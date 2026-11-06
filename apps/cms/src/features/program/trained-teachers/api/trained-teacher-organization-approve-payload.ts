@@ -25,6 +25,11 @@ function normalizePreferredScheduleRank(value: number | null | undefined): numbe
   return Math.trunc(value)
 }
 
+/** 프로그램 공통정보 기준. PERIOD만 기간형. FIXED_DATE·DATE·date는 날짜형. */
+export function isTrainedTeacherPeriodApproveMode(educationScheduleMode?: string | null): boolean {
+  return educationScheduleMode?.trim().toUpperCase() === 'PERIOD'
+}
+
 function uniquePositiveScheduleIds(ids: readonly (number | null | undefined)[]): number[] {
   const unique: number[] = []
   const seen = new Set<number>()
@@ -44,8 +49,9 @@ function uniquePositiveScheduleIds(ids: readonly (number | null | undefined)[]):
  * TT 승인 payload를 만든다.
  *
  * - 일정이 없고 IMMEDIATE면 undefined를 반환해 기존 무본문 승인을 유지한다.
- * - PERIOD 희망 일정은 서버가 내려준 preferenceRank만 preferredScheduleRank로 보낸다.
- * - preferredScheduleRank가 있으면 selectedScheduleId·slots를 절대 함께 만들지 않는다.
+ * - PERIOD만 서버가 내려준 preferenceRank를 preferredScheduleRank로 보낸다.
+ * - DATE(FIXED_DATE 포함)는 preferredScheduleRank를 넣지 않고 MATCHED scheduleId만 보낸다.
+ * - preferredScheduleRank와 selectedScheduleId·slots를 함께 만들지 않는다.
  * - 단일 일정은 selectedScheduleId만, 복수 일정은 slots만 만든다.
  * - requestedScheduleId는 이 함수의 입력·출력에 포함하지 않는다.
  * - scheduledAt은 SCHEDULED일 때만 포함한다.
@@ -53,15 +59,25 @@ function uniquePositiveScheduleIds(ids: readonly (number | null | undefined)[]):
 export function buildTrainedTeacherApproveRequest(input: {
   timing?: TrainedTeacherApproveTiming | null
   scheduledAt?: string | null
+  /** 프로그램 공통정보 educationScheduleMode. PERIOD만 rank, 그 외(DATE·FIXED_DATE)는 scheduleId. */
+  educationScheduleMode?: string | null
   preferredScheduleRank?: number | null
   selectedScheduleId?: number | null
   selectedScheduleIds?: readonly (number | null | undefined)[] | null
 }): TrainedTeacherApproveRequest | undefined {
-  const hasPreferredScheduleRankInput = input.preferredScheduleRank != null
-  const preferredScheduleRank = normalizePreferredScheduleRank(input.preferredScheduleRank)
-  const ids = uniquePositiveScheduleIds(
-    input.selectedScheduleIds != null ? input.selectedScheduleIds : [input.selectedScheduleId]
-  )
+  const periodMode = isTrainedTeacherPeriodApproveMode(input.educationScheduleMode)
+  const dateMode =
+    input.educationScheduleMode != null &&
+    input.educationScheduleMode.trim() !== '' &&
+    !periodMode
+  const preferredScheduleRank = dateMode
+    ? null
+    : normalizePreferredScheduleRank(input.preferredScheduleRank)
+  const ids = periodMode
+    ? []
+    : uniquePositiveScheduleIds(
+        input.selectedScheduleIds != null ? input.selectedScheduleIds : [input.selectedScheduleId]
+      )
   const timing = input.timing ?? undefined
   const scheduledAt = input.scheduledAt?.trim()
   const request: TrainedTeacherApproveRequest = {
@@ -73,7 +89,7 @@ export function buildTrainedTeacherApproveRequest(input: {
     ...(preferredScheduleRank != null ? { preferredScheduleRank } : {}),
   }
 
-  if (hasPreferredScheduleRankInput) {
+  if (preferredScheduleRank != null) {
     return Object.keys(request).length > 0 ? request : undefined
   }
 

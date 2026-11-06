@@ -196,6 +196,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
       textbookId: remote.detail?.textbookId,
       lectureRound: remote.lectureRound,
       textbookName: remote.textbookName,
+      ...(remote.textbookStatus ? { textbookStatus: remote.textbookStatus } : {}),
       applicationReason: remote.detail?.applicationReason,
       otherRequests: remote.detail?.otherRequests,
       gradeBlocks: remote.gradeBlocks ?? null,
@@ -567,12 +568,16 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
       `E-mail : ${displayServerPiiAsIs(mergedDetail.teacherEmail, mergedDetail.teacherEmail)}`,
   ].filter((v): v is string => Boolean(v))
 
+  const textbookDeliveryStatus =
+    mergedDetail.textbookStatus && mergedDetail.textbookStatus !== 'not_applicable'
+      ? mergedDetail.textbookStatus
+      : null
   const textbookStatusCell =
-    onTextbookStatusChange != null ? (
+    textbookDeliveryStatus == null ? null : onTextbookStatusChange != null ? (
       <span className={STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME}>
         <StatusDropdownCell<TextbookStatusKey>
-          status={mergedDetail.textbookStatus}
-          statusOptions={TEXTBOOK_STATUS_OPTION_KEYS}
+          status={textbookDeliveryStatus}
+          statusOptions={TEXTBOOK_STATUS_OPTION_KEYS.filter(key => key !== 'not_applicable')}
           renderBadge={s => <TextbookStatusBadge status={s} />}
           isItemDisabled={(cur, opt) => cur === opt}
           onChange={newStatus => onTextbookStatusChange(detail.id, newStatus)}
@@ -582,7 +587,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
         />
       </span>
     ) : (
-      <TextbookStatusBadge status={mergedDetail.textbookStatus} />
+      <TextbookStatusBadge status={textbookDeliveryStatus} />
     )
 
   const hasSelectedTextbook =
@@ -631,6 +636,8 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
           </span>
         ) : null}
       </div>
+    ) : !hasSelectedTextbook ? (
+      '-'
     ) : (
       <div className="participating-institution-application-info__textbook-value">
         <ProgramDetailTdSegmentWrap>

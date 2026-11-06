@@ -1,7 +1,9 @@
 import {
   formatRequestedEducationFormat,
   mapApiApplicationStatusToApprovalStatus,
+  mapTextbookDeliveryStatusToBadge,
 } from '@/features/program/general/api/adapters/general-applications-adapters'
+import type { TextbookStatusKey } from '@/features/program/general/model/participating-schools'
 import {
   stripDefaultEducationSlotNameFromLabel,
   toDisplayEducationScheduleName,
@@ -239,6 +241,7 @@ type TrainedTeacherOrganizationApplicationDto = (
   otherRequests?: string | null
   requestedEducationFormat?: string | null
   textbookId?: number | string | null
+  textbookDeliveryStatus?: string | null
 }
 
 function formatResultNotificationSentAt(iso?: string | null): string | undefined {
@@ -271,13 +274,13 @@ function mapPreferredScheduleSession(
     typeof session.sessionIndex === 'number' && Number.isFinite(session.sessionIndex)
       ? session.sessionIndex
       : fallbackIndex
-  const classPeriod = session.classPeriod?.trim() || ''
+  const classPeriod = session.classPeriod?.trim() ?? ''
   const timeRange = buildTimeRange(session)
   if (!classPeriod && !timeRange) return null
   return {
     sessionIndex,
-    classPeriod: classPeriod || '-',
-    timeRange: timeRange || '-',
+    classPeriod,
+    timeRange,
     startTime: session.startTime?.trim() || undefined,
     endTime: session.endTime?.trim() || undefined,
   }
@@ -327,6 +330,24 @@ export function mapPreferredScheduleBlocks(
     .sort((a, b) => a.preferenceRank - b.preferenceRank)
 }
 
+/**
+ * 교재 배송 배지. 일반 참여 기관과 같이 `textbookDeliveryStatus`만 쓴다.
+ * 없으면 invent 하지 않는다. 학년 블록 값은 루트가 비었을 때만.
+ */
+export function readTrainedTeacherTextbookDeliveryStatus(
+  dto: TrainedTeacherOrganizationApplicationDto
+): TextbookStatusKey | undefined {
+  const root = dto.textbookDeliveryStatus?.trim()
+  if (root) return mapTextbookDeliveryStatusToBadge(root)
+  const blocks = 'gradeBlocks' in dto ? dto.gradeBlocks : undefined
+  if (!Array.isArray(blocks)) return undefined
+  for (const block of blocks) {
+    const status = block?.textbookDeliveryStatus?.trim()
+    if (status) return mapTextbookDeliveryStatusToBadge(status)
+  }
+  return undefined
+}
+
 /** TT organization-application DTO → ApplicantSchoolRow */
 export function mapTrainedTeacherOrganizationApplicationToRow(
   dto: TrainedTeacherOrganizationApplicationDto,
@@ -368,6 +389,7 @@ export function mapTrainedTeacherOrganizationApplicationToRow(
   const teacherEmailMasked =
     dto.teacherEmailMasked?.trim() || dto.teacherEmail?.trim() || undefined
   const textbookId = dto.textbookId == null ? undefined : String(dto.textbookId)
+  const textbookStatus = readTrainedTeacherTextbookDeliveryStatus(dto)
   const detailFields = {
     ...(addressDetail ? { addressDetail } : {}),
     ...(applicationReason ? { applicationReason } : {}),
@@ -405,6 +427,7 @@ export function mapTrainedTeacherOrganizationApplicationToRow(
     totalEducationRoundCount,
     completedEducationRoundCount,
     textbookName,
+    ...(textbookStatus ? { textbookStatus } : {}),
     educationJournalCount,
     journalSubmitted,
     educationCompletionCount,

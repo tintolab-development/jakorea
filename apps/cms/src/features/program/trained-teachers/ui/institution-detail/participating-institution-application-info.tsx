@@ -144,6 +144,7 @@ export function TrainedTeachersParticipatingInstitutionApplicationInfo({
       <TrainedTeachersPreferredScheduleDetailSection
         blocks={preferredScheduleBlocks}
         sectionTitle="교육 진행 일정"
+        emptyClassName="participating-institution-application-info__schedule-empty"
       />
     </div>
   )

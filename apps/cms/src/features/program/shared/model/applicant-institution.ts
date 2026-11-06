@@ -1,6 +1,9 @@
 import type { Dayjs } from 'dayjs'
 import type { GradeBlock } from '@/shared/api/generated/dashboard/schemas/gradeBlock'
-import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
+import type {
+  ParticipatingSchoolSession,
+  TextbookStatusKey,
+} from '@/features/program/general/model/participating-schools'
 import type { PreferredEducationSchedule } from '@/features/program/general/api/individual-application-screening-api-types'
 
 /** 신청 기관(학교) — 타입·승인 상태 패치 도우미 */
@@ -144,6 +147,8 @@ export interface ApplicantSchoolRow {
   completedEducationRoundCount?: number
   /** TT 교재명 */
   textbookName?: string
+  /** 교재 배송 배지. 서버 `textbookDeliveryStatus`가 있을 때만. PREPARING으로 채우지 않음 */
+  textbookStatus?: TextbookStatusKey
   /** TT 교육일지 수. 최소 0. */
   educationJournalCount?: number
   journalSubmitted?: boolean

@@ -131,7 +131,10 @@ import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import { fetchTrainedTeacherOrganizationApplicationRemote } from '@/features/program/trained-teachers/api/organization-applications-client'
 import { mapTrainedTeacherOrganizationApplicationToRow } from '@/features/program/trained-teachers/api/organization-applications-adapters'
-import { buildTrainedTeacherApproveRequest } from '@/features/program/trained-teachers/api/trained-teacher-organization-approve-payload'
+import {
+  buildTrainedTeacherApproveRequest,
+  isTrainedTeacherPeriodApproveMode,
+} from '@/features/program/trained-teachers/api/trained-teacher-organization-approve-payload'
 import { ProgramApplicationRejectModal } from '@/features/program/shared/ui/detail-modal/components/program-application-reject-modal'
 import { NOTIFY_TIMING_CAPABILITY } from '@/shared/lib/notify-timing-capability'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
@@ -1407,14 +1410,23 @@ export function ApplicantList({
       <InstitutionApproveModal
         open={institutionApproveTarget != null}
         schoolName={institutionApproveTarget?.name ?? ''}
-        copyVariant={isCompanySchoolInstitutionApprove ? 'program-application' : 'participation'}
+        copyVariant={
+          isCompanySchoolInstitutionApprove || isTrainedTeacherProgram
+            ? 'program-application'
+            : 'participation'
+        }
         scheduleConfig={
           requiresInstitutionApproveScheduleAssignment ? institutionApproveScheduleConfig : null
         }
         programId={programId}
         organizationApplicationId={institutionApproveTarget?.id}
         educationScheduleMode={
-          program?.generalCommonInfo?.educationScheduleMode === 'period' ? 'period' : 'date'
+          isTrainedTeacherPeriodApproveMode(
+            program?.generalCommonInfo?.educationScheduleMode ??
+              institutionApproveScheduleMeta.educationScheduleMode
+          )
+            ? 'period'
+            : 'date'
         }
         isTrainedTeacherProgram={isTrainedTeacherProgram}
         applicationStatus={institutionApproveRow?.applicationStatus}
@@ -1450,6 +1462,9 @@ export function ApplicantList({
                   ? buildTrainedTeacherApproveRequest({
                       timing: notify?.timing,
                       scheduledAt: notify?.scheduledAt,
+                      educationScheduleMode:
+                        program?.generalCommonInfo?.educationScheduleMode ??
+                        institutionApproveScheduleMeta.educationScheduleMode,
                       preferredScheduleRank: payload.preferredScheduleRank,
                       selectedScheduleId: payload.selectedScheduleId,
                       selectedScheduleIds: payload.slots?.map(slot => slot.scheduleId),

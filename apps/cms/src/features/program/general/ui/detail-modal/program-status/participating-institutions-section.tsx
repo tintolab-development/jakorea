@@ -199,12 +199,11 @@ export function ParticipatingInstitutionsSection({
       institutionSigungu: appliedFilters.institutionSigungu,
       educationGrade: appliedFilters.educationGrade,
       lectureRound: 'all',
-      // TT는 배송 원장 없음 — URL에 남은 textbookStatus로 0건 필터 방지
-      textbookStatus: isTrainedTeachersSurface ? 'all' : appliedFilters.textbookStatus,
+      textbookStatus: appliedFilters.textbookStatus,
       settlementStatus: 'all',
       teacherName: appliedFilters.teacherName,
     }),
-    [appliedFilters, isTrainedTeachersSurface]
+    [appliedFilters]
   )
 
   const instructorHook = useProgressInstructorList({
@@ -309,9 +308,7 @@ export function ParticipatingInstitutionsSection({
   const showTextbookFeatures = program
     ? isTextbookCatalogLoading || programUsesTextbook(program, textbookCatalog)
     : true
-  /** TT는 배송 원장 없음 — 행이 전부 `not_applicable`. 필터/컬럼 노출 시 조회하면 0건이 됨 */
-  const showTextbookStatusColumn =
-    !isTrainedTeachersSurface && (isCompanySchool || showTextbookFeatures)
+  const showTextbookStatusColumn = isCompanySchool || showTextbookFeatures
 
   const filterFields = useMemo(
     () =>
@@ -424,6 +421,9 @@ export function ParticipatingInstitutionsSection({
                 )
                 if (!hasTextbook)
                   return <ParticipatingInstitutionTextbookStatusBadge status="not_applicable" />
+                if (isTrainedTeachersSurface) {
+                  return <ParticipatingInstitutionTextbookStatusBadge status={status} />
+                }
                 return (
                   <StatusDropdownCell<TextbookStatusKey>
                     status={status ?? null}
@@ -588,7 +588,9 @@ export function ParticipatingInstitutionsSection({
           savedInstructorPatches={savedInstructorPatches}
           instructorList={instructorHook.instructorList}
           onCancelApproval={handleSchoolApprovalCancel}
-          onTextbookStatusChange={handleTextbookStatusChange}
+          onTextbookStatusChange={
+            isTrainedTeachersSurface ? undefined : handleTextbookStatusChange
+          }
         />
       </div>
     )

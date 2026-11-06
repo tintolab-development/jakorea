@@ -25,4 +25,21 @@ describe('formatApplicationDecisionCancelConflictMessage', () => {
     }
     expect(formatApplicationDecisionCancelConflictMessage(error)).toContain('단계와 맞지 않는')
   })
+
+  it('maps nested APPLICATION_DECISION_CONFLICT', () => {
+    const error = {
+      response: {
+        data: {
+          success: false,
+          error: {
+            code: 'APPLICATION_DECISION_CONFLICT',
+            message: '현재 신청 상태에서는 승인 취소를 할 수 없습니다.',
+          },
+        },
+      },
+    }
+    expect(formatApplicationDecisionCancelConflictMessage(error)).toContain(
+      '현재 신청 상태에서는 승인·반려·취소 처리를 수행할 수 없습니다.'
+    )
+  })
 })
