@@ -18,9 +18,7 @@ import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { PaymentOrderBatchConfirmModal } from './payment-order-batch-confirm-modal'
 import { InstructorPaymentStatementBlockedModal } from '@/features/user/detail/ui/modal/instructor-payment-statement-blocked-modal'
 import { PaymentStatementIssuanceViewModal } from '@/features/program/shared/ui/payment-statement-issuance-view-modal'
-import {
-  FilterTableToolbarButton
-} from '@/shared/ui'
+import { FilterTableToolbarButton } from '@/shared/ui'
 import {
   usePaymentOrderDetailLinesController,
   type PaymentOrderDetailLineRow,
@@ -68,8 +66,7 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
     paymentStatementIssueBlocked,
     setPaymentStatementIssueBlocked,
     handleBatchConfirm,
-    canBatchConfirm,
-    isLineCheckboxDisabled,
+    handleBatchConfirmClick,
     handlePaymentStatementIssue,
     closeIssuanceView,
     issuanceViewOpen,
@@ -113,7 +110,6 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
       <FilterTableLayout
         className={filterClassName}
         bordered={false}
-        filterResponsiveWrap={false}
         excelExport={excelExport}
         fields={filterFields}
         filters={filterFilters}
@@ -124,21 +120,14 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
         description={`총 ${filteredRows.length}건`}
         actions={
           <>
-            <FilterTableToolbarButton
-              variant="secondary"
-              disabled={!canBatchConfirm}
-              onClick={() => {
-                if (!canBatchConfirm) return
-                setBatchConfirmOpen(true)
-              }} >
+            <FilterTableToolbarButton variant="secondary" onClick={handleBatchConfirmClick}>
               일괄 확인
             </FilterTableToolbarButton>
             <FilterTableToolbarButton
               variant="primary"
-              style={{ minWidth: 180 }}
               icon={<ButtonDownloadIcon />}
-              disabled={selectedRowKeys.length === 0}
-              onClick={handlePaymentStatementIssue} >
+              onClick={handlePaymentStatementIssue}
+            >
               지급조서 발급
             </FilterTableToolbarButton>
           </>
@@ -154,8 +143,8 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
             columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
             selectedRowKeys,
             onChange: keys => setSelectedRowKeys(keys),
-            getCheckboxProps: record => ({
-              disabled: isLineCheckboxDisabled(record),
+            getCheckboxProps: () => ({
+              disabled: false,
             }),
           }}
         />
