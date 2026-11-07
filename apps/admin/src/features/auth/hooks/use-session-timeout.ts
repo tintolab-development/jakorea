@@ -75,7 +75,7 @@ export function useSessionTimeout() {
       syncSequenceRef.current += 1
       expiryRecheckPendingRef.current = false
       lastExpiryRecheckAtRef.current = 0
-      sessionRef.current
+      sessionRef.current = null
       setSession(null)
       setVisibleKind(null)
       setRemainingMs(0)
