@@ -29,14 +29,14 @@ function mapAssignedInstructors(
   instructors: AssignedInstructor[],
 ): EducationTeacherAssignedInstructor[] {
   return instructors.map(instructor => ({
-    id:
-      instructor.instructorMemberId != null
-        ? String(instructor.instructorMemberId)
-        : instructor.name,
-    instructorMemberId: instructor.instructorMemberId ?? undefined,
+    id: String(instructor.instructorMemberId),
+    instructorMemberId: instructor.instructorMemberId,
     name: instructor.name,
-    ...(instructor.phone?.trim() ? { phone: instructor.phone.trim() } : {}),
-    ...(instructor.email?.trim() ? { email: instructor.email.trim() } : {}),
+    assignmentId: instructor.assignmentId,
+    programScheduleId: instructor.programScheduleId,
+    assignmentStatus: instructor.assignmentStatus,
+    ...(instructor.phone ? { phone: instructor.phone } : {}),
+    ...(instructor.email ? { email: instructor.email } : {}),
     consentDocumentsRequested: instructor.consentDocumentsRequested,
     consents: instructor.consents.map(consent => ({
       id: consent.documentId != null ? String(consent.documentId) : consent.consentType,

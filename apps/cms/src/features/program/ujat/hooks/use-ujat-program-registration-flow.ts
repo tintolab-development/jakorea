@@ -81,6 +81,11 @@ import {
   syncRegistrationProgramDraftSession,
 } from '@/features/program/general/lib/registration-wizard-draft-session'
 import { overlayRecordToInterviewConfig } from '@/features/program/ujat/lib/recruitment-typed-contract'
+import {
+  peekActiveUjatRecruitInstitutionOverlayRecord,
+  peekActiveUjatRecruitVolunteerOverlayRecord,
+  registerUjatRegistrationRecruitRhf,
+} from '@/features/program/ujat/lib/ujat-registration-rhf-api'
 import { getRecruitTypedInterviewRecord } from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
 import { ujatVolunteerRecruitInterviewNamespace } from '@/features/program/ujat/lib/ujat-recruit-volunteer-half-overlay'
 import { PROGRAM_REGISTRATION_UJAT_TEMPLATE_CODE } from '@/features/program/shared/lib/registration-draft-notice'
@@ -338,6 +343,19 @@ export function useUjatProgramRegistrationFlow(
     resetOnProgramChange: false,
     mapToValues: mapVolunteerH2RecruitmentFormValues,
   })
+
+  useEffect(() => {
+    if (!open) {
+      registerUjatRegistrationRecruitRhf(null)
+      return
+    }
+    registerUjatRegistrationRecruitRhf({
+      getInstitution: () => institutionRecruitmentForm.getValues(),
+      getVolunteerH1: () => volunteerH1RecruitmentForm.getValues(),
+      getVolunteerH2: () => volunteerH2RecruitmentForm.getValues(),
+    })
+    return () => registerUjatRegistrationRecruitRhf(null)
+  }, [institutionRecruitmentForm, open, volunteerH1RecruitmentForm, volunteerH2RecruitmentForm])
 
   const buildRegistrationWizardLinkedProgram = useCallback(() => {
     if (!registrationWizardBaseProgram) return null
@@ -932,7 +950,15 @@ export function useUjatProgramRegistrationFlow(
                   }),
                 }
               : undefined,
-            overlayForTemplateCode: collectOperationalOverlayForCatalogId,
+            overlayForTemplateCode: code => {
+              if (code === 'recruitment-ujat-school') {
+                return peekActiveUjatRecruitInstitutionOverlayRecord()
+              }
+              if (code === 'recruitment-ujat-volunteer') {
+                return peekActiveUjatRecruitVolunteerOverlayRecord()
+              }
+              return collectOperationalOverlayForCatalogId(code)
+            },
           })
 
           const { prepareRegistrationCreateFormBindings } =

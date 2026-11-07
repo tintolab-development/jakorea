@@ -23,4 +23,26 @@ describe('mapParticipantSessionsToEducationSchedules', () => {
     ])
     expect(rows[0]?.scheduleLabel).toBe('1회차 · 2026.10.28')
   })
+
+  it('사전교육은 회차 번호 대신 사전교육으로 표시한다', () => {
+    const rows = mapParticipantSessionsToEducationSchedules([
+      {
+        sessionNo: 1,
+        scheduleId: 2,
+        startAt: '2026-10-28T19:00:00Z',
+        scheduleRole: 'PRE_EDUCATION',
+        educationSlotKey: 'general-pre-education:1',
+        scheduleName: '사전 교육',
+      } as SessionProgress,
+    ])
+    expect(rows[0]?.scheduleLabel).toBe('사전교육 · 2026.10.29')
+    expect(rows[0]?.scheduleLabel).not.toContain('1회차')
+  })
+
+  it('회차가 없으면 인덱스로 교육 일정 번호를 만들지 않는다', () => {
+    const rows = mapParticipantSessionsToEducationSchedules([
+      { scheduleId: 3, startAt: '2026-10-28' } as SessionProgress,
+    ])
+    expect(rows[0]?.scheduleLabel).toBe('2026.10.28')
+  })
 })

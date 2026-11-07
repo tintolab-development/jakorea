@@ -793,6 +793,7 @@ export * from './memberInstructorTransportPreview';
 export * from './memberLectureAttendanceResponse';
 export * from './memberLectureFeePreview';
 export * from './memberLectureFeePreviewInstructorFeeCalculationUnit';
+export * from './memberLectureFeePreviewSettlementBlockerCode';
 export * from './memberLectureFeePreviewLectureFeeType';
 export * from './memberLectureReportAssignmentItemResponse';
 export * from './memberLectureReportContentResponse';

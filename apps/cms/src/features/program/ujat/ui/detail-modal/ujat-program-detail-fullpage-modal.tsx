@@ -20,6 +20,7 @@ import { useProgramDetailInfoSave } from '@/features/program/general/hooks/use-p
 import { handleError } from '@/shared/utils/error-handler'
 import {
   programDetailUjatCommonInfoEditSchema,
+  programDetailUjatRecruitEditSchema,
 } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
   applyUjatRecruitFormValuesToProgram,
@@ -137,7 +138,6 @@ import {
   UJAT_INSTITUTION_APP_CHILD_ROWS,
   UJAT_INSTITUTION_APPLICATIONS_LNB_LABEL,
 } from './application-institution/tabs'
-import { programDetailInstitutionsEditSchema } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
   formatUjatRegistrationRequiredFieldReasons,
   listIncompleteUjatProgramRecruitmentInterviewScheduleRequiredFields,
@@ -584,20 +584,25 @@ export function UjatProgramDetailFullPageModal({
     defaultValues: EMPTY_UJAT_TYPED_DETAIL,
   })
   const educationScheduleBaselineRef = useRef<UjatTypedDetail>(EMPTY_UJAT_TYPED_DETAIL)
-  const educationScheduleIsDirty = educationScheduleForm.formState.isDirty
   const resetEducationScheduleForm = educationScheduleForm.reset
 
   useEffect(() => {
     if (!displayProgram) return
+    if (searchParams.get(EDIT_PARAM) === 'info') return
     const next = displayProgram.ujatTypedDetail ?? EMPTY_UJAT_TYPED_DETAIL
     educationScheduleBaselineRef.current = next
     resetEducationScheduleForm(next)
-  }, [displayProgram, resetEducationScheduleForm])
+  }, [displayProgram, resetEducationScheduleForm, searchParams])
 
   const persistUjatEducationSchedule = useCallback(
     async (id: string) => {
-      if (!educationScheduleIsDirty) return
       const snapshot = educationScheduleForm.getValues()
+      if (
+        JSON.stringify(snapshot.halfPlans ?? []) ===
+        JSON.stringify(educationScheduleBaselineRef.current.halfPlans ?? [])
+      ) {
+        return
+      }
       let current = snapshot
       let expectedRevision = snapshot.revision ?? 0
       const changedSemesters: Array<'FIRST_HALF' | 'SECOND_HALF'> = []
@@ -623,7 +628,7 @@ export function UjatProgramDetailFullPageModal({
       educationScheduleBaselineRef.current = current
       educationScheduleForm.reset(current)
     },
-    [educationScheduleForm, educationScheduleIsDirty]
+    [educationScheduleForm]
   )
 
   const volunteerRecruitKindRef = useRef<UjatRecruitDisplayKind>('volunteer_h1')
@@ -956,12 +961,12 @@ export function UjatProgramDetailFullPageModal({
                     buildUjatRegionCapacityUpserts(draft)
                   )
                 }
+                await persistUjatEducationSchedule(draft.id)
                 if (onUpdateProgram) {
                   await onUpdateProgram(draft.id, draft, commonPatch)
                 } else {
                   await updateProgram(draft.id, draft)
                 }
-                await persistUjatEducationSchedule(draft.id)
                 const next = new URLSearchParams(searchParams)
                 next.delete(EDIT_PARAM)
                 if (programId) next.set('programId', programId)
@@ -1086,7 +1091,7 @@ export function UjatProgramDetailFullPageModal({
   const institutionsForm = useProgramDetailEditForm({
     program: displayProgram,
     isEditMode: isEditModeRecruitParticipant,
-    schema: programDetailInstitutionsEditSchema,
+    schema: programDetailUjatRecruitEditSchema,
     mapToValues: mapInstitutionRecruitmentEditValues,
     holdValuesWhileEditing: true,
   })
@@ -1097,6 +1102,7 @@ export function UjatProgramDetailFullPageModal({
   } = useProgramDetailInfoSave({
     form: institutionsForm,
     program: displayProgram ?? ({} as Program),
+    validateSchema: programDetailUjatRecruitEditSchema,
     mapToValues: mapInstitutionRecruitmentEditValues,
     recruitmentAudience: 'participant',
     recruitmentNotesField: 'oneLineIntroduction',
@@ -1165,12 +1171,14 @@ export function UjatProgramDetailFullPageModal({
   const volunteersH1Form = useProgramDetailEditForm({
     program: displayProgram,
     isEditMode: isEditModeRecruitVolunteerH1,
+    schema: programDetailUjatRecruitEditSchema,
     mapToValues: mapVolunteerH1RecruitmentEditValues,
     holdValuesWhileEditing: true,
   })
   const volunteersH2Form = useProgramDetailEditForm({
     program: displayProgram,
     isEditMode: isEditModeRecruitVolunteerH2,
+    schema: programDetailUjatRecruitEditSchema,
     mapToValues: mapVolunteerH2RecruitmentEditValues,
     holdValuesWhileEditing: true,
   })
@@ -1183,6 +1191,7 @@ export function UjatProgramDetailFullPageModal({
   } = useProgramDetailInfoSave({
     form: volunteersForm,
     program: displayProgram ?? ({} as Program),
+    validateSchema: programDetailUjatRecruitEditSchema,
     mapToValues: mapVolunteerRecruitmentEditValues,
     recruitmentAudience: 'volunteer',
     recruitmentNotesField: 'oneLineIntroduction',

@@ -14,10 +14,13 @@ export type AssignedInstructorConsent = {
 }
 
 export type AssignedInstructor = {
-  instructorMemberId: number | null
+  instructorMemberId: number
   name: string
-  phone?: string | null
-  email?: string | null
+  assignmentId: number | null
+  programScheduleId: number | null
+  assignmentStatus: string | null
+  phone: string | null
+  email: string | null
   consentDocumentsRequested: boolean
   consents: AssignedInstructorConsent[]
 }
@@ -41,20 +44,21 @@ const CONSENT_TYPES = new Set<AssignedInstructorConsent['consentType']>([
 function unwrap(payload: unknown): unknown {
   if (!payload || typeof payload !== 'object') return payload
   const body = payload as Record<string, unknown>
-  if (Array.isArray(body.instructors) || Array.isArray(body.assignments)) return body
+  if (Array.isArray(body.instructors)) return body
   if (body.data != null && body.data !== payload) return unwrap(body.data)
   return payload
 }
 
-function readRows(body: unknown): unknown[] {
-  if (Array.isArray(body)) return body
+function readInstructorRows(body: unknown): unknown[] {
   if (!body || typeof body !== 'object') return []
-  const record = body as Record<string, unknown>
-  if (Array.isArray(record.instructors)) return record.instructors
-  if (Array.isArray(record.assignments)) return record.assignments
-  if (Array.isArray(record.items)) return record.items
-  if (Array.isArray(record.content)) return record.content
-  return []
+  const instructors = (body as Record<string, unknown>).instructors
+  return Array.isArray(instructors) ? instructors : []
+}
+
+function readMaskedContact(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : null
 }
 
 function readFiniteNumber(value: unknown): number | null {
@@ -65,9 +69,6 @@ function readFiniteNumber(value: unknown): number | null {
 
 function readName(row: Record<string, unknown>): string {
   if (typeof row.name === 'string' && row.name.trim()) return row.name.trim()
-  if (typeof row.instructorName === 'string' && row.instructorName.trim()) {
-    return row.instructorName.trim()
-  }
   return ''
 }
 
@@ -91,24 +92,35 @@ function mapConsent(value: unknown): AssignedInstructorConsent | null {
 function mapInstructor(value: unknown): AssignedInstructor | null {
   if (!value || typeof value !== 'object') return null
   const row = value as Record<string, unknown>
+  const instructorMemberId = readFiniteNumber(row.instructorMemberId)
   const name = readName(row)
-  if (!name) return null
+  if (instructorMemberId == null || !name) return null
   const consents = Array.isArray(row.consents)
     ? row.consents.map(mapConsent).filter((consent): consent is AssignedInstructorConsent => consent != null)
     : []
+  const assignmentStatus =
+    typeof row.assignmentStatus === 'string' && row.assignmentStatus.trim()
+      ? row.assignmentStatus.trim()
+      : null
   return {
-    instructorMemberId: readFiniteNumber(row.instructorMemberId),
+    instructorMemberId,
     name,
+    assignmentId: readFiniteNumber(row.assignmentId),
+    programScheduleId: readFiniteNumber(row.programScheduleId),
+    assignmentStatus,
+    phone: readMaskedContact(row.phone),
+    email: readMaskedContact(row.email),
     consentDocumentsRequested: row.consentDocumentsRequested === true,
     consents,
   }
 }
 
 export function parseAssignedInstructorList(payload: unknown): AssignedInstructorList {
-  const instructors = readRows(unwrap(payload))
-    .map(mapInstructor)
-    .filter((instructor): instructor is AssignedInstructor => instructor != null)
-  return { instructors }
+  return {
+    instructors: readInstructorRows(unwrap(payload))
+      .map(mapInstructor)
+      .filter((instructor): instructor is AssignedInstructor => instructor != null),
+  }
 }
 
 /** GET .../assigned-instructors — 본인 INDIVIDUAL·ORGANIZATION 신청. 목록에 downloadUrl 없음 */

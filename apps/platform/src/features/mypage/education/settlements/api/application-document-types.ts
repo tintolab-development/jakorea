@@ -23,6 +23,8 @@ export type SettlementApplicationDocumentCalcInfo = {
   instructorFeeAmount: number | null
   businessIncomeYn: boolean | null
   educationSessionCount: number | null
+  recognizedSessionCount?: number | null
+  actualTrainingMinutes?: number | null
   totalStudentCount: number | null
   totalLectureFee: number | null
   oneWayDistanceKm?: number | null

@@ -17,6 +17,7 @@ import {
   loadWritingFormTemplateDraft,
   loadWritingFormTemplateSave,
   persistWritingFormTemplateDraft,
+  persistWritingFormTemplateSave,
 } from './writing-form-template-local-save'
 
 const TEMPLATE_ID = 'registration-general'
@@ -118,5 +119,84 @@ describe('program registration local-only draft', () => {
         publishAfterSave: true,
       })
     )
+  })
+})
+
+describe('UJAT recruit draft overlay sidecar persist', () => {
+  const templateId = 'registration-wizard:UJAT:recruitment-ujat-school'
+  const draft = createProgramRegistrationDraft('general')
+
+  beforeEach(() => {
+    stubLocalStorage()
+  })
+
+  it('omitted overlay keeps unknown sidecar from the previous save', () => {
+    persistWritingFormTemplateSave({
+      templateId,
+      draft,
+      overlay: {
+        'ujat.recruit.institution.publicTitle': 'legacy-public-title',
+        unknownSidecarKey: 'preserve-me',
+      },
+    })
+    persistWritingFormTemplateSave({ templateId, draft })
+    expect(loadWritingFormTemplateSave(templateId)?.overlay).toEqual({
+      'ujat.recruit.institution.publicTitle': 'legacy-public-title',
+      unknownSidecarKey: 'preserve-me',
+    })
+  })
+
+  it('empty overlay {} does not wipe previous sidecar', () => {
+    persistWritingFormTemplateSave({
+      templateId,
+      draft,
+      overlay: { unknownSidecarKey: 'preserve-me', typedTitle: 'keep' },
+    })
+    persistWritingFormTemplateSave({ templateId, draft, overlay: {} })
+    expect(loadWritingFormTemplateSave(templateId)?.overlay).toEqual({
+      unknownSidecarKey: 'preserve-me',
+      typedTitle: 'keep',
+    })
+  })
+
+  it('typed-owned keys merge without dropping unknown sidecar', () => {
+    persistWritingFormTemplateSave({
+      templateId,
+      draft,
+      overlay: { unknownSidecarKey: 'preserve-me', 'ujat.recruit.institution.publicTitle': 'old' },
+    })
+    persistWritingFormTemplateSave({
+      templateId,
+      draft,
+      overlay: { 'ujat.recruit.institution.publicTitle': 'typed-only' },
+    })
+    expect(loadWritingFormTemplateSave(templateId)?.overlay).toEqual({
+      unknownSidecarKey: 'preserve-me',
+      'ujat.recruit.institution.publicTitle': 'typed-only',
+    })
+  })
+
+  it('explicit empty string / false / 0 / [] replace those keys', () => {
+    persistWritingFormTemplateSave({
+      templateId,
+      draft,
+      overlay: { unknownSidecarKey: 'preserve-me', flag: true, count: 1, list: ['a'] },
+    })
+    persistWritingFormTemplateSave({
+      templateId,
+      draft,
+      overlay: { unknownSidecarKey: '', flag: false, count: 0, list: [] },
+    })
+    expect(loadWritingFormTemplateSave(templateId)?.overlay).toEqual({
+      unknownSidecarKey: '',
+      flag: false,
+      count: 0,
+      list: [],
+    })
+  })
+
+  it('first persist without overlay stays empty', () => {
+    persistWritingFormTemplateSave({ templateId, draft })
+    expect(loadWritingFormTemplateSave(templateId)?.overlay).toBeUndefined()
   })
 })

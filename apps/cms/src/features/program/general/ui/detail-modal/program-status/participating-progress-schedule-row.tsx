@@ -4,6 +4,7 @@
 
 import {
   formatGeneralEducationScheduleLine,
+  formatParticipatingProgressEducationScheduleLine,
   type GeneralEducationScheduleShape,
 } from '@/features/program/general/lib/participating-school-session-display'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
@@ -45,6 +46,23 @@ function resolveSessionProgressDisplay(session: ParticipatingSchoolSession): {
   return { label, statusClass }
 }
 
+function resolveParticipatingProgressScheduleLine(
+  session: ParticipatingSchoolSession,
+  shape: GeneralEducationScheduleShape | null,
+  detailScheduleTimeSpan: string | null
+): string {
+  const usePeriodSpan =
+    Boolean(detailScheduleTimeSpan?.trim()) &&
+    shape?.educationStructure === 'schedule' &&
+    shape?.sessionRound === 'single' &&
+    shape?.educationScheduleMode === 'period'
+
+  if (usePeriodSpan) {
+    return formatGeneralEducationScheduleLine(session, shape, { detailScheduleTimeSpan })
+  }
+  return formatParticipatingProgressEducationScheduleLine(session, shape)
+}
+
 export function ParticipatingProgressScheduleValue({
   session,
   shape = null,
@@ -57,7 +75,7 @@ export function ParticipatingProgressScheduleValue({
   /** 전달되면 일반 세션 status fallback을 쓰지 않는다. null이면 뱃지 생략. */
   statusBadge?: { label: string; statusClass: string } | null
 }) {
-  const line = formatGeneralEducationScheduleLine(session, shape, { detailScheduleTimeSpan })
+  const line = resolveParticipatingProgressScheduleLine(session, shape, detailScheduleTimeSpan)
   const resolved =
     statusBadge === undefined ? resolveSessionProgressDisplay(session) : statusBadge
   const status = resolved ? (

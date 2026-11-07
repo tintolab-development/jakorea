@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import type { EducationSettlementItem } from '../model/types'
 import { EDUCATION_SETTLEMENT_PROGRESS_LABEL } from '../lib/settlement-rules'
 import { formatSettlementGradeLabel } from '../lib/format-write-draft'
+import { isLectureFeeSettlementBlocked } from '../lib/lecture-fee-preview'
 import { formatDisplayDate } from '@/shared/lib/format-display-date'
 import {
   isSettlementDeadlinePassed,
@@ -146,15 +147,17 @@ export function EducationSettlementRow({
     item.hasPayableItems === false &&
     item.settlementApplicationId == null &&
     item.status !== 'rejected'
-  const writeDisabled = isSettlementWriteCtaDisabled({
-    documentKind,
-    writeDisabledByStatus: config.writeDisabled,
-    hasPayableItems: item.hasPayableItems,
-    eligible: item.eligible,
-    evidencePolicyUnconfigured: item.evidencePolicyUnconfigured,
-    canSubmit: item.canSubmitReceipt,
-    status: item.status,
-  })
+  const writeDisabled =
+    isSettlementWriteCtaDisabled({
+      documentKind,
+      writeDisabledByStatus: config.writeDisabled,
+      hasPayableItems: item.hasPayableItems,
+      eligible: item.eligible,
+      evidencePolicyUnconfigured: item.evidencePolicyUnconfigured,
+      canSubmit: item.canSubmitReceipt,
+      status: item.status,
+    }) ||
+    (documentKind === 'payment_statement' && isLectureFeeSettlementBlocked(item.lectureFeePreview))
   const viewPath =
     documentKind === 'payment_statement'
       ? item.settlementApplicationId != null

@@ -56,4 +56,16 @@ assert.equal(
   PAYMENT_STATEMENT_CONSENT_REQUIRED_MESSAGE,
 )
 
+const actualTimeAxios = Object.assign(new Error('bad request'), {
+  isAxiosError: true,
+  response: {
+    status: 400,
+    data: { error: { code: 'SETTLEMENT_ACTUAL_TRAINING_TIME_REQUIRED' } },
+  },
+})
+assert.equal(
+  instructorSettlementApiErrorMessage(actualTimeAxios),
+  '실적 시작·종료 시간이 없어 정산을 신청할 수 없습니다.',
+)
+
 console.log('instructor-settlement-contract.selfcheck: ok')

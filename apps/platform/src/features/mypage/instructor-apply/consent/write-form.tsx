@@ -14,6 +14,7 @@ import {
   normalizeMemberConsentWriteDraft,
   overlayPaymentStatementProfileLinkedValues,
   buildPaymentStatementProfileLinkedValues,
+  mergeReceiptPreConsentBasicInfo,
   PAYMENT_STATEMENT_RESIDENT_NUMBER_INVALID_ALERT_MESSAGE,
   resolveDocumentConsentTemplate,
   resolvePlatformConsentHiddenParagraphIds,
@@ -72,10 +73,15 @@ import {
   PaymentBasicInfoFields,
   resolvePaymentConsentSignerName,
 } from './payment-basic-info-fields'
+import {
+  overlayReceiptLockedMemberValues,
+  type ReceiptLockedMemberFields,
+} from './overlay-receipt-locked-member'
 import { ConsentSignatureStatement } from './signature-statement'
 import { PlatformConsentFormBody } from './platform-consent-form-body'
 import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
 import { useInstructorApplyLockedBasic } from '../use-instructor-apply-locked-basic'
+import { isInstructorApplyHomeAddressLocked } from '../map-locked-basic-info'
 import styles from './consent-form.module.css'
 
 function createInitialSchemaConsentState(consentKey: DocumentConsentWriteKey): SchemaConsentWriteState {
@@ -97,7 +103,12 @@ function createInitialSchemaConsentState(consentKey: DocumentConsentWriteKey): S
 
   return {
     draft,
-    paymentBasicInfo: templateId === 'agreement-third-party' ? {} : undefined,
+    paymentBasicInfo:
+      templateId === 'agreement-third-party'
+        ? {}
+        : templateId === 'agreement-receipt-pre-consent'
+          ? mergeReceiptPreConsentBasicInfo()
+          : undefined,
     signatures: {},
   }
 }
@@ -110,6 +121,8 @@ function isSchemaConsentWriteIncomplete(
   return hasMemberConsentIncompleteRequiredFields(state.draft, {
     templateId,
     paymentStatementBasicInfo: state.paymentBasicInfo,
+    receiptPreConsentBasicInfo:
+      templateId === 'agreement-receipt-pre-consent' ? state.paymentBasicInfo : undefined,
   })
 }
 
@@ -127,12 +140,18 @@ const PORTAL_CONSENT_TERMS_NOT_PUBLISHED_MESSAGE =
 const CONSENT_RECEIPT_RRN_NOT_ALLOWED_MESSAGE =
   '주민등록번호는 영수증 발급 사전 동의에 포함할 수 없습니다.'
 const CONSENT_PAYMENT_BASIC_INFO_NOT_ALLOWED_MESSAGE =
-  '영수증 발급 사전 동의에는 지급조서 기본 정보를 넣을 수 없습니다.'
+  '이 동의서에는 지급조서 전용 항목(주민등록번호·소속)을 넣을 수 없습니다.'
+const RECEIPT_CONSENT_BASIC_INFO_REQUIRED_MESSAGE =
+  '영수증 발급 사전 동의서의 지급 확인 정보를 입력해 주세요.'
+const RECEIPT_CONSENT_PURPOSE_INVALID_MESSAGE =
+  '영수증 발급 사전 동의서의 지급 목적을 확인해 주세요.'
 
 const PORTAL_CONSENT_SUBMIT_ERROR_MESSAGES: Record<string, string> = {
   PORTAL_CONSENT_TERMS_NOT_PUBLISHED: PORTAL_CONSENT_TERMS_NOT_PUBLISHED_MESSAGE,
   CONSENT_RECEIPT_RRN_NOT_ALLOWED: CONSENT_RECEIPT_RRN_NOT_ALLOWED_MESSAGE,
   CONSENT_PAYMENT_BASIC_INFO_NOT_ALLOWED: CONSENT_PAYMENT_BASIC_INFO_NOT_ALLOWED_MESSAGE,
+  RECEIPT_CONSENT_BASIC_INFO_REQUIRED: RECEIPT_CONSENT_BASIC_INFO_REQUIRED_MESSAGE,
+  RECEIPT_CONSENT_PURPOSE_INVALID: RECEIPT_CONSENT_PURPOSE_INVALID_MESSAGE,
   PORTAL_CONSENT_REQUIRED_SIGNATURE_MISSING: SIGNATURE_REQUIRED_ALERT_MESSAGE,
   PORTAL_CONSENT_TEMPLATE_VERSION_CHANGED: PORTAL_CONSENT_TEMPLATE_CHANGED_MESSAGE,
 }
@@ -173,6 +192,16 @@ export function SchemaConsentWriteForm({
 }) {
   const { templateId } = resolveDocumentConsentTemplate(consentKey)
   const { lockedBasic, isLoading: isLockedBasicLoading } = useInstructorApplyLockedBasic()
+  const receiptLockedMember = useMemo((): ReceiptLockedMemberFields | null => {
+    if (templateId !== 'agreement-receipt-pre-consent') return null
+    const lockAddress = isInstructorApplyHomeAddressLocked(lockedBasic)
+    return {
+      nameKo: lockedBasic.name.trim(),
+      addressRoad: lockAddress ? lockedBasic.homeAddress : '',
+      addressDetail: lockAddress ? lockedBasic.homeAddressDetail : '',
+      lockAddress,
+    }
+  }, [lockedBasic, templateId])
   const paymentStatementProfileValues = useMemo(() => {
     if (submitContext !== 'instructorApply' || templateId !== 'agreement-third-party') {
       return null
@@ -220,14 +249,15 @@ export function SchemaConsentWriteForm({
   })
 
   const paymentBasicInfo = useMemo(() => {
-    if (templateId !== 'agreement-third-party') {
-      return templateId === 'agreement-receipt-pre-consent' ? state.paymentBasicInfo : undefined
+    if (templateId === 'agreement-receipt-pre-consent') {
+      return overlayReceiptLockedMemberValues(state.paymentBasicInfo, receiptLockedMember)
     }
+    if (templateId !== 'agreement-third-party') return undefined
     return overlayPaymentStatementProfileLinkedValues(
       state.paymentBasicInfo ?? {},
       paymentStatementProfileValues
     )
-  }, [paymentStatementProfileValues, state.paymentBasicInfo, templateId])
+  }, [paymentStatementProfileValues, receiptLockedMember, state.paymentBasicInfo, templateId])
   const writeState = useMemo(
     () => ({ ...state, paymentBasicInfo }),
     [paymentBasicInfo, state]
@@ -261,12 +291,12 @@ export function SchemaConsentWriteForm({
         paymentBasicInfo:
           serverTemplateCode === 'agreement-third-party' ||
           serverTemplateCode === 'agreement-receipt-pre-consent'
-            ? overlayPaymentStatementProfileLinkedValues(
-                prev.paymentBasicInfo ?? {},
-                serverTemplateCode === 'agreement-third-party'
-                  ? paymentStatementProfileValues
-                  : null
-              )
+            ? serverTemplateCode === 'agreement-receipt-pre-consent'
+              ? overlayReceiptLockedMemberValues(prev.paymentBasicInfo, receiptLockedMember)
+              : overlayPaymentStatementProfileLinkedValues(
+                  prev.paymentBasicInfo ?? {},
+                  paymentStatementProfileValues
+                )
             : undefined,
         portalDocument: {
           documentId,
@@ -275,7 +305,7 @@ export function SchemaConsentWriteForm({
         },
       }))
     },
-    [lockedBasic.name, paymentStatementProfileValues, templateId],
+    [lockedBasic.name, paymentStatementProfileValues, receiptLockedMember, templateId],
   )
 
   useEffect(() => {
@@ -322,6 +352,8 @@ export function SchemaConsentWriteForm({
       listMemberConsentIncompleteRequiredFields(state.draft, {
         templateId,
         paymentStatementBasicInfo: paymentBasicInfo,
+        receiptPreConsentBasicInfo:
+          templateId === 'agreement-receipt-pre-consent' ? paymentBasicInfo : undefined,
       }),
     [paymentBasicInfo, state.draft, templateId],
   )
@@ -471,20 +503,27 @@ export function SchemaConsentWriteForm({
 
   const renderParagraphSlot = useCallback(
     (paragraph: WritingFormParagraph) => {
-      if (paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.paymentRecord) {
+      if (
+        paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.paymentRecord ||
+        paragraph.id === RECEIPT_PRE_CONSENT_IDS.paymentRecord
+      ) {
+        const isReceipt = paragraph.id === RECEIPT_PRE_CONSENT_IDS.paymentRecord
         return (
           <PaymentBasicInfoFields
-            variant="payment"
+            variant={isReceipt ? 'receipt' : 'payment'}
             values={paymentBasicInfo ?? {}}
-            lockProfileFields={paymentStatementProfileValues != null}
-            profileValues={paymentStatementProfileValues}
+            lockProfileFields={!isReceipt && paymentStatementProfileValues != null}
+            profileValues={isReceipt ? null : paymentStatementProfileValues}
+            receiptLockedMember={isReceipt ? receiptLockedMember : null}
             onChange={next =>
               setState(prev => ({
                 ...prev,
-                paymentBasicInfo: overlayPaymentStatementProfileLinkedValues(
-                  next,
-                  paymentStatementProfileValues
-                ),
+                paymentBasicInfo: isReceipt
+                  ? overlayReceiptLockedMemberValues(next, receiptLockedMember)
+                  : overlayPaymentStatementProfileLinkedValues(
+                      next,
+                      paymentStatementProfileValues
+                    ),
               }))
             }
           />
@@ -571,6 +610,7 @@ export function SchemaConsentWriteForm({
       signerName,
       paymentBasicInfo,
       paymentStatementProfileValues,
+      receiptLockedMember,
       state.draft.paragraphs,
       state.signatures?.final,
       state.signatures?.mid,

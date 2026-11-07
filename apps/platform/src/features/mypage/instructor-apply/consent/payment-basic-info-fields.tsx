@@ -12,14 +12,19 @@ import formStyles from '@/shared/ui/pf-form/pf-form.module.css'
 import styles from './consent-form.module.css'
 import {
   mergePaymentStatementBasicInfo,
-  mergeReceiptPreConsentBasicInfo,
   overlayPaymentStatementProfileLinkedValues,
   PAYMENT_STATEMENT_DEFAULT_PURPOSE,
   RECEIPT_PRE_CONSENT_DEFAULT_PURPOSE,
-  toReceiptPreConsentFilledBasicInfo,
   type PaymentStatementBasicInfoValues,
   type PaymentStatementProfileLinkedValues,
 } from '@jakorea/form-schema/consent'
+import {
+  overlayReceiptLockedMemberValues,
+  type ReceiptLockedMemberFields,
+} from './overlay-receipt-locked-member'
+
+export type { ReceiptLockedMemberFields }
+export { overlayReceiptLockedMemberValues }
 
 export type PaymentBasicInfoFieldsProps = {
   values: Partial<PaymentStatementBasicInfoValues>
@@ -28,6 +33,8 @@ export type PaymentBasicInfoFieldsProps = {
   /** 강사 신청 기본정보 연동 — 성명·소속·자택 주소 비활성 */
   lockProfileFields?: boolean
   profileValues?: PaymentStatementProfileLinkedValues | null
+  /** 영수증 — 회원정보 성명(항상) · 개인 회원 자택 주소 비활성 */
+  receiptLockedMember?: ReceiptLockedMemberFields | null
 }
 
 export function PaymentBasicInfoFields({
@@ -36,37 +43,35 @@ export function PaymentBasicInfoFields({
   variant = 'payment',
   lockProfileFields = false,
   profileValues,
+  receiptLockedMember,
 }: PaymentBasicInfoFieldsProps) {
   const isReceipt = variant === 'receipt'
-  const merged = isReceipt
-    ? {
-        ...mergePaymentStatementBasicInfo({
-          ...values,
-          paymentPurpose: RECEIPT_PRE_CONSENT_DEFAULT_PURPOSE,
-          residentFront: '',
-          residentBack: '',
-          affiliation: '',
-          noAffiliation: true,
-        }),
-        ...mergeReceiptPreConsentBasicInfo(values),
-        paymentPurpose: RECEIPT_PRE_CONSENT_DEFAULT_PURPOSE,
-      }
-    : mergePaymentStatementBasicInfo(values)
-  const linked = overlayPaymentStatementProfileLinkedValues(merged, profileValues)
+  const linked = isReceipt
+    ? mergePaymentStatementBasicInfo(
+        overlayReceiptLockedMemberValues(values, receiptLockedMember)
+      )
+    : overlayPaymentStatementProfileLinkedValues(
+        mergePaymentStatementBasicInfo(values),
+        profileValues
+      )
   const paymentPurpose = linked.paymentPurpose
   const profileLocked = lockProfileFields && !isReceipt
+  const receiptNameLocked = isReceipt && receiptLockedMember != null
+  const receiptAddressLocked = isReceipt && receiptLockedMember?.lockAddress === true
 
   const patch = <K extends keyof PaymentStatementBasicInfoValues>(
     key: K,
     value: PaymentStatementBasicInfoValues[K]
   ) => {
     if (
-      profileLocked &&
-      (key === 'nameKo' ||
-        key === 'affiliation' ||
-        key === 'noAffiliation' ||
-        key === 'addressRoad' ||
-        key === 'addressDetail')
+      (profileLocked &&
+        (key === 'nameKo' ||
+          key === 'affiliation' ||
+          key === 'noAffiliation' ||
+          key === 'addressRoad' ||
+          key === 'addressDetail')) ||
+      (receiptNameLocked && key === 'nameKo') ||
+      (receiptAddressLocked && (key === 'addressRoad' || key === 'addressDetail'))
     ) {
       return
     }
@@ -74,7 +79,11 @@ export function PaymentBasicInfoFields({
       { ...linked, [key]: value },
       profileLocked ? profileValues : null
     )
-    onChange(isReceipt ? toReceiptPreConsentFilledBasicInfo(next) : next)
+    onChange(
+      isReceipt
+        ? overlayReceiptLockedMemberValues(next, receiptLockedMember)
+        : next
+    )
   }
 
   return (
@@ -86,7 +95,7 @@ export function PaymentBasicInfoFields({
             size="large"
             className={styles.paymentInputW200}
             placeholder="한글 성명"
-            disabled={profileLocked}
+            disabled={profileLocked || receiptNameLocked}
             value={linked.nameKo}
             onValueChange={value => patch('nameKo', value)}
           />
@@ -152,7 +161,7 @@ export function PaymentBasicInfoFields({
         >
           <PFFormHomeAddressFields
             fillRow
-            disabled={profileLocked}
+            disabled={profileLocked || receiptAddressLocked}
             roadValue={linked.addressRoad}
             detailValue={linked.addressDetail}
             onRoadChange={value => patch('addressRoad', value)}

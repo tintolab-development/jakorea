@@ -17,6 +17,10 @@ import {
   replaceGeneralRecruitOverlayForScope,
   resetGeneralRecruitOverlayStoreForTests,
 } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import {
+  replaceUjatRecruitInstitutionOverlayForScope,
+  resetUjatRecruitInstitutionOverlayStoreForTests,
+} from '@/features/template/ui/form-set/recruit-form/UJAT-institution/ujat-recruit-institution-overlay-sync'
 import { resyncGeneralRecruitOverlayFromProgram } from '@/features/program/general/lib/general-recruit-overlay-from-program'
 import {
   parseGeneralProgramServiceDetailJson,
@@ -25,6 +29,7 @@ import {
 
 beforeEach(() => {
   resetGeneralRecruitOverlayStoreForTests()
+  resetUjatRecruitInstitutionOverlayStoreForTests()
 })
 
 function slotKeysAt(startIso: string, count: number): string[] {
@@ -134,6 +139,29 @@ describe('detail-operational-save-merge', () => {
     expect(merged[GENERAL_RECRUIT_OVERLAY_KEYS.instructor.recruitTargets]).not.toEqual([
       'stale-from-store',
     ])
+  })
+
+  it('UJAT 모집 저장은 라이브 overlay store를 정본으로 읽지 않는다', () => {
+    replaceUjatRecruitInstitutionOverlayForScope('recruitment-ujat-school', {
+      'ujat.recruit.institution.publicTitle': 'stale-from-store',
+    })
+    const program: Program = {
+      ...baseProgram(),
+      backendProgramType: 'UJAT',
+      registrationOverlay: {
+        'ujat.recruit.institution.publicTitle': 'row-title',
+        'ujat.recruit.institution.notes': 'ujat-비고-유지',
+      },
+    }
+    const values = programToRecruitmentTabEditValues(program, 'participant')
+    const merged = buildMergedRegistrationOverlayForRecruitSave({
+      program,
+      remotePatch: {},
+      values: { ...values, remarks: 'ujat-비고-PATCH' },
+      audience: 'participant',
+    })
+    expect(merged['ujat.recruit.institution.publicTitle']).toBe('row-title')
+    expect(merged['ujat.recruit.institution.publicTitle']).not.toBe('stale-from-store')
   })
 
   it('TRAINED_TEACHER 모집 저장은 라이브 overlay store를 정본으로 읽지 않는다', () => {

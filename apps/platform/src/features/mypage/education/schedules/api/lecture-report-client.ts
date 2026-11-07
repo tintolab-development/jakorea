@@ -7,6 +7,7 @@ import {
   parseLectureFeePreview,
   type LectureFeePreview,
 } from '../../settlements/lib/lecture-fee-preview'
+import { readInstructorEducationScheduleFields } from '../lib/instructor-education-schedule-display.ts'
 import {
   buildLectureReportSubmitBody,
   getLectureReportApiErrorMessage,
@@ -30,6 +31,12 @@ export type LectureReportAssignment = {
   endAt: string | null
   scheduleName: string | null
   sessionNo: number | null
+  /** GET 원본에 있으면 사용. 없으면 null — 추정하지 않는다. */
+  scheduleRole?: string | null
+  educationSlotKey?: string | null
+  scheduleKind?: string | null
+  /** 해당 회차 커리큘럼 차시 수. sessionNo를 넣지 않는다. */
+  curriculumSessionCount?: number | null
   institutionName: string | null
   grade: string | null
   lectureStatus: LectureReportLectureStatus | string
@@ -135,10 +142,17 @@ function emptyToNull(value: unknown): string | null {
 
 function normalizeLectureReportAssignment(value: unknown): LectureReportAssignment {
   const row = (isRecord(value) ? value : {}) as LectureReportAssignment
+  const scheduleFields = readInstructorEducationScheduleFields(value)
   return {
     ...row,
     institutionName: emptyToNull(row.institutionName),
     grade: emptyToNull(row.grade),
+    scheduleRole: scheduleFields.scheduleRole,
+    educationSlotKey: scheduleFields.educationSlotKey,
+    scheduleKind: scheduleFields.scheduleKind,
+    sessionNo: scheduleFields.sessionNo ?? row.sessionNo ?? null,
+    scheduleName: scheduleFields.scheduleName ?? emptyToNull(row.scheduleName),
+    curriculumSessionCount: scheduleFields.curriculumSessionCount,
     lectureFeePreview: parseLectureFeePreview(
       isRecord(value) ? value.lectureFeePreview : null,
     ),

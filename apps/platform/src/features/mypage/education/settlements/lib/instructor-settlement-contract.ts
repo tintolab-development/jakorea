@@ -16,6 +16,10 @@ export const PAYMENT_STATEMENT_CONSENT_REQUIRED_MESSAGE =
   '지급조서 작성 동의를 완료한 뒤 정산을 신청할 수 있습니다.'
 
 export const INSTRUCTOR_SETTLEMENT_ERROR_MESSAGE: Record<string, string> = {
+  SETTLEMENT_ACTUAL_TRAINING_TIME_REQUIRED:
+    '실적 시작·종료 시간이 없어 정산을 신청할 수 없습니다.',
+  SETTLEMENT_WAGE_RATE_NOT_CONFIGURED:
+    '프로그램 강사비 단가가 없어 정산을 신청할 수 없습니다.',
   LECTURE_REPORT_REQUIRED: '강의보고서/강의평가 제출 이후 정산 신청이 가능합니다.',
   LECTURE_NOT_ENDED: '강의가 종료된 이후에 지급조서를 제출할 수 있습니다.',
   ACTIVE_APPLICATION_EXISTS: '이미 제출된 지급조서가 있습니다. 재제출이 필요하면 기존 신청에서 진행해 주세요.',

@@ -18,6 +18,8 @@ import { overlayRecordToInterviewConfig } from '@/features/program/ujat/lib/recr
 import { ujatVolunteerRecruitInterviewNamespace } from '@/features/program/ujat/lib/ujat-recruit-volunteer-half-overlay'
 import { UJAT_INSTITUTION_RECRUIT_TEMPLATE_PREVIEW_PROGRAM } from '@/features/program/ujat/lib/ujat-institution-recruit-template-preview-program'
 import type { Program } from '@/types/domain'
+import { listUjatEducationRegionsActiveRemoteService } from '@/features/program/ujat/api/education-regions/service'
+import { shouldUseUjatEducationRegionsRemoteApi } from '@/features/program/ujat/api/education-regions/capabilities'
 import { listUjatEducationRegionsActive } from '@/features/program/ujat/lib/ujat-education-regions'
 import { resolveUjatDefaultPaymentItemValues } from '@/features/program/ujat/lib/ujat-wage-info-display'
 import { getPublicHolidayDateKeysForSchedule } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/interview-assign/schedule-utils'
@@ -201,7 +203,13 @@ function needsInstructor(caseId: UjatDevAutofillCaseId): boolean {
 export async function resolveUjatDevAutofillDependencies(
   caseId: UjatDevAutofillCaseId
 ): Promise<ResolvedUjatDevDependencies> {
-  const regions = listUjatEducationRegionsActive()
+  let regions = listUjatEducationRegionsActive()
+  if (regions.length === 0 && shouldUseUjatEducationRegionsRemoteApi()) {
+    const fetched = await listUjatEducationRegionsActiveRemoteService()
+    regions = fetched
+      .filter(row => row.active && row.regionKey.trim())
+      .map(row => ({ key: row.regionKey, label: row.name }))
+  }
   if (regions.length === 0) {
     throw new UjatDevAutofillError(
       'REGIONS_EMPTY',

@@ -14,6 +14,7 @@ import { isProgramSchedulePreEducation } from '@/features/program/shared/lib/pro
 import {
   formatEducationRoundSessionLabel,
   parseConfirmedCurriculumSessionCount,
+  positiveEducationNumber,
   toDisplayEducationScheduleName,
 } from '@/shared/lib/education-schedule-name'
 import type { Program } from '@/types/domain'
@@ -50,6 +51,13 @@ function formatMinutes(totalMinutes: number): string {
   return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
 }
 
+export type GeneralEducationCurriculumSessionRef = {
+  sessionNo?: number | null
+  title?: string | null
+  sessionLabel?: string | null
+  isPreEducation?: boolean
+}
+
 export type GeneralEducationScheduleShape = {
   educationStructure?: 'curriculum' | 'schedule' | null
   sessionRound?: 'single' | 'multi' | null
@@ -58,6 +66,8 @@ export type GeneralEducationScheduleShape = {
   curriculumSessionCount?: number | null
   /** 회차순 커리큘럼 라벨. `N차시`만 진행 시간 줄에 붙인다. */
   curriculumSessionLabels?: readonly string[] | null
+  /** 회차별 커리큘럼 원본. 차시는 sessionNo 매칭으로만 읽는다. */
+  curriculumSessions?: readonly GeneralEducationCurriculumSessionRef[] | null
 }
 
 const RANK_SUFFIX_RE = /\s*\|\s*\d+\s*지망\s*$/u
@@ -98,14 +108,6 @@ function readCurriculumSingleDateTotalSessionText(
       ? Math.trunc(fromCount)
       : (shape.curriculumSessionLabels ?? []).filter(label => /\d+\s*차시/.test(label)).length
   return total > 1 ? `${total}차시` : null
-}
-
-function readCurriculumSessionCountNumber(
-  session: { round?: number; classNum?: string; duration?: string; scheduleLabel?: string },
-  shape: GeneralEducationScheduleShape | null | undefined
-): number | null {
-  const text = readCurriculumSessionText(session, shape)
-  return parseConfirmedCurriculumSessionCount(text)
 }
 
 function readCurriculumSessionText(
@@ -223,6 +225,125 @@ export function formatGeneralEducationScheduleLine(
   return base
 }
 
+function parseConfirmedRoundNumberFromSessionLabel(
+  value: string | null | undefined
+): number | null {
+  const trimmed = typeof value === 'string' ? value.trim() : ''
+  const match = /^(\d+)\s*회차$/u.exec(trimmed)
+  return match ? positiveEducationNumber(Number(match[1])) : null
+}
+
+function isSyntheticRoundAsSessionToken(token: string, roundNumber: number | null): boolean {
+  const trimmed = token.trim()
+  if (!trimmed || trimmed === '-') return true
+  if (/^\d+\s*교시$/u.test(trimmed)) return true
+  if (/^\d+\s*지망$/u.test(trimmed)) return true
+  if (roundNumber != null && trimmed === `${roundNumber}회차`) return true
+  if (roundNumber != null && trimmed === `${roundNumber}차시`) return true
+  return false
+}
+
+function parseRealCurriculumSessionCount(
+  raw: string | null | undefined,
+  roundNumber: number | null
+): number | null {
+  if (!raw || isSyntheticRoundAsSessionToken(raw, roundNumber)) return null
+  return parseConfirmedCurriculumSessionCount(raw)
+}
+
+export function resolveParticipatingProgressRoundNumber(
+  session: Pick<ParticipatingSchoolSession, 'sessionNo' | 'round'>
+): number | null {
+  return positiveEducationNumber(session.sessionNo) ?? positiveEducationNumber(session.round)
+}
+
+export function resolveParticipatingProgressCurriculumSessionCount(
+  session: Pick<
+    ParticipatingSchoolSession,
+    'sessionNo' | 'round' | 'classNum' | 'scheduleLabel' | 'duration'
+  >,
+  shape?: GeneralEducationScheduleShape | null
+): number | null {
+  const roundNumber = resolveParticipatingProgressRoundNumber(session)
+  const fromClassNum = parseRealCurriculumSessionCount(session.classNum, roundNumber)
+  if (fromClassNum != null) return fromClassNum
+  const fromDuration = parseConfirmedCurriculumSessionCount(session.duration)
+  if (fromDuration != null) return fromDuration
+  const fromScheduleLabel = parseRealCurriculumSessionCount(session.scheduleLabel, roundNumber)
+  if (fromScheduleLabel != null) return fromScheduleLabel
+
+  const rows = shape?.curriculumSessions ?? []
+  if (roundNumber != null) {
+    const matched = rows.find(row => {
+      if (row.isPreEducation) return false
+      const rowRound =
+        positiveEducationNumber(row.sessionNo) ??
+        parseConfirmedRoundNumberFromSessionLabel(row.sessionLabel)
+      return rowRound === roundNumber
+    })
+    if (matched) {
+      const fromTitle = parseConfirmedCurriculumSessionCount(matched.title)
+      if (fromTitle != null) return fromTitle
+      const fromRowLabel = parseConfirmedCurriculumSessionCount(matched.sessionLabel)
+      if (fromRowLabel != null) return fromRowLabel
+    }
+  }
+
+  if (shape?.educationStructure === 'curriculum' && shape.sessionRound === 'single') {
+    const count = shape.curriculumSessionCount
+    if (typeof count === 'number' && Number.isFinite(count) && count > 0) {
+      return Math.trunc(count)
+    }
+  }
+
+  return null
+}
+
+/**
+ * 참여자·참여 기관 진행 현황 「교육 진행 일정」.
+ * 사전교육은 canonical만으로 판정하고, 회차는 sessionNo/명시적 round, 차시는 확인된 커리큘럼만 쓴다.
+ */
+export function formatParticipatingProgressEducationScheduleLine(
+  session: ParticipatingSchoolSession,
+  shape?: GeneralEducationScheduleShape | null
+): string {
+  const fromInstant = formatOrganizationScheduleRangeLabel(session.startAt, session.endAt)
+  const dateTime = fromInstant || composeEducationDateTime(session)
+
+  if (isProgramSchedulePreEducation(session)) {
+    if (!dateTime) return PRE_EDUCATION_DISPLAY_LABEL
+    if (dateTime.includes(PRE_EDUCATION_DISPLAY_LABEL)) return dateTime
+    return formatCmsScheduleDisplayLabel(`${dateTime} | ${PRE_EDUCATION_DISPLAY_LABEL}`)
+  }
+
+  const suffix = formatEducationRoundSessionLabel({
+    roundNumber: resolveParticipatingProgressRoundNumber(session),
+    curriculumSessionCount: resolveParticipatingProgressCurriculumSessionCount(session, shape),
+  })
+  if (!dateTime) return suffix
+  if (!suffix) return dateTime
+  if (dateTime.includes(suffix)) return dateTime
+  return `${dateTime} | ${suffix}`
+}
+
+export function withParticipatingProgressCurriculumShape(
+  shape: GeneralEducationScheduleShape | null | undefined,
+  program: {
+    generalCommonInfo?: {
+      curriculumSessions?: readonly GeneralEducationCurriculumSessionRef[] | null
+    } | null
+  } | null | undefined
+): GeneralEducationScheduleShape | null {
+  const curriculumSessions = program?.generalCommonInfo?.curriculumSessions ?? null
+  const curriculumSessionLabels = readCurriculumSessionLabels(program)
+  if (!shape && !curriculumSessions?.length && curriculumSessionLabels.length === 0) return null
+  return {
+    ...(shape ?? {}),
+    curriculumSessionLabels,
+    curriculumSessions,
+  }
+}
+
 export function readCurriculumSessionLabels(
   program: {
     generalCommonInfo?: {
@@ -330,15 +451,11 @@ export function formatParticipatingSchoolSessionLine(s: ParticipatingSchoolSessi
   return base
 }
 
-function resolveAssignmentRoundSessionSuffix(
-  s: Pick<ParticipatingSchoolSession, 'round' | 'classNum' | 'duration' | 'scheduleLabel'>
-): string {
+function resolveAssignmentRoundSessionSuffix(s: ParticipatingSchoolSession): string {
+  if (isProgramSchedulePreEducation(s)) return PRE_EDUCATION_DISPLAY_LABEL
   return formatEducationRoundSessionLabel({
-    roundNumber: s.round,
-    curriculumSessionCount:
-      parseConfirmedCurriculumSessionCount(s.classNum) ??
-      parseConfirmedCurriculumSessionCount(s.duration) ??
-      parseConfirmedCurriculumSessionCount(s.scheduleLabel),
+    roundNumber: resolveParticipatingProgressRoundNumber(s),
+    curriculumSessionCount: resolveParticipatingProgressCurriculumSessionCount(s),
   })
 }
 
@@ -429,9 +546,13 @@ export function formatVolunteerAssignmentScheduleLine(
   })
 
   if (educationStructure === 'curriculum') {
+    const progressShape: GeneralEducationScheduleShape = {
+      ...shape,
+      curriculumSessions: program.generalCommonInfo?.curriculumSessions ?? null,
+    }
     const roundLabel = formatEducationRoundSessionLabel({
-      roundNumber: sessionRound === 'single' ? null : s.round,
-      curriculumSessionCount: readCurriculumSessionCountNumber(s, shape),
+      roundNumber: sessionRound === 'single' ? null : resolveParticipatingProgressRoundNumber(s),
+      curriculumSessionCount: resolveParticipatingProgressCurriculumSessionCount(s, progressShape),
     })
     if (roundLabel) return formatCmsScheduleDisplayLabel(`${dateTimeBase} | ${roundLabel}`)
     return formatCmsScheduleDisplayLabel(dateTimeBase)

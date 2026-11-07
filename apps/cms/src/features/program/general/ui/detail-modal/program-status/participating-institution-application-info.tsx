@@ -12,11 +12,8 @@ import {
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import {
-  prepareGeneralEducationScheduleSessions,
-  readCurriculumSessionLabels,
-  readProgramEducationScheduleLines,
   resolveParticipatingInstitutionScheduleRowLabel,
-  resolveScheduleDetailTimeSpan,
+  withParticipatingProgressCurriculumShape,
 } from '@/features/program/general/lib/participating-school-session-display'
 import { generalEducationScheduleShapeFromBridge } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-session-format'
 import { ApplicantAdminCommentSection } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-admin-comment-section'
@@ -190,22 +187,11 @@ export function ParticipatingInstitutionApplicationInfo({
   useCompanySchoolScheduleFormat = false,
 }: ParticipatingInstitutionApplicationInfoProps) {
   const institutionApplicationBridge = resolveInstitutionApplicationProgramBridge(program)
-  const scheduleShape = generalEducationScheduleShapeFromBridge(institutionApplicationBridge)
-  const detailScheduleTimeSpan = resolveScheduleDetailTimeSpan(
-    program.generalCommonInfo?.scheduleDetails
+  const scheduleShape = withParticipatingProgressCurriculumShape(
+    generalEducationScheduleShapeFromBridge(institutionApplicationBridge),
+    program
   )
-  const curriculumSessionLabels = readCurriculumSessionLabels(program)
-  const displaySessions = useCompanySchoolScheduleFormat
-    ? sessions
-    : prepareGeneralEducationScheduleSessions(
-        sessions,
-        scheduleShape ? { ...scheduleShape, curriculumSessionLabels } : null,
-        {
-          detailScheduleTimeSpan,
-          educationScheduleLines:
-            sessions.length === 0 ? readProgramEducationScheduleLines(program) : [],
-        }
-      )
+  const displaySessions = sessions
   const showGuidanceSection = shouldShowInstitutionApplicationGuidanceParagraph(
     institutionApplicationBridge
   )
@@ -417,10 +403,7 @@ export function ParticipatingInstitutionApplicationInfo({
                 view={
                   <ParticipatingProgressScheduleValue
                     session={session}
-                    shape={
-                      scheduleShape ? { ...scheduleShape, curriculumSessionLabels } : null
-                    }
-                    detailScheduleTimeSpan={detailScheduleTimeSpan}
+                    shape={scheduleShape}
                   />
                 }
               />

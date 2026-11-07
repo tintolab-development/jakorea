@@ -6,7 +6,10 @@ import type {
 } from '../../applications/api/activity-client.ts'
 import type { EducationScheduleItem } from '../../schedules/model/types.ts'
 import type { InstructorTransportPreview } from '../lib/instructor-transport-preview.ts'
-import type { LectureFeePreview } from '../lib/lecture-fee-preview.ts'
+import {
+  lectureFeeSettlementBlockerMessage,
+  type LectureFeePreview,
+} from '../lib/lecture-fee-preview.ts'
 import type { EducationSettlementItem } from '../model/types.ts'
 import {
   canSubmitFromAvailableActions,
@@ -413,6 +416,7 @@ export function buildAssignedSettlementItems(
         hasPayableItems !== false
     const submittedAt = settlement?.submittedAt ?? receipt?.submittedAt
     const ineligibleMessage = individualIneligibleMessage(individual?.ineligibleReason)
+    const lectureFeeBlockerMessage = lectureFeeSettlementBlockerMessage(lecture?.lectureFeePreview)
     const institutionMeta = resolveInstitutionMeta(lecture, schedule)
     const institutionLabel = formatInstitutionLabel(lecture, schedule)
 
@@ -435,7 +439,11 @@ export function buildAssignedSettlementItems(
       ...(deadlineAt ? { deadlineAt } : {}),
       ...(submittedAt ? { submittedAt } : {}),
       ...(amount != null ? { amount } : {}),
-      ...(ineligibleMessage ? { submitBlockedReason: ineligibleMessage } : {}),
+      ...(ineligibleMessage
+        ? { submitBlockedReason: ineligibleMessage }
+        : lectureFeeBlockerMessage
+          ? { submitBlockedReason: lectureFeeBlockerMessage }
+          : {}),
       ...(individual?.eligible != null ? { eligible: individual.eligible } : {}),
       ...(evidencePolicyUnconfigured ? { evidencePolicyUnconfigured: true } : {}),
       ...(individual?.submittedItems?.length ? { submittedItems: [...individual.submittedItems] } : {}),

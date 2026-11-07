@@ -1,5 +1,8 @@
 import type { Page, Request, Route } from '@playwright/test'
-import { noteRootRegistrationOverlay } from './service-detail-overlay-merge'
+import {
+  mergeServiceDetailForProgramPatch,
+  noteRootRegistrationOverlay,
+} from './service-detail-overlay-merge'
 
 // Mirrors the established FE region-capacity PUT contract without importing the Vite alias graph
 // into the Node-only E2E tsconfig.
@@ -28,6 +31,9 @@ export type IsolatedNetworkLog = {
   formVersionPublishes: IsolatedCapturedMutation[]
   formBindings: unknown[]
   typedDetailPuts: IsolatedCapturedMutation[]
+  typedDetailPatches: IsolatedCapturedMutation[]
+  programPatches: IsolatedCapturedMutation[]
+  recruitmentPatches: IsolatedCapturedMutation[]
   physicalSchedulePuts: IsolatedCapturedMutation[]
   regionCapacityPuts: IsolatedCapturedMutation[]
   regionCapacityPutStatuses: number[]
@@ -41,8 +47,35 @@ export type IsolatedNetworkLog = {
   programDraftRequests: string[]
 }
 
+export type IsolatedUjatDetailSeed = {
+  program: Record<string, unknown>
+  typedDetail?: Record<string, unknown>
+}
+
 export type IsolatedRegistrationNetworkOptions = {
   failFirstRegionCapacityPut?: boolean
+  seedProgram?: IsolatedUjatDetailSeed
+}
+
+function educationRegionRows() {
+  return [
+    {
+      id: 1,
+      code: 'SEOUL',
+      nameKo: '서울',
+      displayName: '서울',
+      displayOrder: 1,
+      activeYn: true,
+    },
+    {
+      id: 2,
+      code: 'GYEONGGI_SOUTH',
+      nameKo: '경기남부',
+      displayName: '경기남부',
+      displayOrder: 2,
+      activeYn: true,
+    },
+  ]
 }
 
 const LOCAL_HOSTS = new Set(['127.0.0.1', 'localhost'])
@@ -136,6 +169,7 @@ function catalogPayload(templateCode: string, templateId: number, versionId: num
     templateId,
     templateVersionId: versionId,
     templateCode,
+    templateScope: 'CATALOG',
     versionNo: 1,
     versionStatus: 'PUBLISHED',
     schemaJson: JSON.stringify({
@@ -154,12 +188,16 @@ function versionResponse(args: {
   templateCode?: string
   status?: string
   overlay?: Record<string, unknown>
+  templateScope?: string
+  ownerProgramId?: number
 }) {
   return {
     templateId: args.templateId,
     templateVersionId: args.versionId,
     versionId: args.versionId,
     templateCode: args.templateCode,
+    templateScope: args.templateScope ?? (args.status === 'PUBLISHED' ? 'PROGRAM' : 'CATALOG'),
+    ownerProgramId: args.ownerProgramId,
     versionNo: 1,
     versionStatus: args.status ?? 'DRAFT',
     schemaJson: JSON.stringify({
@@ -247,7 +285,29 @@ function isAllowedGet(pathname: string): boolean {
   return ALLOWED_GET_PREFIXES.some(prefix => pathname.startsWith(prefix))
 }
 
+function adminAuthSessionStatus() {
+  const nowMs = Date.now()
+  const iso = (ms: number) => new Date(ms).toISOString()
+  return {
+    sessionStartedAt: iso(nowMs - 60_000),
+    lastUserActivityAt: iso(nowMs),
+    serverNow: iso(nowMs),
+    absoluteExpiresAt: iso(nowMs + 12 * 60 * 60 * 1000),
+    idleExpiresAt: iso(nowMs + 30 * 60 * 1000),
+    refreshIdleExpiresAt: iso(nowMs + 30 * 60 * 1000),
+    idlePolicyEnforced: true,
+  }
+}
+
+function adminAuthActivityStatus() {
+  return {
+    lastUserActivityAt: new Date().toISOString(),
+    updated: true,
+  }
+}
+
 function isAllowedMutation(method: string, pathname: string): boolean {
+  if (method === 'POST' && pathname === '/api/admin/auth/activity') return true
   if (method === 'PUT' && /^\/api\/admin\/form-template-versions\/\d+$/.test(pathname)) return true
   if (method === 'POST' && /^\/api\/admin\/form-template-versions\/\d+\/publish$/.test(pathname)) {
     return true
@@ -288,6 +348,9 @@ export async function installIsolatedRegistrationNetwork(
     formVersionPublishes: [],
     formBindings: [],
     typedDetailPuts: [],
+    typedDetailPatches: [],
+    programPatches: [],
+    recruitmentPatches: [],
     physicalSchedulePuts: [],
     regionCapacityPuts: [],
     regionCapacityPutStatuses: [],
@@ -298,9 +361,46 @@ export async function installIsolatedRegistrationNetwork(
 
   const copiedVersions = new Map<number, ReturnType<typeof versionResponse>>()
   let nextCopiedVersionId = 900001
-  let createdProgram: Record<string, unknown> | null = null
+  let createdProgram: Record<string, unknown> | null = options.seedProgram?.program
+    ? { ...options.seedProgram.program }
+    : null
+  let typedDetail: Record<string, unknown> = {
+    schemaVersion: 1,
+    revision: 1,
+    common: {},
+    halfPlans: [],
+    ...(options.seedProgram?.typedDetail ?? {}),
+  }
   let failedFirstRegionCapacityPut = false
   const regionCapacityRowsByProgramId = new Map<string, UjatRegionCapacityUpsert[]>()
+  let nextBindingId = 93001
+  let programFormBindings: Record<string, unknown>[] = []
+
+  function catalogBinding(
+    templateCode: string,
+    extras: {
+      formType: string
+      targetType: string
+      targetRole: string
+      targetScopeId: number
+    }
+  ) {
+    const ids = idsFromTemplateCode(templateCode)
+    nextBindingId += 1
+    return {
+      bindingId: nextBindingId,
+      programId: Number(createdProgram?.id ?? 91001),
+      formType: extras.formType,
+      templateId: ids.templateId,
+      templateVersionId: ids.versionId,
+      templateName: templateCode,
+      targetType: extras.targetType,
+      targetRole: extras.targetRole,
+      targetScope: 'RECRUITMENT',
+      targetScopeId: extras.targetScopeId,
+      active: true,
+    }
+  }
 
   await page.addInitScript(() => {
     void navigator.serviceWorker?.getRegistrations().then(registrations => {
@@ -356,6 +456,10 @@ export async function installIsolatedRegistrationNetwork(
       return
     }
 
+    if (method === 'GET' && pathname === '/api/admin/auth/session') {
+      await route.fulfill(json(adminAuthSessionStatus()))
+      return
+    }
     if (method === 'GET' && pathname === '/api/admin/me') {
       await route.fulfill(json(adminMe()))
       return
@@ -374,8 +478,52 @@ export async function installIsolatedRegistrationNetwork(
       )
       return
     }
+    if (method === 'GET' && /^\/api\/admin\/programs\/\d+\/sponsors$/.test(pathname)) {
+      await route.fulfill(
+        json([
+          {
+            id: '1',
+            sponsorId: String(SPONSOR_ID),
+            sponsorName: '격리 후원사',
+            sponsorContactId: String(CONTACT_ID),
+            sponsorContactName: '격리 담당자',
+            sponsorContacts: [
+              {
+                sponsorContactId: String(CONTACT_ID),
+                sponsorContactName: '격리 담당자',
+                displayOrder: 1,
+              },
+            ],
+            displayOrder: 1,
+          },
+        ])
+      )
+      return
+    }
+    if (method === 'GET' && /^\/api\/admin\/programs\/\d+\/navigation$/.test(pathname)) {
+      const programId = Number(pathname.split('/')[4])
+      const programType = String(createdProgram?.programType ?? 'UJAT')
+      await route.fulfill(
+        json({
+          programId,
+          rawProgramType: programType,
+          canonicalProgramType: programType,
+          allowedApplicationTargets: ['ORGANIZATION', 'VOLUNTEER'],
+          disabledApplicationTargets: [],
+        })
+      )
+      return
+    }
     if (method === 'GET' && pathname.includes('/ujat/typed-detail')) {
-      await route.fulfill(json({ schemaVersion: 1, revision: 1, common: {}, halfPlans: [] }))
+      await route.fulfill(json(typedDetail))
+      return
+    }
+    if (method === 'GET' && pathname === '/api/admin/ujat/education-regions') {
+      await route.fulfill(json(emptyPage(educationRegionRows())))
+      return
+    }
+    if (method === 'GET' && /^\/api\/admin\/programs\/\d+\/form-bindings$/.test(pathname)) {
+      await route.fulfill(json(programFormBindings))
       return
     }
     if (method === 'GET' && pathname.includes('/ujat/region-capacities')) {
@@ -476,11 +624,21 @@ export async function installIsolatedRegistrationNetwork(
       }
       log.mutations.push(mutation)
 
+      if (method === 'POST' && pathname === '/api/admin/auth/activity') {
+        await route.fulfill(json(adminAuthActivityStatus()))
+        return
+      }
       if (method === 'POST' && pathname.endsWith('/versions/copy')) {
         const templateId = Number(pathname.split('/')[4])
         const versionId = nextCopiedVersionId
         nextCopiedVersionId += 1
-        const copied = versionResponse({ templateId, versionId, status: 'DRAFT' })
+        const copied = versionResponse({
+          templateId,
+          versionId,
+          status: 'DRAFT',
+          templateScope: 'PROGRAM',
+          ownerProgramId: Number(createdProgram?.id ?? 91001),
+        })
         copiedVersions.set(versionId, copied)
         await route.fulfill(json(copied))
         return
@@ -489,7 +647,13 @@ export async function installIsolatedRegistrationNetwork(
         const templateId = Number(pathname.split('/')[4])
         const versionId = nextCopiedVersionId
         nextCopiedVersionId += 1
-        const created = versionResponse({ templateId, versionId, status: 'DRAFT' })
+        const created = versionResponse({
+          templateId,
+          versionId,
+          status: 'DRAFT',
+          templateScope: 'PROGRAM',
+          ownerProgramId: Number(createdProgram?.id ?? 91001),
+        })
         copiedVersions.set(versionId, created)
         await route.fulfill(json(created))
         return
@@ -498,16 +662,28 @@ export async function installIsolatedRegistrationNetwork(
         log.formVersionPuts.push(mutation)
         const versionId = Number(pathname.split('/').at(-1))
         const existing = copiedVersions.get(versionId)
-        await route.fulfill(
-          json(
-            existing ??
-              versionResponse({
-                templateId: 800000,
-                versionId,
-                overlay: {},
-              })
-          )
-        )
+        const body = mutation.body as Record<string, unknown> | null
+        let overlay: Record<string, unknown> = {}
+        const extensionJson = body?.extensionJson
+        if (typeof extensionJson === 'string') {
+          try {
+            const parsed = JSON.parse(extensionJson) as { overlay?: Record<string, unknown> }
+            overlay = parsed.overlay ?? {}
+          } catch {
+            overlay = {}
+          }
+        } else if (body?.overlay && typeof body.overlay === 'object') {
+          overlay = body.overlay as Record<string, unknown>
+        }
+        const saved = versionResponse({
+          templateId: Number(existing?.templateId ?? 800000),
+          versionId,
+          templateCode: existing?.templateCode,
+          status: 'DRAFT',
+          overlay,
+        })
+        copiedVersions.set(versionId, saved)
+        await route.fulfill(json(saved))
         return
       }
       if (method === 'POST' && pathname.endsWith('/publish')) {
@@ -529,23 +705,63 @@ export async function installIsolatedRegistrationNetwork(
         if (Array.isArray(body?.formBindings)) {
           log.formBindings = body.formBindings
         }
+        const incomingRecruitments = Array.isArray(
+          (body as { recruitments?: unknown })?.recruitments
+        )
+          ? ((body as { recruitments: Array<Record<string, unknown>> }).recruitments)
+          : []
+        const recruitments = incomingRecruitments.map((row, index) => ({
+          ...row,
+          id: typeof row.id === 'number' ? row.id : 92001 + index,
+        }))
         createdProgram = {
           id: 91001,
           title: body?.title ?? '격리 등록 프로그램',
           programType: body?.programType ?? 'GENERAL',
           status: 'PENDING',
           lifecycleStatus: 'RECRUITING_STUDENTS',
-          recruitments: Array.isArray((body as { recruitments?: unknown })?.recruitments)
-            ? (body as { recruitments: unknown[] }).recruitments
-            : [],
+          recruitments,
         }
+        const participantId = Number(
+          recruitments.find(row => row.recruitmentType === 'PARTICIPANT')?.id ?? 92001
+        )
+        const volunteerIds = recruitments
+          .filter(row => row.recruitmentType === 'VOLUNTEER')
+          .map(row => Number(row.id))
+        programFormBindings = [
+          catalogBinding('recruitment-ujat-school', {
+            formType: 'RECRUITMENT',
+            targetType: 'ORGANIZATION',
+            targetRole: 'ORGANIZATION',
+            targetScopeId: participantId,
+          }),
+          ...volunteerIds.map(id =>
+            catalogBinding('recruitment-ujat-volunteer', {
+              formType: 'RECRUITMENT',
+              targetType: 'VOLUNTEER',
+              targetRole: 'VOLUNTEER',
+              targetScopeId: id,
+            })
+          ),
+          catalogBinding('application-ujat-school', {
+            formType: 'APPLICATION',
+            targetType: 'ORGANIZATION',
+            targetRole: 'ORGANIZATION',
+            targetScopeId: participantId,
+          }),
+        ]
         log.createProgramResponse = createdProgram
         await route.fulfill(json(createdProgram))
         return
       }
-      if (method === 'PUT' && pathname.includes('/ujat/typed-detail')) {
+      if (
+        (method === 'PUT' || method === 'PATCH') &&
+        pathname.includes('/ujat/typed-detail')
+      ) {
         if (pathname.endsWith('/schedules')) {
           log.physicalSchedulePuts.push(mutation)
+        } else if (method === 'PATCH') {
+          log.typedDetailPatches.push(mutation)
         } else {
           log.typedDetailPuts.push(mutation)
         }
@@ -553,15 +769,79 @@ export async function installIsolatedRegistrationNetwork(
           typeof mutation.body === 'object' && mutation.body != null
             ? (mutation.body as Record<string, unknown>)
             : {}
-        await route.fulfill(
-          json({
-            schemaVersion: 1,
-            revision: typeof body.revision === 'number' ? body.revision : 1,
-            common: body.common ?? {},
-            halfPlans: Array.isArray(body.halfPlans) ? body.halfPlans : [],
-            ...body,
-          })
-        )
+        const halfMatch = pathname.match(/\/ujat\/typed-detail\/halves\/([^/]+)(?:\/|$)/)
+        const halfPlan =
+          body.halfPlan && typeof body.halfPlan === 'object'
+            ? (body.halfPlan as Record<string, unknown>)
+            : null
+        const prevPlans = Array.isArray(typedDetail.halfPlans)
+          ? (typedDetail.halfPlans as Array<Record<string, unknown>>)
+          : []
+        let nextPlans = Array.isArray(body.halfPlans)
+          ? (body.halfPlans as Array<Record<string, unknown>>)
+          : prevPlans
+        if (halfMatch && halfPlan) {
+          const semesterType = halfMatch[1]
+          const nextPlan = { ...halfPlan, semesterType }
+          const index = nextPlans.findIndex(item => item.semesterType === semesterType)
+          nextPlans =
+            index >= 0
+              ? nextPlans.map((item, i) => (i === index ? nextPlan : item))
+              : [...nextPlans, nextPlan]
+        }
+        typedDetail = {
+          ...typedDetail,
+          ...body,
+          schemaVersion: 1,
+          revision: Number(typedDetail.revision ?? 0) + 1,
+          expectedUpdatedAt: new Date().toISOString(),
+          common: body.common ?? typedDetail.common ?? {},
+          halfPlans: nextPlans,
+        }
+        await route.fulfill(json(typedDetail))
+        return
+      }
+      if (method === 'PATCH' && /^\/api\/admin\/programs\/\d+$/.test(pathname)) {
+        log.programPatches.push(mutation)
+        noteRootRegistrationOverlay(log, mutation.body)
+        const patchBody =
+          typeof mutation.body === 'object' && mutation.body != null
+            ? (mutation.body as Record<string, unknown>)
+            : {}
+        const prev = createdProgram ?? { id: Number(pathname.split('/').at(-1)) }
+        const { serviceDetailJson: incomingJson, ...rest } = patchBody
+        createdProgram = {
+          ...prev,
+          ...rest,
+          serviceDetailJson: mergeServiceDetailForProgramPatch(
+            prev.serviceDetailJson,
+            incomingJson
+          ),
+          updatedAt: new Date().toISOString(),
+        }
+        await route.fulfill(json(createdProgram))
+        return
+      }
+      if (method === 'PATCH' && /\/recruitments\/\d+$/.test(pathname)) {
+        log.recruitmentPatches.push(mutation)
+        const recruitmentId = Number(pathname.split('/').at(-1))
+        const patchBody =
+          typeof mutation.body === 'object' && mutation.body != null
+            ? (mutation.body as Record<string, unknown>)
+            : {}
+        if (createdProgram && Array.isArray(createdProgram.recruitments)) {
+          createdProgram = {
+            ...createdProgram,
+            recruitments: createdProgram.recruitments.map(row =>
+              row != null &&
+              typeof row === 'object' &&
+              Number((row as { id?: unknown }).id) === recruitmentId
+                ? { ...(row as Record<string, unknown>), ...patchBody, id: recruitmentId }
+                : row
+            ),
+          }
+        }
+        await route.fulfill(json({ id: recruitmentId, ...patchBody }))
         return
       }
       if (method === 'DELETE' && /^\/api\/admin\/programs\/\d+$/.test(pathname)) {

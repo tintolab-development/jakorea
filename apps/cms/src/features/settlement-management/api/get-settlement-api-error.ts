@@ -50,7 +50,7 @@ export const TAX_REPORT_REQUIRED_IDENTITY_MISSING_MESSAGE =
 export const SETTLEMENT_CORRECTION_UNIT_AMOUNT_REQUIRED_MESSAGE =
   '기타 인건비·특강 수동 책정 단가를 입력해 주세요. 0원 이하 금액은 사용할 수 없습니다.'
 export const SETTLEMENT_CORRECTION_CALCULATION_UNIT_INVALID_MESSAGE =
-  '지급 기준 단위가 올바르지 않습니다. 출강 1회당·1시간당·1차시당 중 하나를 선택해 주세요.'
+  '지급 기준 단위가 올바르지 않습니다. 출강 1회당·차시당(레거시)·1차시당 중 하나를 선택해 주세요.'
 export const SETTLEMENT_CORRECTION_CLASS_COUNT_REQUIRED_MESSAGE =
   '1차시당 책정에 필요한 차시 수가 없어 정산을 확정할 수 없습니다. 교육 시간을 확인해 주세요.'
 
@@ -90,6 +90,10 @@ const SETTLEMENT_BULK_CONFIRM_ERROR_MESSAGES: Record<string, string> = {
   [LEGACY_GEMINI_TAX_SNAPSHOT_MISSING]: LEGACY_GEMINI_TAX_SNAPSHOT_MISSING_MESSAGE,
   [TAX_REPORT_REQUIRED_IDENTITY_MISSING]: TAX_REPORT_REQUIRED_IDENTITY_MISSING_MESSAGE,
   [GEMINI_TRAINING_REPORT_MISSING]: GEMINI_TRAINING_REPORT_MISSING_MESSAGE,
+  SETTLEMENT_ACTUAL_TRAINING_TIME_REQUIRED:
+    '실적 시작·종료 시간이 없어 정산을 신청할 수 없습니다.',
+  SETTLEMENT_WAGE_RATE_NOT_CONFIGURED:
+    '프로그램 강사비 단가가 없어 정산을 신청할 수 없습니다.',
   SETTLEMENT_BANK_ACCOUNT_REQUIRED:
     '지급조서 사전 동의서를 작성·완료하세요. 등록된 정산 계좌가 없어 계좌이체를 생성할 수 없습니다.',
   SETTLEMENT_ACCOUNT_UPDATE_VIA_CONSENT_ONLY:

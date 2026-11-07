@@ -515,6 +515,9 @@ export function MypageLectureDetailPage() {
         <InstructorAssignmentPanel
           assignedItems={instructorAssignmentQuery.assignedItems}
           waitingItems={instructorAssignmentQuery.waitingItems}
+          useScheduleName={
+            program.educationStructure === 'schedule' && program.sessionRound === 'multi'
+          }
         />
       )
     }

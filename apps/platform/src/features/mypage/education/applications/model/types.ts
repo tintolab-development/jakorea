@@ -64,6 +64,9 @@ export type EducationTeacherAssignedInstructor = {
   /** 배정 강사 회원 번호. 동의서 download-requests 경로 */
   instructorMemberId?: number
   name: string
+  assignmentId?: number | null
+  programScheduleId?: number | null
+  assignmentStatus?: string | null
   phone?: string
   email?: string
   /**

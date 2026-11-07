@@ -993,6 +993,9 @@ const lectureFeePreviewJoin = buildAssignedSettlementItems({
         instructorFeeAmount: 450000,
         totalLectureFee: 450000,
         educationSessionCount: 2,
+        recognizedSessionCount: 1,
+        actualTrainingMinutes: 60,
+        settlementBlockerCode: null,
       },
       instructorTransportPreview: {
         oneWayDistanceKm: 528.6,

@@ -79,7 +79,7 @@ export function formatSettlementGradeLabel(raw: string | null | undefined): stri
   return trimmed.endsWith('학년') ? trimmed : `${trimmed}학년`
 }
 
-/** 기관 프로그램은 프로그램명 대신 `학교명 학년`. institutionOnly면 없으면 '-' */
+/** 기관 프로그램은 `학교명 학년`. 개인형은 기관명이 없으므로 프로그램명. */
 export function formatSettlementSessionBannerTitle(
   session: { institutionName?: string | null; grade?: string | null } | undefined,
   programTitle?: string,
@@ -88,9 +88,10 @@ export function formatSettlementSessionBannerTitle(
   const institutionName = session?.institutionName?.trim() ?? ''
   const grade = formatSettlementGradeLabel(session?.grade)
   const institutionTitle = [institutionName, grade].filter(Boolean).join(' ')
-  if (options?.institutionOnly) return institutionTitle || '-'
+  const programName = programTitle?.trim() ?? ''
+  if (options?.institutionOnly) return institutionTitle || programName || '-'
   if (institutionTitle) return institutionTitle
-  return programTitle?.trim() ?? ''
+  return programName
 }
 
 export function formatSettlementEducationSessionProgress(
@@ -177,10 +178,7 @@ export function formatSettlementPaymentPurpose(draft: SettlementWriteDraft): str
     isSettlementTripLegStarted(draft.transport.depart) ||
     returnStarted ||
     (draft.meta.isInstructor &&
-      isInstructorTransportSectionVisible(draft.transport.autoPreview) &&
-      (draft.transport.autoPreview?.calculatedTransportAmount != null ||
-        draft.transport.autoPreview?.totalTransportFeeWon != null ||
-        draft.transport.autoPreview?.oneWayDistanceKm != null))
+      isInstructorTransportSectionVisible(draft.transport.autoPreview))
   ) {
     names.push('교통비')
   }
