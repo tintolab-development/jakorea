@@ -2599,6 +2599,56 @@
         }
       }
     },
+    "/api/admin/gemini/trainings/approved/{approvedTrainingId}/instructor-applications/{applicationId}": {
+      "get": {
+        "tags": [
+          "신청/프로그램 워크플로우"
+        ],
+        "summary": "Gemini 승인 연수 강사 신청 상세 조회",
+        "operationId": "geminiApprovedTrainingInstructorApplication",
+        "parameters": [
+          {
+            "name": "approvedTrainingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "applicationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstructorApplicationDetailResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 없음"
+          },
+          "404": {
+            "description": "승인 연수 또는 강사 신청 없음"
+          },
+          "409": {
+            "description": "승인 연수와 강사 신청 소속 불일치"
+          }
+        }
+      }
+    },
     "/api/admin/instructor-applications/{applicationId}": {
       "get": {
         "tags": [
@@ -26784,6 +26834,12 @@
           },
           "birthDate": {
             "type": "string"
+          },
+          "age": {
+            "type": "integer",
+            "format": "int32",
+            "description": "백엔드가 KST 기준으로 계산한 만 나이. birthDate가 없으면 null",
+            "nullable": true
           },
           "gender": {
             "type": "string"
