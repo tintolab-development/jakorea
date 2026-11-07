@@ -17,7 +17,14 @@ function mapGeminiApplicationStatus(status?: string): ApplicantInstructorRow['ap
   ) {
     return 'rejected'
   }
-  return 'pending'
+  if (
+    ['PENDING', 'SUBMITTED', 'WAITING', 'WAITING_REVIEW', 'REJECTION_CANCELLED'].includes(
+      normalized
+    )
+  ) {
+    return 'pending'
+  }
+  return 'unknown'
 }
 
 function createSeedRow(applicationId: string): ApplicantInstructorRow {
@@ -26,7 +33,7 @@ function createSeedRow(applicationId: string): ApplicantInstructorRow {
     instructorMemberId: undefined,
     no: 0,
     instructorName: '',
-    lectureExperienceYears: 0,
+    lectureExperienceYears: null,
     educationLevel: '',
     educationSchoolName: '',
     contact: '',
@@ -52,7 +59,7 @@ export function useGeminiInstructorApplicationDetail(
       approvedTrainingId,
       applicationId ?? ''
     ),
-    queryFn: () => getGeminiInstructorApplicationDetail(applicationId!),
+    queryFn: () => getGeminiInstructorApplicationDetail(approvedTrainingId, applicationId!),
     // 서비스 계층에서 remote API 설정 누락을 명시적인 오류로 반환한다.
     // 비활성화된 query를 pending 상태로 남겨 상세 화면이 영구 로딩되지 않게 한다.
     enabled: Boolean(applicationId),
@@ -68,6 +75,7 @@ export function useGeminiInstructorApplicationDetail(
       ...mapped,
       approvalStatus: mapGeminiApplicationStatus(query.data.applicationStatus),
       applicationStatus: query.data.applicationStatus,
+      availableActions: query.data.availableActions ?? [],
     }
   }, [applicationId, query.data])
 

@@ -254,17 +254,22 @@ export async function listGeminiApprovedInstructorApplicationsPage(
 }
 
 export async function getGeminiInstructorApplicationDetail(
+  approvedTrainingId: string,
   applicationId: string
 ): Promise<
   import('@/shared/api/generated/dashboard/schemas/instructorApplicationDetailResponse').InstructorApplicationDetailResponse
 > {
   assertRemoteReady()
-  return fetchGeminiInstructorApplicationDetailRemote(applicationId)
+  return fetchGeminiInstructorApplicationDetailRemote(approvedTrainingId, applicationId)
 }
 
 export async function approveGeminiInstructorApplication(
   applicationId: string,
-  options?: { timing?: 'IMMEDIATE' | 'SCHEDULED'; scheduledAt?: string | null }
+  options?: {
+    timing?: 'IMMEDIATE' | 'SCHEDULED' | null
+    scheduledAt?: string | null
+    replacement?: boolean | null
+  }
 ): Promise<void> {
   assertRemoteReady()
   await approveGeminiInstructorApplicationRemote(applicationId, options)
@@ -412,26 +417,65 @@ export async function deleteGeminiApprovedTrainings(
   }
 }
 
+export type GeminiOrganizationApplicationsApproveResult = {
+  successIds: string[]
+  failureCount: number
+  failures: Array<{
+    id: string
+    code?: string
+    message?: string
+  }>
+}
+
+function mapGeminiBulkApproveResult(
+  result: Awaited<ReturnType<typeof bulkApproveGeminiOrganizationApplicationsRemote>>,
+  requestedIds: number[]
+): GeminiOrganizationApplicationsApproveResult {
+  const successIds = (result?.successIds ?? []).map(String)
+  const failures = (result?.failures ?? [])
+    .filter(failure => failure.id != null)
+    .map(failure => ({
+      id: String(failure.id),
+      ...(failure.code ? { code: failure.code } : {}),
+      ...(failure.message ? { message: failure.message } : {}),
+    }))
+  return {
+    successIds,
+    failureCount: result?.failureCount ?? requestedIds.length - successIds.length,
+    failures,
+  }
+}
+
 export async function approveGeminiOrganizationApplications(
   ids: string[],
   payload?: GeminiOrganizationApplicationApprovePayload
-): Promise<void> {
+): Promise<GeminiOrganizationApplicationsApproveResult> {
   assertRemoteReady()
   const numericIds = toGeminiNumericIds(ids)
   if (numericIds.length === 0) {
     throw new Error('승인할 신청 ID가 올바르지 않습니다.')
   }
-  const usesSingleApprovePath =
-    numericIds.length === 1 ||
-    payload?.timing === 'SCHEDULED' ||
-    payload?.timing === 'ON_ANNOUNCEMENT'
-  if (usesSingleApprovePath) {
+  if (numericIds.length === 1) {
+    await approveGeminiOrganizationApplicationRemote(String(numericIds[0]), payload)
+    return {
+      successIds: [String(numericIds[0])],
+      failureCount: 0,
+      failures: [],
+    }
+  }
+  const timing = payload?.timing ?? 'IMMEDIATE'
+  if (timing === 'ON_ANNOUNCEMENT') {
     for (const id of numericIds) {
       await approveGeminiOrganizationApplicationRemote(String(id), payload)
     }
-    return
+    return {
+      successIds: numericIds.map(String),
+      failureCount: 0,
+      failures: [],
+    }
   }
-  await bulkApproveGeminiOrganizationApplicationsRemote(numericIds)
+  const result = await bulkApproveGeminiOrganizationApplicationsRemote(numericIds, payload)
+  return mapGeminiBulkApproveResult(result, numericIds)
 }
 
 export async function rejectGeminiOrganizationApplications(

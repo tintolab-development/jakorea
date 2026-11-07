@@ -307,15 +307,25 @@ export function useApproveGeminiInstructorApplicationMutation(approvedTrainingId
   return useMutation({
     mutationFn: (input: {
       applicationId: string
-      timing?: 'IMMEDIATE' | 'SCHEDULED'
+      timing?: 'IMMEDIATE' | 'SCHEDULED' | null
       scheduledAt?: string | null
+      replacement?: boolean | null
     }) =>
       approveGeminiInstructorApplication(input.applicationId, {
         timing: input.timing,
         scheduledAt: input.scheduledAt,
+        replacement: input.replacement,
       }),
     retry: false,
     onSuccess: async (_, variables) => {
+      await invalidateGeminiInstructorApprovalQueries(
+        queryClient,
+        approvedTrainingId,
+        variables.applicationId
+      )
+    },
+    onError: async (_, variables) => {
+      // 409/500/알림 예약 실패는 승인 결과를 단정하지 않고 최신 상태를 다시 확인한다.
       await invalidateGeminiInstructorApprovalQueries(
         queryClient,
         approvedTrainingId,
@@ -374,6 +384,7 @@ export function useResendGeminiInstructorApplicationNotificationMutation(
       applicationId: string
       payload: Parameters<typeof resendGeminiInstructorApplicationNotification>[1]
     }) => resendGeminiInstructorApplicationNotification(applicationId, payload),
+    retry: false,
     onSuccess: async (_, variables) => {
       await invalidateGeminiInstructorApprovalQueries(
         queryClient,

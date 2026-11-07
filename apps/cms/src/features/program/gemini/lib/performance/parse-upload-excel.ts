@@ -12,6 +12,8 @@ import { formatExcelDateValue, toJavaLocalTime } from './import-wire-values'
 export {
   GEMINI_PERFORMANCE_INVALID_TEMPLATE_MESSAGE,
   GEMINI_PERFORMANCE_INVALID_TEMPLATE_TITLE,
+  GEMINI_PERFORMANCE_INSTRUCTOR_MISMATCH_MESSAGE,
+  GEMINI_PERFORMANCE_INSTRUCTOR_MISMATCH_TITLE,
 } from './import-popup-copy'
 
 type HeaderMap = Partial<Record<keyof typeof GEMINI_PERFORMANCE_UPLOAD_COLUMNS, number>>
@@ -39,9 +41,11 @@ function buildHeaderMap(headerRow: ExcelJS.Row): HeaderMap {
 function validateRequiredHeaders(headerMap: HeaderMap): void {
   const missing = GEMINI_PERFORMANCE_REQUIRED_UPLOAD_HEADERS.filter(label => {
     const normalizedLabel = normalizeUploadHeader(label)
-    const key = (Object.keys(GEMINI_PERFORMANCE_UPLOAD_COLUMNS) as Array<
-      keyof typeof GEMINI_PERFORMANCE_UPLOAD_COLUMNS
-    >).find(k => normalizeUploadHeader(GEMINI_PERFORMANCE_UPLOAD_COLUMNS[k]) === normalizedLabel)
+    const key = (
+      Object.keys(GEMINI_PERFORMANCE_UPLOAD_COLUMNS) as Array<
+        keyof typeof GEMINI_PERFORMANCE_UPLOAD_COLUMNS
+      >
+    ).find(k => normalizeUploadHeader(GEMINI_PERFORMANCE_UPLOAD_COLUMNS[k]) === normalizedLabel)
     return key ? headerMap[key] == null : true
   })
 

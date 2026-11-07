@@ -301,10 +301,19 @@ export function GeminiInstitutionApplicationTab({
       setDecisionSubmitting(true)
       try {
         if (remoteEnabled) {
-          await approveGeminiOrganizationApplications(ids, {
+          const result = await approveGeminiOrganizationApplications(ids, {
             timing: notify.timing,
             scheduledAt: notify.scheduledAt,
           })
+          if (notify.timing !== 'SCHEDULED' && result.failureCount > 0) {
+            const firstFailure = result.failures[0]
+            showAlert({
+              title: '처리 실패',
+              content:
+                firstFailure?.message?.trim() ||
+                `선택한 신청 중 ${result.failureCount}건을 처리하지 못했습니다.`,
+            })
+          }
         } else {
           patchGeminiInstitutionApplicationApprovalStatus(ids, 'APPROVED')
         }

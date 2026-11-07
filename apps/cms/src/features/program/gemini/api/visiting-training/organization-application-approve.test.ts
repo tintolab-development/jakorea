@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   formatGeminiOrganizationApplicationDecisionError,
   toGeminiOrganizationApplicationApproveBody,
+  toGeminiOrganizationBulkApproveBody,
 } from './organization-application-approve'
 
 function axiosError(code: string, message: string, status = 409) {
@@ -60,6 +61,28 @@ describe('toGeminiOrganizationApplicationApproveBody', () => {
     expect(body).not.toHaveProperty('selectedScheduleId')
     expect(body).not.toHaveProperty('requestedScheduleId')
     expect(body).not.toHaveProperty('slots')
+  })
+})
+
+describe('toGeminiOrganizationBulkApproveBody', () => {
+  it('일괄 즉시 승인은 ids 만 보낸다', () => {
+    expect(toGeminiOrganizationBulkApproveBody([1, 2])).toEqual({ ids: [1, 2] })
+    expect(toGeminiOrganizationBulkApproveBody([1, 2], { timing: 'IMMEDIATE' })).toEqual({
+      ids: [1, 2],
+    })
+  })
+
+  it('일괄 직접 설정은 SCHEDULED + scheduledAt 을 보낸다', () => {
+    expect(
+      toGeminiOrganizationBulkApproveBody([1, 2], {
+        timing: 'SCHEDULED',
+        scheduledAt: '2026-10-29T03:00:00.000Z',
+      })
+    ).toEqual({
+      ids: [1, 2],
+      timing: 'SCHEDULED',
+      scheduledAt: '2026-10-29T03:00:00.000Z',
+    })
   })
 })
 
