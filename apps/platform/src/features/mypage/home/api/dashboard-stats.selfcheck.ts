@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { mapPortalDashboardStats } from './dashboard-stats.ts'
+import { mapPortalDashboardStats, readPortalDashboard } from './dashboard-stats.ts'
 
 const endedStats = mapPortalDashboardStats({
   submitted: 0,
@@ -22,5 +22,40 @@ const missingEnded = mapPortalDashboardStats({
   cancelled: 1,
 })
 assert.equal(missingEnded.completed, 0)
+
+const sampleApplications = {
+  submitted: 3,
+  approved: 4,
+  inProgress: 4,
+  completed: 2,
+  giveUp: 1,
+  rejected: 1,
+  cancelled: 0,
+  ended: 4,
+}
+const sampleStats = mapPortalDashboardStats(sampleApplications)
+assert.equal(sampleStats.applied, 7)
+assert.equal(sampleStats.inProgress, 4)
+assert.equal(sampleStats.completed, 4)
+
+const nested = readPortalDashboard({
+  success: true,
+  data: {
+    applications: sampleApplications,
+    pendingActions: { surveysPending: 9 },
+    upcomingSchedules: [{ eventId: 'x' }],
+    recentNotices: [{ noticeId: 1 }],
+    instructorRoleRequest: { status: 'APPROVED' },
+  },
+})
+assert.deepEqual(nested, { applications: sampleApplications })
+
+const root = readPortalDashboard({
+  applications: sampleApplications,
+  data: { applications: { submitted: 99, approved: 0, inProgress: 0, ended: 0 } },
+})
+assert.deepEqual(root.applications, sampleApplications)
+
+assert.equal(Object.keys(nested).join(','), 'applications')
 
 console.log('mypage home dashboard-stats.selfcheck: ok')

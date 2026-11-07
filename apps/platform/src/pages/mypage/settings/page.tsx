@@ -94,8 +94,8 @@ function resolvePageTitle(tab: SettingsTab, mode: SettingsMode, isInstructor: bo
 }
 
 const INSTRUCTOR_SETTLEMENT_ACCOUNT_GUIDE = [
-  '정산 계좌를 변경하려면 [약관 및 정책 동의 관리]에서',
-  '지급조서 사전 동의서를 다시 작성해 주세요.',
+  '정산 계좌를 변경하려면 [약관 및 정책 동의 관리]\u2060에서',
+  '영수증 사전 동의서를 다시 작성해 주세요.',
   '변경한 계좌는 이후 신청하는 정산 건부터 반영돼요.',
 ].join('\n')
 
