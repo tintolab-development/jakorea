@@ -46,6 +46,7 @@ import {
   ensureAgreementNoticeConfirmationClosing,
   ensureAgreementNoticeInstitutionPurposeParagraphs,
   ensureEducatorFacilitatorPledgeIntroParagraph,
+  fillAgreementNoticeWriteDefaults,
   overlayAgreementNoticeSeedHorizontalTable,
 } from '@/features/template/model/writing-form-draft.schema'
 import { FormEditorFieldNav } from '@/features/template/ui/form-editor/left-panel/form-editor-field-nav'
@@ -273,6 +274,8 @@ export function AgreementWritingFormShell({
         normalized = ensureAgreementNoticeConfirmationClosing(normalized)
         normalized = ensureAgreementNoticeInstitutionPurposeParagraphs(normalized)
         normalized = overlayAgreementNoticeSeedHorizontalTable(normalized)
+        // 편집 화면(C09): 빈 문구·누락 안내 단락만 시안 값으로 보강 — 저장 전까지 서버 원본 불변
+        normalized = fillAgreementNoticeWriteDefaults(normalized)
       }
       if (templateCode === 'agreement-expense') {
         normalized = ensureEducatorFacilitatorPledgeIntroParagraph(normalized)

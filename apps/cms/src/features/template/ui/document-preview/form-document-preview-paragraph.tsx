@@ -741,8 +741,10 @@ function renderBody(
       if (
         renderMode === 'contentOnly' &&
         c.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing &&
-        paragraphBodyOptions?.agreementAdminProxyConfirm !== true
+        paragraphBodyOptions?.agreementAdminProxyConfirm !== true &&
+        !safeTrim(c.body)
       ) {
+        /** 구버전(본문 빈 값)은 구분선만 — 확인 문구가 있으면 시안(C10)대로 표시 */
         return null
       }
       return (
