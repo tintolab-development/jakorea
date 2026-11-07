@@ -77,6 +77,29 @@
   align-items: flex-start;
 }
 
+/* 수정 모드 입력 글자 14 */
+.ja-korea-intro-card .detail-info-form__field-content--edit {
+  --cms-control-font: 14px;
+}
+
+.ja-korea-intro-card .detail-info-form__field-content--edit .cms-input .cms-input__inner .ant-input,
+.ja-korea-intro-card
+  .detail-info-form__field-content--edit
+  .cms-input
+  .cms-input__inner
+  .ant-input-affix-wrapper
+  .ant-input {
+  font-size: 14px !important;
+}
+
+.ja-korea-intro-card
+  .detail-info-form__field-content--edit
+  .cms-textarea
+  .cms-textarea__inner
+  textarea.ant-input {
+  font-size: 14px !important;
+}
+
 .ja-korea-intro-card .ja-korea-intro-preline {
   white-space: pre-line;
   width: 100%;
