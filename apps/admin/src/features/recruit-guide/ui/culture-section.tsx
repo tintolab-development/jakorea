@@ -164,7 +164,7 @@ export function CultureSectionCard({ items }: Props) {
   )
 
   return (
-    <div className="recruit-guide-section">
+    <section className="admin-list-card recruit-guide-section">
       <div className="admin-list-toolbar">
         <div className="table-header-title--wrapper">
           <span className="table-title">■ 조직문화</span>
@@ -209,6 +209,6 @@ export function CultureSectionCard({ items }: Props) {
         rowKey="id"
         scroll={{ x: true }}
       />
-    </div>
+    </section>
   )
 }
