@@ -33,7 +33,7 @@ const MODAL_TITLE: Record<FinanceSection, Record<FinanceViewKind, string>> = {
 }
 
 const MODAL_DESCRIPTION =
-  '홈페이지 투명경영 영역에 노출되는 항목을 등록해 주세요. 그래프 항목은 최대 10개까지 등록할 수 있습니다.'
+  '수입총계 그래프에 신규 등록할 항목의 항목명, 비율 및 금액을 설정해 주세요.'
 
 type ItemFormModalProps = {
   open: boolean
@@ -188,7 +188,7 @@ export function ItemFormModal({
                 <CmsInput
                   inputSize="large"
                   width="100%"
-                  placeholder="0"
+                  placeholder="비율을 입력해 주세요"
                   value={ratio}
                   onChange={e => setRatio(e.target.value)}
                   inputMode="decimal"
@@ -209,7 +209,7 @@ export function ItemFormModal({
                 <CmsInput
                   inputSize="large"
                   width="100%"
-                  placeholder="0"
+                  placeholder="금액을 입력해 주세요"
                   value={amount}
                   onChange={e => setAmount(e.target.value)}
                   inputMode="numeric"

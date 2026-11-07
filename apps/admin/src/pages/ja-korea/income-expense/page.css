@@ -32,13 +32,12 @@
   flex-shrink: 0;
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
   line-height: 150%;
 }
 
 /* 카드 내부: 타이틀 아래 네스트된 그래프|테이블 탭 */
 .income-expense-page__tabs--view {
-  margin-top: 16px;
-  margin-bottom: 20px;
+  margin: 24px 0;
 }
