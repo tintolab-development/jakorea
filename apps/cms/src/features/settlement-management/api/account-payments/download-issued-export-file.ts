@@ -16,6 +16,7 @@ import {
 export async function downloadIssuedSettlementExportFile(input: {
   serverExport: SettlementExportHistoryResponse
   kind: SettlementFormExportKind
+  password?: string
 }): Promise<void> {
   const fileObjectId = input.serverExport.fileObjectId
   if (fileObjectId == null) {
@@ -27,6 +28,7 @@ export async function downloadIssuedSettlementExportFile(input: {
   const blob = await loadSensitiveAdminFileBlob({
     fileObjectId,
     reason,
+    password: input.password,
   })
   await downloadBlob(blob, filename, { skipAccessLog: true })
 }
@@ -35,6 +37,7 @@ export async function downloadIssuedSettlementExportFile(input: {
 export async function downloadIssuedSettlementExportFileOrReissue(input: {
   serverExport: SettlementExportHistoryResponse
   kind: SettlementFormExportKind
+  password?: string
   onReissue: () => Promise<SettlementExportHistoryResponse | null>
 }): Promise<void> {
   try {
@@ -46,6 +49,7 @@ export async function downloadIssuedSettlementExportFileOrReissue(input: {
     await downloadIssuedSettlementExportFile({
       serverExport: next,
       kind: input.kind,
+      password: input.password,
     })
   }
 }

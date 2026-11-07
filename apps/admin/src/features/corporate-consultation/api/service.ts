@@ -3,6 +3,7 @@ import { fetchAllAdminListPages, toAdminListPage, type AdminListPage } from '@/s
 import { getJAKoreaHomepageAdminAPISponsorshipSubset } from '@/shared/api/generated/sponsorship/sponsorship-api';
 import { mapConsultationDetailToDomain, mapConsultationListItemToDomain, toBulkRequest, toConsultationListParams, toStatusUpdateRequest, } from './mappers';
 import { isAdminForbidden, isAdminNotFound } from '@/features/system-inbox/lib/http-status';
+import { downloadHomepageProtectedAttachment, homepageCorporateConsultationAttachmentUrl } from '@/shared/lib/protected-attachment-download';
 function sponsorshipApi() {
     return getJAKoreaHomepageAdminAPISponsorshipSubset();
 }
@@ -32,22 +33,16 @@ export async function getCorporateConsultationService(id: string, actorName?: st
         return null;
     }
 }
-export async function downloadCorporateConsultationAttachmentService(id: string, assetId?: number | null): Promise<{
-    downloadUrl: string;
-    originalName?: string;
-} | null> {
+export async function downloadCorporateConsultationAttachmentService(id: string, assetId: number | null | undefined, password: string, fallbackFileName: string): Promise<void> {
     const numericId = Number(id);
-    if (!Number.isFinite(numericId) || numericId <= 0)
-        return null;
-    const response = assetId != null && assetId > 0
-        ? await sponsorshipApi().attachmentDownloadByAsset1(numericId, assetId)
-        : await sponsorshipApi().attachmentDownload1(numericId);
-    if (!response.downloadUrl)
-        return null;
-    return {
-        downloadUrl: response.downloadUrl,
-        originalName: response.originalName,
-    };
+    if (!Number.isFinite(numericId) || numericId <= 0) {
+        throw new Error('첨부파일을 불러오지 못했습니다.');
+    }
+    await downloadHomepageProtectedAttachment({
+        url: homepageCorporateConsultationAttachmentUrl(numericId, assetId),
+        password,
+        fallbackFileName,
+    });
 }
 export async function removeCorporateConsultationsService(ids: string[], cachedRows?: CorporateConsultation[]): Promise<void> {
     if (ids.length === 0)

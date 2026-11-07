@@ -5,6 +5,8 @@ import type {
 import type { BulkActionResponse as MembersBulkActionResponse } from '@/shared/api/generated/members/schemas/bulkActionResponse'
 import { assertBulkActionSucceeded } from '@/features/user/api/lib/assert-bulk-action-succeeded'
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
+import { isFileDownloadPasswordErrorCode, messageForProtectedDownloadErrorCode } from '@jakorea/domain/shared/file-download-password'
+import { extractApiErrorCode } from '@/shared/lib/extract-api-error-message'
 import { EXTERNAL_IDENTIFIER_PROVIDER_1365 } from '@/features/user/api/map-external-identifiers'
 import {
   MEMBER_DETAIL_SCREEN_CODE,
@@ -713,10 +715,20 @@ function blobWithEvidenceMime(blob: Blob, fileName: string | null | undefined): 
   return new Blob([blob], { type: mime })
 }
 
+function shouldRethrowProtectedConsentDownloadError(error: unknown): boolean {
+  const data =
+    error && typeof error === 'object' && 'response' in error
+      ? (error as { response?: { data?: unknown } }).response?.data
+      : undefined
+  const code = extractApiErrorCode(data)
+  return Boolean(messageForProtectedDownloadErrorCode(code) || isFileDownloadPasswordErrorCode(code))
+}
+
 /** 성범죄 첨부. claim으로 relayToken을 받은 뒤 stream으로 바이트를 받는다. */
 export async function fetchConsentEvidenceBlobRemote(
   filled: FilledDocumentResponse,
-  reason: string
+  reason: string,
+  password?: string
 ): Promise<Blob | null> {
   if (filled.evidenceFileObjectId == null) return null
   try {
@@ -724,9 +736,11 @@ export async function fetchConsentEvidenceBlobRemote(
       fileObjectId: filled.evidenceFileObjectId,
       reason,
       claimPath: filled.evidenceDownloadEndpoint,
+      password,
     })
     return blobWithEvidenceMime(blob, filled.evidenceOriginalFileName)
-  } catch {
+  } catch (error) {
+    if (shouldRethrowProtectedConsentDownloadError(error)) throw error
     return null
   }
 }
@@ -736,7 +750,8 @@ const CRIME_ORIGINAL_FALLBACK_FILENAME = '성범죄_경력조회_동의서.pdf'
 /** 성범죄 업로드 원본. signed-document의 originalDownloadApi + SENSITIVE_FILE_DOWNLOAD. */
 export async function fetchConsentOriginalFileBlobRemote(
   signed: SignedConsentDocumentResponse,
-  reason: string
+  reason: string,
+  password?: string
 ): Promise<Blob | null> {
   if (signed.originalFileObjectId == null) return null
   try {
@@ -744,9 +759,11 @@ export async function fetchConsentOriginalFileBlobRemote(
       fileObjectId: signed.originalFileObjectId,
       reason,
       claimPath: signed.originalDownloadApi,
+      password,
     })
     return blobWithEvidenceMime(blob, CRIME_ORIGINAL_FALLBACK_FILENAME)
-  } catch {
+  } catch (error) {
+    if (shouldRethrowProtectedConsentDownloadError(error)) throw error
     return null
   }
 }
@@ -757,7 +774,8 @@ export async function fetchConsentCrimeOriginalBlobRemote(input: {
   consentType: string
   reason: string
   consentRecordId?: number
-  filled: FilledDocumentResponse
+  filled?: FilledDocumentResponse | null
+  password?: string
 }): Promise<Blob | null> {
   try {
     const signed = await fetchConsentSignedDocumentRemote(
@@ -766,12 +784,18 @@ export async function fetchConsentCrimeOriginalBlobRemote(input: {
       { reason: input.reason },
       input.consentRecordId
     )
-    const original = await fetchConsentOriginalFileBlobRemote(signed, input.reason)
+    const original = await fetchConsentOriginalFileBlobRemote(
+      signed,
+      input.reason,
+      input.password
+    )
     if (original != null) return original
-  } catch {
+  } catch (error) {
+    if (shouldRethrowProtectedConsentDownloadError(error)) throw error
     /* filled evidence 폴백 */
   }
-  return fetchConsentEvidenceBlobRemote(input.filled, input.reason)
+  if (input.filled == null) return null
+  return fetchConsentEvidenceBlobRemote(input.filled, input.reason, input.password)
 }
 
 export async function fetchMemberExternalIdentifiersRemote(

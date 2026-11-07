@@ -60,6 +60,7 @@ export interface PaymentOrderCalculationStatementModalImplProps {
   loadError?: unknown
   paymentOrdersRemote?: boolean
   statementId?: number | null
+  settlementId?: number | null
   detailContextQuery?: PaymentOrdersDetailContextQueryResult
   /**
    * 산출 내역서 UI 유형 — 상세 페이지가 아니라 **테이블 유형**을 따른다.
@@ -83,6 +84,7 @@ export function PaymentOrderCalculationStatementModalImpl({
   loadError,
   paymentOrdersRemote = false,
   statementId,
+  settlementId,
   detailContextQuery,
   entryKind,
   entryClassName,
@@ -417,6 +419,7 @@ export function PaymentOrderCalculationStatementModalImpl({
         onClose={() => setIssuanceViewOpen(false)}
         paragraphBodyOptions={issuanceParagraphBodyOptions}
         fileName={issuanceFileName}
+        settlementId={settlementId ?? undefined}
         zIndex={1500}
       />
       <PaymentOrderCalculationBasisDetailModal

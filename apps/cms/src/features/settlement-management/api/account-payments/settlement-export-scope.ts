@@ -1,6 +1,7 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import customInstance from '@/shared/api/orval-mutator'
-import type { Scope, SettlementExportRequest } from '@/shared/api/generated/settlement/schemas'
+import type { SettlementExportRequest } from '@/shared/api/generated/settlement/schemas'
+import type { SettlementExportScopeResponse } from '@/shared/api/generated/settlement/schemas/settlementExportScopeResponse'
 import {
   ACCOUNT_PAYMENT_EXPORT_STATUS_PAID,
   ACCOUNT_PAYMENT_EXPORT_STATUS_WAITING_PAYMENT,
@@ -11,7 +12,7 @@ import type { AccountPaymentRow } from '@/features/settlement-management/model/a
 
 export type SettlementExportType = 'BULK_TRANSFER' | 'TAX_REPORT'
 
-export type SettlementExportScope = Scope
+export type SettlementExportScope = SettlementExportScopeResponse
 
 const SCOPE_REASON = '계좌 지급 확인 — 원본 발급 범위 확인'
 const SCOPE_PURPOSE = '정산 관리 대량이체·세금신고 원본 양식'
@@ -60,11 +61,16 @@ export async function issueSettlementExportScopeRemote(
   )
 }
 
-export function isScopeExpired(scope: SettlementExportScope, nowEpochSecond = Math.floor(Date.now() / 1000)): boolean {
+export function isScopeExpired(
+  scope: Pick<SettlementExportScope, 'expiresAtEpochSecond'> | Partial<SettlementExportScope>,
+  nowEpochSecond = Math.floor(Date.now() / 1000)
+): boolean {
   return scope.expiresAtEpochSecond != null && scope.expiresAtEpochSecond <= nowEpochSecond
 }
 
-export function assertUsableScopeToken(scope: SettlementExportScope): string {
+export function assertUsableScopeToken(
+  scope: Pick<SettlementExportScope, 'scopeToken'> | Partial<SettlementExportScope>
+): string {
   const token = scope.scopeToken?.trim() ?? ''
   if (!token) {
     throw new Error('서버 scopeToken이 없습니다. 선택 원본 발급을 진행하지 않습니다.')

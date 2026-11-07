@@ -13,13 +13,19 @@ export function UjatProgramApplicationVolunteerPreferredRegionParagraph() {
     UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.preferredRegion,
     ''
   )
+  const selectedRegion = regions.find(
+    option =>
+      option.key === region ||
+      option.key.toLowerCase() === region.trim().toLowerCase() ||
+      option.label === region
+  )?.key
 
   return (
     <div className="multiple-choice-body">
       <CmsRadioGroup
         className="multiple-choice-radio-group multiple-choice-radio-group--inline-wrap"
         size="medium"
-        value={region || undefined}
+        value={selectedRegion || undefined}
         onChange={e => setRegion(e.target.value)}
       >
         {regions.map(option => (

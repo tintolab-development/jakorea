@@ -16,6 +16,7 @@ import type { PaymentStatementBasicInfoAutofillValues } from '@/features/templat
 import { useConsentFilledDocumentMutation } from '@/features/user/api/hooks/use-consent-filled-document-mutation'
 import {
   fetchConsentCrimeOriginalBlobRemote,
+  fetchConsentEvidenceBlobRemote,
   fetchConsentOriginalFileBlobRemote,
   fetchConsentSignedDocumentRemote,
   loadConsentSignedSignatureBlobRemote,
@@ -41,6 +42,10 @@ import { downloadBlob } from '@/shared/utils/file-download'
 import { handleError } from '@/shared/utils/error-handler'
 import type { User } from '@/types/user'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
+import { useAuthStore } from '@/features/auth/model/auth-store'
+import { canDownloadSensitiveConsentFile } from '@/shared/lib/can-download-sensitive-consent-file'
+import { useProtectedFileDownload } from '@/shared/lib/use-protected-file-download'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import '@/features/template/ui/form-editor/form-editor.css'
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
 import '@/features/template/ui/template-management/template-fullpage-modal.css'
@@ -76,6 +81,8 @@ export interface MemberConsentDocumentViewModalProps {
   documentAgreed?: boolean
   /** 동의-only 미리보기 PII 주입용 */
   memberUser?: Omit<User, 'password'>
+  /** 프로그램 맥락의 Program Owner 여부. 미지정 시 전역 역할만으로 판단 */
+  isProgramOwner?: boolean | null
   onClose: () => void
 }
 
@@ -121,6 +128,8 @@ function MemberConsentCrimeDocumentView({
   evidenceFileName,
   isLoading,
   loadFailed,
+  canDownloadFile,
+  onDownloadFile,
   onClose,
 }: {
   open: boolean
@@ -133,6 +142,8 @@ function MemberConsentCrimeDocumentView({
   evidenceFileName?: string | null
   isLoading: boolean
   loadFailed: boolean
+  canDownloadFile: boolean
+  onDownloadFile: () => void
   onClose: () => void
 }) {
   const displaySrc = useSubmittedRemote ? evidenceObjectUrl : null
@@ -142,17 +153,10 @@ function MemberConsentCrimeDocumentView({
     filled?.evidenceOriginalFileName?.trim() ||
     DEFAULT_CRIME_DOWNLOAD_FILENAME
 
-  const handleDownload = useCallback(async () => {
-    if (!displaySrc) return
-    try {
-      const res = await fetch(displaySrc)
-      if (!res.ok) throw new Error('fetch failed')
-      const blob = await res.blob()
-      await downloadBlob(blob, filename)
-    } catch (error) {
-      console.debug('memberConsentCrimeView download failed', error)
-    }
-  }, [displaySrc, filename])
+  const handleDownload = useCallback(() => {
+    if (!canDownloadFile || !displaySrc) return
+    onDownloadFile()
+  }, [canDownloadFile, displaySrc, onDownloadFile])
 
   return (
     <TealHeaderModal
@@ -200,14 +204,16 @@ function MemberConsentCrimeDocumentView({
                 <CmsButton variant="secondary" size="medium" onClick={onClose}>
                   닫기
                 </CmsButton>
+                {canDownloadFile ? (
                 <CmsButton
                   variant="secondary"
                   icon={<ButtonDownloadIcon />}
-                  onClick={() => void handleDownload()}
+                  onClick={handleDownload}
                   size="medium"
                   disabled={!displaySrc} >
                   문서 다운로드
                 </CmsButton>
+                ) : null}
               </div>
             </div>
           )}
@@ -249,6 +255,8 @@ function MemberConsentAgreementDocumentView({
   loadFailed,
   memberUser,
   signatureImageSrc,
+  canDownloadFile,
+  onDownloadFile,
   onClose,
 }: {
   open: boolean
@@ -261,6 +269,8 @@ function MemberConsentAgreementDocumentView({
   loadFailed: boolean
   memberUser?: Omit<User, 'password'>
   signatureImageSrc?: string | null
+  canDownloadFile: boolean
+  onDownloadFile: () => void
   onClose: () => void
 }) {
   const agreementConfig = useMemo(() => resolveAgreementWritingFormConfig(templateId), [templateId])
@@ -398,6 +408,14 @@ function MemberConsentAgreementDocumentView({
         }
       }
       hideParagraphRequiredChrome
+      showDocumentDownload={
+        templateId === 'agreement-notice' ? canDownloadFile && !isSyntheticPreview : true
+      }
+      onDocumentDownloadClick={
+        templateId === 'agreement-notice' && canDownloadFile && !isSyntheticPreview
+          ? onDownloadFile
+          : undefined
+      }
     />
   )
 }
@@ -416,9 +434,17 @@ export function MemberConsentDocumentViewModal({
   filledDocumentRevealEndpoint,
   documentAgreed,
   memberUser,
+  isProgramOwner,
   onClose,
 }: MemberConsentDocumentViewModalProps) {
   const mutation = useConsentFilledDocumentMutation()
+  const { showAlert } = useCmsAlert()
+  const { runProtectedDownload, filePasswordModal } = useProtectedFileDownload()
+  const sessionUser = useAuthStore(state => state.user)
+  const canDownloadSensitiveFile = canDownloadSensitiveConsentFile({
+    roleCode: sessionUser?.roleCode,
+    isProgramOwner,
+  })
   const [filled, setFilled] = useState<FilledDocumentResponse | null>(null)
   const [evidenceObjectUrl, setEvidenceObjectUrl] = useState<string | null>(null)
   const [evidenceMimeType, setEvidenceMimeType] = useState<string | null>(null)
@@ -726,6 +752,78 @@ export function MemberConsentDocumentViewModal({
     [isCrime, loadCrimeOriginal, loadFilledDocument]
   )
 
+  const handleCrimeProtectedDownload = useCallback(() => {
+    if (!canDownloadSensitiveFile || memberId == null || !consentType?.trim()) return
+    const filename =
+      crimeOriginalFileName?.trim() ||
+      filled?.evidenceOriginalFileName?.trim() ||
+      DEFAULT_CRIME_DOWNLOAD_FILENAME
+    runProtectedDownload({
+      kind: 'SEX_OFFENSE_CONSENT',
+      zIndex: REVEAL_REASON_MODAL_Z_INDEX + 20,
+      download: async password => {
+        try {
+          const blob = await fetchConsentCrimeOriginalBlobRemote({
+            memberId,
+            consentType: consentType.trim(),
+            reason: MEMBER_CONSENT_VIEW_AUTO_PRIVACY_REASON,
+            consentRecordId,
+            filled,
+            password,
+          })
+          if (blob == null || blob.size < 1) {
+            throw new Error(CRIME_SNAPSHOT_UNAVAILABLE_MESSAGE)
+          }
+          await downloadBlob(blob, filename)
+        } catch (error) {
+          showAlert({
+            title: '안내',
+            content: getMemberApiErrorMessage(error, CRIME_SNAPSHOT_UNAVAILABLE_MESSAGE),
+          })
+          throw error
+        }
+      },
+    })
+  }, [
+    canDownloadSensitiveFile,
+    consentRecordId,
+    consentType,
+    crimeOriginalFileName,
+    filled,
+    memberId,
+    runProtectedDownload,
+    showAlert,
+  ])
+
+  const handleNoticeProtectedDownload = useCallback(() => {
+    if (!canDownloadSensitiveFile || filled == null) return
+    const filename =
+      filled.evidenceOriginalFileName?.trim() || `${modalTitle.trim() || '행정정보_공동이용_동의서'}.pdf`
+    runProtectedDownload({
+      kind: 'ADMINISTRATIVE_INFO_CONSENT',
+      zIndex: REVEAL_REASON_MODAL_Z_INDEX + 20,
+      download: async password => {
+        try {
+          const blob = await fetchConsentEvidenceBlobRemote(
+            filled,
+            MEMBER_CONSENT_VIEW_AUTO_PRIVACY_REASON,
+            password
+          )
+          if (blob == null || blob.size < 1) {
+            throw new Error(NO_SUBMITTED_CONSENT_MESSAGE)
+          }
+          await downloadBlob(blob, filename)
+        } catch (error) {
+          showAlert({
+            title: '안내',
+            content: getMemberApiErrorMessage(error, NO_SUBMITTED_CONSENT_MESSAGE),
+          })
+          throw error
+        }
+      },
+    })
+  }, [canDownloadSensitiveFile, filled, modalTitle, runProtectedDownload, showAlert])
+
   const remoteRequestPending = mutation.isPending && filled == null && !loadFailed
   const isLoading = canFetchCrimeOriginal
     ? requiresPrivacyReveal
@@ -745,6 +843,7 @@ export function MemberConsentDocumentViewModal({
   if (isCrime) {
     return (
       <>
+        {filePasswordModal}
         <MemberConsentCrimeDocumentView
           open={open}
           modalTitle={modalTitle}
@@ -756,6 +855,8 @@ export function MemberConsentDocumentViewModal({
           evidenceFileName={crimeOriginalFileName}
           isLoading={isLoading}
           loadFailed={loadFailed || remoteUnavailable}
+          canDownloadFile={canDownloadSensitiveFile}
+          onDownloadFile={handleCrimeProtectedDownload}
           onClose={handleClose}
         />
         {reasonOpen ? (
@@ -771,6 +872,7 @@ export function MemberConsentDocumentViewModal({
 
   return (
     <>
+      {filePasswordModal}
       <MemberConsentAgreementDocumentView
         open={open}
         templateId={templateId}
@@ -786,6 +888,8 @@ export function MemberConsentDocumentViewModal({
         }
         memberUser={memberUser}
         signatureImageSrc={signatureImageSrc}
+        canDownloadFile={canDownloadSensitiveFile}
+        onDownloadFile={handleNoticeProtectedDownload}
         onClose={handleClose}
       />
       {reasonOpen ? (

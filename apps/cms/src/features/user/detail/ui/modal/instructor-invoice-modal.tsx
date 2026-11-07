@@ -37,7 +37,7 @@ import { getSettlementApiErrorMessage } from '@/features/settlement-management/a
 import {
   mapSettlementDetailToInstructorInvoice,
 } from '@/features/user/api/map-settlement-to-instructor-member-row'
-import { downloadFromBulkEndpoint } from '@/features/user/api/download-bulk-endpoint'
+import { useProtectedFileDownload } from '@/shared/lib/use-protected-file-download'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './instructor-invoice-modal.css'
 
@@ -84,6 +84,7 @@ export function InstructorInvoiceModal({
   onSettlementUpdated,
 }: InstructorInvoiceModalProps) {
   const { showAlert } = useCmsAlert()
+  const { runProtectedDownload, filePasswordModal } = useProtectedFileDownload()
   const confirmMutation = useConfirmPaymentStatementMutation()
   const rejectMutation = useRejectPaymentStatementMutation()
   const [paymentConfirmOpen, setPaymentConfirmOpen] = useState(false)
@@ -247,28 +248,33 @@ export function InstructorInvoiceModal({
     }
   }
 
-  const handleDownloadPaymentStatement = async () => {
+  const handleDownloadPaymentStatement = () => {
     if (settlementId == null) return
-    setDownloadLoading(true)
-    try {
-      const doc = await downloadPaymentStatementRemote(settlementId)
-      if (doc.downloadUrl) {
-        await downloadFromBulkEndpoint(doc.downloadUrl, `지급조서_${settlementId}`, 'pdf')
-      }
-    } catch (error) {
-      showAlert({
-        title: '안내',
-        content: getSettlementApiErrorMessage(error, '지급조서 다운로드에 실패했습니다.'),
-      })
-    } finally {
-      setDownloadLoading(false)
-    }
+    runProtectedDownload({
+      kind: 'PAYMENT_STATEMENT',
+      zIndex: 1400,
+      download: async password => {
+        setDownloadLoading(true)
+        try {
+          await downloadPaymentStatementRemote(settlementId, { password })
+        } catch (error) {
+          showAlert({
+            title: '안내',
+            content: getSettlementApiErrorMessage(error, '지급조서 다운로드에 실패했습니다.'),
+          })
+          throw error
+        } finally {
+          setDownloadLoading(false)
+        }
+      },
+    })
   }
 
   const showLineActions = Boolean(statementData && statementIdQuery.data != null)
 
   return (
     <>
+      {filePasswordModal}
       {open && effectiveRow && paymentStatementPresentation ? (
         <ContentModal
           open={open}

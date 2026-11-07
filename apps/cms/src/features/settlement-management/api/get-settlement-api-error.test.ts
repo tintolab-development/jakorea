@@ -302,6 +302,58 @@ describe('normalizeSettlementApiErrorCode', () => {
     )
   })
 
+  it('400 DOWNLOAD_PASSWORD_REQUIRED/INVALID는 서버 파일 암호 문구를 쓴다', () => {
+    expect(
+      getSettlementApiErrorMessage(
+        {
+          response: {
+            status: 400,
+            data: {
+              message: '파일 암호를 입력해 주세요.',
+              error: { code: 'DOWNLOAD_PASSWORD_REQUIRED', field: 'password' },
+            },
+          },
+        },
+        'fallback'
+      )
+    ).toBe('파일 암호를 입력해 주세요.')
+    expect(
+      getSettlementApiErrorMessage(
+        {
+          response: {
+            status: 400,
+            data: {
+              message:
+                '파일 암호는 8자 이상이며 영문, 숫자, 특수문자를 포함하고 공백이 없어야 합니다.',
+              error: { code: 'DOWNLOAD_PASSWORD_INVALID', field: 'password' },
+            },
+          },
+        },
+        'fallback'
+      )
+    ).toBe('파일 암호는 8자 이상이며 영문, 숫자, 특수문자를 포함하고 공백이 없어야 합니다.')
+  })
+
+  it('403 CONSENT_SENSITIVE_FILE_FORBIDDEN는 정산 조회 권한 문구로 덮지 않는다', () => {
+    expect(
+      getSettlementApiErrorMessage(
+        {
+          response: {
+            status: 403,
+            data: {
+              message:
+                '성범죄 경력조회 동의서와 행정정보 공동이용 사전동의서는 Master와 해당 프로그램 Program Owner만 열람·다운로드할 수 있습니다.',
+              error: { code: 'CONSENT_SENSITIVE_FILE_FORBIDDEN' },
+            },
+          },
+        },
+        'fallback'
+      )
+    ).toBe(
+      '성범죄 경력조회 동의서와 행정정보 공동이용 사전동의서는 Master와 해당 프로그램 Program Owner만 열람·다운로드할 수 있습니다.'
+    )
+  })
+
   it('getNormalizedSettlementApiError는 axios 응답에서 동일 정규화를 한다', () => {
     const error = {
       response: {

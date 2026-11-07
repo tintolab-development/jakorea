@@ -1,3 +1,4 @@
+import { messageForProtectedDownloadErrorCode } from '@jakorea/domain/shared/file-download-password'
 import { extractApiErrorCode, extractApiErrorMessage } from '@/shared/lib/extract-api-error-message'
 import { getNotificationTimingApiErrorMessage } from '@/shared/lib/notification-schedule'
 
@@ -61,11 +62,18 @@ export function getMemberApiErrorMessage(error: unknown, fallback: string): stri
   if (timingMessage) return timingMessage
   if (error && typeof error === 'object' && 'response' in error) {
     const axiosErr = error as { response?: { status?: number; data?: unknown } }
+    const code = extractApiErrorCode(axiosErr.response?.data)
+    const protectedDownloadMessage = messageForProtectedDownloadErrorCode(code)
+    if (protectedDownloadMessage) {
+      const serverMessage = extractApiErrorMessage(axiosErr.response?.data, {
+        httpStatus: axiosErr.response?.status,
+        fallback: '',
+      }).trim()
+      return serverMessage || protectedDownloadMessage
+    }
     if (axiosErr.response?.status === 403) {
       return '회원 관리 조회 권한이 없습니다. 관리자 계정으로 다시 로그인해 주세요.'
     }
-
-    const code = extractApiErrorCode(axiosErr.response?.data)
     if (code === MEMBER_DELETE_CURRENT_PASSWORD_INVALID_CODE) {
       return MEMBER_DELETE_CURRENT_PASSWORD_INVALID_ALERT_CONTENT
     }

@@ -25,6 +25,7 @@ import {
   loadTaxFilingMaskedResidentNumbers,
 } from '@/pages/settlement-management/tax-filing-masked-resident'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
+import { useProtectedFileDownload } from '@/shared/lib/use-protected-file-download'
 import './tax-filing-preview-modal.css'
 
 const Workbook = lazy(() => import('./bulk-transfer-fortune-workbook'))
@@ -44,6 +45,7 @@ export function TaxFilingPreviewModal({
   serverExport,
   onReissueExport,
 }: TaxFilingPreviewModalProps) {
+  const { runProtectedDownload, filePasswordModal } = useProtectedFileDownload()
   const usesServerFile = serverExport?.deliveryMethod === 'SERVER_FILE'
   const serverFileReady =
     usesServerFile &&
@@ -75,53 +77,64 @@ export function TaxFilingPreviewModal({
     return [sheet]
   }, [previewRows])
 
-  const handleDownload = useCallback(async () => {
-    try {
-      if (serverExport?.deliveryMethod === 'SERVER_FILE') {
-        if (serverExport.fileObjectId == null) {
-          cmsAlertModal.show({
-            title: '다운로드 불가',
-            content:
-              '세금신고 서버 파일이 아직 준비되지 않았습니다. 목록에서 「세금 신고 양식 발급」을 다시 눌러 주세요.',
+  const handleDownload = useCallback(() => {
+    runProtectedDownload({
+      kind: 'TAX_REPORT_EXCEL',
+      zIndex: 1400,
+      download: async password => {
+        try {
+          if (serverExport?.deliveryMethod === 'SERVER_FILE') {
+            if (serverExport.fileObjectId == null) {
+              cmsAlertModal.show({
+                title: '다운로드 불가',
+                content:
+                  '세금신고 서버 파일이 아직 준비되지 않았습니다. 목록에서 「세금 신고 양식 발급」을 다시 눌러 주세요.',
+              })
+              return
+            }
+            if (onReissueExport) {
+              await downloadIssuedSettlementExportFileOrReissue({
+                serverExport,
+                kind: 'tax-report',
+                password,
+                onReissue: onReissueExport,
+              })
+            } else {
+              await downloadIssuedSettlementExportFile({
+                serverExport,
+                kind: 'tax-report',
+                password,
+              })
+            }
+            return
+          }
+          if (shouldUseSettlementRemote('accountPayments')) {
+            cmsAlertModal.show({
+              title: '다운로드 불가',
+              content:
+                '서버 발급 파일이 준비된 뒤에만 세금신고 양식을 받을 수 있습니다. 브라우저에서 엑셀을 만들지 않습니다.',
+            })
+            return
+          }
+          const { exportTaxFilingExcel } =
+            await import('@/pages/settlement-management/tax-filing-excel')
+          await exportTaxFilingExcel(rows)
+        } catch (error) {
+          notifySettlementExportDownloadError({
+            error,
+            fallback: '세금신고 파일 다운로드에 실패했습니다.',
+            issueButtonLabel: '세금 신고 양식 발급',
+            onAlreadyDownloaded: onCancel,
           })
-          return
+          throw error
         }
-        if (onReissueExport) {
-          await downloadIssuedSettlementExportFileOrReissue({
-            serverExport,
-            kind: 'tax-report',
-            onReissue: onReissueExport,
-          })
-        } else {
-          await downloadIssuedSettlementExportFile({
-            serverExport,
-            kind: 'tax-report',
-          })
-        }
-        return
-      }
-      if (shouldUseSettlementRemote('accountPayments')) {
-        cmsAlertModal.show({
-          title: '다운로드 불가',
-          content:
-            '서버 발급 파일이 준비된 뒤에만 세금신고 양식을 받을 수 있습니다. 브라우저에서 엑셀을 만들지 않습니다.',
-        })
-        return
-      }
-      const { exportTaxFilingExcel } =
-        await import('@/pages/settlement-management/tax-filing-excel')
-      await exportTaxFilingExcel(rows)
-    } catch (error) {
-      notifySettlementExportDownloadError({
-        error,
-        fallback: '세금신고 파일 다운로드에 실패했습니다.',
-        issueButtonLabel: '세금 신고 양식 발급',
-        onAlreadyDownloaded: onCancel,
-      })
-    }
-  }, [onCancel, onReissueExport, rows, serverExport])
+      },
+    })
+  }, [onCancel, onReissueExport, rows, runProtectedDownload, serverExport])
 
   return (
+    <>
+    {filePasswordModal}
     <ContentModal
       open={open}
       onCancel={onCancel}
@@ -171,5 +184,6 @@ export function TaxFilingPreviewModal({
         ) : null}
       </div>
     </ContentModal>
+    </>
   )
 }

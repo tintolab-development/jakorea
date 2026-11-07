@@ -10,6 +10,8 @@ import '@jakorea/form-template-runtime/detail-info-form.css'
 import type { CorporateConsultation } from '@/entities/corporate-consultation/model/types'
 import { shouldUseCorporateConsultationRemoteApi } from '@/features/corporate-consultation/api/capabilities'
 import { downloadCorporateConsultationAttachmentService } from '@/features/corporate-consultation/api/service'
+import { homepageAttachmentDownloadErrorMessage } from '@/shared/lib/protected-attachment-download'
+import { useProtectedFileDownload } from '@/shared/lib/use-protected-file-download'
 import { formatDateTimeDotWithKoreanWeekday } from '@/shared/lib/format-display'
 import {
   CmsButton,
@@ -72,6 +74,7 @@ export function CorporateConsultationDetailModal({
   onDelete,
 }: Props) {
   const { showAlert } = useCmsAlert()
+  const { runProtectedDownload, filePasswordModal } = useProtectedFileDownload()
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
   useEffect(() => {
@@ -117,23 +120,29 @@ export function CorporateConsultationDetailModal({
         className="corp-consult-detail-modal__attachment"
         onClick={() => {
           if (!data?.id) return
-          void downloadCorporateConsultationAttachmentService(data.id, data.attachmentAssetId)
-            .then(result => {
-              if (!result?.downloadUrl) {
+          runProtectedDownload({
+            kind: 'HOMEPAGE_PII_ATTACHMENT',
+            zIndex: 1400,
+            download: async password => {
+              try {
+                await downloadCorporateConsultationAttachmentService(
+                  data.id,
+                  data.attachmentAssetId,
+                  password,
+                  data.attachmentFileName ?? 'download'
+                )
+              } catch (error) {
                 showAlert({
                   title: '다운로드 실패',
-                  content: '첨부파일을 불러오지 못했습니다.',
+                  content: homepageAttachmentDownloadErrorMessage(
+                    error,
+                    '첨부파일 다운로드에 실패했습니다.'
+                  ),
                 })
-                return
+                throw error
               }
-              window.open(result.downloadUrl, '_blank', 'noopener,noreferrer')
-            })
-            .catch(() => {
-              showAlert({
-                title: '다운로드 실패',
-                content: '첨부파일 다운로드에 실패했습니다.',
-              })
-            })
+            },
+          })
         }}
       >
         <FileIcon className="corp-consult-detail-modal__file-icon" />
@@ -350,6 +359,7 @@ export function CorporateConsultationDetailModal({
         ) : null}
       </ContentModal>
 
+      {filePasswordModal}
       <ConfirmModal
         open={deleteConfirmOpen}
         title="신청 삭제"

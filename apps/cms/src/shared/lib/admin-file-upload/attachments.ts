@@ -200,6 +200,7 @@ async function readDownloadBlob(downloadUrl: string, headers: Record<string, str
 type SensitiveRelayClaim = {
   relayToken?: string | null
   streamUrl?: string | null
+  containedPiiTypes?: string[] | null
 }
 
 /** responseType blob 오류 본문(JSON Blob)을 error.response.data 객체로 복원한다. */
@@ -238,7 +239,9 @@ export async function loadSensitiveAdminFileBlob(input: {
   fileObjectId: number
   reason: string
   claimPath?: string | null
+  password?: string
 }): Promise<Blob> {
+  const password = input.password?.trim()
   const claimPath =
     input.claimPath?.trim() || `/api/admin/files/${input.fileObjectId}/sensitive-downloads`
   const claim = unwrapApiBody<SensitiveRelayClaim>(
@@ -246,7 +249,7 @@ export async function loadSensitiveAdminFileBlob(input: {
       {
         url: claimPath,
         method: 'POST',
-        data: { reason: input.reason },
+        data: { reason: input.reason, ...(password ? { password } : {}) },
       },
       { skipGlobalErrorAlert: true }
     )
@@ -265,7 +268,11 @@ export async function loadSensitiveAdminFileBlob(input: {
       {
         url: streamUrl,
         method: 'POST',
-        data: { reason: input.reason, relayToken },
+        headers: {
+          Accept:
+            'application/pdf, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/zip, application/octet-stream, application/json, */*',
+        },
+        data: { reason: input.reason, relayToken, ...(password ? { password } : {}) },
         responseType: 'blob',
       },
       { skipGlobalErrorAlert: true }

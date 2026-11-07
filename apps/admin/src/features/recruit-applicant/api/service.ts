@@ -4,6 +4,7 @@ import { toAdminListPage, type AdminListPage } from '@/shared/lib/admin-infinite
 import { getJAKoreaHomepageAdminAPICareersSubset } from '@/shared/api/generated/careers/careers-api';
 import { mapCareerTalentApplicationDetail, mapCareerTalentApplicationListItem, toNumericId, toTalentApplicationListParams, } from './mappers';
 import { toRevealPiiQueryParam } from '@/shared/lib/homepage-pii';
+import { downloadHomepageProtectedAttachment, homepageRecruitAttachmentUrl } from '@/shared/lib/protected-attachment-download';
 export type RecruitApplicantConfirmInput = {
     id: string;
     version: number;
@@ -41,20 +42,13 @@ export async function getRecruitApplicantService(id: string, options?: {
     }
     return mapped;
 }
-export async function downloadRecruitApplicantAttachmentService(id: string, assetId?: number | null): Promise<{
-    downloadUrl: string;
-    originalName?: string;
-} | null> {
+export async function downloadRecruitApplicantAttachmentService(id: string, assetId: number | null | undefined, password: string, fallbackFileName: string): Promise<void> {
     const numericId = toNumericId(id);
-    const response = assetId != null && assetId > 0
-        ? await careersApi().attachmentDownloadByAsset2(numericId, assetId)
-        : await careersApi().attachmentDownload2(numericId);
-    if (!response.downloadUrl)
-        return null;
-    return {
-        downloadUrl: response.downloadUrl,
-        originalName: response.originalName,
-    };
+    await downloadHomepageProtectedAttachment({
+        url: homepageRecruitAttachmentUrl(numericId, assetId),
+        password,
+        fallbackFileName,
+    });
 }
 export async function listRecruitApplicantsPageService(filter: RecruitApplicantListFilter | undefined, page: number): Promise<AdminListPage<RecruitApplicant>> {
     return listRemote(filter, page);

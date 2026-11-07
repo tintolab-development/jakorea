@@ -6,6 +6,7 @@
  * @see apps/cms/docs/api/client-file-access-log-backend-handoff.md
  */
 
+import { formatContainedPiiLead } from '@jakorea/domain/shared/file-download-password'
 import type { DownloadLog, RecordDownloadPayload } from '@/types/download-log'
 import { postFileAccessLog } from '@/shared/lib/post-file-access-log'
 import { queryClient } from '@/shared/lib/query-client'
@@ -61,6 +62,8 @@ export async function recordFileDownload(payload: RecordDownloadPayload): Promis
       userName,
       ipAddress,
       downloadedAt,
+      kind: '-',
+      containedPiiLabel: formatContainedPiiLead([]),
     }
   }
 
@@ -70,5 +73,7 @@ export async function recordFileDownload(payload: RecordDownloadPayload): Promis
     userName,
     ipAddress,
     downloadedAt,
+    kind: '-',
+    containedPiiLabel: formatContainedPiiLead([]),
   })
 }

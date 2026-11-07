@@ -1,3 +1,13 @@
+import {
+  CONSENT_SENSITIVE_FILE_FORBIDDEN_CODE,
+  CONSENT_SENSITIVE_FILE_FORBIDDEN_MESSAGE,
+  DOWNLOAD_PASSWORD_INVALID_CODE,
+  DOWNLOAD_PASSWORD_INVALID_SERVER_MESSAGE,
+  DOWNLOAD_PASSWORD_REQUIRED_CODE,
+  DOWNLOAD_PASSWORD_REQUIRED_MESSAGE,
+  isFileDownloadPasswordErrorCode,
+  messageForProtectedDownloadErrorCode,
+} from '@jakorea/domain/shared/file-download-password'
 import { extractApiErrorMessage } from '@/shared/lib/extract-api-error-message'
 
 const PAYMENT_STATEMENT_STATUS_CONFLICT = 'PAYMENT_STATEMENT_STATUS_CONFLICT'
@@ -8,6 +18,7 @@ const PAYMENT_STATEMENT_CONFLICT_FALLBACK =
 const GENERIC_SETTLEMENT_API_MESSAGES = new Set([
   '요청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
   '요청 처리 중 오류가 발생했습니다.',
+  '요청한 변경이 기존 데이터와 충돌합니다.',
 ])
 
 export const SETTLEMENT_EXPORT_FILE_ALREADY_DOWNLOADED =
@@ -98,6 +109,9 @@ const SETTLEMENT_BULK_CONFIRM_ERROR_MESSAGES: Record<string, string> = {
     '지급조서 사전 동의서를 작성·완료하세요. 등록된 정산 계좌가 없어 계좌이체를 생성할 수 없습니다.',
   SETTLEMENT_ACCOUNT_UPDATE_VIA_CONSENT_ONLY:
     '정산 계좌는 지급조서 사전 동의서에서만 입력·수정할 수 있습니다.',
+  [DOWNLOAD_PASSWORD_REQUIRED_CODE]: DOWNLOAD_PASSWORD_REQUIRED_MESSAGE,
+  [DOWNLOAD_PASSWORD_INVALID_CODE]: DOWNLOAD_PASSWORD_INVALID_SERVER_MESSAGE,
+  [CONSENT_SENSITIVE_FILE_FORBIDDEN_CODE]: CONSENT_SENSITIVE_FILE_FORBIDDEN_MESSAGE,
 }
 
 /** FE가 서버 공통 문구를 덮어쓰는 export/tax 코드 (접미사 포함 raw도 동일) */
@@ -220,6 +234,16 @@ function messageForNormalizedCode(
 export function getSettlementApiErrorMessage(error: unknown, fallback: string): string {
   const response = readAxiosResponse(error)
   if (response) {
+    const protectedDownloadMessage = messageForProtectedDownloadErrorCode(
+      normalizeSettlementApiErrorCode(readRawErrorCode(response.data))?.stableCode
+    )
+    if (protectedDownloadMessage) {
+      const serverMessage = extractApiErrorMessage(response.data, {
+        httpStatus: response.status,
+        fallback: protectedDownloadMessage,
+      }).trim()
+      return serverMessage || protectedDownloadMessage
+    }
     if (response.status === 403) {
       return '정산 관리 조회 권한이 없습니다. 관리자 계정으로 다시 로그인해 주세요.'
     }
@@ -296,6 +320,10 @@ export function getSettlementConfigErrorField(
   if (code === SETTLEMENT_CONFIG_WITHHOLDING_RATE_INVALID) return 'withholdingRate'
   if (code === SETTLEMENT_CONFIG_WITHHOLDING_AMOUNT_INVALID) return 'withholdingAmount'
   return undefined
+}
+
+export function isFileDownloadPasswordApiError(error: unknown): boolean {
+  return isFileDownloadPasswordErrorCode(getSettlementApiErrorCode(error))
 }
 
 export function isPaymentStatementStatusConflictError(error: unknown): boolean {

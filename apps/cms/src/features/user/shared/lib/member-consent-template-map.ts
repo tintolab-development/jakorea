@@ -83,6 +83,12 @@ export function isMemberCrimeConsentField(fieldKey: MemberConsentFieldKey): bool
   return fieldKey === 'consentSexOffenseCheck'
 }
 
+/** 0483 — 성범죄·행정정보 동의서 열람·다운로드 제한 대상 */
+export function isSensitiveConsentDocumentLabel(label: string): boolean {
+  const fieldKey = resolveMemberConsentTemplateByLabel(label)?.fieldKey
+  return fieldKey === 'consentSexOffenseCheck' || fieldKey === 'consentAdministrativeJoint'
+}
+
 export function isAgreementMemberConsentField(
   fieldKey: MemberConsentFieldKey
 ): fieldKey is Exclude<MemberConsentFieldKey, 'consentSexOffenseCheck'> {

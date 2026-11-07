@@ -60,6 +60,7 @@ type PaymentOrderDetailViewShared = {
   calcStatementLoading?: boolean
   calcStatementError?: unknown
   calcStatementId?: number | null
+  calcSettlementId?: number | null
   openCalculationStatement: (lineRow: PaymentOrderCalculationStatementLineRow) => void
   closeCalculationStatement: () => void
   resetCalcAndClose: () => void
@@ -110,6 +111,7 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
     calcStatementLoading,
     calcStatementError,
     calcStatementId,
+    calcSettlementId,
     openCalculationStatement,
     closeCalculationStatement,
     resetCalcAndClose,
@@ -245,6 +247,7 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
         loadError={calcStatementError}
         paymentOrdersRemote={paymentOrdersRemote}
         statementId={calcStatementId}
+        settlementId={calcSettlementId}
         detailContextQuery={detailContextQuery}
         onStatementLineCommitted={handleStatementLineCommitted}
         onAfterRejectResultClosed={closeCalculationStatement}

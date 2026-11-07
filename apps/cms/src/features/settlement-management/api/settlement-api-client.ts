@@ -1,7 +1,7 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
-import type { BulkDownloadEndpointResponse } from '@/features/user/api/download-bulk-endpoint'
 import { getJAKoreaCMSBackendAPISettlementSubset } from '@/shared/api/generated/settlement/settlement-api'
 import customInstance from '@/shared/api/orval-mutator'
+import { postEncryptedAdminFile } from '@/shared/lib/post-encrypted-admin-file'
 import type {
   AccountPaymentDetailResponse,
   BudgetSummaryParams,
@@ -19,7 +19,6 @@ import type {
   SettlementBulkStatusChangeRequest,
   SettlementConfigResponse,
   SettlementCorrectionRequest,
-  SettlementDocumentDownloadResponse,
   SettlementExportRequest,
   SettlementExportHistoryResponse,
   SettlementFrontendResponse,
@@ -99,10 +98,17 @@ export async function fetchAccountPaymentDetailRemote(
   return unwrapApiBody(await settlementApi.getAccountPayment(paymentId, { reason }))
 }
 
+/** POST 암호화 PDF 스트림. GET preview JSON/downloadUrl은 쓰지 않는다. */
 export async function downloadPaymentStatementRemote(
-  settlementId: number
-): Promise<SettlementDocumentDownloadResponse> {
-  return unwrapApiBody(await settlementApi.downloadPaymentStatement(settlementId))
+  settlementId: number,
+  options: { password: string }
+): Promise<void> {
+  await postEncryptedAdminFile({
+    url: `/api/admin/settlements/${settlementId}/payment-statement/download`,
+    password: options.password,
+    fallbackFileName: `지급조서_${settlementId}.pdf`,
+    alternateUrls: [`/api/admin/settlements/${settlementId}/payment-statement/download-requests`],
+  })
 }
 
 export async function fetchPaymentStatementRenderDataRemote(settlementId: number) {
@@ -124,40 +130,17 @@ export async function requestSettlementCorrectionRemote(
   await settlementApi.requestCorrection(settlementId, body)
 }
 
-/** 선택 정산 건 지급조서 ZIP — OpenAPI `POST …/payment-statements/bulk-download/jobs` */
+/** 선택 정산 건 지급조서 ZIP — POST blob. job 폴링/CLIENT_RENDER 없음. */
 export async function bulkDownloadPaymentStatementsRemote(body: {
   settlementIds: number[]
-}): Promise<BulkDownloadEndpointResponse> {
-  const job = unwrapApiBody(
-    await settlementApi.paymentStatements({ settlementIds: body.settlementIds })
-  ) as import('@/shared/api/generated/settlement/schemas/bulkDownloadJobResponse').BulkDownloadJobResponse
-
-  const status = (job.status ?? '').trim().toUpperCase()
-  if (status === 'CLIENT_RENDER_REQUIRED') {
-    throw new Error('CLIENT_RENDER_REQUIRED')
-  }
-
-  const fileObjectId = job.zipJob?.fileObjectId ?? job.fileObjectIds?.[0]
-  if (fileObjectId != null) {
-    const { getFileDownload } = await import('@/shared/lib/admin-file-upload')
-    const resolved = await getFileDownload(fileObjectId)
-    const url = resolved.downloadUrl?.trim()
-    if (url) return { downloadEndpoint: url }
-  }
-
-  // 레거시 hand-wrap path (스펙 외) — 서버가 아직 jobs만 지원하면 404 → 호출부 건별 fallback
-  try {
-    return unwrapApiBody(
-      await customInstance<BulkDownloadEndpointResponse>({
-        url: '/api/admin/settlements/payment-statements/bulk-download',
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        data: body,
-      })
-    )
-  } catch {
-    throw new Error('지급조서 일괄 다운로드 URL이 없습니다.')
-  }
+  password: string
+}): Promise<void> {
+  await postEncryptedAdminFile({
+    url: '/api/admin/settlements/payment-statements/bulk-download/jobs',
+    password: body.password,
+    extraBody: { settlementIds: body.settlementIds },
+    fallbackFileName: '지급조서_일괄.zip',
+  })
 }
 
 export async function resolvePaymentStatementIdForSettlement(
@@ -190,16 +173,34 @@ export async function markAccountPaymentFailedRemote(
 export async function requestBulkTransferExportRemote(
   body: SettlementExportRequest
 ): Promise<SettlementExportHistoryResponse> {
+  const call = settlementApi.requestBulkTransferExport
+  if (typeof call === 'function') {
+    return unwrapApiBody<SettlementExportHistoryResponse>(await call(body))
+  }
   return unwrapApiBody<SettlementExportHistoryResponse>(
-    await settlementApi.requestBulkTransferExport(body)
+    await customInstance({
+      url: '/api/admin/settlements/exports/bulk-transfer',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      data: body,
+    })
   )
 }
 
 export async function requestTaxReportExportRemote(
   body: SettlementExportRequest
 ): Promise<SettlementExportHistoryResponse> {
+  const call = settlementApi.requestTaxReportExport
+  if (typeof call === 'function') {
+    return unwrapApiBody<SettlementExportHistoryResponse>(await call(body))
+  }
   return unwrapApiBody<SettlementExportHistoryResponse>(
-    await settlementApi.requestTaxReportExport(body)
+    await customInstance({
+      url: '/api/admin/settlements/exports/tax-report',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      data: body,
+    })
   )
 }
 
