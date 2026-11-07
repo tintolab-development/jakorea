@@ -27381,10 +27381,12 @@
             "type": "string"
           },
           "instructorPhone": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "instructorName": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "assistantInstructorNames": {
             "type": "string"
@@ -27422,7 +27424,8 @@
             "type": "string"
           },
           "feePayee": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "trainingSessionCount": {
             "type": "integer",
@@ -27497,61 +27500,75 @@
         "properties": {
           "rowNumber": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "minimum": 1,
+            "description": "1-based. FE uses rowNumber-1 as upload row index."
           },
           "status": {
             "type": "string",
-            "description": "대소문자 고정. SUCCESS+paymentExclusionReason=실적만(지급/정산 미생성). FAILED=시간 역전·필수값·부분 기재(NAME_AND_PHONE_REQUIRED)·모호 매칭(AMBIGUOUS)·지급완료 overwrite 차단 등 진짜 검증 실패. GEMINI_INSTRUCTOR_NOT_MATCHED(이름·연락처 있으나 미매칭)는 FAILED가 아니라 SUCCESS+paymentExclusionReason.",
+            "description": "SUCCESS+paymentExclusionReason=실적만(지급/정산 미생성). FAILED=시간 역전·필수값·부분 기재(NAME_AND_PHONE_REQUIRED)·정보 불일치(NOT_MATCHED)·모호 매칭(AMBIGUOUS)·지급완료 overwrite 차단 등. 강사명·연락처 공란은 SUCCESS+GEMINI_INSTRUCTOR_IDENTITY_BLANK. 회원 미확정+외부 지급처만 SUCCESS+GEMINI_INSTRUCTOR_EXTERNAL_PAYEE.",
             "enum": [
               "SUCCESS",
               "FAILED"
             ]
           },
           "message": {
-            "type": "string"
+            "type": "string",
+            "nullable": true,
+            "description": "FAILED 시 GEMINI_INSTRUCTOR_NOT_MATCHED, GEMINI_INSTRUCTOR_MATCH_AMBIGUOUS, GEMINI_INSTRUCTOR_NAME_AND_PHONE_REQUIRED, GEMINI_TRAINING_REPORT_ACCOUNT_PAID 등 안정 코드와 안전한 한국어. SUCCESS 지급 제외는 안내 문구."
           },
           "trainingReportId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "nullable": true
           },
           "accountPaymentId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "nullable": true,
+            "description": "지급 완료(PAID)이거나 import가 account_payment를 생성한 경우에만. 지급 제외(IDENTITY_BLANK/EXTERNAL_PAYEE)와 preview 미생성 건은 null."
           },
           "trainingMinutes": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "classCount": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "calculatedAmount": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "nullable": true
           },
           "matchedInstructorMemberId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "nullable": true,
+            "description": "서버가 강사명·연락처를 회원 정보와 재검증해 확정한 경우에만. 요청 instructorMemberId를 그대로 반환하지 않음. 미확정은 null."
           },
           "assistantInstructorCount": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "deliveryType": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "duplicate": {
             "type": "boolean"
           },
           "paymentExclusionReason": {
             "type": "string",
-            "description": "계좌 지급 제외 사유. 지급 대상이면 null. SUCCESS와 함께 오면 회원 검증 생략·계좌지급/정산 미생성·실적만. ZERO_CALCULATED_FEE=산출 강사비 0원, GEMINI_WAGE_RATE_NOT_CONFIGURED=해당 연수 유형·차시 단가 미설정, GEMINI_INSTRUCTOR_IDENTITY_BLANK=강사명·연락처 완전 미기재, GEMINI_INSTRUCTOR_NOT_MATCHED=이름·연락처 있으나 강사 회원 미매칭",
+            "description": "계좌 지급 제외 사유. 지급 대상이면 null. SUCCESS와 함께 오면 계좌지급/정산 미생성·실적만. ZERO_CALCULATED_FEE / GEMINI_WAGE_RATE_NOT_CONFIGURED / GEMINI_INSTRUCTOR_IDENTITY_BLANK / GEMINI_INSTRUCTOR_EXTERNAL_PAYEE. GEMINI_INSTRUCTOR_NOT_MATCHED는 행 FAILED 코드.",
             "enum": [
               "ZERO_CALCULATED_FEE",
               "GEMINI_WAGE_RATE_NOT_CONFIGURED",
               "GEMINI_INSTRUCTOR_IDENTITY_BLANK",
-              "GEMINI_INSTRUCTOR_NOT_MATCHED"
+              "GEMINI_INSTRUCTOR_EXTERNAL_PAYEE"
             ],
             "nullable": true
           }
@@ -28526,6 +28543,12 @@
             "description": "기관 신청 담당 교사 회원 id",
             "nullable": true
           },
+          "teacherSchoolOrganizationId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "담당 교사 소속 학교 organizationId. PATCH /api/admin/organizations/schools/{organizationId}/teachers/{teacherMemberId}/employment-status 의 path와 같다. 소속 학교가 없으면 null. 교사 상세 GET으로 보완하지 않는다",
+            "nullable": true
+          },
           "teacherName": {
             "type": "string",
             "nullable": true
@@ -28614,7 +28637,14 @@
             "nullable": true
           },
           "officialDocumentRequired": {
-            "type": "boolean"
+            "type": "boolean",
+            "nullable": true,
+            "description": "공문 필요 여부. 한글 라벨(필요/필요 없음)은 FE 렌더"
+          },
+          "officialDocumentRequiredInfo": {
+            "type": "string",
+            "nullable": true,
+            "description": "기관 신청 폼 공문 필요 정보 원문. 없으면 null. BE는 '-'를 넣지 않는다"
           },
           "submittedAt": {
             "type": "string",
@@ -53078,11 +53108,12 @@
           },
           "paymentExclusionReason": {
             "type": "string",
-            "description": "계좌 지급 제외 사유. 지급 대상이면 null. GEMINI_INSTRUCTOR_IDENTITY_BLANK=강사명·연락처 완전 미기재로 실적만 등록, GEMINI_INSTRUCTOR_NOT_MATCHED=이름·연락처 있으나 강사 회원 미매칭으로 실적만 등록",
+            "description": "계좌 지급 제외 사유. 지급 대상이면 null. GEMINI_INSTRUCTOR_IDENTITY_BLANK=강사명·연락처 완전 미기재로 실적만 등록, GEMINI_INSTRUCTOR_EXTERNAL_PAYEE=회원 미확정+외부 지급처로 실적만 등록, GEMINI_INSTRUCTOR_NOT_MATCHED=과거 적재분",
             "enum": [
               "ZERO_CALCULATED_FEE",
               "GEMINI_WAGE_RATE_NOT_CONFIGURED",
               "GEMINI_INSTRUCTOR_IDENTITY_BLANK",
+              "GEMINI_INSTRUCTOR_EXTERNAL_PAYEE",
               "GEMINI_INSTRUCTOR_NOT_MATCHED"
             ],
             "nullable": true

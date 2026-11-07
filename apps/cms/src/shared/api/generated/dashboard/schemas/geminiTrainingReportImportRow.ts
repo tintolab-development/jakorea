@@ -10,8 +10,8 @@ export interface GeminiTrainingReportImportRow {
   programId?: number;
   instructorMemberId?: number;
   instructorEmail?: string;
-  instructorPhone?: string;
-  instructorName?: string;
+  instructorPhone?: string | null;
+  instructorName?: string | null;
   assistantInstructorNames?: string;
   trainingLocation?: string;
   schoolOrOrganizationName?: string;
@@ -21,7 +21,7 @@ export interface GeminiTrainingReportImportRow {
   trainingMinutes?: number;
   sourceTimestamp?: string;
   trainingType?: string;
-  feePayee?: string;
+  feePayee?: string | null;
   trainingSessionCount?: number;
   participantCount?: number;
   trainingTopic?: string;

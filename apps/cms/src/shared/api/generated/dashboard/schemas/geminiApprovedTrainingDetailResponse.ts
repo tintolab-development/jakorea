@@ -69,6 +69,11 @@ export interface GeminiApprovedTrainingDetailResponse {
   managerName?: string;
   /** 기관 신청 담당 교사 회원 id */
   teacherMemberId?: number | null;
+  /**
+   * 담당 교사 소속 학교 organizationId. PATCH /api/admin/organizations/schools/{organizationId}/teachers/{teacherMemberId}/employment-status 의 path와 같다. 소속 학교가 없으면 null. 교사 상세 GET으로 보완하지 않는다
+   * @nullable
+   */
+  teacherSchoolOrganizationId?: number | null;
   teacherName?: string | null;
   /** MALE|FEMALE|OTHER 또는 한글 표시 원문 */
   teacherGender?: string | null;
@@ -92,7 +97,10 @@ export interface GeminiApprovedTrainingDetailResponse {
   teacherInstructorFeeGrade?: string | null;
   teacherBusinessIncomeLabel?: string | null;
   teacherOneLineIntro?: string | null;
-  officialDocumentRequired?: boolean;
+  /** 공문 필요 여부. 한글 라벨(필요/필요 없음)은 FE 렌더 */
+  officialDocumentRequired?: boolean | null;
+  /** 기관 신청 폼 공문 필요 정보 원문. 없으면 null. BE는 '-'를 넣지 않는다 */
+  officialDocumentRequiredInfo?: string | null;
   submittedAt?: string;
   approvedAt?: string;
   updatedAt?: string;

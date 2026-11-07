@@ -65412,6 +65412,12 @@
             "format": "int64",
             "nullable": true
           },
+          "teacherSchoolOrganizationId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "description": "담당 교사 소속 학교 organizationId. PATCH /api/admin/organizations/schools/{organizationId}/teachers/{teacherMemberId}/employment-status 의 path와 같다. 소속 학교가 없으면 null. 교사 상세 GET으로 보완하지 않는다"
+          },
           "teacherName": {
             "type": "string",
             "nullable": true
@@ -65499,7 +65505,13 @@
           },
           "officialDocumentRequired": {
             "type": "boolean",
-            "nullable": true
+            "nullable": true,
+            "description": "공문 필요 여부. 한글 라벨(필요/필요 없음)은 FE 렌더"
+          },
+          "officialDocumentRequiredInfo": {
+            "type": "string",
+            "nullable": true,
+            "description": "기관 신청 폼 공문 필요 정보 원문. 없으면 null. BE는 '-'를 넣지 않는다"
           },
           "submittedAt": {
             "type": "string",
