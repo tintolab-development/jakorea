@@ -4,6 +4,7 @@
  */
 
 import type { InstructorAssignmentListItemResponse } from '@/shared/api/generated/dashboard/schemas/instructorAssignmentListItemResponse'
+import { getSeoulCalendarDate } from '@/shared/utils/date'
 import type { WaitingInstructorAssignmentStatus } from '@/features/program/general/lib/waiting-instructor-assignment'
 import type {
   InstructorAssignmentCalendarItem,
@@ -25,10 +26,17 @@ const ACTIVE_ASSIGNMENT_STATUSES = new Set([
   'IN_PROGRESS',
 ])
 
-/** YYYY-MM-DD 키. `YYYY. MM. DD` · ISO datetime · `2026-09-12(금)` 허용 */
+const ISO_INSTANT_WITH_OFFSET =
+  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})/u
+
+/** YYYY-MM-DD 키. UTC Instant는 Asia/Seoul 달력일. 타임존 없는 로컬 시각은 문자열 날짜를 유지한다. */
 export function extractLectureDateKey(value: string | null | undefined): string | null {
   if (!value?.trim()) return null
   const trimmed = value.trim()
+  if (ISO_INSTANT_WITH_OFFSET.test(trimmed)) {
+    const stamp = new Date(trimmed)
+    if (!Number.isNaN(stamp.getTime())) return getSeoulCalendarDate(stamp)
+  }
   const isoDate = trimmed.match(/(\d{4})-(\d{2})-(\d{2})/)
   if (isoDate) return `${isoDate[1]}-${isoDate[2]}-${isoDate[3]}`
   const dotted = trimmed.match(/(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})/)

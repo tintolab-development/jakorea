@@ -24,6 +24,7 @@ import {
   getApiErrorHttpStatus,
 } from '@/shared/lib/extract-api-error-message'
 import { formatApplicationEligibilityConflictMessage } from '@/features/program/shared/lib/application-eligibility-conflict'
+import { formatApplicationDecisionCancelConflictMessage } from '@/features/program/shared/lib/application-decision-cancel-conflict'
 import { formatApplicationStatusConflictMessage } from '@/features/program/shared/lib/application-status-conflict'
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
@@ -297,6 +298,7 @@ export function useApplicantsDetail({
       isTrainedTeachersSurface ? false : usesProgramInstitutionApplications,
     instructorColumnPreset,
     individualScreeningStage,
+    listFilters: appliedFilters,
     setInstitutionList,
     setInstructorList,
     setIndividualList,
@@ -343,6 +345,7 @@ export function useApplicantsDetail({
         title: '처리 실패',
         content:
           getNotificationTimingApiErrorMessage(error) ??
+          formatApplicationDecisionCancelConflictMessage(error) ??
           formatOrganizationApplicationApproveErrorMessage(error) ??
           formatApplicationEligibilityConflictMessage(error) ??
           formatApplicationStatusConflictMessage(error) ??
@@ -462,6 +465,21 @@ export function useApplicantsDetail({
         }
         const refreshAfterDecision = async () => {
           await institutionApplicationsRemote.invalidateApplications()
+          // TT 진행현황 「참여 기관」은 organization-applications와 별도 쿼리 키 — 승인·반려 후 즉시 refetch되도록 함
+          if (isTrainedTeachersSurface && programId) {
+            await queryClient.invalidateQueries({
+              queryKey: trainedTeacherQueryKeys.participatingInstitutionsProgram(programId),
+            })
+            await queryClient.invalidateQueries({
+              queryKey: trainedTeacherQueryKeys.performanceSummary(programId),
+            })
+            await queryClient.invalidateQueries({
+              queryKey: trainedTeacherQueryKeys.overviewStages(),
+            })
+            await queryClient.invalidateQueries({
+              queryKey: trainedTeacherQueryKeys.lists(),
+            })
+          }
           if (decision === 'approve') {
             const refresh = programId
               ? organizationApprovalRefreshTargets(programId, ids)
@@ -530,10 +548,15 @@ export function useApplicantsDetail({
         if (
           [
             'ORGANIZATION_APPROVE_REQUESTED_SCHEDULE_INVALID',
+            'ORGANIZATION_APPROVE_SCHEDULE_SELECTOR_CONFLICT',
+            'ORGANIZATION_APPROVE_SCHEDULE_NOT_REQUESTED',
+            'ORGANIZATION_APPROVE_PREFERRED_SCHEDULE_REQUIRED',
             'TRAINED_TEACHER_PREFERRED_SCHEDULE_INVALID',
             'TRAINED_TEACHER_PREFERRED_SCHEDULE_NOT_SUPPORTED',
             'TRAINED_TEACHER_PREFERRED_SCHEDULE_PERIOD_REQUIRED',
             'TRAINED_TEACHER_PREFERRED_SCHEDULE_OUTSIDE_PERIOD',
+            'TRAINED_TEACHER_PREFERRED_SCHEDULE_CONFLICT',
+            'TRAINED_TEACHER_PREFERRED_SCHEDULE_SUBMITTED_REQUIRED',
           ].includes(errorCode ?? '')
         ) {
           for (const id of ids) {
@@ -810,10 +833,9 @@ export function useApplicantsDetail({
         await refresh()
         if ((response.failureCount ?? failures.length) > 0) {
           const lines = failures.map(failure => {
-            const code = failure.code?.trim()
             const message = failure.message?.trim() || '처리하지 못했습니다.'
             const id = failure.id != null ? `${failure.id}: ` : ''
-            return `${id}${message}${code ? ` (${code})` : ''}`
+            return `${id}${message}`
           })
           showAlert({
             title: '일부 승인 실패',
@@ -1020,6 +1042,9 @@ export function useApplicantsDetail({
     const applicationsLoading =
       applicationsRemote.applicationsLoading || trainedTeacherApplicationsRemote.applicationsLoading
     if (applicationsLoading) return
+    if (isTrainedTeachersSurface && !trainedTeacherApplicationsRemote.isRemoteDataSource) return
+    // TT 목록 query 성공 직후 institutionList state 동기화 전에는 지문 id를 유지한다.
+    if (isTrainedTeachersSurface && institutionList.length === 0) return
     setSearchParams(
       prevParams => {
         const next = new URLSearchParams(prevParams)
@@ -1037,6 +1062,9 @@ export function useApplicantsDetail({
     setSearchParams,
     applicationsRemote.applicationsLoading,
     trainedTeacherApplicationsRemote.applicationsLoading,
+    trainedTeacherApplicationsRemote.isRemoteDataSource,
+    isTrainedTeachersSurface,
+    institutionList.length,
   ])
 
   useEffect(() => {
@@ -1673,23 +1701,36 @@ export function useApplicantsDetail({
       reason: string,
       notification?: import('@/features/program/general/api/applications-api-client').InstructorApplicationNotificationRequest
     ): Promise<InstitutionCancelApprovalResult> => {
-      if (isTrainedTeachersSurface || !applicationsRemote.remoteEnabled) {
+      if (!institutionApplicationsRemote.remoteEnabled) {
         notifyProgramApiUnavailable(
-          'general-org-application-cancel-approval',
-          '일반 프로그램 · 기관 신청 승인 취소'
+          isTrainedTeachersSurface
+            ? 'trained-teacher-org-application-cancel-approval'
+            : 'general-org-application-cancel-approval',
+          isTrainedTeachersSurface
+            ? '교육받은 교사 · 기관 신청 승인 취소'
+            : '일반 프로그램 · 기관 신청 승인 취소'
         )
         return { status: 'unavailable' }
       }
       try {
-        const response = await applicationsRemote.cancelOrganizationApproval(id, {
+        const response = await institutionApplicationsRemote.cancelOrganizationApproval(id, {
           reason: reason.trim() || '승인 취소',
           ...(notification ? { notification } : {}),
         })
-        await applicationsRemote.invalidateApplications()
+        await institutionApplicationsRemote.invalidateApplications()
         if (programId) {
+          const refresh = organizationApprovalRefreshTargets(programId, [id])
           await queryClient.invalidateQueries({
             queryKey: generalApplicationsQueryKeys.organizationDetail(id),
           })
+          if (isTrainedTeachersSurface) {
+            await queryClient.invalidateQueries({
+              queryKey: trainedTeacherQueryKeys.organizationApplication(programId, id),
+            })
+            await queryClient.invalidateQueries({
+              queryKey: trainedTeacherQueryKeys.organizationApplicationsProgram(programId),
+            })
+          }
           await queryClient.invalidateQueries({
             queryKey: generalProgramProgressQueryKeys.institutions(programId),
           })
@@ -1699,6 +1740,11 @@ export function useApplicantsDetail({
           await queryClient.invalidateQueries({
             queryKey: generalProgramQueryKeys.navigation(programId),
           })
+          await queryClient.invalidateQueries({ queryKey: refresh.educationSlots })
+          await queryClient.invalidateQueries({ queryKey: refresh.schedules })
+          for (const queryKey of refresh.organizationScheduleAssignments) {
+            await queryClient.invalidateQueries({ queryKey })
+          }
         }
         return { status: 'ok', response }
       } catch (error) {
@@ -1707,7 +1753,7 @@ export function useApplicantsDetail({
       }
     },
     [
-      applicationsRemote,
+      institutionApplicationsRemote,
       isTrainedTeachersSurface,
       notifyRemoteDecisionFailure,
       programId,

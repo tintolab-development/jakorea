@@ -9,7 +9,7 @@ import type { Sheet } from '@fortune-sheet/core'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
 import type { AccountPaymentRow } from '@/features/settlement-management/model/account-payments-list'
-import type { SettlementExportHistoryResponse } from '@/shared/api/generated/settlement/schemas'
+import type { SettlementExportResponse } from '@/features/settlement-management/api/account-payments/settlement-export-response'
 import {
   downloadIssuedSettlementExportFile,
   downloadIssuedSettlementExportFileOrReissue,
@@ -26,6 +26,7 @@ import {
   loadBulkTransferWithholdingAmounts,
 } from '@/pages/settlement-management/bulk-transfer-withholding'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
+import { useProtectedFileDownload } from '@/shared/lib/use-protected-file-download'
 import './bulk-transfer-preview-modal.css'
 
 const Workbook = lazy(() => import('./bulk-transfer-fortune-workbook'))
@@ -34,8 +35,8 @@ export interface BulkTransferPreviewModalProps {
   open: boolean
   onCancel: () => void
   rows: AccountPaymentRow[]
-  serverExport?: SettlementExportHistoryResponse | null
-  onReissueExport?: () => Promise<SettlementExportHistoryResponse | null>
+  serverExport?: SettlementExportResponse | null
+  onReissueExport?: () => Promise<SettlementExportResponse | null>
 }
 
 export function BulkTransferPreviewModal({
@@ -45,6 +46,7 @@ export function BulkTransferPreviewModal({
   serverExport,
   onReissueExport,
 }: BulkTransferPreviewModalProps) {
+  const { runProtectedDownload, filePasswordModal } = useProtectedFileDownload()
   const usesServerFile = serverExport?.deliveryMethod === 'SERVER_FILE'
   const serverFileReady =
     usesServerFile &&
@@ -76,7 +78,11 @@ export function BulkTransferPreviewModal({
     return [sheet]
   }, [previewRows])
 
-  const handleDownload = useCallback(async () => {
+  const handleDownload = useCallback(() => {
+    runProtectedDownload({
+      kind: 'BULK_TRANSFER_EXCEL',
+      zIndex: 1400,
+      download: async password => {
     try {
       if (serverExport?.deliveryMethod === 'SERVER_FILE') {
         if (serverExport.fileObjectId == null) {
@@ -91,12 +97,14 @@ export function BulkTransferPreviewModal({
           await downloadIssuedSettlementExportFileOrReissue({
             serverExport,
             kind: 'bulk-transfer',
+            password,
             onReissue: onReissueExport,
           })
         } else {
           await downloadIssuedSettlementExportFile({
             serverExport,
             kind: 'bulk-transfer',
+            password,
           })
         }
         return
@@ -119,10 +127,15 @@ export function BulkTransferPreviewModal({
         issueButtonLabel: '대량이체 양식 발급',
         onAlreadyDownloaded: onCancel,
       })
+      throw error
     }
-  }, [onCancel, onReissueExport, previewRows, serverExport])
+      },
+    })
+  }, [onCancel, onReissueExport, previewRows, runProtectedDownload, serverExport])
 
   return (
+    <>
+    {filePasswordModal}
     <ContentModal
       open={open}
       onCancel={onCancel}
@@ -142,7 +155,8 @@ export function BulkTransferPreviewModal({
             icon={<ButtonDownloadIcon />}
             adminAction="download"
             disabled={usesServerFile && !serverFileReady}
-            onClick={() => void handleDownload()} >
+            onClick={() => void handleDownload()}
+          >
             엑셀 다운로드
           </CmsButton>
         </>
@@ -171,5 +185,6 @@ export function BulkTransferPreviewModal({
         ) : null}
       </div>
     </ContentModal>
+    </>
   )
 }

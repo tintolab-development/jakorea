@@ -53,7 +53,7 @@
   box-sizing: border-box;
   align-items: center;
   justify-content: space-between;
-  padding-bottom: 40px;
+  min-height: 44px;
   flex-shrink: 0;
 }
 
@@ -72,7 +72,7 @@
 
 .docTitle {
   margin: 0;
-  color: #296075;
+  color: #285f74;
   font-family: Pretendard, sans-serif;
   font-size: 40px;
   font-weight: 700;

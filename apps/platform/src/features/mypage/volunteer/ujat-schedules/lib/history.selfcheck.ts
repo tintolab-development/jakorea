@@ -17,6 +17,7 @@ import {
   isAssignedUjatSchedule,
   isUjatVolunteerOwnScheduleRecord,
   resolveScheduleAttendanceQueryErrorMessage,
+  resolveScheduleCheckInErrorMessage,
   resolveUjatScheduleDayStatus,
   resolveUjatVolunteerWithdrawnDetailView,
 } from './history.ts'
@@ -407,6 +408,42 @@ assert.equal(
     item({ id: 'jan', heldAt: '2026-01-15T10:00:00+09:00' }),
   ])[0]?.monthLabel,
   '1월',
+)
+
+function checkInAxios(code: string, message: string) {
+  return {
+    response: {
+      status: 403,
+      data: {
+        success: false,
+        data: null,
+        message,
+        error: { code, message },
+      },
+    },
+  }
+}
+
+assert.equal(
+  resolveScheduleCheckInErrorMessage(
+    checkInAxios(
+      'ORGANIZATION_PORTAL_CHECK_IN_NOT_AVAILABLE',
+      '일반 기관 프로그램은 포털 출석 체크인을 지원하지 않습니다. 관리자 출결로 처리됩니다.',
+    )
+  ),
+  '일반 기관 프로그램은 포털 출석 체크인을 지원하지 않습니다. 관리자 출결로 처리됩니다.',
+)
+assert.equal(
+  resolveScheduleCheckInErrorMessage(
+    checkInAxios('UJAT_VOLUNTEER_ATTENDANCE_REQUIRED', 'UJAT 봉사 출석은 지정된 출석 절차로 처리해 주세요.')
+  ),
+  'UJAT 봉사 출석은 지정된 출석 절차로 처리해 주세요.',
+)
+assert.equal(
+  resolveScheduleCheckInErrorMessage(
+    checkInAxios('PORTAL_CHECK_IN_NOT_AVAILABLE', '포털에서 출석 체크인을 할 수 없습니다.')
+  ),
+  '포털에서 출석 체크인을 할 수 없습니다.',
 )
 
 console.log('ujat volunteer withdrawal history.selfcheck: ok')

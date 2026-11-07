@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import {
+  displayGeminiBusinessIncome,
   displayGeminiSummaryField,
   GEMINI_LECTURE_SCHEDULES_PATH,
   GEMINI_SETTLEMENT_SUMMARY_PATH,
@@ -19,3 +20,9 @@ assert.equal(displayGeminiSummaryField(2), '2')
 assert.equal(displayGeminiSummaryField('GRADE_2'), 'GRADE_2')
 
 console.log('gemini-settlement-status.selfcheck: ok')
+
+assert.equal(displayGeminiBusinessIncome({ businessIncome: true, businessIncomeLabel: '사업소득자' }), '해당')
+assert.equal(displayGeminiBusinessIncome({ businessIncome: null, businessIncomeLabel: '사업소득자' }), '해당')
+assert.equal(displayGeminiBusinessIncome({ businessIncome: false, businessIncomeLabel: null }), '해당 없음')
+assert.equal(displayGeminiBusinessIncome({ businessIncomeLabel: '사업소득자 아님' }), '해당 없음')
+assert.equal(displayGeminiBusinessIncome(null), '-')

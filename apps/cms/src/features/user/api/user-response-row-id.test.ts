@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   coercePositiveInt,
+  copyUserResponseResendIds,
   isUserResponseDisplayRowId,
   resolveCanonicalUserDetailId,
 } from './user-response-row-id'
@@ -19,6 +20,21 @@ describe('user-response-row-id', () => {
   it('coercePositiveInt — 문자열 숫자 허용', () => {
     expect(coercePositiveInt('12')).toBe(12)
     expect(coercePositiveInt(0)).toBeUndefined()
+  })
+
+  it('copyUserResponseResendIds — 양수만 복사', () => {
+    expect(
+      copyUserResponseResendIds({
+        instructorRoleRequestId: 55,
+        adminAccountId: null,
+      })
+    ).toEqual({ instructorRoleRequestId: 55 })
+    expect(
+      copyUserResponseResendIds({
+        instructorRoleRequestId: 0,
+        adminAccountId: undefined,
+      })
+    ).toEqual({})
   })
 
   it('resolveCanonicalUserDetailId — admin slug → admin-account-{id}', () => {

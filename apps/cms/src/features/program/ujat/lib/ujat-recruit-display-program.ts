@@ -49,9 +49,55 @@ function rowString(
     | 'contactName'
     | 'contactPhone'
     | 'contactEmail'
+    | 'documentPassAnnouncementAt'
+    | 'documentPassAnnouncementMethod'
+    | 'finalPassAnnouncementAt'
+    | 'finalPassAnnouncementMethod'
+    | 'interviewMethod'
+    | 'volunteerTargetDetail'
 ): string | undefined {
   if (!hasOwnField(row, key) || row[key] === undefined) return undefined
-  return row[key] ?? ''
+  const value = row[key]
+  return value == null ? '' : String(value)
+}
+
+function blankUjatInstitutionRecruitDisplayFields(program: Program): Program {
+  return {
+    ...program,
+    applicationStartDate: undefined,
+    applicationEndDate: undefined,
+    startDate: '',
+    endDate: '',
+    resultAnnouncementDate: undefined,
+    resultAnnouncementMethod: undefined,
+    contactName: '',
+    contactPhone: '',
+    contactEmail: '',
+    managerName: '',
+    description: undefined,
+    recruitmentGuide: undefined,
+    applicationMethod: undefined,
+    additionalContentHtml: undefined,
+    oneLineIntroduction: undefined,
+    generalCommonInfo: {
+      ...program.generalCommonInfo,
+      announcementTitle: undefined,
+      participantRecruitmentInfo: {
+        ...program.generalCommonInfo?.participantRecruitmentInfo,
+        announcementPublished: undefined,
+        contactOrganizationName: undefined,
+        contactName: '',
+        contactPhone: '',
+        contactEmail: '',
+        inquiryTel: '',
+        inquiryEmail: '',
+        remarks: undefined,
+        educationTarget: undefined,
+        recruitmentTarget: undefined,
+        notesNotApplicable: undefined,
+      },
+    },
+  }
 }
 
 /** UJAT GET — 봉사 반기는 recruitTerm만. startAt 정렬로 h1/h2를 추측하지 않는다. */
@@ -80,6 +126,12 @@ function applyUjatRecruitmentRowCanonicalFields(
   const contactEmail = rowString(row, 'contactEmail')
   const startAt = rowString(row, 'startAt')
   const endAt = rowString(row, 'endAt')
+  const documentPassAt = rowString(row, 'documentPassAnnouncementAt')
+  const documentPassMethod = rowString(row, 'documentPassAnnouncementMethod')
+  const finalPassAt = rowString(row, 'finalPassAnnouncementAt')
+  const finalPassMethod = rowString(row, 'finalPassAnnouncementMethod')
+  const interviewMethod = rowString(row, 'interviewMethod')
+  const volunteerTargetDetail = rowString(row, 'volunteerTargetDetail')
   const volunteerInfo = {
     ...(program.generalCommonInfo?.volunteerRecruitmentInfo ?? {}),
     ...(contactName
@@ -123,15 +175,26 @@ function applyUjatRecruitmentRowCanonicalFields(
   }
   return {
     ...program,
-    ...(hasOwnField(row, 'volunteerTargets') && row.volunteerTargets
-      ? { volunteerTargets: row.volunteerTargets }
-      : {}),
-    ...(hasOwnField(row, 'documentPassAnnouncementAt')
-      ? { documentPassAnnouncementDate: row.documentPassAnnouncementAt ?? '' }
-      : {}),
-    ...(hasOwnField(row, 'finalPassAnnouncementAt')
-      ? { finalPassAnnouncementDate: row.finalPassAnnouncementAt ?? '' }
-      : {}),
+    ...(options?.volunteerHalf
+      ? {
+          volunteerTargets: hasOwnField(row, 'volunteerTargets') ? (row.volunteerTargets ?? []) : [],
+          volunteerTargetDetail: volunteerTargetDetail ?? '',
+          documentPassAnnouncementDate: documentPassAt ?? '',
+          documentPassAnnouncementMethod: documentPassMethod ?? '',
+          interviewMethod: interviewMethod ?? '',
+          finalPassAnnouncementDate: finalPassAt ?? '',
+          finalPassAnnouncementMethod: finalPassMethod ?? '',
+          resultAnnouncementDate: '',
+          resultAnnouncementMethod: '',
+          volunteerApplicationStartDate: startAt ?? '',
+          volunteerApplicationEndDate: endAt ?? '',
+        }
+      : {
+          resultAnnouncementDate: finalPassAt ?? '',
+          resultAnnouncementMethod: finalPassMethod ?? '',
+          applicationStartDate: startAt ?? '',
+          applicationEndDate: endAt ?? '',
+        }),
     startDate: opStart ?? '',
     endDate: opEnd ?? '',
     interviewStartDate: interviewStart ?? '',
@@ -140,15 +203,6 @@ function applyUjatRecruitmentRowCanonicalFields(
     contactName: contactName ?? '',
     contactPhone: contactPhone ?? '',
     contactEmail: contactEmail ?? '',
-    ...(options?.volunteerHalf
-      ? {
-          ...(startAt !== undefined ? { volunteerApplicationStartDate: startAt } : {}),
-          ...(endAt !== undefined ? { volunteerApplicationEndDate: endAt } : {}),
-        }
-      : {
-          ...(startAt !== undefined ? { applicationStartDate: startAt } : {}),
-          ...(endAt !== undefined ? { applicationEndDate: endAt } : {}),
-        }),
     generalCommonInfo: {
       ...program.generalCommonInfo,
       ...(options?.volunteerHalf
@@ -279,7 +333,11 @@ export function resolveUjatRecruitCanonicalDisplayProgram(
     audience === 'volunteer' && half
       ? pickUjatVolunteerRecruitmentRow(fromRows, half)
       : pickRecruitmentCopyRow(fromRows, audience, half ?? undefined)
-  if (!row) return fromRows
+  if (!row) {
+    return kind === 'institution'
+      ? blankUjatInstitutionRecruitDisplayFields(program)
+      : blankUjatVolunteerRecruitProgramFields(program)
+  }
 
   const withCopy = applyRecruitmentRowCopy(fromRows, audience, half ?? undefined)
   return applyUjatRecruitmentRowCanonicalFields(withCopy, row, {
@@ -301,7 +359,12 @@ export function programToUjatRecruitCanonicalFormValues(
       : half
         ? pickUjatVolunteerRecruitmentRow(canonical, half)
         : pickRecruitmentCopyRow(canonical, 'volunteer')
-  if (!row) return values
+  if (!row) {
+    return {
+      ...values,
+      announcementTitle: '',
+    }
+  }
 
   const volunteerRoundIndex = kind === 'volunteer_h1' ? 0 : kind === 'volunteer_h2' ? 1 : null
   const rounds =
@@ -347,6 +410,15 @@ export function programToUjatRecruitCanonicalFormValues(
                   row.remarksNotApplicable === true ? 'not_applicable' : 'applicable',
               }
             : {}),
+          ...(hasOwnField(row, 'finalPassAnnouncementAt')
+            ? { resultAnnouncementDate: row.finalPassAnnouncementAt ?? '' }
+            : {}),
+          ...(hasOwnField(row, 'finalPassAnnouncementMethod')
+            ? { resultAnnouncementMethod: row.finalPassAnnouncementMethod ?? '' }
+            : {}),
+          ...(canonical.educationTargetDetail != null
+            ? { educationTargetDetail: canonical.educationTargetDetail }
+            : {}),
         }
       : {
           ...(hasOwnField(row, 'startAt')
@@ -376,8 +448,20 @@ export function programToUjatRecruitCanonicalFormValues(
           ...(hasOwnField(row, 'documentPassAnnouncementAt')
             ? { documentPassAnnouncementDate: row.documentPassAnnouncementAt ?? '' }
             : {}),
+          ...(hasOwnField(row, 'documentPassAnnouncementMethod')
+            ? { documentPassAnnouncementMethod: row.documentPassAnnouncementMethod ?? '' }
+            : {}),
           ...(hasOwnField(row, 'finalPassAnnouncementAt')
             ? { finalPassAnnouncementDate: row.finalPassAnnouncementAt ?? '' }
+            : {}),
+          ...(hasOwnField(row, 'finalPassAnnouncementMethod')
+            ? { finalPassAnnouncementMethod: row.finalPassAnnouncementMethod ?? '' }
+            : {}),
+          ...(hasOwnField(row, 'interviewMethod')
+            ? { interviewMethod: row.interviewMethod ?? '' }
+            : {}),
+          ...(hasOwnField(row, 'volunteerTargetDetail')
+            ? { volunteerTargetDetail: row.volunteerTargetDetail ?? '' }
             : {}),
           ...(hasOwnField(row, 'interviewConfig')
             ? { volunteerInterviewConfig: row.interviewConfig ?? {} }
@@ -501,6 +585,12 @@ export function applyUjatRecruitFormValuesToProgram(
   }
   return {
     ...program,
+    ...(isInstitution
+      ? {
+          educationTargetDetail: values.educationTargetDetail?.trim() || undefined,
+          remarks: values.oneLineIntroduction?.trim() || program.remarks,
+        }
+      : {}),
     programRecruitments: existingTarget
       ? rows.map(row => (row === existingTarget ? nextRow : row))
       : [...rows, nextRow],

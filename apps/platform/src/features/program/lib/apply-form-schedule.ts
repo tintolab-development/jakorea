@@ -34,6 +34,10 @@ import {
 } from '../../../shared/lib/education-schedule-name.ts'
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
+import {
+  isApplicationSexOffenseInquiryParagraphId,
+  isApplicationSexOffenseSubmissionParagraphId,
+} from './apply-form-paragraph-ids.ts'
 import type { WritingFormDraft } from '@jakorea/form-schema/writing-form'
 import { toSeoulDateOnly, toSeoulDisplayParts } from '../../../shared/lib/format-display-date.ts'
 import { readApplyScheduleMetaFromProgram } from './apply-form-schedule-meta.ts'
@@ -883,6 +887,23 @@ export const TRAINED_TEACHERS_REQUIRED_CONSENT_IDS = [
   'program-application-trained-teachers-seed-third-party',
 ] as const
 
+const FORM_REQUIRED_CONSENT_ID_MARKERS = ['seed-personal-info', 'seed-third-party'] as const
+
+function isAlwaysRequiredApplicationConsentParagraphId(id: string): boolean {
+  return FORM_REQUIRED_CONSENT_ID_MARKERS.some(marker => id.includes(marker))
+}
+
+function isRequiredBottomConsentParagraph(paragraph: WritingFormDraft['paragraphs'][number]): boolean {
+  if (isApplicationSexOffenseSubmissionParagraphId(paragraph.id)) return false
+  if (isApplicationSexOffenseInquiryParagraphId(paragraph.id)) return false
+  if (!('showBottomConsent' in paragraph) || paragraph.showBottomConsent !== true) return false
+  if (isAlwaysRequiredApplicationConsentParagraphId(paragraph.id)) return true
+  return (
+    ('answerRequired' in paragraph && paragraph.answerRequired === true) ||
+    ('requiredMark' in paragraph && paragraph.requiredMark === true)
+  )
+}
+
 export function findMissingRequiredBottomConsentId(
   draft: WritingFormDraft | null | undefined
 ): string | null {
@@ -904,12 +925,8 @@ export function findMissingRequiredBottomConsentId(
   }
 
   const requiredConsent = draft.paragraphs.find(paragraph => {
-    if (!('showBottomConsent' in paragraph) || paragraph.showBottomConsent !== true) return false
-    const required =
-      ('answerRequired' in paragraph && paragraph.answerRequired === true) ||
-      ('requiredMark' in paragraph && paragraph.requiredMark === true)
-    if (!required) return false
-    return paragraph.bottomConsent !== 'agree'
+    if (!isRequiredBottomConsentParagraph(paragraph)) return false
+    return !('bottomConsent' in paragraph) || paragraph.bottomConsent !== 'agree'
   })
   return requiredConsent?.id ?? null
 }

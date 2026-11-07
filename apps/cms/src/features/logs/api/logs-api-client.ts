@@ -83,8 +83,16 @@ function toOrvalListParams<T>(filters: Record<string, string>): T {
 export async function fetchFileAccessLogsRemote(
   params: Record<string, string>
 ): Promise<LogListPageResponseDownloadLogFrontendResponse> {
+  const call = logsRemoteApi.fileAccessLogs
+  if (typeof call === 'function') {
+    return unwrapBody(await call(toOrvalListParams<FileAccessLogsParams>(params)))
+  }
   return unwrapBody(
-    await logsRemoteApi.fileAccessLogs(toOrvalListParams<FileAccessLogsParams>(params))
+    await customInstance({
+      url: '/api/admin/logs/file-access',
+      method: 'GET',
+      params: toOrvalListParams<FileAccessLogsParams>(params),
+    })
   )
 }
 

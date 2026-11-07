@@ -125,7 +125,7 @@ export function mapIndividualSettlementDetailToDraft(input: {
         : emptySettlementTripLeg(),
     },
     extraItems,
-    meal: { amount: '', fileNames: [] },
-    activity: { amount: '', fileNames: [] },
+    meal: { amount: '', fileNames: [], attachments: [] },
+    activity: { amount: '', fileNames: [], attachments: [] },
   }
 }

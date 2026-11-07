@@ -24,13 +24,35 @@ export function hasExplicitApplicationAction(
   return Array.isArray(availableActions) && availableActions.includes(action)
 }
 
-/**
- * 참여자 신청 상세 — 신청 반려 시 [반려 취소].
- * 스펙은 `approvalStatus=rejected` 기준이며, BE `availableActions`에
- * `CANCEL_REJECTION`이 없거나 빈 배열이어도 노출한다.
- */
-export function canCancelParticipantApplicationRejection(
-  _availableActions?: string[]
+export function isApprovalCancelledApplicationStatus(
+  applicationStatus?: string | null
 ): boolean {
-  return true
+  return applicationStatus?.trim().toUpperCase() === 'APPROVAL_CANCELLED'
+}
+
+/**
+ * 신청 반려 복원 CTA. REJECTED는 `CANCEL_REJECTION` 레거시 허용(undefined).
+ * APPROVAL_CANCELLED는 BE가 명시한 경우에만 노출한다. 동일 복구 API로 가정하지 않는다.
+ */
+export function canRestoreRejectedApplication(input: {
+  availableActions?: string[]
+  applicationStatus?: string | null
+}): boolean {
+  if (isApprovalCancelledApplicationStatus(input.applicationStatus)) {
+    return hasExplicitApplicationAction(
+      input.availableActions,
+      APPLICATION_ACTION_CANCEL_REJECTION
+    )
+  }
+  return canPerformApplicationAction(
+    input.availableActions,
+    APPLICATION_ACTION_CANCEL_REJECTION
+  )
+}
+
+/** @deprecated use canRestoreRejectedApplication */
+export function canCancelParticipantApplicationRejection(
+  availableActions?: string[]
+): boolean {
+  return canRestoreRejectedApplication({ availableActions })
 }

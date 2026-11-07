@@ -2,9 +2,11 @@ import type { ReactNode } from 'react'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ApprovalStatusText } from '@/shared/components/approval-status-text'
+import { SendNotiButton } from '@/features/program/shared/ui/detail-modal/components/send-noti-button'
+import '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-basic-info.css'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import { formatGeneralJaVolunteerExperienceLabel } from '@/features/program/general/lib/volunteer-screening-constants'
-import { mapVolunteerDocumentStatusToApprovalStatus } from '@/features/program/general/lib/volunteer-application-detail-visibility'
+import { mapVolunteerProgramApprovalStatus } from '@/features/program/general/lib/volunteer-application-detail-visibility'
 import { resolveGeneralEffectiveSecondInterviewStatus } from '@/features/program/general/lib/general-volunteer-interview2-display'
 import { IndividualApplicantId1365Cell } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/individual-screening-sections'
 import {
@@ -33,11 +35,13 @@ export interface GeneralVolunteerApplicantBasicInfoProps {
   applicant: GeneralVolunteerApplicantRow
   maskSensitive: boolean
   statusRow?: GeneralVolunteerApplicantBasicInfoStatusRow
+  onResendDocumentNotificationClick?: () => void
 }
 
 function resolveStatusField(
   applicant: GeneralVolunteerApplicantRow,
-  statusRow: GeneralVolunteerApplicantBasicInfoStatusRow
+  statusRow: GeneralVolunteerApplicantBasicInfoStatusRow,
+  onResendDocumentNotificationClick?: () => void
 ): { label: string; value: ReactNode } {
   if (statusRow === 'second_interview') {
     const effectiveStatus = resolveGeneralEffectiveSecondInterviewStatus(applicant)
@@ -55,7 +59,17 @@ function resolveStatusField(
   if (statusRow === 'interview_assignment') {
     return {
       label: '면접일 배정 현황',
-      value: <GeneralInterviewAssignmentStatusText status={applicant.interviewAssignmentStatus} />,
+      value: (
+        <div className="applicant-institution-basic-info__approval-status-row">
+          <GeneralInterviewAssignmentStatusText status={applicant.interviewAssignmentStatus} />
+          {onResendDocumentNotificationClick ? (
+            <>
+              <span className="applicant-institution-basic-info__approval-status-vbar" aria-hidden />
+              <SendNotiButton mode="resend" onClick={onResendDocumentNotificationClick} />
+            </>
+          ) : null}
+        </div>
+      ),
     }
   }
 
@@ -63,16 +77,24 @@ function resolveStatusField(
     return {
       label: '프로그램 승인 현황',
       value: (
-        <ApprovalStatusText
-          status={mapVolunteerDocumentStatusToApprovalStatus(applicant.documentScreeningStatus)}
-        />
+        <ApprovalStatusText status={mapVolunteerProgramApprovalStatus(applicant)} />
       ),
     }
   }
 
   return {
     label: '1차 서류 심사 현황',
-    value: <GeneralDocumentScreeningStatusText status={applicant.documentScreeningStatus} />,
+    value: (
+      <div className="applicant-institution-basic-info__approval-status-row">
+        <GeneralDocumentScreeningStatusText status={applicant.documentScreeningStatus} />
+        {onResendDocumentNotificationClick ? (
+          <>
+            <span className="applicant-institution-basic-info__approval-status-vbar" aria-hidden />
+            <SendNotiButton mode="resend" onClick={onResendDocumentNotificationClick} />
+          </>
+        ) : null}
+      </div>
+    ),
   }
 }
 
@@ -80,6 +102,7 @@ export function GeneralVolunteerApplicantBasicInfo({
   applicant,
   maskSensitive,
   statusRow = 'document_screening',
+  onResendDocumentNotificationClick,
 }: GeneralVolunteerApplicantBasicInfoProps) {
   const contactDisplay = maskSensitive ? applicant.contact : applicant.contactRaw
   const emailDisplay = maskSensitive ? applicant.email : applicant.emailRaw
@@ -101,7 +124,10 @@ export function GeneralVolunteerApplicantBasicInfo({
       applicant.name
     )
 
-  const statusField = statusRow === 'none' ? null : resolveStatusField(applicant, statusRow)
+  const statusField =
+    statusRow === 'none'
+      ? null
+      : resolveStatusField(applicant, statusRow, onResendDocumentNotificationClick)
 
   return (
     <section className="general-volunteer-applicant-basic-info">

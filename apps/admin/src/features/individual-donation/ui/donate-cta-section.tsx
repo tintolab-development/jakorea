@@ -82,7 +82,7 @@ export function DonateCtaSectionCard({ donateCta }: Props) {
         render: (_value, record) =>
           isEditing ? (
             <CmsInput
-              inputSize="medium"
+              inputSize="small"
               width="100%"
               value={draftLabel}
               onChange={e => setDraftLabel(e.target.value)}
@@ -103,7 +103,7 @@ export function DonateCtaSectionCard({ donateCta }: Props) {
           if (isEditing) {
             return (
               <CmsInput
-                inputSize="medium"
+                inputSize="small"
                 width="100%"
                 value={draftLink}
                 onChange={e => setDraftLink(e.target.value)}

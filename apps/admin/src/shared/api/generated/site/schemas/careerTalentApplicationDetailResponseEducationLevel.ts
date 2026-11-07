@@ -6,7 +6,10 @@
  * OpenAPI spec version: v1
  */
 
-export type CareerTalentApplicationDetailResponseEducationLevel = typeof CareerTalentApplicationDetailResponseEducationLevel[keyof typeof CareerTalentApplicationDetailResponseEducationLevel];
+/**
+ * Stored education level.
+ */
+export type CareerTalentApplicationDetailResponseEducationLevel = typeof CareerTalentApplicationDetailResponseEducationLevel[keyof typeof CareerTalentApplicationDetailResponseEducationLevel] | null;
 
 
 export const CareerTalentApplicationDetailResponseEducationLevel = {

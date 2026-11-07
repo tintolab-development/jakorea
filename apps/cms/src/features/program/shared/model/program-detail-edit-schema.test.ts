@@ -4,6 +4,7 @@ import { SPONSOR_CONTACT_UNSELECTED_VALUE } from '@/features/program/shared/lib/
 import {
   detailEditValuesToProgramPatch,
   narrowProgramDetailPatchForCommonInfoSave,
+  narrowTrainedTeacherCommonInfoSavePatch,
   programDetailCompanySchoolCommonInfoEditSchema,
   programDetailEditSchema,
   programDetailTrainedTeachersCommonInfoEditSchema,
@@ -108,6 +109,31 @@ describe('narrowProgramDetailPatchForCommonInfoSave', () => {
     expect(narrowed.generalCommonInfo?.instructorRecruitmentInfo).toBeUndefined()
     expect(narrowed.generalCommonInfo?.volunteerRecruitmentInfo).toBeUndefined()
     expect(narrowed.generalCommonInfo?.kpi).toBeTruthy()
+  })
+})
+
+describe('narrowTrainedTeacherCommonInfoSavePatch', () => {
+  it('공통정보 저장에서 루트 remarks를 유지하고 일정·모집 nested는 뺀다', () => {
+    const tt = {
+      ...program,
+      id: '186560',
+      backendProgramType: 'TRAINED_TEACHER' as const,
+      remarks: '예전 비고',
+      mainTitle: '기존 대표',
+    } as Program
+    const values = {
+      ...programToDetailEditValues(tt),
+      remarks: '정본 비고',
+      mainTitle: '수정된 대표명',
+    }
+    const narrowed = narrowTrainedTeacherCommonInfoSavePatch(
+      detailEditValuesToProgramPatch(values, tt)
+    )
+    expect(narrowed.remarks).toBe('정본 비고')
+    expect(narrowed.mainTitle).toBe('수정된 대표명')
+    expect(narrowed.rounds).toBeUndefined()
+    expect(narrowed.applicationEndDate).toBeUndefined()
+    expect(narrowed.generalCommonInfo?.participantRecruitmentInfo).toBeUndefined()
   })
 })
 
@@ -299,7 +325,7 @@ describe('programToDetailEditValues contactPhone (모집 문의처)', () => {
     expect(values.contactPhone).toBeUndefined()
   })
 
-  it('TT 는 담당자 미선택·nested 비어 있어도 top-level 평문 Tel 폴백을 유지한다', () => {
+  it('TT 는 담당자 미선택·nested 비어 있으면 프로그램 컬럼 Tel 로 모집 문의를 채우지 않는다', () => {
     const values = programToDetailEditValues({
       ...program,
       id: '186005',
@@ -312,7 +338,7 @@ describe('programToDetailEditValues contactPhone (모집 문의처)', () => {
       },
     } as Program)
 
-    expect(values.contactPhone).toBe('010-8681-6741')
+    expect(values.contactPhone).toBeUndefined()
   })
 })
 
@@ -893,6 +919,30 @@ describe('trained teachers recruitment edit round-trip', () => {
     expect(display.contactOrganizationName).toBe('수정문의처')
     expect(display.notes).toBe('수정된 비고')
     expect(draft.generalCommonInfo?.participantRecruitmentInfo?.maxAssignableInstructors).toBe(0)
+  })
+
+  it('참여자 모집 문의처를 비우면 프로그램 컬럼·nested 로 채우지 않는다', () => {
+    const patch = detailEditValuesToProgramPatch(
+      {
+        ...programToDetailEditValues(ttProgram),
+        recruitmentContactOrganizationName: '',
+        contactPhone: '',
+        contactEmail: '',
+      },
+      {
+        ...ttProgram,
+        contactName: '이하은',
+        contactPhone: '031-234-5678',
+        contactEmail: 'recruit@jakorea.org',
+      },
+      { recruitmentAudience: 'participant' }
+    )
+    expect(patch.contactName).toBeUndefined()
+    expect(patch.contactPhone).toBeUndefined()
+    expect(patch.contactEmail).toBeUndefined()
+    expect(patch.generalCommonInfo?.participantRecruitmentInfo?.contactName).toBeUndefined()
+    expect(patch.generalCommonInfo?.participantRecruitmentInfo?.inquiryTel).toBeUndefined()
+    expect(patch.generalCommonInfo?.participantRecruitmentInfo?.inquiryEmail).toBeUndefined()
   })
 })
 

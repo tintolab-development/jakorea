@@ -76,9 +76,9 @@ describe('individual instructor lecture assign schedule', () => {
     const slots = parseIndividualInstructorLectureAssignSchedule(createIndividualProgram())
 
     expect(slots).toHaveLength(2)
-    expect(slots[0]?.sessionLabel).toBe('1차시')
+    expect(slots[0]?.sessionLabel).toBe('1회차')
     expect(slots[0]?.timeRange).toBe('09:30 ~ 12:20')
-    expect(slots[1]?.sessionLabel).toBe('2차시')
+    expect(slots[1]?.sessionLabel).toBe('2회차')
   })
 
   it('승인 payload에 일정 id만 넣고 리드 여부를 넣지 않는다', () => {

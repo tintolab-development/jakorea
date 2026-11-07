@@ -1,4 +1,5 @@
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
+import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import {
   createLectureReportIssuanceDraft,
   normalizeWritingFormDraft,
@@ -7,12 +8,17 @@ import {
   type ScaleTypeParagraph,
   type ShortEssayParagraph,
   type StarRateParagraph,
+  type UserInfoParagraph,
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
+import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 import type { Program } from '@/types/domain'
+import { formatEducationScheduleLabelTokens } from '@/shared/lib/education-schedule-name'
 
 export const LECTURE_REPORT_DOCUMENT_TITLE = '강의보고서'
+
+export const LECTURE_REPORT_INSTRUCTOR_INFO_PARAGRAPH_ID = 'lecture-report-instructor-info'
 
 export interface LectureReportPreviewRowContext {
   id: string
@@ -22,6 +28,12 @@ export interface LectureReportPreviewRowContext {
   schoolName: string
   educationGrade: string
   educationScheduleLabel: string
+  lectureDate?: string
+  sessionNo?: number
+  curriculumSessionCount?: number
+  scheduleRole?: string
+  educationSlotKey?: string
+  timeLabel?: string
 }
 
 export interface LectureReportPreviewFile {
@@ -43,6 +55,7 @@ export interface LectureReportPreviewContext {
   program?: Program | null
   row: LectureReportPreviewRowContext
   content?: LectureReportPreviewContent | null
+  hideInstitutionFields: boolean
 }
 
 export function buildLectureReportPreviewContext(
@@ -51,7 +64,25 @@ export function buildLectureReportPreviewContext(
   row: LectureReportPreviewRowContext,
   content?: LectureReportPreviewContent | null
 ): LectureReportPreviewContext {
-  return { instructor, program, row, content }
+  return {
+    instructor,
+    program,
+    row,
+    content,
+    hideInstitutionFields: program != null && isGeneralIndividualProgram(program),
+  }
+}
+
+export function lectureReportPreviewParagraphBodyOptions(
+  ctx: LectureReportPreviewContext
+): RenderFormParagraphBodyOptions {
+  return {
+    lectureReportProgramLinkedPreview: true,
+    lectureReportFiles: ctx.content?.files ?? [],
+    lectureReportHideInstitutionFields: ctx.hideInstitutionFields,
+    hideTitleRequiredMark: true,
+    userInfoPreviewValues: { name: ctx.instructor.instructorName?.trim() || '-' },
+  }
 }
 
 const LECTURE_REPORT_PROGRESS_KEYS = [
@@ -77,13 +108,31 @@ function parseEducationScheduleLabel(label: string): {
   sessionIndex: string
   timeLabel: string
 } {
-  const pipeParts = label.split('|').map(part => part.trim())
-  const sessionLabel = pipeParts.find(part => /\d+\s*회차/.test(part)) ?? ''
-  const sessionIndex = sessionLabel.replace(/회차$/, '').trim()
-  const rangePart = pipeParts[0]?.trim() ?? label
-  const [startDateLabel = ''] = rangePart.split('~').map(part => part.trim())
-  const timeLabel = pipeParts.find(part => /\d{1,2}:\d{2}/.test(part)) ?? ''
+  const raw = label.trim()
+  const pipeParts = raw.split(/\s*[|·]\s*/u).map(part => part.trim()).filter(Boolean)
+  const sessionPart =
+    pipeParts.find(part => /\d+\s*회차/.test(part)) ??
+    pipeParts.find(part => /\d+\s*차시/.test(part)) ??
+    ''
+  const sessionIndex = sessionPart.replace(/\s+/g, '')
+  const rangePart = pipeParts[0] ?? raw
+  const dateOnly = rangePart.replace(/\d{1,2}:\d{2}.*$/, '').trim()
+  const [startDateLabel = ''] = dateOnly.split('~').map(part => part.trim())
+  const timeRange = raw.match(/(\d{1,2}:\d{2})\s*[~\-–]\s*(\d{1,2}:\d{2})/)
+  const timeLabel = timeRange
+    ? `${timeRange[1]} ~ ${timeRange[2]}`
+    : pipeParts.find(part => /\d{1,2}:\d{2}/.test(part) && !/회차|차시/.test(part)) ??
+      raw.match(/\d{1,2}:\d{2}/)?.[0] ??
+      ''
   return { startDateLabel, sessionIndex, timeLabel }
+}
+
+function pickNonEmpty(...candidates: Array<string | undefined | null>): string {
+  for (const candidate of candidates) {
+    const trimmed = candidate?.trim() ?? ''
+    if (trimmed && trimmed !== '-') return trimmed
+  }
+  return ''
 }
 
 function toIsoDateFromLabel(dateLabel: string): string {
@@ -122,19 +171,34 @@ function fillProgramProgressParagraph(
     ctx.row.educationScheduleLabel
   )
   const p = paragraph as LectureReportProgramProgressParagraph
+  const parsedDate = toIsoDateFromLabel(startDateLabel) || startDateLabel
+  const lectureDate = ctx.row.lectureDate?.trim()
+    ? toIsoDateFromLabel(ctx.row.lectureDate) || ctx.row.lectureDate
+    : ''
+  const sessionFromNo = formatEducationScheduleLabelTokens({
+    sessionNo: ctx.row.sessionNo,
+    curriculumSessionCount: ctx.row.curriculumSessionCount,
+    scheduleRole: ctx.row.scheduleRole,
+    educationSlotKey: ctx.row.educationSlotKey,
+  }).join(' · ')
   return {
     ...p,
-    programName: resolveProgramTitle(ctx.program),
-    textbookName: ctx.program?.textbookName?.trim() || '',
-    progressUnit: '',
-    institutionName: ctx.row.schoolName,
-    institutionLocation: '',
-    educationDate: toIsoDateFromLabel(startDateLabel) || startDateLabel,
-    sessionTime: timeLabel,
-    sessionIndex: sessionIndex ? `${sessionIndex}회차` : '',
-    educationTarget: ctx.row.educationGrade === '-' ? '' : ctx.row.educationGrade,
-    classLabel: '',
-    studentCount: '',
+    programName: pickNonEmpty(p.programName, resolveProgramTitle(ctx.program)),
+    textbookName: pickNonEmpty(p.textbookName, ctx.program?.textbookName),
+    progressUnit: pickNonEmpty(p.progressUnit),
+    institutionName: ctx.hideInstitutionFields
+      ? ''
+      : pickNonEmpty(p.institutionName, ctx.row.schoolName),
+    institutionLocation: ctx.hideInstitutionFields ? '' : pickNonEmpty(p.institutionLocation),
+    educationDate: pickNonEmpty(p.educationDate, lectureDate, parsedDate),
+    sessionTime: pickNonEmpty(p.sessionTime, ctx.row.timeLabel, timeLabel),
+    sessionIndex: pickNonEmpty(p.sessionIndex, sessionFromNo, sessionIndex),
+    educationTarget: pickNonEmpty(
+      p.educationTarget,
+      ctx.row.educationGrade === '-' ? '' : ctx.row.educationGrade
+    ),
+    classLabel: pickNonEmpty(p.classLabel),
+    studentCount: pickNonEmpty(p.studentCount),
   }
 }
 
@@ -147,7 +211,9 @@ function readAnswer(answers: Record<string, unknown> | undefined, key: string): 
 }
 
 function answerText(value: unknown): string | undefined {
-  return typeof value === 'string' ? value : undefined
+  if (typeof value === 'string') return value
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value)
+  return undefined
 }
 
 function applyShortEssayAnswer(
@@ -188,7 +254,10 @@ function applyLectureReportAnswer(
     return {
       ...paragraph,
       ...Object.fromEntries(
-        LECTURE_REPORT_PROGRESS_KEYS.map(key => [key, answerText(value[key]) ?? paragraph[key]])
+        LECTURE_REPORT_PROGRESS_KEYS.map(key => [
+          key,
+          pickNonEmpty(answerText(value[key]), paragraph[key]),
+        ])
       ),
     } as LectureReportProgramProgressParagraph
   }
@@ -222,6 +291,69 @@ function applyLectureReportAnswer(
   return paragraph
 }
 
+function stripLectureReportViewRequiredMark(paragraph: WritingFormParagraph): WritingFormParagraph {
+  if (paragraph.kind !== 'single_item') return paragraph
+  if (paragraph.requiredMark !== true && paragraph.answerRequired !== true) return paragraph
+  return { ...paragraph, requiredMark: false, answerRequired: false }
+}
+
+function isInstructorInfoParagraph(paragraph: WritingFormParagraph): boolean {
+  if (paragraph.id === LECTURE_REPORT_INSTRUCTOR_INFO_PARAGRAPH_ID) return true
+  if (paragraph.kind !== 'single_item' || paragraph.variant !== 'user_info') return false
+  const title = paragraph.paragraphTitle?.trim()
+  if (title === '강사 정보') return true
+  return (paragraph.selectedUserFieldKeys ?? []).includes('name')
+}
+
+function createInstructorInfoParagraph(instructorName: string): UserInfoParagraph {
+  const name = instructorName.trim()
+  return {
+    id: LECTURE_REPORT_INSTRUCTOR_INFO_PARAGRAPH_ID,
+    kind: 'single_item',
+    variant: 'user_info',
+    requiredMark: false,
+    answerRequired: false,
+    paragraphTitle: '강사 정보',
+    paragraphDescription: '',
+    participatesInTitleNumbering: false,
+    selectedUserFieldKeys: ['name'],
+    fieldAnswers: { name: name || '-' },
+  }
+}
+
+function insertInstructorInfoParagraph(
+  paragraphs: WritingFormParagraph[],
+  instructorName: string
+): WritingFormParagraph[] {
+  if (paragraphs.some(isInstructorInfoParagraph)) {
+    return paragraphs.map(paragraph => {
+      if (!isInstructorInfoParagraph(paragraph) || paragraph.variant !== 'user_info') {
+        return paragraph
+      }
+      const name = instructorName.trim() || '-'
+      return {
+        ...paragraph,
+        paragraphTitle: paragraph.paragraphTitle?.trim() || '강사 정보',
+        requiredMark: false,
+        answerRequired: false,
+        selectedUserFieldKeys:
+          paragraph.selectedUserFieldKeys?.length ? paragraph.selectedUserFieldKeys : ['name'],
+        fieldAnswers: { ...paragraph.fieldAnswers, name },
+      }
+    })
+  }
+  const instructorParagraph = createInstructorInfoParagraph(instructorName)
+  const titleIndex = paragraphs.findIndex(
+    paragraph => paragraph.kind === 'description' && paragraph.variant === 'survey_title_with_period'
+  )
+  if (titleIndex < 0) return [instructorParagraph, ...paragraphs]
+  return [
+    ...paragraphs.slice(0, titleIndex + 1),
+    instructorParagraph,
+    ...paragraphs.slice(titleIndex + 1),
+  ]
+}
+
 export function buildLectureReportFilledDraft(ctx: LectureReportPreviewContext): WritingFormDraft {
   const programTitle = resolveProgramTitle(ctx.program)
 
@@ -233,15 +365,20 @@ export function buildLectureReportFilledDraft(ctx: LectureReportPreviewContext):
   )
   const filled = {
     ...base,
-    paragraphs: base.paragraphs.map(paragraph => {
-      const withTitle = fillSurveyTitleParagraph(paragraph, programTitle)
-      return fillProgramProgressParagraph(withTitle, ctx)
-    }),
+    paragraphs: insertInstructorInfoParagraph(
+      base.paragraphs.map(paragraph => {
+        const withTitle = fillSurveyTitleParagraph(paragraph, programTitle)
+        return fillProgramProgressParagraph(withTitle, ctx)
+      }),
+      ctx.instructor.instructorName ?? ''
+    ),
   }
   return {
     ...filled,
     paragraphs: filled.paragraphs.map(paragraph =>
-      applyLectureReportAnswer(paragraph, ctx.content?.answers)
+      stripLectureReportViewRequiredMark(
+        applyLectureReportAnswer(paragraph, ctx.content?.answers)
+      )
     ),
   }
 }

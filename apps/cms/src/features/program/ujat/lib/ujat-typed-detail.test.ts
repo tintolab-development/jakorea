@@ -21,7 +21,7 @@ describe('ujat-typed-detail 변환', () => {
       excludeNone: false,
       excludeSaturday: false,
       excludeSunday: false,
-      excludePublicHoliday: false,
+      excludeHoliday: false,
     })
     expect(row?.educationName).toBe('h1')
     expect(row?.educationMethod).toBe('LEGACY')

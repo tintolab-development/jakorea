@@ -238,7 +238,8 @@ describe('evaluateOrganizationAttendanceScopeReadiness', () => {
       '1회차'
     )
     expect(text).not.toContain('학년·반')
-    expect(text).toContain('교육 일정 배정이 완료된 후 출석을 저장할 수 있습니다.')
+    expect(text).toContain('배정되지 않은 일정의 학생 출결은 저장할 수 없습니다.')
+    expect(text).toContain('기관의 교육 일정 배정을 먼저 완료해 주세요.')
   })
 })
 
@@ -262,7 +263,9 @@ describe('GENERAL_ORGANIZATION_ATTENDANCE_ASSIGNMENT_SCOPE_REQUIRED error mappin
       resolveOrganizationAttendanceScopeErrorMessage(
         apiError('GENERAL_ORGANIZATION_ATTENDANCE_ASSIGNMENT_SCOPE_REQUIRED:1694983')
       )
-    ).toBe('교육 일정 배정이 완료된 후 출석을 저장할 수 있습니다.\n기관의 교육 일정 배정을 먼저 완료해 주세요.')
+    ).toBe(
+      '배정되지 않은 일정의 학생 출결은 저장할 수 없습니다.\n기관의 교육 일정 배정을 먼저 완료해 주세요.'
+    )
   })
 
   it('leaves other codes to their existing handlers', () => {
@@ -274,6 +277,12 @@ describe('GENERAL_ORGANIZATION_ATTENDANCE_ASSIGNMENT_SCOPE_REQUIRED error mappin
     expect(
       resolveOrganizationAttendanceScopeErrorMessage(apiError('APPLICATION_DECISION_CONFLICT', 409))
     ).toBeNull()
+    expect(
+      isGeneralOrganizationAttendanceScopeRequiredError(apiError('ATTENDANCE_SCOPE_UNVERIFIED'))
+    ).toBe(true)
+    expect(resolveOrganizationAttendanceScopeErrorMessage(apiError('ATTENDANCE_SCOPE_UNVERIFIED'))).toBe(
+      '배정되지 않은 일정의 학생 출결은 저장할 수 없습니다.\n기관의 교육 일정 배정을 먼저 완료해 주세요.'
+    )
     expect(
       isGeneralOrganizationAttendanceScopeRequiredError(
         apiError('GENERAL_ORGANIZATION_ATTENDANCE_ASSIGNMENT_SCOPE_REQUIRED_X')

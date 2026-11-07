@@ -11,7 +11,9 @@ export function lectureReportWritePath(
 }
 
 export function lectureReportBackPath(applicationId: string): string {
-  return `/mypage/lectures/INSTRUCTOR/${encodeURIComponent(applicationId)}?section=lecture-report`
+  const id = applicationId.trim()
+  if (!id) return '/mypage/lectures'
+  return `/mypage/lectures/INSTRUCTOR/${encodeURIComponent(id)}?section=lecture-report`
 }
 
 /** 강의 상세(강의보고서 탭)에서 미리보기 모달을 열 때 */

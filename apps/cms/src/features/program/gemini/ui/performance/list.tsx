@@ -22,6 +22,8 @@ import {
 import {
   GEMINI_PERFORMANCE_INVALID_TEMPLATE_MESSAGE,
   GEMINI_PERFORMANCE_INVALID_TEMPLATE_TITLE,
+  GEMINI_PERFORMANCE_INSTRUCTOR_MISMATCH_MESSAGE,
+  GEMINI_PERFORMANCE_INSTRUCTOR_MISMATCH_TITLE,
   geminiPerformanceService,
 } from '../../api/performance-service'
 import { resolveGeminiDeleteGuideModalCopy } from '../../lib/delete-guide'
@@ -40,7 +42,6 @@ import {
   GEMINI_PERFORMANCE_REGISTER_BLOCKED_MESSAGE,
   GEMINI_PERFORMANCE_REGISTER_BLOCKED_TITLE,
 } from '../../lib/performance/import-popup-copy'
-import { downloadGeminiPerformanceUploadTemplate } from '../../lib/performance/download-upload-template'
 import { useGeminiPerformanceRows } from '../../hooks/use-gemini-performance-rows'
 import { GEMINI_PERFORMANCE_FILTER_FIELDS } from '../../model/performance/filter-fields'
 import type {
@@ -49,6 +50,7 @@ import type {
 } from '../../model/performance/types'
 import type { GeminiTrainingReportImportRow } from '@/shared/api/generated/dashboard/schemas/geminiTrainingReportImportRow'
 import { UploadDuplicateModal } from './upload-duplicate-modal'
+import { GeminiImportPreviewFailureError } from '../../lib/performance/import-preview-failure'
 import '@/pages/programs/program-list-page.css'
 import '../page.css'
 import './list.css'
@@ -123,6 +125,11 @@ function displayCell(value: string | number | null | undefined): string {
   if (typeof value === 'number' && !Number.isFinite(value)) return '-'
   const text = String(value).trim()
   return text && text !== '-' ? text : '-'
+}
+
+function appendPaymentExclusionNotes(baseMessage: string, notes?: string): string {
+  const normalizedNotes = notes?.trim()
+  return normalizedNotes ? `${baseMessage}\n${normalizedNotes}` : baseMessage
 }
 
 /** 서버에서 처리하지 않는 조건만 클라이언트에서 좁힌다(방식·연수일). */
@@ -211,13 +218,20 @@ export function GeminiPerformanceList() {
         showRegisterBlockedAlert()
         return
       }
+      if (
+        error instanceof GeminiImportPreviewFailureError &&
+        error.kind === 'INSTRUCTOR_INFO_MISMATCH'
+      ) {
+        showAlert({
+          title: GEMINI_PERFORMANCE_INSTRUCTOR_MISMATCH_TITLE,
+          content: GEMINI_PERFORMANCE_INSTRUCTOR_MISMATCH_MESSAGE,
+        })
+        return
+      }
       const message =
         error instanceof Error && error.message === GEMINI_PERFORMANCE_INVALID_TEMPLATE_MESSAGE
           ? GEMINI_PERFORMANCE_INVALID_TEMPLATE_MESSAGE
-          : formatGeminiApiError(
-              error,
-              '파일 업로드에 실패했습니다.\n잠시 후 다시 시도해 주세요.',
-            )
+          : formatGeminiApiError(error, '파일 업로드에 실패했습니다.\n잠시 후 다시 시도해 주세요.')
       showAlert({
         title:
           message === GEMINI_PERFORMANCE_INVALID_TEMPLATE_MESSAGE
@@ -271,7 +285,7 @@ export function GeminiPerformanceList() {
           title: '안내',
           content: formatGeminiApiError(
             error,
-            '실적 삭제를 완료하지 못했습니다.\n잠시 후 다시 시도해 주세요.',
+            '실적 삭제를 완료하지 못했습니다.\n잠시 후 다시 시도해 주세요.'
           ),
         })
       } finally {
@@ -336,7 +350,7 @@ export function GeminiPerformanceList() {
       setImporting(true)
       const endOverlay = beginFileUploadOverlay()
       try {
-        await geminiPerformanceService.applyImport(
+        const result = await geminiPerformanceService.applyImport(
           pendingImportRows,
           'append',
           pendingRemoteImportRows
@@ -345,7 +359,10 @@ export function GeminiPerformanceList() {
         clearPendingImport()
         showAlert({
           title: GEMINI_PERFORMANCE_APPEND_DONE_TITLE,
-          content: GEMINI_PERFORMANCE_APPEND_DONE_MESSAGE,
+          content: appendPaymentExclusionNotes(
+            GEMINI_PERFORMANCE_APPEND_DONE_MESSAGE,
+            result?.paymentExclusionNotes
+          ),
         })
       } catch (error) {
         showImportFailureAlert(error)
@@ -369,7 +386,7 @@ export function GeminiPerformanceList() {
       setImporting(true)
       const endOverlay = beginFileUploadOverlay()
       try {
-        await geminiPerformanceService.applyImport(
+        const result = await geminiPerformanceService.applyImport(
           pendingImportRows,
           'overwrite',
           pendingRemoteImportRows
@@ -378,7 +395,10 @@ export function GeminiPerformanceList() {
         clearPendingImport()
         showAlert({
           title: GEMINI_PERFORMANCE_OVERWRITE_DONE_TITLE,
-          content: GEMINI_PERFORMANCE_OVERWRITE_DONE_MESSAGE,
+          content: appendPaymentExclusionNotes(
+            GEMINI_PERFORMANCE_OVERWRITE_DONE_MESSAGE,
+            result?.paymentExclusionNotes
+          ),
         })
       } catch (error) {
         showImportFailureAlert(error)
@@ -402,7 +422,7 @@ export function GeminiPerformanceList() {
       setImporting(true)
       const endOverlay = beginFileUploadOverlay()
       try {
-        await geminiPerformanceService.applyImport(
+        const result = await geminiPerformanceService.applyImport(
           pendingImportRows,
           'append',
           pendingRemoteImportRows
@@ -411,7 +431,10 @@ export function GeminiPerformanceList() {
         clearPendingImport()
         showAlert({
           title: GEMINI_PERFORMANCE_APPEND_DONE_TITLE,
-          content: GEMINI_PERFORMANCE_APPEND_DONE_MESSAGE,
+          content: appendPaymentExclusionNotes(
+            GEMINI_PERFORMANCE_APPEND_DONE_MESSAGE,
+            result?.paymentExclusionNotes
+          ),
         })
       } catch (error) {
         showImportFailureAlert(error)
@@ -579,9 +602,7 @@ export function GeminiPerformanceList() {
         description={`총 ${listCount.toLocaleString()}건`}
         actions={
           showBulkDelete ? (
-            <FilterTableToolbarButton
-              variant="delete"
-              onClick={handleBulkDeleteClick} >
+            <FilterTableToolbarButton variant="delete" onClick={handleBulkDeleteClick}>
               선택 삭제
             </FilterTableToolbarButton>
           ) : null
@@ -593,13 +614,6 @@ export function GeminiPerformanceList() {
         }}
         actionsAfterExcel={
           <span className="file-upload-picker">
-            {canWrite ? (
-              <FilterTableToolbarButton
-                variant="secondary"
-                onClick={() => void downloadGeminiPerformanceUploadTemplate()} >
-                업로드 양식 다운로드
-              </FilterTableToolbarButton>
-            ) : null}
             <span className="file-upload-picker">
               {canWrite ? (
                 <input
@@ -615,7 +629,8 @@ export function GeminiPerformanceList() {
                 variant="primary"
                 tabIndex={canWrite ? -1 : undefined}
                 disabled={!canWrite || importing}
-                onClick={handleAddReportClick} >
+                onClick={handleAddReportClick}
+              >
                 연수 보고서 등록
               </FilterTableToolbarButton>
             </span>
@@ -676,6 +691,7 @@ export function GeminiPerformanceList() {
       />
       <UploadDuplicateModal
         open={duplicateModalOpen}
+        loading={importing}
         onCancel={handleDuplicateCancel}
         onOverwrite={handleDuplicateOverwrite}
         onAppend={handleDuplicateAppend}

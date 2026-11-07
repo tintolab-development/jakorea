@@ -1,135 +1,99 @@
 /**
- * 신청 강사 상세 - 기본 정보 테이블
- * 학력사항 위에 배치, 이미지 시안과 동일한 4열 그리드(성명, 프로그램 승인 현황, 성별 및 생년월일 등)
+ * 신청 강사 상세 - 기본 정보
+ *
+ * 승인 현황 테이블과 프로필 테이블을 분리해 신청 강사 상세 시안의
+ * 4열 필드 배치를 그대로 사용한다.
  */
 
-import { type ReactNode } from 'react'
-import { MASKING_POLICY } from '@/shared/constants/download-policy'
-import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
+import type { ReactNode } from 'react'
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
-import { SendNotiButton } from '@/features/program/shared/ui/detail-modal/components/send-noti-button'
+import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { ProgramApprovalStatusDetailValue } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/program-approval-status-detail-value'
 import {
-  withProgramDetailTdDivider,
+  AffiliationEmploymentStatusField,
+  formatAccountDisplayContent,
+  formatBirthDateAndAge,
+  HomeAddressDisplay,
+  InstructorBasicInfoDetailForm,
+} from '@/features/program/general/ui/detail-modal/applications/applicant-detail/instructor-basic-info-detail-form'
+import { resolveInstructorAffiliationEmploymentStatus } from '@/features/program/general/lib/instructor-affiliation-employment-display'
+import { formatJaEvaluationGradeCellDisplay } from '@/features/program/general/lib/ja-evaluation-grade-display'
+import {
+  BusinessIncomeView,
+  InstructorFeeGradeView,
+} from '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-general-instructor-fee-fields'
+import {
   ProgramDetailTdSegmentWrap,
+  withProgramDetailTdDivider,
 } from '@/features/program/shared/ui/program-detail-td-divider'
-import {
-  displayServerPiiAsIs,
-  PrivacyHomeAddressDisplay,
-} from '@/features/program/shared/lib/program-pii-display'
-import { LectureFeeBasisView } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-general-instructor-fee-fields'
-import { ApprovalStatusText } from '@/shared/components/approval-status-text'
+import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import './applicant-instructor-basic-info.css'
-
-const APPROVAL_STATUS_LABELS: Record<ApplicantInstructorRow['approvalStatus'], string> = {
-  pending: '대기 중',
-  approved: '승인 완료',
-  rejected: '참여 반려',
-  cancelled: '신청 취소',
-}
-
-function ProgramApprovalStatusValue({
-  instructor,
-  onResendNotificationClick,
-}: {
-  instructor: ApplicantInstructorRow
-  onResendNotificationClick?: () => void
-}) {
-  const status = instructor.approvalStatus
-  if (status === 'pending') {
-    return <>{APPROVAL_STATUS_LABELS.pending}</>
-  }
-  if (status === 'approved') {
-    return (
-      <div className="applicant-instructor-basic-info__approval-status-row">
-        <span>{APPROVAL_STATUS_LABELS.approved}</span>
-        <span className="applicant-instructor-basic-info__approval-status-vbar" aria-hidden />
-        <SendNotiButton mode="resend" onClick={onResendNotificationClick} />
-        {instructor.approvalNotificationSentAt ? (
-          <>
-            <span className="applicant-instructor-basic-info__approval-status-vbar" aria-hidden />
-            <span className="applicant-instructor-basic-info__approval-notification-sent-at">
-              {instructor.approvalNotificationSentAt}
-            </span>
-          </>
-        ) : null}
-      </div>
-    )
-  }
-  if (status === 'cancelled') {
-    return <ApprovalStatusText status="cancelled" />
-  }
-  if (status === 'rejected') {
-    const reason = instructor.rejectionReason ?? '-'
-    return (
-      <div className="applicant-instructor-basic-info__approval-status-row">
-        <span>{APPROVAL_STATUS_LABELS.rejected}</span>
-        <span className="applicant-instructor-basic-info__approval-status-vbar" aria-hidden />
-        <span>사유 : ({reason})</span>
-        <span className="applicant-instructor-basic-info__approval-status-vbar" aria-hidden />
-        <SendNotiButton mode="resend" onClick={onResendNotificationClick} />
-        {instructor.approvalNotificationSentAt ? (
-          <>
-            <span className="applicant-instructor-basic-info__approval-status-vbar" aria-hidden />
-            <span className="applicant-instructor-basic-info__approval-notification-sent-at">
-              {instructor.approvalNotificationSentAt}
-            </span>
-          </>
-        ) : null}
-      </div>
-    )
-  }
-  return <>-</>
-}
-
-function formatBirthDateAndAge(birthDate?: string, age?: number): string {
-  if (!birthDate && age == null) return '-'
-  const formatted = birthDate ? birthDate.split('.').join('. ') : ''
-  if (formatted && age != null) return `${formatted} (만 ${age}세)`
-  if (formatted) return formatted
-  if (age != null) return `만 ${age}세`
-  return '-'
-}
-
-function formatAccountDisplayContent(instructor: ApplicantInstructorRow, mask: boolean): ReactNode {
-  const bank = instructor.bankName ?? ''
-  const num = instructor.accountNumber ?? ''
-  const holder = instructor.accountHolder ?? ''
-  if (!bank && !num && !holder) return '-'
-  if (mask) {
-    const maskedNum = num ? MASKING_POLICY.accountNumber(num) : ''
-    const maskedHolder = holder ? MASKING_POLICY.accountHolderName(holder) : ''
-    const left = [bank, maskedNum].filter(Boolean).join(' ')
-    if (!maskedHolder) return left || '-'
-    if (!left) return maskedHolder
-    return withProgramDetailTdDivider([left, maskedHolder])
-  }
-  const left = [bank, num].filter(Boolean).join(' ')
-  if (!holder) return left || '-'
-  if (!left) return holder
-  return withProgramDetailTdDivider([left, holder])
-}
 
 export interface ApplicantInstructorBasicInfoProps {
   instructor: ApplicantInstructorRow
-  /** true면 연락처·이메일·주소·정산 계좌 마스킹 (승인 완료가 아닐 때) */
+  /** true면 연락처·이메일·주소·정산 계좌를 신청 상세 정책에 따라 마스킹 */
   maskSensitive?: boolean
-  /** 승인 상태 행(프로그램 승인 현황) 표시 여부 */
+  /** 승인 현황 테이블 표시 여부 */
   showApprovalStatus?: boolean
-  /** 한 줄 소개 행 표시 여부 */
+  /** 한 줄 소개 표시 여부 */
   showOneLineIntro?: boolean
-  /** 승인 완료 하단 테이블(강의비/사업소득자) 표시 여부. 미지정 시 승인 완료일 때만 표시 */
+  /** 기존 호출부 호환용. 신청 상세에서는 강사비/사업소득자 필드가 기본 테이블에 표시된다. */
   showPostApprovalFields?: boolean
-  /** 회원 관리 강사 상세 등: 기본 정보 테이블 맨 아래 가입일·연동 소셜 행 */
+  /** 회원 관리 강사 상세 등에서 사용하는 하단 가입 정보. */
   memberBasicInfoFooter?: {
     joinDate: string
     linkedSocial: string
   }
   onResendNotificationClick?: () => void
-  /**
-   * 승인 완료 등으로 신청 맥락 마스킹이 꺼져 있어도 주소만 읍·면·동 이후 블러 처리
-   * (개인정보 미공개 시 회원 상세 강사 탭)
-   */
   privacyMaskAddress?: boolean
+}
+
+function formatEvaluationGrade(value?: string): string {
+  return formatJaEvaluationGradeCellDisplay(value)
+}
+
+function buildAffiliationCell(instructor: ApplicantInstructorRow): ReactNode {
+  const affiliation = instructor.affiliation?.trim()
+  if (!affiliation) return '-'
+
+  const employmentStatus = resolveInstructorAffiliationEmploymentStatus(instructor)
+  const employmentBadge = employmentStatus ? (
+    <AffiliationEmploymentStatusField
+      instructorId={instructor.id}
+      affiliation={instructor.affiliation}
+      employmentStatus={employmentStatus}
+      affiliationOrganizationId={instructor.affiliationOrganizationId}
+      instructorMemberId={instructor.instructorMemberId}
+      persistRemote={false}
+    />
+  ) : null
+
+  return employmentBadge ? (
+    <ProgramDetailTdSegmentWrap>
+      {withProgramDetailTdDivider([affiliation, employmentBadge])}
+    </ProgramDetailTdSegmentWrap>
+  ) : (
+    affiliation
+  )
+}
+
+function buildStatusRows(
+  instructor: ApplicantInstructorRow,
+  showApprovalStatus: boolean,
+  onResendNotificationClick?: () => void
+): ReactNode {
+  if (instructor.approvalStatus === 'unknown') return '-'
+  return showApprovalStatus ? (
+    <ProgramApprovalStatusDetailValue
+      status={instructor.approvalStatus}
+      participationRejectionReason={instructor.rejectionReason}
+      approvalNotificationSentAt={instructor.approvalNotificationSentAt}
+      onResendNotificationClick={onResendNotificationClick}
+    />
+  ) : (
+    instructor.settlementStatusLabel?.trim() || '-'
+  )
 }
 
 export function ApplicantInstructorBasicInfo({
@@ -137,40 +101,21 @@ export function ApplicantInstructorBasicInfo({
   maskSensitive = true,
   showApprovalStatus = true,
   showOneLineIntro = true,
-  showPostApprovalFields,
-  memberBasicInfoFooter,
   privacyMaskAddress = false,
   onResendNotificationClick,
 }: ApplicantInstructorBasicInfoProps) {
-  const managerComment = instructor.managerComment
-  const showManagerComment = instructor.approvalStatus === 'approved' && !!managerComment
-  const mask = maskSensitive && instructor.approvalStatus !== 'approved'
-  const addressMask = mask || privacyMaskAddress
-  const contactDisplay = displayServerPiiAsIs(instructor.contact)
-  const emailDisplay = displayServerPiiAsIs(instructor.email)
-  const accountDisplay = formatAccountDisplayContent(instructor, mask)
-  const birthDisplay = formatBirthDateAndAge(instructor.birthDate, instructor.age)
-  const genderBirthDisplay = withProgramDetailTdDivider(
-    [instructor.gender, birthDisplay].filter(Boolean) as string[]
-  )
-  const schoolPart = instructor.educationSchoolName?.trim() || ''
-  const educationDisplay = withProgramDetailTdDivider(
-    [instructor.educationLevel, schoolPart].filter(Boolean) as string[]
-  )
-  const affiliationDisplay = withProgramDetailTdDivider(
-    [
-      instructor.affiliation ?? '',
-      instructor.lectureExperienceYears != null ? `${instructor.lectureExperienceYears}년` : '',
-      instructor.evaluationGrade ? `${instructor.evaluationGrade}등급` : '',
-    ].filter(Boolean) as string[]
-  )
+  const managerComment = instructor.managerComment?.trim()
+  const showManagerComment = instructor.approvalStatus === 'approved' && Boolean(managerComment)
+  const shouldMask = maskSensitive && instructor.approvalStatus !== 'approved'
+  const addressMask = shouldMask || privacyMaskAddress
+  const scheduleChangeCount = instructor.scheduleChangeCancelCount ?? 0
 
-  const nameKoreanCell =
-    instructor.scheduleChangeCancelCount != null && instructor.scheduleChangeCancelCount > 0 ? (
+  const nameCell =
+    scheduleChangeCount > 0 ? (
       <>
         {instructor.instructorName}
         <ScheduleChangeHistoryBadge
-          count={instructor.scheduleChangeCancelCount}
+          count={scheduleChangeCount}
           className="applicant-instructor-basic-info__name-badge"
         />
       </>
@@ -178,10 +123,29 @@ export function ApplicantInstructorBasicInfo({
       instructor.instructorName
     )
 
-  const shouldShowPostApprovalFields = showPostApprovalFields ?? instructor.approvalStatus === 'approved'
+  const profile = {
+    nameCell,
+    genderBirthDisplay: withProgramDetailTdDivider(
+      [instructor.gender, formatBirthDateAndAge(instructor.birthDate, instructor.age)].filter(
+        Boolean
+      )
+    ),
+    affiliationCell: buildAffiliationCell(instructor),
+    lectureExperienceDisplay:
+      instructor.lectureExperienceYears != null
+        ? `${instructor.lectureExperienceYears}년`
+        : instructor.teachingExperience?.trim() || '-',
+    contactDisplay: displayServerPiiAsIs(instructor.contact),
+    emailDisplay: displayServerPiiAsIs(instructor.email),
+    homeAddressDisplay: <HomeAddressDisplay address={instructor.address} mask={addressMask} />,
+    accountDisplay: formatAccountDisplayContent(instructor, shouldMask),
+    instructorFeeGradeView: <InstructorFeeGradeView instructor={instructor} />,
+    businessIncomeView: <BusinessIncomeView instructor={instructor} />,
+    oneLineIntro: showOneLineIntro ? instructor.oneLineIntro?.trim() || '-' : '-',
+  }
 
   return (
-    <section className="applicant-instructor-basic-info">
+    <div className="applicant-instructor-basic-info__legacy">
       {showManagerComment ? (
         <div className="applicant-instructor-basic-info__manager-comment">
           <div className="applicant-instructor-basic-info__manager-comment-title">
@@ -192,191 +156,23 @@ export function ApplicantInstructorBasicInfo({
           </div>
         </div>
       ) : null}
-      <div className="applicant-instructor-basic-info__title">기본 정보</div>
-      <div className="applicant-instructor-basic-info__table-wrap">
-        <table className="applicant-instructor-basic-info__table">
-          <colgroup>
-            <col style={{ width: '140px' }} />
-            <col style={{ width: '80px' }} />
-            <col />
-            <col style={{ width: '160px' }} />
-            <col />
-          </colgroup>
-          <tbody>
-            <tr>
-              <td
-                colSpan={2}
-                className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label"
-              >
-                성명
-              </td>
-              <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
-                {nameKoreanCell}
-              </td>
-              {showApprovalStatus ? (
-                <>
-                  <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label">
-                    프로그램 승인 현황
-                  </td>
-                  <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
-                    <ProgramApprovalStatusValue
-                      instructor={instructor}
-                      onResendNotificationClick={onResendNotificationClick}
-                    />
-                  </td>
-                </>
-              ) : (
-                <>
-                  <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label">
-                    정산 현황
-                  </td>
-                  <td
-                    className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value applicant-instructor-basic-info__cell--settlement-status"
-                  >
-                    {instructor.settlementStatusLabel?.trim() || '-'}
-                  </td>
-                </>
-              )}
-            </tr>
-            <tr>
-              <td
-                colSpan={2}
-                className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label"
-              >
-                성별 및 생년월일
-              </td>
-              <td
-                colSpan={3}
-                className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value"
-              >
-                <ProgramDetailTdSegmentWrap>{genderBirthDisplay}</ProgramDetailTdSegmentWrap>
-              </td>
-            </tr>
-            <tr>
-              <td
-                colSpan={2}
-                className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label"
-              >
-                연락처
-              </td>
-              <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
-                {contactDisplay}
-              </td>
-              <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label">
-                이메일
-              </td>
-              <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
-                {emailDisplay}
-              </td>
-            </tr>
-            <tr>
-              <td
-                colSpan={2}
-                className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label"
-              >
-                자택 주소
-              </td>
-              <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
-                <PrivacyHomeAddressDisplay address={instructor.address} mask={addressMask} />
-              </td>
-              <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label">
-                정산 계좌 정보
-              </td>
-              <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
-                <ProgramDetailTdSegmentWrap>{accountDisplay}</ProgramDetailTdSegmentWrap>
-              </td>
-            </tr>
-            <tr>
-              <td
-                colSpan={2}
-                className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label"
-              >
-                최종 학력
-              </td>
-              <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
-                <ProgramDetailTdSegmentWrap>{educationDisplay}</ProgramDetailTdSegmentWrap>
-              </td>
-              <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label">
-                소속 및 강사 경력
-              </td>
-              <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
-                <ProgramDetailTdSegmentWrap>{affiliationDisplay}</ProgramDetailTdSegmentWrap>
-              </td>
-            </tr>
-            {showOneLineIntro ? (
-              <tr>
-                <td
-                  colSpan={2}
-                  className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label"
-                >
-                  한 줄 소개
-                </td>
-                <td
-                  colSpan={3}
-                  className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value applicant-instructor-basic-info__cell--one-line"
-                >
-                  {instructor.oneLineIntro ?? '-'}
-                </td>
-              </tr>
-            ) : null}
-            {memberBasicInfoFooter ? (
-              <tr>
-                <td
-                  colSpan={2}
-                  className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label"
-                >
-                  가입일
-                </td>
-                <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
-                  {memberBasicInfoFooter.joinDate}
-                </td>
-                <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label">
-                  연동된 소셜 계정
-                </td>
-                <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
-                  {memberBasicInfoFooter.linkedSocial}
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
-      {shouldShowPostApprovalFields ? (
-        <div className="applicant-instructor-basic-info__table-wrap applicant-instructor-basic-info__post-approval-wrap">
-          <table
-            className="applicant-instructor-basic-info__table applicant-instructor-basic-info__table--post-approval"
-          >
-            <colgroup>
-              <col style={{ width: '220px' }} />
-              <col />
-              <col style={{ width: '220px' }} />
-              <col />
-            </colgroup>
-            <tbody>
-              <tr>
-                <th
-                  scope="row"
-                  className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label"
-                >
-                  강의비 책정 기준
-                </th>
-                <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
-                  <LectureFeeBasisView instructor={instructor} />
-                </td>
-                <th
-                  scope="row"
-                  className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label"
-                >
-                  사업소득자 여부
-                </th>
-                <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
-                  {instructor.businessIncomeEarnerStatus ?? '-'}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      ) : null}
-    </section>
+      <InstructorBasicInfoDetailForm
+        statusRows={
+          <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Field
+              label={showApprovalStatus ? '프로그램 승인 현황' : '정산 현황'}
+              view={buildStatusRows(instructor, showApprovalStatus, onResendNotificationClick)}
+              readOnlyDisplay
+            />
+            <DetailInfoForm.Field
+              label="JA 평가 등급"
+              view={formatEvaluationGrade(instructor.evaluationGrade)}
+              readOnlyDisplay
+            />
+          </DetailInfoForm.Row>
+        }
+        profile={profile}
+      />
+    </div>
   )
 }

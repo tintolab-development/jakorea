@@ -11,6 +11,8 @@ export interface IndividualSettlementReviewDecision {
   settlementApplicationId?: number;
   revisionNo?: number;
   status?: IndividualSettlementReviewDecisionStatus;
+  /** @nullable */
   reviewedByAdminId?: number | null;
+  /** @nullable */
   reviewedAt?: string | null;
 }

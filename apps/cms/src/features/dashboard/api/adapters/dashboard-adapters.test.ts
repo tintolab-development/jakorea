@@ -415,6 +415,22 @@ describe('mapDashboardHomeResponse', () => {
       unreadNotificationCount: null,
     })
   })
+
+  it('최상위 programCount를 그대로 쓴다', () => {
+    expect(
+      mapDashboardHomeResponse({
+        version: 'v9',
+        programCount: 2,
+        memberCount: 100,
+        unreadNotificationCount: 0,
+      })
+    ).toEqual({
+      version: 'v9',
+      programCount: 2,
+      memberCount: 100,
+      unreadNotificationCount: 0,
+    })
+  })
 })
 
 describe('filterRecruitmentListForWidget', () => {

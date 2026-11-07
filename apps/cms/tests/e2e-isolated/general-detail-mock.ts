@@ -99,24 +99,11 @@ export async function installProgramDetailMock(page: Page, fixture: Record<strin
       appendFileSync(process.env.STEP41_DUMP, JSON.stringify({ test: process.env.STEP41_CASE ?? '', method, path: url.pathname, body }) + '\n')
     }
     if (method === 'PATCH' && url.pathname === `/api/admin/programs/${id}` && body && typeof body === 'object') {
-      const next: Record<string, any> = { ...stored }
-      for (const [k, v] of Object.entries(body)) {
-        if (v === undefined) continue
-        // serviceDetailJson은 부분 PATCH 직렬화(service-detail-json.ts:417-420) → BE JSON merge 가정으로 deep-merge
-        next[k] = k === 'serviceDetailJson' ? JSON.stringify(deepMerge(parseJson(stored[k]), parseJson(v))) : v
-      }
-      delete next.expectedUpdatedAt
-      next.updatedAt = new Date().toISOString()
-      stored = next
+      stored = applyRfc7396ProgramPatch(stored, body)
     }
     const rowMatch = /\/recruitments\/(\d+)$/.exec(url.pathname)
     if (method === 'PATCH' && rowMatch && body && typeof body === 'object') {
-      const rowId = Number(rowMatch[1])
-      stored = {
-        ...stored,
-        recruitments: stored.recruitments.map((r: any) => (r.id === rowId ? { ...r, ...body, id: rowId } : r)),
-        updatedAt: new Date().toISOString(),
-      }
+      stored = applyRecruitmentRowPatch(stored, Number(rowMatch[1]), body)
     }
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(stored) })
   })
@@ -164,4 +151,48 @@ export function parseServiceDetail(body: any): Record<string, any> | null {
   const raw = body?.serviceDetailJson
   if (raw == null) return null
   return typeof raw === 'string' ? JSON.parse(raw) : raw
+}
+
+/** BE keonhee: 프로그램 PATCH의 serviceDetailJson 은 RFC-7396. 그 외 필드는 스칼라 교체. */
+export function applyRfc7396ProgramPatch(stored: Record<string, any>, body: Record<string, any>) {
+  const next: Record<string, any> = { ...stored }
+  for (const [k, v] of Object.entries(body)) {
+    if (v === undefined) continue
+    next[k] = k === 'serviceDetailJson' ? JSON.stringify(deepMerge(parseJson(stored[k]), parseJson(v))) : v
+  }
+  delete next.expectedUpdatedAt
+  next.updatedAt = new Date().toISOString()
+  return next
+}
+
+/**
+ * 모집 행 PATCH. interviewConfig 가 있으면 BE가 프로그램 JSON(config_jsonb / serviceDetailJson overlay)에
+ * 면접 슬롯을 동기화할 수 있다 — 배열은 전달값으로 교체(가장 긴 배열 병합 금지).
+ */
+export function applyRecruitmentRowPatch(
+  stored: Record<string, any>,
+  rowId: number,
+  body: Record<string, any>
+) {
+  const next: Record<string, any> = {
+    ...stored,
+    recruitments: (stored.recruitments ?? []).map((r: any) => (r.id === rowId ? { ...r, ...body, id: rowId } : r)),
+    updatedAt: new Date().toISOString(),
+  }
+  const interviewConfig = body.interviewConfig
+  if (interviewConfig && typeof interviewConfig === 'object') {
+    const overlayPatch: Record<string, unknown> = {}
+    if ('selectedSlotKeys' in interviewConfig) {
+      overlayPatch['recruit.volunteer.interview.selectedSlotKeys'] = interviewConfig.selectedSlotKeys
+    }
+    if (interviewConfig.timeUnit != null) {
+      overlayPatch['recruit.volunteer.interview.timeUnit'] = String(interviewConfig.timeUnit)
+    }
+    if (Object.keys(overlayPatch).length > 0) {
+      next.serviceDetailJson = JSON.stringify(
+        deepMerge(parseJson(next.serviceDetailJson), { registration: { overlay: overlayPatch } })
+      )
+    }
+  }
+  return next
 }

@@ -119,6 +119,8 @@ export function buildPaymentStatementPreviewOptionsFromSettlement(input: {
   listItem: SettlementListItemResponse
   detail: SettlementFrontendResponse
   institutionName?: string
+  /** 개인형 프로그램 — 산출 내역 「참여 기관명」열 미노출 */
+  hideInstitutionColumn?: boolean
 }): RenderFormParagraphBodyOptions {
   const scheduleLabel = buildParticipatingInstructorEducationScheduleLabel(input.listItem)
   const institutionName =
@@ -130,12 +132,15 @@ export function buildPaymentStatementPreviewOptionsFromSettlement(input: {
   return {
     paymentStatementBasicInfoValues: buildBasicInfoValues(input.instructor, input.detail),
     lectureFeeCalculationValues: buildLectureFeeCalculationValues(input.detail, input.listItem),
-    paymentStatementCalculationLines: buildCalculationLinesFromSettlement(
-      input.detail,
-      input.listItem,
-      institutionName,
-      scheduleLabel
-    ),
+    paymentStatementCalculationLines: {
+      ...buildCalculationLinesFromSettlement(
+        input.detail,
+        input.listItem,
+        institutionName,
+        scheduleLabel
+      ),
+      ...(input.hideInstitutionColumn ? { hideInstitutionColumn: true } : {}),
+    },
     paymentStatementDisplayMode: 'document',
   }
 }

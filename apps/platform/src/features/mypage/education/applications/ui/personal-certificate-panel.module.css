@@ -1,11 +1,13 @@
-.periodLabel {
-  margin: 0 0 8px;
+.root {
+  margin-top: auto;
 }
 
 .actions {
   display: flex;
   flex-shrink: 0;
-  justify-content: flex-end;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--spacing-12);
 }
 
 .actionButton {

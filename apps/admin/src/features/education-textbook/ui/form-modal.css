@@ -595,11 +595,6 @@
   overflow: visible;
 }
 
-.education-textbook-form-modal__table .cms-textarea--fixed-rows .cms-textarea__inner textarea.ant-input {
-  resize: none !important;
-  overflow-y: auto !important;
-}
-
 .education-textbook-form-modal__registered {
   display: inline-flex;
   flex-wrap: wrap;

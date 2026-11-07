@@ -22,4 +22,6 @@ export interface SensitiveFileDownloadRequest {
      * @maxLength 1024
      */
   relayToken?: string;
+  /** 지급조서·정산 양식·성범죄/행정정보 동의서 다운로드 일회성 암호. 8자 이상 영문+숫자+특수, 공백 불가. write-only이며 저장하지 않습니다. */
+  password?: string;
 }

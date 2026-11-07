@@ -17,6 +17,7 @@ import {
   isEducationDetailKey,
   orderEducationDetailKeys,
   resolveAvailableEducationDetailKeys,
+  syncEducationDetailKeysWithFinalEducation,
   type EducationDetailKey,
 } from '@jakorea/domain/instructor/education-options'
 import {
@@ -217,19 +218,12 @@ export function InstructorRegisterEducationSection() {
 
   /** 최종 학력 변경 시: 하위 옵션만 유지 + 최종 학력 키 고정 체크 */
   useEffect(() => {
-    if (!lockedDetailKey) {
-      form.setFieldValue('educationDetailKeys', [])
-      return
-    }
     const current =
       (form.getFieldValue('educationDetailKeys') as EducationDetailKey[] | undefined) ?? []
-    const available = new Set(availableDetailKeys)
-    const next = orderEducationDetailKeys([
-      lockedDetailKey,
-      ...current.filter(key => available.has(key) && key !== lockedDetailKey),
-    ]).filter(key => available.has(key))
+    const next = syncEducationDetailKeysWithFinalEducation(eduSchoolType, current)
+    if (next.join() === current.join()) return
     form.setFieldValue('educationDetailKeys', next)
-  }, [availableDetailKeys, form, lockedDetailKey])
+  }, [availableDetailKeys, eduSchoolType, form, lockedDetailKey])
 
   /** 체크 시 Form.List가 비어 있으면 1행 보장 */
   useEffect(() => {

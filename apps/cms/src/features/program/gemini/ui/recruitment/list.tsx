@@ -55,17 +55,19 @@ const RECRUITMENT_STATUS_LABEL: Record<GeminiRecruitmentDisplayStatus, string> =
   DRAFT: '임시저장',
 }
 
-/** Figma 찾아가는 연수 모집 공고 목록 — 공고명 710 · 기간 280 · 상태 120 */
+/** Figma 4315:124836 찾아가는 연수 모집 공고 목록 열 폭 */
+const RECRUITMENT_SELECTION_COL_WIDTH = 60
+
 const RECRUITMENT_COL_WIDTH = {
   no: TABLE_COLUMN_WIDTHS.index,
-  title: 710,
+  title: 700,
   applicationPeriod: 280,
   trainingRequestPeriod: 280,
-  status: 120,
+  status: 140,
 } as const
 
 const RECRUITMENT_TABLE_SCROLL_X =
-  TABLE_COLUMN_WIDTHS.checkbox +
+  RECRUITMENT_SELECTION_COL_WIDTH +
   RECRUITMENT_COL_WIDTH.no +
   RECRUITMENT_COL_WIDTH.title +
   RECRUITMENT_COL_WIDTH.applicationPeriod +
@@ -100,6 +102,7 @@ export function GeminiRecruitmentList() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [deleteTargetNames, setDeleteTargetNames] = useState<string[]>([])
   const [deleteBlockedOpen, setDeleteBlockedOpen] = useState(false)
   const [deleteBlockedCopy, setDeleteBlockedCopy] = useState({ title: '', description: '' })
   const todayKey = useToday()
@@ -178,6 +181,7 @@ export function GeminiRecruitmentList() {
       setDeleteBlockedOpen(true)
       return
     }
+    setDeleteTargetNames(selectedRows.map(row => row.title))
     setDeleteModalOpen(true)
   }, [canWrite, selectedRowKeys, showAlert, showNoSelectionAlert, tableData])
 
@@ -185,6 +189,7 @@ export function GeminiRecruitmentList() {
     try {
       await geminiRecruitmentService.delete(selectedRowKeys.map(key => String(key)))
       setSelectedRowKeys([])
+      setDeleteTargetNames([])
       setDeleteModalOpen(false)
       if (remoteEnabled) void refetch()
       showDeleteCompletedAlert()
@@ -192,6 +197,11 @@ export function GeminiRecruitmentList() {
       showRemoteMutationUnavailable()
     }
   }, [refetch, remoteEnabled, selectedRowKeys, showRemoteMutationUnavailable])
+
+  const handleCancelDelete = useCallback(() => {
+    setDeleteTargetNames([])
+    setDeleteModalOpen(false)
+  }, [])
 
   const handleAddRecruitment = useCallback(() => {
     if (!canWrite) return
@@ -321,7 +331,7 @@ export function GeminiRecruitmentList() {
           rowSelection={
             canWrite
               ? {
-                  columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+                  columnWidth: RECRUITMENT_SELECTION_COL_WIDTH,
                   selectedRowKeys,
                   onChange: keys => setSelectedRowKeys(keys.map(k => String(k))),
                   preserveSelectedRowKeys: false,
@@ -335,11 +345,15 @@ export function GeminiRecruitmentList() {
 
       <DeleteGuideModal
         open={deleteModalOpen}
-        title={resolveGeminiDeleteGuideModalCopy('공고', selectedRowKeys.length).title}
-        lines={resolveGeminiDeleteGuideModalCopy('공고', selectedRowKeys.length).lines}
+        title={
+          resolveGeminiDeleteGuideModalCopy('공고', selectedRowKeys.length, deleteTargetNames).title
+        }
+        lines={
+          resolveGeminiDeleteGuideModalCopy('공고', selectedRowKeys.length, deleteTargetNames).lines
+        }
         confirmText="삭제"
         onConfirm={handleConfirmDelete}
-        onCancel={() => setDeleteModalOpen(false)}
+        onCancel={handleCancelDelete}
       />
       <RegistrationDraftNoticeModal
         open={draftNoticeOpen}

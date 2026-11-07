@@ -1,11 +1,48 @@
 import { describe, expect, it } from 'vitest'
-import { canCancelParticipantApplicationRejection } from '@/features/program/shared/lib/application-available-actions'
+import {
+  canCancelParticipantApplicationRejection,
+  canRestoreRejectedApplication,
+} from '@/features/program/shared/lib/application-available-actions'
 
-describe('canCancelParticipantApplicationRejection', () => {
-  it('BE availableActions가 없어도 참여자 신청 반려 취소를 노출한다', () => {
+describe('canRestoreRejectedApplication', () => {
+  it('REJECTED는 availableActions가 없으면 레거시로 반려 취소를 허용한다', () => {
+    expect(canRestoreRejectedApplication({ applicationStatus: 'REJECTED' })).toBe(true)
     expect(canCancelParticipantApplicationRejection(undefined)).toBe(true)
-    expect(canCancelParticipantApplicationRejection([])).toBe(true)
-    expect(canCancelParticipantApplicationRejection(['VIEW'])).toBe(true)
-    expect(canCancelParticipantApplicationRejection(['VIEW', 'CANCEL_REJECTION'])).toBe(true)
+  })
+
+  it('REJECTED는 CANCEL_REJECTION이 있을 때만 빈 배열·VIEW만으로는 노출하지 않는다', () => {
+    expect(
+      canRestoreRejectedApplication({
+        applicationStatus: 'REJECTED',
+        availableActions: [],
+      })
+    ).toBe(false)
+    expect(canCancelParticipantApplicationRejection(['VIEW'])).toBe(false)
+    expect(
+      canRestoreRejectedApplication({
+        applicationStatus: 'REJECTED',
+        availableActions: ['VIEW', 'CANCEL_REJECTION'],
+      })
+    ).toBe(true)
+  })
+
+  it('APPROVAL_CANCELLED는 CANCEL_REJECTION이 명시된 경우에만 복원한다', () => {
+    expect(
+      canRestoreRejectedApplication({
+        applicationStatus: 'APPROVAL_CANCELLED',
+      })
+    ).toBe(false)
+    expect(
+      canRestoreRejectedApplication({
+        applicationStatus: 'APPROVAL_CANCELLED',
+        availableActions: ['VIEW'],
+      })
+    ).toBe(false)
+    expect(
+      canRestoreRejectedApplication({
+        applicationStatus: 'APPROVAL_CANCELLED',
+        availableActions: ['VIEW', 'CANCEL_REJECTION'],
+      })
+    ).toBe(true)
   })
 })

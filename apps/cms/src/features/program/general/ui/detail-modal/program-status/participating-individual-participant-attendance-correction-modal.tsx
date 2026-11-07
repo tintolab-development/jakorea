@@ -41,6 +41,7 @@ export type ParticipatingIndividualParticipantAttendanceCorrectionConfirmPayload
   reason: string
   evidenceFileName: string | null
   evidenceFileObjectIds?: number[]
+  evidenceOriginalFileNames?: string[]
 }
 
 export type ParticipatingIndividualParticipantAttendanceCorrectionModalProps = {
@@ -239,6 +240,7 @@ export function ParticipatingIndividualParticipantAttendanceCorrectionModal({
                   reason: reason.trim(),
                   evidenceFileName: evidenceFiles[0]?.name ?? null,
                   evidenceFileObjectIds,
+                  evidenceOriginalFileNames: evidenceFiles.map(file => file.name),
                 })
               })()
             }} >

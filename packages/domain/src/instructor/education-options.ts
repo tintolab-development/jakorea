@@ -72,3 +72,20 @@ export function orderEducationDetailKeys(keys: EducationDetailKey[]): EducationD
   const set = new Set(keys)
   return EDUCATION_LEVEL_ORDER.filter(key => set.has(key))
 }
+
+/**
+ * CMS 강사 등록과 동일: 최종 학력에 해당하는 학력 상세는 항상 체크(고정).
+ * 최종 학력 미선택이면 상세 키를 비운다. 하위 단계 체크는 유지한다.
+ */
+export function syncEducationDetailKeysWithFinalEducation(
+  eduSchoolType: string | undefined,
+  currentKeys: readonly EducationDetailKey[] | undefined,
+): EducationDetailKey[] {
+  if (!eduSchoolType || !isEducationDetailKey(eduSchoolType)) return []
+  const locked = eduSchoolType
+  const available = resolveAvailableEducationDetailKeys(locked)
+  return orderEducationDetailKeys([
+    locked,
+    ...(currentKeys ?? []).filter(key => available.includes(key) && key !== locked),
+  ])
+}

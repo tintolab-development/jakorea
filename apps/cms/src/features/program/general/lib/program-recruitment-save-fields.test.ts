@@ -65,6 +65,16 @@ describe('programTrainedTeachersRecruitmentSaveSchema', () => {
     expect(result.success).toBe(true)
   })
 
+  it('참여자 행 문의처가 비어 있어도 저장할 수 있다', () => {
+    const result = programTrainedTeachersRecruitmentSaveSchema.safeParse({
+      ...complete,
+      recruitmentContactOrganizationName: '',
+      contactPhone: '',
+      contactEmail: '',
+    })
+    expect(result.success).toBe(true)
+  })
+
   it('날짜 지정형은 최대 일정·1일 최대 차시를 저장 필수값으로 요구하지 않는다', () => {
     const result = programTrainedTeachersRecruitmentSaveSchema.safeParse({
       ...complete,
@@ -106,6 +116,79 @@ describe('programTrainedTeachersRecruitmentSaveSchema', () => {
           'participantRecruitmentMaxScheduleCount',
           'participantRecruitmentMaxSessionsPerDay',
         ])
+      )
+    }
+  })
+
+  it('해당 없음이면 비고가 비어도 학생 명단 제출만 수정해 저장할 수 있다', () => {
+    const result = programTrainedTeachersRecruitmentSaveSchema.safeParse({
+      ...complete,
+      studentListRequired: 'not_required',
+      remarks: null,
+      participantRecruitmentNotesNotApplicable: 'not_applicable',
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('비고가 비어 있으면 한글 안내를 내고 영문 필드명을 쓰지 않는다', () => {
+    const result = programTrainedTeachersRecruitmentSaveSchema.safeParse({
+      ...complete,
+      remarks: null,
+      participantRecruitmentNotesNotApplicable: 'applicable',
+    })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues.map(issue => issue.message)).toContain('비고를 입력해주세요')
+      expect(result.error.issues.map(issue => issue.message).join(' ')).not.toMatch(/remarks/)
+    }
+  })
+
+  it('교육 대상 상세가 비어 있으면 한글 안내를 낸다', () => {
+    const result = programTrainedTeachersRecruitmentSaveSchema.safeParse({
+      ...complete,
+      educationTargetDetail: null,
+    })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues.map(issue => issue.message)).toContain(
+        '교육 대상 상세를 입력해주세요'
+      )
+      expect(result.error.issues.map(issue => issue.message).join(' ')).not.toMatch(
+        /educationTargetDetail/
+      )
+    }
+  })
+
+  it('공고 미게시이면 일정·발표 필드가 비어도 저장할 수 있다', () => {
+    const result = programTrainedTeachersRecruitmentSaveSchema.safeParse({
+      ...complete,
+      participantRecruitmentAnnouncementPublished: 'unpublished',
+      participantProgramOperationStartDate: null,
+      participantProgramOperationEndDate: '',
+      applicationStartDate: null,
+      applicationEndDate: undefined,
+      resultAnnouncementDate: null,
+      resultAnnouncementMethod: '',
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('공고 게시인데 모집 기간이 없으면 한글 안내를 낸다', () => {
+    const result = programTrainedTeachersRecruitmentSaveSchema.safeParse({
+      ...complete,
+      applicationStartDate: null,
+      applicationEndDate: '',
+    })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues.map(issue => issue.message)).toEqual(
+        expect.arrayContaining([
+          '참여자 모집 시작일을 선택해주세요',
+          '참여자 모집 종료일을 선택해주세요',
+        ])
+      )
+      expect(result.error.issues.map(issue => issue.message).join(' ')).not.toMatch(
+        /applicationStartDate|applicationEndDate/
       )
     }
   })

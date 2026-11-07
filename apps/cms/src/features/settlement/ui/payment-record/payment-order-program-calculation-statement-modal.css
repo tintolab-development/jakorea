@@ -32,7 +32,7 @@
   margin-top: 12px;
 }
 
-/* 강사 맥락 기본정보: DetailInfoForm 2블록 — 블록 사이 간격 16px (자택 주소·계좌 / 지급 조서·강의비) */
+/* 강사 맥락 기본정보: DetailInfoForm 2블록 — 블록 사이 간격 16px (자택 주소·계좌 / 지급 조서·강사비) */
 .payment-order-calc-statement-modal__basic-group-gap {
   height: 16px;
   flex-shrink: 0;
@@ -55,7 +55,6 @@
   .detail-info-form
   .payment-order-admin__status-text {
   font-family: Pretendard, sans-serif;
-  font-size: 16px;
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
@@ -83,7 +82,6 @@
   color: var(--color-red, #c32f4a);
   text-align: center;
   font-family: Pretendard, sans-serif;
-  font-size: 16px;
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
@@ -137,16 +135,6 @@
   min-height: 50px;
   padding-top: 0;
   padding-bottom: 0;
-}
-
-.payment-order-calc-statement-modal__basic--program-info
-  .detail-info-form
-  .payment-order-admin__status-text {
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
 }
 
 /* 기본 정보 — 각 테이블 첫 행(프로그램명 / 지급 조서) 값 좌측 정렬 */
@@ -471,4 +459,21 @@
   line-height: 150%;
   color: var(--color-brand-primary, #01a1af);
   font-variant-numeric: tabular-nums;
+}
+
+/* 산출 내역 상세 — 지급조서 표 구성(layout="payment-statement"), 글자 크기만 14px */
+.payment-order-calc-statement-modal
+  .payment-statement-issuance-calculation-lines-table.payment-order-calc-statement-modal__lines-table
+  th,
+.payment-order-calc-statement-modal
+  .payment-statement-issuance-calculation-lines-table.payment-order-calc-statement-modal__lines-table
+  td {
+  font-size: 14px;
+}
+
+.payment-order-calc-statement-modal
+  .payment-order-calc-statement-modal__lines-table
+  .payment-statement-issuance-calculation-lines-table__summary-row
+  > td.payment-statement-issuance-calculation-lines-table__summary-total {
+  font-size: 14px;
 }

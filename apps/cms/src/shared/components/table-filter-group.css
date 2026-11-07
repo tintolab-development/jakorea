@@ -850,6 +850,36 @@
   gap: var(--filter-address-region-pair-gap, 6px);
 }
 
+/*
+ * 기관 소재지는 Figma의 235.5px(114.75px × 2 + 6px) 외곽 치수를 유지한다.
+ * 다만 114.75px 안에서 CmsSelect의 일반 여백(좌 16px·우 40px)을 그대로
+ * 사용하면 `시/군/구` placeholder부터 잘린다. 좁은 두 단계 주소 필터에만
+ * 내부 여백을 조정해 placeholder와 선택값이 가능한 한 많이 보이게 한다.
+ * 선택된 긴 행정구역명은 셀렉트의 title(옵션 label)로 전체 값을 확인할 수 있다.
+ */
+.table-filter-group__field--address-region-filter
+  .table-filter-group__address-region-selects
+  > .cms-select {
+  --cms-control-pl: 12px;
+  --cms-control-pr: 8px;
+  --cms-control-gap: 4px;
+}
+
+/* 선택 시 X까지 예약하면 114.75px 안에서 텍스트가 다시 과도하게 줄어든다.
+ * X는 화살표 영역 위에 표시되는 보조 동작이므로 주소 필터에서는 화살표 폭만
+ * 텍스트 레이아웃에 예약하고, 긴 선택값은 ellipsis + native title로 보완한다. */
+.table-filter-group__field--address-region-filter
+  .table-filter-group__address-region-selects
+  > .cms-select.cms-select--clearable {
+  --cms-select-suffix-w: var(--cms-icon-size, 20px);
+}
+
+/* 고정된 필터 칸을 넓히지 않고, 긴 행정구역명은 팝업에서 전체를 읽을 수 있게 한다. */
+.cms-select-dropdown.table-filter-group__address-region-dropdown {
+  min-width: 180px !important;
+  max-width: min(320px, calc(100vw - 24px));
+}
+
 .table-filter-group__fields-inner
   .ant-col:not(.table-filter-group__col--explicit-width)
   .table-filter-group__field--select:has(.table-filter-group__address-region-selects),

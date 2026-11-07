@@ -51,6 +51,7 @@ export function InstitutionBulkApproveModal({
       onConfirm={onConfirm}
       zIndex={zIndex}
       notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.timedBulk}
+      notifyTimingOptions="two"
     />
   )
 }

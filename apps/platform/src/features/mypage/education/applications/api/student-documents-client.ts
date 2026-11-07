@@ -108,7 +108,26 @@ export async function fetchOrganizationStudentRoster(
     `${organizationApplicationPath(applicationId)}/student-roster`,
     { signal }
   )
-  return unwrapEnvelope<PortalStudentRosterResponse>(data)
+  const unwrapped = unwrapEnvelope<unknown>(data)
+  if (Array.isArray(unwrapped)) {
+    return { rows: unwrapped, totalCount: unwrapped.length }
+  }
+  if (!unwrapped || typeof unwrapped !== 'object') {
+    return { rows: [], totalCount: 0 }
+  }
+  const record = unwrapped as PortalStudentRosterResponse & { items?: unknown }
+  const rows = Array.isArray(record.rows)
+    ? record.rows
+    : Array.isArray(record.items)
+      ? (record.items as PortalStudentRosterResponse['rows'])
+      : []
+  const normalizedRows = rows ?? []
+  return {
+    ...record,
+    rows: normalizedRows,
+    totalCount:
+      typeof record.totalCount === 'number' ? record.totalCount : normalizedRows.length,
+  }
 }
 
 export async function importOrganizationStudentRoster(

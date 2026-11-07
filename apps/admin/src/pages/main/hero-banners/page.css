@@ -64,17 +64,8 @@
   aspect-ratio: 177 / 100;
   overflow: hidden;
   background: lightgray 50% / cover no-repeat;
-  cursor: pointer;
 }
 
-.hero-banners-page__thumb.ant-image,
-.hero-banners-page__thumb-wrap .ant-image {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-.hero-banners-page__thumb-wrap .ant-image-img,
 .hero-banners-page__thumb {
   width: 100%;
   height: 100%;

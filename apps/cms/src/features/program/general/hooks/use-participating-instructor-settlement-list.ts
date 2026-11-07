@@ -6,7 +6,6 @@ import {
 } from '@/features/program/general/api/participating-instructor-settlements-remote'
 import {
   mapSettlementsToParticipatingInstructorSettlementRows,
-  summarizeParticipatingInstructorSettlementProgress,
   type ParticipatingInstructorSettlementApiRow,
 } from '@/features/program/general/lib/map-settlement-to-participating-instructor-settlement-row'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
@@ -24,7 +23,9 @@ export function useParticipatingInstructorSettlementList(input: {
   isLoading: boolean
   rows: ParticipatingInstructorSettlementApiRow[]
   settlementItems: SettlementListItemResponse[]
-  progressSummary: { completed: number; total: number }
+  /** 서버 instructorSessionSummary. 누락·조회 실패면 null (0/0 fallback 금지) */
+  progressSummary: { completed: number; total: number } | null
+  isError: boolean
   invalidate: () => Promise<void>
 } {
   const remoteEnabled = isParticipatingInstructorSettlementsRemoteEnabled()
@@ -54,7 +55,7 @@ export function useParticipatingInstructorSettlementList(input: {
 
   const settlementItems = useMemo(() => {
     if (!queryEnabled) return []
-    return settlementsQuery.data ?? []
+    return settlementsQuery.data?.items ?? []
   }, [queryEnabled, settlementsQuery.data])
 
   const rows = useMemo(() => {
@@ -62,10 +63,12 @@ export function useParticipatingInstructorSettlementList(input: {
     return mapSettlementsToParticipatingInstructorSettlementRows(settlementItems)
   }, [queryEnabled, settlementItems])
 
-  const progressSummary = useMemo(
-    () => summarizeParticipatingInstructorSettlementProgress(rows),
-    [rows]
-  )
+  const progressSummary = useMemo(() => {
+    if (!queryEnabled) return null
+    const summary = settlementsQuery.data?.instructorSessionSummary
+    if (summary?.completed == null || summary.total == null) return null
+    return { completed: summary.completed, total: summary.total }
+  }, [queryEnabled, settlementsQuery.data])
 
   const queryClient = useQueryClient()
   const invalidate = async () => {
@@ -84,6 +87,7 @@ export function useParticipatingInstructorSettlementList(input: {
     rows,
     settlementItems,
     progressSummary,
+    isError: queryEnabled && settlementsQuery.isError,
     invalidate,
   }
 }

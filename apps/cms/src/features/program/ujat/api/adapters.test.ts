@@ -13,6 +13,10 @@ import {
   toCreateRequest,
   toUpdateRequest,
 } from './adapters'
+import {
+  programDetailUjatCommonInfoEditSchema,
+  programToDetailEditValues,
+} from '@/features/program/shared/model/program-detail-edit-schema'
 import { shouldRetryQuery } from './errors'
 import { toRemoteListParams } from './list-params'
 import { parseRegistrationSnapshot } from './service-detail'
@@ -314,6 +318,26 @@ describe('UJAT program adapters', () => {
     expect(updated.managerName).toBeUndefined()
   })
 
+  it('PATCH rounds keep GET program_schedule id', () => {
+    const withRound: Program = {
+      ...program,
+      updatedAt: '2026-10-31T12:10:00.059740Z',
+      rounds: [
+        {
+          id: '187700',
+          programId: program.id,
+          roundNumber: 1,
+          startDate: '2026-03-01T00:00:00.000Z',
+          endDate: '2026-03-01T01:00:00.000Z',
+          status: 'active',
+        },
+      ],
+    }
+    const updated = toUpdateRequest(withRound, { rounds: withRound.rounds })
+    expect(updated.rounds?.[0]?.id).toBe('187700')
+    expect(updated.expectedUpdatedAt).toBe('2026-10-31T12:10:00.059740Z')
+  })
+
   it('상세 PATCH payload는 Typed 운영 필드를 registration.overlay에 재기록하지 않는다', () => {
     const updated = toUpdateRequest(
       program,
@@ -588,6 +612,47 @@ describe('UJAT detailedProgramId·detailedProgramName (id·name 둘 다 삽입, 
     })
     expect(mapped.periodStatus).toBe('SCHEDULED')
     expect(mapped.lifecycleStatus).toBe('planned')
+  })
+
+  it('GET lifecycleStatus RECRUITING_STUDENTS를 typed recruiting_students로 정규화한다', () => {
+    const mapped = fromDetail({
+      id: program.id,
+      sponsorId: program.sponsorId,
+      title: program.title,
+      startDate: String(program.startDate),
+      endDate: String(program.endDate),
+      lifecycleStatus: 'RECRUITING_STUDENTS' as ProgramResponse['lifecycleStatus'],
+      periodStatus: 'RECRUITING',
+    })
+    expect(mapped.lifecycleStatus).toBe('recruiting_students')
+  })
+
+  it('UJAT 상세 GET 필수 공통정보 값이 UJAT 저장 스키마를 통과한다', () => {
+    const mapped = fromDetail({
+      id: '91011',
+      title: 'UJAT STEP61 공고',
+      mainTitle: 'UJAT STEP61 대표',
+      programType: 'UJAT',
+      type: 'offline',
+      category: 'school',
+      lifecycleStatus: 'RECRUITING_STUDENTS' as ProgramResponse['lifecycleStatus'],
+      periodStatus: 'RECRUITING',
+      startDate: '2026-12-01',
+      endDate: '2027-11-30',
+      sponsorId: '163001',
+      managerName: '격리 담당자',
+      contactPhone: '010-1234-5678',
+      detailedProgramId: 163006,
+      businessArea: '경제금융',
+      educationProcess: 'Digital',
+      ipOwned: 'JA',
+      courseDeliveredBy: 'JA',
+      partnerInvolvement: false,
+      venue: '서울시 중구 JA Korea',
+    })
+    const values = programToDetailEditValues(mapped)
+    const parsed = programDetailUjatCommonInfoEditSchema.safeParse(values)
+    expect(parsed.success, JSON.stringify(parsed.success ? [] : parsed.error.issues)).toBe(true)
   })
 
   it('Typed 교육일정이 있으면 semesterCalendars overlay를 덮어쓰지 않는다', () => {
@@ -1058,7 +1123,7 @@ describe('mapUjatProgramRecruitmentsToRequest', () => {
     expect(rows?.find(row => row.recruitmentType === 'VOLUNTEER')?.maxCount).toBe(0)
   })
 
-  it('프로그램 봉사자 기간은 상반기 행에만 넣고 하반기 행은 보내지 않는다', () => {
+  it('프로그램 봉사자 기간은 FIRST_HALF 행에만 넣고 recruitTerm 없는 행은 반기로 쓰지 않는다', () => {
     const rows = mapUjatProgramRecruitmentsToRequest({
       ...program,
       applicationStartDate: '2026-02-01T00:00:00+09:00',
@@ -1106,11 +1171,12 @@ describe('mapUjatProgramRecruitmentsToRequest', () => {
         },
       ],
     })
-    const h1 = rows.find(row => row.id === 182212)
+    expect(rows.some(row => row.id === 182212)).toBe(false)
+    expect(rows.some(row => row.id === 182213)).toBe(false)
+    const h1 = rows.find(row => row.recruitTerm === 'FIRST_HALF')
+    expect(h1?.id).toBeUndefined()
     expect(h1?.startAt).toBe('2026-03-01T00:00:00+09:00')
     expect(h1?.endAt).toBe('2026-03-31T00:00:00+09:00')
-    expect(h1?.recruitTerm).toBe('FIRST_HALF')
-    expect(rows.some(row => row.id === 182213)).toBe(false)
   })
 
   it('봉사자 행은 recruitTerm FIRST_HALF 행을 상반기로 쓰고 기관 행에는 recruitTerm을 보내지 않는다', () => {
@@ -1257,6 +1323,58 @@ describe('mapUjatProgramRecruitmentsToRequest', () => {
     expect(
       rows.find(row => row.recruitmentType === 'PARTICIPANT')?.interviewEnabled
     ).toBeUndefined()
+  })
+
+  it('발표 방법·면접 방식·대상 상세는 해당 행 extra 필드를 그대로 보낸다', () => {
+    const rows = mapUjatProgramRecruitmentsToRequest({
+      ...program,
+      documentPassAnnouncementMethod: '프로그램 공유 서류 방법',
+      volunteerTargetDetail: '프로그램 공유 상세',
+      programRecruitments: [
+        {
+          id: 2001,
+          recruitmentType: 'PARTICIPANT',
+          applicationType: 'ORGANIZATION',
+          finalPassAnnouncementMethod: '홈페이지 공지',
+        },
+        {
+          id: 1001,
+          recruitmentType: 'VOLUNTEER',
+          applicationType: 'VOLUNTEER',
+          recruitTerm: 'FIRST_HALF',
+          documentPassAnnouncementMethod: '이메일 안내',
+          interviewMethod: '대면',
+          finalPassAnnouncementMethod: '문자 안내',
+          volunteerTargetDetail: '대학생 상반기',
+        },
+        {
+          id: 1002,
+          recruitmentType: 'VOLUNTEER',
+          applicationType: 'VOLUNTEER',
+          recruitTerm: 'SECOND_HALF',
+          documentPassAnnouncementMethod: null,
+          interviewMethod: null,
+          finalPassAnnouncementMethod: null,
+          volunteerTargetDetail: null,
+        },
+      ],
+    })
+    expect(rows.find(row => row.id === 2001)).toMatchObject({
+      finalPassAnnouncementMethod: '홈페이지 공지',
+    })
+    expect(rows.find(row => row.id === 1001)).toMatchObject({
+      documentPassAnnouncementMethod: '이메일 안내',
+      interviewMethod: '대면',
+      finalPassAnnouncementMethod: '문자 안내',
+      volunteerTargetDetail: '대학생 상반기',
+    })
+    expect(rows.find(row => row.id === 1002)).toMatchObject({
+      recruitTerm: 'SECOND_HALF',
+      documentPassAnnouncementMethod: null,
+      interviewMethod: null,
+      finalPassAnnouncementMethod: null,
+      volunteerTargetDetail: null,
+    })
   })
 })
 

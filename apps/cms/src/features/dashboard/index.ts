@@ -20,6 +20,7 @@ export type { DashboardWidgetRendererProps } from './ui/dashboard-widget-rendere
 export { useOverallStatistics } from './hooks/use-overall-statistics'
 export { useInstructorActivity } from './hooks/use-instructor-activity'
 export { useDashboardHome } from './hooks/use-dashboard-home'
+export { useDashboardWidgets } from './hooks/use-dashboard-widgets'
 export { useDashboardNotificationCount } from './hooks/use-dashboard-notification-count'
 export { useRecruitmentStatusList } from './hooks/use-recruitment-status-list'
 export { useKpiAchievementList } from './hooks/use-kpi-achievement-list'

@@ -1,6 +1,9 @@
 import { BUSINESS_INCOME } from '@jakorea/domain/instructor/business-income'
 import { CONSENT_VALUE } from '@jakorea/domain/instructor/consent'
-import type { EducationDetailKey } from '@jakorea/domain/instructor/education-options'
+import {
+  syncEducationDetailKeysWithFinalEducation,
+  type EducationDetailKey,
+} from '@jakorea/domain/instructor/education-options'
 import {
   EMPTY_INSTRUCTOR_CAREER,
   EMPTY_INSTRUCTOR_EDUCATION_GRADUATE_ROW,
@@ -173,7 +176,10 @@ export function mapInstructorCmsProfileToFormPartial(
     homeAddressDetail: profile.homeAddress?.detail?.trim() ?? '',
     eduSchoolType: education.highestSchoolType ?? '',
     eduStatus: education.highestStatus ?? '',
-    educationDetailKeys: (education.detailKeys ?? []) as EducationDetailKey[],
+    educationDetailKeys: syncEducationDetailKeysWithFinalEducation(
+      education.highestSchoolType ?? '',
+      (education.detailKeys ?? []) as EducationDetailKey[],
+    ),
     highSchool: highSchool ?? { ...EMPTY_INSTRUCTOR_EDUCATION_SCHOOL_ROW },
     college23Rows: ensureListRows(college23Rows, { ...EMPTY_INSTRUCTOR_EDUCATION_SCHOOL_ROW }),
     college4Rows: ensureListRows(college4Rows, { ...EMPTY_INSTRUCTOR_EDUCATION_SCHOOL_ROW }),

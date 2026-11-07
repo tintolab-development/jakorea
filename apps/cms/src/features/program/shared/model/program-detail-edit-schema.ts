@@ -523,6 +523,22 @@ export const programDetailInstitutionsEditSchema = programDetailEditSchemaBase.e
 })
 
 /**
+ * UJAT 모집정보 탭 — 화면에 없는 공통정보 필드로 저장이 막히지 않게 한다.
+ * 모집 필수 검사는 `listIncompleteUjatProgramRecruitmentTypedRequiredFields`가 담당.
+ */
+export const programDetailUjatRecruitEditSchema = programDetailInstitutionsEditSchema.extend({
+  title: z.string().optional(),
+  description: z.string().optional(),
+  learningSupportContent: z.string().optional(),
+  managerName: z.string().optional(),
+  sponsorId: z.string().optional(),
+  applicationStartDate: z.string().optional(),
+  applicationEndDate: z.string().optional(),
+  resultAnnouncementDate: z.string().optional(),
+  resultAnnouncementMethod: z.string().optional(),
+})
+
+/**
  * 교육받은 교사·1사1교 공통 정보 — 공통정보 탭에 없는 모집 필수값 완화.
  * 일반 스키마의 모집·설명·학습지원 필수값이 화면에 없어 저장이 조용히 실패하던 것을 방지.
  */
@@ -996,17 +1012,7 @@ export function programToDetailEditValues(
 
       const fromProgram = firstPlainKoreanPhoneForEdit(program.contactPhone)
       const sponsorUnselected = sponsorManagerContactIds.some(isSponsorContactUnselected)
-      if (sponsorUnselected) {
-        // TT: top-level contactPhone 이 모집 Tel 폴백 (participant-recruitment-display)
-        if (
-          fromProgram &&
-          program.id != null &&
-          looksLikeTrainedTeacherProgramId(String(program.id))
-        ) {
-          return fromProgram
-        }
-        return undefined
-      }
+      if (sponsorUnselected) return undefined
       return fromProgram
     })(),
     contactEmail:
@@ -1072,10 +1078,11 @@ export function programToDetailEditValues(
       return program.venue?.trim() || undefined
     })(),
     oneLineIntroduction: program.oneLineIntroduction ?? undefined,
-    remarks:
-      program.remarks?.trim() ||
-      program.generalCommonInfo?.participantRecruitmentInfo?.remarks?.trim() ||
-      undefined,
+    remarks: isTrainedTeacherForm
+      ? (program.remarks ?? '')
+      : program.remarks?.trim() ||
+        program.generalCommonInfo?.participantRecruitmentInfo?.remarks?.trim() ||
+        undefined,
     educationTargetDetail:
       program.educationTargetDetail?.trim() ||
       program.generalCommonInfo?.participantRecruitmentInfo?.educationTargetDetail?.trim() ||
@@ -1318,22 +1325,25 @@ export function programToDetailEditValues(
         program.backendProgramType === 'TRAINED_TEACHER' ||
         looksLikeTrainedTeacherProgramId(program.id)
       const isUjatProgram = isUjatDetailEditProgram(program)
-      const keys: readonly string[] = isUjatProgram
+      const keys: readonly string[] | undefined = isUjatProgram
         ? resolveUjatPersistedSurveyMenuKeysForSave(
             program.generalParticipantTypes == null ? program.ujatRegistrationOverlay : undefined,
             program.generalSurveyMenuKeys
           ) ?? []
         : isTrainedTeacherSeed
         ? program.generalSurveyMenuKeys === undefined
-          ? []
+          ? undefined
           : normalizeGeneralSurveyMenuKeys(program.generalSurveyMenuKeys)
         : resolveProgramSurveyMenuKeys(program)
       return {
-        surveySurvey: keys.includes('survey'),
-        surveySatisfaction: keys.includes('satisfaction'),
-        surveyVolunteerSatisfaction: keys.includes('volunteer_satisfaction'),
-        surveySchoolSatisfaction: keys.includes('school_satisfaction'),
-        surveyLectureEvaluation: keys.includes('lecture_evaluation'),
+        surveySurvey: keys === undefined ? undefined : keys.includes('survey'),
+        surveySatisfaction: keys === undefined ? undefined : keys.includes('satisfaction'),
+        surveyVolunteerSatisfaction:
+          keys === undefined ? undefined : keys.includes('volunteer_satisfaction'),
+        surveySchoolSatisfaction:
+          keys === undefined ? undefined : keys.includes('school_satisfaction'),
+        surveyLectureEvaluation:
+          keys === undefined ? undefined : keys.includes('lecture_evaluation'),
         generalParticipantTypes: program.generalParticipantTypes,
       }
     })(),
@@ -1518,15 +1528,19 @@ export function detailEditValuesToProgramPatch(
   const isTrainedTeacherProgram =
     existing.backendProgramType === 'TRAINED_TEACHER' ||
     looksLikeTrainedTeacherProgramId(existing.id)
-  const contactOrganizationName =
-    values.recruitmentContactOrganizationName?.trim() ||
-    existing.generalCommonInfo?.participantRecruitmentInfo?.contactOrganizationName
+  const ttParticipantInquiry =
+    isTrainedTeacherProgram && recruitmentAudience === 'participant'
+  const contactOrganizationName = ttParticipantInquiry
+    ? values.recruitmentContactOrganizationName?.trim() || undefined
+    : values.recruitmentContactOrganizationName?.trim() ||
+      existing.generalCommonInfo?.participantRecruitmentInfo?.contactOrganizationName
   /** 문의처 표시명 — BE contactName (managerName/후원 담당자와 분리) */
-  const inquiryContactName =
-    values.recruitmentContactOrganizationName?.trim() ||
-    existing.contactName?.trim() ||
-    existing.generalCommonInfo?.participantRecruitmentInfo?.contactName?.trim() ||
-    undefined
+  const inquiryContactName = ttParticipantInquiry
+    ? values.recruitmentContactOrganizationName?.trim() || undefined
+    : values.recruitmentContactOrganizationName?.trim() ||
+      existing.contactName?.trim() ||
+      existing.generalCommonInfo?.participantRecruitmentInfo?.contactName?.trim() ||
+      undefined
   const instructorContactOrganizationName =
     values.instructorRecruitmentContactOrganizationName?.trim() ||
     existing.generalCommonInfo?.instructorRecruitmentInfo?.contactOrganizationName
@@ -1594,7 +1608,10 @@ export function detailEditValuesToProgramPatch(
       : existing.generalSurveyMenuKeys
   const registrationOverlay =
     isTrainedTeacherProgram && surveyKeysTouched
-      ? syncSurveyItemsIntoRegistrationOverlay({}, generalSurveyMenuKeys)
+      ? syncSurveyItemsIntoRegistrationOverlay(
+          existing.registrationOverlay,
+          generalSurveyMenuKeys
+        )
       : undefined
   const ujatParticipantTypes = isUjatProgram
     ? existing.generalParticipantTypes ??
@@ -1644,8 +1661,8 @@ export function detailEditValuesToProgramPatch(
       existing.sponsorId,
     managerName: values.managerName,
     contactName: inquiryContactName,
-    contactPhone,
-    contactEmail,
+    contactPhone: ttParticipantInquiry ? contactPhone?.trim() || undefined : contactPhone,
+    contactEmail: ttParticipantInquiry ? contactEmail?.trim() || undefined : contactEmail,
     institutionType:
       values.venueKind === 'outside'
         ? 'outside_school'
@@ -1953,15 +1970,27 @@ export function detailEditValuesToProgramPatch(
           resultAnnouncementDate,
           resultAnnouncementMethod
         ),
-        inquiryTel: contactPhone?.trim() || existing.generalCommonInfo?.participantRecruitmentInfo?.inquiryTel,
-        inquiryEmail:
-          contactEmail?.trim() || existing.generalCommonInfo?.participantRecruitmentInfo?.inquiryEmail,
-        contactPhone: contactPhone?.trim() || existing.generalCommonInfo?.participantRecruitmentInfo?.contactPhone,
-        contactEmail: contactEmail?.trim() || existing.generalCommonInfo?.participantRecruitmentInfo?.contactEmail,
+        inquiryTel: ttParticipantInquiry
+          ? contactPhone?.trim() || undefined
+          : contactPhone?.trim() ||
+            existing.generalCommonInfo?.participantRecruitmentInfo?.inquiryTel,
+        inquiryEmail: ttParticipantInquiry
+          ? contactEmail?.trim() || undefined
+          : contactEmail?.trim() ||
+            existing.generalCommonInfo?.participantRecruitmentInfo?.inquiryEmail,
+        contactPhone: ttParticipantInquiry
+          ? contactPhone?.trim() || undefined
+          : contactPhone?.trim() ||
+            existing.generalCommonInfo?.participantRecruitmentInfo?.contactPhone,
+        contactEmail: ttParticipantInquiry
+          ? contactEmail?.trim() || undefined
+          : contactEmail?.trim() ||
+            existing.generalCommonInfo?.participantRecruitmentInfo?.contactEmail,
         contactOrganizationName,
-        contactName:
-          values.recruitmentContactOrganizationName?.trim() ||
-          existing.generalCommonInfo?.participantRecruitmentInfo?.contactName,
+        contactName: ttParticipantInquiry
+          ? values.recruitmentContactOrganizationName?.trim() || undefined
+          : values.recruitmentContactOrganizationName?.trim() ||
+            existing.generalCommonInfo?.participantRecruitmentInfo?.contactName,
       },
       instructorRecruitmentInfo: {
         ...existing.generalCommonInfo?.instructorRecruitmentInfo,
@@ -2238,6 +2267,10 @@ export function narrowProgramDetailPatchForCommonInfoSave(
     applicationMethod: _applicationMethod,
     otherNotes: _otherNotes,
     educationTargetDetail: _educationTargetDetail,
+    contactName: _contactName,
+    contactEmail: _contactEmail,
+    contactPhone: _contactPhone,
+    attachmentFileNames: _attachmentFileNames,
     ...rest
   } = patch
 
@@ -2255,4 +2288,18 @@ export function narrowProgramDetailPatchForCommonInfoSave(
     ...rest,
     generalCommonInfo: commonRest,
   }
+}
+
+/** TT 공통정보 저장 — 루트 remarks/mainTitle은 유지하고 일정·모집 nested는 제외한다. */
+export function narrowTrainedTeacherCommonInfoSavePatch(
+  patch: Partial<import('@/types/domain').Program>
+): Partial<import('@/types/domain').Program> {
+  const narrowed = narrowProgramDetailPatchForCommonInfoSave(patch)
+  if (Object.prototype.hasOwnProperty.call(patch, 'remarks')) {
+    narrowed.remarks = patch.remarks
+  }
+  if (Object.prototype.hasOwnProperty.call(patch, 'mainTitle')) {
+    narrowed.mainTitle = patch.mainTitle
+  }
+  return narrowed
 }

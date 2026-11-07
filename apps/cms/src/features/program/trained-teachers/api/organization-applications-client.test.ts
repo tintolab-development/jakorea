@@ -12,6 +12,7 @@ vi.mock('@/shared/api/orval-mutator', () => ({
 import customInstance from '@/shared/api/orval-mutator'
 import {
   approveTrainedTeacherOrganizationApplicationRemote,
+  cancelTrainedTeacherOrganizationApplicationApprovalRemote,
   giveUpTrainedTeacherOrganizationApplicationRemote,
 } from './organization-applications-client'
 
@@ -105,5 +106,48 @@ describe('approveTrainedTeacherOrganizationApplicationRemote', () => {
       url: '/api/admin/programs/168006/trained-teacher/organization-applications/928514/approve',
       method: 'POST',
     })
+  })
+})
+
+describe('cancelTrainedTeacherOrganizationApplicationApprovalRemote', () => {
+  beforeEach(() => {
+    vi.mocked(customInstance).mockReset()
+  })
+
+  it('교육받은 교사 전용 cancel-approval 경로로 사유와 알림을 보낸다', async () => {
+    const response = {
+      applicationId: 1691592,
+      applicationType: 'ORGANIZATION',
+      fromStatus: 'APPROVED',
+      toStatus: 'APPROVAL_CANCELLED',
+      participantId: null,
+      notificationEventId: null,
+      availableActions: ['VIEW', 'WRITE_ADMIN_COMMENT', 'APPROVE', 'REJECT'],
+      scheduleAssignmentStatus: null,
+    }
+    vi.mocked(customInstance).mockResolvedValue(response)
+
+    await expect(
+      cancelTrainedTeacherOrganizationApplicationApprovalRemote('186551', '1691592', {
+        reason: '123',
+        notification: { timing: 'IMMEDIATE' },
+        selectedScheduleId: 187702,
+      } as { reason: string; notification: { timing: 'IMMEDIATE' } })
+    ).resolves.toEqual(response)
+
+    expect(customInstance).toHaveBeenCalledWith({
+      url: '/api/admin/programs/186551/trained-teacher/organization-applications/1691592/cancel-approval',
+      method: 'POST',
+      data: {
+        reason: '123',
+        notification: { timing: 'IMMEDIATE' },
+      },
+      headers: { 'Content-Type': 'application/json' },
+    })
+    expect(vi.mocked(customInstance).mock.calls[0]?.[0]).not.toEqual(
+      expect.objectContaining({
+        url: '/api/admin/organization-applications/1691592/cancel-approval',
+      })
+    )
   })
 })

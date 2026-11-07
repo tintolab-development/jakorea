@@ -144,6 +144,19 @@ assert.equal(
   }),
   true,
 )
+assert.equal(
+  wouldShowPersonalCertificatePanel(
+    {
+      displayStatus: 'completed',
+      applicationType: 'INDIVIDUAL',
+      programType: 'GENERAL_INDIVIDUAL',
+      programGroup: 'GENERAL_EDUCATION',
+      detailCase: 'general',
+    },
+    { isTeacher: true },
+  ),
+  true,
+)
 
 assert.equal(
   resolvePortalWithdrawalPhase(

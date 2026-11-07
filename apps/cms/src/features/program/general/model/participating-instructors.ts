@@ -68,6 +68,8 @@ export interface ParticipatingInstructorRow {
   bankName?: string
   accountNumber?: string
   accountHolder?: string
+  /** 강사 신청 상세 `settlement.businessIncome` (null·생략이면 undefined) */
+  settlementBusinessIncome?: boolean
   profileImageUrl?: string
   oneLineIntro?: string
   educationLevel?: string
@@ -99,10 +101,10 @@ export interface ParticipatingInstructorRow {
   lectureReportSubmitted?: boolean
   /** CMS에서 강사 등록으로 추가된 경우 등 */
   registeredByAdmin?: boolean
-  /** 기본 정보 하단 — 강의비 책정 기준(유형·금액, 셀 내 디바이더로 구분) */
+  /** 기본 정보 하단 — 강사비 책정 기준(유형·금액, 셀 내 디바이더로 구분) */
   lectureFeeCategory?: string
   lectureFeeAmount?: string
-  /** 강의비 책정 기준 — 유형·지급 기준·표시 문자열 (강사 신청 상세와 동일 구조) */
+  /** 강사비 책정 기준 — 유형·지급 기준·표시 문자열 (강사 신청 상세와 동일 구조) */
   lectureFeeBasisType?: ApplicantInstructorLectureFeeBasisType
   lectureFeeMeasure?: string
   lectureFeeBasisDisplay?: string

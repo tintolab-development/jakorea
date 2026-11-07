@@ -7,7 +7,7 @@
  */
 
 export interface ProgramFormBindingRequest {
-  /** REGISTRATION | RECRUITMENT | APPLICATION | SURVEY | SATISFACTION | LECTURE_EVALUATION 등. 교육받은 교사 프로그램은 SURVEY, SATISFACTION, LECTURE_EVALUATION을 허용합니다. SATISFACTION은 교사 대상(targetRole=TEACHER)만 허용하며 학생 대상·대상 미지정은 400 TRAINED_TEACHER_SATISFACTION_TEACHER_ONLY. */
+  /** REGISTRATION | RECRUITMENT | APPLICATION | SURVEY | SATISFACTION | LECTURE_EVALUATION 등. 교육받은 교사 프로그램의 SATISFACTION은 교사(targetRole=TEACHER)와 학생(STUDENT) 모두 허용합니다. */
   formType?: string;
   templateId?: number;
   templateVersionId?: number;
@@ -28,4 +28,12 @@ export interface ProgramFormBindingRequest {
   submissionEndAt?: string;
   duplicatePolicy?: string;
   displayOrder?: number;
+  /** SATISFACTION만. PER_SCHEDULE | ONCE_AT_END. 생략 시 targetScope=SCHEDULE이면 PER_SCHEDULE, 아니면 ONCE_AT_END. */
+  satisfactionRunMode?: string;
+  /** SATISFACTION만. 일정 종료(또는 시작일) 후 참여 일수. 허용값 3, 7, 14, 30. 생략 시 7. */
+  satisfactionWindowDays?: number;
+  /** SATISFACTION만. true면 관리자가 지정한 submissionStartAt을 이후 일정 변경이 덮어쓰지 않습니다. */
+  startAtLocked?: boolean;
+  /** SATISFACTION ONCE_AT_END만. true면 시작 시각을 현재 시각으로 둡니다. */
+  startImmediately?: boolean;
 }

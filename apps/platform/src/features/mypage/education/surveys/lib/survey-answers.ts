@@ -6,9 +6,12 @@ import {
   type WritingFormParagraph,
 } from '@jakorea/form-schema/writing-form'
 import { resolveApplicationAnswerKey } from '@/features/program/lib/application-answer-key'
+import { PROGRAM_APPLICATION_FREE_TEXT_MAX_LENGTH } from '@/features/program/lib/portal-application-free-text'
 import type { SurveySidecarState } from './survey-sidecar'
 
-export type EducationSurveyFillValidation = { ok: true } | { ok: false; message: string }
+export type EducationSurveyFillValidation =
+  | { ok: true }
+  | { ok: false; message: string; incomplete?: 'file_attachment' }
 
 function isAnswerRequired(paragraph: WritingFormParagraph): boolean {
   if (paragraph.kind === 'single_item') {
@@ -107,6 +110,29 @@ function extractSurveyParagraphAnswer(
   return undefined
 }
 
+function surveyFreeTextLength(value: unknown): number {
+  if (typeof value === 'string') return value.length
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return 0
+  const record = value as Record<string, unknown>
+  let total = typeof record.bodyText === 'string' ? record.bodyText.length : 0
+  if (Array.isArray(record.items)) {
+    for (const item of record.items) {
+      if (item && typeof item === 'object' && typeof (item as { bodyText?: unknown }).bodyText === 'string') {
+        total += (item as { bodyText: string }).bodyText.length
+      }
+    }
+  }
+  if (Array.isArray(record.fieldDataRows)) {
+    for (const row of record.fieldDataRows) {
+      if (!row || typeof row !== 'object') continue
+      for (const cell of Object.values(row as Record<string, unknown>)) {
+        if (typeof cell === 'string') total += cell.length
+      }
+    }
+  }
+  return total
+}
+
 function isEmptyAnswer(value: unknown): boolean {
   if (value == null) return true
   if (typeof value === 'string') return value.trim() === ''
@@ -199,6 +225,13 @@ export function validateEducationSurveyFill(
       }
       continue
     }
+    const valueForLength = extractSurveyParagraphAnswer(paragraph, sidecar)
+    if (surveyFreeTextLength(valueForLength) > PROGRAM_APPLICATION_FREE_TEXT_MAX_LENGTH) {
+      return {
+        ok: false,
+        message: '입력 가능한 글자 수를 초과했습니다. 1,000자 이하로 작성해 주세요.',
+      }
+    }
     if (!isAnswerRequired(paragraph)) continue
     if (paragraph.kind === 'single_item' && paragraph.variant === 'file_attachment') {
       const questionKey = resolveApplicationAnswerKey(paragraph)
@@ -209,7 +242,11 @@ export function validateEducationSurveyFill(
       const minimum = options?.minimumFilesPerAttachment ?? 1
       if (fileCount < minimum) {
         const title = paragraph.paragraphTitle?.trim() || '교육 사진'
-        return { ok: false, message: `${title}을(를) ${minimum}장 이상 첨부해 주세요.` }
+        return {
+          ok: false,
+          incomplete: 'file_attachment',
+          message: `${title}을(를) ${minimum}장 이상 첨부해 주세요.`,
+        }
       }
       continue
     }
@@ -322,12 +359,16 @@ export function applyEducationSurveyAnswersToDraft(
               'educationTarget',
               'classLabel',
               'studentCount',
-            ].map(key => [
-              key,
-              typeof progress[key as keyof LectureReportProgramProgressParagraph] === 'string'
-                ? progress[key as keyof LectureReportProgramProgressParagraph]
-                : paragraph[key as keyof LectureReportProgramProgressParagraph],
-            ])
+            ].map(key => {
+              const raw = progress[key as keyof LectureReportProgramProgressParagraph]
+              const next =
+                typeof raw === 'string'
+                  ? raw
+                  : typeof raw === 'number' && Number.isFinite(raw)
+                    ? String(raw)
+                    : paragraph[key as keyof LectureReportProgramProgressParagraph]
+              return [key, next]
+            })
           ),
         } as WritingFormParagraph
       }

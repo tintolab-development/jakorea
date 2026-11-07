@@ -1752,7 +1752,7 @@ const notificationEventChannelTemplates = (
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: UNMASKED_DEFAULT 개인정보 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -1768,7 +1768,7 @@ const notificationEventChannelTemplates = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: 2026-10-26 CMS-23 AUTO_RAW_ACCESS: 비 Viewer는 수신자 연락처 원문 + 행별 고정 사유 자동 기록; Viewer는 마스킹.
+ * - 검토 메모: CMS-23: DTO 연락처 항상 마스킹. 비 Viewer는 행별 고정 사유 자동 기록; Viewer는 마스킹.
  * @summary 알림 조회
  */
 const listNotificationDeliveries = (
@@ -1807,7 +1807,7 @@ const listNotificationDeliveries = (
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: UNMASKED_DEFAULT 개인정보 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -1823,7 +1823,7 @@ const listNotificationDeliveries = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: CMS-26: MASTER/PM/AM 감사 성공 후 원문. PROGRAM_VIEWER 403. 목록 GET은 마스킹.
+ * - 검토 메모: CMS-26: 상세 DTO 연락처 항상 마스킹. PROGRAM_VIEWER 403. 감사는 고정 사유.
  * @summary 알림톡/문자/메일 발송 이력 상세 조회
  */
 const getNotificationDelivery = (

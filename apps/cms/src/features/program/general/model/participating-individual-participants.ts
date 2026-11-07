@@ -23,7 +23,7 @@ export function parseParticipantSurveyViewKey(
 }
 
 export type ParticipatingIndividualParticipantRow = GeneralIndividualApplicantRow & {
-  /** 수료증/참여인증서 발급 판별용 회차별 출석 */
+  /** 수료증/참가인증서 발급 판별용 회차별 출석 */
   lectureAttendanceSessions: LectureAttendanceSession[]
   satisfactionSurveyCompleted: boolean
   /** 프로그램 참여 신청일 — 발급 가능 기한(3년) 산정 */

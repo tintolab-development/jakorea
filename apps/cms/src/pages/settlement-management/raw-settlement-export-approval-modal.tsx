@@ -25,8 +25,8 @@ import {
   assertSettlementServerExportReady,
   waitForSettlementExportDownload,
 } from '@/features/settlement-management/api/settlement-api-client'
+import type { SettlementExportResponse } from '@/features/settlement-management/api/account-payments/settlement-export-response'
 import type { AccountPaymentRow } from '@/features/settlement-management/model/account-payments-list'
-import type { SettlementExportHistoryResponse } from '@/shared/api/generated/settlement/schemas'
 import { CmsButton } from '@/shared/ui/cms-button'
 
 type RawExportKind = 'bulk-transfer' | 'tax-report'
@@ -74,7 +74,7 @@ export function RawSettlementExportApprovalModal({
   onRequestExport: (
     kind: RawExportKind,
     body: ReturnType<typeof buildRawExportBodyForScope>
-  ) => Promise<SettlementExportHistoryResponse>
+  ) => Promise<SettlementExportResponse>
   onClose: () => void
 }) {
   const [approvalIdText, setApprovalIdText] = useState('')

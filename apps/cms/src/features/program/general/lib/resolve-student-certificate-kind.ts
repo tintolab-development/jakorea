@@ -30,7 +30,7 @@ export function isWithinStudentCertificateIssuancePeriod(
 }
 
 /**
- * 수료증 vs 참여인증서 판별
+ * 수료증 vs 참가인증서 판별
  * - 수료: 진행된 전 회차에 결석 없음(사유 불참 허용), 마지막 교육 일정까지 참여, 만족도 조사 완료(해당 시)
  * - 참여: 위 조건 미충족
  */

@@ -1,6 +1,9 @@
 import type { Dayjs } from 'dayjs'
 import type { GradeBlock } from '@/shared/api/generated/dashboard/schemas/gradeBlock'
-import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
+import type {
+  ParticipatingSchoolSession,
+  TextbookStatusKey,
+} from '@/features/program/general/model/participating-schools'
 import type { PreferredEducationSchedule } from '@/features/program/general/api/individual-application-screening-api-types'
 
 /** 신청 기관(학교) — 타입·승인 상태 패치 도우미 */
@@ -130,7 +133,7 @@ export interface ApplicantSchoolRow {
   preferredScheduleBlocks?: ApplicantPreferredScheduleBlock[]
   /** TT 기관 신청 상세 `gradeBlocks` — 학생 명단 학급 Select SSOT. 목록 응답에는 없음 */
   gradeBlocks?: GradeBlock[] | null
-  /** TT 기관 신청 상세 `educationSchedules` — 출석 조회 scheduleIds SSOT. 목록 응답에는 없음 */
+  /** TT 기관 신청 상세 `educationSchedules` — 승인 확정 운영 일정·출석 scheduleIds SSOT. 목록 응답에는 없음 */
   educationScheduleSessions?: ParticipatingSchoolSession[]
   /** TT 교육 대상 (org-application additive) */
   educationTarget?: string
@@ -144,6 +147,12 @@ export interface ApplicantSchoolRow {
   completedEducationRoundCount?: number
   /** TT 교재명 */
   textbookName?: string
+  /** TT 상세/목록 루트 `textbookKits`·`kitCount`. 없으면 omit */
+  textbookKits?: number
+  /** TT 상세/목록 루트 `textbookQuantity`·`bookCount`. 없으면 omit */
+  textbookQuantity?: number
+  /** 교재 배송 배지. 서버 `textbookDeliveryStatus`가 있을 때만. PREPARING으로 채우지 않음 */
+  textbookStatus?: TextbookStatusKey
   /** TT 교육일지 수. 최소 0. */
   educationJournalCount?: number
   journalSubmitted?: boolean
@@ -237,7 +246,8 @@ export function patchApplicantSchoolForApprovalStatus(
     return {
       ...row,
       approvalStatus,
-      participationRejectionReason: notifyOptions?.rejectionReason ?? row.participationRejectionReason,
+      participationRejectionReason:
+        notifyOptions?.rejectionReason ?? row.participationRejectionReason,
       approvalNotifyTiming: undefined,
       rejectionNotifyTiming: notifyOptions?.notifyTiming,
       approvalNotificationSentAt: resolveApplicantSchoolApprovalNotificationSentAt(notifyOptions),
@@ -253,11 +263,22 @@ export function patchApplicantSchoolForApprovalStatus(
   }
 }
 
+function withoutDirectDecisionActions(actions?: string[]): string[] | undefined {
+  if (actions == null) return undefined
+  return actions.filter(
+    action => action !== 'APPROVE' && action !== 'REJECT' && action !== 'CANCEL_APPROVAL'
+  )
+}
+
 export function patchApplicantSchoolForCancelApproval(
   row: ApplicantSchoolRow,
   notifyOptions: ApplicantSchoolApprovalNotifyOptions
 ): ApplicantSchoolRow {
-  return patchApplicantSchoolForApprovalStatus(row, 'rejected', notifyOptions)
+  return {
+    ...patchApplicantSchoolForApprovalStatus(row, 'rejected', notifyOptions),
+    applicationStatus: 'APPROVAL_CANCELLED',
+    availableActions: withoutDirectDecisionActions(row.availableActions),
+  }
 }
 
 export function patchApplicantSchoolForCancelRejection(
@@ -265,11 +286,15 @@ export function patchApplicantSchoolForCancelRejection(
   notifyOptions?: ApplicantSchoolApprovalNotifyOptions
 ): ApplicantSchoolRow {
   const pending = patchApplicantSchoolForApprovalStatus(row, 'pending')
+  const restored = {
+    ...pending,
+    applicationStatus: 'REJECTION_CANCELLED',
+  }
   if (!notifyOptions) {
-    return pending
+    return restored
   }
   return {
-    ...pending,
+    ...restored,
     approvalNotificationSentAt: resolveApplicantSchoolApprovalNotificationSentAt(notifyOptions),
   }
 }
@@ -307,10 +332,7 @@ export function updateApplicantSchoolCancelRejection(
   _notifyOptions?: ApplicantSchoolApprovalNotifyOptions
 ): void {}
 
-export function updateApplicantSchoolNotificationResend(
-  _schoolId: string,
-  _sentAt?: Date
-): void {}
+export function updateApplicantSchoolNotificationResend(_schoolId: string, _sentAt?: Date): void {}
 
 export function patchApplicantInstitutionAdminComment(
   _schoolId: string,

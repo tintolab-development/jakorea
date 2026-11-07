@@ -2,18 +2,20 @@ import type {
   InstructorAssignmentItem,
   InstructorAssignmentWaitingItem,
 } from '../api/instructor-assignment-client'
-import { formatDisplayDateTime } from '@/shared/lib/format-display-date'
 import {
   asAssignmentDisplayText,
   displayAssignmentValueOrDash,
   formatAssignmentDistanceKm,
-  formatAssignmentSessionLabel,
   formatAssignmentWaitingStatus,
   formatInstructorRole,
   groupAssignmentsByInstitution,
   sortAssignmentWaitingItems,
   type AssignmentWaitingStatusView,
 } from '../lib/instructor-assignment-support'
+import {
+  formatInstructorEducationScheduleLine,
+  type InstructorEducationScheduleDisplayInput,
+} from '../lib/instructor-education-schedule-display'
 import { PFCategoryBadge, PFText } from '@/shared/ui'
 import styles from './instructor-assignment-panel.module.css'
 
@@ -27,7 +29,7 @@ type InstructorAssignmentPanelProps = {
   waitingItems?: readonly InstructorAssignmentWaitingItem[]
   /** 개인 프로그램 — 배정된 교육 일정 / 배정 대기 교육 일정 (기관명·학년 대신 출강지) */
   individual?: boolean
-  /** 일정형 + 복수 회차 — 차시/회차 대신 일정명 표시 */
+  /** 일정형 + 복수 회차 — 회차/차시 대신 일정명 표시 */
   useScheduleName?: boolean
 }
 
@@ -61,27 +63,11 @@ type WaitingTableRow = {
   status: AssignmentWaitingStatusView
 }
 
-function parseDisplayDateTime(value: string | null): { date: string; time: string } | null {
-  if (!value) return null
-  const formatted = formatDisplayDateTime(value)
-  if (!formatted) return null
-  const match = /^(.*) (\d{2}:\d{2})$/.exec(formatted)
-  if (!match) return { date: formatted, time: '' }
-  return { date: match[1], time: match[2] }
-}
-
 function formatScheduleLine(
-  item: Pick<InstructorAssignmentItem, 'startAt' | 'endAt' | 'sessionNo' | 'scheduleName'>,
+  item: InstructorEducationScheduleDisplayInput,
   useScheduleName: boolean,
 ): string {
-  const start = parseDisplayDateTime(item.startAt)
-  const end = parseDisplayDateTime(item.endAt)
-  const date = start?.date || end?.date || '-'
-  const time = start?.time && end?.time ? `${start.time}~${end.time}` : start?.time || end?.time || '-'
-  const session = formatAssignmentSessionLabel(item, useScheduleName)
-
-  if (!start && !end && session === '-') return '-'
-  return `${date} ${time} | ${session}`
+  return formatInstructorEducationScheduleLine(item, useScheduleName)
 }
 
 function buildRows(

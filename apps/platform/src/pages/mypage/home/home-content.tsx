@@ -7,6 +7,7 @@ import styles from './home-content.module.css'
 export type MypageHomeContentProps = {
   member: MypageMemberView
   programStats: MypageProgramStats
+  programStatsLoading?: boolean
   scheduleEvents: MypageScheduleEvent[]
   scheduleEventsLoading?: boolean
   useMockDemoMonth: boolean
@@ -16,6 +17,7 @@ export type MypageHomeContentProps = {
 export function MypageHomeContent({
   member,
   programStats,
+  programStatsLoading = false,
   scheduleEvents,
   scheduleEventsLoading = false,
   useMockDemoMonth,
@@ -30,7 +32,7 @@ export function MypageHomeContent({
         employmentStatusLabel={member.employmentStatusLabel}
       />
       <div className={styles.stats}>
-        <ProgramStatCards stats={programStats} />
+        <ProgramStatCards stats={programStats} isLoading={programStatsLoading} />
       </div>
       <div className={styles.schedule}>
         <ScheduleSection

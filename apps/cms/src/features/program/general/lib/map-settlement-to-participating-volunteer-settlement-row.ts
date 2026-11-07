@@ -126,8 +126,8 @@ export function mapSettlementToParticipatingVolunteerSettlementRow(
     paymentStatementStatus,
     scheduledSettlementAmount,
     canViewPaymentStatement: canView,
-    sessionCompleted: item.sessionCompleted,
-    sessionTotal: item.sessionTotal,
+    sessionCompleted: item.sessionCompleted ?? undefined,
+    sessionTotal: item.sessionTotal ?? undefined,
   }
 }
 

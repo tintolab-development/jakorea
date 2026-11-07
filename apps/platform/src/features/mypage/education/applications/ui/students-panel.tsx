@@ -226,6 +226,16 @@ export function EducationStudentsPanel({
     )
   }
 
+  if (remoteEnabled && documentsSupported && rosterQuery.isError) {
+    return (
+      <div className={styles.unsupportedShell}>
+        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+          학생 명단을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
+        </PFText>
+      </div>
+    )
+  }
+
   if (remoteEnabled && documentsUnsupported) {
     return (
       <>

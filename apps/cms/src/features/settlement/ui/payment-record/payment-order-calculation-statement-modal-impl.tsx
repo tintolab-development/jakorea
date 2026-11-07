@@ -2,13 +2,24 @@
  * 산출 내역서 모달 — 지급 현황 상세(프로그램/강사) 공통 구현
  */
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Spin } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
+import {
+  ActionResultModal,
+  CmsButton,
+  showNotificationResendRequestCompletedAlert,
+  useCmsAlert,
+} from '@/shared/ui'
 import type { PaymentOrderProgramCalculationStatement } from '@/features/settlement-management/model/payment-order-admin-list'
 import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
 import { useConfirmPaymentStatementMutation, useRejectPaymentStatementMutation } from '@/features/settlement-management/hooks/use-confirm-payment-statement-mutation'
+import { useResendSettlementNotificationMutation } from '@/features/settlement-management/hooks/use-resend-settlement-notification-mutation'
+import { SettlementNotificationResendModal } from '@/features/settlement/ui/payment-record/settlement-notification-resend-modal'
+import {
+  canResendSettlementCalculationStatementNotification,
+  resolveSettlementNotificationResendKind,
+} from '@/features/settlement/lib/settlement-notification-resend'
 import type { PaymentOrdersDetailContextQueryResult } from '@/features/settlement-management/hooks/use-payment-orders-detail-query'
 import type { PaymentOrderCalculationStatementCommitPayload } from '@/pages/settlement-management/payment-order-detail-fullpage-shared'
 import {
@@ -19,6 +30,7 @@ import {
   mapProgramCalculationStatementToIssuanceInput,
 } from '@/features/settlement/lib/payment-order-calculation-statement-issuance-view'
 import { PaymentStatementIssuanceViewModal } from '@/features/program/shared/ui/payment-statement-issuance-view-modal'
+import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-basic-info.css'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import '@/pages/settlement-management/payment-order-admin-status-tag.css'
@@ -60,6 +72,8 @@ export interface PaymentOrderCalculationStatementModalImplProps {
   loadError?: unknown
   paymentOrdersRemote?: boolean
   statementId?: number | null
+  settlementId?: number | null
+  availableActions?: readonly string[] | null
   detailContextQuery?: PaymentOrdersDetailContextQueryResult
   /**
    * 산출 내역서 UI 유형 — 상세 페이지가 아니라 **테이블 유형**을 따른다.
@@ -73,6 +87,25 @@ export interface PaymentOrderCalculationStatementModalImplProps {
   onStatementLineCommitted?: (payload: PaymentOrderCalculationStatementCommitPayload) => void
   /** 반려 결과 모달을 닫은 뒤 산출 내역서까지 닫을 때 */
   onAfterRejectResultClosed?: () => void
+  /** 풀페이지 모달 위에서 열 때 (예: 일반 프로그램 상세 1100 위) */
+  zIndex?: number
+  /**
+   * 지급조서(statementId)가 아직 없는 확정 전 정산 신청서 — 확인·반려 API를 상위가 처리.
+   * 확인 처리: 같은 「지급조서 확인 안내」(계좌 지급 예정일) 모달을 띄운 뒤 `onConfirm`을 부른다.
+   * 신청 반려: `onRejectClick` (상위 사유 모달).
+   */
+  statementActionOverride?: {
+    onConfirm: (lectureFeePaymentScheduledDateIso: string) => Promise<void>
+    onRejectClick: () => void
+    pending?: boolean
+  }
+  /** 기관 프로그램이 아니면 산출 내역 「참여 기관명」열 미노출 */
+  hideInstitutionColumn?: boolean
+  /**
+   * 지급조서 보기 본문을 산출 내역서 대신 별도 정본으로 그릴 때 (예: 확정 전 신청서 문서 스냅샷).
+   * 지정하지 않으면 기존처럼 산출 내역서에서 만든다.
+   */
+  issuanceParagraphBodyOptionsOverride?: RenderFormParagraphBodyOptions
 }
 
 export function PaymentOrderCalculationStatementModalImpl({
@@ -83,20 +116,30 @@ export function PaymentOrderCalculationStatementModalImpl({
   loadError,
   paymentOrdersRemote = false,
   statementId,
+  settlementId,
+  availableActions,
   detailContextQuery,
   entryKind,
   entryClassName,
   onStatementLineCommitted,
   onAfterRejectResultClosed,
+  zIndex,
+  statementActionOverride,
+  hideInstitutionColumn = false,
+  issuanceParagraphBodyOptionsOverride,
 }: PaymentOrderCalculationStatementModalImplProps) {
   const { showAlert } = useCmsAlert()
   const confirmMutation = useConfirmPaymentStatementMutation()
   const rejectMutation = useRejectPaymentStatementMutation()
+  const resendNotificationMutation = useResendSettlementNotificationMutation()
+  const resendIdempotencyKeyRef = useRef<string | null>(null)
   const [paymentConfirmOpen, setPaymentConfirmOpen] = useState(false)
+  const [paymentConfirmDoneOpen, setPaymentConfirmDoneOpen] = useState(false)
   const [paymentRejectOpen, setPaymentRejectOpen] = useState(false)
   const [paymentRejectDoneOpen, setPaymentRejectDoneOpen] = useState(false)
   const [paymentRejectReason, setPaymentRejectReason] = useState('')
   const [issuanceViewOpen, setIssuanceViewOpen] = useState(false)
+  const [notificationResendOpen, setNotificationResendOpen] = useState(false)
 
   const basisDetailContext = useMemo(() => {
     if (!data || (data.context !== 'program' && data.context !== 'instructor')) {
@@ -129,10 +172,13 @@ export function PaymentOrderCalculationStatementModalImpl({
   useEffect(() => {
     if (!open) {
       setPaymentConfirmOpen(false)
+      setPaymentConfirmDoneOpen(false)
       setPaymentRejectOpen(false)
       setPaymentRejectDoneOpen(false)
       setPaymentRejectReason('')
       setIssuanceViewOpen(false)
+      setNotificationResendOpen(false)
+      resendIdempotencyKeyRef.current = null
     }
   }, [open])
   /* eslint-enable react-hooks/set-state-in-effect */
@@ -149,13 +195,22 @@ export function PaymentOrderCalculationStatementModalImpl({
     )
   }, [data, entryKind])
 
-  const issuanceParagraphBodyOptions = useMemo(
-    () =>
-      issuanceInput
-        ? buildPaymentStatementIssuanceViewOptionsFromCalculation(issuanceInput)
-        : undefined,
-    [issuanceInput]
-  )
+  const issuanceParagraphBodyOptions = useMemo(() => {
+    if (issuanceParagraphBodyOptionsOverride) return issuanceParagraphBodyOptionsOverride
+    if (!issuanceInput) return undefined
+    const options = buildPaymentStatementIssuanceViewOptionsFromCalculation(issuanceInput)
+    // 개인형 — 지급조서 산출 내역에서도 「참여 기관명」열 미노출
+    if (hideInstitutionColumn && options.paymentStatementCalculationLines) {
+      return {
+        ...options,
+        paymentStatementCalculationLines: {
+          ...options.paymentStatementCalculationLines,
+          hideInstitutionColumn: true,
+        },
+      }
+    }
+    return options
+  }, [hideInstitutionColumn, issuanceInput, issuanceParagraphBodyOptionsOverride])
 
   const issuanceFileName = useMemo(
     () =>
@@ -179,6 +234,7 @@ export function PaymentOrderCalculationStatementModalImpl({
         title="산출 내역서"
         size="large"
         width={1400}
+        zIndex={zIndex}
         className={rootClass}
         footer={
           <CmsButton variant="secondary" size="large" onClick={onCancel}>
@@ -201,6 +257,7 @@ export function PaymentOrderCalculationStatementModalImpl({
         title="산출 내역서"
         size="large"
         width={1400}
+        zIndex={zIndex}
         className={rootClass}
         footer={
           <CmsButton variant="secondary" size="large" onClick={onCancel}>
@@ -229,6 +286,16 @@ export function PaymentOrderCalculationStatementModalImpl({
   }
 
   const processingStatusClass = statement.basic.processingStatusClass
+  const resendKind = resolveSettlementNotificationResendKind(processingStatusClass)
+  const canResendNotification =
+    paymentOrdersRemote &&
+    settlementId != null &&
+    resendKind != null &&
+    canResendSettlementCalculationStatementNotification(
+      processingStatusClass,
+      availableActions
+    )
+  const hasStoredRejectionReason = Boolean(statement.basic.processingRejectionReason?.trim())
   const canIssuePaymentStatement = isPaymentOrderLineEligibleForPaymentStatementIssue(
     processingStatusClass
   )
@@ -258,6 +325,7 @@ export function PaymentOrderCalculationStatementModalImpl({
         lectureFeePaymentScheduledDate: lectureFeePaymentScheduledDateIso,
       })
       setPaymentConfirmOpen(false)
+      setPaymentConfirmDoneOpen(true)
     } catch (error) {
       showAlert({
         title: '안내',
@@ -314,6 +382,9 @@ export function PaymentOrderCalculationStatementModalImpl({
             : (statement.basic as unknown as PaymentOrderCalculationStatementProgramContext['basic'])
         }
         style={{ minWidth: CALC_STATEMENT_CONTENT_MIN_WIDTH }}
+        onResendNotificationClick={
+          canResendNotification ? () => setNotificationResendOpen(true) : undefined
+        }
       />
     ) : (
       <PaymentOrderCalculationStatementInstructorBasicSection
@@ -323,6 +394,9 @@ export function PaymentOrderCalculationStatementModalImpl({
             : (statement.basic as unknown as PaymentOrderCalculationStatementInstructorContext['basic'])
         }
         style={{ minWidth: CALC_STATEMENT_CONTENT_MIN_WIDTH }}
+        onResendNotificationClick={
+          canResendNotification ? () => setNotificationResendOpen(true) : undefined
+        }
       />
     )
 
@@ -334,6 +408,7 @@ export function PaymentOrderCalculationStatementModalImpl({
         title="산출 내역서"
         size="large"
         width={1400}
+        zIndex={zIndex}
         className={rootClass}
         footer={
           <CmsButton variant="secondary" size="large" onClick={onCancel}>
@@ -343,6 +418,8 @@ export function PaymentOrderCalculationStatementModalImpl({
       >
         {basicSection}
         <PaymentOrderCalculationBreakdownTable
+          layout="payment-statement"
+          hideInstitutionColumn={hideInstitutionColumn}
           blocks={statement.blocks}
           formulaLabel={statement.formulaLabel}
           totalAmount={statement.totalAmount}
@@ -356,13 +433,39 @@ export function PaymentOrderCalculationStatementModalImpl({
           onBasisDetailClick={handleBasisDetailClick}
           onDownloadPaymentStatement={() => setIssuanceViewOpen(true)}
           headerActions={
-            isStatementActionLocked ? null : (
+            statementActionOverride ? (
               <>
                 <CmsButton
                   variant="delete"
                   size="medium"
-                  disabled={rejectMutation.isPending}
-                  onClick={() => setPaymentRejectOpen(true)} >
+                  disabled={statementActionOverride.pending}
+                  onClick={statementActionOverride.onRejectClick}
+                >
+                  신청 반려
+                </CmsButton>
+                <CmsButton
+                  variant="primary"
+                  size="medium"
+                  disabled={statementActionOverride.pending}
+                  onClick={() => setPaymentConfirmOpen(true)}
+                >
+                  확인 처리
+                </CmsButton>
+              </>
+            ) : isStatementActionLocked ? null : (
+              <>
+                <CmsButton
+                  variant="delete"
+                  size="medium"
+                  disabled
+                  onClick={() =>
+                    showAlert({
+                      title: '안내',
+                      content:
+                        '산출 내역서에서는 신청 반려를 처리할 수 없습니다. 개인 일정별 정산 신청 상세에서만 반려할 수 있습니다.',
+                    })
+                  }
+                >
                   신청 반려
                 </CmsButton>
                 <CmsButton
@@ -381,6 +484,16 @@ export function PaymentOrderCalculationStatementModalImpl({
         open={paymentConfirmOpen}
         onCancel={() => setPaymentConfirmOpen(false)}
         onConfirm={({ lectureFeePaymentScheduledDateIso }) => {
+          if (statementActionOverride) {
+            void statementActionOverride
+              .onConfirm(lectureFeePaymentScheduledDateIso)
+              .then(() => {
+                setPaymentConfirmOpen(false)
+                setPaymentConfirmDoneOpen(true)
+              })
+              .catch(() => undefined)
+            return
+          }
           if (paymentOrdersRemote) {
             void handleRemoteConfirm(lectureFeePaymentScheduledDateIso)
             return
@@ -393,6 +506,14 @@ export function PaymentOrderCalculationStatementModalImpl({
           setPaymentConfirmOpen(false)
         }}
         data={statement}
+        zIndex={zIndex != null ? zIndex + 100 : undefined}
+      />
+      <ActionResultModal
+        open={paymentConfirmDoneOpen}
+        title="지급조서 확인 완료"
+        body="지급조서 확인이 완료되었습니다."
+        zIndex={zIndex != null ? zIndex + 100 : undefined}
+        onClose={() => setPaymentConfirmDoneOpen(false)}
       />
       <PaymentOrderPaymentRejectionModal
         open={paymentRejectOpen}
@@ -417,14 +538,74 @@ export function PaymentOrderCalculationStatementModalImpl({
         onClose={() => setIssuanceViewOpen(false)}
         paragraphBodyOptions={issuanceParagraphBodyOptions}
         fileName={issuanceFileName}
+        settlementId={settlementId ?? undefined}
         zIndex={1500}
       />
       <PaymentOrderCalculationBasisDetailModal
         open={basisDetailOpen}
         onCancel={closeBasisDetailModal}
         detail={selectedBasisDetail}
-        zIndex={1400}
+        zIndex={zIndex != null ? zIndex + 100 : 1400}
       />
+      {resendKind != null ? (
+        <SettlementNotificationResendModal
+          open={notificationResendOpen}
+          kind={resendKind}
+          hasStoredRejectionReason={hasStoredRejectionReason}
+          confirmLoading={resendNotificationMutation.isPending}
+          zIndex={1500}
+          onCancel={() => {
+            if (resendNotificationMutation.isPending) return
+            resendIdempotencyKeyRef.current = null
+            setNotificationResendOpen(false)
+          }}
+          onConfirm={payload => {
+            if (settlementId == null || resendNotificationMutation.isPending) return
+            if (
+              payload.notifyTiming === 'manual' &&
+              (!payload.manualNotifyAt || !payload.manualNotifyAt.isAfter(new Date()))
+            ) {
+              void showAlert({
+                title: '예약 발송 일시 확인',
+                content: '예약 발송 일시는 현재 시각보다 이후로 설정해 주세요.',
+              })
+              return
+            }
+            const idempotencyKey =
+              resendIdempotencyKeyRef.current ??
+              `settlement-${settlementId}-${crypto.randomUUID()}`
+            resendIdempotencyKeyRef.current = idempotencyKey
+            void resendNotificationMutation
+              .mutateAsync({
+                settlementId,
+                idempotencyKey,
+                body: {
+                  timing: payload.notifyTiming === 'manual' ? 'SCHEDULED' : 'IMMEDIATE',
+                  scheduledAt:
+                    payload.notifyTiming === 'manual'
+                      ? (payload.manualNotifyAt?.toISOString() ?? null)
+                      : null,
+                  reason:
+                    resendKind === 'rejected' ? payload.reason.trim() || null : null,
+                },
+              })
+              .then(() => {
+                resendIdempotencyKeyRef.current = null
+                setNotificationResendOpen(false)
+                showNotificationResendRequestCompletedAlert()
+              })
+              .catch(error => {
+                showAlert({
+                  title: '알림 재발송 실패',
+                  content: getSettlementApiErrorMessage(
+                    error,
+                    '알림 재발송에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+                  ),
+                })
+              })
+          }}
+        />
+      ) : null}
     </>
   )
 }

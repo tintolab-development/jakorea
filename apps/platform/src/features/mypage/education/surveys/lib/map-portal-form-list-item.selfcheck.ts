@@ -56,6 +56,7 @@ const schedule = mapPortalFormListItem({
 assert.equal(schedule?.id, '188865')
 assert.equal(schedule?.targetScope, 'SCHEDULE')
 assert.equal(schedule?.targetScopeId, 187156)
+assert.equal(schedule?.scheduleId, 187156)
 
 const noDates = mapPortalFormListItem({ bindingId: 3, status: 'NOT_SUBMITTED' })
 assert.ok(noDates)
@@ -115,6 +116,17 @@ assert.equal(resolveEducationSurveyListStatus(false, startClock, beforeClock), '
 assert.equal(
   resolveEducationSurveyListStatus(false, startClock, new Date('2026-11-01T07:21:00+09:00')),
   'in_progress',
+)
+assert.equal(
+  resolveEducationSurveyListStatus(
+    false,
+    {
+      submissionStartAt: '2026-10-24T07:11:00Z',
+      submissionEndAt: '2026-10-31T15:00:00Z',
+    },
+    new Date('2026-11-06T02:00:00Z'),
+  ),
+  'period_closed',
 )
 assert.equal(resolveEducationSurveyListStatus(true, startClock, beforeClock), 'submitted')
 assert.equal(

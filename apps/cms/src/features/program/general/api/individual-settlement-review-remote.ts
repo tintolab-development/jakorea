@@ -151,9 +151,24 @@ export async function fetchIndividualSettlementReviewDetailRemote(
 export async function approveIndividualSettlementReviewRemote(input: {
   settlementApplicationId: number
   expectedRevisionNo: number
+  /**
+   * 「지급조서 확인 안내」에서 고른 계좌 지급 예정일(YYYY-MM-DD).
+   * 강사 지급조서 확인과 같은 키(scheduledPaymentDate·lectureFeePaymentScheduledDate)로 보낸다.
+   * BE 개인 정산 승인 계약에 아직 없으면 무시된다 — 저장은 BE 반영 후.
+   */
+  scheduledPaymentDate?: string
 }): Promise<IndividualSettlementReviewDecision> {
-  const body: IndividualSettlementReviewRequest = {
+  const body: IndividualSettlementReviewRequest & {
+    scheduledPaymentDate?: string
+    lectureFeePaymentScheduledDate?: string
+  } = {
     expectedRevisionNo: input.expectedRevisionNo,
+    ...(input.scheduledPaymentDate
+      ? {
+          scheduledPaymentDate: input.scheduledPaymentDate,
+          lectureFeePaymentScheduledDate: input.scheduledPaymentDate,
+        }
+      : {}),
   }
   const response = await customInstance<unknown>({
     url: individualSettlementReviewApproveUrl(input.settlementApplicationId),

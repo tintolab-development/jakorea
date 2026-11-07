@@ -1,17 +1,25 @@
 /**
  * 재능기부 인터뷰 게시글 선택 팝업 (3-3)
- * 채용 안내 직무 인터뷰 선택과 동일 UI — 임팩트 스토리에서 검색·선택
+ * Figma popup / search / w800 — 임팩트 스토리 검색·선택
  */
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import type { ImpactStory, ImpactStoryListFilter } from '@/entities/impact-stories/model/types'
-import { useImpactStoriesList } from '@/features/impact-stories/api/hooks'
-import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/constants/filter-field-width'
+import { useImpactStoriesPagedList } from '@/features/impact-stories/api/hooks'
 import { CmsButton, CmsInput, CmsSelect, ContentModal } from '@/shared/ui'
 
 import './interview-post-picker-modal.css'
+
+/** Figma Field / Sorting / M — 게시년도 셀렉트 */
+const YEAR_SELECT_WIDTH_PX = 140
+
+type Applied = {
+  year: string
+  title: string
+  page: number
+}
 
 type Props = {
   open: boolean
@@ -19,67 +27,100 @@ type Props = {
   onSelect: (payload: { id: string; title: string; thumbnailUrl: string }) => void
 }
 
+function SearchIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      aria-hidden
+    >
+      <circle cx="9" cy="9" r="6.25" stroke="#9E9E9E" strokeWidth="1.5" />
+      <path d="M13.5 13.5L17 17" stroke="#9E9E9E" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 function storyThumbnailUrl(story: ImpactStory): string {
   return story.thumbnail?.dataUrl ?? ''
 }
 
-function publishedYear(iso: string): string {
-  const y = iso.slice(0, 4)
+function yearRange(year: string): Pick<ImpactStoryListFilter, 'publishedFrom' | 'publishedTo'> {
+  if (!year) return {}
+  return {
+    publishedFrom: `${year}-01-01`,
+    publishedTo: `${year}-12-31`,
+  }
+}
+
+function storyPublishedYear(story: ImpactStory): string {
+  const y = story.publishedAt.slice(0, 4)
   return /^\d{4}$/.test(y) ? y : '-'
 }
 
-function buildYearOptions(): { value: string; label: string }[] {
-  const current = new Date().getFullYear()
-  const years: { value: string; label: string }[] = []
-  for (let y = current; y >= 2018; y -= 1) {
-    years.push({ value: String(y), label: String(y) })
-  }
-  return years
-}
-
-const YEAR_OPTIONS = buildYearOptions()
-
-const EMPTY_FILTER: ImpactStoryListFilter = { visibility: 'public' }
+const CURRENT_YEAR = new Date().getFullYear()
+const YEAR_OPTIONS = Array.from({ length: 16 }, (_, i) => {
+  const year = CURRENT_YEAR - i
+  return { label: `${year}년`, value: String(year) }
+})
 
 export function InterviewPostPickerModal({ open, onCancel, onSelect }: Props) {
-  if (!open) return null
-  return <PickerBody onCancel={onCancel} onSelect={onSelect} />
-}
-
-function PickerBody({ onCancel, onSelect }: Pick<Props, 'onCancel' | 'onSelect'>) {
   const [pendingYear, setPendingYear] = useState('')
   const [pendingTitle, setPendingTitle] = useState('')
-  const [applied, setApplied] = useState<ImpactStoryListFilter | null>(null)
+  const [applied, setApplied] = useState<Applied>({ year: '', title: '', page: 0 })
+  const [hasSearched, setHasSearched] = useState(false)
 
-  const listQuery = useImpactStoriesList(applied ?? EMPTY_FILTER, applied != null)
-  const rows = useMemo(() => listQuery.rows ?? [], [listQuery.rows])
+  useEffect(() => {
+    if (!open) return
+    setPendingYear('')
+    setPendingTitle('')
+    setApplied({ year: '', title: '', page: 0 })
+    setHasSearched(false)
+  }, [open])
+
+  const filter = useMemo<ImpactStoryListFilter>(
+    () => ({
+      visibility: 'public',
+      title: applied.title.trim() || undefined,
+      page: applied.page,
+      ...yearRange(applied.year),
+    }),
+    [applied]
+  )
+
+  const listQuery = useImpactStoriesPagedList(filter, open && hasSearched)
+  const pageData = listQuery.data
+  const rows = pageData?.items ?? []
+  const totalCount = pageData?.totalCount ?? 0
+  const totalPages = pageData?.totalPages ?? 0
+  const currentPage = (pageData?.page ?? applied.page) + 1
 
   const handleSearch = useCallback(() => {
-    const year = pendingYear.trim()
-    const title = pendingTitle.trim()
-    const filter: ImpactStoryListFilter = { visibility: 'public' }
-    if (year) {
-      filter.publishedFrom = `${year}-01-01`
-      filter.publishedTo = `${year}-12-31`
-    }
-    if (title) filter.title = title
-    setApplied(filter)
+    setHasSearched(true)
+    setApplied({
+      year: pendingYear,
+      title: pendingTitle.trim(),
+      page: 0,
+    })
   }, [pendingTitle, pendingYear])
 
   const columns = useMemo<ColumnsType<ImpactStory>>(
     () => [
       {
-        title: '진행년도',
+        title: '게시년도',
         key: 'year',
-        width: 120,
+        width: 160,
         align: 'center',
-        render: (_value, record) => publishedYear(record.publishedAt),
+        className: 'talent-intro-post-picker__year-col',
+        render: (_value, record) => storyPublishedYear(record),
       },
       {
         title: '게시글 제목',
         dataIndex: 'title',
         key: 'title',
-        align: 'left',
+        align: 'center',
         ellipsis: true,
         render: (v: string) => v || '-',
       },
@@ -87,74 +128,108 @@ function PickerBody({ onCancel, onSelect }: Pick<Props, 'onCancel' | 'onSelect'>
     []
   )
 
+  if (!open) return null
+
+  const showEmpty = !listQuery.isLoading && totalCount === 0
+
   return (
     <ContentModal
       open
       onCancel={onCancel}
       title="인터뷰 게시글 선택"
-      size="medium"
+      width={800}
       className="talent-intro-post-picker"
       footer={null}
     >
-      <div className="admin-filter-area talent-intro-post-picker__filter">
-        <div className="admin-filter-area__field admin-filter-area__field--control">
-          <p className="admin-filter-area__label">게시년도</p>
-          <CmsSelect
-            inputSize="large"
-            width={FILTER_CONTROL_MAX_WIDTH_PX}
-            withAllOption
-            value={pendingYear}
-            placeholder="전체"
-            options={YEAR_OPTIONS}
-            onChange={v => setPendingYear(String(v ?? ''))}
-          />
-        </div>
-        <div className="admin-filter-area__field admin-filter-area__field--control talent-intro-post-picker__title-field">
-          <p className="admin-filter-area__label">게시글 제목</p>
-          <CmsInput
-            inputSize="large"
-            width="100%"
-            value={pendingTitle}
-            placeholder="고정 노출할 게시글 제목을 입력해 주세요"
-            onChange={e => setPendingTitle(e.target.value)}
-            onPressEnter={handleSearch}
-          />
-        </div>
-        <div className="admin-filter-area__actions">
-          <CmsButton
-            className="admin-filter-area__search-button"
-            variant="primary"
-            size="medium"
-            type="button"
-            onClick={handleSearch}
-          >
-            검색
-          </CmsButton>
-        </div>
+      <div className="talent-intro-post-picker__search">
+        <CmsSelect
+          inputSize="medium"
+          width={YEAR_SELECT_WIDTH_PX}
+          placeholder="게시년도"
+          withAllOption={false}
+          allowClear={false}
+          value={pendingYear || undefined}
+          options={YEAR_OPTIONS}
+          onChange={value => setPendingYear(value == null ? '' : String(value))}
+        />
+        <CmsInput
+          className="talent-intro-post-picker__title-input"
+          inputSize="medium"
+          width="100%"
+          placeholder="고정 노출할 게시글 제목을 입력해 주세요"
+          icon={<SearchIcon />}
+          value={pendingTitle}
+          onChange={e => setPendingTitle(e.target.value)}
+          onPressEnter={handleSearch}
+        />
+        <CmsButton variant="primary" size="h40" type="button" onClick={handleSearch}>
+          검색
+        </CmsButton>
       </div>
 
-      <CmsDataTable<ImpactStory>
-        className="cms-data-table talent-intro-post-picker__table"
-        rowKey="id"
-        loading={listQuery.isFetching}
-        dataSource={applied ? rows : []}
-        columns={columns}
-        pagination={false}
-        locale={{
-          emptyText: applied ? '검색 결과가 없습니다.' : '검색 조건을 입력한 뒤 검색해 주세요.',
-        }}
-        onRow={record => ({
-          onClick: () => {
-            onSelect({
-              id: record.id,
-              title: record.title,
-              thumbnailUrl: storyThumbnailUrl(record),
-            })
-          },
-          style: { cursor: 'pointer' },
-        })}
-        scroll={{ x: true }}
-      />
+      {!hasSearched ? null : showEmpty ? (
+        <div className="talent-intro-post-picker__empty" role="status">
+          <p>검색 결과가 없습니다.</p>
+          <p>검색 조건 및 검색어를 확인한 후 다시 시도해 주세요.</p>
+        </div>
+      ) : (
+        <>
+          <p className="talent-intro-post-picker__count">
+            총 {totalCount.toLocaleString('ko-KR')}건
+          </p>
+          <CmsDataTable<ImpactStory>
+            className="cms-data-table cms-data-table--skip-auto-no-col talent-intro-post-picker__table"
+            rowKey="id"
+            loading={listQuery.isLoading}
+            dataSource={rows}
+            columns={columns}
+            pagination={false}
+            onRow={record => ({
+              onClick: () => {
+                onSelect({
+                  id: record.id,
+                  title: record.title,
+                  thumbnailUrl: storyThumbnailUrl(record),
+                })
+              },
+              style: { cursor: 'pointer' },
+            })}
+            scroll={{ x: true }}
+          />
+          {totalPages > 0 ? (
+            <div className="talent-intro-post-picker__pager">
+              <button
+                type="button"
+                className="talent-intro-post-picker__pager-btn"
+                disabled={applied.page <= 0}
+                aria-label="이전 페이지"
+                onClick={() => setApplied(prev => ({ ...prev, page: Math.max(0, prev.page - 1) }))}
+              >
+                ‹
+              </button>
+              <span className="talent-intro-post-picker__pager-status">
+                <strong>{currentPage}</strong>
+                {' / '}
+                {totalPages}
+              </span>
+              <button
+                type="button"
+                className="talent-intro-post-picker__pager-btn"
+                disabled={applied.page + 1 >= totalPages}
+                aria-label="다음 페이지"
+                onClick={() =>
+                  setApplied(prev => ({
+                    ...prev,
+                    page: Math.min(totalPages - 1, prev.page + 1),
+                  }))
+                }
+              >
+                ›
+              </button>
+            </div>
+          ) : null}
+        </>
+      )}
     </ContentModal>
   )
 }

@@ -3,7 +3,7 @@ import { toAdminListPage, type AdminListPage } from '@/shared/lib/admin-infinite
 import { getJAKoreaHomepageAdminAPISponsorshipSubset } from '@/shared/api/generated/sponsorship/sponsorship-api';
 import { mapTalentApplicationDetailToDomain, mapTalentApplicationListItemToDomain, toTalentApplicationListParams, toTalentApplicationStatusUpdateRequest, } from './mappers';
 import { isAdminForbidden, isAdminNotFound } from '@/features/system-inbox/lib/http-status';
-import { toRevealPiiQueryParam } from '@/shared/lib/homepage-pii';
+import { downloadHomepageProtectedAttachment, homepageTalentDonationAttachmentUrl } from '@/shared/lib/protected-attachment-download';
 function sponsorshipApi() {
     return getJAKoreaHomepageAdminAPISponsorshipSubset();
 }
@@ -14,17 +14,13 @@ async function listRemote(filter: TalentDonationApplicationListFilter, page: num
 export async function listTalentDonationApplicationsPageService(filter: TalentDonationApplicationListFilter = {}, page = 0): Promise<AdminListPage<TalentDonationApplication>> {
     return listRemote(filter, page);
 }
-export async function getTalentDonationApplicationService(id: string, actorName?: string, options?: {
-    revealPii?: boolean;
-}): Promise<TalentDonationApplication | null> {
+export async function getTalentDonationApplicationService(id: string, actorName?: string): Promise<TalentDonationApplication | null> {
     void actorName;
     const numericId = Number(id);
     if (!Number.isFinite(numericId) || numericId <= 0)
         return null;
     try {
-        const row = await sponsorshipApi().detail7(numericId, {
-            revealPii: toRevealPiiQueryParam(options?.revealPii),
-        });
+        const row = await sponsorshipApi().detail7(numericId);
         return mapTalentApplicationDetailToDomain(row);
     }
     catch (error) {
@@ -33,22 +29,16 @@ export async function getTalentDonationApplicationService(id: string, actorName?
         return null;
     }
 }
-export async function downloadTalentDonationApplicationAttachmentService(id: string, assetId?: number | null): Promise<{
-    downloadUrl: string;
-    originalName?: string;
-} | null> {
+export async function downloadTalentDonationApplicationAttachmentService(id: string, assetId: number | null | undefined, password: string, fallbackFileName: string): Promise<void> {
     const numericId = Number(id);
-    if (!Number.isFinite(numericId) || numericId <= 0)
-        return null;
-    const response = assetId != null && assetId > 0
-        ? await sponsorshipApi().attachmentDownloadByAsset(numericId, assetId)
-        : await sponsorshipApi().attachmentDownload(numericId);
-    if (!response.downloadUrl)
-        return null;
-    return {
-        downloadUrl: response.downloadUrl,
-        originalName: response.originalName,
-    };
+    if (!Number.isFinite(numericId) || numericId <= 0) {
+        throw new Error('첨부파일을 불러오지 못했습니다.');
+    }
+    await downloadHomepageProtectedAttachment({
+        url: homepageTalentDonationAttachmentUrl(numericId, assetId),
+        password,
+        fallbackFileName,
+    });
 }
 export async function removeTalentDonationApplicationsService(ids: string[], _cachedRows?: TalentDonationApplication[]): Promise<void> {
     void _cachedRows;

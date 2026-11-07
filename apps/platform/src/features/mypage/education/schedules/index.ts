@@ -15,6 +15,7 @@ export {
   EDUCATION_ASSIGNMENT_APPROVED_COPY,
   EDUCATION_SCHEDULE_ATTENDANCE_LABEL,
   EDUCATION_SCHEDULE_PROGRESS_LABEL,
+  educationScheduleProgressLabel,
   canSubmitEducationAssignment,
   resolveEducationAssignmentGuide,
   resolveEducationScheduleProgressStatus,

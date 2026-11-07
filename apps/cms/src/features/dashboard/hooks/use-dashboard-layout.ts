@@ -28,10 +28,13 @@ export interface UseDashboardLayoutParams {
   user?: Omit<User, 'password'> | null
 }
 
+const EMPTY_ROLE_WIDTHS: Record<string, 12 | 24> = {}
+
 export interface UseDashboardLayoutResult {
   widgets: DashboardWidgetConfig[]
   defaultIds: string[]
   displayItemsMeta: DisplayItemMeta[]
+  displayItemsMetaById: Map<string, DisplayItemMeta>
   orderedIds: string[]
   setOrderedIds: (role: string, ids: string[]) => void
   getColSpanForId: (id: string) => 12 | 24
@@ -77,7 +80,9 @@ export function useDashboardLayout({
   const setOrderedIdsRaw = useDashboardWidgetOrderStore(
     (s: DashboardWidgetOrderState) => s.setOrderedIds
   )
-  const widthByRole = useDashboardWidgetOrderStore((s: DashboardWidgetOrderState) => s.widthByRole)
+  const savedWidthsForRole = useDashboardWidgetOrderStore(s =>
+    userRole ? s.widthByRole[userRole] : undefined
+  )
   const setWidgetWidth = useDashboardWidgetOrderStore(
     (s: DashboardWidgetOrderState) => s.setWidgetWidth
   )
@@ -89,16 +94,21 @@ export function useDashboardLayout({
     () => resolveDashboardShortcutItems(apiShortcuts, shortcutEnabled).length > 0,
     [apiShortcuts, shortcutEnabled]
   )
-  const roleWidths = (widthByRole[userRole ?? ''] ?? {}) as Record<string, 12 | 24>
+  const roleWidths = (savedWidthsForRole ?? EMPTY_ROLE_WIDTHS) as Record<string, 12 | 24>
+  const displayItemsMetaById = useMemo(() => {
+    const map = new Map<string, DisplayItemMeta>()
+    for (const meta of displayItemsMeta) map.set(meta.id, meta)
+    return map
+  }, [displayItemsMeta])
 
   const getColSpanForId = useCallback(
     (id: string): 12 | 24 => {
       const w = roleWidths[id]
       if (w !== undefined) return w
-      const meta = displayItemsMeta.find((m: DisplayItemMeta) => m.id === id)
+      const meta = displayItemsMetaById.get(id)
       return (meta?.colSpan as 12 | 24) ?? 24
     },
-    [roleWidths, displayItemsMeta]
+    [roleWidths, displayItemsMetaById]
   )
 
   const fullLayoutOrder = useMemo(
@@ -141,6 +151,7 @@ export function useDashboardLayout({
     widgets,
     defaultIds,
     displayItemsMeta,
+    displayItemsMetaById,
     orderedIds,
     setOrderedIds,
     getColSpanForId,

@@ -5,7 +5,13 @@ export type ProgramProgressParticipantListItem = ParticipantListItemResponse & {
   applicationStatus?: string | null
 }
 
-const HIDDEN_APPLICATION_STATUSES = new Set(['REJECTED', 'AUTO_REJECTED'])
+const HIDDEN_APPLICATION_STATUSES = new Set([
+  'REJECTED',
+  'AUTO_REJECTED',
+  'APPROVAL_CANCELLED',
+  'INTERVIEW_FAILED',
+  'CANCELLED_BY_ADMIN',
+])
 
 export function isHiddenFromProgramProgressList(
   item: ProgramProgressParticipantListItem

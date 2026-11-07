@@ -3,6 +3,7 @@
  * Overlay store를 정본으로 읽지 않는다.
  */
 import type { TrainedTeachersRecruitFormState } from './registration-canonical-types'
+import { normalizeTargetLevelValue } from '@/features/program/shared/lib/program-detail-info-constants'
 
 const K = {
   maxAssignableInstructors: 'recruit.maxAssignableInstructors',
@@ -31,6 +32,9 @@ export function emptyTrainedTeachersRecruitFormState(): TrainedTeachersRecruitFo
   return {
     announcementPublished: '',
     studentListRequired: '',
+    maxClassCount: null,
+    maxScheduleCount: null,
+    maxSessionsPerDay: null,
     programAnchorIso: null,
     programRangeSeal: null,
     recruitAnchorIso: null,
@@ -122,9 +126,19 @@ function asOptionalNumber(value: unknown): number | undefined {
   return Number.isFinite(n) ? n : undefined
 }
 
+function asNullableNumber(value: unknown): number | null {
+  if (value == null || value === '') return null
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  const n = Number(value)
+  return Number.isFinite(n) ? n : null
+}
+
 function asStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return []
-  return value.map(item => String(item).trim()).filter(Boolean)
+  const levels = value
+    .map(item => normalizeTargetLevelValue(item) ?? String(item).trim())
+    .filter(Boolean)
+  return [...new Set(levels)]
 }
 
 function asNumberArray(value: unknown): number[] | undefined {
@@ -189,7 +203,7 @@ export function writeTrainedTeachersRecruitmentOverlayValue(
   const field = INSTITUTION_FIELD_BY_KEY[key]
   if (field == null) return next
   if (field === 'maxClassCount' || field === 'maxScheduleCount' || field === 'maxSessionsPerDay') {
-    next[field] = asOptionalNumber(value)
+    next[field] = asNullableNumber(value)
     return next
   }
   if (field === 'targetLevels') {

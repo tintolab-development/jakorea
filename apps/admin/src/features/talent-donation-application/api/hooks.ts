@@ -57,19 +57,15 @@ export function useTalentDonationApplicationsList(
   })
 }
 
-export function useTalentDonationApplicationDetail(
-  id: string | null,
-  enabled = true,
-  revealPii = false,
-) {
+export function useTalentDonationApplicationDetail(id: string | null, enabled = true) {
   const dataSource = source()
   return useQuery({
-    queryKey: talentDonationApplicationQueryKeys.detail(dataSource, id ?? '', revealPii),
-    queryFn: () =>
-      getTalentDonationApplicationService(id!, DEFAULT_CONFIRM_ACTOR, { revealPii }),
+    queryKey: talentDonationApplicationQueryKeys.detail(dataSource, id ?? ''),
+    queryFn: () => getTalentDonationApplicationService(id!, DEFAULT_CONFIRM_ACTOR),
     enabled: Boolean(id) && enabled,
-    staleTime: dataSource === 'remote' ? 30_000 : Number.POSITIVE_INFINITY,
-    retry: dataSource === 'remote' ? 1 : false,
+    staleTime: dataSource === 'remote' ? 0 : Number.POSITIVE_INFINITY,
+    gcTime: dataSource === 'remote' ? 0 : 15 * 60_000,
+    retry: false,
   })
 }
 

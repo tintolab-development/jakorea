@@ -459,7 +459,7 @@ describe('individual approval education scope', () => {
     ).toEqual({ scheduleIds: [123, 901], serverAddedScheduleIds: [901] })
   })
 
-  it('shows the server error code and refetches on revision conflict', () => {
+  it('shows the server message without the error code on revision conflict', () => {
     const error = {
       response: {
         status: 409,
@@ -474,10 +474,9 @@ describe('individual approval education scope', () => {
       },
     }
     expect(isEducationScopeRevisionConflict(error)).toBe(true)
-    expect(formatIndividualApprovalScopeErrorMessage(error)).toContain(
-      'EDUCATION_SCOPE_REVISION_CONFLICT'
+    expect(formatIndividualApprovalScopeErrorMessage(error)).toBe(
+      '교육 일정 개정 번호가 일치하지 않습니다.'
     )
-    expect(formatIndividualApprovalScopeErrorMessage(error)).toContain('개정 번호')
   })
 
   it('does not treat a fixed-date period program as assignable', () => {
@@ -487,5 +486,22 @@ describe('individual approval education scope', () => {
       educationScheduleMode: 'period',
     })
     expect(shape).toMatchObject({ blockedReason: expect.stringContaining('FIXED_DATE') })
+  })
+
+  it('normalizes DATE and PROGRAM_DEFINED to FIXED_DATE for approval', () => {
+    expect(
+      resolveIndividualApprovalProgramShape({
+        educationStructure: 'SCHEDULE',
+        sessionRound: 'MULTI',
+        educationScheduleMode: 'PROGRAM_DEFINED',
+      })
+    ).toMatchObject({ educationScheduleMode: 'FIXED_DATE' })
+    expect(
+      resolveIndividualApprovalProgramShape({
+        educationStructure: 'SCHEDULE',
+        sessionRound: 'MULTI',
+        educationScheduleMode: 'DATE',
+      })
+    ).toMatchObject({ educationScheduleMode: 'FIXED_DATE' })
   })
 })

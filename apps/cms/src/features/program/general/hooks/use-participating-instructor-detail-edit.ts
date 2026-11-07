@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   draftToParticipatingInstructorSavePayload,
   parseParticipatingInstructorEditDraft,
@@ -8,6 +9,7 @@ import {
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import {
   INSTRUCTOR_FEE_POLICY_INVALID_MESSAGE,
+  businessIncomeEarnerStatusPatchField,
   toInstructorApplicationFeePolicy,
 } from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
 import {
@@ -16,6 +18,7 @@ import {
 } from '@/features/program/general/api/applications-api-client'
 import { mapInstructorApplicationDetailToParticipatingRow } from '@/features/program/general/lib/participating-instructor-application-detail'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
+import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { shouldUseOrganizationApplicationRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { PROGRAM_API_UNAVAILABLE_SAVE_CONTENT } from '@/features/program/shared/lib/program-api-unavailable'
 import { showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
@@ -39,6 +42,7 @@ export function useParticipatingInstructorDetailEdit({
   programId,
   onSaved,
 }: UseParticipatingInstructorDetailEditParams) {
+  const queryClient = useQueryClient()
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [draft, setDraft] = useState<ParticipatingInstructorEditDraft | null>(null)
@@ -125,9 +129,15 @@ export function useParticipatingInstructorDetailEdit({
     try {
       await updateInstructorApplication(applicationId, {
         feePolicy,
-        businessIncomeEarnerStatus: payload.businessIncomeEarnerStatus,
+        ...businessIncomeEarnerStatusPatchField(
+          instructor.businessIncomeEarnerStatus,
+          payload.businessIncomeEarnerStatus
+        ),
       })
       const refreshed = await fetchInstructorApplicationDetailRemote(applicationId)
+      void queryClient.invalidateQueries({
+        queryKey: generalApplicationsQueryKeys.instructorDetail(applicationId),
+      })
       onSaved(mapInstructorApplicationDetailToParticipatingRow(refreshed, instructor, programId))
       resetEditState()
       showUpdateCompletedAlert()
@@ -144,7 +154,7 @@ export function useParticipatingInstructorDetailEdit({
       savingRef.current = false
       setIsSaving(false)
     }
-  }, [draft, instructor, onSaved, programId, resetEditState, showAlert])
+  }, [draft, instructor, onSaved, programId, queryClient, resetEditState, showAlert])
 
   return {
     isEditing,

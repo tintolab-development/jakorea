@@ -82,7 +82,7 @@ describe('gemini performance adapters', () => {
     expect(row.calculatedAmount).toBe(50000)
   })
 
-  it('passes through NOT_MATCHED paymentExclusionReason and keeps instructor name', () => {
+  it('passes through EXTERNAL_PAYEE paymentExclusionReason and keeps instructor name', () => {
     const row = mapGeminiTrainingReportItemToRow(
       {
         trainingReportId: 186512,
@@ -90,7 +90,7 @@ describe('gemini performance adapters', () => {
         instructorName: '정현익스펙토페트로눔',
         trainingLocation: '서울개운초등학교',
         trainingDate: '2026-10-01',
-        paymentExclusionReason: 'GEMINI_INSTRUCTOR_NOT_MATCHED',
+        paymentExclusionReason: 'GEMINI_INSTRUCTOR_EXTERNAL_PAYEE',
         accountPaymentId: null,
         calculatedAmount: 170000,
       },
@@ -99,7 +99,7 @@ describe('gemini performance adapters', () => {
     expect(row.instructorName).toBe('정현익스펙토페트로눔')
     expect(row.instructorMemberId).toBeUndefined()
     expect(row.accountPaymentId).toBeUndefined()
-    expect(row.paymentExclusionReason).toBe('GEMINI_INSTRUCTOR_NOT_MATCHED')
+    expect(row.paymentExclusionReason).toBe('GEMINI_INSTRUCTOR_EXTERNAL_PAYEE')
   })
 
   it('does not treat accountPaymentId 0 as paid', () => {
@@ -133,10 +133,10 @@ describe('gemini performance adapters', () => {
         instructorName: '김강사',
         assistantInstructorNames: '이보조',
         trainingFormat: '강의',
-        contact: '01012345678',
+        contact: ' 010-1234-5678 ',
         email: 'a@b.c',
         school: '학교',
-        paymentDestination: '',
+        paymentDestination: ' 외 부 ',
         trainingLocation: '온라인',
         trainingDate: '2026-04-01',
         trainingStartTime: '10:00',
@@ -146,9 +146,11 @@ describe('gemini performance adapters', () => {
       },
       display
     )
-    expect(importRow.instructorMemberId).toBe(42)
+    expect(importRow.instructorMemberId).toBeUndefined()
     expect(importRow.instructorEmail).toBe('a@b.c')
-    expect(importRow.instructorPhone).toBe('010-1234-5678')
+    expect(importRow.instructorPhone).toBe(' 010-1234-5678 ')
+    expect(importRow.instructorName).toBe('김강사')
+    expect(importRow.feePayee).toBe(' 외 부 ')
     expect(importRow.trainingDate).toBe('2026-04-01')
     expect(importRow.trainingStartTime).toBe('10:00:00')
     expect(importRow.trainingEndTime).toBe('11:00:00')
@@ -158,7 +160,7 @@ describe('gemini performance adapters', () => {
     expect(importRow.schoolOrOrganizationName).toBe('학교')
   })
 
-  it('omits instructor identity fields when name and contact are both blank', () => {
+  it('sends blank identity and fee payee as null without inventing member data', () => {
     const display: GeminiPerformanceRow = {
       id: 'tmp',
       no: 1,
@@ -197,8 +199,9 @@ describe('gemini performance adapters', () => {
       display
     )
     expect(importRow.instructorMemberId).toBeUndefined()
-    expect(importRow.instructorName).toBeUndefined()
-    expect(importRow.instructorPhone).toBeUndefined()
+    expect(importRow.instructorName).toBeNull()
+    expect(importRow.instructorPhone).toBeNull()
+    expect(importRow.feePayee).toBeNull()
     expect(importRow.instructorEmail).toBeUndefined()
     expect(importRow.trainingDate).toBe('2026-04-01')
     expect(importRow.trainingLocation).toBe('서울초')

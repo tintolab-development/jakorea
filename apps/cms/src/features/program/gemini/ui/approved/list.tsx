@@ -16,10 +16,12 @@ import {
 import { useDeleteGeminiApprovedTrainingsMutation } from '../../api/visiting-training/hooks'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
-  geminiApprovedTrainingDeleteBlocked,
+  GEMINI_APPROVED_TRAINING_DELETE_BLOCKED_CODE,
   resolveGeminiDeleteBlockedModalCopy,
   resolveGeminiDeleteGuideModalCopy,
 } from '../../lib/delete-guide'
+import { formatGeminiApiError } from '../../lib/gemini-api-error'
+import { getGeneralProgramApiErrorCode } from '@/features/program/general/api/get-general-program-api-error'
 import { DeleteBlockedGuideModal } from '@/shared/ui/delete-blocked-guide-modal'
 import {
   buildApprovedTrainingExcelRows,
@@ -27,15 +29,14 @@ import {
 } from '../../lib/approved/build-excel-export'
 import {
   approvedTrainingStatusModifier,
+  formatApprovedTrainingDeleteDisplayName,
   formatConfirmedTrainingDatetimeDisplay,
   formatInstructorDisplay,
   formatRegionDisplay,
   formatStatusLabel,
 } from '../../lib/approved/format-display'
 import { resolveApprovedTrainingStatus } from '../../lib/approved/resolve-status'
-import {
-  useGeminiApprovedTrainingRows,
-} from '../../hooks/use-gemini-approved-training-rows'
+import { useGeminiApprovedTrainingRows } from '../../hooks/use-gemini-approved-training-rows'
 import { useToday } from '../../hooks/use-today'
 import {
   GEMINI_APPROVED_TRAINING_FILTER_FIELDS,
@@ -140,10 +141,8 @@ export function GeminiApprovedTrainingList() {
         appliedFilters.officialDocumentRequired !== 'ALL'
           ? appliedFilters.officialDocumentRequired
           : undefined,
-      trainingDateFrom:
-        appliedFilters.trainingDateRange?.[0]?.format('YYYY-MM-DD'),
-      trainingDateTo:
-        appliedFilters.trainingDateRange?.[1]?.format('YYYY-MM-DD'),
+      trainingDateFrom: appliedFilters.trainingDateRange?.[0]?.format('YYYY-MM-DD'),
+      trainingDateTo: appliedFilters.trainingDateRange?.[1]?.format('YYYY-MM-DD'),
     }),
     [appliedFilters]
   )
@@ -168,6 +167,22 @@ export function GeminiApprovedTrainingList() {
     [filteredRows, todayKey]
   )
 
+  const selectedTrainingDeleteNames = useMemo(() => {
+    const selectedIds = new Set(selectedRowKeys.map(key => String(key)))
+    return filteredRows
+      .filter(row => selectedIds.has(row.id))
+      .map(formatApprovedTrainingDeleteDisplayName)
+  }, [filteredRows, selectedRowKeys])
+  const approvedTrainingDeleteGuide = useMemo(
+    () =>
+      resolveGeminiDeleteGuideModalCopy(
+        '연수',
+        selectedRowKeys.length,
+        selectedTrainingDeleteNames
+      ),
+    [selectedRowKeys.length, selectedTrainingDeleteNames]
+  )
+
   const showNoSelectionAlert = useCallback(() => {
     showAlert({
       title: '항목 선택 안내',
@@ -181,43 +196,48 @@ export function GeminiApprovedTrainingList() {
       showNoSelectionAlert()
       return
     }
-    const selectedIds = new Set(selectedRowKeys.map(key => String(key)))
-    const selectedRows = filteredRows.filter(row => selectedIds.has(row.id))
-    if (selectedRows.some(geminiApprovedTrainingDeleteBlocked)) {
-      setDeleteBlockedCopy(
-        resolveGeminiDeleteBlockedModalCopy('연수', selectedRowKeys.length)
-      )
-      setDeleteBlockedOpen(true)
-      return
-    }
     setDeleteModalOpen(true)
-  }, [canWrite, filteredRows, selectedRowKeys, showNoSelectionAlert])
+  }, [canWrite, selectedRowKeys, showNoSelectionAlert])
 
   const handleConfirmDelete = useCallback(async () => {
     setDeleteModalOpen(false)
     const selectedIds = selectedRowKeys.map(key => String(key))
-    const selectedIdSet = new Set(selectedIds)
-    const selectedRows = filteredRows.filter(row => selectedIdSet.has(row.id))
-    if (selectedRows.some(geminiApprovedTrainingDeleteBlocked)) {
-      setDeleteBlockedCopy(resolveGeminiDeleteBlockedModalCopy('연수', selectedIds.length))
-      setDeleteBlockedOpen(true)
-      return
-    }
     try {
       const result = await deleteApprovedTrainings(selectedIds)
       const deletedIds = new Set(result.successIds)
       setSelectedRowKeys(selectedIds.filter(id => !deletedIds.has(id)))
       if (result.failureCount > 0) {
-        setDeleteBlockedCopy(resolveGeminiDeleteBlockedModalCopy('연수', selectedIds.length))
-        setDeleteBlockedOpen(true)
+        const hasHistoryBlockedFailure = result.failures.some(
+          failure => failure.code === GEMINI_APPROVED_TRAINING_DELETE_BLOCKED_CODE
+        )
+        if (hasHistoryBlockedFailure) {
+          setDeleteBlockedCopy(resolveGeminiDeleteBlockedModalCopy('연수', selectedIds.length))
+          setDeleteBlockedOpen(true)
+        } else {
+          showAlert({
+            title: '삭제 실패 안내',
+            content:
+              result.failures
+                .map(failure => failure.message || failure.code)
+                .filter((message): message is string => Boolean(message))
+                .join('\n') || '선택한 연수 중 일부를 삭제하지 못했습니다.',
+          })
+        }
         return
       }
       showDeleteCompletedAlert()
-    } catch {
-      setDeleteBlockedCopy(resolveGeminiDeleteBlockedModalCopy('연수', selectedIds.length))
-      setDeleteBlockedOpen(true)
+    } catch (error) {
+      if (getGeneralProgramApiErrorCode(error) === GEMINI_APPROVED_TRAINING_DELETE_BLOCKED_CODE) {
+        setDeleteBlockedCopy(resolveGeminiDeleteBlockedModalCopy('연수', 1))
+        setDeleteBlockedOpen(true)
+        return
+      }
+      showAlert({
+        title: '삭제 실패 안내',
+        content: formatGeminiApiError(error, '연수 삭제를 완료하지 못했습니다.\n잠시 후 다시 시도해 주세요.'),
+      })
     }
-  }, [deleteApprovedTrainings, filteredRows, selectedRowKeys])
+  }, [deleteApprovedTrainings, selectedRowKeys, showAlert])
 
   const columns: ColumnsType<GeminiApprovedTrainingRow> = useMemo(
     () => [
@@ -388,8 +408,8 @@ export function GeminiApprovedTrainingList() {
 
       <DeleteGuideModal
         open={deleteModalOpen}
-        title={resolveGeminiDeleteGuideModalCopy('연수', selectedRowKeys.length).title}
-        lines={resolveGeminiDeleteGuideModalCopy('연수', selectedRowKeys.length).lines}
+        title={approvedTrainingDeleteGuide.title}
+        lines={approvedTrainingDeleteGuide.lines}
         confirmText="삭제"
         onConfirm={handleConfirmDelete}
         onCancel={() => setDeleteModalOpen(false)}

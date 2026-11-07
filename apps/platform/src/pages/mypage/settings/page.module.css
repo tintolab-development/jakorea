@@ -1,5 +1,24 @@
-.pageTitle {
+.pageHeading {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: stretch;
   margin: 0 0 var(--spacing-80);
+}
+
+.pageTitle {
+  display: block;
+  margin: 0;
+}
+
+.instructorSettlementAccountGuide {
+  display: block;
+  width: 100%;
+  margin: var(--spacing-20) 0 0;
+  text-align: start;
+  white-space: pre-line;
+  word-break: keep-all;
 }
 
 .backLink {
@@ -18,6 +37,10 @@
 
 /* 모바일: 여백은 MypageLayout headingFirst(40/20/20/32)가 담당 */
 @media (--bp-below-pc) {
+  .pageHeading {
+    margin: 0;
+  }
+
   .pageTitle {
     margin: 0;
   }

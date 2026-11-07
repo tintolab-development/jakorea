@@ -1,181 +1,231 @@
-/**
- * 세션 타임아웃 관리 Hook
- * Phase 0.5.5: 세션/접근 통제 UX (NFR-SEC-AUT-02)
- * 세션 만료 경고 및 자동 로그아웃 관리
- */
-
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { SESSION_POLICY } from '@/shared/constants/session-policy'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  applyServerClockOffset,
+  correctedNowMs,
+  createSessionWarningDismissState,
+  isSessionIdleStillValid,
+  readJwtSidClaim,
+  parseInstantMs,
+  resolveSessionWarningView,
+  type AdminAuthSessionResponse,
+  type SessionWarningKind,
+} from '@jakorea/domain/session'
+import {
+  getAdminAuthSession,
+  isAdminAuthForbiddenError,
+  isAdminAuthRetryableTransportError,
+  isAdminAuthUnauthorizedError,
+  postAdminAuthActivity,
+} from '@/features/auth/api/admin-session-fetcher'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { setSessionWarningActivitySuppressed } from '@/features/auth/lib/session-keepalive'
 
-/**
- * 세션 타임아웃 관리 Hook
- */
 export function useSessionTimeout() {
-  const { isAuthenticated, logout } = useAuthStore()
-  const [showWarning, setShowWarning] = useState(false)
-  const [countdown, setCountdown] = useState(0)
-  const [lastActivityTime, setLastActivityTime] = useState<number>(() => Date.now())
+  const { isAuthenticated, logout, token } = useAuthStore()
+  const [session, setSession] = useState<AdminAuthSessionResponse | null>(null)
+  const [serverClockOffsetMs, setServerClockOffsetMs] = useState(0)
+  const [visibleKind, setVisibleKind] = useState<SessionWarningKind | null>(null)
+  const [remainingMs, setRemainingMs] = useState(0)
+  const [extendError, setExtendError] = useState<string | null>(null)
+  const [extending, setExtending] = useState(false)
+  const dismissRef = useRef(createSessionWarningDismissState())
+  const sessionRef = useRef<AdminAuthSessionResponse | null>(null)
+  const syncSequenceRef = useRef(0)
+  const expiryRecheckPendingRef = useRef(false)
+  const lastExpiryRecheckAtRef = useRef(0)
 
-  const warningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const expireTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const countdownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
-
-  /**
-   * 세션 연장
-   */
-  const extendSession = useCallback(() => {
-    setShowWarning(false)
-    setCountdown(0)
-    setLastActivityTime(Date.now())
-
-    // 타이머 재설정
-    if (warningTimerRef.current) {
-      clearTimeout(warningTimerRef.current)
-    }
-    if (expireTimerRef.current) {
-      clearTimeout(expireTimerRef.current)
-    }
-    if (countdownTimerRef.current) {
-      clearInterval(countdownTimerRef.current)
-    }
-  }, [])
-
-  /**
-   * 타이머 초기화
-   */
-  const resetTimers = useCallback(() => {
-    // 기존 타이머 정리
-    if (warningTimerRef.current) {
-      clearTimeout(warningTimerRef.current)
-    }
-    if (expireTimerRef.current) {
-      clearTimeout(expireTimerRef.current)
-    }
-    if (countdownTimerRef.current) {
-      clearInterval(countdownTimerRef.current)
-    }
-
-    if (!isAuthenticated) {
-      return
-    }
-
-    const now = Date.now()
-    const idleTime = now - lastActivityTime
-    const remainingIdleTime = SESSION_POLICY.maxIdleMinutes * 60 * 1000 - idleTime
-
-    // 경고 타이머 설정 (만료 5분 전)
-    if (remainingIdleTime > SESSION_POLICY.warningBeforeExpireMinutes * 60 * 1000) {
-      const timeUntilWarning =
-        remainingIdleTime - SESSION_POLICY.warningBeforeExpireMinutes * 60 * 1000
-      warningTimerRef.current = setTimeout(() => {
-        setShowWarning(true)
-        setCountdown(SESSION_POLICY.warningBeforeExpireMinutes * 60) // 초 단위
-
-        // 카운트다운 시작
-        countdownTimerRef.current = setInterval(() => {
-          setCountdown(prev => {
-            if (prev <= 1) {
-              if (countdownTimerRef.current) {
-                clearInterval(countdownTimerRef.current)
-              }
-              return 0
-            }
-            return prev - 1
-          })
-        }, 1000)
-      }, timeUntilWarning)
-    } else if (remainingIdleTime > 0) {
-      // 이미 경고 시간이 지났지만 아직 만료되지 않은 경우
-      setShowWarning(true)
-      const remainingSeconds = Math.ceil(remainingIdleTime / 1000)
-      setCountdown(remainingSeconds)
-
-      // 카운트다운 시작
-      countdownTimerRef.current = setInterval(() => {
-        setCountdown(prev => {
-          if (prev <= 1) {
-            if (countdownTimerRef.current) {
-              clearInterval(countdownTimerRef.current)
-            }
-            return 0
-          }
-          return prev - 1
-        })
-      }, 1000)
-    }
-
-    // 만료 타이머 설정
-    if (remainingIdleTime > 0) {
-      expireTimerRef.current = setTimeout(() => {
+  const syncSession = useCallback(async () => {
+    const initial = useAuthStore.getState()
+    if (!initial.isAuthenticated || !initial.token) return
+    const requestedToken = initial.token
+    const sequence = ++syncSequenceRef.current
+    // A response from an earlier token/request must never terminate or overwrite a newer session.
+    const isCurrent = () =>
+      syncSequenceRef.current === sequence &&
+      useAuthStore.getState().isAuthenticated &&
+      useAuthStore.getState().token === requestedToken
+    try {
+      const next = await getAdminAuthSession()
+      if (!isCurrent()) return
+      sessionRef.current = next
+      setSession(next)
+      setServerClockOffsetMs(previous =>
+        applyServerClockOffset(previous, next.serverNow, Date.now())
+      )
+    } catch (error) {
+      if (!isCurrent()) return
+      if (isAdminAuthUnauthorizedError(error)) {
+        // Axios has already performed the single permitted Refresh/retry for GET Session.
         logout()
-        setShowWarning(false)
-        setCountdown(0)
-      }, remainingIdleTime)
-    } else {
-      // 이미 만료 시간이 지난 경우 즉시 로그아웃
-      logout()
+        return
+      }
+      // 403 is permission denial, 404 can mean the BE route is not deployed, and
+      // transport/invalid-response failures are not proof that the JWT expired.
+      sessionRef.current = null
+      setSession(null)
     }
-  }, [isAuthenticated, lastActivityTime, logout])
+  }, [logout])
 
-  /**
-   * 사용자 활동 감지
-   */
+  useEffect(() => {
+    sessionRef.current = session
+  }, [session])
+
   useEffect(() => {
     if (!isAuthenticated) {
-      setShowWarning(false)
-      setCountdown(0)
+      syncSequenceRef.current += 1
+      expiryRecheckPendingRef.current = false
+      lastExpiryRecheckAtRef.current = 0
+      sessionRef.current = null
+      setSession(null)
+      setVisibleKind(null)
+      setRemainingMs(0)
+      setExtendError(null)
+      dismissRef.current.clear()
       return
     }
+    void syncSession()
+  }, [isAuthenticated, token, syncSession])
 
-    const handleActivity = () => {
-      setLastActivityTime(Date.now())
+  useEffect(() => {
+    if (!isAuthenticated) return
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') void syncSession()
     }
-
-    // 사용자 활동 이벤트 리스너 등록
-    const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click']
-    events.forEach(event => {
-      window.addEventListener(event, handleActivity, { passive: true })
-    })
-
-    // 초기 타이머 설정
-    resetTimers()
-
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== 'auth_token' && event.key !== 'auth_refresh_token') return
+      const storedToken = window.localStorage.getItem('auth_token')
+      const activeToken = useAuthStore.getState().token
+      if (!storedToken) {
+        // Another tab logged out. Do not attempt a Session GET with a stale in-memory JWT.
+        if (event.key === 'auth_token') useAuthStore.getState().logout()
+        return
+      }
+      if (storedToken !== activeToken) {
+        const oldSid = readJwtSidClaim(activeToken)
+        const newSid = readJwtSidClaim(storedToken)
+        if (oldSid && oldSid === newSid) {
+          // A sibling tab rotated the access token of the same login session.
+          useAuthStore.setState({
+            token: storedToken,
+            expiresAt: window.localStorage.getItem('auth_expires_at'),
+          })
+        } else {
+          // Different login identity: restore account data via the app auth store,
+          // never blindly attach the new token to the previous account's UI state.
+          void useAuthStore.getState().checkAuth()
+        }
+        return
+      }
+      void syncSession()
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    window.addEventListener('storage', onStorage)
     return () => {
-      events.forEach(event => {
-        window.removeEventListener(event, handleActivity)
-      })
-      if (warningTimerRef.current) {
-        clearTimeout(warningTimerRef.current)
-      }
-      if (expireTimerRef.current) {
-        clearTimeout(expireTimerRef.current)
-      }
-      if (countdownTimerRef.current) {
-        clearInterval(countdownTimerRef.current)
-      }
+      document.removeEventListener('visibilitychange', onVisibility)
+      window.removeEventListener('storage', onStorage)
     }
-  }, [isAuthenticated, resetTimers])
+  }, [isAuthenticated, syncSession])
 
-  /**
-   * 활동 시간이 변경될 때마다 타이머 재설정
-   */
   useEffect(() => {
-    if (!isAuthenticated) {
-      return
+    if (!isAuthenticated) return
+    const tick = () => {
+      const nowMs = correctedNowMs(Date.now(), serverClockOffsetMs)
+      const view = resolveSessionWarningView({ session, nowMs })
+      // The warning view becomes null after an idle deadline has already passed.
+      // Check that boundary explicitly instead of silently leaving an expired idle UI alive.
+      const idleExpiresAtMs = session?.idlePolicyEnforced
+        ? parseInstantMs(session.idleExpiresAt)
+        : null
+      if ((view && view.remainingMs <= 0) ||
+          (idleExpiresAtMs != null && idleExpiresAtMs <= nowMs)) {
+        // A client timer (clock skew, suspended tab, stale status) is not a server
+        // revocation verdict. Recheck GET Session; only a current 401 may logout.
+        const clientNow = Date.now()
+        if (!expiryRecheckPendingRef.current &&
+            clientNow - lastExpiryRecheckAtRef.current >= 15_000) {
+          lastExpiryRecheckAtRef.current = clientNow
+          expiryRecheckPendingRef.current = true
+          void syncSession().finally(() => {
+            expiryRecheckPendingRef.current = false
+          })
+        }
+        return
+      }
+      dismissRef.current.resetIfExpiryChanged(view?.kind ?? null, view?.expiresAtMs ?? null)
+      const show =
+        view != null &&
+        dismissRef.current.shouldShow(view.kind, view.expiresAtMs, nowMs)
+      setVisibleKind(show ? view.kind : null)
+      setRemainingMs(view?.remainingMs ?? 0)
     }
+    tick()
+    const id = window.setInterval(tick, 1000)
+    return () => window.clearInterval(id)
+  }, [isAuthenticated, session, serverClockOffsetMs, syncSession])
 
-    // 활동 시간이 변경될 때마다 타이머 재설정 (디바운스)
-    const timeoutId = setTimeout(() => {
-      resetTimers()
-    }, 1000) // 1초 디바운스
+  const dismissWarning = useCallback(() => {
+    const nowMs = correctedNowMs(Date.now(), serverClockOffsetMs)
+    const view = resolveSessionWarningView({ session: sessionRef.current, nowMs })
+    if (view) dismissRef.current.dismiss(view.kind, view.expiresAtMs, nowMs)
+    setVisibleKind(null)
+    setExtendError(null)
+  }, [serverClockOffsetMs])
 
-    return () => clearTimeout(timeoutId)
-  }, [lastActivityTime, isAuthenticated, resetTimers])
+  const extendIdleSession = useCallback(async () => {
+    const requestedToken = useAuthStore.getState().token
+    const isCurrent = () => Boolean(requestedToken) &&
+      useAuthStore.getState().isAuthenticated &&
+      useAuthStore.getState().token === requestedToken
+    if (!isCurrent()) return
+    setExtending(true)
+    setExtendError(null)
+    setSessionWarningActivitySuppressed(true)
+    const previousIdle = sessionRef.current?.idleExpiresAt ?? null
+    try {
+      await postAdminAuthActivity()
+      if (!isCurrent()) return
+      const next = await getAdminAuthSession()
+      if (!isCurrent()) return
+      sessionRef.current = next
+      setSession(next)
+      const nowMs = correctedNowMs(Date.now(), applyServerClockOffset(0, next.serverNow, Date.now()))
+      setServerClockOffsetMs(applyServerClockOffset(0, next.serverNow, Date.now()))
+      if (isSessionIdleStillValid(next, nowMs, previousIdle)) {
+        dismissRef.current.clear()
+        setVisibleKind(null)
+        setExtendError(null)
+        return
+      }
+      setExtendError('세션을 연장하지 못했습니다. 잠시 후 다시 시도해 주세요.')
+    } catch (error) {
+      if (!isCurrent()) return
+      if (isAdminAuthUnauthorizedError(error)) {
+        logout()
+        return
+      }
+      if (isAdminAuthForbiddenError(error) || isAdminAuthRetryableTransportError(error)) {
+        setExtendError('세션을 연장하지 못했습니다. 잠시 후 다시 시도해 주세요.')
+        return
+      }
+      setExtendError('세션을 연장하지 못했습니다. 잠시 후 다시 시도해 주세요.')
+    } finally {
+      setSessionWarningActivitySuppressed(false)
+      setExtending(false)
+    }
+  }, [logout])
 
   return {
-    showWarning,
-    countdown,
-    extendSession,
+    showWarning: visibleKind != null,
+    warningKind: visibleKind,
+    countdown: Math.max(0, Math.ceil(remainingMs / 1000)),
+    remainingMs,
+    idlePolicyEnforced: session?.idlePolicyEnforced === true,
+    absoluteExpiresAtMs: parseInstantMs(session?.absoluteExpiresAt),
+    extendError,
+    extending,
+    dismissWarning,
+    extendIdleSession,
+    logout,
+    syncSession,
   }
 }

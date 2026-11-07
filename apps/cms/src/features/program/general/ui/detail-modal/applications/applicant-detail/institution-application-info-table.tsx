@@ -96,9 +96,12 @@ export function InstitutionApplicationTableRowFullWidth({
 export function InstitutionApplicationTableRowSingleCol({
   label,
   value,
+  valueColSpan = 3,
 }: {
   label: ReactNode
   value: ReactNode
+  /** 2열 일정 표는 1. 기본 4열 격자 안 전폭 행은 3. */
+  valueColSpan?: number
 }) {
   return (
     <tr>
@@ -106,7 +109,7 @@ export function InstitutionApplicationTableRowSingleCol({
         {label}
       </td>
       <td
-        colSpan={3}
+        colSpan={valueColSpan}
         className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--value"
       >
         {value}

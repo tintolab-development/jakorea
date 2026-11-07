@@ -17,6 +17,9 @@ export function fieldForTrainedTeachersBasicInfoIncompleteMessage(
   if (message.includes('소재지')) return 'regionLabel'
   if (message.includes('주소')) return 'addressDetail'
   if (message.includes('신청 사유')) return 'applicationReason'
+  if (message.includes('교사명')) return 'teacherName'
+  if (message.includes('연락처')) return 'teacherTel'
+  if (message.includes('이메일')) return 'teacherEmail'
   return undefined
 }
 

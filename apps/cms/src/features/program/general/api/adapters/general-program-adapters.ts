@@ -82,6 +82,7 @@ import {
   readProgramAuditNames,
   withExpectedUpdatedAt,
 } from '@/features/program/shared/lib/program-audit-names'
+import { mapProgramRoundsToWriteRequest } from '@/features/program/shared/lib/round-write'
 import {
   resolveAudienceProgramOperationIsoRange,
   toOperationCalendarDate,
@@ -682,16 +683,7 @@ function mapProgramRoundsToUpdateRequest(
 }
 
 function mapProgramRoundsToRequest(program: Program): ProgramCreateRequest['rounds'] {
-  return program.rounds?.map(round => ({
-    roundNumber: round.roundNumber,
-    startDate: toRequestDate(round.startDate),
-    endDate: toRequestDate(round.endDate),
-    capacity: round.capacity,
-    classCount: round.classCount,
-    status: round.status,
-    curriculum: round.curriculum,
-    deliveryType: round.deliveryType,
-  }))
+  return mapProgramRoundsToWriteRequest(program, toRequestDate)
 }
 
 

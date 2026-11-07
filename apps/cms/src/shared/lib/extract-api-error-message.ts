@@ -129,11 +129,12 @@ const SETTLEMENT_ACCOUNT_ERROR_MESSAGES: Record<string, string> = {
     '지급조서 사전 동의서를 작성·완료하세요. 등록된 정산 계좌가 없어 계좌이체를 생성할 수 없습니다.',
 }
 
-/** 수료증·참여인증서 — 서버 message가 비거나 code만 있을 때 */
+/** 수료증·참가인증서 — 서버 message가 비거나 code만 있을 때 */
 const CERTIFICATE_ISSUE_ERROR_MESSAGES: Record<string, string> = {
   CERTIFICATE_CONSENT_EVIDENCE_UNAVAILABLE:
     '수료증 발급 기간을 확인할 동의 또는 신청 정보가 없습니다.',
-  ISSUANCE_PERIOD_EXPIRED: '수료증 발급 기간이 만료되었습니다.',
+  CERTIFICATE_APPLICATION_DATE_UNAVAILABLE: '신청일을 확인할 수 없어 발급할 수 없습니다.',
+  ISSUANCE_PERIOD_EXPIRED: '신청일로부터 3년이 지나 발급할 수 없습니다.',
   PARTICIPANT_NOT_COMPLETED: '수료 조건을 충족하지 않아 발급할 수 없습니다.',
 }
 
@@ -224,11 +225,12 @@ export function extractApiErrorMessage(
   if (certificateMapped) return certificateMapped
   if (settlementMapped) return settlementMapped
 
-  const nestedCode = envelope?.error?.code?.trim()
-  if (nestedCode) return nestedCode
-
   if (typeof data === 'string' && data.trim()) {
     return data.trim()
+  }
+
+  if (code === 'AUDIT_LOG_UNAVAILABLE') {
+    return '보안 기록을 저장할 수 없어 요청이 중단되었습니다. 잠시 후 다시 시도해 주세요.'
   }
 
   const status = options?.httpStatus

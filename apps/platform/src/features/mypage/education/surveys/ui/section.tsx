@@ -22,9 +22,8 @@ export type EducationSurveySectionProps = {
   applicationType?: ProgramApplicationType | null
   applicationId?: string | null
   programId?: string | null
+  participantId?: number | null
   pendingSurveyCount?: number
-  canSubmitSatisfaction?: boolean
-  canSubmitSurvey?: boolean
 }
 
 /**
@@ -44,9 +43,8 @@ export function EducationSurveySection({
   applicationType,
   applicationId,
   programId,
+  participantId,
   pendingSurveyCount,
-  canSubmitSatisfaction,
-  canSubmitSurvey,
 }: EducationSurveySectionProps) {
   const availability = getEducationSurveyTabAvailability({
     displayStatus,
@@ -64,9 +62,8 @@ export function EducationSurveySection({
         applicationType={applicationType}
         applicationId={applicationId}
         programId={programId}
+        participantId={participantId}
         pendingSurveyCount={kind === 'survey' ? pendingSurveyCount : undefined}
-        canSubmitSatisfaction={kind === 'satisfaction' ? canSubmitSatisfaction : undefined}
-        canSubmitSurvey={kind === 'survey' ? canSubmitSurvey : undefined}
       />
     )
   }

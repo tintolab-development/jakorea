@@ -170,7 +170,7 @@ describe('saveProgramSurveyFormEdit', () => {
     expect(createVersion).toHaveBeenCalledWith(3001, expect.objectContaining({ sourceVersionId: 352 }))
   })
 
-  it('CATALOG copy 응답이 기존 PROGRAM 복사본의 PUBLISHED version이면 그 템플릿에 version을 추가한다', async () => {
+  it('CATALOG copy 응답이 PUBLISHED면 같은 본문으로 재copy해 DRAFT에 저장한다', async () => {
     fetchVersion.mockResolvedValue({
       templateId: 1995,
       templateVersionId: 352,
@@ -178,28 +178,71 @@ describe('saveProgramSurveyFormEdit', () => {
       templateScope: 'CATALOG',
       ownerProgramId: null,
     })
-    copyVersion.mockResolvedValue({
-      templateId: 2001,
-      templateVersionId: 399,
-      versionStatus: 'PUBLISHED',
-      templateScope: 'PROGRAM',
-      ownerProgramId: 186051,
-    })
-    createVersion.mockResolvedValue({ templateId: 2001, templateVersionId: 400 })
+    copyVersion
+      .mockResolvedValueOnce({
+        templateId: 2001,
+        templateVersionId: 399,
+        versionStatus: 'PUBLISHED',
+        templateScope: 'PROGRAM',
+        ownerProgramId: 186051,
+      })
+      .mockResolvedValueOnce({
+        templateId: 2001,
+        templateVersionId: 400,
+        versionStatus: 'DRAFT',
+        templateScope: 'PROGRAM',
+        ownerProgramId: 186051,
+      })
 
     await expect(saveProgramSurveyFormEdit(TARGET, createNewSurveyDraft())).resolves.toEqual({
       ok: true,
       templateId: 2001,
       templateVersionId: 400,
     })
-    expect(copyVersion).toHaveBeenCalledWith(1995, { sourceVersionId: 352, ownerProgramId: 186051 })
-    expect(createVersion).toHaveBeenCalledWith(2001, {
-      versionLabel: 'program-186051',
-      sourceVersionId: 399,
-    })
+    expect(copyVersion).toHaveBeenCalledTimes(2)
+    expect(copyVersion).toHaveBeenNthCalledWith(1, 1995, { sourceVersionId: 352, ownerProgramId: 186051 })
+    expect(copyVersion).toHaveBeenNthCalledWith(2, 1995, { sourceVersionId: 352, ownerProgramId: 186051 })
+    expect(createVersion).not.toHaveBeenCalled()
     expect(updateVersion).toHaveBeenCalledWith(400, { schemaJson: '{"edited":true}' })
     expect(updateVersion).not.toHaveBeenCalledWith(399, expect.anything())
     expect(publishVersion).toHaveBeenCalledWith(400)
+  })
+
+  it('설문 PUT FORM_VERSION_IMMUTABLE이면 같은 copy 본문으로 새 DRAFT에 PUT한다', async () => {
+    fetchVersion.mockResolvedValue({
+      templateId: 1995,
+      templateVersionId: 352,
+      versionStatus: 'PUBLISHED',
+      templateScope: 'CATALOG',
+      ownerProgramId: null,
+    })
+    copyVersion
+      .mockResolvedValueOnce({
+        templateId: 2001,
+        templateVersionId: 399,
+        versionStatus: 'DRAFT',
+      })
+      .mockResolvedValueOnce({
+        templateId: 2001,
+        templateVersionId: 401,
+        versionStatus: 'DRAFT',
+      })
+    updateVersion
+      .mockRejectedValueOnce({
+        response: { data: { error: { code: 'FORM_VERSION_IMMUTABLE' } } },
+      })
+      .mockResolvedValueOnce(undefined)
+    publishVersion.mockResolvedValue(401)
+
+    await expect(saveProgramSurveyFormEdit(TARGET, createNewSurveyDraft())).resolves.toEqual({
+      ok: true,
+      templateId: 2001,
+      templateVersionId: 401,
+    })
+    expect(copyVersion).toHaveBeenCalledTimes(2)
+    expect(updateVersion).toHaveBeenNthCalledWith(1, 399, { schemaJson: '{"edited":true}' })
+    expect(updateVersion).toHaveBeenNthCalledWith(2, 401, { schemaJson: '{"edited":true}' })
+    expect(publishVersion).toHaveBeenCalledWith(401)
   })
 
   it('CATALOG copy 응답이 DRAFT면 version을 추가하지 않고 그 DRAFT에 저장한다', async () => {

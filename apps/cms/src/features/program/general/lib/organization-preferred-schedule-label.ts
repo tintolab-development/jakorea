@@ -224,6 +224,20 @@ function parseScheduleDisplayPoint(raw: string): ScheduleDisplayPoint | null {
   }
   const iso = ISO_SCHEDULE_POINT.exec(text)
   if (iso) {
+    const hasExplicitOffset = /(?:Z|[+-]\d{2}:?\d{2})$/u.test(text)
+    if (hasExplicitOffset) {
+      const clock = readSeoulClock(text)
+      if (clock != null && !clock.dateOnlyToken) {
+        return {
+          year: clock.year,
+          month: clock.month,
+          day: clock.day,
+          weekday: clock.weekday,
+          hour: clock.hour,
+          minute: clock.minute,
+        }
+      }
+    }
     return schedulePointFromMatch(iso[1] || '', iso[2] || '', iso[3] || '', iso[4], iso[5], iso[6])
   }
   const dotted = DOTTED_SCHEDULE_POINT.exec(text)

@@ -9,7 +9,7 @@ import type { ParticipatingInstructorRow } from '@/features/program/general/mode
 import type { Program } from '@/types/domain'
 import { StatusBadge } from '@/shared/components'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { CmsButton, ExcelButton } from '@/shared/ui'
+import { CmsButton, ConfirmModal, ExcelButton } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { handleError } from '@/shared/utils/error-handler'
@@ -32,8 +32,20 @@ import {
   filterParticipatingInstructorSettlementDownloadRows,
   getParticipatingInstructorSettlementBulkDownloadErrorMessage,
 } from '@/features/program/general/lib/participating-instructor-settlement-download'
-import { useParticipatingInstructorPaymentStatementView } from '@/features/program/general/ui/detail-modal/program-status/participating-instructor-payment-statement-view-container'
+import {
+  PARTICIPATING_INSTRUCTOR_CALCULATION_STATEMENT_NESTED_Z_INDEX,
+  useParticipatingInstructorPaymentStatementView,
+} from '@/features/program/general/ui/detail-modal/program-status/participating-instructor-payment-statement-view-container'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
+import { useProtectedFileDownload } from '@/shared/lib/use-protected-file-download'
+import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
+import { getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
+import {
+  SETTLEMENT_APPLICATION_ACTIONS,
+  type SettlementApplicationActionKind,
+} from '@/features/program/general/api/settlement-application-actions-remote'
+import { useSettlementApplicationActions } from '@/features/program/general/hooks/use-settlement-application-actions'
+import { SettlementApplicationReasonModal } from './settlement-application-reason-modal'
 import './participating-instructor-settlement-section.css'
 
 const STATUS_ACCENT_DEFAULT = 'var(--default-BK, #3d3d3d)'
@@ -64,6 +76,30 @@ function resolvePaymentStatementExportLabel(row: ParticipatingInstructorSettleme
   return getInstructorSettlementStatusLabel(row.paymentStatementStatus)
 }
 
+const SETTLEMENT_APPLICATION_ACTION_BUTTONS: Array<{
+  kind: SettlementApplicationActionKind
+  label: string
+  variant: 'primary' | 'default'
+}> = [
+  { kind: 'confirm', label: '승인', variant: 'primary' },
+  { kind: 'reject', label: '반려', variant: 'default' },
+  { kind: 'requestCorrection', label: '보정 요청', variant: 'default' },
+]
+
+function hasSettlementApplicationAction(
+  row: ParticipatingInstructorSettlementApiRow,
+  kind: SettlementApplicationActionKind
+): boolean {
+  return row.availableActions.includes(SETTLEMENT_APPLICATION_ACTIONS[kind])
+}
+
+function formatInstructorSessionProgress(
+  summary: { completed: number; total: number } | null
+): string | null {
+  if (!summary) return null
+  return `${summary.completed} / ${summary.total}건 (강의 진행 회차 기준)`
+}
+
 const settlementExportColumns: ColumnsType<ParticipatingInstructorSettlementApiRow> = [
   { title: 'No.', dataIndex: 'no', key: 'no' },
   { title: '기관명', dataIndex: 'institutionName', key: 'institutionName' },
@@ -92,6 +128,7 @@ export function ParticipatingInstructorSettlementSection({
   program,
 }: ParticipatingInstructorSettlementSectionProps) {
   const { showAlert } = useCmsAlert()
+  const { runProtectedDownload, filePasswordModal } = useProtectedFileDownload()
   const programId = program?.id != null ? String(program.id) : ''
   const { isLoading, rows, settlementItems, progressSummary, remoteEnabled } =
     useParticipatingInstructorSettlementList({
@@ -99,10 +136,47 @@ export function ParticipatingInstructorSettlementSection({
       instructor,
     })
 
+  const instructorMemberId = instructor.memberId?.trim() ?? ''
+  const applicationAction = useSettlementApplicationActions({ programId, instructorMemberId })
+  const [pendingAction, setPendingAction] = useState<{
+    kind: SettlementApplicationActionKind
+    settlementApplicationId: number
+  } | null>(null)
+
+  const closePendingAction = useCallback(() => {
+    if (applicationAction.isPending) return
+    setPendingAction(null)
+  }, [applicationAction.isPending])
+
   const paymentStatementView = useParticipatingInstructorPaymentStatementView({
     instructor,
     settlementItems,
+    programId,
+    programName: program?.mainTitle?.trim() || program?.title?.trim(),
+    onApplicationAction: (kind, settlementApplicationId) =>
+      setPendingAction({ kind, settlementApplicationId }),
+    applicationActionPending: applicationAction.isPending,
   })
+  const closePaymentStatementView = paymentStatementView.handleClose
+
+  const submitPendingAction = useCallback(
+    async (reason?: string) => {
+      if (!pendingAction || applicationAction.isPending) return
+      try {
+        await applicationAction.mutateAsync({ ...pendingAction, reason })
+        setPendingAction(null)
+        closePaymentStatementView()
+      } catch (error) {
+        if (getApiErrorHttpStatus(error) === 409) setPendingAction(null)
+        showAlert({
+          title: '안내',
+          content: getSettlementApiErrorMessage(error, '정산 신청서를 처리하지 못했습니다.'),
+        })
+      }
+    },
+    [applicationAction, closePaymentStatementView, pendingAction, showAlert]
+  )
+
 
   const [bulkDownloadLoading, setBulkDownloadLoading] = useState(false)
 
@@ -134,21 +208,33 @@ export function ParticipatingInstructorSettlementSection({
       return
     }
 
-    setBulkDownloadLoading(true)
-    try {
-      await bulkDownloadParticipatingInstructorPaymentStatements(downloadableRows)
-    } catch (error) {
-      handleError(error, {
-        context: 'participatingInstructorSettlementSection.bulkDownloadPaymentStatements',
-      })
-      showAlert({
-        title: '안내',
-        content: getParticipatingInstructorSettlementBulkDownloadErrorMessage(error),
-      })
-    } finally {
-      setBulkDownloadLoading(false)
-    }
-  }, [bulkDownloadLoading, downloadableRows, remoteEnabled, showAlert])
+    runProtectedDownload({
+      kind: 'PAYMENT_STATEMENT',
+      download: async password => {
+        setBulkDownloadLoading(true)
+        try {
+          await bulkDownloadParticipatingInstructorPaymentStatements(
+            downloadableRows,
+            '지급조서_일괄',
+            {
+              password,
+            }
+          )
+        } catch (error) {
+          handleError(error, {
+            context: 'participatingInstructorSettlementSection.bulkDownloadPaymentStatements',
+          })
+          showAlert({
+            title: '안내',
+            content: getParticipatingInstructorSettlementBulkDownloadErrorMessage(error),
+          })
+          throw error
+        } finally {
+          setBulkDownloadLoading(false)
+        }
+      },
+    })
+  }, [bulkDownloadLoading, downloadableRows, remoteEnabled, runProtectedDownload, showAlert])
 
   const columns = useMemo(
     (): ColumnsType<ParticipatingInstructorSettlementApiRow> => [
@@ -218,16 +304,49 @@ export function ParticipatingInstructorSettlementSection({
           <div className="participating-instructor-settlement-section__payment-statement-cell-inner">
             <CmsButton
               variant="default"
-              size="h40"
+              style={{ width: '100%' }}
+              size="h32"
               disabled={!remoteEnabled}
-              onClick={() => paymentStatementView.handleOpen(record)} >
+              onClick={() => paymentStatementView.handleOpen(record)}
+            >
               지급조서 보기
             </CmsButton>
           </div>
         ),
       },
+      {
+        title: '신청서 처리',
+        key: 'settlementApplicationActions',
+        align: 'center',
+        width: 260,
+        render: (_: unknown, record) => {
+          const applicationId = record.settlementApplicationId
+          if (!record.isPendingApplication || applicationId == null) return null
+          const buttons = SETTLEMENT_APPLICATION_ACTION_BUTTONS.filter(button =>
+            hasSettlementApplicationAction(record, button.kind)
+          )
+          if (buttons.length === 0) return null
+          return (
+            <div className="participating-instructor-settlement-section__application-actions">
+              {buttons.map(button => (
+                <CmsButton
+                  key={button.kind}
+                  variant={button.variant}
+                  size="h40"
+                  disabled={!remoteEnabled || applicationAction.isPending}
+                  onClick={() =>
+                    setPendingAction({ kind: button.kind, settlementApplicationId: applicationId })
+                  }
+                >
+                  {button.label}
+                </CmsButton>
+              ))}
+            </div>
+          )
+        },
+      },
     ],
-    [paymentStatementView.handleOpen, remoteEnabled]
+    [applicationAction.isPending, paymentStatementView.handleOpen, remoteEnabled]
   )
 
   return (
@@ -241,12 +360,12 @@ export function ParticipatingInstructorSettlementSection({
             />
             <DetailInfoForm.Field
               label="프로그램 진행 회차"
-              view={`${progressSummary.completed} / ${progressSummary.total}건 (강의 진행 회차 기준)`}
+              view={formatInstructorSessionProgress(progressSummary)}
             />
           </DetailInfoForm.Row>
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
-              label="강의비 책정 기준"
+              label="강사비 책정 기준"
               view={<LectureFeeBasisView instructor={feeViewRow} />}
             />
             <DetailInfoForm.Field
@@ -268,13 +387,15 @@ export function ParticipatingInstructorSettlementSection({
             size="h40"
             icon={<ButtonDownloadIcon />}
             disabled={!remoteEnabled || bulkDownloadLoading || downloadableRows.length === 0}
-            onClick={() => void handleBulkDownloadPaymentStatements()} >
+            onClick={() => void handleBulkDownloadPaymentStatements()}
+          >
             지급조서 일괄 다운로드
           </CmsButton>
           <ExcelButton
             onClick={exportExcel}
             loading={isExcelExporting}
-            disabled={rows.length === 0} />
+            disabled={rows.length === 0}
+          />
         </div>
       </div>
 
@@ -285,7 +406,7 @@ export function ParticipatingInstructorSettlementSection({
             rowKey="id"
             size="middle"
             pagination={false}
-            scroll={{ x: 1400 }}
+            scroll={{ x: 1660 }}
             columns={columns}
             dataSource={rows}
           />
@@ -293,6 +414,26 @@ export function ParticipatingInstructorSettlementSection({
       </div>
 
       {paymentStatementView.modal}
+      {filePasswordModal}
+      <ConfirmModal
+        open={pendingAction?.kind === 'confirm'}
+        title="정산 신청서 승인"
+        content="선택한 정산 신청서를 승인하시겠습니까?"
+        confirmText="승인"
+        cancelText="취소"
+        onConfirm={() => void submitPendingAction()}
+        onCancel={closePendingAction}
+        confirmLoading={applicationAction.isPending}
+        zIndex={PARTICIPATING_INSTRUCTOR_CALCULATION_STATEMENT_NESTED_Z_INDEX}
+      />
+      <SettlementApplicationReasonModal
+        kind={pendingAction?.kind === 'requestCorrection' ? 'requestCorrection' : 'reject'}
+        open={pendingAction?.kind === 'reject' || pendingAction?.kind === 'requestCorrection'}
+        confirming={applicationAction.isPending}
+        onCancel={closePendingAction}
+        onConfirm={reason => submitPendingAction(reason)}
+        zIndex={PARTICIPATING_INSTRUCTOR_CALCULATION_STATEMENT_NESTED_Z_INDEX}
+      />
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildInstructorCancelRejectionMessage,
+  patchInstructorForCancelRejection,
   resolveInstructorCancelRejectionNotifyVariant,
 } from '@/features/program/general/lib/instructor-cancel-rejection'
 import { buildInstructorCancelRejectCompleteDescription } from '@/features/program/shared/ui/detail-modal/components/instructor-cancel-reject-complete-modal'
@@ -50,6 +51,15 @@ describe('instructor-cancel-rejection', () => {
     expect(buildInstructorCancelRejectionMessage('박틴토', 'alreadySent')).toContain(
       '반려 취소 알림이 새롭게 발송됩니다.'
     )
+  })
+
+  it('반려 취소 패치는 REJECTION_CANCELLED로 복원한다', () => {
+    const restored = patchInstructorForCancelRejection({
+      ...baseRow,
+      applicationStatus: 'APPROVAL_CANCELLED',
+    })
+    expect(restored.approvalStatus).toBe('pending')
+    expect(restored.applicationStatus).toBe('REJECTION_CANCELLED')
   })
 })
 

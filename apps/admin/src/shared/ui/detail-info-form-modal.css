@@ -1,0 +1,26 @@
+/**
+ * 팝업 폭 1400 미만(compact 600 · default 800 · medium 1000 · wide 1200)
+ * → DetailInfoForm 라벨 열 160px.
+ * large(1400) · full 은 화면별 라벨 폭 유지.
+ * 화면 CSS에서 라벨 폭(140 등)을 따로 고정하지 말 것 — 이 규칙이 SSOT.
+ */
+
+.ant-modal.teal-header-modal:not(.teal-header-modal--large):not(.teal-header-modal--full) {
+  --detail-info-label-w: 160px;
+}
+
+.ant-modal.teal-header-modal:not(.teal-header-modal--large):not(.teal-header-modal--full)
+  .detail-info-form
+  .detail-info-form__field {
+  --detail-info-label-w: 160px !important;
+  grid-template-columns: var(--detail-info-label-w) minmax(0, 1fr) !important;
+}
+
+.ant-modal.teal-header-modal:not(.teal-header-modal--large):not(.teal-header-modal--full)
+  .detail-info-form
+  .detail-info-form__field
+  > .detail-info-form__field-label {
+  width: var(--detail-info-label-w, 160px) !important;
+  min-width: var(--detail-info-label-w, 160px) !important;
+  max-width: var(--detail-info-label-w, 160px) !important;
+}

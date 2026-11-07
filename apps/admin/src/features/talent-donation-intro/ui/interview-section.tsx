@@ -45,6 +45,15 @@ function slotTitle(id: InterviewSlot['id']): string {
   return id === 'interview_01' ? '■ 인터뷰 01' : '■ 인터뷰 02'
 }
 
+function inlineFieldClass(isEditing: boolean): string {
+  return [
+    'talent-intro-interview__field',
+    isEditing
+      ? 'talent-intro-interview__field--edit'
+      : 'talent-intro-interview__field--readonly',
+  ].join(' ')
+}
+
 function SearchIcon() {
   return (
     <svg
@@ -134,8 +143,6 @@ export function InterviewSectionCard({ slot, siblingLinkedStoryIds = [] }: Props
     }
   }, [draft, saveMutation, showAlert, siblingLinkedStoryIds, slot.id, slot.version])
 
-  const mode = isEditing ? 'edit' : 'view'
-
   return (
     <div className="talent-intro-section talent-intro-interview">
       <div className="admin-list-toolbar">
@@ -177,85 +184,111 @@ export function InterviewSectionCard({ slot, siblingLinkedStoryIds = [] }: Props
       <DetailInfoForm
         title={slotTitle(slot.id)}
         hideHeader
-        mode={mode}
+        mode="edit"
         className="talent-intro-interview__form"
       >
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="메인 텍스트"
-            view={<span className="talent-intro-interview__preline">{slot.mainText || '-'}</span>}
+            required={isEditing}
+            view={null}
             edit={
-              <CmsInput
-                inputSize="large"
+              <CmsTextArea
+                className={inlineFieldClass(isEditing)}
+                inputSize="small"
                 width="100%"
+                rows={2}
+                autoSize={false}
                 value={draft.mainText}
+                readOnly={!isEditing}
+                tabIndex={isEditing ? 0 : -1}
                 placeholder="메인 텍스트를 입력해 주세요"
-                onChange={e => setDraft(prev => ({ ...prev, mainText: e.target.value }))}
+                onChange={e => {
+                  if (!isEditing) return
+                  setDraft(prev => ({ ...prev, mainText: e.target.value }))
+                }}
               />
             }
-            readOnlyDisplay={!isEditing}
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="서브 텍스트"
-            view={<span className="talent-intro-interview__preline">{slot.subText || '-'}</span>}
+            required={isEditing}
+            view={null}
             edit={
               <CmsTextArea
-                className="cms-textarea--fixed-rows"
-                inputSize="large"
+                className={inlineFieldClass(isEditing)}
+                inputSize="small"
                 width="100%"
                 rows={4}
+                autoSize={false}
                 value={draft.subText}
+                readOnly={!isEditing}
+                tabIndex={isEditing ? 0 : -1}
                 placeholder="서브 텍스트를 입력해 주세요"
-                onChange={e => setDraft(prev => ({ ...prev, subText: e.target.value }))}
+                onChange={e => {
+                  if (!isEditing) return
+                  setDraft(prev => ({ ...prev, subText: e.target.value }))
+                }}
               />
             }
-            readOnlyDisplay={!isEditing}
           />
         </DetailInfoForm.Row>
-        <DetailInfoForm.Row type="single">
+        <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="버튼명"
-            view={<span>{slot.buttonLabel || '-'}</span>}
+            required={isEditing}
+            view={null}
             edit={
               <CmsInput
-                inputSize="large"
+                className={inlineFieldClass(isEditing)}
+                inputSize="small"
                 width="100%"
                 value={draft.buttonLabel}
+                readOnly={!isEditing}
+                tabIndex={isEditing ? 0 : -1}
                 placeholder="버튼명을 입력해 주세요"
-                onChange={e => setDraft(prev => ({ ...prev, buttonLabel: e.target.value }))}
+                onChange={e => {
+                  if (!isEditing) return
+                  setDraft(prev => ({ ...prev, buttonLabel: e.target.value }))
+                }}
               />
             }
-            readOnlyDisplay={!isEditing}
           />
-        </DetailInfoForm.Row>
-        <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="연결 게시글"
-            view={<span>{slot.linkedStoryTitle || '-'}</span>}
+            required={isEditing}
+            view={null}
             edit={
               <CmsInput
-                className="talent-intro-interview__post-input"
-                inputSize="large"
+                className={`talent-intro-interview__post-input ${inlineFieldClass(isEditing)}`}
+                inputSize="small"
                 width="100%"
                 readOnly
+                allowClear={false}
                 value={draft.linkedStoryTitle}
                 placeholder="연결할 게시글을 선택해 주세요"
-                suffix={
+                icon={
                   <button
                     type="button"
                     className="talent-intro-interview__search-btn"
                     aria-label="게시글 검색"
-                    onClick={() => setPickerOpen(true)}
+                    tabIndex={isEditing ? 0 : -1}
+                    onClick={() => {
+                      if (!isEditing) return
+                      setPickerOpen(true)
+                    }}
                   >
                     <SearchIcon />
                   </button>
                 }
-                onClick={() => setPickerOpen(true)}
+                onClick={() => {
+                  if (!isEditing) return
+                  setPickerOpen(true)
+                }}
               />
             }
-            readOnlyDisplay={!isEditing}
           />
         </DetailInfoForm.Row>
       </DetailInfoForm>

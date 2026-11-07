@@ -4,6 +4,7 @@
 
 import { Spin } from 'antd'
 import { useCallback, useState, type CSSProperties, type ReactNode } from 'react'
+import { resolveConsentStatusDisplayLabel } from '@jakorea/domain/shared/required-consent-alert'
 import type { User } from '@/types/user'
 import type { TermsAgreementRequest } from '@/shared/api/generated/members/schemas/termsAgreementRequest'
 import { CmsButton } from '@/shared/ui/cms-button'
@@ -17,11 +18,14 @@ import {
   resolveEditableConsentAgreedFromDraft,
 } from '@/features/user/api/member-basic-info-terms-patch'
 import { MemberConsentDocumentViewModal } from '@/features/user/shared/ui/member-consent-document-view-modal'
+import { useAuthStore } from '@/features/auth/model/auth-store'
+import { canDownloadSensitiveConsentFile } from '@/shared/lib/can-download-sensitive-consent-file'
 import { MemberConsentAgreementModal } from '@/features/user/shared/ui/member-consent-agreement-modal'
 import { MemberConsentCrimeModal } from '@/features/user/shared/ui/member-consent-crime-modal'
 import { CONSENT_RADIO_OPTIONS } from '@/features/user/shared/ui/instructor-profile-form'
 import {
   isMemberCrimeConsentField,
+  isSensitiveConsentDocumentLabel,
   resolveMemberConsentTemplateByLabel,
   type MemberConsentTemplateEntry,
 } from '@/features/user/shared/lib/member-consent-template-map'
@@ -97,11 +101,13 @@ export type ConsentFieldValueSchema =
       type: 'remote_consent'
       agreed: boolean
       agreedAtDisplay?: string
+      consentStatus?: string
     }
   | {
       type: 'document'
       agreed: boolean
       agreedAtDisplay?: string
+      consentStatus?: string
       formResponseId?: number
       consentRecordId?: number
       filledDocumentId?: number
@@ -272,6 +278,7 @@ export interface ConsentRenderCtx {
     label: string,
     document: Extract<ConsentFieldValueSchema, { type: 'document' }>
   ) => void
+  canOpenSensitiveConsentDocument: boolean
   onWriteConsentDocument?: (label: string) => void
   editing?: boolean
   preset?: UserConsentAgreementPreset
@@ -302,19 +309,26 @@ function ConsentValueDisplay({ value }: { value: ReactNode }) {
 function ConsentDocumentRow({
   agreed,
   agreedAtDisplay,
+  consentStatus,
   onOpenDocument,
 }: {
   agreed: boolean
   /** 동의한 경우에만 표시 (예: 2026.01.15 09:15:42) */
   agreedAtDisplay?: string
+  consentStatus?: string
   onOpenDocument?: () => void
 }) {
   const open = onOpenDocument
+  const statusLabel = resolveConsentStatusDisplayLabel({
+    agreed,
+    consentStatus,
+    agreedLabel: '동의',
+  })
 
   return (
     <span className="user-consent-agreement-section__value-inner">
       <span className="user-consent-agreement-section__value-status">
-        {agreed ? '동의' : '미동의'}
+        {statusLabel}
       </span>
       <span className="user-consent-agreement-section__value-sep" aria-hidden>
         |
@@ -354,20 +368,37 @@ function resolveConsentFieldView(
 ): ReactNode {
   switch (value.type) {
     case 'remote_consent': {
-      const status = value.agreed ? '동의' : '미동의'
+      const status = resolveConsentStatusDisplayLabel({
+        agreed: value.agreed,
+        consentStatus: value.consentStatus,
+        agreedLabel: '동의',
+      })
       const text = value.agreedAtDisplay ? `${status} | ${value.agreedAtDisplay}` : status
       return consentFieldContent(text)
     }
-    case 'document':
+    case 'document': {
+      const sensitiveRestricted =
+        isSensitiveConsentDocumentLabel(fieldLabel) && !ctx.canOpenSensitiveConsentDocument
+      if (sensitiveRestricted) {
+        const status = resolveConsentStatusDisplayLabel({
+          agreed: value.agreed,
+          consentStatus: value.consentStatus,
+          agreedLabel: '동의',
+        })
+        const text = value.agreedAtDisplay ? `${status} | ${value.agreedAtDisplay}` : status
+        return consentFieldContent(text)
+      }
       return (
         <ConsentDocumentRow
           agreed={value.agreed}
           agreedAtDisplay={value.agreedAtDisplay}
+          consentStatus={value.consentStatus}
           onOpenDocument={
             value.agreed ? () => ctx.openDocumentForLabel(fieldLabel, value) : undefined
           }
         />
       )
+    }
     case 'empty_half':
       return null
     default: {
@@ -536,6 +567,10 @@ export function UserConsentAgreementSection({
 }: UserConsentAgreementSectionProps) {
   const [activeView, setActiveView] = useState<ActiveConsentView | null>(null)
   const [activeWrite, setActiveWrite] = useState<ActiveConsentWrite | null>(null)
+  const sessionUser = useAuthStore(state => state.user)
+  const canOpenSensitiveConsentDocument = canDownloadSensitiveConsentFile({
+    roleCode: sessionUser?.roleCode,
+  })
 
   const effectiveCaption = caption ?? (preset === 'admin' ? ADMIN_CONSENT_CAPTION : DEFAULT_CAPTION)
 
@@ -587,6 +622,7 @@ export function UserConsentAgreementSection({
   const lowerRows = schema.slice(2)
   const ctx: ConsentRenderCtx = {
     openDocumentForLabel,
+    canOpenSensitiveConsentDocument,
     onWriteConsentDocument: editing ? openWriteForLabel : undefined,
     editing,
     preset,

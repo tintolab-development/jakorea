@@ -51,4 +51,12 @@ describe('withExpectedUpdatedAt', () => {
       expectedUpdatedAt: '2026-11-01T00:00:00.000Z',
     })
   })
+
+  it('keeps GET updatedAt microseconds instead of Date.toISOString truncation', () => {
+    const getUpdatedAt = '2026-10-31T12:10:00.059740Z'
+    expect(withExpectedUpdatedAt({ title: '예시' }, getUpdatedAt).expectedUpdatedAt).toBe(
+      getUpdatedAt
+    )
+    expect(new Date(getUpdatedAt).toISOString()).toBe('2026-10-31T12:10:00.059Z')
+  })
 })

@@ -4,6 +4,7 @@ import {
   buildIndividualSettlementItems,
   buildIndividualSettlementResubmitRequest,
   buildIndividualSettlementSubmitRequest,
+  toIndividualSettlementTripType,
 } from './build-individual-settlement-submit.ts'
 
 const draft = buildSettlementWriteDraft({
@@ -58,6 +59,13 @@ assert.equal(items.length, 2)
 assert.equal(items[0]?.itemType, 'TRANSPORTATION')
 assert.equal(items[0]?.amount, 8000)
 assert.equal(items[0]?.expenses?.length, 2)
+// 학생 교통비 왕복/편도 — 작성 화면 선택값만 tripType으로 보낸다
+assert.equal(items[0]?.tripType, 'ROUND_TRIP')
+assert.equal(toIndividualSettlementTripType('round_trip'), 'ROUND_TRIP')
+assert.equal(toIndividualSettlementTripType('one_way'), 'ONE_WAY')
+assert.equal(toIndividualSettlementTripType(null), null)
+assert.equal(toIndividualSettlementTripType(undefined), null)
+assert.equal(items[1]?.tripType, undefined)
 assert.deepEqual(items[0]?.expenses?.[0]?.fileObjectIds, [11])
 assert.equal(items[1]?.itemType, 'MEAL')
 assert.equal(items[1]?.amount, 10000)

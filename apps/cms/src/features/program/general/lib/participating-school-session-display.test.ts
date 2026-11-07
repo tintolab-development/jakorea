@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import {
   formatGeneralEducationScheduleLine,
+  formatParticipatingProgressEducationScheduleLine,
   formatParticipatingSchoolSessionLine,
   formatVolunteerAssignmentScheduleLine,
   prepareGeneralEducationScheduleSessions,
@@ -225,7 +226,9 @@ describe('formatParticipatingSchoolSessionLine', () => {
     const session = baseSession({
       scheduleLabel: '26년 10월 26일(월) 10:00 ~ 12:00',
     })
-    expect(formatParticipatingSchoolSessionLine(session)).toBe('2026.10.26(월) 10:00 ~ 12:00')
+    expect(formatParticipatingSchoolSessionLine(session)).toBe(
+      '2026.10.26(월) 10:00 ~ 12:00 | 1회차'
+    )
     expect(session.scheduleLabel).toBe('26년 10월 26일(월) 10:00 ~ 12:00')
   })
 })
@@ -416,6 +419,21 @@ describe('resolveParticipatingInstitutionScheduleRowLabel', () => {
 })
 
 describe('formatVolunteerAssignmentScheduleLine', () => {
+  it('UTC instant는 서울 시각과 회차로 표시한다', () => {
+    const line = formatVolunteerAssignmentScheduleLine(
+      baseSession({
+        round: 1,
+        date: '2026.11.06',
+        dayOfWeek: '금',
+        duration: '2차시',
+        timeRange: '06:05~06:10',
+        startAt: '2026-11-06T06:05:00Z',
+        endAt: '2026-11-06T06:10:00Z',
+      })
+    )
+    expect(line).toBe('2026.11.06(금) 15:05 ~ 15:10 | 1회차 (2차시)')
+  })
+
   it('단일 회차는 날짜·시간만 노출한다', () => {
     const line = formatVolunteerAssignmentScheduleLine(
       baseSession(),
@@ -443,7 +461,7 @@ describe('formatVolunteerAssignmentScheduleLine', () => {
       })
     )
 
-    expect(line).toBe('2026.01.09(금) 09:20 ~ 11:20 | 2회차')
+    expect(line).toBe('2026.01.09(금) 09:20 ~ 11:20 | 2회차 (2차시)')
   })
 
   it('복수 일정형은 일정명을 노출한다', () => {
@@ -479,6 +497,84 @@ describe('formatVolunteerAssignmentScheduleLine', () => {
       })
     )
 
-    expect(line).toBe('2026.01.09(금) | 1회차')
+    expect(line).toBe('2026.01.09(금) | 1회차 (1차시)')
+  })
+})
+
+describe('formatParticipatingProgressEducationScheduleLine', () => {
+  const dated = (overrides: Partial<ParticipatingSchoolSession> = {}) =>
+    baseSession({
+      date: '2026.04.20',
+      dayOfWeek: '월',
+      timeRange: '09:30~12:20',
+      classNum: '',
+      ...overrides,
+    })
+
+  it('사전교육은 본교육 회차에 넣지 않고 해당 일정만 표시한다', () => {
+    expect(
+      formatParticipatingProgressEducationScheduleLine(
+        dated({
+          round: 0,
+          sessionNo: null,
+          scheduleRole: 'PRE_EDUCATION',
+          educationSlotKey: 'general-pre-education:1',
+        })
+      )
+    ).toBe('2026.04.20(월) 09:30 ~ 12:20 | 사전교육')
+  })
+
+  it('sessions[0]이나 가장 빠른 시간을 사전교육으로 보지 않는다', () => {
+    expect(
+      formatParticipatingProgressEducationScheduleLine(
+        dated({ round: 1, sessionNo: 1, date: '2026.04.13' })
+      )
+    ).toBe('2026.04.13(월) 09:30 ~ 12:20 | 1회차')
+  })
+
+  it('회차 N과 차시 K를 원본 값으로 붙인다', () => {
+    const shape = {
+      educationStructure: 'curriculum' as const,
+      sessionRound: 'multi' as const,
+      curriculumSessions: [
+        { sessionNo: 1, sessionLabel: '1회차', title: '2차시' },
+        { sessionNo: 2, sessionLabel: '2회차', title: '3차시' },
+        { sessionNo: 3, sessionLabel: '3회차', title: '1차시' },
+      ],
+    }
+    expect(
+      formatParticipatingProgressEducationScheduleLine(dated({ round: 1, sessionNo: 1 }), shape)
+    ).toBe('2026.04.20(월) 09:30 ~ 12:20 | 1회차 (2차시)')
+    expect(
+      formatParticipatingProgressEducationScheduleLine(dated({ round: 2, sessionNo: 2 }), shape)
+    ).toBe('2026.04.20(월) 09:30 ~ 12:20 | 2회차 (3차시)')
+    expect(
+      formatParticipatingProgressEducationScheduleLine(dated({ round: 3, sessionNo: 3 }), shape)
+    ).toBe('2026.04.20(월) 09:30 ~ 12:20 | 3회차 (1차시)')
+  })
+
+  it('중간 회차가 없어도 번호를 다시 매기지 않는다', () => {
+    expect(
+      formatParticipatingProgressEducationScheduleLine(dated({ round: 4, sessionNo: 4 }))
+    ).toBe('2026.04.20(월) 09:30 ~ 12:20 | 4회차')
+  })
+
+  it('합성 N교시·N차시 classNum을 차시로 쓰지 않는다', () => {
+    expect(
+      formatParticipatingProgressEducationScheduleLine(
+        dated({ round: 2, sessionNo: 2, classNum: '2교시' })
+      )
+    ).toBe('2026.04.20(월) 09:30 ~ 12:20 | 2회차')
+    expect(
+      formatParticipatingProgressEducationScheduleLine(
+        dated({ round: 2, sessionNo: 2, classNum: '2차시' })
+      )
+    ).toBe('2026.04.20(월) 09:30 ~ 12:20 | 2회차')
+  })
+
+  it('회차·차시가 없으면 날짜와 시간만 표시한다', () => {
+    expect(
+      formatParticipatingProgressEducationScheduleLine(dated({ round: 0, sessionNo: null, classNum: '' }))
+    ).toBe('2026.04.20(월) 09:30 ~ 12:20')
   })
 })

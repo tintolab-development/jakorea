@@ -12,6 +12,8 @@ import { formatExcelDateValue, toJavaLocalTime } from './import-wire-values'
 export {
   GEMINI_PERFORMANCE_INVALID_TEMPLATE_MESSAGE,
   GEMINI_PERFORMANCE_INVALID_TEMPLATE_TITLE,
+  GEMINI_PERFORMANCE_INSTRUCTOR_MISMATCH_MESSAGE,
+  GEMINI_PERFORMANCE_INSTRUCTOR_MISMATCH_TITLE,
 } from './import-popup-copy'
 
 type HeaderMap = Partial<Record<keyof typeof GEMINI_PERFORMANCE_UPLOAD_COLUMNS, number>>
@@ -39,9 +41,11 @@ function buildHeaderMap(headerRow: ExcelJS.Row): HeaderMap {
 function validateRequiredHeaders(headerMap: HeaderMap): void {
   const missing = GEMINI_PERFORMANCE_REQUIRED_UPLOAD_HEADERS.filter(label => {
     const normalizedLabel = normalizeUploadHeader(label)
-    const key = (Object.keys(GEMINI_PERFORMANCE_UPLOAD_COLUMNS) as Array<
-      keyof typeof GEMINI_PERFORMANCE_UPLOAD_COLUMNS
-    >).find(k => normalizeUploadHeader(GEMINI_PERFORMANCE_UPLOAD_COLUMNS[k]) === normalizedLabel)
+    const key = (
+      Object.keys(GEMINI_PERFORMANCE_UPLOAD_COLUMNS) as Array<
+        keyof typeof GEMINI_PERFORMANCE_UPLOAD_COLUMNS
+      >
+    ).find(k => normalizeUploadHeader(GEMINI_PERFORMANCE_UPLOAD_COLUMNS[k]) === normalizedLabel)
     return key ? headerMap[key] == null : true
   })
 
@@ -78,6 +82,21 @@ function getCellText(row: ExcelJS.Row, colNumber: number | undefined): string {
   }
   if (typeof value === 'string') return value.trim()
   return cell.text?.trim() ?? ''
+}
+
+/** 서버 강사 판정에 사용하는 엑셀 원문. 표시용 텍스트처럼 trim/정규화하지 않는다. */
+function getCellRawText(row: ExcelJS.Row, colNumber: number | undefined): string {
+  if (colNumber == null) return ''
+  const cell = row.getCell(colNumber)
+  const value = unwrapExcelValue(cell.value)
+  if (value instanceof Date) {
+    return formatExcelDateValue(value) ?? ''
+  }
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return cell.text ?? String(value)
+  }
+  if (typeof value === 'string') return value
+  return cell.text ?? ''
 }
 
 function getDateCellText(row: ExcelJS.Row, colNumber: number | undefined): string {
@@ -142,13 +161,13 @@ export async function parseUploadExcel(file: File): Promise<GeminiPerformanceUpl
 
     rows.push({
       timestamp: getCellText(row, headerMap.timestamp),
-      instructorName: getCellText(row, headerMap.instructorName),
+      instructorName: getCellRawText(row, headerMap.instructorName),
       assistantInstructorNames: getCellText(row, headerMap.assistantInstructorNames),
       trainingFormat: getCellText(row, headerMap.trainingFormat),
-      contact: getCellText(row, headerMap.contact),
+      contact: getCellRawText(row, headerMap.contact),
       email: getCellText(row, headerMap.email),
       school: getCellText(row, headerMap.school),
-      paymentDestination: getCellText(row, headerMap.paymentDestination),
+      paymentDestination: getCellRawText(row, headerMap.paymentDestination),
       trainingLocation: getCellText(row, headerMap.trainingLocation),
       trainingDate: getDateCellText(row, headerMap.trainingDate),
       trainingStartTime: getTimeCellText(row, headerMap.trainingStartTime),

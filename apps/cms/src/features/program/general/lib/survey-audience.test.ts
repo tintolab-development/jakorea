@@ -343,6 +343,9 @@ describe('general survey audience', () => {
       secondaryDescription: '만족도조사 등록 시 해당 프로그램의 모든 학교에 동일하게 노출됩니다.',
       registerButton: '만족도조사 등록',
     })
+    expect(getGeneralSatisfactionEmptyCopy('student', companySchool)).toEqual(
+      getGeneralSatisfactionEmptyCopy('teacher', companySchool)
+    )
     expect(buildGeneralSurveyEmptyState(companySchool).satisfactionSurveysByAudience).toEqual({})
   })
 
@@ -356,9 +359,11 @@ describe('general survey audience', () => {
 
     expect(getGeneralSatisfactionAudienceTabs(trainedTeachers).map(tab => tab.key)).toEqual([
       'teacher',
+      'student',
     ])
     expect(getEnabledGeneralSatisfactionAudienceTabs(trainedTeachers).map(tab => tab.key)).toEqual([
       'teacher',
+      'student',
     ])
     expect(getGeneralSurveyMenuItems(trainedTeachers).map(item => item.key)).toEqual([
       'survey',
@@ -379,6 +384,7 @@ describe('general survey audience', () => {
 
     expect(getEnabledGeneralSatisfactionAudienceTabs(trainedTeachers).map(tab => tab.key)).toEqual([
       'teacher',
+      'student',
     ])
     expect(getGeneralSurveyMenuItems(trainedTeachers).map(item => item.key)).toEqual([
       'survey',
@@ -387,13 +393,14 @@ describe('general survey audience', () => {
     ])
   })
 
-  it('교육받은 교사 만족도 바인딩 targetRole은 항상 TEACHER이다', () => {
+  it('교육받은 교사 만족도 바인딩은 교사/학생을 분리한다', () => {
     const trainedTeachers = program({
       id: '186264',
       backendProgramType: 'TRAINED_TEACHER',
     })
     expect(isTrainedTeachersProgram(trainedTeachers)).toBe(true)
-    expect(resolveSatisfactionFormBindingTargetRole(trainedTeachers, 'student')).toBe('TEACHER')
+    expect(resolveSatisfactionFormBindingTargetRole(trainedTeachers, 'student')).toBe('STUDENT')
+    expect(resolveSatisfactionFormBindingTargetRole(trainedTeachers, 'teacher')).toBe('TEACHER')
     expect(resolveSatisfactionFormBindingTargetRole(trainedTeachers, null)).toBe('TEACHER')
     const general = program({
       generalProgramAudience: 'organization',
@@ -417,6 +424,29 @@ describe('general survey audience', () => {
       'survey',
       'lecture_evaluation',
     ])
+  })
+
+  it('만족도 미등록 안내는 기관형/개인형만 나누고 대상 탭은 같다', () => {
+    const org = program({
+      generalProgramAudience: 'organization',
+      generalParticipantTypes: ['school_institution'],
+    })
+    const individual = program({
+      generalProgramAudience: 'individual',
+      generalParticipantTypes: ['individual'],
+    })
+
+    expect(getGeneralSatisfactionEmptyCopy('teacher', org).secondaryDescription).toBe(
+      '만족도조사 등록 시 해당 프로그램의 모든 학교에 동일하게 노출됩니다.'
+    )
+    expect(getGeneralSatisfactionEmptyCopy('student', org)).toEqual(
+      getGeneralSatisfactionEmptyCopy('teacher', org)
+    )
+    expect(getGeneralSatisfactionEmptyCopy('individual', individual)).toMatchObject({
+      description: '만족도조사 등록 버튼을 눌러 설문 내용을 추가해 주세요.',
+      secondaryDescription:
+        '만족도조사 등록 시 해당 프로그램의 모든 참여자에게 동일하게 노출됩니다.',
+    })
   })
 
   it('설문 수정 항목은 공통 3종을 제공한다', () => {

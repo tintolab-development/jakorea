@@ -20,11 +20,19 @@ export interface LectureReportListItemResponse {
   schoolName?: string;
   grade?: string;
   lectureDate?: string;
-  sessionNo?: number;
+  /** 본교육 회차 번호(program_schedule.session_no). 차시 개수가 아님. 사전교육은 보통 null. null만으로 사전교육이 아님. */
+  sessionNo?: number | null;
   timeLabel?: string;
   lectureLabel?: string;
-  dateRoundTimeLabel?: string;
+  /** 날짜 · 회차/사전교육 · 커리큘럼 차시(연결이 있을 때만) · 시각. sessionNo를 N차시로 붙이지 않음. */
+  dateRoundTimeLabel?: string | null;
   lectureProgressStatus?: string;
   fileCount?: number;
   fileObjectIds?: number[];
+  /** canonical 일정 역할. program_schedule.schedule_kind. PRE_EDUCATION|EDUCATION|SESSION|CLOSING. 없으면 null. sessionNo=null로 추정하지 않음. */
+  scheduleRole?: string | null;
+  /** canonical education_slot_key. 사전교육 general-pre-education:*, 본교육 회차 general-common-line:N 등. 없으면 null. */
+  educationSlotKey?: string | null;
+  /** 해당 scheduleId에 연결된 program_curriculum_session 건수(실제 커리큘럼 차시). 없으면 null. sessionNo를 넣지 않음. 사전교육은 null. 정산 인정 차시와 별개. */
+  curriculumSessionCount?: number | null;
 }

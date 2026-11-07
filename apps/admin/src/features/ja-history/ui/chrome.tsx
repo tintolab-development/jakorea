@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import { Image } from 'antd'
 import { JaHistorySaveError, type JaHistoryMedia } from '@/entities/ja-history/model/types'
 import { CmsButton, CmsInput, CmsTextArea, REQUIRED_FIELDS_INCOMPLETE_ALERT } from '@/shared/ui'
 
@@ -113,11 +112,7 @@ export function MediaPreview({
         .join(' ')}
     >
       {media.url ? (
-        <Image
-          src={media.url}
-          alt={media.alt || media.fileName || '이미지'}
-          preview={{ mask: '이미지 보기' }}
-        />
+        <img src={media.url} alt={media.alt || media.fileName || '이미지'} />
       ) : (
         <span className="ja-history-preview__empty">없음</span>
       )}

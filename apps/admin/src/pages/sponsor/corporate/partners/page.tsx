@@ -4,7 +4,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import type { Dayjs } from 'dayjs'
-import { Image, Switch } from 'antd'
+import { Switch } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type {
   CorporatePartner,
@@ -370,11 +370,10 @@ export function CorporatePartnersPage() {
         align: 'center',
         render: (_value, record) => (
           <div className="corporate-partners-page__thumb-wrap">
-            <Image
+            <img
               className="corporate-partners-page__thumb"
               src={record.logoUrl}
               alt={record.logoFileName || record.name || '후원사 로고'}
-              preview={{ mask: '이미지 보기' }}
             />
           </div>
         ),

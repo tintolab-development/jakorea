@@ -25,20 +25,8 @@
   width: 100%;
 }
 
-/*
- * th 시안: 140px · padding 10px
- * Field 인라인 --detail-info-label-w(기본 200) 보다 우선
- */
-.popup-form-modal__form .detail-info-form__field {
-  --detail-info-label-w: 140px !important;
-  grid-template-columns: 140px minmax(0, 1fr) !important;
-}
-
 .popup-form-modal__form .detail-info-form__field-label {
   display: flex !important;
-  width: 140px !important;
-  min-width: 140px !important;
-  max-width: 140px !important;
   min-height: 48px;
   padding: 10px !important;
   justify-content: center;

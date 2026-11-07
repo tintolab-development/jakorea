@@ -62,7 +62,7 @@ describe('mapIndividualSettlementReviewToCalculationStatement', () => {
     expect(view.blocks[0]?.lectureSessionDisplay).toBe('2회차')
   })
 
-  it('리뷰 상세에 없는 강의비·사업기간·회차 진행은 - 이다', () => {
+  it('리뷰 상세에 없는 강사비·사업기간·회차 진행은 - 이다', () => {
     const view = mapIndividualSettlementReviewToCalculationStatement(detail)
     expect(view.basic.businessPeriodDisplay).toBe('-')
     expect(view.basic.programSessionProgressDisplay).toBe('-')

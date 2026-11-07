@@ -11,14 +11,14 @@ export interface AllocationColumn {
   columnKey?: string;
   scheduleId?: number;
   /** 교육 시작 시각(offset date-time). 달력일은 Asia/Seoul. UTC date slice(0,10) 금지 */
-  educationStartAt?: string | null;
+  educationStartAt?: string;
   organizationApplicationId?: number;
   /** 기관명. 없으면 null. 빈 문자열 금지 */
   organizationName?: string | null;
-  /** 기관 시군구 또는 시/도. 없으면 null. 빈 문자열 금지 */
+  /** 기관 시군구 또는 시/도. 없으면 null(빈 문자열 금지) */
   organizationRegion?: string | null;
   /** 확정 슬롯 ujat_organization_class_schedule_assignment.education_region_code. 기관 신청/임시배정/확정 일정에 저장된 코드. 기본값 SEOUL invent 금지 */
-  educationRegionCode?: string | null;
+  educationRegionCode?: string;
   /** 확정 학급 슬롯 수 참고값. 학급 행 SSOT가 아니며 classCount로 N반을 invent하지 않는다 */
   classCount?: number;
   /** 해당 열의 확정 교육 슬롯. 없으면 빈 배열. id invent 금지 */

@@ -51,7 +51,7 @@ export function participatingSchoolSessionToHopeSchedule(
   return {
     hopeDate: datePart,
     hopeTime: timePart,
-    hopeSession: `${session.round}차시`,
+    hopeSession: `${session.round}회차`,
   }
 }
 

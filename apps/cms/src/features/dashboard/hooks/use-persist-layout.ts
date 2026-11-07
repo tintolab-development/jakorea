@@ -23,6 +23,7 @@ export function usePersistDashboardLayout(
   })
   const lastSnapshotRef = useRef<string | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const persistLayoutRef = useRef<() => void>(() => {})
 
   useEffect(() => {
     if (!enabled || !userRole) return
@@ -37,19 +38,31 @@ export function usePersistDashboardLayout(
     }
   }, [])
 
-  return useCallback(() => {
+  const persistLayout = useCallback(() => {
     if (!enabled || !userRole) return
     if (timerRef.current) clearTimeout(timerRef.current)
     timerRef.current = setTimeout(() => {
       const next = snapshotDashboardLayoutForRole(userRole)
       if (shouldSkipLayoutPersist(lastSnapshotRef.current, next)) return
+      const sent = serializeDashboardLayoutSnapshot(next)
       persistPreferences(undefined, {
         onSuccess: () => {
-          lastSnapshotRef.current = serializeDashboardLayoutSnapshot(
+          const current = serializeDashboardLayoutSnapshot(
             snapshotDashboardLayoutForRole(userRole)
           )
+          if (current === sent) {
+            lastSnapshotRef.current = current
+            return
+          }
+          persistLayoutRef.current()
         },
       })
     }, LAYOUT_PERSIST_DEBOUNCE_MS)
   }, [enabled, userRole, persistPreferences])
+
+  useEffect(() => {
+    persistLayoutRef.current = persistLayout
+  }, [persistLayout])
+
+  return persistLayout
 }

@@ -11,12 +11,12 @@ import type { MemberBankAccountUpsertRequest } from './memberBankAccountUpsertRe
  * 강사 정산 정보. Platform 권한 신청과 CMS 강사 등록/상세가 같은 구조를 사용합니다.
  */
 export interface InstructorCmsSettlement {
-  bankName?: string;
+  bankName?: string | null;
   /** 현재 계좌번호. 기본 상세 조회에서는 마스킹되고 개인정보 원문 조회에서만 원문을 반환합니다. */
-  accountNumber?: string;
+  accountNumber?: string | null;
   /** 현재 예금주. 기본 상세 조회에서는 마스킹됩니다. */
-  accountHolder?: string;
-  businessIncome?: boolean;
+  accountHolder?: string | null;
+  businessIncome?: boolean | null;
   /**
      * @minItems 0
      * @maxItems 20

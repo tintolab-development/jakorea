@@ -362,6 +362,35 @@ describe('mapTrainedTeacherDetailToProgram educationStructure', () => {
 })
 
 describe('mapTrainedTeacherToUpdateRequest educationStructure', () => {
+  it('PATCH rounds keep GET program_schedule id', () => {
+    const request = mapTrainedTeacherToUpdateRequest({
+      id: '186551',
+      sponsorId: 'sponsor-1',
+      title: 'TT',
+      type: 'offline',
+      format: 'workshop',
+      category: 'school',
+      description: '',
+      rounds: [
+        {
+          id: '187700',
+          programId: '186551',
+          roundNumber: 1,
+          startDate: '2026-03-01T00:00:00.000Z',
+          endDate: '2026-03-01T01:00:00.000Z',
+          status: 'active',
+        },
+      ],
+      startDate: '2026-01-01',
+      endDate: '2026-12-31',
+      status: 'pending',
+      createdAt: '2026-01-01',
+      updatedAt: '2026-10-31T12:10:00.059740Z',
+    } as Program)
+    expect(request.rounds?.[0]?.id).toBe('187700')
+    expect(request.expectedUpdatedAt).toBe('2026-10-31T12:10:00.059740Z')
+  })
+
   it('writes CURRICULUM when domain is curriculum', () => {
     const program = {
       id: '186002',
@@ -780,12 +809,7 @@ describe('mapTrainedTeacherToUpdateRequest KPI / venue wire', () => {
     }
     const common = detail.program?.generalCommonInfo
     expect(common?.announcementTitle).toBe('기존 공고')
-    expect(common?.participantRecruitmentInfo).toEqual({
-      announcementPublished: true,
-      inquiryTel: '02-000-0000',
-      maxAssignableInstructors: 0,
-      preEducationNoticeRequired: false,
-    })
+    expect(common?.participantRecruitmentInfo).toBeUndefined()
     expect(common).not.toHaveProperty('curriculumSessions')
   })
 
@@ -993,12 +1017,22 @@ describe('mapTrainedTeacherDetailToProgram typed vs nested snapshot', () => {
       }),
     })
     expect(mapped.ips).toBe('Inspire')
-    expect(mapped.mainTitle).toBe('nested 대표')
+    expect(mapped.mainTitle).toBeUndefined()
     expect(mapped.district).toBe('nested 대상')
   })
 })
 
 describe('mapTrainedTeacherDetailToProgram KPI root echo', () => {
+  it('does not invent kpi zeros when only totalParticipants is present', () => {
+    const mapped = mapTrainedTeacherDetailToProgram({
+      id: '186546',
+      title: 'TT',
+      totalParticipants: 200,
+    } as ProgramResponse)
+    expect(mapped.totalParticipants).toBe(200)
+    expect(mapped.generalCommonInfo?.kpi).toBeUndefined()
+  })
+
   it('prefers totalParticipants over nested kpi finalParticipants', () => {
     const mapped = mapTrainedTeacherDetailToProgram({
       id: '186005',
@@ -1121,15 +1155,17 @@ describe('mapTrainedTeacher business period', () => {
     }
     const created = mapTrainedTeacherToCreateRequest(program)
     const updated = mapTrainedTeacherToUpdateRequest(program, {
-      startDate: program.startDate,
-      endDate: program.endDate,
+      startDate: '2025-04-01T15:00:00.000Z',
+      endDate: '2027-08-23T14:59:59.999Z',
     })
     expect(created.startDate).toBe(program.startDate)
     expect(created.endDate).toBe(program.endDate)
     expect(created.businessStartDate).toBe(program.startDate)
     expect(created.businessEndDate).toBe(program.endDate)
-    expect(updated.businessStartDate).toBe(program.startDate)
-    expect(updated.businessEndDate).toBe(program.endDate)
+    expect(updated.startDate).toBe('2025-04-01T15:00:00.000Z')
+    expect(updated.businessStartDate).toBe('2025-04-01T15:00:00.000Z')
+    expect(updated.endDate).toBe('2027-08-23T14:59:59.999Z')
+    expect(updated.businessEndDate).toBe('2027-08-23T14:59:59.999Z')
   })
 })
 
@@ -1298,6 +1334,28 @@ describe('mapTrainedTeacherDetailToProgram recruitment columns (BE 2026-09-23 ha
     expect(mapped.generalCommonInfo?.participantRecruitmentInfo?.contactOrganizationName).toBe(
       '수정문의처'
     )
+  })
+
+  it('GET remarks가 null이면 nested 비고를 폼 정본으로 쓰지 않는다', () => {
+    const mapped = mapTrainedTeacherDetailToProgram({
+      id: '186560',
+      title: 'TT',
+      remarks: null,
+      oneLineIntroduction: '한줄소개',
+      serviceDetailJson: JSON.stringify({
+        schemaVersion: 1,
+        program: {
+          remarks: '구 JSON 비고',
+          generalCommonInfo: {
+            participantRecruitmentInfo: { remarks: '구 nested 비고' },
+          },
+        },
+      }),
+    } as ProgramResponse)
+    expect(mapped.remarks).toBeUndefined()
+    expect(mapped.oneLineIntroduction).toBe('한줄소개')
+    expect(mapped.generalCommonInfo?.participantRecruitmentInfo?.remarks).toBeUndefined()
+    expect(programToDetailEditValues(mapped).remarks).toBe('')
   })
 })
 

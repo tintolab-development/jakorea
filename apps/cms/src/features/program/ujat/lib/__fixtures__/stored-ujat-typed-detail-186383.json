@@ -95,7 +95,7 @@
                   "excludeNone": false,
                   "excludeSaturday": false,
                   "excludeSunday": false,
-                  "excludePublicHoliday": false
+                  "excludeHoliday": false
                 }
               }
             ]
@@ -158,7 +158,7 @@
                   "excludeNone": false,
                   "excludeSaturday": false,
                   "excludeSunday": false,
-                  "excludePublicHoliday": true
+                  "excludeHoliday": true
                 }
               }
             ]

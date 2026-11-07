@@ -65,6 +65,8 @@ import {
 import { ParticipatingVolunteersSection } from './program-status/participating-volunteers-section'
 import { ParticipatingInstructorsSection } from './program-status/participating-instructors-section'
 import { ApplicantList } from '../../../shared/ui/program-detail/applicant-list/applicant-list'
+import { GeneralVolunteerApplicationsView } from './applications/general-volunteer-applications-view'
+import { ParticipantRecruitmentPreviewModal } from './info/participant-recruitment-preview-modal'
 import type { ApplicantDetailMeta } from '../../../shared/ui/program-detail/applicant-list/use-applicants-detail'
 import { generalOrganizationApplicationFilterFields } from '@/features/program/general/lib/application-filter-fields'
 import { ProjectInfoDetailPanels } from '../../../shared/ui/program-detail/project-info/project-info-detail'
@@ -118,13 +120,13 @@ import { TrainedTeachersCommonInfoView } from '@/features/program/trained-teache
 import { resolveGeneralProgramDisplayTitle } from '@/features/program/general/lib/detail-common-info-display'
 import { TrainedTeachersApplicationInfoView } from '@/features/program/trained-teachers/ui/application-info/application-info-view'
 import {
-  FEATURE_COMING_SOON_ALERT_MESSAGE,
   GENERAL_SURVEY_MENU_EMPTY_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
 } from '@/shared/constants/messages'
 import { PRE_EDUCATION_SCHEDULE_REQUIRED_MESSAGE } from '@/features/program/general/model/common-info-edit-schema'
 import { handleError } from '@/shared/utils/error-handler'
+import { showUpdateCompletedAlert } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { isProgramTypeSettingsSaveBlocked } from '@/features/program/shared/lib/program-edit-window'
 import {
@@ -148,9 +150,11 @@ import { TAB_KEYS, type TabKey, type LnbKey } from './program-detail-nav-types'
 import type { GeneralRecruitTabKey } from '@/features/program/general/lib/recruitment-tabs'
 import {
   getGeneralSurveyMenuItems,
+  getGeneralVolunteerInterviewEnabled,
   isGeneralProgramId,
   type GeneralSurveyNavKey,
 } from '@/features/program/general/lib/detail-meta'
+import { previewAudienceFromGeneralRecruitTab } from '@/features/program/general/lib/platform-preview-payload'
 import {
   APPLICANT_ID_PARAM,
   DETAIL_TAB_PARAM,
@@ -1139,10 +1143,6 @@ export function ProgramDetailFullPageModal({
       setActiveTab(childKey as TabKey)
       return
     }
-    if (groupKey === 'applicants' && childKey === 'volunteers') {
-      window.alert(FEATURE_COMING_SOON_ALERT_MESSAGE)
-      return
-    }
     if (groupKey === 'applicants') setApplicantsChild(childKey as TabKey)
     else if (groupKey === 'progress') setProgressChild(childKey as TabKey)
     else if (groupKey === 'survey') {
@@ -1339,6 +1339,8 @@ export function ProgramDetailFullPageModal({
   const [trainedTeachersFormEditPreflightLoading, setTrainedTeachersFormEditPreflightLoading] =
     useState(false)
   const [trainedTeachersFormPreviewReloadKey, setTrainedTeachersFormPreviewReloadKey] = useState(0)
+  const [recruitmentPreviewAudience, setRecruitmentPreviewAudience] =
+    useState<GeneralRecruitTabKey | null>(null)
   /** 1사1교 — 신청 정보 양식 수정 모달·미리보기 갱신 키 */
   const [companySchoolApplicationFormEditOpen, setCompanySchoolApplicationFormEditOpen] =
     useState(false)
@@ -1881,9 +1883,12 @@ export function ProgramDetailFullPageModal({
   }
 
   const handlePreview = () => {
-    if (displayProgram) {
-      window.alert(FEATURE_COMING_SOON_ALERT_MESSAGE)
-    }
+    if (!displayProgram) return
+    const audience: GeneralRecruitTabKey =
+      activeTab === 'instructors' || activeTab === 'volunteers' || activeTab === 'institutions'
+        ? activeTab
+        : 'institutions'
+    setRecruitmentPreviewAudience(audience)
   }
 
   const handleCompanySchoolRecruitTabChange = (tab: GeneralRecruitTabKey) => {
@@ -2206,7 +2211,9 @@ export function ProgramDetailFullPageModal({
                   }
                   throw new Error('trainedTeacherBasicInfoValidationFailed')
                 }
-                const basicOk = await infoTriggerSave(progressTables)
+                const basicOk = await infoTriggerSave(progressTables, {
+                  skipSuccessAlert: trainedTeacherRemoteEnabled,
+                })
                 if (!basicOk) {
                   // API 오류는 onSaveEdit → handleError 에서 이미 안내
                   throw new Error('trainedTeacherBasicInfoSaveFailed')
@@ -2223,6 +2230,7 @@ export function ProgramDetailFullPageModal({
                             commonInfo: payload.commonInfo,
                           },
                         })
+                        showUpdateCompletedAlert()
                       } catch (error) {
                         handleError(error, {
                           context: 'programDetailFullpageModal.trainedTeacherInfoSave',
@@ -2323,13 +2331,24 @@ export function ProgramDetailFullPageModal({
                   onRegisterApplicantCloseHandler={registerApplicantCloseHandler}
                 />
               </div>
+            ) : !isOverviewProgramDetail &&
+              activeLnb === 'applicants' &&
+              (activeChildMenu || 'institutions') === 'volunteers' ? (
+              <div className="participant-applications">
+                <GeneralVolunteerApplicationsView
+                  program={displayProgram}
+                  activeTab="vol_all"
+                  interviewEnabled={getGeneralVolunteerInterviewEnabled(displayProgram)}
+                  onRegisterApplicantCloseHandler={registerApplicantCloseHandler}
+                />
+              </div>
             ) : (
               <ApplicantList
                 menu={activeChildMenu || 'institutions'}
                 program={displayProgram ?? null}
                 programId={displayProgram.id}
                 institutionColumnPreset={isOverviewProgramDetail ? 'company-school' : undefined}
-                detailVariant="legacy"
+                detailVariant="general"
                 onRegisterApplicantCloseHandler={registerApplicantCloseHandler}
               />
             ))}
@@ -2425,6 +2444,19 @@ export function ProgramDetailFullPageModal({
             setCompanySchoolApplicationPreviewReloadKey(key => key + 1)
           }}
           onSaved={() => setCompanySchoolApplicationPreviewReloadKey(key => key + 1)}
+        />
+      ) : null}
+      {displayProgram ? (
+        <ParticipantRecruitmentPreviewModal
+          open={recruitmentPreviewAudience != null}
+          onClose={() => setRecruitmentPreviewAudience(null)}
+          program={displayProgram}
+          sponsorName={sponsorName}
+          audience={
+            recruitmentPreviewAudience
+              ? previewAudienceFromGeneralRecruitTab(recruitmentPreviewAudience, displayProgram)
+              : 'institutions'
+          }
         />
       ) : null}
     </>

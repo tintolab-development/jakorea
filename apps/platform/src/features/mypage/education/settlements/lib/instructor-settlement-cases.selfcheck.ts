@@ -83,7 +83,12 @@ assert.equal(
 
 const case02 = build({
   schedules: [completedSchedule],
-  lectureReports: [{ scheduleId: 1, reportStatus: 'SUBMITTED', lectureStatus: 'COMPLETED' }],
+  lectureReports: [{
+    scheduleId: 1,
+    assignmentId: 12345,
+    reportStatus: 'SUBMITTED',
+    lectureStatus: 'COMPLETED',
+  }],
   settlements: [
     {
       programId: 100,
@@ -94,6 +99,7 @@ const case02 = build({
   ],
 })[0]
 assert.equal(case02?.status, 'pending_submit')
+assert.equal(case02?.assignmentId, 12345)
 const case02Ui = resolveSettlementStatusUi(case02!.status, 'payment_statement')
 assert.equal(case02Ui.writeDisabled, undefined)
 assert.equal(case02Ui.writeLabel, '지급조서 작성하기')
@@ -294,7 +300,7 @@ const mixed = build({
 assert.equal(mixed.length, 2)
 assert.equal(mixed[0]?.status, 'waiting_confirm')
 assert.equal(mixed[1]?.status, 'upcoming')
-assert.equal(mixed[0]?.institutionLabel, '가천 대학교')
+assert.equal(mixed[0]?.institutionLabel, undefined)
 
 assert.equal(
   resolveSettlementAreaFromPathname('/mypage/lectures/INSTRUCTOR/12'),

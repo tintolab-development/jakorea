@@ -12,7 +12,6 @@ import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import '@/shared/components/detail-info-form/detail-info-form.css'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
-import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants'
 import { downloadAdminFile } from '@/shared/lib/admin-file-upload'
 import { FilterTableToolbarButton, useCmsAlert } from '@/shared/ui'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
@@ -196,7 +195,6 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
       ? buildProgressAssignmentSessionsFromRemote(assignmentSubmissionsQuery.data, {
           program,
           giveUpParticipants: assignmentSubmissionsQuery.data.giveUpParticipants,
-          participants: assignmentSubmissionsQuery.data.giveUpParticipants,
         })
       : []
     const assignedRows = assignedSessionsLoading
@@ -323,8 +321,18 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
 
   const downloadAssignmentFile = useCallback(
     async (fileObjectId?: number, fileName?: string, downloadable?: boolean) => {
-      if (fileObjectId == null || downloadable !== true) {
-        showAlert({ title: '안내', content: FEATURE_COMING_SOON_ALERT_MESSAGE })
+      if (fileObjectId == null) {
+        showAlert({
+          title: '안내',
+          content: '첨부 파일 ID가 없어 내려받을 수 없습니다.',
+        })
+        return
+      }
+      if (downloadable !== true) {
+        showAlert({
+          title: '안내',
+          content: '이 과제는 다운로드할 수 없습니다.',
+        })
         return
       }
       try {
@@ -507,10 +515,6 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
     ]
   )
 
-  const showComingSoon = useCallback(() => {
-    showAlert({ title: '안내', content: FEATURE_COMING_SOON_ALERT_MESSAGE })
-  }, [showAlert])
-
   const openSurveyResponseView = useCallback(
     async (
       title: string,
@@ -524,7 +528,10 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
         !Number.isFinite(templateVersionId) ||
         !Number.isFinite(formResponseId)
       ) {
-        showComingSoon()
+        showAlert({
+          title: '안내',
+          content: '설문 응답 ID가 없어 열 수 없습니다.',
+        })
         return
       }
       setSurveyViewLoading(true)
@@ -536,7 +543,10 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
           String(formResponseId)
         )
         if (detail == null) {
-          showComingSoon()
+          showAlert({
+            title: '안내',
+            content: '설문 응답을 찾을 수 없습니다.',
+          })
           return
         }
         setSurveyViewAnswers(detail.answers ?? [])
@@ -546,7 +556,7 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
         setSurveyViewLoading(false)
       }
     },
-    [program.id, showComingSoon]
+    [program.id, showAlert]
   )
 
   const renderSubmissionCell = useCallback(
@@ -592,7 +602,7 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
                     )
                   }
                 >
-                  {item.fileName}
+                  {item.fileName.trim() || '제출 파일'}
                 </button>
               )
             )}
@@ -614,7 +624,7 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
                 )
               }
             >
-              {submission.fileName}
+              {submission.fileName.trim() || '제출 파일'}
             </button>
             {submission.secondaryFileName ? (
               <button

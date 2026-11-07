@@ -43,6 +43,8 @@ import type {
 
 export type ApplicationsListQuery = {
   status?: string
+  /** CMS 「신청 반려」 그룹. REJECTED + APPROVAL_CANCELLED. 단일 status=REJECTED와 구분 */
+  statusGroup?: 'APPLICATION_REJECTED' | string
   page?: number
   size?: number
   /** 봉사자명 등 부분 검색 (`GET …/volunteer-applications`) */
@@ -154,7 +156,8 @@ export type { IndividualApprovalWithScopeResult }
 export type InstructorApplicationUpdatePayload = {
   managerComment?: string | null
   feePolicy?: InstructorApplicationFeePolicyRequest | null
-  businessIncomeEarnerStatus?: '해당' | '해당 없음' | string
+  /** 생략=기존 신청값 유지, null=명시적 초기화(회원 프로필 fallback). 빈 문자열 금지 */
+  businessIncomeEarnerStatus?: '해당' | '해당 없음' | null
 }
 
 /** 기관 승인·반려 / 강사 일괄 — generated BulkDecisionRequest의 평탄 timing 필드. */
@@ -194,12 +197,35 @@ function sanitizeScreeningResultPayload<T extends ScreeningResultNotifyFields>(p
   } as T
 }
 
+function positiveAssignmentId(value: unknown): number | undefined {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 1) return undefined
+  return Math.trunc(value)
+}
+
 function sanitizeInterviewAssignmentPayload<
-  T extends { notifyTiming?: string | null; scheduledAt?: string | null },
+  T extends {
+    notifyTiming?: string | null
+    scheduledAt?: string | null
+    volunteerApplicationId?: number | null
+    individualApplicationId?: number | null
+    interviewSlotId?: number | null
+  },
 >(payload: T): T {
-  const { scheduledAt, ...rest } = payload
+  const {
+    scheduledAt,
+    volunteerApplicationId,
+    individualApplicationId,
+    interviewSlotId,
+    ...rest
+  } = payload
+  const volunteerId = positiveAssignmentId(volunteerApplicationId)
+  const individualId = positiveAssignmentId(individualApplicationId)
+  const slotId = positiveAssignmentId(interviewSlotId)
   return {
     ...rest,
+    ...(volunteerId != null && individualId == null ? { volunteerApplicationId: volunteerId } : {}),
+    ...(individualId != null && volunteerId == null ? { individualApplicationId: individualId } : {}),
+    ...(slotId != null ? { interviewSlotId: slotId } : {}),
     ...(payload.notifyTiming === 'MANUAL' && scheduledAt ? { scheduledAt } : {}),
   } as T
 }
@@ -267,9 +293,19 @@ export async function fetchOrganizationApplicationDetailRemote(
   )
 }
 
+/** BE PATCH accepts null to clear teacher contact fields; generated OpenAPI type omits null. */
+export type OrganizationApplicationUpdateWire = Omit<
+  OrganizationApplicationUpdateRequest,
+  'teacherTel' | 'teacherPhone' | 'teacherEmail'
+> & {
+  teacherTel?: string | null
+  teacherPhone?: string | null
+  teacherEmail?: string | null
+}
+
 export async function updateOrganizationApplicationRemote(
   applicationId: string,
-  payload: OrganizationApplicationUpdateRequest
+  payload: OrganizationApplicationUpdateWire
 ): Promise<OrganizationApplicationDetailResponse> {
   return unwrapApiBody(
     await customInstance({
@@ -895,6 +931,33 @@ export async function resendIndividualApplicationNotification(
   )
 }
 
+/**
+ * POST /api/admin/individual-applications/{applicationId}/document-results/notifications/resend
+ * 서류 합격/불합격 알림만 재enqueue. 신청 결과 notifications/resend와 분리.
+ */
+export async function resendIndividualDocumentResultNotification(
+  applicationId: string,
+  payload: OrganizationApplicationNotificationResendRequest,
+  idempotencyKey: string
+): Promise<ApplicationDecisionResponse> {
+  const body: OrganizationApplicationNotificationResendRequestDto = {
+    timing: payload.timing,
+    ...(payload.scheduledAt != null ? { scheduledAt: payload.scheduledAt } : {}),
+    ...(payload.reason != null ? { reason: payload.reason } : {}),
+  }
+  return unwrapApiBody<ApplicationDecisionResponse>(
+    await customInstance({
+      url: `/api/admin/individual-applications/${encodeURIComponent(applicationId)}/document-results/notifications/resend`,
+      method: 'POST',
+      data: body,
+      headers: {
+        'Content-Type': 'application/json',
+        'Idempotency-Key': idempotencyKey,
+      },
+    })
+  )
+}
+
 /** OpenAPI `OrganizationApplicationNotificationResendRequest` — FE는 IMMEDIATE|SCHEDULED + nullables를 명시적으로 전송 */
 export type OrganizationApplicationNotificationResendRequest = {
   timing: OrganizationApplicationNotificationResendRequestTiming
@@ -1000,6 +1063,33 @@ export async function submitIndividualFinalResultRemote(
       url: `/api/admin/individual-applications/${encodeURIComponent(applicationId)}/final-result`,
       method: 'POST',
       data: sanitizeScreeningResultPayload(payload),
+    })
+  )
+}
+
+/**
+ * POST /api/admin/volunteer-applications/{applicationId}/document-results/notifications/resend
+ * 서류 합격/불합격 알림만 재enqueue. documentStatus는 바꾸지 않는다.
+ */
+export async function resendVolunteerDocumentResultNotification(
+  applicationId: string,
+  payload: OrganizationApplicationNotificationResendRequest,
+  idempotencyKey: string
+): Promise<ApplicationDecisionResponse> {
+  const body: OrganizationApplicationNotificationResendRequestDto = {
+    timing: payload.timing,
+    ...(payload.scheduledAt != null ? { scheduledAt: payload.scheduledAt } : {}),
+    ...(payload.reason != null ? { reason: payload.reason } : {}),
+  }
+  return unwrapApiBody<ApplicationDecisionResponse>(
+    await customInstance({
+      url: `/api/admin/volunteer-applications/${encodeURIComponent(applicationId)}/document-results/notifications/resend`,
+      method: 'POST',
+      data: body,
+      headers: {
+        'Content-Type': 'application/json',
+        'Idempotency-Key': idempotencyKey,
+      },
     })
   )
 }

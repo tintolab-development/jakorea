@@ -29,6 +29,7 @@ import {
 } from './participating-volunteer-fullpage-view'
 import { mergeParticipatingVolunteerDetailRow } from '@/features/program/general/lib/participating-volunteer-detail'
 import { ParticipatingVolunteerActivityCertificatePreviewModal } from './participating-volunteer-activity-certificate-preview-modal'
+import { GeneralVolunteer1365PreviewModal } from './general-volunteer-1365-preview-modal'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import { AddParticipatingVolunteerModal } from '@/features/program/general/ui/add-participating-volunteer-modal'
 import { RegisterEmployeeVolunteerModal } from '@/features/program/general/ui/register-employee-volunteer-modal'
@@ -188,6 +189,8 @@ export function ParticipatingVolunteersSection({
   const [activityCertPreviewOpen, setActivityCertPreviewOpen] = useState(false)
   const [activityCertPreviewVolunteer, setActivityCertPreviewVolunteer] =
     useState<ParticipatingVolunteerRow | null>(null)
+  const [volunteer1365PreviewOpen, setVolunteer1365PreviewOpen] = useState(false)
+  const [volunteer1365ParticipantId, setVolunteer1365ParticipantId] = useState<number | null>(null)
 
   useEffect(() => {
     setPendingFilters({ ...filters })
@@ -421,6 +424,27 @@ export function ParticipatingVolunteersSection({
     setActivityCertPreviewOpen(true)
   }, [filteredVolunteers, selectedRowKeys, showAlert, volunteerList])
 
+  const handle1365RegistrationFormClick = useCallback(() => {
+    const selectedCount = selectedRowKeys.length
+    if (selectedCount !== 1) {
+      showAlert({
+        title: '안내',
+        content: '1365 봉사시간 등록 양식을 열 봉사자를 1명만 선택해 주세요.',
+      })
+      return
+    }
+    const selectedId = Number(selectedRowKeys[0])
+    if (!Number.isSafeInteger(selectedId) || selectedId <= 0) {
+      showAlert({
+        title: '안내',
+        content: '선택한 봉사자의 참여자 ID를 확인할 수 없습니다.',
+      })
+      return
+    }
+    setVolunteer1365ParticipantId(selectedId)
+    setVolunteer1365PreviewOpen(true)
+  }, [selectedRowKeys, showAlert])
+
   const selectedVolunteerFromUrl = useMemo(() => {
     if (!volunteerIdFromUrl) return null
     const row = volunteerList.find(r => r.id === volunteerIdFromUrl)
@@ -501,6 +525,13 @@ export function ParticipatingVolunteersSection({
           const showCount = total <= 3 ? total : 2
           const displaySessions = sessions.slice(0, showCount)
           const restCount = total - showCount
+          if (total === 0) {
+            return (
+              <div className="participating-institutions-section__sessions-cell">
+                <div className="participating-institutions-section__session-line">일정 미배정</div>
+              </div>
+            )
+          }
           return (
             <div className="participating-institutions-section__sessions-cell">
               {displaySessions.map((s: ParticipatingSchoolSession, index) => (
@@ -607,6 +638,9 @@ export function ParticipatingVolunteersSection({
               icon={<ButtonDownloadIcon />}
               onClick={handleActivityCertificateIssueClick} >
               활동확인서 발급
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton variant="secondary" onClick={handle1365RegistrationFormClick}>
+              1365 봉사시간 등록 양식
             </FilterTableToolbarButton>
             {viewMode === 'list' ? (
               <FilterTableToolbarButton
@@ -787,6 +821,17 @@ export function ParticipatingVolunteersSection({
           }}
           volunteer={mergeParticipatingVolunteerDetailRow(activityCertPreviewVolunteer)}
           program={program}
+        />
+      ) : null}
+      {programId && volunteer1365ParticipantId != null ? (
+        <GeneralVolunteer1365PreviewModal
+          open={volunteer1365PreviewOpen}
+          programId={programId}
+          participantId={volunteer1365ParticipantId}
+          onCancel={() => {
+            setVolunteer1365PreviewOpen(false)
+            setVolunteer1365ParticipantId(null)
+          }}
         />
       ) : null}
     </div>

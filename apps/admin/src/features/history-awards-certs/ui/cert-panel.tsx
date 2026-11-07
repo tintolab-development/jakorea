@@ -7,7 +7,6 @@ import type {
   CertCreateInput,
   CertItem,
   CertListFilter,
-  CertSortKey,
   PublicFilterValue,
 } from '@/entities/history-awards-certs/model/types'
 import {
@@ -24,6 +23,7 @@ import {
   deleteConfirmContent,
   deleteFailureAlert,
 } from '@/features/history-awards-certs/lib/delete-guards'
+import { historyAwardsCertsListRowNo } from '@/features/history-awards-certs/lib/list-row-no'
 import { CertFormModal } from '@/features/history-awards-certs/ui/form-modal'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
@@ -67,7 +67,6 @@ type CertPendingFilters = {
   organization: string
   certified: PendingDateRange
   created: PendingDateRange
-  sort: CertSortKey
 }
 
 const INITIAL_PENDING: CertPendingFilters = {
@@ -76,7 +75,6 @@ const INITIAL_PENDING: CertPendingFilters = {
   organization: '',
   certified: null,
   created: null,
-  sort: 'date',
 }
 
 const certifiedSyncRef: UrlDateRangePendingSyncRef = { hadCompleteInUrl: false }
@@ -87,12 +85,8 @@ function parsePublic(raw: string | null): PublicFilterValue {
   return ''
 }
 
-function parseSort(raw: string | null): CertSortKey {
-  return raw === 'created' ? 'created' : 'date'
-}
-
 function parseApplied(searchParams: URLSearchParams): CertListFilter {
-  const filter: CertListFilter = { sort: parseSort(searchParams.get('c_sort')) }
+  const filter: CertListFilter = {}
   const isPublic = parsePublic(searchParams.get('c_public'))
   if (isPublic === 'true') filter.isPublic = true
   if (isPublic === 'false') filter.isPublic = false
@@ -133,12 +127,6 @@ const searchSyncRules: readonly TableSearchParamRule<CertPendingFilters>[] = [
     transform: v => String(v).trim(),
   },
   {
-    kind: 'param',
-    filterKey: 'sort',
-    paramKey: 'c_sort',
-    condition: f => f.sort === 'created',
-  },
-  {
     kind: 'apply',
     apply: (nextParams, f) => {
       applyDateRangeToSearchParams(nextParams, f.certified, 'c_cfrom', 'c_cto')
@@ -170,7 +158,6 @@ export function CertPanel() {
       const isPublic = parsePublic(searchParams.get('c_public'))
       const content = searchParams.get('c_content') ?? ''
       const organization = searchParams.get('c_org') ?? ''
-      const sort = parseSort(searchParams.get('c_sort'))
       const certFrom = searchParams.get('c_cfrom')
       const certTo = searchParams.get('c_cto')
       const crFrom = searchParams.get('c_crfrom')
@@ -196,13 +183,11 @@ export function CertPanel() {
           organization,
           certified,
           created,
-          sort,
         }
         if (
           prev.isPublic === next.isPublic &&
           prev.content === next.content &&
           prev.organization === next.organization &&
-          prev.sort === next.sort &&
           pendingDateRangeTupleEqual(prev.certified, next.certified) &&
           pendingDateRangeTupleEqual(prev.created, next.created)
         ) {
@@ -331,7 +316,7 @@ export function CertPanel() {
         width: TABLE_COLUMN_WIDTHS.index,
         className: CMS_TABLE_NO_COL_CLASS,
         align: 'center',
-        render: (_v, _r, index) => totalCount - index,
+        render: (_v, _r, index) => historyAwardsCertsListRowNo(totalCount, index),
       },
       {
         title: '공개 여부',

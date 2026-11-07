@@ -5,7 +5,7 @@
  * Filtered for CMS notifications / kakao alimtalk Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { ParticipantRow } from './participantRow';
+import type { GeneralIndividualAssignmentParticipant } from './generalIndividualAssignmentParticipant';
 
 export interface ScheduleGroup {
   scheduleId?: number;
@@ -16,5 +16,5 @@ export interface ScheduleGroup {
   assignmentEnabled?: boolean;
   assignmentPeriodStart?: string;
   assignmentPeriodEnd?: string;
-  participants?: ParticipantRow[];
+  participants?: GeneralIndividualAssignmentParticipant[];
 }

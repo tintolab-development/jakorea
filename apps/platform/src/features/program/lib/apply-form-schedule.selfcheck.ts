@@ -567,6 +567,75 @@ function testTrainedTeacherPeriodDateBounds() {
   } as never
   assert.equal(hasMissingRequiredBottomConsent(consentDraft), true)
 
+  const institutionConsentDraft = {
+    schemaVersion: 1,
+    formSettings: {},
+    paragraphs: [
+      {
+        id: 'program-application-institution-seed-personal-info',
+        kind: 'single_item',
+        variant: 'vertical_table',
+        showBottomConsent: true,
+        requiredMark: false,
+        answerRequired: false,
+        bottomConsent: 'disagree',
+      },
+      {
+        id: 'program-application-institution-seed-marketing',
+        kind: 'single_item',
+        variant: 'vertical_table',
+        showBottomConsent: true,
+        requiredMark: false,
+        answerRequired: false,
+        bottomConsent: 'disagree',
+      },
+    ],
+  }
+  assert.equal(
+    findMissingRequiredBottomConsentId(institutionConsentDraft as never),
+    'program-application-institution-seed-personal-info',
+  )
+  assert.equal(
+    findMissingRequiredBottomConsentId({
+      ...institutionConsentDraft,
+      paragraphs: [
+        {
+          ...institutionConsentDraft.paragraphs[0],
+          bottomConsent: 'agree',
+        },
+        institutionConsentDraft.paragraphs[1],
+      ],
+    } as never),
+    null,
+  )
+  assert.equal(
+    findMissingRequiredBottomConsentId({
+      schemaVersion: 1,
+      formSettings: {},
+      paragraphs: [
+        {
+          id: 'program-application-institution-seed-sex-offense-consent-submission',
+          kind: 'single_item',
+          variant: 'vertical_table',
+          showBottomConsent: true,
+          requiredMark: true,
+          answerRequired: true,
+          bottomConsent: null,
+        },
+        {
+          id: 'program-application-institution-seed-personal-info',
+          kind: 'single_item',
+          variant: 'vertical_table',
+          showBottomConsent: true,
+          requiredMark: true,
+          answerRequired: true,
+          bottomConsent: 'agree',
+        },
+      ],
+    } as never),
+    null,
+  )
+
   assert.equal(
     findIncompletePreferredScheduleMessage([
       { date: '2026-11-10', classPeriod: '1', startTime: '14:00', endTime: '03:03' },

@@ -36,4 +36,6 @@ export interface FormEditorRightPanelProps {
    * 신청 양식은 미지정(실제 단락 유형 표시).
    */
   structureLockedTypeSelectPreset?: import('@/features/template/ui/form-editor/right-panel/sections/structure-locked-section').StructureLockedTypeSelectPreset
+  /** 만족도조사 일정별 — 제목 단락「작성 기간」설정 인풋 비활성 */
+  lockSurveyWritingPeriodInput?: boolean
 }

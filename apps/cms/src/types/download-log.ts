@@ -13,6 +13,8 @@ export interface DownloadLog {
   userName: string
   ipAddress: string
   downloadedAt: DateValue
+  kind: string
+  containedPiiLabel: string
 }
 
 export interface DownloadLogFilters {

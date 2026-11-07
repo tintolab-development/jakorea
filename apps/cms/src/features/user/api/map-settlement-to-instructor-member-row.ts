@@ -1,4 +1,8 @@
-import { formatDateDot, formatDateDotWithWeekday } from '@/shared/utils/date'
+import {
+  formatDateDot,
+  formatDateDotWithWeekday,
+  getSeoulCalendarDate,
+} from '@/shared/utils/date'
 import type {
   SettlementFrontendItemResponse,
   SettlementFrontendResponse,
@@ -46,7 +50,9 @@ function paymentOrderStatusToInstructorUiStatus(
 }
 
 /** 강사 회원 상세 정산 탭·프로그램 참여 강사 — OpenAPI `statementStatus` + `paymentStatus` → 8종 UI key */
-export function resolveSettlementUiStatus(item: SettlementListItemResponse): InstructorSettlementUiStatus {
+export function resolveSettlementUiStatus(
+  item: SettlementListItemResponse
+): InstructorSettlementUiStatus {
   const paymentStatus = item.paymentStatus?.toUpperCase()
   const statementStatus = item.statementStatus?.toUpperCase()
 
@@ -76,7 +82,10 @@ export function resolveSettlementUiStatus(item: SettlementListItemResponse): Ins
   )
 }
 
-function mapItemToLine(item: SettlementFrontendItemResponse, index: number): InstructorSettlementInvoiceLineItem {
+function mapItemToLine(
+  item: SettlementFrontendItemResponse,
+  index: number
+): InstructorSettlementInvoiceLineItem {
   const amount = item.amount ?? 0
   const kind = mapSettlementFrontendItemTypeToLineKind(item.type, amount)
   return {
@@ -90,16 +99,25 @@ function mapItemToLine(item: SettlementFrontendItemResponse, index: number): Ins
   }
 }
 
-function formatIsoDate(iso?: string): string {
-  if (!iso?.trim()) return '-'
-  const label = formatDateDot(iso.slice(0, 10))
-  return label === '-' ? iso : label
+function seoulCalendarDateFromIso(iso?: string | null): string | undefined {
+  if (!iso?.trim()) return undefined
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return undefined
+  return getSeoulCalendarDate(date)
 }
 
-function formatIsoDateWithWeekday(iso?: string): string {
-  if (!iso?.trim()) return '-'
-  const label = formatDateDotWithWeekday(iso.slice(0, 10))
-  return label === '-' ? iso : label
+function formatIsoDate(iso?: string | null): string {
+  const calendar = seoulCalendarDateFromIso(iso)
+  if (!calendar) return iso?.trim() ? iso : '-'
+  const label = formatDateDot(calendar)
+  return label === '-' ? (iso?.trim() || '-') : label
+}
+
+function formatIsoDateWithWeekday(iso?: string | null): string {
+  const calendar = seoulCalendarDateFromIso(iso)
+  if (!calendar) return iso?.trim() ? iso : '-'
+  const label = formatDateDotWithWeekday(calendar)
+  return label === '-' ? (iso?.trim() || '-') : label
 }
 
 export function mapSettlementDetailToInstructorInvoice(
@@ -128,8 +146,7 @@ export function mapSettlementDetailToInstructorInvoice(
     line => line.kind === 'withholding' || line.산정항목.includes('원천')
   )
   const withholdingAmount =
-    listItem.withholdingTaxAmount ??
-    (withholdingLine ? Math.abs(withholdingLine.정산금액) : 0)
+    listItem.withholdingTaxAmount ?? (withholdingLine ? Math.abs(withholdingLine.정산금액) : 0)
   const totalAmount = settlement.totalAmount ?? listItem.netPaymentAmount ?? 0
   const lectureDate = formatIsoDateWithWeekday(listItem.lectureDate)
   const lectureFeeTitle = resolveLectureFeeStandardTitleFromSettlement(settlement)
@@ -137,7 +154,7 @@ export function mapSettlementDetailToInstructorInvoice(
     settlement.lectureFeeStandardAmount,
     settlement.items
   )
-  // taxIncomeType(BUSINESS_INCOME 등)은 소득 구분 — 강의비 책정 기준 라벨로 쓰지 않는다.
+  // taxIncomeType(BUSINESS_INCOME 등)은 소득 구분 — 강사비 책정 기준 라벨로 쓰지 않는다.
   const lectureFeeBasis =
     lectureFeeTitle !== '-'
       ? [lectureFeeTitle, lectureFeeAmount !== '-' ? lectureFeeAmount : '']
@@ -145,15 +162,9 @@ export function mapSettlementDetailToInstructorInvoice(
           .join(' | ')
       : '-'
 
-  const sessionOrdinal = settlement.sessionOrdinal ?? listItem.sessionOrdinal
-  const sessionLabel = resolveCanonicalLectureSessionDisplay(
-    settlement.lectureSessionDisplay,
-    sessionOrdinal
-  )
+  const sessionLabel = resolveCanonicalLectureSessionDisplay(settlement.lectureSessionDisplay)
   const lectureDateSessions =
-    sessionLabel !== '-'
-      ? `${lectureDate} | ${sessionLabel}`
-      : lectureDate
+    sessionLabel !== '-' ? `${lectureDate} | ${sessionLabel}` : lectureDate
 
   return {
     programName,
@@ -165,8 +176,7 @@ export function mapSettlementDetailToInstructorInvoice(
     }),
     operationPeriod: formatBusinessPeriodDisplay({
       period: settlement.period,
-      businessPeriodStart:
-        settlement.businessPeriodStart ?? listItem.businessPeriodStart,
+      businessPeriodStart: settlement.businessPeriodStart ?? listItem.businessPeriodStart,
       businessPeriodEnd: settlement.businessPeriodEnd ?? listItem.businessPeriodEnd,
       formatDate: formatIsoDateWithWeekday,
     }),
@@ -176,8 +186,7 @@ export function mapSettlementDetailToInstructorInvoice(
     ),
     lectureFeeBasis,
     businessIncomeEarner: formatBusinessIncomeEarnerLabel(settlement.businessIncomeEarnerLabel),
-    institutionName:
-      settlement.institutionName?.trim() || listItem.institutionName?.trim() || '-',
+    institutionName: settlement.institutionName?.trim() || listItem.institutionName?.trim() || '-',
     lectureDateSessions,
     lineItems: lineItems.filter(
       line => line.kind !== 'withholding' && !line.산정항목.includes('원천')
@@ -204,23 +213,30 @@ export function mapSettlementItemToInstructorMemberRow(
 
   const status = resolveSettlementUiStatus(item)
   const programName = item.programNameKo?.trim() || `프로그램 ${item.programId ?? ''}`
-  const calendarDate = item.lectureDate?.slice(0, 10) ?? item.expectedTransferDate?.slice(0, 10) ?? ''
+  const calendarDate =
+    seoulCalendarDateFromIso(item.lectureDate) ??
+    seoulCalendarDateFromIso(item.expectedTransferDate) ??
+    ''
 
   return {
     id: String(settlementId),
     settlementId,
     statementId,
-    correctionRequestId: item.settlementCorrectionRequestId,
+    correctionRequestId: item.settlementCorrectionRequestId ?? undefined,
     no: index + 1,
     programName,
-    instructorName: item.instructorName?.trim(),
+    instructorName: item.instructorName?.trim() || undefined,
     institutionName: item.institutionName?.trim() || '-',
-    lectureDateDisplay: calendarDate || '-',
-    calendarDate: calendarDate || new Date().toISOString().slice(0, 10),
+    lectureDateDisplay: calendarDate ? formatDateDot(calendarDate) : '-',
+    calendarDate,
     status,
     scheduledAmount: item.netPaymentAmount ?? item.grossAmount ?? 0,
     detailAvailable: status !== 'none',
-    invoice: mapSettlementDetailToInstructorInvoice({ items: [], totalAmount: item.netPaymentAmount }, item, status),
+    invoice: mapSettlementDetailToInstructorInvoice(
+      { id: String(settlementId), items: [], totalAmount: item.netPaymentAmount ?? 0 },
+      item,
+      status
+    ),
   }
 }
 

@@ -341,7 +341,10 @@ export function parseTrainedTeacherServiceDetailJson(raw?: string | null): Parti
       parsed.frontendProgramId != null ||
       parsed.seedCase != null
 
-    if (!hasPrimaryShape) return {}
+    if (!hasPrimaryShape) {
+      const leftoverOverlay = reconcileSurveyOverlay(registrationOverlay, undefined)
+      return leftoverOverlay ? { registrationOverlay: leftoverOverlay } : {}
+    }
 
     const normalized = normalizeGeneralProgramServiceDetailParsed(
       parsed as Parameters<typeof normalizeGeneralProgramServiceDetailParsed>[0]

@@ -33,16 +33,16 @@
       "description": "회원 본인의 통합 동의 조회, 전자서명, 철회 API"
     },
     {
-      "name": "수료증/참여인증서",
-      "description": "수료증과 참여인증서 발급, 조회, 다운로드, 상태 확인 API입니다."
-    },
-    {
       "name": "기타 API",
       "description": "교사회원의 UJAT 교육일별 배정 봉사자 민감 동의서 일괄 다운로드 API"
     },
     {
       "name": "기타 API",
       "description": "회원 포탈 일반 사용자 로그인/세션 API. 관리자 인증과 분리된 canonical surface입니다."
+    },
+    {
+      "name": "수료증/참가인증서",
+      "description": "수료증과 참가인증서 발급, 조회, 다운로드, 상태 확인 API입니다."
     },
     {
       "name": "기타 API",
@@ -225,6 +225,10 @@
       "description": "UJAT 신청기관 임시배정, 기관 일정 확인 및 지역별 교육배정 준비 API"
     },
     {
+      "name": "수료증/참가인증서",
+      "description": "수료증/참가인증서 발급, 이력, 차단 사유 API"
+    },
+    {
       "name": "기타 API",
       "description": "GENERAL_ORGANIZATION 동일 기관 신청 학년 합반 canonical API"
     },
@@ -279,10 +283,6 @@
     {
       "name": "알림",
       "description": "알림 템플릿, 이벤트, 발송 상태 API"
-    },
-    {
-      "name": "수료증/참여인증서",
-      "description": "수료증/참여인증서 발급, 이력, 차단 사유 API"
     },
     {
       "name": "기타 API",

@@ -47,6 +47,23 @@ function writeFile(file: LocalSaveFile): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(file))
 }
 
+/**
+ * Local draft overlay 계약 (프로그램 공통).
+ * - 생략/`undefined`/`null`: 이전 overlay 유지 (Typed 위저드가 overlay를 안 실을 때 sidecar 보호)
+ * - `{}`: 전체 초기화가 아니라 no-op. 전체 삭제는 `removeWritingFormTemplateSave`
+ * - 키가 있는 객체: previous ∪ incoming. incoming 키가 `''`/`false`/`0`/`[]`/`null`이면 그 키만 갱신
+ * - incoming에 없는 키는 삭제하지 않음 (unknown sidecar 보존). 키 삭제는 해당 키를 명시 값으로 덮을 때만
+ */
+function nextPersistedOverlay(
+  incoming: Record<string, unknown> | undefined,
+  previous: Record<string, unknown> | undefined
+): Record<string, unknown> | undefined {
+  if (incoming == null || Object.keys(incoming).length === 0) {
+    return previous != null ? cloneJson(previous) : undefined
+  }
+  return cloneJson({ ...(previous ?? {}), ...incoming })
+}
+
 /** QuotaExceededError / 용량 부족 — 임시저장 UI 실패 문구 분기용 */
 export function isLocalStorageQuotaExceededError(error: unknown): boolean {
   if (error == null || typeof error !== 'object') return false
@@ -82,14 +99,25 @@ export function persistWritingFormTemplateSave(args: {
   settingsJson?: Record<string, unknown>
 }): void {
   const file = readFile()
+  const previous = file.byTemplateId[args.templateId]
   file.byTemplateId[args.templateId] = {
     version: 1,
     templateId: args.templateId,
     savedAt: new Date().toISOString(),
     draft: cloneJson(normalizeWritingFormDraft(args.draft)),
-    overlay: args.overlay != null ? cloneJson(args.overlay) : undefined,
-    editorState: args.editorState != null ? cloneJson(args.editorState) : undefined,
-    settingsJson: args.settingsJson != null ? cloneJson(args.settingsJson) : undefined,
+    overlay: nextPersistedOverlay(args.overlay, previous?.overlay),
+    editorState:
+      args.editorState != null
+        ? cloneJson(args.editorState)
+        : previous?.editorState != null
+          ? cloneJson(previous.editorState)
+          : undefined,
+    settingsJson:
+      args.settingsJson != null
+        ? cloneJson(args.settingsJson)
+        : previous?.settingsJson != null
+          ? cloneJson(previous.settingsJson)
+          : undefined,
   }
   writeFile(file)
   if (typeof window !== 'undefined') {

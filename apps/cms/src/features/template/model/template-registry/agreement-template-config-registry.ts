@@ -165,6 +165,8 @@ export const AGREEMENT_TEMPLATE_CONFIG_REGISTRY: Record<
       writingPreviewHeaderTitle: title,
       structureLockedParagraphIds: RECEIPT_PRE_CONSENT_SEED_PARAGRAPH_IDS,
       hideDragHandleForParagraphIds: RECEIPT_PRE_CONSENT_HIDDEN_DRAG_HANDLE_IDS,
+      /** 템플릿 관리 잠금 해제 후에도 유지 — 영수증은 항목(단락·표 행/열) 추가·삭제·이동 불가, 문구만 수정(0647) */
+      authoringStructureControlLockedParagraphIds: RECEIPT_PRE_CONSENT_SEED_PARAGRAPH_IDS,
       previewLayout: 'a4-document',
       a4HiddenParagraphIds: RECEIPT_PRE_CONSENT_A4_HIDDEN_PARAGRAPH_IDS,
       a4PageBreakBeforeParagraphIds: RECEIPT_PRE_CONSENT_A4_PAGE_BREAK_BEFORE_PARAGRAPH_IDS,

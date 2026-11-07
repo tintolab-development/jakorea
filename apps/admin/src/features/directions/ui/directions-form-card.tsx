@@ -156,6 +156,7 @@ export function DirectionsFormCard({ data }: Props) {
           <DetailInfoForm.Row type="single" className="directions-card__row--fixed">
             <DetailInfoForm.Field
               label="국문 주소지"
+              required={isEditing}
               view={null}
               edit={
                 <CmsInput
@@ -177,6 +178,7 @@ export function DirectionsFormCard({ data }: Props) {
           <DetailInfoForm.Row type="single" className="directions-card__row--fixed">
             <DetailInfoForm.Field
               label="영문 주소지"
+              required={isEditing}
               view={null}
               edit={
                 <CmsInput
@@ -198,6 +200,7 @@ export function DirectionsFormCard({ data }: Props) {
           <DetailInfoForm.Row type="single" className="directions-card__row--kakao">
             <DetailInfoForm.Field
               label="카카오맵 HTML"
+              required={isEditing}
               view={null}
               edit={
                 <CmsTextArea
@@ -227,6 +230,7 @@ export function DirectionsFormCard({ data }: Props) {
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="전화번호"
+              required={isEditing}
               view={null}
               edit={
                 <CmsInput
@@ -260,6 +264,7 @@ export function DirectionsFormCard({ data }: Props) {
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="Fax 번호"
+              required={isEditing}
               view={null}
               edit={
                 <CmsInput
@@ -281,6 +286,7 @@ export function DirectionsFormCard({ data }: Props) {
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="이메일 주소"
+              required={isEditing}
               view={null}
               edit={
                 <CmsInput

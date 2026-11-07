@@ -77,7 +77,8 @@
 
 .education-fields-page__intro-form .detail-info-form__field-label-text {
   text-align: center;
-  width: 100%;
+  width: fit-content;
+  max-width: 100%;
 }
 
 /* 조회·수정 모두 border 1px 슬롯 유지 (색만 변경) */
@@ -122,17 +123,11 @@
   border-width: 1px;
 }
 
-/*
- * fixed-rows: resize 핸들·세로 드래그 팽창 금지 (조회/수정 동일).
- * cms-textarea 기본 `resize: vertical` 을 덮음.
- */
+/* resize 핸들 없음·세로 스크롤은 공통 `cms-textarea--fixed-rows` — 여기선 box-sizing만 */
 .education-fields-page
   .education-fields-inline-field.cms-textarea--fixed-rows
   .cms-textarea__inner
   textarea.ant-input {
-  resize: none !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
   box-sizing: border-box;
 }
 

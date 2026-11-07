@@ -31,6 +31,13 @@
   min-width: 0;
 }
 
+.program-intro-form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
 .program-intro-section-title {
   display: flex;
   align-items: center;
@@ -77,7 +84,8 @@
 
 .program-intro-card .detail-info-form__field-label-text {
   text-align: center;
-  width: 100%;
+  width: fit-content;
+  max-width: 100%;
 }
 
 /* 시안 td(값 셀) — 텍스트 좌측 · 세로(column) 가운데 · 줄 수에 따라 높이 확장 */
@@ -135,10 +143,19 @@
   height: auto;
 }
 
+/* Figma 프로그램 01 이미지 셀: 파일명 · 파일 추가 · 안내를 한 줄 */
 .program-intro-card .file-select-field {
   display: flex !important;
-  flex-direction: column !important;
-  align-items: stretch !important;
+  flex-direction: row !important;
+  flex-wrap: wrap;
+  align-items: center !important;
+  gap: 8px 16px;
+}
+
+.program-intro-card .file-select-field__names,
+.program-intro-card .file-select-field__empty {
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
 .program-intro-card .file-select-field__actions {
@@ -147,6 +164,12 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 16px;
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.program-intro-card .file-select-field__guide-line {
+  white-space: nowrap;
 }
 
 .program-intro-card .program-intro-inline-field {
@@ -194,11 +217,15 @@
   font-weight: 500;
 }
 
+.program-intro-card .program-intro-inline-field--edit.cms-textarea .cms-textarea__control {
+  overflow: visible;
+}
+
 .program-intro-card
-  .program-intro-inline-field.cms-textarea--fixed-rows
+  .program-intro-inline-field--edit
   .cms-textarea__inner
   textarea.ant-input {
-  resize: none !important;
+  resize: vertical !important;
   overflow-y: auto !important;
   overflow-x: hidden !important;
   box-sizing: border-box;
@@ -212,12 +239,8 @@
   height: fit-content;
 }
 
-.program-intro-card
-  .program-intro-inline-field--readonly.cms-textarea
-  .cms-textarea__control,
-.program-intro-card
-  .program-intro-inline-field--readonly.cms-textarea
-  .cms-textarea__inner {
+.program-intro-card .program-intro-inline-field--readonly.cms-textarea .cms-textarea__control,
+.program-intro-card .program-intro-inline-field--readonly.cms-textarea .cms-textarea__inner {
   display: block;
   min-height: 0 !important;
   height: fit-content !important;
@@ -254,9 +277,7 @@
   line-height: 150% !important;
 }
 
-.program-intro-card
-  .program-intro-inline-field--readonly.cms-input--medium
-  .cms-input__control {
+.program-intro-card .program-intro-inline-field--readonly.cms-input--small .cms-input__control {
   height: auto;
   min-height: 1.5em;
 }
@@ -275,10 +296,8 @@
 .program-intro-file-view__icon {
   flex-shrink: 0;
   display: block;
-  width: 24px;
-  height: 24px;
-  aspect-ratio: 1 / 1;
-  color: var(--default-BK, #3d3d3d);
+  width: 20px;
+  height: 20px;
 }
 
 .program-intro-file-view__name {
@@ -289,7 +308,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: Pretendard, sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
   line-height: 24px;
 }
@@ -301,7 +320,7 @@
   white-space: pre-line;
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
   line-height: 150%;
   text-align: left;
@@ -310,7 +329,7 @@
 .program-intro-file-empty {
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
   line-height: 140%;
   opacity: 0.6;

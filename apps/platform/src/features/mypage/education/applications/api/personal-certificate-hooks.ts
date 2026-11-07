@@ -25,7 +25,7 @@ export function usePersonalCertificateAvailabilityQuery(options: {
     options.programId != null && String(options.programId).trim()
       ? String(options.programId).trim()
       : null
-  const certificateType = options.certificateType?.trim() || 'AUTO'
+  const certificateType = options.certificateType?.trim() || 'COMPLETION'
   const enabled =
     options.enabled !== false &&
     isRemoteApiConfigured() &&
@@ -75,6 +75,9 @@ export function useIssuePersonalCertificateMutation(options?: {
           'certificate-availability',
           programId,
         ],
+      })
+      await queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.mypage.certificates.all(),
       })
       if (options?.applicationType && options?.applicationId) {
         await queryClient.invalidateQueries({

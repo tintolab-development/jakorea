@@ -8,6 +8,8 @@ import { mapUploadToDisplayRow } from '../lib/performance/map-upload-to-display-
 import {
   GEMINI_PERFORMANCE_INVALID_TEMPLATE_MESSAGE,
   GEMINI_PERFORMANCE_INVALID_TEMPLATE_TITLE,
+  GEMINI_PERFORMANCE_INSTRUCTOR_MISMATCH_MESSAGE,
+  GEMINI_PERFORMANCE_INSTRUCTOR_MISMATCH_TITLE,
   parseUploadExcel,
 } from '../lib/performance/parse-upload-excel'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
@@ -28,8 +30,7 @@ import {
   type GeminiPerformanceRemoteListPage,
 } from './performance-remote/service'
 
-const REMOTE_ONLY_MESSAGE =
-  'Gemini 실적은 Admin API를 사용하세요. mock 카탈로그는 제거되었습니다.'
+const REMOTE_ONLY_MESSAGE = 'Gemini 실적은 Admin API를 사용하세요. mock 카탈로그는 제거되었습니다.'
 
 export type GeminiPerformanceImportResult = {
   importedRows: GeminiPerformanceRow[]
@@ -40,9 +41,7 @@ export type GeminiPerformanceImportResult = {
   paymentExclusionNotes?: string
 }
 
-function parseListFiltersFromQueryKey(
-  queryKey: readonly unknown[]
-): GeminiPerformanceListFilters {
+function parseListFiltersFromQueryKey(queryKey: readonly unknown[]): GeminiPerformanceListFilters {
   const raw = queryKey[5]
   if (typeof raw !== 'string' || !raw) return {}
   try {
@@ -71,10 +70,10 @@ async function refreshGeminiPerformanceListCaches(): Promise<void> {
     listQueries.map(async query => {
       const filters = parseListFiltersFromQueryKey(query.queryKey)
       const pages = await reloadGeminiPerformanceListCache(filters)
-      queryClient.setQueryData<InfiniteData<GeminiPerformanceRemoteListPage>>(
-        query.queryKey,
-        { pages, pageParams: pages.map((_, index) => index) }
-      )
+      queryClient.setQueryData<InfiniteData<GeminiPerformanceRemoteListPage>>(query.queryKey, {
+        pages,
+        pageParams: pages.map((_, index) => index),
+      })
     })
   )
 }
@@ -129,4 +128,6 @@ export const geminiPerformanceService = {
 export {
   GEMINI_PERFORMANCE_INVALID_TEMPLATE_MESSAGE,
   GEMINI_PERFORMANCE_INVALID_TEMPLATE_TITLE,
+  GEMINI_PERFORMANCE_INSTRUCTOR_MISMATCH_MESSAGE,
+  GEMINI_PERFORMANCE_INSTRUCTOR_MISMATCH_TITLE,
 }

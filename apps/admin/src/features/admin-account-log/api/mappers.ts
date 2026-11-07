@@ -3,12 +3,10 @@
  */
 
 import type {
-  AdminAccountActionType,
   AdminAccountListFilter,
   AdminAccountListResult,
   AdminAccountLog,
 } from '@/entities/admin-account-log/model/types'
-import { ADMIN_ACCOUNT_ACTION_TYPES } from '@/entities/admin-account-log/model/types'
 import { LOG_LIST_PAGE_SIZE } from '@/features/logs/shared/lib/list-page'
 import type { AdminAccountActionLogItem } from '@/shared/api/generated/logs/schemas/adminAccountActionLogItem'
 import type { AdminAccountActionsParams } from '@/shared/api/generated/logs/schemas/adminAccountActionsParams'
@@ -16,13 +14,6 @@ import type { ExportAdminAccountActionsParams } from '@/shared/api/generated/log
 import type { PageResponseAdminAccountActionLogItem } from '@/shared/api/generated/logs/schemas/pageResponseAdminAccountActionLogItem'
 
 export const LIST_PAGE_SIZE = LOG_LIST_PAGE_SIZE
-
-function parseActionType(raw: string | undefined): AdminAccountActionType {
-  if (raw && (ADMIN_ACCOUNT_ACTION_TYPES as readonly string[]).includes(raw)) {
-    return raw as AdminAccountActionType
-  }
-  return 'profile_update'
-}
 
 export function toAdminAccountActionsParams(
   filter: AdminAccountListFilter,
@@ -60,7 +51,7 @@ function mapItem(row: AdminAccountActionLogItem): AdminAccountLog {
     id: String(row.id ?? ''),
     name: row.name ?? '',
     loginId: row.loginId ?? '',
-    actionType: parseActionType(row.actionType),
+    actionType: row.actionType?.trim() ?? '',
     processedAt: row.processedAt ?? '',
     ip: row.ip ?? '',
   }

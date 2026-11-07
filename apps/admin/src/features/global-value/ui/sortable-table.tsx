@@ -40,6 +40,7 @@ export function GlobalValuesSortableTable({
         dataSource={items}
         columns={columns}
         pagination={false}
+        tableLayout="fixed"
         components={{ body: { row: AdminSortableTableRow } }}
       />
     </AdminSortableDndShell>

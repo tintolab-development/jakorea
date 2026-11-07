@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
 import type { TitleWithPeriodParagraph, WritingFormDraft } from '@jakorea/form-schema/writing-form'
@@ -30,6 +30,7 @@ import {
   type LectureReportState,
 } from '@/features/mypage/education/schedules/api/lecture-report-client'
 import { asAssignmentDisplayText } from '@/features/mypage/education/schedules/lib/instructor-assignment-support'
+import { formatInstructorEducationUnitLabel } from '@/features/mypage/education/schedules/lib/instructor-education-schedule-display'
 import {
   INVALID_LECTURE_REPORT_BINDING_MESSAGE,
   LECTURE_REPORT_BINDING_UNAVAILABLE_MESSAGE,
@@ -39,11 +40,25 @@ import {
   lectureReportBackPath,
   lectureReportPreviewPath,
 } from '@/features/mypage/education/schedules/lib/lecture-report-path'
+import {
+  lectureReportCompleteSettlementWritePath,
+  lectureReportCompleteTabPath,
+  resolveInstructorLectureApplicationId,
+  resolveLectureSettlementSessionId,
+} from '@/features/mypage/education/schedules/lib/lecture-report-complete-navigation'
+import {
+  lectureReportOverdueWarningText,
+  shouldShowLectureReportOverdueWarning,
+} from '@/features/mypage/education/schedules/lib/lecture-report-policy'
 import { LectureReportSubmitCompleteModal } from '@/features/mypage/education/schedules/ui/lecture-report-submit-complete-modal'
-import { buildSettlementWritePath } from '@/features/mypage/education/settlements/lib/write-path'
+import { fetchSettlementApplications } from '@/features/mypage/education/applications/api/activity-client'
+import {
+  findSettlementApplicationForLectureAssignment,
+  isKnownSettlementApplicationSubmitted,
+} from '@/features/mypage/education/settlements/lib/settlement-join'
 import { isGeminiSettlementProgram } from '@/features/mypage/education/settlements/lib/payment-statement-status'
 import { platformQueryKeys } from '@/shared/api/query-keys'
-import { PFButton, PFFormPage, PFLoadingSpinner, PFText } from '@/shared/ui'
+import { PFAlertModal, PFButton, PFFormPage, PFLoadingSpinner, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 import {
   buildLectureReportPageTitle,
@@ -52,6 +67,24 @@ import {
 import { resolveEducationSurveySectionDescription } from '@/features/mypage/education/surveys/lib/survey-section-title'
 import { toDisplayEducationScheduleName } from '@/shared/lib/education-schedule-name'
 import { toSeoulDateOnly } from '@/shared/lib/format-display-date'
+
+const REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE = '필수 항목 입력 안내'
+
+const REQUIRED_FIELDS_INCOMPLETE_ALERT_DESCRIPTION = (
+  <>
+    입력되지 않은 필수 항목이 있어요.
+    {'\n'}
+    &apos;
+    <PFText as="span" typo="bd-md-rg" color="error">
+      *
+    </PFText>
+    &apos; 표시된 필수 항목을 모두 작성해 주세요.
+  </>
+)
+
+const EDUCATION_PHOTOS_INCOMPLETE_ALERT_TITLE = '교육 사진 첨부 안내'
+const EDUCATION_PHOTOS_INCOMPLETE_ALERT_DESCRIPTION =
+  '교육 장면 사진을 2장 이상 첨부해 주세요'
 
 type LoadedReport = {
   assignment: LectureReportAssignment
@@ -88,12 +121,17 @@ function formatTime(value: string | null | undefined): string {
 function applyLectureReportAssignmentContext(
   draft: WritingFormDraft,
   assignment: LectureReportAssignment,
-  program: { title?: string; educationTargetDetailLabel?: string } | null | undefined
+  program: {
+    title?: string
+    educationTargetDetailLabel?: string
+    programAudience?: 'organization' | 'individual'
+  } | null | undefined
 ): WritingFormDraft {
   const educationDate = toSeoulDateOnly(assignment.startAt)
   const sessionTime = [formatTime(assignment.startAt), formatTime(assignment.endAt)]
     .filter(Boolean)
     .join(' ~ ')
+  const hideInstitution = program?.programAudience === 'individual'
   return {
     ...draft,
     paragraphs: draft.paragraphs.map(paragraph => {
@@ -106,16 +144,20 @@ function applyLectureReportAssignmentContext(
       return {
         ...paragraph,
         programName: program?.title?.trim() || paragraph.programName,
-        institutionName: assignment.institutionName?.trim() || paragraph.institutionName,
+        institutionName: hideInstitution
+          ? ''
+          : assignment.institutionName?.trim() || paragraph.institutionName,
+        institutionLocation: hideInstitution
+          ? ''
+          : assignment.institutionAddress?.trim() || paragraph.institutionLocation,
         educationDate: educationDate || paragraph.educationDate,
         sessionTime: sessionTime || paragraph.sessionTime,
         sessionIndex:
-          assignment.sessionNo != null ? `${assignment.sessionNo}차시` : paragraph.sessionIndex,
+          formatInstructorEducationUnitLabel(assignment) || paragraph.sessionIndex,
         educationTarget:
           program?.educationTargetDetailLabel?.trim() ||
           asAssignmentDisplayText(assignment.grade) ||
           paragraph.educationTarget,
-        classLabel: asAssignmentDisplayText(assignment.grade) || paragraph.classLabel,
       }
     }),
   }
@@ -132,8 +174,14 @@ export function MypageLectureReportWritePage() {
   const assignmentId = parsePositiveInteger(searchParams.get('assignmentId'))
   const legacyPreviewRoute =
     searchParams.get('mode') === 'read' || searchParams.get('mode') === 'preview'
-  const backPath = lectureReportBackPath(applicationId)
   const [loaded, setLoaded] = useState<LoadedReport | null>(null)
+  const backPath = lectureReportBackPath(
+    resolveInstructorLectureApplicationId({
+      routeApplicationId: applicationId,
+      instructorApplicationId:
+        loaded?.assignment.instructorApplicationId ?? loaded?.state.instructorApplicationId,
+    }),
+  )
   const [draft, setDraft] = useState<WritingFormDraft | null>(null)
   const [sidecar, setSidecar] = useState<SurveySidecarState>(EMPTY_SURVEY_SIDECAR)
   const [fileObjectIdsByQuestion, setFileObjectIdsByQuestion] = useState<Record<string, number[]>>(
@@ -144,8 +192,10 @@ export function MypageLectureReportWritePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [alert, setAlert] = useState<{ title: string; description: ReactNode } | null>(null)
   const [submitCompleteOpen, setSubmitCompleteOpen] = useState(false)
   const [settlementSessionId, setSettlementSessionId] = useState('')
+  const [paymentStatementAlreadySubmitted, setPaymentStatementAlreadySubmitted] = useState(false)
   const programQuery = useProgramDetail(
     loaded?.state.programId == null ? null : String(loaded.state.programId),
     { fresh: true }
@@ -357,12 +407,21 @@ export function MypageLectureReportWritePage() {
       minimumFilesPerAttachment: 2,
     })
     if (!validation.ok) {
-      setError(validation.message)
+      setAlert(
+        validation.incomplete === 'file_attachment'
+          ? {
+              title: EDUCATION_PHOTOS_INCOMPLETE_ALERT_TITLE,
+              description: EDUCATION_PHOTOS_INCOMPLETE_ALERT_DESCRIPTION,
+            }
+          : {
+              title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+              description: REQUIRED_FIELDS_INCOMPLETE_ALERT_DESCRIPTION,
+            },
+      )
       return
     }
 
     setBusy(true)
-    setError('')
     try {
       await submitLectureReport(loaded.assignment.assignmentId, buildSubmitInput())
       const latest = await getLectureReportState(loaded.assignment.assignmentId)
@@ -378,15 +437,39 @@ export function MypageLectureReportWritePage() {
       void queryClient.invalidateQueries({
         queryKey: platformQueryKeys.mypage.lectureReportAssignments(String(loaded.state.programId)),
       })
-      setSettlementSessionId(String(loaded.assignment.scheduleId))
+      let alreadySubmitted = false
+      try {
+        const settlements = await queryClient.fetchQuery({
+          queryKey: platformQueryKeys.mypage.settlementApplications(),
+          queryFn: ({ signal }) => fetchSettlementApplications(signal),
+          staleTime: 0,
+        })
+        alreadySubmitted = isKnownSettlementApplicationSubmitted(
+          findSettlementApplicationForLectureAssignment(settlements, {
+            assignmentId: loaded.assignment.assignmentId,
+            scheduleId: loaded.assignment.scheduleId,
+            programId: loaded.state.programId,
+          }),
+        )
+      } catch {
+        alreadySubmitted = false
+      }
+      setPaymentStatementAlreadySubmitted(alreadySubmitted)
+      setSettlementSessionId(
+        resolveLectureSettlementSessionId({
+          scheduleId: loaded.assignment.scheduleId,
+          assignmentId: loaded.assignment.assignmentId,
+        }),
+      )
       setSubmitCompleteOpen(true)
     } catch (cause) {
-      setError(
-        getLectureReportApiErrorMessage(
+      setAlert({
+        title: '안내',
+        description: getLectureReportApiErrorMessage(
           cause,
-          cause instanceof Error ? cause.message : '강의보고서 제출에 실패했습니다.'
-        )
-      )
+          cause instanceof Error ? cause.message : '강의보고서 제출에 실패했습니다.',
+        ),
+      })
     } finally {
       setBusy(false)
     }
@@ -400,7 +483,9 @@ export function MypageLectureReportWritePage() {
   const pageTitle = buildLectureReportPageTitle(lectureName)
   const pageDescription = resolveEducationSurveySectionDescription(titleParagraph?.surveyDescription)
   const period = titleParagraph?.showWritingPeriodOnForm
-    ? resolveEducationSurveyPeriodLabel(titleParagraph, loaded?.assignment.startAt)
+    ? resolveEducationSurveyPeriodLabel(titleParagraph, loaded?.assignment.startAt, {
+        submitDueAt: loaded?.assignment.submitDueAt ?? loaded?.state.submitDueAt,
+      })
     : ''
   const formProgramTitle =
     program?.title || toDisplayEducationScheduleName(loaded?.assignment.scheduleName) || '강의'
@@ -413,7 +498,7 @@ export function MypageLectureReportWritePage() {
     <PFFormPage
       aria-label="강의보고서 작성"
       className={styles.page}
-      back={<ProgramBackButton size="small" label="이전으로" onClick={() => navigate(backPath)} />}
+      back={<ProgramBackButton size="small" label="이전으로" to={backPath} />}
       title={
         <PFText as="h1" typo="hd-sm" color="black" className={styles.pageTitle}>
           {pageTitle}
@@ -447,7 +532,10 @@ export function MypageLectureReportWritePage() {
       ) : null}
       {!loading && !error && loaded && draft ? (
         <>
-          {loaded.state.reportStatus === 'OVERDUE' ? (
+          {shouldShowLectureReportOverdueWarning(
+            loaded.state.reportStatus,
+            loaded.state.canSubmit,
+          ) ? (
             <PFText
               as="p"
               role="status"
@@ -455,7 +543,7 @@ export function MypageLectureReportWritePage() {
               color="neutral-cool-600"
               className={styles.notice}
             >
-              제출 기한이 지났습니다. 사업 운영 종료 전까지 지각 제출할 수 있습니다.
+              {lectureReportOverdueWarningText()}
             </PFText>
           ) : null}
           {fileUploadError ? (
@@ -466,6 +554,7 @@ export function MypageLectureReportWritePage() {
           <EducationSurveyFormBody
             draft={draft}
             programTitle={formProgramTitle}
+            hideLectureReportInstitutionFields={program?.programAudience === 'individual'}
             onUpdateParagraph={
               ((id, updater) => {
                 setDraft(current =>
@@ -503,31 +592,56 @@ export function MypageLectureReportWritePage() {
         </>
       ) : null}
 
+      <PFAlertModal
+        open={alert != null}
+        title={alert?.title ?? ''}
+        description={alert?.description}
+        onConfirm={() => setAlert(null)}
+      />
       <LectureReportSubmitCompleteModal
         open={submitCompleteOpen}
-        hidePaymentStatementCta={isGeminiSettlementProgram({
-          programType: program?.programType,
-          detailCase: program?.detailCase,
-        })}
+        hidePaymentStatementCta={
+          paymentStatementAlreadySubmitted ||
+          isGeminiSettlementProgram({
+            programType: program?.programType,
+            detailCase: program?.detailCase,
+          })
+        }
         onLater={() => {
+          const appId = resolveInstructorLectureApplicationId({
+            routeApplicationId: applicationId,
+            instructorApplicationId:
+              loaded?.assignment.instructorApplicationId ?? loaded?.state.instructorApplicationId,
+          })
           setSubmitCompleteOpen(false)
-          navigate(backPath, { replace: true })
+          navigate(lectureReportCompleteTabPath(appId), { replace: true })
         }}
         onWritePaymentStatement={() => {
-          const sessionId = settlementSessionId.trim()
+          const appId = resolveInstructorLectureApplicationId({
+            routeApplicationId: applicationId,
+            instructorApplicationId:
+              loaded?.assignment.instructorApplicationId ?? loaded?.state.instructorApplicationId,
+          })
+          const sessionId =
+            settlementSessionId.trim() ||
+            resolveLectureSettlementSessionId({
+              scheduleId: loaded?.assignment.scheduleId,
+              assignmentId: loaded?.assignment.assignmentId,
+            })
+          const writePath = lectureReportCompleteSettlementWritePath(appId, sessionId)
           setSubmitCompleteOpen(false)
-          if (!sessionId) {
-            navigate(backPath, { replace: true })
+          if (!writePath) {
+            navigate(lectureReportCompleteTabPath(appId), { replace: true })
             return
           }
-          navigate(
-            buildSettlementWritePath({
-              applicationId,
-              sessionId,
-              area: 'lecture',
-              applicationType: 'INSTRUCTOR',
-            }),
-          )
+          if (loaded?.state.programId != null) {
+            void queryClient.invalidateQueries({
+              queryKey: platformQueryKeys.mypage.lectureReportAssignments(
+                String(loaded.state.programId),
+              ),
+            })
+          }
+          navigate(writePath, { replace: true })
         }}
       />
     </PFFormPage>

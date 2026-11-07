@@ -4,37 +4,36 @@ import {
   getGeneralProgramApiErrorMessage,
 } from '@/features/program/general/api/get-general-program-api-error'
 
-/** 목록·preview 원본 `accountPaymentId`가 양수일 때만 계좌 지급 완료. 0·null·생략은 미지급. */
+export const GEMINI_TRAINING_REPORT_ACCOUNT_PAID_CODE = 'GEMINI_TRAINING_REPORT_ACCOUNT_PAID'
+
+/** 목록 삭제 UI의 기존 사전 차단용 판정. import 보호 중복 판정에는 사용하지 않는다. */
 export function isGeminiPerformanceAccountPaid(
   accountPaymentId: number | null | undefined
 ): boolean {
   return accountPaymentId != null && Number.isFinite(accountPaymentId) && accountPaymentId > 0
 }
 
-/**
- * 지급완료 중복(시안 「실적 등록 불가」).
- * BE: duplicate=true + (accountPaymentId>0 또는 FAILED message에 ACCOUNT_PAID/시안 문구).
- * duplicateStrategy(overwrite|append)와 무관.
- */
+/** 백엔드 결과의 machine code만으로 지급조서/계좌 보호 중복을 판정한다. */
+export function getGeminiPerformancePaidBlockedResultMessage(
+  results: GeminiTrainingReportImportResult[] | undefined
+): string | undefined {
+  const blocked = (results ?? []).find(
+    result => result.status !== 'SUCCESS' && isGeminiPerformancePaidBlockedText(result.message)
+  )
+  const message = blocked?.message
+  return message ?? undefined
+}
+
 export function hasPaidDuplicateImportResults(
   results: GeminiTrainingReportImportResult[] | undefined
 ): boolean {
-  return (results ?? []).some(result => {
-    if (result.duplicate !== true) return false
-    if (isGeminiPerformanceAccountPaid(result.accountPaymentId)) return true
-    return (
-      result.status !== 'SUCCESS' && isGeminiPerformancePaidBlockedText(result.message)
-    )
-  })
+  return getGeminiPerformancePaidBlockedResultMessage(results) != null
 }
 
-export function isGeminiPerformancePaidBlockedText(text: string | undefined): boolean {
+export function isGeminiPerformancePaidBlockedText(text: string | null | undefined): boolean {
   if (!text?.trim()) return false
-  if (text.includes('GEMINI_TRAINING_REPORT_ACCOUNT_PAID')) return true
-  if (text.includes('계좌 지급이 완료')) return true
-  if (text.includes('신규 데이터로 덮어쓸 수 없')) return true
-  if (text.includes('덮어쓸 수 없')) return true
-  return /ACCOUNT_PAYMENT_COMPLETED|GEMINI_TRAINING_REPORT_PAID|ACCOUNT_PAID/.test(text)
+  const code = text.split(':', 1)[0]?.trim()
+  return code === GEMINI_TRAINING_REPORT_ACCOUNT_PAID_CODE
 }
 
 export function isGeminiPerformancePaidBlockedError(error: unknown): boolean {
@@ -47,10 +46,7 @@ export function isGeminiPerformancePaidBlockedError(error: unknown): boolean {
 export function hasPaidBlockedImportFailures(
   results: GeminiTrainingReportImportResult[] | undefined
 ): boolean {
-  return (results ?? []).some(
-    result =>
-      result.status !== 'SUCCESS' && isGeminiPerformancePaidBlockedText(result.message)
-  )
+  return getGeminiPerformancePaidBlockedResultMessage(results) != null
 }
 
 /** preview/import 응답에서 지급완료 등록 불가(strategy 무관). */

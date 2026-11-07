@@ -148,7 +148,7 @@
         "bodyPlaceholder": "자유롭게 작성해 주세요",
         "bodyText": "",
         "itemInputRows": 4,
-        "maxLength": 2000
+        "maxLength": 1000
       },
       {
         "id": "program-participant-application-seed-team-info",

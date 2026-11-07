@@ -408,6 +408,7 @@ function renderBody(
         <DocumentEducationPhotosReadonly
           paragraph={p as FileAttachmentParagraph}
           files={paragraphBodyOptions?.lectureReportFiles}
+          hideRequiredMark={paragraphBodyOptions?.hideTitleRequiredMark === true}
         />
       )
     }
@@ -555,6 +556,14 @@ function renderBody(
           onChange={noopOnParagraphChange}
           isEditMode={false}
           isTemplateAuthoringMode={paragraphBodyOptions?.lectureReportProgramLinkedPreview !== true}
+          previewReadonly={
+            renderMode === 'contentOnly' ||
+            paragraphBodyOptions?.lectureReportProgramLinkedPreview === true
+          }
+          previewSkin={renderMode === 'contentOnly' ? 'a4Document' : 'surface'}
+          hideInstitutionFields={
+            paragraphBodyOptions?.lectureReportHideInstitutionFields === true
+          }
         />
       )
     case 'vertical_table':
@@ -692,7 +701,9 @@ function renderBody(
             <UserInfoPreviewTable
               selectedEntries={getUserInfoPreviewSelectedEntries(ui)}
               skin="a4Document"
-              previewValues={paragraphBodyOptions?.userInfoPreviewValues}
+              previewValues={
+                paragraphBodyOptions?.userInfoPreviewValues ?? ui.fieldAnswers
+              }
               forceTwoColumnRow={
                 ui.id === UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.volunteerInfo
               }
@@ -741,8 +752,10 @@ function renderBody(
       if (
         renderMode === 'contentOnly' &&
         c.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing &&
-        paragraphBodyOptions?.agreementAdminProxyConfirm !== true
+        paragraphBodyOptions?.agreementAdminProxyConfirm !== true &&
+        !safeTrim(c.body)
       ) {
+        /** 구버전(본문 빈 값)은 구분선만 — 확인 문구가 있으면 시안(C10)대로 표시 */
         return null
       }
       return (
@@ -917,7 +930,11 @@ export function FormDocumentPreviewParagraph({
           <ContentOnlyParagraphHeader
             displayTitle={displayTitle}
             description={viewModel.description}
-            requiredMark={resolveParagraphTitleRequiredMark(paragraph)}
+            requiredMark={
+              paragraphBodyOptions?.hideTitleRequiredMark === true
+                ? false
+                : resolveParagraphTitleRequiredMark(paragraph)
+            }
             titleHint={multipleChoiceAllowMultipleTitleHint(paragraph)}
           />
         ) : null}

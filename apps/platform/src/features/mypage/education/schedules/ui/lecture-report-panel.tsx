@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PFButton, PFMetaBadge, PFPagination, PFStateBadge, PFText } from '@/shared/ui'
+import {
+  formatDisplayClock,
+  formatDisplayDate,
+  toSeoulDisplayParts,
+} from '@/shared/lib/format-display-date'
 import { EducationSessionListSkeleton } from '@/features/mypage/shared/ui'
 import { EducationSessionCard, EducationSessionCardHeader } from '../../shared'
 import villaIconUrl from '@/shared/assets/icons/villa.svg'
@@ -19,6 +24,7 @@ import {
 } from '../lib/lecture-report-preview-url'
 import { LectureReportPreviewModalContainer } from './lecture-report-preview-modal-container'
 import styles from './lecture-report-panel.module.css'
+import { formatLectureReportCardTimeSubtitle } from '../lib/instructor-education-schedule-display'
 import { clampLectureReportPage, resolveLectureReportAction } from '../lib/lecture-report-policy'
 
 type Props = { applicationId: string; programId: number; instructorProgram: boolean }
@@ -34,20 +40,14 @@ function resolveReportStatus(state: LectureReportState | undefined, row: Lecture
   // reportStatus는 서버 값만 사용 — lectureStatus로 추정하지 않는다.
   return undefined
 }
-function formatDateOnly(value: string | null): string {
-  if (!value) return ''
-  const parsed = new Date(value)
-  const parts = new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' }).formatToParts(parsed)
-  const part = (type: string) => parts.find(item => item.type === type)?.value ?? ''
-  return `${part('year')}년 ${part('month')}월 ${part('day')}일(${part('weekday')})`
-}
 function formatDueDate(value: string | null): string {
-  const formatted = formatDateOnly(value)
+  const formatted = formatDisplayDate(value)
   return formatted ? `${formatted}까지` : ''
 }
 function formatTime(value: string | null): string {
-  if (!value) return ''
-  return new Intl.DateTimeFormat('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(value))
+  const parts = toSeoulDisplayParts(value)
+  if (!parts?.hasTime) return ''
+  return formatDisplayClock(parts.hour, parts.minute)
 }
 function formatTimeRange(row: LectureReportAssignment): string {
   const start = formatTime(row.startAt)
@@ -65,10 +65,13 @@ function lectureStatusPresentation(value: string | null | undefined): { label: s
     default: return { label: '진행 현황 확인 중', tone: 'disabled' }
   }
 }
-function reportMessage(status: LectureReportStatus | undefined): string {
+function reportMessage(status: LectureReportStatus | undefined, canSubmit: boolean): string {
   switch (status) {
     case 'SUBMITTED': return '강의보고서 제출이 완료되었습니다'
-    case 'OVERDUE': return '강의보고서 제출기한이 마감되었어요'
+    case 'OVERDUE':
+      return canSubmit
+        ? '제출 기한이 지났지만 사업 운영기간 내에는 제출할 수 있어요'
+        : '강의보고서 제출기한이 마감되었어요'
     case 'AVAILABLE': return '기한 내에 강의보고서를 제출해 주세요'
     case 'UPCOMING': return '강의보고서는 강의 진행 이후 작성이 가능해요'
     case 'BUSINESS_ENDED': return '사업 운영이 종료되어 강의보고서를 제출할 수 없어요'
@@ -180,7 +183,7 @@ export function LectureReportPanel({ applicationId, programId, instructorProgram
         const lectureStatus = lectureStatusPresentation(row.lectureStatus)
         const statusLoaded = state != null || row.reportStatus != null
         const timeRange = formatTimeRange(row)
-        const timeLabel = [timeRange, row.sessionNo ? `${row.sessionNo}차시` : ''].filter(Boolean).join(' ')
+        const timeLabel = formatLectureReportCardTimeSubtitle({ ...row, timeRange })
         const institutionMeta = instructorProgram && (row.institutionName || row.grade) ? (
           <PFMetaBadge
             icon={<img src={villaIconUrl} alt="" width={20} height={20} aria-hidden="true" />}
@@ -203,13 +206,13 @@ export function LectureReportPanel({ applicationId, programId, instructorProgram
           <EducationSessionCard className={styles.row} key={row.assignmentId}>
             <EducationSessionCardHeader
               badge={<PFStateBadge size="small" tone={lectureStatus.tone}>{lectureStatus.label}</PFStateBadge>}
-              date={formatDateOnly(row.startAt) || '강의 일정'}
+              date={formatDisplayDate(row.startAt) || '강의 일정'}
               subtitle={timeLabel ? <PFText as="span" typo="bd-md-rg" className={styles.timeLabel}>{timeLabel}</PFText> : undefined}
               aside={<div className={styles.headerAside}>{institutionMeta}{reportMeta}</div>}
             />
             <div className={[styles.reportGuide, submitted ? styles.reportGuideSubmitted : undefined].filter(Boolean).join(' ')}>
               <div className={styles.reportGuideCopy}>
-                <p className={styles.reportMessage}>{reportMessage(reportStatus)}</p>
+                <p className={styles.reportMessage}>{reportMessage(reportStatus, action === 'write')}</p>
                 {reportStatus !== 'UPCOMING' && row.submitDueAt ? <p className={styles.reportDueDate}>{formatDueDate(row.submitDueAt)}</p> : null}
               </div>
               <PFButton

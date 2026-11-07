@@ -15,6 +15,8 @@ import {
   settlementDocumentFirstColumnValue,
   settlementDocumentLinesSectionTitle,
   settlementDocumentPayDeductionLabel,
+  showSettlementDocumentAttachmentsPage,
+  shouldShowSettlementDocumentFirstColumn,
   warnIfSettlementDocumentTotalMismatch,
   type SettlementDocumentInfoRow,
 } from '../lib/format-application-document'
@@ -23,9 +25,14 @@ import styles from './application-document-view.module.css'
 
 export type SettlementApplicationDocumentPage = 'summary' | 'attachments'
 
+/** 첫 열을 숨길 때 일자 병합용 단일 그룹 키 (화면에 표시하지 않음) */
+const NO_FIRST_COLUMN_GROUP = 'no-first-column'
+
 type EducationSettlementApplicationDocumentViewProps = {
   document: SettlementApplicationDocumentResponse
   programTitle?: string | null
+  /** `application.programConfig.programType` — 개인형이면 「참여 기관명」열 미노출 */
+  programType?: string | null
   page?: SettlementApplicationDocumentPage
   onRefreshDocument: () => void | Promise<unknown>
   refreshing?: boolean
@@ -64,7 +71,9 @@ function DividedParts({ parts, className }: { parts: string[]; className: string
   )
 }
 
+/** value === null(제출 스냅샷 값 없음)이면 빈 칸 — `-`·기본값을 그리지 않는다 */
 function InfoValue({ row }: { row: SettlementDocumentInfoRow }) {
+  if (row.value == null) return null
   return row.parts ? (
     <DividedParts parts={row.parts} className={styles.infoParts} />
   ) : (
@@ -112,6 +121,7 @@ function InfoTable({ rows }: { rows: SettlementDocumentInfoRow[] }) {
 export function EducationSettlementApplicationDocumentView({
   document,
   programTitle,
+  programType,
   page = 'summary',
   onRefreshDocument,
   refreshing = false,
@@ -157,22 +167,28 @@ export function EducationSettlementApplicationDocumentView({
     }
   }
 
-  const showCalc = document.documentType === 'PAYMENT_STATEMENT' && document.calcInfo != null
+  /** 영수증(RECEIPT_SETTLEMENT)은 calcInfo = null — 지급조서 전용 산출 정보는 그리지 않는다 */
+  const calcInfo = document.documentType === 'PAYMENT_STATEMENT' ? document.calcInfo : null
+  const showCalc = calcInfo != null
   const basicRows = buildSettlementDocumentBasicRows(document.basicInfo)
-  const calcRows = showCalc ? buildSettlementDocumentCalcRows(document.calcInfo!) : []
+  const calcRows = calcInfo != null ? buildSettlementDocumentCalcRows(calcInfo, document.lines) : []
+  const showFirstColumn = shouldShowSettlementDocumentFirstColumn(document.documentType, programType)
+  const linesColumnCount = showFirstColumn ? 6 : 5
   const firstColumnHeader = settlementDocumentFirstColumnHeader(document.documentType)
   const linesTitle = settlementDocumentLinesSectionTitle(document.documentType)
   const lineCells = document.lines.map(line => {
     const dateParts = formatSettlementDocumentLectureDateParts(line)
     return {
-      first: settlementDocumentFirstColumnValue(document.documentType, line, programTitle),
+      first: showFirstColumn
+        ? settlementDocumentFirstColumnValue(document.documentType, line, programTitle)
+        : NO_FIRST_COLUMN_GROUP,
       dateParts,
       date: dateParts.join(' | '),
     }
   })
   const lineSpans = buildSettlementDocumentLineSpans(lineCells)
 
-  if (page === 'attachments') {
+  if (page === 'attachments' && showSettlementDocumentAttachmentsPage(document)) {
     return (
       <div className={styles.body}>
         <section className={styles.section}>
@@ -208,7 +224,9 @@ export function EducationSettlementApplicationDocumentView({
                         {downloadingAttachmentId === fileObjectId ? '다운로드 중...' : '다운로드'}
                       </button>
                     ) : (
-                      <span className={styles.attachmentMeta}>다운로드할 파일 정보가 없습니다.</span>
+                      <span className={styles.attachmentMeta}>
+                        다운로드할 파일 정보가 없습니다.
+                      </span>
                     )}
                   </li>
                 )
@@ -230,7 +248,7 @@ export function EducationSettlementApplicationDocumentView({
 
       {showCalc ? (
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>강의비 산출 정보</h2>
+          <h2 className={styles.sectionTitle}>강사비 산출 정보</h2>
           <InfoTable rows={calcRows} />
         </section>
       ) : null}
@@ -240,7 +258,7 @@ export function EducationSettlementApplicationDocumentView({
         <div className={styles.linesWrap}>
           <table className={styles.linesTable}>
             <colgroup>
-              <col className={styles.colProgram} />
+              {showFirstColumn ? <col className={styles.colProgram} /> : null}
               <col className={styles.colDate} />
               <col className={styles.colPay} />
               <col className={styles.colCategory} />
@@ -249,7 +267,7 @@ export function EducationSettlementApplicationDocumentView({
             </colgroup>
             <thead>
               <tr>
-                <th scope="col">{firstColumnHeader}</th>
+                {showFirstColumn ? <th scope="col">{firstColumnHeader}</th> : null}
                 <th scope="col">교육 진행 일자</th>
                 <th scope="col">지급/공제</th>
                 <th scope="col">구분</th>
@@ -260,7 +278,7 @@ export function EducationSettlementApplicationDocumentView({
             <tbody>
               {document.lines.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className={styles.emptyCell}>
+                  <td colSpan={linesColumnCount} className={styles.emptyCell}>
                     제출 정보 없음
                   </td>
                 </tr>
@@ -270,7 +288,7 @@ export function EducationSettlementApplicationDocumentView({
                   const span = lineSpans[index]!
                   return (
                     <tr key={`${line.category ?? ''}-${line.description ?? ''}-${index}`}>
-                      {span.firstRowSpan > 0 ? (
+                      {showFirstColumn && span.firstRowSpan > 0 ? (
                         <td rowSpan={span.firstRowSpan > 1 ? span.firstRowSpan : undefined}>
                           {cell.first}
                         </td>
@@ -293,7 +311,7 @@ export function EducationSettlementApplicationDocumentView({
             </tbody>
             <tfoot>
               <tr className={styles.summaryRow}>
-                <th scope="row" colSpan={2}>
+                <th scope="row" colSpan={showFirstColumn ? 2 : 1}>
                   합계
                 </th>
                 <td colSpan={3} className={styles.summaryFormula}>

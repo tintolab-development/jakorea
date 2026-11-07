@@ -10,6 +10,7 @@ import {
   payableEvidenceRequired,
   pickAmountPayableItems,
   pickTransportPayableItem,
+  readPayableMaxLimitWon,
   receiptPaymentItemLabel,
   resolveReceiptPaymentUiKind,
   sortReceiptPayableItems,
@@ -130,6 +131,14 @@ assert.deepEqual(
 const studentOnly = normalizePayableItems([
   { itemType: 'STUDENT_TRANSPORTATION', itemName: '학생 교통비', evidenceRequired: true },
 ])
+const withMax = normalizePayableItems([
+  { itemType: 'MEAL', itemName: '식사비', maxLimitWon: 30_000 },
+  { itemType: 'ACTIVITY', itemName: '활동비', maxAmount: 50_000 },
+])
+assert.equal(readPayableMaxLimitWon(withMax.find(item => item.itemType === 'MEAL')), 30_000)
+assert.equal(readPayableMaxLimitWon(withMax.find(item => item.itemType === 'ACTIVITY')), 50_000)
+assert.equal(readPayableMaxLimitWon({ maxLimitWon: 0, maxAmount: -1 }), null)
+
 assert.equal(studentOnly[0]?.itemType, 'STUDENT_TRANSPORTATION')
 assert.equal(pickTransportPayableItem(studentOnly)?.itemType, 'STUDENT_TRANSPORTATION')
 assert.equal(pickAmountPayableItems(studentOnly).length, 0)

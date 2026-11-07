@@ -297,14 +297,6 @@
   box-sizing: border-box;
 }
 
-.education-textbooks-page__thumb.ant-image,
-.education-textbooks-page__thumb-wrap .ant-image {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-.education-textbooks-page__thumb-wrap .ant-image-img,
 .education-textbooks-page__thumb {
   width: 100% !important;
   height: 100% !important;

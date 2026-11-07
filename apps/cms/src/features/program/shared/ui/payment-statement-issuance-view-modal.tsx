@@ -3,7 +3,7 @@
  * 강의보고서 미리보기와 동일한 풀페이지 레이아웃(닫기·파일 다운로드·페이지 이동).
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ModalCloseIcon } from '@/shared/ui/icons'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
@@ -15,10 +15,6 @@ import {
   getA4DocumentTitle,
   getA4PreviewParagraphs,
 } from '@/features/template/lib/a4-document-preview'
-import {
-  collectFormDocumentPdfPageElements,
-  downloadFormDocumentPdfFromPageElements,
-} from '@/features/template/lib/generate-form-document-pdf'
 import { createPaymentStatementIssuanceDraft } from '@/features/template/model/payment-statement-issuance-draft'
 import {
   getPaymentStatementA4ParagraphGap,
@@ -27,8 +23,13 @@ import {
 import { normalizeWritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import { resolvePaymentStatementIssuanceDocumentParagraphBodyOptions } from '@/features/template/ui/form-set/payment-statement-issuance/paragraph-config'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
-import { handleError } from '@/shared/utils/error-handler'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
+import { useProtectedFileDownload } from '@/shared/lib/use-protected-file-download'
+import { downloadPaymentStatementRemote } from '@/features/settlement-management/api/settlement-api-client'
+import {
+  getSettlementApiErrorMessage,
+  isFileDownloadPasswordApiError,
+} from '@/features/settlement-management/api/get-settlement-api-error'
 import '@/features/template/ui/template-management/template-fullpage-modal.css'
 import '@/features/program/general/ui/detail-modal/program-status/lecture-report-issuance-preview-modal.css'
 
@@ -44,9 +45,11 @@ export interface PaymentStatementIssuanceViewModalProps {
   fileName?: string
   /** 풀페이지 모달 위 겹침 — 기본 1400 */
   zIndex?: number
-  /** 전달 시 서버 PDF 등 외부 다운로드 핸들러 사용 */
-  onDownloadPdf?: () => Promise<void>
+  /** 전달 시 서버 PDF 등 외부 다운로드 핸들러 사용. password는 파일 암호 팝업에서 전달 */
+  onDownloadPdf?: (password: string) => Promise<void>
   downloadLoading?: boolean
+  /** 서버 단건 다운로드용. onDownloadPdf가 없을 때 사용 */
+  settlementId?: number
 }
 
 function PreviewPagePrevIcon() {
@@ -105,12 +108,12 @@ export function PaymentStatementIssuanceViewModal({
   zIndex = 1400,
   onDownloadPdf,
   downloadLoading: downloadLoadingProp = false,
+  settlementId,
 }: PaymentStatementIssuanceViewModalProps) {
   const { showAlert } = useCmsAlert()
+  const { runProtectedDownload, filePasswordModal } = useProtectedFileDownload()
   const [currentPageIndex, setCurrentPageIndex] = useState(0)
-  const [clientPdfLoading, setClientPdfLoading] = useState(false)
-  const pdfLoading = downloadLoadingProp || clientPdfLoading
-  const pdfHostRef = useRef<HTMLDivElement>(null)
+  const pdfLoading = downloadLoadingProp
 
   const draft = useMemo(
     () => normalizeWritingFormDraft(createPaymentStatementIssuanceDraft()),
@@ -168,26 +171,39 @@ export function PaymentStatementIssuanceViewModal({
     }
   }, [open, fileName])
 
-  const handleDownloadPdf = useCallback(async () => {
+  const handleDownloadPdf = useCallback(() => {
     if (pdfLoading) return
-    if (onDownloadPdf) {
-      await onDownloadPdf()
-      return
-    }
+    runProtectedDownload({
+      kind: 'PAYMENT_STATEMENT',
+      zIndex: zIndex + 20,
+      download: async password => {
+        if (onDownloadPdf) {
+          await onDownloadPdf(password)
+          return
+        }
+        if (settlementId != null) {
+          try {
+            await downloadPaymentStatementRemote(settlementId, { password })
+            return
+          } catch (error) {
+            if (!isFileDownloadPasswordApiError(error)) {
+              showAlert({
+                title: '안내',
+                content: getSettlementApiErrorMessage(error, '지급조서 다운로드에 실패했습니다.'),
+              })
+            }
+            throw error
+          }
+        }
 
-    const root = pdfHostRef.current
-    if (!root) return
-    setClientPdfLoading(true)
-    try {
-      const pageEls = collectFormDocumentPdfPageElements(root)
-      await downloadFormDocumentPdfFromPageElements(pageEls, `${fileName}.pdf`)
-    } catch (e) {
-      handleError(e, { context: 'paymentStatementIssuanceViewModal.downloadPdf' })
-      showAlert({ title: '안내', content: 'PDF 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.' })
-    } finally {
-      setClientPdfLoading(false)
-    }
-  }, [fileName, onDownloadPdf, pdfLoading, showAlert])
+        showAlert({
+          title: '안내',
+          content: '서버 지급조서가 없어 다운로드할 수 없습니다.',
+        })
+        throw new Error('서버 지급조서가 없어 다운로드할 수 없습니다.')
+      },
+    })
+  }, [onDownloadPdf, pdfLoading, runProtectedDownload, settlementId, showAlert, zIndex])
 
   if (!open) return null
 
@@ -209,6 +225,7 @@ export function PaymentStatementIssuanceViewModal({
 
   return (
     <>
+      {filePasswordModal}
       <TealHeaderModal
         open={open}
         onCancel={handleClose}
@@ -292,29 +309,6 @@ export function PaymentStatementIssuanceViewModal({
         </div>
       </TealHeaderModal>
 
-      <div ref={pdfHostRef} className="lecture-report-issuance-preview-modal__pdf-host" aria-hidden="true">
-        {pages.map((pageParagraphs, pageIndex) => (
-          <A4DocumentPageLayout
-            key={pageIndex}
-            title={documentTitle}
-            pageIndex={pageIndex}
-            pdfCapture
-          >
-            <div style={{ width: '100%', paddingBottom: 16, boxSizing: 'border-box' }}>
-              <FormDocumentPreviewBody
-                paragraphs={pageParagraphs}
-                allParagraphs={previewParagraphs}
-                titleNumbering={titleNumbering}
-                editorKind="horizontal_table"
-                overflowParagraphIds={overflowParagraphIds}
-                renderMode="contentOnly"
-                paragraphBodyOptions={resolvedParagraphBodyOptions}
-                paragraphGapPx={getPaymentStatementA4ParagraphGap}
-              />
-            </div>
-          </A4DocumentPageLayout>
-        ))}
-      </div>
     </>
   )
 }

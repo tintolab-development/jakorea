@@ -101,7 +101,7 @@ export function mapIndividualSettlementReviewToCalculationStatement(
     return {
       id,
       itemLabel: itemLabel(item),
-      // 관리자 상세 GET items[].description = 정산 항목 설정 카탈로그. receipts/expenses 메모는 쓰지 않는다.
+      // items[].description = 서버가 제출 시점에 생성·저장한 항목 설명. 설정 재조회·FE 조립·receipts 메모로 대체하지 않는다.
       description: displayOrDash(item.description),
       amount: kind === 'withholding' && amount > 0 ? -amount : amount,
       kind,

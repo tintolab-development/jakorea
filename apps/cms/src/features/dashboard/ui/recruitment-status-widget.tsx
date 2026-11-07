@@ -8,7 +8,7 @@
 import { Card, Typography } from 'antd'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
-import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { LoadingButton } from '@/shared/ui'
 import {
@@ -34,34 +34,15 @@ const { Text } = Typography
 const WIDGET_KEY = 'recruitment-status-widget'
 const EMPTY_IDS: string[] = []
 
-export function RecruitmentStatusWidget() {
+export function RecruitmentStatusWidget({ isHalfColumn = false }: { isHalfColumn?: boolean }) {
   const navigate = useNavigate()
-  const cardRef = useRef<HTMLDivElement>(null)
-  const [halfColumn, setHalfColumn] = useState(false)
   const allowedProgramIds =
     useDashboardSettingsStore(s => s.widgetProgramIds[WIDGET_KEY]) ?? EMPTY_IDS
   const { data, isLoading: loading, isError } = useRecruitmentStatusList(allowedProgramIds)
   const programs = data?.rows ?? []
   /** 시안 100% 13192:232449 — 프로그램명 가변 + 200/200/200, 50% 12360:299527 — 가변 + 180/120/120 */
-  const statusColumnWidth = halfColumn ? 180 : 200
-  const countColumnWidth = halfColumn ? 120 : 200
-  useLayoutEffect(() => {
-    const root = cardRef.current
-    if (!root) {
-      setHalfColumn(false)
-      return
-    }
-    const slot = root.closest('.dashboard-widget-slot')
-    if (!slot) {
-      setHalfColumn(false)
-      return
-    }
-    const sync = () => setHalfColumn(slot.getAttribute('data-col-span') === '12')
-    sync()
-    const mo = new MutationObserver(sync)
-    mo.observe(slot, { attributes: true, attributeFilter: ['data-col-span'] })
-    return () => mo.disconnect()
-  }, [])
+  const statusColumnWidth = isHalfColumn ? 180 : 200
+  const countColumnWidth = isHalfColumn ? 120 : 200
 
   const totalCountLabel = formatDashboardHeaderTotalCount(data?.totalCount ?? null)
 
@@ -110,7 +91,6 @@ export function RecruitmentStatusWidget() {
 
   return (
     <Card
-      ref={cardRef}
       className="dashboard-widget-table dashboard-widget-table--recruitment"
       title={
         <WidgetTitleWithHandle>

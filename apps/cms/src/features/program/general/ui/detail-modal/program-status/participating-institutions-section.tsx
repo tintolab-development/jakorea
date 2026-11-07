@@ -52,13 +52,10 @@ import { useProgramTextbookCatalog } from '@/features/textbook/hooks/use-program
 import { CMS_TABLE_NO_COL_CLASS, CMS_DATA_TABLE_ROW_DISABLED_CLASS } from '@/shared/constants/table'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { ParticipatingInstitutionsCalendarView } from './participating-institutions-calendar-view'
+import { ParticipatingProgressEducationScheduleCell } from '../../../lib/participating-progress-education-schedule-cell'
 import {
   buildParticipatingSchoolPreferredScheduleLines,
-  formatGeneralEducationScheduleLine,
-  prepareGeneralEducationScheduleSessions,
-  readCurriculumSessionLabels,
-  readProgramEducationScheduleLines,
-  resolveScheduleDetailTimeSpan,
+  withParticipatingProgressCurriculumShape,
 } from '../../../lib/participating-school-session-display'
 import { generalEducationScheduleShapeFromBridge } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-session-format'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
@@ -199,12 +196,11 @@ export function ParticipatingInstitutionsSection({
       institutionSigungu: appliedFilters.institutionSigungu,
       educationGrade: appliedFilters.educationGrade,
       lectureRound: 'all',
-      // TT는 배송 원장 없음 — URL에 남은 textbookStatus로 0건 필터 방지
-      textbookStatus: isTrainedTeachersSurface ? 'all' : appliedFilters.textbookStatus,
+      textbookStatus: appliedFilters.textbookStatus,
       settlementStatus: 'all',
       teacherName: appliedFilters.teacherName,
     }),
-    [appliedFilters, isTrainedTeachersSurface]
+    [appliedFilters]
   )
 
   const instructorHook = useProgressInstructorList({
@@ -292,26 +288,19 @@ export function ParticipatingInstitutionsSection({
     () => resolveInstitutionApplicationProgramBridge(program),
     [program]
   )
-  const educationScheduleShape = useMemo(() => {
-    const shape = generalEducationScheduleShapeFromBridge(programBridge)
-    if (!shape) return null
-    return { ...shape, curriculumSessionLabels: readCurriculumSessionLabels(program) }
-  }, [program, programBridge])
-  const detailScheduleTimeSpan = useMemo(
-    () => resolveScheduleDetailTimeSpan(program?.generalCommonInfo?.scheduleDetails),
-    [program]
-  )
-  const educationScheduleLines = useMemo(
-    () => readProgramEducationScheduleLines(program),
-    [program]
+  const educationScheduleShape = useMemo(
+    () =>
+      withParticipatingProgressCurriculumShape(
+        generalEducationScheduleShapeFromBridge(programBridge),
+        program
+      ),
+    [program, programBridge]
   )
   const maxClassCount = isCompanySchool ? programBridge.maxClassCount : undefined
   const showTextbookFeatures = program
     ? isTextbookCatalogLoading || programUsesTextbook(program, textbookCatalog)
     : true
-  /** TT는 배송 원장 없음 — 행이 전부 `not_applicable`. 필터/컬럼 노출 시 조회하면 0건이 됨 */
-  const showTextbookStatusColumn =
-    !isTrainedTeachersSurface && (isCompanySchool || showTextbookFeatures)
+  const showTextbookStatusColumn = isCompanySchool || showTextbookFeatures
 
   const filterFields = useMemo(
     () =>
@@ -361,22 +350,17 @@ export function ParticipatingInstitutionsSection({
         ...participatingScheduleTableColumnLayout(),
         render: (_: unknown, record: ParticipatingSchoolRow) => {
           const assignedSessions = resolveParticipatingProgressAssignedSessions(record.sessions)
-          const sessionLines = showAssignedEducationSchedule
-            ? prepareGeneralEducationScheduleSessions(assignedSessions, educationScheduleShape, {
-                detailScheduleTimeSpan,
-                educationScheduleLines:
-                  assignedSessions.length === 0 ? educationScheduleLines : [],
-              })
-                .map(session =>
-                  formatGeneralEducationScheduleLine(session, educationScheduleShape, {
-                    detailScheduleTimeSpan,
-                  })
-                )
-                .filter(Boolean)
-            : buildParticipatingSchoolPreferredScheduleLines(
-                resolveParticipatingInstitutionPreferredDisplaySessions(record)
-              )
-          if (showAssignedEducationSchedule && sessionLines.length === 0) return '-'
+          if (showAssignedEducationSchedule) {
+            return (
+              <ParticipatingProgressEducationScheduleCell
+                sessions={assignedSessions}
+                shape={educationScheduleShape}
+              />
+            )
+          }
+          const sessionLines = buildParticipatingSchoolPreferredScheduleLines(
+            resolveParticipatingInstitutionPreferredDisplaySessions(record)
+          )
           const total = sessionLines.length
           const showCount = total <= 3 ? total : 2
           const displaySessions = sessionLines.slice(0, showCount)
@@ -419,9 +403,15 @@ export function ParticipatingInstitutionsSection({
                       className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME}`,
                     },
               render: (status: TextbookStatusKey, record: ParticipatingSchoolRow) => {
-                const hasTextbook = Boolean(
-                  record.textbookId?.trim() || record.textbookName?.trim()
-                )
+                const hasTextbook = isTrainedTeachersSurface
+                  ? status != null && status !== 'not_applicable'
+                  : Boolean(
+                      record.textbookId?.trim() ||
+                        record.textbookName?.trim() ||
+                        (typeof record.textbookKits === 'number' && record.textbookKits > 0) ||
+                        (typeof record.textbookQuantity === 'number' &&
+                          record.textbookQuantity > 0)
+                    )
                 if (!hasTextbook)
                   return <ParticipatingInstitutionTextbookStatusBadge status="not_applicable" />
                 return (
@@ -500,9 +490,7 @@ export function ParticipatingInstitutionsSection({
           ]),
     ],
     [
-      detailScheduleTimeSpan,
       educationScheduleColumnTitle,
-      educationScheduleLines,
       educationScheduleShape,
       showAssignedEducationSchedule,
       getInstructorDisplayForSchool,

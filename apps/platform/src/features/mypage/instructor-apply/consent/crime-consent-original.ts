@@ -37,6 +37,9 @@ export const CRIME_CONSENT_MESSAGES = {
   documentFileNotReady: '동의서 파일 준비가 아직 끝나지 않았어요. 잠시 후 다시 시도해 주세요.',
   retentionExpired: '보관 기간이 지나 동의서를 다운로드할 수 없어요.',
   downloadFailed: '업로드한 동의서를 다운로드하지 못했어요. 잠시 후 다시 시도해 주세요.',
+  formFileUnavailable:
+    '게시된 동의서 양식 파일을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.',
+  formFileFallbackName: '성범죄 경력 조회 동의서_양식.pdf',
   unauthorized: '로그인이 만료되었어요. 다시 로그인한 뒤 시도해 주세요.',
   forbidden: '이 동의서에 접근할 권한이 없어요.',
 } as const

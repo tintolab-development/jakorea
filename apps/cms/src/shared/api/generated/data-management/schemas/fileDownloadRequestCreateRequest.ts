@@ -21,4 +21,6 @@ export interface FileDownloadRequestCreateRequest {
      * @minimum 1
      */
   expiresInMinutes?: number;
+  /** 민감 파일 일회성 암호. write-only. */
+  password?: string;
 }

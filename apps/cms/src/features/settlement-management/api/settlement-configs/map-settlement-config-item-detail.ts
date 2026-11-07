@@ -3,6 +3,7 @@ import {
   getCatalogSettlementItemSettingDetailByWageType,
   getCatalogSettlementItemSettingDetailForDeduction,
   parseEditableLines,
+  sanitizeSettlementConfigLines,
   type SettlementItemSettingDetail,
 } from '@/features/settlement-management/model/settlement-item-setting-detail'
 import type {
@@ -35,7 +36,9 @@ function readStringArray(value: unknown): string[] {
     return parseEditableLines(value)
   }
   if (!Array.isArray(value)) return []
-  return value.filter((line): line is string => typeof line === 'string' && line.trim().length > 0)
+  return sanitizeSettlementConfigLines(
+    value.filter((line): line is string => typeof line === 'string')
+  )
 }
 
 function firstLines(...values: unknown[]): string[] {
@@ -85,16 +88,31 @@ export function evidenceRequiredYnFromSubmission(
 }
 
 function readTransportMode(value: unknown): SettlementItemSettingDetail['transportCommuteMode'] {
-  if (value === 'private_car' || value === 'public_transit' || value === 'user_choice') {
+  // BE seed: private_car | public_transit only (user_choice는 FE opaque, 읽지 않음)
+  if (value === 'private_car' || value === 'public_transit') {
     return value
   }
   return undefined
 }
 
-function normalizeLayout(layout: string | undefined): SettlementItemSettingDetail['layout'] {
+function normalizeLayout(layout: string | null | undefined): SettlementItemSettingDetail['layout'] {
   const normalized = layout?.trim()
   if (!normalized) return 'simple'
+  // legacy wire alias → BE canonical `activity`
+  if (normalized === 'volunteerActivity') return 'activity'
   return normalized as SettlementItemSettingDetail['layout']
+}
+
+function preferCatalogLayout(
+  mappedLayout: SettlementItemSettingDetail['layout'],
+  catalogLayout: SettlementItemSettingDetail['layout']
+): SettlementItemSettingDetail['layout'] {
+  // ACTIVITY: meal 등 잘못된 layout → catalog `activity` (wire에 volunteerActivity 강제 금지)
+  if (catalogLayout === 'activity' && mappedLayout !== 'activity') {
+    return catalogLayout
+  }
+  if (mappedLayout === 'simple') return catalogLayout
+  return mappedLayout
 }
 
 function fillEmptyFromCatalog(
@@ -104,7 +122,7 @@ function fillEmptyFromCatalog(
   return {
     ...catalog,
     ...mapped,
-    layout: mapped.layout === 'simple' ? catalog.layout : mapped.layout,
+    layout: preferCatalogLayout(mapped.layout, catalog.layout),
     qualificationLines:
       mapped.qualificationLines.length > 0 ? mapped.qualificationLines : catalog.qualificationLines,
     remarkLines: mapped.remarkLines.length > 0 ? mapped.remarkLines : catalog.remarkLines,
@@ -117,6 +135,14 @@ function fillEmptyFromCatalog(
     geminiSession2Won: mapped.geminiSession2Won ?? catalog.geminiSession2Won,
     geminiSession3Won: mapped.geminiSession3Won ?? catalog.geminiSession3Won,
     geminiSession4Won: mapped.geminiSession4Won ?? catalog.geminiSession4Won,
+    geminiSession1UniversityWon:
+      mapped.geminiSession1UniversityWon ?? catalog.geminiSession1UniversityWon,
+    geminiSession2UniversityWon:
+      mapped.geminiSession2UniversityWon ?? catalog.geminiSession2UniversityWon,
+    geminiSession3UniversityWon:
+      mapped.geminiSession3UniversityWon ?? catalog.geminiSession3UniversityWon,
+    geminiSession4UniversityWon:
+      mapped.geminiSession4UniversityWon ?? catalog.geminiSession4UniversityWon,
     withholdingExclusionMaxWon:
       mapped.withholdingExclusionMaxWon === undefined
         ? catalog.withholdingExclusionMaxWon
@@ -125,10 +151,6 @@ function fillEmptyFromCatalog(
       mapped.withholdingEarnedIncomeDeductionWon === undefined
         ? catalog.withholdingEarnedIncomeDeductionWon
         : mapped.withholdingEarnedIncomeDeductionWon,
-    withholdingTaxRateDailyWorker:
-      mapped.withholdingTaxRateDailyWorker === undefined
-        ? catalog.withholdingTaxRateDailyWorker
-        : mapped.withholdingTaxRateDailyWorker,
     withholdingTaxRateBusiness:
       mapped.withholdingTaxRateBusiness === undefined
         ? catalog.withholdingTaxRateBusiness
@@ -145,10 +167,7 @@ function fillEmptyFromCatalog(
       mapped.withholdingTaxRateInterview === undefined
         ? catalog.withholdingTaxRateInterview
         : mapped.withholdingTaxRateInterview,
-    withholdingEarnedIncomeTaxCreditRate:
-      mapped.withholdingEarnedIncomeTaxCreditRate === undefined
-        ? catalog.withholdingEarnedIncomeTaxCreditRate
-        : mapped.withholdingEarnedIncomeTaxCreditRate,
+    // DEPRECATED: withholdingTaxRateDailyWorker / withholdingEarnedIncomeTaxCreditRate — 업서트·카탈로그 채움 안 함
   }
 }
 
@@ -157,18 +176,41 @@ function geminiSessionsFromWageItem(
   detail: Record<string, unknown>
 ): Pick<
   SettlementItemSettingDetail,
-  'geminiSession1Won' | 'geminiSession2Won' | 'geminiSession3Won' | 'geminiSession4Won'
+  | 'geminiSession1Won'
+  | 'geminiSession2Won'
+  | 'geminiSession3Won'
+  | 'geminiSession4Won'
+  | 'geminiSession1UniversityWon'
+  | 'geminiSession2UniversityWon'
+  | 'geminiSession3UniversityWon'
+  | 'geminiSession4UniversityWon'
 > {
   const fromJson = {
     geminiSession1Won: readNumber(detail.session1Won),
     geminiSession2Won: readNumber(detail.session2Won),
     geminiSession3Won: readNumber(detail.session3Won),
     geminiSession4Won: readNumber(detail.session4Won),
+    geminiSession1UniversityWon: readNumber(
+      detail.session1UniversityWon ?? detail.session1CollegeWon
+    ),
+    geminiSession2UniversityWon: readNumber(
+      detail.session2UniversityWon ?? detail.session2CollegeWon
+    ),
+    geminiSession3UniversityWon: readNumber(
+      detail.session3UniversityWon ?? detail.session3CollegeWon
+    ),
+    geminiSession4UniversityWon: readNumber(
+      detail.session4UniversityWon ?? detail.session4CollegeWon
+    ),
   }
 
-  const rateByUnit = new Map(
-    (item.rateItems ?? []).map(rate => [rate.unitCount ?? 0, rate.amount ?? 0])
-  )
+  const rateByUnit = new Map<number, number>()
+  for (const rate of item.rateItems ?? []) {
+    const unit = readNumber(rate.unitCount)
+    const amount = readNumber(rate.amount)
+    if (unit == null || amount == null) continue
+    rateByUnit.set(unit, amount)
+  }
 
   return {
     geminiSession1Won:
@@ -179,12 +221,17 @@ function geminiSessionsFromWageItem(
       fromJson.geminiSession3Won ?? (rateByUnit.has(3) ? rateByUnit.get(3)! : null),
     geminiSession4Won:
       fromJson.geminiSession4Won ?? (rateByUnit.has(4) ? rateByUnit.get(4)! : null),
+    geminiSession1UniversityWon: fromJson.geminiSession1UniversityWon,
+    geminiSession2UniversityWon: fromJson.geminiSession2UniversityWon,
+    geminiSession3UniversityWon: fromJson.geminiSession3UniversityWon,
+    geminiSession4UniversityWon: fromJson.geminiSession4UniversityWon,
   }
 }
 
 export function mapWageItemToSettingDetail(item: WageItemResponse): SettlementItemSettingDetail {
   const extra = asRecord(item)
   const detail = parseDetailJson(item.detailJson ?? extra.detail_json)
+  const catalog = getCatalogSettlementItemSettingDetailByWageType(item.wageItemType)
   const layout = normalizeLayout(item.layout ?? (extra.layout as string | undefined))
   const compareKind =
     detail.compareKind === 'exceed' || detail.compareKind === 'below'
@@ -198,7 +245,7 @@ export function mapWageItemToSettingDetail(item: WageItemResponse): SettlementIt
 
   const basisHours =
     firstNumber(item.basisHours, extra.basis_hours, detail.basisHours) ??
-    (layout === 'transport' ? readNumber(detail.minDistanceKm ?? detail.minOneWayKm) : null) ??
+    (layout === 'transport' ? readNumber(detail.minOneWayKm ?? detail.minDistanceKm) : null) ??
     1
 
   const mapped: SettlementItemSettingDetail = {
@@ -206,32 +253,32 @@ export function mapWageItemToSettingDetail(item: WageItemResponse): SettlementIt
     basisUnit:
       item.calculationUnit?.trim() ||
       (extra.calculation_unit as string | undefined)?.trim() ||
+      catalog.basisUnit ||
       '전체',
     basisHours,
     compareKind,
     maxLimitWon,
     basicFeeWon: readNumber(detail.basicFeeWon),
     longDistanceFeeWon: readNumber(detail.longDistanceFeeWon),
+    // 임금: detailJson.qualificationLines / remarkLines 가 있으면 그대로 (카탈로그·top-level보다 우선)
     qualificationLines: firstLines(
-      item.qualificationLines,
-      extra.qualification_lines,
       detail.qualificationLines,
-      detail.qualification_lines
+      detail.qualification_lines,
+      item.qualificationLines,
+      extra.qualification_lines
     ),
     remarkLines: firstLines(
-      item.remarkLines,
-      extra.remark_lines,
       detail.remarkLines,
-      detail.remark_lines
+      detail.remark_lines,
+      item.remarkLines,
+      extra.remark_lines
     ),
     ...geminiSessionsFromWageItem(item, detail),
   }
 
-  return fillEmptyFromCatalog(
-    mapped,
-    getCatalogSettlementItemSettingDetailByWageType(item.wageItemType)
-  )
+  return fillEmptyFromCatalog(mapped, catalog)
 }
+
 
 export function mapPaymentItemToSettingDetail(
   item: PaymentItemResponse
@@ -239,20 +286,12 @@ export function mapPaymentItemToSettingDetail(
   const extra = asRecord(item)
   const detail = parseDetailJson(item.detailJson ?? extra.detail_json)
   const layout = normalizeLayout(item.layout ?? (extra.layout as string | undefined))
-  const qualificationLines = firstLines(
-    extra.qualificationLines,
-    extra.qualification_lines,
-    detail.qualificationLines,
-    detail.qualification_lines
-  )
-  const remarkLines = firstLines(
-    extra.remarkLines,
-    extra.remark_lines,
-    detail.remarkLines,
-    detail.remark_lines
-  )
+  // 지급: top-level 없음 — detailJson.qualificationLines / remarkLines 만
+  const qualificationLines = firstLines(detail.qualificationLines, detail.qualification_lines)
+  const remarkLines = firstLines(detail.remarkLines, detail.remark_lines)
 
-  const minKm = readNumber(detail.minDistanceKm ?? detail.minOneWayKm)
+  // 거리 canonical: minOneWayKm → minDistanceKm → 30
+  const minKm = readNumber(detail.minOneWayKm ?? detail.minDistanceKm)
 
   const mapped: SettlementItemSettingDetail = {
     layout,
@@ -264,7 +303,9 @@ export function mapPaymentItemToSettingDetail(
           ? (readNumber(detail.basisHours) ?? 1)
           : 1,
     compareKind: 'standard',
+    // LODGING_1C1S: fixedAmountWon이 정본(시드). maxLimitWon/maxAmount는 fallback.
     maxLimitWon: firstNumber(
+      detail.fixedAmountWon,
       item.maxLimitWon,
       item.maxAmount,
       extra.max_limit_won,
@@ -272,10 +313,7 @@ export function mapPaymentItemToSettingDetail(
     ),
     basicFeeWon: null,
     longDistanceFeeWon: null,
-    qualificationLines:
-      item.paymentItemType === 'ACTIVITY' && qualificationLines.length === 0
-        ? ['참여자에게 지급되는 지원비']
-        : qualificationLines,
+    qualificationLines,
     remarkLines,
     transportCommuteMode: readTransportMode(
       detail.transportCommuteMode ?? extra.transportCommuteMode
@@ -289,9 +327,13 @@ export function mapPaymentItemToSettingDetail(
     mapped,
     getCatalogSettlementItemSettingDetailByPaymentType(item.paymentItemType)
   )
+  // evidenceRequiredYn이 있으면 mapped 값, 없으면 카탈로그(강사 교통=불필요 등) 유지
   return {
     ...filled,
-    evidenceSubmission: mapped.evidenceSubmission,
+    evidenceSubmission:
+      mapped.evidenceSubmission !== undefined
+        ? mapped.evidenceSubmission
+        : filled.evidenceSubmission,
   }
 }
 
@@ -313,32 +355,18 @@ export function mapDeductionItemToSettingDetail(
     maxLimitWon: null,
     basicFeeWon: null,
     longDistanceFeeWon: null,
-    qualificationLines: firstLines(
-      extra.qualificationLines,
-      extra.qualification_lines,
-      detail.qualificationLines,
-      detail.qualification_lines
-    ),
-    remarkLines: firstLines(
-      extra.remarkLines,
-      extra.remark_lines,
-      detail.remarkLines,
-      detail.remark_lines
-    ),
+    // 공제: top-level 없음 — detailJson.qualificationLines / remarkLines 만
+    qualificationLines: firstLines(detail.qualificationLines, detail.qualification_lines),
+    remarkLines: firstLines(detail.remarkLines, detail.remark_lines),
     withholdingExclusionMaxWon: readOptionalNumber(detail, 'withholdingExclusionMaxWon'),
     withholdingEarnedIncomeDeductionWon: readOptionalNumber(
       detail,
       'withholdingEarnedIncomeDeductionWon'
     ),
-    withholdingTaxRateDailyWorker: readOptionalNumber(detail, 'withholdingTaxRateDailyWorker'),
     withholdingTaxRateBusiness: readOptionalNumber(detail, 'withholdingTaxRateBusiness'),
     withholdingTaxRateOther: readOptionalNumber(detail, 'withholdingTaxRateOther'),
     withholdingTaxRatePrize: readOptionalNumber(detail, 'withholdingTaxRatePrize'),
     withholdingTaxRateInterview: readOptionalNumber(detail, 'withholdingTaxRateInterview'),
-    withholdingEarnedIncomeTaxCreditRate: readOptionalNumber(
-      detail,
-      'withholdingEarnedIncomeTaxCreditRate'
-    ),
   }
 
   const catalog = getCatalogSettlementItemSettingDetailForDeduction()

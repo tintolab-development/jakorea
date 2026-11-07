@@ -57,7 +57,10 @@ assert.equal(
 
 const contractErrorCases = [
   ['FORM_ANSWER_REQUIRED', '필수 입력값을 입력해 주세요.'],
+  ['FORM_REQUIRED_CONSENT_NOT_AGREED', '필수 동의 항목에 동의해 주세요.'],
+  ['FORM_ANSWER_TOO_LONG', '입력 가능한 글자 수를 초과했습니다. 1,000자 이하로 작성해 주세요.'],
   ['FORM_ANSWER_TYPE_INVALID', '입력 형식이 올바르지 않습니다.'],
+  ['FORM_BINDING_TARGET_ROLE_MISMATCH', '현재 참여 역할에 해당하지 않는 설문입니다.'],
   ['INVALID_REQUESTED_EDUCATION_FORMAT', '희망 교육 형태를 다시 확인해 주세요.'],
   ['FORM_OPTION_NOT_ALLOWED', '선택한 값은 사용할 수 없습니다.'],
   ['FORM_ANSWER_NOT_ALLOWED', '현재 제출할 수 없는 양식 항목입니다.'],
@@ -108,7 +111,12 @@ const contractErrorCases = [
     'CERTIFICATE_CONSENT_EVIDENCE_UNAVAILABLE',
     '수료증 발급 기간을 확인할 동의 또는 신청 정보가 없습니다.',
   ],
-  ['ISSUANCE_PERIOD_EXPIRED', '수료증 발급 기간이 만료되었습니다.'],
+  ['ISSUANCE_PERIOD_EXPIRED', '신청일로부터 3년이 지나 발급할 수 없습니다.'],
+  ['CERTIFICATE_APPLICATION_DATE_UNAVAILABLE', '신청일을 확인할 수 없습니다.'],
+  [
+    'MEMBER_PARTICIPATION_CERTIFICATE_SELF_ISSUE_NOT_ALLOWED',
+    '참가인증서는 회원·학생·교사가 직접 발급할 수 없습니다.',
+  ],
 ] as const
 
 for (const [code, message] of contractErrorCases) {
@@ -274,6 +282,8 @@ assert.equal(
 )
 
 assert.equal(isApplicationAnswerValidationErrorCode('FORM_ANSWER_REQUIRED'), true)
+assert.equal(isApplicationAnswerValidationErrorCode('FORM_REQUIRED_CONSENT_NOT_AGREED'), true)
+assert.equal(isApplicationAnswerValidationErrorCode('FORM_ANSWER_TOO_LONG'), true)
 assert.equal(isApplicationAnswerValidationErrorCode('RUNTIME_SCHEDULE_STALE'), false)
 assert.equal(
   isApplicationAnswerValidationErrorCode('PREFERRED_SCHEDULE_OUTSIDE_TRAINING_REQUEST_RANGE'),
@@ -403,6 +413,19 @@ assert.deepEqual(
   {
     'program-application-trained-teachers-seed-basic-info': '필수 입력값을 입력해 주세요.',
   },
+)
+
+assert.equal(
+  messageForApplicationBlockedReason('ABSENCE_REASON_NOT_ALLOWED'),
+  '출석 처리된 회차에는 불참 사유를 제출할 수 없습니다.',
+)
+assert.equal(
+  messageForApplicationBlockedReason('COMPLETION_CERTIFICATE_REQUIRED'),
+  '수료 조건을 충족한 뒤에는 수료증을 발급해 주세요.',
+)
+assert.equal(
+  messageForApplicationBlockedReason('PARTICIPATION_NOT_STARTED'),
+  '참가 이력이 없어 증명서를 발급할 수 없습니다.',
 )
 
 console.log('application-api-error.selfcheck: ok')

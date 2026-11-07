@@ -1,5 +1,6 @@
 import type { LectureReportProgramProgressParagraph } from '@jakorea/form-schema/writing-form'
 import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
+import hostStyles from '@/features/program/ui/apply-form-field-host.module.css'
 import { formatDisplayDate, toSeoulDateOnly } from '@/shared/lib/format-display-date'
 import {
   PFFormField,
@@ -15,6 +16,7 @@ export type LectureReportProgramProgressFieldProps = {
   paragraph: LectureReportProgramProgressParagraph
   onUpdateParagraph?: FormUpdateParagraph
   readOnly?: boolean
+  hideInstitutionFields?: boolean
 }
 
 function displayValue(value: string | undefined): string {
@@ -33,6 +35,7 @@ export function LectureReportProgramProgressField({
   paragraph,
   onUpdateParagraph,
   readOnly = false,
+  hideInstitutionFields = false,
 }: LectureReportProgramProgressFieldProps) {
   const autofillLocked = true
   const progressUnitEditable = !readOnly
@@ -47,7 +50,7 @@ export function LectureReportProgramProgressField({
   }
 
   return (
-    <PFFormFieldTable className={styles.table}>
+    <PFFormFieldTable className={[styles.table, hostStyles.root].join(' ')}>
       <PFFormFieldRow type="double">
         <PFFormField label="프로그램명">
           <PFTextInput
@@ -85,6 +88,7 @@ export function LectureReportProgramProgressField({
         </PFFormField>
       </PFFormFieldRow>
 
+      {hideInstitutionFields ? null : (
       <PFFormFieldRow type="double">
         <PFFormField label="기관명">
           <PFTextInput
@@ -109,6 +113,7 @@ export function LectureReportProgramProgressField({
           />
         </PFFormField>
       </PFFormFieldRow>
+      )}
 
       <PFFormFieldRow type="double">
         <PFFormField label="교육 진행일">

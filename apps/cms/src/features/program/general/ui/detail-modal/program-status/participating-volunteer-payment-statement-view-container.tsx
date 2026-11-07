@@ -8,13 +8,15 @@ import {
   downloadPaymentStatementRemote,
   fetchSettlementDetailRemote,
 } from '@/features/settlement-management/api/settlement-api-client'
-import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
+import {
+  getSettlementApiErrorMessage,
+  isFileDownloadPasswordApiError,
+} from '@/features/settlement-management/api/get-settlement-api-error'
 import { buildPaymentStatementPreviewOptionsFromSettlement } from '@/features/program/general/lib/map-settlement-to-payment-statement-preview-options'
 import {
   PAYMENT_STATEMENT_ISSUANCE_DOCUMENT_TITLE,
 } from '@/features/program/general/lib/participating-instructor-payment-statement-issuance-view'
 import { PaymentStatementIssuanceViewModal } from '@/features/program/shared/ui/payment-statement-issuance-view-modal'
-import { downloadFromBulkEndpoint } from '@/features/user/api/download-bulk-endpoint'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import {
   isPaymentStatementApplicationMissing,
@@ -25,7 +27,7 @@ function sanitizeFileNamePart(value: string): string {
   return value.replace(/[\\/:*?"<>|]/g, '_').trim()
 }
 
-function volunteerToPaymentStatementInstructorShape(
+export function volunteerToPaymentStatementInstructorShape(
   volunteer: ParticipatingVolunteerRow
 ): ParticipatingInstructorRow {
   return {
@@ -151,28 +153,19 @@ export function useParticipatingVolunteerPaymentStatementView(input: {
     handleClose()
   }, [detailQuery.error, detailQuery.isError, handleClose, open, showAlert])
 
-  const handleDownloadPdf = useCallback(async () => {
+  const handleDownloadPdf = useCallback(async (password: string) => {
     if (!activeRow || downloadLoading) return
     setDownloadLoading(true)
     try {
-      const response = await downloadPaymentStatementRemote(activeRow.settlementId)
-      if (response.downloadUrl) {
-        await downloadFromBulkEndpoint(
-          response.downloadUrl,
-          fileName ?? `지급조서_${activeRow.settlementId}`,
-          'pdf'
-        )
-        return
-      }
-      showAlert({
-        title: '안내',
-        content: '다운로드 URL을 받지 못했습니다. 잠시 후 다시 시도해 주세요.',
-      })
+      await downloadPaymentStatementRemote(activeRow.settlementId, { password })
     } catch (error) {
-      showAlert({
-        title: '안내',
-        content: getSettlementApiErrorMessage(error, '지급조서 다운로드에 실패했습니다.'),
-      })
+      if (!isFileDownloadPasswordApiError(error)) {
+        showAlert({
+          title: '안내',
+          content: getSettlementApiErrorMessage(error, '지급조서 다운로드에 실패했습니다.'),
+        })
+      }
+      throw error
     } finally {
       setDownloadLoading(false)
     }

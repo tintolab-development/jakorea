@@ -19,14 +19,21 @@ function buildFilledDocument(
     (consentKey === 'consentReceiptPreConsent'
       ? 'agreement-receipt-pre-consent'
       : resolveInstructorApplyConsentTemplate(consentKey).templateId)
-  const omitPaymentBasicInfo = templateCode === 'agreement-receipt-pre-consent'
+  const allowPaymentBasicInfo =
+    templateCode === 'agreement-third-party' ||
+    templateCode === 'document-payment-order-pre-consent' ||
+    templateCode === 'agreement-receipt-pre-consent'
+  const paymentBasicInfo =
+    allowPaymentBasicInfo &&
+    state.paymentBasicInfo &&
+    Object.keys(state.paymentBasicInfo).length > 0
+      ? state.paymentBasicInfo
+      : undefined
   return {
     templateVersionId: state.portalDocument?.templateVersionId,
     templateCode,
     schemaJson: state.draft,
-    ...(!omitPaymentBasicInfo && state.paymentBasicInfo
-      ? { paymentBasicInfo: state.paymentBasicInfo }
-      : {}),
+    ...(paymentBasicInfo ? { paymentBasicInfo } : {}),
   }
 }
 
@@ -139,6 +146,18 @@ const receiptFilled = buildFilledDocument('consentReceiptPreConsent', {
 })
 assert.equal(receiptFilled.templateCode, 'agreement-receipt-pre-consent')
 assert.equal(receiptFilled.templateVersionId, 123)
-assert.equal('paymentBasicInfo' in receiptFilled, false)
+assert.equal(receiptFilled.paymentBasicInfo?.nameKo, '이건희')
+
+const expenseFilled = buildFilledDocument('consentEducatorPledge', {
+  ...state,
+  paymentBasicInfo: {},
+  portalDocument: {
+    documentId: 61,
+    templateVersionId: 61,
+    templateCode: 'agreement-expense',
+  },
+})
+assert.equal(expenseFilled.templateCode, 'agreement-expense')
+assert.equal('paymentBasicInfo' in expenseFilled, false)
 
 console.log('portal-consent-template-version.selfcheck: ok')

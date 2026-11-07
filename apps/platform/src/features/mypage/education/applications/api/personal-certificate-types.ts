@@ -3,7 +3,12 @@
  * CertificateIssueRequest / CertificateIssueResponse (포털 me 경로).
  */
 
-export type PortalPersonalCertificateType = 'AUTO' | 'COMPLETION' | 'PARTICIPATION' | string
+export type PortalPersonalCertificateType =
+  | 'AUTO'
+  | 'COMPLETION'
+  | 'PARTICIPATION'
+  | 'INSTRUCTOR_ACTIVITY'
+  | 'VOLUNTEER_ACTIVITY'
 
 export type PortalCertificateIssueReason =
   | 'INSTITUTION_SUBMISSION'
@@ -30,14 +35,13 @@ export type MemberCertificateAvailabilityResponse = {
 export type PortalCertificateIssueRequest = {
   programId: number
   participantId: number
-  /** 생략 또는 AUTO → 서버가 COMPLETION/PARTICIPATION 결정 */
+  /** 포털 발급은 COMPLETION만. PARTICIPATION 자가 발급은 보내지 않는다. */
   certificateType?: PortalPersonalCertificateType
   issueReason?: PortalCertificateIssueReason
 }
 
 export type PortalCertificateIssueResponse = {
-  /** OpenAPI CertificateIssueResponse.issueId — 일부 응답은 certificateIssueId */
-  issueId?: number
+  /** 포털 발급 응답 SSOT. OpenAPI/도메인 issueId 와 동일 값. */
   certificateIssueId?: number
   programId?: number
   participantId?: number
@@ -55,7 +59,7 @@ export function readPortalCertificateIssueId(
   response: PortalCertificateIssueResponse | null | undefined,
 ): number | null {
   if (!response) return null
-  const raw = response.certificateIssueId ?? response.issueId
+  const raw = response.certificateIssueId
   const id = typeof raw === 'number' ? raw : Number(raw)
   return Number.isInteger(id) && id > 0 ? id : null
 }

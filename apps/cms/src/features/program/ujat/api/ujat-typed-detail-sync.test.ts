@@ -72,7 +72,7 @@ describe('syncStoredUjatTypedHalves', () => {
         excludeNone: false,
         excludeSaturday: true,
         excludeSunday: true,
-        excludePublicHoliday: false,
+        excludeHoliday: false,
       },
     })
     expect(result).toEqual({ sentHalves: ['FIRST_HALF'], revision: 4 })

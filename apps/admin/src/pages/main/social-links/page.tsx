@@ -201,7 +201,7 @@ export function SocialLinksPage() {
         render: (_value, record) =>
           isEditing ? (
             <CmsInput
-              inputSize="medium"
+              inputSize="small"
               width="100%"
               value={draftUrls[record.id] ?? record.linkUrl}
               onChange={e => handleDraftChange(record.id, e.target.value)}

@@ -1,3 +1,5 @@
+import { formatAssignmentEducationUnitLabel } from './instructor-education-schedule-display.ts'
+
 const INSTITUTION_ASSIGNMENT_PROGRAM_TYPES = new Set([
   'GENERAL_ORGANIZATION',
   'GEMINI_TRAINING',
@@ -168,13 +170,20 @@ export function sortAssignmentWaitingItems<T extends { status: unknown; startAt?
 }
 
 /**
- * 교육 일정 줄의 차시 자리 표시.
- * 일정형 + 복수 회차는 차시/회차 대신 일정명, 그 외는 `N차시`. 값이 없으면 '-'.
+ * 교육 일정 줄의 회차·차시·사전교육 자리.
+ * 일정형 + 복수 회차는 일정명 우선. 사전교육 canonical은 일정명보다 앞선다.
+ * sessionNo는 회차이며 차시로 쓰지 않는다.
  */
 export function formatAssignmentSessionLabel(
-  item: { sessionNo: number | null; scheduleName: string | null },
+  item: {
+    sessionNo: number | null
+    scheduleName: string | null
+    scheduleRole?: string | null
+    educationSlotKey?: string | null
+    scheduleKind?: string | null
+    curriculumSessionCount?: number | null
+  },
   useScheduleName: boolean,
 ): string {
-  if (useScheduleName) return asAssignmentDisplayText(item.scheduleName) || '-'
-  return item.sessionNo != null ? `${item.sessionNo}차시` : '-'
+  return formatAssignmentEducationUnitLabel(item, useScheduleName)
 }

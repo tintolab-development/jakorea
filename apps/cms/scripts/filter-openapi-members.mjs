@@ -2,7 +2,7 @@
  * 회원 관리 API 연동용 OpenAPI 부분집합 생성
  * `openapi/backend.openapi.json` → `openapi/members.openapi.json`
  */
-import { readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { normalizeOpenApiSchemaNode } from './lib/normalize-openapi-schema-for-orval.mjs'
@@ -39,7 +39,7 @@ const subset = {
   ...spec,
   info: {
     ...spec.info,
-    title: `${spec.info?.title ?? 'API'} — Members subset`,
+    title: 'JA Korea CMS Backend API — Members subset',
     description: 'Filtered for CMS member management Orval codegen.',
   },
   paths: filteredPaths,
@@ -52,6 +52,16 @@ if (bearer && bearer.type === 'http' && 'name' in bearer) {
 }
 
 normalizeOpenApiSchemaNode(subset)
+
+if (existsSync(outputPath)) {
+  const previous = JSON.parse(readFileSync(outputPath, 'utf8'))
+  const prevUser = previous.components?.schemas?.UserResponse
+  const nextUser = subset.components?.schemas?.UserResponse
+  if (prevUser?.properties && nextUser?.properties) {
+    nextUser.properties = { ...prevUser.properties, ...nextUser.properties }
+    delete nextUser.additionalProperties
+  }
+}
 
 writeFileSync(outputPath, `${JSON.stringify(subset, null, 2)}\n`)
 console.log(`Wrote ${outputPath} (${Object.keys(filteredPaths).length} paths)`)

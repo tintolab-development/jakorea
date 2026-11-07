@@ -465,6 +465,21 @@ describe('company-school adapters', () => {
       rounds: [{ ...withContact.rounds[0], id: '186592' }],
     })
     expect(withPersistedRound.rounds?.[0]?.id).toBe('186592')
+    const fromGet = mapCompanySchoolDetailToProgram({
+      id: '186551',
+      title: withContact.title,
+      rounds: [
+        {
+          id: '187700',
+          roundNumber: 1,
+          startDate: '2026-01-01T00:00:00.000Z',
+          endDate: '2026-12-31T23:59:59.999Z',
+          status: 'active',
+        },
+      ],
+    } as ProgramResponse)
+    expect(fromGet.rounds[0]?.id).toBe('187700')
+    expect(mapCompanySchoolToUpdateRequest(fromGet).rounds?.[0]?.id).toBe('187700')
     expect(request.managerName).toBe('홍길동')
     expect(request.contactPhone).toBe('010-1234-5678')
     expect(request.curriculum).toBe('company-school-curriculum')

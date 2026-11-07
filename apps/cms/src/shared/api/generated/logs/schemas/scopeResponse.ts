@@ -7,6 +7,9 @@
  */
 import type { ScheduleEnrich } from './scheduleEnrich';
 
+/**
+ * 참여자 교육 범위. CMS OpenAPI의 CmsParticipantEducationScopeResponse와 동일 계약이다.
+ */
 export interface ScopeResponse {
   programId?: number;
   participantId?: number;

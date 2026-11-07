@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { platformQueryKeys } from '@/shared/api/query-keys'
 import { getAccessToken } from '@/shared/lib/auth-token'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
+import { queryRetryDelay, shouldRetryQuery } from '@/shared/lib/query-retry'
 import type { ProgramApplicationType } from './types'
 import {
   fetchAssignedInstructors,
@@ -38,6 +39,8 @@ export function useAssignedInstructorsQuery(
     enabled,
     staleTime: 60_000,
     gcTime: 10 * 60_000,
+    retry: shouldRetryQuery,
+    retryDelay: queryRetryDelay,
     refetchOnWindowFocus: false,
   })
 

@@ -134,6 +134,141 @@ describe('saveProgramScopedOperationalFormVersion', () => {
     ).toEqual({ templateId: 88, templateVersionId: 880 })
   })
 
+  it('registration-general(template 1)은 versions/copy 하지 않는다', async () => {
+    resolveFormTemplateCatalogIds.mockResolvedValue({ templateId: 1, templateVersionId: 11 })
+    const saved = await saveProgramScopedOperationalFormVersion({
+      program: { id: '186547' } as Program,
+      templateCode: 'registration-general',
+      versionId: 11,
+      draft: userDraft,
+    })
+    expect(copyFormTemplateVersionRemote).not.toHaveBeenCalled()
+    expect(saveFormTemplateVersionDraftByVersionId).not.toHaveBeenCalled()
+    expect(saved).toEqual({ templateId: 1, templateVersionId: 11 })
+  })
+
+  it('registration-ujat(template 3)은 versions/copy 하지 않는다', async () => {
+    resolveFormTemplateCatalogIds.mockResolvedValue({ templateId: 3, templateVersionId: 31 })
+    const saved = await saveProgramScopedOperationalFormVersion({
+      program: { id: '186558' } as Program,
+      templateCode: 'registration-ujat',
+      versionId: 31,
+      draft: userDraft,
+    })
+    expect(copyFormTemplateVersionRemote).not.toHaveBeenCalled()
+    expect(saveFormTemplateVersionDraftByVersionId).not.toHaveBeenCalled()
+    expect(saved).toEqual({ templateId: 3, templateVersionId: 31 })
+  })
+
+  it('PUT FORM_VERSION_IMMUTABLE이면 같은 copy 본문으로 새 DRAFT id를 받아 PUT을 재시도한다', async () => {
+    fetchFormTemplateVersionRemote.mockResolvedValue({
+      templateId: 19,
+      templateVersionId: 73,
+      versionStatus: 'PUBLISHED',
+      templateScope: 'CATALOG',
+      ownerProgramId: null,
+    })
+    resolveFormTemplateCatalogIds.mockResolvedValue({ templateId: 19, templateVersionId: 73 })
+    copyFormTemplateVersionRemote
+      .mockResolvedValueOnce({
+        templateId: 88,
+        templateVersionId: 2682,
+        versionStatus: 'DRAFT',
+      })
+      .mockResolvedValueOnce({
+        templateId: 88,
+        templateVersionId: 9001,
+        versionStatus: 'DRAFT',
+      })
+    saveFormTemplateVersionDraftByVersionId
+      .mockRejectedValueOnce({
+        response: { data: { error: { code: 'FORM_VERSION_IMMUTABLE' } } },
+      })
+      .mockResolvedValueOnce(undefined)
+    publishFormTemplateVersionById.mockResolvedValue(9001)
+
+    await saveProgramScopedOperationalFormVersion({
+      program: { id: '186558', backendProgramType: 'UJAT' } as Program,
+      templateCode: 'application-ujat-volunteer',
+      versionId: 73,
+      draft: userDraft,
+      ownerProgramId: 186558,
+    })
+
+    expect(copyFormTemplateVersionRemote).toHaveBeenCalledTimes(2)
+    expect(copyFormTemplateVersionRemote).toHaveBeenNthCalledWith(1, 19, {
+      sourceVersionId: 73,
+      versionLabel: 'program-186558',
+      ownerProgramId: 186558,
+    })
+    expect(copyFormTemplateVersionRemote).toHaveBeenNthCalledWith(2, 19, {
+      sourceVersionId: 73,
+      versionLabel: 'program-186558',
+      ownerProgramId: 186558,
+    })
+    expect(saveFormTemplateVersionDraftByVersionId).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ versionId: 2682 })
+    )
+    expect(saveFormTemplateVersionDraftByVersionId).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ versionId: 9001 })
+    )
+    expect(publishFormTemplateVersionById).toHaveBeenCalledWith(9001)
+    expect(saveFormTemplateVersionDraftByVersionId).not.toHaveBeenCalledWith(
+      expect.objectContaining({ versionId: 73 })
+    )
+  })
+
+  it('같은 VOLUNTEER APPLICATION 슬롯은 POST를 반복하지 않고 PATCH한다', async () => {
+    fetchFormTemplateVersionRemote.mockResolvedValue({
+      templateId: 19,
+      templateVersionId: 73,
+      versionStatus: 'PUBLISHED',
+      templateScope: 'CATALOG',
+      ownerProgramId: null,
+    })
+    resolveFormTemplateCatalogIds.mockResolvedValue({ templateId: 19, templateVersionId: 73 })
+    copyFormTemplateVersionRemote.mockResolvedValue({
+      templateId: 88,
+      templateVersionId: 9001,
+      versionStatus: 'DRAFT',
+    })
+    publishFormTemplateVersionById.mockResolvedValue(9001)
+    fetchGeneralProgramFormBindings.mockResolvedValue([
+      {
+        bindingId: 11,
+        active: true,
+        formType: 'APPLICATION',
+        targetType: 'VOLUNTEER',
+        targetScope: 'PROGRAM',
+        templateId: 19,
+        templateVersionId: 73,
+      },
+      {
+        bindingId: 12,
+        active: true,
+        formType: 'APPLICATION',
+        targetType: 'VOLUNTEER',
+        targetScope: 'PROGRAM',
+        templateId: 19,
+        templateVersionId: 73,
+        updatedAt: '2026-11-07T00:00:00+09:00',
+      },
+    ])
+
+    await saveProgramScopedOperationalFormVersion({
+      program: { id: '186558', backendProgramType: 'UJAT' } as Program,
+      templateCode: 'application-ujat-volunteer',
+      versionId: 73,
+      draft: userDraft,
+      ownerProgramId: 186558,
+    })
+
+    expect(createGeneralProgramFormBinding).not.toHaveBeenCalled()
+    expect(updateGeneralProgramFormBinding).toHaveBeenCalledTimes(1)
+  })
+
   it('copies even a DRAFT version when ownership is unknown (always COPY — shared data guard)', async () => {
     fetchFormTemplateVersionRemote.mockResolvedValue({
       templateId: 10,
@@ -329,7 +464,7 @@ describe('saveProgramScopedOperationalFormVersion', () => {
     expect(publishFormTemplateVersionById).toHaveBeenCalledWith(94)
   })
 
-  it('프로그램 전용 PUBLISHED면 copyVersion 대신 같은 템플릿에 DRAFT version을 추가한다', async () => {
+  it('프로그램 전용 PUBLISHED면 카탈로그 copy로 새 DRAFT id를 받아 PUT한다', async () => {
     fetchFormTemplateVersionRemote.mockResolvedValue({
       templateId: 88,
       templateVersionId: 94,
@@ -337,7 +472,11 @@ describe('saveProgramScopedOperationalFormVersion', () => {
       templateScope: 'PROGRAM',
       ownerProgramId: 186363,
     })
-    createFormTemplateVersionRemote.mockResolvedValue({ templateId: 88, templateVersionId: 9402 })
+    copyFormTemplateVersionRemote.mockResolvedValue({
+      templateId: 88,
+      templateVersionId: 9402,
+      versionStatus: 'DRAFT',
+    })
     publishFormTemplateVersionById.mockResolvedValue(9402)
     resolveFormTemplateCatalogIds.mockResolvedValue({ templateId: 10, templateVersionId: 100 })
 
@@ -349,11 +488,12 @@ describe('saveProgramScopedOperationalFormVersion', () => {
       ownerProgramId: 186363,
     })
 
-    expect(copyFormTemplateVersionRemote).not.toHaveBeenCalled()
-    expect(createFormTemplateVersionRemote).toHaveBeenCalledWith(88, {
+    expect(copyFormTemplateVersionRemote).toHaveBeenCalledWith(10, {
+      sourceVersionId: 100,
       versionLabel: 'program-186363',
-      sourceVersionId: 94,
+      ownerProgramId: 186363,
     })
+    expect(createFormTemplateVersionRemote).not.toHaveBeenCalled()
     expect(saveFormTemplateVersionDraftByVersionId).toHaveBeenCalledWith(
       expect.objectContaining({ versionId: 9402 })
     )
@@ -388,10 +528,10 @@ describe('saveProgramScopedOperationalFormVersion', () => {
       ownerProgramId: 186363,
     })
 
-    expect(copyFormTemplateVersionRemote).not.toHaveBeenCalled()
-    expect(createFormTemplateVersionRemote).toHaveBeenCalledWith(88, {
+    expect(copyFormTemplateVersionRemote).toHaveBeenCalled()
+    expect(createFormTemplateVersionRemote).toHaveBeenCalledWith(10, {
       versionLabel: 'program-186363',
-      sourceVersionId: 94,
+      sourceVersionId: 100,
     })
   })
 

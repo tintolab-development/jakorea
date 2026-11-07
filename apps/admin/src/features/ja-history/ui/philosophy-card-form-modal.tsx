@@ -1,5 +1,4 @@
 import { memo, useCallback, useRef, useState } from 'react'
-import { Image } from 'antd'
 import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
 import type { JaHistoryPhilosophyCard } from '@/entities/ja-history/model/types'
@@ -12,6 +11,7 @@ import {
   FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
   isFileSelectTotalSizeExceeded,
   notifyFileSelectTotalSizeExceeded,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   useCmsAlert,
 } from '@/shared/ui'
 import { isAllowedJaHistoryImage, JA_HISTORY_IMAGE_ACCEPT, readJaHistoryImage } from './image-file'
@@ -132,7 +132,7 @@ function PhilosophyCardFormBody({
     if (!title.trim()) nextErrors.title = '타이틀을 입력해 주세요.'
     if (!description.trim()) nextErrors.description = '서브 텍스트를 입력해 주세요.'
     if (Object.keys(nextErrors).length > 0) {
-      setErrors(nextErrors)
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     onSubmit({
@@ -205,7 +205,7 @@ function PhilosophyCardFormBody({
                 <div className="file-select-image-cell">
                   <div className="file-select-image-cell__preview">
                     {imageUrl ? (
-                      <Image src={imageUrl} alt="교육 카드 미리보기" preview={{ mask: '이미지 보기' }} />
+                      <img src={imageUrl} alt="교육 카드 미리보기" />
                     ) : (
                       <span>없음</span>
                     )}

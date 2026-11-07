@@ -8,7 +8,10 @@ import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import type { PiiAccessListFilter, PiiAccessLog } from '@/entities/pii-access-log/model/types'
 import { useExportPiiAccessLogs, usePiiAccessLogsList } from '@/features/pii-access-log/api/hooks'
+import { displayLogField } from '@/features/logs/shared/lib/display-log-field'
 import { formatLogDateTime } from '@/features/logs/shared/lib/format-datetime'
+import { LogListAccessDenied } from '@/features/logs/shared/ui/log-list-access-denied'
+import { isAdminForbidden } from '@/features/system-inbox/lib/http-status'
 import {
   logListRowNumber,
   logTablePagination,
@@ -169,6 +172,7 @@ export function PiiAccessLogPage() {
   const total = listQuery.data?.total ?? 0
   const page = appliedFilter.page ?? 0
   const loading = listQuery.isLoading || listQuery.isFetching
+  const forbidden = isAdminForbidden(listQuery.error)
 
   const handlePageChange = useCallback(
     (nextPage: number) => {
@@ -201,6 +205,7 @@ export function PiiAccessLogPage() {
         key: 'targetName',
         width: COL.targetName,
         ellipsis: true,
+        render: (v: string) => displayLogField(v),
       },
       {
         title: '조회 목적',
@@ -208,6 +213,7 @@ export function PiiAccessLogPage() {
         key: 'purpose',
         width: COL.purpose,
         ellipsis: true,
+        render: (v: string) => displayLogField(v),
       },
       {
         title: '조회자명',
@@ -215,23 +221,29 @@ export function PiiAccessLogPage() {
         key: 'accessorName',
         width: COL.accessorName,
         ellipsis: true,
+        render: (v: string) => displayLogField(v),
       },
       {
         title: '조회 일시',
         dataIndex: 'accessedAt',
         key: 'accessedAt',
         width: COL.accessedAt,
-        render: (v: string) => formatLogDateTime(v),
+        render: (v: string) => (v?.trim() ? formatLogDateTime(v) : '-'),
       },
       {
         title: 'IP',
         dataIndex: 'ip',
         key: 'ip',
         width: COL.ip,
+        render: (v: string) => displayLogField(v),
       },
     ],
     [total, page]
   )
+
+  if (forbidden) {
+    return <LogListAccessDenied />
+  }
 
   return (
     <div className="log-list-page">

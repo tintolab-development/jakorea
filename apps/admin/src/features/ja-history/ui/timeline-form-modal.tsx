@@ -1,5 +1,4 @@
 import { memo, useCallback, useRef, useState } from 'react'
-import { Image } from 'antd'
 import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
 import type {
@@ -212,11 +211,16 @@ function TimelineFormBody({
       }
     })
 
-    if (Object.keys(nextErrors).length > 0 || alertMessage) {
-      setErrors(nextErrors)
+    if (Object.keys(nextErrors).length > 0) {
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+      return
+    }
+    if (alertMessage) {
       if (alertPeriodId) setActiveId(alertPeriodId)
-      if (alertMessage) {
+      if (alertMessage.includes('함께 입력')) {
         showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+      } else {
+        showAlert({ title: '입력 확인', content: alertMessage })
       }
       return
     }
@@ -274,11 +278,7 @@ function TimelineFormBody({
                 <div className="file-select-image-cell">
                   <div className="file-select-image-cell__preview">
                     {imageUrl ? (
-                      <Image
-                        src={imageUrl}
-                        alt="대표 이미지 미리보기"
-                        preview={{ mask: '이미지 보기' }}
-                      />
+                      <img src={imageUrl} alt="대표 이미지 미리보기" />
                     ) : (
                       <span>없음</span>
                     )}

@@ -50,9 +50,16 @@
   overflow: visible;
 }
 
-/* 기본 DetailInfoForm required (정기후원 타이틀은 main-content-required-label 사용) */
+/*
+ * Field `required` 마크는 패키지가 position:absolute; left:100% 이다.
+ * relative만 덮으면 left:100%가 남아 별표가 값 셀(인풋)로 밀린다.
+ * 메인 콘텐츠 섹션은 MainContentRequiredLabel을 쓴다.
+ */
 .main-content-section-card .detail-info-form__field-required {
   position: relative;
+  left: auto;
+  right: auto;
+  bottom: auto;
   top: -6px;
   margin-left: 1px;
   width: 9px;
@@ -119,9 +126,6 @@
 }
 
 .main-content-section-card .cms-textarea--fixed-rows .cms-textarea__inner textarea.ant-input {
-  resize: none;
-  overflow-x: hidden;
-  overflow-y: auto;
   box-sizing: border-box;
   height: 44px;
   min-height: 44px;

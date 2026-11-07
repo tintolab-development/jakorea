@@ -37,6 +37,24 @@ export function collectDisagreedRequiredConsentLabels<TKey extends string>(
 }
 
 /** 약관·동의 라디오 미선택 여부 (`agree`/`disagree` 모두 아님) */
+/** 서버 `consentStatus` — 초상권 등 부분동의 */
+export function isPartialConsentStatus(value: string | null | undefined): boolean {
+  return (value ?? '').trim().toUpperCase() === 'PARTIAL'
+}
+
+export const PARTIAL_CONSENT_DISPLAY_LABEL = '부분동의'
+
+/** 동의 상태 표시. `PARTIAL`이면 동의/미동의보다 부분동의를 우선한다. */
+export function resolveConsentStatusDisplayLabel(options: {
+  agreed: boolean
+  consentStatus?: string | null
+  agreedLabel: string
+  disagreedLabel?: string
+}): string {
+  if (isPartialConsentStatus(options.consentStatus)) return PARTIAL_CONSENT_DISPLAY_LABEL
+  return options.agreed ? options.agreedLabel : (options.disagreedLabel ?? '미동의')
+}
+
 export function hasUnsetConsentSelections<TKey extends string>(
   values: Partial<Record<TKey, ConsentAgreeValue | boolean | null | undefined>>,
   keys: readonly TKey[]

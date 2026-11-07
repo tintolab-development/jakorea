@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
   formatApplicationEligibilityConflictMessage,
+  isVolunteer1365ApprovalBlockedFailure,
   parseMissingEligibilityRequirements,
+  readVolunteer1365ApprovalBlockedAlert,
+  VOLUNTEER_1365_APPROVAL_BLOCKED_ALERT,
 } from './application-eligibility-conflict'
 
 function conflictError(details: Record<string, string>, code = 'APPLICATION_DECISION_CONFLICT') {
@@ -76,6 +79,53 @@ describe('formatApplicationEligibilityConflictMessage', () => {
       })
     )
     expect(message).toContain('동의 버전 2025-01, 현행 버전 2026-01')
+  })
+
+  it('1365 ID만 없는 봉사자 승인은 승인 불가 안내를 쓴다', () => {
+    expect(
+      readVolunteer1365ApprovalBlockedAlert(
+        conflictError({
+          external1365Provided: 'false',
+          memberId: '190109',
+          missingRequirements: 'EXTERNAL_1365_ID_REQUIRED',
+          programId: '186550',
+          participantType: 'VOLUNTEER',
+          reason: 'EXTERNAL_1365_ID_REQUIRED',
+        })
+      )
+    ).toEqual(VOLUNTEER_1365_APPROVAL_BLOCKED_ALERT)
+    expect(VOLUNTEER_1365_APPROVAL_BLOCKED_ALERT).toEqual({
+      title: '봉사자 신청 승인 불가 안내',
+      content:
+        '1365 ID가 등록되지 않은 봉사 신청자는\n프로그램 신청 승인이 불가합니다.',
+    })
+  })
+
+  it('초상권 미동의가 함께 있으면 1365 전용 안내를 쓰지 않는다', () => {
+    expect(
+      readVolunteer1365ApprovalBlockedAlert(
+        conflictError({
+          missingRequirements: 'PORTRAIT_RIGHTS_CONSENT_REQUIRED,EXTERNAL_1365_ID_REQUIRED',
+          participantType: 'VOLUNTEER',
+          reason: 'PORTRAIT_RIGHTS_CONSENT_REQUIRED',
+        })
+      )
+    ).toBeNull()
+  })
+
+  it('일괄 실패 항목은 1365 문구와 코드로 구분한다', () => {
+    expect(
+      isVolunteer1365ApprovalBlockedFailure({
+        code: 'APPLICATION_DECISION_CONFLICT',
+        message: '1365 ID 등록 후 봉사 프로그램 참여 승인이 가능합니다.',
+      })
+    ).toBe(true)
+    expect(
+      isVolunteer1365ApprovalBlockedFailure({
+        code: 'APPLICATION_DECISION_CONFLICT',
+        message: '초상권 동의 완료 후 프로그램 참여 승인이 가능합니다.',
+      })
+    ).toBe(false)
   })
 
   it('참여자격과 무관한 409는 null', () => {

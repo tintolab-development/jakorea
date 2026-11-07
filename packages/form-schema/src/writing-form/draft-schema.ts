@@ -227,7 +227,7 @@ export type DropdownParagraph = WritingFormParagraphBase & {
 }
 
 /** 주관식형(단일항목·테이블 셀) 입력 글자 수 상한 */
-export const SHORT_ESSAY_MAX_LENGTH = 2000
+export const SHORT_ESSAY_MAX_LENGTH = 1000
 
 /**
  * 테이블 셀 날짜/시간 모드.
@@ -920,6 +920,52 @@ export function resolveHorizontalTableCellPlainText(
   const fieldText = fieldCellValueToPlainText(paragraph.fieldDataRows?.[rowIndex]?.[colIndex])
   const dataText = paragraph.dataRows?.[rowIndex]?.[colIndex] ?? ''
   return fieldText.trim() ? fieldText : dataText
+}
+
+/**
+ * 서버(CMS) 저장 시드 표가 **구조적으로 깨졌는지** — 표 variant 아님·열 0개·본문 셀 전부 빈 값.
+ * 문구 차이·행/열 추가·삭제·일부 빈칸은 깨짐이 아니다(관리자 편집본 보존, `server-data-source-of-truth`).
+ */
+export function isSeedHorizontalTableStructurallyBroken(
+  saved: WritingFormParagraph,
+  _seed: HorizontalTableParagraph
+): boolean {
+  if (saved.kind !== 'single_item' || saved.variant !== 'horizontal_table') return true
+  const colCount = saved.columnHeaders?.length ?? 0
+  if (colCount === 0) return true
+  const savedRowCount = Math.max(saved.dataRows?.length ?? 0, saved.fieldDataRows?.length ?? 0)
+  /** 고정 문구 표 — 본문 셀이 전부 비면(행만 패딩된 경우 포함) 깨진 것으로 본다 */
+  let hasCellText = false
+  for (let r = 0; r < savedRowCount && !hasCellText; r += 1) {
+    for (let c = 0; c < colCount; c += 1) {
+      if (resolveHorizontalTableCellPlainText(saved, r, c).trim()) {
+        hasCellText = true
+        break
+      }
+    }
+  }
+  return !hasCellText
+}
+
+/**
+ * 저장 표가 깨졌을 때만 시드로 복구 — 아니면 저장값 그대로.
+ * 복구도 **표 구조·본문 셀만** 시드로 채운다. 제목·하단 문구·필수 표시·동의 노출/응답은 저장값 유지
+ * (깨진 표 복구가 기존 제출본 표시나 필수 검증을 바꾸지 않게).
+ */
+export function repairSeedHorizontalTableIfBroken(
+  saved: WritingFormParagraph,
+  seed: HorizontalTableParagraph
+): WritingFormParagraph {
+  if (!isSeedHorizontalTableStructurallyBroken(saved, seed)) return saved
+  if (saved.kind !== 'single_item' || saved.variant !== 'horizontal_table') return seed
+  return {
+    ...saved,
+    tableFlavor: seed.tableFlavor,
+    columnHeaders: seed.columnHeaders,
+    columnFields: seed.columnFields,
+    dataRows: seed.dataRows,
+    fieldDataRows: seed.fieldDataRows,
+  }
 }
 
 export function createHorizontalTableParagraph(id: string): HorizontalTableParagraph {
@@ -2375,41 +2421,56 @@ function migrateAgreementPortraitPersonalConsentNameCells(
 }
 
 const PORTRAIT_DELEGATED_TASK_CELL =
-  'JA Korea 사업 수행 및 관리: 대내외 보고서 작성, 홍보영상 및 자료 제작\nJA Korea 프로그램 홍보를 위한 온라인 매체 게시 및 인쇄물 발간\n- 온라인 매체: 홈페이지 및 SNS 이미지와 영상 포함 게시물\n- 인쇄물: 리플렛, 팜플렛, 브로슈어, 기업보고서, 사례집, 애뉴얼리포트 등'
+  'JA Korea 사업 수행 및 관리: 대내외 보고서 작성\nJA Korea 프로그램 홍보를 위한 홍보영상 및 자료 제작, 온라인 매체 게시 및 인쇄물 발간 (3. 초상권 제공·이용 동의 시)\n- 온라인 매체: 홈페이지 및 SNS 이미지와 영상 포함 게시물\n- 인쇄물: 리플렛, 팜플렛, 브로슈어, 기업보고서, 사례집, 애뉴얼리포트 등'
 
 const AGREEMENT_PORTRAIT_INTRO_TEXT =
-  '아래 사항에 동의하는 경우, 명시된 사용 용도에 한하여 글과 함께 저작물을 제작하는 형태로 초상권을 사용할 권리를 촬영자에게 부여합니다.\n또한, 저작물에 대한 소유권을 주장하지 않으며 저작물에 대한 소유권 및 저작권이 JA Korea에 있음을 확인합니다.'
+  '아래 사항에 동의한 경우, 명시된 사용 용도에 한하여 글과 함께 저작물을 제작하는 형태로 초상권을 사용할 권리를 JA Korea에 부여합니다.\n또한, 저작물에 대한 소유권을 주장하지 않으며 저작물에 대한 소유권 및 저작권이 JA Korea에 있음을 확인합니다.'
 
 /** 교육진행자 동의 서약서 — 서문(설명글 텍스트형) 고정 본문 */
 export const EDUCATOR_FACILITATOR_PLEDGE_INTRO_TEXT =
   '본인은 JA Korea의 교육사업에 참여함에 있어, 다음 사항을 준수할 것을 서약합니다.'
 
 /** 교육진행자 동의 서약서 — 제목 단락(`survey_title_with_period`) 고정 문구 */
-export const EDUCATOR_FACILITATOR_PLEDGE_SURVEY_TITLE = 'JA Korea 교육진행자 서약서(안)'
+export const EDUCATOR_FACILITATOR_PLEDGE_SURVEY_TITLE = 'JA Korea 교육진행자 서약서'
 
 const AGREEMENT_PORTRAIT_PERSONAL_CONSENT_QUESTION =
-  '위 동의를 거부할 수 있으며, 동의하지 않을 경우 수업 참여가 제한될 수 있습니다. 위 개인정보 및 초상권 수집·이용에 동의하십니까?'
+  '위 동의를 거부할 권리가 있으며, 동의하지 않을 경우 프로그램을 신청할 수 없습니다. 위 개인정보 및 초상권 수집·이용에 동의하십니까?'
 
 const AGREEMENT_PORTRAIT_DELEGATED_CONSENT_QUESTION =
-  '위 개인정보 및 초상권 수집·이용에 동의하십니까?'
+  '위 동의를 거부할 권리가 있으며, 동의하지 않을 경우 프로그램을 신청할 수 없습니다. 위 개인정보 처리위탁 제공에 동의하십니까?'
 
-const AGREEMENT_PORTRAIT_USAGE_CONSENT_QUESTION = '위와 같은 초상권 활용에 동의하십니까?'
+const AGREEMENT_PORTRAIT_USAGE_CONSENT_QUESTION =
+  '위 사항은 JA Korea 프로그램 관련 초상권 이용 및 활용 동의에 관한 사항이며, 귀하는 이를 거부할 수 있습니다.\n개인정보, 초상권 수집 이용에 대한 동의를 거부할 권리가 있으며, 동의 거부 시 관련 홍보물 제작에서 제외합니다.'
 
 const PORTRAIT_PERSONAL_PURPOSE_CELL =
-  '홍보 콘텐츠 제작 게시, 제작물의 정보 이용\n- 온라인(디지털 매체): 콘텐츠 제작, 홈페이지, SNS 게시물\n- 간행물(인쇄/출판/제작물) 제작: 리플렛, 팜플렛, 브로슈어, 기업보고서, 애뉴얼리포트 등'
+  'JA Korea 사업 수행 및 관리: 교육 운영 기록, 대내외 보고서 작성'
 
-const PORTRAIT_DELEGATED_PERIOD_CELL = '개인정보 수집 시 동의 기간 또는 위탁계약 종료 시까지'
+const PORTRAIT_DELEGATED_PERIOD_CELL = '개인정보 수집 시 동의기간 또는 위탁계약 종료 시까지'
 
 const PORTRAIT_USAGE_SCOPE_HEADER = '초상권의 사용 범위'
 
 const PORTRAIT_USAGE_SCOPE_CELL =
   '1) 간행물(인쇄/출판/제작물): 리플렛, 팜플렛, 브로슈어, 기업보고서, 사례집, 애뉴얼리포트 등\n2) 온라인(디지털 매체): 홈페이지, SNS 게시물 등'
 
-/** 초상권 시드 고정 카피 — 구 draft를 시안 문구로 보정 (성명·소속 응답 셀은 유지) */
+let agreementPortraitSeedByIdCache: Map<string, WritingFormParagraph> | null = null
+
+function getAgreementPortraitSeedParagraph(id: string): WritingFormParagraph | undefined {
+  if (agreementPortraitSeedByIdCache == null) {
+    agreementPortraitSeedByIdCache = new Map(
+      createAgreementPortraitDraft().paragraphs.map(seed => [seed.id, seed] as const)
+    )
+  }
+  return agreementPortraitSeedByIdCache.get(id)
+}
+
+/**
+ * 초상권 시드 고정 카피 — **비어 있는 값만** 시드로 채운다(서버/CMS 저장 문구는 덮지 않음).
+ * 성명·소속 응답 셀은 유지.
+ */
 function migrateAgreementPortraitSeedFixedCopy(p: WritingFormParagraph): WritingFormParagraph {
-  if (p.id === 'agreement-portrait-intro') {
+  if (p.id === AGREEMENT_PORTRAIT_PARAGRAPH_IDS.intro) {
     if (p.kind !== 'single_item' || p.variant !== 'agreement_explanation_text') return p
-    if (p.bodyText === AGREEMENT_PORTRAIT_INTRO_TEXT) return p
+    if ((p.bodyText ?? '').trim() !== '') return p
     return { ...p, bodyText: AGREEMENT_PORTRAIT_INTRO_TEXT }
   }
 
@@ -2419,62 +2480,29 @@ function migrateAgreementPortraitSeedFixedCopy(p: WritingFormParagraph): Writing
     p.id === AGREEMENT_PORTRAIT_PARAGRAPH_IDS.portraitUsageTable
   ) {
     if (p.kind !== 'single_item' || p.variant !== 'vertical_table') return p
+    const seed = getAgreementPortraitSeedParagraph(p.id)
+    if (seed == null || seed.kind !== 'single_item' || seed.variant !== 'vertical_table') return p
+    const seedCellByHeader = new Map<string, string>()
+    for (const row of seed.rows ?? []) {
+      if (row.stageCount !== 1) continue
+      const header = (row.headers[0] ?? '').trim()
+      if (header) seedCellByHeader.set(header, row.cells[0] ?? '')
+    }
     const rows = p.rows ?? []
     let changed = false
     const nextRows = rows.map(row => {
-      const header = (row.headers[0] ?? '').trim()
-      if (p.id === AGREEMENT_PORTRAIT_PARAGRAPH_IDS.personalConsentTable) {
-        if (header === '수집 목적' && (row.cells[0] ?? '') !== PORTRAIT_PERSONAL_PURPOSE_CELL) {
-          changed = true
-          return { ...row, cells: [PORTRAIT_PERSONAL_PURPOSE_CELL] }
-        }
-        return row
-      }
-      if (p.id === AGREEMENT_PORTRAIT_PARAGRAPH_IDS.delegatedConsentTable) {
-        if (header === '위탁 업무' && (row.cells[0] ?? '') !== PORTRAIT_DELEGATED_TASK_CELL) {
-          changed = true
-          return { ...row, cells: [PORTRAIT_DELEGATED_TASK_CELL] }
-        }
-        if (header === '위탁 기간' && (row.cells[0] ?? '') !== PORTRAIT_DELEGATED_PERIOD_CELL) {
-          changed = true
-          return { ...row, cells: [PORTRAIT_DELEGATED_PERIOD_CELL] }
-        }
-        return row
-      }
-      // usage table
-      if (header === '초상권 사용 범위' || header === PORTRAIT_USAGE_SCOPE_HEADER) {
-        const headerChanged = header !== PORTRAIT_USAGE_SCOPE_HEADER
-        const cellChanged = (row.cells[0] ?? '') !== PORTRAIT_USAGE_SCOPE_CELL
-        if (!headerChanged && !cellChanged) return row
-        if (row.stageCount !== 1) return row
-        changed = true
-        return {
-          ...row,
-          headers: [PORTRAIT_USAGE_SCOPE_HEADER],
-          cells: [PORTRAIT_USAGE_SCOPE_CELL],
-        }
-      }
-      return row
+      if (row.stageCount !== 1) return row
+      if ((row.cells[0] ?? '').trim() !== '') return row
+      const seedCell = seedCellByHeader.get((row.headers[0] ?? '').trim())
+      if (!seedCell) return row
+      changed = true
+      return { ...row, cells: [seedCell] }
     })
-
     let nextBottom = p.bottomText
-    if (p.id === AGREEMENT_PORTRAIT_PARAGRAPH_IDS.personalConsentTable) {
-      if (nextBottom !== AGREEMENT_PORTRAIT_PERSONAL_CONSENT_QUESTION) {
-        changed = true
-        nextBottom = AGREEMENT_PORTRAIT_PERSONAL_CONSENT_QUESTION
-      }
-    } else if (p.id === AGREEMENT_PORTRAIT_PARAGRAPH_IDS.delegatedConsentTable) {
-      if (nextBottom !== AGREEMENT_PORTRAIT_DELEGATED_CONSENT_QUESTION) {
-        changed = true
-        nextBottom = AGREEMENT_PORTRAIT_DELEGATED_CONSENT_QUESTION
-      }
-    } else if (p.id === AGREEMENT_PORTRAIT_PARAGRAPH_IDS.portraitUsageTable) {
-      if (nextBottom !== AGREEMENT_PORTRAIT_USAGE_CONSENT_QUESTION) {
-        changed = true
-        nextBottom = AGREEMENT_PORTRAIT_USAGE_CONSENT_QUESTION
-      }
+    if ((nextBottom ?? '').trim() === '' && (seed.bottomText ?? '').trim() !== '') {
+      changed = true
+      nextBottom = seed.bottomText
     }
-
     if (!changed) return p
     return { ...p, rows: nextRows as typeof rows, bottomText: nextBottom }
   }
@@ -2500,6 +2528,16 @@ function migratePaymentStatementPreConsentSeedRequiredMarks(
   p: WritingFormParagraph
 ): WritingFormParagraph {
   if (!p.id.startsWith('payment-statement-pre-consent-seed-')) {
+    return p
+  }
+  // 2·4번(법령에 따른 수집·제공) — 동의 라디오를 끈 양식(시안·재저장본)만 `*`·답변 필수 강제 제외.
+  // 서버 양식에 라디오가 아직 켜져 있으면 기존처럼 필수 유지(필수 검증 완화 방지).
+  if (
+    (p.id === 'payment-statement-pre-consent-seed-p2-rrn-collection' ||
+      p.id === 'payment-statement-pre-consent-seed-p4-rrn-third-party') &&
+    'showBottomConsent' in p &&
+    p.showBottomConsent === false
+  ) {
     return p
   }
   if (p.kind === 'single_item') {
@@ -2591,16 +2629,17 @@ const AGREEMENT_NOTICE_SUBJECT_BIRTH_PLACEHOLDER = '생년월일 8자리를 입�
 const AGREEMENT_NOTICE_SUBJECT_PHONE_PLACEHOLDER = '전화번호를 입력해 주세요'
 
 const AGREEMENT_NOTICE_TABLE_BOTTOM_TEXT =
-  '* 이용기관은 본인이 동의한 위 공동이용 행정정보를 확인하기 위해 「개인정보 보호법」 시행령 제19조에 따라 주민등록번호, 여권번호, 운전면허번호 또는 외국인등록번호가 포함된 행정정보를 처리할 수 있습니다.\n이용기관이 요청하는 경우 기재하여 주십시오(필요시 기재사항)'
+  '※ 이용기관은 본인이 동의한 위 공동이용 행정정보를 확인하기 위해 「개인정보 보호법」 시행령 제19조에 따라 주민등록번호, 여권번호, 운전면허의 면허번호 또는 외국인등록번호가 포함된 행정정보를 처리할 수 있습니다.\n이용기관이 요청하는 경우 기재하여 주십시오(필요시 기재사항).'
 
 const AGREEMENT_NOTICE_TABLE_FIRST_ROW: [string, string, string, string] = [
   '1',
-  '성범죄경력 및 아동학대 관련 범죄전력 조회',
+  '성범죄경력 및 아동학대관련 범죄전력 조회',
   '',
   '',
 ]
 
-const AGREEMENT_NOTICE_TABLE_BODY_ROW_COUNT = 5
+/** 시안: 헤더 1행 + 값 4행 */
+const AGREEMENT_NOTICE_TABLE_BODY_ROW_COUNT = 4
 
 /** 표 하단 식별번호 시드 — normalize 경로에서 전체 draft 재생성 없이 사용 */
 function createAgreementNoticeIdTypeWithInputSeed(): IdTypeWithInputParagraph {
@@ -2643,17 +2682,14 @@ function migrateAgreementNoticeTableSeedRows(p: WritingFormParagraph): WritingFo
     dataRows = createAgreementNoticeTableDataRows().map(r => [...r])
   } else {
     const r0 = dataRows[0] ?? Array.from({ length: colCount }, () => '')
-    /** 시드 고정 문구 — 좌측 1행은 항상 최신 시드로 맞춤(빈 저장본 덮어쓰기·플래시 방지) */
+    /** 서버 저장값 우선 — 좌측 1행(연번·행정정보명)이 **비었을 때만** 시드로 채움 */
     dataRows[0] = [
-      AGREEMENT_NOTICE_TABLE_FIRST_ROW[0],
-      AGREEMENT_NOTICE_TABLE_FIRST_ROW[1],
+      (r0[0] ?? '').trim() ? (r0[0] ?? '') : AGREEMENT_NOTICE_TABLE_FIRST_ROW[0],
+      (r0[1] ?? '').trim() ? (r0[1] ?? '') : AGREEMENT_NOTICE_TABLE_FIRST_ROW[1],
       r0[2] ?? '',
       r0[3] ?? '',
       ...r0.slice(4),
     ]
-    while (dataRows.length < AGREEMENT_NOTICE_TABLE_BODY_ROW_COUNT) {
-      dataRows.push(Array.from({ length: colCount }, () => ''))
-    }
   }
   const seedIdTypeWithInput =
     p.idTypeWithInput == null ? createAgreementNoticeIdTypeWithInputSeed() : null
@@ -2661,7 +2697,7 @@ function migrateAgreementNoticeTableSeedRows(p: WritingFormParagraph): WritingFo
   return {
     ...p,
     dataRows,
-    bottomText: AGREEMENT_NOTICE_TABLE_BOTTOM_TEXT,
+    bottomText: (p.bottomText ?? '').trim() ? p.bottomText : AGREEMENT_NOTICE_TABLE_BOTTOM_TEXT,
     idTypeWithInput:
       p.idTypeWithInput == null
         ? seedIdTypeWithInput
@@ -2743,13 +2779,15 @@ function migrateAgreementNoticeInstitutionPurposeParagraph(
       : AGREEMENT_NOTICE_PURPOSE_PARAGRAPH
 
   if (p.kind === 'single_item' && p.variant === 'agreement_explanation_text') {
+    // 저장값(빈 문자열 포함) 유지 — 제출본 조회에도 타는 공통 정규화라 빈 값 채움은 작성 진입(normalizeMemberConsentWriteDraft)에서만
     const bodyText = typeof p.bodyText === 'string' ? p.bodyText : seed.bodyText
+    const paragraphTitle = p.paragraphTitle?.trim() ? p.paragraphTitle : seed.paragraphTitle
     const bodyPlaceholder =
       p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.institution
         ? AGREEMENT_NOTICE_INSTITUTION_PLACEHOLDER
         : AGREEMENT_NOTICE_PURPOSE_PLACEHOLDER
     if (
-      p.paragraphTitle === seed.paragraphTitle &&
+      p.paragraphTitle === paragraphTitle &&
       (p.paragraphDescription ?? '') === seed.paragraphDescription &&
       p.participatesInTitleNumbering === seed.participatesInTitleNumbering &&
       p.bodyPlaceholder === bodyPlaceholder &&
@@ -2761,7 +2799,7 @@ function migrateAgreementNoticeInstitutionPurposeParagraph(
     }
     return {
       ...p,
-      paragraphTitle: seed.paragraphTitle,
+      paragraphTitle,
       paragraphDescription: p.paragraphDescription ?? '',
       participatesInTitleNumbering: seed.participatesInTitleNumbering,
       bodyPlaceholder,
@@ -2930,7 +2968,6 @@ function normalizeWritingFormParagraph(p: WritingFormParagraph): WritingFormPara
   next = migrateAgreementNoticeInstitutionPurposeParagraph(next)
   next = migrateAgreementExpensePledgeIntroParagraph(next)
   next = migrateEducatorFacilitatorPledgeTitleParagraph(next)
-  next = migrateEducatorFacilitatorPledgeClauseCopy(next)
   next = migrateSettlementTransportParagraphCopy(next)
   next = migrateSettlementAccommodationParagraphCopy(next)
   next = migrateUjatEducationExplanationOptionalTitle(next)
@@ -3069,6 +3106,8 @@ export const AGREEMENT_NOTICE_PARAGRAPH_IDS = {
   idType: 'agreement-notice-id-type',
   consentStatic: 'agreement-notice-consent-static',
   subject: 'agreement-notice-subject',
+  /** 5번 대상자 본인 카드 하단 안내(열람·보유기간) — 번호 없음 */
+  subjectNote: 'agreement-notice-subject-note',
   confirmationClosing: 'agreement-notice-confirmation-closing',
   systemDate: 'agreement-notice-system-date',
   systemSignature: 'agreement-notice-system-signature',
@@ -3089,6 +3128,7 @@ export const AGREEMENT_NOTICE_SEED_PARAGRAPH_IDS = new Set<string>([
   AGREEMENT_NOTICE_PARAGRAPH_IDS.idType,
   AGREEMENT_NOTICE_PARAGRAPH_IDS.consentStatic,
   AGREEMENT_NOTICE_PARAGRAPH_IDS.subject,
+  AGREEMENT_NOTICE_PARAGRAPH_IDS.subjectNote,
   AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing,
   AGREEMENT_NOTICE_PARAGRAPH_IDS.systemDate,
   AGREEMENT_NOTICE_PARAGRAPH_IDS.systemSignature,
@@ -3111,7 +3151,7 @@ export const AGREEMENT_NOTICE_INSTITUTION_PARAGRAPH: AgreementExplanationTextPar
   paragraphDescription: '',
   participatesInTitleNumbering: true,
   bodyPlaceholder: AGREEMENT_NOTICE_INSTITUTION_PLACEHOLDER,
-  bodyText: '',
+  bodyText: 'JA Korea 및 교육진행자가 배정된 학교·기관 (학교·기관 배정 강의가 아닌 경우 JA Korea)',
   answerRequired: false,
 }
 
@@ -3139,9 +3179,12 @@ export function createDefaultIdTypeWithInputOptions(): IdTypeWithInputOption[] {
 }
 
 const AGREEMENT_NOTICE_CONSENT_LINES = [
-  '○ 본인은 위 사무의 처리를 위하여 「전자정부법」 제36조에 따른 행정정보 공동이용을 통해 이용기관의 업무처리담당자가 전자적으로 본인의 구비서류(공동이용 행정정보)를 확인하는 것에 동의합니다.',
-  '* 만일, 본인이 위 행정정보 이용에 대해 동의를 하지 아니할 경우에도 불이익은 없습니다. 다만, 동의하지 아니한 경우에는 본인이 해당 구비서류를 제출하여야 합니다.',
+  '본인은 위 사무의 처리를 위하여 「전자정부법」제36조에 따른 행정정보 공동이용을 통해 이용기관의 업무처리담당자가 전자적으로 본인의 구비서류(공동이용 행정정보)를 확인하는 것에 동의합니다. ※ 만일, 본인이 위 행정정보 이용에 대해 동의를 하지 아니할 경우에도 불이익은 없습니다. 다만, 동의하지 아니한 경우에는 본인이 해당 구비서류를 제출하여야 합니다.',
 ] as const
+
+/** 서명 카드 확인문 — CMS·Platform 시안 공통 */
+export const AGREEMENT_NOTICE_CONFIRMATION_TEXT =
+  '위와 같은 행정정보 공동이용 사전 동의에 대한 내용을 모두 확인했습니다.'
 
 const AGREEMENT_NOTICE_CONFIRMATION_CLOSING: ClosingParagraph = {
   id: AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing,
@@ -3151,8 +3194,22 @@ const AGREEMENT_NOTICE_CONFIRMATION_CLOSING: ClosingParagraph = {
   paragraphTitle: '',
   paragraphDescription: '',
   participatesInTitleNumbering: false,
-  /** 작성·미리보기에서 문구 없음. A4는 본문·날짜/서명 사이 구분선으로만 사용 */
-  body: '',
+  body: AGREEMENT_NOTICE_CONFIRMATION_TEXT,
+}
+
+/** 5번 대상자 본인 카드 하단 안내 — CMS 편집 가능한 설명글 텍스트형 */
+export const AGREEMENT_NOTICE_SUBJECT_NOTE_PARAGRAPH: AgreementExplanationTextParagraph = {
+  id: AGREEMENT_NOTICE_PARAGRAPH_IDS.subjectNote,
+  kind: 'single_item',
+  variant: 'agreement_explanation_text',
+  requiredMark: false,
+  paragraphTitle: '',
+  paragraphDescription: '',
+  participatesInTitleNumbering: false,
+  bodyPlaceholder: '한 줄 안내를 입력해 주세요',
+  bodyText:
+    '작성한 동의서는 범죄경력 확인에만 사용합니다. JA Korea는 권한이 있는 담당자가 열람하며, 교육진행자가 배정된 학교·기관은 기관이 [JA 시스템 내에서 동의서 확인]을 선택한 경우에만 열람할 수 있습니다.\n학교·기관의 보유기간은 해당 교육 종료 시까지입니다. 본 동의는 동의일로부터 1년간 유효하며, 동의서는 활동 종료 후 3년간 보관한 뒤 파기합니다.',
+  answerRequired: false,
 }
 
 function createAgreementNoticeTableDataRows(): string[][] {
@@ -3251,6 +3308,7 @@ export function createAgreementNoticeDraft(): WritingFormDraft {
         bodyPlaceholder: '답변을 입력해 주세요',
         bodyText: '',
       },
+      { ...AGREEMENT_NOTICE_SUBJECT_NOTE_PARAGRAPH },
       AGREEMENT_NOTICE_CONFIRMATION_CLOSING,
       {
         id: AGREEMENT_NOTICE_PARAGRAPH_IDS.systemDate,
@@ -3276,24 +3334,14 @@ export function createAgreementNoticeDraft(): WritingFormDraft {
   }
 }
 
-/** 교육진행자 동의 서약서 — 제목 단락 surveyTitle 구 저장본 보정 */
+/** 교육진행자 동의 서약서 — 제목 단락 surveyTitle이 **비었을 때만** 시드 제목(서버 저장값 우선) */
 function migrateEducatorFacilitatorPledgeTitleParagraph(
   p: WritingFormParagraph
 ): WritingFormParagraph {
   if (p.id !== 'agreement-expense-pledge-title') return p
   if (p.kind !== 'description' || p.variant !== 'survey_title_with_period') return p
-  if (p.surveyTitle === EDUCATOR_FACILITATOR_PLEDGE_SURVEY_TITLE) return p
+  if ((p.surveyTitle ?? '').trim() !== '') return p
   return { ...p, surveyTitle: EDUCATOR_FACILITATOR_PLEDGE_SURVEY_TITLE }
-}
-
-/** 교육진행자 동의 서약서 — 조항 3 본문 시안 카피 보정 */
-function migrateEducatorFacilitatorPledgeClauseCopy(p: WritingFormParagraph): WritingFormParagraph {
-  if (p.id !== 'agreement-expense-pledge-clause-3') return p
-  if (p.kind !== 'single_item' || p.variant !== 'multiple_choice') return p
-  const nextDescription =
-    '교육과정 중 알게 된 관련인의 개인정보를 외부로 유출하거나 무단으로 사용하지 않겠습니다.'
-  if (p.paragraphDescription === nextDescription) return p
-  return { ...p, paragraphDescription: nextDescription }
 }
 
 /** 구 저장본에 confirmationClosing이 없으면 systemDate 앞에 삽입. 제목형 작성 기간은 항상 off. 확인 문구는 비운다. */
@@ -3363,14 +3411,7 @@ export function ensureAgreementNoticeConfirmationClosing(
     ) {
       return { ...p, showWritingPeriodOnForm: false }
     }
-    if (
-      p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing &&
-      p.kind === 'description' &&
-      p.variant === 'closing' &&
-      p.body !== ''
-    ) {
-      return { ...p, body: '' }
-    }
+    // 확인문은 저장값 그대로(제출본 조회 경로 공용) — 빈 값 채움은 `fillAgreementNoticeWriteDefaults`
     return p
   })
 
@@ -3384,6 +3425,53 @@ export function ensureAgreementNoticeConfirmationClosing(
     }
   }
 
+  return { ...draft, paragraphs }
+}
+
+/**
+ * 작성 진입·CMS 양식 편집 전용 — 이용기관·이용사무·확인문이 비었으면 시안 문구,
+ * 5번 하단 안내 단락이 없으면 삽입. 저장값이 있으면 유지.
+ * 제출본(filledDocument) 조회 경로에서는 호출하지 않는다(제출 당시 내용 보존).
+ */
+export function fillAgreementNoticeWriteDefaults(draft: WritingFormDraft): WritingFormDraft {
+  const paragraphs = draft.paragraphs.map(p => {
+    if (
+      p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing &&
+      p.kind === 'description' &&
+      p.variant === 'closing' &&
+      (p.body ?? '').trim() === ''
+    ) {
+      return { ...p, body: AGREEMENT_NOTICE_CONFIRMATION_TEXT }
+    }
+    if (
+      (p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.institution ||
+        p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.purpose) &&
+      p.kind === 'single_item' &&
+      p.variant === 'agreement_explanation_text' &&
+      (p.bodyText ?? '').trim() === ''
+    ) {
+      const seedBody =
+        p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.institution
+          ? AGREEMENT_NOTICE_INSTITUTION_PARAGRAPH.bodyText
+          : AGREEMENT_NOTICE_DEFAULT_PURPOSE
+      return { ...p, bodyText: seedBody }
+    }
+    return p
+  })
+  return ensureAgreementNoticeSubjectNoteParagraph({ ...draft, paragraphs })
+}
+
+/** 구 저장본에 5번 하단 안내 단락이 없으면 대상자 본인 바로 뒤에 시드 삽입(있으면 저장값 유지) */
+export function ensureAgreementNoticeSubjectNoteParagraph(
+  draft: WritingFormDraft
+): WritingFormDraft {
+  if (draft.paragraphs.some(p => p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.subjectNote)) {
+    return draft
+  }
+  const subjectIdx = draft.paragraphs.findIndex(p => p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.subject)
+  if (subjectIdx < 0) return draft
+  const paragraphs = [...draft.paragraphs]
+  paragraphs.splice(subjectIdx + 1, 0, { ...AGREEMENT_NOTICE_SUBJECT_NOTE_PARAGRAPH })
   return { ...draft, paragraphs }
 }
 
@@ -3493,8 +3581,8 @@ export function createAgreementPortraitDraft(): WritingFormDraft {
           },
           {
             stageCount: 1,
-            headers: ['보유 기간'],
-            cells: ['10년'],
+            headers: ['보유 및 이용기간'],
+            cells: ['동의일로부터 1년'],
           },
         ],
         bottomText: AGREEMENT_PORTRAIT_PERSONAL_CONSENT_QUESTION,
@@ -3508,7 +3596,7 @@ export function createAgreementPortraitDraft(): WritingFormDraft {
         kind: 'single_item',
         variant: 'vertical_table',
         requiredMark: true,
-        paragraphTitle: '개인정보처리위탁 제공 동의',
+        paragraphTitle: '개인정보 처리위탁 동의',
         paragraphDescription: '',
         participatesInTitleNumbering: true,
         verticalTableFlavor: 'text',
@@ -3549,14 +3637,14 @@ export function createAgreementPortraitDraft(): WritingFormDraft {
             stageCount: 1,
             headers: ['초상권 이용 목적'],
             cells: [
-              '1) JA Korea 온라인 게시\n2) JA Korea 보고자료 작성\n3) JA Korea 대내외 홍보자료 활용',
+              '1) JA Korea 온라인 게시\n2) JA Korea 대·내외 홍보자료 활용',
             ],
           },
           {
             stageCount: 1,
             headers: ['초상권 수집 범위 및 이용기간'],
             cells: [
-              '1) 초상권 수집 범위: 본 프로그램 참여 중 촬영되는 사진 및 동영상 일체\n2) 사진 및 동영상 자료의 보유 및 이용기간\n- 보유 및 이용기간: 사진 및 동영상 촬영일로부터 5년까지 보유 및 이용\n(단, 홍보자료로 제작된 사진 및 동영상의 경우 활용이 지속될 수 있음)',
+              '1) 초상권 수집 범위: 본 프로그램 참여 중 촬영되는 사진 및 동영상 일체\n2) 사진 및 동영상 자료의 보유 및 이용기간\n- 보유 및 이용기간: 동의일로부터 1년까지 보유 및 이용\n(단, 홍보자료로 제작된 사진 및 동영상의 경우 활용이 지속될 수 있음)',
             ],
           },
           {
@@ -3564,13 +3652,7 @@ export function createAgreementPortraitDraft(): WritingFormDraft {
             headers: [PORTRAIT_USAGE_SCOPE_HEADER],
             cells: [PORTRAIT_USAGE_SCOPE_CELL],
           },
-          {
-            stageCount: 1,
-            headers: ['초상권 이용·활용 동의 거부'],
-            cells: [
-              '위 사항은 JA Korea 프로그램 관련 초상권 이용 및 활용 동의에 관한 사항이며, 귀하는 이를 거부할 수 있습니다. 개인정보, 초상권 수집 이용에 대한 동의를 거부할 권리가 있으며, 동의 거부 시 관련 홍보물 제작에서 제외됩니다.',
-            ],
-          },
+          // 시안: 3행 — 구 4행 `초상권 이용·활용 동의 거부` 문구는 표 하단 안내(bottomText)로 이동
         ],
         bottomText: AGREEMENT_PORTRAIT_USAGE_CONSENT_QUESTION,
         showBottomText: true,
@@ -3864,7 +3946,7 @@ export function createEducatorFacilitatorPledgeDraft(): WritingFormDraft {
       createPledgeClauseMultipleChoice(
         EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.clause1,
         '1',
-        '아동·청소년 보호와 성범죄 예방',
+        '아동·청소년 보호 및 법령 준수',
         '교육 대상이 아동·청소년인 경우, 관련 법령과 윤리 기준을 준수하며, 모든 수강생이 안전하고 존중받는 환경에서 학습할 수 있도록 최선을 다하겠습니다.'
       ),
       createPledgeClauseMultipleChoice(
@@ -3877,7 +3959,7 @@ export function createEducatorFacilitatorPledgeDraft(): WritingFormDraft {
         EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.clause3,
         '3',
         '개인정보 보호',
-        '교육과정 중 알게 된 관련인의 개인정보를 외부로 유출하거나 무단으로 사용하지 않겠습니다.'
+        '교육과정 중 알게 된 관련인의 개인정보를 외부에 유출하거나 무단으로 사용하지 않겠습니다.'
       ),
       createPledgeClauseMultipleChoice(
         EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.clause4,
@@ -3893,7 +3975,8 @@ export function createEducatorFacilitatorPledgeDraft(): WritingFormDraft {
         paragraphTitle: '',
         paragraphDescription: '',
         participatesInTitleNumbering: false,
-        body: '본 서약을 위반할 경우, 재단의 교육사업과 관련한 강사 자격이 제한되거나 향후 활동에 불이익이 있을 수 있음을 인지하고 이에 동의합니다.',
+        /** 1행 = 서명 카드 확인문, 2행 이후 = 회색 안내(유효·보관 기간) */
+        body: '본 서약을 위반할 경우, 재단의 교육사업과 관련한 강사 자격이 제한되거나 향후 활동에 불이익이 있을 수 있음을 인지하고 이에 동의합니다.\n본 서약은 서약일로부터 1년간 유효하며, 서약서는 활동 종료 후 3년간 보관한 뒤 파기합니다.',
       },
       {
         id: EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.systemDate,

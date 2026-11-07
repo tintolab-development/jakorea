@@ -6,6 +6,7 @@ import { useCallback, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { formatDateTimeSecondsDot } from '@/shared/utils/date'
 import { Spin } from 'antd'
+import { AdminDetailBackLink, AdminDetailMoreMenu } from '@jakorea/admin-ui/post-detail'
 import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
 import { postsQueryKeys } from '@/features/posts/api/posts-query-keys'
 import { useFaqDetailQuery } from '@/features/posts/hooks/use-faq-detail-query'
@@ -128,6 +129,7 @@ export function AdminFaqDetailPage() {
         onClose={() => setActionResultOpen(false)}
       />
       <div className="admin-faq-detail-page__inner">
+        <AdminDetailBackLink onClick={goList} />
         <div className="admin-faq-detail-page__card">
           <div className="admin-faq-detail-page__header">
             <div className="admin-faq-detail-page__top-row">
@@ -145,6 +147,13 @@ export function AdminFaqDetailPage() {
                   <span className="admin-faq-detail-page__category">{faq.category}</span>
                 ) : null}
               </div>
+              <span className="admin-detail-top-actions">
+                <AdminDetailMoreMenu
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  disabled={!canWrite}
+                />
+              </span>
             </div>
             <h1 className="admin-faq-detail-page__title">{faq.question}</h1>
             <div className="admin-faq-detail-page__meta">

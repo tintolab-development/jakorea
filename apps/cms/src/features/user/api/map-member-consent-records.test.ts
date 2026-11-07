@@ -118,6 +118,37 @@ describe('applyTermsAgreementsToSchema', () => {
 })
 
 describe('applyMemberConsentToSchema', () => {
+  it('Summary consentStatus PARTIAL을 필드에 전달한다', () => {
+    const rows = applyMemberConsentToSchema(individualSchema, {
+      consentSummaries: [
+        {
+          consentType: 'PRIVACY_COLLECTION',
+          agreed: true,
+          consentStatus: 'PARTIAL',
+        },
+        {
+          consentType: 'PORTRAIT_RIGHTS',
+          agreed: true,
+          consentStatus: 'PARTIAL',
+        },
+      ],
+    })
+
+    const field = (label: string) =>
+      rows.flatMap(r => r.fields).find(f => f.label === label)?.value
+
+    expect(field('개인정보 수집·이용 동의')).toMatchObject({
+      type: 'remote_consent',
+      agreed: true,
+      consentStatus: 'PARTIAL',
+    })
+    expect(field('초상권 수집·이용 동의')).toMatchObject({
+      type: 'document',
+      agreed: true,
+      consentStatus: 'PARTIAL',
+    })
+  })
+
   it('Summary agreed가 consent-records 이력(과거 false)보다 우선한다', () => {
     const rows = applyMemberConsentToSchema(individualSchema, {
       consentSummaries: [

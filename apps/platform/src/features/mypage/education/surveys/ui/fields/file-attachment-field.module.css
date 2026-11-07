@@ -5,30 +5,82 @@
   flex-direction: column;
 }
 
+.attach {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
 .attachRow {
   display: flex;
   width: 100%;
   min-width: 0;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: var(--spacing-16);
+  align-items: center;
+  gap: 16px;
 }
 
-.trigger {
+.attachRow .trigger {
   width: auto;
   flex: 0 0 auto;
 }
 
-.hints {
-  display: flex;
-  min-width: min(100%, 280px);
-  flex: 1 1 200px;
-  flex-direction: column;
-  gap: var(--spacing-2);
+.attachRow .trigger button,
+:global(.form-template-host) .attachRow .trigger button {
+  display: inline-flex;
+  box-sizing: border-box;
+  width: 120px;
+  height: 40px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 16px;
+  border: 1px solid var(--color-primary-500, #01a1af);
+  border-radius: 8px;
+  background:
+    linear-gradient(90deg, rgb(1 161 175 / 6%) 0%, rgb(1 161 175 / 6%) 100%),
+    var(--color-neutral-white, #fff);
+  color: var(--color-primary-500, #01a1af);
+  font-family: var(--font-family-base);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: normal;
+  white-space: nowrap;
+  cursor: pointer;
 }
 
-.hintLine {
+.attachRow .trigger button:hover:not(:disabled),
+:global(.form-template-host) .attachRow .trigger button:hover:not(:disabled) {
+  background:
+    linear-gradient(90deg, rgb(1 161 175 / 12%) 0%, rgb(1 161 175 / 12%) 100%),
+    var(--color-neutral-white, #fff);
+}
+
+.attachRow .trigger button:disabled,
+:global(.form-template-host) .attachRow .trigger button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.hint {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
   margin: 0;
+  color: var(--color-neutral-black, #3d3d3d);
+  font-family: var(--font-family-base);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  opacity: 0.6;
+}
+
+.hint span::before {
+  content: '-  ';
 }
 
 .files {
@@ -36,10 +88,22 @@
   width: 100%;
   min-width: 0;
   flex-direction: column;
-  gap: var(--spacing-8);
-  margin-top: var(--spacing-12);
+  gap: 8px;
 }
 
 .fileError {
-  margin: var(--spacing-8) 0 0;
+  margin: 0;
+  color: var(--color-red, #e5484d);
+  font-family: var(--font-family-base);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 140%;
+}
+
+@media (--bp-below-pc) {
+  .attachRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
 }

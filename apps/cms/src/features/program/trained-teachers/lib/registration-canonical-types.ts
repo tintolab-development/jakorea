@@ -77,9 +77,9 @@ export type TrainedTeachersRecruitRange = {
 export type TrainedTeachersRecruitFormState = {
   announcementPublished: string
   studentListRequired: string
-  maxClassCount?: number
-  maxScheduleCount?: number
-  maxSessionsPerDay?: number
+  maxClassCount: number | null
+  maxScheduleCount: number | null
+  maxSessionsPerDay: number | null
   programAnchorIso: string | null
   programRangeSeal: TrainedTeachersRecruitRange | null
   recruitAnchorIso: string | null

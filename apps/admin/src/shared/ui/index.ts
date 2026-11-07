@@ -111,6 +111,8 @@ export { AlertModal } from './alert-modal'
 export type { AlertModalProps } from './alert-modal'
 export { ConfirmModal } from './confirm-modal'
 export type { ConfirmModalProps } from './confirm-modal'
+export { FilePasswordSetupModal } from './file-password-setup-modal'
+export type { FilePasswordSetupModalProps } from './file-password-setup-modal'
 export { HomepagePiiRevealAction } from './homepage-pii-reveal-action'
 export { cmsAlertModal, isCmsAlertModalReady, CMS_ALERT_MODAL_CLOSED_EVENT } from './cms-alert-modal-api'
 export { showAddCompletedAlert } from './show-add-completed-alert'
@@ -124,6 +126,7 @@ export {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
 } from './required-fields-incomplete-alert'
+export { mapAdminMutationAlert } from './map-admin-mutation-alert'
 export { showRegisterCompletedAlert } from './show-register-completed-alert'
 export { showUpdateCompletedAlert } from './show-update-completed-alert'
 export type { CmsAlertModalShowOptions } from './cms-alert-modal-api'

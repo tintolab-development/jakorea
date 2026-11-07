@@ -21,6 +21,7 @@ export interface GeminiApprovedTrainingDetailResponse {
   recruitmentId?: number;
   recruitmentTitle?: string;
   recruitmentDescription?: string;
+  /** 화면 배지 4종. Asia/Seoul 날짜 기준 파생. program.period_status가 아니다. SCHEDULED=프로그램 진행 예정, IN_PROGRESS=프로그램 진행 중, COMPLETED=프로그램 진행 완료, NOT_CONDUCTED=프로그램 미진행. 강사 미배정+희망일 경과=NOT_CONDUCTED, 미배정+희망일 남음=SCHEDULED, 배정+확정일 전=SCHEDULED, 당일=IN_PROGRESS, 경과=COMPLETED. */
   progressStatus?: GeminiApprovedTrainingDetailResponseProgressStatus;
   applicationStatus?: string;
   institutionName?: string;
@@ -69,9 +70,15 @@ export interface GeminiApprovedTrainingDetailResponse {
   managerName?: string;
   /** 기관 신청 담당 교사 회원 id */
   teacherMemberId?: number | null;
+  /**
+   * 담당 교사 소속 학교 organizationId. PATCH /api/admin/organizations/schools/{organizationId}/teachers/{teacherMemberId}/employment-status 의 path와 같다. 소속 학교가 없으면 null. 교사 상세 GET으로 보완하지 않는다
+   * @nullable
+   */
+  teacherSchoolOrganizationId?: number | null;
   teacherName?: string | null;
-  /** MALE|FEMALE|OTHER 또는 한글 표시 원문 */
+  /** 상세 GET은 **. POST .../privacy/unmask 시 회원 저장 원문(MALE|FEMALE|OTHER 등). 없으면 null */
   teacherGender?: string | null;
+  /** 상세 GET은 yyyy-**-**. POST .../privacy/unmask 시 yyyy-MM-dd 원문. 없으면 null */
   teacherBirthDate?: string | null;
   teacherPhone?: string | null;
   teacherEmail?: string | null;
@@ -92,7 +99,10 @@ export interface GeminiApprovedTrainingDetailResponse {
   teacherInstructorFeeGrade?: string | null;
   teacherBusinessIncomeLabel?: string | null;
   teacherOneLineIntro?: string | null;
-  officialDocumentRequired?: boolean;
+  /** 공문 필요 여부. 한글 라벨(필요/필요 없음)은 FE 렌더 */
+  officialDocumentRequired?: boolean | null;
+  /** 기관 신청 폼 공문 필요 정보 원문. 없으면 null. BE는 '-'를 넣지 않는다 */
+  officialDocumentRequiredInfo?: string | null;
   submittedAt?: string;
   approvedAt?: string;
   updatedAt?: string;

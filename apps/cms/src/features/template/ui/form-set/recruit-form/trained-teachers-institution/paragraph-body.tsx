@@ -6,9 +6,6 @@ import { RecruitDetailInfoParagraph } from '@/features/template/ui/form-set/recr
 
 const TRAINED_TEACHERS_RECRUIT_DEFAULTS = {
   studentListRequired: 'none' as const,
-  maxClassCount: 2,
-  maxScheduleCount: 2,
-  maxSessionsPerDay: 5,
 }
 
 /** 템플릿 편집기 — 교육받은 교사_참여 기관 모집 폼 시드 단락 본문 */

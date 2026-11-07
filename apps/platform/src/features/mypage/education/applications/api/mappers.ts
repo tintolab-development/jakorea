@@ -43,14 +43,16 @@ const DISPLAY_STATUS_FROM_API: Record<string, EducationDisplayStatus> = {
   '진행 완료': 'completed',
   '활동 포기': 'withdrawn',
   '신청 반려': 'rejected',
+  '승인 취소': 'rejected',
   '작성 중': 'waiting_result',
-  '신청 취소': 'withdrawn',
+  '신청 취소': 'cancelled',
   // 영문/코드형 displayStatus (일부 환경·상세 폴백)
   WAITING_RESULT: 'waiting_result',
   WAITING: 'waiting_result',
   DOCUMENT_PASSED: 'document_passed',
   DOC_PASSED: 'document_passed',
   IN_PROGRESS: 'in_progress',
+  INSTRUCTOR_REPORTS_PENDING: 'in_progress',
   COMPLETED: 'completed',
   FINISHED: 'completed',
   WITHDRAWN: 'withdrawn',
@@ -58,8 +60,11 @@ const DISPLAY_STATUS_FROM_API: Record<string, EducationDisplayStatus> = {
   GIVEN_UP: 'withdrawn',
   REJECTED: 'rejected',
   AUTO_REJECTED: 'rejected',
-  CANCELLED: 'withdrawn',
-  CANCELED: 'withdrawn',
+  INTERVIEW_FAILED: 'rejected',
+  CANCELLED_BY_ADMIN: 'rejected',
+  APPROVAL_CANCELLED: 'rejected',
+  CANCELLED: 'cancelled',
+  CANCELED: 'cancelled',
 }
 
 const APPLICATION_TYPE_SET = new Set<ProgramApplicationType>([
@@ -98,19 +103,34 @@ function hasStatus(value: string, tokens: readonly string[]): boolean {
   return tokens.includes(value)
 }
 
+/** Application GET `program.surveyConfigured` / `satisfactionConfigured` — boolean only. */
+function readConfiguredFlag(value: unknown): boolean | undefined {
+  if (value === true || value === false) return value
+  return undefined
+}
+
 function resolveDisplayStatusFromApplicationFields(input: {
   applicationStatus?: string | null
   participationStatus?: string | null
-  completionStatus?: string | null
 }): EducationDisplayStatus {
   const applicationStatus = (input.applicationStatus ?? '').trim().toUpperCase()
   const participationStatus = (input.participationStatus ?? '').trim().toUpperCase()
-  const completionStatus = (input.completionStatus ?? '').trim().toUpperCase()
 
-  if (hasStatus(applicationStatus, ['REJECTED', 'AUTO_REJECTED', 'FINAL_REJECTED', 'FINAL_FAILED', 'FAILED'])) {
+  if (
+    hasStatus(applicationStatus, [
+      'REJECTED',
+      'AUTO_REJECTED',
+      'FINAL_REJECTED',
+      'FINAL_FAILED',
+      'FAILED',
+      'INTERVIEW_FAILED',
+      'CANCELLED_BY_ADMIN',
+      'APPROVAL_CANCELLED',
+    ])
+  ) {
     return 'rejected'
   }
-  if (hasStatus(applicationStatus, ['CANCELLED', 'CANCELED'])) return 'withdrawn'
+  if (hasStatus(applicationStatus, ['CANCELLED', 'CANCELED'])) return 'cancelled'
   if (
     applicationStatus.startsWith('GIVE_UP') ||
     applicationStatus === 'GIVEN_UP' ||
@@ -119,12 +139,7 @@ function resolveDisplayStatusFromApplicationFields(input: {
   ) {
     return 'withdrawn'
   }
-  if (
-    completionStatus === 'COMPLETED' ||
-    participationStatus === 'COMPLETED' ||
-    applicationStatus === 'COMPLETED' ||
-    applicationStatus === 'FINISHED'
-  ) {
+  if (applicationStatus === 'COMPLETED' || applicationStatus === 'FINISHED') {
     return 'completed'
   }
   if (
@@ -144,10 +159,13 @@ function resolveDisplayStatusFromApplicationFields(input: {
   ) {
     return 'document_passed'
   }
+  if (hasStatus(applicationStatus, ['REJECTION_CANCELLED', 'WAITING_REVIEW', 'SUBMITTED', 'PENDING'])) {
+    return 'waiting_result'
+  }
   return 'waiting_result'
 }
 
-/** 상세·목록 공통: displayStatus 우선, 없으면 applicationStatus·참여 상태로 탭 분류. */
+/** 상세·목록 공통: GET displayStatus SSOT. 수료·사업종료일로 재계산하지 않는다. */
 export function resolvePortalDisplayStatus(
   detail: PortalProgramApplicationDetail | PortalProgramApplicationListItem,
 ): EducationDisplayStatus {
@@ -162,7 +180,6 @@ export function resolvePortalDisplayStatus(
   return resolveDisplayStatusFromApplicationFields({
     applicationStatus: detail.applicationStatus,
     participationStatus: detail.participationStatus ?? participation?.status,
-    completionStatus: participation?.completionStatus,
   })
 }
 
@@ -610,9 +627,12 @@ export function mapPortalProgramApplicationDetail(
       programType: detail.program.programType,
       educationFormLabel: detail.program.educationFormLabel,
       educationJournalEnabled: detail.program.educationJournalEnabled,
-      surveyConfigured: detail.program.surveyConfigured,
-      satisfactionConfigured: detail.program.satisfactionConfigured,
+      surveyConfigured: readConfiguredFlag(detail.program.surveyConfigured),
+      satisfactionConfigured: readConfiguredFlag(detail.program.satisfactionConfigured),
     }
+  }
+  if (detail.portalWarningCode?.trim()) {
+    mapped.portalWarningCode = detail.portalWarningCode.trim()
   }
   const recruitmentLabel = formatDateRange(
     detail.program?.recruitmentStartAt,

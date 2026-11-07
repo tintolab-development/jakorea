@@ -3,6 +3,12 @@
  * - Base URL: `VITE_API_BASE_URL` (미설정 + DEV 프록시 시 동일 출처 상대 경로)
  * - 인증: `platform_auth_*` localStorage + `withCredentials`
  * - 리프레시: `POST /api/portal/auth/refresh` (body refreshToken only, no Bearer)
+ *
+ * 인증 헤더 판정(`skipAuth`/공개 경로)과 401 자동 Refresh 판정(`skipRefresh`/제외 경로)은 분리한다.
+ * - Activity: Bearer 부착 + 401 시 Refresh·재POST 0회
+ * - Session GET: Bearer 부착 + 401 시 Access JWT 자체가 만료된 경우에만 Refresh 1회 → 재조회 1회
+ * - Refresh: 탭 내 single-flight + 탭 간 Web Locks 직렬화. 409 REFRESH_TOKEN_ALREADY_ROTATED는 재POST 금지
+ * - 인증 실패 처리: 세대·저장 토큰 비교로 오래된 실패가 새 세션을 서버 Logout/삭제하지 못하게 한다
  */
 
 import axios, {
@@ -14,13 +20,13 @@ import axios, {
 import { portalAuthPaths } from '@/features/auth/sign-in/api/endpoints'
 import { getApiBaseUrl, getApiBaseUrlForPath } from '@/shared/lib/api-remote-env'
 import { isAdminOnboardingRequired } from '@/shared/lib/admin-onboarding-session'
+import { readJwtExpiresAtMs } from '@jakorea/domain/session'
 import {
-  clearAuthTokens,
   getAccessToken,
+  getAuthGeneration,
   getRefreshToken,
   setAuthTokens,
 } from '@/shared/lib/auth-token'
-import { setDevAuthLoggedIn } from '@/shared/lib/dev-auth'
 
 export type TAxiosHeaders = {
   'Content-Type': string
@@ -42,6 +48,8 @@ export type TErrorResponse = {
 
 type RetryableRequest = InternalAxiosRequestConfig & {
   _retry?: boolean
+  /** 요청 시점 탭 인증 세대 (request interceptor가 기록) */
+  _authGeneration?: number
   skipRefresh?: boolean
   skipAuth?: boolean
   /** verification-sessions 등 skipAuth 경로여도 Bearer를 유지한다. */
@@ -54,6 +62,15 @@ const PORTAL_ORGANIZATIONS_SCHOOLS = '/api/portal/organizations/schools'
 const PORTAL_PUBLIC_SURVEYS_PREFIX = '/api/portal/public/surveys/'
 const AUTH_VERIFICATION_SESSIONS_PREFIX = '/api/auth/verification-sessions'
 const DEFAULT_REFRESH_PATH = `${PORTAL_AUTH_PREFIX}/refresh`
+const PORTAL_SESSION_ACTIVITY_PATH = portalAuthPaths.activity()
+const PORTAL_SESSION_STATUS_PATH = portalAuthPaths.session()
+const REFRESH_TOKEN_ALREADY_ROTATED = 'REFRESH_TOKEN_ALREADY_ROTATED'
+/** 탭 간 Refresh 직렬화 (Web Locks). 미지원 브라우저는 탭 내 single-flight만 적용 */
+const CROSS_TAB_REFRESH_LOCK = 'platform:portal-auth-refresh'
+/** 409 후 다른 탭이 저장할 최신 토큰을 기다리는 최대 시간 */
+const ROTATED_TOKEN_WAIT_MS = 3_000
+/** JWT exp 판정 여유 (클라이언트 시계 오차 흡수) */
+const ACCESS_EXPIRY_HINT_SKEW_MS = 5_000
 
 export { getApiBaseUrl, isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 
@@ -103,9 +120,15 @@ function resolveRequestUrl(config: InternalAxiosRequestConfig): string {
   return config.url ?? raw
 }
 
-function isExcludedFromAutoRefresh(url?: string): boolean {
-  if (!url) return false
-  const path = url.split('?')[0] ?? url
+function pathOf(url?: string): string {
+  if (!url) return ''
+  return url.split('?')[0] ?? url
+}
+
+/** 공개 인증 경로 — Authorization 헤더를 붙이지 않는다 (skipAuth와 동일 효과). */
+function isPublicAuthPath(url?: string): boolean {
+  const path = pathOf(url)
+  if (!path) return false
   return (
     path.includes(`${HOMEPAGE_AUTH_PREFIX}/login`) ||
     path.includes(`${HOMEPAGE_AUTH_PREFIX}/refresh`) ||
@@ -121,6 +144,39 @@ function isExcludedFromAutoRefresh(url?: string): boolean {
     path.includes(PORTAL_PUBLIC_SURVEYS_PREFIX) ||
     path.includes(AUTH_VERIFICATION_SESSIONS_PREFIX)
   )
+}
+
+function isPortalSessionActivityPath(url?: string): boolean {
+  return pathOf(url).endsWith(PORTAL_SESSION_ACTIVITY_PATH)
+}
+
+function isPortalSessionStatusPath(url?: string): boolean {
+  return pathOf(url).endsWith(PORTAL_SESSION_STATUS_PATH)
+}
+
+/**
+ * 401 자동 Refresh 제외 경로. 공개 인증 경로 + Activity(Bearer는 유지).
+ * Activity 401은 Refresh·재POST 없이 호출자에게 그대로 전달한다.
+ */
+function isExcludedFromAutoRefresh(url?: string): boolean {
+  return isPublicAuthPath(url) || isPortalSessionActivityPath(url)
+}
+
+function readBearerToken(headers: InternalAxiosRequestConfig['headers'] | undefined): string | null {
+  if (!headers) return null
+  const raw =
+    typeof (headers as AxiosRequestHeaders).get === 'function'
+      ? (headers as AxiosRequestHeaders).get('Authorization')
+      : (headers as Record<string, unknown>).Authorization
+  if (typeof raw !== 'string') return null
+  const match = /^Bearer\s+(.+)$/i.exec(raw.trim())
+  return match?.[1]?.trim() || null
+}
+
+/** 요청 제어 힌트: JWT exp가 지났으면 true. 판독 불가면 false(만료로 단정하지 않음). */
+function isAccessTokenExpiredByHint(accessToken: string | null, nowMs = Date.now()): boolean {
+  const expMs = readJwtExpiresAtMs(accessToken)
+  return expMs != null && expMs <= nowMs + ACCESS_EXPIRY_HINT_SKEW_MS
 }
 
 function clearAuthorizationHeader(
@@ -193,22 +249,30 @@ export async function postPortalAuthLogout(refreshToken: string): Promise<void> 
 /** @deprecated `postPortalAuthLogout` 사용 */
 export const postHomepageAuthLogout = postPortalAuthLogout
 
-let isRefreshing = false
 let refreshPromise: Promise<string> | null = null
-let failedQueue: {
-  resolve: (token: string) => void
-  reject: (err: unknown) => void
-}[] = []
 
-function processQueue(token: string | null, error: unknown = null) {
-  failedQueue.forEach(p => {
-    if (token) {
-      p.resolve(token)
-    } else {
-      p.reject(error)
-    }
-  })
-  failedQueue = []
+class PortalRefreshError extends Error {
+  /** 서버가 인증 무효를 확정했는지 (401/400/403). 네트워크·5xx는 false */
+  readonly definitive: boolean
+  /** 서버 Logout에 이 토큰을 써도 되는지 (409 stale 경쟁이면 false) */
+  readonly allowServerLogout: boolean
+  readonly refreshTokenUsed: string | null
+  readonly originalError: unknown
+
+  constructor(input: {
+    message: string
+    definitive: boolean
+    allowServerLogout: boolean
+    refreshTokenUsed: string | null
+    originalError?: unknown
+  }) {
+    super(input.message)
+    this.name = 'PortalRefreshError'
+    this.definitive = input.definitive
+    this.allowServerLogout = input.allowServerLogout
+    this.refreshTokenUsed = input.refreshTokenUsed
+    this.originalError = input.originalError
+  }
 }
 
 function parseAccessTokenFromRefreshBody(payload: unknown): string | null {
@@ -251,96 +315,180 @@ function parseExpiresInFromRefreshBody(payload: unknown): number | undefined {
   return undefined
 }
 
-let authFailureHandled = false
+type AuthFailureContext = {
+  /** 실패를 유발한 요청/Refresh 시점의 탭 인증 세대 */
+  generation: number
+  /** 실패를 유발한 Refresh 토큰 (없으면 null) */
+  refreshToken: string | null
+  /** 서버 Logout 시도 여부. 409 경쟁처럼 토큰 유효성이 불분명하면 false */
+  serverLogout: boolean
+}
 
-async function handleAuthFailure() {
+/** 같은 세대에 대해 실패 처리를 한 번만 수행한다. 새 로그인(세대 증가) 시 자연히 초기화된다. */
+let authFailureHandledGeneration: number | null = null
+
+function isStaleAuthFailure(ctx: AuthFailureContext): boolean {
+  // 이 탭에서 이미 새 로그인·Refresh·로그아웃이 일어났다.
+  if (ctx.generation !== getAuthGeneration()) return true
+  // 다른 탭이 최신 토큰으로 교체(Refresh 회전 또는 새 로그인)했다.
+  if (getRefreshToken() !== ctx.refreshToken) return true
+  return false
+}
+
+async function handleAuthFailure(ctx: AuthFailureContext) {
   const onAdminRegisteredOnboarding =
     isAdminOnboardingRequired() &&
     typeof window !== 'undefined' &&
     window.location.pathname.startsWith('/auth/admin-registered')
 
-  if (onAdminRegisteredOnboarding || authFailureHandled) {
-    return
-  }
-  authFailureHandled = true
+  if (onAdminRegisteredOnboarding) return
+  if (isStaleAuthFailure(ctx)) return
+  if (authFailureHandledGeneration === ctx.generation) return
+  authFailureHandledGeneration = ctx.generation
 
-  const refreshToken = getRefreshToken()
-  if (refreshToken) {
-    try {
-      await postPortalAuthLogout(refreshToken)
-    } catch {
-      // refresh 폐기 실패여도 로컬 세션은 종료
-    }
-  }
-
-  clearAuthTokens()
-  setDevAuthLoggedIn(false)
-  if (typeof window !== 'undefined') {
-    const path = `${window.location.pathname}${window.location.search}`
-    const next = encodeURIComponent(path)
-    window.location.assign(`/auth/sign-in?redirect=${next}`)
-  }
-}
-
-function enqueueWhileRefreshing(originalRequest: RetryableRequest) {
-  return new Promise((resolve, reject) => {
-    failedQueue.push({
-      resolve: (token: string) => {
-        originalRequest.headers = setAuthorizationHeader(originalRequest.headers, token)
-        resolve(axiosClient(originalRequest))
-      },
-      reject: err => {
-        reject(err)
-      },
-    })
+  const path =
+    typeof window !== 'undefined' ? `${window.location.pathname}${window.location.search}` : '/'
+  const { logoutPortalSession } = await import('@/features/auth/session/portal-logout')
+  await logoutPortalSession({
+    serverLogout: ctx.serverLogout,
+    refreshToken: ctx.refreshToken,
+    redirectTo: `/auth/sign-in?redirect=${encodeURIComponent(path)}`,
   })
 }
 
-async function runSingleFlightRefresh(refreshToken: string): Promise<string> {
-  if (refreshPromise) {
-    return refreshPromise
-  }
-
-  refreshPromise = (async () => {
-    try {
-      const res = await postAuthenticationRefreshToken(refreshToken)
-      const newAccessToken = parseAccessTokenFromRefreshBody(res.data)
-      const newRefreshToken = parseRefreshTokenFromRefreshBody(res.data)
-      const expiresInSeconds = parseExpiresInFromRefreshBody(res.data)
-
-      if (!newAccessToken || !newRefreshToken) {
-        throw new Error('Invalid refresh response: missing access or refresh token')
+function waitForStoredRefreshTokenChange(previous: string, timeoutMs: number): Promise<boolean> {
+  if (typeof window === 'undefined') return Promise.resolve(false)
+  return new Promise(resolve => {
+    const startedAt = Date.now()
+    const check = () => {
+      const current = getRefreshToken()
+      if (current && current !== previous) {
+        resolve(true)
+        return
       }
+      if (Date.now() - startedAt >= timeoutMs) {
+        resolve(false)
+        return
+      }
+      window.setTimeout(check, 150)
+    }
+    check()
+  })
+}
 
-      const expiresAtIso =
-        expiresInSeconds && expiresInSeconds > 0
-          ? new Date(Date.now() + expiresInSeconds * 1000).toISOString()
-          : undefined
+function withCrossTabRefreshLock<T>(task: () => Promise<T>): Promise<T> {
+  const locks =
+    typeof navigator !== 'undefined'
+      ? (navigator as Navigator & { locks?: LockManager }).locks
+      : undefined
+  if (!locks || typeof locks.request !== 'function') return task()
+  return locks.request(CROSS_TAB_REFRESH_LOCK, { mode: 'exclusive' }, task) as Promise<T>
+}
 
-      setAuthTokens({
-        accessToken: newAccessToken,
-        refreshToken: newRefreshToken,
-        expiresAt: expiresAtIso,
+/**
+ * Refresh 1회. 탭 간 lock 안에서 저장소를 다시 읽어, 다른 탭이 이미 회전했으면 POST 없이 최신 Access를 쓴다.
+ * 409 REFRESH_TOKEN_ALREADY_ROTATED는 같은 토큰으로 재POST하지 않고 최신 저장 토큰만 확인한다.
+ */
+async function refreshAccessTokenOnce(failedAccessToken: string | null): Promise<string> {
+  return withCrossTabRefreshLock(async () => {
+    const storedAccessToken = getAccessToken()
+    const storedRefreshToken = getRefreshToken()
+
+    if (storedAccessToken && failedAccessToken && storedAccessToken !== failedAccessToken) {
+      // 다른 탭(또는 이 탭의 앞선 Refresh)이 이미 교체했다. 회전된 토큰을 다시 쓰지 않는다.
+      return storedAccessToken
+    }
+    if (!storedRefreshToken) {
+      throw new PortalRefreshError({
+        message: 'No refresh token',
+        definitive: true,
+        allowServerLogout: false,
+        refreshTokenUsed: null,
       })
+    }
 
-      return newAccessToken
+    let res
+    try {
+      res = await postAuthenticationRefreshToken(storedRefreshToken)
     } catch (err) {
       const axiosErr = err as AxiosError<TErrorResponse>
       const status = axiosErr.response?.status
       const code = getErrorCode(axiosErr.response?.data)
 
-      // 동일 refresh 동시 rotation: 재POST 금지. in-flight가 있으면 상위에서 공유됨.
-      // 단독 409면 세션을 신뢰할 수 없어 종료.
-      if (status === 409 && code === 'CONFLICT') {
-        throw err
+      if (status === 409 && code === REFRESH_TOKEN_ALREADY_ROTATED) {
+        // 동시 회전 경쟁: 승자가 저장할 최신 토큰을 확인한다. 같은 토큰 재POST 금지.
+        const rotated = await waitForStoredRefreshTokenChange(
+          storedRefreshToken,
+          ROTATED_TOKEN_WAIT_MS,
+        )
+        const latestAccessToken = getAccessToken()
+        if (rotated && latestAccessToken) return latestAccessToken
+        throw new PortalRefreshError({
+          message: 'Refresh token already rotated',
+          definitive: true,
+          // 이 토큰은 이미 회전됐다. 이것으로 서버 Logout하면 같은 sid 후속 토큰까지 폐기된다.
+          allowServerLogout: false,
+          refreshTokenUsed: storedRefreshToken,
+          originalError: err,
+        })
       }
 
-      throw err
-    } finally {
-      refreshPromise = null
+      const definitive = status === 400 || status === 401 || status === 403
+      throw new PortalRefreshError({
+        message: `Refresh failed (${status ?? 'network'})`,
+        definitive,
+        allowServerLogout: definitive,
+        refreshTokenUsed: storedRefreshToken,
+        originalError: err,
+      })
     }
-  })()
 
+    const newAccessToken = parseAccessTokenFromRefreshBody(res.data)
+    const newRefreshToken = parseRefreshTokenFromRefreshBody(res.data)
+    const expiresInSeconds = parseExpiresInFromRefreshBody(res.data)
+
+    if (!newAccessToken || !newRefreshToken) {
+      throw new PortalRefreshError({
+        message: 'Invalid refresh response: missing access or refresh token',
+        definitive: false,
+        allowServerLogout: false,
+        refreshTokenUsed: storedRefreshToken,
+      })
+    }
+
+    // 회전 직후 다른 경로(로그아웃·새 로그인)가 저장소를 바꿨다면 덮어쓰지 않는다.
+    if (getRefreshToken() !== storedRefreshToken) {
+      const latestAccessToken = getAccessToken()
+      if (latestAccessToken) return latestAccessToken
+      throw new PortalRefreshError({
+        message: 'Session changed during refresh',
+        definitive: false,
+        allowServerLogout: false,
+        refreshTokenUsed: storedRefreshToken,
+      })
+    }
+
+    const expiresAtIso =
+      expiresInSeconds && expiresInSeconds > 0
+        ? new Date(Date.now() + expiresInSeconds * 1000).toISOString()
+        : undefined
+
+    setAuthTokens({
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+      expiresAt: expiresAtIso,
+    })
+
+    return newAccessToken
+  })
+}
+
+/** 탭 내 single-flight. 동시 401 요청은 같은 Refresh 결과를 공유한다. */
+function runSingleFlightRefresh(failedAccessToken: string | null): Promise<string> {
+  if (refreshPromise) return refreshPromise
+  refreshPromise = refreshAccessTokenOnce(failedAccessToken).finally(() => {
+    refreshPromise = null
+  })
   return refreshPromise
 }
 
@@ -349,6 +497,7 @@ axiosClient.interceptors.request.use(
     const retryable = config as RetryableRequest
     config.baseURL = getApiBaseUrlForPath(config.url ?? '')
     const url = resolveRequestUrl(config)
+    retryable._authGeneration = getAuthGeneration()
 
     if (retryable.forceAuth) {
       const token = getAccessToken()
@@ -358,7 +507,8 @@ axiosClient.interceptors.request.use(
       return config
     }
 
-    if (retryable.skipAuth || isExcludedFromAutoRefresh(url)) {
+    // 인증 헤더 제거는 skipAuth/공개 경로만. skipRefresh(예: Activity)는 Bearer를 유지한다.
+    if (retryable.skipAuth || isPublicAuthPath(url)) {
       config.headers = clearAuthorizationHeader(config.headers)
       return config
     }
@@ -394,6 +544,7 @@ axiosClient.interceptors.response.use(
       return Promise.reject(error)
     }
 
+    // 403(ADMIN JWT로 MEMBER 세션 API 호출 등)은 Refresh로 우회하지 않는다.
     if (status === 403 && code === 'PERMISSION_DENIED') {
       return Promise.reject(error)
     }
@@ -403,31 +554,34 @@ axiosClient.interceptors.response.use(
       return Promise.reject(error)
     }
 
-    const refreshToken = getRefreshToken()
-    if (!refreshToken) {
-      handleAuthFailure()
+    const failedAccessToken = readBearerToken(originalRequest.headers)
+
+    // Session GET: Access JWT 자체 만료일 때만 Refresh 1회 + 재조회 1회.
+    // sid 폐기·레거시(sid 없음)·서명 오류 401은 Refresh하지 않고 호출자가 재로그인으로 처리한다.
+    if (
+      isPortalSessionStatusPath(requestUrl) &&
+      !isAccessTokenExpiredByHint(failedAccessToken)
+    ) {
       return Promise.reject(error)
     }
 
-    if (isRefreshing) {
-      return enqueueWhileRefreshing(originalRequest)
-    }
-
+    const generation = originalRequest._authGeneration ?? getAuthGeneration()
     originalRequest._retry = true
-    isRefreshing = true
 
     try {
-      const newAccessToken = await runSingleFlightRefresh(refreshToken)
-      processQueue(newAccessToken)
-      isRefreshing = false
-
+      const newAccessToken = await runSingleFlightRefresh(failedAccessToken)
       originalRequest.headers = setAuthorizationHeader(originalRequest.headers, newAccessToken)
       return axiosClient(originalRequest)
     } catch (err) {
-      processQueue(null, err)
-      isRefreshing = false
-      handleAuthFailure()
-      return Promise.reject(err)
+      if (err instanceof PortalRefreshError && err.definitive) {
+        void handleAuthFailure({
+          generation,
+          refreshToken: err.refreshTokenUsed,
+          serverLogout: err.allowServerLogout,
+        })
+      }
+      // 네트워크·5xx·잘못된 응답은 인증 폐기의 증거가 아니므로 로그아웃하지 않는다.
+      return Promise.reject(err instanceof PortalRefreshError && err.originalError ? err.originalError : err)
     }
   },
 )

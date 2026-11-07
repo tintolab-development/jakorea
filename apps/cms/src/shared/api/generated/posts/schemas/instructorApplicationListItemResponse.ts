@@ -18,6 +18,7 @@ export interface InstructorApplicationListItemResponse {
   affiliationOrganizationId?: number;
   /** 강사 실명. 프로그램 관리에서는 마스킹하지 않습니다. */
   instructorName?: string;
+  /** 정규화된 application_status. 목록과 상세는 같은 코드를 반환한다. CMS 「승인 대기」=statusGroup=APPLICATION_PENDING(SUBMITTED, WAITING, WAITING_REVIEW, PENDING, REJECTION_CANCELLED; REVIEWING 등 WAITING_REVIEW 별칭 포함). 「신청 반려」=statusGroup=APPLICATION_REJECTED(REJECTED, APPROVAL_CANCELLED). REJECTION_CANCELLED는 반려 취소 후 승인 대기이며 상세에서 대기 중으로 바꾸지 않는다. 단일 status=는 정규화 등호이며 그룹의 다른 상태를 포함하지 않는다. */
   applicationStatus?: string;
   /** 자택 주소. 동(읍/면/리)까지 노출 + ' *****' (FE blur). 기관 주소 아님. */
   homeAddress?: string;

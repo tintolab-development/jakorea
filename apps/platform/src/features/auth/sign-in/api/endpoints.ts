@@ -5,6 +5,10 @@ export const portalAuthPaths = {
   refresh: () => '/api/portal/auth/refresh',
   logout: () => '/api/portal/auth/logout',
   me: () => '/api/portal/auth/me',
+  /** POST — MEMBER Bearer, 본문 없음. 실제 사용자 활동 기록 (BE 60초 기록 억제) */
+  activity: () => '/api/portal/auth/activity',
+  /** GET — MEMBER Bearer. 조회 전용(활동·Refresh 미발생), Cache-Control: no-store */
+  session: () => '/api/portal/auth/session',
   emailCheck: () => '/api/portal/auth/email/check',
   emailRecoveryLookup: () => '/api/portal/auth/email-recovery/lookup',
   passwordChange: () => '/api/portal/auth/password/change',

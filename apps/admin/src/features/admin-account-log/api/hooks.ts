@@ -1,5 +1,6 @@
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { AdminAccountListFilter } from '@/entities/admin-account-log/model/types'
+import { fileDownloadLogQueryKeys } from '@/features/file-download-log/api/query-keys'
 import { shouldUseAdminAccountLogRemoteApi } from './capabilities'
 import { adminAccountLogQueryKeys } from './query-keys'
 import {
@@ -16,15 +17,20 @@ export function useAdminAccountLogsList(filter: AdminAccountListFilter) {
   return useQuery({
     queryKey: adminAccountLogQueryKeys.list(dataSource, filter),
     queryFn: () => listAdminAccountLogsService(filter),
-    staleTime: dataSource === 'remote' ? 30_000 : Number.POSITIVE_INFINITY,
-    retry: dataSource === 'remote' ? 1 : false,
+    staleTime: 0,
+    retry: false,
   })
 }
 
 export function useExportAdminAccountLogs() {
+  const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (filter: AdminAccountListFilter) =>
       exportAdminAccountLogsService(filter),
     retry: false,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: fileDownloadLogQueryKeys.all })
+      void queryClient.invalidateQueries({ queryKey: adminAccountLogQueryKeys.all })
+    },
   })
 }

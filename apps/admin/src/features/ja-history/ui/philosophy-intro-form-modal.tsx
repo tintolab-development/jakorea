@@ -2,7 +2,7 @@ import { memo, useRef, useState } from 'react'
 import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
 import type { JaHistoryPhilosophy } from '@/entities/ja-history/model/types'
-import { CmsButton, CmsTextArea, ContentModal } from '@/shared/ui'
+import { CmsButton, CmsTextArea, ContentModal, REQUIRED_FIELDS_INCOMPLETE_ALERT, useCmsAlert } from '@/shared/ui'
 
 const DraftTextArea = memo(function DraftTextArea({
   initialValue,
@@ -50,18 +50,15 @@ type Props = {
 }
 
 function PhilosophyIntroFormBody({ initial, confirmLoading, onCancel, onSubmit }: Omit<Props, 'open'>) {
+  const { showAlert } = useCmsAlert()
   const titleRef = useRef(initial.title)
   const leadRef = useRef(initial.lead)
-  const [errors, setErrors] = useState<{ title?: string; lead?: string }>({})
 
   const handleSubmit = () => {
     const title = titleRef.current
     const lead = leadRef.current
-    const nextErrors: typeof errors = {}
-    if (!title.trim()) nextErrors.title = '타이틀을 입력해 주세요.'
-    if (!lead.trim()) nextErrors.lead = '서브 텍스트를 입력해 주세요.'
-    if (Object.keys(nextErrors).length > 0) {
-      setErrors(nextErrors)
+    if (!title.trim() || !lead.trim()) {
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     onSubmit({ title, lead })
@@ -106,22 +103,15 @@ function PhilosophyIntroFormBody({ initial, confirmLoading, onCancel, onSubmit }
             required
             view={null}
             edit={
-              <div>
-                <DraftTextArea
-                  initialValue={titleRef.current}
-                  rows={2}
-                  placeholder="타이틀을 입력해 주세요"
-                  ariaLabel="타이틀"
-                  onValue={value => {
-                    titleRef.current = value
-                  }}
-                />
-                {errors.title ? (
-                  <p className="ja-history-modal__field-error" role="alert">
-                    {errors.title}
-                  </p>
-                ) : null}
-              </div>
+              <DraftTextArea
+                initialValue={titleRef.current}
+                rows={2}
+                placeholder="타이틀을 입력해 주세요"
+                ariaLabel="타이틀"
+                onValue={value => {
+                  titleRef.current = value
+                }}
+              />
             }
           />
         </DetailInfoForm.Row>
@@ -131,22 +121,15 @@ function PhilosophyIntroFormBody({ initial, confirmLoading, onCancel, onSubmit }
             required
             view={null}
             edit={
-              <div>
-                <DraftTextArea
-                  initialValue={leadRef.current}
-                  rows={4}
-                  placeholder="서브 텍스트를 입력해 주세요"
-                  ariaLabel="서브 텍스트"
-                  onValue={value => {
-                    leadRef.current = value
-                  }}
-                />
-                {errors.lead ? (
-                  <p className="ja-history-modal__field-error" role="alert">
-                    {errors.lead}
-                  </p>
-                ) : null}
-              </div>
+              <DraftTextArea
+                initialValue={leadRef.current}
+                rows={4}
+                placeholder="서브 텍스트를 입력해 주세요"
+                ariaLabel="서브 텍스트"
+                onValue={value => {
+                  leadRef.current = value
+                }}
+              />
             }
           />
         </DetailInfoForm.Row>

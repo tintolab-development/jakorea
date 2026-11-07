@@ -1,0 +1,82 @@
+name: Admin Activity bearer auth regression
+
+on:
+  pull_request:
+    branches: [main, jiwon]
+    paths:
+      - 'apps/cms/src/shared/instance/axios-instance.ts'
+      - 'apps/admin/src/shared/instance/axios-instance.ts'
+      - 'apps/cms/src/shared/instance/axios-instance.activity-bearer.test.ts'
+      - 'apps/cms/src/shared/instance/axios-instance.activity-session.test.ts'
+      - 'apps/cms/src/shared/instance/axios-instance.activity-15s.test.ts'
+      - 'apps/admin/src/shared/instance/axios-instance.activity-15s.test.ts'
+      - 'apps/cms/src/features/auth/hooks/use-session-timeout.ts'
+      - 'apps/admin/src/features/auth/hooks/use-session-timeout.ts'
+      - 'apps/cms/src/features/auth/hooks/use-session-timeout.regression.test.tsx'
+      - 'apps/admin/src/features/auth/hooks/use-session-timeout.regression.test.tsx'
+      - 'apps/cms/src/app/providers/auth-provider.tsx'
+      - 'apps/admin/src/app/providers/auth-provider.tsx'
+      - 'apps/cms/src/app/providers/auth-provider.activity-regression.test.tsx'
+      - 'apps/admin/src/app/providers/auth-provider.activity-regression.test.tsx'
+      - 'apps/cms/src/features/auth/model/auth-store.ts'
+      - 'apps/admin/src/features/auth/model/auth-store.ts'
+      - 'apps/cms/src/features/auth/model/auth-store.refresh-race.test.ts'
+      - 'apps/admin/src/features/auth/model/auth-store.refresh-race.test.ts'
+      - 'apps/admin/src/shared/lib/api-remote-env.admin-session.test.ts'
+      - '.github/workflows/admin-activity-bearer-pr.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  admin-activity-bearer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.3
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.20.2'
+          cache: pnpm
+      - name: Install dependencies
+        env:
+          HUSKY: '0'
+        run: pnpm install --frozen-lockfile
+      - name: Build CMS workspace dependencies
+        run: pnpm --filter cms build:workspace-deps
+      - name: CMS Activity Bearer, Refresh and 16-second sustained regression
+        run: |
+          pnpm --filter cms exec vitest run \
+            src/shared/instance/axios-instance.activity-bearer.test.ts \
+            src/shared/instance/axios-instance.activity-session.test.ts \
+            src/shared/instance/axios-instance.refresh-lock.test.ts \
+            src/shared/instance/axios-instance.activity-15s.test.ts \
+            src/features/auth/hooks/use-session-timeout.regression.test.tsx \
+            src/app/providers/auth-provider.activity-regression.test.tsx \
+            src/features/auth/model/auth-store.refresh-race.test.ts
+      - name: Homepage Admin Activity Bearer and 16-second sustained regression
+        run: |
+          pnpm --filter cms exec vitest run \
+            --root "$GITHUB_WORKSPACE/apps/admin" \
+            --config "$GITHUB_WORKSPACE/apps/admin/vite.config.ts" \
+            src/shared/instance/axios-instance.activity-15s.test.ts \
+            src/features/auth/hooks/use-session-timeout.regression.test.tsx \
+            src/app/providers/auth-provider.activity-regression.test.tsx \
+            src/features/auth/model/auth-store.refresh-race.test.ts \
+            src/shared/lib/api-remote-env.admin-session.test.ts
+      - name: Ensure both interceptors separate Bearer and Refresh exclusion
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          for app in ("cms", "admin"):
+              code = Path(f"apps/{app}/src/shared/instance/axios-instance.ts").read_text()
+              assert "retryable.skipAuth || isExcludedFromBearerAuth(url)" in code, app
+              assert "isExcludedFromBearerAuth(url) || path === `${adminAuthPaths.prefix}/activity`" in code, app
+              header_fn = code.split("function isExcludedFromBearerAuth(", 1)[1].split("\n}", 1)[0]
+              assert "path.includes(`${prefix}/activity`)" not in header_fn, app
+              print(f"ADMIN_ACTIVITY_BEARER=PASS|{app}")
+          PY

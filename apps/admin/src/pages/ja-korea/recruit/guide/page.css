@@ -1,49 +1,22 @@
-/* 멀티 섹션 — 짧은 콘텐츠는 흰 카드가 영역을 채우고, 길면 layout-content가 스크롤
- * @see pages/sponsor/corporate/guide/page.css
+/**
+ * 채용 안내 관리 — 섹션별 흰 카드 3개, 간격 32
  */
+
 .recruit-guide-page {
   display: flex;
   flex-direction: column;
+  gap: 32px;
   width: 100%;
   min-width: 0;
-  height: auto;
-  overflow: visible;
-  flex-shrink: 0;
   min-height: calc(100vh - var(--header-height, 64px) - 64px);
 }
 
-.recruit-guide-page > .recruit-guide-card.admin-list-card {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  height: auto;
-  max-height: none;
-  margin-bottom: 0;
-  overflow: visible !important;
-}
-
-.recruit-guide-card__heading {
-  flex-shrink: 0;
-  margin-bottom: 16px;
-}
-
-.recruit-guide-page .recruit-guide-section + .recruit-guide-section {
-  margin-top: 24px;
-}
-
-.recruit-guide-page .recruit-guide-section {
-  display: flex;
-  flex-direction: column;
+.recruit-guide-page > .admin-list-card,
+.recruit-guide-page .admin-list-card.recruit-guide-section {
   flex: 0 0 auto;
-  min-width: 0;
-  width: 100%;
-  margin: 0;
-  padding: 0;
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  box-shadow: none;
+  margin-bottom: 0;
+  overflow-x: auto;
+  overflow-y: visible;
 }
 
 .recruit-guide-page .recruit-guide-section .admin-list-toolbar {

@@ -6,4 +6,5 @@ import { queryClient } from '@/shared/lib/query-client'
 export function clearDashboardQueryCache(): void {
   useDashboardSettingsStore.getState().setAssignedProgramTypes(null)
   void queryClient.removeQueries({ queryKey: dashboardQueryKeys.all })
+  void queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.all })
 }

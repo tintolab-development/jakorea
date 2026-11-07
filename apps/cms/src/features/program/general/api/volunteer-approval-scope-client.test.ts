@@ -12,6 +12,7 @@ vi.mock('@/shared/api/orval-mutator', () => ({
 import {
   approveVolunteerApplicationWithEducationScopeRemote,
   bulkApproveVolunteerApplicationsWithEducationScopeRemote,
+  bulkVolunteerFinalResultsRemote,
   submitVolunteerFinalResultRemote,
 } from './applications-api-client'
 
@@ -87,5 +88,31 @@ describe('volunteer approval with education scope client', () => {
     expect(customInstanceMock.mock.calls[0]?.[0].url).toBe(
       '/api/admin/volunteer-applications/1/final-result'
     )
+  })
+})
+
+describe('volunteer approval without education scope', () => {
+  beforeEach(() => {
+    customInstanceMock.mockReset()
+  })
+
+  it('posts final-results/bulk PASS without filling schedule ids', async () => {
+    customInstanceMock.mockResolvedValue({
+      successCount: 4,
+      failureCount: 0,
+      successIds: [1691680, 1691679, 1691678, 1691677],
+    })
+    await bulkVolunteerFinalResultsRemote({
+      ids: [1691680, 1691679, 1691678, 1691677],
+      result: 'PASS',
+    })
+    expect(customInstanceMock.mock.calls[0]?.[0]).toEqual({
+      url: '/api/admin/volunteer-applications/final-results/bulk',
+      method: 'POST',
+      data: {
+        ids: [1691680, 1691679, 1691678, 1691677],
+        result: 'PASS',
+      },
+    })
   })
 })

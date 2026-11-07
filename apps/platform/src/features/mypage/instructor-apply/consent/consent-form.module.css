@@ -536,6 +536,40 @@
   letter-spacing: -0.2px;
 }
 
+/* 서명 카드 왼쪽 — 확인문(S58) + 회색 안내(S72), gap 4 */
+.statementTextGroup {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-4, 4px);
+}
+
+.statementNote {
+  margin: 0;
+  color: var(--color-neutral-warm-600, #7a7a7a);
+  font-family: var(--font-family-base);
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%;
+  letter-spacing: -0.18px;
+  white-space: pre-line;
+}
+
+/* 카드 하단 안내(S62) — 행정정보 5번 대상자 본인 */
+.sectionFooterNote {
+  margin: 0;
+  padding: 0 var(--spacing-8, 8px);
+  color: var(--color-neutral-black, #3d3d3d);
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%;
+  letter-spacing: -0.16px;
+  white-space: pre-line;
+}
+
 .statementSignatureBlock {
   flex-shrink: 0;
   width: auto;

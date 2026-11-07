@@ -88,6 +88,8 @@ const BLOCKED_REASON_MESSAGES: Record<string, string> = {
   APPLICATION_ALREADY_SUBMITTED: '이미 제출한 신청이 있습니다.',
   /** application-options.blockedReason — APPLICATION_ALREADY_SUBMITTED와 동일 안내 */
   ALREADY_APPLIED: '이미 제출한 신청이 있습니다.',
+  /** 기관 신청 재제출 — 구 409 코드. 현행은 APPLICATION_ALREADY_SUBMITTED */
+  CONSTRAINT_VIOLATION: '이미 제출한 신청이 있습니다.',
   PREFERRED_SCHEDULE_OUTSIDE_EDUCATION_RANGE:
     '희망 교육 일정이 프로그램 교육 가능 기간을 벗어났습니다.',
   /** Gemini 연수 요청 가능기간 밖·미설정. 교육 가능 기간 코드와 분리. */
@@ -108,7 +110,10 @@ const BLOCKED_REASON_MESSAGES: Record<string, string> = {
   PREFERRED_SCHEDULE_SESSION_TIMES_REQUIRED:
     '진행 희망 교육 일정의 차시와 시간을 입력해 주세요.',
   FORM_ANSWER_REQUIRED: '필수 입력값을 입력해 주세요.',
+  FORM_REQUIRED_CONSENT_NOT_AGREED: '필수 동의 항목에 동의해 주세요.',
+  FORM_ANSWER_TOO_LONG: '입력 가능한 글자 수를 초과했습니다. 1,000자 이하로 작성해 주세요.',
   FORM_ANSWER_TYPE_INVALID: '입력 형식이 올바르지 않습니다.',
+  FORM_BINDING_TARGET_ROLE_MISMATCH: '현재 참여 역할에 해당하지 않는 설문입니다.',
   INVALID_REQUESTED_EDUCATION_FORMAT: '희망 교육 형태를 다시 확인해 주세요.',
   FORM_OPTION_NOT_ALLOWED: '선택한 값은 사용할 수 없습니다.',
   FORM_ANSWER_NOT_ALLOWED: '현재 제출할 수 없는 양식 항목입니다.',
@@ -174,9 +179,19 @@ const BLOCKED_REASON_MESSAGES: Record<string, string> = {
   ASSIGNMENT_RESUBMIT_NOT_ALLOWED: '현재 상태에서는 과제를 수정 제출할 수 없습니다.',
   CERTIFICATE_CONSENT_EVIDENCE_UNAVAILABLE:
     '수료증 발급 기간을 확인할 동의 또는 신청 정보가 없습니다.',
-  ISSUANCE_PERIOD_EXPIRED: '수료증 발급 기간이 만료되었습니다.',
+  CERTIFICATE_APPLICATION_DATE_UNAVAILABLE: '신청일을 확인할 수 없습니다.',
+  MEMBER_PARTICIPATION_CERTIFICATE_SELF_ISSUE_NOT_ALLOWED:
+    '참가인증서는 회원·학생·교사가 직접 발급할 수 없습니다.',
+  CERTIFICATE_ALREADY_ISSUED: '이미 발급된 증명서입니다.',
+  CERTIFICATE_ISSUE_NOT_ELIGIBLE: '증명서 발급 요건을 충족하지 않았습니다.',
+  ATTENDANCE_NOT_COMPLETED: '출석 요건을 충족하지 않아 발급할 수 없습니다.',
+  ISSUANCE_PERIOD_EXPIRED: '신청일로부터 3년이 지나 발급할 수 없습니다.',
   PARTICIPANT_NOT_COMPLETED: '수료 조건을 충족하지 않아 발급할 수 없습니다.',
+  COMPLETION_CERTIFICATE_REQUIRED: '수료 조건을 충족한 뒤에는 수료증을 발급해 주세요.',
+  PARTICIPATION_NOT_STARTED: '참가 이력이 없어 증명서를 발급할 수 없습니다.',
+  ABSENCE_REASON_NOT_ALLOWED: '출석 처리된 회차에는 불참 사유를 제출할 수 없습니다.',
   PORTAL_CERTIFICATE_ISSUANCE_NOT_READY: '수료증을 아직 발급할 수 없습니다.',
+  PORTAL_ANSWER_PRIVACY_UNVERIFIABLE: 'PORTAL_ANSWER_PRIVACY_UNVERIFIABLE',
 }
 
 export const INDIVIDUAL_APPLICATION_ENROLLED_GRADE_REQUIRED_CODE =

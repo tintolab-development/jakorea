@@ -20,6 +20,21 @@ describe('logs-adapters', () => {
     })
     expect(row.fileName).toBe('report.pdf')
     expect(row.userName).toBe('홍길동')
+    expect(row.kind).toBe('-')
+    expect(row.containedPiiLabel).toBe('개인정보가 포함된 파일입니다.')
+  })
+
+  it('maps containedPiiTypes and kind from file-access rows', () => {
+    const row = mapDownloadLogResponse({
+      id: 7,
+      fileName: '지급조서_41.pdf',
+      userName: '관리자',
+      kind: 'PAYMENT_STATEMENT',
+      containedPiiTypes: ['RESIDENT_REGISTRATION_NUMBER', 'ACCOUNT_NUMBER'],
+      downloadedAt: '2026-09-02T08:00:00Z',
+    })
+    expect(row.kind).toBe('PAYMENT_STATEMENT')
+    expect(row.containedPiiLabel).toBe('주민등록번호·계좌번호가 포함된 파일입니다.')
   })
 
   it('maps DownloadLogFrontendResponse including numeric id', () => {
@@ -37,6 +52,8 @@ describe('logs-adapters', () => {
     expect(row.userId).toBe('1001')
     expect(row.ipAddress).toBe('203.0.113.10')
     expect(row.downloadedAt).toBe('2026-09-02T08:00:00Z')
+    expect(row.kind).toBe('-')
+    expect(row.containedPiiLabel).toBe('개인정보가 포함된 파일입니다.')
   })
 
   it('maps download log page wrapper and does not use items.length as total', () => {

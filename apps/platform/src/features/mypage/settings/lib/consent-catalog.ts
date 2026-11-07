@@ -32,6 +32,8 @@ export type SettingsConsentItem = {
   withdrawable?: boolean
   /** 서버 `status` — WITHDRAWN이면 철회 버튼 비활성 */
   status?: string
+  /** 서버 `consentStatus` — `PARTIAL`이면 부분동의 */
+  consentStatus?: string
   /** 서버 `signed` — 동의서 게이트는 agreed && signed */
   signed?: boolean
   /** 서버 listed. boolean만 유지. null은 true로 올리지 않는다. */

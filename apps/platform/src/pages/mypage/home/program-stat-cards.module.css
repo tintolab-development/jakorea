@@ -30,6 +30,11 @@
 
   .value {
     font-size: 20px !important;
+    min-height: calc(20px * 1.44);
+  }
+
+  .valueBone {
+    height: calc(20px * 1.44);
   }
 }
 
@@ -58,6 +63,16 @@
 .value {
   margin: 0;
   text-align: left;
+}
+
+.value {
+  min-height: calc(34px * 1.44);
+}
+
+.valueBone {
+  width: 52px;
+  height: calc(34px * 1.44);
+  border-radius: var(--radius-8);
 }
 
 .label {

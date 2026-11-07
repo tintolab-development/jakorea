@@ -55,15 +55,16 @@ import './board-panel.css'
  * 시안 이사회 테이블 컬럼 폭
  * 선택 60 · 순서·No 80 · 공개 100 (공통 상수) + 나머지 비율
  */
+/** Figma 01-2 함께하는 사람들_이사회 — 테이블 합계 1538px */
 const BOARD_COLUMN_WIDTHS = {
   selection: TABLE_COLUMN_WIDTHS.checkbox,
   sort: TABLE_COLUMN_WIDTHS.sort,
   no: TABLE_COLUMN_WIDTHS.index,
   isPublic: TABLE_COLUMN_WIDTHS.usage,
-  nameKo: 140,
-  nameEn: 188,
-  position: 120,
-  affiliation: 460,
+  nameKo: 305,
+  nameEn: 304,
+  position: 305,
+  affiliation: 304,
 } as const
 
 const BOARD_TABLE_SCROLL_X =

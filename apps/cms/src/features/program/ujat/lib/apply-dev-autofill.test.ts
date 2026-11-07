@@ -9,8 +9,22 @@ vi.mock('@/features/sponsor/api/admin-sponsors-service', () => ({
   getSponsorOptionsList: vi.fn(),
   getSponsorContacts: vi.fn(),
 }))
+vi.mock('@/features/program/ujat/api/education-regions/capabilities', () => ({
+  shouldUseUjatEducationRegionsRemoteApi: vi.fn(() => false),
+}))
+vi.mock('@/features/program/ujat/api/education-regions/service', async importOriginal => {
+  const actual = await importOriginal<
+    typeof import('@/features/program/ujat/api/education-regions/service')
+  >()
+  return {
+    ...actual,
+    listUjatEducationRegionsActiveRemoteService: vi.fn(),
+  }
+})
 
-import { applyUjatDevAutofillCase, UjatDevAutofillError, type UjatDevAutofillResult } from './apply-dev-autofill'
+import { applyUjatDevAutofillCase, resolveUjatDevAutofillDependencies, UjatDevAutofillError, type UjatDevAutofillResult } from './apply-dev-autofill'
+import { shouldUseUjatEducationRegionsRemoteApi } from '@/features/program/ujat/api/education-regions/capabilities'
+import { listUjatEducationRegionsActiveRemoteService } from '@/features/program/ujat/api/education-regions/service'
 import type { UjatBasicInfoFormValues } from './ujat-basic-info-form'
 import { UJAT_DEV_AUTOFILL_CASE_IDS, type UjatDevAutofillCaseId } from './dev-autofill-cases'
 import type { ResolvedUjatDevDependencies } from './dev-autofill-fixture'
@@ -108,6 +122,8 @@ function createRequest(result: UjatDevAutofillResult) {
 afterEach(() => {
   vi.unstubAllEnvs()
   customInstanceMock.mockReset()
+  vi.mocked(shouldUseUjatEducationRegionsRemoteApi).mockReturnValue(false)
+  vi.mocked(listUjatEducationRegionsActiveRemoteService).mockReset()
   resetUjatProgramRegistrationOverlayStoreForTests()
   resetUjatRecruitInstitutionOverlayStoreForTests()
   resetUjatRecruitVolunteerOverlayStoreForTests()
@@ -424,5 +440,26 @@ describe('GET recruitments[] 재수화', () => {
     expect(h1?.interviewStartAt).toBe(`${plan.halves.h1.interview.start}T00:00:00+09:00`)
     expect(h2?.interviewStartAt).toBe(`${plan.halves.h2.interview.start}T00:00:00+09:00`)
     expect(h2?.interviewEndAt).toBe(`${plan.halves.h2.interview.end}T00:00:00+09:00`)
+  })
+
+  it('remote 스냅샷이 비면 교육 지역 GET으로 채우고, 빈 목록일 때만 REGIONS_EMPTY', async () => {
+    vi.mocked(shouldUseUjatEducationRegionsRemoteApi).mockReturnValue(true)
+    vi.mocked(listUjatEducationRegionsActiveRemoteService).mockResolvedValue([
+      {
+        id: '1',
+        regionKey: 'SEOUL',
+        name: '서울',
+        active: true,
+        sortOrder: 1,
+        createdByName: '',
+        updatedByName: '',
+        createdAt: '2026-01-01T00:00:00+09:00',
+        hasUsageHistory: false,
+      },
+    ])
+    await expect(resolveUjatDevAutofillDependencies('REG-01')).rejects.toMatchObject({
+      code: 'SPONSORS_EMPTY',
+    })
+    expect(listUjatEducationRegionsActiveRemoteService).toHaveBeenCalledTimes(1)
   })
 })

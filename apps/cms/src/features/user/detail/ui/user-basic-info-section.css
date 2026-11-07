@@ -234,7 +234,7 @@
   color: #c32f4a;
 }
 
-/* 강의비 행 — 스펙: "유형 | 금액" */
+/* 강사비 행 — 스펙: "유형 | 금액" */
 .basic-info-fee {
   display: inline-flex;
   align-items: center;
@@ -252,7 +252,7 @@
   color: var(--color-blue, #017eaf);
 }
 
-/* 교사 및 강사: 강의비 블록은 별도 DetailInfoForm — 기본 정보와 16px 간격, 헤더는 스크린리더 전용 */
+/* 교사 및 강사: 강사비 블록은 별도 DetailInfoForm — 기본 정보와 16px 간격, 헤더는 스크린리더 전용 */
 .user-basic-info-section--instructor-fee-form {
   margin-top: var(--spacing-16, 16px);
   width: 100%;

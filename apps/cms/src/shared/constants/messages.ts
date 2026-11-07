@@ -4,7 +4,7 @@
  */
 
 /** 폼 제출 — 필수 항목 미완 시 AlertModal 제목 (회원 신규 등록과 동일) */
-export const REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE = '필수 항목 미입력'
+export const REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE = '필수 항목 입력 안내'
 
 /** 폼 제출 — 필수 항목 미완 시 AlertModal 본문 (`*` 빨간색). 필드명 미안내 */
 export {
@@ -57,12 +57,12 @@ export const STUDENT_PORTRAIT_CONSENT_NOT_SUBMITTED_ALERT_MESSAGE =
 export const STUDENT_PORTRAIT_CONSENT_DOWNLOAD_FAILED_ALERT_MESSAGE =
   '초상권 동의서 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.'
 
-/** 참여 학생 목록 — 수료증/참여인증서 발급: 미선택 시 AlertModal 본문 */
+/** 참여 학생 목록 — 수료증/참가인증서 발급: 미선택 시 AlertModal 본문 */
 export const STUDENT_CERTIFICATE_ISSUE_SELECT_ONE_ALERT_MESSAGE = '발급할 학생을 1명 선택해 주세요.'
 
-/** 참여 학생 목록 — 수료증/참여인증서 발급: 다수 선택 시 AlertModal 본문 */
+/** 참여 학생 목록 — 수료증/참가인증서 발급: 다수 선택 시 AlertModal 본문 */
 export const STUDENT_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_ALERT_MESSAGE =
-  '수료증/참여인증서는 한 번에 1명만 발급할 수 있습니다.\n학생 1명만 선택한 뒤 다시 시도해 주세요.'
+  '수료증/참가인증서는 한 번에 1명만 발급할 수 있습니다.\n학생 1명만 선택한 뒤 다시 시도해 주세요.'
 
 /** 참여 강사 목록 — 활동인증서 발급: 미선택 시 AlertModal 본문 */
 export const ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONE_ALERT_MESSAGE =
@@ -113,7 +113,7 @@ export const PARTICIPATING_INSTRUCTOR_ALREADY_ACTIVITY_WITHDRAWN_ALERT_MESSAGE =
 export const PARTICIPATING_INSTITUTION_ALREADY_ACTIVITY_WITHDRAWN_ALERT_MESSAGE =
   '이미 활동 포기 처리된 기관입니다.'
 
-/** 수료증/참여인증서·활동인증서 발급 사유 모달 — 사유 미선택 시 AlertModal 본문 */
+/** 수료증/참가인증서·활동인증서 발급 사유 모달 — 사유 미선택 시 AlertModal 본문 */
 export const CERTIFICATE_ISSUE_REASON_REQUIRED_ALERT_MESSAGE = '발급 사유를 선택해 주세요.'
 
 /** 강사 배정/승인 취소 — 귀책 미선택 */
@@ -160,6 +160,7 @@ export const MESSAGES = {
     rejected: '거절되었습니다.',
     cancelled: '취소되었습니다.',
     saved: '저장되었습니다.',
+    issued: '발급되었습니다.',
     uploaded: '업로드되었습니다.',
     downloaded: '다운로드되었습니다.',
     exported: '내보내기가 완료되었습니다.',

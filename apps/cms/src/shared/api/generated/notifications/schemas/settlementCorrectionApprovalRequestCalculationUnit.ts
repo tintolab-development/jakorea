@@ -7,7 +7,7 @@
  */
 
 /**
- * 특강/기타 인건비 지급 기준. PER_LECTURE=출강 1회, PER_HOUR=1시간당, PER_CLASS=1차시당(기타 인건비)
+ * 특강/기타 인건비 지급 기준. PER_LECTURE=출강 1회, PER_HOUR=레거시 차시당 단가(시간 비례 아님), PER_CLASS=1차시당
  */
 export type SettlementCorrectionApprovalRequestCalculationUnit = typeof SettlementCorrectionApprovalRequestCalculationUnit[keyof typeof SettlementCorrectionApprovalRequestCalculationUnit];
 

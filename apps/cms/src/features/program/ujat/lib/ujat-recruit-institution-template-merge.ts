@@ -119,7 +119,8 @@ export function buildUjatRecruitInstitutionOverlayFromDetailEditValues(
     [OVERLAY_KEYS.publicTitle]: values.announcementTitle?.trim() ?? '',
     [OVERLAY_KEYS.programRange]: toRangeSeal(values.startDate, values.endDate),
     [OVERLAY_KEYS.targetLevels]: values.targetLevels ?? [],
-    [OVERLAY_KEYS.district]: values.district?.trim() ?? '',
+    [OVERLAY_KEYS.district]:
+      values.educationTargetDetail?.trim() || values.district?.trim() || '',
     [OVERLAY_KEYS.recruitRange]: toRangeSeal(
       values.applicationStartDate,
       values.applicationEndDate
@@ -184,7 +185,8 @@ export function applyUjatRecruitInstitutionOverlayOntoProgram(
     endDate: preferOverlay && programRange?.end?.trim() ? programRange.end : program.endDate,
     targetLevel: (targetLevels?.[0] as Program['targetLevel']) ?? program.targetLevel,
     targetLevels: (targetLevels as Program['targetLevels']) ?? program.targetLevels,
-    district: district ?? program.district,
+    district: program.district,
+    educationTargetDetail: district ?? program.educationTargetDetail,
     applicationStartDate:
       preferOverlay && recruitRange?.start?.trim()
         ? recruitRange.start

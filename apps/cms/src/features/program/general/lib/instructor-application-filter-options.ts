@@ -31,11 +31,12 @@ export const INSTRUCTOR_JA_EVALUATION_GRADE_FILTER_OPTIONS = [
 
 /** lectureExperienceYears(숫자) ↔ JA 강의 경력 필터 구간 매칭 */
 export function matchesInstructorJaExperienceYears(
-  rowYears: number,
+  rowYears: number | null | undefined,
   filter: unknown
 ): boolean {
   const raw = String(filter ?? 'all')
   if (raw === 'all' || raw === '') return true
+  if (rowYears == null) return false
 
   switch (raw as InstructorJaExperienceFilterValue) {
     case 'lt1':

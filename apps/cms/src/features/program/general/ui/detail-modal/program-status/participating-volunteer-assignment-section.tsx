@@ -2,9 +2,8 @@
  * 참여 봉사자 상세 — 봉사 배정 현황 탭
  */
 
-import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type Key } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Select } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
@@ -38,6 +37,8 @@ import {
 } from '@/features/program/general/lib/participating-volunteer-institution-assignment'
 import { WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS } from '@/features/program/general/lib/waiting-instructor-assignment'
 import { participatingScheduleTableColumnLayout } from '@/features/program/general/lib/participating-institutions-table'
+import { buildVolunteerInstitutionAddAssignOptions } from '@/features/program/general/lib/general-add-assign-session-chips'
+import { GeneralParticipantAddAssignModal } from './general-participant-add-assign-modal'
 import { ParticipatingVolunteerUnassignConfirmModal } from './participating-volunteer-unassign-confirm-modal'
 import { ParticipatingVolunteerUnassignCompleteModal } from './participating-volunteer-unassign-complete-modal'
 import './instructor-assignment-status-text.css'
@@ -76,6 +77,9 @@ function renderHopeScheduleLine(line: string) {
   )
 }
 
+/** 추가 배정 — Figma CMS 9760:8214 ‘기관 추가 배정 안내’ (C: 기관형 참여 봉사자) */
+const ADD_ASSIGN_MODAL_TITLE = '기관 추가 배정 안내'
+
 /** 시안 기준 체크박스 열 60px — 두 테이블 합계 1546px */
 const ASSIGNMENT_CHECKBOX_COLUMN_WIDTH = 60
 const ASSIGNMENT_TABLE_SCROLL_X = 1546
@@ -113,6 +117,9 @@ export function ParticipatingVolunteerAssignmentSection({
   const [selectAssignConfirmOpen, setSelectAssignConfirmOpen] = useState(false)
   const [addAssignModalOpen, setAddAssignModalOpen] = useState(false)
   const [addAssignWaitingRowId, setAddAssignWaitingRowId] = useState<string | null>(null)
+  const [addAssignSchoolId, setAddAssignSchoolId] = useState<string | null>(null)
+  const [addAssignSubmitting, setAddAssignSubmitting] = useState(false)
+  const addAssignInFlightRef = useRef(false)
 
   useEffect(() => {
     const assigned = buildInitialVolunteerAssignedRows(volunteer, schoolRows, program)
@@ -482,10 +489,31 @@ export function ParticipatingVolunteerAssignmentSection({
     waitingInstitutions,
   ])
 
+  const closeAddAssignModal = useCallback(() => {
+    if (addAssignInFlightRef.current) return
+    setAddAssignModalOpen(false)
+    setAddAssignSchoolId(null)
+    setAddAssignWaitingRowId(null)
+  }, [])
+
   const handleAddAssignConfirm = useCallback(() => {
-    if (!addAssignWaitingRowId) return
+    if (addAssignInFlightRef.current) return
+    if (!addAssignSchoolId) {
+      showAlert({ title: ADD_ASSIGN_MODAL_TITLE, content: '배정할 기관을 선택해 주세요.' })
+      return
+    }
+    if (!addAssignWaitingRowId) {
+      showAlert({ title: ADD_ASSIGN_MODAL_TITLE, content: '봉사 배정일을 선택해 주세요.' })
+      return
+    }
     const waitingRow = waitingInstitutions.find(w => w.id === addAssignWaitingRowId)
-    if (!waitingRow || waitingRow.assignmentStatus !== 'waiting') return
+    if (
+      !waitingRow ||
+      waitingRow.assignmentStatus !== 'waiting' ||
+      waitingRow.schoolId !== addAssignSchoolId
+    ) {
+      return
+    }
 
     const school = schoolRows.find(s => s.id === waitingRow.schoolId)
     if (!school) return
@@ -506,25 +534,55 @@ export function ParticipatingVolunteerAssignmentSection({
           ),
         ])
 
+    addAssignInFlightRef.current = true
+    setAddAssignSubmitting(true)
     void (async () => {
-      const saved = await persistAssignedOrganizations(nextAssigned, '봉사 배정')
-      if (!saved) return
-      setWaitingInstitutions(prev =>
-        renumberVolunteerWaitingRows(prev.filter(w => w.id !== addAssignWaitingRowId))
-      )
-      setAssignedInstitutions(nextAssigned)
-      setAddAssignModalOpen(false)
-      setAddAssignWaitingRowId(null)
+      try {
+        const saved = await persistAssignedOrganizations(nextAssigned, '봉사 배정')
+        if (!saved) return
+        setWaitingInstitutions(prev =>
+          renumberVolunteerWaitingRows(prev.filter(w => w.id !== addAssignWaitingRowId))
+        )
+        setAssignedInstitutions(nextAssigned)
+        setAddAssignModalOpen(false)
+        setAddAssignSchoolId(null)
+        setAddAssignWaitingRowId(null)
+      } finally {
+        addAssignInFlightRef.current = false
+        setAddAssignSubmitting(false)
+      }
     })()
   }, [
+    addAssignSchoolId,
     addAssignWaitingRowId,
     assignedInstitutions,
     persistAssignedOrganizations,
     program,
     schoolRows,
+    showAlert,
     volunteer,
     waitingInstitutions,
   ])
+
+  /** 추가 배정 모달(기관 추가 배정 안내) — 기관명 옵션 + 기관별 봉사 일정 칩 */
+  const addAssignInstitutionChoices = useMemo(
+    () => buildVolunteerInstitutionAddAssignOptions(waitingInstitutions),
+    [waitingInstitutions]
+  )
+  const addAssignSessionOptions = useMemo(
+    () =>
+      (addAssignSchoolId
+        ? addAssignInstitutionChoices.sessionOptionsBySchoolId.get(addAssignSchoolId)
+        : undefined) ?? [],
+    [addAssignInstitutionChoices, addAssignSchoolId]
+  )
+  const addAssignSelectedSessionIds = useMemo(
+    () => (addAssignWaitingRowId ? [addAssignWaitingRowId] : []),
+    [addAssignWaitingRowId]
+  )
+  const handleAddAssignSessionIdsChange = useCallback((ids: string[]) => {
+    setAddAssignWaitingRowId(ids[0] ?? null)
+  }, [])
 
   const addAssignOptions = useMemo(
     () =>
@@ -574,7 +632,11 @@ export function ParticipatingVolunteerAssignmentSection({
               disabled={addAssignOptions.length === 0}
               onClick={() => {
                 if (addAssignOptions.length === 0) return
-                setAddAssignWaitingRowId(addAssignOptions[0]?.value ?? null)
+                const firstRowId = addAssignOptions[0]?.value ?? null
+                setAddAssignWaitingRowId(firstRowId)
+                setAddAssignSchoolId(
+                  waitingInstitutions.find(w => w.id === firstRowId)?.schoolId ?? null
+                )
                 setAddAssignModalOpen(true)
               }}
             >
@@ -707,45 +769,29 @@ export function ParticipatingVolunteerAssignmentSection({
         </p>
       </ContentModal>
 
-      <ContentModal
+      <GeneralParticipantAddAssignModal
         open={addAssignModalOpen}
-        onCancel={() => {
-          setAddAssignModalOpen(false)
-          setAddAssignWaitingRowId(null)
+        onCancel={closeAddAssignModal}
+        title={ADD_ASSIGN_MODAL_TITLE}
+        description={`**[${volunteer.volunteerName}]** 님을 추가 배정할 기관을 선택해 주세요.`}
+        onConfirm={handleAddAssignConfirm}
+        confirmLoading={addAssignSubmitting}
+        target={{
+          label: '기관명',
+          placeholder: '배정할 기관을 선택해 주세요',
+          options: addAssignInstitutionChoices.institutionOptions,
+          value: addAssignSchoolId,
+          onChange: setAddAssignSchoolId,
         }}
-        title="추가 배정"
-        width={600}
-        footer={
-          <>
-            <CmsButton
-              variant="secondary"
-              size="large"
-              onClick={() => {
-                setAddAssignModalOpen(false)
-                setAddAssignWaitingRowId(null)
-              }}
-            >
-              취소
-            </CmsButton>
-            <CmsButton variant="primary" size="large" onClick={handleAddAssignConfirm}>
-              배정
-            </CmsButton>
-          </>
-        }
-      >
-        <div style={{ marginBottom: 16 }}>
-          <span style={{ display: 'block', marginBottom: 8 }}>기관 · 일정 선택</span>
-          <Select
-            style={{ width: '100%' }}
-            placeholder="배정할 기관과 일정을 선택해 주세요"
-            options={addAssignOptions}
-            value={addAssignWaitingRowId ?? undefined}
-            onChange={v => setAddAssignWaitingRowId(v)}
-            allowClear
-            getPopupContainer={() => document.body}
-          />
-        </div>
-      </ContentModal>
+        sessions={{
+          label: '봉사 배정일 선택',
+          options: addAssignSessionOptions,
+          value: addAssignSelectedSessionIds,
+          onChange: handleAddAssignSessionIdsChange,
+          selectionMode: 'single',
+          emptyText: '선택 가능한 봉사 일정이 없습니다.',
+        }}
+      />
     </div>
   )
 }

@@ -8,6 +8,8 @@ import {
 
 export const AGREEMENT_NOTICE_A4_HIDDEN_PARAGRAPH_IDS = new Set<string>([
   AGREEMENT_NOTICE_PARAGRAPH_IDS.title,
+  /** 5번 하단 열람·보유기간 안내 — 편집(C09)·Platform 작성(P5)에만 있고 A4 미리보기(C10)에는 없음 */
+  AGREEMENT_NOTICE_PARAGRAPH_IDS.subjectNote,
 ])
 
 /** A4 본문 스코프 — 행정정보 공동이용 사전동의서 전용 미리보기 CSS */

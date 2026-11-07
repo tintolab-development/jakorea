@@ -21,6 +21,7 @@ type SurveyRegisteredActionsProps = {
   layout?: 'poll' | 'satisfaction'
   showAddButton?: boolean
   showShareButton?: boolean
+  downloadEnabled?: boolean
   onShareClick: () => void
   onAddClick?: () => void
   onOpenTemplatePreview: () => void
@@ -37,6 +38,7 @@ export function SurveyRegisteredActions({
   layout = 'poll',
   showAddButton = true,
   showShareButton = true,
+  downloadEnabled,
   onShareClick,
   onAddClick,
   onOpenTemplatePreview,
@@ -67,12 +69,16 @@ export function SurveyRegisteredActions({
     )
   }
 
+  const resultsDownloadEnabled =
+    downloadEnabled ?? (layout === 'satisfaction' ? true : canDownloadSurveyResults(survey))
+
   return (
     <div className={rootClassName}>
       <CmsButton className="survey-management-registered-actions__download-button"
         variant="secondary"
         size="large"
         icon={<ButtonDownloadIcon />}
+        disabled={!resultsDownloadEnabled}
         onClick={onDownloadClick} >
         {labels.download}
       </CmsButton>

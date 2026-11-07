@@ -48,6 +48,21 @@ describe('isCertificateEligibleForIssue', () => {
     expect(certificateBlockingReasons({ eligible: true, blockingReasons: null })).toEqual([])
   })
 
+  it('ignores SATISFACTION_SURVEY_NOT_COMPLETED as a completion block', () => {
+    expect(
+      isCertificateEligibleForIssue({
+        eligible: true,
+        blockingReasons: ['SATISFACTION_SURVEY_NOT_COMPLETED'],
+      })
+    ).toBe(true)
+    expect(
+      certificateBlockingReasons({
+        eligible: true,
+        blockingReasons: ['SATISFACTION_SURVEY_NOT_COMPLETED', PARTICIPANT_NOT_COMPLETED],
+      })
+    ).toEqual([PARTICIPANT_NOT_COMPLETED])
+  })
+
   it('rejects missing eligible or blocking reasons', () => {
     expect(isCertificateEligibleForIssue(undefined)).toBe(false)
     expect(isCertificateEligibleForIssue({ eligible: false, policyId: 1 })).toBe(false)
@@ -127,6 +142,9 @@ describe('messageForCertificateReasonCode', () => {
     expect(messageForCertificateReasonCode(PARTICIPANT_NOT_COMPLETED)).toBe(
       PARTICIPANT_NOT_COMPLETED_MESSAGE
     )
+    expect(messageForCertificateReasonCode('COMPLETION_CERTIFICATE_REQUIRED')).toBe(
+      '수료 조건을 충족한 뒤에는 수료증을 발급해 주세요.'
+    )
     expect(messageForCertificateReasonCode('OTHER')).toBeNull()
     expect(messageForCertificateReasonCode('NO_RECOGNIZED_RECORD')).toBe(
       CERTIFICATE_NO_RECOGNIZED_RECORD_MESSAGE
@@ -173,6 +191,20 @@ describe('selectIssuableCertificatePlan', () => {
       activityWithdrawn: false,
       completion: eligible,
       participation: eligible,
+    })
+    expect(plan.apiType).toBe('COMPLETION')
+    expect(plan.eligible).toBe(true)
+  })
+
+  it('does not treat COMPLETION_CERTIFICATE_REQUIRED participation as issuable', () => {
+    const plan = selectIssuableCertificatePlan({
+      activityWithdrawn: false,
+      completion: eligible,
+      participation: {
+        eligible: false,
+        reasonCode: 'COMPLETION_CERTIFICATE_REQUIRED',
+        blockingReasons: ['COMPLETION_CERTIFICATE_REQUIRED'],
+      },
     })
     expect(plan.apiType).toBe('COMPLETION')
     expect(plan.eligible).toBe(true)

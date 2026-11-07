@@ -4,7 +4,7 @@
  */
 
 import { useCallback, useMemo } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   createGeneralProgramFormBinding,
   createGeneralProgramPost,
@@ -69,6 +69,7 @@ import {
   applySurveyDisplayTitles,
   fetchSurveyTitlesByTemplateVersionIds,
 } from '@/features/program/shared/lib/survey-management/survey-display-titles'
+import { mergeSatisfactionQuestionSummaries } from '@/features/program/shared/lib/survey-management/satisfaction-binding-contract'
 import type { RegisteredSurvey } from '@/features/program/shared/lib/survey-management/survey-management-types'
 import type {
   SurveyPollRawResponse,
@@ -580,6 +581,41 @@ export type SurveyResponsesDetailPolicy =
   /** 그래프는 summary `options`로 그리므로 주관식 답이 공개일 때만 상세 조회 */
   | 'public-text-only'
 
+async function loadMappedProgramSurveyResponses(input: {
+  programId: string
+  templateVersionId: string
+  bindingId: string
+  detailPolicy: SurveyResponsesDetailPolicy
+  queryClient: ReturnType<typeof useQueryClient>
+}): Promise<SurveyPollRawResponse[]> {
+  const items = await fetchGeneralProgramSurveyResponses(
+    input.programId,
+    input.templateVersionId,
+    input.bindingId
+  )
+  if (input.detailPolicy === 'public-text-only') {
+    const summary = await input.queryClient.fetchQuery({
+      queryKey: generalProgramQueryKeys.surveySummary(
+        input.programId,
+        input.templateVersionId,
+        input.bindingId
+      ),
+      queryFn: () =>
+        fetchGeneralProgramSurveySummary(
+          input.programId,
+          input.templateVersionId,
+          input.bindingId
+        ),
+      staleTime: SURVEY_SUMMARY_STALE_MS,
+      retry: false,
+    })
+    if (!surveySummaryHasPublicTextAnswers(summary)) {
+      return items.map(item => mapSurveyResponseListItemToPollResponse(item))
+    }
+  }
+  return mapResponsesWithDetails(input.programId, input.templateVersionId, items)
+}
+
 export function useGeneralProgramSurveyResponses(
   programId: string | undefined,
   templateVersionId: string | undefined,
@@ -599,30 +635,14 @@ export function useGeneralProgramSurveyResponses(
       ),
       detailPolicy,
     ],
-    queryFn: async () => {
-      const items = await fetchGeneralProgramSurveyResponses(
-        programId!,
-        templateVersionId!,
-        bindingId
-      )
-      if (detailPolicy === 'public-text-only') {
-        const summary = await queryClient.fetchQuery({
-          queryKey: generalProgramQueryKeys.surveySummary(
-            programId!,
-            templateVersionId!,
-            bindingId
-          ),
-          queryFn: () =>
-            fetchGeneralProgramSurveySummary(programId!, templateVersionId!, bindingId),
-          staleTime: SURVEY_SUMMARY_STALE_MS,
-          retry: false,
-        })
-        if (!surveySummaryHasPublicTextAnswers(summary)) {
-          return items.map(item => mapSurveyResponseListItemToPollResponse(item))
-        }
-      }
-      return mapResponsesWithDetails(programId!, templateVersionId!, items)
-    },
+    queryFn: () =>
+      loadMappedProgramSurveyResponses({
+        programId: programId!,
+        templateVersionId: templateVersionId!,
+        bindingId,
+        detailPolicy,
+        queryClient,
+      }),
     enabled: remoteEnabled,
     staleTime: 30_000,
     retry: false,
@@ -681,6 +701,98 @@ export function useGeneralProgramSurveySummary(
     questionSummaries,
     loading: remoteEnabled ? query.isFetching || query.isLoading : false,
     isRemoteDataSource: remoteEnabled && !query.isError,
+  }
+}
+
+/** 일정 바인딩 여러 개의 summary·응답을 같은 query key로 조회한 뒤 합친다. binding 생략 GET은 쓰지 않는다. */
+export function useGeneralProgramSurveyResultsForBindings(
+  programId: string | undefined,
+  templateVersionId: string | undefined,
+  bindingIds: readonly string[],
+  options?: { detailPolicy?: SurveyResponsesDetailPolicy }
+) {
+  const surfaceRemote = useProgramsReadsRemoteEnabledForSurface(programId)
+  const queryClient = useQueryClient()
+  const detailPolicy = options?.detailPolicy ?? 'when-preview-short'
+  const scopedBindingIds = useMemo(() => {
+    const seen = new Set<string>()
+    const next: string[] = []
+    for (const raw of bindingIds) {
+      const bindingId = raw.trim()
+      if (!bindingId || seen.has(bindingId)) continue
+      seen.add(bindingId)
+      next.push(bindingId)
+    }
+    return next
+  }, [bindingIds])
+  const remoteEnabled =
+    surfaceRemote && Boolean(templateVersionId) && scopedBindingIds.length > 0
+
+  const summaryQueries = useQueries({
+    queries: scopedBindingIds.map(bindingId => ({
+      queryKey: generalProgramQueryKeys.surveySummary(
+        programId ?? '',
+        templateVersionId ?? '',
+        bindingId
+      ),
+      queryFn: () =>
+        fetchGeneralProgramSurveySummary(programId!, templateVersionId!, bindingId),
+      enabled: remoteEnabled,
+      staleTime: SURVEY_SUMMARY_STALE_MS,
+      retry: false,
+    })),
+  })
+  const responseQueries = useQueries({
+    queries: scopedBindingIds.map(bindingId => ({
+      queryKey: [
+        ...generalProgramQueryKeys.surveyResponses(
+          programId ?? '',
+          templateVersionId ?? '',
+          bindingId
+        ),
+        detailPolicy,
+      ],
+      queryFn: () =>
+        loadMappedProgramSurveyResponses({
+          programId: programId!,
+          templateVersionId: templateVersionId!,
+          bindingId,
+          detailPolicy,
+          queryClient,
+        }),
+      enabled: remoteEnabled,
+      staleTime: 30_000,
+      retry: false,
+    })),
+  })
+
+  const summaryError = summaryQueries.some(query => query.isError)
+  const responsesError = responseQueries.some(query => query.isError)
+  const summariesPending = summaryQueries.some(query => query.data === undefined)
+  const responsesPending = responseQueries.some(query => query.data === undefined)
+
+  const questionSummaries = useMemo<SurveyResultQuestionSummary[] | null | undefined>(() => {
+    if (!remoteEnabled || summaryError) return undefined
+    if (summariesPending) return null
+    return mergeSatisfactionQuestionSummaries(
+      summaryQueries.map(query => mapSurveySummaryToQuestionSummaries(query.data ?? []))
+    )
+  }, [remoteEnabled, summariesPending, summaryError, summaryQueries])
+
+  const pollResponses = useMemo<SurveyPollRawResponse[] | null>(() => {
+    if (!remoteEnabled || responsesError) return null
+    if (responsesPending) return null
+    return responseQueries.flatMap(query => query.data ?? [])
+  }, [remoteEnabled, responsesError, responsesPending, responseQueries])
+
+  return {
+    pollResponses,
+    questionSummaries,
+    loading: remoteEnabled
+      ? summaryQueries.some(query => query.isFetching || query.isLoading) ||
+        responseQueries.some(query => query.isFetching || query.isLoading)
+      : false,
+    isRemoteDataSource: remoteEnabled && !summaryError && !responsesError,
   }
 }
 

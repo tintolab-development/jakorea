@@ -7,9 +7,7 @@ import {
 
 describe('mergePaymentStatementBasicInfo', () => {
   it('빈 paymentPurpose를 고정 문구로 채운다', () => {
-    expect(mergePaymentStatementBasicInfo().paymentPurpose).toBe(
-      PAYMENT_STATEMENT_DEFAULT_PURPOSE
-    )
+    expect(mergePaymentStatementBasicInfo().paymentPurpose).toBe(PAYMENT_STATEMENT_DEFAULT_PURPOSE)
     expect(
       mergePaymentStatementBasicInfo({ nameKo: '홍길동', paymentPurpose: '' }).paymentPurpose
     ).toBe(PAYMENT_STATEMENT_DEFAULT_PURPOSE)
@@ -19,9 +17,9 @@ describe('mergePaymentStatementBasicInfo', () => {
   })
 
   it('이미 있는 지급 목적은 유지한다', () => {
-    expect(
-      mergePaymentStatementBasicInfo({ paymentPurpose: '기타 지급' }).paymentPurpose
-    ).toBe('기타 지급')
+    expect(mergePaymentStatementBasicInfo({ paymentPurpose: '기타 지급' }).paymentPurpose).toBe(
+      '기타 지급'
+    )
   })
 
   it('레거시 강의비 오타는 강사비 고정 문구로 정규화한다', () => {

@@ -1,6 +1,6 @@
 import dayjs from 'dayjs'
 import { formatYmdHmWithKoreanWeekday } from '@/shared/lib/format-date-korean-weekday'
-import { formatDateDot } from '@/shared/utils/date'
+import { formatDateDot, getSeoulCalendarDate } from '@/shared/utils/date'
 import type { SettlementListItemResponse } from '@/shared/api/generated/settlement/schemas'
 import { resolveSettlementUiStatus } from '@/features/user/api/map-settlement-to-instructor-member-row'
 import type { InstructorSettlementUiStatus } from '@/shared/constants/instructor-settlement-status'
@@ -8,7 +8,14 @@ import type { ParticipatingIndividualInstructorLectureProgress } from '@/feature
 
 export interface ParticipatingInstructorSettlementApiRow {
   id: string
-  settlementId: number
+  /** 확정 정산 행 ID. 확정 전 신청서 행이면 null */
+  settlementId: number | null
+  /** 정산 신청서 ID. 확정 전 신청서 행의 승인·반려·보정 요청은 이 값으로 호출한다 */
+  settlementApplicationId: number | null
+  /** settlementId === null && settlementApplicationId !== null */
+  isPendingApplication: boolean
+  /** 서버 availableActions 그대로 (status로 재계산하지 않음) */
+  availableActions: string[]
   no: number
   institutionName: string
   educationGrade: string
@@ -23,18 +30,18 @@ export interface ParticipatingInstructorSettlementApiRow {
   sessionTotal?: number
 }
 
-function formatIsoDateTime(iso?: string): string {
+function formatIsoDateTime(iso?: string | null): string {
   if (!iso?.trim()) return ''
   const parsed = dayjs(iso)
   if (!parsed.isValid()) return iso.trim()
   return formatYmdHmWithKoreanWeekday(parsed)
 }
 
-function formatLectureDateOnly(iso?: string): string {
+function formatLectureDateOnly(iso?: string | null): string {
   if (!iso?.trim()) return ''
-  const parsed = dayjs(iso.slice(0, 10))
-  if (!parsed.isValid()) return iso.trim()
-  const label = formatDateDot(parsed)
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return iso.trim()
+  const label = formatDateDot(getSeoulCalendarDate(date))
   return label === '-' ? iso.trim() : label
 }
 
@@ -82,8 +89,10 @@ export function mapSettlementToParticipatingInstructorSettlementRow(
   index: number,
   totalCount: number
 ): ParticipatingInstructorSettlementApiRow | null {
-  const settlementId = item.settlementId
-  if (settlementId == null) return null
+  const settlementId = item.settlementId ?? null
+  const settlementApplicationId = item.settlementApplicationId ?? null
+  const isPendingApplication = settlementId == null && settlementApplicationId != null
+  if (settlementId == null && !isPendingApplication) return null
 
   const paymentStatementStatus = resolveSettlementUiStatus(item)
   const lectureProgress = inferParticipatingInstructorLectureProgress(item)
@@ -93,8 +102,11 @@ export function mapSettlementToParticipatingInstructorSettlementRow(
     item.netPaymentAmount ?? item.grossAmount ?? null
 
   return {
-    id: String(settlementId),
+    id: settlementId != null ? String(settlementId) : `application:${settlementApplicationId}`,
     settlementId,
+    settlementApplicationId,
+    isPendingApplication,
+    availableActions: item.availableActions ?? [],
     no: totalCount - index,
     institutionName: item.institutionName?.trim() || '-',
     educationGrade: '-',
@@ -104,9 +116,9 @@ export function mapSettlementToParticipatingInstructorSettlementRow(
     hasPaymentStatementApplication: hasApplication,
     paymentStatementStatus,
     scheduledSettlementAmount,
-    canViewPaymentStatement: hasApplication,
-    sessionCompleted: item.sessionCompleted,
-    sessionTotal: item.sessionTotal,
+    canViewPaymentStatement: settlementId != null && hasApplication,
+    sessionCompleted: item.sessionCompleted ?? undefined,
+    sessionTotal: item.sessionTotal ?? undefined,
   }
 }
 
@@ -120,22 +132,23 @@ export function mapSettlementsToParticipatingInstructorSettlementRows(
     return (b.sessionOrdinal ?? 0) - (a.sessionOrdinal ?? 0)
   })
 
-  return sorted
-    .map((item, index) =>
-      mapSettlementToParticipatingInstructorSettlementRow(item, index, sorted.length)
-    )
-    .filter((row): row is ParticipatingInstructorSettlementApiRow => row != null)
-}
+  // 승인 직후 같은 신청서가 확정 정산 행과 신청서 행으로 동시에 남지 않도록 확정 행을 우선한다.
+  const confirmedApplicationIds = new Set(
+    sorted
+      .filter(item => item.settlementId != null && item.settlementApplicationId != null)
+      .map(item => item.settlementApplicationId)
+  )
+  const deduped = sorted.filter(
+    item =>
+      item.settlementId != null ||
+      item.settlementApplicationId == null ||
+      !confirmedApplicationIds.has(item.settlementApplicationId)
+  )
 
-export function summarizeParticipatingInstructorSettlementProgress(
-  rows: ParticipatingInstructorSettlementApiRow[]
-): { completed: number; total: number } {
-  const completed = rows.filter(row => row.lectureProgress === 'completed').length
-  const sessionTotals = rows
-    .map(row => row.sessionTotal)
-    .filter((value): value is number => value != null && value > 0)
-  const total = sessionTotals.length > 0 ? Math.max(...sessionTotals) : rows.length
-  return { completed, total }
+  const rows = deduped
+    .map((item, index) => mapSettlementToParticipatingInstructorSettlementRow(item, index, 0))
+    .filter((row): row is ParticipatingInstructorSettlementApiRow => row != null)
+  return rows.map((row, index) => ({ ...row, no: rows.length - index }))
 }
 
 /** 요약 카드 — 표시 가능한 지급조서 상태 집계 */

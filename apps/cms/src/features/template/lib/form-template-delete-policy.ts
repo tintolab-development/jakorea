@@ -1,4 +1,7 @@
-import { TEMPLATE_CODE_CATALOG } from '@/features/template/api/form-template-catalog'
+import {
+  isCertificateIssuanceTemplateCode,
+  TEMPLATE_CODE_CATALOG,
+} from '@/features/template/api/form-template-catalog'
 import { lookupWritingTemplateRegistry } from '@/features/template/lib/lookup-writing-template-registry'
 
 const DELETE_AVAILABLE_ACTIONS = new Set(['DELETE', 'delete', 'REMOVE', 'remove'])
@@ -103,6 +106,16 @@ export function isCatalogSurveyOrGeneralAgreementTemplateCode(
   if (code === '') return false
   const category = resolveWritingFormCatalogCategory(code)
   return category === 'SURVEY' || (category === 'AGREEMENT' && code !== 'agreement-crime')
+}
+
+/**
+ * 인증서(Payload D) — 양식 관리 저장 시 자동 게시.
+ * 포털/BE PDF 렌더는 PUBLISHED `settingsJson`을 SSOT로 사용한다.
+ */
+export function isCertificateIssuanceTemplatePublishTarget(
+  templateCode: string | undefined | null
+): boolean {
+  return isCertificateIssuanceTemplateCode(templateCode?.trim() ?? undefined)
 }
 
 /** 템플릿 관리 저장 후 자동 발행 대상(설문·일반 동의서). 등록·모집·신청·성범죄·발급은 제외. */

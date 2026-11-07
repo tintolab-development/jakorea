@@ -26,7 +26,8 @@ export interface OrganizationApplicationDetailResponse {
   organizationAddress?: string;
   organizationAddressDetail?: string;
   requestedGrade?: string;
-  requestedEducationFormat?: string;
+  /** ONLINE, OFFLINE, HYBRID 또는 null. 저장된 교육 형태가 없거나 해당 프로그램에서 사용하지 않으면 null입니다. 프로그램 공통 교육 형태로 채우지 않습니다. 컬럼이 비어 있고 제출 답변에 educationFormat이 있으면 그 답을 투영합니다. 기존 한글 저장값(온라인/오프라인/혼합)은 ONLINE|OFFLINE|HYBRID로 정규화합니다. 인식하지 못한 신청 값은 원문을 유지합니다. 빈 문자열·'-'는 null입니다. */
+  requestedEducationFormat?: string | null;
   textbookId?: number;
   textbookName?: string;
   /** 지정 교재의 교육대상. 교재가 없으면 null. */
@@ -37,6 +38,7 @@ export interface OrganizationApplicationDetailResponse {
   teacherName?: string;
   teacherPhone?: string;
   teacherEmail?: string;
+  /** 정규화된 application_status. 목록과 상세는 같은 코드를 반환한다. CMS 「승인 대기」=statusGroup=APPLICATION_PENDING(SUBMITTED, WAITING, WAITING_REVIEW, PENDING, REJECTION_CANCELLED; REVIEWING 등 WAITING_REVIEW 별칭 포함). 「신청 반려」=statusGroup=APPLICATION_REJECTED(REJECTED, APPROVAL_CANCELLED). REJECTION_CANCELLED는 반려 취소 후 승인 대기이며 상세에서 대기 중으로 바꾸지 않는다. 단일 status=는 정규화 등호이며 그룹의 다른 상태를 포함하지 않는다. */
   applicationStatus?: string;
   requestedStudentCount?: number;
   requestedMaleCount?: number;
@@ -76,8 +78,10 @@ export interface OrganizationApplicationDetailResponse {
   /** UJAT 잔여교재 배출 장소. Portal guidance meal 답을 프로젝션. UJAT이 아니면 null. 없으면 mealNotice 스냅샷으로 fallback 가능. snackAvailability와 동일 필드로 쓰지 않음. */
   leftoverTextbookDisposal?: string | null;
   textbookGrade?: string;
-  textbookKits?: number;
-  textbookQuantity?: number;
+  /** 저장된 키트 수. 없으면 null이며 학생 수/24로 계산하지 않습니다. kitCount와 같은 값입니다. */
+  textbookKits?: number | null;
+  /** 저장된 교재 권수. 없으면 null. bookCount와 같은 값입니다. */
+  textbookQuantity?: number | null;
   mergeGroupId?: number;
   combinedClassYn?: boolean;
   sessions?: SessionResponse[];

@@ -54,7 +54,6 @@ export function useParticipatingIndividualProgressAssignment(program: Program) {
     return buildProgressAssignmentSessionsFromRemote(remoteQuery.data, {
       program,
       giveUpParticipants: remoteQuery.data.giveUpParticipants,
-      participants: remoteQuery.data.giveUpParticipants,
     })
   }, [program, remoteEnabled, remoteQuery.data])
 

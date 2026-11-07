@@ -46,7 +46,7 @@ export type GeminiPerformanceRow = {
   /**
    * 서버 원본 지급 제외 사유.
    * `GEMINI_INSTRUCTOR_IDENTITY_BLANK` = 강사 미기재로 실적만 등록(지급·회원 매칭 없음).
-   * `GEMINI_INSTRUCTOR_NOT_MATCHED` = 이름·연락처는 있으나 회원 미매칭(실적만, 지급·정산 없음).
+   * `GEMINI_INSTRUCTOR_EXTERNAL_PAYEE` = 회원 미확정·외부 지급처로 실적만 등록(계좌 지급 제외).
    */
   paymentExclusionReason?: string | null
 }

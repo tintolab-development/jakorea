@@ -13,7 +13,7 @@ const ids = new Set(draft.paragraphs.map(paragraph => paragraph.id))
 assert.equal(RECEIPT_PRE_CONSENT_TEMPLATE_CODE, 'agreement-receipt-pre-consent')
 assert.equal(draft.paragraphs[0]?.kind === 'description' && draft.paragraphs[0].variant === 'survey_title_with_period'
   ? draft.paragraphs[0].surveyTitle
-  : '', '영수증 발급 사전 동의서')
+  : '', '영수증 사전 동의서')
 assert.equal(ids.has(RECEIPT_PRE_CONSENT_IDS.p1Collection), true)
 assert.equal(ids.has(RECEIPT_PRE_CONSENT_IDS.p2ThirdParty), true)
 assert.equal(ids.has(RECEIPT_PRE_CONSENT_IDS.paymentRecord), true)
@@ -24,7 +24,7 @@ assert.equal(receiptPreConsentDraftContainsResidentNumber(draft), false)
 const paymentRecord = draft.paragraphs.find(p => p.id === RECEIPT_PRE_CONSENT_IDS.paymentRecord)
 assert.equal(
   paymentRecord && 'paragraphTitle' in paymentRecord ? paymentRecord.paragraphTitle : '',
-  '지급 확인 정보',
+  '지급조서',
 )
 
 const thirdParty = JSON.stringify(

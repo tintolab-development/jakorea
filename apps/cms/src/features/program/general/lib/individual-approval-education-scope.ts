@@ -43,6 +43,7 @@ export const INDIVIDUAL_APPROVAL_SCOPE_ERROR_CODES = [
   'EDUCATION_SCOPE_HAS_CERTIFICATE',
   'PARTICIPANT_NOT_ACTIVE',
   'APPLICATION_DECISION_CONFLICT',
+  'INDIVIDUAL_INTERVIEW_REQUIRED',
 ] as const
 
 export type IndividualApprovalScopeErrorCode =
@@ -95,6 +96,9 @@ const INDIVIDUAL_APPROVAL_SCOPE_CODE_FALLBACK_MESSAGES: Partial<Record<string, s
     GENERAL_INDIVIDUAL_PRE_EDUCATION_NOT_CONFIGURED_MESSAGE,
   GENERAL_INDIVIDUAL_PRE_EDUCATION_SCOPE_MISMATCH:
     EDUCATION_SCOPE_PUT_PRE_EDUCATION_MERGE_PENDING_MESSAGE,
+  INDIVIDUAL_INTERVIEW_REQUIRED: '면접 합격 후 최종 승인',
+  GENERAL_INDIVIDUAL_SCHEDULE_MODE_FIXED_DATE_ONLY:
+    '기간형(PERIOD) 교육 일정은 개인 승인에 사용할 수 없습니다.',
 }
 
 function readTrimmedString(value: unknown): string {
@@ -223,7 +227,14 @@ export function resolveIndividualApprovalProgramShape(input: {
   if (!educationStructure || !sessionRound || !mode) {
     return { blockedReason: INDIVIDUAL_APPROVAL_PROGRAM_SHAPE_MISSING_MESSAGE }
   }
-  if (mode !== 'FIXED_DATE' && mode !== 'DATE') {
+  if (mode === 'PERIOD') {
+    return { blockedReason: INDIVIDUAL_APPROVAL_FIXED_DATE_ONLY_MESSAGE }
+  }
+  if (
+    mode !== 'FIXED_DATE' &&
+    mode !== 'DATE' &&
+    mode !== 'PROGRAM_DEFINED'
+  ) {
     return { blockedReason: INDIVIDUAL_APPROVAL_FIXED_DATE_ONLY_MESSAGE }
   }
   return {
@@ -706,8 +717,7 @@ export function formatIndividualApprovalScopeErrorMessage(error: unknown): strin
     httpStatus: getApiErrorHttpStatus(error),
     fallback: '교육 일정 승인에 실패했습니다. 신청과 교육 일정을 다시 확인해 주세요.',
   }).trim()
-  if (code && message && !message.includes(code)) return `${message} (${code})`
-  return message || code || '교육 일정 승인에 실패했습니다. 신청과 교육 일정을 다시 확인해 주세요.'
+  return message || '교육 일정 승인에 실패했습니다. 신청과 교육 일정을 다시 확인해 주세요.'
 }
 
 export function individualApprovalEducationSlotsQueryKey(programId: string) {

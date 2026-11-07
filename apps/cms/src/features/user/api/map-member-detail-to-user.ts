@@ -49,7 +49,10 @@ import {
   resolveIdentitySelfSignupCompletedAfterAdminRegistration,
   resolveRegisteredByAdmin,
 } from '@/features/user/api/resolve-member-registration-flags'
-import { coercePositiveInt } from '@/features/user/api/user-response-row-id'
+import {
+  coercePositiveInt,
+  copyUserResponseResendIds,
+} from '@/features/user/api/user-response-row-id'
 import { applyScheduleChangeCancelCountToUser } from '@/features/user/api/resolve-schedule-change-cancel-count'
 
 const USER_AFFILIATION_PIPE_SEP = ' | ' as const
@@ -331,6 +334,12 @@ export function mapMemberDetailToUser(
       }),
     under14: detail.under14,
     guardianConsentRequired: detail.guardianConsentRequired,
+    ...copyUserResponseResendIds(
+      detail as MemberDetailResponse & {
+        instructorRoleRequestId?: number | null
+        adminAccountId?: number | null
+      }
+    ),
   }
 
   const profileFromRoles = inferInstructorMemberProfileFromRoles(detail.roles)

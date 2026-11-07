@@ -21,10 +21,15 @@ import {
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import type { ParticipantCancelRejectionConfirmPayload } from '@/features/program/general/lib/participant-cancel-rejection'
 import {
+  canResendApplicationResultNotification,
+  canResendVolunteerDocumentResultNotification,
   resolveApplicantNotificationResendSentAt,
   toApplicantNotificationResendNotifyOptions,
 } from '@/features/program/general/lib/applicant-notification-resend'
-import type { IndividualApplicantScreeningStage } from '@/features/program/general/lib/individual-application-visibility'
+import {
+  shouldBlockIndividualFinalApproveForInterview,
+  type IndividualApplicantScreeningStage,
+} from '@/features/program/general/lib/individual-application-visibility'
 import {
   screeningDoc1DetailTitle,
   screeningDocPassedDetailTitle,
@@ -48,6 +53,7 @@ import {
 import {
   showApplicationApprovalCompletedAlert,
   showApplicationRejectionCompletedAlert,
+  showNotificationResendRequestCompletedAlert,
 } from '@/shared/ui'
 import { ApplicantNotificationResendModal } from '@/features/program/shared/ui/detail-modal/components/applicant-notification-resend-modal'
 import { ProgramApplicationRejectModal } from '@/features/program/shared/ui/detail-modal/components/program-application-reject-modal'
@@ -59,6 +65,7 @@ import type { ApplicantDetailMeta } from '@/features/program/shared/ui/program-d
 import {
   fetchIndividualApplicationDetailRemote,
   resendIndividualApplicationNotification,
+  resendIndividualDocumentResultNotification,
   unmaskIndividualApplicationPrivacyRemote,
   updateIndividualApplication,
   updateIndividualDocumentEvaluationRemote,
@@ -342,6 +349,13 @@ export function GeneralParticipantApplicantDetailView({
         notificationIdempotencyKeyRef.current ??
         `individual-${applicantId}-${crypto.randomUUID()}`
       notificationIdempotencyKeyRef.current = idempotencyKey
+      if (screeningStage === 'doc1' || screeningStage === 'doc_passed') {
+        return resendIndividualDocumentResultNotification(
+          applicantId,
+          payload,
+          idempotencyKey
+        )
+      }
       return resendIndividualApplicationNotification(applicantId, payload, idempotencyKey)
     },
   })
@@ -515,6 +529,7 @@ export function GeneralParticipantApplicantDetailView({
       evaluation: NonNullable<GeneralIndividualApplicantRow['managerAEvaluation']>
     ) => {
       if (!applicant) return
+      if (!applicant.availableActions?.includes('UPDATE_DOCUMENT_EVALUATION')) return
       try {
         const response = await updateIndividualDocumentEvaluationRemote(applicant.id, managerSlot, {
           evaluation: evaluation.toUpperCase(),
@@ -559,19 +574,41 @@ export function GeneralParticipantApplicantDetailView({
     } as GeneralVolunteerApplicantRow
   }, [applicant])
 
+  const isDocumentResultResendStage =
+    screeningStage === 'doc1' || screeningStage === 'doc_passed'
+  const isInterviewFinalStage = screeningStage === 'interview2'
+
   const handleOpenNotificationResend = useCallback(() => {
     if (!applicant) return
-    if (applicant.approvalStatus !== 'approved' && applicant.approvalStatus !== 'rejected') return
-    if (
-      !usesApplicationMock &&
-      !applicant.availableActions?.includes('RESEND_NOTIFICATION')
+    if (isInterviewFinalStage) return
+    if (isDocumentResultResendStage) {
+      if (
+        !canResendVolunteerDocumentResultNotification({
+          documentScreeningStatus: applicant.documentScreeningStatus,
+          availableActions: usesApplicationMock ? ['RESEND_NOTIFICATION'] : applicant.availableActions,
+          secondInterviewScreeningStatus: applicant.secondInterviewScreeningStatus,
+          applicationStatus: applicant.applicationStatus,
+        })
+      ) {
+        return
+      }
+    } else if (
+      !canResendApplicationResultNotification({
+        approvalStatus: applicant.approvalStatus,
+        availableActions: usesApplicationMock ? undefined : applicant.availableActions,
+      })
     ) {
       return
     }
     notificationIdempotencyKeyRef.current =
-      `individual-${applicant.id}-${crypto.randomUUID()}`
+      `${isDocumentResultResendStage ? 'individual-document' : 'individual'}-${applicant.id}-${crypto.randomUUID()}`
     setNotificationResendOpen(true)
-  }, [applicant, usesApplicationMock])
+  }, [
+    applicant,
+    isDocumentResultResendStage,
+    isInterviewFinalStage,
+    usesApplicationMock,
+  ])
 
   if (!applicant) return null
 
@@ -585,6 +622,21 @@ export function GeneralParticipantApplicantDetailView({
         individualScreeningStage={screeningStage}
         onBack={() => {}}
         onApprove={id => {
+          if (
+            screeningStage !== 'doc1' &&
+            shouldBlockIndividualFinalApproveForInterview({
+              program,
+              screeningStage,
+              interviewResultStatus: applicant.interviewResultStatus,
+              secondInterviewScreeningStatus: applicant.secondInterviewScreeningStatus,
+            })
+          ) {
+            void showAlert({
+              title: '안내',
+              content: '면접 합격 후 최종 승인',
+            })
+            return
+          }
           setApproveTarget({ id, name: applicant.applicantName })
         }}
         onReject={id => {
@@ -611,10 +663,26 @@ export function GeneralParticipantApplicantDetailView({
               }
         }
         onResendNotification={
-          usesApplicationMock ||
-          applicant.availableActions?.includes('RESEND_NOTIFICATION')
-            ? handleOpenNotificationResend
-            : undefined
+          isInterviewFinalStage
+            ? undefined
+            : isDocumentResultResendStage
+              ? canResendVolunteerDocumentResultNotification({
+                  documentScreeningStatus: applicant.documentScreeningStatus,
+                  availableActions: usesApplicationMock
+                    ? ['RESEND_NOTIFICATION']
+                    : applicant.availableActions,
+                  secondInterviewScreeningStatus: applicant.secondInterviewScreeningStatus,
+                  applicationStatus: applicant.applicationStatus,
+                })
+                ? handleOpenNotificationResend
+                : undefined
+              : usesApplicationMock ||
+                  canResendApplicationResultNotification({
+                    approvalStatus: applicant.approvalStatus,
+                    availableActions: applicant.availableActions,
+                  })
+                ? handleOpenNotificationResend
+                : undefined
         }
         onIndividualDetailSaved={syncApplicant}
         onSaveIndividualDetail={usesApplicationMock ? undefined : saveIndividualDetail}
@@ -633,17 +701,27 @@ export function GeneralParticipantApplicantDetailView({
           usesApplicationMock ? undefined : applicant.canRevealPersonalInfo === true
         }
         onIndividualManagerEvaluationChange={
-          usesApplicationMock ? undefined : saveManagerEvaluation
+          usesApplicationMock ||
+          !applicant.availableActions?.includes('UPDATE_DOCUMENT_EVALUATION')
+            ? undefined
+            : saveManagerEvaluation
         }
         onIndividualTeamRoleChange={usesApplicationMock ? undefined : saveTeamRole}
       />
       <ApplicantNotificationResendModal
         open={notificationResendOpen}
-        subjectKind="individual"
+        subjectKind={isDocumentResultResendStage ? 'volunteer_document' : 'individual'}
         subjectName={applicant.applicantName}
         approvalStatus={
-          applicant.approvalStatus === 'rejected' ? 'rejected' : 'approved'
+          isDocumentResultResendStage
+            ? applicant.documentScreeningStatus === 'fail'
+              ? 'rejected'
+              : 'approved'
+            : applicant.approvalStatus === 'rejected'
+              ? 'rejected'
+              : 'approved'
         }
+        storedRejectionReason={applicant.participationRejectionReason}
         confirmLoading={resendNotificationMutation.isPending}
         onCancel={() => {
           if (resendNotificationMutation.isPending) return
@@ -666,6 +744,7 @@ export function GeneralParticipantApplicantDetailView({
             })
             syncApplicant(patched)
             setNotificationResendOpen(false)
+            showNotificationResendRequestCompletedAlert()
             return
           }
 
@@ -687,13 +766,19 @@ export function GeneralParticipantApplicantDetailView({
                 payload.notifyTiming === 'manual'
                   ? (payload.manualNotifyAt?.toISOString() ?? null)
                   : null,
-              reason: applicant.approvalStatus === 'rejected' ? payload.reason.trim() : null,
+              reason:
+                (isDocumentResultResendStage
+                  ? applicant.documentScreeningStatus === 'fail'
+                  : applicant.approvalStatus === 'rejected')
+                  ? payload.reason.trim() || null
+                  : null,
             })
             await queryClient.invalidateQueries({
               queryKey: generalApplicationsQueryKeys.all,
             })
             notificationIdempotencyKeyRef.current = null
             setNotificationResendOpen(false)
+            showNotificationResendRequestCompletedAlert()
           } catch (error) {
             const responseData =
               error && typeof error === 'object' && 'response' in error

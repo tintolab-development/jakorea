@@ -35,6 +35,27 @@ function resolveSurveyTitle(
   return SATISFACTION_TEMPLATE_NAME_BY_AUDIENCE[options?.satisfactionAudience ?? 'student']
 }
 
+/** 제목 단락 `surveyTitle`이 비어 있으면 목록·바인딩 설문명으로 채운다. */
+export function applySurveyDisplayTitleToDraft(
+  draft: WritingFormDraft,
+  displayName: string | undefined,
+  options?: { overwrite?: boolean },
+): WritingFormDraft {
+  const title = displayName?.trim() ?? ''
+  if (!title) return draft
+  let changed = false
+  const paragraphs = draft.paragraphs.map(paragraph => {
+    if (paragraph.kind !== 'description' || paragraph.variant !== 'survey_title_with_period') {
+      return paragraph
+    }
+    if (!options?.overwrite && paragraph.surveyTitle.trim() !== '') return paragraph
+    if (paragraph.surveyTitle === title) return paragraph
+    changed = true
+    return { ...paragraph, surveyTitle: title }
+  })
+  return changed ? { ...draft, paragraphs } : draft
+}
+
 function applySurveyHeader(
   draft: WritingFormDraft,
   surveyTitle: string,

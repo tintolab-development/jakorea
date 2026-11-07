@@ -50,9 +50,26 @@ function typedRecruitmentWindowFields(
     next.documentPassAnnouncementAt =
       typeof row.documentPassAnnouncementAt === 'string' ? row.documentPassAnnouncementAt : null
   }
+  if ('documentPassAnnouncementMethod' in row) {
+    next.documentPassAnnouncementMethod =
+      typeof row.documentPassAnnouncementMethod === 'string'
+        ? row.documentPassAnnouncementMethod
+        : null
+  }
   if ('finalPassAnnouncementAt' in row) {
     next.finalPassAnnouncementAt =
       typeof row.finalPassAnnouncementAt === 'string' ? row.finalPassAnnouncementAt : null
+  }
+  if ('finalPassAnnouncementMethod' in row) {
+    next.finalPassAnnouncementMethod =
+      typeof row.finalPassAnnouncementMethod === 'string' ? row.finalPassAnnouncementMethod : null
+  }
+  if ('interviewMethod' in row) {
+    next.interviewMethod = typeof row.interviewMethod === 'string' ? row.interviewMethod : null
+  }
+  if ('volunteerTargetDetail' in row) {
+    next.volunteerTargetDetail =
+      typeof row.volunteerTargetDetail === 'string' ? row.volunteerTargetDetail : null
   }
   if ('noticeExposureTiming' in row) {
     next.noticeExposureTiming = optionalNoticeExposure(row.noticeExposureTiming) ?? null
@@ -105,6 +122,13 @@ export function toProgramRecruitmentWindows(
         interviewEnabled?: boolean | null
         interviewStartAt?: string | null
         interviewEndAt?: string | null
+        documentPassAnnouncementAt?: string | null
+        documentPassAnnouncementMethod?: string | null
+        finalPassAnnouncementAt?: string | null
+        finalPassAnnouncementMethod?: string | null
+        interviewMethod?: string | null
+        volunteerTargetDetail?: string | null
+        volunteerTargets?: string[] | null
         thumbnailFileObjectId?: number | null
         attachments?: Array<{
           attachmentId?: number
@@ -138,6 +162,12 @@ export function toProgramRecruitmentWindows(
     interviewEnabled: row.interviewEnabled ?? null,
     interviewStartAt: row.interviewStartAt ?? null,
     interviewEndAt: row.interviewEndAt ?? null,
+    documentPassAnnouncementAt: row.documentPassAnnouncementAt ?? null,
+    documentPassAnnouncementMethod: row.documentPassAnnouncementMethod ?? null,
+    finalPassAnnouncementAt: row.finalPassAnnouncementAt ?? null,
+    finalPassAnnouncementMethod: row.finalPassAnnouncementMethod ?? null,
+    interviewMethod: row.interviewMethod ?? null,
+    volunteerTargetDetail: row.volunteerTargetDetail ?? null,
     thumbnailFileObjectId: row.thumbnailFileObjectId ?? null,
     attachments: (row.attachments ?? []).map(item => ({
       attachmentId: item.attachmentId,

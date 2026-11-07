@@ -62,7 +62,7 @@ describe('normalizeMemberConsentWriteDraft', () => {
       institution?.kind === 'single_item' &&
         institution.variant === 'agreement_explanation_text' &&
         institution.bodyText
-    ).toBe('')
+    ).toBe('JA Korea 및 교육진행자가 배정된 학교·기관 (학교·기관 배정 강의가 아닌 경우 JA Korea)')
 
     const purpose = draft.paragraphs.find(p => p.id === 'agreement-notice-purpose')
     expect(
@@ -84,7 +84,7 @@ describe('normalizeMemberConsentWriteDraft', () => {
     ).toBe('')
   })
 
-  it('resets notice institution to empty and purpose to the default on write entry', () => {
+  it('keeps server-saved notice institution and purpose text on write entry (서버 원본 우선)', () => {
     const base = normalizeWritingFormDraft(createAgreementNoticeDraft())
     const dirty: typeof base = {
       ...base,
@@ -110,7 +110,35 @@ describe('normalizeMemberConsentWriteDraft', () => {
       institution?.kind === 'single_item' &&
         institution.variant === 'agreement_explanation_text' &&
         institution.bodyText
-    ).toBe('')
+    ).toBe('저장된 기관명')
+    expect(
+      purpose?.kind === 'single_item' &&
+        purpose.variant === 'agreement_explanation_text' &&
+        purpose.bodyText
+    ).toBe('다른 목적')
+  })
+
+  it('fills empty notice institution/purpose from the seed on write entry', () => {
+    const base = normalizeWritingFormDraft(createAgreementNoticeDraft())
+    const empty: typeof base = {
+      ...base,
+      paragraphs: base.paragraphs.map(paragraph =>
+        paragraph.kind === 'single_item' &&
+        paragraph.variant === 'agreement_explanation_text' &&
+        (paragraph.id === 'agreement-notice-institution' ||
+          paragraph.id === 'agreement-notice-purpose')
+          ? { ...paragraph, bodyText: '' }
+          : paragraph
+      ),
+    }
+    const draft = normalizeMemberConsentWriteDraft(empty, 'agreement-notice')
+    const institution = draft.paragraphs.find(p => p.id === 'agreement-notice-institution')
+    const purpose = draft.paragraphs.find(p => p.id === 'agreement-notice-purpose')
+    expect(
+      institution?.kind === 'single_item' &&
+        institution.variant === 'agreement_explanation_text' &&
+        institution.bodyText
+    ).toBe('JA Korea 및 교육진행자가 배정된 학교·기관 (학교·기관 배정 강의가 아닌 경우 JA Korea)')
     expect(
       purpose?.kind === 'single_item' &&
         purpose.variant === 'agreement_explanation_text' &&

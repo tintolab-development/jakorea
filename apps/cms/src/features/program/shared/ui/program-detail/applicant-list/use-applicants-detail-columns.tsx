@@ -24,6 +24,10 @@ import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/or
 import { prepareGeneralEducationScheduleSessions } from '@/features/program/general/lib/participating-school-session-display'
 import { generalEducationScheduleShapeFromBridge } from './applicants-detail-session-format'
 import { formatInstitutionApplicationGradeDisplay } from '@/features/program/general/lib/institution-application-detail-edit-policy'
+import {
+  formatTrainedTeacherPreferredScheduleLines,
+  trainedTeacherPreferredScheduleLineKey,
+} from '@/features/program/trained-teachers/lib/preferred-schedule-display'
 
 const GENERAL_DETAIL_INSTITUTION_TEXT_COL_MIN_WIDTH = 185
 /** legacy 기관 목록 일정 열 `480px`와 동일 — 한 줄 일정·디바이더·차시 말줄임 방지 */
@@ -149,6 +153,32 @@ export function useInstitutionApplicantColumns(params: {
                 'applicant-details__td-sessions applicant-details__td-sessions--center applicant-details__td-sessions--schedule',
             }),
             render: (_: unknown, record: ApplicantSchoolRow) => {
+              if (Array.isArray(record.preferredScheduleBlocks)) {
+                const hopeBlocks = record.preferredScheduleBlocks
+                if (hopeBlocks.length === 0) {
+                  return (
+                    <div className="applicant-details__sessions-cell">
+                      <div className="applicant-details__session-line applicant-details__session-line--nowrap">
+                        -
+                      </div>
+                    </div>
+                  )
+                }
+                return (
+                  <div className="applicant-details__sessions-cell">
+                    {hopeBlocks.flatMap(block =>
+                      formatTrainedTeacherPreferredScheduleLines(block).map((line, sessionIndex) => (
+                        <div
+                          key={`${record.id}-${trainedTeacherPreferredScheduleLineKey(block, sessionIndex)}`}
+                          className="applicant-details__session-line applicant-details__session-line--nowrap"
+                        >
+                          {line}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )
+              }
               const hopeSessions = record.sessions ?? []
               if (hopeSessions.length === 0) {
                 return (
