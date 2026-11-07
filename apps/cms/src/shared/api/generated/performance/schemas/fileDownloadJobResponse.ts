@@ -9,14 +9,11 @@ import type { FileDownloadJobResponseRequiredHeaders } from './fileDownloadJobRe
 
 export interface FileDownloadJobResponse {
   jobType?: string;
-  /** instructorMemberId 필터로 호출하면 이 숫자는 강사 ID일 수 있다. 화면 programId와 비교하지 말 것. */
   programId?: number;
   generatedFileJobId?: number;
   status?: string;
-  /** 미완료 Job이면 null */
-  fileObjectId?: number | null;
-  /** 미완료 Job이면 null. 빈 문자열과 구분한다. */
-  downloadUrl?: string | null;
-  downloadExpiresAt?: string | null;
+  fileObjectId?: number;
+  downloadUrl?: string;
+  downloadExpiresAt?: string;
   requiredHeaders?: FileDownloadJobResponseRequiredHeaders;
 }

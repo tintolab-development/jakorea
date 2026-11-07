@@ -8,6 +8,7 @@
 import type { AvailableScheduleSlot } from './availableScheduleSlot';
 import type { FeePolicy } from './feePolicy';
 import type { InstructorCmsProfile } from './instructorCmsProfile';
+import type { InstructorCmsSettlement } from './instructorCmsSettlement';
 import type { InstructorMemberProfile } from './instructorMemberProfile';
 
 export interface InstructorApplicationDetailResponse {
@@ -56,7 +57,9 @@ export interface InstructorApplicationDetailResponse {
   affiliationIsCurrentlyEmployed?: boolean | null;
   /** 저장된 강사비. basis/measure/amount가 모두 없으면 null */
   feePolicy?: FeePolicy | null;
-  /** 사업소득자 해당 여부. 해당 | 해당 없음. 없으면 null */
+  /** 강사 현재 정산 정보(member_bank_account.is_current=true). 회원 상세 InstructorCmsSettlement와 같은 구조이며 bankAccounts는 사용하지 않는다. 일반 상세는 계좌번호·예금주 마스킹, 개인정보 원문 조회에서만 원문. 없으면 null */
+  settlement?: InstructorCmsSettlement | null;
+  /** 사업소득자 해당 여부. 해당 | 해당 없음. 신청 컬럼 우선, 없으면 instructor_profile.business_income_yn(true→해당, false→해당 없음). 둘 다 없으면 null */
   businessIncomeEarnerStatus?: string | null;
   /** 교사 겸직 스냅샷. 교사 프로필이 없으면 null */
   instructorMemberProfile?: InstructorMemberProfile | null;

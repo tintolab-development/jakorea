@@ -71,8 +71,9 @@ export interface GeminiApprovedTrainingDetailResponse {
   /** 기관 신청 담당 교사 회원 id */
   teacherMemberId?: number | null;
   teacherName?: string | null;
-  /** MALE|FEMALE|OTHER 또는 한글 표시 원문 */
+  /** 상세 GET은 **. POST .../privacy/unmask 시 회원 저장 원문(MALE|FEMALE|OTHER 등). 없으면 null */
   teacherGender?: string | null;
+  /** 상세 GET은 yyyy-**-**. POST .../privacy/unmask 시 yyyy-MM-dd 원문. 없으면 null */
   teacherBirthDate?: string | null;
   teacherPhone?: string | null;
   teacherEmail?: string | null;

@@ -8,6 +8,9 @@
 import type { ApplicationDecisionResponse } from './applicationDecisionResponse';
 import type { ScopeResponse } from './scopeResponse';
 
+/**
+ * 개인 신청 교육 범위 승인 응답. Springdoc Result 이름 충돌을 피하기 위해 FE에서 분리한다.
+ */
 export interface IndividualApprovalWithScopeResult {
   decision?: ApplicationDecisionResponse;
   educationScope?: ScopeResponse;

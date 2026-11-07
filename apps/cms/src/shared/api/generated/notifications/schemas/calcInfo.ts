@@ -17,11 +17,15 @@ export interface CalcInfo {
   instructorFeeAmount?: number;
   /** 사업소득자 여부 */
   businessIncomeYn?: boolean;
-  /** 교육 진행 차시 번호(sessionNo와 동일). 제출 스냅샷에 없으면 null */
-  educationSessionCount?: number;
+  /** 교육 회차 번호(sessionNo와 동일). 인정 차시가 아님. 제출 스냅샷에 없으면 null. 지급조서 '교육 진행 차시' 표시에는 쓰지 않는다. */
+  educationSessionCount?: number | null;
+  /** 강사비 산정에 적용된 인정 차시. 지급조서 '교육 진행 차시' 표시 기준. 제출 스냅샷 recognizedSessionCount. 구 스냅샷에 없으면 null이며 educationSessionCount로 대체하지 않는다. */
+  recognizedSessionCount?: number | null;
+  /** 강사비 산정에 사용한 진행 시간(분). 기관·개인=배정 일정, 제미나이=실적. 구 스냅샷에 없으면 null. */
+  actualTrainingMinutes?: number | null;
   /** 총 학생 수. 제출 스냅샷에 없으면 null */
   totalStudentCount?: number;
-  /** 이번 회차 총 강의비(원, 정수). 제출 전 lectureFeePreview.totalLectureFee와 동일 산식. 실적 시간 기준 차시당 단가×인정 차시. educationSessionCount(차시 번호)를 곱하지 않음. */
+  /** 이번 회차 총 강의비(원, 정수). 제출 전 lectureFeePreview.totalLectureFee와 동일 산식. 인정 차시×단가. educationSessionCount(회차 번호)를 곱하지 않음. */
   totalLectureFee?: number;
   /** 편도 km. 제출 전 transportPreview.oneWayDistanceKm와 동일. */
   oneWayDistanceKm?: string | null;

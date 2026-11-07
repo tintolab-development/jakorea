@@ -53,6 +53,7 @@ import type {
   SettlementExportRequest,
   SettlementFrontendResponse,
   SettlementGenerateRequest,
+  SettlementListResponse,
   SettlementNotificationResendRequest,
   SettlementNotificationResendResponse,
   SettlementOpenQuestion,
@@ -1618,8 +1619,8 @@ const bulkPaid = (
  */
 const listSettlements = (
     params?: ListSettlementsParams,
- options?: SecondParameter<typeof customInstance<PageResponseSettlementListItemResponse>>,) => {
-      return customInstance<PageResponseSettlementListItemResponse>(
+ options?: SecondParameter<typeof customInstance<SettlementListResponse>>,) => {
+      return customInstance<SettlementListResponse>(
       {url: `/api/admin/settlements`, method: 'GET',
         params
     },

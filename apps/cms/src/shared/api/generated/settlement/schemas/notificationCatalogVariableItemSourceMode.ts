@@ -7,7 +7,7 @@
  */
 
 /**
- * 값 소스. SERVER_RESOLVED=서버 정본(요청 덮어쓰기 불가), MANUAL_ALLOWED=CMS 수동 발송 입력 허용, EVENT_ONLY=자동 이벤트 전용. enabled와 독립. 구 FE는 필드를 무시해도 됨
+ * 값 소스. SERVER_RESOLVED=서버 정본(요청 덮어쓰기 불가), MANUAL_ALLOWED=CMS 수동 발송 입력 허용, EVENT_ONLY=자동 이벤트 전용. enabled와 독립.
  */
 export type NotificationCatalogVariableItemSourceMode = typeof NotificationCatalogVariableItemSourceMode[keyof typeof NotificationCatalogVariableItemSourceMode] | null;
 
