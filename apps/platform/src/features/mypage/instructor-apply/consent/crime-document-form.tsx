@@ -12,7 +12,10 @@ import {
 import { formatSingleFileUploadHint } from '@/shared/lib/file-upload-policy'
 import { submitPortalCrimeConsentComplete } from '../../settings/lib/submit-portal-consent-document'
 import type { InstructorApplyConsentKey } from './catalog'
-import { downloadCrimeConsentFormDocument } from './crime-consent-form-document'
+import {
+  CrimeConsentCatalogDownloadError,
+  downloadCrimeConsentFormDocument,
+} from './crime-consent-form-document'
 import {
   canRecheckCrimeConsentOriginalFile,
   classifyCrimeConsentOriginalFile,
@@ -92,7 +95,11 @@ export function CrimeConsentDocumentForm({
 
   const handleDownloadForm = useCallback(() => {
     void downloadCrimeConsentFormDocument().catch(error => {
-      console.debug('crimeConsentForm download failed', error)
+      const message =
+        error instanceof CrimeConsentCatalogDownloadError
+          ? error.message
+          : CRIME_CONSENT_MESSAGES.formFileUnavailable
+      setAlertMessage(message)
     })
   }, [])
 

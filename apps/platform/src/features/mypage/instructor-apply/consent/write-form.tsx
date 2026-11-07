@@ -52,6 +52,7 @@ import {
   createPortalConsentDocument,
   fetchPortalConsentDocumentDetail,
 } from '../../settings/api/portal-consent-documents'
+import { parseWritingFormDraftFromUnknown } from '../../settings/lib/parse-consent-document-draft'
 import { restoreCompatibleConsentDraftValues } from '../../settings/lib/restore-compatible-consent-draft'
 import { submitPortalConsentDocumentFromWriteState } from '../../settings/lib/submit-portal-consent-document'
 import { resolvePortalConsentCreateType } from '../../settings/lib/settings-consent-key'
@@ -133,6 +134,8 @@ const PORTAL_SUBMIT_FAILED_MESSAGE =
   '동의서를 제출하지 못했어요. 입력 내용을 확인한 뒤 다시 시도해 주세요.'
 const SIGNATURE_REQUIRED_ALERT_MESSAGE = '전자서명을 완료해 주세요'
 const SERVER_DRAFT_LOADING_MESSAGE = '동의서 양식을 불러오는 중입니다.'
+const SERVER_DRAFT_UNAVAILABLE_MESSAGE =
+  '동의서 양식을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.'
 const PORTAL_CONSENT_TEMPLATE_CHANGED_MESSAGE =
   '동의서 양식이 변경되었습니다. 최신 양식을 다시 확인해 주세요.'
 const MEMBER_PROFILE_LOADING_MESSAGE = '회원 정보를 불러오는 중입니다.'
@@ -247,6 +250,7 @@ export function SchemaConsentWriteForm({
   const portalSubmitEnabled = isRemoteApiConfigured() && Boolean(getAccessToken())
   const serverDraftInitializedRef = useRef(false)
   const [isServerDraftLoading, setIsServerDraftLoading] = useState(false)
+  const [serverDraftUnavailable, setServerDraftUnavailable] = useState(false)
 
   const [state, setState] = useState<SchemaConsentWriteState>(() => {
     const initial = createInitialSchemaConsentState(consentKey)
@@ -282,18 +286,21 @@ export function SchemaConsentWriteForm({
       const formTemplateVersion = document.formTemplateVersion
       const documentId = document.documentId
       const serverTemplateCode = formTemplateVersion?.templateCode?.trim() || templateId
-      const normalizedServerDraft =
+      const versionDraft =
         formTemplateVersion?.schemaJson != null
-          ? normalizeMemberConsentWriteDraft(
-              formTemplateVersion.schemaJson as WritingFormDraft,
-              serverTemplateCode,
-            )
+          ? parseWritingFormDraftFromUnknown(formTemplateVersion.schemaJson)
           : null
-      if (documentId == null || normalizedServerDraft == null) return
+      if (documentId == null || versionDraft == null) return
+      const normalizedServerDraft = normalizeMemberConsentWriteDraft(
+        versionDraft,
+        serverTemplateCode,
+      )
+      const filledDraft = parseWritingFormDraftFromUnknown(document.filledDocument?.schemaJson)
+      const answersToRestore = restoreFromDraft ?? filledDraft
       const restoredDraft =
-        restoreFromDraft == null
+        answersToRestore == null
           ? normalizedServerDraft
-          : restoreCompatibleConsentDraftValues(restoreFromDraft, normalizedServerDraft)
+          : restoreCompatibleConsentDraftValues(answersToRestore, normalizedServerDraft)
       const serverDraft = applyLockedNoticeSubjectName(
         restoredDraft,
         serverTemplateCode,
@@ -329,10 +336,19 @@ export function SchemaConsentWriteForm({
     setIsServerDraftLoading(true)
     const consentType = resolvePortalConsentCreateType(consentKey)
     void createPortalConsentDocument({ consentType })
-      .then(applyServerDraftDocument)
+      .then(document => {
+        applyServerDraftDocument(document)
+        if (document.documentId == null || document.formTemplateVersion?.schemaJson == null) {
+          setServerDraftUnavailable(true)
+          openAlert(SERVER_DRAFT_UNAVAILABLE_MESSAGE)
+          return
+        }
+        setServerDraftUnavailable(false)
+      })
       .catch(error => {
+        setServerDraftUnavailable(true)
         console.debug('portal consent draft create failed', error)
-        openAlert(PORTAL_SUBMIT_FAILED_MESSAGE)
+        openAlert(SERVER_DRAFT_UNAVAILABLE_MESSAGE)
       })
       .finally(() => setIsServerDraftLoading(false))
   }, [applyServerDraftDocument, consentKey, openAlert, portalSubmitEnabled, readOnly, templateId])
@@ -377,6 +393,10 @@ export function SchemaConsentWriteForm({
     if (isSubmitting) return
     if (isServerDraftLoading) {
       openAlert(SERVER_DRAFT_LOADING_MESSAGE)
+      return
+    }
+    if (serverDraftUnavailable) {
+      openAlert(SERVER_DRAFT_UNAVAILABLE_MESSAGE)
       return
     }
     if (templateId === 'agreement-notice' && isLockedBasicLoading && !lockedBasic.name.trim()) {
@@ -703,7 +723,11 @@ export function SchemaConsentWriteForm({
           handleSubmit()
         }}
       >
-        <fieldset disabled={readOnly} className={styles.fieldset}>
+        <fieldset
+          disabled={readOnly || isServerDraftLoading || serverDraftUnavailable}
+          className={styles.fieldset}
+          aria-busy={isServerDraftLoading || undefined}
+        >
           <PlatformConsentFormBody
             draft={state.draft}
             hiddenParagraphIds={hiddenParagraphIds}
@@ -720,7 +744,7 @@ export function SchemaConsentWriteForm({
               size="xlarge"
               width={240}
               type="submit"
-              disabled={isSubmitting || isServerDraftLoading}
+              disabled={isSubmitting || isServerDraftLoading || serverDraftUnavailable}
             >
               {isSubmitting ? '제출 중…' : isServerDraftLoading ? '불러오는 중…' : '작성완료'}
             </PFButton>
