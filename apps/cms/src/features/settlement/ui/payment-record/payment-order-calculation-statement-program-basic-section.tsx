@@ -1,5 +1,5 @@
 /**
- * 산출 내역서 — 기본 정보(프로그램명·회차·사업기간·지급조서·강의비·사업소득) 공통 블록
+ * 산출 내역서 — 기본 정보(프로그램명·회차·사업기간·지급조서·강사비·사업소득) 공통 블록
  */
 
 import type { CSSProperties } from 'react'
@@ -11,11 +11,13 @@ import { PaymentOrderCalculationStatementProcessingStatusView } from './payment-
 export interface PaymentOrderCalculationStatementProgramBasicSectionProps {
   basic: PaymentOrderCalculationStatementProgramBasicInfo
   style?: CSSProperties
+  onResendNotificationClick?: () => void
 }
 
 export function PaymentOrderCalculationStatementProgramBasicSection({
   basic,
   style,
+  onResendNotificationClick,
 }: PaymentOrderCalculationStatementProgramBasicSectionProps) {
   const formCardClass =
     'payment-order-calc-statement-modal__detail-form-card payment-order-calc-statement-modal__detail-form-card--program'
@@ -54,15 +56,23 @@ export function PaymentOrderCalculationStatementProgramBasicSection({
           <DetailInfoForm.Field
             label="지급 조서 처리 현황"
             fullRow
-            view={<PaymentOrderCalculationStatementProcessingStatusView basic={basic} />}
+            view={
+              <PaymentOrderCalculationStatementProcessingStatusView
+                basic={basic}
+                onResendNotificationClick={onResendNotificationClick}
+              />
+            }
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
-            label="강의비 책정 기준"
+            label="강사비 책정 기준"
             view={
               <div className="payment-order-calc-statement-modal__td-divider-wrap payment-order-calc-statement-modal__td-divider-wrap--start">
-                {withProgramDetailTdDivider([basic.lectureFeeStandardTitle, basic.lectureFeeStandardAmount])}
+                {withProgramDetailTdDivider([
+                  basic.lectureFeeStandardTitle,
+                  basic.lectureFeeStandardAmount,
+                ])}
               </div>
             }
           />

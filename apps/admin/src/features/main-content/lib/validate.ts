@@ -48,6 +48,8 @@ export const PERFORMANCE_METRIC_FIELDS: Record<
 
 export type MainContentFieldErrors = Record<string, string>
 
+const INCOMPLETE = '__incomplete_required__'
+
 function isBlank(value: string): boolean {
   return value.trim().length === 0
 }
@@ -56,12 +58,16 @@ function overMax(value: string, max: number): boolean {
   return value.trim().length > max
 }
 
-function requiredMessage(field: string): string {
-  return `${field}: must not be blank`
+function maxLengthMessage(label: string, max: number): string {
+  return `${label}은(는) ${max.toLocaleString()}자 이내로 입력해 주세요.`
 }
 
-function maxLengthMessage(field: string, max: number): string {
-  return `${field}: size must be between 1 and ${max}`
+function setError(errors: MainContentFieldErrors, field: string, message: string) {
+  if (!errors[field]) errors[field] = message
+}
+
+function setIncomplete(errors: MainContentFieldErrors, field: string) {
+  setError(errors, field, INCOMPLETE)
 }
 
 /** BE `^https?://.+` — 스킴만 있고 호스트가 없는 값은 거절 */
@@ -90,24 +96,21 @@ export function parseNonNegativeInt(value: string): number | null {
   return n
 }
 
-function setError(errors: MainContentFieldErrors, field: string, message: string) {
-  if (!errors[field]) errors[field] = message
-}
-
 function validateRequiredTitle(
   errors: MainContentFieldErrors,
   title: string,
   max: number,
+  label: string,
 ) {
-  if (isBlank(title)) setError(errors, 'title', requiredMessage('title'))
-  else if (overMax(title, max)) setError(errors, 'title', maxLengthMessage('title', max))
+  if (isBlank(title)) setIncomplete(errors, 'title')
+  else if (overMax(title, max)) setError(errors, 'title', maxLengthMessage(label, max))
 }
 
 export function validateEducationSection(
   section: EducationSection,
 ): MainContentFieldErrors {
   const errors: MainContentFieldErrors = {}
-  validateRequiredTitle(errors, section.title, MAIN_CONTENT_LIMITS.educationTitle)
+  validateRequiredTitle(errors, section.title, MAIN_CONTENT_LIMITS.educationTitle, '타이틀 텍스트')
   return errors
 }
 
@@ -116,25 +119,25 @@ export function validateImpactStorySection(
   featuredOptionIds: readonly string[],
 ): MainContentFieldErrors {
   const errors: MainContentFieldErrors = {}
-  validateRequiredTitle(errors, section.title, MAIN_CONTENT_LIMITS.impactTitle)
+  validateRequiredTitle(errors, section.title, MAIN_CONTENT_LIMITS.impactTitle, '타이틀 텍스트')
 
   if (isBlank(section.youtubeUrl)) {
-    setError(errors, 'youtubeUrl', requiredMessage('youtubeUrl'))
+    setIncomplete(errors, 'youtubeUrl')
   } else if (overMax(section.youtubeUrl, MAIN_CONTENT_LIMITS.youtubeUrl)) {
-    setError(errors, 'youtubeUrl', maxLengthMessage('youtubeUrl', MAIN_CONTENT_LIMITS.youtubeUrl))
+    setError(
+      errors,
+      'youtubeUrl',
+      maxLengthMessage('메인 영상 유튜브 링크', MAIN_CONTENT_LIMITS.youtubeUrl),
+    )
   } else if (!isValidYouTubeLinkUrl(section.youtubeUrl)) {
-    setError(errors, 'youtubeUrl', 'youtubeUrl must use an official YouTube host.')
+    setError(errors, 'youtubeUrl', '유튜브 링크는 공식 YouTube 주소만 입력할 수 있습니다.')
   }
 
   const featuredId = Number(section.featuredContentId.trim())
   if (!Number.isInteger(featuredId) || featuredId <= 0) {
-    setError(errors, 'featuredStoryId', 'featuredStoryId is required.')
+    setIncomplete(errors, 'featuredStoryId')
   } else if (!featuredOptionIds.includes(String(featuredId))) {
-    setError(
-      errors,
-      'featuredStoryId',
-      'The representative Impact Story must already be public and its publication time must have arrived.',
-    )
+    setError(errors, 'featuredStoryId', '공개된 임팩트 스토리를 선택해 주세요.')
   }
   return errors
 }
@@ -143,19 +146,26 @@ export function validatePerformanceSection(
   section: PerformanceSection,
 ): MainContentFieldErrors {
   const errors: MainContentFieldErrors = {}
-  validateRequiredTitle(errors, section.title, MAIN_CONTENT_LIMITS.performanceTitle)
+  validateRequiredTitle(
+    errors,
+    section.title,
+    MAIN_CONTENT_LIMITS.performanceTitle,
+    '타이틀 텍스트',
+  )
 
   for (const metric of section.metrics) {
     const field = PERFORMANCE_METRIC_FIELDS[metric.id]
-    if (parseNonNegativeInt(metric.value) == null) {
-      setError(errors, field, `${field}: must be greater than or equal to 0`)
+    if (isBlank(metric.value)) {
+      setIncomplete(errors, field)
+    } else if (parseNonNegativeInt(metric.value) == null) {
+      setError(errors, field, '0 이상의 숫자를 입력해 주세요.')
     }
   }
 
   if (isBlank(section.bottomText)) {
-    setError(errors, 'bottomText', requiredMessage('bottomText'))
+    setIncomplete(errors, 'bottomText')
   } else if (overMax(section.bottomText, MAIN_CONTENT_LIMITS.bottomText)) {
-    setError(errors, 'bottomText', maxLengthMessage('bottomText', MAIN_CONTENT_LIMITS.bottomText))
+    setError(errors, 'bottomText', maxLengthMessage('하단 텍스트', MAIN_CONTENT_LIMITS.bottomText))
   }
   return errors
 }
@@ -164,37 +174,57 @@ export function validateDonationSection(
   section: DonationSection,
 ): MainContentFieldErrors {
   const errors: MainContentFieldErrors = {}
-  validateRequiredTitle(errors, section.title, MAIN_CONTENT_LIMITS.donationTitle)
+  validateRequiredTitle(errors, section.title, MAIN_CONTENT_LIMITS.donationTitle, '타이틀 텍스트')
 
   const ctas = [
     {
       labelField: 'cta1Label',
       urlField: 'cta1Url',
+      labelName: '버튼명',
+      urlName: '연결 링크',
       data: section.cta1,
     },
     {
       labelField: 'cta2Label',
       urlField: 'cta2Url',
+      labelName: '버튼명',
+      urlName: '연결 링크',
       data: section.cta2,
     },
   ] as const
 
   for (const row of ctas) {
     if (isBlank(row.data.label)) {
-      setError(errors, row.labelField, requiredMessage(row.labelField))
+      setIncomplete(errors, row.labelField)
     } else if (overMax(row.data.label, MAIN_CONTENT_LIMITS.ctaLabel)) {
-      setError(errors, row.labelField, maxLengthMessage(row.labelField, MAIN_CONTENT_LIMITS.ctaLabel))
+      setError(errors, row.labelField, maxLengthMessage(row.labelName, MAIN_CONTENT_LIMITS.ctaLabel))
     }
 
     if (isBlank(row.data.linkUrl)) {
-      setError(errors, row.urlField, requiredMessage(row.urlField))
+      setIncomplete(errors, row.urlField)
     } else if (overMax(row.data.linkUrl, MAIN_CONTENT_LIMITS.ctaUrl)) {
-      setError(errors, row.urlField, maxLengthMessage(row.urlField, MAIN_CONTENT_LIMITS.ctaUrl))
+      setError(errors, row.urlField, maxLengthMessage(row.urlName, MAIN_CONTENT_LIMITS.ctaUrl))
     } else if (!isValidRequiredHttpUrl(row.data.linkUrl)) {
-      setError(errors, row.urlField, `${row.urlField}: must match "^https?://.+"`)
+      setError(
+        errors,
+        row.urlField,
+        '연결 링크는 http:// 또는 https://로 시작하는 주소를 입력해 주세요.',
+      )
     }
   }
   return errors
+}
+
+export function hasIncompleteRequiredMainContentFields(errors: MainContentFieldErrors): boolean {
+  return Object.values(errors).includes(INCOMPLETE)
+}
+
+export function formatOnlyMainContentFieldErrors(
+  errors: MainContentFieldErrors,
+): MainContentFieldErrors {
+  return Object.fromEntries(
+    Object.entries(errors).filter(([, message]) => message !== INCOMPLETE),
+  )
 }
 
 export function hasFieldErrors(errors: MainContentFieldErrors): boolean {

@@ -15,13 +15,18 @@ export interface IndividualSettlementReviewListItem {
   memberName?: string;
   programScheduleId?: number;
   scheduleName?: string;
+  /** @nullable */
   scheduleStartAt?: string | null;
+  /** @nullable */
   scheduleEndAt?: string | null;
   latestRevisionNo?: number;
   status?: string;
   totalAmount?: number;
+  /** @nullable */
   submittedAt?: string | null;
+  /** @nullable */
   reviewedAt?: string | null;
   rejected?: boolean;
+  /** @nullable */
   rejectionReason?: string | null;
 }

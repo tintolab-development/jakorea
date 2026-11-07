@@ -2,10 +2,9 @@
  * 산출 내역서 — 지급조서 처리 현황 표시 (프로그램·신청자 basic 공통)
  */
 
-import { SendNotiButton } from '@/features/program/shared/ui/detail-modal/components/send-noti-button'
 import { ProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
+import { SendNotiButton } from '@/features/program/shared/ui/detail-modal/components/send-noti-button'
 import type { PaymentOrderAdminLineProcessingStatus } from '@/features/settlement-management/model/payment-order-admin-list'
-import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 
 export type PaymentOrderCalculationStatementProcessingStatusFields = {
   processingStatusDisplay: string
@@ -18,14 +17,22 @@ function processingStatusCssModifier(status: PaymentOrderAdminLineProcessingStat
   return status === 'application_rejected' ? 'application-rejected' : status
 }
 
-function sendNotiPlaceholder() {
-  cmsAlertModal.show({ title: '안내', content: '준비 중입니다.' })
+function ResendSlot({ onClick }: { onClick?: () => void }) {
+  if (!onClick) return null
+  return (
+    <>
+      <ProgramDetailTdDivider />
+      <SendNotiButton mode="resend" onClick={onClick} />
+    </>
+  )
 }
 
 export function PaymentOrderCalculationStatementProcessingStatusView({
   basic,
+  onResendNotificationClick,
 }: {
   basic: PaymentOrderCalculationStatementProcessingStatusFields
+  onResendNotificationClick?: () => void
 }) {
   const statusMod = processingStatusCssModifier(basic.processingStatusClass)
 
@@ -49,8 +56,7 @@ export function PaymentOrderCalculationStatementProcessingStatusView({
         <span className="payment-order-calc-statement-modal__processing-status-detail">
           사유 : {basic.processingRejectionReason ?? '-'}
         </span>
-        <ProgramDetailTdDivider />
-        <SendNotiButton onClick={sendNotiPlaceholder} />
+        <ResendSlot onClick={onResendNotificationClick} />
       </div>
     )
   }
@@ -70,6 +76,20 @@ export function PaymentOrderCalculationStatementProcessingStatusView({
         <span className="payment-order-calc-statement-modal__processing-status-detail">
           이체 예정일 : {basic.lectureFeePaymentScheduledDateDisplay ?? '-'}
         </span>
+        <ResendSlot onClick={onResendNotificationClick} />
+      </div>
+    )
+  }
+
+  if (onResendNotificationClick) {
+    return (
+      <div className="payment-order-calc-statement-modal__processing-status-row payment-order-calc-statement-modal__processing-status-row--pd-divider">
+        <span
+          className={`payment-order-admin__status-text payment-order-admin__status-text--${statusMod}`}
+        >
+          {basic.processingStatusDisplay}
+        </span>
+        <ResendSlot onClick={onResendNotificationClick} />
       </div>
     )
   }

@@ -8,6 +8,8 @@
 
 export interface SettlementListItemResponse {
   settlementId?: number;
+  /** 정산 신청서 ID. 확정 전 신청서 행이면 값이 있고, 정산 행이면 연결된 신청서 ID 또는 null */
+  settlementApplicationId?: number | null;
   programId?: number;
   programNameKo?: string;
   scheduleId?: number;

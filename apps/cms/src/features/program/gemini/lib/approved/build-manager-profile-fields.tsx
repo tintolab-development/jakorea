@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import {
@@ -9,31 +10,25 @@ import {
   withProgramDetailTdDivider,
 } from '@/features/program/shared/ui/program-detail-td-divider'
 import { SchoolTeacherEmploymentStatusBadge } from '@/features/user/detail/lib/school-teacher-employment-status'
-import type { SchoolTeacherEmploymentStatus } from '@/types/user'
-import type {
-  GeminiApprovedTrainingDetail,
-  GeminiApprovedTrainingEmploymentStatus,
-} from '../../model/approved/detail-types'
+import type { GeminiApprovedTrainingDetail } from '../../model/approved/detail-types'
+import { mapGeminiApprovedEmploymentToSchoolStatus } from './employment-status'
 import type { VerticalInfoTableItem } from './vertical-info-table'
 
-function mapEmploymentStatus(
-  status: GeminiApprovedTrainingEmploymentStatus
-): SchoolTeacherEmploymentStatus {
-  if (status === 'LEAVE') return 'ON_LEAVE'
-  if (status === 'TRANSFER') return 'TRANSFERRED'
-  return 'ACTIVE'
+function displayOptionalText(value: string): string {
+  return value.trim() ? value : '-'
 }
 
 export function buildGeminiApprovedManagerTableItems(
   detail: GeminiApprovedTrainingDetail,
-  personalInfoRevealed: boolean
+  personalInfoRevealed = false,
+  employmentStatusControl?: ReactNode
 ): VerticalInfoTableItem[] {
   const mask = !personalInfoRevealed
   const contact = detail.managerContact.trim()
   const email = detail.managerEmail.trim()
   const employmentStatus =
     detail.managerEmploymentStatus != null
-      ? mapEmploymentStatus(detail.managerEmploymentStatus)
+      ? mapGeminiApprovedEmploymentToSchoolStatus(detail.managerEmploymentStatus)
       : null
 
   const nameCell = (
@@ -75,9 +70,10 @@ export function buildGeminiApprovedManagerTableItems(
         <ProgramDetailTdSegmentWrap>
           {withProgramDetailTdDivider([
             detail.managerSchool,
-            employmentStatus != null ? (
-              <SchoolTeacherEmploymentStatusBadge status={employmentStatus} />
-            ) : null,
+            employmentStatusControl ??
+              (employmentStatus != null ? (
+                <SchoolTeacherEmploymentStatusBadge status={employmentStatus} />
+              ) : null),
           ])}
         </ProgramDetailTdSegmentWrap>
       ),
@@ -111,12 +107,12 @@ export function buildGeminiApprovedManagerTableItems(
     {
       key: 'position',
       label: '직급',
-      children: detail.managerPosition,
+      children: displayOptionalText(detail.managerPosition),
     },
     {
       key: 'subject',
       label: '과목',
-      children: detail.managerSubject,
+      children: displayOptionalText(detail.managerSubject),
     },
     {
       key: 'instructorFeeGrade',

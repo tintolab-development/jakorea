@@ -19,12 +19,11 @@ export function resolveSurveyTitlePeriodDisabledDate(
   return date => isBeforeSeoulToday(date)
 }
 
-/** 프로그램 > 설문조사 수정 — 제목 단락「작성 기간」토글 ON 고정(초기 draft 정규화) */
+/** 프로그램 > 설문·만족도 수정 — 제목 단락「작성 기간」토글 ON 고정(초기 draft 정규화) */
 export function forceSurveyTitleWritingPeriodOn(draft: WritingFormDraft): WritingFormDraft {
   let changed = false
   const paragraphs = draft.paragraphs.map(p => {
     if (
-      !isSurveyTitleParagraphId(p.id) ||
       p.kind !== 'description' ||
       p.variant !== 'survey_title_with_period' ||
       p.showWritingPeriodOnForm === true

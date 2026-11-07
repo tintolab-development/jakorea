@@ -70,6 +70,7 @@ const DOCUMENT_LABELS = new Set([
 type AgreementOverlay = {
   agreed: boolean
   agreedAt?: string
+  consentStatus?: string
   consentRecordId?: number
   formResponseId?: number
   filledDocumentId?: number
@@ -113,6 +114,7 @@ function agreementToFieldValue(
       type: 'document',
       agreed,
       agreedAtDisplay: agreed ? agreedAtDisplay : undefined,
+      consentStatus: agreement.consentStatus,
       formResponseId: agreement.formResponseId,
       filledDocumentId: agreement.filledDocumentId,
       filledDocumentAvailable: agreement.filledDocumentAvailable,
@@ -126,6 +128,7 @@ function agreementToFieldValue(
     type: 'remote_consent',
     agreed,
     agreedAtDisplay,
+    consentStatus: agreement.consentStatus,
   }
 }
 
@@ -202,6 +205,7 @@ function lookupConsentIndex<T>(
 function toConsentRecordOverlay(record: MemberConsentRecordResponse): AgreementOverlay {
   return {
     agreed: false,
+    consentStatus: record.consentStatus,
     consentRecordId: record.consentRecordId,
     formResponseId: record.formResponseId,
     filledDocumentId: record.filledDocumentId,
@@ -261,6 +265,7 @@ function buildTermsAgreementLabelMap(
     map.set(label, {
       agreed: row.agreed === true,
       agreedAt: row.agreedAt,
+      consentStatus: row.consentStatus,
       consentRecordId: readTermsConsentRecordId(row),
       consentType: row.termsType,
     })
@@ -282,6 +287,7 @@ function mergeRecordMetaIntoOverlay(
     filledDocumentRevealEndpoint:
       meta.filledDocumentRevealEndpoint ?? overlay.filledDocumentRevealEndpoint,
     consentType: meta.consentType ?? overlay.consentType,
+    consentStatus: overlay.consentStatus ?? meta.consentStatus,
   }
 }
 
@@ -337,6 +343,7 @@ function buildLabelMapFromSummaries(
         agreed,
         agreedAt: agreed ? summary.agreedAt : undefined,
         consentType: summary.consentType,
+        consentStatus: summary.consentStatus,
       }
       labelMap.set(
         field.label,

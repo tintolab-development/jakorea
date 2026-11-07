@@ -1,5 +1,5 @@
 ---
-description: Remote API만 SSOT — fallback·overlay·form hydrate·local invent 절대 금지
+description: Remote API response is SSOT — no overlay/fallback/cross-source backfill (EN clause in file)
 alwaysApply: true
 ---
 
@@ -52,9 +52,24 @@ const rows = buildFromTemporaryScheduleSlots(temporarySchedule.slots) // []면 �
 // 비면 BE/계약을 확인한다. form·store·overlay로 채우지 않는다.
 ```
 
+## English — Remote API SSOT; no overlay / fallback data
+
+**Canonical source:** For any screen, the **remote API response that screen is bound to** (typically the detail GET for that view) is the **single source of truth (SSOT)** for business data shown on that screen.
+
+**Hard ban — do not author, restore, or bypass overlay / fallback filling.**  
+No exception for “undeployed BE”, “legacy”, “safety net”, or “temporary hydrate”.
+
+1. **No cross-source backfill** — If a detail field is `null`, missing, or empty, do **not** populate it from another endpoint, list row, form-response, program-wide defaults, **overlay / preferOverlay / catalog peek**, local store, session, mock, or invented matrices.
+2. **No substitute fields on the same response** — Do not treat sibling JSON (e.g. preferred-schedule **candidates**, `lastPreferredDate`, list-cache shape) as a stand-in when the contract field for “confirmed” value is null (e.g. `trainingDate` null → do not render 1st-choice candidate in its place on modals or detail).
+3. **Wire vs display** — API payloads stay `null` / absent; showing `-` or empty UI is **render layer only**. Do not write `''` or `'-'` into mapped model objects to hide gaps.
+4. **List + detail** — When both exist, **detail GET wins**. An explicit `null` on detail is still canonical; do not “fix” it from the list.
+5. **Explicit opt-in only** — Unless the user or written spec **explicitly** allows fallback for a field, **no fallback path**.
+
+If data is missing, show `-` or an empty state and **fix the API contract / BE read model** — never mask gaps in the frontend.
+
 ## 관련
 
 - 프로그램 상세 overlay 저장: `program-detail-overlay-save-ssot.mdc`
 - CMS remote-only: `apps/cms/.cursor/rules/process/cms-remote-only-orval-ssot.mdc`
 
-**Last updated:** 2026-11-01
+**Last updated:** 2026-11-08

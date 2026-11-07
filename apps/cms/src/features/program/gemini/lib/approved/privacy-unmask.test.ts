@@ -10,6 +10,8 @@ describe('mapGeminiApprovedTrainingPrivacyUnmask', () => {
     const mapped = mapGeminiApprovedTrainingPrivacyUnmask({
       id: 186100,
       teacherName: '김교사',
+      teacherGender: 'FEMALE',
+      teacherBirthDate: '1990-01-02',
       teacherPhone: '01012345678',
       teacherEmail: 'teacher@example.com',
       teacherHomeAddress: '서울시 중구 세종대로 1',
@@ -28,6 +30,8 @@ describe('mapGeminiApprovedTrainingPrivacyUnmask', () => {
 
     expect(mapped).toEqual({
       teacherName: '김교사',
+      teacherGender: '여성',
+      teacherBirthDate: '1990-01-02',
       teacherPhone: '01012345678',
       teacherEmail: 'teacher@example.com',
       teacherHomeAddress: '서울시 중구 세종대로 1',
@@ -44,7 +48,6 @@ describe('mapGeminiApprovedTrainingPrivacyUnmask', () => {
   it('배정 강사가 없으면 instructor를 만들지 않는다', () => {
     const mapped = mapGeminiApprovedTrainingPrivacyUnmask({
       teacherAccountNumber: '11012341234',
-      // OpenAPI는 optional만 적지만 응답은 null로 온다.
       assignedInstructor: null,
     } as unknown as GeminiApprovedTrainingDetailResponse)
 

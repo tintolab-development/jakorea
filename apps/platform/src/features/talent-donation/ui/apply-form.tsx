@@ -7,6 +7,7 @@ import {
   REQUIRED_CONSENT_DISAGREE_ALERT_TITLE,
 } from '@jakorea/domain/shared/required-consent-alert'
 import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
+import { formatBirthDateInput } from '@/features/auth/sign-up'
 import {
   PFAlertModal,
   PFButton,
@@ -329,16 +330,18 @@ export function TalentDonationApplyForm() {
               <FieldLabel htmlFor="talent-apply-birth" required>
                 생년월일
               </FieldLabel>
-              <PFDateInput
+              <PFTextInput
                 id="talent-apply-birth"
                 className={styles.control}
                 size="xlarge"
                 width="100%"
-                picker="date"
                 placeholder={PH.birthDate}
+                inputMode="numeric"
+                maxLength={10}
+                autoComplete="bday"
                 value={values.birthDate}
                 error={Boolean(errors.birthDate)}
-                onValueChange={value => patch('birthDate', value)}
+                onValueChange={value => patch('birthDate', formatBirthDateInput(value))}
                 aria-label="생년월일"
               />
             </div>

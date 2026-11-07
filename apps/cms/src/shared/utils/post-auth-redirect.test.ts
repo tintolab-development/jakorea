@@ -1,8 +1,10 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import {
   PASSWORD_CHANGE_REQUIRED_PATH,
   PASSWORD_CHANGE_REQUIRED_STORAGE_KEY,
+  assignLoginAfterSessionEnd,
   isAdminFirstLoginOnboardingIncomplete,
+  isCmsLoggedOutPublicPath,
   isPasswordChangeRequiredPath,
   passwordChangeRequiredPaths,
   resolvePostAuthRedirectPath,
@@ -47,6 +49,28 @@ describe('resolveSessionAuthFailureRedirect', () => {
     expect(
       resolveSessionAuthFailureRedirect({ pathname: '/', search: '', complete: false })
     ).toBe('/login?next=%2F')
+  })
+})
+
+describe('isCmsLoggedOutPublicPath', () => {
+  it('로그인·가입 화면은 공개로 본다', () => {
+    expect(isCmsLoggedOutPublicPath('/login')).toBe(true)
+    expect(isCmsLoggedOutPublicPath('/register/complete')).toBe(true)
+    expect(isCmsLoggedOutPublicPath('/')).toBe(false)
+  })
+})
+
+describe('assignLoginAfterSessionEnd', () => {
+  it('대시보드에 남아 있으면 로그인으로 보낸다', () => {
+    const assign = vi.fn()
+    assignLoginAfterSessionEnd({ pathname: '/', search: '', complete: false, assign })
+    expect(assign).toHaveBeenCalledWith('/login?next=%2F')
+  })
+
+  it('이미 로그인 화면이면 다시 보내지 않는다', () => {
+    const assign = vi.fn()
+    assignLoginAfterSessionEnd({ pathname: '/login', search: '', complete: false, assign })
+    expect(assign).not.toHaveBeenCalled()
   })
 })
 

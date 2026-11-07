@@ -21,7 +21,8 @@ export interface GeminiTrainingReportImportRow {
   trainingMinutes?: number;
   sourceTimestamp?: string;
   trainingType?: string;
-  feePayee?: string;
+  /** 강사비 지급처. 저장·rawPayloadJsonb에 원문 유지. 외부 지급처 판정은 trim+공백제거+ASCII 대문자화 후 canonical EXTERNAL 또는 한글 별칭 외부만 인정. null/빈 문자열/INTERNAL/내부/미정 및 그 외 값은 외부 지급처가 아님. */
+  feePayee?: string | null;
   trainingSessionCount?: number;
   participantCount?: number;
   trainingTopic?: string;

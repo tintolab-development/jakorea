@@ -138,7 +138,7 @@ export interface PaymentOrderAdminProgramDetailInstructorRow {
   sessionOrdinal: number
   processingStatus: PaymentOrderAdminLineProcessingStatus
   estimatedAmount: number
-  /** 일괄 확인 시 선택한 강의비 지급 예정일 (ISO YYYY-MM-DD) */
+  /** 일괄 확인 시 선택한 강사비 지급 예정일 (ISO YYYY-MM-DD) */
   lectureFeePaymentScheduledDate?: string
   /** 신청 반려 시 산출 내역서·상세에 표시할 사유 */
   processingRejectionReason?: string
@@ -172,7 +172,7 @@ export interface PaymentOrderAdminInstructorDetailProgramRow {
   sessionOrdinal: number
   processingStatus: PaymentOrderAdminLineProcessingStatus
   estimatedAmount: number
-  /** 일괄 확인 시 선택한 강의비 지급 예정일 (ISO YYYY-MM-DD) */
+  /** 일괄 확인 시 선택한 강사비 지급 예정일 (ISO YYYY-MM-DD) */
   lectureFeePaymentScheduledDate?: string
   /** 신청 반려 시 산출 내역서·상세에 표시할 사유 */
   processingRejectionReason?: string

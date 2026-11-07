@@ -103,6 +103,7 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
         textbookName: program.textbookName || '',
         textbookNameEn: program.textbookNameEn || '',
         rounds: program.rounds.map(r => ({
+          id: r.id,
           roundNumber: r.roundNumber,
           startDate: typeof r.startDate === 'string' ? r.startDate : r.startDate.toISOString(),
           endDate: typeof r.endDate === 'string' ? r.endDate : r.endDate.toISOString(),
@@ -170,6 +171,7 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
         textbookName: program.textbookName || '',
         textbookNameEn: program.textbookNameEn || '',
         rounds: program.rounds.map(r => ({
+          id: r.id,
           roundNumber: r.roundNumber,
           startDate: typeof r.startDate === 'string' ? r.startDate : r.startDate.toISOString(),
           endDate: typeof r.endDate === 'string' ? r.endDate : r.endDate.toISOString(),

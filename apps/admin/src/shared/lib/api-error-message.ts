@@ -97,3 +97,17 @@ export function isEnabledLimitError(error: unknown): boolean {
     /at most \d+/i.test(message)
   )
 }
+
+/** BE NotBlank / must not be blank — 공통 필수 미입력 안내로 매핑 */
+export function isBlankRequiredValidationError(error: unknown): boolean {
+  if (isMinActiveRequiredError(error) || isEnabledLimitError(error)) return false
+  const localCode = error instanceof Error ? error.message : ''
+  if (localCode === 'EMPTY_REQUIRED' || /_REQUIRED$/.test(localCode)) return true
+  const code = readApiErrorCode(error) ?? ''
+  if (/^(NOT_BLANK|BLANK_VALUE|FIELD_REQUIRED)$/i.test(code)) return true
+  const message = readApiErrorMessage(error) ?? ''
+  if (/must not be blank|must not be empty|must not be null/i.test(message)) return true
+  if (/\bis required\.?$/i.test(message)) return true
+  if (code === 'VALIDATION_ERROR' && /blank|not be empty/i.test(message)) return true
+  return false
+}

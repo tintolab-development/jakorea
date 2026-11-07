@@ -23,8 +23,6 @@ const WEEKDAYS = [
   { key: 'sat', label: 'Sat', className: calendarStyles.weekdaySat },
 ] as const
 
-const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
-
 type SettlementCalendarViewProps = {
   month: string
   date: string
@@ -237,48 +235,60 @@ export function SettlementCalendarView({
       </section>
 
       <aside className={styles.side} aria-label="선택일 정산 일정">
-        <div className={styles.sideHeader}>
-          <PFText as="p" typo="hd-md" color="black" className={styles.sideDay}>
-            {String(selectedDate.getDate()).padStart(2, '0')}
-          </PFText>
-          <PFText as="p" typo="bd-md-md" color="neutral-cool-500" className={styles.sideWeekday}>
-            {WEEKDAY_KO[selectedDate.getDay()]}
-          </PFText>
-        </div>
         {selectedItems.length === 0 ? (
-          <PFEmptyState
-            variant="inline"
-            title="선택한 날짜에 정산 일정이 없어요"
-            description={
-              <>
-                정산 일정이 생기면
-                <br />
-                캘린더에서 확인할 수 있어요.
-              </>
-            }
-          />
+          <div className={styles.empty}>
+            <PFEmptyState
+              variant="inline"
+              title="예정된 프로그램 일정이 없어요"
+              description={
+                <>
+                  신청한 프로그램 일정이 생기면
+                  <br />
+                  캘린더에서 확인할 수 있어요.
+                </>
+              }
+            />
+          </div>
         ) : (
-          <ul className={styles.sideList}>
-            {selectedItems.map(item => {
-              const colors = SETTLEMENT_CALENDAR_EVENT_COLORS[item.status]
-              return (
-                <li key={item.id} className={styles.sideItem}>
-                  <span className={styles.sideStatus} style={{ backgroundColor: colors.background }}>
-                    <span className={styles.sideStatusDot} style={{ backgroundColor: colors.accent }} />
-                    <PFText as="span" typo="caption-sb" color="black">
-                      {SETTLEMENT_STATUS_CALENDAR_SHORT[item.status]}
+          <div className={styles.list}>
+            <div className={styles.listHeader}>
+              <PFText as="p" typo="bd-md-md" color="neutral-cool-500" className={styles.listLead}>
+                확인이 필요한 일정이에요
+              </PFText>
+              <PFText as="h3" typo="hl-lg" color="black" className={styles.listCount}>
+                총 {selectedItems.length}개
+              </PFText>
+            </div>
+            <ul className={styles.listItems}>
+              {selectedItems.map(item => {
+                const colors = SETTLEMENT_CALENDAR_EVENT_COLORS[item.status]
+                return (
+                  <li
+                    key={item.id}
+                    className={styles.listItem}
+                    style={{ borderLeftColor: colors.accent }}
+                  >
+                    <PFText
+                      as="p"
+                      typo="label-md"
+                      color="neutral-cool-500"
+                      className={styles.listProgram}
+                    >
+                      {item.programName}
                     </PFText>
-                  </span>
-                  <PFText as="p" typo="bd-md-sb" color="black" className={styles.sideProgram}>
-                    {item.programName}
-                  </PFText>
-                  <PFText as="p" typo="bd-md-md" color="black" className={styles.sideAmount}>
-                    {formatSignedWonAmount(item.appliedAmount)}
-                  </PFText>
-                </li>
-              )
-            })}
-          </ul>
+                    <div className={styles.listDetail}>
+                      <PFText as="p" typo="bd-md-sb" color="black" className={styles.listTitle}>
+                        {SETTLEMENT_STATUS_CALENDAR_SHORT[item.status]}
+                      </PFText>
+                      <PFText as="p" typo="bd-sm-rg" color="black" className={styles.listAmount}>
+                        {formatSignedWonAmount(item.appliedAmount)}
+                      </PFText>
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
         )}
       </aside>
     </div>

@@ -69,7 +69,7 @@ export function EducationInProgressFileRow({
 
   const fileMenuOptions = [
     { value: 'download', label: '다운로드' },
-    { value: 'view-original', label: '원글보기' },
+    ...(file.postId ? [{ value: 'view-original', label: '원글보기' }] : []),
   ]
 
   return (

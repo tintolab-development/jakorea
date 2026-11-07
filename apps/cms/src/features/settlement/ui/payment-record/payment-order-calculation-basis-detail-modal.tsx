@@ -145,7 +145,11 @@ export function usePaymentOrderCalculationBasisDetailModal(
         return
       }
 
-      showAlert({ title: '안내', content: '준비 중입니다.' })
+      showAlert({
+        title: '안내',
+        content:
+          '이 지급 항목의 산정 기준 상세 레이아웃이 없습니다. 항목 유형과 API basisDetail.layout을 확인해 주세요.',
+      })
     },
     [context, showAlert]
   )

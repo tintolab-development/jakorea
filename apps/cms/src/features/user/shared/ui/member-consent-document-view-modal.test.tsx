@@ -29,6 +29,12 @@ vi.mock('@/features/template/hooks/use-a4-paragraph-pages', () => ({
 vi.mock('@/shared/ui/cms-alert-modal-provider', () => ({
   useCmsAlert: () => ({ showAlert: vi.fn() }),
 }))
+vi.mock('@/features/auth/model/auth-store', () => ({
+  useAuthStore: (select?: (state: { user: { roleCode: string } }) => unknown) => {
+    const state = { user: { roleCode: 'MASTER' } }
+    return typeof select === 'function' ? select(state) : state
+  },
+}))
 
 const loadConsentSignedSignatureBlobRemote = vi.fn()
 const fetchConsentSignedDocumentRemote = vi.fn()

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type Key } from 'react'
+import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import {
   showApplicationApprovalCompletedAlert,
   showApplicationRejectionCompletedAlert,
@@ -7,20 +7,9 @@ import type { ColumnsType } from 'antd/es/table'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { MESSAGES } from '@/shared/constants/messages'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
-import type { PreferredEducationSchedule } from '@/features/program/general/api/individual-application-screening-api-types'
-import type { IndividualApproveScopeConfirmPayload } from '@/features/program/general/ui/detail-modal/applications/individual-approve-scope-modal'
-import { fetchVolunteerApplicationDetailRemote } from '@/features/program/general/api/applications-api-client'
-import {
-  approveGeneralVolunteerApplicationWithEducationScope,
-  bulkApproveGeneralVolunteerApplicationsWithEducationScope,
-} from '@/features/program/general/api/admin-applications-service'
-import { mapVolunteerActivityScheduleSlotsToPreferred } from '@/features/program/general/lib/volunteer-activity-schedule-slots'
-import { getApiErrorCode } from '@/shared/lib/extract-api-error-message'
-import { formatIndividualApprovalScopeErrorMessage } from '@/features/program/general/lib/individual-approval-education-scope'
 import {
   toNestedDecisionNotification,
   toScreeningNotifyFields,
-  toTimedBulkNotifyTiming,
 } from '@/features/program/general/lib/application-decision-notify-timing'
 import type { FilterTableExcelExportConfig } from '@/shared/components/filter-table-layout'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
@@ -38,7 +27,7 @@ import {
   formatGeneralVolunteerEssayCellValue,
   type GeneralManagerEvaluation,
 } from '@/features/program/general/lib/volunteer-screening-constants'
-import { volunteerApplicationApprovalStatusLabel } from '@/features/program/general/lib/volunteer-application-detail-visibility'
+import { volunteerProgramApprovalStatusLabel } from '@/features/program/general/lib/volunteer-application-detail-visibility'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { useGeneralVolunteerApplicationsRemote } from '@/features/program/general/hooks/use-general-volunteer-applications-remote'
 import { buildGeneralVolunteerDoc1ListQuery } from '@/features/program/general/api/volunteer-list-query'
@@ -110,18 +99,6 @@ function resolveDocScreeningExportColumns(
   return interviewEnabled ? EXPORT_COLUMNS : APPLICATION_EXPORT_COLUMNS
 }
 
-const VOLUNTEER_SCOPE_APPROVE_DEFAULT_REASON = '봉사 일정 배정'
-
-function volunteerScopeApproveErrorMessage(error: unknown): string {
-  return formatIndividualApprovalScopeErrorMessage(error)
-}
-
-function volunteerScopeApproveErrorTitle(error: unknown): string {
-  return getApiErrorCode(error) === 'GENERAL_INDIVIDUAL_PRE_EDUCATION_NOT_CONFIGURED'
-    ? '사전교육 일정 안내'
-    : '처리 실패'
-}
-
 function toExportRow(
   row: GeneralVolunteerApplicantRow,
   interviewEnabled: boolean
@@ -157,7 +134,7 @@ function toExportRow(
     managerBEvaluationLabel: GENERAL_MANAGER_EVALUATION_LABELS[row.managerBEvaluation],
     documentScreeningStatusLabel: interviewEnabled
       ? GENERAL_DOCUMENT_SCREENING_STATUS_LABELS[row.documentScreeningStatus]
-      : volunteerApplicationApprovalStatusLabel(row.documentScreeningStatus),
+      : volunteerProgramApprovalStatusLabel(row),
   }
 }
 
@@ -175,11 +152,6 @@ export function useGeneralVolunteerDocScreening({
     useState<GeneralVolunteerApplicantRow | null>(null)
   const [rejectModalVolunteer, setRejectModalVolunteer] =
     useState<GeneralVolunteerApplicantRow | null>(null)
-  const [approvePreferredSchedules, setApprovePreferredSchedules] = useState<
-    PreferredEducationSchedule[]
-  >([])
-  const [approveConfirmLoading, setApproveConfirmLoading] = useState(false)
-  const approvePrefetchSeq = useRef(0)
   const [cancelApprovalTargetId, setCancelApprovalTargetId] = useState<string | null>(null)
   const [cancelRejectTargetId, setCancelRejectTargetId] = useState<string | null>(null)
   const remoteEnabled = shouldUseGeneralApplicationsRemoteApi() && Boolean(programId)
@@ -195,7 +167,10 @@ export function useGeneralVolunteerDocScreening({
   const [appliedFilters, setAppliedFilters] = useState<GeneralVolunteerDoc1Filters>(() => ({
     ...DEFAULT_GENERAL_VOLUNTEER_DOC1_FILTERS,
   }))
-  const listQuery = useMemo(() => buildGeneralVolunteerDoc1ListQuery(appliedFilters), [appliedFilters])
+  const listQuery = useMemo(
+    () => buildGeneralVolunteerDoc1ListQuery(appliedFilters, { interviewEnabled }),
+    [appliedFilters, interviewEnabled]
+  )
   const volunteerRemote = useGeneralVolunteerApplicationsRemote({
     programId,
     stage: 'doc1',
@@ -351,36 +326,16 @@ export function useGeneralVolunteerDocScreening({
   }, [])
 
   const closeApproveModal = useCallback(() => {
-    approvePrefetchSeq.current += 1
     setApproveModalVolunteer(null)
-    setApprovePreferredSchedules([])
-    setApproveConfirmLoading(false)
   }, [])
 
   const closeRejectModal = useCallback(() => {
     setRejectModalVolunteer(null)
   }, [])
 
-  const openApproveModal = useCallback(
-    (applicant: GeneralVolunteerApplicantRow) => {
-      setApproveModalVolunteer(applicant)
-      setApprovePreferredSchedules([])
-      if (interviewEnabled) return
-      const seq = ++approvePrefetchSeq.current
-      void fetchVolunteerApplicationDetailRemote(applicant.id)
-        .then(detail => {
-          if (seq !== approvePrefetchSeq.current) return
-          setApprovePreferredSchedules(
-            mapVolunteerActivityScheduleSlotsToPreferred(detail.activityScheduleSlots)
-          )
-        })
-        .catch(() => {
-          if (seq !== approvePrefetchSeq.current) return
-          setApprovePreferredSchedules([])
-        })
-    },
-    [interviewEnabled]
-  )
+  const openApproveModal = useCallback((applicant: GeneralVolunteerApplicantRow) => {
+    setApproveModalVolunteer(applicant)
+  }, [])
 
   const openRejectModal = useCallback((applicant: GeneralVolunteerApplicantRow) => {
     setRejectModalVolunteer(applicant)
@@ -424,60 +379,19 @@ export function useGeneralVolunteerDocScreening({
         showApplicationApprovalCompletedAlert()
         return
       }
-      if (!volunteerRemote.remoteEnabled) {
-        notifyProgramApiUnavailable(
-          'general-volunteer-application-final-result',
-          '봉사자 프로그램 신청 심사'
-        )
-        return
-      }
-      const targets = ids
-        .map(id => Number(id))
-        .filter(id => Number.isFinite(id))
-        .map(applicationId => ({
-          applicationId,
-          confirmedScheduleIds: [],
-          expectedScopeRevision: 0,
-        }))
-      if (targets.length === 0) return
-      try {
-        const bulk = await bulkApproveGeneralVolunteerApplicationsWithEducationScope({
-          reason: payload.reason.trim() || VOLUNTEER_SCOPE_APPROVE_DEFAULT_REASON,
-          targets,
-          ...toTimedBulkNotifyTiming(payload.notifyTiming, payload.manualNotifyAt),
-        })
-        await volunteerRemote.invalidateApplications()
-        setBulkApproveOpen(false)
-        if ((bulk.failureCount ?? 0) > 0) {
-          const firstFailure = bulk.failures?.[0]
-          showAlert({
-            title: '처리 실패',
-            content:
-              firstFailure?.message?.trim() ||
-              firstFailure?.code?.trim() ||
-              `요청 ${bulk.requestedCount ?? ids.length}건 중 성공 ${bulk.successCount ?? 0}건, 실패 ${bulk.failureCount ?? 0}건입니다.`,
-          })
-          if ((bulk.successCount ?? 0) === 0) return
-          setSelectedRowKeys([])
-          return
-        }
-        setSelectedRowKeys([])
-        showApplicationApprovalCompletedAlert()
-      } catch (error) {
-        await volunteerRemote.invalidateApplications()
-        showAlert({
-          title: volunteerScopeApproveErrorTitle(error),
-          content: volunteerScopeApproveErrorMessage(error),
-        })
-      }
+      const ok = await applyFinalResultStatus(
+        ids,
+        'pass',
+        payload.notifyTiming,
+        undefined,
+        scheduledAt
+      )
+      setBulkApproveOpen(false)
+      if (!ok) return
+      setSelectedRowKeys([])
+      showApplicationApprovalCompletedAlert()
     },
-    [
-      applyDocumentScreeningStatus,
-      interviewEnabled,
-      selectedRowKeys,
-      showAlert,
-      volunteerRemote,
-    ]
+    [applyDocumentScreeningStatus, applyFinalResultStatus, interviewEnabled, selectedRowKeys]
   )
 
   const handleBulkRejectConfirm = useCallback(
@@ -509,55 +423,30 @@ export function useGeneralVolunteerDocScreening({
     async (payload: PermissionModalPayload) => {
       if (!approveModalVolunteer) return
       const { id } = approveModalVolunteer
-      const ok = await applyDocumentScreeningStatus(
-        [id],
-        'pass',
+      const scheduledAt = toScreeningNotifyFields(
         payload.notifyTiming,
-        undefined,
-        toScreeningNotifyFields(payload.notifyTiming, payload.manualNotifyAt).scheduledAt
-      )
+        payload.manualNotifyAt
+      ).scheduledAt
+      const ok = interviewEnabled
+        ? await applyDocumentScreeningStatus(
+            [id],
+            'pass',
+            payload.notifyTiming,
+            undefined,
+            scheduledAt
+          )
+        : await applyFinalResultStatus([id], 'pass', payload.notifyTiming, undefined, scheduledAt)
       setApproveModalVolunteer(null)
       if (!ok) return
       setSelectedRowKeys(prev => prev.filter(key => String(key) !== id))
       showApplicationApprovalCompletedAlert()
     },
-    [applyDocumentScreeningStatus, approveModalVolunteer]
-  )
-
-  const handleApplicationApproveConfirm = useCallback(
-    async (payload: IndividualApproveScopeConfirmPayload) => {
-      if (!approveModalVolunteer) return
-      if (!volunteerRemote.remoteEnabled) {
-        notifyProgramApiUnavailable(
-          'general-volunteer-application-final-result',
-          '봉사자 프로그램 신청 심사'
-        )
-        return
-      }
-      const { id } = approveModalVolunteer
-      setApproveConfirmLoading(true)
-      try {
-        await approveGeneralVolunteerApplicationWithEducationScope(id, {
-          confirmedScheduleIds: payload.confirmedScheduleIds,
-          expectedScopeRevision: payload.expectedScopeRevision,
-          reason: payload.reason.trim() || VOLUNTEER_SCOPE_APPROVE_DEFAULT_REASON,
-          ...toTimedBulkNotifyTiming(payload.notifyTiming, payload.manualNotifyAt),
-        })
-        await volunteerRemote.invalidateApplications()
-        closeApproveModal()
-        setSelectedRowKeys(prev => prev.filter(key => String(key) !== id))
-        showApplicationApprovalCompletedAlert()
-      } catch (error) {
-        await volunteerRemote.invalidateApplications()
-        showAlert({
-          title: volunteerScopeApproveErrorTitle(error),
-          content: volunteerScopeApproveErrorMessage(error),
-        })
-      } finally {
-        setApproveConfirmLoading(false)
-      }
-    },
-    [approveModalVolunteer, closeApproveModal, showAlert, volunteerRemote]
+    [
+      applyDocumentScreeningStatus,
+      applyFinalResultStatus,
+      approveModalVolunteer,
+      interviewEnabled,
+    ]
   )
 
   const handleRejectModalConfirm = useCallback(
@@ -746,10 +635,7 @@ export function useGeneralVolunteerDocScreening({
     openApproveModal,
     openRejectModal,
     handleApproveModalConfirm,
-    handleApplicationApproveConfirm,
     handleRejectModalConfirm,
-    approvePreferredSchedules,
-    approveConfirmLoading,
     bulkApproveSubjectName:
       list.find(row => selectedRowKeys.map(String).includes(row.id))?.name ?? '',
     bulkRejectSubjectName:

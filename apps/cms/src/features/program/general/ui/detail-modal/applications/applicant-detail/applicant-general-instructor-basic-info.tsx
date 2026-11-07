@@ -28,7 +28,7 @@ import {
 } from './applicant-general-instructor-fee-fields'
 import {
   AffiliationEmploymentStatusField,
-  formatAccountDisplayContent,
+  formatServerAccountDisplayContent,
   formatBirthDateAndAge,
   HomeAddressDisplay,
   InstructorBasicInfoDetailForm,
@@ -54,6 +54,7 @@ function ProgramApprovalStatusValue({
   instructor: ApplicantInstructorRow
   onResendNotificationClick?: () => void
 }) {
+  if (instructor.approvalStatus === 'unknown') return <span>-</span>
   return (
     <ProgramApprovalStatusDetailValue
       status={instructor.approvalStatus}
@@ -75,7 +76,6 @@ export function ApplicantGeneralInstructorBasicInfo({
   persistAffiliationEmploymentRemote = false,
   onAffiliationEmploymentStatusSaved,
 }: ApplicantGeneralInstructorBasicInfoProps) {
-  const shouldMask = maskSensitive && instructor.approvalStatus !== 'approved'
   const isEditMode = mode === 'edit' && draft != null && onDraftChange != null
   const showAdminComment = instructor.approvalStatus === 'approved'
   const showPostApprovalFields = instructor.approvalStatus === 'approved'
@@ -160,7 +160,7 @@ export function ApplicantGeneralInstructorBasicInfo({
       {showPostApprovalFields ? (
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
-            label="강의비 책정 기준"
+            label="강사비 책정 기준"
             fullRow
             view={lectureFeeView}
             edit={lectureFeeEdit}
@@ -195,8 +195,10 @@ export function ApplicantGeneralInstructorBasicInfo({
           lectureExperienceDisplay,
           contactDisplay,
           emailDisplay,
-          homeAddressDisplay: <HomeAddressDisplay address={instructor.address} mask={maskSensitive} />,
-          accountDisplay: formatAccountDisplayContent(instructor, shouldMask),
+          homeAddressDisplay: (
+            <HomeAddressDisplay address={instructor.address} mask={maskSensitive} />
+          ),
+          accountDisplay: formatServerAccountDisplayContent(instructor),
           instructorFeeGradeView: <InstructorFeeGradeView instructor={instructor} />,
           instructorFeeGradeEdit:
             isEditMode && draft && onDraftChange ? (

@@ -7,6 +7,11 @@
 
 import { useEffect, useMemo } from 'react'
 import {
+  postAdminAuthActivity,
+  isAdminAuthUnauthorizedError,
+  isAdminAuthForbiddenError,
+} from '@/features/auth/api/admin-session-fetcher'
+import {
   REFRESH_TOKEN_STORAGE_KEY,
   startUserActivityTracking,
 } from '@/features/auth/lib/session-keepalive'
@@ -92,7 +97,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     // 활동 추적 (선제 refresh 게이트: 최근 30분 내 활동 + 마지막 발급 후 20분 경과)
-    const stopActivityTracking = startUserActivityTracking()
+    const stopActivityTracking = startUserActivityTracking(window, () => {
+      const initial = useAuthStore.getState()
+      if (!initial.isAuthenticated || !initial.token) return
+      const requestedToken = initial.token
+      void postAdminAuthActivity().catch(error => {
+        const current = useAuthStore.getState()
+        // A delayed 401 from the previous access token must not end a refreshed login.
+        if (!current.isAuthenticated || current.token !== requestedToken) return
+        if (isAdminAuthUnauthorizedError(error)) {
+          current.logout()
+        } else if (isAdminAuthForbiddenError(error)) {
+          // Permission/account-type mismatch is not token expiration.
+          console.warn('[ADMIN_SESSION] Activity was denied (403); verify ADMIN JWT and sid.')
+        }
+      })
+    })
 
     // 만료만 보고 바로 logout하지 않는다: refresh-first, 실패 시에만 logout (store.checkSessionExpiry)
     const checkSessionExpiry = () => {

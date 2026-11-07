@@ -50,6 +50,20 @@ describe('attachRecruitmentRowIdentity', () => {
     )
     expect(out.map(row => row.id)).toEqual([186068, 186050])
   })
+
+  it('UJAT 반기 요청은 recruitTerm이 같은 행에만 id를 붙인다', () => {
+    const rows: ProgramRecruitmentRequest[] = [
+      {
+        recruitmentType: 'VOLUNTEER',
+        targetType: 'COLLEGE_STUDENT',
+        applicationType: 'VOLUNTEER',
+        recruitTerm: 'FIRST_HALF',
+      },
+    ]
+    const out = attachRecruitmentRowIdentity(rows, ujatRows)
+    expect(out[0]?.id).toBeUndefined()
+    expect(out[0]?.recruitTerm).toBe('FIRST_HALF')
+  })
 })
 
 describe('buildRecruitmentRowCopyRequests', () => {

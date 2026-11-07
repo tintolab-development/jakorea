@@ -12,6 +12,10 @@ export type IndividualApplicationsParams = {
  */
 status?: string;
 /**
+ * 표시 그룹 필터. APPLICATION_PENDING=SUBMITTED+WAITING+WAITING_REVIEW+PENDING+REJECTION_CANCELLED. APPLICATION_REJECTED=REJECTED+APPROVAL_CANCELLED. 단일 status와 함께 주면 교집합. 알 수 없는 값은 400 UNSUPPORTED_APPLICATION_STATUS_GROUP.
+ */
+statusGroup?: string;
+/**
  * 상태 필터입니다. 응답 enum 값과 화면 배지 라벨을 매핑해서 사용합니다.
  */
 documentStatus?: string;

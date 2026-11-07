@@ -21,6 +21,76 @@ assert.equal(generalOrganization.educationTargetLabel, '')
 assert.equal(generalOrganization.educationFormLabel, '')
 assert.equal(generalOrganization.educationForm, undefined)
 
+const instructorReportsPending = mapPortalProgramApplicationListItem({
+  applicationId: 9001,
+  applicationType: 'INSTRUCTOR',
+  programId: 900,
+  programType: 'GENERAL_ORGANIZATION',
+  programGroup: 'GENERAL',
+  programTitle: '강의보고서 미제출',
+  displayStatus: 'INSTRUCTOR_REPORTS_PENDING',
+})
+assert.equal(instructorReportsPending?.displayStatus, 'in_progress')
+
+const approvalCancelled = mapPortalProgramApplicationListItem({
+  applicationId: 1691547,
+  applicationType: 'ORGANIZATION',
+  programId: 100,
+  programType: 'GENERAL_ORGANIZATION',
+  programGroup: 'GENERAL',
+  programTitle: '승인 취소 프로그램',
+  applicationStatus: 'APPROVAL_CANCELLED',
+  displayStatus: '승인 취소',
+})
+assert.equal(approvalCancelled?.displayStatus, 'rejected')
+
+const approvalCancelledFromStatus = mapPortalProgramApplicationListItem({
+  applicationId: 1691548,
+  applicationType: 'VOLUNTEER',
+  programId: 100,
+  programType: 'GENERAL_ORGANIZATION',
+  programGroup: 'GENERAL',
+  programTitle: '승인 취소 봉사',
+  applicationStatus: 'APPROVAL_CANCELLED',
+  participationStatus: 'ACTIVE',
+})
+assert.equal(approvalCancelledFromStatus?.displayStatus, 'rejected')
+
+const rejectionCancelled = mapPortalProgramApplicationListItem({
+  applicationId: 1691550,
+  applicationType: 'INDIVIDUAL',
+  programId: 100,
+  programType: 'GENERAL_INDIVIDUAL',
+  programGroup: 'GENERAL',
+  programTitle: '반려 취소 프로그램',
+  applicationStatus: 'REJECTION_CANCELLED',
+  displayStatus: '결과 대기',
+})
+assert.equal(rejectionCancelled?.displayStatus, 'waiting_result')
+
+const rejectionCancelledFromStatus = mapPortalProgramApplicationListItem({
+  applicationId: 1691551,
+  applicationType: 'ORGANIZATION',
+  programId: 100,
+  programType: 'GENERAL_ORGANIZATION',
+  programGroup: 'GENERAL',
+  programTitle: '반려 취소 기관',
+  applicationStatus: 'REJECTION_CANCELLED',
+})
+assert.equal(rejectionCancelledFromStatus?.displayStatus, 'waiting_result')
+
+const userCancelled = mapPortalProgramApplicationListItem({
+  applicationId: 1691549,
+  applicationType: 'ORGANIZATION',
+  programId: 100,
+  programType: 'GENERAL_ORGANIZATION',
+  programGroup: 'GENERAL',
+  programTitle: '사용자 신청 취소 프로그램',
+  applicationStatus: 'CANCELLED',
+  displayStatus: '신청 취소',
+})
+assert.equal(userCancelled?.displayStatus, 'cancelled')
+
 const generalYouth = mapPortalProgramApplicationListItem({
   applicationId: 2,
   applicationType: 'INDIVIDUAL',
@@ -510,6 +580,40 @@ assert.equal(certificateDetailIssued.participantId, 1695042)
 assert.equal(certificateDetailIssued.certificateStatus, 'COMPLETION_ISSUED')
 assert.equal(certificateDetailIssued.canIssueCertificate, true)
 assert.equal(certificateDetailIssued.certificateAvailable, undefined)
+
+const personalCompletedNotGraduated = mapPortalProgramApplicationDetail({
+  applicationId: 1694691,
+  applicationType: 'INDIVIDUAL',
+  programId: 186339,
+  programTitle: '개인 일정 종료 만족도 제출',
+  programGroup: 'GENERAL',
+  programType: 'GENERAL_INDIVIDUAL',
+  applicationStatus: 'APPROVED',
+  displayStatus: '진행 완료',
+  participation: {
+    participantId: 1694970,
+    completionStatus: 'NOT_COMPLETED',
+  },
+})
+assert.equal(personalCompletedNotGraduated?.displayStatus, 'completed')
+assert.equal(personalCompletedNotGraduated?.participantId, 1694970)
+
+assert.equal(
+  mapPortalProgramApplicationDetail({
+    applicationId: 1694691,
+    applicationType: 'INDIVIDUAL',
+    programId: 186339,
+    programTitle: 'displayStatus 없을 때 completionStatus로 완료 만들지 않음',
+    programGroup: 'GENERAL',
+    programType: 'GENERAL_INDIVIDUAL',
+    applicationStatus: 'APPROVED',
+    participation: {
+      participantId: 1694970,
+      completionStatus: 'COMPLETED',
+    },
+  })?.displayStatus,
+  'in_progress',
+)
 
 const certificateDetailAvailable = mapPortalProgramApplicationDetail({
   applicationId: 1694719,

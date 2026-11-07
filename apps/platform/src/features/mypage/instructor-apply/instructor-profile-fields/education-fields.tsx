@@ -1,4 +1,4 @@
-import { useMemo, type ReactNode } from 'react'
+import { useEffect, useMemo, type ReactNode } from 'react'
 import { INSTRUCTOR_FORM_PLACEHOLDERS as PH } from '@jakorea/domain/instructor/form-copy'
 import {
   EDUCATION_DEGREE_OPTIONS,
@@ -8,6 +8,7 @@ import {
   isEducationDetailKey,
   orderEducationDetailKeys,
   resolveAvailableEducationDetailKeys,
+  syncEducationDetailKeysWithFinalEducation,
   type EducationDetailKey,
 } from '@jakorea/domain/instructor/education-options'
 import {
@@ -74,19 +75,30 @@ export function InstructorEducationProfileFields({
   }
 
   const handleEduSchoolTypeChange = (eduSchoolType: string) => {
-    const available = resolveAvailableEducationDetailKeys(eduSchoolType)
-    const locked = isEducationDetailKey(eduSchoolType) ? eduSchoolType : null
     onValuesChange(prev => ({
       ...prev,
       eduSchoolType,
-      educationDetailKeys: locked
-        ? orderEducationDetailKeys([
-            ...prev.educationDetailKeys.filter(key => available.includes(key)),
-            locked,
-          ])
-        : [],
+      educationDetailKeys: syncEducationDetailKeysWithFinalEducation(
+        eduSchoolType,
+        prev.educationDetailKeys,
+      ),
     }))
   }
+
+  useEffect(() => {
+    const next = syncEducationDetailKeysWithFinalEducation(
+      values.eduSchoolType,
+      values.educationDetailKeys,
+    )
+    if (next.join() === values.educationDetailKeys.join()) return
+    onValuesChange(prev => ({
+      ...prev,
+      educationDetailKeys: syncEducationDetailKeysWithFinalEducation(
+        prev.eduSchoolType,
+        prev.educationDetailKeys,
+      ),
+    }))
+  }, [onValuesChange, values.eduSchoolType, values.educationDetailKeys])
 
   const toggleEducationDetail = (key: EducationDetailKey) => {
     if (key === values.eduSchoolType) return

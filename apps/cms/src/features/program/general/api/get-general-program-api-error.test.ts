@@ -223,6 +223,18 @@ describe('getGeneralProgramApiErrorMessage', () => {
     expect(
       getGeneralProgramApiErrorMessage(errorFor('FORM_RESPONSE_ALREADY_SUBMITTED'), 'fallback')
     ).toBe('이미 제출된 응답입니다. 수정은 응답 수정으로 해 주세요.')
+    expect(
+      getGeneralProgramApiErrorMessage(errorFor('INDIVIDUAL_INTERVIEW_REQUIRED'), 'fallback')
+    ).toBe('면접 합격 후 최종 승인')
+    expect(
+      getGeneralProgramApiErrorMessage(
+        errorFor('GENERAL_INSTRUCTOR_ASSIGNMENT_REQUIRES_RECRUITMENT'),
+        'fallback'
+      )
+    ).toBe('강사 모집이 없는 프로그램에는 강사를 배정할 수 없습니다.')
+    expect(
+      getGeneralProgramApiErrorMessage(errorFor('ATTENDANCE_AFTER_GIVE_UP'), 'fallback')
+    ).toBe('활동 포기 이후 회차에는 출결을 저장할 수 없습니다.')
   })
 
   it('PREFERRED_SCHEDULE_* 서버 메시지가 있으면 그대로 쓴다', () => {
@@ -354,6 +366,15 @@ describe('getGeneralProgramApiErrorMessage program schedule codes', () => {
     ).toContain('educationSlotKey')
   })
 
+  it('maps PROGRAM_SCHEDULE_LOCKED', () => {
+    expect(
+      getGeneralProgramApiErrorMessage(
+        { response: { data: { error: { code: 'PROGRAM_SCHEDULE_LOCKED' } } } },
+        'fallback'
+      )
+    ).toContain('출결·정산')
+  })
+
   it('maps PROGRAM_SCHEDULE_NOT_ACTIVE', () => {
     expect(
       getGeneralProgramApiErrorMessage(
@@ -370,6 +391,24 @@ describe('getGeneralProgramApiErrorMessage program schedule codes', () => {
         'fallback'
       )
     ).toContain('EDUCATION')
+  })
+
+  it('maps PROGRAM_SCHEDULE_LOCKED with BE Korean message', () => {
+    expect(
+      getGeneralProgramApiErrorMessage(
+        {
+          response: {
+            data: {
+              error: {
+                code: 'PROGRAM_SCHEDULE_LOCKED',
+                message: '이미 시작된 일정은 변경할 수 없습니다.',
+              },
+            },
+          },
+        },
+        'fallback'
+      )
+    ).toBe('이미 시작된 일정은 변경할 수 없습니다.')
   })
 
   it('maps PROGRAM_DATE_OUTSIDE_OPEN_PERIOD even when server message is generic', () => {

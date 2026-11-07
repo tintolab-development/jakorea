@@ -43,6 +43,7 @@ export function useMarkAccountPaymentFailedMutation() {
 export function useBulkTransferExportMutation() {
   return useMutation({
     mutationFn: (body: SettlementExportRequest) => requestBulkTransferExportRemote(body),
+    retry: false,
   })
 }
 
@@ -50,5 +51,6 @@ export function useBulkTransferExportMutation() {
 export function useTaxReportExportMutation() {
   return useMutation({
     mutationFn: (body: SettlementExportRequest) => requestTaxReportExportRemote(body),
+    retry: false,
   })
 }

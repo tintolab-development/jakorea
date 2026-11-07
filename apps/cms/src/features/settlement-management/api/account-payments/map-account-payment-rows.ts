@@ -1,13 +1,10 @@
 import type { AccountPaymentRow } from '@/features/settlement-management/model/account-payments-list'
 import type { AccountPaymentListItemResponse } from '@/shared/api/generated/settlement/schemas'
 import { mapPaymentStatusToAccountPaymentStatus } from '@/features/settlement-management/api/shared/settlement-status-mappers'
-import { formatLectureSessionLabel } from '@/features/settlement-management/api/shared/map-frontend-fields'
-import { isCanonicalLectureSessionDisplay } from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail'
 
 function resolveSessionLabel(item: AccountPaymentListItemResponse): string {
   const label = item.sessionLabel?.trim()
-  if (label && isCanonicalLectureSessionDisplay(label)) return label
-  if (item.sessionOrdinal != null) return formatLectureSessionLabel(item.sessionOrdinal)
+  if (label) return label
   return '-'
 }
 
@@ -19,11 +16,11 @@ export function mapAccountPaymentListItemToRow(
 
   return {
     id: paymentId != null ? String(paymentId) : `ap-${index}`,
-    accountPaymentId: paymentId,
-    settlementId: item.settlementId,
+    accountPaymentId: paymentId ?? undefined,
+    settlementId: item.settlementId ?? undefined,
     no: index + 1,
     instructorName: item.instructorName?.trim() || '-',
-    programId: item.programId,
+    programId: item.programId ?? undefined,
     programName: item.programNameKo?.trim() || item.programName?.trim() || '-',
     institutionName: item.institutionName?.trim() || '-',
     sessionLabel: resolveSessionLabel(item),
@@ -31,12 +28,12 @@ export function mapAccountPaymentListItemToRow(
     amount: item.netPaymentAmount ?? 0,
     lectureDate: item.lectureDate ?? undefined,
     transferScheduledDate: item.scheduledPaymentDate ?? '',
-    paidAt: item.paidAt,
-    bankName: item.bankName,
-    maskedAccountNo: item.maskedAccountNo,
-    accountHolder: item.accountHolder,
+    paidAt: item.paidAt ?? undefined,
+    bankName: item.bankName ?? undefined,
+    maskedAccountNo: item.maskedAccountNo ?? undefined,
+    accountHolder: item.accountHolder ?? undefined,
     /** 계좌 지급 memberId — 지급조서 instructorMemberId와 다를 수 있음(시안 카탈로그 분리). 이름 merge 금지 */
-    instructorMemberId: item.memberId,
+    instructorMemberId: item.memberId ?? undefined,
     // 목록 API는 지급조서 CONFIRMED 건만 반환
     paymentOrderStatus: 'confirmed',
   }

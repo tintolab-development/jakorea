@@ -15,7 +15,7 @@ export type GeminiInstitutionApproveConfirmPayload = PermissionModalPayload
 
 function resolveSubjectName(name: string): string {
   const trimmed = name.trim()
-  return trimmed && trimmed !== '-' ? trimmed : '신청자'
+  return trimmed && trimmed !== '-' ? trimmed : '기관'
 }
 
 export function buildGeminiInstitutionApproveMessage(
@@ -25,12 +25,12 @@ export function buildGeminiInstitutionApproveMessage(
 ): string {
   const name = resolveSubjectName(subjectName)
   if (selectionCount > 1) {
-    return `**[${name}] 님 외 ${selectionCount - 1}명**의 프로그램 신청을 승인하시겠습니까?\n승인 시 회원에게 승인 알림이 발송됩니다.`
+    return `**[${name}] 외 ${selectionCount - 1}개**의 프로그램 신청을 승인하시겠습니까?\n승인 시 담당 교사에게 승인 알림이 발송됩니다.`
   }
   if (withScheduleAssignment) {
-    return `**[${name}]** 님의 프로그램 신청을 승인하시겠습니까?\n승인 시 선택한 일정으로 교육이 배정되며, 회원에게 승인 알림이 발송됩니다.`
+    return `**[${name}]**의 프로그램 신청을 승인하시겠습니까?\n승인 시 선택한 일정으로 교육이 배정되며, 담당 교사에게 승인 알림이 발송됩니다.`
   }
-  return `**[${name}]** 님의 프로그램 신청을 승인하시겠습니까?\n승인 시 회원에게 승인 알림이 발송됩니다.`
+  return `**[${name}]**의 프로그램 신청을 승인하시겠습니까?\n승인 시 담당 교사에게 승인 알림이 발송됩니다.`
 }
 
 export function GeminiInstitutionApproveModal({
@@ -74,6 +74,7 @@ export function GeminiInstitutionApproveModal({
       confirmLabel="승인"
       confirmLoading={confirmLoading}
       notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.full}
+      notifyTimingOptions="two"
       onCancel={onCancel}
       onConfirm={payload => {
         onConfirm(payload)

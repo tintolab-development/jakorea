@@ -66,4 +66,41 @@ describe('participating instructor application detail', () => {
     expect(merged.freeWriting1).toBe('화요일 오전 가능')
     expect(merged.careerDetails ?? []).toHaveLength(0)
   })
+  it('신청 상세 정산 계좌·사업소득자 여부를 참여 강사 행에 유지한다', () => {
+    const detail = {
+      ...detailWithResume,
+      businessIncomeEarnerStatus: '해당',
+      settlement: { bankName: '우리', accountNumber: '239999288881', accountHolder: '이순규' },
+    } as unknown as InstructorApplicationDetailResponse
+    const canonical = mapInstructorApplicationDetailToParticipatingRow(detail, base, '186048')
+    const hydrated = hydrateInstructorApplicationRowFromForm({
+      row: participatingRowToInstructorApplicationSeed(canonical, '186048'),
+      formResponse: scheduleMemoForm,
+    })
+    const merged = mergeInstructorApplicationIntoParticipatingRow(canonical, hydrated)
+    expect(merged.bankName).toBe('우리')
+    expect(merged.accountNumber).toBe('239999288881')
+    expect(merged.accountHolder).toBe('이순규')
+    expect(merged.businessIncomeEarnerStatus).toBe('해당')
+  })
+
+  it('신청 상세에 정산 값이 없으면 목록 row 값으로 보완하지 않는다', () => {
+    const baseWithAccount = {
+      ...base,
+      bankName: '국민',
+      accountNumber: '111-222',
+      accountHolder: '목록값',
+      businessIncomeEarnerStatus: '해당',
+    } as ParticipatingInstructorRow
+    const row = mapInstructorApplicationDetailToParticipatingRow(
+      { ...detailWithResume, settlement: null, businessIncomeEarnerStatus: null },
+      baseWithAccount,
+      '186048'
+    )
+    expect(row.bankName).toBeUndefined()
+    expect(row.accountNumber).toBeUndefined()
+    expect(row.accountHolder).toBeUndefined()
+    expect(row.businessIncomeEarnerStatus).toBeUndefined()
+    expect(row.settlementBusinessIncome).toBeUndefined()
+  })
 })

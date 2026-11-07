@@ -165,22 +165,6 @@
   font-weight: 500;
 }
 
-.directions-card .directions-inline-field--readonly.cms-input .ant-input {
-  font-weight: 600;
-}
-
-.directions-card
-  .directions-inline-field--edit.cms-textarea--fixed-rows
-  .cms-textarea__inner
-  textarea.ant-input,
-.directions-card
-  .directions-inline-field.cms-textarea--fixed-rows
-  .cms-textarea__inner
-  textarea.ant-input {
-  resize: none !important;
-  overflow-y: auto;
-}
-
 .directions-card .directions-inline-field .cms-textarea {
   width: 100%;
   max-width: 100%;
@@ -213,10 +197,7 @@
   align-self: stretch;
 }
 
-.directions-card
-  .directions-inline-field--kakao
-  .cms-textarea__inner
-  textarea.ant-input {
+.directions-card .directions-inline-field--kakao .cms-textarea__inner textarea.ant-input {
   flex: 1 1 auto;
   height: 100% !important;
   max-height: none !important;

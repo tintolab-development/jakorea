@@ -66,6 +66,8 @@ export interface GeneralIndividualApplicantRow {
   educationGrade: string
   homeAddress: string
   approvalStatus: ApplicantApprovalStatusKey
+  /** 서버 원본 신청 상태. 화면용 approvalStatus와 분리한다. */
+  applicationStatus?: string | null
   programId?: string
   /** 신청 희망 일정 원본. 배정 ID는 scheduleId가 있는 항목만 사용한다. */
   preferredEducationSchedules?: PreferredEducationSchedule[]
@@ -95,6 +97,8 @@ export interface GeneralIndividualApplicantRow {
   assignedInterviewDateLabel?: string
   assignedInterviewTime?: string
   secondInterviewScreeningStatus?: GeneralSecondInterviewScreeningStatus
+  /** 면접 평가/합격 원문 상태 (EVALUATED | INTERVIEW_EVALUATED | PASSED | INTERVIEW_PASSED) */
+  interviewResultStatus?: string | null
   totalScore?: number | null
   managerAScore?: number | null
   managerBScore?: number | null
@@ -176,7 +180,18 @@ export function patchGeneralIndividualApplicantForCancelApproval(
   row: GeneralIndividualApplicantRow,
   notifyOptions: ApplicantSchoolApprovalNotifyOptions
 ): GeneralIndividualApplicantRow {
-  return patchGeneralIndividualApplicantForApprovalStatus(row, 'rejected', notifyOptions)
+  const rejected = patchGeneralIndividualApplicantForApprovalStatus(row, 'rejected', notifyOptions)
+  return {
+    ...rejected,
+    applicationStatus: 'APPROVAL_CANCELLED',
+    availableActions: (row.availableActions ?? []).filter(
+      action =>
+        action !== 'APPROVE' &&
+        action !== 'REJECT' &&
+        action !== 'CANCEL_APPROVAL' &&
+        action !== 'CANCEL_REJECTION'
+    ),
+  }
 }
 
 export function patchGeneralIndividualApplicantForCancelRejection(
@@ -184,11 +199,15 @@ export function patchGeneralIndividualApplicantForCancelRejection(
   notifyOptions?: ApplicantSchoolApprovalNotifyOptions
 ): GeneralIndividualApplicantRow {
   const pending = patchGeneralIndividualApplicantForApprovalStatus(row, 'pending')
+  const restored = {
+    ...pending,
+    applicationStatus: 'REJECTION_CANCELLED',
+  }
   if (!notifyOptions) {
-    return pending
+    return restored
   }
   return {
-    ...pending,
+    ...restored,
     approvalNotificationSentAt: resolveApplicantSchoolApprovalNotificationSentAt(notifyOptions),
   }
 }

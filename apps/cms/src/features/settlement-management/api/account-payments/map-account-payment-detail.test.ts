@@ -5,9 +5,15 @@ import {
   mapAccountPaymentDetailFromGetApi,
   resolveAccountPaymentMemberId,
 } from '@/features/settlement-management/api/account-payments/map-account-payment-detail'
-import type { AccountPaymentRow, AccountPaymentStatusDetail } from '@/features/settlement-management/model/account-payments-list'
+import type {
+  AccountPaymentRow,
+  AccountPaymentStatusDetail,
+} from '@/features/settlement-management/model/account-payments-list'
 import type { InstructorMemberDetailResponse } from '@/shared/api/generated/members/schemas'
-import type { AccountPaymentDetailResponse } from '@/shared/api/generated/settlement/schemas'
+import type {
+  AccountPaymentDetailResponse,
+  SettlementFrontendResponse,
+} from '@/shared/api/generated/settlement/schemas'
 
 const baseRow: AccountPaymentRow = {
   id: '185956',
@@ -61,7 +67,7 @@ describe('resolveAccountPaymentMemberId', () => {
   it('payment.memberId를 우선한다', () => {
     const detail: AccountPaymentDetailResponse = {
       payment: { memberId: 190001, instructorName: '이건희' },
-      settlement: { instructorId: '999' },
+      settlement: { instructorId: '999' } as SettlementFrontendResponse,
     }
     expect(resolveAccountPaymentMemberId(detail, baseRow)).toBe(190001)
   })
@@ -69,11 +75,11 @@ describe('resolveAccountPaymentMemberId', () => {
   it('payment.memberId 없으면 settlement.instructorId를 쓴다', () => {
     const detail: AccountPaymentDetailResponse = {
       payment: { instructorName: '이건희' },
-      settlement: { instructorId: '190001' },
+      settlement: { instructorId: '190001' } as SettlementFrontendResponse,
     }
-    expect(resolveAccountPaymentMemberId(detail, { ...baseRow, instructorMemberId: undefined })).toBe(
-      190001
-    )
+    expect(
+      resolveAccountPaymentMemberId(detail, { ...baseRow, instructorMemberId: undefined })
+    ).toBe(190001)
   })
 
   it('둘 다 없으면 row.instructorMemberId를 쓴다', () => {
@@ -175,6 +181,7 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
         accountHolder: '이*희',
       },
       settlement: {
+        id: '190001',
         instructorId: '190001',
         instructorName: '이건희',
         institutionName: '서울 성동고등학교',
@@ -183,7 +190,7 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
         businessPeriodStart: '2026-01-01',
         businessPeriodEnd: '2026-12-31',
         period: '2026-11',
-        items: [{ type: 'instructor_fee', amount: 100_000, description: '강의비' }],
+        items: [{ type: 'instructor_fee', amount: 100_000, description: '강사비' }],
         totalAmount: 100_000,
       },
       sensitiveAccount: {
@@ -221,6 +228,9 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
         paymentStatus: 'WAITING_PAYMENT',
       },
       settlement: {
+        id: '185956',
+        items: [],
+        totalAmount: 0,
         payee: {
           gender: '**',
           birthDate: '1985-**-**',
@@ -249,7 +259,7 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
     expect(mapped.plainAccountForPaymentConfirm?.holder).toBe('[E2E-SETTLE] 김정산')
   })
 
-  it('제미나이 calculationDetail → basisDetail 강의 시간 2차시 (시계열 lectureSessionDisplay 무시)', () => {
+  it('제미나이 일정 칸은 lectureSessionDisplay 시계열을 유지하고 모달 인정 차시는 calculationDetail', () => {
     const detail: AccountPaymentDetailResponse = {
       payment: {
         accountPaymentId: 185986,
@@ -262,6 +272,7 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
         paymentStatus: 'PAID',
       },
       settlement: {
+        id: '185986',
         wageItemType: 'GEMINI',
         lectureFeeStandardTitle: '제미나이 강사비',
         lectureFeeStandardAmount: 170_000,

@@ -5,7 +5,7 @@
  * Filtered for CMS posts management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { NoticeAttachment } from './noticeAttachment';
+import type { MemberPortalNoticeAttachment } from './memberPortalNoticeAttachment';
 import type { NoticeComment } from './noticeComment';
 import type { NoticeInlineImage } from './noticeInlineImage';
 
@@ -19,7 +19,7 @@ export interface NoticeDetailResponse {
   unread?: boolean;
   createdAt?: string;
   updatedAt?: string;
-  attachments?: NoticeAttachment[];
+  attachments?: MemberPortalNoticeAttachment[];
   inlineImages?: NoticeInlineImage[];
   comments?: NoticeComment[];
   /** 조회 수. 이번 상세 조회의 읽음 처리를 반영한 값입니다. */

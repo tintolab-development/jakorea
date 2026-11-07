@@ -12,6 +12,8 @@ import {
 describe('TT 공통 정보 조회 표시', () => {
   it('type=offline 을 오프라인으로 표시하고 nested 라벨 부재를 - 로 만들지 않는다', () => {
     expect(educationFormLabelFromProgramType('offline')).toBe('오프라인')
+    expect(educationFormLabelFromProgramType('OFFLINE')).toBe('오프라인')
+    expect(educationFormLabelFromProgramType('HYBRID')).toBe('온/오프라인')
     expect(
       resolveTrainedTeachersEducationFormView({
         programType: 'offline',

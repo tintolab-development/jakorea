@@ -653,6 +653,8 @@ export function UjatEducationProgressInstitutionDetailView({
         ) : null}
       </div>
 
+      <div className="ujat-education-progress-institution-detail__page-bottom-spacer" aria-hidden />
+
       {personalInfoRevealModal}
 
       <UjatEducationProgressActivityWithdrawModal

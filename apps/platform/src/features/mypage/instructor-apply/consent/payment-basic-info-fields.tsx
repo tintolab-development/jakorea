@@ -12,14 +12,19 @@ import formStyles from '@/shared/ui/pf-form/pf-form.module.css'
 import styles from './consent-form.module.css'
 import {
   mergePaymentStatementBasicInfo,
-  mergeReceiptPreConsentBasicInfo,
   overlayPaymentStatementProfileLinkedValues,
   PAYMENT_STATEMENT_DEFAULT_PURPOSE,
   RECEIPT_PRE_CONSENT_DEFAULT_PURPOSE,
-  toReceiptPreConsentFilledBasicInfo,
   type PaymentStatementBasicInfoValues,
   type PaymentStatementProfileLinkedValues,
 } from '@jakorea/form-schema/consent'
+import {
+  overlayReceiptLockedMemberValues,
+  type ReceiptLockedMemberFields,
+} from './overlay-receipt-locked-member'
+
+export type { ReceiptLockedMemberFields }
+export { overlayReceiptLockedMemberValues }
 
 export type PaymentBasicInfoFieldsProps = {
   values: Partial<PaymentStatementBasicInfoValues>
@@ -28,6 +33,10 @@ export type PaymentBasicInfoFieldsProps = {
   /** 강사 신청 기본정보 연동 — 성명·소속·자택 주소 비활성 */
   lockProfileFields?: boolean
   profileValues?: PaymentStatementProfileLinkedValues | null
+  /** 영수증 — 회원정보 성명(항상) · 개인 회원 자택 주소 비활성 */
+  receiptLockedMember?: ReceiptLockedMemberFields | null
+  /** 영수증 — 회원정보 소속(표시 전용, 제출 payload 미포함) */
+  receiptAffiliationDisplay?: string
 }
 
 export function PaymentBasicInfoFields({
@@ -36,37 +45,36 @@ export function PaymentBasicInfoFields({
   variant = 'payment',
   lockProfileFields = false,
   profileValues,
+  receiptLockedMember,
+  receiptAffiliationDisplay,
 }: PaymentBasicInfoFieldsProps) {
   const isReceipt = variant === 'receipt'
-  const merged = isReceipt
-    ? {
-        ...mergePaymentStatementBasicInfo({
-          ...values,
-          paymentPurpose: RECEIPT_PRE_CONSENT_DEFAULT_PURPOSE,
-          residentFront: '',
-          residentBack: '',
-          affiliation: '',
-          noAffiliation: true,
-        }),
-        ...mergeReceiptPreConsentBasicInfo(values),
-        paymentPurpose: RECEIPT_PRE_CONSENT_DEFAULT_PURPOSE,
-      }
-    : mergePaymentStatementBasicInfo(values)
-  const linked = overlayPaymentStatementProfileLinkedValues(merged, profileValues)
+  const linked = isReceipt
+    ? mergePaymentStatementBasicInfo(
+        overlayReceiptLockedMemberValues(values, receiptLockedMember)
+      )
+    : overlayPaymentStatementProfileLinkedValues(
+        mergePaymentStatementBasicInfo(values),
+        profileValues
+      )
   const paymentPurpose = linked.paymentPurpose
   const profileLocked = lockProfileFields && !isReceipt
+  const receiptNameLocked = isReceipt && receiptLockedMember != null
+  const receiptAddressLocked = isReceipt && receiptLockedMember?.lockAddress === true
 
   const patch = <K extends keyof PaymentStatementBasicInfoValues>(
     key: K,
     value: PaymentStatementBasicInfoValues[K]
   ) => {
     if (
-      profileLocked &&
-      (key === 'nameKo' ||
-        key === 'affiliation' ||
-        key === 'noAffiliation' ||
-        key === 'addressRoad' ||
-        key === 'addressDetail')
+      (profileLocked &&
+        (key === 'nameKo' ||
+          key === 'affiliation' ||
+          key === 'noAffiliation' ||
+          key === 'addressRoad' ||
+          key === 'addressDetail')) ||
+      (receiptNameLocked && key === 'nameKo') ||
+      (receiptAddressLocked && (key === 'addressRoad' || key === 'addressDetail'))
     ) {
       return
     }
@@ -74,7 +82,11 @@ export function PaymentBasicInfoFields({
       { ...linked, [key]: value },
       profileLocked ? profileValues : null
     )
-    onChange(isReceipt ? toReceiptPreConsentFilledBasicInfo(next) : next)
+    onChange(
+      isReceipt
+        ? overlayReceiptLockedMemberValues(next, receiptLockedMember)
+        : next
+    )
   }
 
   return (
@@ -86,7 +98,7 @@ export function PaymentBasicInfoFields({
             size="large"
             className={styles.paymentInputW200}
             placeholder="한글 성명"
-            disabled={profileLocked}
+            disabled={profileLocked || receiptNameLocked}
             value={linked.nameKo}
             onValueChange={value => patch('nameKo', value)}
           />
@@ -102,7 +114,20 @@ export function PaymentBasicInfoFields({
           />
         </PFFormField>
       </PFFormFieldRow>
-      {isReceipt ? null : (
+      {isReceipt ? (
+        <PFFormFieldRow type="single">
+          {/* 시안: 영수증 지급조서 2행 `소속`(전체 폭, 읽기전용·회원정보). 영수증은 소속을 수집하지 않으므로 값은 저장하지 않음 */}
+          <PFFormField label="소속" className={styles.paymentFixedField}>
+            <PFTextInput
+              variant="formPage"
+              size="large"
+              disabled
+              placeholder="소속"
+              value={receiptAffiliationDisplay ?? ''}
+            />
+          </PFFormField>
+        </PFFormFieldRow>
+      ) : (
       <PFFormFieldRow type="double">
         <PFFormField
           label="주민등록번호"
@@ -122,7 +147,7 @@ export function PaymentBasicInfoFields({
               variant="formPage"
               size="large"
               className={styles.paymentInputW240}
-              placeholder="소속 기관명"
+              placeholder="소속"
               disabled={profileLocked || linked.noAffiliation}
               value={linked.noAffiliation ? '' : linked.affiliation}
               onValueChange={value => patch('affiliation', value)}
@@ -147,12 +172,12 @@ export function PaymentBasicInfoFields({
       )}
       <PFFormFieldRow type="single">
         <PFFormField
-          label={isReceipt ? '지역/주소' : '자택 주소'}
+          label="자택 주소"
           className={`${styles.paymentFixedField} ${styles.paymentInputW240}`}
         >
           <PFFormHomeAddressFields
             fillRow
-            disabled={profileLocked}
+            disabled={profileLocked || receiptAddressLocked}
             roadValue={linked.addressRoad}
             detailValue={linked.addressDetail}
             onRoadChange={value => patch('addressRoad', value)}

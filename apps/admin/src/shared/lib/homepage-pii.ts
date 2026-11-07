@@ -6,7 +6,7 @@ export const HOMEPAGE_PII_REVEAL_COPY = {
   revealed: '원문 표시 중',
   confirmTitle: '개인정보 원문 보기',
   confirmContent:
-    '연락처·이메일 등 개인정보 원문을 조회합니다. 조회 기록은 감사 로그에 남습니다.',
+    '연락처·이메일·주소·학력·경력·첨부 등 개인정보 원문을 조회합니다. 조회 기록은 감사 로그에 남습니다.',
   confirmText: '조회',
   cancelText: '취소',
   forbiddenTitle: '권한 없음',

@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildApplicantNotificationResendMessage,
+  canResendApplicationResultNotification,
+  canResendVolunteerDocumentResultNotification,
+  resolveOptionalNotificationResendReason,
   shouldShowApplicantNotificationResendReason,
 } from '@/features/program/general/lib/applicant-notification-resend'
 
@@ -32,6 +35,82 @@ describe('applicant-notification-resend', () => {
       '프로그램 승인 알림을 재발송하시겠습니까?\n확인 시 신청자에게 승인 알림이 재발송됩니다.'
     )
     expect(shouldShowApplicantNotificationResendReason('individual', 'approved')).toBe(false)
+  })
+
+  it('availableActions에 RESEND_NOTIFICATION이 있으면 승인·반려만 재발송한다', () => {
+    expect(
+      canResendApplicationResultNotification({
+        approvalStatus: 'approved',
+        availableActions: ['RESEND_NOTIFICATION'],
+      })
+    ).toBe(true)
+    expect(
+      canResendApplicationResultNotification({
+        approvalStatus: 'pending',
+        availableActions: ['RESEND_NOTIFICATION'],
+      })
+    ).toBe(false)
+    expect(
+      canResendApplicationResultNotification({
+        approvalStatus: 'rejected',
+        availableActions: ['GIVE_UP'],
+      })
+    ).toBe(false)
+    expect(
+      canResendApplicationResultNotification({
+        approvalStatus: 'approved',
+        availableActions: [],
+      })
+    ).toBe(true)
+  })
+
+  it('봉사자 서류는 GET RESEND_NOTIFICATION이 있고 면접 최종이 아닐 때만 재발송한다', () => {
+    expect(
+      canResendVolunteerDocumentResultNotification({
+        documentScreeningStatus: 'pass',
+        availableActions: ['RESEND_NOTIFICATION'],
+      })
+    ).toBe(true)
+    expect(
+      canResendVolunteerDocumentResultNotification({
+        documentScreeningStatus: 'fail',
+        availableActions: ['RESEND_NOTIFICATION'],
+      })
+    ).toBe(true)
+    expect(
+      canResendVolunteerDocumentResultNotification({ documentScreeningStatus: 'pass' })
+    ).toBe(false)
+    expect(
+      canResendVolunteerDocumentResultNotification({
+        documentScreeningStatus: 'pending',
+        availableActions: ['RESEND_NOTIFICATION'],
+      })
+    ).toBe(false)
+    expect(
+      canResendVolunteerDocumentResultNotification({
+        documentScreeningStatus: 'pass',
+        availableActions: ['RESEND_NOTIFICATION'],
+        secondInterviewScreeningStatus: 'pass',
+      })
+    ).toBe(false)
+    expect(
+      canResendVolunteerDocumentResultNotification({
+        documentScreeningStatus: 'fail',
+        availableActions: ['RESEND_NOTIFICATION'],
+        applicationStatus: 'APPROVED',
+      })
+    ).toBe(false)
+    expect(
+      buildApplicantNotificationResendMessage('volunteer_document', '박봉사', 'approved')
+    ).toContain('서류 심사 합격 알림을 재발송하시겠습니까?')
+    expect(shouldShowApplicantNotificationResendReason('volunteer_document', 'rejected')).toBe(true)
+    expect(
+      shouldShowApplicantNotificationResendReason('volunteer_document', 'rejected', '서류 미비')
+    ).toBe(false)
+    expect(resolveOptionalNotificationResendReason(true, '', '서류 미비')).toBeNull()
+    expect(resolveOptionalNotificationResendReason(true, '직접 입력', '서류 미비')).toBe(
+      '직접 입력'
+    )
   })
 
   it('기관 반려는 사유 입력을 노출한다', () => {

@@ -15,16 +15,14 @@ vi.mock('./settlement-item-setting-detail-source', () => {
     maxLimitWon: null,
     basicFeeWon: null,
     longDistanceFeeWon: null,
-    qualificationLines: ['1일 급여액에서 근로소득공제 150,000원을 차감하여 산정'],
+    qualificationLines: ['강사비 등 임금 항목에 소득 유형별 원천징수율 적용 (지급 항목은 실비로 제외)'],
     remarkLines: [],
     withholdingExclusionMaxWon: 1000,
     withholdingEarnedIncomeDeductionWon: 150000,
-    withholdingTaxRateDailyWorker: 6,
     withholdingTaxRateBusiness: 3.3,
     withholdingTaxRateOther: 8.8,
     withholdingTaxRatePrize: 4.4,
     withholdingTaxRateInterview: 22,
-    withholdingEarnedIncomeTaxCreditRate: 55,
   } as const
   const mealDetail = {
     layout: 'meal',
@@ -108,8 +106,8 @@ describe('SettlementItemSettingDetailModal 원천징수 금액 입력', () => {
         open
         item={{
           id: 'deduction-1',
-          title: '원천징수',
-          description: '',
+          title: '원천징수세액',
+          description: '소득 유형별 원천징수 기준과 세율을 설정합니다.',
           iconKey: 'deduct_business_33',
         }}
         onCancel={vi.fn()}
@@ -117,25 +115,34 @@ describe('SettlementItemSettingDetailModal 원천징수 금액 입력', () => {
       />
     )
 
-    expect(screen.getByRole('textbox', { name: '일용근로소득 세율' })).toHaveValue('6')
-    expect(screen.getByRole('textbox', { name: '근로소득세액공제율' })).toHaveValue('55')
+    expect(screen.getByRole('textbox', { name: '공제 요건' })).toHaveValue(
+      '• 강사비 등 임금 항목에 소득 유형별 원천징수율 적용 (지급 항목은 실비로 제외)'
+    )
+    expect(screen.getByRole('textbox', { name: '사업소득 세율' })).toHaveValue('3.3')
+    expect(screen.getByRole('textbox', { name: '기타소득 세율' })).toHaveValue('8.8')
+    expect(screen.getByRole('textbox', { name: '상금 기타소득 세율' })).toHaveValue('4.4')
+    expect(screen.getByRole('textbox', { name: '면접비·지원금·경품 기타소득 세율' })).toHaveValue(
+      '22'
+    )
     expect(screen.getByRole('columnheader', { name: '소액부징수 기준' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: '근로소득공제' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: '근로소득공제' })).not.toBeInTheDocument()
     expect(screen.getByRole('heading', { name: '소득 유형별 원천징수율' })).toBeInTheDocument()
+    expect(screen.getByText('원천징수세액(소득세)이')).toBeInTheDocument()
     expect(screen.getByText('원 미만인 경우, 미징수')).toBeInTheDocument()
 
-    fireEvent.change(screen.getByRole('textbox', { name: '일용근로소득 세율' }), {
-      target: { value: '7.5' },
+    fireEvent.change(screen.getByRole('textbox', { name: '사업소득 세율' }), {
+      target: { value: '4.1' },
     })
-    fireEvent.change(screen.getByRole('textbox', { name: '근로소득세액공제율' }), {
-      target: { value: '50' },
+    fireEvent.change(screen.getByRole('textbox', { name: '기타소득 세율' }), {
+      target: { value: '9.9' },
     })
     fireEvent.click(screen.getByRole('button', { name: '저장' }))
 
     await waitFor(() => expect(onSaveRemote).toHaveBeenCalled())
     const savedDetail = onSaveRemote.mock.calls[0]?.[1]
-    expect(savedDetail.withholdingTaxRateDailyWorker).toBe(7.5)
-    expect(savedDetail.withholdingEarnedIncomeTaxCreditRate).toBe(50)
+    expect(savedDetail.withholdingTaxRateBusiness).toBe(4.1)
+    expect(savedDetail.withholdingTaxRateOther).toBe(9.9)
+    // Figma 미표시 필드는 detail 값 그대로 보존
   })
 
   it('원격 저장 실패 시 성공 처리하지 않고 모달을 닫지 않는다', async () => {

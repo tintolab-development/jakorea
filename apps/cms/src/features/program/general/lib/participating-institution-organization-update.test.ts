@@ -59,11 +59,12 @@ describe('buildParticipatingInstitutionOrganizationUpdateRequest', () => {
       requestedStudentCount: 40,
       requestedEducationFormat: 'OFFLINE',
       teacherMemberId: 1001,
-      teacherPhone: '010-0000-0000',
-      teacherEmail: 't@school.kr',
       textbookId: 55,
       textbookGrade: '3학년',
     })
+    expect(body).not.toHaveProperty('teacherTel')
+    expect(body).not.toHaveProperty('teacherPhone')
+    expect(body).not.toHaveProperty('teacherEmail')
     expect(body).not.toHaveProperty('textbookKits')
     expect(body).not.toHaveProperty('textbookQuantity')
   })
@@ -133,6 +134,35 @@ describe('buildParticipatingInstitutionOrganizationUpdateRequest', () => {
       requestedGrade: '2학년',
       requestedEducationFormat: 'ONLINE',
     })
+  })
+
+  it('Tel과 M을 teacherTel/teacherPhone에 따로 넣고 한쪽이 비어도 다른 쪽으로 채우지 않는다', () => {
+    const body = buildParticipatingInstitutionOrganizationUpdateRequest({
+      draft: { ...baseDraft, teacherPhone: '02-9999-0000', teacherMobile: '010-0000-1111' },
+      teacherOptions: [],
+      baselineTeacherContact: {
+        teacherPhone: '02-000-0000',
+        teacherMobile: '010-0000-0000',
+        teacherEmail: 't@school.kr',
+      },
+    })
+    expect(body.teacherTel).toBe('02-9999-0000')
+    expect(body.teacherPhone).toBe('010-0000-1111')
+    expect(body).not.toHaveProperty('teacherEmail')
+  })
+
+  it('Tel만 비우면 teacherTel null이고 teacherPhone은 omit한다', () => {
+    const body = buildParticipatingInstitutionOrganizationUpdateRequest({
+      draft: { ...baseDraft, teacherPhone: '' },
+      teacherOptions: [],
+      baselineTeacherContact: {
+        teacherPhone: '02-000-0000',
+        teacherMobile: '010-0000-0000',
+        teacherEmail: 't@school.kr',
+      },
+    })
+    expect(body.teacherTel).toBeNull()
+    expect(body).not.toHaveProperty('teacherPhone')
   })
 
   it('해당 없음이면 textbookId null을 보낸다', () => {

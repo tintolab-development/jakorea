@@ -40,7 +40,7 @@ describe('recordFileDownload', () => {
 
   it('실세션이면 POST /api/admin/logs/file-access/client를 호출한다', async () => {
     vi.mocked(shouldRecordFileAccessRemotely).mockReturnValue(true)
-    vi.mocked(postFileAccessLog).mockResolvedValueOnce({ id: 'log-12' })
+    vi.mocked(postFileAccessLog).mockResolvedValueOnce({})
 
     const created = await recordFileDownload({
       fileName: '회원_목록.xlsx',
@@ -51,7 +51,10 @@ describe('recordFileDownload', () => {
     expect(postFileAccessLog).toHaveBeenCalledWith(
       expect.objectContaining({ fileName: '회원_목록.xlsx' })
     )
-    expect(created.id).toBe('log-12')
+    expect(postFileAccessLog).toHaveBeenCalledWith(
+      expect.not.objectContaining({ ipAddress: expect.anything() })
+    )
+    expect(created.id).toMatch(/^remote-/)
     expect(listDownloadLogMemory()).toHaveLength(0)
   })
 

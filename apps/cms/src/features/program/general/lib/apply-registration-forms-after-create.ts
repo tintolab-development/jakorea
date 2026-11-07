@@ -9,6 +9,7 @@ import {
   getOperationalFormSpec,
   getRegistrationFormSpec,
   isSystemCatalogOnlyFormType,
+  isSystemCatalogOnlyTemplateCode,
   listRecruitmentRowApplicationBindings,
   pickOperationalFormBinding,
 } from '@/features/program/general/lib/operational-form-bindings'
@@ -226,7 +227,7 @@ export async function applyRegistrationFormsAfterCreate(args: {
   // UJAT 봉사자 상·하반기처럼 같은 templateCode를 행마다 적용할 때 COPY는 한 번만.
   const publishedByTemplateCode = new Map<string, { templateId: number; templateVersionId: number }>()
   for (const item of args.forms) {
-    if (isSystemCatalogOnlyFormType(item.formType)) {
+    if (isSystemCatalogOnlyFormType(item.formType) || isSystemCatalogOnlyTemplateCode(item.templateCode)) {
       continue
     }
     let targets: ApplyTarget[]
@@ -254,6 +255,12 @@ export async function applyRegistrationFormsAfterCreate(args: {
         })
       } catch (error) {
         const parsed = parseFormApplyError(error)
+        if (
+          isSystemCatalogOnlyTemplateCode(item.templateCode) ||
+          isSystemCatalogOnlyFormType(item.formType)
+        ) {
+          continue
+        }
         result.failed.push({
           templateCode: item.templateCode,
           recruitmentId: target.recruitmentId,

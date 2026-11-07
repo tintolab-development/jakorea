@@ -103,7 +103,7 @@ export const PROGRAM_MANAGER_PERMISSION_CATEGORIES: ProgramManagerPermissionCate
       { id: 'fd_payment_bulk', label: '지급조서 일괄 다운로드' },
       { id: 'fd_ujat_assignment', label: 'UJAT 배정표' },
       { id: 'fd_1365_volunteer_form', label: '1365 봉사자실적 등록 양식' },
-      { id: 'fd_certificate_issue', label: '수료증·참여인증서 발급' },
+      { id: 'fd_certificate_issue', label: '수료증·참가인증서 발급' },
       { id: 'fd_activity_certificate', label: '봉사·강사 활동인증서 발급' },
       { id: 'fd_manager_list', label: '담당자 목록 다운로드' },
     ],

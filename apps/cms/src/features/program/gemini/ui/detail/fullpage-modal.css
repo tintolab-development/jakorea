@@ -5,6 +5,10 @@
   padding: 0 var(--detail-fullpage-padding-x, 52px) var(--detail-fullpage-padding-bottom, 52px);
 }
 
+.gemini-recruitment-detail-fullpage-modal.ant-modal {
+  --detail-fullpage-lnb-width: 270px;
+}
+
 .gemini-recruitment-detail-fullpage-modal .program-detail-fullpage-modal__info-tab {
   padding-bottom: 0;
 }

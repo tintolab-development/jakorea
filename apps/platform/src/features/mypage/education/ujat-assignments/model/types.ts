@@ -14,6 +14,6 @@ export type UjatClassAssignmentScheduleSection = {
   dateLabel: string
   attendanceManagerName: string
   totalClassCount: number
-  consentDocumentsDownloadPath: string
+  consentDocumentsDownloadPath: string | null
   rows: UjatClassAssignmentRow[]
 }

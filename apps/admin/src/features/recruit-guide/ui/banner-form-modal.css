@@ -72,10 +72,6 @@
   gap: 16px;
 }
 
-.recruit-guide-banner-modal .cms-textarea--fixed-rows .cms-textarea__inner textarea.ant-input {
-  resize: none;
-}
-
 .recruit-guide-banner-modal__field-error {
   margin-top: 6px;
   color: var(--color-error, #e53935);

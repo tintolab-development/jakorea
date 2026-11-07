@@ -11,9 +11,10 @@ import { countGeneralProgramOverviewStages } from '@/features/program/general/li
 import { countCompanySchoolOverviewStages } from '@/features/program/1c-1s/lib/overview-stage-counts'
 import { SHORTCUT_ITEMS, DASHBOARD_HOME_PATH } from '@/features/dashboard/model/dashboard-settings-store'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
-import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
+import { hasRemoteAdminSession } from '@/entities/user/api/auth-service'
 import {
   fetchDashboardHomeRemote,
+  fetchDashboardWidgetsRemote,
   fetchDashboardKpiProgressRemote,
   fetchDashboardNotificationCountRemote,
   fetchDashboardProgramInquiriesRemote,
@@ -27,6 +28,7 @@ import {
   markAllAdminNotificationsReadRemote,
   hideAdminNotificationRemote,
   toDashboardQueryParams,
+  normalizeDashboardProgramIds,
 } from '@/features/dashboard/api/dashboard-api-client'
 import {
   mapDashboardHomeResponse,
@@ -50,9 +52,9 @@ import {
 } from '@/features/dashboard/lib/admin-notification-inbox-page'
 export type { DashboardHomeSummary, ProgramInquiryRow, DashboardScheduleEventDto, DashboardProgramOption }
 
-/** dashboard 실 API — 유효 JWT 없으면 mock fallback (403 방지) */
+/** dashboard 실 API — 로그인 세션이면 GET을 보낸다. JWT 3-part·권한 키를 기다리지 않는다. */
 export function shouldUseDashboardRemoteApi(): boolean {
-  return isRealApiModuleEnabled('dashboard') && hasRemoteAdminJwt()
+  return isRealApiModuleEnabled('dashboard') && hasRemoteAdminSession()
 }
 
 export interface ProgramProgressSummary {
@@ -258,7 +260,9 @@ export async function getRecruitmentStatusList(options?: {
   programIds?: string[]
 }): Promise<DashboardRecruitmentListView> {
   if (shouldUseDashboardRemoteApi()) {
-    const queryParams = toDashboardQueryParams({ programIds: options?.programIds })
+    const queryParams = toDashboardQueryParams({
+      programIds: normalizeDashboardProgramIds(options?.programIds),
+    })
     const dto = await fetchDashboardRecruitmentsRemote(queryParams)
     return mapRecruitmentListResponse(dto)
   }
@@ -279,7 +283,9 @@ export async function getKpiAchievementList(options?: {
   programIds?: string[]
 }): Promise<ProgramKpiItem[]> {
   if (shouldUseDashboardRemoteApi()) {
-    const queryParams = toDashboardQueryParams({ programIds: options?.programIds })
+    const queryParams = toDashboardQueryParams({
+      programIds: normalizeDashboardProgramIds(options?.programIds),
+    })
     const dto = await fetchDashboardKpiProgressRemote(queryParams)
     return mapKpiProgressListResponse(dto)
   }
@@ -313,6 +319,15 @@ export async function getDashboardHomeSummary(): Promise<DashboardHomeSummary> {
   }
 }
 
+/** Swagger: GET /api/admin/dashboard/widgets */
+export async function getDashboardWidgetCatalog() {
+  if (shouldUseDashboardRemoteApi()) {
+    const dto = await fetchDashboardWidgetsRemote()
+    return { items: dto.items ?? [] }
+  }
+  return { items: [] }
+}
+
 /** Swagger: GET /api/admin/notifications/unread-count */
 export async function getDashboardNotificationCount(): Promise<number | null> {
   if (shouldUseDashboardRemoteApi()) {
@@ -327,7 +342,9 @@ export async function getProgramInquiryStatusList(options?: {
   programIds?: string[]
 }): Promise<ProgramInquiryRow[]> {
   if (shouldUseDashboardRemoteApi()) {
-    const queryParams = toDashboardQueryParams({ programIds: options?.programIds })
+    const queryParams = toDashboardQueryParams({
+      programIds: normalizeDashboardProgramIds(options?.programIds),
+    })
     const dto = await fetchDashboardProgramInquiriesRemote(queryParams)
     return mapProgramInquiryListResponse(dto)
   }
@@ -351,7 +368,7 @@ export async function getDashboardScheduleEvents(options?: {
     if (options?.dateTo) extra.dateTo = options.dateTo
     if (options?.programType) extra.programType = options.programType
     const queryParams = toDashboardQueryParams({
-      programIds: options?.programIds,
+      programIds: normalizeDashboardProgramIds(options?.programIds),
       extra,
     })
     const dto = await fetchDashboardProgramSchedulesRemote(queryParams)

@@ -14,6 +14,7 @@ import { resolveUjatRegistrationBasicInfoOverlay } from '@/features/program/ujat
 import { buildRecurringUnavailableLabel } from '@/features/template/ui/form-set/shared/unavailable-dates-exclusion'
 import { createDefaultUnavailableDatesExclusionState } from '@/features/template/ui/form-set/shared/unavailable-dates-exclusion'
 import type { UjatTypedDetail } from '@/features/program/ujat/api/typed-detail-client'
+import { holidayExcludedFromTyped } from '@/features/program/ujat/lib/ujat-typed-detail'
 
 export type UjatEducationScheduleSettingsSemesterDisplay = {
   semesterLabel: string
@@ -149,7 +150,7 @@ export function resolveUjatEducationScheduleSettingsSemesterDisplayFromTypedDeta
     excludeNone: row?.exclusion?.excludeNone === true,
     excludeSaturday: row?.exclusion?.excludeSaturday === true,
     excludeSunday: row?.exclusion?.excludeSunday === true,
-    excludeHoliday: row?.exclusion?.excludePublicHoliday === true,
+    excludeHoliday: holidayExcludedFromTyped(row?.exclusion),
   }
   const unavailableDatesText = exclusion.excludeNone
     ? '진행 불가일 없음'

@@ -7,7 +7,6 @@ import type {
   AwardCreateInput,
   AwardItem,
   AwardListFilter,
-  AwardSortKey,
   PublicFilterValue,
 } from '@/entities/history-awards-certs/model/types'
 import {
@@ -24,6 +23,7 @@ import {
   deleteConfirmContent,
   deleteFailureAlert,
 } from '@/features/history-awards-certs/lib/delete-guards'
+import { historyAwardsCertsListRowNo } from '@/features/history-awards-certs/lib/list-row-no'
 import { AwardFormModal } from '@/features/history-awards-certs/ui/form-modal'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
@@ -67,7 +67,6 @@ type AwardPendingFilters = {
   organization: string
   awarded: PendingDateRange
   created: PendingDateRange
-  sort: AwardSortKey
 }
 
 const INITIAL_PENDING: AwardPendingFilters = {
@@ -76,7 +75,6 @@ const INITIAL_PENDING: AwardPendingFilters = {
   organization: '',
   awarded: null,
   created: null,
-  sort: 'date',
 }
 
 const awardedSyncRef: UrlDateRangePendingSyncRef = { hadCompleteInUrl: false }
@@ -87,12 +85,8 @@ function parsePublic(raw: string | null): PublicFilterValue {
   return ''
 }
 
-function parseSort(raw: string | null): AwardSortKey {
-  return raw === 'created' ? 'created' : 'date'
-}
-
 function parseApplied(searchParams: URLSearchParams): AwardListFilter {
-  const filter: AwardListFilter = { sort: parseSort(searchParams.get('a_sort')) }
+  const filter: AwardListFilter = {}
   const isPublic = parsePublic(searchParams.get('a_public'))
   if (isPublic === 'true') filter.isPublic = true
   if (isPublic === 'false') filter.isPublic = false
@@ -133,12 +127,6 @@ const searchSyncRules: readonly TableSearchParamRule<AwardPendingFilters>[] = [
     transform: v => String(v).trim(),
   },
   {
-    kind: 'param',
-    filterKey: 'sort',
-    paramKey: 'a_sort',
-    condition: f => f.sort === 'created',
-  },
-  {
     kind: 'apply',
     apply: (nextParams, f) => {
       applyDateRangeToSearchParams(nextParams, f.awarded, 'a_afrom', 'a_ato')
@@ -170,7 +158,6 @@ export function AwardPanel() {
       const isPublic = parsePublic(searchParams.get('a_public'))
       const title = searchParams.get('a_title') ?? ''
       const organization = searchParams.get('a_org') ?? ''
-      const sort = parseSort(searchParams.get('a_sort'))
       const aFrom = searchParams.get('a_afrom')
       const aTo = searchParams.get('a_ato')
       const cFrom = searchParams.get('a_cfrom')
@@ -196,13 +183,11 @@ export function AwardPanel() {
           organization,
           awarded,
           created,
-          sort,
         }
         if (
           prev.isPublic === next.isPublic &&
           prev.title === next.title &&
           prev.organization === next.organization &&
-          prev.sort === next.sort &&
           pendingDateRangeTupleEqual(prev.awarded, next.awarded) &&
           pendingDateRangeTupleEqual(prev.created, next.created)
         ) {
@@ -331,7 +316,7 @@ export function AwardPanel() {
         width: TABLE_COLUMN_WIDTHS.index,
         className: CMS_TABLE_NO_COL_CLASS,
         align: 'center',
-        render: (_v, _r, index) => totalCount - index,
+        render: (_v, _r, index) => historyAwardsCertsListRowNo(totalCount, index),
       },
       {
         title: '공개 여부',

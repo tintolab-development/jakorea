@@ -365,3 +365,8 @@
   color: var(--main-BK, #3d3d3d);
   font-size: 16px;
 }
+
+/* `< 목록으로` (admin-ui post-detail) — 카드와 간격 16 */
+.impact-story-detail-page__inner > .admin-detail-back-link {
+  margin-bottom: -8px;
+}

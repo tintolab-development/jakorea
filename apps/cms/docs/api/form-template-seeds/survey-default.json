@@ -362,7 +362,7 @@
         ],
         "bodyPlaceholder": "답변을 입력해 주세요",
         "bodyText": "",
-        "maxLength": 2000
+        "maxLength": 1000
       },
       {
         "id": "survey-paragraph-subjective-2",
@@ -385,7 +385,7 @@
         ],
         "bodyPlaceholder": "답변을 입력해 주세요",
         "bodyText": "",
-        "maxLength": 2000
+        "maxLength": 1000
       },
       {
         "id": "survey-paragraph-subjective-3",
@@ -408,7 +408,7 @@
         ],
         "bodyPlaceholder": "답변을 입력해 주세요",
         "bodyText": "",
-        "maxLength": 2000
+        "maxLength": 1000
       },
       {
         "id": "survey-paragraph-star",

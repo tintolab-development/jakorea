@@ -19,21 +19,14 @@
   height: 72px;
 }
 
-.thumbnail-upload-field__thumb .ant-image,
 .thumbnail-upload-field__image {
-  width: 72px;
-  height: 72px;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.thumbnail-upload-field__thumb .ant-image-img {
   width: 72px;
   height: 72px;
   object-fit: cover;
   border: 1px solid var(--Border-default, #e0e0e0);
   border-radius: 8px;
   box-sizing: border-box;
+  display: block;
 }
 
 .thumbnail-upload-field__body {

@@ -40,7 +40,10 @@ type TextbookBadgeChrome = { className?: string; style?: CSSProperties }
 export type TextbookStatusBadgeProps =
   | ({ variant?: 'textbook'; status: TextbookStatusKey } & TextbookBadgeChrome)
   | ({ variant: 'approval'; status: ApprovalStatusKey } & TextbookBadgeChrome)
-  | ({ variant: 'payment-order-line'; status: PaymentOrderAdminLineProcessingStatus } & TextbookBadgeChrome)
+  | ({
+      variant: 'payment-order-line'
+      status: PaymentOrderAdminLineProcessingStatus
+    } & TextbookBadgeChrome)
   | ({
       variant: 'payment-order-line-detail'
       status: PaymentOrderAdminLineProcessingStatus
@@ -49,7 +52,9 @@ export type TextbookStatusBadgeProps =
 function getLabel(props: TextbookStatusBadgeProps): string {
   if (props.variant === 'approval') return APPROVAL_STATUS_LABELS[props.status]
   if (props.variant === 'payment-order-line' || props.variant === 'payment-order-line-detail') {
-    return PAYMENT_ORDER_ADMIN_LINE_STATUS_LABELS[props.status as PaymentOrderAdminLineProcessingStatus]
+    return PAYMENT_ORDER_ADMIN_LINE_STATUS_LABELS[
+      props.status as PaymentOrderAdminLineProcessingStatus
+    ]
   }
   return TEXTBOOK_STATUS_LABELS[props.status]
 }

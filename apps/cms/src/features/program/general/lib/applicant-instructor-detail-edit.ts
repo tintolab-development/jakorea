@@ -18,7 +18,7 @@ export interface ApplicantInstructorEditDraft {
   lectureFeeMeasure: string
   lectureFeeAmount: string
   instructorFeeGrade: string
-  businessIncomeEarnerStatus: ApplicantInstructorBusinessIncomeStatus
+  businessIncomeEarnerStatus?: ApplicantInstructorBusinessIncomeStatus
 }
 
 export const applicantInstructorEditSchema = z

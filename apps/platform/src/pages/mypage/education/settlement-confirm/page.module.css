@@ -21,7 +21,7 @@
   margin-inline: auto;
 }
 
-/* 영수증 제출 전 확인 제목 가로 중앙 정렬 (PFFormPage 제목 h1) */
+/* 지급조서·영수증 제출 전 확인 제목 가로 중앙 정렬 (PFFormPage 제목 h1) */
 .titleCentered > header,
 .titleCentered > header h1 {
   width: 100%;

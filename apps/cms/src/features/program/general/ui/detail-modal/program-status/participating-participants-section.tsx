@@ -24,12 +24,16 @@ import { useProgressIndividualParticipantList } from '@/features/program/general
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { normalizeGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 import { useParticipatingIndividualParticipantColumns } from '@/features/program/general/lib/participating-individual-participant-columns'
+import { resolveParticipatingIndividualProgressScheduleSessionsFallback } from '@/features/program/general/lib/participating-individual-progress-schedule-sessions'
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import { resolveInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import {
+  formatParticipatingProgressEducationScheduleLine,
   readCurriculumSessionLabels,
   resolveScheduleDetailTimeSpan,
+  withParticipatingProgressCurriculumShape,
 } from '@/features/program/general/lib/participating-school-session-display'
+import { generalEducationScheduleShapeFromBridge } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-session-format'
 import {
   buildParticipatingParticipantCertificateContext,
   hydrateParticipatingParticipantCertificateProfile,
@@ -126,8 +130,17 @@ export function ParticipatingParticipantsSection({
         program?.generalCommonInfo?.scheduleDetails
       ),
       curriculumSessionLabels: readCurriculumSessionLabels(program),
+      curriculumSessions: program?.generalCommonInfo?.curriculumSessions ?? null,
     }),
     [program]
+  )
+  const progressScheduleShape = useMemo(
+    () =>
+      withParticipatingProgressCurriculumShape(
+        generalEducationScheduleShapeFromBridge(programBridge),
+        program
+      ),
+    [program, programBridge]
   )
   const columns = useParticipatingIndividualParticipantColumns(programBridge, scheduleDisplay)
   const { tableWrapRef, tableScrollX } = useContainerFitTableScrollX(
@@ -370,23 +383,26 @@ export function ParticipatingParticipantsSection({
         return {
           ...column,
           render: (_: unknown, record: ParticipatingIndividualParticipantRow) => {
-            const sessions = record.sessions ?? []
+            const sessions = resolveParticipatingIndividualProgressScheduleSessionsFallback(
+              record.sessions
+            )
             if (sessions.length === 0) return '-'
             return sessions
-              .map(session => {
-                const date = session.date?.trim() ?? ''
-                const time = session.timeRange?.trim() ?? ''
-                const round = session.classNum ?? (session.round ? `${session.round}차시` : '')
-                const line = session.scheduleLabel?.trim() || [date, time].filter(Boolean).join(' ')
-                return formatCmsScheduleDisplayLabel(round ? `${line} | ${round}` : line)
-              })
+              .map(session =>
+                formatCmsScheduleDisplayLabel(
+                  formatParticipatingProgressEducationScheduleLine(
+                    session,
+                    progressScheduleShape
+                  )
+                )
+              )
               .join('\n')
           },
         }
       }
       return column
     })
-  }, [columns])
+  }, [columns, progressScheduleShape])
 
   if (participantsLoading && participantList.length === 0) {
     return (

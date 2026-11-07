@@ -90,6 +90,10 @@ export interface TemplatePreviewModalProps {
     showSubmitButton?: boolean
     showRecipient?: boolean
   }
+  /** false면 A4 「문서 다운로드」를 숨긴다 */
+  showDocumentDownload?: boolean
+  /** 지정 시 클라이언트 html2pdf 대신 이 핸들러만 호출한다 */
+  onDocumentDownloadClick?: () => void
 }
 
 /**
@@ -114,6 +118,8 @@ export function TemplatePreviewModal({
   focusedParagraphId = null,
   onEditForm,
   agreementClosingFooter,
+  showDocumentDownload = true,
+  onDocumentDownloadClick,
 }: TemplatePreviewModalProps) {
   const { showAlert } = useCmsAlert()
   const previewBodyRef = useRef<HTMLDivElement>(null)
@@ -318,7 +324,7 @@ export function TemplatePreviewModal({
                     현재 화면은 미리보기 화면입니다.
                   </span>
                   <div className="template-preview-modal__notice-actions">
-                    {isA4DocumentPreviewLayout ? (
+                    {isA4DocumentPreviewLayout && showDocumentDownload ? (
                       <CmsButton
                         type="button"
                         variant="primary"
@@ -327,7 +333,13 @@ export function TemplatePreviewModal({
                         adminAction="download"
                         loading={pdfLoading}
                         disabled={pdfLoading || pageCount === 0}
-                        onClick={() => void handlePdfDownload()} >
+                        onClick={() => {
+                          if (onDocumentDownloadClick) {
+                            onDocumentDownloadClick()
+                            return
+                          }
+                          void handlePdfDownload()
+                        }} >
                         문서 다운로드
                       </CmsButton>
                     ) : null}

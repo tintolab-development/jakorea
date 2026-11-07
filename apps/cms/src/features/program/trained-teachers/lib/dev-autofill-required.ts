@@ -113,15 +113,34 @@ function ensureIps(
   return true
 }
 
+function parseScheduleLineParts(line: string): {
+  dateLabel: string
+  startTime?: string
+  endTime?: string
+} {
+  const timeMatch = line.match(/(\d{1,2}:\d{2})\s*[~～-]\s*(\d{1,2}:\d{2})/)
+  const dateLabel = line.replace(/\s+\d{1,2}:\d{2}\s*[~～-]\s*\d{1,2}:\d{2}.*$/, '').trim() || line
+  return {
+    dateLabel,
+    startTime: timeMatch?.[1],
+    endTime: timeMatch?.[2],
+  }
+}
+
 function ensureGroupTimes(
   overlay: Record<string, unknown>,
   index: number,
-  groupCount: number
+  groupCount: number,
+  scheduleLine: string
 ): boolean {
   const key = GENERAL_REGISTRATION_OVERLAY_GROUP_TIMES_KEY
   const record = isRecord(overlay[key]) ? { ...overlay[key] } : {}
   const count = Math.max(1, groupCount)
+  const parsed = parseScheduleLineParts(scheduleLine)
   const slots = Array.from({ length: count }, (_, slotIndex) => {
+    if (slotIndex === 0 && parsed.startTime && parsed.endTime) {
+      return { startTime: parsed.startTime, endTime: parsed.endTime }
+    }
     const sample = FALLBACK_GROUP_TIMES[slotIndex % FALLBACK_GROUP_TIMES.length]!
     return { startTime: sample.startTime, endTime: sample.endTime }
   })
@@ -267,7 +286,7 @@ function applyRequiredReason(
         `${TT_CURRICULUM}.progressSessionByRound`,
         `${GEN_CURRICULUM}.progressSessionByRound`,
         index,
-        String(index)
+        ctx.sessionRoundType === 'multi' ? `${index + 1}회차` : `${index + 1}차시`
       )
     case 'curriculum.roundContent':
       return mergeIndexText(
@@ -330,13 +349,14 @@ function applyRequiredReason(
         `${GEN_SCHEDULE_CURRICULUM}.scheduleDateByDetailIso`,
         `${GEN_SCHEDULE_CURRICULUM}.scheduleDateByDetailIso`,
         index,
-        line
+        parseScheduleLineParts(line).dateLabel
       )
     case 'scheduleCurriculum.groupTimes':
       return ensureGroupTimes(
         overlay,
         index,
-        ctx.sessionRoundType === 'multi' ? 1 : ctx.scheduleCurriculumGroupCount
+        ctx.sessionRoundType === 'multi' ? 1 : ctx.scheduleCurriculumGroupCount,
+        line
       )
     case 'scheduleCurriculum.ips':
       return ensureIps(overlay, `${GEN_SCHEDULE_CURRICULUM}.ipsByDetailIndex`, index, ips)
@@ -357,7 +377,7 @@ function applyRequiredReason(
         `${GEN_SCHEDULE_CURRICULUM}.scheduleDateByDetailIso`,
         `${GEN_SCHEDULE_CURRICULUM}.scheduleDateByDetailIso`,
         0,
-        line
+        parseScheduleLineParts(line).dateLabel
       )
     case 'educationScheduleSettings.periodDateIso':
     case 'educationScheduleSettings.singleDateIso':

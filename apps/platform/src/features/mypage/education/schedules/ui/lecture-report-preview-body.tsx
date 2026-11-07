@@ -10,6 +10,7 @@ import {
 } from '@jakorea/form-schema/writing-form'
 import { FillParagraphBody, FormTemplateHost } from '@jakorea/form-template-runtime'
 import { resolveApplicationAnswerKey } from '@/features/program/lib/application-answer-key'
+import { formatDisplayDate, toSeoulDateOnly } from '@/shared/lib/format-display-date'
 import type { LectureReportContent } from '../api/lecture-report-client'
 import { lectureReportFilesForParagraph } from '../lib/lecture-report-preview-files'
 import { LectureReportEducationPhotosPreview } from './lecture-report-education-photos-preview'
@@ -18,6 +19,8 @@ import styles from './lecture-report-preview-body.module.css'
 type LectureReportPreviewBodyProps = {
   draft: WritingFormDraft
   content: LectureReportContent | null
+  instructorName?: string
+  hideInstitutionFields?: boolean
 }
 
 function record(value: unknown): Record<string, unknown> {
@@ -28,6 +31,7 @@ function record(value: unknown): Record<string, unknown> {
 
 function text(value: unknown): string {
   if (value == null) return ''
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value)
   if (Array.isArray(value)) return value.map(item => text(item)).filter(Boolean).join(', ')
   return String(value).trim()
 }
@@ -85,20 +89,31 @@ function selectedLabels(
   return paragraph.items.filter(item => selectedIds.includes(item.id)).map(item => item.label)
 }
 
+function formatProgressEducationDate(value: string): string {
+  const trimmed = value.trim()
+  if (!trimmed) return ''
+  const dateOnly = toSeoulDateOnly(trimmed)
+  return formatDisplayDate(dateOnly ?? trimmed) || trimmed
+}
+
 function ProgressTable({
   paragraph,
   content,
+  hideInstitutionFields = false,
 }: {
   paragraph: LectureReportProgramProgressParagraph
   content: LectureReportContent | null
+  hideInstitutionFields?: boolean
 }) {
   const answer = record(answerFor(paragraph, content))
   const value = (field: keyof LectureReportProgramProgressParagraph) =>
     text(answer[field]) || text(paragraph[field])
   const rows: Array<[string, string, string, string]> = [
     ['프로그램명', value('programName'), '사용교재 및 진행단원', [value('textbookName'), value('progressUnit')].filter(Boolean).join(' | ')],
-    ['기관명', value('institutionName'), '기관 소재지', value('institutionLocation')],
-    ['교육 진행일', value('educationDate'), '교육 진행 시간(차시)', [value('sessionTime'), value('sessionIndex')].filter(Boolean).join(' | ')],
+    ...(hideInstitutionFields
+      ? []
+      : [['기관명', value('institutionName'), '기관 소재지', value('institutionLocation')] as [string, string, string, string]]),
+    ['교육 진행일', formatProgressEducationDate(value('educationDate')) || value('educationDate'), '교육 진행 시간(차시)', [value('sessionTime'), value('sessionIndex')].filter(Boolean).join(' | ')],
     ['교육 대상', value('educationTarget'), '학급 및 학생 수', [value('classLabel'), value('studentCount')].filter(Boolean).join(' | ')],
   ]
 
@@ -163,9 +178,23 @@ function UserInfoAnswer({ paragraph, content }: { paragraph: WritingFormParagrap
   )
 }
 
-function ParagraphBody({ paragraph, content }: { paragraph: WritingFormParagraph; content: LectureReportContent | null }) {
+function ParagraphBody({
+  paragraph,
+  content,
+  hideInstitutionFields = false,
+}: {
+  paragraph: WritingFormParagraph
+  content: LectureReportContent | null
+  hideInstitutionFields?: boolean
+}) {
   if (paragraph.kind === 'single_item' && paragraph.variant === 'lecture_report_program_progress') {
-    return <ProgressTable paragraph={paragraph} content={content} />
+    return (
+      <ProgressTable
+        paragraph={paragraph}
+        content={content}
+        hideInstitutionFields={hideInstitutionFields}
+      />
+    )
   }
   if (paragraph.kind === 'single_item' && (paragraph.variant === 'short_essay' || paragraph.variant === 'session_plan_short_essay')) {
     return <SessionAnswer paragraph={paragraph} content={content} />
@@ -218,17 +247,60 @@ function ParagraphBody({ paragraph, content }: { paragraph: WritingFormParagraph
   return <p className={styles.answerText}>-</p>
 }
 
-export function LectureReportPreviewBody({ draft, content }: LectureReportPreviewBodyProps) {
+function hasInstructorInfoSection(draft: WritingFormDraft): boolean {
+  return draft.paragraphs.some(paragraph => {
+    if (paragraph.kind !== 'single_item' || paragraph.variant !== 'user_info') return false
+    const title = paragraph.paragraphTitle?.trim()
+    if (title === '강사 정보') return true
+    return (paragraph.selectedUserFieldKeys ?? []).includes('name')
+  })
+}
+
+export function LectureReportPreviewBody({
+  draft,
+  content,
+  instructorName,
+  hideInstitutionFields = false,
+}: LectureReportPreviewBodyProps) {
+  const showInjectedInstructor = Boolean(instructorName?.trim()) && !hasInstructorInfoSection(draft)
+
   return (
     <div className={styles.body}>
+      {showInjectedInstructor ? (
+        <section className={styles.section}>
+          <header className={styles.sectionHeader}>
+            <h2>강사 정보</h2>
+          </header>
+          <div className={styles.sectionBody}>
+            <dl className={styles.userInfoList}>
+              <div>
+                <dt>이름</dt>
+                <dd>{displayValue(instructorName)}</dd>
+              </div>
+            </dl>
+          </div>
+        </section>
+      ) : null}
       {draft.paragraphs.map(paragraph => {
         if (paragraph.kind === 'description' && paragraph.variant === 'system') return null
         if (paragraph.kind === 'description' && paragraph.variant === 'closing') {
-          return <ParagraphBody key={paragraph.id} paragraph={paragraph} content={content} />
+          return (
+            <ParagraphBody
+              key={paragraph.id}
+              paragraph={paragraph}
+              content={content}
+              hideInstitutionFields={hideInstitutionFields}
+            />
+          )
         }
         if (paragraph.kind === 'single_item' && paragraph.variant === 'file_attachment') {
           return (
-            <ParagraphBody key={paragraph.id} paragraph={paragraph} content={content} />
+            <ParagraphBody
+              key={paragraph.id}
+              paragraph={paragraph}
+              content={content}
+              hideInstitutionFields={hideInstitutionFields}
+            />
           )
         }
         const description = paragraphDescription(paragraph)
@@ -236,11 +308,14 @@ export function LectureReportPreviewBody({ draft, content }: LectureReportPrevie
           <section className={styles.section} key={paragraph.id}>
             <header className={styles.sectionHeader}>
               <h2>{paragraphTitle(paragraph)}</h2>
-              {paragraph.requiredMark ? <span className={styles.required}>*</span> : null}
               {description ? <p>{description}</p> : null}
             </header>
             <div className={styles.sectionBody}>
-              <ParagraphBody paragraph={paragraph} content={content} />
+              <ParagraphBody
+                paragraph={paragraph}
+                content={content}
+                hideInstitutionFields={hideInstitutionFields}
+              />
             </div>
           </section>
         )

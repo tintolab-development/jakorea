@@ -41,6 +41,7 @@ const DASHBOARD_EXACT_PATHS = new Set([
   '/api/admin/programs/{programId}/trained-teacher/organization-applications',
   '/api/admin/programs/{programId}/trained-teacher/organization-applications/{applicationId}',
   '/api/admin/programs/{programId}/trained-teacher/organization-applications/{applicationId}/give-up',
+  '/api/admin/programs/{programId}/trained-teacher/organization-applications/{applicationId}/cancel-approval',
   '/api/admin/programs/{programId}/trained-teacher/organization-applications/{applicationId}/remove-from-progress',
   '/api/admin/programs/{programId}/trained-teacher/organization-applications/{applicationId}/notifications/resend',
   '/api/admin/gemini/trainings/organization-applications/{applicationId}/notifications/resend',
@@ -54,6 +55,7 @@ const DASHBOARD_EXACT_PATHS = new Set([
   '/api/admin/individual-settlement-applications/{settlementApplicationId}',
   '/api/admin/individual-settlement-applications/{settlementApplicationId}/approve',
   '/api/admin/individual-settlement-applications/{settlementApplicationId}/reject',
+  '/api/admin/programs/{programId}/assignment-submissions',
   // UJAT Typed detail is the canonical replacement for typed registration.overlay writes.
   '/api/admin/programs/{programId}/ujat/typed-detail',
 ])
@@ -76,7 +78,7 @@ const subset = {
   ...spec,
   info: {
     ...spec.info,
-    title: `${spec.info?.title ?? 'API'} — Dashboard subset`,
+    title: 'JA Korea CMS Backend API — Dashboard subset',
     description: 'Filtered for CMS dashboard Orval codegen (1st pilot).',
   },
   paths: filteredPaths,

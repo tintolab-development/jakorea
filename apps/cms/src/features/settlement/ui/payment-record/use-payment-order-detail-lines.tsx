@@ -500,9 +500,25 @@ export function usePaymentOrderDetailLinesController(
     return selectedConfirmableRows.every(row => canConfirmPaymentStatement(row))
   }, [selectedConfirmableRows])
 
-  const isLineCheckboxDisabled = useCallback((row: PaymentOrderDetailLineRow) => {
-    return !canConfirmPaymentStatement(row)
-  }, [])
+  /**
+   * 일괄 확인 — 버튼은 항상 활성. 선택 없음·확인 불가 항목 포함 시 안내 모달.
+   * (체크박스도 전부 선택 가능 — 확인 완료 건은 지급조서 발급 대상)
+   */
+  const handleBatchConfirmClick = useCallback(() => {
+    if (selectedConfirmableRows.length === 0) {
+      showAlert({ title: '안내', content: '일괄 확인할 항목을 선택해 주세요.' })
+      return
+    }
+    if (!canBatchConfirm) {
+      showAlert({
+        title: '일괄 확인 불가 안내',
+        content:
+          '선택한 항목 중 확인 처리할 수 없는 지급조서가 있습니다.\n확인 대기 중인 지급조서만 선택해 주세요.',
+      })
+      return
+    }
+    setBatchConfirmOpen(true)
+  }, [canBatchConfirm, selectedConfirmableRows.length, showAlert])
 
   const filteredRows = useMemo(
     () => filterDetailRows(rowsState, mode, applied, remoteServerFiltered && paymentOrdersRemote),
@@ -549,7 +565,7 @@ export function usePaymentOrderDetailLinesController(
           if (!payload) {
             throw new Error('지급조서 발급 데이터를 만들 수 없습니다.')
           }
-          return payload
+          return { ...payload, settlementId: programLineRow.settlementId }
         }
         return buildMockProgramDetailLinePaymentStatementIssuancePayload(
           args.programRow,
@@ -577,7 +593,7 @@ export function usePaymentOrderDetailLinesController(
         if (!payload) {
           throw new Error('지급조서 발급 데이터를 만들 수 없습니다.')
         }
-        return payload
+        return { ...payload, settlementId: instructorLineRow.settlementId }
       }
       return buildMockInstructorDetailLinePaymentStatementIssuancePayload(
         args.instructorRow,
@@ -599,7 +615,10 @@ export function usePaymentOrderDetailLinesController(
   }, [])
 
   const handlePaymentStatementIssue = useCallback(() => {
-    if (selectedRowKeys.length === 0) return
+    if (selectedRowKeys.length === 0) {
+      showAlert({ title: '안내', content: '지급조서를 발급할 항목을 선택해 주세요.' })
+      return
+    }
     const selected = rowsState.filter(r => selectedRowKeys.includes(r.id))
     if (selected.length === 0) return
 
@@ -874,7 +893,7 @@ export function usePaymentOrderDetailLinesController(
     setPaymentStatementIssueBlocked,
     handleBatchConfirm,
     canBatchConfirm,
-    isLineCheckboxDisabled,
+    handleBatchConfirmClick,
     handlePaymentStatementIssue,
     closeIssuanceView,
     issuanceViewOpen,

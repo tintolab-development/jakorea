@@ -18,7 +18,10 @@ import {
 } from '@/shared/ui'
 import type { SchoolSearchSelection, SchoolSearchSelectMeta } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
-import { REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE } from '@/shared/constants/messages'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+} from '@/shared/constants/messages'
 import { isRequiredAddressIncomplete } from '@jakorea/domain/shared/required-address'
 
 const FORM_ID = 'cms-school-register-modal-form'
@@ -147,7 +150,7 @@ export function SchoolRegisterModal({
   const handleSubmitAttempt = (values: SchoolRegisterModalFormValues) => {
     if (hasSchoolRegisterMissingRequired(values)) {
       showAlert({
-        title: '안내',
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
         content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
       })
       return

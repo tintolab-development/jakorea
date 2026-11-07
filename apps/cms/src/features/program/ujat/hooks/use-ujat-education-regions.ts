@@ -6,6 +6,7 @@ import {
   listUjatEducationRegionsActive,
   type UjatEducationRegionOption,
 } from '@/features/program/ujat/lib/ujat-education-regions'
+import { UJAT_DEFAULT_EDUCATION_REGIONS } from '@/features/program/ujat/lib/ujat-default-education-region-rows'
 
 export function useUjatEducationRegions(): {
   regions: UjatEducationRegionOption[]
@@ -30,7 +31,9 @@ export function useUjatEducationRegions(): {
         .map(row => ({ key: row.regionKey, label: row.name }))
     }
     void version
-    return listUjatEducationRegionsActive()
+    const live = listUjatEducationRegionsActive()
+    if (live.length > 0) return live
+    return UJAT_DEFAULT_EDUCATION_REGIONS.map(row => ({ key: row.key, label: row.label }))
   }, [listQuery.data, remoteEnabled, version])
 
   const labels = useMemo(() => regions.map(row => row.label), [regions])

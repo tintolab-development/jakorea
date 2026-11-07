@@ -202,7 +202,9 @@ export function resolveUjatMonthProgressStatus(
 }
 
 export function ujatMonthProgressLabel(status: EducationScheduleProgressStatus): string {
-  return status === 'scheduled' ? '진행중' : EDUCATION_SCHEDULE_PROGRESS_LABEL.completed
+  if (status === 'scheduled' || status === 'in_progress') return '진행중'
+  if (status === 'unscheduled') return EDUCATION_SCHEDULE_PROGRESS_LABEL.unscheduled
+  return EDUCATION_SCHEDULE_PROGRESS_LABEL.completed
 }
 
 export function groupUjatVolunteerSchedulesByMonth(
@@ -270,7 +272,43 @@ export function resolveScheduleAttendanceQueryErrorMessage(error: unknown): stri
   return '출석현황을 불러오지 못했습니다.'
 }
 
+function readCheckInErrorCode(error: unknown): string | null {
+  if (typeof error !== 'object' || error == null || !('response' in error)) return null
+  const data = (error as { response?: { data?: unknown } }).response?.data
+  if (!data || typeof data !== 'object') return null
+  const record = data as { code?: unknown; error?: { code?: unknown; message?: unknown } }
+  const nested = record.error?.code
+  if (typeof nested === 'string' && nested.trim()) return nested.trim().toUpperCase()
+  if (typeof record.code === 'string' && record.code.trim()) return record.code.trim().toUpperCase()
+  return null
+}
+
+function readCheckInErrorMessage(error: unknown): string | null {
+  if (typeof error !== 'object' || error == null || !('response' in error)) return null
+  const data = (error as { response?: { data?: unknown } }).response?.data
+  if (!data || typeof data !== 'object') return null
+  const record = data as { message?: unknown; error?: { message?: unknown } }
+  if (typeof record.error?.message === 'string' && record.error.message.trim()) {
+    return record.error.message.trim()
+  }
+  if (typeof record.message === 'string' && record.message.trim()) return record.message.trim()
+  return null
+}
+
 export function resolveScheduleCheckInErrorMessage(error: unknown): string {
+  const code = readCheckInErrorCode(error)
+  if (code === 'ORGANIZATION_PORTAL_CHECK_IN_NOT_AVAILABLE') {
+    return (
+      readCheckInErrorMessage(error) ??
+      '일반 기관 프로그램은 포털 출석 체크인을 지원하지 않습니다. 관리자 출결로 처리됩니다.'
+    )
+  }
+  if (code === 'UJAT_VOLUNTEER_ATTENDANCE_REQUIRED') {
+    return readCheckInErrorMessage(error) ?? 'UJAT 봉사 출석은 지정된 출석 절차로 처리해 주세요.'
+  }
+  if (code === 'PORTAL_CHECK_IN_NOT_AVAILABLE') {
+    return readCheckInErrorMessage(error) ?? '포털에서 출석 체크인을 할 수 없습니다.'
+  }
   if (typeof error === 'object' && error != null && 'response' in error) {
     const status = (error as { response?: { status?: unknown } }).response?.status
     if (status === 401) {

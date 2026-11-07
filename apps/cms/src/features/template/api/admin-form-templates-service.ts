@@ -21,6 +21,7 @@ import {
   isCatalogOriginalVersionWriteBlocked,
   isCatalogSurveyOrGeneralAgreementTemplateCode,
   isDocumentOnlyAgreementTemplateCode,
+  isCertificateIssuanceTemplatePublishTarget,
   isSurveyOrGeneralAgreementPublishTarget,
   resolveWritingFormCatalogCategory,
   shouldOmitImmutableFormSchemaJson,
@@ -573,10 +574,11 @@ export async function saveFormTemplateVersionDraft(args: {
   const fingerprint = fingerprintVersionBody(body)
   const cached = getFormTemplateVersionCacheEntry(args.templateCode)
   const wantPublish =
-    args.publishAfterSave === true &&
-    isSurveyOrGeneralAgreementPublishTarget(args.templateCode, {
-      baseTemplateCode: cached?.baseTemplateCode,
-    })
+    isCertificateIssuanceTemplatePublishTarget(args.templateCode) ||
+    (args.publishAfterSave === true &&
+      isSurveyOrGeneralAgreementPublishTarget(args.templateCode, {
+        baseTemplateCode: cached?.baseTemplateCode,
+      }))
 
   const pending = wantPublish ? unpublishedDraftByTemplateCode.get(args.templateCode) : undefined
   let leftoverDraftVersionIds: number[] = []

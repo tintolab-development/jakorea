@@ -8,19 +8,31 @@
 
 export type List12Params = {
 /**
- * 쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.
+ * 지정하면 그 물리 일정만. 생략하면 과제 대상 회차 전부
  */
-enabled?: boolean;
+scheduleId?: number;
 /**
- * 쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.
+ * 참여자명 부분 일치
  */
-category?: string;
+memberName?: string;
 /**
- * 페이지 번호입니다. 목록 화면의 페이지 상태와 함께 유지합니다.
+ * 소속 부분 일치
+ */
+affiliation?: string;
+/**
+ * 학년 부분 일치
+ */
+grade?: string;
+/**
+ * NOT_SUBMITTED 또는 SUBMITTED. SCHEDULED는 필터하지 않습니다.
+ */
+submissionStatus?: string;
+/**
+ * 각 ScheduleGroup.participants의 0-based page(그룹마다 독립 적용). totalElements/totalPages 없음
  */
 page?: number;
 /**
- * 페이지 크기입니다. 화면별 기본 목록 개수와 일치시켜 호출합니다.
+ * 각 ScheduleGroup.participants 크기(기본 20, 최대 200). 그룹마다 독립 적용
  */
 size?: number;
 };

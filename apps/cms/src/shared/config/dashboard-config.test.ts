@@ -42,7 +42,9 @@ describe('getDashboardWidgetsForUser', () => {
 
 describe('assignedProgramTypesForWidgetLayout', () => {
   it('remote이고 아직 GET 전이면 빈 배열로 일정 위젯을 숨긴다', () => {
-    expect(assignedProgramTypesForWidgetLayout(null, true)).toEqual([])
+    const first = assignedProgramTypesForWidgetLayout(null, true)
+    expect(first).toEqual([])
+    expect(first).toBe(assignedProgramTypesForWidgetLayout(null, true))
   })
 
   it('mock이면 null을 유지해 ACL 폴백을 쓴다', () => {

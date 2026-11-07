@@ -7,18 +7,19 @@
  */
 
 import { useId, useRef, type ChangeEvent } from 'react'
-import './file-select-field.css'
-
-/** Figma Table/Common/Cell/File — 모달 td 이미지 추가 영역 */
-export const FILE_SELECT_IMAGE_CELL_CLASS = 'file-select-image-cell'
-export const FILE_SELECT_IMAGE_CELL_PREVIEW_CLASS = 'file-select-image-cell__preview'
-import { CmsButton } from '@/shared/ui/cms-button'
 import { openFilePicker } from '@/shared/lib/open-file-picker'
+import { CmsButton } from '@/shared/ui/cms-button'
 import {
   FILE_SELECT_MAX_TOTAL_BYTES,
   isFileSelectTotalSizeExceeded,
   notifyFileSelectTotalSizeExceeded,
 } from '@/shared/ui/file-select-field-limits'
+import { FileTypeIcon } from '@/shared/ui/icons/FileTypeIcon'
+import './file-select-field.css'
+
+/** Figma Table/Common/Cell/File — 모달 td 이미지 추가 영역 */
+export const FILE_SELECT_IMAGE_CELL_CLASS = 'file-select-image-cell'
+export const FILE_SELECT_IMAGE_CELL_PREVIEW_CLASS = 'file-select-image-cell__preview'
 
 function RemoveIcon() {
   const maskId = `file-select-remove-${useId().replace(/:/g, '')}`
@@ -143,6 +144,7 @@ export function FileSelectField({
         <div className="file-select-field__names">
           {fileNames!.map((name, i) => (
             <span key={`${i}-${name}`} className="file-select-field__name-row">
+              <FileTypeIcon fileName={name} className="file-select-field__type-icon" />
               <span className="file-select-field__name">{name}</span>
               {canRemove ? (
                 <button

@@ -10,13 +10,15 @@ import '@jakorea/form-template-runtime/detail-info-form.css'
 import type { CorporateConsultation } from '@/entities/corporate-consultation/model/types'
 import { shouldUseCorporateConsultationRemoteApi } from '@/features/corporate-consultation/api/capabilities'
 import { downloadCorporateConsultationAttachmentService } from '@/features/corporate-consultation/api/service'
+import { homepageAttachmentDownloadErrorMessage } from '@/shared/lib/protected-attachment-download'
+import { useProtectedFileDownload } from '@/shared/lib/use-protected-file-download'
 import { formatDateTimeDotWithKoreanWeekday } from '@/shared/lib/format-display'
 import {
   CmsButton,
   ConfirmModal,
   CONTENT_MODAL_FOOTER_START_CLASS,
   ContentModal,
-  HomepagePiiRevealAction,
+  PageContentLoading,
   useCmsAlert,
 } from '@/shared/ui'
 
@@ -27,15 +29,12 @@ dayjs.locale('ko')
 type Props = {
   open: boolean
   data: CorporateConsultation | null
+  loading?: boolean
   confirmLoading?: boolean
   deleteLoading?: boolean
-  canRevealPii?: boolean
-  piiRevealed?: boolean
-  revealLoading?: boolean
   onCancel: () => void
   onConfirm: () => void
   onDelete: () => void
-  onRevealPii?: () => void
 }
 
 function statusLabel(status: CorporateConsultation['status']): string {
@@ -67,17 +66,15 @@ function FileIcon({ className }: { className?: string }) {
 export function CorporateConsultationDetailModal({
   open,
   data,
+  loading = false,
   confirmLoading = false,
   deleteLoading = false,
-  canRevealPii = false,
-  piiRevealed = false,
-  revealLoading = false,
   onCancel,
   onConfirm,
   onDelete,
-  onRevealPii,
 }: Props) {
   const { showAlert } = useCmsAlert()
+  const { runProtectedDownload, filePasswordModal } = useProtectedFileDownload()
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
   useEffect(() => {
@@ -85,7 +82,8 @@ export function CorporateConsultationDetailModal({
   }, [open])
 
   const isConfirmed = data?.status === 'confirmed'
-  const busy = confirmLoading || deleteLoading || revealLoading
+  const waiting = loading && !data
+  const busy = confirmLoading || deleteLoading || waiting
 
   const confirmedView = (() => {
     if (!data?.confirmedAt) {
@@ -115,52 +113,44 @@ export function CorporateConsultationDetailModal({
       <span>-</span>
     )
 
-  const attachmentView = data?.attachmentFileName ? (
-    shouldUseCorporateConsultationRemoteApi() ? (
+  const attachmentView =
+    data?.attachmentFileName && shouldUseCorporateConsultationRemoteApi() ? (
       <button
         type="button"
         className="corp-consult-detail-modal__attachment"
         onClick={() => {
           if (!data?.id) return
-          void downloadCorporateConsultationAttachmentService(data.id, data.attachmentAssetId)
-            .then(result => {
-              if (!result?.downloadUrl) {
+          runProtectedDownload({
+            kind: 'HOMEPAGE_PII_ATTACHMENT',
+            zIndex: 1400,
+            download: async password => {
+              try {
+                await downloadCorporateConsultationAttachmentService(
+                  data.id,
+                  data.attachmentAssetId,
+                  password,
+                  data.attachmentFileName ?? 'download'
+                )
+              } catch (error) {
                 showAlert({
                   title: '다운로드 실패',
-                  content: '첨부파일을 불러오지 못했습니다.',
+                  content: homepageAttachmentDownloadErrorMessage(
+                    error,
+                    '첨부파일 다운로드에 실패했습니다.'
+                  ),
                 })
-                return
+                throw error
               }
-              window.open(result.downloadUrl, '_blank', 'noopener,noreferrer')
-            })
-            .catch(() => {
-              showAlert({
-                title: '다운로드 실패',
-                content: '첨부파일 다운로드에 실패했습니다.',
-              })
-            })
+            },
+          })
         }}
       >
         <FileIcon className="corp-consult-detail-modal__file-icon" />
         <span>{data.attachmentFileName}</span>
       </button>
-    ) : data.attachmentUrl ? (
-      <a
-        className="corp-consult-detail-modal__attachment"
-        href={data.attachmentUrl}
-        download={data.attachmentFileName}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <FileIcon className="corp-consult-detail-modal__file-icon" />
-        <span>{data.attachmentFileName}</span>
-      </a>
     ) : (
-      <span>{data.attachmentFileName}</span>
+      <span>{data?.attachmentFileName || '-'}</span>
     )
-  ) : (
-    <span>-</span>
-  )
 
   const footer = (
     <>
@@ -174,13 +164,6 @@ export function CorporateConsultationDetailModal({
         onClick={() => setDeleteConfirmOpen(true)} >
         신청 삭제
       </CmsButton>
-      <HomepagePiiRevealAction
-        canReveal={canRevealPii && Boolean(onRevealPii)}
-        revealed={piiRevealed}
-        loading={revealLoading}
-        disabled={busy && !revealLoading}
-        onReveal={() => onRevealPii?.()}
-      />
       <CmsButton
         variant="secondary"
         size="medium"
@@ -211,7 +194,9 @@ export function CorporateConsultationDetailModal({
         className="corp-consult-detail-modal"
         footer={footer}
       >
-        {data ? (
+        {waiting ? (
+          <PageContentLoading />
+        ) : data ? (
           <div className="corp-consult-detail-modal__scroll">
             <section
               className="corp-consult-detail-modal__section"
@@ -360,6 +345,7 @@ export function CorporateConsultationDetailModal({
         ) : null}
       </ContentModal>
 
+      {filePasswordModal}
       <ConfirmModal
         open={deleteConfirmOpen}
         title="신청 삭제"

@@ -34,7 +34,7 @@ describe('resolveStudentCertificateKind', () => {
     ).toBe('completion')
   })
 
-  it('결석이 있으면 참여인증서를 발급한다', () => {
+  it('결석이 있으면 참가인증서를 발급한다', () => {
     expect(
       resolveStudentCertificateKind({
         sessions: fourSessionProgram(['attended', 'absent', 'attended', 'attended']),
@@ -44,7 +44,7 @@ describe('resolveStudentCertificateKind', () => {
     ).toBe('participation')
   })
 
-  it('만족도 조사가 필요한데 미완료이면 참여인증서를 발급한다', () => {
+  it('만족도 조사가 필요한데 미완료이면 참가인증서를 발급한다', () => {
     expect(
       resolveStudentCertificateKind({
         sessions: fourSessionProgram(['attended', 'attended', 'attended', 'attended']),
@@ -54,7 +54,7 @@ describe('resolveStudentCertificateKind', () => {
     ).toBe('participation')
   })
 
-  it('마지막 교육 일정에 도달하지 못하면 참여인증서를 발급한다', () => {
+  it('마지막 교육 일정에 도달하지 못하면 참가인증서를 발급한다', () => {
     expect(
       resolveStudentCertificateKind({
         sessions: fourSessionProgram(['attended', 'attended', 'not_held', 'not_held']),

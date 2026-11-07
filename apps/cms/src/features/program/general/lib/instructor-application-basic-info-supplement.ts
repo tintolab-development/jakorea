@@ -1,16 +1,10 @@
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import type { InstructorApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationDetailResponse'
 import type { InstructorCmsProfile } from '@/shared/api/generated/dashboard/schemas/instructorCmsProfile'
-import type { InstructorCmsSettlement } from '@/shared/api/generated/members/schemas/instructorCmsSettlement'
-import { normalizeInstructorCmsSettlementFromApi } from '@/features/user/api/map-instructor-cms-profile'
-import type { User } from '@/types/user'
-
-type InstructorApplicationDetailLoose = InstructorApplicationDetailResponse & {
-  settlement?: InstructorCmsSettlement | null
-  bankName?: string | null
-  accountNumber?: string | null
-  accountHolder?: string | null
-}
+import {
+  parseBusinessIncomeStatus,
+  type ApplicantInstructorBusinessIncomeStatus,
+} from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
 
 function pickTrimmed(value: string | null | undefined): string | undefined {
   const trimmed = value?.trim()
@@ -31,38 +25,41 @@ export function affiliationDisplayFromInstructorCmsProfile(
   return orgs || undefined
 }
 
-function businessIncomeLabelFromSettlement(
-  settlement: ReturnType<typeof normalizeInstructorCmsSettlementFromApi>
-): string | undefined {
-  if (!settlement) return undefined
-  return settlement.businessIncome ? '해당' : '해당 없음'
-}
-
-/** OpenAPI에 없는 `settlement`·flat 계좌 필드(런타임)까지 읽는다. */
-export function readInstructorApplicationSettlementFields(
-  dto: InstructorApplicationDetailResponse
-): {
+export type InstructorApplicationSettlementFields = {
   bankName?: string
   accountNumber?: string
   accountHolder?: string
-  businessIncomeEarnerStatus?: string
-} {
-  const loose = dto as InstructorApplicationDetailLoose
-  const settlement = normalizeInstructorCmsSettlementFromApi(loose.settlement ?? undefined)
-  const bankName = pickTrimmed(settlement?.bankName) ?? pickTrimmed(loose.bankName)
-  const accountNumber = pickTrimmed(settlement?.accountNumber) ?? pickTrimmed(loose.accountNumber)
-  const accountHolder = pickTrimmed(settlement?.accountHolder) ?? pickTrimmed(loose.accountHolder)
-  const businessIncomeEarnerStatus =
-    pickTrimmed(dto.businessIncomeEarnerStatus) ?? businessIncomeLabelFromSettlement(settlement)
+  /** `settlement.businessIncome` 원값. 표시용 사업소득자 여부는 `businessIncomeEarnerStatus`만 사용 */
+  settlementBusinessIncome?: boolean
+  businessIncomeEarnerStatus?: ApplicantInstructorBusinessIncomeStatus
+}
+
+/**
+ * 강사 신청 상세 GET 정본에서 정산 정보를 읽는다.
+ * - `settlement` null·생략·내부 필드 null/생략/빈 문자열 → 값 없음(키 미생성)
+ * - 계좌번호·예금주는 서버 마스킹 수준 그대로 (FE 재마스킹·추정 금지)
+ * - 사업소득자 여부는 서버가 결정한 `businessIncomeEarnerStatus`만 사용 (settlement.businessIncome로 계산 금지)
+ */
+export function readInstructorApplicationSettlementFields(
+  dto: InstructorApplicationDetailResponse
+): InstructorApplicationSettlementFields {
+  const settlement = dto.settlement ?? undefined
+  const bankName = pickTrimmed(settlement?.bankName)
+  const accountNumber = pickTrimmed(settlement?.accountNumber)
+  const accountHolder = pickTrimmed(settlement?.accountHolder)
+  const settlementBusinessIncome =
+    typeof settlement?.businessIncome === 'boolean' ? settlement.businessIncome : undefined
+  const businessIncomeEarnerStatus = parseBusinessIncomeStatus(dto.businessIncomeEarnerStatus)
   return {
     ...(bankName ? { bankName } : {}),
     ...(accountNumber ? { accountNumber } : {}),
     ...(accountHolder ? { accountHolder } : {}),
+    ...(settlementBusinessIncome != null ? { settlementBusinessIncome } : {}),
     ...(businessIncomeEarnerStatus ? { businessIncomeEarnerStatus } : {}),
   }
 }
 
-/** 신청 DTO에서 소속·정산·사업소득자 보강 (기존 row 값이 있으면 유지) */
+/** 신청 DTO에서 소속·정산·사업소득자 보강. 정산·사업소득자는 GET 정본만 사용 (row 폴백 없음) */
 export function supplementApplicantInstructorBasicInfoFromApplicationDetail(
   dto: InstructorApplicationDetailResponse,
   row: ApplicantInstructorRow
@@ -73,6 +70,7 @@ export function supplementApplicantInstructorBasicInfoFromApplicationDetail(
   | 'bankName'
   | 'accountNumber'
   | 'accountHolder'
+  | 'settlementBusinessIncome'
   | 'businessIncomeEarnerStatus'
 > {
   const affiliationFromDto = pickTrimmed(dto.affiliation)
@@ -87,44 +85,38 @@ export function supplementApplicantInstructorBasicInfoFromApplicationDetail(
       dto.affiliationOrganizationId !== undefined
         ? dto.affiliationOrganizationId
         : row.affiliationOrganizationId,
-    bankName: pickTrimmed(row.bankName) ?? settlementFields.bankName,
-    accountNumber: pickTrimmed(row.accountNumber) ?? settlementFields.accountNumber,
-    accountHolder: pickTrimmed(row.accountHolder) ?? settlementFields.accountHolder,
-    businessIncomeEarnerStatus:
-      pickTrimmed(row.businessIncomeEarnerStatus) ?? settlementFields.businessIncomeEarnerStatus,
+    bankName: settlementFields.bankName,
+    accountNumber: settlementFields.accountNumber,
+    accountHolder: settlementFields.accountHolder,
+    settlementBusinessIncome: settlementFields.settlementBusinessIncome,
+    businessIncomeEarnerStatus: settlementFields.businessIncomeEarnerStatus,
   }
 }
 
-/** 강사 회원 상세 — 신청 상세에 비어 있는 기본정보만 채운다 (신청 스냅샷 우선). */
-export function supplementApplicantInstructorBasicInfoFromMember(
-  row: ApplicantInstructorRow,
-  user: Omit<User, 'password'>
-): ApplicantInstructorRow {
-  const info = user.instructorInfo
-  const businessFromMember =
-    info?.isBusinessIncome === true
-      ? '해당'
-      : info?.isBusinessIncome === false
-        ? '해당 없음'
-        : undefined
-
-  return {
-    ...row,
-    affiliation: pickTrimmed(row.affiliation) ?? pickTrimmed(user.affiliation),
-    bankName: pickTrimmed(row.bankName) ?? pickTrimmed(info?.bankName),
-    accountNumber: pickTrimmed(row.accountNumber) ?? pickTrimmed(info?.accountNumber),
-    accountHolder: pickTrimmed(row.accountHolder) ?? pickTrimmed(info?.accountHolder),
-    businessIncomeEarnerStatus:
-      pickTrimmed(row.businessIncomeEarnerStatus) ?? businessFromMember,
-  }
+function isServerMasked(value: string | null | undefined): value is string {
+  return typeof value === 'string' && value.includes('*')
 }
 
-export function instructorApplicationRowNeedsMemberBasicInfoSupplement(
-  row: ApplicantInstructorRow
-): boolean {
-  return (
-    !pickTrimmed(row.affiliation) ||
-    !pickTrimmed(row.bankName) ||
-    !pickTrimmed(row.businessIncomeEarnerStatus)
-  )
+/**
+ * 원문 조회 응답이 프로그램 권한 projection으로 계좌 필드가 제거된 경우,
+ * 직전 일반 GET의 서버 마스킹 값을 유지한다 (원문 미노출 + 마스킹 데이터 유지).
+ * 마스킹되지 않은 이전 값은 가져오지 않는다.
+ */
+export function retainMaskedInstructorApplicationSettlement(
+  projected: InstructorApplicationDetailResponse,
+  previous: InstructorApplicationDetailResponse | undefined
+): InstructorApplicationDetailResponse {
+  const prev = previous?.settlement
+  const next = projected.settlement
+  if (!prev || !next) return projected
+  const restored = {
+    ...(next.accountNumber == null && isServerMasked(prev.accountNumber)
+      ? { accountNumber: prev.accountNumber }
+      : {}),
+    ...(next.accountHolder == null && isServerMasked(prev.accountHolder)
+      ? { accountHolder: prev.accountHolder }
+      : {}),
+  }
+  if (Object.keys(restored).length === 0) return projected
+  return { ...projected, settlement: { ...next, ...restored } }
 }

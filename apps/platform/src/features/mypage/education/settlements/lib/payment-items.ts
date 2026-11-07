@@ -136,6 +136,17 @@ export type ReceiptPayableItem = {
   itemType: string
   itemName: string
   evidenceRequired: boolean | null
+  maxLimitWon: number | null
+}
+
+export function readPayableMaxLimitWon(item: {
+  maxLimitWon?: number | null
+  maxAmount?: number | null
+} | null | undefined): number | null {
+  if (!item) return null
+  const raw = item.maxLimitWon ?? item.maxAmount
+  if (typeof raw !== 'number' || !Number.isFinite(raw) || raw <= 0) return null
+  return Math.floor(raw)
 }
 
 const WAGE_ITEM_TYPES = new Set([
@@ -186,7 +197,13 @@ export function sortReceiptPayableItems<T extends { itemType?: string | null; it
 }
 
 export function normalizePayableItems(
-  items: readonly { itemType?: string | null; itemName?: string | null; evidenceRequired?: boolean | null }[] | null | undefined,
+  items: readonly {
+    itemType?: string | null
+    itemName?: string | null
+    evidenceRequired?: boolean | null
+    maxLimitWon?: number | null
+    maxAmount?: number | null
+  }[] | null | undefined,
 ): ReceiptPayableItem[] {
   const source = items ?? []
   const hasCanonicalTransport = source.some(
@@ -211,6 +228,7 @@ export function normalizePayableItems(
       itemName: receiptPaymentItemLabel({ itemType, itemName: item.itemName }),
       evidenceRequired:
         item.evidenceRequired === true ? true : item.evidenceRequired === false ? false : null,
+      maxLimitWon: readPayableMaxLimitWon(item),
     })
   }
   return sortReceiptPayableItems(normalized)

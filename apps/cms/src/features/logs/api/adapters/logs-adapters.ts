@@ -7,6 +7,7 @@ import type {
 import type { LogListPage } from '@/features/logs/api/log-list-page'
 import { LOG_LIST_PAGE_SIZE } from '@/features/logs/api/log-list-page'
 import type { BugIssueLog, BugIssueLogDetail } from '@/types/bug-issue-log'
+import { formatContainedPiiLead, parseContainedPiiTypes } from '@jakorea/domain/shared/file-download-password'
 import type { DownloadLog } from '@/types/download-log'
 import type { MemberLoginLog } from '@/types/member-login-log'
 import type { PersonalInfoAccessLog } from '@/types/personal-info-access-log'
@@ -102,11 +103,13 @@ export function mapDownloadLogResponse(dto: DownloadLogFrontendResponse | object
     fileName: readExtraString(dto, ['fileName']),
     userId: readExtraString(dto, ['userId']),
     userName: readExtraString(dto, ['userName']),
-    ipAddress: readExtraString(dto, ['ipAddress']),
+    ipAddress: readExtraString(dto, ['ipAddress', 'requestIp']),
     downloadedAt: (() => {
-      const value = readExtraString(dto, ['downloadedAt'])
+      const value = readExtraString(dto, ['downloadedAt', 'createdAt', 'requestedAt'])
       return value === '-' ? new Date().toISOString() : value
     })(),
+    kind: readExtraString(dto, ['kind', 'eventType', 'fileType']),
+    containedPiiLabel: formatContainedPiiLead(parseContainedPiiTypes(rec.containedPiiTypes)),
   }
 }
 

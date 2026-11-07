@@ -6,4 +6,7 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * @nullable
+ */
 export type ApiErrorDetailDetails = {[key: string]: string} | null;

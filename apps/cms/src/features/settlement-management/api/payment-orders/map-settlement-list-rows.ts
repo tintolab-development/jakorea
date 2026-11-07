@@ -32,7 +32,7 @@ function sumAppliedSettlementAmount(items: SettlementListItemResponse[]): number
 }
 
 function countPendingItems(items: SettlementListItemResponse[]): number {
-  return items.filter(i => isPendingStatementStatus(i.statementStatus)).length
+  return items.filter(i => isPendingStatementStatus(i.statementStatus ?? undefined)).length
 }
 
 export function mapSettlementsToProgramRows(

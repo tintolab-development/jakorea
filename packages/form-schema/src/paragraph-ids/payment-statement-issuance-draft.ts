@@ -97,10 +97,10 @@ const tableBasic = htText(
   ]
 )
 
-/** 강의비 산출 정보 */
+/** 강사비 산출 정보 */
 const tableCalcInfo = htText(
   PAYMENT_STATEMENT_ISSUANCE_IDS.tableCalcInfo,
-  '강의비 산출 정보',
+  '강사비 산출 정보',
   ['항목', '내용'],
   [
     ['강사료 유형', ''],
@@ -113,10 +113,10 @@ const tableCalcInfo = htText(
   ]
 )
 
-/** 강의비 산출 내역 — 편집기 시드(헤더·행 텍스트). 실제 미리보기 본문은 `PaymentStatementIssuanceCalculationLinesTable`가 담당 */
+/** 강사비 산출 내역 — 편집기 시드(헤더·행 텍스트). 실제 미리보기 본문은 `PaymentStatementIssuanceCalculationLinesTable`가 담당 */
 const tableCalcLines = htText(
   PAYMENT_STATEMENT_ISSUANCE_IDS.tableCalcLines,
-  '강의비 산출 내역',
+  '강사비 산출 내역',
   ['참여 기관명', '강의 진행 일자', '지급/공제', '구분', '항목명', '금액'],
   [
     ['○○고등학교', '2025-09-01', '지급', '강사료', '강사료', '500,000'],

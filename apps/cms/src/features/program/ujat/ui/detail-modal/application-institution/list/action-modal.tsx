@@ -97,6 +97,7 @@ export function UjatInstitutionApplicationActionModal({
         onCancel={onCancel}
         onConfirm={onConfirm}
         notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.timedBulk}
+        notifyTimingOptions="two"
         confirmLoading={confirmLoading}
       />
     )

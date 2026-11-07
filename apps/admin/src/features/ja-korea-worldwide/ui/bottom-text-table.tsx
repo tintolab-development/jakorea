@@ -16,14 +16,14 @@ export function BottomTextTable({ value, mode, onChange }: BottomTextTableProps)
     <DetailInfoForm title="하단 문구" hideHeader mode={mode} className="ja-worldwide-bottom">
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
-          label="하단 문구"
+          label="하단 텍스트"
           view={<span className="ja-worldwide-bottom__text">{value || '-'}</span>}
           edit={
             <CmsTextArea
-              className="cms-textarea--fixed-rows"
+              layout="fixed"
               inputSize="medium"
               width="100%"
-              rows={3}
+              rows={2}
               value={value}
               onChange={e => onChange(e.target.value)}
               placeholder="하단 문구를 입력해 주세요"

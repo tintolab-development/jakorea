@@ -3,12 +3,15 @@ import {
   buildSurveyPollScheduleSelectOptions,
   buildSurveyPollScheduleSelectOptionsForProgram,
   collectSurveyPollUsedScheduleIds,
+  collectUnboundSurveyPollScheduleValues,
   disableSurveyPollScheduleOptionsWithSurvey,
   isSurveyPollBindingTargetScheduleAlreadyRegistered,
   SURVEY_POLL_SCHEDULE_ALREADY_REGISTERED_MESSAGE,
   formatSurveyPollScheduleOptionLabel,
+  pickLastSurveyPollEducationSlot,
   isTrainedTeacherEventScheduleProgram,
   resolveSurveyPollScheduleCandidatesFromSources,
+  sortSatisfactionScheduleDisplayItemsAsc,
 } from '@/features/program/shared/lib/survey-management/survey-poll-schedule-options'
 import type { Program } from '@/types/domain'
 import type { ProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/programScheduleResponse'
@@ -56,6 +59,37 @@ describe('buildSurveyPollScheduleSelectOptions', () => {
       }),
     ])
     expect(options.map(o => o.value)).toEqual(['10', '30'])
+  })
+
+  it('picks the last education slot by start then session', () => {
+    expect(
+      pickLastSurveyPollEducationSlot([
+        slot({
+          id: 10,
+          sessionNo: 1,
+          startAt: '2026-11-12T03:00:00.000Z',
+          endAt: '2026-11-12T06:00:00.000Z',
+        }),
+        slot({
+          id: 30,
+          sessionNo: 3,
+          startAt: '2026-11-26T03:00:00.000Z',
+          endAt: '2026-11-26T06:00:00.000Z',
+        }),
+        slot({
+          id: 20,
+          sessionNo: 2,
+          startAt: '2026-11-19T03:00:00.000Z',
+          endAt: '2026-11-19T06:00:00.000Z',
+        }),
+        slot({
+          id: 99,
+          sessionNo: 9,
+          scheduleRole: 'PRE_EDUCATION',
+          startAt: '2026-12-01T03:00:00.000Z',
+        }),
+      ])?.id
+    ).toBe(30)
   })
 
   it('drops schedules without positive scheduleId', () => {
@@ -559,6 +593,20 @@ describe('one survey per schedule — disable used schedules', () => {
     )
     expect(options.every(o => o.disabled === true)).toBe(true)
   })
+
+  it('collects unbound schedule values for per-schedule auto mapping', () => {
+    const base = buildSurveyPollScheduleSelectOptions(slots)
+    const options = disableSurveyPollScheduleOptionsWithSurvey(base, [ref({ targetScopeId: 32 })])
+    expect(collectUnboundSurveyPollScheduleValues(options)).toEqual(['31', '33'])
+    expect(
+      collectUnboundSurveyPollScheduleValues(
+        disableSurveyPollScheduleOptionsWithSurvey(
+          base,
+          [31, 32, 33].map(id => ref({ targetScopeId: id }))
+        )
+      )
+    ).toEqual([])
+  })
 })
 
 describe('hidden schedule field — already registered guard', () => {
@@ -598,5 +646,26 @@ describe('hidden schedule field — already registered guard', () => {
       )
     ).toBe(false)
     expect(isSurveyPollBindingTargetScheduleAlreadyRegistered(null, [ref(100)])).toBe(false)
+  })
+})
+
+describe('sortSatisfactionScheduleDisplayItemsAsc', () => {
+  it('puts earlier dates and lower session numbers first', () => {
+    expect(
+      sortSatisfactionScheduleDisplayItemsAsc([
+        { key: '1', sessionNo: 1, startAt: '2026-11-03T00:00:00+09:00' },
+        { key: '2', sessionNo: 2, startAt: '2026-11-04T00:00:00+09:00' },
+        { key: '3', sessionNo: 3, startAt: '2026-11-25T00:00:00+09:00' },
+      ]).map(item => item.key)
+    ).toEqual(['1', '2', '3'])
+  })
+
+  it('orders same-day sessions by session number', () => {
+    expect(
+      sortSatisfactionScheduleDisplayItemsAsc([
+        { key: '2', sessionNo: 2, startAt: '2026-11-09T00:00:00+09:00' },
+        { key: '1', sessionNo: 1, startAt: '2026-11-09T00:00:00+09:00' },
+      ]).map(item => item.key)
+    ).toEqual(['1', '2'])
   })
 })

@@ -138,7 +138,7 @@ export function InterviewSectionCard({ items }: Props) {
   const pickerLoading = addMutation.isPending || replaceMutation.isPending
 
   return (
-    <div className="recruit-guide-section">
+    <section className="admin-list-card recruit-guide-section">
       <div className="admin-list-toolbar">
         <div className="table-header-title--wrapper">
           <span className="table-title">■ 직무 인터뷰 (임팩트 스토리)</span>
@@ -213,6 +213,6 @@ export function InterviewSectionCard({ items }: Props) {
           void handleDeleteConfirm()
         }}
       />
-    </div>
+    </section>
   )
 }

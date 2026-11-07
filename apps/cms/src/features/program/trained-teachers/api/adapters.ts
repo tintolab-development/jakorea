@@ -23,6 +23,7 @@ import {
   readProgramAuditNames,
   withExpectedUpdatedAt,
 } from '@/features/program/shared/lib/program-audit-names'
+import { mapProgramRoundsToWriteRequest } from '@/features/program/shared/lib/round-write'
 import { applyBusinessPeriodHistoriesFromDto } from '@/features/program/shared/lib/business-period-extend'
 import {
   buildProgramSponsorAssignmentsWire,
@@ -268,32 +269,18 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
       otherMatters: dto.otherMatters,
       otherNotes: undefined,
     }) || undefined
-  const remarks = dto.remarks?.trim() || undefined
+  const remarks =
+    dto.remarks == null ? undefined : dto.remarks.trim() || undefined
   const educationTargetDetail = dto.educationTargetDetail?.trim() || undefined
-  const nestedStudentListRequired = toStudentListRequired(
-    (
-      details.generalCommonInfo?.participantRecruitmentInfo as
-        | { studentListRequired?: string }
-        | undefined
-    )?.studentListRequired
-  )
 
   const nestedKpi = details.generalCommonInfo?.kpi
   const rootFinalParticipants = toJavaInt(dto.totalParticipants)
   const resolvedKpi = nestedKpi
     ? {
         ...nestedKpi,
-        finalParticipants: rootFinalParticipants ?? nestedKpi.finalParticipants,
+        ...(rootFinalParticipants != null ? { finalParticipants: rootFinalParticipants } : {}),
       }
-    : rootFinalParticipants != null
-      ? {
-          finalParticipants: rootFinalParticipants,
-          instructorCount: 0,
-          volunteerCount: 0,
-          finalSchools: 0,
-          finalClasses: 0,
-        }
-      : undefined
+    : undefined
   const topVenue = dto.venue?.trim() || undefined
   const topVenueDetail =
     typeof dto.venueDetail === 'string' ? dto.venueDetail.trim() || undefined : undefined
@@ -322,17 +309,12 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     id,
     sponsorId: dto.sponsorId ?? '',
     title,
-    mainTitle:
-      dto.mainTitle !== undefined
-        ? dto.mainTitle?.trim() || undefined
-        : typeof detailFields.mainTitle === 'string'
-          ? detailFields.mainTitle
-          : undefined,
+    mainTitle: dto.mainTitle == null ? undefined : dto.mainTitle.trim() || undefined,
     // 세부 프로그램 마스터 id — 일반 프로그램 어댑터와 동일하게 top-level 필드로 읽어온다.
     detailedProgramId: dto.detailedProgramId != null ? String(dto.detailedProgramId) : undefined,
-    type: (dto.type as ProgramType | undefined) ?? 'offline',
-    format: (dto.format as ProgramFormat | undefined) ?? 'workshop',
-    category: (dto.category as ProgramCategory | undefined) ?? 'school',
+    type: dto.type as ProgramType,
+    format: dto.format as ProgramFormat,
+    category: dto.category as ProgramCategory,
     description: dto.description,
     rounds:
       dto.rounds?.map((round, index) => ({
@@ -350,7 +332,7 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     ...resolveBusinessPeriodDates(dto),
     applicationStartDate: dto.applicationStartDate,
     applicationEndDate: dto.applicationEndDate,
-    status: (dto.status as Status | undefined) ?? 'pending',
+    status: dto.status as Status,
     lifecycleStatus:
       toTypedProgramLifecycleStatus(dto.lifecycleStatus) ??
       toTypedProgramLifecycleStatus(dto.periodStatus),
@@ -392,7 +374,7 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     contactPhone: dto.contactPhone?.trim() || undefined,
     oneLineIntroduction: dto.oneLineIntroduction,
     keyVisualImage: dto.keyVisualImage,
-    posterImage: details.posterImage ?? dto.keyVisualImage,
+    posterImage: details.posterImage,
     settlementRuleId: dto.settlementRuleId,
     applicationPathId: dto.applicationPathId,
     additionalContentHtml: dto.additionalContentHtml,
@@ -403,7 +385,7 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     recruitmentTargetDetail: dto.recruitmentTargetDetail?.trim() || undefined,
     // BE 응답은 구버전/Primary 데이터에서 serviceDetailJson 중첩값만 제공할 수 있다.
     // top-level 컬럼이 있으면 그것을 우선하고, 없을 때만 같은 원격 응답의 nested 값을 사용한다.
-    studentListRequired: toStudentListRequired(dto.studentListRequired) ?? nestedStudentListRequired,
+    studentListRequired: toStudentListRequired(dto.studentListRequired),
     remarks,
     educationTargetDetail,
     generalParticipantTypes: Array.isArray(details.generalParticipantTypes)
@@ -420,7 +402,7 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
       participantRecruitmentInfo: mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo(
         {
           ...details.generalCommonInfo?.participantRecruitmentInfo,
-          ...(remarks ? { remarks } : {}),
+          remarks,
           ...(educationTargetDetail ? { educationTargetDetail } : {}),
         },
         dto
@@ -437,27 +419,299 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
 }
 
 function mapRounds(program: Program): ProgramUpdateRequest['rounds'] {
-  return program.rounds.map(round => ({
-    roundNumber: round.roundNumber,
-    startDate: toDate(round.startDate),
-    endDate: toDate(round.endDate),
-    capacity: round.capacity,
-    classCount: round.classCount,
-    status: round.status,
-    curriculum: round.curriculum,
-    deliveryType: round.deliveryType,
-  }))
+  return mapProgramRoundsToWriteRequest(program, toDate)
 }
 
 function mergeTrainedTeacherUpdateProgram(program: Program, patch: Partial<Program>): Program {
   const merged: Program = { ...program, ...patch }
+  if (patch.registrationOverlay != null && typeof patch.registrationOverlay === 'object') {
+    merged.registrationOverlay = {
+      ...(program.registrationOverlay ?? {}),
+      ...patch.registrationOverlay,
+    }
+  }
   if (patch.generalCommonInfo) {
+    const existingRecruitment = program.generalCommonInfo?.participantRecruitmentInfo
+    const patchRecruitment = patch.generalCommonInfo.participantRecruitmentInfo
+    const { participantRecruitmentInfo: _ignored, ...patchCommonRest } = patch.generalCommonInfo
     merged.generalCommonInfo = {
       ...program.generalCommonInfo,
-      ...patch.generalCommonInfo,
+      ...patchCommonRest,
+      participantRecruitmentInfo:
+        patchRecruitment != null && typeof patchRecruitment === 'object'
+          ? { ...existingRecruitment, ...patchRecruitment }
+          : existingRecruitment,
     }
   }
   return merged
+}
+
+function patchHasProgramKey(patch: Partial<Program>, key: keyof Program): boolean {
+  return Object.prototype.hasOwnProperty.call(patch, key)
+}
+
+function trainedTeacherPatchTouchesServiceDetail(patch: Partial<Program>): boolean {
+  return (
+    patchHasProgramKey(patch, 'generalCommonInfo') ||
+    patchHasProgramKey(patch, 'registrationOverlay') ||
+    patchHasProgramKey(patch, 'generalSurveyMenuKeys') ||
+    patchHasProgramKey(patch, 'generalParticipantTypes') ||
+    patchHasProgramKey(patch, 'generalProgramEducationStructure') ||
+    patchHasProgramKey(patch, 'generalProgramSessionRound') ||
+    patchHasProgramKey(patch, 'scheduleTimeEnabled') ||
+    patchHasProgramKey(patch, 'startTime') ||
+    patchHasProgramKey(patch, 'endTime') ||
+    patchHasProgramKey(patch, 'businessArea')
+  )
+}
+
+function serializeTrainedTeacherPatchServiceDetailJson(
+  program: Program,
+  merged: Program,
+  patch: Partial<Program>,
+  options?: { omitInfoDetailOwnedFields?: boolean; omitRegistrationOverlay?: boolean }
+): string {
+  const omitOverlay = options?.omitRegistrationOverlay === true
+  const patchRecruitment =
+    patch.generalCommonInfo != null &&
+    Object.prototype.hasOwnProperty.call(patch.generalCommonInfo, 'participantRecruitmentInfo')
+      ? patch.generalCommonInfo.participantRecruitmentInfo
+      : undefined
+  const patchRecruitmentKeys =
+    patchRecruitment != null && typeof patchRecruitment === 'object'
+      ? Object.fromEntries(
+          Object.entries(patchRecruitment).filter(([key]) => key !== 'remarks')
+        )
+      : undefined
+  void program
+  const serializeSource: Program = {
+    ...merged,
+    remarks: undefined,
+    mainTitle: undefined,
+    generalCommonInfo: merged.generalCommonInfo
+      ? {
+          ...merged.generalCommonInfo,
+          participantRecruitmentInfo:
+            patchRecruitmentKeys != null && Object.keys(patchRecruitmentKeys).length > 0
+              ? patchRecruitmentKeys
+              : undefined,
+        }
+      : undefined,
+  }
+  return serializeTrainedTeacherServiceDetailJson(serializeSource, {
+    omitInfoDetailOwnedFields: options?.omitInfoDetailOwnedFields !== false,
+    omitRegistrationOverlay: omitOverlay,
+  })
+}
+
+function mapTrainedTeacherPatchToUpdateRequest(
+  program: Program,
+  patch: Partial<Program>,
+  options?: { omitInfoDetailOwnedFields?: boolean; omitRegistrationOverlay?: boolean }
+): ProgramUpdateRequest {
+  const merged = mergeTrainedTeacherUpdateProgram(program, patch)
+  const has = (key: keyof Program) => patchHasProgramKey(patch, key)
+  const educationStructure = mapDomainEducationStructureToApi(
+    merged.generalProgramEducationStructure
+  )
+  const detailedProgramId =
+    educationStructure === 'SCHEDULE'
+      ? undefined
+      : parseDetailedProgramMasterId(merged.detailedProgramId)
+  const detailedProgramName = merged.generalCommonInfo?.detailedProgramName
+  const sponsorIdsFromForm = (
+    merged.generalCommonInfo?.sponsorManagementIds?.length
+      ? merged.generalCommonInfo.sponsorManagementIds
+      : merged.generalCommonInfo?.sponsorManagementId
+        ? [merged.generalCommonInfo.sponsorManagementId]
+        : merged.sponsorId
+          ? [merged.sponsorId]
+          : []
+  )
+    .map(id => String(id).trim())
+    .filter(Boolean)
+  const contactIds = merged.generalCommonInfo?.sponsorManagerContactIds
+  const contactRefs =
+    contactIds != null
+      ? normalizeSponsorManagerContactIds({ ids: contactIds })
+      : normalizeSponsorManagerContactIds({
+          id: merged.generalCommonInfo?.sponsorManagerContactId,
+        })
+  const sponsors = buildProgramSponsorAssignmentsWire(sponsorIdsFromForm, contactRefs)
+  const primarySponsorId =
+    sponsors.find(s => s.sponsorContactId)?.sponsorId || sponsors[0]?.sponsorId || merged.sponsorId
+  const businessArea = resolveStoredBusinessArea(merged.businessArea) || undefined
+  const previousBusinessArea = resolveStoredBusinessArea(program.businessArea) || undefined
+  const clearBusinessArea = has('businessArea') && !businessArea && Boolean(previousBusinessArea)
+  const persistedTargetLevels = resolvePersistedProgramTargetLevels(merged)
+  const includeTargetLevels =
+    (has('targetLevels') || has('targetLevel') || has('generalCommonInfo')) &&
+    (Array.isArray(merged.targetLevels) || persistedTargetLevels.length > 0)
+  const serializeBase = includeTargetLevels
+    ? { ...merged, targetLevels: persistedTargetLevels, targetLevel: persistedTargetLevels[0] }
+    : merged
+  const serializeSource = clearBusinessArea
+    ? { ...serializeBase, businessArea: undefined }
+    : serializeBase
+  const venueName = merged.venue?.trim() || undefined
+  const venueDetail = merged.generalCommonInfo?.venueDetail?.trim() || undefined
+  const venueKind =
+    merged.generalCommonInfo?.venueKind === 'inside' ||
+    merged.generalCommonInfo?.venueKind === 'outside' ||
+    merged.generalCommonInfo?.venueKind === 'other'
+      ? merged.generalCommonInfo.venueKind
+      : undefined
+  const body: ProgramUpdateRequest = {}
+
+  const assignIfHas = (key: keyof Program, value: unknown) => {
+    if (!has(key)) return
+    ;(body as Record<string, unknown>)[key] = value
+  }
+
+  if (has('sponsorId') || has('generalCommonInfo')) {
+    body.sponsors = sponsors
+    body.sponsorId = primarySponsorId
+  }
+
+  assignIfHas('title', merged.title)
+  assignIfHas('type', merged.type)
+  assignIfHas('format', merged.format)
+  assignIfHas('category', merged.category)
+  assignIfHas('description', merged.description)
+  if (has('startDate')) {
+    body.startDate = toDate(merged.startDate)
+    body.businessStartDate = toDate(merged.startDate)
+  }
+  if (has('endDate')) {
+    body.endDate = toDate(merged.endDate)
+    body.businessEndDate = toDate(merged.endDate)
+  }
+  if (has('applicationStartDate')) {
+    body.applicationStartDate = toDate(merged.applicationStartDate)
+  }
+  if (has('applicationEndDate')) {
+    body.applicationEndDate = toDate(merged.applicationEndDate)
+  }
+  if (has('businessArea') && businessArea) {
+    body.businessArea = businessArea
+  }
+  if (has('generalProgramEducationStructure') || has('generalCommonInfo')) {
+    body.educationStructure = educationStructure
+  }
+  if (has('detailedProgramId') || has('generalCommonInfo')) {
+    body.detailedProgramId = detailedProgramId
+  }
+  assignIfHas('titleEn', merged.titleEn)
+  if (has('mainTitle')) {
+    const nextMainTitle = merged.mainTitle?.trim()
+    if (nextMainTitle) body.mainTitle = nextMainTitle
+    else if (program.mainTitle?.trim()) {
+      const clearFields = [...(body.clearFields ?? [])]
+      if (!clearFields.includes('mainTitle')) clearFields.push('mainTitle')
+      body.clearFields = clearFields
+    }
+  }
+  assignIfHas('textbookName', merged.textbookName)
+  assignIfHas('textbookNameEn', merged.textbookNameEn)
+  assignIfHas('schoolId', merged.schoolId)
+  assignIfHas('district', merged.district)
+  assignIfHas('ips', merged.ips)
+  if (includeTargetLevels) {
+    body.targetLevels = persistedTargetLevels
+    body.targetLevel = persistedTargetLevels[0]
+  }
+  assignIfHas('institutionType', merged.institutionType)
+  assignIfHas('ipOwned', merged.ipOwned)
+  assignIfHas('courseDeliveredBy', merged.courseDeliveredBy)
+  assignIfHas('partnerInvolvement', merged.partnerInvolvement)
+  assignIfHas('programCategory', merged.programCategory ?? undefined)
+  assignIfHas('programChannel', merged.programChannel ?? undefined)
+  if (has('educationTime')) {
+    body.educationTime = toJavaInt(merged.educationTime)
+  }
+  if (has('teamDivision')) {
+    body.teamDivision = omitIfDetailedProgramNameAlias(merged.teamDivision, detailedProgramName)
+  }
+  assignIfHas('educationProcess', merged.educationProcess)
+  if (has('maleParticipants')) {
+    body.maleParticipants = toJavaInt(merged.maleParticipants)
+  }
+  if (has('femaleParticipants')) {
+    body.femaleParticipants = toJavaInt(merged.femaleParticipants)
+  }
+  if (has('totalParticipants') || has('approvedStudentCount') || has('generalCommonInfo')) {
+    body.totalParticipants = toJavaInt(
+      merged.totalParticipants ?? merged.generalCommonInfo?.kpi?.finalParticipants
+    )
+  }
+  if (has('generalTeachers')) {
+    body.generalTeachers = toJavaInt(merged.generalTeachers)
+  }
+  if (has('educatedTeachers')) {
+    body.educatedTeachers = toJavaInt(merged.educatedTeachers)
+  }
+  if (has('instructors')) {
+    body.instructors = toJavaInt(merged.instructors)
+  }
+  assignIfHas('managerName', merged.managerName)
+  if (has('venue') || has('generalCommonInfo')) {
+    body.venue = venueName
+  }
+  if (has('generalCommonInfo') && venueDetail) {
+    body.venueDetail = venueDetail
+  }
+  if (has('generalCommonInfo') && venueKind) {
+    body.venueKind = venueKind
+  }
+  assignIfHas('curriculum', merged.curriculum)
+  assignIfHas('contactEmail', merged.contactEmail)
+  assignIfHas('contactPhone', merged.contactPhone)
+  if (has('remarks')) {
+    const nextRemarks = merged.remarks?.trim()
+    if (nextRemarks) body.remarks = nextRemarks
+    else if (program.remarks?.trim()) {
+      const clearFields = [...(body.clearFields ?? [])]
+      if (!clearFields.includes('remarks')) clearFields.push('remarks')
+      body.clearFields = clearFields
+    }
+  }
+  assignIfHas('educationTargetDetail', merged.educationTargetDetail)
+  assignIfHas('studentListRequired', merged.studentListRequired)
+  assignIfHas('oneLineIntroduction', merged.oneLineIntroduction)
+  assignIfHas('keyVisualImage', merged.keyVisualImage)
+  assignIfHas('settlementRuleId', merged.settlementRuleId)
+  assignIfHas('applicationPathId', merged.applicationPathId)
+  assignIfHas('additionalContentHtml', merged.additionalContentHtml)
+  assignIfHas('recruitmentGuide', merged.recruitmentGuide)
+  assignIfHas('learningSupportContent', merged.learningSupportContent)
+  assignIfHas('attachmentFileNames', merged.attachmentFileNames)
+  if (has('rounds')) {
+    body.rounds = mapRounds(merged)
+  }
+  if (!has('schedules')) {
+    delete (body as { schedules?: unknown }).schedules
+  }
+  if (trainedTeacherPatchTouchesServiceDetail(patch)) {
+    body.serviceDetailJson = serializeTrainedTeacherPatchServiceDetailJson(
+      program,
+      serializeSource,
+      patch,
+      options
+    )
+  }
+
+  applyProgramMissingCommonStringFieldsToUpdateRequest(body, {
+    mode: 'patch',
+    merged,
+    existing: program,
+    patch,
+  })
+  if (clearBusinessArea) {
+    const clearFields = [...(body.clearFields ?? [])]
+    if (!clearFields.includes('businessArea')) clearFields.push('businessArea')
+    body.clearFields = clearFields
+  }
+  return withExpectedUpdatedAt(body, program.updatedAt)
 }
 
 export function mapTrainedTeacherToUpdateRequest(
@@ -465,7 +719,10 @@ export function mapTrainedTeacherToUpdateRequest(
   patch?: Partial<Program>,
   options?: { omitInfoDetailOwnedFields?: boolean; omitRegistrationOverlay?: boolean }
 ): ProgramUpdateRequest {
-  const merged = patch ? mergeTrainedTeacherUpdateProgram(program, patch) : program
+  if (patch != null) {
+    return mapTrainedTeacherPatchToUpdateRequest(program, patch, options)
+  }
+  const merged = program
   const educationStructure = mapDomainEducationStructureToApi(
     merged.generalProgramEducationStructure
   )
@@ -577,7 +834,7 @@ export function mapTrainedTeacherToUpdateRequest(
     educationTargetDetail: merged.educationTargetDetail,
     studentListRequired: merged.studentListRequired,
     oneLineIntroduction: merged.oneLineIntroduction,
-    keyVisualImage: merged.keyVisualImage ?? merged.posterImage,
+    keyVisualImage: merged.keyVisualImage,
     settlementRuleId: merged.settlementRuleId,
     applicationPathId: merged.applicationPathId,
     additionalContentHtml: merged.additionalContentHtml,

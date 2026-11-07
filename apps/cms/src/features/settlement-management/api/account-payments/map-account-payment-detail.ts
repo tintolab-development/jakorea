@@ -19,7 +19,6 @@ import type {
   SettlementFrontendItemResponse,
   SettlementFrontendResponse,
 } from '@/shared/api/generated/settlement/schemas'
-import { formatLectureSessionLabel } from '@/features/settlement-management/api/shared/map-frontend-fields'
 import { mapPaymentStatusToAccountPaymentStatus } from '@/features/settlement-management/api/shared/settlement-status-mappers'
 import {
   formatBusinessIncomeEarnerLabel,
@@ -79,10 +78,6 @@ function formatLectureDateDisplay(iso: string | null | undefined): string {
   return formatTransferDateDisplay(iso)
 }
 
-function toRoundSessionLabel(label: string): string {
-  return label.replace(/차시/g, '회차')
-}
-
 function resolveInstitutionName(
   row: AccountPaymentRow,
   institutionName?: string | null
@@ -95,13 +90,11 @@ function resolveInstitutionName(
 
 function resolveSessionDisplay(
   row: AccountPaymentRow,
-  lectureSessionDisplay?: string,
-  sessionOrdinal?: number
+  lectureSessionDisplay?: string | null
 ): string {
   const fromApi = lectureSessionDisplay?.trim()
-  if (fromApi) return toRoundSessionLabel(fromApi)
-  if (sessionOrdinal != null) return toRoundSessionLabel(formatLectureSessionLabel(sessionOrdinal))
-  if (row.sessionLabel && row.sessionLabel !== '-') return toRoundSessionLabel(row.sessionLabel)
+  if (fromApi) return fromApi
+  if (row.sessionLabel && row.sessionLabel !== '-') return row.sessionLabel
   return '-'
 }
 
@@ -152,11 +145,7 @@ function buildBlocksFromFrontendSettlement(
     {
       institutionName: resolveInstitutionName(row, settlement.institutionName),
       lectureDateDisplay: formatLectureDateDisplay(row.lectureDate ?? row.transferScheduledDate),
-      lectureSessionDisplay: resolveSessionDisplay(
-        row,
-        settlement.lectureSessionDisplay,
-        settlement.sessionOrdinal
-      ),
+      lectureSessionDisplay: resolveSessionDisplay(row, settlement.lectureSessionDisplay),
       lines,
     },
   ]
@@ -357,7 +346,7 @@ function buildAccountPaymentStatusDetail(
       programName: extras?.programName ?? row.programName,
       programSessionProgressDisplay:
         extras?.programSessionProgressDisplay ??
-        (row.sessionLabel !== '-' ? toRoundSessionLabel(row.sessionLabel) : '-'),
+        (row.sessionLabel !== '-' ? row.sessionLabel : '-'),
       businessPeriodDisplay: extras?.businessPeriodDisplay ?? '-',
       accountPaymentStatus,
       accountPaymentStatusLabel: ACCOUNT_PAYMENT_STATUS_LABELS[accountPaymentStatus],
@@ -400,7 +389,7 @@ export function mapAccountPaymentDetailRemote(
       businessPeriodEnd: settlement.businessPeriodEnd,
       formatDate: formatTransferDateDisplay,
     }),
-    programSessionProgressDisplay: toRoundSessionLabel(formatProgramSessionProgressDisplay(settlement)),
+    programSessionProgressDisplay: formatProgramSessionProgressDisplay(settlement),
     lectureFeeStandardTitle: formatLectureFeeStandardTitle(settlement.lectureFeeStandardTitle),
     lectureFeeStandardAmount: formatWonAmountDisplay(settlement.lectureFeeStandardAmount),
     businessIncomeEarnerLabel: formatBusinessIncomeEarnerLabel(
@@ -456,12 +445,7 @@ export function mapAccountPaymentDetailFromGetApi(
       payment?.institutionName?.trim() ||
       settlement?.institutionName?.trim() ||
       row.institutionName,
-    sessionLabel:
-      payment?.sessionLabel?.trim() ||
-      (payment?.sessionOrdinal != null
-        ? formatLectureSessionLabel(payment.sessionOrdinal)
-        : undefined) ||
-      row.sessionLabel,
+    sessionLabel: payment?.sessionLabel?.trim() || row.sessionLabel,
     lectureDate: payment?.lectureDate ?? row.lectureDate,
     amount: payment?.netPaymentAmount ?? row.amount,
     transferScheduledDate:

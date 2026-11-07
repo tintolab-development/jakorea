@@ -180,7 +180,7 @@ const subset = {
   ...spec,
   info: {
     ...spec.info,
-    title: `${spec.info?.title ?? 'API'} — Settlement subset`,
+    title: 'JA Korea CMS Backend API — Settlement subset',
     description: 'Filtered for CMS settlement management Orval codegen.',
   },
   paths: filteredPaths,

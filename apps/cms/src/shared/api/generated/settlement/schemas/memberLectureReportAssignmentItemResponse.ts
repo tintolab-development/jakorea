@@ -5,6 +5,8 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { MemberInstructorTransportPreview } from './memberInstructorTransportPreview';
+import type { MemberLectureFeePreview } from './memberLectureFeePreview';
 
 export interface MemberLectureReportAssignmentItemResponse {
   assignmentId?: number;
@@ -14,9 +16,18 @@ export interface MemberLectureReportAssignmentItemResponse {
   startAt?: string;
   endAt?: string;
   scheduleName?: string;
-  sessionNo?: number;
-  institutionName?: string;
-  grade?: string;
+  /** 본교육 회차 번호(program_schedule.session_no). 차시 개수가 아님. 사전교육은 보통 null. null만으로 사전교육이 아님. */
+  sessionNo?: number | null;
+  /** canonical 일정 역할. program_schedule.schedule_kind. PRE_EDUCATION|EDUCATION|SESSION|CLOSING. 없으면 null. sessionNo=null로 추정하지 않음. */
+  scheduleRole?: string | null;
+  /** canonical education_slot_key. 사전교육 general-pre-education:*, 본교육 회차 general-common-line:N 등. 없으면 null. */
+  educationSlotKey?: string | null;
+  /** 해당 scheduleId에 연결된 program_curriculum_session 건수(실제 커리큘럼 차시). 없으면 null. sessionNo를 넣지 않음. 사전교육은 null. 정산 인정 차시와 별개. */
+  curriculumSessionCount?: number | null;
+  /** 기관(학교) 프로그램이면 학교/기관명. 개인형이면 null. 빈 문자열 금지. */
+  institutionName?: string | null;
+  /** 기관 프로그램 학년(숫자 또는 n학년). 개인형이거나 없으면 null. 빈 문자열 금지. */
+  grade?: string | null;
   lectureStatus?: string;
   reportStatus?: string;
   submitDueAt?: string;
@@ -26,4 +37,8 @@ export interface MemberLectureReportAssignmentItemResponse {
   institutionAddress?: string;
   /** 자택-기관 거리(km) 숫자. 문자열 아님. 없으면 null */
   distanceFromHome?: string | null;
+  /** 지급조서 제출 전 강의비 산출 미리보기. totalLectureFee는 실적 시간이 있을 때만 확정 금액. 없으면 null. */
+  lectureFeePreview?: MemberLectureFeePreview | null;
+  /** 지급조서 제출 전 강사 교통비 미리보기. 객체는 항상 존재. oneWayDistanceKm는 distanceFromHome과 동일. 편도 30 미만 또는 지급 항목 없으면 금액 null. 제출 CalcInfo·CMS 교통비 스냅샷과 산식 동일. */
+  transportPreview?: MemberInstructorTransportPreview | null;
 }

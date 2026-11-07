@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { FileDownloadListFilter } from '@/entities/file-download-log/model/types'
 import { shouldUseFileDownloadLogRemoteApi } from './capabilities'
 import { fileDownloadLogQueryKeys } from './query-keys'
@@ -16,15 +16,19 @@ export function useFileDownloadLogsList(filter: FileDownloadListFilter) {
   return useQuery({
     queryKey: fileDownloadLogQueryKeys.list(dataSource, filter),
     queryFn: () => listFileDownloadLogsService(filter),
-    staleTime: dataSource === 'remote' ? 30_000 : Number.POSITIVE_INFINITY,
-    retry: dataSource === 'remote' ? 1 : false,
+    staleTime: 0,
+    retry: false,
   })
 }
 
 export function useExportFileDownloadLogs() {
+  const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (filter: FileDownloadListFilter) =>
       exportFileDownloadLogsService(filter),
     retry: false,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: fileDownloadLogQueryKeys.all })
+    },
   })
 }

@@ -24,7 +24,7 @@ const CODE_MESSAGES: Record<string, string> = {
   [APPLICATION_ANNOUNCEMENT_DATE_NOT_CONFIGURED]:
     '프로그램 발표일이 설정되지 않아 발표일 발송을 예약할 수 없습니다. 발표일을 설정하거나 다른 발송 시점을 선택해 주세요.',
   [APPLICATION_DECISION_CONFLICT]:
-    '현재 신청 상태에서는 처리할 수 없습니다. 화면을 새로고침한 뒤 다시 시도해 주세요.',
+    '현재 신청 상태에서는 승인·반려·취소 처리를 수행할 수 없습니다.',
 }
 
 /** 신청 취소·최종 결과 overwrite 409 — Alert 본문. 해당 없으면 `null`. */

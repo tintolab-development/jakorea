@@ -32,6 +32,7 @@ import {
   resolveRecruitmentRemarks,
 } from '@/features/program/shared/lib/recruitment-row-copy'
 import { hydrateRecruitmentWindowsOntoProgram } from '@/features/program/shared/lib/hydrate-recruitment-windows'
+import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import {
   parseDisplayPeriodLabelToIsoRange,
   seedAudienceProgramOperationFormFields,
@@ -328,12 +329,36 @@ export function programToRecruitmentTabEditValues(
     ...(isGeneralRowCopyProgram(merged)
       ? generalRecruitmentRowFormSeed(recruitmentRow, audience)
       : {}),
+    ...(isTrainedTeachersDetailProgram(merged) && audience === 'participant'
+      ? trainedTeachersParticipantRecruitmentRowFormSeed(recruitmentRow)
+      : {}),
   }
 }
 
 function isGeneralRowCopyProgram(program: Program): boolean {
   const type = program.backendProgramType?.toUpperCase() ?? ''
   return type === 'GENERAL' || type.startsWith('GENERAL_')
+}
+
+/** TT 참여자 모집 — GET 행만. null 도 컬럼·nested 시드를 덮어 빈 칸으로 둔다. */
+function trainedTeachersParticipantRecruitmentRowFormSeed(
+  row: ReturnType<typeof pickRecruitmentCopyRow>
+): Partial<ProgramDetailEditFormValues> {
+  if (!row) return {}
+  return {
+    ...(row.startAt ? { applicationStartDate: String(row.startAt) } : {}),
+    ...(row.endAt ? { applicationEndDate: String(row.endAt) } : {}),
+    ...(row.operationStartDate
+      ? { participantProgramOperationStartDate: String(row.operationStartDate) }
+      : {}),
+    ...(row.operationEndDate
+      ? { participantProgramOperationEndDate: String(row.operationEndDate) }
+      : {}),
+    recruitmentContactOrganizationName: row.contactName?.trim() ?? '',
+    contactPhone: row.contactPhone?.trim() ?? '',
+    contactEmail: row.contactEmail?.trim() ?? '',
+    remarks: row.remarks?.trim() ?? '',
+  }
 }
 
 /** 일반 프로그램 모집 탭은 그 행의 문의처만 보여 준다. 공고명은 공통정보를 본다. */

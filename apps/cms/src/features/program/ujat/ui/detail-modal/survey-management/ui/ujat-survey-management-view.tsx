@@ -74,6 +74,13 @@ import { getSurveyWritingTemplateSelectOptions } from '../lib/ujat-survey-templa
 import {
   buildUjatSurveyWritingPreviewSession,
 } from '../lib/open-ujat-survey-writing-preview'
+import { resolveSatisfactionSurveyDisplayTitle } from '@/features/program/shared/lib/survey-management/satisfaction-survey-display-title'
+import {
+  findSatisfactionScheduleById,
+  resolveSatisfactionCreateSubmissionPeriod,
+  resolveSatisfactionPreviewPeriod,
+  type SatisfactionFormEditPeriod,
+} from '@/features/program/shared/lib/survey-management/satisfaction-form-edit-period'
 import { UjatSurveyTemplateEditModal } from './ujat-survey-template-edit-modal'
 import {
   SurveyTemplateEditModal,
@@ -107,9 +114,11 @@ import {
   SURVEY_POLL_SCHEDULE_ALREADY_REGISTERED_MESSAGE,
   disableSurveyPollScheduleOptionsWithSurvey,
   isSurveyPollBindingTargetScheduleAlreadyRegistered,
+  pickLastSurveyPollEducationSlot,
 } from '@/features/program/shared/lib/survey-management/survey-poll-schedule-options'
 import { resolveUjatSurveyScheduleFieldFromOptions } from '../lib/ujat-survey-schedule-register'
 import { loadProgramSurveyFormEditAfterBinding } from '@/features/program/shared/lib/survey-management/load-program-survey-form-edit'
+import { isSatisfactionPerScheduleWritingPeriodLocked } from '@/features/program/shared/lib/survey-management/satisfaction-binding-contract'
 import { useProgramSurveyScheduleOptions } from '@/features/program/shared/hooks/use-program-survey-schedule-options'
 import { SurveyPollRegisterModal } from '@/features/program/shared/ui/survey-management/survey-poll-register-modal'
 import {
@@ -253,7 +262,13 @@ export function UjatSurveyManagementView({
   const openUjatSurveyTemplatePreview = useCallback(
     (
       survey: { id: string; templateId: string; title: string; bindingId?: string },
-      options?: { allowEdit?: boolean }
+      options?: {
+        allowEdit?: boolean
+        displayTitle?: string
+        overwriteTitle?: boolean
+        displayPeriod?: SatisfactionFormEditPeriod | null
+        lockWritingPeriodInput?: boolean
+      }
     ) => {
       const catalogRow = findWritingTemplateRowByDefinitionId(survey.templateId)
       const allowEdit = options?.allowEdit ?? true
@@ -271,8 +286,10 @@ export function UjatSurveyManagementView({
           : undefined
       void buildUjatSurveyWritingPreviewSession({
         templateId: survey.templateId,
-        title: survey.title,
+        title: options?.displayTitle ?? survey.title,
         versionId: survey.id,
+        overwriteTitle: options?.overwriteTitle,
+        displayPeriod: options?.displayPeriod,
         onEditForm,
       })
         .then(session => {
@@ -290,7 +307,12 @@ export function UjatSurveyManagementView({
                   ...session,
                   onEditForm: () => {
                     closeWritingUserPreview()
-                    setProgramFormEdit({ target: editTarget, initialDraft: session.draft })
+                    setProgramFormEdit({
+                      target: editTarget,
+                      initialDraft: session.draft,
+                      displayPeriod: options?.displayPeriod,
+                      lockWritingPeriodInput: options?.lockWritingPeriodInput,
+                    })
                   },
                 }
               : session
@@ -382,7 +404,7 @@ export function UjatSurveyManagementView({
     surveyCreateModalOpen || satisfactionCreateModalOpen || lectureEvalCreateModalOpen
   const surveyScheduleOptionsQuery = useProgramSurveyScheduleOptions(
     displayProgram,
-    registerScheduleModalOpen
+    registerScheduleModalOpen || isUjatSatisfactionSurveyTab(activeTab)
   )
   const registerScheduleOptions = useMemo(() => {
     const raw = surveyScheduleOptionsQuery.options ?? []
@@ -638,7 +660,8 @@ export function UjatSurveyManagementView({
           const editLoad = await loadProgramSurveyFormEditAfterBinding(
             String(displayProgram.id),
             result.binding,
-            selectedSurveyTemplateId
+            selectedSurveyTemplateId,
+            { schedules: surveyScheduleOptionsQuery.schedules }
           )
           setSurveyCreateModalOpen(false)
           setSelectedSurveyScheduleValue(null)
@@ -683,6 +706,7 @@ export function UjatSurveyManagementView({
     selectedSurveyTemplateId,
     showAlert,
     showUjatRegisterScheduleField,
+    surveyScheduleOptionsQuery.schedules,
     surveysRemote,
   ])
 
@@ -848,17 +872,28 @@ export function UjatSurveyManagementView({
           void showAlert({ title: '등록 실패', content: scheduleTarget.message })
           return
         }
+        const period = resolveSatisfactionCreateSubmissionPeriod(
+          findSatisfactionScheduleById(
+            surveyScheduleOptionsQuery.schedules,
+            scheduleTarget.target.targetScopeId
+          ) ?? pickLastSurveyPollEducationSlot(surveyScheduleOptionsQuery.schedules),
+          7
+        )
         const payload: ProgramFormBindingRequest = {
           formType: 'SATISFACTION',
           templateId: resolved.templateId,
           templateVersionId: resolved.templateVersionId,
-          submissionStartAt: resolved.submissionStartAt,
-          submissionEndAt: resolved.submissionEndAt,
+          ...(period ?? {}),
           targetRole,
           ...scheduleTarget.target,
           active: true,
           required: false,
-        }
+          duplicatePolicy: 'ONE_SUBMITTED_PER_CONTEXT',
+          satisfactionRunMode: 'PER_SCHEDULE',
+          satisfactionWindowDays: 7,
+          startAtLocked: false,
+          startImmediately: false,
+        } as ProgramFormBindingRequest
         const result = await createBinding(payload)
         if (!result.ok) {
           await invalidateSurveyCaches()
@@ -868,8 +903,19 @@ export function UjatSurveyManagementView({
         if (displayProgram != null && result.binding != null) {
           const editLoad = await loadProgramSurveyFormEditAfterBinding(
             String(displayProgram.id),
-            result.binding,
-            selectedSatisfactionTemplateId
+            {
+              ...result.binding,
+              formType: result.binding.formType ?? payload.formType,
+              targetScope: result.binding.targetScope ?? payload.targetScope,
+              targetScopeId: result.binding.targetScopeId ?? payload.targetScopeId,
+            },
+            selectedSatisfactionTemplateId,
+            {
+              schedules: surveyScheduleOptionsQuery.schedules,
+              windowDays: 7,
+              targetScope: result.binding.targetScope ?? payload.targetScope,
+              targetScopeId: result.binding.targetScopeId ?? payload.targetScopeId,
+            }
           )
           setSatisfactionCreateModalOpen(false)
           if (editLoad.ok) {
@@ -909,6 +955,7 @@ export function UjatSurveyManagementView({
     resolveRegisterScheduleTarget,
     selectedSatisfactionTemplateId,
     showAlert,
+    surveyScheduleOptionsQuery.schedules,
     surveysRemote,
   ])
 
@@ -956,8 +1003,26 @@ export function UjatSurveyManagementView({
     if (!activeSatisfactionSurvey) return
     openUjatSurveyTemplatePreview(activeSatisfactionSurvey, {
       allowEdit: canEditRegisteredSurveyForm(activeSatisfactionSurvey),
+      displayTitle: resolveSatisfactionSurveyDisplayTitle(
+        activeSatisfactionSurvey,
+        surveyScheduleOptionsQuery.schedules
+      ),
+      overwriteTitle: true,
+      displayPeriod: resolveSatisfactionPreviewPeriod(
+        activeSatisfactionSurvey,
+        surveyScheduleOptionsQuery.schedules
+      ),
+      lockWritingPeriodInput: isSatisfactionPerScheduleWritingPeriodLocked({
+        formType: 'SATISFACTION',
+        runMode: activeSatisfactionSurvey.satisfactionRunMode,
+        targetScope: activeSatisfactionSurvey.targetScope,
+      }),
     })
-  }, [activeSatisfactionSurvey, openUjatSurveyTemplatePreview])
+  }, [
+    activeSatisfactionSurvey,
+    openUjatSurveyTemplatePreview,
+    surveyScheduleOptionsQuery.schedules,
+  ])
 
   const handleShareSatisfactionSurvey = useCallback(() => {
     if (!activeSatisfactionSurvey || programId == null) return

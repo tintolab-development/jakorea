@@ -5,8 +5,10 @@ import type { AccountPaymentRow } from '@/features/settlement-management/model/a
 export const ACCOUNT_PAYMENT_EXPORT_STATUS_WAITING_PAYMENT = 'WAITING_PAYMENT' as const
 export const ACCOUNT_PAYMENT_EXPORT_STATUS_PAID = 'PAID' as const
 
-const EXPORT_REASON = '계좌 지급 확인 — 양식 발급'
-const EXPORT_BUSINESS_PURPOSE = '정산 관리 대량이체·세금신고 양식'
+const BULK_TRANSFER_EXPORT_REASON = '계좌 지급 확인 — 양식 발급 (대량이체 양식 발급)'
+const BULK_TRANSFER_EXPORT_BUSINESS_PURPOSE = '정산 관리 대량이체·세금신고 양식'
+const TAX_REPORT_EXPORT_REASON = '세금신고 양식 발급'
+const TAX_REPORT_EXPORT_BUSINESS_PURPOSE = '정산 관리 세금신고 양식'
 
 export type BuildAccountPaymentExportRequestInput = {
   fromDate?: string
@@ -48,27 +50,43 @@ function resolveSelectedIds(
 export function buildAccountPaymentExportRequest(
   input: BuildAccountPaymentExportRequestInput
 ): SettlementExportRequest {
-  const label =
-    input.kind === 'bulk-transfer' ? '대량이체 양식 발급' : '세금신고 양식 발급'
   const selectedIds =
     input.selection.kind === 'selected' ? resolveSelectedIds(input.selection.rows) : undefined
+
+  if (
+    input.kind === 'tax-report' &&
+    input.selection.kind === 'selected' &&
+    selectedIds?.settlementIds.length === 0
+  ) {
+    throw new Error('세금신고 선택 대상 정산 ID가 없습니다.')
+  }
+
+  const hasDateRange = Boolean(input.fromDate && input.toDate)
+  const shouldIncludeDateRange =
+    hasDateRange && (input.kind === 'bulk-transfer' || input.selection.kind === 'all')
+
   return {
     status:
       input.kind === 'bulk-transfer'
         ? ACCOUNT_PAYMENT_EXPORT_STATUS_WAITING_PAYMENT
         : ACCOUNT_PAYMENT_EXPORT_STATUS_PAID,
-    reason: `${EXPORT_REASON} (${label})`,
-    businessPurpose: EXPORT_BUSINESS_PURPOSE,
+    reason:
+      input.kind === 'bulk-transfer'
+        ? BULK_TRANSFER_EXPORT_REASON
+        : TAX_REPORT_EXPORT_REASON,
+    businessPurpose:
+      input.kind === 'bulk-transfer'
+        ? BULK_TRANSFER_EXPORT_BUSINESS_PURPOSE
+        : TAX_REPORT_EXPORT_BUSINESS_PURPOSE,
     rawPrivacyIncluded: false,
     settlementIds: selectedIds?.settlementIds ?? [],
     ...(input.kind === 'bulk-transfer'
       ? { accountPaymentIds: selectedIds?.accountPaymentIds ?? [] }
       : {}),
-    ...(input.fromDate || input.toDate
+    ...(shouldIncludeDateRange
       ? {
-          ...(input.fromDate ? { fromDate: input.fromDate } : {}),
-          ...(input.toDate ? { toDate: input.toDate } : {}),
-          dateRangeValid: true,
+          fromDate: input.fromDate,
+          toDate: input.toDate,
         }
       : {}),
   }
@@ -89,15 +107,20 @@ export function buildRawAccountPaymentExportRequest(input: {
 }): SettlementExportRequest {
   const approvalReference = input.approvalReference.trim()
   if (!approvalReference) throw new Error('승인 reference가 없습니다.')
-  const label = input.kind === 'bulk-transfer' ? '대량이체 양식 발급' : '세금신고 양식 발급'
   return {
-    reason: `${EXPORT_REASON} (${label})`,
-    businessPurpose: EXPORT_BUSINESS_PURPOSE,
+    reason:
+      input.kind === 'bulk-transfer'
+        ? BULK_TRANSFER_EXPORT_REASON
+        : TAX_REPORT_EXPORT_REASON,
+    businessPurpose:
+      input.kind === 'bulk-transfer'
+        ? BULK_TRANSFER_EXPORT_BUSINESS_PURPOSE
+        : TAX_REPORT_EXPORT_BUSINESS_PURPOSE,
     exportPolicy: RAW_PRIVACY_EXPORT_POLICY,
     rawPrivacyIncluded: true,
     approvalReference,
     settlementIds: [],
-    accountPaymentIds: [],
+    ...(input.kind === 'bulk-transfer' ? { accountPaymentIds: [] } : {}),
   }
 }
 

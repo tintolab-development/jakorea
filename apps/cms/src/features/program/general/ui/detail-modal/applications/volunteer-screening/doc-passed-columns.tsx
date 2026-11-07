@@ -5,6 +5,7 @@ import type { GeneralVolunteerApplicantRow } from '@/features/program/general/mo
 import { screeningApplicantNameLabel, type ScreeningSubjectKind } from '@/features/program/general/lib/screening-subject-kind'
 import { PARTICIPANT_APPLICANT_NAME_COL_WIDTH } from '@/features/program/general/lib/participant-screening-table-widths'
 import { canReassignVolunteerInterviewAssignment } from '@/features/program/shared/lib/volunteer-interview-reassign'
+import { isVolunteerAssignmentBlockedApplicationStatus } from './general-volunteer-applicant-guard-actions'
 import { GeneralInterviewAssignmentStatusText } from './status-text'
 
 const CENTER_CELL_CLASS = 'general-volunteer-doc-passed__center-cell'
@@ -87,6 +88,7 @@ export function useGeneralVolunteerDocPassedColumns({
           const isAssigned = record.interviewAssignmentStatus === 'assigned'
           const label = isAssigned ? '면접일 재배정' : '면접일 배정'
           const disabled =
+            isVolunteerAssignmentBlockedApplicationStatus(record.applicationStatus) ||
             record.interviewAssignmentStatus === 'withdrawn' ||
             (isAssigned && !canReassignVolunteerInterviewAssignment(record))
           return (

@@ -31,8 +31,10 @@ import {
   filterParticipatingVolunteerSettlementDownloadRows,
   getParticipatingVolunteerSettlementBulkDownloadErrorMessage,
 } from '@/features/program/general/lib/participating-volunteer-settlement-download'
-import { useParticipatingVolunteerPaymentStatementView } from '@/features/program/general/ui/detail-modal/program-status/participating-volunteer-payment-statement-view-container'
+import { volunteerToPaymentStatementInstructorShape } from '@/features/program/general/ui/detail-modal/program-status/participating-volunteer-payment-statement-view-container'
+import { useParticipatingInstructorPaymentStatementView } from '@/features/program/general/ui/detail-modal/program-status/participating-instructor-payment-statement-view-container'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
+import { useProtectedFileDownload } from '@/shared/lib/use-protected-file-download'
 import './participating-volunteer-settlement-section.css'
 
 function formatSettlementAmount(amount: number | null): string {
@@ -91,6 +93,7 @@ export function ParticipatingVolunteerSettlementSection({
   program,
 }: ParticipatingVolunteerSettlementSectionProps) {
   const { showAlert } = useCmsAlert()
+  const { runProtectedDownload, filePasswordModal } = useProtectedFileDownload()
   const programId = program?.id != null ? String(program.id) : ''
   const isIndividual = isGeneralIndividualProgram(program)
   const institutionNameOverride = isIndividual
@@ -120,11 +123,29 @@ export function ParticipatingVolunteerSettlementSection({
     }))
   }, [institutionNameOverride, rows])
 
-  const paymentStatementView = useParticipatingVolunteerPaymentStatementView({
-    volunteer,
+  /** 지급조서 보기 → 강사와 같은 산출 내역서(확인 처리 = 계좌 지급 예정일 모달) */
+  const statementInstructor = useMemo(
+    () => volunteerToPaymentStatementInstructorShape(volunteer),
+    [volunteer]
+  )
+  const paymentStatementView = useParticipatingInstructorPaymentStatementView({
+    instructor: statementInstructor,
     settlementItems,
-    institutionNameOverride,
+    programId,
+    programName: program.mainTitle?.trim() || program.title?.trim(),
+    hideInstitutionColumn: isIndividual,
   })
+  const openPaymentStatement = paymentStatementView.handleOpen
+  const handleOpenPaymentStatement = useCallback(
+    (record: ParticipatingVolunteerSettlementApiRow) =>
+      openPaymentStatement({
+        ...record,
+        settlementApplicationId:
+          settlementItems.find(item => item.settlementId === record.settlementId)
+            ?.settlementApplicationId ?? null,
+      }),
+    [openPaymentStatement, settlementItems]
+  )
 
   const [bulkDownloadLoading, setBulkDownloadLoading] = useState(false)
 
@@ -151,21 +172,33 @@ export function ParticipatingVolunteerSettlementSection({
       return
     }
 
-    setBulkDownloadLoading(true)
-    try {
-      await bulkDownloadParticipatingVolunteerPaymentStatements(downloadableRows)
-    } catch (error) {
-      handleError(error, {
-        context: 'participatingVolunteerSettlementSection.bulkDownloadPaymentStatements',
-      })
-      showAlert({
-        title: '안내',
-        content: getParticipatingVolunteerSettlementBulkDownloadErrorMessage(error),
-      })
-    } finally {
-      setBulkDownloadLoading(false)
-    }
-  }, [bulkDownloadLoading, downloadableRows, remoteEnabled, showAlert])
+    runProtectedDownload({
+      kind: 'PAYMENT_STATEMENT',
+      download: async password => {
+        setBulkDownloadLoading(true)
+        try {
+          await bulkDownloadParticipatingVolunteerPaymentStatements(
+            downloadableRows,
+            '지급조서_일괄',
+            {
+              password,
+            }
+          )
+        } catch (error) {
+          handleError(error, {
+            context: 'participatingVolunteerSettlementSection.bulkDownloadPaymentStatements',
+          })
+          showAlert({
+            title: '안내',
+            content: getParticipatingVolunteerSettlementBulkDownloadErrorMessage(error),
+          })
+          throw error
+        } finally {
+          setBulkDownloadLoading(false)
+        }
+      },
+    })
+  }, [bulkDownloadLoading, downloadableRows, remoteEnabled, runProtectedDownload, showAlert])
 
   const columns = useMemo(
     (): ColumnsType<ParticipatingVolunteerSettlementApiRow> => [
@@ -235,16 +268,18 @@ export function ParticipatingVolunteerSettlementSection({
           <div className="participating-volunteer-settlement-section__payment-statement-cell-inner">
             <CmsButton
               variant="default"
-              size="h40"
+              style={{ width: '100%' }}
+              size="h32"
               disabled={!remoteEnabled}
-              onClick={() => paymentStatementView.handleOpen(record)} >
+              onClick={() => handleOpenPaymentStatement(record)}
+            >
               지급조서 보기
             </CmsButton>
           </div>
         ),
       },
     ],
-    [paymentStatementView.handleOpen, remoteEnabled]
+    [handleOpenPaymentStatement, remoteEnabled]
   )
 
   return (
@@ -277,13 +312,15 @@ export function ParticipatingVolunteerSettlementSection({
             size="h40"
             icon={<ButtonDownloadIcon />}
             disabled={!remoteEnabled || bulkDownloadLoading || downloadableRows.length === 0}
-            onClick={() => void handleBulkDownloadPaymentStatements()} >
+            onClick={() => void handleBulkDownloadPaymentStatements()}
+          >
             지급조서 일괄 다운로드
           </CmsButton>
           <ExcelButton
             onClick={exportExcel}
             loading={isExcelExporting}
-            disabled={displayRows.length === 0} />
+            disabled={displayRows.length === 0}
+          />
         </div>
       </div>
 
@@ -302,6 +339,7 @@ export function ParticipatingVolunteerSettlementSection({
       </div>
 
       {paymentStatementView.modal}
+      {filePasswordModal}
     </div>
   )
 }

@@ -27,7 +27,7 @@ const detail = {
                 excludeNone: false,
                 excludeSaturday: true,
                 excludeSunday: false,
-                excludePublicHoliday: true,
+                excludeHoliday: true,
               },
             },
           ],

@@ -194,13 +194,13 @@ describe('instructor-lecture-assign-schedule', () => {
       expect(parsed.slotsByDateKey.size).toBe(0)
     })
 
-    it('차시 라벨은 sessionNo만 쓰고, 시간은 시작~종료로 표기한다', () => {
+    it('회차 라벨은 sessionNo만 쓰고, 시간은 시작~종료로 표기한다', () => {
       const [slot] =
         parseInstructorLectureAssignScheduleFromInstitutions(
           [org('1', 10, [assignedSession({ sessionNo: 5, round: 1 })])],
           { sessionSource: 'assigned' }
         ).slotsByDateKey.get('2026-10-27') ?? []
-      expect(slot?.sessionLabel).toBe('5차시')
+      expect(slot?.sessionLabel).toBe('5회차')
       expect(slot?.timeRange).toBe('09:00 ~ 09:40')
     })
 

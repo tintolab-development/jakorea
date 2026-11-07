@@ -6,7 +6,10 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * 설문/만족도 응답 키. 둘 다 있어야 유효하며 없으면 상위 필드가 null.
+ */
 export interface FormResponseRef {
-  templateVersionId?: number;
-  formResponseId?: number;
+  templateVersionId: number;
+  formResponseId: number;
 }

@@ -89,8 +89,7 @@
   border-radius: 0;
 }
 
-.ja-history-preview--card .ant-image,
-.ja-history-preview--card .ant-image .ant-image-img {
+.ja-history-preview--card img {
   width: 100%;
   height: 100%;
   max-width: none;
@@ -190,12 +189,6 @@
   white-space: pre-line;
 }
 
-.ja-history-inline-field.cms-textarea--fixed-rows .cms-textarea__inner textarea.ant-input {
-  resize: none !important;
-  overflow-x: hidden;
-  overflow-y: auto;
-}
-
 .ja-history-preview {
   position: relative;
   width: auto;
@@ -210,20 +203,10 @@
   border: 1px solid var(--table-line, #e0e0e0);
   border-radius: 4px;
   background: #fff;
-  cursor: pointer;
   line-height: 0;
 }
 
-.ja-history-preview .ant-image {
-  display: flex;
-  width: 100%;
-  height: auto;
-  max-width: 100%;
-  min-width: 0;
-  line-height: 0;
-}
-
-.ja-history-preview .ant-image .ant-image-img {
+.ja-history-preview img {
   display: block;
   width: 100%;
   height: auto;
@@ -231,11 +214,6 @@
   max-width: 100%;
   max-height: none;
   object-fit: contain;
-}
-
-.ja-history-preview .ant-image-mask {
-  position: absolute;
-  inset: 0;
 }
 
 .ja-history-preview--mark {
@@ -274,12 +252,9 @@
   overflow: hidden;
 }
 
-.ja-history-preview--hero .ant-image,
-.ja-history-preview--hero .ant-image .ant-image-img,
-.ja-history-preview--origin .ant-image,
-.ja-history-preview--origin .ant-image .ant-image-img,
-.ja-history-preview--cta .ant-image,
-.ja-history-preview--cta .ant-image .ant-image-img {
+.ja-history-preview--hero img,
+.ja-history-preview--origin img,
+.ja-history-preview--cta img {
   width: 100%;
   height: 100%;
   max-width: none;
@@ -323,8 +298,7 @@
   overflow: hidden;
 }
 
-.ja-history-preview--thumb .ant-image,
-.ja-history-preview--thumb .ant-image .ant-image-img {
+.ja-history-preview--thumb img {
   width: 100%;
   height: 100%;
   max-width: none;
@@ -754,28 +728,15 @@
   color: var(--color-text-tertiary, #9e9e9e);
   font-size: 12px;
   font-weight: 500;
-  cursor: pointer;
   line-height: 0;
   box-sizing: border-box;
 }
 
-.ja-history-modal__preview .ant-image {
-  display: flex;
-  width: 100%;
-  height: 100%;
-  line-height: 0;
-}
-
-.ja-history-modal__preview .ant-image .ant-image-img {
+.ja-history-modal__preview img {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-
-.ja-history-modal__preview .ant-image-mask {
-  position: absolute;
-  inset: 0;
 }
 
 .ja-history-modal__file-field {
@@ -799,9 +760,13 @@
 .ja-history-modal .file-select-field__actions {
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 16px;
+}
+
+.ja-history-modal .file-select-image-cell .file-select-field__guide-line {
+  white-space: nowrap;
 }
 
 .ja-history-modal
@@ -863,8 +828,4 @@
   color: var(--color-error, #e11d2e);
   font-size: 13px;
   line-height: 150%;
-}
-
-.ja-history-modal .cms-textarea--fixed-rows .cms-textarea__inner textarea.ant-input {
-  resize: none;
 }

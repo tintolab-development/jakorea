@@ -17,9 +17,11 @@ export interface PaymentItemResponse {
   useYn?: boolean;
   iconKey?: string;
   emojiOverride?: string;
+  /** transport | lodging | meal | activity. ACTIVITY는 activity만. volunteerActivity는 읽기 alias */
   layout?: string;
   maxLimitWon?: number;
   description?: string;
+  /** 지급요건/비고는 detailJson.qualificationLines / remarkLines 전용. 교통 minOneWayKm·minDistanceKm dual-write */
   detailJson?: string;
   /** 정산 신청 가능 payee 역할. INSTRUCTOR|STUDENT|PARTICIPANT_INDIVIDUAL|PARTICIPANT_ORGANIZATION */
   eligiblePayeeTypes?: string[] | null;

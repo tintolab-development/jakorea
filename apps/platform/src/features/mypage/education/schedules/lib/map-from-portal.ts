@@ -8,9 +8,11 @@ import type {
 } from '../../applications/api/activity-client'
 import type { ProgramApplicationType } from '../../applications/api/types'
 import {
+  EDUCATION_SCHEDULE_EMPTY_LABEL,
   resolveEducationScheduleCommonInfoLabel,
   resolveEducationScheduleRowLabel,
 } from './common-info-label.ts'
+import { isTrainedTeacherOrganizationSchedule } from './trained-teacher-organization.ts'
 import {
   stripDefaultEducationSlotNameFromLabel,
   toDisplayEducationScheduleName,
@@ -54,10 +56,14 @@ function optionalText(value: string | null | undefined): string | undefined {
   return trimmed ? trimmed : undefined
 }
 
-function mapAvailableActions(values: readonly string[] | undefined): string[] | undefined {
+function mapAvailableActions(
+  values: readonly string[] | undefined,
+  applicationType?: ProgramApplicationType | null,
+): string[] | undefined {
   const actions = (values ?? [])
     .map(value => value.trim().toUpperCase())
     .filter(value => value.length > 0)
+    .filter(value => !(applicationType === 'ORGANIZATION' && value === 'CHECK_IN'))
   return actions.length > 0 ? [...new Set(actions)] : undefined
 }
 
@@ -224,10 +230,30 @@ export type MapPortalEducationScheduleMeta = {
   educationStructure?: PortalEducationStructure | null
   sessionRound?: PortalSessionRound | null
   applicationType?: ProgramApplicationType | null
+  programType?: string | null
+}
+
+function resolveOperationalDayRowLabel(
+  sessionLabel: string | undefined,
+  preferenceRank: number | undefined,
+): string {
+  if (sessionLabel) return sessionLabel
+  if (preferenceRank != null) return `${preferenceRank}지망`
+  return EDUCATION_SCHEDULE_EMPTY_LABEL
+}
+
+/** 이 행(portal item)의 groupTimes 슬롯 수. sessionNo·커리큘럼 차시로 접지 않고, 다른 지망 item과 합치지 않는다. */
+function resolveOperationalDayDurationLabel(
+  groupTimes: PortalEducationScheduleGroupTime[] | undefined,
+): string {
+  const slotCount = (groupTimes ?? []).filter(
+    slot => Boolean(slot.startTime?.trim()) || Boolean(slot.endTime?.trim()),
+  ).length
+  return `${slotCount > 0 ? slotCount : 1}차시`
 }
 
 /**
- * 신청 GET .../schedules → 교육일정 탭 행.
+ * 신청 GET .../schedules → 교육일정 탭 행. 행 수 = items 수(배정 집합).
  * startAt이 없어도 매핑은 유지한다. 화면은 scheduleId 있는 배정 일정만 노출한다.
  * assignment.enabled가 true가 아니면 과제 블록 omit.
  * 카드 청록 라벨은 공통정보(차시/단원명/일정명)만 쓴다.
@@ -238,25 +264,46 @@ export function mapPortalEducationSchedule(
   index: number,
   meta?: MapPortalEducationScheduleMeta,
 ): EducationScheduleItem {
-  const sessionNumber = item.sessionNo ?? index + 1
+  const operationalDayView = isTrainedTeacherOrganizationSchedule(
+    meta?.applicationType,
+    meta?.programType,
+  )
+  const sessionNumber =
+    item.sessionNo != null && Number.isSafeInteger(item.sessionNo) && item.sessionNo > 0
+      ? item.sessionNo
+      : operationalDayView
+        ? 0
+        : index + 1
   // 백엔드 자동 기본명(`공통 교육 예정 N`)은 회차·일정 라벨로 쓰지 않는다.
   const sessionLabel = toDisplayEducationScheduleName(item.sessionLabel)
   const scheduleLabel = optionalText(stripDefaultEducationSlotNameFromLabel(item.scheduleLabel))
-  const title = resolveEducationScheduleCommonInfoLabel({
-    educationStructure: meta?.educationStructure,
-    sessionRound: meta?.sessionRound,
-    unitName: item.unitName,
-    scheduleName: item.scheduleName,
-    title: item.title,
-    sessionLabel: item.sessionLabel,
-  })
-  const rowLabel = resolveEducationScheduleRowLabel({
-    educationStructure: meta?.educationStructure,
-    sessionLabel: item.sessionLabel,
-    scheduleName: item.scheduleName,
-    title: stripDefaultEducationSlotNameFromLabel(item.title),
-    blockKind: item.blockKind,
-  })
+  const preferenceRank = positiveInteger(item.preferenceRank)
+  const title = operationalDayView
+    ? resolveOperationalDayRowLabel(sessionLabel, preferenceRank)
+    : resolveEducationScheduleCommonInfoLabel({
+        educationStructure: meta?.educationStructure,
+        sessionRound: meta?.sessionRound,
+        unitName: item.unitName,
+        scheduleName: item.scheduleName,
+        title: item.title,
+        sessionLabel: item.sessionLabel,
+      })
+  const mappedRowLabel = operationalDayView
+    ? resolveOperationalDayRowLabel(sessionLabel, preferenceRank)
+    : resolveEducationScheduleRowLabel({
+        educationStructure: meta?.educationStructure,
+        sessionLabel: item.sessionLabel,
+        scheduleName: item.scheduleName,
+        title: stripDefaultEducationSlotNameFromLabel(item.title),
+        blockKind: item.blockKind,
+      })
+  const preferenceLabel = preferenceRank != null ? `${preferenceRank}지망` : undefined
+  const rowLabel =
+    operationalDayView
+      ? mappedRowLabel
+      : mappedRowLabel !== '-'
+        ? mappedRowLabel
+        : preferenceLabel ?? mappedRowLabel
   const heldAt = optionalText(item.startAt ?? undefined) ?? ''
   const endAt = optionalText(item.endAt ?? undefined)
   const progressTimeLabel =
@@ -270,7 +317,7 @@ export function mapPortalEducationSchedule(
   const assignmentAllowed =
     meta?.applicationType !== 'INSTRUCTOR' && meta?.applicationType !== 'VOLUNTEER'
   const assignment = assignmentAllowed ? mapAssignment(item.assignment) : undefined
-  const availableActions = mapAvailableActions(item.availableActions)
+  const availableActions = mapAvailableActions(item.availableActions, meta?.applicationType)
   const assignmentStatus = optionalText(item.assignmentStatus ?? undefined)
   const scheduleStatus = optionalText(item.scheduleStatus)
   const classLabel = optionalText(item.classLabel)
@@ -284,7 +331,9 @@ export function mapPortalEducationSchedule(
     attendanceStatus === 'present' ||
     attendanceStatus === 'late'
   const absenceReason = hideAbsenceReason ? undefined : optionalText(item.absenceReason)
-  const curriculumSessions = mapCurriculumSessions(item.curriculumSessions)
+  const curriculumSessions = operationalDayView
+    ? undefined
+    : mapCurriculumSessions(item.curriculumSessions)
 
   return {
     id,
@@ -298,6 +347,13 @@ export function mapPortalEducationSchedule(
     ...(endAt ? { endAt } : {}),
     title,
     rowLabel,
+    ...(preferenceRank != null ? { preferenceRank } : {}),
+    ...(operationalDayView
+      ? {
+          operationalDayView: true,
+          durationLabel: resolveOperationalDayDurationLabel(item.groupTimes),
+        }
+      : {}),
     attendanceStatus,
     ...(absenceReason ? { absenceReason } : {}),
     ...(absenceReasonStatus ? { absenceReasonStatus } : {}),

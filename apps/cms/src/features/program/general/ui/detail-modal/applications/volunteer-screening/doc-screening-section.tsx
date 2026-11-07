@@ -5,10 +5,12 @@ import {
   FilterTableToolbarButton,
 } from '@/shared/ui'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
-import { IndividualApproveScopeModal } from '@/features/program/general/ui/detail-modal/applications/individual-approve-scope-modal'
 import { ProgramApplicationRejectModal } from '@/features/program/shared/ui/detail-modal/components/program-application-reject-modal'
 import { NOTIFY_TIMING_CAPABILITY } from '@/shared/lib/notify-timing-capability'
-import { GeneralVolunteerApplicationBulkApproveModal } from './general-volunteer-application-bulk-approve-modal'
+import {
+  GeneralVolunteerApplicationApproveModal,
+  GeneralVolunteerApplicationBulkApproveModal,
+} from './general-volunteer-application-bulk-approve-modal'
 import { canSelectVolunteerApplicationForDecision } from './general-volunteer-application-decision-actions'
 import { GeneralVolunteerDocumentApproveModal } from './general-volunteer-document-approve-modal'
 import { GeneralVolunteerDocumentBulkApproveModal } from './general-volunteer-document-bulk-approve-modal'
@@ -71,10 +73,7 @@ export function GeneralVolunteerDocScreeningSection({
     openApproveModal,
     openRejectModal,
     handleApproveModalConfirm,
-    handleApplicationApproveConfirm,
     handleRejectModalConfirm,
-    approvePreferredSchedules,
-    approveConfirmLoading,
     bulkApproveSubjectName,
     bulkRejectSubjectName,
     cancelApprovalVolunteer,
@@ -149,19 +148,12 @@ export function GeneralVolunteerDocScreeningSection({
     </>
   ) : (
     <>
-      {program ? (
-        <IndividualApproveScopeModal
-          open={approveModalVolunteer != null}
-          participantName={approveModalVolunteer?.name ?? ''}
-          programId={programId}
-          program={program}
-          preferredEducationSchedules={approvePreferredSchedules}
-          confirmLoading={approveConfirmLoading}
-          scheduleAssignmentAudience="volunteer"
-          onCancel={closeApproveModal}
-          onConfirm={handleApplicationApproveConfirm}
-        />
-      ) : null}
+      <GeneralVolunteerApplicationApproveModal
+        open={approveModalVolunteer != null}
+        volunteerName={approveModalVolunteer?.name ?? ''}
+        onCancel={closeApproveModal}
+        onConfirm={handleApproveModalConfirm}
+      />
       <ProgramApplicationRejectModal
         open={rejectModalVolunteer != null}
         audience="member"

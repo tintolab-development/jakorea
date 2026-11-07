@@ -1,52 +1,46 @@
 /**
- * 클라이언트 발급 문서(엑셀·지급조서·작성/발급 양식 PDF 등) 감사 로그 POST.
+ * 클라이언트 blob 다운로드 감사 로그 POST.
  *
  * BE 계약: `POST /api/admin/logs/file-access/client`
- * @see apps/cms/docs/api/client-file-access-log-backend-handoff.md
- *
- * GET `/api/admin/logs/file-access` 에 POST 하지 말 것 (스테이징 405).
+ * 성공 200 `data` 는 항상 null. 503 `AUDIT_LOG_UNAVAILABLE` 은 호출부가 서버 문구로 안내하고 파일을 저장하지 않는다.
+ * GET `/api/admin/logs/file-access` 에 POST 하지 말 것.
  */
 
 import { customInstance } from '@/shared/api/orval-mutator'
 
-/** BE handoff 확정 path — GET file-access 와 다름 */
+/** BE 확정 path — GET file-access 와 다름 */
 export const FILE_ACCESS_LOG_CREATE_PATH = '/api/admin/logs/file-access/client'
+
+const FILE_ACCESS_LOG_STRING_MAX = 255
 
 export type PostFileAccessLogBody = {
   fileName: string
   userAgent?: string
-  ipAddress?: string
 }
 
 export type PostFileAccessLogResult = {
   id?: string
 }
 
-function unwrapCreatedLogId(payload: unknown): string | undefined {
-  const body =
-    payload != null && typeof payload === 'object' && 'success' in payload && 'data' in payload
-      ? (payload as { data: unknown }).data
-      : payload
-  if (body == null || typeof body !== 'object') return undefined
-  const id = (body as { id?: unknown }).id
-  if (typeof id === 'string' && id.trim()) return id.trim()
-  if (typeof id === 'number' && Number.isFinite(id)) return String(id)
-  return undefined
+function clipLogField(value: string): string {
+  return value.length <= FILE_ACCESS_LOG_STRING_MAX
+    ? value
+    : value.slice(0, FILE_ACCESS_LOG_STRING_MAX)
 }
 
 export async function postFileAccessLog(
   body: PostFileAccessLogBody
 ): Promise<PostFileAccessLogResult> {
-  const fileName = body.fileName.trim()
+  const fileName = clipLogField(body.fileName.trim())
   if (!fileName) {
     throw new Error('다운로드 파일명이 없습니다.')
   }
+  const userAgent = body.userAgent?.trim()
   const payload: PostFileAccessLogBody = {
     fileName,
-    ...(body.userAgent?.trim() ? { userAgent: body.userAgent.trim() } : {}),
-    ...(body.ipAddress?.trim() ? { ipAddress: body.ipAddress.trim() } : {}),
+    ...(userAgent ? { userAgent: clipLogField(userAgent) } : {}),
   }
-  const response = await customInstance<unknown>(
+  await customInstance<unknown>(
     {
       url: FILE_ACCESS_LOG_CREATE_PATH,
       method: 'POST',
@@ -55,5 +49,5 @@ export async function postFileAccessLog(
     },
     { skipGlobalErrorAlert: true }
   )
-  return { id: unwrapCreatedLogId(response) }
+  return {}
 }

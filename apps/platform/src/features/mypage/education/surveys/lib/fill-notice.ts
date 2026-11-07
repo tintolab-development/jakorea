@@ -29,7 +29,7 @@ export function resolveEducationSurveyFillNotice(options: {
   if (options.status === 'submitted' && !options.rewriteRequested) {
     return { type: 'submitted' }
   }
-  if (options.periodBlockReason === 'not_started') {
+  if (options.periodBlockReason === 'not_started' && options.canWrite !== true) {
     return { type: 'period', reason: 'not_started' }
   }
   if (options.canShowFormBody) {

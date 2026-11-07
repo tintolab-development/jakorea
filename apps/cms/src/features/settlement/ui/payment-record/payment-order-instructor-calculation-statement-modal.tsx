@@ -14,6 +14,7 @@ export interface PaymentOrderInstructorCalculationStatementModalProps {
   loadError?: unknown
   paymentOrdersRemote?: boolean
   statementId?: number | null
+  settlementId?: number | null
   detailContextQuery?: import('@/features/settlement-management/hooks/use-payment-orders-detail-query').PaymentOrdersDetailContextQueryResult
   onStatementLineCommitted?: (payload: PaymentOrderCalculationStatementCommitPayload) => void
   onAfterRejectResultClosed?: () => void

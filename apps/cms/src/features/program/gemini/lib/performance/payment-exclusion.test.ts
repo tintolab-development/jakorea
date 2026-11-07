@@ -2,32 +2,37 @@ import { describe, expect, it } from 'vitest'
 import {
   displayGeminiPaymentExclusionCell,
   formatGeminiPaymentExclusionReason,
+  isGeminiInstructorExternalPayeeExclusion,
   isGeminiInstructorIdentityBlankExclusion,
-  isGeminiInstructorNotMatchedExclusion,
-  isGeminiInstructorSoftPaymentExclusion,
+  isGeminiInstructorPerformanceOnlyExclusion,
 } from './payment-exclusion'
 
 describe('payment-exclusion', () => {
   it('labels IDENTITY_BLANK as performance-only', () => {
     expect(formatGeminiPaymentExclusionReason('GEMINI_INSTRUCTOR_IDENTITY_BLANK')).toBe(
-      '강사 정보 미기재 (실적만 등록, 지급 없음)'
+      '강사 정보 미기재 (실적만 등록, 계좌 지급 제외)'
     )
     expect(isGeminiInstructorIdentityBlankExclusion('GEMINI_INSTRUCTOR_IDENTITY_BLANK')).toBe(
       true
     )
-    expect(isGeminiInstructorNotMatchedExclusion('GEMINI_INSTRUCTOR_IDENTITY_BLANK')).toBe(false)
+    expect(isGeminiInstructorExternalPayeeExclusion('GEMINI_INSTRUCTOR_IDENTITY_BLANK')).toBe(false)
   })
 
-  it('labels NOT_MATCHED separately from IDENTITY_BLANK', () => {
-    expect(formatGeminiPaymentExclusionReason('GEMINI_INSTRUCTOR_NOT_MATCHED')).toBe(
-      '강사 회원 미매칭 (실적만 등록, 지급·정산 없음)'
+  it('labels EXTERNAL_PAYEE as performance-only without opening payout flow', () => {
+    expect(formatGeminiPaymentExclusionReason('GEMINI_INSTRUCTOR_EXTERNAL_PAYEE')).toBe(
+      '외부 지급처 (실적만 등록, 계좌 지급 제외)'
     )
-    expect(displayGeminiPaymentExclusionCell('GEMINI_INSTRUCTOR_NOT_MATCHED')).toBe(
-      '강사 회원 미매칭 (실적만 등록, 지급·정산 없음)'
+    expect(displayGeminiPaymentExclusionCell('GEMINI_INSTRUCTOR_EXTERNAL_PAYEE')).toBe(
+      '외부 지급처 (실적만 등록, 계좌 지급 제외)'
     )
-    expect(isGeminiInstructorNotMatchedExclusion('GEMINI_INSTRUCTOR_NOT_MATCHED')).toBe(true)
-    expect(isGeminiInstructorIdentityBlankExclusion('GEMINI_INSTRUCTOR_NOT_MATCHED')).toBe(false)
-    expect(isGeminiInstructorSoftPaymentExclusion('GEMINI_INSTRUCTOR_NOT_MATCHED')).toBe(true)
+    expect(isGeminiInstructorExternalPayeeExclusion('GEMINI_INSTRUCTOR_EXTERNAL_PAYEE')).toBe(true)
+    expect(isGeminiInstructorIdentityBlankExclusion('GEMINI_INSTRUCTOR_EXTERNAL_PAYEE')).toBe(false)
+    expect(isGeminiInstructorPerformanceOnlyExclusion('GEMINI_INSTRUCTOR_EXTERNAL_PAYEE')).toBe(true)
+  })
+
+  it('does not treat NOT_MATCHED as a payment exclusion', () => {
+    expect(formatGeminiPaymentExclusionReason('GEMINI_INSTRUCTOR_NOT_MATCHED')).toBeUndefined()
+    expect(isGeminiInstructorPerformanceOnlyExclusion('GEMINI_INSTRUCTOR_NOT_MATCHED')).toBe(false)
   })
 
   it('shows dash when paymentExclusionReason is null', () => {

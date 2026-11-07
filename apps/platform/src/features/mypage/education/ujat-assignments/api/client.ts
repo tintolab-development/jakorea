@@ -17,48 +17,36 @@ function applicationPath(applicationType: ProgramApplicationType, applicationId:
   return `${APPLICATIONS_PATH}/${applicationType}/${applicationId}`
 }
 
+/** OpenAPI `MemberPortalUjatClassAssignmentRow` */
 export type PortalUjatClassAssignmentRow = {
   slotId?: number | null
-  scheduleId?: number | null
-  scheduleStartAt?: string | null
-  date?: string | null
   grade?: string | null
   gradeLabel?: string | null
   className?: string | null
   classLabel?: string | null
-  classNo?: number | string | null
+  classNo?: string | number | null
   volunteerAName?: string | null
   volunteerBName?: string | null
-  volunteerA?: string | null
-  volunteerB?: string | null
   textbookName?: string | null
+  /** 학급 학생 수. 교재 준비수량이 아님. 표 컬럼에 쓰지 않는다. */
+  studentCount?: number | null
   textbookQuantity?: number | null
   textbookQuantityLabel?: string | null
-  studentCount?: number | null
-  attendanceManagerName?: string | null
-  attendanceManager?: string | null
-  consentDocumentsDownloadPath?: string | null
-  downloadPath?: string | null
 }
 
+/** OpenAPI `MemberPortalUjatClassAssignmentSchedule` */
 export type PortalUjatClassAssignmentSchedule = {
   scheduleId?: number | null
   scheduleStartAt?: string | null
   date?: string | null
   attendanceManagerName?: string | null
-  attendanceManager?: string | null
   consentDocumentsDownloadPath?: string | null
-  downloadPath?: string | null
   rows?: PortalUjatClassAssignmentRow[]
-  slots?: PortalUjatClassAssignmentRow[]
-  classes?: PortalUjatClassAssignmentRow[]
 }
 
+/** OpenAPI `MemberPortalUjatClassAssignmentsResponse` */
 export type PortalUjatClassAssignmentsResponse = {
   schedules?: PortalUjatClassAssignmentSchedule[]
-  items?: PortalUjatClassAssignmentSchedule[] | PortalUjatClassAssignmentRow[]
-  content?: PortalUjatClassAssignmentSchedule[] | PortalUjatClassAssignmentRow[]
-  slots?: PortalUjatClassAssignmentRow[]
 }
 
 /**

@@ -14,10 +14,34 @@ import type {
 } from '@/features/program/general/lib/build-registration-create-form-bindings'
 import { loadRegistrationWizardFormDraft } from '@/features/program/general/lib/registration-wizard-form-draft'
 import { resolveRegistrationProgramDraftProgramType } from '@/features/program/general/lib/resolve-program-api-type-for-draft'
+import {
+  peekDirtyTrainedTeachersApplicationOverlayRecord,
+  peekDirtyTrainedTeachersRecruitmentOverlayRecord,
+} from '@/features/program/trained-teachers/lib/registration-rhf-api'
+import {
+  peekActiveUjatRecruitInstitutionOverlayRecord,
+  peekActiveUjatRecruitVolunteerOverlayRecord,
+} from '@/features/program/ujat/lib/ujat-registration-rhf-api'
 
 /** 수정하지 않은 신청 양식도 프로그램 전용 COPY로 발행해야 하는 프로그램 유형(GENERAL만). */
 function shouldAlwaysApplyApplicationForms(program: Program): boolean {
   return resolveProgramOperationalBindingKind(program) === 'GENERAL'
+}
+
+function overlayRecordHasUserValues(record: Record<string, unknown> | null | undefined): boolean {
+  if (record == null) return false
+  return Object.entries(record).some(([key, value]) => {
+    if (key.toLowerCase().includes('announcementpublished') && value === true) return false
+    if (value == null) return false
+    if (typeof value === 'string') return value.trim() !== ''
+    if (typeof value === 'boolean') return value
+    if (typeof value === 'number') return Number.isFinite(value)
+    if (Array.isArray(value)) return value.length > 0
+    if (typeof value === 'object') {
+      return overlayRecordHasUserValues(value as Record<string, unknown>)
+    }
+    return true
+  })
 }
 
 export type RegistrationFormFlushInput = {
@@ -90,17 +114,22 @@ export async function prepareRegistrationCreateFormBindings(args: {
     }
 
     const overlay =
-      spec.templateCode === 'recruitment-trained-teachers' ||
-      spec.templateCode === 'application-trained-teachers'
-        ? null
-        : collectOperationalOverlayForCatalogId(spec.templateCode)
+      spec.templateCode === 'recruitment-trained-teachers'
+        ? peekDirtyTrainedTeachersRecruitmentOverlayRecord()
+        : spec.templateCode === 'application-trained-teachers'
+          ? peekDirtyTrainedTeachersApplicationOverlayRecord()
+          : spec.templateCode === 'recruitment-ujat-school'
+            ? peekActiveUjatRecruitInstitutionOverlayRecord()
+            : spec.templateCode === 'recruitment-ujat-volunteer'
+              ? peekActiveUjatRecruitVolunteerOverlayRecord()
+              : collectOperationalOverlayForCatalogId(spec.templateCode)
     const wizardSaved = await loadRegistrationWizardFormDraft({
       programType: programDraftType,
       templateCode: spec.templateCode,
     })
     const hasWizardOperationalDraft =
       wizardSaved?.draft != null && wizardSaved.draft.paragraphs.length > 0
-    const hasOverlay = overlay != null && Object.keys(overlay).length > 0
+    const hasOverlay = overlayRecordHasUserValues(overlay)
     if (!hasWizardOperationalDraft && !hasOverlay) {
       // 수정하지 않은 GENERAL 신청 양식: 본문 없이 담아 두면 `applyOne`이 바인딩된 카탈로그 버전 본문을
       // (loadFormTemplateVersionDraftByVersionId → createSeedDraftForOperationalCatalogId 순) 채워 COPY·발행한다.

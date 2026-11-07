@@ -34,7 +34,13 @@ export type IsolatedNetworkLog = {
   programDraftRequests: string[]
 }
 
-export type IsolatedFailMode = 'none' | 'put' | 'publish' | 'create' | 'portalPost'
+export type IsolatedFailMode = 'none' | 'put' | 'publish' | 'create' | 'portalPost' | 'infoDetail'
+
+export type IsolatedTtSeed = {
+  program: Record<string, unknown>
+  infoDetail?: Record<string, unknown>
+  sponsors?: Array<Record<string, unknown>>
+}
 
 const LOCAL_HOSTS = new Set(['127.0.0.1', 'localhost'])
 const STUBBED_EXTERNAL_HOSTS = new Set([
@@ -130,6 +136,28 @@ function emptyPage<T>(items: T[] = []) {
     size: 20,
     totalElements: items.length,
     totalPages: 1,
+  }
+}
+
+/** 격리 E2E에서 세션 경고 모달이 클릭을 가로채지 않도록 유휴·절대 만료를 충분히 남긴다. */
+function adminAuthSessionStatus() {
+  const nowMs = Date.now()
+  const iso = (ms: number) => new Date(ms).toISOString()
+  return {
+    sessionStartedAt: iso(nowMs - 60_000),
+    lastUserActivityAt: iso(nowMs),
+    serverNow: iso(nowMs),
+    absoluteExpiresAt: iso(nowMs + 12 * 60 * 60 * 1000),
+    idleExpiresAt: iso(nowMs + 30 * 60 * 1000),
+    refreshIdleExpiresAt: iso(nowMs + 30 * 60 * 1000),
+    idlePolicyEnforced: true,
+  }
+}
+
+function adminAuthActivityStatus() {
+  return {
+    lastUserActivityAt: new Date().toISOString(),
+    updated: true,
   }
 }
 
@@ -348,6 +376,18 @@ function persistProgramPatch(store: IsolatedProgramStore, body: Record<string, u
   store.program = next
 }
 
+function overlayInfoConfigJson(prevRaw: unknown, incomingRaw: unknown): string {
+  const prev = parseJsonObject(prevRaw)
+  const incoming = parseJsonObject(incomingRaw)
+  const prevCommon = parseJsonObject(prev.generalCommonInfo)
+  const nextCommon = parseJsonObject(incoming.generalCommonInfo)
+  return JSON.stringify({
+    ...prev,
+    ...incoming,
+    generalCommonInfo: { ...prevCommon, ...nextCommon },
+  })
+}
+
 function persistInfoDetailPatch(store: IsolatedProgramStore, body: Record<string, unknown>) {
   store.infoDetail = {
     ...store.infoDetail,
@@ -365,18 +405,22 @@ function persistInfoDetailPatch(store: IsolatedProgramStore, body: Record<string
         ? body.teacherTrainingScheduleName
         : store.infoDetail.teacherTrainingScheduleName,
     configJson:
-      typeof body.configJson === 'string' ? body.configJson : store.infoDetail.configJson,
+      typeof body.configJson === 'string'
+        ? overlayInfoConfigJson(store.infoDetail.configJson, body.configJson)
+        : store.infoDetail.configJson,
     updatedAt: new Date().toISOString(),
   }
 }
 
 function isAllowedGet(pathname: string): boolean {
   if (pathname === '/api/admin/me') return true
+  if (pathname === '/api/admin/auth/session') return true
   if (pathname === '/api/admin/programs') return true
   if (pathname === '/api/admin/programs/overview-stages') return true
   if (pathname === '/api/admin/sponsors') return true
   if (pathname === '/api/admin/detailed-programs') return true
   if (pathname === '/api/admin/form-templates') return true
+  if (pathname === '/api/admin/applications/counts') return true
   if (pathname === '/api/admin/form-templates/create-options') return true
   if (pathname === '/api/admin/notifications') return true
   if (pathname === '/api/admin/me/dashboard-preferences') return true
@@ -401,6 +445,7 @@ function isAllowedGet(pathname: string): boolean {
 }
 
 function isAllowedMutation(method: string, pathname: string): boolean {
+  if (method === 'POST' && pathname === '/api/admin/auth/activity') return true
   if (method === 'PUT' && /^\/api\/admin\/form-template-versions\/\d+$/.test(pathname)) return true
   if (method === 'POST' && /^\/api\/admin\/form-template-versions\/\d+\/publish$/.test(pathname)) {
     return true
@@ -413,6 +458,12 @@ function isAllowedMutation(method: string, pathname: string): boolean {
   if (method === 'PATCH' && /^\/api\/admin\/programs\/\d+\/form-bindings\/\d+$/.test(pathname)) return true
   if (method === 'PATCH' && /^\/api\/admin\/form-templates\/\d+$/.test(pathname)) return true
   if (method === 'PATCH' && /^\/api\/admin\/programs\/\d+$/.test(pathname)) return true
+  if (
+    (method === 'PUT' || method === 'POST') &&
+    /^\/api\/admin\/programs\/\d+\/inline-images$/.test(pathname)
+  ) {
+    return true
+  }
   if (method === 'PATCH' && /^\/api\/admin\/programs\/\d+\/trained-teacher\/detail$/.test(pathname)) {
     return true
   }
@@ -426,7 +477,7 @@ function isAllowedMutation(method: string, pathname: string): boolean {
 
 export async function installTtIsolatedNetwork(
   page: Page,
-  options?: { failMode?: IsolatedFailMode }
+  options?: { failMode?: IsolatedFailMode; seed?: IsolatedTtSeed }
 ): Promise<IsolatedNetworkLog> {
   const failMode = options?.failMode ?? 'none'
   const log: IsolatedNetworkLog = {
@@ -450,10 +501,23 @@ export async function installTtIsolatedNetwork(
   const copiedVersions = new Map<number, ReturnType<typeof versionResponse>>()
   const templateCodeByVersion = new Map<number, string>()
   let nextCopiedVersionId = 900101
+  const defaultSeedSponsors = [
+    {
+      sponsorId: String(SPONSOR_ID),
+      sponsorName: '격리 후원사',
+      sponsorContactId: String(CONTACT_ID),
+      sponsorContactName: '격리 담당자',
+      displayOrder: 0,
+    },
+  ]
   const store: IsolatedProgramStore = {
-    program: null,
-    infoDetail: emptyInfoDetail(),
-    sponsors: [],
+    program: options?.seed?.program
+      ? { ...options.seed.program, id: PROGRAM_ID, programType: 'TRAINED_TEACHER' }
+      : null,
+    infoDetail: options?.seed
+      ? (options.seed.infoDetail ?? emptyInfoDetail())
+      : emptyInfoDetail(),
+    sponsors: options?.seed?.sponsors ?? (options?.seed?.program ? defaultSeedSponsors : []),
   }
   let createdBindings: unknown[] = []
 
@@ -521,6 +585,10 @@ export async function installTtIsolatedNetwork(
       return
     }
 
+    if (method === 'GET' && pathname === '/api/admin/auth/session') {
+      await route.fulfill(json(adminAuthSessionStatus()))
+      return
+    }
     if (method === 'GET' && pathname === '/api/admin/me') {
       await route.fulfill(
         json({
@@ -609,6 +677,11 @@ export async function installTtIsolatedNetwork(
           ])
         )
       )
+      return
+    }
+    if (method === 'GET' && pathname === '/api/admin/applications/counts') {
+      // ApplicationCountResponse[] — 신규·격리 프로그램은 신청 0건.
+      await route.fulfill(json([]))
       return
     }
     if (method === 'GET' && pathname === '/api/admin/form-templates') {
@@ -745,6 +818,10 @@ export async function installTtIsolatedNetwork(
       }
       log.mutations.push(mutation)
 
+      if (method === 'POST' && pathname === '/api/admin/auth/activity') {
+        await route.fulfill(json(adminAuthActivityStatus()))
+        return
+      }
       if (failMode === 'put' && method === 'PUT' && pathname.includes('/form-template-versions/')) {
         log.formVersionPuts.push(mutation)
         await route.fulfill(json({ error: { code: 'PUT_FAILED', message: 'mock put fail' } }, 500))
@@ -833,6 +910,12 @@ export async function installTtIsolatedNetwork(
       }
       if (method === 'PATCH' && pathname.endsWith('/trained-teacher/detail')) {
         log.infoDetailPatches.push(mutation)
+        if (failMode === 'infoDetail') {
+          await route.fulfill(
+            json({ error: { code: 'DETAIL_PATCH_FAILED', message: 'mock B fail' } }, 500)
+          )
+          return
+        }
         persistInfoDetailPatch(store, (mutation.body ?? {}) as Record<string, unknown>)
         await route.fulfill(json(store.infoDetail))
         return
@@ -843,6 +926,13 @@ export async function installTtIsolatedNetwork(
       }
       if (method === 'POST' && pathname.startsWith('/api/admin/files')) {
         await route.fulfill(json({ fileObjectId: 71011, contentUrl: '/files/isolated-tt' }))
+        return
+      }
+      if (
+        (method === 'PUT' || method === 'POST') &&
+        /\/programs\/\d+\/inline-images$/.test(pathname)
+      ) {
+        await route.fulfill(json({ bound: true }))
         return
       }
       if (method === 'PUT' && pathname.endsWith('/applications/draft')) {

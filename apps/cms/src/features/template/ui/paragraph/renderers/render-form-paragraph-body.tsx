@@ -168,9 +168,9 @@ export type RenderFormParagraphBodyOptions = {
   paymentStatementBasicInfoOnValuesChange?: (
     values: PaymentStatementBasicInfoAutofillValues
   ) => void
-  /** 강의비 산출 정보 단락 미리 채움 */
+  /** 강사비 산출 정보 단락 미리 채움 */
   lectureFeeCalculationValues?: Partial<LectureFeeCalculationAutofillValues>
-  /** 강의비 산출 내역 단락 — 발급용 테이블 목·실데이터 */
+  /** 강사비 산출 내역 단락 — 발급용 테이블 목·실데이터 */
   paymentStatementCalculationLines?: PaymentStatementCalculationLinesViewModel
   /** 지급조서 A4 문서 렌더링 시 disabled 입력 UI를 정적 텍스트로 전환 */
   paymentStatementDisplayMode?: PaymentStatementIssuanceParagraphDisplayMode
@@ -293,6 +293,10 @@ export type RenderFormParagraphBodyOptions = {
   surveyPeriodReadonly?: boolean
   /** 강의보고서 프로그램 진행 정보 — 프로그램·배정 연동 미리보기(템플릿 안내 대신 실값) */
   lectureReportProgramLinkedPreview?: boolean
+  /** 개인형 강의보고서 — 기관명·기관 소재지 숨김 */
+  lectureReportHideInstitutionFields?: boolean
+  /** 강의보고서 미리보기·PDF — 단락 타이틀 필수(*) 숨김 */
+  hideTitleRequiredMark?: boolean
   /** 제출 강의보고서 미리보기 — 실제 첨부 파일 메타데이터 */
   lectureReportFiles?: readonly {
     fileObjectId: number
@@ -302,6 +306,8 @@ export type RenderFormParagraphBodyOptions = {
   hideSurveyWritingPeriod?: boolean
   /** 프로그램 > 설문조사 수정 — 제목 단락「작성 기간」토글 ON 고정(카드 하단 토글 disabled) */
   lockSurveyWritingPeriodToggleOn?: boolean
+  /** 만족도조사 일정별 — 제목 단락「작성 기간」날짜 인풋 비활성 */
+  lockSurveyWritingPeriodInput?: boolean
 }
 
 export function renderFormParagraphBody(
@@ -383,6 +389,7 @@ export function renderFormParagraphBody(
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
           isEditMode={titlePeriodEditMode}
+          periodInputDisabled={options?.lockSurveyWritingPeriodInput === true}
         />
       )
     case 'user_profile':
@@ -647,15 +654,18 @@ export function renderFormParagraphBody(
     }
     case 'lecture_report_program_progress': {
       const lr = p as LectureReportProgramProgressParagraph
+      const linkedPreview = options?.lectureReportProgramLinkedPreview === true
       return (
         <LectureReportProgramProgress
           paragraph={lr}
           onChange={next => updateParagraph(lr.id, () => next)}
           isEditMode={isBodyInteractive}
           isTemplateAuthoringMode={
-            paragraphInteractionMode === 'authoring' &&
-            options?.lectureReportProgramLinkedPreview !== true
+            paragraphInteractionMode === 'authoring' && !linkedPreview
           }
+          previewReadonly={linkedPreview || isPreviewReadonly}
+          previewSkin="surface"
+          hideInstitutionFields={options?.lectureReportHideInstitutionFields === true}
         />
       )
     }

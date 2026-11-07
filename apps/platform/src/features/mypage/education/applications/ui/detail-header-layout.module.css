@@ -8,6 +8,10 @@
   flex-wrap: wrap;
 }
 
+.rowStacked {
+  align-items: stretch;
+}
+
 .leftColumn {
   display: flex;
   min-width: 0;
@@ -21,6 +25,13 @@
   flex: 0 1 420px;
   justify-content: flex-end;
   min-width: 0;
+}
+
+.asideSlotStack {
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--spacing-16);
 }
 
 .asideSlotEnd {

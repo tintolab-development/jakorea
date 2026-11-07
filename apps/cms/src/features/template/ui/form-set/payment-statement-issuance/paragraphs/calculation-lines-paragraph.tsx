@@ -15,6 +15,7 @@ export function CalculationLinesParagraph({ lines }: CalculationLinesParagraphPr
         blocks={linesVm.blocks}
         formulaLabel={linesVm.formulaLabel}
         totalAmount={linesVm.totalAmount}
+        hideInstitutionColumn={linesVm.hideInstitutionColumn}
       />
     </div>
   )

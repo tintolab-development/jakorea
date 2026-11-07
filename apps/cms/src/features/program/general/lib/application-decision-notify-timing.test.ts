@@ -13,12 +13,13 @@ import {
 } from './application-decision-notify-timing'
 
 const scheduled = dayjs('2026-10-20T09:00:00+09:00')
+const scheduledAtSeoul = '2026-10-20T09:00:00+09:00'
 
 describe('toFlatDecisionNotifyTiming', () => {
   it('직접설정만 SCHEDULED + scheduledAt을 반환한다', () => {
     expect(toFlatDecisionNotifyTiming('manual', scheduled)).toEqual({
       timing: 'SCHEDULED',
-      scheduledAt: scheduled.toISOString(),
+      scheduledAt: scheduledAtSeoul,
     })
   })
 
@@ -40,7 +41,7 @@ describe('toTimedBulkNotifyTiming', () => {
   it('직접 설정은 SCHEDULED를 유지한다', () => {
     expect(toTimedBulkNotifyTiming('manual', scheduled)).toEqual({
       timing: 'SCHEDULED',
-      scheduledAt: scheduled.toISOString(),
+      scheduledAt: scheduledAtSeoul,
     })
   })
 
@@ -59,7 +60,7 @@ describe('toOrganizationApproveNotifyTiming', () => {
   it('예약 승인에는 SCHEDULED와 scheduledAt을 보낸다', () => {
     expect(toOrganizationApproveNotifyTiming('manual', scheduled)).toEqual({
       timing: 'SCHEDULED',
-      scheduledAt: scheduled.toISOString(),
+      scheduledAt: scheduledAtSeoul,
     })
   })
 
@@ -80,7 +81,7 @@ describe('toTrainedTeacherApproveNotifyTiming', () => {
   it('직접 설정은 SCHEDULED로 전달한다', () => {
     expect(toTrainedTeacherApproveNotifyTiming('manual', scheduled)).toEqual({
       timing: 'SCHEDULED',
-      scheduledAt: scheduled.toISOString(),
+      scheduledAt: scheduledAtSeoul,
     })
   })
 })
@@ -90,7 +91,7 @@ describe('toNestedDecisionNotification', () => {
     expect(toNestedDecisionNotification('manual', scheduled)).toEqual({
       notification: {
         timing: 'SCHEDULED',
-        scheduledAt: scheduled.toISOString(),
+        scheduledAt: scheduledAtSeoul,
       },
     })
   })
@@ -119,7 +120,7 @@ describe('toScreeningNotifyFields', () => {
   it('직접설정은 MANUAL + scheduledAt이다', () => {
     expect(toScreeningNotifyFields('manual', scheduled)).toEqual({
       notifyTiming: 'MANUAL',
-      scheduledAt: scheduled.toISOString(),
+      scheduledAt: scheduledAtSeoul,
     })
   })
 })
@@ -128,7 +129,7 @@ describe('toInterviewAssignNotifyFields', () => {
   it('면접 배정 직접설정만 scheduledAt을 붙인다', () => {
     expect(toInterviewAssignNotifyFields('manual', scheduled)).toEqual({
       notifyTiming: 'MANUAL',
-      scheduledAt: scheduled.toISOString(),
+      scheduledAt: scheduledAtSeoul,
     })
     expect(toInterviewAssignNotifyFields('immediate')).toEqual({ notifyTiming: 'IMMEDIATE' })
   })
@@ -138,7 +139,7 @@ describe('toScheduledOnlyNotifyTiming', () => {
   it('직접 설정만 SCHEDULED를 반환한다', () => {
     expect(toScheduledOnlyNotifyTiming('manual', scheduled)).toEqual({
       timing: 'SCHEDULED',
-      scheduledAt: scheduled.toISOString(),
+      scheduledAt: scheduledAtSeoul,
     })
     expect(toScheduledOnlyNotifyTiming('immediate')).toBeUndefined()
   })

@@ -29,13 +29,17 @@
   flex: 1 1 auto;
   min-width: 0;
   min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .board-panel__group {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   min-width: 0;
+  flex-shrink: 0;
 }
 
 .board-panel__group-title {
@@ -74,8 +78,8 @@
 /* scroll.x 합계 유지 — cms-data-table width:100% 가 열 합을 잡아먹지 않도록 */
 .board-panel .board-members-table.cms-data-table table.ant-table {
   table-layout: fixed !important;
-  width: max(100%, 1228px) !important;
-  min-width: 1228px !important;
+  width: max(100%, 1538px) !important;
+  min-width: 1538px !important;
 }
 
 .board-panel .board-members-table .ant-table-thead > tr > th,
@@ -103,7 +107,7 @@
 }
 
 /* ── 고정 컬럼 폭 (cms-data-table 강제 규칙 override) ──
- * 선택 60 | 순서 80 | No. 80 | 공개 100 | 한글 140 | 영문 188 | 직위 120 | 소속 460
+ * 선택 60 | 순서 80 | No. 80 | 공개 100 | 한글 305 | 영문 304 | 직위 305 | 소속 304
  */
 
 /* selection-col 다음을 No.로 가정하는 공통 규칙 덮어쓰기 → 순서 80 */
@@ -138,29 +142,30 @@
 
 .board-panel .board-members-table .ant-table-thead > tr > th.board-members-table__col--name-ko,
 .board-panel .board-members-table .ant-table-tbody > tr > td.board-members-table__col--name-ko {
-  width: 140px !important;
-  min-width: 140px !important;
-  max-width: 140px !important;
+  width: 305px !important;
+  min-width: 305px !important;
+  max-width: 305px !important;
 }
 
 .board-panel .board-members-table .ant-table-thead > tr > th.board-members-table__col--name-en,
 .board-panel .board-members-table .ant-table-tbody > tr > td.board-members-table__col--name-en {
-  width: 188px !important;
-  min-width: 188px !important;
-  max-width: 188px !important;
+  width: 304px !important;
+  min-width: 304px !important;
+  max-width: 304px !important;
 }
 
 .board-panel .board-members-table .ant-table-thead > tr > th.board-members-table__col--position,
 .board-panel .board-members-table .ant-table-tbody > tr > td.board-members-table__col--position {
-  width: 120px !important;
-  min-width: 120px !important;
-  max-width: 120px !important;
+  width: 305px !important;
+  min-width: 305px !important;
+  max-width: 305px !important;
 }
 
 .board-panel .board-members-table .ant-table-thead > tr > th.board-members-table__col--affiliation,
 .board-panel .board-members-table .ant-table-tbody > tr > td.board-members-table__col--affiliation {
-  width: 460px !important;
-  min-width: 280px !important;
+  width: 304px !important;
+  min-width: 304px !important;
+  max-width: 304px !important;
 }
 
 .board-panel-inline-field.cms-input {

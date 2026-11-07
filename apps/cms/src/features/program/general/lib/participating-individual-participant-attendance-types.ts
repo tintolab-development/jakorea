@@ -39,6 +39,7 @@ export type ParticipatingIndividualParticipantAttendanceRow = {
   /** education-scope 배정 순서 — 마지막 교육 일정 판정 */
   assignedIndex: number
   lateTime?: string
+  lateMinutes?: number | null
   educationProgress: ParticipatingIndividualParticipantSessionProgressStatus
   remark?: string
 }
@@ -75,4 +76,11 @@ export function hasExcusedAbsenceInParticipatingIndividualAttendanceRows(
   rows: ParticipatingIndividualParticipantAttendanceRow[]
 ): boolean {
   return rows.some(row => row.attendanceStatus === 'excused_absence')
+}
+
+/** 현재 출결이 사유 불참일 때만 불참 사유·첨부를 보여 준다. 출석·지각·결석 정정 후 이전 PDF는 숨긴다. */
+export function isParticipatingIndividualAbsenceReasonVisibleForStatus(
+  status: ParticipatingIndividualParticipantAttendanceStatus
+): boolean {
+  return status === 'excused_absence'
 }

@@ -12,6 +12,8 @@ import {
 describe('one-school-per-day-conflict', () => {
   it('extractLectureDateKey는 ISO·점표기·표시 문자열을 YYYY-MM-DD로 정규화한다', () => {
     expect(extractLectureDateKey('2026-09-12T09:00:00')).toBe('2026-09-12')
+    expect(extractLectureDateKey('2026-11-06T15:05:00Z')).toBe('2026-11-07')
+    expect(extractLectureDateKey('2026-11-06T15:05:00+09:00')).toBe('2026-11-06')
     expect(extractLectureDateKey('2026.09.12')).toBe('2026-09-12')
     expect(extractLectureDateKey('2026.09.12(금)')).toBe('2026-09-12')
     expect(extractLectureDateKey('2026-09-12(금) 09:00 ~ 11:00')).toBe('2026-09-12')

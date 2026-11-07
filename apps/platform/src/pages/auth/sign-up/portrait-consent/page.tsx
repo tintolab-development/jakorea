@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ProgramBackButton } from '@/features/program'
 import {
@@ -12,6 +12,10 @@ import { MEMBER_CONSENT_TEMPLATE_MAP } from '@jakorea/form-schema/consent'
 import { parseSafeInternalPath } from '@/features/mypage/lib/safe-internal-path'
 import { SIGN_UP_PATH } from '@/features/auth/sign-up/lib/wizard-location'
 import { PFFormPage } from '@/shared/ui'
+import { useSignupTermsQuery } from '@/features/auth/sign-up/api/queries/use-signup-terms'
+import { pickSignupPortraitTermsDocument } from '@/features/auth/sign-up/lib/pick-signup-portrait-terms'
+import { parseWritingFormDraftFromUnknown } from '@/features/mypage/settings/lib/parse-consent-document-draft'
+import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 
 const PAGE_TITLE = MEMBER_CONSENT_TEMPLATE_MAP.consentPortrait.modalTitle
 
@@ -40,6 +44,26 @@ export function SignUpPortraitConsentPage() {
   }
 
   const [titleAside, setTitleAside] = useState<ReactNode>(null)
+  const memberType = bridge?.memberType ?? null
+  const birthDateIso = bridge?.birthDateIso ?? null
+  const termsQuery = useSignupTermsQuery({
+    memberType,
+    birthDateIso,
+    enabled: bridge != null,
+  })
+  const portraitTerms = pickSignupPortraitTermsDocument(termsQuery.data)
+  const serverDraft = useMemo(
+    () => parseWritingFormDraftFromUnknown(portraitTerms?.content),
+    [portraitTerms],
+  )
+  const remote = isRemoteApiConfigured()
+  const canQueryTerms = Boolean(memberType && birthDateIso)
+  const termsReady = termsQuery.isSuccess || termsQuery.isError
+  const serverDraftPending = Boolean(bridge) && remote && canQueryTerms && !termsReady
+  const serverDraftUnavailable =
+    Boolean(bridge) &&
+    remote &&
+    (!canQueryTerms || termsQuery.isError || (termsQuery.isSuccess && serverDraft == null))
 
   if (bridge == null) {
     return null
@@ -52,7 +76,13 @@ export function SignUpPortraitConsentPage() {
       title={PAGE_TITLE}
       titleAside={titleAside}
     >
-      <PortraitConsentWriteForm onComplete={handleComplete} onTitleAside={setTitleAside} />
+      <PortraitConsentWriteForm
+        onComplete={handleComplete}
+        onTitleAside={setTitleAside}
+        serverDraft={serverDraft}
+        serverDraftPending={serverDraftPending}
+        serverDraftUnavailable={serverDraftUnavailable}
+      />
     </PFFormPage>
   )
 }

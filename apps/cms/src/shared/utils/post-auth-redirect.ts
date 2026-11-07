@@ -51,6 +51,43 @@ export function resolveSessionAuthFailureRedirect(options: {
   return `/login?next=${encodeURIComponent(path)}`
 }
 
+/** 로그인·가입·찾기 등 비로그인 공개 화면 — 로그아웃 후 다시 보내지 않음 */
+export function isCmsLoggedOutPublicPath(pathname: string): boolean {
+  if (pathname === '/login' || pathname.startsWith('/login/')) return true
+  if (pathname === '/register' || pathname.startsWith('/register/')) return true
+  if (pathname === '/find-email' || pathname.startsWith('/find-email/')) return true
+  if (pathname === '/find-password' || pathname.startsWith('/find-password/')) return true
+  if (pathname === '/social-connect' || pathname.startsWith('/social-connect/')) return true
+  if (pathname === '/oauth' || pathname.startsWith('/oauth/')) return true
+  return isPasswordChangeRequiredPath(pathname)
+}
+
+/**
+ * 세션이 끝난 뒤 보호 화면에 남지 않도록 로그인으로 보낸다.
+ * 공개 인증 화면에 있으면 그대로 둔다.
+ */
+export function assignLoginAfterSessionEnd(options?: {
+  pathname?: string
+  search?: string
+  complete?: boolean
+  assign?: (url: string) => void
+}): void {
+  if (typeof window === 'undefined' && options?.assign == null) return
+  const pathname = options?.pathname ?? window.location.pathname
+  const search = options?.search ?? window.location.search
+  if (isCmsLoggedOutPublicPath(pathname)) return
+  const target = resolveSessionAuthFailureRedirect({
+    pathname,
+    search,
+    complete: options?.complete === true,
+  })
+  if (target == null) return
+  const current = `${pathname}${search}`
+  if (current === target) return
+  const assign = options?.assign ?? ((url: string) => window.location.assign(url))
+  assign(target)
+}
+
 export function isPasswordChangeRequiredPath(pathname: string): boolean {
   return (
     pathname === PASSWORD_CHANGE_REQUIRED_PATH ||

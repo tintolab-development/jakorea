@@ -28,7 +28,10 @@ import type {
   GeneralSecondInterviewScreeningStatus,
 } from '@/features/program/general/lib/volunteer-screening-constants'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
-import { formatApplicationEligibilityConflictMessage } from '@/features/program/shared/lib/application-eligibility-conflict'
+import {
+  formatApplicationEligibilityConflictMessage,
+  readVolunteer1365ApprovalBlockedAlert,
+} from '@/features/program/shared/lib/application-eligibility-conflict'
 import { formatApplicationDecisionCancelConflictMessage } from '@/features/program/shared/lib/application-decision-cancel-conflict'
 import { formatApplicationStatusConflictMessage } from '@/features/program/shared/lib/application-status-conflict'
 import {
@@ -43,6 +46,7 @@ import {
 } from '@/features/program/general/api/applications-api-client'
 import { validateApplicationGiveUpReason } from '@/features/program/shared/lib/application-give-up'
 import { mergeGeneralVolunteerApplicantListRows } from '@/features/program/general/lib/general-volunteer-applications-list-merge'
+import { formatVolunteerBulkActionFailures } from '@/features/program/general/ui/detail-modal/applications/volunteer-screening/general-volunteer-application-decision-actions'
 import { getNotificationScheduleError } from '@/shared/lib/notification-schedule'
 import {
   DOCUMENT_EVALUATION_ERROR_ALERT_TITLE,
@@ -156,11 +160,14 @@ export function useGeneralVolunteerApplicationsRemote({
       if (shouldSkipLocalApiErrorAlert(error)) return
       const data = (error as { response?: { data?: unknown } } | null)?.response?.data
       const scheduleError = getNotificationScheduleError(error)
+      const volunteer1365Alert =
+        subjectKind === 'participant' ? null : readVolunteer1365ApprovalBlockedAlert(error)
       const interviewAlert = readInterviewDecisionErrorAlert(error, '처리 실패')
       showAlert({
-        title: interviewAlert.title,
+        title: volunteer1365Alert?.title ?? interviewAlert.title,
         content:
           scheduleError?.message ??
+          volunteer1365Alert?.content ??
           formatApplicationEligibilityConflictMessage(error) ??
           formatApplicationDecisionCancelConflictMessage(error) ??
           formatApplicationStatusConflictMessage(error) ??
@@ -283,12 +290,12 @@ export function useGeneralVolunteerApplicationsRemote({
           }
         } else if (ids.length > 1) {
           const bulk = await submitGeneralVolunteerFinalResultBulk(ids, payload)
+          await invalidateApplications()
           if ((bulk.failureCount ?? 0) > 0) {
-            showAlert({
-              title: '면접 결과 일부 실패',
-              content: `요청 ${bulk.requestedCount ?? ids.length}건 중 성공 ${bulk.successCount ?? 0}건, 실패 ${bulk.failureCount ?? 0}건입니다.`,
-            })
+            showAlert(formatVolunteerBulkActionFailures(bulk))
+            return false
           }
+          return true
         } else {
           for (const id of ids) {
             await submitGeneralVolunteerFinalResult(id, payload)

@@ -16,13 +16,18 @@ import type {
 } from '@/entities/recruit-applicant/model/types'
 import { shouldUseRecruitApplicantRemoteApi } from '@/features/recruit-applicant/api/capabilities'
 import { downloadRecruitApplicantAttachmentService } from '@/features/recruit-applicant/api/service'
+import { homepageAttachmentDownloadErrorMessage } from '@/shared/lib/protected-attachment-download'
+import { useProtectedFileDownload } from '@/shared/lib/use-protected-file-download'
 import { formatDateTimeDotWithKoreanWeekday } from '@/shared/lib/format-display'
+import {
+  displayServerPiiAsIs,
+  PrivacyHomeAddressDisplay,
+} from '@/shared/lib/homepage-pii-display'
 import {
   CmsButton,
   ConfirmModal,
   CONTENT_MODAL_FOOTER_START_CLASS,
   ContentModal,
-  HomepagePiiRevealAction,
   PageContentLoading,
   useCmsAlert,
 } from '@/shared/ui'
@@ -37,13 +42,9 @@ type Props = {
   loading?: boolean
   confirmLoading?: boolean
   deleteLoading?: boolean
-  canRevealPii?: boolean
-  piiRevealed?: boolean
-  revealLoading?: boolean
   onCancel: () => void
   onConfirm: () => void
   onDelete: () => void
-  onRevealPii?: () => void
 }
 
 const JOB_LABEL: Record<RecruitJobInterest, string> = {
@@ -104,15 +105,12 @@ export function RecruitApplicantDetailModal({
   loading = false,
   confirmLoading = false,
   deleteLoading = false,
-  canRevealPii = false,
-  piiRevealed = false,
-  revealLoading = false,
   onCancel,
   onConfirm,
   onDelete,
-  onRevealPii,
 }: Props) {
   const { showAlert } = useCmsAlert()
+  const { runProtectedDownload, filePasswordModal } = useProtectedFileDownload()
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
   useEffect(() => {
@@ -120,8 +118,12 @@ export function RecruitApplicantDetailModal({
   }, [open])
 
   const isConfirmed = data?.status === 'confirmed'
-  const waiting = loading && !data
-  const busy = confirmLoading || deleteLoading || waiting || revealLoading
+  const waiting = open && (!data || loading)
+  const busy = confirmLoading || deleteLoading || waiting
+
+  const phoneDisplay = data ? displayServerPiiAsIs(data.phone) : '-'
+  const emailDisplay = data ? displayServerPiiAsIs(data.email) : '-'
+  const nameDisplay = data ? displayServerPiiAsIs(data.applicantName) : '-'
 
   const confirmedView = (() => {
     if (!data?.confirmedAt) return <span>-</span>
@@ -153,37 +155,44 @@ export function RecruitApplicantDetailModal({
     )
   })()
 
+  const hasAttachment = Boolean(data?.attachmentFileName)
   const attachmentView =
-    data?.attachmentFileName && shouldUseRecruitApplicantRemoteApi() ? (
+    hasAttachment && shouldUseRecruitApplicantRemoteApi() ? (
       <button
         type="button"
         className="recruit-applicant-detail-modal__attachment"
         onClick={() => {
-          if (!data?.id) return
-          void downloadRecruitApplicantAttachmentService(data.id, data.attachmentAssetId)
-            .then(result => {
-              if (!result?.downloadUrl) {
+          if (!data?.id || !data.attachmentFileName) return
+          runProtectedDownload({
+            kind: 'HOMEPAGE_PII_ATTACHMENT',
+            zIndex: 1400,
+            download: async password => {
+              try {
+                await downloadRecruitApplicantAttachmentService(
+                  data.id,
+                  data.attachmentAssetId,
+                  password,
+                  data.attachmentFileName ?? 'download'
+                )
+              } catch (error) {
                 showAlert({
                   title: '다운로드 실패',
-                  content: '첨부파일을 불러오지 못했습니다.',
+                  content: homepageAttachmentDownloadErrorMessage(
+                    error,
+                    '첨부파일 다운로드에 실패했습니다.'
+                  ),
                 })
-                return
+                throw error
               }
-              window.open(result.downloadUrl, '_blank', 'noopener,noreferrer')
-            })
-            .catch(() => {
-              showAlert({
-                title: '다운로드 실패',
-                content: '첨부파일 다운로드에 실패했습니다.',
-              })
-            })
+            },
+          })
         }}
       >
         <FileIcon className="recruit-applicant-detail-modal__file-icon" />
-        <span>{data.attachmentFileName}</span>
+        <span>{data?.attachmentFileName}</span>
       </button>
     ) : (
-      <span>{data?.attachmentFileName || '-'}</span>
+      <span>{hasAttachment ? data?.attachmentFileName : '-'}</span>
     )
 
   const footer = (
@@ -198,13 +207,6 @@ export function RecruitApplicantDetailModal({
         onClick={() => setDeleteConfirmOpen(true)} >
         신청 삭제
       </CmsButton>
-      <HomepagePiiRevealAction
-        canReveal={canRevealPii && Boolean(onRevealPii)}
-        revealed={piiRevealed}
-        loading={revealLoading}
-        disabled={busy && !revealLoading}
-        onReveal={() => onRevealPii?.()}
-      />
       <CmsButton
         variant="secondary"
         size="medium"
@@ -304,7 +306,7 @@ export function RecruitApplicantDetailModal({
                   <DetailInfoForm.Row type="double">
                     <DetailInfoForm.Field
                       label="지원자명"
-                      view={<span>{data.applicantName || '-'}</span>}
+                      view={<span>{nameDisplay}</span>}
                       edit={null}
                       readOnlyDisplay
                     />
@@ -318,13 +320,13 @@ export function RecruitApplicantDetailModal({
                   <DetailInfoForm.Row type="double">
                     <DetailInfoForm.Field
                       label="연락처"
-                      view={<span>{data.phone || '-'}</span>}
+                      view={<span>{phoneDisplay}</span>}
                       edit={null}
                       readOnlyDisplay
                     />
                     <DetailInfoForm.Field
                       label="이메일"
-                      view={<span>{data.email || '-'}</span>}
+                      view={<span>{emailDisplay}</span>}
                       edit={null}
                       readOnlyDisplay
                     />
@@ -333,9 +335,17 @@ export function RecruitApplicantDetailModal({
                     <DetailInfoForm.Field
                       label="자택 주소"
                       view={
-                        <span>
-                          {joinParts([data.addressRoad, data.addressDetail], ', ') || '-'}
-                        </span>
+                        data ? (
+                          <PrivacyHomeAddressDisplay
+                            address={data.addressRoad}
+                            addressDetail={data.addressDetail}
+                            revealed
+                            blurClassName="program-pii-address-blur"
+                            valueShellClassName="program-detail-home-address-value"
+                          />
+                        ) : (
+                          <span>-</span>
+                        )
                       }
                       edit={null}
                       readOnlyDisplay
@@ -369,18 +379,20 @@ export function RecruitApplicantDetailModal({
                     readOnlyDisplay
                   />
                 </DetailInfoForm.Row>
-                <DetailInfoForm.Row type="single">
-                  <DetailInfoForm.Field
-                    label="학력정보"
-                    view={
-                      <span className="recruit-applicant-detail-modal__content">
-                        {data.educationInfo.trim() || '-'}
-                      </span>
-                    }
-                    edit={null}
-                    readOnlyDisplay
-                  />
-                </DetailInfoForm.Row>
+                {data.educationInfo ? (
+                  <DetailInfoForm.Row type="single">
+                    <DetailInfoForm.Field
+                      label="학력정보"
+                      view={
+                        <span className="recruit-applicant-detail-modal__content">
+                          {data.educationInfo}
+                        </span>
+                      }
+                      edit={null}
+                      readOnlyDisplay
+                    />
+                  </DetailInfoForm.Row>
+                ) : null}
               </DetailInfoForm>
             </section>
 
@@ -414,24 +426,27 @@ export function RecruitApplicantDetailModal({
                     readOnlyDisplay
                   />
                 </DetailInfoForm.Row>
-                <DetailInfoForm.Row type="single">
-                  <DetailInfoForm.Field
-                    label="경력/경험/자격정보"
-                    view={
-                      <span className="recruit-applicant-detail-modal__content">
-                        {data.careerInfo.trim() || '-'}
-                      </span>
-                    }
-                    edit={null}
-                    readOnlyDisplay
-                  />
-                </DetailInfoForm.Row>
+                {data.careerInfo ? (
+                  <DetailInfoForm.Row type="single">
+                    <DetailInfoForm.Field
+                      label="경력/경험/자격정보"
+                      view={
+                        <span className="recruit-applicant-detail-modal__content">
+                          {data.careerInfo}
+                        </span>
+                      }
+                      edit={null}
+                      readOnlyDisplay
+                    />
+                  </DetailInfoForm.Row>
+                ) : null}
               </DetailInfoForm>
             </section>
           </div>
         ) : null}
       </ContentModal>
 
+      {filePasswordModal}
       <ConfirmModal
         open={deleteConfirmOpen}
         title="신청 삭제"

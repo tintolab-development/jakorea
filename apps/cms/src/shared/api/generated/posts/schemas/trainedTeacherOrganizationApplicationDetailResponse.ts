@@ -7,6 +7,8 @@
  */
 import type { GradeBlock } from './gradeBlock';
 import type { PreferredScheduleBlock } from './preferredScheduleBlock';
+import type { TrainedTeacherOrganizationApplicationDetailResponseRequestedEducationFormat } from './trainedTeacherOrganizationApplicationDetailResponseRequestedEducationFormat';
+import type { TrainedTeacherOrganizationApplicationDetailResponseTextbookDeliveryStatus } from './trainedTeacherOrganizationApplicationDetailResponseTextbookDeliveryStatus';
 import type { TrainedTeacherOrganizationEducationSchedule } from './trainedTeacherOrganizationEducationSchedule';
 
 export interface TrainedTeacherOrganizationApplicationDetailResponse {
@@ -50,14 +52,24 @@ export interface TrainedTeacherOrganizationApplicationDetailResponse {
   completedEducationRoundCount?: number;
   progressLabel?: string;
   textbookName?: string;
+  /** 저장된 키트 수. 없으면 null이며 학생 수/24로 계산하지 않습니다. kitCount와 같은 값입니다. */
+  textbookKits?: number | null;
+  /** 저장된 교재 권수. 없으면 null. bookCount와 같은 값입니다. */
+  textbookQuantity?: number | null;
+  /** 저장된 키트 수. UJAT는 저장값이 없으면 null이며 학생 수/24로 계산하지 않습니다. textbookKits와 같은 값입니다. */
+  kitCount?: number | null;
+  /** 저장된 교재 권수. 없으면 null. textbookQuantity와 같은 값입니다. */
+  bookCount?: number | null;
+  /** 저장된 교재 배송 상태. 없으면 null. PREPARING으로 기본 채움하지 않습니다. */
+  textbookDeliveryStatus?: TrainedTeacherOrganizationApplicationDetailResponseTextbookDeliveryStatus;
   educationCompletionCount?: number;
   activityWithdrawn?: boolean;
   giveUpAt?: string;
   giveUpStopScheduleId?: number;
   /** 신청 당시 저장된 기관 상세주소. 없으면 null. */
   addressDetail?: string | null;
-  /** 신청 당시 저장된 교육 형태. 없으면 null. */
-  requestedEducationFormat?: string | null;
+  /** ONLINE, OFFLINE, HYBRID 또는 null. 신청 당시 저장된 교육 형태. 없으면 null. 프로그램 공통 교육 형태로 채우지 않습니다. 컬럼이 비어 있고 제출 답변에 educationFormat이 있으면 공통과 동일하게 투영합니다. 기존 한글 저장값(온라인/오프라인/혼합)은 ONLINE|OFFLINE|HYBRID로 정규화합니다. 인식하지 못한 신청 값은 원문을 유지합니다. 빈 문자열·'-'는 null입니다. */
+  requestedEducationFormat?: TrainedTeacherOrganizationApplicationDetailResponseRequestedEducationFormat;
   /** 신청 당시 저장된 신청 사유. 없으면 null. */
   applicationReason?: string | null;
   /** 신청 당시 저장된 기타 요청사항. 없으면 null. */
@@ -66,7 +78,7 @@ export interface TrainedTeacherOrganizationApplicationDetailResponse {
   teacherEmail?: string | null;
   /** 신청 당시 지정된 교재 id. 없으면 null. */
   textbookId?: number | null;
-  /** 기관이 실제 진행하는 교육 일정. totalEducationRoundCount 와 같은 기준(활성 일정, 교사 연수 일정 제외, 기관 일정 배정이 있으면 배정 일정만, 활동 포기 시 중단 일정 이전만)이며 시작 시각 순. 없으면 []. 출석 조회 scheduleIds 의 SSOT 이고 preferredScheduleBlocks(희망 일정)와 다를 수 있습니다. */
+  /** 기관이 실제 진행하는 교육 일정. totalEducationRoundCount 와 같은 기준(활성 일정, 교사 연수 일정 제외, 기관 일정 배정이 있으면 배정 일정만, 활동 포기 시 중단 일정 이전만)이며 시작 시각 순. 없으면 []. 승인 시 selectedScheduleId/slots(DATE) 또는 preferredScheduleRank(PERIOD)로 확정된 배정 일정만. 같은 지망의 복수 슬롯은 배정된 scheduleId만 남기고 합치지 않는다. 진행 미편입(미승인)이면 []. 출석 조회 scheduleIds 의 SSOT 이고 preferredScheduleBlocks(희망 일정)와 다를 수 있습니다. scheduleStatus는 일반 프로그램 participants sessions[].scheduleStatus 와 같은 교육 진행(시각) SSOT이며 출석과 별개입니다. */
   educationSchedules?: TrainedTeacherOrganizationEducationSchedule[];
   /** CMS 학생 명단 학급 Select SSOT. 공통 기관 신청 상세 gradeBlocks와 같은 형식이며 활성 학생 명단의 grade/className으로 묶습니다. 명단이 없으면 신청 학년(requested_grade)과 requestedClassCount만 담은 블록 1개(classes=[])이고, 둘 다 없으면 null. classes가 []이면 classCount로 반 목록을 만들지 않습니다. */
   gradeBlocks?: GradeBlock[] | null;

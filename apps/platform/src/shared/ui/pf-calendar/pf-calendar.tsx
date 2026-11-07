@@ -352,7 +352,7 @@ export function PFCalendar({
                                 key={event.id}
                                 className={styles.eventDot}
                                 style={{
-                                  backgroundColor: CALENDAR_EVENT_COLORS[event.type].accent,
+                                  backgroundColor: (CALENDAR_EVENT_COLORS[event.type] ?? CALENDAR_EVENT_COLORS.education).accent,
                                 }}
                               />
                             ))}
@@ -376,7 +376,7 @@ export function PFCalendar({
               {week.segments.length > 0 ? (
                 <div className={styles.eventLayer} aria-hidden="true">
                   {week.segments.map(segment => {
-                    const colors = CALENDAR_EVENT_COLORS[segment.type]
+                    const colors = CALENDAR_EVENT_COLORS[segment.type] ?? CALENDAR_EVENT_COLORS.education
                     return (
                       <div
                         key={`${segment.eventId}-${segment.startCol}-${segment.lane}`}

@@ -1,6 +1,7 @@
 /**
  * 학교 상세정보 – 강사 배정 안내 모달
- * 스펙(스크린샷): width 800 · 패딩 26/30/34 · 섹션 간격 30px
+ * 스펙(Figma CMS 9760:8214): width 600 · 패딩 24/30/34 · 섹션 간격 30px
+ * 일반 프로그램 추가 배정 5개 경로 공통 (general-participant-add-assign-modal.tsx)
  * 교육 배정일: 외곽 보더 박스 안 1열 칩 리스트(선택/미선택/비활성)
  */
 
@@ -98,7 +99,8 @@
 
 .school-detail-add-instructor-assign-modal__required {
   margin-left: var(--spacing-4, 4px);
-  color: var(--color-required-mark, #ff4d4f);
+  /* Figma 9760:8214 필수 * — Status red main */
+  color: var(--Status-red-main, #c32f4a);
   font-size: var(--font-size-14);
   font-weight: var(--font-weight-500);
   line-height: 1;
@@ -161,7 +163,22 @@
   border: 1px solid var(--table-line, #e0e0e0);
   background: #fff;
   align-self: stretch;
+  /* 일정이 많으면 목록 안에서 스크롤 (칩 6개 높이: 52×6 + 10×5 + 패딩 32) — 푸터가 화면 밖으로 밀리지 않게 */
+  max-height: 394px;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* 긴 차시·세션명은 날짜·시간을 가리지 않고 차시 쪽에서 말줄임 (이 모달 범위 한정) */
+.school-detail-add-instructor-assign-modal__session-grid .instructor-assign-session-slot-chip__schedule {
+  flex-shrink: 0;
+}
+
+.school-detail-add-instructor-assign-modal__session-grid .instructor-assign-session-slot-chip__round {
+  flex-shrink: 1;
+  min-width: 0;
   overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .school-detail-add-instructor-assign-modal__session-empty {

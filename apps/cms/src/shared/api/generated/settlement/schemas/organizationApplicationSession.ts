@@ -11,16 +11,32 @@
  */
 export interface OrganizationApplicationSession {
   scheduleId?: number;
+  /** @nullable */
   sessionNo?: number | null;
+  /** @nullable */
   scheduleName?: string | null;
-  /** 임시 배정 또는 승인 후 확정 진행일. UJAT 교육 진행 참여 기관 「교육 진행 일정」열 */
+  /**
+     * 임시 배정 또는 승인 후 확정 진행일. UJAT 교육 진행 참여 기관 「교육 진행 일정」열
+     * @nullable
+     */
   startAt?: string | null;
+  /** @nullable */
   endAt?: string | null;
-  /** GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다. */
+  /**
+     * GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다.
+     * @nullable
+     */
   grade?: string | null;
-  /** GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다. */
+  /**
+     * GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다.
+     * @nullable
+     */
   className?: string | null;
-  /** GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다. */
+  /**
+     * GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다.
+     * @nullable
+     */
   classLabel?: string | null;
+  /** @nullable */
   assignmentStatus?: string | null;
 }

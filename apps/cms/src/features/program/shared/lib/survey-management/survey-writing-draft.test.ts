@@ -50,6 +50,7 @@ import {
   loadWritingFormTemplateSave,
 } from '@/features/template/lib/writing-form-template-local-save'
 import {
+  applySurveyDisplayTitleToDraft,
   resolveSurveyWritingDraft,
   saveSurveyWritingTemplate,
 } from './survey-writing-draft'
@@ -75,6 +76,76 @@ describe('survey-writing-draft remote SSOT', () => {
     const draft = await resolveSurveyWritingDraft(TEMPLATE_ID)
     expect(draft).toEqual(remoteDraft)
     expect(loadWritingFormTemplateSave(TEMPLATE_ID)).toBeNull()
+  })
+
+  it('fills empty surveyTitle on remote draft with the registered display name', async () => {
+    const remoteDraft = normalizeWritingFormDraft(createDefaultSurveyDraft())
+    loadWritingFormTemplateDraftMock.mockResolvedValue({
+      version: 1,
+      templateId: TEMPLATE_ID,
+      savedAt: new Date().toISOString(),
+      draft: remoteDraft,
+    })
+
+    const draft = await resolveSurveyWritingDraft(TEMPLATE_ID, {
+      templateName: '학생용 만족도조사',
+    })
+    const titleParagraph = draft.paragraphs.find(
+      (
+        p
+      ): p is Extract<
+        (typeof draft.paragraphs)[number],
+        { kind: 'description'; variant: 'survey_title_with_period' }
+      > => p.kind === 'description' && p.variant === 'survey_title_with_period'
+    )
+    expect(titleParagraph?.surveyTitle).toBe('학생용 만족도조사')
+  })
+
+  it('overwrites an existing surveyTitle when asked', () => {
+    const draft = applySurveyDisplayTitleToDraft(
+      normalizeWritingFormDraft({
+        ...createDefaultSurveyDraft(),
+        paragraphs: createDefaultSurveyDraft().paragraphs.map(p =>
+          p.kind === 'description' && p.variant === 'survey_title_with_period'
+            ? { ...p, surveyTitle: '양식에 적힌 제목' }
+            : p
+        ),
+      }),
+      '1회차 · 2026.11.12(목) 만족도조사 (학생용)',
+      { overwrite: true }
+    )
+    const titleParagraph = draft.paragraphs.find(
+      (
+        p
+      ): p is Extract<
+        (typeof draft.paragraphs)[number],
+        { kind: 'description'; variant: 'survey_title_with_period' }
+      > => p.kind === 'description' && p.variant === 'survey_title_with_period'
+    )
+    expect(titleParagraph?.surveyTitle).toBe('1회차 · 2026.11.12(목) 만족도조사 (학생용)')
+  })
+
+  it('does not overwrite an existing surveyTitle', () => {
+    const draft = applySurveyDisplayTitleToDraft(
+      normalizeWritingFormDraft({
+        ...createDefaultSurveyDraft(),
+        paragraphs: createDefaultSurveyDraft().paragraphs.map(p =>
+          p.kind === 'description' && p.variant === 'survey_title_with_period'
+            ? { ...p, surveyTitle: '양식에 적힌 제목' }
+            : p
+        ),
+      }),
+      '등록명'
+    )
+    const titleParagraph = draft.paragraphs.find(
+      (
+        p
+      ): p is Extract<
+        (typeof draft.paragraphs)[number],
+        { kind: 'description'; variant: 'survey_title_with_period' }
+      > => p.kind === 'description' && p.variant === 'survey_title_with_period'
+    )
+    expect(titleParagraph?.surveyTitle).toBe('양식에 적힌 제목')
   })
 
   it('saves via remote and does not write localStorage', async () => {

@@ -43,6 +43,8 @@ export type ParticipatingIndividualProgressAttendanceParticipantRow = {
   persistedAttendanceStatus?: ParticipatingIndividualProgressAttendanceStatus
   attendanceRecorded: boolean
   lateTime?: string
+  /** GET AttendanceItemResponse.lateMinutes — 회차 시작 시각 기준. FE가 08:30으로 재계산하지 않는다. */
+  lateMinutes?: number | null
   remark?: string
 }
 

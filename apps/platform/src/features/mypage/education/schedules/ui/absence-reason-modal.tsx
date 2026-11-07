@@ -45,6 +45,10 @@ import {
 } from '../../applications/api/activity-client'
 import { useSubmitApplicationAbsenceReason } from '../../applications/api/activity-hooks'
 import { resolveEducationScheduleDateLabel } from '../lib/format'
+import {
+  canSubmitEducationAbsenceReason,
+  resolveEducationScheduleProgressStatus,
+} from '../lib/schedule-rules'
 import type { EducationScheduleItem } from '../model/types'
 import styles from './absence-reason-modal.module.css'
 
@@ -441,6 +445,19 @@ export function EducationAbsenceReasonModal({
       return
     }
     if (files.some(file => file.status !== 'uploaded' || file.fileObjectId == null)) {
+      return
+    }
+    const selectedItem = items.find(item => String(item.scheduleId) === selectedScheduleId)
+    if (
+      selectedItem &&
+      !canSubmitEducationAbsenceReason(
+        resolveEducationScheduleProgressStatus(selectedItem.heldAt),
+        selectedItem.attendanceStatus,
+        selectedItem.availableActions,
+        selectedItem.absenceReasonStatus,
+      )
+    ) {
+      setFormError('출석 처리된 회차에는 불참 사유를 제출할 수 없습니다.')
       return
     }
     setFormError(null)

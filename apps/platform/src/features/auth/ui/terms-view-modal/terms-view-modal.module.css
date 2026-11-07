@@ -91,10 +91,51 @@
   gap: 20px;
 }
 
+.tableContainer {
+  margin: 8px 0;
+}
+
+.tableContainer :global(th),
+.tableContainer :global(th span) {
+  font-family: Pretendard, var(--font-family-base, sans-serif);
+  font-weight: 600;
+  font-style: normal;
+  font-size: 14px;
+  line-height: 160%;
+  letter-spacing: 0;
+  text-align: center;
+}
+
+.tableContainer :global(td),
+.tableContainer :global(td span) {
+  font-family: Pretendard, var(--font-family-base, sans-serif);
+  font-weight: 400;
+  font-style: normal;
+  font-size: 14px;
+  line-height: 160%;
+  letter-spacing: 0;
+  text-align: center;
+  white-space: pre-line;
+}
+
+.sectionHeading {
+  margin-bottom: 8px;
+}
+
 .section {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+}
+
+.paragraph.paragraph {
+  display: block;
+  margin: 0;
+  white-space: pre-line;
+}
+
+.paragraphSpacer {
+  flex-shrink: 0;
+  width: 100%;
 }
 
 .consent {

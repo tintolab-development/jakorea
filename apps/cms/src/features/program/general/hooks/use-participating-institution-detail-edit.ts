@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
 import type { Program } from '@/types/domain'
@@ -117,6 +117,9 @@ export function useParticipatingInstitutionDetailEdit({
     typeof detailToParticipatingInstitutionEditDraft
   > | null>(null)
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
+  const editBaselineRef = useRef<ReturnType<
+    typeof detailToParticipatingInstitutionEditDraft
+  > | null>(null)
   const { showAlert } = useCmsAlert()
 
   const isCompanySchool = useMemo(() => isCompanySchoolProgram(program), [program])
@@ -282,6 +285,7 @@ export function useParticipatingInstitutionDetailEdit({
     setIsEditing(false)
     setDraft(null)
     setValidationErrors({})
+    editBaselineRef.current = null
   }, [])
 
   /* eslint-disable react-hooks/set-state-in-effect -- detail 변경 시 편집 draft 초기화 */
@@ -321,6 +325,7 @@ export function useParticipatingInstitutionDetailEdit({
       }
     }
     setDraft(nextDraft)
+    editBaselineRef.current = nextDraft
     setValidationErrors({})
     setIsEditing(true)
   }, [
@@ -448,11 +453,13 @@ export function useParticipatingInstitutionDetailEdit({
 
     setIsSaving(true)
     try {
-      const baseline = detailToParticipatingInstitutionEditDraft(
-        detail,
-        detail.textbookId || textbookDisplay.textbookId || '',
-        detail.textbookGrade || textbookDisplay.textbookGrade
-      )
+      const baseline =
+        editBaselineRef.current ??
+        detailToParticipatingInstitutionEditDraft(
+          detail,
+          detail.textbookId || textbookDisplay.textbookId || '',
+          detail.textbookGrade || textbookDisplay.textbookGrade
+        )
       const nonMergeChanged =
         baseline.educationGrade !== normalizedDraft.educationGrade ||
         baseline.classCount !== normalizedDraft.classCount ||
@@ -515,6 +522,7 @@ export function useParticipatingInstitutionDetailEdit({
             includeTextbookFields: textbookChanged,
             allowEducationFormatChange:
               shouldShowInstitutionApplicationEducationFormatField(program),
+            baselineTeacherContact: baseline,
           })
           await updateOrganizationApplicationRemote(applicationId, updateBody)
           const canonicalDetail = await fetchOrganizationApplicationDetailRemote(applicationId)

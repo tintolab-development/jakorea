@@ -205,7 +205,8 @@
   .detail-info-form__row--double
   .program-registration-paragraph__schedule-detail-row
   > .cms-select:first-child {
-  flex-shrink: 0;
+  flex: 0 1 120px;
+  min-width: 0;
 }
 
 .program-registration-paragraph
@@ -214,6 +215,32 @@
   > .cms-select:last-child {
   flex: 1 1 0;
   min-width: 0;
+  width: auto;
+  max-width: 100%;
+}
+
+/* CmsSelect 인라인 width/flex-shrink:0 이 반쪽 칸에서 2차를 밀어내지 않게 */
+.program-registration-paragraph
+  .detail-info-form-inputs-wrapper.program-registration-ips-type-fields--inline
+  > .cms-select.cms-field__box {
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.program-registration-paragraph
+  .detail-info-form-inputs-wrapper.program-registration-ips-type-fields--inline
+  > .cms-select.cms-field__box:first-child {
+  flex: 0 1 120px;
+  width: 120px;
+  max-width: 44%;
+}
+
+.program-registration-paragraph
+  .detail-info-form-inputs-wrapper.program-registration-ips-type-fields--inline
+  > .cms-select.cms-field__box:last-child {
+  flex: 1 1 0;
+  width: auto;
+  max-width: 100%;
 }
 
 /* 프로그램 등록 — 교육 진행(일정형) 카드 헤더 우측 버튼 묶음 */

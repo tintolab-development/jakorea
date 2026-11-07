@@ -155,7 +155,7 @@ describe('buildUjatProgramListRowFromRegistrationSnapshot — overlay를 1차 �
     expect(program.managerName).toBe('정민재')
     expect(program.contactPhone).toBe('031-234-5678')
     expect(program.contactEmail).toBe('edu.team@jakorea.org')
-    expect(program.district).toBe('초등학교 4~6학년')
+    expect(program.educationTargetDetail).toBe('초등학교 4~6학년')
     expect(program.applicationStartDate).toBe('2026-11-10T15:00:00.000Z')
     expect(program.applicationEndDate).toBe('2026-11-24T15:00:00.000Z')
     expect(program.volunteerTargets).toEqual(['고등학생', '중학생'])
@@ -181,5 +181,23 @@ describe('buildUjatProgramListRowFromRegistrationSnapshot — overlay를 1차 �
     expect(program.institutionType).toBe('outside_school')
     expect(program.generalCommonInfo?.venueKind).toBe('outside')
     expect(program.generalCommonInfo?.venueDetail).toBe('강남구 교육장')
+  })
+
+  it('RHF 사업기간은 UTC Instant가 아니라 YYYY-MM-DD로 유지한다', () => {
+    const program = buildUjatProgramListRowFromRegistrationSnapshot({
+      id: 'ujat-create-dates',
+      overlay: {},
+      basicInfo: {
+        startDate: '2027-03-09',
+        endDate: '2028-02-29',
+        ipsCategory: 'inspire',
+        detailedProgramId: '163006',
+      },
+    })
+    expect(program.startDate).toBe('2027-03-09')
+    expect(program.endDate).toBe('2028-02-29')
+    expect(program.ips).toBe('Inspire')
+    expect(program.detailedProgramId).toBe('163006')
+    expect(String(program.startDate)).not.toContain('T')
   })
 })

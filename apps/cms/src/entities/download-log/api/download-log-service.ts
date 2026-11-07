@@ -6,6 +6,7 @@
  * @see apps/cms/docs/api/client-file-access-log-backend-handoff.md
  */
 
+import { formatContainedPiiLead } from '@jakorea/domain/shared/file-download-password'
 import type { DownloadLog, RecordDownloadPayload } from '@/types/download-log'
 import { postFileAccessLog } from '@/shared/lib/post-file-access-log'
 import { queryClient } from '@/shared/lib/query-client'
@@ -46,21 +47,22 @@ export async function recordFileDownload(payload: RecordDownloadPayload): Promis
   const downloadedAt = new Date().toISOString()
 
   if (shouldRecordFileAccessRemotely()) {
-    const created = await postFileAccessLog({
+    await postFileAccessLog({
       fileName,
       ...(typeof navigator !== 'undefined' && navigator.userAgent
         ? { userAgent: navigator.userAgent }
         : {}),
-      ...(payload.ipAddress ? { ipAddress: payload.ipAddress } : {}),
     })
     void queryClient.invalidateQueries({ queryKey: ['cms', 'logs'] })
     return {
-      id: created.id ?? `remote-${Date.now()}`,
+      id: `remote-${Date.now()}`,
       fileName,
       userId,
       userName,
       ipAddress,
       downloadedAt,
+      kind: '-',
+      containedPiiLabel: formatContainedPiiLead([]),
     }
   }
 
@@ -70,5 +72,7 @@ export async function recordFileDownload(payload: RecordDownloadPayload): Promis
     userName,
     ipAddress,
     downloadedAt,
+    kind: '-',
+    containedPiiLabel: formatContainedPiiLead([]),
   })
 }

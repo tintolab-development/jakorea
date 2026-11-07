@@ -104,7 +104,7 @@ export function buildSchoolApproveMessageLines(count: number): string[] {
 export function buildSchoolCancelApprovalMessageLines(schoolName: string): string[] {
   return [
     `[${schoolName}] 기관의 참여 승인을 취소하시겠습니까?`,
-    '취소 시 프로그램 승인 현황이 [승인 취소]로 변경됩니다.',
+    '취소 시 프로그램 승인 현황이 [신청 반려]로 변경됩니다.',
     '정말로 취소하시겠습니까?',
   ]
 }

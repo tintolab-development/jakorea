@@ -85,7 +85,7 @@
         "kind": "single_item",
         "variant": "horizontal_table",
         "requiredMark": true,
-        "paragraphTitle": "강의비 산출 정보",
+        "paragraphTitle": "강사비 산출 정보",
         "paragraphDescription": "",
         "participatesInTitleNumbering": true,
         "tableFlavor": "text",
@@ -137,7 +137,7 @@
         "kind": "single_item",
         "variant": "horizontal_table",
         "requiredMark": true,
-        "paragraphTitle": "강의비 산출 내역",
+        "paragraphTitle": "강사비 산출 내역",
         "paragraphDescription": "",
         "participatesInTitleNumbering": true,
         "tableFlavor": "text",
@@ -356,7 +356,7 @@
         "paragraphTitle": "",
         "paragraphDescription": "",
         "participatesInTitleNumbering": false,
-        "body": "2026년 10월 31일"
+        "body": "2026년 11월 08일"
       },
       {
         "id": "payment-statement-seed-closing-signature",

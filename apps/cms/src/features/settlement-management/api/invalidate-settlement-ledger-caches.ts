@@ -14,5 +14,6 @@ export async function invalidateSettlementLedgerCaches(queryClient: QueryClient)
     queryClient.invalidateQueries({
       queryKey: [...settlementQueryKeys.accountPayments.all(), 'budgetSummary'],
     }),
+    queryClient.invalidateQueries({ queryKey: ['instructor-settlement-detail'] }),
   ])
 }

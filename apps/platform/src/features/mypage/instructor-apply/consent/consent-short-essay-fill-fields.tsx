@@ -29,6 +29,12 @@ function resolveTextareaRows(paragraph: ConsentShortEssayParagraph): 1 | 4 | 5 {
 /** 행정정보 ⑤ 대상자 본인 — 시안 라벨 앞 '・' (스키마 시드 문자열이 아니라 렌더 단계에서만 부여) */
 const SUBJECT_LABEL_BULLET = '・'
 
+/**
+ * 행정정보 ⑤ 생년월일 — Platform 시안(P5) placeholder. CMS 시안(C09)은 `생년월일 8자리를 입력해 주세요`라
+ * 스키마 값은 CMS 기준으로 두고 Platform 렌더에서만 바꾼다(입력 형식 검증은 그대로).
+ */
+const PLATFORM_NOTICE_SUBJECT_BIRTH_PLACEHOLDER = '생년월일을 입력해 주세요'
+
 function isShortEssayVariant(
   current: { kind: string; variant: string },
 ): current is ConsentShortEssayParagraph {
@@ -112,9 +118,12 @@ export function ConsentShortEssayFillFields({
           baseLabel && paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.subject
             ? `${SUBJECT_LABEL_BULLET}${baseLabel}`
             : baseLabel
-        const placeholder = item.placeholder?.trim() || fallbackPlaceholder
         const isPhone = item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.phone
         const isBirth = item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.birth
+        const placeholder =
+          isBirth && paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.subject
+            ? PLATFORM_NOTICE_SUBJECT_BIRTH_PLACEHOLDER
+            : item.placeholder?.trim() || fallbackPlaceholder
         const isLockedNoticeSubjectName =
           paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.subject &&
           item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.name &&

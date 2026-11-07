@@ -6,10 +6,10 @@ import { SocialLinkMinActiveError } from '@/entities/social-link/model/types'
 import {
   type AdminMutationAlert,
   isMinActiveRequiredError,
-  mapCommonRemoteMutationFailure,
   readApiErrorMessage,
 } from '@/shared/lib/api-error-message'
 import { minActiveRequiredAlert } from '@/shared/lib/min-active-guard'
+import { mapAdminMutationAlert } from '@/shared/ui'
 
 const MIN_ACTIVE_ALERT = minActiveRequiredAlert('소셜 링크는')
 
@@ -18,7 +18,7 @@ export function socialLinkMutationFailureAlert(
   fallbackContent: string,
   title = '저장 실패',
 ): AdminMutationAlert {
-  const common = mapCommonRemoteMutationFailure(error)
+  const common = mapAdminMutationAlert(error)
   if (common) return common
 
   if (

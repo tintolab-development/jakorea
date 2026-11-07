@@ -85,7 +85,7 @@
         "kind": "single_item",
         "variant": "horizontal_table",
         "requiredMark": true,
-        "paragraphTitle": "강의비 산출 내역",
+        "paragraphTitle": "강사비 산출 내역",
         "paragraphDescription": "",
         "participatesInTitleNumbering": true,
         "tableFlavor": "text",
@@ -95,7 +95,7 @@
         ],
         "dataRows": [
           [
-            "강의비 유형",
+            "강사비 유형",
             ""
           ],
           [
@@ -111,7 +111,7 @@
             ""
           ],
           [
-            "총 강의비",
+            "총 강사비",
             ""
           ]
         ],

@@ -29,6 +29,7 @@ import {
   readProgramEducationScheduleLines,
   resolveParticipatingInstitutionScheduleRowLabel,
   resolveScheduleDetailTimeSpan,
+  withParticipatingProgressCurriculumShape,
 } from '@/features/program/general/lib/participating-school-session-display'
 import { generalEducationScheduleShapeFromBridge } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-session-format'
 import { ProgramEnrollmentStatusText } from '@/shared/components/program-enrollment-status-text'
@@ -312,17 +313,11 @@ function IndividualApplicantProgressScheduleSection({
   loading?: boolean
 }) {
   const bridge = resolveInstitutionApplicationProgramBridge(program)
-  const scheduleShape = generalEducationScheduleShapeFromBridge(bridge)
-  const curriculumSessionLabels = readCurriculumSessionLabels(program)
-  const detailScheduleTimeSpan = resolveScheduleDetailTimeSpan(
-    program.generalCommonInfo?.scheduleDetails
+  const shape = withParticipatingProgressCurriculumShape(
+    generalEducationScheduleShapeFromBridge(bridge),
+    program
   )
-  const displaySessions = prepareGeneralEducationScheduleSessions(
-    sessions,
-    scheduleShape ? { ...scheduleShape, curriculumSessionLabels } : null,
-    { detailScheduleTimeSpan }
-  )
-  const shape = scheduleShape ? { ...scheduleShape, curriculumSessionLabels } : null
+  const displaySessions = [...sessions]
   return (
     <DetailInfoForm title="교육 진행 일정" mode="view">
       {loading ? (
@@ -348,7 +343,6 @@ function IndividualApplicantProgressScheduleSection({
                 <ParticipatingProgressScheduleValue
                   session={session}
                   shape={shape}
-                  detailScheduleTimeSpan={detailScheduleTimeSpan}
                 />
               }
             />

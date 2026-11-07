@@ -10,7 +10,7 @@ import {
   readApiErrorField,
   readApiErrorMessage,
 } from '@/shared/lib/api-error-message'
-import { REQUIRED_FIELDS_INCOMPLETE_ALERT } from '@/shared/ui'
+import { mapAdminMutationAlert, REQUIRED_FIELDS_INCOMPLETE_ALERT } from '@/shared/ui'
 
 const ORG_FIELD_LABEL: Record<string, string> = {
   organizationName: '기관명',
@@ -30,6 +30,8 @@ const VERSION_CONFLICT_ALERT: AdminMutationAlert = {
 }
 
 export function footerOrgSaveFailureAlert(error: unknown): AdminMutationAlert {
+  const mapped = mapAdminMutationAlert(error)
+  if (mapped) return mapped
   if (isOptimisticLockConflictError(error)) return VERSION_CONFLICT_ALERT
   const code = readApiErrorCode(error) ?? (error instanceof Error ? error.message : '')
   const field = readApiErrorField(error)

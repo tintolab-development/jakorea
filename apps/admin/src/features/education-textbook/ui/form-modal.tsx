@@ -388,7 +388,7 @@ function TextbookFormBody({
     }
     const unitIntroMarkdown = canEdit ? getHTML().trim() : (initial?.unitIntroMarkdown ?? '')
     if (canEdit && isEmptyAdminHtml(unitIntroMarkdown)) {
-      showAlert({ title: '입력 확인', content: '단원 소개를 입력해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (canEdit) {

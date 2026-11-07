@@ -1,20 +1,20 @@
 /**
- * 학교 상세정보 – 강사 배정 안내 모달
- * 스펙(스크린샷): width 800 · 패딩 26/30/34 · 섹션 간격 30px
- * 대표 강사 지정 → 강사명 → 교육 배정일(1열 칩 리스트) · 취소/강사 배정
+ * 학교 상세정보 – 강사 추가 배정 안내 모달 (A: 기관형 > 참여 기관 상세 > 강사 배정 현황 > 추가 배정)
+ * 스펙(Figma CMS 9760:8214 ‘강사 추가 배정 안내’): width 600 · 패딩 24/30/34 · 섹션 간격 30px
+ * 대표 강사 지정 → 강사명 → 교육 배정일(1열 칩 리스트) · 취소/배정
+ * 공통 필드 UI: general-participant-add-assign-modal.tsx
  */
 
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Form } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { CmsButton, CmsRadio, CmsSelect } from '@/shared/ui'
+import { CmsButton, CmsSelect } from '@/shared/ui'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import type {
   ParticipatingSchoolRow,
   ParticipatingSchoolSession,
 } from '@/features/program/general/model/participating-schools'
 import type { InstructorRoleKey } from '../../../model/school-detail-types'
-import { INSTRUCTOR_ROLE_LABELS } from '../../../model/school-detail-types'
 import type { InstructorAssignSessionOption } from '../../../lib/instructor-assign-session-options'
 import { useProgramInstructorApplications } from '@/features/program/general/hooks/use-program-instructor-applications'
 import {
@@ -22,59 +22,17 @@ import {
   buildSchoolAddInstructorAssignSessionOptions,
   type SchoolAddInstructorAssignOption,
 } from '../../../lib/school-add-instructor-assign'
-import { InstructorAssignSessionSlotChip } from '@/features/program/shared/ui/detail-modal/components/instructor-assign-session-slot-chip'
+import {
+  AddAssignRequiredLabel as RequiredFieldLabel,
+  AddAssignRoleRadios,
+  AddAssignSessionChipList,
+  GENERAL_ADD_ASSIGN_MODAL_CLASS_NAME,
+  GENERAL_ADD_ASSIGN_MODAL_WIDTH,
+} from './general-participant-add-assign-modal'
 import { SchoolDetailNewAssignGuideModal } from './school-detail-new-assign-guide-modal'
 import { SchoolDetailAssignOverflowModal } from './school-detail-assign-overflow-modal'
 import { SchoolDetailLeadInstructorConfirmModal } from './school-detail-lead-instructor-confirm-modal'
 import './school-detail-add-instructor-assign-modal.css'
-
-function InstructorAssignSessionTags({
-  value,
-  onChange,
-  options,
-}: {
-  value?: string[]
-  onChange?: (ids: string[]) => void
-  options: InstructorAssignSessionOption[]
-}) {
-  if (options.length === 0) {
-    return (
-      <p className="school-detail-add-instructor-assign-modal__session-empty">
-        선택 가능한 교육 일정이 없습니다.
-      </p>
-    )
-  }
-  return (
-    <div
-      className="school-detail-add-instructor-assign-modal__session-grid"
-      role="group"
-      aria-label="교육 배정일 선택"
-    >
-      {options.map(opt => {
-        const selected = value?.includes(opt.id) ?? false
-        const isDisabled = Boolean(opt.disabled)
-        return (
-          <InstructorAssignSessionSlotChip
-            key={opt.id}
-            scheduleLabel={opt.scheduleLabel}
-            sessionRoundLabel={opt.sessionRoundLabel}
-            capacityLabel={opt.capacityLabel}
-            selected={selected}
-            disabled={isDisabled}
-            onClick={() => {
-              if (isDisabled) return
-              const prev = value ?? []
-              const next = prev.includes(opt.id)
-                ? prev.filter(id => id !== opt.id)
-                : [...prev, opt.id]
-              onChange?.(next)
-            }}
-          />
-        )
-      })}
-    </div>
-  )
-}
 
 export type AddInstructorAssignOption = SchoolAddInstructorAssignOption
 
@@ -127,18 +85,7 @@ export interface SchoolDetailAddInstructorAssignModalProps {
 }
 
 const DEFAULT_ROLE: InstructorRoleKey = 'assistant'
-const MODAL_WIDTH = 600
-
-function RequiredFieldLabel({ children }: { children: ReactNode }) {
-  return (
-    <>
-      {children}
-      <span className="school-detail-add-instructor-assign-modal__required" aria-hidden>
-        *
-      </span>
-    </>
-  )
-}
+const MODAL_WIDTH = GENERAL_ADD_ASSIGN_MODAL_WIDTH
 
 export function SchoolDetailAddInstructorAssignModal({
   open,
@@ -310,7 +257,7 @@ export function SchoolDetailAddInstructorAssignModal({
         취소
       </CmsButton>
       <CmsButton variant="primary" size="medium" onClick={() => form.submit()}>
-        강사 배정
+        배정
       </CmsButton>
     </>
   )
@@ -323,8 +270,8 @@ export function SchoolDetailAddInstructorAssignModal({
         title="강사 추가 배정 안내"
         width={MODAL_WIDTH}
         footer={footer}
-        className="school-detail-add-instructor-assign-modal"
-        description={`**[${schoolName}]**에 추가 배정할 강사님을 선택해 주세요`}
+        className={GENERAL_ADD_ASSIGN_MODAL_CLASS_NAME}
+        description={`**[${schoolName}]**에 추가 배정할 강사님을 선택해 주세요.`}
       >
         <div className="school-detail-add-instructor-assign-modal__body">
           <Form
@@ -343,17 +290,7 @@ export function SchoolDetailAddInstructorAssignModal({
                 rules={[{ required: true, message: '대표 강사 지정을 선택해 주세요.' }]}
                 className="school-detail-add-instructor-assign-modal__field"
               >
-                <CmsRadio.Group
-                  className="school-detail-add-instructor-assign-modal__role-radios"
-                  size="medium"
-                  options={[
-                    { label: INSTRUCTOR_ROLE_LABELS.lead, value: 'lead' as InstructorRoleKey },
-                    {
-                      label: INSTRUCTOR_ROLE_LABELS.assistant,
-                      value: 'assistant' as InstructorRoleKey,
-                    },
-                  ]}
-                />
+                <AddAssignRoleRadios />
               </Form.Item>
               <Form.Item
                 name="instructorId"
@@ -390,7 +327,7 @@ export function SchoolDetailAddInstructorAssignModal({
                 ]}
                 className="school-detail-add-instructor-assign-modal__field school-detail-add-instructor-assign-modal__field--sessions"
               >
-                <InstructorAssignSessionTags options={assignmentSessionOptions} />
+                <AddAssignSessionChipList options={assignmentSessionOptions} selectionMode="multiple" />
               </Form.Item>
             </div>
           </Form>

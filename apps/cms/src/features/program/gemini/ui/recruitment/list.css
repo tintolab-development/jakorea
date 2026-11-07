@@ -2,8 +2,12 @@
  * cms-data-table 가 FilterTableLayout 에서 No. 이후 col 을 auto 로 풀어
  * 신청기간·상태가 함께 늘어난다. 시안 폭을 th/td·col 에 강제한다.
  *
- * 공고명 710(잔여 흡수) · 신청/연수요청기간 280 · 상태 120
+ * 선택 60 · No. 80 · 공고명 700 · 신청/연수요청기간 280 · 상태 140
  */
+
+.gemini-recruitment-list__table {
+  --table-selection-column-width: 60px;
+}
 
 /* 선택 열 있음: checkbox · No. · 공고명 · 신청기간 · 연수요청 · 상태 */
 .filter-table-layout
@@ -13,7 +17,7 @@
   + col
   ~ col:nth-child(3) {
   width: auto !important;
-  min-width: 710px !important;
+  min-width: 700px !important;
   max-width: none !important;
 }
 
@@ -40,9 +44,9 @@
   col.ant-table-selection-col
   + col
   ~ col:nth-child(6) {
-  width: 120px !important;
-  min-width: 120px !important;
-  max-width: 120px !important;
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
 }
 
 /* 선택 열 없음: No. · 공고명 · 신청기간 · 연수요청 · 상태 */
@@ -54,7 +58,7 @@
   colgroup
   > col:nth-child(2) {
   width: auto !important;
-  min-width: 710px !important;
+  min-width: 700px !important;
   max-width: none !important;
 }
 
@@ -84,9 +88,9 @@
   )
   colgroup
   > col:nth-child(5) {
-  width: 120px !important;
-  min-width: 120px !important;
-  max-width: 120px !important;
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
 }
 
 .filter-table-layout
@@ -102,7 +106,7 @@
   > tr
   > td.gemini-recruitment-list__col-title {
   width: auto !important;
-  min-width: 710px !important;
+  min-width: 700px !important;
   max-width: none !important;
 }
 
@@ -135,9 +139,9 @@
   .ant-table-tbody
   > tr
   > td.gemini-recruitment-list__col-status {
-  width: 120px !important;
-  min-width: 120px !important;
-  max-width: 120px !important;
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
 }
 
 .gemini-recruitment-list__status {

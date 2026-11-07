@@ -13,4 +13,6 @@ export interface DownloadLogFrontendResponse {
   userName?: string;
   ipAddress?: string;
   downloadedAt?: string;
+  kind?: string;
+  containedPiiTypes?: string[];
 }

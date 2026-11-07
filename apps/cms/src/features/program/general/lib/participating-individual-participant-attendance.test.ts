@@ -8,6 +8,7 @@ import {
   buildParticipatingIndividualParticipantAttendanceRowsFromAssigned,
   buildParticipatingIndividualParticipantAttendanceSummary,
   mergeParticipatingIndividualAbsenceReasons,
+  resolveVisibleParticipatingIndividualAbsenceReasons,
 } from './participating-individual-participant-attendance'
 import type { ParticipatingIndividualParticipantAttendanceRow } from './participating-individual-participant-attendance-types'
 
@@ -160,6 +161,36 @@ describe('buildParticipatingIndividualParticipantAttendanceRowsFromAssigned', ()
     expect(rows[0]?.attendanceStatus).toBe('present')
     expect(rows[1]?.scheduleId).toBe('20')
     expect(rows[1]?.attendanceStatus).toBe('withdrawn')
+  })
+
+  it('marks sessions after the activity-withdraw stop session as withdrawn', () => {
+    const sessions = [
+      assignedSession(10),
+      assignedSession(20, {
+        date: '2026.06.05',
+        deliveryScheduleStatus: 'SCHEDULED',
+        educationScheduleLabel: '4차 교육',
+      }),
+      assignedSession(30, {
+        date: '2026.06.12',
+        deliveryScheduleStatus: 'SCHEDULED',
+        educationScheduleLabel: '5차 교육',
+      }),
+    ]
+    const stopKey = buildParticipatingSchoolSessionKey(sessions[1]!, 1)
+    const rows = buildParticipatingIndividualParticipantAttendanceRowsFromAssigned({
+      assignedSessions: sessions,
+      attendanceSessions: [attendanceSession('10')],
+      participant: participant({
+        activityWithdrawn: true,
+        activityWithdrawStopSessionKey: stopKey,
+      }),
+      program,
+    })
+
+    expect(rows[0]?.attendanceStatus).toBe('present')
+    expect(rows[1]?.attendanceStatus).toBe('withdrawn')
+    expect(rows[2]?.attendanceStatus).toBe('withdrawn')
   })
 
   it('returns empty when nothing is assigned', () => {
@@ -357,7 +388,7 @@ describe('mergeParticipatingIndividualAbsenceReasons', () => {
         fileName: null,
       },
     ]
-    expect(mergeParticipatingIndividualAbsenceReasons([], fromRows)).toEqual(fromRows)
+    expect(mergeParticipatingIndividualAbsenceReasons([], fromRows)).toEqual([])
   })
 
   it('prefers remote files and still adds missing local rows', () => {
@@ -387,6 +418,120 @@ describe('mergeParticipatingIndividualAbsenceReasons', () => {
       },
     ]
     const merged = mergeParticipatingIndividualAbsenceReasons(remote, fromRows)
-    expect(merged).toEqual([remote[0], fromRows[1]])
+    expect(merged).toEqual(remote)
+  })
+})
+
+describe('resolveVisibleParticipatingIndividualAbsenceReasons', () => {
+  const noShowRemote = [
+    {
+      id: 'remote-24',
+      scheduleRowId: '24',
+      dateLabel: '10월 24일',
+      reason: '노쇼',
+      fileName: '증빙.pdf',
+    },
+  ]
+
+  function row(
+    overrides: Partial<ParticipatingIndividualParticipantAttendanceRow>
+  ): ParticipatingIndividualParticipantAttendanceRow {
+    return {
+      id: '24',
+      scheduleId: '24',
+      assignedIndex: 0,
+      scheduleLabel: '2026. 10. 24(토) | 2회차',
+      attendanceStatus: 'present',
+      attendanceRecorded: true,
+      educationProgress: 'completed',
+      ...overrides,
+    }
+  }
+
+  it('hides remote reasons when the attendance row is no longer excused', () => {
+    expect(
+      resolveVisibleParticipatingIndividualAbsenceReasons({
+        remote: noShowRemote,
+        rows: [row({ attendanceStatus: 'present' })],
+      })
+    ).toEqual([])
+  })
+
+  it('shows attendance-row remark when absence-reasons GET is empty', () => {
+    expect(
+      resolveVisibleParticipatingIndividualAbsenceReasons({
+        remote: [],
+        rows: [
+          row({
+            attendanceStatus: 'excused_absence',
+            remark: '병원 진료',
+          }),
+        ],
+      })
+    ).toEqual([
+      {
+        id: 'abs-24',
+        scheduleRowId: '24',
+        dateLabel: '10월 24일',
+        reason: '병원 진료',
+        fileName: null,
+        fileObjectIds: undefined,
+        originalFileNames: undefined,
+      },
+    ])
+  })
+
+  it('prefers attendance remark over stale remote reason text', () => {
+    expect(
+      resolveVisibleParticipatingIndividualAbsenceReasons({
+        remote: noShowRemote,
+        rows: [
+          row({
+            attendanceStatus: 'excused_absence',
+            remark: '관리자 정정 사유',
+          }),
+        ],
+      })
+    ).toEqual([
+      {
+        id: 'remote-24',
+        scheduleRowId: '24',
+        dateLabel: '10월 24일',
+        reason: '관리자 정정 사유',
+        fileName: null,
+        fileObjectIds: undefined,
+        originalFileNames: undefined,
+      },
+    ])
+  })
+
+  it('shows CMS 정정 업로드 증빙 when absence-reasons GET has no files yet', () => {
+    expect(
+      resolveVisibleParticipatingIndividualAbsenceReasons({
+        remote: [],
+        rows: [
+          row({
+            attendanceStatus: 'excused_absence',
+            remark: '병원 진료',
+          }),
+        ],
+        adminEvidenceByScheduleId: {
+          '24': {
+            fileObjectIds: [2056505],
+            originalFileNames: ['확인서.pdf'],
+          },
+        },
+      })
+    ).toEqual([
+      {
+        id: 'abs-24',
+        scheduleRowId: '24',
+        dateLabel: '10월 24일',
+        reason: '병원 진료',
+        fileName: '확인서.pdf',
+        fileObjectIds: [2056505],
+        originalFileNames: ['확인서.pdf'],
+      },
+    ])
   })
 })

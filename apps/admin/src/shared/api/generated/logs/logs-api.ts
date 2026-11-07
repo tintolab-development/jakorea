@@ -94,7 +94,7 @@ const adminAccountActions = (
     }
 
 /**
- * Internal ingest for collectors (JA CMS / Platform / Homepage services). Admin log list screens must not POST. Writes are append-only. Homepage does not own account APIs; JA CMS should POST after create/deactivate/profile/permission/password changes. Not used by Admin list UI.
+ * Internal ingest for collectors (JA CMS / Platform / Homepage services). Admin log list screens must not POST. Writes are append-only. Homepage does not own account APIs; JA CMS should POST after create/deactivate/profile/permission/password/identity re-verify using the same ingest bearer as member-logins. Not used by Admin list UI.
  * @summary Ingest admin account-processing evidence
  */
 const createAdminAccountAction = (

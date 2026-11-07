@@ -6,6 +6,8 @@
 import { useState, useEffect, useMemo, useCallback, useRef, type Key } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { cacheProjectedProgramPrivacy } from '@/features/program/shared/lib/program-my-assignment'
+import type { InstructorApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationDetailResponse'
+import { retainMaskedInstructorApplicationSettlement } from '@/features/program/general/lib/instructor-application-basic-info-supplement'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
@@ -43,6 +45,10 @@ import { fetchMemberRolePrivacyUnmask } from '@/features/user/api/member-privacy
 import { mapInstructorApplicationDetailToParticipatingRow } from '@/features/program/general/lib/participating-instructor-application-detail'
 import { giveUpGeneralParticipatingInstitution } from '@/features/program/general/api/admin-program-progress-service'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
+import {
+  GENERAL_INSTRUCTOR_ASSIGNMENT_REQUIRES_RECRUITMENT_MESSAGE,
+  programHasActiveInstructorRecruitment,
+} from '@/features/program/general/lib/general-instructor-recruitment-required'
 import {
   generalApplicationsQueryKeys,
   generalProgramProgressQueryKeys,
@@ -394,12 +400,14 @@ export function ParticipatingInstructorFullpageView({
           reason,
           Number.isFinite(programIdNumber) ? programIdNumber : undefined
         )
-        const safeDto = cacheProjectedProgramPrivacy(
-          queryClient,
-          generalApplicationsQueryKeys.instructorDetail(applicationId),
-          program.id,
-          dto
+        const detailKey = generalApplicationsQueryKeys.instructorDetail(applicationId)
+        const previousDetail =
+          queryClient.getQueryData<InstructorApplicationDetailResponse>(detailKey)
+        const safeDto = retainMaskedInstructorApplicationSettlement(
+          cacheProjectedProgramPrivacy(queryClient, detailKey, program.id, dto),
+          previousDetail
         )
+        queryClient.setQueryData(detailKey, safeDto)
         const mapped = mapInstructorApplicationDetailToParticipatingRow(
           safeDto,
           mergedInstructor,
@@ -415,6 +423,9 @@ export function ParticipatingInstructorFullpageView({
           nameEnglish: mapped.nameEnglish,
           birthDate: mapped.birthDate,
           gender: mapped.gender,
+          bankName: mapped.bankName,
+          accountNumber: mapped.accountNumber,
+          accountHolder: mapped.accountHolder,
         }))
         return {
           name: safeDto.instructorName?.trim() || undefined,
@@ -892,6 +903,14 @@ export function ParticipatingInstructorFullpageView({
     if (!assignGuideMode || !assignGuideSchoolId) return false
     if (assignGuideInFlightRef.current) return false
 
+    if (!programHasActiveInstructorRecruitment(program)) {
+      showAlert({
+        title: '배정 실패',
+        content: GENERAL_INSTRUCTOR_ASSIGNMENT_REQUIRES_RECRUITMENT_MESSAGE,
+      })
+      return false
+    }
+
     const memberId = Number(mergedInstructor.memberId)
     if (!Number.isFinite(memberId) || memberId <= 0) {
       showAlert({
@@ -1044,7 +1063,7 @@ export function ParticipatingInstructorFullpageView({
     mergedInstructor,
     mergedInstructor.instructorApplicationId,
     mergedInstructor.memberId,
-    program.id,
+    program,
     queryClient,
     schoolRows,
     selectedWaitingSchoolKeys,

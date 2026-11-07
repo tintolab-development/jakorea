@@ -160,6 +160,62 @@ describe('persist-recruitment-row-save', () => {
     expect(body?.clearFields).toContain('startAt')
   })
 
+  it('기관 최종 발표 방법을 비우면 빈 문자열로 보낸다', () => {
+    const program = orgProgram()
+    const draft: Program = {
+      ...program,
+      programRecruitments: program.programRecruitments?.map(row =>
+        row.recruitmentType === 'PARTICIPANT'
+          ? { ...row, finalPassAnnouncementMethod: '홈페이지 공지' }
+          : row
+      ),
+    }
+    const body = buildProgramRecruitmentRowSaveRequest({
+      baseline: draft,
+      draft,
+      patch: {
+        resultAnnouncementMethod: '',
+      },
+      audience: 'participant',
+    })
+    expect(body?.finalPassAnnouncementMethod).toBe('')
+  })
+
+  it('H1 extra만 보내면 H2 행은 요청에 넣지 않는다', () => {
+    const program: Program = {
+      ...orgProgram(),
+      backendProgramType: 'UJAT',
+      programRecruitments: [
+        volunteerRow({
+          id: 1001,
+          recruitTerm: 'FIRST_HALF',
+          documentPassAnnouncementMethod: '홈페이지 공지',
+          volunteerTargetDetail: '대학생 상반기',
+        }),
+        volunteerRow({
+          id: 1002,
+          recruitTerm: 'SECOND_HALF',
+          documentPassAnnouncementMethod: '문자 안내',
+          volunteerTargetDetail: '하반기 상세',
+        }),
+      ],
+    }
+    const body = buildProgramRecruitmentRowSaveRequest({
+      baseline: program,
+      draft: program,
+      patch: {
+        documentPassAnnouncementMethod: '이메일 안내',
+        volunteerTargetDetail: '상반기 상세만',
+      },
+      audience: 'volunteer',
+      volunteerHalf: 'h1',
+    })
+    expect(body?.id).toBe(1001)
+    expect(body?.recruitTerm).toBe('FIRST_HALF')
+    expect(body?.documentPassAnnouncementMethod).toBe('이메일 안내')
+    expect(body?.volunteerTargetDetail).toBe('상반기 상세만')
+  })
+
   it('기관 행 비고만 바꾸면 remarks만 보내고 빈 announcementTitle·summary를 넣지 않는다', () => {
     const program: Program = {
       ...orgProgram(),

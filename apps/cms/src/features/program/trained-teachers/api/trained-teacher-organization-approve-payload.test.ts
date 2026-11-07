@@ -1,5 +1,18 @@
 import { describe, expect, it } from 'vitest'
-import { buildTrainedTeacherApproveRequest } from './trained-teacher-organization-approve-payload'
+import {
+  buildTrainedTeacherApproveRequest,
+  isTrainedTeacherPeriodApproveMode,
+} from './trained-teacher-organization-approve-payload'
+
+describe('isTrainedTeacherPeriodApproveMode', () => {
+  it('PERIOD만 기간형으로 본다', () => {
+    expect(isTrainedTeacherPeriodApproveMode('PERIOD')).toBe(true)
+    expect(isTrainedTeacherPeriodApproveMode('period')).toBe(true)
+    expect(isTrainedTeacherPeriodApproveMode('FIXED_DATE')).toBe(false)
+    expect(isTrainedTeacherPeriodApproveMode('date')).toBe(false)
+    expect(isTrainedTeacherPeriodApproveMode('DATE')).toBe(false)
+  })
+})
 
 describe('buildTrainedTeacherApproveRequest', () => {
   it('일정 없는 즉시 승인은 기존 무본문 요청을 유지한다', () => {
@@ -13,6 +26,38 @@ describe('buildTrainedTeacherApproveRequest', () => {
         selectedScheduleIds: [187134, 187134],
       })
     ).toEqual({ timing: 'IMMEDIATE', selectedScheduleId: 187134 })
+  })
+
+  it('1691630 DATE 단일 선택은 selectedScheduleId만 보낸다', () => {
+    expect(
+      buildTrainedTeacherApproveRequest({
+        timing: 'IMMEDIATE',
+        educationScheduleMode: 'DATE',
+        selectedScheduleId: 187701,
+      })
+    ).toEqual({ timing: 'IMMEDIATE', selectedScheduleId: 187701 })
+  })
+
+  it('날짜형은 preferredScheduleRank를 넣지 않고 selectedScheduleId만 보낸다', () => {
+    expect(
+      buildTrainedTeacherApproveRequest({
+        timing: 'IMMEDIATE',
+        educationScheduleMode: 'FIXED_DATE',
+        preferredScheduleRank: 1,
+        selectedScheduleId: 187702,
+      })
+    ).toEqual({ timing: 'IMMEDIATE', selectedScheduleId: 187702 })
+  })
+
+  it('기간형은 selectedScheduleId를 버리고 preferredScheduleRank만 보낸다', () => {
+    expect(
+      buildTrainedTeacherApproveRequest({
+        timing: 'IMMEDIATE',
+        educationScheduleMode: 'PERIOD',
+        preferredScheduleRank: 2,
+        selectedScheduleId: 187702,
+      })
+    ).toEqual({ timing: 'IMMEDIATE', preferredScheduleRank: 2 })
   })
 
   it('복수 일정은 slots만 보낸다', () => {
@@ -51,7 +96,7 @@ describe('buildTrainedTeacherApproveRequest', () => {
         preferredScheduleRank: 1.5,
         selectedScheduleId: 187157,
       })
-    ).toEqual({ timing: 'IMMEDIATE' })
+    ).toEqual({ timing: 'IMMEDIATE', selectedScheduleId: 187157 })
   })
 
   it('SCHEDULED는 scheduledAt을 포함하고 다른 timing에는 포함하지 않는다', () => {

@@ -1,7 +1,12 @@
 import assert from 'node:assert/strict'
 import {
   listRowCertificateAvailable,
+  resolveAutoPersonalCertificateSlot,
   resolveCertificateCtaView,
+  resolveExclusivePersonalCertificateSlot,
+  resolveExclusivePersonalCertificateViews,
+  resolvePortalCertificateAvailabilityCtaView,
+  resolvePortalCertificateIssueParticipantId,
   shouldFetchIndividualCertificateAvailability,
   shouldShowDetailCertificateCta,
   shouldShowListCertificateEntry,
@@ -20,7 +25,7 @@ assert.equal(shouldFetchIndividualCertificateAvailability(personalCompleted), tr
 assert.equal(shouldShowDetailCertificateCta(personalCompleted), true)
 assert.equal(
   shouldFetchIndividualCertificateAvailability({ ...personalCompleted, isTeacher: true }),
-  false,
+  true,
 )
 assert.equal(
   shouldShowDetailCertificateCta({ ...personalCompleted, canIssueCertificate: false }),
@@ -81,7 +86,7 @@ assert.equal(
     isTeacher: true,
     certificateAvailable: true,
   }),
-  false,
+  true,
 )
 
 assert.deepEqual(
@@ -137,9 +142,14 @@ assert.equal(
   resolveCertificateCtaView({
     ...personalCompleted,
     certificateStatus: 'NOT_ELIGIBLE',
-    availability: { available: true, canDownload: false, certificateType: 'PARTICIPATION' },
+    availability: {
+      available: true,
+      canDownload: false,
+      certificateType: 'PARTICIPATION',
+      participantId: 1694970,
+    },
   }).kind,
-  'issue',
+  'hidden',
 )
 
 assert.equal(
@@ -157,6 +167,263 @@ assert.equal(
     availability: undefined,
   }).kind,
   'hidden',
+)
+
+assert.equal(
+  resolvePortalCertificateAvailabilityCtaView({
+    available: false,
+    canDownload: false,
+    certificateType: 'PARTICIPATION',
+  }).kind,
+  'hidden',
+)
+
+assert.equal(
+  resolvePortalCertificateIssueParticipantId({
+    applicationParticipantId: 1694970,
+    availabilityParticipantId: 1694971,
+  }),
+  1694971,
+)
+assert.equal(
+  resolvePortalCertificateIssueParticipantId({
+    applicationParticipantId: 1694970,
+    availabilityParticipantId: 1694970,
+  }),
+  1694970,
+)
+assert.equal(
+  resolvePortalCertificateAvailabilityCtaView({
+    available: true,
+    canDownload: true,
+    existingIssueId: 17,
+    certificateType: 'PARTICIPATION',
+  }).kind,
+  'hidden',
+)
+assert.equal(
+  resolvePortalCertificateAvailabilityCtaView({
+    available: false,
+    canDownload: false,
+    existingIssueId: 17,
+    certificateType: 'PARTICIPATION',
+  }).kind,
+  'hidden',
+)
+
+assert.deepEqual(
+  resolveExclusivePersonalCertificateViews({
+    completion: { kind: 'issue' },
+    participation: { kind: 'download', issueId: 17 },
+  }),
+  { completion: { kind: 'issue' }, participation: { kind: 'hidden' } },
+)
+assert.deepEqual(
+  resolveExclusivePersonalCertificateViews({
+    completion: { kind: 'hidden' },
+    participation: { kind: 'issue' },
+  }),
+  { completion: { kind: 'hidden' }, participation: { kind: 'hidden' } },
+)
+assert.deepEqual(
+  resolveExclusivePersonalCertificateViews({
+    completion: { kind: 'issue' },
+    participation: { kind: 'hidden' },
+  }),
+  { completion: { kind: 'issue' }, participation: { kind: 'hidden' } },
+)
+
+assert.deepEqual(
+  resolveExclusivePersonalCertificateSlot({
+    completion: {
+      available: true,
+      canDownload: true,
+      existingIssueId: 18,
+      certificateType: 'COMPLETION',
+      participantId: 1694970,
+    },
+    participation: {
+      available: false,
+      canDownload: true,
+      existingIssueId: 17,
+      certificateType: 'PARTICIPATION',
+      reasonCode: 'COMPLETION_CERTIFICATE_REQUIRED',
+    },
+  }),
+  { type: 'COMPLETION', view: { kind: 'download', issueId: 18 } },
+)
+
+assert.deepEqual(
+  resolveExclusivePersonalCertificateSlot({
+    completion: {
+      available: true,
+      canDownload: false,
+      existingIssueId: null,
+      certificateType: 'COMPLETION',
+    },
+    participation: {
+      available: false,
+      canDownload: true,
+      existingIssueId: 17,
+      certificateType: 'PARTICIPATION',
+    },
+  }),
+  { type: 'COMPLETION', view: { kind: 'issue' } },
+)
+
+assert.deepEqual(
+  resolveExclusivePersonalCertificateSlot({
+    completion: {
+      available: false,
+      canDownload: false,
+      certificateType: 'COMPLETION',
+      reasonCode: 'PARTICIPANT_NOT_COMPLETED',
+    },
+    participation: {
+      available: true,
+      canDownload: false,
+      certificateType: 'PARTICIPATION',
+      participantId: 1694970,
+    },
+  }),
+  { type: null, view: { kind: 'hidden' } },
+)
+
+assert.deepEqual(
+  resolveExclusivePersonalCertificateSlot({
+    completion: {
+      available: false,
+      eligible: false,
+      reasonCode: 'PARTICIPANT_NOT_COMPLETED',
+      existingIssueId: 18,
+      canDownload: false,
+      certificateType: 'COMPLETION',
+      participantId: 1694970,
+    },
+    participation: {
+      available: true,
+      eligible: true,
+      reasonCode: 'AVAILABLE',
+      existingIssueId: 17,
+      canDownload: true,
+      certificateType: 'PARTICIPATION',
+      participantId: 1694970,
+    },
+  }),
+  { type: null, view: { kind: 'hidden' } },
+)
+
+assert.deepEqual(
+  resolveExclusivePersonalCertificateSlot({
+    completion: {
+      available: false,
+      canDownload: true,
+      existingIssueId: 18,
+      certificateType: 'COMPLETION',
+    },
+    participation: {
+      available: true,
+      canDownload: true,
+      existingIssueId: 17,
+      certificateType: 'PARTICIPATION',
+    },
+  }),
+  { type: null, view: { kind: 'hidden' } },
+)
+
+assert.equal(
+  resolvePortalCertificateAvailabilityCtaView({
+    available: false,
+    canDownload: false,
+    existingIssueId: 18,
+    certificateType: 'COMPLETION',
+  }).kind,
+  'hidden',
+)
+assert.equal(
+  resolvePortalCertificateAvailabilityCtaView({
+    available: false,
+    canDownload: true,
+    existingIssueId: 18,
+    certificateType: 'COMPLETION',
+  }).kind,
+  'hidden',
+)
+
+assert.deepEqual(
+  resolveAutoPersonalCertificateSlot({
+    certificateType: 'COMPLETION',
+    available: true,
+    canDownload: true,
+    existingIssueId: 18,
+    participantId: 1694970,
+    reasonCode: 'AVAILABLE',
+  }),
+  { type: 'COMPLETION', view: { kind: 'download', issueId: 18 } },
+)
+
+assert.equal(
+  resolveAutoPersonalCertificateSlot({
+    certificateType: 'COMPLETION',
+    available: false,
+    canDownload: true,
+    existingIssueId: 18,
+    reasonCode: 'PARTICIPANT_NOT_COMPLETED',
+  }).type,
+  null,
+)
+
+assert.equal(
+  resolveAutoPersonalCertificateSlot({
+    certificateType: 'PARTICIPATION',
+    available: true,
+    canDownload: true,
+    existingIssueId: 17,
+    reasonCode: 'AVAILABLE',
+  }).type,
+  null,
+)
+
+assert.deepEqual(
+  resolveAutoPersonalCertificateSlot({
+    certificateType: 'AUTO',
+    available: true,
+    canDownload: true,
+    existingIssueId: 18,
+    reasonCode: 'AVAILABLE',
+  }),
+  { type: 'COMPLETION', view: { kind: 'download', issueId: 18 } },
+)
+
+assert.equal(
+  resolveAutoPersonalCertificateSlot({
+    certificateType: 'PARTICIPATION',
+    available: false,
+    canDownload: false,
+    existingIssueId: 17,
+    reasonCode: 'COMPLETION_CERTIFICATE_REQUIRED',
+  }).type,
+  null,
+)
+
+assert.equal(
+  resolveExclusivePersonalCertificateSlot({
+    completion: {
+      available: false,
+      canDownload: false,
+      existingIssueId: 18,
+      certificateType: 'COMPLETION',
+      reasonCode: 'PARTICIPANT_NOT_COMPLETED',
+    },
+    participation: {
+      available: false,
+      canDownload: false,
+      existingIssueId: 17,
+      certificateType: 'PARTICIPATION',
+      reasonCode: 'COMPLETION_CERTIFICATE_REQUIRED',
+    },
+  }).type,
+  null,
 )
 
 console.log('certificate-cta.selfcheck: ok')

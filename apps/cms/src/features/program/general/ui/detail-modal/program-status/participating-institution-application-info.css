@@ -70,11 +70,64 @@
   color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
 }
 
+/* Figma 5416:115668 / 14931:806953 — Table / Vertical / Medium */
+.participating-institution-application-info .applicant-institution-basic-info__title {
+  padding: 0 8px;
+}
+
+.participating-institution-application-info .applicant-institution-basic-info__table-wrap {
+  border-color: #e0e0e0;
+}
+
+.participating-institution-application-info .applicant-institution-basic-info__table tbody tr {
+  height: 52px;
+}
+
+.participating-institution-application-info
+  .applicant-institution-basic-info__cell--label {
+  width: 180px;
+  min-width: 180px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 150%;
+  color: #3d3d3d;
+  white-space: nowrap;
+}
+
+.participating-institution-application-info
+  .applicant-institution-basic-info__cell--value {
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+  color: #3d3d3d;
+  overflow: hidden;
+}
+
+.participating-institution-application-info__schedule-value {
+  flex-wrap: nowrap;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.participating-institution-application-info__schedule-value > span {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.participating-institution-application-info__schedule-value > span:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .participating-institution-application-info__session-status {
   font-family: 'Pretendard', sans-serif;
   font-size: 14px;
   font-style: normal;
-  font-weight: 700;
+  font-weight: 500;
   line-height: 150%; /* 24px */
 }
 

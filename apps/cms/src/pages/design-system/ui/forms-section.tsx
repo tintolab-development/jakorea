@@ -485,7 +485,7 @@ export function FormsSection() {
 
       <DsDemo label="ThumbnailUploadField">
         <p className="ds-demo__hint" style={{ marginTop: 0 }}>
-          썸네일 72×72(클릭 시 확대 보기) · 파일명 14px/500/130% · 「파일 추가」 secondary
+          썸네일 72×72 · 파일명 14px/500/130% · 「파일 추가」 secondary
           small(h32) · 가이드 12px/500/150% · 버튼–가이드 16px · 파일이 있으면 버튼 비활성, X로 삭제
         </p>
         <div className="ds-demo__stack">

@@ -634,6 +634,10 @@ const bulkDelete3 = (
       options);
     }
 
+/**
+ * No reorder endpoint. totalCount is the filtered total for infinite scroll.
+ * @summary List history rows
+ */
 const history = (
     params?: HistoryParams,
  options?: SecondParameter<typeof customInstance<PageResponseHistoryResponse>>,) => {
@@ -666,6 +670,10 @@ const deleteHistoryBulk = (
       options);
     }
 
+/**
+ * No reorder endpoint. totalCount is the filtered total for infinite scroll.
+ * @summary List certification rows
+ */
 const certifications = (
     params?: CertificationsParams,
  options?: SecondParameter<typeof customInstance<PageResponseCertificationResponse>>,) => {
@@ -698,6 +706,10 @@ const deleteCertifications = (
       options);
     }
 
+/**
+ * No reorder endpoint. totalCount is the filtered total for infinite scroll.
+ * @summary List award rows
+ */
 const awards = (
     params?: AwardsParams,
  options?: SecondParameter<typeof customInstance<PageResponseAwardResponse>>,) => {

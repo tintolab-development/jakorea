@@ -26,6 +26,7 @@ import {
   normalizeUjatProgressStatus,
   resolveUjatProgressStatus,
 } from '@/features/program/ujat/lib/normalize-ujat-progress-status'
+import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
 import { parseDetailedProgramMasterId } from '@/features/program/general/lib/detailed-program-request-id'
 import {
   buildProgramSponsorAssignmentsWire,
@@ -48,6 +49,7 @@ import {
   readProgramAuditNames,
   withExpectedUpdatedAt,
 } from '@/features/program/shared/lib/program-audit-names'
+import { mapProgramRoundsToWriteRequest } from '@/features/program/shared/lib/round-write'
 import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
 import { applyBusinessPeriodHistoriesFromDto } from '@/features/program/shared/lib/business-period-extend'
 import {
@@ -477,10 +479,22 @@ function recruitmentRow(input: {
     ...(source?.finalPassAnnouncementAt !== undefined
       ? { finalPassAnnouncementAt: source.finalPassAnnouncementAt }
       : {}),
+    ...(source?.finalPassAnnouncementMethod !== undefined
+      ? { finalPassAnnouncementMethod: source.finalPassAnnouncementMethod }
+      : {}),
     ...(input.recruitmentType === ProgramRecruitmentRequestRecruitmentType.VOLUNTEER
       ? {
           ...(source?.documentPassAnnouncementAt !== undefined
             ? { documentPassAnnouncementAt: source.documentPassAnnouncementAt }
+            : {}),
+          ...(source?.documentPassAnnouncementMethod !== undefined
+            ? { documentPassAnnouncementMethod: source.documentPassAnnouncementMethod }
+            : {}),
+          ...(source?.interviewMethod !== undefined
+            ? { interviewMethod: source.interviewMethod }
+            : {}),
+          ...(source?.volunteerTargetDetail !== undefined
+            ? { volunteerTargetDetail: source.volunteerTargetDetail }
             : {}),
           ...(source?.noticeExposureTiming !== undefined
             ? { noticeExposureTiming: source.noticeExposureTiming }
@@ -506,30 +520,23 @@ export function mapUjatProgramRecruitmentsToRequest(program: Program): ProgramRe
     row => (row.recruitmentType ?? '').toUpperCase() === 'PARTICIPANT'
   )
   const institutionStart = recruitmentWindowInstant(
-    institution?.startAt ?? program.applicationStartDate,
+    institution ? institution.startAt ?? undefined : program.applicationStartDate,
     'start'
   )
   const institutionEnd = recruitmentWindowInstant(
-    institution?.endAt ?? program.applicationEndDate,
+    institution ? institution.endAt ?? undefined : program.applicationEndDate,
     'end'
   )
-  const volunteers = (program.programRecruitments ?? [])
-    .filter(row => (row.recruitmentType ?? '').toUpperCase() === 'VOLUNTEER')
-    .slice()
-    .sort((a, b) => {
-      const aTime = Date.parse(a.startAt ?? '')
-      const bTime = Date.parse(b.startAt ?? '')
-      return (Number.isNaN(aTime) ? Infinity : aTime) - (Number.isNaN(bTime) ? Infinity : bTime)
-    })
-  const h1 =
-    volunteers.find(row => row.recruitTerm === 'FIRST_HALF') ??
-    (volunteers.every(row => row.recruitTerm == null) ? volunteers[0] : undefined)
+  const volunteers = (program.programRecruitments ?? []).filter(
+    row => (row.recruitmentType ?? '').toUpperCase() === 'VOLUNTEER'
+  )
+  const h1 = volunteers.find(row => row.recruitTerm === 'FIRST_HALF')
   const volunteerStart = recruitmentWindowInstant(
-    h1?.startAt ?? program.volunteerApplicationStartDate,
+    h1 ? h1.startAt ?? undefined : program.volunteerApplicationStartDate,
     'start'
   )
   const volunteerEnd = recruitmentWindowInstant(
-    h1?.endAt ?? program.volunteerApplicationEndDate,
+    h1 ? h1.endAt ?? undefined : program.volunteerApplicationEndDate,
     'end'
   )
   const rows = [
@@ -649,8 +656,18 @@ export function buildUjatNewVolunteerHalfRowRequests(
       ...(row.documentPassAnnouncementAt !== undefined
         ? { documentPassAnnouncementAt: row.documentPassAnnouncementAt }
         : {}),
+      ...(row.documentPassAnnouncementMethod !== undefined
+        ? { documentPassAnnouncementMethod: row.documentPassAnnouncementMethod }
+        : {}),
       ...(row.finalPassAnnouncementAt !== undefined
         ? { finalPassAnnouncementAt: row.finalPassAnnouncementAt }
+        : {}),
+      ...(row.finalPassAnnouncementMethod !== undefined
+        ? { finalPassAnnouncementMethod: row.finalPassAnnouncementMethod }
+        : {}),
+      ...(row.interviewMethod !== undefined ? { interviewMethod: row.interviewMethod } : {}),
+      ...(row.volunteerTargetDetail !== undefined
+        ? { volunteerTargetDetail: row.volunteerTargetDetail }
         : {}),
       ...(row.noticeExposureTiming !== undefined
         ? { noticeExposureTiming: row.noticeExposureTiming }
@@ -997,7 +1014,7 @@ export function fromDetail(
     periodStatus,
   })
   const lifecycleStatus =
-    (dto.lifecycleStatus as ProgramLifecycleStatus | undefined) ??
+    toTypedProgramLifecycleStatus(dto.lifecycleStatus) ??
     mapPeriodStatusToLifecycle(periodStatus) ??
     'planned'
   const dtoTargetLevels = Array.isArray(
@@ -1122,8 +1139,7 @@ export function fromDetail(
       overlay: overlayForProgram,
     }
   )
-  const withInterview = hydrateUjatVolunteerInterviewFromRecruitmentRows(mapped)
-  const withRows = hydrateRecruitmentWindowsOntoProgram(withInterview)
+  const withRows = hydrateRecruitmentWindowsOntoProgram(mapped)
   const result: UjatProgramWithExtras = {
     ...withRows,
     generalParticipantTypes: generalParticipantTypesFromUjatFlags(
@@ -1148,22 +1164,6 @@ export function fromDetail(
     ...(periodStatus != null ? { periodStatus } : {}),
   }
   return applyBusinessPeriodHistoriesFromDto(result, dto)
-}
-
-function hydrateUjatVolunteerInterviewFromRecruitmentRows(program: Program): Program {
-  if (program.interviewStartDate && program.interviewEndDate) return program
-  const rows = program.programRecruitments ?? []
-  const volunteers = rows.filter(row => (row.recruitmentType ?? '').toUpperCase() === 'VOLUNTEER')
-  const h1 =
-    volunteers.find(row => row.recruitTerm === 'FIRST_HALF') ??
-    volunteers.find(row => row.recruitTerm == null) ??
-    volunteers[0]
-  if (!h1?.interviewStartAt && !h1?.interviewEndAt) return program
-  return {
-    ...program,
-    interviewStartDate: program.interviewStartDate ?? h1.interviewStartAt ?? undefined,
-    interviewEndDate: program.interviewEndDate ?? h1.interviewEndAt ?? undefined,
-  }
 }
 
 function looksMaskedPii(value: string | null | undefined): boolean {
@@ -1307,6 +1307,7 @@ function coreRequest(
     educationTime: program.educationTime,
     teamDivision: program.teamDivision,
     educationProcess: program.educationProcess,
+    educationTargetDetail: program.educationTargetDetail,
     maleParticipants: program.maleParticipants,
     femaleParticipants: program.femaleParticipants,
     totalParticipants: program.totalParticipants,
@@ -1329,16 +1330,7 @@ function coreRequest(
     recruitmentGuide: program.recruitmentGuide,
     learningSupportContent: program.learningSupportContent,
     attachmentFileNames: program.attachmentFileNames,
-    rounds: program.rounds.map(round => ({
-      roundNumber: round.roundNumber,
-      startDate: dateOnlyValue(round.startDate),
-      endDate: dateOnlyValue(round.endDate),
-      capacity: round.capacity,
-      classCount: round.classCount,
-      status: round.status,
-      curriculum: round.curriculum,
-      deliveryType: round.deliveryType,
-    })),
+    rounds: mapProgramRoundsToWriteRequest(program, dateOnlyValue),
     serviceDetailJson: serializeServiceDetail(
       targetLevels?.length
         ? { ...program, targetLevels, targetLevel: targetLevels[0] }
@@ -1451,6 +1443,7 @@ function patchRequest(
   if (has('educationTime')) body.educationTime = merged.educationTime
   if (has('teamDivision')) body.teamDivision = merged.teamDivision
   if (has('educationProcess')) body.educationProcess = merged.educationProcess
+  if (has('educationTargetDetail')) body.educationTargetDetail = merged.educationTargetDetail
   if (has('maleParticipants')) body.maleParticipants = merged.maleParticipants
   if (has('femaleParticipants')) body.femaleParticipants = merged.femaleParticipants
   if (has('totalParticipants')) body.totalParticipants = merged.totalParticipants
@@ -1484,16 +1477,7 @@ function patchRequest(
   }
   if (has('attachmentFileNames')) body.attachmentFileNames = merged.attachmentFileNames
   if (has('rounds')) {
-    body.rounds = merged.rounds.map(round => ({
-      roundNumber: round.roundNumber,
-      startDate: dateOnlyValue(round.startDate),
-      endDate: dateOnlyValue(round.endDate),
-      capacity: round.capacity,
-      classCount: round.classCount,
-      status: round.status,
-      curriculum: round.curriculum,
-      deliveryType: round.deliveryType,
-    }))
+    body.rounds = mapProgramRoundsToWriteRequest(merged, dateOnlyValue)
   }
 
   // UJAT registration overlay 보존을 위해 patch 저장 시 serviceDetailJson은 항상 포함

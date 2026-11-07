@@ -12,7 +12,10 @@ import {
 import { formatSingleFileUploadHint } from '@/shared/lib/file-upload-policy'
 import { submitPortalCrimeConsentComplete } from '../../settings/lib/submit-portal-consent-document'
 import type { InstructorApplyConsentKey } from './catalog'
-import { downloadCrimeConsentFormDocument } from './crime-consent-form-document'
+import {
+  CrimeConsentCatalogDownloadError,
+  downloadCrimeConsentFormDocument,
+} from './crime-consent-form-document'
 import {
   canRecheckCrimeConsentOriginalFile,
   classifyCrimeConsentOriginalFile,
@@ -39,6 +42,10 @@ import {
 } from '../api/member-file-upload'
 import styles from './consent-form.module.css'
 
+/**
+ * 시안(P6·C08)은 `PDF, JPG, PNG`이지만 `CRIMINAL_HISTORY_CONSENT_ORIGINAL`의 JPG/PNG 수용이
+ * API 계약(OpenAPI filePurpose 설명)에 없어 실제 허용·안내는 PDF 유지 — BE 확인 후 확장.
+ */
 const CRIME_CONSENT_UPLOAD_HINTS = [
   formatSingleFileUploadHint('PDF'),
   '첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
@@ -88,7 +95,11 @@ export function CrimeConsentDocumentForm({
 
   const handleDownloadForm = useCallback(() => {
     void downloadCrimeConsentFormDocument().catch(error => {
-      console.debug('crimeConsentForm download failed', error)
+      const message =
+        error instanceof CrimeConsentCatalogDownloadError
+          ? error.message
+          : CRIME_CONSENT_MESSAGES.formFileUnavailable
+      setAlertMessage(message)
     })
   }, [])
 
@@ -248,7 +259,7 @@ export function CrimeConsentDocumentForm({
                 1. 동의서 양식 다운로드
               </PFText>
               <PFText as="p" typo="bd-md-rg" color="neutral-cool-500">
-                성범죄 경력 조회 동의서 양식을 다운로드하여 작성 및 서명해 주세요.
+                성범죄경력 조회 동의서 양식을 다운로드하여 작성 및 서명해 주세요.
               </PFText>
             </div>
             <PFButton
@@ -275,7 +286,7 @@ export function CrimeConsentDocumentForm({
             <PFFormFileAttach
               className={styles.crimeAttachButton}
               accept={CRIME_CONSENT_ORIGINAL_ACCEPT}
-              buttonLabel="동의서 업로드"
+              buttonLabel="파일 첨부"
               buttonVariant="tertiary"
               buttonSize="xlarge"
               buttonFullWidth

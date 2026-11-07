@@ -1,7 +1,7 @@
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 
-/** 해당 월의 셋째 주 화요일 (강의비 지급 예정일 기본값) */
+/** 해당 월의 셋째 주 화요일 (강사비 지급 예정일 기본값) */
 export function thirdTuesdayOfMonth(monthRef: Dayjs): Dayjs {
   let d = monthRef.startOf('month')
   let count = 0

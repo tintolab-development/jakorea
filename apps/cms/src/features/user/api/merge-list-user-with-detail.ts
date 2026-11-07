@@ -242,6 +242,8 @@ export function mergeListUserWithFetchedDetail(
     id: resolveCanonicalUserDetailId(listUser, fetched),
     memberId: fetched.memberId ?? listUser.memberId,
     adminAccountId: fetched.adminAccountId ?? listUser.adminAccountId,
+    instructorRoleRequestId:
+      fetched.instructorRoleRequestId ?? listUser.instructorRoleRequestId,
     role,
     registeredByAdmin: Boolean(listUser.registeredByAdmin || fetched.registeredByAdmin),
     identitySelfSignupCompletedAfterAdminRegistration: Boolean(

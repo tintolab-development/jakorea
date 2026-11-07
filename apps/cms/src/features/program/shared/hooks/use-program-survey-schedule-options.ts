@@ -7,6 +7,7 @@ import {
   buildSurveyPollScheduleSelectOptionsForProgram,
   disableSurveyPollScheduleOptionsWithSurvey,
   type SurveyPollScheduleBindingRef,
+  type SurveyPollUsedScheduleFilter,
 } from '@/features/program/shared/lib/survey-management/survey-poll-schedule-options'
 import type { Program } from '@/types/domain'
 
@@ -18,7 +19,8 @@ export function useProgramSurveyScheduleOptions(
   program: Program | null | undefined,
   enabled: boolean,
   /** 서버 form-binding 목록(classifiedBindings). 이미 설문이 있는 일정을 비활성화한다. */
-  existingBindings?: ReadonlyArray<SurveyPollScheduleBindingRef> | null
+  existingBindings?: ReadonlyArray<SurveyPollScheduleBindingRef> | null,
+  usedScheduleFilter?: SurveyPollUsedScheduleFilter
 ) {
   const programId = program?.id != null ? String(program.id) : undefined
   const query = useQuery({
@@ -33,9 +35,10 @@ export function useProgramSurveyScheduleOptions(
     }
     return disableSurveyPollScheduleOptionsWithSurvey(
       buildSurveyPollScheduleSelectOptionsForProgram(program, query.data ?? []),
-      existingBindings
+      existingBindings,
+      usedScheduleFilter
     )
-  }, [program, query.data, existingBindings])
+  }, [program, query.data, existingBindings, usedScheduleFilter])
 
   useEffect(() => {
     if (!enabled || program == null || query.isLoading || query.isError || !import.meta.env.DEV) {
@@ -55,6 +58,7 @@ export function useProgramSurveyScheduleOptions(
 
   return {
     options,
+    schedules: query.data ?? [],
     hasSessionSchedules,
     isLoading: query.isLoading,
     isError: query.isError,

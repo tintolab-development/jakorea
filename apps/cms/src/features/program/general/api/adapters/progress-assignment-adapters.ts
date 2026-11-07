@@ -8,7 +8,6 @@ import type {
   GeneralAssignmentSubmissionParticipantDto,
   GeneralAssignmentSubmissionScheduleDto,
 } from '@/features/program/general/api/program-progress-api-client'
-import type { ParticipantListItemResponse } from '@/shared/api/generated/dashboard/schemas/participantListItemResponse'
 import { shouldHideGiveUpParticipantFromSchedule } from '@/features/program/general/lib/general-progress-give-up-visibility'
 import { buildGeneralProgressSessionTableHeader } from '@/features/program/general/lib/general-progress-session-table-header'
 import { resolveSchoolDetailAttendanceSessionLeadLabel } from '@/features/program/general/lib/school-detail-attendance-display'
@@ -143,8 +142,8 @@ function mapSubmission(
   const normalized = (status ?? '').trim().toUpperCase()
   if (normalized === 'SCHEDULED') return { kind: 'scheduled' }
   if (normalized === 'SUBMITTED') {
-    const mappedFiles = files.map((file, index) => ({
-      fileName: file.originalFileName?.trim() || `제출 파일${index > 0 ? ` ${index + 1}` : ''}`,
+    const mappedFiles = files.map(file => ({
+      fileName: file.fileName?.trim() || file.originalFileName?.trim() || '',
       href: '#',
       fileObjectId: file.fileObjectId,
       downloadable: file.downloadable === true,
@@ -158,12 +157,11 @@ function mapSubmission(
       }),
     ]
     const [first, second] = mappedFiles
-    const fileName = first?.fileName || '제출 파일'
     return {
       kind: 'submitted',
       files: mappedFiles,
       items: mappedItems,
-      fileName: first?.fileName || fileName,
+      fileName: first?.fileName || '',
       href: first?.href || '#',
       fileObjectId: first?.fileObjectId,
       downloadable: first?.downloadable === true,
@@ -174,41 +172,6 @@ function mapSubmission(
     }
   }
   return { kind: 'not_submitted' }
-}
-
-function scheduleIdMatches(value: number | null | undefined, scheduleId: string): boolean {
-  return value != null && String(value) === scheduleId
-}
-
-function participantBelongsToAssignmentSchedule(
-  participant: ParticipantListItemResponse,
-  scheduleId: string
-): boolean {
-  return (participant.sessions ?? []).some(
-    session =>
-      scheduleIdMatches(session.scheduleId, scheduleId) ||
-      scheduleIdMatches(session.resolvedScheduleId, scheduleId)
-  )
-}
-
-function mapRosterParticipantToAssignmentDto(
-  participant: ParticipantListItemResponse
-): GeneralAssignmentSubmissionParticipantDto {
-  return {
-    participantId: participant.participantId,
-    memberName: participant.memberName,
-    gender: participant.gender,
-    birthDate: participant.birthDate,
-    affiliation: participant.organizationName,
-    organizationName: participant.organizationName,
-    grade: participant.grade,
-    submissionStatus: 'NOT_SUBMITTED',
-    remarkKind: 'NONE',
-    files: [],
-    links: [],
-    giveUpAt: participant.giveUpAt,
-    participantStatus: participant.participantStatus,
-  }
 }
 
 function mapParticipantRow(
@@ -278,7 +241,6 @@ export function buildProgressAssignmentSessionsFromRemote(
   options?: {
     program?: Program | null
     giveUpParticipants?: GiveUpParticipantLookup[] | null
-    participants?: ParticipantListItemResponse[] | null
   }
 ): ParticipatingIndividualProgressAssignmentSessionGroup[] {
   const giveUpById = new Map(
@@ -286,35 +248,13 @@ export function buildProgressAssignmentSessionsFromRemote(
       .filter(item => item.participantId != null)
       .map(item => [String(item.participantId), item] as const)
   )
-  const roster = (options?.participants ?? []).filter(participant => {
-    const type = (participant.participantType ?? '').toUpperCase()
-    return type === 'INDIVIDUAL' || type === 'STUDENT' || type === 'PARTICIPANT' || type === ''
-  })
-  const rosterHasAssignedSessions = roster.some(participant =>
-    (participant.sessions ?? []).some(
-      session => session.scheduleId != null || session.resolvedScheduleId != null
-    )
-  )
-  const rosterForSchedule = (scheduleId: string) =>
-    rosterHasAssignedSessions
-      ? roster.filter(participant => participantBelongsToAssignmentSchedule(participant, scheduleId))
-      : roster
 
   // Render only BE assignment-submissions items keyed by scheduleId.
   // Do not invent/remap schedules from dashboard schedules or curriculum index.
   return (data.items ?? [])
     .filter(isGeneralProgressEducationSessionSchedule)
     .filter(isAssignmentEnabledSchedule)
-    .map((schedule, index) => {
-      const group = mapScheduleGroup(schedule, index, { program: options?.program, giveUpById })
-      if (group.participants.length > 0) return group
-      return mapScheduleGroup(
-        {
-          ...schedule,
-          participants: rosterForSchedule(group.id).map(mapRosterParticipantToAssignmentDto),
-        },
-        index,
-        { program: options?.program, giveUpById }
-      )
-    })
+    .map((schedule, index) =>
+      mapScheduleGroup(schedule, index, { program: options?.program, giveUpById })
+    )
 }

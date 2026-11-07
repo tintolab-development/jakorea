@@ -5,7 +5,6 @@
  */
 
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Image } from 'antd'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
@@ -223,13 +222,12 @@ export function EnrollmentStatusDetailModal({
           <div className="enrollment-status-detail-modal__program-inner">
             <div className="enrollment-status-detail-modal__poster-wrap">
               {program.posterImage || program.keyVisualImage ? (
-                <Image
+                <img
                   src={program.keyVisualImage || program.posterImage}
                   alt={program.title}
                   width={336}
                   height={336}
-                  style={{ objectFit: 'cover', aspectRatio: '1/1' }}
-                  preview={{ mask: '확대 보기' }}
+                  className="enrollment-status-detail-modal__poster-img"
                 />
               ) : (
                 <div className="enrollment-status-detail-modal__poster-placeholder">

@@ -8,6 +8,21 @@ import {
 } from './extract-api-error-message'
 
 describe('extractApiErrorMessage', () => {
+  it('매핑 없는 코드만 있으면 코드를 노출하지 않고 fallback을 쓴다', () => {
+    expect(
+      extractApiErrorMessage(
+        { success: false, error: { code: 'UNKNOWN_SNAKE_CODE' } },
+        { fallback: '요청 처리에 실패했습니다.' }
+      )
+    ).toBe('요청 처리에 실패했습니다.')
+    expect(
+      extractApiErrorMessage(
+        { success: false, error: { code: 'UNKNOWN_SNAKE_CODE' } },
+        { httpStatus: 409 }
+      )
+    ).toBe('요청한 변경이 기존 데이터와 충돌합니다.')
+  })
+
   it('error.message를 top-level message보다 우선한다', () => {
     expect(
       extractApiErrorMessage({
@@ -76,6 +91,34 @@ describe('extractApiErrorMessage', () => {
         },
       })
     ).toBe('ADMIN_EMAIL_ALREADY_EXISTS')
+  })
+
+  it('AUDIT_LOG_UNAVAILABLE는 서버 문구를 쓰고 일반 500 문구로 바꾸지 않는다', () => {
+    const serverMessage =
+      '보안 기록을 저장할 수 없어 요청이 중단되었습니다. 잠시 후 다시 시도해 주세요.'
+    expect(
+      extractApiErrorMessage(
+        {
+          success: false,
+          data: null,
+          message: serverMessage,
+          error: {
+            code: 'AUDIT_LOG_UNAVAILABLE',
+            message: serverMessage,
+            field: null,
+            details: null,
+            detail: serverMessage,
+          },
+        },
+        { httpStatus: 503 }
+      )
+    ).toBe(serverMessage)
+    expect(
+      extractApiErrorMessage(
+        { success: false, error: { code: 'AUDIT_LOG_UNAVAILABLE' } },
+        { httpStatus: 503 }
+      )
+    ).toBe(serverMessage)
   })
 
   it('정산 계좌 가드 코드는 서버 메시지가 없으면 동의서 안내를 쓴다', () => {

@@ -12,10 +12,13 @@ export const PAYMENT_CONSENT_PLATFORM_HIDDEN_PARAGRAPH_IDS = new Set<string>([
   PAYMENT_STATEMENT_PRE_CONSENT_IDS.tailDate,
 ])
 
+/**
+ * 영수증 — 날짜 단락만 숨김(작성일은 서명 블록에 표시).
+ * 서명란(midSignature/tailSignature)은 지급조서와 같이 노출해 Platform 신규 작성에서 양식 서명란 위치에 각각 서명한다.
+ */
 export const RECEIPT_CONSENT_PLATFORM_HIDDEN_PARAGRAPH_IDS = new Set<string>([
   RECEIPT_PRE_CONSENT_IDS.midDate,
   RECEIPT_PRE_CONSENT_IDS.tailDate,
-  RECEIPT_PRE_CONSENT_IDS.paymentRecord,
 ])
 
 export const EDUCATOR_CONSENT_PLATFORM_HIDDEN_PARAGRAPH_IDS = new Set<string>([
@@ -65,10 +68,12 @@ export type PlatformConsentFillOptions = {
   interactiveExplanationIds?: ReadonlySet<string>
 }
 
-export function buildPlatformConsentFillOptions(templateId: string): PlatformConsentFillOptions {
+/**
+ * 행정정보 1번(이용기관)·2번(이용사무)은 시안상 표시만 — 서버(CMS) 양식 문구를 그대로 보여 준다.
+ * `NOTICE_FILL_INTERACTIVE_EXPLANATION_IDS`는 호환용으로 남겨 두되 Platform fill에는 넘기지 않는다.
+ */
+export function buildPlatformConsentFillOptions(_templateId: string): PlatformConsentFillOptions {
   return {
     consentFillReadOnlyBody: true,
-    interactiveExplanationIds:
-      templateId === 'agreement-notice' ? NOTICE_FILL_INTERACTIVE_EXPLANATION_IDS : undefined,
   }
 }

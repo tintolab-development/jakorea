@@ -15,10 +15,12 @@ export interface GradeBlock {
   gradeLabel?: string | null;
   classCount?: number | null;
   classes?: ClassRoom[];
-  /** 학년 블록에 저장된 교재명. 없으면 null. */
+  /** 학년 블록에 저장된 교재명. 없으면 null. 프로그램 공통 교재명으로 채우지 않습니다. */
   textbookName?: string | null;
   textbookNameEn?: string | null;
+  /** 학년 블록에 저장된 키트 수. 없으면 null. */
   kitCount?: number | null;
+  /** 학년 블록에 저장된 권수. 없으면 null. */
   bookCount?: number | null;
   textbookDeliveryStatus?: GradeBlockTextbookDeliveryStatus;
 }

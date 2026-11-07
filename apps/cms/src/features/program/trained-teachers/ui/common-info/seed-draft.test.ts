@@ -30,7 +30,8 @@ describe('seedDraft', () => {
     expect(draft.educationJournalEnabled).toBe(false)
     expect(draft.teacherTrainingEnabled).toBe(false)
     expect(draft.kpiEducatedTeachers).toBe(12)
-    expect(draft.kpiFinalParticipants).toBe(10)
+    expect(draft.kpiFinalParticipants).toBeUndefined()
+    expect(draft.kpiFinalSchools).toBeUndefined()
   })
 
   it('canonical false 는 overlay yes 가 있어도 교육일지를 켜지 않는다', () => {

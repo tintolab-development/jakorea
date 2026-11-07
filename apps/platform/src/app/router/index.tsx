@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { createBrowserRouter } from 'react-router-dom'
 import {
   AdminRegisteredBirthPage,
@@ -96,6 +97,10 @@ import { INDIVIDUAL_DONATION_PATH } from '@/features/individual-donation'
 import { TALENT_DONATION_APPLY_PATH, TALENT_DONATION_PATH } from '@/features/talent-donation'
 import { ABOUT_HISTORY_PATH } from '@/shared/config/gnb-temporary-paths'
 import { AppLayoutRoute } from './app-layout-route'
+
+const DesignSystemPage = import.meta.env.DEV
+  ? lazy(() => import('@/pages/design-system/page'))
+  : null
 
 export const router = createBrowserRouter([
   {
@@ -227,6 +232,18 @@ export const router = createBrowserRouter([
   {
     element: <AppLayoutRoute layout="full" />,
     children: [
+      ...(import.meta.env.DEV && DesignSystemPage
+        ? [
+            {
+              path: '/design-system',
+              element: (
+                <Suspense fallback={null}>
+                  <DesignSystemPage />
+                </Suspense>
+              ),
+            },
+          ]
+        : []),
       { path: '/auth/member-conversion', element: <MemberConversionPage /> },
       { path: '/auth/sign-up/identity/callback', element: <SignUpIdentityCallbackPage /> },
       {
@@ -254,8 +271,6 @@ export const router = createBrowserRouter([
       { path: '/mypage/education/:applicationId', element: <MypageEducationDetailPage /> },
       { path: '/mypage/volunteer/:applicationType/:applicationId', element: <MypageVolunteerDetailPage /> },
       { path: '/mypage/volunteer/:applicationId', element: <MypageVolunteerDetailPage /> },
-      { path: '/mypage/lectures/:applicationType/:applicationId', element: <MypageLectureDetailPage /> },
-      { path: '/mypage/lectures/:applicationId', element: <MypageLectureDetailPage /> },
       {
         path: '/mypage/lectures/:applicationType/:applicationId/lecture-report/write',
         element: <MypageLectureReportWritePage />,
@@ -264,6 +279,8 @@ export const router = createBrowserRouter([
         path: '/mypage/lectures/:applicationId/lecture-report/write',
         element: <MypageLectureReportWritePage />,
       },
+      { path: '/mypage/lectures/:applicationType/:applicationId', element: <MypageLectureDetailPage /> },
+      { path: '/mypage/lectures/:applicationId', element: <MypageLectureDetailPage /> },
       {
         path: '/mypage/lectures/:applicationType/:applicationId/settlement/write',
         element: <MypageEducationSettlementWritePage />,

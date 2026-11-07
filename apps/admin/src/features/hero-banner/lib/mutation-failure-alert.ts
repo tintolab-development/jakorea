@@ -6,11 +6,10 @@ import { HeroBannerMinActiveError } from '@/entities/hero-banner/model/types'
 import {
   type AdminMutationAlert,
   isMinActiveRequiredError,
-  mapCommonRemoteMutationFailure,
   readApiErrorMessage,
 } from '@/shared/lib/api-error-message'
 import { minActiveRequiredAlert } from '@/shared/lib/min-active-guard'
-import { REQUIRED_FIELDS_INCOMPLETE_ALERT } from '@/shared/ui'
+import { mapAdminMutationAlert, REQUIRED_FIELDS_INCOMPLETE_ALERT } from '@/shared/ui'
 
 const MIN_ACTIVE_ALERT = minActiveRequiredAlert('히어로 배너는')
 
@@ -19,7 +18,7 @@ export function heroBannerMutationFailureAlert(
   fallbackContent: string,
   title = '저장 실패',
 ): AdminMutationAlert {
-  const common = mapCommonRemoteMutationFailure(error)
+  const common = mapAdminMutationAlert(error)
   if (common) return common
 
   if (

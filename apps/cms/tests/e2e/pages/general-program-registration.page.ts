@@ -966,6 +966,20 @@ export class GeneralProgramRegistrationPage {
   }
 
   async goToRecruitment() {
+    if (this.sponsorManagerLabel) {
+      const managerField = this.page
+        .locator('.detail-info-form__field')
+        .filter({
+          has: this.page.locator('.detail-info-form__field-label-text', {
+            hasText: /^후원사 담당자$/,
+          }),
+        })
+        .first()
+      await expect(managerField.locator('.cms-select-multi__trigger, .ant-select').first()).toContainText(
+        this.sponsorManagerLabel,
+        { timeout: 20_000 }
+      )
+    }
     await this.page.getByRole('button', { name: '모집 정보 작성하기' }).scrollIntoViewIfNeeded()
     await this.page.getByRole('button', { name: '모집 정보 작성하기' }).click()
     await expect(this.page).toHaveURL(/generalStep=recruit-/)

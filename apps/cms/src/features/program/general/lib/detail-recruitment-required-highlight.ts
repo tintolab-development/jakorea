@@ -99,9 +99,11 @@ function listParticipant(program: Program, values: ProgramDetailEditFormValues):
     push(keys, blankText(values.resultAnnouncementDate), `${prefix}.finalAnnounceIso`)
     push(keys, blankText(values.resultAnnouncementMethod), `${prefix}.finalAnnounceMethod`)
   }
-  push(keys, blankText(values.recruitmentContactOrganizationName), `${prefix}.inquiryContact`)
-  push(keys, blankText(values.contactPhone), `${prefix}.inquiryTel`)
-  push(keys, blankText(values.contactEmail), `${prefix}.inquiryEmail`)
+  if (!isTrainedTeachers) {
+    push(keys, blankText(values.recruitmentContactOrganizationName), `${prefix}.inquiryContact`)
+    push(keys, blankText(values.contactPhone), `${prefix}.inquiryTel`)
+    push(keys, blankText(values.contactEmail), `${prefix}.inquiryEmail`)
+  }
   if (values.participantRecruitmentNotesNotApplicable !== 'not_applicable') {
     push(keys, blankText(values.remarks), `${prefix}.notes`)
   }

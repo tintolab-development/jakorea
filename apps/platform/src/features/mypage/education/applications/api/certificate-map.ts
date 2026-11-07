@@ -1,6 +1,13 @@
 export const PORTAL_CERTIFICATE_TYPE_COMPLETION = 'COMPLETION' as const
+export const PORTAL_CERTIFICATE_TYPE_PARTICIPATION = 'PARTICIPATION' as const
 
-export type PortalCertificateType = typeof PORTAL_CERTIFICATE_TYPE_COMPLETION | string
+export type PortalCertificateType =
+  | typeof PORTAL_CERTIFICATE_TYPE_COMPLETION
+  | typeof PORTAL_CERTIFICATE_TYPE_PARTICIPATION
+  | 'INSTRUCTOR_ACTIVITY'
+  | 'VOLUNTEER_ACTIVITY'
+  | 'AUTO'
+  | string
 
 export type PortalCertificateAvailability = {
   programId?: number
@@ -23,6 +30,7 @@ export type PortalCertificateIssueRequest = {
   programId: number
   participantId: number
   certificateType?: PortalCertificateType
+  issueReason?: 'INSTITUTION_SUBMISSION' | 'EDUCATION_COMPLETION_PROOF' | 'PERSONAL_ARCHIVE'
 }
 
 export type PortalCertificateIssueResult = {
@@ -72,7 +80,7 @@ export function mapPortalCertificateAvailability(
     certificateType: readOptionalString(record.certificateType) ?? undefined,
     available: readBoolean(record.available),
     reason: readOptionalString(record.reason),
-    eligible: typeof record.eligible === 'boolean' ? record.eligible : undefined,
+    eligible: readBoolean(record.eligible),
     reasonCode: readOptionalString(record.reasonCode),
     reasonMessage: readOptionalString(record.reasonMessage),
     existingIssueId: readOptionalNumber(record.existingIssueId),
@@ -87,8 +95,7 @@ export function mapPortalCertificateAvailability(
 export function mapPortalCertificateIssueResult(payload: unknown): PortalCertificateIssueResult {
   const body = unwrapEnvelope<Record<string, unknown>>(payload)
   const record = body && typeof body === 'object' ? body : {}
-  const certificateIssueId =
-    readOptionalNumber(record.certificateIssueId) ?? readOptionalNumber(record.issueId)
+  const certificateIssueId = readOptionalNumber(record.certificateIssueId)
   if (certificateIssueId == null) {
     throw new Error('수료증 발급 결과를 확인하지 못했습니다.')
   }

@@ -26,8 +26,8 @@ export interface SettlementCorrectionApprovalRequest {
   pricingMode: SettlementCorrectionApprovalRequestPricingMode;
   /** 강사비 유형. PROGRAM_STANDARD일 때 TIER1/TIER2/TIER3 중 하나 */
   wageItemType?: SettlementCorrectionApprovalRequestWageItemType;
-  /** 특강/기타 인건비 지급 기준. PER_LECTURE=출강 1회, PER_HOUR=1시간당, PER_CLASS=1차시당(기타 인건비) */
+  /** 특강/기타 인건비 지급 기준. PER_LECTURE=출강 1회, PER_HOUR=레거시 차시당 단가(시간 비례 아님), PER_CLASS=1차시당 */
   calculationUnit?: SettlementCorrectionApprovalRequestCalculationUnit;
-  /** 특강/기타 인건비 1회·1시간당·1차시당 단가. PROGRAM_STANDARD에서는 서버 카탈로그 금액을 사용 */
+  /** 특강/기타 인건비 1회·1차시당 단가. PROGRAM_STANDARD에서는 프로그램 저장 단가를 사용 */
   unitAmount?: number;
 }

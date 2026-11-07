@@ -136,9 +136,11 @@ function filterRows(rows: GeminiInstitutionApplicationRow[], filters: PendingFil
 }
 
 function resolveDecisionSubjectName(row: GeminiInstitutionApplicationRow | undefined): string {
+  const institution = row?.institutionName.trim()
+  if (institution && institution !== '-') return institution
   const teacher = row?.teacherName.trim()
   if (teacher && teacher !== '-') return teacher
-  return row?.institutionName.trim() || '신청자'
+  return '기관'
 }
 
 export function GeminiInstitutionApplicationTab({
@@ -299,10 +301,19 @@ export function GeminiInstitutionApplicationTab({
       setDecisionSubmitting(true)
       try {
         if (remoteEnabled) {
-          await approveGeminiOrganizationApplications(ids, {
+          const result = await approveGeminiOrganizationApplications(ids, {
             timing: notify.timing,
             scheduledAt: notify.scheduledAt,
           })
+          if (notify.timing !== 'SCHEDULED' && result.failureCount > 0) {
+            const firstFailure = result.failures[0]
+            showAlert({
+              title: '처리 실패',
+              content:
+                firstFailure?.message?.trim() ||
+                `선택한 신청 중 ${result.failureCount}건을 처리하지 못했습니다.`,
+            })
+          }
         } else {
           patchGeminiInstitutionApplicationApprovalStatus(ids, 'APPROVED')
         }
@@ -494,12 +505,13 @@ export function GeminiInstitutionApplicationTab({
 
       <ProgramApplicationRejectModal
         open={bulkRejectOpen}
-        audience="member"
+        audience="institution"
         variant={rejectTargetCount > 1 ? 'bulk' : 'single'}
         subjectName={rejectSubjectName}
         selectionCount={rejectTargetCount}
         confirmLoading={decisionSubmitting}
         notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.timedBulk}
+        notifyTimingOptions="two"
         onCancel={() => {
           if (decisionSubmitting) return
           setBulkRejectOpen(false)

@@ -11,13 +11,25 @@ export const ISSUANCE_PERIOD_EXPIRED = 'ISSUANCE_PERIOD_EXPIRED' as const
 
 export const PARTICIPANT_NOT_COMPLETED = 'PARTICIPANT_NOT_COMPLETED' as const
 
+export const COMPLETION_CERTIFICATE_REQUIRED = 'COMPLETION_CERTIFICATE_REQUIRED' as const
+
 /** 동의 ledger 근거 없음 — 서버 error.message 와 동일 카피 */
 export const CERTIFICATE_CONSENT_EVIDENCE_UNAVAILABLE_MESSAGE =
   '수료증 발급 기간을 확인할 동의 또는 신청 정보가 없습니다.'
 
-export const ISSUANCE_PERIOD_EXPIRED_MESSAGE = '수료증 발급 기간이 만료되었습니다.'
+export const ISSUANCE_PERIOD_EXPIRED_MESSAGE =
+  '신청일로부터 3년이 지나 발급할 수 없습니다.'
+
+export const CERTIFICATE_APPLICATION_DATE_UNAVAILABLE =
+  'CERTIFICATE_APPLICATION_DATE_UNAVAILABLE' as const
+
+export const CERTIFICATE_APPLICATION_DATE_UNAVAILABLE_MESSAGE =
+  '신청일을 확인할 수 없어 발급할 수 없습니다.'
 
 export const PARTICIPANT_NOT_COMPLETED_MESSAGE = '수료 조건을 충족하지 않아 발급할 수 없습니다.'
+
+export const COMPLETION_CERTIFICATE_REQUIRED_MESSAGE =
+  '수료 조건을 충족한 뒤에는 수료증을 발급해 주세요.'
 
 export const CERTIFICATE_ELIGIBILITY_TYPE_COMPLETION = 'COMPLETION' as const
 export const CERTIFICATE_ELIGIBILITY_TYPE_PARTICIPATION = 'PARTICIPATION' as const
@@ -34,8 +46,15 @@ export const CERTIFICATE_NO_RECOGNIZED_RECORD_MESSAGE =
 
 const CERTIFICATE_REASON_MESSAGES: Record<string, string> = {
   [CERTIFICATE_CONSENT_EVIDENCE_UNAVAILABLE]: CERTIFICATE_CONSENT_EVIDENCE_UNAVAILABLE_MESSAGE,
+  [CERTIFICATE_APPLICATION_DATE_UNAVAILABLE]: CERTIFICATE_APPLICATION_DATE_UNAVAILABLE_MESSAGE,
   [ISSUANCE_PERIOD_EXPIRED]: ISSUANCE_PERIOD_EXPIRED_MESSAGE,
   [PARTICIPANT_NOT_COMPLETED]: PARTICIPANT_NOT_COMPLETED_MESSAGE,
+  [COMPLETION_CERTIFICATE_REQUIRED]: COMPLETION_CERTIFICATE_REQUIRED_MESSAGE,
+  CERTIFICATE_ALREADY_ISSUED: '이미 발급된 증명서입니다.',
+  CERTIFICATE_ISSUE_NOT_ELIGIBLE: '증명서 발급 요건을 충족하지 않았습니다.',
+  ATTENDANCE_NOT_COMPLETED: PARTICIPANT_NOT_COMPLETED_MESSAGE,
+  MEMBER_PARTICIPATION_CERTIFICATE_SELF_ISSUE_NOT_ALLOWED:
+    '참가인증서는 회원·학생·교사가 직접 발급할 수 없습니다.',
   [CERTIFICATE_NO_RECOGNIZED_RECORD]: CERTIFICATE_NO_RECOGNIZED_RECORD_MESSAGE,
   [CERTIFICATE_NO_RECOGNIZED_ATTENDANCE]: CERTIFICATE_NO_RECOGNIZED_RECORD_MESSAGE,
   [CERTIFICATE_GIVE_UP_NO_RECORD]: CERTIFICATE_NO_RECOGNIZED_RECORD_MESSAGE,
@@ -54,10 +73,16 @@ export function normalizeCertificateReasonCode(
   return reason?.trim().toUpperCase() ?? ''
 }
 
+const SATISFACTION_SURVEY_NOT_COMPLETED = 'SATISFACTION_SURVEY_NOT_COMPLETED'
+
 export function certificateBlockingReasons(
   eligibility: CertificateEligibilityLike | null | undefined
 ): string[] {
-  return Array.isArray(eligibility?.blockingReasons) ? [...eligibility.blockingReasons] : []
+  return Array.isArray(eligibility?.blockingReasons)
+    ? eligibility.blockingReasons.filter(
+        reason => normalizeCertificateReasonCode(reason) !== SATISFACTION_SURVEY_NOT_COMPLETED
+      )
+    : []
 }
 
 export function isCertificateConsentEvidenceUnavailable(
@@ -98,12 +123,15 @@ export function messageForCertificateReasonCode(
 /**
  * 동의 근거 없음·발급 기간 만료는 수료/참여 유형과 무관하게 발급 CTA를 막는다.
  * eligible=true 이고 blockingReasons 가 비면 reasonCode 가 있어도 통과한다.
- * PARTICIPANT_NOT_COMPLETED 만으로는 참여인증서 경로를 닫지 않는다.
+ * PARTICIPANT_NOT_COMPLETED 만으로는 참가인증서 경로를 닫지 않는다.
  */
 export function certificateIssuePrecheckBlockMessage(
   eligibility: CertificateEligibilityLike | null | undefined
 ): string | null {
   if (isCertificateEligibleForIssue(eligibility)) return null
+  if (eligibilityHasReason(eligibility, CERTIFICATE_APPLICATION_DATE_UNAVAILABLE)) {
+    return CERTIFICATE_APPLICATION_DATE_UNAVAILABLE_MESSAGE
+  }
   if (eligibilityHasReason(eligibility, CERTIFICATE_CONSENT_EVIDENCE_UNAVAILABLE)) {
     return CERTIFICATE_CONSENT_EVIDENCE_UNAVAILABLE_MESSAGE
   }

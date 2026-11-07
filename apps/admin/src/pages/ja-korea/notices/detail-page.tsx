@@ -8,6 +8,7 @@
 import { useCallback, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { EyeOutlined, PaperClipOutlined } from '@ant-design/icons'
+import { AdminDetailBackLink, AdminDetailMoreMenu } from '@jakorea/admin-ui/post-detail'
 import type { Notice } from '@/entities/notices/model/types'
 import {
   useNoticeDetail,
@@ -232,6 +233,7 @@ function NoticeDetailView({
         <p className="notice-detail-page__hint">
           * 작성일은 어드민 화면에서만 노출되며, 홈페이지에서는 게시일만 노출됩니다.
         </p>
+        <AdminDetailBackLink onClick={onList} />
 
         <div className="notice-detail-page__card">
           <div className="notice-detail-page__top-row">
@@ -244,9 +246,12 @@ function NoticeDetailView({
             >
               {notice.isPublic ? '공개' : '비공개'}
             </span>
-            <span className="notice-detail-page__views">
-              <EyeOutlined className="notice-detail-page__views-icon" aria-hidden />
-              {notice.viewCount.toLocaleString('ko-KR')}
+            <span className="admin-detail-top-actions">
+              <span className="notice-detail-page__views">
+                <EyeOutlined className="notice-detail-page__views-icon" aria-hidden />
+                {notice.viewCount.toLocaleString('ko-KR')}
+              </span>
+              <AdminDetailMoreMenu onEdit={onEdit} onDelete={onDelete} />
             </span>
           </div>
 

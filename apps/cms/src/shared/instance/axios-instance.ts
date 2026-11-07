@@ -21,6 +21,7 @@ import {
   parseAuthTokenResponse,
 } from '@/features/auth/lib/parse-auth-token-response'
 import { recordTokenIssuedAt } from '@/features/auth/lib/session-keepalive'
+import { readJwtSidClaim } from '@jakorea/domain/session'
 import { recordBackendErrorForE2e } from '@/features/e2e-error-log/lib/record-from-axios-error'
 import { getApiBaseUrl } from '@/shared/lib/api-remote-env'
 import { isRequestCanceledError } from '@/shared/lib/is-request-canceled-error'
@@ -109,7 +110,7 @@ function isExcludedFromBearerAuth(url?: string): boolean {
   )
 }
 
-/** Activity is authenticated, but 401 must not trigger an automatic Refresh. */
+/** Activity requires Bearer but must not trigger an automatic refresh on 401. */
 function isExcludedFromAutoRefresh(url?: string): boolean {
   if (!url) return false
   const path = url.split('?')[0] ?? url
@@ -393,6 +394,16 @@ axiosClient.interceptors.response.use(
     const status = response.status
     const code = getErrorCode(response.data)
 
+    // A late 401 from an access token superseded by login/Refresh in this tab
+    // must not refresh, retry, or revoke the newly active admin session.
+    const sentBearer = originalRequest.headers?.get?.('Authorization')
+    const activeToken = useAuthStore.getState().token
+    if (status === 401 && typeof sentBearer === 'string' &&
+        sentBearer.startsWith('Bearer ') &&
+        sentBearer !== `Bearer ${activeToken ?? ''}`) {
+      return Promise.reject(error)
+    }
+
     if (originalRequest.skipRefresh || isExcludedFromAutoRefresh(requestUrl)) {
       if (!isSessionAuthUtilityPath(requestUrl) && !originalRequest.skipGlobalErrorAlert) {
         showGlobalApiErrorAlert(error, originalRequest)
@@ -408,6 +419,12 @@ axiosClient.interceptors.response.use(
     const isAccessTokenFailure = status === 401 && isAccessTokenUnauthorizedCode(code)
     if (!isAccessTokenFailure || originalRequest._retry) {
       showGlobalApiErrorAlert(error, originalRequest)
+      return Promise.reject(error)
+    }
+
+    const isSessionPath = requestUrl.includes(`${adminAuthPaths.prefix}/session`)
+    if (isSessionPath && !readJwtSidClaim(useAuthStore.getState().token)) {
+      handleAuthFailure()
       return Promise.reject(error)
     }
 
@@ -434,7 +451,16 @@ axiosClient.interceptors.response.use(
     } catch (err) {
       processQueue(null, err)
       isRefreshing = false
-      // refresh 키는 logout()이 원격 revoke 후 제거한다 (선삭제 금지)
+      const sentBearer = originalRequest.headers?.get?.('Authorization')
+      const currentToken = useAuthStore.getState().token
+      const storedRefresh = readRefreshToken()
+      const newerAccessToken = typeof sentBearer === 'string' &&
+        sentBearer.startsWith('Bearer ') && sentBearer !== `Bearer ${currentToken ?? ''}`
+      const rotatedInAnotherTab = Boolean(storedRefresh && storedRefresh !== refreshToken)
+      if (newerAccessToken || rotatedInAnotherTab) {
+        // A stale failed Refresh must not logout/revoke a newer access/refresh session.
+        return Promise.reject(err)
+      }
       handleAuthFailure()
       return Promise.reject(err)
     }

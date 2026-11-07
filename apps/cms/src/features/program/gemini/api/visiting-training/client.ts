@@ -6,7 +6,9 @@ import type { BulkDecisionRequest } from '@/shared/api/generated/dashboard/schem
 import type { BulkIdsRequest } from '@/shared/api/generated/dashboard/schemas/bulkIdsRequest'
 import {
   toGeminiOrganizationApplicationApproveBody,
+  toGeminiOrganizationBulkApproveBody,
   type GeminiOrganizationApplicationApprovePayload,
+  type GeminiOrganizationBulkApproveRequest,
 } from './organization-application-approve'
 import type { GeminiApprovedTrainingDetailResponse } from '@/shared/api/generated/dashboard/schemas/geminiApprovedTrainingDetailResponse'
 import type { GeminiApprovedTrainingItem } from '@/shared/api/generated/dashboard/schemas/geminiApprovedTrainingItem'
@@ -21,6 +23,7 @@ import type { GeminiRecruitmentListResponse } from '@/shared/api/generated/dashb
 import type { ProgramCreateRequest } from '@/shared/api/generated/dashboard/schemas/programCreateRequest'
 import type { ProgramResponse } from '@/shared/api/generated/dashboard/schemas/programResponse'
 import type { ProgramUpdateRequest } from '@/shared/api/generated/dashboard/schemas/programUpdateRequest'
+import type { InstructorApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationDetailResponse'
 
 const BASE = '/api/admin/gemini/trainings'
 
@@ -63,11 +66,7 @@ function toPageEnvelope<T>(
   }
 }
 
-function appendPageParams(
-  query: URLSearchParams,
-  page: number,
-  size: number
-): void {
+function appendPageParams(query: URLSearchParams, page: number, size: number): void {
   query.set('page', String(page))
   query.set('size', String(size))
 }
@@ -234,6 +233,19 @@ export async function fetchGeminiApprovedInstructorApplicationsRemote(
   return toPageEnvelope(body, page, size)
 }
 
+/** Gemini 강사 신청 상세 화면은 신청 상세 canonical DTO를 사용한다. */
+export async function fetchGeminiInstructorApplicationDetailRemote(
+  approvedTrainingId: string,
+  applicationId: string
+): Promise<InstructorApplicationDetailResponse> {
+  return unwrapApiBody<InstructorApplicationDetailResponse>(
+    await customInstance({
+      url: `${BASE}/approved/${encodeURIComponent(approvedTrainingId)}/instructor-applications/${encodeURIComponent(applicationId)}`,
+      method: 'GET',
+    })
+  )
+}
+
 export async function createGeminiRecruitmentRemote(
   body: ProgramCreateRequest
 ): Promise<ProgramResponse> {
@@ -278,18 +290,24 @@ export async function bulkDeleteGeminiRecruitmentsRemote(ids: number[]): Promise
   })
 }
 
-export async function deleteGeminiApprovedTrainingRemote(approvedTrainingId: string): Promise<void> {
+export async function deleteGeminiApprovedTrainingRemote(
+  approvedTrainingId: string,
+  reason: string | null = null
+): Promise<void> {
+  const query = new URLSearchParams()
+  query.set('reason', reason ?? '')
   await customInstance({
-    url: `${BASE}/approved/${encodeURIComponent(approvedTrainingId)}`,
+    url: `${BASE}/approved/${encodeURIComponent(approvedTrainingId)}?${query.toString()}`,
     method: 'DELETE',
   })
 }
 
 /** OpenAPI operationId: bulkDeleteApprovedTrainings — 부분 성공 가능 */
 export async function bulkDeleteGeminiApprovedTrainingsRemote(
-  ids: number[]
+  ids: number[],
+  reason: string | null = null
 ): Promise<BulkActionResponse> {
-  const body: BulkDecisionRequest = { ids }
+  const body = { ids, reason }
   return unwrapApiBody<BulkActionResponse>(
     await customInstance({
       url: `${BASE}/approved/bulk-delete`,
@@ -326,16 +344,24 @@ export async function rejectGeminiOrganizationApplicationRemote(
   })
 }
 
+export type { GeminiOrganizationBulkApproveRequest }
+
 export async function bulkApproveGeminiOrganizationApplicationsRemote(
-  ids: number[]
-): Promise<void> {
-  const body: BulkIdsRequest = { ids }
-  await customInstance({
-    url: `${BASE}/organization-applications/bulk-approve`,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    data: body,
-  })
+  ids: number[],
+  payload?: GeminiOrganizationApplicationApprovePayload
+): Promise<BulkActionResponse> {
+  const body: GeminiOrganizationBulkApproveRequest = toGeminiOrganizationBulkApproveBody(
+    ids,
+    payload
+  )
+  return unwrapApiBody<BulkActionResponse>(
+    await customInstance({
+      url: `${BASE}/organization-applications/bulk-approve`,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      data: body,
+    })
+  )
 }
 
 export async function bulkRejectGeminiOrganizationApplicationsRemote(
@@ -382,11 +408,22 @@ export async function resendGeminiOrganizationApplicationNotificationRemote(
 }
 
 export async function approveGeminiInstructorApplicationRemote(
-  applicationId: string
+  applicationId: string,
+  options?: {
+    timing?: 'IMMEDIATE' | 'SCHEDULED' | null
+    scheduledAt?: string | null
+    /** 구버전 호환 타입만 유지하며 신규 프론트에서는 전송하지 않는다. */
+    replacement?: boolean | null
+  }
 ): Promise<void> {
   await customInstance({
     url: `${BASE}/instructor-applications/${encodeURIComponent(applicationId)}/approve`,
     method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    data: {
+      timing: options?.timing ?? 'IMMEDIATE',
+      scheduledAt: options?.scheduledAt ?? null,
+    },
   })
 }
 
@@ -401,4 +438,27 @@ export async function rejectGeminiInstructorApplicationRemote(
     headers: { 'Content-Type': 'application/json' },
     data: body,
   })
+}
+
+export type GeminiInstructorNotificationResendPayload = {
+  timing: 'IMMEDIATE' | 'SCHEDULED'
+  scheduledAt: string | null
+}
+
+/**
+ * Gemini 강사 신청 ID는 instructor-applications 재발송 API와 동일 PK.
+ * Gemini 전용 resend path는 없다.
+ */
+export async function resendGeminiInstructorApplicationNotificationRemote(
+  applicationId: string,
+  payload: GeminiInstructorNotificationResendPayload
+): Promise<void> {
+  await unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/instructor-applications/${encodeURIComponent(applicationId)}/notifications/resend`,
+      method: 'POST',
+      data: payload,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  )
 }

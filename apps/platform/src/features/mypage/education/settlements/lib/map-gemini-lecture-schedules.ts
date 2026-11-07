@@ -61,13 +61,15 @@ export function mapGeminiLectureSchedulesToSettlementItems(
       status = 'waiting_confirm'
     }
     const institution = row.institutionName?.trim()
+    const grade = row.grade?.trim()
     return {
       id: row.scheduleId != null ? String(row.scheduleId) : `gemini-schedule-${index + 1}`,
       scheduleId: row.scheduleId ?? undefined,
       sessionNumber: recognizedClassCountOf(row) ?? index + 1,
       heldAt: row.startAt ?? row.endAt ?? '',
       sessionMeta: formatSessionMeta(row),
-      ...(institution ? { institutionLabel: institution } : {}),
+      ...(institution ? { institutionName: institution, institutionLabel: institution } : {}),
+      ...(grade ? { grade } : {}),
       progress,
       status,
     }

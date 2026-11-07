@@ -4,10 +4,11 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, showNotificationResendRequestCompletedAlert } from '@/shared/ui'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import {
@@ -28,6 +29,9 @@ import { TEXTBOOK_STATUS_OPTION_KEYS } from '@/features/program/general/model/pa
 import type { TextbookStatusKey } from '@/features/program/general/model/participating-schools'
 import { useParticipatingInstitutionDetailEdit } from '@/features/program/general/hooks/use-participating-institution-detail-edit'
 import { shouldShowInstitutionApplicationEducationFormatField } from '@/features/program/general/lib/institution-application-detail-edit-policy'
+import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
+import { resolveStoredEducationFormLabel } from '@/features/program/shared/model/program-detail-edit-schema'
+import { resolveTrainedTeachersEducationFormView } from '@/features/program/trained-teachers/lib/common-info-display'
 import {
   canParticipatingInstitutionApplicationInfoEdit,
   getParticipatingInstitutionApplicationInfoEditBlockedAlertMessage,
@@ -43,7 +47,6 @@ import {
   InstitutionClassAndStudentCountEdit,
   InstitutionEducationFormatRadios,
   InstitutionGradeSelectEdit,
-  InstitutionMultilineEdit,
   InstitutionTeacherEdit,
 } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-application-edit-fields'
 import {
@@ -63,18 +66,24 @@ import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-i
 import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { fetchMemberRolePrivacyUnmask } from '@/features/user/api/member-privacy-unmask'
+import { unmaskOrganizationApplicationPrivacyRemote } from '@/features/program/general/api/applications-api-client'
+import { cacheProjectedProgramPrivacy } from '@/features/program/shared/lib/program-my-assignment'
+import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { mergeOrganizationApplicationDetailOntoSchoolDetail } from '@/features/program/general/lib/school-detail'
+import type { OrganizationApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationDetailResponse'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
+import { resolveTrainedTeacherTextbookDeliveryBadge } from '@/features/program/trained-teachers/api/organization-applications-adapters'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 import {
   getTrainedTeacherOrganizationApplication,
   giveUpTrainedTeacherOrganizationApplication,
+  resendTrainedTeacherOrganizationApplicationNotification,
 } from '@/features/program/trained-teachers/api/organization-applications-service'
 import { trainedTeacherQueryKeys } from '@/features/program/trained-teachers/api/query-keys'
 import {
   buildTrainedTeacherActivityWithdrawScheduleOptions,
   parseTrainedTeacherStopScheduleId,
 } from '@/features/program/trained-teachers/lib/organization-activity-withdraw-schedules'
-import { mapProgramSchedulesToPreferredScheduleBlocks } from '@/features/program/trained-teachers/api/organization-applications-adapters'
 import { fetchAdminProgramSchedulesRemote } from '@/features/program/general/api/program-schedules-api-client'
 import { extractApiErrorMessage, getApiErrorCode } from '@/shared/lib/extract-api-error-message'
 import { ApplicationGiveUpRequestFaultParty as FaultParty } from '@/shared/api/generated/dashboard/schemas/applicationGiveUpRequestFaultParty'
@@ -93,6 +102,13 @@ import {
   type TrainedTeachersInstitutionDetailTabKey,
 } from '@/features/program/trained-teachers/lib/institution-detail-tabs'
 import { TrainedTeachersParticipatingInstitutionApplicationInfo } from './participating-institution-application-info'
+import { ProgramApprovalStatusDetailValue } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/program-approval-status-detail-value'
+import { ApplicantNotificationResendModal } from '@/features/program/shared/ui/detail-modal/components/applicant-notification-resend-modal'
+import {
+  canResendApplicationResultNotification,
+  toApplicantNotificationResendNotifyOptions,
+} from '@/features/program/general/lib/applicant-notification-resend'
+import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import { TrainedTeachersEducationJournalSection } from './education-journal-section'
 import { SchoolDetailAttendanceSection } from '@/features/program/general/ui/detail-modal/program-status/school-detail-attendance-section'
 import { SchoolDetailStudentListSection } from '@/features/program/general/ui/detail-modal/program-status/school-detail-student-list-section'
@@ -152,6 +168,8 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
   const [textbookStatusDropdownOpen, setTextbookStatusDropdownOpen] = useState(false)
   const [activityWithdrawModalOpen, setActivityWithdrawModalOpen] = useState(false)
   const [activityWithdrawSubmitting, setActivityWithdrawSubmitting] = useState(false)
+  const [notificationResendOpen, setNotificationResendOpen] = useState(false)
+  const [notificationResendSubmitting, setNotificationResendSubmitting] = useState(false)
   const [adminCommentModalOpen, setAdminCommentModalOpen] = useState(false)
   const [adminCommentDraft, setAdminCommentDraft] = useState('')
   const [adminCommentError, setAdminCommentError] = useState<string | undefined>()
@@ -188,14 +206,27 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
       classCount: remote.classCount,
       studentCount: remote.studentCount,
       teacherName: remote.teacherName,
-      teacherPhone: remote.contact,
-      teacherMobile: remote.contact,
+      ...(remote.detail != null && Object.prototype.hasOwnProperty.call(remote.detail, 'teacherTel')
+        ? { teacherPhone: remote.detail.teacherTel }
+        : {}),
+      ...(remote.detail?.teacherPhone != null || remote.detail?.teacherMobile != null
+        ? { teacherMobile: remote.detail.teacherPhone ?? remote.detail.teacherMobile }
+        : remote.contact
+          ? { teacherMobile: remote.contact }
+          : {}),
       teacherEmail: remote.detail?.teacherEmail,
       addressDetail: remote.detail?.addressDetail,
-      educationFormat: remote.detail?.educationType,
+      ...(remote.detail?.educationType?.trim()
+        ? { educationFormat: remote.detail.educationType.trim() }
+        : {}),
       textbookId: remote.detail?.textbookId,
       lectureRound: remote.lectureRound,
       textbookName: remote.textbookName,
+      ...(remote.textbookStatus ? { textbookStatus: remote.textbookStatus } : {}),
+      ...(typeof remote.textbookKits === 'number' ? { textbookKits: remote.textbookKits } : {}),
+      ...(typeof remote.textbookQuantity === 'number'
+        ? { textbookQuantity: remote.textbookQuantity }
+        : {}),
       applicationReason: remote.detail?.applicationReason,
       otherRequests: remote.detail?.otherRequests,
       gradeBlocks: remote.gradeBlocks ?? null,
@@ -204,11 +235,6 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
   const rosterDependentQueryKeys = useMemo(
     () => [trainedTeacherQueryKeys.organizationApplication(programId, applicationDetailId)],
     [applicationDetailId, programId]
-  )
-
-  const programScheduleBlocks = useMemo(
-    () => mapProgramSchedulesToPreferredScheduleBlocks(program.schedules),
-    [program.schedules]
   )
 
   useEffect(() => {
@@ -251,21 +277,27 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
   const mergedDetail = {
     ...detail,
     ...(applicationBasicInfo ?? {}),
-    ...(!ttRemoteEnabled || activeTab !== 'application' ? savedBasicPatch : {}),
-    ...(ttRemoteEnabled && activeTab === 'application'
-      ? { preferredScheduleBlocks: programScheduleBlocks }
-      : {}),
+    ...savedBasicPatch,
   }
-  const sessions = row.sessions ?? []
+  const sessions = applicationDetailQuery.data?.educationScheduleSessions ?? []
   const attendanceRow = useMemo(() => {
-    if (activeTab !== 'attendance' || !applicationDetailQuery.data) return row
     return {
       ...row,
       organizationApplicationId: row.organizationApplicationId ?? row.id,
-      sessions: applicationDetailQuery.data.educationScheduleSessions ?? [],
+      sessions,
     }
-  }, [activeTab, applicationDetailQuery.data, row])
+  }, [row, sessions])
   const isActivityWithdrawn = mergedDetail.activityWithdrawn === true
+  const applicationApprovalStatus =
+    applicationDetailQuery.data?.approvalStatus ?? row.approvalStatus
+  const canResendApplicationNotification =
+    ttRemoteEnabled &&
+    applicationDetailId !== '' &&
+    canResendApplicationResultNotification({
+      approvalStatus: applicationApprovalStatus,
+      availableActions:
+        applicationDetailQuery.data?.availableActions ?? row.availableActions,
+    })
 
   const activityWithdrawScheduleOptions = useMemo(
     () => buildTrainedTeacherActivityWithdrawScheduleOptions(programSchedulesQuery.data ?? []),
@@ -304,12 +336,112 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     enrollmentStatus: programProgressStatus,
   })
   const showEducationFormatField = shouldShowInstitutionApplicationEducationFormatField(program)
+  const applicationEducationFormatDisplay = useMemo(() => {
+    const fromApplication = mergedDetail.educationFormat?.trim() ?? ''
+    if (fromApplication) return fromApplication
+    const common = resolveGeneralProgramCommonInfo(program)
+    const storedLabel = resolveStoredEducationFormLabel({
+      educationFormLabel: common.educationFormLabel,
+      scheduleDetails: common.scheduleDetails,
+      curriculumSessions: common.curriculumSessions,
+    }).trim()
+    const fromProgram = resolveTrainedTeachersEducationFormView({
+      programType: program.type,
+      educationFormScheduleDetail: common.educationFormScheduleDetail,
+      educationFormLabel: storedLabel,
+    }).formLabel.trim()
+    if (!fromProgram || fromProgram === '-' || fromProgram.includes('참여자')) return '-'
+    return fromProgram
+  }, [mergedDetail.educationFormat, program])
 
   useEffect(() => {
     if (isApplicationInfoEditing && !canEditApplicationInfo) {
       cancelApplicationInfoEdit()
     }
   }, [canEditApplicationInfo, cancelApplicationInfoEdit, isApplicationInfoEditing])
+
+  const [editUnmaskConfirmOpen, setEditUnmaskConfirmOpen] = useState(false)
+  const [editUnmaskConfirmLoading, setEditUnmaskConfirmLoading] = useState(false)
+
+  const resolvePersonalInfoAccessItem = useCallback(
+    () => mergedDetail.schoolName ?? row.schoolName ?? '학교 상세 정보',
+    [mergedDetail.schoolName, row.schoolName]
+  )
+
+  const revealInstitutionTeacherPersonalInfo = useCallback(
+    async (reason: string) => {
+      const orgAppId = (row.organizationApplicationId ?? row.id)?.trim()
+      if (orgAppId) {
+        const programIdNumber = Number(programId)
+        const dto = await unmaskOrganizationApplicationPrivacyRemote(
+          orgAppId,
+          reason,
+          Number.isFinite(programIdNumber) ? programIdNumber : undefined
+        )
+        return cacheProjectedProgramPrivacy(
+          queryClient,
+          generalApplicationsQueryKeys.organizationDetail(orgAppId),
+          programId,
+          dto
+        )
+      }
+      if (row.teacherMemberId == null) {
+        throw new Error('기관 신청 ID 또는 담당 교사 회원 ID가 없습니다.')
+      }
+      return fetchMemberRolePrivacyUnmask(row.teacherMemberId, reason, 'SCHOOL')
+    },
+    [programId, queryClient, row.id, row.organizationApplicationId, row.teacherMemberId]
+  )
+
+  const applyInstitutionTeacherPersonalInfo = useCallback(
+    (payload: unknown) => {
+      if (payload == null || typeof payload !== 'object') return
+      if (
+        'teacherTel' in payload ||
+        'teacherPhone' in payload ||
+        'organizationName' in payload ||
+        'privacyMaskingLevel' in payload
+      ) {
+        const unmasked = mergeOrganizationApplicationDetailOntoSchoolDetail(
+          detail,
+          payload as OrganizationApplicationDetailResponse
+        )
+        onSaveBasicInfo?.({
+          id: detail.id,
+          teacherName: unmasked.teacherName ?? '',
+          teacherPhone: unmasked.teacherPhone ?? '',
+          teacherMobile: unmasked.teacherMobile ?? '',
+          teacherEmail: unmasked.teacherEmail ?? '',
+        })
+        return
+      }
+      const privacy = payload as { name?: unknown; phone?: unknown; email?: unknown }
+      onSaveBasicInfo?.({
+        id: detail.id,
+        ...(typeof privacy.name === 'string' ? { teacherName: privacy.name } : {}),
+        ...(typeof privacy.phone === 'string' ? { teacherMobile: privacy.phone } : {}),
+        ...(typeof privacy.email === 'string' ? { teacherEmail: privacy.email } : {}),
+      })
+    },
+    [detail, onSaveBasicInfo]
+  )
+
+  const {
+    personalInfoRevealed,
+    revealWithReason,
+    onPrivacyControlClick: handlePrivacyToggleClick,
+    confirmModal: personalInfoRevealModal,
+    programPrivacyPending,
+  } = usePersonalInfoReveal({
+    privacyScope: 'program',
+    programId: programId,
+    resolveProgramRole: () => resolveSessionProgramRole(programId),
+    resolveAccessItem: resolvePersonalInfoAccessItem,
+    revealPersonalInfo: revealInstitutionTeacherPersonalInfo,
+    onPrivacyUnmasked: applyInstitutionTeacherPersonalInfo,
+    resetDeps: [detail.id],
+    controlMode: 'toggleRemask',
+  })
 
   const handleEnterApplicationInfoEdit = useCallback(() => {
     if (!canEditApplicationInfo) {
@@ -322,53 +454,53 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
       })
       return
     }
-    enterApplicationInfoEdit()
-  }, [canEditApplicationInfo, enterApplicationInfoEdit, program, programProgressStatus, showAlert])
-
-  const resolvePersonalInfoAccessItem = useCallback(
-    () => mergedDetail.schoolName ?? row.schoolName ?? '학교 상세 정보',
-    [mergedDetail.schoolName, row.schoolName]
-  )
-
-  const revealInstitutionTeacherPersonalInfo = useCallback(
-    async (reason: string) => {
-      if (row.teacherMemberId == null) {
-        throw new Error('담당 교사 회원 ID가 없습니다.')
-      }
-      return fetchMemberRolePrivacyUnmask(row.teacherMemberId, reason, 'SCHOOL')
-    },
-    [row.teacherMemberId]
-  )
-
-  const applyInstitutionTeacherPersonalInfo = useCallback(
-    (payload: unknown) => {
-      if (payload == null || typeof payload !== 'object') return
-      const privacy = payload as { name?: unknown; phone?: unknown; email?: unknown }
-      onSaveBasicInfo?.({
-        id: detail.id,
-        ...(typeof privacy.name === 'string' ? { teacherName: privacy.name } : {}),
-        ...(typeof privacy.phone === 'string' ? { teacherPhone: privacy.phone } : {}),
-        ...(typeof privacy.email === 'string' ? { teacherEmail: privacy.email } : {}),
-      })
-    },
-    [detail.id, onSaveBasicInfo]
-  )
-
-  const {
+    if (personalInfoRevealed) {
+      enterApplicationInfoEdit()
+      return
+    }
+    setEditUnmaskConfirmOpen(true)
+  }, [
+    canEditApplicationInfo,
+    enterApplicationInfoEdit,
     personalInfoRevealed,
-    onPrivacyControlClick: handlePrivacyToggleClick,
-    confirmModal: personalInfoRevealModal,
-  programPrivacyPending,
-  } = usePersonalInfoReveal({
-    privacyScope: 'program',
-    programId: programId,
-    resolveProgramRole: () => resolveSessionProgramRole(programId),
-    resolveAccessItem: resolvePersonalInfoAccessItem,
-    revealPersonalInfo: revealInstitutionTeacherPersonalInfo,
-    onPrivacyUnmasked: applyInstitutionTeacherPersonalInfo,
-    resetDeps: [detail.id],
-    controlMode: 'toggleRemask',
-  })
+    program,
+    programProgressStatus,
+    showAlert,
+  ])
+
+  const closeEditUnmaskConfirm = useCallback(() => {
+    if (editUnmaskConfirmLoading) return
+    setEditUnmaskConfirmOpen(false)
+  }, [editUnmaskConfirmLoading])
+
+  const confirmEditUnmaskAndStartEdit = useCallback(() => {
+    if (editUnmaskConfirmLoading) return
+    setEditUnmaskConfirmLoading(true)
+    void revealWithReason('신청 정보 수정')
+      .then(result => {
+        if (!result.ok) return
+        setEditUnmaskConfirmOpen(false)
+        if (
+          result.payload != null &&
+          typeof result.payload === 'object' &&
+          ('teacherTel' in result.payload ||
+            'teacherPhone' in result.payload ||
+            'organizationName' in result.payload)
+        ) {
+          enterApplicationInfoEdit(
+            mergeOrganizationApplicationDetailOntoSchoolDetail(
+              mergedDetail,
+              result.payload as OrganizationApplicationDetailResponse
+            )
+          )
+          return
+        }
+        enterApplicationInfoEdit()
+      })
+      .finally(() => {
+        setEditUnmaskConfirmLoading(false)
+      })
+  }, [editUnmaskConfirmLoading, enterApplicationInfoEdit, mergedDetail, revealWithReason])
 
   const handleAdminCommentEditEnter = useCallback(() => {
     if (isApplicationInfoEditing) return
@@ -567,12 +699,33 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
       `E-mail : ${displayServerPiiAsIs(mergedDetail.teacherEmail, mergedDetail.teacherEmail)}`,
   ].filter((v): v is string => Boolean(v))
 
+  const hasSelectedTextbook =
+    ((mergedDetail.textbookId?.trim() ?? '') !== '' &&
+      mergedDetail.textbookId?.trim() !== TEXTBOOK_NOT_USED_OPTION_VALUE) ||
+    ((mergedDetail.textbookName?.trim() ?? '') !== '' &&
+      mergedDetail.textbookName?.trim() !== '해당 없음' &&
+      mergedDetail.textbookName?.trim() !== '-') ||
+    (typeof mergedDetail.textbookKits === 'number' && mergedDetail.textbookKits > 0) ||
+    (typeof mergedDetail.textbookQuantity === 'number' && mergedDetail.textbookQuantity > 0)
+  const storedTextbookDelivery =
+    mergedDetail.textbookStatus === 'preparing' ||
+    mergedDetail.textbookStatus === 'shipping' ||
+    mergedDetail.textbookStatus === 'delivered' ||
+    mergedDetail.textbookStatus === 'not_applicable'
+      ? mergedDetail.textbookStatus
+      : undefined
+  const textbookDeliveryStatus = resolveTrainedTeacherTextbookDeliveryBadge(
+    storedTextbookDelivery,
+    hasSelectedTextbook
+  )
   const textbookStatusCell =
-    onTextbookStatusChange != null ? (
+    textbookDeliveryStatus === 'not_applicable' ? (
+      <TextbookStatusBadge status="not_applicable" />
+    ) : onTextbookStatusChange != null ? (
       <span className={STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME}>
         <StatusDropdownCell<TextbookStatusKey>
-          status={mergedDetail.textbookStatus}
-          statusOptions={TEXTBOOK_STATUS_OPTION_KEYS}
+          status={textbookDeliveryStatus}
+          statusOptions={TEXTBOOK_STATUS_OPTION_KEYS.filter(key => key !== 'not_applicable')}
           renderBadge={s => <TextbookStatusBadge status={s} />}
           isItemDisabled={(cur, opt) => cur === opt}
           onChange={newStatus => onTextbookStatusChange(detail.id, newStatus)}
@@ -582,15 +735,19 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
         />
       </span>
     ) : (
-      <TextbookStatusBadge status={mergedDetail.textbookStatus} />
+      <TextbookStatusBadge status={textbookDeliveryStatus} />
     )
-
-  const hasSelectedTextbook =
-    ((mergedDetail.textbookId?.trim() ?? '') !== '' &&
-      mergedDetail.textbookId?.trim() !== TEXTBOOK_NOT_USED_OPTION_VALUE) ||
-    ((mergedDetail.textbookName?.trim() ?? '') !== '' &&
-      mergedDetail.textbookName?.trim() !== '해당 없음')
-  const textbookNameView = !hasSelectedTextbook ? '해당 없음' : textbookDisplay.textbookName
+  const textbookNameView = !hasSelectedTextbook
+    ? '해당 없음'
+    : textbookDisplay.textbookName?.trim() &&
+        textbookDisplay.textbookName.trim() !== '-' &&
+        textbookDisplay.textbookName.trim() !== '해당 없음'
+      ? textbookDisplay.textbookName.trim()
+      : mergedDetail.textbookName?.trim() &&
+          mergedDetail.textbookName.trim() !== '-' &&
+          mergedDetail.textbookName.trim() !== '해당 없음'
+        ? mergedDetail.textbookName.trim()
+        : ''
   const kitsAndQty = hasSelectedTextbook
     ? formatParticipatingInstitutionKitQuantity(
         textbookDisplay.textbookKits,
@@ -599,6 +756,80 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     : '-'
 
   const textbookSelectOptions = ensureTextbookNotUsedSelectOption(textbookOptions)
+
+  const handleConfirmApplicationNotificationResend = useCallback(
+    async (payload: PermissionModalPayload) => {
+      if (notificationResendSubmitting) return
+      if (!programId || applicationDetailId === '') return
+      if (
+        payload.notifyTiming === 'manual' &&
+        (!payload.manualNotifyAt || !payload.manualNotifyAt.isAfter(new Date()))
+      ) {
+        void showAlert({
+          title: '예약 발송 일시 확인',
+          content: '예약 발송 일시는 현재 시각보다 이후로 설정해 주세요.',
+        })
+        return
+      }
+      const notifyOptions = toApplicantNotificationResendNotifyOptions(payload)
+      if (applicationApprovalStatus === 'rejected' && !payload.reason.trim()) {
+        void showAlert({
+          title: '반려 사유 확인',
+          content: '반려 알림 재발송 시 사유를 입력해 주세요.',
+        })
+        return
+      }
+      setNotificationResendSubmitting(true)
+      try {
+        await resendTrainedTeacherOrganizationApplicationNotification(
+          programId,
+          applicationDetailId,
+          {
+            timing: notifyOptions.notifyTiming === 'manual' ? 'SCHEDULED' : 'IMMEDIATE',
+            scheduledAt:
+              notifyOptions.notifyTiming === 'manual'
+                ? (notifyOptions.manualNotifyAt?.toISOString() ?? null)
+                : null,
+            reason: applicationApprovalStatus === 'rejected' ? payload.reason.trim() : null,
+          },
+          `tt-org-${applicationDetailId}-${crypto.randomUUID()}`
+        )
+        setNotificationResendOpen(false)
+        await queryClient.invalidateQueries({
+          queryKey: trainedTeacherQueryKeys.organizationApplication(programId, applicationDetailId),
+        })
+        showNotificationResendRequestCompletedAlert()
+      } catch (error) {
+        void showAlert({
+          title: '알림 재발송 실패',
+          content: extractApiErrorMessage(error) || '알림 재발송에 실패했습니다.',
+        })
+      } finally {
+        setNotificationResendSubmitting(false)
+      }
+    },
+    [
+      applicationApprovalStatus,
+      applicationDetailId,
+      notificationResendSubmitting,
+      programId,
+      queryClient,
+      showAlert,
+    ]
+  )
+
+  const programApprovalStatusCell =
+    applicationApprovalStatus != null ? (
+      <ProgramApprovalStatusDetailValue
+        status={applicationApprovalStatus}
+        participationRejectionReason={applicationDetailQuery.data?.participationRejectionReason}
+        approvalNotificationSentAt={applicationDetailQuery.data?.approvalNotificationSentAt}
+        onResendNotificationClick={
+          canResendApplicationNotification ? () => setNotificationResendOpen(true) : undefined
+        }
+      />
+    ) : null
+
   const textbookCell =
     isApplicationInfoEditing && applicationInfoDraft && canEditTextbook ? (
       <div className="institution-basic-info__field-stack school-detail-fullpage-view__textbook-select-only">
@@ -631,10 +862,16 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
           </span>
         ) : null}
       </div>
+    ) : !hasSelectedTextbook ? (
+      '-'
     ) : (
       <div className="participating-institution-application-info__textbook-value">
         <ProgramDetailTdSegmentWrap>
-          {withProgramDetailTdDivider([textbookNameView, kitsAndQty, textbookStatusCell])}
+          {withProgramDetailTdDivider(
+            [textbookNameView, kitsAndQty !== '-' ? kitsAndQty : null, textbookStatusCell].filter(
+              (part): part is NonNullable<typeof part> => part != null && part !== ''
+            )
+          )}
         </ProgramDetailTdSegmentWrap>
       </div>
     )
@@ -674,7 +911,11 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     )
   }
 
-  if (canFetchApplicationDetail && applicationDetailQuery.isError && activeTabUsesApplicationDetail) {
+  if (
+    canFetchApplicationDetail &&
+    applicationDetailQuery.isError &&
+    activeTabUsesApplicationDetail
+  ) {
     return (
       <div className="school-detail-fullpage-view">
         <CmsTextTabs
@@ -695,12 +936,14 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
                 size="medium"
                 onClick={() => {
                   void applicationDetailQuery.refetch()
-                }} >
+                }}
+              >
                 다시 시도
               </CmsButton>
             </div>
           </div>
         </div>
+        <div className="school-detail-fullpage-view__page-bottom-spacer" aria-hidden />
       </div>
     )
   }
@@ -723,7 +966,8 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
                   variant="delete"
                   size="h40"
                   disabled={isActivityWithdrawn}
-                  onClick={handleRequestActivityWithdraw} >
+                  onClick={handleRequestActivityWithdraw}
+                >
                   활동 포기
                 </CmsButton>
               ) : null}
@@ -741,22 +985,22 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
                 onCancel={cancelApplicationInfoEdit}
                 onSave={() => {
                   void saveApplicationInfoEdit()
-                }} />
+                }}
+              />
               {!isApplicationInfoEditing ? (
                 <>
                   {showAdminCommentSection ? (
-                    <CmsButton
-                      variant="primary"
-                      size="h40"
-                      onClick={handleAdminCommentEditEnter} >
+                    <CmsButton variant="primary" size="h40" onClick={handleAdminCommentEditEnter}>
                       코멘트 작성
                     </CmsButton>
                   ) : null}
-                  <PersonalInfoRevealButton disabled={programPrivacyPending}
+                  <PersonalInfoRevealButton
+                    disabled={programPrivacyPending}
                     labelMode="toggle"
                     revealed={personalInfoRevealed}
                     cmsSize="h40"
-                    onClick={handlePrivacyToggleClick} />
+                    onClick={handlePrivacyToggleClick}
+                  />
                 </>
               ) : null}
             </>
@@ -774,12 +1018,18 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
               isAdminCommentEditing={false}
               adminCommentError={adminCommentError}
               programProgressCell={<ProgramEnrollmentStatusText status={programProgressStatus} />}
+              programApprovalStatusCell={programApprovalStatusCell}
               textbookCell={textbookCell}
               usesTextbook={usesTextbook}
               textbookEditFullWidth={isApplicationInfoEditing && canEditTextbook}
               institutionId={row.id}
+              educationScheduleSessions={
+                applicationDetailQuery.data?.educationScheduleSessions ?? []
+              }
               preferredScheduleBlocks={
-                ttRemoteEnabled ? programScheduleBlocks : mergedDetail.preferredScheduleBlocks
+                applicationDetailQuery.data?.preferredScheduleBlocks ??
+                mergedDetail.preferredScheduleBlocks ??
+                []
               }
               schoolName={mergedDetail.schoolName}
               educationGrade={
@@ -813,7 +1063,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
                     error={applicationInfoValidationErrors?.educationFormat}
                   />
                 ) : (
-                  (mergedDetail.educationFormat ?? '-')
+                  applicationEducationFormatDisplay
                 )
               }
               teacherInfo={
@@ -832,30 +1082,8 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
                   '-'
                 )
               }
-              applicationReason={
-                isApplicationDetailEditing ? (
-                  <InstitutionMultilineEdit
-                    value={applicationInfoDraft.applicationReason}
-                    onChange={value => updateApplicationInfoDraft({ applicationReason: value })}
-                    placeholder="신청 사유를 입력해 주세요."
-                    error={applicationInfoValidationErrors?.applicationReason}
-                  />
-                ) : (
-                  (mergedDetail.applicationReason ?? '-')
-                )
-              }
-              otherRequests={
-                isApplicationDetailEditing ? (
-                  <InstitutionMultilineEdit
-                    value={applicationInfoDraft.otherRequests}
-                    onChange={value => updateApplicationInfoDraft({ otherRequests: value })}
-                    placeholder="기타 요청사항을 입력해 주세요."
-                    error={applicationInfoValidationErrors?.otherRequests}
-                  />
-                ) : (
-                  (mergedDetail.otherRequests ?? '-')
-                )
-              }
+              applicationReason={mergedDetail.applicationReason ?? '-'}
+              otherRequests={mergedDetail.otherRequests ?? '-'}
             />
           </div>
         )}
@@ -904,7 +1132,22 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
         )}
       </div>
 
+      <div className="school-detail-fullpage-view__page-bottom-spacer" aria-hidden />
+
       {personalInfoRevealModal}
+      <ConfirmModal
+        open={editUnmaskConfirmOpen}
+        title="정보 수정 안내"
+        content={
+          "정보 수정 시 개인정보 마스킹이 해제되며,\n개인정보 열람 사유는 '정보 수정'으로 로그 이력에 기록됩니다.\n해당 기관의 개인정보 열람 및 정보를 수정하시겠습니까?"
+        }
+        confirmText="정보 수정"
+        cancelText="취소"
+        onConfirm={confirmEditUnmaskAndStartEdit}
+        onCancel={closeEditUnmaskConfirm}
+        confirmLoading={editUnmaskConfirmLoading}
+        zIndex={1100}
+      />
 
       <ActivityWithdrawScheduleModal
         open={activityWithdrawModalOpen}
@@ -924,6 +1167,21 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
         onChange={handleAdminCommentDraftChange}
         onCancel={handleAdminCommentModalCancel}
         onConfirm={handleAdminCommentSave}
+      />
+      <ApplicantNotificationResendModal
+        open={notificationResendOpen}
+        subjectKind="institution"
+        subjectName={mergedDetail.schoolName ?? row.schoolName ?? ''}
+        approvalStatus={applicationApprovalStatus === 'rejected' ? 'rejected' : 'approved'}
+        confirmLoading={notificationResendSubmitting}
+        zIndex={2600}
+        onCancel={() => {
+          if (notificationResendSubmitting) return
+          setNotificationResendOpen(false)
+        }}
+        onConfirm={payload => {
+          void handleConfirmApplicationNotificationResend(payload)
+        }}
       />
     </div>
   )

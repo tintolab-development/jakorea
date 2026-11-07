@@ -9,6 +9,7 @@
 export interface Target {
   applicationId: number;
   /**
+     * 관리자가 확정한 교육 일정 ID. 봉사자 일괄 승인에서 빈 배열이면 신청만 승인합니다. null은 거부합니다.
      * @minItems 0
      * @maxItems 1000
      */

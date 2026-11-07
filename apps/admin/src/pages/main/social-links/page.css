@@ -46,8 +46,45 @@
   background: var(--color-mint-01, #01a1af) !important;
 }
 
-.social-link-table .ant-table-tbody > tr > td {
-  vertical-align: middle;
+.social-link-table.cms-data-table .ant-table-tbody > tr.ant-table-row,
+.social-link-table.cms-data-table .ant-table-tbody > tr.ant-table-row:hover {
+  transition: none !important;
+}
+
+/*
+ * cms-data-table 공통 규칙은 :not(placeholder/measure-row) 로 특이도가 높다.
+ * 동일 :not + cell-row-hover 를 쌍으로 두어 호버 시 padding/height/border 가 바뀌지 않게 한다.
+ */
+.social-link-table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td,
+.social-link-table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.ant-table-cell-row-hover {
+  box-sizing: border-box !important;
+  height: 60px !important;
+  min-height: 60px !important;
+  max-height: 60px !important;
+  padding: 12px 16px !important;
+  overflow: hidden !important;
+  vertical-align: middle !important;
+  white-space: nowrap !important;
+  transition: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.social-link-table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):last-child
+  > td,
+.social-link-table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):last-child
+  > td.ant-table-cell-row-hover {
+  border-bottom: none !important;
 }
 
 .social-link-table .ant-table-tbody > tr > td .cms-input {

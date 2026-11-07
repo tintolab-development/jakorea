@@ -7,7 +7,7 @@
  */
 
 /**
- * 수료증/참여인증서 발급 상세 응답
+ * 수료증/참가인증서 발급 상세 응답
  */
 export interface CertificateIssueResponse {
   /** 증명서 발급 ID */

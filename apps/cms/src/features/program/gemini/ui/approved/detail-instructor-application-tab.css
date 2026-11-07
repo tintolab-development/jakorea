@@ -1,6 +1,6 @@
 .gemini-approved-instructor-application-tab__approval {
   font-family: Pretendard, var(--font-family-primary), sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
@@ -16,4 +16,20 @@
 
 .gemini-approved-instructor-application-tab__approval--rejected {
   color: var(--color-red, #c32f4a);
+}
+
+.gemini-approved-instructor-application-tab__approval--unknown {
+  color: var(--color-text-secondary, #8c8c8c);
+}
+.gemini-approved-instructor-application-tab__detail-loading,
+.gemini-approved-instructor-application-tab__detail-error {
+  min-height: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary, #8c8c8c);
+}
+
+.gemini-approved-instructor-application-tab__detail-error {
+  color: var(--color-error, #d4380d);
 }

@@ -7,10 +7,11 @@
  */
 
 /**
- * 개인 신청 승인 및 교육 일정 확정. timing을 생략하면 승인 알림을 즉시 발송합니다.
+ * 개인 신청 승인 및 교육 일정 확정. 봉사자 승인 전용 호출은 confirmedScheduleIds=[] 로 일정 없이 승인할 수 있습니다. 개인 신청은 서비스 계층에서 일정 1건 이상을 요구합니다. timing을 생략하면 승인 알림을 즉시 발송합니다.
  */
 export interface IndividualApprovalWithScopeRequest {
   /**
+     * 관리자가 확정한 교육 일정 ID. 봉사자 승인에서 빈 배열이면 신청만 승인하고 교육 범위는 변경하지 않습니다. null은 거부합니다.
      * @minItems 0
      * @maxItems 1000
      */

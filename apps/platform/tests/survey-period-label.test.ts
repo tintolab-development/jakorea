@@ -48,4 +48,46 @@ describe('education survey period label', () => {
       resolveEducationSurveyPeriodLabel(titleParagraph({ endPeriodMode: 'immediate', endAt: null }))
     ).toBe('2026년 11월 1일(일) 07:15 ~')
   })
+
+  it('uses server submitDueAt instead of computing next-month 5th', () => {
+    expect(
+      resolveEducationSurveyPeriodLabel(
+        titleParagraph({
+          startAt: null,
+          endAt: null,
+          startPeriodPresetLabel: '활동일 (09:00)',
+          endPeriodPresetLabel: '활동일 익월 5일 (24:00)',
+        }),
+        '2026-10-27T03:55:00+09:00',
+        { submitDueAt: '2026-11-05T14:59:59Z' },
+      ),
+    ).toBe('2026년 10월 27일(화) 03:55 ~ 2026년 11월 5일(목) 24:00')
+  })
+
+  it('uses effectiveDeadline when it is earlier than regular next-month 5th', () => {
+    expect(
+      resolveEducationSurveyPeriodLabel(
+        titleParagraph({
+          startAt: null,
+          endAt: null,
+          endPeriodPresetLabel: '활동일 익월 5일 (24:00)',
+        }),
+        '2026-12-10T10:00:00+09:00',
+        { submitDueAt: '2026-12-20T14:59:59Z' },
+      ),
+    ).toBe('2026년 12월 10일(목) 10:00 ~ 2026년 12월 20일(일) 24:00')
+  })
+
+  it('does not invent a next-month 5th date when submitDueAt is missing', () => {
+    expect(
+      resolveEducationSurveyPeriodLabel(
+        titleParagraph({
+          startAt: null,
+          endAt: null,
+          endPeriodPresetLabel: '활동일 익월 5일 (24:00)',
+        }),
+        '2026-12-10T10:00:00+09:00',
+      ),
+    ).toBe('2026년 12월 10일(목) 10:00 ~ 활동일 익월 5일 (24:00)')
+  })
 })

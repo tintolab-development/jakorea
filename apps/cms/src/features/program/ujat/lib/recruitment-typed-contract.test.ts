@@ -29,12 +29,14 @@ describe('typedFieldsFromRecruitmentFormValues', () => {
     const fields = typedFieldsFromRecruitmentFormValues(
       {
         resultAnnouncementDate: '2026-03-16',
+        resultAnnouncementMethod: '홈페이지',
         participantRecruitmentAnnouncementPublished: 'published',
         participantRecruitmentNotesNotApplicable: 'applicable',
       } as ProgramDetailEditFormValues,
       'institution'
     )
     expect(fields.finalPassAnnouncementAt).toBe('2026-03-16')
+    expect(fields.finalPassAnnouncementMethod).toBe('홈페이지')
     expect(fields.announcementPublished).toBe(true)
     expect(fields.remarksNotApplicable).toBe(false)
   })
@@ -52,6 +54,33 @@ describe('typedFieldsFromRecruitmentFormValues', () => {
     )
     expect(fields.finalPassAnnouncementAt).toBe('2026-03-23')
     expect(fields.documentPassAnnouncementAt).toBe('2026-03-16')
+  })
+
+  it('빈 방법·상세는 null이 아니라 빈 문자열로 보내 해당 행만 비운다', () => {
+    const institution = typedFieldsFromRecruitmentFormValues(
+      {
+        resultAnnouncementMethod: '   ',
+        participantRecruitmentAnnouncementPublished: 'published',
+        participantRecruitmentNotesNotApplicable: 'applicable',
+      } as ProgramDetailEditFormValues,
+      'institution'
+    )
+    const volunteer = typedFieldsFromRecruitmentFormValues(
+      {
+        documentPassAnnouncementMethod: '',
+        interviewMethod: '',
+        finalPassAnnouncementMethod: '',
+        volunteerTargetDetail: '',
+        volunteerRecruitmentAnnouncementPublished: 'published',
+        volunteerRecruitmentNotesNotApplicable: 'applicable',
+      } as ProgramDetailEditFormValues,
+      'volunteer'
+    )
+    expect(institution.finalPassAnnouncementMethod).toBe('')
+    expect(volunteer.documentPassAnnouncementMethod).toBe('')
+    expect(volunteer.interviewMethod).toBe('')
+    expect(volunteer.finalPassAnnouncementMethod).toBe('')
+    expect(volunteer.volunteerTargetDetail).toBe('')
   })
 })
 

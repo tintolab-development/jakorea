@@ -10,7 +10,10 @@ export const GEMINI_INSTRUCTOR_APPLICATION_FILTER_FIELDS: FilterFieldConfig[] = 
     placeholder: '강사명을 입력해 주세요',
     width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
-  createHomeAddressRegionFilterField({ label: '자택 주소지' }),
+  createHomeAddressRegionFilterField({
+    label: '자택 주소지',
+    width: FILTER_CONTROL_MAX_WIDTH_PX,
+  }),
   {
     key: 'experienceYears',
     type: 'select',

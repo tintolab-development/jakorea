@@ -1,3 +1,4 @@
+import type { InstructorTransportPreview } from './instructor-transport-preview.ts'
 import type { SettlementDocumentKind } from './settlement-status-ui.ts'
 import { createSettlementIdempotencyKey } from './seoul-deadline.ts'
 import { emptySettlementTripLeg } from './empty-trip-leg.ts'
@@ -11,6 +12,7 @@ type BuildSettlementWriteDraftInput = {
   applicationId: string
   sessionId: string
   scheduleId?: number
+  assignmentId?: number
   isInstructor: boolean
   documentKind?: SettlementDocumentKind
   programTitle?: string
@@ -32,6 +34,7 @@ type BuildSettlementWriteDraftInput = {
   transportItemType?: string
   transportItemName?: string
   transportEvidenceRequired?: boolean
+  transportAutoPreview?: InstructorTransportPreview | null
   tripType: SettlementWriteDraft['transport']['tripType']
   departTransit: string
   departAmount: string
@@ -44,8 +47,10 @@ type BuildSettlementWriteDraftInput = {
   extraItems?: SettlementAmountItemDraft[]
   mealAmount: string
   mealFiles: string[]
+  mealAttachments?: SettlementReceiptAttachment[]
   activityAmount: string
   activityFiles: string[]
+  activityAttachments?: SettlementReceiptAttachment[]
 }
 
 export function buildSettlementWriteDraft(
@@ -57,6 +62,7 @@ export function buildSettlementWriteDraft(
       applicationId: input.applicationId,
       sessionId: input.sessionId,
       scheduleId: input.scheduleId,
+      assignmentId: input.assignmentId,
       isInstructor: input.isInstructor,
       documentKind,
       programTitle: input.programTitle,
@@ -82,6 +88,7 @@ export function buildSettlementWriteDraft(
       itemType: input.transportItemType,
       itemName: input.transportItemName,
       evidenceRequired: input.transportEvidenceRequired,
+      autoPreview: input.transportAutoPreview ?? null,
       tripType: input.tripType,
       depart: {
         transit: input.departTransit,
@@ -100,12 +107,34 @@ export function buildSettlementWriteDraft(
     meal: {
       amount: input.mealAmount,
       fileNames: input.mealFiles,
+      attachments: input.mealAttachments ?? [],
     },
     activity: {
       amount: input.activityAmount,
       fileNames: input.activityFiles,
+      attachments: input.activityAttachments ?? [],
     },
   }
+}
+
+export function normalizeSettlementNamedExpense(
+  item?: Partial<SettlementWriteDraft['meal']> | null
+): SettlementWriteDraft['meal'] {
+  return {
+    amount: item?.amount ?? '',
+    fileNames: item?.fileNames ?? [],
+    attachments: item?.attachments ?? [],
+  }
+}
+
+export function readSettlementNamedExpenseFileNames(
+  item?: Partial<SettlementWriteDraft['meal']> | null
+): string[] {
+  const normalized = normalizeSettlementNamedExpense(item)
+  if (normalized.attachments.length > 0) {
+    return normalized.attachments.map(file => file.fileName)
+  }
+  return normalized.fileNames
 }
 
 export function hydrateSettlementWriteFormState(draft: SettlementWriteDraft) {
@@ -131,8 +160,10 @@ export function hydrateSettlementWriteFormState(draft: SettlementWriteDraft) {
     extraItems: draft.extraItems,
     mealAmount: draft.meal.amount,
     mealFiles: draft.meal.fileNames,
+    mealAttachments: draft.meal.attachments ?? [],
     activityAmount: draft.activity.amount,
     activityFiles: draft.activity.fileNames,
+    activityAttachments: draft.activity.attachments ?? [],
     idempotencyKey: draft.meta.idempotencyKey,
   }
 }

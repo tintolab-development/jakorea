@@ -20,6 +20,7 @@ import {
   publishProgramOperationDateFocus,
   resolveProgramDateOutsideOpenPeriodAlert,
 } from '@/features/program/shared/lib/program-date-outside-open-period-alert'
+import { readVolunteer1365ApprovalBlockedAlert } from '@/features/program/shared/lib/application-eligibility-conflict'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import { isRequestCanceledError } from '@/shared/lib/is-request-canceled-error'
 import { isAdminFirstLoginOnboardingIncomplete } from '@/shared/utils/post-auth-redirect'
@@ -88,6 +89,11 @@ function shouldSkipGlobalErrorAlert(
 
   // 출결 정정 일정 시작 전 — 화면에서 전용 안내를 띄운다.
   if (code === 'ATTENDANCE_RECORDING_NOT_OPEN') {
+    return true
+  }
+
+  // 봉사자 1365 ID 미등록 승인 차단 — 화면에서 전용 안내를 띄운다.
+  if (readVolunteer1365ApprovalBlockedAlert(error)) {
     return true
   }
 

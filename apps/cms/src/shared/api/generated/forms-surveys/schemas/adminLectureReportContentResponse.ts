@@ -13,6 +13,14 @@ export interface AdminLectureReportContentResponse {
   reportId?: number;
   programId?: number;
   scheduleId?: number;
+  /** 본교육 회차 번호(program_schedule.session_no). 차시 개수가 아님. */
+  sessionNo?: number | null;
+  /** canonical 일정 역할. PRE_EDUCATION|EDUCATION|SESSION|CLOSING. 없으면 null. */
+  scheduleRole?: string | null;
+  /** canonical education_slot_key. 없으면 null. */
+  educationSlotKey?: string | null;
+  /** 연결된 program_curriculum_session 건수. 사전교육·연결 없으면 null. 정산 인정 차시와 별개. */
+  curriculumSessionCount?: number | null;
   instructorAssignmentId?: number;
   instructorMemberId?: number;
   formResponseId?: number;

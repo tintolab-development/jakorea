@@ -21,7 +21,6 @@ export function shouldShowPersonalCertificateAction(input: {
   detailCase?: string | null
   isTeacher?: boolean
 }): boolean {
-  if (input.isTeacher) return false
   if ((input.applicationType ?? '').trim().toUpperCase() !== 'INDIVIDUAL') return false
   if (isExcludedGeminiSurface(input)) return false
   const programType = (input.programType ?? '').trim().toUpperCase()
@@ -73,6 +72,14 @@ export function portalCertificateDocumentLabel(
     return '참가인증서'
   }
   return '수료증'
+}
+
+export function portalCertificateCtaButtonLabel(input: {
+  certificateType: string | null | undefined
+  action: 'issue' | 'download'
+}): string {
+  const documentLabel = portalCertificateDocumentLabel(input.certificateType)
+  return input.action === 'download' ? `${documentLabel} 다운로드` : `${documentLabel} 발급하기`
 }
 
 export function portalCertificateIssueType(

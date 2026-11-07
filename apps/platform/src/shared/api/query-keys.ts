@@ -319,7 +319,7 @@ export const platformQueryKeys = {
     /** 내 강사 권한 신청 제출 스냅샷 — GET .../instructor-role-requests/current/detail */
     instructorRoleRequestCurrentDetail: () =>
       [...platformQueryKeys.mypage.all(), 'instructor-role-request', 'current', 'detail'] as const,
-    /** 마이페이지 홈 요약 — GET /api/portal/me/dashboard (Class E, member scoped) */
+    /** 마이페이지 홈 신청/진행/종료 카운트 — GET /api/portal/me/dashboard.applications (Class E) */
     dashboard: () => [...platformQueryKeys.mypage.all(), 'dashboard'] as const,
     /** 내 통합 동의 현황 — GET /api/portal/me/consents (member scoped) */
     consents: () => [...platformQueryKeys.mypage.all(), 'consents'] as const,
@@ -610,6 +610,9 @@ export const platformQueryKeys = {
     /** 정산 신청 목록 — GET /api/portal/me/settlement-applications (Class C) */
     settlementApplications: () =>
       [...platformQueryKeys.mypage.all(), 'settlement-applications'] as const,
+    /** 강사 정산 신청 상세 — GET/POST /api/portal/me/settlement-applications (Class D) */
+    settlementApplication: (applicationId: number) =>
+      [...platformQueryKeys.mypage.settlementApplications(), applicationId] as const,
     /**
      * 강의보고서 배정 목록 — GET /api/portal/me/programs/{programId}/lecture-report-assignments (Class C)
      */

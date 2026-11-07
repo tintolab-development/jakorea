@@ -20,7 +20,7 @@ export const SETTLEMENT_CORRECTION_CALCULATION_UNIT_OPTIONS: {
   label: string
 }[] = [
   { value: SettlementCorrectionCalculationUnit.PER_LECTURE, label: '출강 1회당' },
-  { value: SettlementCorrectionCalculationUnit.PER_HOUR, label: '1시간당' },
+  { value: SettlementCorrectionCalculationUnit.PER_HOUR, label: '차시당(레거시)' },
   { value: SettlementCorrectionCalculationUnit.PER_CLASS, label: '1차시당' },
 ]
 

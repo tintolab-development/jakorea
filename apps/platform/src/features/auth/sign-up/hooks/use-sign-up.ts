@@ -718,6 +718,8 @@ export function useSignUp() {
       guardianAgreements: nextGuardianAgreements,
       verifiedName: isUnderAgeSignup ? memberProfileName : verifiedName,
       portraitCompleted: false,
+      memberType: apiMemberType ?? undefined,
+      birthDateIso: birthDateIso ?? undefined,
     })
     navigate(buildPortraitConsentPath(returnSearch))
   }

@@ -7,7 +7,11 @@ import {
   mapPortalProgramApplicationDetail,
   mapPortalProgramApplicationListItem,
 } from '../src/features/mypage/education/applications/api/mappers'
-import { resolveCertificateCtaView } from '../src/features/mypage/education/applications/lib/certificate-cta'
+import {
+  resolveAutoPersonalCertificateSlot,
+  resolveCertificateCtaView,
+  resolveExclusivePersonalCertificateSlot,
+} from '../src/features/mypage/education/applications/lib/certificate-cta'
 
 const { getMock, postMock } = vi.hoisted(() => ({
   getMock: vi.fn(),
@@ -25,6 +29,87 @@ describe('개인 수료증 API 계약', () => {
   beforeEach(() => {
     getMock.mockReset()
     postMock.mockReset()
+  })
+
+  it('AUTO availability는 수료증만 평가하고 PARTICIPATION CTA로 쓰지 않는다', async () => {
+    getMock.mockResolvedValue({
+      data: {
+        available: true,
+        eligible: true,
+        canDownload: true,
+        participantId: 1694970,
+        certificateType: 'COMPLETION',
+        reasonCode: 'AVAILABLE',
+        existingIssueId: 18,
+      },
+    })
+    const result = await fetchMyCertificateAvailability(186339, 'AUTO')
+    expect(getMock).toHaveBeenCalledWith(
+      '/api/portal/me/programs/186339/certificates/availability?certificateType=AUTO',
+      expect.objectContaining({ signal: undefined }),
+    )
+    expect(result.certificateType).toBe('COMPLETION')
+    expect(result.participantId).toBe(1694970)
+    expect(result.canDownload).toBe(true)
+    expect(
+      resolveAutoPersonalCertificateSlot(result),
+    ).toEqual({ type: 'COMPLETION', view: { kind: 'download', issueId: 18 } })
+  })
+
+  it('참가인증서 availability는 certificateType=PARTICIPATION을 명시한다', async () => {
+    getMock.mockResolvedValue({
+      data: {
+        available: true,
+        canDownload: false,
+        participantId: 1694970,
+        certificateType: 'PARTICIPATION',
+        reasonCode: 'AVAILABLE',
+      },
+    })
+    const result = await fetchMyCertificateAvailability(186339, 'PARTICIPATION')
+    expect(getMock).toHaveBeenCalledWith(
+      '/api/portal/me/programs/186339/certificates/availability?certificateType=PARTICIPATION',
+      expect.objectContaining({ signal: undefined }),
+    )
+    expect(result.certificateType).toBe('PARTICIPATION')
+    expect(result.participantId).toBe(1694970)
+    expect(result.available).toBe(true)
+    expect(resolveAutoPersonalCertificateSlot(result).type).toBeNull()
+    expect(
+      resolveExclusivePersonalCertificateSlot({
+        completion: { available: false, canDownload: false, certificateType: 'COMPLETION' },
+        participation: result,
+      }),
+    ).toEqual({ type: null, view: { kind: 'hidden' } })
+  })
+
+  it('issueMyCertificate는 PARTICIPATION을 네트워크로 보내지 않는다', async () => {
+    await expect(
+      issueMyCertificate({
+        programId: 186339,
+        participantId: 1694970,
+        certificateType: 'PARTICIPATION',
+        issueReason: 'PERSONAL_ARCHIVE',
+      }),
+    ).rejects.toThrow('참가인증서는 CMS 관리자만 발급할 수 있습니다.')
+    expect(postMock).not.toHaveBeenCalled()
+  })
+
+  it('포털은 참가인증서 PARTICIPATION POST를 CTA로 쓰지 않는다', () => {
+    expect(
+      resolveCertificateCtaView({
+        isTeacher: false,
+        applicationType: 'INDIVIDUAL',
+        programType: 'GENERAL_INDIVIDUAL',
+        availability: {
+          available: true,
+          canDownload: true,
+          existingIssueId: 17,
+          certificateType: 'PARTICIPATION',
+          participantId: 1694970,
+        },
+      }),
+    ).toEqual({ kind: 'hidden' })
   })
 
   it('availability는 COMPLETION 쿼리와 프로그램 path를 쓴다', async () => {
@@ -47,7 +132,7 @@ describe('개인 수료증 API 계약', () => {
 
   it('발급 body는 programId·participantId·COMPLETION을 보낸다', async () => {
     postMock.mockResolvedValue({
-      data: { issueId: 14, issueStatus: 'ISSUED', issuedAt: '2026-11-01T07:11:50Z' },
+      data: { certificateIssueId: 14, issueStatus: 'ISSUED', issuedAt: '2026-11-01T07:11:50Z' },
     })
     const result = await issueMyCertificate({
       programId: 186514,
@@ -57,6 +142,7 @@ describe('개인 수료증 API 계약', () => {
       programId: 186514,
       participantId: 1695043,
       certificateType: 'COMPLETION',
+      issueReason: 'PERSONAL_ARCHIVE',
     })
     expect(result.certificateIssueId).toBe(14)
   })
@@ -87,15 +173,129 @@ describe('개인 수료증 API 계약', () => {
     ).toEqual({ kind: 'download', issueId: 14 })
   })
 
-  it('canIssueCertificate가 false여도 availability가 가능하면 발급 버튼이다', () => {
+  it('참가인증서는 available이어도 포털 CTA를 열지 않는다', () => {
     expect(
       resolveCertificateCtaView({
         isTeacher: false,
         applicationType: 'INDIVIDUAL',
+        programType: 'GENERAL_INDIVIDUAL',
+        canIssueCertificate: true,
+        availability: {
+          available: true,
+          canDownload: true,
+          existingIssueId: 17,
+          certificateType: 'PARTICIPATION',
+        },
+      }),
+    ).toEqual({ kind: 'hidden' })
+  })
+
+  it('canIssueCertificate가 false여도 COMPLETION availability가 가능하면 발급 버튼이다', () => {
+    expect(
+      resolveCertificateCtaView({
+        isTeacher: true,
+        applicationType: 'INDIVIDUAL',
+        programType: 'GENERAL_INDIVIDUAL',
         canIssueCertificate: false,
-        availability: { available: true, canDownload: false, certificateType: 'PARTICIPATION' },
+        availability: { available: true, canDownload: false, certificateType: 'COMPLETION' },
       }),
     ).toEqual({ kind: 'issue' })
+  })
+
+  it('수료증 canDownload가 열려 있으면 기존 참가인증서 17을 단일 CTA로 쓰지 않는다', () => {
+    expect(
+      resolveExclusivePersonalCertificateSlot({
+        completion: {
+          available: true,
+          canDownload: true,
+          existingIssueId: 18,
+          certificateType: 'COMPLETION',
+          participantId: 1694970,
+        },
+        participation: {
+          available: false,
+          canDownload: true,
+          existingIssueId: 17,
+          certificateType: 'PARTICIPATION',
+        },
+      }),
+    ).toEqual({ type: 'COMPLETION', view: { kind: 'download', issueId: 18 } })
+  })
+
+  it('수료 자격만 열리면 참가인증서 기발급 다운로드로 대체하지 않는다', () => {
+    expect(
+      resolveExclusivePersonalCertificateSlot({
+        completion: {
+          available: true,
+          canDownload: false,
+          existingIssueId: null,
+          certificateType: 'COMPLETION',
+        },
+        participation: {
+          available: false,
+          canDownload: true,
+          existingIssueId: 17,
+          certificateType: 'PARTICIPATION',
+        },
+      }),
+    ).toEqual({ type: 'COMPLETION', view: { kind: 'issue' } })
+  })
+
+  it('수료가 깨진 뒤 existingIssueId 18·canDownload false면 수료증을 그리지 않는다', () => {
+    expect(
+      resolveExclusivePersonalCertificateSlot({
+        completion: {
+          available: false,
+          canDownload: false,
+          existingIssueId: 18,
+          certificateType: 'COMPLETION',
+          participantId: 1694970,
+          reasonCode: 'PARTICIPANT_NOT_COMPLETED',
+        },
+        participation: {
+          available: true,
+          canDownload: true,
+          existingIssueId: 17,
+          certificateType: 'PARTICIPATION',
+          participantId: 1694970,
+        },
+      }),
+    ).toEqual({ type: null, view: { kind: 'hidden' } })
+  })
+
+  it('수료 미충족이면 참가인증서 발급 CTA로 대체하지 않는다', () => {
+    expect(
+      resolveExclusivePersonalCertificateSlot({
+        completion: {
+          available: false,
+          canDownload: false,
+          certificateType: 'COMPLETION',
+          reasonCode: 'PARTICIPANT_NOT_COMPLETED',
+        },
+        participation: {
+          available: true,
+          canDownload: false,
+          certificateType: 'PARTICIPATION',
+          participantId: 1694970,
+        },
+      }),
+    ).toEqual({ type: null, view: { kind: 'hidden' } })
+  })
+
+  it('availability가 불가면 참가인증서도 숨긴다', () => {
+    expect(
+      resolveCertificateCtaView({
+        isTeacher: true,
+        applicationType: 'INDIVIDUAL',
+        programType: 'GENERAL_INDIVIDUAL',
+        canIssueCertificate: true,
+        availability: {
+          available: false,
+          canDownload: false,
+          certificateType: 'PARTICIPATION',
+        },
+      }),
+    ).toEqual({ kind: 'hidden' })
   })
 
   it('목록은 certificateAvailable을 복사하고 ISSUE_CERTIFICATE는 availableActions로 둔다', () => {
@@ -154,5 +354,60 @@ describe('개인 수료증 API 계약', () => {
     expect(issued?.canIssueCertificate).toBe(true)
     expect(issued?.participantId).toBe(1695042)
     expect(issued?.certificateStatus).toBe('COMPLETION_ISSUED')
+  })
+
+  it('displayStatus 진행 완료는 completionStatus NOT_COMPLETED로 덮지 않는다', () => {
+    const mapped = mapPortalProgramApplicationDetail({
+      applicationId: 1694691,
+      applicationType: 'INDIVIDUAL',
+      programId: 186339,
+      programTitle: '개인 일정 종료 만족도 제출',
+      programGroup: 'GENERAL',
+      programType: 'GENERAL_INDIVIDUAL',
+      applicationStatus: 'APPROVED',
+      displayStatus: '진행 완료',
+      participation: {
+        participantId: 1694970,
+        completionStatus: 'NOT_COMPLETED',
+      },
+    })
+    expect(mapped?.displayStatus).toBe('completed')
+    expect(mapped?.participantId).toBe(1694970)
+  })
+
+  it('displayStatus가 없으면 completionStatus COMPLETED로 진행 완료를 만들지 않는다', () => {
+    expect(
+      mapPortalProgramApplicationDetail({
+        applicationId: 1694691,
+        applicationType: 'INDIVIDUAL',
+        programId: 186339,
+        programTitle: 'fallback',
+        programGroup: 'GENERAL',
+        programType: 'GENERAL_INDIVIDUAL',
+        applicationStatus: 'APPROVED',
+        participation: {
+          participantId: 1694970,
+          completionStatus: 'COMPLETED',
+        },
+      })?.displayStatus,
+    ).toBe('in_progress')
+  })
+
+  it('COMPLETION available false면 canDownload만으로 수료증을 열지 않는다', () => {
+    expect(
+      resolveExclusivePersonalCertificateSlot({
+        completion: {
+          available: false,
+          canDownload: true,
+          existingIssueId: 18,
+          certificateType: 'COMPLETION',
+        },
+        participation: {
+          available: true,
+          canDownload: false,
+          certificateType: 'PARTICIPATION',
+        },
+      }),
+    ).toEqual({ type: null, view: { kind: 'hidden' } })
   })
 })

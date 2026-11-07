@@ -126,8 +126,14 @@ export function PermissionApprovalStatusWithResend({
 }) {
   const status = normalizePermissionApprovalStatus(user.permissionApprovalStatus)
   const tone = permissionApprovalStatusListToneView(user)
+  const hideResendForAdminReject =
+    status === 'REJECTED' && notifyPermissionRole !== 'instructor'
 
-  if (status === 'PENDING' || status === 'REJECTED' || isInstructorPermissionRevoked(user)) {
+  if (
+    status === 'PENDING' ||
+    hideResendForAdminReject ||
+    isInstructorPermissionRevoked(user)
+  ) {
     return tone
   }
 

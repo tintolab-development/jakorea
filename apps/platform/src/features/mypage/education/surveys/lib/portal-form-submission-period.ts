@@ -43,16 +43,16 @@ export function isPortalFormSubmissionPeriodOpen(
   return resolvePortalFormSubmissionPeriodBlockReason(entry, at) == null
 }
 
-/** 미제출 목록 배지. 작성 시작 시각 이전이면 진행중이 아니다. */
+/** 미제출 목록 배지. 기간 시작 전·종료 후·진행 중을 submissionStartAt/EndAt 기준으로 구분한다. */
 export function resolveEducationSurveyListStatus(
   submitted: boolean,
   entry: PeriodFields,
   at: Date = new Date(),
 ): EducationSurveyListStatus {
   if (submitted) return 'submitted'
-  if (resolvePortalFormSubmissionPeriodBlockReason(entry, at) === 'not_started') {
-    return 'before_start'
-  }
+  const block = resolvePortalFormSubmissionPeriodBlockReason(entry, at)
+  if (block === 'not_started') return 'before_start'
+  if (block === 'closed') return 'period_closed'
   return 'in_progress'
 }
 

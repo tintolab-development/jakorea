@@ -7,10 +7,14 @@
  */
 import type { PerformanceRecordFrontendResponse } from './performanceRecordFrontendResponse';
 
+/**
+ * 실적 목록 페이지. totalElements는 필터 적용 후 전체 건수.
+ */
 export interface PerformanceRecordFrontendPageResponse {
-  content?: PerformanceRecordFrontendResponse[];
-  totalElements?: number;
-  totalPages?: number;
-  number?: number;
-  size?: number;
+  content: PerformanceRecordFrontendResponse[];
+  totalElements: number;
+  totalPages: number;
+  /** 0-base 페이지 번호 */
+  number: number;
+  size: number;
 }

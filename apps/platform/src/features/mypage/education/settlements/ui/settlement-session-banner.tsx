@@ -1,4 +1,5 @@
 import type { EducationSettlementItem } from '../model/types'
+import { formatSettlementSessionBannerTitle } from '../lib/format-write-draft'
 import { formatEducationSessionDate } from '../../shared'
 import { PFText } from '@/shared/ui'
 import styles from './settlement-session-banner.module.css'
@@ -6,6 +7,8 @@ import styles from './settlement-session-banner.module.css'
 type EducationSettlementSessionBannerProps = {
   programTitle?: string
   session?: EducationSettlementItem
+  /** 지급조서: 기관명+학년 우선. 개인형처럼 없으면 프로그램명 */
+  institutionTitle?: boolean
 }
 
 function formatSessionBannerMeta(item: EducationSettlementItem): string {
@@ -20,14 +23,18 @@ function formatSessionBannerMeta(item: EducationSettlementItem): string {
 export function EducationSettlementSessionBanner({
   programTitle,
   session,
+  institutionTitle = false,
 }: EducationSettlementSessionBannerProps) {
-  if (!programTitle && !session) return null
+  const title = formatSettlementSessionBannerTitle(session, programTitle, {
+    institutionOnly: institutionTitle,
+  })
+  if (!title && !session) return null
 
   return (
     <div className={styles.banner}>
-      {programTitle ? (
+      {title ? (
         <PFText as="p" typo="bd-lg-sb" color="black" className={styles.bannerTitle}>
-          {programTitle}
+          {title}
         </PFText>
       ) : null}
       {session ? (
