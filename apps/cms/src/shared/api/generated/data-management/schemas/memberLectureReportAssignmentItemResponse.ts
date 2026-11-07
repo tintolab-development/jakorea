@@ -5,33 +5,33 @@
  * Filtered for CMS data management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { MemberInstructorTransportPreview } from './memberInstructorTransportPreview';
-import type { MemberLectureFeePreview } from './memberLectureFeePreview';
+import type { MemberInstructorTransportPreview } from './memberInstructorTransportPreview'
+import type { MemberLectureFeePreview } from './memberLectureFeePreview'
 
 export interface MemberLectureReportAssignmentItemResponse {
-  assignmentId?: number;
-  instructorApplicationId?: number;
-  programId?: number;
-  scheduleId?: number;
-  startAt?: string;
-  endAt?: string;
-  scheduleName?: string;
-  sessionNo?: number;
+  assignmentId?: number
+  instructorApplicationId?: number
+  programId?: number
+  scheduleId?: number
+  startAt?: string
+  endAt?: string
+  scheduleName?: string
+  sessionNo?: number
   /** 기관(학교) 프로그램이면 학교/기관명. 개인형이면 null. 빈 문자열 금지. */
-  institutionName?: string | null;
+  institutionName?: string | null
   /** 기관 프로그램 학년(숫자 또는 n학년). 개인형이거나 없으면 null. 빈 문자열 금지. */
-  grade?: string | null;
-  lectureStatus?: string;
-  reportStatus?: string;
-  submitDueAt?: string;
-  canSubmit?: boolean;
-  reportId?: number;
-  instructorRole?: string;
-  institutionAddress?: string;
+  grade?: string | null
+  lectureStatus?: string
+  reportStatus?: string
+  submitDueAt?: string
+  canSubmit?: boolean
+  reportId?: number
+  instructorRole?: string
+  institutionAddress?: string
   /** 자택-기관 거리(km) 숫자. 문자열 아님. 없으면 null */
-  distanceFromHome?: string | null;
-  /** 지급조서 제출 전 강의비 산출 미리보기. 제출 스냅샷 CalcInfo와 산식 동일. 없으면 null. */
-  lectureFeePreview?: MemberLectureFeePreview | null;
+  distanceFromHome?: string | null
+  /** 지급조서 제출 전 강사비 산출 미리보기. 제출 스냅샷 CalcInfo와 산식 동일. 없으면 null. */
+  lectureFeePreview?: MemberLectureFeePreview | null
   /** 지급조서 제출 전 강사 교통비 미리보기. 객체는 항상 존재. oneWayDistanceKm는 distanceFromHome과 동일. 편도 30 미만 또는 지급 항목 없으면 금액 null. 제출 CalcInfo·CMS 교통비 스냅샷과 산식 동일. */
-  transportPreview?: MemberInstructorTransportPreview | null;
+  transportPreview?: MemberInstructorTransportPreview | null
 }

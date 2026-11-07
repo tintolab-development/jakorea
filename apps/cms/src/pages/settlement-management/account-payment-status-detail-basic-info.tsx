@@ -51,15 +51,18 @@ export interface AccountPaymentStatusDetailBasicInfoProps {
   basic: AccountPaymentStatusDetailBasic
 }
 
-export function AccountPaymentStatusDetailBasicInfo({ basic }: AccountPaymentStatusDetailBasicInfoProps) {
-  const settlementAccountDisplay = [basic.settlementAccountBankNumberPart, basic.settlementAccountHolderPart]
+export function AccountPaymentStatusDetailBasicInfo({
+  basic,
+}: AccountPaymentStatusDetailBasicInfoProps) {
+  const settlementAccountDisplay = [
+    basic.settlementAccountBankNumberPart,
+    basic.settlementAccountHolderPart,
+  ]
     .filter(part => part?.trim() && part.trim() !== '-')
     .join(' | ')
 
   return (
-    <div
-      className="account-payment-status-detail-fullpage-modal__basic-stack payment-order-instructor-status-detail__basic-block program-detail-fullpage-modal__info-tab-block"
-    >
+    <div className="account-payment-status-detail-fullpage-modal__basic-stack payment-order-instructor-status-detail__basic-block program-detail-fullpage-modal__info-tab-block">
       <DetailInfoForm
         title="기본 정보"
         className="account-payment-status-detail-fullpage-modal__detail-form-card"
@@ -144,7 +147,7 @@ export function AccountPaymentStatusDetailBasicInfo({ basic }: AccountPaymentSta
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
-            label="강의비 책정 기준"
+            label="강사비 책정 기준"
             view={
               <div className="payment-order-calc-statement-modal__td-divider-wrap payment-order-calc-statement-modal__td-divider-wrap--start">
                 {withProgramDetailTdDivider([

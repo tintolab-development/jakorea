@@ -62,11 +62,7 @@ export function mergePaymentStatementBasicInfo(
 /** 강사 등록·신청 기본정보와 연동해 잠글 지급조서 필드 (정산 계좌는 동의서에서만 관리) */
 export type PaymentStatementProfileLinkedValues = Pick<
   PaymentStatementBasicInfoValues,
-  | 'nameKo'
-  | 'affiliation'
-  | 'noAffiliation'
-  | 'addressRoad'
-  | 'addressDetail'
+  'nameKo' | 'affiliation' | 'noAffiliation' | 'addressRoad' | 'addressDetail'
 >
 
 export type PaymentStatementProfileLinkedSource = {

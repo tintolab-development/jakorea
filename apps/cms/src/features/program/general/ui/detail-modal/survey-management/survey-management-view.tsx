@@ -94,6 +94,10 @@ import {
   shouldShowSurveyPollScheduleSelectField,
 } from '@/features/program/shared/lib/survey-management/should-show-survey-poll-schedule-field'
 import { loadProgramSurveyFormEditAfterBinding } from '@/features/program/shared/lib/survey-management/load-program-survey-form-edit'
+import {
+  findSatisfactionScheduleById,
+  resolveSatisfactionCreateSubmissionPeriod,
+} from '@/features/program/shared/lib/survey-management/satisfaction-form-edit-period'
 import { resolveSatisfactionSurveyDisplayTitle } from '@/features/program/shared/lib/survey-management/satisfaction-survey-display-title'
 import { useProgramSurveyScheduleOptions } from '@/features/program/shared/hooks/use-program-survey-schedule-options'
 import { SurveyPollRegisterModal } from '@/features/program/shared/ui/survey-management/survey-poll-register-modal'
@@ -756,13 +760,22 @@ export function GeneralSurveyManagementView({
         : kind === 'lecture'
           ? 'ADMIN'
           : undefined
-    const submissionPeriod = kind === 'survey' ? ensureSurveyCreateSubmissionPeriod(ids) : ids
+    const submissionPeriod: SurveySubmissionPeriod =
+      kind === 'survey'
+        ? ensureSurveyCreateSubmissionPeriod(ids)
+        : kind === 'satisfaction'
+          ? {}
+          : ids
     return {
       formType,
       templateId: ids.templateId,
       templateVersionId: ids.templateVersionId,
-      submissionStartAt: submissionPeriod.submissionStartAt,
-      submissionEndAt: submissionPeriod.submissionEndAt,
+      ...(submissionPeriod.submissionStartAt != null
+        ? { submissionStartAt: submissionPeriod.submissionStartAt }
+        : {}),
+      ...(submissionPeriod.submissionEndAt != null
+        ? { submissionEndAt: submissionPeriod.submissionEndAt }
+        : {}),
       targetRole,
       ...(audience === 'volunteer_h1'
         ? { targetScope: 'TERM', targetScopeId: 1 }
@@ -1049,14 +1062,40 @@ export function GeneralSurveyManagementView({
           if (satisfactionRunMode === SATISFACTION_RUN_MODE_ONCE_AT_END) {
             payload.targetScope = 'PROGRAM'
             delete payload.targetScopeId
+            const lastSlot = pickLastSurveyPollEducationSlot(
+              satisfactionScheduleOptionsQuery.schedules
+            )
+            const period = resolveSatisfactionCreateSubmissionPeriod(
+              lastSlot,
+              satisfactionWindowDays
+            )
+            if (period != null) Object.assign(payload, period)
             satisfactionPayloads.push(payload)
           } else {
             for (const scheduleValue of satisfactionUnboundScheduleValues) {
               try {
+                const target = resolveSurveyPollBindingTarget(scheduleValue)
+                const schedule = findSatisfactionScheduleById(
+                  satisfactionScheduleOptionsQuery.schedules,
+                  target.targetScopeId
+                )
+                const period = resolveSatisfactionCreateSubmissionPeriod(
+                  schedule,
+                  satisfactionWindowDays
+                )
+                if (period == null) {
+                  void showAlert({
+                    title: '등록 실패',
+                    content:
+                      '일정 종료 시각을 확인할 수 없습니다. 프로그램 일정을 확인한 뒤 다시 시도해 주세요.',
+                  })
+                  return
+                }
                 satisfactionPayloads.push({
                   ...payload,
                   ...writeFields,
-                  ...resolveSurveyPollBindingTarget(scheduleValue),
+                  ...target,
+                  ...period,
                 })
               } catch {
                 void showAlert({

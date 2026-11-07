@@ -199,4 +199,26 @@ describe('UJAT recruit draft overlay sidecar persist', () => {
     persistWritingFormTemplateSave({ templateId, draft })
     expect(loadWritingFormTemplateSave(templateId)?.overlay).toBeUndefined()
   })
+
+  it('first persist with empty {} stays empty (no previous to keep)', () => {
+    persistWritingFormTemplateSave({ templateId, draft, overlay: {} })
+    expect(loadWritingFormTemplateSave(templateId)?.overlay).toBeUndefined()
+  })
+
+  it('omitting a previous key does not delete it; null on a key is stored', () => {
+    persistWritingFormTemplateSave({
+      templateId,
+      draft,
+      overlay: { keep: 'sidecar', dropCandidate: 'old' },
+    })
+    persistWritingFormTemplateSave({
+      templateId,
+      draft,
+      overlay: { dropCandidate: null },
+    })
+    expect(loadWritingFormTemplateSave(templateId)?.overlay).toEqual({
+      keep: 'sidecar',
+      dropCandidate: null,
+    })
+  })
 })

@@ -4,11 +4,9 @@ import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import {
-  SATISFACTION_ONCE_AT_END_PROGRAM_CLOSE_HINT,
   SATISFACTION_RUN_MODE_ONCE_AT_END,
   SATISFACTION_RUN_MODE_PER_SCHEDULE,
   SATISFACTION_WINDOW_DAYS,
-  formatSatisfactionOnceAtEndStartHint,
   formatSatisfactionWindowExampleLine,
   type SatisfactionRunMode,
   type SatisfactionWindowDays,
@@ -55,7 +53,6 @@ export function SatisfactionRegisterModal({
   onWindowDaysChange,
   schedulesLoading = false,
   hasSessionSchedules,
-  lastEducationScheduleLabel = null,
   onCancel,
   onSubmit,
 }: SatisfactionRegisterModalProps) {
@@ -127,7 +124,7 @@ export function SatisfactionRegisterModal({
         />
         <div>
           <CmsRadioGroup
-            label="진행 방식"
+            label="설문 진행 방식"
             required
             size="medium"
             value={runMode}
@@ -138,8 +135,8 @@ export function SatisfactionRegisterModal({
           </CmsRadioGroup>
           <p className="survey-management-create-modal__hint">
             {perSchedule
-              ? '확정된 모든 교육 일정에 동일한 만족도조사가 적용되며, 각 일정이 끝나면 자동으로 시작돼요.'
-              : '마지막 교육 일정이 끝나면 자동으로 시작돼요.'}
+              ? '확정된 모든 교육 일정에 동일한 만족도조사가 적용되며, 각 일정이 끝나면 자동으로 시작됩니다.'
+              : '배정된 마지막 교육 일정이 끝난 뒤 한 번만 진행됩니다.'}
           </p>
         </div>
         {perSchedule ? (
@@ -148,7 +145,7 @@ export function SatisfactionRegisterModal({
               width="100%"
               withAllOption={false}
               allowClear={false}
-              label="참여 기간"
+              label="설문 진행 기간"
               required
               options={SATISFACTION_WINDOW_DAYS.map(days => ({
                 label: `일정 종료 후 ${days}일`,
@@ -162,24 +159,12 @@ export function SatisfactionRegisterModal({
                 }
               }}
             />
-            <p className="survey-management-create-modal__hint">
-              선택지: 일정 종료 후 3일 / 7일 / 14일 / 30일
+            <p className="survey-management-satisfaction__schedule-select-hint">
+              일정마다 참여 기간이 자동으로 적용됩니다.{' '}
+              {formatSatisfactionWindowExampleLine(windowDays)}
             </p>
           </div>
         ) : null}
-        <div className="survey-management-deadline-hint__container">
-          {perSchedule ? (
-            <>
-              <p>일정마다 참여 기간이 자동으로 적용돼요.</p>
-              <p>{formatSatisfactionWindowExampleLine(windowDays)}</p>
-            </>
-          ) : (
-            <>
-              <p>{formatSatisfactionOnceAtEndStartHint(lastEducationScheduleLabel)}</p>
-              <p>{SATISFACTION_ONCE_AT_END_PROGRAM_CLOSE_HINT}</p>
-            </>
-          )}
-        </div>
       </div>
     </ContentModal>
   )

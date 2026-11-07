@@ -4987,8 +4987,7 @@
       "AttendanceManagerUpdateRequest": {
         "type": "object",
         "required": [
-          "organizationApplicationId",
-          "participantId"
+          "organizationApplicationId"
         ],
         "properties": {
           "organizationApplicationId": {
@@ -14616,7 +14615,7 @@
           "lectureFeePaymentScheduledDate": {
             "type": "string",
             "format": "date",
-            "description": "지급조서 확인 시 강의비 이체 예정일. KST 기준 오늘 또는 이후 날짜만 허용됩니다.",
+            "description": "지급조서 확인 시 강사비 이체 예정일. KST 기준 오늘 또는 이후 날짜만 허용됩니다.",
             "example": "2026-09-15"
           },
           "scheduledPaymentDate": {
@@ -14798,13 +14797,13 @@
           "scheduledPaymentDate": {
             "type": "string",
             "format": "date",
-            "description": "강의비 지급 예정일. lectureFeePaymentScheduledDate와 동일 처리하며 KST 기준 오늘 또는 이후 날짜만 허용합니다.",
+            "description": "강사비 지급 예정일. lectureFeePaymentScheduledDate와 동일 처리하며 KST 기준 오늘 또는 이후 날짜만 허용합니다.",
             "example": "2026-06-30"
           },
           "lectureFeePaymentScheduledDate": {
             "type": "string",
             "format": "date",
-            "description": "FE UI 호환 강의비 지급 예정일. scheduledPaymentDate와 동일 처리하며 KST 기준 오늘 또는 이후 날짜만 허용합니다.",
+            "description": "FE UI 호환 강사비 지급 예정일. scheduledPaymentDate와 동일 처리하며 KST 기준 오늘 또는 이후 날짜만 허용합니다.",
             "example": "2026-06-30"
           },
           "reason": {
@@ -34099,7 +34098,7 @@
         "properties": {
           "lectureFeeType": {
             "type": "string",
-            "description": "강의비 유형 코드. GRADE_1=1급 강의비, GRADE_2=2급 강의비, GRADE_3=3급 강의비. 제출 전 lectureFeePreview.lectureFeeType과 동일. 없으면 null.",
+            "description": "강사비 유형 코드. GRADE_1=1급 강사비, GRADE_2=2급 강사비, GRADE_3=3급 강사비. 제출 전 lectureFeePreview.lectureFeeType과 동일. 없으면 null.",
             "enum": [
               "GRADE_1",
               "GRADE_2",
@@ -34129,7 +34128,7 @@
           "totalLectureFee": {
             "type": "integer",
             "format": "int64",
-            "description": "이번 회차 총 강의비(원, 정수). 제출 전 lectureFeePreview.totalLectureFee와 동일 산식. PER_HOUR는 강의 시간×단가. educationSessionCount를 곱하지 않음."
+            "description": "이번 회차 총 강사비(원, 정수). 제출 전 lectureFeePreview.totalLectureFee와 동일 산식. PER_HOUR는 강의 시간×단가. educationSessionCount를 곱하지 않음."
           },
           "oneWayDistanceKm": {
             "type": "string",
@@ -34293,7 +34292,7 @@
         "properties": {
           "lectureFeeType": {
             "type": "string",
-            "description": "이 배정/프로그램에 적용된 강의비 유형 코드. GRADE_1=1급 강의비, GRADE_2=2급 강의비, GRADE_3=3급 강의비. 코드만 내려 주고 표시 라벨은 FE. 없으면 null.",
+            "description": "이 배정/프로그램에 적용된 강사비 유형 코드. GRADE_1=1급 강사비, GRADE_2=2급 강사비, GRADE_3=3급 강사비. 코드만 내려 주고 표시 라벨은 FE. 없으면 null.",
             "enum": [
               "GRADE_1",
               "GRADE_2",
@@ -34324,7 +34323,7 @@
           "totalLectureFee": {
             "type": "integer",
             "format": "int64",
-            "description": "이번 회차 총 강의비(원, 정수). 서버 산식만. FE 계산 금지. 예: PER_HOUR + startAt~endAt 03:55~04:55(60분) + instructorFeeAmount=450000 → totalLectureFee=450000. 차시 번호 2를 곱하지 않음. 산출 불가 시 null.",
+            "description": "이번 회차 총 강사비(원, 정수). 서버 산식만. FE 계산 금지. 예: PER_HOUR + startAt~endAt 03:55~04:55(60분) + instructorFeeAmount=450000 → totalLectureFee=450000. 차시 번호 2를 곱하지 않음. 산출 불가 시 null.",
             "example": 450000,
             "nullable": true
           },
@@ -34411,7 +34410,7 @@
             "nullable": true
           },
           "lectureFeePreview": {
-            "description": "지급조서 제출 전 강의비 산출 미리보기. 제출 스냅샷 CalcInfo와 산식 동일. 없으면 null.",
+            "description": "지급조서 제출 전 강사비 산출 미리보기. 제출 스냅샷 CalcInfo와 산식 동일. 없으면 null.",
             "oneOf": [
               {
                 "$ref": "#/components/schemas/MemberLectureFeePreview"

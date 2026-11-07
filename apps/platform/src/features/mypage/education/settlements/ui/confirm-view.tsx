@@ -115,7 +115,11 @@ function ConfirmTripLegBlock({
         {heading}
       </PFText>
       <PFInfoReview
-        rows={showReceipt ? buildTripLegRows(leg) : buildTripLegRows(leg).filter(row => row.label !== '영수증 제출')}
+        rows={
+          showReceipt
+            ? buildTripLegRows(leg)
+            : buildTripLegRows(leg).filter(row => row.label !== '영수증 제출')
+        }
         accentFirstRow={false}
       />
     </div>
@@ -143,13 +147,17 @@ export function EducationSettlementConfirmView({
   const receiptExtras = readOnly
     ? sortedReceiptExtras
     : overlayPayableEvidenceRequired(sortedReceiptExtras, session?.payableItems)
-  const wageExtras = receiptExtras.filter(item => isReceiptWageItemType(item.itemType, item.itemName))
-  const restExtras = receiptExtras.filter(item => !isReceiptWageItemType(item.itemType, item.itemName))
+  const wageExtras = receiptExtras.filter(item =>
+    isReceiptWageItemType(item.itemType, item.itemName)
+  )
+  const restExtras = receiptExtras.filter(
+    item => !isReceiptWageItemType(item.itemType, item.itemName)
+  )
   const showTransportReceipt = isReceiptEvidenceRequired(
     readOnly
       ? draft.transport.evidenceRequired
       : (payableEvidenceRequired(session?.payableItems, draft.transport.itemType) ??
-        draft.transport.evidenceRequired),
+          draft.transport.evidenceRequired)
   )
   const resident = formatSettlementResidentNumber(draft)
   const lectureFeePreview = session?.lectureFeePreview ?? null
@@ -157,14 +165,14 @@ export function EducationSettlementConfirmView({
   const lectureFeeBlockerMessage = lectureFeeSettlementBlockerMessage(lectureFeePreview)
   const confirmedLectureFee = hasConfirmedLectureFeeTotal(lectureFeePreview)
   const recognizedSessionLabel = formatRecognizedSessionCountLabel(
-    lectureFeePreview?.recognizedSessionCount,
+    lectureFeePreview?.recognizedSessionCount
   )
   const businessIncome = readInstructorBusinessIncomeConfirmLabel(profileQuery.data)
   const sessionNo =
     lectureFeePreview?.educationSessionCount ??
     (session && session.sessionNumber > 0 ? session.sessionNumber : null)
   const calcRows: PFInfoReviewItem[] = [
-    { label: '강의비 유형', value: lectureFeeTypeDisplayLabel(lectureFeePreview?.lectureFeeType) },
+    { label: '강사비 유형', value: lectureFeeTypeDisplayLabel(lectureFeePreview?.lectureFeeType) },
     { label: '강사비 배정', value: formatInstructorFeeAssignment(lectureFeePreview) },
     { label: '사업소득자 여부', value: businessIncome },
     {
@@ -176,9 +184,7 @@ export function EducationSettlementConfirmView({
         endAt: session?.lectureEndAt,
       }),
     },
-    ...(recognizedSessionLabel
-      ? [{ label: '인정 차시', value: recognizedSessionLabel }]
-      : []),
+    ...(recognizedSessionLabel ? [{ label: '인정 차시', value: recognizedSessionLabel }] : []),
   ]
   const totalLectureFee = formatTotalLectureFee(lectureFeePreview)
   const basicRows: PFInfoReviewItem[] = [
@@ -199,10 +205,10 @@ export function EducationSettlementConfirmView({
       />
 
       {!isReceipt ? (
-        <ConfirmSection title="강의비 산출 정보">
+        <ConfirmSection title="강사비 산출 정보">
           <PFInfoReview rows={calcRows} accentFirstRow={false} />
           {confirmedLectureFee ? (
-            <ConfirmAmountSummary label="총 강의비" amount={totalLectureFee} />
+            <ConfirmAmountSummary label="총 강사비" amount={totalLectureFee} />
           ) : null}
           {lectureFeeBlockerMessage ? (
             <PFText as="p" typo="bd-md-rg" color="error" className={styles.sectionFooter}>
@@ -243,7 +249,10 @@ export function EducationSettlementConfirmView({
               <PFInfoReview
                 accentFirstRow={false}
                 rows={[
-                  { label: '신청 구분', value: resolveSettlementTripTypeLabel(draft.transport.tripType) },
+                  {
+                    label: '신청 구분',
+                    value: resolveSettlementTripTypeLabel(draft.transport.tripType),
+                  },
                 ]}
               />
 
@@ -303,13 +312,12 @@ export function EducationSettlementConfirmView({
       ))}
 
       {!isReceiptWriteDraft(draft) && showMeal ? (
-        <ConfirmSection
-          title="식사비 신청"
-          footer="1인 기준, 시간 당 최대 3만원까지 지급됩니다."
-        >
+        <ConfirmSection title="식사비 신청" footer="1인 기준, 시간 당 최대 3만원까지 지급됩니다.">
           <PFInfoReview
             accentFirstRow={false}
-            rows={[{ label: '영수증 제출', value: formatSettlementFileNames(draft.meal.fileNames) }]}
+            rows={[
+              { label: '영수증 제출', value: formatSettlementFileNames(draft.meal.fileNames) },
+            ]}
           />
           <ConfirmAmountSummary
             label="식사비"
@@ -322,7 +330,9 @@ export function EducationSettlementConfirmView({
         <ConfirmSection title="활동비 신청" footer="사용한 금액의 영수증을 제출해 주세요.">
           <PFInfoReview
             accentFirstRow={false}
-            rows={[{ label: '영수증 제출', value: formatSettlementFileNames(draft.activity.fileNames) }]}
+            rows={[
+              { label: '영수증 제출', value: formatSettlementFileNames(draft.activity.fileNames) },
+            ]}
           />
           <ConfirmAmountSummary
             label="활동비"

@@ -8,11 +8,7 @@ import type { InstructorMemberProfile, SchoolTeacherEmploymentStatus } from '@/t
 
 export type ApplicantInstructorLectureFeeBasisType = 'program' | 'special_lecture' | 'other_labor'
 
-export type ApplicantInstructorApprovalStatusKey =
-  | 'pending'
-  | 'rejected'
-  | 'approved'
-  | 'cancelled'
+export type ApplicantInstructorApprovalStatusKey = 'pending' | 'rejected' | 'approved' | 'cancelled'
 
 export type ApplicantInstructorApprovalNotifyTiming = 'immediate' | 'on_announcement' | 'manual'
 
@@ -193,13 +189,13 @@ export interface ApplicantInstructorRow {
   managerComment?: string
   /** BE availableActions — 헤더 CTA 노출 게이트 */
   availableActions?: string[]
-  /** 승인 완료 시 기본 정보 하단: 강의비 책정 기준 (예: 특강 강사비 | 915,000원) */
+  /** 승인 완료 시 기본 정보 하단: 강사비 책정 기준 (예: 특강 강사비 | 915,000원) */
   lectureFeeBasisDisplay?: string
-  /** 강의비 책정 기준 — 유형 */
+  /** 강사비 책정 기준 — 유형 */
   lectureFeeBasisType?: ApplicantInstructorLectureFeeBasisType
-  /** 강의비 책정 기준 — 단위 (예: 출강 1회당) */
+  /** 강사비 책정 기준 — 단위 (예: 출강 1회당) */
   lectureFeeMeasure?: string
-  /** 강의비 책정 기준 — 금액(숫자만) */
+  /** 강사비 책정 기준 — 금액(숫자만) */
   lectureFeeAmount?: string
   /** 사업소득자 여부 (예: 해당 없음) — general 상세에서 승인 전에도 표시 */
   businessIncomeEarnerStatus?: string
@@ -263,7 +259,8 @@ export function patchApplicantInstructorForApprovalStatus(
       lectureFeeBasisDisplay: row.lectureFeeBasisDisplay,
       businessIncomeEarnerStatus: row.businessIncomeEarnerStatus ?? '해당 없음',
       approvalNotifyTiming: notifyOptions?.notifyTiming,
-      approvalNotificationSentAt: resolveApplicantInstructorApprovalNotificationSentAt(notifyOptions),
+      approvalNotificationSentAt:
+        resolveApplicantInstructorApprovalNotificationSentAt(notifyOptions),
     }
   }
   if (approvalStatus === 'rejected') {
@@ -278,7 +275,8 @@ export function patchApplicantInstructorForApprovalStatus(
       businessIncomeEarnerStatus: row.businessIncomeEarnerStatus ?? '해당 없음',
       approvalNotifyTiming: undefined,
       rejectionNotifyTiming: notifyOptions?.notifyTiming,
-      approvalNotificationSentAt: resolveApplicantInstructorApprovalNotificationSentAt(notifyOptions),
+      approvalNotificationSentAt:
+        resolveApplicantInstructorApprovalNotificationSentAt(notifyOptions),
     }
   }
 
@@ -312,8 +310,7 @@ export function patchApplicantInstructorForCancelApproval(
     assignedLectures: undefined,
     assignedSchoolId: undefined,
     assignedSchoolName: undefined,
-    approvalNotificationSentAt:
-      resolveApplicantInstructorApprovalNotificationSentAt(notifyOptions),
+    approvalNotificationSentAt: resolveApplicantInstructorApprovalNotificationSentAt(notifyOptions),
   }
 }
 

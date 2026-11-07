@@ -208,7 +208,9 @@ export function EducationSettlementApplicationDocumentView({
                         {downloadingAttachmentId === fileObjectId ? '다운로드 중...' : '다운로드'}
                       </button>
                     ) : (
-                      <span className={styles.attachmentMeta}>다운로드할 파일 정보가 없습니다.</span>
+                      <span className={styles.attachmentMeta}>
+                        다운로드할 파일 정보가 없습니다.
+                      </span>
                     )}
                   </li>
                 )
@@ -230,7 +232,7 @@ export function EducationSettlementApplicationDocumentView({
 
       {showCalc ? (
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>강의비 산출 정보</h2>
+          <h2 className={styles.sectionTitle}>강사비 산출 정보</h2>
           <InfoTable rows={calcRows} />
         </section>
       ) : null}

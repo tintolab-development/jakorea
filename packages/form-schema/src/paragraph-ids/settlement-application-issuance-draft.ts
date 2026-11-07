@@ -32,12 +32,7 @@ function htText(
   columnHeaders: string[],
   dataRows: string[][],
   overrides?: Partial<
-    Pick<
-      HorizontalTableParagraph,
-      | 'paragraphDescription'
-      | 'bottomText'
-      | 'showBottomText'
-    >
+    Pick<HorizontalTableParagraph, 'paragraphDescription' | 'bottomText' | 'showBottomText'>
   >
 ): HorizontalTableParagraph {
   return normalizeHorizontalTableParagraph({
@@ -95,14 +90,14 @@ const tableBasic = htText(
 
 const tableCalcInfo = htText(
   SETTLEMENT_APPLICATION_ISSUANCE_IDS.tableCalcInfo,
-  '강의비 산출 내역',
+  '강사비 산출 내역',
   ['항목', '내용'],
   [
-    ['강의비 유형', ''],
+    ['강사비 유형', ''],
     ['강사비 책정', ''],
     ['사업소득자 여부', ''],
     ['교육 진행 차시', ''],
-    ['총 강의비', ''],
+    ['총 강사비', ''],
   ]
 )
 

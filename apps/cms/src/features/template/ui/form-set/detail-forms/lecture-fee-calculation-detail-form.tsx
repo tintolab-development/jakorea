@@ -1,5 +1,5 @@
 /**
- * 지급조서(발급용) — 「강의비 산출 정보」 블록 본문.
+ * 지급조서(발급용) — 「강사비 산출 정보」 블록 본문.
  * 지급조서 기본 정보와 동일하게 DetailInfoForm 격자 + 비활성 UI.
  */
 
@@ -10,7 +10,7 @@ import { CmsInput } from '@/shared/ui/cms-input'
 import { formatNumberDisplay } from '@/shared/utils'
 import './lecture-fee-calculation-detail-form.css'
 
-/** 강의비 산출 정보 — 교육 진행 차시 제외 필드 인풋 너비(px), 높이는 medium(40px) */
+/** 강사비 산출 정보 — 교육 진행 차시 제외 필드 인풋 너비(px), 높이는 medium(40px) */
 const LECTURE_FEE_INPUT_WIDTH_PX = 244
 /** 교육 진행 차시·시간 인풋 너비(px) */
 const LECTURE_FEE_SESSION_INPUT_WIDTH_PX = 221
@@ -49,7 +49,7 @@ export type LectureFeeCalculationDetailFormProps = {
   values?: Partial<LectureFeeCalculationAutofillValues>
   className?: string
   displayMode?: PaymentStatementIssuanceParagraphDisplayMode
-  /** 정산 신청서는 지급 항목·총 학생 수 행 없이 총 강의비만 전행 폭으로 표시 */
+  /** 정산 신청서는 지급 항목·총 학생 수 행 없이 총 강사비만 전행 폭으로 표시 */
   feeLayout?: LectureFeeCalculationFeeLayout
 }
 
@@ -101,14 +101,14 @@ export function LectureFeeCalculationDetailForm({
 
   return (
     <DetailInfoForm
-      title="강의비 산출 정보"
+      title="강사비 산출 정보"
       hideHeader
       mode={isDocumentMode ? 'view' : 'edit'}
       className={['lecture-fee-calculation-detail-form', className].filter(Boolean).join(' ')}
     >
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
-          label="강의비 유형"
+          label="강사비 유형"
           view={textOrDash(v.lectureFeeType)}
           edit={
             <CmsInput
@@ -116,7 +116,7 @@ export function LectureFeeCalculationDetailForm({
               inputSize="small"
               value={v.lectureFeeType}
               width={LECTURE_FEE_INPUT_WIDTH_PX}
-              aria-label="강의비 유형 (발급 시 자동 입력)"
+              aria-label="강사비 유형 (발급 시 자동 입력)"
             />
           }
         />
@@ -131,9 +131,7 @@ export function LectureFeeCalculationDetailForm({
         <DetailInfoForm.Field
           label="사업소득자 여부"
           view={joinText([v.businessIncomeLeft, v.businessIncomeRight])}
-          edit={
-            <InlineTextPair left={v.businessIncomeLeft} right={v.businessIncomeRight} />
-          }
+          edit={<InlineTextPair left={v.businessIncomeLeft} right={v.businessIncomeRight} />}
         />
         <DetailInfoForm.Field
           label="교육 진행 차시"
@@ -199,7 +197,7 @@ export function LectureFeeCalculationDetailForm({
 
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
-          label="총 강의비"
+          label="총 강사비"
           colSpan={2}
           view={formatAmountView(v.totalLectureFee, '원')}
           edit={
@@ -209,7 +207,7 @@ export function LectureFeeCalculationDetailForm({
                 inputSize="small"
                 value={v.totalLectureFee}
                 width={LECTURE_FEE_INPUT_WIDTH_PX}
-                aria-label="총 강의비"
+                aria-label="총 강사비"
               />
               <span className="lecture-fee-calculation-detail-form__suffix">원</span>
             </div>

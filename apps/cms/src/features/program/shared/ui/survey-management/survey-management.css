@@ -255,23 +255,15 @@
   margin: 0 0 16px;
 }
 
-.survey-management-deadline-hint__container {
-  display: flex;
-  width: 540px;
-  padding: 10px 14px;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  border-radius: 8px;
-  background: #e6f6f7;
-}
-
-.survey-management-deadline-hint__container p {
+.survey-management-satisfaction__schedule-select-hint {
   margin: 0;
-  color: #00a0af;
-  font-family: 'Noto Sans KR';
-  font-size: 13px;
+  overflow: hidden;
+  color: var(--Content-tertiary, #85969d);
+  text-overflow: ellipsis;
+  font-family: Pretendard;
+  font-size: 12px;
   font-style: normal;
-  font-weight: 400;
-  line-height: 19px; /* 146.154% */
+  font-weight: 500;
+  line-height: 150%; /* 18px */
+  padding-left: 3px;
 }

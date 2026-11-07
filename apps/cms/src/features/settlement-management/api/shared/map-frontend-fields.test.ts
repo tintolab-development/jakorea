@@ -28,9 +28,9 @@ describe('formatLectureFeeStandardTitle', () => {
     expect(formatLectureFeeStandardTitle('1급 강사비')).toBe('1급 강사비')
   })
 
-  it('generic 강사비·강의비는 -', () => {
+  it('generic 강사비·강사비는 -', () => {
     expect(formatLectureFeeStandardTitle('강사비')).toBe('-')
-    expect(formatLectureFeeStandardTitle('강의비')).toBe('-')
+    expect(formatLectureFeeStandardTitle('강사비')).toBe('-')
     expect(formatLectureFeeStandardTitle(undefined)).toBe('-')
   })
 })

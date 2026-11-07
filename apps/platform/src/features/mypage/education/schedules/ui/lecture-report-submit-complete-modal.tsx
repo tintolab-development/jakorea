@@ -30,7 +30,7 @@ export function LectureReportSubmitCompleteModal({
           </PFText>
           {hidePaymentStatementCta ? null : (
             <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.description}>
-              강의비 지급을 위해 지급조서도 지금 작성할까요?
+              강사비 지급을 위해 지급조서도 지금 작성할까요?
               <br />
               나중에 프로그램의 정산 현황 메뉴에서도 작성할 수 있어요.
             </PFText>
@@ -46,7 +46,12 @@ export function LectureReportSubmitCompleteModal({
               <PFButton type="button" variant="tertiary" size="xlarge" onClick={onLater}>
                 나중에 하기
               </PFButton>
-              <PFButton type="button" variant="primary" size="xlarge" onClick={onWritePaymentStatement}>
+              <PFButton
+                type="button"
+                variant="primary"
+                size="xlarge"
+                onClick={onWritePaymentStatement}
+              >
                 지급조서 작성하기
               </PFButton>
             </>

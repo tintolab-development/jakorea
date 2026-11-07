@@ -18,9 +18,7 @@ import {
   PaymentOrderCalculationBasisDetailModal,
   usePaymentOrderCalculationBasisDetailModal,
 } from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail-modal'
-import {
-  computePaymentOrderCalculationSubtotalBeforeWithholding,
-} from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail'
+import { computePaymentOrderCalculationSubtotalBeforeWithholding } from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail'
 import type { PaymentOrderCalculationTableRow } from '@/features/settlement/ui/payment-record/payment-order-calculation-breakdown-table'
 import { buildPaymentOrderStatementFromInstructorInvoice } from '@/features/user/detail/lib/instructor-invoice-payment-statement-bridge'
 import {
@@ -34,24 +32,23 @@ import {
 } from '@/features/settlement-management/hooks/use-confirm-payment-statement-mutation'
 import type { PaymentOrderRejectSubmitPayload } from '@/features/settlement/lib/payment-order-reject-notification'
 import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
-import {
-  mapSettlementDetailToInstructorInvoice,
-} from '@/features/user/api/map-settlement-to-instructor-member-row'
+import { mapSettlementDetailToInstructorInvoice } from '@/features/user/api/map-settlement-to-instructor-member-row'
 import { useProtectedFileDownload } from '@/shared/lib/use-protected-file-download'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './instructor-invoice-modal.css'
 
 function buildBasisDetailTableRow(input: {
   lineId: string
-  item: Pick<InstructorSettlementInvoiceLineItem, '산정항목' | '항목설명' | '정산금액' | 'isPositive' | 'kind' | 'basisDetail'>
+  item: Pick<
+    InstructorSettlementInvoiceLineItem,
+    '산정항목' | '항목설명' | '정산금액' | 'isPositive' | 'kind' | 'basisDetail'
+  >
   institutionName: string
   lectureDateDisplay: string
   lectureSessionDisplay: string
 }): PaymentOrderCalculationTableRow {
   const amount =
-    input.item.isPositive === false
-      ? -Math.abs(input.item.정산금액)
-      : input.item.정산금액
+    input.item.isPositive === false ? -Math.abs(input.item.정산금액) : input.item.정산금액
   return {
     key: input.lineId,
     blockRowSpan: 1,
@@ -126,11 +123,7 @@ export function InstructorInvoiceModal({
       statementStatus: undefined,
       paymentStatus: undefined,
     }
-    return mapSettlementDetailToInstructorInvoice(
-      settlementDetailQuery.data,
-      listItem,
-      row.status
-    )
+    return mapSettlementDetailToInstructorInvoice(settlementDetailQuery.data, listItem, row.status)
   }, [row, settlementDetailQuery.data])
 
   const effectiveRow = useMemo(() => {
@@ -160,12 +153,8 @@ export function InstructorInvoiceModal({
     }
   }, [statementData])
 
-  const {
-    basisDetailOpen,
-    selectedBasisDetail,
-    handleBasisDetailClick,
-    closeBasisDetailModal,
-  } = usePaymentOrderCalculationBasisDetailModal(open, basisDetailContext)
+  const { basisDetailOpen, selectedBasisDetail, handleBasisDetailClick, closeBasisDetailModal } =
+    usePaymentOrderCalculationBasisDetailModal(open, basisDetailContext)
 
   const lectureDateParts = useMemo(() => {
     const raw = effectiveRow?.invoice.lectureDateSessions ?? '-'
@@ -318,7 +307,9 @@ export function InstructorInvoiceModal({
                       <DetailInfoForm.Field
                         label="지급조서 처리 현황"
                         view={
-                          <span style={{ color: paymentStatementPresentation.color, fontWeight: 600 }}>
+                          <span
+                            style={{ color: paymentStatementPresentation.color, fontWeight: 600 }}
+                          >
                             {paymentStatementPresentation.label}
                           </span>
                         }
@@ -330,7 +321,7 @@ export function InstructorInvoiceModal({
                         view={<span>{effectiveRow.invoice.expectedTransferDate}</span>}
                       />
                       <DetailInfoForm.Field
-                        label="강의비 책정 기준"
+                        label="강사비 책정 기준"
                         view={<span>{effectiveRow.invoice.lectureFeeBasis}</span>}
                       />
                     </DetailInfoForm.Row>
@@ -357,13 +348,15 @@ export function InstructorInvoiceModal({
                       <CmsButton
                         variant="delete"
                         size="large"
-                        onClick={() => setPaymentRejectOpen(true)} >
+                        onClick={() => setPaymentRejectOpen(true)}
+                      >
                         신청 반려
                       </CmsButton>
                       <CmsButton
                         variant="primary"
                         size="large"
-                        onClick={() => setPaymentConfirmOpen(true)} >
+                        onClick={() => setPaymentConfirmOpen(true)}
+                      >
                         확인 처리
                       </CmsButton>
                     </div>
@@ -480,7 +473,8 @@ export function InstructorInvoiceModal({
                               size="large"
                               icon={<ButtonDownloadIcon />}
                               loading={downloadLoading}
-                              onClick={() => void handleDownloadPaymentStatement()} >
+                              onClick={() => void handleDownloadPaymentStatement()}
+                            >
                               지급조서 발급
                             </CmsButton>
                           </div>

@@ -65,17 +65,23 @@ export function formatGeminiWon(amount: number | null | undefined): string {
   return `${amount.toLocaleString('ko-KR')}원`
 }
 
-/** Figma 11001-286941 강의비 책정 기준: `1차시 0원`, 단가 미설정은 `N차시 -` */
+/** Figma 11001-286941 강사비 책정 기준: `1차시 0원`, 단가 미설정은 `N차시 -` */
 export function formatGeminiFeeBasisItem(item: GeminiLectureFeeBasisItem): string {
   return `${item.classCount}차시 ${formatGeminiWon(item.amount)}`
 }
 
 /** lectureFeeBasisItems가 있으면 차시별 목록, 비었으면 lectureFeeBasis 한 줄(fallback) */
 export function resolveGeminiFeeBasisDisplay(
-  summary: Pick<GeminiSettlementSummary, 'lectureFeeBasisItems' | 'lectureFeeBasis'> | null | undefined,
+  summary:
+    | Pick<GeminiSettlementSummary, 'lectureFeeBasisItems' | 'lectureFeeBasis'>
+    | null
+    | undefined
 ): { items: string[]; fallback: string } {
   const items = (summary?.lectureFeeBasisItems ?? []).map(formatGeminiFeeBasisItem)
-  return { items, fallback: items.length > 0 ? '' : displayGeminiSummaryField(summary?.lectureFeeBasis) }
+  return {
+    items,
+    fallback: items.length > 0 ? '' : displayGeminiSummaryField(summary?.lectureFeeBasis),
+  }
 }
 
 const PROCESSING_STATUS_FIGMA_LABEL: Record<string, string> = {
@@ -86,18 +92,27 @@ const PROCESSING_STATUS_FIGMA_LABEL: Record<string, string> = {
 
 /** 지급조서 처리 현황 — Figma 붙여쓰기 표기. 코드로 분기, 모르는 코드는 서버 라벨 그대로 */
 export function displayGeminiProcessingStatus(
-  summary: Pick<
-    GeminiSettlementSummary,
-    'paymentStatementProcessingStatusCode' | 'paymentStatementProcessingStatus'
-  > | null | undefined,
+  summary:
+    | Pick<
+        GeminiSettlementSummary,
+        'paymentStatementProcessingStatusCode' | 'paymentStatementProcessingStatus'
+      >
+    | null
+    | undefined
 ): string {
   const code = summary?.paymentStatementProcessingStatusCode?.trim().toUpperCase() ?? ''
-  return PROCESSING_STATUS_FIGMA_LABEL[code] ?? displayGeminiSummaryField(summary?.paymentStatementProcessingStatus)
+  return (
+    PROCESSING_STATUS_FIGMA_LABEL[code] ??
+    displayGeminiSummaryField(summary?.paymentStatementProcessingStatus)
+  )
 }
 
 /** 사업소득자 여부 — Figma '해당 없음'. BE false·'사업소득자 아님'만 치환 */
 export function displayGeminiBusinessIncome(
-  summary: Pick<GeminiSettlementSummary, 'businessIncome' | 'businessIncomeLabel'> | null | undefined,
+  summary:
+    | Pick<GeminiSettlementSummary, 'businessIncome' | 'businessIncomeLabel'>
+    | null
+    | undefined
 ): string {
   const label = summary?.businessIncomeLabel?.trim() ?? ''
   if (summary?.businessIncome === false || label === '사업소득자 아님') return '해당 없음'

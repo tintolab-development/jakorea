@@ -168,9 +168,9 @@ export type RenderFormParagraphBodyOptions = {
   paymentStatementBasicInfoOnValuesChange?: (
     values: PaymentStatementBasicInfoAutofillValues
   ) => void
-  /** 강의비 산출 정보 단락 미리 채움 */
+  /** 강사비 산출 정보 단락 미리 채움 */
   lectureFeeCalculationValues?: Partial<LectureFeeCalculationAutofillValues>
-  /** 강의비 산출 내역 단락 — 발급용 테이블 목·실데이터 */
+  /** 강사비 산출 내역 단락 — 발급용 테이블 목·실데이터 */
   paymentStatementCalculationLines?: PaymentStatementCalculationLinesViewModel
   /** 지급조서 A4 문서 렌더링 시 disabled 입력 UI를 정적 텍스트로 전환 */
   paymentStatementDisplayMode?: PaymentStatementIssuanceParagraphDisplayMode

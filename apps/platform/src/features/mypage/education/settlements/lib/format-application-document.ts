@@ -35,14 +35,14 @@ export function formatSettlementDocumentYesNo(value: boolean | null | undefined)
 
 export function formatSettlementDocumentCount(
   value: number | null | undefined,
-  suffix = '',
+  suffix = ''
 ): string {
   if (value == null || !Number.isFinite(value)) return SETTLEMENT_DOCUMENT_EMPTY
   return suffix ? `${value.toLocaleString('ko-KR')}${suffix}` : value.toLocaleString('ko-KR')
 }
 
 export function formatSettlementDocumentHomeAddress(
-  basic: SettlementApplicationDocumentBasicInfo,
+  basic: SettlementApplicationDocumentBasicInfo
 ): string {
   const address = basic.homeAddress?.trim() ?? ''
   const detail = basic.homeAddressDetail?.trim() ?? ''
@@ -53,7 +53,7 @@ export function formatSettlementDocumentHomeAddress(
 
 /** 시안: "농협 01010101-01-000111 | 김제이" — 은행·계좌는 공백, 예금주는 구분선 */
 export function formatSettlementDocumentAccountParts(
-  basic: SettlementApplicationDocumentBasicInfo,
+  basic: SettlementApplicationDocumentBasicInfo
 ): string[] {
   const bank = basic.bank?.trim() ?? ''
   const account = basic.accountNumberMasked?.trim() ?? ''
@@ -64,26 +64,26 @@ export function formatSettlementDocumentAccountParts(
 }
 
 export function formatSettlementDocumentAccountInfo(
-  basic: SettlementApplicationDocumentBasicInfo,
+  basic: SettlementApplicationDocumentBasicInfo
 ): string {
   return formatSettlementDocumentAccountParts(basic).join(' | ')
 }
 
 export function isSettlementDocumentDeductionLine(
-  line: SettlementApplicationDocumentLine,
+  line: SettlementApplicationDocumentLine
 ): boolean {
   return line.direction === 'DEDUCTION' || line.amount < 0
 }
 
 export function settlementDocumentPayDeductionLabel(
-  line: SettlementApplicationDocumentLine,
+  line: SettlementApplicationDocumentLine
 ): string {
   return isSettlementDocumentDeductionLine(line) ? '공제' : '지급'
 }
 
 /** 시안: "2026.01.28(수) | 2회차" — 날짜·회차 사이 구분선 */
 export function formatSettlementDocumentLectureDateParts(
-  line: SettlementApplicationDocumentLine,
+  line: SettlementApplicationDocumentLine
 ): string[] {
   const date = displaySettlementDocumentText(line.educationDate)
   const session = line.sessionLabel?.trim()
@@ -94,33 +94,31 @@ export function formatSettlementDocumentLectureDateParts(
 }
 
 export function formatSettlementDocumentLectureDate(
-  line: SettlementApplicationDocumentLine,
+  line: SettlementApplicationDocumentLine
 ): string {
   return formatSettlementDocumentLectureDateParts(line).join(' | ')
 }
 
-export function formatSettlementDocumentSignedAmount(
-  amount: number | null | undefined,
-): string {
+export function formatSettlementDocumentSignedAmount(amount: number | null | undefined): string {
   if (amount == null || !Number.isFinite(amount)) return SETTLEMENT_DOCUMENT_EMPTY
   if (amount < 0) return formatSettlementDocumentAmount(amount)
   return `+${amount.toLocaleString('ko-KR')}원`
 }
 
 export function isReceiptSettlementDocument(
-  documentType: SettlementApplicationDocumentResponse['documentType'],
+  documentType: SettlementApplicationDocumentResponse['documentType']
 ): boolean {
   return documentType === 'RECEIPT_SETTLEMENT'
 }
 
 export function settlementDocumentLinesSectionTitle(
-  documentType: SettlementApplicationDocumentResponse['documentType'],
+  documentType: SettlementApplicationDocumentResponse['documentType']
 ): string {
-  return isReceiptSettlementDocument(documentType) ? '영수증 산출 내역' : '강의비 산출 내역'
+  return isReceiptSettlementDocument(documentType) ? '영수증 산출 내역' : '강사비 산출 내역'
 }
 
 export function settlementDocumentFirstColumnHeader(
-  documentType: SettlementApplicationDocumentResponse['documentType'],
+  documentType: SettlementApplicationDocumentResponse['documentType']
 ): string {
   return isReceiptSettlementDocument(documentType) ? '프로그램명' : '참여 기관명'
 }
@@ -128,7 +126,7 @@ export function settlementDocumentFirstColumnHeader(
 export function settlementDocumentFirstColumnValue(
   documentType: SettlementApplicationDocumentResponse['documentType'],
   line: SettlementApplicationDocumentLine,
-  programTitle?: string | null,
+  programTitle?: string | null
 ): string {
   if (isReceiptSettlementDocument(documentType)) {
     return displaySettlementDocumentText(programTitle)
@@ -146,7 +144,7 @@ export type SettlementDocumentInfoRow = {
 }
 
 export function buildSettlementDocumentBasicRows(
-  basic: SettlementApplicationDocumentBasicInfo,
+  basic: SettlementApplicationDocumentBasicInfo
 ): SettlementDocumentInfoRow[] {
   const accountParts = formatSettlementDocumentAccountParts(basic)
   return [
@@ -173,10 +171,10 @@ export function buildSettlementDocumentBasicRows(
 }
 
 export function buildSettlementDocumentCalcRows(
-  calc: SettlementApplicationDocumentCalcInfo,
+  calc: SettlementApplicationDocumentCalcInfo
 ): SettlementDocumentInfoRow[] {
   return [
-    { label: '강의비 유형', value: displayDocumentLectureFeeType(calc.lectureFeeType) },
+    { label: '강사비 유형', value: displayDocumentLectureFeeType(calc.lectureFeeType) },
     {
       label: '강사비 책정',
       value: formatSettlementDocumentAmount(calc.instructorFeeAmount),
@@ -193,7 +191,9 @@ export function buildSettlementDocumentCalcRows(
       ? [
           {
             label: '인정 차시',
-            value: formatRecognizedSessionCountLabel(calc.recognizedSessionCount) ?? SETTLEMENT_DOCUMENT_EMPTY,
+            value:
+              formatRecognizedSessionCountLabel(calc.recognizedSessionCount) ??
+              SETTLEMENT_DOCUMENT_EMPTY,
           },
         ]
       : []),
@@ -201,7 +201,7 @@ export function buildSettlementDocumentCalcRows(
       ? []
       : [
           {
-            label: '총 강의비',
+            label: '총 강사비',
             value: formatSettlementDocumentAmount(calc.totalLectureFee),
           },
         ]),
@@ -221,7 +221,7 @@ export type SettlementDocumentLineSpan = {
  * - 빈 값(`-`)은 합치지 않음
  */
 export function buildSettlementDocumentLineSpans(
-  cells: Array<{ first: string; date: string }>,
+  cells: Array<{ first: string; date: string }>
 ): SettlementDocumentLineSpan[] {
   const spans: SettlementDocumentLineSpan[] = cells.map(() => ({ firstRowSpan: 1, dateRowSpan: 1 }))
   const mergeable = (value: string) => value !== '' && value !== SETTLEMENT_DOCUMENT_EMPTY
@@ -249,7 +249,7 @@ export function buildSettlementDocumentLineSpans(
 
 /** 2개씩 한 행. `fullRow`이거나 짝이 없는 행은 한 줄 전체(right = null). 순서는 그대로. */
 export function layoutSettlementDocumentInfoRows(
-  rows: SettlementDocumentInfoRow[],
+  rows: SettlementDocumentInfoRow[]
 ): Array<[SettlementDocumentInfoRow, SettlementDocumentInfoRow | null]> {
   const layout: Array<[SettlementDocumentInfoRow, SettlementDocumentInfoRow | null]> = []
   for (let i = 0; i < rows.length; i += 1) {
@@ -267,7 +267,7 @@ export function layoutSettlementDocumentInfoRows(
 
 /** lines 합 ≠ total.amount 이면 로깅만 (UI는 total 정본). */
 export function warnIfSettlementDocumentTotalMismatch(
-  document: Pick<SettlementApplicationDocumentResponse, 'lines' | 'total'>,
+  document: Pick<SettlementApplicationDocumentResponse, 'lines' | 'total'>
 ): void {
   const sum = document.lines.reduce((acc, line) => acc + line.amount, 0)
   if (sum !== document.total.amount) {
@@ -280,7 +280,7 @@ export function warnIfSettlementDocumentTotalMismatch(
 }
 
 export function formatSettlementDocumentTotalLabel(
-  total: SettlementApplicationDocumentTotal,
+  total: SettlementApplicationDocumentTotal
 ): string {
   return displaySettlementDocumentText(total.formulaLabel) === SETTLEMENT_DOCUMENT_EMPTY
     ? '합계'

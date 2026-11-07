@@ -77,7 +77,9 @@ export function AccountPaymentCompleteSuccessModal({
 
   const modalClassName = [
     'account-payment-complete-success-modal',
-    isBulk ? 'account-payment-complete-success-modal--bulk' : 'account-payment-complete-success-modal--single',
+    isBulk
+      ? 'account-payment-complete-success-modal--bulk'
+      : 'account-payment-complete-success-modal--single',
   ]
     .filter(Boolean)
     .join(' ')
@@ -114,14 +116,14 @@ export function AccountPaymentCompleteSuccessModal({
               <strong className="account-payment-complete-success-modal__name">
                 [{context.recipientName}]
               </strong>
-              님 외 {context.otherRecipientCount}명의 강의비 계좌 지급 처리가 완료되었습니다.
+              님 외 {context.otherRecipientCount}명의 강사비 계좌 지급 처리가 완료되었습니다.
             </>
           ) : (
             <>
               <strong className="account-payment-complete-success-modal__name">
                 [{context.recipientName}]
               </strong>
-              님의 강의비 계좌 지급 처리가 완료되었습니다.
+              님의 강사비 계좌 지급 처리가 완료되었습니다.
             </>
           )}
         </p>

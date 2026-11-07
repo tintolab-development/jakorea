@@ -159,7 +159,7 @@
   color: var(--color-text-secondary, #595959);
 }
 
-/* 승인 완료 전용: 강의비·사업소득자 1행 — 라벨 열 220px */
+/* 승인 완료 전용: 강사비·사업소득자 1행 — 라벨 열 220px */
 .applicant-instructor-basic-info__table--post-approval.applicant-instructor-basic-info__table
   col:nth-child(1),
 .applicant-instructor-basic-info__table--post-approval.applicant-instructor-basic-info__table
@@ -175,7 +175,7 @@
   font-weight: 700;
 }
 
-/* 승인 완료 전용: 강의비·사업소득자 1행 테이블 (메인 기본 정보 바로 아래) */
+/* 승인 완료 전용: 강사비·사업소득자 1행 테이블 (메인 기본 정보 바로 아래) */
 .applicant-instructor-basic-info__table--post-approval.applicant-instructor-basic-info__table
   tbody
   tr:first-child

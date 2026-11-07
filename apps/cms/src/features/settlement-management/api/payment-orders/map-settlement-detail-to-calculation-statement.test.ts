@@ -31,7 +31,7 @@ function settlement(
 }
 
 describe('mapSettlementDetailToProgramCalculationStatement', () => {
-  it('단건 DTO로 진행 회차·강의비 책정·기관명·강의 구간을 채움', () => {
+  it('단건 DTO로 진행 회차·강사비 책정·기관명·강의 구간을 채움', () => {
     const mapped = mapSettlementDetailToProgramCalculationStatement(
       lineRow,
       settlement({
@@ -403,7 +403,7 @@ describe('mapSettlementDetailToInstructorPageCalculationStatement', () => {
     expect(mapped.blocks[0]?.lectureSessionDisplay).toBe('1차시')
   })
 
-  it('강의비 책정은 API 값, 강사 PII는 placeholder 유지', () => {
+  it('강사비 책정은 API 값, 강사 PII는 placeholder 유지', () => {
     const mapped = mapSettlementDetailToInstructorPageCalculationStatement(
       lineRow,
       settlement({

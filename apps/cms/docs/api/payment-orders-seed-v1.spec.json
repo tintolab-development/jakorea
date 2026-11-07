@@ -15,7 +15,14 @@
     "contactAndAccountMasking": "allowed",
     "personalProgram": "institutionName empty/null → FE '-'",
     "resubmission": "New settlement + new statementId. Keep previous row REJECTED.",
-    "calendarShortLabels": ["재신청", "확인 대기", "확인 완료", "정정 요청", "신청 반려", "일부 확인"],
+    "calendarShortLabels": [
+      "재신청",
+      "확인 대기",
+      "확인 완료",
+      "정정 요청",
+      "신청 반려",
+      "일부 확인"
+    ],
     "calendarPaidChip": "Do NOT seed PAID on this screen. Blue 지급 완료 / 계좌 지급 chips in the mockup belong to account-payments.",
     "defaultDateWindow": "1st of current month through 1st of next month; place lectureDate inside"
   },
@@ -186,7 +193,7 @@
       "instructorMemberId": 170201,
       "instructorName": "박틴토",
       "programName": "2026년 JA Korea 초등 경제교육",
-      "lectureFeeStandardTitle": "특강 강의비",
+      "lectureFeeStandardTitle": "특강 강사비",
       "lectureFee": 915000,
       "travel": 31500,
       "lodging": 80000,

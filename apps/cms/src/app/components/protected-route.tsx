@@ -29,7 +29,11 @@ export function ProtectedRoute({
   requiredRoles,
   requireAuth = true,
 }: ProtectedRouteProps) {
-  const { isAuthenticated, user, requiresMfa, mfaState, passwordChangeRequired } = useAuthStore()
+  const isAuthenticated = useAuthStore(state => state.isAuthenticated)
+  const user = useAuthStore(state => state.user)
+  const requiresMfa = useAuthStore(state => state.requiresMfa)
+  const mfaState = useAuthStore(state => state.mfaState)
+  const passwordChangeRequired = useAuthStore(state => state.passwordChangeRequired)
 
   if (hasPasswordChangeRequiredComplete()) {
     return <Navigate to={passwordChangeRequiredPaths.complete} replace />

@@ -98,6 +98,29 @@ export function addSeoulCalendarDaysEndOfDay(iso: string, days: number): string 
   return next ? seoulEndOfDayIso(next) : null
 }
 
+export function findSatisfactionScheduleById(
+  schedules: ReadonlyArray<SatisfactionFormEditSchedule>,
+  id: number | string | null | undefined
+): SatisfactionFormEditSchedule | undefined {
+  const scopeId = coercePositiveInt(id)
+  if (scopeId == null) return undefined
+  return schedules.find(schedule => coercePositiveInt(schedule.id) === scopeId)
+}
+
+/** 일정별 등록 — 해당 슬롯 종료 시각부터 windowDays일째 23:59:59(KST). 템플릿 작성 기간은 쓰지 않는다. */
+export function resolveSatisfactionCreateSubmissionPeriod(
+  schedule: SatisfactionFormEditSchedule | null | undefined,
+  windowDays: unknown
+): { submissionStartAt: string; submissionEndAt: string } | null {
+  const days = readSatisfactionWindowDays(windowDays)
+  if (schedule == null || days == null) return null
+  const sessionEnd = readScheduleInstant(schedule)
+  if (sessionEnd == null) return null
+  const endAt = addSeoulCalendarDaysEndOfDay(sessionEnd, days)
+  if (endAt == null) return null
+  return { submissionStartAt: sessionEnd, submissionEndAt: endAt }
+}
+
 function pickLatestSessionEndIso(
   schedules: ReadonlyArray<SatisfactionFormEditSchedule>
 ): string | undefined {
