@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:8081",
+      "url": "http://jakorea-homepage.ngrok.app",
       "description": "Generated server url"
     }
   ],
@@ -9936,6 +9936,7 @@
       },
       "CareerTalentApplicationDetailResponse": {
         "type": "object",
+        "description": "Admin detail is always stored original PII. Empty strings are null. List items remain masked.",
         "properties": {
           "id": {
             "type": "integer",
@@ -9965,33 +9966,34 @@
           },
           "name": {
             "type": "string",
-            "description": "Applicant name. revealPii=false uses PrivacyMaskingSupport.maskName (same as list). Original name only when revealPii=true."
+            "description": "Stored applicant name (original). Empty is null, never \"\".",
+            "nullable": true
           },
           "phone": {
             "type": "string",
-            "description": "revealPii=false: PrivacyMaskingSupport.maskPhone (same as list). revealPii=true: original. Empty is null, never \"\".",
-            "example": "010-****-9154",
+            "description": "Stored phone (original). Empty is null, never \"\".",
+            "example": "010-1234-5678",
             "nullable": true
           },
           "email": {
             "type": "string",
-            "description": "revealPii=false: PrivacyMaskingSupport.maskEmail (same as list). revealPii=true: original. Empty is null, never \"\".",
-            "example": "0915***@naver.com",
+            "description": "Stored email (original). Empty is null, never \"\".",
+            "example": "applicant@example.com",
             "nullable": true
           },
           "addressRoad": {
             "type": "string",
-            "description": "revealPii=false: PrivacyMaskingSupport.maskAddress. revealPii=true: original. Empty is null, never \"\".",
+            "description": "Stored road address (original). Empty is null, never \"\".",
             "nullable": true
           },
           "addressDetail": {
             "type": "string",
-            "description": "revealPii=false: PrivacyMaskingSupport.maskAddress. revealPii=true: original. Empty is null, never \"\".",
+            "description": "Stored address detail (original). Empty is null, never \"\".",
             "nullable": true
           },
           "educationLevel": {
             "type": "string",
-            "description": "revealPii=false: omitted (null). revealPii=true: stored enum. careerType stays on the masked detail; this field does not until revealed.",
+            "description": "Stored education level.",
             "enum": [
               "HIGH_SCHOOL",
               "COLLEGE",
@@ -10004,17 +10006,17 @@
           },
           "schoolName": {
             "type": "string",
-            "description": "revealPii=false: omitted. revealPii=true: stored school name.",
+            "description": "Stored school name (original). Empty is null, never \"\".",
             "nullable": true
           },
           "major": {
             "type": "string",
-            "description": "revealPii=false: omitted. revealPii=true: stored major. Empty is null, never \"\".",
+            "description": "Stored major (original). Empty is null, never \"\".",
             "nullable": true
           },
           "educationInfo": {
             "type": "string",
-            "description": "revealPii=false: omitted. revealPii=true: stored education body. Empty is null, never \"\".",
+            "description": "Stored education information (original). Empty is null, never \"\".",
             "nullable": true
           },
           "careerType": {
@@ -10026,7 +10028,7 @@
           },
           "careerInfo": {
             "type": "string",
-            "description": "revealPii=false: omitted. revealPii=true: stored career body. Empty is null, never \"\".",
+            "description": "Stored career information (original). Empty is null, never \"\".",
             "nullable": true
           },
           "privacyAgreed": {
@@ -10047,12 +10049,12 @@
           },
           "attachmentOriginalName": {
             "type": "string",
-            "description": "revealPii=false: omitted. revealPii=true: first attachment original name.",
+            "description": "First stored attachment original name. Empty is null, never \"\".",
             "nullable": true
           },
           "attachments": {
             "type": "array",
-            "description": "revealPii=false: empty array. revealPii=true: stored attachments in display order.",
+            "description": "Stored attachments in display order, including originalName. Empty when no attachments exist.",
             "items": {
               "$ref": "#/components/schemas/ApplicationAttachmentItem"
             }

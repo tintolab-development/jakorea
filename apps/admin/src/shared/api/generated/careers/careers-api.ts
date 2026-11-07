@@ -333,7 +333,7 @@ const guide = (
     }
 
 /**
- * phone and email are always PrivacyMaskingSupport-masked. Original contact PII is only on GET /{id}?revealPii=true.
+ * name, phone, and email are always PrivacyMaskingSupport-masked. Original PII is returned only by the detail GET. List GET does not write privacy-access logs.
  * @summary List career talent applications
  */
 const list15 = (
@@ -358,7 +358,7 @@ const delete4 = (
     }
 
 /**
- * revealPii=false (default) masks phone, email, addressRoad, and addressDetail with the same PrivacyMaskingSupport rules as the list. Name uses maskName. Education, career, and attachments stay omitted until revealed. Every 200 writes homepage_admin_audit_log (PII_READ / CAREER_TALENT_APPLICATION) and homepage_privacy_access_log with the original targetName. revealPii=true returns originals only with HOMEPAGE_PII_VIEW; otherwise 403. Admin log list screens must not POST privacy-access.
+ * Always stored original PII (not masked). HOMEPAGE_VIEW is enough; HOMEPAGE_PII_VIEW is not required. Every 200 writes homepage_admin_audit_log (PII_READ / CAREER_TALENT_APPLICATION) and homepage_privacy_access_log with the original targetName. List remains masked (name, phone, and email). revealPii is a deprecated no-op. Admin log list screens must not POST privacy-access.
  * @summary Get career talent application detail
  */
 const detail9 = (

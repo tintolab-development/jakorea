@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:8081",
+      "url": "http://jakorea-homepage.ngrok.app",
       "description": "Generated server url"
     }
   ],
@@ -930,7 +930,7 @@
           "career-talent-application-admin-controller"
         ],
         "summary": "List career talent applications",
-        "description": "phone and email are always PrivacyMaskingSupport-masked. Original contact PII is only on GET /{id}?revealPii=true.",
+        "description": "name, phone, and email are always PrivacyMaskingSupport-masked. Original PII is returned only by the detail GET. List GET does not write privacy-access logs.",
         "operationId": "list_15",
         "parameters": [
           {
@@ -1099,7 +1099,7 @@
           "career-talent-application-admin-controller"
         ],
         "summary": "Get career talent application detail",
-        "description": "revealPii=false (default) masks phone, email, addressRoad, and addressDetail with the same PrivacyMaskingSupport rules as the list. Name uses maskName. Education, career, and attachments stay omitted until revealed. Every 200 writes homepage_admin_audit_log (PII_READ / CAREER_TALENT_APPLICATION) and homepage_privacy_access_log with the original targetName. revealPii=true returns originals only with HOMEPAGE_PII_VIEW; otherwise 403. Admin log list screens must not POST privacy-access.",
+        "description": "Always stored original PII (not masked). HOMEPAGE_VIEW is enough; HOMEPAGE_PII_VIEW is not required. Every 200 writes homepage_admin_audit_log (PII_READ / CAREER_TALENT_APPLICATION) and homepage_privacy_access_log with the original targetName. List remains masked (name, phone, and email). revealPii is a deprecated no-op. Admin log list screens must not POST privacy-access.",
         "operationId": "detail_9",
         "parameters": [
           {
@@ -1114,8 +1114,9 @@
           {
             "name": "revealPii",
             "in": "query",
-            "description": "false (default): masked PII. true: original PII requires HOMEPAGE_PII_VIEW; otherwise 403.",
+            "description": "Deprecated no-op. Omitted, false, and true all return the same original detail and do not affect authorization.",
             "required": false,
+            "deprecated": true,
             "schema": {
               "type": "boolean",
               "default": false
@@ -11053,6 +11054,7 @@
       },
       "CareerTalentApplicationDetailResponse": {
         "type": "object",
+        "description": "Admin detail is always stored original PII. Empty strings are null. List items remain masked.",
         "properties": {
           "id": {
             "type": "integer",
@@ -11082,33 +11084,34 @@
           },
           "name": {
             "type": "string",
-            "description": "Applicant name. revealPii=false uses PrivacyMaskingSupport.maskName (same as list). Original name only when revealPii=true."
+            "description": "Stored applicant name (original). Empty is null, never \"\".",
+            "nullable": true
           },
           "phone": {
             "type": "string",
-            "description": "revealPii=false: PrivacyMaskingSupport.maskPhone (same as list). revealPii=true: original. Empty is null, never \"\".",
-            "example": "010-****-9154",
+            "description": "Stored phone (original). Empty is null, never \"\".",
+            "example": "010-1234-5678",
             "nullable": true
           },
           "email": {
             "type": "string",
-            "description": "revealPii=false: PrivacyMaskingSupport.maskEmail (same as list). revealPii=true: original. Empty is null, never \"\".",
-            "example": "0915***@naver.com",
+            "description": "Stored email (original). Empty is null, never \"\".",
+            "example": "applicant@example.com",
             "nullable": true
           },
           "addressRoad": {
             "type": "string",
-            "description": "revealPii=false: PrivacyMaskingSupport.maskAddress. revealPii=true: original. Empty is null, never \"\".",
+            "description": "Stored road address (original). Empty is null, never \"\".",
             "nullable": true
           },
           "addressDetail": {
             "type": "string",
-            "description": "revealPii=false: PrivacyMaskingSupport.maskAddress. revealPii=true: original. Empty is null, never \"\".",
+            "description": "Stored address detail (original). Empty is null, never \"\".",
             "nullable": true
           },
           "educationLevel": {
             "type": "string",
-            "description": "revealPii=false: omitted (null). revealPii=true: stored enum. careerType stays on the masked detail; this field does not until revealed.",
+            "description": "Stored education level.",
             "enum": [
               "HIGH_SCHOOL",
               "COLLEGE",
@@ -11121,17 +11124,17 @@
           },
           "schoolName": {
             "type": "string",
-            "description": "revealPii=false: omitted. revealPii=true: stored school name.",
+            "description": "Stored school name (original). Empty is null, never \"\".",
             "nullable": true
           },
           "major": {
             "type": "string",
-            "description": "revealPii=false: omitted. revealPii=true: stored major. Empty is null, never \"\".",
+            "description": "Stored major (original). Empty is null, never \"\".",
             "nullable": true
           },
           "educationInfo": {
             "type": "string",
-            "description": "revealPii=false: omitted. revealPii=true: stored education body. Empty is null, never \"\".",
+            "description": "Stored education information (original). Empty is null, never \"\".",
             "nullable": true
           },
           "careerType": {
@@ -11143,7 +11146,7 @@
           },
           "careerInfo": {
             "type": "string",
-            "description": "revealPii=false: omitted. revealPii=true: stored career body. Empty is null, never \"\".",
+            "description": "Stored career information (original). Empty is null, never \"\".",
             "nullable": true
           },
           "privacyAgreed": {
@@ -11164,12 +11167,12 @@
           },
           "attachmentOriginalName": {
             "type": "string",
-            "description": "revealPii=false: omitted. revealPii=true: first attachment original name.",
+            "description": "First stored attachment original name. Empty is null, never \"\".",
             "nullable": true
           },
           "attachments": {
             "type": "array",
-            "description": "revealPii=false: empty array. revealPii=true: stored attachments in display order.",
+            "description": "Stored attachments in display order, including originalName. Empty when no attachments exist.",
             "items": {
               "$ref": "#/components/schemas/ApplicationAttachmentItem"
             }
