@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useMemo, useState, type Key } from 'react'
-import { Image, Switch } from 'antd'
+import { Switch } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { HeroBanner } from '@/entities/hero-banner/model/types'
 import {
@@ -227,11 +227,10 @@ export function HeroBannersPage() {
         className: 'hero-banner-table__col--image',
         render: (_value, record) => (
           <div className="hero-banners-page__thumb-wrap">
-            <Image
+            <img
               className="hero-banners-page__thumb"
               src={record.imageUrl}
               alt={record.imageFileName || '배너 이미지'}
-              preview={{ mask: '이미지 보기' }}
             />
           </div>
         ),

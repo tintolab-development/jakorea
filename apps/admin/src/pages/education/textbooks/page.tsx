@@ -4,7 +4,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import type { Dayjs } from 'dayjs'
-import { Image, Switch } from 'antd'
+import { Switch } from 'antd'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import type {
@@ -469,11 +469,10 @@ export function EducationTextbooksPage() {
           <div className="education-textbooks-page__thumb-cell">
             <div className="education-textbooks-page__thumb-wrap">
               {row.thumbnailUrl ? (
-                <Image
+                <img
                   className="education-textbooks-page__thumb"
                   src={row.thumbnailUrl}
                   alt=""
-                  preview={false}
                 />
               ) : (
                 <span className="education-textbooks-page__thumb-empty">-</span>

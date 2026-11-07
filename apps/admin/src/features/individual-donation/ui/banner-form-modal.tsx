@@ -255,7 +255,7 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
               <div>
                 <CmsTextArea
                   className="cms-textarea--fixed-rows"
-                  inputSize="large"
+                  inputSize="small"
                   width="100%"
                   rows={3}
                   placeholder="메인 텍스트를 입력해 주세요"
@@ -285,7 +285,7 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
               <div>
                 <CmsTextArea
                   className="cms-textarea--fixed-rows"
-                  inputSize="large"
+                  inputSize="small"
                   width="100%"
                   rows={4}
                   placeholder="서브 텍스트를 입력해 주세요"

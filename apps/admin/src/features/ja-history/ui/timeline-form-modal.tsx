@@ -1,5 +1,4 @@
 import { memo, useCallback, useRef, useState } from 'react'
-import { Image } from 'antd'
 import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
 import type {
@@ -274,11 +273,7 @@ function TimelineFormBody({
                 <div className="file-select-image-cell">
                   <div className="file-select-image-cell__preview">
                     {imageUrl ? (
-                      <Image
-                        src={imageUrl}
-                        alt="대표 이미지 미리보기"
-                        preview={{ mask: '이미지 보기' }}
-                      />
+                      <img src={imageUrl} alt="대표 이미지 미리보기" />
                     ) : (
                       <span>없음</span>
                     )}

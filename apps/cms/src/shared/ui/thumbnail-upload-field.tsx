@@ -1,12 +1,11 @@
 /**
  * 썸네일 업로드 공통 필드 (디자인 시스템)
- * - 72×72 썸네일(확대 보기) / placeholder + 파일명(X) · 「첨부된 파일이 없습니다.」 + 「파일 추가」 + 가이드
+ * - 72×72 썸네일 / placeholder + 파일명(X) · 「첨부된 파일이 없습니다.」 + 「파일 추가」 + 가이드
  * - 단건 선택. 업로드 API 는 호출하지 않는다 — `onSelectFile` 에서 화면별로 처리
  * - 파일이 있거나 disabled·uploading 이면 버튼 비활성. disabled 면 X 미표시
  */
 
 import { useEffect, useRef, type ChangeEvent } from 'react'
-import { Image } from 'antd'
 import { openFilePicker } from '@/shared/lib/open-file-picker'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { beginFileUploadOverlay } from '@/shared/ui/file-upload-overlay-store'
@@ -91,13 +90,12 @@ export function ThumbnailUploadField({
     >
       <div className="thumbnail-upload-field__thumb">
         {previewUrl ? (
-          <Image
+          <img
             src={previewUrl}
             alt={previewAlt}
             width={72}
             height={72}
             className="thumbnail-upload-field__image"
-            preview={{ mask: '확대 보기' }}
           />
         ) : (
           <ThumbnailPlaceholder />

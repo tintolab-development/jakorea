@@ -117,7 +117,7 @@ export function PartnershipSectionCard({ items }: Props) {
             return (
               <CmsTextArea
                 className="cms-textarea--fixed-rows"
-                inputSize="medium"
+                inputSize="small"
                 width="100%"
                 rows={2}
                 value={value}
@@ -141,7 +141,7 @@ export function PartnershipSectionCard({ items }: Props) {
             return (
               <CmsTextArea
                 className="cms-textarea--fixed-rows"
-                inputSize="medium"
+                inputSize="small"
                 width="100%"
                 rows={3}
                 value={value}

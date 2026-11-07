@@ -196,41 +196,11 @@
   flex: 0 0 86px;
 }
 
-.rd-list__thumb.ant-image,
-.rd-list__thumb-wrap .ant-image {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  display: block;
-  overflow: hidden;
-}
-
-.rd-list__thumb-wrap .ant-image-img,
 .rd-list__thumb {
   width: 100% !important;
   height: 100% !important;
   object-fit: cover;
   display: block;
-}
-
-/* 호버 마스크: 레이아웃 점유 없이 래퍼를 덮고, 좁은 연차(80px)에서도 문구가 잘리지 않게 */
-.rd-list__thumb-wrap .ant-image-mask {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  padding: 4px;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  font-size: 12px;
-  line-height: 1.3;
-  white-space: normal;
-  text-align: center;
 }
 
 .rd-list__file-link {

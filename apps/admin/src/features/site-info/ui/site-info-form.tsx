@@ -141,7 +141,7 @@ const SiteInfoTextField = memo(function SiteInfoTextField({
             ? 'site-info-inline-field site-info-inline-field--edit'
             : 'site-info-inline-field site-info-inline-field--readonly'
         }
-        inputSize="large"
+        inputSize="small"
         width="100%"
         placeholder={placeholder}
         value={localValue}
@@ -167,30 +167,19 @@ const SiteInfoTextField = memo(function SiteInfoTextField({
 
 function ImageView({
   url,
-  fileName,
   alt,
-  variant = 'default',
 }: {
   url: string
-  fileName?: string
   alt: string
-  variant?: 'default' | 'favicon'
 }) {
   if (!url) {
     return <span className="site-info-form__text-view">-</span>
   }
   return (
     <div className="site-info-form__image-view">
-      <div
-        className={
-          variant === 'favicon'
-            ? 'site-info-form__preview site-info-form__preview--favicon'
-            : 'site-info-form__preview'
-        }
-      >
+      <div className="site-info-form__preview">
         <img src={url} alt={alt} />
       </div>
-      {fileName ? <span className="site-info-form__file-name">{fileName}</span> : null}
     </div>
   )
 }
@@ -247,14 +236,9 @@ function ImageEditField({
     [onChange, showAlert]
   )
 
-  const previewClass =
-    variant === 'favicon'
-      ? 'site-info-form__preview site-info-form__preview--favicon'
-      : 'site-info-form__preview'
-
   return (
     <div className="site-info-form__image-row">
-      <div className={previewClass}>
+      <div className="site-info-form__preview">
         {imageUrl ? <img src={imageUrl} alt={alt} /> : <ImagePlaceholderIcon />}
       </div>
       <FileSelectField
@@ -404,7 +388,7 @@ export function SiteInfoFormCard({ data }: Props) {
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="사이트명"
-              required
+              required={isEditing}
               view={null}
               edit={
                 <SiteInfoTextField
@@ -422,6 +406,7 @@ export function SiteInfoFormCard({ data }: Props) {
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="사이트 소개글"
+              required={isEditing}
               view={null}
               edit={
                 <SiteInfoTextField
@@ -437,6 +422,7 @@ export function SiteInfoFormCard({ data }: Props) {
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="링크 공유용 이미지"
+              required={isEditing}
               view={null}
               edit={
                 isEditing ? (
@@ -462,11 +448,7 @@ export function SiteInfoFormCard({ data }: Props) {
                     }
                   />
                 ) : (
-                  <ImageView
-                    url={image.ogImageUrl}
-                    fileName={image.ogImageFileName}
-                    alt="링크 공유용 이미지"
-                  />
+                  <ImageView url={image.ogImageUrl} alt="링크 공유용 이미지" />
                 )
               }
             />
@@ -474,6 +456,7 @@ export function SiteInfoFormCard({ data }: Props) {
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="브라우저탭 아이콘"
+              required={isEditing}
               view={null}
               edit={
                 isEditing ? (
@@ -500,12 +483,7 @@ export function SiteInfoFormCard({ data }: Props) {
                     }
                   />
                 ) : (
-                  <ImageView
-                    url={image.faviconUrl}
-                    fileName={image.faviconFileName}
-                    alt="브라우저탭 아이콘"
-                    variant="favicon"
-                  />
+                  <ImageView url={image.faviconUrl} alt="브라우저탭 아이콘" />
                 )
               }
             />
