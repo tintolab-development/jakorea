@@ -12,7 +12,10 @@ import type {
 } from '@/entities/history-awards-certs/model/types'
 import { deleteConfirmContent } from '@/features/history-awards-certs/lib/delete-guards'
 import { coerceRadioBoolean } from '@/features/history-awards-certs/lib/format'
-import { isHistoryFormRequiredIncomplete } from '@/features/history-awards-certs/lib/history-form-required'
+import {
+  isDatedFormRequiredIncomplete,
+  isHistoryFormRequiredIncomplete,
+} from '@/features/history-awards-certs/lib/history-form-required'
 import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT,
   CmsButton,
@@ -164,20 +167,12 @@ function HacFormBody(props: BodyProps) {
       return
     }
 
-    if (!eventOn || !eventOn.isValid()) {
+    if (!eventOn || isDatedFormRequiredIncomplete({ date: eventOn, name, organization })) {
       showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     const trimmedName = name.trim()
-    if (!trimmedName) {
-      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
-      return
-    }
     const org = organization.trim()
-    if (!org) {
-      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
-      return
-    }
     const date = eventOn.format('YYYY-MM-DD')
     if (props.kind === 'award') {
       props.onSubmit({ isPublic, title: trimmedName, organization: org, awardedOn: date })
@@ -329,6 +324,7 @@ function HacFormBody(props: BodyProps) {
               <DetailInfoForm.Row type="single">
                 <DetailInfoForm.Field
                   label={datedCopy.dateLabel}
+                  required
                   view={null}
                   edit={
                     <CmsDatePicker
@@ -345,6 +341,7 @@ function HacFormBody(props: BodyProps) {
               <DetailInfoForm.Row type="single">
                 <DetailInfoForm.Field
                   label={datedCopy.nameLabel}
+                  required
                   view={null}
                   edit={
                     <CmsInput
@@ -360,6 +357,7 @@ function HacFormBody(props: BodyProps) {
               <DetailInfoForm.Row type="single">
                 <DetailInfoForm.Field
                   label={datedCopy.orgLabel}
+                  required
                   view={null}
                   edit={
                     <CmsInput

@@ -165,18 +165,6 @@
   font-weight: 500;
 }
 
-.directions-card
-  .directions-inline-field--edit.cms-textarea--fixed-rows
-  .cms-textarea__inner
-  textarea.ant-input,
-.directions-card
-  .directions-inline-field.cms-textarea--fixed-rows
-  .cms-textarea__inner
-  textarea.ant-input {
-  resize: none !important;
-  overflow-y: auto;
-}
-
 .directions-card .directions-inline-field .cms-textarea {
   width: 100%;
   max-width: 100%;

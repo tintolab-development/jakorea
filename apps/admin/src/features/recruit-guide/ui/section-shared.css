@@ -151,20 +151,10 @@
   overflow-wrap: break-word;
 }
 
-.recruit-guide-section .recruit-guide-inline-field.cms-textarea--fixed-rows textarea.ant-input {
-  resize: none !important;
-}
-
 .recruit-guide-section .recruit-guide-inline-field--readonly .ant-input,
 .recruit-guide-section .recruit-guide-inline-field--readonly textarea.ant-input {
   cursor: default;
   overflow: hidden !important;
-}
-
-.recruit-guide-section
-  .recruit-guide-inline-field--edit.cms-textarea--fixed-rows
-  textarea.ant-input {
-  overflow-y: auto;
 }
 
 .recruit-guide-section .cms-data-table .ant-table-tbody > tr {

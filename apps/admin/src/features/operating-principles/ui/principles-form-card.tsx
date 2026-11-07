@@ -28,7 +28,13 @@ import {
   PrincipleDragHandle,
   PrinciplesSortableTable,
 } from '@/features/operating-principles/ui/sortable-table'
-import { CmsButton, CmsTextArea, REQUIRED_FIELDS_INCOMPLETE_ALERT, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
+import {
+  CmsButton,
+  CmsTextArea,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
+  showSaveCompletedAlert,
+  useCmsAlert,
+} from '@/shared/ui'
 import {
   CMS_TABLE_NO_COL_CLASS,
   CMS_TABLE_SORT_COL_CLASS,
@@ -46,8 +52,7 @@ type DraftTexts = Record<string, { title: string; subText: string }>
 function SectionTitle({ children, note }: { children: ReactNode; note?: ReactNode }) {
   return (
     <div className="principles-form-section-title">
-      <span className="principles-form-section-title__marker" aria-hidden />
-      <span className="principles-form-section-title__text">{children}</span>
+      <span className="principles-form-section-title__text">■ {children}</span>
       {note != null ? <span className="principles-form-section-title__note">{note}</span> : null}
     </div>
   )

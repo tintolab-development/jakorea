@@ -49,18 +49,12 @@
   flex-shrink: 0;
 }
 
-.principles-form-section-title__marker {
-  flex-shrink: 0;
-  width: 10px;
-  height: 10px;
-  background: var(--default-BK, #3d3d3d);
-}
-
 .principles-form-section-title__text {
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
   font-size: 16px;
   font-weight: 700;
+  padding: 0 8px;
   line-height: 140%;
 }
 
@@ -133,12 +127,8 @@
   cursor: default;
 }
 
-.principles-form-card
-  .principles-inline-field--readonly
-  .cms-input__control:hover,
-.principles-form-card
-  .principles-inline-field--readonly
-  .cms-textarea__control:hover {
+.principles-form-card .principles-inline-field--readonly .cms-input__control:hover,
+.principles-form-card .principles-inline-field--readonly .cms-textarea__control:hover {
   border-color: transparent !important;
 }
 
@@ -149,29 +139,11 @@
   font-weight: 500;
 }
 
-.principles-form-card
-  .principles-inline-field--readonly.cms-input
-  .ant-input {
+.principles-form-card .principles-inline-field--readonly.cms-input .ant-input {
   font-weight: 600;
 }
 
-/*
- * 시안 Field/Table Input resizable=false.
- * 조회·수정 모두 높이 조절 핸들 없음 — 모드 전환 시 그립 유무로 텍스트가 흔들리지 않게 함.
- * CmsTextArea 기본 resize:vertical · rows=1 expandable-single-row 를 덮음.
- */
-.principles-form-card
-  .principles-inline-field.cms-textarea--fixed-rows
-  .cms-textarea__inner
-  textarea.ant-input,
-.principles-form-card
-  .principles-inline-field.cms-textarea--expandable-single-row
-  .cms-textarea__inner
-  textarea.ant-input {
-  resize: none !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-}
+/* resize 핸들 없음·세로 스크롤은 공통 `cms-textarea--fixed-rows`(CmsTextArea layout="fixed") */
 
 .principles-col-required {
   margin-left: 2px;

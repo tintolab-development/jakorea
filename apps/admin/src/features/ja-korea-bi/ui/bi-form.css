@@ -27,16 +27,12 @@
   min-height: 0;
 }
 
+/* 라벨 폭은 DetailInfoForm.Field `labelWidth` prop(--detail-info-label-w)으로만 지정 */
 .ja-korea-bi-card .detail-info-form__field {
   min-height: 54px;
-  --detail-info-label-w: 160px;
-  grid-template-columns: 160px minmax(0, 1fr);
 }
 
 .ja-korea-bi-card .detail-info-form__field-label {
-  width: 160px;
-  min-width: 160px;
-  max-width: 160px;
   min-height: 54px;
   padding: 12px 16px;
   box-sizing: border-box;
@@ -75,12 +71,7 @@
   max-width: 100%;
 }
 
-/* edit: resize 비활성 · 과도한 높이 팽창 방지 */
-.ja-korea-bi-card .cms-textarea--fixed-rows .cms-textarea__inner textarea.ant-input {
-  resize: none !important;
-}
-
-/* large 기본 min-height(44) 이상으로 불필요하게 커지지 않도록 width만 100% */
+/* edit 입력은 medium(h40) — min-height 40 이상으로 커지지 않도록 width만 100% */
 .ja-korea-bi-card .cms-textarea .cms-textarea__control {
   width: 100% !important;
   min-width: 0 !important;

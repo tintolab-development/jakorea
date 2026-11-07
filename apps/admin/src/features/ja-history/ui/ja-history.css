@@ -189,12 +189,6 @@
   white-space: pre-line;
 }
 
-.ja-history-inline-field.cms-textarea--fixed-rows .cms-textarea__inner textarea.ant-input {
-  resize: none !important;
-  overflow-x: hidden;
-  overflow-y: auto;
-}
-
 .ja-history-preview {
   position: relative;
   width: auto;
@@ -834,8 +828,4 @@
   color: var(--color-error, #e11d2e);
   font-size: 13px;
   line-height: 150%;
-}
-
-.ja-history-modal .cms-textarea--fixed-rows .cms-textarea__inner textarea.ant-input {
-  resize: none;
 }

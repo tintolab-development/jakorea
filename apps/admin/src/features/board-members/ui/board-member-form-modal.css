@@ -29,16 +29,8 @@
   min-width: 0;
 }
 
-.board-member-form-modal__form .detail-info-form__field {
-  --detail-info-label-w: 140px !important;
-  grid-template-columns: 140px minmax(0, 1fr) !important;
-}
-
 .board-member-form-modal__form .detail-info-form__field-label {
   display: flex !important;
-  width: 140px !important;
-  min-width: 140px !important;
-  max-width: 140px !important;
   min-height: 52px;
   padding: 8px 16px !important;
   justify-content: center;

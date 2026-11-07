@@ -71,10 +71,14 @@
   min-width: 0;
 }
 
-/* 시안: 지부명·연결링크 셀 (th/td 공통 스펙) */
+/*
+ * 시안: 지부명·연결링크 셀 (th/td 공통 스펙)
+ * 높이 52 고정 (border 포함) — 조회 텍스트·수정 인풋(h36) 모두 세로 중앙, 모드 전환 시 행 높이 불변
+ */
 .ja-worldwide-branches__cell {
   display: flex;
-  padding: 12px 20px;
+  height: 52px;
+  padding: 0 20px;
   justify-content: center;
   align-items: center;
   gap: 8px;
@@ -82,7 +86,6 @@
   align-self: stretch;
   box-sizing: border-box;
   min-width: 0;
-  min-height: 54px;
   border-right: 1px solid var(--table-line, #e0e0e0);
   border-bottom: 1px solid var(--table-line, #e0e0e0);
   background: #fff;
@@ -106,11 +109,18 @@
   white-space: nowrap;
 }
 
+/* 조회 모드 값 글자 14 (헤더는 16 유지) */
+.ja-worldwide-branches__row:not(.ja-worldwide-branches__row--head) .ja-worldwide-branches__cell {
+  font-size: 14px;
+}
+
 .ja-worldwide-branches__url {
   display: block;
   width: 100%;
   min-width: 0;
-  overflow-wrap: anywhere;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   text-align: center;
 }
 
@@ -144,23 +154,48 @@
   white-space: nowrap;
 }
 
+/*
+ * 하단 문구 값 셀 — 조회/수정 높이 동일 고정 (모드 전환 시 흔들림 없음)
+ * 셀 108 = padding 10×2 + 박스 88
+ * 박스 88 = border 1×2 + padding 9×2 + 본문 3줄(14px × 160% × 3 ≈ 67)
+ * 조회 텍스트도 같은 박스 위치(border+padding)에 놓아 글자 위치가 그대로 유지됨
+ */
 .ja-worldwide-bottom .detail-info-form__field-content {
-  min-height: 54px;
+  height: 108px;
+  min-height: 108px;
   padding: 10px 16px;
+  align-items: flex-start;
   justify-content: flex-start;
   text-align: left;
 }
 
-.ja-worldwide-bottom .detail-info-form__field-content--edit:has(.cms-textarea) {
-  align-items: flex-start;
+.ja-worldwide-bottom .detail-info-form__field-content--edit > * {
+  margin-block: 0;
 }
 
-.ja-worldwide-bottom__text {
+.ja-worldwide-bottom .cms-textarea .cms-textarea__control {
+  height: 88px;
+  min-height: 88px;
+  padding: 9px 16px;
+}
+
+.ja-worldwide-bottom .cms-textarea .cms-textarea__inner textarea.ant-input {
+  height: 100% !important;
+  font-size: 14px;
+  line-height: 160%;
+}
+
+.ja-worldwide-bottom .detail-info-form__field-content--view > .ja-worldwide-bottom__text {
   display: block;
+  box-sizing: border-box;
   width: 100%;
   min-width: 0;
+  height: 88px;
+  padding: 10px 17px;
+  overflow-x: hidden;
+  overflow-y: auto;
   white-space: pre-line;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
   line-height: 160%;
   text-align: left;
@@ -169,8 +204,4 @@
 .ja-worldwide-bottom .cms-textarea--fixed-rows {
   width: 100%;
   min-width: 0;
-}
-
-.ja-worldwide-card .cms-textarea--fixed-rows .cms-textarea__inner textarea.ant-input {
-  resize: none;
 }

@@ -104,9 +104,3 @@
   min-width: 320px !important;
   max-width: 320px !important;
 }
-
-.individual-donation-section .cms-textarea--fixed-rows .cms-textarea__inner textarea.ant-input {
-  resize: none !important;
-  overflow-x: hidden !important;
-  overflow-y: auto !important;
-}

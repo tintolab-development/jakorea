@@ -64,9 +64,12 @@ export function BiFormCard({ data }: Props) {
     }
   }, [draft, saveMutation, showAlert])
 
-  const updateDraft = useCallback((patch: Partial<Pick<JaKoreaBi, 'title' | 'mainText' | 'subText'>>) => {
-    setDraft(prev => ({ ...prev, ...patch }))
-  }, [])
+  const updateDraft = useCallback(
+    (patch: Partial<Pick<JaKoreaBi, 'title' | 'mainText' | 'subText'>>) => {
+      setDraft(prev => ({ ...prev, ...patch }))
+    },
+    []
+  )
 
   const mode = isEditing ? 'edit' : 'view'
   const current = isEditing ? draft : data
@@ -85,7 +88,8 @@ export function BiFormCard({ data }: Props) {
                 size="h40"
                 type="button"
                 onClick={handleCancel}
-                disabled={saveMutation.isPending} >
+                disabled={saveMutation.isPending}
+              >
                 취소
               </CmsButton>
               <CmsButton
@@ -95,7 +99,8 @@ export function BiFormCard({ data }: Props) {
                 loading={saveMutation.isPending}
                 onClick={() => {
                   void handleSave()
-                }} >
+                }}
+              >
                 저장
               </CmsButton>
             </>
@@ -112,12 +117,13 @@ export function BiFormCard({ data }: Props) {
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="타이틀"
+              labelWidth={200}
               required
               view={<PrelineView value={current.title} />}
               edit={
                 <CmsTextArea
                   className="cms-textarea--fixed-rows"
-                  inputSize="large"
+                  inputSize="medium"
                   width="100%"
                   rows={1}
                   value={draft.title}
@@ -131,10 +137,11 @@ export function BiFormCard({ data }: Props) {
             <DetailInfoForm.Field
               label="메인 텍스트"
               required
+              labelWidth={200}
               view={<PrelineView value={current.mainText} />}
               edit={
                 <CmsTextArea
-                  inputSize="large"
+                  inputSize="medium"
                   width="100%"
                   autoSize={{ minRows: 1, maxRows: 2 }}
                   value={draft.mainText}
@@ -148,10 +155,11 @@ export function BiFormCard({ data }: Props) {
             <DetailInfoForm.Field
               label="서브 텍스트"
               required
+              labelWidth={200}
               view={<PrelineView value={current.subText} />}
               edit={
                 <CmsTextArea
-                  inputSize="large"
+                  inputSize="medium"
                   width="100%"
                   autoSize={{ minRows: 1, maxRows: 2 }}
                   value={draft.subText}

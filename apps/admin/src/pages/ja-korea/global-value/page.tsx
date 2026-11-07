@@ -177,6 +177,7 @@ export function GlobalValuePage() {
               <CmsTextArea
                 inputSize="medium"
                 width="100%"
+                layout="fixed"
                 autoSize={{ minRows: 1, maxRows: 2 }}
                 value={value}
                 onChange={e => handleDraftChange(record.id, 'mainText', e.target.value)}
@@ -203,6 +204,7 @@ export function GlobalValuePage() {
               <CmsTextArea
                 inputSize="medium"
                 width="100%"
+                layout="fixed"
                 autoSize={{ minRows: 1, maxRows: 2 }}
                 value={value}
                 onChange={e => handleDraftChange(record.id, 'subText', e.target.value)}

@@ -126,9 +126,6 @@
 }
 
 .main-content-section-card .cms-textarea--fixed-rows .cms-textarea__inner textarea.ant-input {
-  resize: none;
-  overflow-x: hidden;
-  overflow-y: auto;
   box-sizing: border-box;
   height: 44px;
   min-height: 44px;

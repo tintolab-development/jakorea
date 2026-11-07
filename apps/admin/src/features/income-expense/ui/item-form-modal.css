@@ -18,11 +18,6 @@
   width: 100%;
 }
 
-.income-expense-item-form-modal__form .detail-info-form__field {
-  --detail-info-label-w: 140px !important;
-  grid-template-columns: 140px minmax(0, 1fr) !important;
-}
-
 .income-expense-item-form-modal__with-suffix {
   display: flex;
   align-items: center;

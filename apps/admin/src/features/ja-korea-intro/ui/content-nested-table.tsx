@@ -3,7 +3,7 @@
  */
 import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import type { IntroContentBlock } from '@/entities/ja-korea-intro/model/types'
-import { CmsInput, CmsTextArea } from '@/shared/ui'
+import { CmsTextArea } from '@/shared/ui'
 
 type ContentNestedTableProps = {
   data: IntroContentBlock
@@ -21,9 +21,11 @@ export function ContentNestedTable({ data, mode, ariaLabel, onChange }: ContentN
           required
           view={<span className="ja-korea-intro-preline">{data.title || '-'}</span>}
           edit={
-            <CmsInput
+            <CmsTextArea
               inputSize="medium"
               width="100%"
+              layout="fixed"
+              autoSize={{ minRows: 1, maxRows: 2 }}
               value={data.title}
               onChange={e => onChange({ title: e.target.value })}
               placeholder="타이틀을 입력해 주세요"
@@ -41,6 +43,7 @@ export function ContentNestedTable({ data, mode, ariaLabel, onChange }: ContentN
             <CmsTextArea
               inputSize="medium"
               width="100%"
+              layout="fixed"
               autoSize={{ minRows: 1, maxRows: 2 }}
               value={data.description}
               onChange={e => onChange({ description: e.target.value })}

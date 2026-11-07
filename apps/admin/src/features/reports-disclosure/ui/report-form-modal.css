@@ -15,18 +15,13 @@
   margin-top: 30px;
 }
 
-/* th 140px · popup/hero 동일 */
+/* th 스펙 · 라벨 폭은 공통 detail-info-form-modal.css */
 .rd-form-modal .detail-info-form__field {
   min-height: 54px;
-  --detail-info-label-w: 140px !important;
-  grid-template-columns: 140px minmax(0, 1fr) !important;
 }
 
 .rd-form-modal .detail-info-form__field-label {
   display: flex !important;
-  width: 140px !important;
-  min-width: 140px !important;
-  max-width: 140px !important;
   min-height: 48px;
   padding: 10px !important;
   justify-content: center;
