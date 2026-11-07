@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
 import {
   getOperationalFormSpec,
+  isRegistrationCatalogTemplateId,
   isSystemCatalogOnlyFormType,
   isSystemCatalogOnlyTemplateCode,
   listAllRegistrationCreateFormSpecs,
@@ -24,7 +25,11 @@ describe('isSystemCatalogOnlyFormType', () => {
     expect(isSystemCatalogOnlyFormType('APPLICATION')).toBe(false)
     expect(isSystemCatalogOnlyFormType('RECRUITMENT')).toBe(false)
     expect(isSystemCatalogOnlyTemplateCode('registration-general')).toBe(true)
+    expect(isSystemCatalogOnlyTemplateCode('registration-trained-teachers')).toBe(true)
     expect(isSystemCatalogOnlyTemplateCode('application-participant-school')).toBe(false)
+    expect(isRegistrationCatalogTemplateId(1)).toBe(true)
+    expect(isRegistrationCatalogTemplateId(41)).toBe(true)
+    expect(isRegistrationCatalogTemplateId(2)).toBe(false)
   })
 })
 

@@ -266,6 +266,19 @@ function isCopyFromNonCatalogOriginalError(error: unknown): boolean {
   return message.includes('카탈로그 원본에서만')
 }
 
+function isRegistrationCatalogCopyPolicyError(error: unknown): boolean {
+  if (isRegistrationCatalogTemplateId((error as { templateId?: number })?.templateId)) {
+    return true
+  }
+  const status = (error as { response?: { status?: number } })?.response?.status
+  const message = extractCopyErrorMessage(error)
+  if (status !== 400) return false
+  return (
+    /REGISTRATION|등록 양식|시스템 제공/i.test(message) ||
+    message.includes('프로그램 전용 COPY 대상이 아닙니다')
+  )
+}
+
 function extractCopyErrorMessage(error: unknown): string {
   if (error && typeof error === 'object') {
     const data = (error as { response?: { data?: { error?: { message?: string }; message?: string } } })
@@ -300,7 +313,7 @@ async function copyCatalogOperationalFormVersion(args: {
   ownerProgramId?: number
 }): Promise<{ templateId: number; templateVersionId: number }> {
   if (isRegistrationCatalogTemplateId(args.sourceTemplateId)) {
-    throw new Error('등록 양식(template 1)은 프로그램 전용 COPY 대상이 아닙니다.')
+    throw new Error('시스템 제공 등록 양식은 프로그램 전용 COPY 대상이 아닙니다.')
   }
   const copyOwnerProgramId = args.ownerProgramId ?? toOwnerProgramId(args.programId)
   try {
@@ -325,6 +338,9 @@ async function copyCatalogOperationalFormVersion(args: {
         ownerProgramId: copyOwnerProgramId,
       })
       throw error
+    }
+    if (isRegistrationCatalogCopyPolicyError(error)) {
+      throw new Error('시스템 제공 등록 양식은 프로그램 전용 COPY 대상이 아닙니다.')
     }
     if (isCopyFromNonCatalogOriginalError(error)) {
       const draftVersionId = await createDraftVersionOnTemplate(
@@ -476,8 +492,11 @@ async function saveProgramScopedOperationalFormVersionOnce(input: {
     publishedVersionId = await publishFormTemplateVersionById(draftVersionId)
     if (catalog != null && draftTemplateId !== catalog.templateId) {
       try {
+        const userFormDescription = args.draft.paragraphs
+          .map(paragraph => paragraph.paragraphDescription?.trim())
+          .find(text => Boolean(text))
         await updateFormTemplateRemote(draftTemplateId, {
-          description: `program-scoped:${args.program.id}`,
+          description: userFormDescription || `program-scoped:${args.program.id}`,
         })
       } catch (error) {
         console.warn('[program-form-bindings] label program-scoped template failed', error)

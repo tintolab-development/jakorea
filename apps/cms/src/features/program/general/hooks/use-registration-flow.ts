@@ -77,8 +77,8 @@ import {
 import { listIncompleteGeneralProgramRecruitmentRequiredFields } from '@/features/program/general/lib/registration-recruitment-required-fields'
 import { listIncompleteEconomyProgramRecruitmentRequiredFields } from '@/features/program/general/lib/economy-program-registration-required-fields'
 import {
-  peekActiveTrainedTeachersApplicationOverlayRecord,
-  peekActiveTrainedTeachersRecruitmentOverlayRecord,
+  peekDirtyTrainedTeachersApplicationOverlayRecord,
+  peekDirtyTrainedTeachersRecruitmentOverlayRecord,
   peekTrainedTeachersRegistrationRhf,
 } from '@/features/program/trained-teachers/lib/registration-rhf-api'
 import { listIncompleteTrainedTeachersRecruitmentRequiredFields } from '@/features/program/trained-teachers/lib/trained-teachers-recruitment-required-fields'
@@ -893,10 +893,10 @@ export function useGeneralProgramRegistrationFlow(
           : undefined,
         overlayForTemplateCode: code => {
           if (code === 'recruitment-trained-teachers') {
-            return peekActiveTrainedTeachersRecruitmentOverlayRecord() ?? undefined
+            return peekDirtyTrainedTeachersRecruitmentOverlayRecord() ?? undefined
           }
           if (code === 'application-trained-teachers') {
-            return peekActiveTrainedTeachersApplicationOverlayRecord() ?? undefined
+            return peekDirtyTrainedTeachersApplicationOverlayRecord() ?? undefined
           }
           // P5-d: 일반 RHF가 마운트돼 있으면 신청 overlay는 RHF 투영만 쓴다(스토어 fallback 없음).
           // RHF가 없는 경로(구 경로)만 스토어를 읽는다.

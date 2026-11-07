@@ -69,13 +69,13 @@ vi.mock('@/features/program/general/lib/registration-operational-form-drafts', (
     createSeedDraftForOperationalCatalogId(...args),
 }))
 
-const peekActiveTrainedTeachersRecruitmentOverlayRecord = vi.fn()
-const peekActiveTrainedTeachersApplicationOverlayRecord = vi.fn()
+const peekDirtyTrainedTeachersRecruitmentOverlayRecord = vi.fn()
+const peekDirtyTrainedTeachersApplicationOverlayRecord = vi.fn()
 vi.mock('@/features/program/trained-teachers/lib/registration-rhf-api', () => ({
-  peekActiveTrainedTeachersRecruitmentOverlayRecord: () =>
-    peekActiveTrainedTeachersRecruitmentOverlayRecord(),
-  peekActiveTrainedTeachersApplicationOverlayRecord: () =>
-    peekActiveTrainedTeachersApplicationOverlayRecord(),
+  peekDirtyTrainedTeachersRecruitmentOverlayRecord: () =>
+    peekDirtyTrainedTeachersRecruitmentOverlayRecord(),
+  peekDirtyTrainedTeachersApplicationOverlayRecord: () =>
+    peekDirtyTrainedTeachersApplicationOverlayRecord(),
 }))
 
 const peekActiveUjatRecruitInstitutionOverlayRecord = vi.fn()
@@ -114,8 +114,8 @@ describe('prepareRegistrationCreateFormBindings (CREATE 후 적용할 양식 목
     vi.clearAllMocks()
     httpCalls.length = 0
     collectOperationalOverlayForCatalogId.mockReturnValue(null)
-    peekActiveTrainedTeachersRecruitmentOverlayRecord.mockReturnValue(null)
-    peekActiveTrainedTeachersApplicationOverlayRecord.mockReturnValue(null)
+    peekDirtyTrainedTeachersRecruitmentOverlayRecord.mockReturnValue(null)
+    peekDirtyTrainedTeachersApplicationOverlayRecord.mockReturnValue(null)
     peekActiveUjatRecruitInstitutionOverlayRecord.mockReturnValue(null)
     peekActiveUjatRecruitVolunteerOverlayRecord.mockReturnValue(null)
     createSeedDraftForOperationalCatalogId.mockReturnValue(createProgramRegistrationDraft())
@@ -286,11 +286,11 @@ describe('prepareRegistrationCreateFormBindings (CREATE 후 적용할 양식 목
           nameHints: [],
         },
       ])
-      peekActiveTrainedTeachersRecruitmentOverlayRecord.mockReturnValue({
+      peekDirtyTrainedTeachersRecruitmentOverlayRecord.mockReturnValue({
         'recruit.maxClassCount': 4,
         'trainedTeachersRecruit.detailInfo.programDescription': '모집 설명',
       })
-      peekActiveTrainedTeachersApplicationOverlayRecord.mockReturnValue({
+      peekDirtyTrainedTeachersApplicationOverlayRecord.mockReturnValue({
         'application.trainedTeachers.preferredSchedules': [],
       })
       const result = await prepareRegistrationCreateFormBindings({ program })
