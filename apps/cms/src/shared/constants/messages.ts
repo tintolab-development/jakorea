@@ -160,6 +160,7 @@ export const MESSAGES = {
     rejected: '거절되었습니다.',
     cancelled: '취소되었습니다.',
     saved: '저장되었습니다.',
+    issued: '발급되었습니다.',
     uploaded: '업로드되었습니다.',
     downloaded: '다운로드되었습니다.',
     exported: '내보내기가 완료되었습니다.',

@@ -133,8 +133,8 @@ export function TalentDonationApplicationDetailModal({
     )
   })()
 
-  const attachmentView = data?.attachmentFileName ? (
-    shouldUseTalentDonationApplicationRemoteApi() ? (
+  const attachmentView =
+    data?.attachmentFileName && shouldUseTalentDonationApplicationRemoteApi() ? (
       <button
         type="button"
         className="talent-app-detail-modal__attachment"
@@ -168,23 +168,9 @@ export function TalentDonationApplicationDetailModal({
         <FileIcon className="talent-app-detail-modal__file-icon" />
         <span>{data.attachmentFileName}</span>
       </button>
-    ) : data.attachmentUrl ? (
-      <a
-        className="talent-app-detail-modal__attachment"
-        href={data.attachmentUrl}
-        download={data.attachmentFileName}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <FileIcon className="talent-app-detail-modal__file-icon" />
-        <span>{data.attachmentFileName}</span>
-      </a>
     ) : (
-      <span>{data.attachmentFileName}</span>
+      <span>{data?.attachmentFileName || '-'}</span>
     )
-  ) : (
-    <span>-</span>
-  )
 
   const footer = (
     <>

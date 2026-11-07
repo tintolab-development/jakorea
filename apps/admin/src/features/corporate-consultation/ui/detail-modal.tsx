@@ -113,8 +113,8 @@ export function CorporateConsultationDetailModal({
       <span>-</span>
     )
 
-  const attachmentView = data?.attachmentFileName ? (
-    shouldUseCorporateConsultationRemoteApi() ? (
+  const attachmentView =
+    data?.attachmentFileName && shouldUseCorporateConsultationRemoteApi() ? (
       <button
         type="button"
         className="corp-consult-detail-modal__attachment"
@@ -148,23 +148,9 @@ export function CorporateConsultationDetailModal({
         <FileIcon className="corp-consult-detail-modal__file-icon" />
         <span>{data.attachmentFileName}</span>
       </button>
-    ) : data.attachmentUrl ? (
-      <a
-        className="corp-consult-detail-modal__attachment"
-        href={data.attachmentUrl}
-        download={data.attachmentFileName}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <FileIcon className="corp-consult-detail-modal__file-icon" />
-        <span>{data.attachmentFileName}</span>
-      </a>
     ) : (
-      <span>{data.attachmentFileName}</span>
+      <span>{data?.attachmentFileName || '-'}</span>
     )
-  ) : (
-    <span>-</span>
-  )
 
   const footer = (
     <>

@@ -229,6 +229,10 @@ export function extractApiErrorMessage(
     return data.trim()
   }
 
+  if (code === 'AUDIT_LOG_UNAVAILABLE') {
+    return '보안 기록을 저장할 수 없어 요청이 중단되었습니다. 잠시 후 다시 시도해 주세요.'
+  }
+
   const status = options?.httpStatus
   if (status === 403) return '요청에 필요한 권한이 없습니다.'
   if (status === 404) return '요청한 정보를 찾을 수 없습니다.'

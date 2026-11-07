@@ -80,3 +80,20 @@ export function messageForProtectedDownloadErrorCode(code: string | undefined): 
 export function isFileDownloadPasswordErrorCode(code: string | undefined): boolean {
   return code === DOWNLOAD_PASSWORD_REQUIRED_CODE || code === DOWNLOAD_PASSWORD_INVALID_CODE
 }
+
+/** 암호 모달 제출 — 서버 DOWNLOAD_PASSWORD_* / field=password 와 같은 문구 */
+export function fileDownloadPasswordSubmitFieldErrors(
+  password: string,
+  confirmPassword: string
+): { password?: string; confirm?: string } {
+  if (!password.trim()) {
+    return { password: DOWNLOAD_PASSWORD_REQUIRED_MESSAGE }
+  }
+  if (!isValidFileDownloadPassword(password)) {
+    return { password: DOWNLOAD_PASSWORD_INVALID_SERVER_MESSAGE }
+  }
+  if (password !== confirmPassword) {
+    return { confirm: FILE_DOWNLOAD_PASSWORD_MISMATCH_MESSAGE }
+  }
+  return {}
+}

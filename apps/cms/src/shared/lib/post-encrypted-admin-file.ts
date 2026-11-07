@@ -3,7 +3,7 @@ import { axiosClient, type RetryableRequest } from '@/shared/instance/axios-inst
 import { hydrateAxiosBlobError } from '@/shared/lib/admin-file-upload/attachments'
 import { downloadBlob, fileNameFromContentDisposition } from '@/shared/utils/file-download'
 
-/** axios 기본 Accept: application/json 만으로는 서버 PDF/XLSX/ZIP produce가 406이 난다. */
+/** axios 기본 Accept: application/json 만으로는 구 서버 PDF produce가 406이 날 수 있다. 406은 폴백 트리거가 아니다. */
 export const ENCRYPTED_ADMIN_FILE_ACCEPT =
   'application/pdf, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/zip, application/octet-stream, application/json, */*'
 

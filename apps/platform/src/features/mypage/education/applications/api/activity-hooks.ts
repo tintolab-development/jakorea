@@ -130,14 +130,15 @@ function mapNotice(item: PortalNoticeListItem): EducationInProgressNotice | null
 function mapNoticeAttachmentListItem(
   item: PortalNoticeAttachmentListItem
 ): EducationInProgressFile | null {
-  if (item.attachmentId == null || item.postId == null) return null
+  if (item.attachmentId == null) return null
+  const postId = item.postId != null && item.postId > 0 ? String(item.postId) : undefined
   return {
     id: String(item.attachmentId),
     fileObjectId: item.fileObjectId,
     fileName: item.originalFileName?.trim() || '첨부파일',
     uploadedAt: item.createdAt ?? '',
     fileSizeBytes: item.fileSize ?? 0,
-    postId: String(item.postId),
+    ...(postId ? { postId } : {}),
     downloadPath: item.downloadPath?.trim() || undefined,
   }
 }
@@ -174,6 +175,12 @@ function mapNoticeDetail(detail: PortalNoticeDetail): {
     },
     files: (detail.attachments ?? []).flatMap(file => {
       if (file.attachmentId == null) return []
+      const attachmentPostId =
+        file.postId != null && file.postId > 0
+          ? String(file.postId)
+          : detail.postId != null && detail.postId > 0
+            ? String(detail.postId)
+            : undefined
       return [
         {
           id: String(file.attachmentId),
@@ -181,7 +188,7 @@ function mapNoticeDetail(detail: PortalNoticeDetail): {
           fileName: file.originalFileName?.trim() || '첨부파일',
           uploadedAt: file.createdAt ?? detail.createdAt ?? '',
           fileSizeBytes: file.fileSize ?? 0,
-          postId: id,
+          ...(attachmentPostId ? { postId: attachmentPostId } : {}),
           downloadPath: file.downloadPath?.trim() || undefined,
         },
       ]

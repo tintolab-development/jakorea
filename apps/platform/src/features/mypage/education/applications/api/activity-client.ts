@@ -49,6 +49,8 @@ export type PortalNoticeListResponse = {
 }
 
 export type PortalNoticeAttachment = {
+  /** 원글 program_post.id. 없으면 null이며 원글보기만 숨긴다. */
+  postId?: number | null
   attachmentId?: number
   fileObjectId?: number
   originalFileName?: string

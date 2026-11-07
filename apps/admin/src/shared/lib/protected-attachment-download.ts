@@ -33,7 +33,10 @@ export function homepageCorporateConsultationAttachmentUrl(
   )
 }
 
-function fileNameFromContentDisposition(header: string | undefined, fallback: string): string {
+export const HOMEPAGE_PROTECTED_ATTACHMENT_ACCEPT =
+  'application/pdf, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/zip, application/octet-stream, application/json, */*'
+
+export function fileNameFromContentDisposition(header: string | undefined, fallback: string): string {
   if (!header) return fallback
   const star = /filename\*\s*=\s*UTF-8''([^;]+)/i.exec(header)?.[1]?.trim().replace(/^"|"$/g, '')
   if (star) {
@@ -50,12 +53,58 @@ function fileNameFromContentDisposition(header: string | undefined, fallback: st
   return plain || fallback
 }
 
+function contentDispositionHeader(headers: unknown): string | undefined {
+  if (headers == null || typeof headers !== 'object') return undefined
+  const record = headers as Record<string, unknown> & { get?: (name: string) => unknown }
+  const raw =
+    (typeof record.get === 'function' ? record.get('content-disposition') : undefined) ??
+    record['content-disposition'] ??
+    record['Content-Disposition']
+  if (typeof raw === 'string' && raw.trim()) return raw
+  if (Array.isArray(raw) && typeof raw[0] === 'string' && raw[0].trim()) return raw[0]
+  return undefined
+}
+
+function isBlobLike(data: unknown): data is Blob {
+  if (typeof Blob !== 'undefined' && data instanceof Blob) return true
+  return (
+    typeof data === 'object' &&
+    data != null &&
+    typeof (data as Blob).size === 'number' &&
+    (typeof (data as Blob).text === 'function' || typeof (data as Blob).arrayBuffer === 'function')
+  )
+}
+
+async function blobToText(data: Blob): Promise<string> {
+  if (typeof data.text === 'function') {
+    const text = await data.text()
+    if (text) return text
+  }
+  if (typeof data.arrayBuffer === 'function') {
+    const buffer = await data.arrayBuffer()
+    if (buffer.byteLength > 0) return new TextDecoder().decode(buffer)
+  }
+  return ''
+}
+
+function redactPasswordFromAxiosError(error: unknown): unknown {
+  if (!axios.isAxiosError(error) || error.config == null) return error
+  const data = error.config.data as unknown
+  if (data && typeof data === 'object' && !Array.isArray(data) && 'password' in (data as object)) {
+    error.config.data = { ...(data as Record<string, unknown>), password: '[REDACTED]' }
+  } else if (typeof data === 'string' && /"password"\s*:/.test(data)) {
+    error.config.data = '[REDACTED]'
+  }
+  return error
+}
+
 async function hydrateAxiosBlobError(error: unknown): Promise<unknown> {
+  redactPasswordFromAxiosError(error)
   if (!axios.isAxiosError(error) || error.response == null) return error
   const data = error.response.data
-  if (!(data instanceof Blob)) return error
+  if (!isBlobLike(data)) return error
   try {
-    const text = await data.text()
+    const text = await blobToText(data)
     if (!text.trim()) return error
     error.response.data = JSON.parse(text) as unknown
   } catch {
@@ -76,24 +125,40 @@ function saveBlob(blob: Blob, fileName: string): void {
   window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0)
 }
 
+function looksLikeDownloadUrlJson(payload: unknown): boolean {
+  if (payload == null || typeof payload !== 'object' || Array.isArray(payload)) return false
+  const downloadUrl = (payload as { downloadUrl?: unknown }).downloadUrl
+  return typeof downloadUrl === 'string' && downloadUrl.trim().length > 0
+}
+
 async function throwIfJsonErrorBlob(payload: Blob, status: number): Promise<void> {
   const type = payload.type.toLowerCase()
   if (type.includes('pdf') || type.includes('zip') || type.includes('spreadsheet') || type.includes('excel')) {
     return
   }
-  if (!type.includes('json')) {
-    const head = (await payload.slice(0, 1).text()).trim()
-    if (head !== '{' && head !== '[') return
+  const text = await blobToText(payload)
+  const trimmed = text.trim()
+  if (!type.includes('json') && !trimmed.startsWith('{') && !trimmed.startsWith('[')) {
+    return
+  }
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(trimmed) as unknown
+  } catch {
+    return
+  }
+  if (looksLikeDownloadUrlJson(parsed)) {
+    throw new Error('암호화된 파일을 받지 못했습니다.')
   }
   const error = new AxiosError('첨부파일 다운로드에 실패했습니다.')
   error.response = {
-    data: payload,
+    data: parsed,
     status,
     statusText: 'Error',
     headers: {},
     config: error.config ?? ({ headers: {} } as InternalAxiosRequestConfig),
   }
-  throw await hydrateAxiosBlobError(error)
+  throw error
 }
 
 /** POST { password } 암호화 blob 저장. GET/downloadUrl 새 탭 없음. */
@@ -108,22 +173,21 @@ export async function downloadHomepageProtectedAttachment(input: {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Accept:
-          'application/pdf, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/zip, application/octet-stream, application/json, */*',
+        Accept: HOMEPAGE_PROTECTED_ATTACHMENT_ACCEPT,
       },
       data: { password: input.password },
       responseType: 'blob',
+      transformResponse: [data => data],
     })
     const blob = response.data
-    if (!(blob instanceof Blob) || blob.size < 1) {
+    if (!isBlobLike(blob) || blob.size < 1) {
       throw new Error('암호화된 파일을 받지 못했습니다.')
     }
     await throwIfJsonErrorBlob(blob, response.status)
-    const header = response.headers['content-disposition']
     saveBlob(
       blob,
       fileNameFromContentDisposition(
-        typeof header === 'string' ? header : undefined,
+        contentDispositionHeader(response.headers),
         input.fallbackFileName.trim() || 'download'
       )
     )

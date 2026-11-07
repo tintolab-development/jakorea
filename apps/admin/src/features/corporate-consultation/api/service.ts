@@ -33,6 +33,7 @@ export async function getCorporateConsultationService(id: string, actorName?: st
         return null;
     }
 }
+/** applicationId·consultationId 진입 모두 상담 PK를 path id로 쓴다. */
 export async function downloadCorporateConsultationAttachmentService(id: string, assetId: number | null | undefined, password: string, fallbackFileName: string): Promise<void> {
     const numericId = Number(id);
     if (!Number.isFinite(numericId) || numericId <= 0) {

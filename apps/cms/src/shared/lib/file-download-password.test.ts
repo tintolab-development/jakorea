@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  fileDownloadPasswordSubmitFieldErrors,
   formatContainedPiiLead,
   isValidFileDownloadPassword,
   parseContainedPiiTypes,
@@ -26,6 +27,13 @@ describe('file download password', () => {
     expect(validateFileDownloadPasswordConfirm('short', 'short')).toBe(
       '영문·숫자·특수문자를 조합해 8자 이상 입력해 주세요.'
     )
+    expect(fileDownloadPasswordSubmitFieldErrors('', 'Jafile1!')).toEqual({
+      password: '파일 암호를 입력해 주세요.',
+    })
+    expect(fileDownloadPasswordSubmitFieldErrors('short', 'short')).toEqual({
+      password: '파일 암호는 8자 이상이며 영문, 숫자, 특수문자를 포함하고 공백이 없어야 합니다.',
+    })
+    expect(fileDownloadPasswordSubmitFieldErrors('Jafile1!', 'Jafile1!')).toEqual({})
   })
 
   it('포함 개인정보 문구를 동적으로 만든다', () => {

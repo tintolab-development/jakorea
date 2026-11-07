@@ -3,18 +3,18 @@ import { Form } from 'antd'
 import {
   FILE_DOWNLOAD_PASSWORD_NOT_STORED_MESSAGE,
   FILE_DOWNLOAD_PASSWORD_RULE_MESSAGE,
+  fileDownloadPasswordSubmitFieldErrors,
   formatContainedPiiLead,
-  validateFileDownloadPasswordConfirm,
   type ContainedPiiType,
 } from '@jakorea/domain/shared/file-download-password'
 import {
   resolveContainedPiiTypes,
   type ProtectedFileDownloadKind,
 } from '@jakorea/domain/shared/protected-file-download-kinds'
+import { getFileDownloadPasswordFormError } from '@/shared/lib/file-download-password-api-error'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsInput } from '@/shared/ui'
-import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import './file-password-setup-modal.css'
 
 export interface FilePasswordSetupModalProps {
@@ -36,30 +36,34 @@ export function FilePasswordSetupModal({
   onCancel,
   onConfirm,
 }: FilePasswordSetupModalProps) {
-  const { showAlert } = useCmsAlert()
   const passwordId = useId()
   const confirmId = useId()
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordError, setPasswordError] = useState<string | null>(null)
+  const [confirmError, setConfirmError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!open) return
     setPassword('')
     setConfirmPassword('')
+    setPasswordError(null)
+    setConfirmError(null)
   }, [open])
 
   const lead = formatContainedPiiLead(resolveContainedPiiTypes(kind, containedPiiTypes))
 
-  const handleConfirm = () => {
-    const error = validateFileDownloadPasswordConfirm(password, confirmPassword)
-    if (error) {
-      showAlert({
-        title: '안내',
-        content: error,
-      })
-      return
+  const handleConfirm = async () => {
+    const local = fileDownloadPasswordSubmitFieldErrors(password, confirmPassword)
+    setPasswordError(local.password ?? null)
+    setConfirmError(local.confirm ?? null)
+    if (local.password || local.confirm) return
+    try {
+      await onConfirm(password)
+    } catch (error) {
+      const fieldError = getFileDownloadPasswordFormError(error)
+      if (fieldError) setPasswordError(fieldError)
     }
-    void onConfirm(password)
   }
 
   return (
@@ -85,7 +89,7 @@ export function FilePasswordSetupModal({
             size="large"
             type="button"
             loading={confirmLoading}
-            onClick={handleConfirm}
+            onClick={() => void handleConfirm()}
           >
             다운로드
           </CmsButton>
@@ -113,10 +117,19 @@ export function FilePasswordSetupModal({
             autoComplete="new-password"
             allowClear={false}
             value={password}
-            onChange={e => setPassword(e.target.value)}
+            status={passwordError ? 'error' : undefined}
+            onChange={e => {
+              setPassword(e.target.value)
+              if (passwordError) setPasswordError(null)
+            }}
             width="100%"
             placeholder="사용할 암호를 입력해 주세요"
           />
+          {passwordError ? (
+            <p className="file-password-setup-modal__field-error" role="alert">
+              {passwordError}
+            </p>
+          ) : null}
           <label className="file-password-setup-modal__label" htmlFor={confirmId}>
             파일 암호 확인{' '}
             <span className="file-password-setup-modal__required" aria-hidden>
@@ -129,10 +142,19 @@ export function FilePasswordSetupModal({
             autoComplete="new-password"
             allowClear={false}
             value={confirmPassword}
-            onChange={e => setConfirmPassword(e.target.value)}
+            status={confirmError ? 'error' : undefined}
+            onChange={e => {
+              setConfirmPassword(e.target.value)
+              if (confirmError) setConfirmError(null)
+            }}
             width="100%"
             placeholder="암호를 한 번 더 입력해 주세요"
           />
+          {confirmError ? (
+            <p className="file-password-setup-modal__field-error" role="alert">
+              {confirmError}
+            </p>
+          ) : null}
         </div>
       </Form>
     </ContentModal>

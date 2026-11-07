@@ -47,16 +47,15 @@ export async function recordFileDownload(payload: RecordDownloadPayload): Promis
   const downloadedAt = new Date().toISOString()
 
   if (shouldRecordFileAccessRemotely()) {
-    const created = await postFileAccessLog({
+    await postFileAccessLog({
       fileName,
       ...(typeof navigator !== 'undefined' && navigator.userAgent
         ? { userAgent: navigator.userAgent }
         : {}),
-      ...(payload.ipAddress ? { ipAddress: payload.ipAddress } : {}),
     })
     void queryClient.invalidateQueries({ queryKey: ['cms', 'logs'] })
     return {
-      id: created.id ?? `remote-${Date.now()}`,
+      id: `remote-${Date.now()}`,
       fileName,
       userId,
       userName,
