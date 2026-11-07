@@ -2,13 +2,19 @@
  * 산출 내역서 모달 — 지급 현황 상세(프로그램/강사) 공통 구현
  */
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Spin } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { CmsButton, showNotificationResendRequestCompletedAlert, useCmsAlert } from '@/shared/ui'
 import type { PaymentOrderProgramCalculationStatement } from '@/features/settlement-management/model/payment-order-admin-list'
 import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
 import { useConfirmPaymentStatementMutation, useRejectPaymentStatementMutation } from '@/features/settlement-management/hooks/use-confirm-payment-statement-mutation'
+import { useResendSettlementNotificationMutation } from '@/features/settlement-management/hooks/use-resend-settlement-notification-mutation'
+import { SettlementNotificationResendModal } from '@/features/settlement/ui/payment-record/settlement-notification-resend-modal'
+import {
+  canResendSettlementCalculationStatementNotification,
+  resolveSettlementNotificationResendKind,
+} from '@/features/settlement/lib/settlement-notification-resend'
 import type { PaymentOrdersDetailContextQueryResult } from '@/features/settlement-management/hooks/use-payment-orders-detail-query'
 import type { PaymentOrderCalculationStatementCommitPayload } from '@/pages/settlement-management/payment-order-detail-fullpage-shared'
 import {
@@ -61,6 +67,7 @@ export interface PaymentOrderCalculationStatementModalImplProps {
   paymentOrdersRemote?: boolean
   statementId?: number | null
   settlementId?: number | null
+  availableActions?: readonly string[] | null
   detailContextQuery?: PaymentOrdersDetailContextQueryResult
   /**
    * 산출 내역서 UI 유형 — 상세 페이지가 아니라 **테이블 유형**을 따른다.
@@ -85,6 +92,7 @@ export function PaymentOrderCalculationStatementModalImpl({
   paymentOrdersRemote = false,
   statementId,
   settlementId,
+  availableActions,
   detailContextQuery,
   entryKind,
   entryClassName,
@@ -94,11 +102,14 @@ export function PaymentOrderCalculationStatementModalImpl({
   const { showAlert } = useCmsAlert()
   const confirmMutation = useConfirmPaymentStatementMutation()
   const rejectMutation = useRejectPaymentStatementMutation()
+  const resendNotificationMutation = useResendSettlementNotificationMutation()
+  const resendIdempotencyKeyRef = useRef<string | null>(null)
   const [paymentConfirmOpen, setPaymentConfirmOpen] = useState(false)
   const [paymentRejectOpen, setPaymentRejectOpen] = useState(false)
   const [paymentRejectDoneOpen, setPaymentRejectDoneOpen] = useState(false)
   const [paymentRejectReason, setPaymentRejectReason] = useState('')
   const [issuanceViewOpen, setIssuanceViewOpen] = useState(false)
+  const [notificationResendOpen, setNotificationResendOpen] = useState(false)
 
   const basisDetailContext = useMemo(() => {
     if (!data || (data.context !== 'program' && data.context !== 'instructor')) {
@@ -135,6 +146,8 @@ export function PaymentOrderCalculationStatementModalImpl({
       setPaymentRejectDoneOpen(false)
       setPaymentRejectReason('')
       setIssuanceViewOpen(false)
+      setNotificationResendOpen(false)
+      resendIdempotencyKeyRef.current = null
     }
   }, [open])
   /* eslint-enable react-hooks/set-state-in-effect */
@@ -231,6 +244,16 @@ export function PaymentOrderCalculationStatementModalImpl({
   }
 
   const processingStatusClass = statement.basic.processingStatusClass
+  const resendKind = resolveSettlementNotificationResendKind(processingStatusClass)
+  const canResendNotification =
+    paymentOrdersRemote &&
+    settlementId != null &&
+    resendKind != null &&
+    canResendSettlementCalculationStatementNotification(
+      processingStatusClass,
+      availableActions
+    )
+  const hasStoredRejectionReason = Boolean(statement.basic.processingRejectionReason?.trim())
   const canIssuePaymentStatement = isPaymentOrderLineEligibleForPaymentStatementIssue(
     processingStatusClass
   )
@@ -316,6 +339,9 @@ export function PaymentOrderCalculationStatementModalImpl({
             : (statement.basic as unknown as PaymentOrderCalculationStatementProgramContext['basic'])
         }
         style={{ minWidth: CALC_STATEMENT_CONTENT_MIN_WIDTH }}
+        onResendNotificationClick={
+          canResendNotification ? () => setNotificationResendOpen(true) : undefined
+        }
       />
     ) : (
       <PaymentOrderCalculationStatementInstructorBasicSection
@@ -325,6 +351,9 @@ export function PaymentOrderCalculationStatementModalImpl({
             : (statement.basic as unknown as PaymentOrderCalculationStatementInstructorContext['basic'])
         }
         style={{ minWidth: CALC_STATEMENT_CONTENT_MIN_WIDTH }}
+        onResendNotificationClick={
+          canResendNotification ? () => setNotificationResendOpen(true) : undefined
+        }
       />
     )
 
@@ -363,8 +392,15 @@ export function PaymentOrderCalculationStatementModalImpl({
                 <CmsButton
                   variant="delete"
                   size="medium"
-                  disabled={rejectMutation.isPending}
-                  onClick={() => setPaymentRejectOpen(true)} >
+                  disabled
+                  onClick={() =>
+                    showAlert({
+                      title: '안내',
+                      content:
+                        '산출 내역서에서는 신청 반려를 처리할 수 없습니다. 개인 일정별 정산 신청 상세에서만 반려할 수 있습니다.',
+                    })
+                  }
+                >
                   신청 반려
                 </CmsButton>
                 <CmsButton
@@ -428,6 +464,65 @@ export function PaymentOrderCalculationStatementModalImpl({
         detail={selectedBasisDetail}
         zIndex={1400}
       />
+      {resendKind != null ? (
+        <SettlementNotificationResendModal
+          open={notificationResendOpen}
+          kind={resendKind}
+          hasStoredRejectionReason={hasStoredRejectionReason}
+          confirmLoading={resendNotificationMutation.isPending}
+          zIndex={1500}
+          onCancel={() => {
+            if (resendNotificationMutation.isPending) return
+            resendIdempotencyKeyRef.current = null
+            setNotificationResendOpen(false)
+          }}
+          onConfirm={payload => {
+            if (settlementId == null || resendNotificationMutation.isPending) return
+            if (
+              payload.notifyTiming === 'manual' &&
+              (!payload.manualNotifyAt || !payload.manualNotifyAt.isAfter(new Date()))
+            ) {
+              void showAlert({
+                title: '예약 발송 일시 확인',
+                content: '예약 발송 일시는 현재 시각보다 이후로 설정해 주세요.',
+              })
+              return
+            }
+            const idempotencyKey =
+              resendIdempotencyKeyRef.current ??
+              `settlement-${settlementId}-${crypto.randomUUID()}`
+            resendIdempotencyKeyRef.current = idempotencyKey
+            void resendNotificationMutation
+              .mutateAsync({
+                settlementId,
+                idempotencyKey,
+                body: {
+                  timing: payload.notifyTiming === 'manual' ? 'SCHEDULED' : 'IMMEDIATE',
+                  scheduledAt:
+                    payload.notifyTiming === 'manual'
+                      ? (payload.manualNotifyAt?.toISOString() ?? null)
+                      : null,
+                  reason:
+                    resendKind === 'rejected' ? payload.reason.trim() || null : null,
+                },
+              })
+              .then(() => {
+                resendIdempotencyKeyRef.current = null
+                setNotificationResendOpen(false)
+                showNotificationResendRequestCompletedAlert()
+              })
+              .catch(error => {
+                showAlert({
+                  title: '알림 재발송 실패',
+                  content: getSettlementApiErrorMessage(
+                    error,
+                    '알림 재발송에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+                  ),
+                })
+              })
+          }}
+        />
+      ) : null}
     </>
   )
 }

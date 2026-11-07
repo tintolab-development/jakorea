@@ -9,6 +9,7 @@ import {
   messageForProtectedDownloadErrorCode,
 } from '@jakorea/domain/shared/file-download-password'
 import { extractApiErrorMessage } from '@/shared/lib/extract-api-error-message'
+import { getFileDownloadPasswordFormError as getSharedFileDownloadPasswordFormError } from '@/shared/lib/file-download-password-api-error'
 
 const PAYMENT_STATEMENT_STATUS_CONFLICT = 'PAYMENT_STATEMENT_STATUS_CONFLICT'
 const PAYMENT_STATEMENT_CONFLICT_FALLBACK =
@@ -324,6 +325,11 @@ export function getSettlementConfigErrorField(
 
 export function isFileDownloadPasswordApiError(error: unknown): boolean {
   return isFileDownloadPasswordErrorCode(getSettlementApiErrorCode(error))
+}
+
+/** 400 error.code + field=password 를 암호 입력 폼 에러로 쓴다. */
+export function getFileDownloadPasswordFormError(error: unknown): string | null {
+  return getSharedFileDownloadPasswordFormError(error)
 }
 
 export function isPaymentStatementStatusConflictError(error: unknown): boolean {

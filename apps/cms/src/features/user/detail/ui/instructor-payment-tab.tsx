@@ -281,10 +281,12 @@ export function InstructorPaymentTab({
             await downloadPaymentStatementRemote(settlementId, { password })
           }
         } catch (error) {
-          showAlert({
-            title: '안내',
-            content: getSettlementApiErrorMessage(error, '지급조서 일괄 발급에 실패했습니다.'),
-          })
+          if (!isFileDownloadPasswordApiError(error)) {
+            showAlert({
+              title: '안내',
+              content: getSettlementApiErrorMessage(error, '지급조서 일괄 발급에 실패했습니다.'),
+            })
+          }
           throw error
         } finally {
           setBulkDownloadLoading(false)

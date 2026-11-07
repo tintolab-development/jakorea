@@ -11,11 +11,13 @@ import { PaymentOrderCalculationStatementProcessingStatusView } from './payment-
 export interface PaymentOrderCalculationStatementProgramBasicSectionProps {
   basic: PaymentOrderCalculationStatementProgramBasicInfo
   style?: CSSProperties
+  onResendNotificationClick?: () => void
 }
 
 export function PaymentOrderCalculationStatementProgramBasicSection({
   basic,
   style,
+  onResendNotificationClick,
 }: PaymentOrderCalculationStatementProgramBasicSectionProps) {
   const formCardClass =
     'payment-order-calc-statement-modal__detail-form-card payment-order-calc-statement-modal__detail-form-card--program'
@@ -54,7 +56,12 @@ export function PaymentOrderCalculationStatementProgramBasicSection({
           <DetailInfoForm.Field
             label="지급 조서 처리 현황"
             fullRow
-            view={<PaymentOrderCalculationStatementProcessingStatusView basic={basic} />}
+            view={
+              <PaymentOrderCalculationStatementProcessingStatusView
+                basic={basic}
+                onResendNotificationClick={onResendNotificationClick}
+              />
+            }
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">

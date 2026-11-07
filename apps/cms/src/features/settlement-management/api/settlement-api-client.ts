@@ -123,6 +123,38 @@ export async function rejectPaymentStatementRemote(
   await settlementApi.rejectPaymentStatement(statementId, body)
 }
 
+export type SettlementNotificationResendRequestBody = {
+  timing: 'IMMEDIATE' | 'SCHEDULED'
+  scheduledAt?: string | null
+  reason?: string | null
+}
+
+/**
+ * POST /api/admin/settlements/{settlementId}/notifications/resend
+ * 최신 statementStatus·paymentStatus로 기존 알림만 재enqueue. 업무 상태는 바꾸지 않는다.
+ */
+export async function resendSettlementNotificationRemote(
+  settlementId: number,
+  body: SettlementNotificationResendRequestBody,
+  idempotencyKey: string
+): Promise<void> {
+  await unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/settlements/${settlementId}/notifications/resend`,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Idempotency-Key': idempotencyKey,
+      },
+      data: {
+        timing: body.timing,
+        ...(body.scheduledAt != null ? { scheduledAt: body.scheduledAt } : {}),
+        ...(body.reason != null ? { reason: body.reason } : {}),
+      },
+    })
+  )
+}
+
 export async function requestSettlementCorrectionRemote(
   settlementId: number,
   body: SettlementCorrectionRequest

@@ -1303,7 +1303,6 @@ export function UserListPage() {
                   openInstructorRegisterModal()
                   return
                 }
-                window.alert('준비 중입니다')
               }} >
               {resolvedMemberListKind === 'institutions'
                 ? '학교 등록'

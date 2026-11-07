@@ -3,6 +3,7 @@ import {
   getSettlementConfigErrorField,
   getSettlementApiErrorMessage,
   getSettlementApiErrorCode,
+  getFileDownloadPasswordFormError,
   getNormalizedSettlementApiError,
   isSettlementExportAlreadyDownloadedError,
   isSettlementExportReissueRequiredError,
@@ -331,6 +332,18 @@ describe('normalizeSettlementApiErrorCode', () => {
         },
         'fallback'
       )
+    ).toBe('파일 암호는 8자 이상이며 영문, 숫자, 특수문자를 포함하고 공백이 없어야 합니다.')
+    expect(
+      getFileDownloadPasswordFormError({
+        response: {
+          status: 400,
+          data: {
+            message:
+              '파일 암호는 8자 이상이며 영문, 숫자, 특수문자를 포함하고 공백이 없어야 합니다.',
+            error: { code: 'DOWNLOAD_PASSWORD_INVALID', field: 'password' },
+          },
+        },
+      })
     ).toBe('파일 암호는 8자 이상이며 영문, 숫자, 특수문자를 포함하고 공백이 없어야 합니다.')
   })
 

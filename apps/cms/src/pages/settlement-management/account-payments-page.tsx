@@ -40,6 +40,7 @@ import { useSettlementBudgetSummaryQuery } from '@/features/settlement-managemen
 import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
 import { isGlobalApiErrorAlertShown } from '@/shared/lib/show-global-api-error-alert'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
+import { showIssueCompletedAlert } from '@/shared/ui/show-issue-completed-alert'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canAccessAccountPayments } from '@/shared/lib/account-payments-access'
 import {
@@ -733,6 +734,7 @@ export default function AccountPaymentsPage() {
       setIssuedFormPreviewRows(rows)
       setIssuedFormExport(readyExport)
       setBulkTransferPreviewOpen(true)
+      showIssueCompletedAlert()
     })()
   }, [notifyExportError, resolveToolbarFormIssueRows, waitReadyFormExport])
 
@@ -756,6 +758,7 @@ export default function AccountPaymentsPage() {
       setIssuedFormPreviewRows(rows)
       setIssuedFormExport(readyExport)
       setTaxFilingPreviewOpen(true)
+      showIssueCompletedAlert()
     })()
   }, [notifyExportError, resolveToolbarFormIssueRows, waitReadyFormExport])
 
@@ -1045,6 +1048,7 @@ export default function AccountPaymentsPage() {
       setIssuedFormPreviewRows(rowsForPreview)
       setIssuedFormExport(readyExport)
       setBulkTransferPreviewOpen(true)
+      showIssueCompletedAlert()
     })()
   }, [
     accountPaymentCompleteSuccessContext,

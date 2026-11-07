@@ -1,4 +1,8 @@
-import { formatDateDot, formatDateDotWithWeekday } from '@/shared/utils/date'
+import {
+  formatDateDot,
+  formatDateDotWithWeekday,
+  getSeoulCalendarDate,
+} from '@/shared/utils/date'
 import type {
   SettlementFrontendItemResponse,
   SettlementFrontendResponse,
@@ -95,16 +99,25 @@ function mapItemToLine(
   }
 }
 
+function seoulCalendarDateFromIso(iso?: string): string | undefined {
+  if (!iso?.trim()) return undefined
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return undefined
+  return getSeoulCalendarDate(date)
+}
+
 function formatIsoDate(iso?: string): string {
-  if (!iso?.trim()) return '-'
-  const label = formatDateDot(iso.slice(0, 10))
-  return label === '-' ? iso : label
+  const calendar = seoulCalendarDateFromIso(iso)
+  if (!calendar) return iso?.trim() ? iso : '-'
+  const label = formatDateDot(calendar)
+  return label === '-' ? (iso?.trim() || '-') : label
 }
 
 function formatIsoDateWithWeekday(iso?: string): string {
-  if (!iso?.trim()) return '-'
-  const label = formatDateDotWithWeekday(iso.slice(0, 10))
-  return label === '-' ? iso : label
+  const calendar = seoulCalendarDateFromIso(iso)
+  if (!calendar) return iso?.trim() ? iso : '-'
+  const label = formatDateDotWithWeekday(calendar)
+  return label === '-' ? (iso?.trim() || '-') : label
 }
 
 export function mapSettlementDetailToInstructorInvoice(
@@ -205,7 +218,9 @@ export function mapSettlementItemToInstructorMemberRow(
   const status = resolveSettlementUiStatus(item)
   const programName = item.programNameKo?.trim() || `프로그램 ${item.programId ?? ''}`
   const calendarDate =
-    item.lectureDate?.slice(0, 10) ?? item.expectedTransferDate?.slice(0, 10) ?? ''
+    seoulCalendarDateFromIso(item.lectureDate) ??
+    seoulCalendarDateFromIso(item.expectedTransferDate) ??
+    ''
 
   return {
     id: String(settlementId),
@@ -216,8 +231,8 @@ export function mapSettlementItemToInstructorMemberRow(
     programName,
     instructorName: item.instructorName?.trim(),
     institutionName: item.institutionName?.trim() || '-',
-    lectureDateDisplay: calendarDate || '-',
-    calendarDate: calendarDate || new Date().toISOString().slice(0, 10),
+    lectureDateDisplay: calendarDate ? formatDateDot(calendarDate) : '-',
+    calendarDate,
     status,
     scheduledAmount: item.netPaymentAmount ?? item.grossAmount ?? 0,
     detailAvailable: status !== 'none',

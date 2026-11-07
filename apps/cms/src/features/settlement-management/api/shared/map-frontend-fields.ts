@@ -205,13 +205,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
-function coerceTransportStudentBasisLayout(value: unknown): unknown {
-  if (!isRecord(value) || value.layout !== 'transportStudent') return value
-  if ('outbound' in value) return { ...value, layout: 'transportRoundTrip' }
-  if ('trip' in value) return { ...value, layout: 'transportOneWay' }
-  return { ...value, layout: 'transportOneWay' }
-}
-
 function hasLectureFeeAmountField(value: Record<string, unknown>): boolean {
   return (
     'feeAssessmentWon' in value ||
@@ -320,13 +313,12 @@ export function mapCalculationDetailToBasisDetail(
   candidates.push(detail)
 
   for (const candidate of candidates) {
-    const coerced = coerceTransportStudentBasisLayout(candidate)
     if (
-      isSupportedBasisDetailLayout(coerced as PaymentOrderCalculationBasisDetail) &&
-      hasTypedBasisDetailFields(coerced)
+      isSupportedBasisDetailLayout(candidate as PaymentOrderCalculationBasisDetail) &&
+      hasTypedBasisDetailFields(candidate)
     ) {
       const normalized = normalizeTypedLectureFeeBasisDetail(
-        coerced as PaymentOrderCalculationBasisDetail,
+        candidate as PaymentOrderCalculationBasisDetail,
         candidate
       )
       // typed payload에 tier/totalWon이 없으면 mapLectureFee로 급수·특강·제미나이 필드를 채운다.

@@ -102,8 +102,14 @@ export function getPaymentOrderCalculationColumns(options?: {
       options.onBasisDetailClick(row)
       return
     }
-    options?.onDetailClick?.()
-    cmsAlertModal.show({ title: '안내', content: '준비 중입니다.' })
+    if (options?.onDetailClick) {
+      options.onDetailClick()
+      return
+    }
+    cmsAlertModal.show({
+      title: '안내',
+      content: '산정 기준 상세를 표시할 수 없습니다.',
+    })
   }
 
   const sessionLabelMode = options?.lectureSessionSegmentLabel ?? 'session'
@@ -299,7 +305,10 @@ export function PaymentOrderCalculationBreakdownTable({
       onDownloadPaymentStatement()
       return
     }
-    cmsAlertModal.show({ title: '안내', content: '준비 중입니다.' })
+    cmsAlertModal.show({
+      title: '안내',
+      content: '지급조서 발급 API가 이 화면에 연결되어 있지 않습니다.',
+    })
   }
 
   return (
