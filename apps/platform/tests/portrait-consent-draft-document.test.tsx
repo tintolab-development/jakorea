@@ -7,9 +7,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-  PORTRAIT_CONSENT_DRAFT_DOCUMENT_TTL_MS,
   acquirePortraitConsentDraftDocument,
-  releasePortraitConsentDraftDocument,
   resetPortraitConsentDraftDocumentSessionForTest,
 } from '../src/features/mypage/settings/lib/portrait-consent-draft-document-session'
 
@@ -109,19 +107,13 @@ describe('acquirePortraitConsentDraftDocument', () => {
     await expect(acquirePortraitConsentDraftDocument('k', create)).resolves.toEqual(doc(2))
     expect(create).toHaveBeenCalledTimes(2)
   })
-  it('release·TTL 이후 새로 생성, 키(프로그램)별 분리', async () => {
-    let t = 0
-    const now = () => t
+  it('완료된 응답은 재사용하지 않고 키(프로그램)별로 다시 조회', async () => {
     const create = vi.fn().mockImplementation(async () => doc(3))
-    await acquirePortraitConsentDraftDocument('k', create, now)
-    await acquirePortraitConsentDraftDocument('k2', create, now)
+    await acquirePortraitConsentDraftDocument('k', create)
+    await acquirePortraitConsentDraftDocument('k2', create)
     expect(create).toHaveBeenCalledTimes(2)
-    releasePortraitConsentDraftDocument('k')
-    await acquirePortraitConsentDraftDocument('k', create, now)
+    await acquirePortraitConsentDraftDocument('k', create)
     expect(create).toHaveBeenCalledTimes(3)
-    t = PORTRAIT_CONSENT_DRAFT_DOCUMENT_TTL_MS + 1
-    await acquirePortraitConsentDraftDocument('k', create, now)
-    expect(create).toHaveBeenCalledTimes(4)
   })
 })
 
@@ -133,21 +125,20 @@ describe('MypagePortraitConsentWriteForm DRAFT 생성', () => {
     expect(captured.serverDraft).toEqual(SERVER_SCHEMA)
   })
 
-  it('취소 후 재진입은 같은 DRAFT 재사용(POST 추가 없음), 제출 후 재진입은 새로 생성', async () => {
-    createMock.mockResolvedValueOnce(doc(1)).mockResolvedValueOnce(doc(2))
+  it('취소 후 재진입은 서버를 다시 조회하고, 제출 후 재진입도 새로 생성', async () => {
+    createMock.mockResolvedValueOnce(doc(1)).mockResolvedValueOnce(doc(2)).mockResolvedValueOnce(doc(3))
     await mount()
     await unmount()
     await mount()
-    expect(createMock).toHaveBeenCalledTimes(1)
+    expect(createMock).toHaveBeenCalledTimes(2)
     await act(async () => {
       await captured.onSubmitAsync!({ draft: SERVER_SCHEMA })
     })
     expect(submitMock).toHaveBeenCalledTimes(1)
-    expect((submitMock.mock.calls[0]![1] as { createdDocument: { documentId: number } }).createdDocument.documentId).toBe(1)
-    expect(createMock).toHaveBeenCalledTimes(1)
+    expect((submitMock.mock.calls[0]![1] as { createdDocument: { documentId: number } }).createdDocument.documentId).toBe(2)
     await unmount()
     await mount()
-    expect(createMock).toHaveBeenCalledTimes(2)
+    expect(createMock).toHaveBeenCalledTimes(3)
   })
 
   it('생성 응답 전에 제출해도 같은 요청을 기다려 POST 1회', async () => {

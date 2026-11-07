@@ -1,8 +1,4 @@
-import {
-  MEMBER_CONSENT_TEMPLATE_MAP,
-  normalizeMemberConsentWriteDraft,
-} from '@jakorea/form-schema/consent'
-import { createAgreementPortraitDraft, type WritingFormDraft } from '@jakorea/form-schema/writing-form'
+import type { WritingFormDraft } from '@jakorea/form-schema/writing-form'
 import type {
   AgreementState,
   GuardianAgreementState,
@@ -61,6 +57,8 @@ export type PortraitConsentBridgeState = {
   guardianAgreements?: GuardianAgreementState
   verifiedName?: string
   portraitCompleted?: boolean
+  memberType?: 'GENERAL' | 'TEACHER'
+  birthDateIso?: string
 }
 
 /** Strict Mode remount에서도 동일 스냅샷을 재적용하기 위한 메모리 핸드오프 */
@@ -96,6 +94,8 @@ function isBridgeState(value: unknown): value is PortraitConsentBridgeState {
   if (o.guardianAgreements != null && !isAgreementState(o.guardianAgreements)) return false
   if (o.verifiedName != null && typeof o.verifiedName !== 'string') return false
   if (o.portraitCompleted != null && typeof o.portraitCompleted !== 'boolean') return false
+  if (o.memberType != null && o.memberType !== 'GENERAL' && o.memberType !== 'TEACHER') return false
+  if (o.birthDateIso != null && typeof o.birthDateIso !== 'string') return false
   return true
 }
 
@@ -251,8 +251,6 @@ export function buildPortraitConsentPath(returnSearch: string): string {
   return `${SIGN_UP_PORTRAIT_CONSENT_PATH}?${params.toString()}`
 }
 
-const PORTRAIT_CONSENT_TEMPLATE_ID = MEMBER_CONSENT_TEMPLATE_MAP.consentPortrait.templateId
-
 /** 가입 완료 시 sessionStorage에 남은 초상권 작성 draft (현재 wizard instance scope만) */
 export function readPortraitConsentDraftForSubmit(): WritingFormDraft | null {
   if (!canUseSessionStorage()) return null
@@ -263,12 +261,11 @@ export function readPortraitConsentDraftForSubmit(): WritingFormDraft | null {
   const wizardId = ensureSignupWizardInstanceId()
   if (!scope.startsWith(`${wizardId}:`)) return null
 
-  const fallbackDraft = normalizeMemberConsentWriteDraft(
-    createAgreementPortraitDraft(),
-    PORTRAIT_CONSENT_TEMPLATE_ID
-  )
   const loaded = loadPortraitConsentDraftState(
-    { draft: fallbackDraft, signatures: {} },
+    {
+      draft: { schemaVersion: 1, formSettings: { titleNumbering: 'numeric' }, paragraphs: [] },
+      signatures: {},
+    },
     scope
   )
 

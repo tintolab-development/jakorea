@@ -3,6 +3,7 @@
  * 로그인 연동 시 set/clear 호출. axios 인터셉터가 get을 사용한다.
  */
 
+import { resetPortraitConsentDraftDocumentSession } from '@/features/mypage/settings/lib/portrait-consent-draft-document-session'
 import { setAdminOnboardingRequired } from './admin-onboarding-session'
 import { emitDevAuthChange } from './auth-session-event'
 import { queryClient } from './query-client'
@@ -64,6 +65,7 @@ export function clearAuthTokens(options?: { clearQueryCache?: boolean }) {
   }
 
   setAdminOnboardingRequired(false)
+  resetPortraitConsentDraftDocumentSession()
 
   if (options?.clearQueryCache !== false) {
     queryClient.removeQueries({

@@ -44,7 +44,7 @@ export function MypagePortraitConsentWriteForm({
   const [searchParams] = useSearchParams()
   /** 원본 보기(`?mode=view`)에서는 DRAFT를 만들지 않는다 */
   const isViewMode = searchParams.get('mode') === 'view'
-  /** 작성 진입 시 DRAFT 생성 → 서버(CMS) 현재 양식으로 렌더. 실패·비원격이면 seed fallback */
+  /** 작성 진입 시 DRAFT 생성 → 서버(CMS) 현재 양식으로 렌더. 실패 시 시드로 대체하지 않는다. */
   const [createdDocument, setCreatedDocument] = useState<PortalConsentDocumentDetail | null>(null)
   const [createFailed, setCreateFailed] = useState(false)
   const programId = programTarget?.programId
@@ -79,12 +79,14 @@ export function MypagePortraitConsentWriteForm({
 
   const serverDraftPending =
     remoteEnabled && !isViewMode && createdDocument == null && !createFailed
+  const serverDraftUnavailable = remoteEnabled && !isViewMode && createFailed
 
   return (
     <PortraitConsentWriteForm
       verifiedName={displayName}
       serverDraft={serverDraft}
       serverDraftPending={serverDraftPending}
+      serverDraftUnavailable={serverDraftUnavailable}
       saveDraftState={saveMypagePortraitConsentDraftState}
       onSubmitAsync={async (state: PortraitSubmitState) => {
         // 진입 시 생성이 아직 진행 중이면 같은 Promise를 기다린다(중복 POST 방지)

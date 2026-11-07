@@ -11,11 +11,11 @@ import {
 } from '@jakorea/form-schema/consent'
 import {
   AGREEMENT_PORTRAIT_PARAGRAPH_IDS,
-  createAgreementPortraitDraft,
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '@jakorea/form-schema/writing-form'
 import { type FormUpdateParagraph, patchVerticalTableCell } from '@jakorea/form-template-runtime'
+import { restoreCompatibleConsentDraftValues } from '@/features/mypage/settings/lib/restore-compatible-consent-draft'
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { PlatformConsentFormBody } from '@/features/mypage/instructor-apply/consent/platform-consent-form-body'
 import { ConsentSignatureStatement } from '@/features/mypage/instructor-apply/consent/signature-statement'
@@ -47,7 +47,7 @@ type PortraitConsentWriteState = {
 }
 
 function createPortraitConsentDraft(): WritingFormDraft {
-  return normalizeMemberConsentWriteDraft(createAgreementPortraitDraft(), TEMPLATE_ID)
+  return { schemaVersion: 1, formSettings: { titleNumbering: 'numeric' }, paragraphs: [] }
 }
 
 function createInitialPortraitConsentState(): PortraitConsentWriteState {
@@ -92,6 +92,8 @@ function hasPortraitSignature(signature: FormSignatureValue | string | undefined
 }
 
 const SUBMIT_FAILED_ALERT_MESSAGE = '동의서 제출에 실패했어요. 잠시 후 다시 시도해 주세요.'
+const SERVER_DRAFT_UNAVAILABLE_ALERT_MESSAGE =
+  '초상권 동의 양식을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.'
 export function PortraitConsentWriteForm({
   onComplete,
   verifiedName: verifiedNameProp,
@@ -100,12 +102,14 @@ export function PortraitConsentWriteForm({
   onTitleAside,
   serverDraft,
   serverDraftPending = false,
+  serverDraftUnavailable = false,
 }: {
   /** 서버 양식 수신 대기 중 — 입력·제출 잠금(수신 후 양식 교체로 입력값이 사라지는 것 방지) */
   serverDraftPending?: boolean
+  /** 게시본 조회 실패·스키마 없음 — 고정 시드로 대체하지 않음 */
+  serverDraftUnavailable?: boolean
   /**
    * 서버(CMS) 현재 양식 schema — 있으면 로컬 seed 대신 사용(응답 값은 비우고 성명 prefill).
-   * 회원가입(비로그인) 진입은 양식 조회 API가 없어 seed fallback(BE 요청).
    */
   serverDraft?: WritingFormDraft | null
   onComplete: () => void
@@ -145,7 +149,10 @@ export function PortraitConsentWriteForm({
     const normalized = normalizeMemberConsentWriteDraft(serverDraft, TEMPLATE_ID)
     setState(prev => ({
       ...prev,
-      draft: prefillPortraitName(normalized, verifiedNameRef.current),
+      draft: prefillPortraitName(
+        restoreCompatibleConsentDraftValues(prev.draft, normalized),
+        verifiedNameRef.current,
+      ),
     }))
   }, [serverDraft])
 
@@ -191,6 +198,16 @@ export function PortraitConsentWriteForm({
 
   const handleSubmit = () => {
     if (isSubmitting) return
+    if (serverDraftPending || serverDraftUnavailable) {
+      setAlertTitle('안내')
+      setAlertMessage(
+        serverDraftUnavailable
+          ? SERVER_DRAFT_UNAVAILABLE_ALERT_MESSAGE
+          : '동의서 양식을 불러오는 중입니다.',
+      )
+      setAlertOpen(true)
+      return
+    }
     if (incomplete) {
       const unagreedLabels = collectMemberConsentUnagreedRequiredLabels(state.draft)
       if (unagreedLabels.length > 0) {
@@ -277,7 +294,7 @@ export function PortraitConsentWriteForm({
       >
         <fieldset
           className={consentStyles.fieldset}
-          disabled={serverDraftPending}
+          disabled={serverDraftPending || serverDraftUnavailable}
           aria-busy={serverDraftPending || undefined}
         >
           <PlatformConsentFormBody
@@ -293,7 +310,7 @@ export function PortraitConsentWriteForm({
             size="xlarge"
             width={240}
             type="submit"
-            disabled={isSubmitting || serverDraftPending}
+            disabled={isSubmitting || serverDraftPending || serverDraftUnavailable}
           >
             작성완료
           </PFButton>
