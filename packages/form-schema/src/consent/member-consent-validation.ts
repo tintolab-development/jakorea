@@ -359,7 +359,7 @@ export function listMemberConsentIncompleteRequiredFields(
       fields.push({
         paragraphId: RECEIPT_PRE_CONSENT_IDS.paymentRecord,
         fieldId: RECEIPT_PRE_CONSENT_IDS.paymentRecord,
-        label: '지급 확인 정보',
+        label: '지급조서',
       })
     }
   }

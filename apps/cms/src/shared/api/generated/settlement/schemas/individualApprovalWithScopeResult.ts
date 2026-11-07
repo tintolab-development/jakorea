@@ -8,9 +8,6 @@
 import type { ApplicationDecisionResponse } from './applicationDecisionResponse';
 import type { ScopeResponse } from './scopeResponse';
 
-/**
- * 개인 신청 교육범위 포함 승인 결과. educationScope는 ScopeResponse.
- */
 export interface IndividualApprovalWithScopeResult {
   decision?: ApplicationDecisionResponse;
   educationScope?: ScopeResponse;

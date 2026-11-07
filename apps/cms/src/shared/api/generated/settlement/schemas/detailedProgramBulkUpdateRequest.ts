@@ -9,7 +9,7 @@ import type { DetailedProgramBulkUpdateItem } from './detailedProgramBulkUpdateI
 
 export interface DetailedProgramBulkUpdateRequest {
   /**
-     * @minItems 1
+     * @minItems 0
      * @maxItems 500
      */
   items: DetailedProgramBulkUpdateItem[];

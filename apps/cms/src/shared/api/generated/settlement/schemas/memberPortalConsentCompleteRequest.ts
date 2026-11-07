@@ -9,25 +9,19 @@ import type { FilledDocumentRequest } from './filledDocumentRequest';
 import type { MemberPortalConsentCompleteRequestConsentStatus } from './memberPortalConsentCompleteRequestConsentStatus';
 
 export interface MemberPortalConsentCompleteRequest {
-  /** @nullable */
-  identityVerificationSessionId?: number | null;
-  /**
-     * FULL은 deprecated이며 PARTIAL로 정규화됩니다.
-     * @nullable
-     */
+  identityVerificationSessionId?: number;
+  /** PORTRAIT_RIGHTS 전용 부분동의 상태 힌트. FULL은 deprecated이며 서버가 PARTIAL로 정규화합니다. */
   consentStatus?: MemberPortalConsentCompleteRequestConsentStatus;
-  /** @nullable */
-  programEligible?: boolean | null;
+  /** PORTRAIT_RIGHTS 전용 프로그램 참여 가능 여부 힌트. 서버가 filledDocument의 1·2번 항목으로 재계산합니다. */
+  programEligible?: boolean;
+  /** Completed authored form for portrait, payment statement, facilitator pledge, and administrative information consents */
   filledDocument?: FilledDocumentRequest;
+  /** CRIMINAL_HISTORY_CHECK_CONSENT 전용, confirm 및 CLEAN 검사를 마친 원본 PDF fileObjectId */
+  evidenceFileObjectId?: number;
   /**
-     * Required original PDF for CRIMINAL_HISTORY_CHECK_CONSENT. Upload with CRIMINAL_HISTORY_CONSENT_ORIGINAL, confirm and wait for CLEAN/AVAILABLE. Other consent types reject this field. Retries must reference the same file; legacy signed documents may attach an original once.
-     * @nullable
-     */
-  evidenceFileObjectId?: number | null;
-  /**
-     * 만 14세 미만 PORTRAIT_RIGHTS complete 필수. GET guardian-verifications verificationToken.
+     * 만 14세 미만 PORTRAIT_RIGHTS complete 시 필수. POST /api/portal/me/guardian-verifications 이후 VERIFIED 조회에서 받은 one-time token.
+     * @minLength 0
      * @maxLength 256
-     * @nullable
      */
-  guardianVerificationToken?: string | null;
+  guardianVerificationToken?: string;
 }

@@ -5,22 +5,25 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { BulkDecisionRequestTiming } from './bulkDecisionRequestTiming';
 
+/**
+ * 다건 승인·반려 요청. timing을 생략하면 각 건을 즉시 발송합니다.
+ */
 export interface BulkDecisionRequest {
   /**
-     * @minItems 1
+     * 처리 대상 ID
+     * @minItems 0
      * @maxItems 100
-     * @items.minimum 1
      */
   ids: number[];
   /**
-     * 반려 또는 불합격 사유
+     * 반려·불합격 사유. 승인 요청에서는 생략합니다.
+     * @minLength 0
      * @maxLength 500
      */
   reason?: string;
-  /** @nullable */
-  timing?: BulkDecisionRequestTiming;
-  /** @nullable */
-  scheduledAt?: string | null;
+  /** IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE. 일괄 전체에 같은 시점을 적용합니다. */
+  timing?: string;
+  /** timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601 */
+  scheduledAt?: string;
 }

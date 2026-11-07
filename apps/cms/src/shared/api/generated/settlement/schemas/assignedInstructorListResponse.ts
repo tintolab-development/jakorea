@@ -8,5 +8,5 @@
 import type { AssignedInstructor } from './assignedInstructor';
 
 export interface AssignedInstructorListResponse {
-  instructors: AssignedInstructor[];
+  instructors?: AssignedInstructor[];
 }

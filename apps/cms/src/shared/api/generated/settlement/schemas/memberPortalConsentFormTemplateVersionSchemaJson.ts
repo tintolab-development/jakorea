@@ -6,4 +6,4 @@
  * OpenAPI spec version: v9
  */
 
-export type MemberPortalConsentFormTemplateVersionSchemaJson = { [key: string]: unknown };
+export type MemberPortalConsentFormTemplateVersionSchemaJson = {[key: string]: unknown};

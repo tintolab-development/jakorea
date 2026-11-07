@@ -6,36 +6,31 @@
  * OpenAPI spec version: v9
  */
 
-/**
- * 실적 목록 아이템. FE 필드명 유지. ipOwned 빈값을 JA로 채우지 않음.
- */
 export interface PerformanceRecordFrontendResponse {
   id?: string;
+  programId?: string;
+  programScheduleId?: string;
+  status?: string;
   educationMonth?: string;
   businessArea?: string;
-  sponsorNameKo?: string;
   sponsorNameEn?: string;
-  mainTitle?: string;
   titleEn?: string;
+  sponsorNameKo?: string;
+  mainTitle?: string;
   title?: string;
   textbookName?: string;
   textbookNameEn?: string;
   schoolOrOrganizationName?: string;
   district?: string;
   targetLevel?: string;
-  /** @nullable */
-  ipOwned?: string | null;
+  ipOwned?: string;
   courseDeliveredBy?: string;
   partnerInvolvement?: string;
-  /** 기관 안/밖/기타 또는 inside_school/outside_school/other */
   institutionType?: string;
   ips?: string;
-  /** @nullable */
-  programCategory?: string | null;
-  /** @nullable */
-  programChannel?: string | null;
+  programCategory?: string;
+  programChannel?: string;
   educationType?: string;
-  /** 올림 정수 문자열 */
   educationHours?: string;
   classCount?: number;
   maleParticipants?: number;
@@ -47,5 +42,13 @@ export interface PerformanceRecordFrontendResponse {
   generalTeachers?: number;
   educatedTeachers?: number;
   instructors?: number;
+  vulnerableStudents?: number;
   managerName?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  confirmedAt?: string;
+  originalPerformanceRecordId?: string;
+  revisionNo?: number;
+  latestRevision?: boolean;
+  correctionRequestId?: string;
 }

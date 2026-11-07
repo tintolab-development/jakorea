@@ -5,29 +5,30 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { BulkResultRequestNotifyTiming } from './bulkResultRequestNotifyTiming';
 
+/**
+ * 다건 선발 결과 처리 요청
+ */
 export interface BulkResultRequest {
   /**
-     * @minItems 1
+     * @minItems 0
      * @maxItems 100
-     * @items.minimum 1
      */
   ids: number[];
-  /** 업무별 허용 결과값 */
+  /**
+     * 업무 API가 허용하는 결과값. 봉사자 서류: PASS/FAIL, 최종: PASS/FAIL
+     * @minLength 1
+     */
   result: string;
-  /** @maxLength 500 */
+  /**
+     * @minLength 0
+     * @maxLength 500
+     */
   reason?: string;
-  /** @nullable */
-  reserveRank?: number | null;
-  /**
-     * 생략하면 즉시 발송. MANUAL과 SCHEDULED는 동일하며 scheduledAt 필수.
-     * @nullable
-     */
-  notifyTiming?: BulkResultRequestNotifyTiming;
-  /**
-     * notifyTiming=MANUAL일 때 필수. UTC 기준 ISO-8601 형식이며 서버 현재 시각보다 최소 60초 이후여야 합니다.
-     * @nullable
-     */
-  scheduledAt?: string | null;
+  /** 예비 합격 순위. 다건 요청에서는 모든 대상에 동일 순위를 적용하지 않으므로 현재 미지원 */
+  reserveRank?: number;
+  /** 결과 알림 시점. IMMEDIATE | ON_ANNOUNCEMENT | MANUAL | SCHEDULED. SCHEDULED는 MANUAL과 동일. 생략하면 즉시 발송 */
+  notifyTiming?: string;
+  /** notifyTiming=MANUAL 또는 SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601 */
+  scheduledAt?: string;
 }

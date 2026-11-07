@@ -7,6 +7,6 @@
  */
 
 export interface AdminSignupSocialLinkCompleteResponse {
-  status: string;
-  completedAt: string;
+  status?: string;
+  completedAt?: string;
 }

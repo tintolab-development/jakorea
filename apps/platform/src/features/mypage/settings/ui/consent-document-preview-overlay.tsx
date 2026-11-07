@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { buildPlatformConsentFillOptions, isCrimeConsentTemplate } from '@jakorea/form-schema/consent'
 import type { PaymentStatementBasicInfoValues } from '@jakorea/form-schema/consent'
-import type { WritingFormDraft } from '@jakorea/form-schema/writing-form'
+import type { WritingFormDraft, WritingFormParagraph } from '@jakorea/form-schema/writing-form'
 import { PlatformConsentFormBody } from '@/features/mypage/instructor-apply/consent/platform-consent-form-body'
 import closeIconUrl from '@/shared/ui/pf-modal/icons/close.svg'
 import { PFPagination, PFLoadingSpinner, PFText } from '@/shared/ui'
@@ -56,6 +56,7 @@ type ConsentDocumentPreviewOverlayProps = {
 function ConsentDocumentPreviewBody({
   templateId,
   pageDraft,
+  titleNumberingParagraphs,
   submittedDateLabel,
   showClosingRecipient,
   paymentBasicInfo,
@@ -64,6 +65,8 @@ function ConsentDocumentPreviewBody({
 }: {
   templateId: string
   pageDraft: WritingFormDraft
+  /** 전체 쪽 단락 — 쪽마다 번호를 1부터 다시 세지 않도록 */
+  titleNumberingParagraphs?: readonly WritingFormParagraph[]
   submittedDateLabel: string
   showClosingRecipient: boolean
   paymentBasicInfo?: Partial<PaymentStatementBasicInfoValues>
@@ -83,6 +86,7 @@ function ConsentDocumentPreviewBody({
       fillOptions={fillOptions}
       documentPreview
       documentPreviewTemplateId={templateId}
+      titleNumberingParagraphs={titleNumberingParagraphs}
       submittedDateLabel={submittedDateLabel}
       showClosingRecipient={showClosingRecipient}
       paymentBasicInfo={paymentBasicInfo}
@@ -272,6 +276,7 @@ export function ConsentDocumentPreviewOverlay({
     return splitParagraphsIntoPages(visible, previewConfig.pageBreakBeforeParagraphIds)
   }, [draft, previewConfig])
 
+  const allPageParagraphs = useMemo(() => pages.flat(), [pages])
   const totalPages = Math.max(1, pages.length)
   const safePage = Math.min(Math.max(1, currentPage), totalPages)
   const activeParagraphs = pages[safePage - 1] ?? []
@@ -325,6 +330,7 @@ export function ConsentDocumentPreviewOverlay({
               <ConsentDocumentPreviewBody
                 templateId={previewConfig!.templateId}
                 pageDraft={pageDraft}
+                titleNumberingParagraphs={allPageParagraphs}
                 submittedDateLabel={submittedDateLabel}
                 showClosingRecipient={showClosingRecipient}
                 paymentBasicInfo={paymentBasicInfo}

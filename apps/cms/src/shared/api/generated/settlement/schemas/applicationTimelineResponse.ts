@@ -6,11 +6,10 @@
  * OpenAPI spec version: v9
  */
 import type { ApplicationTimelineEventResponse } from './applicationTimelineEventResponse';
-import type { ApplicationTimelineResponseApplicationType } from './applicationTimelineResponseApplicationType';
 
 export interface ApplicationTimelineResponse {
-  applicationId: number;
-  applicationType: ApplicationTimelineResponseApplicationType;
-  currentStatus: string;
-  events: ApplicationTimelineEventResponse[];
+  applicationId?: number;
+  applicationType?: string;
+  currentStatus?: string;
+  events?: ApplicationTimelineEventResponse[];
 }

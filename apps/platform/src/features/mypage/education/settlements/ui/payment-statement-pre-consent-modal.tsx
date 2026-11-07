@@ -8,6 +8,7 @@ type PaymentStatementPreConsentModalProps = {
   variant?: SettlementDocumentKind
   onCancel: () => void
   onWriteConsent: () => void
+  cancelLabel?: string
 }
 
 export {
@@ -23,6 +24,7 @@ export function PaymentStatementPreConsentModal({
   variant = 'receipt',
   onCancel,
   onWriteConsent,
+  cancelLabel = '취소',
 }: PaymentStatementPreConsentModalProps) {
   const copy = settlementPreConsentModalCopy(variant)
   return (
@@ -44,7 +46,7 @@ export function PaymentStatementPreConsentModal({
         </div>
         <div className={styles.actions}>
           <PFButton type="button" variant="secondary" size="xlarge" onClick={onCancel}>
-            취소
+            {cancelLabel}
           </PFButton>
           <PFButton type="button" variant="primary" size="xlarge" onClick={onWriteConsent}>
             동의서 작성하기

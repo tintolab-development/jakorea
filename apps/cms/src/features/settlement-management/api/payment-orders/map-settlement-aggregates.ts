@@ -6,9 +6,9 @@ import type {
 import type { SettlementAggregateResponse } from '@/shared/api/generated/settlement/schemas'
 import { mapStatementStatusToProcessingStatus } from '@/features/settlement-management/api/shared/settlement-status-mappers'
 
-type AggregateItem = SettlementAggregateResponse & {
-  aggregateStatus?: string
-  processingStatus?: string
+type AggregateItem = {
+  aggregateStatus?: string | null
+  processingStatus?: string | null
 }
 
 function deriveProcessingStatus(

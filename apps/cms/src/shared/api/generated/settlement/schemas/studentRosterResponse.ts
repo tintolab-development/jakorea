@@ -6,22 +6,17 @@
  * OpenAPI spec version: v9
  */
 import type { StudentRosterItemResponse } from './studentRosterItemResponse';
-import type { StudentRosterResponsePrivacyAccessMode } from './studentRosterResponsePrivacyAccessMode';
 
 export interface StudentRosterResponse {
   organizationApplicationId?: number;
   programId?: number;
-  /** @nullable */
-  importBatchId?: number | null;
+  importBatchId?: number;
   importStatus?: string;
-  /** 현재 active 학생명단 revision. 다음 관리자 전체 교체 PUT의 expectedRevisionNo로 전달할 수 있습니다. 명단이 없으면 0입니다. */
   revisionNo?: number;
-  /** @nullable */
-  sourceFileObjectId?: number | null;
+  sourceFileObjectId?: number;
   totalCount?: number;
-  /** @nullable */
-  committedAt?: string | null;
+  committedAt?: string;
   rows?: StudentRosterItemResponse[];
   /** 개인정보 노출 모드. AUTO_RAW_ACCESS(CMS 학생 명단·출석, 진입 시 자동 조회 기록 후 phone·email·birthDate 원문), MASKED(SENSITIVE_PII_READ가 없는 CMS 조회: phone·email·birthDate 생략, masked* 필드만), RAW_POLICY_EXCEPTION(포털 교사 본인 업로드 명단: 원문, 조회 기록 대상 아님). */
-  privacyAccessMode?: StudentRosterResponsePrivacyAccessMode;
+  privacyAccessMode?: string;
 }

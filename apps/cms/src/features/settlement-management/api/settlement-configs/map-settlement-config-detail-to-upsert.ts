@@ -29,7 +29,7 @@ function stripDeprecatedWithholdingKeys(json: string): string {
   }
 }
 
-function mergeDetailJson(existing: string | undefined, patch: Record<string, unknown>): string {
+function mergeDetailJson(existing: string | null | undefined, patch: Record<string, unknown>): string {
   let base: Record<string, unknown> = {}
   if (existing?.trim()) {
     try {
@@ -106,9 +106,9 @@ function wageItemToUpsert(
           { unitCount: 4, amount: detail.geminiSession4Won ?? 0 },
         ]
       : item.rateItems?.map(rate => ({
-          id: rate.id,
-          unitCount: rate.unitCount,
-          amount: rate.amount,
+          id: typeof rate.id === 'number' ? rate.id : undefined,
+          unitCount: typeof rate.unitCount === 'number' ? rate.unitCount : 0,
+          amount: typeof rate.amount === 'number' ? rate.amount : 0,
         }))
 
   return {

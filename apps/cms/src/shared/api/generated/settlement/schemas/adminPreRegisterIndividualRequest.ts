@@ -5,21 +5,17 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { AdminPreRegisterIndividualRequestEnrollmentStatus } from './adminPreRegisterIndividualRequestEnrollmentStatus';
 import type { PortalSchoolSelectionRequest } from './portalSchoolSelectionRequest';
 import type { TermsAgreementRequest } from './termsAgreementRequest';
 
-/**
- * CMS 개인(일반) 회원 사전등록. 재학 중(ENROLLED)이면 canonical 학교와 grade를 함께 저장합니다.
- */
 export interface AdminPreRegisterIndividualRequest {
-  /** @maxLength 254 */
-  email: string;
   /**
-     * 생략하거나 가입 이메일과 동일해야 합니다.
-     * @nullable
+     * @minLength 0
+     * @maxLength 254
      */
-  rawPassword?: string | null;
+  email: string;
+  /** 호환용 입력값입니다. 생략할 수 있으며, 입력하는 경우 가입 이메일과 동일해야 합니다. 실제 초기 비밀번호는 정규화된 가입 이메일로 설정됩니다. */
+  rawPassword?: string;
   /** @minLength 1 */
   name: string;
   /** @minLength 1 */
@@ -29,36 +25,19 @@ export interface AdminPreRegisterIndividualRequest {
   birthDate: string;
   /** @minLength 1 */
   address: string;
-  /** @nullable */
-  addressDetail?: string | null;
-  /** @nullable */
-  zipCode?: string | null;
-  /**
-     * 학교명. organizationId가 없으면 활성 CMS 학교와 고유하게 일치할 때만 안전하게 해석합니다.
-     * @nullable
-     */
-  schoolName?: string | null;
-  /**
-     * 학교 미재학(해당 없음)일 때 선택 입력하는 소속 기관명
-     * @nullable
-     */
-  affiliationName?: string | null;
+  addressDetail?: string;
+  zipCode?: string;
+  schoolName?: string;
+  /** 학교 미재학(해당 없음)일 때 선택 입력하는 소속 기관명 */
+  affiliationName?: string;
   /** @minLength 1 */
-  enrollmentStatus: AdminPreRegisterIndividualRequestEnrollmentStatus;
-  /**
-     * 기존 CMS 학교 PK.
-     * @nullable
-     */
-  schoolOrganizationId?: number | null;
-  /** CMS에 없는 학교의 구조화된 선택값. */
-  schoolSelection?: PortalSchoolSelectionRequest | null;
-  /**
-     * 재학 중 소속 학년. ENROLLED이면 필수입니다.
-     * @nullable
-     */
-  grade?: string | null;
-  /** @nullable */
-  external1365Id?: string | null;
-  /** @nullable */
-  termsAgreements?: TermsAgreementRequest[] | null;
+  enrollmentStatus: string;
+  /** 기존 CMS 학교 PK. 재학중인 경우 schoolName보다 우선하며, 생략 시 schoolSelection(NEIS/CAREER_NET) 또는 고유 schoolName을 안전하게 해석합니다. */
+  schoolOrganizationId?: number;
+  /** CMS에 없는 학교 선택값. 개인 재학은 NEIS(초·중·고) 또는 CAREER_NET(대학·전문대). CAREER_NET은 educationOfficeCode 불필요. */
+  schoolSelection?: PortalSchoolSelectionRequest;
+  /** 재학중 소속 학년 */
+  grade?: string;
+  external1365Id?: string;
+  termsAgreements?: TermsAgreementRequest[];
 }

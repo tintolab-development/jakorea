@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import {
   buildSettlementDocumentBasicRows,
+  buildSettlementDocumentCalcRows,
   displaySettlementDocumentText,
   formatSettlementDocumentAccountInfo,
   formatSettlementDocumentAccountParts,
@@ -17,7 +18,10 @@ import {
   settlementDocumentFirstColumnValue,
   settlementDocumentLinesSectionTitle,
 } from './format-application-document.ts'
-import type { SettlementApplicationDocumentBasicInfo } from '../api/application-document-types.ts'
+import type {
+  SettlementApplicationDocumentBasicInfo,
+  SettlementApplicationDocumentCalcInfo,
+} from '../api/application-document-types.ts'
 
 assert.equal(displaySettlementDocumentText(null), SETTLEMENT_DOCUMENT_EMPTY)
 assert.equal(displaySettlementDocumentText('  '), SETTLEMENT_DOCUMENT_EMPTY)
@@ -222,3 +226,38 @@ assert.deepEqual(
     [1, 1],
   ]
 )
+
+const calc: SettlementApplicationDocumentCalcInfo = {
+  lectureFeeType: 'GRADE_1',
+  instructorFeeAmount: 300000,
+  businessIncomeYn: false,
+  educationSessionCount: 3,
+  recognizedSessionCount: 1,
+  actualTrainingMinutes: 60,
+  totalStudentCount: null,
+  totalLectureFee: 300000,
+}
+const calcRows = buildSettlementDocumentCalcRows(calc)
+assert.equal(
+  calcRows.find(row => row.label === '교육 진행 차시')?.value,
+  '1차시'
+)
+assert.equal(
+  calcRows.find(row => row.label === '총 강사비')?.value,
+  '300,000원'
+)
+assert.equal(calcRows.some(row => row.label === '교육 진행 회차'), false)
+assert.equal(calcRows.some(row => row.label === '인정 차시'), false)
+
+const legacyCalc = buildSettlementDocumentCalcRows({
+  ...calc,
+  recognizedSessionCount: null,
+  actualTrainingMinutes: null,
+  totalLectureFee: 300000,
+})
+assert.equal(
+  legacyCalc.find(row => row.label === '교육 진행 차시')?.value,
+  SETTLEMENT_DOCUMENT_EMPTY
+)
+assert.notEqual(legacyCalc.find(row => row.label === '교육 진행 차시')?.value, '3회차')
+assert.notEqual(legacyCalc.find(row => row.label === '교육 진행 차시')?.value, '3차시')

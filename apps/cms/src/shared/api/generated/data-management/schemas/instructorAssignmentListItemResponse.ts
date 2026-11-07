@@ -32,6 +32,14 @@ export interface InstructorAssignmentListItemResponse {
   evaluationComment?: string;
   evaluationSubmittedAt?: string;
   lectureDate?: string;
+  /** 본교육 회차 번호(program_schedule.session_no). 차시 개수가 아님. 사전교육은 보통 null. null만으로 사전교육이 아님. */
+  sessionNo?: number | null;
+  /** canonical 일정 역할. program_schedule.schedule_kind. PRE_EDUCATION|EDUCATION|SESSION|CLOSING. 없으면 null. sessionNo=null로 추정하지 않음. */
+  scheduleRole?: string | null;
+  /** canonical education_slot_key. 없으면 null. */
+  educationSlotKey?: string | null;
+  /** 해당 scheduleId에 연결된 program_curriculum_session 건수(실제 커리큘럼 차시). 없으면 null. sessionNo를 넣지 않음. 사전교육은 null. 정산 인정 차시와 별개. */
+  curriculumSessionCount?: number | null;
   /** 강사 실명. 프로그램 관리에서는 마스킹하지 않습니다. */
   instructorName?: string;
   organizationName?: string;

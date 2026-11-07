@@ -6,37 +6,29 @@
  * OpenAPI spec version: v9
  */
 import type { FormResponseRef } from './formResponseRef';
-import type { GeneralIndividualAssignmentParticipantRemarkKind } from './generalIndividualAssignmentParticipantRemarkKind';
-import type { GeneralIndividualAssignmentParticipantSubmissionStatus } from './generalIndividualAssignmentParticipantSubmissionStatus';
-import type { GeneralIndividualAssignmentParticipantTeamRole } from './generalIndividualAssignmentParticipantTeamRole';
 import type { GeneralIndividualAssignmentSubmissionFile } from './generalIndividualAssignmentSubmissionFile';
-import type { GeneralIndividualAssignmentSubmissionLink } from './generalIndividualAssignmentSubmissionLink';
+import type { SubmissionLink } from './submissionLink';
 
+/**
+ * 회차 과제 행. files[].fileObjectId/fileName/downloadable과 survey/satisfaction FormResponseRef(없으면 null)를 포함한다.
+ */
 export interface GeneralIndividualAssignmentParticipant {
-  participantId: number;
-  memberId: number;
-  memberName?: string | null;
-  /** 기본 목록에서는 '*'로 마스킹. */
-  gender?: string | null;
-  /** CMS default responses use yyyy-**-** when a birth year exists; otherwise null. */
-  birthDate?: string | null;
-  affiliation?: string | null;
-  /** affiliation과 같은 값. 없으면 null. */
-  organizationName?: string | null;
-  grade?: string | null;
-  /** CMS 참여자 팀 membership의 역할. 팀 membership이 없으면 null. */
-  teamRole?: GeneralIndividualAssignmentParticipantTeamRole;
-  /** CMS 참여자 팀명. 팀 membership이 없으면 null. */
-  teamName?: string | null;
-  /** SCHEDULED: 과제 기간 시작 전(기간 미설정 시 회차 시작 전) | NOT_SUBMITTED | SUBMITTED. 과제 기간 시작일(assignmentPeriodStart)이 있으면 now < 시작일일 때만 SCHEDULED이고, 없을 때만 회차 startAt 기준으로 판정한다. 제출 건이 있으면 기간과 무관하게 SUBMITTED. */
-  submissionStatus: GeneralIndividualAssignmentParticipantSubmissionStatus;
-  remarkKind: GeneralIndividualAssignmentParticipantRemarkKind;
-  remarkAt?: string | null;
-  files: GeneralIndividualAssignmentSubmissionFile[];
-  /** 포털 과제 URL 제출물. 없으면 빈 배열. */
-  links: GeneralIndividualAssignmentSubmissionLink[];
-  /** 이 scheduleId에 바인딩된 설문조사(SURVEY/QUESTIONNAIRE)를 해당 참여자가 제출한 경우만 FormResponseRef. 미제출·프로그램 단위 설문·다른 회차 제출은 null. 키는 생략하지 않는다. templateVersionId/formResponseId는 양수이며 0·음수·빈 객체는 쓰지 않는다. */
-  surveyResponse: FormResponseRef | null;
-  /** 이 회차에 바인딩된 만족도조사 제출이 있으면 FormResponseRef. 프로그램 단위 만족도(SATISFACTION/SATISFACTION_SURVEY/PROGRAM_SATISFACTION, targetScope=PROGRAM)는 마지막 교육 회차(ACTIVE/COMPLETED program_schedule를 session_no, start_at, id 오름차순으로 본 마지막)에만 넣고 다른 회차에 복사하지 않는다. 마지막 교육 회차가 이 목록 items에 없으면 넣지 않는다. 미제출은 null. 키는 생략하지 않는다. */
-  satisfactionResponse: FormResponseRef | null;
+  participantId?: number;
+  memberId?: number;
+  memberName?: string;
+  gender?: string;
+  birthDate?: string;
+  birthYear?: number;
+  affiliation?: string;
+  organizationName?: string;
+  grade?: string;
+  teamRole?: string;
+  teamName?: string;
+  submissionStatus?: string;
+  remarkKind?: string;
+  remarkAt?: string;
+  files?: GeneralIndividualAssignmentSubmissionFile[];
+  links?: SubmissionLink[];
+  surveyResponse?: FormResponseRef;
+  satisfactionResponse?: FormResponseRef;
 }

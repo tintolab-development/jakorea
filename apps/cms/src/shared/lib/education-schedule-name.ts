@@ -111,6 +111,68 @@ export function formatEducationRoundSessionLabel(input: {
   return ''
 }
 
+const PROGRAM_SCHEDULE_ROLE_PRE_EDUCATION = 'PRE_EDUCATION'
+const GENERAL_PRE_EDUCATION_SLOT_KEY_PREFIX = 'general-pre-education:'
+
+/** 사전교육은 canonical 역할·슬롯만으로 판별한다. sessionNo=null만으로는 추정하지 않는다. */
+export function isEducationSchedulePreEducation(input: {
+  scheduleRole?: string | null
+  educationSlotKey?: string | null
+}): boolean {
+  if (String(input.scheduleRole ?? '').trim().toUpperCase() === PROGRAM_SCHEDULE_ROLE_PRE_EDUCATION) {
+    return true
+  }
+  return String(input.educationSlotKey ?? '')
+    .trim()
+    .toLowerCase()
+    .startsWith(GENERAL_PRE_EDUCATION_SLOT_KEY_PREFIX)
+}
+
+export type EducationScheduleLabelInput = {
+  sessionNo?: number | null
+  curriculumSessionCount?: number | null
+  scheduleRole?: string | null
+  educationSlotKey?: string | null
+}
+
+/**
+ * 강의보고서·BE dateRoundTimeLabel과 같은 토큰.
+ * 사전교육 → `사전교육`
+ * 본교육 회차+차시 → `N회차`, `K차시` (괄호로 합치지 않음)
+ * 회차만 → `N회차`
+ * sessionNo 없이 차시만 있으면 만들지 않음 (강의보고서 폴백으로 넘긴다)
+ * sessionNo를 차시로 쓰지 않는다.
+ */
+export function formatEducationScheduleLabelTokens(
+  input: EducationScheduleLabelInput
+): string[] {
+  if (isEducationSchedulePreEducation(input)) return [PRE_EDUCATION_SCHEDULE_DISPLAY_NAME]
+  const sessionNo = positiveEducationNumber(input.sessionNo)
+  const curriculumSessionCount = positiveEducationNumber(input.curriculumSessionCount)
+  const tokens: string[] = []
+  if (sessionNo != null) tokens.push(`${sessionNo}회차`)
+  if (sessionNo != null && curriculumSessionCount != null) {
+    tokens.push(`${curriculumSessionCount}차시`)
+  }
+  return tokens
+}
+
+/**
+ * 교육 일정 단위 라벨.
+ * 사전교육 → `사전교육`
+ * 회차+차시 → `N회차 (K차시)` (배정·진행 셀 접미)
+ * 회차만 → `N회차`
+ * 확인된 차시만 → `K차시`
+ * 없으면 빈 문자열. sessionNo를 차시로 쓰지 않는다.
+ */
+export function formatEducationScheduleUnitLabel(input: EducationScheduleLabelInput): string {
+  if (isEducationSchedulePreEducation(input)) return PRE_EDUCATION_SCHEDULE_DISPLAY_NAME
+  return formatEducationRoundSessionLabel({
+    roundNumber: input.sessionNo,
+    curriculumSessionCount: input.curriculumSessionCount,
+  })
+}
+
 /** `일시 | N회차` (+ ` (k차시)`). 이미 회차 접미가 있거나 회차를 모르면 label 그대로. */
 export function appendEducationRoundSuffix(
   label: string,

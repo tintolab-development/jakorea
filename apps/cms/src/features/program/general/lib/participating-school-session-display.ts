@@ -260,11 +260,13 @@ export function resolveParticipatingProgressRoundNumber(
 export function resolveParticipatingProgressCurriculumSessionCount(
   session: Pick<
     ParticipatingSchoolSession,
-    'sessionNo' | 'round' | 'classNum' | 'scheduleLabel' | 'duration'
+    'sessionNo' | 'round' | 'classNum' | 'scheduleLabel' | 'duration' | 'curriculumSessionCount'
   >,
   shape?: GeneralEducationScheduleShape | null
 ): number | null {
   const roundNumber = resolveParticipatingProgressRoundNumber(session)
+  const fromApi = positiveEducationNumber(session.curriculumSessionCount)
+  if (fromApi != null) return fromApi
   const fromClassNum = parseRealCurriculumSessionCount(session.classNum, roundNumber)
   if (fromClassNum != null) return fromClassNum
   const fromDuration = parseConfirmedCurriculumSessionCount(session.duration)

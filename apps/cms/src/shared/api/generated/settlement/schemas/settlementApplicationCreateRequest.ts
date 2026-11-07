@@ -5,26 +5,23 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { SettlementApplicationCreateRequestEvidenceAttachmentsItem } from './settlementApplicationCreateRequestEvidenceAttachmentsItem';
-import type { SettlementApplicationCreateRequestRequestedItemsItem } from './settlementApplicationCreateRequestRequestedItemsItem';
+import type { SettlementApplicationEvidenceAttachmentRequest } from './settlementApplicationEvidenceAttachmentRequest';
+import type { SettlementApplicationRequestedItemRequest } from './settlementApplicationRequestedItemRequest';
 
 /**
- * 강사 지급조서(정산 신청) 최초 제출
+ * 강사 지급조서(정산 신청) 최초 제출. GET /settlement-applications 와 동일 컬렉션.
  */
 export interface SettlementApplicationCreateRequest {
+  /** 중복 제출 방지 키 */
   idempotencyKey: string;
   /** 강사 배정 ID (program_individual_application.id 아님) */
   assignmentId: number;
-  /** @nullable */
-  programScheduleId?: number | null;
-  /**
-     * programScheduleId 별칭
-     * @nullable
-     */
-  scheduleId?: number | null;
-  /** @nullable */
-  formResponseId?: number | null;
+  /** 프로그램 일정 ID. scheduleId 와 둘 중 하나 필수, 둘 다 있으면 같아야 함. */
+  programScheduleId?: number;
+  /** programScheduleId 별칭 */
+  scheduleId?: number;
+  formResponseId?: number;
   attachmentFileIds?: number[];
-  requestedItems?: SettlementApplicationCreateRequestRequestedItemsItem[];
-  evidenceAttachments?: SettlementApplicationCreateRequestEvidenceAttachmentsItem[];
+  requestedItems?: SettlementApplicationRequestedItemRequest[];
+  evidenceAttachments?: SettlementApplicationEvidenceAttachmentRequest[];
 }

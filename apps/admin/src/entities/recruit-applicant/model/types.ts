@@ -27,7 +27,7 @@ export type RecruitApplicant = {
   id: string
   status: RecruitApplicantStatus
   jobInterest: RecruitJobInterest
-  /** 서버 마스킹 또는 reveal 원문. FE 재마스킹 없음. */
+  /** 목록: 서버 마스킹. 상세: 저장 원문. FE 재마스킹 없음. */
   applicantName: string | null
   phone: string | null
   email: string | null
@@ -42,7 +42,7 @@ export type RecruitApplicantDetail = RecruitApplicant & {
   addressRoad: string | null
   addressDetail: string | null
   educationLevel: RecruitEducationLevel | null
-  /** revealPii=false 시 omitted → null. FE가 "" 로 만들지 않는다. */
+  /** 상세 GET 원문. 빈 값은 null. FE가 "" 로 만들지 않는다. */
   schoolName: string | null
   major: string | null
   educationInfo: string | null

@@ -14,6 +14,7 @@ import {
   FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
   isFileSelectTotalSizeExceeded,
   notifyFileSelectTotalSizeExceeded,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   useCmsAlert,
 } from '@/shared/ui'
 
@@ -137,23 +138,19 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
   }, [])
 
   const handleSubmit = useCallback(() => {
-    const nextErrors: typeof errors = {}
-    if (!imageUrl.trim() && !imageFile && imageAssetId == null) {
-      nextErrors.image = '배너 이미지를 등록해 주세요.'
+    const imageMissing = !imageUrl.trim() && !imageFile && imageAssetId == null
+    if (imageMissing || !mainText.trim() || !subText01.trim() || !subText02.trim()) {
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+      return
     }
-    if (!mainText.trim()) {
-      nextErrors.mainText = '메인 텍스트를 입력해 주세요.'
-    } else if (mainText.trimEnd().length > MAIN_TEXT_MAX_LENGTH) {
+    const nextErrors: typeof errors = {}
+    if (mainText.trimEnd().length > MAIN_TEXT_MAX_LENGTH) {
       nextErrors.mainText = `메인 텍스트는 ${MAIN_TEXT_MAX_LENGTH}자 이내로 입력해 주세요.`
     }
-    if (!subText01.trim()) {
-      nextErrors.subText01 = '서브 텍스트를 입력해 주세요.'
-    } else if (subText01.trimEnd().length > SUB_TEXT_MAX_LENGTH) {
+    if (subText01.trimEnd().length > SUB_TEXT_MAX_LENGTH) {
       nextErrors.subText01 = `서브 텍스트 01은 ${SUB_TEXT_MAX_LENGTH}자 이내로 입력해 주세요.`
     }
-    if (!subText02.trim()) {
-      nextErrors.subText02 = '서브 텍스트를 입력해 주세요.'
-    } else if (subText02.trimEnd().length > SUB_TEXT_MAX_LENGTH) {
+    if (subText02.trimEnd().length > SUB_TEXT_MAX_LENGTH) {
       nextErrors.subText02 = `서브 텍스트 02는 ${SUB_TEXT_MAX_LENGTH}자 이내로 입력해 주세요.`
     }
     if (Object.keys(nextErrors).length > 0) {
@@ -179,6 +176,7 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
     initial.version,
     mainText,
     onSubmit,
+    showAlert,
     subText01,
     subText02,
   ])

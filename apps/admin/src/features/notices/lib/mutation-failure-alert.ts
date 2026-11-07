@@ -4,11 +4,11 @@
 
 import {
   type AdminMutationAlert,
-  mapCommonRemoteMutationFailure,
   readApiErrorCode,
   readApiErrorField,
   readApiErrorMessage,
 } from '@/shared/lib/api-error-message'
+import { mapAdminMutationAlert } from '@/shared/ui'
 
 const BODY_TOO_LONG =
   '본문이 너무 길거나 형식이 올바르지 않습니다. 이미지를 파일로 다시 삽입한 뒤 저장해 주세요.'
@@ -21,7 +21,7 @@ export function noticeMutationFailureAlert(
   fallbackContent: string,
   title = '저장 실패',
 ): AdminMutationAlert {
-  const common = mapCommonRemoteMutationFailure(error)
+  const common = mapAdminMutationAlert(error)
   if (common) return common
 
   const code = readApiErrorCode(error) ?? ''

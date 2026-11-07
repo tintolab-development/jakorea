@@ -5,17 +5,13 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { MemberLectureReportFormBindingResponseContextType } from './memberLectureReportFormBindingResponseContextType';
 
-/**
- * assignment/program/schedule과 실제 연결된 강의보고서 바인딩 및 서버가 결정한 제출 컨텍스트입니다.
- */
 export interface MemberLectureReportFormBindingResponse {
-  assignmentId: number;
-  programId: number;
-  programScheduleId: number;
-  bindingId: number;
-  templateVersionId: number;
-  contextType: MemberLectureReportFormBindingResponseContextType;
-  contextId: number;
+  assignmentId?: number;
+  programId?: number;
+  programScheduleId?: number;
+  bindingId?: number;
+  templateVersionId?: number;
+  contextType?: string;
+  contextId?: number;
 }

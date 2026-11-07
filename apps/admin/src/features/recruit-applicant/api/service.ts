@@ -3,7 +3,6 @@ import type { RecruitApplicant, RecruitApplicantDetail, RecruitApplicantListFilt
 import { toAdminListPage, type AdminListPage } from '@/shared/lib/admin-infinite-list';
 import { getJAKoreaHomepageAdminAPICareersSubset } from '@/shared/api/generated/careers/careers-api';
 import { mapCareerTalentApplicationDetail, mapCareerTalentApplicationListItem, toNumericId, toTalentApplicationListParams, } from './mappers';
-import { toRevealPiiQueryParam } from '@/shared/lib/homepage-pii';
 import { downloadHomepageProtectedAttachment, homepageRecruitAttachmentUrl } from '@/shared/lib/protected-attachment-download';
 export type RecruitApplicantConfirmInput = {
     id: string;
@@ -30,12 +29,8 @@ export function isRecruitApplicantNotFoundError(error: unknown): boolean {
         code?: unknown;
     }).code === 'CAREER_RESOURCE_NOT_FOUND';
 }
-export async function getRecruitApplicantService(id: string, options?: {
-    revealPii?: boolean;
-}): Promise<RecruitApplicantDetail | null> {
-    const row = await careersApi().detail9(toNumericId(id), {
-        revealPii: toRevealPiiQueryParam(options?.revealPii),
-    });
+export async function getRecruitApplicantService(id: string): Promise<RecruitApplicantDetail | null> {
+    const row = await careersApi().detail9(toNumericId(id));
     const mapped = mapCareerTalentApplicationDetail(row);
     if (!mapped) {
         throw new Error('신청 상세를 불러오지 못했습니다.');

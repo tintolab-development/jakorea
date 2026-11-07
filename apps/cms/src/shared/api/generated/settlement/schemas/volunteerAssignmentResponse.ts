@@ -5,35 +5,28 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { VolunteerAssignmentResponseAssignmentStatus } from './volunteerAssignmentResponseAssignmentStatus';
 
+/**
+ * 일반 기관 프로그램 봉사자 배정
+ */
 export interface VolunteerAssignmentResponse {
   assignmentId?: number;
   programId?: number;
   volunteerParticipantId?: number;
-  /** @nullable */
-  volunteerMemberId?: number | null;
+  volunteerMemberId?: number;
   volunteerName?: string;
   organizationApplicationId?: number;
-  /** @nullable */
-  organizationId?: number | null;
+  organizationId?: number;
   organizationName?: string;
   scheduleId?: number;
-  /** @nullable */
-  scheduleName?: string | null;
-  /** @nullable */
-  scheduleStartAt?: string | null;
-  /** @nullable */
-  scheduleEndAt?: string | null;
-  assignmentStatus?: VolunteerAssignmentResponseAssignmentStatus;
+  scheduleName?: string;
+  scheduleStartAt?: string;
+  scheduleEndAt?: string;
+  assignmentStatus?: string;
   assignmentReason?: string;
-  /** @nullable */
-  assignedByAdminId?: number | null;
+  assignedByAdminId?: number;
   assignedAt?: string;
-  /** @nullable */
-  cancelledByAdminId?: number | null;
-  /** @nullable */
-  cancelledAt?: string | null;
-  /** @nullable */
-  cancelReason?: string | null;
+  cancelledByAdminId?: number;
+  cancelledAt?: string;
+  cancelReason?: string;
 }

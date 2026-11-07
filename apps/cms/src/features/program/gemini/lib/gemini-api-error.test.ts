@@ -86,24 +86,20 @@ describe('formatGeminiApiError', () => {
     ).toBe('1행: 강사 정보 미기재 (실적만 등록, 계좌 지급 제외)')
   })
 
-  it('treats NOT_MATCHED as a failed row even if a stale server sends SUCCESS', () => {
+  it('treats NOT_MATCHED as a failed import row, not a payment exclusion', () => {
     expect(
       formatGeminiImportPreviewFailures([
         {
-          status: 'SUCCESS',
+          status: 'FAILED',
           rowNumber: 1,
           message: 'GEMINI_INSTRUCTOR_NOT_MATCHED: 입력한 강사명·연락처가 회원 정보와 일치하지 않습니다.',
-          trainingReportId: 186512,
-          accountPaymentId: undefined,
-          matchedInstructorMemberId: undefined,
-          paymentExclusionReason: 'GEMINI_INSTRUCTOR_NOT_MATCHED' as never,
         },
       ]),
     ).toBe('1행: 입력한 강사명·연락처가 회원 정보와 일치하지 않습니다.')
     expect(
       formatGeminiImportPaymentExclusionNotes([
         {
-          status: 'SUCCESS',
+          status: 'FAILED',
           rowNumber: 1,
           paymentExclusionReason: 'GEMINI_INSTRUCTOR_NOT_MATCHED' as never,
         },

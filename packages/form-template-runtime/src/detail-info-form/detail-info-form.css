@@ -254,6 +254,7 @@
 .detail-info-form__field-label-text {
   position: relative;
   display: inline-block;
+  width: fit-content;
   max-width: 100%;
 }
 

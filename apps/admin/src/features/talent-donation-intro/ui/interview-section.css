@@ -4,24 +4,58 @@
 
 .talent-intro-interview .detail-info-form__field {
   min-height: 54px;
-  --detail-info-label-w: 160px !important;
-  grid-template-columns: 160px minmax(0, 1fr) !important;
-}
-
-.talent-intro-interview .detail-info-form__field-label {
-  display: flex !important;
-  width: 160px !important;
-  min-width: 160px !important;
-  max-width: 160px !important;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
 }
 
 .talent-intro-interview .detail-info-form__field-content {
   justify-content: flex-start;
   align-items: center;
   text-align: left;
+}
+
+.talent-intro-interview .detail-info-form__field-content--edit > * {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.talent-intro-interview__field .cms-input__control,
+.talent-intro-interview__field.cms-input .cms-input__control {
+  height: 36px;
+  min-height: 36px;
+  max-height: 36px;
+  border-width: 1px;
+  border-style: solid;
+  box-sizing: border-box;
+}
+
+.talent-intro-interview__field .cms-textarea__control {
+  border-width: 1px;
+  border-style: solid;
+  box-sizing: border-box;
+}
+
+.talent-intro-interview__field--readonly .cms-input__control,
+.talent-intro-interview__field--readonly .cms-textarea__control {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  cursor: default;
+}
+
+.talent-intro-interview__field--readonly .ant-input,
+.talent-intro-interview__field--readonly textarea.ant-input {
+  cursor: default;
+}
+
+.talent-intro-interview__field--readonly .talent-intro-interview__search-btn {
+  visibility: hidden;
+}
+
+.talent-intro-interview .detail-info-form__field-content--edit .ant-input,
+.talent-intro-interview .detail-info-form__field-content--edit textarea.ant-input {
+  font-size: 14px !important;
+  font-weight: 500;
+  line-height: 150%;
 }
 
 .talent-intro-interview__preline {
@@ -47,6 +81,7 @@
   color: var(--color-mint-01, #01a1af);
 }
 
+.talent-intro-interview__post-input .cms-input__control,
 .talent-intro-interview__post-input .ant-input {
   cursor: pointer;
 }

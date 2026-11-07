@@ -88,13 +88,14 @@ function BoardMemberFormBody({
       open
       onCancel={onCancel}
       title="구성원 등록"
+      description="구성원 정보를 입력해 주세요."
       width={800}
       className="board-member-form-modal"
       footer={
         <>
           <CmsButton
             variant="secondary"
-            size="medium"
+            size="h40"
             type="button"
             onClick={onCancel}
             disabled={confirmLoading}
@@ -103,7 +104,7 @@ function BoardMemberFormBody({
           </CmsButton>
           <CmsButton
             variant="primary"
-            size="medium"
+            size="h40"
             type="button"
             loading={confirmLoading}
             disabled={confirmLoading}
@@ -114,110 +115,125 @@ function BoardMemberFormBody({
         </>
       }
     >
-      <DetailInfoForm
-        title="구성원 등록"
-        hideHeader
-        mode="edit"
-        className="board-member-form-modal__form"
-      >
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
-            label="공개 여부"
-            required
-            view={null}
-            edit={
-              <CmsRadioGroup
-                value={isPublic}
-                onChange={e => setIsPublic(coerceRadioBoolean(e.target.value))}
-              >
-                <CmsRadio value={true}>공개</CmsRadio>
-                <CmsRadio value={false}>비공개</CmsRadio>
-              </CmsRadioGroup>
-            }
-          />
-        </DetailInfoForm.Row>
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
-            label="이사회 직책"
-            required
-            view={null}
-            edit={
-              <CmsSelect
-                inputSize="large"
-                width="100%"
-                placeholder="이사회 직책을 선택해 주세요"
-                options={ROLE_OPTIONS}
-                value={roleGroup}
-                onChange={value => setRoleGroup(value as BoardRoleGroup)}
-              />
-            }
-          />
-        </DetailInfoForm.Row>
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
-            label="한글 성명"
-            required
-            view={null}
-            edit={
-              <CmsInput
-                inputSize="large"
-                width="100%"
-                placeholder="한글 성명을 입력해 주세요"
-                value={nameKo}
-                onChange={e => setNameKo(e.target.value)}
-              />
-            }
-          />
-        </DetailInfoForm.Row>
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
-            label="영문 성명"
-            required
-            view={null}
-            edit={
-              <CmsInput
-                inputSize="large"
-                width="100%"
-                placeholder="영문 성명을 입력해 주세요"
-                value={nameEn}
-                onChange={e => setNameEn(e.target.value)}
-              />
-            }
-          />
-        </DetailInfoForm.Row>
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
-            label="직위"
-            required
-            view={null}
-            edit={
-              <CmsInput
-                inputSize="large"
-                width="100%"
-                placeholder="직위를 입력해 주세요"
-                value={position}
-                onChange={e => setPosition(e.target.value)}
-              />
-            }
-          />
-        </DetailInfoForm.Row>
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
-            label="소속 및 직책"
-            required
-            view={null}
-            edit={
-              <CmsInput
-                inputSize="large"
-                width="100%"
-                placeholder="소속 및 직책을 입력해 주세요"
-                value={affiliation}
-                onChange={e => setAffiliation(e.target.value)}
-              />
-            }
-          />
-        </DetailInfoForm.Row>
-      </DetailInfoForm>
+      <div className="board-member-form-modal__forms">
+        <DetailInfoForm
+          title="공개 및 직책"
+          hideHeader
+          mode="edit"
+          className="board-member-form-modal__form"
+        >
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="공개 여부"
+              required
+              view={null}
+              edit={
+                <CmsRadioGroup
+                  size="medium"
+                  value={isPublic}
+                  onChange={e => setIsPublic(coerceRadioBoolean(e.target.value))}
+                >
+                  <CmsRadio size="medium" value={true}>
+                    공개
+                  </CmsRadio>
+                  <CmsRadio size="medium" value={false}>
+                    비공개
+                  </CmsRadio>
+                </CmsRadioGroup>
+              }
+            />
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="이사회 직책"
+              required
+              view={null}
+              edit={
+                <CmsSelect
+                  inputSize="large"
+                  width="100%"
+                  placeholder="이사회 직책을 선택해 주세요"
+                  options={ROLE_OPTIONS}
+                  value={roleGroup}
+                  onChange={value => setRoleGroup(value as BoardRoleGroup)}
+                />
+              }
+            />
+          </DetailInfoForm.Row>
+        </DetailInfoForm>
+
+        <DetailInfoForm
+          title="구성원 정보"
+          hideHeader
+          mode="edit"
+          className="board-member-form-modal__form"
+        >
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="한글 성명"
+              required
+              view={null}
+              edit={
+                <CmsInput
+                  inputSize="large"
+                  width="100%"
+                  placeholder="한글 성명을 입력해 주세요"
+                  value={nameKo}
+                  onChange={e => setNameKo(e.target.value)}
+                />
+              }
+            />
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="영문 성명"
+              required
+              view={null}
+              edit={
+                <CmsInput
+                  inputSize="large"
+                  width="100%"
+                  placeholder="영문 성명을 입력해 주세요"
+                  value={nameEn}
+                  onChange={e => setNameEn(e.target.value)}
+                />
+              }
+            />
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="직위"
+              required
+              view={null}
+              edit={
+                <CmsInput
+                  inputSize="large"
+                  width="100%"
+                  placeholder="직위를 입력해 주세요"
+                  value={position}
+                  onChange={e => setPosition(e.target.value)}
+                />
+              }
+            />
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="소속 및 직책"
+              required
+              view={null}
+              edit={
+                <CmsInput
+                  inputSize="large"
+                  width="100%"
+                  placeholder="소속 및 직책을 입력해 주세요"
+                  value={affiliation}
+                  onChange={e => setAffiliation(e.target.value)}
+                />
+              }
+            />
+          </DetailInfoForm.Row>
+        </DetailInfoForm>
+      </div>
     </ContentModal>
   )
 }

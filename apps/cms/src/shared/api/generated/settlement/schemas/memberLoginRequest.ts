@@ -7,11 +7,19 @@
  */
 
 /**
- * 회원 포탈 회원 로그인 요청
+ * 회원 로그인 요청
  */
 export interface MemberLoginRequest {
-  /** 회원 이메일 */
+  /**
+     * 회원 이메일
+     * @minLength 0
+     * @maxLength 254
+     */
   email: string;
-  /** 회원 비밀번호. 예시는 샘플입니다. */
+  /**
+     * 회원 비밀번호. Swagger 예시는 샘플 값이며 실제 비밀번호를 기록하지 않습니다.
+     * @minLength 8
+     * @maxLength 200
+     */
   password: string;
 }

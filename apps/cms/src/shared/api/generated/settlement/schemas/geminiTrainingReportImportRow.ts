@@ -5,42 +5,34 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { GeminiTrainingReportImportRowTrainingSessionCount } from './geminiTrainingReportImportRowTrainingSessionCount';
 
 export interface GeminiTrainingReportImportRow {
-  programId: number;
-  /** @nullable */
-  instructorMemberId?: number | null;
-  /** @nullable */
-  instructorEmail?: string | null;
-  /** @nullable */
-  instructorPhone?: string | null;
-  /** @nullable */
-  instructorName?: string | null;
-  /** @nullable */
-  assistantInstructorNames?: string | null;
-  /** @nullable */
-  trainingLocation?: string | null;
-  /** @nullable */
-  schoolOrOrganizationName?: string | null;
-  trainingDate: string;
-  trainingStartTime: string;
-  trainingEndTime: string;
-  /** @nullable */
-  trainingMinutes?: number | null;
-  trainingSessionCount: GeminiTrainingReportImportRowTrainingSessionCount;
-  /** @nullable */
-  participantCount?: number | null;
-  /** @nullable */
-  sourceTimestamp?: string | null;
-  /** @nullable */
-  trainingType?: string | null;
-  /** @nullable */
+  programId?: number;
+  instructorMemberId?: number;
+  instructorEmail?: string;
+  instructorPhone?: string;
+  instructorName?: string;
+  assistantInstructorNames?: string;
+  trainingLocation?: string;
+  schoolOrOrganizationName?: string;
+  trainingDate?: string;
+  trainingStartTime?: string;
+  trainingEndTime?: string;
+  trainingMinutes?: number;
+  sourceTimestamp?: string;
+  trainingType?: string;
+  /** 강사비 지급처. 저장·rawPayloadJsonb에 원문 유지. 외부 지급처 판정은 trim+공백제거+ASCII 대문자화 후 canonical EXTERNAL 또는 한글 별칭 외부만 인정. null/빈 문자열/INTERNAL/내부/미정 및 그 외 값은 외부 지급처가 아님. */
   feePayee?: string | null;
-  /** @nullable */
-  bankName?: string | null;
-  /** @nullable */
-  accountNo?: string | null;
-  /** @nullable */
-  accountHolder?: string | null;
+  trainingSessionCount?: number;
+  participantCount?: number;
+  trainingTopic?: string;
+  trainingPhotoReferences?: string;
+  trainingMaterialReferences?: string;
+  lectureEvaluation?: string;
+  supportRequest?: string;
+  bankName?: string;
+  accountNo?: string;
+  accountHolder?: string;
+  expectedTransferDate?: string;
+  rawPayloadJsonb?: string;
 }

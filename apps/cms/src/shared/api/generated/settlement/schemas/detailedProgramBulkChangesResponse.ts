@@ -8,6 +8,6 @@
 import type { DetailedProgramResponse } from './detailedProgramResponse';
 
 export interface DetailedProgramBulkChangesResponse {
-  updated: DetailedProgramResponse[];
-  deletedIds: number[];
+  updated?: DetailedProgramResponse[];
+  deletedIds?: number[];
 }

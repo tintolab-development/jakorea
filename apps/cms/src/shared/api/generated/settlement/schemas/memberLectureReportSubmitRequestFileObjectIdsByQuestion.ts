@@ -6,7 +6,4 @@
  * OpenAPI spec version: v9
  */
 
-/**
- * @nullable
- */
-export type MemberLectureReportSubmitRequestFileObjectIdsByQuestion = {[key: string]: number[]} | null;
+export type MemberLectureReportSubmitRequestFileObjectIdsByQuestion = {[key: string]: number[]};

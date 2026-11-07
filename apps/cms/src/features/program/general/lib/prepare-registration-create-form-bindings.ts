@@ -15,8 +15,8 @@ import type {
 import { loadRegistrationWizardFormDraft } from '@/features/program/general/lib/registration-wizard-form-draft'
 import { resolveRegistrationProgramDraftProgramType } from '@/features/program/general/lib/resolve-program-api-type-for-draft'
 import {
-  peekActiveTrainedTeachersApplicationOverlayRecord,
-  peekActiveTrainedTeachersRecruitmentOverlayRecord,
+  peekDirtyTrainedTeachersApplicationOverlayRecord,
+  peekDirtyTrainedTeachersRecruitmentOverlayRecord,
 } from '@/features/program/trained-teachers/lib/registration-rhf-api'
 import {
   peekActiveUjatRecruitInstitutionOverlayRecord,
@@ -115,9 +115,9 @@ export async function prepareRegistrationCreateFormBindings(args: {
 
     const overlay =
       spec.templateCode === 'recruitment-trained-teachers'
-        ? peekActiveTrainedTeachersRecruitmentOverlayRecord()
+        ? peekDirtyTrainedTeachersRecruitmentOverlayRecord()
         : spec.templateCode === 'application-trained-teachers'
-          ? peekActiveTrainedTeachersApplicationOverlayRecord()
+          ? peekDirtyTrainedTeachersApplicationOverlayRecord()
           : spec.templateCode === 'recruitment-ujat-school'
             ? peekActiveUjatRecruitInstitutionOverlayRecord()
             : spec.templateCode === 'recruitment-ujat-volunteer'

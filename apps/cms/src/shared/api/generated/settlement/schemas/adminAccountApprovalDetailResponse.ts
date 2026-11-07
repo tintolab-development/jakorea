@@ -5,61 +5,36 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { AdminAccountApprovalDetailResponseSocialAccountsItem } from './adminAccountApprovalDetailResponseSocialAccountsItem';
+import type { AdminLinkedSocialAccountResponse } from './adminLinkedSocialAccountResponse';
 import type { AdminTermsAgreementResponse } from './adminTermsAgreementResponse';
 
-/**
- * CMS 관리자 계정 상세 응답
- */
 export interface AdminAccountApprovalDetailResponse {
+  /** 관리자 계정 PK. 관리자 조회/수정/삭제 경로에 사용합니다. */
   adminAccountId?: number;
+  /** 외부 참조 및 감사용 관리자 UUID. CRUD 경로에는 사용하지 않습니다. */
   uuid?: string;
-  /** 마스킹된 이메일 */
   email?: string;
   name?: string;
-  /** 마스킹된 연락처 */
   phone?: string;
-  /** @nullable */
-  gender?: string | null;
-  /**
-     * 기본 응답은 yyyy-**-**이며 원문이 없으면 null
-     * @nullable
-     */
-  birthDate?: string | null;
-  /**
-     * 기본 응답에서 표시 가능한 출생 연도
-     * @nullable
-     */
-  birthYear?: number | null;
+  gender?: string;
+  birthDate?: string;
+  birthYear?: number;
   status?: string;
   roleCode?: string;
   roleName?: string;
   mfaRequired?: boolean;
-  /** 관리자 생성 계정 여부. */
   createdByAdmin?: boolean;
-  /** createdByAdmin과 동일 의미의 FE 호환 필드. */
   registeredByAdmin?: boolean;
-  /** 셀프 가입 본인인증 완료 여부. */
   identityVerified?: boolean;
   permissionVersion?: number;
-  /** @nullable */
-  verificationReason?: string | null;
-  /** @nullable */
-  verificationResult?: string | null;
-  /** @nullable */
-  verifiedByAdminId?: number | null;
-  /** @nullable */
-  verifiedAt?: string | null;
-  /** @nullable */
-  lastLoginAt?: string | null;
+  verificationReason?: string;
+  verificationResult?: string;
+  verifiedByAdminId?: number;
+  verifiedAt?: string;
+  lastLoginAt?: string;
   createdAt?: string;
   updatedAt?: string;
-  /**
-     * 관리자 권한 신청 시각
-     * @nullable
-     */
-  requestedAt?: string | null;
-  /** 현재 담당 배정 프로그램 수(기존 호환 필드) */
+  requestedAt?: string;
   managedProgramCount?: number;
   /** 현재 진행 중인 담당 프로그램 수 */
   activeManagedProgramCount?: number;
@@ -67,11 +42,9 @@ export interface AdminAccountApprovalDetailResponse {
   totalManagedProgramCount?: number;
   /** 현재 또는 과거에 프로그램 담당자로 배정된 이력이 있는지 여부 */
   hasProgramAssignmentHistory?: boolean;
-  /**
-     * 관리자 권한 승인/반려 결과 알림 재발송 시각
-     * @nullable
-     */
-  notificationResentAt?: string | null;
-  socialAccounts?: AdminAccountApprovalDetailResponseSocialAccountsItem[];
+  /** 관리자 권한 승인/반려 결과 알림 재발송 시각 */
+  notificationResentAt?: string;
+  socialAccounts?: AdminLinkedSocialAccountResponse[];
+  /** 관리자 등록 약관 4종의 최신 동의 상태. SERVICE_TERMS, PRIVACY_COLLECTION, MFA_SETUP_CONSENT, MARKETING을 포함합니다. */
   termsAgreements?: AdminTermsAgreementResponse[];
 }

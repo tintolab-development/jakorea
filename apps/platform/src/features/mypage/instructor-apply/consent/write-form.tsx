@@ -41,6 +41,7 @@ import {
   PFFormDraftSignatureProvider,
   PFFormDraftSignatureTitleAsideBridge,
   PFFormSignatureBlock,
+  type FormSignatureValue,
 } from '@/shared/ui'
 import {
   clearConsentSignatureSlotKeys,
@@ -51,6 +52,7 @@ import {
   createPortalConsentDocument,
   fetchPortalConsentDocumentDetail,
 } from '../../settings/api/portal-consent-documents'
+import { parseWritingFormDraftFromUnknown } from '../../settings/lib/parse-consent-document-draft'
 import { restoreCompatibleConsentDraftValues } from '../../settings/lib/restore-compatible-consent-draft'
 import { submitPortalConsentDocumentFromWriteState } from '../../settings/lib/submit-portal-consent-document'
 import { resolvePortalConsentCreateType } from '../../settings/lib/settings-consent-key'
@@ -132,6 +134,8 @@ const PORTAL_SUBMIT_FAILED_MESSAGE =
   '동의서를 제출하지 못했어요. 입력 내용을 확인한 뒤 다시 시도해 주세요.'
 const SIGNATURE_REQUIRED_ALERT_MESSAGE = '전자서명을 완료해 주세요'
 const SERVER_DRAFT_LOADING_MESSAGE = '동의서 양식을 불러오는 중입니다.'
+const SERVER_DRAFT_UNAVAILABLE_MESSAGE =
+  '동의서 양식을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.'
 const PORTAL_CONSENT_TEMPLATE_CHANGED_MESSAGE =
   '동의서 양식이 변경되었습니다. 최신 양식을 다시 확인해 주세요.'
 const MEMBER_PROFILE_LOADING_MESSAGE = '회원 정보를 불러오는 중입니다.'
@@ -142,7 +146,7 @@ const CONSENT_RECEIPT_RRN_NOT_ALLOWED_MESSAGE =
 const CONSENT_PAYMENT_BASIC_INFO_NOT_ALLOWED_MESSAGE =
   '이 동의서에는 지급조서 전용 항목(주민등록번호·소속)을 넣을 수 없습니다.'
 const RECEIPT_CONSENT_BASIC_INFO_REQUIRED_MESSAGE =
-  '영수증 발급 사전 동의서의 지급 확인 정보를 입력해 주세요.'
+  '영수증 사전 동의서의 지급조서 정보를 입력해 주세요.'
 const RECEIPT_CONSENT_PURPOSE_INVALID_MESSAGE =
   '영수증 발급 사전 동의서의 지급 목적을 확인해 주세요.'
 
@@ -221,6 +225,19 @@ export function SchemaConsentWriteForm({
       homeAddressDetail: draft?.homeAddressDetail || lockedBasic.homeAddressDetail,
     })
   }, [lockedBasic, submitContext, templateId])
+  /** 영수증 지급조서 `소속` — 회원정보 표시 전용(제출 payload에는 넣지 않음: 영수증은 소속 미수집) */
+  const receiptAffiliationDisplay = useMemo(() => {
+    if (templateId !== 'agreement-receipt-pre-consent') return ''
+    const linked = buildPaymentStatementProfileLinkedValues({
+      name: lockedBasic.name,
+      memberType: lockedBasic.memberType,
+      schoolName: lockedBasic.schoolName,
+      affiliationName: lockedBasic.affiliationName,
+      affiliationNone:
+        lockedBasic.memberType === 'school_teacher' ? false : Boolean(lockedBasic.affiliationNone),
+    })
+    return linked.affiliation
+  }, [lockedBasic, templateId])
   const [alertOpen, setAlertOpen] = useState(false)
   const [alertTitle, setAlertTitle] = useState('안내')
   const [alertMessage, setAlertMessage] = useState(CONSENT_WRITE_INCOMPLETE_ALERT_MESSAGE)
@@ -233,6 +250,7 @@ export function SchemaConsentWriteForm({
   const portalSubmitEnabled = isRemoteApiConfigured() && Boolean(getAccessToken())
   const serverDraftInitializedRef = useRef(false)
   const [isServerDraftLoading, setIsServerDraftLoading] = useState(false)
+  const [serverDraftUnavailable, setServerDraftUnavailable] = useState(false)
 
   const [state, setState] = useState<SchemaConsentWriteState>(() => {
     const initial = createInitialSchemaConsentState(consentKey)
@@ -268,18 +286,21 @@ export function SchemaConsentWriteForm({
       const formTemplateVersion = document.formTemplateVersion
       const documentId = document.documentId
       const serverTemplateCode = formTemplateVersion?.templateCode?.trim() || templateId
-      const normalizedServerDraft =
+      const versionDraft =
         formTemplateVersion?.schemaJson != null
-          ? normalizeMemberConsentWriteDraft(
-              formTemplateVersion.schemaJson as WritingFormDraft,
-              serverTemplateCode,
-            )
+          ? parseWritingFormDraftFromUnknown(formTemplateVersion.schemaJson)
           : null
-      if (documentId == null || normalizedServerDraft == null) return
+      if (documentId == null || versionDraft == null) return
+      const normalizedServerDraft = normalizeMemberConsentWriteDraft(
+        versionDraft,
+        serverTemplateCode,
+      )
+      const filledDraft = parseWritingFormDraftFromUnknown(document.filledDocument?.schemaJson)
+      const answersToRestore = restoreFromDraft ?? filledDraft
       const restoredDraft =
-        restoreFromDraft == null
+        answersToRestore == null
           ? normalizedServerDraft
-          : restoreCompatibleConsentDraftValues(restoreFromDraft, normalizedServerDraft)
+          : restoreCompatibleConsentDraftValues(answersToRestore, normalizedServerDraft)
       const serverDraft = applyLockedNoticeSubjectName(
         restoredDraft,
         serverTemplateCode,
@@ -315,10 +336,19 @@ export function SchemaConsentWriteForm({
     setIsServerDraftLoading(true)
     const consentType = resolvePortalConsentCreateType(consentKey)
     void createPortalConsentDocument({ consentType })
-      .then(applyServerDraftDocument)
+      .then(document => {
+        applyServerDraftDocument(document)
+        if (document.documentId == null || document.formTemplateVersion?.schemaJson == null) {
+          setServerDraftUnavailable(true)
+          openAlert(SERVER_DRAFT_UNAVAILABLE_MESSAGE)
+          return
+        }
+        setServerDraftUnavailable(false)
+      })
       .catch(error => {
+        setServerDraftUnavailable(true)
         console.debug('portal consent draft create failed', error)
-        openAlert(PORTAL_SUBMIT_FAILED_MESSAGE)
+        openAlert(SERVER_DRAFT_UNAVAILABLE_MESSAGE)
       })
       .finally(() => setIsServerDraftLoading(false))
   }, [applyServerDraftDocument, consentKey, openAlert, portalSubmitEnabled, readOnly, templateId])
@@ -363,6 +393,10 @@ export function SchemaConsentWriteForm({
     if (isSubmitting) return
     if (isServerDraftLoading) {
       openAlert(SERVER_DRAFT_LOADING_MESSAGE)
+      return
+    }
+    if (serverDraftUnavailable) {
+      openAlert(SERVER_DRAFT_UNAVAILABLE_MESSAGE)
       return
     }
     if (templateId === 'agreement-notice' && isLockedBasicLoading && !lockedBasic.name.trim()) {
@@ -501,8 +535,74 @@ export function SchemaConsentWriteForm({
     }
   }, [onTitleAside, showDraftSignature])
 
+  /**
+   * 지급조서·영수증 — 양식에 있는 서명란 단락(mid/tail)에 각 슬롯 서명 블록을 둔다.
+   * 서명란 단락이 없으면 기존처럼 확인문 카드 안에 서명 블록을 둔다(서명 불가 방지).
+   */
+  const signatureParagraphSlotById = useMemo(() => {
+    const map = new Map<string, 'mid' | 'final'>()
+    const known: Array<[string, 'mid' | 'final']> =
+      templateId === 'agreement-third-party'
+        ? [
+            [PAYMENT_STATEMENT_PRE_CONSENT_IDS.midSignature, 'mid'],
+            [PAYMENT_STATEMENT_PRE_CONSENT_IDS.tailSignature, 'final'],
+          ]
+        : templateId === 'agreement-receipt-pre-consent'
+          ? [
+              [RECEIPT_PRE_CONSENT_IDS.midSignature, 'mid'],
+              [RECEIPT_PRE_CONSENT_IDS.tailSignature, 'final'],
+            ]
+          : []
+    for (const [id, slot] of known) {
+      const p = state.draft.paragraphs.find(paragraph => paragraph.id === id)
+      if (
+        p != null &&
+        p.kind === 'description' &&
+        p.variant === 'system' &&
+        p.systemPreset === 'agreement_signature' &&
+        !hiddenParagraphIds.has(id)
+      ) {
+        map.set(id, slot)
+      }
+    }
+    return map
+  }, [hiddenParagraphIds, state.draft.paragraphs, templateId])
+  const signatureSlotsAtSignatureParagraph = useMemo(
+    () => new Set(signatureParagraphSlotById.values()),
+    [signatureParagraphSlotById],
+  )
+
   const renderParagraphSlot = useCallback(
     (paragraph: WritingFormParagraph) => {
+      const signatureParagraphSlot = signatureParagraphSlotById.get(paragraph.id)
+      if (signatureParagraphSlot != null) {
+        return (
+          <PFFormSignatureBlock
+            className={styles.statementSignatureBlock}
+            signerName={signerName}
+            signature={state.signatures?.[signatureParagraphSlot]}
+            onSignatureChange={value =>
+              setState(prev => ({
+                ...prev,
+                signatures: { ...prev.signatures, [signatureParagraphSlot]: value },
+              }))
+            }
+          />
+        )
+      }
+      if (
+        paragraph.kind === 'description' &&
+        paragraph.variant === 'system' &&
+        paragraph.systemPreset === 'agreement_signature' &&
+        paragraph.id !== AGREEMENT_NOTICE_PARAGRAPH_IDS.systemSignature
+      ) {
+        // 서버 서명 필드(mid/final) 계약 밖 서명란 — 서명 패드를 만들거나 다른 서명을 복제하지 않는다
+        return (
+          <p className={styles.statementNote} role="note" data-unsupported-signature-field={paragraph.id}>
+            이 서명란은 아직 전자서명을 지원하지 않습니다. 이 위치에는 서명이 저장되지 않습니다.
+          </p>
+        )
+      }
       if (
         paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.paymentRecord ||
         paragraph.id === RECEIPT_PRE_CONSENT_IDS.paymentRecord
@@ -515,6 +615,7 @@ export function SchemaConsentWriteForm({
             lockProfileFields={!isReceipt && paymentStatementProfileValues != null}
             profileValues={isReceipt ? null : paymentStatementProfileValues}
             receiptLockedMember={isReceipt ? receiptLockedMember : null}
+            receiptAffiliationDisplay={isReceipt ? receiptAffiliationDisplay : undefined}
             onChange={next =>
               setState(prev => ({
                 ...prev,
@@ -543,6 +644,7 @@ export function SchemaConsentWriteForm({
             statement={body}
             signerName={signerName}
             signature={state.signatures?.mid}
+            showSignatureBlock={!signatureSlotsAtSignatureParagraph.has('mid')}
             onSignatureChange={mid =>
               setState(prev => ({
                 ...prev,
@@ -566,6 +668,7 @@ export function SchemaConsentWriteForm({
             statement={body}
             signerName={signerName}
             signature={state.signatures?.final}
+            showSignatureBlock={!signatureSlotsAtSignatureParagraph.has('final')}
             onSignatureChange={finalSig =>
               setState(prev => ({
                 ...prev,
@@ -581,9 +684,12 @@ export function SchemaConsentWriteForm({
           paragraph.kind === 'description' && paragraph.variant === 'closing'
             ? paragraph.body.trim()
             : ''
+        // 1행 = 확인문(S58), 2행 이후 = 회색 안내(S72 — 유효·보관 기간). CMS 마무리글 본문 그대로
+        const [statementLine = '', ...noteLines] = body.split('\n')
         return (
           <ConsentSignatureStatement
-            statement={body}
+            statement={statementLine.trim()}
+            note={noteLines.join('\n')}
             signerName={signerName}
             signature={state.signatures?.final}
             onSignatureChange={finalSig =>
@@ -607,6 +713,8 @@ export function SchemaConsentWriteForm({
       return undefined
     },
     [
+      signatureParagraphSlotById,
+      signatureSlotsAtSignatureParagraph,
       signerName,
       paymentBasicInfo,
       paymentStatementProfileValues,
@@ -628,22 +736,40 @@ export function SchemaConsentWriteForm({
       ) {
         return undefined
       }
+      const confirmationClosing = state.draft.paragraphs.find(
+        p => p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing,
+      )
+      const confirmationText =
+        confirmationClosing?.kind === 'description' && confirmationClosing.variant === 'closing'
+          ? confirmationClosing.body.trim()
+          : ''
+      const onSignatureChange = (finalSig: FormSignatureValue) =>
+        setState(prev => ({
+          ...prev,
+          signatures: { ...prev.signatures, final: finalSig },
+        }))
+      if (confirmationText) {
+        // 서명 카드 확인문 — CMS 저장 `confirmationClosing` 본문
+        return (
+          <ConsentSignatureStatement
+            statement={confirmationText}
+            signerName={signerName}
+            signature={state.signatures?.final}
+            onSignatureChange={onSignatureChange}
+          />
+        )
+      }
       return (
         <PFFormSignatureBlock
           className={styles.noticeSubjectSignatureCard}
           contentAlign="end"
           signerName={signerName}
           signature={state.signatures?.final}
-          onSignatureChange={finalSig =>
-            setState(prev => ({
-              ...prev,
-              signatures: { ...prev.signatures, final: finalSig },
-            }))
-          }
+          onSignatureChange={onSignatureChange}
         />
       )
     },
-    [signerName, state.signatures?.final, templateId],
+    [signerName, state.draft.paragraphs, state.signatures?.final, templateId],
   )
 
   if (isCrimeConsentTemplate(templateId) && isInstructorApplyConsentKey(consentKey)) {
@@ -667,7 +793,11 @@ export function SchemaConsentWriteForm({
           handleSubmit()
         }}
       >
-        <fieldset disabled={readOnly} className={styles.fieldset}>
+        <fieldset
+          disabled={readOnly || isServerDraftLoading || serverDraftUnavailable}
+          className={styles.fieldset}
+          aria-busy={isServerDraftLoading || undefined}
+        >
           <PlatformConsentFormBody
             draft={state.draft}
             hiddenParagraphIds={hiddenParagraphIds}
@@ -684,7 +814,7 @@ export function SchemaConsentWriteForm({
               size="xlarge"
               width={240}
               type="submit"
-              disabled={isSubmitting || isServerDraftLoading}
+              disabled={isSubmitting || isServerDraftLoading || serverDraftUnavailable}
             >
               {isSubmitting ? '제출 중…' : isServerDraftLoading ? '불러오는 중…' : '작성완료'}
             </PFButton>

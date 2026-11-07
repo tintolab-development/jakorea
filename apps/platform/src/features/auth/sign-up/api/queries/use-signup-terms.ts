@@ -27,7 +27,9 @@ export function useSignupTermsQuery({
         birthDate: birthDateIso!,
       }),
     enabled: canFetch,
-    staleTime: 5 * 60_000,
-    gcTime: 30 * 60_000,
+    staleTime: 0,
+    gcTime: 5 * 60_000,
+    refetchOnMount: 'always',
+    refetchOnReconnect: true,
   })
 }

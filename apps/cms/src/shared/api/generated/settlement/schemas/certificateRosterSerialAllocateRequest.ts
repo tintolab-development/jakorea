@@ -7,15 +7,19 @@
  */
 import type { CertificateRosterSerialAllocateRequestCertificateType } from './certificateRosterSerialAllocateRequestCertificateType';
 
+/**
+ * 기관 학생 명단 행을 지정하는 증서 번호 발급 요청
+ */
 export interface CertificateRosterSerialAllocateRequest {
-  /** @minimum 1 */
+  /** 발급 대상 프로그램의 PK */
   programId: number;
-  /** @minimum 1 */
+  /** 기관 학생을 소유한 program_organization_application.id. participantId가 아닙니다. */
   applicationId: number;
-  /**
-     * program_organization_student_roster.id; never interpreted as participantId
-     * @minimum 1
-     */
+  /** program_organization_student_roster.id. 서버가 이 roster의 명시적 participant 연결을 검증합니다. */
   rosterId: number;
+  /**
+     * 인증서 문서 타입
+     * @minLength 1
+     */
   certificateType: CertificateRosterSerialAllocateRequestCertificateType;
 }

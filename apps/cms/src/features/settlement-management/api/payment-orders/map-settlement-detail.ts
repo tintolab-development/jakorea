@@ -54,7 +54,7 @@ function toProgramDetailInstructorRow(
   return {
     id: settlementId != null ? String(settlementId) : `line-${index}`,
     no: index + 1,
-    settlementId,
+    settlementId: settlementId ?? undefined,
     statementId: resolveStatementId(item, statementMap),
     instructorName: item.instructorName ?? '-',
     institutionName: formatPaymentOrderInstitutionDisplay(item.institutionName),
@@ -62,9 +62,9 @@ function toProgramDetailInstructorRow(
     sessionOrdinal: item.sessionOrdinal ?? 0,
     processingStatus: mapSettlementAxesToLineStatus(item.statementStatus, item.paymentStatus),
     estimatedAmount: item.netPaymentAmount ?? 0,
-    lectureFeePaymentScheduledDate: item.expectedTransferDate,
-    statementStatus: item.statementStatus,
-    paymentStatus: item.paymentStatus,
+    lectureFeePaymentScheduledDate: item.expectedTransferDate ?? undefined,
+    statementStatus: item.statementStatus ?? undefined,
+    paymentStatus: item.paymentStatus ?? undefined,
     availableActions,
     canConfirmPaymentStatement: canConfirmPaymentStatement({
       availableActions,
@@ -83,7 +83,7 @@ function toInstructorDetailProgramRow(
   return {
     id: settlementId != null ? String(settlementId) : `line-${index}`,
     no: index + 1,
-    settlementId,
+    settlementId: settlementId ?? undefined,
     statementId: resolveStatementId(item, statementMap),
     programName: item.programNameKo ?? '-',
     institutionName: formatPaymentOrderInstitutionDisplay(item.institutionName),
@@ -91,9 +91,9 @@ function toInstructorDetailProgramRow(
     sessionOrdinal: item.sessionOrdinal ?? 0,
     processingStatus: mapSettlementAxesToLineStatus(item.statementStatus, item.paymentStatus),
     estimatedAmount: item.netPaymentAmount ?? 0,
-    lectureFeePaymentScheduledDate: item.expectedTransferDate,
-    statementStatus: item.statementStatus,
-    paymentStatus: item.paymentStatus,
+    lectureFeePaymentScheduledDate: item.expectedTransferDate ?? undefined,
+    statementStatus: item.statementStatus ?? undefined,
+    paymentStatus: item.paymentStatus ?? undefined,
     availableActions,
     canConfirmPaymentStatement: canConfirmPaymentStatement({
       availableActions,

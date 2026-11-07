@@ -5,129 +5,61 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { InstructorApplicationAvailableScheduleSlot } from './instructorApplicationAvailableScheduleSlot';
-import type { InstructorApplicationDetailResponsePrivacyMaskingLevel } from './instructorApplicationDetailResponsePrivacyMaskingLevel';
-import type { InstructorApplicationFeePolicy } from './instructorApplicationFeePolicy';
-import type { InstructorApplicationInstructorMemberProfile } from './instructorApplicationInstructorMemberProfile';
+import type { AvailableScheduleSlot } from './availableScheduleSlot';
+import type { FeePolicy } from './feePolicy';
 import type { InstructorCmsProfile } from './instructorCmsProfile';
+import type { InstructorMemberProfile } from './instructorMemberProfile';
 
-/**
- * 강사 신청 상세. 일반 조회는 개인정보 마스킹(privacyMaskingLevel=MASKED), 원문 조회는 UNMASKED
- */
 export interface InstructorApplicationDetailResponse {
-  id: number;
-  programId: number;
-  /** @nullable */
-  recruitmentId?: number | null;
-  /** @nullable */
-  instructorMemberId?: number | null;
-  /** @nullable */
-  instructorName?: string | null;
-  /** @nullable */
-  nameHanja?: string | null;
-  /** @nullable */
-  nameEnglish?: string | null;
-  /**
-     * Masked responses use yyyy-**-**; UNMASKED responses return the original yyyy-MM-dd value.
-     * @nullable
-     */
-  birthDate?: string | null;
-  /** @nullable */
-  gender?: string | null;
-  /**
-     * 일반 상세는 마스킹, 원문 조회는 원문
-     * @nullable
-     */
-  contact?: string | null;
-  /**
-     * 일반 상세는 마스킹, 원문 조회는 원문
-     * @nullable
-     */
-  email?: string | null;
-  /** @nullable */
-  homeAddress?: string | null;
-  /**
-     * 일반 상세는 마스킹
-     * @nullable
-     */
-  homeAddressDetail?: string | null;
-  /** @nullable */
-  educationLevel?: string | null;
-  /**
-     * 신청 스냅샷. 없으면 강사 프로필 값
-     * @nullable
-     */
-  educationSchoolName?: string | null;
-  /**
-     * 신청 스냅샷. 없으면 강사 프로필 값
-     * @nullable
-     */
-  affiliation?: string | null;
-  /**
-     * 신청 스냅샷. 없으면 강사 프로필 경력 요약
-     * @nullable
-     */
-  teachingExperience?: string | null;
-  /** @nullable */
-  jaLectureExperienceYears?: number | null;
-  /** @nullable */
-  jaEvaluationGrade?: string | null;
-  /** @nullable */
-  oneLineIntro?: string | null;
-  /** @nullable */
-  availableScheduleMemo?: string | null;
-  /** 선택한 일정. 없으면 빈 배열(null 아님) */
-  availableScheduleSlots: InstructorApplicationAvailableScheduleSlot[];
-  /** @nullable */
-  managerComment?: string | null;
-  /** 정규화된 application_status. 목록과 상세는 같은 코드를 반환한다. CMS 「승인 대기」=statusGroup=APPLICATION_PENDING(SUBMITTED, WAITING, WAITING_REVIEW, PENDING, REJECTION_CANCELLED). 「신청 반려」=statusGroup=APPLICATION_REJECTED(REJECTED, APPROVAL_CANCELLED). REJECTION_CANCELLED는 반려 취소 후 승인 대기이며 상세에서 대기 중으로 바꾸지 않는다. */
-  applicationStatus: string;
-  /** @nullable */
-  instructorTypeSnapshot?: string | null;
-  /** @nullable */
-  instructorFeeGradeSnapshot?: string | null;
-  /** @nullable */
-  distanceKm?: number | null;
-  /** @nullable */
-  longDistance?: boolean | null;
-  /** @nullable */
-  submittedAt?: string | null;
-  /** @nullable */
-  approvedAt?: string | null;
-  /** @nullable */
-  rejectedAt?: string | null;
-  /** @nullable */
-  rejectReason?: string | null;
-  /** @nullable */
-  participantId?: number | null;
-  /** 현재 상태에서 가능한 처리. 없으면 빈 배열(null 아님) */
-  availableActions: string[];
-  privacyMaskingLevel: InstructorApplicationDetailResponsePrivacyMaskingLevel;
-  canRevealPersonalInfo: boolean;
-  /**
-     * 강사 회원에 DB로 연결된 기존 소속 학교/기관 ID. 목록과 같은 값. 없으면 null
-     * @nullable
-     */
+  id?: number;
+  programId?: number;
+  recruitmentId?: number;
+  instructorMemberId?: number;
+  instructorName?: string;
+  nameHanja?: string;
+  nameEnglish?: string;
+  birthDate?: string;
+  gender?: string;
+  contact?: string;
+  email?: string;
+  homeAddress?: string;
+  homeAddressDetail?: string;
+  educationLevel?: string;
+  educationSchoolName?: string;
+  affiliation?: string;
+  teachingExperience?: string;
+  jaLectureExperienceYears?: number;
+  jaEvaluationGrade?: string;
+  oneLineIntro?: string;
+  availableScheduleMemo?: string;
+  availableScheduleSlots?: AvailableScheduleSlot[];
+  managerComment?: string;
+  /** 정규화된 application_status. 목록과 상세는 같은 코드를 반환한다. CMS 「승인 대기」=statusGroup=APPLICATION_PENDING(SUBMITTED, WAITING, WAITING_REVIEW, PENDING, REJECTION_CANCELLED; REVIEWING 등 WAITING_REVIEW 별칭 포함). 「신청 반려」=statusGroup=APPLICATION_REJECTED(REJECTED, APPROVAL_CANCELLED). REJECTION_CANCELLED는 반려 취소 후 승인 대기이며 상세에서 대기 중으로 바꾸지 않는다. 단일 status=는 정규화 등호이며 그룹의 다른 상태를 포함하지 않는다. */
+  applicationStatus?: string;
+  instructorTypeSnapshot?: string;
+  instructorFeeGradeSnapshot?: string;
+  distanceKm?: number;
+  longDistance?: boolean;
+  submittedAt?: string;
+  approvedAt?: string;
+  rejectedAt?: string;
+  rejectReason?: string;
+  participantId?: number;
+  availableActions?: string[];
+  privacyMaskingLevel?: string;
+  canRevealPersonalInfo?: boolean;
+  /** 강사 회원에 DB로 연결된 기존 소속 학교/기관 ID. 목록과 같은 값. 없으면 null */
   affiliationOrganizationId?: number | null;
-  /**
-     * 교사 프로필 재직 상태. ACTIVE | ON_LEAVE | TRANSFERRED | INACTIVE | RESIGNED | WITHDRAWN. 교사 프로필이 없으면 null
-     * @nullable
-     */
+  /** 교사 프로필 재직 상태. ACTIVE | ON_LEAVE | TRANSFERRED | INACTIVE | RESIGNED | WITHDRAWN. 교사 프로필이 없으면 null */
   employmentStatus?: string | null;
-  /**
-     * 재직(ACTIVE)이면 true. 교사 프로필이 없으면 null
-     * @nullable
-     */
+  /** 재직(ACTIVE)이면 true. 교사 프로필이 없으면 null */
   affiliationIsCurrentlyEmployed?: boolean | null;
   /** 저장된 강사비. basis/measure/amount가 모두 없으면 null */
-  feePolicy?: InstructorApplicationFeePolicy | null;
-  /**
-     * 사업소득자 해당 여부. 해당 | 해당 없음. 없으면 null
-     * @nullable
-     */
+  feePolicy?: FeePolicy | null;
+  /** 사업소득자 해당 여부. 해당 | 해당 없음. 없으면 null */
   businessIncomeEarnerStatus?: string | null;
   /** 교사 겸직 스냅샷. 교사 프로필이 없으면 null */
-  instructorMemberProfile?: InstructorApplicationInstructorMemberProfile | null;
+  instructorMemberProfile?: InstructorMemberProfile | null;
   /** 강사 회원의 현재 구조화 이력서(학력·경력·JA Korea 활동·자격·수상·자기소개). 회원 관리 강사 상세의 profile과 같은 구조이며 일반 상세에서는 같은 규칙으로 마스킹됩니다. 강사 프로필이 없으면 null */
   instructorCmsProfile?: InstructorCmsProfile | null;
 }

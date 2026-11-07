@@ -66,6 +66,23 @@ export function lectureFeeBasisTypeLabel(type: ApplicantInstructorLectureFeeBasi
   return LECTURE_FEE_BASIS_TYPE_LABEL[type]
 }
 
+/** GET `feePolicy.basisType` — `PROGRAM`/`program`은 프로그램 기준. RECRUITMENT만 특강. */
+export function parseLectureFeeBasisTypeFromApi(
+  raw?: string | null
+): ApplicantInstructorLectureFeeBasisType | undefined {
+  const trimmed = raw?.trim()
+  if (!trimmed) return undefined
+  const upper = trimmed.toUpperCase()
+  const lower = trimmed.toLowerCase()
+  if (upper === 'PROGRAM' || lower === 'program' || /프로그램\s*기준/.test(trimmed)) {
+    return 'program'
+  }
+  if (lower === 'special_lecture' || /특강/.test(trimmed)) return 'special_lecture'
+  if (lower === 'other_labor' || /기타\s*인건비/.test(trimmed)) return 'other_labor'
+  if (upper === 'RECRUITMENT') return 'special_lecture'
+  return undefined
+}
+
 export function parseBusinessIncomeStatus(
   value: string | undefined
 ): ApplicantInstructorBusinessIncomeStatus {
@@ -251,8 +268,8 @@ export function resolveLectureFeeBasisFromRow(row: ApplicantInstructorRow): Reso
   const display = row.lectureFeeBasisDisplay?.trim()
   if (!display) {
     return {
-      type: 'special_lecture',
-      measure: DEFAULT_LECTURE_FEE_MEASURE,
+      type: 'program',
+      measure: LECTURE_FEE_MEASURE_NOT_APPLICABLE,
       amount: parseLectureFeeAmountDigits(row.lectureFeeAmount),
     }
   }
@@ -275,7 +292,7 @@ export function resolveLectureFeeBasisFromRow(row: ApplicantInstructorRow): Reso
       ? 'special_lecture'
       : segments[0]?.includes('기타')
         ? 'other_labor'
-        : 'special_lecture')
+        : 'program')
 
   const amountSegment = segments.find(s => /[\d,]+/.test(s)) ?? segments[segments.length - 1]
   const measureSegment = findLectureFeeMeasureInDisplaySegments(segments)
@@ -285,6 +302,31 @@ export function resolveLectureFeeBasisFromRow(row: ApplicantInstructorRow): Reso
     measure: normalizeLectureFeeMeasure(measureSegment),
     amount: parseLectureFeeAmountDigits(amountSegment),
   }
+}
+
+function lectureFeeMeasureViewLabel(measure: string | undefined): string {
+  const trimmed = measure?.trim() ?? ''
+  if (!trimmed || trimmed === LECTURE_FEE_MEASURE_NOT_APPLICABLE) return ''
+  if (trimmed === '1회 기준') return DEFAULT_LECTURE_FEE_MEASURE
+  return LECTURE_FEE_MEASURE_OPTIONS.some(option => option.value === trimmed) ? trimmed : ''
+}
+
+/** 상세·정산 보기용 세그먼트: 유형 | 지급 기준 | 금액. 값 없으면 []. */
+export function buildLectureFeeBasisViewSegments(row: ApplicantInstructorRow): string[] {
+  const hasExplicitBasis =
+    Boolean(row.lectureFeeBasisType) ||
+    Boolean(row.lectureFeeBasisDisplay?.trim()) ||
+    Boolean(parseLectureFeeAmountDigits(row.lectureFeeAmount)) ||
+    Boolean(row.instructorFeeGradeLabel?.trim())
+  if (!hasExplicitBasis) return []
+
+  const fee = resolveLectureFeeBasisFromRow(row)
+  const measureLabel = lectureFeeMeasureViewLabel(row.lectureFeeMeasure || fee.measure)
+  return [
+    lectureFeeBasisTypeLabel(fee.type),
+    measureLabel,
+    formatLectureFeeAmountWon(fee.amount),
+  ].filter(Boolean)
 }
 
 export function buildLectureFeeBasisDisplay(

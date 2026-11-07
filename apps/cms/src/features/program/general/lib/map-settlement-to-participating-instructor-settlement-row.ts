@@ -23,14 +23,14 @@ export interface ParticipatingInstructorSettlementApiRow {
   sessionTotal?: number
 }
 
-function formatIsoDateTime(iso?: string): string {
+function formatIsoDateTime(iso?: string | null): string {
   if (!iso?.trim()) return ''
   const parsed = dayjs(iso)
   if (!parsed.isValid()) return iso.trim()
   return formatYmdHmWithKoreanWeekday(parsed)
 }
 
-function formatLectureDateOnly(iso?: string): string {
+function formatLectureDateOnly(iso?: string | null): string {
   if (!iso?.trim()) return ''
   const date = new Date(iso)
   if (Number.isNaN(date.getTime())) return iso.trim()
@@ -105,8 +105,8 @@ export function mapSettlementToParticipatingInstructorSettlementRow(
     paymentStatementStatus,
     scheduledSettlementAmount,
     canViewPaymentStatement: hasApplication,
-    sessionCompleted: item.sessionCompleted,
-    sessionTotal: item.sessionTotal,
+    sessionCompleted: item.sessionCompleted ?? undefined,
+    sessionTotal: item.sessionTotal ?? undefined,
   }
 }
 

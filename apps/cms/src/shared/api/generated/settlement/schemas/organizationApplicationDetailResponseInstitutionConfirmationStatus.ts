@@ -8,7 +8,6 @@
 
 /**
  * UJAT 기관 확인 상태(temporary-schedule와 동일 vocabulary). scheduleConfirmStatus와 동치: institution_checking→CHECKING, institution_confirmed→CONFIRMED, revision_requested→REVISION_REQUESTED. 비대상·미설정이면 키를 생략하며 null로 보내지 않는다.
- * @nullable
  */
 export type OrganizationApplicationDetailResponseInstitutionConfirmationStatus = typeof OrganizationApplicationDetailResponseInstitutionConfirmationStatus[keyof typeof OrganizationApplicationDetailResponseInstitutionConfirmationStatus] | null;
 

@@ -7,13 +7,12 @@
  */
 
 /**
- * CMS 관리자 등록 회원의 NICE 본인인증 세션 연결 요청
+ * CMS 관리자 등록 회원의 NICE 본인인증 결과 연결 요청
  */
 export interface AdminProvisionedIdentityConfirmRequest {
-  /** NICE 본인인증 완료 세션 ID */
   identityVerificationSessionId: number;
   /**
-     * NICE 본인인증 완료 세션에서 발급된 프로필 토큰
+     * @minLength 0
      * @maxLength 512
      */
   profileToken: string;

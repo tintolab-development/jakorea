@@ -10,5 +10,6 @@
  * 프로그램 목록과 같은 유형·데이터 범위의 진행년도 옵션. 없으면 years는 [].
  */
 export interface ProgramBusinessYearsResponse {
-  years: number[];
+  /** deleted_at IS NULL 이고 business_year IS NOT NULL 인 값의 distinct. 내림차순. */
+  years?: number[];
 }

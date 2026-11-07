@@ -253,11 +253,19 @@ export async function fetchProgramLectureReportsRemote(
   programId: string,
   params?: { page?: number; size?: number; instructorMemberId?: number }
 ): Promise<ProgramLectureReportsPageDto> {
+  const instructorMemberId =
+    params?.instructorMemberId != null && params.instructorMemberId > 0
+      ? params.instructorMemberId
+      : undefined
   const body = await unwrapApiBody<unknown[] | ProgramLectureReportsPageDto>(
     await customInstance({
       url: `/api/admin/programs/${encodeURIComponent(programId)}/lecture-reports`,
       method: 'GET',
-      params,
+      params: {
+        page: params?.page,
+        size: params?.size,
+        ...(instructorMemberId != null ? { instructorMemberId } : {}),
+      },
     })
   )
   if (Array.isArray(body)) {
@@ -274,24 +282,25 @@ export async function fetchProgramLectureReportsRemote(
 
 /**
  * GET /api/admin/programs/{programId}/lecture-reports/download
- * OpenAPI 응답 스키마 미정 — 회원 일괄과 동일하게 `FileDownloadJobResponse`(`downloadUrl`) 가정.
- * `downloadEndpoint` additive 도 수용.
+ * 제출 첨부 ZIP Job. 본문 PDF가 아니다. 빈 대상은 HTTP 409 LECTURE_REPORT_NO_DOWNLOADABLE_FILES.
  */
 export async function downloadProgramLectureReportsRemote(
   programId: string,
   params?: { instructorMemberId?: number }
-): Promise<{
-  downloadUrl?: string
-  downloadEndpoint?: string
-  fileObjectId?: number
-  status?: string
-}> {
+): Promise<import('@/shared/lib/lecture-report-bulk-download').LectureReportBulkDownloadJob> {
+  const query =
+    params?.instructorMemberId != null && params.instructorMemberId > 0
+      ? { instructorMemberId: params.instructorMemberId }
+      : undefined
   return unwrapApiBody(
-    await customInstance({
-      url: `/api/admin/programs/${encodeURIComponent(programId)}/lecture-reports/download`,
-      method: 'GET',
-      params,
-    })
+    await customInstance(
+      {
+        url: `/api/admin/programs/${encodeURIComponent(programId)}/lecture-reports/download`,
+        method: 'GET',
+        params: query,
+      },
+      { skipGlobalErrorAlert: true }
+    )
   )
 }
 
@@ -770,18 +779,6 @@ export async function fetchEmployeeVolunteerCountsRemote(
       toNumericProgramId(programId),
       organizationApplicationId != null ? { organizationApplicationId } : undefined
     )
-  )
-}
-
-/** POST /api/admin/programs/{programId}/completion/rebuild-participants */
-export async function rebuildProgramCompletionParticipantsRemote(
-  programId: string
-): Promise<unknown> {
-  return unwrapApiBody(
-    await customInstance({
-      url: `/api/admin/programs/${encodeURIComponent(programId)}/completion/rebuild-participants`,
-      method: 'POST',
-    })
   )
 }
 

@@ -8,27 +8,15 @@
 import type { MemberPortalUjatClassAssignmentRow } from './memberPortalUjatClassAssignmentRow';
 
 export interface MemberPortalUjatClassAssignmentSchedule {
-  scheduleId: number;
-  /**
-     * 교육일 시작. 항상 Asia/Seoul +09:00. date와 같은 달력일. UTC Z 직렬화 금지.
-     * @nullable
-     */
+  scheduleId?: number;
+  /** 교육일 시작. 항상 Asia/Seoul +09:00. date와 같은 달력일. UTC Z 직렬화 금지. */
   scheduleStartAt?: string | null;
-  /**
-     * 교육일 Asia/Seoul YYYY-MM-DD. UTC slice(0,10) 금지. scheduleStartAt과 달력일이 다르면 date가 정본.
-     * @nullable
-     */
-  date: string | null;
-  /**
-     * 해당 일정의 출결 담당자 이름. attendanceManager 별칭 없음. 없으면 null.
-     * @nullable
-     */
-  attendanceManagerName: string | null;
-  /**
-     * JA 시스템 확인 요청이 있고 해당 일정에 배정 봉사자가 있을 때만 path. 없으면 null. 빈 문자열 금지. 필드 생략 금지.
-     * @nullable
-     */
-  consentDocumentsDownloadPath: string | null;
+  /** 교육일 Asia/Seoul YYYY-MM-DD. UTC slice(0,10) 금지. scheduleStartAt과 달력일이 다르면 date가 정본. */
+  date?: string | null;
+  /** 해당 일정의 출결 담당자 이름. attendanceManager 별칭 없음. 없으면 null. */
+  attendanceManagerName?: string | null;
+  /** 동의서 일괄 다운로드 GET path. JA 시스템 확인 요청이 있고 해당 일정에 배정 봉사자가 있을 때만 채운다. 없으면 null. 빈 문자열 금지. 필드 생략 금지. */
+  consentDocumentsDownloadPath?: string | null;
   /** 학급 행. 없으면 []. null 금지. 총 학급 수는 FE가 rows.length로 센다. */
-  rows: MemberPortalUjatClassAssignmentRow[];
+  rows?: MemberPortalUjatClassAssignmentRow[];
 }

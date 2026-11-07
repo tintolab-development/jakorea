@@ -119,7 +119,7 @@ export function TaxFilingPreviewModal({
           if (!previewWorkbook) {
             cmsAlertModal.show({
               title: '다운로드 불가',
-              content: previewValidationError?.message ?? '세금신고 미리보기 데이터가 없습니다.',
+              content: '세금신고 미리보기 데이터가 없습니다.',
             })
             return
           }

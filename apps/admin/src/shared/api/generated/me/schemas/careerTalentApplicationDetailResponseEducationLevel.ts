@@ -7,7 +7,7 @@
  */
 
 /**
- * revealPii=false: omitted (null). revealPii=true: stored enum. careerType stays on the masked detail; this field does not until revealed.
+ * Stored education level.
  */
 export type CareerTalentApplicationDetailResponseEducationLevel = typeof CareerTalentApplicationDetailResponseEducationLevel[keyof typeof CareerTalentApplicationDetailResponseEducationLevel] | null;
 

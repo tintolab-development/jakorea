@@ -16,6 +16,7 @@ export type LectureReportProgramProgressFieldProps = {
   paragraph: LectureReportProgramProgressParagraph
   onUpdateParagraph?: FormUpdateParagraph
   readOnly?: boolean
+  hideInstitutionFields?: boolean
 }
 
 function displayValue(value: string | undefined): string {
@@ -34,6 +35,7 @@ export function LectureReportProgramProgressField({
   paragraph,
   onUpdateParagraph,
   readOnly = false,
+  hideInstitutionFields = false,
 }: LectureReportProgramProgressFieldProps) {
   const autofillLocked = true
   const progressUnitEditable = !readOnly
@@ -86,6 +88,7 @@ export function LectureReportProgramProgressField({
         </PFFormField>
       </PFFormFieldRow>
 
+      {hideInstitutionFields ? null : (
       <PFFormFieldRow type="double">
         <PFFormField label="기관명">
           <PFTextInput
@@ -110,6 +113,7 @@ export function LectureReportProgramProgressField({
           />
         </PFFormField>
       </PFFormFieldRow>
+      )}
 
       <PFFormFieldRow type="double">
         <PFFormField label="교육 진행일">

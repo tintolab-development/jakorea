@@ -8,7 +8,6 @@
 
 /**
  * 응답 필드. 학교 연 1회 신청은 null. 명시적 volunteer recruit_term이 있을 때만 FIRST_HALF|SECOND_HALF. 목록 쿼리 recruitHalf는 이 값 등호가 아니라 확정 session 교육일 학기 필터.
- * @nullable
  */
 export type OrganizationApplicationListItemResponseRecruitHalf = typeof OrganizationApplicationListItemResponseRecruitHalf[keyof typeof OrganizationApplicationListItemResponseRecruitHalf] | null;
 

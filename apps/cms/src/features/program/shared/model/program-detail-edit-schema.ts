@@ -1078,10 +1078,11 @@ export function programToDetailEditValues(
       return program.venue?.trim() || undefined
     })(),
     oneLineIntroduction: program.oneLineIntroduction ?? undefined,
-    remarks:
-      program.remarks?.trim() ||
-      program.generalCommonInfo?.participantRecruitmentInfo?.remarks?.trim() ||
-      undefined,
+    remarks: isTrainedTeacherForm
+      ? (program.remarks ?? '')
+      : program.remarks?.trim() ||
+        program.generalCommonInfo?.participantRecruitmentInfo?.remarks?.trim() ||
+        undefined,
     educationTargetDetail:
       program.educationTargetDetail?.trim() ||
       program.generalCommonInfo?.participantRecruitmentInfo?.educationTargetDetail?.trim() ||
@@ -2287,4 +2288,18 @@ export function narrowProgramDetailPatchForCommonInfoSave(
     ...rest,
     generalCommonInfo: commonRest,
   }
+}
+
+/** TT 공통정보 저장 — 루트 remarks/mainTitle은 유지하고 일정·모집 nested는 제외한다. */
+export function narrowTrainedTeacherCommonInfoSavePatch(
+  patch: Partial<import('@/types/domain').Program>
+): Partial<import('@/types/domain').Program> {
+  const narrowed = narrowProgramDetailPatchForCommonInfoSave(patch)
+  if (Object.prototype.hasOwnProperty.call(patch, 'remarks')) {
+    narrowed.remarks = patch.remarks
+  }
+  if (Object.prototype.hasOwnProperty.call(patch, 'mainTitle')) {
+    narrowed.mainTitle = patch.mainTitle
+  }
+  return narrowed
 }

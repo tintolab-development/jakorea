@@ -7,8 +7,7 @@
  */
 
 /**
- * 교육 진행(시각 기준). GET /api/admin/dashboard/program-schedules items.scheduleStatus · 일반 프로그램 participants sessions[].scheduleStatus 와 동일. 출석과 별개. 산출 불가면 null. 빈 문자열 금지.
- * @nullable
+ * 교육 진행(시각 기준). UNSCHEDULED|SCHEDULED|IN_PROGRESS|COMPLETED. 대시보드 program-schedules.scheduleStatus · 일반 프로그램 participants sessions[].scheduleStatus 와 동일 규칙. 출석 제출과 별개. 산출 불가면 null. 빈 문자열 금지.
  */
 export type TrainedTeacherOrganizationEducationScheduleScheduleStatus = typeof TrainedTeacherOrganizationEducationScheduleScheduleStatus[keyof typeof TrainedTeacherOrganizationEducationScheduleScheduleStatus] | null;
 

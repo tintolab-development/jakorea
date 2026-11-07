@@ -7,27 +7,22 @@
  */
 import type { SettlementStatusChangeRequestNotificationType } from './settlementStatusChangeRequestNotificationType';
 
+/**
+ * 정산/지급 상태 변경 요청
+ */
 export interface SettlementStatusChangeRequest {
   /**
+     * 상태 변경 사유. 승인/거절/실패/재발행 이력에 남습니다.
      * @minLength 2
      * @maxLength 500
      */
   reason: string;
-  /** @nullable */
+  /** IMMEDIATE | ON_ANNOUNCEMENT | MANUAL */
   notificationType?: SettlementStatusChangeRequestNotificationType;
-  /**
-     * MANUAL일 때 필수
-     * @nullable
-     */
-  scheduledNotificationAt?: string | null;
-  /**
-     * 강의비 지급 예정일. KST 기준 오늘 또는 이후 날짜만 허용합니다.
-     * @nullable
-     */
-  lectureFeePaymentScheduledDate?: string | null;
-  /**
-     * 이체 예정일. KST 기준 오늘 또는 이후 날짜만 허용합니다.
-     * @nullable
-     */
-  scheduledPaymentDate?: string | null;
+  /** MANUAL일 때 필수 ISO datetime */
+  scheduledNotificationAt?: string;
+  /** 지급조서 확인 시 강의비 이체 예정일. KST 기준 오늘 또는 이후 날짜만 허용됩니다. */
+  lectureFeePaymentScheduledDate?: string;
+  /** lectureFeePaymentScheduledDate와 동일. FE 호환 필드명이며 KST 기준 오늘 또는 이후 날짜만 허용됩니다. */
+  scheduledPaymentDate?: string;
 }

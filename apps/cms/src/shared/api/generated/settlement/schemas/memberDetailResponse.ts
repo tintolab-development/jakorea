@@ -7,70 +7,32 @@
  */
 import type { MemberLinkedSocialAccountResponse } from './memberLinkedSocialAccountResponse';
 
-/**
- * CMS 회원 역할 상세의 공통 기본정보. 기본 조회에서는 이메일/연락처 등 개인정보가 마스킹됩니다.
- */
 export interface MemberDetailResponse {
   memberId?: number;
   uuid?: string;
-  /** @nullable */
-  email?: string | null;
-  /** @nullable */
-  name?: string | null;
-  /** @nullable */
-  phone?: string | null;
-  /**
-     * 기본 CMS 조회는 yyyy-**-**이며, 정본 생년월일이 없으면 null. UNMASKED 감사 응답은 yyyy-MM-dd 원문
-     * @nullable
-     */
-  birthDate?: string | null;
-  /** @nullable */
-  gender?: string | null;
+  email?: string;
+  name?: string;
+  phone?: string;
+  birthDate?: string;
+  birthYear?: number;
+  gender?: string;
   status?: string;
   loginEnabled?: boolean;
   identityVerified?: boolean;
   preRegistered?: boolean;
-  /** 관리자 선등록 원본 여부 */
   createdByAdmin?: boolean;
   under14?: boolean;
   guardianConsentRequired?: boolean;
-  /** @nullable */
-  external1365Id?: string | null;
+  external1365Id?: string;
   roles?: string[];
   identitySelfSignupCompletedAfterAdminRegistration?: boolean;
-  /** 관리자 선등록 안내 문구 노출 여부 */
   adminRegisteredNoticeVisible?: boolean;
   socialAccounts?: MemberLinkedSocialAccountResponse[];
   scheduleChangeCount?: number;
   scheduleCancelCount?: number;
-  /** 회원 본인이 변경/취소한 일정 관련 이력 합계 */
   scheduleChangeCancelCount?: number;
-  /** @nullable */
-  joinedAt?: string | null;
-  /** @nullable */
-  lastLoginAt?: string | null;
+  joinedAt?: string;
+  lastLoginAt?: string;
   createdAt?: string;
   updatedAt?: string;
-  /**
-     * 게시글 작성 actor 유형. MEMBER 또는 ADMIN 등입니다.
-     * @nullable
-     */
-  createdByActorType?: string | null;
-  /**
-     * 게시글 작성 actor ID. 탈퇴·삭제·미존재 actor면 null일 수 있습니다.
-     * @nullable
-     */
-  createdByActorId?: number | null;
-  /**
-     * 게시글 작성자 표시명. 탈퇴·삭제·미존재 actor면 null이며 FE가 안내로 대체할 수 있습니다.
-     * @nullable
-     */
-  createdByDisplayName?: string | null;
-  /** 현재 로그인 회원이 작성한 게시글이면 true입니다. */
-  mine?: boolean;
-  /**
-     * 기본 마스킹 조회에서 노출 가능한 출생 연도(YYYY)
-     * @nullable
-     */
-  birthYear?: number | null;
 }

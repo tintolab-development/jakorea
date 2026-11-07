@@ -85,32 +85,3 @@
   align-items: center;
   gap: 16px;
 }
-
-.hero-banner-form-modal
-  .hero-banner-form-modal__main-title-textarea.cms-textarea--large
-  .cms-textarea__control {
-  overflow: visible;
-  height: auto;
-  min-height: 0;
-  align-items: stretch;
-}
-
-.hero-banner-form-modal .hero-banner-form-modal__main-title-textarea .cms-textarea__inner {
-  display: block;
-  flex: none;
-  height: auto;
-}
-
-.hero-banner-form-modal
-  .hero-banner-form-modal__main-title-textarea
-  .cms-textarea__inner
-  textarea.ant-input {
-  flex: none;
-  resize: both;
-  min-height: 64px;
-  min-width: 160px;
-  max-width: 100%;
-  height: auto;
-  overflow: auto;
-  white-space: pre-wrap;
-}

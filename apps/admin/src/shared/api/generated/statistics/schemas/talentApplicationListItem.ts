@@ -12,7 +12,8 @@ import type { TalentApplicationListItemStatus } from './talentApplicationListIte
 export interface TalentApplicationListItem {
   id?: number;
   status?: TalentApplicationListItemStatus;
-  name?: string;
+  /** Stored applicant name (original). Empty is null, never "". */
+  name?: string | null;
   phone?: string;
   email?: string;
   gender?: TalentApplicationListItemGender;

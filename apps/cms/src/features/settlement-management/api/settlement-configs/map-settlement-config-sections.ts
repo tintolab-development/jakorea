@@ -51,7 +51,7 @@ const ICON_KEYS = new Set<SettlementItemSettingIconKey>([
   'deduct_business_33',
 ])
 
-function asIconKey(value: string | undefined): SettlementItemSettingIconKey | undefined {
+function asIconKey(value: string | null | undefined): SettlementItemSettingIconKey | undefined {
   if (!value) return undefined
   return ICON_KEYS.has(value as SettlementItemSettingIconKey)
     ? (value as SettlementItemSettingIconKey)
@@ -70,19 +70,19 @@ function sectionTitle(kind: SettlementItemSettingCategoryKind): string {
 }
 
 function formatPaymentDescription(item: {
-  description?: string
-  paymentItemType?: string
+  description?: string | null
+  paymentItemType?: string | null
 }): string {
   const trimmed = item.description?.trim()
   if (trimmed) return trimmed
   return getCatalogSettlementItemDescriptionByPaymentType(item.paymentItemType) ?? ''
 }
 
-function normalizeWageType(value: string | undefined): string {
+function normalizeWageType(value: string | null | undefined): string {
   return value?.trim().toUpperCase() ?? ''
 }
 
-function normalizePaymentType(value: string | undefined): string {
+function normalizePaymentType(value: string | null | undefined): string {
   return value?.trim().toUpperCase() ?? ''
 }
 
@@ -99,10 +99,10 @@ export function mapSettlementConfigToSections(
       asIconKey(item.iconKey) ?? WAGE_TYPE_ICON[wageItemType] ?? 'wage_tier3'
     return {
       id: item.id != null ? `w-${item.id}` : `w-${wageItemType}`,
-      apiItemId: item.id,
+      apiItemId: item.id ?? undefined,
       sectionKind: 'wage' as const,
       wageItemType,
-      layout: item.layout,
+      layout: item.layout ?? undefined,
       title: item.name ?? '임금 항목',
       description:
         item.description?.trim() ||
@@ -123,7 +123,7 @@ export function mapSettlementConfigToSections(
       asIconKey(item.iconKey) ?? PAYMENT_TYPE_ICON[paymentItemType] ?? 'pay_transport'
     return {
       id: item.id != null ? `p-${item.id}` : `p-${paymentItemType}`,
-      apiItemId: item.id,
+      apiItemId: item.id ?? undefined,
       sectionKind: 'payment' as const,
       paymentItemType,
       // ACTIVITY wire layout = activity (meal/volunteerActivity 정규화)
@@ -132,7 +132,7 @@ export function mapSettlementConfigToSections(
           ? 'activity'
           : item.layout === 'volunteerActivity'
             ? 'activity'
-            : item.layout,
+            : item.layout ?? undefined,
       title: item.itemName ?? '지급 항목',
       description: formatPaymentDescription({ ...item, paymentItemType }),
       iconKey,
@@ -153,9 +153,9 @@ export function mapSettlementConfigToSections(
         name === '원천징수'
       return {
         id: item.id != null ? `d-${item.id}` : `d-${name}`,
-        apiItemId: item.id,
+        apiItemId: item.id ?? undefined,
         sectionKind: 'deduction' as const,
-        layout: item.layout ?? (isWithholding ? 'withholdingDailyWorker' : item.layout),
+        layout: item.layout ?? (isWithholding ? 'withholdingDailyWorker' : undefined),
         title: name,
         description:
           description ||

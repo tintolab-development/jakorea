@@ -6,16 +6,13 @@
  * OpenAPI spec version: v9
  */
 
-/**
- * UJAT 신청기관 임시 반려. CMS 확인 모달은 applicationIds만 보낸다. reason은 호환용이며 생략·null·빈 문자열을 허용한다. 실제 신청 REJECTED 사유와 분리된다.
- */
 export interface TemporaryRejectionRequest {
   /** @minItems 1 */
   applicationIds: number[];
   /**
-     * 선택. 임시 반려는 알림·실제 반려 사유로 사용하지 않는다.
+     * 호환용 선택 필드. CMS 임시 반려 확인 모달은 사유를 보내지 않는다. 생략·null·빈 문자열을 허용하며 실제 신청 REJECTED 사유와 무관하다.
+     * @minLength 0
      * @maxLength 2000
-     * @nullable
      */
   reason?: string | null;
 }

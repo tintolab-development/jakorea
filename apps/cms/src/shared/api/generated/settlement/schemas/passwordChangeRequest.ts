@@ -6,14 +6,19 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * 비밀번호 변경 요청
+ */
 export interface PasswordChangeRequest {
   /**
+     * 현재 비밀번호. 실제 값을 문서나 로그에 남기지 않습니다.
      * @minLength 8
      * @maxLength 200
      */
   currentPassword: string;
   /**
-     * @minLength 8
+     * 새 비밀번호. 실제 값을 문서나 로그에 남기지 않습니다.
+     * @minLength 12
      * @maxLength 200
      */
   newPassword: string;

@@ -208,14 +208,20 @@ function padScheduleNumber(index: number): string {
   return String(index + 1).padStart(2, '0')
 }
 
-/** 추가·삭제 후 차시/회차 라벨 재부여 */
+/** 추가·삭제 후 차시/회차 라벨 재부여. 교육 연수 ON이면 첫 항목 라벨을 유지한다. */
 function relabelCurriculumSessions(
   sessions: GeneralProgramCurriculumSessionRow[],
-  isMulti: boolean
+  isMulti: boolean,
+  teacherTrainingEnabled = false
 ): GeneralProgramCurriculumSessionRow[] {
   return sessions.map((session, index) => ({
     ...session,
-    sessionLabel: isMulti ? `${index + 1}회차` : `${index + 1}차시`,
+    sessionLabel:
+      teacherTrainingEnabled && index === 0
+        ? TEACHER_TRAINING_HEADING
+        : isMulti
+          ? `${index + 1}회차`
+          : `${index + 1}차시`,
   }))
 }
 
@@ -1057,13 +1063,9 @@ function TrainedTeachersCurriculumSection({
     updateDraft(d => ({
       ...d,
       curriculumSessions: relabelCurriculumSessions(
-        [
-          ...d.curriculumSessions,
-          isMulti
-            ? { sessionLabel: '', title: '1', description: '' }
-            : { sessionLabel: '', title: '', description: '' },
-        ],
-        isMulti
+        [...d.curriculumSessions, { sessionLabel: '', title: '', description: '' }],
+        isMulti,
+        d.teacherTrainingEnabled
       ),
     }))
 
@@ -1072,7 +1074,8 @@ function TrainedTeachersCurriculumSection({
       ...d,
       curriculumSessions: relabelCurriculumSessions(
         d.curriculumSessions.filter((_, i) => i !== index),
-        isMulti
+        isMulti,
+        d.teacherTrainingEnabled
       ),
     }))
 
@@ -1105,7 +1108,11 @@ function TrainedTeachersCurriculumSection({
             onAddScheduleCurriculumGroup={() => {}}
             trainedTeachersTeacherTrainingEnabled={draft.teacherTrainingEnabled}
             onTrainedTeachersTeacherTrainingEnabledChange={next =>
-              updateDraft(d => ({ ...d, teacherTrainingEnabled: next }))
+              updateDraft(d => ({
+                ...d,
+                teacherTrainingEnabled: next,
+                curriculumSessions: relabelCurriculumSessions(d.curriculumSessions, isMulti, next),
+              }))
             }
           />
         ) : undefined

@@ -6,30 +6,26 @@
  * OpenAPI spec version: v9
  */
 
-/**
- * CMS 관리자 계정 목록 항목
- */
 export interface AdminAccountListItemResponse {
+  /** 관리자 계정 PK. 관리자 조회/수정/삭제 경로에 사용합니다. */
   adminAccountId?: number;
+  /** 외부 참조 및 감사용 관리자 UUID. CRUD 경로에는 사용하지 않습니다. */
   uuid?: string;
   email?: string;
   name?: string;
-  /** @nullable */
-  phone?: string | null;
+  phone?: string;
   status?: string;
   roleCode?: string;
   roleName?: string;
   mfaRequired?: boolean;
-  /** MASTER 등 관리자가 생성한 관리자 계정 여부. */
   createdByAdmin?: boolean;
-  /** createdByAdmin과 동일 의미의 FE 호환 필드. */
   registeredByAdmin?: boolean;
-  /** 셀프 가입 시 본인인증 완료 여부. */
   identityVerified?: boolean;
   permissionVersion?: number;
-  /** @nullable */
-  lastLoginAt?: string | null;
+  lastLoginAt?: string;
   createdAt?: string;
+  requestedAt?: string;
+  managedProgramCount?: number;
   /** 현재 또는 과거에 프로그램 담당자로 배정된 이력이 있는지 여부 */
   hasProgramAssignmentHistory?: boolean;
 }

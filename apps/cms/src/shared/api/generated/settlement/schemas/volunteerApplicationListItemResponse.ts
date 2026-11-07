@@ -5,10 +5,10 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { DocumentManagerEvaluation } from './documentManagerEvaluation';
-import type { VolunteerApplicationListInterviewEvaluation } from './volunteerApplicationListInterviewEvaluation';
+import type { InterviewAvailabilitySlot } from './interviewAvailabilitySlot';
+import type { InterviewEvaluationSummary } from './interviewEvaluationSummary';
+import type { VolunteerApplicationListItemResponseFinalResultStatus } from './volunteerApplicationListItemResponseFinalResultStatus';
 import type { VolunteerApplicationListItemResponseRecruitHalf } from './volunteerApplicationListItemResponseRecruitHalf';
-import type { VolunteerInterviewAvailabilitySlot } from './volunteerInterviewAvailabilitySlot';
 
 /**
  * 봉사자 신청 목록 항목
@@ -18,147 +18,80 @@ export interface VolunteerApplicationListItemResponse {
   programId?: number;
   programName?: string;
   programType?: string;
-  /** @nullable */
-  recruitmentId?: number | null;
-  /** @nullable */
-  memberId?: number | null;
-  /** @nullable */
-  memberName?: string | null;
-  /**
-     * 목록용 마스킹 연락처. 원문이 없으면 null
-     * @nullable
-     */
+  recruitmentId?: number;
+  /** 상·하반기. program_recruitment.recruit_term의 FIRST_HALF|SECOND_HALF. 해당 없으면 null */
+  recruitHalf?: VolunteerApplicationListItemResponseRecruitHalf;
+  memberId?: number;
+  /** 봉사자 회원에 DB로 연결된 기존 소속 학교/기관 ID. 저장된 소속이 없으면 null */
+  affiliationOrganizationId?: number;
+  memberName?: string;
+  /** 목록용 마스킹 연락처. 원문이 없으면 null */
   contact?: string | null;
-  /**
-     * 목록용 마스킹 이메일. 원문이 없으면 null
-     * @nullable
-     */
+  /** 목록용 마스킹 이메일. 원문이 없으면 null */
   email?: string | null;
-  /**
-     * 자택 주소. 목록은 항상 MASKED: 시/도만 반환하거나 시/도를 판별할 수 없으면 null. 시군구·동·상세로 채우지 않음. preferredRegion(희망 교육 지역)과 다른 필드이며 대체하지 않음
-     * @nullable
-     */
+  /** 자택 주소. 목록은 항상 MASKED: 시/도만 반환하거나 시/도를 판별할 수 없으면 null. 시군구·동·상세로 채우지 않음. preferredRegion(희망 교육 지역)과 다른 필드이며 대체하지 않음 */
   homeAddress?: string | null;
-  /**
-     * 자택 시/도. 저장된 region_sido 또는 주소에서 인식된 시/도. 없으면 null
-     * @nullable
-     */
+  /** 자택 시/도. 저장된 region_sido 또는 주소에서 인식된 시/도. 없으면 null */
   homeAddressSido?: string | null;
-  /**
-     * 자택 시군구. 저장된 region_sigungu. 없으면 null. 목록에서 무조건 null로 두지 않음. preferredRegion과 다른 필드
-     * @nullable
-     */
+  /** 자택 시군구. 저장된 region_sigungu. 없으면 null. 목록에서 무조건 null로 두지 않음. preferredRegion과 다른 필드 */
   homeAddressSigungu?: string | null;
   applicationStatus?: string;
-  /** @nullable */
-  documentStatus?: string | null;
-  /** @nullable */
-  interviewStatus?: string | null;
-  /** @nullable */
-  finalResultStatus?: string | null;
-  /** @nullable */
-  reserveRank?: number | null;
+  documentStatus?: string;
+  interviewStatus?: string;
+  /** DB final_result_status 원문. PASS|FAIL|RESERVE|WAITING. 목록 쿼리 finalResultStatus=APPROVED는 PASS로 매핑되어 이 값이 PASS인 행을 포함한다(응답을 APPROVED로 바꾸지 않음). */
+  finalResultStatus?: VolunteerApplicationListItemResponseFinalResultStatus;
+  reserveRank?: number;
   isReparticipation?: boolean;
   giveUpYn?: boolean;
-  /** @nullable */
-  rejectReason?: string | null;
-  interviewAvailability?: VolunteerInterviewAvailabilitySlot[];
-  /** @minimum 0 */
-  interviewAvailabilityCount?: number;
-  /** @nullable */
-  interviewAssignmentId?: number | null;
-  /** @nullable */
-  assignedInterviewSlotId?: number | null;
-  /** @nullable */
-  assignedInterviewStartAt?: string | null;
-  /** @nullable */
-  assignedInterviewEndAt?: string | null;
-  /** @nullable */
-  submittedAt?: string | null;
-  availableActions: string[];
-  managerAEvaluation: DocumentManagerEvaluation;
-  managerBEvaluation: DocumentManagerEvaluation;
-  /**
-     * 봉사자 회원에 DB로 연결된 기존 소속 학교/기관 ID. 저장된 소속이 없으면 null
-     * @nullable
-     */
-  affiliationOrganizationId?: number | null;
-  /** @nullable */
-  applicationFormResponseId?: number | null;
-  /**
-     * 지원 에세이 제출 여부. 목록에서는 원문 PII를 노출하지 않고 상세 응답 ID만 함께 제공합니다.
-     * @nullable
-     */
-  essaySubmitted?: boolean | null;
-  /**
-     * 자유 작성 1번(intro) 본문. 일반·UJAT 공통. trim한 신청 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. 다른 문항으로 채우지 않음
-     * @nullable
-     */
+  applicationFormResponseId?: number;
+  essaySubmitted?: boolean;
+  /** 자유 작성 1번(intro) 본문. 일반·UJAT 공통. trim한 신청 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. 다른 문항으로 채우지 않음 */
   essayIntro?: string | null;
-  /**
-     * 자유 작성 2번(educationExperience) 본문. 일반·UJAT 공통. trim한 신청 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. 다른 문항으로 채우지 않음
-     * @nullable
-     */
+  /** 자유 작성 2번(educationExperience) 본문. 일반·UJAT 공통. trim한 신청 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. 다른 문항으로 채우지 않음 */
   essayEducationExperience?: string | null;
-  /**
-     * 자유 작성 3번(necessity) 본문. 일반·UJAT 공통. trim한 신청 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. 다른 문항으로 채우지 않음
-     * @nullable
-     */
+  /** 자유 작성 3번(necessity) 본문. 일반·UJAT 공통. trim한 신청 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. 다른 문항으로 채우지 않음 */
   essayNecessity?: string | null;
-  /**
-     * 자유 작성 4번(jaExperience) 본문. 일반·UJAT 공통. trim한 신청 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. 다른 문항으로 채우지 않음
-     * @nullable
-     */
+  /** 자유 작성 4번(jaExperience) 본문. 일반·UJAT 공통. trim한 신청 원문(마스킹하지 않음). 답이 없거나 비었거나 notApplicable이면 null. 다른 문항으로 채우지 않음 */
   essayJaExperience?: string | null;
-  /** @nullable */
-  interviewAssignmentStatus?: string | null;
-  /** 현재 면접 배정의 슬롯 평가. evaluatorOrder 1이 담당자 A, 2가 담당자 B. 빈 배열은 평가 없음 */
-  interviewEvaluations: VolunteerApplicationListInterviewEvaluation[];
-  canEditManagerAEvaluation: boolean;
-  canEditManagerBEvaluation: boolean;
+  /** 현재 반려 사유. 반려 상태가 아니면 null */
+  rejectReason?: string;
+  /** 담당자 A 서류평가: UNREVIEWED/PASS/NEUTRAL/FAIL */
+  managerAEvaluation?: string;
+  /** 담당자 B 서류평가: UNREVIEWED/PASS/NEUTRAL/FAIL */
+  managerBEvaluation?: string;
+  /** 신청자가 제출한 면접 가능 시간 구간 */
+  interviewAvailability?: InterviewAvailabilitySlot[];
   /**
-     * program_recruitment.recruit_term의 FIRST_HALF|SECOND_HALF. 해당 없으면 null.
-     * @nullable
+     * 유효한 면접 가능 시간 구간 수
+     * @minimum 0
      */
-  recruitHalf?: VolunteerApplicationListItemResponseRecruitHalf;
-  /**
-     * UJAT 학년. 저장값이 1학년|2학년|3학년|4학년|졸업|휴학|졸업유예 또는 1|2|3|4|leave|deferred|graduate 이면 한글 라벨. 그 외·미응답·UJAT 외 null. 추측하지 않음
-     * @nullable
-     */
+  interviewAvailabilityCount?: number;
+  /** 현재 유효한 면접 배정 ID. 면접 평가 API path에 사용 */
+  interviewAssignmentId?: number;
+  interviewAssignmentStatus?: string;
+  /** 현재 배정된 면접 슬롯 ID */
+  assignedInterviewSlotId?: number;
+  assignedInterviewStartAt?: string;
+  assignedInterviewEndAt?: string;
+  interviewEvaluations?: InterviewEvaluationSummary[];
+  submittedAt?: string;
+  canEditManagerAEvaluation?: boolean;
+  canEditManagerBEvaluation?: boolean;
+  availableActions?: string[];
+  /** UJAT 학년. 저장값이 1학년|2학년|3학년|4학년|졸업|휴학|졸업유예 또는 1|2|3|4|leave|deferred|graduate 이면 목록은 한글 라벨로 정규화. 그 외·미응답·UJAT이 아니면 null. 추측하지 않음 */
   grade?: string | null;
-  /**
-     * UJAT 희망 교육 지역 라벨. 매핑 실패·UJAT 외 null
-     * @nullable
-     */
+  /** UJAT 희망 교육 지역 라벨. 지역 마스터에 없으면 null */
   preferredRegion?: string | null;
-  /**
-     * UJAT 희망 교육 지역 코드. 없으면 null
-     * @nullable
-     */
+  /** UJAT 희망 교육 지역 코드. 없으면 null */
   preferredRegionCode?: string | null;
-  /**
-     * UJAT 교육 진행 경험. 미응답은 null
-     * @nullable
-     */
+  /** UJAT 교육 진행 경험. 미응답·판별 불가면 null. false로 채우지 않음 */
   hasEducationExperience?: boolean | null;
-  /**
-     * UJAT 봉사자 생년월일. UJAT 외 null
-     * @nullable
-     */
+  /** UJAT 봉사자 생년월일. 없으면 null. 다른 프로그램 목록은 null */
   birthDate?: string | null;
-  /**
-     * UJAT 1365 아이디 마스킹값. 없으면 null. 원문은 상세 unmask profile.external1365Id
-     * @nullable
-     */
+  /** UJAT 1365 ID 마스킹 값. 없으면 null. 원문은 상세 unmask profile.external1365Id */
   id1365?: string | null;
-  /**
-     * UJAT 교육 진행 배정일수. 취소가 아닌 서로 다른 program_schedule_id 수(전 반기·전 지역). allocation-matrix volunteers[].totalAssignedDays와 같은 이름이지만 목록은 educationRegionCode 필터를 쓰지 않는다. 배정이 없거나 UJAT이 아니면 null. 0으로 채우지 않음
-     * @nullable
-     */
+  /** UJAT 교육 진행 배정일수. 취소가 아닌 서로 다른 program_schedule_id 수(전 반기·전 지역). allocation-matrix volunteers[].totalAssignedDays와 같은 이름이지만 목록은 educationRegionCode 필터를 쓰지 않는다. 배정이 없거나 UJAT이 아니면 null. 0으로 채우지 않음 */
   totalAssignedDays?: number | null;
-  /**
-     * 개강식 참석. 저장 컬럼이 없어 항상 null
-     * @nullable
-     */
+  /** 발대식 참석. 저장값이 없으면 null. false로 채우지 않음 */
   openingCeremonyAttended?: boolean | null;
 }

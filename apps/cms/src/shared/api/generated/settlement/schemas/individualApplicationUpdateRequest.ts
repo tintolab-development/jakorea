@@ -5,26 +5,14 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { IndividualApplicationUpdateRequestTeamRole } from './individualApplicationUpdateRequestTeamRole';
 
 /**
- * 승인된 개인 신청 운영정보 부분 수정 요청. 누락 필드는 유지됩니다.
+ * 승인된 개인 신청 관리자 운영정보 부분 수정 요청. 누락 필드는 유지됩니다.
  */
 export interface IndividualApplicationUpdateRequest {
-  /** @nullable */
-  textbookId?: number | null;
-  /**
-     * @maxLength 100
-     * @nullable
-     */
-  teamName?: string | null;
-  /** @minimum 1 */
+  textbookId?: number;
+  teamName?: string;
   teamMemberCount?: number;
-  teamRole?: IndividualApplicationUpdateRequestTeamRole;
-  /**
-     * Admin CMS 전용 코멘트. null 또는 trim 후 빈 문자열은 삭제로 처리합니다.
-     * @maxLength 2000
-     * @nullable
-     */
-  managerComment?: string | null;
+  teamRole?: string;
+  managerComment?: string;
 }

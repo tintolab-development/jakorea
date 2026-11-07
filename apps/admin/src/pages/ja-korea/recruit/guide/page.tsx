@@ -1,5 +1,5 @@
 /**
- * 채용 안내 관리
+ * 채용 안내 관리 — 상단 배너 / 조직문화 / 직무 인터뷰 카드 3개
  */
 
 import { useRecruitGuide } from '@/features/recruit-guide/api/hooks'
@@ -40,14 +40,9 @@ export function RecruitGuidePage() {
 
   return (
     <div className="recruit-guide-page">
-      <div className="admin-list-card recruit-guide-card">
-        <div className="recruit-guide-card__heading">
-          <span className="table-title">채용 안내 관리</span>
-        </div>
-        <BannerSectionCard banner={data.banner} />
-        <CultureSectionCard items={data.cultureItems} />
-        <InterviewSectionCard items={data.interviews} />
-      </div>
+      <BannerSectionCard banner={data.banner} />
+      <CultureSectionCard items={data.cultureItems} />
+      <InterviewSectionCard items={data.interviews} />
     </div>
   )
 }

@@ -44,7 +44,7 @@ assert.equal(
     sessionNo: 1,
     curriculumSessionCount: 2,
   }),
-  '15:05~15:10 | 1회차 (2차시)',
+  '15:05~15:10 | 1회차 | 2차시',
 )
 assert.equal(
   formatLectureReportCardTimeSubtitle({
@@ -52,7 +52,7 @@ assert.equal(
     sessionNo: 2,
     curriculumSessionCount: 2,
   }),
-  '15:15~15:20 | 2회차 (2차시)',
+  '15:15~15:20 | 2회차 | 2차시',
 )
 
 // CASE 2. 사전교육 없음 — 본교육 회차 원천 유지

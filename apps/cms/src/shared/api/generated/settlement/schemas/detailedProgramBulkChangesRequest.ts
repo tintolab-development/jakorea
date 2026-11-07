@@ -8,12 +8,15 @@
 import type { DetailedProgramBulkDeleteItem } from './detailedProgramBulkDeleteItem';
 import type { DetailedProgramBulkUpdateItem } from './detailedProgramBulkUpdateItem';
 
-/**
- * 두 배열의 고유 ID 합계는 500 이하이며, 두 배열에 같은 ID를 포함할 수 없습니다. 두 배열 모두 빈 요청은 거부됩니다.
- */
 export interface DetailedProgramBulkChangesRequest {
-  /** @maxItems 500 */
+  /**
+     * @minItems 0
+     * @maxItems 500
+     */
   updates: DetailedProgramBulkUpdateItem[];
-  /** @maxItems 500 */
+  /**
+     * @minItems 0
+     * @maxItems 500
+     */
   deleteItems: DetailedProgramBulkDeleteItem[];
 }

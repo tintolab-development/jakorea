@@ -8,34 +8,39 @@
 import type { InquiryResponseStatus } from './inquiryResponseStatus';
 
 /**
- * 문의 응답. inquirerName/inquirerPhone/inquirerEmail/assignedAdminName은 값이 있을 때만 포함
+ * 문의 응답
  */
 export interface InquiryResponse {
   /** 문의 ID */
   id?: number;
-  /** 문의 카테고리명 */
+  /** 문의 카테고리 */
   category?: string;
-  /** @nullable */
-  programId?: number | null;
-  /** @nullable */
-  programNameSnapshot?: string | null;
+  /** 연결 프로그램 ID */
+  programId?: number;
+  /** 문의 시점 프로그램명 스냅샷 */
+  programNameSnapshot?: string;
+  /** 문의자 회원 ID */
   inquirerMemberId?: number;
   /** 문의자 표시명 */
   inquirerName?: string;
-  /** 문의자 전화번호 */
+  /** 문의자 전화번호(기본 마스킹) */
   inquirerPhone?: string;
-  /** 문의자 이메일 */
+  /** 문의자 이메일(기본 마스킹) */
   inquirerEmail?: string;
+  /** 문의 제목 */
   title?: string;
+  /** 문의 본문 */
   content?: string;
-  /** Admin API 상태 */
+  /** CMS 문의 답변 상태 */
   status?: InquiryResponseStatus;
-  /** @nullable */
-  assignedAdminId?: number | null;
+  /** 담당 관리자 ID */
+  assignedAdminId?: number;
   /** 담당 관리자 표시명 */
   assignedAdminName?: string;
-  /** @nullable */
-  answeredAt?: string | null;
+  /** 답변 완료 시각 */
+  answeredAt?: string;
+  /** 문의 생성 시각 */
   createdAt?: string;
+  /** 문의 수정 시각 */
   updatedAt?: string;
 }

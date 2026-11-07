@@ -3,7 +3,13 @@ import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
 import type { JaKoreaBi } from '@/entities/ja-korea-bi/model/types'
 import { useSaveJaKoreaBi } from '@/features/ja-korea-bi/api/hooks'
-import { CmsButton, CmsTextArea, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
+  CmsButton,
+  CmsTextArea,
+  showUpdateCompletedAlert,
+  useCmsAlert,
+} from '@/shared/ui'
 
 import './bi-form.css'
 
@@ -42,10 +48,14 @@ export function BiFormCard({ data }: Props) {
   }, [data])
 
   const handleSave = useCallback(async () => {
+    if (!draft.title.trim() || !draft.mainText.trim() || !draft.subText.trim()) {
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+      return
+    }
     try {
       await saveMutation.mutateAsync(draft)
       setIsEditing(false)
-      showSaveCompletedAlert()
+      showUpdateCompletedAlert()
     } catch {
       showAlert({
         title: '저장 실패',
@@ -102,6 +112,7 @@ export function BiFormCard({ data }: Props) {
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="타이틀"
+              required
               view={<PrelineView value={current.title} />}
               edit={
                 <CmsTextArea
@@ -119,13 +130,13 @@ export function BiFormCard({ data }: Props) {
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="메인 텍스트"
+              required
               view={<PrelineView value={current.mainText} />}
               edit={
                 <CmsTextArea
-                  className="cms-textarea--fixed-rows"
                   inputSize="large"
                   width="100%"
-                  rows={2}
+                  autoSize={{ minRows: 1, maxRows: 2 }}
                   value={draft.mainText}
                   onChange={e => updateDraft({ mainText: e.target.value })}
                   placeholder="메인 텍스트 입력"
@@ -136,13 +147,13 @@ export function BiFormCard({ data }: Props) {
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="서브 텍스트"
+              required
               view={<PrelineView value={current.subText} />}
               edit={
                 <CmsTextArea
-                  className="cms-textarea--fixed-rows"
                   inputSize="large"
                   width="100%"
-                  rows={3}
+                  autoSize={{ minRows: 1, maxRows: 2 }}
                   value={draft.subText}
                   onChange={e => updateDraft({ subText: e.target.value })}
                   placeholder="서브 텍스트 입력"

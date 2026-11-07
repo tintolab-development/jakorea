@@ -8,9 +8,8 @@
 import type { GeminiInstructorApplicationItem } from './geminiInstructorApplicationItem';
 
 export interface GeminiInstructorApplicationListResponse {
-  /** 없으면 [] */
-  content: GeminiInstructorApplicationItem[];
-  page: number;
-  size: number;
-  totalElements: number;
+  content?: GeminiInstructorApplicationItem[];
+  page?: number;
+  size?: number;
+  totalElements?: number;
 }

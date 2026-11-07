@@ -11,7 +11,14 @@ import {
   useSaveEducationTargets,
 } from '@/features/education-target/api/hooks'
 import { IndexColorDot } from '@/features/education-target/ui/index-color-dot'
-import { CmsButton, CmsInput, ContentModal, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
+import {
+  CmsButton,
+  CmsInput,
+  ContentModal,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
+  showSaveCompletedAlert,
+  useCmsAlert,
+} from '@/shared/ui'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 
 import './targets-modal.css'
@@ -44,10 +51,7 @@ export function EducationTargetsModal({ open, onCancel, onSaved }: Props) {
     const hasBlank = rows.some(row => !(draftNames[row.id] ?? row.name).trim())
     if (hasBlank) {
       setShowRequiredErrors(true)
-      showAlert({
-        title: '입력 확인',
-        content: '교육 대상명을 입력해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     setShowRequiredErrors(false)

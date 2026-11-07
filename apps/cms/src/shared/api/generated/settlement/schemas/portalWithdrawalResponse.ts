@@ -5,11 +5,10 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { PortalWithdrawalResponseStatus } from './portalWithdrawalResponseStatus';
 
 export interface PortalWithdrawalResponse {
-  memberId: number;
-  status: PortalWithdrawalResponseStatus;
-  withdrawnAt: string;
-  message: string;
+  memberId?: number;
+  status?: string;
+  withdrawnAt?: string;
+  message?: string;
 }

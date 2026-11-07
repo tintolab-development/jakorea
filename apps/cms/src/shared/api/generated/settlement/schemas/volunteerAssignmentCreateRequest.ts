@@ -6,20 +6,27 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * 일반 기관 프로그램 봉사자 배정 요청
+ */
 export interface VolunteerAssignmentCreateRequest {
-  /** @minimum 1 */
+  /**
+     * VOLUNTEER 프로그램 참여자 ID
+     * @minimum 1
+     */
   volunteerParticipantId: number;
   /**
+     * 기관 신청 ID. scheduleId만 전달한 경우 해당 회차가 한 기관에만 배정돼 있으면 서버가 해석합니다.
      * @minimum 1
-     * @nullable
      */
-  organizationApplicationId?: number | null;
+  organizationApplicationId?: number;
   /**
+     * 실제 프로그램 일정 ID. organizationApplicationId만 전달한 경우 활성 회차가 하나일 때만 서버가 해석합니다.
      * @minimum 1
-     * @nullable
      */
-  scheduleId?: number | null;
+  scheduleId?: number;
   /**
+     * 배정 사유
      * @minLength 2
      * @maxLength 500
      */

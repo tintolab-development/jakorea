@@ -5,19 +5,16 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { CmsParticipantEducationScopeScheduleEnrich } from './cmsParticipantEducationScopeScheduleEnrich';
+import type { ScheduleEnrich } from './scheduleEnrich';
 
 /**
- * ParticipantEducationScopeService.ScopeResponse. CmsParticipantEducationScopeResponse와 동일 계약. springdoc inner-class 이름 ScopeResponse를 해소한다.
+ * 참여자 교육 범위. CMS OpenAPI의 CmsParticipantEducationScopeResponse와 동일 계약이다.
  */
 export interface ScopeResponse {
-  programId: number;
-  participantId: number;
-  /** @minimum 0 */
-  revision: number;
-  configured: boolean;
-  /** 이 참여자에게 배정된 program_schedule id 목록. PUT 계약과 동일. */
-  scheduleIds: number[];
-  /** 프로그램 ACTIVE/COMPLETED 일정 enrich. 빈 배열 가능, null 아님. */
-  schedules: CmsParticipantEducationScopeScheduleEnrich[];
+  programId?: number;
+  participantId?: number;
+  revision?: number;
+  configured?: boolean;
+  scheduleIds?: number[];
+  schedules?: ScheduleEnrich[];
 }

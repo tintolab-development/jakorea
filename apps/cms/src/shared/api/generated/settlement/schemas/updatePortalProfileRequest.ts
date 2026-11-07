@@ -8,100 +8,27 @@
 import type { GuardianProfileResponse } from './guardianProfileResponse';
 import type { InstructorPortalProfileUpdate } from './instructorPortalProfileUpdate';
 import type { PortalSchoolSelectionRequest } from './portalSchoolSelectionRequest';
-import type { UpdatePortalProfileRequestSchoolEnrollmentStatus } from './updatePortalProfileRequestSchoolEnrollmentStatus';
 
 /**
- * 본인인증 고정정보(이메일·이름·휴대폰·생년월일·성별)를 제외한 회원 포탈 수정 가능 필드. 만 14세 미만 보호자는 nested guardian(정본) 또는 최상위 guardianName/guardianRelation/guardianPhone 으로 갱신. 둘 다 있으면 nested 우선. 성인 요청의 보호자 필드는 무시. 이름·휴대폰 변경에 NICE 세션 불필요.
+ * 회원 포탈 내정보 수정 요청. 이메일·이름·휴대폰·생년월일·성별은 본인인증 정보이므로 이 API에서 수정하지 않습니다. 만 14세 미만 보호자는 nested guardian(정본) 또는 최상위 guardianName/guardianRelation/guardianPhone 으로 갱신합니다. 둘 다 있으면 nested 우선. 성인 요청의 보호자 필드는 무시합니다. 이름·휴대폰 변경에 NICE 세션은 필요하지 않습니다.
  */
 export interface UpdatePortalProfileRequest {
-  /**
-     * @maxLength 30
-     * @nullable
-     */
-  postalCode?: string | null;
-  /**
-     * @maxLength 255
-     * @nullable
-     */
-  address?: string | null;
-  /**
-     * @maxLength 255
-     * @nullable
-     */
-  addressDetail?: string | null;
-  /**
-     * @maxLength 100
-     * @nullable
-     */
-  regionSido?: string | null;
-  /**
-     * @maxLength 100
-     * @nullable
-     */
-  regionSigungu?: string | null;
-  /**
-     * @maxLength 50
-     * @nullable
-     */
-  grade?: string | null;
-  /**
-     * For NOT_ENROLLED members: omitted preserves the existing value; explicit null or an empty string clears it.
-     * @maxLength 255
-     * @nullable
-     */
-  affiliationName?: string | null;
-  /**
-     * ENROLLED 학교의 canonical organizationId. NOT_ENROLLED에서는 null로 clear합니다.
-     * @nullable
-     */
-  schoolOrganizationId?: number | null;
-  /**
-     * organizationId가 누락된 경우 고유한 활성 CMS 학교명과 정확히 일치하면 안전하게 해석합니다.
-     * @maxLength 255
-     * @nullable
-     */
-  schoolName?: string | null;
-  /** CMS에 아직 없는 학교를 선택한 경우의 구조화된 학교 참조. */
-  schoolSelection?: PortalSchoolSelectionRequest | null;
-  /**
-     * 일반회원 학교 재학 상태. NOT_ENROLLED이면 학교 FK/스냅샷/학년/소속을 모두 해제합니다.
-     * @maxLength 30
-     * @nullable
-     */
-  schoolEnrollmentStatus?: UpdatePortalProfileRequestSchoolEnrollmentStatus;
-  /**
-     * @maxLength 30
-     * @nullable
-     */
-  teacherEmploymentStatus?: string | null;
-  /**
-     * Omitted preserves the existing 1365 identifier; explicit null or an empty string removes the linked identifier.
-     * @maxLength 100
-     * @nullable
-     */
-  external1365Id?: string | null;
-  /** 강사 회원만 제출 가능한 강사 전용 수정 payload. 서버가 역할별 수정 허용 필드를 강제합니다. */
-  instructorProfile?: InstructorPortalProfileUpdate | null;
-  /** Server issued signup intent binding for under-14 signup */
-  signupIntentId?: string;
-  /** 만 14세 미만 보호자 갱신 정본. GET guardian과 동일 키. 최상위 보호자 필드와 함께 오면 nested 우선. */
-  guardian?: GuardianProfileResponse | null;
-  /**
-     * FE 호환 최상위 보호자 이름. nested guardian이 있으면 무시.
-     * @maxLength 100
-     * @nullable
-     */
-  guardianName?: string | null;
-  /**
-     * FE 호환 최상위 보호자 관계. 최대 64자. nested guardian이 있으면 무시.
-     * @maxLength 64
-     * @nullable
-     */
-  guardianRelation?: string | null;
-  /**
-     * FE 호환 최상위 보호자 휴대폰. 숫자만 또는 하이픈 허용. nested guardian이 있으면 무시. 저장·GET은 하이픈 표시.
-     * @maxLength 30
-     * @nullable
-     */
-  guardianPhone?: string | null;
+  postalCode?: string;
+  address?: string;
+  addressDetail?: string;
+  regionSido?: string;
+  regionSigungu?: string;
+  grade?: string;
+  schoolOrganizationId?: number;
+  schoolName?: string;
+  schoolSelection?: PortalSchoolSelectionRequest;
+  schoolEnrollmentStatus?: string;
+  teacherEmploymentStatus?: string;
+  instructorProfile?: InstructorPortalProfileUpdate;
+  affiliationName?: string;
+  external1365Id?: string;
+  guardian?: GuardianProfileResponse;
+  guardianName?: string;
+  guardianRelation?: string;
+  guardianPhone?: string;
 }

@@ -7,12 +7,21 @@
  */
 
 export interface AdminSignupSsoLinkStartRequest {
-  /** 소셜 제공자 코드(GOOGLE, KAKAO, NAVER) */
-  provider: string;
-  /** 프론트 복귀 URL. returnUrl과 동일한 용도로 허용합니다. */
+  /** @pattern ^[A-Za-z_]{2,30}$ */
+  provider?: string;
+  /**
+     * @minLength 0
+     * @maxLength 2048
+     */
   redirectUri?: string;
-  /** 소셜 연결 완료 후 프론트로 복귀할 URL입니다. */
+  /**
+     * @minLength 0
+     * @maxLength 2048
+     */
   returnUrl?: string;
-  /** 관리자 회원가입 완료 응답에서 받은 일회용 handoff token입니다. */
-  signupSocialLinkToken: string;
+  /**
+     * @minLength 0
+     * @maxLength 255
+     */
+  signupSocialLinkToken?: string;
 }

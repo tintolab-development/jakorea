@@ -8,14 +8,12 @@ import {
 } from '@/features/program/shared/ui/program-detail-td-divider'
 import type { ApplicantInstructorEditDraft } from '@/features/program/general/lib/applicant-instructor-detail-edit'
 import {
-  formatLectureFeeAmountWon,
   LECTURE_FEE_BASIS_TYPE_OPTIONS,
   LECTURE_FEE_MEASURE_NOT_APPLICABLE,
   LECTURE_FEE_MEASURE_NOT_APPLICABLE_OPTION,
   LECTURE_FEE_MEASURE_OPTIONS,
   DEFAULT_LECTURE_FEE_MEASURE,
-  lectureFeeBasisTypeLabel,
-  resolveLectureFeeBasisFromRow,
+  buildLectureFeeBasisViewSegments,
   type ApplicantInstructorBusinessIncomeStatus,
   type ApplicantInstructorLectureFeeBasisType,
 } from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
@@ -29,17 +27,13 @@ function FieldError({ message }: { message?: string }) {
 }
 
 export function LectureFeeBasisView({ instructor }: { instructor: ApplicantInstructorRow }) {
-  const fee = resolveLectureFeeBasisFromRow(instructor)
-  const categoryLabel = lectureFeeBasisTypeLabel(fee.type)
-  const amountLabel = formatLectureFeeAmountWon(fee.amount)
-
-  if (!amountLabel) {
-    return <span>{categoryLabel}</span>
-  }
+  const segments = buildLectureFeeBasisViewSegments(instructor)
+  if (segments.length === 0) return <span>-</span>
+  if (segments.length === 1) return <span>{segments[0]}</span>
 
   return (
     <ProgramDetailTdSegmentWrap>
-      {withProgramDetailTdDivider([categoryLabel, amountLabel])}
+      {withProgramDetailTdDivider(segments)}
     </ProgramDetailTdSegmentWrap>
   )
 }

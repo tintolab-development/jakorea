@@ -105,6 +105,12 @@ export function peekActiveTrainedTeachersRecruitmentOverlayRecord(): Record<stri
   return serializeTrainedTeachersRecruitmentForFormVersion(api.getValues().recruitment)
 }
 
+/** COPY/PUT 대상 — 사용자가 고친 모집 양식만. */
+export function peekDirtyTrainedTeachersRecruitmentOverlayRecord(): Record<string, unknown> | null {
+  if (api == null || !api.isDirty()) return null
+  return peekActiveTrainedTeachersRecruitmentOverlayRecord()
+}
+
 /** TT 모집 overlay 키를 RHF에만 기록. store에 쓰지 않는다. 소비되지 않은 키를 반환한다. */
 export function patchActiveTrainedTeachersRecruitmentOverlay(
   partial: Record<string, unknown>
@@ -172,6 +178,12 @@ export function readActiveTrainedTeachersApplicationOverlayValue(
 export function peekActiveTrainedTeachersApplicationOverlayRecord(): Record<string, unknown> | null {
   if (api == null) return null
   return serializeTrainedTeachersApplicationForFormVersion(api.getValues().application)
+}
+
+/** COPY/PUT 대상 — 사용자가 고친 신청 양식만. */
+export function peekDirtyTrainedTeachersApplicationOverlayRecord(): Record<string, unknown> | null {
+  if (api == null || !api.isDirty()) return null
+  return peekActiveTrainedTeachersApplicationOverlayRecord()
 }
 
 /** TT 신청 overlay 키를 RHF에만 기록. store에 쓰지 않는다. 소비되지 않은 키를 반환한다. */

@@ -7,6 +7,7 @@
  */
 import type { GradeBlock } from './gradeBlock';
 import type { PreferredScheduleBlock } from './preferredScheduleBlock';
+import type { TrainedTeacherOrganizationApplicationDetailResponseRequestedEducationFormat } from './trainedTeacherOrganizationApplicationDetailResponseRequestedEducationFormat';
 import type { TrainedTeacherOrganizationApplicationDetailResponseTextbookDeliveryStatus } from './trainedTeacherOrganizationApplicationDetailResponseTextbookDeliveryStatus';
 import type { TrainedTeacherOrganizationEducationSchedule } from './trainedTeacherOrganizationEducationSchedule';
 
@@ -51,11 +52,11 @@ export interface TrainedTeacherOrganizationApplicationDetailResponse {
   completedEducationRoundCount?: number;
   progressLabel?: string;
   textbookName?: string;
-  /** 저장된 키트 수. 없으면 null. 학생 수/24로 계산하지 않습니다. kitCount와 같은 값입니다. */
+  /** 저장된 키트 수. 없으면 null이며 학생 수/24로 계산하지 않습니다. kitCount와 같은 값입니다. */
   textbookKits?: number | null;
   /** 저장된 교재 권수. 없으면 null. bookCount와 같은 값입니다. */
   textbookQuantity?: number | null;
-  /** 저장된 키트 수. 저장값이 없으면 null이며 학생 수/24로 계산하지 않습니다. textbookKits와 같은 값입니다. */
+  /** 저장된 키트 수. UJAT는 저장값이 없으면 null이며 학생 수/24로 계산하지 않습니다. textbookKits와 같은 값입니다. */
   kitCount?: number | null;
   /** 저장된 교재 권수. 없으면 null. textbookQuantity와 같은 값입니다. */
   bookCount?: number | null;
@@ -67,8 +68,8 @@ export interface TrainedTeacherOrganizationApplicationDetailResponse {
   giveUpStopScheduleId?: number;
   /** 신청 당시 저장된 기관 상세주소. 없으면 null. */
   addressDetail?: string | null;
-  /** 신청 당시 저장된 교육 형태. 없으면 null. */
-  requestedEducationFormat?: string | null;
+  /** ONLINE, OFFLINE, HYBRID 또는 null. 신청 당시 저장된 교육 형태. 없으면 null. 프로그램 공통 교육 형태로 채우지 않습니다. 컬럼이 비어 있고 제출 답변에 educationFormat이 있으면 공통과 동일하게 투영합니다. 기존 한글 저장값(온라인/오프라인/혼합)은 ONLINE|OFFLINE|HYBRID로 정규화합니다. 인식하지 못한 신청 값은 원문을 유지합니다. 빈 문자열·'-'는 null입니다. */
+  requestedEducationFormat?: TrainedTeacherOrganizationApplicationDetailResponseRequestedEducationFormat;
   /** 신청 당시 저장된 신청 사유. 없으면 null. */
   applicationReason?: string | null;
   /** 신청 당시 저장된 기타 요청사항. 없으면 null. */

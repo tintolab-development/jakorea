@@ -6,10 +6,13 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * 프로그램 목록 상단 stage 카드 건수. periodStatus 필터와 동일 버킷을 1회 조회한다.
+ */
 export interface ProgramOverviewStagesResponse {
-  total: number;
-  scheduled: number;
-  recruiting: number;
-  inProgress: number;
-  completed: number;
+  total?: number;
+  scheduled?: number;
+  recruiting?: number;
+  inProgress?: number;
+  completed?: number;
 }

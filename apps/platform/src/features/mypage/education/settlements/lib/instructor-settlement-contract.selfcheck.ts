@@ -68,4 +68,16 @@ assert.equal(
   '실적 시작·종료 시간이 없어 정산을 신청할 수 없습니다.',
 )
 
+const assignedScheduleAxios = Object.assign(new Error('bad request'), {
+  isAxiosError: true,
+  response: {
+    status: 400,
+    data: { error: { code: 'SETTLEMENT_ASSIGNED_SCHEDULE_TIME_REQUIRED' } },
+  },
+})
+assert.equal(
+  instructorSettlementApiErrorMessage(assignedScheduleAxios),
+  '배정 일정 시작·종료 시간이 없어 정산을 신청할 수 없습니다.',
+)
+
 console.log('instructor-settlement-contract.selfcheck: ok')

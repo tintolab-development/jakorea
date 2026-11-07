@@ -5,24 +5,34 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
-import type { List12SubmissionStatus } from './list12SubmissionStatus';
 
 export type List12Params = {
-scheduleId?: number | null;
-memberName?: string | null;
-affiliation?: string | null;
-grade?: string | null;
 /**
- * NOT_SUBMITTED 또는 SUBMITTED. 응답 submissionStatus와 같은 판정 기준(과제 기간 시작 전이면 SCHEDULED)으로 거른다. SCHEDULED는 필터 대상이 아니다.
+ * 지정하면 그 물리 일정만. 생략하면 과제 대상 회차 전부
  */
-submissionStatus?: List12SubmissionStatus;
+scheduleId?: number;
 /**
- * @minimum 0
+ * 참여자명 부분 일치
  */
-page?: number | null;
+memberName?: string;
 /**
- * @minimum 1
- * @maximum 200
+ * 소속 부분 일치
  */
-size?: number | null;
+affiliation?: string;
+/**
+ * 학년 부분 일치
+ */
+grade?: string;
+/**
+ * NOT_SUBMITTED 또는 SUBMITTED. SCHEDULED는 필터하지 않습니다.
+ */
+submissionStatus?: string;
+/**
+ * 각 ScheduleGroup.participants의 0-based page(그룹마다 독립 적용). totalElements/totalPages 없음
+ */
+page?: number;
+/**
+ * 각 ScheduleGroup.participants 크기(기본 20, 최대 200). 그룹마다 독립 적용
+ */
+size?: number;
 };

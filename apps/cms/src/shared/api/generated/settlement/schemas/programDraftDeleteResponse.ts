@@ -7,5 +7,5 @@
  */
 
 export interface ProgramDraftDeleteResponse {
-  deletedCount: number;
+  deletedCount?: number;
 }

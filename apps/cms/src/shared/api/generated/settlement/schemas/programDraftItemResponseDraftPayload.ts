@@ -6,4 +6,4 @@
  * OpenAPI spec version: v9
  */
 
-export type ProgramDraftItemResponseDraftPayload = { [key: string]: unknown };
+export type ProgramDraftItemResponseDraftPayload = {[key: string]: unknown};

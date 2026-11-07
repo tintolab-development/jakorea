@@ -6,13 +6,10 @@
  * OpenAPI spec version: v9
  */
 
-/**
- * 교육받은 교사 교육일지 등록. fileObjectId는 필수이며 선행 upload-requests 및 confirm 후 CLEAN·AVAILABLE 상태여야 합니다.
- */
 export interface EducationJournalCreateRequest {
   organizationApplicationId?: number;
+  /** 교육일지 제출 파일 ID. EDUCATION_JOURNAL 목적의 CLEAN·AVAILABLE 파일이어야 합니다. */
   fileObjectId: number;
   journalTitle?: string;
-  /** @nullable */
-  journalMemo?: string | null;
+  journalMemo?: string;
 }

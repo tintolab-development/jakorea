@@ -10,15 +10,15 @@
   word-break: keep-all;
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
   line-height: 150%;
   text-align: center;
 }
 
 .individual-donation-thumb {
-  width: 86px;
-  height: 86px;
+  width: 72px;
+  height: 72px;
   flex-shrink: 0;
   aspect-ratio: 1 / 1;
   margin: 0 auto;
@@ -34,7 +34,11 @@
 .individual-donation-thumb img {
   width: 100%;
   height: 100%;
+  max-width: none;
+  max-height: none;
   object-fit: cover;
+  object-position: center;
+  display: block;
 }
 
 .individual-donation-thumb--empty {
@@ -51,7 +55,7 @@
   max-width: 100%;
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
   line-height: 150%;
   text-align: center;
@@ -71,6 +75,8 @@
 
 .individual-donation-section .cms-data-table .ant-table-thead > tr > th,
 .individual-donation-section .cms-data-table .ant-table-tbody > tr > td {
+  padding: 12px 16px !important;
+  box-sizing: border-box;
   text-align: center !important;
   vertical-align: middle;
 }
@@ -97,4 +103,10 @@
   width: 320px !important;
   min-width: 320px !important;
   max-width: 320px !important;
+}
+
+.individual-donation-section .cms-textarea--fixed-rows .cms-textarea__inner textarea.ant-input {
+  resize: none !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
 }

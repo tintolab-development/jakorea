@@ -21,6 +21,7 @@ import type { ProgramDetailEditFormValues } from '@/features/program/shared/mode
 import {
   detailEditValuesToProgramPatch,
   narrowProgramDetailPatchForCommonInfoSave,
+  narrowTrainedTeacherCommonInfoSavePatch,
   programToDetailEditValues,
   volunteerDocumentInterviewNestedPatch,
 } from '@/features/program/shared/model/program-detail-edit-schema'
@@ -45,6 +46,7 @@ import {
   mergeOverlayOnlyVolunteerInterviewSchedule,
   mergeVolunteerRecruitmentInfoAfterOverlayApply,
 } from '@/features/program/general/lib/detail-operational-save-merge'
+import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 
 export { mergeVolunteerRecruitmentInfoAfterOverlayApply }
 
@@ -284,7 +286,9 @@ export function useProgramDetailInfoSave({
           remotePatch = omitRecruitmentTabScheduleFields(remotePatch)
         }
         if (commonInfoPatchOnly) {
-          remotePatch = narrowProgramDetailPatchForCommonInfoSave(remotePatch)
+          remotePatch = isTrainedTeachersDetailProgram(program)
+            ? narrowTrainedTeacherCommonInfoSavePatch(remotePatch)
+            : narrowProgramDetailPatchForCommonInfoSave(remotePatch)
         }
         const draftToSave: Program = {
           ...program,

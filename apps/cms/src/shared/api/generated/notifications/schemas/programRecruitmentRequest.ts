@@ -23,6 +23,7 @@ export interface ProgramRecruitmentRequest {
   /** 모집 상태 */
   status?: ProgramRecruitmentRequestStatus;
   startAt?: string;
+  /** 모집 마감. 날짜만(YYYY-MM-DD)이면 해당일 23:59:59.999 KST. 시각이 있으면 그대로 저장. */
   endAt?: string;
   /** 해당 모집 유형의 프로그램 운영 시작일. 수정 시 미전송하면 기존 값을 보존한다. UJAT 최초 생성에서 생략하면 null이며 사업 시작일로 채우지 않는다. */
   operationStartDate?: string;

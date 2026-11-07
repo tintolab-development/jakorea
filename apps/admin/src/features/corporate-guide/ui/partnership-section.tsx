@@ -117,7 +117,7 @@ export function PartnershipSectionCard({ items }: Props) {
             return (
               <CmsTextArea
                 className="cms-textarea--fixed-rows"
-                inputSize="medium"
+                inputSize="small"
                 width="100%"
                 rows={2}
                 value={value}
@@ -141,9 +141,9 @@ export function PartnershipSectionCard({ items }: Props) {
             return (
               <CmsTextArea
                 className="cms-textarea--fixed-rows"
-                inputSize="medium"
+                inputSize="small"
                 width="100%"
-                rows={3}
+                rows={2}
                 value={value}
                 onChange={e => handleDraftChange(record.step, { description: e.target.value })}
                 placeholder="단계 설명을 입력해 주세요"

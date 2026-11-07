@@ -7,7 +7,7 @@
  */
 
 /**
- * SUCCESS+paymentExclusionReason=실적만(지급/정산 미생성). FAILED=시간 역전·필수값·부분 기재(NAME_AND_PHONE_REQUIRED)·정보 불일치(NOT_MATCHED)·모호 매칭(AMBIGUOUS)·지급완료 overwrite 차단 등. 강사명·연락처 공란은 SUCCESS+GEMINI_INSTRUCTOR_IDENTITY_BLANK. 회원 미확정+외부 지급처만 SUCCESS+GEMINI_INSTRUCTOR_EXTERNAL_PAYEE.
+ * 대소문자 고정. SUCCESS+paymentExclusionReason=실적만(지급/정산 미생성). FAILED=시간 역전·필수값·부분 기재(NAME_AND_PHONE_REQUIRED)·정보 불일치(NOT_MATCHED/IDENTITY_MISMATCH)·모호 매칭(AMBIGUOUS)·지급완료 overwrite 차단 등. 강사명·연락처 완전 공란은 SUCCESS+GEMINI_INSTRUCTOR_IDENTITY_BLANK. 회원 미확정+외부 지급처만 SUCCESS+GEMINI_INSTRUCTOR_EXTERNAL_PAYEE.
  */
 export type GeminiTrainingReportImportResultStatus = typeof GeminiTrainingReportImportResultStatus[keyof typeof GeminiTrainingReportImportResultStatus];
 

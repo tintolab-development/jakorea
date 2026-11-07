@@ -7,10 +7,9 @@
  */
 
 /**
- * 생략/PROGRAM=실발급, FORM_TEMPLATE=양식 관리 샘플
- * @nullable
+ * 발급 출처. 생략/PROGRAM=실발급, FORM_TEMPLATE=양식 관리 샘플
  */
-export type CertificateSerialAllocateRequestIssuanceSource = typeof CertificateSerialAllocateRequestIssuanceSource[keyof typeof CertificateSerialAllocateRequestIssuanceSource] | null;
+export type CertificateSerialAllocateRequestIssuanceSource = typeof CertificateSerialAllocateRequestIssuanceSource[keyof typeof CertificateSerialAllocateRequestIssuanceSource];
 
 
 export const CertificateSerialAllocateRequestIssuanceSource = {

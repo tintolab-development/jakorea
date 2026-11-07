@@ -359,12 +359,16 @@ export function applyEducationSurveyAnswersToDraft(
               'educationTarget',
               'classLabel',
               'studentCount',
-            ].map(key => [
-              key,
-              typeof progress[key as keyof LectureReportProgramProgressParagraph] === 'string'
-                ? progress[key as keyof LectureReportProgramProgressParagraph]
-                : paragraph[key as keyof LectureReportProgramProgressParagraph],
-            ])
+            ].map(key => {
+              const raw = progress[key as keyof LectureReportProgramProgressParagraph]
+              const next =
+                typeof raw === 'string'
+                  ? raw
+                  : typeof raw === 'number' && Number.isFinite(raw)
+                    ? String(raw)
+                    : paragraph[key as keyof LectureReportProgramProgressParagraph]
+              return [key, next]
+            })
           ),
         } as WritingFormParagraph
       }

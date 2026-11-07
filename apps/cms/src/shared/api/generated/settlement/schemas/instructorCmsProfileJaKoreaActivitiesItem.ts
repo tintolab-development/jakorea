@@ -6,4 +6,4 @@
  * OpenAPI spec version: v9
  */
 
-export type InstructorCmsProfileJaKoreaActivitiesItem = { [key: string]: unknown };
+export type InstructorCmsProfileJaKoreaActivitiesItem = {[key: string]: unknown};

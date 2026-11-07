@@ -121,12 +121,17 @@ function formatTime(value: string | null | undefined): string {
 function applyLectureReportAssignmentContext(
   draft: WritingFormDraft,
   assignment: LectureReportAssignment,
-  program: { title?: string; educationTargetDetailLabel?: string } | null | undefined
+  program: {
+    title?: string
+    educationTargetDetailLabel?: string
+    programAudience?: 'organization' | 'individual'
+  } | null | undefined
 ): WritingFormDraft {
   const educationDate = toSeoulDateOnly(assignment.startAt)
   const sessionTime = [formatTime(assignment.startAt), formatTime(assignment.endAt)]
     .filter(Boolean)
     .join(' ~ ')
+  const hideInstitution = program?.programAudience === 'individual'
   return {
     ...draft,
     paragraphs: draft.paragraphs.map(paragraph => {
@@ -139,7 +144,12 @@ function applyLectureReportAssignmentContext(
       return {
         ...paragraph,
         programName: program?.title?.trim() || paragraph.programName,
-        institutionName: assignment.institutionName?.trim() || paragraph.institutionName,
+        institutionName: hideInstitution
+          ? ''
+          : assignment.institutionName?.trim() || paragraph.institutionName,
+        institutionLocation: hideInstitution
+          ? ''
+          : assignment.institutionAddress?.trim() || paragraph.institutionLocation,
         educationDate: educationDate || paragraph.educationDate,
         sessionTime: sessionTime || paragraph.sessionTime,
         sessionIndex:
@@ -148,7 +158,6 @@ function applyLectureReportAssignmentContext(
           program?.educationTargetDetailLabel?.trim() ||
           asAssignmentDisplayText(assignment.grade) ||
           paragraph.educationTarget,
-        classLabel: asAssignmentDisplayText(assignment.grade) || paragraph.classLabel,
       }
     }),
   }
@@ -165,8 +174,14 @@ export function MypageLectureReportWritePage() {
   const assignmentId = parsePositiveInteger(searchParams.get('assignmentId'))
   const legacyPreviewRoute =
     searchParams.get('mode') === 'read' || searchParams.get('mode') === 'preview'
-  const backPath = lectureReportBackPath(applicationId)
   const [loaded, setLoaded] = useState<LoadedReport | null>(null)
+  const backPath = lectureReportBackPath(
+    resolveInstructorLectureApplicationId({
+      routeApplicationId: applicationId,
+      instructorApplicationId:
+        loaded?.assignment.instructorApplicationId ?? loaded?.state.instructorApplicationId,
+    }),
+  )
   const [draft, setDraft] = useState<WritingFormDraft | null>(null)
   const [sidecar, setSidecar] = useState<SurveySidecarState>(EMPTY_SURVEY_SIDECAR)
   const [fileObjectIdsByQuestion, setFileObjectIdsByQuestion] = useState<Record<string, number[]>>(
@@ -483,7 +498,7 @@ export function MypageLectureReportWritePage() {
     <PFFormPage
       aria-label="강의보고서 작성"
       className={styles.page}
-      back={<ProgramBackButton size="small" label="이전으로" onClick={() => navigate(backPath)} />}
+      back={<ProgramBackButton size="small" label="이전으로" to={backPath} />}
       title={
         <PFText as="h1" typo="hd-sm" color="black" className={styles.pageTitle}>
           {pageTitle}
@@ -539,6 +554,7 @@ export function MypageLectureReportWritePage() {
           <EducationSurveyFormBody
             draft={draft}
             programTitle={formProgramTitle}
+            hideLectureReportInstitutionFields={program?.programAudience === 'individual'}
             onUpdateParagraph={
               ((id, updater) => {
                 setDraft(current =>

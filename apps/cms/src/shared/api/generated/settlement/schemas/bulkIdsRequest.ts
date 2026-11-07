@@ -6,12 +6,14 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * 다건 처리 대상 ID 요청. 후원사·교재·세부 프로그램 등 마스터 id는 숫자(Long) backend id이다(UUID 문자열 아님).
+ */
 export interface BulkIdsRequest {
   /**
-     * 처리 대상 ID 목록
-     * @minItems 1
+     * 처리 대상 숫자 ID(최대 100). 중복 ID는 허용하지 않습니다.
+     * @minItems 0
      * @maxItems 100
-     * @items.minimum 1
      */
   ids: number[];
 }

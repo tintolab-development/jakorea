@@ -8,7 +8,6 @@
 
 /**
  * program_schedule.schedule_kind. PRE_EDUCATION은 출석·대시보드에 포함되고 신청/배정 후보에서는 제외합니다.
- * @nullable
  */
 export type DashboardProgramScheduleResponseScheduleRole = typeof DashboardProgramScheduleResponseScheduleRole[keyof typeof DashboardProgramScheduleResponseScheduleRole] | null;
 

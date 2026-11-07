@@ -5,43 +5,24 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { PreferredScheduleBlockDayOfWeek } from './preferredScheduleBlockDayOfWeek';
-import type { PreferredScheduleBlockScheduleStatus } from './preferredScheduleBlockScheduleStatus';
 import type { PreferredScheduleSessionTime } from './preferredScheduleSessionTime';
 
-/**
- * TRAINED_TEACHER 및 UJAT ORGANIZATION 희망 교육 일정 블록. UJAT 학교 신청은 date-only이며 classPeriod/startTime/endTime과 프로그램 운영일을 넣지 않습니다. PERIOD에서 scheduleId=null인 원본 블록도 정상이며 승인 시 preferredScheduleRank로 선택할 수 있습니다. 배열 index를 식별자로 사용하지 않습니다.
- */
 export interface PreferredScheduleBlock {
-  /** @minimum 1 */
   preferenceRank?: number;
   date?: string;
-  dayOfWeek?: PreferredScheduleBlockDayOfWeek;
-  /** @minimum 1 */
+  dayOfWeek?: string;
   sessionCount?: number;
   sessionTimes?: PreferredScheduleSessionTime[];
-  /**
-     * 실제 program_schedule.id. 매핑되지 않은 legacy/삭제 일정은 null.
-     * @nullable
-     */
+  /** 실제 program_schedule.id. 매핑되지 않은 legacy/삭제 일정은 null. */
   scheduleId?: number | null;
-  /** @nullable */
+  /** 매핑된 실제 일정 시작 시각. */
   startAt?: string | null;
-  /** @nullable */
+  /** 매핑된 실제 일정 종료 시각. */
   endAt?: string | null;
-  /**
-     * 실제 일정의 session_no(회차).
-     * @nullable
-     */
+  /** 실제 일정의 session_no(회차). */
   round?: number | null;
-  /**
-     * 실제 일정명 또는 회차 라벨.
-     * @nullable
-     */
+  /** 실제 일정명 또는 회차 라벨. */
   label?: string | null;
-  /**
-     * 희망 일정과 실제 일정 매칭 상태. 임의로 다른 일정으로 치환하지 않습니다.
-     * @nullable
-     */
-  scheduleStatus?: PreferredScheduleBlockScheduleStatus;
+  /** MATCHED | UNMATCHED | INACTIVE_OR_DELETED. */
+  scheduleStatus?: string | null;
 }

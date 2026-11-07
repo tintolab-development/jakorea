@@ -3,6 +3,7 @@ import {
   normalizeHorizontalTableParagraph,
   normalizeVerticalTableParagraph,
   normalizeWritingFormDraft,
+  repairSeedHorizontalTableIfBroken,
   type AgreementExplanationTextParagraph,
   type ClosingParagraph,
   type HorizontalTableFieldCellValue,
@@ -34,10 +35,10 @@ export const RECEIPT_PRE_CONSENT_SEED_PARAGRAPH_IDS = new Set<string>(
 )
 
 const P1_BOTTOM =
-  '위의 개인정보 수집·이용에 대한 동의를 거부할 권리가 있습니다. 그러나 동의를 거부할 경우 기관 사업에 필요한 업무처리에 제약이 발생할 수 있습니다.'
+  '위의 개인정보 수집·이용에 대한 동의를 거부할 권리가 있습니다. 그러나 동의를 거부할 경우 영수증 금액 지급이 제한됩니다.'
 
 const P2_BOTTOM =
-  '위의 개인정보의 제3자 제공·이용에 대한 동의를 거부할 권리가 있습니다. 그러나 동의를 거부할 경우 실비 지급 등 업무처리에 제약이 발생할 수 있습니다.'
+  '위의 개인정보의 제3자 제공·이용에 대한 동의를 거부할 권리가 있으며, 동의하지 않아도 영수증 금액 지급은 제한되지 않습니다.\n다만 사회복지공동모금회 배분사업으로 운영하는 프로그램은 증빙서류 제출 등 업무처리에 제약이 발생할 수 있습니다.\n(선택) 위 개인정보 제3자 제공·이용에 동의하십니까?'
 
 function createP1CollectionTable(): HorizontalTableParagraph {
   const colCount = 3
@@ -49,11 +50,11 @@ function createP1CollectionTable(): HorizontalTableParagraph {
     {
       kind: 'text',
       value:
-        '성명, 생년월일, 주소, 전화번호, e-mail,\n계좌정보(은행, 계좌번호, 예금주)',
+        '성명, 영문 성명, 생년월일, 소속, 주소, 전화번호, 이메일, 계좌정보(은행, 계좌번호, 예금주)',
     },
     {
       kind: 'text',
-      value: '실비 정산 지급 및\n사업에 필요한 업무처리',
+      value: '교통비·식사비·활동비 등 실비 지급 및 사업에 필요한 업무처리',
     },
     {
       kind: 'text',
@@ -65,11 +66,11 @@ function createP1CollectionTable(): HorizontalTableParagraph {
     kind: 'single_item',
     variant: 'horizontal_table',
     requiredMark: true,
-    paragraphTitle: '개인정보 수집·이용',
+    paragraphTitle: '개인정보 수집‧이용',
     paragraphDescription: '',
     participatesInTitleNumbering: true,
     tableFlavor: 'field',
-    columnHeaders: ['항목', '수집·이용 목적', '보유기간'],
+    columnHeaders: ['항목', '수집‧이용 목적', '보유기간'],
     dataRows: [Array.from({ length: colCount }, () => '')],
     columnFields,
     fieldDataRows: [bodyRow],
@@ -91,11 +92,10 @@ function createP2ThirdPartyTable(): HorizontalTableParagraph {
   ]
   const bodyRows: HorizontalTableFieldCellValue[][] = [
     [
-      { kind: 'text', value: '사회복지공동모금회' },
+      { kind: 'text', value: '사회복지공동모금회 (선택 동의)' },
       {
         kind: 'text',
-        value:
-          '성명, 생년월일, 주소, 전화번호, e-mail,\n계좌정보(은행, 계좌번호, 예금주)',
+        value: '성명, 생년월일, 주소, 전화번호, 이메일, 계좌정보(은행, 계좌번호, 예금주)',
       },
       { kind: 'text', value: '배분사업 수행 관련 증빙서류 제출' },
       { kind: 'text', value: '10년' },
@@ -106,7 +106,7 @@ function createP2ThirdPartyTable(): HorizontalTableParagraph {
     kind: 'single_item',
     variant: 'horizontal_table',
     requiredMark: true,
-    paragraphTitle: '개인정보 제3자 제공·이용',
+    paragraphTitle: '개인정보 제3자 제공‧이용',
     paragraphDescription: '',
     participatesInTitleNumbering: true,
     tableFlavor: 'field',
@@ -130,7 +130,7 @@ const seedTitle: TitleWithPeriodParagraph = {
   paragraphTitle: '',
   paragraphDescription: '',
   participatesInTitleNumbering: false,
-  surveyTitle: '영수증 발급 사전 동의서',
+  surveyTitle: '영수증 사전 동의서',
   surveyDescription: '',
   periodMode: 'immediate',
   startAt: null,
@@ -148,7 +148,7 @@ const intro: AgreementExplanationTextParagraph = {
   participatesInTitleNumbering: false,
   bodyPlaceholder: '',
   bodyText:
-    'JA KOREA (이하 "기관"이라 함)는 「개인정보 보호법」 제15조 및 22조에 의거하여 개인정보 수집 및 이용에 관한 정보주체의 동의절차를 준수하며,\n개인정보 제공자가 동의한 이용목적 외의 용도로는 이용, 제공되지 않습니다. 제공된 개인정보는 개인정보 관리책임자를 통해 열람, 정정, 삭제 등을 요구할 수 있습니다.',
+    'JA KOREA (이하 “기관”이라 함)는 「개인정보 보호법」제15조 및 22조에 의거하여 개인정보 수집 및 이용에 관한 정보주체의 동의절차를 준수하며, 개인정보 제공자가 동의한 이용목적 외의 용도로는 이용․제공되지 않습니다. 제공된 개인정보는 개인정보 보호책임자를 통해 열람, 정정, 삭제 등을 요구할 수 있습니다.',
   answerRequired: true,
 }
 
@@ -193,8 +193,9 @@ const paymentRecord = normalizeVerticalTableParagraph({
   kind: 'single_item',
   variant: 'vertical_table',
   verticalTableFlavor: 'text',
-  requiredMark: false,
-  paragraphTitle: '지급 확인 정보',
+  // 시안: `3. 지급조서 *` — 입력 칸 필수(영문 성명·정산 계좌)
+  requiredMark: true,
+  paragraphTitle: '지급조서',
   paragraphDescription: '',
   participatesInTitleNumbering: true,
   rows: [{ stageCount: 1, headers: [''], cells: [''], stageKinds: ['text'] }],
@@ -202,7 +203,7 @@ const paymentRecord = normalizeVerticalTableParagraph({
   showBottomText: false,
   showBottomConsent: false,
   bottomConsent: 'agree',
-  answerRequired: false,
+  answerRequired: true,
 })
 
 const finalConfirm: AgreementExplanationTextParagraph = {
@@ -286,8 +287,14 @@ export function overlayReceiptPreConsentSeedHorizontalTables(
 
   const resolvedById = new Map<string, WritingFormParagraph>()
   for (const p of draft.paragraphs) {
-    if (RECEIPT_PRE_CONSENT_HORIZONTAL_TABLE_IDS.has(p.id)) {
-      resolvedById.set(p.id, seedById.get(p.id) ?? p)
+    const seedParagraph = seedById.get(p.id)
+    if (
+      RECEIPT_PRE_CONSENT_HORIZONTAL_TABLE_IDS.has(p.id) &&
+      seedParagraph?.kind === 'single_item' &&
+      seedParagraph.variant === 'horizontal_table'
+    ) {
+      // 서버 저장값 우선 — 빈 표·구조 깨짐일 때만 시드 복구
+      resolvedById.set(p.id, repairSeedHorizontalTableIfBroken(p, seedParagraph))
     } else {
       resolvedById.set(p.id, p)
     }

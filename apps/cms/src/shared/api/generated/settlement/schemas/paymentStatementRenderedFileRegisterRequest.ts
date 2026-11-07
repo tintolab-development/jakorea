@@ -8,13 +8,13 @@
 
 export interface PaymentStatementRenderedFileRegisterRequest {
   /**
-     * 업로드/바이러스 스캔 완료된 PDF file_object ID
+     * 업로드/스캔 완료된 PDF file_object ID
      * @minimum 1
      */
   fileObjectId: number;
   /**
-     * render-data 응답의 frozen payloadHash
-     * @minLength 1
+     * GET /payment-statement/render-data 응답의 payloadHash. 다른 snapshot PDF 오등록 방지용
+     * @minLength 0
      * @maxLength 128
      */
   payloadHash: string;

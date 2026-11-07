@@ -7,8 +7,7 @@
  */
 
 /**
- * program_recruitment.recruit_term의 FIRST_HALF|SECOND_HALF. 해당 없으면 null.
- * @nullable
+ * 상·하반기. program_recruitment.recruit_term의 FIRST_HALF|SECOND_HALF. 해당 없으면 null
  */
 export type VolunteerApplicationListItemResponseRecruitHalf = typeof VolunteerApplicationListItemResponseRecruitHalf[keyof typeof VolunteerApplicationListItemResponseRecruitHalf] | null;
 

@@ -7,14 +7,12 @@
  */
 
 /**
- * Admin API 상태
+ * CMS 문의 답변 상태
  */
 export type InquiryResponseStatus = typeof InquiryResponseStatus[keyof typeof InquiryResponseStatus];
 
 
 export const InquiryResponseStatus = {
   PENDING: 'PENDING',
-  IN_PROGRESS: 'IN_PROGRESS',
   ANSWERED: 'ANSWERED',
-  CLOSED: 'CLOSED',
 } as const;

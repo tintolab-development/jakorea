@@ -5,23 +5,25 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { MemberPortalInstructorRoleRequestSummary } from './memberPortalInstructorRoleRequestSummary';
-import type { PortalApplicationSummary } from './portalApplicationSummary';
-import type { PortalDashboardResponseMemberType } from './portalDashboardResponseMemberType';
+import type { ApplicationSummary } from './applicationSummary';
+import type { InstructorRoleRequestSummary } from './instructorRoleRequestSummary';
+import type { PendingActionSummary } from './pendingActionSummary';
 import type { PortalNoticeItem } from './portalNoticeItem';
-import type { PortalPendingActionSummary } from './portalPendingActionSummary';
 import type { PortalScheduleItem } from './portalScheduleItem';
 
 /**
- * 개인·학교(교사)·강사 역할에 따라 회원 포탈 홈 화면을 구성하는 집계 응답
+ * 홈 통계 정본은 applications이다. 이전 병목은 전체 신청 UNION 스캔 + 행마다 참여자/수료 상관 서브쿼리 반복 + pending 9종 + 180일 일정 LATERAL + 공지 조인이 한 응답에 묶인 것이었다.
  */
 export interface PortalDashboardResponse {
-  memberType: PortalDashboardResponseMemberType;
-  teacher: boolean;
-  instructor: boolean;
-  applications: PortalApplicationSummary;
-  pendingActions: PortalPendingActionSummary;
-  upcomingSchedules: PortalScheduleItem[];
-  recentNotices: PortalNoticeItem[];
-  instructorRoleRequest: MemberPortalInstructorRoleRequestSummary;
+  memberType?: string;
+  teacher?: boolean;
+  instructor?: boolean;
+  instructorRoleRequest?: InstructorRoleRequestSummary;
+  applications?: ApplicationSummary;
+  /** 이 path에서는 집계하지 않는다. 각 필드는 0이다. */
+  pendingActions?: PendingActionSummary;
+  /** 이 path에서는 집계하지 않으며 []. 일정 SSOT는 GET /api/portal/me/calendar 이다. */
+  upcomingSchedules?: PortalScheduleItem[];
+  /** 이 path에서는 집계하지 않으며 []. */
+  recentNotices?: PortalNoticeItem[];
 }

@@ -11,38 +11,41 @@ import type { CareerTalentApplicationDetailResponseEducationLevel } from './care
 import type { CareerTalentApplicationDetailResponseJobInterest } from './careerTalentApplicationDetailResponseJobInterest';
 import type { CareerTalentApplicationDetailResponseStatus } from './careerTalentApplicationDetailResponseStatus';
 
+/**
+ * Admin detail is always stored original PII. Empty strings are null. List items remain masked.
+ */
 export interface CareerTalentApplicationDetailResponse {
   id?: number;
   status?: CareerTalentApplicationDetailResponseStatus;
   version?: number;
   jobInterest?: CareerTalentApplicationDetailResponseJobInterest;
-  /** Applicant name. revealPii=false uses PrivacyMaskingSupport.maskName (same as list and sponsorship talent). Original name only when revealPii=true. */
-  name?: string;
-  /** revealPii=false: PrivacyMaskingSupport.maskPhone (same as list). revealPii=true: original. Empty is null, never "". */
+  /** Stored applicant name (original). Empty is null, never "". */
+  name?: string | null;
+  /** Stored phone (original). Empty is null, never "". */
   phone?: string | null;
-  /** revealPii=false: PrivacyMaskingSupport.maskEmail (same as list). revealPii=true: original. Empty is null, never "". */
+  /** Stored email (original). Empty is null, never "". */
   email?: string | null;
-  /** revealPii=false: PrivacyMaskingSupport.maskAddress. revealPii=true: original. Empty is null, never "". */
+  /** Stored road address (original). Empty is null, never "". */
   addressRoad?: string | null;
-  /** revealPii=false: PrivacyMaskingSupport.maskAddress. revealPii=true: original. Empty is null, never "". */
+  /** Stored address detail (original). Empty is null, never "". */
   addressDetail?: string | null;
-  /** revealPii=false: omitted (null). revealPii=true: stored enum. careerType stays on the masked detail; this field does not until revealed. */
+  /** Stored education level. */
   educationLevel?: CareerTalentApplicationDetailResponseEducationLevel;
-  /** revealPii=false: omitted. revealPii=true: stored school name. */
+  /** Stored school name (original). Empty is null, never "". */
   schoolName?: string | null;
-  /** revealPii=false: omitted. revealPii=true: stored major. Empty is null, never "". */
+  /** Stored major (original). Empty is null, never "". */
   major?: string | null;
-  /** revealPii=false: omitted. revealPii=true: stored education body. Empty is null, never "". */
+  /** Stored education information (original). Empty is null, never "". */
   educationInfo?: string | null;
   careerType?: CareerTalentApplicationDetailResponseCareerType;
-  /** revealPii=false: omitted. revealPii=true: stored career body. Empty is null, never "". */
+  /** Stored career information (original). Empty is null, never "". */
   careerInfo?: string | null;
   privacyAgreed?: boolean;
   appliedAt?: string;
   confirmedAt?: string | null;
   confirmedByName?: string | null;
-  /** revealPii=false: omitted. revealPii=true: first attachment original name. */
+  /** First stored attachment original name. Empty is null, never "". */
   attachmentOriginalName?: string | null;
-  /** revealPii=false: empty array. revealPii=true: stored attachments in display order. */
+  /** Stored attachments in display order, including originalName. Empty when no attachments exist. */
   attachments?: ApplicationAttachmentItem[];
 }

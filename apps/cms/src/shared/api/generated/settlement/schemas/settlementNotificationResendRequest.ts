@@ -5,23 +5,19 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { SettlementNotificationResendRequestTiming } from './settlementNotificationResendRequestTiming';
 
 /**
- * 정산 산출 내역서/지급조서 처리 현황 알림 재발송. timing은 IMMEDIATE|SCHEDULED만. ON_ANNOUNCEMENT와 최초 확인 notificationType MANUAL은 422입니다.
+ * 정산 산출 내역서/지급조서 처리 현황 알림 재발송. timing은 IMMEDIATE|SCHEDULED만 허용합니다. ON_ANNOUNCEMENT와 최초 확인 notificationType MANUAL은 거부합니다.
  */
 export interface SettlementNotificationResendRequest {
-  /** null 또는 빈 값은 IMMEDIATE로 정규화됩니다. */
-  timing?: SettlementNotificationResendRequestTiming;
-  /**
-     * SCHEDULED일 때 필수 ISO-8601. IMMEDIATE이면 null.
-     * @nullable
-     */
+  /** IMMEDIATE | SCHEDULED. 생략하면 IMMEDIATE */
+  timing?: string;
+  /** timing=SCHEDULED일 때 필수 ISO-8601. IMMEDIATE이면 null */
   scheduledAt?: string | null;
   /**
-     * statementStatus=REJECTED일 때 필수(저장된 반려 사유가 있으면 생략 가능). 알림 본문에만 쓰며 statementStatus는 바꾸지 않습니다. 사용자_영수증_신청_반려 템플릿과 섞지 않습니다.
+     * statementStatus=REJECTED일 때 필수. 그 외 null
+     * @minLength 0
      * @maxLength 500
-     * @nullable
      */
   reason?: string | null;
 }

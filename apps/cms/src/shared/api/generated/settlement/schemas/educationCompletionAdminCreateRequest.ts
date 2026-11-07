@@ -7,6 +7,8 @@
  */
 
 export interface EducationCompletionAdminCreateRequest {
+  /** @minimum 1 */
   organizationApplicationId: number;
+  /** @minimum 1 */
   programScheduleId: number;
 }

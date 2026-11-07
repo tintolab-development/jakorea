@@ -17,6 +17,10 @@ import { findAssignedSettlementItem } from '@/features/mypage/education/settleme
 import { readEducationApplicationTypeFromRoute } from '@/features/mypage/education/applications/lib/education-application-route'
 import { educationApplicationDetailPath } from '@/features/mypage'
 import { INDIVIDUAL_SETTLEMENT_DISABLED_MESSAGE } from '@/features/mypage/education/settlements/lib/individual-settlement-contract'
+import {
+  isLectureReportSettlementReturn,
+  lectureReportCompleteTabPath,
+} from '@/features/mypage/education/schedules/lib/lecture-report-complete-navigation'
 import { useSettlementPreConsent } from '@/features/mypage/education/settlements/hooks/use-receipt-payment-statement-consent'
 import { PaymentStatementPreConsentModal } from '@/features/mypage/education/settlements/ui/payment-statement-pre-consent-modal'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
@@ -32,6 +36,7 @@ export function MypageEducationSettlementWritePage() {
   }>()
   const [searchParams] = useSearchParams()
   const sessionId = searchParams.get('sessionId') ?? ''
+  const returnToLectureReport = isLectureReportSettlementReturn(searchParams.get('returnTo'))
   const remoteEnabled = isRemoteApiConfigured()
   const routeApplicationType =
     readSettlementRouteApplicationType(applicationTypeParam) ??
@@ -73,9 +78,14 @@ export function MypageEducationSettlementWritePage() {
   })
   const blockedPreConsentWrite =
     !preConsent.isConsentLoading && !preConsent.isConsentSubmitted
-  const backPath = applicationId
-    ? buildSettlementTabPath(applicationId, area, applicationType)
-    : educationApplicationDetailPath(applicationId)
+  const lectureReportListPath = applicationId
+    ? lectureReportCompleteTabPath(applicationId)
+    : ''
+  const backPath = returnToLectureReport && lectureReportListPath
+    ? lectureReportListPath
+    : applicationId
+      ? buildSettlementTabPath(applicationId, area, applicationType)
+      : educationApplicationDetailPath(applicationId)
 
   useEffect(() => {
     if (!hideGeminiPaymentStatementWrite) return
@@ -133,7 +143,10 @@ export function MypageEducationSettlementWritePage() {
         <PaymentStatementPreConsentModal
           open
           variant={documentKind}
-          onCancel={() => navigate(backPath)}
+          cancelLabel={returnToLectureReport ? '나중에 하기' : '취소'}
+          onCancel={() =>
+            navigate(backPath, returnToLectureReport ? { replace: true } : undefined)
+          }
           onWriteConsent={preConsent.goToConsents}
         />
       </>

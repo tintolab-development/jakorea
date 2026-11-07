@@ -95,7 +95,7 @@ function readTransportMode(value: unknown): SettlementItemSettingDetail['transpo
   return undefined
 }
 
-function normalizeLayout(layout: string | undefined): SettlementItemSettingDetail['layout'] {
+function normalizeLayout(layout: string | null | undefined): SettlementItemSettingDetail['layout'] {
   const normalized = layout?.trim()
   if (!normalized) return 'simple'
   // legacy wire alias → BE canonical `activity`
@@ -204,9 +204,13 @@ function geminiSessionsFromWageItem(
     ),
   }
 
-  const rateByUnit = new Map(
-    (item.rateItems ?? []).map(rate => [rate.unitCount ?? 0, rate.amount ?? 0])
-  )
+  const rateByUnit = new Map<number, number>()
+  for (const rate of item.rateItems ?? []) {
+    const unit = readNumber(rate.unitCount)
+    const amount = readNumber(rate.amount)
+    if (unit == null || amount == null) continue
+    rateByUnit.set(unit, amount)
+  }
 
   return {
     geminiSession1Won:

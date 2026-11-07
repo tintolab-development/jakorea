@@ -3,6 +3,26 @@ import { jsPDF } from 'jspdf'
 import { downloadBlob } from '@/shared/utils/file-download'
 import { countPdfImageSlices } from './count-pdf-image-slices'
 
+async function waitForDocumentImages(root: HTMLElement): Promise<void> {
+  const deadline = Date.now() + 12_000
+  while (Date.now() < deadline) {
+    if (root.querySelector('[data-photo-state="loading"]') == null) break
+    await new Promise(resolve => {
+      window.setTimeout(resolve, 40)
+    })
+  }
+  const images = Array.from(root.querySelectorAll('img'))
+  await Promise.all(
+    images.map(img => {
+      if (img.complete) return Promise.resolve()
+      return new Promise<void>(resolve => {
+        img.addEventListener('load', () => resolve(), { once: true })
+        img.addEventListener('error', () => resolve(), { once: true })
+      })
+    })
+  )
+}
+
 /**
  * 미리보기와 동일한 A4 DOM 노드(권장: `data-form-document-pdf-page`가 붙은 루트)를 순서대로 캡처해 PDF Blob을 반환한다.
  * 캡처가 A4보다 길면 이어지는 페이지로 자른다. 한 노드를 A4 높이에 강제로 맞추면 내용이 잘리거나 찌그러진다.
@@ -25,6 +45,7 @@ export async function generateFormDocumentPdfBlobFromPageElements(
   let hasContentPage = false
 
   for (const el of pageElements) {
+    await waitForDocumentImages(el)
     const captureWidth = Math.max(el.scrollWidth, el.offsetWidth, 1)
     const captureHeight = Math.max(el.scrollHeight, el.offsetHeight, 1)
     const canvas = await html2canvas(el, {

@@ -6,17 +6,20 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * 면접 배정 결과. 봉사자/개인 신청 중 하나만 채워집니다.
+ */
 export interface InterviewAssignmentResponse {
-  /** @nullable */
-  volunteerApplicationId?: number | null;
-  /** @nullable */
-  individualApplicationId?: number | null;
+  /** 봉사자 신청 ID */
+  volunteerApplicationId?: number;
+  /** 개인 신청 ID */
+  individualApplicationId?: number;
+  /** 면접 배정 ID */
   interviewAssignmentId?: number;
+  /** 면접 슬롯 ID */
   interviewSlotId?: number;
+  /** 배정 상태 */
   assignmentStatus?: string;
-  /**
-     * 배정 알림 이벤트 ID. 알림을 만들지 않으면 null
-     * @nullable
-     */
+  /** 배정 알림 이벤트 ID. 같은 슬롯 재요청처럼 알림을 만들지 않으면 null */
   notificationEventId?: number | null;
 }

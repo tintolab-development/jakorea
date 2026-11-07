@@ -293,6 +293,10 @@ export type RenderFormParagraphBodyOptions = {
   surveyPeriodReadonly?: boolean
   /** 강의보고서 프로그램 진행 정보 — 프로그램·배정 연동 미리보기(템플릿 안내 대신 실값) */
   lectureReportProgramLinkedPreview?: boolean
+  /** 개인형 강의보고서 — 기관명·기관 소재지 숨김 */
+  lectureReportHideInstitutionFields?: boolean
+  /** 강의보고서 미리보기·PDF — 단락 타이틀 필수(*) 숨김 */
+  hideTitleRequiredMark?: boolean
   /** 제출 강의보고서 미리보기 — 실제 첨부 파일 메타데이터 */
   lectureReportFiles?: readonly {
     fileObjectId: number
@@ -650,15 +654,18 @@ export function renderFormParagraphBody(
     }
     case 'lecture_report_program_progress': {
       const lr = p as LectureReportProgramProgressParagraph
+      const linkedPreview = options?.lectureReportProgramLinkedPreview === true
       return (
         <LectureReportProgramProgress
           paragraph={lr}
           onChange={next => updateParagraph(lr.id, () => next)}
           isEditMode={isBodyInteractive}
           isTemplateAuthoringMode={
-            paragraphInteractionMode === 'authoring' &&
-            options?.lectureReportProgramLinkedPreview !== true
+            paragraphInteractionMode === 'authoring' && !linkedPreview
           }
+          previewReadonly={linkedPreview || isPreviewReadonly}
+          previewSkin="surface"
+          hideInstitutionFields={options?.lectureReportHideInstitutionFields === true}
         />
       )
     }

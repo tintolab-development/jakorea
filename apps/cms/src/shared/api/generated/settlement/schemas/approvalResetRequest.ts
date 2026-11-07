@@ -8,14 +8,10 @@
 
 export interface ApprovalResetRequest {
   /**
-     * 승인 취소/재검토 사유
-     * @minLength 1
+     * @minLength 0
      * @maxLength 1000
      */
   reason: string;
-  /**
-     * 결과 알림 예약 시각(ISO-8601). 생략 또는 null이면 즉시 발송. 유효한 미래 시각이면 예약. 최소 60초 이후여야 한다.
-     * @nullable
-     */
-  scheduledAt?: string | null;
+  /** 결과 알림 예약 시각(ISO-8601). 생략 또는 null이면 즉시 발송. 유효한 미래 시각이면 예약. 최소 60초 이후여야 한다. */
+  scheduledAt?: string;
 }

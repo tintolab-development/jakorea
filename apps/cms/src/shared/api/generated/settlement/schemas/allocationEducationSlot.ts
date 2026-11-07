@@ -9,19 +9,10 @@
 export interface AllocationEducationSlot {
   /** ujat_organization_class_schedule_assignment.id */
   educationSlotId?: number;
-  /**
-     * 슬롯 class_label 원문. 없으면 null. grade+className으로 합성하지 않음
-     * @nullable
-     */
+  /** 슬롯 class_label 원문. 없으면 null. grade+className으로 합성하지 않음 */
   classLabel?: string | null;
-  /**
-     * 학년 원문. 없으면 null
-     * @nullable
-     */
+  /** 학년 원문. 없으면 null */
   grade?: string | null;
-  /**
-     * 반 이름 원문. 없으면 null
-     * @nullable
-     */
+  /** 반 이름 원문. 없으면 null */
   className?: string | null;
 }

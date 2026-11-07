@@ -8,7 +8,6 @@
 
 /**
  * is_schedule_lead 기준. LEAD=주강사, ASSISTANT=보조강사. 미설정이면 null
- * @nullable
  */
 export type MemberPortalTeacherAssignmentItemInstructorRole = typeof MemberPortalTeacherAssignmentItemInstructorRole[keyof typeof MemberPortalTeacherAssignmentItemInstructorRole] | null;
 

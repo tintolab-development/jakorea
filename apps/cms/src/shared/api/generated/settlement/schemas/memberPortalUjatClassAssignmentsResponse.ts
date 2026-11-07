@@ -8,8 +8,9 @@
 import type { MemberPortalUjatClassAssignmentSchedule } from './memberPortalUjatClassAssignmentSchedule';
 
 /**
- * UJAT 기관 마이페이지 배정 탭 SSOT. 배정이 없으면 schedules=[]. null 금지. slots/content/items로 채우지 않는다.
+ * UJAT 기관 마이페이지 배정 탭. schedules는 항상 배열이며 배정이 없으면 []. FE는 이 GET만 SSOT로 쓴다. slots/content/items·answers·다른 학기 배정으로 채우지 않는다.
  */
 export interface MemberPortalUjatClassAssignmentsResponse {
-  schedules: MemberPortalUjatClassAssignmentSchedule[];
+  /** 일정별 학급 배정. 없으면 []. null 금지. */
+  schedules?: MemberPortalUjatClassAssignmentSchedule[];
 }

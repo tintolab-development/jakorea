@@ -6,13 +6,7 @@
  * OpenAPI spec version: v9
  */
 
-/**
- * Structured business/operation period (compatibility). (한글 계약 설명)
- * @nullable
- */
-export type ProgramPeriodRequest = {
-  /** @nullable */
-  startDate?: string | null;
-  /** @nullable */
-  endDate?: string | null;
-} | null;
+export interface ProgramPeriodRequest {
+  startDate?: string;
+  endDate?: string;
+}

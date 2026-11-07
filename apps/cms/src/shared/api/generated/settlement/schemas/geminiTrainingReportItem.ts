@@ -5,56 +5,31 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { GeminiTrainingReportItemDeliveryType } from './geminiTrainingReportItemDeliveryType';
 import type { GeminiTrainingReportItemPaymentExclusionReason } from './geminiTrainingReportItemPaymentExclusionReason';
 
 export interface GeminiTrainingReportItem {
   trainingReportId?: number;
   programId?: number;
-  /** @nullable */
-  programNameKo?: string | null;
-  /** @nullable */
-  instructorMemberId?: number | null;
-  /** @nullable */
-  instructorName?: string | null;
-  /** @nullable */
-  schoolOrOrganizationName?: string | null;
-  /** @nullable */
-  trainingLocation?: string | null;
-  /** @nullable */
-  trainingDate?: string | null;
-  /** @nullable */
-  trainingStartTime?: string | null;
-  /** @nullable */
-  trainingEndTime?: string | null;
-  /** @nullable */
-  trainingMinutes?: number | null;
-  /** @nullable */
-  classCount?: number | null;
-  /** @nullable */
-  topic?: string | null;
-  /** @nullable */
-  assistantInstructorNames?: string | null;
-  /** @nullable */
-  assistantInstructorCount?: number | null;
-  /** @nullable */
-  deliveryType?: GeminiTrainingReportItemDeliveryType;
-  /** @nullable */
-  participantCount?: number | null;
-  /** @nullable */
-  calculatedAmount?: number | null;
-  /**
-     * PAID 건만. 미지급은 null. 0 금지.
-     * @nullable
-     */
+  programNameKo?: string;
+  instructorMemberId?: number;
+  instructorName?: string;
+  schoolOrOrganizationName?: string;
+  trainingLocation?: string;
+  trainingDate?: string;
+  trainingStartTime?: string;
+  trainingEndTime?: string;
+  trainingMinutes?: number;
+  classCount?: number;
+  topic?: string;
+  assistantInstructorNames?: string;
+  assistantInstructorCount?: number;
+  deliveryType?: string;
+  participantCount?: number;
+  calculatedAmount?: number;
+  /** account_payment.payment_status=PAID 일 때만 채움. 미지급은 null. 0을 넣지 않음. */
   accountPaymentId?: number | null;
-  /** @nullable */
-  status?: string | null;
-  /** @nullable */
-  createdAt?: string | null;
-  /**
-     * 계좌 지급 제외 사유. 지급 대상이면 null. GEMINI_INSTRUCTOR_IDENTITY_BLANK=강사명·연락처 완전 미기재로 실적만 등록, GEMINI_INSTRUCTOR_NOT_MATCHED=이름·연락처 있으나 강사 회원 미매칭으로 실적만 등록
-     * @nullable
-     */
+  status?: string;
+  createdAt?: string;
+  /** 계좌 지급 제외 사유. 지급 대상이면 null. GEMINI_INSTRUCTOR_IDENTITY_BLANK=강사명·연락처 완전 미기재로 실적만 등록, GEMINI_INSTRUCTOR_EXTERNAL_PAYEE=회원 미확정+외부 지급처로 실적만 등록, GEMINI_INSTRUCTOR_NOT_MATCHED=과거 적재분(신규 import는 FAILED로 전환) */
   paymentExclusionReason?: GeminiTrainingReportItemPaymentExclusionReason;
 }

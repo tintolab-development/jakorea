@@ -6,7 +6,10 @@ import {
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import type { Program } from '@/types/domain'
 
-function createContext(content?: LectureReportPreviewContext['content']): LectureReportPreviewContext {
+function createContext(
+  content?: LectureReportPreviewContext['content'],
+  overrides: Partial<LectureReportPreviewContext> = {}
+): LectureReportPreviewContext {
   return {
     instructor: {
       id: 'instructor-1',
@@ -24,7 +27,9 @@ function createContext(content?: LectureReportPreviewContext['content']): Lectur
       educationGrade: '초등학교 3학년',
       educationScheduleLabel: '2026.09.15 | 1회차 | 10:00-11:00',
     },
+    hideInstitutionFields: false,
     content,
+    ...overrides,
   }
 }
 
@@ -74,5 +79,84 @@ describe('buildLectureReportFilledDraft', () => {
     ).toMatchObject({ bodyText: '실제 답변' })
 
     expect(JSON.stringify(draft)).not.toContain('경제의 기본 개념인 수요와 공급')
+  })
+
+  it('보기 화면에 강사 정보를 넣고 항목 타이틀 필수 표시를 끈다', () => {
+    const draft = buildLectureReportFilledDraft(createContext())
+    const instructor = draft.paragraphs.find(
+      paragraph =>
+        paragraph.kind === 'single_item' &&
+        paragraph.variant === 'user_info' &&
+        paragraph.paragraphTitle === '강사 정보'
+    )
+    expect(instructor).toMatchObject({
+      requiredMark: false,
+      fieldAnswers: { name: '김제이' },
+    })
+    expect(
+      draft.paragraphs.some(
+        paragraph =>
+          paragraph.kind === 'single_item' &&
+          (paragraph.requiredMark === true || paragraph.answerRequired === true)
+      )
+    ).toBe(false)
+  })
+
+  it('제출 양식에 있는 진행 정보 값은 빈 배정 필드로 지우지 않는다', () => {
+    const draft = buildLectureReportFilledDraft(
+      createContext(undefined, {
+        hideInstitutionFields: true,
+        content: {
+          form: {
+            schemaVersion: 1,
+            formSettings: { titleNumbering: 'none' },
+            paragraphs: [
+              {
+                id: 'lecture-report-program-progress',
+                kind: 'single_item',
+                variant: 'lecture_report_program_progress',
+                requiredMark: true,
+                paragraphTitle: '프로그램 진행 정보',
+                paragraphDescription: '',
+                participatesInTitleNumbering: true,
+                answerRequired: true,
+                programName: '정산(개인/봉사자/강사)',
+                textbookName: '교재명',
+                progressUnit: '12',
+                institutionName: '',
+                institutionLocation: '',
+                educationDate: '2026-11-06',
+                sessionTime: '10:00 ~ 11:00',
+                sessionIndex: '1차시',
+                educationTarget: '중등',
+                classLabel: '2반',
+                studentCount: '30',
+              },
+            ],
+          },
+        },
+        row: {
+          id: 'report-1',
+          no: 1,
+          schoolName: '-',
+          educationGrade: '중등',
+          educationScheduleLabel: '2026.11.06(금)',
+        },
+      })
+    )
+    const progress = draft.paragraphs.find(
+      paragraph => paragraph.kind === 'single_item' && paragraph.variant === 'lecture_report_program_progress'
+    )
+    expect(progress).toMatchObject({
+      programName: '정산(개인/봉사자/강사)',
+      textbookName: '교재명',
+      progressUnit: '12',
+      sessionTime: '10:00 ~ 11:00',
+      sessionIndex: '1차시',
+      educationTarget: '중등',
+      classLabel: '2반',
+      studentCount: '30',
+      institutionName: '',
+    })
   })
 })

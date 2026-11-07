@@ -8,22 +8,24 @@
 import type { ProgramBusinessPeriodHistoryItem } from './programBusinessPeriodHistoryItem';
 
 /**
- * 프로그램 사업 종료일 연장 결과
+ * 프로그램 사업 종료일 연장 결과. 이력은 이번 PATCH 1건만 포함하며 프로그램 상세 GET에는 businessPeriodHistories가 없습니다.
  */
 export interface ProgramBusinessPeriodResponse {
-  programId: number;
-  /** @nullable */
-  businessStartDate?: string | null;
-  /** @nullable */
-  previousBusinessEndDate?: string | null;
-  businessEndDate: string;
-  updatedAt: string;
-  /** @nullable */
+  programId?: number;
+  /** 사업 시작일 */
+  businessStartDate?: string;
+  /** 연장 전 사업 종료일 */
+  previousBusinessEndDate?: string;
+  /** 연장 후 사업 종료일 */
+  businessEndDate?: string;
+  /** 변경 시각 */
+  updatedAt?: string;
+  /** 연장 사유. blank trim 시 null */
   reason?: string | null;
-  /** @nullable */
+  /** 변경한 관리자 이름 */
   changedByName?: string | null;
-  /** @nullable */
+  /** 변경 시각. updatedAt과 동일 */
   changedAt?: string | null;
-  /** Present only in the successful extension response; absent from program detail GET. */
+  /** 이번 연장 1건. 상세 GET 재조회에는 없음 */
   businessPeriodHistories?: ProgramBusinessPeriodHistoryItem[];
 }

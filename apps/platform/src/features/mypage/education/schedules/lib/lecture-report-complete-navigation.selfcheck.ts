@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import {
+  isLectureReportSettlementReturn,
   lectureReportCompleteSettlementWritePath,
   lectureReportCompleteTabPath,
   resolveInstructorLectureApplicationId,
@@ -23,8 +24,10 @@ assert.equal(resolveLectureSettlementSessionId({ scheduleId: 0, assignmentId: nu
 assert.equal(lectureReportCompleteTabPath('12'), '/mypage/lectures/INSTRUCTOR/12?section=lecture-report')
 assert.equal(
   lectureReportCompleteSettlementWritePath('12', '88'),
-  '/mypage/lectures/INSTRUCTOR/12/settlement/write?sessionId=88',
+  '/mypage/lectures/INSTRUCTOR/12/settlement/write?sessionId=88&returnTo=lecture-report',
 )
 assert.equal(lectureReportCompleteSettlementWritePath('12', ''), null)
+assert.equal(isLectureReportSettlementReturn('lecture-report'), true)
+assert.equal(isLectureReportSettlementReturn('settlement'), false)
 
 console.log('lecture-report-complete-navigation.selfcheck: ok')

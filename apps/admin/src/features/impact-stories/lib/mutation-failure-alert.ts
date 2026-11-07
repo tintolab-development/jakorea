@@ -4,10 +4,10 @@
 
 import {
   type AdminMutationAlert,
-  mapCommonRemoteMutationFailure,
   readApiErrorCode,
   readApiErrorMessage,
 } from '@/shared/lib/api-error-message'
+import { mapAdminMutationAlert } from '@/shared/ui'
 
 function mapBodyValidationFailure(
   error: unknown,
@@ -42,7 +42,7 @@ export function impactStoryMutationFailureAlert(
   fallbackContent: string,
   title = '저장 실패',
 ): AdminMutationAlert {
-  const common = mapCommonRemoteMutationFailure(error)
+  const common = mapAdminMutationAlert(error)
   if (common) return common
 
   const body = mapBodyValidationFailure(error, title)
@@ -52,7 +52,7 @@ export function impactStoryMutationFailureAlert(
 }
 
 export function impactStoryCategoryMutationFailureAlert(error: unknown): AdminMutationAlert {
-  const common = mapCommonRemoteMutationFailure(error)
+  const common = mapAdminMutationAlert(error)
   if (common) return common
 
   const code = readApiErrorCode(error) ?? ''

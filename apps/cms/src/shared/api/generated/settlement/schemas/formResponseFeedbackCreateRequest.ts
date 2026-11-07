@@ -5,14 +5,12 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { FormResponseFeedbackCreateRequestDecision } from './formResponseFeedbackCreateRequestDecision';
 
 export interface FormResponseFeedbackCreateRequest {
-  /** @maxLength 4000 */
-  content: string;
   /**
-     * APPROVE는 responseStatus=APPROVED. 생략·null·REVISION_REQUEST는 기존과 같이 REJECTED(수정 요청).
-     * @nullable
+     * @minLength 0
+     * @maxLength 4000
      */
-  decision?: FormResponseFeedbackCreateRequestDecision;
+  content: string;
+  decision?: string;
 }

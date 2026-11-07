@@ -7,7 +7,10 @@
  */
 import type { MemberPortalUjatTemporaryScheduleSlot } from './memberPortalUjatTemporaryScheduleSlot';
 
+/**
+ * 포털 공개용 CMS 임시배정 슬롯 묶음. 기관 주소 등 관리자 전용 필드는 넣지 않습니다.
+ */
 export interface MemberPortalUjatTemporarySchedule {
-  /** 활성·미취소 임시배정 슬롯. 없으면 []. */
+  /** 활성·미취소 슬롯. 없으면 빈 배열. */
   slots?: MemberPortalUjatTemporaryScheduleSlot[];
 }

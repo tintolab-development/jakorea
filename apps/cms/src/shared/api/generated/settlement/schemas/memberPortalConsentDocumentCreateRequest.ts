@@ -7,16 +7,17 @@
  */
 
 export interface MemberPortalConsentDocumentCreateRequest {
-  /** PAYMENT_STATEMENT_PRE_CONSENT and PAYMENT_STATEMENT_CONSENT are aliases */
+  /**
+     * @minLength 0
+     * @maxLength 100
+     */
   consentType: string;
   /**
      * Optional. Omit both target fields for member-wide PORTRAIT_RIGHTS; the server binds the authenticated member. PROGRAM plus targetId preserves program-scoped consent.
-     * @nullable
+     * @minLength 0
+     * @maxLength 100
      */
-  targetType?: string | null;
-  /**
-     * Optional with targetType. For MEMBER scope, must equal the authenticated member ID; for PROGRAM scope, the member must be a participant.
-     * @nullable
-     */
-  targetId?: number | null;
+  targetType?: string;
+  /** Optional with targetType. For MEMBER scope, must equal the authenticated member ID; for PROGRAM scope, the member must be a participant. */
+  targetId?: number;
 }

@@ -53,6 +53,8 @@ export interface ParticipatingSchoolSession {
   scheduleRole?: string
   /** GET schedules / education-slots `educationSlotKey` */
   educationSlotKey?: string
+  /** 해당 일정의 program_curriculum_session 건수. 없으면 생략. sessionNo로 채우지 않는다. */
+  curriculumSessionCount?: number | null
 }
 
 export interface ParticipatingSchoolRow {

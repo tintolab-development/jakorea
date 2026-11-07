@@ -6,29 +6,17 @@
  * OpenAPI spec version: v9
  */
 
-/**
- * 현재 program_admin_assignment 행의 projection. 이력 행 ID와 별개입니다.
- */
 export interface AdminActiveProgramAssignmentResponse {
-  /** program_admin_assignment.id */
   activeAssignmentId?: number;
   programId?: number;
   programName?: string;
   assignmentRole?: string;
-  /** @nullable */
-  assignedAt?: string | null;
-  /** @nullable */
-  programStartDate?: string | null;
-  /** @nullable */
-  progressYear?: number | null;
-  /** @nullable */
-  lifecycleStatus?: string | null;
-  /** @nullable */
-  approvedStudentCount?: number | null;
-  /** @nullable */
-  recruitmentCapacity?: number | null;
-  /** @nullable */
-  participantType?: string | null;
-  /** @nullable */
-  targetLevel?: string | null;
+  assignedAt?: string;
+  programStartDate?: string;
+  progressYear?: number;
+  lifecycleStatus?: string;
+  approvedStudentCount?: number;
+  recruitmentCapacity?: number;
+  participantType?: string;
+  targetLevel?: string;
 }

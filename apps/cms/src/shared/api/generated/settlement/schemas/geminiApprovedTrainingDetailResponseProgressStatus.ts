@@ -7,7 +7,7 @@
  */
 
 /**
- * @nullable
+ * 화면 배지 4종. Asia/Seoul 날짜 기준 파생. program.period_status가 아니다. SCHEDULED=프로그램 진행 예정, IN_PROGRESS=프로그램 진행 중, COMPLETED=프로그램 진행 완료, NOT_CONDUCTED=프로그램 미진행. 강사 미배정+희망일 경과=NOT_CONDUCTED, 미배정+희망일 남음=SCHEDULED, 배정+확정일 전=SCHEDULED, 당일=IN_PROGRESS, 경과=COMPLETED.
  */
 export type GeminiApprovedTrainingDetailResponseProgressStatus = typeof GeminiApprovedTrainingDetailResponseProgressStatus[keyof typeof GeminiApprovedTrainingDetailResponseProgressStatus] | null;
 

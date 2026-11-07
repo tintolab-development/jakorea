@@ -12,58 +12,33 @@
 export interface GeminiInstructorApplicationItem {
   applicationId?: number;
   programId?: number;
-  /** @nullable */
-  recruitmentId?: number | null;
-  /** @nullable */
-  instructorMemberId?: number | null;
-  /** @nullable */
-  instructorName?: string | null;
+  recruitmentId?: number;
+  instructorMemberId?: number;
+  instructorName?: string;
   /** PENDING|APPROVED|REJECTED canonical */
   applicationStatus?: string;
-  /** @nullable */
-  instructorTypeSnapshot?: string | null;
-  /** @nullable */
-  instructorFeeGradeSnapshot?: string | null;
-  /**
-     * JA 평가 등급. 예: A등급
-     * @nullable
-     */
+  instructorTypeSnapshot?: string;
+  instructorFeeGradeSnapshot?: string;
+  /** JA 평가 등급 표시. 예: A등급 */
   grade?: string | null;
-  /** @nullable */
   homeSido?: string | null;
-  /** @nullable */
   homeSigungu?: string | null;
-  /** @nullable */
+  /** JA 강의 경력(년) */
   experienceYears?: number | null;
-  /**
-     * 마스킹 전화
-     * @nullable
-     */
+  /** 목록 마스킹 전화. 예: 010-****-0000 */
   phone?: string | null;
-  /**
-     * 마스킹 이메일
-     * @nullable
-     */
+  /** 목록 마스킹 이메일 */
   email?: string | null;
-  /** @nullable */
+  /** 해당 월 확정 배정 수 */
   monthlyAssignmentCount?: number | null;
-  /** @nullable */
-  distanceKm?: number | null;
-  /** @nullable */
-  longDistance?: boolean | null;
-  /** @nullable */
-  availableScheduleMemo?: string | null;
-  /** @nullable */
-  submittedAt?: string | null;
-  /** @nullable */
-  approvedAt?: string | null;
-  /** @nullable */
-  rejectedAt?: string | null;
-  /**
-     * 가장 최근 강사 승인/반려 결과 알림 시각. 없으면 null. 재발송해도 approvedAt·rejectedAt·applicationStatus는 바뀌지 않습니다.
-     * @nullable
-     */
+  distanceKm?: number;
+  longDistance?: boolean;
+  availableScheduleMemo?: string;
+  submittedAt?: string;
+  approvedAt?: string;
+  rejectedAt?: string;
+  /** 가장 최근 강사 승인/반려 결과 알림 시각. 없으면 null. 재발송해도 approvedAt·rejectedAt·applicationStatus는 바뀌지 않습니다. */
   resultNotificationSentAt?: string | null;
-  /** APPROVED 또는 REJECTED이면 RESEND_NOTIFICATION을 포함한다. */
+  /** APPROVED 또는 REJECTED(AUTO_REJECTED·CANCELLED 제외)이면 RESEND_NOTIFICATION을 포함한다. */
   availableActions?: string[];
 }

@@ -5,20 +5,19 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { IndividualApplicationTeam } from './individualApplicationTeam';
-import type { IndividualApplicationTextbook } from './individualApplicationTextbook';
+import type { Team } from './team';
+import type { Textbook } from './textbook';
 
+/**
+ * 개인 신청 관리자 운영정보 수정 결과
+ */
 export interface IndividualApplicationUpdateResponse {
-  applicationId: number;
-  programId: number;
-  applicationStatus: string;
-  textbook?: IndividualApplicationTextbook | null;
-  team?: IndividualApplicationTeam;
-  /**
-     * @maxLength 2000
-     * @nullable
-     */
+  applicationId?: number;
+  programId?: number;
+  applicationStatus?: string;
+  textbook?: Textbook;
+  team?: Team;
   managerComment?: string | null;
-  updatedAt: string;
+  updatedAt?: string;
   availableActions?: string[];
 }

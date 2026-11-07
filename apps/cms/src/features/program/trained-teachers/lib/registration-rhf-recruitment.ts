@@ -3,6 +3,7 @@
  * Overlay store를 정본으로 읽지 않는다.
  */
 import type { TrainedTeachersRecruitFormState } from './registration-canonical-types'
+import { normalizeTargetLevelValue } from '@/features/program/shared/lib/program-detail-info-constants'
 
 const K = {
   maxAssignableInstructors: 'recruit.maxAssignableInstructors',
@@ -134,7 +135,10 @@ function asNullableNumber(value: unknown): number | null {
 
 function asStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return []
-  return value.map(item => String(item).trim()).filter(Boolean)
+  const levels = value
+    .map(item => normalizeTargetLevelValue(item) ?? String(item).trim())
+    .filter(Boolean)
+  return [...new Set(levels)]
 }
 
 function asNumberArray(value: unknown): number[] | undefined {

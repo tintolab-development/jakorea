@@ -9,9 +9,9 @@ import type { NotificationDeliveryListResponseParams } from './notificationDeliv
 import type { NotificationDeliveryResponse } from './notificationDeliveryResponse';
 
 export interface NotificationDeliveryListResponse {
-  items: NotificationDeliveryResponse[];
-  params: NotificationDeliveryListResponseParams;
-  totalCount: number;
-  page: number;
-  size: number;
+  items?: NotificationDeliveryResponse[];
+  params?: NotificationDeliveryListResponseParams;
+  totalCount?: number;
+  page?: number;
+  size?: number;
 }

@@ -6,7 +6,4 @@
  * OpenAPI spec version: v9
  */
 
-/**
- * 병합 후 최신 제출 응답 전체. null이 아닌 객체이며 body에 없던 답변 키도 유지됩니다.
- */
-export type OrganizationGuidanceAnswersPatchResponseAnswers = { [key: string]: unknown };
+export type OrganizationGuidanceAnswersPatchResponseAnswers = {[key: string]: unknown};

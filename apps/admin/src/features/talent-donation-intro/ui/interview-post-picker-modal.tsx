@@ -3,7 +3,7 @@
  * Figma popup / search / w800 — 임팩트 스토리 검색·선택
  */
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import type { ImpactStory, ImpactStoryListFilter } from '@/entities/impact-stories/model/types'
@@ -70,6 +70,15 @@ export function InterviewPostPickerModal({ open, onCancel, onSelect }: Props) {
   const [pendingYear, setPendingYear] = useState('')
   const [pendingTitle, setPendingTitle] = useState('')
   const [applied, setApplied] = useState<Applied>({ year: '', title: '', page: 0 })
+  const [hasSearched, setHasSearched] = useState(false)
+
+  useEffect(() => {
+    if (!open) return
+    setPendingYear('')
+    setPendingTitle('')
+    setApplied({ year: '', title: '', page: 0 })
+    setHasSearched(false)
+  }, [open])
 
   const filter = useMemo<ImpactStoryListFilter>(
     () => ({
@@ -81,7 +90,7 @@ export function InterviewPostPickerModal({ open, onCancel, onSelect }: Props) {
     [applied]
   )
 
-  const listQuery = useImpactStoriesPagedList(filter, open)
+  const listQuery = useImpactStoriesPagedList(filter, open && hasSearched)
   const pageData = listQuery.data
   const rows = pageData?.items ?? []
   const totalCount = pageData?.totalCount ?? 0
@@ -89,6 +98,7 @@ export function InterviewPostPickerModal({ open, onCancel, onSelect }: Props) {
   const currentPage = (pageData?.page ?? applied.page) + 1
 
   const handleSearch = useCallback(() => {
+    setHasSearched(true)
     setApplied({
       year: pendingYear,
       title: pendingTitle.trim(),
@@ -133,17 +143,18 @@ export function InterviewPostPickerModal({ open, onCancel, onSelect }: Props) {
     >
       <div className="talent-intro-post-picker__search">
         <CmsSelect
-          inputSize="large"
+          inputSize="medium"
           width={YEAR_SELECT_WIDTH_PX}
           placeholder="게시년도"
-          withAllOption
+          withAllOption={false}
+          allowClear={false}
           value={pendingYear || undefined}
           options={YEAR_OPTIONS}
           onChange={value => setPendingYear(value == null ? '' : String(value))}
         />
         <CmsInput
           className="talent-intro-post-picker__title-input"
-          inputSize="large"
+          inputSize="medium"
           width="100%"
           placeholder="고정 노출할 게시글 제목을 입력해 주세요"
           icon={<SearchIcon />}
@@ -151,12 +162,12 @@ export function InterviewPostPickerModal({ open, onCancel, onSelect }: Props) {
           onChange={e => setPendingTitle(e.target.value)}
           onPressEnter={handleSearch}
         />
-        <CmsButton variant="primary" size="medium" type="button" onClick={handleSearch}>
+        <CmsButton variant="primary" size="h40" type="button" onClick={handleSearch}>
           검색
         </CmsButton>
       </div>
 
-      {showEmpty ? (
+      {!hasSearched ? null : showEmpty ? (
         <div className="talent-intro-post-picker__empty" role="status">
           <p>검색 결과가 없습니다.</p>
           <p>검색 조건 및 검색어를 확인한 후 다시 시도해 주세요.</p>

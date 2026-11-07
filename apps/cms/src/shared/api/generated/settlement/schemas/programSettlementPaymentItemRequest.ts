@@ -6,17 +6,10 @@
  * OpenAPI spec version: v9
  */
 
-/**
- * Program payment item input. Evidence policy writes are supported for GENERAL_INDIVIDUAL only. Omitted evidenceRequired preserves the existing value on update and leaves new items unconfigured; explicit null clears to unconfigured. Older clients may omit this field.
- */
 export interface ProgramSettlementPaymentItemRequest {
   /** Canonical stored values: TRANSPORTATION (instructor, label 교통비), STUDENT_TRANSPORTATION (student, label 학생 교통비), LONG_DISTANCE_TRANSPORTATION, LODGING, ACTIVITY, MEAL. Request aliases are normalized to those values and are not stored as-is: TRANSPORT_STUDENT, p-166202, and labels containing both 학생 and 교통 map to STUDENT_TRANSPORTATION; TRANSPORT_INSTRUCTOR, p-166201, and 교통비 (without 학생) map to TRANSPORTATION. Do not persist Korean as item_type. TRANSPORTATION-only rows are never migrated to STUDENT_TRANSPORTATION. Instructor and student may both be present as two rows. */
   itemType?: string;
-  /** @nullable */
-  useYn?: boolean | null;
-  /**
-     * true requires evidence, false does not, null is unconfigured. Omission differs from explicit null on update.
-     * @nullable
-     */
+  useYn?: boolean;
+  /** Individual program only. Omitted preserves the stored setting on update; explicit null clears it to unconfigured; true/false are stored distinctly. Existing clients may omit this field. */
   evidenceRequired?: boolean | null;
 }

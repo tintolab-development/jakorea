@@ -7,8 +7,7 @@
  */
 
 /**
- * UJAT 봉사자 모집 상·하반기 canonical 값. 그 외에는 null.
- * @nullable
+ * UJAT 봉사자 모집 상·하반기. UJAT VOLUNTEER 외에는 null.
  */
 export type ProgramRecruitmentResponseRecruitTerm = typeof ProgramRecruitmentResponseRecruitTerm[keyof typeof ProgramRecruitmentResponseRecruitTerm] | null;
 

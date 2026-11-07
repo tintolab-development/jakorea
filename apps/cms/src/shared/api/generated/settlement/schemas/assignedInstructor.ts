@@ -5,38 +5,21 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { AssignedInstructorAssignmentStatus } from './assignedInstructorAssignmentStatus';
 import type { AssignedInstructorConsent } from './assignedInstructorConsent';
 
 export interface AssignedInstructor {
-  instructorMemberId: number;
-  name: string;
-  /**
-     * INDIVIDUAL CASE_D의 직접 연결 배정 ID. ORGANIZATION에서는 null.
-     * @nullable
-     */
+  instructorMemberId?: number;
+  name?: string;
+  /** 강사 배정 ID. 개인 신청 CASE_D와 기관 신청(직접 organization_application_id 또는 OSA 일정 연결) 모두 있으면 채운다. 없으면 null. */
   assignmentId?: number | null;
-  /**
-     * INDIVIDUAL CASE_D의 직접 연결 교육 일정 ID. ORGANIZATION에서는 null.
-     * @nullable
-     */
+  /** 교육 일정 ID. 기관 신청은 OSA로 연결된 program_schedule_id를 반환한다. 없으면 null. */
   programScheduleId?: number | null;
-  /**
-     * INDIVIDUAL CASE_D는 ASSIGNED만 반환하며 ORGANIZATION에서는 null.
-     * @nullable
-     */
-  assignmentStatus?: AssignedInstructorAssignmentStatus;
-  consentDocumentsRequested: boolean;
-  /** consentDocumentsRequested가 false이면 빈 배열입니다. */
-  consents: AssignedInstructorConsent[];
-  /**
-     * 승인된 기관/교사 본인만 원문. 그 외·미설정은 null
-     * @nullable
-     */
+  /** 배정 상태. ASSIGNED 등 활성 상태. 없으면 null. */
+  assignmentStatus?: string | null;
+  consentDocumentsRequested?: boolean;
+  consents?: AssignedInstructorConsent[];
+  /** 승인된 기관/교사 본인에게만 반환. PrivacyMaskingSupport 마스킹 전화번호. 그 외·미설정은 null */
   phone?: string | null;
-  /**
-     * 승인된 기관/교사 본인만 원문. 그 외·미설정은 null
-     * @nullable
-     */
+  /** 승인된 기관/교사 본인에게만 반환. PrivacyMaskingSupport 마스킹 이메일. 그 외·미설정은 null */
   email?: string | null;
 }

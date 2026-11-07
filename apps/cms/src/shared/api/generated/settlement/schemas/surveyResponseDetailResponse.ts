@@ -13,25 +13,15 @@ export interface SurveyResponseDetailResponse {
   templateVersionId?: number;
   programId?: number;
   contextType?: string;
-  /** @nullable */
-  contextId?: number | null;
+  contextId?: number;
   responseStatus?: string;
-  /** @nullable */
-  submittedByMemberId?: number | null;
-  /**
-     * 제출 회원 실명(마스킹 없음). 회원 제출이 아니거나 탈퇴 회원이면 null
-     * @nullable
-     */
+  submittedByMemberId?: number;
+  /** 제출 회원 실명(마스킹 없음). 회원 제출이 아니거나 탈퇴 회원이면 null */
   submittedByMemberName?: string | null;
-  /** @nullable */
-  submittedByAdminId?: number | null;
-  /**
-     * 대리 제출 관리자 실명(마스킹 없음). 관리자 제출이 아니면 null
-     * @nullable
-     */
+  submittedByAdminId?: number;
+  /** 대리 제출 관리자 실명(마스킹 없음). 관리자 제출이 아니면 null */
   submittedByAdminName?: string | null;
-  /** @nullable */
-  submittedAt?: string | null;
+  submittedAt?: string;
   createdAt?: string;
   answers?: SurveyAnswerResponse[];
 }

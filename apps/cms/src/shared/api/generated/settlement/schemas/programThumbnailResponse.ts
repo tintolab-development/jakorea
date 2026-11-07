@@ -6,21 +6,10 @@
  * OpenAPI spec version: v9
  */
 
-/**
- * 프로그램 대표 이미지. fileObjectId가 null이면 대표 이미지가 없습니다.
- */
 export interface ProgramThumbnailResponse {
-  /** @nullable */
-  fileObjectId?: number | null;
-  /** @nullable */
-  originalFileName?: string | null;
-  /** @nullable */
-  contentType?: string | null;
-  /** @nullable */
-  fileSize?: number | null;
-  /**
-     * 없으면 null. 예: /api/admin/files/{id}/download
-     * @nullable
-     */
-  downloadPath?: string | null;
+  fileObjectId?: number;
+  originalFileName?: string;
+  contentType?: string;
+  fileSize?: number;
+  downloadPath?: string;
 }

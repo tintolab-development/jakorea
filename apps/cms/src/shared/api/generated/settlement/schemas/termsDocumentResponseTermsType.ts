@@ -7,7 +7,7 @@
  */
 
 /**
- * CMS 약관 관리와 회원 유형별 동의에서 공유하는 canonical TERMS_TYPE
+ * 약관 타입
  */
 export type TermsDocumentResponseTermsType = typeof TermsDocumentResponseTermsType[keyof typeof TermsDocumentResponseTermsType];
 

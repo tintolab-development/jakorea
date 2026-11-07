@@ -7,31 +7,16 @@
  */
 import type { SettlementFrontendCalculationDetailResponseLayout } from './settlementFrontendCalculationDetailResponseLayout';
 
-/**
- * CMS 산정 기준 상세 모달 payload. instructor_fee(급수 lectureFeeTier / 특강 lectureFeeSpecial / 제미나이 lectureFeeGemini)와 withholding(layout=withholding)은 GET 계좌 지급·정산 상세에서 null이 아니어야 한다. 원천징수 basis는 강사비 detail을 재사용하지 않는다. 모달 강의 시간 SSOT는 basisJson.lectureTimeDisplay(canonical N차시|회차) 또는 basisJson.sessionOrdinal이며, settlement.lectureSessionDisplay의 시계열(14:30 ~ 16:30)을 넣지 않는다.
- */
 export interface SettlementFrontendCalculationDetailResponse {
-  /**
-     * CMS 산정 기준 상세 viewer layout. FE가 렌더할 수 있는 값만 반환한다. 미지원 지급 항목은 remote.
-     * @nullable
-     */
+  /** CMS 산정 기준 상세 viewer layout. FE가 렌더할 수 있는 값만 반환한다. 미지원 지급 항목은 remote. */
   layout?: SettlementFrontendCalculationDetailResponseLayout;
-  /**
-     * 정산 시점 계산 근거 JSON snapshot. 강사비 최소 키: layout, itemType=LECTURE_FEE, wageItemType, categoryLabel, feeAssessmentWon|amount, sessionOrdinal, lectureTimeDisplay(canonical 차시/회차만). 원천징수 최소 키: layout=withholding, taxIncomeType, taxableAmount, rate|combinedTaxRate, incomeTax|incomeTaxAmount, localTax|localIncomeTaxAmount, withholdingTaxAmount, smallAmountExemptionApplied
-     * @nullable
-     */
-  basisJson?: string | null;
-  /** @nullable */
-  resultAmount?: number | null;
-  /** @nullable */
-  title?: string | null;
-  /** @nullable */
-  formulaText?: string | null;
+  basisJson?: string;
+  resultAmount?: number;
+  title?: string;
+  formulaText?: string;
   lineLabels?: string[];
   formulaLines?: string[];
   summaryLabels?: string[];
-  /** @nullable */
-  iconKey?: string | null;
-  /** @nullable */
-  emojiOverride?: string | null;
+  iconKey?: string;
+  emojiOverride?: string;
 }

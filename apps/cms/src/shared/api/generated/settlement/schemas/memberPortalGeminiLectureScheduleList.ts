@@ -7,10 +7,12 @@
  */
 import type { MemberPortalGeminiLectureScheduleItem } from './memberPortalGeminiLectureScheduleItem';
 
+/**
+ * 제미나이 강의 일정. items는 없으면 []. null이 아니다.
+ */
 export interface MemberPortalGeminiLectureScheduleList {
   applicationId?: number;
   applicationType?: string;
   programId?: number;
-  /** 없으면 []. null이 아니다. */
   items?: MemberPortalGeminiLectureScheduleItem[];
 }

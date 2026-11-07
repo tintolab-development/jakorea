@@ -8,56 +8,44 @@
 import type { GuardianProfileResponse } from './guardianProfileResponse';
 import type { InstructorPortalProfileResponse } from './instructorPortalProfileResponse';
 import type { PortalProfileResponseAgeGroup } from './portalProfileResponseAgeGroup';
-import type { PortalProfileResponseMemberType } from './portalProfileResponseMemberType';
+import type { PortalTeacherOrganizationResponse } from './portalTeacherOrganizationResponse';
 
 export interface PortalProfileResponse {
-  memberId: number;
-  email: string;
-  name: string;
-  /** @nullable */
-  phone?: string | null;
-  /**
-     * Stored birth date for the authenticated member.
-     * @nullable
-     */
+  memberId?: number;
+  /** 인증된 회원 본인의 저장된 이메일 원문입니다. */
+  email?: string;
+  name?: string;
+  /** 인증된 회원 본인의 저장된 전화번호 원문입니다. */
+  phone?: string;
+  /** 인증된 회원 본인의 저장된 생년월일입니다. */
   birthDate?: string | null;
-  /** @nullable */
+  /** 기존 계약 호환을 위한 출생연도입니다. */
   birthYear?: number | null;
-  /** @nullable */
-  gender?: string | null;
-  memberType: PortalProfileResponseMemberType;
-  /** 교사회원 여부 */
-  teacher: boolean;
+  /** 인증된 회원 본인의 저장된 성별 값입니다. */
+  gender?: string;
+  memberType?: string;
+  teacher?: boolean;
   /** 강사회원 여부. 승인된 강사 권한이 있을 때만 true. 강사 권한 신청 중(미승인)·반려·철회·권한 없음은 false. GET /api/portal/auth/me 의 instructor와 항상 동일. */
-  instructor: boolean;
-  /** @nullable */
-  postalCode?: string | null;
-  /** @nullable */
+  instructor?: boolean;
+  postalCode?: string;
+  /** 인증된 회원 본인의 저장된 주소입니다. */
   address?: string | null;
-  /** @nullable */
+  /** 인증된 회원 본인의 저장된 상세주소입니다. */
   addressDetail?: string | null;
-  /** @nullable */
-  regionSido?: string | null;
-  /** @nullable */
-  regionSigungu?: string | null;
-  /** @nullable */
-  schoolOrganizationId?: number | null;
-  /** @nullable */
-  schoolName?: string | null;
-  /** @nullable */
-  grade?: string | null;
-  /** @nullable */
-  affiliationName?: string | null;
-  /** @nullable */
-  schoolEnrollmentStatus?: string | null;
-  /** @nullable */
-  teacherEmploymentStatus?: string | null;
-  accountStatus: string;
-  joinedAt: string;
-  /** 활성 강사인 경우 포탈에서 조회/수정 가능한 강사 프로필과 정산 계좌 정보 */
-  instructorProfile?: InstructorPortalProfileResponse | null;
-  /** 만 14세 미만 회원인 경우 최신 보호자 정보 */
-  guardian?: GuardianProfileResponse | null;
+  regionSido?: string;
+  regionSigungu?: string;
+  schoolOrganizationId?: number;
+  schoolName?: string;
+  grade?: string;
+  affiliationName?: string;
+  schoolEnrollmentStatus?: string;
+  teacherEmploymentStatus?: string;
+  teacherOrganization?: PortalTeacherOrganizationResponse;
+  external1365Id?: string;
+  accountStatus?: string;
+  joinedAt?: string;
+  guardian?: GuardianProfileResponse;
+  instructorProfile?: InstructorPortalProfileResponse;
   /** 만 14세 미만 여부. ageGroup == UNDER_14 와 동일. */
   under14?: boolean;
   /** 나이 그룹 */

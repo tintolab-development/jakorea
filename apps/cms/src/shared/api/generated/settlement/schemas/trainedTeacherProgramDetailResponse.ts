@@ -5,31 +5,14 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { TrainedTeacherProgramDetailResponseJournalSubmissionLimitType } from './trainedTeacherProgramDetailResponseJournalSubmissionLimitType';
 
-/**
- * TRAINED_TEACHER typed detail SSOT. teacherTrainingEnabled/teacherTrainingScheduleName own the 「교육 연수」 toggle (not GENERAL preEducation*). GET configJson is a projection of journal/training + curriculum/schedule only — not the programs editor blob. PATCH configJson overlays those keys onto trained_teacher_program_detail.config_jsonb and does not restore missing sponsor/textbook keys from the previous blob. educationJournalEnabled is on/off only; educationJournalRequired must be false; journalSubmissionLimitType must be UNLIMITED.
- */
 export interface TrainedTeacherProgramDetailResponse {
   programId?: number;
-  /** 「교육 연수」 ON/OFF SSOT. */
   teacherTrainingEnabled?: boolean;
-  /**
-     * Training schedule label when ON. Default 「교육 연수」(legacy 「교사 연수」 still matched).
-     * @nullable
-     */
-  teacherTrainingScheduleName?: string | null;
-  /** Education journal on/off only. (한글 계약 설명) */
+  teacherTrainingScheduleName?: string;
   educationJournalEnabled?: boolean;
-  /** Always false for TT. true is rejected by policy. (한글 계약 설명) */
   educationJournalRequired?: boolean;
-  /** TT journals have no count limit. Non-UNLIMITED rejected. (한글 계약 설명) */
-  journalSubmissionLimitType?: TrainedTeacherProgramDetailResponseJournalSubmissionLimitType;
-  /**
-     * TT detail echo: education journal/training flags + curriculum/schedule tables only (educationScheduleMode, educationScheduleLines, educationScheduleRange, maxClassCount, maxScheduleCount, maxSessionsPerDay, maxAssignableInstructors). programs PATCH blob, sponsor ids, and textbookName are not returned. teacherTrainingEnabled=false clears teacherTrainingScheduleName. maxAssignableInstructors is ignored for TT instructor APIs. (한글 계약 설명)
-     * @nullable
-     */
-  configJson?: string | null;
-  /** @nullable */
-  updatedAt?: string | null;
+  journalSubmissionLimitType?: string;
+  configJson?: string;
+  updatedAt?: string;
 }

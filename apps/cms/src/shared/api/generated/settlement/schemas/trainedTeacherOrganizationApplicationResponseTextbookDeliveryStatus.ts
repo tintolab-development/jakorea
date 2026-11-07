@@ -8,7 +8,6 @@
 
 /**
  * 저장된 교재 배송 상태. 없으면 null. PREPARING으로 기본 채움하지 않습니다.
- * @nullable
  */
 export type TrainedTeacherOrganizationApplicationResponseTextbookDeliveryStatus = typeof TrainedTeacherOrganizationApplicationResponseTextbookDeliveryStatus[keyof typeof TrainedTeacherOrganizationApplicationResponseTextbookDeliveryStatus] | null;
 

@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:8081",
+      "url": "http://jakorea-homepage.ngrok.app",
       "description": "Generated server url"
     }
   ],
@@ -316,6 +316,103 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/PrepareResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/careers/talent-applications/{id}/attachments/{assetId}/download": {
+      "post": {
+        "tags": [
+          "career-talent-application-admin-controller"
+        ],
+        "summary": "Download a career talent application attachment by asset id",
+        "description": "Streams a server-encrypted file. Body { password } is write-only and is never stored.",
+        "operationId": "attachmentDownloadByAsset_2",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "assetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FileDownloadPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/careers/talent-applications/{id}/attachment-download": {
+      "post": {
+        "tags": [
+          "career-talent-application-admin-controller"
+        ],
+        "summary": "Download career talent application attachment",
+        "description": "Streams a server-encrypted file. Body { password } is write-only and is never stored. containedPiiTypes is empty until classified.",
+        "operationId": "attachmentDownload_2",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FileDownloadPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
                 }
               }
             }
@@ -833,7 +930,7 @@
           "career-talent-application-admin-controller"
         ],
         "summary": "List career talent applications",
-        "description": "phone and email are always PrivacyMaskingSupport-masked. Original contact PII is only on GET /{id}?revealPii=true.",
+        "description": "name, phone, and email are always PrivacyMaskingSupport-masked. Original PII is returned only by the detail GET. List GET does not write privacy-access logs.",
         "operationId": "list_15",
         "parameters": [
           {
@@ -1002,7 +1099,7 @@
           "career-talent-application-admin-controller"
         ],
         "summary": "Get career talent application detail",
-        "description": "revealPii=false (default) masks phone, email, addressRoad, and addressDetail with the same PrivacyMaskingSupport rules as the list. Name uses maskName. Education, career, and attachments stay omitted until revealed. revealPii=true returns originals only with HOMEPAGE_PII_VIEW and writes an audit/privacy log; otherwise 403.",
+        "description": "Always stored original PII (not masked). HOMEPAGE_VIEW is enough; HOMEPAGE_PII_VIEW is not required. Every 200 writes homepage_admin_audit_log (PII_READ / CAREER_TALENT_APPLICATION) and homepage_privacy_access_log with the original targetName. List remains masked (name, phone, and email). revealPii is a deprecated no-op. Admin log list screens must not POST privacy-access.",
         "operationId": "detail_9",
         "parameters": [
           {
@@ -1017,8 +1114,9 @@
           {
             "name": "revealPii",
             "in": "query",
-            "description": "false (default): masked PII. true: original PII requires HOMEPAGE_PII_VIEW; otherwise 403.",
+            "description": "Deprecated no-op. Omitted, false, and true all return the same original detail and do not affect authorization.",
             "required": false,
+            "deprecated": true,
             "schema": {
               "type": "boolean",
               "default": false
@@ -1032,77 +1130,6 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/CareerTalentApplicationDetailResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/admin/careers/talent-applications/{id}/attachments/{assetId}/download": {
-      "get": {
-        "tags": [
-          "career-talent-application-admin-controller"
-        ],
-        "operationId": "attachmentDownloadByAsset_2",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          },
-          {
-            "name": "assetId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/CareerTalentApplicationAttachmentDownloadResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/admin/careers/talent-applications/{id}/attachment-download": {
-      "get": {
-        "tags": [
-          "career-talent-application-admin-controller"
-        ],
-        "operationId": "attachmentDownload_2",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/CareerTalentApplicationAttachmentDownloadResponse"
                 }
               }
             }
@@ -1482,7 +1509,8 @@
               "JA_HISTORY_WORLD_TIMELINE_IMAGE",
               "JA_HISTORY_KOREA_TIMELINE_IMAGE",
               "JA_HISTORY_PHILOSOPHY_CARD_IMAGE",
-              "JA_HISTORY_LOCKED_MEDIA"
+              "JA_HISTORY_LOCKED_MEDIA",
+              "LOG_EXPORT_XLSX"
             ]
           },
           "status": {
@@ -6192,6 +6220,18 @@
           "metricCode"
         ]
       },
+      "FileDownloadPasswordRequest": {
+        "type": "object",
+        "description": "일회성 파일 암호. write-only이며 서버는 저장하지 않습니다.",
+        "properties": {
+          "password": {
+            "type": "string",
+            "description": "8자 이상, 영문+숫자+특수문자, 공백 불가",
+            "example": "Jafile1!",
+            "writeOnly": true
+          }
+        }
+      },
       "SponsorCreateRequest": {
         "type": "object",
         "properties": {
@@ -6618,6 +6658,11 @@
             "minLength": 0
           },
           "actionType": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 0
+          },
+          "clientIp": {
             "type": "string",
             "maxLength": 64,
             "minLength": 0
@@ -7229,7 +7274,8 @@
               "JA_HISTORY_WORLD_TIMELINE_IMAGE",
               "JA_HISTORY_KOREA_TIMELINE_IMAGE",
               "JA_HISTORY_PHILOSOPHY_CARD_IMAGE",
-              "JA_HISTORY_LOCKED_MEDIA"
+              "JA_HISTORY_LOCKED_MEDIA",
+              "LOG_EXPORT_XLSX"
             ]
           },
           "originalName": {
@@ -7283,7 +7329,9 @@
             ]
           },
           "name": {
-            "type": "string"
+            "type": "string",
+            "description": "Stored applicant name (original). Empty is null, never \"\".",
+            "nullable": true
           },
           "phone": {
             "type": "string"
@@ -7378,7 +7426,9 @@
             "type": "string"
           },
           "contactName": {
-            "type": "string"
+            "type": "string",
+            "description": "Stored contact name (original). Empty is null, never \"\".",
+            "nullable": true
           },
           "departmentTitle": {
             "type": "string"
@@ -7482,7 +7532,7 @@
           },
           "name": {
             "type": "string",
-            "description": "Applicant name. Always PrivacyMaskingSupport.maskName (first character + asterisks), same as sponsorship talent applications. Full name is never returned on the list."
+            "description": "Applicant name. Always PrivacyMaskingSupport.maskName (first character + asterisks). Full name is never returned on the list."
           },
           "phone": {
             "type": "string",
@@ -9763,7 +9813,7 @@
       },
       "TalentApplicationDetailResponse": {
         "type": "object",
-        "description": "Admin detail is always stored original PII. Empty strings are null. List items stay masked. Not the careers talent-application revealPii contract.",
+        "description": "Admin detail is always stored original PII. Empty strings are null. List name is original while phone and email remain masked. Not the careers talent-application revealPii contract.",
         "properties": {
           "id": {
             "type": "integer",
@@ -9860,21 +9910,6 @@
             "items": {
               "$ref": "#/components/schemas/ApplicationAttachmentItem"
             }
-          }
-        }
-      },
-      "TalentApplicationAttachmentDownloadResponse": {
-        "type": "object",
-        "properties": {
-          "originalName": {
-            "type": "string"
-          },
-          "downloadUrl": {
-            "type": "string"
-          },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time"
           }
         }
       },
@@ -10001,7 +10036,7 @@
       },
       "ConsultationDetailResponse": {
         "type": "object",
-        "description": "Admin detail is always stored original PII. Empty strings are null. List stays masked. Not the careers talent-application revealPii contract.",
+        "description": "Admin detail is always stored original PII. Empty strings are null. List contactName is original while maskedContactPhone remains masked. Not the careers talent-application revealPii contract.",
         "properties": {
           "id": {
             "type": "integer",
@@ -10071,21 +10106,6 @@
           "version": {
             "type": "integer",
             "format": "int64"
-          }
-        }
-      },
-      "AttachmentDownloadResponse": {
-        "type": "object",
-        "properties": {
-          "originalName": {
-            "type": "string"
-          },
-          "downloadUrl": {
-            "type": "string"
-          },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time"
           }
         }
       },
@@ -10490,7 +10510,9 @@
             "type": "string"
           },
           "targetName": {
-            "type": "string"
+            "type": "string",
+            "description": "Stored target name (original). Empty is null, never \"\".",
+            "nullable": true
           },
           "accessPurpose": {
             "type": "string"
@@ -10611,7 +10633,8 @@
               "JA_HISTORY_WORLD_TIMELINE_IMAGE",
               "JA_HISTORY_KOREA_TIMELINE_IMAGE",
               "JA_HISTORY_PHILOSOPHY_CARD_IMAGE",
-              "JA_HISTORY_LOCKED_MEDIA"
+              "JA_HISTORY_LOCKED_MEDIA",
+              "LOG_EXPORT_XLSX"
             ]
           },
           "originalName": {
@@ -10632,6 +10655,15 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "downloadKind": {
+            "type": "string"
+          },
+          "containedPiiTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -11022,6 +11054,7 @@
       },
       "CareerTalentApplicationDetailResponse": {
         "type": "object",
+        "description": "Admin detail is always stored original PII. Empty strings are null. List items remain masked.",
         "properties": {
           "id": {
             "type": "integer",
@@ -11051,33 +11084,34 @@
           },
           "name": {
             "type": "string",
-            "description": "Applicant name. revealPii=false uses PrivacyMaskingSupport.maskName (same as list and sponsorship talent). Original name only when revealPii=true."
+            "description": "Stored applicant name (original). Empty is null, never \"\".",
+            "nullable": true
           },
           "phone": {
             "type": "string",
-            "description": "revealPii=false: PrivacyMaskingSupport.maskPhone (same as list). revealPii=true: original. Empty is null, never \"\".",
-            "example": "010-****-9154",
+            "description": "Stored phone (original). Empty is null, never \"\".",
+            "example": "010-1234-5678",
             "nullable": true
           },
           "email": {
             "type": "string",
-            "description": "revealPii=false: PrivacyMaskingSupport.maskEmail (same as list). revealPii=true: original. Empty is null, never \"\".",
-            "example": "0915***@naver.com",
+            "description": "Stored email (original). Empty is null, never \"\".",
+            "example": "applicant@example.com",
             "nullable": true
           },
           "addressRoad": {
             "type": "string",
-            "description": "revealPii=false: PrivacyMaskingSupport.maskAddress. revealPii=true: original. Empty is null, never \"\".",
+            "description": "Stored road address (original). Empty is null, never \"\".",
             "nullable": true
           },
           "addressDetail": {
             "type": "string",
-            "description": "revealPii=false: PrivacyMaskingSupport.maskAddress. revealPii=true: original. Empty is null, never \"\".",
+            "description": "Stored address detail (original). Empty is null, never \"\".",
             "nullable": true
           },
           "educationLevel": {
             "type": "string",
-            "description": "revealPii=false: omitted (null). revealPii=true: stored enum. careerType stays on the masked detail; this field does not until revealed.",
+            "description": "Stored education level.",
             "enum": [
               "HIGH_SCHOOL",
               "COLLEGE",
@@ -11090,17 +11124,17 @@
           },
           "schoolName": {
             "type": "string",
-            "description": "revealPii=false: omitted. revealPii=true: stored school name.",
+            "description": "Stored school name (original). Empty is null, never \"\".",
             "nullable": true
           },
           "major": {
             "type": "string",
-            "description": "revealPii=false: omitted. revealPii=true: stored major. Empty is null, never \"\".",
+            "description": "Stored major (original). Empty is null, never \"\".",
             "nullable": true
           },
           "educationInfo": {
             "type": "string",
-            "description": "revealPii=false: omitted. revealPii=true: stored education body. Empty is null, never \"\".",
+            "description": "Stored education information (original). Empty is null, never \"\".",
             "nullable": true
           },
           "careerType": {
@@ -11112,7 +11146,7 @@
           },
           "careerInfo": {
             "type": "string",
-            "description": "revealPii=false: omitted. revealPii=true: stored career body. Empty is null, never \"\".",
+            "description": "Stored career information (original). Empty is null, never \"\".",
             "nullable": true
           },
           "privacyAgreed": {
@@ -11133,30 +11167,15 @@
           },
           "attachmentOriginalName": {
             "type": "string",
-            "description": "revealPii=false: omitted. revealPii=true: first attachment original name.",
+            "description": "First stored attachment original name. Empty is null, never \"\".",
             "nullable": true
           },
           "attachments": {
             "type": "array",
-            "description": "revealPii=false: empty array. revealPii=true: stored attachments in display order.",
+            "description": "Stored attachments in display order, including originalName. Empty when no attachments exist.",
             "items": {
               "$ref": "#/components/schemas/ApplicationAttachmentItem"
             }
-          }
-        }
-      },
-      "CareerTalentApplicationAttachmentDownloadResponse": {
-        "type": "object",
-        "properties": {
-          "originalName": {
-            "type": "string"
-          },
-          "downloadUrl": {
-            "type": "string"
-          },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time"
           }
         }
       },

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import {
+  formatEducationProgressSessionCount,
   formatInstructorFeeAssignment,
   formatLectureFeeSessionProgress,
   formatLectureFeeWon,
@@ -190,7 +191,10 @@ const tenMinuteZeroSession = parseLectureFeePreview({
 })
 assert.equal(formatTotalLectureFee(tenMinuteZeroSession), '0원')
 assert.equal(hasConfirmedLectureFeeTotal(tenMinuteZeroSession), true)
-assert.equal(formatRecognizedSessionCountLabel(0), '인정 0차시')
+assert.equal(formatRecognizedSessionCountLabel(0), '0차시')
+assert.equal(formatEducationProgressSessionCount(1), '1차시')
+assert.equal(formatEducationProgressSessionCount(null), '-')
+assert.notEqual(formatEducationProgressSessionCount(1), '3차시')
 assert.equal(isLectureFeeSettlementBlocked(tenMinuteZeroSession), false)
 
 const twoSessionUncapped = parseLectureFeePreview({
@@ -218,5 +222,69 @@ assert.equal(
   lectureFeeSettlementBlockerMessage(wageMissing),
   '프로그램 강사비 단가가 없어 정산을 신청할 수 없습니다.'
 )
+
+const assignedScheduleMissing = parseLectureFeePreview({
+  lectureFeeType: 'GRADE_1',
+  instructorFeeCalculationUnit: 'PER_HOUR',
+  instructorFeeAmount: 300000,
+  totalLectureFee: null,
+  educationSessionCount: 3,
+  recognizedSessionCount: null,
+  actualTrainingMinutes: null,
+  settlementBlockerCode: 'SETTLEMENT_ASSIGNED_SCHEDULE_TIME_REQUIRED',
+})
+assert.equal(isLectureFeeSettlementBlocked(assignedScheduleMissing), true)
+assert.equal(
+  lectureFeeSettlementBlockerMessage(assignedScheduleMissing),
+  '배정 일정 시작·종료 시간이 없어 정산을 신청할 수 없습니다.'
+)
+assert.notEqual(
+  lectureFeeSettlementBlockerMessage(assignedScheduleMissing),
+  '실적 시작·종료 시간이 없어 정산을 신청할 수 없습니다.'
+)
+
+const threeRoundOneRecognized = parseLectureFeePreview({
+  lectureFeeType: 'GRADE_1',
+  instructorFeeCalculationUnit: 'PER_CLASS',
+  instructorFeeAmount: 300000,
+  totalLectureFee: 300000,
+  educationSessionCount: 3,
+  recognizedSessionCount: 1,
+  actualTrainingMinutes: 60,
+  settlementBlockerCode: null,
+})
+assert.equal(formatTotalLectureFee(threeRoundOneRecognized), '300,000원')
+assert.equal(formatEducationProgressSessionCount(threeRoundOneRecognized?.recognizedSessionCount), '1차시')
+assert.notEqual(
+  formatEducationProgressSessionCount(threeRoundOneRecognized?.educationSessionCount),
+  formatEducationProgressSessionCount(threeRoundOneRecognized?.recognizedSessionCount)
+)
+
+const twentyMinuteZero = parseLectureFeePreview({
+  lectureFeeType: 'GRADE_1',
+  instructorFeeCalculationUnit: 'PER_CLASS',
+  instructorFeeAmount: 300000,
+  totalLectureFee: 0,
+  educationSessionCount: 3,
+  recognizedSessionCount: 0,
+  actualTrainingMinutes: 20,
+  settlementBlockerCode: null,
+})
+assert.equal(formatTotalLectureFee(twentyMinuteZero), '0원')
+assert.equal(formatEducationProgressSessionCount(twentyMinuteZero?.recognizedSessionCount), '0차시')
+assert.equal(isLectureFeeSettlementBlocked(twentyMinuteZero), false)
+
+const geminiUnsubmitted = parseLectureFeePreview({
+  lectureFeeType: null,
+  instructorFeeCalculationUnit: 'PER_CLASS',
+  instructorFeeAmount: 170000,
+  totalLectureFee: null,
+  educationSessionCount: 1,
+  recognizedSessionCount: null,
+  actualTrainingMinutes: null,
+  settlementBlockerCode: 'SETTLEMENT_ACTUAL_TRAINING_TIME_REQUIRED',
+})
+assert.equal(formatEducationProgressSessionCount(geminiUnsubmitted?.recognizedSessionCount), '-')
+assert.equal(formatTotalLectureFee(geminiUnsubmitted), '-')
 
 console.log('lecture-fee-preview.selfcheck: ok')

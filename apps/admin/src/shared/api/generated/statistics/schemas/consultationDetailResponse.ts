@@ -9,7 +9,7 @@ import type { ApplicationAttachmentItem } from './applicationAttachmentItem';
 import type { ConsultationDetailResponseStatus } from './consultationDetailResponseStatus';
 
 /**
- * Admin detail is always stored original PII. Empty strings are null. List stays masked. Not the careers talent-application revealPii contract.
+ * Admin detail is always stored original PII. Empty strings are null. List contactName is original while maskedContactPhone remains masked. Not the careers talent-application revealPii contract.
  */
 export interface ConsultationDetailResponse {
   id?: number;

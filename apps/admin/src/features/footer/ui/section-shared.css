@@ -155,6 +155,15 @@
  */
 .footer-section
   .footer-top-menu-table.footer-sortable-table.cms-data-table
+  .ant-table-thead
+  > tr
+  > th {
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+
+.footer-section
+  .footer-top-menu-table.footer-sortable-table.cms-data-table
   .ant-table-tbody
   > tr
   > td,
@@ -183,6 +192,7 @@
   max-height: 54px !important;
   padding: 10px 16px !important;
   overflow: hidden !important;
+  font-size: 14px !important;
 }
 
 /* 수정 모드: 입력 높이 반영, 상태 간 동일 */
@@ -208,7 +218,16 @@
   overflow: hidden !important;
 }
 
-/* —— 유관기관 로고: 72(thumb)+12+12=96 고정 —— */
+/* —— 유관기관 로고: 72(thumb)+12+12=96 고정, 텍스트 14px —— */
+.footer-section
+  .footer-related-logos-table.footer-sortable-table.cms-data-table
+  .ant-table-thead
+  > tr
+  > th {
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+
 .footer-section
   .footer-related-logos-table.footer-sortable-table.cms-data-table
   .ant-table-tbody
@@ -238,6 +257,7 @@
   min-height: 96px !important;
   max-height: 96px !important;
   padding: 12px !important;
+  font-size: 14px !important;
   /* 로고 셀만 썸네일 클립 — 관리 열 overflow 는 last-child 규칙으로 visible */
   overflow: hidden !important;
 }

@@ -1,6 +1,10 @@
 import { messageForProtectedDownloadErrorCode } from '@jakorea/domain/shared/file-download-password'
 import { extractApiErrorCode, extractApiErrorMessage } from '@/shared/lib/extract-api-error-message'
 import { getNotificationTimingApiErrorMessage } from '@/shared/lib/notification-schedule'
+import {
+  LECTURE_REPORT_NO_DOWNLOADABLE_FILES,
+  LECTURE_REPORT_NO_DOWNLOADABLE_FILES_MESSAGE,
+} from '@/shared/lib/lecture-report-bulk-download'
 
 /** BE가 code별 구체 메시지 대신 쓰는 공통 409 문구 — FE 매핑이 있으면 이를 덮어쓴다 */
 const GENERIC_CONFLICT_API_MESSAGE =
@@ -35,6 +39,7 @@ const MEMBER_ERROR_CODE_MESSAGES: Record<string, string> = {
   CMS_MEMBER_DELETE_CURRENT_PASSWORD_INVALID: MEMBER_DELETE_CURRENT_PASSWORD_INVALID_ALERT_CONTENT,
   SETTLEMENT_ACCOUNT_UPDATE_VIA_CONSENT_ONLY:
     '정산 계좌는 지급조서 사전 동의서에서만 입력·수정할 수 있습니다.',
+  [LECTURE_REPORT_NO_DOWNLOADABLE_FILES]: LECTURE_REPORT_NO_DOWNLOADABLE_FILES_MESSAGE,
 }
 
 export function isMemberDeleteCurrentPasswordInvalidError(error: unknown): boolean {
@@ -70,6 +75,13 @@ export function getMemberApiErrorMessage(error: unknown, fallback: string): stri
         fallback: '',
       }).trim()
       return serverMessage || protectedDownloadMessage
+    }
+    if (code === 'PERMISSION_DENIED' || code === 'RESOURCE_SCOPE_DENIED') {
+      const serverMessage = extractApiErrorMessage(axiosErr.response?.data, {
+        httpStatus: axiosErr.response?.status,
+        fallback: '',
+      }).trim()
+      return serverMessage || '파일 다운로드 권한이 없습니다.'
     }
     if (axiosErr.response?.status === 403) {
       return '회원 관리 조회 권한이 없습니다. 관리자 계정으로 다시 로그인해 주세요.'

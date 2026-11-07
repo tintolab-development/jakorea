@@ -5,127 +5,67 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { OrganizationApplicationListGradeBlock } from './organizationApplicationListGradeBlock';
+import type { GradeBlock } from './gradeBlock';
 import type { OrganizationApplicationListItemResponsePreviousYearParticipation } from './organizationApplicationListItemResponsePreviousYearParticipation';
 import type { OrganizationApplicationListItemResponseRecruitHalf } from './organizationApplicationListItemResponseRecruitHalf';
 import type { OrganizationApplicationListItemResponseRequestedEducationFormat } from './organizationApplicationListItemResponseRequestedEducationFormat';
 import type { OrganizationApplicationListItemResponseScheduleConfirmStatus } from './organizationApplicationListItemResponseScheduleConfirmStatus';
-import type { OrganizationApplicationSession } from './organizationApplicationSession';
 import type { PreferredEducationScheduleResponse } from './preferredEducationScheduleResponse';
+import type { Session } from './session';
 
-/**
- * 기관 신청 목록 항목. GENERAL_ORGANIZATION의 sessions는 확정 일정만 제공하며 학년·학급은 독립적인 신청·학생 명단 필드로 제공합니다.
- */
 export interface OrganizationApplicationListItemResponse {
   id?: number;
   programId?: number;
   programName?: string;
   programType?: string;
-  /** @nullable */
-  recruitmentId?: number | null;
-  /** @nullable */
-  organizationId?: number | null;
-  /** @nullable */
-  organizationName?: string | null;
-  /** @nullable */
-  teacherMemberId?: number | null;
-  /** @nullable */
-  teacherName?: string | null;
-  /** 정규화된 application_status. 목록과 상세는 같은 코드를 반환한다. CMS 「승인 대기」=statusGroup=APPLICATION_PENDING(SUBMITTED, WAITING, WAITING_REVIEW, PENDING, REJECTION_CANCELLED). 「신청 반려」=statusGroup=APPLICATION_REJECTED(REJECTED, APPROVAL_CANCELLED). REJECTION_CANCELLED는 반려 취소 후 승인 대기이며 상세에서 대기 중으로 바꾸지 않는다. */
-  applicationStatus?: string;
-  /** @nullable */
-  requestedStudentCount?: number | null;
-  /** @nullable */
-  requestedClassCount?: number | null;
-  /**
-     * 기관 신청 답변에서 저장된 희망 교육 형태. 없으면 null이며 프로그램 교육 형태를 추정해 채우지 않습니다.
-     * @nullable
-     */
-  requestedEducationFormat?: OrganizationApplicationListItemResponseRequestedEducationFormat;
-  /** @nullable */
-  mergeGroupId?: number | null;
-  /** @nullable */
-  submittedAt?: string | null;
-  /** @nullable */
-  approvedAt?: string | null;
-  /** @nullable */
-  rejectedAt?: string | null;
-  /**
-     * 가장 최근 기관 승인/반려 결과 알림의 발송 시각. 즉시 발송은 요청 시각, 예약 발송은 scheduledAt. 알림이 없으면 null. 재발송해도 approvedAt·rejectedAt은 바뀌지 않습니다.
-     * @nullable
-     */
-  resultNotificationSentAt?: string | null;
-  /** @nullable */
-  rejectReason?: string | null;
-  availableActions: string[];
-  /** @nullable */
-  defaultScheduleId?: number | null;
-  /** @nullable */
-  defaultScheduleName?: string | null;
-  /** @nullable */
-  ujatPartnerAssignmentsPath?: string | null;
-  /** @nullable */
-  ujatPartnerRecommendationPath?: string | null;
-  /**
-     * 신청 학년 우선. requested_grade 원문(예: 1, 학년 접미사 없음). 비어 있으면 배정/명단 학년, 그것도 없으면 프로그램 대상 학년(예: 3학년, 3~6학년). 둘 다 없으면 null.
-     * @nullable
-     */
-  grade?: string | null;
-  /** @nullable */
-  regionSido?: string | null;
-  /** @nullable */
-  regionSigungu?: string | null;
-  /** 임시 배정 또는 승인 후 확정 진행일. UJAT 교육 진행 참여 기관 「교육 진행 일정」열은 sessions[].startAt. 미배정이면 [] */
-  sessions: OrganizationApplicationSession[];
-  /** 신청 교육 진행 희망일. UJAT은 신청서 원문과 왕복하며 startAt(Asia/Seoul 해당일 00:00)이 날짜 열 O/- SSOT. 빈 배열이면 해당 열은 전부 -. 확정 진행일과 혼용하지 않음 */
-  preferredEducationSchedules: PreferredEducationScheduleResponse[];
-  /** @nullable */
-  mergeStatus?: string | null;
-  /** @nullable */
-  mergeLead?: boolean | null;
-  /**
-     * 응답 필드. 학교 연 1회 신청은 null. 명시적 volunteer recruit_term이 있을 때만 FIRST_HALF|SECOND_HALF. 목록 쿼리 recruitHalf는 이 값 등호가 아니라 확정 session 교육일 학기 필터.
-     * @nullable
-     */
+  recruitmentId?: number;
+  /** 응답 필드. 학교 연 1회 신청은 null. 명시적 volunteer recruit_term이 있을 때만 FIRST_HALF|SECOND_HALF. 목록 쿼리 recruitHalf는 이 값 등호가 아니라 확정 session 교육일 학기 필터. */
   recruitHalf?: OrganizationApplicationListItemResponseRecruitHalf;
-  /**
-     * UJAT 임시배정 워크플로. TEMP_ASSIGNED|TEMP_REJECTED 등
-     * @nullable
-     */
+  organizationId?: number;
+  organizationName?: string;
+  teacherMemberId?: number;
+  teacherName?: string;
+  /** 정규화된 application_status. 목록과 상세는 같은 코드를 반환한다. CMS 「승인 대기」=statusGroup=APPLICATION_PENDING(SUBMITTED, WAITING, WAITING_REVIEW, PENDING, REJECTION_CANCELLED; REVIEWING 등 WAITING_REVIEW 별칭 포함). 「신청 반려」=statusGroup=APPLICATION_REJECTED(REJECTED, APPROVAL_CANCELLED). REJECTION_CANCELLED는 반려 취소 후 승인 대기이며 상세에서 대기 중으로 바꾸지 않는다. 단일 status=는 정규화 등호이며 그룹의 다른 상태를 포함하지 않는다. */
+  applicationStatus?: string;
+  /** UJAT 임시배정 워크플로 상태. TEMP_ASSIGNED|TEMP_REJECTED 등. 미사용 프로그램은 null */
   temporaryAssignmentStatus?: string | null;
-  /**
-     * 1사1교 전년도 참여 여부. Platform yes/no는 참여/미참여. 없거나 다른 프로그램이면 null.
-     * @nullable
-     */
+  requestedStudentCount?: number;
+  requestedClassCount?: number;
+  /** 기관 신청 답변에서 저장된 희망 교육 형태. 없으면 null이며 프로그램 교육 형태를 추정해 채우지 않습니다. */
+  requestedEducationFormat?: OrganizationApplicationListItemResponseRequestedEducationFormat;
+  submittedAt?: string;
+  approvedAt?: string;
+  rejectedAt?: string;
+  /** 가장 최근 기관 승인/반려 결과 알림의 발송 시각. 즉시 발송은 요청 시각, 예약 발송은 scheduledAt. 알림이 없으면 null. 재발송해도 approvedAt·rejectedAt은 바뀌지 않습니다. */
+  resultNotificationSentAt?: string | null;
+  rejectReason?: string;
+  availableActions?: string[];
+  defaultScheduleId?: number;
+  defaultScheduleName?: string;
+  ujatPartnerAssignmentsPath?: string;
+  ujatPartnerRecommendationPath?: string;
+  /** 신청 학년 우선. requested_grade 원문(예: 1, 학년 접미사 없음). 비어 있으면 배정/명단 학년, 그것도 없으면 프로그램 대상 학년(예: 3학년, 3~6학년). 둘 다 없으면 null. */
+  grade?: string | null;
+  regionSido?: string;
+  regionSigungu?: string;
+  sessions?: Session[];
+  /** 신청자가 고른 교육 진행 희망일. UJAT은 신청서 「교육 진행 희망일」 원문과 왕복하며 startAt(Asia/Seoul 해당일 00:00)이 날짜 열 O/- 의 SSOT. 빈 배열이면 해당 열은 전부 -. 임시배정·승인 후 확정 진행일은 sessions[].startAt. 다른 컬럼으로 채우지 않음. */
+  preferredEducationSchedules?: PreferredEducationScheduleResponse[];
+  mergeGroupId?: number;
+  mergeStatus?: string;
+  mergeLead?: boolean;
+  /** 1사1교 전년도 참여 여부. 참여|미참여. 다른 프로그램이거나 답이 없으면 null. */
   previousYearParticipation?: OrganizationApplicationListItemResponsePreviousYearParticipation;
-  /**
-     * 1사1교 결연 금융회사명. 없거나 다른 프로그램이면 null.
-     * @nullable
-     */
+  /** 1사1교 결연 금융회사명. 없거나 다른 프로그램이면 null. */
   affiliatedFinancialCompany?: string | null;
-  /**
-     * UJAT 교육 지역 코드. 없으면 null. 시도/시군구로 서울을 채우지 않음
-     * @nullable
-     */
+  /** UJAT 교육 지역 코드. 배정 슬롯 또는 신청 지역 답이 하나의 코드로 모이면 그 코드. 없으면 null. regionSido로 대체하지 않음 */
   educationRegionCode?: string | null;
-  /**
-     * 일정 확인 상태. 미매핑·UJAT 외 null. temporaryAssignmentStatus를 대체하지 않음
-     * @nullable
-     */
+  /** UJAT 일정 확인 상태. 저장값이 없으면 null. institution_checking으로 기본값을 넣지 않음 */
   scheduleConfirmStatus?: OrganizationApplicationListItemResponseScheduleConfirmStatus;
-  /**
-     * 배정 강사 수. 0명·UJAT 외는 null
-     * @nullable
-     */
+  /** 신청에 배정된 강사 수. 0명이면 null */
   assignedInstructorCount?: number | null;
-  /**
-     * 운영 학생 명단 수. 명단 없음·UJAT 외는 null. requestedStudentCount를 쓰지 않음
-     * @nullable
-     */
+  /** 운영 학생 수. 학생 명단 행이 있을 때만 그 수. 신청 총원으로 대체하지 않으며 없으면 null */
   operatingStudentCount?: number | null;
-  /**
-     * 학년별 학급 [{gradeLabel, classCount}]. 다학년 신청 원문·학급 카탈로그가 있으면 학년마다 한 줄. 없으면 null
-     * @nullable
-     */
-  gradeBlocks?: OrganizationApplicationListGradeBlock[] | null;
+  /** 학년별 학급. [{gradeLabel, classCount}]. 다학년 신청 원문·학급 카탈로그가 있으면 학년마다 한 줄. 없으면 null이며 grade+requestedClassCount로 추정해 여러 줄을 만들지 않음 */
+  gradeBlocks?: GradeBlock[] | null;
 }

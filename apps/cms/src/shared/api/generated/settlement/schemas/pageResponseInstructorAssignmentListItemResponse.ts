@@ -8,9 +8,9 @@
 import type { InstructorAssignmentListItemResponse } from './instructorAssignmentListItemResponse';
 
 export interface PageResponseInstructorAssignmentListItemResponse {
-  items: InstructorAssignmentListItemResponse[];
-  page: number;
-  size: number;
-  totalElements: number;
-  totalPages: number;
+  items?: InstructorAssignmentListItemResponse[];
+  page?: number;
+  size?: number;
+  totalElements?: number;
+  totalPages?: number;
 }

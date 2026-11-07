@@ -7,7 +7,7 @@
  */
 
 /**
- * 활성 배정 상태. 취소·대체·대기·반려 상태는 제외합니다.
+ * 활성 배정 상태. 현재 정책상 ASSIGNED 또는 COMPLETED가 반환될 수 있으며 취소·대체·대기·반려 상태는 제외합니다.
  */
 export type MemberPortalTeacherAssignmentItemAssignmentStatus = typeof MemberPortalTeacherAssignmentItemAssignmentStatus[keyof typeof MemberPortalTeacherAssignmentItemAssignmentStatus];
 

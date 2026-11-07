@@ -7,16 +7,13 @@
  */
 
 /**
- * 인증서 고유번호 발급 data
+ * 인증서 고유번호 발급 응답
  */
 export interface CertificateSerialAllocateResponse {
-  /**
-     * YY-JA-NNNNN. 00000 금지. 형식이 틀리면 PDF를 만들지 말 것
-     * @pattern ^\d{2}-JA-\d{5}$
-     */
-  serialNumber: string;
+  /** 고유번호 (YY-JA-NNNNN) */
+  serialNumber?: string;
   /** certificate_issue 장부 PK */
-  issueId: number;
-  /** 동일 키 재사용이면 true. true여도 PDF 진행은 정상 */
-  reused: boolean;
+  issueId?: number;
+  /** 호환 필드. 발급마다 새 번호를 쓰므로 정상 응답은 false */
+  reused?: boolean;
 }

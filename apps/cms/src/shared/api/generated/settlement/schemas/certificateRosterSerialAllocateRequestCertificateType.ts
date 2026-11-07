@@ -6,6 +6,10 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * 인증서 문서 타입
+ * @minLength 1
+ */
 export type CertificateRosterSerialAllocateRequestCertificateType = typeof CertificateRosterSerialAllocateRequestCertificateType[keyof typeof CertificateRosterSerialAllocateRequestCertificateType];
 
 

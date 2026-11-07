@@ -8,7 +8,6 @@
 
 /**
  * CMS 산정 기준 상세 viewer layout. FE가 렌더할 수 있는 값만 반환한다. 미지원 지급 항목은 remote.
- * @nullable
  */
 export type SettlementFrontendCalculationDetailResponseLayout = typeof SettlementFrontendCalculationDetailResponseLayout[keyof typeof SettlementFrontendCalculationDetailResponseLayout] | null;
 

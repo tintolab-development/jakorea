@@ -9,16 +9,20 @@
   word-break: keep-all;
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
   line-height: 150%;
   text-align: center;
 }
 
 .recruit-guide-section .table-title {
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 700;
   line-height: 150%;
+  height: 40px;
+  display: flex !important;
+  align-items: flex-end;
+  justify-content: center;
 }
 
 .recruit-guide-thumb {
@@ -57,27 +61,17 @@
 
 .recruit-guide-section .cms-data-table .ant-table-tbody > tr > td,
 .recruit-guide-section .cms-data-table .ant-table-tbody > tr:hover > td,
-.recruit-guide-section
-  .cms-data-table
-  .ant-table-tbody
-  > tr
-  > td.ant-table-cell-row-hover {
+.recruit-guide-section .cms-data-table .ant-table-tbody > tr > td.ant-table-cell-row-hover {
   height: auto !important;
   min-height: 54px;
 }
 
 .recruit-guide-banner-table .ant-table-tbody > tr > td,
 .recruit-guide-banner-table .ant-table-tbody > tr:hover > td,
-.recruit-guide-banner-table
-  .ant-table-tbody
-  > tr
-  > td.ant-table-cell-row-hover,
+.recruit-guide-banner-table .ant-table-tbody > tr > td.ant-table-cell-row-hover,
 .recruit-guide-culture-table .ant-table-tbody > tr > td,
 .recruit-guide-culture-table .ant-table-tbody > tr:hover > td,
-.recruit-guide-culture-table
-  .ant-table-tbody
-  > tr
-  > td.ant-table-cell-row-hover {
+.recruit-guide-culture-table .ant-table-tbody > tr > td.ant-table-cell-row-hover {
   white-space: normal !important;
 }
 
@@ -167,7 +161,9 @@
   overflow: hidden !important;
 }
 
-.recruit-guide-section .recruit-guide-inline-field--edit.cms-textarea--fixed-rows textarea.ant-input {
+.recruit-guide-section
+  .recruit-guide-inline-field--edit.cms-textarea--fixed-rows
+  textarea.ant-input {
   overflow-y: auto;
 }
 

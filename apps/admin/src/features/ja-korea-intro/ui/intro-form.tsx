@@ -9,8 +9,16 @@ import type {
   VisionMission,
 } from '@/entities/ja-korea-intro/model/types'
 import { useSaveJaKoreaIntro } from '@/features/ja-korea-intro/api/hooks'
+import { hasIncompleteRequiredJaKoreaIntroFields } from '@/features/ja-korea-intro/lib/required-fields'
 import { ContentNestedTable } from '@/features/ja-korea-intro/ui/content-nested-table'
-import { CmsButton, CmsInput, CmsTextArea, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
+  CmsButton,
+  CmsInput,
+  CmsTextArea,
+  showSaveCompletedAlert,
+  useCmsAlert,
+} from '@/shared/ui'
 
 import './intro-form.css'
 
@@ -64,6 +72,10 @@ export function IntroFormCard({ data }: Props) {
   }, [data])
 
   const handleSave = useCallback(async () => {
+    if (hasIncompleteRequiredJaKoreaIntroFields(draft)) {
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+      return
+    }
     try {
       await saveMutation.mutateAsync(draft)
       setIsEditing(false)
@@ -192,6 +204,7 @@ export function IntroFormCard({ data }: Props) {
             <DetailInfoForm.Row type="double">
               <DetailInfoForm.Field
                 label="메인 타이틀"
+                required
                 view={<PrelineView value={section01.mainTitle} />}
                 edit={
                   <CmsInput
@@ -205,6 +218,7 @@ export function IntroFormCard({ data }: Props) {
               />
               <DetailInfoForm.Field
                 label="서브 타이틀"
+                required
                 view={<PrelineView value={section01.subTitle} />}
                 edit={
                   <CmsInput
@@ -226,6 +240,7 @@ export function IntroFormCard({ data }: Props) {
             <DetailInfoForm.Row type="double">
               <DetailInfoForm.Field
                 label="타이틀 문구"
+                required
                 view={<PrelineView value={section02.titlePhrase} />}
                 edit={
                   <CmsInput
@@ -239,6 +254,7 @@ export function IntroFormCard({ data }: Props) {
               />
               <DetailInfoForm.Field
                 label="서브 타이틀"
+                required
                 view={<PrelineView value={section02.subTitle} />}
                 edit={
                   <CmsInput
@@ -266,13 +282,13 @@ export function IntroFormCard({ data }: Props) {
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="상단 서브 텍스트"
+                required
                 view={<PrelineView value={vision.topSubText} />}
                 edit={
                   <CmsTextArea
-                    className="cms-textarea--fixed-rows"
                     inputSize="medium"
                     width="100%"
-                    rows={2}
+                    autoSize={{ minRows: 1, maxRows: 2 }}
                     value={draft.vision.topSubText}
                     onChange={e => updateVision({ topSubText: e.target.value })}
                     placeholder="상단 서브 텍스트를 입력해 주세요"
@@ -283,13 +299,13 @@ export function IntroFormCard({ data }: Props) {
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="메인 텍스트"
+                required
                 view={<PrelineView value={vision.mainText} />}
                 edit={
                   <CmsTextArea
-                    className="cms-textarea--fixed-rows"
                     inputSize="medium"
                     width="100%"
-                    rows={2}
+                    autoSize={{ minRows: 1, maxRows: 2 }}
                     value={draft.vision.mainText}
                     onChange={e => updateVision({ mainText: e.target.value })}
                     placeholder="메인 텍스트를 입력해 주세요"
@@ -306,13 +322,13 @@ export function IntroFormCard({ data }: Props) {
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="상단 서브 텍스트"
+                required
                 view={<PrelineView value={mission.topSubText} />}
                 edit={
                   <CmsTextArea
-                    className="cms-textarea--fixed-rows"
                     inputSize="medium"
                     width="100%"
-                    rows={2}
+                    autoSize={{ minRows: 1, maxRows: 2 }}
                     value={draft.mission.topSubText}
                     onChange={e => updateMission({ topSubText: e.target.value })}
                     placeholder="상단 서브 텍스트를 입력해 주세요"
@@ -323,13 +339,13 @@ export function IntroFormCard({ data }: Props) {
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="메인 텍스트"
+                required
                 view={<PrelineView value={mission.mainText} />}
                 edit={
                   <CmsTextArea
-                    className="cms-textarea--fixed-rows"
                     inputSize="medium"
                     width="100%"
-                    rows={2}
+                    autoSize={{ minRows: 1, maxRows: 2 }}
                     value={draft.mission.mainText}
                     onChange={e => updateMission({ mainText: e.target.value })}
                     placeholder="메인 텍스트를 입력해 주세요"

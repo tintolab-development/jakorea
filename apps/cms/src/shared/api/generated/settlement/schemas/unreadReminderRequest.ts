@@ -7,11 +7,7 @@
  */
 
 export interface UnreadReminderRequest {
-  /** @nullable */
-  message?: string | null;
-  /**
-     * 선택 미열람 회원 ID. 생략하면 게시글 scope 전체 미열람 회원.
-     * @nullable
-     */
-  memberIds?: number[] | null;
+  message?: string;
+  /** 선택 미열람 회원 ID. 생략하면 해당 게시글 scope의 전체 미열람 회원 */
+  memberIds?: number[];
 }

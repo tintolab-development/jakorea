@@ -23,6 +23,10 @@ import {
   resolveProgramRecruitmentPolicyErrorMessage,
 } from '@/shared/lib/program-edit-window-error-message'
 import { resolveProgramScheduleLineErrorMessage } from '@/features/program/shared/lib/program-schedule-line-error'
+import {
+  LECTURE_REPORT_NO_DOWNLOADABLE_FILES,
+  LECTURE_REPORT_NO_DOWNLOADABLE_FILES_MESSAGE,
+} from '@/shared/lib/lecture-report-bulk-download'
 
 const BUSINESS_START_LOCK_PATTERN =
   /business_start_date|schedule lock|only be modified before/i
@@ -61,7 +65,6 @@ const PROGRESS_INSTRUCTOR_ERROR_MESSAGES: Record<string, string> = {
   GENERAL_INSTRUCTOR_ASSIGNMENT_REQUIRES_RECRUITMENT:
     '강사 모집이 없는 프로그램에는 강사를 배정할 수 없습니다.',
   ATTENDANCE_AFTER_GIVE_UP: '활동 포기 이후 회차에는 출결을 저장할 수 없습니다.',
-  PROGRAM_COMPLETION_NOT_COMPLETED: '프로그램이 종료된 뒤에만 수료를 재계산할 수 있습니다.',
   FORM_ANSWER_TYPE_INVALID: '입력 형식이 올바르지 않습니다.',
   FORM_ANSWER_REQUIRED: '필수 입력값을 입력해 주세요.',
   FORM_ANSWER_TOO_LONG: '입력 가능한 글자 수를 초과했습니다. 1,000자 이하로 작성해 주세요.',
@@ -249,6 +252,21 @@ export function getGeneralProgramApiErrorMessage(error: unknown, fallback: strin
   if (organizationAssignmentMessage) return organizationAssignmentMessage
 
   const code = extractApiErrorCode(error)
+  if (code === LECTURE_REPORT_NO_DOWNLOADABLE_FILES) {
+    const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()
+    if (raw && raw !== code) return raw
+    return LECTURE_REPORT_NO_DOWNLOADABLE_FILES_MESSAGE
+  }
+  if (code === 'PERMISSION_DENIED' || code === 'RESOURCE_SCOPE_DENIED') {
+    const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()
+    if (raw && raw !== code) return raw
+    return '파일 다운로드 권한이 없습니다.'
+  }
+  if (code === 'INTERNAL_SERVER_ERROR') {
+    const raw = extractRawApiMessage(error)?.replace(/^INTERNAL_SERVER_ERROR:\s*/i, '').trim()
+    if (raw && raw !== code && !/^internal server error$/i.test(raw)) return raw
+    return '서버 오류가 발생했습니다. 잠시 후 다시 시도하거나 관리자에게 문의해 주세요.'
+  }
   if (code && PROGRAM_INLINE_IMAGE_ERROR_MESSAGES[code]) {
     return PROGRAM_INLINE_IMAGE_ERROR_MESSAGES[code]
   }
@@ -280,6 +298,11 @@ export function getGeneralProgramApiErrorMessage(error: unknown, fallback: strin
     const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()
     if (raw && raw !== code) return raw
     return PROGRAM_SCHEDULE_NOT_EDUCATION_SLOT_MESSAGE
+  }
+  if (code === 'PROGRAM_SCHEDULE_LOCKED') {
+    const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()
+    if (raw && raw !== code) return raw
+    return '이미 시작했거나 출결·정산이 있는 일정은 변경하거나 요청에서 빠뜨릴 수 없습니다.'
   }
   if (code === 'PROGRAM_DATE_OUTSIDE_OPEN_PERIOD') {
     return '모집·운영 기간이 사업(오픈) 기간 밖입니다. 모집 창은 모집 행으로만 저장되고, 신청일·프로그램 운영일은 사업 기간 안에 있을 때만 함께 전송됩니다.'

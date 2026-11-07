@@ -8,9 +8,9 @@
 import type { AccountDirectoryItemResponse } from './accountDirectoryItemResponse';
 
 export interface PageResponseAccountDirectoryItemResponse {
-  items: AccountDirectoryItemResponse[];
-  page: number;
-  size: number;
-  totalElements: number;
-  totalPages: number;
+  items?: AccountDirectoryItemResponse[];
+  page?: number;
+  size?: number;
+  totalElements?: number;
+  totalPages?: number;
 }

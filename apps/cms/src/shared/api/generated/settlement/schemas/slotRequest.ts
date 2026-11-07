@@ -7,9 +7,5 @@
  */
 
 export interface SlotRequest {
-  /**
-     * program_schedule.id
-     * @minimum 1
-     */
   scheduleId: number;
 }

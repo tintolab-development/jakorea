@@ -9,7 +9,7 @@ import {
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import { resolveAssignableSchedulePayloadFromSession } from '@/features/program/general/lib/organization-instructor-assignable-schedule'
 import {
-  formatEducationRoundSessionLabel,
+  formatEducationScheduleUnitLabel,
   parseConfirmedCurriculumSessionCount,
 } from '@/shared/lib/education-schedule-name'
 
@@ -63,11 +63,24 @@ function splitRangeDateAndTime(range: string): { dateLabel: string; timeLabel: s
 }
 
 export function resolveAssignmentRoundSessionLabel(
-  session: Pick<ParticipatingSchoolSession, 'round' | 'classNum' | 'duration' | 'scheduleLabel'>
+  session: Pick<
+    ParticipatingSchoolSession,
+    | 'round'
+    | 'sessionNo'
+    | 'classNum'
+    | 'duration'
+    | 'scheduleLabel'
+    | 'scheduleRole'
+    | 'educationSlotKey'
+    | 'curriculumSessionCount'
+  >
 ): string {
-  return formatEducationRoundSessionLabel({
-    roundNumber: session.round,
+  return formatEducationScheduleUnitLabel({
+    sessionNo: session.sessionNo ?? session.round,
+    scheduleRole: session.scheduleRole,
+    educationSlotKey: session.educationSlotKey,
     curriculumSessionCount:
+      session.curriculumSessionCount ??
       parseConfirmedCurriculumSessionCount(session.classNum) ??
       parseConfirmedCurriculumSessionCount(session.duration) ??
       parseConfirmedCurriculumSessionCount(session.scheduleLabel),

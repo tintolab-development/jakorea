@@ -6,4 +6,4 @@
  * OpenAPI spec version: v9
  */
 
-export type MemberLectureReportContentResponseAnswers = { [key: string]: unknown };
+export type MemberLectureReportContentResponseAnswers = {[key: string]: unknown};

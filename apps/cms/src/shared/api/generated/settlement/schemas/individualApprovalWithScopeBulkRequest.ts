@@ -5,25 +5,24 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { IndividualApprovalWithScopeBulkRequestTiming } from './individualApprovalWithScopeBulkRequestTiming';
-import type { IndividualApprovalWithScopeBulkTarget } from './individualApprovalWithScopeBulkTarget';
+import type { Target } from './target';
 
+/**
+ * 확정된 교육 범위를 포함하는 개인·봉사자 일괄 승인 요청입니다. 봉사자 대상은 confirmedScheduleIds=[] 로 일정 없이 승인할 수 있습니다. 부분 성공이 가능하므로 successCount와 failureCount를 확인해야 합니다. timing은 모든 대상에 동일하게 적용합니다.
+ */
 export interface IndividualApprovalWithScopeBulkRequest {
   /**
-     * @minItems 1
+     * @minItems 0
      * @maxItems 100
      */
-  targets: IndividualApprovalWithScopeBulkTarget[];
+  targets: Target[];
   /**
-     * @minLength 1
+     * @minLength 0
      * @maxLength 500
      */
   reason: string;
-  /**
-     * IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE. 발표일은 대상 프로그램별로 서버가 계산합니다.
-     * @nullable
-     */
-  timing?: IndividualApprovalWithScopeBulkRequestTiming;
-  /** @nullable */
-  scheduledAt?: string | null;
+  /** IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE. 발표일은 대상 프로그램별로 서버가 계산합니다. */
+  timing?: string;
+  /** timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601 */
+  scheduledAt?: string;
 }

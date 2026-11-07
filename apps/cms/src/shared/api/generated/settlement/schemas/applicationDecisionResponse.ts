@@ -8,21 +8,13 @@
 import type { ApplicationDecisionResponseScheduleAssignmentStatus } from './applicationDecisionResponseScheduleAssignmentStatus';
 
 export interface ApplicationDecisionResponse {
-  applicationId: number;
-  applicationType: string;
-  fromStatus: string;
-  toStatus: string;
-  /** @nullable */
-  participantId: number | null;
-  /**
-     * 결정 알림 이벤트 id. 미발송이면 JSON null이며 필드를 omit하지 않습니다.
-     * @nullable
-     */
-  notificationEventId: number | null;
-  availableActions: string[];
-  /**
-     * 기관 승인 후 또는 제미나이 강사 승인 후 일정 배정 상태. ASSIGNED는 확정 일정이 있고 UNASSIGNED는 승인됐지만 일정이 없습니다. GENERAL/UJAT/1사1교 강사 승인 등 그 외 결정에서는 null입니다.
-     * @nullable
-     */
-  scheduleAssignmentStatus: ApplicationDecisionResponseScheduleAssignmentStatus;
+  applicationId?: number;
+  applicationType?: string;
+  fromStatus?: string;
+  toStatus?: string;
+  participantId?: number;
+  notificationEventId?: number;
+  availableActions?: string[];
+  /** 기관 승인 후 또는 제미나이 강사 승인 후 일정 배정 상태. ASSIGNED는 확정 일정(OSA 또는 강사 배정 일정)이 있고, UNASSIGNED는 승인됐지만 일정이 없습니다. GENERAL/UJAT/1사1교 강사 승인 등 그 외 결정에서는 null입니다. */
+  scheduleAssignmentStatus?: ApplicationDecisionResponseScheduleAssignmentStatus;
 }

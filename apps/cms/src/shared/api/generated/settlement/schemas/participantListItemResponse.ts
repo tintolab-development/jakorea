@@ -5,154 +5,65 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { AssignmentInstructor } from './assignmentInstructor';
 import type { FormResponseRef } from './formResponseRef';
-import type { ParticipantAssignmentInstructor } from './participantAssignmentInstructor';
-import type { ParticipantSessionProgress } from './participantSessionProgress';
+import type { SessionProgress } from './sessionProgress';
 
-/**
- * 프로그램 참여자 진행현황. 유형에 해당하지 않는 단일값은 null이고 배열은 항상 []입니다.
- */
 export interface ParticipantListItemResponse {
   participantId?: number;
   programId?: number;
-  /** @nullable */
-  memberId?: number | null;
-  /** @nullable */
-  memberName?: string | null;
+  memberId?: number;
+  memberName?: string;
   participantType?: string;
-  /** @nullable */
-  sourceApplicationType?: string | null;
-  /** @nullable */
-  sourceApplicationId?: number | null;
-  /** @nullable */
-  organizationApplicationId?: number | null;
-  /**
-     * 기관 참여자는 기관 신청의 실제 기관 ID, 개인·강사·봉사자는 저장된 기존 소속 기관 ID. 소속이 없으면 null
-     * @nullable
-     */
-  organizationId?: number | null;
-  /** @nullable */
-  organizationName?: string | null;
-  /** @nullable */
-  educationGrade?: string | null;
-  /** @nullable */
-  region?: string | null;
-  /** @nullable */
-  classCount?: number | null;
-  /** @nullable */
-  studentCount?: number | null;
-  /** @nullable */
-  textbookId?: number | null;
-  /** @nullable */
-  textbookName?: string | null;
-  /** @nullable */
-  textbookStatus?: string | null;
-  /** @nullable */
-  mergeGroupId?: number | null;
-  /** @nullable */
-  combinedClass?: boolean | null;
+  sourceApplicationType?: string;
+  sourceApplicationId?: number;
+  organizationApplicationId?: number;
+  organizationId?: number;
+  organizationName?: string;
   participantStatus?: string;
-  /** @nullable */
-  completionStatus?: string | null;
-  /** @nullable */
-  certificateStatus?: string | null;
-  /** @nullable */
-  performanceInclude?: boolean | null;
-  /** @nullable */
-  joinedAt?: string | null;
-  /** @nullable */
-  completedAt?: string | null;
-  /** @nullable */
-  giveUpAt?: string | null;
-  availableActions: string[];
-  /**
-     * 기관 참여자 학년. requested_grade 원문(예: 1, 학년 접미사 없음)을 우선하고, 비어 있으면 양식 applicationGrade/educationGrade/grade, 그다음 배정·명단 학년, 그것도 없으면 프로그램 대상 학년(예: 3학년, 3~6학년). 개인 참여자는 명단·신청 스냅샷. 없으면 null. 빈 문자열은 반환하지 않는다.
-     * @nullable
-     */
+  completionStatus?: string;
+  certificateStatus?: string;
+  performanceInclude?: boolean;
+  joinedAt?: string;
+  completedAt?: string;
+  giveUpAt?: string;
+  availableActions?: string[];
+  /** 기관 참여자 학년. requested_grade 원문(예: 1, 학년 접미사 없음)을 우선하고, 비어 있으면 양식 applicationGrade/educationGrade/grade, 그다음 배정·명단 학년, 그것도 없으면 프로그램 대상 학년(예: 3학년, 3~6학년). 개인 참여자는 명단·신청 스냅샷. 없으면 null. 빈 문자열은 반환하지 않는다. */
   grade?: string | null;
-  /** @nullable */
-  regionSido?: string | null;
-  /** @nullable */
-  regionSigungu?: string | null;
-  /** @nullable */
-  className?: string | null;
-  /** @nullable */
-  studentNo?: number | null;
-  /** @nullable */
-  teacherMemberId?: number | null;
-  /** @nullable */
-  teacherName?: string | null;
-  /** @nullable */
-  materialAssignmentStatus?: string | null;
-  /** 참여 일정. 기관·개인 모두 해당 참여자 실제 배정 일정만. INDIVIDUAL: education-scope 확정 일정만. 프로그램 전체 예정일 아님. 없으면 []. null은 반환하지 않는다. */
-  sessions: ParticipantSessionProgress[];
-  assignmentInstructors: ParticipantAssignmentInstructor[];
-  /** @nullable */
-  mergeStatus?: string | null;
-  /** @nullable */
-  mergeLead?: boolean | null;
-  /**
-     * 개인정보 정책에 맞게 축약·마스킹된 자택 주소 요약
-     * @nullable
-     */
-  homeAddressSummary?: string | null;
-  /**
-     * 서버 마스킹 연락처
-     * @nullable
-     */
-  contact?: string | null;
-  /**
-     * 서버 마스킹 이메일
-     * @nullable
-     */
-  email?: string | null;
-  /** @nullable */
-  jaEvaluationGrade?: string | null;
-  /** @nullable */
-  lectureExperienceYears?: number | null;
-  /**
-     * 참여 강사/봉사자 화면용 정산 상태 canonical UI key
-     * @nullable
-     */
-  settlementStatus?: string | null;
-  assignedOrganizationNames: string[];
-  /** @nullable */
-  lectureReportSubmitted?: boolean | null;
-  /**
-     * 서버에서 복호화 후 마스킹한 1365 식별값
-     * @nullable
-     */
-  external1365Id?: string | null;
-  /**
-     * 마스킹 연락처. contact와 동일 값의 하위호환 alias
-     * @nullable
-     */
-  phone?: string | null;
-  /**
-     * 참여 기관 교재 배송. PREPARING|SHIPPING|DELIVERED|NOT_APPLICABLE. 기관이 아니면 null
-     * @nullable
-     */
-  textbookDeliveryStatus?: string | null;
-  /**
-     * 관리자 등록 봉사자 구분 GENERAL|EMPLOYEE. 없으면 null
-     * @nullable
-     */
-  volunteerKind?: string | null;
-  /**
-     * 만족도조사 바인딩이 없으면 null. 있으면 제출 완료 여부
-     * @nullable
-     */
-  satisfactionSurveyCompleted?: boolean | null;
-  surveyResponse?: FormResponseRef | null;
-  satisfactionResponse?: FormResponseRef | null;
-  /**
-     * 참여자 생년월일 (개인 신청 스냅샷 우선, 없으면 회원 정보). 회원 없는 행은 null
-     * @nullable
-     */
+  regionSido?: string;
+  regionSigungu?: string;
+  className?: string;
+  studentNo?: number;
+  classCount?: number;
+  studentCount?: number;
+  teacherMemberId?: number;
+  teacherName?: string;
+  phone?: string;
+  contact?: string;
+  email?: string;
+  textbookId?: number;
+  textbookName?: string;
+  materialAssignmentStatus?: string;
+  homeAddressSummary?: string;
+  jaEvaluationGrade?: string;
+  lectureExperienceYears?: number;
+  settlementStatus?: string;
+  assignedOrganizationNames?: string[];
+  lectureReportSubmitted?: boolean;
+  external1365Id?: string;
+  /** 참여 일정. 기관·개인 모두 해당 참여자 실제 배정 일정만. INDIVIDUAL은 education-scope 확정 일정만이며 프로그램 전체 예정일이 아니다. 없으면 []. null은 반환하지 않는다. */
+  sessions?: SessionProgress[];
+  assignmentInstructors?: AssignmentInstructor[];
+  mergeGroupId?: number;
+  mergeStatus?: string;
+  mergeLead?: boolean;
+  textbookDeliveryStatus?: string;
+  volunteerKind?: string;
+  satisfactionSurveyCompleted?: boolean;
+  surveyResponse?: FormResponseRef;
+  satisfactionResponse?: FormResponseRef;
+  /** 참여자 생년월일 (개인 신청 스냅샷 우선, 없으면 회원 정보). 회원 없는 행은 null */
   birthDate?: string | null;
-  /**
-     * 참여자 성별 원시 코드 (스냅샷 우선, 없으면 회원 정보). 회원 없는 행은 null
-     * @nullable
-     */
+  /** 참여자 성별 원시 코드 (스냅샷 우선, 없으면 회원 정보). 회원 없는 행은 null */
   gender?: string | null;
 }

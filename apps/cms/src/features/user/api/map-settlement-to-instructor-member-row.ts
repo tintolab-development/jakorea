@@ -99,21 +99,21 @@ function mapItemToLine(
   }
 }
 
-function seoulCalendarDateFromIso(iso?: string): string | undefined {
+function seoulCalendarDateFromIso(iso?: string | null): string | undefined {
   if (!iso?.trim()) return undefined
   const date = new Date(iso)
   if (Number.isNaN(date.getTime())) return undefined
   return getSeoulCalendarDate(date)
 }
 
-function formatIsoDate(iso?: string): string {
+function formatIsoDate(iso?: string | null): string {
   const calendar = seoulCalendarDateFromIso(iso)
   if (!calendar) return iso?.trim() ? iso : '-'
   const label = formatDateDot(calendar)
   return label === '-' ? (iso?.trim() || '-') : label
 }
 
-function formatIsoDateWithWeekday(iso?: string): string {
+function formatIsoDateWithWeekday(iso?: string | null): string {
   const calendar = seoulCalendarDateFromIso(iso)
   if (!calendar) return iso?.trim() ? iso : '-'
   const label = formatDateDotWithWeekday(calendar)
@@ -162,11 +162,7 @@ export function mapSettlementDetailToInstructorInvoice(
           .join(' | ')
       : '-'
 
-  const sessionOrdinal = settlement.sessionOrdinal ?? listItem.sessionOrdinal
-  const sessionLabel = resolveCanonicalLectureSessionDisplay(
-    settlement.lectureSessionDisplay,
-    sessionOrdinal
-  )
+  const sessionLabel = resolveCanonicalLectureSessionDisplay(settlement.lectureSessionDisplay)
   const lectureDateSessions =
     sessionLabel !== '-' ? `${lectureDate} | ${sessionLabel}` : lectureDate
 
@@ -226,10 +222,10 @@ export function mapSettlementItemToInstructorMemberRow(
     id: String(settlementId),
     settlementId,
     statementId,
-    correctionRequestId: item.settlementCorrectionRequestId,
+    correctionRequestId: item.settlementCorrectionRequestId ?? undefined,
     no: index + 1,
     programName,
-    instructorName: item.instructorName?.trim(),
+    instructorName: item.instructorName?.trim() || undefined,
     institutionName: item.institutionName?.trim() || '-',
     lectureDateDisplay: calendarDate ? formatDateDot(calendarDate) : '-',
     calendarDate,
@@ -237,7 +233,7 @@ export function mapSettlementItemToInstructorMemberRow(
     scheduledAmount: item.netPaymentAmount ?? item.grossAmount ?? 0,
     detailAvailable: status !== 'none',
     invoice: mapSettlementDetailToInstructorInvoice(
-      { items: [], totalAmount: item.netPaymentAmount },
+      { id: String(settlementId), items: [], totalAmount: item.netPaymentAmount ?? 0 },
       item,
       status
     ),

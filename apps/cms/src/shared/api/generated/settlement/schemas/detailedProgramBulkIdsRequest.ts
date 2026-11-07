@@ -8,7 +8,7 @@
 
 export interface DetailedProgramBulkIdsRequest {
   /**
-     * @minItems 1
+     * @minItems 0
      * @maxItems 500
      */
   ids: number[];

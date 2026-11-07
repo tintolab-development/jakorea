@@ -5,25 +5,22 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { SettlementApplicationDocumentAttachment } from './settlementApplicationDocumentAttachment';
-import type { SettlementApplicationDocumentBasicInfo } from './settlementApplicationDocumentBasicInfo';
-import type { SettlementApplicationDocumentCalcInfo } from './settlementApplicationDocumentCalcInfo';
-import type { SettlementApplicationDocumentLine } from './settlementApplicationDocumentLine';
+import type { Attachment } from './attachment';
+import type { BasicInfo } from './basicInfo';
+import type { CalcInfo } from './calcInfo';
+import type { Line } from './line';
 import type { SettlementApplicationDocumentResponseDocumentType } from './settlementApplicationDocumentResponseDocumentType';
-import type { SettlementApplicationDocumentTotal } from './settlementApplicationDocumentTotal';
+import type { Total } from './total';
 
 export interface SettlementApplicationDocumentResponse {
-  documentType: SettlementApplicationDocumentResponseDocumentType;
-  title: string;
-  /** @nullable */
-  revisionNo?: number | null;
-  /** @nullable */
-  submittedAt?: string | null;
-  /** @nullable */
-  status?: string | null;
-  basicInfo?: SettlementApplicationDocumentBasicInfo;
-  calcInfo?: SettlementApplicationDocumentCalcInfo | null;
-  lines: SettlementApplicationDocumentLine[];
-  total?: SettlementApplicationDocumentTotal | null;
-  attachments: SettlementApplicationDocumentAttachment[];
+  documentType?: SettlementApplicationDocumentResponseDocumentType;
+  title?: string;
+  revisionNo?: number;
+  submittedAt?: string;
+  status?: string;
+  basicInfo?: BasicInfo;
+  calcInfo?: CalcInfo;
+  lines?: Line[];
+  total?: Total;
+  attachments?: Attachment[];
 }

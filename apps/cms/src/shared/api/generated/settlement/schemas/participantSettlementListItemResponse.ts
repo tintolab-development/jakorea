@@ -5,37 +5,29 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { ParticipantSettlementListItemResponseItemType } from './participantSettlementListItemResponseItemType';
 
 /**
- * 참여자 실비 영수증 기반 정산 목록 행. LODGING 유형 미포함.
+ * 참여자(학생·개인) 실비 정산 행. 숙박(LODGING) 유형은 포함하지 않습니다.
  */
 export interface ParticipantSettlementListItemResponse {
   receiptId?: number;
-  /** @nullable */
-  originalReceiptId?: number | null;
+  originalReceiptId?: number;
   revisionNo?: number;
   latestRevision?: boolean;
-  /** @nullable */
-  submittedAt?: string | null;
-  /** @nullable */
-  itemSummary?: string | null;
-  /** @nullable */
-  itemType?: ParticipantSettlementListItemResponseItemType;
-  /** @nullable */
-  expenseType?: string | null;
-  /** @nullable */
-  expenseDate?: string | null;
-  /** @nullable */
-  amount?: number | null;
-  /**
-     * SUBMITTED|APPROVED|REJECTED
-     * @nullable
-     */
-  receiptStatus?: string | null;
-  /** @nullable */
-  settlementId?: number | null;
-  /** @nullable */
-  paymentStatus?: string | null;
+  /** 신청(제출) 일시 */
+  submittedAt?: string;
+  /** 항목 요약 라벨(학생 교통비·참여자 활동비·식사비) */
+  itemSummary?: string;
+  /** settlementFrontend.items[].type 호환: transportation|activity|meal */
+  itemType?: string;
+  expenseType?: string;
+  expenseDate?: string;
+  amount?: number;
+  /** 영수증 검토 상태: SUBMITTED|APPROVED|REJECTED */
+  receiptStatus?: string;
+  /** 지급조서/정산 테이블 연결 전까지 null */
+  settlementId?: number;
+  /** 지급 처리 전까지 null */
+  paymentStatus?: string;
   availableActions?: string[];
 }

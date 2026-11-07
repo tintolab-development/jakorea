@@ -7,9 +7,5 @@
  */
 
 export interface ProgramThumbnailUpdateRequest {
-  /**
-     * null이면 대표 이미지를 지웁니다.
-     * @nullable
-     */
-  fileObjectId?: number | null;
+  fileObjectId?: number;
 }

@@ -2,15 +2,9 @@ import {
   resolveDocumentConsentTemplate,
   toReceiptPreConsentFilledBasicInfo,
 } from '@jakorea/form-schema/consent'
-import {
-  AGREEMENT_NOTICE_PARAGRAPH_IDS,
-  AGREEMENT_PORTRAIT_PARAGRAPH_IDS,
-  EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS,
-  type WritingFormDraft,
-} from '@jakorea/form-schema/writing-form'
+import { type WritingFormDraft } from '@jakorea/form-schema/writing-form'
 import { buildPortraitFilledDocument } from '@/features/auth/sign-up/lib/map-portrait-consent-filled-document'
-import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@jakorea/form-schema/paragraph-ids/payment-statement-pre-consent-draft'
-import { RECEIPT_PRE_CONSENT_IDS } from '@jakorea/form-schema/paragraph-ids/receipt-pre-consent-draft'
+import { resolveConsentSignatureValuesForServerFields } from './resolve-consent-signature-field-values'
 import { isAxiosError } from 'axios'
 import {
   fetchMemberPortalFile,
@@ -41,18 +35,6 @@ import { resolvePortraitPortalCompleteHints } from './resolve-portrait-portal-co
 /** OpenAPI: ELECTRONIC_SIGNATURE가 저장 정본. MEMBER_ELECTRONIC_SIGNATURE는 동등 alias. */
 const SIGNATURE_FILE_PURPOSE = 'ELECTRONIC_SIGNATURE'
 
-const FIELD_KEY_TO_SIGNATURE_SLOT: Record<string, 'mid' | 'final'> = {
-  [PAYMENT_STATEMENT_PRE_CONSENT_IDS.midSignature]: 'mid',
-  [PAYMENT_STATEMENT_PRE_CONSENT_IDS.tailSignature]: 'final',
-  [RECEIPT_PRE_CONSENT_IDS.midSignature]: 'mid',
-  [RECEIPT_PRE_CONSENT_IDS.tailSignature]: 'final',
-  [EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.systemSignature]: 'final',
-  [AGREEMENT_NOTICE_PARAGRAPH_IDS.systemSignature]: 'final',
-  [AGREEMENT_PORTRAIT_PARAGRAPH_IDS.systemSignature]: 'final',
-  /** 화면 서명은 확인 문구 단락에 그리고, 값은 signatures.final에 둔다. */
-  [AGREEMENT_PORTRAIT_PARAGRAPH_IDS.confirmationClosing]: 'final',
-}
-
 export type PortraitPortalConsentWriteState = {
   draft: WritingFormDraft
   signatures?: SchemaConsentWriteState['signatures']
@@ -79,53 +61,27 @@ async function registerSignatureProfile(signature: FormSignatureValue): Promise<
   return profile.signatureProfileId
 }
 
-function readSignatureSlot(
-  signatures: SchemaConsentWriteState['signatures'],
-  slot: 'mid' | 'final',
-): FormSignatureValue | null {
-  const raw = signatures?.[slot]
-  if (!raw) return null
-  if (typeof raw === 'string') {
-    return raw ? { dataUrl: raw, signedAt: new Date().toISOString() } : null
-  }
-  return raw.dataUrl ? raw : null
-}
-
-function resolveSignatureForFieldKey(
-  fieldKey: string,
-  signatures: SchemaConsentWriteState['signatures'],
-): FormSignatureValue | null {
-  const slot = FIELD_KEY_TO_SIGNATURE_SLOT[fieldKey]
-  if (!slot) return null
-  return readSignatureSlot(signatures, slot)
-}
-
 async function signDocumentSignatureFields(
   documentId: number,
   state: SchemaConsentWriteState,
   options?: { fallbackSlot?: 'mid' | 'final' },
 ): Promise<void> {
-  let detail = await fetchPortalConsentDocumentDetail(documentId)
-  const fields = [...(detail.signatureFields ?? [])].sort(
-    (a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0),
+  const detail = await fetchPortalConsentDocumentDetail(documentId)
+  const pending = resolveConsentSignatureValuesForServerFields(
+    detail.signatureFields,
+    state.signatures,
+    options,
   )
 
-  for (const field of fields) {
-    const fieldKey = field.fieldKey?.trim()
-    if (!fieldKey || field.signed === true) continue
-    const signature =
-      resolveSignatureForFieldKey(fieldKey, state.signatures) ??
-      (field.required && options?.fallbackSlot
-        ? readSignatureSlot(state.signatures, options.fallbackSlot)
-        : null)
-    if (!signature) {
+  for (const field of pending) {
+    if (!field.signature) {
       if (field.required) {
         throw new Error('필수 전자서명이 누락되었습니다.')
       }
       continue
     }
-    const signatureProfileId = await registerSignatureProfile(signature)
-    detail = await signPortalConsentDocumentField(documentId, fieldKey, {
+    const signatureProfileId = await registerSignatureProfile(field.signature)
+    await signPortalConsentDocumentField(documentId, field.fieldKey, {
       signatureProfileId,
     })
   }
@@ -230,20 +186,36 @@ export async function submitPortalConsentDocumentFromWriteState(
 }
 
 /** 마이페이지 — 초상권 수집·이용 동의서 (미성년 프로그램 신청 시 `programTarget`) */
+/** 초상권 DRAFT 문서 생성 — 응답 `formTemplateVersion.schemaJson`이 서버(CMS) 현재 양식 */
+export function createPortraitConsentDraftDocument(
+  programTarget?: { programId: number },
+): Promise<PortalConsentDocumentDetail> {
+  return createPortalConsentDocument(
+    buildPortalPortraitRightsConsentCreateRequest(
+      programTarget ? { programId: programTarget.programId } : undefined,
+    ),
+  )
+}
+
 export async function submitPortalPortraitConsentFromWriteState(
   state: PortraitPortalConsentWriteState,
   options?: {
     programTarget?: { programId: number }
     /** 만 14세 미만 complete 필수. 화면·로그에 출력하지 않는다. */
     guardianVerificationToken?: string
+    /**
+     * 작성 진입 시 이미 만든 DRAFT 문서(서버 현재 양식 버전 포함). 있으면 재생성하지 않고
+     * 화면에 보여준 양식 버전 그대로 제출한다.
+     */
+    createdDocument?: PortalConsentDocumentDetail | null
   },
 ): Promise<void> {
   const programTarget = options?.programTarget
   const guardianVerificationToken = options?.guardianVerificationToken?.trim()
-  const createBody = buildPortalPortraitRightsConsentCreateRequest(
-    programTarget ? { programId: programTarget.programId } : undefined,
-  )
-  const created = await createPortalConsentDocument(createBody)
+  const created =
+    options?.createdDocument?.documentId != null
+      ? options.createdDocument
+      : await createPortraitConsentDraftDocument(programTarget)
   const documentId = created.documentId
   if (documentId == null) {
     throw new Error('동의서 문서를 만들지 못했습니다.')
@@ -251,14 +223,16 @@ export async function submitPortalPortraitConsentFromWriteState(
 
   await signDocumentSignatureFields(documentId, state, { fallbackSlot: 'final' })
 
-  const filledDocument = buildPortraitFilledDocument(state.draft)
-  const hints = resolvePortraitPortalCompleteHints(state.draft)
   const version = readCreatedConsentTemplateVersion(created)
+  const filledDocument = buildPortraitFilledDocument(state.draft, version)
+  const hints = resolvePortraitPortalCompleteHints(state.draft)
 
   await completePortalConsentDocument(documentId, {
     filledDocument: {
-      templateVersionId: version.templateVersionId,
-      templateCode: version.templateCode?.trim() || filledDocument.templateCode,
+      ...(filledDocument.templateVersionId != null
+        ? { templateVersionId: filledDocument.templateVersionId }
+        : {}),
+      ...(filledDocument.templateCode ? { templateCode: filledDocument.templateCode } : {}),
       schemaJson: filledDocument.schemaJson as unknown as Record<string, unknown>,
     },
     consentStatus: hints.consentStatus,

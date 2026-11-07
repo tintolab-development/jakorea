@@ -6,7 +6,6 @@
  * OpenAPI spec version: v1
  */
 import type {
-  AttachmentDownloadResponse,
   BannerResponse,
   BannerUpdateRequest,
   BulkDeleteRequest,
@@ -22,6 +21,7 @@ import type {
   Detail8Params,
   DonationButtonResponse,
   DonationUrlUpdateRequest,
+  FileDownloadPasswordRequest,
   FixedTextUpdateRequest,
   List13Params,
   List14Params,
@@ -43,7 +43,6 @@ import type {
   SponsorResponse,
   SponsorUpdateRequest,
   StatusUpdateRequest,
-  TalentApplicationAttachmentDownloadResponse,
   TalentApplicationCreateRequest,
   TalentApplicationCreateResponse,
   TalentApplicationDetailResponse,
@@ -263,6 +262,39 @@ const prepare1 = (
       options);
     }
 
+/**
+ * Streams a server-encrypted file. Body { password } is write-only and is never stored.
+ * @summary Download a talent application attachment by asset id
+ */
+const attachmentDownloadByAsset = (
+    id: number,
+    assetId: number,
+    fileDownloadPasswordRequest: FileDownloadPasswordRequest,
+ options?: SecondParameter<typeof customInstance<string>>,) => {
+      return customInstance<string>(
+      {url: `/api/admin/sponsorship/talent-applications/${id}/attachments/${assetId}/download`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: fileDownloadPasswordRequest
+    },
+      options);
+    }
+
+/**
+ * Streams a server-encrypted file. Body { password } is write-only and is never stored. containedPiiTypes is empty until classified.
+ * @summary Download talent application attachment
+ */
+const attachmentDownload = (
+    id: number,
+    fileDownloadPasswordRequest: FileDownloadPasswordRequest,
+ options?: SecondParameter<typeof customInstance<string>>,) => {
+      return customInstance<string>(
+      {url: `/api/admin/sponsorship/talent-applications/${id}/attachment-download`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: fileDownloadPasswordRequest
+    },
+      options);
+    }
+
 const list2 = (
     params?: List2Params,
  options?: SecondParameter<typeof customInstance<PageResponseSponsorListItem>>,) => {
@@ -291,6 +323,39 @@ const delete1 = (
       {url: `/api/admin/sponsorship/corporate/sponsors`, method: 'DELETE',
       headers: {'Content-Type': 'application/json', },
       data: bulkDeleteRequest
+    },
+      options);
+    }
+
+/**
+ * Streams a server-encrypted file. Body { password } is write-only and is never stored.
+ * @summary Download a corporate consultation attachment by asset id
+ */
+const attachmentDownloadByAsset1 = (
+    id: number,
+    assetId: number,
+    fileDownloadPasswordRequest: FileDownloadPasswordRequest,
+ options?: SecondParameter<typeof customInstance<string>>,) => {
+      return customInstance<string>(
+      {url: `/api/admin/sponsorship/corporate-consultations/${id}/attachments/${assetId}/download`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: fileDownloadPasswordRequest
+    },
+      options);
+    }
+
+/**
+ * Streams a server-encrypted file. Body { password } is write-only and is never stored. containedPiiTypes is empty until classified.
+ * @summary Download corporate consultation attachment
+ */
+const attachmentDownload1 = (
+    id: number,
+    fileDownloadPasswordRequest: FileDownloadPasswordRequest,
+ options?: SecondParameter<typeof customInstance<string>>,) => {
+      return customInstance<string>(
+      {url: `/api/admin/sponsorship/corporate-consultations/${id}/attachment-download`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: fileDownloadPasswordRequest
     },
       options);
     }
@@ -409,7 +474,7 @@ const delete3 = (
     }
 
 /**
- * Always stored original PII (not masked). HOMEPAGE_VIEW is enough; HOMEPAGE_PII_VIEW is not required. Every 200 writes homepage_admin_audit_log (PII_READ / TALENT_APPLICATION) and homepage_privacy_access_log. List GET stays masked. revealPii is a deprecated no-op.
+ * Always stored original PII (not masked). HOMEPAGE_VIEW is enough; HOMEPAGE_PII_VIEW is not required. Every 200 writes homepage_admin_audit_log (PII_READ / TALENT_APPLICATION) and homepage_privacy_access_log. List name is original; phone and email remain masked. revealPii is a deprecated no-op.
  * @summary Get talent application detail
  */
 const detail7 = (
@@ -419,25 +484,6 @@ const detail7 = (
       return customInstance<TalentApplicationDetailResponse>(
       {url: `/api/admin/sponsorship/talent-applications/${id}`, method: 'GET',
         params
-    },
-      options);
-    }
-
-const attachmentDownloadByAsset = (
-    id: number,
-    assetId: number,
- options?: SecondParameter<typeof customInstance<TalentApplicationAttachmentDownloadResponse>>,) => {
-      return customInstance<TalentApplicationAttachmentDownloadResponse>(
-      {url: `/api/admin/sponsorship/talent-applications/${id}/attachments/${assetId}/download`, method: 'GET'
-    },
-      options);
-    }
-
-const attachmentDownload = (
-    id: number,
- options?: SecondParameter<typeof customInstance<TalentApplicationAttachmentDownloadResponse>>,) => {
-      return customInstance<TalentApplicationAttachmentDownloadResponse>(
-      {url: `/api/admin/sponsorship/talent-applications/${id}/attachment-download`, method: 'GET'
     },
       options);
     }
@@ -482,7 +528,7 @@ const bulkDelete6 = (
     }
 
 /**
- * Always stored original PII (not masked). HOMEPAGE_VIEW is enough; HOMEPAGE_PII_VIEW is not required. Every 200 writes homepage_admin_audit_log (PII_READ / CORPORATE_CONSULTATION) and homepage_privacy_access_log. List GET stays masked (maskedContactPhone). revealPii is a deprecated no-op.
+ * Always stored original PII (not masked). HOMEPAGE_VIEW is enough; HOMEPAGE_PII_VIEW is not required. Every 200 writes homepage_admin_audit_log (PII_READ / CORPORATE_CONSULTATION) and homepage_privacy_access_log. List contactName is original; maskedContactPhone remains masked. revealPii is a deprecated no-op.
  * @summary Get corporate consultation detail
  */
 const detail8 = (
@@ -496,26 +542,7 @@ const detail8 = (
       options);
     }
 
-const attachmentDownloadByAsset1 = (
-    id: number,
-    assetId: number,
- options?: SecondParameter<typeof customInstance<AttachmentDownloadResponse>>,) => {
-      return customInstance<AttachmentDownloadResponse>(
-      {url: `/api/admin/sponsorship/corporate-consultations/${id}/attachments/${assetId}/download`, method: 'GET'
-    },
-      options);
-    }
-
-const attachmentDownload1 = (
-    id: number,
- options?: SecondParameter<typeof customInstance<AttachmentDownloadResponse>>,) => {
-      return customInstance<AttachmentDownloadResponse>(
-      {url: `/api/admin/sponsorship/corporate-consultations/${id}/attachment-download`, method: 'GET'
-    },
-      options);
-    }
-
-return {updateInterview,updateHowItems,updateBanner,updatePersonalUsage,updateDonationUrl,updatePersonalBanner,updateCorporateSteps,get,update,updateCorporateMetrics,updateCorporateBanner,create,confirm,prepare,create1,confirm1,prepare1,list2,create3,delete1,bulkConfirm,updateStatus,toggle,updateStatus1,get5,personal,corporate,list10,get11,list13,delete3,detail7,attachmentDownloadByAsset,attachmentDownload,personal1,corporate1,list14,bulkDelete6,detail8,attachmentDownloadByAsset1,attachmentDownload1}};
+return {updateInterview,updateHowItems,updateBanner,updatePersonalUsage,updateDonationUrl,updatePersonalBanner,updateCorporateSteps,get,update,updateCorporateMetrics,updateCorporateBanner,create,confirm,prepare,create1,confirm1,prepare1,attachmentDownloadByAsset,attachmentDownload,list2,create3,delete1,attachmentDownloadByAsset1,attachmentDownload1,bulkConfirm,updateStatus,toggle,updateStatus1,get5,personal,corporate,list10,get11,list13,delete3,detail7,personal1,corporate1,list14,bulkDelete6,detail8}};
 export type UpdateInterviewResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['updateInterview']>>>
 export type UpdateHowItemsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['updateHowItems']>>>
 export type UpdateBannerResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['updateBanner']>>>
@@ -533,9 +560,13 @@ export type PrepareResult = NonNullable<Awaited<ReturnType<ReturnType<typeof get
 export type Create1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['create1']>>>
 export type Confirm1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['confirm1']>>>
 export type Prepare1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['prepare1']>>>
+export type AttachmentDownloadByAssetResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['attachmentDownloadByAsset']>>>
+export type AttachmentDownloadResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['attachmentDownload']>>>
 export type List2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['list2']>>>
 export type Create3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['create3']>>>
 export type Delete1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['delete1']>>>
+export type AttachmentDownloadByAsset1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['attachmentDownloadByAsset1']>>>
+export type AttachmentDownload1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['attachmentDownload1']>>>
 export type BulkConfirmResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['bulkConfirm']>>>
 export type UpdateStatusResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['updateStatus']>>>
 export type ToggleResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['toggle']>>>
@@ -548,12 +579,8 @@ export type Get11Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJA
 export type List13Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['list13']>>>
 export type Delete3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['delete3']>>>
 export type Detail7Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['detail7']>>>
-export type AttachmentDownloadByAssetResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['attachmentDownloadByAsset']>>>
-export type AttachmentDownloadResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['attachmentDownload']>>>
 export type Personal1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['personal1']>>>
 export type Corporate1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['corporate1']>>>
 export type List14Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['list14']>>>
 export type BulkDelete6Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['bulkDelete6']>>>
 export type Detail8Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['detail8']>>>
-export type AttachmentDownloadByAsset1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['attachmentDownloadByAsset1']>>>
-export type AttachmentDownload1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['attachmentDownload1']>>>

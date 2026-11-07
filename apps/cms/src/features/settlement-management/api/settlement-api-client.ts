@@ -14,6 +14,7 @@ import type {
   ListExportHistoriesParams,
   ListPaymentStatementsParams,
   ListSettlementAggregatesParams,
+  ListTransportationSnapshotsParams,
   ListSettlementsParams,
   PageResponseAccountPaymentListItemResponse,
   PageResponsePaymentStatementListItemResponse,
@@ -43,7 +44,13 @@ export async function fetchSettlementsPageRemote(
 export async function fetchPaymentStatementsPageRemote(
   params: ListPaymentStatementsParams
 ): Promise<PageResponsePaymentStatementListItemResponse> {
-  return unwrapApiBody(await settlementApi.listPaymentStatements(params))
+  return unwrapApiBody(
+    await customInstance({
+      url: '/api/admin/settlements/statements',
+      method: 'GET',
+      params,
+    })
+  )
 }
 
 export async function fetchSettlementDetailRemote(
@@ -55,8 +62,13 @@ export async function fetchSettlementDetailRemote(
 export async function fetchSettlementTransportationSnapshotsRemote(
   settlementId: number
 ): Promise<PageResponseSettlementTransportationSnapshotResponse['items']> {
+  const query: ListTransportationSnapshotsParams = { settlementId, page: 0, size: 20 }
   const page = unwrapApiBody<PageResponseSettlementTransportationSnapshotResponse>(
-    await settlementApi.listTransportationSnapshots({ settlementId, page: 0, size: 20 })
+    await customInstance({
+      url: '/api/admin/settlements/transportation-snapshots',
+      method: 'GET',
+      params: query,
+    })
   )
   return page.items ?? []
 }
@@ -77,7 +89,14 @@ export async function bulkConfirmPaymentStatementsRemote(
 export async function bulkMarkAccountPaymentsPaidRemote(
   body: SettlementBulkStatusChangeRequest
 ): Promise<void> {
-  await unwrapApiBody(await settlementApi.bulkPaid(body))
+  await unwrapApiBody(
+    await customInstance({
+      url: '/api/admin/account-payments/bulk-paid',
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      data: body,
+    })
+  )
 }
 
 export async function fetchSettlementBudgetSummaryRemote(
@@ -164,7 +183,12 @@ export async function requestSettlementCorrectionRemote(
   settlementId: number,
   body: SettlementCorrectionRequest
 ): Promise<void> {
-  await settlementApi.requestCorrection(settlementId, body)
+  await customInstance({
+    url: `/api/admin/settlements/${settlementId}/correction-requests`,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    data: body,
+  })
 }
 
 /** 선택 정산 건 지급조서 ZIP — POST blob. job 폴링/CLIENT_RENDER 없음. */
@@ -197,23 +221,29 @@ export async function markAccountPaymentPaidRemote(
   paymentId: number,
   body: SettlementStatusChangeRequest = { reason: '계좌 지급 완료' }
 ): Promise<void> {
-  await settlementApi.markPaid(paymentId, body)
+  await customInstance({
+    url: `/api/admin/account-payments/${paymentId}/paid`,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    data: body,
+  })
 }
 
 export async function markAccountPaymentFailedRemote(
   paymentId: number,
   body: SettlementStatusChangeRequest = { reason: '' }
 ): Promise<void> {
-  await settlementApi.markFailed(paymentId, body)
+  await customInstance({
+    url: `/api/admin/account-payments/${paymentId}/failed`,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    data: body,
+  })
 }
 
 export async function requestBulkTransferExportRemote(
   body: SettlementExportRequest
 ): Promise<SettlementExportHistoryResponse> {
-  const call = settlementApi.requestBulkTransferExport
-  if (typeof call === 'function') {
-    return unwrapApiBody<SettlementExportHistoryResponse>(await call(body))
-  }
   return unwrapApiBody<SettlementExportHistoryResponse>(
     await customInstance({
       url: '/api/admin/settlements/exports/bulk-transfer',
@@ -322,7 +352,13 @@ export function assertSettlementServerExportReady(
 export async function fetchSettlementExportHistoriesRemote(
   params: ListExportHistoriesParams
 ): Promise<PageResponseSettlementExportHistoryResponse> {
-  return unwrapApiBody(await settlementApi.listExportHistories(params))
+  return unwrapApiBody(
+    await customInstance({
+      url: '/api/admin/settlements/exports',
+      method: 'GET',
+      params,
+    })
+  )
 }
 
 export async function fetchCurrentSettlementConfigRemote(): Promise<SettlementConfigResponse> {
@@ -353,7 +389,13 @@ export async function fetchSettlementCalendarRemote(fromDate: string, toDate: st
 }
 
 export async function fetchSettlementCalendarSummaryRemote(year: number, month: number) {
-  return unwrapApiBody(await settlementApi.settlementCalendarSummary({ year, month }))
+  return unwrapApiBody(
+    await customInstance({
+      url: '/api/admin/settlements/calendar/summary',
+      method: 'GET',
+      params: { year, month },
+    })
+  )
 }
 
 export async function fetchSettlementCalendarDateRemote(date: string) {

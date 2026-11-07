@@ -73,9 +73,7 @@ export function formatGeminiImportPreviewFailures(
   // 지급완료 중복 FAILED는 「실적 등록 불가」전용 — 일반 행 실패 문구에 섞지 않는다.
   const failed = (results ?? []).filter(
     result =>
-      (!isGeminiImportResultSuccess(result) ||
-        (result.paymentExclusionReason as string | null | undefined) ===
-          'GEMINI_INSTRUCTOR_NOT_MATCHED') &&
+      !isGeminiImportResultSuccess(result) &&
       !isGeminiPerformancePaidBlockedText(result.message)
   )
   if (failed.length === 0) return undefined

@@ -49,10 +49,13 @@ export function isSystemCatalogOnlyFormType(formType: string | null | undefined)
 export const REGISTRATION_GENERAL_CATALOG_TEMPLATE_ID = 1
 /** BE templateId=3 은 registration-ujat. versions/copy 400. */
 export const REGISTRATION_UJAT_CATALOG_TEMPLATE_ID = 3
+/** BE templateId=41 은 registration-trained-teachers. versions/copy 400. */
+export const REGISTRATION_TRAINED_TEACHERS_CATALOG_TEMPLATE_ID = 41
 
 const REGISTRATION_CATALOG_TEMPLATE_IDS = new Set([
   REGISTRATION_GENERAL_CATALOG_TEMPLATE_ID,
   REGISTRATION_UJAT_CATALOG_TEMPLATE_ID,
+  REGISTRATION_TRAINED_TEACHERS_CATALOG_TEMPLATE_ID,
 ])
 
 export function isSystemCatalogOnlyTemplateCode(templateCode: string | null | undefined): boolean {
