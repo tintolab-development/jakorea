@@ -62,6 +62,8 @@ type PaymentOrderDetailViewShared = {
   calcStatementId?: number | null
   calcSettlementId?: number | null
   calcAvailableActions?: readonly string[] | null
+  /** 개인형 프로그램 — 산출 내역 「참여 기관명」열 미노출 */
+  calcHideInstitutionColumn?: boolean
   openCalculationStatement: (lineRow: PaymentOrderCalculationStatementLineRow) => void
   closeCalculationStatement: () => void
   resetCalcAndClose: () => void
@@ -114,6 +116,7 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
     calcStatementId,
     calcSettlementId,
     calcAvailableActions,
+    calcHideInstitutionColumn,
     openCalculationStatement,
     closeCalculationStatement,
     resetCalcAndClose,
@@ -251,6 +254,7 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
         statementId={calcStatementId}
         settlementId={calcSettlementId}
         availableActions={calcAvailableActions}
+        hideInstitutionColumn={calcHideInstitutionColumn}
         detailContextQuery={detailContextQuery}
         onStatementLineCommitted={handleStatementLineCommitted}
         onAfterRejectResultClosed={closeCalculationStatement}

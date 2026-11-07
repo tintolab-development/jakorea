@@ -55,7 +55,6 @@
   .detail-info-form
   .payment-order-admin__status-text {
   font-family: Pretendard, sans-serif;
-  font-size: 16px;
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
@@ -83,7 +82,6 @@
   color: var(--color-red, #c32f4a);
   text-align: center;
   font-family: Pretendard, sans-serif;
-  font-size: 16px;
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
@@ -464,8 +462,12 @@
 }
 
 /* 산출 내역 상세 — 지급조서 표 구성(layout="payment-statement"), 글자 크기만 14px */
-.payment-order-calc-statement-modal .payment-statement-issuance-calculation-lines-table.payment-order-calc-statement-modal__lines-table th,
-.payment-order-calc-statement-modal .payment-statement-issuance-calculation-lines-table.payment-order-calc-statement-modal__lines-table td {
+.payment-order-calc-statement-modal
+  .payment-statement-issuance-calculation-lines-table.payment-order-calc-statement-modal__lines-table
+  th,
+.payment-order-calc-statement-modal
+  .payment-statement-issuance-calculation-lines-table.payment-order-calc-statement-modal__lines-table
+  td {
   font-size: 14px;
 }
 

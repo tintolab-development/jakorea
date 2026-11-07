@@ -195,14 +195,22 @@ export function PaymentOrderCalculationStatementModalImpl({
     )
   }, [data, entryKind])
 
-  const issuanceParagraphBodyOptions = useMemo(
-    () =>
-      issuanceParagraphBodyOptionsOverride ??
-      (issuanceInput
-        ? buildPaymentStatementIssuanceViewOptionsFromCalculation(issuanceInput)
-        : undefined),
-    [issuanceInput, issuanceParagraphBodyOptionsOverride]
-  )
+  const issuanceParagraphBodyOptions = useMemo(() => {
+    if (issuanceParagraphBodyOptionsOverride) return issuanceParagraphBodyOptionsOverride
+    if (!issuanceInput) return undefined
+    const options = buildPaymentStatementIssuanceViewOptionsFromCalculation(issuanceInput)
+    // 개인형 — 지급조서 산출 내역에서도 「참여 기관명」열 미노출
+    if (hideInstitutionColumn && options.paymentStatementCalculationLines) {
+      return {
+        ...options,
+        paymentStatementCalculationLines: {
+          ...options.paymentStatementCalculationLines,
+          hideInstitutionColumn: true,
+        },
+      }
+    }
+    return options
+  }, [hideInstitutionColumn, issuanceInput, issuanceParagraphBodyOptionsOverride])
 
   const issuanceFileName = useMemo(
     () =>
