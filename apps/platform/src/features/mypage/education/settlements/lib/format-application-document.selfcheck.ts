@@ -269,7 +269,8 @@ assert.notEqual(legacyCalc.find(row => row.label === '교육 진행 차시')?.va
 assert.equal(shouldShowSettlementDocumentFirstColumn('PAYMENT_STATEMENT', 'GENERAL_INDIVIDUAL'), false)
 assert.equal(shouldShowSettlementDocumentFirstColumn('PAYMENT_STATEMENT', 'GENERAL_ORGANIZATION'), true)
 assert.equal(shouldShowSettlementDocumentFirstColumn('PAYMENT_STATEMENT', null), true)
-assert.equal(shouldShowSettlementDocumentFirstColumn('RECEIPT_SETTLEMENT', 'GENERAL_INDIVIDUAL'), true)
+assert.equal(shouldShowSettlementDocumentFirstColumn('RECEIPT_SETTLEMENT', 'GENERAL_INDIVIDUAL'), false)
+assert.equal(shouldShowSettlementDocumentFirstColumn('RECEIPT_SETTLEMENT', null), true)
 assert.equal(buildSettlementDocumentCalcRows({
   lectureFeeType: null, instructorFeeAmount: null, businessIncomeYn: true, educationSessionCount: null,
   recognizedSessionCount: null, actualTrainingMinutes: null, totalStudentCount: null, totalLectureFee: null,

@@ -157,15 +157,13 @@ export function settlementDocumentFirstColumnHeader(
 }
 
 /**
- * 산출 내역 첫 열 노출 여부.
- * 개인형 프로그램(GENERAL_INDIVIDUAL) 지급조서는 기관이 없으므로 「참여 기관명」열 자체를 그리지 않는다.
- * 영수증(첫 열 = 프로그램명)은 그대로 둔다.
+ * 산출 내역 첫 열(참여 기관명 / 프로그램명) 노출 여부.
+ * 개인형 프로그램(GENERAL_INDIVIDUAL)은 지급조서·영수증 모두 첫 열 자체를 그리지 않는다.
  */
 export function shouldShowSettlementDocumentFirstColumn(
-  documentType: SettlementApplicationDocumentResponse['documentType'],
+  _documentType: SettlementApplicationDocumentResponse['documentType'],
   programType?: string | null
 ): boolean {
-  if (isReceiptSettlementDocument(documentType)) return true
   return programType?.trim().toUpperCase() !== 'GENERAL_INDIVIDUAL'
 }
 
