@@ -12,12 +12,13 @@ export const PAYMENT_CONSENT_PLATFORM_HIDDEN_PARAGRAPH_IDS = new Set<string>([
   PAYMENT_STATEMENT_PRE_CONSENT_IDS.tailDate,
 ])
 
+/**
+ * 영수증 — 날짜 단락만 숨김(작성일은 서명 블록에 표시).
+ * 서명란(midSignature/tailSignature)은 지급조서와 같이 노출해 Platform 신규 작성에서 양식 서명란 위치에 각각 서명한다.
+ */
 export const RECEIPT_CONSENT_PLATFORM_HIDDEN_PARAGRAPH_IDS = new Set<string>([
   RECEIPT_PRE_CONSENT_IDS.midDate,
   RECEIPT_PRE_CONSENT_IDS.tailDate,
-  /** midConsentLine / finalConfirm + ConsentSignatureStatement */
-  RECEIPT_PRE_CONSENT_IDS.midSignature,
-  RECEIPT_PRE_CONSENT_IDS.tailSignature,
 ])
 
 export const EDUCATOR_CONSENT_PLATFORM_HIDDEN_PARAGRAPH_IDS = new Set<string>([

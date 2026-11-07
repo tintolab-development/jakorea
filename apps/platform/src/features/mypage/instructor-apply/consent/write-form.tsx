@@ -535,8 +535,74 @@ export function SchemaConsentWriteForm({
     }
   }, [onTitleAside, showDraftSignature])
 
+  /**
+   * 지급조서·영수증 — 양식에 있는 서명란 단락(mid/tail)에 각 슬롯 서명 블록을 둔다.
+   * 서명란 단락이 없으면 기존처럼 확인문 카드 안에 서명 블록을 둔다(서명 불가 방지).
+   */
+  const signatureParagraphSlotById = useMemo(() => {
+    const map = new Map<string, 'mid' | 'final'>()
+    const known: Array<[string, 'mid' | 'final']> =
+      templateId === 'agreement-third-party'
+        ? [
+            [PAYMENT_STATEMENT_PRE_CONSENT_IDS.midSignature, 'mid'],
+            [PAYMENT_STATEMENT_PRE_CONSENT_IDS.tailSignature, 'final'],
+          ]
+        : templateId === 'agreement-receipt-pre-consent'
+          ? [
+              [RECEIPT_PRE_CONSENT_IDS.midSignature, 'mid'],
+              [RECEIPT_PRE_CONSENT_IDS.tailSignature, 'final'],
+            ]
+          : []
+    for (const [id, slot] of known) {
+      const p = state.draft.paragraphs.find(paragraph => paragraph.id === id)
+      if (
+        p != null &&
+        p.kind === 'description' &&
+        p.variant === 'system' &&
+        p.systemPreset === 'agreement_signature' &&
+        !hiddenParagraphIds.has(id)
+      ) {
+        map.set(id, slot)
+      }
+    }
+    return map
+  }, [hiddenParagraphIds, state.draft.paragraphs, templateId])
+  const signatureSlotsAtSignatureParagraph = useMemo(
+    () => new Set(signatureParagraphSlotById.values()),
+    [signatureParagraphSlotById],
+  )
+
   const renderParagraphSlot = useCallback(
     (paragraph: WritingFormParagraph) => {
+      const signatureParagraphSlot = signatureParagraphSlotById.get(paragraph.id)
+      if (signatureParagraphSlot != null) {
+        return (
+          <PFFormSignatureBlock
+            className={styles.statementSignatureBlock}
+            signerName={signerName}
+            signature={state.signatures?.[signatureParagraphSlot]}
+            onSignatureChange={value =>
+              setState(prev => ({
+                ...prev,
+                signatures: { ...prev.signatures, [signatureParagraphSlot]: value },
+              }))
+            }
+          />
+        )
+      }
+      if (
+        paragraph.kind === 'description' &&
+        paragraph.variant === 'system' &&
+        paragraph.systemPreset === 'agreement_signature' &&
+        paragraph.id !== AGREEMENT_NOTICE_PARAGRAPH_IDS.systemSignature
+      ) {
+        // 서버 서명 필드(mid/final) 계약 밖 서명란 — 서명 패드를 만들거나 다른 서명을 복제하지 않는다
+        return (
+          <p className={styles.statementNote} role="note" data-unsupported-signature-field={paragraph.id}>
+            이 서명란은 아직 전자서명을 지원하지 않습니다. 이 위치에는 서명이 저장되지 않습니다.
+          </p>
+        )
+      }
       if (
         paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.paymentRecord ||
         paragraph.id === RECEIPT_PRE_CONSENT_IDS.paymentRecord
@@ -578,6 +644,7 @@ export function SchemaConsentWriteForm({
             statement={body}
             signerName={signerName}
             signature={state.signatures?.mid}
+            showSignatureBlock={!signatureSlotsAtSignatureParagraph.has('mid')}
             onSignatureChange={mid =>
               setState(prev => ({
                 ...prev,
@@ -601,6 +668,7 @@ export function SchemaConsentWriteForm({
             statement={body}
             signerName={signerName}
             signature={state.signatures?.final}
+            showSignatureBlock={!signatureSlotsAtSignatureParagraph.has('final')}
             onSignatureChange={finalSig =>
               setState(prev => ({
                 ...prev,
@@ -645,6 +713,8 @@ export function SchemaConsentWriteForm({
       return undefined
     },
     [
+      signatureParagraphSlotById,
+      signatureSlotsAtSignatureParagraph,
       signerName,
       paymentBasicInfo,
       paymentStatementProfileValues,

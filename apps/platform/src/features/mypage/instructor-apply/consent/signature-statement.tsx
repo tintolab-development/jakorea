@@ -16,9 +16,11 @@ export const ConsentSignatureStatement = forwardRef<
     signerName: string
     signature?: string | FormSignatureValue | null
     onSignatureChange: (value: FormSignatureValue) => void
+    /** false면 진술문만 — 서명 블록은 양식 서명란 단락 위치에 따로 렌더 */
+    showSignatureBlock?: boolean
   }
 >(function ConsentSignatureStatement(
-  { statement, note, signerName, signature, onSignatureChange },
+  { statement, note, signerName, signature, onSignatureChange, showSignatureBlock = true },
   ref,
 ) {
   const trimmedNote = note?.trim() ?? ''
@@ -32,13 +34,15 @@ export const ConsentSignatureStatement = forwardRef<
       ) : (
         <p className={styles.statementText}>{statement}</p>
       )}
-      <PFFormSignatureBlock
-        ref={ref}
-        className={styles.statementSignatureBlock}
-        signerName={signerName}
-        signature={signature}
-        onSignatureChange={onSignatureChange}
-      />
+      {showSignatureBlock ? (
+        <PFFormSignatureBlock
+          ref={ref}
+          className={styles.statementSignatureBlock}
+          signerName={signerName}
+          signature={signature}
+          onSignatureChange={onSignatureChange}
+        />
+      ) : null}
     </section>
   )
 })
