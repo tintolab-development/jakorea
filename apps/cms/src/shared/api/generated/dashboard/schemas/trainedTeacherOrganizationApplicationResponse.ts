@@ -62,10 +62,6 @@ export interface TrainedTeacherOrganizationApplicationResponse {
   bookCount?: number | null;
   /** 저장된 교재 배송 상태. 없으면 null. PREPARING으로 기본 채움하지 않습니다. */
   textbookDeliveryStatus?: TrainedTeacherOrganizationApplicationResponseTextbookDeliveryStatus;
-  /** 신청 당시 저장된 교육 형태. 없으면 null. */
-  requestedEducationFormat?: string | null;
-  /** 신청 당시 지정된 교재 id. 없으면 null. */
-  textbookId?: number | null;
   educationCompletionCount?: number;
   /** 활동 포기 시각이 있으면 true. applicationStatus는 APPROVED를 유지합니다. */
   activityWithdrawn?: boolean | null;

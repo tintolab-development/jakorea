@@ -52,6 +52,14 @@ export interface TrainedTeacherOrganizationApplicationResponse {
   completedEducationRoundCount?: number;
   progressLabel?: string;
   textbookName?: string;
+  /** 저장된 키트 수. 없으면 null. 학생 수/24로 계산하지 않습니다. kitCount와 같은 값입니다. */
+  textbookKits?: number | null;
+  /** 저장된 교재 권수. 없으면 null. bookCount와 같은 값입니다. */
+  textbookQuantity?: number | null;
+  /** 저장된 키트 수. 저장값이 없으면 null이며 학생 수/24로 계산하지 않습니다. textbookKits와 같은 값입니다. */
+  kitCount?: number | null;
+  /** 저장된 교재 권수. 없으면 null. textbookQuantity와 같은 값입니다. */
+  bookCount?: number | null;
   /** 저장된 교재 배송 상태. 없으면 null. PREPARING으로 기본 채움하지 않습니다. */
   textbookDeliveryStatus?: TrainedTeacherOrganizationApplicationResponseTextbookDeliveryStatus;
   educationCompletionCount?: number;

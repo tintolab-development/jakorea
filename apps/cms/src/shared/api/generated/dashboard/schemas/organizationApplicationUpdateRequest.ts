@@ -17,11 +17,9 @@ export interface OrganizationApplicationUpdateRequest {
   requestedEducationFormat?: string;
   teacherMemberId?: number;
   teacherName?: string;
-  /** 교사 일반 전화. 휴대전화(teacherPhone)와 별도. 생략 시 유지, null이면 삭제. */
-  teacherTel?: string | null;
-  /** 교사 휴대전화. 일반 전화(teacherTel)와 별도. 생략 시 유지, null이면 삭제. */
-  teacherPhone?: string | null;
-  teacherEmail?: string | null;
+  teacherPhone?: string;
+  teacherTel?: string;
+  teacherEmail?: string;
   textbookId?: number;
   applicationReason?: string;
   otherRequests?: string;

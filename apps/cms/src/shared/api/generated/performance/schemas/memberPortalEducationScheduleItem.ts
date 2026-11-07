@@ -22,6 +22,7 @@ export interface MemberPortalEducationScheduleItem {
   locationName?: string;
   address?: string;
   addressDetail?: string;
+  /** 교육 진행 뱃지. COMPLETED | IN_PROGRESS | SCHEDULED | UNSCHEDULED. MATCHED는 지망 배정 코드이며 이 필드에 넣지 않는다. */
   scheduleStatus?: string;
   /** PRESENT | LATE | ABSENT | EXCUSED. 예정·미기록이면 null. */
   attendanceStatus?: string | null;
@@ -32,7 +33,7 @@ export interface MemberPortalEducationScheduleItem {
   surveyCount?: number;
   satisfactionCount?: number;
   availableActions?: string[];
-  /** 커리큘럼 행 라벨. CMS 공통정보 curriculumSessions[].sessionLabel 원문. 예: 1차시 / 1회차. 저장값이 없거나 정의와 매칭되지 않으면 null이며 합성하지 않는다. */
+  /** 커리큘럼 행 라벨 원문(예: 1차시) 또는 TRAINED_TEACHER 기관 운영 일정의 지망 라벨(예: 1지망). MATCHED 지망을 커리큘럼 차시로 치환하지 않는다. 없으면 null. */
   sessionLabel?: string | null;
   unitName?: string | null;
   content?: string | null;
@@ -53,4 +54,6 @@ export interface MemberPortalEducationScheduleItem {
   classLabel?: string | null;
   /** UJAT 배정 기관명. 없으면 null. 빈 문자열 금지. locationName과 별개 */
   organizationName?: string | null;
+  /** TRAINED_TEACHER 기관 신청 MATCHED 지망 순위(양수). 배열 index·session_no로 채우지 않는다. 없거나 해당 없으면 null. */
+  preferenceRank?: number | null;
 }
