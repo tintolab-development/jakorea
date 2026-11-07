@@ -1,10 +1,10 @@
 import dayjs from 'dayjs'
+import { formatDateDotWithWeekday } from '@/shared/utils/date'
+import type { GeminiApprovedTrainingDetail } from '../../model/approved/detail-types'
 import type {
-  GeminiApprovedTrainingDateCandidate,
   GeminiApprovedTrainingRow,
   GeminiApprovedTrainingStatus,
 } from '../../model/approved/types'
-import { formatTrainingDateCandidatesDisplay } from './training-date-candidates'
 
 export const APPROVED_TRAINING_STATUS_LABEL: Record<GeminiApprovedTrainingStatus, string> = {
   SCHEDULED: '프로그램 진행 예정',
@@ -15,11 +15,33 @@ export const APPROVED_TRAINING_STATUS_LABEL: Record<GeminiApprovedTrainingStatus
 
 const KOREAN_WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'] as const
 
-/** 승인 연수 삭제 안내에 표시할 식별자. 확정 연수일이 없으면 기관명만 반환한다. */
+type AssignedTrainingScheduleRow = Pick<
+  GeminiApprovedTrainingRow,
+  'instructorAssigned' | 'trainingDate' | 'trainingTimeText'
+>
+
+function formatDateTimeLabel(date: string | undefined, timeText: string | undefined): string {
+  const x = dayjs(date)
+  if (!x.isValid()) return '-'
+  const dateLabel = x.format('YYYY.MM.DD')
+  const time = timeText?.trim() ?? ''
+  if (!time || time === '-') return dateLabel
+  return `${dateLabel} | ${time}`
+}
+
+/** 강사 배정 완료 후에만 API 확정 일정을 표시한다. 후보·lastPreferred 대체 없음. */
+function formatAssignedTrainingDatetimeDisplay(row: AssignedTrainingScheduleRow): string {
+  if (!row.instructorAssigned) return '-'
+  const label = formatDateTimeLabel(row.trainingDate, row.trainingTimeText)
+  return label
+}
+
+/** 승인 연수 삭제 안내 식별자. 강사 미배정이면 기관명만. */
 export function formatApprovedTrainingDeleteDisplayName(
-  row: Pick<GeminiApprovedTrainingRow, 'institutionName' | 'trainingDate'>
+  row: Pick<GeminiApprovedTrainingRow, 'institutionName' | 'trainingDate' | 'instructorAssigned'>
 ): string {
   const institutionName = row.institutionName.trim() || '기관명 없음'
+  if (!row.instructorAssigned) return institutionName
   const trainingDate = row.trainingDate.trim()
   const parsed = dayjs(trainingDate)
   if (!trainingDate || !parsed.isValid()) return institutionName
@@ -37,59 +59,49 @@ export function formatRegionDisplay(
   return `${row.institutionSido} ${row.institutionSigungu}`.trim()
 }
 
-function formatDateTimeLabel(date: string | undefined, timeText: string | undefined): string {
-  const x = dayjs(date)
-  if (!x.isValid()) return '-'
-  const dateLabel = x.format('YYYY.MM.DD')
-  const time = timeText?.trim() ?? ''
-  if (!time || time === '-') return dateLabel
-  return `${dateLabel} | ${time}`
+export type GeminiInstructorApprovalTrainingSummaryLabels = {
+  institutionName: string
+  trainingDateLabel: string
+  trainingTimeLabel: string
 }
 
-function firstPreferredCandidate(
-  candidates: readonly GeminiApprovedTrainingDateCandidate[] | undefined
-): GeminiApprovedTrainingDateCandidate | undefined {
-  if (!candidates?.length) return undefined
-  return [...candidates].sort((a, b) => a.preferenceRank - b.preferenceRank)[0]
-}
-
-/** 승인된 연수일시 한 줄. 강사 미지정이어도 확정일 또는 1지망을 보여 준다. */
-export function formatConfirmedTrainingDatetimeDisplay(
-  row: Pick<
-    GeminiApprovedTrainingRow,
-    'trainingDate' | 'trainingTimeText' | 'trainingDateCandidates'
-  > & {
-    instructorAssigned?: boolean
-  }
+export function formatTrainingTimeTextWithClassCount(
+  timeText: string,
+  classCount: number | null | undefined
 ): string {
-  const confirmed = formatDateTimeLabel(row.trainingDate, row.trainingTimeText)
-  if (confirmed !== '-') return confirmed
-  const first = firstPreferredCandidate(row.trainingDateCandidates)
-  if (!first) return '-'
-  return formatDateTimeLabel(first.trainingDate, first.trainingTimeText)
+  if (!timeText) return '-'
+  const classCountText = classCount == null ? '-' : `${classCount}차시`
+  return `${timeText} (${classCountText})`
 }
 
-function formatLastPreferredDateDisplay(lastPreferredDate: string | undefined): string {
-  const x = dayjs(lastPreferredDate)
-  return x.isValid() ? x.format('YYYY.MM.DD') : '-'
-}
-
-/** 확정 연수일시. 미확정이면 기관 신청 희망 일정(1~3지망), 없으면 lastPreferredDate */
-export function formatTrainingDatetimeDisplay(
-  row: Pick<
-    GeminiApprovedTrainingRow,
-    | 'instructorAssigned'
-    | 'trainingDate'
-    | 'trainingTimeText'
-    | 'trainingDateCandidates'
-    | 'lastPreferredDate'
+/**
+ * 강사 승인 모달 info callout. 확정 일정 필드만 사용한다 (상세 GET SSOT).
+ */
+export function resolveGeminiInstructorApprovalTrainingSummary(
+  detail: Pick<
+    GeminiApprovedTrainingDetail,
+    'institutionName' | 'instructorAssigned' | 'trainingDate' | 'trainingTimeText' | 'classCount'
   >
-): string {
-  const confirmed = formatDateTimeLabel(row.trainingDate, row.trainingTimeText)
-  if (confirmed !== '-') return confirmed
-  const candidates = formatTrainingDateCandidatesDisplay(row.trainingDateCandidates)
-  if (candidates !== '-') return candidates
-  return formatLastPreferredDateDisplay(row.lastPreferredDate)
+): GeminiInstructorApprovalTrainingSummaryLabels {
+  const institutionName = detail.institutionName.trim() || '-'
+  const dateRaw = detail.trainingDate.trim()
+  const parsedDate = dayjs(dateRaw)
+  const hasDate = Boolean(dateRaw) && parsedDate.isValid()
+  const trainingDateLabel = hasDate ? formatDateDotWithWeekday(parsedDate) : '-'
+  const trainingTimeLabel = hasDate
+    ? formatTrainingTimeTextWithClassCount(detail.trainingTimeText, detail.classCount)
+    : '-'
+  return { institutionName, trainingDateLabel, trainingTimeLabel }
+}
+
+/** 목록·엑셀 연수일시. 강사 배정 완료 + API 확정 필드만. */
+export function formatConfirmedTrainingDatetimeDisplay(row: AssignedTrainingScheduleRow): string {
+  return formatAssignedTrainingDatetimeDisplay(row)
+}
+
+/** @deprecated 목록은 formatConfirmedTrainingDatetimeDisplay 사용. 동일 규칙. */
+export function formatTrainingDatetimeDisplay(row: AssignedTrainingScheduleRow): string {
+  return formatAssignedTrainingDatetimeDisplay(row)
 }
 
 export function formatInstructorDisplay(row: GeminiApprovedTrainingRow): string {

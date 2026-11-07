@@ -1,12 +1,11 @@
-import dayjs from 'dayjs'
 import { PermissionModal, type PermissionModalPayload } from '@/shared/components/permission-modal'
 import { NOTIFY_TIMING_CAPABILITY } from '@/shared/lib/notify-timing-capability'
-import { formatDateDotWithWeekday } from '@/shared/utils/date'
 import type { GeminiApprovedTrainingDetail } from '../../model/approved/detail-types'
 import {
   buildGeminiInstructorApproveMessageLines,
   buildGeminiInstructorChangeMessageLines,
 } from '../../lib/approved/instructor-approve-messages'
+import { resolveGeminiInstructorApprovalTrainingSummary } from '../../lib/approved/format-display'
 import './instructor-approval-modal.css'
 
 type GeminiInstructorApprovalModalMode = 'approve' | 'change'
@@ -22,28 +21,14 @@ export type GeminiInstructorApprovalModalProps = {
   zIndex?: number
 }
 
-function displayValue(value: string | null | undefined): string {
-  const trimmed = value?.trim() ?? ''
-  return trimmed || '-'
-}
-
-function formatTrainingDate(value: string): string {
-  const parsed = dayjs(value.trim())
-  return parsed.isValid() ? formatDateDotWithWeekday(parsed) : '-'
-}
-
-function formatTrainingTime(value: string): string {
-  const text = displayValue(value)
-  if (text === '-') return text
-  return text.replace(/\s*[~〜]\s*/gu, ' ~ ').replace(/\s*\((\d+차시)\)\s*$/u, ' ($1)')
-}
-
+/** 승인 연수 상세 GET만 SSOT. trainingDateCandidates·lastPreferredDate·목록 API 미사용. */
 function TrainingSummary({ detail }: { detail: GeminiApprovedTrainingDetail }) {
+  const summary = resolveGeminiInstructorApprovalTrainingSummary(detail)
   return (
     <div className="gemini-instructor-approval-modal__training-summary" aria-label="연수 정보">
-      <span>{displayValue(detail.institutionName)}</span>
-      <span>{formatTrainingDate(detail.trainingDate)}</span>
-      <span>{formatTrainingTime(detail.trainingTimeText)}</span>
+      <span>{summary.institutionName}</span>
+      <span>{summary.trainingDateLabel}</span>
+      <span>{summary.trainingTimeLabel}</span>
     </div>
   )
 }
@@ -77,7 +62,7 @@ export function GeminiInstructorApprovalModal({
       onCancel={onCancel}
       onConfirm={onConfirm}
       notifyTimingOptions="two"
-      notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.immediateOnly}
+      notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.scheduledOnly}
       zIndex={zIndex}
     />
   )

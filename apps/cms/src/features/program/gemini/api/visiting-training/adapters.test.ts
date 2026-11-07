@@ -333,7 +333,7 @@ describe('gemini visiting-training adapters', () => {
     expect(unmatched.trainingDateCandidates).toEqual([
       { preferenceRank: 1, trainingDate: '2026-10-29', trainingTimeText: '10:00~12:00' },
     ])
-    expect(unmatched.lastPreferredDate).toBe('2026-10-29')
+    expect(unmatched.lastPreferredDate).toBe('')
   })
 
   it('maps create request and numeric ids', () => {

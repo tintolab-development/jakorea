@@ -1,9 +1,4 @@
 import type { GeminiApprovedTrainingDetail } from '@/features/program/gemini/model/approved/detail-types'
-import {
-  mapGeminiApprovedTrainingPrivacyUnmask,
-  toGeminiApprovedTrainingUnmaskError,
-  type GeminiApprovedTrainingPrivacyUnmasked,
-} from '@/features/program/gemini/lib/approved/privacy-unmask'
 import type { GeminiInstructorApplicationRow } from '@/features/program/gemini/model/approved/instructor-application-types'
 import type { GeminiApprovedTrainingRow } from '@/features/program/gemini/model/approved/types'
 import type { GeminiRecruitmentDetail } from '@/features/program/gemini/model/recruitment/detail-types'
@@ -37,6 +32,11 @@ import {
   syncProgramInlineImagesKeepProgram,
 } from '@/features/program/shared/api/program-inline-images'
 import { resolveGeminiAttachmentFileObjectIdsForSave } from '../../lib/recruitment/attachment-file-objects'
+import {
+  mapGeminiApprovedTrainingPrivacyUnmask,
+  toGeminiApprovedTrainingUnmaskError,
+  type GeminiApprovedTrainingPrivacyUnmasked,
+} from '../../lib/approved/privacy-unmask'
 import { shouldUseGeminiVisitingTrainingRemoteApi } from './capabilities'
 import { canGeminiRecruitmentInfoEdit } from '../../lib/recruitment/info-edit-policy'
 import {
@@ -50,6 +50,7 @@ import {
   deleteGeminiApprovedTrainingRemote,
   deleteGeminiRecruitmentRemote,
   fetchGeminiApprovedInstructorApplicationsRemote,
+  fetchGeminiInstructorApplicationDetailRemote,
   fetchGeminiApprovedTrainingDetailRemote,
   fetchGeminiApprovedTrainingsRemote,
   fetchGeminiOrganizationApplicationsRemote,
@@ -126,10 +127,7 @@ export async function listGeminiRecruitmentsPage(
   const baseNo = page.page * page.size
   return {
     rows: page.items.map((item, index) =>
-      mapGeminiRecruitmentItemToRow(
-        item,
-        Math.max(page.totalElements - baseNo - index - 1, 0)
-      )
+      mapGeminiRecruitmentItemToRow(item, Math.max(page.totalElements - baseNo - index - 1, 0))
     ),
     page: page.page,
     size: page.size,
@@ -255,9 +253,18 @@ export async function listGeminiApprovedInstructorApplicationsPage(
   }
 }
 
+export async function getGeminiInstructorApplicationDetail(
+  applicationId: string
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/instructorApplicationDetailResponse').InstructorApplicationDetailResponse
+> {
+  assertRemoteReady()
+  return fetchGeminiInstructorApplicationDetailRemote(applicationId)
+}
+
 export async function approveGeminiInstructorApplication(
   applicationId: string,
-  options?: { replacement?: boolean }
+  options?: { timing?: 'IMMEDIATE' | 'SCHEDULED'; scheduledAt?: string | null }
 ): Promise<void> {
   assertRemoteReady()
   await approveGeminiInstructorApplicationRemote(applicationId, options)
@@ -334,9 +341,7 @@ export async function updateGeminiRecruitment(
   )
   const request = mapGeminiRecruitmentDetailToUpdateRequest(draft, { recruitmentWindowLocked })
   const prepared = await prepareProgramInlineImageBind(programId, request)
-  const body = (
-    prepared.didAdopt ? prepared.rewritten : request
-  ) as ProgramUpdateRequest
+  const body = (prepared.didAdopt ? prepared.rewritten : request) as ProgramUpdateRequest
   await updateGeminiRecruitmentRemote(programId, body)
   if (prepared.fileObjectIds.length > 0) {
     await putProgramInlineImages(programId, prepared.fileObjectIds)

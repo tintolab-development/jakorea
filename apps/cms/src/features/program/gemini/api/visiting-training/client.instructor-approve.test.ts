@@ -17,23 +17,28 @@ describe('Gemini 강사 승인 remote client', () => {
     customInstanceMock.mockResolvedValue({})
   })
 
-  it('Gemini 전용 강사 승인 path에 application id를 전달한다', async () => {
+  it('Gemini 전용 강사 승인 path에 즉시 알림 계약을 전달한다', async () => {
     await approveGeminiInstructorApplicationRemote('1691631')
 
     expect(customInstanceMock).toHaveBeenCalledWith({
       url: '/api/admin/gemini/trainings/instructor-applications/1691631/approve',
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      data: { timing: 'IMMEDIATE', scheduledAt: null },
     })
   })
 
-  it('강사 변경이면 replacement=true body를 전달한다', async () => {
-    await approveGeminiInstructorApplicationRemote('1694824', { replacement: true })
+  it('강사 변경도 replacement 없이 알림 시점만 전달한다', async () => {
+    await approveGeminiInstructorApplicationRemote('1694824', {
+      timing: 'SCHEDULED',
+      scheduledAt: '2026-09-15T05:41:00.000Z',
+    })
 
     expect(customInstanceMock).toHaveBeenCalledWith({
       url: '/api/admin/gemini/trainings/instructor-applications/1694824/approve',
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      data: { replacement: true },
+      data: { timing: 'SCHEDULED', scheduledAt: '2026-09-15T05:41:00.000Z' },
     })
   })
 })

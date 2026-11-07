@@ -575,11 +575,7 @@ export function mapGeminiRecruitmentItemToApprovedRow(
   const trainingDate = toTrainingDateKey(dto.trainingDate)
   const trainingTimeText = trimmedOrEmpty(dto.trainingTimeText)
   const trainingDateCandidates = mapGeminiTrainingDateCandidates(dto.trainingDateCandidates)
-  // 목록에 lastPreferredDate가 오면 사용. 없으면 후보 마지막일. trainingDate 복사 금지
-  const lastPreferredDate =
-    toTrainingDateKey(dto.lastPreferredDate) ||
-    trainingDateCandidates[trainingDateCandidates.length - 1]?.trainingDate ||
-    ''
+  const lastPreferredDate = toTrainingDateKey(dto.lastPreferredDate)
   return {
     id: toId(dto.id ?? dto.organizationApplicationId ?? dto.programId),
     no: index + 1,

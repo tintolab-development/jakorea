@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import type { Key } from 'react'
+import { Spin } from 'antd'
+import type { PermissionModalPayload } from '@/shared/components/permission-modal'
+import { ApplicantsDetailContents } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-contents'
+import type { ApplicantInstructorApplicationInfoData } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-application-info'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
+import type { Program } from '@/types/domain'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -89,9 +95,21 @@ function toHomeRegionText(row: GeminiInstructorApplicationRow): string {
 export function GeminiApprovedTrainingDetailInstructorApplicationTab({
   approvedTrainingId,
   trainingDetail,
+  selectedApplicationId = null,
+  selectedApplicationDetail = null,
+  selectedApplicationDetailLoading = false,
+  selectedApplicationDetailError = false,
+  onOpenApplicationDetail,
+  onCloseApplicationDetail,
 }: {
   approvedTrainingId: string
   trainingDetail: GeminiApprovedTrainingDetail
+  selectedApplicationId?: string | null
+  selectedApplicationDetail?: ApplicantInstructorRow | null
+  selectedApplicationDetailLoading?: boolean
+  selectedApplicationDetailError?: boolean
+  onOpenApplicationDetail?: (applicationId: string) => void
+  onCloseApplicationDetail?: () => void
 }) {
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
@@ -104,14 +122,18 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
     target: GeminiInstructorApplicationRow
   } | null>(null)
 
-  const listQuery = useGeminiApprovedInstructorApplicationsQuery(approvedTrainingId, {
-    instructorName: appliedFilters.instructorName,
-    homeSido: appliedFilters.homeSido,
-    homeSigungu: appliedFilters.homeSigungu,
-    experienceYears: appliedFilters.experienceYears,
-    grade: appliedFilters.grade,
-    approvalStatus: appliedFilters.approvalStatus,
-  })
+  const listQuery = useGeminiApprovedInstructorApplicationsQuery(
+    approvedTrainingId,
+    {
+      instructorName: appliedFilters.instructorName,
+      homeSido: appliedFilters.homeSido,
+      homeSigungu: appliedFilters.homeSigungu,
+      experienceYears: appliedFilters.experienceYears,
+      grade: appliedFilters.grade,
+      approvalStatus: appliedFilters.approvalStatus,
+    },
+    !selectedApplicationId
+  )
   const approveMutation = useApproveGeminiInstructorApplicationMutation(approvedTrainingId)
 
   const rows = useMemo(
@@ -119,6 +141,8 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
     [listQuery.data]
   )
   const totalElements = listQuery.data?.pages[0]?.totalElements ?? rows.length
+  const hasApprovedInstructor =
+    trainingDetail.instructorAssigned || rows.some(row => row.approvalStatus === 'APPROVED')
 
   useEffect(() => {
     setSelectedRowKeys([])
@@ -127,15 +151,16 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
   }, [approvedTrainingId])
 
   const approveButtonLabel = useMemo(() => {
+    if (hasApprovedInstructor) return '강사 변경'
     if (selectedRowKeys.length !== 1) return '선택 승인'
     const selected = rows.find(row => row.id === String(selectedRowKeys[0]))
     if (!selected) return '선택 승인'
     const action = resolveGeminiInstructorApprovalAction({
       approvalStatus: selected.approvalStatus,
-      instructorAssigned: trainingDetail.instructorAssigned,
+      instructorAssigned: hasApprovedInstructor,
     })
     return action === 'change' ? '강사 변경' : '선택 승인'
-  }, [rows, selectedRowKeys, trainingDetail.instructorAssigned])
+  }, [hasApprovedInstructor, rows, selectedRowKeys])
 
   const showNoSelectionAlert = useCallback(() => {
     showAlert({
@@ -162,7 +187,7 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
     }
     const action = resolveGeminiInstructorApprovalAction({
       approvalStatus: target.approvalStatus,
-      instructorAssigned: trainingDetail.instructorAssigned,
+      instructorAssigned: hasApprovedInstructor,
     })
     if (action === 'invalid') {
       showAlert({
@@ -173,35 +198,114 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
       return
     }
     setConfirmModal({ mode: action, target })
-  }, [canWrite, rows, selectedRowKeys, showAlert, showNoSelectionAlert, trainingDetail])
+  }, [canWrite, hasApprovedInstructor, rows, selectedRowKeys, showAlert, showNoSelectionAlert])
 
-  const handleConfirmModalOk = useCallback(async () => {
-    if (!confirmModal) return
-    try {
-      await approveMutation.mutateAsync({
-        applicationId: confirmModal.target.id,
-        replacement: confirmModal.mode === 'change',
-      })
-      if (confirmModal.mode === 'approve') {
-        showAlert({
-          title: '승인 완료',
-          content: '승인되었습니다.',
+  const handleConfirmModalOk = useCallback(
+    async (payload: PermissionModalPayload) => {
+      if (!confirmModal) return
+      try {
+        await approveMutation.mutateAsync({
+          applicationId: confirmModal.target.id,
+          timing: payload.notifyTiming === 'manual' ? 'SCHEDULED' : 'IMMEDIATE',
+          scheduledAt:
+            payload.notifyTiming === 'manual'
+              ? (payload.manualNotifyAt?.toISOString() ?? null)
+              : null,
         })
-      } else {
+        if (confirmModal.mode === 'approve') {
+          showAlert({
+            title: '승인 완료',
+            content: '승인되었습니다.',
+          })
+        } else {
+          showAlert({
+            title: '강사 변경 완료',
+            content: '강사가 변경되었습니다.',
+          })
+        }
+        setSelectedRowKeys([])
+        setConfirmModal(null)
+      } catch (error) {
         showAlert({
-          title: '강사 변경 완료',
-          content: '강사가 변경되었습니다.',
+          title: '처리 실패',
+          content: formatGeminiApiError(
+            error,
+            '강사 승인·변경에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+          ),
         })
       }
-      setSelectedRowKeys([])
-      setConfirmModal(null)
-    } catch (error) {
-      showAlert({
-        title: '처리 실패',
-        content: formatGeminiApiError(error, '강사 승인·변경에 실패했습니다. 잠시 후 다시 시도해 주세요.'),
+    },
+    [approveMutation, confirmModal, showAlert]
+  )
+
+  const createDetailTarget = useCallback(
+    (detailRow: ApplicantInstructorRow): GeminiInstructorApplicationRow => ({
+      id: detailRow.id,
+      approvedTrainingId,
+      no: detailRow.no,
+      instructorName: detailRow.instructorName,
+      homeSido: '',
+      homeSigungu: '',
+      experienceYears: detailRow.lectureExperienceYears,
+      grade: detailRow.evaluationGrade ?? '-',
+      contact: detailRow.contact,
+      email: detailRow.email,
+      monthlyAssignmentCount: 0,
+      approvalStatus:
+        detailRow.approvalStatus === 'approved'
+          ? 'APPROVED'
+          : detailRow.approvalStatus === 'rejected'
+            ? 'REJECTED'
+            : 'PENDING',
+    }),
+    [approvedTrainingId]
+  )
+
+  const handleDetailApprove = useCallback(
+    (applicationId: string) => {
+      if (!canWrite || !selectedApplicationDetail) return
+      const target =
+        rows.find(row => row.id === applicationId) ?? createDetailTarget(selectedApplicationDetail)
+      const action = resolveGeminiInstructorApprovalAction({
+        approvalStatus: target.approvalStatus,
+        instructorAssigned: hasApprovedInstructor,
       })
-    }
-  }, [approveMutation, confirmModal, showAlert])
+      if (action === 'invalid') {
+        showAlert({
+          title: '안내',
+          content:
+            target.approvalStatus === 'APPROVED'
+              ? '현재 승인된 강사입니다. 변경할 다른 강사를 선택해 주세요.'
+              : '신청 반려된 강사는 선택 승인할 수 없습니다.\\n승인 대기 상태의 강사를 선택해 주세요.',
+        })
+        return
+      }
+      setConfirmModal({ mode: action, target })
+    },
+    [
+      canWrite,
+      createDetailTarget,
+      hasApprovedInstructor,
+      rows,
+      selectedApplicationDetail,
+      showAlert,
+    ]
+  )
+
+  const approvalModal = (
+    <GeminiInstructorApprovalModal
+      open={confirmModal != null}
+      mode={confirmModal?.mode ?? 'approve'}
+      instructorName={confirmModal?.target.instructorName ?? ''}
+      trainingDetail={trainingDetail}
+      onCancel={() => setConfirmModal(null)}
+      onConfirm={payload => {
+        void handleConfirmModalOk(payload)
+      }}
+      confirmLoading={approveMutation.isPending}
+      zIndex={2600}
+    />
+  )
 
   const columns = useMemo<ColumnsType<GeminiInstructorApplicationRow>>(
     () => [
@@ -274,6 +378,58 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
     ],
     []
   )
+
+  if (selectedApplicationId) {
+    if (selectedApplicationDetailLoading) {
+      return (
+        <>
+          <div className="gemini-approved-instructor-application-tab__detail-loading" role="status">
+            <Spin size="large" />
+          </div>
+          {approvalModal}
+        </>
+      )
+    }
+    if (selectedApplicationDetailError || !selectedApplicationDetail) {
+      return (
+        <>
+          <div className="gemini-approved-instructor-application-tab__detail-error" role="alert">
+            강사 신청 상세 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
+          </div>
+          {approvalModal}
+        </>
+      )
+    }
+    return (
+      <>
+        <ApplicantsDetailContents
+          type="instructors"
+          data={selectedApplicationDetail}
+          detailVariant="legacy"
+          program={
+            trainingDetail.programId
+              ? ({ id: trainingDetail.programId } as Program)
+              : null
+          }
+          instructorApplicationInfo={
+            {
+              officialDocumentRequired: trainingDetail.officialDocumentRequired,
+              officialDocumentRequiredInfo: trainingDetail.officialDocumentRequiredInfo,
+              institutionName: trainingDetail.institutionName,
+              trainingDate: trainingDetail.trainingDate,
+              trainingTimeText: trainingDetail.trainingTimeText,
+            } satisfies ApplicantInstructorApplicationInfoData
+          }
+          instructorResumeLayout="application"
+          onBack={onCloseApplicationDetail ?? (() => undefined)}
+          onApprove={handleDetailApprove}
+          onReject={() => undefined}
+          hidePendingRejectAction
+        />
+        {approvalModal}
+      </>
+    )
+  }
 
   return (
     <>
@@ -351,6 +507,19 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
           dataSource={rows}
           loading={listQuery.isPending}
           pagination={false}
+          onRow={record => ({
+            onClick: event => {
+              const target = event.target as HTMLElement
+              if (
+                target.closest('.ant-table-selection-column') ||
+                target.closest('.ant-checkbox-wrapper')
+              ) {
+                return
+              }
+              onOpenApplicationDetail?.(record.id)
+            },
+            style: { cursor: onOpenApplicationDetail ? 'pointer' : undefined },
+          })}
           rowSelection={
             canWrite
               ? {
@@ -366,18 +535,7 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
         />
       </FilterTableLayout>
 
-      <GeminiInstructorApprovalModal
-        open={confirmModal != null}
-        mode={confirmModal?.mode ?? 'approve'}
-        instructorName={confirmModal?.target.instructorName ?? ''}
-        trainingDetail={trainingDetail}
-        onCancel={() => setConfirmModal(null)}
-        onConfirm={() => {
-          void handleConfirmModalOk()
-        }}
-        confirmLoading={approveMutation.isPending}
-        zIndex={2600}
-      />
+      {approvalModal}
     </>
   )
 }
