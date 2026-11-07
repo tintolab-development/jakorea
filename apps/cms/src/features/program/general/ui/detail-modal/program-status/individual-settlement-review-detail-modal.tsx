@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Spin } from 'antd'
 import { useQuery } from '@tanstack/react-query'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { ActionResultModal, CmsButton, ContentModal, ConfirmModal } from '@/shared/ui'
+import { ActionResultModal, CmsButton, ContentModal } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
 import {
@@ -25,6 +25,7 @@ import type {
   PaymentOrderCalculationStatementProgramBasicInfo,
   PaymentOrderProgramCalculationStatement,
 } from '@/features/settlement-management/model/payment-order-admin-list'
+import { PaymentOrderPaymentConfirmationModal } from '@/features/settlement/ui/payment-record/payment-order-payment-confirmation-modal'
 import {
   PaymentOrderPaymentRejectionModal,
   type PaymentOrderRejectSubmitPayload,
@@ -184,12 +185,13 @@ export function IndividualSettlementReviewDetailModal({
     [showAlert]
   )
 
-  const handleApprove = useCallback(async () => {
+  const handleApprove = useCallback(async (scheduledPaymentDate: string) => {
     if (settlementApplicationId == null || expectedRevisionNo == null) return
     try {
       await approveMutation.mutateAsync({
         settlementApplicationId,
         expectedRevisionNo,
+        scheduledPaymentDate,
       })
       setApproveOpen(false)
       setApproveDoneOpen(true)
@@ -260,7 +262,7 @@ export function IndividualSettlementReviewDetailModal({
               blocks={statementView.blocks}
               formulaLabel={statementView.formulaLabel}
               totalAmount={statementView.totalAmount}
-              institutionColumnTitle="프로그램명"
+              hideInstitutionColumn
               dateColumnTitle="교육 진행 일자"
               lectureSessionSegmentLabel="round"
               tableCellSpec="cms-data-table"
@@ -300,16 +302,15 @@ export function IndividualSettlementReviewDetailModal({
         )}
       </ContentModal>
 
-      <ConfirmModal
+      {/* 강사 산출 내역서와 같은 「지급조서 확인 안내」(대상·일정 + 계좌 지급 예정일) */}
+      <PaymentOrderPaymentConfirmationModal
         open={approveOpen}
-        title="지급조서 확인 안내"
-        content="지급조서 확인 처리 하시겠습니까?"
-        cancelText="취소"
-        confirmText="확인 처리"
+        data={rejectStatement}
         zIndex={INDIVIDUAL_SETTLEMENT_REVIEW_NESTED_MODAL_Z_INDEX}
         onCancel={() => setApproveOpen(false)}
-        onConfirm={() => void handleApprove()}
-        confirmLoading={approveMutation.isPending}
+        onConfirm={({ lectureFeePaymentScheduledDateIso }) =>
+          void handleApprove(lectureFeePaymentScheduledDateIso)
+        }
       />
 
       <ActionResultModal
