@@ -10,6 +10,8 @@ export type PaymentStatementCalculationLinesViewModel = {
   blocks: PaymentOrderCalculationStatementSessionBlock[]
   formulaLabel: string
   totalAmount: number
+  /** 개인형 프로그램 — 「참여 기관명」열 자체를 그리지 않는다 */
+  hideInstitutionColumn?: boolean
 }
 
 const lectureFee = 240_000

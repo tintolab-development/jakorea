@@ -68,6 +68,8 @@ export type PaymentStatementIssuanceCalculationLinesTableProps = {
   blocks: PaymentOrderCalculationStatementSessionBlock[]
   formulaLabel: string
   totalAmount: number
+  /** 개인형 프로그램 — 「참여 기관명」열 미노출 */
+  hideInstitutionColumn?: boolean
   className?: string
 }
 
@@ -75,14 +77,20 @@ export function PaymentStatementIssuanceCalculationLinesTable({
   blocks,
   formulaLabel,
   totalAmount,
+  hideInstitutionColumn = false,
   className,
 }: PaymentStatementIssuanceCalculationLinesTableProps) {
+  const columnCount = hideInstitutionColumn ? 5 : 6
   const tableRows = useMemo(
     () => buildPaymentStatementIssuanceCalculationLinesRows(blocks),
     [blocks]
   )
 
-  const rootClass = ['payment-statement-issuance-calculation-lines-table', className]
+  const rootClass = [
+    'payment-statement-issuance-calculation-lines-table',
+    hideInstitutionColumn ? 'payment-statement-issuance-calculation-lines-table--no-institution' : '',
+    className,
+  ]
     .filter(Boolean)
     .join(' ')
 
@@ -91,7 +99,9 @@ export function PaymentStatementIssuanceCalculationLinesTable({
       <div className="payment-statement-issuance-calculation-lines-table__radius">
         <table className={rootClass}>
           <colgroup>
-            <col className="payment-statement-issuance-calculation-lines-table__col--institution" />
+            {hideInstitutionColumn ? null : (
+              <col className="payment-statement-issuance-calculation-lines-table__col--institution" />
+            )}
             <col className="payment-statement-issuance-calculation-lines-table__col--date" />
             <col className="payment-statement-issuance-calculation-lines-table__col--pay" />
             <col className="payment-statement-issuance-calculation-lines-table__col--category" />
@@ -100,7 +110,7 @@ export function PaymentStatementIssuanceCalculationLinesTable({
           </colgroup>
           <thead>
             <tr>
-              <th>참여 기관명</th>
+              {hideInstitutionColumn ? null : <th>참여 기관명</th>}
               <th>강의 진행 일자</th>
               <th>지급/공제</th>
               <th>구분</th>
@@ -112,7 +122,7 @@ export function PaymentStatementIssuanceCalculationLinesTable({
             {tableRows.length === 0 ? (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={columnCount}
                   className="payment-statement-issuance-calculation-lines-table__empty"
                 >
                   -
@@ -123,7 +133,9 @@ export function PaymentStatementIssuanceCalculationLinesTable({
                 <tr key={row.key}>
                   {row.isFirstInBlock ? (
                     <>
-                      <td rowSpan={row.blockRowSpan}>{row.institutionName}</td>
+                      {hideInstitutionColumn ? null : (
+                        <td rowSpan={row.blockRowSpan}>{row.institutionName}</td>
+                      )}
                       <td rowSpan={row.blockRowSpan}>
                         <div className="payment-statement-issuance-calculation-lines-table__date-cell">
                           {withProgramDetailTdDivider([
@@ -148,7 +160,7 @@ export function PaymentStatementIssuanceCalculationLinesTable({
             <tr className="payment-statement-issuance-calculation-lines-table__summary-row">
               <th scope="row">합계</th>
               <td
-                colSpan={4}
+                colSpan={columnCount - 2}
                 className="payment-statement-issuance-calculation-lines-table__formula"
               >
                 {formulaLabel}

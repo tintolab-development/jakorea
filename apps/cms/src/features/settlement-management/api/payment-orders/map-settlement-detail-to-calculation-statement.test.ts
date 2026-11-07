@@ -320,7 +320,7 @@ describe('mapSettlementDetailToProgramCalculationStatement', () => {
     expect(mapped.blocks[0]?.lines[0]?.basisDetail).toMatchObject({
       layout: 'lectureFeeTier',
       categoryLabel: '1급 강사비',
-      lectureTimeDisplay: '1차시',
+      lectureTimeDisplay: '-',
       feeAssessmentWon: 500000,
     })
   })

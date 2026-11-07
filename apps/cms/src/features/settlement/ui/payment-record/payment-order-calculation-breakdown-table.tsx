@@ -66,8 +66,9 @@ export function buildPaymentOrderCalculationTableRows(
   return out
 }
 
+/** 지급 `+`, 공제 `-`, 0원은 부호 없이 `0원` */
 function formatSignedWon(n: number): string {
-  const sign = n >= 0 ? '+' : ''
+  const sign = n > 0 ? '+' : ''
   return `${sign}${n.toLocaleString('ko-KR')}원`
 }
 

@@ -68,6 +68,7 @@ export function ParticipatingIndividualInstructorSettlementSection({
     instructor,
     settlementItems,
     institutionNameOverride: programTitle,
+    hideInstitutionColumn: true,
   })
 
   const [bulkDownloadLoading, setBulkDownloadLoading] = useState(false)

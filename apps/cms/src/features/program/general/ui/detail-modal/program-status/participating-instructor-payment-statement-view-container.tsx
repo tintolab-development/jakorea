@@ -39,6 +39,8 @@ export function useParticipatingInstructorPaymentStatementView(input: {
   instructor: ParticipatingInstructorRow
   settlementItems: SettlementListItemResponse[]
   institutionNameOverride?: string
+  /** 개인형 프로그램 — 지급조서 산출 내역 「참여 기관명」열 미노출 */
+  hideInstitutionColumn?: boolean
 }) {
   const { showAlert } = useCmsAlert()
   const [open, setOpen] = useState(false)
@@ -71,8 +73,16 @@ export function useParticipatingInstructorPaymentStatementView(input: {
       listItem,
       detail: detailQuery.data,
       institutionName: input.institutionNameOverride,
+      hideInstitutionColumn: input.hideInstitutionColumn,
     })
-  }, [activeRow, detailQuery.data, input.instructor, input.institutionNameOverride, listItem])
+  }, [
+    activeRow,
+    detailQuery.data,
+    input.instructor,
+    input.institutionNameOverride,
+    input.hideInstitutionColumn,
+    listItem,
+  ])
 
   const fileName = useMemo(() => {
     if (!activeRow) return undefined

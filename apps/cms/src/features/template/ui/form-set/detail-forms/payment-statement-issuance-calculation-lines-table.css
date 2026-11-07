@@ -44,6 +44,12 @@
   width: 16.4%;
 }
 
+/* 개인형 프로그램 — 참여 기관명 열 없음: 남는 폭은 항목명 열이 가져간다 */
+.payment-statement-issuance-calculation-lines-table--no-institution
+  .payment-statement-issuance-calculation-lines-table__col--item {
+  width: auto;
+}
+
 .payment-statement-issuance-calculation-lines-table th,
 .payment-statement-issuance-calculation-lines-table td {
   box-sizing: border-box;
