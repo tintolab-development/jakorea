@@ -6,23 +6,21 @@ import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { FilterTableToolbarButton, useCmsAlert } from '@/shared/ui'
-import { DeleteGuideModal } from '@/shared/ui/delete-guide-modal'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
+import { formatGeminiApiError } from '../../lib/gemini-api-error'
 import {
   useApproveGeminiInstructorApplicationMutation,
   useGeminiApprovedInstructorApplicationsQuery,
-  useRejectGeminiInstructorApplicationMutation,
 } from '../../api/visiting-training/hooks'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-basic-info.css'
-import {
-  buildGeminiInstructorApproveMessageLines,
-  buildGeminiInstructorChangeMessageLines,
-} from '../../lib/approved/instructor-approve-messages'
+import { resolveGeminiInstructorApprovalAction } from '../../lib/approved/instructor-approval-action'
 import { GEMINI_INSTRUCTOR_APPLICATION_FILTER_FIELDS } from '../../model/approved/instructor-application-filter-fields'
+import type { GeminiApprovedTrainingDetail } from '../../model/approved/detail-types'
 import type {
   GeminiInstructorApplicationApprovalStatus,
   GeminiInstructorApplicationRow,
 } from '../../model/approved/instructor-application-types'
+import { GeminiInstructorApprovalModal } from './instructor-approval-modal'
 import './detail-instructor-application-tab.css'
 
 type PendingFilters = {
@@ -90,8 +88,10 @@ function toHomeRegionText(row: GeminiInstructorApplicationRow): string {
 
 export function GeminiApprovedTrainingDetailInstructorApplicationTab({
   approvedTrainingId,
+  trainingDetail,
 }: {
   approvedTrainingId: string
+  trainingDetail: GeminiApprovedTrainingDetail
 }) {
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
@@ -99,9 +99,10 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [pendingFilters, setPendingFilters] = useState<PendingFilters>(INITIAL_PENDING_FILTERS)
   const [appliedFilters, setAppliedFilters] = useState<PendingFilters>(INITIAL_PENDING_FILTERS)
-  const [confirmModal, setConfirmModal] = useState<
-    { mode: 'approve'; target: GeminiInstructorApplicationRow } | { mode: 'change' } | null
-  >(null)
+  const [confirmModal, setConfirmModal] = useState<{
+    mode: 'approve' | 'change'
+    target: GeminiInstructorApplicationRow
+  } | null>(null)
 
   const listQuery = useGeminiApprovedInstructorApplicationsQuery(approvedTrainingId, {
     instructorName: appliedFilters.instructorName,
@@ -112,7 +113,6 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
     approvalStatus: appliedFilters.approvalStatus,
   })
   const approveMutation = useApproveGeminiInstructorApplicationMutation(approvedTrainingId)
-  const rejectMutation = useRejectGeminiInstructorApplicationMutation(approvedTrainingId)
 
   const rows = useMemo(
     () => listQuery.data?.pages.flatMap(page => page.rows) ?? [],
@@ -129,8 +129,13 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
   const approveButtonLabel = useMemo(() => {
     if (selectedRowKeys.length !== 1) return '선택 승인'
     const selected = rows.find(row => row.id === String(selectedRowKeys[0]))
-    return selected?.approvalStatus === 'APPROVED' ? '강사 변경' : '선택 승인'
-  }, [rows, selectedRowKeys])
+    if (!selected) return '선택 승인'
+    const action = resolveGeminiInstructorApprovalAction({
+      approvalStatus: selected.approvalStatus,
+      instructorAssigned: trainingDetail.instructorAssigned,
+    })
+    return action === 'change' ? '강사 변경' : '선택 승인'
+  }, [rows, selectedRowKeys, trainingDetail.instructorAssigned])
 
   const showNoSelectionAlert = useCallback(() => {
     showAlert({
@@ -149,10 +154,17 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
     const target = rows.find(row => row.id === assigneeId)
     if (!target) return
     if (target.approvalStatus === 'APPROVED') {
-      setConfirmModal({ mode: 'change' })
+      showAlert({
+        title: '안내',
+        content: '현재 승인된 강사입니다. 변경할 다른 강사를 선택해 주세요.',
+      })
       return
     }
-    if (target.approvalStatus !== 'PENDING') {
+    const action = resolveGeminiInstructorApprovalAction({
+      approvalStatus: target.approvalStatus,
+      instructorAssigned: trainingDetail.instructorAssigned,
+    })
+    if (action === 'invalid') {
       showAlert({
         title: '안내',
         content:
@@ -160,40 +172,36 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
       })
       return
     }
-    setConfirmModal({ mode: 'approve', target })
-  }, [canWrite, rows, selectedRowKeys, showAlert, showNoSelectionAlert])
+    setConfirmModal({ mode: action, target })
+  }, [canWrite, rows, selectedRowKeys, showAlert, showNoSelectionAlert, trainingDetail])
 
   const handleConfirmModalOk = useCallback(async () => {
     if (!confirmModal) return
     try {
+      await approveMutation.mutateAsync({
+        applicationId: confirmModal.target.id,
+        replacement: confirmModal.mode === 'change',
+      })
       if (confirmModal.mode === 'approve') {
-        await approveMutation.mutateAsync(confirmModal.target.id)
         showAlert({
           title: '승인 완료',
           content: '승인되었습니다.',
         })
       } else {
-        const approved = rows.filter(row => row.approvalStatus === 'APPROVED')
-        for (const row of approved) {
-          await rejectMutation.mutateAsync({
-            applicationId: row.id,
-            reason: '강사 변경',
-          })
-        }
         showAlert({
-          title: '강사 변경',
-          content: '기존 승인 강사를 대기 상태로 되돌렸습니다. 새 강사를 선택해 승인해 주세요.',
+          title: '강사 변경 완료',
+          content: '강사가 변경되었습니다.',
         })
       }
       setSelectedRowKeys([])
       setConfirmModal(null)
-    } catch {
+    } catch (error) {
       showAlert({
         title: '처리 실패',
-        content: '강사 승인·변경에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+        content: formatGeminiApiError(error, '강사 승인·변경에 실패했습니다. 잠시 후 다시 시도해 주세요.'),
       })
     }
-  }, [approveMutation, confirmModal, rejectMutation, rows, showAlert])
+  }, [approveMutation, confirmModal, showAlert])
 
   const columns = useMemo<ColumnsType<GeminiInstructorApplicationRow>>(
     () => [
@@ -358,22 +366,16 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
         />
       </FilterTableLayout>
 
-      <DeleteGuideModal
+      <GeminiInstructorApprovalModal
         open={confirmModal != null}
+        mode={confirmModal?.mode ?? 'approve'}
+        instructorName={confirmModal?.target.instructorName ?? ''}
+        trainingDetail={trainingDetail}
         onCancel={() => setConfirmModal(null)}
         onConfirm={() => {
           void handleConfirmModalOk()
         }}
-        title={confirmModal?.mode === 'change' ? '강사 변경' : '강사 승인 안내'}
-        lines={
-          confirmModal?.mode === 'change'
-            ? buildGeminiInstructorChangeMessageLines()
-            : confirmModal?.mode === 'approve'
-              ? buildGeminiInstructorApproveMessageLines(confirmModal.target.instructorName)
-              : []
-        }
-        confirmText={confirmModal?.mode === 'change' ? '변경' : '승인'}
-        confirmVariant="primary"
+        confirmLoading={approveMutation.isPending}
         zIndex={2600}
       />
     </>
