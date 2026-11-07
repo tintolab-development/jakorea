@@ -95,6 +95,8 @@ export function getPaymentOrderCalculationColumns(options?: {
   dateColumnTitle?: string
   /** true면 항목 설명 말줄임 대신 개행 */
   wrapDescription?: boolean
+  /** 개인형 프로그램 — 1열(참여 기관명/프로그램명) 미노출 */
+  hideInstitutionColumn?: boolean
 }): ColumnsType<PaymentOrderCalculationTableRow> {
   const handleBasisDetailClick = (row: PaymentOrderCalculationTableRow) => {
     if (options?.onBasisDetailClick) {
@@ -127,7 +129,7 @@ export function getPaymentOrderCalculationColumns(options?: {
         ? { institution: 188, date: 264, item: 142, description: 311, amount: 214, detail: 221 }
         : { institution: 160, date: 268, item: 120, description: 320, amount: 152, detail: 176 }
 
-  return [
+  const columns: ColumnsType<PaymentOrderCalculationTableRow> = [
     {
       title: options?.institutionColumnTitle ?? '참여 기관명',
       dataIndex: 'institutionName',
@@ -208,6 +210,9 @@ export function getPaymentOrderCalculationColumns(options?: {
       ),
     },
   ]
+  return options?.hideInstitutionColumn
+    ? columns.filter(column => column.key !== 'institutionName')
+    : columns
 }
 
 export interface PaymentOrderCalculationBreakdownTableProps {
@@ -291,6 +296,7 @@ export function PaymentOrderCalculationBreakdownTable({
         institutionColumnTitle,
         dateColumnTitle,
         wrapDescription,
+        hideInstitutionColumn,
       }),
     [
       lectureSessionSegmentLabel,
@@ -299,8 +305,11 @@ export function PaymentOrderCalculationBreakdownTable({
       wrapDescription,
       institutionColumnTitle,
       dateColumnTitle,
+      hideInstitutionColumn,
     ]
   )
+  /** 1열을 숨기면 합계 행 셀 index가 한 칸씩 당겨진다 */
+  const summaryOffset = hideInstitutionColumn ? -1 : 0
   const showHeaderActions = headerActions != null
   const [issueBlockedOpen, setIssueBlockedOpen] = useState(false)
 
@@ -395,20 +404,24 @@ export function PaymentOrderCalculationBreakdownTable({
           summary={() => (
             <CmsDataTable.Summary fixed="bottom">
               <CmsDataTable.Summary.Row className="payment-order-calc-statement-modal__summary-row">
-                <CmsDataTable.Summary.Cell index={0} colSpan={2} align="center">
+                <CmsDataTable.Summary.Cell
+                  index={0}
+                  colSpan={hideInstitutionColumn ? 1 : 2}
+                  align="center"
+                >
                   <span className="payment-order-calc-statement-modal__summary-label">합계</span>
                 </CmsDataTable.Summary.Cell>
-                <CmsDataTable.Summary.Cell index={2} colSpan={2} align="center">
+                <CmsDataTable.Summary.Cell index={summaryOffset + 2} colSpan={2} align="center">
                   <span className="payment-order-calc-statement-modal__summary-formula">
                     {formulaLabel}
                   </span>
                 </CmsDataTable.Summary.Cell>
-                <CmsDataTable.Summary.Cell index={4} align="center">
+                <CmsDataTable.Summary.Cell index={summaryOffset + 4} align="center">
                   <span className="payment-order-calc-statement-modal__summary-total">
                     {formatPaymentOrderCalculationWonPlain(totalAmount)}
                   </span>
                 </CmsDataTable.Summary.Cell>
-                <CmsDataTable.Summary.Cell index={5} align="center">
+                <CmsDataTable.Summary.Cell index={summaryOffset + 5} align="center">
                   <CmsButton
                     type="button"
                     variant="primary"
