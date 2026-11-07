@@ -67,10 +67,12 @@ export type PlatformConsentFillOptions = {
   interactiveExplanationIds?: ReadonlySet<string>
 }
 
-export function buildPlatformConsentFillOptions(templateId: string): PlatformConsentFillOptions {
+/**
+ * 행정정보 1번(이용기관)·2번(이용사무)은 시안상 표시만 — 서버(CMS) 양식 문구를 그대로 보여 준다.
+ * `NOTICE_FILL_INTERACTIVE_EXPLANATION_IDS`는 호환용으로 남겨 두되 Platform fill에는 넘기지 않는다.
+ */
+export function buildPlatformConsentFillOptions(_templateId: string): PlatformConsentFillOptions {
   return {
     consentFillReadOnlyBody: true,
-    interactiveExplanationIds:
-      templateId === 'agreement-notice' ? NOTICE_FILL_INTERACTIVE_EXPLANATION_IDS : undefined,
   }
 }

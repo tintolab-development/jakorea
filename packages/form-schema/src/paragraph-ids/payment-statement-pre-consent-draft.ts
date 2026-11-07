@@ -3,6 +3,7 @@ import {
   normalizeHorizontalTableParagraph,
   normalizeVerticalTableParagraph,
   normalizeWritingFormDraft,
+  repairSeedHorizontalTableIfBroken,
   type AgreementExplanationTextParagraph,
   type ClosingParagraph,
   type HorizontalTableFieldCellValue,
@@ -42,13 +43,13 @@ const P1_BOTTOM =
   '위의 개인정보 수집·이용에 대한 동의를 거부할 권리가 있습니다. 그러나 동의를 거부할 경우 기관 사업에 필요한 업무처리에 제약이 발생할 수 있습니다.'
 
 const P2_BOTTOM =
-  '위의 고유식별번호(주민등록번호) 수집·이용에 대한 동의를 거부할 권리가 있습니다. 그러나 동의를 거부할 경우 활동비지급 및 세금신고 등 업무처리에 제약이 발생할 수 있습니다.'
+  '주민등록번호는 「소득세법」에 따라 원천징수 및 지급명세서 제출을 위해 수집하는 정보로, 동의 대상이 아닙니다. 제공하지 않으면 활동비지급 및 세금신고 등 업무처리가 어렵습니다.'
 
 const P3_BOTTOM =
-  '위의 개인정보의 제3자 제공·이용에 대한 동의를 거부할 권리가 있습니다. 그러나 동의를 거부할 경우 활동비지급 및 세금신고 등 업무처리에 제약이 발생할 수 있습니다.'
+  '국세청 제공은 「소득세법」에 따른 것으로 동의 대상이 아니며, 제공하지 않으면 활동비지급 및 세금 신고 등 업무처리가 어렵습니다.\n사회복지공동모금회 제공은 선택 사항으로 동의를 거부할 권리가 있으며, 동의하지 않아도 강사비·실비 지급은 제한되지 않습니다.\n다만 사회복지공동모금회 배분사업으로 운영하는 프로그램은 증빙서류 제출 등 업무처리에 제약이 발생할 수 있습니다.\n(선택) 위 개인정보 제3자 제공·이용(사회복지공동모금회)에 동의하십니까?'
 
 const P4_BOTTOM =
-  '위의 고유식별정보의 제3자 제공·이용에 대한 동의를 거부할 권리가 있습니다. 그러나 동의를 거부할 경우 활동비지급 및 세금 신고 등 업무처리에 제약이 발생할 수 있습니다.'
+  '주민등록번호는 「소득세법」에 따라 원천세 신고를 위해 국세청에 제공하는 정보로, 동의 대상이 아닙니다. 제공하지 않으면 활동비지급 및 세금 신고 등 업무처리가 어렵습니다.'
 
 function createP1CollectionTable(): HorizontalTableParagraph {
   const colCount = 3
@@ -60,12 +61,11 @@ function createP1CollectionTable(): HorizontalTableParagraph {
     {
       kind: 'text',
       value:
-        '성명, 생년월일, 주소, 전화번호, e-mail,\n계좌정보(은행, 계좌번호, 예금주)',
+        '성명, 영문 성명, 생년월일, 소속, 주소, 전화번호, 이메일, 계좌정보(은행, 계좌번호, 예금주)',
     },
     {
       kind: 'text',
-      value:
-        '강사비, 회의비 등 목적에 맞게 사용 지급 및\n강사관리 및 사업에 필요한 업무처리',
+      value: '강사비 및 교통비 등 실비 지급 및 강사관리 및 사업에 필요한 업무 처리',
     },
     {
       kind: 'text',
@@ -77,11 +77,11 @@ function createP1CollectionTable(): HorizontalTableParagraph {
     kind: 'single_item',
     variant: 'horizontal_table',
     requiredMark: true,
-    paragraphTitle: '개인정보 수집·이용',
+    paragraphTitle: '개인정보 수집‧이용',
     paragraphDescription: '',
     participatesInTitleNumbering: true,
     tableFlavor: 'field',
-    columnHeaders: ['항목', '수집·이용 목적', '보유기간'],
+    columnHeaders: ['항목', '수집‧이용 목적', '보유기간'],
     dataRows: [Array.from({ length: colCount }, () => '')],
     columnFields,
     fieldDataRows: [bodyRow],
@@ -117,20 +117,21 @@ function createP2RrnCollectionTable(): HorizontalTableParagraph {
     id: PAYMENT_STATEMENT_PRE_CONSENT_IDS.p2RrnCollection,
     kind: 'single_item',
     variant: 'horizontal_table',
-    requiredMark: true,
-    paragraphTitle: '고유식별번호(주민등록번호) 수집·이용',
+    // 시안: 법령에 따른 수집 — 동의 대상 아님(`*`·라디오 없음)
+    requiredMark: false,
+    paragraphTitle: '고유식별번호(주민등록번호) 수집‧이용 (법령에 따른 수집)',
     paragraphDescription: '',
     participatesInTitleNumbering: true,
     tableFlavor: 'field',
-    columnHeaders: ['항목', '수집·이용 목적', '보유기간'],
+    columnHeaders: ['항목', '수집‧이용 목적', '보유기간'],
     dataRows: [Array.from({ length: colCount }, () => '')],
     columnFields,
     fieldDataRows: [bodyRow],
     bottomText: P2_BOTTOM,
     showBottomText: true,
-    showBottomConsent: true,
+    showBottomConsent: false,
     bottomConsent: 'agree',
-    answerRequired: true,
+    answerRequired: false,
   })
 }
 
@@ -144,17 +145,17 @@ function createP3ThirdPartyTable(): HorizontalTableParagraph {
   ]
   const bodyRows: HorizontalTableFieldCellValue[][] = [
     [
-      { kind: 'text', value: '국세청' },
-      { kind: 'text', value: '성명, 주소' },
+      { kind: 'text', value: '국세청 (법령에 따른 제공)' },
+      { kind: 'text', value: '성명, 주소, 지급 금액' },
+      // §8 D5 — CMS `원천세 신고` vs Platform `원천세신고` 결정 전 현행 유지
       { kind: 'text', value: '원천세 신고' },
       { kind: 'text', value: '소득세법에 따른 보관기간' },
     ],
     [
-      { kind: 'text', value: '사회복지공동모금회' },
+      { kind: 'text', value: '사회복지공동모금회 (선택 동의)' },
       {
         kind: 'text',
-        value:
-          '성명, 생년월일, 주소, 전화번호, e-mail,\n계좌정보(은행, 계좌번호, 예금주)',
+        value: '성명, 생년월일, 주소, 전화번호, 이메일, 계좌정보(은행, 계좌번호, 예금주)',
       },
       { kind: 'text', value: '배분사업 수행 관련 증빙서류 제출' },
       { kind: 'text', value: '10년' },
@@ -165,7 +166,7 @@ function createP3ThirdPartyTable(): HorizontalTableParagraph {
     kind: 'single_item',
     variant: 'horizontal_table',
     requiredMark: true,
-    paragraphTitle: '개인정보 제3자 제공·이용',
+    paragraphTitle: '개인정보 제3자 제공‧이용',
     paragraphDescription: '',
     participatesInTitleNumbering: true,
     tableFlavor: 'field',
@@ -191,16 +192,17 @@ function createP4RrnThirdPartyTable(): HorizontalTableParagraph {
   ]
   const bodyRow: HorizontalTableFieldCellValue[] = [
     { kind: 'text', value: '국세청' },
-    { kind: 'text', value: '성명, 주소' },
-    { kind: 'text', value: '원천세 신고' },
+    { kind: 'text', value: '주민등록번호' },
+    { kind: 'text', value: '원천세신고' },
     { kind: 'text', value: '소득세법에 따른 보관기간' },
   ]
   return normalizeHorizontalTableParagraph({
     id: PAYMENT_STATEMENT_PRE_CONSENT_IDS.p4RrnThirdParty,
     kind: 'single_item',
     variant: 'horizontal_table',
-    requiredMark: true,
-    paragraphTitle: '고유식별번호 제3자 제공·이용',
+    // 시안: 법령에 따른 제공 — 동의 대상 아님(`*`·라디오 없음)
+    requiredMark: false,
+    paragraphTitle: '고유식별번호 제3자 제공·이용 (법령에 따른 제공)',
     paragraphDescription: '',
     participatesInTitleNumbering: true,
     tableFlavor: 'field',
@@ -210,9 +212,9 @@ function createP4RrnThirdPartyTable(): HorizontalTableParagraph {
     fieldDataRows: [bodyRow],
     bottomText: P4_BOTTOM,
     showBottomText: true,
-    showBottomConsent: true,
+    showBottomConsent: false,
     bottomConsent: 'agree',
-    answerRequired: true,
+    answerRequired: false,
   })
 }
 
@@ -242,7 +244,7 @@ const intro: AgreementExplanationTextParagraph = {
   participatesInTitleNumbering: false,
   bodyPlaceholder: '',
   bodyText:
-    'JA KOREA (이하 "기관"이라 함)는 「개인정보 보호법」 제15조 및 22조에 의거하여 개인정보 수집 및 이용에 관한 정보주체의 동의절차를 준수하며,\n개인정보 제공자가 동의한 이용목적 외의 용도로는 이용, 제공되지 않습니다. 제공된 개인정보는 개인정보 관리책임자를 통해 열람, 정정, 삭제 등을 요구할 수 있습니다.',
+    'JA KOREA (이하 “기관”이라 함)는 「개인정보 보호법」제15조 및 22조에 의거하여 개인정보 수집 및 이용에 관한 정보주체의 동의절차를 준수하며, 개인정보 제공자가 동의한 이용목적(법령에 따라 처리하는 정보는 해당 법령에서 정한 목적) 외의 용도로는 이용․제공되지 않습니다.\n제공된 개인정보는 개인정보 보호책임자를 통해 열람, 정정, 삭제 등을 요구할 수 있습니다.',
   answerRequired: true,
 }
 
@@ -378,8 +380,8 @@ export const PAYMENT_STATEMENT_PRE_CONSENT_HORIZONTAL_TABLE_IDS = new Set<string
 ])
 
 /**
- * 저장된 draft에 구 시드(1행·옛 문구)가 남아 있어도
- * 가로형 표 단락(p1~p4)은 최신 시드 내용으로 덮어쓴다.
+ * 가로형 표 단락(p1~p4)은 **서버 저장값 우선** — 표가 비었거나 구조가 깨진 경우
+ * (열 수 불일치·시드보다 적은 행·전부 빈 값)에만 최신 시드로 복구한다.
  * 시드에 있는 mid/tail·귀하 등 단락이 없으면 시드 순서로 보강한다.
  * 제거된 단락(JA Korea 활동 경험 등)은 저장본에서 삭제한다.
  */
@@ -402,8 +404,13 @@ export function overlayPaymentStatementPreConsentSeedHorizontalTables(
 
   const resolvedById = new Map<string, WritingFormParagraph>()
   for (const p of stripped.paragraphs) {
-    if (PAYMENT_STATEMENT_PRE_CONSENT_HORIZONTAL_TABLE_IDS.has(p.id)) {
-      resolvedById.set(p.id, seedById.get(p.id) ?? p)
+    const seedParagraph = seedById.get(p.id)
+    if (
+      PAYMENT_STATEMENT_PRE_CONSENT_HORIZONTAL_TABLE_IDS.has(p.id) &&
+      seedParagraph?.kind === 'single_item' &&
+      seedParagraph.variant === 'horizontal_table'
+    ) {
+      resolvedById.set(p.id, repairSeedHorizontalTableIfBroken(p, seedParagraph))
     } else {
       resolvedById.set(p.id, p)
     }
