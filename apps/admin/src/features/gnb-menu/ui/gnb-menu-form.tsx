@@ -102,7 +102,7 @@ export function GnbMenuFormCard({ data }: Props) {
   const { showAlert } = useCmsAlert()
   const saveMutation = useSaveGnbMenu()
   const [isEditing, setIsEditing] = useState(false)
-  /** 순서용. 메뉴명 타이핑은 nameDraftRef만 갱신. 사용 여부는 조회 모드에서 즉시 저장 */
+  /** 순서·사용 여부용. 메뉴명 타이핑은 nameDraftRef만 갱신. 조회 모드 사용 여부는 즉시 저장 */
   const [draft, setDraft] = useState<GnbMenuDoc>(() => cloneDoc(data))
   const nameDraftRef = useRef<NameDraftMap>({})
   const [nameResetKey, setNameResetKey] = useState(0)
@@ -142,10 +142,6 @@ export function GnbMenuFormCard({ data }: Props) {
         ...g,
         items: g.items.map(item => ({
           ...item,
-          // 수정 모드에서는 사용 여부 변경 불가 — 서버/조회 데이터 유지
-          isActive:
-            data.groups.find(dg => dg.id === g.id)?.items.find(di => di.id === item.id)
-              ?.isActive ?? item.isActive,
           name: nameMap[item.id] ?? item.name,
         })),
       })),
@@ -169,7 +165,7 @@ export function GnbMenuFormCard({ data }: Props) {
         content: 'GNB 메뉴 저장에 실패했습니다. 다시 시도해 주세요.',
       })
     }
-  }, [data.groups, draft, saveMutation, showAlert])
+  }, [draft, saveMutation, showAlert])
 
   const updateGroupItems = useCallback((groupId: string, nextItems: GnbSubMenu[]) => {
     setDraft(prev => ({
@@ -180,10 +176,22 @@ export function GnbMenuFormCard({ data }: Props) {
     }))
   }, [])
 
-  /** 조회 모드: 사용 여부 즉시 저장. 수정 모드에서는 호출하지 않음 */
+  /** 조회 모드: 사용 여부 즉시 저장. 수정 모드: draft에 반영 후 저장 시 함께 반영 */
   const handleToggleActive = useCallback(
     (groupId: string, itemId: string, isActive: boolean) => {
-      if (isEditing) return
+      if (isEditing) {
+        setDraft(prev => ({
+          ...prev,
+          groups: prev.groups.map(g => {
+            if (g.id !== groupId) return g
+            return {
+              ...g,
+              items: g.items.map(item => (item.id === itemId ? { ...item, isActive } : item)),
+            }
+          }),
+        }))
+        return
+      }
       const nextDoc: GnbMenuDoc = {
         ...data,
         groups: data.groups.map(g => {
@@ -233,7 +241,7 @@ export function GnbMenuFormCard({ data }: Props) {
         render: (_value, record) => (
           <Switch
             checked={record.isActive}
-            disabled={isEditing || saveMutation.isPending}
+            disabled={saveMutation.isPending}
             onChange={checked => {
               handleToggleActive(groupId, record.id, checked)
             }}
