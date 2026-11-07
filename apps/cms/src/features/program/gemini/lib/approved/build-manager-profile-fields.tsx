@@ -14,9 +14,13 @@ import type { GeminiApprovedTrainingDetail } from '../../model/approved/detail-t
 import { mapGeminiApprovedEmploymentToSchoolStatus } from './employment-status'
 import type { VerticalInfoTableItem } from './vertical-info-table'
 
+function displayOptionalText(value: string): string {
+  return value.trim() ? value : '-'
+}
+
 export function buildGeminiApprovedManagerTableItems(
   detail: GeminiApprovedTrainingDetail,
-  personalInfoRevealed: boolean,
+  personalInfoRevealed = false,
   employmentStatusControl?: ReactNode
 ): VerticalInfoTableItem[] {
   const mask = !personalInfoRevealed
@@ -103,12 +107,12 @@ export function buildGeminiApprovedManagerTableItems(
     {
       key: 'position',
       label: '직급',
-      children: detail.managerPosition.trim() || '-',
+      children: displayOptionalText(detail.managerPosition),
     },
     {
       key: 'subject',
       label: '과목',
-      children: detail.managerSubject.trim() || '-',
+      children: displayOptionalText(detail.managerSubject),
     },
     {
       key: 'instructorFeeGrade',

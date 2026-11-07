@@ -48,7 +48,6 @@ describe('mapGeminiApprovedTrainingPrivacyUnmask', () => {
   it('배정 강사가 없으면 instructor를 만들지 않는다', () => {
     const mapped = mapGeminiApprovedTrainingPrivacyUnmask({
       teacherAccountNumber: '11012341234',
-      // OpenAPI는 optional만 적지만 응답은 null로 온다.
       assignedInstructor: null,
     } as unknown as GeminiApprovedTrainingDetailResponse)
 

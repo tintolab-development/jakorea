@@ -15,6 +15,7 @@ describe('mapGeminiApprovedTrainingDetailResponseToDetail', () => {
       progressStatus: 'SCHEDULED',
       trainingDate: null,
       trainingTimeText: null,
+      classCount: null,
       lastPreferredDate: '2026-03-15',
       studentCount: undefined,
       institutionApplicationCount: null,
@@ -67,6 +68,7 @@ describe('mapGeminiApprovedTrainingDetailResponseToDetail', () => {
       teacherAccountHolder: '김교사',
       trainingDate: null,
       lastPreferredDate: '2026-03-15',
+      classCount: null,
     })
 
     expect(detail.managerScheduleChangeCount).toBe(0)
@@ -76,7 +78,19 @@ describe('mapGeminiApprovedTrainingDetailResponseToDetail', () => {
     expect(detail.managerAccountNumber).toBe('123-****-7890')
     expect(detail.managerAccountHolder).toBe('김교사')
     expect(detail.trainingDate).toBe('')
+    expect(detail.classCount).toBeNull()
     expect(detail.trainingDate).not.toBe(detail.lastPreferredDate)
+  })
+
+  it('직급·과목은 상세 API 응답 값을 그대로 보존한다', () => {
+    const detail = mapGeminiApprovedTrainingDetailResponseToDetail({
+      id: 186102,
+      teacherPosition: ' 과장 ',
+      teacherSubject: '정보',
+    })
+
+    expect(detail.managerPosition).toBe(' 과장 ')
+    expect(detail.managerSubject).toBe('정보')
   })
 
   it('계좌가 없으면 계좌번호만 빈 문자열로 둔다', () => {
@@ -90,6 +104,26 @@ describe('mapGeminiApprovedTrainingDetailResponseToDetail', () => {
     expect(detail.managerAccountBank).toBe('국민')
     expect(detail.managerAccountNumber).toBe('')
     expect(detail.managerAccountHolder).toBe('김교사')
+  })
+
+  it('trainingTimeText가 없으면 시작·종료 시각으로 대체하지 않는다', () => {
+    const detail = mapGeminiApprovedTrainingDetailResponseToDetail({
+      id: 1091531,
+      organizationApplicationId: 1091531,
+      institutionName: 'QA 제휴학교',
+      scheduleId: 90001,
+      assignedInstructor: null,
+      trainingDate: '2026-01-30',
+      trainingTimeText: null,
+      trainingStartTime: '10:30',
+      trainingEndTime: '13:00',
+      classCount: 3,
+    })
+
+    expect(detail.instructorAssigned).toBe(false)
+    expect(detail.trainingDate).toBe('2026-01-30')
+    expect(detail.trainingTimeText).toBe('')
+    expect(detail.classCount).toBe(3)
   })
 
   it('maps assignedInstructor when present', () => {
@@ -264,10 +298,7 @@ describe('mapGeminiInstructorApplicationItemToRow', () => {
     expect(row.grade).toBe('2급')
   })
 
-  it.each([
-    'AUTO_REJECTED',
-    'CANCELLED',
-  ])('maps %s to 신청 반려 상태', applicationStatus => {
+  it.each(['AUTO_REJECTED', 'CANCELLED'])('maps %s to 신청 반려 상태', applicationStatus => {
     const row = mapGeminiInstructorApplicationItemToRow(
       {
         applicationId: 2,

@@ -65,10 +65,7 @@ function keepFirstInfiniteQueryPage<T>(
   }
 }
 
-function useTrimInfiniteQueryPages<T>(
-  queryKey: readonly unknown[],
-  enabled: boolean
-): void {
+function useTrimInfiniteQueryPages<T>(queryKey: readonly unknown[], enabled: boolean): void {
   const queryClient = useQueryClient()
   useLayoutEffect(() => {
     if (!enabled) return
@@ -105,10 +102,7 @@ export function useGeminiRecruitmentsQuery(
   })
 }
 
-export function useGeminiRecruitmentDetailQuery(
-  programId: string | undefined,
-  enabled = true
-) {
+export function useGeminiRecruitmentDetailQuery(programId: string | undefined, enabled = true) {
   return useQuery({
     queryKey: geminiVisitingTrainingQueryKeys.recruitmentDetail(programId ?? ''),
     queryFn: () => getGeminiRecruitmentDetail(programId!),
@@ -125,11 +119,7 @@ export function useGeminiOrganizationApplicationsQuery(
 ) {
   const filtersKey = JSON.stringify(filters)
   const queryKey = useMemo(
-    () =>
-      geminiVisitingTrainingQueryKeys.organizationApplications(
-        programId ?? '',
-        filtersKey
-      ),
+    () => geminiVisitingTrainingQueryKeys.organizationApplications(programId ?? '', filtersKey),
     [filtersKey, programId]
   )
   useTrimInfiniteQueryPages<GeminiOrganizationApplicationsPage>(queryKey, enabled)
@@ -268,7 +258,8 @@ export function useGeminiApprovedInstructorApplicationsQuery(
 
 async function invalidateGeminiInstructorApprovalQueries(
   queryClient: QueryClient,
-  approvedTrainingId: string
+  approvedTrainingId: string,
+  applicationId?: string
 ) {
   await queryClient.invalidateQueries({
     queryKey: geminiVisitingTrainingQueryKeys.approvedInstructorApplications(approvedTrainingId),
@@ -276,6 +267,14 @@ async function invalidateGeminiInstructorApprovalQueries(
   await queryClient.invalidateQueries({
     queryKey: geminiVisitingTrainingQueryKeys.approvedDetail(approvedTrainingId),
   })
+  if (applicationId) {
+    await queryClient.invalidateQueries({
+      queryKey: geminiVisitingTrainingQueryKeys.approvedInstructorApplicationDetail(
+        approvedTrainingId,
+        applicationId
+      ),
+    })
+  }
   await queryClient.invalidateQueries({
     queryKey: geminiVisitingTrainingQueryKeys.approvedList(),
   })
@@ -306,13 +305,22 @@ export function usePatchGeminiApprovedTeacherEmploymentMutation(approvedTraining
 export function useApproveGeminiInstructorApplicationMutation(approvedTrainingId: string) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (input: { applicationId: string; replacement?: boolean }) =>
+    mutationFn: (input: {
+      applicationId: string
+      timing?: 'IMMEDIATE' | 'SCHEDULED'
+      scheduledAt?: string | null
+    }) =>
       approveGeminiInstructorApplication(input.applicationId, {
-        replacement: input.replacement,
+        timing: input.timing,
+        scheduledAt: input.scheduledAt,
       }),
     retry: false,
-    onSuccess: async () => {
-      await invalidateGeminiInstructorApprovalQueries(queryClient, approvedTrainingId)
+    onSuccess: async (_, variables) => {
+      await invalidateGeminiInstructorApprovalQueries(
+        queryClient,
+        approvedTrainingId,
+        variables.applicationId
+      )
     },
   })
 }
@@ -344,8 +352,12 @@ export function useRejectGeminiInstructorApplicationMutation(approvedTrainingId:
     mutationFn: ({ applicationId, reason }: { applicationId: string; reason?: string }) =>
       rejectGeminiInstructorApplication(applicationId, reason),
     retry: false,
-    onSuccess: async () => {
-      await invalidateGeminiInstructorApprovalQueries(queryClient, approvedTrainingId)
+    onSuccess: async (_, variables) => {
+      await invalidateGeminiInstructorApprovalQueries(
+        queryClient,
+        approvedTrainingId,
+        variables.applicationId
+      )
     },
   })
 }
@@ -362,8 +374,12 @@ export function useResendGeminiInstructorApplicationNotificationMutation(
       applicationId: string
       payload: Parameters<typeof resendGeminiInstructorApplicationNotification>[1]
     }) => resendGeminiInstructorApplicationNotification(applicationId, payload),
-    onSuccess: async () => {
-      await invalidateGeminiInstructorApprovalQueries(queryClient, approvedTrainingId)
+    onSuccess: async (_, variables) => {
+      await invalidateGeminiInstructorApprovalQueries(
+        queryClient,
+        approvedTrainingId,
+        variables.applicationId
+      )
     },
   })
 }

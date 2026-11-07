@@ -21,6 +21,7 @@ import type { GeminiRecruitmentListResponse } from '@/shared/api/generated/dashb
 import type { ProgramCreateRequest } from '@/shared/api/generated/dashboard/schemas/programCreateRequest'
 import type { ProgramResponse } from '@/shared/api/generated/dashboard/schemas/programResponse'
 import type { ProgramUpdateRequest } from '@/shared/api/generated/dashboard/schemas/programUpdateRequest'
+import type { InstructorApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationDetailResponse'
 
 const BASE = '/api/admin/gemini/trainings'
 
@@ -63,11 +64,7 @@ function toPageEnvelope<T>(
   }
 }
 
-function appendPageParams(
-  query: URLSearchParams,
-  page: number,
-  size: number
-): void {
+function appendPageParams(query: URLSearchParams, page: number, size: number): void {
   query.set('page', String(page))
   query.set('size', String(size))
 }
@@ -234,6 +231,18 @@ export async function fetchGeminiApprovedInstructorApplicationsRemote(
   return toPageEnvelope(body, page, size)
 }
 
+/** Gemini 강사 신청 상세 화면은 신청 상세 canonical DTO를 사용한다. */
+export async function fetchGeminiInstructorApplicationDetailRemote(
+  applicationId: string
+): Promise<InstructorApplicationDetailResponse> {
+  return unwrapApiBody<InstructorApplicationDetailResponse>(
+    await customInstance({
+      url: `/api/admin/instructor-applications/${encodeURIComponent(applicationId)}`,
+      method: 'GET',
+    })
+  )
+}
+
 export async function createGeminiRecruitmentRemote(
   body: ProgramCreateRequest
 ): Promise<ProgramResponse> {
@@ -389,18 +398,16 @@ export async function resendGeminiOrganizationApplicationNotificationRemote(
 
 export async function approveGeminiInstructorApplicationRemote(
   applicationId: string,
-  options?: { replacement?: boolean }
+  options?: { timing?: 'IMMEDIATE' | 'SCHEDULED'; scheduledAt?: string | null }
 ): Promise<void> {
-  const replacement = options?.replacement === true
   await customInstance({
     url: `${BASE}/instructor-applications/${encodeURIComponent(applicationId)}/approve`,
     method: 'POST',
-    ...(replacement
-      ? {
-          headers: { 'Content-Type': 'application/json' },
-          data: { replacement: true },
-        }
-      : {}),
+    headers: { 'Content-Type': 'application/json' },
+    data: {
+      timing: options?.timing ?? 'IMMEDIATE',
+      scheduledAt: options?.scheduledAt ?? null,
+    },
   })
 }
 

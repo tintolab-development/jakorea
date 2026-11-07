@@ -21,6 +21,7 @@ export type GeminiApprovedTrainingDetail = {
   institutionName: string
   trainingDate: string
   trainingTimeText: string
+  classCount: number | null
   /** 기관 신청 희망 일정(1~3지망). 확정 일정이 없을 때 표시용 */
   trainingDateCandidates: GeminiApprovedTrainingDateCandidate[]
   studentCount: number | null

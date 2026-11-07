@@ -11,8 +11,7 @@ import type {
   GeminiInstructorApplicationApprovalStatus,
   GeminiInstructorApplicationRow,
 } from './instructor-application-types'
-import type { GeminiApprovedTrainingRow, GeminiApprovedTrainingStatus } from './types'
-import { getGeminiApprovedTrainingRowsSnapshot } from './approved-training-store'
+import type { GeminiApprovedTrainingStatus } from './types'
 import { formatInstructorFeeGradeLabel } from '@/shared/constants/instructor-fee-grade'
 import { formatGeminiInstructorApplicationGrade } from '../../lib/instructor-application-grade-label'
 import { toGenderLabelOrRaw } from '@/features/user/api/map-member-gender-birth'
@@ -23,7 +22,6 @@ function toId(value: number | string | null | undefined): string {
   if (value == null) return ''
   return String(value)
 }
-
 function trimmed(value: string | null | undefined): string {
   return value?.trim() ?? ''
 }
@@ -113,8 +111,9 @@ export function mapGeminiApprovedTrainingDetailResponseToDetail(
     programId: toId(dto.programId),
     recruitmentTitle: trimmed(dto.recruitmentTitle),
     institutionName: trimmed(dto.institutionName) || '기관명 없음',
-    trainingDate: trimmed(dto.trainingDate),
-    trainingTimeText: trimmed(dto.trainingTimeText),
+    trainingDate: dto.trainingDate ?? '',
+    trainingTimeText: dto.trainingTimeText ?? '',
+    classCount: dto.classCount ?? null,
     trainingDateCandidates: mapGeminiTrainingDateCandidates(dto.trainingDateCandidates),
     studentCount: dto.studentCount ?? null,
     recruitmentCount: dto.institutionApplicationCount ?? null,
@@ -141,8 +140,8 @@ export function mapGeminiApprovedTrainingDetailResponseToDetail(
       formatBusinessIncomeDisplay(dto.teacherBusinessIncomeLabel) ??
       trimmed(dto.teacherBusinessIncomeLabel),
     managerOneLineIntro: trimmed(dto.teacherOneLineIntro),
-    managerPosition: trimmed(dto.teacherPosition),
-    managerSubject: trimmed(dto.teacherSubject),
+    managerPosition: dto.teacherPosition ?? '',
+    managerSubject: dto.teacherSubject ?? '',
     instructor,
     trainingContent: '',
     instructorAssigned,
@@ -185,64 +184,4 @@ export function mapGeminiInstructorApplicationItemToRow(
     monthlyAssignmentCount: dto.monthlyAssignmentCount ?? 0,
     approvalStatus: mapInstructorApplicationStatus(dto.applicationStatus),
   }
-}
-
-/** @deprecated 목록 캐시 폴백 — 상세 GET 전환 후 호출하지 않는다. */
-export function mapGeminiApprovedTrainingRowToDetail(
-  row: GeminiApprovedTrainingRow
-): GeminiApprovedTrainingDetail {
-  const instructorAssigned = row.instructorAssigned
-  return {
-    id: row.id,
-    programId: '',
-    recruitmentTitle: row.recruitmentTitle ?? '',
-    recruitmentCount: null,
-    completedRecruitmentCount: null,
-    institutionAddress: `${row.institutionSido} ${row.institutionSigungu}`.trim(),
-    joinedAt: '',
-    managerMemberId: '',
-    teacherSchoolOrganizationId: null,
-    managerNameKo: row.managerName,
-    managerScheduleChangeCount: 0,
-    managerGender: '',
-    managerBirthDate: '',
-    managerEmploymentStatus: null,
-    managerContact: '',
-    managerEmail: '',
-    managerSchool: '',
-    managerHomeAddress: '',
-    managerLectureExperience: '',
-    managerAccountBank: '',
-    managerAccountNumber: '',
-    managerAccountHolder: '',
-    managerInstructorFeeGrade: '',
-    managerBusinessIncomeLabel: '',
-    managerOneLineIntro: '',
-    managerPosition: '',
-    managerSubject: '',
-    trainingContent: '',
-    institutionName: row.institutionName,
-    trainingDate: row.trainingDate,
-    trainingTimeText: row.trainingTimeText,
-    trainingDateCandidates: row.trainingDateCandidates,
-    studentCount: row.studentCount,
-    instructor: emptyInstructor(),
-    instructorAssigned,
-    lastPreferredDate: row.lastPreferredDate,
-    officialDocumentRequired: row.officialDocumentRequired,
-    officialDocumentRequiredInfo: null,
-    progressStatus: null,
-  }
-}
-
-export function getGeminiApprovedTrainingDetail(
-  rowId: string
-): GeminiApprovedTrainingDetail | null {
-  const row = getGeminiApprovedTrainingRowsSnapshot().find(x => x.id === rowId)
-  if (!row) return null
-  return mapGeminiApprovedTrainingRowToDetail(row)
-}
-
-export function getGeminiApprovedTrainingRowById(rowId: string): GeminiApprovedTrainingRow | null {
-  return getGeminiApprovedTrainingRowsSnapshot().find(x => x.id === rowId) ?? null
 }

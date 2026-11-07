@@ -9,6 +9,7 @@ import {
 import {
   GEMINI_APPROVED_TRAINING_ID_PARAM,
   GEMINI_APPROVED_TRAINING_LNB_PARAM,
+  GEMINI_APPROVED_INSTRUCTOR_APPLICATION_ID_PARAM,
 } from '../../lib/approved/detail-url'
 
 export function useGeminiApprovedTrainingDetailUrl() {
@@ -22,6 +23,7 @@ export function useGeminiApprovedTrainingDetailUrl() {
           const next = new URLSearchParams(prev)
           next.set(GEMINI_APPROVED_TRAINING_ID_PARAM, id)
           next.delete(GEMINI_APPROVED_TRAINING_LNB_PARAM)
+          next.delete(GEMINI_APPROVED_INSTRUCTOR_APPLICATION_ID_PARAM)
           next.delete(GEMINI_RECRUITMENT_ADD_PARAM)
           next.delete(GEMINI_RECRUITMENT_ID_PARAM)
           next.delete(GEMINI_RECRUITMENT_LNB_PARAM)
@@ -40,6 +42,7 @@ export function useGeminiApprovedTrainingDetailUrl() {
         const next = new URLSearchParams(prev)
         next.delete(GEMINI_APPROVED_TRAINING_ID_PARAM)
         next.delete(GEMINI_APPROVED_TRAINING_LNB_PARAM)
+        next.delete(GEMINI_APPROVED_INSTRUCTOR_APPLICATION_ID_PARAM)
         return next
       },
       { replace: true }

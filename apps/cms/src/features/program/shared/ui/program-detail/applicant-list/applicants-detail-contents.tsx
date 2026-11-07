@@ -64,10 +64,12 @@ import {
   mapInstructorApplicationDetailToApplicantRow,
   mapOrganizationApplicationDetailToApplicantSchoolRow,
 } from '@/features/program/general/api/adapters/general-applications-adapters'
-import { resolveApplicantCancelApprovalState } from '@/features/program/general/lib/applicant-cancel-approval-policy'
 import {
-  type ApplicantInstructorRow,
-} from '@/features/program/shared/model/applicant-instructor'
+  readInstructorApplicationSettlementFields,
+  retainMaskedInstructorApplicationSettlement,
+} from '@/features/program/general/lib/instructor-application-basic-info-supplement'
+import { resolveApplicantCancelApprovalState } from '@/features/program/general/lib/applicant-cancel-approval-policy'
+import { type ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import {
   patchGeneralIndividualApplicantManagerEvaluation,
   type GeneralIndividualApplicantDetailSavePayload,
@@ -81,13 +83,17 @@ import {
 } from '@/features/program/general/lib/individual-application-visibility'
 import type { GeneralManagerEvaluation } from '@/features/program/general/lib/volunteer-screening-constants'
 import { ApplicantInstructorBasicInfo } from './applicant-instructor-basic-info'
+import {
+  ApplicantInstructorApplicationInfo,
+  type ApplicantInstructorApplicationInfoData,
+} from './applicant-instructor-application-info'
 import { ApplicantInstitutionBasicInfo } from './applicant-institution-basic-info'
 import { ApplicantGeneralInstitutionBasicInfo } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-basic-info'
 import { ApplicantGeneralIndividualBasicInfo } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/individual-basic-info'
 import type { InstructorApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationDetailResponse'
-import { retainMaskedInstructorApplicationSettlement } from '@/features/program/general/lib/instructor-application-basic-info-supplement'
 import { ApplicantGeneralInstructorBasicInfo } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-general-instructor-basic-info'
 import { ApplicantInstructorResume } from './applicant-instructor-resume'
+import type { ApplicantInstructorResumeLayout } from './applicant-instructor-resume'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
 import {
@@ -178,14 +184,16 @@ function ApplicantHeaderActionsExtra({
             cmsVariant={a.variant}
             cmsSize="large"
             disabled={a.disabled || programPrivacyPending}
-            onClick={a.onClick ?? (() => {})} />
+            onClick={a.onClick ?? (() => {})}
+          />
         ) : a.key === 'edit-info' ? (
           <CmsButton
             key={a.key}
             {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
             disabled={a.disabled}
             title={a.title}
-            onClick={a.onClick} >
+            onClick={a.onClick}
+          >
             {a.label}
           </CmsButton>
         ) : (
@@ -196,7 +204,8 @@ function ApplicantHeaderActionsExtra({
             disabled={a.disabled}
             loading={a.loading}
             title={a.title}
-            onClick={a.onClick} >
+            onClick={a.onClick}
+          >
             {a.label}
           </CmsButton>
         )
@@ -336,13 +345,14 @@ function headerBtnsPendingParticipation(
   availableActions?: string[],
   labels: { reject: string; approve: string } = individualApplicationDecisionButtonLabels(false),
   approveGate?: { disabled: boolean; title?: string },
-  applicationStatus?: string | null
+  applicationStatus?: string | null,
+  hideReject = false
 ): ApplicantHeaderActionItem[] {
   if (isApprovalCancelledApplicationStatus(applicationStatus)) {
     return [headerBtnPrivacy(onRevealPersonalInfo)]
   }
   const items: ApplicantHeaderActionItem[] = []
-  if (canPerformApplicationAction(availableActions, 'REJECT')) {
+  if (!hideReject && canPerformApplicationAction(availableActions, 'REJECT')) {
     items.push({
       key: 'reject',
       variant: 'delete',
@@ -413,6 +423,7 @@ function resolveApplicantHeaderItems(params: {
   instructorApplicationStatus?: string | null
   individualApplicationStatus?: string | null
   allowCancelRejection?: boolean
+  hidePendingRejectAction?: boolean
   isCancelledInstitution?: boolean
   isCancelledInstructor?: boolean
   program?: Program | null
@@ -465,6 +476,7 @@ function resolveApplicantHeaderItems(params: {
     instructorApplicationStatus,
     individualApplicationStatus,
     allowCancelRejection = true,
+    hidePendingRejectAction = false,
     isCancelledInstitution = false,
     isCancelledInstructor = false,
     program = null,
@@ -523,10 +535,7 @@ function resolveApplicantHeaderItems(params: {
     }
     if (
       onCancelFinalPass &&
-      hasExplicitApplicationAction(
-        individualAvailableActions,
-        APPLICATION_ACTION_CANCEL_FINAL_PASS
-      )
+      hasExplicitApplicationAction(individualAvailableActions, APPLICATION_ACTION_CANCEL_FINAL_PASS)
     ) {
       items.push(
         headerBtnCancelFinalPass(
@@ -594,10 +603,7 @@ function resolveApplicantHeaderItems(params: {
     const items: ApplicantHeaderActionItem[] = []
     if (
       onCancelFinalFail &&
-      hasExplicitApplicationAction(
-        individualAvailableActions,
-        APPLICATION_ACTION_CANCEL_FINAL_FAIL
-      )
+      hasExplicitApplicationAction(individualAvailableActions, APPLICATION_ACTION_CANCEL_FINAL_FAIL)
     ) {
       items.push(headerBtnCancelFinalFail(applicantId, onCancelFinalFail))
     }
@@ -641,14 +647,13 @@ function resolveApplicantHeaderItems(params: {
       isIndividual
         ? individualApplicationDecisionButtonLabels(useDocumentDecisionLabels)
         : undefined,
-      blockFinalApprove
-        ? { disabled: true, title: '면접 합격 후 최종 승인' }
-        : undefined,
+      blockFinalApprove ? { disabled: true, title: '면접 합격 후 최종 승인' } : undefined,
       isInstructor
         ? instructorApplicationStatus
         : isInstitution
           ? institutionApplicationStatus
-          : individualApplicationStatus
+          : individualApplicationStatus,
+      hidePendingRejectAction
     )
   }
   return null
@@ -689,6 +694,10 @@ interface ApplicantsDetailContentsProps {
   ) => void | Promise<void>
   /** 일반 프로그램 강사 상세 수정 — 목록 동기화용 */
   onInstructorDetailSaved?: (row: ApplicantInstructorRow) => void
+  /** Gemini 찾아가는 연수 강사 신청 상세의 신청 정보 테이블 */
+  instructorApplicationInfo?: ApplicantInstructorApplicationInfoData
+  /** 신청 상세 시안은 학력·경력만 표시 */
+  instructorResumeLayout?: ApplicantInstructorResumeLayout
   onBack: () => void
   onApprove: (id: string) => void
   onReject: (id: string) => void
@@ -702,6 +711,8 @@ interface ApplicantsDetailContentsProps {
   onCancelFinalFail?: (id: string) => void
   /** 승인·반려 상태에서 알림 재발송 클릭 시 호출 */
   onResendNotification?: () => void
+  /** Gemini 승인 연수 강사 상세 시안처럼 대기 상태의 반려 CTA를 숨긴다. */
+  hidePendingRejectAction?: boolean
   /** 개인 면접 심사 탭 — 상세 섹션 분기 */
   individualScreeningStage?: IndividualApplicantScreeningStage
 }
@@ -724,6 +735,8 @@ export function ApplicantsDetailContents({
   onIndividualManagerEvaluationChange,
   onIndividualTeamRoleChange,
   onInstructorDetailSaved,
+  instructorApplicationInfo,
+  instructorResumeLayout,
   onBack: _onBack,
   onApprove,
   onReject,
@@ -732,6 +745,7 @@ export function ApplicantsDetailContents({
   onCancelFinalPass,
   onCancelFinalFail,
   onResendNotification,
+  hidePendingRejectAction = false,
   individualScreeningStage = 'main',
 }: ApplicantsDetailContentsProps) {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -772,13 +786,11 @@ export function ApplicantsDetailContents({
   const institutionRow = isInstitution ? (data as ApplicantSchoolRow) : null
   const instructorRow = isInstructor ? (data as ApplicantInstructorRow) : null
   const isTrainedTeachers = isTrainedTeachersDetailProgram(program ?? null)
-  const {
-    row: institutionData,
-    isError: institutionDetailError,
-  } = useOrganizationApplicationDetailEnrichment(institutionRow, {
-    enabled: isGeneralDetail,
-    detailSource: isTrainedTeachers ? 'trained-teacher' : 'general',
-  })
+  const { row: institutionData, isError: institutionDetailError } =
+    useOrganizationApplicationDetailEnrichment(institutionRow, {
+      enabled: isGeneralDetail,
+      detailSource: isTrainedTeachers ? 'trained-teacher' : 'general',
+    })
   const instructorData = useInstructorApplicationDetailEnrichment(instructorRow, {
     enabled: isGeneralDetail,
   })
@@ -796,8 +808,7 @@ export function ApplicantsDetailContents({
   /** 신청 강사 반려: [반려 취소] [개인정보 상세보기] */
   const isRejectedInstructor = isInstructor && instructorData?.approvalStatus === 'rejected'
 
-  const isCancelledInstitution =
-    isInstitution && institutionData?.approvalStatus === 'cancelled'
+  const isCancelledInstitution = isInstitution && institutionData?.approvalStatus === 'cancelled'
   const isCancelledInstructor = isInstructor && instructorData?.approvalStatus === 'cancelled'
 
   const isApprovedIndividual = isIndividual && individualData?.approvalStatus === 'approved'
@@ -823,7 +834,10 @@ export function ApplicantsDetailContents({
   /** 합반 GET/POST/DELETE는 programType === GENERAL_ORGANIZATION 일 때만 */
   const mergeGroupsAllowed = isGeneralOrganizationProgram(program)
   const mergeGroupsEnabled =
-    mergeGroupsAllowed && isGeneralDetail && isInstitution && shouldUseOrganizationMergeGroupsRemoteApi()
+    mergeGroupsAllowed &&
+    isGeneralDetail &&
+    isInstitution &&
+    shouldUseOrganizationMergeGroupsRemoteApi()
   const mergeGroupsQuery = useOrganizationMergeGroups(
     programId,
     program?.backendProgramType,
@@ -1171,13 +1185,7 @@ export function ApplicantsDetailContents({
         content: MESSAGES.error.save,
       })
     }
-  }, [
-    instructorAdminCommentDraft,
-    instructorData,
-    onInstructorDetailSaved,
-    queryClient,
-    showAlert,
-  ])
+  }, [instructorAdminCommentDraft, instructorData, onInstructorDetailSaved, queryClient, showAlert])
 
   const handleInstructorAdminCommentModalCancel = useCallback(() => {
     setIsInstructorAdminCommentModalOpen(false)
@@ -1273,6 +1281,9 @@ export function ApplicantsDetailContents({
     contact?: string
     email?: string
     address?: string
+    bankName?: string
+    accountNumber?: string
+    accountHolder?: string
   } | null>(null)
 
   useEffect(() => {
@@ -1348,6 +1359,7 @@ export function ApplicantsDetailContents({
       const detailKey = generalApplicationsQueryKeys.instructorDetail(applicationId)
       const previousDetail =
         queryClient.getQueryData<InstructorApplicationDetailResponse>(detailKey)
+      const settlementFields = readInstructorApplicationSettlementFields(detail)
       const safeDetail = retainMaskedInstructorApplicationSettlement(
         cacheProjectedProgramPrivacy(queryClient, detailKey, program?.id ?? '', detail),
         previousDetail
@@ -1366,6 +1378,9 @@ export function ApplicantsDetailContents({
             .map(part => part?.trim())
             .filter(Boolean)
             .join(' ') || undefined,
+        bankName: settlementFields.bankName,
+        accountNumber: settlementFields.accountNumber,
+        accountHolder: settlementFields.accountHolder,
       }
     },
     [instructorData, onInstructorDetailSaved, program?.id, queryClient]
@@ -1378,12 +1393,18 @@ export function ApplicantsDetailContents({
       phone?: unknown
       email?: unknown
       address?: unknown
+      bankName?: unknown
+      accountNumber?: unknown
+      accountHolder?: unknown
     }
     setInstructorPrivacy({
       ...(typeof privacy.name === 'string' ? { instructorName: privacy.name } : {}),
       ...(typeof privacy.phone === 'string' ? { contact: privacy.phone } : {}),
       ...(typeof privacy.email === 'string' ? { email: privacy.email } : {}),
       ...(typeof privacy.address === 'string' ? { address: privacy.address } : {}),
+      ...(typeof privacy.bankName === 'string' ? { bankName: privacy.bankName } : {}),
+      ...(typeof privacy.accountNumber === 'string' ? { accountNumber: privacy.accountNumber } : {}),
+      ...(typeof privacy.accountHolder === 'string' ? { accountHolder: privacy.accountHolder } : {}),
     })
   }, [])
 
@@ -1392,8 +1413,7 @@ export function ApplicantsDetailContents({
     if (!institutionTeacherPrivacy) return institutionData
     return {
       ...institutionData,
-      teacherName:
-        institutionTeacherPrivacy.teacherName ?? institutionData.teacherName,
+      teacherName: institutionTeacherPrivacy.teacherName ?? institutionData.teacherName,
       /** 휴대전화만. Tel은 detail.teacherTel — 한 번호로 합치지 않음 */
       contact: institutionTeacherPrivacy.teacherPhone ?? institutionData.contact,
       detail: {
@@ -1421,6 +1441,9 @@ export function ApplicantsDetailContents({
       contact: instructorPrivacy.contact ?? instructorData.contact,
       email: instructorPrivacy.email ?? instructorData.email,
       address: instructorPrivacy.address ?? instructorData.address,
+      bankName: instructorPrivacy.bankName ?? instructorData.bankName,
+      accountNumber: instructorPrivacy.accountNumber ?? instructorData.accountNumber,
+      accountHolder: instructorPrivacy.accountHolder ?? instructorData.accountHolder,
     }
   }, [instructorData, instructorPrivacy])
 
@@ -1429,7 +1452,7 @@ export function ApplicantsDetailContents({
     revealWithReason,
     openPersonalInfoRevealConfirm: onRevealPersonalInfo,
     confirmModal: personalInfoRevealModal,
-  programPrivacyPending,
+    programPrivacyPending,
   } = usePersonalInfoReveal({
     privacyScope: 'program',
     programId: programId,
@@ -1600,6 +1623,7 @@ export function ApplicantsDetailContents({
       instructorApplicationStatus: instructorData?.applicationStatus,
       individualApplicationStatus: individualData?.applicationStatus,
       allowCancelRejection: !isTrainedTeachers,
+      hidePendingRejectAction,
       program,
       individualScreeningStage,
     })
@@ -1658,6 +1682,7 @@ export function ApplicantsDetailContents({
     onCancelReject,
     onCancelFinalPass,
     onCancelFinalFail,
+    hidePendingRejectAction,
     personalInfoRevealed,
     programPrivacyPending,
     individualData,
@@ -1808,7 +1833,10 @@ export function ApplicantsDetailContents({
           maskSensitive={!personalInfoRevealed && d.approvalStatus !== 'approved'}
           onResendNotificationClick={onResendNotification}
         />
-        <ApplicantInstructorResume instructor={d} />
+        {instructorApplicationInfo ? (
+          <ApplicantInstructorApplicationInfo data={instructorApplicationInfo} />
+        ) : null}
+        <ApplicantInstructorResume instructor={d} layout={instructorResumeLayout} />
       </div>
     )
   }, [
@@ -1822,6 +1850,8 @@ export function ApplicantsDetailContents({
     instructorDetailEdit.validationErrors,
     onResendNotification,
     onInstructorDetailSaved,
+    instructorApplicationInfo,
+    instructorResumeLayout,
   ])
 
   const tabPanel = useMemo(() => {
@@ -1916,11 +1946,7 @@ export function ApplicantsDetailContents({
     </>
   )
 
-  if (
-    isInstitution &&
-    isGeneralDetail &&
-    institutionDetailError
-  ) {
+  if (isInstitution && isGeneralDetail && institutionDetailError) {
     return (
       <div className="applicant-contents">
         <div className="applicant-contents__panel">

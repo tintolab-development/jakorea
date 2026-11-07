@@ -9,9 +9,7 @@ export type GeminiApprovedTrainingPrivacyUnmasked = {
   teacherPhone?: string
   teacherEmail?: string
   teacherHomeAddress?: string
-  /** 계좌가 없거나 복호화에 실패하면 null */
   teacherAccountNumber: string | null
-  /** 배정 강사가 없으면 null. 강사 원문을 만들지 않는다. */
   instructor: {
     phone?: string
     email?: string
@@ -24,7 +22,6 @@ function nonEmpty(value: string | null | undefined): string | undefined {
   return trimmed ? trimmed : undefined
 }
 
-/** 승인 연수 unmask 본문에서 원문 필드만 고른다. 직급·과목은 항상 비어 화면 모델에 넣지 않는다. */
 export function mapGeminiApprovedTrainingPrivacyUnmask(
   dto: GeminiApprovedTrainingDetailResponse
 ): GeminiApprovedTrainingPrivacyUnmasked {

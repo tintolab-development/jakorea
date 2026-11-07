@@ -35,12 +35,14 @@ import { useGeminiApprovedTrainingDetail } from '../../hooks/use-gemini-approved
 import { buildGeminiApprovedTrainingBreadcrumbItems } from '../../lib/approved/detail-breadcrumb'
 import {
   GEMINI_APPROVED_TRAINING_LNB_PARAM,
+  GEMINI_APPROVED_INSTRUCTOR_APPLICATION_ID_PARAM,
   parseGeminiApprovedTrainingDetailLnb,
   type GeminiApprovedTrainingDetailLnbKey,
 } from '../../lib/approved/detail-url'
 import { formatApprovedTrainingDeleteDisplayName } from '../../lib/approved/format-display'
 import { GeminiApprovedTrainingDetailInstructorApplicationTab } from './detail-instructor-application-tab'
 import { GeminiApprovedTrainingDetailProgramInfoTab } from './detail-program-info-tab'
+import { useGeminiInstructorApplicationDetail } from '../../hooks/use-gemini-instructor-application-detail'
 import '@/features/program/general/ui/detail-modal/program-detail-fullpage-modal.css'
 import '../detail/fullpage-modal.css'
 
@@ -62,11 +64,19 @@ export function GeminiApprovedTrainingDetailFullPageModal({
   const activeLnb = parseGeminiApprovedTrainingDetailLnb(
     searchParams.get(GEMINI_APPROVED_TRAINING_LNB_PARAM)
   )
+  const selectedInstructorApplicationId =
+    activeLnb === 'instructors'
+      ? searchParams.get(GEMINI_APPROVED_INSTRUCTOR_APPLICATION_ID_PARAM)?.trim() || null
+      : null
   const { detail, isLoading } = useGeminiApprovedTrainingDetail(approvedTrainingId)
-  const [unmasked, setUnmasked] = useState<GeminiApprovedTrainingPrivacyUnmasked | null>(null)
+  const selectedInstructorApplicationDetail = useGeminiInstructorApplicationDetail(
+    approvedTrainingId,
+    selectedInstructorApplicationId
+  )
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
   const { showAlert } = useCmsAlert()
+  const [unmasked, setUnmasked] = useState<GeminiApprovedTrainingPrivacyUnmasked | null>(null)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [deleteBlockedOpen, setDeleteBlockedOpen] = useState(false)
   const [deleteBlockedCopy, setDeleteBlockedCopy] = useState({ title: '', description: '' })
@@ -128,6 +138,10 @@ export function GeminiApprovedTrainingDetailFullPageModal({
 
   const detailTitle = detail ? `승인 연수 상세 (${detail.institutionName})` : '승인 연수 상세'
 
+  const resolvedDetailTitle = selectedInstructorApplicationDetail.row
+    ? `강사 신청 상세 (${selectedInstructorApplicationDetail.row.instructorName})`
+    : detailTitle
+
   const headerBreadcrumbItems = useMemo(() => {
     return buildGeminiApprovedTrainingBreadcrumbItems({
       pathname: location.pathname,
@@ -135,8 +149,18 @@ export function GeminiApprovedTrainingDetailFullPageModal({
       approvedTrainingId,
       recruitmentTitle: detail?.recruitmentTitle ?? '승인 연수 상세',
       activeLnb,
+      instructorApplicationName: selectedInstructorApplicationDetail.row?.instructorName,
+      institutionName: detail?.institutionName,
     })
-  }, [activeLnb, approvedTrainingId, detail?.recruitmentTitle, location.pathname, searchParams])
+  }, [
+    activeLnb,
+    approvedTrainingId,
+    detail?.institutionName,
+    detail?.recruitmentTitle,
+    location.pathname,
+    searchParams,
+    selectedInstructorApplicationDetail.row?.instructorName,
+  ])
 
   const setActiveLnb = useCallback(
     (lnb: GeminiApprovedTrainingDetailLnbKey) => {
@@ -148,6 +172,7 @@ export function GeminiApprovedTrainingDetailFullPageModal({
           } else {
             next.set(GEMINI_APPROVED_TRAINING_LNB_PARAM, lnb)
           }
+          next.delete(GEMINI_APPROVED_INSTRUCTOR_APPLICATION_ID_PARAM)
           return next
         },
         { replace: true }
@@ -164,6 +189,21 @@ export function GeminiApprovedTrainingDetailFullPageModal({
     },
     [setActiveLnb]
   )
+
+  const handleHeaderClose = useCallback(() => {
+    if (selectedInstructorApplicationId) {
+      setSearchParams(
+        prev => {
+          const next = new URLSearchParams(prev)
+          next.delete(GEMINI_APPROVED_INSTRUCTOR_APPLICATION_ID_PARAM)
+          return next
+        },
+        { replace: true }
+      )
+      return
+    }
+    onClose()
+  }, [onClose, selectedInstructorApplicationId, setSearchParams])
 
   const handleDeleteClick = useCallback(() => {
     setDeleteModalOpen(true)
@@ -223,7 +263,8 @@ export function GeminiApprovedTrainingDetailFullPageModal({
     <DetailFullPageModal
       open={Boolean(approvedTrainingId)}
       onClose={onClose}
-      title={detailTitle}
+      onHeaderClose={handleHeaderClose}
+      title={resolvedDetailTitle}
       loading={isLoading}
       error={detailBodyError}
       headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
@@ -266,6 +307,31 @@ export function GeminiApprovedTrainingDetailFullPageModal({
             <GeminiApprovedTrainingDetailInstructorApplicationTab
               approvedTrainingId={approvedTrainingId}
               trainingDetail={detail}
+              selectedApplicationId={selectedInstructorApplicationId}
+              selectedApplicationDetail={selectedInstructorApplicationDetail.row}
+              selectedApplicationDetailLoading={selectedInstructorApplicationDetail.isLoading}
+              selectedApplicationDetailError={selectedInstructorApplicationDetail.isError}
+              onOpenApplicationDetail={applicationId => {
+                setSearchParams(
+                  prev => {
+                    const next = new URLSearchParams(prev)
+                    next.set(GEMINI_APPROVED_TRAINING_LNB_PARAM, 'instructors')
+                    next.set(GEMINI_APPROVED_INSTRUCTOR_APPLICATION_ID_PARAM, applicationId)
+                    return next
+                  },
+                  { replace: false }
+                )
+              }}
+              onCloseApplicationDetail={() => {
+                setSearchParams(
+                  prev => {
+                    const next = new URLSearchParams(prev)
+                    next.delete(GEMINI_APPROVED_INSTRUCTOR_APPLICATION_ID_PARAM)
+                    return next
+                  },
+                  { replace: true }
+                )
+              }}
             />
           ) : detail.programId ? (
             <div className="program-detail-fullpage-modal__info-tab program-detail-fullpage-modal__managers-tab">

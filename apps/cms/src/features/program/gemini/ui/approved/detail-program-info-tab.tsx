@@ -11,6 +11,7 @@ import { buildGeminiApprovedManagerTableItems } from '../../lib/approved/build-m
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   approvedTrainingStatusModifier,
+  formatTrainingTimeTextWithClassCount,
   formatStatusLabel,
 } from '../../lib/approved/format-display'
 import {
@@ -40,16 +41,17 @@ function dash(value: string | null | undefined): string {
   return trimmed || '-'
 }
 
-/** 승인 상세는 서버가 확정한 연수일만 표시한다. 미배정/미확정이면 후보 일정으로 대체하지 않는다. */
-function formatDetailTrainingDatetime(detail: GeminiApprovedTrainingDetail): string {
+/** 강사 배정 완료 후 상세 GET 확정 연수일·시간만 표시한다. */
+export function formatDetailTrainingDatetime(detail: GeminiApprovedTrainingDetail): string {
+  if (!detail.instructorAssigned) return '-'
   const raw = detail.trainingDate.trim()
   if (!raw) return '-'
   const x = dayjs(raw)
   if (!x.isValid()) return '-'
   const datePart = formatDateDotWithWeekday(x)
   if (datePart === '-') return '-'
-  const time = detail.trainingTimeText.trim()
-  return time ? `${datePart} | ${time}` : datePart
+  const time = formatTrainingTimeTextWithClassCount(detail.trainingTimeText, detail.classCount)
+  return time === '-' ? `${datePart} | -` : `${datePart} | ${time}`
 }
 
 function progressStatusView(status: GeminiApprovedTrainingStatus | null): ReactNode {
@@ -71,19 +73,52 @@ type AssignedInstructorRow = {
   email: string
 }
 
+const ASSIGNED_INSTRUCTOR_NAME_COLUMN_WIDTH = 180
+const ASSIGNED_INSTRUCTOR_DATA_COLUMN_WIDTH = 272
+
 const ASSIGNED_INSTRUCTOR_COLUMNS: ColumnsType<AssignedInstructorRow> = [
-  { title: '신청 강사명', dataIndex: 'name', key: 'name', width: 180, align: 'center' },
-  { title: '자택 주소지', dataIndex: 'region', key: 'region', width: 272, align: 'center' },
+  {
+    title: '신청 강사명',
+    dataIndex: 'name',
+    key: 'name',
+    width: ASSIGNED_INSTRUCTOR_NAME_COLUMN_WIDTH,
+    align: 'center',
+  },
+  {
+    title: '자택 주소지',
+    dataIndex: 'region',
+    key: 'region',
+    width: ASSIGNED_INSTRUCTOR_DATA_COLUMN_WIDTH,
+    align: 'center',
+  },
   {
     title: 'JA 강의 경력',
     dataIndex: 'experience',
     key: 'experience',
-    width: 272,
+    width: ASSIGNED_INSTRUCTOR_DATA_COLUMN_WIDTH,
     align: 'center',
   },
-  { title: 'JA 평가 등급', dataIndex: 'grade', key: 'grade', width: 272, align: 'center' },
-  { title: '연락처', dataIndex: 'contact', key: 'contact', width: 272, align: 'center' },
-  { title: '이메일', dataIndex: 'email', key: 'email', width: 272, align: 'center' },
+  {
+    title: 'JA 평가 등급',
+    dataIndex: 'grade',
+    key: 'grade',
+    width: ASSIGNED_INSTRUCTOR_DATA_COLUMN_WIDTH,
+    align: 'center',
+  },
+  {
+    title: '연락처',
+    dataIndex: 'contact',
+    key: 'contact',
+    width: ASSIGNED_INSTRUCTOR_DATA_COLUMN_WIDTH,
+    align: 'center',
+  },
+  {
+    title: '이메일',
+    dataIndex: 'email',
+    key: 'email',
+    width: ASSIGNED_INSTRUCTOR_DATA_COLUMN_WIDTH,
+    align: 'center',
+  },
 ]
 
 function EmptyDetailPanel() {
@@ -97,6 +132,8 @@ function EmptyDetailPanel() {
   )
 }
 
+const DETAIL_INFO_LABEL_WIDTH = 180
+
 function DetailInfoRows({ items }: { items: VerticalInfoTableItem[] }) {
   const rows: ReactNode[] = []
   let index = 0
@@ -106,7 +143,13 @@ function DetailInfoRows({ items }: { items: VerticalInfoTableItem[] }) {
     if (item.span === 2) {
       rows.push(
         <DetailInfoForm.Row key={item.key} type="single">
-          <DetailInfoForm.Field label={item.label} fullRow view={item.children} readOnlyDisplay />
+          <DetailInfoForm.Field
+            label={item.label}
+            labelWidth={DETAIL_INFO_LABEL_WIDTH}
+            fullRow
+            view={item.children}
+            readOnlyDisplay
+          />
         </DetailInfoForm.Row>
       )
       index += 1
@@ -117,8 +160,18 @@ function DetailInfoRows({ items }: { items: VerticalInfoTableItem[] }) {
     if (next && next.span !== 2) {
       rows.push(
         <DetailInfoForm.Row key={item.key} type="double">
-          <DetailInfoForm.Field label={item.label} view={item.children} readOnlyDisplay />
-          <DetailInfoForm.Field label={next.label} view={next.children} readOnlyDisplay />
+          <DetailInfoForm.Field
+            label={item.label}
+            labelWidth={DETAIL_INFO_LABEL_WIDTH}
+            view={item.children}
+            readOnlyDisplay
+          />
+          <DetailInfoForm.Field
+            label={next.label}
+            labelWidth={DETAIL_INFO_LABEL_WIDTH}
+            view={next.children}
+            readOnlyDisplay
+          />
         </DetailInfoForm.Row>
       )
       index += 2
@@ -127,7 +180,13 @@ function DetailInfoRows({ items }: { items: VerticalInfoTableItem[] }) {
 
     rows.push(
       <DetailInfoForm.Row key={item.key} type="single">
-        <DetailInfoForm.Field label={item.label} fullRow view={item.children} readOnlyDisplay />
+        <DetailInfoForm.Field
+          label={item.label}
+          labelWidth={DETAIL_INFO_LABEL_WIDTH}
+          fullRow
+          view={item.children}
+          readOnlyDisplay
+        />
       </DetailInfoForm.Row>
     )
     index += 1
@@ -301,7 +360,10 @@ export function GeminiApprovedTrainingDetailProgramInfoTab({
       >
         {detail.instructorAssigned ? (
           <CmsDataTable
-            className="cms-data-table gemini-approved-training-detail-info__instructor-table"
+            className={
+              'cms-data-table cms-data-table--skip-auto-no-col ' +
+              'gemini-approved-training-detail-info__instructor-table'
+            }
             rowKey="key"
             pagination={false}
             columns={ASSIGNED_INSTRUCTOR_COLUMNS}
