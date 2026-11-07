@@ -9,6 +9,7 @@ import type {
   AccountPaymentDetailResponse,
   ApiResponse,
   ApiResponseMapStringObject,
+  ApiResponseSettlementApplicationDocumentResponse,
   ApiResponseSettlementBulkStatusChangeResponse,
   ApiResponseSettlementCorrectionResponse,
   ApiResponseSettlementGenerateResponse,
@@ -18,6 +19,7 @@ import type {
   ClientGeneratedDownloadLogRequest,
   EncryptedPaymentStatementDownloadRequest,
   GetAccountPaymentParams,
+  GetAdminSettlementApplicationDocumentParams,
   IssueSettlementExportScopeParams,
   ListAccountPaymentsParams,
   ListCorrectionRequestsParams,
@@ -2673,7 +2675,22 @@ const deleteConfigItem = (
       options);
     }
 
-return {currentConfig,updateCurrentConfig,deleteCurrentConfig,recalculate,requestPaymentStatement,registerPaymentStatementRenderedFile,downloadPaymentStatement,downloadPaymentStatementEncrypted,requestPaymentStatementDownload,recordPaymentStatementClientDownload,resendSettlementNotification,requestCorrection,resendSettlementStatementNotification,bulkConfirmPaymentStatements,paymentStatements,requestTaxReportExport,previewTaxReport,issueSettlementExportScope,requestBulkTransferExport,duplicateConfigItem,duplicateCurrentConfig,rejectPaymentStatement,confirmPaymentStatement,rejectCorrection,approveCorrection,markPaid,markFailed,bulkPaid,listSettlements,getSettlement,listSettlementRevisions,getSettlementRevisionDetail,paymentStatementRenderData,getSettlementAvailableActions,listTransportationSnapshots,statusMappings,listPaymentStatements,openQuestions,listExportHistories,listCorrectionRequests,settlementCalendar,settlementCalendarSummary,settlementCalendarDate,budgetSummary,listSettlementAggregates,getAccountPayment,listAccountPayments,deleteConfigItem}};
+/**
+ * 정산 목록 행에 settlementId가 없고 settlementApplicationId가 있을 때 사용한다. 제출 revision 스냅샷만 반환하며 현재 회원·일정·프로필로 보완하지 않는다. 권한: 관리자 인증 + SETTLEMENT_READ.
+ * @summary 관리자 확정 전 정산 신청서 지급조서 조회
+ */
+const getAdminSettlementApplicationDocument = (
+    applicationId: number,
+    params?: GetAdminSettlementApplicationDocumentParams,
+ options?: SecondParameter<typeof customInstance<ApiResponseSettlementApplicationDocumentResponse>>,) => {
+      return customInstance<ApiResponseSettlementApplicationDocumentResponse>(
+      {url: `/api/admin/settlement-applications/${applicationId}/application-document`, method: 'GET',
+        params
+    },
+      options);
+    }
+
+return {currentConfig,updateCurrentConfig,deleteCurrentConfig,recalculate,requestPaymentStatement,registerPaymentStatementRenderedFile,downloadPaymentStatement,downloadPaymentStatementEncrypted,requestPaymentStatementDownload,recordPaymentStatementClientDownload,resendSettlementNotification,requestCorrection,resendSettlementStatementNotification,bulkConfirmPaymentStatements,paymentStatements,requestTaxReportExport,previewTaxReport,issueSettlementExportScope,requestBulkTransferExport,duplicateConfigItem,duplicateCurrentConfig,rejectPaymentStatement,confirmPaymentStatement,rejectCorrection,approveCorrection,markPaid,markFailed,bulkPaid,listSettlements,getSettlement,listSettlementRevisions,getSettlementRevisionDetail,paymentStatementRenderData,getSettlementAvailableActions,listTransportationSnapshots,statusMappings,listPaymentStatements,openQuestions,listExportHistories,listCorrectionRequests,settlementCalendar,settlementCalendarSummary,settlementCalendarDate,budgetSummary,listSettlementAggregates,getAccountPayment,listAccountPayments,deleteConfigItem,getAdminSettlementApplicationDocument}};
 export type CurrentConfigResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['currentConfig']>>>
 export type UpdateCurrentConfigResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['updateCurrentConfig']>>>
 export type DeleteCurrentConfigResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['deleteCurrentConfig']>>>
@@ -2722,3 +2739,4 @@ export type ListSettlementAggregatesResult = NonNullable<Awaited<ReturnType<Retu
 export type GetAccountPaymentResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['getAccountPayment']>>>
 export type ListAccountPaymentsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['listAccountPayments']>>>
 export type DeleteConfigItemResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['deleteConfigItem']>>>
+export type GetAdminSettlementApplicationDocumentResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['getAdminSettlementApplicationDocument']>>>

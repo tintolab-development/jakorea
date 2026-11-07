@@ -13485,6 +13485,146 @@
         }
       }
     },
+    "/api/portal/auth/activity": {
+      "post": {
+        "tags": [
+          "회원 포탈 인증"
+        ],
+        "operationId": "recordPortalMemberActivity",
+        "summary": "포털 회원 세션 사용자 활동 기록",
+        "description": "MEMBER JWT의 서명된 sid에 결속된 로그인 세션만 허용합니다. 서버가 사용자 활동 시각을 정하고 60초 이내 반복 기록은 updated=false로 응답할 수 있습니다. 정책 OFF에서는 Activity 200만으로 Refresh가 연장되었다고 가정하지 마세요. 세션 시작 후 12시간 절대 만료는 항상 유지됩니다.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authenticated MEMBER activity accepted; updated=false is a throttled write, not proof of extension.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "lastUserActivityAt",
+                    "updated"
+                  ],
+                  "properties": {
+                    "lastUserActivityAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updated": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "examples": {
+                  "updated": {
+                    "value": {
+                      "lastUserActivityAt": "2026-11-05T07:30:00Z",
+                      "updated": true
+                    }
+                  },
+                  "throttled": {
+                    "value": {
+                      "lastUserActivityAt": "2026-11-05T07:30:00Z",
+                      "updated": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED: missing/invalid JWT, missing sid, revoked member session, 12-hour absolute expiration, or 30-minute user idle expiration when enabled."
+          },
+          "403": {
+            "description": "PERMISSION_DENIED: an authenticated ADMIN account cannot access MEMBER session endpoints."
+          }
+        }
+      }
+    },
+    "/api/portal/auth/session": {
+      "get": {
+        "tags": [
+          "회원 포탈 인증"
+        ],
+        "operationId": "getPortalMemberSessionStatus",
+        "summary": "포털 회원 현재 세션 상태 조회",
+        "description": "MEMBER JWT의 sid로만 본인의 활성 로그인 세션을 조회합니다. 읽기 전용이며 사용자 활동·Refresh 회전·만료 기한을 변경하지 않습니다. 정책 OFF에서는 idleExpiresAt과 refreshIdleExpiresAt이 null이고 12시간 절대 만료는 유지합니다.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Read-only, no-store server-derived MEMBER session snapshot",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "sessionStartedAt",
+                    "absoluteExpiresAt",
+                    "lastUserActivityAt",
+                    "idleExpiresAt",
+                    "refreshIdleExpiresAt",
+                    "idlePolicyEnforced",
+                    "serverNow"
+                  ],
+                  "properties": {
+                    "sessionStartedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "Bound MEMBER login session start time in UTC"
+                    },
+                    "absoluteExpiresAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "MEMBER session 12-hour absolute deadline, never extended by refresh or activity"
+                    },
+                    "lastUserActivityAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "Last persisted user input activity time. May be throttled by 60 seconds"
+                    },
+                    "idleExpiresAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time",
+                      "description": "30-minute MEMBER user inactivity deadline only when explicitly enabled; null otherwise"
+                    },
+                    "refreshIdleExpiresAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "date-time",
+                      "description": "Same 30-minute activity deadline while MEMBER idle policy ON; null while OFF (no legacy MEMBER refresh idle gate)"
+                    },
+                    "idlePolicyEnforced": {
+                      "type": "boolean",
+                      "description": "Whether access and activity are gated by 30-minute user inactivity"
+                    },
+                    "serverNow": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "Server timestamp for calculating UI countdown without trusting client wall clock"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED: missing/invalid JWT, missing sid, revoked session, 12-hour absolute expiration, or configured 30-minute idle expiration"
+          },
+          "403": {
+            "description": "PERMISSION_DENIED: ADMIN bearer is not a MEMBER session token."
+          }
+        }
+      }
+    },
     "/api/portal/auth/password/change": {
       "post": {
         "operationId": "changePassword",
@@ -76667,6 +76807,62 @@
           }
         }
       }
+    },
+    "/api/admin/settlement-applications/{applicationId}/application-document": {
+      "get": {
+        "tags": [
+          "기타 API"
+        ],
+        "operationId": "getAdminSettlementApplicationDocument",
+        "summary": "관리자 확정 전 정산 신청서 지급조서 조회",
+        "description": "정산 목록 행에 settlementId가 없고 settlementApplicationId가 있을 때 사용한다. 제출 revision 스냅샷만 반환하며 현재 회원·일정·프로필로 보완하지 않는다. 권한: 관리자 인증 + SETTLEMENT_READ.",
+        "parameters": [
+          {
+            "name": "applicationId",
+            "in": "path",
+            "required": true,
+            "description": "정산 목록 응답의 settlementApplicationId",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "revisionNo",
+            "in": "query",
+            "required": false,
+            "description": "조회할 revision. 생략하면 최신 revision",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseSettlementApplicationDocumentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "잘못된 revisionNo"
+          },
+          "401": {
+            "description": "인증 만료"
+          },
+          "403": {
+            "description": "권한 또는 프로그램 접근 범위 부족"
+          },
+          "404": {
+            "description": "정산 신청서 또는 revision 없음"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -113827,37 +114023,47 @@
         "description": "제출 시점 스냅샷만. 스냅샷 없는 필드는 null(현재 회원/동의서 값으로 채우지 않음).",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "englishName": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "residentNumberMasked": {
             "type": "string",
             "description": "예: 000915-1******. 원문 없음.",
-            "example": "000915-1******"
+            "example": "000915-1******",
+            "nullable": true
           },
           "affiliation": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "homeAddress": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "homeAddressDetail": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "bank": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "accountNumberMasked": {
             "type": "string",
-            "description": "마스킹된 계좌번호. 원문 없음."
+            "description": "마스킹된 계좌번호. 원문 없음.",
+            "nullable": true
           },
           "accountHolder": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "paymentPurpose": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -113895,13 +114101,11 @@
             "description": "교육 회차 번호(sessionNo와 동일). 인정 차시가 아님. 제출 스냅샷에 없으면 null. 지급조서 '교육 진행 차시' 표시에는 쓰지 않는다."
           },
           "recognizedSessionCount": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": "integer",
             "format": "int32",
-            "description": "강사비 산정에 적용된 인정 차시. 지급조서 '교육 진행 차시' 표시 기준. 제출 스냅샷 recognizedSessionCount. 구 스냅샷에 없으면 null이며 educationSessionCount로 대체하지 않는다.",
-            "example": 1
+            "description": "강사비 산정에 적용된 인정 차시. 지급조서 '교육 진행 차시' 표시 기준. 구 스냅샷에 없으면 null이며 educationSessionCount로 대체하지 않는다.",
+            "example": 1,
+            "nullable": true
           },
           "actualTrainingMinutes": {
             "type": [
@@ -113957,6 +114161,29 @@
             "format": "int64",
             "description": "총 산정 교통비(원, 정수)=유류비+톨비. 제출 전 transportPreview.calculatedTransportAmount와 동일. 편도 30 미만 미지급은 null. 원천징수·과세 합산에 넣지 않음.",
             "example": 209810
+          },
+          "instructorFeeCalculationUnit": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "PER_HOUR",
+              "PER_CLASS",
+              "PER_SESSION",
+              "PER_LECTURE"
+            ],
+            "description": "강사비 책정 단위. 제출 시점 lectureFeePreview.instructorFeeCalculationUnit과 동일 코드. 구 스냅샷에 없으면 null"
+          },
+          "educationStartAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "제출 시점 program_schedule.start_at (ISO-8601 instant). 구 스냅샷에 없으면 null"
+          },
+          "educationEndAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "제출 시점 program_schedule.end_at (ISO-8601 instant). 구 스냅샷에 없으면 null"
           }
         }
       },
@@ -113984,7 +114211,9 @@
             "type": "string"
           },
           "description": {
-            "type": "string"
+            "type": "string",
+            "nullable": true,
+            "description": "산출 항목 설명. 백엔드가 정산 제출 시점에 생성·저장한 값이며 이후 설정 변경에도 바뀌지 않는다. FE는 그대로 표시하고 조립·재생성하지 않는다. 없으면 null."
           },
           "amount": {
             "type": "integer",
@@ -121055,7 +121284,9 @@
             "description": "산출 내역서 공통 항목 코드"
           },
           "description": {
-            "type": "string"
+            "type": "string",
+            "nullable": true,
+            "description": "산출 항목 설명. 백엔드가 정산 제출 시점에 생성·저장한 값이며 이후 설정 변경에도 바뀌지 않는다. FE는 그대로 표시하고 조립·재생성하지 않는다. 없으면 null."
           },
           "amount": {
             "type": "integer",
@@ -143439,6 +143670,15 @@
             },
             "nullable": true,
             "description": "Optional for TRANSPORTATION when evidenceRequired is false. Empty array still persists legs parsed from items[].description. When present, each expense is a leg (가는 편 / 오는 편) and files may be []."
+          },
+          "tripType": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "ROUND_TRIP",
+              "ONE_WAY"
+            ],
+            "description": "학생 교통비 왕복/편도. ROUND_TRIP → 왕복 교통비 실비 지급, ONE_WAY → 편도 교통비 실비 지급. null·생략이면 서버 description null."
           }
         },
         "required": [
@@ -143601,13 +143841,23 @@
           },
           "description": {
             "type": "string",
-            "nullable": true
+            "nullable": true,
+            "description": "산출 항목 설명. 백엔드가 정산 제출 시점에 생성·저장한 값이며 이후 설정 변경에도 바뀌지 않는다. FE는 그대로 표시하고 조립·재생성하지 않는다. 없으면 null."
           },
           "expenses": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/IndividualSettlementExpense"
             }
+          },
+          "tripType": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "ROUND_TRIP",
+              "ONE_WAY"
+            ],
+            "description": "학생 교통비 왕복/편도. ROUND_TRIP → 왕복 교통비 실비 지급, ONE_WAY → 편도 교통비 실비 지급. null·생략이면 서버 description null."
           }
         },
         "required": [
@@ -144087,7 +144337,7 @@
           "description": {
             "type": "string",
             "nullable": true,
-            "description": "관리자 조회 시 현재 정산 항목 설정에서 매칭된 지급/임금/공제 항목 description. 신청자 입력 요약이 아님. 매칭 실패 또는 설정 문구 공백이면 null."
+            "description": "산출 항목 설명. 백엔드가 정산 제출 시점에 생성·저장한 값이며 이후 설정 변경에도 바뀌지 않는다. FE는 그대로 표시하고 조립·재생성하지 않는다. 없으면 null."
           },
           "receipts": {
             "type": "array",
@@ -145383,6 +145633,34 @@
             "nullable": true,
             "example": 209810,
             "description": "총 산정 교통비(원, 정수)=유류비+톨비. 제출 전 transportPreview.calculatedTransportAmount와 동일. 편도 30 미만 미지급은 null. 원천징수·과세 합산에 넣지 않음."
+          },
+          "instructorFeeCalculationUnit": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "PER_HOUR",
+              "PER_CLASS",
+              "PER_SESSION",
+              "PER_LECTURE"
+            ],
+            "description": "강사비 책정 단위. 제출 시점 lectureFeePreview.instructorFeeCalculationUnit과 동일 코드. 구 스냅샷에 없으면 null"
+          },
+          "recognizedSessionCount": {
+            "type": "integer",
+            "nullable": true,
+            "description": "강사비 산정에 적용된 인정 차시. 지급조서 '교육 진행 차시' 표시 기준. 구 스냅샷에 없으면 null이며 educationSessionCount로 대체하지 않는다."
+          },
+          "educationStartAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "제출 시점 program_schedule.start_at (ISO-8601 instant). 구 스냅샷에 없으면 null"
+          },
+          "educationEndAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "제출 시점 program_schedule.end_at (ISO-8601 instant). 구 스냅샷에 없으면 null"
           }
         }
       },
@@ -145416,7 +145694,8 @@
           },
           "description": {
             "type": "string",
-            "nullable": true
+            "nullable": true,
+            "description": "산출 항목 설명. 백엔드가 정산 제출 시점에 생성·저장한 값이며 이후 설정 변경에도 바뀌지 않는다. FE는 그대로 표시하고 조립·재생성하지 않는다. 없으면 null."
           },
           "amount": {
             "type": "integer",
