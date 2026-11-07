@@ -9,8 +9,8 @@ exports[`UJAT 반기 parity (part4 step7) > 생성 요청 — serviceDetailJson(
   "attachmentFileNames": undefined,
   "autoApplyDefaultFormBindings": true,
   "businessArea": undefined,
-  "businessEndDate": "2027-12-31T23:59:59.999Z",
-  "businessStartDate": "2027-01-01T00:00:00.000Z",
+  "businessEndDate": "2028-01-01",
+  "businessStartDate": "2027-01-01",
   "category": "school",
   "contactEmail": undefined,
   "contactPhone": undefined,
@@ -22,8 +22,9 @@ exports[`UJAT 반기 parity (part4 step7) > 생성 요청 — serviceDetailJson(
   "educatedTeachers": undefined,
   "educationProcess": undefined,
   "educationStructure": "SCHEDULE",
+  "educationTargetDetail": undefined,
   "educationTime": undefined,
-  "endDate": "2027-12-31T23:59:59.999Z",
+  "endDate": "2028-01-01",
   "femaleParticipants": undefined,
   "format": "course",
   "generalTeachers": undefined,
@@ -92,7 +93,7 @@ exports[`UJAT 반기 parity (part4 step7) > 생성 요청 — serviceDetailJson(
     },
   ],
   "staffVolunteers": undefined,
-  "startDate": "2027-01-01T00:00:00.000Z",
+  "startDate": "2027-01-01",
   "targetLevel": "elementary",
   "targetLevels": [
     "elementary",
@@ -105,6 +106,7 @@ exports[`UJAT 반기 parity (part4 step7) > 생성 요청 — serviceDetailJson(
   "totalParticipants": undefined,
   "type": "offline",
   "venue": undefined,
+  "venueKind": undefined,
 }
 `;
 
@@ -132,6 +134,7 @@ exports[`UJAT 반기 parity (part4 step7) > 생성 요청 — serviceDetailJson(
 
 exports[`UJAT 반기 parity (part4 step7) > 수정 요청 — 반기 일정 수정 PATCH 본문 > update-body 1`] = `
 {
+  "expectedUpdatedAt": "2026-01-01T00:00:00.000Z",
   "targetLevel": "elementary",
   "targetLevels": [
     "elementary",

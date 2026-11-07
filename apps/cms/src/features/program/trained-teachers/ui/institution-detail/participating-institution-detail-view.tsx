@@ -269,15 +269,14 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     ...(applicationBasicInfo ?? {}),
     ...savedBasicPatch,
   }
-  const sessions = row.sessions ?? []
+  const sessions = applicationDetailQuery.data?.educationScheduleSessions ?? []
   const attendanceRow = useMemo(() => {
-    if (activeTab !== 'attendance' || !applicationDetailQuery.data) return row
     return {
       ...row,
       organizationApplicationId: row.organizationApplicationId ?? row.id,
-      sessions: applicationDetailQuery.data.educationScheduleSessions ?? [],
+      sessions,
     }
-  }, [activeTab, applicationDetailQuery.data, row])
+  }, [row, sessions])
   const isActivityWithdrawn = mergedDetail.activityWithdrawn === true
 
   const activityWithdrawScheduleOptions = useMemo(
@@ -412,7 +411,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     revealWithReason,
     onPrivacyControlClick: handlePrivacyToggleClick,
     confirmModal: personalInfoRevealModal,
-  programPrivacyPending,
+    programPrivacyPending,
   } = usePersonalInfoReveal({
     privacyScope: 'program',
     programId: programId,
@@ -724,11 +723,11 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
         textbookDisplay.textbookName.trim() !== '-' &&
         textbookDisplay.textbookName.trim() !== '해당 없음'
       ? textbookDisplay.textbookName.trim()
-      : (mergedDetail.textbookName?.trim() &&
+      : mergedDetail.textbookName?.trim() &&
           mergedDetail.textbookName.trim() !== '-' &&
           mergedDetail.textbookName.trim() !== '해당 없음'
-          ? mergedDetail.textbookName.trim()
-          : '')
+        ? mergedDetail.textbookName.trim()
+        : ''
   const kitsAndQty = hasSelectedTextbook
     ? formatParticipatingInstitutionKitQuantity(
         textbookDisplay.textbookKits,
@@ -818,7 +817,11 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     )
   }
 
-  if (canFetchApplicationDetail && applicationDetailQuery.isError && activeTabUsesApplicationDetail) {
+  if (
+    canFetchApplicationDetail &&
+    applicationDetailQuery.isError &&
+    activeTabUsesApplicationDetail
+  ) {
     return (
       <div className="school-detail-fullpage-view">
         <CmsTextTabs
@@ -839,7 +842,8 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
                 size="medium"
                 onClick={() => {
                   void applicationDetailQuery.refetch()
-                }} >
+                }}
+              >
                 다시 시도
               </CmsButton>
             </div>
@@ -868,7 +872,8 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
                   variant="delete"
                   size="h40"
                   disabled={isActivityWithdrawn}
-                  onClick={handleRequestActivityWithdraw} >
+                  onClick={handleRequestActivityWithdraw}
+                >
                   활동 포기
                 </CmsButton>
               ) : null}
@@ -886,22 +891,22 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
                 onCancel={cancelApplicationInfoEdit}
                 onSave={() => {
                   void saveApplicationInfoEdit()
-                }} />
+                }}
+              />
               {!isApplicationInfoEditing ? (
                 <>
                   {showAdminCommentSection ? (
-                    <CmsButton
-                      variant="primary"
-                      size="h40"
-                      onClick={handleAdminCommentEditEnter} >
+                    <CmsButton variant="primary" size="h40" onClick={handleAdminCommentEditEnter}>
                       코멘트 작성
                     </CmsButton>
                   ) : null}
-                  <PersonalInfoRevealButton disabled={programPrivacyPending}
+                  <PersonalInfoRevealButton
+                    disabled={programPrivacyPending}
                     labelMode="toggle"
                     revealed={personalInfoRevealed}
                     cmsSize="h40"
-                    onClick={handlePrivacyToggleClick} />
+                    onClick={handlePrivacyToggleClick}
+                  />
                 </>
               ) : null}
             </>

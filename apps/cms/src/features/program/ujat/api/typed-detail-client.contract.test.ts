@@ -42,6 +42,44 @@ describe('UJAT Typed detail HTTP contract', () => {
     })
   })
 
+  it('ISO instant 날짜가 VALIDATION_FAILED면 YYYY-MM-DD로 다시 보낸다', async () => {
+    request
+      .mockRejectedValueOnce({
+        response: { data: { error: { code: 'VALIDATION_FAILED', field: 'startDate' } } },
+      })
+      .mockResolvedValueOnce({ schemaVersion: 1, halfPlans: [] })
+
+    await replaceUjatTypedDetailRemote('186558', {
+      schemaVersion: 1,
+      halfPlans: [
+        {
+          semesterType: 'FIRST_HALF',
+          stages: [
+            {
+              stage: 'MAIN_EDUCATION',
+              rows: [
+                {
+                  startDate: '2027-03-08T15:00:00.000Z',
+                  endDate: '2027-03-08T15:00:00.000Z',
+                  exclusion: { excludeHoliday: true },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    })
+
+    expect(request).toHaveBeenCalledTimes(2)
+    const first = request.mock.calls[0]?.[0] as { data: { halfPlans: Array<{ stages: Array<{ rows: Array<{ startDate: string; exclusion: unknown }> }> }> } }
+    const second = request.mock.calls[1]?.[0] as { data: { halfPlans: Array<{ stages: Array<{ rows: Array<{ startDate: string; exclusion: unknown }> }> }> } }
+    expect(first.data.halfPlans[0].stages[0].rows[0].startDate).toBe('2027-03-09')
+    expect(second.data.halfPlans[0].stages[0].rows[0].startDate).toBe('2027-03-09')
+    expect(JSON.stringify(first.data.halfPlans[0].stages[0].rows[0].exclusion)).not.toContain(
+      'excludePublicHoliday'
+    )
+  })
+
   it('PATCH uses JSON Merge Patch semantics', async () => {
     const patch = { common: { surveySettings: [] } }
     await patchUjatTypedDetailRemote('186264', patch)

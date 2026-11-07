@@ -50,6 +50,28 @@ describe('UJAT typed detail migration boundary', () => {
     })
   })
 
+  it('진행불가일은 excludeHoliday로만 직렬화하고 KST Instant 날짜를 YYYY-MM-DD로 보낸다', () => {
+    const typed = typedDetailFromUjatOverlay({
+      'ujat.h1.event.name': '상반기 본교육',
+      'ujat.h1.event.delivery': 'offline',
+      'ujat.h1.event.range': {
+        start: '2027-03-08T15:00:00.000Z',
+        end: '2027-03-08T15:00:00.000Z',
+      },
+      'ujat.h1.eduSchedule.exclusion': { excludeHoliday: true, excludeSaturday: true },
+    })
+    const row = typed.halfPlans?.[0]?.stages?.[0]?.rows?.[0]
+    expect(row?.startDate).toBe('2027-03-09')
+    expect(row?.endDate).toBe('2027-03-09')
+    expect(row?.exclusion).toEqual({
+      excludeNone: false,
+      excludeSaturday: true,
+      excludeSunday: false,
+      excludeHoliday: true,
+    })
+    expect(JSON.stringify(row?.exclusion)).not.toContain('excludePublicHoliday')
+  })
+
   it('typed values are projected to the legacy UI model for the migration window', () => {
     const overlay = ujatOverlayFromTypedDetail({
       schemaVersion: 1,

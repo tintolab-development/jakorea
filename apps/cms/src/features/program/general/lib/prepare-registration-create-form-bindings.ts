@@ -28,6 +28,22 @@ function shouldAlwaysApplyApplicationForms(program: Program): boolean {
   return resolveProgramOperationalBindingKind(program) === 'GENERAL'
 }
 
+function overlayRecordHasUserValues(record: Record<string, unknown> | null | undefined): boolean {
+  if (record == null) return false
+  return Object.entries(record).some(([key, value]) => {
+    if (key.toLowerCase().includes('announcementpublished') && value === true) return false
+    if (value == null) return false
+    if (typeof value === 'string') return value.trim() !== ''
+    if (typeof value === 'boolean') return value
+    if (typeof value === 'number') return Number.isFinite(value)
+    if (Array.isArray(value)) return value.length > 0
+    if (typeof value === 'object') {
+      return overlayRecordHasUserValues(value as Record<string, unknown>)
+    }
+    return true
+  })
+}
+
 export type RegistrationFormFlushInput = {
   templateCode: string
   draft: WritingFormDraft
@@ -113,7 +129,7 @@ export async function prepareRegistrationCreateFormBindings(args: {
     })
     const hasWizardOperationalDraft =
       wizardSaved?.draft != null && wizardSaved.draft.paragraphs.length > 0
-    const hasOverlay = overlay != null && Object.keys(overlay).length > 0
+    const hasOverlay = overlayRecordHasUserValues(overlay)
     if (!hasWizardOperationalDraft && !hasOverlay) {
       // 수정하지 않은 GENERAL 신청 양식: 본문 없이 담아 두면 `applyOne`이 바인딩된 카탈로그 버전 본문을
       // (loadFormTemplateVersionDraftByVersionId → createSeedDraftForOperationalCatalogId 순) 채워 COPY·발행한다.

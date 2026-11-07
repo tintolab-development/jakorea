@@ -41,6 +41,7 @@ import {
 } from '@/features/program/general/lib/participating-instructor-settlement-download'
 import { useParticipatingInstructorPaymentStatementView } from '@/features/program/general/ui/detail-modal/program-status/participating-instructor-payment-statement-view-container'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
+import { useProtectedFileDownload } from '@/shared/lib/use-protected-file-download'
 import './participating-instructor-settlement-section.css'
 
 export interface ParticipatingIndividualInstructorSettlementSectionProps {
@@ -53,6 +54,7 @@ export function ParticipatingIndividualInstructorSettlementSection({
   program,
 }: ParticipatingIndividualInstructorSettlementSectionProps) {
   const { showAlert } = useCmsAlert()
+  const { runProtectedDownload, filePasswordModal } = useProtectedFileDownload()
   const programId = program.id != null ? String(program.id) : ''
   const programTitle = program.mainTitle?.trim() || program.title?.trim() || '개인 프로그램'
 
@@ -98,24 +100,38 @@ export function ParticipatingIndividualInstructorSettlementSection({
       return
     }
 
-    setBulkDownloadLoading(true)
-    try {
-      await bulkDownloadParticipatingInstructorPaymentStatements(
-        downloadableRows,
-        `지급조서_${instructor.instructorName}`
-      )
-    } catch (error) {
-      handleError(error, {
-        context: 'participatingIndividualInstructorSettlementSection.bulkDownloadPaymentStatements',
-      })
-      showAlert({
-        title: '안내',
-        content: getParticipatingInstructorSettlementBulkDownloadErrorMessage(error),
-      })
-    } finally {
-      setBulkDownloadLoading(false)
-    }
-  }, [bulkDownloadLoading, downloadableRows, instructor.instructorName, remoteEnabled, showAlert])
+    runProtectedDownload({
+      kind: 'PAYMENT_STATEMENT',
+      download: async password => {
+        setBulkDownloadLoading(true)
+        try {
+          await bulkDownloadParticipatingInstructorPaymentStatements(
+            downloadableRows,
+            `지급조서_${instructor.instructorName}`,
+            { password }
+          )
+        } catch (error) {
+          handleError(error, {
+            context: 'participatingIndividualInstructorSettlementSection.bulkDownloadPaymentStatements',
+          })
+          showAlert({
+            title: '안내',
+            content: getParticipatingInstructorSettlementBulkDownloadErrorMessage(error),
+          })
+          throw error
+        } finally {
+          setBulkDownloadLoading(false)
+        }
+      },
+    })
+  }, [
+    bulkDownloadLoading,
+    downloadableRows,
+    instructor.instructorName,
+    remoteEnabled,
+    runProtectedDownload,
+    showAlert,
+  ])
 
   const columns = useMemo(
     (): ColumnsType<ParticipatingInstructorSettlementApiRow> => [
@@ -255,6 +271,7 @@ export function ParticipatingIndividualInstructorSettlementSection({
       </div>
 
       {paymentStatementView.modal}
+      {filePasswordModal}
     </div>
   )
 }

@@ -26,9 +26,7 @@ import {
   selectOrganizationApprovePreferredSchedules,
   type OrganizationApproveEducationScheduleMode,
 } from '@/features/program/general/lib/organization-application-approve-slots'
-import {
-  formatOrganizationApproveScheduleCard,
-} from '@/features/program/general/lib/organization-preferred-schedule-label'
+import { formatOrganizationApproveScheduleCard } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { stripDefaultEducationSlotNameFromLabel } from '@/shared/lib/education-schedule-name'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -401,20 +399,25 @@ export function InstitutionApproveModal({
   const scheduleCardsForView = periodSingleRequestedApproval
     ? requestedScheduleCards
     : scheduleCards
+  const trainedTeacherDateSingleSelect =
+    isTrainedTeacherProgram && !periodSchedule && !isTrainedTeacherPeriodApproval
   const allowsMultipleSchedules = periodSingleRequestedApproval
     ? false
-    : allowsMultipleOrganizationEducationScheduleAssignment({
-        sessionRound,
-        educationScheduleMode,
-        maxScheduleCount,
-      })
-  const assignmentHint = periodSingleRequestedApproval
-    ? ORGANIZATION_EDUCATION_SINGLE_SCHEDULE_HINT
-    : organizationEducationScheduleAssignmentHint({
-        sessionRound,
-        educationScheduleMode,
-        maxScheduleCount,
-      })
+    : trainedTeacherDateSingleSelect
+      ? false
+      : allowsMultipleOrganizationEducationScheduleAssignment({
+          sessionRound,
+          educationScheduleMode,
+          maxScheduleCount,
+        })
+  const assignmentHint =
+    periodSingleRequestedApproval || trainedTeacherDateSingleSelect
+      ? ORGANIZATION_EDUCATION_SINGLE_SCHEDULE_HINT
+      : organizationEducationScheduleAssignmentHint({
+          sessionRound,
+          educationScheduleMode,
+          maxScheduleCount,
+        })
   const [selectedOptionKeys, setSelectedOptionKeys] = useState<string[]>([])
   const [selectedPreferredScheduleRank, setSelectedPreferredScheduleRank] = useState<number | null>(
     null
@@ -507,15 +510,15 @@ export function InstitutionApproveModal({
   ])
   const selectableCards = periodSingleRequestedApproval
     ? requestedScheduleCards
-      : hasPreferredSchedules
-        ? scheduleCards.filter(card =>
+    : hasPreferredSchedules
+      ? scheduleCards.filter(card =>
           isTrainedTeacherPeriodApproval
             ? card.preferredScheduleRank != null &&
               card.scheduleStatus?.trim().toUpperCase() !== 'INACTIVE_OR_DELETED'
             : hasStructuredPreferredScheduleSource
-            ? card.confirmableScheduleId != null &&
-              card.scheduleStatus?.trim().toUpperCase() !== 'INACTIVE_OR_DELETED'
-            : periodSchedule || card.confirmableScheduleId != null
+              ? card.confirmableScheduleId != null &&
+                card.scheduleStatus?.trim().toUpperCase() !== 'INACTIVE_OR_DELETED'
+              : periodSchedule || card.confirmableScheduleId != null
         )
       : commonAssignmentCards
   const selectedCards = selectableCards.filter(card =>

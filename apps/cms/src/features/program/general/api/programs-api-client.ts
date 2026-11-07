@@ -12,6 +12,7 @@ import customInstance from '@/shared/api/orval-mutator'
 import { axiosClient } from '@/shared/instance/axios-instance'
 import type { BulkActionResponse } from '@/shared/api/generated/dashboard/schemas/bulkActionResponse'
 import type { ProgramResponse } from '@/shared/api/generated/dashboard/schemas/programResponse'
+import { latestProgramFormBindingsBySlot } from '@/features/program/general/lib/operational-form-bindings'
 
 /** GET/POST/PATCH /api/admin/programs 본문. createdByName / updatedByName 포함. */
 export type AdminProgramResponseDto = ProgramResponse
@@ -658,8 +659,8 @@ export async function fetchAdminProgramFormBindingsRemote(
       method: 'GET',
     })
   )
-  if (Array.isArray(body)) return body
-  return body.items ?? []
+  const items = Array.isArray(body) ? body : (body.items ?? [])
+  return latestProgramFormBindingsBySlot(items)
 }
 
 /** POST /api/admin/programs/{programId}/form-bindings */

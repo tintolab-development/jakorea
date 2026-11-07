@@ -416,6 +416,9 @@ export function programToUjatRecruitCanonicalFormValues(
           ...(hasOwnField(row, 'finalPassAnnouncementMethod')
             ? { resultAnnouncementMethod: row.finalPassAnnouncementMethod ?? '' }
             : {}),
+          ...(canonical.educationTargetDetail != null
+            ? { educationTargetDetail: canonical.educationTargetDetail }
+            : {}),
         }
       : {
           ...(hasOwnField(row, 'startAt')
@@ -582,6 +585,12 @@ export function applyUjatRecruitFormValuesToProgram(
   }
   return {
     ...program,
+    ...(isInstitution
+      ? {
+          educationTargetDetail: values.educationTargetDetail?.trim() || undefined,
+          remarks: values.oneLineIntroduction?.trim() || program.remarks,
+        }
+      : {}),
     programRecruitments: existingTarget
       ? rows.map(row => (row === existingTarget ? nextRow : row))
       : [...rows, nextRow],

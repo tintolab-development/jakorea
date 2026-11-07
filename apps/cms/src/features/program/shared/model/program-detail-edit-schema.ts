@@ -2266,6 +2266,10 @@ export function narrowProgramDetailPatchForCommonInfoSave(
     applicationMethod: _applicationMethod,
     otherNotes: _otherNotes,
     educationTargetDetail: _educationTargetDetail,
+    contactName: _contactName,
+    contactEmail: _contactEmail,
+    contactPhone: _contactPhone,
+    attachmentFileNames: _attachmentFileNames,
     ...rest
   } = patch
 

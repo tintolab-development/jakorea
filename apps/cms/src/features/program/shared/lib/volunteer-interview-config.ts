@@ -191,9 +191,7 @@ export function volunteerInterviewConfigFromOverlayLikeServer(
           return {
             excludeSaturday: booleanOrNull(o.excludeSaturday),
             excludeSunday: booleanOrNull(o.excludeSunday),
-            excludeHoliday: booleanOrNull(
-              'excludeHoliday' in o ? o.excludeHoliday : o.excludePublicHoliday
-            ),
+            excludeHoliday: booleanOrNull(o.excludeHoliday),
           }
         })()
       : null

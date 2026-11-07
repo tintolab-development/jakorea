@@ -185,6 +185,70 @@ describe('buildTrainedTeacherEducationProgressRows', () => {
     )
   })
 
+  it('1691630 DATE 1건 배정은 희망 5장이어도 운영 행 1줄·scheduleId 187701만 쓴다', () => {
+    const rows = buildTrainedTeacherEducationProgressRows(
+      [
+        session({
+          date: '2026.11.17',
+          dayOfWeek: '화',
+          timeRange: '15:07~16:07',
+          resolvedScheduleId: 187701,
+          deliveryScheduleStatus: 'SCHEDULED',
+        }),
+      ],
+      [
+        {
+          preferenceRank: 1,
+          date: '2026-11-13',
+          dayOfWeek: '금',
+          sessionCount: 1,
+          sessionTimes: [],
+          scheduleId: 187703,
+          scheduleStatus: 'MATCHED',
+        },
+        {
+          preferenceRank: 2,
+          date: '2026-11-16',
+          dayOfWeek: '월',
+          sessionCount: 1,
+          sessionTimes: [],
+          scheduleId: 187704,
+          scheduleStatus: 'MATCHED',
+        },
+        {
+          preferenceRank: 3,
+          date: '2026-11-17',
+          dayOfWeek: '화',
+          sessionCount: 1,
+          sessionTimes: [],
+          scheduleId: 187701,
+          scheduleStatus: 'MATCHED',
+        },
+        {
+          preferenceRank: 4,
+          date: '2026-11-19',
+          dayOfWeek: '목',
+          sessionCount: 1,
+          sessionTimes: [],
+          scheduleId: 187702,
+          scheduleStatus: 'MATCHED',
+        },
+        {
+          preferenceRank: 5,
+          date: '2026-11-27',
+          dayOfWeek: '금',
+          sessionCount: 1,
+          sessionTimes: [],
+          scheduleId: 187705,
+          scheduleStatus: 'MATCHED',
+        },
+      ]
+    )
+    expect(rows).toHaveLength(1)
+    expect(rows[0]?.rowLabel).toBe('3지망')
+    expect(rows[0]?.attendanceScheduleIds).toEqual([187701])
+  })
+
   it('educationSchedules가 1건이면 preferred가 7건이어도 1행만 그린다', () => {
     const rows = buildTrainedTeacherEducationProgressRows(
       [

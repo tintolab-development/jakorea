@@ -237,9 +237,9 @@ export function mapApplicantSchoolToParticipatingSchool(
     /** TT는 강사 Relation 없음 — 합성하지 않음 */
     instructors: '',
     programId: row.programId,
-    sessions: row.sessions?.length
-      ? row.sessions
-      : mapPreferredScheduleBlocksToSessions(row.preferredScheduleBlocks),
+    /** 운영 일정 SSOT. 목록 GET에는 educationSchedules가 없으므로 []. 희망 지망으로 채우지 않는다. */
+    sessions: row.educationScheduleSessions ?? [],
+    hopeEducationSessions: mapPreferredScheduleBlocksToSessions(row.preferredScheduleBlocks),
     preferredScheduleBlocks: row.preferredScheduleBlocks,
     educationTarget: row.educationTarget,
     progressLabel: row.progressLabel,

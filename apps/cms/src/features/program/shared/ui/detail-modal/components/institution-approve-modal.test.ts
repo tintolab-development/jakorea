@@ -417,9 +417,7 @@ describe('InstitutionApproveModal schedule sources', () => {
             date: '2026-11-09',
             dayOfWeek: '월',
             sessionCount: 1,
-            sessionTimes: [
-              { sessionIndex: 1, classPeriod: '1교시', timeRange: '01:00 ~ 02:00' },
-            ],
+            sessionTimes: [{ sessionIndex: 1, classPeriod: '1교시', timeRange: '01:00 ~ 02:00' }],
             scheduleId: null,
             scheduleStatus: 'UNMATCHED',
           },
@@ -428,9 +426,7 @@ describe('InstitutionApproveModal schedule sources', () => {
             date: '2026-11-10',
             dayOfWeek: '화',
             sessionCount: 1,
-            sessionTimes: [
-              { sessionIndex: 1, classPeriod: '2교시', timeRange: '03:00 ~ 04:00' },
-            ],
+            sessionTimes: [{ sessionIndex: 1, classPeriod: '2교시', timeRange: '03:00 ~ 04:00' }],
             scheduleId: null,
             scheduleStatus: 'UNMATCHED',
           },
@@ -439,9 +435,7 @@ describe('InstitutionApproveModal schedule sources', () => {
             date: '2026-11-11',
             dayOfWeek: '수',
             sessionCount: 1,
-            sessionTimes: [
-              { sessionIndex: 1, classPeriod: '3교시', timeRange: '05:00 ~ 06:00' },
-            ],
+            sessionTimes: [{ sessionIndex: 1, classPeriod: '3교시', timeRange: '05:00 ~ 06:00' }],
             scheduleId: null,
             scheduleStatus: 'UNMATCHED',
           },
@@ -458,7 +452,9 @@ describe('InstitutionApproveModal schedule sources', () => {
     const secondChoice = await screen.findByRole('button', { name: /2026\.\s*11\.\s*10/ })
     const thirdChoice = await screen.findByRole('button', { name: /2026\.\s*11\.\s*11/ })
     expect(screen.queryByText('승인 시 실제 일정 생성')).toBeNull()
-    expect(screen.queryByText('승인 시 선택한 희망 일정이 기관별 교육 일정으로 생성됩니다.')).toBeNull()
+    expect(
+      screen.queryByText('승인 시 선택한 희망 일정이 기관별 교육 일정으로 생성됩니다.')
+    ).toBeNull()
     expect((firstChoice as HTMLButtonElement).disabled).toBe(false)
     expect((secondChoice as HTMLButtonElement).disabled).toBe(false)
     expect((thirdChoice as HTMLButtonElement).disabled).toBe(false)
@@ -506,6 +502,53 @@ describe('InstitutionApproveModal schedule sources', () => {
     expect(onConfirm.mock.calls[0]?.[0]).not.toHaveProperty('preferredScheduleRank')
     expect(onConfirm.mock.calls[0]?.[0]).not.toHaveProperty('selectedScheduleId')
     expect(onConfirm.mock.calls[0]?.[0]).not.toHaveProperty('slots')
+  })
+
+  it('교육받은 교사 DATE는 회차가 복수여도 카드 1장만 고르고 selectedScheduleId만 보낸다', async () => {
+    fetchSlots.mockResolvedValue([])
+    const { onConfirm } = renderModal({
+      scheduleConfig: {
+        preferredScheduleBlocks: [
+          {
+            preferenceRank: 1,
+            date: '2026-11-13',
+            dayOfWeek: '금',
+            sessionCount: 1,
+            sessionTimes: [{ sessionIndex: 1, classPeriod: '1교시', timeRange: '15:07 ~ 16:07' }],
+            scheduleId: 187703,
+            scheduleStatus: 'MATCHED',
+          },
+          {
+            preferenceRank: 3,
+            date: '2026-11-17',
+            dayOfWeek: '화',
+            sessionCount: 1,
+            sessionTimes: [{ sessionIndex: 1, classPeriod: '1교시', timeRange: '15:07 ~ 16:07' }],
+            scheduleId: 187701,
+            scheduleStatus: 'MATCHED',
+          },
+        ],
+      },
+      educationScheduleMode: 'date',
+      isTrainedTeacherProgram: true,
+      applicationStatus: 'SUBMITTED',
+      educationStructure: 'curriculum',
+      sessionRound: 'multi',
+    })
+
+    expect(await screen.findByText('교육은 한 개의 일정에만 배정할 수 있습니다.')).toBeTruthy()
+    const first = await screen.findByRole('button', { name: /2026\.\s*11\.\s*13/ })
+    const assigned = screen.getByRole('button', { name: /2026\.\s*11\.\s*17/ })
+    fireEvent.click(first)
+    fireEvent.click(assigned)
+    expect(first.getAttribute('aria-pressed')).toBe('false')
+    expect(assigned.getAttribute('aria-pressed')).toBe('true')
+    fireEvent.click(screen.getByRole('button', { name: '승인' }))
+    await waitFor(() => expect(onConfirm).toHaveBeenCalled())
+    expect(onConfirm.mock.calls[0]?.[0]).toMatchObject({ selectedScheduleId: 187701 })
+    expect(onConfirm.mock.calls[0]?.[0]).not.toHaveProperty('slots')
+    expect(onConfirm.mock.calls[0]?.[0]).not.toHaveProperty('preferredScheduleRank')
+    expect(onConfirm.mock.calls[0]?.[0]).not.toHaveProperty('requestedScheduleId')
   })
 
   it('교육받은 교사 복수 회차는 서버가 매칭한 preferredScheduleBlocks만 배정한다', async () => {
@@ -732,6 +775,8 @@ describe('institution approve copy helpers', () => {
     expect(buildInstitutionApproveMessage('테스트학교', true)).toContain(
       '승인 시 선택한 일정으로 교육이 배정되며'
     )
-    expect(buildInstitutionApproveMessage('테스트학교')).toContain('프로그램 참여를 승인하시겠습니까')
+    expect(buildInstitutionApproveMessage('테스트학교')).toContain(
+      '프로그램 참여를 승인하시겠습니까'
+    )
   })
 })

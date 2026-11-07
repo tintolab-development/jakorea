@@ -1307,6 +1307,7 @@ function coreRequest(
     educationTime: program.educationTime,
     teamDivision: program.teamDivision,
     educationProcess: program.educationProcess,
+    educationTargetDetail: program.educationTargetDetail,
     maleParticipants: program.maleParticipants,
     femaleParticipants: program.femaleParticipants,
     totalParticipants: program.totalParticipants,
@@ -1442,6 +1443,7 @@ function patchRequest(
   if (has('educationTime')) body.educationTime = merged.educationTime
   if (has('teamDivision')) body.teamDivision = merged.teamDivision
   if (has('educationProcess')) body.educationProcess = merged.educationProcess
+  if (has('educationTargetDetail')) body.educationTargetDetail = merged.educationTargetDetail
   if (has('maleParticipants')) body.maleParticipants = merged.maleParticipants
   if (has('femaleParticipants')) body.femaleParticipants = merged.femaleParticipants
   if (has('totalParticipants')) body.totalParticipants = merged.totalParticipants

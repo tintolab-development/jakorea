@@ -6,6 +6,7 @@ import type {
 } from '@/types/domain'
 import { announcementPublishedFromFormValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
+import { ujatTypedDate } from '@/features/program/ujat/lib/ujat-typed-detail'
 import { toUjatVolunteerNoticeExposurePayload } from '@/features/template/lib/ujat-volunteer-notice-exposure'
 import { ujatVolunteerRecruitInterviewNamespace } from '@/features/program/ujat/lib/ujat-recruit-volunteer-half-overlay'
 
@@ -256,6 +257,12 @@ function formClearableText(value: string | undefined): string | null {
   return value == null ? null : value.trim()
 }
 
+function formDateOnly(value: unknown): string | null {
+  if (value == null) return null
+  if (typeof value === 'string') return value.trim() || null
+  return ujatTypedDate(value)
+}
+
 export function typedFieldsFromRecruitmentFormValues(
   values: ProgramDetailEditFormValues,
   kind: 'institution' | 'volunteer'
@@ -267,7 +274,7 @@ export function typedFieldsFromRecruitmentFormValues(
         null,
       remarksNotApplicable: values.participantRecruitmentNotesNotApplicable === 'not_applicable',
       // 기관 폼의 최종 합격자 발표일 → 수정 경로(adapters finalPassAnnouncementAt)와 동일
-      finalPassAnnouncementAt: values.resultAnnouncementDate?.trim() || null,
+      finalPassAnnouncementAt: formDateOnly(values.resultAnnouncementDate),
       finalPassAnnouncementMethod: formClearableText(values.resultAnnouncementMethod),
     }
   }
@@ -279,9 +286,9 @@ export function typedFieldsFromRecruitmentFormValues(
     volunteerTargets: mapUjatVolunteerTargetsToApi(values.volunteerTargets),
     volunteerTargetDetail: formClearableText(values.volunteerTargetDetail),
     remarksNotApplicable: values.volunteerRecruitmentNotesNotApplicable === 'not_applicable',
-    documentPassAnnouncementAt: values.documentPassAnnouncementDate?.trim() || null,
+    documentPassAnnouncementAt: formDateOnly(values.documentPassAnnouncementDate),
     documentPassAnnouncementMethod: formClearableText(values.documentPassAnnouncementMethod),
-    finalPassAnnouncementAt: values.finalPassAnnouncementDate?.trim() || null,
+    finalPassAnnouncementAt: formDateOnly(values.finalPassAnnouncementDate),
     finalPassAnnouncementMethod: formClearableText(values.finalPassAnnouncementMethod),
     interviewMethod: formClearableText(values.interviewMethod),
     interviewConfig: parseRecruitmentInterviewConfig(values.volunteerInterviewConfig) ?? null,
