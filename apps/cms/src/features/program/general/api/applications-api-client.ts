@@ -930,6 +930,33 @@ export async function resendIndividualApplicationNotification(
   )
 }
 
+/**
+ * POST /api/admin/individual-applications/{applicationId}/document-results/notifications/resend
+ * 서류 합격/불합격 알림만 재enqueue. 신청 결과 notifications/resend와 분리.
+ */
+export async function resendIndividualDocumentResultNotification(
+  applicationId: string,
+  payload: OrganizationApplicationNotificationResendRequest,
+  idempotencyKey: string
+): Promise<ApplicationDecisionResponse> {
+  const body: OrganizationApplicationNotificationResendRequestDto = {
+    timing: payload.timing,
+    ...(payload.scheduledAt != null ? { scheduledAt: payload.scheduledAt } : {}),
+    ...(payload.reason != null ? { reason: payload.reason } : {}),
+  }
+  return unwrapApiBody<ApplicationDecisionResponse>(
+    await customInstance({
+      url: `/api/admin/individual-applications/${encodeURIComponent(applicationId)}/document-results/notifications/resend`,
+      method: 'POST',
+      data: body,
+      headers: {
+        'Content-Type': 'application/json',
+        'Idempotency-Key': idempotencyKey,
+      },
+    })
+  )
+}
+
 /** OpenAPI `OrganizationApplicationNotificationResendRequest` — FE는 IMMEDIATE|SCHEDULED + nullables를 명시적으로 전송 */
 export type OrganizationApplicationNotificationResendRequest = {
   timing: OrganizationApplicationNotificationResendRequestTiming
@@ -1035,6 +1062,33 @@ export async function submitIndividualFinalResultRemote(
       url: `/api/admin/individual-applications/${encodeURIComponent(applicationId)}/final-result`,
       method: 'POST',
       data: sanitizeScreeningResultPayload(payload),
+    })
+  )
+}
+
+/**
+ * POST /api/admin/volunteer-applications/{applicationId}/document-results/notifications/resend
+ * 서류 합격/불합격 알림만 재enqueue. documentStatus는 바꾸지 않는다.
+ */
+export async function resendVolunteerDocumentResultNotification(
+  applicationId: string,
+  payload: OrganizationApplicationNotificationResendRequest,
+  idempotencyKey: string
+): Promise<ApplicationDecisionResponse> {
+  const body: OrganizationApplicationNotificationResendRequestDto = {
+    timing: payload.timing,
+    ...(payload.scheduledAt != null ? { scheduledAt: payload.scheduledAt } : {}),
+    ...(payload.reason != null ? { reason: payload.reason } : {}),
+  }
+  return unwrapApiBody<ApplicationDecisionResponse>(
+    await customInstance({
+      url: `/api/admin/volunteer-applications/${encodeURIComponent(applicationId)}/document-results/notifications/resend`,
+      method: 'POST',
+      data: body,
+      headers: {
+        'Content-Type': 'application/json',
+        'Idempotency-Key': idempotencyKey,
+      },
     })
   )
 }

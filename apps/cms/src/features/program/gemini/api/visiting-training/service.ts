@@ -56,12 +56,14 @@ import {
   fetchGeminiRecruitmentDetailRemote,
   fetchGeminiRecruitmentsRemotePage,
   rejectGeminiInstructorApplicationRemote,
+  resendGeminiInstructorApplicationNotificationRemote,
   rejectGeminiOrganizationApplicationRemote,
   resendGeminiOrganizationApplicationNotificationRemote,
   unmaskGeminiApprovedTrainingPrivacyRemote,
   updateGeminiRecruitmentRemote,
   type GeminiApprovedTrainingRemoteFilters,
   type GeminiInstructorApplicationRemoteFilters,
+  type GeminiInstructorNotificationResendPayload,
   type GeminiOrganizationApplicationApprovePayload,
   type GeminiOrganizationNotificationResendPayload,
   type GeminiRecruitmentRemoteFilters,
@@ -264,6 +266,14 @@ export async function rejectGeminiInstructorApplication(
 ): Promise<void> {
   assertRemoteReady()
   await rejectGeminiInstructorApplicationRemote(applicationId, reason)
+}
+
+export async function resendGeminiInstructorApplicationNotification(
+  applicationId: string,
+  payload: GeminiInstructorNotificationResendPayload
+): Promise<void> {
+  assertRemoteReady()
+  await resendGeminiInstructorApplicationNotificationRemote(applicationId, payload)
 }
 
 export async function createGeminiRecruitment(

@@ -20,6 +20,7 @@ import {
   listGeminiOrganizationApplicationsPage,
   listGeminiRecruitmentsPage,
   rejectGeminiInstructorApplication,
+  resendGeminiInstructorApplicationNotification,
   type GeminiApprovedTrainingsPage,
   type GeminiInstructorApplicationsPage,
   type GeminiOrganizationApplicationsPage,
@@ -314,6 +315,24 @@ export function useRejectGeminiInstructorApplicationMutation(approvedTrainingId:
   return useMutation({
     mutationFn: ({ applicationId, reason }: { applicationId: string; reason?: string }) =>
       rejectGeminiInstructorApplication(applicationId, reason),
+    onSuccess: async () => {
+      await invalidateGeminiInstructorApprovalQueries(queryClient, approvedTrainingId)
+    },
+  })
+}
+
+export function useResendGeminiInstructorApplicationNotificationMutation(
+  approvedTrainingId: string
+) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      applicationId,
+      payload,
+    }: {
+      applicationId: string
+      payload: Parameters<typeof resendGeminiInstructorApplicationNotification>[1]
+    }) => resendGeminiInstructorApplicationNotification(applicationId, payload),
     onSuccess: async () => {
       await invalidateGeminiInstructorApprovalQueries(queryClient, approvedTrainingId)
     },

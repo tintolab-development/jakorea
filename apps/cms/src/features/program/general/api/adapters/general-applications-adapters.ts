@@ -1840,6 +1840,7 @@ export function mapVolunteerApplicationToGeneralVolunteerApplicantRow(
     availableActions: dto.availableActions ?? [],
     applicationStatus: dto.applicationStatus ?? null,
     documentScreeningStatus: mapApiDocumentStatusToScreeningStatus(dto.documentStatus),
+    documentRejectionReason: dto.rejectReason?.trim() || undefined,
     interviewSlotCount: dto.interviewAvailabilityCount ?? 0,
     interviewAssignmentStatus: mapVolunteerInterviewAssignmentFromWire({
       interviewStatus: dto.interviewStatus,
@@ -1939,6 +1940,7 @@ export function mapVolunteerApplicationDetailToApplicantRow(
     availableActions: dto.availableActions ?? base.availableActions,
     applicationStatus: dto.applicationStatus ?? base.applicationStatus,
     documentScreeningStatus: mapApiDocumentStatusToScreeningStatus(screening?.documentStatus),
+    documentRejectionReason: screening?.rejectReason?.trim() || base.documentRejectionReason,
     interviewSlotCount: dto.interviewAvailabilityCount ?? base.interviewSlotCount,
     interviewAssignmentStatus,
     interviewAssignmentApiStatus:

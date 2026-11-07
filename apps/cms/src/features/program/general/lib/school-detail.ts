@@ -37,8 +37,18 @@ import {
   formatApplicantGradeLabel,
   formatPreviousYearParticipationLabel,
   formatRequestedEducationFormat,
+  mapApiApplicationStatusToApprovalStatus,
 } from '@/features/program/general/api/adapters/general-applications-adapters'
+import { formatApplicantSchoolApprovalNotificationSentAt } from '@/features/program/shared/model/applicant-institution'
 import type { OrganizationApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationDetailResponse'
+
+function formatSchoolDetailResultNotificationSentAt(iso?: string | null): string | undefined {
+  const trimmed = iso?.trim()
+  if (!trimmed) return undefined
+  const parsed = new Date(trimmed)
+  if (Number.isNaN(parsed.getTime())) return undefined
+  return formatApplicantSchoolApprovalNotificationSentAt(parsed)
+}
 
 function readFiniteNumber(value: unknown): number | undefined {
   if (typeof value === 'number' && Number.isFinite(value)) return value
@@ -294,6 +304,7 @@ export function getSchoolDetailByRow(row: ParticipatingSchoolRow): SchoolDetailF
     totalSessions: sessionCount,
     activityWithdrawn: row.activityWithdrawn === true,
     availableActions: row.availableActions,
+    approvalStatus: row.approvalStatus,
     instructors: [],
   }
 }
@@ -327,6 +338,10 @@ export function mergeOrganizationApplicationDetailOntoSchoolDetail(
   const waitingRoomLocation = stringField('waitingRoomLocation')
   const mealNotice = stringField('mealNotice')
   const parkingInfo = stringField('parkingInfo')
+  const rejectReason = stringField('rejectReason')
+  const resultNotificationSentAt = formatSchoolDetailResultNotificationSentAt(
+    dto.resultNotificationSentAt
+  )
   const textbookName = stringField('textbookName')
   const textbookGrade = stringField('textbookGrade')
   const economyFields = {
@@ -361,6 +376,9 @@ export function mergeOrganizationApplicationDetailOntoSchoolDetail(
     ...readOrganizationTextbookKitFields(dto),
     waitingRoomAvailable: dto.waitingRoomAvailable ?? undefined,
     participationAppliedAt: dto.submittedAt ?? undefined,
+    approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
+    participationRejectionReason: rejectReason,
+    resultNotificationSentAt,
     gradeBlocks: dto.gradeBlocks ?? undefined,
     ...economyFields,
   }

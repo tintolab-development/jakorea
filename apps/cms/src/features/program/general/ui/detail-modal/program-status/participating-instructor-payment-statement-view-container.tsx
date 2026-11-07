@@ -7,7 +7,10 @@ import {
   downloadPaymentStatementRemote,
   fetchSettlementDetailRemote,
 } from '@/features/settlement-management/api/settlement-api-client'
-import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
+import {
+  getSettlementApiErrorMessage,
+  isFileDownloadPasswordApiError,
+} from '@/features/settlement-management/api/get-settlement-api-error'
 import { buildPaymentStatementPreviewOptionsFromSettlement } from '@/features/program/general/lib/map-settlement-to-payment-statement-preview-options'
 import {
   buildPaymentStatementIssuancePreviewFileName,
@@ -116,10 +119,12 @@ export function useParticipatingInstructorPaymentStatementView(input: {
     try {
       await downloadPaymentStatementRemote(activeRow.settlementId, { password })
     } catch (error) {
-      showAlert({
-        title: '안내',
-        content: getSettlementApiErrorMessage(error, '지급조서 다운로드에 실패했습니다.'),
-      })
+      if (!isFileDownloadPasswordApiError(error)) {
+        showAlert({
+          title: '안내',
+          content: getSettlementApiErrorMessage(error, '지급조서 다운로드에 실패했습니다.'),
+        })
+      }
       throw error
     } finally {
       setDownloadLoading(false)

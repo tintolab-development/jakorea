@@ -11,10 +11,22 @@ import axios from 'axios'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { cacheProjectedProgramPrivacy } from '@/features/program/shared/lib/program-my-assignment'
 import type { ColumnsType } from 'antd/es/table'
-import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
+import {
+  CmsButton,
+  ExcelButton,
+  showNotificationResendRequestCompletedAlert,
+  useCmsAlert,
+} from '@/shared/ui'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import { giveUpGeneralParticipatingInstitution } from '@/features/program/general/api/admin-program-progress-service'
+import { resendGeneralOrganizationApplicationNotification } from '@/features/program/general/api/admin-applications-service'
+import { ProgramApprovalStatusDetailValue } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/program-approval-status-detail-value'
+import { ApplicantNotificationResendModal } from '@/features/program/shared/ui/detail-modal/components/applicant-notification-resend-modal'
+import {
+  canResendApplicationResultNotification,
+  toApplicantNotificationResendNotifyOptions,
+} from '@/features/program/general/lib/applicant-notification-resend'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { useProgramInstructorApplications } from '@/features/program/general/hooks/use-program-instructor-applications'
 import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
@@ -544,6 +556,8 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
   )
   const [activityWithdrawModalOpen, setActivityWithdrawModalOpen] = useState(false)
   const [activityWithdrawSubmitting, setActivityWithdrawSubmitting] = useState(false)
+  const [notificationResendOpen, setNotificationResendOpen] = useState(false)
+  const [notificationResendSubmitting, setNotificationResendSubmitting] = useState(false)
   const [adminCommentModalOpen, setAdminCommentModalOpen] = useState(false)
   const [adminCommentDraft, setAdminCommentDraft] = useState('')
   const [adminCommentError, setAdminCommentError] = useState<string | undefined>()
@@ -612,6 +626,15 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
   const participantSessions = row.sessions ?? []
   const isActivityWithdrawn = mergedDetail.activityWithdrawn === true
   const availableActions = mergedDetail.availableActions ?? row.availableActions
+  const applicationApprovalStatus = mergedDetail.approvalStatus ?? row.approvalStatus
+  const applicationResultNotificationActions =
+    organizationDetailQuery.data?.availableActions ?? availableActions
+  const canResendApplicationNotification =
+    organizationApplicationIdForDetail.length > 0 &&
+    canResendApplicationResultNotification({
+      approvalStatus: applicationApprovalStatus,
+      availableActions: applicationResultNotificationActions,
+    })
   const canRequestActivityWithdraw =
     !isActivityWithdrawn && (availableActions == null || availableActions.includes('GIVE_UP'))
   const showActivityWithdrawButton =
@@ -2308,6 +2331,81 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
       </div>
     ) : null
 
+  const handleConfirmApplicationNotificationResend = useCallback(
+    async (payload: PermissionModalPayload) => {
+      if (notificationResendSubmitting) return
+      if (!organizationApplicationIdForDetail) return
+      if (
+        payload.notifyTiming === 'manual' &&
+        (!payload.manualNotifyAt || !payload.manualNotifyAt.isAfter(new Date()))
+      ) {
+        void showAlert({
+          title: '예약 발송 일시 확인',
+          content: '예약 발송 일시는 현재 시각보다 이후로 설정해 주세요.',
+        })
+        return
+      }
+      const notifyOptions = toApplicantNotificationResendNotifyOptions(payload)
+      if (applicationApprovalStatus === 'rejected' && !payload.reason.trim()) {
+        void showAlert({
+          title: '반려 사유 확인',
+          content: '반려 알림 재발송 시 사유를 입력해 주세요.',
+        })
+        return
+      }
+      setNotificationResendSubmitting(true)
+      try {
+        await resendGeneralOrganizationApplicationNotification(
+          organizationApplicationIdForDetail,
+          {
+            timing: notifyOptions.notifyTiming === 'manual' ? 'SCHEDULED' : 'IMMEDIATE',
+            scheduledAt:
+              notifyOptions.notifyTiming === 'manual'
+                ? (notifyOptions.manualNotifyAt?.toISOString() ?? null)
+                : null,
+            reason: applicationApprovalStatus === 'rejected' ? payload.reason.trim() : null,
+          },
+          `org-${organizationApplicationIdForDetail}-${crypto.randomUUID()}`
+        )
+        setNotificationResendOpen(false)
+        await queryClient.invalidateQueries({
+          queryKey: generalApplicationsQueryKeys.organizationDetailInProgram(
+            programId,
+            organizationApplicationIdForDetail
+          ),
+        })
+        showNotificationResendRequestCompletedAlert()
+      } catch (error) {
+        void showAlert({
+          title: '알림 재발송 실패',
+          content: getGeneralProgramApiErrorMessage(error, '알림 재발송에 실패했습니다.'),
+        })
+      } finally {
+        setNotificationResendSubmitting(false)
+      }
+    },
+    [
+      applicationApprovalStatus,
+      notificationResendSubmitting,
+      organizationApplicationIdForDetail,
+      programId,
+      queryClient,
+      showAlert,
+    ]
+  )
+
+  const programApprovalStatusCell =
+    applicationApprovalStatus != null ? (
+      <ProgramApprovalStatusDetailValue
+        status={applicationApprovalStatus}
+        participationRejectionReason={mergedDetail.participationRejectionReason}
+        approvalNotificationSentAt={mergedDetail.resultNotificationSentAt}
+        onResendNotificationClick={
+          canResendApplicationNotification ? () => setNotificationResendOpen(true) : undefined
+        }
+      />
+    ) : null
+
   const textbookCell =
     isApplicationInfoEditing && canEditTextbook ? (
       textbookSelectEditCell
@@ -2445,6 +2543,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
               isAdminCommentEditing={false}
               adminCommentError={adminCommentError}
               programProgressCell={<ProgramEnrollmentStatusText status={programProgressStatus} />}
+              programApprovalStatusCell={programApprovalStatusCell}
               textbookCell={textbookCell}
               combinedClassCell={combinedClassCell}
               hideCombinedClass={!isGeneralOrganizationProgram(program)}
@@ -2989,6 +3088,21 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         onChange={handleAdminCommentDraftChange}
         onCancel={handleAdminCommentModalCancel}
         onConfirm={handleAdminCommentSave}
+      />
+      <ApplicantNotificationResendModal
+        open={notificationResendOpen}
+        subjectKind="institution"
+        subjectName={mergedDetail.schoolName ?? row.schoolName ?? ''}
+        approvalStatus={applicationApprovalStatus === 'rejected' ? 'rejected' : 'approved'}
+        confirmLoading={notificationResendSubmitting}
+        zIndex={2600}
+        onCancel={() => {
+          if (notificationResendSubmitting) return
+          setNotificationResendOpen(false)
+        }}
+        onConfirm={payload => {
+          void handleConfirmApplicationNotificationResend(payload)
+        }}
       />
       {combinedClassProcess.modals}
     </div>

@@ -4,7 +4,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, showNotificationResendRequestCompletedAlert } from '@/shared/ui'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
@@ -77,6 +77,7 @@ import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/tra
 import {
   getTrainedTeacherOrganizationApplication,
   giveUpTrainedTeacherOrganizationApplication,
+  resendTrainedTeacherOrganizationApplicationNotification,
 } from '@/features/program/trained-teachers/api/organization-applications-service'
 import { trainedTeacherQueryKeys } from '@/features/program/trained-teachers/api/query-keys'
 import {
@@ -101,6 +102,13 @@ import {
   type TrainedTeachersInstitutionDetailTabKey,
 } from '@/features/program/trained-teachers/lib/institution-detail-tabs'
 import { TrainedTeachersParticipatingInstitutionApplicationInfo } from './participating-institution-application-info'
+import { ProgramApprovalStatusDetailValue } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/program-approval-status-detail-value'
+import { ApplicantNotificationResendModal } from '@/features/program/shared/ui/detail-modal/components/applicant-notification-resend-modal'
+import {
+  canResendApplicationResultNotification,
+  toApplicantNotificationResendNotifyOptions,
+} from '@/features/program/general/lib/applicant-notification-resend'
+import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import { TrainedTeachersEducationJournalSection } from './education-journal-section'
 import { SchoolDetailAttendanceSection } from '@/features/program/general/ui/detail-modal/program-status/school-detail-attendance-section'
 import { SchoolDetailStudentListSection } from '@/features/program/general/ui/detail-modal/program-status/school-detail-student-list-section'
@@ -160,6 +168,8 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
   const [textbookStatusDropdownOpen, setTextbookStatusDropdownOpen] = useState(false)
   const [activityWithdrawModalOpen, setActivityWithdrawModalOpen] = useState(false)
   const [activityWithdrawSubmitting, setActivityWithdrawSubmitting] = useState(false)
+  const [notificationResendOpen, setNotificationResendOpen] = useState(false)
+  const [notificationResendSubmitting, setNotificationResendSubmitting] = useState(false)
   const [adminCommentModalOpen, setAdminCommentModalOpen] = useState(false)
   const [adminCommentDraft, setAdminCommentDraft] = useState('')
   const [adminCommentError, setAdminCommentError] = useState<string | undefined>()
@@ -278,6 +288,16 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     }
   }, [row, sessions])
   const isActivityWithdrawn = mergedDetail.activityWithdrawn === true
+  const applicationApprovalStatus =
+    applicationDetailQuery.data?.approvalStatus ?? row.approvalStatus
+  const canResendApplicationNotification =
+    ttRemoteEnabled &&
+    applicationDetailId !== '' &&
+    canResendApplicationResultNotification({
+      approvalStatus: applicationApprovalStatus,
+      availableActions:
+        applicationDetailQuery.data?.availableActions ?? row.availableActions,
+    })
 
   const activityWithdrawScheduleOptions = useMemo(
     () => buildTrainedTeacherActivityWithdrawScheduleOptions(programSchedulesQuery.data ?? []),
@@ -736,6 +756,80 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     : '-'
 
   const textbookSelectOptions = ensureTextbookNotUsedSelectOption(textbookOptions)
+
+  const handleConfirmApplicationNotificationResend = useCallback(
+    async (payload: PermissionModalPayload) => {
+      if (notificationResendSubmitting) return
+      if (!programId || applicationDetailId === '') return
+      if (
+        payload.notifyTiming === 'manual' &&
+        (!payload.manualNotifyAt || !payload.manualNotifyAt.isAfter(new Date()))
+      ) {
+        void showAlert({
+          title: '예약 발송 일시 확인',
+          content: '예약 발송 일시는 현재 시각보다 이후로 설정해 주세요.',
+        })
+        return
+      }
+      const notifyOptions = toApplicantNotificationResendNotifyOptions(payload)
+      if (applicationApprovalStatus === 'rejected' && !payload.reason.trim()) {
+        void showAlert({
+          title: '반려 사유 확인',
+          content: '반려 알림 재발송 시 사유를 입력해 주세요.',
+        })
+        return
+      }
+      setNotificationResendSubmitting(true)
+      try {
+        await resendTrainedTeacherOrganizationApplicationNotification(
+          programId,
+          applicationDetailId,
+          {
+            timing: notifyOptions.notifyTiming === 'manual' ? 'SCHEDULED' : 'IMMEDIATE',
+            scheduledAt:
+              notifyOptions.notifyTiming === 'manual'
+                ? (notifyOptions.manualNotifyAt?.toISOString() ?? null)
+                : null,
+            reason: applicationApprovalStatus === 'rejected' ? payload.reason.trim() : null,
+          },
+          `tt-org-${applicationDetailId}-${crypto.randomUUID()}`
+        )
+        setNotificationResendOpen(false)
+        await queryClient.invalidateQueries({
+          queryKey: trainedTeacherQueryKeys.organizationApplication(programId, applicationDetailId),
+        })
+        showNotificationResendRequestCompletedAlert()
+      } catch (error) {
+        void showAlert({
+          title: '알림 재발송 실패',
+          content: extractApiErrorMessage(error) || '알림 재발송에 실패했습니다.',
+        })
+      } finally {
+        setNotificationResendSubmitting(false)
+      }
+    },
+    [
+      applicationApprovalStatus,
+      applicationDetailId,
+      notificationResendSubmitting,
+      programId,
+      queryClient,
+      showAlert,
+    ]
+  )
+
+  const programApprovalStatusCell =
+    applicationApprovalStatus != null ? (
+      <ProgramApprovalStatusDetailValue
+        status={applicationApprovalStatus}
+        participationRejectionReason={applicationDetailQuery.data?.participationRejectionReason}
+        approvalNotificationSentAt={applicationDetailQuery.data?.approvalNotificationSentAt}
+        onResendNotificationClick={
+          canResendApplicationNotification ? () => setNotificationResendOpen(true) : undefined
+        }
+      />
+    ) : null
+
   const textbookCell =
     isApplicationInfoEditing && applicationInfoDraft && canEditTextbook ? (
       <div className="institution-basic-info__field-stack school-detail-fullpage-view__textbook-select-only">
@@ -924,6 +1018,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
               isAdminCommentEditing={false}
               adminCommentError={adminCommentError}
               programProgressCell={<ProgramEnrollmentStatusText status={programProgressStatus} />}
+              programApprovalStatusCell={programApprovalStatusCell}
               textbookCell={textbookCell}
               usesTextbook={usesTextbook}
               textbookEditFullWidth={isApplicationInfoEditing && canEditTextbook}
@@ -1072,6 +1167,21 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
         onChange={handleAdminCommentDraftChange}
         onCancel={handleAdminCommentModalCancel}
         onConfirm={handleAdminCommentSave}
+      />
+      <ApplicantNotificationResendModal
+        open={notificationResendOpen}
+        subjectKind="institution"
+        subjectName={mergedDetail.schoolName ?? row.schoolName ?? ''}
+        approvalStatus={applicationApprovalStatus === 'rejected' ? 'rejected' : 'approved'}
+        confirmLoading={notificationResendSubmitting}
+        zIndex={2600}
+        onCancel={() => {
+          if (notificationResendSubmitting) return
+          setNotificationResendOpen(false)
+        }}
+        onConfirm={payload => {
+          void handleConfirmApplicationNotificationResend(payload)
+        }}
       />
     </div>
   )

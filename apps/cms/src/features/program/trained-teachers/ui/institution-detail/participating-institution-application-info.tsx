@@ -75,6 +75,8 @@ export interface TrainedTeachersParticipatingInstitutionApplicationInfoProps {
   onAdminCommentDraftChange?: (value: string) => void
   adminCommentError?: string
   programProgressCell: ReactNode
+  /** 프로그램 승인 현황 + 알림 재발송. 없으면 행을 숨긴다. */
+  programApprovalStatusCell?: ReactNode
   textbookCell: ReactNode
   usesTextbook?: boolean
   textbookEditFullWidth?: boolean
@@ -103,6 +105,7 @@ export function TrainedTeachersParticipatingInstitutionApplicationInfo({
   onAdminCommentDraftChange,
   adminCommentError,
   programProgressCell,
+  programApprovalStatusCell,
   textbookCell,
   usesTextbook = true,
   textbookEditFullWidth = false,
@@ -150,6 +153,12 @@ export function TrainedTeachersParticipatingInstitutionApplicationInfo({
                   label="프로그램 진행 현황"
                   value={programProgressCell}
                 />
+                {programApprovalStatusCell ? (
+                  <InstitutionApplicationTableRowFullWidth
+                    label="프로그램 승인 현황"
+                    value={programApprovalStatusCell}
+                  />
+                ) : null}
                 {usesTextbook && textbookEditFullWidth ? (
                   <InstitutionApplicationTableRowFullWidth label="교재명" value={textbookCell} />
                 ) : null}

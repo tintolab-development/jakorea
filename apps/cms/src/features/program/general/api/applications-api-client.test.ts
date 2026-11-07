@@ -15,6 +15,7 @@ import {
   approveOrganizationApplicationRemote,
   bulkApproveInstructorApplicationsRemote,
   bulkIndividualDocumentResultsRemote,
+  resendIndividualDocumentResultNotification,
   cancelIndividualApplicationApprovalRemote,
   cancelIndividualApplicationRejectionRemote,
   unmaskIndividualApplicationPrivacyRemote,
@@ -106,6 +107,32 @@ describe('updateIndividualApplication', () => {
         },
       })
     )
+  })
+})
+
+describe('resendIndividualDocumentResultNotification', () => {
+  beforeEach(() => {
+    vi.mocked(customInstance).mockReset()
+  })
+
+  it('신청 결과 path가 아니라 서류 document-results resend path를 호출한다', async () => {
+    vi.mocked(customInstance).mockResolvedValue({ applicationId: 1690625 })
+
+    await resendIndividualDocumentResultNotification(
+      '1690625',
+      { timing: 'IMMEDIATE', scheduledAt: null, reason: null },
+      'individual-document-1690625-key'
+    )
+
+    expect(customInstance).toHaveBeenCalledWith({
+      url: '/api/admin/individual-applications/1690625/document-results/notifications/resend',
+      method: 'POST',
+      data: { timing: 'IMMEDIATE' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Idempotency-Key': 'individual-document-1690625-key',
+      },
+    })
   })
 })
 

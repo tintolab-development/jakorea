@@ -26,7 +26,10 @@ import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/para
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import { useProtectedFileDownload } from '@/shared/lib/use-protected-file-download'
 import { downloadPaymentStatementRemote } from '@/features/settlement-management/api/settlement-api-client'
-import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
+import {
+  getSettlementApiErrorMessage,
+  isFileDownloadPasswordApiError,
+} from '@/features/settlement-management/api/get-settlement-api-error'
 import '@/features/template/ui/template-management/template-fullpage-modal.css'
 import '@/features/program/general/ui/detail-modal/program-status/lecture-report-issuance-preview-modal.css'
 
@@ -183,10 +186,12 @@ export function PaymentStatementIssuanceViewModal({
             await downloadPaymentStatementRemote(settlementId, { password })
             return
           } catch (error) {
-            showAlert({
-              title: '안내',
-              content: getSettlementApiErrorMessage(error, '지급조서 다운로드에 실패했습니다.'),
-            })
+            if (!isFileDownloadPasswordApiError(error)) {
+              showAlert({
+                title: '안내',
+                content: getSettlementApiErrorMessage(error, '지급조서 다운로드에 실패했습니다.'),
+              })
+            }
             throw error
           }
         }

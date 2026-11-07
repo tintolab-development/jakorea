@@ -203,7 +203,6 @@ function ApplicantHeaderActionsExtra({
   )
 }
 
-/** 클릭 시 준비 중 안내(브라우저 alert) */
 function headerBtnPrivacy(onRevealPersonalInfo: () => void): ApplicantHeaderActionItem {
   return {
     key: 'privacy',
@@ -274,15 +273,6 @@ function headerBtnEditInfoDisabled(): ApplicantHeaderActionItem {
     variant: PROGRAM_EDIT_INFO_BUTTON_PROPS.variant,
     label: PROGRAM_EDIT_INFO_BUTTON_LABEL,
     disabled: true,
-  }
-}
-
-function headerBtnEditInfoPreparing(): ApplicantHeaderActionItem {
-  return {
-    key: 'edit-info',
-    variant: PROGRAM_EDIT_INFO_BUTTON_PROPS.variant,
-    label: PROGRAM_EDIT_INFO_BUTTON_LABEL,
-    onClick: () => window.alert('준비중'),
   }
 }
 
@@ -561,11 +551,6 @@ function resolveApplicantHeaderItems(params: {
       return headerEditModeActions(onCancelInstructorEdit, onSaveInstructorEdit)
     }
 
-    const editButton =
-      isGeneralInstructorEditEnabled && onEnterInstructorEdit
-        ? headerBtnEditInfo(onEnterInstructorEdit)
-        : headerBtnEditInfoPreparing()
-
     const items: ApplicantHeaderActionItem[] = []
 
     if (
@@ -574,7 +559,9 @@ function resolveApplicantHeaderItems(params: {
     ) {
       items.push(headerBtnCancelApproval(applicantId, onCancelApproval, cancelApprovalState))
     }
-    items.push(editButton)
+    if (isGeneralInstructorEditEnabled && onEnterInstructorEdit) {
+      items.push(headerBtnEditInfo(onEnterInstructorEdit))
+    }
 
     if (isAdminCommentWriteEnabled && onEnterAdminCommentEdit) {
       items.push(headerBtnWriteComment(onEnterAdminCommentEdit, isEditingInstructorDetail))

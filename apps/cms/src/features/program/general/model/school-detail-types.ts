@@ -5,7 +5,10 @@
 
 import type { GradeBlock } from '@/shared/api/generated/dashboard/schemas/gradeBlock'
 import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
-import type { TextbookStatusKey } from '@/features/program/general/model/participating-schools'
+import type {
+  ParticipatingSchoolApprovalStatusKey,
+  TextbookStatusKey,
+} from '@/features/program/general/model/participating-schools'
 import type { SettlementStatusKey } from '@/features/program/general/model/participating-instructors'
 import type { StudentPortraitConsentSubmission } from '../lib/student-portrait-consent'
 import type { ApplicantPreferredScheduleBlock } from '@/features/program/shared/model/applicant-institution'
@@ -92,6 +95,12 @@ export interface SchoolDetailForModal {
   activityWithdrawStopScheduleLabel?: string
   /** BE participant availableActions — 상세 포기 버튼 게이트 */
   availableActions?: string[]
+  /** 기관 신청 승인/반려 — 진행 현황 상세 「프로그램 승인 현황」 */
+  approvalStatus?: ParticipatingSchoolApprovalStatusKey
+  /** 기관 신청 반려 사유. 없으면 표시 `-` */
+  participationRejectionReason?: string
+  /** 가장 최근 승인/반려 결과 알림 발송 시각(표시 문자열) */
+  resultNotificationSentAt?: string
   /** 프로그램 참여 신청일 — 수료증/참가인증서 발급 가능 기한(3년) 산정 기준 */
   participationAppliedAt?: string
   /** 기관 신청 상세 `gradeBlocks` — 등록 학년·학급 SSOT */

@@ -1,6 +1,6 @@
 import dayjs from 'dayjs'
 import { formatYmdHmWithKoreanWeekday } from '@/shared/lib/format-date-korean-weekday'
-import { formatDateDot } from '@/shared/utils/date'
+import { formatDateDot, getSeoulCalendarDate } from '@/shared/utils/date'
 import type { SettlementListItemResponse } from '@/shared/api/generated/settlement/schemas'
 import { resolveSettlementUiStatus } from '@/features/user/api/map-settlement-to-instructor-member-row'
 import type { InstructorSettlementUiStatus } from '@/shared/constants/instructor-settlement-status'
@@ -32,9 +32,9 @@ function formatIsoDateTime(iso?: string): string {
 
 function formatLectureDateOnly(iso?: string): string {
   if (!iso?.trim()) return ''
-  const parsed = dayjs(iso.slice(0, 10))
-  if (!parsed.isValid()) return iso.trim()
-  const label = formatDateDot(parsed)
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return iso.trim()
+  const label = formatDateDot(getSeoulCalendarDate(date))
   return label === '-' ? iso.trim() : label
 }
 

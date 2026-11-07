@@ -65,6 +65,8 @@ export interface GeneralVolunteerApplicantRow {
   /** wire `applicationStatus` — 승인 취소·반려·포기 후 면접/교육일 배정 차단 */
   applicationStatus?: string | null
   documentScreeningStatus: GeneralDocumentScreeningStatus
+  /** GET screening.rejectReason / list rejectReason — 서류 불합격 재발송 시 생략 가능 */
+  documentRejectionReason?: string
   documentApprovalNotifyTiming?: PermissionModalNotifyTiming
   documentRejectionNotifyTiming?: PermissionModalNotifyTiming
   /** 반려 취소(alreadySent) 시 재발송 알림 시기 */

@@ -14,7 +14,14 @@ import {
   useApproveGeminiInstructorApplicationMutation,
   useGeminiApprovedInstructorApplicationsQuery,
   useRejectGeminiInstructorApplicationMutation,
+  useResendGeminiInstructorApplicationNotificationMutation,
 } from '../../api/visiting-training/hooks'
+import { SendNotiButton } from '@/features/program/shared/ui/detail-modal/components/send-noti-button'
+import { ApplicantNotificationResendModal } from '@/features/program/shared/ui/detail-modal/components/applicant-notification-resend-modal'
+import { toApplicantNotificationResendNotifyOptions } from '@/features/program/general/lib/applicant-notification-resend'
+import { toInstructorApplicationNotificationRequest } from '@/features/program/general/lib/instructor-application-notification'
+import { showNotificationResendRequestCompletedAlert } from '@/shared/ui'
+import '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-basic-info.css'
 import {
   buildGeminiInstructorApproveMessageLines,
   buildGeminiInstructorChangeMessageLines,
@@ -59,7 +66,7 @@ const COL = {
   contact: 140,
   email: 180,
   monthlyAssignment: 130,
-  approvalStatus: 140,
+  approvalStatus: 280,
 } as const
 
 const TABLE_SCROLL_X =
@@ -86,6 +93,14 @@ function approvalStatusText(status: GeminiInstructorApplicationApprovalStatus) {
   return <span className={`${base} ${modifier}`}>{APPROVAL_STATUS_LABEL[status]}</span>
 }
 
+function toInstructorResendApprovalStatus(
+  status: GeminiInstructorApplicationApprovalStatus
+): 'approved' | 'rejected' | null {
+  if (status === 'APPROVED') return 'approved'
+  if (status === 'REJECTED') return 'rejected'
+  return null
+}
+
 function toHomeRegionText(row: GeminiInstructorApplicationRow): string {
   return `${row.homeSido} ${row.homeSigungu}`.trim()
 }
@@ -104,6 +119,8 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
   const [confirmModal, setConfirmModal] = useState<
     { mode: 'approve'; target: GeminiInstructorApplicationRow } | { mode: 'change' } | null
   >(null)
+  const [notificationResendTarget, setNotificationResendTarget] =
+    useState<GeminiInstructorApplicationRow | null>(null)
 
   const listQuery = useGeminiApprovedInstructorApplicationsQuery(approvedTrainingId, {
     instructorName: appliedFilters.instructorName,
@@ -115,6 +132,8 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
   })
   const approveMutation = useApproveGeminiInstructorApplicationMutation(approvedTrainingId)
   const rejectMutation = useRejectGeminiInstructorApplicationMutation(approvedTrainingId)
+  const resendNotificationMutation =
+    useResendGeminiInstructorApplicationNotificationMutation(approvedTrainingId)
 
   const rows = useMemo(
     () => listQuery.data?.pages.flatMap(page => page.rows) ?? [],
@@ -262,10 +281,29 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
         key: 'approvalStatus',
         width: COL.approvalStatus,
         align: 'center',
-        render: (status: GeminiInstructorApplicationApprovalStatus) => approvalStatusText(status),
+        render: (_: unknown, row: GeminiInstructorApplicationRow) => {
+          const resendStatus = toInstructorResendApprovalStatus(row.approvalStatus)
+          return (
+            <div className="applicant-institution-basic-info__approval-status-row">
+              {approvalStatusText(row.approvalStatus)}
+              {canWrite && resendStatus ? (
+                <>
+                  <span
+                    className="applicant-institution-basic-info__approval-status-vbar"
+                    aria-hidden
+                  />
+                  <SendNotiButton
+                    mode="resend"
+                    onClick={() => setNotificationResendTarget(row)}
+                  />
+                </>
+              ) : null}
+            </div>
+          )
+        },
       },
     ],
-    []
+    [canWrite]
   )
 
   return (
@@ -377,6 +415,56 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
         confirmText={confirmModal?.mode === 'change' ? '변경' : '승인'}
         confirmVariant="primary"
         zIndex={2600}
+      />
+      <ApplicantNotificationResendModal
+        open={notificationResendTarget != null}
+        subjectKind="instructor"
+        subjectName={notificationResendTarget?.instructorName ?? ''}
+        approvalStatus={
+          notificationResendTarget?.approvalStatus === 'REJECTED' ? 'rejected' : 'approved'
+        }
+        confirmLoading={resendNotificationMutation.isPending}
+        zIndex={2700}
+        onCancel={() => {
+          if (resendNotificationMutation.isPending) return
+          setNotificationResendTarget(null)
+        }}
+        onConfirm={payload => {
+          if (!notificationResendTarget || resendNotificationMutation.isPending) return
+          if (
+            payload.notifyTiming === 'manual' &&
+            (!payload.manualNotifyAt || !payload.manualNotifyAt.isAfter(new Date()))
+          ) {
+            void showAlert({
+              title: '예약 발송 일시 확인',
+              content: '예약 발송 일시는 현재 시각보다 이후로 설정해 주세요.',
+            })
+            return
+          }
+          const notifyOptions = toApplicantNotificationResendNotifyOptions(payload)
+          const notification = toInstructorApplicationNotificationRequest(
+            notifyOptions.notifyTiming,
+            notifyOptions.manualNotifyAt
+          )
+          void resendNotificationMutation
+            .mutateAsync({
+              applicationId: notificationResendTarget.id,
+              payload: {
+                timing: notification.timing === 'SCHEDULED' ? 'SCHEDULED' : 'IMMEDIATE',
+                scheduledAt: notification.scheduledAt ?? null,
+              },
+            })
+            .then(() => {
+              setNotificationResendTarget(null)
+              showNotificationResendRequestCompletedAlert()
+            })
+            .catch(() => {
+              showAlert({
+                title: '알림 재발송 실패',
+                content: '알림 재발송에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+              })
+            })
+        }}
       />
     </>
   )
