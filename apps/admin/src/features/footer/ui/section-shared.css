@@ -155,6 +155,15 @@
  */
 .footer-section
   .footer-top-menu-table.footer-sortable-table.cms-data-table
+  .ant-table-thead
+  > tr
+  > th {
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+
+.footer-section
+  .footer-top-menu-table.footer-sortable-table.cms-data-table
   .ant-table-tbody
   > tr
   > td,
@@ -183,6 +192,7 @@
   max-height: 54px !important;
   padding: 10px 16px !important;
   overflow: hidden !important;
+  font-size: 14px !important;
 }
 
 /* 수정 모드: 입력 높이 반영, 상태 간 동일 */
