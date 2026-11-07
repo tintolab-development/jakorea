@@ -10,10 +10,19 @@
 
 .talent-intro-post-picker__search {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 8px;
   width: 100%;
+}
+
+.talent-intro-post-picker__search .cms-input .cms-input__control,
+.talent-intro-post-picker__search .cms-select .cms-field__box,
+.talent-intro-post-picker__search .cms-select .cms-select__control {
+  height: 40px;
+  min-height: 40px;
+  max-height: 40px;
+  box-sizing: border-box;
 }
 
 .talent-intro-post-picker__title-input {
