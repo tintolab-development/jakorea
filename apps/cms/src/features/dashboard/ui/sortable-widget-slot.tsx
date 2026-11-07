@@ -114,9 +114,11 @@ function SortableWidgetSlotInner({
   const colSpanRef = useRef(colSpan)
   const isDraggingRef = useRef(isDragging)
   const isResizingRef = useRef(false)
+  const isWidthTransitioningRef = useRef(false)
   const resizeStartXRef = useRef(0)
   const resizeLastXRef = useRef(0)
   const measureRafRef = useRef<number | null>(null)
+  const resizeObserverRef = useRef<ResizeObserver | null>(null)
   const [isResizing, setIsResizing] = useState(false)
   const [previewColSpan, setPreviewColSpan] = useState<12 | 24 | null>(null)
   const resizeIconMaskId = useId().replace(/:/g, '')
@@ -172,7 +174,7 @@ function SortableWidgetSlotInner({
   }, [hasBuiltInHandle])
 
   const scheduleMeasureHandle = useCallback(() => {
-    if (isDraggingRef.current) return
+    if (isDraggingRef.current || isResizingRef.current || isWidthTransitioningRef.current) return
     if (measureRafRef.current != null) return
     measureRafRef.current = window.requestAnimationFrame(() => {
       measureRafRef.current = null
@@ -192,12 +194,28 @@ function SortableWidgetSlotInner({
   useLayoutEffect(() => {
     const slot = slotRef.current
     if (!slot || !hasBuiltInHandle) return
+    const col = colRef.current
 
     const queryHandle = () => slot.querySelector('.widget-drag-handle') as HTMLElement | null
     const ro = new ResizeObserver(() => {
+      if (isWidthTransitioningRef.current) return
       scheduleMeasureHandle()
     })
+    resizeObserverRef.current = ro
     ro.observe(slot)
+
+    const handleTransitionEnd = (event: TransitionEvent) => {
+      if (
+        !isWidthTransitioningRef.current ||
+        (event.propertyName !== 'flex-basis' && event.propertyName !== 'max-width')
+      ) {
+        return
+      }
+      isWidthTransitioningRef.current = false
+      ro.observe(slot)
+      scheduleMeasureHandle()
+    }
+    col?.addEventListener('transitionend', handleTransitionEnd)
 
     let mo: MutationObserver | null = null
     let watchedHandle: HTMLElement | null = null
@@ -258,6 +276,8 @@ function SortableWidgetSlotInner({
     return () => {
       disconnectMo()
       ro.disconnect()
+      if (resizeObserverRef.current === ro) resizeObserverRef.current = null
+      col?.removeEventListener('transitionend', handleTransitionEnd)
     }
   }, [hasBuiltInHandle, scheduleMeasureHandle])
 
@@ -296,6 +316,9 @@ function SortableWidgetSlotInner({
       setPreviewColSpan(null)
       document.body.style.cursor = ''
       if (onResizeWidth && next !== startSpan) {
+        isWidthTransitioningRef.current = true
+        const slot = slotRef.current
+        if (slot) resizeObserverRef.current?.unobserve(slot)
         onResizeWidth(id, next)
       }
     },

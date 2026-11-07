@@ -112,7 +112,11 @@ const DashboardWidgetCell = memo(function DashboardWidgetCell({
       height={height}
       onResizeWidth={onResizeWidth}
     >
-      <DashboardWidgetRenderer widgetType={id} {...widgetRendererProps} />
+      <DashboardWidgetRenderer
+        widgetType={id}
+        isHalfColumn={colSpan === 12}
+        {...widgetRendererProps}
+      />
     </SortableWidgetSlot>
   )
 })

@@ -22,7 +22,8 @@ export function ScheduleChangeHistoryBadge({
 }: ScheduleChangeHistoryBadgeProps) {
   const prefix =
     labelVariant === 'name' ? '이름 변경&취소 이력' : '일정 변경&취소 이력'
-  const label = count <= 0 ? '0회' : `${prefix} ${count}회`
+  const safeCount = Number.isFinite(count) && count > 0 ? count : 0
+  const label = `${prefix} ${safeCount}회`
   return (
     <span
       className={`schedule-change-history-badge ${className ?? ''}`.trim()}

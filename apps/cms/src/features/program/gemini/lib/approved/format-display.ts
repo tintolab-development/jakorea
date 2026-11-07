@@ -13,6 +13,20 @@ export const APPROVED_TRAINING_STATUS_LABEL: Record<GeminiApprovedTrainingStatus
   NOT_CONDUCTED: '프로그램 미진행',
 }
 
+const KOREAN_WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'] as const
+
+/** 승인 연수 삭제 안내에 표시할 식별자. 확정 연수일이 없으면 기관명만 반환한다. */
+export function formatApprovedTrainingDeleteDisplayName(
+  row: Pick<GeminiApprovedTrainingRow, 'institutionName' | 'trainingDate'>
+): string {
+  const institutionName = row.institutionName.trim() || '기관명 없음'
+  const trainingDate = row.trainingDate.trim()
+  const parsed = dayjs(trainingDate)
+  if (!trainingDate || !parsed.isValid()) return institutionName
+
+  return `${institutionName} · ${parsed.format('YYYY.MM.DD')}(${KOREAN_WEEKDAYS[parsed.day()]})`
+}
+
 export function formatStatusLabel(status: GeminiApprovedTrainingStatus): string {
   return APPROVED_TRAINING_STATUS_LABEL[status]
 }

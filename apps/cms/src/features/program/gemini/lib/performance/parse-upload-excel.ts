@@ -80,6 +80,21 @@ function getCellText(row: ExcelJS.Row, colNumber: number | undefined): string {
   return cell.text?.trim() ?? ''
 }
 
+/** 서버 강사 판정에 사용하는 엑셀 원문. 표시용 텍스트처럼 trim/정규화하지 않는다. */
+function getCellRawText(row: ExcelJS.Row, colNumber: number | undefined): string {
+  if (colNumber == null) return ''
+  const cell = row.getCell(colNumber)
+  const value = unwrapExcelValue(cell.value)
+  if (value instanceof Date) {
+    return formatExcelDateValue(value) ?? ''
+  }
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return cell.text ?? String(value)
+  }
+  if (typeof value === 'string') return value
+  return cell.text ?? ''
+}
+
 function getDateCellText(row: ExcelJS.Row, colNumber: number | undefined): string {
   if (colNumber == null) return ''
   const cell = row.getCell(colNumber)
@@ -142,13 +157,13 @@ export async function parseUploadExcel(file: File): Promise<GeminiPerformanceUpl
 
     rows.push({
       timestamp: getCellText(row, headerMap.timestamp),
-      instructorName: getCellText(row, headerMap.instructorName),
+      instructorName: getCellRawText(row, headerMap.instructorName),
       assistantInstructorNames: getCellText(row, headerMap.assistantInstructorNames),
       trainingFormat: getCellText(row, headerMap.trainingFormat),
-      contact: getCellText(row, headerMap.contact),
+      contact: getCellRawText(row, headerMap.contact),
       email: getCellText(row, headerMap.email),
       school: getCellText(row, headerMap.school),
-      paymentDestination: getCellText(row, headerMap.paymentDestination),
+      paymentDestination: getCellRawText(row, headerMap.paymentDestination),
       trainingLocation: getCellText(row, headerMap.trainingLocation),
       trainingDate: getDateCellText(row, headerMap.trainingDate),
       trainingStartTime: getTimeCellText(row, headerMap.trainingStartTime),

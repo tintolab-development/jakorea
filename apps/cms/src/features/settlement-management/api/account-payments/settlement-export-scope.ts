@@ -27,7 +27,7 @@ export function buildFullCorpusScopeRequest(_kind: 'bulk-transfer' | 'tax-report
     reason: SCOPE_REASON,
     businessPurpose: SCOPE_PURPOSE,
     settlementIds: [],
-    accountPaymentIds: [],
+    ...(_kind === 'bulk-transfer' ? { accountPaymentIds: [] } : {}),
   }
 }
 

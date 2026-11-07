@@ -25,6 +25,7 @@ describe('mapGeminiApprovedTrainingDetailResponseToDetail', () => {
       institutionSigungu: '강남구',
       institutionAddress: null,
       teacherMemberId: 12001,
+      teacherSchoolOrganizationId: 190100,
       teacherName: '김교사',
       teacherPhone: '010-1234-5678',
       teacherEmail: 'kim@example.com',
@@ -46,7 +47,9 @@ describe('mapGeminiApprovedTrainingDetailResponseToDetail', () => {
     expect(detail.managerNameKo).toBe('김교사')
     expect(detail.managerMemberId).toBe('12001')
     expect(detail.instructorAssigned).toBe(false)
-    expect(detail.officialDocumentType).toBe('필요 없음')
+    expect(detail.teacherSchoolOrganizationId).toBe(190100)
+    expect(detail.officialDocumentRequired).toBe(false)
+    expect(detail.officialDocumentRequiredInfo).toBeNull()
     expect(detail.progressStatus).toBe('SCHEDULED')
     expect(detail.lastPreferredDate).toBe('2026-03-15')
     expect(detail.managerPosition).toBe('')
@@ -94,6 +97,7 @@ describe('mapGeminiApprovedTrainingDetailResponseToDetail', () => {
       id: 1,
       programId: 2,
       assignedInstructor: {
+        memberId: 190001,
         name: '이강사',
         homeAddress: '부산 해운대',
         experienceYears: 3,
@@ -102,9 +106,11 @@ describe('mapGeminiApprovedTrainingDetailResponseToDetail', () => {
         email: 'lee***@example.com',
       },
       officialDocumentRequired: true,
+      officialDocumentRequiredInfo: '학교장 직인',
     })
     expect(detail.instructorAssigned).toBe(true)
     expect(detail.instructor).toEqual({
+      memberId: '190001',
       name: '이강사',
       region: '부산 해운대',
       experienceYears: 3,
@@ -112,7 +118,8 @@ describe('mapGeminiApprovedTrainingDetailResponseToDetail', () => {
       contact: '010-****-0000',
       email: 'lee***@example.com',
     })
-    expect(detail.officialDocumentType).toBe('필요')
+    expect(detail.officialDocumentRequired).toBe(true)
+    expect(detail.officialDocumentRequiredInfo).toBe('학교장 직인')
   })
 
   it('일정 없이도 assignedInstructor만으로 담당 강사를 두고 희망일을 확정일로 쓰지 않는다', () => {
@@ -162,6 +169,57 @@ describe('mapGeminiApprovedTrainingDetailResponseToDetail', () => {
     expect(detail.instructorAssigned).toBe(false)
     expect(detail.trainingDate).toBe('')
     expect(detail.instructor.name).toBe('-')
+  })
+
+  it('회원 ID가 없는 assignedInstructor는 부분 응답으로 보고 미배정 처리한다', () => {
+    const detail = mapGeminiApprovedTrainingDetailResponseToDetail({
+      id: 185334,
+      instructorMemberId: 190006,
+      instructorName: '최지원',
+      assignedInstructor: {
+        name: '최지원',
+        phone: '010-3327-5124',
+      },
+    })
+
+    expect(detail.instructorAssigned).toBe(false)
+    expect(detail.instructor.name).toBe('-')
+  })
+
+  it('maps QA seed 1691498 fields without inventing school org or official-doc copy', () => {
+    const detail = mapGeminiApprovedTrainingDetailResponseToDetail({
+      id: 1691498,
+      teacherMemberId: 190080,
+      teacherSchoolOrganizationId: 190100,
+      officialDocumentRequired: true,
+      officialDocumentRequiredInfo: null,
+      progressStatus: 'SCHEDULED',
+      assignedInstructor: null,
+      trainingDate: null,
+      lastPreferredDate: '2026-05-01',
+      teacherScheduleChangeCount: 0,
+    } as unknown as GeminiApprovedTrainingDetailResponse)
+
+    expect(detail.teacherSchoolOrganizationId).toBe(190100)
+    expect(detail.managerMemberId).toBe('190080')
+    expect(detail.officialDocumentRequired).toBe(true)
+    expect(detail.officialDocumentRequiredInfo).toBeNull()
+    expect(detail.progressStatus).toBe('SCHEDULED')
+    expect(detail.instructorAssigned).toBe(false)
+    expect(detail.trainingDate).toBe('')
+    expect(detail.trainingDate).not.toBe(detail.lastPreferredDate)
+    expect(detail.managerScheduleChangeCount).toBe(0)
+  })
+
+  it('keeps teacherSchoolOrganizationId null even when teacherMemberId is present', () => {
+    const detail = mapGeminiApprovedTrainingDetailResponseToDetail({
+      id: 1,
+      teacherMemberId: 190080,
+      teacherSchoolOrganizationId: null,
+    } as unknown as GeminiApprovedTrainingDetailResponse)
+
+    expect(detail.managerMemberId).toBe('190080')
+    expect(detail.teacherSchoolOrganizationId).toBeNull()
   })
 })
 

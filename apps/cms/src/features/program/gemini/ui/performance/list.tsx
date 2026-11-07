@@ -40,7 +40,6 @@ import {
   GEMINI_PERFORMANCE_REGISTER_BLOCKED_MESSAGE,
   GEMINI_PERFORMANCE_REGISTER_BLOCKED_TITLE,
 } from '../../lib/performance/import-popup-copy'
-import { downloadGeminiPerformanceUploadTemplate } from '../../lib/performance/download-upload-template'
 import { useGeminiPerformanceRows } from '../../hooks/use-gemini-performance-rows'
 import { GEMINI_PERFORMANCE_FILTER_FIELDS } from '../../model/performance/filter-fields'
 import type {
@@ -123,6 +122,11 @@ function displayCell(value: string | number | null | undefined): string {
   if (typeof value === 'number' && !Number.isFinite(value)) return '-'
   const text = String(value).trim()
   return text && text !== '-' ? text : '-'
+}
+
+function appendPaymentExclusionNotes(baseMessage: string, notes?: string): string {
+  const normalizedNotes = notes?.trim()
+  return normalizedNotes ? `${baseMessage}\n${normalizedNotes}` : baseMessage
 }
 
 /** 서버에서 처리하지 않는 조건만 클라이언트에서 좁힌다(방식·연수일). */
@@ -336,7 +340,7 @@ export function GeminiPerformanceList() {
       setImporting(true)
       const endOverlay = beginFileUploadOverlay()
       try {
-        await geminiPerformanceService.applyImport(
+        const result = await geminiPerformanceService.applyImport(
           pendingImportRows,
           'append',
           pendingRemoteImportRows
@@ -345,7 +349,10 @@ export function GeminiPerformanceList() {
         clearPendingImport()
         showAlert({
           title: GEMINI_PERFORMANCE_APPEND_DONE_TITLE,
-          content: GEMINI_PERFORMANCE_APPEND_DONE_MESSAGE,
+          content: appendPaymentExclusionNotes(
+            GEMINI_PERFORMANCE_APPEND_DONE_MESSAGE,
+            result?.paymentExclusionNotes
+          ),
         })
       } catch (error) {
         showImportFailureAlert(error)
@@ -369,7 +376,7 @@ export function GeminiPerformanceList() {
       setImporting(true)
       const endOverlay = beginFileUploadOverlay()
       try {
-        await geminiPerformanceService.applyImport(
+        const result = await geminiPerformanceService.applyImport(
           pendingImportRows,
           'overwrite',
           pendingRemoteImportRows
@@ -378,7 +385,10 @@ export function GeminiPerformanceList() {
         clearPendingImport()
         showAlert({
           title: GEMINI_PERFORMANCE_OVERWRITE_DONE_TITLE,
-          content: GEMINI_PERFORMANCE_OVERWRITE_DONE_MESSAGE,
+          content: appendPaymentExclusionNotes(
+            GEMINI_PERFORMANCE_OVERWRITE_DONE_MESSAGE,
+            result?.paymentExclusionNotes
+          ),
         })
       } catch (error) {
         showImportFailureAlert(error)
@@ -402,7 +412,7 @@ export function GeminiPerformanceList() {
       setImporting(true)
       const endOverlay = beginFileUploadOverlay()
       try {
-        await geminiPerformanceService.applyImport(
+        const result = await geminiPerformanceService.applyImport(
           pendingImportRows,
           'append',
           pendingRemoteImportRows
@@ -411,7 +421,10 @@ export function GeminiPerformanceList() {
         clearPendingImport()
         showAlert({
           title: GEMINI_PERFORMANCE_APPEND_DONE_TITLE,
-          content: GEMINI_PERFORMANCE_APPEND_DONE_MESSAGE,
+          content: appendPaymentExclusionNotes(
+            GEMINI_PERFORMANCE_APPEND_DONE_MESSAGE,
+            result?.paymentExclusionNotes
+          ),
         })
       } catch (error) {
         showImportFailureAlert(error)
@@ -593,13 +606,6 @@ export function GeminiPerformanceList() {
         }}
         actionsAfterExcel={
           <span className="file-upload-picker">
-            {canWrite ? (
-              <FilterTableToolbarButton
-                variant="secondary"
-                onClick={() => void downloadGeminiPerformanceUploadTemplate()} >
-                업로드 양식 다운로드
-              </FilterTableToolbarButton>
-            ) : null}
             <span className="file-upload-picker">
               {canWrite ? (
                 <input
@@ -676,6 +682,7 @@ export function GeminiPerformanceList() {
       />
       <UploadDuplicateModal
         open={duplicateModalOpen}
+        loading={importing}
         onCancel={handleDuplicateCancel}
         onOverwrite={handleDuplicateOverwrite}
         onAppend={handleDuplicateAppend}

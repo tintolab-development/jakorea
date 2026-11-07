@@ -29,6 +29,8 @@ export type GeminiApprovedTrainingDetail = {
   institutionAddress: string
   joinedAt: string
   managerMemberId?: string
+  /** 담당 교사 소속 학교. 없으면 PATCH 금지 */
+  teacherSchoolOrganizationId: number | null
   managerNameKo: string
   managerScheduleChangeCount: number
   managerGender: string
@@ -49,12 +51,12 @@ export type GeminiApprovedTrainingDetail = {
   managerPosition: string
   managerSubject: string
   instructor: GeminiApprovedTrainingInstructorInfo
-  officialDocumentType: string
-  officialDocumentRequiredInfo: string
   trainingContent: string
   instructorAssigned: boolean
   lastPreferredDate: string
-  officialDocumentRequired: boolean
-  /** 서버 progressStatus. 없으면 UI가 날짜로 파생 */
+  officialDocumentRequired: boolean | null
+  /** 기관 신청 폼 원문. 없으면 null. UI '-'는 렌더만 */
+  officialDocumentRequiredInfo: string | null
+  /** GET progressStatus. 날짜로 다시 계산하지 않는다 */
   progressStatus: GeminiApprovedTrainingStatus | null
 }

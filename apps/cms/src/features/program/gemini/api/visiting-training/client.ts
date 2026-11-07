@@ -278,18 +278,24 @@ export async function bulkDeleteGeminiRecruitmentsRemote(ids: number[]): Promise
   })
 }
 
-export async function deleteGeminiApprovedTrainingRemote(approvedTrainingId: string): Promise<void> {
+export async function deleteGeminiApprovedTrainingRemote(
+  approvedTrainingId: string,
+  reason: string | null = null
+): Promise<void> {
+  const query = new URLSearchParams()
+  query.set('reason', reason ?? '')
   await customInstance({
-    url: `${BASE}/approved/${encodeURIComponent(approvedTrainingId)}`,
+    url: `${BASE}/approved/${encodeURIComponent(approvedTrainingId)}?${query.toString()}`,
     method: 'DELETE',
   })
 }
 
 /** OpenAPI operationId: bulkDeleteApprovedTrainings — 부분 성공 가능 */
 export async function bulkDeleteGeminiApprovedTrainingsRemote(
-  ids: number[]
+  ids: number[],
+  reason: string | null = null
 ): Promise<BulkActionResponse> {
-  const body: BulkDecisionRequest = { ids }
+  const body = { ids, reason }
   return unwrapApiBody<BulkActionResponse>(
     await customInstance({
       url: `${BASE}/approved/bulk-delete`,

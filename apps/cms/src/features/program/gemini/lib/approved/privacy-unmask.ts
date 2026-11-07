@@ -1,8 +1,11 @@
 import type { GeminiApprovedTrainingDetailResponse } from '@/shared/api/generated/dashboard/schemas/geminiApprovedTrainingDetailResponse'
 import { getApiErrorCode, getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
+import { toGenderLabelOrRaw } from '@/features/user/api/map-member-gender-birth'
 
 export type GeminiApprovedTrainingPrivacyUnmasked = {
   teacherName?: string
+  teacherGender?: string
+  teacherBirthDate?: string
   teacherPhone?: string
   teacherEmail?: string
   teacherHomeAddress?: string
@@ -28,6 +31,8 @@ export function mapGeminiApprovedTrainingPrivacyUnmask(
   const assigned = dto.assignedInstructor
   return {
     teacherName: nonEmpty(dto.teacherName),
+    teacherGender: toGenderLabelOrRaw(nonEmpty(dto.teacherGender)),
+    teacherBirthDate: nonEmpty(dto.teacherBirthDate),
     teacherPhone: nonEmpty(dto.teacherPhone),
     teacherEmail: nonEmpty(dto.teacherEmail),
     teacherHomeAddress: nonEmpty(dto.teacherHomeAddress),

@@ -1384,6 +1384,7 @@ export function ApplicantList({
         subjectName={firstSelectedInstitutionName}
         selectionCount={selectedRowKeys.length}
         notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.timedBulk}
+        notifyTimingOptions="two"
         onCancel={() => setInstitutionBulkRejectOpen(false)}
         onConfirm={payload => {
           void (async () => {
@@ -1524,6 +1525,7 @@ export function ApplicantList({
         variant="single"
         subjectName={institutionRejectTarget?.name ?? ''}
         notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.timedBulk}
+        notifyTimingOptions="two"
         onCancel={() => setInstitutionRejectTarget(null)}
         onConfirm={payload => {
           if (!institutionRejectTarget) return

@@ -385,7 +385,7 @@ export function TableFilterGroup({
       const sidoEmpty = sido == null || sido === ''
       const districtOptions = ar.getSigunguOptions(sido)
       return (
-        <div className="table-filter-group__field table-filter-group__field--select table-filter-group__field--address-region">
+        <div className="table-filter-group__field table-filter-group__field--select table-filter-group__field--address-region table-filter-group__field--address-region-filter">
           <TableFilterFieldLabel htmlFor={fieldIds.sido} id={fieldIds.label}>
             {field.label}
           </TableFilterFieldLabel>
@@ -398,6 +398,7 @@ export function TableFilterGroup({
               selectClassName="table-filter-group__select"
               onChange={value => onFilterChange(ar.sidoKey, value ?? '')}
               popupMatchSelectWidth={false}
+              popupClassName="table-filter-group__address-region-dropdown"
               style={{ width: '100%', ...field.style }}
               options={ar.sidoOptions.map(opt => ({ label: opt.label, value: opt.value }))}
             />
@@ -410,6 +411,7 @@ export function TableFilterGroup({
               onChange={value => onFilterChange(ar.sigunguKey, value ?? '')}
               disabled={sidoEmpty}
               popupMatchSelectWidth={false}
+              popupClassName="table-filter-group__address-region-dropdown"
               style={{ width: '100%', ...field.style }}
               options={districtOptions.map(opt => ({ label: opt.label, value: opt.value }))}
               aria-label={ar.sigunguPlaceholder ?? '시/군/구'}

@@ -845,6 +845,7 @@ export function InstitutionApproveModal({
       onConfirm={handleConfirm}
       zIndex={zIndex}
       width={600}
+      notifyTimingOptions={copyVariant === 'program-application' ? 'two' : undefined}
     >
       <PermissionModalMessage
         text={buildInstitutionApproveMessage(

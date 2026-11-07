@@ -2,6 +2,11 @@ import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import { getJAKoreaCMSBackendAPISettlementSubset } from '@/shared/api/generated/settlement/settlement-api'
 import customInstance from '@/shared/api/orval-mutator'
 import { postEncryptedAdminFile } from '@/shared/lib/post-encrypted-admin-file'
+import type { SettlementExportResponse } from '@/features/settlement-management/api/account-payments/settlement-export-response'
+import {
+  parseTaxReportPreviewWorkbook,
+  type TaxReportPreviewWorkbook,
+} from '@/features/settlement-management/api/account-payments/tax-report-preview'
 import type {
   AccountPaymentDetailResponse,
   BudgetSummaryParams,
@@ -259,8 +264,10 @@ export async function requestBulkTransferExportRemote(
 
 export async function requestTaxReportExportRemote(
   body: SettlementExportRequest
-): Promise<SettlementExportHistoryResponse> {
-  return unwrapApiBody<SettlementExportHistoryResponse>(
+): Promise<SettlementExportResponse> {
+  // 현재 generated operation은 options만 받아 body를 전송하지 않으므로
+  // OpenAPI가 갱신될 때까지 이 adapter에서 인증된 JSON POST를 단 한 번 보낸다.
+  return unwrapApiBody<SettlementExportResponse>(
     await customInstance({
       url: '/api/admin/settlements/exports/tax-report',
       method: 'POST',
@@ -270,9 +277,22 @@ export async function requestTaxReportExportRemote(
   )
 }
 
+/** 서버 canonical TAX_REPORT_FORTUNE_V1 dataset — 미리보기 전용 조회 */
+export async function requestTaxReportPreviewRemote(
+  settlementIds: number[]
+): Promise<TaxReportPreviewWorkbook> {
+  const payload = await customInstance<unknown>({
+    url: '/api/admin/settlements/exports/tax-report/preview',
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    data: { settlementIds },
+  })
+  return parseTaxReportPreviewWorkbook(unwrapApiBody(payload))
+}
+
 /** sensitive SERVER_FILE 다운로드는 downloadUrl 대신 fileObjectId로 받는다. */
 export function isSettlementExportFileReady(
-  exportHistory: SettlementExportHistoryResponse | null | undefined
+  exportHistory: SettlementExportResponse | null | undefined
 ): boolean {
   if (exportHistory == null) return false
   if (exportHistory.pollingStatus === 'FAILED' || exportHistory.exportStatus === 'FAILED') {
@@ -289,9 +309,9 @@ export function isSettlementExportFileReady(
  * SERVER_FILE 민감 다운로드는 fileObjectId 존재를 완료 조건으로 본다.
  */
 export async function waitForSettlementExportDownload(
-  requested: SettlementExportHistoryResponse,
+  requested: SettlementExportResponse,
   options: { attempts?: number; intervalMs?: number } = {}
-): Promise<SettlementExportHistoryResponse> {
+): Promise<SettlementExportResponse> {
   if (requested.deliveryMethod !== 'SERVER_FILE') return requested
   if (isSettlementExportFileReady(requested)) return requested
   if (requested.exportHistoryId == null) return requested
@@ -322,9 +342,9 @@ export async function waitForSettlementExportDownload(
 
 /** remote 양식 발급 후 모달/다운로드 진입 전 SERVER_FILE + fileObjectId를 강제한다. */
 export function assertSettlementServerExportReady(
-  exportHistory: SettlementExportHistoryResponse | null | undefined,
+  exportHistory: SettlementExportResponse | null | undefined,
   fallbackMessage = '서버 파일이 준비되지 않았습니다. 클라이언트 파일로 대체하지 않습니다.'
-): SettlementExportHistoryResponse {
+): SettlementExportResponse {
   if (exportHistory == null) {
     throw new Error(fallbackMessage)
   }

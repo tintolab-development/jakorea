@@ -13,6 +13,7 @@ import {
   formatGeminiImportPaymentExclusionNotes,
   formatGeminiImportPreviewFailures,
 } from '@/features/program/gemini/lib/performance/import-preview-failure'
+import { findGeminiDuplicateRowIndexes } from '@/features/program/gemini/lib/performance/import-result-duplicates'
 import {
   isGeminiPerformanceAccountPaid,
   isGeminiPerformancePaidRegisterBlocked,
@@ -152,17 +153,13 @@ export function matchUploadRowsAgainstExistingReports(
   let paidDuplicate = false
   uploadRows.forEach((upload, index) => {
     const display = displayRows[index]
-    const memberId = display?.instructorMemberId
-      ? Number(display.instructorMemberId)
-      : undefined
     const key = buildGeminiPerformanceServerMatchKey({
       programId,
       trainingDate: display?.trainingDate || upload.trainingDate,
       trainingLocation: upload.trainingLocation,
       schoolOrOrganizationName: upload.school,
       trainingStartTime: upload.trainingStartTime,
-      instructorMemberId:
-        memberId != null && Number.isFinite(memberId) && memberId > 0 ? memberId : null,
+      instructorMemberId: null,
       instructorName: upload.instructorName,
       instructorPhone: upload.contact,
     })
@@ -199,19 +196,8 @@ export async function prepareGeminiPerformanceImportRemote(
   const preview = await previewGeminiTrainingReportImportRemote({
     rows: remoteImportRows,
   })
-  const existingItems = await fetchAllGeminiTrainingReportItems()
-  const serverMatch = matchUploadRowsAgainstExistingReports(
-    uploadRows,
-    importedRows,
-    existingItems,
-    programId
-  )
-
   // 지급완료 중복(BE preview 또는 목록 대조) — 덮어쓰기/데이터 추가 다이얼로그·import 금지
-  if (
-    isGeminiPerformancePaidRegisterBlocked(preview.results) ||
-    serverMatch.paidDuplicate
-  ) {
+  if (isGeminiPerformancePaidRegisterBlocked(preview.results)) {
     throw new Error(GEMINI_PERFORMANCE_REGISTER_BLOCKED_MESSAGE)
   }
   const previewFailure = formatGeminiImportPreviewFailures(preview.results)
@@ -219,12 +205,24 @@ export async function prepareGeminiPerformanceImportRemote(
     throw new Error(previewFailure)
   }
 
-  // SSOT: BE preview.duplicate=true (미지급 SUCCESS 포함). 목록 대조·파일 내 중복은 보조.
+  // 정상적인 preview 응답은 모든 업로드 행의 결과를 반환하므로 duplicate가 SSOT다.
+  // 결과 배열이 누락·축약된 응답에서만 기존 목록 대조를 보조로 사용한다.
+  const previewResults = preview.results ?? []
+  const serverMatch =
+    previewResults.length === remoteImportRows.length
+      ? { unpaidDuplicateKeys: [], paidDuplicate: false }
+      : matchUploadRowsAgainstExistingReports(
+          uploadRows,
+          importedRows,
+          await fetchAllGeminiTrainingReportItems(),
+          programId
+        )
+  if (serverMatch.paidDuplicate) {
+    throw new Error(GEMINI_PERFORMANCE_REGISTER_BLOCKED_MESSAGE)
+  }
+
   const remoteDuplicateIndexes = new Set(
-    (preview.results ?? [])
-      .filter(result => result.duplicate === true)
-      .map(result => (result.rowNumber != null ? result.rowNumber - 1 : -1))
-      .filter(index => index >= 0)
+    findGeminiDuplicateRowIndexes(previewResults, importedRows.length)
   )
   const fromPreview = importedRows
     .filter((_, index) => remoteDuplicateIndexes.has(index))

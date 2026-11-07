@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  formatApprovedTrainingDeleteDisplayName,
   formatConfirmedTrainingDatetimeDisplay,
   formatTrainingDatetimeDisplay,
 } from './format-display'
@@ -35,9 +36,7 @@ describe('formatTrainingDatetimeDisplay', () => {
     expect(formatTrainingDatetimeDisplay(row)).toBe(
       '1지망 11/10 10:00~12:00(1차시) | 2지망 11/12 10:00~12:00(1차시) | 3지망 11/17'
     )
-    expect(formatConfirmedTrainingDatetimeDisplay(row)).toBe(
-      '2026.11.10 | 10:00~12:00(1차시)'
-    )
+    expect(formatConfirmedTrainingDatetimeDisplay(row)).toBe('2026.11.10 | 10:00~12:00(1차시)')
   })
 
   it('강사 미지정이어도 승인 연수일시는 한 줄로 보여 준다', () => {
@@ -96,5 +95,25 @@ describe('formatTrainingDatetimeDisplay', () => {
         trainingDateCandidates: [],
       })
     ).toBe('2026.10.29')
+  })
+})
+
+describe('formatApprovedTrainingDeleteDisplayName', () => {
+  it('확정 연수일이 있으면 기관명과 요일을 함께 표시한다', () => {
+    expect(
+      formatApprovedTrainingDeleteDisplayName({
+        institutionName: '제이초등학교',
+        trainingDate: '2026-01-09',
+      })
+    ).toBe('제이초등학교 · 2026.01.09(금)')
+  })
+
+  it('확정 연수일이 없으면 기관명만 표시한다', () => {
+    expect(
+      formatApprovedTrainingDeleteDisplayName({
+        institutionName: '제이초등학교',
+        trainingDate: '',
+      })
+    ).toBe('제이초등학교')
   })
 })

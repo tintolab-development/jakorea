@@ -743,7 +743,7 @@ describe('InstitutionApproveModal schedule sources', () => {
     expect(screen.getByText(/승인 시 담당 교사에게 승인 알림이 발송됩니다/)).toBeTruthy()
     expect(screen.getByText('알림 발송')).toBeTruthy()
     expect(screen.getByText('즉시')).toBeTruthy()
-    expect(screen.getByText('발표일에 맞춰서')).toBeTruthy()
+    expect(screen.queryByText('발표일에 맞춰서')).toBeNull()
     expect(screen.getByText('직접 설정')).toBeTruthy()
     expect(screen.queryByText('기관 승인 안내')).toBeNull()
     expect(screen.queryByText('배정된 일정')).toBeNull()

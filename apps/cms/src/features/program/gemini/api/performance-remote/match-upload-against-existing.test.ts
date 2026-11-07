@@ -79,17 +79,9 @@ describe('matchUploadRowsAgainstExistingReports', () => {
           trainingDate: '2026-10-28',
           trainingLocation: '왕남초등학교',
           trainingStartTime: '14:00:00',
-          instructorName: '강하늘',
-          contact: '010-1111-2222',
         }),
       ],
-      [
-        {
-          ...display('k-paid', '2026-10-28'),
-          instructorName: '강하늘',
-          instructorMemberId: '99',
-        },
-      ],
+      [display('k-paid', '2026-10-28')],
       [
         {
           trainingReportId: 185888,
@@ -97,8 +89,8 @@ describe('matchUploadRowsAgainstExistingReports', () => {
           trainingDate: '2026-10-28',
           trainingLocation: '왕남초등학교',
           trainingStartTime: '14:00:00',
-          instructorName: '강하늘',
-          instructorMemberId: 99,
+          instructorName: undefined,
+          instructorMemberId: undefined,
           accountPaymentId: 185986,
         },
       ],
