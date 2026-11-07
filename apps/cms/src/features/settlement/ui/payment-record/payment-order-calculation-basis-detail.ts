@@ -365,7 +365,6 @@ export function mapLectureFeeCalculationDetailToBasisDetail(
       detail.resultAmount
     const sessionOrdinal = numberValue(recordValue(candidate, 'sessionOrdinal'))
     const hours = numberValue(recordValue(candidate, 'hours'))
-    // 모달 강의 시간: canonical 차시·회차 → sessionOrdinal → hours(N시간). 시계열·일정명 금지.
     const lectureTimeDisplay = resolveLectureTimeDisplayFromCalculationFields({
       lectureTimeDisplay: stringValue(recordValue(candidate, 'lectureTimeDisplay')),
       sessionOrdinal,
@@ -845,7 +844,7 @@ function resolveLectureFeeStandardTitleForRow(
 }
 
 /**
- * 순수 차시·회차 표기만 허용.
+ * 순수 차시·회차 표기. 일정 칸 표시에는 쓰지 않는다.
  * `GROK_E2E_API CS03 1회차` 같은 일정명에서 숫자를 뽑아 N차시로 오인하지 않는다.
  */
 export function isCanonicalLectureSessionDisplay(raw: string | undefined): boolean {
@@ -854,45 +853,33 @@ export function isCanonicalLectureSessionDisplay(raw: string | undefined): boole
   return /^\d+\s*(?:~\s*\d+\s*)?(?:차시|회차)$/u.test(trimmed)
 }
 
-/** 모달 「강의 시간」에 쓸 수 있는 표기 — 차시·회차 또는 N시간 */
+/** 모달 「강의 시간」: calculationDetail 원문(시계열 포함) 또는 N시간 */
 export function isUsableLectureTimeDisplay(raw: string | undefined): boolean {
   const trimmed = raw?.trim()
-  if (!trimmed || trimmed === '-') return false
-  if (isCanonicalLectureSessionDisplay(trimmed)) return true
-  return /^\d+(?:\.\d+)?\s*시간$/u.test(trimmed)
+  return Boolean(trimmed && trimmed !== '-')
 }
 
-/** lectureSessionDisplay가 일정명이면 파싱하지 않고 sessionOrdinal → N차시 */
+/** 정산 일정 칸 = lectureSessionDisplay 원문. sessionOrdinal+"차시"로 재조립하지 않는다. */
 export function resolveCanonicalLectureSessionDisplay(
   lectureSessionDisplay?: string | null,
-  sessionOrdinal?: number | null
+  _sessionOrdinal?: number | null
 ): string {
   const fromDisplay = lectureSessionDisplay?.trim()
-  if (fromDisplay && isCanonicalLectureSessionDisplay(fromDisplay)) {
-    return fromDisplay
-  }
-  if (sessionOrdinal != null && Number.isFinite(sessionOrdinal) && sessionOrdinal > 0) {
-    return `${Math.trunc(sessionOrdinal)}차시`
-  }
+  if (fromDisplay && fromDisplay !== '-') return fromDisplay
   return '-'
 }
 
 /**
  * calculationDetail(basisJson) 필드만으로 모달 강의 시간을 만든다.
- * 우선순위: canonical 차시·회차 → sessionOrdinal → hours(N시간).
+ * lectureTimeDisplay 원문 우선. sessionOrdinal+"차시"로 덮지 않는다.
  */
 export function resolveLectureTimeDisplayFromCalculationFields(input: {
   lectureTimeDisplay?: string | null
   sessionOrdinal?: number | null
   hours?: number | null
 }): string {
-  const fromSession = resolveCanonicalLectureSessionDisplay(
-    input.lectureTimeDisplay,
-    input.sessionOrdinal
-  )
-  if (fromSession !== '-') return fromSession
   const rawDisplay = input.lectureTimeDisplay?.trim()
-  if (rawDisplay && isUsableLectureTimeDisplay(rawDisplay)) return rawDisplay
+  if (rawDisplay && rawDisplay !== '-') return rawDisplay
   if (input.hours != null && Number.isFinite(input.hours) && input.hours > 0) {
     const hours = input.hours
     return Number.isInteger(hours) ? `${Math.trunc(hours)}시간` : `${hours}시간`
@@ -924,9 +911,7 @@ function resolveLectureTimeDisplayForRow(row: {
 }): string {
   if (row.basisDetail && isLectureFeeBasisDetail(row.basisDetail)) {
     const fromDetail = row.basisDetail.lectureTimeDisplay.trim()
-    if (fromDetail && fromDetail !== '-' && isUsableLectureTimeDisplay(fromDetail)) {
-      return fromDetail
-    }
+    if (fromDetail && fromDetail !== '-') return fromDetail
   }
   return '-'
 }

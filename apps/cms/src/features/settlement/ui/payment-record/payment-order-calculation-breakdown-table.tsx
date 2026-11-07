@@ -75,10 +75,7 @@ export function formatPaymentOrderCalculationWonPlain(n: number): string {
   return `${n.toLocaleString('ko-KR')}원`
 }
 
-function formatLectureSessionSegment(raw: string, mode: 'session' | 'round' | undefined): string {
-  if (mode === 'round') {
-    return raw.replace(/차시/g, '회차')
-  }
+function formatLectureSessionSegment(raw: string, _mode: 'session' | 'round' | undefined): string {
   return raw
 }
 

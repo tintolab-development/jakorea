@@ -7,8 +7,13 @@ import { useRef } from 'react'
 import type { LectureReportProgramProgressParagraph } from '@/features/template/model/writing-form-draft.schema'
 import '@/features/template/ui/paragraph/table/vertical-table-paragraph-body.css'
 import { DeferredBorderlessInput } from '@/features/template/ui/shared/deferred-borderless-input'
+import {
+  UserInfoPreviewTable,
+  type UserInfoPreviewTableSkin,
+} from '@/features/template/ui/paragraph/single-item/user-info'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { formatAppDatepickerDisplay } from '@/shared/ui/app-datepicker'
+import { formatDateDotWithWeekday } from '@/shared/utils/date'
 import './lecture-report-program-progress.css'
 
 dayjs.extend(customParseFormat)
@@ -39,24 +44,81 @@ function wrapClass(base: string, locked: boolean): string {
   return locked ? `${base} ${base}--disabled` : base
 }
 
+function displayOrDash(value: string | undefined): string {
+  const trimmed = value?.trim() ?? ''
+  return trimmed || '-'
+}
+
+function joinSplit(left: string | undefined, right: string | undefined): string {
+  const parts = [left, right].map(part => part?.trim() ?? '').filter(Boolean)
+  return parts.length > 0 ? parts.join(' | ') : '-'
+}
+
+function formatProgressEducationDate(raw: string | undefined): string {
+  const trimmed = raw?.trim() ?? ''
+  if (!trimmed) return '-'
+  const formatted = formatDateDotWithWeekday(trimmed)
+  return formatted === '-' ? trimmed : formatted
+}
+
 /**
  * 시안: 배정 연동 필드는 전부 disabled(회색).
  * 「진행 단원」만 작성 가능(흰 배경).
+ * 강의보고서 보기 — 일반 텍스트 표, 개인형은 기관명·소재지 숨김.
  */
 export function LectureReportProgramProgress({
   paragraph,
   onChange,
   isEditMode,
   isTemplateAuthoringMode = false,
+  previewReadonly = false,
+  previewSkin = 'surface',
+  hideInstitutionFields = false,
 }: {
   paragraph: LectureReportProgramProgressParagraph
   onChange: (next: LectureReportProgramProgressParagraph) => void
   isEditMode: boolean
   /** 템플릿 편집 — 진행 단원은 시안상 항상 활성 */
   isTemplateAuthoringMode?: boolean
+  previewReadonly?: boolean
+  previewSkin?: UserInfoPreviewTableSkin
+  hideInstitutionFields?: boolean
 }) {
   const paragraphRef = useRef(paragraph)
   paragraphRef.current = paragraph
+
+  if (previewReadonly) {
+    const entries = [
+      { key: 'programName', label: '프로그램명' },
+      { key: 'textbook', label: '사용교재 및 진행단원' },
+      ...(!hideInstitutionFields
+        ? [
+            { key: 'institutionName', label: '기관명' },
+            { key: 'institutionLocation', label: '기관 소재지' },
+          ]
+        : []),
+      { key: 'educationDate', label: '교육 진행일' },
+      { key: 'session', label: '교육 진행 시간(차시)' },
+      { key: 'educationTarget', label: '교육 대상' },
+      { key: 'classCount', label: '학급 및 학생 수' },
+    ]
+    return (
+      <UserInfoPreviewTable
+        selectedEntries={entries}
+        skin={previewSkin}
+        previewValues={{
+          programName: displayOrDash(paragraph.programName),
+          textbook: joinSplit(paragraph.textbookName, paragraph.progressUnit),
+          institutionName: displayOrDash(paragraph.institutionName),
+          institutionLocation: displayOrDash(paragraph.institutionLocation),
+          educationDate: formatProgressEducationDate(paragraph.educationDate),
+          session: joinSplit(paragraph.sessionTime, paragraph.sessionIndex),
+          educationTarget: displayOrDash(paragraph.educationTarget),
+          classCount: joinSplit(paragraph.classLabel, paragraph.studentCount),
+        }}
+      />
+    )
+  }
 
   const patch = (partial: Partial<LectureReportProgramProgressParagraph>) => {
     onChange({ ...paragraphRef.current, ...partial })
@@ -122,6 +184,7 @@ export function LectureReportProgramProgress({
           </div>
         </div>
 
+        {hideInstitutionFields ? null : (
         <div className="form-editor-vertical-table__row" role="row">
           <div className="form-editor-vertical-table__stage">
             <div className="form-editor-vertical-table__th" role="columnheader">
@@ -162,6 +225,7 @@ export function LectureReportProgramProgress({
             </div>
           </div>
         </div>
+        )}
 
         <div className="form-editor-vertical-table__row" role="row">
           <div className="form-editor-vertical-table__stage">

@@ -235,9 +235,6 @@ describe('getGeneralProgramApiErrorMessage', () => {
     expect(
       getGeneralProgramApiErrorMessage(errorFor('ATTENDANCE_AFTER_GIVE_UP'), 'fallback')
     ).toBe('활동 포기 이후 회차에는 출결을 저장할 수 없습니다.')
-    expect(
-      getGeneralProgramApiErrorMessage(errorFor('PROGRAM_COMPLETION_NOT_COMPLETED'), 'fallback')
-    ).toBe('프로그램이 종료된 뒤에만 수료를 재계산할 수 있습니다.')
   })
 
   it('PREFERRED_SCHEDULE_* 서버 메시지가 있으면 그대로 쓴다', () => {

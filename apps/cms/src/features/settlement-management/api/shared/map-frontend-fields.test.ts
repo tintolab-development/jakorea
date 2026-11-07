@@ -212,7 +212,7 @@ describe('mapCalculationDetailToBasisDetail', () => {
     }
   })
 
-  it('Gemini basisJson sessionOrdinal=2 → lectureTimeDisplay 2차시', () => {
+  it('Gemini basisJson에 lectureTimeDisplay가 없으면 sessionOrdinal으로 차시를 만들지 않는다', () => {
     const detail = mapCalculationDetailToBasisDetail({
       layout: 'lectureFeeGemini',
       title: '강사비 산정 기준 상세',
@@ -231,10 +231,10 @@ describe('mapCalculationDetailToBasisDetail', () => {
     if (detail?.layout !== 'lectureFeeGemini') return
     expect(detail.categoryLabel).toBe('제미나이 강사비')
     expect(detail.feeAssessmentWon).toBe(170000)
-    expect(detail.lectureTimeDisplay).toBe('2차시')
+    expect(detail.lectureTimeDisplay).toBe('-')
   })
 
-  it('Gemini typed basisJson 시계열 lectureTimeDisplay는 canonical 거절 후 sessionOrdinal → N차시', () => {
+  it('Gemini typed basisJson 시계열 lectureTimeDisplay를 유지한다', () => {
     const detail = mapCalculationDetailToBasisDetail({
       layout: 'lectureFeeGemini',
       basisJson: JSON.stringify({
@@ -247,8 +247,7 @@ describe('mapCalculationDetailToBasisDetail', () => {
     })
     expect(detail?.layout).toBe('lectureFeeGemini')
     if (detail?.layout !== 'lectureFeeGemini') return
-    expect(detail.lectureTimeDisplay).toBe('2차시')
-    expect(detail.lectureTimeDisplay).not.toBe('14:30 ~ 16:30')
+    expect(detail.lectureTimeDisplay).toBe('14:30 ~ 16:30')
   })
 
   it('BE LECTURE_FEE basisJson(layout=lectureFeeTier) → 급수 모달 payload', () => {

@@ -162,11 +162,7 @@ export function mapSettlementDetailToInstructorInvoice(
           .join(' | ')
       : '-'
 
-  const sessionOrdinal = settlement.sessionOrdinal ?? listItem.sessionOrdinal
-  const sessionLabel = resolveCanonicalLectureSessionDisplay(
-    settlement.lectureSessionDisplay,
-    sessionOrdinal
-  )
+  const sessionLabel = resolveCanonicalLectureSessionDisplay(settlement.lectureSessionDisplay)
   const lectureDateSessions =
     sessionLabel !== '-' ? `${lectureDate} | ${sessionLabel}` : lectureDate
 

@@ -349,8 +349,8 @@ export function mapCalculationDetailToBasisDetail(
 }
 
 /**
- * typed basisJson의 lectureTimeDisplay가 시계열·일정명이면 sessionOrdinal·hours로 정규화.
- * calculationDetail 밖(payment/settlement) ordinal은 쓰지 않는다.
+ * typed basisJson의 lectureTimeDisplay 원문을 유지한다.
+ * 시계열·일정명을 sessionOrdinal+"차시"로 덮지 않는다.
  */
 function normalizeTypedLectureFeeBasisDetail(
   detail: PaymentOrderCalculationBasisDetail,

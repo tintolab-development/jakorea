@@ -23,7 +23,6 @@ import {
   formatBusinessIncomeEarnerLabel,
   formatBusinessPeriodDisplay,
   resolveLectureFeeStandardTitleFromSettlement,
-  formatLectureSessionLabel,
   formatProgramSessionProgressDisplay,
   mapCalculationDetailToBasisDetail,
   mapSettlementFrontendItemTypeToLineKind,
@@ -31,7 +30,6 @@ import {
   resolveLectureFeeStandardAmountDisplay,
 } from '@/features/settlement-management/api/shared/map-frontend-fields'
 import {
-  isCanonicalLectureSessionDisplay,
   mapTransportationSnapshotToBasisDetail,
   type PaymentOrderCalculationBasisDetailTransportSnapshot,
 } from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail'
@@ -148,26 +146,15 @@ function withTransportationAmountFallback(
   }
 }
 
-function resolveLectureSessionDisplay(
-  lineRow: DetailLineRow,
-  settlement: SettlementFrontendResponse,
-  sessionDisplay: 'range' | 'single'
-): string {
+function resolveLectureSessionDisplay(settlement: SettlementFrontendResponse): string {
   const fromApi = settlement.lectureSessionDisplay?.trim()
-  if (fromApi && isCanonicalLectureSessionDisplay(fromApi)) return fromApi
-
-  const sessionOrdinal = settlement.sessionOrdinal ?? lineRow.sessionOrdinal
-  if (sessionOrdinal == null || sessionOrdinal <= 0) return '—'
-
-  const single = formatLectureSessionLabel(sessionOrdinal)
-  if (sessionDisplay === 'single') return single
-  return `${sessionOrdinal} ~ ${sessionOrdinal}차시`
+  return fromApi || '—'
 }
 
 function buildBlocks(
   lineRow: DetailLineRow,
   settlement: SettlementFrontendResponse,
-  sessionDisplay: 'range' | 'single' = 'range',
+  _sessionDisplay: 'range' | 'single' = 'range',
   transportationSnapshot?: SettlementTransportationSnapshotResponse
 ): PaymentOrderCalculationStatementSessionBlock[] {
   const items = prepareSettlementFrontendItemsForStatement(settlement.items)
@@ -192,7 +179,7 @@ function buildBlocks(
     {
       institutionName,
       lectureDateDisplay: formatIsoToKoreanWeekday(lineRow.lectureDate),
-      lectureSessionDisplay: resolveLectureSessionDisplay(lineRow, settlement, sessionDisplay),
+      lectureSessionDisplay: resolveLectureSessionDisplay(settlement),
       lines,
     },
   ]

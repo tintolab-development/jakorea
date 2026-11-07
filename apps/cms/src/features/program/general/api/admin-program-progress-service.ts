@@ -457,26 +457,14 @@ export async function downloadGeneralProgramLectureReports(
   assertProgramProgressRemoteReady()
   const { downloadProgramLectureReportsRemote } =
     await import('@/features/program/general/api/program-progress-api-client')
-  const { downloadFromBulkEndpoint } = await import('@/features/user/api/download-bulk-endpoint')
-  const { downloadAdminFile } = await import('@/shared/lib/admin-file-upload')
-  const { generateFilename } = await import('@/shared/utils/file-download')
+  const { saveLectureReportBulkDownloadJob } = await import(
+    '@/shared/lib/lecture-report-bulk-download'
+  )
 
   const job = await downloadProgramLectureReportsRemote(programId, {
     instructorMemberId: options?.instructorMemberId,
   })
-  const endpoint = job.downloadUrl?.trim() || job.downloadEndpoint?.trim()
-  if (endpoint) {
-    await downloadFromBulkEndpoint(endpoint, '강의보고서_일괄', 'zip')
-    return
-  }
-  if (job.fileObjectId != null) {
-    await downloadAdminFile({
-      fileObjectId: job.fileObjectId,
-      fileName: generateFilename('강의보고서_일괄', 'zip'),
-    })
-    return
-  }
-  throw new Error('강의보고서 다운로드 URL이 없습니다.')
+  await saveLectureReportBulkDownloadJob(job, '강의보고서_일괄')
 }
 
 /** 제출 파일(fileObjectId) 단건 다운로드 — 「강의보고서 보기」 */

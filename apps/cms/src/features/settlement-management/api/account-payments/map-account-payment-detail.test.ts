@@ -259,7 +259,7 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
     expect(mapped.plainAccountForPaymentConfirm?.holder).toBe('[E2E-SETTLE] 김정산')
   })
 
-  it('제미나이 calculationDetail → basisDetail 강의 시간 2차시 (시계열 lectureSessionDisplay 무시)', () => {
+  it('제미나이 일정 칸은 lectureSessionDisplay 시계열을 유지하고 모달 인정 차시는 calculationDetail', () => {
     const detail: AccountPaymentDetailResponse = {
       payment: {
         accountPaymentId: 185986,

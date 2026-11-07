@@ -88,7 +88,6 @@ import type { ExternalIdentifierResponse } from '@/shared/api/generated/members/
 import type { InstructorJaEvaluationInput } from '@/shared/api/generated/members/schemas/instructorJaEvaluationInput'
 import type { InstructorJaEvaluationResponse } from '@/shared/api/generated/members/schemas/instructorJaEvaluationResponse'
 import type { AdminSelfWithdrawalRequest } from '@/shared/api/generated/members/schemas/adminSelfWithdrawalRequest'
-import type { FileDownloadJobResponse } from '@/shared/api/generated/members/schemas/fileDownloadJobResponse'
 import type { AccountDirectoryBulkDeleteRequest } from '@/shared/api/generated/members/schemas/accountDirectoryBulkDeleteRequest'
 import type { AdminMemberBulkDeleteRequest } from '@/shared/api/generated/members/schemas/adminMemberBulkDeleteRequest'
 import type { AdminApprovalBulkDecisionRequest } from '@/shared/api/generated/members/schemas/adminApprovalBulkDecisionRequest'
@@ -520,8 +519,16 @@ export async function bulkDeleteProgramHistoryRemote(
 /** Swagger `downloadAllLectureReports` — GET users/{memberId}/lecture-reports/download */
 export async function downloadAllMemberLectureReportsRemote(
   memberId: number
-): Promise<FileDownloadJobResponse> {
-  return unwrapApiBody(await membersApi.downloadAllLectureReports(memberId))
+): Promise<import('@/shared/lib/lecture-report-bulk-download').LectureReportBulkDownloadJob> {
+  return unwrapApiBody(
+    await customInstance(
+      {
+        url: `/api/admin/users/${memberId}/lecture-reports/download`,
+        method: 'GET',
+      },
+      { skipGlobalErrorAlert: true }
+    )
+  )
 }
 
 export async function fetchAffiliatedTeachersRemote(

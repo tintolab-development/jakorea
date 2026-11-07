@@ -55,8 +55,11 @@ import {
   FilterTableToolbarButton,
 } from '@/shared/ui'
 import { downloadAllMemberLectureReportsRemote } from '@/features/user/api/members-api-client'
-import { downloadFromBulkEndpoint } from '@/features/user/api/download-bulk-endpoint'
-import { handleError } from '@/shared/utils/error-handler'
+import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
+import {
+  hasFileDownloadPermission,
+  saveLectureReportBulkDownloadJob,
+} from '@/shared/lib/lecture-report-bulk-download'
 import { CertificateBulkIssueReasonModal } from './modal/certificate-bulk-issue-reason-modal'
 import type { CertificateIssueReasonValue } from './modal/certificate-bulk-issue-reason-modal'
 import { LectureReportSubmissionHistoryModal } from './modal/lecture-report-submission-history-modal'
@@ -281,21 +284,24 @@ export function MemberProgramLectureHistory({
     []
   )
 
+  const canBulkDownloadFiles = hasFileDownloadPermission()
+
   const handleDownloadAllLectureReports = useCallback(async () => {
     if (memberId == null || allLectureReportsDownloading) return
+    if (!canBulkDownloadFiles) return
     setAllLectureReportsDownloading(true)
     try {
       const job = await downloadAllMemberLectureReportsRemote(memberId)
-      await downloadFromBulkEndpoint(job.downloadUrl, 'lecture-reports-all', 'zip')
+      await saveLectureReportBulkDownloadJob(job, 'lecture-reports-all')
     } catch (error) {
-      const info = handleError(error, {
-        defaultMessage: '강의보고서 일괄 다운로드에 실패했습니다.',
+      showAlert({
+        title: '안내',
+        content: getMemberApiErrorMessage(error, '강의보고서 일괄 다운로드에 실패했습니다.'),
       })
-      showAlert({ title: '안내', content: info.detail })
     } finally {
       setAllLectureReportsDownloading(false)
     }
-  }, [allLectureReportsDownloading, memberId, showAlert])
+  }, [allLectureReportsDownloading, canBulkDownloadFiles, memberId, showAlert])
 
   const historyDeleteGuide = useMemo(() => {
     if (selectedRowKeys.length === 0) return null
@@ -689,7 +695,10 @@ export function MemberProgramLectureHistory({
                   활동인증서 발급
                 </FilterTableToolbarButton>
               )}
-              {mode === 'instructorLecture' && memberId != null && isMembersRemoteEnabled() && (
+              {mode === 'instructorLecture' &&
+                memberId != null &&
+                isMembersRemoteEnabled() &&
+                canBulkDownloadFiles && (
                 <FilterTableToolbarButton
                   variant="secondary"
                   icon={<ButtonDownloadIcon />}

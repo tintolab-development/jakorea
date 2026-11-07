@@ -38,6 +38,7 @@ export function createLectureReportIssuanceA4Preview(): {
     a4RenderMode: 'contentOnly',
     paragraphBodyOptions: {
       documentPreviewClassName: LECTURE_REPORT_A4_PREVIEW_BODY_CLASS_NAME,
+      hideTitleRequiredMark: true,
     },
   }
 }

@@ -250,7 +250,7 @@ describe('mapSettlementDetailToProgramCalculationStatement', () => {
     })
   })
 
-  it('일정명은 강의 시간으로 쓰지 않고 sessionOrdinal → N차시 구간을 쓴다', () => {
+  it('lectureSessionDisplay 원문을 일정 칸에 그대로 쓴다', () => {
     const mapped = mapSettlementDetailToProgramCalculationStatement(
       { ...lineRow, sessionOrdinal: 1 },
       settlement({
@@ -273,7 +273,7 @@ describe('mapSettlementDetailToProgramCalculationStatement', () => {
 
     expect(mapped.basic.lectureFeeStandardTitle).toBe('-')
     expect(mapped.basic.lectureFeeStandardAmount).toBe('500,000원')
-    expect(mapped.blocks[0]?.lectureSessionDisplay).toBe('1 ~ 1차시')
+    expect(mapped.blocks[0]?.lectureSessionDisplay).toBe('GROK_E2E_API CS03 1회차')
     expect(mapped.blocks[0]?.lines[0]?.kind).toBe('lecture_fee')
     expect(mapped.blocks[0]?.lines[0]?.amount).toBe(500000)
   })
@@ -392,7 +392,7 @@ describe('mapSettlementDetailToProgramCalculationStatement', () => {
 })
 
 describe('mapSettlementDetailToInstructorPageCalculationStatement', () => {
-  it('강사 상세는 일정명 대신 sessionOrdinal을 1차시로 표시한다', () => {
+  it('강사 상세도 lectureSessionDisplay 원문을 쓴다', () => {
     const mapped = mapSettlementDetailToInstructorPageCalculationStatement(
       { ...lineRow, sessionOrdinal: 1 },
       settlement({
@@ -402,7 +402,7 @@ describe('mapSettlementDetailToInstructorPageCalculationStatement', () => {
       instructorIdentityFromLine('홍길동'),
       'JA 경제교실'
     )
-    expect(mapped.blocks[0]?.lectureSessionDisplay).toBe('1차시')
+    expect(mapped.blocks[0]?.lectureSessionDisplay).toBe('GROK_E2E_API CS03 1회차')
   })
 
   it('강사비 책정은 API 값, 강사 PII는 placeholder 유지', () => {

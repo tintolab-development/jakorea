@@ -85,6 +85,12 @@ export type AgreementWritingFormShellProps = {
   structureLockedParagraphIds?: ReadonlySet<string>
   /** 제목형 등 — 드래그 핸들 비노출 */
   hideDragHandleForParagraphIds?: ReadonlySet<string>
+  /**
+   * 템플릿 관리(`stripAgreementWritingFormStructureLocks`)에서 본문 잠금이 풀린 카탈로그 원본에도
+   * 구조 조작(단락 추가·복제·삭제·이동, 표 행/열 추가·삭제, 유형 변경)만 막을 단락 id.
+   * 본문·제목 문구 편집은 유지한다. 사용자 복제·신규(`isStructureLocked=false`)에는 적용하지 않는다.
+   */
+  authoringStructureControlLockedParagraphIds?: ReadonlySet<string>
   /** A4 미리보기 레이아웃 사용 여부 */
   previewLayout?: 'default' | 'a4-document'
   /** A4 미리보기 시 숨길 단락 id */
@@ -146,6 +152,39 @@ function resolveAgreementTemplateName(draft: WritingFormDraft): string {
 }
 
 /** 구조 잠금 해제 시에도 마무리+날짜+서명 확인 카드 옵션 유지 */
+const EMPTY_PARAGRAPH_ID_SET: ReadonlySet<string> = new Set<string>()
+
+function tableShape(p: WritingFormParagraph): string | null {
+  if (p.kind !== 'single_item') return null
+  if (p.variant === 'horizontal_table' || p.variant === 'vertical_table') {
+    const t = p as unknown as {
+      columnHeaders?: unknown[]
+      rowHeaders?: unknown[]
+      dataRows?: unknown[][]
+      fieldDataRows?: unknown[][]
+      rows?: unknown[]
+    }
+    const rows = (r?: unknown[][]) => (r == null ? '-' : r.map(x => x?.length ?? 0).join(','))
+    return [
+      t.columnHeaders?.length ?? '-',
+      t.rowHeaders?.length ?? '-',
+      rows(t.dataRows),
+      rows(t.fieldDataRows),
+      t.rows?.length ?? '-',
+    ].join('|')
+  }
+  return null
+}
+
+/** 구조 조작 판정 — 단락 종류·표 행/열 수 변화. 문구(값) 변화는 허용 */
+export function changesParagraphStructure(
+  prev: WritingFormParagraph,
+  next: WritingFormParagraph
+): boolean {
+  if (prev.id !== next.id || prev.kind !== next.kind || prev.variant !== next.variant) return true
+  return tableShape(prev) !== tableShape(next)
+}
+
 function preserveUnlockedAgreementConfirmBodyOptions(
   options: RenderFormParagraphBodyOptions | undefined
 ): RenderFormParagraphBodyOptions | undefined {
@@ -174,6 +213,7 @@ export function AgreementWritingFormShell({
   writingPreviewHeaderTitle = '동의 양식',
   structureLockedParagraphIds,
   hideDragHandleForParagraphIds,
+  authoringStructureControlLockedParagraphIds,
   previewLayout = 'default',
   a4HiddenParagraphIds,
   a4PageBreakBeforeParagraphIds,
@@ -219,6 +259,35 @@ export function AgreementWritingFormShell({
   const effectiveParagraphBodyOptions = isStructureLocked
     ? paragraphBodyOptions
     : preserveUnlockedAgreementConfirmBodyOptions(paragraphBodyOptions)
+  /** 구조 조작 전용 잠금 — 본문 잠금(`structureLockedParagraphIds`)이 없을 때만 */
+  const structureControlLockedParagraphIds =
+    isStructureLocked &&
+    effectiveStructureLockedParagraphIds == null &&
+    authoringStructureControlLockedParagraphIds != null &&
+    authoringStructureControlLockedParagraphIds.size > 0
+      ? authoringStructureControlLockedParagraphIds
+      : undefined
+  /** 좌측 카드 액션·표 행열·우측 유형 선택은 잠그고, 본문 렌더는 빈 잠금 집합으로 기존 편집 유지 */
+  const leftPanelStructureLockedParagraphIds =
+    effectiveStructureLockedParagraphIds ?? structureControlLockedParagraphIds
+  const leftPanelParagraphBodyOptions = useMemo<RenderFormParagraphBodyOptions | undefined>(
+    () =>
+      structureControlLockedParagraphIds == null
+        ? effectiveParagraphBodyOptions
+        : {
+            ...effectiveParagraphBodyOptions,
+            structureLockedParagraphIds: EMPTY_PARAGRAPH_ID_SET,
+            structureLockedAuthoringOperationalFill: true,
+          },
+    [effectiveParagraphBodyOptions, structureControlLockedParagraphIds]
+  )
+  const leftPanelHideDragHandleForParagraphIds = useMemo<ReadonlySet<string> | undefined>(() => {
+    if (structureControlLockedParagraphIds == null) return effectiveHideDragHandleForParagraphIds
+    return new Set([
+      ...(effectiveHideDragHandleForParagraphIds ?? []),
+      ...structureControlLockedParagraphIds,
+    ])
+  }, [effectiveHideDragHandleForParagraphIds, structureControlLockedParagraphIds])
 
   const resolveInitialDraft = useCallback((): WritingFormDraft => {
     const raw = typeof initialDraft === 'function' ? initialDraft() : initialDraft
@@ -251,10 +320,20 @@ export function AgreementWritingFormShell({
     (id: string, updater: (p: WritingFormParagraph) => WritingFormParagraph) => {
       setDraft(prev => ({
         ...prev,
-        paragraphs: prev.paragraphs.map(p => (p.id === id ? updater(p) : p)),
+        paragraphs: prev.paragraphs.map(p => {
+          if (p.id !== id) return p
+          const next = updater(p)
+          if (
+            structureControlLockedParagraphIds?.has(id) === true &&
+            changesParagraphStructure(p, next)
+          ) {
+            return p
+          }
+          return next
+        }),
       }))
     },
-    []
+    [structureControlLockedParagraphIds]
   )
 
   useEffect(() => {
@@ -303,12 +382,21 @@ export function AgreementWritingFormShell({
     applyDraft(resolveInitialDraft())
   }, [defaultActiveParagraphId, resolveInitialDraft, templateCode])
 
-  const onReorderMiddle = useCallback((activeId: string, overId: string) => {
-    setDraft(prev => ({
-      ...prev,
-      paragraphs: reorderWritingFormMiddleParagraphs(prev.paragraphs, activeId, overId),
-    }))
-  }, [])
+  const onReorderMiddle = useCallback(
+    (activeId: string, overId: string) => {
+      if (
+        structureControlLockedParagraphIds?.has(activeId) === true ||
+        structureControlLockedParagraphIds?.has(overId) === true
+      ) {
+        return
+      }
+      setDraft(prev => ({
+        ...prev,
+        paragraphs: reorderWritingFormMiddleParagraphs(prev.paragraphs, activeId, overId),
+      }))
+    },
+    [structureControlLockedParagraphIds]
+  )
 
   const onTitleNumberingChange = useCallback((style: FormTitleNumberingStyle) => {
     setDraft(prev => ({
@@ -515,12 +603,12 @@ export function AgreementWritingFormShell({
           onHorizontalTableRowSelectionChange={onHorizontalTableRowSelectionChange}
           verticalTableBodyRowSelection={verticalTableBodyRowSelection}
           onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
-          structureLockedParagraphIds={effectiveStructureLockedParagraphIds}
-          hideDragHandleForParagraphIds={effectiveHideDragHandleForParagraphIds}
-          paragraphBodyOptions={effectiveParagraphBodyOptions}
+          structureLockedParagraphIds={leftPanelStructureLockedParagraphIds}
+          hideDragHandleForParagraphIds={leftPanelHideDragHandleForParagraphIds}
+          paragraphBodyOptions={leftPanelParagraphBodyOptions}
           agreementClosingFooter={agreementClosingFooter}
           middleParagraphActions={
-            effectiveStructureLockedParagraphIds != null ? undefined : middleParagraphActions
+            leftPanelStructureLockedParagraphIds != null ? undefined : middleParagraphActions
           }
         />
       }
@@ -530,7 +618,7 @@ export function AgreementWritingFormShell({
           pinnedTop={pinnedTop}
           sortableMiddle={sortableMiddle}
           pinnedBottom={pinnedBottom}
-          hideSortableDragHandleForIds={effectiveHideDragHandleForParagraphIds}
+          hideSortableDragHandleForIds={leftPanelHideDragHandleForParagraphIds}
           selectedItemId={activeParagraphId}
           onSelectItem={handleSelectParagraph}
           onReorderMiddle={onReorderMiddle}
@@ -553,7 +641,7 @@ export function AgreementWritingFormShell({
             onHorizontalTableBodyRowDeleted={focusHorizontalTableBodyRow}
             verticalTableBodyRowSelection={verticalTableBodyRowSelection}
             onVerticalTableBodyRowDeleted={focusVerticalTableBodyRow}
-            structureLockedParagraphIds={effectiveStructureLockedParagraphIds}
+            structureLockedParagraphIds={leftPanelStructureLockedParagraphIds}
           />
         </FormEditorFieldNav>
       }

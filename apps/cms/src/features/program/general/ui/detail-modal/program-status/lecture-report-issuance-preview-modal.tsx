@@ -18,6 +18,7 @@ import { createLectureReportIssuanceA4Preview } from '@/features/template/model/
 import {
   buildLectureReportFilledDraft,
   buildLectureReportPreviewFileName,
+  lectureReportPreviewParagraphBodyOptions,
   LECTURE_REPORT_DOCUMENT_TITLE,
   type LectureReportPreviewContext,
 } from '@/features/program/general/lib/build-lecture-report-issuance-preview'
@@ -121,11 +122,10 @@ export function LectureReportIssuancePreviewModal({
       ...base,
       paragraphBodyOptions: {
         ...base.paragraphBodyOptions,
-        lectureReportProgramLinkedPreview: true,
-        lectureReportFiles: context?.content?.files ?? [],
+        ...(context != null ? lectureReportPreviewParagraphBodyOptions(context) : {}),
       },
     }
-  }, [context?.content?.files])
+  }, [context])
 
   const previewParagraphs = useMemo(
     () => getA4PreviewParagraphs(draft?.paragraphs ?? [], a4Preview.a4HiddenParagraphIds),

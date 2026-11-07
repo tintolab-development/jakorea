@@ -1,6 +1,11 @@
 import dayjs from 'dayjs'
 import { formatDateDot } from '@/shared/utils/date'
 import type { LectureReportListItemResponse } from '@/shared/api/generated/dashboard/schemas/lectureReportListItemResponse'
+import {
+  formatEducationScheduleLabelTokens,
+  isEducationSchedulePreEducation,
+  positiveEducationNumber,
+} from '@/shared/lib/education-schedule-name'
 
 /**
  * GET …/programs/{id}/lecture-reports 응답 → 강사 강의보고서 테이블 row.
@@ -17,10 +22,17 @@ export type ParticipatingInstructorLectureReportRow = {
   schoolName: string
   educationGrade: string
   educationScheduleLabel: string
+  lectureDate?: string
+  sessionNo?: number
+  curriculumSessionCount?: number
+  scheduleRole?: string
+  educationSlotKey?: string
+  timeLabel?: string
   submissionPeriodLabel: string
   lectureProgressLabel: '진행 완료' | '진행 예정'
   submissionStatusLabel: '제출 완료' | '미제출' | '진행 예정'
   canViewReport: boolean
+  fileCount: number
   fileObjectIds: number[]
 }
 
@@ -48,22 +60,124 @@ function mapProgressLabel(
   return submissionStatusLabel === '진행 예정' ? '진행 예정' : '진행 완료'
 }
 
-function buildScheduleLabel(row: LectureReportListItemResponse): string {
-  const dateRound = row.dateRoundTimeLabel?.trim()
-  if (dateRound) return dateRound
-  const lectureLabel = row.lectureLabel?.trim()
-  if (lectureLabel) return lectureLabel
-
-  const parts: string[] = []
-  if (row.lectureDate) {
-    const d = dayjs(row.lectureDate)
-    parts.push(d.isValid() ? formatDateDot(d) : row.lectureDate)
+function readLooseString(raw: Record<string, unknown>, keys: readonly string[]): string | undefined {
+  for (const key of keys) {
+    const value = raw[key]
+    if (typeof value === 'string') {
+      const trimmed = value.trim()
+      if (trimmed) return trimmed
+    }
   }
-  if (row.sessionNo != null) parts.push(`${row.sessionNo}회차`)
-  if (row.timeLabel?.trim()) parts.push(row.timeLabel.trim())
-  if (parts.length > 0) return parts.join(' | ')
+  return undefined
+}
+
+function readLoosePositiveInt(
+  raw: Record<string, unknown>,
+  keys: readonly string[]
+): number | undefined {
+  for (const key of keys) {
+    const value = raw[key]
+    if (typeof value === 'number') {
+      const n = positiveEducationNumber(value)
+      if (n != null) return n
+    }
+    if (typeof value === 'string') {
+      const n = positiveEducationNumber(Number(value.trim()))
+      if (n != null) return n
+    }
+  }
+  return undefined
+}
+
+type LectureReportScheduleFields = {
+  sessionNo?: number
+  curriculumSessionCount?: number
+  scheduleRole?: string
+  educationSlotKey?: string
+  lectureDate?: string
+  timeLabel?: string
+}
+
+export function readLectureReportScheduleFields(
+  dto: unknown
+): LectureReportScheduleFields {
+  if (dto == null || typeof dto !== 'object') return {}
+  const raw = dto as Record<string, unknown>
+  return {
+    sessionNo: readLoosePositiveInt(raw, ['sessionNo', 'session_no']),
+    curriculumSessionCount: readLoosePositiveInt(raw, [
+      'curriculumSessionCount',
+      'curriculum_session_count',
+    ]),
+    scheduleRole: readLooseString(raw, ['scheduleRole', 'schedule_role', 'scheduleKind', 'schedule_kind']),
+    educationSlotKey: readLooseString(raw, ['educationSlotKey', 'education_slot_key']),
+    lectureDate:
+      typeof raw.lectureDate === 'string' && raw.lectureDate.trim() ? raw.lectureDate.trim() : undefined,
+    timeLabel:
+      typeof raw.timeLabel === 'string' && raw.timeLabel.trim() ? raw.timeLabel.trim() : undefined,
+  }
+}
+
+function lectureReportDateToken(lectureDate: string | undefined): string | undefined {
+  if (!lectureDate) return undefined
+  const iso = /^(\d{4}-\d{2}-\d{2})/.exec(lectureDate.trim())
+  if (iso) return iso[1]
+  const d = dayjs(lectureDate)
+  return d.isValid() ? d.format('YYYY-MM-DD') : lectureDate.trim()
+}
+
+function isLegacySessionNoAsSessionLabel(label: string, sessionNo: number | undefined): boolean {
+  if (sessionNo == null) return false
+  const hasRound = new RegExp(`(^|[|·\\s])${sessionNo}\\s*회차(?=\\s*[|·]|$)`, 'u').test(label)
+  if (hasRound) return false
+  return new RegExp(`(^|[|·\\s])${sessionNo}\\s*차시(?=\\s*[|·]|$)`, 'u').test(label)
+}
+
+/**
+ * 강의보고서 일정 라벨. canonical 필드로 재조립하고, 구버전 `N차시` dateRoundTimeLabel은 쓰지 않는다.
+ * 표시: 날짜 · 회차 · 차시(연결 있을 때만) · 시각. 회차와 차시를 괄호로 합치지 않는다.
+ */
+export function buildLectureReportEducationScheduleLabel(
+  dto: unknown,
+  fields: LectureReportScheduleFields = readLectureReportScheduleFields(dto)
+): string {
+  const isPreEducation = isEducationSchedulePreEducation({
+    scheduleRole: fields.scheduleRole,
+    educationSlotKey: fields.educationSlotKey,
+  })
+  const unitTokens = formatEducationScheduleLabelTokens({
+    sessionNo: fields.sessionNo,
+    curriculumSessionCount: fields.curriculumSessionCount,
+    scheduleRole: fields.scheduleRole,
+    educationSlotKey: fields.educationSlotKey,
+  })
+  const canCompose = isPreEducation || fields.sessionNo != null
+  if (canCompose) {
+    const parts: string[] = []
+    const dateToken = lectureReportDateToken(fields.lectureDate)
+    if (dateToken) parts.push(dateToken)
+    parts.push(...unitTokens)
+    if (fields.timeLabel) parts.push(fields.timeLabel)
+    if (parts.length > 0) return parts.join(' | ')
+  }
+
+  if (dto == null || typeof dto !== 'object') return '-'
+  const row = dto as LectureReportListItemResponse
+  const fallback = row.dateRoundTimeLabel?.trim() || row.lectureLabel?.trim()
+  if (fallback && !isLegacySessionNoAsSessionLabel(fallback, fields.sessionNo)) {
+    return fallback
+  }
+  const leftover: string[] = []
+  const dateToken = lectureReportDateToken(fields.lectureDate)
+  if (dateToken) leftover.push(dateToken)
+  if (fields.timeLabel) leftover.push(fields.timeLabel)
+  if (leftover.length > 0) return leftover.join(' | ')
   if (row.scheduleId != null) return `일정 #${row.scheduleId}`
   return '-'
+}
+
+function buildScheduleLabel(row: LectureReportListItemResponse): string {
+  return buildLectureReportEducationScheduleLabel(row)
 }
 
 export function mapLectureReportDtoToInstructorRow(
@@ -72,6 +186,7 @@ export function mapLectureReportDtoToInstructorRow(
 ): ParticipatingInstructorLectureReportRow | null {
   if (dto == null || typeof dto !== 'object') return null
   const row = dto as LectureReportListItemResponse & Record<string, unknown>
+  const scheduleFields = readLectureReportScheduleFields(row)
   const reportId =
     typeof row.reportId === 'number' && Number.isFinite(row.reportId) ? row.reportId : undefined
   const formResponseId =
@@ -113,10 +228,20 @@ export function mapLectureReportDtoToInstructorRow(
     schoolName: typeof row.schoolName === 'string' && row.schoolName.trim() ? row.schoolName : '-',
     educationGrade: grade,
     educationScheduleLabel: buildScheduleLabel(row),
+    lectureDate: scheduleFields.lectureDate,
+    sessionNo: scheduleFields.sessionNo,
+    curriculumSessionCount: scheduleFields.curriculumSessionCount,
+    scheduleRole: scheduleFields.scheduleRole,
+    educationSlotKey: scheduleFields.educationSlotKey,
+    timeLabel: scheduleFields.timeLabel,
     submissionPeriodLabel,
     lectureProgressLabel,
     submissionStatusLabel,
     canViewReport: submissionStatusLabel === '제출 완료',
+    fileCount:
+      typeof row.fileCount === 'number' && Number.isFinite(row.fileCount)
+        ? row.fileCount
+        : fileObjectIds.length,
     fileObjectIds,
   }
 }

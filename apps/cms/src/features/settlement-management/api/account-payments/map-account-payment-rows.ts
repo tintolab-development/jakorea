@@ -1,13 +1,10 @@
 import type { AccountPaymentRow } from '@/features/settlement-management/model/account-payments-list'
 import type { AccountPaymentListItemResponse } from '@/shared/api/generated/settlement/schemas'
 import { mapPaymentStatusToAccountPaymentStatus } from '@/features/settlement-management/api/shared/settlement-status-mappers'
-import { formatLectureSessionLabel } from '@/features/settlement-management/api/shared/map-frontend-fields'
-import { isCanonicalLectureSessionDisplay } from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail'
 
 function resolveSessionLabel(item: AccountPaymentListItemResponse): string {
   const label = item.sessionLabel?.trim()
-  if (label && isCanonicalLectureSessionDisplay(label)) return label
-  if (item.sessionOrdinal != null) return formatLectureSessionLabel(item.sessionOrdinal)
+  if (label) return label
   return '-'
 }
 
