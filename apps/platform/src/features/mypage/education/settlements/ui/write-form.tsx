@@ -949,7 +949,7 @@ export function EducationSettlementWriteForm({
             title={`${transportSectionNo}. 교통비 신청`}
             description={
               isReceipt
-                ? '가는 편과 오는 편을 구분해 실제 사용한 교통비를 신청해 주세요.'
+                ? '편도 30km 이상 이동 시 지원되는 비용입니다. 가는 편과 오는 편을 구분해 실제 사용한 교통비를 신청해 주세요.'
                 : '편도 30km 이상 이동 시 지원되는 비용입니다.'
             }
           >
