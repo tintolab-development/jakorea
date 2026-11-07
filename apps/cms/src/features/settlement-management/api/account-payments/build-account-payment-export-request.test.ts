@@ -63,10 +63,28 @@ describe('buildAccountPaymentExportRequest', () => {
     })
     expect(body.status).toBe(ACCOUNT_PAYMENT_EXPORT_STATUS_PAID)
     expect(body.settlementIds).toEqual([102])
+    expect(body.reason).toBe('세금신고 양식 발급')
+    expect(body.businessPurpose).toBe('정산 관리 세금신고 양식')
+    expect(body.rawPrivacyIncluded).toBe(false)
     expect('accountPaymentIds' in body).toBe(false)
+    expect('dateRangeValid' in body).toBe(false)
+    expect('rawPrivacyApprovalValid' in body).toBe(false)
   })
 
-  it('이체 기간이 있으면 fromDate/toDate를 포함한다', () => {
+  it('선택 세금신고는 화면 기간으로 선택 settlement를 다시 자르지 않는다', () => {
+    const body = buildAccountPaymentExportRequest({
+      kind: 'tax-report',
+      selection: { kind: 'selected', rows: [{ settlementId: 88021 }] },
+      fromDate: '2026-01-01',
+      toDate: '2026-12-31',
+    })
+
+    expect(body.settlementIds).toEqual([88021])
+    expect(body.fromDate).toBeUndefined()
+    expect(body.toDate).toBeUndefined()
+  })
+
+  it('전체 세금신고만 fromDate/toDate 쌍을 포함하고 derived field는 넣지 않는다', () => {
     const body = buildAccountPaymentExportRequest({
       kind: 'tax-report',
       selection: { kind: 'all' },
@@ -75,8 +93,19 @@ describe('buildAccountPaymentExportRequest', () => {
     })
     expect(body.fromDate).toBe('2026-08-01')
     expect(body.toDate).toBe('2026-08-31')
-    expect(body.dateRangeValid).toBe(true)
-    expect(body.reason).toContain('세금신고')
+    expect(body.dateRangeValid).toBeUndefined()
+    expect(body.rawPrivacyApprovalValid).toBeUndefined()
+    expect(body.reason).toBe('세금신고 양식 발급')
+    expect(body.businessPurpose).toBe('정산 관리 세금신고 양식')
+  })
+
+  it('선택 세금신고에 settlement ID가 없으면 전체 발급으로 변환하지 않는다', () => {
+    expect(() =>
+      buildAccountPaymentExportRequest({
+        kind: 'tax-report',
+        selection: { kind: 'selected', rows: [{ settlementId: undefined, accountPaymentId: 2001 }] },
+      })
+    ).toThrow(/세금신고 선택 대상 정산 ID/)
   })
 
   it('마스킹 발급은 원본 승인을 넣지 않는다', () => {
@@ -102,7 +131,9 @@ describe('buildRawAccountPaymentExportRequest', () => {
     expect(body.programId).toBeUndefined()
     expect(body.instructorMemberId).toBeUndefined()
     expect(body.settlementIds).toEqual([])
-    expect(body.accountPaymentIds).toEqual([])
+    expect(body.accountPaymentIds).toBeUndefined()
+    expect(body.reason).toBe('세금신고 양식 발급')
+    expect(body.businessPurpose).toBe('정산 관리 세금신고 양식')
     expect(body.status).toBeUndefined()
     expect(body.fromDate).toBeUndefined()
     expect(body.toDate).toBeUndefined()
