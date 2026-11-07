@@ -76,6 +76,8 @@ import {
 } from '../lib/open-ujat-survey-writing-preview'
 import { resolveSatisfactionSurveyDisplayTitle } from '@/features/program/shared/lib/survey-management/satisfaction-survey-display-title'
 import {
+  findSatisfactionScheduleById,
+  resolveSatisfactionCreateSubmissionPeriod,
   resolveSatisfactionPreviewPeriod,
   type SatisfactionFormEditPeriod,
 } from '@/features/program/shared/lib/survey-management/satisfaction-form-edit-period'
@@ -112,6 +114,7 @@ import {
   SURVEY_POLL_SCHEDULE_ALREADY_REGISTERED_MESSAGE,
   disableSurveyPollScheduleOptionsWithSurvey,
   isSurveyPollBindingTargetScheduleAlreadyRegistered,
+  pickLastSurveyPollEducationSlot,
 } from '@/features/program/shared/lib/survey-management/survey-poll-schedule-options'
 import { resolveUjatSurveyScheduleFieldFromOptions } from '../lib/ujat-survey-schedule-register'
 import { loadProgramSurveyFormEditAfterBinding } from '@/features/program/shared/lib/survey-management/load-program-survey-form-edit'
@@ -869,12 +872,18 @@ export function UjatSurveyManagementView({
           void showAlert({ title: '등록 실패', content: scheduleTarget.message })
           return
         }
+        const period = resolveSatisfactionCreateSubmissionPeriod(
+          findSatisfactionScheduleById(
+            surveyScheduleOptionsQuery.schedules,
+            scheduleTarget.target.targetScopeId
+          ) ?? pickLastSurveyPollEducationSlot(surveyScheduleOptionsQuery.schedules),
+          7
+        )
         const payload: ProgramFormBindingRequest = {
           formType: 'SATISFACTION',
           templateId: resolved.templateId,
           templateVersionId: resolved.templateVersionId,
-          submissionStartAt: resolved.submissionStartAt,
-          submissionEndAt: resolved.submissionEndAt,
+          ...(period ?? {}),
           targetRole,
           ...scheduleTarget.target,
           active: true,

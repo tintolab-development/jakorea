@@ -218,7 +218,7 @@ export function getGeneralSatisfactionNoResponseTitle(
 }
 
 export function getGeneralSatisfactionCreateDescription(): string {
-  return '새로운 만족도조사를 등록하시겠습니까?\n사용할 템플릿과 진행 방식을 선택해 주세요.'
+  return '새로운 만족도조사를 등록하시겠습니까?\n만족도조사 신규 등록을 위해 사용할 템플릿 유형과 진행 방식을 선택해 주세요.'
 }
 
 export function getGeneralSatisfactionDeleteModalTitle(

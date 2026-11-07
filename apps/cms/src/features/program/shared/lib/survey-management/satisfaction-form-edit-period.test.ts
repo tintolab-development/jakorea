@@ -4,6 +4,8 @@ import {
   addSeoulCalendarDaysEndOfDay,
   applySurveyTitleCustomPeriodToDraft,
   exclusiveMidnightToDisplayDeadline,
+  findSatisfactionScheduleById,
+  resolveSatisfactionCreateSubmissionPeriod,
   resolveSatisfactionFormEditPeriod,
   resolveSatisfactionPreviewPeriod,
 } from './satisfaction-form-edit-period'
@@ -26,6 +28,41 @@ describe('addSeoulCalendarDaysEndOfDay', () => {
   it('adds window days from session end like the register modal example', () => {
     expect(addSeoulCalendarDaysEndOfDay('2026-11-12T12:00:00.000+09:00', 3)).toBe(
       '2026-11-15T23:59:59.999+09:00'
+    )
+  })
+})
+
+describe('resolveSatisfactionCreateSubmissionPeriod', () => {
+  it('starts at the bound slot end and ends windowDays later at 23:59 KST', () => {
+    expect(
+      resolveSatisfactionCreateSubmissionPeriod(
+        { id: 1, endAt: '2026-11-12T12:00:00.000+09:00' },
+        7
+      )
+    ).toEqual({
+      submissionStartAt: '2026-11-12T12:00:00.000+09:00',
+      submissionEndAt: '2026-11-19T23:59:59.999+09:00',
+    })
+  })
+
+  it('does not fall back to another slot when the bound schedule has no instant', () => {
+    expect(
+      resolveSatisfactionCreateSubmissionPeriod({ id: 1, startAt: '   ' }, 3)
+    ).toBeNull()
+  })
+})
+
+describe('findSatisfactionScheduleById', () => {
+  it('matches numeric and string schedule ids', () => {
+    const schedules = [
+      { id: '1', endAt: '2026-11-12T12:00:00.000+09:00' },
+      { id: 2, endAt: '2026-11-20T12:00:00.000+09:00' },
+    ]
+    expect(findSatisfactionScheduleById(schedules, 1)?.endAt).toBe(
+      '2026-11-12T12:00:00.000+09:00'
+    )
+    expect(findSatisfactionScheduleById(schedules, '2')?.endAt).toBe(
+      '2026-11-20T12:00:00.000+09:00'
     )
   })
 })
