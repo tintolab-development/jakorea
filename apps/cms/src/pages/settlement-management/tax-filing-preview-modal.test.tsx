@@ -14,6 +14,7 @@ vi.mock('./bulk-transfer-fortune-workbook', () => ({
 vi.mock('./tax-filing-fortune-data', () => ({
   TAX_FILING_SHEET_COLUMN_COUNT: 9,
   buildTaxFilingFortuneSheet: () => ({ celldata: [] }),
+  getTaxFilingPreviewValidationError: () => null,
 }))
 
 const downloadIssuedSettlementExportFile = vi.fn().mockResolvedValue(undefined)
@@ -50,7 +51,7 @@ describe('TaxFilingPreviewModal SERVER_FILE 다운로드', () => {
         <TaxFilingPreviewModal
           open
           onCancel={() => undefined}
-          rows={[]}
+          previewWorkbook={null}
           serverExport={{
             deliveryMethod: 'SERVER_FILE',
             fileObjectId: 92,
@@ -64,6 +65,61 @@ describe('TaxFilingPreviewModal SERVER_FILE 다운로드', () => {
     await waitFor(() => {
       expect(downloadIssuedSettlementExportFile).toHaveBeenCalledWith({
         serverExport: { deliveryMethod: 'SERVER_FILE', fileObjectId: 92 },
+        kind: 'tax-report',
+        password: 'Jafile1!',
+      })
+    })
+  })
+
+  it('다운로드 클릭 시 미리보기 위에 암호 모달을 적층한다', async () => {
+    render(
+      <CmsAlertModalProvider>
+        <TaxFilingPreviewModal
+          open
+          onCancel={() => undefined}
+          previewWorkbook={null}
+          serverExport={{
+            deliveryMethod: 'SERVER_FILE',
+            fileObjectId: 92,
+          }}
+        />
+      </CmsAlertModalProvider>
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: '엑셀 다운로드' }))
+
+    expect(screen.getByText('파일 암호 설정 안내')).toBeTruthy()
+    expect(screen.getByText('세금신고 양식 미리보기')).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: '취소' }))
+
+    await waitFor(() => {
+      expect(screen.getByText('세금신고 양식 미리보기')).toBeTruthy()
+    })
+  })
+
+  it('미리보기 다운로드 확정 시 기존 tax-report export를 먼저 요청한다', async () => {
+    const requestExport = vi.fn().mockResolvedValue({
+      deliveryMethod: 'SERVER_FILE',
+      fileObjectId: 93,
+    })
+    render(
+      <CmsAlertModalProvider>
+        <TaxFilingPreviewModal
+          open
+          onCancel={() => undefined}
+          previewWorkbook={null}
+          onRequestExport={requestExport}
+        />
+      </CmsAlertModalProvider>
+    )
+
+    await confirmFilePassword()
+
+    await waitFor(() => {
+      expect(requestExport).toHaveBeenCalledTimes(1)
+      expect(downloadIssuedSettlementExportFile).toHaveBeenCalledWith({
+        serverExport: { deliveryMethod: 'SERVER_FILE', fileObjectId: 93 },
         kind: 'tax-report',
         password: 'Jafile1!',
       })

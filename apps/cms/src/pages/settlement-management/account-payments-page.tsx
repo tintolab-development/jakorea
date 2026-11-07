@@ -3,7 +3,16 @@
  * 필터·목록: `FilterTableLayout` (`title`·`description`·`actions`) + 테이블·캘린더 본문
  */
 
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState, type Key } from 'react'
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type Key,
+} from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
@@ -23,10 +32,12 @@ import { getSettlementApiErrorMessage } from '@/features/settlement-management/a
 import { buildAccountPaymentExportRequest } from '@/features/settlement-management/api/account-payments/build-account-payment-export-request'
 import {
   assertSettlementServerExportReady,
+  requestTaxReportPreviewRemote,
   waitForSettlementExportDownload,
 } from '@/features/settlement-management/api/settlement-api-client'
+import type { SettlementExportResponse } from '@/features/settlement-management/api/account-payments/settlement-export-response'
+import type { TaxReportPreviewWorkbook } from '@/features/settlement-management/api/account-payments/tax-report-preview'
 import type {
-  SettlementExportHistoryResponse,
   SettlementExportRequest,
 } from '@/shared/api/generated/settlement/schemas'
 import { pickEligibleAccountPaymentFormIssueRows } from './resolve-toolbar-form-issue-rows'
@@ -281,9 +292,12 @@ export default function AccountPaymentsPage() {
   const [issuedFormPreviewRows, setIssuedFormPreviewRows] = useState<AccountPaymentRow[] | null>(
     null
   )
-  const [issuedFormExport, setIssuedFormExport] = useState<SettlementExportHistoryResponse | null>(
+  const [issuedFormExport, setIssuedFormExport] = useState<SettlementExportResponse | null>(
     null
   )
+  const [issuedTaxReportPreview, setIssuedTaxReportPreview] =
+    useState<TaxReportPreviewWorkbook | null>(null)
+  const taxReportPreviewRequestSequence = useRef(0)
   const [accountFormIssueBlockedOpen, setAccountFormIssueBlockedOpen] = useState(false)
   const [accountFormIssueBlockedVariant, setAccountFormIssueBlockedVariant] = useState<
     'single' | 'multi'
@@ -643,7 +657,7 @@ export default function AccountPaymentsPage() {
     async (
       kind: 'bulk-transfer' | 'tax-report',
       rows: AccountPaymentRow[]
-    ): Promise<SettlementExportHistoryResponse | null> => {
+    ): Promise<SettlementExportResponse | null> => {
       if (!accountPaymentsRemote) return null
       const body = buildAccountPaymentExportRequest({
         kind,
@@ -680,7 +694,7 @@ export default function AccountPaymentsPage() {
     async (
       kind: 'bulk-transfer' | 'tax-report',
       rows: AccountPaymentRow[]
-    ): Promise<SettlementExportHistoryResponse | null> => {
+    ): Promise<SettlementExportResponse | null> => {
       const exportResult = await requestExportForKind(kind, rows)
       const formLabel = kind === 'bulk-transfer' ? '대량이체' : '세금신고'
       if (accountPaymentsRemote) {
@@ -702,7 +716,10 @@ export default function AccountPaymentsPage() {
   )
 
   const submitPreparedExport = useCallback(
-    async (kind: 'bulk-transfer' | 'tax-report', body: SettlementExportRequest) => {
+    async (
+      kind: 'bulk-transfer' | 'tax-report',
+      body: SettlementExportRequest
+    ): Promise<SettlementExportResponse> => {
       if (kind === 'bulk-transfer') return bulkTransferExportMutation.mutateAsync(body)
       return taxReportExportMutation.mutateAsync(body)
     },
@@ -724,7 +741,7 @@ export default function AccountPaymentsPage() {
     const rows = resolveToolbarFormIssueRows('bulk-transfer')
     if (rows === null) return
     void (async () => {
-      let readyExport: SettlementExportHistoryResponse | null = null
+      let readyExport: SettlementExportResponse | null = null
       try {
         readyExport = await waitReadyFormExport('bulk-transfer', rows)
       } catch (error) {
@@ -747,20 +764,37 @@ export default function AccountPaymentsPage() {
   const openTaxFilingPreview = useCallback(() => {
     const rows = resolveToolbarFormIssueRows('tax-report')
     if (rows === null) return
+    const requestSequence = ++taxReportPreviewRequestSequence.current
     void (async () => {
-      let readyExport: SettlementExportHistoryResponse | null = null
       try {
-        readyExport = await waitReadyFormExport('tax-report', rows)
+        const exportBody = buildAccountPaymentExportRequest({
+          kind: 'tax-report',
+          selection: { kind: 'selected', rows },
+          fromDate: listQueryFilters.fromDate,
+          toDate: listQueryFilters.toDate,
+        })
+        const previewPromise = accountPaymentsRemote
+          ? requestTaxReportPreviewRemote(exportBody.settlementIds ?? [])
+          : Promise.resolve(null)
+        const previewWorkbook = await previewPromise
+        if (requestSequence !== taxReportPreviewRequestSequence.current) return
+        setIssuedTaxReportPreview(previewWorkbook)
+        setIssuedFormPreviewRows(rows)
+        setIssuedFormExport(null)
+        setTaxFilingPreviewOpen(true)
       } catch (error) {
-        notifyExportError(error, '세금신고 파일 생성에 실패했습니다.')
+        if (requestSequence !== taxReportPreviewRequestSequence.current) return
+        notifyExportError(error, '세금신고 미리보기 또는 파일 생성에 실패했습니다.')
         return
       }
-      setIssuedFormPreviewRows(rows)
-      setIssuedFormExport(readyExport)
-      setTaxFilingPreviewOpen(true)
-      showIssueCompletedAlert()
     })()
-  }, [notifyExportError, resolveToolbarFormIssueRows, waitReadyFormExport])
+  }, [
+    accountPaymentsRemote,
+    listQueryFilters.fromDate,
+    listQueryFilters.toDate,
+    notifyExportError,
+    resolveToolbarFormIssueRows,
+  ])
 
   const reissueIssuedFormExport = useCallback(
     async (kind: 'bulk-transfer' | 'tax-report') => {
@@ -784,9 +818,11 @@ export default function AccountPaymentsPage() {
   )
 
   const closeTaxFilingPreview = useCallback(() => {
+    taxReportPreviewRequestSequence.current += 1
     setTaxFilingPreviewOpen(false)
     setIssuedFormPreviewRows(null)
     setIssuedFormExport(null)
+    setIssuedTaxReportPreview(null)
   }, [])
 
   const closeAccountFormIssueBlocked = useCallback(() => {
@@ -1038,7 +1074,7 @@ export default function AccountPaymentsPage() {
       return
     }
     void (async () => {
-      let readyExport: SettlementExportHistoryResponse | null = null
+      let readyExport: SettlementExportResponse | null = null
       try {
         readyExport = await waitReadyFormExport('bulk-transfer', rowsForPreview)
       } catch (error) {
@@ -1298,8 +1334,9 @@ export default function AccountPaymentsPage() {
           <TaxFilingPreviewModal
             open
             onCancel={closeTaxFilingPreview}
-            rows={issuedFormPreviewRows ?? []}
+            previewWorkbook={issuedTaxReportPreview}
             serverExport={issuedFormExport}
+            onRequestExport={() => reissueIssuedFormExport('tax-report')}
             onReissueExport={() => reissueIssuedFormExport('tax-report')}
           />
         </Suspense>

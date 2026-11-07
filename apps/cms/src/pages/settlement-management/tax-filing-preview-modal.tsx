@@ -2,13 +2,13 @@
  * 정산 관리 > 계좌 지급 — 세금신고 양식 미리보기 (Fortune Sheet)
  */
 
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useCallback, useMemo } from 'react'
 import { Spin } from 'antd'
 import type { Sheet } from '@fortune-sheet/core'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
-import type { AccountPaymentRow } from '@/features/settlement-management/model/account-payments-list'
-import type { SettlementExportHistoryResponse } from '@/shared/api/generated/settlement/schemas'
+import type { SettlementExportResponse } from '@/features/settlement-management/api/account-payments/settlement-export-response'
+import type { TaxReportPreviewWorkbook } from '@/features/settlement-management/api/account-payments/tax-report-preview'
 import {
   downloadIssuedSettlementExportFile,
   downloadIssuedSettlementExportFileOrReissue,
@@ -19,11 +19,8 @@ import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import {
   TAX_FILING_SHEET_COLUMN_COUNT,
   buildTaxFilingFortuneSheet,
+  getTaxFilingPreviewValidationError,
 } from '@/pages/settlement-management/tax-filing-fortune-data'
-import {
-  applyTaxFilingMaskedResidentNumbers,
-  loadTaxFilingMaskedResidentNumbers,
-} from '@/pages/settlement-management/tax-filing-masked-resident'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import { useProtectedFileDownload } from '@/shared/lib/use-protected-file-download'
 import './tax-filing-preview-modal.css'
@@ -33,16 +30,18 @@ const Workbook = lazy(() => import('./bulk-transfer-fortune-workbook'))
 export interface TaxFilingPreviewModalProps {
   open: boolean
   onCancel: () => void
-  rows: AccountPaymentRow[]
-  serverExport?: SettlementExportHistoryResponse | null
-  onReissueExport?: () => Promise<SettlementExportHistoryResponse | null>
+  previewWorkbook: TaxReportPreviewWorkbook | null
+  serverExport?: SettlementExportResponse | null
+  onRequestExport?: () => Promise<SettlementExportResponse | null>
+  onReissueExport?: () => Promise<SettlementExportResponse | null>
 }
 
 export function TaxFilingPreviewModal({
   open,
   onCancel,
-  rows,
+  previewWorkbook,
   serverExport,
+  onRequestExport,
   onReissueExport,
 }: TaxFilingPreviewModalProps) {
   const { runProtectedDownload, filePasswordModal } = useProtectedFileDownload()
@@ -51,31 +50,14 @@ export function TaxFilingPreviewModal({
     usesServerFile &&
     serverExport?.fileObjectId != null &&
     Number.isFinite(serverExport.fileObjectId)
-  const [previewRows, setPreviewRows] = useState(rows)
-
-  useEffect(() => {
-    if (!open) return
-    setPreviewRows(rows)
-    if (!shouldUseSettlementRemote('accountPayments')) return
-    let cancelled = false
-    void loadTaxFilingMaskedResidentNumbers(rows)
-      .then(masked => {
-        if (cancelled) return
-        setPreviewRows(applyTaxFilingMaskedResidentNumbers(rows, masked))
-      })
-      .catch(() => {
-        if (cancelled) return
-        setPreviewRows(rows)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [open, rows])
+  const previewValidationError = useMemo(
+    () => getTaxFilingPreviewValidationError(previewWorkbook),
+    [previewWorkbook]
+  )
 
   const sheetData: Sheet[] = useMemo(() => {
-    const sheet = buildTaxFilingFortuneSheet(previewRows)
-    return [sheet]
-  }, [previewRows])
+    return previewWorkbook ? [buildTaxFilingFortuneSheet(previewWorkbook)] : []
+  }, [previewWorkbook])
 
   const handleDownload = useCallback(() => {
     runProtectedDownload({
@@ -83,8 +65,15 @@ export function TaxFilingPreviewModal({
       zIndex: 1400,
       download: async password => {
         try {
-          if (serverExport?.deliveryMethod === 'SERVER_FILE') {
-            if (serverExport.fileObjectId == null) {
+          let exportToDownload = serverExport ?? null
+          let requestedExport = false
+          if (exportToDownload == null && onRequestExport) {
+            requestedExport = true
+            exportToDownload = await onRequestExport()
+          }
+          if (requestedExport && exportToDownload == null) return
+          if (exportToDownload?.deliveryMethod === 'SERVER_FILE') {
+            if (exportToDownload.fileObjectId == null) {
               cmsAlertModal.show({
                 title: '다운로드 불가',
                 content:
@@ -94,14 +83,14 @@ export function TaxFilingPreviewModal({
             }
             if (onReissueExport) {
               await downloadIssuedSettlementExportFileOrReissue({
-                serverExport,
+                serverExport: exportToDownload,
                 kind: 'tax-report',
                 password,
                 onReissue: onReissueExport,
               })
             } else {
               await downloadIssuedSettlementExportFile({
-                serverExport,
+                serverExport: exportToDownload,
                 kind: 'tax-report',
                 password,
               })
@@ -116,9 +105,25 @@ export function TaxFilingPreviewModal({
             })
             return
           }
+          if (previewValidationError) {
+            cmsAlertModal.show({
+              title: '다운로드 불가',
+              content:
+                previewValidationError?.message ??
+                '서버 발급 파일이 준비된 뒤에만 세금신고 양식을 받을 수 있습니다.',
+            })
+            return
+          }
           const { exportTaxFilingExcel } =
             await import('@/pages/settlement-management/tax-filing-excel')
-          await exportTaxFilingExcel(rows)
+          if (!previewWorkbook) {
+            cmsAlertModal.show({
+              title: '다운로드 불가',
+              content: previewValidationError?.message ?? '세금신고 미리보기 데이터가 없습니다.',
+            })
+            return
+          }
+          await exportTaxFilingExcel(previewWorkbook, { password })
         } catch (error) {
           notifySettlementExportDownloadError({
             error,
@@ -130,7 +135,15 @@ export function TaxFilingPreviewModal({
         }
       },
     })
-  }, [onCancel, onReissueExport, rows, runProtectedDownload, serverExport])
+  }, [
+    onCancel,
+    onRequestExport,
+    onReissueExport,
+    previewValidationError,
+    previewWorkbook,
+    runProtectedDownload,
+    serverExport,
+  ])
 
   return (
     <>
@@ -153,7 +166,10 @@ export function TaxFilingPreviewModal({
             size="large"
             icon={<ButtonDownloadIcon />}
             adminAction="download"
-            disabled={usesServerFile && !serverFileReady}
+            disabled={
+              (usesServerFile && !serverFileReady) ||
+              previewValidationError?.code === 'VALIDATION_ERROR'
+            }
             onClick={() => void handleDownload()}
           >
             엑셀 다운로드
@@ -162,7 +178,22 @@ export function TaxFilingPreviewModal({
       }
     >
       <div className="tax-filing-preview-modal__sheet-host">
-        {open ? (
+        {previewValidationError ? (
+          <div
+            role="alert"
+            style={{
+              marginBottom: 12,
+              padding: '12px 16px',
+              color: '#8a1c1c',
+              background: '#fff1f0',
+              border: '1px solid #ffa39e',
+              borderRadius: 4,
+            }}
+          >
+            {previewValidationError.message}
+          </div>
+        ) : null}
+        {open && sheetData.length > 0 && !previewValidationError ? (
           <Suspense
             fallback={
               <div className="tax-filing-preview-modal__sheet-loading">

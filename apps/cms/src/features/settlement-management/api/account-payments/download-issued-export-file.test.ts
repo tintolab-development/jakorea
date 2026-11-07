@@ -230,6 +230,39 @@ describe('downloadIssuedSettlementExportFile', () => {
     )
   })
 
+  it('세금신고 서버 파일은 입력한 암호를 claim과 stream에 전달한다', async () => {
+    const fileBlob = new Blob(['encrypted-xlsx'], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    })
+    mockedInstance
+      .mockResolvedValueOnce({
+        relayToken: 'relay-token-password',
+        streamUrl: '/api/admin/files/92/sensitive-downloads/stream',
+      })
+      .mockResolvedValueOnce(fileBlob)
+
+    await downloadIssuedSettlementExportFile({
+      serverExport: { deliveryMethod: 'SERVER_FILE', fileObjectId: 92 },
+      kind: 'tax-report',
+      password: 'Jafile1!',
+    })
+
+    expect(mockedInstance.mock.calls[0]?.[0]).toEqual(
+      expect.objectContaining({
+        data: { reason: '세금신고 양식 발급', password: 'Jafile1!' },
+      })
+    )
+    expect(mockedInstance.mock.calls[1]?.[0]).toEqual(
+      expect.objectContaining({
+        data: {
+          reason: '세금신고 양식 발급',
+          relayToken: 'relay-token-password',
+          password: 'Jafile1!',
+        },
+      })
+    )
+  })
+
   it('409 ALREADY_DOWNLOADED면 재발급 후 새 fileObjectId로 받는다', async () => {
     const fileBlob = new Blob(['xlsx'], {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

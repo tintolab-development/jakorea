@@ -9,7 +9,7 @@ import type { Sheet } from '@fortune-sheet/core'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
 import type { AccountPaymentRow } from '@/features/settlement-management/model/account-payments-list'
-import type { SettlementExportHistoryResponse } from '@/shared/api/generated/settlement/schemas'
+import type { SettlementExportResponse } from '@/features/settlement-management/api/account-payments/settlement-export-response'
 import {
   downloadIssuedSettlementExportFile,
   downloadIssuedSettlementExportFileOrReissue,
@@ -35,8 +35,8 @@ export interface BulkTransferPreviewModalProps {
   open: boolean
   onCancel: () => void
   rows: AccountPaymentRow[]
-  serverExport?: SettlementExportHistoryResponse | null
-  onReissueExport?: () => Promise<SettlementExportHistoryResponse | null>
+  serverExport?: SettlementExportResponse | null
+  onReissueExport?: () => Promise<SettlementExportResponse | null>
 }
 
 export function BulkTransferPreviewModal({

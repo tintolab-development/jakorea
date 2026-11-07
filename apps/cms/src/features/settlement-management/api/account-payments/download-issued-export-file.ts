@@ -1,4 +1,4 @@
-import type { SettlementExportHistoryResponse } from '@/shared/api/generated/settlement/schemas'
+import type { SettlementExportResponse } from './settlement-export-response'
 import { loadSensitiveAdminFileBlob } from '@/shared/lib/admin-file-upload/attachments'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import { downloadBlob, recordDownloadAccessLog } from '@/shared/utils/file-download'
@@ -14,7 +14,7 @@ import {
 } from '@/features/settlement-management/api/account-payments/settlement-form-download'
 
 export async function downloadIssuedSettlementExportFile(input: {
-  serverExport: SettlementExportHistoryResponse
+  serverExport: SettlementExportResponse
   kind: SettlementFormExportKind
   password?: string
 }): Promise<void> {
@@ -35,10 +35,10 @@ export async function downloadIssuedSettlementExportFile(input: {
 
 /** 409 SETTLEMENT_EXPORT_FILE_ALREADY_DOWNLOADED면 한 번만 재발급 후 다시 받는다. */
 export async function downloadIssuedSettlementExportFileOrReissue(input: {
-  serverExport: SettlementExportHistoryResponse
+  serverExport: SettlementExportResponse
   kind: SettlementFormExportKind
   password?: string
-  onReissue: () => Promise<SettlementExportHistoryResponse | null>
+  onReissue: () => Promise<SettlementExportResponse | null>
 }): Promise<void> {
   try {
     await downloadIssuedSettlementExportFile(input)
