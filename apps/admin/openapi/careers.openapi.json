@@ -1099,7 +1099,7 @@
           "career-talent-application-admin-controller"
         ],
         "summary": "Get career talent application detail",
-        "description": "revealPii=false (default) masks phone, email, addressRoad, and addressDetail with the same PrivacyMaskingSupport rules as the list. Name uses maskName. Education, career, and attachments stay omitted until revealed. Every 200 writes homepage_admin_audit_log (PII_READ / CAREER_TALENT_APPLICATION) and homepage_privacy_access_log with a masked targetName. revealPii=true returns originals only with HOMEPAGE_PII_VIEW; otherwise 403. Admin log list screens must not POST privacy-access.",
+        "description": "revealPii=false (default) masks phone, email, addressRoad, and addressDetail with the same PrivacyMaskingSupport rules as the list. Name uses maskName. Education, career, and attachments stay omitted until revealed. Every 200 writes homepage_admin_audit_log (PII_READ / CAREER_TALENT_APPLICATION) and homepage_privacy_access_log with the original targetName. revealPii=true returns originals only with HOMEPAGE_PII_VIEW; otherwise 403. Admin log list screens must not POST privacy-access.",
         "operationId": "detail_9",
         "parameters": [
           {
@@ -7328,7 +7328,9 @@
             ]
           },
           "name": {
-            "type": "string"
+            "type": "string",
+            "description": "Stored applicant name (original). Empty is null, never \"\".",
+            "nullable": true
           },
           "phone": {
             "type": "string"
@@ -7423,7 +7425,9 @@
             "type": "string"
           },
           "contactName": {
-            "type": "string"
+            "type": "string",
+            "description": "Stored contact name (original). Empty is null, never \"\".",
+            "nullable": true
           },
           "departmentTitle": {
             "type": "string"
@@ -7527,7 +7531,7 @@
           },
           "name": {
             "type": "string",
-            "description": "Applicant name. Always PrivacyMaskingSupport.maskName (first character + asterisks), same as sponsorship talent applications. Full name is never returned on the list."
+            "description": "Applicant name. Always PrivacyMaskingSupport.maskName (first character + asterisks). Full name is never returned on the list."
           },
           "phone": {
             "type": "string",
@@ -9808,7 +9812,7 @@
       },
       "TalentApplicationDetailResponse": {
         "type": "object",
-        "description": "Admin detail is always stored original PII. Empty strings are null. List items stay masked. Not the careers talent-application revealPii contract.",
+        "description": "Admin detail is always stored original PII. Empty strings are null. List name is original while phone and email remain masked. Not the careers talent-application revealPii contract.",
         "properties": {
           "id": {
             "type": "integer",
@@ -10031,7 +10035,7 @@
       },
       "ConsultationDetailResponse": {
         "type": "object",
-        "description": "Admin detail is always stored original PII. Empty strings are null. List stays masked. Not the careers talent-application revealPii contract.",
+        "description": "Admin detail is always stored original PII. Empty strings are null. List contactName is original while maskedContactPhone remains masked. Not the careers talent-application revealPii contract.",
         "properties": {
           "id": {
             "type": "integer",
@@ -10505,7 +10509,9 @@
             "type": "string"
           },
           "targetName": {
-            "type": "string"
+            "type": "string",
+            "description": "Stored target name (original). Empty is null, never \"\".",
+            "nullable": true
           },
           "accessPurpose": {
             "type": "string"
@@ -11076,7 +11082,7 @@
           },
           "name": {
             "type": "string",
-            "description": "Applicant name. revealPii=false uses PrivacyMaskingSupport.maskName (same as list and sponsorship talent). Original name only when revealPii=true."
+            "description": "Applicant name. revealPii=false uses PrivacyMaskingSupport.maskName (same as list). Original name only when revealPii=true."
           },
           "phone": {
             "type": "string",

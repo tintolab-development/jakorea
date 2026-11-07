@@ -16,7 +16,7 @@ export interface CareerTalentApplicationDetailResponse {
   status?: CareerTalentApplicationDetailResponseStatus;
   version?: number;
   jobInterest?: CareerTalentApplicationDetailResponseJobInterest;
-  /** Applicant name. revealPii=false uses PrivacyMaskingSupport.maskName (same as list and sponsorship talent). Original name only when revealPii=true. */
+  /** Applicant name. revealPii=false uses PrivacyMaskingSupport.maskName (same as list). Original name only when revealPii=true. */
   name?: string;
   /** revealPii=false: PrivacyMaskingSupport.maskPhone (same as list). revealPii=true: original. Empty is null, never "". */
   phone?: string | null;

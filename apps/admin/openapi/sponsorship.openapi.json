@@ -1305,7 +1305,7 @@
           "talent-application-admin-controller"
         ],
         "summary": "Get talent application detail",
-        "description": "Always stored original PII (not masked). HOMEPAGE_VIEW is enough; HOMEPAGE_PII_VIEW is not required. Every 200 writes homepage_admin_audit_log (PII_READ / TALENT_APPLICATION) and homepage_privacy_access_log. List GET stays masked. revealPii is a deprecated no-op.",
+        "description": "Always stored original PII (not masked). HOMEPAGE_VIEW is enough; HOMEPAGE_PII_VIEW is not required. Every 200 writes homepage_admin_audit_log (PII_READ / TALENT_APPLICATION) and homepage_privacy_access_log. List name is original; phone and email remain masked. revealPii is a deprecated no-op.",
         "operationId": "detail_7",
         "parameters": [
           {
@@ -1523,7 +1523,7 @@
           "corporate-consultation-admin-controller"
         ],
         "summary": "Get corporate consultation detail",
-        "description": "Always stored original PII (not masked). HOMEPAGE_VIEW is enough; HOMEPAGE_PII_VIEW is not required. Every 200 writes homepage_admin_audit_log (PII_READ / CORPORATE_CONSULTATION) and homepage_privacy_access_log. List GET stays masked (maskedContactPhone). revealPii is a deprecated no-op.",
+        "description": "Always stored original PII (not masked). HOMEPAGE_VIEW is enough; HOMEPAGE_PII_VIEW is not required. Every 200 writes homepage_admin_audit_log (PII_READ / CORPORATE_CONSULTATION) and homepage_privacy_access_log. List contactName is original; maskedContactPhone remains masked. revealPii is a deprecated no-op.",
         "operationId": "detail_8",
         "parameters": [
           {
@@ -7732,7 +7732,9 @@
             ]
           },
           "name": {
-            "type": "string"
+            "type": "string",
+            "description": "Stored applicant name (original). Empty is null, never \"\".",
+            "nullable": true
           },
           "phone": {
             "type": "string"
@@ -7827,7 +7829,9 @@
             "type": "string"
           },
           "contactName": {
-            "type": "string"
+            "type": "string",
+            "description": "Stored contact name (original). Empty is null, never \"\".",
+            "nullable": true
           },
           "departmentTitle": {
             "type": "string"
@@ -7931,7 +7935,7 @@
           },
           "name": {
             "type": "string",
-            "description": "Applicant name. Always PrivacyMaskingSupport.maskName (first character + asterisks), same as sponsorship talent applications. Full name is never returned on the list."
+            "description": "Applicant name. Always PrivacyMaskingSupport.maskName (first character + asterisks). Full name is never returned on the list."
           },
           "phone": {
             "type": "string",
@@ -10212,7 +10216,7 @@
       },
       "TalentApplicationDetailResponse": {
         "type": "object",
-        "description": "Admin detail is always stored original PII. Empty strings are null. List items stay masked. Not the careers talent-application revealPii contract.",
+        "description": "Admin detail is always stored original PII. Empty strings are null. List name is original while phone and email remain masked. Not the careers talent-application revealPii contract.",
         "properties": {
           "id": {
             "type": "integer",
@@ -10435,7 +10439,7 @@
       },
       "ConsultationDetailResponse": {
         "type": "object",
-        "description": "Admin detail is always stored original PII. Empty strings are null. List stays masked. Not the careers talent-application revealPii contract.",
+        "description": "Admin detail is always stored original PII. Empty strings are null. List contactName is original while maskedContactPhone remains masked. Not the careers talent-application revealPii contract.",
         "properties": {
           "id": {
             "type": "integer",
@@ -10909,7 +10913,9 @@
             "type": "string"
           },
           "targetName": {
-            "type": "string"
+            "type": "string",
+            "description": "Stored target name (original). Empty is null, never \"\".",
+            "nullable": true
           },
           "accessPurpose": {
             "type": "string"
@@ -11480,7 +11486,7 @@
           },
           "name": {
             "type": "string",
-            "description": "Applicant name. revealPii=false uses PrivacyMaskingSupport.maskName (same as list and sponsorship talent). Original name only when revealPii=true."
+            "description": "Applicant name. revealPii=false uses PrivacyMaskingSupport.maskName (same as list). Original name only when revealPii=true."
           },
           "phone": {
             "type": "string",
