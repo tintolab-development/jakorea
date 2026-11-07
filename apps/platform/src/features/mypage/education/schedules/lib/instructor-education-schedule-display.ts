@@ -1,6 +1,8 @@
 import { formatDisplayDateTime } from '../../../../../shared/lib/format-display-date.ts'
 import {
-  formatEducationRoundSessionLabel,
+  formatEducationScheduleLabelTokens,
+  formatEducationScheduleUnitLabel,
+  isEducationSchedulePreEducation,
   positiveEducationNumber,
   toDisplayEducationScheduleName,
 } from '../../../../../shared/lib/education-schedule-name.ts'
@@ -12,7 +14,6 @@ function displayText(value: unknown): string {
 }
 
 export const PROGRAM_SCHEDULE_ROLE_PRE_EDUCATION = 'PRE_EDUCATION'
-const GENERAL_PRE_EDUCATION_SLOT_KEY_PREFIX = 'general-pre-education:'
 
 /**
  * 강의보고서·배정 현황이 같은 교육 일정을 같은 의미로 표시할 때 쓰는 입력.
@@ -106,12 +107,9 @@ export function readInstructorEducationScheduleFields(
 export function isCanonicalPreEducationSchedule(
   item: InstructorEducationScheduleDisplayInput,
 ): boolean {
-  const role = String(item.scheduleRole ?? '').trim().toUpperCase()
-  if (role === PROGRAM_SCHEDULE_ROLE_PRE_EDUCATION) return true
   const kind = String(item.scheduleKind ?? '').trim().toUpperCase()
   if (kind === PROGRAM_SCHEDULE_ROLE_PRE_EDUCATION) return true
-  const slotKey = item.educationSlotKey?.trim().toLowerCase() ?? ''
-  return slotKey.startsWith(GENERAL_PRE_EDUCATION_SLOT_KEY_PREFIX)
+  return isEducationSchedulePreEducation(item)
 }
 
 /**
@@ -131,9 +129,11 @@ export function formatInstructorEducationUnitLabel(
   if (options.useScheduleName === true) {
     return displayText(item.scheduleName)
   }
-  const roundOrSession = formatEducationRoundSessionLabel({
-    roundNumber: item.sessionNo,
+  const roundOrSession = formatEducationScheduleUnitLabel({
+    sessionNo: item.sessionNo,
     curriculumSessionCount: item.curriculumSessionCount,
+    scheduleRole: item.scheduleRole,
+    educationSlotKey: item.educationSlotKey,
   })
   if (roundOrSession) return roundOrSession
   return toDisplayEducationScheduleName(item.scheduleName) ?? ''
@@ -149,8 +149,13 @@ export function formatAssignmentEducationUnitLabel(
 export function formatLectureReportCardTimeSubtitle(
   item: InstructorEducationScheduleDisplayInput & { timeRange: string },
 ): string {
-  const unit = formatInstructorEducationUnitLabel(item)
-  return [item.timeRange, unit].filter(Boolean).join(' | ')
+  const tokens = formatEducationScheduleLabelTokens({
+    sessionNo: item.sessionNo,
+    curriculumSessionCount: item.curriculumSessionCount,
+    scheduleRole: item.scheduleRole ?? item.scheduleKind,
+    educationSlotKey: item.educationSlotKey,
+  })
+  return [item.timeRange, ...tokens].filter(Boolean).join(' | ')
 }
 
 function parseDisplayDateTime(value: string | null | undefined): { date: string; time: string } | null {

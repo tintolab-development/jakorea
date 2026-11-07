@@ -7,6 +7,7 @@ import { getGeneralInstitutionApplicationsForProgram } from '@/features/program/
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import {
   formatEducationRoundSessionLabel,
+  formatEducationScheduleUnitLabel,
   parseConfirmedCurriculumSessionCount,
 } from '@/shared/lib/education-schedule-name'
 import type { Program } from '@/types/domain'
@@ -169,9 +170,20 @@ function formatKstClock(raw: string | null | undefined): string | null {
   return `${hour}:${minute}`
 }
 
-/** 배정 일정 회차 라벨 — sessionNo 원본만 회차로 사용. classNum 차시 토큰으로 대체하지 않는다. */
+/** 배정 일정 단위 라벨 — sessionNo는 회차, 확인된 커리큘럼만 차시. 사전교육은 canonical만. */
 function assignedSessionLabel(session: ParticipatingSchoolSession): string {
-  return formatEducationRoundSessionLabel({ roundNumber: session.sessionNo }) || '-'
+  return (
+    formatEducationScheduleUnitLabel({
+      sessionNo: session.sessionNo,
+      scheduleRole: session.scheduleRole,
+      educationSlotKey: session.educationSlotKey,
+      curriculumSessionCount:
+        session.curriculumSessionCount ??
+        parseConfirmedCurriculumSessionCount(session.classNum) ??
+        parseConfirmedCurriculumSessionCount(session.duration) ??
+        parseConfirmedCurriculumSessionCount(session.scheduleLabel),
+    }) || '-'
+  )
 }
 
 function assignedSessionTimeRange(session: ParticipatingSchoolSession): string {

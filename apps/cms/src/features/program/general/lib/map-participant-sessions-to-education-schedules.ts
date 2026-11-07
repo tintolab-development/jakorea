@@ -1,6 +1,7 @@
 import type { ParticipatingInstructorEducationScheduleRow } from '@/features/program/general/model/participating-instructors'
 import {
-  formatEducationRoundSessionLabel,
+  formatEducationScheduleUnitLabel,
+  positiveEducationNumber,
   toDisplayEducationScheduleName,
 } from '@/shared/lib/education-schedule-name'
 import type { SessionProgress } from '@/shared/api/generated/dashboard/schemas/sessionProgress'
@@ -32,7 +33,12 @@ function formatSessionProgressLabel(session: SessionProgress): string {
   if (isProgramSchedulePreEducation(session)) {
     parts.push(PRE_EDUCATION_DISPLAY_LABEL)
   } else {
-    const roundLabel = formatEducationRoundSessionLabel({ roundNumber: session.sessionNo })
+    const roundLabel = formatEducationScheduleUnitLabel({
+      sessionNo: session.sessionNo,
+      curriculumSessionCount: positiveEducationNumber(
+        (session as SessionProgress & { curriculumSessionCount?: number | null }).curriculumSessionCount
+      ),
+    })
     if (roundLabel) parts.push(roundLabel)
   }
   const scheduleName = toDisplayEducationScheduleName(session.scheduleName)

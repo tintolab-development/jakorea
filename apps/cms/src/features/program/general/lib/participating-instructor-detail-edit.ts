@@ -101,7 +101,7 @@ export function resolveLectureFeeBasisFromParticipatingRow(
         ? 'special_lecture'
         : segments[0]?.includes('기타')
           ? 'other_labor'
-          : 'special_lecture')
+          : 'program')
     const amountSegment = segments.find(s => /[\d,]+/.test(s)) ?? segments[segments.length - 1]
     const measureSegment = segments.find(
       s => s === '출강 1회당' || s === '1시간 당' || s === '1회 기준'
@@ -125,8 +125,8 @@ export function resolveLectureFeeBasisFromParticipatingRow(
   }
 
   return {
-    type: inferred ?? 'special_lecture',
-    measure: DEFAULT_LECTURE_FEE_MEASURE,
+    type: inferred ?? 'program',
+    measure: LECTURE_FEE_MEASURE_NOT_APPLICABLE,
     amount: parseLectureFeeAmountDigits(row.lectureFeeAmount),
   }
 }
@@ -200,9 +200,15 @@ export function participatingRowToApplicantFeeViewRow(row: ParticipatingInstruct
   businessIncomeEarnerStatus?: string
 } {
   const fee = resolveLectureFeeBasisFromParticipatingRow(row)
+  const hasRecordedBasis =
+    Boolean(row.lectureFeeBasisType) ||
+    Boolean(row.lectureFeeBasisDisplay?.trim()) ||
+    Boolean(row.lectureFeeCategory?.trim()) ||
+    Boolean(parseLectureFeeAmountDigits(row.lectureFeeAmount)) ||
+    Boolean(row.instructorFeeGradeLabel?.trim())
   return {
-    lectureFeeBasisType: fee.type,
-    lectureFeeMeasure: fee.measure,
+    lectureFeeBasisType: hasRecordedBasis ? fee.type : undefined,
+    lectureFeeMeasure: row.lectureFeeMeasure?.trim() || fee.measure,
     lectureFeeAmount: fee.amount,
     lectureFeeBasisDisplay:
       row.lectureFeeBasisDisplay?.trim() ||

@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   composeSatisfactionSurveyDisplayTitle,
   formatEducationRoundSessionLabel,
+  formatEducationScheduleLabelTokens,
+  formatEducationScheduleUnitLabel,
   formatSatisfactionPerScheduleDisplayName,
   isDefaultEducationSlotName,
   parseConfirmedCurriculumSessionCount,
@@ -148,6 +150,43 @@ describe('formatEducationRoundSessionLabel', () => {
     expect(formatEducationRoundSessionLabel({})).toBe('')
     expect(parseConfirmedCurriculumSessionCount('2차시')).toBe(2)
     expect(parseConfirmedCurriculumSessionCount('1회차')).toBeNull()
+  })
+})
+
+describe('formatEducationScheduleUnitLabel', () => {
+  it('shows 사전교육 only from canonical role or slot key', () => {
+    expect(formatEducationScheduleUnitLabel({ scheduleRole: 'PRE_EDUCATION', sessionNo: 3 })).toBe(
+      '사전교육'
+    )
+    expect(
+      formatEducationScheduleUnitLabel({
+        educationSlotKey: 'general-pre-education:1',
+        sessionNo: null,
+      })
+    ).toBe('사전교육')
+    expect(formatEducationScheduleUnitLabel({ sessionNo: null, scheduleRole: null })).toBe('')
+    expect(formatEducationScheduleUnitLabel({ scheduleRole: 'CLOSING', sessionNo: 1 })).toBe('1회차')
+  })
+
+  it('keeps sessionNo as 회차 and curriculumSessionCount as 차시', () => {
+    expect(
+      formatEducationScheduleUnitLabel({ sessionNo: 3, curriculumSessionCount: 2 })
+    ).toBe('3회차 (2차시)')
+    expect(formatEducationScheduleUnitLabel({ sessionNo: 3 })).toBe('3회차')
+    expect(formatEducationScheduleUnitLabel({ curriculumSessionCount: 2 })).toBe('2차시')
+  })
+})
+
+describe('formatEducationScheduleLabelTokens', () => {
+  it('splits 회차 and 차시 the way lecture-report dateRoundTimeLabel does', () => {
+    expect(
+      formatEducationScheduleLabelTokens({ sessionNo: 3, curriculumSessionCount: 2 })
+    ).toEqual(['3회차', '2차시'])
+    expect(formatEducationScheduleLabelTokens({ sessionNo: 3 })).toEqual(['3회차'])
+    expect(formatEducationScheduleLabelTokens({ curriculumSessionCount: 2 })).toEqual([])
+    expect(
+      formatEducationScheduleLabelTokens({ scheduleRole: 'PRE_EDUCATION', sessionNo: 3 })
+    ).toEqual(['사전교육'])
   })
 })
 
