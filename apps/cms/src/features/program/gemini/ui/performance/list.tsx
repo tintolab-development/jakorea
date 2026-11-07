@@ -40,7 +40,6 @@ import {
   GEMINI_PERFORMANCE_REGISTER_BLOCKED_MESSAGE,
   GEMINI_PERFORMANCE_REGISTER_BLOCKED_TITLE,
 } from '../../lib/performance/import-popup-copy'
-import { downloadGeminiPerformanceUploadTemplate } from '../../lib/performance/download-upload-template'
 import { useGeminiPerformanceRows } from '../../hooks/use-gemini-performance-rows'
 import { GEMINI_PERFORMANCE_FILTER_FIELDS } from '../../model/performance/filter-fields'
 import type {
@@ -593,13 +592,6 @@ export function GeminiPerformanceList() {
         }}
         actionsAfterExcel={
           <span className="file-upload-picker">
-            {canWrite ? (
-              <FilterTableToolbarButton
-                variant="secondary"
-                onClick={() => void downloadGeminiPerformanceUploadTemplate()} >
-                업로드 양식 다운로드
-              </FilterTableToolbarButton>
-            ) : null}
             <span className="file-upload-picker">
               {canWrite ? (
                 <input
