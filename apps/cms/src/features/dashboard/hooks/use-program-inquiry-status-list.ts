@@ -29,7 +29,6 @@ export function useProgramInquiryStatusList(programIds: string[]) {
       getProgramInquiryStatusList(normalizedIds ? { programIds: normalizedIds } : undefined),
     enabled: remoteEnabled,
     staleTime: 60_000,
-    refetchOnMount: 'always',
     retry: false,
   })
 }

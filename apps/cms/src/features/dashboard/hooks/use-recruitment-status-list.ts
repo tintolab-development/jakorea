@@ -35,7 +35,6 @@ export function useRecruitmentStatusList(programIds: string[]) {
     select: mapRecruitmentListResponse,
     enabled: remoteEnabled,
     staleTime: 60_000,
-    refetchOnMount: 'always',
     retry: false,
   })
 }
