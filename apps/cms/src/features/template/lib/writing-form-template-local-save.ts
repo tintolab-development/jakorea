@@ -48,8 +48,11 @@ function writeFile(file: LocalSaveFile): void {
 }
 
 /**
- * overlay 인자를 생략하거나 빈 `{}`로 넘기면 기존 sidecar를 지우지 않는다.
- * 명시 키가 있는 snapshot은 그 값으로 교체한다(빈 문자열·null·[] 유지).
+ * Local draft overlay 계약 (프로그램 공통).
+ * - 생략/`undefined`/`null`: 이전 overlay 유지 (Typed 위저드가 overlay를 안 실을 때 sidecar 보호)
+ * - `{}`: 전체 초기화가 아니라 no-op. 전체 삭제는 `removeWritingFormTemplateSave`
+ * - 키가 있는 객체: previous ∪ incoming. incoming 키가 `''`/`false`/`0`/`[]`/`null`이면 그 키만 갱신
+ * - incoming에 없는 키는 삭제하지 않음 (unknown sidecar 보존). 키 삭제는 해당 키를 명시 값으로 덮을 때만
  */
 function nextPersistedOverlay(
   incoming: Record<string, unknown> | undefined,
