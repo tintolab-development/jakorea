@@ -387,6 +387,24 @@ describe('getGeneralProgramApiErrorMessage program schedule codes', () => {
     ).toContain('EDUCATION')
   })
 
+  it('maps PROGRAM_SCHEDULE_LOCKED with BE Korean message', () => {
+    expect(
+      getGeneralProgramApiErrorMessage(
+        {
+          response: {
+            data: {
+              error: {
+                code: 'PROGRAM_SCHEDULE_LOCKED',
+                message: '이미 시작된 일정은 변경할 수 없습니다.',
+              },
+            },
+          },
+        },
+        'fallback'
+      )
+    ).toBe('이미 시작된 일정은 변경할 수 없습니다.')
+  })
+
   it('maps PROGRAM_DATE_OUTSIDE_OPEN_PERIOD even when server message is generic', () => {
     expect(
       getGeneralProgramApiErrorMessage(

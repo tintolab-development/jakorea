@@ -273,6 +273,11 @@ export function getGeneralProgramApiErrorMessage(error: unknown, fallback: strin
     if (raw && raw !== code) return raw
     return PROGRAM_SCHEDULE_NOT_EDUCATION_SLOT_MESSAGE
   }
+  if (code === 'PROGRAM_SCHEDULE_LOCKED') {
+    const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()
+    if (raw && raw !== code) return raw
+    return '이미 시작했거나 출결·정산이 있는 일정은 변경하거나 요청에서 빠뜨릴 수 없습니다.'
+  }
   if (code === 'PROGRAM_DATE_OUTSIDE_OPEN_PERIOD') {
     return '모집·운영 기간이 사업(오픈) 기간 밖입니다. 모집 창은 모집 행으로만 저장되고, 신청일·프로그램 운영일은 사업 기간 안에 있을 때만 함께 전송됩니다.'
   }

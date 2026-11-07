@@ -4,6 +4,7 @@ import { SPONSOR_CONTACT_UNSELECTED_VALUE } from '@/features/program/shared/lib/
 import {
   detailEditValuesToProgramPatch,
   narrowProgramDetailPatchForCommonInfoSave,
+  narrowTrainedTeacherCommonInfoSavePatch,
   programDetailCompanySchoolCommonInfoEditSchema,
   programDetailEditSchema,
   programDetailTrainedTeachersCommonInfoEditSchema,
@@ -108,6 +109,31 @@ describe('narrowProgramDetailPatchForCommonInfoSave', () => {
     expect(narrowed.generalCommonInfo?.instructorRecruitmentInfo).toBeUndefined()
     expect(narrowed.generalCommonInfo?.volunteerRecruitmentInfo).toBeUndefined()
     expect(narrowed.generalCommonInfo?.kpi).toBeTruthy()
+  })
+})
+
+describe('narrowTrainedTeacherCommonInfoSavePatch', () => {
+  it('공통정보 저장에서 루트 remarks를 유지하고 일정·모집 nested는 뺀다', () => {
+    const tt = {
+      ...program,
+      id: '186560',
+      backendProgramType: 'TRAINED_TEACHER' as const,
+      remarks: '예전 비고',
+      mainTitle: '기존 대표',
+    } as Program
+    const values = {
+      ...programToDetailEditValues(tt),
+      remarks: '정본 비고',
+      mainTitle: '수정된 대표명',
+    }
+    const narrowed = narrowTrainedTeacherCommonInfoSavePatch(
+      detailEditValuesToProgramPatch(values, tt)
+    )
+    expect(narrowed.remarks).toBe('정본 비고')
+    expect(narrowed.mainTitle).toBe('수정된 대표명')
+    expect(narrowed.rounds).toBeUndefined()
+    expect(narrowed.applicationEndDate).toBeUndefined()
+    expect(narrowed.generalCommonInfo?.participantRecruitmentInfo).toBeUndefined()
   })
 })
 

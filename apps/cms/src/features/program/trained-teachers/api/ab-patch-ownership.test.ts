@@ -98,18 +98,14 @@ function parseA(program: Program, patch?: Partial<Program>) {
 
 describe('TRAINED_TEACHER A/B PATCH ownership', () => {
   it('A PATCH 는 B 소유 nested·연수·일지를 보내지 않고 모집정보를 유지한다', () => {
-    const { envelope } = parseA(ttProgram(), { mainTitle: '새 대표' })
-    const common = envelope.program?.generalCommonInfo ?? {}
-    expect(common.curriculumSessions).toBeUndefined()
-    expect(common.scheduleDetails).toBeUndefined()
-    expect(common.teacherTrainingEnabled).toBeUndefined()
-    expect(common.educationJournalEnabled).toBeUndefined()
-    expect(common.participantRecruitmentInfo).toMatchObject({
-      inquiryTel: '02-000-0000',
-      remarks: '모집 비고',
-      maxClassCount: 4,
-      unknownLegacyField: 'keep-recruit-sidecar',
-    })
+    const { request, envelope } = parseA(ttProgram(), { mainTitle: '새 대표' })
+    expect(request.mainTitle).toBe('새 대표')
+    expect(request.rounds).toBeUndefined()
+    expect(request.applicationStartDate).toBeUndefined()
+    expect(request.applicationEndDate).toBeUndefined()
+    expect(request.remarks).toBeUndefined()
+    expect(request.serviceDetailJson).toBeUndefined()
+    expect(envelope.program).toBeUndefined()
   })
 
   it('불완전한 participantRecruitmentInfo patch 를 GET 값과 합쳐 객체 교체에 대비한다', () => {
@@ -118,13 +114,13 @@ describe('TRAINED_TEACHER A/B PATCH ownership', () => {
         participantRecruitmentInfo: { inquiryTel: '02-999-8888' },
       },
     })
-    expect(envelope.program?.generalCommonInfo?.participantRecruitmentInfo).toMatchObject({
+    const recruitment = envelope.program?.generalCommonInfo?.participantRecruitmentInfo as
+      | { inquiryTel?: string; remarks?: string }
+      | undefined
+    expect(recruitment).toMatchObject({
       inquiryTel: '02-999-8888',
-      remarks: '모집 비고',
-      maxClassCount: 4,
-      contactOrganizationName: '문의기관',
-      unknownLegacyField: 'keep-recruit-sidecar',
     })
+    expect(recruitment?.remarks).toBeUndefined()
   })
 
   it('B PATCH 는 모집정보·공고·KPI 를 넣지 않는다', () => {
@@ -210,7 +206,8 @@ describe('TRAINED_TEACHER A/B PATCH ownership', () => {
       educationJournalEnabled: b.educationJournalEnabled,
       configJson: b.configJson,
     })
-    const { envelope } = parseA(afterB, { title: 'B 이후 공고' })
+    const { request, envelope } = parseA(afterB, { title: 'B 이후 공고' })
+    expect(request.serviceDetailJson).toBeUndefined()
     expect(envelope.program?.generalCommonInfo?.curriculumSessions).toBeUndefined()
     expect(envelope.program?.generalCommonInfo?.teacherTrainingEnabled).toBeUndefined()
     expect(afterB.generalCommonInfo?.curriculumSessions?.[0]?.title).toBe('수정 회차')
@@ -255,6 +252,8 @@ describe('TRAINED_TEACHER A/B PATCH ownership', () => {
       configJson: b.configJson,
     })
     const staleA = parseA(existing, { mainTitle: '오래된 A' })
+    expect(staleA.request.serviceDetailJson).toBeUndefined()
+    expect(staleA.request.rounds).toBeUndefined()
     expect(staleA.envelope.program?.generalCommonInfo?.curriculumSessions).toBeUndefined()
     expect(staleA.envelope.program?.generalCommonInfo?.teacherTrainingEnabled).toBeUndefined()
     expect(afterB.generalCommonInfo?.curriculumSessions?.[0]?.title).toBe('B 이후 회차')
@@ -281,11 +280,13 @@ describe('TRAINED_TEACHER A/B PATCH ownership', () => {
       },
     }
     const { envelope } = parseA(existing, stalePatch)
-    expect(envelope.program?.generalCommonInfo?.participantRecruitmentInfo).toMatchObject({
+    const recruitment = envelope.program?.generalCommonInfo?.participantRecruitmentInfo as
+      | { inquiryTel?: string; remarks?: string }
+      | undefined
+    expect(recruitment).toMatchObject({
       inquiryTel: '02-111-2222',
-      remarks: '모집 비고',
-      maxClassCount: 4,
     })
+    expect(recruitment?.remarks).toBeUndefined()
   })
 
   it('설문 [] 는 명시적 해제로 전송하고 overlay sidecar 는 남긴다', () => {
@@ -315,11 +316,10 @@ describe('TRAINED_TEACHER A/B PATCH ownership', () => {
       }),
     } as Parameters<typeof mapTrainedTeacherDetailToProgram>[0])
     expect(mapped.registrationOverlay?.unknownSidecarKey).toBe('preserve-me')
-    const { envelope } = parseA(mapped, { mainTitle: 'TT-05 레거시 이후 대표' })
-    expect(envelope.registration?.overlay?.unknownSidecarKey).toBe('preserve-me')
-    expect(envelope.registration?.overlay?.['application.institution.teacherTel']).toBe(
-      '02-111-1111'
-    )
+    const { request, envelope } = parseA(mapped, { mainTitle: 'TT-05 레거시 이후 대표' })
+    expect(request.mainTitle).toBe('TT-05 레거시 이후 대표')
+    expect(request.serviceDetailJson).toBeUndefined()
+    expect(envelope.registration).toBeUndefined()
   })
 
   it('overlay-only GET (program envelope 없음) sidecar 를 hydrate 한다', () => {
@@ -338,8 +338,9 @@ describe('TRAINED_TEACHER A/B PATCH ownership', () => {
       }),
     } as Parameters<typeof mapTrainedTeacherDetailToProgram>[0])
     expect(mapped.registrationOverlay?.unknownSidecarKey).toBe('preserve-me')
-    const { envelope } = parseA(mapped, { mainTitle: 'TT-05 레거시 이후 대표' })
-    expect(envelope.registration?.overlay?.unknownSidecarKey).toBe('preserve-me')
+    const { request, envelope } = parseA(mapped, { mainTitle: 'TT-05 레거시 이후 대표' })
+    expect(request.serviceDetailJson).toBeUndefined()
+    expect(envelope.registration).toBeUndefined()
   })
 
   it('설문 overlay 미러 패치가 leftover sidecar 를 객체 교체로 지우지 않는다', () => {
