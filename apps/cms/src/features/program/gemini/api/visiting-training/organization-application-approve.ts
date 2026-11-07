@@ -20,6 +20,27 @@ export type GeminiOrganizationApplicationApproveBody = {
   scheduledAt?: string
 }
 
+/** OpenAPI: GeminiOrganizationBulkApproveRequest — bulk-approve 전용 (ON_ANNOUNCEMENT 없음) */
+export type GeminiOrganizationBulkApproveRequest = {
+  ids: number[]
+  timing?: 'IMMEDIATE' | 'SCHEDULED' | null
+  scheduledAt?: string | null
+}
+
+export function toGeminiOrganizationBulkApproveBody(
+  ids: number[],
+  payload?: GeminiOrganizationApplicationApprovePayload
+): GeminiOrganizationBulkApproveRequest {
+  const timing = payload?.timing ?? 'IMMEDIATE'
+  if (timing === 'SCHEDULED') {
+    const scheduledAt = payload?.scheduledAt?.trim()
+    return scheduledAt
+      ? { ids, timing: 'SCHEDULED', scheduledAt }
+      : { ids, timing: 'SCHEDULED' }
+  }
+  return { ids }
+}
+
 export const GEMINI_APPLICATION_DECISION_CONFLICT_MESSAGE =
   '현재 신청 상태에서는 승인·반려·취소 처리를 수행할 수 없습니다.'
 
