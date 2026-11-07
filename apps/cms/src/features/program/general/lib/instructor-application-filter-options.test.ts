@@ -7,6 +7,12 @@ describe('matchesInstructorJaExperienceYears', () => {
     expect(matchesInstructorJaExperienceYears(25, undefined)).toBe(true)
   })
 
+  it('경력 값이 없으면 특정 경력 구간에서 제외한다', () => {
+    expect(matchesInstructorJaExperienceYears(null, 'lt1')).toBe(false)
+    expect(matchesInstructorJaExperienceYears(undefined, '1-5')).toBe(false)
+    expect(matchesInstructorJaExperienceYears(null, 'all')).toBe(true)
+  })
+
   it('구간별로 경력 연수를 매칭한다', () => {
     expect(matchesInstructorJaExperienceYears(0, 'lt1')).toBe(true)
     expect(matchesInstructorJaExperienceYears(1, 'lt1')).toBe(false)

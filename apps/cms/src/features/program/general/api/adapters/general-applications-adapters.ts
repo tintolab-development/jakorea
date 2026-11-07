@@ -235,7 +235,12 @@ function trimListQueryValue(value: unknown): string | undefined {
 }
 
 function readUiApprovalStatusFilter(value: unknown): ApplicantApprovalStatusKey | undefined {
-  if (value === 'pending' || value === 'approved' || value === 'rejected' || value === 'cancelled') {
+  if (
+    value === 'pending' ||
+    value === 'approved' ||
+    value === 'rejected' ||
+    value === 'cancelled'
+  ) {
     return value
   }
   return undefined
@@ -810,9 +815,7 @@ export function mapOrganizationApplicationDetailToApplicantSchoolRow(
   const requestedScheduleMemo = dto.requestedScheduleMemo?.trim()
   const preferredFromDetail = readOrganizationApplicationPreferredEducationSchedules(dto)
   const preferred =
-    preferredFromDetail.length > 0
-      ? preferredFromDetail
-      : (base.preferredEducationSchedules ?? [])
+    preferredFromDetail.length > 0 ? preferredFromDetail : (base.preferredEducationSchedules ?? [])
   const preferredEducationDates = readOrganizationApplicationPreferredEducationDates(dto)
   const listItemShape = dto as OrganizationApplicationListItemResponse
   const requestedHope = options?.requestedSchedules
@@ -1129,6 +1132,7 @@ export function mapInstructorApplicationDetailToApplicantRow(
     nameHanja: dto.nameHanja?.trim() || base.nameHanja,
     nameEnglish: dto.nameEnglish?.trim() || base.nameEnglish,
     birthDate: dto.birthDate?.trim() || base.birthDate,
+    age: dto.age ?? base.age,
     gender: toGenderLabelOrRaw(dto.gender) || base.gender,
     rejectionReason: dto.rejectReason?.trim() || base.rejectionReason,
     distanceKm:
@@ -1261,7 +1265,7 @@ function formatPreferredScheduleDate(date: Date): { date: string; dayOfWeek: str
 
 function preferredScheduleLabel(schedule: PreferredEducationSchedule): string {
   return stripDefaultEducationSlotNameFromLabel(
-    typeof schedule.label === 'string' ? schedule.label : '',
+    typeof schedule.label === 'string' ? schedule.label : ''
   )
 }
 
@@ -1371,7 +1375,8 @@ export function mapSessionProgressToParticipatingSchoolSessions(
           : '-'
       const sessionNo = positiveEducationNumber(session.sessionNo)
       const curriculumSessionCount = positiveEducationNumber(
-        (session as SessionProgress & { curriculumSessionCount?: number | null }).curriculumSessionCount
+        (session as SessionProgress & { curriculumSessionCount?: number | null })
+          .curriculumSessionCount
       )
       const resolvedScheduleId = session.resolvedScheduleId ?? session.scheduleId ?? null
       const scheduleUnresolved =
@@ -1460,19 +1465,10 @@ export function mapIndividualApplicationToApplicantRow(
       dto.giveUpYn
     ),
     interviewResultStatus: (() => {
-      const candidates = [
-        dto.finalResultStatus,
-        dto.interviewStatus,
-        dto.applicationStatus,
-      ]
+      const candidates = [dto.finalResultStatus, dto.interviewStatus, dto.applicationStatus]
         .map(value => (typeof value === 'string' ? value.trim().toUpperCase() : ''))
         .filter(Boolean)
-      const pass = new Set([
-        'EVALUATED',
-        'INTERVIEW_EVALUATED',
-        'PASSED',
-        'INTERVIEW_PASSED',
-      ])
+      const pass = new Set(['EVALUATED', 'INTERVIEW_EVALUATED', 'PASSED', 'INTERVIEW_PASSED'])
       return candidates.find(value => pass.has(value)) ?? candidates[0] ?? null
     })(),
     secondInterviewScreeningStatus: mapApiFinalResultToSecondInterviewStatus(
@@ -1536,10 +1532,8 @@ export function mapIndividualApplicationDetailToApplicantRow(
     availableActions: dto.availableActions ?? base.availableActions,
     privacyMaskingLevel: dto.privacyMaskingLevel === 'UNMASKED' ? 'UNMASKED' : 'MASKED',
     canRevealPersonalInfo: dto.canRevealPersonalInfo === true,
-    canEditManagerAEvaluation:
-      canEditDocumentEvaluation && dto.canEditManagerAEvaluation !== false,
-    canEditManagerBEvaluation:
-      canEditDocumentEvaluation && dto.canEditManagerBEvaluation !== false,
+    canEditManagerAEvaluation: canEditDocumentEvaluation && dto.canEditManagerAEvaluation !== false,
+    canEditManagerBEvaluation: canEditDocumentEvaluation && dto.canEditManagerBEvaluation !== false,
     affiliation: profile?.affiliationSchool?.trim() || base.affiliation || '',
     educationGrade: isK12SchoolAffiliationName(
       profile?.affiliationSchool?.trim() || base.affiliation
@@ -1732,11 +1726,7 @@ export function mapVolunteerInterviewAssignmentFromWire(input: {
   giveUpYn?: boolean
 }): GeneralInterviewAssignmentStatus {
   if (input.giveUpYn) return 'withdrawn'
-  const fields = [
-    input.interviewAssignmentStatus,
-    input.interviewStatus,
-    input.applicationStatus,
-  ]
+  const fields = [input.interviewAssignmentStatus, input.interviewStatus, input.applicationStatus]
   let notRequired = false
   for (const field of fields) {
     const mapped = mapApiVolunteerInterviewStatusToAssignmentStatus(field, false)
@@ -1925,10 +1915,7 @@ export function mapVolunteerApplicationDetailToApplicantRow(
     contactRaw: profile?.contact?.trim() || base.contactRaw,
     emailRaw: profile?.email?.trim() || base.emailRaw,
     homeAddress:
-      profile?.homeAddressSummary?.trim() ||
-      profile?.homeAddress?.trim() ||
-      base.homeAddress ||
-      '',
+      profile?.homeAddressSummary?.trim() || profile?.homeAddress?.trim() || base.homeAddress || '',
     id1365: profile?.external1365Id?.trim() || base.id1365,
     scheduleChangeCancelCount:
       dto.application?.scheduleChangeCancelCount ?? base.scheduleChangeCancelCount,

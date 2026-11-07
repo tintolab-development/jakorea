@@ -83,6 +83,7 @@ function buildStatusRows(
   showApprovalStatus: boolean,
   onResendNotificationClick?: () => void
 ): ReactNode {
+  if (instructor.approvalStatus === 'unknown') return '-'
   return showApprovalStatus ? (
     <ProgramApprovalStatusDetailValue
       status={instructor.approvalStatus}

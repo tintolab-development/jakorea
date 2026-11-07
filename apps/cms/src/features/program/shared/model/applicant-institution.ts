@@ -246,7 +246,8 @@ export function patchApplicantSchoolForApprovalStatus(
     return {
       ...row,
       approvalStatus,
-      participationRejectionReason: notifyOptions?.rejectionReason ?? row.participationRejectionReason,
+      participationRejectionReason:
+        notifyOptions?.rejectionReason ?? row.participationRejectionReason,
       approvalNotifyTiming: undefined,
       rejectionNotifyTiming: notifyOptions?.notifyTiming,
       approvalNotificationSentAt: resolveApplicantSchoolApprovalNotificationSentAt(notifyOptions),
@@ -331,10 +332,7 @@ export function updateApplicantSchoolCancelRejection(
   _notifyOptions?: ApplicantSchoolApprovalNotifyOptions
 ): void {}
 
-export function updateApplicantSchoolNotificationResend(
-  _schoolId: string,
-  _sentAt?: Date
-): void {}
+export function updateApplicantSchoolNotificationResend(_schoolId: string, _sentAt?: Date): void {}
 
 export function patchApplicantInstitutionAdminComment(
   _schoolId: string,

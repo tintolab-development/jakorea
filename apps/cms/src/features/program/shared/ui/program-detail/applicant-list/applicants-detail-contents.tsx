@@ -1203,7 +1203,9 @@ export function ApplicantsDetailContents({
       approvalStatus:
         institutionData?.approvalStatus ??
         individualData?.approvalStatus ??
-        instructorData?.approvalStatus ??
+        (instructorData?.approvalStatus === 'unknown'
+          ? 'pending'
+          : instructorData?.approvalStatus) ??
         'pending',
       sessions: cancelApprovalSessions,
       hasCancelHandler: Boolean(onCancelApproval),
@@ -1397,8 +1399,12 @@ export function ApplicantsDetailContents({
       ...(typeof privacy.email === 'string' ? { email: privacy.email } : {}),
       ...(typeof privacy.address === 'string' ? { address: privacy.address } : {}),
       ...(typeof privacy.bankName === 'string' ? { bankName: privacy.bankName } : {}),
-      ...(typeof privacy.accountNumber === 'string' ? { accountNumber: privacy.accountNumber } : {}),
-      ...(typeof privacy.accountHolder === 'string' ? { accountHolder: privacy.accountHolder } : {}),
+      ...(typeof privacy.accountNumber === 'string'
+        ? { accountNumber: privacy.accountNumber }
+        : {}),
+      ...(typeof privacy.accountHolder === 'string'
+        ? { accountHolder: privacy.accountHolder }
+        : {}),
     })
   }, [])
 

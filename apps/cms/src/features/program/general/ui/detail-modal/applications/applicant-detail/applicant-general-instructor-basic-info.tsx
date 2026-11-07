@@ -54,6 +54,7 @@ function ProgramApprovalStatusValue({
   instructor: ApplicantInstructorRow
   onResendNotificationClick?: () => void
 }) {
+  if (instructor.approvalStatus === 'unknown') return <span>-</span>
   return (
     <ProgramApprovalStatusDetailValue
       status={instructor.approvalStatus}
