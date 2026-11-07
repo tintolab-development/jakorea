@@ -14,6 +14,7 @@ import {
   FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
   isFileSelectTotalSizeExceeded,
   notifyFileSelectTotalSizeExceeded,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   useCmsAlert,
 } from '@/shared/ui'
 
@@ -143,7 +144,7 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
       nextErrors.subText = '서브 텍스트를 입력해 주세요.'
     }
     if (Object.keys(nextErrors).length > 0) {
-      setErrors(nextErrors)
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     setErrors({})
@@ -164,6 +165,7 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
     initial.version,
     mainText,
     onSubmit,
+    showAlert,
     subText,
   ])
 

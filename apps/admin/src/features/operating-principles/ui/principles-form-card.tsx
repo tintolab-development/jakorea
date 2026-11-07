@@ -28,7 +28,7 @@ import {
   PrincipleDragHandle,
   PrinciplesSortableTable,
 } from '@/features/operating-principles/ui/sortable-table'
-import { CmsButton, CmsTextArea, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CmsTextArea, REQUIRED_FIELDS_INCOMPLETE_ALERT, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 import {
   CMS_TABLE_NO_COL_CLASS,
   CMS_TABLE_SORT_COL_CLASS,
@@ -124,6 +124,18 @@ export function PrinciplesFormCard({ data }: Props) {
   }, [data.intro, rows])
 
   const handleSave = useCallback(async () => {
+    if (!draftIntro.topSubText.trim() || !draftIntro.mainText.trim()) {
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+      return
+    }
+    const hasBlankPrinciple = rows.some(row => {
+      const draft = draftTexts[row.id]
+      return !(draft?.title ?? row.title).trim() || !(draft?.subText ?? row.subText).trim()
+    })
+    if (hasBlankPrinciple) {
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+      return
+    }
     try {
       await saveMutation.mutateAsync({
         intro: draftIntro,

@@ -5,7 +5,6 @@ import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT,
   CmsButton,
   CmsInput,
-  CmsTextArea,
   CmsRadio,
   CmsRadioGroup,
   ContentModal,
@@ -279,14 +278,12 @@ function HeroBannerFormBody({ mode, initial, confirmLoading, onCancel, onSubmit 
             label="메인 타이틀"
             view={null}
             edit={
-              <CmsTextArea
-                inputSize="large"
+              <CmsInput
+                inputSize="medium"
                 width="100%"
-                rows={2}
-                autoSize={{ minRows: 2, maxRows: 8 }}
                 placeholder="메인 타이틀을 입력해 주세요"
                 value={mainTitle}
-                onChange={e => setMainTitle(e.target.value)}
+                onChange={e => setMainTitle(e.target.value.replace(/\r?\n/g, ' '))}
               />
             }
           />

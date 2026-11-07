@@ -126,6 +126,7 @@ export {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
 } from './required-fields-incomplete-alert'
+export { mapAdminMutationAlert } from './map-admin-mutation-alert'
 export { showRegisterCompletedAlert } from './show-register-completed-alert'
 export { showUpdateCompletedAlert } from './show-update-completed-alert'
 export type { CmsAlertModalShowOptions } from './cms-alert-modal-api'

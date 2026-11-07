@@ -211,11 +211,16 @@ function TimelineFormBody({
       }
     })
 
-    if (Object.keys(nextErrors).length > 0 || alertMessage) {
-      setErrors(nextErrors)
+    if (Object.keys(nextErrors).length > 0) {
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+      return
+    }
+    if (alertMessage) {
       if (alertPeriodId) setActiveId(alertPeriodId)
-      if (alertMessage) {
+      if (alertMessage.includes('함께 입력')) {
         showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+      } else {
+        showAlert({ title: '입력 확인', content: alertMessage })
       }
       return
     }

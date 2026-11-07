@@ -10,6 +10,7 @@ import {
   FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
   isFileSelectTotalSizeExceeded,
   notifyFileSelectTotalSizeExceeded,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   useCmsAlert,
 } from '@/shared/ui'
 import { isAllowedJaHistoryImage, JA_HISTORY_IMAGE_ACCEPT, readJaHistoryImage } from './image-file'
@@ -111,7 +112,7 @@ function HeroFormBody({ initial, confirmLoading, onCancel, onSubmit }: Omit<Prop
     if (!imageUrl.trim()) nextErrors.image = '히어로 이미지를 등록해 주세요.'
     if (!mainText.trim()) nextErrors.mainText = '메인 텍스트를 입력해 주세요.'
     if (Object.keys(nextErrors).length > 0) {
-      setErrors(nextErrors)
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     onSubmit({

@@ -20,6 +20,7 @@ import {
   isFileSelectTotalSizeExceeded,
   notifyFileSelectTotalSizeExceeded,
   ThumbnailPlaceholder,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   useCmsAlert,
 } from '@/shared/ui'
 import { getCorporatePartnerById } from '@/features/corporate-partner/api/service'
@@ -286,11 +287,9 @@ function CorporatePartnerFormBody({
   const handleSubmit = useCallback(() => {
     const name = nameRef.current
     const nextErrors: typeof errors = {}
-    if (!logoUrl.trim()) {
-      nextErrors.logo = '로고 이미지를 등록해 주세요.'
-    }
-    if (!name.trim()) {
-      nextErrors.name = '기업명을 입력해 주세요.'
+    if (!logoUrl.trim() || !name.trim()) {
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+      return
     }
     const orderNum = Math.floor(Number(sortOrder))
     if (!Number.isFinite(orderNum) || orderNum < 1 || orderNum > maxOrder) {
@@ -310,7 +309,7 @@ function CorporatePartnerFormBody({
       name: name.trim(),
       sortOrder: orderNum,
     })
-  }, [isPublic, logoAssetId, logoFile, logoFileName, logoUrl, maxOrder, onSubmit, sortOrder])
+  }, [isPublic, logoAssetId, logoFile, logoFileName, logoUrl, maxOrder, onSubmit, showAlert, sortOrder])
 
   const title = mode === 'edit' ? '후원사 수정' : '후원사 등록'
   const confirmLabel = mode === 'edit' ? '저장' : '등록'

@@ -327,7 +327,7 @@ export function SiteInfoFormCard({ data }: Props) {
       showUpdateCompletedAlert()
     } catch (error) {
       if (error instanceof Error && error.message === 'SITE_NAME_REQUIRED') {
-        setNameError('사이트명을 입력해 주세요.')
+        showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
         return
       }
       showAlert({

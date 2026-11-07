@@ -20,7 +20,8 @@ import {
   type ProgramIntroImageSlot,
 } from '@/features/education-program-intro/lib/image-slots'
 import { educationProgramIntroMutationFailureAlert } from '@/features/education-program-intro/lib/mutation-failure-alert'
-import { CmsButton, CmsInput, CmsTextArea, FileSelectField, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
+import { hasIncompleteRequiredProgramIntroFields } from '@/features/education-program-intro/lib/required-fields'
+import { CmsButton, CmsInput, CmsTextArea, FileSelectField, REQUIRED_FIELDS_INCOMPLETE_ALERT, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 import { FileTypeIcon } from '@/shared/ui/icons/FileTypeIcon'
 
 import './form-card.css'
@@ -377,6 +378,10 @@ export function ProgramIntroFormCard({ data, onEditingChange }: Props) {
   }, [data])
 
   const handleSave = useCallback(async () => {
+    if (hasIncompleteRequiredProgramIntroFields(draft)) {
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+      return
+    }
     try {
       await saveMutation.mutateAsync({
         fieldCode: draft.fieldCode,

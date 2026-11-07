@@ -7,8 +7,8 @@ import {
   mainContentSaveFailureAlert,
   readMainContentFieldErrors,
 } from '@/features/main-content/lib/mutation-failure-alert'
+import { applyMainContentClientSaveGate } from '@/features/main-content/lib/client-save-gate'
 import {
-  hasFieldErrors,
   MAIN_CONTENT_LIMITS,
   type MainContentFieldErrors,
   validateImpactStorySection,
@@ -56,9 +56,13 @@ export function ImpactStorySectionCard({ data, options }: Props) {
   }, [data])
 
   const handleSave = useCallback(async () => {
-    const invalid = validateImpactStorySection(draft, optionIds)
-    if (hasFieldErrors(invalid)) {
-      setFieldErrors(invalid)
+    if (
+      applyMainContentClientSaveGate(
+        validateImpactStorySection(draft, optionIds),
+        showAlert,
+        setFieldErrors,
+      )
+    ) {
       return
     }
     try {
