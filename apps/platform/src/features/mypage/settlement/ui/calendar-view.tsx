@@ -23,8 +23,6 @@ const WEEKDAYS = [
   { key: 'sat', label: 'Sat', className: calendarStyles.weekdaySat },
 ] as const
 
-const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
-
 type SettlementCalendarViewProps = {
   month: string
   date: string
@@ -252,37 +250,45 @@ export function SettlementCalendarView({
             />
           </div>
         ) : (
-          <>
-            <div className={styles.sideHeader}>
-              <PFText as="p" typo="hd-md" color="black" className={styles.sideDay}>
-                {String(selectedDate.getDate()).padStart(2, '0')}
+          <div className={styles.list}>
+            <div className={styles.listHeader}>
+              <PFText as="p" typo="bd-md-md" color="neutral-cool-500" className={styles.listLead}>
+                확인이 필요한 일정이에요
               </PFText>
-              <PFText as="p" typo="bd-md-md" color="neutral-cool-500" className={styles.sideWeekday}>
-                {WEEKDAY_KO[selectedDate.getDay()]}
+              <PFText as="h3" typo="hl-lg" color="black" className={styles.listCount}>
+                총 {selectedItems.length}개
               </PFText>
             </div>
-            <ul className={styles.sideList}>
+            <ul className={styles.listItems}>
               {selectedItems.map(item => {
                 const colors = SETTLEMENT_CALENDAR_EVENT_COLORS[item.status]
                 return (
-                  <li key={item.id} className={styles.sideItem}>
-                    <span className={styles.sideStatus} style={{ backgroundColor: colors.background }}>
-                      <span className={styles.sideStatusDot} style={{ backgroundColor: colors.accent }} />
-                      <PFText as="span" typo="caption-sb" color="black">
-                        {SETTLEMENT_STATUS_CALENDAR_SHORT[item.status]}
-                      </PFText>
-                    </span>
-                    <PFText as="p" typo="bd-md-sb" color="black" className={styles.sideProgram}>
+                  <li
+                    key={item.id}
+                    className={styles.listItem}
+                    style={{ borderLeftColor: colors.accent }}
+                  >
+                    <PFText
+                      as="p"
+                      typo="label-md"
+                      color="neutral-cool-500"
+                      className={styles.listProgram}
+                    >
                       {item.programName}
                     </PFText>
-                    <PFText as="p" typo="bd-md-md" color="black" className={styles.sideAmount}>
-                      {formatSignedWonAmount(item.appliedAmount)}
-                    </PFText>
+                    <div className={styles.listDetail}>
+                      <PFText as="p" typo="bd-md-sb" color="black" className={styles.listTitle}>
+                        {SETTLEMENT_STATUS_CALENDAR_SHORT[item.status]}
+                      </PFText>
+                      <PFText as="p" typo="bd-sm-rg" color="black" className={styles.listAmount}>
+                        {formatSignedWonAmount(item.appliedAmount)}
+                      </PFText>
+                    </div>
                   </li>
                 )
               })}
             </ul>
-          </>
+          </div>
         )}
       </aside>
     </div>

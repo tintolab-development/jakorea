@@ -42,61 +42,85 @@
   min-width: 0;
 }
 
-.sideHeader {
+/* 우측 목록 — 마이페이지 메인 캘린더(schedule-section)와 같은 구성 */
+.list {
   display: flex;
-  align-items: baseline;
-  gap: var(--spacing-8);
+  flex: 1 0 0;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: stretch;
+  gap: var(--spacing-24);
+  min-height: 0;
+  padding: var(--spacing-20) 0 var(--spacing-40) var(--spacing-16);
+  overflow: hidden;
 }
 
-.sideDay,
-.sideWeekday,
-.sideProgram,
-.sideAmount {
+.listHeader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+  flex-shrink: 0;
+  align-self: stretch;
+}
+
+.listLead,
+.listCount {
   margin: 0;
 }
 
-.sideList {
+.listItems {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
-  gap: var(--spacing-16);
+  align-self: stretch;
+  gap: var(--spacing-8);
   margin: 0;
   padding: 0;
   list-style: none;
+  overflow-y: auto;
+  min-height: 0;
+  width: 100%;
 }
 
-.sideItem {
+.listItem {
   display: flex;
+  box-sizing: border-box;
+  width: 100%;
   flex-direction: column;
-  gap: var(--spacing-8);
+  align-items: flex-start;
+  min-width: 0;
+  padding: var(--spacing-12) var(--spacing-12) var(--spacing-12) var(--spacing-20);
+  border-left: 6px solid transparent;
+  background: var(--color-neutral-white);
+  box-shadow: var(--shadow-card-sm);
 }
 
-.sideStatus {
-  display: inline-flex;
-  width: fit-content;
+.listProgram,
+.listTitle,
+.listAmount {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.listProgram {
+  width: 100%;
+}
+
+.listDetail {
+  display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: var(--spacing-4);
-  padding: 4px 8px;
-  border-radius: var(--radius-8);
+  gap: var(--spacing-8);
+  width: 100%;
+  min-width: 0;
 }
 
-.sideStatusDot {
-  width: 6px;
-  height: 6px;
-  border-radius: var(--radius-999);
-}
-
-.sideHeader,
-.sideList {
-  padding-left: var(--spacing-16);
-}
-
-.sideHeader {
-  padding-top: var(--spacing-20);
-}
-
-.sideList {
-  padding-right: 0;
-  padding-bottom: var(--spacing-40);
+.listTitle,
+.listAmount {
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
 @media (--bp-below-pc) {
@@ -111,6 +135,42 @@
     max-width: none;
     width: 100%;
     min-height: 240px;
+  }
+
+  /* 마이페이지 메인 캘린더 목록과 같은 모바일 타이포 (Figma) */
+  .listLead {
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 150%;
+    letter-spacing: -0.16px;
+  }
+
+  .listCount {
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 150%;
+    letter-spacing: -0.24px;
+  }
+
+  .listProgram {
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 140%;
+    letter-spacing: 0;
+  }
+
+  .listTitle {
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 150%;
+    letter-spacing: -0.16px;
+  }
+
+  .listAmount {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 160%;
+    letter-spacing: 0;
   }
 }
 
