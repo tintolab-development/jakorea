@@ -5,11 +5,43 @@ import {
   isGeminiInstructorPerformanceOnlyExclusion,
 } from '@/features/program/gemini/lib/performance/payment-exclusion'
 
+const GEMINI_INSTRUCTOR_FAILURE_CODES = [
+  'GEMINI_INSTRUCTOR_NOT_MATCHED',
+  'GEMINI_INSTRUCTOR_IDENTITY_MISMATCH',
+  'GEMINI_INSTRUCTOR_MATCH_AMBIGUOUS',
+  'GEMINI_INSTRUCTOR_NAME_AND_PHONE_REQUIRED',
+] as const
+
+export type GeminiImportPreviewFailureKind = 'INSTRUCTOR_INFO_MISMATCH' | 'GENERAL'
+
+export class GeminiImportPreviewFailureError extends Error {
+  kind: GeminiImportPreviewFailureKind
+
+  constructor(message: string, kind: GeminiImportPreviewFailureKind) {
+    super(message)
+    this.name = 'GeminiImportPreviewFailureError'
+    this.kind = kind
+  }
+}
+
+export function hasGeminiInstructorInfoMismatchFailures(
+  results: GeminiTrainingReportImportResult[] | undefined
+): boolean {
+  return (results ?? []).some(
+    result =>
+      !isGeminiImportResultSuccess(result) &&
+      GEMINI_INSTRUCTOR_FAILURE_CODES.some(code => result.message?.includes(code))
+  )
+}
+
 function describeFailure(message: string): string {
   if (message.includes('GEMINI_TRAINING_END_TIME_NOT_AFTER_START')) {
     return '종료 시각이 시작 시각보다 늦어야 합니다.'
   }
-  if (message.includes('programId is required') || message.includes('not a Gemini training program')) {
+  if (
+    message.includes('programId is required') ||
+    message.includes('not a Gemini training program')
+  ) {
     return '연결할 Gemini 모집 공고가 없습니다.'
   }
   if (message.includes('trainingSessionCount')) {
@@ -36,10 +68,19 @@ function describeFailure(message: string): string {
   return message || '등록할 수 없는 행입니다.'
 }
 
-export function isGeminiImportResultSuccess(
-  result: GeminiTrainingReportImportResult
-): boolean {
+export function isGeminiImportResultSuccess(result: GeminiTrainingReportImportResult): boolean {
   return result.status === 'SUCCESS'
+}
+
+export function createGeminiImportPreviewFailureError(
+  results: GeminiTrainingReportImportResult[] | undefined
+): GeminiImportPreviewFailureError | undefined {
+  const message = formatGeminiImportPreviewFailures(results)
+  if (!message) return undefined
+  return new GeminiImportPreviewFailureError(
+    message,
+    hasGeminiInstructorInfoMismatchFailures(results) ? 'INSTRUCTOR_INFO_MISMATCH' : 'GENERAL'
+  )
 }
 
 /**
@@ -73,8 +114,7 @@ export function formatGeminiImportPreviewFailures(
   // 지급완료 중복 FAILED는 「실적 등록 불가」전용 — 일반 행 실패 문구에 섞지 않는다.
   const failed = (results ?? []).filter(
     result =>
-      !isGeminiImportResultSuccess(result) &&
-      !isGeminiPerformancePaidBlockedText(result.message)
+      !isGeminiImportResultSuccess(result) && !isGeminiPerformancePaidBlockedText(result.message)
   )
   if (failed.length === 0) return undefined
   return failed

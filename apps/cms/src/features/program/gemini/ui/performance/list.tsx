@@ -22,6 +22,8 @@ import {
 import {
   GEMINI_PERFORMANCE_INVALID_TEMPLATE_MESSAGE,
   GEMINI_PERFORMANCE_INVALID_TEMPLATE_TITLE,
+  GEMINI_PERFORMANCE_INSTRUCTOR_MISMATCH_MESSAGE,
+  GEMINI_PERFORMANCE_INSTRUCTOR_MISMATCH_TITLE,
   geminiPerformanceService,
 } from '../../api/performance-service'
 import { resolveGeminiDeleteGuideModalCopy } from '../../lib/delete-guide'
@@ -48,6 +50,7 @@ import type {
 } from '../../model/performance/types'
 import type { GeminiTrainingReportImportRow } from '@/shared/api/generated/dashboard/schemas/geminiTrainingReportImportRow'
 import { UploadDuplicateModal } from './upload-duplicate-modal'
+import { GeminiImportPreviewFailureError } from '../../lib/performance/import-preview-failure'
 import '@/pages/programs/program-list-page.css'
 import '../page.css'
 import './list.css'
@@ -215,13 +218,20 @@ export function GeminiPerformanceList() {
         showRegisterBlockedAlert()
         return
       }
+      if (
+        error instanceof GeminiImportPreviewFailureError &&
+        error.kind === 'INSTRUCTOR_INFO_MISMATCH'
+      ) {
+        showAlert({
+          title: GEMINI_PERFORMANCE_INSTRUCTOR_MISMATCH_TITLE,
+          content: GEMINI_PERFORMANCE_INSTRUCTOR_MISMATCH_MESSAGE,
+        })
+        return
+      }
       const message =
         error instanceof Error && error.message === GEMINI_PERFORMANCE_INVALID_TEMPLATE_MESSAGE
           ? GEMINI_PERFORMANCE_INVALID_TEMPLATE_MESSAGE
-          : formatGeminiApiError(
-              error,
-              '파일 업로드에 실패했습니다.\n잠시 후 다시 시도해 주세요.',
-            )
+          : formatGeminiApiError(error, '파일 업로드에 실패했습니다.\n잠시 후 다시 시도해 주세요.')
       showAlert({
         title:
           message === GEMINI_PERFORMANCE_INVALID_TEMPLATE_MESSAGE
@@ -275,7 +285,7 @@ export function GeminiPerformanceList() {
           title: '안내',
           content: formatGeminiApiError(
             error,
-            '실적 삭제를 완료하지 못했습니다.\n잠시 후 다시 시도해 주세요.',
+            '실적 삭제를 완료하지 못했습니다.\n잠시 후 다시 시도해 주세요.'
           ),
         })
       } finally {
@@ -592,9 +602,7 @@ export function GeminiPerformanceList() {
         description={`총 ${listCount.toLocaleString()}건`}
         actions={
           showBulkDelete ? (
-            <FilterTableToolbarButton
-              variant="delete"
-              onClick={handleBulkDeleteClick} >
+            <FilterTableToolbarButton variant="delete" onClick={handleBulkDeleteClick}>
               선택 삭제
             </FilterTableToolbarButton>
           ) : null
@@ -621,7 +629,8 @@ export function GeminiPerformanceList() {
                 variant="primary"
                 tabIndex={canWrite ? -1 : undefined}
                 disabled={!canWrite || importing}
-                onClick={handleAddReportClick} >
+                onClick={handleAddReportClick}
+              >
                 연수 보고서 등록
               </FilterTableToolbarButton>
             </span>
