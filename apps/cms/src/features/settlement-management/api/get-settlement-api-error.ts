@@ -74,7 +74,7 @@ export const GEMINI_TRAINING_REPORT_MISSING_MESSAGE =
 
 /** BE 2026-09-11 bulk-confirm 계약 — 공통 메시지 없을 때 FE fallback */
 const SETTLEMENT_BULK_CONFIRM_ERROR_MESSAGES: Record<string, string> = {
-  SCHEDULED_PAYMENT_DATE_REQUIRED: '강사비 지급 예정일을 입력해 주세요.',
+  SCHEDULED_PAYMENT_DATE_REQUIRED: '계좌 지급 예정일을 입력해 주세요.',
   PAYMENT_STATEMENT_IDS_REQUIRED: '확인할 지급조서를 선택해 주세요.',
   PAYMENT_STATEMENT_NOT_FOUND:
     '지급조서를 찾을 수 없습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.',
