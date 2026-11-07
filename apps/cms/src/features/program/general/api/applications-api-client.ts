@@ -156,7 +156,8 @@ export type { IndividualApprovalWithScopeResult }
 export type InstructorApplicationUpdatePayload = {
   managerComment?: string | null
   feePolicy?: InstructorApplicationFeePolicyRequest | null
-  businessIncomeEarnerStatus?: '해당' | '해당 없음' | string
+  /** 생략=기존 신청값 유지, null=명시적 초기화(회원 프로필 fallback). 빈 문자열 금지 */
+  businessIncomeEarnerStatus?: '해당' | '해당 없음' | null
 }
 
 /** 기관 승인·반려 / 강사 일괄 — generated BulkDecisionRequest의 평탄 timing 필드. */

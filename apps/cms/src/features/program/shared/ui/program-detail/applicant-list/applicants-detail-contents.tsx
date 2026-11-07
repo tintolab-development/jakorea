@@ -84,6 +84,8 @@ import { ApplicantInstructorBasicInfo } from './applicant-instructor-basic-info'
 import { ApplicantInstitutionBasicInfo } from './applicant-institution-basic-info'
 import { ApplicantGeneralInstitutionBasicInfo } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-basic-info'
 import { ApplicantGeneralIndividualBasicInfo } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/individual-basic-info'
+import type { InstructorApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationDetailResponse'
+import { retainMaskedInstructorApplicationSettlement } from '@/features/program/general/lib/instructor-application-basic-info-supplement'
 import { ApplicantGeneralInstructorBasicInfo } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-general-instructor-basic-info'
 import { ApplicantInstructorResume } from './applicant-instructor-resume'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
@@ -1343,12 +1345,14 @@ export function ApplicantsDetailContents({
         reason,
         Number.isFinite(programIdNumber) ? programIdNumber : undefined
       )
-      const safeDetail = cacheProjectedProgramPrivacy(
-        queryClient,
-        generalApplicationsQueryKeys.instructorDetail(applicationId),
-        program?.id ?? '',
-        detail
+      const detailKey = generalApplicationsQueryKeys.instructorDetail(applicationId)
+      const previousDetail =
+        queryClient.getQueryData<InstructorApplicationDetailResponse>(detailKey)
+      const safeDetail = retainMaskedInstructorApplicationSettlement(
+        cacheProjectedProgramPrivacy(queryClient, detailKey, program?.id ?? '', detail),
+        previousDetail
       )
+      queryClient.setQueryData(detailKey, safeDetail)
       if (instructorData) {
         const mapped = mapInstructorApplicationDetailToApplicantRow(safeDetail, instructorData)
         onInstructorDetailSaved?.(mapped)

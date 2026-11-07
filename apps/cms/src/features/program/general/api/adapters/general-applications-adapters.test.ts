@@ -1295,7 +1295,86 @@ describe('general-applications-adapters', () => {
     expect(row.affiliation).toBe('JA Korea 본부')
     expect(row.bankName).toBe('국민은행')
     expect(row.accountNumber).toBe('123-456-7890')
-    expect(row.businessIncomeEarnerStatus).toBe('해당 없음')
+    expect(row.businessIncomeEarnerStatus).toBeUndefined()
+  })
+
+  it('UNMASKED 신청 상세는 경력·주소·소속을 같은 GET에서만 채우고 계좌·책정은 비운다', () => {
+    const base = mapInstructorApplicationToApplicantInstructorRow(
+      instructorApplicationListItemFixture({
+        id: 1694808,
+        instructorMemberId: 190115,
+        programId: 186550,
+        instructorName: '이순규',
+        applicationStatus: 'APPROVED',
+        preferredOrganizations: [],
+        availableActions: [],
+        availableScheduleIds: [],
+      }),
+      0,
+      '186550'
+    )
+    const row = mapInstructorApplicationDetailToApplicantRow(
+      {
+        id: 1694808,
+        instructorName: '이순규',
+        homeAddress: '서울특별시 강남구 테헤란로 152 10층',
+        homeAddressDetail: '10층',
+        teachingExperience: '5년',
+        jaLectureExperienceYears: null,
+        affiliation: null,
+        feePolicy: null,
+        businessIncomeEarnerStatus: null,
+        instructorFeeGradeSnapshot: 'GRADE_1',
+        instructorCmsProfile: {
+          affiliation: { organizationNames: ['JA 강사단'] },
+          instructorCareerSummary: '5년',
+          career: { summaryYears: '5년', rows: [] },
+          homeAddress: { line: '서울특별시 강남구 테헤란로 1', detail: '10층' },
+          defaultFeeGrade: 'GRADE_1',
+        },
+      } as never,
+      base
+    )
+    expect(row.lectureExperienceYears).toBe(5)
+    expect(row.address).toBe('서울특별시 강남구 테헤란로 152 10층')
+    expect(row.affiliation).toBe('JA 강사단')
+    expect(row.instructorFeeGradeLabel).toBe('1급 강사비')
+    expect(row.lectureFeeBasisType).toBeUndefined()
+    expect(row.bankName).toBeUndefined()
+    expect(row.businessIncomeEarnerStatus).toBeUndefined()
+  })
+
+  it('신청 상세에 계좌·사업소득 필드가 없으면 비워 둔다', () => {
+    const base = mapInstructorApplicationToApplicantInstructorRow(
+      instructorApplicationListItemFixture({
+        id: 1694808,
+        instructorMemberId: 190115,
+        programId: 186550,
+        instructorName: '이순규',
+        applicationStatus: 'APPROVED',
+        preferredOrganizations: [],
+        availableActions: [],
+        availableScheduleIds: [],
+      }),
+      0,
+      '186550'
+    )
+    const row = mapInstructorApplicationDetailToApplicantRow(
+      {
+        id: 1694808,
+        programId: 186550,
+        feePolicy: null,
+        businessIncomeEarnerStatus: null,
+        instructorCmsProfile: {
+          defaultFeeGrade: 'GRADE_1',
+        },
+      } as never,
+      base
+    )
+    expect(row.bankName).toBeUndefined()
+    expect(row.accountNumber).toBeUndefined()
+    expect(row.accountHolder).toBeUndefined()
+    expect(row.businessIncomeEarnerStatus).toBeUndefined()
   })
 
   it('merges instructorCmsProfile resume onto instructor application detail', () => {

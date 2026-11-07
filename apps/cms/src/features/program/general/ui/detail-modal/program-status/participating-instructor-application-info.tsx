@@ -30,7 +30,7 @@ import {
 } from '@/features/program/shared/ui/program-detail-td-divider'
 import {
   AffiliationEmploymentStatusField,
-  formatAccountDisplayContent,
+  formatServerAccountDisplayContent,
   formatBirthDateAndAge,
   HomeAddressDisplay,
   InstructorBasicInfoDetailForm,
@@ -220,7 +220,7 @@ export function ParticipatingInstructorApplicationInfo({
           homeAddressDisplay: (
             <HomeAddressDisplay address={instructor.address} mask={privacyMasked} />
           ),
-          accountDisplay: formatAccountDisplayContent(instructor, privacyMasked),
+          accountDisplay: formatServerAccountDisplayContent(instructor),
           instructorFeeGradeView: <InstructorFeeGradeView instructor={feeViewRow} />,
           instructorFeeGradeEdit:
             isEditMode && feeEditDraft ? (

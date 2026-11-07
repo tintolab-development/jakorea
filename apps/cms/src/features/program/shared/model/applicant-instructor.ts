@@ -129,6 +129,8 @@ export interface ApplicantInstructorRow {
   accountNumber?: string
   /** 정산 계좌: 예금주 */
   accountHolder?: string
+  /** 강사 신청 상세 `settlement.businessIncome` (null·생략이면 undefined). 사업소득자 표시는 businessIncomeEarnerStatus */
+  settlementBusinessIncome?: boolean
   /** 프로필 사진 URL (없으면 플레이스홀더) */
   profileImageUrl?: string
   /** 희망 배정 학교 1~4순위 (일부 assignable: false로 배정 불가) */
@@ -216,7 +218,7 @@ export interface ApplicantInstructorDetailSavePayload {
   lectureFeeAmount?: string
   lectureFeeBasisDisplay?: string
   instructorFeeGradeLabel?: string
-  businessIncomeEarnerStatus?: string
+  businessIncomeEarnerStatus?: '해당' | '해당 없음'
 }
 
 export function formatApprovalNotificationSentAt(d = new Date()): string {
@@ -257,7 +259,7 @@ export function patchApplicantInstructorForApprovalStatus(
       lectureFeeMeasure: row.lectureFeeMeasure,
       lectureFeeAmount: row.lectureFeeAmount,
       lectureFeeBasisDisplay: row.lectureFeeBasisDisplay,
-      businessIncomeEarnerStatus: row.businessIncomeEarnerStatus ?? '해당 없음',
+      businessIncomeEarnerStatus: row.businessIncomeEarnerStatus,
       approvalNotifyTiming: notifyOptions?.notifyTiming,
       approvalNotificationSentAt:
         resolveApplicantInstructorApprovalNotificationSentAt(notifyOptions),
@@ -272,7 +274,7 @@ export function patchApplicantInstructorForApprovalStatus(
       lectureFeeBasisType: undefined,
       lectureFeeMeasure: undefined,
       lectureFeeAmount: undefined,
-      businessIncomeEarnerStatus: row.businessIncomeEarnerStatus ?? '해당 없음',
+      businessIncomeEarnerStatus: row.businessIncomeEarnerStatus,
       approvalNotifyTiming: undefined,
       rejectionNotifyTiming: notifyOptions?.notifyTiming,
       approvalNotificationSentAt:
@@ -288,7 +290,7 @@ export function patchApplicantInstructorForApprovalStatus(
     lectureFeeBasisType: undefined,
     lectureFeeMeasure: undefined,
     lectureFeeAmount: undefined,
-    businessIncomeEarnerStatus: row.businessIncomeEarnerStatus ?? '해당 없음',
+    businessIncomeEarnerStatus: row.businessIncomeEarnerStatus,
     approvalNotifyTiming: undefined,
     rejectionNotifyTiming: undefined,
     approvalNotificationSentAt: undefined,

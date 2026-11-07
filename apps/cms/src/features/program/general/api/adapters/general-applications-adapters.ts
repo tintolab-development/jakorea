@@ -1025,6 +1025,50 @@ function mapAffiliationEmploymentStatus(
   return undefined
 }
 
+function parseInstructorExperienceYears(raw?: string | null): number | undefined {
+  const match = raw?.trim().match(/(\d+)/)
+  if (!match) return undefined
+  const years = Number(match[1])
+  return Number.isFinite(years) ? years : undefined
+}
+
+function resolveInstructorLectureExperienceYears(
+  dto: InstructorApplicationDetailResponse,
+  base: ApplicantInstructorRow
+): number {
+  if (
+    typeof dto.jaLectureExperienceYears === 'number' &&
+    Number.isFinite(dto.jaLectureExperienceYears)
+  ) {
+    return dto.jaLectureExperienceYears
+  }
+  const fromSameGet =
+    parseInstructorExperienceYears(dto.teachingExperience) ??
+    parseInstructorExperienceYears(dto.instructorCmsProfile?.instructorCareerSummary) ??
+    parseInstructorExperienceYears(dto.instructorCmsProfile?.career?.summaryYears)
+  if (fromSameGet != null) return fromSameGet
+  return base.lectureExperienceYears
+}
+
+function joinInstructorHomeAddress(
+  line?: string | null,
+  detail?: string | null
+): string | undefined {
+  const addressLine = line?.trim() ?? ''
+  const addressDetail = detail?.trim() ?? ''
+  if (!addressLine && !addressDetail) return undefined
+  if (!addressDetail) return addressLine
+  if (!addressLine) return addressDetail
+  if (
+    addressLine === addressDetail ||
+    addressLine.endsWith(addressDetail) ||
+    addressLine.includes(` ${addressDetail}`)
+  ) {
+    return addressLine
+  }
+  return `${addressLine} ${addressDetail}`
+}
+
 export function mapInstructorApplicationDetailToApplicantRow(
   dto: InstructorApplicationDetailResponse,
   base: ApplicantInstructorRow
@@ -1068,25 +1112,18 @@ export function mapInstructorApplicationDetailToApplicantRow(
         : base.instructorMemberId,
     programId: toId(dto.programId) || base.programId,
     instructorName: dto.instructorName?.trim() || base.instructorName,
-    lectureExperienceYears:
-      typeof dto.jaLectureExperienceYears === 'number' &&
-      Number.isFinite(dto.jaLectureExperienceYears)
-        ? dto.jaLectureExperienceYears
-        : base.lectureExperienceYears,
+    lectureExperienceYears: resolveInstructorLectureExperienceYears(dto, base),
     educationLevel: dto.educationLevel?.trim() || base.educationLevel,
     educationSchoolName: dto.educationSchoolName?.trim() || base.educationSchoolName,
     contact: dto.contact?.trim() || base.contact,
     email: dto.email?.trim() || base.email,
-    address:
-      [dto.homeAddress, dto.homeAddressDetail]
-        .map(part => part?.trim())
-        .filter(Boolean)
-        .join(' ') || base.address,
+    address: joinInstructorHomeAddress(dto.homeAddress, dto.homeAddressDetail) || base.address,
     appliedAt: dto.submittedAt ?? base.appliedAt,
     affiliation: basicInfoSupplement.affiliation,
     bankName: basicInfoSupplement.bankName,
     accountNumber: basicInfoSupplement.accountNumber,
     accountHolder: basicInfoSupplement.accountHolder,
+    settlementBusinessIncome: basicInfoSupplement.settlementBusinessIncome,
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
     applicationStatus: dto.applicationStatus ?? base.applicationStatus,
     evaluationGrade: formatJaEvaluationGradeLabel(dto.jaEvaluationGrade) ?? base.evaluationGrade,

@@ -3,6 +3,7 @@
  * 학력사항 위에 배치, 이미지 시안과 동일한 4열 그리드(성명, 프로그램 승인 현황, 성별 및 생년월일 등)
  */
 
+import { formatBusinessIncomeDisplay } from '@jakorea/domain/instructor/business-income'
 import { type ReactNode } from 'react'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
@@ -367,7 +368,7 @@ export function ApplicantInstructorBasicInfo({
                   사업소득자 여부
                 </th>
                 <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
-                  {instructor.businessIncomeEarnerStatus ?? '-'}
+                  {formatBusinessIncomeDisplay(instructor.businessIncomeEarnerStatus) ?? '-'}
                 </td>
               </tr>
             </tbody>

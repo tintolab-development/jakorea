@@ -105,6 +105,14 @@ describe('buildLectureFeeBasisViewSegments', () => {
       } as ApplicantInstructorRow)
     ).toEqual(['프로그램 기준', '120,000원'])
   })
+
+  it('강사비 등급만 있고 feePolicy가 없으면 책정 기준을 만들지 않는다', () => {
+    expect(
+      buildLectureFeeBasisViewSegments({
+        instructorFeeGradeLabel: '1급 강사비',
+      } as ApplicantInstructorRow)
+    ).toEqual([])
+  })
 })
 
 describe('parseLectureFeeBasisTypeFromApi', () => {
@@ -116,5 +124,23 @@ describe('parseLectureFeeBasisTypeFromApi', () => {
   it('RECRUITMENT만 특강으로 본다', () => {
     expect(parseLectureFeeBasisTypeFromApi('RECRUITMENT')).toBe('special_lecture')
     expect(parseLectureFeeBasisTypeFromApi('special_lecture')).toBe('special_lecture')
+  })
+})
+
+describe('businessIncomeEarnerStatusPatchField', () => {
+  it('표시값과 같으면 필드를 생략해 기존 신청값(또는 프로필 fallback)을 유지한다', async () => {
+    const { businessIncomeEarnerStatusPatchField } = await import('./applicant-instructor-lecture-fee-basis')
+    expect(businessIncomeEarnerStatusPatchField('해당', '해당')).toEqual({})
+    expect(businessIncomeEarnerStatusPatchField('해당', undefined)).toEqual({})
+  })
+
+  it('바뀌면 신청 override로 보낸다', async () => {
+    const { businessIncomeEarnerStatusPatchField } = await import('./applicant-instructor-lecture-fee-basis')
+    expect(businessIncomeEarnerStatusPatchField('해당', '해당 없음')).toEqual({
+      businessIncomeEarnerStatus: '해당 없음',
+    })
+    expect(businessIncomeEarnerStatusPatchField(null, '해당')).toEqual({
+      businessIncomeEarnerStatus: '해당',
+    })
   })
 })

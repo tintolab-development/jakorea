@@ -84,9 +84,26 @@ export function parseLectureFeeBasisTypeFromApi(
 }
 
 export function parseBusinessIncomeStatus(
-  value: string | undefined
-): ApplicantInstructorBusinessIncomeStatus {
-  return value?.trim() === '해당' ? '해당' : '해당 없음'
+  value: string | null | undefined
+): ApplicantInstructorBusinessIncomeStatus | undefined {
+  const trimmed = value?.trim()
+  if (trimmed === '해당' || trimmed === '해당 없음') return trimmed
+  return undefined
+}
+
+/**
+ * 강사 신청 PATCH `businessIncomeEarnerStatus` 필드.
+ * 표시값(신청값 또는 회원 프로필 fallback)에서 바뀌지 않았으면 필드를 생략해 기존 신청값을 유지한다.
+ * 바뀌지 않은 fallback 값을 보내면 신청 override로 저장되므로 보내지 않는다.
+ */
+export function businessIncomeEarnerStatusPatchField(
+  current: string | null | undefined,
+  nextRaw: string | null | undefined
+): { businessIncomeEarnerStatus?: ApplicantInstructorBusinessIncomeStatus } {
+  const next = parseBusinessIncomeStatus(nextRaw)
+  if (next == null) return {}
+  if (parseBusinessIncomeStatus(current) === next) return {}
+  return { businessIncomeEarnerStatus: next }
 }
 
 export function parseLectureFeeAmountDigits(raw: string | undefined): string {
@@ -316,8 +333,7 @@ export function buildLectureFeeBasisViewSegments(row: ApplicantInstructorRow): s
   const hasExplicitBasis =
     Boolean(row.lectureFeeBasisType) ||
     Boolean(row.lectureFeeBasisDisplay?.trim()) ||
-    Boolean(parseLectureFeeAmountDigits(row.lectureFeeAmount)) ||
-    Boolean(row.instructorFeeGradeLabel?.trim())
+    Boolean(parseLectureFeeAmountDigits(row.lectureFeeAmount))
   if (!hasExplicitBasis) return []
 
   const fee = resolveLectureFeeBasisFromRow(row)

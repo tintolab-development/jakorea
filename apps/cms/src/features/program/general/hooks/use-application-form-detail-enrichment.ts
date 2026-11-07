@@ -31,13 +31,6 @@ import {
   hydrateInstructorApplicationRowFromForm,
   hydrateVolunteerApplicationRowFromForm,
 } from '@/features/program/general/api/adapters/application-form-detail-adapters'
-import { fetchInstructorMemberDetailRemote } from '@/features/user/api/members-api-client'
-import { mapInstructorMemberDetailToUser } from '@/features/user/api/map-member-detail-to-user'
-import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
-import {
-  instructorApplicationRowNeedsMemberBasicInfoSupplement,
-  supplementApplicantInstructorBasicInfoFromMember,
-} from '@/features/program/general/lib/instructor-application-basic-info-supplement'
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
@@ -285,53 +278,19 @@ export function useInstructorApplicationDetailEnrichment(
     targetType: 'INSTRUCTOR_APPLICATION',
   })
 
-  const instructorMemberId = row?.instructorMemberId
-  const mergedFromApplicationDetail = useMemo(() => {
+  // 강사 신청 상세 GET이 정본이다. 회원 상세 등 다른 API로 빈 값을 보완하지 않는다.
+  return useMemo(() => {
     if (!row) return null
-    return detailQuery.data
+    const canonical = detailQuery.data
       ? mapInstructorApplicationDetailToApplicantRow(detailQuery.data, row)
       : row
-  }, [row, detailQuery.data])
-
-  const needsMemberBasicInfo = useMemo(
-    () =>
-      mergedFromApplicationDetail != null &&
-      instructorMemberId != null &&
-      Number.isFinite(instructorMemberId) &&
-      isMembersRemoteEnabled() &&
-      instructorApplicationRowNeedsMemberBasicInfoSupplement(mergedFromApplicationDetail),
-    [instructorMemberId, mergedFromApplicationDetail]
-  )
-
-  const memberBasicInfoQuery = useQuery({
-    queryKey: ['instructor-application-member-basic-info', instructorMemberId],
-    queryFn: async () => {
-      const detail = await fetchInstructorMemberDetailRemote(instructorMemberId!)
-      return mapInstructorMemberDetailToUser(detail)
-    },
-    enabled: Boolean(
-      options?.enabled !== false && needsMemberBasicInfo && instructorMemberId != null
-    ),
-    staleTime: 60_000,
-    retry: false,
-  })
-
-  return useMemo(() => {
-    if (!mergedFromApplicationDetail) return null
-    let canonical = mergedFromApplicationDetail
-    if (memberBasicInfoQuery.data) {
-      canonical = supplementApplicantInstructorBasicInfoFromMember(
-        canonical,
-        memberBasicInfoQuery.data
-      )
-    }
     if (!formResponse && !adminComment) return canonical
     return hydrateInstructorApplicationRowFromForm({
       row: canonical,
       formResponse,
       adminComment,
     })
-  }, [mergedFromApplicationDetail, formResponse, adminComment, memberBasicInfoQuery.data])
+  }, [row, detailQuery.data, formResponse, adminComment])
 }
 
 /** 참여 강사 상세 — 신청 정보 탭 (instructor-applications GET + form_response hydrate) */

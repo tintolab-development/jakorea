@@ -1,3 +1,4 @@
+import { formatBusinessIncomeDisplay } from '@jakorea/domain/instructor/business-income'
 import type { PaymentOrderCalculationLineKind } from '@/features/settlement-management/model/payment-order-admin-list'
 import {
   isGenericLectureFeeCategoryLabel,
@@ -178,8 +179,7 @@ export function resolveLectureFeeStandardAmountDisplay(
 }
 
 export function formatBusinessIncomeEarnerLabel(label?: string | null): string {
-  const trimmed = label?.trim()
-  return trimmed || '해당 없음'
+  return formatBusinessIncomeDisplay(label) ?? (label?.trim() || '해당 없음')
 }
 
 export function needsPaymentStatementJoin(

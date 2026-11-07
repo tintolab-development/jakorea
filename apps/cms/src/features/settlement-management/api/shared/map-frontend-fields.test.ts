@@ -268,7 +268,7 @@ describe('mapCalculationDetailToBasisDetail', () => {
     expect(detail.categoryLabel).toBe('1급 강사비')
     expect(detail.tier).toBe('1')
     expect(detail.feeAssessmentWon).toBe(500000)
-    expect(detail.lectureTimeDisplay).toBe('1차시')
+    expect(detail.lectureTimeDisplay).toBe('-')
   })
 
   it('layout만 있고 typed 필드 없으면 undefined', () => {

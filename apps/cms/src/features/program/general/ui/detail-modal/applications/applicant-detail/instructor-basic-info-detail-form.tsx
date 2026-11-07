@@ -68,6 +68,19 @@ export function formatAccountDisplayContent(fields: AccountDisplayFields, mask: 
   return withProgramDetailTdDivider([left, holder])
 }
 
+/**
+ * 강사 신청 상세 GET `settlement` 표시.
+ * 서버 마스킹 수준(일반 GET=마스킹, 원문 조회=원문) 그대로 렌더링하며 FE 재마스킹·placeholder 생성을 하지 않는다.
+ */
+export function formatServerAccountDisplayContent(fields: AccountDisplayFields): ReactNode {
+  const left = [fields.bankName, fields.accountNumber].filter(Boolean).join(' ')
+  const holder = fields.accountHolder
+  if (!left && !holder) return null
+  if (!holder) return left
+  if (!left) return holder
+  return withProgramDetailTdDivider([left, holder])
+}
+
 export function AffiliationEmploymentStatusField({
   instructorId,
   affiliation,

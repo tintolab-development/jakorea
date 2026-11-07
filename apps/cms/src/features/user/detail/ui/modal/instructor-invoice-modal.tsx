@@ -455,7 +455,7 @@ export function InstructorInvoiceModal({
                                     : 'instructor-invoice-modal__amount--minus'
                                 }
                               >
-                                {item.isPositive !== false ? '+' : ''}
+                                {item.isPositive !== false && item.정산금액 !== 0 ? '+' : ''}
                                 {item.정산금액.toLocaleString()}원
                               </td>
                               <td>

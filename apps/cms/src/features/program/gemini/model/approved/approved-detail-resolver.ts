@@ -1,3 +1,4 @@
+import { formatBusinessIncomeDisplay } from '@jakorea/domain/instructor/business-income'
 import type { GeminiApprovedTrainingDetailResponse } from '@/shared/api/generated/dashboard/schemas/geminiApprovedTrainingDetailResponse'
 import type { GeminiAssignedInstructor } from '@/shared/api/generated/dashboard/schemas/geminiAssignedInstructor'
 import type { GeminiInstructorApplicationItem } from '@/shared/api/generated/dashboard/schemas/geminiInstructorApplicationItem'
@@ -126,7 +127,9 @@ export function mapGeminiApprovedTrainingDetailResponseToDetail(
     managerAccountNumber: trimmed(dto.teacherAccountNumber),
     managerAccountHolder: trimmed(dto.teacherAccountHolder),
     managerInstructorFeeGrade: formatInstructorFeeGradeLabel(dto.teacherInstructorFeeGrade),
-    managerBusinessIncomeLabel: trimmed(dto.teacherBusinessIncomeLabel),
+    managerBusinessIncomeLabel:
+      formatBusinessIncomeDisplay(dto.teacherBusinessIncomeLabel) ??
+      trimmed(dto.teacherBusinessIncomeLabel),
     managerOneLineIntro: trimmed(dto.teacherOneLineIntro),
     managerPosition: trimmed(dto.teacherPosition),
     managerSubject: trimmed(dto.teacherSubject),

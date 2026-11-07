@@ -19,7 +19,7 @@ export interface ParticipatingInstructorEditDraft {
   lectureFeeMeasure: string
   lectureFeeAmount: string
   instructorFeeGrade: string
-  businessIncomeEarnerStatus: ApplicantInstructorBusinessIncomeStatus
+  businessIncomeEarnerStatus?: ApplicantInstructorBusinessIncomeStatus
 }
 
 export interface ParticipatingInstructorDetailSavePayload {
@@ -204,8 +204,7 @@ export function participatingRowToApplicantFeeViewRow(row: ParticipatingInstruct
     Boolean(row.lectureFeeBasisType) ||
     Boolean(row.lectureFeeBasisDisplay?.trim()) ||
     Boolean(row.lectureFeeCategory?.trim()) ||
-    Boolean(parseLectureFeeAmountDigits(row.lectureFeeAmount)) ||
-    Boolean(row.instructorFeeGradeLabel?.trim())
+    Boolean(parseLectureFeeAmountDigits(row.lectureFeeAmount))
   return {
     lectureFeeBasisType: hasRecordedBasis ? fee.type : undefined,
     lectureFeeMeasure: row.lectureFeeMeasure?.trim() || fee.measure,

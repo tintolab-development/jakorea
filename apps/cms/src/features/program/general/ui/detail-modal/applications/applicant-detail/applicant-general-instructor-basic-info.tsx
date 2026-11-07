@@ -28,7 +28,7 @@ import {
 } from './applicant-general-instructor-fee-fields'
 import {
   AffiliationEmploymentStatusField,
-  formatAccountDisplayContent,
+  formatServerAccountDisplayContent,
   formatBirthDateAndAge,
   HomeAddressDisplay,
   InstructorBasicInfoDetailForm,
@@ -75,7 +75,6 @@ export function ApplicantGeneralInstructorBasicInfo({
   persistAffiliationEmploymentRemote = false,
   onAffiliationEmploymentStatusSaved,
 }: ApplicantGeneralInstructorBasicInfoProps) {
-  const shouldMask = maskSensitive && instructor.approvalStatus !== 'approved'
   const isEditMode = mode === 'edit' && draft != null && onDraftChange != null
   const showAdminComment = instructor.approvalStatus === 'approved'
   const showPostApprovalFields = instructor.approvalStatus === 'approved'
@@ -198,7 +197,7 @@ export function ApplicantGeneralInstructorBasicInfo({
           homeAddressDisplay: (
             <HomeAddressDisplay address={instructor.address} mask={maskSensitive} />
           ),
-          accountDisplay: formatAccountDisplayContent(instructor, shouldMask),
+          accountDisplay: formatServerAccountDisplayContent(instructor),
           instructorFeeGradeView: <InstructorFeeGradeView instructor={instructor} />,
           instructorFeeGradeEdit:
             isEditMode && draft && onDraftChange ? (

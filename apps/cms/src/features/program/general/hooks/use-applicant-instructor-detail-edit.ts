@@ -4,6 +4,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import {
   draftToInstructorSavePayload,
@@ -13,6 +14,7 @@ import {
 } from '@/features/program/general/lib/applicant-instructor-detail-edit'
 import {
   INSTRUCTOR_FEE_POLICY_INVALID_MESSAGE,
+  businessIncomeEarnerStatusPatchField,
   toInstructorApplicationFeePolicy,
 } from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
 import {
@@ -21,6 +23,7 @@ import {
 } from '@/features/program/general/api/applications-api-client'
 import { mapInstructorApplicationDetailToApplicantRow } from '@/features/program/general/api/adapters/general-applications-adapters'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
+import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { showUpdateCompletedAlert } from '@/shared/ui'
 
 export interface UseApplicantInstructorDetailEditParams {
@@ -32,6 +35,7 @@ export function useApplicantInstructorDetailEdit({
   instructor,
   onSaved,
 }: UseApplicantInstructorDetailEditParams) {
+  const queryClient = useQueryClient()
   const [isEditing, setIsEditing] = useState(false)
   const [draft, setDraft] = useState<ApplicantInstructorEditDraft | null>(null)
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
@@ -89,9 +93,15 @@ export function useApplicantInstructorDetailEdit({
       await updateInstructorApplication(instructor.id, {
         managerComment: payload.managerComment ?? null,
         feePolicy,
-        businessIncomeEarnerStatus: payload.businessIncomeEarnerStatus,
+        ...businessIncomeEarnerStatusPatchField(
+          instructor.businessIncomeEarnerStatus,
+          payload.businessIncomeEarnerStatus
+        ),
       })
       const refreshed = await fetchInstructorApplicationDetailRemote(instructor.id)
+      void queryClient.invalidateQueries({
+        queryKey: generalApplicationsQueryKeys.instructorDetail(instructor.id),
+      })
       onSaved(mapInstructorApplicationDetailToApplicantRow(refreshed, instructor))
       resetEditState()
       showUpdateCompletedAlert()
@@ -105,7 +115,7 @@ export function useApplicantInstructorDetailEdit({
       })
       return false
     }
-  }, [draft, instructor, onSaved, resetEditState])
+  }, [draft, instructor, onSaved, queryClient, resetEditState])
 
   return {
     isEditing,

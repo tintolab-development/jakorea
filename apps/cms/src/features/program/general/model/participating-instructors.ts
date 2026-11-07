@@ -68,6 +68,8 @@ export interface ParticipatingInstructorRow {
   bankName?: string
   accountNumber?: string
   accountHolder?: string
+  /** 강사 신청 상세 `settlement.businessIncome` (null·생략이면 undefined) */
+  settlementBusinessIncome?: boolean
   profileImageUrl?: string
   oneLineIntro?: string
   educationLevel?: string
