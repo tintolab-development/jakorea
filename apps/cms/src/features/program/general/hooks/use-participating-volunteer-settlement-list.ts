@@ -53,7 +53,7 @@ export function useParticipatingVolunteerSettlementList(input: {
 
   const settlementItems = useMemo(() => {
     if (!queryEnabled) return []
-    return settlementsQuery.data ?? []
+    return settlementsQuery.data?.items ?? []
   }, [queryEnabled, settlementsQuery.data])
 
   const rows = useMemo(() => {

@@ -27,12 +27,20 @@ import type {
   SettlementAggregateResponse,
   SettlementConfigUpdateRequest,
 } from '@/shared/api/generated/settlement/schemas'
+import type { SettlementListResponse } from '@/shared/api/generated/settlement/schemas/settlementListResponse'
 
 const settlementApi = getJAKoreaCMSBackendAPISettlementSubset()
 
 export async function fetchSettlementsPageRemote(
   params: ListSettlementsParams
 ): Promise<PageResponseSettlementListItemResponse> {
+  return unwrapApiBody(await settlementApi.listSettlements(params))
+}
+
+/** `GET /api/admin/settlements` 원 응답 (instructorSessionSummary 포함). 기존 페이지 호출은 fetchSettlementsPageRemote 유지 */
+export async function fetchSettlementListPageRemote(
+  params: ListSettlementsParams
+): Promise<SettlementListResponse> {
   return unwrapApiBody(await settlementApi.listSettlements(params))
 }
 
