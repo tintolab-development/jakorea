@@ -30,6 +30,7 @@ export interface ProgramResponse {
   startDate?: string;
   endDate?: string;
   applicationStartDate?: string;
+  /** 참여자 모집 마감 Instant. rounds date-only와 혼용하지 말 것. */
   applicationEndDate?: string;
   status?: string;
   /** 프로그램 진행 단계(카드/필터 축). SCHEDULED·RECRUITING(예정)·IN_PROGRESS·COMPLETED는 상호 배타. */
@@ -42,6 +43,7 @@ export interface ProgramResponse {
   detailedProgramId?: number;
   detailedProgramName?: string;
   titleEn?: string;
+  /** 대표 프로그램명 정본. 공고명 title로 채우지 않음. */
   mainTitle?: string;
   textbookName?: string;
   textbookNameEn?: string;
@@ -86,7 +88,7 @@ export interface ProgramResponse {
   recruitmentGuide?: string;
   learningSupportContent?: string;
   otherMatters?: string;
-  /** 참여자 모집 비고. 강사·봉사자 nested remarks와 별개. otherMatters(기타사항)와 별개. 없으면 null. */
+  /** 참여자 모집 비고 정본. nested serviceDetailJson remarks는 미러. oneLineIntroduction/otherMatters/recruitments[].remarks와 별개. 없으면 null. */
   remarks?: string | null;
   /** 참여자 지원 방법 자유 텍스트. 강사·봉사자 nested applicationMethod와 별개. applicationPathId가 아님. 없으면 null. */
   applicationMethod?: string | null;
@@ -99,6 +101,7 @@ export interface ProgramResponse {
   serviceDetailJson?: string;
   attachmentFileNames?: string[];
   adminAssignments?: ProgramAdminAssignmentResponse[];
+  /** 프로그램 일정 Instant startAt/endAt. rounds의 date-only와 혼용하지 말 것. */
   schedules?: ProgramScheduleResponse[];
   recruitments?: ProgramRecruitmentResponse[];
   settlementPolicy?: ProgramSettlementPolicyResponse;

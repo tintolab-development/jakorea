@@ -34,6 +34,7 @@ export interface ProgramUpdateRequest {
   businessEndDate?: string;
   businessPeriod?: ProgramPeriodRequest;
   applicationStartDate?: string;
+  /** 참여자 모집 마감. 날짜만 YYYY-MM-DD이면 해당일 23:59:59.999 Asia/Seoul로 저장. 시각이 있는 ISO는 그대로. 운영기간 businessEndDate와 별개. */
   applicationEndDate?: string;
   /** 모집 유형별 canonical 설정. 지정 시 legacy applicationStartDate/applicationEndDate보다 우선 */
   recruitments?: ProgramRecruitmentRequest[];
@@ -43,6 +44,7 @@ export interface ProgramUpdateRequest {
   /** 교육 진행 구조 */
   educationStructure?: ProgramUpdateRequestEducationStructure;
   titleEn?: string;
+  /** 대표 프로그램명 정본. write alias representativeProgramNameKo/mainProgramNameKo. 공고명 title/announcementTitle/nameKo와 별개. 비우기는 clearFields mainTitle. */
   mainTitle?: string;
   /** 명시적으로 입력하는 교재명. detailedProgramName/curriculumTitle alias는 구 클라이언트 호환용이며 master 세부 프로그램명을 변경하지 않는다. */
   textbookName?: string;
@@ -79,6 +81,7 @@ export interface ProgramUpdateRequest {
   contactEmail?: string;
   contactPhone?: string;
   oneLineIntroduction?: string;
+  /** 참여자 모집 비고 정본. GET remarks와 왕복. nested는 미러. 비우기는 clearFields remarks. */
   remarks?: string;
   educationTargetDetail?: string;
   venueDetail?: string;
@@ -106,10 +109,11 @@ export interface ProgramUpdateRequest {
   attachmentFileNames?: string[];
   rounds?: ProgramRoundRequest[];
   adminAssignments?: ProgramAdminAssignmentRequest[];
+  /** 공통정보 PATCH에서는 생략. []는 전체 삭제. lock 행 변경/누락 시 409 PROGRAM_SCHEDULE_LOCKED. */
   schedules?: ProgramScheduleRequest[];
   wagePolicies?: ProgramWagePolicyRequest[];
   paymentItems?: ProgramSettlementPaymentItemRequest[];
-  /** 교육받은 교사: 요청 envelope의 program.*와 registration.overlay.*를 키 단위로 저장 snapshot에 덮어씁니다. 보낸 키는 교체하고 생략한 키는 유지합니다. registration/overlay 전체를 교체하지 않으므로 설문·공고·KPI·교육과정 nested 값이 보존됩니다. participantRecruitmentInfo는 보내면 교체(라벨+컬럼 동시 반영), 생략하면 유지합니다. RFC-7396 깊은 병합은 하지 않으며 루트 generalCommonInfo는 제거합니다. 일반 프로그램은 기존 RFC-7396 병합이며 설문 3종(survey, satisfaction, lecture_evaluation)을 유지합니다. UJAT 설문은 survey, volunteer_satisfaction, school_satisfaction, lecture_evaluation 4종이며 satisfaction으로 접지 않고, overlay ujat.basicInfo.surveyItems 4 boolean이 있으면 keys로 덮어쓰지 않습니다. 모집 행만 PATCH하면 설문 keys/surveyItems는 재계산하지 않습니다. */
+  /** 교육받은 교사: program.* / registration.overlay.* 키 단위 overlay. participantRecruitmentInfo는 보낸 키만 덮음(통째 교체·RFC-7396 깊은 병합 아님). 비고/대표명 정본은 루트 remarks/mainTitle. */
   serviceDetailJson?: string;
   /** PATCH에서 명시적으로 null로 초기화할 필드 목록. 생략/null은 기존 값 유지 */
   clearFields?: string[];
