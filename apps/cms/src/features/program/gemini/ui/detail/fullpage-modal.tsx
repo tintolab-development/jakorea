@@ -281,7 +281,7 @@ export function GeminiRecruitmentDetailFullPageModal({
   }, [onClose, queryClient, recruitmentId, showAlert])
 
   const open = Boolean(recruitmentId)
-  const deleteGuide = resolveGeminiDeleteGuideModalCopy('공고', 1)
+  const deleteGuide = resolveGeminiDeleteGuideModalCopy('공고', 1, detail?.title ? [detail.title] : [])
 
   return (
     <>

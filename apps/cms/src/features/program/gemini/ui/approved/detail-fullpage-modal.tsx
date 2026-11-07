@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
-import { Result } from 'antd'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
 import { sanitizeProgramPrivacyOverlay } from '@/features/program/shared/lib/program-my-assignment'
@@ -10,20 +9,18 @@ import {
   type GeminiApprovedTrainingPrivacyUnmasked,
 } from '../../api/visiting-training/service'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
-import { CmsButton, DeleteGuideModal, showDeleteCompletedAlert } from '@/shared/ui'
-import {
-  getApiErrorHttpStatus,
-  readApiErrorAlertMessage,
-} from '@/shared/lib/extract-api-error-message'
+import { DeleteGuideModal, showDeleteCompletedAlert, useCmsAlert } from '@/shared/ui'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { ProgramDetailLnbDeleteButton } from '@/features/program/shared/ui/program-detail/lnb-delete-button'
 import { useDeleteGeminiApprovedTrainingsMutation } from '../../api/visiting-training/hooks'
 import {
-  geminiApprovedTrainingDeleteBlocked,
+  GEMINI_APPROVED_TRAINING_DELETE_BLOCKED_CODE,
   resolveGeminiDeleteBlockedModalCopy,
   resolveGeminiDeleteGuideModalCopy,
 } from '../../lib/delete-guide'
+import { formatGeminiApiError } from '../../lib/gemini-api-error'
+import { getGeneralProgramApiErrorCode } from '@/features/program/general/api/get-general-program-api-error'
 import { DeleteBlockedGuideModal } from '@/shared/ui/delete-blocked-guide-modal'
 import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
 import { DetailModalSidebar } from '@/shared/ui/detail-modal-sidebar'
@@ -35,14 +32,13 @@ import {
   LnbIconProjectInfo,
 } from '@/features/program/general/ui/detail-modal/program-detail-lnb-icons'
 import { useGeminiApprovedTrainingDetail } from '../../hooks/use-gemini-approved-training-detail'
-import { useToday } from '../../hooks/use-today'
 import { buildGeminiApprovedTrainingBreadcrumbItems } from '../../lib/approved/detail-breadcrumb'
 import {
   GEMINI_APPROVED_TRAINING_LNB_PARAM,
   parseGeminiApprovedTrainingDetailLnb,
   type GeminiApprovedTrainingDetailLnbKey,
 } from '../../lib/approved/detail-url'
-import { formatConfirmedTrainingDatetimeDisplay } from '../../lib/approved/format-display'
+import { formatApprovedTrainingDeleteDisplayName } from '../../lib/approved/format-display'
 import { GeminiApprovedTrainingDetailInstructorApplicationTab } from './detail-instructor-application-tab'
 import { GeminiApprovedTrainingDetailProgramInfoTab } from './detail-program-info-tab'
 import '@/features/program/general/ui/detail-modal/program-detail-fullpage-modal.css'
@@ -66,18 +62,11 @@ export function GeminiApprovedTrainingDetailFullPageModal({
   const activeLnb = parseGeminiApprovedTrainingDetailLnb(
     searchParams.get(GEMINI_APPROVED_TRAINING_LNB_PARAM)
   )
-  const todayKey = useToday()
-  const {
-    detail,
-    isLoading,
-    isError: isDetailError,
-    error: detailError,
-    isRefetching: isDetailRefetching,
-    refetch: refetchDetail,
-  } = useGeminiApprovedTrainingDetail(approvedTrainingId)
+  const { detail, isLoading } = useGeminiApprovedTrainingDetail(approvedTrainingId)
   const [unmasked, setUnmasked] = useState<GeminiApprovedTrainingPrivacyUnmasked | null>(null)
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
+  const { showAlert } = useCmsAlert()
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [deleteBlockedOpen, setDeleteBlockedOpen] = useState(false)
   const [deleteBlockedCopy, setDeleteBlockedCopy] = useState({ title: '', description: '' })
@@ -87,7 +76,7 @@ export function GeminiApprovedTrainingDetailFullPageModal({
     personalInfoRevealed,
     openPersonalInfoRevealConfirm,
     confirmModal: personalInfoRevealModal,
-  programPrivacyPending,
+    programPrivacyPending,
   } = usePersonalInfoReveal({
     privacyScope: 'program',
     programId: detail?.programId,
@@ -117,6 +106,8 @@ export function GeminiApprovedTrainingDetailFullPageModal({
     return {
       ...detail,
       managerNameKo: unmasked.teacherName ?? detail.managerNameKo,
+      managerGender: unmasked.teacherGender ?? detail.managerGender,
+      managerBirthDate: unmasked.teacherBirthDate ?? detail.managerBirthDate,
       managerContact: unmasked.teacherPhone ?? detail.managerContact,
       managerEmail: unmasked.teacherEmail ?? detail.managerEmail,
       managerHomeAddress: unmasked.teacherHomeAddress ?? detail.managerHomeAddress,
@@ -135,12 +126,7 @@ export function GeminiApprovedTrainingDetailFullPageModal({
     }
   }, [detail, personalInfoRevealed, unmasked])
 
-  const trainingDatetimeLabel = detail ? formatConfirmedTrainingDatetimeDisplay(detail) : '-'
-  const detailTitle = detail
-    ? detail.instructorAssigned && trainingDatetimeLabel !== '-'
-      ? `${detail.institutionName} (${trainingDatetimeLabel})`
-      : detail.institutionName
-    : '승인 연수 상세'
+  const detailTitle = detail ? `승인 연수 상세 (${detail.institutionName})` : '승인 연수 상세'
 
   const headerBreadcrumbItems = useMemo(() => {
     return buildGeminiApprovedTrainingBreadcrumbItems({
@@ -180,59 +166,58 @@ export function GeminiApprovedTrainingDetailFullPageModal({
   )
 
   const handleDeleteClick = useCallback(() => {
-    if (detail && geminiApprovedTrainingDeleteBlocked(detail)) {
-      setDeleteBlockedCopy(resolveGeminiDeleteBlockedModalCopy('연수', 1))
-      setDeleteBlockedOpen(true)
-      return
-    }
     setDeleteModalOpen(true)
-  }, [detail])
+  }, [])
 
   const handleConfirmDelete = useCallback(async () => {
     setDeleteModalOpen(false)
-    if (detail && geminiApprovedTrainingDeleteBlocked(detail)) {
-      setDeleteBlockedCopy(resolveGeminiDeleteBlockedModalCopy('연수', 1))
-      setDeleteBlockedOpen(true)
-      return
-    }
     try {
       const result = await deleteApprovedTrainings([approvedTrainingId])
       if (result.failureCount > 0) {
-        setDeleteBlockedCopy(resolveGeminiDeleteBlockedModalCopy('연수', 1))
-        setDeleteBlockedOpen(true)
+        if (
+          result.failures.some(
+            failure => failure.code === GEMINI_APPROVED_TRAINING_DELETE_BLOCKED_CODE
+          )
+        ) {
+          setDeleteBlockedCopy(resolveGeminiDeleteBlockedModalCopy('연수', 1))
+          setDeleteBlockedOpen(true)
+        } else {
+          showAlert({
+            title: '삭제 실패 안내',
+            content:
+              result.failures
+                .map(failure => failure.message || failure.code)
+                .filter((message): message is string => Boolean(message))
+                .join('\n') || '연수 삭제를 완료하지 못했습니다.',
+          })
+        }
         return
       }
       onClose()
       showDeleteCompletedAlert()
-    } catch {
-      setDeleteBlockedCopy(resolveGeminiDeleteBlockedModalCopy('연수', 1))
-      setDeleteBlockedOpen(true)
+    } catch (error) {
+      if (getGeneralProgramApiErrorCode(error) === GEMINI_APPROVED_TRAINING_DELETE_BLOCKED_CODE) {
+        setDeleteBlockedCopy(resolveGeminiDeleteBlockedModalCopy('연수', 1))
+        setDeleteBlockedOpen(true)
+        return
+      }
+      showAlert({
+        title: '삭제 실패 안내',
+        content: formatGeminiApiError(
+          error,
+          '연수 삭제를 완료하지 못했습니다.\n잠시 후 다시 시도해 주세요.'
+        ),
+      })
     }
-  }, [approvedTrainingId, deleteApprovedTrainings, detail, onClose])
+  }, [approvedTrainingId, deleteApprovedTrainings, onClose, showAlert])
 
-  const deleteGuide = resolveGeminiDeleteGuideModalCopy('연수', 1)
+  const deleteGuide = resolveGeminiDeleteGuideModalCopy(
+    '연수',
+    1,
+    detail ? [formatApprovedTrainingDeleteDisplayName(detail)] : []
+  )
 
-  const detailBodyError =
-    isLoading || detail
-      ? null
-      : isDetailError && getApiErrorHttpStatus(detailError) !== 404
-        ? (
-            <Result
-              status="error"
-              title="승인 연수 정보를 불러오지 못했습니다."
-              subTitle={readApiErrorAlertMessage(detailError, '잠시 후 다시 시도해 주세요.')}
-              extra={
-                <CmsButton
-                  variant="secondary"
-                  size="large"
-                  loading={isDetailRefetching}
-                  onClick={refetchDetail} >
-                  다시 시도
-                </CmsButton>
-              }
-            />
-          )
-        : '승인 연수 정보를 찾을 수 없습니다.'
+  const detailBodyError = isLoading || detail ? null : '승인 연수 정보를 찾을 수 없습니다.'
 
   return (
     <DetailFullPageModal
@@ -244,72 +229,71 @@ export function GeminiApprovedTrainingDetailFullPageModal({
       headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
       className="program-detail-fullpage-modal gemini-recruitment-detail-fullpage-modal"
       sidebar={
-          <DetailModalSidebar
-            navAriaLabel="승인 연수 상세 메뉴"
-            items={SIDEBAR_ITEMS}
-            activeKey={activeLnb}
-            expandedGroupKeys={[]}
-            onSelectTop={handleSidebarSelectTop}
-            onSelectChild={() => undefined}
-            footer={
-              canWrite && detail ? (
-                <ProgramDetailLnbDeleteButton onClick={handleDeleteClick} />
-              ) : null
-            }
-          />
-        }
-      >
-        {detail && displayedDetail ? (
-          <>
-            {activeLnb === 'info' ? (
-              <>
-                <div className="gemini-recruitment-detail__header-actions program-detail-fullpage-modal__header-actions">
-                  <PersonalInfoRevealButton disabled={programPrivacyPending}
-                    labelMode="stickyReveal"
-                    revealed={personalInfoRevealed}
-                    cmsSize="large"
-                    onClick={openPersonalInfoRevealConfirm} />
-                </div>
-                <div className="program-detail-fullpage-modal__info-tab">
-                  <GeminiApprovedTrainingDetailProgramInfoTab
-                    detail={displayedDetail}
-                    todayKey={todayKey}
-                    personalInfoRevealed={personalInfoRevealed}
-                  />
-                </div>
-              </>
-            ) : activeLnb === 'instructors' ? (
-              <GeminiApprovedTrainingDetailInstructorApplicationTab
-                approvedTrainingId={approvedTrainingId}
-              />
-            ) : detail.programId ? (
-              <div className="program-detail-fullpage-modal__info-tab program-detail-fullpage-modal__managers-tab">
-                <ProgramManagersTab programId={detail.programId} maskSensitive />
-              </div>
-            ) : (
-              <div className="program-detail-fullpage-modal__info-tab program-detail-fullpage-modal__managers-tab">
-                담당자 조회를 위한 모집 프로그램 ID가 없습니다.
-              </div>
-            )}
-          </>
-        ) : null}
-        {personalInfoRevealModal}
-        <DeleteGuideModal
-          open={deleteModalOpen}
-          title={deleteGuide.title}
-          lines={deleteGuide.lines}
-          confirmText="삭제"
-          onConfirm={() => {
-            void handleConfirmDelete()
-          }}
-          onCancel={() => setDeleteModalOpen(false)}
+        <DetailModalSidebar
+          navAriaLabel="승인 연수 상세 메뉴"
+          items={SIDEBAR_ITEMS}
+          activeKey={activeLnb}
+          expandedGroupKeys={[]}
+          onSelectTop={handleSidebarSelectTop}
+          onSelectChild={() => undefined}
+          footer={
+            canWrite && detail ? <ProgramDetailLnbDeleteButton onClick={handleDeleteClick} /> : null
+          }
         />
-        <DeleteBlockedGuideModal
-          open={deleteBlockedOpen}
-          onClose={() => setDeleteBlockedOpen(false)}
-          title={deleteBlockedCopy.title}
-          description={deleteBlockedCopy.description}
-        />
+      }
+    >
+      {detail && displayedDetail ? (
+        <>
+          {activeLnb === 'info' ? (
+            <>
+              <div className="gemini-recruitment-detail__header-actions program-detail-fullpage-modal__header-actions">
+                <PersonalInfoRevealButton
+                  disabled={programPrivacyPending}
+                  labelMode="stickyReveal"
+                  revealed={personalInfoRevealed}
+                  cmsSize="large"
+                  onClick={openPersonalInfoRevealConfirm}
+                />
+              </div>
+              <div className="program-detail-fullpage-modal__info-tab">
+                <GeminiApprovedTrainingDetailProgramInfoTab
+                  detail={displayedDetail}
+                  personalInfoRevealed={personalInfoRevealed}
+                />
+              </div>
+            </>
+          ) : activeLnb === 'instructors' ? (
+            <GeminiApprovedTrainingDetailInstructorApplicationTab
+              approvedTrainingId={approvedTrainingId}
+            />
+          ) : detail.programId ? (
+            <div className="program-detail-fullpage-modal__info-tab program-detail-fullpage-modal__managers-tab">
+              <ProgramManagersTab programId={detail.programId} maskSensitive />
+            </div>
+          ) : (
+            <div className="program-detail-fullpage-modal__info-tab program-detail-fullpage-modal__managers-tab">
+              담당자 조회를 위한 모집 프로그램 ID가 없습니다.
+            </div>
+          )}
+        </>
+      ) : null}
+      {personalInfoRevealModal}
+      <DeleteGuideModal
+        open={deleteModalOpen}
+        title={deleteGuide.title}
+        lines={deleteGuide.lines}
+        confirmText="삭제"
+        onConfirm={() => {
+          void handleConfirmDelete()
+        }}
+        onCancel={() => setDeleteModalOpen(false)}
+      />
+      <DeleteBlockedGuideModal
+        open={deleteBlockedOpen}
+        onClose={() => setDeleteBlockedOpen(false)}
+        title={deleteBlockedCopy.title}
+        description={deleteBlockedCopy.description}
+      />
     </DetailFullPageModal>
   )
 }

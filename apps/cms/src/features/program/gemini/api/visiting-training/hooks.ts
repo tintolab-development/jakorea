@@ -11,6 +11,8 @@ import { geminiApprovedTrainingService } from '../approved-training-service'
 import { shouldUseGeminiVisitingTrainingRemoteApi } from './capabilities'
 import { geminiVisitingTrainingQueryKeys } from './query-keys'
 import { mapGeminiRecruitmentUiStatusToPeriodStatusWire } from '../../lib/recruitment/map-period-status-wire'
+import { updateTeacherEmploymentStatusRemote } from '@/features/user/api/members-api-client'
+import type { SchoolTeacherEmploymentStatus } from '@/types/user'
 import {
   approveGeminiInstructorApplication,
   getGeminiApprovedTrainingDetail,
@@ -276,6 +278,28 @@ async function invalidateGeminiInstructorApprovalQueries(
   })
   await queryClient.invalidateQueries({
     queryKey: geminiVisitingTrainingQueryKeys.approvedList(),
+  })
+}
+
+export function usePatchGeminiApprovedTeacherEmploymentMutation(approvedTrainingId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: {
+      teacherSchoolOrganizationId: number
+      teacherMemberId: number
+      employmentStatus: SchoolTeacherEmploymentStatus
+    }) =>
+      updateTeacherEmploymentStatusRemote(
+        input.teacherSchoolOrganizationId,
+        input.teacherMemberId,
+        input.employmentStatus
+      ),
+    retry: false,
+    onSettled: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: geminiVisitingTrainingQueryKeys.approvedDetail(approvedTrainingId),
+      })
+    },
   })
 }
 

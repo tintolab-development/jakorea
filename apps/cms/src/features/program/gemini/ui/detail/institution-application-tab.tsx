@@ -136,9 +136,11 @@ function filterRows(rows: GeminiInstitutionApplicationRow[], filters: PendingFil
 }
 
 function resolveDecisionSubjectName(row: GeminiInstitutionApplicationRow | undefined): string {
+  const institution = row?.institutionName.trim()
+  if (institution && institution !== '-') return institution
   const teacher = row?.teacherName.trim()
   if (teacher && teacher !== '-') return teacher
-  return row?.institutionName.trim() || '신청자'
+  return '기관'
 }
 
 export function GeminiInstitutionApplicationTab({
@@ -494,12 +496,13 @@ export function GeminiInstitutionApplicationTab({
 
       <ProgramApplicationRejectModal
         open={bulkRejectOpen}
-        audience="member"
+        audience="institution"
         variant={rejectTargetCount > 1 ? 'bulk' : 'single'}
         subjectName={rejectSubjectName}
         selectionCount={rejectTargetCount}
         confirmLoading={decisionSubmitting}
         notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.timedBulk}
+        notifyTimingOptions="two"
         onCancel={() => {
           if (decisionSubmitting) return
           setBulkRejectOpen(false)

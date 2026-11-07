@@ -28,7 +28,7 @@ export function hasPaidDuplicateImportResults(
   })
 }
 
-export function isGeminiPerformancePaidBlockedText(text: string | undefined): boolean {
+export function isGeminiPerformancePaidBlockedText(text: string | null | undefined): boolean {
   if (!text?.trim()) return false
   if (text.includes('GEMINI_TRAINING_REPORT_ACCOUNT_PAID')) return true
   if (text.includes('계좌 지급이 완료')) return true

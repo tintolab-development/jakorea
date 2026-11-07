@@ -369,6 +369,11 @@ export async function deleteGeminiRecruitments(ids: string[]): Promise<void> {
 export type GeminiApprovedTrainingsDeleteResult = {
   successIds: string[]
   failureCount: number
+  failures: Array<{
+    id: string
+    code?: string
+    message?: string
+  }>
 }
 
 export async function deleteGeminiApprovedTrainings(
@@ -381,13 +386,21 @@ export async function deleteGeminiApprovedTrainings(
   }
   if (numericIds.length === 1) {
     await deleteGeminiApprovedTrainingRemote(String(numericIds[0]))
-    return { successIds: [String(numericIds[0])], failureCount: 0 }
+    return { successIds: [String(numericIds[0])], failureCount: 0, failures: [] }
   }
   const result = await bulkDeleteGeminiApprovedTrainingsRemote(numericIds)
   const successIds = (result?.successIds ?? []).map(String)
+  const failures = (result?.failures ?? [])
+    .filter(failure => failure.id != null)
+    .map(failure => ({
+      id: String(failure.id),
+      ...(failure.code ? { code: failure.code } : {}),
+      ...(failure.message ? { message: failure.message } : {}),
+    }))
   return {
     successIds,
     failureCount: result?.failureCount ?? numericIds.length - successIds.length,
+    failures,
   }
 }
 

@@ -153,17 +153,13 @@ export function matchUploadRowsAgainstExistingReports(
   let paidDuplicate = false
   uploadRows.forEach((upload, index) => {
     const display = displayRows[index]
-    const memberId = display?.instructorMemberId
-      ? Number(display.instructorMemberId)
-      : undefined
     const key = buildGeminiPerformanceServerMatchKey({
       programId,
       trainingDate: display?.trainingDate || upload.trainingDate,
       trainingLocation: upload.trainingLocation,
       schoolOrOrganizationName: upload.school,
       trainingStartTime: upload.trainingStartTime,
-      instructorMemberId:
-        memberId != null && Number.isFinite(memberId) && memberId > 0 ? memberId : null,
+      instructorMemberId: null,
       instructorName: upload.instructorName,
       instructorPhone: upload.contact,
     })

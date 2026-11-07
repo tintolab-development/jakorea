@@ -5,22 +5,14 @@ import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
-import { useCmsAlert,
-  FilterTableToolbarButton
-} from '@/shared/ui'
+import { FilterTableToolbarButton, useCmsAlert } from '@/shared/ui'
 import { DeleteGuideModal } from '@/shared/ui/delete-guide-modal'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   useApproveGeminiInstructorApplicationMutation,
   useGeminiApprovedInstructorApplicationsQuery,
   useRejectGeminiInstructorApplicationMutation,
-  useResendGeminiInstructorApplicationNotificationMutation,
 } from '../../api/visiting-training/hooks'
-import { SendNotiButton } from '@/features/program/shared/ui/detail-modal/components/send-noti-button'
-import { ApplicantNotificationResendModal } from '@/features/program/shared/ui/detail-modal/components/applicant-notification-resend-modal'
-import { toApplicantNotificationResendNotifyOptions } from '@/features/program/general/lib/applicant-notification-resend'
-import { toInstructorApplicationNotificationRequest } from '@/features/program/general/lib/instructor-application-notification'
-import { showNotificationResendRequestCompletedAlert } from '@/shared/ui'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-basic-info.css'
 import {
   buildGeminiInstructorApproveMessageLines,
@@ -59,14 +51,14 @@ const INITIAL_PENDING_FILTERS: PendingFilters = {
 
 const COL = {
   no: TABLE_COLUMN_WIDTHS.index,
-  instructorName: 120,
-  homeRegion: 170,
-  experience: 120,
-  grade: 120,
-  contact: 140,
-  email: 180,
-  monthlyAssignment: 130,
-  approvalStatus: 280,
+  instructorName: 140,
+  homeRegion: 220,
+  experience: 140,
+  grade: 140,
+  contact: 220,
+  email: 220,
+  monthlyAssignment: 140,
+  approvalStatus: 160,
 } as const
 
 const TABLE_SCROLL_X =
@@ -79,8 +71,7 @@ const TABLE_SCROLL_X =
   COL.contact +
   COL.email +
   COL.monthlyAssignment +
-  COL.approvalStatus +
-  48
+  COL.approvalStatus
 
 function approvalStatusText(status: GeminiInstructorApplicationApprovalStatus) {
   const base = 'gemini-approved-instructor-application-tab__approval'
@@ -91,14 +82,6 @@ function approvalStatusText(status: GeminiInstructorApplicationApprovalStatus) {
         ? `${base}--approved`
         : `${base}--rejected`
   return <span className={`${base} ${modifier}`}>{APPROVAL_STATUS_LABEL[status]}</span>
-}
-
-function toInstructorResendApprovalStatus(
-  status: GeminiInstructorApplicationApprovalStatus
-): 'approved' | 'rejected' | null {
-  if (status === 'APPROVED') return 'approved'
-  if (status === 'REJECTED') return 'rejected'
-  return null
 }
 
 function toHomeRegionText(row: GeminiInstructorApplicationRow): string {
@@ -119,8 +102,6 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
   const [confirmModal, setConfirmModal] = useState<
     { mode: 'approve'; target: GeminiInstructorApplicationRow } | { mode: 'change' } | null
   >(null)
-  const [notificationResendTarget, setNotificationResendTarget] =
-    useState<GeminiInstructorApplicationRow | null>(null)
 
   const listQuery = useGeminiApprovedInstructorApplicationsQuery(approvedTrainingId, {
     instructorName: appliedFilters.instructorName,
@@ -132,8 +113,6 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
   })
   const approveMutation = useApproveGeminiInstructorApplicationMutation(approvedTrainingId)
   const rejectMutation = useRejectGeminiInstructorApplicationMutation(approvedTrainingId)
-  const resendNotificationMutation =
-    useResendGeminiInstructorApplicationNotificationMutation(approvedTrainingId)
 
   const rows = useMemo(
     () => listQuery.data?.pages.flatMap(page => page.rows) ?? [],
@@ -269,7 +248,7 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
         align: 'center',
       },
       {
-        title: '배정횟수(월별)',
+        title: '배정횟수(연도별)',
         dataIndex: 'monthlyAssignmentCount',
         key: 'monthlyAssignmentCount',
         width: COL.monthlyAssignment,
@@ -281,29 +260,11 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
         key: 'approvalStatus',
         width: COL.approvalStatus,
         align: 'center',
-        render: (_: unknown, row: GeminiInstructorApplicationRow) => {
-          const resendStatus = toInstructorResendApprovalStatus(row.approvalStatus)
-          return (
-            <div className="applicant-institution-basic-info__approval-status-row">
-              {approvalStatusText(row.approvalStatus)}
-              {canWrite && resendStatus ? (
-                <>
-                  <span
-                    className="applicant-institution-basic-info__approval-status-vbar"
-                    aria-hidden
-                  />
-                  <SendNotiButton
-                    mode="resend"
-                    onClick={() => setNotificationResendTarget(row)}
-                  />
-                </>
-              ) : null}
-            </div>
-          )
-        },
+        render: (_: unknown, row: GeminiInstructorApplicationRow) =>
+          approvalStatusText(row.approvalStatus),
       },
     ],
-    [canWrite]
+    []
   )
 
   return (
@@ -361,9 +322,7 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
         description={`총 ${totalElements.toLocaleString()}건`}
         actions={
           canWrite ? (
-            <FilterTableToolbarButton
-              variant="secondary"
-              onClick={handleBulkApprove} >
+            <FilterTableToolbarButton variant="secondary" onClick={handleBulkApprove}>
               {approveButtonLabel}
             </FilterTableToolbarButton>
           ) : null
@@ -387,6 +346,7 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
           rowSelection={
             canWrite
               ? {
+                  columnTitle: '선택',
                   type: 'radio',
                   columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
                   selectedRowKeys,
@@ -415,56 +375,6 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
         confirmText={confirmModal?.mode === 'change' ? '변경' : '승인'}
         confirmVariant="primary"
         zIndex={2600}
-      />
-      <ApplicantNotificationResendModal
-        open={notificationResendTarget != null}
-        subjectKind="instructor"
-        subjectName={notificationResendTarget?.instructorName ?? ''}
-        approvalStatus={
-          notificationResendTarget?.approvalStatus === 'REJECTED' ? 'rejected' : 'approved'
-        }
-        confirmLoading={resendNotificationMutation.isPending}
-        zIndex={2700}
-        onCancel={() => {
-          if (resendNotificationMutation.isPending) return
-          setNotificationResendTarget(null)
-        }}
-        onConfirm={payload => {
-          if (!notificationResendTarget || resendNotificationMutation.isPending) return
-          if (
-            payload.notifyTiming === 'manual' &&
-            (!payload.manualNotifyAt || !payload.manualNotifyAt.isAfter(new Date()))
-          ) {
-            void showAlert({
-              title: '예약 발송 일시 확인',
-              content: '예약 발송 일시는 현재 시각보다 이후로 설정해 주세요.',
-            })
-            return
-          }
-          const notifyOptions = toApplicantNotificationResendNotifyOptions(payload)
-          const notification = toInstructorApplicationNotificationRequest(
-            notifyOptions.notifyTiming,
-            notifyOptions.manualNotifyAt
-          )
-          void resendNotificationMutation
-            .mutateAsync({
-              applicationId: notificationResendTarget.id,
-              payload: {
-                timing: notification.timing === 'SCHEDULED' ? 'SCHEDULED' : 'IMMEDIATE',
-                scheduledAt: notification.scheduledAt ?? null,
-              },
-            })
-            .then(() => {
-              setNotificationResendTarget(null)
-              showNotificationResendRequestCompletedAlert()
-            })
-            .catch(() => {
-              showAlert({
-                title: '알림 재발송 실패',
-                content: '알림 재발송에 실패했습니다. 잠시 후 다시 시도해 주세요.',
-              })
-            })
-        }}
       />
     </>
   )

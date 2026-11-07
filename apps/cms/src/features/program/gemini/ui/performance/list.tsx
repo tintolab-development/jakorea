@@ -124,6 +124,11 @@ function displayCell(value: string | number | null | undefined): string {
   return text && text !== '-' ? text : '-'
 }
 
+function appendPaymentExclusionNotes(baseMessage: string, notes?: string): string {
+  const normalizedNotes = notes?.trim()
+  return normalizedNotes ? `${baseMessage}\n${normalizedNotes}` : baseMessage
+}
+
 /** 서버에서 처리하지 않는 조건만 클라이언트에서 좁힌다(방식·연수일). */
 function filterRowsClientOnly(rows: GeminiPerformanceRow[], filters: PendingFilters) {
   return rows.filter(row => {
@@ -335,7 +340,7 @@ export function GeminiPerformanceList() {
       setImporting(true)
       const endOverlay = beginFileUploadOverlay()
       try {
-        await geminiPerformanceService.applyImport(
+        const result = await geminiPerformanceService.applyImport(
           pendingImportRows,
           'append',
           pendingRemoteImportRows
@@ -344,7 +349,10 @@ export function GeminiPerformanceList() {
         clearPendingImport()
         showAlert({
           title: GEMINI_PERFORMANCE_APPEND_DONE_TITLE,
-          content: GEMINI_PERFORMANCE_APPEND_DONE_MESSAGE,
+          content: appendPaymentExclusionNotes(
+            GEMINI_PERFORMANCE_APPEND_DONE_MESSAGE,
+            result?.paymentExclusionNotes
+          ),
         })
       } catch (error) {
         showImportFailureAlert(error)
@@ -368,7 +376,7 @@ export function GeminiPerformanceList() {
       setImporting(true)
       const endOverlay = beginFileUploadOverlay()
       try {
-        await geminiPerformanceService.applyImport(
+        const result = await geminiPerformanceService.applyImport(
           pendingImportRows,
           'overwrite',
           pendingRemoteImportRows
@@ -377,7 +385,10 @@ export function GeminiPerformanceList() {
         clearPendingImport()
         showAlert({
           title: GEMINI_PERFORMANCE_OVERWRITE_DONE_TITLE,
-          content: GEMINI_PERFORMANCE_OVERWRITE_DONE_MESSAGE,
+          content: appendPaymentExclusionNotes(
+            GEMINI_PERFORMANCE_OVERWRITE_DONE_MESSAGE,
+            result?.paymentExclusionNotes
+          ),
         })
       } catch (error) {
         showImportFailureAlert(error)
@@ -401,7 +412,7 @@ export function GeminiPerformanceList() {
       setImporting(true)
       const endOverlay = beginFileUploadOverlay()
       try {
-        await geminiPerformanceService.applyImport(
+        const result = await geminiPerformanceService.applyImport(
           pendingImportRows,
           'append',
           pendingRemoteImportRows
@@ -410,7 +421,10 @@ export function GeminiPerformanceList() {
         clearPendingImport()
         showAlert({
           title: GEMINI_PERFORMANCE_APPEND_DONE_TITLE,
-          content: GEMINI_PERFORMANCE_APPEND_DONE_MESSAGE,
+          content: appendPaymentExclusionNotes(
+            GEMINI_PERFORMANCE_APPEND_DONE_MESSAGE,
+            result?.paymentExclusionNotes
+          ),
         })
       } catch (error) {
         showImportFailureAlert(error)

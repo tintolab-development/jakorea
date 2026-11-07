@@ -57,7 +57,9 @@ describe('formatGeminiApiError', () => {
           message: 'GEMINI_INSTRUCTOR_MATCH_AMBIGUOUS',
         },
       ]),
-    ).toBe('3행: 동일 이름·연락처 강사가 여러 명입니다.')
+    ).toBe(
+      '3행: 동일한 이름과 연락처의 강사가 여러 명입니다. 정확한 강사 회원을 선택해 주세요.',
+    )
   })
 
   it('does not treat IDENTITY_BLANK SUCCESS as a preview failure', () => {
@@ -81,33 +83,63 @@ describe('formatGeminiApiError', () => {
           paymentExclusionReason: 'GEMINI_INSTRUCTOR_IDENTITY_BLANK',
         },
       ]),
-    ).toBe('1행: 강사 정보 미기재 (실적만 등록, 지급 없음)')
+    ).toBe('1행: 강사 정보 미기재 (실적만 등록, 계좌 지급 제외)')
   })
 
-  it('does not treat NOT_MATCHED SUCCESS as a preview failure; notes include label', () => {
+  it('treats NOT_MATCHED as a failed row even if a stale server sends SUCCESS', () => {
     expect(
       formatGeminiImportPreviewFailures([
         {
           status: 'SUCCESS',
           rowNumber: 1,
-          message:
-            '일치하는 강사 회원을 찾지 못해 실적만 등록하고 계좌 지급·정산 대상에서 제외했습니다.',
+          message: 'GEMINI_INSTRUCTOR_NOT_MATCHED: 입력한 강사명·연락처가 회원 정보와 일치하지 않습니다.',
           trainingReportId: 186512,
           accountPaymentId: undefined,
           matchedInstructorMemberId: undefined,
-          paymentExclusionReason: 'GEMINI_INSTRUCTOR_NOT_MATCHED',
+          paymentExclusionReason: 'GEMINI_INSTRUCTOR_NOT_MATCHED' as never,
         },
       ]),
-    ).toBeUndefined()
+    ).toBe('1행: 입력한 강사명·연락처가 회원 정보와 일치하지 않습니다.')
     expect(
       formatGeminiImportPaymentExclusionNotes([
         {
           status: 'SUCCESS',
           rowNumber: 1,
-          paymentExclusionReason: 'GEMINI_INSTRUCTOR_NOT_MATCHED',
+          paymentExclusionReason: 'GEMINI_INSTRUCTOR_NOT_MATCHED' as never,
         },
       ]),
-    ).toBe('1행: 강사 회원 미매칭 (실적만 등록, 지급·정산 없음)')
+    ).toBeUndefined()
+  })
+
+  it('shows external-payee SUCCESS as performance-only', () => {
+    expect(
+      formatGeminiImportPaymentExclusionNotes([
+        {
+          status: 'SUCCESS',
+          rowNumber: 4,
+          paymentExclusionReason: 'GEMINI_INSTRUCTOR_EXTERNAL_PAYEE',
+        },
+      ]),
+    ).toBe('4행: 외부 지급처 (실적만 등록, 계좌 지급 제외)')
+  })
+
+  it('maps identity mismatch and partial identity failures', () => {
+    expect(
+      formatGeminiImportPreviewFailures([
+        {
+          status: 'FAILED',
+          rowNumber: 5,
+          message: 'GEMINI_INSTRUCTOR_IDENTITY_MISMATCH: 불일치',
+        },
+        {
+          status: 'FAILED',
+          rowNumber: 6,
+          message: 'GEMINI_INSTRUCTOR_NAME_AND_PHONE_REQUIRED: 부분 입력',
+        },
+      ]),
+    ).toBe(
+      '5행: 선택한 강사 회원과 입력한 강사명·연락처가 일치하지 않습니다.\n6행: 강사명과 연락처를 입력해 주세요.',
+    )
   })
 
   it('does not show axios status 400 as the user message', () => {
@@ -115,5 +147,19 @@ describe('formatGeminiApiError', () => {
     expect(formatGeminiApiError(error, '실적 등록에 실패했습니다.')).toBe(
       '실적 등록에 실패했습니다.',
     )
+  })
+
+  it('maps approved-training history conflicts to the delete-blocked copy', () => {
+    expect(
+      formatGeminiApiError(
+        {
+          response: {
+            status: 409,
+            data: { error: { code: 'GEMINI_APPROVED_TRAINING_HAS_BUSINESS_HISTORY' } },
+          },
+        },
+        '연수 삭제에 실패했습니다.'
+      )
+    ).toBe('신청 강사 또는 교육 진행 이력이 있는 연수는 삭제할 수 없습니다.')
   })
 })
