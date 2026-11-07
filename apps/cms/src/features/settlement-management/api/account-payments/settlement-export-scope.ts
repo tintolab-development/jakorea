@@ -1,7 +1,7 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import customInstance from '@/shared/api/orval-mutator'
 import type { SettlementExportRequest } from '@/shared/api/generated/settlement/schemas'
-import type { SettlementExportScopeResponse } from '@/shared/api/generated/settlement/schemas/settlementExportScopeResponse'
+import type { Scope as SettlementExportScopeResponse } from '@/shared/api/generated/settlement/schemas/scope'
 import {
   ACCOUNT_PAYMENT_EXPORT_STATUS_PAID,
   ACCOUNT_PAYMENT_EXPORT_STATUS_WAITING_PAYMENT,

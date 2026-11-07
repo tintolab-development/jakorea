@@ -8,7 +8,14 @@
  * - typed 가 없는 기존 프로그램에는 아무것도 쓰지 않는다(backfill 금지).
  */
 import type { UjatHalfSemesterKey } from '@/features/program/ujat/lib/ujat-half-education-schedule-types'
-import type { UjatTypedExclusionPolicy } from '@/shared/api/generated/dashboard/schemas/ujatTypedExclusionPolicy'
+
+/** BE UJAT typed / overlay exclusion (공휴일 키는 `excludeHoliday`; generic `ExclusionPolicy`와 다름). */
+export type UjatTypedExclusionPolicy = {
+  excludeNone?: boolean | null
+  excludeSaturday?: boolean | null
+  excludeSunday?: boolean | null
+  excludeHoliday?: boolean | null
+}
 
 export const UJAT_TYPED_DETAIL_ROOT_KEY = 'ujatTypedDetail'
 export const UJAT_TYPED_SCHEMA_VERSION = 1

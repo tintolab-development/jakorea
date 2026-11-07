@@ -7,8 +7,8 @@ import {
   normalizeUjatTypedDetailForWrite,
   normalizeUjatTypedHalfPlanForWrite,
   ujatTypedDate,
+  type UjatTypedExclusionPolicy,
 } from '@/features/program/ujat/lib/ujat-typed-detail'
-import type { UjatTypedExclusionPolicy as GeneratedUjatTypedExclusionPolicy } from '@/shared/api/generated/dashboard/schemas/ujatTypedExclusionPolicy'
 
 /**
  * JABACK UJAT Typed detail v1.
@@ -22,7 +22,7 @@ export type UjatTypedTextbookPlan = {
   responsiblePerson?: string | null
 }
 
-export type UjatTypedExclusionPolicy = GeneratedUjatTypedExclusionPolicy
+export type { UjatTypedExclusionPolicy }
 
 export type UjatTypedScheduleRow = {
   rowId?: string | null

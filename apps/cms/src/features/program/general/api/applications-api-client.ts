@@ -292,9 +292,19 @@ export async function fetchOrganizationApplicationDetailRemote(
   )
 }
 
+/** BE PATCH accepts null to clear teacher contact fields; generated OpenAPI type omits null. */
+export type OrganizationApplicationUpdateWire = Omit<
+  OrganizationApplicationUpdateRequest,
+  'teacherTel' | 'teacherPhone' | 'teacherEmail'
+> & {
+  teacherTel?: string | null
+  teacherPhone?: string | null
+  teacherEmail?: string | null
+}
+
 export async function updateOrganizationApplicationRemote(
   applicationId: string,
-  payload: OrganizationApplicationUpdateRequest
+  payload: OrganizationApplicationUpdateWire
 ): Promise<OrganizationApplicationDetailResponse> {
   return unwrapApiBody(
     await customInstance({
