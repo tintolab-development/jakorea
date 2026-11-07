@@ -356,3 +356,8 @@
     min-height: 0;
   }
 }
+
+/* `< 목록으로` (admin-ui post-detail) — 카드와 간격 16 */
+.notice-detail-page__inner > .admin-detail-back-link {
+  margin-bottom: -8px;
+}

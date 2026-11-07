@@ -108,3 +108,10 @@ export {
   type AdminAuthFormLabelProps,
   type AdminAuthPageProps,
 } from './auth/index.js'
+
+export {
+  AdminDetailBackLink,
+  AdminDetailMoreMenu,
+  type AdminDetailBackLinkProps,
+  type AdminDetailMoreMenuProps,
+} from './post-detail/index.js'

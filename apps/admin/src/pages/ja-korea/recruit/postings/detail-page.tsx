@@ -7,6 +7,7 @@
 import { useCallback, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { EyeOutlined, PaperClipOutlined } from '@ant-design/icons'
+import { AdminDetailBackLink, AdminDetailMoreMenu } from '@jakorea/admin-ui/post-detail'
 import dayjs from 'dayjs'
 import 'dayjs/locale/ko'
 import type { RecruitPosting, RecruitPostingStatus } from '@/entities/recruit-posting/model/types'
@@ -250,6 +251,7 @@ function RecruitPostingDetailView({
         <p className="recruit-posting-detail-page__hint">
           * 작성일은 어드민 화면에서만 노출되며, 홈페이지에서는 게시일만 노출됩니다.
         </p>
+        <AdminDetailBackLink onClick={onList} />
 
         <div className="recruit-posting-detail-page__card">
           <div className="recruit-posting-detail-page__top-row">
@@ -263,9 +265,12 @@ function RecruitPostingDetailView({
                 {formatRecruitPeriod(posting.recruitStart, posting.recruitEnd)}
               </span>
             </div>
-            <span className="recruit-posting-detail-page__views">
-              <EyeOutlined className="recruit-posting-detail-page__views-icon" aria-hidden />
-              {posting.viewCount.toLocaleString('ko-KR')}
+            <span className="admin-detail-top-actions">
+              <span className="recruit-posting-detail-page__views">
+                <EyeOutlined className="recruit-posting-detail-page__views-icon" aria-hidden />
+                {posting.viewCount.toLocaleString('ko-KR')}
+              </span>
+              <AdminDetailMoreMenu onEdit={onEdit} onDelete={onDelete} />
             </span>
           </div>
 
