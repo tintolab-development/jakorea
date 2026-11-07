@@ -84,30 +84,25 @@ describe('formatGeminiApiError', () => {
     ).toBe('1행: 강사 정보 미기재 (실적만 등록, 지급 없음)')
   })
 
-  it('does not treat NOT_MATCHED SUCCESS as a preview failure; notes include label', () => {
+  it('treats NOT_MATCHED as a FAILED import row, not a SUCCESS payment exclusion', () => {
     expect(
       formatGeminiImportPreviewFailures([
         {
-          status: 'SUCCESS',
+          status: 'FAILED',
           rowNumber: 1,
-          message:
-            '일치하는 강사 회원을 찾지 못해 실적만 등록하고 계좌 지급·정산 대상에서 제외했습니다.',
-          trainingReportId: 186512,
-          accountPaymentId: undefined,
-          matchedInstructorMemberId: undefined,
-          paymentExclusionReason: 'GEMINI_INSTRUCTOR_NOT_MATCHED',
+          message: 'GEMINI_INSTRUCTOR_NOT_MATCHED: 일치하는 강사 회원을 찾지 못했습니다.',
         },
       ]),
-    ).toBeUndefined()
+    ).toBe('1행: 강사명과 연락처가 일치하는 강사 회원을 찾지 못했습니다.')
     expect(
       formatGeminiImportPaymentExclusionNotes([
         {
-          status: 'SUCCESS',
+          status: 'FAILED',
           rowNumber: 1,
-          paymentExclusionReason: 'GEMINI_INSTRUCTOR_NOT_MATCHED',
+          message: 'GEMINI_INSTRUCTOR_NOT_MATCHED: 일치하는 강사 회원을 찾지 못했습니다.',
         },
       ]),
-    ).toBe('1행: 강사 회원 미매칭 (실적만 등록, 지급·정산 없음)')
+    ).toBeUndefined()
   })
 
   it('does not show axios status 400 as the user message', () => {

@@ -761,6 +761,7 @@ export * from './jsonNode';
 export * from './koreanPublicHolidayResponse';
 export * from './kpiTargetResponse';
 export * from './kpiTargetUpsertRequest';
+export * from './lectureReportBulkDownloadErrorCode';
 export * from './lectureReportDecisionResponse';
 export * from './lectureReportExceptionRequest';
 export * from './lectureReportListItemResponse';
@@ -1464,6 +1465,7 @@ export * from './settlementStatusMappingResponsePaymentStatusToAccountPaymentTra
 export * from './settlementStatusMappingResponsePaymentTransitions';
 export * from './settlementStatusMappingResponseStatementStatusToPaymentOrderProcessingStatus';
 export * from './settlementStatusMappingResponseStatementTransitions';
+export * from './settlementTaxReportPreviewRequest';
 export * from './settlementTransportationSnapshotResponse';
 export * from './signedConsentDocumentParams';
 export * from './signedConsentDocumentResponse';

@@ -30,6 +30,6 @@ export interface GeminiTrainingReportItem {
   accountPaymentId?: number | null;
   status?: string;
   createdAt?: string;
-  /** 계좌 지급 제외 사유. 지급 대상이면 null. GEMINI_INSTRUCTOR_IDENTITY_BLANK=강사명·연락처 완전 미기재로 실적만 등록, GEMINI_INSTRUCTOR_NOT_MATCHED=이름·연락처 있으나 강사 회원 미매칭으로 실적만 등록 */
+  /** 계좌 지급 제외 사유. 지급 대상이면 null. GEMINI_INSTRUCTOR_IDENTITY_BLANK=강사명·연락처 완전 미기재로 실적만 등록, GEMINI_INSTRUCTOR_EXTERNAL_PAYEE=회원 미확정+외부 지급처로 실적만 등록, GEMINI_INSTRUCTOR_NOT_MATCHED=과거 적재분(신규 import는 FAILED로 전환) */
   paymentExclusionReason?: GeminiTrainingReportItemPaymentExclusionReason;
 }

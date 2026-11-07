@@ -1443,6 +1443,7 @@ export * from './settlementStatusMappingResponsePaymentStatusToAccountPaymentTra
 export * from './settlementStatusMappingResponsePaymentTransitions';
 export * from './settlementStatusMappingResponseStatementStatusToPaymentOrderProcessingStatus';
 export * from './settlementStatusMappingResponseStatementTransitions';
+export * from './settlementTaxReportPreviewRequest';
 export * from './settlementTransportationSnapshotResponse';
 export * from './signedConsentDocumentResponse';
 export * from './signedConsentDocumentResponseSchemaJson';

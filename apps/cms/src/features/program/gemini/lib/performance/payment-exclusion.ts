@@ -10,6 +10,8 @@ export const GEMINI_PAYMENT_EXCLUSION_REASON_LABELS: Record<string, string> = {
     '강사비 단가 미설정 (지급 제외)',
   [GeminiTrainingReportItemPaymentExclusionReason.GEMINI_INSTRUCTOR_IDENTITY_BLANK]:
     '강사 정보 미기재 (실적만 등록, 지급 없음)',
+  [GeminiTrainingReportItemPaymentExclusionReason.GEMINI_INSTRUCTOR_EXTERNAL_PAYEE]:
+    '외부 지급처 (실적만 등록, 지급 없음)',
   [GeminiTrainingReportItemPaymentExclusionReason.GEMINI_INSTRUCTOR_NOT_MATCHED]:
     '강사 회원 미매칭 (실적만 등록, 지급·정산 없음)',
 }

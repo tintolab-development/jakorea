@@ -28,6 +28,8 @@ export interface ProgramScheduleResponse {
   scheduleOrigin?: string;
   ujatEducationStage?: string;
   ujatPlanRowId?: string;
+  /** 해당 일정에 연결된 program_curriculum_session 건수(커리큘럼 차시). 없으면 null. sessionNo(회차)를 넣지 않음. 사전교육은 null. 정산 인정 차시와 별개. */
+  curriculumSessionCount?: number | null;
   startDate?: string;
   endDate?: string;
 }

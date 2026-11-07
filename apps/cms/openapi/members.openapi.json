@@ -5470,6 +5470,9 @@
           "403": {
             "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
           },
+          "409": {
+            "description": "다운로드할 첨부 없음. error.code = LECTURE_REPORT_NO_DOWNLOADABLE_FILES. Job을 만들지 않는다."
+          },
           "500": {
             "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
           }
@@ -45086,6 +45089,13 @@
           }
         }
       },
+      "LectureReportBulkDownloadErrorCode": {
+        "type": "string",
+        "description": "GET lecture-reports/download 빈 ZIP 대상. HTTP 409.",
+        "enum": [
+          "LECTURE_REPORT_NO_DOWNLOADABLE_FILES"
+        ]
+      },
       "FileDownloadJobResponse": {
         "type": "object",
         "properties": {
@@ -45094,7 +45104,8 @@
           },
           "programId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "instructorMemberId 없이 호출하면 programId. instructorMemberId를 넘기면 이 필드에 필터 강사 ID가 들어갈 수 있다."
           },
           "generatedFileJobId": {
             "type": "integer",
@@ -45105,14 +45116,17 @@
           },
           "fileObjectId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "nullable": true
           },
           "downloadUrl": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "downloadExpiresAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "nullable": true
           },
           "requiredHeaders": {
             "type": "object",

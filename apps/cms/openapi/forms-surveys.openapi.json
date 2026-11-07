@@ -16422,6 +16422,57 @@
           "reason"
         ]
       },
+      "SettlementTaxReportPreviewRequest": {
+        "type": "object",
+        "description": "세금신고 양식 미리보기 요청. 선택한 정산 건은 서버의 공식 세금 snapshot으로 렌더링합니다.",
+        "properties": {
+          "settlementIds": {
+            "type": "array",
+            "description": "미리볼 정산 ID 목록. 빈 배열이면 선택된 건이 없는 24행 placeholder를 반환합니다.",
+            "items": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            },
+            "maxItems": 5000,
+            "minItems": 0
+          }
+        }
+      },
+      "ApiResponseMapStringObject": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다.",
+            "nullable": true
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
+          }
+        }
+      },
       "Scope": {
         "type": "object",
         "properties": {
@@ -24929,40 +24980,6 @@
           }
         }
       },
-      "ApiResponseMapStringObject": {
-        "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "description": "요청 처리 성공 여부",
-            "example": false
-          },
-          "data": {
-            "type": "object",
-            "additionalProperties": {},
-            "description": "성공 응답 데이터. 오류 응답에서는 null입니다.",
-            "nullable": true
-          },
-          "message": {
-            "type": "string",
-            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
-            "example": "현재 상태에서는 요청을 처리할 수 없습니다.",
-            "nullable": true
-          },
-          "error": {
-            "$ref": "#/components/schemas/ErrorDetail",
-            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
-            "nullable": true
-          },
-          "detail": {
-            "type": "string",
-            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
-            "example": "면접이 아직 종료되지 않았습니다.",
-            "nullable": true
-          }
-        }
-      },
       "InquiryAnswerRequest": {
         "type": "object",
         "description": "문의 답변 등록 요청",
@@ -25355,7 +25372,9 @@
             "type": "string"
           },
           "feePayee": {
-            "type": "string"
+            "type": "string",
+            "description": "강사비 지급처. 저장·rawPayloadJsonb에 원문 유지. 외부 지급처 판정은 trim+공백제거+ASCII 대문자화 후 canonical EXTERNAL 또는 한글 별칭 외부만 인정. null/빈 문자열/INTERNAL/내부/미정 및 그 외 값은 외부 지급처가 아님.",
+            "nullable": true
           },
           "trainingSessionCount": {
             "type": "integer",
@@ -25434,14 +25453,16 @@
           },
           "status": {
             "type": "string",
-            "description": "대소문자 고정. SUCCESS+paymentExclusionReason=실적만(지급/정산 미생성). FAILED=시간 역전·필수값·부분 기재(NAME_AND_PHONE_REQUIRED)·모호 매칭(AMBIGUOUS)·지급완료 overwrite 차단 등 진짜 검증 실패. GEMINI_INSTRUCTOR_NOT_MATCHED(이름·연락처 있으나 미매칭)는 FAILED가 아니라 SUCCESS+paymentExclusionReason.",
+            "description": "대소문자 고정. SUCCESS+paymentExclusionReason=실적만(지급/정산 미생성). FAILED=시간 역전·필수값·부분 기재(NAME_AND_PHONE_REQUIRED)·정보 불일치(NOT_MATCHED/IDENTITY_MISMATCH)·모호 매칭(AMBIGUOUS)·지급완료 overwrite 차단 등. 강사명·연락처 완전 공란은 SUCCESS+GEMINI_INSTRUCTOR_IDENTITY_BLANK. 회원 미확정+외부 지급처만 SUCCESS+GEMINI_INSTRUCTOR_EXTERNAL_PAYEE.",
             "enum": [
               "SUCCESS",
               "FAILED"
             ]
           },
           "message": {
-            "type": "string"
+            "type": "string",
+            "description": "FAILED는 안정 코드+안전한 한국어(예: GEMINI_INSTRUCTOR_NOT_MATCHED: …). SUCCESS 지급 제외는 안내 문구.",
+            "nullable": true
           },
           "trainingReportId": {
             "type": "integer",
@@ -25449,7 +25470,9 @@
           },
           "accountPaymentId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "지급 완료(PAID)이거나 import가 account_payment를 생성한 경우에만. 지급 제외(IDENTITY_BLANK/EXTERNAL_PAYEE 등)와 preview 미생성 건은 null.",
+            "nullable": true
           },
           "trainingMinutes": {
             "type": "integer",
@@ -25465,7 +25488,9 @@
           },
           "matchedInstructorMemberId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "서버가 이름·연락처 재검증으로 확정한 회원만. 미확정은 null.",
+            "nullable": true
           },
           "assistantInstructorCount": {
             "type": "integer",
@@ -25479,12 +25504,12 @@
           },
           "paymentExclusionReason": {
             "type": "string",
-            "description": "계좌 지급 제외 사유. 지급 대상이면 null. SUCCESS와 함께 오면 회원 검증 생략·계좌지급/정산 미생성·실적만. ZERO_CALCULATED_FEE=산출 강사비 0원, GEMINI_WAGE_RATE_NOT_CONFIGURED=해당 연수 유형·차시 단가 미설정, GEMINI_INSTRUCTOR_IDENTITY_BLANK=강사명·연락처 완전 미기재, GEMINI_INSTRUCTOR_NOT_MATCHED=이름·연락처 있으나 강사 회원 미매칭",
+            "description": "계좌 지급 제외 사유. 지급 대상이면 null. SUCCESS와 함께 오면 계좌지급/정산 미생성·실적만. ZERO_CALCULATED_FEE=산출 강사비 0원, GEMINI_WAGE_RATE_NOT_CONFIGURED=해당 연수 유형·차시 단가 미설정, GEMINI_INSTRUCTOR_IDENTITY_BLANK=강사명·연락처 완전 미기재, GEMINI_INSTRUCTOR_EXTERNAL_PAYEE=회원 미확정+외부 지급처. GEMINI_INSTRUCTOR_NOT_MATCHED는 행 FAILED 코드이며 이 필드에 넣지 않음.",
             "enum": [
               "ZERO_CALCULATED_FEE",
               "GEMINI_WAGE_RATE_NOT_CONFIGURED",
               "GEMINI_INSTRUCTOR_IDENTITY_BLANK",
-              "GEMINI_INSTRUCTOR_NOT_MATCHED"
+              "GEMINI_INSTRUCTOR_EXTERNAL_PAYEE"
             ],
             "nullable": true
           }
@@ -26204,6 +26229,12 @@
           "ujatPlanRowId": {
             "type": "string"
           },
+          "curriculumSessionCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "해당 일정에 연결된 program_curriculum_session 건수(커리큘럼 차시). 없으면 null. sessionNo(회차)를 넣지 않음. 사전교육은 null. 정산 인정 차시와 별개.",
+            "nullable": true
+          },
           "startDate": {
             "type": "string"
           },
@@ -26323,6 +26354,7 @@
           },
           "progressStatus": {
             "type": "string",
+            "description": "화면 배지 4종. Asia/Seoul 날짜 기준 파생. program.period_status가 아니다. SCHEDULED=프로그램 진행 예정, IN_PROGRESS=프로그램 진행 중, COMPLETED=프로그램 진행 완료, NOT_CONDUCTED=프로그램 미진행. 강사 미배정+희망일 경과=NOT_CONDUCTED, 미배정+희망일 남음=SCHEDULED, 배정+확정일 전=SCHEDULED, 당일=IN_PROGRESS, 경과=COMPLETED.",
             "enum": [
               "SCHEDULED",
               "IN_PROGRESS",
@@ -26485,6 +26517,12 @@
             "type": "string",
             "nullable": true
           },
+          "teacherSchoolOrganizationId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "담당 교사 teacher_profile.current_organization_id. PATCH /api/admin/organizations/schools/{organizationId}/teachers/{teacherMemberId}/employment-status 의 path organizationId와 동일 PK. 교사 프로필/학교 소속이 없거나 삭제된 학교면 null. 다른 API로 채우지 않는다.",
+            "nullable": true
+          },
           "teacherEmploymentStatus": {
             "type": "string",
             "enum": [
@@ -26548,6 +26586,11 @@
           },
           "officialDocumentRequired": {
             "type": "boolean"
+          },
+          "officialDocumentRequiredInfo": {
+            "type": "string",
+            "description": "기관 신청 폼에 저장된 공문 필요 정보 원문. 없으면 null. 빈 문자열·하이픈을 넣지 않는다. FE가 고정 문구를 만들지 않는다.",
+            "nullable": true
           },
           "submittedAt": {
             "type": "string",
@@ -45708,7 +45751,9 @@
           },
           "sessionNo": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "본교육 회차 번호(program_schedule.session_no). 차시 개수가 아님. 사전교육은 보통 null. null만으로 사전교육이 아님.",
+            "nullable": true
           },
           "timeLabel": {
             "type": "string"
@@ -45717,7 +45762,9 @@
             "type": "string"
           },
           "dateRoundTimeLabel": {
-            "type": "string"
+            "type": "string",
+            "description": "날짜 · 회차/사전교육 · 커리큘럼 차시(연결이 있을 때만) · 시각. sessionNo를 N차시로 붙이지 않음.",
+            "nullable": true
           },
           "lectureProgressStatus": {
             "type": "string"
@@ -45732,6 +45779,22 @@
               "type": "integer",
               "format": "int64"
             }
+          },
+          "scheduleRole": {
+            "type": "string",
+            "description": "canonical 일정 역할. program_schedule.schedule_kind. PRE_EDUCATION|EDUCATION|SESSION|CLOSING. 없으면 null. sessionNo=null로 추정하지 않음.",
+            "nullable": true
+          },
+          "educationSlotKey": {
+            "type": "string",
+            "description": "canonical education_slot_key. 사전교육 general-pre-education:*, 본교육 회차 general-common-line:N 등. 없으면 null.",
+            "nullable": true
+          },
+          "curriculumSessionCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "해당 scheduleId에 연결된 program_curriculum_session 건수(실제 커리큘럼 차시). 없으면 null. sessionNo를 넣지 않음. 사전교육은 null. 정산 인정 차시와 별개.",
+            "nullable": true
           }
         }
       },
@@ -47427,6 +47490,28 @@
             "type": "integer",
             "format": "int64"
           },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32",
+            "description": "본교육 회차 번호(program_schedule.session_no). 차시 개수가 아님.",
+            "nullable": true
+          },
+          "scheduleRole": {
+            "type": "string",
+            "description": "canonical 일정 역할. PRE_EDUCATION|EDUCATION|SESSION|CLOSING. 없으면 null.",
+            "nullable": true
+          },
+          "educationSlotKey": {
+            "type": "string",
+            "description": "canonical education_slot_key. 없으면 null.",
+            "nullable": true
+          },
+          "curriculumSessionCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "연결된 program_curriculum_session 건수. 사전교육·연결 없으면 null. 정산 인정 차시와 별개.",
+            "nullable": true
+          },
           "instructorAssignmentId": {
             "type": "integer",
             "format": "int64"
@@ -47607,6 +47692,28 @@
           "lectureDate": {
             "type": "string",
             "format": "date"
+          },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32",
+            "description": "본교육 회차 번호(program_schedule.session_no). 차시 개수가 아님. 사전교육은 보통 null. null만으로 사전교육이 아님.",
+            "nullable": true
+          },
+          "scheduleRole": {
+            "type": "string",
+            "description": "canonical 일정 역할. program_schedule.schedule_kind. PRE_EDUCATION|EDUCATION|SESSION|CLOSING. 없으면 null. sessionNo=null로 추정하지 않음.",
+            "nullable": true
+          },
+          "educationSlotKey": {
+            "type": "string",
+            "description": "canonical education_slot_key. 없으면 null.",
+            "nullable": true
+          },
+          "curriculumSessionCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "해당 scheduleId에 연결된 program_curriculum_session 건수(실제 커리큘럼 차시). 없으면 null. sessionNo를 넣지 않음. 사전교육은 null. 정산 인정 차시와 별개.",
+            "nullable": true
           },
           "instructorName": {
             "type": "string",
@@ -50129,15 +50236,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "adminAccountId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
-          },
           "memberId": {
             "type": "integer",
             "format": "int64",
             "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
+          },
+          "adminAccountId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
           }
         }
       },
@@ -51162,11 +51269,12 @@
           },
           "paymentExclusionReason": {
             "type": "string",
-            "description": "계좌 지급 제외 사유. 지급 대상이면 null. GEMINI_INSTRUCTOR_IDENTITY_BLANK=강사명·연락처 완전 미기재로 실적만 등록, GEMINI_INSTRUCTOR_NOT_MATCHED=이름·연락처 있으나 강사 회원 미매칭으로 실적만 등록",
+            "description": "계좌 지급 제외 사유. 지급 대상이면 null. GEMINI_INSTRUCTOR_IDENTITY_BLANK=강사명·연락처 완전 미기재로 실적만 등록, GEMINI_INSTRUCTOR_EXTERNAL_PAYEE=회원 미확정+외부 지급처로 실적만 등록, GEMINI_INSTRUCTOR_NOT_MATCHED=과거 적재분(신규 import는 FAILED로 전환)",
             "enum": [
               "ZERO_CALCULATED_FEE",
               "GEMINI_WAGE_RATE_NOT_CONFIGURED",
               "GEMINI_INSTRUCTOR_IDENTITY_BLANK",
+              "GEMINI_INSTRUCTOR_EXTERNAL_PAYEE",
               "GEMINI_INSTRUCTOR_NOT_MATCHED"
             ],
             "nullable": true

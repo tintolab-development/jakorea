@@ -2865,6 +2865,146 @@
         }
       }
     },
+    "/api/admin/settlements/exports/tax-report/preview": {
+      "post": {
+        "tags": [
+          "정산"
+        ],
+        "summary": "세금신고 양식 미리보기 공식 dataset 조회",
+        "description": "### 이 API가 하는 일\n- 세금신고 양식 미리보기 공식 dataset 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 정산 관리 (`null`)\n- 프론트 담당 영역: 정산s (`settlements`)\n- 호출 방식: `POST /api/admin/settlements/exports/tax-report/preview`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: selected settlementIds\n- 응답 사용 위치: preview payload drives Fortune Sheet rows/styles/layout and remains MASKED\n- 프론트 조회 키: `post_admin_settlements_exports_tax-report_preview`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: SETTLEMENT_TAX_REPORT_PREVIEW_SMOKE\n- 목데이터 대체: 선택한 settlementIds를 공식 미리보기 dataset API로 전달합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: SETTLEMENT_READ 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수 아님\n\n### 상태값/화면 배지 기준\n- 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.\n- 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 선택 settlementIds를 TAX_REPORT_FORTUNE_V1 canonical dataset으로 조회하고 raw 주민등록번호를 반환하지 않음",
+        "operationId": "previewTaxReport",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SettlementTaxReportPreviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값 검증 실패",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "bad-request": {
+                    "summary": "요청 값 검증 실패",
+                    "description": "bad-request",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "BAD_REQUEST: request parameter is invalid"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "인증 필요",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "summary": "인증 필요",
+                    "description": "unauthorized",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "UNAUTHORIZED: authentication is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 부족",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "forbidden": {
+                    "summary": "권한 부족",
+                    "description": "forbidden",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "PERMISSION_DENIED: admin permission is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "대상 리소스 없음",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "not-found": {
+                    "summary": "대상 리소스 없음",
+                    "description": "not-found",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "NOT_FOUND: requested resource was not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "비즈니스 상태 충돌 또는 중복 요청",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "conflict": {
+                    "summary": "비즈니스 상태 충돌",
+                    "description": "conflict",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "CONFLICT: requested transition is not allowed in the current state"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "서버 내부 오류입니다. requestId와 서버 로그를 확인합니다."
+          }
+        }
+      }
+    },
     "/api/admin/settlements/exports/scope": {
       "post": {
         "tags": [
@@ -21675,10 +21815,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -21686,6 +21826,57 @@
           "businessPurpose",
           "reason"
         ]
+      },
+      "SettlementTaxReportPreviewRequest": {
+        "type": "object",
+        "description": "세금신고 양식 미리보기 요청. 선택한 정산 건은 서버의 공식 세금 snapshot으로 렌더링합니다.",
+        "properties": {
+          "settlementIds": {
+            "type": "array",
+            "description": "미리볼 정산 ID 목록. 빈 배열이면 선택된 건이 없는 24행 placeholder를 반환합니다.",
+            "items": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            },
+            "maxItems": 5000,
+            "minItems": 0
+          }
+        }
+      },
+      "ApiResponseMapStringObject": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다.",
+            "nullable": true
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
+          }
+        }
       },
       "Scope": {
         "type": "object",
@@ -25538,7 +25729,7 @@
       },
       "InstructorAssignmentCancelRequest": {
         "type": "object",
-        "description": "강사 배정 취소 요청. 봉사자/UJAT AssignmentCancelRequest와 분리되며 faultParty를 포함한다.",
+        "description": "강사 배정 취소 요청",
         "properties": {
           "reason": {
             "type": "string",
@@ -25555,17 +25746,17 @@
           "scheduledAt": {
             "type": "string",
             "format": "date-time",
-            "nullable": true,
             "description": "취소 알림 직접 설정 시 예약 발송 시각. timing=SCHEDULED일 때 필수이며 미래 시각이어야 합니다."
           },
           "faultParty": {
             "type": "string",
-            "nullable": true,
-            "description": "취소 귀책. USER=강사 사유(JA 감점 대상), ADMIN=운영 사유(감점 없음). 생략/null이면 서버가 ADMIN 처리.",
+            "description": "취소 귀책. USER=강사 사유(JA 평가 등급 강의 취소 감점 대상), ADMIN=운영 사유. 생략·null이면 ADMIN으로 처리합니다.",
             "enum": [
               "USER",
               "ADMIN"
-            ]
+            ],
+            "example": "USER",
+            "nullable": true
           }
         }
       },
@@ -30194,40 +30385,6 @@
           }
         }
       },
-      "ApiResponseMapStringObject": {
-        "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "description": "요청 처리 성공 여부",
-            "example": false
-          },
-          "data": {
-            "type": "object",
-            "additionalProperties": {},
-            "description": "성공 응답 데이터. 오류 응답에서는 null입니다.",
-            "nullable": true
-          },
-          "message": {
-            "type": "string",
-            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
-            "example": "현재 상태에서는 요청을 처리할 수 없습니다.",
-            "nullable": true
-          },
-          "error": {
-            "$ref": "#/components/schemas/ErrorDetail",
-            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
-            "nullable": true
-          },
-          "detail": {
-            "type": "string",
-            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
-            "example": "면접이 아직 종료되지 않았습니다.",
-            "nullable": true
-          }
-        }
-      },
       "InquiryAnswerRequest": {
         "type": "object",
         "description": "문의 답변 등록 요청",
@@ -30459,7 +30616,6 @@
       },
       "IndividualApprovalWithScopeResult": {
         "type": "object",
-        "description": "개인 신청 교육 범위 승인 응답. Springdoc Result 이름 충돌을 피하기 위해 FE에서 분리한다.",
         "properties": {
           "decision": {
             "$ref": "#/components/schemas/ApplicationDecisionResponse"
@@ -30620,7 +30776,9 @@
             "type": "string"
           },
           "feePayee": {
-            "type": "string"
+            "type": "string",
+            "description": "강사비 지급처. 저장·rawPayloadJsonb에 원문 유지. 외부 지급처 판정은 trim+공백제거+ASCII 대문자화 후 canonical EXTERNAL 또는 한글 별칭 외부만 인정. null/빈 문자열/INTERNAL/내부/미정 및 그 외 값은 외부 지급처가 아님.",
+            "nullable": true
           },
           "trainingSessionCount": {
             "type": "integer",
@@ -30699,14 +30857,16 @@
           },
           "status": {
             "type": "string",
-            "description": "대소문자 고정. SUCCESS+paymentExclusionReason=실적만(지급/정산 미생성). FAILED=시간 역전·필수값·부분 기재(NAME_AND_PHONE_REQUIRED)·모호 매칭(AMBIGUOUS)·지급완료 overwrite 차단 등 진짜 검증 실패. GEMINI_INSTRUCTOR_NOT_MATCHED(이름·연락처 있으나 미매칭)는 FAILED가 아니라 SUCCESS+paymentExclusionReason.",
+            "description": "대소문자 고정. SUCCESS+paymentExclusionReason=실적만(지급/정산 미생성). FAILED=시간 역전·필수값·부분 기재(NAME_AND_PHONE_REQUIRED)·정보 불일치(NOT_MATCHED/IDENTITY_MISMATCH)·모호 매칭(AMBIGUOUS)·지급완료 overwrite 차단 등. 강사명·연락처 완전 공란은 SUCCESS+GEMINI_INSTRUCTOR_IDENTITY_BLANK. 회원 미확정+외부 지급처만 SUCCESS+GEMINI_INSTRUCTOR_EXTERNAL_PAYEE.",
             "enum": [
               "SUCCESS",
               "FAILED"
             ]
           },
           "message": {
-            "type": "string"
+            "type": "string",
+            "description": "FAILED는 안정 코드+안전한 한국어(예: GEMINI_INSTRUCTOR_NOT_MATCHED: …). SUCCESS 지급 제외는 안내 문구.",
+            "nullable": true
           },
           "trainingReportId": {
             "type": "integer",
@@ -30714,7 +30874,9 @@
           },
           "accountPaymentId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "지급 완료(PAID)이거나 import가 account_payment를 생성한 경우에만. 지급 제외(IDENTITY_BLANK/EXTERNAL_PAYEE 등)와 preview 미생성 건은 null.",
+            "nullable": true
           },
           "trainingMinutes": {
             "type": "integer",
@@ -30730,7 +30892,9 @@
           },
           "matchedInstructorMemberId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "서버가 이름·연락처 재검증으로 확정한 회원만. 미확정은 null.",
+            "nullable": true
           },
           "assistantInstructorCount": {
             "type": "integer",
@@ -30744,12 +30908,12 @@
           },
           "paymentExclusionReason": {
             "type": "string",
-            "description": "계좌 지급 제외 사유. 지급 대상이면 null. SUCCESS와 함께 오면 회원 검증 생략·계좌지급/정산 미생성·실적만. ZERO_CALCULATED_FEE=산출 강사비 0원, GEMINI_WAGE_RATE_NOT_CONFIGURED=해당 연수 유형·차시 단가 미설정, GEMINI_INSTRUCTOR_IDENTITY_BLANK=강사명·연락처 완전 미기재, GEMINI_INSTRUCTOR_NOT_MATCHED=이름·연락처 있으나 강사 회원 미매칭",
+            "description": "계좌 지급 제외 사유. 지급 대상이면 null. SUCCESS와 함께 오면 계좌지급/정산 미생성·실적만. ZERO_CALCULATED_FEE=산출 강사비 0원, GEMINI_WAGE_RATE_NOT_CONFIGURED=해당 연수 유형·차시 단가 미설정, GEMINI_INSTRUCTOR_IDENTITY_BLANK=강사명·연락처 완전 미기재, GEMINI_INSTRUCTOR_EXTERNAL_PAYEE=회원 미확정+외부 지급처. GEMINI_INSTRUCTOR_NOT_MATCHED는 행 FAILED 코드이며 이 필드에 넣지 않음.",
             "enum": [
               "ZERO_CALCULATED_FEE",
               "GEMINI_WAGE_RATE_NOT_CONFIGURED",
               "GEMINI_INSTRUCTOR_IDENTITY_BLANK",
-              "GEMINI_INSTRUCTOR_NOT_MATCHED"
+              "GEMINI_INSTRUCTOR_EXTERNAL_PAYEE"
             ],
             "nullable": true
           }
@@ -31469,6 +31633,12 @@
           "ujatPlanRowId": {
             "type": "string"
           },
+          "curriculumSessionCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "해당 일정에 연결된 program_curriculum_session 건수(커리큘럼 차시). 없으면 null. sessionNo(회차)를 넣지 않음. 사전교육은 null. 정산 인정 차시와 별개.",
+            "nullable": true
+          },
           "startDate": {
             "type": "string"
           },
@@ -31588,6 +31758,7 @@
           },
           "progressStatus": {
             "type": "string",
+            "description": "화면 배지 4종. Asia/Seoul 날짜 기준 파생. program.period_status가 아니다. SCHEDULED=프로그램 진행 예정, IN_PROGRESS=프로그램 진행 중, COMPLETED=프로그램 진행 완료, NOT_CONDUCTED=프로그램 미진행. 강사 미배정+희망일 경과=NOT_CONDUCTED, 미배정+희망일 남음=SCHEDULED, 배정+확정일 전=SCHEDULED, 당일=IN_PROGRESS, 경과=COMPLETED.",
             "enum": [
               "SCHEDULED",
               "IN_PROGRESS",
@@ -31750,6 +31921,12 @@
             "type": "string",
             "nullable": true
           },
+          "teacherSchoolOrganizationId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "담당 교사 teacher_profile.current_organization_id. PATCH /api/admin/organizations/schools/{organizationId}/teachers/{teacherMemberId}/employment-status 의 path organizationId와 동일 PK. 교사 프로필/학교 소속이 없거나 삭제된 학교면 null. 다른 API로 채우지 않는다.",
+            "nullable": true
+          },
           "teacherEmploymentStatus": {
             "type": "string",
             "enum": [
@@ -31813,6 +31990,11 @@
           },
           "officialDocumentRequired": {
             "type": "boolean"
+          },
+          "officialDocumentRequiredInfo": {
+            "type": "string",
+            "description": "기관 신청 폼에 저장된 공문 필요 정보 원문. 없으면 null. 빈 문자열·하이픈을 넣지 않는다. FE가 고정 문구를 만들지 않는다.",
+            "nullable": true
           },
           "submittedAt": {
             "type": "string",
@@ -40860,7 +41042,22 @@
           "educationSessionCount": {
             "type": "integer",
             "format": "int32",
-            "description": "교육 진행 차시 번호(sessionNo와 동일). 제출 스냅샷에 없으면 null"
+            "description": "교육 회차 번호(sessionNo와 동일). 인정 차시가 아님. 제출 스냅샷에 없으면 null. 지급조서 '교육 진행 차시' 표시에는 쓰지 않는다.",
+            "nullable": true
+          },
+          "recognizedSessionCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "강사비 산정에 적용된 인정 차시. 지급조서 '교육 진행 차시' 표시 기준. 제출 스냅샷 recognizedSessionCount. 구 스냅샷에 없으면 null이며 educationSessionCount로 대체하지 않는다.",
+            "example": 1,
+            "nullable": true
+          },
+          "actualTrainingMinutes": {
+            "type": "integer",
+            "format": "int32",
+            "description": "강사비 산정에 사용한 진행 시간(분). 기관·개인=배정 일정, 제미나이=실적. 구 스냅샷에 없으면 null.",
+            "example": 60,
+            "nullable": true
           },
           "totalStudentCount": {
             "type": "integer",
@@ -40870,7 +41067,7 @@
           "totalLectureFee": {
             "type": "integer",
             "format": "int64",
-            "description": "이번 회차 총 강의비(원, 정수). 제출 전 lectureFeePreview.totalLectureFee와 동일 산식. 실적 시간 기준 차시당 단가×인정 차시. educationSessionCount(차시 번호)를 곱하지 않음."
+            "description": "이번 회차 총 강의비(원, 정수). 제출 전 lectureFeePreview.totalLectureFee와 동일 산식. 인정 차시×단가. educationSessionCount(회차 번호)를 곱하지 않음."
           },
           "oneWayDistanceKm": {
             "type": "string",
@@ -41030,7 +41227,7 @@
       },
       "MemberLectureFeePreview": {
         "type": "object",
-        "description": "제출 전 미리보기. totalLectureFee는 배정 실적 시각이 있을 때만 확정 금액이다. 예정 startAt~endAt으로 확정액을 채우지 않는다. 1~3급·차시당(PER_HOUR 레거시 포함, PER_CLASS)은 단가×인정 차시. PER_SESSION/PER_LECTURE/FIXED는 출강 1회 단가=총액. educationSessionCount는 일정 차시 번호이며 시수 배수가 아니다. 실적 시간이 없으면 totalLectureFee=null, settlementBlockerCode=SETTLEMENT_ACTUAL_TRAINING_TIME_REQUIRED. 키는 항상 존재.",
+        "description": "제출 전 미리보기. 기관·개인 totalLectureFee는 배정 일정 startAt~endAt 진행 시간으로 확정한다. 제미나이는 강의보고서 실적 시각만 사용한다. 1~3급·차시당(PER_HOUR 레거시 포함, PER_CLASS)은 단가×인정 차시. PER_SESSION/PER_LECTURE/FIXED는 출강 1회 단가=총액. educationSessionCount는 일정 회차 번호이며 시수 배수가 아니다. 인정 차시는 recognizedSessionCount. 계산 시간이 없으면 totalLectureFee=null, settlementBlockerCode=SETTLEMENT_ASSIGNED_SCHEDULE_TIME_REQUIRED(기관·개인) 또는 SETTLEMENT_ACTUAL_TRAINING_TIME_REQUIRED(제미나이). 키는 항상 존재.",
         "properties": {
           "lectureFeeType": {
             "type": "string",
@@ -41066,35 +41263,35 @@
           "totalLectureFee": {
             "type": "integer",
             "format": "int64",
-            "description": "이번 회차 확정 강의비(원, 정수). 실적 시간 기준. 예: 실적 90분=2차시, 단가 300000 → 600000. 실적 10분=0차시 → 0. 실적 없음 → null.",
+            "description": "이번 회차 확정 강의비(원, 정수). 기관·개인은 배정 일정 시간, 제미나이는 실적 시간. 예: 60분=1차시, 단가 300000 → 300000. 기관·개인 20분=0차시 → 0. 계산 시간 없음 → null.",
             "example": 450000,
             "nullable": true
           },
           "educationSessionCount": {
             "type": "integer",
             "format": "int32",
-            "description": "이번 일정 차시 번호. sessionNo와 동일. 시수/횟수 배수가 아님. 없으면 null.",
-            "example": 2,
+            "description": "이번 일정 회차 번호. sessionNo와 동일. 인정 차시·시수 배수가 아님. 없으면 null.",
+            "example": 3,
             "nullable": true
           },
           "recognizedSessionCount": {
             "type": "integer",
             "format": "int32",
-            "description": "실적 시간으로 환산한 인정 차시. 실적 없으면 null. 0은 0차시.",
+            "description": "강사비 산정에 적용된 인정 차시. 계산 시간 없으면 null. 0은 0차시.",
             "example": 1,
             "nullable": true
           },
           "actualTrainingMinutes": {
             "type": "integer",
             "format": "int32",
-            "description": "배정 실적 시작~종료 분. 실적 없으면 null.",
-            "example": 90,
+            "description": "강사비 산정에 사용한 진행 시간(분). 기관·개인=배정 일정, 제미나이=강의보고서 실적. 없으면 null.",
+            "example": 60,
             "nullable": true
           },
           "settlementBlockerCode": {
             "type": "string",
-            "description": "확정 강사비를 신청할 수 없을 때 코드. SETTLEMENT_ACTUAL_TRAINING_TIME_REQUIRED, SETTLEMENT_WAGE_RATE_NOT_CONFIGURED. 확정 가능하면 null.",
-            "example": "SETTLEMENT_ACTUAL_TRAINING_TIME_REQUIRED",
+            "description": "확정 강사비를 신청할 수 없을 때 코드. SETTLEMENT_ASSIGNED_SCHEDULE_TIME_REQUIRED(기관·개인), SETTLEMENT_ACTUAL_TRAINING_TIME_REQUIRED(제미나이), SETTLEMENT_WAGE_RATE_NOT_CONFIGURED. 확정 가능하면 null.",
+            "example": "SETTLEMENT_ASSIGNED_SCHEDULE_TIME_REQUIRED",
             "nullable": true
           }
         }
@@ -50966,7 +51163,9 @@
           },
           "sessionNo": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "본교육 회차 번호(program_schedule.session_no). 차시 개수가 아님. 사전교육은 보통 null. null만으로 사전교육이 아님.",
+            "nullable": true
           },
           "timeLabel": {
             "type": "string"
@@ -50975,7 +51174,9 @@
             "type": "string"
           },
           "dateRoundTimeLabel": {
-            "type": "string"
+            "type": "string",
+            "description": "날짜 · 회차/사전교육 · 커리큘럼 차시(연결이 있을 때만) · 시각. sessionNo를 N차시로 붙이지 않음.",
+            "nullable": true
           },
           "lectureProgressStatus": {
             "type": "string"
@@ -50990,6 +51191,22 @@
               "type": "integer",
               "format": "int64"
             }
+          },
+          "scheduleRole": {
+            "type": "string",
+            "description": "canonical 일정 역할. program_schedule.schedule_kind. PRE_EDUCATION|EDUCATION|SESSION|CLOSING. 없으면 null. sessionNo=null로 추정하지 않음.",
+            "nullable": true
+          },
+          "educationSlotKey": {
+            "type": "string",
+            "description": "canonical education_slot_key. 사전교육 general-pre-education:*, 본교육 회차 general-common-line:N 등. 없으면 null.",
+            "nullable": true
+          },
+          "curriculumSessionCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "해당 scheduleId에 연결된 program_curriculum_session 건수(실제 커리큘럼 차시). 없으면 null. sessionNo를 넣지 않음. 사전교육은 null. 정산 인정 차시와 별개.",
+            "nullable": true
           }
         }
       },
@@ -52685,6 +52902,28 @@
             "type": "integer",
             "format": "int64"
           },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32",
+            "description": "본교육 회차 번호(program_schedule.session_no). 차시 개수가 아님.",
+            "nullable": true
+          },
+          "scheduleRole": {
+            "type": "string",
+            "description": "canonical 일정 역할. PRE_EDUCATION|EDUCATION|SESSION|CLOSING. 없으면 null.",
+            "nullable": true
+          },
+          "educationSlotKey": {
+            "type": "string",
+            "description": "canonical education_slot_key. 없으면 null.",
+            "nullable": true
+          },
+          "curriculumSessionCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "연결된 program_curriculum_session 건수. 사전교육·연결 없으면 null. 정산 인정 차시와 별개.",
+            "nullable": true
+          },
           "instructorAssignmentId": {
             "type": "integer",
             "format": "int64"
@@ -52865,6 +53104,28 @@
           "lectureDate": {
             "type": "string",
             "format": "date"
+          },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32",
+            "description": "본교육 회차 번호(program_schedule.session_no). 차시 개수가 아님. 사전교육은 보통 null. null만으로 사전교육이 아님.",
+            "nullable": true
+          },
+          "scheduleRole": {
+            "type": "string",
+            "description": "canonical 일정 역할. program_schedule.schedule_kind. PRE_EDUCATION|EDUCATION|SESSION|CLOSING. 없으면 null. sessionNo=null로 추정하지 않음.",
+            "nullable": true
+          },
+          "educationSlotKey": {
+            "type": "string",
+            "description": "canonical education_slot_key. 없으면 null.",
+            "nullable": true
+          },
+          "curriculumSessionCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "해당 scheduleId에 연결된 program_curriculum_session 건수(실제 커리큘럼 차시). 없으면 null. sessionNo를 넣지 않음. 사전교육은 null. 정산 인정 차시와 별개.",
+            "nullable": true
           },
           "instructorName": {
             "type": "string",
@@ -54827,12 +55088,12 @@
         "properties": {
           "key": {
             "type": "string",
-            "description": "카탈로그 key = #{…} 안쪽 라벨. fail-closed 메시지 키와 동일.",
+            "description": "카탈로그 key = #{…} 안쪽 라벨",
             "example": "교육 진행 수업 시간"
           },
           "token": {
             "type": "string",
-            "description": "본문 삽입용 토큰. 예: #{교육 진행 수업 시간}. FE는 key가 아니라 token을 삽입.",
+            "description": "본문 삽입용 토큰",
             "example": "#{교육 진행 수업 시간}"
           },
           "description": {
@@ -54842,11 +55103,11 @@
           },
           "requiresProgram": {
             "type": "boolean",
-            "description": "true이면 programId 없이 enabled=false."
+            "description": "true면 programId 없이 enabled=false. 알림톡 피커 Option A에서도 동일"
           },
           "enabled": {
             "type": "boolean",
-            "description": "삽입 허용 SSOT(값 존재와 무관). FE 재계산 금지. true여도 원천 데이터 없으면 발송 실패 가능."
+            "description": "삽입·알림톡 피커(프로그램 지정 시) 사용 허용 SSOT. FE 재계산 금지. 시스템 이벤트 전용 키는 기본 false. TEMP: local + ja.notification.qa.system-manual-send-enabled=true 이면 SYSTEM도 true. true여도 원천 데이터 없으면 발송 실패 가능(QA 모드에서는 서버가 SYSTEM 더미 enrich)"
           },
           "programGroups": {
             "type": "array",
@@ -54864,21 +55125,21 @@
           },
           "participantTypes": {
             "type": "array",
-            "description": "허용 참여 유형. 비면 제한 없음. PARTICIPANT|INSTRUCTOR|VOLUNTEER.",
+            "description": "허용 참여 유형. 비면 제한 없음",
             "items": {
               "type": "string"
             }
           },
           "memberTypes": {
             "type": "array",
-            "description": "허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN.",
+            "description": "허용 회원 유형. 비면 제한 없음",
             "items": {
               "type": "string"
             }
           },
           "sourceMode": {
             "type": "string",
-            "description": "값 소스. SERVER_RESOLVED=서버 정본(요청 덮어쓰기 불가), MANUAL_ALLOWED=CMS 수동 발송 입력 허용, EVENT_ONLY=자동 이벤트 전용. enabled와 독립.",
+            "description": "값 소스. SERVER_RESOLVED=서버 정본(요청 덮어쓰기 불가), MANUAL_ALLOWED=CMS 수동 발송 입력 허용, EVENT_ONLY=자동 이벤트 전용. enabled와 독립. 구 FE는 필드를 무시해도 됨",
             "enum": [
               "SERVER_RESOLVED",
               "MANUAL_ALLOWED",
@@ -55387,15 +55648,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "adminAccountId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
-          },
           "memberId": {
             "type": "integer",
             "format": "int64",
             "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
+          },
+          "adminAccountId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
           }
         }
       },
@@ -56420,11 +56681,12 @@
           },
           "paymentExclusionReason": {
             "type": "string",
-            "description": "계좌 지급 제외 사유. 지급 대상이면 null. GEMINI_INSTRUCTOR_IDENTITY_BLANK=강사명·연락처 완전 미기재로 실적만 등록, GEMINI_INSTRUCTOR_NOT_MATCHED=이름·연락처 있으나 강사 회원 미매칭으로 실적만 등록",
+            "description": "계좌 지급 제외 사유. 지급 대상이면 null. GEMINI_INSTRUCTOR_IDENTITY_BLANK=강사명·연락처 완전 미기재로 실적만 등록, GEMINI_INSTRUCTOR_EXTERNAL_PAYEE=회원 미확정+외부 지급처로 실적만 등록, GEMINI_INSTRUCTOR_NOT_MATCHED=과거 적재분(신규 import는 FAILED로 전환)",
             "enum": [
               "ZERO_CALCULATED_FEE",
               "GEMINI_WAGE_RATE_NOT_CONFIGURED",
               "GEMINI_INSTRUCTOR_IDENTITY_BLANK",
+              "GEMINI_INSTRUCTOR_EXTERNAL_PAYEE",
               "GEMINI_INSTRUCTOR_NOT_MATCHED"
             ],
             "nullable": true
@@ -59339,30 +59601,6 @@
           },
           "status": {
             "type": "string"
-          }
-        }
-      },
-      "InstructorApplicationApprovalCancellationRequest": {
-        "type": "object",
-        "description": "강사 신청 승인 취소 요청. 승인 취소 1건 = JA 감점 1건. 연쇄 배정 취소는 별도 집계하지 않는다.",
-        "properties": {
-          "reason": {
-            "type": "string",
-            "maxLength": 500,
-            "minLength": 0,
-            "example": "강사 개인 사정"
-          },
-          "notification": {
-            "$ref": "#/components/schemas/Notification"
-          },
-          "faultParty": {
-            "type": "string",
-            "nullable": true,
-            "description": "취소 귀책. USER=강사 사유(JA 감점 대상), ADMIN=운영 사유(감점 없음). 생략/null이면 서버가 ADMIN 처리.",
-            "enum": [
-              "USER",
-              "ADMIN"
-            ]
           }
         }
       },
