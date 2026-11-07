@@ -323,6 +323,103 @@
         }
       }
     },
+    "/api/admin/careers/talent-applications/{id}/attachments/{assetId}/download": {
+      "post": {
+        "tags": [
+          "career-talent-application-admin-controller"
+        ],
+        "summary": "Download a career talent application attachment by asset id",
+        "description": "Streams a server-encrypted file. Body { password } is write-only and is never stored.",
+        "operationId": "attachmentDownloadByAsset_2",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "assetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FileDownloadPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/careers/talent-applications/{id}/attachment-download": {
+      "post": {
+        "tags": [
+          "career-talent-application-admin-controller"
+        ],
+        "summary": "Download career talent application attachment",
+        "description": "Streams a server-encrypted file. Body { password } is write-only and is never stored. containedPiiTypes is empty until classified.",
+        "operationId": "attachmentDownload_2",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FileDownloadPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/careers/postings": {
       "get": {
         "tags": [
@@ -1002,7 +1099,7 @@
           "career-talent-application-admin-controller"
         ],
         "summary": "Get career talent application detail",
-        "description": "revealPii=false (default) masks phone, email, addressRoad, and addressDetail with the same PrivacyMaskingSupport rules as the list. Name uses maskName. Education, career, and attachments stay omitted until revealed. revealPii=true returns originals only with HOMEPAGE_PII_VIEW and writes an audit/privacy log; otherwise 403.",
+        "description": "revealPii=false (default) masks phone, email, addressRoad, and addressDetail with the same PrivacyMaskingSupport rules as the list. Name uses maskName. Education, career, and attachments stay omitted until revealed. Every 200 writes homepage_admin_audit_log (PII_READ / CAREER_TALENT_APPLICATION) and homepage_privacy_access_log with a masked targetName. revealPii=true returns originals only with HOMEPAGE_PII_VIEW; otherwise 403. Admin log list screens must not POST privacy-access.",
         "operationId": "detail_9",
         "parameters": [
           {
@@ -1032,77 +1129,6 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/CareerTalentApplicationDetailResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/admin/careers/talent-applications/{id}/attachments/{assetId}/download": {
-      "get": {
-        "tags": [
-          "career-talent-application-admin-controller"
-        ],
-        "operationId": "attachmentDownloadByAsset_2",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          },
-          {
-            "name": "assetId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/CareerTalentApplicationAttachmentDownloadResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/admin/careers/talent-applications/{id}/attachment-download": {
-      "get": {
-        "tags": [
-          "career-talent-application-admin-controller"
-        ],
-        "operationId": "attachmentDownload_2",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/CareerTalentApplicationAttachmentDownloadResponse"
                 }
               }
             }
@@ -1482,7 +1508,8 @@
               "JA_HISTORY_WORLD_TIMELINE_IMAGE",
               "JA_HISTORY_KOREA_TIMELINE_IMAGE",
               "JA_HISTORY_PHILOSOPHY_CARD_IMAGE",
-              "JA_HISTORY_LOCKED_MEDIA"
+              "JA_HISTORY_LOCKED_MEDIA",
+              "LOG_EXPORT_XLSX"
             ]
           },
           "status": {
@@ -6192,6 +6219,18 @@
           "metricCode"
         ]
       },
+      "FileDownloadPasswordRequest": {
+        "type": "object",
+        "description": "일회성 파일 암호. write-only이며 서버는 저장하지 않습니다.",
+        "properties": {
+          "password": {
+            "type": "string",
+            "description": "8자 이상, 영문+숫자+특수문자, 공백 불가",
+            "example": "Jafile1!",
+            "writeOnly": true
+          }
+        }
+      },
       "SponsorCreateRequest": {
         "type": "object",
         "properties": {
@@ -6618,6 +6657,11 @@
             "minLength": 0
           },
           "actionType": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 0
+          },
+          "clientIp": {
             "type": "string",
             "maxLength": 64,
             "minLength": 0
@@ -7229,7 +7273,8 @@
               "JA_HISTORY_WORLD_TIMELINE_IMAGE",
               "JA_HISTORY_KOREA_TIMELINE_IMAGE",
               "JA_HISTORY_PHILOSOPHY_CARD_IMAGE",
-              "JA_HISTORY_LOCKED_MEDIA"
+              "JA_HISTORY_LOCKED_MEDIA",
+              "LOG_EXPORT_XLSX"
             ]
           },
           "originalName": {
@@ -9863,21 +9908,6 @@
           }
         }
       },
-      "TalentApplicationAttachmentDownloadResponse": {
-        "type": "object",
-        "properties": {
-          "originalName": {
-            "type": "string"
-          },
-          "downloadUrl": {
-            "type": "string"
-          },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
       "PersonalAdminResponse": {
         "type": "object",
         "properties": {
@@ -10071,21 +10101,6 @@
           "version": {
             "type": "integer",
             "format": "int64"
-          }
-        }
-      },
-      "AttachmentDownloadResponse": {
-        "type": "object",
-        "properties": {
-          "originalName": {
-            "type": "string"
-          },
-          "downloadUrl": {
-            "type": "string"
-          },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time"
           }
         }
       },
@@ -10611,7 +10626,8 @@
               "JA_HISTORY_WORLD_TIMELINE_IMAGE",
               "JA_HISTORY_KOREA_TIMELINE_IMAGE",
               "JA_HISTORY_PHILOSOPHY_CARD_IMAGE",
-              "JA_HISTORY_LOCKED_MEDIA"
+              "JA_HISTORY_LOCKED_MEDIA",
+              "LOG_EXPORT_XLSX"
             ]
           },
           "originalName": {
@@ -10632,6 +10648,15 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "downloadKind": {
+            "type": "string"
+          },
+          "containedPiiTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -11142,21 +11167,6 @@
             "items": {
               "$ref": "#/components/schemas/ApplicationAttachmentItem"
             }
-          }
-        }
-      },
-      "CareerTalentApplicationAttachmentDownloadResponse": {
-        "type": "object",
-        "properties": {
-          "originalName": {
-            "type": "string"
-          },
-          "downloadUrl": {
-            "type": "string"
-          },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time"
           }
         }
       },

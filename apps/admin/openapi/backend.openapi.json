@@ -12,58 +12,6 @@
     }
   ],
   "paths": {
-"/api/admin/auth/activity": {
-      "post": {
-        "tags": ["인증/세션"],
-        "summary": "관리자 실제 사용자 활동 기록",
-        "description": "요청 본문 없음. bare JSON `{ lastUserActivityAt, updated }`. 세션을 Refresh하지 않는다.",
-        "operationId": "recordAdminAuthActivity",
-        "responses": {
-          "200": {
-            "description": "활동 기록 결과",
-            "headers": {
-              "Cache-Control": {
-                "schema": { "type": "string", "example": "no-store" }
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/AdminAuthActivityResponse" }
-              }
-            }
-          },
-          "401": { "description": "인증 실패. Refresh 없이 재로그인" },
-          "403": { "description": "ADMIN 권한 아님" }
-        },
-        "security": [{ "bearerAuth": [] }]
-      }
-    },
-    "/api/admin/auth/session": {
-      "get": {
-        "tags": ["인증/세션"],
-        "summary": "관리자 세션 상태 조회",
-        "description": "읽기 전용. 유휴/절대 기한과 idlePolicyEnforced, serverNow를 반환한다. GET 자체는 활동을 연장하지 않는다.",
-        "operationId": "getAdminAuthSession",
-        "responses": {
-          "200": {
-            "description": "세션 상태",
-            "headers": {
-              "Cache-Control": {
-                "schema": { "type": "string", "example": "no-store" }
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/AdminAuthSessionResponse" }
-              }
-            }
-          },
-          "401": { "description": "sid 없음 또는 세션 만료/폐기" },
-          "403": { "description": "ADMIN 권한 아님" }
-        },
-        "security": [{ "bearerAuth": [] }]
-      }
-    },
     "/api/admin/sponsorship/talent/interviews/{slotId}": {
       "put": {
         "tags": [
@@ -3453,6 +3401,103 @@
         }
       }
     },
+    "/api/admin/sponsorship/talent-applications/{id}/attachments/{assetId}/download": {
+      "post": {
+        "tags": [
+          "talent-application-admin-controller"
+        ],
+        "summary": "Download a talent application attachment by asset id",
+        "description": "Streams a server-encrypted file. Body { password } is write-only and is never stored.",
+        "operationId": "attachmentDownloadByAsset",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "assetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FileDownloadPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/sponsorship/talent-applications/{id}/attachment-download": {
+      "post": {
+        "tags": [
+          "talent-application-admin-controller"
+        ],
+        "summary": "Download talent application attachment",
+        "description": "Streams a server-encrypted file. Body { password } is write-only and is never stored. containedPiiTypes is empty until classified.",
+        "operationId": "attachmentDownload",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FileDownloadPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/sponsorship/corporate/sponsors": {
       "get": {
         "tags": [
@@ -3574,6 +3619,103 @@
         "responses": {
           "204": {
             "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/admin/sponsorship/corporate-consultations/{id}/attachments/{assetId}/download": {
+      "post": {
+        "tags": [
+          "corporate-consultation-admin-controller"
+        ],
+        "summary": "Download a corporate consultation attachment by asset id",
+        "description": "Streams a server-encrypted file. Body { password } is write-only and is never stored.",
+        "operationId": "attachmentDownloadByAsset_1",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "assetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FileDownloadPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/sponsorship/corporate-consultations/{id}/attachment-download": {
+      "post": {
+        "tags": [
+          "corporate-consultation-admin-controller"
+        ],
+        "summary": "Download corporate consultation attachment",
+        "description": "Streams a server-encrypted file. Body { password } is write-only and is never stored. containedPiiTypes is empty until classified.",
+        "operationId": "attachmentDownload_1",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FileDownloadPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
+                }
+              }
+            }
           }
         }
       }
@@ -4289,8 +4431,18 @@
           "homepage-log-admin-controller"
         ],
         "summary": "Ingest admin account-processing evidence",
-        "description": "Internal ingest for collectors (JA CMS / Platform / Homepage services). Admin log list screens must not POST. Writes are append-only. Homepage does not own account APIs; JA CMS should POST after create/deactivate/profile/permission/password changes. Not used by Admin list UI.",
+        "description": "Internal ingest for collectors (JA CMS / Platform / Homepage services). Admin log list screens must not POST. Writes are append-only. Homepage does not own account APIs; JA CMS should POST after create/deactivate/profile/permission/password/identity re-verify using the same ingest bearer as member-logins. Not used by Admin list UI.",
         "operationId": "createAdminAccountAction",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -5583,6 +5735,103 @@
         "responses": {
           "200": {
             "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/admin/careers/talent-applications/{id}/attachments/{assetId}/download": {
+      "post": {
+        "tags": [
+          "career-talent-application-admin-controller"
+        ],
+        "summary": "Download a career talent application attachment by asset id",
+        "description": "Streams a server-encrypted file. Body { password } is write-only and is never stored.",
+        "operationId": "attachmentDownloadByAsset_2",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "assetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FileDownloadPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/careers/talent-applications/{id}/attachment-download": {
+      "post": {
+        "tags": [
+          "career-talent-application-admin-controller"
+        ],
+        "summary": "Download career talent application attachment",
+        "description": "Streams a server-encrypted file. Body { password } is write-only and is never stored. containedPiiTypes is empty until classified.",
+        "operationId": "attachmentDownload_2",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FileDownloadPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
+                }
+              }
+            }
           }
         }
       }
@@ -8014,77 +8263,6 @@
         }
       }
     },
-    "/api/admin/sponsorship/talent-applications/{id}/attachments/{assetId}/download": {
-      "get": {
-        "tags": [
-          "talent-application-admin-controller"
-        ],
-        "operationId": "attachmentDownloadByAsset",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          },
-          {
-            "name": "assetId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/TalentApplicationAttachmentDownloadResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/admin/sponsorship/talent-applications/{id}/attachment-download": {
-      "get": {
-        "tags": [
-          "talent-application-admin-controller"
-        ],
-        "operationId": "attachmentDownload",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/TalentApplicationAttachmentDownloadResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/admin/sponsorship/personal": {
       "get": {
         "tags": [
@@ -8296,77 +8474,6 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ConsultationDetailResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/admin/sponsorship/corporate-consultations/{id}/attachments/{assetId}/download": {
-      "get": {
-        "tags": [
-          "corporate-consultation-admin-controller"
-        ],
-        "operationId": "attachmentDownloadByAsset_1",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          },
-          {
-            "name": "assetId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AttachmentDownloadResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/admin/sponsorship/corporate-consultations/{id}/attachment-download": {
-      "get": {
-        "tags": [
-          "corporate-consultation-admin-controller"
-        ],
-        "operationId": "attachmentDownload_1",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AttachmentDownloadResponse"
                 }
               }
             }
@@ -8913,7 +9020,8 @@
                 "JA_HISTORY_WORLD_TIMELINE_IMAGE",
                 "JA_HISTORY_KOREA_TIMELINE_IMAGE",
                 "JA_HISTORY_PHILOSOPHY_CARD_IMAGE",
-                "JA_HISTORY_LOCKED_MEDIA"
+                "JA_HISTORY_LOCKED_MEDIA",
+                "LOG_EXPORT_XLSX"
               ]
             }
           },
@@ -9036,7 +9144,8 @@
                 "JA_HISTORY_WORLD_TIMELINE_IMAGE",
                 "JA_HISTORY_KOREA_TIMELINE_IMAGE",
                 "JA_HISTORY_PHILOSOPHY_CARD_IMAGE",
-                "JA_HISTORY_LOCKED_MEDIA"
+                "JA_HISTORY_LOCKED_MEDIA",
+                "LOG_EXPORT_XLSX"
               ]
             }
           },
@@ -9384,7 +9493,7 @@
           "career-talent-application-admin-controller"
         ],
         "summary": "Get career talent application detail",
-        "description": "revealPii=false (default) masks phone, email, addressRoad, and addressDetail with the same PrivacyMaskingSupport rules as the list. Name uses maskName. Education, career, and attachments stay omitted until revealed. revealPii=true returns originals only with HOMEPAGE_PII_VIEW and writes an audit/privacy log; otherwise 403.",
+        "description": "revealPii=false (default) masks phone, email, addressRoad, and addressDetail with the same PrivacyMaskingSupport rules as the list. Name uses maskName. Education, career, and attachments stay omitted until revealed. Every 200 writes homepage_admin_audit_log (PII_READ / CAREER_TALENT_APPLICATION) and homepage_privacy_access_log with a masked targetName. revealPii=true returns originals only with HOMEPAGE_PII_VIEW; otherwise 403. Admin log list screens must not POST privacy-access.",
         "operationId": "detail_9",
         "parameters": [
           {
@@ -9414,77 +9523,6 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/CareerTalentApplicationDetailResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/admin/careers/talent-applications/{id}/attachments/{assetId}/download": {
-      "get": {
-        "tags": [
-          "career-talent-application-admin-controller"
-        ],
-        "operationId": "attachmentDownloadByAsset_2",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          },
-          {
-            "name": "assetId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/CareerTalentApplicationAttachmentDownloadResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/admin/careers/talent-applications/{id}/attachment-download": {
-      "get": {
-        "tags": [
-          "career-talent-application-admin-controller"
-        ],
-        "operationId": "attachmentDownload_2",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/CareerTalentApplicationAttachmentDownloadResponse"
                 }
               }
             }
@@ -9577,29 +9615,6 @@
   },
   "components": {
     "schemas": {
-"AdminAuthActivityResponse": {
-        "type": "object",
-        "description": "POST /api/admin/auth/activity bare JSON",
-        "required": ["lastUserActivityAt", "updated"],
-        "properties": {
-          "lastUserActivityAt": { "type": "string", "format": "date-time" },
-          "updated": { "type": "boolean", "description": "false면 60초 기록 억제로 기존 시각 유지" }
-        }
-      },
-      "AdminAuthSessionResponse": {
-        "type": "object",
-        "description": "GET /api/admin/auth/session bare JSON",
-        "required": ["sessionStartedAt", "absoluteExpiresAt", "lastUserActivityAt", "idlePolicyEnforced", "serverNow"],
-        "properties": {
-          "sessionStartedAt": { "type": "string", "format": "date-time" },
-          "absoluteExpiresAt": { "type": "string", "format": "date-time" },
-          "lastUserActivityAt": { "type": "string", "format": "date-time" },
-          "idleExpiresAt": { "type": "string", "format": "date-time", "nullable": true },
-          "refreshIdleExpiresAt": { "type": "string", "format": "date-time", "nullable": true },
-          "idlePolicyEnforced": { "type": "boolean" },
-          "serverNow": { "type": "string", "format": "date-time" }
-        }
-      },
       "TalentSponsorshipInterviewUpdateRequest": {
         "type": "object",
         "properties": {
@@ -9949,7 +9964,8 @@
               "JA_HISTORY_WORLD_TIMELINE_IMAGE",
               "JA_HISTORY_KOREA_TIMELINE_IMAGE",
               "JA_HISTORY_PHILOSOPHY_CARD_IMAGE",
-              "JA_HISTORY_LOCKED_MEDIA"
+              "JA_HISTORY_LOCKED_MEDIA",
+              "LOG_EXPORT_XLSX"
             ]
           },
           "status": {
@@ -14691,6 +14707,18 @@
           "metricCode"
         ]
       },
+      "FileDownloadPasswordRequest": {
+        "type": "object",
+        "description": "일회성 파일 암호. write-only이며 서버는 저장하지 않습니다.",
+        "properties": {
+          "password": {
+            "type": "string",
+            "description": "8자 이상, 영문+숫자+특수문자, 공백 불가",
+            "example": "Jafile1!",
+            "writeOnly": true
+          }
+        }
+      },
       "SponsorCreateRequest": {
         "type": "object",
         "properties": {
@@ -15121,6 +15149,11 @@
             "minLength": 0
           },
           "actionType": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 0
+          },
+          "clientIp": {
             "type": "string",
             "maxLength": 64,
             "minLength": 0
@@ -15736,7 +15769,8 @@
               "JA_HISTORY_WORLD_TIMELINE_IMAGE",
               "JA_HISTORY_KOREA_TIMELINE_IMAGE",
               "JA_HISTORY_PHILOSOPHY_CARD_IMAGE",
-              "JA_HISTORY_LOCKED_MEDIA"
+              "JA_HISTORY_LOCKED_MEDIA",
+              "LOG_EXPORT_XLSX"
             ]
           },
           "originalName": {
@@ -18398,21 +18432,6 @@
           }
         }
       },
-      "TalentApplicationAttachmentDownloadResponse": {
-        "type": "object",
-        "properties": {
-          "originalName": {
-            "type": "string"
-          },
-          "downloadUrl": {
-            "type": "string"
-          },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
       "PersonalAdminResponse": {
         "type": "object",
         "properties": {
@@ -18610,21 +18629,6 @@
           "version": {
             "type": "integer",
             "format": "int64"
-          }
-        }
-      },
-      "AttachmentDownloadResponse": {
-        "type": "object",
-        "properties": {
-          "originalName": {
-            "type": "string"
-          },
-          "downloadUrl": {
-            "type": "string"
-          },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time"
           }
         }
       },
@@ -19150,7 +19154,8 @@
               "JA_HISTORY_WORLD_TIMELINE_IMAGE",
               "JA_HISTORY_KOREA_TIMELINE_IMAGE",
               "JA_HISTORY_PHILOSOPHY_CARD_IMAGE",
-              "JA_HISTORY_LOCKED_MEDIA"
+              "JA_HISTORY_LOCKED_MEDIA",
+              "LOG_EXPORT_XLSX"
             ]
           },
           "originalName": {
@@ -19171,6 +19176,15 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "downloadKind": {
+            "type": "string"
+          },
+          "containedPiiTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -19705,21 +19719,6 @@
             "items": {
               "$ref": "#/components/schemas/ApplicationAttachmentItem"
             }
-          }
-        }
-      },
-      "CareerTalentApplicationAttachmentDownloadResponse": {
-        "type": "object",
-        "properties": {
-          "originalName": {
-            "type": "string"
-          },
-          "downloadUrl": {
-            "type": "string"
-          },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time"
           }
         }
       },
