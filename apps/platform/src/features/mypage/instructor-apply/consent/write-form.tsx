@@ -536,37 +536,57 @@ export function SchemaConsentWriteForm({
   }, [onTitleAside, showDraftSignature])
 
   /**
-   * 지급조서·영수증 — 양식에 있는 서명란 단락(mid/tail)에 각 슬롯 서명 블록을 둔다.
-   * 서명란 단락이 없으면 기존처럼 확인문 카드 안에 서명 블록을 둔다(서명 불가 방지).
+   * 지급조서·영수증 — 양식 서명란 단락(mid/tail) 처리.
+   * - 확인문 바로 다음 서명란(사이 단락이 모두 숨김): Figma 12127:73978처럼 확인문 카드 한 장에
+   *   진술문(왼쪽)+작성일·성명·서명하기(오른쪽)를 두고, 빈 서명란 단락은 숨긴다.
+   * - 서명란이 확인문과 떨어져 있으면 그 서명란 위치에 서명 블록을 둔다.
+   * - 서명란 단락이 없으면 확인문 카드 안에 서명 블록(서명 불가 방지).
    */
-  const signatureParagraphSlotById = useMemo(() => {
+  const { signatureParagraphSlotById, mergedSignatureParagraphIds } = useMemo(() => {
     const map = new Map<string, 'mid' | 'final'>()
-    const known: Array<[string, 'mid' | 'final']> =
+    const merged = new Set<string>()
+    const known: Array<[string, 'mid' | 'final', string]> =
       templateId === 'agreement-third-party'
         ? [
-            [PAYMENT_STATEMENT_PRE_CONSENT_IDS.midSignature, 'mid'],
-            [PAYMENT_STATEMENT_PRE_CONSENT_IDS.tailSignature, 'final'],
+            [PAYMENT_STATEMENT_PRE_CONSENT_IDS.midSignature, 'mid', PAYMENT_STATEMENT_PRE_CONSENT_IDS.midConsentLine],
+            [PAYMENT_STATEMENT_PRE_CONSENT_IDS.tailSignature, 'final', PAYMENT_STATEMENT_PRE_CONSENT_IDS.finalConfirm],
           ]
         : templateId === 'agreement-receipt-pre-consent'
           ? [
-              [RECEIPT_PRE_CONSENT_IDS.midSignature, 'mid'],
-              [RECEIPT_PRE_CONSENT_IDS.tailSignature, 'final'],
+              [RECEIPT_PRE_CONSENT_IDS.midSignature, 'mid', RECEIPT_PRE_CONSENT_IDS.midConsentLine],
+              [RECEIPT_PRE_CONSENT_IDS.tailSignature, 'final', RECEIPT_PRE_CONSENT_IDS.finalConfirm],
             ]
           : []
-    for (const [id, slot] of known) {
-      const p = state.draft.paragraphs.find(paragraph => paragraph.id === id)
+    const paragraphs = state.draft.paragraphs
+    for (const [id, slot, consentLineId] of known) {
+      const index = paragraphs.findIndex(paragraph => paragraph.id === id)
+      const p = index >= 0 ? paragraphs[index] : undefined
       if (
-        p != null &&
-        p.kind === 'description' &&
-        p.variant === 'system' &&
-        p.systemPreset === 'agreement_signature' &&
-        !hiddenParagraphIds.has(id)
+        p == null ||
+        p.kind !== 'description' ||
+        p.variant !== 'system' ||
+        p.systemPreset !== 'agreement_signature' ||
+        hiddenParagraphIds.has(id)
       ) {
-        map.set(id, slot)
+        continue
       }
+      const lineIndex = paragraphs.findIndex(paragraph => paragraph.id === consentLineId)
+      const adjacentToConsentLine =
+        lineIndex >= 0 &&
+        lineIndex < index &&
+        paragraphs.slice(lineIndex + 1, index).every(paragraph => hiddenParagraphIds.has(paragraph.id))
+      if (adjacentToConsentLine) merged.add(id)
+      else map.set(id, slot)
     }
-    return map
+    return { signatureParagraphSlotById: map, mergedSignatureParagraphIds: merged }
   }, [hiddenParagraphIds, state.draft.paragraphs, templateId])
+  const bodyHiddenParagraphIds = useMemo(
+    () =>
+      mergedSignatureParagraphIds.size === 0
+        ? hiddenParagraphIds
+        : new Set([...hiddenParagraphIds, ...mergedSignatureParagraphIds]),
+    [hiddenParagraphIds, mergedSignatureParagraphIds],
+  )
   const signatureSlotsAtSignatureParagraph = useMemo(
     () => new Set(signatureParagraphSlotById.values()),
     [signatureParagraphSlotById],
@@ -800,7 +820,7 @@ export function SchemaConsentWriteForm({
         >
           <PlatformConsentFormBody
             draft={state.draft}
-            hiddenParagraphIds={hiddenParagraphIds}
+            hiddenParagraphIds={bodyHiddenParagraphIds}
             onUpdateParagraph={readOnly ? () => undefined : updateParagraph}
             fillOptions={fillOptions}
             lockedNoticeSubjectMemberName={lockedNoticeSubjectMemberName}

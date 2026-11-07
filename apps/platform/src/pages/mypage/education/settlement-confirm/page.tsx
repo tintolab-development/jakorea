@@ -23,10 +23,15 @@ import {
 } from '@/features/mypage/education/applications/api/activity-hooks'
 import { useSubmitInstructorSettlementMutation } from '@/features/mypage/education/settlements/api/use-submit-instructor-settlement-mutation'
 import { findAssignedSettlementItem } from '@/features/mypage/education/settlements/lib/assigned-settlement-items'
+import { normalizeSettlementNamedExpense } from '@/features/mypage/education/settlements/lib/build-write-draft'
 import {
   buildInstructorSettlementCreateRequest,
   buildInstructorSettlementResubmitRequest,
 } from '@/features/mypage/education/settlements/lib/build-instructor-settlement-submit'
+import {
+  resolveSettlementWriteValidationAlert,
+  validateSettlementWriteDraft,
+} from '@/features/mypage/education/settlements/lib/validate-write-draft'
 import {
   instructorSettlementApiErrorMessage,
   isInstructorPaymentStatementSubmit,
@@ -165,6 +170,8 @@ export function MypageEducationSettlementConfirmPage() {
             ? storedDraft.transport.autoPreview
             : (session?.instructorTransportPreview ?? storedDraft.transport.autoPreview ?? null),
       },
+      meal: normalizeSettlementNamedExpense(storedDraft.meal),
+      activity: normalizeSettlementNamedExpense(storedDraft.activity),
     }
   }, [
     consentSidecarQuery.sidecar,
@@ -212,6 +219,7 @@ export function MypageEducationSettlementConfirmPage() {
             open
             document={null}
             programTitle={application?.title}
+            programType={programType}
             loading
             onClose={handleClose}
             onRefreshDocument={refreshDocument}
@@ -234,6 +242,7 @@ export function MypageEducationSettlementConfirmPage() {
         open
         document={documentQuery.document}
         programTitle={application?.title}
+        programType={programType}
         loading={documentQuery.isLoading}
         error={documentError}
         refreshing={documentQuery.isFetching}
@@ -320,6 +329,14 @@ export function MypageEducationSettlementConfirmPage() {
         : '지급조서 제출에 필요한 일정 정보가 없습니다. 작성 화면으로 돌아가 다시 시도해 주세요.'
     try {
       const settlementApplicationId = draft.meta.settlementApplicationId
+      const writeValidationError = validateSettlementWriteDraft(draft)
+      if (writeValidationError) {
+        setAlertMessage(
+          resolveSettlementWriteValidationAlert(writeValidationError, documentKind).description
+        )
+        setAlertOpen(true)
+        return
+      }
       if (isInstructorSubmit) {
         const resubmit =
           draft.meta.resubmit === true && settlementApplicationId != null

@@ -568,8 +568,14 @@ export function EducationSettlementWriteForm({
     formatSettlementAmountInput(hydrated?.mealAmount ?? '', INSTRUCTOR_MEAL_MAX_WON),
   )
   const [mealFiles, setMealFiles] = useState<string[]>(hydrated?.mealFiles ?? [])
+  const [mealAttachments, setMealAttachments] = useState<SettlementReceiptAttachment[]>(
+    hydrated?.mealAttachments ?? []
+  )
   const [activityAmount, setActivityAmount] = useState(hydrated?.activityAmount ?? '')
   const [activityFiles, setActivityFiles] = useState<string[]>(hydrated?.activityFiles ?? [])
+  const [activityAttachments, setActivityAttachments] = useState<SettlementReceiptAttachment[]>(
+    hydrated?.activityAttachments ?? []
+  )
   const [alertOpen, setAlertOpen] = useState(false)
   const [alertTitle, setAlertTitle] = useState(SETTLEMENT_WRITE_ALERT_TITLE)
   const [alertMessage, setAlertMessage] = useState('')
@@ -752,9 +758,15 @@ export function EducationSettlementWriteForm({
           }))
         : [],
       mealAmount: formatSettlementAmountInput(mealAmount, INSTRUCTOR_MEAL_MAX_WON),
-      mealFiles,
+      mealFiles:
+        mealAttachments.length > 0 ? mealAttachments.map(file => file.fileName) : mealFiles,
+      mealAttachments,
       activityAmount,
-      activityFiles,
+      activityFiles:
+        activityAttachments.length > 0
+          ? activityAttachments.map(file => file.fileName)
+          : activityFiles,
+      activityAttachments,
     })
 
     const validationError = validateSettlementWriteDraft(draft)
@@ -1064,7 +1076,12 @@ export function EducationSettlementWriteForm({
                     <ReceiptUpload
                       fileNames={mealFiles}
                       onFileNamesChange={setMealFiles}
-                      uploadEnabled={false}
+                      attachments={mealAttachments}
+                      onAttachmentsChange={next => {
+                        setMealAttachments(next)
+                        setMealFiles(next.map(file => file.fileName))
+                      }}
+                      uploadEnabled
                       ariaLabel="식사비 영수증 제출"
                       onError={showAlert}
                     />
@@ -1094,7 +1111,12 @@ export function EducationSettlementWriteForm({
                     <ReceiptUpload
                       fileNames={activityFiles}
                       onFileNamesChange={setActivityFiles}
-                      uploadEnabled={false}
+                      attachments={activityAttachments}
+                      onAttachmentsChange={next => {
+                        setActivityAttachments(next)
+                        setActivityFiles(next.map(file => file.fileName))
+                      }}
+                      uploadEnabled
                       ariaLabel="활동비 영수증 제출"
                       onError={showAlert}
                     />

@@ -117,4 +117,34 @@ const instructorPaymentMissingTransit = buildSettlementWriteDraft({
 })
 assert.equal(validateSettlementWriteDraft(instructorPaymentMissingTransit), null)
 
+const instructorMealMissingReceipt = buildSettlementWriteDraft({
+  ...base,
+  isInstructor: true,
+  documentKind: 'payment_statement',
+  mealAmount: '30,000',
+})
+assert.equal(validateSettlementWriteDraft(instructorMealMissingReceipt), 'receipt_required')
+
+const instructorMealNamesOnly = buildSettlementWriteDraft({
+  ...base,
+  isInstructor: true,
+  documentKind: 'payment_statement',
+  mealAmount: '30,000',
+  mealFiles: ['주진2.png'],
+})
+assert.equal(validateSettlementWriteDraft(instructorMealNamesOnly), 'upload_incomplete')
+
+const instructorMealUploaded = buildSettlementWriteDraft({
+  ...base,
+  isInstructor: true,
+  documentKind: 'payment_statement',
+  mealAmount: '30,000',
+  mealFiles: ['주진2.png'],
+  mealAttachments: [{ fileObjectId: 101, fileName: '주진2.png' }],
+  activityAmount: '23,000',
+  activityFiles: ['act.png'],
+  activityAttachments: [{ fileObjectId: 102, fileName: 'act.png' }],
+})
+assert.equal(validateSettlementWriteDraft(instructorMealUploaded), null)
+
 console.log('validate-write-draft.selfcheck: ok')

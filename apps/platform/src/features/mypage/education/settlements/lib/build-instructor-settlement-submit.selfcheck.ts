@@ -112,4 +112,49 @@ assert.throws(
   /ASSIGNMENT_ID_REQUIRED/
 )
 
+const mealActivity = buildSettlementWriteDraft({
+  ...base,
+  extraItems: [],
+  mealAmount: '30,000',
+  mealFiles: ['주진2.png'],
+  mealAttachments: [{ fileObjectId: 101, fileName: '주진2.png' }],
+  activityAmount: '23,000',
+  activityFiles: ['act.png'],
+  activityAttachments: [{ fileObjectId: 102, fileName: 'act.png' }],
+})
+const mealActivityPayload = buildInstructorSettlementCreateRequest(mealActivity)
+assert.deepEqual(
+  mealActivityPayload.requestedItems.filter(
+    item => item.itemType === 'MEAL' || item.itemType === 'ACTIVITY'
+  ),
+  [
+    { itemType: 'MEAL', requestedAmount: 30000, evidenceSubmitted: true },
+    { itemType: 'ACTIVITY', requestedAmount: 23000, evidenceSubmitted: true },
+  ]
+)
+assert.deepEqual(
+  mealActivityPayload.evidenceAttachments.filter(
+    item => item.itemType === 'MEAL' || item.itemType === 'ACTIVITY'
+  ),
+  [
+    { itemType: 'MEAL', fileObjectIds: [101] },
+    { itemType: 'ACTIVITY', fileObjectIds: [102] },
+  ]
+)
+
+const mealNamesOnly = buildInstructorSettlementCreateRequest(
+  buildSettlementWriteDraft({
+    ...base,
+    extraItems: [],
+    mealAmount: '30,000',
+    mealFiles: ['주진2.png'],
+    mealAttachments: [],
+  })
+)
+assert.equal(mealNamesOnly.requestedItems.find(item => item.itemType === 'MEAL')?.evidenceSubmitted, false)
+assert.equal(
+  mealNamesOnly.evidenceAttachments.some(item => item.itemType === 'MEAL'),
+  false
+)
+
 console.log('build-instructor-settlement-submit.selfcheck: ok')

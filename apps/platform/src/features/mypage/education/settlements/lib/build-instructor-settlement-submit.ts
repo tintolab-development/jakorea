@@ -120,12 +120,14 @@ export function buildInstructorSettlementPayloadParts(draft: SettlementWriteDraf
   pushItem(requestedItems, evidenceAttachments, {
     itemType: 'MEAL',
     amount: parseSettlementAmount(draft.meal.amount),
-    fileObjectIds: [],
+    fileObjectIds: (draft.meal.attachments ?? []).map(file => file.fileObjectId),
+    evidenceRequired: true,
   })
   pushItem(requestedItems, evidenceAttachments, {
     itemType: 'ACTIVITY',
     amount: parseSettlementAmount(draft.activity.amount),
-    fileObjectIds: [],
+    fileObjectIds: (draft.activity.attachments ?? []).map(file => file.fileObjectId),
+    evidenceRequired: true,
   })
 
   return { requestedItems, evidenceAttachments }

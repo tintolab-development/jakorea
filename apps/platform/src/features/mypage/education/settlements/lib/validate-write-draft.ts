@@ -39,6 +39,30 @@ function isAmountMissingReceipt(amount: string, fileCount: number): boolean {
   return parseSettlementAmount(amount) > 0 && fileCount === 0
 }
 
+function namedExpenseAttachmentCount(item: {
+  fileNames: string[]
+  attachments?: { fileObjectId: number }[]
+}): number {
+  const uploaded = (item.attachments ?? []).filter(
+    file => Number.isSafeInteger(file.fileObjectId) && file.fileObjectId > 0
+  )
+  if (uploaded.length > 0) return uploaded.length
+  return item.fileNames?.length ?? 0
+}
+
+function isNamedExpenseUploadIncomplete(item: {
+  amount: string
+  fileNames: string[]
+  attachments?: { fileObjectId: number }[]
+}): boolean {
+  if (parseSettlementAmount(item.amount) <= 0) return false
+  const uploaded = (item.attachments ?? []).filter(
+    file => Number.isSafeInteger(file.fileObjectId) && file.fileObjectId > 0
+  )
+  if (uploaded.length > 0) return false
+  return (item.fileNames?.length ?? 0) > 0
+}
+
 function isReceiptDraft(draft: SettlementWriteDraft): boolean {
   return draft.meta.documentKind === 'receipt' || !draft.meta.isInstructor
 }
@@ -53,8 +77,15 @@ export function validateSettlementWriteDraft(
   }
 
   if (meta.isInstructor && meta.documentKind !== 'receipt') {
-    if (isAmountMissingReceipt(meal.amount, meal.fileNames.length)) return 'receipt_required'
-    if (isAmountMissingReceipt(activity.amount, activity.fileNames.length)) return 'receipt_required'
+    if (isAmountMissingReceipt(meal.amount, namedExpenseAttachmentCount(meal))) {
+      return 'receipt_required'
+    }
+    if (isAmountMissingReceipt(activity.amount, namedExpenseAttachmentCount(activity))) {
+      return 'receipt_required'
+    }
+    if (isNamedExpenseUploadIncomplete(meal) || isNamedExpenseUploadIncomplete(activity)) {
+      return 'upload_incomplete'
+    }
     return null
   }
 
@@ -68,9 +99,10 @@ export function validateSettlementWriteDraft(
   const extraStarted = extraItems.some(
     item => parseSettlementAmount(item.amount) > 0 || item.attachments.length > 0
   )
-  const mealStarted = parseSettlementAmount(meal.amount) > 0 || meal.fileNames.length > 0
+  const mealStarted =
+    parseSettlementAmount(meal.amount) > 0 || namedExpenseAttachmentCount(meal) > 0
   const activityStarted =
-    parseSettlementAmount(activity.amount) > 0 || activity.fileNames.length > 0
+    parseSettlementAmount(activity.amount) > 0 || namedExpenseAttachmentCount(activity) > 0
 
   if (!transportStarted && !extraStarted && !mealStarted && !activityStarted) {
     return 'min_expense_item'
@@ -107,8 +139,15 @@ export function validateSettlementWriteDraft(
   }
 
   if (!isReceiptDraft(draft)) {
-    if (isAmountMissingReceipt(meal.amount, meal.fileNames.length)) return 'receipt_required'
-    if (isAmountMissingReceipt(activity.amount, activity.fileNames.length)) return 'receipt_required'
+    if (isAmountMissingReceipt(meal.amount, namedExpenseAttachmentCount(meal))) {
+      return 'receipt_required'
+    }
+    if (isAmountMissingReceipt(activity.amount, namedExpenseAttachmentCount(activity))) {
+      return 'receipt_required'
+    }
+    if (isNamedExpenseUploadIncomplete(meal) || isNamedExpenseUploadIncomplete(activity)) {
+      return 'upload_incomplete'
+    }
   }
 
   return null

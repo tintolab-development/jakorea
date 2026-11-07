@@ -154,7 +154,11 @@ export function hasSettlementMealSection(draft: SettlementWriteDraft): boolean {
         (parseSettlementAmount(item.amount) > 0 || item.attachments.length > 0)
     )
   }
-  return parseSettlementAmount(draft.meal.amount) > 0 || draft.meal.fileNames.length > 0
+  return (
+    parseSettlementAmount(draft.meal.amount) > 0 ||
+    (draft.meal.fileNames?.length ?? 0) > 0 ||
+    (draft.meal.attachments?.length ?? 0) > 0
+  )
 }
 
 export function hasSettlementActivitySection(draft: SettlementWriteDraft): boolean {
@@ -165,7 +169,11 @@ export function hasSettlementActivitySection(draft: SettlementWriteDraft): boole
         (parseSettlementAmount(item.amount) > 0 || item.attachments.length > 0)
     )
   }
-  return parseSettlementAmount(draft.activity.amount) > 0 || draft.activity.fileNames.length > 0
+  return (
+    parseSettlementAmount(draft.activity.amount) > 0 ||
+    (draft.activity.fileNames?.length ?? 0) > 0 ||
+    (draft.activity.attachments?.length ?? 0) > 0
+  )
 }
 
 /** 지급조서 확인 기본정보 — 신청한 항목명으로 `교통비, 식사비 지급` */

@@ -59,8 +59,16 @@ export function loadSettlementWriteDraft(
           attachments: parsed.transport.return?.attachments ?? [],
         },
       },
-      meal: parsed.meal ?? { amount: '', fileNames: [] },
-      activity: parsed.activity ?? { amount: '', fileNames: [] },
+      meal: {
+        amount: parsed.meal?.amount ?? '',
+        fileNames: parsed.meal?.fileNames ?? [],
+        attachments: parsed.meal?.attachments ?? [],
+      },
+      activity: {
+        amount: parsed.activity?.amount ?? '',
+        fileNames: parsed.activity?.fileNames ?? [],
+        attachments: parsed.activity?.attachments ?? [],
+      },
     }
   } catch {
     return null

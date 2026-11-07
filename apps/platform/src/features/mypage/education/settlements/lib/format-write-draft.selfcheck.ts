@@ -1,8 +1,11 @@
 import assert from 'node:assert/strict'
+import { buildSettlementWriteDraft } from './build-write-draft.ts'
 import {
   INSTRUCTOR_MEAL_MAX_WON,
   formatSettlementAmountInput,
   formatSettlementSessionBannerTitle,
+  hasSettlementActivitySection,
+  hasSettlementMealSection,
 } from './format-write-draft.ts'
 
 assert.equal(INSTRUCTOR_MEAL_MAX_WON, 30_000)
@@ -38,5 +41,35 @@ assert.equal(
   }),
   '-',
 )
+
+const legacyMealDraft = {
+  ...buildSettlementWriteDraft({
+    applicationId: '1',
+    sessionId: '2',
+    isInstructor: true,
+    name: '홍길동',
+    homeAddress: '서울',
+    homeAddressDetail: '',
+    bank: '국민',
+    accountNumber: '1',
+    accountHolder: '홍길동',
+    tripType: 'one_way',
+    departTransit: '',
+    departAmount: '',
+    returnTransit: '',
+    returnAmount: '',
+    mealAmount: '30,000',
+    mealFiles: ['주진2.png'],
+    activityAmount: '23,000',
+    activityFiles: ['act.png'],
+  }),
+}
+legacyMealDraft.meal = { amount: '30,000', fileNames: ['주진2.png'] } as typeof legacyMealDraft.meal
+legacyMealDraft.activity = {
+  amount: '23,000',
+  fileNames: ['act.png'],
+} as typeof legacyMealDraft.activity
+assert.equal(hasSettlementMealSection(legacyMealDraft), true)
+assert.equal(hasSettlementActivitySection(legacyMealDraft), true)
 
 console.log('format-write-draft.selfcheck: ok')

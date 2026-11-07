@@ -64,10 +64,12 @@ export type SettlementWriteDraft = {
   meal: {
     amount: string
     fileNames: string[]
+    attachments: SettlementReceiptAttachment[]
   }
   activity: {
     amount: string
     fileNames: string[]
+    attachments: SettlementReceiptAttachment[]
   }
 }
 

@@ -18,6 +18,7 @@ import {
   resolveSettlementTripTypeLabel,
   startedReceiptExtraItems,
 } from '../lib/format-write-draft'
+import { readSettlementNamedExpenseFileNames } from '../lib/build-write-draft'
 import {
   formatEducationProgressSessionCount,
   formatInstructorFeeAssignment,
@@ -27,7 +28,7 @@ import {
   lectureFeeSettlementBlockerMessage,
   lectureFeeTypeDisplayLabel,
 } from '../lib/lecture-fee-preview'
-import { readInstructorBusinessIncomeConfirmLabel } from '../lib/instructor-settlement-summary'
+import { readInstructorBusinessIncomeLabel } from '../lib/instructor-settlement-summary'
 import { usePortalProfileQuery } from '@/features/auth/sign-in'
 import { readTripLegFileNames } from '../lib/empty-trip-leg'
 import {
@@ -163,7 +164,7 @@ export function EducationSettlementConfirmView({
   const lectureFeeBlocked = isLectureFeeSettlementBlocked(lectureFeePreview)
   const lectureFeeBlockerMessage = lectureFeeSettlementBlockerMessage(lectureFeePreview)
   const confirmedLectureFee = hasConfirmedLectureFeeTotal(lectureFeePreview)
-  const businessIncome = readInstructorBusinessIncomeConfirmLabel(profileQuery.data)
+  const businessIncome = readInstructorBusinessIncomeLabel(profileQuery.data)
   const calcRows: PFInfoReviewItem[] = [
     { label: '강사비 유형', value: lectureFeeTypeDisplayLabel(lectureFeePreview?.lectureFeeType) },
     { label: '강사비 배정', value: formatInstructorFeeAssignment(lectureFeePreview) },
@@ -303,7 +304,10 @@ export function EducationSettlementConfirmView({
           <PFInfoReview
             accentFirstRow={false}
             rows={[
-              { label: '영수증 제출', value: formatSettlementFileNames(draft.meal.fileNames) },
+              {
+                label: '영수증 제출',
+                value: formatSettlementFileNames(readSettlementNamedExpenseFileNames(draft.meal)),
+              },
             ]}
           />
           <ConfirmAmountSummary
@@ -318,7 +322,12 @@ export function EducationSettlementConfirmView({
           <PFInfoReview
             accentFirstRow={false}
             rows={[
-              { label: '영수증 제출', value: formatSettlementFileNames(draft.activity.fileNames) },
+              {
+                label: '영수증 제출',
+                value: formatSettlementFileNames(
+                  readSettlementNamedExpenseFileNames(draft.activity)
+                ),
+              },
             ]}
           />
           <ConfirmAmountSummary

@@ -1,3 +1,4 @@
+import { formatBusinessIncomeDisplay } from '@jakorea/domain/instructor/business-income'
 const MISSING = '-'
 
 export const GEMINI_SETTLEMENT_SUMMARY_PATH = (applicationType: string, applicationId: string) =>
@@ -107,14 +108,16 @@ export function displayGeminiProcessingStatus(
   )
 }
 
-/** 사업소득자 여부 — Figma '해당 없음'. BE false·'사업소득자 아님'만 치환 */
+/** 사업소득자 여부 — `해당` | `해당 없음` (BE `사업소득자`/`사업소득자 아님` 라벨도 같은 문구로) */
 export function displayGeminiBusinessIncome(
   summary:
     | Pick<GeminiSettlementSummary, 'businessIncome' | 'businessIncomeLabel'>
     | null
     | undefined
 ): string {
-  const label = summary?.businessIncomeLabel?.trim() ?? ''
-  if (summary?.businessIncome === false || label === '사업소득자 아님') return '해당 없음'
-  return displayGeminiSummaryField(label)
+  return (
+    formatBusinessIncomeDisplay(summary?.businessIncome ?? null) ??
+    formatBusinessIncomeDisplay(summary?.businessIncomeLabel) ??
+    MISSING
+  )
 }
