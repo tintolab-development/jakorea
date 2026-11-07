@@ -16,6 +16,7 @@ import { toSeoulIsoDate } from './seoul-deadline.ts'
 import type {
   PortalIndividualSettlementExpenseInput,
   PortalIndividualSettlementItemInput,
+  PortalIndividualSettlementTripType,
   PortalIndividualSettlementResubmitRequest,
   PortalIndividualSettlementSubmitRequest,
 } from '../../applications/api/activity-client.ts'
@@ -42,6 +43,15 @@ function transportDescription(draft: SettlementWriteDraft): string {
     .filter(Boolean)
     .join(' ')
   return `${trip}. ${depart} / ${back}`
+}
+
+/** 작성 화면에서 고른 왕복/편도만 그대로 보낸다 (기존 description 파싱으로 추정하지 않음) */
+export function toIndividualSettlementTripType(
+  tripType: SettlementWriteDraft['transport']['tripType'] | null | undefined,
+): PortalIndividualSettlementTripType | null {
+  if (tripType === 'round_trip') return 'ROUND_TRIP'
+  if (tripType === 'one_way') return 'ONE_WAY'
+  return null
 }
 
 function buildTransportItem(
@@ -78,6 +88,7 @@ function buildTransportItem(
   return {
     itemType: draft.transport.itemType,
     amount: total,
+    tripType: toIndividualSettlementTripType(draft.transport.tripType),
     description: transportDescription(draft).slice(0, 1000),
     expenses,
   }

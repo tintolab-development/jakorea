@@ -1142,9 +1142,14 @@ export type PortalIndividualSettlementExpenseInput = {
   fileObjectIds?: number[]
 }
 
+/** 학생 교통비 왕복/편도. 서버가 항목 설명(왕복·편도 교통비 실비 지급)을 만든다. null·생략이면 서버 description null */
+export type PortalIndividualSettlementTripType = 'ROUND_TRIP' | 'ONE_WAY'
+
 export type PortalIndividualSettlementItemInput = {
   itemType: string
   amount: number
+  tripType?: PortalIndividualSettlementTripType | null
+  /** 입력 메모(교통 구간·영수증 복원용). 화면 항목 설명 열은 서버 저장 description을 쓴다 */
   description?: string
   expenses?: PortalIndividualSettlementExpenseInput[]
 }
