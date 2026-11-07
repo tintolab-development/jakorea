@@ -47,6 +47,7 @@ import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { withSessionAdminRole } from '@/shared/lib/admin-role-policy'
 import {
   PASSWORD_CHANGE_REQUIRED_STORAGE_KEY,
+  assignLoginAfterSessionEnd,
   isAdminFirstLoginOnboardingIncomplete,
 } from '@/shared/utils/post-auth-redirect'
 
@@ -453,6 +454,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       clearPerformanceQueryCache()
       clearProgramQueryCache()
       clearNotificationsQueryCache()
+      assignLoginAfterSessionEnd()
     },
 
     checkAuth: async () => {
