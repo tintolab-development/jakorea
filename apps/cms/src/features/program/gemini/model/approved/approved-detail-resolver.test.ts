@@ -281,6 +281,7 @@ describe('mapGeminiInstructorApplicationItemToRow', () => {
     expect(row.homeSido).toBe('부산광역시')
     expect(row.homeSigungu).toBe('해운대구')
     expect(row.approvalStatus).toBe('PENDING')
+    expect(row.availableActions).toEqual([])
     expect(row.monthlyAssignmentCount).toBe(1)
     expect(row.grade).toBe('A등급')
   })
@@ -298,6 +299,20 @@ describe('mapGeminiInstructorApplicationItemToRow', () => {
     expect(row.grade).toBe('2급')
   })
 
+  it('preserves missing experience years as null instead of displaying 0년', () => {
+    const row = mapGeminiInstructorApplicationItemToRow(
+      {
+        applicationId: 3,
+        instructorName: '경력 미입력 강사',
+        experienceYears: null,
+      },
+      '1',
+      0
+    )
+
+    expect(row.experienceYears).toBeNull()
+  })
+
   it.each(['AUTO_REJECTED', 'CANCELLED'])('maps %s to 신청 반려 상태', applicationStatus => {
     const row = mapGeminiInstructorApplicationItemToRow(
       {
@@ -310,5 +325,15 @@ describe('mapGeminiInstructorApplicationItemToRow', () => {
     )
 
     expect(row.approvalStatus).toBe('REJECTED')
+  })
+
+  it('does not turn an unknown server status into pending', () => {
+    const row = mapGeminiInstructorApplicationItemToRow(
+      { applicationId: 3, applicationStatus: 'PROCESSING' },
+      '1',
+      0
+    )
+
+    expect(row.approvalStatus).toBe('UNKNOWN')
   })
 })

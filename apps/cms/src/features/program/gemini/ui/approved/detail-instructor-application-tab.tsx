@@ -1,8 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import type { Key } from 'react'
 import { Spin } from 'antd'
+import { useQueryClient } from '@tanstack/react-query'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
+import { getGeneralProgramApiErrorCode } from '@/features/program/general/api/get-general-program-api-error'
+import { getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
 import { ApplicantsDetailContents } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-contents'
 import type { ApplicantInstructorApplicationInfoData } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-application-info'
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
@@ -17,7 +20,9 @@ import { formatGeminiApiError } from '../../lib/gemini-api-error'
 import {
   useApproveGeminiInstructorApplicationMutation,
   useGeminiApprovedInstructorApplicationsQuery,
+  useResendGeminiInstructorApplicationNotificationMutation,
 } from '../../api/visiting-training/hooks'
+import { geminiVisitingTrainingQueryKeys } from '../../api/visiting-training/query-keys'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-basic-info.css'
 import { resolveGeminiInstructorApprovalAction } from '../../lib/approved/instructor-approval-action'
 import { GEMINI_INSTRUCTOR_APPLICATION_FILTER_FIELDS } from '../../model/approved/instructor-application-filter-fields'
@@ -42,6 +47,7 @@ const APPROVAL_STATUS_LABEL: Record<GeminiInstructorApplicationApprovalStatus, s
   PENDING: '승인 대기',
   APPROVED: '승인 완료',
   REJECTED: '신청 반려',
+  UNKNOWN: '상태 확인 필요',
 }
 
 const INITIAL_PENDING_FILTERS: PendingFilters = {
@@ -84,12 +90,38 @@ function approvalStatusText(status: GeminiInstructorApplicationApprovalStatus) {
       ? `${base}--pending`
       : status === 'APPROVED'
         ? `${base}--approved`
-        : `${base}--rejected`
+        : status === 'REJECTED'
+          ? `${base}--rejected`
+          : `${base}--unknown`
   return <span className={`${base} ${modifier}`}>{APPROVAL_STATUS_LABEL[status]}</span>
 }
 
 function toHomeRegionText(row: GeminiInstructorApplicationRow): string {
   return `${row.homeSido} ${row.homeSigungu}`.trim()
+}
+
+function canApprove(availableActions?: string[]): boolean {
+  return availableActions?.includes('APPROVE') === true
+}
+
+function canResendNotification(availableActions?: string[]): boolean {
+  return availableActions?.includes('RESEND_NOTIFICATION') === true
+}
+
+function resolveApplicationDetailErrorMessage(error: unknown): string {
+  const code = getGeneralProgramApiErrorCode(error)
+  const status = getApiErrorHttpStatus(error)
+  if (status === 403) return '강사 신청 상세를 조회할 권한이 없습니다.'
+  if (code === 'GEMINI_APPROVED_TRAINING_NOT_FOUND') {
+    return '승인 연수 정보를 찾을 수 없습니다.'
+  }
+  if (code === 'GEMINI_INSTRUCTOR_APPLICATION_NOT_FOUND') {
+    return '강사 신청 정보를 찾을 수 없습니다.'
+  }
+  if (status === 409 || code === 'APPLICATION_TRAINING_MISMATCH') {
+    return '해당 승인 연수에 속하지 않는 강사 신청입니다. 목록을 다시 확인해 주세요.'
+  }
+  return '강사 신청 상세 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.'
 }
 
 export function GeminiApprovedTrainingDetailInstructorApplicationTab({
@@ -98,7 +130,7 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
   selectedApplicationId = null,
   selectedApplicationDetail = null,
   selectedApplicationDetailLoading = false,
-  selectedApplicationDetailError = false,
+  selectedApplicationDetailError,
   onOpenApplicationDetail,
   onCloseApplicationDetail,
 }: {
@@ -107,13 +139,14 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
   selectedApplicationId?: string | null
   selectedApplicationDetail?: ApplicantInstructorRow | null
   selectedApplicationDetailLoading?: boolean
-  selectedApplicationDetailError?: boolean
+  selectedApplicationDetailError?: unknown
   onOpenApplicationDetail?: (applicationId: string) => void
   onCloseApplicationDetail?: () => void
 }) {
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
   const { showAlert } = useCmsAlert()
+  const queryClient = useQueryClient()
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [pendingFilters, setPendingFilters] = useState<PendingFilters>(INITIAL_PENDING_FILTERS)
   const [appliedFilters, setAppliedFilters] = useState<PendingFilters>(INITIAL_PENDING_FILTERS)
@@ -121,6 +154,7 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
     mode: 'approve' | 'change'
     target: GeminiInstructorApplicationRow
   } | null>(null)
+  const handledDetailErrorRef = useRef<string | null>(null)
 
   const listQuery = useGeminiApprovedInstructorApplicationsQuery(
     approvedTrainingId,
@@ -135,20 +169,71 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
     !selectedApplicationId
   )
   const approveMutation = useApproveGeminiInstructorApplicationMutation(approvedTrainingId)
+  const resendNotificationMutation =
+    useResendGeminiInstructorApplicationNotificationMutation(approvedTrainingId)
 
   const rows = useMemo(
     () => listQuery.data?.pages.flatMap(page => page.rows) ?? [],
     [listQuery.data]
   )
   const totalElements = listQuery.data?.pages[0]?.totalElements ?? rows.length
-  const hasApprovedInstructor =
-    trainingDetail.instructorAssigned || rows.some(row => row.approvalStatus === 'APPROVED')
+  const hasApprovedInstructor = trainingDetail.instructorAssigned
+  const selectedRow =
+    selectedRowKeys.length === 1
+      ? rows.find(row => row.id === String(selectedRowKeys[0]))
+      : undefined
+  const selectedRowCanApprove = canApprove(selectedRow?.availableActions)
 
   useEffect(() => {
     setSelectedRowKeys([])
     setPendingFilters(INITIAL_PENDING_FILTERS)
     setAppliedFilters(INITIAL_PENDING_FILTERS)
   }, [approvedTrainingId])
+
+  useEffect(() => {
+    if (!selectedApplicationId || !selectedApplicationDetailError || !onCloseApplicationDetail) {
+      handledDetailErrorRef.current = null
+      return
+    }
+    const code = getGeneralProgramApiErrorCode(selectedApplicationDetailError)
+    const status = getApiErrorHttpStatus(selectedApplicationDetailError)
+    if (
+      status !== 404 &&
+      status !== 409 &&
+      code !== 'GEMINI_APPROVED_TRAINING_NOT_FOUND' &&
+      code !== 'GEMINI_INSTRUCTOR_APPLICATION_NOT_FOUND' &&
+      code !== 'APPLICATION_TRAINING_MISMATCH'
+    ) {
+      return
+    }
+    const errorKey = `${selectedApplicationId}:${status ?? ''}:${code ?? ''}`
+    if (handledDetailErrorRef.current === errorKey) return
+    handledDetailErrorRef.current = errorKey
+
+    const message = resolveApplicationDetailErrorMessage(selectedApplicationDetailError)
+    showAlert({
+      title:
+        status === 409 || code === 'APPLICATION_TRAINING_MISMATCH'
+          ? '강사 신청 변경 안내'
+          : '강사 신청 조회 안내',
+      content: message,
+    })
+    void queryClient
+      .invalidateQueries({
+        queryKey: geminiVisitingTrainingQueryKeys.approvedInstructorApplications(
+          approvedTrainingId
+        ),
+        refetchType: 'none',
+      })
+      .finally(onCloseApplicationDetail)
+  }, [
+    approvedTrainingId,
+    onCloseApplicationDetail,
+    queryClient,
+    selectedApplicationDetailError,
+    selectedApplicationId,
+    showAlert,
+  ])
 
   const approveButtonLabel = useMemo(() => {
     if (hasApprovedInstructor) return '강사 변경'
@@ -178,6 +263,13 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
     const assigneeId = String(selectedRowKeys[0])
     const target = rows.find(row => row.id === assigneeId)
     if (!target) return
+    if (!canApprove(target.availableActions)) {
+      showAlert({
+        title: '승인 불가 안내',
+        content: '현재 신청 상태에서는 승인할 수 없습니다. 최신 상태를 확인해 주세요.',
+      })
+      return
+    }
     if (target.approvalStatus === 'APPROVED') {
       showAlert({
         title: '안내',
@@ -256,7 +348,10 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
           ? 'APPROVED'
           : detailRow.approvalStatus === 'rejected'
             ? 'REJECTED'
-            : 'PENDING',
+            : detailRow.approvalStatus === 'pending'
+              ? 'PENDING'
+              : 'UNKNOWN',
+      availableActions: detailRow.availableActions ?? [],
     }),
     [approvedTrainingId]
   )
@@ -266,6 +361,13 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
       if (!canWrite || !selectedApplicationDetail) return
       const target =
         rows.find(row => row.id === applicationId) ?? createDetailTarget(selectedApplicationDetail)
+      if (!canApprove(target.availableActions)) {
+        showAlert({
+          title: '승인 불가 안내',
+          content: '현재 신청 상태에서는 승인할 수 없습니다. 최신 상태를 확인해 주세요.',
+        })
+        return
+      }
       const action = resolveGeminiInstructorApprovalAction({
         approvalStatus: target.approvalStatus,
         instructorAssigned: hasApprovedInstructor,
@@ -291,6 +393,33 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
       showAlert,
     ]
   )
+
+  const handleResendNotification = useCallback(async () => {
+    if (!canWrite || !selectedApplicationDetail || resendNotificationMutation.isPending) return
+    if (!canResendNotification(selectedApplicationDetail.availableActions)) {
+      showAlert({
+        title: '재발송 불가 안내',
+        content: '현재 신청 상태에서는 알림을 재발송할 수 없습니다. 최신 상태를 확인해 주세요.',
+      })
+      return
+    }
+
+    try {
+      await resendNotificationMutation.mutateAsync({
+        applicationId: selectedApplicationDetail.id,
+        payload: { timing: 'IMMEDIATE', scheduledAt: null },
+      })
+      showAlert({
+        title: '알림 재발송 완료',
+        content: '승인 알림을 재발송했습니다.',
+      })
+    } catch (error) {
+      showAlert({
+        title: '알림 재발송 실패',
+        content: formatGeminiApiError(error, '알림을 재발송하지 못했습니다. 잠시 후 다시 시도해 주세요.'),
+      })
+    }
+  }, [canWrite, resendNotificationMutation, selectedApplicationDetail, showAlert])
 
   const approvalModal = (
     <GeminiInstructorApprovalModal
@@ -336,7 +465,7 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
         key: 'experienceYears',
         width: COL.experience,
         align: 'center',
-        render: (years: number) => `${years}년`,
+        render: (years: number | null) => (years == null ? '-' : `${years}년`),
       },
       {
         title: 'JA 평가 등급',
@@ -394,7 +523,12 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
       return (
         <>
           <div className="gemini-approved-instructor-application-tab__detail-error" role="alert">
-            강사 신청 상세 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
+            {resolveApplicationDetailErrorMessage(selectedApplicationDetailError)}
+            {onCloseApplicationDetail ? (
+              <button type="button" onClick={onCloseApplicationDetail}>
+                강사 신청 목록으로
+              </button>
+            ) : null}
           </div>
           {approvalModal}
         </>
@@ -406,11 +540,7 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
           type="instructors"
           data={selectedApplicationDetail}
           detailVariant="legacy"
-          program={
-            trainingDetail.programId
-              ? ({ id: trainingDetail.programId } as Program)
-              : null
-          }
+          program={trainingDetail.programId ? ({ id: trainingDetail.programId } as Program) : null}
           instructorApplicationInfo={
             {
               officialDocumentRequired: trainingDetail.officialDocumentRequired,
@@ -424,6 +554,11 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
           onBack={onCloseApplicationDetail ?? (() => undefined)}
           onApprove={handleDetailApprove}
           onReject={() => undefined}
+          onResendNotification={
+            canWrite && canResendNotification(selectedApplicationDetail.availableActions)
+              ? () => void handleResendNotification()
+              : undefined
+          }
           hidePendingRejectAction
         />
         {approvalModal}
@@ -485,7 +620,7 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
         title="교육 신청 강사 목록"
         description={`총 ${totalElements.toLocaleString()}건`}
         actions={
-          canWrite ? (
+          canWrite && (selectedRowKeys.length === 0 || selectedRowCanApprove) ? (
             <FilterTableToolbarButton variant="secondary" onClick={handleBulkApprove}>
               {approveButtonLabel}
             </FilterTableToolbarButton>

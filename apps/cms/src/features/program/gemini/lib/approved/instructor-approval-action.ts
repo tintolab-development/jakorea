@@ -14,6 +14,7 @@ export function resolveGeminiInstructorApprovalAction({
   instructorAssigned: boolean
 }): GeminiInstructorApprovalAction {
   if (approvalStatus === 'APPROVED') return 'invalid'
+  if (approvalStatus === 'UNKNOWN') return 'invalid'
   if (instructorAssigned && (approvalStatus === 'PENDING' || approvalStatus === 'REJECTED')) {
     return 'change'
   }

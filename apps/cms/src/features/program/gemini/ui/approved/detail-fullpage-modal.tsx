@@ -310,7 +310,7 @@ export function GeminiApprovedTrainingDetailFullPageModal({
               selectedApplicationId={selectedInstructorApplicationId}
               selectedApplicationDetail={selectedInstructorApplicationDetail.row}
               selectedApplicationDetailLoading={selectedInstructorApplicationDetail.isLoading}
-              selectedApplicationDetailError={selectedInstructorApplicationDetail.isError}
+              selectedApplicationDetailError={selectedInstructorApplicationDetail.error}
               onOpenApplicationDetail={applicationId => {
                 setSearchParams(
                   prev => {

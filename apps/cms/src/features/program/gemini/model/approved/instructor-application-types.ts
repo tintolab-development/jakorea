@@ -1,4 +1,8 @@
-export type GeminiInstructorApplicationApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
+export type GeminiInstructorApplicationApprovalStatus =
+  | 'PENDING'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'UNKNOWN'
 
 export type GeminiInstructorApplicationRow = {
   id: string
@@ -7,10 +11,11 @@ export type GeminiInstructorApplicationRow = {
   instructorName: string
   homeSido: string
   homeSigungu: string
-  experienceYears: number
+  experienceYears: number | null
   grade: string
   contact: string
   email: string
   monthlyAssignmentCount: number
   approvalStatus: GeminiInstructorApplicationApprovalStatus
+  availableActions: string[]
 }

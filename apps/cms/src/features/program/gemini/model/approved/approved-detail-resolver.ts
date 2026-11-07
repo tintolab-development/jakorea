@@ -159,7 +159,14 @@ function mapInstructorApplicationStatus(
   if (['REJECTED', 'AUTO_REJECTED', 'CANCELLED'].includes(normalized)) {
     return 'REJECTED'
   }
-  return 'PENDING'
+  if (
+    ['PENDING', 'SUBMITTED', 'WAITING', 'WAITING_REVIEW', 'REJECTION_CANCELLED'].includes(
+      normalized
+    )
+  ) {
+    return 'PENDING'
+  }
+  return 'UNKNOWN'
 }
 
 export function mapGeminiInstructorApplicationItemToRow(
@@ -174,11 +181,12 @@ export function mapGeminiInstructorApplicationItemToRow(
     instructorName: trimmed(dto.instructorName) || '강사명 없음',
     homeSido: trimmed(dto.homeSido),
     homeSigungu: trimmed(dto.homeSigungu),
-    experienceYears: dto.experienceYears ?? 0,
+    experienceYears: dto.experienceYears ?? null,
     grade: formatGeminiInstructorApplicationGrade(dto.grade, dto.instructorFeeGradeSnapshot),
     contact: trimmed(dto.phone) || '-',
     email: trimmed(dto.email) || '-',
     monthlyAssignmentCount: dto.monthlyAssignmentCount ?? 0,
     approvalStatus: mapInstructorApplicationStatus(dto.applicationStatus),
+    availableActions: dto.availableActions ?? [],
   }
 }

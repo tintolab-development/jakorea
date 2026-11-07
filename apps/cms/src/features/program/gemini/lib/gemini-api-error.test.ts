@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { formatGeminiApiError } from './gemini-api-error'
 import {
+  createGeminiImportPreviewFailureError,
   formatGeminiImportPaymentExclusionNotes,
   formatGeminiImportPreviewFailures,
 } from './performance/import-preview-failure'
@@ -44,7 +45,7 @@ describe('formatGeminiApiError', () => {
           rowNumber: 2,
           message: 'GEMINI_TRAINING_END_TIME_NOT_AFTER_START',
         },
-      ]),
+      ])
     ).toBe('2행: 종료 시각이 시작 시각보다 늦어야 합니다.')
   })
 
@@ -56,10 +57,8 @@ describe('formatGeminiApiError', () => {
           rowNumber: 3,
           message: 'GEMINI_INSTRUCTOR_MATCH_AMBIGUOUS',
         },
-      ]),
-    ).toBe(
-      '3행: 동일한 이름과 연락처의 강사가 여러 명입니다. 정확한 강사 회원을 선택해 주세요.',
-    )
+      ])
+    ).toBe('3행: 동일한 이름과 연락처의 강사가 여러 명입니다. 정확한 강사 회원을 선택해 주세요.')
   })
 
   it('does not treat IDENTITY_BLANK SUCCESS as a preview failure', () => {
@@ -73,7 +72,7 @@ describe('formatGeminiApiError', () => {
           matchedInstructorMemberId: undefined,
           accountPaymentId: undefined,
         },
-      ]),
+      ])
     ).toBeUndefined()
     expect(
       formatGeminiImportPaymentExclusionNotes([
@@ -82,7 +81,7 @@ describe('formatGeminiApiError', () => {
           rowNumber: 1,
           paymentExclusionReason: 'GEMINI_INSTRUCTOR_IDENTITY_BLANK',
         },
-      ]),
+      ])
     ).toBe('1행: 강사 정보 미기재 (실적만 등록, 계좌 지급 제외)')
   })
 
@@ -92,9 +91,10 @@ describe('formatGeminiApiError', () => {
         {
           status: 'FAILED',
           rowNumber: 1,
-          message: 'GEMINI_INSTRUCTOR_NOT_MATCHED: 입력한 강사명·연락처가 회원 정보와 일치하지 않습니다.',
+          message:
+            'GEMINI_INSTRUCTOR_NOT_MATCHED: 입력한 강사명·연락처가 회원 정보와 일치하지 않습니다.',
         },
-      ]),
+      ])
     ).toBe('1행: 입력한 강사명·연락처가 회원 정보와 일치하지 않습니다.')
     expect(
       formatGeminiImportPaymentExclusionNotes([
@@ -103,7 +103,7 @@ describe('formatGeminiApiError', () => {
           rowNumber: 1,
           paymentExclusionReason: 'GEMINI_INSTRUCTOR_NOT_MATCHED' as never,
         },
-      ]),
+      ])
     ).toBeUndefined()
   })
 
@@ -115,7 +115,7 @@ describe('formatGeminiApiError', () => {
           rowNumber: 4,
           paymentExclusionReason: 'GEMINI_INSTRUCTOR_EXTERNAL_PAYEE',
         },
-      ]),
+      ])
     ).toBe('4행: 외부 지급처 (실적만 등록, 계좌 지급 제외)')
   })
 
@@ -132,16 +132,29 @@ describe('formatGeminiApiError', () => {
           rowNumber: 6,
           message: 'GEMINI_INSTRUCTOR_NAME_AND_PHONE_REQUIRED: 부분 입력',
         },
-      ]),
+      ])
     ).toBe(
-      '5행: 선택한 강사 회원과 입력한 강사명·연락처가 일치하지 않습니다.\n6행: 강사명과 연락처를 입력해 주세요.',
+      '5행: 선택한 강사 회원과 입력한 강사명·연락처가 일치하지 않습니다.\n6행: 강사명과 연락처를 입력해 주세요.'
     )
+  })
+
+  it('classifies instructor identity failures for the dedicated alert modal', () => {
+    const error = createGeminiImportPreviewFailureError([
+      {
+        status: 'FAILED',
+        rowNumber: 5,
+        message: 'GEMINI_INSTRUCTOR_IDENTITY_MISMATCH: 불일치',
+      },
+    ])
+
+    expect(error?.kind).toBe('INSTRUCTOR_INFO_MISMATCH')
+    expect(error?.message).toBe('5행: 선택한 강사 회원과 입력한 강사명·연락처가 일치하지 않습니다.')
   })
 
   it('does not show axios status 400 as the user message', () => {
     const error = new Error('Request failed with status code 400')
     expect(formatGeminiApiError(error, '실적 등록에 실패했습니다.')).toBe(
-      '실적 등록에 실패했습니다.',
+      '실적 등록에 실패했습니다.'
     )
   })
 
