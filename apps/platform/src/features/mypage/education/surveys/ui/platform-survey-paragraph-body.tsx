@@ -50,6 +50,7 @@ export type PlatformSurveyParagraphBodyProps = {
   userInfoEditable?: boolean
   userInfoRequiredFieldKeys?: readonly string[]
   readOnly?: boolean
+  hideLectureReportInstitutionFields?: boolean
 }
 
 export function PlatformSurveyParagraphBody({
@@ -64,6 +65,7 @@ export function PlatformSurveyParagraphBody({
   userInfoEditable = false,
   userInfoRequiredFieldKeys,
   readOnly = false,
+  hideLectureReportInstitutionFields = false,
 }: PlatformSurveyParagraphBodyProps) {
   if (isUserInfoParagraph(paragraph)) {
     const entries = getUserInfoSelectedEntries(paragraph)
@@ -201,6 +203,7 @@ export function PlatformSurveyParagraphBody({
         paragraph={paragraph as LectureReportProgramProgressParagraph}
         onUpdateParagraph={onUpdateParagraph}
         readOnly={readOnly}
+        hideInstitutionFields={hideLectureReportInstitutionFields}
       />
     )
   }

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { WritingFormDraft } from '@jakorea/form-schema/writing-form'
 import { useProgramDetail } from '@/features/program'
+import { useMypageMember } from '@/features/mypage/hooks/use-mypage-member'
 import type { LectureReportAssignment, LectureReportContent } from '../api/lecture-report-client'
 import {
   buildLectureReportPageTitle,
@@ -35,6 +36,7 @@ export function LectureReportPreviewModalContainer({
 
   const programQuery = useProgramDetail(programId == null ? null : String(programId), { fresh: true })
   const program = programQuery.program
+  const { displayName } = useMypageMember()
 
   useEffect(() => {
     if (!open || assignmentId == null) {
@@ -89,6 +91,8 @@ export function LectureReportPreviewModalContainer({
       content={content}
       loading={loading}
       error={error}
+      instructorName={displayName}
+      hideInstitutionFields={program?.programAudience === 'individual'}
       onClose={onClose}
     />
   )

@@ -64,7 +64,6 @@ export function LectureReportEducationPhotosPreview({
       <header className={styles.header}>
         <div className={styles.titleRow}>
           <h2 className={styles.title}>{title}</h2>
-          {paragraph.requiredMark ? <span className={styles.required} aria-hidden>*</span> : null}
         </div>
         {showDescription ? (
           <PFText as="p" typo="bd-md-rg" color="neutral-cool-500" className={styles.description}>

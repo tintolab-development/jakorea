@@ -6,7 +6,7 @@ import type {
   SettlementApplicationDocumentTotal,
 } from '../api/application-document-types'
 import {
-  formatRecognizedSessionCountLabel,
+  formatEducationProgressSessionCount,
   lectureFeeTypeDisplayLabel,
 } from './lecture-fee-preview.ts'
 
@@ -184,19 +184,9 @@ export function buildSettlementDocumentCalcRows(
       value: formatSettlementDocumentYesNo(calc.businessIncomeYn),
     },
     {
-      label: '교육 진행 회차',
-      value: formatSettlementDocumentCount(calc.educationSessionCount, '회차'),
+      label: '교육 진행 차시',
+      value: formatEducationProgressSessionCount(calc.recognizedSessionCount),
     },
-    ...(formatRecognizedSessionCountLabel(calc.recognizedSessionCount)
-      ? [
-          {
-            label: '인정 차시',
-            value:
-              formatRecognizedSessionCountLabel(calc.recognizedSessionCount) ??
-              SETTLEMENT_DOCUMENT_EMPTY,
-          },
-        ]
-      : []),
     ...(calc.totalLectureFee == null
       ? []
       : [

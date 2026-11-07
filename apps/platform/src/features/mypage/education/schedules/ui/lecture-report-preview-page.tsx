@@ -33,8 +33,12 @@ export function LectureReportPreviewPage({
   if (pageIndex > 0) {
     return (
       <div className={styles.stage}>
-        <div className={styles.frameCompactSheet}>
-          <div className={styles.content}>{children}</div>
+        <div className={styles.frame}>
+          <div className={styles.scaleInner}>
+            <section className={styles.sheet}>
+              <div className={styles.content}>{children}</div>
+            </section>
+          </div>
         </div>
       </div>
     )

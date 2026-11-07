@@ -5,6 +5,8 @@
   padding-inline: 0;
   background-color: transparent;
   border: none;
+  color: inherit;
+  text-decoration: none;
   cursor: pointer;
 }
 

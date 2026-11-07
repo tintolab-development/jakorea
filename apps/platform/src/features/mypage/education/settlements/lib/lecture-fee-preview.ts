@@ -11,6 +11,7 @@ export const INSTRUCTOR_FEE_CALCULATION_UNITS = [
 export type InstructorFeeCalculationUnit = (typeof INSTRUCTOR_FEE_CALCULATION_UNITS)[number]
 
 export const LECTURE_FEE_SETTLEMENT_BLOCKER_CODES = [
+  'SETTLEMENT_ASSIGNED_SCHEDULE_TIME_REQUIRED',
   'SETTLEMENT_ACTUAL_TRAINING_TIME_REQUIRED',
   'SETTLEMENT_WAGE_RATE_NOT_CONFIGURED',
 ] as const
@@ -39,6 +40,8 @@ export const LECTURE_FEE_SETTLEMENT_BLOCKER_MESSAGE: Record<
   LectureFeeSettlementBlockerCode,
   string
 > = {
+  SETTLEMENT_ASSIGNED_SCHEDULE_TIME_REQUIRED:
+    '배정 일정 시작·종료 시간이 없어 정산을 신청할 수 없습니다.',
   SETTLEMENT_ACTUAL_TRAINING_TIME_REQUIRED: '실적 시작·종료 시간이 없어 정산을 신청할 수 없습니다.',
   SETTLEMENT_WAGE_RATE_NOT_CONFIGURED: '프로그램 강사비 단가가 없어 정산을 신청할 수 없습니다.',
 }
@@ -135,7 +138,14 @@ export function isLectureFeeSettlementBlocked(
 
 export function formatRecognizedSessionCountLabel(count: number | null | undefined): string | null {
   if (count == null || !Number.isSafeInteger(count) || count < 0) return null
-  return `인정 ${count}차시`
+  return `${count}차시`
+}
+
+/** 지급조서 '교육 진행 차시'. recognizedSessionCount만. educationSessionCount로 대체하지 않는다. */
+export function formatEducationProgressSessionCount(
+  count: number | null | undefined
+): string {
+  return formatRecognizedSessionCountLabel(count) ?? MISSING
 }
 
 export function formatInstructorFeeAssignment(

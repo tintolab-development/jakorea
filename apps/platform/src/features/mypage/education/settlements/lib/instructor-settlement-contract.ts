@@ -16,6 +16,8 @@ export const PAYMENT_STATEMENT_CONSENT_REQUIRED_MESSAGE =
   '지급조서 작성 동의를 완료한 뒤 정산을 신청할 수 있습니다.'
 
 export const INSTRUCTOR_SETTLEMENT_ERROR_MESSAGE: Record<string, string> = {
+  SETTLEMENT_ASSIGNED_SCHEDULE_TIME_REQUIRED:
+    '배정 일정 시작·종료 시간이 없어 정산을 신청할 수 없습니다.',
   SETTLEMENT_ACTUAL_TRAINING_TIME_REQUIRED:
     '실적 시작·종료 시간이 없어 정산을 신청할 수 없습니다.',
   SETTLEMENT_WAGE_RATE_NOT_CONFIGURED:

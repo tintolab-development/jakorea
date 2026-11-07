@@ -19,9 +19,8 @@ import {
   startedReceiptExtraItems,
 } from '../lib/format-write-draft'
 import {
+  formatEducationProgressSessionCount,
   formatInstructorFeeAssignment,
-  formatLectureFeeSessionProgress,
-  formatRecognizedSessionCountLabel,
   formatTotalLectureFee,
   hasConfirmedLectureFeeTotal,
   isLectureFeeSettlementBlocked,
@@ -164,27 +163,15 @@ export function EducationSettlementConfirmView({
   const lectureFeeBlocked = isLectureFeeSettlementBlocked(lectureFeePreview)
   const lectureFeeBlockerMessage = lectureFeeSettlementBlockerMessage(lectureFeePreview)
   const confirmedLectureFee = hasConfirmedLectureFeeTotal(lectureFeePreview)
-  const recognizedSessionLabel = formatRecognizedSessionCountLabel(
-    lectureFeePreview?.recognizedSessionCount
-  )
   const businessIncome = readInstructorBusinessIncomeConfirmLabel(profileQuery.data)
-  const sessionNo =
-    lectureFeePreview?.educationSessionCount ??
-    (session && session.sessionNumber > 0 ? session.sessionNumber : null)
   const calcRows: PFInfoReviewItem[] = [
     { label: '강사비 유형', value: lectureFeeTypeDisplayLabel(lectureFeePreview?.lectureFeeType) },
     { label: '강사비 배정', value: formatInstructorFeeAssignment(lectureFeePreview) },
     { label: '사업소득자 여부', value: businessIncome },
     {
-      label: '교육 진행 회차',
-      value: formatLectureFeeSessionProgress({
-        sessionNo,
-        educationSessionCount: lectureFeePreview?.educationSessionCount,
-        startAt: session?.lectureStartAt,
-        endAt: session?.lectureEndAt,
-      }),
+      label: '교육 진행 차시',
+      value: formatEducationProgressSessionCount(lectureFeePreview?.recognizedSessionCount),
     },
-    ...(recognizedSessionLabel ? [{ label: '인정 차시', value: recognizedSessionLabel }] : []),
   ]
   const totalLectureFee = formatTotalLectureFee(lectureFeePreview)
   const basicRows: PFInfoReviewItem[] = [
