@@ -254,7 +254,7 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
                   className="cms-textarea--fixed-rows"
                   inputSize="small"
                   width="100%"
-                  rows={3}
+                  rows={2}
                   placeholder="메인 텍스트를 입력해 주세요"
                   value={mainText}
                   onChange={e => {
@@ -284,7 +284,7 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
                   className="cms-textarea--fixed-rows"
                   inputSize="small"
                   width="100%"
-                  rows={4}
+                  rows={2}
                   placeholder="서브 텍스트를 입력해 주세요"
                   value={subText}
                   onChange={e => {

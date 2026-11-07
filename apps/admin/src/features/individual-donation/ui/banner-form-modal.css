@@ -87,7 +87,9 @@
 }
 
 .individual-donation-banner-modal .cms-textarea--fixed-rows .cms-textarea__inner textarea.ant-input {
-  resize: none;
+  resize: none !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
 }
 
 .individual-donation-banner-modal__field-error {

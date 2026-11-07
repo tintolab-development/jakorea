@@ -64,7 +64,7 @@ function LinkFieldValue({
   return (
     <CmsInput
       className={fieldClass(isEditing)}
-      inputSize="medium"
+      inputSize="small"
       width="100%"
       value={value}
       readOnly={!isEditing}

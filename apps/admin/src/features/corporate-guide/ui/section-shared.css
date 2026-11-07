@@ -137,3 +137,9 @@
   min-width: 200px !important;
   max-width: 280px !important;
 }
+
+.corporate-guide-section .cms-textarea--fixed-rows .cms-textarea__inner textarea.ant-input {
+  resize: none !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}

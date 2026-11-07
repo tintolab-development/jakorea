@@ -86,7 +86,9 @@
 }
 
 .corporate-guide-banner-modal .cms-textarea--fixed-rows .cms-textarea__inner textarea.ant-input {
-  resize: none;
+  resize: none !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
 }
 
 .corporate-guide-banner-modal__field-error {
