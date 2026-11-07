@@ -12,6 +12,17 @@ import { useCallback, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import type { ParticipatingInstructorSettlementApiRow } from '@/features/program/general/lib/map-settlement-to-participating-instructor-settlement-row'
+
+/** 산출 내역서를 여는 데 필요한 정산 행 필드 — 강사·봉사자 정산 탭 공통 */
+export type ParticipatingSettlementStatementRow = Pick<
+  ParticipatingInstructorSettlementApiRow,
+  | 'id'
+  | 'settlementId'
+  | 'settlementApplicationId'
+  | 'hasPaymentStatementApplication'
+  | 'institutionName'
+  | 'scheduledSettlementAmount'
+>
 import type {
   SettlementFrontendResponse,
   SettlementListItemResponse,
@@ -71,7 +82,7 @@ function pendingApplicationDetailFromListItem(
 }
 
 function findListItem(
-  row: ParticipatingInstructorSettlementApiRow,
+  row: ParticipatingSettlementStatementRow,
   items: SettlementListItemResponse[]
 ): SettlementListItemResponse {
   const matched =
@@ -111,7 +122,7 @@ export function useParticipatingInstructorPaymentStatementView(input: {
 }) {
   const { showAlert } = useCmsAlert()
   const queryClient = useQueryClient()
-  const [activeRow, setActiveRow] = useState<ParticipatingInstructorSettlementApiRow | null>(null)
+  const [activeRow, setActiveRow] = useState<ParticipatingSettlementStatementRow | null>(null)
   const open = activeRow != null
 
   const isPendingApplication =
@@ -205,7 +216,7 @@ export function useParticipatingInstructorPaymentStatementView(input: {
   ])
 
   const handleOpen = useCallback(
-    (row: ParticipatingInstructorSettlementApiRow) => {
+    (row: ParticipatingSettlementStatementRow) => {
       const pending = row.settlementId == null && row.settlementApplicationId != null
       if (
         !pending &&
@@ -259,7 +270,7 @@ export function useParticipatingInstructorPaymentStatementView(input: {
         const settlementId = approved?.settlementId
         if (settlementId != null) {
           setActiveRow(prev =>
-            prev ? { ...prev, id: String(settlementId), settlementId, isPendingApplication: false } : prev
+            prev ? { ...prev, id: String(settlementId), settlementId } : prev
           )
         }
         await refreshSettlements()

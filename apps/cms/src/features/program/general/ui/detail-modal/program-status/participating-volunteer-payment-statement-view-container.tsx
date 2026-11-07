@@ -27,7 +27,7 @@ function sanitizeFileNamePart(value: string): string {
   return value.replace(/[\\/:*?"<>|]/g, '_').trim()
 }
 
-function volunteerToPaymentStatementInstructorShape(
+export function volunteerToPaymentStatementInstructorShape(
   volunteer: ParticipatingVolunteerRow
 ): ParticipatingInstructorRow {
   return {
