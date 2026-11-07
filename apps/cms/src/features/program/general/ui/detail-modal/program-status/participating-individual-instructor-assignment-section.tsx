@@ -59,8 +59,10 @@ import {
 import { toInstructorAssignmentCancelRequest } from '@/features/program/general/lib/instructor-cancel-fault-party'
 import { resolveAssignableSchedulePayloadFromSession } from '@/features/program/general/lib/organization-instructor-assignable-schedule'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
-import { hasActiveInstructorRecruitment } from '@/features/program/general/lib/detail-meta'
-import { GENERAL_INSTRUCTOR_ASSIGNMENT_REQUIRES_RECRUITMENT_MESSAGE } from '@/features/program/general/lib/general-instructor-recruitment-required'
+import {
+  GENERAL_INSTRUCTOR_ASSIGNMENT_REQUIRES_RECRUITMENT_MESSAGE,
+  programHasActiveInstructorRecruitment,
+} from '@/features/program/general/lib/general-instructor-recruitment-required'
 import { SchoolDetailUnassignCompleteModal } from './school-detail-unassign-complete-modal'
 import { SchoolDetailUnassignConfirmModal } from './school-detail-unassign-confirm-modal'
 import './instructor-assignment-status-text.css'
@@ -123,14 +125,14 @@ export function ParticipatingIndividualInstructorAssignmentSection({
   const [assignSubmitting, setAssignSubmitting] = useState(false)
   const assignInFlightRef = useRef(false)
 
-  const instructorRecruitmentReady = hasActiveInstructorRecruitment(program)
+  const canAssignInstructor = programHasActiveInstructorRecruitment(program)
   const assignment = useParticipatingInstructorInstitutionAssignment({
     programId: program.id,
     instructor,
     schoolRows,
     instructorList,
     isCompanySchool: false,
-    enabled: instructorRecruitmentReady,
+    enabled: canAssignInstructor,
 
     maxAssignableInstructors: resolveRequiredAssignableInstructorCount(program),
   })
@@ -367,7 +369,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
   }, [selectedAssignedKeys.length, showAlert])
 
   const handleSelectAssignClick = useCallback(() => {
-    if (!instructorRecruitmentReady) {
+    if (!canAssignInstructor) {
       showAlert({
         title: '배정 실패',
         content: GENERAL_INSTRUCTOR_ASSIGNMENT_REQUIRES_RECRUITMENT_MESSAGE,
@@ -383,7 +385,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
     )
     if (!movable) return
     setSelectAssignConfirmOpen(true)
-  }, [instructorRecruitmentReady, selectedWaitingKeys, waitingSchedules, showAlert])
+  }, [canAssignInstructor, selectedWaitingKeys, waitingSchedules, showAlert])
 
   const createAssignmentsFromWaiting = useCallback(
     async (
@@ -392,7 +394,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
       /** 추가 배정 모달의 대표 강사 지정 — 미지정(선택 배정)이면 기존처럼 대표 미배정 시 대표로 */
       options?: { role?: InstructorRoleKey }
     ) => {
-      if (!instructorRecruitmentReady) {
+      if (!canAssignInstructor) {
         showAlert({
           title: '배정 실패',
           content: GENERAL_INSTRUCTOR_ASSIGNMENT_REQUIRES_RECRUITMENT_MESSAGE,
@@ -489,7 +491,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
       assignment,
       instructor.instructorApplicationId,
       instructor.memberId,
-      instructorRecruitmentReady,
+      canAssignInstructor,
       program.id,
       showAlert,
     ]
@@ -653,9 +655,9 @@ export function ParticipatingIndividualInstructorAssignmentSection({
             <CmsButton
               variant="secondary"
               size="h40"
-              disabled={!instructorRecruitmentReady || addAssignOptions.length === 0}
+              disabled={!canAssignInstructor || addAssignOptions.length === 0}
               onClick={() => {
-                if (!instructorRecruitmentReady) {
+                if (!canAssignInstructor) {
                   showAlert({
                     title: '배정 실패',
                     content: GENERAL_INSTRUCTOR_ASSIGNMENT_REQUIRES_RECRUITMENT_MESSAGE,
@@ -706,7 +708,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
             <CmsButton
               variant="secondary"
               size="h40"
-              disabled={!instructorRecruitmentReady}
+              disabled={!canAssignInstructor}
               onClick={handleSelectAssignClick}
             >
               선택 배정

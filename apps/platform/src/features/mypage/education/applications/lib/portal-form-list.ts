@@ -241,6 +241,27 @@ export function mapPortalFormListItemToSurveyEntry(
   }
 }
 
+export function applySatisfactionScheduleLineDate(
+  entry: EducationSurveyListEntry,
+  scheduleLine: string | null | undefined
+): EducationSurveyListEntry {
+  if (!isPortalSatisfactionFormType(entry.formType)) return entry
+  if (!isPortalScheduleTargetScope(entry.targetScope)) return entry
+  if (entry.title.includes(' · ') || !scheduleLine?.trim()) return entry
+  const roundMatch = /^(\d+)회차$/u.exec(entry.title.trim())
+  return {
+    ...entry,
+    title: composeSatisfactionSurveyDisplayTitle({
+      formName: roundMatch ? undefined : entry.title,
+      perSchedule: true,
+      scheduleDisplayName: formatSatisfactionPerScheduleDisplayName({
+        sessionNo: roundMatch ? Number(roundMatch[1]) : null,
+        scheduleLine,
+      }),
+    }),
+  }
+}
+
 export function dedupePortalFormListItems(
   items: readonly PortalFormListItem[]
 ): PortalFormListItem[] {

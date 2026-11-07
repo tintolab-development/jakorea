@@ -31,6 +31,7 @@ import {
   useSubmitEducationSurveyMutation,
 } from '../../applications/api/activity-hooks'
 import {
+  applySatisfactionScheduleLineDate,
   isPortalBoundFormVersionUsable,
   isPortalSatisfactionFormType,
   isPortalSurveyFormType,
@@ -176,8 +177,12 @@ export function EducationSurveyFillPanel({
         }
         return isPortalSurveyFormType(entry.formType)
       })
+      .map((entry, index) =>
+        applySatisfactionScheduleLineDate(entry, educationScheduleLines?.[index])
+      )
   }, [
     applicationType,
+    educationScheduleLines,
     kind,
     remoteForms.enabled,
     remoteForms.items,
