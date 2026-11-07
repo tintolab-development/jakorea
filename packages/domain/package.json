@@ -56,6 +56,14 @@
       "types": "./dist/shared/identity-module-copy.d.ts",
       "import": "./dist/shared/identity-module-copy.js"
     },
+    "./shared/file-download-password": {
+      "types": "./dist/shared/file-download-password.d.ts",
+      "import": "./dist/shared/file-download-password.js"
+    },
+    "./shared/protected-file-download-kinds": {
+      "types": "./dist/shared/protected-file-download-kinds.d.ts",
+      "import": "./dist/shared/protected-file-download-kinds.js"
+    },
     "./instructor/gender": {
       "types": "./dist/instructor/gender.d.ts",
       "import": "./dist/instructor/gender.js"
