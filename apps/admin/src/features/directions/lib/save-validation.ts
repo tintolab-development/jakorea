@@ -3,17 +3,19 @@
  * BE: KakaoRoughmapPolicy / DirectionsUpdateRequest / VersionGuard
  */
 
+import type { ReactNode } from 'react'
 import type { DirectionsInfo } from '@/entities/directions/model/types'
 import { isValidKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import {
   isOptimisticLockConflictError,
   readApiErrorMessage,
 } from '@/shared/lib/api-error-message'
-import { REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE } from '@/shared/ui'
+import { REQUIRED_FIELDS_INCOMPLETE_ALERT } from '@/shared/ui'
+import { hasIncompleteRequiredDirectionsFields } from './required-fields'
 
 export type DirectionsAlert = {
   title: string
-  content: string
+  content: ReactNode
 }
 
 /** BE KakaoRoughmapPolicy.GENERATED 와 동일 (charset 포함 생성 스니펫) */
@@ -73,18 +75,16 @@ export function validateDirectionsBeforeSave(data: DirectionsInfo): DirectionsAl
   const email = data.email.trimEnd()
 
   if (
-    !addressKo.trim() ||
-    !addressEn.trim() ||
-    !kakaoMapHtml.trim() ||
-    !phone.trim() ||
-    !fax.trim() ||
-    !email.trim()
+    hasIncompleteRequiredDirectionsFields({
+      addressKo,
+      addressEn,
+      kakaoMapHtml,
+      phone,
+      fax,
+      email,
+    })
   ) {
-    return {
-      title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
-      content:
-        "입력되지 않은 필수 항목이 있습니다.\n'*' 표시된 필수 항목을 모두 작성해 주세요.",
-    }
+    return REQUIRED_FIELDS_INCOMPLETE_ALERT
   }
 
   if (addressKo.length > FIELD_LIMITS.addressKo) {
