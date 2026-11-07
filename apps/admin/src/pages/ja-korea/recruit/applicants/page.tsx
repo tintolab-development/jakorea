@@ -22,11 +22,8 @@ import {
   useRemoveRecruitApplicants,
 } from '@/features/recruit-applicant/api/hooks'
 import { shouldUseRecruitApplicantRemoteApi } from '@/features/recruit-applicant/api/capabilities'
-import { detailFromListItem } from '@/features/recruit-applicant/api/mappers'
 import { isRecruitApplicantNotFoundError } from '@/features/recruit-applicant/api/service'
-import { useHomepagePiiView } from '@/features/auth/hooks/use-homepage-pii-view'
 import { isAdminForbidden } from '@/features/system-inbox/lib/http-status'
-import { HOMEPAGE_PII_REVEAL_COPY } from '@/shared/lib/homepage-pii'
 import { RecruitApplicantDetailModal } from '@/features/recruit-applicant/ui/detail-modal'
 import { recruitApplicantQueryKeys } from '@/features/recruit-applicant/api/query-keys'
 import { RECRUIT_APPLICANTS_CHANGED_EVENT } from '@/features/recruit-applicant/api/store'
@@ -302,22 +299,7 @@ export function RecruitApplicantsPage() {
     patchSearchParams,
     DETAIL_QUERY_KEYS
   )
-  const [revealedForId, setRevealedForId] = useState<string | null>(null)
-  const canRevealPii = useHomepagePiiView()
-  const piiRevealed = Boolean(detailId) && revealedForId === detailId
-
-  useEffect(() => {
-    if (!detailId) {
-      setRevealedForId(null)
-      return
-    }
-    setRevealedForId(prev => (prev === detailId ? prev : null))
-  }, [detailId])
-  const detailQuery = useRecruitApplicantDetail(detailId, { revealPii: false })
-  const revealedQuery = useRecruitApplicantDetail(detailId, {
-    revealPii: true,
-    enabled: piiRevealed,
-  })
+  const detailQuery = useRecruitApplicantDetail(detailId)
   const remoteDetail = shouldUseRecruitApplicantRemoteApi()
 
   const rowNoMap = useMemo(() => {
@@ -354,36 +336,9 @@ export function RecruitApplicantsPage() {
     }
   }, [listQuery, removeMutation, selectedRowKeys, showAlert])
 
-  const detailRow = useMemo(() => {
-    if (!detailId) return null
-    if (piiRevealed && revealedQuery.isSuccess && revealedQuery.data) {
-      return revealedQuery.data
-    }
-    if (detailQuery.data) return detailQuery.data
-    if (remoteDetail) return null
-    const listed = rows.find(row => row.id === detailId)
-    return listed ? detailFromListItem(listed) : null
-  }, [
-    detailId,
-    detailQuery.data,
-    piiRevealed,
-    remoteDetail,
-    revealedQuery.data,
-    revealedQuery.isSuccess,
-    rows,
-  ])
-
-  useEffect(() => {
-    if (!piiRevealed || !revealedQuery.isError) return
-    setRevealedForId(null)
-    const forbidden = isAdminForbidden(revealedQuery.error)
-    showAlert({
-      title: forbidden ? HOMEPAGE_PII_REVEAL_COPY.forbiddenTitle : '조회 실패',
-      content: forbidden
-        ? HOMEPAGE_PII_REVEAL_COPY.forbiddenContent
-        : '개인정보 원문을 불러오지 못했습니다. 다시 시도해 주세요.',
-    })
-  }, [piiRevealed, revealedQuery.error, revealedQuery.isError, showAlert])
+  const detailRow =
+    detailId && detailQuery.data?.id === detailId ? detailQuery.data : null
+  const detailLoading = Boolean(detailId) && !detailRow
 
   useEffect(() => {
     if (!remoteDetail || !detailId || !detailQuery.isError) return
@@ -399,21 +354,6 @@ export function RecruitApplicantsPage() {
     })
     closeDetail()
   }, [closeDetail, detailId, detailQuery.error, detailQuery.isError, remoteDetail, showAlert])
-
-  useEffect(() => {
-    if (remoteDetail || !detailId || detailQuery.isPending || detailQuery.isFetching) return
-    if (detailQuery.data) return
-    if (rows.some(row => row.id === detailId)) return
-    closeDetail()
-  }, [
-    closeDetail,
-    detailId,
-    detailQuery.data,
-    detailQuery.isFetching,
-    detailQuery.isPending,
-    remoteDetail,
-    rows,
-  ])
 
   const handleDetailConfirm = useCallback(async () => {
     if (!detailRow) return
@@ -777,16 +717,10 @@ export function RecruitApplicantsPage() {
 
       <RecruitApplicantDetailModal
         open={detailId != null}
-        loading={remoteDetail && detailQuery.isPending}
+        loading={detailLoading}
         data={detailRow}
         confirmLoading={confirmMutation.isPending && detailId != null}
         deleteLoading={removeMutation.isPending && detailId != null}
-        canRevealPii={canRevealPii}
-        piiRevealed={piiRevealed && Boolean(revealedQuery.data)}
-        revealLoading={piiRevealed && revealedQuery.isPending}
-        onRevealPii={() => {
-          if (detailId) setRevealedForId(detailId)
-        }}
         onCancel={closeDetail}
         onConfirm={() => {
           void handleDetailConfirm()
