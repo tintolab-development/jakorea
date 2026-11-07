@@ -11,5 +11,6 @@ import type { OrganizationGuidanceAnswersPatchRequestAnswers } from './organizat
  * 기관 신청 답변 부분 갱신 요청. 기본은 안내·성범죄 단락만 허용합니다. UJAT ORGANIZATION이고 supplement.ujat.portalBannerState가 ACTION_REQUIRED 또는 REVISION_REQUIRED이면 basic-info·grade-application-info·grade-class-time·preferred-education-schedule도 함께 보낼 수 있습니다. ADMIN_REVIEW·FINAL_APPROVED·REJECTED이거나 assignmentLocked=true이면 거부합니다. 희망일 selectedIds가 runtime 후보 밖이면 400 PREFERRED_EDUCATION_DATE_INVALID입니다. guidance 객체는 computer-in-room·waiting-place·meal·other-notes에 더해 snackAvailability(possible|impossible)·classroomSettingConfirmed(confirmed)를 허용합니다. 성범죄 inquiryMethod=ja_system(직접 제출)은 siteSubmission·자격정보 없이 허용하고, criminal_record_site+online은 institutionId·verificationNumber가 필요합니다. 배너 전이는 POST .../ujat/temporary-schedule/confirm 이 담당합니다. 희망일 answers는 임시배정 슬롯으로 덮지 않습니다.
  */
 export interface OrganizationGuidanceAnswersPatchRequest {
+  /** 기본은 guidance와 선택적 성범죄 단락만 허용합니다. 일반 기관은 program-application-institution-seed-*, Gemini는 program-application-economy-seed-* 키를 사용합니다. UJAT이고 portalBannerState가 ACTION_REQUIRED 또는 REVISION_REQUIRED이면 ujat-program-application-institution-seed-basic-info, -grade-application-info, -grade-class-time, -preferred-education-schedule를 추가로 보낼 수 있습니다. ADMIN_REVIEW·FINAL_APPROVED·REJECTED·assignmentLocked에서는 이 키도 거부합니다. */
   answers: OrganizationGuidanceAnswersPatchRequestAnswers;
 }

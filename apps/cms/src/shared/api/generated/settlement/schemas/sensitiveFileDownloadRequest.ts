@@ -6,20 +6,17 @@
  * OpenAPI spec version: v9
  */
 
-/**
- * 민감 파일 relay 다운로드 요청. 민감 파일은 사유와 one-time relay token 정책이 적용됩니다.
- */
 export interface SensitiveFileDownloadRequest {
   /**
-     * 민감 파일 접근 사유. 개인정보 원문 조회와 같이 1자 이상 500자 이하이며 감사 로그에 저장됩니다.
      * @minLength 1
      * @maxLength 500
      */
   reason: string;
-  /**
-     * claim 단계에서 발급된 one-time relay token
-     * @minLength 0
-     * @maxLength 1024
-     */
+  /** @maxLength 1024 */
   relayToken?: string;
+  /**
+     * 지급조서·정산 양식·성범죄/행정정보 동의서 다운로드 일회성 암호. write-only이며 저장하지 않습니다.
+     * @minLength 8
+     */
+  password?: string;
 }

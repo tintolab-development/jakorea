@@ -8,6 +8,7 @@
 
 /**
  * 출석 기록 출처. ADMIN=관리자 정정/저장, MEMBER_SELF=회원 셀프 체크인, SYSTEM=일정 시작 자동 출석.
+ * @nullable
  */
 export type AttendanceItemResponseCheckInSource = typeof AttendanceItemResponseCheckInSource[keyof typeof AttendanceItemResponseCheckInSource] | null;
 

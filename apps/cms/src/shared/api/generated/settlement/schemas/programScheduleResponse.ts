@@ -5,29 +5,68 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { ProgramScheduleResponseScheduleOrigin } from './programScheduleResponseScheduleOrigin';
+import type { ProgramScheduleResponseScheduleRole } from './programScheduleResponseScheduleRole';
+import type { ProgramScheduleResponseScheduleStatus } from './programScheduleResponseScheduleStatus';
 
+/**
+ * 프로그램의 활성 물리 일정과 canonical 교육 슬롯 응답. id는 물리 scheduleId이고 educationSlotKey는 논리 슬롯 식별자다. 기존 일정은 명시적인 데이터 전환 전까지 educationSlotKey가 null일 수 있다.
+ */
 export interface ProgramScheduleResponse {
   id?: number;
-  sessionNo?: number;
-  scheduleName?: string;
-  startAt?: string;
-  endAt?: string;
-  allDay?: boolean;
-  locationName?: string;
-  address?: string;
-  addressDetail?: string;
-  maxParticipantCount?: number;
-  completionRequired?: boolean;
+  /** @nullable */
+  sessionNo?: number | null;
+  /** @nullable */
+  scheduleName?: string | null;
+  /** @nullable */
+  startAt?: string | null;
+  /** @nullable */
+  endAt?: string | null;
+  /** @nullable */
+  allDay?: boolean | null;
+  /** @nullable */
+  locationName?: string | null;
+  /** @nullable */
+  address?: string | null;
+  /** @nullable */
+  addressDetail?: string | null;
+  /** @nullable */
+  maxParticipantCount?: number | null;
+  /** @nullable */
+  completionRequired?: boolean | null;
   ujatPartnerAssignmentEligible?: boolean;
-  ujatPartnerAssignmentsPath?: string;
-  ujatPartnerRecommendationPath?: string;
-  educationSlotKey?: string;
-  scheduleRole?: string;
-  scheduleStatus?: string;
-  publiclyVisible?: boolean;
-  scheduleOrigin?: string;
-  ujatEducationStage?: string;
-  ujatPlanRowId?: string;
-  startDate?: string;
-  endDate?: string;
+  /** @nullable */
+  ujatPartnerAssignmentsPath?: string | null;
+  /** @nullable */
+  ujatPartnerRecommendationPath?: string | null;
+  /**
+     * @maxLength 64
+     * @nullable
+     */
+  educationSlotKey?: string | null;
+  /**
+     * program_schedule.schedule_kind의 canonical 역할
+     * @nullable
+     */
+  scheduleRole?: ProgramScheduleResponseScheduleRole;
+  /** @nullable */
+  scheduleStatus?: ProgramScheduleResponseScheduleStatus;
+  /** @nullable */
+  publiclyVisible?: boolean | null;
+  /** 물리 program_schedule 행의 영속 소유 출처. UNKNOWN은 레거시 미분류 행이다. */
+  scheduleOrigin?: ProgramScheduleResponseScheduleOrigin;
+  /**
+     * 물리 일정과 연결된 UJAT Typed 교육 단계. 레거시 일정은 null일 수 있다.
+     * @nullable
+     */
+  ujatEducationStage?: string | null;
+  /**
+     * 물리 일정과 연결된 Typed 계획 rowId. 레거시 일정은 null일 수 있다.
+     * @nullable
+     */
+  ujatPlanRowId?: string | null;
+  /** @nullable */
+  startDate?: string | null;
+  /** @nullable */
+  endDate?: string | null;
 }

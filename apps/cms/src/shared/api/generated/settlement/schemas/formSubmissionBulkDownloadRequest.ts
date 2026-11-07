@@ -7,13 +7,29 @@
  */
 
 export interface FormSubmissionBulkDownloadRequest {
+  /** @minimum 1 */
   programId: number;
-  memberId?: number;
-  contextType?: string;
-  contextId?: number;
   /**
-     * @minItems 0
-     * @maxItems 100
+     * 회원 기준 서버 재조회. 본인 제출, 본인 program_participant context 제출(관리자 대리 포함), 팀 공유 스냅샷 제출을 포함합니다.
+     * @minimum 1
+     * @nullable
      */
-  formResponseIds?: number[];
+  memberId?: number | null;
+  /**
+     * 생략 시 과제/설문 계열 context와 참여자 context(PARTICIPANT, PROGRAM_PARTICIPANT)를 모두 조회합니다. 허용값: ASSIGNMENT, HOMEWORK, SURVEY, QUESTIONNAIRE, SATISFACTION, SATISFACTION_SURVEY, PROGRAM_SATISFACTION, PARTICIPANT, PROGRAM_PARTICIPANT. 그 외 값은 400.
+     * @nullable
+     */
+  contextType?: string | null;
+  /**
+     * @minimum 1
+     * @nullable
+     */
+  contextId?: number | null;
+  /**
+     * @minItems 1
+     * @maxItems 100
+     * @nullable
+     * @items.minimum 1
+     */
+  formResponseIds?: number[] | null;
 }

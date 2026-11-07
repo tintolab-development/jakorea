@@ -7,13 +7,14 @@
  */
 
 /**
- * CONFIRMED | WAITING_CONFIRM | REAPPLICATION | PARTIAL | CORRECTION_REQUESTED | REJECTED
+ * 확인완료만 CONFIRMED, 대기·재신청만 REQUESTED, 재신청만 REAPPLICATION, 혼재 PARTIAL
+ * @nullable
  */
-export type SettlementAggregateResponseAggregateStatus = typeof SettlementAggregateResponseAggregateStatus[keyof typeof SettlementAggregateResponseAggregateStatus];
+export type SettlementAggregateResponseAggregateStatus = typeof SettlementAggregateResponseAggregateStatus[keyof typeof SettlementAggregateResponseAggregateStatus] | null;
 
 
 export const SettlementAggregateResponseAggregateStatus = {
-  WAITING_CONFIRM: 'WAITING_CONFIRM',
+  REQUESTED: 'REQUESTED',
   REAPPLICATION: 'REAPPLICATION',
   PARTIAL: 'PARTIAL',
   CONFIRMED: 'CONFIRMED',

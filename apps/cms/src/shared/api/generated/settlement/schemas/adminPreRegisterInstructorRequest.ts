@@ -5,110 +5,117 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { InstructorCertificationUpsertRequest } from './instructorCertificationUpsertRequest';
+import type { AdminPreRegisterInstructorRequestBankAccountsItem } from './adminPreRegisterInstructorRequestBankAccountsItem';
+import type { AdminPreRegisterInstructorRequestCertificationsItem } from './adminPreRegisterInstructorRequestCertificationsItem';
 import type { InstructorCmsProfile } from './instructorCmsProfile';
 import type { InstructorCmsSettlement } from './instructorCmsSettlement';
 import type { InstructorJaEvaluationInput } from './instructorJaEvaluationInput';
-import type { MemberBankAccountUpsertRequest } from './memberBankAccountUpsertRequest';
 import type { PortalSchoolSelectionRequest } from './portalSchoolSelectionRequest';
 import type { TermsAgreementRequest } from './termsAgreementRequest';
 
 /**
- * CMS 강사 신규 등록 요청. profile/settlement 구조가 canonical이며 기존 flat 필드는 한시적 입력 호환용입니다.
+ * CMS 강사 신규등록. profile/settlement가 canonical이며 기존 flat 계좌·프로필 필드는 입력 호환용입니다.
  */
 export interface AdminPreRegisterInstructorRequest {
-  /** @minLength 1 */
   email: string;
-  /** 호환용 입력값입니다. 생략할 수 있으며, 입력하는 경우 가입 이메일과 동일해야 합니다. 실제 초기 비밀번호는 정규화된 가입 이메일로 설정됩니다. */
-  rawPassword?: string;
-  /** @minLength 1 */
-  name: string;
-  phone?: string;
-  gender?: string;
-  birthDate?: string;
+  /** @nullable */
+  rawPassword?: string | null;
   /**
-     * profile.memberType 호환 필드
-     * @deprecated
+     * Required for new rows. Existing rosterId rows may omit it or send '*' to retain the stored value.
+     * @nullable
      */
-  instructorType?: string;
-  /**
-     * profile.defaultFeeGrade 호환 필드
-     * @deprecated
-     */
-  feeGrade?: string;
-  /**
-     * 직접 입력 금지. 전달 시 INSTRUCTOR_JA_GRADE_REQUIRES_EVALUATION_WORKFLOW로 거절됩니다. jaEvaluation을 사용합니다.
-     * @deprecated
-     */
-  jaGrade?: string;
-  /**
-     * settlement.businessIncome 호환 필드
-     * @deprecated
-     */
-  businessIncome?: boolean;
-  /**
-     * profile.homeAddress.line 호환 필드
-     * @deprecated
-     */
-  homeAddress?: string;
-  /**
-     * profile.homeAddress.detail 호환 필드
-     * @deprecated
-     */
-  homeAddressDetail?: string;
-  /**
-     * profile.education 최고학력 요약 호환 필드
-     * @deprecated
-     */
-  educationLevel?: string;
-  /**
-     * profile.instructorCareerSummary 호환 필드
-     * @deprecated
-     */
-  careerText?: string;
-  /**
-     * profile.essays.freeWrite1 호환 필드
-     * @deprecated
-     */
-  selfIntroduction?: string;
-  /**
-     * profile.oneLineIntro 호환 필드
-     * @deprecated
-     */
-  oneLineIntro?: string;
-  /**
-     * settlement.bankName 호환 필드
-     * @deprecated
-     */
-  bankName?: string;
-  /**
-     * settlement.accountNumber 호환 필드
-     * @deprecated
-     */
-  accountNumber?: string;
-  /**
-     * settlement.accountHolder 호환 필드
-     * @deprecated
-     */
-  accountHolder?: string;
-  /**
-     * 다계좌 호환 입력. 상세 응답은 settlement 현재 계좌만 반환합니다.
-     * @deprecated
-     * @minItems 0
-     * @maxItems 20
-     */
-  bankAccounts?: MemberBankAccountUpsertRequest[];
-  /**
-     * @minItems 0
-     * @maxItems 50
-     */
-  certifications?: InstructorCertificationUpsertRequest[];
-  external1365Id?: string;
-  termsAgreements?: TermsAgreementRequest[];
+  name: string | null;
+  /** @nullable */
+  phone?: string | null;
+  /** @nullable */
+  gender?: string | null;
+  /** @nullable */
+  birthDate?: string | null;
   /** 교사회원 소속 학교 선택값. CMS organizationId가 없는 NEIS 학교도 서버가 canonical organization으로 해석/등록합니다. */
   schoolSelection?: PortalSchoolSelectionRequest;
   profile?: InstructorCmsProfile;
   settlement?: InstructorCmsSettlement;
-  /** JA 등급 평가 팝업에서 입력한 4개 평가항목. 총점/등급은 서버가 산정합니다. */
+  /**
+     * @maxItems 50
+     * @nullable
+     */
+  certifications?: AdminPreRegisterInstructorRequestCertificationsItem[] | null;
+  /** @nullable */
+  external1365Id?: string | null;
+  /** @nullable */
+  termsAgreements?: TermsAgreementRequest[] | null;
+  /**
+     * @deprecated
+     * @nullable
+     */
+  instructorType?: string | null;
+  /**
+     * @deprecated
+     * @nullable
+     */
+  feeGrade?: string | null;
+  /**
+     * 사용 중단된 직접 입력입니다. 값을 보내면 거부되며 jaEvaluation을 사용해야 합니다.
+     * @deprecated
+     * @nullable
+     */
+  jaGrade?: string | null;
+  /**
+     * @deprecated
+     * @nullable
+     */
+  businessIncome?: boolean | null;
+  /**
+     * @deprecated
+     * @nullable
+     */
+  homeAddress?: string | null;
+  /**
+     * @deprecated
+     * @nullable
+     */
+  homeAddressDetail?: string | null;
+  /**
+     * @deprecated
+     * @nullable
+     */
+  educationLevel?: string | null;
+  /**
+     * @deprecated
+     * @nullable
+     */
+  careerText?: string | null;
+  /**
+     * @deprecated
+     * @nullable
+     */
+  selfIntroduction?: string | null;
+  /**
+     * @deprecated
+     * @nullable
+     */
+  oneLineIntro?: string | null;
+  /**
+     * @deprecated
+     * @nullable
+     */
+  bankName?: string | null;
+  /**
+     * @deprecated
+     * @nullable
+     */
+  accountNumber?: string | null;
+  /**
+     * @deprecated
+     * @nullable
+     */
+  accountHolder?: string | null;
+  /**
+     * @deprecated
+     * @maxItems 20
+     * @nullable
+     */
+  bankAccounts?: AdminPreRegisterInstructorRequestBankAccountsItem[] | null;
+  /** 신규 강사 등록 시 함께 완료할 JA 평가 4개 항목 */
   jaEvaluation?: InstructorJaEvaluationInput;
 }

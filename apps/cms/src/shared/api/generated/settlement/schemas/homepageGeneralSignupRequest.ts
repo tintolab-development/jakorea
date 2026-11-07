@@ -8,7 +8,7 @@
 import type { MemberSignupRequest } from './memberSignupRequest';
 
 /**
- * 회원 포탈 일반회원 가입 요청
+ * 회원 포탈 일반회원 가입 요청입니다.
  */
 export interface HomepageGeneralSignupRequest {
   member: MemberSignupRequest;

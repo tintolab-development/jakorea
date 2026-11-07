@@ -5,21 +5,27 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { DocumentManagerEvaluation } from './documentManagerEvaluation';
+import type { ManagerSlot } from './managerSlot';
 
 /**
- * 봉사자 신청 담당자 A/B 서류 평가 저장 결과
+ * 저장 직후 봉사자 A/B 평가 원장과 현재 관리자 편집 권한
  */
 export interface VolunteerDocumentEvaluationResponse {
-  applicationId?: number;
-  managerSlot?: string;
-  evaluation?: string;
-  evaluatedByAdminId?: number;
-  evaluatedByAdminName?: string;
-  evaluatedAt?: string;
-  managerAEvaluation?: string;
-  managerBEvaluation?: string;
-  documentStatus?: string;
-  availableActions?: string[];
-  canEditManagerAEvaluation?: boolean;
-  canEditManagerBEvaluation?: boolean;
+  applicationId: number;
+  managerSlot: ManagerSlot;
+  evaluation: DocumentManagerEvaluation;
+  /** @nullable */
+  evaluatedByAdminId?: number | null;
+  /** @nullable */
+  evaluatedByAdminName?: string | null;
+  /** @nullable */
+  evaluatedAt?: string | null;
+  managerAEvaluation: DocumentManagerEvaluation;
+  managerBEvaluation: DocumentManagerEvaluation;
+  /** @nullable */
+  documentStatus: string | null;
+  availableActions: string[];
+  canEditManagerAEvaluation: boolean;
+  canEditManagerBEvaluation: boolean;
 }

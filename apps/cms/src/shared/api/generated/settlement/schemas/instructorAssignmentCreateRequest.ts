@@ -5,26 +5,50 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { InstructorAssignmentCreateRequestTiming } from './instructorAssignmentCreateRequestTiming';
 
+/**
+ * 강사 배정 생성. 배정 완료 알림은 이 API가 소유합니다. timing 생략 시 즉시 발송.
+ */
 export interface InstructorAssignmentCreateRequest {
-  /** @minimum 1 */
-  instructorApplicationId?: number;
+  /**
+     * @minimum 1
+     * @nullable
+     */
+  instructorApplicationId?: number | null;
   /** @minimum 1 */
   instructorMemberId: number;
-  /** @minimum 1 */
-  scheduleId?: number;
-  /** @minimum 1 */
-  organizationApplicationId?: number;
-  /** @minimum 1 */
-  requestedScheduleId?: number;
-  scheduleLead?: boolean;
-  /** @minimum 1 */
-  feePolicyId?: number;
-  /** @minimum 0 */
-  lectureFeeAmountSnapshot?: number;
-  lodgingApprovedYn?: boolean;
-  /** 배정 완료 알림. IMMEDIATE | SCHEDULED. 생략하면 IMMEDIATE. 승인 알림과 다른 이벤트입니다. */
-  timing?: string;
-  /** timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601 */
-  scheduledAt?: string;
+  /**
+     * @minimum 1
+     * @nullable
+     */
+  scheduleId?: number | null;
+  /**
+     * @minimum 1
+     * @nullable
+     */
+  organizationApplicationId?: number | null;
+  /**
+     * @minimum 1
+     * @nullable
+     */
+  requestedScheduleId?: number | null;
+  /** @nullable */
+  scheduleLead?: boolean | null;
+  /**
+     * @minimum 1
+     * @nullable
+     */
+  feePolicyId?: number | null;
+  /**
+     * @minimum 0
+     * @nullable
+     */
+  lectureFeeAmountSnapshot?: number | null;
+  /** @nullable */
+  lodgingApprovedYn?: boolean | null;
+  /** @nullable */
+  timing?: InstructorAssignmentCreateRequestTiming;
+  /** @nullable */
+  scheduledAt?: string | null;
 }

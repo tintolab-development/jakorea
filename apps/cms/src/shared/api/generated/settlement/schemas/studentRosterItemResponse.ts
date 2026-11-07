@@ -8,35 +8,69 @@
 
 export interface StudentRosterItemResponse {
   rosterId?: number;
-  memberId?: number;
+  /** @nullable */
+  memberId?: number | null;
   studentName?: string;
-  gender?: string;
-  /** Portal owner 조회 또는 CMS 개인정보 원문 조회에서만 원문 날짜를 반환하며, CMS 기본 조회에서는 null입니다. */
+  /** @nullable */
+  gender?: string | null;
+  /**
+     * Raw LocalDate in owner-scoped Portal or dedicated CMS privacy-detail responses; null in CMS default roster reads.
+     * @nullable
+     */
   birthDate?: string | null;
-  /** 학생명단 저장 생년월일의 연도만 사용합니다. 승인된 회원 연결 정책이 확인될 때까지 회원 정본 연도 fallback은 차단됩니다. */
+  /**
+     * Uses only the stored roster birthDate year. Canonical member birth year fallback is disabled until an approved roster-to-member relationship policy is established.
+     * @nullable
+     */
   birthYear?: number | null;
-  /** CMS 기본 학생명단 표시용 생년월일 값(yyyy-**-**). Portal에서는 null이며 저장·수정 요청에 사용할 수 없습니다. */
+  /**
+     * CMS roster display value in yyyy-**-** format. Null in owner-scoped Portal roster responses. Display-only; StudentRosterRowRequest.birthDate remains LocalDate.
+     * @nullable
+     */
   maskedBirthDate?: string | null;
   grade?: string;
-  className?: string;
-  studentNo?: number;
-  maskedPhone?: string;
-  maskedEmail?: string;
-  notes?: string;
+  /** @nullable */
+  className?: string | null;
+  /** @nullable */
+  studentNo?: number | null;
+  /**
+     * Always masked contact phone for display on both CMS and Portal surfaces.
+     * @nullable
+     */
+  maskedPhone?: string | null;
+  /**
+     * Always masked email for display on both CMS and Portal surfaces.
+     * @nullable
+     */
+  maskedEmail?: string | null;
+  /**
+     * Raw phone returned only within Portal owner scope or the dedicated CMS privacy-detail response; omitted on CMS default roster reads.
+     * @nullable
+     */
+  phone?: string | null;
+  /**
+     * Raw email returned only within Portal owner scope or the dedicated CMS privacy-detail response; omitted on CMS default roster reads.
+     * @nullable
+     */
+  email?: string | null;
+  /** @nullable */
+  notes?: string | null;
+  /** 출석 연동용 stable participant id */
   participantId?: number;
   revisionNo?: number;
-  portraitConsentId?: number;
+  /** @nullable */
+  portraitConsentId?: number | null;
   /** 초상권 동의 상태: NOT_RECORDED | CONSENTED | REFUSED | WITHDRAWN */
   portraitConsentStatus?: string;
-  /** 초상권 동의 근거 문서 ID. 파일 다운로드 ID가 아니다. */
-  portraitConsentSourceArtifactId?: number;
-  /** 관리자 파일 다운로드에 쓰는 fileObjectId. CONSENTED이면 파일이 있을 때 채운다. 없으면 null */
+  /** @nullable */
+  portraitConsentSourceArtifactId?: number | null;
+  /** @nullable */
+  portraitConsentUpdatedAt?: string | null;
+  /**
+     * 관리자 파일 다운로드 fileObjectId. portraitConsentSourceArtifactId 는 동의 문서 ID
+     * @nullable
+     */
   portraitConsentFileObjectId?: number | null;
-  portraitConsentUpdatedAt?: string;
-  /** 프로그램에 만족도조사가 없으면 null. 있으면 제출 완료 여부 */
+  /** @nullable */
   satisfactionSurveyCompleted?: boolean | null;
-  /** Raw contact phone in owner-scoped Portal or dedicated CMS privacy-detail responses; omitted from CMS default roster reads. maskedPhone is always masked. */
-  phone?: string | null;
-  /** Raw email in owner-scoped Portal or dedicated CMS privacy-detail responses; omitted from CMS default roster reads. maskedEmail is always masked. */
-  email?: string | null;
 }

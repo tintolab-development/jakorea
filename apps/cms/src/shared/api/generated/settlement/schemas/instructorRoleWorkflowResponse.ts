@@ -5,12 +5,20 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { InstructorRoleWorkflowResponseApprovalNotificationCase } from './instructorRoleWorkflowResponseApprovalNotificationCase';
 
 export interface InstructorRoleWorkflowResponse {
-  requestId?: number;
+  /** @nullable */
+  requestId?: number | null;
   memberId?: number;
-  instructorProfileId?: number;
+  /** @nullable */
+  instructorProfileId?: number | null;
   status?: string;
-  message?: string;
-  approvalNotificationCase?: string;
+  /** @nullable */
+  message?: string | null;
+  /**
+     * cancel-approval 처리 시점에 재평가한 CASE. CASE_1이면 INSTRUCTOR_ROLE_REJECTED, CASE_2이면 INSTRUCTOR_ROLE_APPROVAL_CANCELLED. 다른 워크플로 응답에서는 null.
+     * @nullable
+     */
+  approvalNotificationCase?: InstructorRoleWorkflowResponseApprovalNotificationCase;
 }

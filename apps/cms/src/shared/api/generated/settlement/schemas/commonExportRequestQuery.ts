@@ -6,4 +6,7 @@
  * OpenAPI spec version: v9
  */
 
-export type CommonExportRequestQuery = {[key: string]: unknown};
+/**
+ * exportType별 allow-list된 현재 화면 검색조건 snapshot. 임의 SQL/order 식은 허용하지 않습니다.
+ */
+export type CommonExportRequestQuery = { [key: string]: unknown };

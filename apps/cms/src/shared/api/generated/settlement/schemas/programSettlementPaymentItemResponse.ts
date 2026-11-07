@@ -10,6 +10,11 @@ export interface ProgramSettlementPaymentItemResponse {
   id?: number;
   /** Stored canonical item_type. TRANSPORTATION is instructor (display 교통비). STUDENT_TRANSPORTATION is student (display 학생 교통비). GET never treats TRANSPORTATION-only as student enabled. */
   itemType?: string;
-  useYn?: boolean;
-  evidenceRequired?: boolean;
+  /** @nullable */
+  useYn?: boolean | null;
+  /**
+     * true requires evidence, false does not, null is unconfigured.
+     * @nullable
+     */
+  evidenceRequired?: boolean | null;
 }

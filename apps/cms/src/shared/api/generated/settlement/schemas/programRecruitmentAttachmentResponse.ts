@@ -7,14 +7,18 @@
  */
 
 /**
- * 모집 행 하나에 붙은 첨부파일
+ * 모집 행 첨부파일. 다운로드는 downloadPath.
  */
 export interface ProgramRecruitmentAttachmentResponse {
   attachmentId?: number;
   fileObjectId?: number;
-  originalFileName?: string;
-  contentType?: string;
-  fileSize?: number;
+  /** @nullable */
+  originalFileName?: string | null;
+  /** @nullable */
+  contentType?: string | null;
+  /** @nullable */
+  fileSize?: number | null;
   displayOrder?: number;
-  downloadPath?: string;
+  /** @nullable */
+  downloadPath?: string | null;
 }

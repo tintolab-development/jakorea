@@ -9,7 +9,7 @@ import type { InstructorCmsProfile } from './instructorCmsProfile';
 import type { InstructorCmsSettlement } from './instructorCmsSettlement';
 
 /**
- * 강사 회원의 포탈 회원정보 설정 응답. 강사비/JA 등급은 조회 전용입니다.
+ * 강사 포탈 회원정보 설정 응답. profile의 강사비/JA 등급/승인 상태는 조회 전용입니다.
  */
 export interface InstructorPortalProfileResponse {
   profile?: InstructorCmsProfile;

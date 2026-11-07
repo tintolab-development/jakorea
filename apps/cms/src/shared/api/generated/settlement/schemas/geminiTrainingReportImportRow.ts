@@ -5,33 +5,42 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { GeminiTrainingReportImportRowTrainingSessionCount } from './geminiTrainingReportImportRowTrainingSessionCount';
 
 export interface GeminiTrainingReportImportRow {
-  programId?: number;
-  instructorMemberId?: number;
-  instructorEmail?: string;
-  instructorPhone?: string;
-  instructorName?: string;
-  assistantInstructorNames?: string;
-  trainingLocation?: string;
-  schoolOrOrganizationName?: string;
-  trainingDate?: string;
-  trainingStartTime?: string;
-  trainingEndTime?: string;
-  trainingMinutes?: number;
-  sourceTimestamp?: string;
-  trainingType?: string;
-  feePayee?: string;
-  trainingSessionCount?: number;
-  participantCount?: number;
-  trainingTopic?: string;
-  trainingPhotoReferences?: string;
-  trainingMaterialReferences?: string;
-  lectureEvaluation?: string;
-  supportRequest?: string;
-  bankName?: string;
-  accountNo?: string;
-  accountHolder?: string;
-  expectedTransferDate?: string;
-  rawPayloadJsonb?: string;
+  programId: number;
+  /** @nullable */
+  instructorMemberId?: number | null;
+  /** @nullable */
+  instructorEmail?: string | null;
+  /** @nullable */
+  instructorPhone?: string | null;
+  /** @nullable */
+  instructorName?: string | null;
+  /** @nullable */
+  assistantInstructorNames?: string | null;
+  /** @nullable */
+  trainingLocation?: string | null;
+  /** @nullable */
+  schoolOrOrganizationName?: string | null;
+  trainingDate: string;
+  trainingStartTime: string;
+  trainingEndTime: string;
+  /** @nullable */
+  trainingMinutes?: number | null;
+  trainingSessionCount: GeminiTrainingReportImportRowTrainingSessionCount;
+  /** @nullable */
+  participantCount?: number | null;
+  /** @nullable */
+  sourceTimestamp?: string | null;
+  /** @nullable */
+  trainingType?: string | null;
+  /** @nullable */
+  feePayee?: string | null;
+  /** @nullable */
+  bankName?: string | null;
+  /** @nullable */
+  accountNo?: string | null;
+  /** @nullable */
+  accountHolder?: string | null;
 }

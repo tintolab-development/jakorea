@@ -5,39 +5,47 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { Application } from './application';
+import type { IndividualApplicationProfile } from './individualApplicationProfile';
+import type { IndividualApplicationScreening } from './individualApplicationScreening';
+import type { IndividualApplicationSubmittedContent } from './individualApplicationSubmittedContent';
+import type { IndividualApplicationTeam } from './individualApplicationTeam';
+import type { IndividualApplicationTextbook } from './individualApplicationTextbook';
 import type { InterviewAvailabilitySlot } from './interviewAvailabilitySlot';
-import type { Profile } from './profile';
-import type { Screening } from './screening';
-import type { Team } from './team';
-import type { Textbook } from './textbook';
 
 /**
- * 일반 프로그램 개인 신청 상세
+ * Admin CMS용 일반 프로그램 개인 신청 상세
  */
 export interface IndividualApplicationDetailResponse {
   id?: number;
+  canEditManagerAEvaluation?: boolean;
+  canEditManagerBEvaluation?: boolean;
   programId?: number;
-  recruitmentId?: number;
+  /** @nullable */
+  recruitmentId?: number | null;
   memberId?: number;
-  /** 정규화된 application_status. 목록과 상세는 같은 코드를 반환한다. CMS 「승인 대기」=statusGroup=APPLICATION_PENDING(SUBMITTED, WAITING, WAITING_REVIEW, PENDING, REJECTION_CANCELLED; REVIEWING 등 WAITING_REVIEW 별칭 포함). 「신청 반려」=statusGroup=APPLICATION_REJECTED(REJECTED, APPROVAL_CANCELLED). REJECTION_CANCELLED는 반려 취소 후 승인 대기이며 상세에서 대기 중으로 바꾸지 않는다. 단일 status=는 정규화 등호이며 그룹의 다른 상태를 포함하지 않는다. */
+  /** 정규화된 application_status. 목록과 상세는 같은 코드를 반환한다. CMS 「승인 대기」=statusGroup=APPLICATION_PENDING(SUBMITTED, WAITING, WAITING_REVIEW, PENDING, REJECTION_CANCELLED). 「신청 반려」=statusGroup=APPLICATION_REJECTED(REJECTED, APPROVAL_CANCELLED). REJECTION_CANCELLED는 반려 취소 후 승인 대기이며 상세에서 대기 중으로 바꾸지 않는다. */
   applicationStatus?: string;
-  /** Admin CMS 전용 최신 관리자 코멘트 */
+  /**
+     * Admin CMS 전용 최신 관리자 코멘트
+     * @maxLength 2000
+     * @nullable
+     */
   managerComment?: string | null;
   updatedAt?: string;
   availableActions?: string[];
-  canEditManagerAEvaluation?: boolean;
-  canEditManagerBEvaluation?: boolean;
   privacyMaskingLevel?: string;
   canRevealPersonalInfo?: boolean;
-  profile?: Profile;
-  application?: Application;
-  textbook?: Textbook;
-  team?: Team;
-  screening?: Screening;
+  profile?: IndividualApplicationProfile;
+  application?: IndividualApplicationSubmittedContent;
+  textbook?: IndividualApplicationTextbook | null;
+  team?: IndividualApplicationTeam;
+  screening?: IndividualApplicationScreening;
   interviewAvailabilitySlots?: InterviewAvailabilitySlot[];
   interviewAvailabilityCount?: number;
-  assignedInterviewSlotId?: number;
-  assignedInterviewStartAt?: string;
-  assignedInterviewEndAt?: string;
+  /** @nullable */
+  assignedInterviewSlotId?: number | null;
+  /** @nullable */
+  assignedInterviewStartAt?: string | null;
+  /** @nullable */
+  assignedInterviewEndAt?: string | null;
 }

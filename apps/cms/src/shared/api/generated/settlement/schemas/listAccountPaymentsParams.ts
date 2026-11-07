@@ -9,7 +9,7 @@ import type { ListAccountPaymentsStatus } from './listAccountPaymentsStatus';
 
 export type ListAccountPaymentsParams = {
 /**
- * REQUESTED는 대기 버킷 alias(WAITING_PAYMENT+내부 FAILED)입니다. UI 업무 상태는 WAITING_PAYMENT/PAID만 사용합니다.
+ * REQUESTED는 대기 버킷 alias(WAITING_PAYMENT+FAILED). 응답 paymentStatus는 WAITING_PAYMENT입니다.
  */
 status?: ListAccountPaymentsStatus;
 /**
@@ -32,12 +32,9 @@ programName?: string;
  * 이체일 기준 전년-12-01~당해-12-31. fromDate/toDate가 있으면 그 값 우선.
  */
 year?: number;
-/**
- * 페이지 번호입니다. 목록 화면의 페이지 상태와 함께 유지합니다.
- */
 page?: number;
 /**
- * 페이지 크기입니다. 화면별 기본 목록 개수와 일치시켜 호출합니다.
+ * @maximum 100
  */
 size?: number;
 };

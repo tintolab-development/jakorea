@@ -6,4 +6,4 @@
  * OpenAPI spec version: v9
  */
 
-export type InstructorPortalEditableProfileAwardsItem = {[key: string]: unknown};
+export type InstructorPortalEditableProfileAwardsItem = { [key: string]: unknown };

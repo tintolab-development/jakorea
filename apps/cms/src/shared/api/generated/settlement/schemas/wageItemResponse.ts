@@ -5,26 +5,46 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { WageItemRateResponse } from './wageItemRateResponse';
+import type { WageItemResponseRateItemsItem } from './wageItemResponseRateItemsItem';
 import type { WageItemResponseWageItemType } from './wageItemResponseWageItemType';
 
 export interface WageItemResponse {
-  id?: number;
+  /** @nullable */
+  id?: number | null;
+  /** @nullable */
   wageItemType?: WageItemResponseWageItemType;
-  /** GET 임금 제목. PUT은 WageItemUpsertRequest.itemName */
-  name?: string;
-  amount?: number;
-  calculationUnit?: string;
-  editableYn?: boolean;
-  iconKey?: string;
-  emojiOverride?: string;
-  /** tier1 | specialLecture | gemini */
-  layout?: string;
-  basisHours?: number;
-  maxLimitWon?: number;
+  /**
+     * GET 임금 제목. PUT은 WageItemUpsertRequest.itemName
+     * @nullable
+     */
+  name?: string | null;
+  /** @nullable */
+  amount?: number | null;
+  /** @nullable */
+  calculationUnit?: string | null;
+  /** @nullable */
+  editableYn?: boolean | null;
+  /** @nullable */
+  iconKey?: string | null;
+  /** @nullable */
+  emojiOverride?: string | null;
+  /**
+     * tier1 | specialLecture | gemini
+     * @nullable
+     */
+  layout?: string | null;
+  /** @nullable */
+  basisHours?: number | null;
+  /** @nullable */
+  maxLimitWon?: number | null;
   qualificationLines?: string[];
   remarkLines?: string[];
-  description?: string;
-  detailJson?: string;
-  rateItems?: WageItemRateResponse[];
+  /** @nullable */
+  description?: string | null;
+  /**
+     * Gemini session1Won..session4Won. sessionNUniversityWon은 값이 있을 때만. JSON null 금지. withholdingTaxRateDailyWorker / withholdingEarnedIncomeTaxCreditRate 기록 금지
+     * @nullable
+     */
+  detailJson?: string | null;
+  rateItems?: WageItemResponseRateItemsItem[];
 }

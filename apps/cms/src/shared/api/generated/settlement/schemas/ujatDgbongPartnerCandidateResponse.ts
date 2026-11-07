@@ -7,15 +7,28 @@
  */
 
 export interface UjatDgbongPartnerCandidateResponse {
-  participantId?: number;
-  memberId?: number;
-  memberName?: string;
-  assignedScheduleCount?: number;
-  samePartnerCount?: number;
-  attendanceManagerCount?: number;
-  rank?: number;
-  /** memberName과 동일. CMS partnerOptionsFromRecommendation 소비 필드. */
-  volunteerName?: string;
-  /** assignedScheduleCount와 동일. CMS partnerOptionsFromRecommendation 소비 필드. */
-  assignmentDayCount?: number;
+  /** @nullable */
+  participantId?: number | null;
+  /** @nullable */
+  memberId?: number | null;
+  /** @nullable */
+  memberName?: string | null;
+  /** @nullable */
+  assignedScheduleCount?: number | null;
+  /** @nullable */
+  samePartnerCount?: number | null;
+  /** @nullable */
+  attendanceManagerCount?: number | null;
+  /** @nullable */
+  rank?: number | null;
+  /**
+     * memberName과 동일. CMS partnerOptionsFromRecommendation 소비 필드.
+     * @nullable
+     */
+  volunteerName?: string | null;
+  /**
+     * assignedScheduleCount와 동일. CMS partnerOptionsFromRecommendation 소비 필드.
+     * @nullable
+     */
+  assignmentDayCount?: number | null;
 }

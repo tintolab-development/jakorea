@@ -10,15 +10,15 @@ import type { ListSettlementAggregatesStatementStatus } from './listSettlementAg
 
 export type ListSettlementAggregatesParams = {
 /**
- * 쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.
+ * program | instructor (한글 계약 설명)
  */
 groupBy?: string;
 /**
- * 대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.
+ * 프로그램 ID
  */
 programId?: number;
 /**
- * 대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.
+ * 신청자 회원 ID
  */
 instructorMemberId?: number;
 /**
@@ -26,7 +26,7 @@ instructorMemberId?: number;
  */
 statementStatus?: ListSettlementAggregatesStatementStatus;
 /**
- * 상태 필터입니다. 응답 enum 값과 화면 배지 라벨을 매핑해서 사용합니다.
+ * 지급 상태
  */
 paymentStatus?: string;
 /**
@@ -46,11 +46,11 @@ toDate?: string;
  */
 pendingItemBucket?: ListSettlementAggregatesPendingItemBucket;
 /**
- * 페이지 번호입니다. 목록 화면의 페이지 상태와 함께 유지합니다.
+ * 페이지. 기본 0
  */
 page?: number;
 /**
- * 페이지 크기입니다. 화면별 기본 목록 개수와 일치시켜 호출합니다.
+ * 페이지 크기. 기본 20. FE는 100 루프
  */
 size?: number;
 };

@@ -10,13 +10,10 @@ export interface MemberPortalFileUploadConfirmRequest {
   /** @minimum 1 */
   fileSize: number;
   /**
-     * @minLength 0
      * @maxLength 128
+     * @nullable
      */
-  checksumSha256?: string;
-  /**
-     * @minLength 0
-     * @maxLength 120
-     */
+  checksumSha256?: string | null;
+  /** @maxLength 120 */
   contentType: string;
 }

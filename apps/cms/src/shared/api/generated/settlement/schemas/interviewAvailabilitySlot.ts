@@ -6,6 +6,9 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * Alias of IndividualInterviewAvailabilitySlot for legacy $ref compatibility (orval). (한글 계약 설명)
+ */
 export interface InterviewAvailabilitySlot {
   startAt?: string;
   endAt?: string;

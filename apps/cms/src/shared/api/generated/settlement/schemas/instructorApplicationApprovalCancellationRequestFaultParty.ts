@@ -8,6 +8,7 @@
 
 /**
  * 취소 귀책. USER=강사 사유(JA 감점 대상), ADMIN=운영 사유(감점 없음). 생략/null이면 서버가 ADMIN 처리.
+ * @nullable
  */
 export type InstructorApplicationApprovalCancellationRequestFaultParty = typeof InstructorApplicationApprovalCancellationRequestFaultParty[keyof typeof InstructorApplicationApprovalCancellationRequestFaultParty] | null;
 

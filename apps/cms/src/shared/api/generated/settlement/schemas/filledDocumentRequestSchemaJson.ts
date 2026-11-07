@@ -6,7 +6,4 @@
  * OpenAPI spec version: v9
  */
 
-/**
- * @jakorea/form-schema WritingFormDraft 전체 객체. Jackson 구현체에 종속되지 않는 JSON object 형태로 전달합니다.
- */
-export type FilledDocumentRequestSchemaJson = {[key: string]: unknown};
+export type FilledDocumentRequestSchemaJson = { [key: string]: unknown };

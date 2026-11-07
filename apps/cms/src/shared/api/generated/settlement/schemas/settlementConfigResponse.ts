@@ -10,14 +10,22 @@ import type { PaymentItemResponse } from './paymentItemResponse';
 import type { WageItemResponse } from './wageItemResponse';
 
 export interface SettlementConfigResponse {
-  configId?: number;
-  configName?: string;
-  effectiveFrom?: string;
-  effectiveTo?: string;
-  dailyIncomeThreshold?: number;
-  earnedIncomeDeduction?: number;
-  smallTaxExemptionThreshold?: number;
-  useYn?: boolean;
+  /** @nullable */
+  configId?: number | null;
+  /** @nullable */
+  configName?: string | null;
+  /** @nullable */
+  effectiveFrom?: string | null;
+  /** @nullable */
+  effectiveTo?: string | null;
+  /** @nullable */
+  dailyIncomeThreshold?: number | null;
+  /** @nullable */
+  earnedIncomeDeduction?: number | null;
+  /** @nullable */
+  smallTaxExemptionThreshold?: number | null;
+  /** @nullable */
+  useYn?: boolean | null;
   wageItems?: WageItemResponse[];
   paymentItems?: PaymentItemResponse[];
   deductionItems?: DeductionItemResponse[];

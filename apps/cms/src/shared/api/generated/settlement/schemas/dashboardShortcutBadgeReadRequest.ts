@@ -9,6 +9,9 @@
 export interface DashboardShortcutBadgeReadRequest {
   /** path shortcutId와 동일. POST body에 이 값만 보낸다. */
   shortcutId?: string;
-  /** 클라이언트가 보내지 않는다. 서버가 읽음 시각을 기록한다. 호환용으로 남아 있으며 보내도 계약상 클라이언트 송신 없음. */
+  /**
+     * 클라이언트가 보내지 않는다. 서버가 읽음 시각을 기록한다. 호환용으로 남아 있으며 보내도 계약상 클라이언트 송신 없음.
+     * @nullable
+     */
   readAt?: string | null;
 }

@@ -7,7 +7,8 @@
  */
 
 /**
- * 회원 포탈 로그인·토큰 갱신·소셜 로그인에서 항상 UNDER_14 또는 OVER_14. GET /api/portal/auth/me 및 GET /api/portal/me/profile 과 동일 규칙(member_signup_profile.age_group 우선, 없으면 member.is_under_14_yn). 관리자 토큰 응답은 null.
+ * 회원 포탈 로그인·토큰 갱신·소셜 로그인에서 항상 UNDER_14 또는 OVER_14. GET /api/portal/auth/me 및 GET /api/portal/me/profile 과 동일 규칙(member_signup_profile.age_group 우선, 없으면 member.is_under_14_yn). 관리자 토큰 응답은 null. 키는 항상 포함되며 회원은 빈 문자열이 아닙니다.
+ * @nullable
  */
 export type AuthTokenResponseAgeGroup = typeof AuthTokenResponseAgeGroup[keyof typeof AuthTokenResponseAgeGroup] | null;
 

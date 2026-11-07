@@ -8,6 +8,7 @@
 import type { ProgramDraftUpsertRequestDraftPayload } from './programDraftUpsertRequestDraftPayload';
 
 export interface ProgramDraftUpsertRequest {
-  programType?: string;
+  programType: string;
+  /** Opaque JSON object. Unknown keys are stored and echoed. (한글 계약 설명) */
   draftPayload?: ProgramDraftUpsertRequestDraftPayload;
 }

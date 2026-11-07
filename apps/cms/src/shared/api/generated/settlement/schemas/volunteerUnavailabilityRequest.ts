@@ -7,14 +7,16 @@
  */
 
 export interface VolunteerUnavailabilityRequest {
-  /** 활동 불가 대상 봉사자 program_participant.id */
   participantId: number;
-  /** 대상이 그날 ASSIGNED이면 필수. ASSIGNED가 없으면 생략 또는 null. 빈 문자열 금지 */
+  /**
+     * 대상이 그날 ASSIGNED이면 필수. ASSIGNED가 없으면 생략 또는 null. 빈 문자열 금지
+     * @nullable
+     */
   replacementParticipantId?: number | null;
   /**
      * 관리자 메모. 없으면 null. 예: CMS 참여 불가일 설정
-     * @minLength 0
      * @maxLength 1000
+     * @nullable
      */
   reason?: string | null;
 }

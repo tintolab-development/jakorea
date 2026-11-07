@@ -8,8 +8,9 @@
 import type { GeminiApprovedTrainingItem } from './geminiApprovedTrainingItem';
 
 export interface GeminiApprovedTrainingListResponse {
-  content?: GeminiApprovedTrainingItem[];
-  page?: number;
-  size?: number;
-  totalElements?: number;
+  content: GeminiApprovedTrainingItem[];
+  page: number;
+  size: number;
+  /** 필터 적용 후 전체 건수. 현재 페이지 길이가 아니다. */
+  totalElements: number;
 }

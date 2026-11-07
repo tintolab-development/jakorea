@@ -11,9 +11,12 @@ export interface AdminAccountPrivacyResponse {
   uuid?: string;
   email?: string;
   name?: string;
-  phone?: string;
-  gender?: string;
-  birthDate?: string;
+  /** @nullable */
+  phone?: string | null;
+  /** @nullable */
+  gender?: string | null;
+  /** @nullable */
+  birthDate?: string | null;
   status?: string;
   roleCode?: string;
 }

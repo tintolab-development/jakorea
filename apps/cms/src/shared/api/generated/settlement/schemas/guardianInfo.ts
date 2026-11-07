@@ -6,10 +6,21 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * 만 14세 미만 회원의 보호자 인증 정보
+ */
 export interface GuardianInfo {
-  guardianName?: string;
-  relation?: string;
-  phone?: string;
-  consentStatus?: string;
-  consentedAt?: string;
+  /** @nullable */
+  guardianName?: string | null;
+  /**
+     * 부/모 등 가입자와의 관계
+     * @nullable
+     */
+  relation?: string | null;
+  /** @nullable */
+  phone?: string | null;
+  /** @nullable */
+  consentStatus?: string | null;
+  /** @nullable */
+  consentedAt?: string | null;
 }

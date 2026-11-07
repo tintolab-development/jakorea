@@ -8,8 +8,9 @@
 
 /**
  * 모집 유형
+ * @nullable
  */
-export type ProgramRecruitmentRequestRecruitmentType = typeof ProgramRecruitmentRequestRecruitmentType[keyof typeof ProgramRecruitmentRequestRecruitmentType];
+export type ProgramRecruitmentRequestRecruitmentType = typeof ProgramRecruitmentRequestRecruitmentType[keyof typeof ProgramRecruitmentRequestRecruitmentType] | null;
 
 
 export const ProgramRecruitmentRequestRecruitmentType = {

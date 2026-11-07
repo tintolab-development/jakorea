@@ -7,7 +7,8 @@
  */
 
 /**
- * 설문류(SURVEY, SATISFACTION, LECTURE_EVALUATION)만. BEFORE_START | IN_PROGRESS | FINISHED. 그 외 formType은 null. now < submissionStartAt 이면 BEFORE_START, submissionEndAt이 있고 now > submissionEndAt 이면 FINISHED, 그 외(시작 시각 null 포함)는 IN_PROGRESS. 응답 수로 바꾸지 않는다.
+ * 설문류(SURVEY, SATISFACTION, LECTURE_EVALUATION)만. 그 외 formType은 null. 교육받은 교사에서 과거 SATISFACTION 계열 row는 현재 사용 가능한 바인딩으로 노출하지 않는다. now < submissionStartAt이면 BEFORE_START, submissionEndAt이 있고 now > submissionEndAt이면 FINISHED, 그 외(시작 시각 null 포함)는 IN_PROGRESS. 응답 수로 바꾸지 않는다.
+ * @nullable
  */
 export type ProgramFormBindingResponseProgressStatus = typeof ProgramFormBindingResponseProgressStatus[keyof typeof ProgramFormBindingResponseProgressStatus] | null;
 

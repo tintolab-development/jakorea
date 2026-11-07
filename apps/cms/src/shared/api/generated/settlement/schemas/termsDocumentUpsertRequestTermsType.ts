@@ -7,8 +7,7 @@
  */
 
 /**
- * 약관 타입
- * @minLength 1
+ * CMS 약관 관리와 회원 유형별 동의에서 공유하는 canonical TERMS_TYPE
  */
 export type TermsDocumentUpsertRequestTermsType = typeof TermsDocumentUpsertRequestTermsType[keyof typeof TermsDocumentUpsertRequestTermsType];
 

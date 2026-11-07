@@ -7,16 +7,21 @@
  */
 
 export interface StudentPortraitConsentResponse {
-  consentId?: number;
+  /** @nullable */
+  consentId?: number | null;
   rosterId?: number;
   participantId?: number;
   organizationApplicationId?: number;
   programId?: number;
   /** 초상권 동의 상태: NOT_RECORDED | CONSENTED | REFUSED | WITHDRAWN */
   status?: string;
-  sourceArtifactId?: number;
+  /** @nullable */
+  sourceArtifactId?: number | null;
   revisionNo?: number;
-  reason?: string;
-  recordedByAdminId?: number;
-  recordedAt?: string;
+  /** @nullable */
+  reason?: string | null;
+  /** @nullable */
+  recordedByAdminId?: number | null;
+  /** @nullable */
+  recordedAt?: string | null;
 }

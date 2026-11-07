@@ -12,12 +12,19 @@ export interface FormRuntimeSubmitRequest {
   templateVersionId: number;
   programId: number;
   programFormBindingId: number;
+  /** @nullable */
   programScheduleId?: number | null;
+  /** @nullable */
   curriculumSessionId?: number | null;
+  /** @nullable */
   contextType?: string | null;
+  /** @nullable */
   contextId?: number | null;
+  /** @nullable */
   submittedByMemberId?: number | null;
+  /** @nullable */
   submittedByAdminId?: number | null;
   answers: FormRuntimeSubmitRequestAnswers;
+  /** @nullable */
   fileObjectIdsByQuestion?: FormRuntimeSubmitRequestFileObjectIdsByQuestion;
 }

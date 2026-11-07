@@ -13,15 +13,9 @@ export interface AdminMemberDeleteRequest {
      */
   reason: string;
   /**
-     * 현재 로그인 관리자 비밀번호. 값이 있으면 이 비밀번호로 확인합니다.
-     * @minLength 0
+     * 현재 로그인 관리자 비밀번호. 회원 삭제/익명화 전 서버에서 검증합니다.
+     * @minLength 1
      * @maxLength 200
      */
-  currentPassword?: string;
-  /**
-     * 비밀번호를 보내지 않을 때 확인 문구. 삭제 또는 탈퇴.
-     * @minLength 0
-     * @maxLength 30
-     */
-  confirmationText?: string;
+  currentPassword: string;
 }

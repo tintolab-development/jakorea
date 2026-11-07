@@ -6,82 +6,41 @@
  * OpenAPI spec version: v9
  */
 import type { TemplateSyncItemRequestAlimtalkMetadata } from './templateSyncItemRequestAlimtalkMetadata';
+import type { TemplateSyncItemRequestChannelType } from './templateSyncItemRequestChannelType';
 
 export interface TemplateSyncItemRequest {
-  /**
-     * @minLength 0
-     * @maxLength 255
-     */
+  /** @maxLength 255 */
   templateCode: string;
-  /**
-     * @minLength 0
-     * @maxLength 255
-     */
+  /** @maxLength 255 */
   providerTemplateCode?: string;
-  /**
-     * @minLength 0
-     * @maxLength 255
-     */
+  /** @maxLength 255 */
   providerFlowId?: string;
-  /**
-     * @minLength 0
-     * @maxLength 255
-     */
+  /** @maxLength 255 */
   displayName?: string;
-  /**
-     * @minLength 0
-     * @maxLength 255
-     */
+  /** @maxLength 255 */
   providerSenderKey?: string;
-  /**
-     * @minLength 0
-     * @maxLength 20
-     */
+  /** @maxLength 20 */
   providerSenderProfileType?: string;
-  /**
-     * @minLength 0
-     * @maxLength 255
-     */
+  /** @maxLength 255 */
   senderProfileDisplayName?: string;
-  /**
-     * @minLength 0
-     * @maxLength 40
-     */
+  /** @maxLength 40 */
   alimtalkMessageType?: string;
-  /**
-     * @minLength 0
-     * @maxLength 40
-     */
+  /** @maxLength 40 */
   alimtalkEmphasisType?: string;
   alimtalkSecurityYn?: boolean;
-  /**
-     * @minLength 0
-     * @maxLength 255
-     */
+  /** @maxLength 255 */
   kakaoTemplateCategory?: string;
   alimtalkMetadata?: TemplateSyncItemRequestAlimtalkMetadata;
-  /**
-     * @minLength 0
-     * @maxLength 40
-     */
+  /** @maxLength 40 */
   approvalStatus?: string;
   categoryId?: number;
   titleTemplate?: string;
   contentTemplate?: string;
-  /**
-     * @minLength 0
-     * @maxLength 20
-     */
-  channelType?: string;
-  /**
-     * @minLength 0
-     * @maxLength 255
-     */
+  /** @maxLength 20 */
+  channelType?: TemplateSyncItemRequestChannelType;
+  /** @maxLength 255 */
   providerSenderEmailAddress?: string;
-  /**
-     * @minLength 0
-     * @maxLength 20
-     */
+  /** @maxLength 20 */
   emailTemplateLanguage?: string;
   emailAttachmentIds?: string[];
 }

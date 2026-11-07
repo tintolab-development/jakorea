@@ -5,12 +5,13 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { CommonSettings } from './commonSettings';
-import type { HalfPlan } from './halfPlan';
+import type { UjatTypedCommonSettings } from './ujatTypedCommonSettings';
+import type { UjatTypedHalfPlan } from './ujatTypedHalfPlan';
 
 export interface UjatTypedDetail {
   schemaVersion?: number;
-  halfPlans?: HalfPlan[];
-  common?: CommonSettings;
+  halfPlans?: UjatTypedHalfPlan[];
+  common?: UjatTypedCommonSettings;
+  /** 서버가 관리하는 충돌 검사용 revision. schemaVersion과 다르다. */
   revision?: number;
 }

@@ -42,6 +42,7 @@ import type {
   EducationClassRemappingRequest,
   EducationClassRemappingResponse,
   GeminiOrganizationApplicationListResponse,
+  GeneralIndividualAssignmentSubmissionListResponse,
   IndividualApplicationDetailResponse,
   IndividualApplicationNotificationResendRequest,
   IndividualApplicationUpdateRequest,
@@ -51,6 +52,7 @@ import type {
   IndividualDocumentEvaluationResponse,
   InstructorApplicationDetailResponse,
   InstructorApplicationsParams,
+  List12Params,
   List13Params,
   ListAssignmentsParams,
   ListIndividualSettlementApplicationsParams,
@@ -3753,7 +3755,22 @@ const dashboardHome = (
       options);
     }
 
-return {recordVolunteerDocumentEvaluation,getUjatTypedDetail,replaceUjatTypedDetail,patchUjatTypedDetail,getTemporarySchedule,saveTemporarySchedule,preferences1,updatePreferences1,getDashboardPreferences,saveDashboardPreferences,recordIndividualDocumentEvaluation,getWidgetProgramFilters,saveWidgetProgramFilters,saveDashboardWidgetLayout,saveDashboardShortcutVisibility,dashboardPreferences,saveDashboardPreferences1,requestScheduleChange,listEducationClasses,addEducationClasses,remapEducationClasses,removeOrganizationFromProgress,resendTrainedTeacherOrganizationApplicationNotification,giveUpOrganizationActivity,cancelTrainedTeacherOrganizationApproval,resendOrganizationApplicationNotification,readDashboardShortcutBadge,unmaskIndividualApplicationDetail,resendIndividualApplicationNotification,bulkIndividualDocumentResult,resendGeminiOrganizationApplicationNotification,updateVolunteerApplicationActivityRegion,organizationApplicationDetail,updateOrganizationApplication,markRead2,hide1,markClicked1,readAllNotifications,instructorApplication,updateInstructorApplication,rejectIndividualSettlementApplication,approveIndividualSettlementApplication,individualApplicationDetail,updateIndividualApplication,volunteerApplicationDetail,volunteerApplications,listAssignments,organizationApplications,organizationApplication,organizationApplications1,instructorApplications,individualApplications,notifications1,unreadNotificationCount,list13,getDashboardShortcutBadges,listIndividualSettlementApplications,getIndividualSettlementApplication,organizationApplications2,dashboardWidgets,dashboardShortcuts,dashboardRecruitments,dashboardProgramSchedules,dashboardProgramInquiries,dashboardNotificationCount,dashboardKpiProgress,dashboardHome}};
+/**
+ * General individual assignment sessions. items, participants, and files are empty arrays when absent. Gender is masked as *; birthDate uses yyyy-**-** when a birth year exists and is null otherwise. birthYear is also returned. Assignment period, affiliation, organizationName, grade, and remarkAt are null when absent. participants[].surveyResponse and satisfactionResponse are FormResponseRef or null (the keys are always present). surveyResponse is filled only when that participant submitted a SURVEY/QUESTIONNAIRE bound to this scheduleId. Program-scoped surveys and other-session submissions stay null. satisfactionResponse is filled only for a satisfaction form bound to this session, or — for a program-scoped satisfaction — only on the last education session (last ACTIVE/COMPLETED program_schedule by session_no, start_at, id). It is not copied onto other sessions. Access requires PROGRAM_READ. files[] fileName/fileObjectId/downloadable.
+ * @summary 일반 개인 프로그램 회차별 과제 제출 목록
+ */
+const list12 = (
+    programId: number,
+    params?: List12Params,
+ options?: SecondParameter<typeof customInstance<GeneralIndividualAssignmentSubmissionListResponse>>,) => {
+      return customInstance<GeneralIndividualAssignmentSubmissionListResponse>(
+      {url: `/api/admin/programs/${programId}/assignment-submissions`, method: 'GET',
+        params
+    },
+      options);
+    }
+
+return {recordVolunteerDocumentEvaluation,getUjatTypedDetail,replaceUjatTypedDetail,patchUjatTypedDetail,getTemporarySchedule,saveTemporarySchedule,preferences1,updatePreferences1,getDashboardPreferences,saveDashboardPreferences,recordIndividualDocumentEvaluation,getWidgetProgramFilters,saveWidgetProgramFilters,saveDashboardWidgetLayout,saveDashboardShortcutVisibility,dashboardPreferences,saveDashboardPreferences1,requestScheduleChange,listEducationClasses,addEducationClasses,remapEducationClasses,removeOrganizationFromProgress,resendTrainedTeacherOrganizationApplicationNotification,giveUpOrganizationActivity,cancelTrainedTeacherOrganizationApproval,resendOrganizationApplicationNotification,readDashboardShortcutBadge,unmaskIndividualApplicationDetail,resendIndividualApplicationNotification,bulkIndividualDocumentResult,resendGeminiOrganizationApplicationNotification,updateVolunteerApplicationActivityRegion,organizationApplicationDetail,updateOrganizationApplication,markRead2,hide1,markClicked1,readAllNotifications,instructorApplication,updateInstructorApplication,rejectIndividualSettlementApplication,approveIndividualSettlementApplication,individualApplicationDetail,updateIndividualApplication,volunteerApplicationDetail,volunteerApplications,listAssignments,organizationApplications,organizationApplication,organizationApplications1,instructorApplications,individualApplications,notifications1,unreadNotificationCount,list13,getDashboardShortcutBadges,listIndividualSettlementApplications,getIndividualSettlementApplication,organizationApplications2,dashboardWidgets,dashboardShortcuts,dashboardRecruitments,dashboardProgramSchedules,dashboardProgramInquiries,dashboardNotificationCount,dashboardKpiProgress,dashboardHome,list12}};
 export type RecordVolunteerDocumentEvaluationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['recordVolunteerDocumentEvaluation']>>>
 export type GetUjatTypedDetailResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['getUjatTypedDetail']>>>
 export type ReplaceUjatTypedDetailResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['replaceUjatTypedDetail']>>>
@@ -3821,3 +3838,4 @@ export type DashboardProgramInquiriesResult = NonNullable<Awaited<ReturnType<Ret
 export type DashboardNotificationCountResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['dashboardNotificationCount']>>>
 export type DashboardKpiProgressResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['dashboardKpiProgress']>>>
 export type DashboardHomeResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['dashboardHome']>>>
+export type List12Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['list12']>>>

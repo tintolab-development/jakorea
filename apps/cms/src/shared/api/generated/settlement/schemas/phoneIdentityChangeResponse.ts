@@ -7,7 +7,7 @@
  */
 
 export interface PhoneIdentityChangeResponse {
-  memberId?: number;
-  phone?: string;
-  changedAt?: string;
+  memberId: number;
+  phone: string;
+  changedAt: string;
 }

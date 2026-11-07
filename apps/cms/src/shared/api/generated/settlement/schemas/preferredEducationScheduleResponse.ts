@@ -5,24 +5,44 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { PreferredEducationScheduleResponseUnresolvedReason } from './preferredEducationScheduleResponseUnresolvedReason';
 
 /**
- * 신청자가 해당 신청 건에서 선택한 교육 일정. 공통정보 line:N은 그 줄의 PROGRAM_DEFINED 교육 슬롯(education_slot_key=general-common-line:N+1)에 직접 연결한다. 날짜만 있는 희망 일정은 그날 교육 슬롯 전부, 시각이 있는 희망 일정은 시작·종료가 같은 교육 슬롯 전부를 scheduleIds로 반환한다. 신청 파생 일정이나 OSA id는 반환하지 않으며, 연결할 슬롯이 없으면 scheduleId=null, scheduleIds=[]와 unresolvedReason을 반환한다.
+ * 신청자가 해당 신청 건에서 선택한 교육 일정. 공통정보 line:N은 그 줄의 PROGRAM_DEFINED 교육 슬롯(education_slot_key=general-common-line:N+1)에 직접 연결합니다. 날짜만 있는 희망 일정은 그날 교육 슬롯 전부, 시각이 있는 희망 일정은 시작·종료가 같은 교육 슬롯 전부를 scheduleIds로 반환합니다. 신청 파생 일정이나 OSA id는 반환하지 않으며, 연결할 슬롯이 없으면 scheduleId=null, scheduleIds=[]와 unresolvedReason을 반환합니다.
  */
 export interface PreferredEducationScheduleResponse {
-  /** 연결된 첫 PROGRAM_DEFINED program_schedule id(GET .../education-slots의 scheduleId). scheduleIds[0]과 같다. 여러 날 기간 창·신청 파생·UNKNOWN 일정이거나 연결할 슬롯이 없으면 null이며, 이때 startAt/endAt/label만 신청일로 표시한다. */
+  /**
+     * 연결된 첫 PROGRAM_DEFINED program_schedule id(GET .../education-slots의 scheduleId). scheduleIds[0]과 같습니다. 여러 날 기간 창·신청 파생·UNKNOWN 일정이거나 연결할 슬롯이 없으면 null이며, 이때 startAt/endAt/label만 신청일로 표시합니다.
+     * @nullable
+     */
   scheduleId?: number | null;
-  round?: number | null;
-  /** 선택 일정의 시작 시각(UTC Instant). 캘린더 날짜는 educationDate(Asia/Seoul)를 사용한다. */
-  startAt?: string | null;
-  /** 선택 일정의 종료 시각(UTC Instant). */
-  endAt?: string | null;
-  /** 공통정보 educationScheduleLines 표시 문자열. program_schedule 선택이면 null. */
-  label?: string | null;
-  /** scheduleId가 null인 이유. 연결되면 null, 연결할 슬롯이 없으면 NO_PROGRAM_DEFINED_SCHEDULE_MATCH. AMBIGUOUS_SCHEDULE_MATCH는 하위 호환을 위해 enum에 남지만 일반(GENERAL) 희망 일정에서는 더 이상 반환하지 않는다. */
-  unresolvedReason?: string | null;
-  /** 이 희망 일정이 가리키는 PROGRAM_DEFINED program_schedule id 전체(시작 시각, id 순). 같은 날 슬롯이 여러 개면 모두 포함한다. 연결이 없으면 []이며 null은 반환하지 않는다. */
+  /** 이 희망 일정이 가리키는 PROGRAM_DEFINED program_schedule id 전체(시작 시각, id 순). 같은 날 슬롯이 여러 개면 모두 포함합니다. 연결이 없으면 []이며 null은 반환하지 않습니다. */
   scheduleIds?: number[];
-  /** 희망 교육일(Asia/Seoul 달력 날짜). startAt Instant를 UTC 날짜로 자르면 하루 밀릴 수 있으므로 표시·비교에는 이 필드를 사용한다. */
+  /** @nullable */
+  round?: number | null;
+  /**
+     * 선택 일정의 시작 시각(UTC Instant). 캘린더 날짜 표시는 educationDate(Asia/Seoul)를 사용한다.
+     * @nullable
+     */
+  startAt?: string | null;
+  /**
+     * 선택 일정의 종료 시각(UTC Instant).
+     * @nullable
+     */
+  endAt?: string | null;
+  /**
+     * 공통정보 educationScheduleLines[N] 표시 문자열. N이 현재 목록 범위를 벗어나면 제출 당시 라벨 스냅샷, 스냅샷도 없으면 null. program_schedule 선택이면 null.
+     * @nullable
+     */
+  label?: string | null;
+  /**
+     * scheduleId가 null인 이유. 연결되면 null, 연결할 공통 슬롯이 없으면 NO_PROGRAM_DEFINED_SCHEDULE_MATCH입니다. AMBIGUOUS_SCHEDULE_MATCH는 하위 호환을 위해 enum에 남지만 일반(GENERAL) 희망 일정에서는 더 이상 반환하지 않습니다.
+     * @nullable
+     */
+  unresolvedReason?: PreferredEducationScheduleResponseUnresolvedReason;
+  /**
+     * 희망 교육일(Asia/Seoul 달력 날짜). startAt Instant를 UTC 날짜로 자르면 하루 밀릴 수 있으므로 표시·비교에는 이 필드를 사용한다.
+     * @nullable
+     */
   educationDate?: string | null;
 }

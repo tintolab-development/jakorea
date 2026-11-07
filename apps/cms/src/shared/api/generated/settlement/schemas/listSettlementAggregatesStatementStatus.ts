@@ -10,7 +10,7 @@ export type ListSettlementAggregatesStatementStatus = typeof ListSettlementAggre
 
 
 export const ListSettlementAggregatesStatementStatus = {
-  WAITING_CONFIRM: 'WAITING_CONFIRM',
+  REQUESTED: 'REQUESTED',
   REAPPLICATION: 'REAPPLICATION',
   PARTIAL: 'PARTIAL',
   CONFIRMED: 'CONFIRMED',

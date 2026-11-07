@@ -8,7 +8,7 @@
 import type { PortalScheduleItem } from './portalScheduleItem';
 
 export interface PortalCalendarResponse {
-  from?: string;
-  to?: string;
-  items?: PortalScheduleItem[];
+  from: string;
+  to: string;
+  items: PortalScheduleItem[];
 }

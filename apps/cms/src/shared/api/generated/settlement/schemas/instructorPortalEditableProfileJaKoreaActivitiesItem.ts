@@ -6,4 +6,4 @@
  * OpenAPI spec version: v9
  */
 
-export type InstructorPortalEditableProfileJaKoreaActivitiesItem = {[key: string]: unknown};
+export type InstructorPortalEditableProfileJaKoreaActivitiesItem = { [key: string]: unknown };

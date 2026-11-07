@@ -14,18 +14,30 @@ import type { MemberPortalEducationScheduleAssignmentSubmission } from './member
  */
 export interface MemberPortalEducationScheduleAssignment {
   enabled?: boolean;
+  /** @nullable */
   submitStartAt?: string | null;
+  /** @nullable */
   submitEndAt?: string | null;
+  /** @nullable */
   periodLabel?: string | null;
   status?: MemberPortalEducationScheduleAssignmentStatus;
-  /** 과제 제출 ID(form_response.id). 피드백이 있으면 피드백이 달린 제출본 ID이며 GET /api/portal/me/form-responses/{formResponseId}/feedback 키로 쓴다. 미제출이면 null(생략). */
+  /**
+     * 과제 제출 ID(form_response.id). 피드백이 있으면 피드백이 달린 제출본 ID이며 GET /api/portal/me/form-responses/{formResponseId}/feedback 키로 쓴다. 미제출이면 null(생략).
+     * @nullable
+     */
   formResponseId?: number | null;
-  /** 최신 제출본의 파일·링크만 반환하며 이전 revision 이력은 포함하지 않는다. 미제출이면 null(생략). */
+  /**
+     * 최신 제출본의 파일·링크만 반환하며 이전 revision 이력은 포함하지 않는다. 미제출이면 null(생략).
+     * @nullable
+     */
   submissions?: MemberPortalEducationScheduleAssignmentSubmission[] | null;
   /** 최초 제출 가능. 과제 설정 ON, 제출 기간 내, 본인 참여 회차(scheduleId 존재), 미제출일 때 true. 현재 정책상 submitEndAt 이후 미제출 최초 제출은 허용하지 않습니다. */
   canSubmit?: boolean;
   /** 수정 제출 가능. 제출 이력 있음, 마감 전, 본인 제출, form_response.response_status가 SUBMITTED 또는 REJECTED일 때 true. APPROVED/COMPLETED면 false. GET /api/portal/me/form-responses/{formResponseId}/feedback 의 canResubmit과 동일 규칙. */
   canResubmit?: boolean;
-  /** 제출본 form_response.response_status. 미제출이면 null(생략). APPROVED/REJECTED/SUBMITTED/COMPLETED 등. status(FEEDBACK 등)와 별도로 승인 여부를 구분한다. */
+  /**
+     * 제출본 form_response.response_status. 미제출이면 null(생략). APPROVED/REJECTED/SUBMITTED/COMPLETED 등. status(FEEDBACK 등)와 별도로 승인 여부를 구분한다.
+     * @nullable
+     */
   responseStatus?: MemberPortalEducationScheduleAssignmentResponseStatus;
 }

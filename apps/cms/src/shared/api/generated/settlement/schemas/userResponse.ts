@@ -14,11 +14,14 @@ import type { UserListRowMetrics } from './userListRowMetrics';
 import type { UserResponseInstructorStatus } from './userResponseInstructorStatus';
 
 export interface UserResponse {
-  email?: string;
-  name?: string;
+  /** @nullable */
+  email?: string | null;
+  /** @nullable */
+  name?: string | null;
   nameEn?: string;
   profileImageUrl?: string;
-  phone?: string;
+  /** @nullable */
+  phone?: string | null;
   /**
      * [Deprecated compatibility] 목록 표시용 단일 역할. 권한/필터 판단은 roles를 사용합니다.
      * @deprecated
@@ -64,8 +67,13 @@ export interface UserResponse {
   bio?: string;
   detailAddress?: string;
   zipCode?: string;
-  birthDate?: string;
-  birthYear?: number;
+  /**
+     * CMS masked display yyyy-**-**; null when the canonical birth year is absent
+     * @nullable
+     */
+  birthDate?: string | null;
+  /** @nullable */
+  birthYear?: number | null;
   gender?: string;
   /**
      * [Deprecated compatibility] 학교/기관 소속은 organizationId 기반 affiliation DTO를 사용합니다.
@@ -96,4 +104,15 @@ export interface UserResponse {
   instructorStatus?: UserResponseInstructorStatus;
   /** 강사 권한 박탈 시각. 권한이 유효하거나 강사 프로필이 없으면 null입니다. */
   instructorRevokedAt?: string;
-}
+  /**
+     * 승인 또는 반려된 강사 권한 신청 PK. PENDING이면 null. 재발송 POST /api/admin/instructor-role-requests/{requestId}/resend-notification
+     * @nullable
+     */
+  instructorRoleRequestId?: number | null;
+  /**
+     * 승인 또는 반려된 관리자 계정 PK. PENDING_VERIFICATION이면 null. 회원 PK(memberId)가 아니다. 재발송 POST /api/admin/admin-approval-requests/{adminAccountId}/resend-notification
+     * @nullable
+     */
+  adminAccountId?: number | null;
+  [key: string]: unknown;
+ }

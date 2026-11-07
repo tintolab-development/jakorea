@@ -7,51 +7,57 @@
  */
 
 export interface StudentRosterRowRequest {
-  /** 기존 활성 roster row를 지정하면 전체 교체 후에도 동일 rosterId를 유지합니다. 신규 행은 생략합니다. */
-  rosterId?: number | null;
-  /** 정책 확인 전 새 roster 행에 대한 회원 연결은 허용되지 않습니다. 기존 row의 memberId를 그대로 유지하는 용도입니다. */
-  memberId?: number | null;
   /**
-     * @minLength 0
-     * @maxLength 100
+     * 기존 활성 roster row를 안정적으로 이어받기 위한 id
+     * @nullable
      */
+  rosterId?: number | null;
+  /**
+     * 정책 확인 전 새 roster 행에 대한 회원 연결은 허용되지 않습니다. 기존 row의 memberId를 그대로 유지하는 용도입니다.
+     * @nullable
+     */
+  memberId?: number | null;
+  /** @maxLength 100 */
   studentName: string;
   /**
-     * Existing roster rows may omit or send '*' to retain the stored value. Required for new rows.
-     * @minLength 0
+     * @minLength 1
      * @maxLength 30
      */
-  gender?: string | null;
-  /** Existing roster rows may omit this value to retain the stored date. Required for new rows. */
+  gender?: string;
+  /**
+     * Required for new rows. Existing rosterId rows may omit it to retain the stored value.
+     * @nullable
+     */
   birthDate?: string | null;
   /**
      * 선택 입력. 기본 학생명단 양식에는 포함되지 않습니다.
-     * @minLength 0
      * @maxLength 30
+     * @nullable
      */
   grade?: string | null;
-  /**
-     * @minLength 0
-     * @maxLength 50
-     */
+  /** @maxLength 50 */
   className: string;
   /**
      * 선택 입력. 기본 학생명단 양식에는 포함되지 않습니다.
      * @minimum 1
      * @maximum 999
+     * @nullable
      */
   studentNo?: number | null;
-  /** 신규 행은 필수. 기존 활성 행(rosterId 또는 이름·생년월일·학년·반·번호 일치)은 생략하거나 빈 문자열이면 저장된 암호화 연락처를 유지합니다. 값을 보내면 하이픈 전화번호 형식을 검사합니다. */
+  /**
+     * 신규 행은 필수. 기존 활성 행(rosterId 또는 이름·생년월일·학년·반·번호 일치)은 생략하거나 빈 문자열이면 저장된 암호화 연락처를 유지합니다. 값을 보내면 하이픈 전화번호 형식을 검사합니다.
+     * @nullable
+     */
   phone?: string | null;
   /**
      * 신규 행은 필수. 기존 활성 행은 생략하거나 빈 문자열이면 저장된 암호화 이메일을 유지합니다. 값을 보내면 이메일 형식을 검사합니다.
-     * @minLength 0
      * @maxLength 255
+     * @nullable
      */
   email?: string | null;
   /**
-     * @minLength 0
      * @maxLength 200
+     * @nullable
      */
-  notes?: string;
+  notes?: string | null;
 }

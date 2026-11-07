@@ -14,7 +14,8 @@ export interface MemberPortalFileResponse {
   fileSize?: number;
   scanStatus?: string;
   uploadStatus?: string;
-  retentionExpiresAt?: string;
+  /** @nullable */
+  retentionExpiresAt?: string | null;
   downloadable?: boolean;
   createdAt?: string;
   updatedAt?: string;

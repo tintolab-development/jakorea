@@ -6,4 +6,4 @@
  * OpenAPI spec version: v9
  */
 
-export type ProgramFormBindingRenderResponseQuestionsItem = {[key: string]: unknown};
+export type ProgramFormBindingRenderResponseQuestionsItem = { [key: string]: unknown };

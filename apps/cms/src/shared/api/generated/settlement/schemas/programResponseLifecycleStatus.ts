@@ -7,9 +7,10 @@
  */
 
 /**
- * typed 진행 현황. periodStatus와 동일 UI 버킷을 가리킨다.
+ * typed 진행 현황.
+ * @nullable
  */
-export type ProgramResponseLifecycleStatus = typeof ProgramResponseLifecycleStatus[keyof typeof ProgramResponseLifecycleStatus];
+export type ProgramResponseLifecycleStatus = typeof ProgramResponseLifecycleStatus[keyof typeof ProgramResponseLifecycleStatus] | null;
 
 
 export const ProgramResponseLifecycleStatus = {

@@ -7,7 +7,7 @@
  */
 
 export interface DetailedProgramBulkDeleteItem {
-  id?: number;
+  id: number;
   /** @minimum 1 */
   version: number;
 }

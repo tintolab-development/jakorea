@@ -7,6 +7,6 @@
  */
 
 export interface FormResponseRef {
-  templateVersionId?: number;
-  formResponseId?: number;
+  templateVersionId: number;
+  formResponseId: number;
 }

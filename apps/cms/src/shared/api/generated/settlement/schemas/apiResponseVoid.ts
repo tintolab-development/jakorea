@@ -5,23 +5,14 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { ErrorDetail } from './errorDetail';
 
-/**
- * 공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.
- */
 export interface ApiResponseVoid {
-  /** 요청 처리 성공 여부 */
   success?: boolean;
-  /**
-     * 성공 응답 데이터. 오류 응답에서는 null입니다.
-     * @nullable
-     */
-  data?: null;
-  /** 오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다. */
+  data?: unknown | null;
+  /** @nullable */
   message?: string | null;
-  /** 구조화된 오류 정보. 성공 응답에서는 null입니다. */
-  error?: ErrorDetail | null;
-  /** RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다. */
-  detail?: string | null;
+  /** @nullable */
+  errorCode?: string | null;
+  /** @nullable */
+  traceId?: string | null;
 }

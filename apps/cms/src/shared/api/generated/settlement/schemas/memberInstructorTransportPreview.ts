@@ -7,15 +7,28 @@
  */
 
 /**
- * 제출 전 강사 교통비 미리보기. FE는 네이버 거리×오피넷 유가+통행료를 계산하지 않는다. 왕복 자동 산정 = 네이버 지도 이동 거리(왕복) × 출강일 오피넷 유가 스냅샷 + 통행료. 편도 30.0km 이상(포함)만 지급. 편도 30 미만은 fuelCostWon/tollFeeWon/calculatedTransportAmount=null. 프로그램에 강사 교통비 지급 항목이 없으면 금액은 null. 이미 산출된 금액은 유가 변동으로 다시 계산하지 않는다. 자차·증빙 없음. 금액 JSON은 정수 number(문자열·소수 원 금지). oneWayDistanceKm는 distanceFromHome과 동일.
+ * 제출 전 강사 교통비 미리보기. FE는 네이버 거리×오피넷 유가+통행료를 계산하지 않는다. 왕복 자동 산정 = 네이버 지도 이동 거리(왕복) × 출강일 오피넷 유가 스냅샷 + 통행료. 편도 30.0km 이상(포함)만 지급. 편도 30 미만은 fuelCostWon/tollFeeWon/calculatedTransportAmount=null. 프로그램에 강사 교통비 지급 항목이 없으면 금액 null. 이미 산출된 금액은 유가 변동으로 다시 계산하지 않는다. 자차·증빙 없음. 금액 JSON은 정수 number. km만 소수 허용.
+ * @nullable
  */
-export interface MemberInstructorTransportPreview {
-  /** 편도 km. distanceFromHome과 동일. 528.6 같은 소수 허용. 없으면 null. */
-  oneWayDistanceKm?: string | null;
-  /** 유류비(원, 정수). 왕복 거리×출강일 유가. 미지급·산출 불가면 null. */
+export type MemberInstructorTransportPreview = {
+  /**
+     * 편도 km. distanceFromHome과 동일. 528.6 같은 소수 허용.
+     * @nullable
+     */
+  oneWayDistanceKm?: number | null;
+  /**
+     * 유류비(원, 정수). 미지급이면 null.
+     * @nullable
+     */
   fuelCostWon?: number | null;
-  /** 톨비(원, 정수). 왕복 통행료. 미지급·산출 불가면 null. 고속도로 없으면 0. */
+  /**
+     * 톨비(원, 정수). 미지급이면 null. 고속도로 없으면 0.
+     * @nullable
+     */
   tollFeeWon?: number | null;
-  /** 총 산정 교통비(원, 정수)=유류비+톨비. 왕복 산식 결과. 제출 후 CalcInfo.calculatedTransportAmount와 동일. 미지급이면 null. */
+  /**
+     * 총 산정 교통비(원, 정수)=유류비+톨비. 제출 후 CalcInfo.calculatedTransportAmount와 동일. 미지급이면 null.
+     * @nullable
+     */
   calculatedTransportAmount?: number | null;
-}
+} | null;

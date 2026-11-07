@@ -5,51 +5,104 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { SettlementFrontendApprovalHistoryResponse } from './settlementFrontendApprovalHistoryResponse';
-import type { SettlementFrontendAttachmentResponse } from './settlementFrontendAttachmentResponse';
 import type { SettlementFrontendItemResponse } from './settlementFrontendItemResponse';
 import type { SettlementFrontendPayeeResponse } from './settlementFrontendPayeeResponse';
+import type { SettlementFrontendResponseApprovalHistoriesItem } from './settlementFrontendResponseApprovalHistoriesItem';
+import type { SettlementFrontendResponseAttachmentsItem } from './settlementFrontendResponseAttachmentsItem';
+import type { SettlementFrontendResponseCalculationResult } from './settlementFrontendResponseCalculationResult';
+import type { SettlementFrontendResponseTollReceiptReview } from './settlementFrontendResponseTollReceiptReview';
 
 export interface SettlementFrontendResponse {
-  id?: string;
-  programId?: string;
-  instructorId?: string;
-  matchingId?: string;
-  period?: string;
-  programNameKo?: string;
-  businessPeriodStart?: string;
-  businessPeriodEnd?: string;
-  sessionCompleted?: number;
-  sessionTotal?: number;
-  programSessionProgressDisplay?: string;
-  sessionOrdinal?: number;
-  lectureFeeStandardTitle?: string;
-  lectureFeeStandardAmount?: number;
-  wageItemType?: string;
-  feeGrade?: string;
-  lectureSessionDisplay?: string;
-  /** 참여 기관명. 목록 institutionName과 동일 규칙. 개인 참여 등으로 기관이 없으면 null */
+  id: string;
+  /** @nullable */
+  programId?: string | null;
+  /** @nullable */
+  instructorId?: string | null;
+  /** @nullable */
+  matchingId?: string | null;
+  /** @nullable */
+  period?: string | null;
+  /** @nullable */
+  programNameKo?: string | null;
+  /** @nullable */
+  businessPeriodStart?: string | null;
+  /** @nullable */
+  businessPeriodEnd?: string | null;
+  /** @nullable */
+  sessionCompleted?: number | null;
+  /** @nullable */
+  sessionTotal?: number | null;
+  /** @nullable */
+  programSessionProgressDisplay?: string | null;
+  /** @nullable */
+  sessionOrdinal?: number | null;
+  /**
+     * 해당 정산에 적용된 강의비 책정 기준명
+     * @nullable
+     */
+  lectureFeeStandardTitle?: string | null;
+  /** @nullable */
+  lectureFeeStandardAmount?: number | null;
+  /**
+     * TIER1/TIER2/TIER3/SPECIAL_LECTURE 등 적용 임금 항목
+     * @nullable
+     */
+  wageItemType?: string | null;
+  /** @nullable */
+  feeGrade?: string | null;
+  /** @nullable */
+  lectureSessionDisplay?: string | null;
+  /**
+     * 참여 기관명. 목록 institutionName과 동일 규칙. 개인 참여 등으로 기관이 없으면 null
+     * @nullable
+     */
   institutionName?: string | null;
-  instructorName?: string;
-  businessIncomeEarnerLabel?: string;
-  expectedTransferDate?: string;
-  correctionReason?: string;
-  items?: SettlementFrontendItemResponse[];
-  totalAmount?: number;
-  status?: string;
-  calculationStatus?: string;
-  statementStatus?: string;
-  paymentStatus?: string;
-  paidAt?: string;
-  documentGeneratedAt?: string;
-  notes?: string;
-  attachments?: SettlementFrontendAttachmentResponse[];
-  tollReceiptReview?: unknown;
-  calculationResult?: unknown;
-  approvalHistories?: SettlementFrontendApprovalHistoryResponse[];
-  createdAt?: string;
-  updatedAt?: string;
+  /**
+     * 정산 CMS 신청자명은 원문
+     * @nullable
+     */
+  instructorName?: string | null;
+  /** @nullable */
+  businessIncomeEarnerLabel?: string | null;
+  /** @nullable */
+  expectedTransferDate?: string | null;
+  /** @nullable */
+  correctionReason?: string | null;
+  items: SettlementFrontendItemResponse[];
+  totalAmount: number;
+  /** @nullable */
+  status?: string | null;
+  /** @nullable */
+  calculationStatus?: string | null;
+  /** @nullable */
+  statementStatus?: string | null;
+  /** @nullable */
+  paymentStatus?: string | null;
+  /**
+     * 지급 완료 건의 실제 이체 완료일시
+     * @nullable
+     */
+  paidAt?: string | null;
+  /** @nullable */
+  documentGeneratedAt?: string | null;
+  /** @nullable */
+  notes?: string | null;
+  attachments?: SettlementFrontendResponseAttachmentsItem[];
+  /** @nullable */
+  tollReceiptReview?: SettlementFrontendResponseTollReceiptReview;
+  /** @nullable */
+  calculationResult?: SettlementFrontendResponseCalculationResult;
+  approvalHistories?: SettlementFrontendResponseApprovalHistoriesItem[];
+  /** @nullable */
+  createdAt?: string | null;
+  /** @nullable */
+  updatedAt?: string | null;
+  availableActions?: string[];
   /** 지급조서·산출 내역서 수취인 표시 블록(MASKED). instructorMemberId가 없으면 null */
   payee?: SettlementFrontendPayeeResponse | null;
-  availableActions?: string[];
+  /**
+     * 가장 최근 정산 결과 알림(확인/반려/지급완료/정정완료 재발송 포함) 시각. 없으면 null. statementStatus·paymentStatus·paidAt는 재발송으로 바뀌지 않습니다.
+     * @nullable
+     */
+  resultNotificationSentAt?: string | null;
 }

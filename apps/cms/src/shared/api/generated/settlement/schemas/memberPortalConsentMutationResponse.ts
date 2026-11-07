@@ -7,7 +7,10 @@
  */
 
 export interface MemberPortalConsentMutationResponse {
-  /** 전자서명 문서 철회 시 문서 ID. documentId 없는 legacy ledger 철회에서는 null. */
+  /**
+     * 전자서명 문서 철회 시 문서 ID. documentId 없는 legacy ledger 철회에서는 null.
+     * @nullable
+     */
   documentId?: number | null;
   consentType?: string;
   status?: string;

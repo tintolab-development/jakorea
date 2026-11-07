@@ -20,22 +20,37 @@ export interface MemberPortalProgramSummary {
   educationEndAt?: string;
   inquiryEmail?: string;
   inquiryPhone?: string;
-  /** thumbnailFileObjectId와 같은 값(기존 필드 호환). 없으면 null. */
+  /**
+     * thumbnailFileObjectId와 같은 값(기존 필드 호환). 없으면 null.
+     * @nullable
+     */
   posterFileObjectId?: number | null;
-  /** 신청 recruitmentId 모집 행 대표 이미지 file_object id. GENERAL_*·UJAT는 그 모집 행 값만 쓰고 프로그램 대표 이미지나 다른 모집 행으로 채우지 않는다. 그 외 유형은 프로그램 대표 이미지. 공개 GET /api/portal/programs 행 thumbnailFileObjectId와 같은 규칙. 없으면 null. */
+  /**
+     * 신청 recruitmentId 모집 행 대표 이미지 file_object id. GENERAL_*·UJAT는 그 모집 행 값만 쓰고 프로그램 대표 이미지나 다른 모집 행으로 채우지 않는다. 그 외 유형은 프로그램 대표 이미지. 공개 GET /api/portal/programs 행 thumbnailFileObjectId와 같은 규칙. 없으면 null.
+     * @nullable
+     */
   thumbnailFileObjectId?: number | null;
-  /** 해당 모집 행의 면접 여부. null이면 미설정(면접 없음으로 취급). false면 서류 합격 면접 배너를 숨긴다. */
+  /**
+     * 해당 모집 행의 면접 여부. null이면 미설정(면접 없음으로 취급). false면 서류 합격 면접 배너를 숨긴다.
+     * @nullable
+     */
   interviewEnabled?: boolean | null;
   /** 프로그램 canonical type. 신청 상세의 programType과 동일합니다. */
   programType?: string;
-  /** 프로그램 설정의 교육 형태 라벨. 신청 답변의 educationFormat이 없을 때 표시 기준으로 사용할 수 있습니다. */
+  /**
+     * 프로그램 설정의 교육 형태 라벨. 신청 답변의 educationFormat이 없을 때 표시 기준으로 사용할 수 있습니다.
+     * @nullable
+     */
   educationFormLabel?: string | null;
-  /** TRAINED_TEACHER의 교육일지 설정값. 대상 외 프로그램이나 detail row 없음, OFF는 false입니다. */
+  /** TRAINED_TEACHER detail의 실제 educationJournalEnabled 값. 대상 외 프로그램, detail row 없음, OFF는 false입니다. */
   educationJournalEnabled?: boolean;
   /** CMS 공통정보 generalSurveyMenuKeys에 survey가 있는지. form-binding·일정 매핑·shareActive·작성 기간과 무관. 강의평가(lecture_evaluation)만으로는 true가 되지 않습니다. 없으면 false. */
   surveyConfigured?: boolean;
   /** CMS 공통정보 generalSurveyMenuKeys에 satisfaction이 있는지. 레거시 student_satisfaction·teacher_satisfaction·volunteer_satisfaction·school_satisfaction도 satisfaction으로 봅니다. TRAINED_TEACHER 특수 분기 없음. form-binding과 무관. 없으면 false. */
   satisfactionConfigured?: boolean;
-  /** 제미나이 gemini_program_detail.min_participant_count. 비제미나이·미설정이면 null. 기본값으로 채우지 않는다. */
+  /**
+     * 제미나이 gemini_program_detail.min_participant_count. 비제미나이·미설정이면 null.
+     * @nullable
+     */
   minStudentCount?: number | null;
 }

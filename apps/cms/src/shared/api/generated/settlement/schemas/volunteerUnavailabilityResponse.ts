@@ -7,11 +7,17 @@
  */
 
 export interface VolunteerUnavailabilityResponse {
-  id?: number;
-  programId?: number;
-  scheduleId?: number;
-  participantId?: number;
-  replacementParticipantId?: number;
-  reason?: string;
+  /** @nullable */
+  id?: number | null;
+  /** @nullable */
+  programId?: number | null;
+  /** @nullable */
+  scheduleId?: number | null;
+  /** @nullable */
+  participantId?: number | null;
+  /** @nullable */
+  replacementParticipantId?: number | null;
+  /** @nullable */
+  reason?: string | null;
   replacementApplied?: boolean;
 }

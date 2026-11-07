@@ -6,12 +6,12 @@
  * OpenAPI spec version: v9
  */
 
-/**
- * 프로그램·모집·신청유형별 신청 건수. recruitmentId가 null이면 해당 유형의 고유 모집 행을 찾을 수 없는 레거시/모호 신청이다.
- */
 export interface ApplicationCountResponse {
   programId?: number;
-  /** 신청에 저장된 recruitment_id. 없으면 프로그램에서 해당 targetType으로 유일하게 매칭되는 program_recruitment.id(1사1교 기관=ORGANIZATION, 강사=INSTRUCTOR, 교육받은 교사 기관=ORGANIZATION). 매칭 행이 없거나 같은 유형 모집이 2건 이상이면 null. null을 0이나 다른 모집 id로 바꾸지 않는다. */
+  /**
+     * Null when no unique recruitment row exists; never substitute 0 or another recruitment id.
+     * @nullable
+     */
   recruitmentId?: number | null;
   targetType?: string;
   totalCount?: number;

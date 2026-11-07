@@ -6,24 +6,24 @@
  * OpenAPI spec version: v9
  */
 
-/**
- * 강사 권한 신청 일괄 승인·반려 요청
- */
 export interface InstructorRoleBulkReviewRequest {
   /**
-     * @minItems 0
+     * @minItems 1
      * @maxItems 100
+     * @items.minimum 1
      */
   ids: number[];
-  activityType?: string;
-  feeGrade?: string;
-  jaGrade?: string;
-  rejectReason?: string;
+  /** @nullable */
+  activityType?: string | null;
+  /** @nullable */
+  feeGrade?: string | null;
+  /** @nullable */
+  jaGrade?: string | null;
+  /** @nullable */
+  rejectReason?: string | null;
   /**
-     * @minLength 0
+     * @minLength 1
      * @maxLength 500
      */
-  reason?: string;
-  /** 일괄 결과 알림 예약 시각. null이면 즉시 발송 */
-  scheduledAt?: string;
+  reason: string;
 }

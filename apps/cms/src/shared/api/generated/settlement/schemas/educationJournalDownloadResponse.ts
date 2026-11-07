@@ -6,9 +6,13 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * 일지 전용 preview URL이 아니다. canonical file download 정책을 반환한다.
+ */
 export interface EducationJournalDownloadResponse {
   journalId?: number;
-  fileObjectId?: number;
+  /** @nullable */
+  fileObjectId?: number | null;
   accessPolicy?: string;
   downloadEndpoint?: string;
   status?: string;

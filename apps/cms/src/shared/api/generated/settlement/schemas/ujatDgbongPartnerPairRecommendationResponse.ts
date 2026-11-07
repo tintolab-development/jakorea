@@ -8,11 +8,14 @@
 import type { UjatDgbongPartnerCandidateResponse } from './ujatDgbongPartnerCandidateResponse';
 
 export interface UjatDgbongPartnerPairRecommendationResponse {
-  programId?: number;
-  scheduleId?: number;
-  organizationApplicationId?: number;
+  /** @nullable */
+  programId?: number | null;
+  /** @nullable */
+  scheduleId?: number | null;
+  /** @nullable */
+  organizationApplicationId?: number | null;
   primary?: UjatDgbongPartnerCandidateResponse;
-  secondary?: UjatDgbongPartnerCandidateResponse;
-  attendanceManager?: UjatDgbongPartnerCandidateResponse;
+  secondary?: UjatDgbongPartnerCandidateResponse | null;
+  attendanceManager?: UjatDgbongPartnerCandidateResponse | null;
   rankedCandidates?: UjatDgbongPartnerCandidateResponse[];
 }

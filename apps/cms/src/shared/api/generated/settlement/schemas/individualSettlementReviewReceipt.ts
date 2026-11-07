@@ -10,16 +10,24 @@ import type { IndividualSettlementReviewReceiptTransitCode } from './individualS
 
 export interface IndividualSettlementReviewReceipt {
   receiptId: number;
+  /** @nullable */
   originalReceiptId?: number | null;
   revisionNo: number;
   expenseType: string;
   expenseDate: string;
   amount: number;
+  /** @nullable */
   description?: string | null;
   receiptStatus: string;
   files: IndividualSettlementReviewFileRef[];
-  /** 대중교통 수단 한글 라벨. 버스(시내·시외·고속 등) | 지하철 | 기차(KTX·SRT·무궁화호 등) | 항공기 | 기타. 없으면 null. */
+  /**
+     * 대중교통 수단 한글 라벨. 버스(시내·시외·고속 등) | 지하철 | 기차(KTX·SRT·무궁화호 등) | 항공기 | 기타. 없으면 null.
+     * @nullable
+     */
   transitLabel?: string | null;
-  /** 대중교통 수단 코드. bus | subway | train | flight | other. 없으면 null. */
+  /**
+     * 대중교통 수단 코드. bus | subway | train | flight | other. 없으면 null.
+     * @nullable
+     */
   transitCode?: IndividualSettlementReviewReceiptTransitCode;
 }

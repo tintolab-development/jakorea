@@ -6,18 +6,14 @@
  * OpenAPI spec version: v9
  */
 
-/**
- * 사업 종료일 연장 1건. PATCH 성공 응답에만 포함되며 프로그램 상세 GET에는 없습니다.
- */
 export interface ProgramBusinessPeriodHistoryItem {
-  /** 연장 전 사업 종료일 */
+  /** @nullable */
   previousBusinessEndDate?: string | null;
-  /** 연장 후 사업 종료일 */
   businessEndDate?: string;
-  /** 연장 사유 */
+  /** @nullable */
   reason?: string | null;
-  /** 변경한 관리자 이름 */
+  /** @nullable */
   changedByName?: string | null;
-  /** 변경 시각 */
+  /** @nullable */
   changedAt?: string | null;
 }

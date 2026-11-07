@@ -5,22 +5,48 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { MemberConsentRecordResponseConsentStatus } from './memberConsentRecordResponseConsentStatus';
 
 export interface MemberConsentRecordResponse {
   consentRecordId?: number;
-  formResponseId?: number;
+  /** @nullable */
+  formResponseId?: number | null;
   memberId?: number;
   consentType?: string;
   consentValue?: boolean;
-  consentedAt?: string;
-  collectedByAdminId?: number;
-  evidenceFileObjectId?: number;
-  evidenceAccessPolicy?: string;
-  filledDocumentId?: number;
-  version?: string;
-  templateCode?: string;
-  consentStatus?: string;
-  programEligible?: boolean;
+  /** @nullable */
+  consentedAt?: string | null;
+  /** @nullable */
+  collectedByAdminId?: number | null;
+  /** @nullable */
+  evidenceFileObjectId?: number | null;
+  /** @nullable */
+  evidenceAccessPolicy?: string | null;
+  /** @nullable */
+  filledDocumentId?: number | null;
+  /**
+     * Null in roster responses; use birthYear.
+     * @nullable
+     */
+  version?: string | null;
+  /**
+     * Year-only birth date display for admin roster responses.
+     * @nullable
+     */
+  birthYear?: number | null;
+  /** @nullable */
+  templateCode?: string | null;
+  /**
+     * PORTRAIT_RIGHTS 전용 상태
+     * @nullable
+     */
+  consentStatus?: MemberConsentRecordResponseConsentStatus;
+  /**
+     * PORTRAIT_RIGHTS 전용 프로그램 참여 가능 여부
+     * @nullable
+     */
+  programEligible?: boolean | null;
   filledDocumentAvailable?: boolean;
-  filledDocumentRevealEndpoint?: string;
+  /** @nullable */
+  filledDocumentRevealEndpoint?: string | null;
 }

@@ -5,11 +5,11 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { Affiliation } from './affiliation';
-import type { Career } from './career';
-import type { Education } from './education';
-import type { Essays } from './essays';
-import type { HomeAddress } from './homeAddress';
+import type { InstructorCmsAffiliation } from './instructorCmsAffiliation';
+import type { InstructorCmsCareer } from './instructorCmsCareer';
+import type { InstructorCmsEducation } from './instructorCmsEducation';
+import type { InstructorCmsEssays } from './instructorCmsEssays';
+import type { InstructorCmsHomeAddress } from './instructorCmsHomeAddress';
 import type { InstructorPortalEditableProfileAwardsItem } from './instructorPortalEditableProfileAwardsItem';
 import type { InstructorPortalEditableProfileJaKoreaActivitiesItem } from './instructorPortalEditableProfileJaKoreaActivitiesItem';
 import type { InstructorPortalEditableProfileLicensesItem } from './instructorPortalEditableProfileLicensesItem';
@@ -18,34 +18,34 @@ import type { InstructorPortalEditableProfileLicensesItem } from './instructorPo
  * 강사가 포탈에서 직접 수정할 수 있는 프로필 필드만 노출한 요청 계약
  */
 export interface InstructorPortalEditableProfile {
-  affiliation?: Affiliation;
+  affiliation?: InstructorCmsAffiliation;
   /**
-     * @minLength 0
      * @maxLength 100
+     * @nullable
      */
-  instructorCareerSummary?: string;
+  instructorCareerSummary?: string | null;
   /**
-     * @minLength 0
      * @maxLength 500
+     * @nullable
      */
-  oneLineIntro?: string;
-  homeAddress?: HomeAddress;
-  education?: Education;
-  career?: Career;
+  oneLineIntro?: string | null;
+  homeAddress?: InstructorCmsHomeAddress;
+  education?: InstructorCmsEducation;
+  career?: InstructorCmsCareer;
   /**
-     * @minItems 0
      * @maxItems 50
+     * @nullable
      */
-  jaKoreaActivities?: InstructorPortalEditableProfileJaKoreaActivitiesItem[];
+  jaKoreaActivities?: InstructorPortalEditableProfileJaKoreaActivitiesItem[] | null;
   /**
-     * @minItems 0
      * @maxItems 50
+     * @nullable
      */
-  licenses?: InstructorPortalEditableProfileLicensesItem[];
+  licenses?: InstructorPortalEditableProfileLicensesItem[] | null;
   /**
-     * @minItems 0
      * @maxItems 50
+     * @nullable
      */
-  awards?: InstructorPortalEditableProfileAwardsItem[];
-  essays?: Essays;
+  awards?: InstructorPortalEditableProfileAwardsItem[] | null;
+  essays?: InstructorCmsEssays;
 }

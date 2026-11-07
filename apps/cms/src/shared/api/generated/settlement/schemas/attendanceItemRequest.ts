@@ -9,8 +9,14 @@
 export interface AttendanceItemRequest {
   participantId?: number;
   status?: string;
-  absenceReason?: string;
-  arrivalTime?: string;
-  /** 사유 불참 증빙 fileObjectId. CMS UJAT 봉사 탭은 생략(null/[]). 없으면 absence-reasons에 사유 텍스트만 남고 파일은 없다. */
+  /** @nullable */
+  absenceReason?: string | null;
+  /** @nullable */
+  arrivalTime?: string | null;
+  /**
+     * 사유 불참 증빙. CMS UJAT 봉사 탭은 생략. 없으면 파일 없이 사유 텍스트만 원장에 남는다.
+     * @maxItems 5
+     * @nullable
+     */
   fileObjectIds?: number[] | null;
 }

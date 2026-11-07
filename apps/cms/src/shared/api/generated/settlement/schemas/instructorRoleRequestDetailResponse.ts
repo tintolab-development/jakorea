@@ -7,42 +7,71 @@
  */
 import type { InstructorCmsProfile } from './instructorCmsProfile';
 import type { InstructorCmsSettlement } from './instructorCmsSettlement';
+import type { InstructorRoleRequestDetailResponseApprovalNotificationCase } from './instructorRoleRequestDetailResponseApprovalNotificationCase';
+import type { InstructorRoleRequestDetailResponseApprovalNotificationState } from './instructorRoleRequestDetailResponseApprovalNotificationState';
+import type { InstructorRoleRequestTermsAgreement } from './instructorRoleRequestTermsAgreement';
 import type { MemberLinkedSocialAccountResponse } from './memberLinkedSocialAccountResponse';
-import type { TermsAgreement } from './termsAgreement';
 
 /**
- * CMS 강사 권한 신청 상세. Platform 신청 당시 구조화 양식을 신청 스냅샷 기준으로 반환합니다.
+ * CMS 강사 권한 신청 상세. 회원포탈 신청 당시 구조화 스냅샷과 심사 메타데이터를 반환합니다.
  */
 export interface InstructorRoleRequestDetailResponse {
   requestId?: number;
   memberId?: number;
   status?: string;
   requestedActivityType?: string;
-  requestedAt?: string;
-  decidedAt?: string;
-  /** 회원 가입일(member.joined_at) */
-  joinedAt?: string;
-  /** 승인/반려 결과 알림 재발송 시각 */
-  notificationResentAt?: string;
-  rejectedReason?: string;
+  /** @nullable */
+  requestedAt?: string | null;
+  /** @nullable */
+  decidedAt?: string | null;
+  /**
+     * 회원 가입일(member.joined_at)
+     * @nullable
+     */
+  joinedAt?: string | null;
+  /**
+     * 승인/반려 결과 알림 재발송 시각
+     * @nullable
+     */
+  notificationResentAt?: string | null;
+  /** @nullable */
+  rejectedReason?: string | null;
   name?: string;
   gender?: string;
-  birthDate?: string;
-  birthYear?: number;
+  /**
+     * MASKED 기본 조회는 yyyy-**-**이며 원문이 없으면 null. UNMASKED 감사 조회는 yyyy-MM-dd 원문
+     * @nullable
+     */
+  birthDate?: string | null;
+  /**
+     * 기본 응답에서 표시 가능한 출생 연도
+     * @nullable
+     */
+  birthYear?: number | null;
   phone?: string;
   email?: string;
-  /** MASKED=기본 GET 상세, UNMASKED=POST …/privacy/unmask 원문 응답. FE는 unmask 성공 시 이 플래그와 phone/email로 화면을 교체해야 한다. */
-  privacyMaskingLevel?: string;
   profile?: InstructorCmsProfile;
   settlement?: InstructorCmsSettlement;
-  termsAgreements?: TermsAgreement[];
+  termsAgreements?: InstructorRoleRequestTermsAgreement[];
   socialAccounts?: MemberLinkedSocialAccountResponse[];
-  /** 승인 알림 CASE. CASE_1=아직 유효화·발송되지 않음, CASE_2=이미 유효화되었거나 외부 발송 단계 진입, NONE=승인 알림 이력 없음. GET 스냅샷이며 취소 시점의 실제 CASE는 응답 approvalNotificationCase를 따른다. */
-  approvalNotificationCase?: string;
-  /** 승인 알림 상태. NONE|SCHEDULED|PENDING|PROCESSING|SENT|UNKNOWN. 여러 이벤트가 있으면 가장 진행된 상태를 반환한다. UNKNOWN은 외부 상태가 확인 불가이며 CASE_2로 취급한다. */
-  approvalNotificationState?: string;
-  /** 아직 도래하지 않은 승인 알림 available_at 중 가장 늦은 시각. 이전이 이미 발송된 재발송 예약이면 CASE_2와 함께 반환될 수 있다. */
+  /**
+     * 승인 알림 CASE. CASE_1=아직 유효화·발송되지 않음, CASE_2=이미 유효화되었거나 외부 발송 단계 진입, NONE=승인 알림 이력 없음. GET 스냅샷이며 취소 시점의 실제 CASE는 cancel-approval 응답 approvalNotificationCase를 따른다.
+     * @nullable
+     */
+  approvalNotificationCase?: InstructorRoleRequestDetailResponseApprovalNotificationCase;
+  /**
+     * 승인 알림 상태. 여러 이벤트가 있으면 가장 진행된 상태를 반환한다. UNKNOWN은 외부 상태가 확인 불가이며 CASE_2로 취급한다.
+     * @nullable
+     */
+  approvalNotificationState?: InstructorRoleRequestDetailResponseApprovalNotificationState;
+  /**
+     * 아직 도래하지 않은 승인 알림 available_at 중 가장 늦은 시각
+     * @nullable
+     */
   approvalNotificationScheduledAt?: string | null;
-  /** 승인 알림 외부 발송 sent_at 중 가장 늦은 시각. 없으면 null. */
+  /**
+     * 승인 알림 외부 발송 sent_at 중 가장 늦은 시각
+     * @nullable
+     */
   approvalNotificationSentAt?: string | null;
 }

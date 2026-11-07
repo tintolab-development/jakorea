@@ -10,10 +10,14 @@ import type { FileDownloadJobResponseRequiredHeaders } from './fileDownloadJobRe
 export interface FileDownloadJobResponse {
   jobType?: string;
   programId?: number;
-  generatedFileJobId?: number;
+  /** @nullable */
+  generatedFileJobId?: number | null;
   status?: string;
-  fileObjectId?: number;
-  downloadUrl?: string;
-  downloadExpiresAt?: string;
+  /** @nullable */
+  fileObjectId?: number | null;
+  /** @nullable */
+  downloadUrl?: string | null;
+  /** @nullable */
+  downloadExpiresAt?: string | null;
   requiredHeaders?: FileDownloadJobResponseRequiredHeaders;
 }

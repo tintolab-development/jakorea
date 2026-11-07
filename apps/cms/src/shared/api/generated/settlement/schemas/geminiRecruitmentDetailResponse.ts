@@ -6,67 +6,104 @@
  * OpenAPI spec version: v9
  */
 import type { GeminiRecruitmentDetailResponseEducationForm } from './geminiRecruitmentDetailResponseEducationForm';
+import type { GeminiRecruitmentDetailResponseProgramType } from './geminiRecruitmentDetailResponseProgramType';
+import type { GeminiRecruitmentDetailResponseTargetLevelsItem } from './geminiRecruitmentDetailResponseTargetLevelsItem';
 
 /**
- * Gemini 찾아가는 연수 모집 공고 상세. create/PATCH로 저장한 모집 정보 필드를 같은 이름으로 왕복한다. serviceDetailJson 원문은 노출하지 않는다.
+ * Gemini 찾아가는 연수 모집 공고 상세. create/PATCH 저장 필드를 같은 이름으로 왕복한다. serviceDetailJson 원문은 노출하지 않는다.
  */
 export interface GeminiRecruitmentDetailResponse {
-  programId?: number;
-  programCode?: string;
-  programType?: string;
-  draftStatus?: string;
-  periodStatus?: string;
-  nameKo?: string;
-  summary?: string;
-  description?: string;
-  businessYear?: number;
-  businessStartDate?: string;
-  businessEndDate?: string;
-  /** 기관 모집 기간 시작. 연수 요청 가능기간(trainingRequest*)과 별개. */
-  applicationStartDate?: string;
-  /** 기관 모집 기간 종료. */
-  applicationEndDate?: string;
-  /** 연수 요청 가능기간 시작. */
-  trainingRequestStartDate?: string;
-  /** 연수 요청 가능기간 종료. */
-  trainingRequestEndDate?: string;
-  minimumParticipantCount?: number;
-  certificateDisabled?: boolean;
-  organizationApplicationCount?: number;
-  approvedOrganizationApplicationCount?: number;
-  /** 교육 대상 코드. elementary|middle|high|university|adult. 없으면 []. */
-  targetLevels?: string[];
-  /** 교육 대상 상세 */
+  programId: number;
+  programCode: string;
+  programType: GeminiRecruitmentDetailResponseProgramType;
+  draftStatus: string;
+  periodStatus: string;
+  nameKo: string;
+  /** @nullable */
+  summary?: string | null;
+  /** @nullable */
+  description?: string | null;
+  /** @nullable */
+  businessYear?: number | null;
+  /** @nullable */
+  businessStartDate?: string | null;
+  /** @nullable */
+  businessEndDate?: string | null;
+  /**
+     * 기관 모집 기간 시작
+     * @nullable
+     */
+  applicationStartDate?: string | null;
+  /**
+     * 기관 모집 기간 종료
+     * @nullable
+     */
+  applicationEndDate?: string | null;
+  /**
+     * 연수 요청 가능기간 시작
+     * @nullable
+     */
+  trainingRequestStartDate?: string | null;
+  /**
+     * 연수 요청 가능기간 종료
+     * @nullable
+     */
+  trainingRequestEndDate?: string | null;
+  /** @nullable */
+  minimumParticipantCount?: number | null;
+  certificateDisabled: boolean;
+  /** @nullable */
+  organizationApplicationCount?: number | null;
+  /** @nullable */
+  approvedOrganizationApplicationCount?: number | null;
+  /** 없으면 []. elementary|middle|high|university|adult */
+  targetLevels: GeminiRecruitmentDetailResponseTargetLevelsItem[];
+  /** @nullable */
   recruitmentTargetDetail?: string | null;
-  /** 교육 형태. Gemini 모집은 online|offline 권장. hybrid는 계약 확정 전 값으로 내려갈 수 있다. */
+  /** @nullable */
   educationForm?: GeminiRecruitmentDetailResponseEducationForm;
-  /** 교육 진행 구조. program.education_structure. 예: SCHEDULE. 없으면 null — FE가 SCHEDULE로 추정하지 않도록 GET SSOT. */
+  /**
+     * 교육 진행 구조. program.education_structure. 예: SCHEDULE. 없으면 null — FE가 SCHEDULE로 추정하지 않도록 GET SSOT.
+     * @nullable
+     */
   educationStructure?: string | null;
-  /** 문의처 이름 */
+  /** @nullable */
   contactName?: string | null;
-  /** 문의처 전화 */
+  /** @nullable */
   contactPhone?: string | null;
-  /** 문의처 이메일 */
+  /** @nullable */
   contactEmail?: string | null;
-  /** 비고. geminiRecruitment.notes 저장값. 해당없음이면 null */
+  /**
+     * 비고. geminiRecruitment.notes 저장값. 해당없음이면 null
+     * @nullable
+     */
   remarks?: string | null;
-  /** 기타사항. Gemini 찾아가는 연수 모집에는 입력란이 없어 항상 null. 하위 호환 필드로 유지한다. */
+  /**
+     * 기타사항. Gemini 찾아가는 연수 모집에는 입력란이 없어 항상 null. 하위 호환 필드로 유지한다.
+     * @nullable
+     */
   otherMatters?: string | null;
-  /** 섬네일 파일명 */
+  /** @nullable */
   thumbnailFileName?: string | null;
-  /** 모집 안내 */
+  /** @nullable */
   recruitmentGuide?: string | null;
-  /** 지원 방법 */
+  /** @nullable */
   applicationMethod?: string | null;
-  /** 학습 지원 내용 */
+  /** @nullable */
   learningSupportContent?: string | null;
-  /** 추가 내용 HTML/Markdown 저장분 */
+  /** @nullable */
   additionalContentHtml?: string | null;
-  /** 첨부 파일명. 없으면 []. */
-  attachmentFileNames?: string[];
-  createdAt?: string;
+  /** 없으면 [] */
+  attachmentFileNames: string[];
+  /** @nullable */
+  createdAt?: string | null;
+  /** @nullable */
   createdByName?: string | null;
-  updatedAt?: string;
-  /** program.updated_by_admin_id가 가리키는 CMS 관리자 화면 표시명. 생성 직후는 createdByName과 같다. 이력 없으면 null. */
+  /** @nullable */
+  updatedAt?: string | null;
+  /**
+     * program.updated_by_admin_id가 가리키는 CMS 관리자 화면 표시명. 생성 직후는 createdByName과 같다. PATCH 후 GET에서 저장 관리자로 갱신. 이력 없으면 null.
+     * @nullable
+     */
   updatedByName?: string | null;
 }

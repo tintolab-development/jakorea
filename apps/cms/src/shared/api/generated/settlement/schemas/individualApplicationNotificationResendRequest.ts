@@ -5,13 +5,20 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { IndividualApplicationNotificationResendRequestTiming } from './individualApplicationNotificationResendRequestTiming';
 
 export interface IndividualApplicationNotificationResendRequest {
-  timing?: string;
-  scheduledAt?: string;
+  /** null 또는 빈 값은 IMMEDIATE로 정규화됩니다. */
+  timing?: IndividualApplicationNotificationResendRequestTiming;
   /**
-     * @minLength 0
-     * @maxLength 500
+     * SCHEDULED일 때 필수인 UTC 기준 미래 시각. IMMEDIATE일 때는 null이어야 합니다.
+     * @nullable
      */
-  reason?: string;
+  scheduledAt?: string | null;
+  /**
+     * REJECTED 신청에서 trim 후 필수이며 해당 발송의 payload snapshot으로만 저장됩니다. APPROVED에서는 null로 정규화됩니다.
+     * @maxLength 500
+     * @nullable
+     */
+  reason?: string | null;
 }

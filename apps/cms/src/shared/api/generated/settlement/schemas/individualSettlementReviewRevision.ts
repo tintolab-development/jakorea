@@ -11,9 +11,12 @@ export interface IndividualSettlementReviewRevision {
   revisionId: number;
   revisionNo: number;
   status: string;
+  /** @nullable */
   rejectionReason?: string | null;
   submittedAt: string;
+  /** @nullable */
   reviewedAt?: string | null;
+  /** @nullable */
   reviewedByAdminId?: number | null;
   items: IndividualSettlementReviewItem[];
 }

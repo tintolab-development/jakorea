@@ -7,8 +7,10 @@
  */
 
 export interface DetailedProgramUpdateRequest {
-  nameKo?: string;
-  useYn?: boolean;
+  /** @nullable */
+  nameKo?: string | null;
+  /** @nullable */
+  useYn?: boolean | null;
   /** @minimum 1 */
   version: number;
 }

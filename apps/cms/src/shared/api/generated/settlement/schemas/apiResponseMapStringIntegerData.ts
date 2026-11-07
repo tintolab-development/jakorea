@@ -8,5 +8,6 @@
 
 /**
  * 성공 응답 데이터. 오류 응답에서는 null입니다.
+ * @nullable
  */
 export type ApiResponseMapStringIntegerData = {[key: string]: number} | null;

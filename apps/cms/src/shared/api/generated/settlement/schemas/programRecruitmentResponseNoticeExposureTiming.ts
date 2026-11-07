@@ -8,6 +8,7 @@
 
 /**
  * 봉사자 공고 노출 시점. VOLUNTEER가 아니면 null. typed 없으면 overlay 호환 조회.
+ * @nullable
  */
 export type ProgramRecruitmentResponseNoticeExposureTiming = typeof ProgramRecruitmentResponseNoticeExposureTiming[keyof typeof ProgramRecruitmentResponseNoticeExposureTiming] | null;
 

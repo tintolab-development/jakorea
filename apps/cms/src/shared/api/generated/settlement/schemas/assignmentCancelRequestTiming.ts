@@ -7,7 +7,8 @@
  */
 
 /**
- * 취소 알림 발송 방식. IMMEDIATE 또는 SCHEDULED. 이미 배정 알림이 발송된 경우에만 사용됩니다. 생략 시 scheduledAt이 있으면 SCHEDULED, 없으면 IMMEDIATE로 처리합니다.
+ * 취소 알림 발송 방식. 이미 배정 알림이 발송된 경우에만 사용됩니다. 생략 시 scheduledAt이 있으면 SCHEDULED, 없으면 IMMEDIATE로 처리합니다.
+ * @nullable
  */
 export type AssignmentCancelRequestTiming = typeof AssignmentCancelRequestTiming[keyof typeof AssignmentCancelRequestTiming] | null;
 

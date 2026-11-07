@@ -9,21 +9,39 @@ import type { WageItemRateUpsertRequest } from './wageItemRateUpsertRequest';
 import type { WageItemUpsertRequestWageItemType } from './wageItemUpsertRequestWageItemType';
 
 export interface WageItemUpsertRequest {
-  id?: number;
+  /** @nullable */
+  id?: number | null;
+  /** @nullable */
   wageItemType?: WageItemUpsertRequestWageItemType;
-  /** PUT 임금 제목. GET WageItemResponse.name */
-  itemName?: string;
-  amount?: number;
-  calculationUnit?: string;
-  editableYn?: boolean;
-  iconKey?: string;
-  emojiOverride?: string;
-  layout?: string;
-  basisHours?: number;
-  maxLimitWon?: number;
+  /**
+     * PUT 임금 제목. GET은 WageItemResponse.name
+     * @nullable
+     */
+  itemName?: string | null;
+  /** @nullable */
+  amount?: number | null;
+  /** @nullable */
+  calculationUnit?: string | null;
+  /** @nullable */
+  editableYn?: boolean | null;
+  /** @nullable */
+  iconKey?: string | null;
+  /** @nullable */
+  emojiOverride?: string | null;
+  /** @nullable */
+  layout?: string | null;
+  /** @nullable */
+  basisHours?: number | null;
+  /** @nullable */
+  maxLimitWon?: number | null;
   qualificationLines?: string[];
   remarkLines?: string[];
-  description?: string;
-  detailJson?: string;
+  /** @nullable */
+  description?: string | null;
+  /**
+     * Gemini session1Won..session4Won. sessionNUniversityWon은 값이 있을 때만. JSON null 금지. withholdingTaxRateDailyWorker / withholdingEarnedIncomeTaxCreditRate 기록 금지
+     * @nullable
+     */
+  detailJson?: string | null;
   rateItems?: WageItemRateUpsertRequest[];
 }

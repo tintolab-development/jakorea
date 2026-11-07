@@ -5,23 +5,13 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { Period } from './period';
-import type { Stats } from './stats';
-import type { SummarySection } from './summarySection';
+import type { PerformanceStatsFrontendResponseStats } from './performanceStatsFrontendResponseStats';
+import type { PerformanceSummarySection } from './performanceSummarySection';
 
+/**
+ * sections는 항상 채움. 사업분야 순서: 경제금융→진로취업→기업가정신→디지털리터러시.
+ */
 export interface PerformanceStatsFrontendResponse {
-  id?: string;
-  programId?: string;
-  programName?: string;
-  sponsorId?: string;
-  period?: Period;
-  stats?: Stats;
-  sections?: SummarySection[];
-  businessArea?: string;
-  ips?: string;
-  targetLevel?: string;
-  institutionType?: string;
-  region?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  sections?: PerformanceSummarySection[];
+  stats?: PerformanceStatsFrontendResponseStats;
 }

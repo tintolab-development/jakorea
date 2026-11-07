@@ -5,18 +5,18 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { StudentPortraitConsentUpsertRequestStatus } from './studentPortraitConsentUpsertRequestStatus';
 
 export interface StudentPortraitConsentUpsertRequest {
+  status: StudentPortraitConsentUpsertRequestStatus;
   /**
-     * @minLength 1
-     * @pattern CONSENTED|REFUSED|WITHDRAWN
+     * 동일 기관 신청의 승인된 초상권 동의 근거 문서 ID. CONSENTED/REFUSED 처리 시 필수
+     * @nullable
      */
-  status: string;
-  /** 동일 기관 신청의 승인된 초상권 동의 근거 문서 ID. CONSENTED/REFUSED 처리 시 필수 */
-  sourceArtifactId?: number;
+  sourceArtifactId?: number | null;
   /**
-     * @minLength 0
      * @maxLength 1000
+     * @nullable
      */
-  reason?: string;
+  reason?: string | null;
 }

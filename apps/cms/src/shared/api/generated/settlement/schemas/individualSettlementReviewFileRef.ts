@@ -10,5 +10,6 @@ export interface IndividualSettlementReviewFileRef {
   fileObjectId: number;
   fileName: string;
   contentType: string;
+  /** @nullable */
   fileSize?: number | null;
 }

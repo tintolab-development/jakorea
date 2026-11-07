@@ -5,31 +5,110 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { OrganizationApplicationUpdateRequestRequestedEducationFormat } from './organizationApplicationUpdateRequestRequestedEducationFormat';
 
 /**
- * 승인된 기관 신청 정보를 부분 수정합니다. 생략한 항목은 현재 운영 스냅샷 값을 유지합니다. teacherTel(일반전화)과 teacherPhone(휴대전화)은 서로 채우지 않으며, null은 해당 스냅샷을 지웁니다.
+ * 기관/회원 master를 변경하지 않고 해당 프로그램의 기관 신청 운영 snapshot만 부분 수정합니다. 누락 필드는 유지됩니다. teacherTel(일반전화)과 teacherPhone(휴대전화)은 서로 채우지 않습니다. 필드 생략은 기존 값 유지, null은 해당 스냅샷을 지웁니다.
  */
 export interface OrganizationApplicationUpdateRequest {
-  requestedGrade?: string;
-  organizationAddressDetail?: string;
-  requestedClassCount?: number;
-  requestedStudentCount?: number;
-  requestedEducationFormat?: string;
-  teacherMemberId?: number;
-  teacherName?: string;
-  teacherPhone?: string;
-  teacherTel?: string;
-  teacherEmail?: string;
-  textbookId?: number;
-  applicationReason?: string;
-  otherRequests?: string;
-  computerInRoom?: string;
-  waitingRoomAvailable?: boolean;
-  waitingRoomLocation?: string;
-  mealProvided?: boolean;
-  mealNotice?: string;
-  parkingInfo?: string;
-  textbookGrade?: string;
-  textbookKits?: number;
-  textbookQuantity?: number;
+  /**
+     * @maxLength 50
+     * @nullable
+     */
+  requestedGrade?: string | null;
+  /**
+     * @maxLength 255
+     * @nullable
+     */
+  organizationAddressDetail?: string | null;
+  /**
+     * @minimum 1
+     * @nullable
+     */
+  requestedClassCount?: number | null;
+  /**
+     * @minimum 1
+     * @nullable
+     */
+  requestedStudentCount?: number | null;
+  /** @nullable */
+  requestedEducationFormat?: OrganizationApplicationUpdateRequestRequestedEducationFormat;
+  /**
+     * 교사 변경은 회원 id로만 합니다. TRAINED_TEACHER에서 teacherName만 보내면 400 ORGANIZATION_APPLICATION_TEACHER_NAME_REQUIRES_MEMBER_ID.
+     * @nullable
+     */
+  teacherMemberId?: number | null;
+  /**
+     * TRAINED_TEACHER에서 이름만 있으면 저장하지 않고 400입니다. teacherMemberId와 함께 오면 이름은 무시하고 회원 id를 사용합니다.
+     * @nullable
+     */
+  teacherName?: string | null;
+  /**
+     * 교사 휴대전화. 일반전화(teacherTel)와 별도. 생략 시 유지, null이면 지움. teacherTel 값으로 채우지 않음.
+     * @maxLength 255
+     * @nullable
+     */
+  teacherPhone?: string | null;
+  /**
+     * 교사 일반 전화. 휴대전화(teacherPhone)와 별도. 생략 시 유지, null이면 지움. teacherPhone 값으로 채우지 않음. UI '-'·빈 문자열은 저장하지 않음.
+     * @maxLength 255
+     * @nullable
+     */
+  teacherTel?: string | null;
+  /**
+     * @maxLength 255
+     * @nullable
+     */
+  teacherEmail?: string | null;
+  /** @nullable */
+  textbookId?: number | null;
+  /**
+     * @maxLength 2000
+     * @nullable
+     */
+  applicationReason?: string | null;
+  /**
+     * @maxLength 2000
+     * @nullable
+     */
+  otherRequests?: string | null;
+  /**
+     * @maxLength 1000
+     * @nullable
+     */
+  computerInRoom?: string | null;
+  /** @nullable */
+  waitingRoomAvailable?: boolean | null;
+  /**
+     * @maxLength 1000
+     * @nullable
+     */
+  waitingRoomLocation?: string | null;
+  /** @nullable */
+  mealProvided?: boolean | null;
+  /**
+     * @maxLength 1000
+     * @nullable
+     */
+  mealNotice?: string | null;
+  /**
+     * @maxLength 1000
+     * @nullable
+     */
+  parkingInfo?: string | null;
+  /**
+     * @maxLength 100
+     * @nullable
+     */
+  textbookGrade?: string | null;
+  /**
+     * @minimum 0
+     * @nullable
+     */
+  textbookKits?: number | null;
+  /**
+     * @minimum 0
+     * @nullable
+     */
+  textbookQuantity?: number | null;
 }

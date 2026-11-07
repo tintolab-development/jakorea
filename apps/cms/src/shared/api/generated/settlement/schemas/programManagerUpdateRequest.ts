@@ -5,8 +5,9 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { ProgramAdminAssignmentRole } from './programAdminAssignmentRole';
 
 export interface ProgramManagerUpdateRequest {
   adminId?: number;
-  role?: string;
+  role?: ProgramAdminAssignmentRole;
 }

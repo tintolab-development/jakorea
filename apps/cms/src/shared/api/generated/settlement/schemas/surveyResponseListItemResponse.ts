@@ -12,17 +12,27 @@ export interface SurveyResponseListItemResponse {
   templateVersionId?: number;
   programId?: number;
   contextType?: string;
-  contextId?: number;
+  /** @nullable */
+  contextId?: number | null;
   responseStatus?: string;
-  submittedByMemberId?: number;
-  /** 제출 회원 실명(마스킹 없음). 회원 제출이 아니거나 탈퇴 회원이면 null */
+  /** @nullable */
+  submittedByMemberId?: number | null;
+  /**
+     * 제출 회원 실명(마스킹 없음). 회원 제출이 아니거나 탈퇴 회원이면 null
+     * @nullable
+     */
   submittedByMemberName?: string | null;
-  submittedByAdminId?: number;
-  /** 대리 제출 관리자 실명(마스킹 없음). 관리자 제출이 아니면 null */
+  /** @nullable */
+  submittedByAdminId?: number | null;
+  /**
+     * 대리 제출 관리자 실명(마스킹 없음). 관리자 제출이 아니면 null
+     * @nullable
+     */
   submittedByAdminName?: string | null;
   answerCount?: number;
   /** JSON 배열 문자열 [{"questionKey": string, "questionLabel": string, "answerDisplayText": string | null}], 최대 5개. NON_PII/PUBLIC/NONE의 answerDisplayText만 표시하고 민감·미분류 답변은 null. 주관식 answerDisplayText는 bodyText 원문. 답이 없으면 "[]" */
   answerPreviewJson?: string;
-  submittedAt?: string;
+  /** @nullable */
+  submittedAt?: string | null;
   createdAt?: string;
 }

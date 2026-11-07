@@ -8,24 +8,47 @@
 import type { SettlementAggregateResponseAggregateStatus } from './settlementAggregateResponseAggregateStatus';
 
 export interface SettlementAggregateResponse {
-  groupBy?: string;
-  aggregateKey?: number;
-  programId?: number;
-  /** 프로그램명 */
-  programName?: string;
-  instructorMemberId?: number;
-  /** 신청자 실명. 서버에서 마스킹하지 않습니다. */
-  instructorName?: string;
-  instructorCount?: number;
-  participationCount?: number;
-  /** 지급 대기 건수. payment_status IN (WAITING_PAYMENT, WAITING, READY_TO_PAY, FAILED). PAID 제외. */
-  pendingPaymentSettlementItemCount?: number;
-  /** 총액. REJECTED 제외. CORRECTION_REQUESTED는 기존 정산금액을 유지한다. */
-  estimatedAmount?: number;
-  settlementRelevantAttendanceDates?: string[];
-  /** CONFIRMED | WAITING_CONFIRM | REAPPLICATION | PARTIAL | CORRECTION_REQUESTED | REJECTED */
+  /** @nullable */
+  groupBy?: string | null;
+  /** @nullable */
+  aggregateKey?: number | null;
+  /** @nullable */
+  programId?: number | null;
+  /** @nullable */
+  programName?: string | null;
+  /** @nullable */
+  instructorMemberId?: number | null;
+  /**
+     * 신청자 실명. 서버에서 마스킹하지 않습니다.
+     * @nullable
+     */
+  instructorName?: string | null;
+  /** @nullable */
+  instructorCount?: number | null;
+  /** @nullable */
+  participationCount?: number | null;
+  /**
+     * REQUESTED+REAPPLICATION 건수
+     * @nullable
+     */
+  pendingPaymentSettlementItemCount?: number | null;
+  /**
+     * 총액. REJECTED·CORRECTION_REQUESTED 제외
+     * @nullable
+     */
+  estimatedAmount?: number | null;
+  /** @nullable */
+  settlementRelevantAttendanceDates?: string[] | null;
+  /**
+     * 확인완료만 CONFIRMED, 대기·재신청만 REQUESTED, 재신청만 REAPPLICATION, 혼재 PARTIAL
+     * @nullable
+     */
   aggregateStatus?: SettlementAggregateResponseAggregateStatus;
-  /** aggregateStatus와 동일. FE 호환 필드 */
-  processingStatus?: string;
-  scheduleChangeCancelCount?: number;
+  /**
+     * aggregateStatus와 동일
+     * @nullable
+     */
+  processingStatus?: string | null;
+  /** @nullable */
+  scheduleChangeCancelCount?: number | null;
 }

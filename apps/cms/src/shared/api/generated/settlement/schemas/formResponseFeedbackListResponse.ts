@@ -8,14 +8,17 @@
 import type { FormResponseFeedbackItemResponse } from './formResponseFeedbackItemResponse';
 
 /**
- * Admin GET /api/admin/form-responses/{responseId}/feedback. 기존 피드백 hydrate용. feedbacks는 []이며 null이 아니다. feedback 행이 없고 rejectReason만 있으면 feedbacks에 feedbackId=null 항목 1개를 넣는다.
+ * Admin GET feedback. feedbacks는 []이며 null이 아니다.
  */
 export interface FormResponseFeedbackListResponse {
   formResponseId?: number;
-  responseStatus?: string;
-  reviewedAt?: string;
-  /** form_response.reject_reason. 없으면 null */
+  /** @nullable */
+  responseStatus?: string | null;
+  /** @nullable */
+  reviewedAt?: string | null;
+  /** @nullable */
   rejectReason?: string | null;
-  feedbackKind?: string;
+  /** @nullable */
+  feedbackKind?: string | null;
   feedbacks?: FormResponseFeedbackItemResponse[];
 }

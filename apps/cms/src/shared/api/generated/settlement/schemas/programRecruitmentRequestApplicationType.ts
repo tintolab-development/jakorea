@@ -7,7 +7,8 @@
  */
 
 /**
- * 이 모집 행의 신청 유형. recruitmentType/targetType 은 이 값에서 정한다.
+ * 이 모집 행의 신청 유형. recruitmentType 과 맞아야 한다(PARTICIPANT=INDIVIDUAL|ORGANIZATION, INSTRUCTOR=INSTRUCTOR, VOLUNTEER=VOLUNTEER).
+ * @nullable
  */
 export type ProgramRecruitmentRequestApplicationType = typeof ProgramRecruitmentRequestApplicationType[keyof typeof ProgramRecruitmentRequestApplicationType] | null;
 

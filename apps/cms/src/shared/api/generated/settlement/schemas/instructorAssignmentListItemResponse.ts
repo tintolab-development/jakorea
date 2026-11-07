@@ -6,45 +6,88 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * 강사 배정 목록 항목. organizationId는 기관 신청 배정에서만 값이 있고 개인 출강지이면 null입니다.
+ */
 export interface InstructorAssignmentListItemResponse {
-  assignmentId?: number;
-  programId?: number;
-  scheduleId?: number;
-  organizationApplicationId?: number;
-  /** 배정 대상 기관 신청이 참조하는 실제 기관 ID. 개인 출강지 배정이면 null */
-  organizationId?: number;
-  instructorApplicationId?: number;
-  instructorMemberId?: number;
-  participantId?: number;
-  assignmentStatus?: string;
-  scheduleLead?: boolean;
-  assignedByAdminId?: number;
-  assignedAt?: string;
-  cancelledAt?: string;
-  cancelReason?: string;
-  feePolicyId?: number;
-  lectureFeeAmountSnapshot?: number;
-  lodgingApprovedYn?: boolean;
-  lodgingAmountSnapshot?: number;
-  evaluationId?: number;
-  evaluationStatus?: string;
-  evaluationTotalScore?: number;
-  evaluationComment?: string;
-  evaluationSubmittedAt?: string;
-  lectureDate?: string;
-  /** 강사 실명. 프로그램 관리에서는 마스킹하지 않습니다. */
-  instructorName?: string;
-  organizationName?: string;
-  /** 공식 출강지 명칭. 개인형 배정은 program_schedule.location_name을 사용하며 없으면 null입니다. */
-  lectureLocationName?: string;
-  /** 공식 출강지 주소. 개인형은 일정 주소를 우선하고, 없으면 강사 신청의 공식 출강지 주소 snapshot을 사용합니다. */
-  lecturePlaceAddress?: string;
-  distanceKm?: number;
-  /** 강사 자택에서 공식 출강지까지의 저장된 거리 상태. 개인형 주소가 없으면 ADDRESS_UNAVAILABLE입니다. */
-  distanceStatus?: string;
-  distanceProvider?: string;
-  distanceCalculatedAt?: string;
-  longDistance?: boolean;
-  /** 자택 주소. 동(읍/면/리)까지 + ' *****' (FE blur). 기관/조직 주소(organizationName)와 무관. */
-  homeAddress?: string;
+  /** @nullable */
+  assignmentId?: number | null;
+  /** @nullable */
+  programId?: number | null;
+  /** @nullable */
+  scheduleId?: number | null;
+  /** @nullable */
+  organizationApplicationId?: number | null;
+  /**
+     * 기관 신청 배정이 참조하는 실제 기관 ID. 개인 출강지이면 null
+     * @nullable
+     */
+  organizationId?: number | null;
+  /** @nullable */
+  instructorApplicationId?: number | null;
+  /** @nullable */
+  instructorMemberId?: number | null;
+  /** @nullable */
+  participantId?: number | null;
+  /** @nullable */
+  assignmentStatus?: string | null;
+  /** @nullable */
+  scheduleLead?: boolean | null;
+  /** @nullable */
+  assignedByAdminId?: number | null;
+  /** @nullable */
+  assignedAt?: string | null;
+  /** @nullable */
+  cancelledAt?: string | null;
+  /** @nullable */
+  cancelReason?: string | null;
+  /** @nullable */
+  feePolicyId?: number | null;
+  /** @nullable */
+  lectureFeeAmountSnapshot?: number | null;
+  /** @nullable */
+  lodgingApprovedYn?: boolean | null;
+  /** @nullable */
+  lodgingAmountSnapshot?: number | null;
+  /** @nullable */
+  evaluationId?: number | null;
+  /** @nullable */
+  evaluationStatus?: string | null;
+  /** @nullable */
+  evaluationTotalScore?: number | null;
+  /** @nullable */
+  evaluationComment?: string | null;
+  /** @nullable */
+  evaluationSubmittedAt?: string | null;
+  /** @nullable */
+  lectureDate?: string | null;
+  /** @nullable */
+  instructorName?: string | null;
+  /** @nullable */
+  organizationName?: string | null;
+  /**
+     * 공식 출강지 명칭. 개인형 배정은 program_schedule.location_name을 사용합니다.
+     * @nullable
+     */
+  lectureLocationName?: string | null;
+  /**
+     * 공식 출강지 주소. 개인형은 일정 주소를 우선하고 강사 신청의 공식 주소 snapshot을 보조로 사용합니다.
+     * @nullable
+     */
+  lecturePlaceAddress?: string | null;
+  /** @nullable */
+  distanceKm?: number | null;
+  /**
+     * 저장된 거리 상태. 주소가 없으면 ADDRESS_UNAVAILABLE이며 계산 실패를 0km로 보정하지 않습니다.
+     * @nullable
+     */
+  distanceStatus?: string | null;
+  /** @nullable */
+  distanceProvider?: string | null;
+  /** @nullable */
+  distanceCalculatedAt?: string | null;
+  /** @nullable */
+  longDistance?: boolean | null;
+  /** @nullable */
+  homeAddress?: string | null;
 }

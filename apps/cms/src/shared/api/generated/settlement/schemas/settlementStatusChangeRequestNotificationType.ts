@@ -7,9 +7,9 @@
  */
 
 /**
- * IMMEDIATE | ON_ANNOUNCEMENT | MANUAL
+ * @nullable
  */
-export type SettlementStatusChangeRequestNotificationType = typeof SettlementStatusChangeRequestNotificationType[keyof typeof SettlementStatusChangeRequestNotificationType];
+export type SettlementStatusChangeRequestNotificationType = typeof SettlementStatusChangeRequestNotificationType[keyof typeof SettlementStatusChangeRequestNotificationType] | null;
 
 
 export const SettlementStatusChangeRequestNotificationType = {

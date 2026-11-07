@@ -14,16 +14,29 @@ import type { MemberPortalTeacherAssignmentItemInstructorRole } from './memberPo
 export interface MemberPortalTeacherAssignmentItem {
   assignmentId?: number;
   instructorMemberId?: number;
-  /** 배정 강사명. CASE_D에서는 현재 로그인 회원의 강사 신청에 연결된 이름입니다. */
+  /**
+     * 배정 강사명. CASE_D에서는 현재 로그인 회원의 강사 신청에 연결된 이름입니다.
+     * @nullable
+     */
   instructorName?: string | null;
   programId?: number;
-  programScheduleId?: number;
-  /** 활성 배정 상태. 현재 정책상 ASSIGNED 또는 COMPLETED가 반환될 수 있으며 취소·대체·대기·반려 상태는 제외합니다. */
+  /** @nullable */
+  programScheduleId?: number | null;
+  /** 활성 배정 상태. 취소·대체·대기·반려 상태는 제외합니다. */
   assignmentStatus?: MemberPortalTeacherAssignmentItemAssignmentStatus;
-  /** is_schedule_lead 기준. LEAD=주강사, ASSISTANT=보조강사. 미설정이면 null */
+  /**
+     * is_schedule_lead 기준. LEAD=주강사, ASSISTANT=보조강사. 미설정이면 null
+     * @nullable
+     */
   instructorRole?: MemberPortalTeacherAssignmentItemInstructorRole;
-  /** 기관 소재지. 없으면 null */
+  /**
+     * 기관 소재지. 없으면 null
+     * @nullable
+     */
   institutionAddress?: string | null;
-  /** 자택-기관 거리(km) 숫자. 문자열 아님. 산정값이 있을 때만. 없으면 null */
-  distanceFromHome?: string | null;
+  /**
+     * 저장된 자택-기관 거리(km). 산정값이 있을 때만. 없으면 null
+     * @nullable
+     */
+  distanceFromHome?: number | null;
 }

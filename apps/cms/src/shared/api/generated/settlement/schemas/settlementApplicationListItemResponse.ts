@@ -11,27 +11,51 @@
  */
 export interface SettlementApplicationListItemResponse {
   /** 정산 신청 ID */
-  applicationId?: number;
-  /** 정산 신청 번호 */
+  applicationId: number;
+  /**
+     * 정산 신청 번호
+     * @nullable
+     */
   applicationNo?: string | null;
-  /** 강사 배정 ID */
+  /**
+     * 강사 배정 ID
+     * @nullable
+     */
   assignmentId?: number | null;
-  /** 프로그램 ID */
+  /**
+     * 프로그램 ID
+     * @nullable
+     */
   programId?: number | null;
-  /** 프로그램 일정 ID */
+  /**
+     * 프로그램 일정 ID
+     * @nullable
+     */
   programScheduleId?: number | null;
   /** 정산 신청 상태 */
-  status?: string;
-  /** 지급 총액(원) */
+  status: string;
+  /**
+     * 지급 총액(원)
+     * @nullable
+     */
   grossAmount?: number | null;
-  /** 원천징수세액(원) */
+  /**
+     * 원천징수세액(원)
+     * @nullable
+     */
   withholdingTaxAmount?: number | null;
-  /** 실지급액(원) */
+  /**
+     * 실지급액(원)
+     * @nullable
+     */
   netPaymentAmount?: number | null;
-  /** 제출 시각 */
+  /**
+     * 제출 시각
+     * @nullable
+     */
   submittedAt?: string | null;
   /** 생성 시각 */
   createdAt?: string;
   /** 회원 가능 액션 */
-  availableActions?: string[];
+  availableActions: string[];
 }

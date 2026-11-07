@@ -12,19 +12,16 @@
 export interface AdminSelfWithdrawalRequest {
   /**
      * 현재 로그인 관리자 비밀번호. 탈퇴 본인 확인 SoT.
-     * @minLength 0
+     * @minLength 1
      * @maxLength 200
      */
   currentPassword: string;
   /**
      * 선택. 무시됩니다. 구 클라이언트가 보내던 확인 문구 호환용.
-     * @minLength 0
      * @maxLength 30
+     * @nullable
      */
   confirmationText?: string | null;
-  /**
-     * @minLength 0
-     * @maxLength 500
-     */
+  /** @maxLength 500 */
   reason?: string;
 }

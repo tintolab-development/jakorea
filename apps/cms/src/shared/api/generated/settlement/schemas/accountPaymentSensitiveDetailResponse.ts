@@ -7,12 +7,19 @@
  */
 
 /**
- * 계좌 지급 상세 진입 시 반환하는 원문 계좌정보(bankName, accountNo, accountHolder). 목록에는 포함하지 않습니다. 성별·생년월일·연락처·이메일·자택주소는 계좌 지급 상세 계약에 없습니다. GET /api/admin/account-payments/{paymentId} 성공 시 감사 사유는 정확히 '정산금의 계좌 지급 처리를 위함'이며, 감사 저장 실패 시 이 원문을 반환하지 않습니다.
+ * 필수 reason과 PRIVACY_ACCOUNT_READ 및 프로그램 SENSITIVE_PII_READ를 확인하고 원문 계좌 정보를 반환하며, 조회 사유를 감사기록에 저장합니다. 감사 로그 저장 실패 시 요청을 차단합니다.
  */
 export interface AccountPaymentSensitiveDetailResponse {
-  bankName?: string;
-  /** 복호화된 계좌번호 원문 */
-  accountNo?: string;
-  /** 예금주 원문 */
-  accountHolder?: string;
+  /** @nullable */
+  bankName?: string | null;
+  /**
+     * 복호화된 계좌번호 원문
+     * @nullable
+     */
+  accountNo?: string | null;
+  /**
+     * 예금주 원문
+     * @nullable
+     */
+  accountHolder?: string | null;
 }

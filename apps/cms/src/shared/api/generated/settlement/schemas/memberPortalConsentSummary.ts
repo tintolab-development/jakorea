@@ -7,26 +7,41 @@
  */
 
 export interface MemberPortalConsentSummary {
-  consentType?: string;
-  title?: string;
-  applicable?: boolean;
-  required?: boolean;
-  agreed?: boolean;
-  signed?: boolean;
-  status?: string;
-  agreedAt?: string;
-  expiresAt?: string;
-  expired?: boolean;
-  withdrawable?: boolean;
-  participationRestricted?: boolean;
-  paymentRestricted?: boolean;
-  reconsentRequired?: boolean;
-  documentId?: number;
-  termsVersion?: string;
-  currentTermsVersion?: string;
-  policyUpdated?: boolean;
-  consentStatus?: string;
-  programEligible?: boolean;
-  /** 4종 서약/동의의 마이페이지 노출 이력. 해당 4종은 항상 true/false이며, 그 외 유형에는 포함하지 않습니다. */
+  /** Canonical consent type; PAYMENT_STATEMENT_PRE_CONSENT is returned as PAYMENT_STATEMENT_CONSENT. */
+  consentType: string;
+  title: string;
+  applicable: boolean;
+  required: boolean;
+  /** Current effective consent after expiry, withdrawal, policy update, and required signature checks. */
+  agreed: boolean;
+  signed: boolean;
+  status: string;
+  /** @nullable */
+  agreedAt?: string | null;
+  /** @nullable */
+  expiresAt?: string | null;
+  expired: boolean;
+  withdrawable: boolean;
+  participationRestricted: boolean;
+  paymentRestricted: boolean;
+  reconsentRequired: boolean;
+  /**
+     * Current effective electronic consent document ID; null if not applicable or no current document.
+     * @nullable
+     */
+  documentId?: number | null;
+  /** @nullable */
+  termsVersion?: string | null;
+  /** @nullable */
+  currentTermsVersion?: string | null;
+  policyUpdated: boolean;
+  /** @nullable */
+  consentStatus?: string | null;
+  /** @nullable */
+  programEligible?: boolean | null;
+  /**
+     * Always true or false for the four consent card types. Omitted for all other consent types, including PORTRAIT_RIGHTS. It records portal card visibility only and does not indicate consent effectiveness.
+     * @nullable
+     */
   listed?: boolean | null;
 }

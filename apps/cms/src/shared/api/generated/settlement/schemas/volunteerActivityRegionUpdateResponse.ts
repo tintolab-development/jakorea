@@ -8,8 +8,14 @@
 
 export interface VolunteerActivityRegionUpdateResponse {
   applicationId?: number;
-  /** 마스터 라벨. GET 목록 preferredRegion 및 상세 ujat.preferredActivityRegion과 동일 */
+  /**
+     * 마스터 라벨. GET 목록 preferredRegion 및 상세 ujat.preferredActivityRegion과 동일
+     * @nullable
+     */
   preferredRegion?: string | null;
-  /** 마스터 code. GET 목록 preferredRegionCode와 동일 */
+  /**
+     * 마스터 code. GET 목록 preferredRegionCode와 동일
+     * @nullable
+     */
   preferredRegionCode?: string | null;
 }

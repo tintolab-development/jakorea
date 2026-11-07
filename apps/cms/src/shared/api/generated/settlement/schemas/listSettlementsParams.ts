@@ -7,44 +7,14 @@
  */
 
 export type ListSettlementsParams = {
-/**
- * 대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.
- */
 programId?: number;
-/**
- * 대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.
- */
 instructorMemberId?: number;
-/**
- * 라인 상태. REAPPLICATION/RESUBMITTED 모두 재신청
- */
 statementStatus?: string;
-/**
- * 상태 필터입니다. 응답 enum 값과 화면 배지 라벨을 매핑해서 사용합니다.
- */
 paymentStatus?: string;
-/**
- * 프로그램명 또는 신청자명 contains. 신청자명은 실명 기준
- */
 search?: string;
-/**
- * 출강일 시작. 이체 예정일이 아닙니다.
- */
 fromDate?: string;
-/**
- * 출강일 종료. 이체 예정일이 아닙니다.
- */
 toDate?: string;
-/**
- * 쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
- */
 pendingItemBucket?: string;
-/**
- * 페이지 번호입니다. 목록 화면의 페이지 상태와 함께 유지합니다.
- */
 page?: number;
-/**
- * 페이지 크기입니다. 화면별 기본 목록 개수와 일치시켜 호출합니다.
- */
 size?: number;
 };

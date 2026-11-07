@@ -11,31 +11,31 @@
  */
 export interface SettlementBulkStatusChangeRequest {
   /**
-   * Legacy 공통 대상 ID 목록. 지급조서 confirm은 statementId, 계좌 지급 paid는 paymentId를 사용합니다.
-   * @minItems 0
-   * @maxItems 500
-   */
-  ids?: number[]
+     * Legacy 공통 대상 ID 목록. 지급조서 confirm은 statementId, 계좌 지급 paid는 paymentId를 사용합니다.
+     * @minItems 0
+     * @maxItems 500
+     */
+  ids?: number[];
   /**
-   * 지급조서 일괄 확인 대상 statementId 목록. FE는 이 필드만 사용합니다.
-   * @minItems 0
-   * @maxItems 500
-   */
-  statementIds?: number[]
+     * 지급조서 일괄 확인 대상 statementId 목록. FE는 이 필드만 사용합니다.
+     * @minItems 0
+     * @maxItems 500
+     */
+  statementIds?: number[];
   /**
-   * 이 API(bulk-confirm)에서는 사용하지 않습니다. 계좌 지급 bulk-paid 전용.
-   * @minItems 0
-   * @maxItems 500
-   */
-  paymentIds?: number[]
+     * 이 API(bulk-confirm)에서는 사용하지 않습니다. 계좌 지급 bulk-paid 전용.
+     * @minItems 0
+     * @maxItems 500
+     */
+  paymentIds?: number[];
   /** 강사비 지급 예정일. lectureFeePaymentScheduledDate와 동일 처리하며 KST 기준 오늘 또는 이후 날짜만 허용합니다. */
-  scheduledPaymentDate?: string
+  scheduledPaymentDate?: string;
   /** FE UI 호환 강사비 지급 예정일. scheduledPaymentDate와 동일 처리하며 KST 기준 오늘 또는 이후 날짜만 허용합니다. */
-  lectureFeePaymentScheduledDate?: string
+  lectureFeePaymentScheduledDate?: string;
   /**
-   * 상태 변경 사유
-   * @minLength 2
-   * @maxLength 500
-   */
-  reason: string
+     * 상태 변경 사유
+     * @minLength 2
+     * @maxLength 500
+     */
+  reason: string;
 }
