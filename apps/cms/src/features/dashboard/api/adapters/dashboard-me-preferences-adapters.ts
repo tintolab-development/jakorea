@@ -88,9 +88,62 @@ export function buildMeDashboardPreferencesRequest(
   }
 }
 
+export function fingerprintMePreferencesRequest(body: DashboardMePreferencesRequest): string {
+  const widths = body.layout?.widgetWidths ?? {}
+  const sortedWidths: Record<string, unknown> = {}
+  for (const key of Object.keys(widths).sort()) {
+    sortedWidths[key] = widths[key]
+  }
+  const shortcutVisibility = body.settings?.shortcutVisibility ?? {}
+  const sortedShortcut: Record<string, unknown> = {}
+  for (const key of Object.keys(shortcutVisibility).sort()) {
+    sortedShortcut[key] = shortcutVisibility[key]
+  }
+  const filters = body.settings?.widgetProgramFilters ?? {}
+  const sortedFilters: Record<string, unknown> = {}
+  for (const key of Object.keys(filters).sort()) {
+    const value = filters[key]
+    sortedFilters[key] = Array.isArray(value) ? [...value].map(String).sort() : value
+  }
+  const inquiry = body.settings?.inquiryRowRead ?? {}
+  const sortedInquiry: Record<string, unknown> = {}
+  for (const key of Object.keys(inquiry).sort()) {
+    sortedInquiry[key] = inquiry[key]
+  }
+  return JSON.stringify({
+    orderedWidgetIds: body.layout?.orderedWidgetIds ?? [],
+    widgetWidths: sortedWidths,
+    shortcutVisibility: sortedShortcut,
+    widgetProgramFilters: sortedFilters,
+    inquiryRowRead: sortedInquiry,
+  })
+}
+
+export function fingerprintMePreferencesClient(
+  layoutRole: UserRole,
+  requestRole: string = layoutRole
+): string {
+  return fingerprintMePreferencesRequest(
+    buildMeDashboardPreferencesRequest(layoutRole, requestRole)
+  )
+}
+
+export function shouldApplyPreferencesSaveToClient(
+  sentFingerprint: string,
+  currentFingerprint: string
+): boolean {
+  return sentFingerprint === currentFingerprint
+}
+
+export interface ApplyMeDashboardPreferencesOptions {
+  applyLayout?: boolean
+  applySettings?: boolean
+}
+
 export function applyMeDashboardPreferencesResponse(
   dto: DashboardMePreferencesResponse,
-  role: UserRole
+  role: UserRole,
+  options?: ApplyMeDashboardPreferencesOptions
 ): void {
   cachedRevision = dto.revision
   if (Object.prototype.hasOwnProperty.call(dto, 'assignedProgramTypes')) {
@@ -99,8 +152,11 @@ export function applyMeDashboardPreferencesResponse(
       .setAssignedProgramTypes(parseAssignedProgramTypes(dto.assignedProgramTypes))
   }
 
+  const applySettings = options?.applySettings !== false
+  const applyLayout = options?.applyLayout !== false
+
   const settings = dto.settings
-  if (settings) {
+  if (applySettings && settings) {
     const serverShortcutVisibility = asBooleanRecord(settings.shortcutVisibility)
     useDashboardSettingsStore.setState(state => {
       const normalized = normalizeShortcutVisibilityFromServer(serverShortcutVisibility)
@@ -123,7 +179,7 @@ export function applyMeDashboardPreferencesResponse(
   }
 
   const layout = dto.layout
-  if (layout) {
+  if (applyLayout && layout) {
     const orderedWidgetIds = stripRemovedDashboardWidgetIds(layout.orderedWidgetIds ?? [])
     const widgetWidths = stripRemovedDashboardWidgetWidths(asWidgetWidths(layout.widgetWidths)) ?? {}
     useDashboardWidgetOrderStore.setState(state => ({

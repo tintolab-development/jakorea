@@ -33,9 +33,11 @@ export function CustomerInquiryStatusWidget() {
   const inquiryNotificationReadProgramKeys =
     useDashboardSettingsStore(s => s.inquiryNotificationReadProgramKeys) ?? {}
 
-  const { data = [], isLoading: loading, isError } = useProgramInquiryStatusList(allowedProgramIds)
-
-  const totalCount = data.length
+  const { data, isLoading: loading, isError, isFetched } = useProgramInquiryStatusList(
+    allowedProgramIds
+  )
+  const rows = data ?? []
+  const totalCount = isFetched ? rows.length : null
   /** 시안 100% 13192:232459 — 프로그램명 가변 + 200/200/200, 50% 12360:299676 — 가변 + 80/80/80 */
   const countColumnWidth = halfColumn ? 80 : 200
 
@@ -142,7 +144,7 @@ export function CustomerInquiryStatusWidget() {
         <WidgetTitleWithHandle>
           <span className="widget-card-title">프로그램 별 문의 현황</span>
           <Text type="secondary" className="dashboard-widget-table__header-total-count">
-            총 {totalCount}건
+            {totalCount == null ? '총 -' : `총 ${totalCount}건`}
           </Text>
         </WidgetTitleWithHandle>
       }
@@ -157,7 +159,7 @@ export function CustomerInquiryStatusWidget() {
       ) : (
         <CmsDataTable<ProgramInquiryRow>
           columns={columns}
-          dataSource={data}
+          dataSource={rows}
           rowKey="key"
           pagination={false}
           loading={loading}

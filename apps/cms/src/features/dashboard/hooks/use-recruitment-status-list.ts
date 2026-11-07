@@ -1,22 +1,41 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { getRecruitmentStatusList } from '@/features/dashboard/api/admin-dashboard-service'
-import { toDashboardQueryParams } from '@/features/dashboard/api/dashboard-api-client'
+import { fetchDashboardRecruitmentsCatalog } from '@/features/dashboard/api/admin-dashboard-service'
+import { mapRecruitmentListResponse } from '@/features/dashboard/api/adapters/dashboard-adapters'
+import {
+  fetchDashboardRecruitmentsRemote,
+  normalizeDashboardProgramIds,
+  toDashboardQueryParams,
+} from '@/features/dashboard/api/dashboard-api-client'
 import { dashboardQueryKeys } from '@/features/dashboard/api/dashboard-query-keys'
-import { useDashboardQueryScope } from '@/features/dashboard/hooks/use-dashboard-query-scope'
+import {
+  useDashboardQueryScope,
+  useDashboardRemoteQueryEnabled,
+} from '@/features/dashboard/hooks/use-dashboard-query-scope'
 
 export function useRecruitmentStatusList(programIds: string[]) {
   const scope = useDashboardQueryScope()
-  const queryParams = useMemo(
-    () => toDashboardQueryParams(programIds.length > 0 ? { programIds } : undefined),
+  const remoteEnabled = useDashboardRemoteQueryEnabled()
+  const normalizedIds = useMemo(
+    () => normalizeDashboardProgramIds(programIds),
     [programIds]
   )
+  const queryParams = useMemo(
+    () => toDashboardQueryParams(normalizedIds ? { programIds: normalizedIds } : undefined),
+    [normalizedIds]
+  )
+  const isUnfiltered = !normalizedIds
 
   return useQuery({
     queryKey: dashboardQueryKeys.recruitments(scope, queryParams),
     queryFn: () =>
-      getRecruitmentStatusList(programIds.length > 0 ? { programIds } : undefined),
+      isUnfiltered
+        ? fetchDashboardRecruitmentsCatalog()
+        : fetchDashboardRecruitmentsRemote(queryParams),
+    select: mapRecruitmentListResponse,
+    enabled: remoteEnabled,
     staleTime: 60_000,
+    refetchOnMount: 'always',
     retry: false,
   })
 }
