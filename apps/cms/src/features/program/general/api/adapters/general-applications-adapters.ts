@@ -14,7 +14,10 @@ import type {
   ApplicantInstructorRow,
 } from '@/features/program/shared/model/applicant-instructor'
 import type { InstructorMemberProfile, SchoolTeacherEmploymentStatus } from '@/types/user'
-import { buildLectureFeeBasisDisplay } from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
+import {
+  buildLectureFeeBasisDisplay,
+  parseLectureFeeBasisTypeFromApi,
+} from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
 import {
   readRuntimeBoolean,
   readRuntimeNumber,
@@ -1000,14 +1003,7 @@ function mapInstructorFeeMeasureFromApi(raw?: string | null): string | undefined
 function mapInstructorFeeBasisType(
   raw?: string | null
 ): ApplicantInstructorLectureFeeBasisType | undefined {
-  const trimmed = raw?.trim()
-  if (!trimmed) return undefined
-  const lower = trimmed.toLowerCase()
-  if (lower === 'program' || trimmed === 'PROGRAM') return 'program'
-  if (lower === 'special_lecture') return 'special_lecture'
-  if (lower === 'other_labor') return 'other_labor'
-  if (trimmed === 'RECRUITMENT') return 'special_lecture'
-  return undefined
+  return parseLectureFeeBasisTypeFromApi(raw)
 }
 
 function mapInstructorMemberProfileFromDetail(
@@ -1109,7 +1105,7 @@ export function mapInstructorApplicationDetailToApplicantRow(
         ? (buildLectureFeeBasisDisplay(
             mapInstructorFeeBasisType(dto.feePolicy.basisType) ??
               base.lectureFeeBasisType ??
-              'special_lecture',
+              'program',
             mapInstructorFeeMeasureFromApi(dto.feePolicy.measure) ?? base.lectureFeeMeasure ?? '',
             dto.feePolicy.amount != null
               ? String(dto.feePolicy.amount)
@@ -1374,6 +1370,9 @@ export function mapSessionProgressToParticipatingSchoolSessions(
           ? `${Math.round((end.getTime() - start.getTime()) / 60_000)}분`
           : '-'
       const sessionNo = positiveEducationNumber(session.sessionNo)
+      const curriculumSessionCount = positiveEducationNumber(
+        (session as SessionProgress & { curriculumSessionCount?: number | null }).curriculumSessionCount
+      )
       const resolvedScheduleId = session.resolvedScheduleId ?? session.scheduleId ?? null
       const scheduleUnresolved =
         session.scheduleUnresolved ??
@@ -1399,6 +1398,7 @@ export function mapSessionProgressToParticipatingSchoolSessions(
         ...(scheduleName ? { scheduleName } : {}),
         ...(canonical.scheduleRole ? { scheduleRole: String(canonical.scheduleRole) } : {}),
         ...(canonical.educationSlotKey ? { educationSlotKey: canonical.educationSlotKey } : {}),
+        ...(curriculumSessionCount != null ? { curriculumSessionCount } : {}),
       }
     })
 }
