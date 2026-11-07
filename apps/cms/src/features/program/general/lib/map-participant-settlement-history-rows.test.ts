@@ -83,6 +83,9 @@ describe('mapParticipantSettlementHistoryRows', () => {
       {
         id: '9',
         settlementId: 9,
+        settlementApplicationId: null,
+        isPendingApplication: false,
+        availableActions: [],
         no: 1,
         institutionName: '-',
         educationGrade: '-',

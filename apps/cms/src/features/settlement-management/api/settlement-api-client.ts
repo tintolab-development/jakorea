@@ -33,6 +33,7 @@ import type {
   SettlementConfigUpdateRequest,
 } from '@/shared/api/generated/settlement/schemas'
 import type { SettlementListResponse } from '@/shared/api/generated/settlement/schemas/settlementListResponse'
+import type { SettlementApplicationDocumentResponse } from '@/shared/api/generated/settlement/schemas'
 
 const settlementApi = getJAKoreaCMSBackendAPISettlementSubset()
 
@@ -65,6 +66,22 @@ export async function fetchSettlementDetailRemote(
   settlementId: number
 ): Promise<SettlementFrontendResponse> {
   return unwrapApiBody(await settlementApi.getSettlement(settlementId))
+}
+
+/**
+ * 확정 전 정산 신청서 지급조서 (제출 revision 스냅샷). revisionNo 생략 시 최신 revision.
+ * 403/404여도 포털 본인 API나 다른 정산 API로 재시도하지 않는다.
+ */
+export async function fetchSettlementApplicationDocumentRemote(
+  applicationId: number,
+  revisionNo?: number
+): Promise<SettlementApplicationDocumentResponse> {
+  return unwrapApiBody(
+    await settlementApi.getAdminSettlementApplicationDocument(
+      applicationId,
+      revisionNo != null ? { revisionNo } : undefined
+    )
+  )
 }
 
 export async function fetchSettlementTransportationSnapshotsRemote(

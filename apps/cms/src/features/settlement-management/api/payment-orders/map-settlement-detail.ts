@@ -73,6 +73,14 @@ function toProgramDetailInstructorRow(
   }
 }
 
+/** 정산 목록 단건 → 산출 내역서(프로그램형) 라인 행 — 참여 강사 상세 등 단건 진입용 */
+export function mapSettlementListItemToProgramDetailLineRow(
+  item: SettlementListItemResponse,
+  index = 0
+): PaymentOrderAdminProgramDetailInstructorRow {
+  return toProgramDetailInstructorRow(item, index, new Map())
+}
+
 function toInstructorDetailProgramRow(
   item: SettlementListItemResponse,
   index: number,

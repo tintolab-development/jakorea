@@ -772,23 +772,6 @@ export function buildLectureFeeBasisDetailFromStandardTitle(
   return buildLectureFeeTierBasisDetail(lectureFeeStandardTitle, lectureFee, lectureTimeDisplay)
 }
 
-export function lectureFeeLineDescriptionFromStandardTitle(
-  lectureFeeStandardTitle: string
-): string {
-  if (isSpecialLectureFeeTitle(lectureFeeStandardTitle)) {
-    return '프로그램 1회 강사비 (특강 강사)'
-  }
-  if (isGeminiLectureFeeTitle(lectureFeeStandardTitle)) {
-    return '프로그램 1회 강사비 (제미나이 강사)'
-  }
-  const tier = LECTURE_FEE_TIER_TITLE_MAP[lectureFeeStandardTitle]
-  if (tier) {
-    return `프로그램 1회 강사비 (${tier}급 강사)`
-  }
-  const short = lectureFeeStandardTitle.replace(/ 강사비$/, '')
-  return `프로그램 1회 강사비 (${short})`
-}
-
 function hashLineSeed(lineId: string): number {
   let hash = 0
   for (let i = 0; i < lineId.length; i += 1) {

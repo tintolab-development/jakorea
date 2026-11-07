@@ -4,13 +4,12 @@
  * 편집·미리보기 동일하게 네이티브 HTML 테이블로 렌더한다.
  */
 
-import { useMemo } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import type {
   PaymentOrderCalculationLineKind,
   PaymentOrderCalculationStatementSessionBlock,
 } from '@/features/settlement-management/model/payment-order-admin-list'
 import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
-import { formatPaymentOrderCalculationWonPlain } from '@/features/settlement/ui/payment-record/payment-order-calculation-breakdown-table'
 import { resolvePaymentStatementIssuanceCategoryLabel } from './payment-statement-issuance-category-label'
 import './payment-statement-issuance-calculation-lines-table.css'
 
@@ -24,9 +23,16 @@ export interface PaymentStatementIssuanceCalculationLinesRow {
   paymentDeductionLabel: string
   categoryLabel: string
   itemLabel: string
+  /** 산출 내역서(관리자) — 「항목 설명」열 */
+  description: string
   amount: number
   lineId: string
   amountDisplayOverride?: string
+}
+
+/** 산출 내역서 표와 같은 금액 표기 (`n원`) — breakdown-table과 순환 import를 피하려 로컬 정의 */
+function formatPaymentOrderCalculationWonPlain(n: number): string {
+  return `${n.toLocaleString('ko-KR')}원`
 }
 
 function paymentDeductionLabel(kind: PaymentOrderCalculationLineKind): string {
@@ -50,6 +56,7 @@ export function buildPaymentStatementIssuanceCalculationLinesRows(
         paymentDeductionLabel: paymentDeductionLabel(line.kind),
         categoryLabel: resolvePaymentStatementIssuanceCategoryLabel(line),
         itemLabel: line.itemLabel,
+        description: line.description,
         amount: line.amount,
         lineId: line.id,
         amountDisplayOverride: line.amountDisplayOverride,
@@ -70,6 +77,15 @@ export type PaymentStatementIssuanceCalculationLinesTableProps = {
   totalAmount: number
   /** 개인형 프로그램 — 「참여 기관명」열 미노출 */
   hideInstitutionColumn?: boolean
+  /** `description`: 산출 내역서 — 5열을 「항목 설명」(행 description)으로 표시 */
+  itemColumn?: 'itemLabel' | 'description'
+  /** 산출 내역서 — 맨 오른쪽 추가 열 (예: 산정 기준 상세) */
+  trailingColumn?: {
+    title: ReactNode
+    renderCell: (row: PaymentStatementIssuanceCalculationLinesRow) => ReactNode
+    /** 합계 행의 같은 열 (예: 지급조서 발급 버튼) */
+    summaryCell?: ReactNode
+  }
   className?: string
 }
 
@@ -78,9 +94,11 @@ export function PaymentStatementIssuanceCalculationLinesTable({
   formulaLabel,
   totalAmount,
   hideInstitutionColumn = false,
+  itemColumn = 'itemLabel',
+  trailingColumn,
   className,
 }: PaymentStatementIssuanceCalculationLinesTableProps) {
-  const columnCount = hideInstitutionColumn ? 5 : 6
+  const columnCount = (hideInstitutionColumn ? 5 : 6) + (trailingColumn ? 1 : 0)
   const tableRows = useMemo(
     () => buildPaymentStatementIssuanceCalculationLinesRows(blocks),
     [blocks]
@@ -89,6 +107,7 @@ export function PaymentStatementIssuanceCalculationLinesTable({
   const rootClass = [
     'payment-statement-issuance-calculation-lines-table',
     hideInstitutionColumn ? 'payment-statement-issuance-calculation-lines-table--no-institution' : '',
+    trailingColumn ? 'payment-statement-issuance-calculation-lines-table--with-trailing' : '',
     className,
   ]
     .filter(Boolean)
@@ -107,6 +126,9 @@ export function PaymentStatementIssuanceCalculationLinesTable({
             <col className="payment-statement-issuance-calculation-lines-table__col--category" />
             <col className="payment-statement-issuance-calculation-lines-table__col--item" />
             <col className="payment-statement-issuance-calculation-lines-table__col--amount" />
+            {trailingColumn ? (
+              <col className="payment-statement-issuance-calculation-lines-table__col--trailing" />
+            ) : null}
           </colgroup>
           <thead>
             <tr>
@@ -114,8 +136,9 @@ export function PaymentStatementIssuanceCalculationLinesTable({
               <th>강의 진행 일자</th>
               <th>지급/공제</th>
               <th>구분</th>
-              <th>항목명</th>
+              <th>{itemColumn === 'description' ? '항목 설명' : '항목명'}</th>
               <th>금액</th>
+              {trailingColumn ? <th>{trailingColumn.title}</th> : null}
             </tr>
           </thead>
           <tbody>
@@ -148,10 +171,11 @@ export function PaymentStatementIssuanceCalculationLinesTable({
                   ) : null}
                   <td>{row.paymentDeductionLabel}</td>
                   <td>{row.categoryLabel}</td>
-                  <td>{row.itemLabel}</td>
+                  <td>{itemColumn === 'description' ? row.description : row.itemLabel}</td>
                   <td className="payment-statement-issuance-calculation-lines-table__amount">
                     {renderAmountText(row.amount, row)}
                   </td>
+                  {trailingColumn ? <td>{trailingColumn.renderCell(row)}</td> : null}
                 </tr>
               ))
             )}
@@ -160,7 +184,7 @@ export function PaymentStatementIssuanceCalculationLinesTable({
             <tr className="payment-statement-issuance-calculation-lines-table__summary-row">
               <th scope="row">합계</th>
               <td
-                colSpan={columnCount - 2}
+                colSpan={columnCount - 2 - (trailingColumn ? 1 : 0)}
                 className="payment-statement-issuance-calculation-lines-table__formula"
               >
                 {formulaLabel}
@@ -168,6 +192,7 @@ export function PaymentStatementIssuanceCalculationLinesTable({
               <td className="payment-statement-issuance-calculation-lines-table__summary-total">
                 {formatPaymentOrderCalculationWonPlain(totalAmount)}
               </td>
+              {trailingColumn ? <td>{trailingColumn.summaryCell ?? null}</td> : null}
             </tr>
           </tfoot>
         </table>

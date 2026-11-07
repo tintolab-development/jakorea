@@ -23,6 +23,8 @@ export interface PaymentOrderPaymentConfirmationModalProps {
   /** 선택한 강사비 지급 예정일(ISO YYYY-MM-DD) */
   onConfirm: (payload: { lectureFeePaymentScheduledDateIso: string }) => void
   data: PaymentOrderProgramCalculationStatement | null
+  /** 산출 내역서를 풀페이지 위(zIndex 지정)에서 열었을 때 그보다 위 */
+  zIndex?: number
 }
 
 function getInstructorName(statement: PaymentOrderProgramCalculationStatement): string {
@@ -35,6 +37,7 @@ export function PaymentOrderPaymentConfirmationModal({
   onCancel,
   onConfirm,
   data,
+  zIndex,
 }: PaymentOrderPaymentConfirmationModalProps) {
   const block0 = data?.blocks[0]
   const instructorName = data ? getInstructorName(data) : ''
@@ -57,6 +60,7 @@ export function PaymentOrderPaymentConfirmationModal({
       onCancel={onCancel}
       title="지급조서 확인"
       width={600}
+      zIndex={zIndex}
       className="payment-order-payment-confirm-modal"
       footer={
         <div className="payment-order-payment-confirm__footer-actions">
@@ -110,7 +114,7 @@ export function PaymentOrderPaymentConfirmationModal({
               suffixIcon={<CalendarOutlined />}
               allowClear={false}
               inputReadOnly
-              popupStyle={{ zIndex: 1200 }}
+              popupStyle={{ zIndex: (zIndex ?? 1000) + 200 }}
             />
           </div>
         </div>

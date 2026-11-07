@@ -35,12 +35,15 @@ export function SettlementApplicationReasonModal({
   confirming = false,
   onCancel,
   onConfirm,
+  zIndex = MODAL_Z_INDEX,
 }: {
   kind: SettlementApplicationReasonKind
   open: boolean
   confirming?: boolean
   onCancel: () => void
   onConfirm: (reason: string) => void | Promise<void>
+  /** 산출 내역서 위에서 열 때 더 높게 */
+  zIndex?: number
 }) {
   const copy = COPY[kind]
   const [reason, setReason] = useState('')
@@ -89,7 +92,7 @@ export function SettlementApplicationReasonModal({
       onCancel={handleCancel}
       title={copy.title}
       width={600}
-      zIndex={MODAL_Z_INDEX}
+      zIndex={zIndex}
       className="settlement-application-reason-modal"
       footer={footer}
     >

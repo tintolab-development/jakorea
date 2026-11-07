@@ -12,7 +12,9 @@ import {
 export function filterParticipatingInstructorSettlementDownloadRows(
   rows: ParticipatingInstructorSettlementApiRow[]
 ): ParticipatingInstructorSettlementApiRow[] {
+  // 확정 전 신청서 행(settlementId null)은 지급조서 다운로드 대상이 아니다.
   return rows.filter(row =>
+    row.settlementId != null &&
     isParticipatingInstructorSettlementEligibleForPaymentStatementDownload({
       lectureProgressLabel: row.lectureProgressLabel,
       hasPaymentStatementApplication: row.hasPaymentStatementApplication,
@@ -26,7 +28,9 @@ export async function bulkDownloadParticipatingInstructorPaymentStatements(
   filenamePrefix = '지급조서_일괄',
   options: { password: string }
 ): Promise<void> {
-  const settlementIds = rows.map(row => row.settlementId)
+  const settlementIds = rows
+    .map(row => row.settlementId)
+    .filter((id): id is number => id != null)
   if (settlementIds.length === 0) {
     throw new Error('다운로드할 정산 건이 없습니다.')
   }

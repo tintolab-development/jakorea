@@ -44,6 +44,16 @@
   width: 16.4%;
 }
 
+/* 산출 내역서(관리자) — 산정 기준 상세 열 추가: 항목 설명이 남는 폭을 가져간다 */
+.payment-statement-issuance-calculation-lines-table__col--trailing {
+  width: 14%;
+}
+
+.payment-statement-issuance-calculation-lines-table--with-trailing
+  .payment-statement-issuance-calculation-lines-table__col--item {
+  width: auto;
+}
+
 /* 개인형 프로그램 — 참여 기관명 열 없음: 남는 폭은 항목명 열이 가져간다 */
 .payment-statement-issuance-calculation-lines-table--no-institution
   .payment-statement-issuance-calculation-lines-table__col--item {

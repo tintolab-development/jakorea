@@ -11,7 +11,6 @@ import {
   isSupportedBasisDetailLayout,
   mapTransportationSnapshotToBasisDetail,
   DISTANCE_SNAPSHOT_UNLINKED_NOTICE,
-  lectureFeeLineDescriptionFromStandardTitle,
   resolveActivityBasisDetailTotalWon,
   resolveBasisDetailModalTitle,
   resolveLodgingBasisDetailTotalWon,
@@ -250,18 +249,6 @@ describe('payment-order-calculation-basis-detail', () => {
     })
     expect(resolveWithholdingBasisDetailAmountWon(withholding)).toBe(-2228)
     expect(resolveBasisDetailModalTitle(withholding)).toBe('원천징수 산정 기준 상세')
-  })
-
-  it('lectureFeeLineDescriptionFromStandardTitle formats tier descriptions', () => {
-    expect(lectureFeeLineDescriptionFromStandardTitle('1급 강사비')).toBe(
-      '프로그램 1회 강사비 (1급 강사)'
-    )
-    expect(lectureFeeLineDescriptionFromStandardTitle('특강 강사비')).toBe(
-      '프로그램 1회 강사비 (특강 강사)'
-    )
-    expect(lectureFeeLineDescriptionFromStandardTitle('제미나이 강사비')).toBe(
-      '프로그램 1회 강사비 (제미나이 강사)'
-    )
   })
 
   it('resolvePaymentOrderCalculationBasisDetailForRow does not invent travel mock without basisDetail', () => {

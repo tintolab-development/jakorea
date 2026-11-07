@@ -11,7 +11,7 @@ import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/p
 import type { Program } from '@/types/domain'
 import { StatusBadge } from '@/shared/components'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { CmsButton, ExcelButton } from '@/shared/ui'
+import { CmsButton, ConfirmModal, ExcelButton } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { handleError } from '@/shared/utils/error-handler'
@@ -39,7 +39,15 @@ import {
   filterParticipatingInstructorSettlementDownloadRows,
   getParticipatingInstructorSettlementBulkDownloadErrorMessage,
 } from '@/features/program/general/lib/participating-instructor-settlement-download'
-import { useParticipatingInstructorPaymentStatementView } from '@/features/program/general/ui/detail-modal/program-status/participating-instructor-payment-statement-view-container'
+import {
+  PARTICIPATING_INSTRUCTOR_CALCULATION_STATEMENT_NESTED_Z_INDEX,
+  useParticipatingInstructorPaymentStatementView,
+  type ParticipatingInstructorApplicationActionKind,
+} from '@/features/program/general/ui/detail-modal/program-status/participating-instructor-payment-statement-view-container'
+import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
+import { getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
+import { useSettlementApplicationActions } from '@/features/program/general/hooks/use-settlement-application-actions'
+import { SettlementApplicationReasonModal } from './settlement-application-reason-modal'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import { useProtectedFileDownload } from '@/shared/lib/use-protected-file-download'
 import './participating-instructor-settlement-section.css'
@@ -64,12 +72,49 @@ export function ParticipatingIndividualInstructorSettlementSection({
       instructor,
     })
 
+  const applicationAction = useSettlementApplicationActions({
+    programId,
+    instructorMemberId: instructor.memberId?.trim() ?? '',
+  })
+  const [pendingAction, setPendingAction] = useState<{
+    kind: ParticipatingInstructorApplicationActionKind
+    settlementApplicationId: number
+  } | null>(null)
+
   const paymentStatementView = useParticipatingInstructorPaymentStatementView({
     instructor,
     settlementItems,
-    institutionNameOverride: programTitle,
+    programId,
+    programName: programTitle,
     hideInstitutionColumn: true,
+    onApplicationAction: (kind, settlementApplicationId) =>
+      setPendingAction({ kind, settlementApplicationId }),
+    applicationActionPending: applicationAction.isPending,
   })
+  const closePaymentStatementView = paymentStatementView.handleClose
+
+  const closePendingAction = useCallback(() => {
+    if (applicationAction.isPending) return
+    setPendingAction(null)
+  }, [applicationAction.isPending])
+
+  const submitPendingAction = useCallback(
+    async (reason?: string) => {
+      if (!pendingAction || applicationAction.isPending) return
+      try {
+        await applicationAction.mutateAsync({ ...pendingAction, reason })
+        setPendingAction(null)
+        closePaymentStatementView()
+      } catch (error) {
+        if (getApiErrorHttpStatus(error) === 409) setPendingAction(null)
+        showAlert({
+          title: '안내',
+          content: getSettlementApiErrorMessage(error, '정산 신청서를 처리하지 못했습니다.'),
+        })
+      }
+    },
+    [applicationAction, closePaymentStatementView, pendingAction, showAlert]
+  )
 
   const [bulkDownloadLoading, setBulkDownloadLoading] = useState(false)
 
@@ -113,7 +158,8 @@ export function ParticipatingIndividualInstructorSettlementSection({
           )
         } catch (error) {
           handleError(error, {
-            context: 'participatingIndividualInstructorSettlementSection.bulkDownloadPaymentStatements',
+            context:
+              'participatingIndividualInstructorSettlementSection.bulkDownloadPaymentStatements',
           })
           showAlert({
             title: '안내',
@@ -197,7 +243,8 @@ export function ParticipatingIndividualInstructorSettlementSection({
           <div className="participating-instructor-settlement-section__payment-statement-cell-inner">
             <CmsButton
               variant="default"
-              size="h40"
+              style={{ width: '100%' }}
+              size="h32"
               disabled={!remoteEnabled}
               onClick={() => paymentStatementView.handleOpen(record)}
             >
@@ -221,7 +268,11 @@ export function ParticipatingIndividualInstructorSettlementSection({
             />
             <DetailInfoForm.Field
               label="프로그램 진행 회차"
-              view={`${progressSummary.completed} / ${progressSummary.total}건 (강의 진행 회차 기준)`}
+              view={
+                progressSummary
+                  ? `${progressSummary.completed} / ${progressSummary.total}건 (강의 진행 회차 기준)`
+                  : null
+              }
             />
           </DetailInfoForm.Row>
           <DetailInfoForm.Row type="double">
@@ -276,6 +327,25 @@ export function ParticipatingIndividualInstructorSettlementSection({
 
       {paymentStatementView.modal}
       {filePasswordModal}
+      <ConfirmModal
+        open={pendingAction?.kind === 'confirm'}
+        title="정산 신청서 승인"
+        content="선택한 정산 신청서를 승인하시겠습니까?"
+        confirmText="승인"
+        cancelText="취소"
+        onConfirm={() => void submitPendingAction()}
+        onCancel={closePendingAction}
+        confirmLoading={applicationAction.isPending}
+        zIndex={PARTICIPATING_INSTRUCTOR_CALCULATION_STATEMENT_NESTED_Z_INDEX}
+      />
+      <SettlementApplicationReasonModal
+        kind="reject"
+        open={pendingAction?.kind === 'reject'}
+        confirming={applicationAction.isPending}
+        onCancel={closePendingAction}
+        onConfirm={reason => submitPendingAction(reason)}
+        zIndex={PARTICIPATING_INSTRUCTOR_CALCULATION_STATEMENT_NESTED_Z_INDEX}
+      />
     </div>
   )
 }

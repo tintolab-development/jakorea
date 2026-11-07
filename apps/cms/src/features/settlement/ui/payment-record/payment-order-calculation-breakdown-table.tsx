@@ -6,6 +6,7 @@ import { useMemo, useState, type ReactNode } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsButton, type CmsButtonSize } from '@/shared/ui/cms-button'
 import { CalculationDetailViewButton } from './calculation-detail-view-button'
+import { PaymentStatementIssuanceCalculationLinesTable } from '@/features/template/ui/form-set/detail-forms/payment-statement-issuance-calculation-lines-table'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import { CMS_ALERT_MODAL_Z_INDEX } from '@/shared/constants/modal-z-index'
 import { InstructorPaymentStatementBlockedModal } from '@/features/user/detail/ui/modal/instructor-payment-statement-blocked-modal'
@@ -239,6 +240,13 @@ export interface PaymentOrderCalculationBreakdownTableProps {
    * `statement-modal`: 산출 내역서 모달 전용 오버라이드(기본).
    */
   tableCellSpec?: 'statement-modal' | 'cms-data-table'
+  /**
+   * `payment-statement`: 지급조서 내부 「강사비 산출 내역」표와 같은 구성·스타일
+   * (참여 기관명 · 강의 진행 일자 · 지급/공제 · 구분 · 항목 설명 · 금액 + 산정 기준 상세).
+   */
+  layout?: 'data-table' | 'payment-statement'
+  /** `payment-statement` — 기관 프로그램이 아니면 참여 기관명 열 미노출 */
+  hideInstitutionColumn?: boolean
 }
 
 export function PaymentOrderCalculationBreakdownTable({
@@ -256,6 +264,8 @@ export function PaymentOrderCalculationBreakdownTable({
   institutionColumnTitle,
   dateColumnTitle,
   tableCellSpec = 'statement-modal',
+  layout = 'data-table',
+  hideInstitutionColumn = false,
 }: PaymentOrderCalculationBreakdownTableProps) {
   const resolvedColumnWidthPreset =
     columnWidthPreset ?? (tableCellSpec === 'statement-modal' ? 'statement-modal' : 'compact')
@@ -328,46 +338,92 @@ export function PaymentOrderCalculationBreakdownTable({
         ) : null}
       </div>
 
-      <CmsDataTable<PaymentOrderCalculationTableRow>
-        className={tableClassName}
-        rowKey="key"
-        columns={columns}
-        dataSource={tableRows}
-        pagination={false}
-        size={tableCellSpec === 'cms-data-table' ? undefined : 'middle'}
-        tableLayout="fixed"
-        rowHoverable={false}
-        scroll={{ x: tableMinWidth }}
-        summary={() => (
-          <CmsDataTable.Summary fixed="bottom">
-            <CmsDataTable.Summary.Row className="payment-order-calc-statement-modal__summary-row">
-              <CmsDataTable.Summary.Cell index={0} colSpan={2} align="center">
-                <span className="payment-order-calc-statement-modal__summary-label">합계</span>
-              </CmsDataTable.Summary.Cell>
-              <CmsDataTable.Summary.Cell index={2} colSpan={2} align="center">
-                <span className="payment-order-calc-statement-modal__summary-formula">
-                  {formulaLabel}
-                </span>
-              </CmsDataTable.Summary.Cell>
-              <CmsDataTable.Summary.Cell index={4} align="center">
-                <span className="payment-order-calc-statement-modal__summary-total">
-                  {formatPaymentOrderCalculationWonPlain(totalAmount)}
-                </span>
-              </CmsDataTable.Summary.Cell>
-              <CmsDataTable.Summary.Cell index={5} align="center">
-                <CmsButton
-                  type="button"
-                  variant="primary"
-                  size={actionButtonSize}
-                  icon={<ButtonDownloadIcon />}
-                  onClick={handleDownload} >
-                  지급조서 발급
-                </CmsButton>
-              </CmsDataTable.Summary.Cell>
-            </CmsDataTable.Summary.Row>
-          </CmsDataTable.Summary>
-        )}
-      />
+      {layout === 'payment-statement' ? (
+        <PaymentStatementIssuanceCalculationLinesTable
+          blocks={blocks}
+          formulaLabel={formulaLabel}
+          totalAmount={totalAmount}
+          hideInstitutionColumn={hideInstitutionColumn}
+          className="payment-order-calc-statement-modal__lines-table"
+          itemColumn="description"
+          trailingColumn={{
+            title: '산정 기준 상세',
+            renderCell: row => {
+              const tableRow = tableRows.find(r => r.lineId === row.lineId)
+              return (
+                <div className="payment-order-calc-statement-modal__detail-btn-wrap">
+                  <CalculationDetailViewButton
+                    onClick={() => {
+                      if (tableRow && onBasisDetailClick) {
+                        onBasisDetailClick(tableRow)
+                        return
+                      }
+                      cmsAlertModal.show({
+                        title: '안내',
+                        content: '산정 기준 상세를 표시할 수 없습니다.',
+                      })
+                    }}
+                  />
+                </div>
+              )
+            },
+            summaryCell: (
+              <CmsButton
+                type="button"
+                variant="primary"
+                size="h32"
+                style={{ width: '100%' }}
+                icon={<ButtonDownloadIcon />}
+                onClick={handleDownload}
+              >
+                지급조서 발급
+              </CmsButton>
+            ),
+          }}
+        />
+      ) : (
+        <CmsDataTable<PaymentOrderCalculationTableRow>
+          className={tableClassName}
+          rowKey="key"
+          columns={columns}
+          dataSource={tableRows}
+          pagination={false}
+          size={tableCellSpec === 'cms-data-table' ? undefined : 'middle'}
+          tableLayout="fixed"
+          rowHoverable={false}
+          scroll={{ x: tableMinWidth }}
+          summary={() => (
+            <CmsDataTable.Summary fixed="bottom">
+              <CmsDataTable.Summary.Row className="payment-order-calc-statement-modal__summary-row">
+                <CmsDataTable.Summary.Cell index={0} colSpan={2} align="center">
+                  <span className="payment-order-calc-statement-modal__summary-label">합계</span>
+                </CmsDataTable.Summary.Cell>
+                <CmsDataTable.Summary.Cell index={2} colSpan={2} align="center">
+                  <span className="payment-order-calc-statement-modal__summary-formula">
+                    {formulaLabel}
+                  </span>
+                </CmsDataTable.Summary.Cell>
+                <CmsDataTable.Summary.Cell index={4} align="center">
+                  <span className="payment-order-calc-statement-modal__summary-total">
+                    {formatPaymentOrderCalculationWonPlain(totalAmount)}
+                  </span>
+                </CmsDataTable.Summary.Cell>
+                <CmsDataTable.Summary.Cell index={5} align="center">
+                  <CmsButton
+                    type="button"
+                    variant="primary"
+                    size={actionButtonSize}
+                    icon={<ButtonDownloadIcon />}
+                    onClick={handleDownload}
+                  >
+                    지급조서 발급
+                  </CmsButton>
+                </CmsDataTable.Summary.Cell>
+              </CmsDataTable.Summary.Row>
+            </CmsDataTable.Summary>
+          )}
+        />
+      )}
       <InstructorPaymentStatementBlockedModal
         open={issueBlockedOpen}
         onClose={() => setIssueBlockedOpen(false)}

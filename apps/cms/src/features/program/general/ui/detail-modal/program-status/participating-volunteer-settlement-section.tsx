@@ -158,9 +158,13 @@ export function ParticipatingVolunteerSettlementSection({
       download: async password => {
         setBulkDownloadLoading(true)
         try {
-          await bulkDownloadParticipatingVolunteerPaymentStatements(downloadableRows, '지급조서_일괄', {
-            password,
-          })
+          await bulkDownloadParticipatingVolunteerPaymentStatements(
+            downloadableRows,
+            '지급조서_일괄',
+            {
+              password,
+            }
+          )
         } catch (error) {
           handleError(error, {
             context: 'participatingVolunteerSettlementSection.bulkDownloadPaymentStatements',
@@ -245,9 +249,11 @@ export function ParticipatingVolunteerSettlementSection({
           <div className="participating-volunteer-settlement-section__payment-statement-cell-inner">
             <CmsButton
               variant="default"
-              size="h40"
+              style={{ width: '100%' }}
+              size="h32"
               disabled={!remoteEnabled}
-              onClick={() => paymentStatementView.handleOpen(record)} >
+              onClick={() => paymentStatementView.handleOpen(record)}
+            >
               지급조서 보기
             </CmsButton>
           </div>
@@ -287,13 +293,15 @@ export function ParticipatingVolunteerSettlementSection({
             size="h40"
             icon={<ButtonDownloadIcon />}
             disabled={!remoteEnabled || bulkDownloadLoading || downloadableRows.length === 0}
-            onClick={() => void handleBulkDownloadPaymentStatements()} >
+            onClick={() => void handleBulkDownloadPaymentStatements()}
+          >
             지급조서 일괄 다운로드
           </CmsButton>
           <ExcelButton
             onClick={exportExcel}
             loading={isExcelExporting}
-            disabled={displayRows.length === 0} />
+            disabled={displayRows.length === 0}
+          />
         </div>
       </div>
 
