@@ -1,3 +1,5 @@
+export { FileTypeIcon, resolveFileTypeIconType } from './FileTypeIcon'
+export type { FileTypeIconProps, FileTypeIconType } from './FileTypeIcon'
 export {
   MainScreenMenuIcon,
   JaKoreaMenuIcon,

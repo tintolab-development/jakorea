@@ -21,6 +21,7 @@ import {
 } from '@/features/education-program-intro/lib/image-slots'
 import { educationProgramIntroMutationFailureAlert } from '@/features/education-program-intro/lib/mutation-failure-alert'
 import { CmsButton, CmsInput, CmsTextArea, FileSelectField, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
+import { FileTypeIcon } from '@/shared/ui/icons/FileTypeIcon'
 
 import './form-card.css'
 
@@ -41,39 +42,6 @@ function SectionTitle({ children }: { children: ReactNode }) {
 
 function PrelineView({ value }: { value: string }) {
   return <span className="program-intro-preline">{value || '-'}</span>
-}
-
-function FileIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 20 20"
-      fill="none"
-      className={className}
-      aria-hidden
-    >
-      <path
-        d="M5.5 2.5h6.2L14.5 5.3V16.5a1 1 0 0 1-1 1h-8a1 1 0 0 1-1-1v-13a1 1 0 0 1 1-1Z"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M11.5 2.5V5.8H14.5"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M7 9.5h6M7 12.5h4.5"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-      />
-    </svg>
-  )
 }
 
 function readFileAsDataUrl(file: File): Promise<string> {
@@ -97,7 +65,7 @@ function ImageFileView({ image }: { image: ProgramIntroImage }) {
   }
   return (
     <div className="program-intro-file-view">
-      <FileIcon className="program-intro-file-view__icon" />
+      <FileTypeIcon fileName={image.fileName} size={20} className="program-intro-file-view__icon" />
       <span className="program-intro-file-view__name">{image.fileName}</span>
     </div>
   )

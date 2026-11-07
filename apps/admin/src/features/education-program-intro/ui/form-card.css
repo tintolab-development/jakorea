@@ -296,10 +296,8 @@
 .program-intro-file-view__icon {
   flex-shrink: 0;
   display: block;
-  width: 24px;
-  height: 24px;
-  aspect-ratio: 1 / 1;
-  color: var(--default-BK, #3d3d3d);
+  width: 20px;
+  height: 20px;
 }
 
 .program-intro-file-view__name {

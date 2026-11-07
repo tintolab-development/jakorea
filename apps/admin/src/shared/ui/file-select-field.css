@@ -55,6 +55,11 @@
   min-width: 0;
 }
 
+.file-select-field__type-icon {
+  flex-shrink: 0;
+  display: block;
+}
+
 .file-select-field__name,
 .file-select-field__empty {
   overflow: hidden;
