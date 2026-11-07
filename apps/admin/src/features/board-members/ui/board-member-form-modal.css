@@ -1,18 +1,53 @@
-/* 구성원 등록 모달 */
+/* 구성원 등록 모달 — 시안: 설명 + 테이블 2블록 */
 
 .board-member-form-modal.content-modal.teal-header-modal.ant-modal .ant-modal-content {
   padding: 24px 30px 32px;
+}
+
+.board-member-form-modal.content-modal.content-modal--title-body-gap-always
+  .teal-header-modal__body,
+.board-member-form-modal.content-modal
+  .teal-header-modal__body:has(> .content-modal__description) {
+  padding-top: 12px;
+  gap: 30px;
 }
 
 .board-member-form-modal .teal-header-modal__footer {
   margin-top: 30px;
 }
 
-.board-member-form-modal__form {
+.board-member-form-modal__forms {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   width: 100%;
+  min-width: 0;
 }
 
-/* DetailInfoForm edit 기본 margin/align 원복 — 단 RadioGroup flex 레이아웃은 유지 */
+.board-member-form-modal__form {
+  width: 100%;
+  min-width: 0;
+}
+
+.board-member-form-modal__form .detail-info-form__field {
+  --detail-info-label-w: 140px !important;
+  grid-template-columns: 140px minmax(0, 1fr) !important;
+}
+
+.board-member-form-modal__form .detail-info-form__field-label {
+  display: flex !important;
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+  min-height: 52px;
+  padding: 8px 16px !important;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+  text-align: center;
+  align-self: stretch;
+}
+
 .board-member-form-modal .detail-info-form__field-content--edit > * {
   margin-block: 0 !important;
   width: 100%;
@@ -24,7 +59,6 @@
   display: block;
 }
 
-/* 공개 여부 라디오: app-radio gap(12px) 유지 — display:block 으로 덮어쓰지 않음 */
 .board-member-form-modal .detail-info-form__field-content--edit > .app-radio-group.ant-radio-group {
   display: flex !important;
   flex-direction: row;
