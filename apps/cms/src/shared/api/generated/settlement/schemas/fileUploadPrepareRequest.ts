@@ -7,53 +7,30 @@
  */
 
 /**
- * 파일 업로드 준비 요청. 실제 바이너리 업로드 전에 파일 메타데이터와 presigned upload URL을 생성합니다.
+ * 파일 업로드 준비 요청. ownerId=null은 명시된 upload-first draft 용도에서만 허용됩니다.
  */
 export interface FileUploadPrepareRequest {
-  /**
-     * 파일이 연결될 상위 도메인. 메일 템플릿 첨부는 NOTIFICATION + EMAIL_TEMPLATE + ownerId=templateId.
-     * @minLength 0
-     * @maxLength 80
-     */
+  /** @maxLength 80 */
   ownerDomain: string;
-  /**
-     * 파일 소유 리소스 유형. 메일 템플릿 첨부는 EMAIL_TEMPLATE.
-     * @minLength 0
-     * @maxLength 80
-     */
+  /** @maxLength 80 */
   ownerType: string;
   /**
-     * 파일 소유 리소스 ID. upload-first draft는 CONTENT/NOTICE의 NOTICE_ATTACHMENT 또는 NOTICE_INLINE_IMAGE, CONTENT/FAQ의 FAQ_INLINE_IMAGE, PROGRAM_CONTENT/PROGRAM의 PROGRAM_THUMBNAIL·PROGRAM_DETAIL_ATTACHMENT·PROGRAM_INLINE_IMAGE일 때 null 허용
+     * upload-first draft에서는 null. PROGRAM_CONTENT/PROGRAM은 PROGRAM_THUMBNAIL·PROGRAM_DETAIL_ATTACHMENT·PROGRAM_INLINE_IMAGE에서 허용됩니다.
      * @minimum 1
+     * @nullable
      */
-  ownerId?: number;
-  /**
-     * 파일 업무 목적. privacy/retention/download 정책은 서버가 이 값으로 결정합니다. VOLUNTEER_APPLICATION_EVIDENCE는 PROGRAM/APPLICATION 또는 PROGRAM/PROGRAM owner, JPG/PNG/PDF 20MB, PRIVATE_SENSITIVE. CERTIFICATE_ASSET은 CONTENT/CERTIFICATE_TEMPLATE owner만 허용합니다.
-     * @minLength 0
-     * @maxLength 80
-     */
+  ownerId?: number | null;
+  /** @maxLength 80 */
   filePurpose: string;
-  /**
-     * 사용자가 업로드한 원본 파일명
-     * @minLength 0
-     * @maxLength 255
-     */
+  /** @maxLength 255 */
   originalFileName: string;
   /**
-     * MIME 콘텐츠 타입. 브라우저가 비워 보내거나 application/octet-stream이면 서버가 허용 확장자 기준으로 안전한 표준 MIME을 보정합니다.
-     * @minLength 0
      * @maxLength 120
+     * @nullable
      */
-  contentType?: string;
-  /**
-     * 파일 크기(byte)
-     * @minimum 1
-     */
+  contentType?: string | null;
+  /** @minimum 1 */
   fileSize: number;
-  /**
-     * SHA-256 체크섬(64자리 HEX). S3 native checksum 서명/검증에 사용됩니다.
-     * @minLength 1
-     * @pattern ^[0-9a-fA-F]{64}$
-     */
+  /** @pattern ^[0-9a-fA-F]{64}$ */
   checksumSha256: string;
 }

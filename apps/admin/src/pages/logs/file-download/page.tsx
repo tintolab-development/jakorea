@@ -107,7 +107,9 @@ function rangeAsPicker(period: PendingDateRange): [Dayjs | null, Dayjs | null] {
 
 const COL = {
   no: TABLE_COLUMN_WIDTHS.index,
-  fileName: 280,
+  fileName: 240,
+  downloadKind: 140,
+  containedPii: 240,
   userName: 140,
   downloadedAt: 180,
   ip: 140,
@@ -196,6 +198,22 @@ export function FileDownloadLogPage() {
         dataIndex: 'fileName',
         key: 'fileName',
         width: COL.fileName,
+        ellipsis: true,
+        render: (v: string) => displayLogField(v),
+      },
+      {
+        title: '종류',
+        dataIndex: 'downloadKind',
+        key: 'downloadKind',
+        width: COL.downloadKind,
+        ellipsis: true,
+        render: (v: string) => displayLogField(v),
+      },
+      {
+        title: '포함 개인정보',
+        dataIndex: 'containedPiiLabel',
+        key: 'containedPiiLabel',
+        width: COL.containedPii,
         ellipsis: true,
         render: (v: string) => displayLogField(v),
       },

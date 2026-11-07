@@ -13,5 +13,6 @@ export interface EmailAttachmentItem {
   contentType?: string;
   byteSize?: number;
   downloadHint?: string;
-  nhnAttachmentId?: string;
+  /** @nullable */
+  nhnAttachmentId?: string | null;
 }

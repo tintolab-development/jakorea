@@ -14,7 +14,7 @@ export interface DashboardRecruitmentResponse {
   recruitmentId?: number;
   recruitmentType?: string;
   targetType?: string;
-  /** 참여자 모집 창 SSOT(프로그램 목록 recruitmentStatus와 동일 창). OPEN/RECRUITING=모집 중, SCHEDULED=모집 예정, CLOSED=모집 마감. ACTIVE/OPEN PARTICIPANT 최신 행의 서울 날짜 창. 참여자 모집이 없으면 CLOSED. 프로그램 lifecycle/KPI 실적과 혼용하지 않음. */
+  /** 참여자 모집 창 SSOT(프로그램 목록과 동일). OPEN=모집 중, SCHEDULED=모집 예정, CLOSED=모집 마감. 참여자 모집이 없으면 CLOSED. lifecycle/KPI와 혼용하지 않음. */
   recruitmentStatus?: string;
   participantRecruitmentStatus?: string;
   volunteerRecruitmentStatus?: string;

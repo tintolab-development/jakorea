@@ -14,12 +14,16 @@ import type { ErrorDetail } from './errorDetail';
 export interface ApiResponseMapStringInteger {
   /** 요청 처리 성공 여부 */
   success?: boolean;
-  /** 성공 응답 데이터. 오류 응답에서는 null입니다. */
+  /**
+     * 성공 응답 데이터. 오류 응답에서는 null입니다.
+     * @nullable
+     */
   data?: ApiResponseMapStringIntegerData;
-  /** 오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다. */
+  /**
+     * 오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.
+     * @nullable
+     */
   message?: string | null;
   /** 구조화된 오류 정보. 성공 응답에서는 null입니다. */
   error?: ErrorDetail | null;
-  /** RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다. */
-  detail?: string | null;
 }

@@ -10,7 +10,10 @@ import type {
   AccountPaymentStatusDetail,
 } from '@/features/settlement-management/model/account-payments-list'
 import type { InstructorMemberDetailResponse } from '@/shared/api/generated/members/schemas'
-import type { AccountPaymentDetailResponse } from '@/shared/api/generated/settlement/schemas'
+import type {
+  AccountPaymentDetailResponse,
+  SettlementFrontendResponse,
+} from '@/shared/api/generated/settlement/schemas'
 
 const baseRow: AccountPaymentRow = {
   id: '185956',
@@ -64,7 +67,7 @@ describe('resolveAccountPaymentMemberId', () => {
   it('payment.memberId를 우선한다', () => {
     const detail: AccountPaymentDetailResponse = {
       payment: { memberId: 190001, instructorName: '이건희' },
-      settlement: { instructorId: '999' },
+      settlement: { instructorId: '999' } as SettlementFrontendResponse,
     }
     expect(resolveAccountPaymentMemberId(detail, baseRow)).toBe(190001)
   })
@@ -72,7 +75,7 @@ describe('resolveAccountPaymentMemberId', () => {
   it('payment.memberId 없으면 settlement.instructorId를 쓴다', () => {
     const detail: AccountPaymentDetailResponse = {
       payment: { instructorName: '이건희' },
-      settlement: { instructorId: '190001' },
+      settlement: { instructorId: '190001' } as SettlementFrontendResponse,
     }
     expect(
       resolveAccountPaymentMemberId(detail, { ...baseRow, instructorMemberId: undefined })
@@ -178,6 +181,7 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
         accountHolder: '이*희',
       },
       settlement: {
+        id: '190001',
         instructorId: '190001',
         instructorName: '이건희',
         institutionName: '서울 성동고등학교',
@@ -224,6 +228,9 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
         paymentStatus: 'WAITING_PAYMENT',
       },
       settlement: {
+        id: '185956',
+        items: [],
+        totalAmount: 0,
         payee: {
           gender: '**',
           birthDate: '1985-**-**',
@@ -265,6 +272,7 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
         paymentStatus: 'PAID',
       },
       settlement: {
+        id: '185986',
         wageItemType: 'GEMINI',
         lectureFeeStandardTitle: '제미나이 강사비',
         lectureFeeStandardAmount: 170_000,

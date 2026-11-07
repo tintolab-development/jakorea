@@ -6,16 +6,22 @@
  * OpenAPI spec version: v9
  */
 
-/**
- * CMS 임시배정 슬롯의 포털 공개 필드
- */
 export interface MemberPortalUjatTemporaryScheduleSlot {
   scheduleId?: number;
-  /** 교육일 시작 시각. ISO-8601, Asia/Seoul 오프셋(+09:00). */
-  scheduleStartAt?: string;
-  grade?: string;
-  className?: string;
-  /** 학생 수. 저장값이 0이어도 gradeBlocks.classes의 grade+className 매칭으로 hydrate된 값을 반환할 수 있다. 매칭 실패 시 0. Portal·Admin GET은 이 값을 그대로 노출한다. */
-  studentCount?: number;
-  assignmentStatus?: string;
+  /**
+     * 교육일 시작 시각. ISO-8601, Asia/Seoul 오프셋(+09:00).
+     * @nullable
+     */
+  scheduleStartAt?: string | null;
+  /** @nullable */
+  grade?: string | null;
+  /** @nullable */
+  className?: string | null;
+  /**
+     * 학생 수. 저장값이 0이어도 gradeBlocks.classes의 grade+className 매칭으로 hydrate된 값을 반환할 수 있다. 매칭 실패 시 0. Portal·Admin GET은 이 값을 그대로 노출한다.
+     * @nullable
+     */
+  studentCount?: number | null;
+  /** @nullable */
+  assignmentStatus?: string | null;
 }

@@ -11,7 +11,20 @@ export interface BulkDownloadEndpointResponse {
 }
 
 /** downloadEndpoint(Bearer blob 또는 절대 URL)로 ZIP 등 파일 수신 */
-export async function fetchBulkDownloadBlob(downloadEndpoint: string): Promise<Blob> {
+export async function fetchBulkDownloadBlob(
+  downloadEndpoint: string,
+  options?: { password?: string }
+): Promise<Blob> {
+  const password = options?.password?.trim()
+  if (password) {
+    return customInstance<Blob>({
+      url: downloadEndpoint,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      data: { password },
+      responseType: 'blob',
+    })
+  }
   return customInstance<Blob>({
     url: downloadEndpoint,
     method: 'GET',
@@ -22,12 +35,16 @@ export async function fetchBulkDownloadBlob(downloadEndpoint: string): Promise<B
 export async function downloadFromBulkEndpoint(
   downloadEndpoint: string | undefined,
   filenamePrefix: string,
-  extension = 'zip'
+  extension = 'zip',
+  options?: { password?: string }
 ): Promise<void> {
   const trimmed = downloadEndpoint?.trim()
   if (!trimmed) {
     throw new Error('다운로드 URL이 없습니다.')
   }
-  const blob = await fetchBulkDownloadBlob(toSameOriginApiPath(trimmed, getApiBaseUrl()) ?? trimmed)
+  const blob = await fetchBulkDownloadBlob(
+    toSameOriginApiPath(trimmed, getApiBaseUrl()) ?? trimmed,
+    options
+  )
   await downloadBlob(blob, generateFilename(filenamePrefix, extension))
 }

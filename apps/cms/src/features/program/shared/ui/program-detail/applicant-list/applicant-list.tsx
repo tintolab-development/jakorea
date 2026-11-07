@@ -7,6 +7,7 @@ import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   showApplicationApprovalCompletedAlert,
   showApplicationRejectionCompletedAlert,
+  showNotificationResendRequestCompletedAlert,
   useCmsAlert,
   FilterTableToolbarButton,
 } from '@/shared/ui'
@@ -1410,11 +1411,7 @@ export function ApplicantList({
       <InstitutionApproveModal
         open={institutionApproveTarget != null}
         schoolName={institutionApproveTarget?.name ?? ''}
-        copyVariant={
-          isCompanySchoolInstitutionApprove || isTrainedTeacherProgram
-            ? 'program-application'
-            : 'participation'
-        }
+        copyVariant={isCompanySchoolInstitutionApprove ? 'program-application' : 'participation'}
         scheduleConfig={
           requiresInstitutionApproveScheduleAssignment ? institutionApproveScheduleConfig : null
         }
@@ -2187,7 +2184,9 @@ export function ApplicantList({
                   },
                   `org-${id}-${crypto.randomUUID()}`
                 )
-                if (ok) setNotificationResendTarget(null)
+                if (!ok) return
+                setNotificationResendTarget(null)
+                showNotificationResendRequestCompletedAlert()
               })()
               return
             }
@@ -2199,19 +2198,23 @@ export function ApplicantList({
             return
           }
 
-          setNotificationResendTarget(null)
-
           if (subjectKind === 'instructor') {
             if (detailVariant === 'general') {
-              void resendInstructorNotification(id, {
-                timing: notifyOptions.notifyTiming === 'manual' ? 'SCHEDULED' : 'IMMEDIATE',
-                scheduledAt:
-                  notifyOptions.notifyTiming === 'manual'
-                    ? (notifyOptions.manualNotifyAt?.toISOString() ?? null)
-                    : null,
-              })
+              void (async () => {
+                const ok = await resendInstructorNotification(id, {
+                  timing: notifyOptions.notifyTiming === 'manual' ? 'SCHEDULED' : 'IMMEDIATE',
+                  scheduledAt:
+                    notifyOptions.notifyTiming === 'manual'
+                      ? (notifyOptions.manualNotifyAt?.toISOString() ?? null)
+                      : null,
+                })
+                if (!ok) return
+                setNotificationResendTarget(null)
+                showNotificationResendRequestCompletedAlert()
+              })()
               return
             }
+            setNotificationResendTarget(null)
             setInstructorList(prev => {
               const next = prev.map(row =>
                 row.id === id
@@ -2225,9 +2228,11 @@ export function ApplicantList({
               }
               return next
             })
+            showNotificationResendRequestCompletedAlert()
             return
           }
 
+          setNotificationResendTarget(null)
           setIndividualList(prev => {
             const next = prev.map(row =>
               row.id === id
@@ -2246,6 +2251,7 @@ export function ApplicantList({
           updateGeneralIndividualApplicantNotificationResend(id, sentAt, {
             rejectionReason: notifyOptions.rejectionReason,
           })
+          showNotificationResendRequestCompletedAlert()
         }}
       />
       <InstructorBulkApproveModal

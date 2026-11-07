@@ -8,86 +8,184 @@
 import type { ProgramRecruitmentAttachmentResponse } from './programRecruitmentAttachmentResponse';
 import type { ProgramRecruitmentResponseApplicationType } from './programRecruitmentResponseApplicationType';
 import type { ProgramRecruitmentResponseNoticeExposureTiming } from './programRecruitmentResponseNoticeExposureTiming';
+import type { ProgramRecruitmentResponseRecruitmentType } from './programRecruitmentResponseRecruitmentType';
 import type { ProgramRecruitmentResponseRecruitTerm } from './programRecruitmentResponseRecruitTerm';
 import type { RecruitmentInterviewConfig } from './recruitmentInterviewConfig';
 
 /**
- * 프로그램 모집 행 응답. 모집 행마다 공고 문구·담당자·대표 이미지·첨부·신청 양식을 따로 가진다.
+ * 프로그램 모집 행 응답. GENERAL_*·UJAT 은 모집 행마다 공고 문구·담당자·대표 이미지·첨부·신청 양식을 따로 가진다. TRAINED_TEACHER 참여자 행은 담당자를 행 컬럼으로 돌려준다. 그 외 유형은 대표 이미지·첨부를 프로그램 값으로, 담당자를 null 로 돌려준다.
  */
 export interface ProgramRecruitmentResponse {
   id?: number;
-  recruitmentType?: string;
-  targetType?: string;
-  status?: string;
-  startAt?: string;
-  endAt?: string;
-  operationStartDate?: string;
-  operationEndDate?: string;
-  maxCount?: number;
-  minCount?: number;
-  selectionMethod?: string;
-  /** 이 모집 행의 프로그램 설명. 비어 있으면 null. 프로그램 description으로 채우지 않는다. */
+  recruitmentType?: ProgramRecruitmentResponseRecruitmentType;
+  /** @nullable */
+  targetType?: string | null;
+  /** @nullable */
+  status?: string | null;
+  /** @nullable */
+  startAt?: string | null;
+  /** @nullable */
+  endAt?: string | null;
+  /** @nullable */
+  operationStartDate?: string | null;
+  /** @nullable */
+  operationEndDate?: string | null;
+  /** @nullable */
+  maxCount?: number | null;
+  /** @nullable */
+  minCount?: number | null;
+  /** @nullable */
+  selectionMethod?: string | null;
+  /**
+     * 이 모집 행의 설명. 없으면 null.
+     * @nullable
+     */
   programDescription?: string | null;
-  /** 이 모집 행의 모집 안내. 비어 있으면 null. 다른 모집이나 프로그램 recruitmentGuide로 채우지 않는다. */
+  /**
+     * 이 모집 행의 모집 안내. 없으면 null.
+     * @nullable
+     */
   recruitmentGuide?: string | null;
-  /** 이 모집 행의 신청 방법. 비어 있으면 null. */
+  /**
+     * 이 모집 행의 신청 방법. 없으면 null.
+     * @nullable
+     */
   applicationMethod?: string | null;
-  /** 이 모집 행의 학습 지원. 비어 있으면 null. */
+  /**
+     * 이 모집 행의 학습 지원. 없으면 null.
+     * @nullable
+     */
   learningSupportContent?: string | null;
-  /** 이 모집 행의 추가 내용 HTML. 비어 있으면 null. */
+  /**
+     * 이 모집 행의 추가 내용 HTML. 없으면 null.
+     * @nullable
+     */
   additionalContentHtml?: string | null;
-  /** 이 모집 행의 비고. 비어 있으면 null. */
+  /**
+     * 이 모집 행의 비고. 없으면 null.
+     * @nullable
+     */
   remarks?: string | null;
-  /** 강사·봉사자 행 기타사항. 참여자·기관 행과 빈 값은 null. 프로그램 공통 기타사항으로 채우지 않는다. */
+  /**
+     * 강사·봉사자 행 기타사항. 참여자·기관 행과 빈 값은 null. 프로그램 공통 기타사항으로 채우지 않는다.
+     * @nullable
+     */
   otherMatters?: string | null;
   /** 이 모집 행의 신청 유형 */
   applicationType?: ProgramRecruitmentResponseApplicationType;
-  /** UJAT 봉사자 모집 상·하반기. UJAT VOLUNTEER 외에는 null. */
+  /**
+     * UJAT 봉사자 모집 상·하반기 canonical 값. 그 외에는 null.
+     * @nullable
+     */
   recruitTerm?: ProgramRecruitmentResponseRecruitTerm;
-  /** 이 모집 행의 공고 제목. 비어 있으면 null. GENERAL_* VOLUNTEER는 공통정보 공고명을 쓰므로 저장하지 않는다. */
+  /**
+     * 이 모집 행의 공고 제목. GENERAL_* 봉사자 행은 공통정보 공고명을 쓰므로 항상 null이며, UJAT 봉사자 포커스는 모집별 공고명을 사용합니다. 그 외에는 비어 있으면 null.
+     * @nullable
+     */
   announcementTitle?: string | null;
-  /** 이 모집 행의 한 줄 소개. 비어 있으면 null. */
+  /**
+     * 이 모집 행의 한 줄 소개. 비어 있으면 null.
+     * @nullable
+     */
   summary?: string | null;
-  /** 이 모집 행의 담당자 이름. TRAINED_TEACHER 참여자 행 포함. 비어 있으면 null. 프로그램 컬럼으로 채우지 않는다. */
+  /**
+     * 이 모집 행의 담당자 이름. TRAINED_TEACHER 참여자 행 포함. 비어 있으면 null.
+     * @nullable
+     */
   contactName?: string | null;
-  /** 이 모집 행의 담당자 연락처. 비어 있으면 null. */
+  /**
+     * 이 모집 행의 담당자 연락처. 비어 있으면 null.
+     * @nullable
+     */
   contactPhone?: string | null;
-  /** 이 모집 행의 담당자 이메일. 비어 있으면 null. */
+  /**
+     * 이 모집 행의 담당자 이메일. 비어 있으면 null.
+     * @nullable
+     */
   contactEmail?: string | null;
-  /** 이 모집 행의 대표 이미지 file_object id. 없으면 null. GENERAL_*\/UJAT 외 유형은 프로그램 대표 이미지. */
+  /**
+     * 이 모집 행의 대표 이미지. 없으면 null. GENERAL_*·UJAT 외 유형은 프로그램 대표 이미지.
+     * @nullable
+     */
   thumbnailFileObjectId?: number | null;
-  /** 이 모집 행의 첨부파일. 없으면 []. GENERAL_*\/UJAT 외 유형은 프로그램 첨부파일. */
+  /** 이 모집 행의 첨부파일. 없으면 []. GENERAL_*·UJAT 외 유형은 프로그램 첨부파일. */
   attachments?: ProgramRecruitmentAttachmentResponse[];
-  /** 이 모집 행의 신청 양식 바인딩 id. 행 전용(RECRUITMENT) 바인딩이 없으면 같은 신청 유형의 프로그램 바인딩, 그것도 없으면 null. */
+  /**
+     * 이 모집 행의 신청 양식 바인딩 id. 행 전용(RECRUITMENT) 바인딩, 없으면 같은 신청 유형의 프로그램 바인딩, 그것도 없으면 null.
+     * @nullable
+     */
   applicationFormBindingId?: number | null;
-  /** 면접 여부. 저장된 값이 없으면 null. */
+  /**
+     * 면접 여부. 저장된 값이 없으면 null. false여도 interviewStartAt/interviewEndAt은 저장된 시각을 그대로 둔다.
+     * @nullable
+     */
   interviewEnabled?: boolean | null;
-  /** 2차 면접 시작. 저장된 값이 없으면 null. */
+  /**
+     * 2차 면접 시작. 없으면 null. 빈 문자열로 채우지 않는다.
+     * @nullable
+     */
   interviewStartAt?: string | null;
-  /** 2차 면접 종료. 저장된 값이 없으면 null. */
+  /**
+     * 2차 면접 종료. 없으면 null. 빈 문자열로 채우지 않는다.
+     * @nullable
+     */
   interviewEndAt?: string | null;
-  /** 공고 게시 여부. 저장된 값이 없으면 true(DB 기본). */
+  /**
+     * 공고 게시 여부. 저장된 값이 없으면 true(DB 기본).
+     * @nullable
+     */
   announcementPublished?: boolean | null;
-  /** 서류 발표 시각. 없으면 null. */
+  /**
+     * 서류 발표 시각. 없으면 null.
+     * @nullable
+     */
   documentPassAnnouncementAt?: string | null;
-  /** 최종 발표 시각. 없으면 null. */
+  /**
+     * 최종 발표 시각. 없으면 null.
+     * @nullable
+     */
   finalPassAnnouncementAt?: string | null;
-  /** 봉사자 공고 노출 시점. VOLUNTEER가 아니면 null. typed 없으면 overlay 호환 조회. */
+  /**
+     * 봉사자 공고 노출 시점. VOLUNTEER가 아니면 null. typed 없으면 overlay 호환 조회.
+     * @nullable
+     */
   noticeExposureTiming?: ProgramRecruitmentResponseNoticeExposureTiming;
-  /** 봉사자 모집 대상. VOLUNTEER가 아니면 null. typed 없으면 overlay 호환. 명시적 [] 는 제한 없음. */
+  /**
+     * 봉사자 모집 대상 코드. VOLUNTEER가 아니면 null. typed 없으면 overlay 호환. 명시적 [] 는 제한 없음.
+     * @nullable
+     */
   volunteerTargets?: string[] | null;
-  /** 비고 해당 없음. typed 없으면 overlay 호환. 없으면 null. */
+  /**
+     * 비고 해당 없음. typed 없으면 overlay 호환. 없으면 null.
+     * @nullable
+     */
   remarksNotApplicable?: boolean | null;
   /** 봉사자 면접 슬롯. VOLUNTEER가 아니면 null. typed 없으면 overlay 호환. 명시적 빈 typed 는 overlay로 복원하지 않는다. */
   interviewConfig?: RecruitmentInterviewConfig | null;
-  /** 1차 서류 발표 방법. 이 모집 행 typed 컬럼만. 없으면 null. overlay·프로그램 컬럼·다른 반기 행으로 채우지 않는다. VOLUNTEER가 아니면 null. */
-  documentPassAnnouncementMethod?: string | null;
-  /** 최종 발표 방법. 이 모집 행 typed 컬럼만. 없으면 null. overlay·프로그램 컬럼·다른 반기 행으로 채우지 않는다. PARTICIPANT·VOLUNTEER가 아니면 null. */
-  finalPassAnnouncementMethod?: string | null;
-  /** 2차 면접 방식. 이 모집 행 typed 컬럼만. 없으면 null. overlay·프로그램 컬럼·다른 반기 행으로 채우지 않는다. VOLUNTEER가 아니면 null. */
-  interviewMethod?: string | null;
-  /** 봉사자 모집 대상 상세. 이 모집 행 typed 컬럼만. 없으면 null. overlay·프로그램 컬럼·다른 반기 행으로 채우지 않는다. VOLUNTEER가 아니면 null. */
-  volunteerTargetDetail?: string | null;
-  /** 행 내용 수정 revision. PATCH expectedRevision 과 비교한다. */
+  /**
+     * 행 내용 수정 revision. PATCH expectedRevision 과 비교한다.
+     * @nullable
+     */
   contentRevision?: number | null;
-}
+  /**
+     * 1차 서류 발표 방법. 이 모집 행 typed 컬럼만. 없으면 null. overlay·프로그램 컬럼·다른 반기 행으로 채우지 않는다. 빈 문자열은 null. VOLUNTEER가 아니면 null.
+     * @nullable
+     */
+  documentPassAnnouncementMethod?: string | null;
+  /**
+     * 최종 발표 방법. 이 모집 행 typed 컬럼만. 없으면 null. overlay·프로그램 컬럼·다른 반기 행으로 채우지 않는다. 빈 문자열은 null. PARTICIPANT·VOLUNTEER가 아니면 null.
+     * @nullable
+     */
+  finalPassAnnouncementMethod?: string | null;
+  /**
+     * 2차 면접 방식. 이 모집 행 typed 컬럼만. 없으면 null. overlay·프로그램 컬럼·다른 반기 행으로 채우지 않는다. 빈 문자열은 null. VOLUNTEER가 아니면 null.
+     * @nullable
+     */
+  interviewMethod?: string | null;
+  /**
+     * 봉사자 모집 대상 상세. 이 모집 행 typed 컬럼만. 없으면 null. overlay·프로그램 컬럼·다른 반기 행으로 채우지 않는다. 빈 문자열은 null. VOLUNTEER가 아니면 null.
+     * @nullable
+     */
+  volunteerTargetDetail?: string | null;
+  [key: string]: unknown;
+ }

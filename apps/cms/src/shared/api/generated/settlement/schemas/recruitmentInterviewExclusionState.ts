@@ -6,14 +6,11 @@
  * OpenAPI spec version: v9
  */
 
-/**
- * 면접 반복 제외. 각 플래그 null 은 false 와 구분되어 저장된다.
- */
 export interface RecruitmentInterviewExclusionState {
-  /** 토요일 제외. null 은 미설정. */
+  /** @nullable */
   excludeSaturday?: boolean | null;
-  /** 일요일 제외. null 은 미설정. */
+  /** @nullable */
   excludeSunday?: boolean | null;
-  /** 공휴일 제외. null 은 미설정. */
+  /** @nullable */
   excludeHoliday?: boolean | null;
 }

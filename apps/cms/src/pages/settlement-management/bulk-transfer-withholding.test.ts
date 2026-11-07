@@ -10,9 +10,9 @@ describe('withholdingTaxAmountFromSettlementDetail', () => {
     expect(
       withholdingTaxAmountFromSettlementDetail({
         items: [
-          { type: 'instructor_fee', amount: 240_000 },
-          { type: 'withholding', amount: -7_920 },
-          { type: 'withholding', amount: 0 },
+          { type: 'instructor_fee', description: '', amount: 240_000 },
+          { type: 'withholding', description: '', amount: -7_920 },
+          { type: 'withholding', description: '', amount: 0 },
         ],
       })
     ).toBe(7_920)
@@ -21,7 +21,7 @@ describe('withholdingTaxAmountFromSettlementDetail', () => {
   it('withholding이 없으면 0이다', () => {
     expect(
       withholdingTaxAmountFromSettlementDetail({
-        items: [{ type: 'activity', amount: 50_000 }],
+        items: [{ type: 'activity', description: '', amount: 50_000 }],
       })
     ).toBe(0)
   })

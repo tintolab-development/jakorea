@@ -6,7 +6,7 @@
  * Phase 1 (대시보드 고도화): 즉시 처리 필요 작업, 월별 정산 현황, 통합 활동 피드
  */
 
-import { useMemo, useCallback, useState, useEffect } from 'react'
+import { useMemo, useCallback, useState, useEffect, memo } from 'react'
 import { Row } from 'antd'
 import { DndContext, DragOverlay, MeasuringStrategy, closestCenter } from '@dnd-kit/core'
 import { SortableContext, rectSwappingStrategy, type SortingStrategy } from '@dnd-kit/sortable'
@@ -19,15 +19,20 @@ import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-cod
 import {
   useActiveProgramCount,
   useDashboardLayout,
+  type DisplayItemMeta,
   SortableWidgetSlot,
   DashboardSettingsModal,
   DashboardToolbar,
   DashboardWidgetRenderer,
+  type DashboardWidgetRendererProps,
   useOverallStatistics,
   useInstructorActivity,
   useDashboardDnd,
   getSlotHeight,
   useDashboardHome,
+  useDashboardWidgets,
+  useRecruitmentStatusList,
+  useProgramInquiryStatusList,
   useDashboardPreferences,
   usePersistDashboardLayout,
   useSyncDashboardShortcutCatalog,
@@ -38,6 +43,79 @@ import './dashboard.css'
 import '@/features/dashboard/ui/widget-card.css'
 /* 메뉴 바로가기 태그: Ant css-in-js보다 앞서 로드(중복 import는 Vite가 합침) */
 import '@/features/dashboard/ui/menu-shortcut-widget.css'
+
+const EMPTY_DASHBOARD_PROGRAM_IDS: string[] = []
+
+type DashboardWidgetGridProps = {
+  displayOrder: string[]
+  displayItemsMetaById: Map<string, DisplayItemMeta>
+  roleWidths: Record<string, 12 | 24>
+  userRole: string | null
+  onResizeWidth: (widgetId: string, newColSpan: 12 | 24) => void
+  widgetRendererProps: Omit<DashboardWidgetRendererProps, 'widgetType'>
+}
+
+const DashboardWidgetGrid = memo(function DashboardWidgetGrid({
+  displayOrder,
+  displayItemsMetaById,
+  roleWidths,
+  userRole,
+  onResizeWidth,
+  widgetRendererProps,
+}: DashboardWidgetGridProps) {
+  return (
+    <Row gutter={[32, 32]} align="stretch">
+      {displayOrder.map(id => {
+        const meta = displayItemsMetaById.get(id)
+        if (!meta) return null
+        const effectiveColSpan =
+          (roleWidths[id] as 12 | 24 | undefined) ?? (meta.colSpan as 12 | 24)
+        const slotHeight = getSlotHeight(effectiveColSpan, meta)
+        return (
+          <DashboardWidgetCell
+            key={id}
+            id={id}
+            colSpan={effectiveColSpan}
+            hasBuiltInHandle={meta.hasBuiltInHandle}
+            height={slotHeight}
+            onResizeWidth={
+              userRole && isWidgetResizable(id) ? onResizeWidth : undefined
+            }
+            widgetRendererProps={widgetRendererProps}
+          />
+        )
+      })}
+    </Row>
+  )
+})
+
+const DashboardWidgetCell = memo(function DashboardWidgetCell({
+  id,
+  colSpan,
+  hasBuiltInHandle,
+  height,
+  onResizeWidth,
+  widgetRendererProps,
+}: {
+  id: string
+  colSpan: 12 | 24
+  hasBuiltInHandle: boolean
+  height: number | undefined
+  onResizeWidth?: (widgetId: string, newColSpan: 12 | 24) => void
+  widgetRendererProps: Omit<DashboardWidgetRendererProps, 'widgetType'>
+}) {
+  return (
+    <SortableWidgetSlot
+      id={id}
+      colSpan={colSpan}
+      hasBuiltInHandle={hasBuiltInHandle}
+      height={height}
+      onResizeWidth={onResizeWidth}
+    >
+      <DashboardWidgetRenderer widgetType={id} {...widgetRendererProps} />
+    </SortableWidgetSlot>
+  )
+})
 
 /** rectSwappingStrategy에서 scaleX/scaleY를 항상 1로 고정 — 드롭 계산(swap)과 프리뷰를 맞춤 */
 const noScaleRectSwappingStrategy: SortingStrategy = args => {
@@ -52,6 +130,9 @@ export function Dashboard() {
   const isAdmin = user?.role === 'ADMIN'
   const useRemoteDashboard = isAdmin && shouldUseDashboardRemoteApi()
   const { data: dashboardHome } = useDashboardHome(!!isAdmin)
+  useDashboardWidgets(!!isAdmin)
+  useRecruitmentStatusList(EMPTY_DASHBOARD_PROGRAM_IDS)
+  useProgramInquiryStatusList(EMPTY_DASHBOARD_PROGRAM_IDS)
   const { isFetched: preferencesFetched } = useDashboardPreferences(!!isAdmin)
   useSyncDashboardShortcutCatalog(!!isAdmin && useRemoteDashboard)
   const preferencesReady = !useRemoteDashboard || preferencesFetched
@@ -63,7 +144,7 @@ export function Dashboard() {
   const userRole = user?.role ?? null
 
   const instructorCount = null
-  const activeProgramsCount = useRemoteDashboard
+  const activeProgramsCount = isAdmin
     ? (dashboardHome?.programCount ?? null)
     : mockActiveProgramCount
 
@@ -94,6 +175,7 @@ export function Dashboard() {
   const {
     displayOrder,
     displayItemsMeta,
+    displayItemsMetaById,
     roleWidths,
     setOrderedIds,
     setWidgetWidth,
@@ -190,31 +272,14 @@ export function Dashboard() {
             className="dashboard-widget-row-wrapper"
             data-dragging={activeId ? 'true' : undefined}
           >
-            <Row gutter={[32, 32]} align="stretch">
-              {displayOrder.flatMap((id: string) => {
-                const meta = displayItemsMeta.find(m => m.id === id)
-                if (!meta) return []
-
-                const effectiveColSpan =
-                  (roleWidths[id] as 12 | 24 | undefined) ?? (meta.colSpan as 12 | 24)
-                const slotHeight = getSlotHeight(effectiveColSpan, meta)
-
-                return [
-                  <SortableWidgetSlot
-                    key={id}
-                    id={id}
-                    colSpan={effectiveColSpan}
-                    hasBuiltInHandle={meta.hasBuiltInHandle}
-                    height={slotHeight}
-                    onResizeWidth={
-                      userRole && isWidgetResizable(id) ? handleResizeWidth : undefined
-                    }
-                  >
-                    <DashboardWidgetRenderer widgetType={id} {...widgetRendererProps} />
-                  </SortableWidgetSlot>,
-                ]
-              })}
-            </Row>
+            <DashboardWidgetGrid
+              displayOrder={displayOrder}
+              displayItemsMetaById={displayItemsMetaById}
+              roleWidths={roleWidths}
+              userRole={userRole}
+              onResizeWidth={handleResizeWidth}
+              widgetRendererProps={widgetRendererProps}
+            />
           </div>
         </SortableContext>
         <DragOverlay

@@ -7,6 +7,5 @@
  */
 
 export interface EducationCompletionCancelRequest {
-  /** @minLength 1 */
   reason: string;
 }

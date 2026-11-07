@@ -5,51 +5,47 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { SchoolOrganizationUpsertRequestStatus } from './schoolOrganizationUpsertRequestStatus';
 
+/**
+ * 학교 organization canonical 생성/수정 요청. 사람 회원/member 정보는 포함하지 않습니다.
+ */
 export interface SchoolOrganizationUpsertRequest {
-  /**
-     * @minLength 0
-     * @maxLength 255
-     */
+  /** @maxLength 255 */
   name: string;
   /**
-     * @minLength 0
+     * 외부 식별 코드가 있을 때 provider. 미지정 시 코드 존재 시 NEIS로 정규화됩니다.
      * @maxLength 255
+     * @nullable
      */
-  externalProvider?: string;
+  externalProvider?: string | null;
   /**
-     * @minLength 0
      * @maxLength 255
+     * @nullable
      */
-  externalOrganizationCode?: string;
-  /**
-     * @minLength 0
-     * @maxLength 255
-     */
+  externalOrganizationCode?: string | null;
+  /** @maxLength 255 */
   address: string;
   /**
-     * @minLength 0
      * @maxLength 255
+     * @nullable
      */
-  addressDetail?: string;
+  addressDetail?: string | null;
   /**
-     * @minLength 0
      * @maxLength 255
+     * @nullable
      */
-  zipcode?: string;
+  zipcode?: string | null;
   /**
-     * @minLength 0
      * @maxLength 255
+     * @nullable
      */
-  regionSido?: string;
+  regionSido?: string | null;
   /**
-     * @minLength 0
      * @maxLength 255
+     * @nullable
      */
-  regionSigungu?: string;
-  /**
-     * @minLength 0
-     * @maxLength 255
-     */
-  status?: string;
+  regionSigungu?: string | null;
+  /** @nullable */
+  status?: SchoolOrganizationUpsertRequestStatus;
 }

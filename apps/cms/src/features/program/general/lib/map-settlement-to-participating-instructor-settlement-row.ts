@@ -1,6 +1,6 @@
 import dayjs from 'dayjs'
 import { formatYmdHmWithKoreanWeekday } from '@/shared/lib/format-date-korean-weekday'
-import { formatDateDot } from '@/shared/utils/date'
+import { formatDateDot, getSeoulCalendarDate } from '@/shared/utils/date'
 import type { SettlementListItemResponse } from '@/shared/api/generated/settlement/schemas'
 import { resolveSettlementUiStatus } from '@/features/user/api/map-settlement-to-instructor-member-row'
 import type { InstructorSettlementUiStatus } from '@/shared/constants/instructor-settlement-status'
@@ -23,18 +23,18 @@ export interface ParticipatingInstructorSettlementApiRow {
   sessionTotal?: number
 }
 
-function formatIsoDateTime(iso?: string): string {
+function formatIsoDateTime(iso?: string | null): string {
   if (!iso?.trim()) return ''
   const parsed = dayjs(iso)
   if (!parsed.isValid()) return iso.trim()
   return formatYmdHmWithKoreanWeekday(parsed)
 }
 
-function formatLectureDateOnly(iso?: string): string {
+function formatLectureDateOnly(iso?: string | null): string {
   if (!iso?.trim()) return ''
-  const parsed = dayjs(iso.slice(0, 10))
-  if (!parsed.isValid()) return iso.trim()
-  const label = formatDateDot(parsed)
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return iso.trim()
+  const label = formatDateDot(getSeoulCalendarDate(date))
   return label === '-' ? iso.trim() : label
 }
 
@@ -105,8 +105,8 @@ export function mapSettlementToParticipatingInstructorSettlementRow(
     paymentStatementStatus,
     scheduledSettlementAmount,
     canViewPaymentStatement: hasApplication,
-    sessionCompleted: item.sessionCompleted,
-    sessionTotal: item.sessionTotal,
+    sessionCompleted: item.sessionCompleted ?? undefined,
+    sessionTotal: item.sessionTotal ?? undefined,
   }
 }
 

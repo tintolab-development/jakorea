@@ -163,6 +163,9 @@ const PROGRAM_EDUCATION_SLOT_KEY_MISMATCH_MESSAGE =
 const PROGRAM_SCHEDULE_NOT_ACTIVE_MESSAGE =
   '비활성·취소된 교육 일정에는 새로 배정할 수 없습니다. 프로그램 일정 목록을 확인해 주세요.'
 
+const PROGRAM_SCHEDULE_LOCKED_MESSAGE =
+  '이미 시작되었거나 출결·정산이 있는 교육 일정은 변경할 수 없습니다. 최신 정보를 확인한 뒤 다시 시도해 주세요.'
+
 const PROGRAM_SCHEDULE_NOT_EDUCATION_SLOT_MESSAGE =
   '사전교육·폐회 등 교육 슬롯이 아닌 일정에는 배정할 수 없습니다. EDUCATION·SESSION 일정을 선택해 주세요.'
 
@@ -262,6 +265,11 @@ export function getGeneralProgramApiErrorMessage(error: unknown, fallback: strin
     const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()
     if (raw && raw !== code) return raw
     return PROGRAM_EDUCATION_SLOT_KEY_MISMATCH_MESSAGE
+  }
+  if (code === 'PROGRAM_SCHEDULE_LOCKED') {
+    const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()
+    if (raw && raw !== code) return raw
+    return PROGRAM_SCHEDULE_LOCKED_MESSAGE
   }
   if (code === 'PROGRAM_SCHEDULE_NOT_ACTIVE') {
     const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()

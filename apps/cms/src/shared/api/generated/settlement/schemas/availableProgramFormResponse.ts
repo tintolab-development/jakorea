@@ -14,10 +14,14 @@ export interface AvailableProgramFormResponse {
   templateName: string;
   formType: string;
   targetScope: string;
+  /** @nullable */
   targetScopeId?: number | null;
+  /** @nullable */
   targetScopeLabel?: string | null;
   required: boolean;
+  /** @nullable */
   submissionStartAt?: string | null;
+  /** @nullable */
   submissionEndAt?: string | null;
   alreadySubmitted: boolean;
 }

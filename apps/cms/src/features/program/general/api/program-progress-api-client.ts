@@ -578,7 +578,8 @@ export async function fetchProgramSubmissionTeamsRemote(
 
 export type GeneralAssignmentSubmissionFileDto = {
   fileObjectId?: number
-  originalFileName?: string
+  fileName?: string | null
+  originalFileName?: string | null
   downloadable?: boolean
 }
 

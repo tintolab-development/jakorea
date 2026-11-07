@@ -5,48 +5,61 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { ActivityScheduleSlot } from './activityScheduleSlot';
-import type { Application } from './application';
-import type { InterviewAvailabilitySlot } from './interviewAvailabilitySlot';
-import type { Profile } from './profile';
-import type { Screening } from './screening';
+import type { VolunteerActivityScheduleSlot } from './volunteerActivityScheduleSlot';
+import type { VolunteerApplicationProfile } from './volunteerApplicationProfile';
+import type { VolunteerApplicationScreening } from './volunteerApplicationScreening';
+import type { VolunteerApplicationSubmittedContent } from './volunteerApplicationSubmittedContent';
+import type { VolunteerInterviewAvailabilitySlot } from './volunteerInterviewAvailabilitySlot';
 
 /**
- * 일반/UJAT 프로그램 봉사자 신청 상세
+ * Admin CMS용 일반/UJAT 프로그램 봉사자 신청 상세
  */
 export interface VolunteerApplicationDetailResponse {
   id?: number;
   programId?: number;
-  recruitmentId?: number;
+  /** @nullable */
+  recruitmentId?: number | null;
   memberId?: number;
   applicationStatus?: string;
-  /** 면접 상태. 배정 직후 ASSIGNED, 이후 PARTIALLY_EVALUATED|EVALUATED. 배정 전이면 PENDING/WAITING 등 저장된 값 */
+  /**
+     * 면접 상태. 배정 직후 ASSIGNED
+     * @nullable
+     */
   interviewStatus?: string | null;
-  /** 현재 유효 면접 배정 상태. 배정 전이면 null */
+  /**
+     * 현재 유효 면접 배정 상태. 배정 전이면 null
+     * @nullable
+     */
   interviewAssignmentStatus?: string | null;
-  submittedAt?: string;
-  updatedAt?: string;
+  /** @nullable */
+  submittedAt?: string | null;
+  /** @nullable */
+  updatedAt?: string | null;
   availableActions?: string[];
   canEditManagerAEvaluation?: boolean;
   canEditManagerBEvaluation?: boolean;
   privacyMaskingLevel?: string;
   canRevealPersonalInfo?: boolean;
-  profile?: Profile;
-  application?: Application;
-  screening?: Screening;
+  profile?: VolunteerApplicationProfile;
+  application?: VolunteerApplicationSubmittedContent;
+  screening?: VolunteerApplicationScreening;
   /** 신청자가 고른 면접 가능(희망) 시간 구간. program_interview_slot 선택과 CMS 면접 진행 가능 일정에서 고른 interview-option 답을 합쳐 startAt 순으로 반환. 없으면 [] */
-  interviewAvailability?: InterviewAvailabilitySlot[];
+  interviewAvailability?: VolunteerInterviewAvailabilitySlot[];
   /**
      * interviewAvailability 항목 수
      * @minimum 0
      */
   interviewAvailabilityCount?: number;
-  interviewAssignmentId?: number;
-  assignedInterviewSlotId?: number;
-  assignedInterviewStartAt?: string;
-  assignedInterviewEndAt?: string;
+  /** @nullable */
+  interviewAssignmentId?: number | null;
+  /** @nullable */
+  assignedInterviewSlotId?: number | null;
+  /** @nullable */
+  assignedInterviewStartAt?: string | null;
+  /** @nullable */
+  assignedInterviewEndAt?: string | null;
   /** 신청자가 고른 봉사 진행 가능 일정(C). form_response_answer 기반 read model. UJAT·면접 일정과 분리. 없으면 [] */
-  activityScheduleSlots?: ActivityScheduleSlot[];
+  activityScheduleSlots?: VolunteerActivityScheduleSlot[];
   /**
      * activityScheduleSlots 항목 수
      * @minimum 0

@@ -3,12 +3,15 @@ import type { ProgramApplicationType } from '../../applications/api/types'
 import {
   canSubmitEducationAbsenceReason,
   EDUCATION_SCHEDULE_ATTENDANCE_LABEL,
-  EDUCATION_SCHEDULE_PROGRESS_LABEL,
+  educationScheduleProgressLabel,
   resolveEducationScheduleRowProgressStatus,
   shouldDisplayEducationAbsenceReason,
   shouldShowEducationAssignment,
 } from '../lib/schedule-rules'
-import { resolveEducationScheduleRowDateLabel } from '../lib/format'
+import {
+  resolveEducationScheduleDateLabel,
+  resolveEducationScheduleRowDateLabel,
+} from '../lib/format'
 import {
   educationCurriculumSessionSummaryLabel,
   hasEducationCurriculumSessions,
@@ -44,7 +47,10 @@ export function EducationScheduleRow({
   showAbsenceReason = true,
 }: EducationScheduleRowProps) {
   const progress = resolveEducationScheduleRowProgressStatus(item)
-  const heldLabel = resolveEducationScheduleRowDateLabel(item)
+  const heldLabel =
+    item.operationalDayView === true
+      ? resolveEducationScheduleDateLabel(item)
+      : resolveEducationScheduleRowDateLabel(item)
   const showAssignment = assignmentAllowed && shouldShowEducationAssignment(item)
   const hasOperationalSchedule = item.scheduleId !== null
   const showAbsenceSubmit =
@@ -60,13 +66,19 @@ export function EducationScheduleRow({
   const curriculumSessions = hasEducationCurriculumSessions(item.curriculumSessions)
     ? visibleEducationCurriculumSessions(item.curriculumSessions)
     : []
-  const showCurriculumSessions = curriculumSessions.length > 0
+  const showCurriculumSessions =
+    item.operationalDayView !== true && curriculumSessions.length > 0
   const sessionSummary = showCurriculumSessions
     ? educationCurriculumSessionSummaryLabel(curriculumSessions)
     : undefined
+  const operationalSubtitle = [item.rowLabel?.trim(), item.durationLabel?.trim()]
+    .filter((part): part is string => Boolean(part) && part !== '-')
+    .join(' · ')
   const subtitle = showCurriculumSessions
     ? sessionSummary || '전 차시'
-    : item.rowLabel?.trim() || '-'
+    : item.operationalDayView === true
+      ? operationalSubtitle || '-'
+      : item.rowLabel?.trim() || '-'
   const sessionHeading = subtitle === '-' ? heldLabel : `${heldLabel}, ${subtitle}`
   const absenceReason =
     showAbsenceReason &&
@@ -86,7 +98,7 @@ export function EducationScheduleRow({
           mobileStack
           badge={
             <PFStateBadge size="small" tone={progress === 'completed' ? 'success' : 'progress'}>
-              {EDUCATION_SCHEDULE_PROGRESS_LABEL[progress]}
+              {educationScheduleProgressLabel(progress, item.operationalDayView === true)}
             </PFStateBadge>
           }
           date={heldLabel}

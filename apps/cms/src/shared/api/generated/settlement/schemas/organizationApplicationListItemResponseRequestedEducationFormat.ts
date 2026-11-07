@@ -8,6 +8,7 @@
 
 /**
  * 기관 신청 답변에서 저장된 희망 교육 형태. 없으면 null이며 프로그램 교육 형태를 추정해 채우지 않습니다.
+ * @nullable
  */
 export type OrganizationApplicationListItemResponseRequestedEducationFormat = typeof OrganizationApplicationListItemResponseRequestedEducationFormat[keyof typeof OrganizationApplicationListItemResponseRequestedEducationFormat] | null;
 

@@ -7,9 +7,10 @@
  */
 
 /**
- * 활동 포기 귀책 주체. USER만 회원 일정 변경/취소 횟수에 반영됩니다. 미전달 legacy 요청은 ADMIN으로 안전 처리합니다.
+ * 활동 포기 귀책. USER만 회원 일정 변경/취소 횟수에 반영. 생략·null이면 ADMIN으로 처리합니다. participant give-up 및 신청 APPROVED 호환 분기에서 사용. 강사 participant의 USER 활동 포기는 JA 평가 등급 강의 취소 감점에도 반영됩니다.
+ * @nullable
  */
-export type ApplicationGiveUpRequestFaultParty = typeof ApplicationGiveUpRequestFaultParty[keyof typeof ApplicationGiveUpRequestFaultParty];
+export type ApplicationGiveUpRequestFaultParty = typeof ApplicationGiveUpRequestFaultParty[keyof typeof ApplicationGiveUpRequestFaultParty] | null;
 
 
 export const ApplicationGiveUpRequestFaultParty = {

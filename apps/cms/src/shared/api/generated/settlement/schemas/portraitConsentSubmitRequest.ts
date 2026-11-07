@@ -7,5 +7,6 @@
  */
 
 export interface PortraitConsentSubmitRequest {
+  /** PORTRAIT_CONSENT 용도로 업로드·confirm·CLEAN 검사가 끝난 본인 파일 ID */
   fileObjectId: number;
 }

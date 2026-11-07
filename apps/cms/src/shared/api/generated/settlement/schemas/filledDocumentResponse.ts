@@ -8,16 +8,17 @@
 import type { FilledDocumentResponseSchemaJson } from './filledDocumentResponseSchemaJson';
 import type { PaymentStatementBasicInfo } from './paymentStatementBasicInfo';
 
-/**
- * 회원 동의서 작성본 원문 조회 응답. 민감정보 원문 조회 권한과 사유 감사가 적용됩니다.
- */
 export interface FilledDocumentResponse {
   filledDocumentId?: number;
   consentRecordId?: number;
   memberId?: number;
   consentType?: string;
   version?: string;
-  templateVersionId?: number;
+  /**
+     * 제출 당시 CMS form_template_version ID. legacy 작성본은 null.
+     * @nullable
+     */
+  templateVersionId?: number | null;
   templateCode?: string;
   schemaJson?: FilledDocumentResponseSchemaJson;
   paymentBasicInfo?: PaymentStatementBasicInfo;

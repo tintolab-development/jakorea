@@ -5,13 +5,14 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { NotificationResendRequestTiming } from './notificationResendRequestTiming';
 
 /**
- * 결과 알림 재발송 요청. body를 생략하면 즉시 재발송합니다. 예약 접수는 발송 완료가 아닙니다.
+ * 결과 알림 재발송. body 생략 시 즉시 재발송. timing=SCHEDULED이면 scheduledAt 필수. 예약 접수는 발송 완료가 아닙니다.
  */
 export interface NotificationResendRequest {
-  /** IMMEDIATE | SCHEDULED. 생략하면 IMMEDIATE */
-  timing?: string;
-  /** timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601 Instant */
-  scheduledAt?: string;
+  /** @nullable */
+  timing?: NotificationResendRequestTiming;
+  /** @nullable */
+  scheduledAt?: string | null;
 }

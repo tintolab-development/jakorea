@@ -6,4 +6,4 @@
  * OpenAPI spec version: v9
  */
 
-export type InstructorCmsProfileAwardsItem = {[key: string]: unknown};
+export type InstructorCmsProfileAwardsItem = { [key: string]: unknown };

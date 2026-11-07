@@ -6,7 +6,10 @@
  * OpenAPI spec version: v9
  */
 
-export type MemberPortalGeminiSettlementSummaryPaymentStatementProcessingStatus = typeof MemberPortalGeminiSettlementSummaryPaymentStatementProcessingStatus[keyof typeof MemberPortalGeminiSettlementSummaryPaymentStatementProcessingStatus];
+/**
+ * @nullable
+ */
+export type MemberPortalGeminiSettlementSummaryPaymentStatementProcessingStatus = typeof MemberPortalGeminiSettlementSummaryPaymentStatementProcessingStatus[keyof typeof MemberPortalGeminiSettlementSummaryPaymentStatementProcessingStatus] | null;
 
 
 export const MemberPortalGeminiSettlementSummaryPaymentStatementProcessingStatus = {

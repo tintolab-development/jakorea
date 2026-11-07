@@ -298,6 +298,7 @@ export function useApplicantsDetail({
       isTrainedTeachersSurface ? false : usesProgramInstitutionApplications,
     instructorColumnPreset,
     individualScreeningStage,
+    listFilters: appliedFilters,
     setInstitutionList,
     setInstructorList,
     setIndividualList,
@@ -464,6 +465,21 @@ export function useApplicantsDetail({
         }
         const refreshAfterDecision = async () => {
           await institutionApplicationsRemote.invalidateApplications()
+          // TT 진행현황 「참여 기관」은 organization-applications와 별도 쿼리 키 — 승인·반려 후 즉시 refetch되도록 함
+          if (isTrainedTeachersSurface && programId) {
+            await queryClient.invalidateQueries({
+              queryKey: trainedTeacherQueryKeys.participatingInstitutionsProgram(programId),
+            })
+            await queryClient.invalidateQueries({
+              queryKey: trainedTeacherQueryKeys.performanceSummary(programId),
+            })
+            await queryClient.invalidateQueries({
+              queryKey: trainedTeacherQueryKeys.overviewStages(),
+            })
+            await queryClient.invalidateQueries({
+              queryKey: trainedTeacherQueryKeys.lists(),
+            })
+          }
           if (decision === 'approve') {
             const refresh = programId
               ? organizationApprovalRefreshTargets(programId, ids)

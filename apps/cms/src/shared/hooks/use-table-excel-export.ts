@@ -11,6 +11,7 @@
 
 import { useCallback, useState, type Key } from 'react'
 import type { ColumnsType } from 'antd/es/table'
+import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
 import { guardAdminDownload } from '@/shared/lib/session-admin-role'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import { exportTableToExcel } from '@/shared/utils/table-export'
@@ -60,6 +61,10 @@ const DEFAULT_EMPTY_CONTENT = '다운로드할 데이터가 없습니다.'
 const DEFAULT_ERROR_TITLE = '다운로드 실패'
 const DEFAULT_ERROR_CONTENT = '엑셀 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.'
 
+function defaultExcelExportErrorContent(error: unknown): string {
+  return readApiErrorAlertMessage(error, DEFAULT_ERROR_CONTENT)
+}
+
 export function useTableExcelExport<T extends object>({
   columns,
   data,
@@ -72,7 +77,7 @@ export function useTableExcelExport<T extends object>({
   emptyAlertTitle = DEFAULT_EMPTY_TITLE,
   emptyAlertContent = DEFAULT_EMPTY_CONTENT,
   errorAlertTitle = DEFAULT_ERROR_TITLE,
-  errorAlertContent = DEFAULT_ERROR_CONTENT,
+  errorAlertContent = defaultExcelExportErrorContent,
 }: UseTableExcelExportOptions<T>) {
   const [isExporting, setIsExporting] = useState(false)
 

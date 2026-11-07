@@ -402,3 +402,26 @@ export async function rejectGeminiInstructorApplicationRemote(
     data: body,
   })
 }
+
+export type GeminiInstructorNotificationResendPayload = {
+  timing: 'IMMEDIATE' | 'SCHEDULED'
+  scheduledAt: string | null
+}
+
+/**
+ * Gemini 강사 신청 ID는 instructor-applications 재발송 API와 동일 PK.
+ * Gemini 전용 resend path는 없다.
+ */
+export async function resendGeminiInstructorApplicationNotificationRemote(
+  applicationId: string,
+  payload: GeminiInstructorNotificationResendPayload
+): Promise<void> {
+  await unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/instructor-applications/${encodeURIComponent(applicationId)}/notifications/resend`,
+      method: 'POST',
+      data: payload,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  )
+}

@@ -105,6 +105,7 @@ import {
   updateUjatTypedDetailHalfRemote,
   type UjatTypedDetail,
 } from '@/features/program/ujat/api/typed-detail-client'
+import { normalizeUjatTypedDetailForWrite } from '@/features/program/ujat/lib/ujat-typed-detail'
 import {
   omitRecruitmentTabScheduleFields,
   persistRecruitmentTabSave,
@@ -596,26 +597,23 @@ export function UjatProgramDetailFullPageModal({
 
   const persistUjatEducationSchedule = useCallback(
     async (id: string) => {
-      const snapshot = educationScheduleForm.getValues()
-      if (
-        JSON.stringify(snapshot.halfPlans ?? []) ===
-        JSON.stringify(educationScheduleBaselineRef.current.halfPlans ?? [])
-      ) {
-        return
+      const snapshot = normalizeUjatTypedDetailForWrite(educationScheduleForm.getValues())
+      const baseline = normalizeUjatTypedDetailForWrite(educationScheduleBaselineRef.current)
+      const changedHalves = (['FIRST_HALF', 'SECOND_HALF'] as const).filter(semesterType => {
+        const halfPlan = snapshot.halfPlans?.find(item => item.semesterType === semesterType)
+        const baselineHalfPlan = baseline.halfPlans?.find(item => item.semesterType === semesterType)
+        return JSON.stringify(halfPlan ?? null) !== JSON.stringify(baselineHalfPlan ?? null)
+      })
+      if (changedHalves.length === 0) {
+        return snapshot
       }
       let current = snapshot
       let expectedRevision = snapshot.revision ?? 0
-      const changedSemesters: Array<'FIRST_HALF' | 'SECOND_HALF'> = []
-      for (const semesterType of ['FIRST_HALF', 'SECOND_HALF'] as const) {
+      for (const semesterType of changedHalves) {
         const halfPlan = current.halfPlans?.find(item => item.semesterType === semesterType) ?? {
           semesterType,
           stages: [],
         }
-        const baselineHalfPlan = educationScheduleBaselineRef.current.halfPlans?.find(
-          item => item.semesterType === semesterType
-        ) ?? { semesterType, stages: [] }
-        if (JSON.stringify(halfPlan) === JSON.stringify(baselineHalfPlan)) continue
-        changedSemesters.push(semesterType)
         current = await updateUjatTypedDetailHalfRemote(
           id,
           semesterType,
@@ -624,9 +622,10 @@ export function UjatProgramDetailFullPageModal({
         )
         expectedRevision = current.revision ?? expectedRevision
       }
-      current = await syncUjatTypedDetailPhysicalSchedulesRemote(id, current, changedSemesters)
+      current = await syncUjatTypedDetailPhysicalSchedulesRemote(id, current, changedHalves)
       educationScheduleBaselineRef.current = current
       educationScheduleForm.reset(current)
+      return current
     },
     [educationScheduleForm]
   )
@@ -961,11 +960,17 @@ export function UjatProgramDetailFullPageModal({
                     buildUjatRegionCapacityUpserts(draft)
                   )
                 }
-                await persistUjatEducationSchedule(draft.id)
+                const typedAfterSchedule = await persistUjatEducationSchedule(draft.id)
+                const draftWithTyped = {
+                  ...draft,
+                  ujatTypedDetail:
+                    typedAfterSchedule ??
+                    normalizeUjatTypedDetailForWrite(educationScheduleForm.getValues()),
+                }
                 if (onUpdateProgram) {
-                  await onUpdateProgram(draft.id, draft, commonPatch)
+                  await onUpdateProgram(draft.id, draftWithTyped, commonPatch)
                 } else {
-                  await updateProgram(draft.id, draft)
+                  await updateProgram(draft.id, draftWithTyped)
                 }
                 const next = new URLSearchParams(searchParams)
                 next.delete(EDIT_PARAM)

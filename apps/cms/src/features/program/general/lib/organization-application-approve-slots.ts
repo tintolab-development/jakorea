@@ -436,8 +436,8 @@ export function resolveOrganizationApproveScheduleOptionsFromPreferred(
     let block: OrganizationApproveScheduleAssignmentBlock | null = null
     let sessionNo: number | null = null
 
-    if (requireMatchedScheduleStatus && scheduleStatus !== 'MATCHED') {
-      block = scheduleStatus === 'INACTIVE_OR_DELETED' ? 'INACTIVE_OR_DELETED' : 'UNMATCHED'
+    if (scheduleStatus === 'INACTIVE_OR_DELETED') {
+      block = 'INACTIVE_OR_DELETED'
     } else if (trustMatchedPreferredScheduleIds && scheduleId != null && !unresolvedReason) {
       // TT 상세의 MATCHED scheduleId는 서버가 이미 program_schedule과 매칭한 정본이다.
       // 클라이언트가 날짜·시간으로 다시 계산하거나 education-slots 응답에 의존하지 않는다.
@@ -455,6 +455,12 @@ export function resolveOrganizationApproveScheduleOptionsFromPreferred(
           round,
         })
       }
+    } else if (
+      requireMatchedScheduleStatus
+        ? scheduleStatus !== 'MATCHED'
+        : scheduleStatus === 'UNMATCHED' && scheduleId == null
+    ) {
+      block = 'UNMATCHED'
     } else if (periodMode) {
       // TT 상세 응답은 기간형이어도 서버가 실제 program_schedule 매칭을
       // 함께 제공한다. 이 경우 일반 PERIOD의 requested-schedule 행 대신

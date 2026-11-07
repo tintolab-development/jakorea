@@ -55,6 +55,7 @@ const DASHBOARD_EXACT_PATHS = new Set([
   '/api/admin/individual-settlement-applications/{settlementApplicationId}',
   '/api/admin/individual-settlement-applications/{settlementApplicationId}/approve',
   '/api/admin/individual-settlement-applications/{settlementApplicationId}/reject',
+  '/api/admin/programs/{programId}/assignment-submissions',
   // UJAT Typed detail is the canonical replacement for typed registration.overlay writes.
   '/api/admin/programs/{programId}/ujat/typed-detail',
 ])
@@ -77,7 +78,7 @@ const subset = {
   ...spec,
   info: {
     ...spec.info,
-    title: `${spec.info?.title ?? 'API'} — Dashboard subset`,
+    title: 'JA Korea CMS Backend API — Dashboard subset',
     description: 'Filtered for CMS dashboard Orval codegen (1st pilot).',
   },
   paths: filteredPaths,

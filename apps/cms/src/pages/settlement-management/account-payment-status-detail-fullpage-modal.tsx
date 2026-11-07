@@ -245,6 +245,7 @@ export function AccountPaymentStatusDetailFullPageModal({
         onClose={() => setIssuanceViewOpen(false)}
         paragraphBodyOptions={issuanceParagraphBodyOptions}
         fileName={issuanceFileName}
+        settlementId={row.settlementId}
         zIndex={1500}
       />
       <PaymentOrderCalculationBasisDetailModal

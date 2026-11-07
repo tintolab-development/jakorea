@@ -5,24 +5,48 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { PaymentItemResponseEligiblePayeeTypesItem } from './paymentItemResponseEligiblePayeeTypesItem';
 import type { PaymentItemResponsePaymentItemType } from './paymentItemResponsePaymentItemType';
 
 export interface PaymentItemResponse {
-  id?: number;
+  /** @nullable */
+  id?: number | null;
+  /** @nullable */
   paymentItemType?: PaymentItemResponsePaymentItemType;
-  itemName?: string;
-  maxAmount?: number;
-  taxableYn?: boolean;
-  evidenceRequiredYn?: boolean;
-  useYn?: boolean;
-  iconKey?: string;
-  emojiOverride?: string;
-  /** transport | lodging | meal | activity. ACTIVITY는 activity만. volunteerActivity는 읽기 alias */
-  layout?: string;
-  maxLimitWon?: number;
-  description?: string;
-  /** 지급요건/비고는 detailJson.qualificationLines / remarkLines 전용. 교통 minOneWayKm·minDistanceKm dual-write */
-  detailJson?: string;
-  /** 정산 신청 가능 payee 역할. INSTRUCTOR|STUDENT|PARTICIPANT_INDIVIDUAL|PARTICIPANT_ORGANIZATION */
-  eligiblePayeeTypes?: string[] | null;
+  /** @nullable */
+  itemName?: string | null;
+  /** @nullable */
+  maxAmount?: number | null;
+  /** @nullable */
+  taxableYn?: boolean | null;
+  /**
+     * 정산 항목 설정의 증빙 자료 제출 필요 여부
+     * @nullable
+     */
+  evidenceRequiredYn?: boolean | null;
+  /** @nullable */
+  useYn?: boolean | null;
+  /** @nullable */
+  iconKey?: string | null;
+  /** @nullable */
+  emojiOverride?: string | null;
+  /**
+     * transport | lodging | meal | activity. ACTIVITY는 activity만. volunteerActivity는 읽기 alias
+     * @nullable
+     */
+  layout?: string | null;
+  /** @nullable */
+  maxLimitWon?: number | null;
+  /** @nullable */
+  description?: string | null;
+  /**
+     * 지급요건/비고는 qualificationLines / remarkLines 전용. 교통 minOneWayKm·minDistanceKm dual-write. 1사1교 금액 정본 fixedAmountWon
+     * @nullable
+     */
+  detailJson?: string | null;
+  /**
+     * 정산 신청 가능 payee. INSTRUCTOR|STUDENT|PARTICIPANT_INDIVIDUAL|PARTICIPANT_ORGANIZATION. LODGING_* 는 INSTRUCTOR 만.
+     * @nullable
+     */
+  eligiblePayeeTypes?: PaymentItemResponseEligiblePayeeTypesItem[] | null;
 }

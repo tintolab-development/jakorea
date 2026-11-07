@@ -64,11 +64,23 @@ export function getUjatEducationRegionLabel(
   regionKey: string,
   fallback: string = regionKey
 ): string {
-  const fromActive = listUjatEducationRegionsActive().find(row => row.key === regionKey)
+  const normalized = regionKey.trim().toLowerCase()
+  const fromActive = listUjatEducationRegionsActive().find(
+    row => row.key.toLowerCase() === normalized || row.label === regionKey
+  )
   if (fromActive) return fromActive.label
 
-  const fromAll = readAllRows().find(row => row.regionKey === regionKey)
+  const fromAll = readAllRows().find(
+    row =>
+      row.regionKey.toLowerCase() === normalized ||
+      row.name === regionKey
+  )
   if (fromAll) return fromAll.name
+
+  const fromDefault = UJAT_DEFAULT_EDUCATION_REGIONS.find(
+    row => row.key === normalized || row.label === regionKey
+  )
+  if (fromDefault) return fromDefault.label
 
   return fallback
 }

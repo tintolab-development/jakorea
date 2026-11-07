@@ -278,6 +278,7 @@ export function mapAccountPaymentStatusDetailToIssuanceInput(
 export type PaymentStatementIssuancePayload = {
   paragraphBodyOptions: RenderFormParagraphBodyOptions
   fileName: string
+  settlementId?: number
 }
 
 export function buildPaymentStatementIssuancePayloadFromCalculationStatement(

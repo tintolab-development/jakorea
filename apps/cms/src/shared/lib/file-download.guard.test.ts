@@ -127,6 +127,25 @@ describe('downloadBlob / downloadExcel access log', () => {
     expect(saveAs).not.toHaveBeenCalled()
   })
 
+  it('AUDIT_LOG_UNAVAILABLE이면 저장하지 않고 한 번만 기록한다', async () => {
+    vi.mocked(shouldRecordFileAccessRemotely).mockReturnValue(true)
+    const auditError = {
+      response: {
+        status: 503,
+        data: {
+          success: false,
+          error: { code: 'AUDIT_LOG_UNAVAILABLE' },
+        },
+      },
+    }
+    vi.mocked(postFileAccessLog).mockRejectedValueOnce(auditError)
+    await expect(downloadBlob(new Blob(['x']), '계좌 지급 대상 목록_20261107.xlsx')).rejects.toEqual(
+      auditError
+    )
+    expect(postFileAccessLog).toHaveBeenCalledTimes(1)
+    expect(saveAs).not.toHaveBeenCalled()
+  })
+
   it('실세션이면 POST file-access 후 저장한다', async () => {
     vi.mocked(shouldRecordFileAccessRemotely).mockReturnValue(true)
     await downloadBlob(new Blob(['x']), '회원_목록.xlsx')

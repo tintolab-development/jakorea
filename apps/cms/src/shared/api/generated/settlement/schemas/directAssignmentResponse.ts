@@ -13,7 +13,7 @@ export interface DirectAssignmentResponse {
   movedParticipantId?: number;
   movedFromExistingPair?: boolean;
   targetAssignment?: UjatDgbongPartnerAssignmentResponse;
-  remainingSourceAssignment?: UjatDgbongPartnerAssignmentResponse;
+  remainingSourceAssignment?: UjatDgbongPartnerAssignmentResponse | null;
   /** 1인 배정 슬롯의 기존 조에 두 번째 봉사자(SECONDARY)로 추가했으면 true. */
   addedAsSecondary?: boolean;
 }

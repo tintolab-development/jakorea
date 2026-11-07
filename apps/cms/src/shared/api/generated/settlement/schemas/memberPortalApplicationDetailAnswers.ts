@@ -7,6 +7,6 @@
  */
 
 /**
- * 실제 최신 제출본의 원본 답변 맵. 키는 문단 id이며 preferredScheduleOptionValues의 schedule:{scheduleId} 또는 legacy line:{index} 토큰도 원본 그대로 보존합니다. educationFormat이 없으면 기본값을 삽입하지 않습니다. UJAT 학교 신청 키는 ujat-program-application-institution-seed-basic-info, -grade-application-info, -grade-class-time, -preferred-education-schedule입니다. 없는 문단은 만들지 않으며 없으면 빈 객체 {}.
+ * 실제 최신 제출본의 원본 답변 맵. 키는 문단 id이며 preferredScheduleOptionValues의 schedule:{scheduleId} 또는 legacy line:{index} 토큰도 원본 그대로 보존합니다. MEMBER_SELF이므로 teacherEmail·teacherTel·teacherMobile 등 본인 제출 PII는 마스킹하지 않습니다. educationFormat이 없으면 기본값을 삽입하지 않습니다. UJAT 학교 신청 키는 ujat-program-application-institution-seed-basic-info(학교명·지역·주소·담당교사 연락처·기타요청), -grade-application-info, -grade-class-time, -preferred-education-schedule입니다. 없는 문단·학년·교시·희망일을 서버가 만들지 않으며 값은 `-`로 채우지 않습니다. 없으면 빈 객체 {}.
  */
-export type MemberPortalApplicationDetailAnswers = {[key: string]: unknown};
+export type MemberPortalApplicationDetailAnswers = { [key: string]: unknown };

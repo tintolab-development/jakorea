@@ -44,9 +44,94 @@ const heldAtSameDay = '2026-10-31T21:59:00+09:00'
 const endAtSameDay = '2026-10-31T22:14:00+09:00'
 const heldAtPrevDay = '2026-10-30T21:59:00+09:00'
 
+assert.equal(canSubmitEducationAbsenceReason('in_progress', null), true)
+
 // 기존 일 단위 규칙 — 당일은 scheduled, 전날은 completed
 assert.equal(resolveEducationScheduleProgressStatus(heldAtSameDay, sameDay), 'scheduled')
 assert.equal(resolveEducationScheduleProgressStatus(heldAtPrevDay, sameDay), 'completed')
+
+assert.equal(
+  resolveEducationScheduleRowProgressStatus(
+    {
+      heldAt: heldAtSameDay,
+      endAt: endAtSameDay,
+      attendanceStatus: null,
+      scheduleStatus: 'IN_PROGRESS',
+    },
+    sameDay,
+  ),
+  'in_progress',
+)
+assert.equal(
+  resolveEducationScheduleRowProgressStatus(
+    {
+      heldAt: heldAtPrevDay,
+      attendanceStatus: null,
+      scheduleStatus: 'SCHEDULED',
+    },
+    sameDay,
+  ),
+  'scheduled',
+)
+assert.equal(
+  resolveEducationScheduleRowProgressStatus(
+    {
+      heldAt: heldAtSameDay,
+      attendanceStatus: null,
+      scheduleStatus: 'COMPLETED',
+    },
+    sameDay,
+  ),
+  'completed',
+)
+assert.equal(
+  resolveEducationScheduleRowProgressStatus(
+    {
+      heldAt: heldAtSameDay,
+      endAt: '2026-10-31T23:50:00+09:00',
+      attendanceStatus: null,
+      scheduleStatus: 'MATCHED',
+    },
+    sameDay,
+  ),
+  'scheduled',
+)
+assert.equal(
+  resolveEducationScheduleRowProgressStatus(
+    {
+      heldAt: heldAtSameDay,
+      attendanceStatus: 'present',
+      scheduleStatus: 'SCHEDULED',
+      operationalDayView: true,
+    },
+    sameDay,
+  ),
+  'scheduled',
+)
+assert.equal(
+  resolveEducationScheduleRowProgressStatus(
+    {
+      heldAt: heldAtSameDay,
+      attendanceStatus: null,
+      scheduleStatus: 'UNSCHEDULED',
+      operationalDayView: true,
+    },
+    sameDay,
+  ),
+  'unscheduled',
+)
+assert.equal(
+  resolveEducationScheduleRowProgressStatus(
+    {
+      heldAt: heldAtSameDay,
+      attendanceStatus: null,
+      scheduleStatus: 'MATCHED',
+      operationalDayView: true,
+    },
+    sameDay,
+  ),
+  'unscheduled',
+)
 
 // 행 뱃지 — 출결 있으면 당일에도 completed
 assert.equal(

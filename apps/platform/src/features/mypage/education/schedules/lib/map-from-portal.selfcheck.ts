@@ -393,4 +393,68 @@ const emptySessions = mapPortalEducationSchedule(
 )
 assert.equal(emptySessions.curriculumSessions, undefined)
 
+const preferenceRankLabel = mapPortalEducationSchedule(
+  { scheduleId: 187703, preferenceRank: 1, startAt: '2026-11-13T15:07:00+09:00' },
+  0,
+)
+assert.equal(preferenceRankLabel.rowLabel, '1지망')
+
+const sessionLabelWinsOverRank = mapPortalEducationSchedule(
+  {
+    scheduleId: 187704,
+    preferenceRank: 2,
+    sessionLabel: '2차시',
+    startAt: '2026-11-16T15:07:00+09:00',
+  },
+  0,
+  { educationStructure: 'CURRICULUM' },
+)
+assert.equal(sessionLabelWinsOverRank.rowLabel, '2차시')
+
+const ttOrgDay = mapPortalEducationSchedule(
+  {
+    scheduleId: 187703,
+    sessionNo: 3,
+    title: '공통 교육 예정 3',
+    startAt: '2026-11-13T06:07:00Z',
+    endAt: '2026-11-13T07:07:00Z',
+    scheduleStatus: 'SCHEDULED',
+    sessionLabel: '1지망',
+    preferenceRank: 1,
+    curriculumSessions: [
+      { sessionNo: 1, sessionLabel: '1차시', title: '교육받은교사 테스트' },
+      { sessionNo: 2, sessionLabel: '2차시', title: '교육받은교사 테스트2' },
+    ],
+  },
+  0,
+  {
+    applicationType: 'ORGANIZATION',
+    programType: 'TRAINED_TEACHER',
+    educationStructure: 'CURRICULUM',
+    sessionRound: 'SINGLE',
+  },
+)
+assert.equal(ttOrgDay.rowLabel, '1지망')
+assert.equal(ttOrgDay.title, '1지망')
+assert.equal(ttOrgDay.durationLabel, '1차시')
+assert.equal(ttOrgDay.preferenceRank, 1)
+assert.equal(ttOrgDay.sessionNumber, 3)
+assert.equal(ttOrgDay.operationalDayView, true)
+assert.equal(ttOrgDay.curriculumSessions, undefined)
+assert.equal(ttOrgDay.scheduleStatus, 'SCHEDULED')
+assert.equal(ttOrgDay.progressTimeLabel, '2026년 11월 13일(금) 15:07 ~ 16:07')
+
+const ttOrgRankOnly = mapPortalEducationSchedule(
+  {
+    scheduleId: 187704,
+    sessionNo: 4,
+    title: '공통 교육 예정 4',
+    preferenceRank: 2,
+    startAt: '2026-11-16T06:07:00Z',
+  },
+  6,
+  { applicationType: 'ORGANIZATION', programType: 'TRAINED_TEACHER' },
+)
+assert.equal(ttOrgRankOnly.rowLabel, '2지망')
+
 console.log('map-from-portal.selfcheck: ok')

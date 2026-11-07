@@ -13,21 +13,36 @@ import type { FormResponseProjectionResponse } from './formResponseProjectionRes
  */
 export interface FormResponseDocumentSnapshotResponse {
   formResponseId?: number;
-  templateId?: number;
-  templateVersionId?: number;
-  templateCode?: string;
-  templateName?: string;
-  formType?: string;
-  category?: string;
-  documentTitle?: string;
-  programId?: number;
-  contextType?: string;
-  contextId?: number;
-  responseStatus?: string;
-  submittedAt?: string;
-  rawAnswersJson?: string;
-  projectionReady?: boolean;
-  projectionCount?: number;
+  /** @nullable */
+  templateId?: number | null;
+  /** @nullable */
+  templateVersionId?: number | null;
+  /** @nullable */
+  templateCode?: string | null;
+  /** @nullable */
+  templateName?: string | null;
+  /** @nullable */
+  formType?: string | null;
+  /** @nullable */
+  category?: string | null;
+  /** @nullable */
+  documentTitle?: string | null;
+  /** @nullable */
+  programId?: number | null;
+  /** @nullable */
+  contextType?: string | null;
+  /** @nullable */
+  contextId?: number | null;
+  /** @nullable */
+  responseStatus?: string | null;
+  /** @nullable */
+  submittedAt?: string | null;
+  /** @nullable */
+  rawAnswersJson?: string | null;
+  /** @nullable */
+  projectionReady?: boolean | null;
+  /** @nullable */
+  projectionCount?: number | null;
   answers?: FormResponseAnswerResponse[];
   projections?: FormResponseProjectionResponse[];
 }

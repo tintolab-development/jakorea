@@ -28,6 +28,16 @@ describe('buildTrainedTeacherApproveRequest', () => {
     ).toEqual({ timing: 'IMMEDIATE', selectedScheduleId: 187134 })
   })
 
+  it('1691630 DATE 단일 선택은 selectedScheduleId만 보낸다', () => {
+    expect(
+      buildTrainedTeacherApproveRequest({
+        timing: 'IMMEDIATE',
+        educationScheduleMode: 'DATE',
+        selectedScheduleId: 187701,
+      })
+    ).toEqual({ timing: 'IMMEDIATE', selectedScheduleId: 187701 })
+  })
+
   it('날짜형은 preferredScheduleRank를 넣지 않고 selectedScheduleId만 보낸다', () => {
     expect(
       buildTrainedTeacherApproveRequest({

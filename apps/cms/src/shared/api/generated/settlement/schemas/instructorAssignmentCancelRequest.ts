@@ -19,8 +19,14 @@ export interface InstructorAssignmentCancelRequest {
   reason?: string;
   /** 취소 알림 발송 방식. IMMEDIATE 또는 SCHEDULED. 이미 배정 알림이 발송된 경우에만 사용됩니다. */
   timing?: string;
-  /** 취소 알림 직접 설정 시 예약 발송 시각. timing=SCHEDULED일 때 필수이며 미래 시각이어야 합니다. */
+  /**
+     * 취소 알림 직접 설정 시 예약 발송 시각. timing=SCHEDULED일 때 필수이며 미래 시각이어야 합니다.
+     * @nullable
+     */
   scheduledAt?: string | null;
-  /** 취소 귀책. USER=강사 사유(JA 감점 대상), ADMIN=운영 사유(감점 없음). 생략/null이면 서버가 ADMIN 처리. */
+  /**
+     * 취소 귀책. USER=강사 사유(JA 감점 대상), ADMIN=운영 사유(감점 없음). 생략/null이면 서버가 ADMIN 처리.
+     * @nullable
+     */
   faultParty?: InstructorAssignmentCancelRequestFaultParty;
 }

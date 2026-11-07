@@ -7,7 +7,8 @@
  */
 
 /**
- * 출석 코드만 PRESENT|LATE|ABSENT|EXCUSED. UJAT 배정은 기록이 없으면 참여자 행을 유지하고 status를 null로 반환한다. 미기록·비출석 값(COMPLETED·SCHEDULED 등)도 null.
+ * 출석 코드만 PRESENT, LATE, ABSENT, EXCUSED. UJAT 배정은 기록이 없으면 참여자 행을 유지하고 status를 null로 반환한다. 미기록 또는 비출석 값(COMPLETED·SCHEDULED 등)도 null.
+ * @nullable
  */
 export type AttendanceItemResponseStatus = typeof AttendanceItemResponseStatus[keyof typeof AttendanceItemResponseStatus] | null;
 

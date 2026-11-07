@@ -116,6 +116,7 @@ export type IndividualApplicationDetailEnriched = Omit<
   }
 }
 
+/** 관리자 신청 상태: 승인 대기·승인 완료·신청 반려. 승인 취소 전용 배지는 쓰지 않는다. */
 export function mapApiApplicationStatusToApprovalStatus(
   status?: string
 ): ApplicantApprovalStatusKey {
@@ -123,10 +124,18 @@ export function mapApiApplicationStatusToApprovalStatus(
   if (['APPROVED', 'ASSIGNED', 'WAITING_ASSIGNMENT'].includes(normalized)) {
     return 'approved'
   }
-  if (['REJECTED', 'AUTO_REJECTED', 'INTERVIEW_FAILED', 'CANCELLED_BY_ADMIN'].includes(normalized)) {
+  if (
+    [
+      'REJECTED',
+      'AUTO_REJECTED',
+      'INTERVIEW_FAILED',
+      'CANCELLED_BY_ADMIN',
+      'APPROVAL_CANCELLED',
+    ].includes(normalized)
+  ) {
     return 'rejected'
   }
-  if (['CANCELLED', 'CANCELED', 'APPROVAL_CANCELLED'].includes(normalized)) {
+  if (['CANCELLED', 'CANCELED'].includes(normalized)) {
     return 'cancelled'
   }
   if (normalized === 'REJECTION_CANCELLED') {
@@ -177,22 +186,98 @@ export function mapIndividualApplicationToApprovalStatus(input: {
   return 'pending'
 }
 
+export const ADMIN_LIST_STATUS_GROUP_APPLICATION_REJECTED = 'APPLICATION_REJECTED'
+
+export type ApplicationApprovalApiListQuery = {
+  status?: string
+  statusGroup?: typeof ADMIN_LIST_STATUS_GROUP_APPLICATION_REJECTED
+}
+
+/**
+ * 목록 GET 필터. 「신청 반려」는 statusGroup=APPLICATION_REJECTED
+ * (REJECTED+APPROVAL_CANCELLED). 단일 status=REJECTED는 승인 취소 건을 빠뜨린다.
+ * 승인 대기는 단일 status=WAITING_REVIEW가 REJECTION_CANCELLED를 제외하므로 서버 status를 생략한다.
+ */
+export function mapApprovalStatusToApiListQuery(
+  status?: ApplicantApprovalStatusKey
+): ApplicationApprovalApiListQuery {
+  if (!status) return {}
+  switch (status) {
+    case 'approved':
+      return { status: 'APPROVED' }
+    case 'rejected':
+      return { statusGroup: ADMIN_LIST_STATUS_GROUP_APPLICATION_REJECTED }
+    case 'cancelled':
+      return { status: 'CANCELLED' }
+    case 'pending':
+      return {}
+    default:
+      return {}
+  }
+}
+
+/** 단일 status= 정확 일치. 신청 반려 그룹 조회에는 {@link mapApprovalStatusToApiListQuery}를 쓴다. */
 export function mapApprovalStatusToApiFilter(
   status?: ApplicantApprovalStatusKey
 ): string | undefined {
-  if (!status) return undefined
-  switch (status) {
-    case 'approved':
-      return 'APPROVED'
-    case 'rejected':
-      return 'REJECTED'
-    case 'cancelled':
-      return 'CANCELLED'
-    case 'pending':
-      return 'WAITING_REVIEW'
-    default:
-      return undefined
+  if (status === 'rejected') return undefined
+  if (status === 'pending') return 'WAITING_REVIEW'
+  return mapApprovalStatusToApiListQuery(status).status
+}
+
+function trimListQueryValue(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : undefined
+}
+
+function readUiApprovalStatusFilter(value: unknown): ApplicantApprovalStatusKey | undefined {
+  if (value === 'pending' || value === 'approved' || value === 'rejected' || value === 'cancelled') {
+    return value
   }
+  return undefined
+}
+
+export function buildGeneralOrganizationApplicationsApiQuery(
+  filters: Record<string, unknown> = {}
+): ApplicationApprovalApiListQuery & { organizationName?: string; teacherName?: string } {
+  const organizationName = trimListQueryValue(filters.organizationName)
+  const teacherName = trimListQueryValue(filters.teacherName)
+  return {
+    ...mapApprovalStatusToApiListQuery(readUiApprovalStatusFilter(filters.approvalStatus)),
+    ...(organizationName ? { organizationName } : {}),
+    ...(teacherName ? { teacherName } : {}),
+  }
+}
+
+export function buildGeneralIndividualApplicationsApiQuery(
+  filters: Record<string, unknown> = {}
+): ApplicationApprovalApiListQuery & { keyword?: string } {
+  const keyword = trimListQueryValue(filters.applicantName)
+  return {
+    ...mapApprovalStatusToApiListQuery(readUiApprovalStatusFilter(filters.approvalStatus)),
+    ...(keyword ? { keyword } : {}),
+  }
+}
+
+export function buildGeneralInstructorApplicationsApiQuery(
+  filters: Record<string, unknown> = {}
+): ApplicationApprovalApiListQuery & { keyword?: string } {
+  const keyword = trimListQueryValue(filters.instructorName)
+  return {
+    ...mapApprovalStatusToApiListQuery(readUiApprovalStatusFilter(filters.approvalStatus)),
+    ...(keyword ? { keyword } : {}),
+  }
+}
+
+export function serializeApplicationsApiQuery(query: Record<string, unknown>): string {
+  return JSON.stringify({
+    status: query.status ?? '',
+    statusGroup: query.statusGroup ?? '',
+    keyword: query.keyword ?? '',
+    organizationName: query.organizationName ?? '',
+    teacherName: query.teacherName ?? '',
+  })
 }
 
 /**
@@ -631,6 +716,7 @@ export function mapOrganizationApplicationToApplicantSchoolRow(
     teacherName: dto.teacherName?.trim() || '-',
     appliedAt: dto.submittedAt ?? undefined,
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
+    applicationStatus: dto.applicationStatus,
     participationRejectionReason: dto.rejectReason?.trim() || undefined,
     approvalNotificationSentAt: formatOrganizationResultNotificationSentAt(
       readResultNotificationSentAt(dto)
@@ -760,6 +846,7 @@ export function mapOrganizationApplicationDetailToApplicantSchoolRow(
     contact: teacherPhone,
     appliedAt: dto.submittedAt ?? undefined,
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
+    applicationStatus: dto.applicationStatus,
     participationRejectionReason: dto.rejectReason?.trim() || undefined,
     approvalNotificationSentAt: formatOrganizationResultNotificationSentAt(
       readResultNotificationSentAt(dto)
@@ -887,6 +974,7 @@ export function mapInstructorApplicationToApplicantInstructorRow(
     schoolName: primarySchoolName && primarySchoolName !== '-' ? primarySchoolName : '',
     preferredSchools: preferredSchools.length > 0 ? preferredSchools : undefined,
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
+    applicationStatus: dto.applicationStatus,
     evaluationGrade: formatJaEvaluationGradeLabel(dto.jaEvaluationGrade),
     instructorFeeGradeLabel:
       formatInstructorFeeGradeLabel(readRuntimeString(dto, 'instructorFeeGradeSnapshot')) ||
@@ -1004,6 +1092,7 @@ export function mapInstructorApplicationDetailToApplicantRow(
     accountNumber: basicInfoSupplement.accountNumber,
     accountHolder: basicInfoSupplement.accountHolder,
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
+    applicationStatus: dto.applicationStatus ?? base.applicationStatus,
     evaluationGrade: formatJaEvaluationGradeLabel(dto.jaEvaluationGrade) ?? base.evaluationGrade,
     instructorFeeGradeLabel:
       formatInstructorFeeGradeLabel(dto.feePolicy?.instructorFeeGrade) ||
@@ -1356,6 +1445,7 @@ export function mapIndividualApplicationToApplicantRow(
       finalResultStatus: dto.finalResultStatus,
       reserveRank: dto.reserveRank,
     }),
+    applicationStatus: dto.applicationStatus,
     memberId: dto.memberId != null ? String(dto.memberId) : undefined,
     affiliationOrganizationId: affiliation.affiliationOrganizationId,
     adminComment: dto.managerComment ?? undefined,
@@ -1463,6 +1553,7 @@ export function mapIndividualApplicationDetailToApplicantRow(
       finalResultStatus: screening?.finalResultStatus,
       reserveRank: screening?.reserveRank,
     }),
+    applicationStatus: dto.applicationStatus ?? base.applicationStatus,
     adminComment: dto.managerComment ?? undefined,
     programId: toId(dto.programId) || base.programId,
     preferredEducationSchedules:
@@ -1749,6 +1840,7 @@ export function mapVolunteerApplicationToGeneralVolunteerApplicantRow(
     availableActions: dto.availableActions ?? [],
     applicationStatus: dto.applicationStatus ?? null,
     documentScreeningStatus: mapApiDocumentStatusToScreeningStatus(dto.documentStatus),
+    documentRejectionReason: dto.rejectReason?.trim() || undefined,
     interviewSlotCount: dto.interviewAvailabilityCount ?? 0,
     interviewAssignmentStatus: mapVolunteerInterviewAssignmentFromWire({
       interviewStatus: dto.interviewStatus,
@@ -1848,6 +1940,7 @@ export function mapVolunteerApplicationDetailToApplicantRow(
     availableActions: dto.availableActions ?? base.availableActions,
     applicationStatus: dto.applicationStatus ?? base.applicationStatus,
     documentScreeningStatus: mapApiDocumentStatusToScreeningStatus(screening?.documentStatus),
+    documentRejectionReason: screening?.rejectReason?.trim() || base.documentRejectionReason,
     interviewSlotCount: dto.interviewAvailabilityCount ?? base.interviewSlotCount,
     interviewAssignmentStatus,
     interviewAssignmentApiStatus:

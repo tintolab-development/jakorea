@@ -5,7 +5,7 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { AbsenceReasonAttachmentItem } from './absenceReasonAttachmentItem';
+import type { AbsenceReasonAdminListItemResponseReviewStatus } from './absenceReasonAdminListItemResponseReviewStatus';
 
 export interface AbsenceReasonAdminListItemResponse {
   submissionId?: number;
@@ -14,18 +14,25 @@ export interface AbsenceReasonAdminListItemResponse {
   scheduleId?: number;
   participantId?: number;
   memberId?: number;
-  memberName?: string;
-  scheduleName?: string;
-  scheduleStartAt?: string;
+  /** @nullable */
+  memberName?: string | null;
+  /** @nullable */
+  scheduleName?: string | null;
+  /** @nullable */
+  scheduleStartAt?: string | null;
   reason?: string;
-  reviewStatus?: string;
-  reviewComment?: string;
+  reviewStatus?: AbsenceReasonAdminListItemResponseReviewStatus;
+  /** @nullable */
+  reviewComment?: string | null;
   revisionNo?: number;
   latestRevision?: boolean;
   fileObjectIds?: number[];
-  originalFileNames?: string[];
-  attachments?: AbsenceReasonAttachmentItem[];
-  submittedAt?: string;
-  reviewedAt?: string;
-  reviewedByAdminId?: number;
+  /** fileObjectIds와 같은 순서. 이름이 없으면 그 칸은 null. */
+  originalFileNames?: (string | null)[];
+  /** @nullable */
+  submittedAt?: string | null;
+  /** @nullable */
+  reviewedAt?: string | null;
+  /** @nullable */
+  reviewedByAdminId?: number | null;
 }

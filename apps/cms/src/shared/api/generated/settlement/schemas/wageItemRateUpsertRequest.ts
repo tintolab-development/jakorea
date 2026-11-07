@@ -7,7 +7,10 @@
  */
 
 export interface WageItemRateUpsertRequest {
-  id?: number;
-  unitCount?: number;
-  amount?: number;
+  /** @nullable */
+  id?: number | null;
+  /** @nullable */
+  unitCount?: number | null;
+  /** @nullable */
+  amount?: number | null;
 }

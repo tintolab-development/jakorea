@@ -57,6 +57,22 @@ export function withProgramDetailTdDivider(segments: ReactNode[]) {
   )
 }
 
-export function ProgramDetailTdSegmentWrap({ children }: { children: ReactNode }) {
-  return <div className="program-detail-td-segment-wrap">{children}</div>
+export function ProgramDetailTdSegmentWrap({
+  children,
+  className,
+}: {
+  children: ReactNode
+  className?: string
+}) {
+  return (
+    <div
+      className={
+        className
+          ? `program-detail-td-segment-wrap ${className}`
+          : 'program-detail-td-segment-wrap'
+      }
+    >
+      {children}
+    </div>
+  )
 }

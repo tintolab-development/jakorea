@@ -9,7 +9,8 @@
 export interface ProgramPostUnreadReminderResponse {
   programId?: number;
   postId?: number;
-  notificationEventId?: number;
+  /** @nullable */
+  notificationEventId?: number | null;
   queued?: boolean;
   recipientCount?: number;
   unreadCount?: number;

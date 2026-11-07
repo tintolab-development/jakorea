@@ -5,28 +5,52 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { MemberLectureFeePreviewInstructorFeeCalculationUnit } from './memberLectureFeePreviewInstructorFeeCalculationUnit'
-import type { MemberLectureFeePreviewLectureFeeType } from './memberLectureFeePreviewLectureFeeType'
-import type { MemberLectureFeePreviewSettlementBlockerCode } from './memberLectureFeePreviewSettlementBlockerCode'
+import type { MemberLectureFeePreviewInstructorFeeCalculationUnit } from './memberLectureFeePreviewInstructorFeeCalculationUnit';
+import type { MemberLectureFeePreviewLectureFeeType } from './memberLectureFeePreviewLectureFeeType';
 
 /**
- * 제출 전 미리보기. 제출 스냅샷 CalcInfo와 산식 동일. FE는 시급×분/60을 계산하지 않으며 프로그램 overlay·프로필 defaultFeeGrade·카탈로그 한도로 hydrate 하지 않는다. PER_HOUR는 레거시 저장값으로 차시당 단가와 같다. PER_CLASS=차시당 단가×인정 차시. PER_LECTURE/PER_SESSION=출강 1회 고정. FIXED=고정 금액. totalLectureFee는 실적 확정 총액만(예정시간 추정 금지). 없으면 null. 금액 단위는 원(정수). 키는 항상 존재.
+ * 제출 전 미리보기. totalLectureFee는 배정 실적 시각이 있을 때만 확정 금액이다. 예정 startAt~endAt으로 확정액을 채우지 않는다. 레거시 PER_HOUR와 PER_CLASS는 프로그램 단가×인정 차시. PER_SESSION/PER_LECTURE/FIXED는 단가=총액. educationSessionCount는 일정 차시 번호이며 곱하지 않는다. 실적 없으면 totalLectureFee=null, settlementBlockerCode=SETTLEMENT_ACTUAL_TRAINING_TIME_REQUIRED. 금액은 원(정수). 키는 항상 존재. Gemini lectureFeeBasisItems는 포함하지 않는다.
+ * @nullable
  */
-export interface MemberLectureFeePreview {
-  /** 이 배정/프로그램에 적용된 강사비 유형 코드. GRADE_1=1급 강사비, GRADE_2=2급 강사비, GRADE_3=3급 강사비. 코드만 내려 주고 표시 라벨은 FE. 없으면 null. */
-  lectureFeeType?: MemberLectureFeePreviewLectureFeeType
-  /** 강사비 배정 단위. FE 표시: PER_HOUR/PER_CLASS=차시당(PER_HOUR는 레거시), PER_SESSION/PER_LECTURE=출강 1회당, FIXED=단위 없이 금액만. */
-  instructorFeeCalculationUnit?: MemberLectureFeePreviewInstructorFeeCalculationUnit
-  /** 책정 단가(원). 시안 강사비 배정 금액. 총액 아님. 없으면 null. */
-  instructorFeeAmount?: number | null
-  /** 이번 회차 총 강사비(원, 정수). 실적 확정액만. FE 계산 금지. 0도 확정 0원. 실적 없으면 null. */
-  totalLectureFee?: number | null
-  /** 이번 일정 차시 번호. sessionNo와 동일. 인정 차시·총액 배수가 아님. 없으면 null. */
-  educationSessionCount?: number | null
-  /** 실적 분으로 산출한 인정 차시. 실적 없으면 null. 0은 0차시. */
-  recognizedSessionCount?: number | null
-  /** 배정 actual_training_* 분. 없으면 null. */
-  actualTrainingMinutes?: number | null
-  /** 정산 확정/신청 차단 코드. 없으면 null. */
-  settlementBlockerCode?: MemberLectureFeePreviewSettlementBlockerCode
-}
+export type MemberLectureFeePreview = {
+  /**
+     * 강의비 유형 코드. GRADE_1=1급 강의비, GRADE_2=2급 강의비, GRADE_3=3급 강의비. 없으면 null. FE 매핑: lectureFeePreview.lectureFeeType. 프로필 instructorFeeGradeLabel 사용 금지.
+     * @nullable
+     */
+  lectureFeeType?: MemberLectureFeePreviewLectureFeeType;
+  /**
+     * 저장된 계산 단위. 레거시 PER_HOUR는 시급 비례가 아니라 차시당 단가. PER_CLASS=차시당, PER_SESSION/PER_LECTURE=출강 1회당, FIXED=고정 금액.
+     * @nullable
+     */
+  instructorFeeCalculationUnit?: MemberLectureFeePreviewInstructorFeeCalculationUnit;
+  /**
+     * 프로그램에 저장된 차시당 또는 1회당 단가(원). 총액 아님. 카탈로그 최대 한도로 대체하지 않음.
+     * @nullable
+     */
+  instructorFeeAmount?: number | null;
+  /**
+     * 실적 시간 기준 확정 강의비(원). 예: 실적 90분=2차시, 단가 300000 → 600000. 실적 10분=0. 실적 없음 → null. educationSessionCount를 곱하지 않음.
+     * @nullable
+     */
+  totalLectureFee?: number | null;
+  /**
+     * 이번 일정 차시 번호. 같은 item의 sessionNo와 동일. 시수/횟수 배수가 아님.
+     * @nullable
+     */
+  educationSessionCount?: number | null;
+  /**
+     * 실적 시간으로 환산한 인정 차시. 실적 없으면 null.
+     * @nullable
+     */
+  recognizedSessionCount?: number | null;
+  /**
+     * 배정 실적 시작~종료 분. 실적 없으면 null.
+     * @nullable
+     */
+  actualTrainingMinutes?: number | null;
+  /**
+     * 확정 강사비를 신청할 수 없을 때 코드. 확정 가능하면 null.
+     * @nullable
+     */
+  settlementBlockerCode?: string | null;
+} | null;

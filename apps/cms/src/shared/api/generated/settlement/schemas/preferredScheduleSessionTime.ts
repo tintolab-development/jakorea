@@ -7,6 +7,7 @@
  */
 
 export interface PreferredScheduleSessionTime {
+  /** @minimum 1 */
   sessionIndex?: number;
   classPeriod?: string;
   startTime?: string;

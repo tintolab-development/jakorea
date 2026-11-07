@@ -130,14 +130,15 @@ function mapNotice(item: PortalNoticeListItem): EducationInProgressNotice | null
 function mapNoticeAttachmentListItem(
   item: PortalNoticeAttachmentListItem
 ): EducationInProgressFile | null {
-  if (item.attachmentId == null || item.postId == null) return null
+  if (item.attachmentId == null) return null
+  const postId = item.postId != null && item.postId > 0 ? String(item.postId) : undefined
   return {
     id: String(item.attachmentId),
     fileObjectId: item.fileObjectId,
     fileName: item.originalFileName?.trim() || '첨부파일',
     uploadedAt: item.createdAt ?? '',
     fileSizeBytes: item.fileSize ?? 0,
-    postId: String(item.postId),
+    ...(postId ? { postId } : {}),
     downloadPath: item.downloadPath?.trim() || undefined,
   }
 }
@@ -174,6 +175,12 @@ function mapNoticeDetail(detail: PortalNoticeDetail): {
     },
     files: (detail.attachments ?? []).flatMap(file => {
       if (file.attachmentId == null) return []
+      const attachmentPostId =
+        file.postId != null && file.postId > 0
+          ? String(file.postId)
+          : detail.postId != null && detail.postId > 0
+            ? String(detail.postId)
+            : undefined
       return [
         {
           id: String(file.attachmentId),
@@ -181,7 +188,7 @@ function mapNoticeDetail(detail: PortalNoticeDetail): {
           fileName: file.originalFileName?.trim() || '첨부파일',
           uploadedAt: file.createdAt ?? detail.createdAt ?? '',
           fileSizeBytes: file.fileSize ?? 0,
-          postId: id,
+          ...(attachmentPostId ? { postId: attachmentPostId } : {}),
           downloadPath: file.downloadPath?.trim() || undefined,
         },
       ]
@@ -706,9 +713,11 @@ export function useToggleApplicationNoticeReactionMutation(
 
 export function useApplicationSchedulesQuery(
   applicationType: ProgramApplicationType | null | undefined,
-  applicationId: string | null | undefined
+  applicationId: string | null | undefined,
+  options?: { programType?: string | null },
 ) {
   const enabled = isActivityQueryEnabled(applicationType, applicationId)
+  const programType = options?.programType
   const query = useQuery({
     queryKey: platformQueryKeys.mypage.programApplications.schedules(
       applicationType ?? '',
@@ -726,10 +735,17 @@ export function useApplicationSchedulesQuery(
             educationStructure: query.data?.educationStructure,
             sessionRound: query.data?.sessionRound,
             applicationType,
+            programType,
           }),
         ),
       ),
-    [applicationType, query.data?.educationStructure, query.data?.items, query.data?.sessionRound],
+    [
+      applicationType,
+      programType,
+      query.data?.educationStructure,
+      query.data?.items,
+      query.data?.sessionRound,
+    ],
   )
   return {
     enabled,
@@ -1032,7 +1048,9 @@ export function useApplicationSettlementsQuery(
   programId: string | null | undefined,
   options?: { operationEndAt?: string | null; programType?: string | null; enabled?: boolean }
 ) {
-  const schedules = useApplicationSchedulesQuery(applicationType, applicationId)
+  const schedules = useApplicationSchedulesQuery(applicationType, applicationId, {
+    programType: options?.programType,
+  })
   const enabled = schedules.enabled && options?.enabled !== false
   const individualAudience = shouldUseIndividualSettlementSchedulesApi(
     applicationType,

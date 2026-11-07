@@ -42,6 +42,8 @@ export interface ParticipatingInstitutionApplicationInfoProps {
   onAdminCommentDraftChange?: (value: string) => void
   adminCommentError?: string
   programProgressCell: ReactNode
+  /** 프로그램 승인 현황 + 알림 재발송. 없으면 행을 숨긴다. */
+  programApprovalStatusCell?: ReactNode
   textbookCell: ReactNode
   combinedClassCell: ReactNode
   hideCombinedClass?: boolean
@@ -163,6 +165,7 @@ export function ParticipatingInstitutionApplicationInfo({
   onAdminCommentDraftChange,
   adminCommentError,
   programProgressCell,
+  programApprovalStatusCell,
   textbookCell,
   combinedClassCell,
   hideCombinedClass = false,
@@ -224,6 +227,16 @@ export function ParticipatingInstitutionApplicationInfo({
               edit={programProgressCell}
             />
           </DetailInfoForm.Row>
+          {programApprovalStatusCell ? (
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="프로그램 승인 현황"
+                fullRow
+                readOnlyDisplay
+                view={programApprovalStatusCell}
+              />
+            </DetailInfoForm.Row>
+          ) : null}
           {hideCombinedClass ? (
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field

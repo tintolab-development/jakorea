@@ -1,4 +1,7 @@
-import type { SettlementItemSettingDetail } from '@/features/settlement-management/model/settlement-item-setting-detail'
+import {
+  sanitizeSettlementConfigLines,
+  type SettlementItemSettingDetail,
+} from '@/features/settlement-management/model/settlement-item-setting-detail'
 import type { SettlementItemSettingRow } from '@/features/settlement-management/model/settlement-item-settings'
 import {
   evidenceRequiredYnFromSubmission,
@@ -13,7 +16,6 @@ import type {
   SettlementConfigUpdateRequest,
   WageItemResponse,
 } from '@/shared/api/generated/settlement/schemas'
-
 function stripDeprecatedWithholdingKeys(json: string): string {
   try {
     const parsed: unknown = JSON.parse(json)
@@ -27,7 +29,7 @@ function stripDeprecatedWithholdingKeys(json: string): string {
   }
 }
 
-function mergeDetailJson(existing: string | undefined, patch: Record<string, unknown>): string {
+function mergeDetailJson(existing: string | null | undefined, patch: Record<string, unknown>): string {
   let base: Record<string, unknown> = {}
   if (existing?.trim()) {
     try {
@@ -66,10 +68,14 @@ function wageItemToUpsert(
   detail: SettlementItemSettingDetail,
   meta: { title: string; description: string; emojiOverride?: string | null }
 ): NonNullable<SettlementConfigUpdateRequest['wageItems']>[number] {
+  const qualificationLines = sanitizeSettlementConfigLines(detail.qualificationLines)
+  const remarkLines = sanitizeSettlementConfigLines(detail.remarkLines)
   const detailPatch: Record<string, unknown> = {
     compareKind: detail.compareKind,
     basicFeeWon: detail.basicFeeWon,
     longDistanceFeeWon: detail.longDistanceFeeWon,
+    qualificationLines,
+    remarkLines,
   }
   if (detail.layout === 'gemini') {
     // 자체 연수 → sessionNWon + rateItems. 대학생은 detailJson만(rateItems 단일). null 키는 생략(4차시 대학생 등).
@@ -100,9 +106,9 @@ function wageItemToUpsert(
           { unitCount: 4, amount: detail.geminiSession4Won ?? 0 },
         ]
       : item.rateItems?.map(rate => ({
-          id: rate.id,
-          unitCount: rate.unitCount,
-          amount: rate.amount,
+          id: typeof rate.id === 'number' ? rate.id : undefined,
+          unitCount: typeof rate.unitCount === 'number' ? rate.unitCount : 0,
+          amount: typeof rate.amount === 'number' ? rate.amount : 0,
         }))
 
   return {
@@ -117,8 +123,8 @@ function wageItemToUpsert(
     layout: item.layout,
     basisHours: detail.basisHours,
     maxLimitWon: detail.maxLimitWon ?? undefined,
-    qualificationLines: detail.qualificationLines,
-    remarkLines: detail.remarkLines,
+    qualificationLines,
+    remarkLines,
     description: meta.description,
     detailJson: (() => {
       const merged = mergeDetailJson(item.detailJson, detailPatch)
@@ -161,8 +167,8 @@ function paymentItemToUpsert(
 
   const detailPatch: Record<string, unknown> = {
     evidenceSubmission: detail.evidenceSubmission,
-    qualificationLines: detail.qualificationLines,
-    remarkLines: detail.remarkLines,
+    qualificationLines: sanitizeSettlementConfigLines(detail.qualificationLines),
+    remarkLines: sanitizeSettlementConfigLines(detail.remarkLines),
   }
   if (detail.layout === 'transport') {
     detailPatch.transportCommuteMode = detail.transportCommuteMode
@@ -205,7 +211,7 @@ function deductionItemToUpsert(
 ): NonNullable<SettlementConfigUpdateRequest['deductionItems']>[number] {
   return {
     id: item.id,
-    itemName: meta.title,
+    itemName: item.itemName ?? '',
     deductionRate: item.deductionRate,
     deductionAmount: item.deductionAmount,
     useYn: item.useYn,
@@ -215,8 +221,8 @@ function deductionItemToUpsert(
     description: meta.description,
     detailJson: stripDeprecatedWithholdingKeys(
       mergeDetailJson(item.detailJson, {
-        qualificationLines: detail.qualificationLines,
-        remarkLines: detail.remarkLines,
+        qualificationLines: sanitizeSettlementConfigLines(detail.qualificationLines),
+        remarkLines: sanitizeSettlementConfigLines(detail.remarkLines),
         withholdingExclusionMaxWon: detail.withholdingExclusionMaxWon,
         withholdingEarnedIncomeDeductionWon: detail.withholdingEarnedIncomeDeductionWon,
         withholdingTaxRateBusiness: detail.withholdingTaxRateBusiness,

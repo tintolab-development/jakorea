@@ -5,11 +5,12 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { Item } from './item';
+import type { CertificateRosterBulkIssueItem } from './certificateRosterBulkIssueItem';
 
 export interface CertificateRosterBulkIssueResponse {
-  requestedCount?: number;
-  issuedCount?: number;
-  reusedCount?: number;
-  items?: Item[];
+  requestedCount: number;
+  /** Number of newly issued items; excludes reused issues. */
+  issuedCount: number;
+  reusedCount: number;
+  items: CertificateRosterBulkIssueItem[];
 }

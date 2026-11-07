@@ -6,12 +6,11 @@
  * OpenAPI spec version: v9
  */
 
-/**
- * 회원 연동 소셜 계정(CONNECTED provider만 노출)
- */
 export interface MemberLinkedSocialAccountResponse {
   provider?: string;
   status?: string;
-  maskedProviderUserId?: string;
-  linkedAt?: string;
+  /** @nullable */
+  maskedProviderUserId?: string | null;
+  /** @nullable */
+  linkedAt?: string | null;
 }

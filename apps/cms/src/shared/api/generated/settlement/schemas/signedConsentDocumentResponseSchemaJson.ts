@@ -6,4 +6,8 @@
  * OpenAPI spec version: v9
  */
 
-export type SignedConsentDocumentResponseSchemaJson = {[key: string]: unknown};
+/**
+ * Always null; this consent has no WritingFormDraft.
+ * @nullable
+ */
+export type SignedConsentDocumentResponseSchemaJson = { [key: string]: unknown } | null;

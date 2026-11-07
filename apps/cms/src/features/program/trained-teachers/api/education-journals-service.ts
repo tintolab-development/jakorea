@@ -2,6 +2,7 @@ import JSZip from 'jszip'
 import type { TrainedTeachersEducationJournalEntry } from '@/features/program/trained-teachers/model/institution-detail'
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
+import { TEXTBOOK_NOT_USED_OPTION_VALUE } from '@/features/program/general/lib/individual-applicant-textbook'
 import { downloadAdminFile, loadAdminFileBlob } from '@/shared/lib/admin-file-upload'
 import { downloadFile } from '@/shared/lib/file-download'
 import { downloadBlob } from '@/shared/utils/file-download'
@@ -18,7 +19,10 @@ import {
 } from './education-journals-client'
 import type { EducationJournalGeneratedFileJobResponse } from '@/shared/api/generated/dashboard/schemas/educationJournalGeneratedFileJobResponse'
 import { listTrainedTeacherOrganizationApplications } from './organization-applications-service'
-import { mapPreferredScheduleBlocksToSessions } from './organization-applications-adapters'
+import {
+  mapPreferredScheduleBlocksToSessions,
+  resolveTrainedTeacherTextbookDeliveryBadge,
+} from './organization-applications-adapters'
 import type { EducationJournalCreateRequest } from '@/shared/api/generated/dashboard/schemas/educationJournalCreateRequest'
 
 function assertRemoteReady(): void {
@@ -179,6 +183,32 @@ export async function downloadTrainedTeacherEducationJournalZipJob(
   await downloadZipFromEndpoint(fileName, job.generatedFileEndpoint)
 }
 
+function hasSelectedTrainedTeacherTextbook(row: ApplicantSchoolRow): boolean {
+  const textbookId = row.detail?.textbookId?.trim() ?? ''
+  const textbookName = row.textbookName?.trim() ?? ''
+  const hasKits =
+    (typeof row.textbookKits === 'number' && row.textbookKits > 0) ||
+    (typeof row.textbookQuantity === 'number' && row.textbookQuantity > 0)
+  return (
+    (textbookId !== '' && textbookId !== TEXTBOOK_NOT_USED_OPTION_VALUE) ||
+    (textbookName !== '' && textbookName !== '해당 없음' && textbookName !== '-') ||
+    hasKits
+  )
+}
+
+/**
+ * 목록 교재 배송 현황. 저장 상태가 없고 교재가 지정돼 있으면 배송 전.
+ * 교재가 없으면 해당 없음(-).
+ */
+export function resolveTrainedTeacherParticipatingTextbookStatus(
+  row: ApplicantSchoolRow
+): ParticipatingSchoolRow['textbookStatus'] {
+  return resolveTrainedTeacherTextbookDeliveryBadge(
+    row.textbookStatus,
+    hasSelectedTrainedTeacherTextbook(row)
+  )
+}
+
 /** 승인된 기관 신청 → 진행 현황 참여 기관 목록 */
 export function mapApplicantSchoolToParticipatingSchool(
   row: ApplicantSchoolRow,
@@ -198,7 +228,7 @@ export function mapApplicantSchoolToParticipatingSchool(
     classCount: row.classCount,
     studentCount: row.studentCount,
     lectureRound: row.lectureRound?.trim() || lectureRoundFromCounts || '',
-    textbookStatus: row.textbookStatus ?? 'not_applicable',
+    textbookStatus: resolveTrainedTeacherParticipatingTextbookStatus(row),
     approvalStatus: 'approved',
     teacherName: row.teacherName || '-',
     teacherMemberId: row.teacherMemberId,
@@ -207,9 +237,9 @@ export function mapApplicantSchoolToParticipatingSchool(
     /** TT는 강사 Relation 없음 — 합성하지 않음 */
     instructors: '',
     programId: row.programId,
-    sessions: row.sessions?.length
-      ? row.sessions
-      : mapPreferredScheduleBlocksToSessions(row.preferredScheduleBlocks),
+    /** 운영 일정 SSOT. 목록 GET에는 educationSchedules가 없으므로 []. 희망 지망으로 채우지 않는다. */
+    sessions: row.educationScheduleSessions ?? [],
+    hopeEducationSessions: mapPreferredScheduleBlocksToSessions(row.preferredScheduleBlocks),
     preferredScheduleBlocks: row.preferredScheduleBlocks,
     educationTarget: row.educationTarget,
     progressLabel: row.progressLabel,
@@ -217,6 +247,8 @@ export function mapApplicantSchoolToParticipatingSchool(
     completedEducationRoundCount: row.completedEducationRoundCount,
     textbookName: row.textbookName,
     textbookId: row.detail?.textbookId,
+    ...(row.textbookKits != null ? { textbookKits: row.textbookKits } : {}),
+    ...(row.textbookQuantity != null ? { textbookQuantity: row.textbookQuantity } : {}),
     teacherPhone: row.contact,
     teacherMobile: row.contact,
     teacherEmail: row.detail?.teacherEmail,

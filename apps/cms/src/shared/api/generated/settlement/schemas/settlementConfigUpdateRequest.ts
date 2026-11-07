@@ -10,13 +10,20 @@ import type { PaymentItemUpsertRequest } from './paymentItemUpsertRequest';
 import type { WageItemUpsertRequest } from './wageItemUpsertRequest';
 
 export interface SettlementConfigUpdateRequest {
-  configName?: string;
-  effectiveFrom?: string;
-  effectiveTo?: string;
-  dailyIncomeThreshold?: number;
-  earnedIncomeDeduction?: number;
-  smallTaxExemptionThreshold?: number;
-  useYn?: boolean;
+  /** @nullable */
+  configName?: string | null;
+  /** @nullable */
+  effectiveFrom?: string | null;
+  /** @nullable */
+  effectiveTo?: string | null;
+  /** @nullable */
+  dailyIncomeThreshold?: number | null;
+  /** @nullable */
+  earnedIncomeDeduction?: number | null;
+  /** @nullable */
+  smallTaxExemptionThreshold?: number | null;
+  /** @nullable */
+  useYn?: boolean | null;
   wageItems?: WageItemUpsertRequest[];
   paymentItems?: PaymentItemUpsertRequest[];
   deductionItems?: DeductionItemUpsertRequest[];

@@ -21,6 +21,7 @@ export type ApplicantNotificationResendModalProps = {
   subjectKind: ApplicantNotificationResendSubjectKind
   subjectName: string
   approvalStatus: ApplicantNotificationResendApprovalStatus
+  storedRejectionReason?: string | null
   onCancel: () => void
   onConfirm: (payload: PermissionModalPayload) => void
   confirmLoading?: boolean
@@ -32,12 +33,17 @@ export function ApplicantNotificationResendModal({
   subjectKind,
   subjectName,
   approvalStatus,
+  storedRejectionReason,
   onCancel,
   onConfirm,
   confirmLoading,
   zIndex,
 }: ApplicantNotificationResendModalProps) {
-  const requireReason = shouldShowApplicantNotificationResendReason(subjectKind, approvalStatus)
+  const requireReason = shouldShowApplicantNotificationResendReason(
+    subjectKind,
+    approvalStatus,
+    storedRejectionReason
+  )
 
   return (
     <PermissionModal

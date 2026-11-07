@@ -7,9 +7,9 @@
  */
 
 export interface PhoneIdentityConfirmRequest {
-  identityVerificationSessionId?: number;
+  identityVerificationSessionId: number;
   /**
-     * @minLength 0
+     * @minLength 1
      * @maxLength 512
      */
   profileToken: string;

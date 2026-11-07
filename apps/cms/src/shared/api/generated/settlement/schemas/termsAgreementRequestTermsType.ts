@@ -7,8 +7,7 @@
  */
 
 /**
- * 회원 동의 원장에 저장 가능한 canonical TERMS_TYPE입니다. CMS 약관 문서 관리의 전체 18개 타입 중 회원 동의 테이블에 저장되는 15개 canonical 타입과 지급조서 문서 입력 별칭 1개를 사용합니다. PAYMENT_STATEMENT_PRE_CONSENT 입력은 회원 원장의 PAYMENT_STATEMENT_CONSENT로 정규화됩니다.
- * @minLength 1
+ * 회원 동의 원장에 저장되는 15개 canonical TERMS_TYPE와 지급조서 문서 입력 별칭 PAYMENT_STATEMENT_PRE_CONSENT를 허용합니다. 별칭은 PAYMENT_STATEMENT_CONSENT로 정규화됩니다.
  */
 export type TermsAgreementRequestTermsType = typeof TermsAgreementRequestTermsType[keyof typeof TermsAgreementRequestTermsType];
 

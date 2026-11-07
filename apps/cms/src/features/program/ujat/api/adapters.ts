@@ -49,6 +49,7 @@ import {
   readProgramAuditNames,
   withExpectedUpdatedAt,
 } from '@/features/program/shared/lib/program-audit-names'
+import { mapProgramRoundsToWriteRequest } from '@/features/program/shared/lib/round-write'
 import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
 import { applyBusinessPeriodHistoriesFromDto } from '@/features/program/shared/lib/business-period-extend'
 import {
@@ -1306,6 +1307,7 @@ function coreRequest(
     educationTime: program.educationTime,
     teamDivision: program.teamDivision,
     educationProcess: program.educationProcess,
+    educationTargetDetail: program.educationTargetDetail,
     maleParticipants: program.maleParticipants,
     femaleParticipants: program.femaleParticipants,
     totalParticipants: program.totalParticipants,
@@ -1328,16 +1330,7 @@ function coreRequest(
     recruitmentGuide: program.recruitmentGuide,
     learningSupportContent: program.learningSupportContent,
     attachmentFileNames: program.attachmentFileNames,
-    rounds: program.rounds.map(round => ({
-      roundNumber: round.roundNumber,
-      startDate: dateOnlyValue(round.startDate),
-      endDate: dateOnlyValue(round.endDate),
-      capacity: round.capacity,
-      classCount: round.classCount,
-      status: round.status,
-      curriculum: round.curriculum,
-      deliveryType: round.deliveryType,
-    })),
+    rounds: mapProgramRoundsToWriteRequest(program, dateOnlyValue),
     serviceDetailJson: serializeServiceDetail(
       targetLevels?.length
         ? { ...program, targetLevels, targetLevel: targetLevels[0] }
@@ -1450,6 +1443,7 @@ function patchRequest(
   if (has('educationTime')) body.educationTime = merged.educationTime
   if (has('teamDivision')) body.teamDivision = merged.teamDivision
   if (has('educationProcess')) body.educationProcess = merged.educationProcess
+  if (has('educationTargetDetail')) body.educationTargetDetail = merged.educationTargetDetail
   if (has('maleParticipants')) body.maleParticipants = merged.maleParticipants
   if (has('femaleParticipants')) body.femaleParticipants = merged.femaleParticipants
   if (has('totalParticipants')) body.totalParticipants = merged.totalParticipants
@@ -1483,16 +1477,7 @@ function patchRequest(
   }
   if (has('attachmentFileNames')) body.attachmentFileNames = merged.attachmentFileNames
   if (has('rounds')) {
-    body.rounds = merged.rounds.map(round => ({
-      roundNumber: round.roundNumber,
-      startDate: dateOnlyValue(round.startDate),
-      endDate: dateOnlyValue(round.endDate),
-      capacity: round.capacity,
-      classCount: round.classCount,
-      status: round.status,
-      curriculum: round.curriculum,
-      deliveryType: round.deliveryType,
-    }))
+    body.rounds = mapProgramRoundsToWriteRequest(merged, dateOnlyValue)
   }
 
   // UJAT registration overlay 보존을 위해 patch 저장 시 serviceDetailJson은 항상 포함

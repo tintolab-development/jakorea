@@ -12,12 +12,27 @@ export interface EducationJournalGeneratedFileJobResponse {
   sourceDomain?: string;
   sourceId?: number;
   jobStatus?: string;
-  fileObjectId?: number;
-  generatedFileEndpoint?: string;
-  requestPayloadJson?: string;
-  resultSnapshotJson?: string;
-  failureReason?: string;
-  requestedAt?: string;
-  completedAt?: string;
+  /**
+     * MASKED에서는 null이며 UNMASKED에서만 원문
+     * @nullable
+     */
+  fileObjectId?: number | null;
+  /**
+     * 기본 응답에서 표시 가능한 출생 연도
+     * @nullable
+     */
+  birthYear?: number | null;
+  /** @nullable */
+  generatedFileEndpoint?: string | null;
+  /** @nullable */
+  requestPayloadJson?: string | null;
+  /** @nullable */
+  resultSnapshotJson?: string | null;
+  /** @nullable */
+  failureReason?: string | null;
+  /** @nullable */
+  requestedAt?: string | null;
+  /** @nullable */
+  completedAt?: string | null;
   availableActions?: string[];
 }

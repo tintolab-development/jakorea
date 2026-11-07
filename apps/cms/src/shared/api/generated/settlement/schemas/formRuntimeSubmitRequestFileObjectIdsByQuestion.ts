@@ -6,4 +6,7 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * @nullable
+ */
 export type FormRuntimeSubmitRequestFileObjectIdsByQuestion = {[key: string]: number[]} | null;

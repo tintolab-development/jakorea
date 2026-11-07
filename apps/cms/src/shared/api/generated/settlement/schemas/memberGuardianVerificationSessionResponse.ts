@@ -5,10 +5,11 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { MemberGuardianVerificationSessionResponseStatus } from './memberGuardianVerificationSessionResponseStatus';
 
 export interface MemberGuardianVerificationSessionResponse {
-  sessionId?: number;
-  statusToken?: string;
-  status?: string;
-  expiresAt?: string;
+  sessionId: number;
+  statusToken: string;
+  status: MemberGuardianVerificationSessionResponseStatus;
+  expiresAt: string;
 }

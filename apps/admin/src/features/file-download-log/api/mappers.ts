@@ -11,6 +11,7 @@ import { LOG_LIST_PAGE_SIZE } from '@/features/logs/shared/lib/list-page'
 import type { ExportFileDownloadsParams } from '@/shared/api/generated/logs/schemas/exportFileDownloadsParams'
 import type { FileDownloadLogItem } from '@/shared/api/generated/logs/schemas/fileDownloadLogItem'
 import type { FileDownloadsParams } from '@/shared/api/generated/logs/schemas/fileDownloadsParams'
+import { formatContainedPiiLead, parseContainedPiiTypes } from '@jakorea/domain/shared/file-download-password'
 import type { PageResponseFileDownloadLogItem } from '@/shared/api/generated/logs/schemas/pageResponseFileDownloadLogItem'
 
 export const LIST_PAGE_SIZE = LOG_LIST_PAGE_SIZE
@@ -43,12 +44,19 @@ export function toFileDownloadsExportParams(
 }
 
 function mapItem(row: FileDownloadLogItem): FileDownloadLog {
+  const extra = row as FileDownloadLogItem & {
+    downloadKind?: string
+    kind?: string
+    containedPiiTypes?: unknown
+  }
   return {
     id: String(row.id ?? ''),
     fileName: row.originalName ?? '',
     userName: row.adminName ?? '',
     downloadedAt: row.createdAt ?? '',
     ip: row.clientIp ?? '',
+    downloadKind: extra.downloadKind?.trim() || extra.kind?.trim() || row.sourceType || '',
+    containedPiiLabel: formatContainedPiiLead(parseContainedPiiTypes(extra.containedPiiTypes)),
   }
 }
 

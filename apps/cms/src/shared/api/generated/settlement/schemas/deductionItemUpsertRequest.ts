@@ -7,14 +7,24 @@
  */
 
 export interface DeductionItemUpsertRequest {
-  id?: number;
-  itemName?: string;
-  deductionRate?: string;
-  deductionAmount?: number;
-  useYn?: boolean;
-  iconKey?: string;
-  emojiOverride?: string;
-  layout?: string;
-  description?: string;
-  detailJson?: string;
+  /** @nullable */
+  id?: number | null;
+  /** @nullable */
+  itemName?: string | null;
+  /** @nullable */
+  deductionRate?: string | null;
+  /** @nullable */
+  deductionAmount?: number | null;
+  /** @nullable */
+  useYn?: boolean | null;
+  /** @nullable */
+  iconKey?: string | null;
+  /** @nullable */
+  emojiOverride?: string | null;
+  /** @nullable */
+  layout?: string | null;
+  /** @nullable */
+  description?: string | null;
+  /** @nullable */
+  detailJson?: string | null;
 }

@@ -7,7 +7,7 @@
  */
 
 /**
- * 집계 범위. YEAR=연간(paid_at/settlement year). PERIOD는 expected만 기간 필터된 경우에도 completed*\/settlementCount/paidCount는 여전히 YEAR.
+ * 집계 범위. YEAR=연간(paid_at/settlement year). completed*\/settlementCount/paidCount는 항상 YEAR.
  */
 export type SettlementBudgetSummaryResponseAggregationScope = typeof SettlementBudgetSummaryResponseAggregationScope[keyof typeof SettlementBudgetSummaryResponseAggregationScope];
 

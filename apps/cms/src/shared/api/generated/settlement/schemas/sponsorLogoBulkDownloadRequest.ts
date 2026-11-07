@@ -10,6 +10,7 @@ export interface SponsorLogoBulkDownloadRequest {
   /**
      * @minItems 1
      * @maxItems 100
+     * @items.minimum 1
      */
   sponsorIds: number[];
 }

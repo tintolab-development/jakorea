@@ -1,33 +1,28 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getKpiAchievementList } from '@/features/dashboard/api/admin-dashboard-service'
-import { toDashboardQueryParams } from '@/features/dashboard/api/dashboard-api-client'
+import {
+  normalizeDashboardProgramIds,
+  toDashboardQueryParams,
+} from '@/features/dashboard/api/dashboard-api-client'
 import { dashboardQueryKeys } from '@/features/dashboard/api/dashboard-query-keys'
 import { useDashboardQueryScope } from '@/features/dashboard/hooks/use-dashboard-query-scope'
 
 export function useKpiAchievementList(programIds: string[]) {
   const scope = useDashboardQueryScope()
-  const programIdsKey = useMemo(
-    () =>
-      programIds.length > 0
-        ? [...programIds].map(String).sort().join(',')
-        : '',
+  const normalizedIds = useMemo(
+    () => normalizeDashboardProgramIds(programIds),
     [programIds]
   )
   const queryParams = useMemo(
-    () =>
-      toDashboardQueryParams(
-        programIdsKey ? { programIds: programIdsKey.split(',') } : undefined
-      ),
-    [programIdsKey]
+    () => toDashboardQueryParams(normalizedIds ? { programIds: normalizedIds } : undefined),
+    [normalizedIds]
   )
 
   return useQuery({
     queryKey: dashboardQueryKeys.kpiProgress(scope, queryParams),
     queryFn: () =>
-      getKpiAchievementList(
-        programIdsKey ? { programIds: programIdsKey.split(',') } : undefined
-      ),
+      getKpiAchievementList(normalizedIds ? { programIds: normalizedIds } : undefined),
     staleTime: 60_000,
     refetchOnMount: false,
     refetchOnWindowFocus: false,

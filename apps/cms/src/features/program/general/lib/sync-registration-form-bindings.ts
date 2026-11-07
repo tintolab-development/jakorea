@@ -24,6 +24,7 @@ import {
   REGISTRATION_GENERAL_CATALOG_TEMPLATE_ID,
   pickOperationalFormBinding,
   programForApplicationFormEditor,
+  programFormBindingSlotKey,
   recruitmentApplicationBindingScope,
   resolveRowApplicationBinding,
   type OperationalFormSpec,
@@ -210,8 +211,11 @@ function bindingToUpdatePayload(
     formType: binding.formType ?? spec.formType,
     templateId: ids.templateId,
     templateVersionId: ids.templateVersionId,
-    targetType: binding.targetType,
-    targetRole: binding.targetRole ?? spec.targetRole,
+    targetType:
+      spec.targetRole != null && spec.targetRole !== ''
+        ? resolveFormBindingTargetType(spec.targetRole)
+        : binding.targetType,
+    targetRole: spec.targetRole ?? binding.targetRole,
     targetScope: scope?.targetScope ?? binding.targetScope,
     targetScopeId: scope?.targetScopeId ?? binding.targetScopeId,
     required: binding.required,
@@ -229,6 +233,16 @@ function selectBindingForOperationalSpec(
   const row = resolveRowApplicationBinding(program, bindings, spec)
   if (row.kind === 'missing') return undefined
   if (row.kind === 'binding') return row.binding
+  const scopedId = program.activeRecruitmentId
+  if (scopedId != null) {
+    const byScope = bindings.find(
+      item =>
+        item.active !== false &&
+        String(item.formType ?? '').trim().toUpperCase() === spec.formType &&
+        item.targetScopeId === scopedId
+    )
+    if (byScope != null) return byScope
+  }
   return pickOperationalFormBinding(bindings, { ...spec, catalogTemplateId })
 }
 
@@ -237,6 +251,10 @@ function withRecruitmentApplicationScope(
   spec: OperationalFormSpec,
   payload: ProgramFormBindingRequest
 ): ProgramFormBindingRequest {
+  const programType = program.backendProgramType?.trim().toUpperCase()
+  if (programType === 'UJAT' && spec.formType === 'APPLICATION') {
+    return sanitizeProgramFormBindingPayload(program, payload)
+  }
   const scoped = recruitmentApplicationBindingScope(program, spec.formType)
   if (scoped == null) return sanitizeProgramFormBindingPayload(program, payload)
   return sanitizeProgramFormBindingPayload(program, { ...payload, ...scoped })
@@ -306,14 +324,22 @@ async function createDraftVersionOnTemplate(
   return created.templateVersionId
 }
 
+function isFormVersionImmutableError(error: unknown): boolean {
+  const code = getApiErrorCode(error)
+  return code === 'FORM_VERSION_IMMUTABLE' || code === 'FORM_CATALOG_VERSION_IMMUTABLE'
+}
+
+const REGISTRATION_CATALOG_COPY_FORBIDDEN_MESSAGE =
+  '등록 양식 저장에 실패했습니다.\n관리자에게 문의해 주세요.'
+
 async function copyCatalogOperationalFormVersion(args: {
   sourceTemplateId: number
   sourceVersionId: number
   programId: string | number
   ownerProgramId?: number
-}): Promise<{ templateId: number; templateVersionId: number }> {
+}): Promise<{ templateId: number; templateVersionId: number; versionStatus?: string | null }> {
   if (isRegistrationCatalogTemplateId(args.sourceTemplateId)) {
-    throw new Error('시스템 제공 등록 양식은 프로그램 전용 COPY 대상이 아닙니다.')
+    throw new Error(REGISTRATION_CATALOG_COPY_FORBIDDEN_MESSAGE)
   }
   const copyOwnerProgramId = args.ownerProgramId ?? toOwnerProgramId(args.programId)
   try {
@@ -328,6 +354,7 @@ async function copyCatalogOperationalFormVersion(args: {
     return {
       templateId: copied.templateId ?? args.sourceTemplateId,
       templateVersionId: copied.templateVersionId,
+      versionStatus: copied.versionStatus ?? null,
     }
   } catch (error) {
     const code = getApiErrorCode(error)
@@ -340,7 +367,7 @@ async function copyCatalogOperationalFormVersion(args: {
       throw error
     }
     if (isRegistrationCatalogCopyPolicyError(error)) {
-      throw new Error('시스템 제공 등록 양식은 프로그램 전용 COPY 대상이 아닙니다.')
+      throw new Error(REGISTRATION_CATALOG_COPY_FORBIDDEN_MESSAGE)
     }
     if (isCopyFromNonCatalogOriginalError(error)) {
       const draftVersionId = await createDraftVersionOnTemplate(
@@ -348,7 +375,7 @@ async function copyCatalogOperationalFormVersion(args: {
         args.programId,
         args.sourceVersionId
       )
-      return { templateId: args.sourceTemplateId, templateVersionId: draftVersionId }
+      return { templateId: args.sourceTemplateId, templateVersionId: draftVersionId, versionStatus: 'DRAFT' }
     }
     throw error
   }
@@ -453,41 +480,83 @@ async function saveProgramScopedOperationalFormVersionOnce(input: {
       catalogTemplateId: catalog?.templateId,
       programId: args.program.id,
     })
-    if (plan.action === 'copy-from-catalog') {
-      if (isRegistrationCatalogTemplateId(sourceTemplateId)) {
-        return {
-          templateId: sourceTemplateId,
-          templateVersionId: catalog?.templateVersionId ?? args.versionId,
-        }
+    const copySource = (): {
+      sourceTemplateId: number
+      sourceVersionId: number
+    } | null => {
+      if (isRegistrationCatalogTemplateId(sourceTemplateId)) return null
+      if (isRegistrationCatalogTemplateId(catalog?.templateId)) return null
+      const copyFromOperationalCatalog =
+        catalog?.templateId != null &&
+        catalog.templateId !== sourceTemplateId &&
+        catalog.templateVersionId != null &&
+        !isRegistrationCatalogTemplateId(catalog.templateId)
+      return {
+        sourceTemplateId: copyFromOperationalCatalog ? catalog.templateId : sourceTemplateId,
+        sourceVersionId: copyFromOperationalCatalog ? catalog.templateVersionId : args.versionId,
       }
-      const copied = await copyCatalogOperationalFormVersion({
-        sourceTemplateId,
-        sourceVersionId: args.versionId,
+    }
+    const runCopy = async () => {
+      const source = copySource()
+      if (source == null) return null
+      return copyCatalogOperationalFormVersion({
+        ...source,
         programId: args.program.id,
         ownerProgramId: args.ownerProgramId,
       })
-      draftTemplateId = copied.templateId
-      draftVersionId = copied.templateVersionId
-    } else if (plan.action === 'create-draft-version') {
-      draftVersionId = await createDraftVersionOnTemplate(
-        sourceTemplateId,
-        args.program.id,
-        args.versionId
-      )
     }
 
-    const baseline = await loadFormTemplateVersionDraftByVersionId(args.templateCode, draftVersionId)
-    const draftForPut =
-      baseline?.draft != null ? coalesceScopedFormDraftForPut(baseline.draft, args.draft) : args.draft
+    if (plan.action === 'copy-from-catalog' || plan.action === 'create-draft-version') {
+      if (isRegistrationCatalogTemplateId(sourceTemplateId) || isRegistrationCatalogTemplateId(catalog?.templateId)) {
+        return {
+          templateId: catalog?.templateId ?? sourceTemplateId,
+          templateVersionId: catalog?.templateVersionId ?? args.versionId,
+        }
+      }
+      const copied = await runCopy()
+      if (copied != null) {
+        draftTemplateId = copied.templateId
+        draftVersionId = copied.templateVersionId
+        if (String(copied.versionStatus ?? '').toUpperCase() === 'PUBLISHED') {
+          const recopy = await runCopy()
+          if (recopy != null) {
+            draftTemplateId = recopy.templateId
+            draftVersionId = recopy.templateVersionId
+          }
+        }
+      } else if (plan.action === 'create-draft-version') {
+        draftVersionId = await createDraftVersionOnTemplate(
+          sourceTemplateId,
+          args.program.id,
+          args.versionId
+        )
+      }
+    }
 
-    await saveFormTemplateVersionDraftByVersionId({
-      versionId: draftVersionId,
-      draft: draftForPut,
-      overlay: args.overlay,
-      editorState: args.editorState,
-      settingsJson: args.settingsJson,
-      templateCode: args.templateCode,
-    })
+    const putDraft = async (versionId: number) => {
+      const baseline = await loadFormTemplateVersionDraftByVersionId(args.templateCode, versionId)
+      const draftForPut =
+        baseline?.draft != null ? coalesceScopedFormDraftForPut(baseline.draft, args.draft) : args.draft
+      await saveFormTemplateVersionDraftByVersionId({
+        versionId,
+        draft: draftForPut,
+        overlay: args.overlay,
+        editorState: args.editorState,
+        settingsJson: args.settingsJson,
+        templateCode: args.templateCode,
+      })
+    }
+
+    try {
+      await putDraft(draftVersionId)
+    } catch (error) {
+      if (!isFormVersionImmutableError(error)) throw error
+      const recopy = await runCopy()
+      if (recopy == null) throw error
+      draftTemplateId = recopy.templateId
+      draftVersionId = recopy.templateVersionId
+      await putDraft(draftVersionId)
+    }
 
     publishedVersionId = await publishFormTemplateVersionById(draftVersionId)
     if (catalog != null && draftTemplateId !== catalog.templateId) {
@@ -527,9 +596,35 @@ async function saveProgramScopedOperationalFormVersionOnce(input: {
     createPayload.targetRole = spec.targetRole
     createPayload.targetType = resolveFormBindingTargetType(spec.targetRole)
   }
+  if (existing?.targetScope != null && existing.targetScope !== '') {
+    createPayload.targetScope = existing.targetScope
+    createPayload.targetScopeId = existing.targetScopeId
+  } else if (
+    spec.formType === 'RECRUITMENT' &&
+    args.program.backendProgramType?.trim().toUpperCase() === 'UJAT' &&
+    spec.targetRole === 'VOLUNTEER' &&
+    (args.program.activeRecruitmentId === 1 || args.program.activeRecruitmentId === 2)
+  ) {
+    createPayload.targetScope = 'TERM'
+    createPayload.targetScopeId = args.program.activeRecruitmentId
+  }
 
-  const bindingInactive = existing?.active === false
-  if (existing?.bindingId == null || bindingInactive) {
+  const existingAudience =
+    canonicalFormBindingTarget(existing?.targetType) ||
+    canonicalFormBindingTarget(existing?.targetRole)
+  const specAudience =
+    spec.targetRole != null && spec.targetRole !== ''
+      ? canonicalFormBindingTarget(spec.targetRole)
+      : ''
+  const existingAudienceMismatch =
+    existing?.bindingId != null &&
+    specAudience !== '' &&
+    existingAudience !== '' &&
+    existingAudience !== specAudience
+  const existingSlotKey = existing != null ? programFormBindingSlotKey(existing) : ''
+  const createSlotKey = programFormBindingSlotKey(createPayload)
+  const sameSlot = existingSlotKey !== '' && existingSlotKey === createSlotKey
+  if (existing?.bindingId == null || (existingAudienceMismatch && !sameSlot)) {
     await createGeneralProgramFormBinding(args.program.id, createPayload)
   } else {
     await updateGeneralProgramFormBinding(
@@ -540,8 +635,7 @@ async function saveProgramScopedOperationalFormVersionOnce(input: {
   }
   rememberProgramOperationalFormBinding(args.program.id, args.templateCode, ids)
   invalidateProgramFormBindingsCache(args.program.id)
-  const usedBindingId =
-    existing?.bindingId != null && !bindingInactive ? Number(existing.bindingId) : undefined
+  const usedBindingId = existing?.bindingId != null ? Number(existing.bindingId) : undefined
   return usedBindingId != null ? { ...ids, bindingId: usedBindingId } : ids
 }
 

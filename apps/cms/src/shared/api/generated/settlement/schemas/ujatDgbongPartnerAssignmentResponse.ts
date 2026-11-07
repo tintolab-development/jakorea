@@ -7,19 +7,31 @@
  */
 
 export interface UjatDgbongPartnerAssignmentResponse {
-  assignmentGroupId?: string;
-  programId?: number;
-  scheduleId?: number;
-  organizationApplicationId?: number;
-  educationSlotId?: number;
-  classLabel?: string;
-  primaryParticipantId?: number;
-  secondaryParticipantId?: number;
-  attendanceManagerParticipantId?: number;
-  status?: string;
-  assignedAt?: string;
-  cancelledAt?: string;
-  cancelReason?: string;
-  /** 배정 알림(ACTIVITY_ORGANIZATION_ASSIGNED)이 회원에게 이미 노출되었거나 외부 발송 처리에 들어갔는지 여부. false면 발송 전(예약 포함)이므로 취소 시 사유·취소 알림 없이 예약 배정 알림만 취소합니다. true면 취소 시 reason 필수 + timing/scheduledAt으로 회원 취소 알림을 보냅니다. */
+  assignmentGroupId: string;
+  /** @nullable */
+  programId: number | null;
+  /** @nullable */
+  scheduleId: number | null;
+  /** @nullable */
+  organizationApplicationId?: number | null;
+  /** @nullable */
+  educationSlotId?: number | null;
+  /** @nullable */
+  classLabel?: string | null;
+  /** @nullable */
+  primaryParticipantId?: number | null;
+  /** @nullable */
+  secondaryParticipantId?: number | null;
+  /** @nullable */
+  attendanceManagerParticipantId?: number | null;
+  /** @nullable */
+  status: string | null;
+  /** @nullable */
+  assignedAt?: string | null;
+  /** @nullable */
+  cancelledAt?: string | null;
+  /** @nullable */
+  cancelReason?: string | null;
+  /** 배정 알림이 회원에게 이미 노출되었거나 외부 발송 처리에 들어갔는지. 항상 true|false. omit/undefined 없음. false만 취소 body {} 허용. true면 reason+알림. */
   assignmentNotificationSent: boolean;
 }

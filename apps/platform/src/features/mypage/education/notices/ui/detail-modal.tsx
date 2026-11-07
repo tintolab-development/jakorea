@@ -80,6 +80,10 @@ const AUTHOR_MENU_OPTIONS = [
   { value: 'delete', label: '삭제하기' },
 ]
 
+function authorMenuOptions(canEdit: boolean) {
+  return canEdit ? AUTHOR_MENU_OPTIONS : AUTHOR_MENU_OPTIONS.filter(option => option.value !== 'edit')
+}
+
 const REACTION_LIST_HEIGHT_PX = 249
 const REACTION_LIST_MIN_HEIGHT_PX = 160
 const REACTION_PICKER_HEIGHT_PX = 56
@@ -130,7 +134,6 @@ export function EducationInProgressNoticeDetailModal({
 }: EducationInProgressNoticeDetailModalProps) {
   const [comment, setComment] = useState('')
   const [isAuthorMenuOpen, setIsAuthorMenuOpen] = useState(false)
-  const [isComingSoonOpen, setIsComingSoonOpen] = useState(false)
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
   const [commentToDeleteId, setCommentToDeleteId] = useState<string | null>(null)
   const [isAttachmentListOpen, setIsAttachmentListOpen] = useState(false)
@@ -361,13 +364,7 @@ export function EducationInProgressNoticeDetailModal({
   }, [isAuthorMenuOpen])
 
   if (!notice) {
-    return (
-      <PFAlertModal
-        open={isComingSoonOpen}
-        title="준비 중"
-        onConfirm={() => setIsComingSoonOpen(false)}
-      />
-    )
+    return null
   }
 
   const publishedAtLabel = formatEducationNoticePublishedAt(notice.publishedAt)
@@ -392,9 +389,7 @@ export function EducationInProgressNoticeDetailModal({
     }
     if (value === 'edit' && onEdit) {
       onEdit(notice.id, attachments)
-      return
     }
-    setIsComingSoonOpen(true)
   }
 
   const handleDeleteConfirm = () => {
@@ -591,7 +586,7 @@ export function EducationInProgressNoticeDetailModal({
                           id={authorMenuId}
                           className={styles.moreMenu}
                           role="menu"
-                          options={AUTHOR_MENU_OPTIONS}
+                          options={authorMenuOptions(Boolean(onEdit))}
                           onSelect={handleAuthorMenuSelect}
                         />
                       ) : null}
@@ -868,12 +863,6 @@ export function EducationInProgressNoticeDetailModal({
         open={commentToDeleteId !== null}
         onCancel={() => setCommentToDeleteId(null)}
         onConfirm={handleCommentDeleteConfirm}
-      />
-
-      <PFAlertModal
-        open={isComingSoonOpen}
-        title="준비 중"
-        onConfirm={() => setIsComingSoonOpen(false)}
       />
 
       <PFAlertModal

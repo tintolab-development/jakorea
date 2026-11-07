@@ -44,6 +44,13 @@ export const PROGRAM_DETAIL_EDIT_FIELD_LABELS: Record<string, string> = {
   applicationEndDate: '참여자 모집 종료일',
   resultAnnouncementDate: '결과 발표일',
   resultAnnouncementMethod: '결과 발표 방법',
+  remarks: '비고',
+  studentListRequired: '학생 명단 제출 여부',
+  educationTargetDetail: '교육 대상 상세',
+  participantRecruitmentAnnouncementPublished: '공고 게시 여부',
+  participantRecruitmentMaxClassCount: '신청 가능 최대 학급 수',
+  participantProgramOperationStartDate: '프로그램 운영 시작일',
+  participantProgramOperationEndDate: '프로그램 운영 종료일',
 }
 
 function resolveFieldLabel(path: (string | number)[], labels: Record<string, string>): string {

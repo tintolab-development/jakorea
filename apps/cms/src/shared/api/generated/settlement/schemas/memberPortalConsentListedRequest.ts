@@ -5,8 +5,13 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { MemberPortalConsentListedRequestConsentTypesItem } from './memberPortalConsentListedRequestConsentTypesItem';
 
 export interface MemberPortalConsentListedRequest {
-  /** 노출을 고정할 동의 유형(1~4개). PAYMENT_STATEMENT_PRE_CONSENT는 PAYMENT_STATEMENT_CONSENT로 정규화됩니다. */
-  consentTypes?: string[];
+  /**
+     * Only the four member portal consent card types are accepted. The payment pre-consent alias is normalized.
+     * @minItems 1
+     * @maxItems 20
+     */
+  consentTypes: MemberPortalConsentListedRequestConsentTypesItem[];
 }

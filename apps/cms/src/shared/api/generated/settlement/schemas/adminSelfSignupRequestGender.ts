@@ -7,10 +7,9 @@
  */
 
 /**
- * 성별
- * @pattern ^(MALE|FEMALE|OTHER)?$
+ * @nullable
  */
-export type AdminSelfSignupRequestGender = typeof AdminSelfSignupRequestGender[keyof typeof AdminSelfSignupRequestGender];
+export type AdminSelfSignupRequestGender = typeof AdminSelfSignupRequestGender[keyof typeof AdminSelfSignupRequestGender] | null;
 
 
 export const AdminSelfSignupRequestGender = {

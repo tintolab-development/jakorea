@@ -8,10 +8,18 @@
 import type { MemberLectureReportSubmitRequestAnswers } from './memberLectureReportSubmitRequestAnswers';
 import type { MemberLectureReportSubmitRequestFileObjectIdsByQuestion } from './memberLectureReportSubmitRequestFileObjectIdsByQuestion';
 
+/**
+ * formResponseId가 있으면 기존 제출 응답을 검증 후 연결합니다. formResponseId가 없고 answers 또는 fileObjectIdsByQuestion이 있으면 활성 lecture-report binding 기준으로 FormResponse를 생성하고 같은 트랜잭션에서 보고서를 연결합니다. contextType/contextId와 bindingId는 요청에 포함하지 않으며 서버가 assignment/application에서 결정합니다.
+ */
 export interface MemberLectureReportSubmitRequest {
-  templateVersionId?: number;
-  formResponseId?: number;
-  attachmentGroupId?: number;
+  /** @nullable */
+  templateVersionId?: number | null;
+  /** @nullable */
+  formResponseId?: number | null;
+  /** @nullable */
+  attachmentGroupId?: number | null;
+  /** @nullable */
   answers?: MemberLectureReportSubmitRequestAnswers;
+  /** @nullable */
   fileObjectIdsByQuestion?: MemberLectureReportSubmitRequestFileObjectIdsByQuestion;
 }

@@ -9,18 +9,21 @@
  */
 import type { UjatHalfSemesterKey } from '@/features/program/ujat/lib/ujat-half-education-schedule-types'
 
+/** BE UJAT typed / overlay exclusion (공휴일 키는 `excludeHoliday`; generic `ExclusionPolicy`와 다름). */
+export type UjatTypedExclusionPolicy = {
+  excludeNone?: boolean | null
+  excludeSaturday?: boolean | null
+  excludeSunday?: boolean | null
+  excludeHoliday?: boolean | null
+}
+
 export const UJAT_TYPED_DETAIL_ROOT_KEY = 'ujatTypedDetail'
 export const UJAT_TYPED_SCHEMA_VERSION = 1
 
 export type UjatTypedSemester = 'FIRST_HALF' | 'SECOND_HALF'
 export type UjatTypedStage = 'PRE_EDUCATION' | 'MAIN_EDUCATION' | 'POST_EDUCATION'
 
-export type UjatTypedExclusion = {
-  excludeNone?: boolean | null
-  excludeSaturday?: boolean | null
-  excludeSunday?: boolean | null
-  excludePublicHoliday?: boolean | null
-}
+export type UjatTypedExclusion = UjatTypedExclusionPolicy
 
 export type UjatTypedScheduleRow = {
   rowId?: string | null
@@ -170,16 +173,45 @@ function overlayKeys(half: UjatHalfSemesterKey) {
   }
 }
 
-function exclusionFromOverlay(raw: unknown, excludedDates: string[]): UjatTypedExclusion | null {
+/** Overlay/응답의 공휴일 제외. GET에는 `excludeHoliday`만 온다. null은 미설정이며 true로 승격하지 않는다. */
+export function holidayExcludedFromTyped(
+  exclusion: Pick<UjatTypedExclusion, 'excludeHoliday'> | Record<string, unknown> | null | undefined
+): boolean {
+  if (exclusion == null || typeof exclusion !== 'object') return false
+  return (exclusion as { excludeHoliday?: boolean | null }).excludeHoliday === true
+}
+
+function copyExclusionFlag(
+  raw: Record<string, unknown>,
+  key: 'excludeNone' | 'excludeSaturday' | 'excludeSunday' | 'excludeHoliday',
+  target: UjatTypedExclusion
+) {
+  if (!Object.prototype.hasOwnProperty.call(raw, key)) return
+  const value = raw[key]
+  if (value === true || value === false || value === null) target[key] = value
+}
+
+/** typed-detail 쓰기: GET exclusion을 통째로 보내되 구키는 빼고 omit/null/false를 구분한다. */
+export function exclusionForTypedWrite(raw: unknown): UjatTypedExclusion | null {
+  if (!isRecord(raw)) return null
+  const next: UjatTypedExclusion = {}
+  copyExclusionFlag(raw, 'excludeNone', next)
+  copyExclusionFlag(raw, 'excludeSaturday', next)
+  copyExclusionFlag(raw, 'excludeSunday', next)
+  copyExclusionFlag(raw, 'excludeHoliday', next)
+  return next
+}
+
+/** Overlay `excludeHoliday` → BE typed `excludeHoliday`. 구키는 보내지 않는다. */
+export function exclusionFromOverlay(raw: unknown, excludedDates: string[] = []): UjatTypedExclusion | null {
   if (!isRecord(raw)) return null
   const none = raw.excludeNone === true
-  const holidayRaw = 'excludePublicHoliday' in raw ? raw.excludePublicHoliday : raw.excludeHoliday
   return {
     // BE 검증: excludeNone 은 다른 제외(요일·공휴일·특정일)와 같이 못 쓴다.
     excludeNone: none && excludedDates.length === 0,
     excludeSaturday: !none && raw.excludeSaturday === true,
     excludeSunday: !none && raw.excludeSunday === true,
-    excludePublicHoliday: !none && holidayRaw === true,
+    excludeHoliday: !none && holidayExcludedFromTyped(raw),
   }
 }
 
@@ -339,7 +371,7 @@ function canonicalHalf(plan: UjatTypedHalfPlan | null | undefined): string {
                 excludeNone: r.exclusion.excludeNone === true,
                 excludeSaturday: r.exclusion.excludeSaturday === true,
                 excludeSunday: r.exclusion.excludeSunday === true,
-                excludePublicHoliday: r.exclusion.excludePublicHoliday === true,
+                excludeHoliday: holidayExcludedFromTyped(r.exclusion),
               }
             : null,
         })),
@@ -503,7 +535,7 @@ export function applyStoredUjatTypedHalvesToOverlay(
             excludeNone: row.exclusion.excludeNone === true,
             excludeSaturday: row.exclusion.excludeSaturday === true,
             excludeSunday: row.exclusion.excludeSunday === true,
-            excludeHoliday: row.exclusion.excludePublicHoliday === true,
+            excludeHoliday: holidayExcludedFromTyped(row.exclusion),
           }
         } else delete next[keys.exclusion]
       }
@@ -533,6 +565,9 @@ function writeRowDates(row: UjatTypedScheduleRow, at: string): UjatTypedSchedule
   if (Array.isArray(row.dates)) next.dates = normalizeStoredDateList(row.dates, `${at}.dates`)
   if (Array.isArray(row.excludedDates)) {
     next.excludedDates = normalizeStoredDateList(row.excludedDates, `${at}.excludedDates`)
+  }
+  if (row.exclusion != null && isRecord(row.exclusion)) {
+    next.exclusion = exclusionForTypedWrite(row.exclusion)
   }
   return next
 }

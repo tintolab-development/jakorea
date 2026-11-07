@@ -6,18 +6,31 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * 교육일지 canonical row. submittedAt이 없던 legacy row는 응답에서 createdAt을 submittedAt 표시값으로 사용합니다.
+ */
 export interface EducationJournalResponse {
   journalId?: number;
   programId?: number;
-  organizationApplicationId?: number;
-  submittedByMemberId?: number;
-  submittedByAdminId?: number;
-  fileObjectId?: number;
-  journalTitle?: string;
-  journalMemo?: string;
-  originalFilename?: string;
-  submittedAt?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  /** @nullable */
+  organizationApplicationId?: number | null;
+  /** @nullable */
+  submittedByMemberId?: number | null;
+  /** @nullable */
+  submittedByAdminId?: number | null;
+  /** @nullable */
+  fileObjectId?: number | null;
+  /** @nullable */
+  journalTitle?: string | null;
+  /** @nullable */
+  journalMemo?: string | null;
+  /** @nullable */
+  originalFilename?: string | null;
+  /** @nullable */
+  submittedAt?: string | null;
+  /** @nullable */
+  createdAt?: string | null;
+  /** @nullable */
+  updatedAt?: string | null;
   availableActions?: string[];
 }

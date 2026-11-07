@@ -5,22 +5,24 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { List12SubmissionStatus } from './list12SubmissionStatus';
 
 export type List12Params = {
+scheduleId?: number | null;
+memberName?: string | null;
+affiliation?: string | null;
+grade?: string | null;
 /**
- * 쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.
+ * NOT_SUBMITTED 또는 SUBMITTED. 응답 submissionStatus와 같은 판정 기준(과제 기간 시작 전이면 SCHEDULED)으로 거른다. SCHEDULED는 필터 대상이 아니다.
  */
-enabled?: boolean;
+submissionStatus?: List12SubmissionStatus;
 /**
- * 쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.
+ * @minimum 0
  */
-category?: string;
+page?: number | null;
 /**
- * 페이지 번호입니다. 목록 화면의 페이지 상태와 함께 유지합니다.
+ * @minimum 1
+ * @maximum 200
  */
-page?: number;
-/**
- * 페이지 크기입니다. 화면별 기본 목록 개수와 일치시켜 호출합니다.
- */
-size?: number;
+size?: number | null;
 };

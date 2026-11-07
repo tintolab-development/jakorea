@@ -7,7 +7,7 @@
  */
 
 /**
- * 교육 형태. Gemini 모집은 online|offline 권장. hybrid는 계약 확정 전 값으로 내려갈 수 있다.
+ * @nullable
  */
 export type GeminiRecruitmentDetailResponseEducationForm = typeof GeminiRecruitmentDetailResponseEducationForm[keyof typeof GeminiRecruitmentDetailResponseEducationForm] | null;
 

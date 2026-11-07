@@ -7,9 +7,18 @@
  */
 
 export interface ProgramPostUpsertRequest {
-  title?: string;
-  content?: string;
-  visibilityType?: string;
-  /** 특정 참여 기관 게시글이면 기관 신청 ID. null이면 프로그램 전체 게시글 */
-  organizationApplicationId?: number;
+  /** @nullable */
+  title?: string | null;
+  /** @nullable */
+  content?: string | null;
+  /**
+     * PROGRAM_PARTICIPANTS 등 게시글 공개 범위
+     * @nullable
+     */
+  visibilityType?: string | null;
+  /**
+     * 특정 참여 기관 게시글이면 기관 신청 ID. 생략하면 프로그램 전체 게시글. 생성 후 scope 변경 불가.
+     * @nullable
+     */
+  organizationApplicationId?: number | null;
 }

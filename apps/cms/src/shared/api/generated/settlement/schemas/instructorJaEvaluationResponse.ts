@@ -5,33 +5,57 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { CriteriaScore } from './criteriaScore';
+import type { InstructorJaEvaluationCriteriaScore } from './instructorJaEvaluationCriteriaScore';
 import type { InstructorJaEvaluationResponseCurrentGrade } from './instructorJaEvaluationResponseCurrentGrade';
 
 /**
- * 강사 JA 평가의 현재 서버 산정 결과
+ * 강사 회원 단위 JA 평가의 현재 서버 산정 결과. fixed score + 이력 기반 행정능력 감점 = total score.
  */
 export interface InstructorJaEvaluationResponse {
   instructorMemberId?: number;
-  evaluationId?: number;
-  criteria?: CriteriaScore[];
-  fixedEvaluationScore?: number;
-  /** 행정능력 자동 감점 합계(cancellationAdjustmentScore + lateReportAdjustmentScore). 0 이하. */
-  administrativeAdjustmentScore?: number;
-  /** CMS에서 강사 사유(faultParty=USER)로 처리한 취소 감점. 2회당 -5점. */
-  cancellationAdjustmentScore?: number;
-  /** 강의보고서 제출기한 미준수 감점. 2회당 -5점. 취소 건수와 합산하지 않습니다. */
-  lateReportAdjustmentScore?: number;
-  /** 호환용 필드. 정산 신청 기한 미준수는 JA 평가 등급 감점 대상이 아니므로 산정 결과는 항상 0입니다. */
-  lateSettlementAdjustmentScore?: number;
-  totalScore?: number;
-  /** 서버 산정 등급. Wire 값은 A|B|C|D (JA_ prefix 없음). */
+  /** @nullable */
+  evaluationId?: number | null;
+  criteria?: InstructorJaEvaluationCriteriaScore[];
+  /** @nullable */
+  fixedEvaluationScore?: number | null;
+  /**
+     * 행정능력 자동 감점 합계(cancellationAdjustmentScore + lateReportAdjustmentScore). 0 이하.
+     * @nullable
+     */
+  administrativeAdjustmentScore?: number | null;
+  /**
+     * CMS에서 강사 사유(faultParty=USER)로 처리한 취소 감점. 2회당 -5점(floor(건수/2)×-5).
+     * @nullable
+     */
+  cancellationAdjustmentScore?: number | null;
+  /**
+     * 강의보고서 제출기한(교육 시작월 다음 달 5일) 미준수 감점. 2회당 -5점(floor(건수/2)×-5). 취소 건수와 합산하지 않습니다.
+     * @nullable
+     */
+  lateReportAdjustmentScore?: number | null;
+  /**
+     * 호환용 필드. 정산 신청 기한 미준수는 JA 평가 등급 감점 대상이 아니므로 산정 결과는 항상 0입니다.
+     * @nullable
+     */
+  lateSettlementAdjustmentScore?: number | null;
+  /** @nullable */
+  totalScore?: number | null;
+  /**
+     * 서버 산정 등급. Wire 값은 A|B|C|D (JA_ prefix 없음).
+     * @nullable
+     */
   currentGrade?: InstructorJaEvaluationResponseCurrentGrade;
-  evaluatedAt?: string;
-  calculatedAt?: string;
-  gradeChangedAt?: string;
-  /** 활성 정책 버전. 정책 미초기화면 null. */
-  policyVersion?: string;
-  /** false면 전역 JA 등급 정책 미초기화. POST 평가 완료 불가. GET은 200으로 이 플래그만 확인. */
+  /** @nullable */
+  evaluatedAt?: string | null;
+  /** @nullable */
+  calculatedAt?: string | null;
+  /** @nullable */
+  gradeChangedAt?: string | null;
+  /**
+     * 활성 정책 버전. 정책 미초기화면 null.
+     * @nullable
+     */
+  policyVersion?: string | null;
+  /** false면 전역 JA 등급 정책 미초기화. POST 평가 완료 불가. GET은 200으로 이 플래그만 확인. 평가 완료 시 INSTRUCTOR_JA_GRADE_POLICY_NOT_INITIALIZED를 반환합니다. */
   policyReady?: boolean;
 }

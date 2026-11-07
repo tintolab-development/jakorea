@@ -36,12 +36,18 @@ export const dashboardQueryKeys = {
   /** Swagger: get_admin_notifications */
   notifications: (source: DashboardQueryScope, params: Record<string, string | number | boolean>) =>
     [...dashboardQueryKeys.notificationsAll(source), params] as const,
+  /** Swagger: get_admin_dashboard_widgets */
+  widgetCatalog: (source: DashboardQueryScope) =>
+    [...dashboardQueryKeys.scope(source), 'get_admin_dashboard_widgets'] as const,
   /** Swagger: get_admin_dashboard_widgets_widgetKey_program-filters (options via recruitments) */
   programOptions: (source: DashboardQueryScope, widgetKey: string) =>
     [...dashboardQueryKeys.scope(source), 'get_admin_dashboard_program_options', widgetKey] as const,
-  /** 무필터 recruitments 1회 — 위젯별 programType은 FE에서 분류 */
+  /**
+   * 무필터 recruitments 카탈로그.
+   * GET /api/admin/dashboard/recruitments 와 동일 파라미터이므로 recruitments 키를 재사용한다.
+   */
   programOptionsCatalog: (source: DashboardQueryScope) =>
-    [...dashboardQueryKeys.scope(source), 'dashboard_program_options_catalog'] as const,
+    dashboardQueryKeys.recruitments(source, {}),
   /** Swagger: get_admin_dashboard_shortcuts */
   shortcuts: (source: DashboardQueryScope) =>
     [...dashboardQueryKeys.scope(source), 'get_admin_dashboard_shortcuts'] as const,

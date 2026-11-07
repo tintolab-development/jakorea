@@ -1,4 +1,5 @@
 import { axiosClient } from '@/shared/api/axios-instance'
+import { readPortalDashboard } from './dashboard-stats'
 
 const DASHBOARD_PATH = '/api/portal/me/dashboard'
 const CALENDAR_PATH = '/api/portal/me/calendar'
@@ -66,9 +67,9 @@ export type PortalScheduleItem = {
   address?: string | null
 }
 
+/** 홈은 applications 카운트만 사용. pending/schedules/notices/instructorRoleRequest는 파싱하지 않는다. */
 export type PortalDashboardResponse = {
   applications?: PortalApplicationSummary
-  upcomingSchedules?: PortalScheduleItem[]
 }
 
 export type PortalCalendarResponse = {
@@ -79,7 +80,7 @@ export type PortalCalendarResponse = {
 
 export async function fetchPortalDashboard(signal?: AbortSignal): Promise<PortalDashboardResponse> {
   const { data } = await axiosClient.get<unknown>(DASHBOARD_PATH, { signal })
-  return unwrapEnvelope<PortalDashboardResponse>(data)
+  return readPortalDashboard(data)
 }
 
 export async function fetchPortalCalendar(

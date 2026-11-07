@@ -5,19 +5,23 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { ApplicationSummary } from './applicationSummary';
-import type { InstructorRoleRequestSummary } from './instructorRoleRequestSummary';
-import type { PendingActionSummary } from './pendingActionSummary';
+import type { MemberPortalInstructorRoleRequestSummary } from './memberPortalInstructorRoleRequestSummary';
+import type { PortalApplicationSummary } from './portalApplicationSummary';
+import type { PortalDashboardResponseMemberType } from './portalDashboardResponseMemberType';
 import type { PortalNoticeItem } from './portalNoticeItem';
+import type { PortalPendingActionSummary } from './portalPendingActionSummary';
 import type { PortalScheduleItem } from './portalScheduleItem';
 
+/**
+ * 개인·학교(교사)·강사 역할에 따라 회원 포탈 홈 화면을 구성하는 집계 응답
+ */
 export interface PortalDashboardResponse {
-  memberType?: string;
-  teacher?: boolean;
-  instructor?: boolean;
-  instructorRoleRequest?: InstructorRoleRequestSummary;
-  applications?: ApplicationSummary;
-  pendingActions?: PendingActionSummary;
-  upcomingSchedules?: PortalScheduleItem[];
-  recentNotices?: PortalNoticeItem[];
+  memberType: PortalDashboardResponseMemberType;
+  teacher: boolean;
+  instructor: boolean;
+  applications: PortalApplicationSummary;
+  pendingActions: PortalPendingActionSummary;
+  upcomingSchedules: PortalScheduleItem[];
+  recentNotices: PortalNoticeItem[];
+  instructorRoleRequest: MemberPortalInstructorRoleRequestSummary;
 }

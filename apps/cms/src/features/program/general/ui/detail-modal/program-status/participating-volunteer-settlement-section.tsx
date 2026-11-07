@@ -33,6 +33,7 @@ import {
 } from '@/features/program/general/lib/participating-volunteer-settlement-download'
 import { useParticipatingVolunteerPaymentStatementView } from '@/features/program/general/ui/detail-modal/program-status/participating-volunteer-payment-statement-view-container'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
+import { useProtectedFileDownload } from '@/shared/lib/use-protected-file-download'
 import './participating-volunteer-settlement-section.css'
 
 function formatSettlementAmount(amount: number | null): string {
@@ -91,6 +92,7 @@ export function ParticipatingVolunteerSettlementSection({
   program,
 }: ParticipatingVolunteerSettlementSectionProps) {
   const { showAlert } = useCmsAlert()
+  const { runProtectedDownload, filePasswordModal } = useProtectedFileDownload()
   const programId = program?.id != null ? String(program.id) : ''
   const isIndividual = isGeneralIndividualProgram(program)
   const institutionNameOverride = isIndividual
@@ -151,21 +153,29 @@ export function ParticipatingVolunteerSettlementSection({
       return
     }
 
-    setBulkDownloadLoading(true)
-    try {
-      await bulkDownloadParticipatingVolunteerPaymentStatements(downloadableRows)
-    } catch (error) {
-      handleError(error, {
-        context: 'participatingVolunteerSettlementSection.bulkDownloadPaymentStatements',
-      })
-      showAlert({
-        title: '안내',
-        content: getParticipatingVolunteerSettlementBulkDownloadErrorMessage(error),
-      })
-    } finally {
-      setBulkDownloadLoading(false)
-    }
-  }, [bulkDownloadLoading, downloadableRows, remoteEnabled, showAlert])
+    runProtectedDownload({
+      kind: 'PAYMENT_STATEMENT',
+      download: async password => {
+        setBulkDownloadLoading(true)
+        try {
+          await bulkDownloadParticipatingVolunteerPaymentStatements(downloadableRows, '지급조서_일괄', {
+            password,
+          })
+        } catch (error) {
+          handleError(error, {
+            context: 'participatingVolunteerSettlementSection.bulkDownloadPaymentStatements',
+          })
+          showAlert({
+            title: '안내',
+            content: getParticipatingVolunteerSettlementBulkDownloadErrorMessage(error),
+          })
+          throw error
+        } finally {
+          setBulkDownloadLoading(false)
+        }
+      },
+    })
+  }, [bulkDownloadLoading, downloadableRows, remoteEnabled, runProtectedDownload, showAlert])
 
   const columns = useMemo(
     (): ColumnsType<ParticipatingVolunteerSettlementApiRow> => [
@@ -302,6 +312,7 @@ export function ParticipatingVolunteerSettlementSection({
       </div>
 
       {paymentStatementView.modal}
+      {filePasswordModal}
     </div>
   )
 }

@@ -9,37 +9,20 @@ import type { TermsDocumentUpsertRequestContentFormat } from './termsDocumentUps
 import type { TermsDocumentUpsertRequestTermsType } from './termsDocumentUpsertRequestTermsType';
 
 /**
- * 약관 문서 등록/수정 요청. contentFormat=HTML을 권장합니다.
+ * 약관 문서 등록/수정 요청. 피그마 약관 모달처럼 볼드와 줄바꿈이 필요한 문서는 contentFormat=HTML을 권장합니다.
  */
 export interface TermsDocumentUpsertRequest {
-  /**
-     * 약관 타입
-     * @minLength 1
-     */
+  /** CMS 약관 관리와 회원 유형별 동의에서 공유하는 canonical TERMS_TYPE */
   termsType: TermsDocumentUpsertRequestTermsType;
-  /**
-     * 약관 버전
-     * @minLength 1
-     */
   version: string;
-  /**
-     * 약관 제목
-     * @minLength 1
-     */
   title: string;
-  /**
-     * 약관 본문. HTML 저장 시 프론트는 sanitize 후 렌더링합니다.
-     * @minLength 1
-     */
+  /** 약관 본문. HTML 저장 시 프론트는 sanitize 후 렌더링합니다. */
   content: string;
-  /** 본문 형식 */
   contentFormat?: TermsDocumentUpsertRequestContentFormat;
-  /** 필수 동의 여부 */
   requiredYn: boolean;
-  /** 게시 여부. true이면 현재 약관 조회 대상이 됩니다. */
   publishedYn?: boolean;
-  /** 적용 시작 시각 */
-  effectiveFrom?: string;
-  /** 적용 종료 시각 */
-  effectiveTo?: string;
+  /** @nullable */
+  effectiveFrom?: string | null;
+  /** @nullable */
+  effectiveTo?: string | null;
 }

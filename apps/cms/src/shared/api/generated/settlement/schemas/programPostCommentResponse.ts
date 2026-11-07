@@ -15,7 +15,10 @@ export interface ProgramPostCommentResponse {
   content?: string;
   createdByActorType?: string;
   createdByActorId?: number;
-  /** 작성자 actor 표시명. MEMBER는 회원 이름, ADMIN은 관리자 이름입니다. 탈퇴·삭제·미존재 계정이거나 이름이 비어 있으면 null입니다. */
+  /**
+     * 작성자 표시명. MEMBER는 회원 이름, ADMIN은 관리자 이름입니다. 탈퇴·삭제·미존재 계정이거나 이름이 비어 있으면 null입니다.
+     * @nullable
+     */
   createdByDisplayName?: string | null;
   createdAt?: string;
   updatedAt?: string;

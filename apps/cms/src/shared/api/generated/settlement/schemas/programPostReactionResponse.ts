@@ -9,7 +9,10 @@
 export interface ProgramPostReactionResponse {
   actorType?: string;
   actorId?: number;
-  /** 반응한 사람 actor 표시명. MEMBER는 회원 이름, ADMIN은 관리자 이름입니다. 탈퇴·삭제·미존재 계정이거나 이름이 비어 있으면 null입니다. */
+  /**
+     * 반응한 사람 표시명. MEMBER는 회원 이름, ADMIN은 관리자 이름입니다. 탈퇴·삭제·미존재 계정이거나 이름이 비어 있으면 null입니다.
+     * @nullable
+     */
   actorDisplayName?: string | null;
   /** 정규화된 반응 유형. SMILE, LAUGH, LOVEFACE, SURPRISED, CRY, ANGRY, SCREAM, HEART, CLAP, THUMBSUP, CHECK 중 하나입니다. */
   reactionType?: string;

@@ -7,7 +7,8 @@
  */
 
 /**
- * 계좌 지급 제외 사유. 지급 대상이면 null. SUCCESS와 함께 오면 회원 검증 생략·계좌지급/정산 미생성·실적만. ZERO_CALCULATED_FEE=산출 강사비 0원, GEMINI_WAGE_RATE_NOT_CONFIGURED=해당 연수 유형·차시 단가 미설정, GEMINI_INSTRUCTOR_IDENTITY_BLANK=강사명·연락처 완전 미기재, GEMINI_INSTRUCTOR_NOT_MATCHED=이름·연락처 있으나 강사 회원 미매칭
+ * 계좌 지급 제외 사유. 지급 대상이면 null. SUCCESS와 함께 오면 회원 검증 생략·계좌지급/정산 미생성·실적만. ZERO_CALCULATED_FEE / GEMINI_WAGE_RATE_NOT_CONFIGURED / GEMINI_INSTRUCTOR_IDENTITY_BLANK / GEMINI_INSTRUCTOR_NOT_MATCHED
+ * @nullable
  */
 export type GeminiTrainingReportImportResultPaymentExclusionReason = typeof GeminiTrainingReportImportResultPaymentExclusionReason[keyof typeof GeminiTrainingReportImportResultPaymentExclusionReason] | null;
 

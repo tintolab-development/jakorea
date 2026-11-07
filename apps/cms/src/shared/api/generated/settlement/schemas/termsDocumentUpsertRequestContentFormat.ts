@@ -6,9 +6,6 @@
  * OpenAPI spec version: v9
  */
 
-/**
- * 본문 형식
- */
 export type TermsDocumentUpsertRequestContentFormat = typeof TermsDocumentUpsertRequestContentFormat[keyof typeof TermsDocumentUpsertRequestContentFormat];
 
 

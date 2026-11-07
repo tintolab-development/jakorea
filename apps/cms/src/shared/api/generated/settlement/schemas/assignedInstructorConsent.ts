@@ -8,8 +8,8 @@
 import type { AssignedInstructorConsentConsentType } from './assignedInstructorConsentConsentType';
 
 export interface AssignedInstructorConsent {
-  consentType?: AssignedInstructorConsentConsentType;
-  title?: string;
-  documentId?: number;
-  originalFileName?: string;
+  consentType: AssignedInstructorConsentConsentType;
+  title: string;
+  documentId: number;
+  originalFileName: string;
 }

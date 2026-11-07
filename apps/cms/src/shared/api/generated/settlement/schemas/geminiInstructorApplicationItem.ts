@@ -12,29 +12,58 @@
 export interface GeminiInstructorApplicationItem {
   applicationId?: number;
   programId?: number;
-  recruitmentId?: number;
-  instructorMemberId?: number;
-  instructorName?: string;
+  /** @nullable */
+  recruitmentId?: number | null;
+  /** @nullable */
+  instructorMemberId?: number | null;
+  /** @nullable */
+  instructorName?: string | null;
   /** PENDING|APPROVED|REJECTED canonical */
   applicationStatus?: string;
-  instructorTypeSnapshot?: string;
-  instructorFeeGradeSnapshot?: string;
-  /** JA 평가 등급 표시. 예: A등급 */
+  /** @nullable */
+  instructorTypeSnapshot?: string | null;
+  /** @nullable */
+  instructorFeeGradeSnapshot?: string | null;
+  /**
+     * JA 평가 등급. 예: A등급
+     * @nullable
+     */
   grade?: string | null;
+  /** @nullable */
   homeSido?: string | null;
+  /** @nullable */
   homeSigungu?: string | null;
-  /** JA 강의 경력(년) */
+  /** @nullable */
   experienceYears?: number | null;
-  /** 목록 마스킹 전화. 예: 010-****-0000 */
+  /**
+     * 마스킹 전화
+     * @nullable
+     */
   phone?: string | null;
-  /** 목록 마스킹 이메일 */
+  /**
+     * 마스킹 이메일
+     * @nullable
+     */
   email?: string | null;
-  /** 해당 월 확정 배정 수 */
+  /** @nullable */
   monthlyAssignmentCount?: number | null;
-  distanceKm?: number;
-  longDistance?: boolean;
-  availableScheduleMemo?: string;
-  submittedAt?: string;
-  approvedAt?: string;
-  rejectedAt?: string;
+  /** @nullable */
+  distanceKm?: number | null;
+  /** @nullable */
+  longDistance?: boolean | null;
+  /** @nullable */
+  availableScheduleMemo?: string | null;
+  /** @nullable */
+  submittedAt?: string | null;
+  /** @nullable */
+  approvedAt?: string | null;
+  /** @nullable */
+  rejectedAt?: string | null;
+  /**
+     * 가장 최근 강사 승인/반려 결과 알림 시각. 없으면 null. 재발송해도 approvedAt·rejectedAt·applicationStatus는 바뀌지 않습니다.
+     * @nullable
+     */
+  resultNotificationSentAt?: string | null;
+  /** APPROVED 또는 REJECTED이면 RESEND_NOTIFICATION을 포함한다. */
+  availableActions?: string[];
 }

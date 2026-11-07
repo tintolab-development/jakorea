@@ -26,6 +26,8 @@ function settlement(
   return {
     id: '1001',
     programNameKo: 'JA 경제교실',
+    items: [],
+    totalAmount: 0,
     ...overrides,
   }
 }

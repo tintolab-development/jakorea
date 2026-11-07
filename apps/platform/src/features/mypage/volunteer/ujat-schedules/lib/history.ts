@@ -202,7 +202,9 @@ export function resolveUjatMonthProgressStatus(
 }
 
 export function ujatMonthProgressLabel(status: EducationScheduleProgressStatus): string {
-  return status === 'scheduled' ? '진행중' : EDUCATION_SCHEDULE_PROGRESS_LABEL.completed
+  if (status === 'scheduled' || status === 'in_progress') return '진행중'
+  if (status === 'unscheduled') return EDUCATION_SCHEDULE_PROGRESS_LABEL.unscheduled
+  return EDUCATION_SCHEDULE_PROGRESS_LABEL.completed
 }
 
 export function groupUjatVolunteerSchedulesByMonth(

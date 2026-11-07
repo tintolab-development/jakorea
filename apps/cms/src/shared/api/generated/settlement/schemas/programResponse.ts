@@ -5,110 +5,252 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { ProgramAdminAssignmentResponse } from './programAdminAssignmentResponse';
 import type { ProgramRecruitmentResponse } from './programRecruitmentResponse';
-import type { ProgramResponseEducationStructure } from './programResponseEducationStructure';
+import type { ProgramResponseAdminAssignmentsItem } from './programResponseAdminAssignmentsItem';
 import type { ProgramResponseLifecycleStatus } from './programResponseLifecycleStatus';
 import type { ProgramResponsePeriodStatus } from './programResponsePeriodStatus';
-import type { ProgramResponseProgramType } from './programResponseProgramType';
-import type { ProgramResponseTargetLevel } from './programResponseTargetLevel';
-import type { ProgramRoundResponse } from './programRoundResponse';
+import type { ProgramResponseRoundsItem } from './programResponseRoundsItem';
+import type { ProgramResponseTargetLevelsItem } from './programResponseTargetLevelsItem';
 import type { ProgramScheduleResponse } from './programScheduleResponse';
 import type { ProgramSettlementPolicyResponse } from './programSettlementPolicyResponse';
 
+/**
+ * CMS 프로그램 상세 응답 (full GET echo + KPI/venue additive).
+ */
 export interface ProgramResponse {
   id?: string;
-  /** 프로그램 유형 */
-  programType?: ProgramResponseProgramType;
-  sponsorId?: string;
-  title?: string;
-  type?: string;
-  format?: string;
-  category?: string;
-  description?: string;
-  rounds?: ProgramRoundResponse[];
-  startDate?: string;
-  endDate?: string;
-  applicationStartDate?: string;
-  applicationEndDate?: string;
-  status?: string;
-  /** 프로그램 진행 단계(카드/필터 축). SCHEDULED·RECRUITING(예정)·IN_PROGRESS·COMPLETED는 상호 배타. */
+  /**
+     * GENERAL|TRAINED_TEACHER|UJAT|... (한글 계약 설명)
+     * @nullable
+     */
+  programType?: string | null;
+  /** @nullable */
+  sponsorId?: string | null;
+  /** @nullable */
+  title?: string | null;
+  /**
+     * 공고용 alias echo (nested/detail)
+     * @nullable
+     */
+  announcementTitle?: string | null;
+  /** @nullable */
+  type?: string | null;
+  /** @nullable */
+  format?: string | null;
+  /** @nullable */
+  category?: string | null;
+  /** @nullable */
+  description?: string | null;
+  /** 항상 배열. 데이터가 없으면 []. */
+  rounds: ProgramResponseRoundsItem[];
+  /** @nullable */
+  startDate?: string | null;
+  /** @nullable */
+  endDate?: string | null;
+  /**
+     * Alias of startDate (한글 계약 설명)
+     * @nullable
+     */
+  businessStartDate?: string | null;
+  /**
+     * Alias of endDate (한글 계약 설명)
+     * @nullable
+     */
+  businessEndDate?: string | null;
+  /** @nullable */
+  businessYear?: number | null;
+  /** @nullable */
+  applicationStartDate?: string | null;
+  /** @nullable */
+  applicationEndDate?: string | null;
+  /**
+     * 레거시 UI status
+     * @nullable
+     */
+  status?: string | null;
+  /**
+     * 목록 카드/필터 축. SCHEDULED·RECRUITING(예정)·IN_PROGRESS·COMPLETED는 상호 배타.
+     * @nullable
+     */
   periodStatus?: ProgramResponsePeriodStatus;
-  /** typed 진행 현황. periodStatus와 동일 UI 버킷을 가리킨다. */
+  /**
+     * typed 진행 현황.
+     * @nullable
+     */
   lifecycleStatus?: ProgramResponseLifecycleStatus;
-  businessArea?: string;
-  /** 교육 진행 구조 */
-  educationStructure?: ProgramResponseEducationStructure;
-  detailedProgramId?: number;
-  detailedProgramName?: string;
-  titleEn?: string;
-  mainTitle?: string;
-  textbookName?: string;
-  textbookNameEn?: string;
-  schoolId?: string;
-  district?: string;
-  ips?: string;
-  /** 교육 대상 첫 값. targetLevels[0]과 같다. 없으면 null. */
-  targetLevel?: ProgramResponseTargetLevel;
-  /** 교육 대상 코드 배열. 없으면 필드를 생략한다. elementary|middle|high|university|adult. */
-  targetLevels?: string[];
-  institutionType?: string;
-  ipOwned?: string;
-  courseDeliveredBy?: string;
-  partnerInvolvement?: boolean;
-  programCategory?: string;
-  programChannel?: string;
-  educationTime?: number;
-  teamDivision?: string;
-  educationProcess?: string;
-  maleParticipants?: number;
-  femaleParticipants?: number;
-  totalParticipants?: number;
-  generalVolunteers?: number;
-  staffVolunteers?: number;
-  returningVolunteers?: number;
-  generalTeachers?: number;
-  educatedTeachers?: number;
-  instructors?: number;
-  finalSchools?: number;
-  finalClasses?: number;
-  managerName?: string;
-  venue?: string;
-  curriculum?: string;
-  contactName?: string;
-  contactEmail?: string;
-  contactPhone?: string;
-  oneLineIntroduction?: string;
-  keyVisualImage?: string;
-  settlementRuleId?: string;
-  applicationPathId?: string;
-  additionalContentHtml?: string;
-  recruitmentGuide?: string;
-  learningSupportContent?: string;
-  otherMatters?: string;
-  /** 참여자 모집 비고. 강사·봉사자 nested remarks와 별개. otherMatters(기타사항)와 별개. 없으면 null. */
+  /** @nullable */
+  businessArea?: string | null;
+  /**
+     * CURRICULUM|SCHEDULE (한글 계약 설명)
+     * @nullable
+     */
+  educationStructure?: string | null;
+  /** @nullable */
+  detailedProgramId?: number | null;
+  /**
+     * detailedProgramId master에서 조회한 세부 프로그램명. 명시적 textbookName과 독립된 read-only 값
+     * @nullable
+     */
+  detailedProgramName?: string | null;
+  /** @nullable */
+  titleEn?: string | null;
+  /**
+     * 대표 프로그램명(국문). 목록·상세 모두 service detail mainTitle을 우선하고, 없으면 title(name_ko). title과 다를 수 있다.
+     * @nullable
+     */
+  mainTitle?: string | null;
+  /** @nullable */
+  textbookName?: string | null;
+  /** @nullable */
+  textbookNameEn?: string | null;
+  /** @nullable */
+  schoolId?: string | null;
+  /** @nullable */
+  district?: string | null;
+  /** @nullable */
+  ips?: string | null;
+  /**
+     * 교육 대상 첫 값. targetLevels[0]과 같다.
+     * @nullable
+     */
+  targetLevel?: string | null;
+  /** 교육 대상 코드 배열. 값이 없으면 생략된다. */
+  targetLevels?: ProgramResponseTargetLevelsItem[];
+  /** @nullable */
+  institutionType?: string | null;
+  /** @nullable */
+  ipOwned?: string | null;
+  /** @nullable */
+  courseDeliveredBy?: string | null;
+  /** @nullable */
+  partnerInvolvement?: boolean | null;
+  /** @nullable */
+  programCategory?: string | null;
+  /** @nullable */
+  programChannel?: string | null;
+  /** @nullable */
+  educationTime?: number | null;
+  /** @nullable */
+  teamDivision?: string | null;
+  /** @nullable */
+  educationProcess?: string | null;
+  /** @nullable */
+  maleParticipants?: number | null;
+  /** @nullable */
+  femaleParticipants?: number | null;
+  /**
+     * 참여자 최종 인원. dual-read totalParticipants|finalParticipants
+     * @nullable
+     */
+  totalParticipants?: number | null;
+  /** @nullable */
+  generalVolunteers?: number | null;
+  /** @nullable */
+  staffVolunteers?: number | null;
+  /** @nullable */
+  returningVolunteers?: number | null;
+  /** @nullable */
+  generalTeachers?: number | null;
+  /** @nullable */
+  educatedTeachers?: number | null;
+  /** @nullable */
+  instructors?: number | null;
+  /**
+     * 최종 파견 학교 수. dual-read root|kpi|generalCommonInfo.kpi
+     * @nullable
+     */
+  finalSchools?: number | null;
+  /**
+     * 최종 파견 학급 수. dual-read root|kpi|generalCommonInfo.kpi
+     * @nullable
+     */
+  finalClasses?: number | null;
+  /** @nullable */
+  managerName?: string | null;
+  /** @nullable */
+  venue?: string | null;
+  /** @nullable */
+  curriculum?: string | null;
+  /** @nullable */
+  contactName?: string | null;
+  /** @nullable */
+  contactEmail?: string | null;
+  /** @nullable */
+  contactPhone?: string | null;
+  /** @nullable */
+  oneLineIntroduction?: string | null;
+  /** @nullable */
+  keyVisualImage?: string | null;
+  /** @nullable */
+  settlementRuleId?: string | null;
+  /** @nullable */
+  applicationPathId?: string | null;
+  /** @nullable */
+  additionalContentHtml?: string | null;
+  /** @nullable */
+  recruitmentGuide?: string | null;
+  /** @nullable */
+  learningSupportContent?: string | null;
+  /** @nullable */
+  otherMatters?: string | null;
+  /**
+     * 참여자 모집 비고 정본. PATCH remarks와 왕복. nested participantRecruitmentInfo.remarks는 같은 값의 미러. 강사·봉사자 nested remarks·otherMatters와 별개. 없으면 null.
+     * @nullable
+     */
   remarks?: string | null;
-  /** 참여자 지원 방법 자유 텍스트. 강사·봉사자 nested applicationMethod와 별개. applicationPathId가 아님. 없으면 null. */
+  /**
+     * 참여자 지원 방법. 강사·봉사자 nested applicationMethod와 별개. applicationPathId가 아님. 없으면 null.
+     * @nullable
+     */
   applicationMethod?: string | null;
-  recruitmentTargetDetail?: string;
-  educationTargetDetail?: string;
-  venueDetail?: string;
-  venueKind?: string;
-  studentListRequired?: string;
-  /** 유형별 config JSON 문자열. TRAINED_TEACHER: {schemaVersion, program}. CMS 모집 정보 표시 정본은 recruitments[] 행(문의처·운영기간·모집기간). nested participantRecruitmentInfo 기간 라벨은 행과 같은 구간이다. remarks ≠ oneLineIntroduction. educationTargetDetail ≠ district. maxAssignableInstructors is always 0. instructorRecruitmentInfo/volunteerRecruitmentInfo omitted. */
-  serviceDetailJson?: string;
-  attachmentFileNames?: string[];
-  adminAssignments?: ProgramAdminAssignmentResponse[];
-  schedules?: ProgramScheduleResponse[];
-  recruitments?: ProgramRecruitmentResponse[];
-  settlementPolicy?: ProgramSettlementPolicyResponse;
-  createdAt?: string;
-  /** 최초 등록한 CMS 관리자 화면 표시명. 이력 없거나 관리자명 없으면 null. 빈 문자열을 쓰지 않는다. */
+  /** @nullable */
+  recruitmentTargetDetail?: string | null;
+  /**
+     * 모집/교육 대상 상세. district와 분리.
+     * @nullable
+     */
+  educationTargetDetail?: string | null;
+  /**
+     * 교육 장소 기타 직접입력.
+     * @nullable
+     */
+  venueDetail?: string | null;
+  /**
+     * 교육 장소 종류: inside_school|outside_school|other
+     * @nullable
+     */
+  venueKind?: string | null;
+  /**
+     * 학생 명단 제출 required|not_required
+     * @nullable
+     */
+  studentListRequired?: string | null;
+  /**
+     * 유형별 config JSON 문자열. TRAINED_TEACHER GET envelope is {schemaVersion, program}. CMS recruitment display SSOT is recruitments[] (contact and period fields). Nested participantRecruitmentInfo period labels match the PARTICIPANT row. remarks is not oneLineIntroduction. educationTargetDetail is not district. maxAssignableInstructors is always 0. instructorRecruitmentInfo/volunteerRecruitmentInfo are omitted. GENERAL keeps generalCommonInfo + 모집/상세 중첩 객체.
+     * @nullable
+     */
+  serviceDetailJson?: string | null;
+  /** 항상 배열. 데이터가 없으면 []. */
+  attachmentFileNames: string[];
+  /** 항상 배열. 데이터가 없으면 []. */
+  adminAssignments: ProgramResponseAdminAssignmentsItem[];
+  /** 항상 배열. 데이터가 없으면 []. */
+  schedules: ProgramScheduleResponse[];
+  /** 항상 배열. 데이터가 없으면 []. */
+  recruitments: ProgramRecruitmentResponse[];
+  settlementPolicy?: ProgramSettlementPolicyResponse | null;
+  /** @nullable */
+  createdAt?: string | null;
+  /**
+     * 최초 등록한 CMS 관리자의 화면 표시명(admin_account.name). program.created_by_admin_id 조인. 이력 없거나 이름 없으면 null. 빈 문자열을 쓰지 않는다. managerName/sponsor 담당자와 같지 않다.
+     * @nullable
+     */
   createdByName?: string | null;
-  updatedAt?: string;
-  /** 마지막으로 프로그램을 수정한 CMS 관리자 화면 표시명. 생성 직후는 createdByName과 같다. PATCH마다 저장 관리자로 갱신. 이력 없으면 null. */
+  /** @nullable */
+  updatedAt?: string | null;
+  /**
+     * 마지막으로 프로그램을 수정한 CMS 관리자의 화면 표시명. program.updated_by_admin_id → admin_account.name. 생성 직후는 createdByName과 같다(INSERT 시 updated_by_admin_id=created_by_admin_id). PATCH /api/admin/programs/{id}마다 저장 관리자로만 갱신하고 createdByName은 유지. 이력 없으면 null.
+     * @nullable
+     */
   updatedByName?: string | null;
-  businessStartDate?: string;
-  businessEndDate?: string;
-  businessYear?: number;
 }

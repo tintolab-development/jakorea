@@ -5,29 +5,31 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { AdminAccountCreateRequestRoleCode } from './adminAccountCreateRequestRoleCode';
 import type { AdminTermsAgreementRequest } from './adminTermsAgreementRequest';
 
 /**
- * MASTER 관리자가 즉시 ACTIVE 상태로 등록하는 관리자 신규 등록 요청입니다.
+ * CMS 관리자 신규 등록 요청입니다. 약관 4종을 정확히 한 건씩 포함해야 합니다.
  */
 export interface AdminAccountCreateRequest {
-  /**
-     * 관리자 로그인 이메일
-     * @minLength 1
-     */
   email: string;
-  /** 초기 비밀번호. 생략하면 정규화된 로그인 이메일을 사용하며, 전달하는 경우 이메일과 동일해야 합니다. */
-  rawPassword?: string;
+  /**
+     * 생략하면 정규화된 로그인 이메일을 사용하며, 전달하는 경우 이메일과 동일해야 합니다.
+     * @nullable
+     */
+  rawPassword?: string | null;
   /** @minLength 1 */
   name: string;
-  phone?: string;
-  gender?: string;
-  birthDate?: string;
-  /** CMS 전역 권한 코드. MASTER, ACCOUNTING_MANAGER, PROGRAM_MANAGER, PROGRAM_VIEWER. 생략 시 PROGRAM_VIEWER. */
-  roleCode?: string;
-  reason?: string;
+  /** @nullable */
+  phone?: string | null;
+  /** @nullable */
+  gender?: string | null;
+  /** @nullable */
+  birthDate?: string | null;
+  roleCode: AdminAccountCreateRequestRoleCode;
+  /** @nullable */
+  reason?: string | null;
   /**
-     * 관리자 등록 약관 4종. SERVICE_TERMS, PRIVACY_COLLECTION, MFA_SETUP_CONSENT, MARKETING을 각각 1건씩 전송합니다.
      * @minItems 4
      * @maxItems 4
      */

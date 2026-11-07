@@ -8,17 +8,23 @@
 import type { AssignmentCancelRequestTiming } from './assignmentCancelRequestTiming';
 
 /**
- * 강사/참가자/UJAT 파트너 배정 취소 요청. 배정 알림 발송 전에는 reason을 생략할 수 있고, 발송 후에는 reason(2자 이상)과 timing/scheduledAt을 사용합니다.
+ * 강사/참가자/UJAT 파트너 배정 취소 요청. 배정 알림 발송 전(assignmentNotificationSent=false)에는 reason/timing/scheduledAt을 omit하거나 null로 두고 빈 객체 {} 도 허용합니다. 빈 문자열("") placeholder는 보내지 않습니다. 발송 후에는 reason(2자 이상)과 timing/scheduledAt을 사용합니다.
  */
 export interface AssignmentCancelRequest {
   /**
-     * 취소 사유. 이미 배정 알림이 발송된 경우 2자 이상 필수이며, 발송 전 취소에서는 생략할 수 있습니다.
-     * @minLength 0
+     * 취소 사유. 이미 배정 알림이 발송된 경우 2자 이상 필수이며, 발송 전 취소에서는 omit/null. 빈 문자열("")은 사용하지 않습니다.
      * @maxLength 500
+     * @nullable
      */
   reason?: string | null;
-  /** 취소 알림 발송 방식. IMMEDIATE 또는 SCHEDULED. 이미 배정 알림이 발송된 경우에만 사용됩니다. 생략 시 scheduledAt이 있으면 SCHEDULED, 없으면 IMMEDIATE로 처리합니다. */
+  /**
+     * 취소 알림 발송 방식. 이미 배정 알림이 발송된 경우에만 사용됩니다. 생략 시 scheduledAt이 있으면 SCHEDULED, 없으면 IMMEDIATE로 처리합니다.
+     * @nullable
+     */
   timing?: AssignmentCancelRequestTiming;
-  /** 취소 알림 예약 발송 시각. timing=SCHEDULED일 때 필수이며 미래 시각이어야 합니다. 과거이면 400입니다. IMMEDIATE일 때는 null이어야 합니다. */
+  /**
+     * timing=SCHEDULED일 때 필수인 미래 예약 발송 시각. 과거이면 400 CANCELLATION_NOTIFICATION_SCHEDULED_AT_INVALID. IMMEDIATE일 때는 null이어야 합니다.
+     * @nullable
+     */
   scheduledAt?: string | null;
 }

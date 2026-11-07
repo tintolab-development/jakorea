@@ -5,8 +5,13 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { UjatPreferredEducationDateOption } from './ujatPreferredEducationDateOption';
 
 /**
- * 런타임 장식 컨텍스트. UJAT 학교 신청 바인딩은 ujatPreferredEducationDateOptions를 항상 배열로 포함하며 후보가 없으면 []이다. 각 항목은 id(h1:YYYY-MM-DD|h2:YYYY-MM-DD), date(YYYY-MM-DD Asia/Seoul), label. 신청 제출 후에도 동일 규칙으로 노출한다.
+ * 런타임 장식 컨텍스트. UJAT 학교 신청 바인딩은 ujatPreferredEducationDateOptions를 항상 배열로 포함하며 후보가 없으면 []이다. 각 항목은 id(h1:YYYY-MM-DD|h2:YYYY-MM-DD), date(YYYY-MM-DD Asia/Seoul), label. 신청 제출 후에도 동일 규칙으로 노출한다. PortalFormRuntimeContext 계약을 따른다.
+ * @nullable
  */
-export type ProgramFormBindingRenderResponseRuntimeContext = {[key: string]: unknown} | null;
+export type ProgramFormBindingRenderResponseRuntimeContext = {
+  ujatPreferredEducationDateOptions?: UjatPreferredEducationDateOption[];
+  [key: string]: unknown;
+ } | null;

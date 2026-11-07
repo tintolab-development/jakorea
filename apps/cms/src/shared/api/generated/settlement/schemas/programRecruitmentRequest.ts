@@ -13,91 +13,211 @@ import type { ProgramRecruitmentRequestStatus } from './programRecruitmentReques
 import type { RecruitmentInterviewConfig } from './recruitmentInterviewConfig';
 
 /**
- * 프로그램 모집 유형별 canonical 설정
+ * 프로그램 모집 행 저장 요청. 항목에 id 또는 applicationType 이 하나라도 있으면 행 단위 저장(요청에 없는 행은 그대로 둔다). 둘 다 없으면 예전 방식(모집 유형별 upsert)이며 같은 모집 유형 활성 행이 2개 이상이면 409 RECRUITMENT_ROW_ID_REQUIRED.
  */
 export interface ProgramRecruitmentRequest {
-  /** 모집 유형 */
-  recruitmentType: ProgramRecruitmentRequestRecruitmentType;
-  /** 모집 대상. 일반 프로그램에서 PARTICIPANT=ORGANIZATION|INDIVIDUAL, INSTRUCTOR=TEACHER, VOLUNTEER=ORGANIZATION|SCHOOL|INDIVIDUAL|STUDENT|COLLEGE_STUDENT(비어 있으면 COLLEGE_STUDENT) */
-  targetType?: string;
-  /** 모집 상태 */
-  status?: ProgramRecruitmentRequestStatus;
-  startAt?: string;
-  endAt?: string;
-  /** 해당 모집 유형의 프로그램 운영 시작일. 수정 시 미전송하면 기존 값을 보존한다. UJAT 최초 생성에서 생략하면 null이며 사업 시작일로 채우지 않는다. */
-  operationStartDate?: string;
-  /** 해당 모집 유형의 프로그램 운영 종료일. 수정 시 미전송하면 기존 값을 보존한다. UJAT 최초 생성에서 생략하면 null이며 사업 종료일로 채우지 않는다. */
-  operationEndDate?: string;
-  /** 최대 모집 인원. null이면 제한 없음 */
-  maxCount?: number;
-  /** 최소 모집 인원. null이면 미설정 */
-  minCount?: number;
-  /** 선발 방식 코드. 예: ADMIN_REVIEW */
-  selectionMethod?: string;
-  /** 수정할 모집 행 id. 보내면 그 행만 수정하고, 요청에 없는 행은 그대로 둔다. id 또는 applicationType 이 하나라도 있으면 행 단위 저장으로 처리한다. */
+  /**
+     * 수정할 모집 행 id. 없으면 새 행을 만든다.
+     * @nullable
+     */
   id?: number | null;
-  /** 이 모집 행의 신청 유형. recruitmentType/targetType 은 이 값에서 정한다. */
+  /**
+     * 이 모집 행의 신청 유형. recruitmentType 과 맞아야 한다(PARTICIPANT=INDIVIDUAL|ORGANIZATION, INSTRUCTOR=INSTRUCTOR, VOLUNTEER=VOLUNTEER).
+     * @nullable
+     */
   applicationType?: ProgramRecruitmentRequestApplicationType;
-  /** UJAT 봉사자 모집 상·하반기 SSOT. UJAT VOLUNTEER에서만 FIRST_HALF|SECOND_HALF, 그 외에는 null. */
+  /**
+     * UJAT VOLUNTEER 상·하반기 SSOT. recruitHalf/recruit_half/semesterType alias도 허용.
+     * @nullable
+     */
   recruitTerm?: ProgramRecruitmentRequestRecruitTerm;
-  /** 공고 제목. 행 단위 저장에서 null 이면 기존 값 유지, "" 이면 비움. GENERAL_* VOLUNTEER는 공통정보 공고명을 쓰므로 보내도 저장하지 않고 null로 둔다. */
+  /**
+     * 모집 유형
+     * @nullable
+     */
+  recruitmentType: ProgramRecruitmentRequestRecruitmentType;
+  /**
+     * 모집 대상
+     * @nullable
+     */
+  targetType?: string | null;
+  /**
+     * 모집 상태
+     * @nullable
+     */
+  status?: ProgramRecruitmentRequestStatus;
+  /**
+     * 모집 시작
+     * @nullable
+     */
+  startAt?: string | null;
+  /**
+     * 모집 마감. 날짜만(YYYY-MM-DD)이면 해당일 23:59:59.999 KST. 시각이 있으면 그대로 저장.
+     * @nullable
+     */
+  endAt?: string | null;
+  /**
+     * 운영 시작일. 수정 시 미전송하면 기존 값 보존. UJAT 최초 생성에서 생략하면 null이며 사업 시작일로 채우지 않는다.
+     * @nullable
+     */
+  operationStartDate?: string | null;
+  /**
+     * 운영 종료일. 수정 시 미전송하면 기존 값 보존. UJAT 최초 생성에서 생략하면 null이며 사업 종료일로 채우지 않는다.
+     * @nullable
+     */
+  operationEndDate?: string | null;
+  /** @nullable */
+  maxCount?: number | null;
+  /** @nullable */
+  minCount?: number | null;
+  /** @nullable */
+  selectionMethod?: string | null;
+  /**
+     * 공고 제목. null 이면 기존 값 유지, "" 이면 비움.
+     * @nullable
+     */
   announcementTitle?: string | null;
-  /** 한 줄 소개. null 유지, "" 비움 */
+  /**
+     * 한 줄 소개. null 이면 기존 값 유지, "" 이면 비움.
+     * @nullable
+     */
   summary?: string | null;
-  /** 프로그램 설명. null 유지, "" 비움 */
+  /**
+     * 프로그램 설명. null 이면 기존 값 유지, "" 이면 비움.
+     * @nullable
+     */
   programDescription?: string | null;
-  /** 모집 안내. null 유지, "" 비움 */
+  /**
+     * 모집 안내. null 이면 기존 값 유지, "" 이면 비움.
+     * @nullable
+     */
   recruitmentGuide?: string | null;
-  /** 신청 방법. null 유지, "" 비움 */
+  /**
+     * 신청 방법. null 이면 기존 값 유지, "" 이면 비움.
+     * @nullable
+     */
   applicationMethod?: string | null;
-  /** 학습 지원. null 유지, "" 비움 */
+  /**
+     * 학습 지원. null 이면 기존 값 유지, "" 이면 비움.
+     * @nullable
+     */
   learningSupportContent?: string | null;
-  /** 추가 내용 HTML. null 유지, "" 비움 */
+  /**
+     * 추가 내용 HTML. null 이면 기존 값 유지, "" 이면 비움.
+     * @nullable
+     */
   additionalContentHtml?: string | null;
-  /** 비고. null 유지, "" 비움 */
+  /**
+     * 비고. null 이면 기존 값 유지, "" 이면 비움.
+     * @nullable
+     */
   remarks?: string | null;
-  /** 담당자 이름. null 유지, "" 비움 */
+  /**
+     * 담당자 이름. null 이면 기존 값 유지, "" 이면 비움.
+     * @nullable
+     */
   contactName?: string | null;
-  /** 담당자 연락처. null 유지, "" 비움 */
+  /**
+     * 담당자 연락처. null 이면 기존 값 유지, "" 이면 비움.
+     * @nullable
+     */
   contactPhone?: string | null;
-  /** 담당자 이메일. null 유지, "" 비움 */
+  /**
+     * 담당자 이메일. null 이면 기존 값 유지, "" 이면 비움.
+     * @nullable
+     */
   contactEmail?: string | null;
-  /** 강사·봉사자 기타사항. null 유지, "" 비움. 참여자 행에는 저장해도 포털 참여자 상세에는 내려가지 않는다. */
+  /**
+     * 강사·봉사자 기타사항. null 이면 기존 값 유지, "" 이면 비움. 프로그램 공통 기타사항으로 다른 행을 채우지 않는다.
+     * @nullable
+     */
   otherMatters?: string | null;
-  /** 면접 여부. null 이면 기존 값 유지. false 여도 발표·면접 시각은 지우지 않는다. */
+  /**
+     * 면접 여부. null 이면 기존 값 유지. false여도 발표·면접 시각 컬럼은 지우지 않는다.
+     * @nullable
+     */
   interviewEnabled?: boolean | null;
-  /** 2차 면접 시작. UJAT VOLUNTEER 운영 행(ACTIVE/OPEN)에서는 필수. null 이면 기존 값 유지. */
+  /**
+     * 2차 면접 시작. UJAT VOLUNTEER ACTIVE/OPEN 저장 시 필수. null은 기존 값 유지, clearFields에 interviewStartAt이면 비움. INACTIVE 임시저장은 생략 가능.
+     * @nullable
+     */
   interviewStartAt?: string | null;
-  /** 2차 면접 종료. UJAT VOLUNTEER 운영 행(ACTIVE/OPEN)에서는 필수. null 이면 기존 값 유지. */
+  /**
+     * 2차 면접 종료. UJAT VOLUNTEER ACTIVE/OPEN 저장 시 필수이며 시작 이후여야 한다. null은 기존 값 유지.
+     * @nullable
+     */
   interviewEndAt?: string | null;
-  /** 공고 게시 여부. null 이면 기존 값 유지. false 는 포털 비공개. */
+  /**
+     * 공고 게시 여부. null 이면 기존 값 유지.
+     * @nullable
+     */
   announcementPublished?: boolean | null;
-  /** 서류 발표 시각. null 유지, clearFields에 documentPassAnnouncementAt 이면 비움. */
+  /**
+     * 서류 발표 시각. null 유지, clearFields에 있으면 비움.
+     * @nullable
+     */
   documentPassAnnouncementAt?: string | null;
-  /** 최종 발표 시각. null 유지, clearFields에 finalPassAnnouncementAt 이면 비움. */
+  /**
+     * 최종 발표 시각. null 유지, clearFields에 있으면 비움.
+     * @nullable
+     */
   finalPassAnnouncementAt?: string | null;
-  /** 봉사자 공고 노출 시점. VOLUNTEER만. start-day|one-day-before|one-week-before. null 유지. */
+  /**
+     * 봉사자 공고 노출 시점. VOLUNTEER만. null 유지.
+     * @nullable
+     */
   noticeExposureTiming?: ProgramRecruitmentRequestNoticeExposureTiming;
-  /** 봉사자 모집 대상 코드 배열. VOLUNTEER만. null 유지, [] 는 제한 없음(명시적 빈 값). */
+  /**
+     * 봉사자 모집 대상. VOLUNTEER만. null 유지, [] 는 명시적 빈 값.
+     * @nullable
+     */
   volunteerTargets?: string[] | null;
-  /** 비고 해당 없음. null 유지. */
+  /**
+     * 비고 해당 없음. null 유지.
+     * @nullable
+     */
   remarksNotApplicable?: boolean | null;
-  /** 봉사자 면접 슬롯 설정. VOLUNTEER만. 객체 생략(null)은 기존 유지, 빈 객체는 명시적 빈 typed 값. */
+  /** 봉사자 면접 슬롯 설정. VOLUNTEER만. 객체 생략은 기존 유지, 빈 객체는 명시적 빈 typed 값. */
   interviewConfig?: RecruitmentInterviewConfig | null;
-  /** 1차 서류 발표 방법. 이 모집 행만 저장. null 생략은 기존 유지, "" 또는 clearFields 항목은 해당 행만 비움. UJAT VOLUNTEER는 recruitTerm이 다른 행으로 복사하지 않는다. */
-  documentPassAnnouncementMethod?: string | null;
-  /** 최종 발표 방법. 이 모집 행만 저장. null 생략은 기존 유지, "" 또는 clearFields 항목은 해당 행만 비움. UJAT VOLUNTEER는 recruitTerm이 다른 행으로 복사하지 않는다. */
-  finalPassAnnouncementMethod?: string | null;
-  /** 2차 면접 방식. 이 모집 행만 저장. null 생략은 기존 유지, "" 또는 clearFields 항목은 해당 행만 비움. UJAT VOLUNTEER는 recruitTerm이 다른 행으로 복사하지 않는다. */
-  interviewMethod?: string | null;
-  /** 봉사자 모집 대상 상세. 이 모집 행만 저장. null 생략은 기존 유지, "" 또는 clearFields 항목은 해당 행만 비움. UJAT VOLUNTEER는 recruitTerm이 다른 행으로 복사하지 않는다. */
-  volunteerTargetDetail?: string | null;
-  /** 동시 수정 검증용. 조회 응답 contentRevision 과 같아야 한다. 생략하면 검사하지 않는다. */
+  /**
+     * 동시 수정 검증. 조회 contentRevision 과 같아야 한다. 생략하면 검사하지 않는다.
+     * @nullable
+     */
   expectedRevision?: number | null;
-  /** null 로 비울 필드 이름. 예: ["maxCount","remarks","interviewConfig"] */
+  /**
+     * null 로 비울 필드 이름. 예: ["maxCount","remarks","interviewConfig"]
+     * @nullable
+     */
   clearFields?: string[] | null;
-  /** 프로그램 신규 등록 시 이 모집 행에 연결할 대표 이미지 fileObjectId. 생성 트랜잭션에서만 사용하며, 기존 모집 수정 API에서는 사용하지 않습니다. */
+  /**
+     * 프로그램 신규 등록 시 이 모집 행에 연결할 대표 이미지 fileObjectId. 생성 트랜잭션에서만 사용하며 기존 모집 수정 API에서는 사용하지 않습니다.
+     * @nullable
+     */
   thumbnailFileObjectId?: number | null;
-  /** 프로그램 신규 등록 시 이 모집 행에 연결할 첨부파일 fileObjectId 목록. 요청 순서가 표시 순서이며, 생성 트랜잭션에서만 사용합니다. */
+  /**
+     * 프로그램 신규 등록 시 이 모집 행에 연결할 첨부파일 fileObjectId 목록. 요청 순서가 표시 순서이며 생성 트랜잭션에서만 사용합니다.
+     * @nullable
+     * @items.minimum 1
+     */
   attachmentFileObjectIds?: number[] | null;
+  /**
+     * 1차 서류 발표 방법. 이 모집 행만 저장. null 생략은 기존 유지, "" 또는 clearFields 항목은 해당 행만 비움. UJAT VOLUNTEER는 recruitTerm이 다른 행으로 복사하지 않는다.
+     * @nullable
+     */
+  documentPassAnnouncementMethod?: string | null;
+  /**
+     * 최종 발표 방법. 이 모집 행만 저장. null 생략은 기존 유지, "" 또는 clearFields 항목은 해당 행만 비움. UJAT VOLUNTEER는 recruitTerm이 다른 행으로 복사하지 않는다.
+     * @nullable
+     */
+  finalPassAnnouncementMethod?: string | null;
+  /**
+     * 2차 면접 방식. 이 모집 행만 저장. null 생략은 기존 유지, "" 또는 clearFields 항목은 해당 행만 비움. UJAT VOLUNTEER는 recruitTerm이 다른 행으로 복사하지 않는다.
+     * @nullable
+     */
+  interviewMethod?: string | null;
+  /**
+     * 봉사자 모집 대상 상세. 이 모집 행만 저장. null 생략은 기존 유지, "" 또는 clearFields 항목은 해당 행만 비움. UJAT VOLUNTEER는 recruitTerm이 다른 행으로 복사하지 않는다.
+     * @nullable
+     */
+  volunteerTargetDetail?: string | null;
 }

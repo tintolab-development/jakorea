@@ -15,12 +15,19 @@ export interface ErrorDetail {
   code?: string;
   /** 사용자/프론트에 노출 가능한 안전한 오류 메시지 */
   message?: string;
-  /** 필드 단위 검증 오류인 경우 대상 필드 */
+  /**
+     * 필드 단위 검증 오류인 경우 대상 필드
+     * @nullable
+     */
   field?: string | null;
-  /** 5xx 등 서버 오류의 로그 추적용 ID. 4xx 클라이언트 오류 본문에는 넣지 않습니다. */
+  /**
+     * 서버 로그 추적용 ID
+     * @nullable
+     */
   traceId?: string | null;
-  /** 전이 충돌 등 부가 컨텍스트. 없으면 null입니다. */
+  /**
+     * 전이 충돌 등 부가 컨텍스트. 없으면 null입니다.
+     * @nullable
+     */
   details?: ErrorDetailDetails;
-  /** RFC7807 detail. message와 동일합니다. */
-  detail?: string;
 }

@@ -7,42 +7,62 @@
  */
 import type { InstructorPreferredOrganizationResponse } from './instructorPreferredOrganizationResponse';
 
+/**
+ * 강사 신청 목록 항목. 프로필 상태와 실제 선택 가능 일정 ID를 함께 제공합니다.
+ */
 export interface InstructorApplicationListItemResponse {
   id?: number;
   programId?: number;
-  programName?: string;
-  programType?: string;
-  recruitmentId?: number;
-  instructorMemberId?: number;
-  /** 강사 회원에 DB로 연결된 기존 소속 학교/기관 ID. 저장된 소속이 없으면 null */
-  affiliationOrganizationId?: number;
-  /** 강사 실명. 프로그램 관리에서는 마스킹하지 않습니다. */
-  instructorName?: string;
-  /** 정규화된 application_status. 목록과 상세는 같은 코드를 반환한다. CMS 「승인 대기」=statusGroup=APPLICATION_PENDING(SUBMITTED, WAITING, WAITING_REVIEW, PENDING, REJECTION_CANCELLED; REVIEWING 등 WAITING_REVIEW 별칭 포함). 「신청 반려」=statusGroup=APPLICATION_REJECTED(REJECTED, APPROVAL_CANCELLED). REJECTION_CANCELLED는 반려 취소 후 승인 대기이며 상세에서 대기 중으로 바꾸지 않는다. 단일 status=는 정규화 등호이며 그룹의 다른 상태를 포함하지 않는다. */
+  /** @nullable */
+  instructorMemberId?: number | null;
+  /**
+     * 강사 회원에 DB로 연결된 기존 소속 학교/기관 ID. 저장된 소속이 없으면 null
+     * @nullable
+     */
+  affiliationOrganizationId?: number | null;
+  /** @nullable */
+  instructorName?: string | null;
+  /** 정규화된 application_status. 목록과 상세는 같은 코드를 반환한다. CMS 「승인 대기」=statusGroup=APPLICATION_PENDING(SUBMITTED, WAITING, WAITING_REVIEW, PENDING, REJECTION_CANCELLED). 「신청 반려」=statusGroup=APPLICATION_REJECTED(REJECTED, APPROVAL_CANCELLED). REJECTION_CANCELLED는 반려 취소 후 승인 대기이며 상세에서 대기 중으로 바꾸지 않는다. */
   applicationStatus?: string;
-  /** 자택 주소. 동(읍/면/리)까지 노출 + ' *****' (FE blur). 기관 주소 아님. */
-  homeAddress?: string;
-  jaLectureExperienceYears?: number;
-  jaEvaluationGrade?: string;
-  /** 마스킹 연락처. 예: 010-****-5678 */
-  contact?: string;
-  /** 마스킹 이메일. 예: 0915***@naver.com */
-  email?: string;
-  instructorTypeSnapshot?: string;
-  instructorFeeGradeSnapshot?: string;
-  distanceKm?: number;
-  longDistance?: boolean;
-  programDispatchCount?: number;
-  programLongDistanceDispatchCount?: number;
-  instructorProfileStatus?: string;
-  primaryActivityType?: string;
-  availableScheduleIds?: number[];
-  availableScheduleMemo?: string;
-  /** 캘린더용 희망 기관·교육 일정. form answer 기반. 없으면 []. */
-  preferredOrganizations?: InstructorPreferredOrganizationResponse[];
-  submittedAt?: string;
-  approvedAt?: string;
-  rejectedAt?: string;
-  rejectReason?: string;
-  availableActions?: string[];
+  /**
+     * 기존 목록 마스킹/blur 정책 적용값
+     * @nullable
+     */
+  homeAddress?: string | null;
+  /** @nullable */
+  jaLectureExperienceYears?: number | null;
+  /** @nullable */
+  jaEvaluationGrade?: string | null;
+  /**
+     * 마스킹 연락처
+     * @nullable
+     */
+  contact?: string | null;
+  /**
+     * 마스킹 이메일
+     * @nullable
+     */
+  email?: string | null;
+  /** @nullable */
+  instructorProfileStatus?: string | null;
+  /** @nullable */
+  primaryActivityType?: string | null;
+  /**
+     * 기존 단일 강사 신청 거리. 기관별 거리는 preferredOrganizations에서 제공
+     * @nullable
+     */
+  distanceKm?: number | null;
+  /** @nullable */
+  longDistance?: boolean | null;
+  /** @nullable */
+  programDispatchCount?: number | null;
+  /** @nullable */
+  programLongDistanceDispatchCount?: number | null;
+  /** 신청 시 선택한 assignable 일정 ID. 미선택이면 [] */
+  availableScheduleIds: number[];
+  /** @nullable */
+  availableScheduleMemo?: string | null;
+  /** 캘린더용 희망 기관·교육 일정. form answer 기반. 없으면 [] */
+  preferredOrganizations: InstructorPreferredOrganizationResponse[];
+  availableActions: string[];
 }

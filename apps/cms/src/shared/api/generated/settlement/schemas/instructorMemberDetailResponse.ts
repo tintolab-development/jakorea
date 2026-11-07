@@ -5,21 +5,19 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { InstructorCertificationResponse } from './instructorCertificationResponse';
 import type { InstructorCmsProfile } from './instructorCmsProfile';
 import type { InstructorCmsSettlement } from './instructorCmsSettlement';
+import type { InstructorMemberDetailResponseCertificationsItem } from './instructorMemberDetailResponseCertificationsItem';
 import type { MemberDetailResponse } from './memberDetailResponse';
-import type { TermsAgreementRow } from './termsAgreementRow';
-import type { UserListRowMetrics } from './userListRowMetrics';
+import type { MemberTermsAgreementRow } from './memberTermsAgreementRow';
 
 /**
- * CMS 강사 상세 응답. 강사 프로필과 현재 정산계좌를 구조화하여 중복 없이 반환합니다.
+ * 강사 상세 응답. profile과 settlement로 구조화하고 계좌 중복 필드는 제거합니다.
  */
 export interface InstructorMemberDetailResponse {
-  member?: MemberDetailResponse;
-  profile?: InstructorCmsProfile;
-  settlement?: InstructorCmsSettlement;
-  listMetrics?: UserListRowMetrics;
-  certifications?: InstructorCertificationResponse[];
-  termsAgreements?: TermsAgreementRow[];
+  member: MemberDetailResponse;
+  profile: InstructorCmsProfile;
+  settlement: InstructorCmsSettlement;
+  certifications: InstructorMemberDetailResponseCertificationsItem[];
+  termsAgreements: MemberTermsAgreementRow[];
 }

@@ -3,6 +3,7 @@
  */
 
 import {
+  formatGeneralEducationScheduleLine,
   formatParticipatingProgressEducationScheduleLine,
   type GeneralEducationScheduleShape,
 } from '@/features/program/general/lib/participating-school-session-display'
@@ -45,32 +46,53 @@ function resolveSessionProgressDisplay(session: ParticipatingSchoolSession): {
   return { label, statusClass }
 }
 
+function resolveParticipatingProgressScheduleLine(
+  session: ParticipatingSchoolSession,
+  shape: GeneralEducationScheduleShape | null,
+  detailScheduleTimeSpan: string | null
+): string {
+  const usePeriodSpan =
+    Boolean(detailScheduleTimeSpan?.trim()) &&
+    shape?.educationStructure === 'schedule' &&
+    shape?.sessionRound === 'single' &&
+    shape?.educationScheduleMode === 'period'
+
+  if (usePeriodSpan) {
+    return formatGeneralEducationScheduleLine(session, shape, { detailScheduleTimeSpan })
+  }
+  return formatParticipatingProgressEducationScheduleLine(session, shape)
+}
+
 export function ParticipatingProgressScheduleValue({
   session,
   shape = null,
-  detailScheduleTimeSpan: _detailScheduleTimeSpan = null,
+  detailScheduleTimeSpan = null,
+  statusBadge,
 }: {
   session: ParticipatingSchoolSession
   shape?: GeneralEducationScheduleShape | null
   detailScheduleTimeSpan?: string | null
+  /** 전달되면 일반 세션 status fallback을 쓰지 않는다. null이면 뱃지 생략. */
+  statusBadge?: { label: string; statusClass: string } | null
 }) {
-  const line = formatParticipatingProgressEducationScheduleLine(session, shape)
-  const { label: statusLabel, statusClass } = resolveSessionProgressDisplay(session)
-  const status = (
+  const line = resolveParticipatingProgressScheduleLine(session, shape, detailScheduleTimeSpan)
+  const resolved =
+    statusBadge === undefined ? resolveSessionProgressDisplay(session) : statusBadge
+  const status = resolved ? (
     <span
       key="status"
-      className={`participating-institution-application-info__session-status ${statusClass}`}
+      className={`participating-institution-application-info__session-status ${resolved.statusClass}`}
     >
-      {statusLabel}
+      {resolved.label}
     </span>
-  )
+  ) : null
   const parts = line
     .split(' | ')
     .map(part => part.trim())
     .filter(Boolean)
   return (
     <ProgramDetailTdSegmentWrap>
-      {withProgramDetailTdDivider([...parts, status])}
+      {withProgramDetailTdDivider(status ? [...parts, status] : parts)}
     </ProgramDetailTdSegmentWrap>
   )
 }

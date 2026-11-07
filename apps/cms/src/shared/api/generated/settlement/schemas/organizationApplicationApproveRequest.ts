@@ -5,26 +5,41 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { OrganizationApplicationApproveRequestTiming } from './organizationApplicationApproveRequestTiming';
 import type { SlotRequest } from './slotRequest';
 
 /**
- * 기관 신청 승인 요청. GENERAL_ORGANIZATION은 일정 미확정 승인, selectedScheduleId/slots, 또는 PERIOD 희망 행 id(requestedScheduleId) 확정을 지원합니다. TRAINED_TEACHER PERIOD는 신청 원본 preferredScheduleBlocks의 preferenceRank를 preferredScheduleRank로 확정할 수 있습니다. 일정 선택 필드는 동시에 보낼 수 없습니다.
+ * 기관 신청 승인 요청. GENERAL_ORGANIZATION은 일정 미확정으로 승인하거나 selectedScheduleId/slots로 program_schedule을 확정하거나, PERIOD에서는 requestedScheduleId로 개별 교육일을 확정할 수 있습니다. TRAINED_TEACHER PERIOD는 SUBMITTED 신청의 원본 preferredScheduleBlocks[].preferenceRank를 preferredScheduleRank로 확정할 수 있습니다. preferredScheduleRank는 배열 index나 program_schedule.id가 아니며 일정 미선택 승인에서는 필드를 생략합니다. 일정 선택 필드는 동시에 보낼 수 없습니다.
  */
 export interface OrganizationApplicationApproveRequest {
   /**
      * 기존 FE 호환용 복수 일정 입력. GENERAL_ORGANIZATION·TRAINED_TEACHER에서 선택 사항이며 scheduleId만 보냅니다. selectedScheduleId와 동시에 보낼 수 없습니다.
-     * @minItems 0
      * @maxItems 500
      */
   slots?: SlotRequest[];
-  /** 선택 확정할 희망 교육 일정의 program_schedule.id. GENERAL_ORGANIZATION·TRAINED_TEACHER에서 사용하며 없으면 별도 배정합니다. */
-  selectedScheduleId?: number;
-  /** GENERAL_ORGANIZATION PERIOD에서 확정할 program_application_requested_schedule.id. selectedScheduleId/slots와 동시에 보낼 수 없습니다. resolvedScheduleId가 null이어도 유효합니다. */
+  /**
+     * 선택 확정할 희망 교육 일정의 program_schedule.id. GENERAL_ORGANIZATION·TRAINED_TEACHER에서 사용하며 없으면 별도 배정합니다.
+     * @minimum 1
+     * @nullable
+     */
+  selectedScheduleId?: number | null;
+  /**
+     * GENERAL_ORGANIZATION PERIOD에서 확정할 program_application_requested_schedule.id. selectedScheduleId/slots와 동시에 보낼 수 없습니다. resolvedScheduleId가 null이어도 유효합니다.
+     * @minimum 1
+     * @nullable
+     */
   requestedScheduleId?: number | null;
-  /** TRAINED_TEACHER PERIOD에서 확정할 신청 원본 preferredScheduleBlocks[].preferenceRank. 배열 index나 program_schedule.id가 아니며, 해당 application의 블록에만 유효합니다. TRAINED_TEACHER + PERIOD + SUBMITTED에서만 사용할 수 있고, 일정 미선택 승인에서는 필드를 생략합니다. selectedScheduleId/slots/requestedScheduleId와 동시에 보낼 수 없습니다. */
+  /**
+     * TRAINED_TEACHER + PERIOD + SUBMITTED에서 확정할 신청 원본 preferredScheduleBlocks[].preferenceRank. 양의 정수이며 배열 index나 program_schedule.id가 아니고 해당 application의 블록에만 유효합니다. 일정 미선택 승인에서는 필드를 생략하며 다른 일정 선택 필드와 동시에 보낼 수 없습니다.
+     * @minimum 1
+     * @nullable
+     */
   preferredScheduleRank?: number | null;
-  /** IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE. ON_ANNOUNCEMENT는 프로그램 발표일 기준으로 서버가 예약합니다. */
-  timing?: string;
-  /** timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601 */
-  scheduledAt?: string;
+  /**
+     * IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. ON_ANNOUNCEMENT는 서버가 프로그램 발표일 기준으로 예약합니다.
+     * @nullable
+     */
+  timing?: OrganizationApplicationApproveRequestTiming;
+  /** @nullable */
+  scheduledAt?: string | null;
 }

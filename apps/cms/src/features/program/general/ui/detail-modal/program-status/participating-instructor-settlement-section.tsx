@@ -34,6 +34,7 @@ import {
 } from '@/features/program/general/lib/participating-instructor-settlement-download'
 import { useParticipatingInstructorPaymentStatementView } from '@/features/program/general/ui/detail-modal/program-status/participating-instructor-payment-statement-view-container'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
+import { useProtectedFileDownload } from '@/shared/lib/use-protected-file-download'
 import './participating-instructor-settlement-section.css'
 
 const STATUS_ACCENT_DEFAULT = 'var(--default-BK, #3d3d3d)'
@@ -92,6 +93,7 @@ export function ParticipatingInstructorSettlementSection({
   program,
 }: ParticipatingInstructorSettlementSectionProps) {
   const { showAlert } = useCmsAlert()
+  const { runProtectedDownload, filePasswordModal } = useProtectedFileDownload()
   const programId = program?.id != null ? String(program.id) : ''
   const { isLoading, rows, settlementItems, progressSummary, remoteEnabled } =
     useParticipatingInstructorSettlementList({
@@ -134,21 +136,29 @@ export function ParticipatingInstructorSettlementSection({
       return
     }
 
-    setBulkDownloadLoading(true)
-    try {
-      await bulkDownloadParticipatingInstructorPaymentStatements(downloadableRows)
-    } catch (error) {
-      handleError(error, {
-        context: 'participatingInstructorSettlementSection.bulkDownloadPaymentStatements',
-      })
-      showAlert({
-        title: '안내',
-        content: getParticipatingInstructorSettlementBulkDownloadErrorMessage(error),
-      })
-    } finally {
-      setBulkDownloadLoading(false)
-    }
-  }, [bulkDownloadLoading, downloadableRows, remoteEnabled, showAlert])
+    runProtectedDownload({
+      kind: 'PAYMENT_STATEMENT',
+      download: async password => {
+        setBulkDownloadLoading(true)
+        try {
+          await bulkDownloadParticipatingInstructorPaymentStatements(downloadableRows, '지급조서_일괄', {
+            password,
+          })
+        } catch (error) {
+          handleError(error, {
+            context: 'participatingInstructorSettlementSection.bulkDownloadPaymentStatements',
+          })
+          showAlert({
+            title: '안내',
+            content: getParticipatingInstructorSettlementBulkDownloadErrorMessage(error),
+          })
+          throw error
+        } finally {
+          setBulkDownloadLoading(false)
+        }
+      },
+    })
+  }, [bulkDownloadLoading, downloadableRows, remoteEnabled, runProtectedDownload, showAlert])
 
   const columns = useMemo(
     (): ColumnsType<ParticipatingInstructorSettlementApiRow> => [
@@ -296,6 +306,7 @@ export function ParticipatingInstructorSettlementSection({
       </div>
 
       {paymentStatementView.modal}
+      {filePasswordModal}
     </div>
   )
 }

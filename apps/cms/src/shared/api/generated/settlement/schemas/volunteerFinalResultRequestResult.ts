@@ -6,9 +6,6 @@
  * OpenAPI spec version: v9
  */
 
-/**
- * 최종 결과. PASS/APPROVED, FAIL/REJECTED, RESERVE
- */
 export type VolunteerFinalResultRequestResult = typeof VolunteerFinalResultRequestResult[keyof typeof VolunteerFinalResultRequestResult];
 
 
@@ -16,4 +13,7 @@ export const VolunteerFinalResultRequestResult = {
   PASS: 'PASS',
   FAIL: 'FAIL',
   RESERVE: 'RESERVE',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  FINAL_SELECTED: 'FINAL_SELECTED',
 } as const;

@@ -6,4 +6,7 @@
  * OpenAPI spec version: v9
  */
 
-export type OrganizationGuidanceAnswersPatchRequestAnswers = {[key: string]: unknown};
+/**
+ * 기본은 guidance와 선택적 성범죄 단락만 허용합니다. 일반 기관은 program-application-institution-seed-*, Gemini는 program-application-economy-seed-* 키를 사용합니다. UJAT이고 portalBannerState가 ACTION_REQUIRED 또는 REVISION_REQUIRED이면 ujat-program-application-institution-seed-basic-info, -grade-application-info, -grade-class-time, -preferred-education-schedule를 추가로 보낼 수 있습니다. ADMIN_REVIEW·FINAL_APPROVED·REJECTED·assignmentLocked에서는 이 키도 거부합니다.
+ */
+export type OrganizationGuidanceAnswersPatchRequestAnswers = { [key: string]: unknown };

@@ -8,8 +8,9 @@
 
 /**
  * ASSIGNED_PAIR | ASSIGNED_SINGLE(빈 슬롯에 1인만 배정) | UNASSIGNED(빈 슬롯 배정 실패) | SECONDARY_ADDED(기존 1인 슬롯에 두 번째 봉사자 추가) | SECONDARY_UNAVAILABLE(기존 1인 슬롯 보강 실패, 1인 유지). 기존 2인조에서 한 명을 옮겨 1인 커버한 경우 result는 ASSIGNED_SINGLE이고 reason=PAIR_SPLIT. PAIR_SPLIT이면 대상 학급 row의 sourceEducationSlotId가 원본 학급이고, 원본 학급 row도 results에 포함된다.
+ * @nullable
  */
-export type AutoAssignmentSlotResultResult = typeof AutoAssignmentSlotResultResult[keyof typeof AutoAssignmentSlotResultResult];
+export type AutoAssignmentSlotResultResult = typeof AutoAssignmentSlotResultResult[keyof typeof AutoAssignmentSlotResultResult] | null;
 
 
 export const AutoAssignmentSlotResultResult = {

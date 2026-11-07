@@ -10,10 +10,6 @@
  * refresh token 기반 토큰 갱신/로그아웃 요청
  */
 export interface RefreshTokenRequest {
-  /**
-     * refresh token. 예시는 sample token입니다.
-     * @minLength 0
-     * @maxLength 4096
-     */
+  /** refresh token. 예시는 sample token입니다. */
   refreshToken: string;
 }

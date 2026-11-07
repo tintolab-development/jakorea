@@ -7,7 +7,8 @@
  */
 
 /**
- * Gemini 모집 공고 게시 상태. DRAFT 또는 PUBLISHED. 생략하면 기존 값을 유지한다. GENERAL / UJAT / COMPANY_SCHOOL / TRAINED_TEACHER에서는 무시한다.
+ * Gemini 모집 공고 게시 상태. 생략하면 기존 값을 유지한다. GENERAL / UJAT / COMPANY_SCHOOL / TRAINED_TEACHER에서는 무시한다.
+ * @nullable
  */
 export type ProgramUpdateRequestDraftStatus = typeof ProgramUpdateRequestDraftStatus[keyof typeof ProgramUpdateRequestDraftStatus] | null;
 

@@ -12,22 +12,36 @@ export interface GeminiApprovedTrainingItem {
   id?: number;
   programId?: number;
   organizationApplicationId?: number;
-  recruitmentId?: number;
+  /** @nullable */
+  recruitmentId?: number | null;
   institutionName?: string;
-  institutionSido?: string;
-  institutionSigungu?: string;
+  /** @nullable */
+  institutionSido?: string | null;
+  /** @nullable */
+  institutionSigungu?: string | null;
   /** Asia/Seoul 기준 파생 진행 현황. program.period_status가 아니다. */
   progressStatus?: GeminiApprovedTrainingItemProgressStatus;
-  /** 강사 매칭으로 확정된 날짜. 미매칭이면 null. */
+  /**
+     * 강사 매칭으로 확정된 날짜. 미매칭이면 null.
+     * @nullable
+     */
   trainingDate?: string | null;
-  /** 희망 일정 중 preferenceRank가 가장 높은 날짜. 없으면 null. 확정 trainingDate와 분리. */
+  /**
+     * 희망 일정 중 preferenceRank가 가장 높은 날짜. 없으면 null.
+     * @nullable
+     */
   lastPreferredDate?: string | null;
-  trainingTimeText?: string;
-  studentCount?: number;
-  instructorName?: string;
-  managerName?: string;
+  /** @nullable */
+  trainingTimeText?: string | null;
+  /** @nullable */
+  studentCount?: number | null;
+  /** @nullable */
+  instructorName?: string | null;
+  /** @nullable */
+  managerName?: string | null;
   officialDocumentRequired?: boolean;
-  recruitmentTitle?: string;
+  /** @nullable */
+  recruitmentTitle?: string | null;
   /** 기관 신청 희망 일정 1~3지망 후보. preferenceRank 오름차순. 확정 trainingDate와 분리. 희망 일정이 없으면 []. null이 아니다 */
   trainingDateCandidates?: GeminiTrainingDateCandidate[];
 }

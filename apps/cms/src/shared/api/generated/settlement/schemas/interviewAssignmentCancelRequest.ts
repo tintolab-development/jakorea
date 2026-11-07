@@ -8,7 +8,6 @@
 
 export interface InterviewAssignmentCancelRequest {
   /**
-     * 면접 배정 취소 사유
      * @minLength 2
      * @maxLength 500
      */

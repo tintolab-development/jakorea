@@ -39,8 +39,10 @@ import {
   bulkDownloadPaymentStatementsRemote,
   downloadPaymentStatementRemote,
 } from '@/features/settlement-management/api/settlement-api-client'
-import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
-import { downloadFromBulkEndpoint } from '@/features/user/api/download-bulk-endpoint'
+import {
+  getSettlementApiErrorMessage,
+  isFileDownloadPasswordApiError,
+} from '@/features/settlement-management/api/get-settlement-api-error'
 import { memberQueryKeys } from '@/features/user/api/member-query-keys'
 import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
 import { InstructorInvoiceModal } from './modal/instructor-invoice-modal'
@@ -55,6 +57,7 @@ import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scro
 import '@/shared/components/filter-table-layout.css'
 import './instructor-payment-tab.css'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { useProtectedFileDownload } from '@/shared/lib/use-protected-file-download'
 import {
   PAYMENT_ORDERS_DETAIL_KEY_PARAM,
   PAYMENT_ORDERS_DETAIL_TYPE_PARAM,
@@ -110,6 +113,7 @@ export function InstructorPaymentTab({
   instructorMemberId,
 }: InstructorPaymentTabProps) {
   const { showAlert } = useCmsAlert()
+  const { runProtectedDownload, filePasswordModal } = useProtectedFileDownload()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const settlementsRemote = isMemberInstructorSettlementsRemoteEnabled()
@@ -257,34 +261,39 @@ export function InstructorPaymentTab({
       return
     }
 
-    setBulkDownloadLoading(true)
-    try {
-      const settlementIds = selected.map(row => row.settlementId)
-      try {
-        const response = await bulkDownloadPaymentStatementsRemote({ settlementIds })
-        if (response.downloadEndpoint) {
-          await downloadFromBulkEndpoint(response.downloadEndpoint, '지급조서_일괄')
-          return
-        }
-      } catch {
-        // bulk-download 미구현 시 단건 download fallback
-      }
+    runProtectedDownload({
+      kind: 'PAYMENT_STATEMENT',
+      download: async password => {
+        setBulkDownloadLoading(true)
+        try {
+          const settlementIds = selected.map(row => row.settlementId)
+          try {
+            await bulkDownloadPaymentStatementsRemote({
+              settlementIds,
+              password,
+            })
+            return
+          } catch (error) {
+            if (isFileDownloadPasswordApiError(error)) throw error
+          }
 
-      for (const settlementId of settlementIds) {
-        const doc = await downloadPaymentStatementRemote(settlementId)
-        if (doc.downloadUrl) {
-          await downloadFromBulkEndpoint(doc.downloadUrl, `지급조서_${settlementId}`, 'pdf')
+          for (const settlementId of settlementIds) {
+            await downloadPaymentStatementRemote(settlementId, { password })
+          }
+        } catch (error) {
+          if (!isFileDownloadPasswordApiError(error)) {
+            showAlert({
+              title: '안내',
+              content: getSettlementApiErrorMessage(error, '지급조서 일괄 발급에 실패했습니다.'),
+            })
+          }
+          throw error
+        } finally {
+          setBulkDownloadLoading(false)
         }
-      }
-    } catch (error) {
-      showAlert({
-        title: '안내',
-        content: getSettlementApiErrorMessage(error, '지급조서 일괄 발급에 실패했습니다.'),
-      })
-    } finally {
-      setBulkDownloadLoading(false)
-    }
-  }, [baseRows, selectedRowKeys, settlementsRemote, showAlert])
+      },
+    })
+  }, [baseRows, selectedRowKeys, settlementsRemote, runProtectedDownload, showAlert])
 
   const columns: ColumnsType<InstructorSettlementListRow> = useMemo(
     () => [
@@ -555,6 +564,7 @@ export function InstructorPaymentTab({
           variant={paymentStatementBlockedModal.variant}
           selectedCount={paymentStatementBlockedModal.selectedCount}
         />
+        {filePasswordModal}
       </Spin>
     </div>
   )

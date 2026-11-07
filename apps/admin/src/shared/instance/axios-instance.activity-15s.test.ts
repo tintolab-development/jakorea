@@ -64,8 +64,10 @@ describe('Homepage Admin: Activity and Session after 10-15 seconds', () => {
     const requests: { path: string; auth: string | null }[] = []
     adapterMock.mockImplementation(async (config: InternalAxiosRequestConfig) => {
       const path = String(config.url ?? '').split('?')[0]
-      const auth = config.headers.get('Authorization')
-      requests.push({ path, auth: auth ?? null })
+      const authRaw = config.headers.get('Authorization')
+      const auth =
+        authRaw === undefined || authRaw === null ? null : String(authRaw)
+      requests.push({ path, auth })
       if (auth !== 'Bearer ' + currentToken) throw unauthorized(config)
       if (path.endsWith('/activity')) {
         return success(config, { lastUserActivityAt: new Date().toISOString(), updated: true })
@@ -132,8 +134,12 @@ describe('Homepage Admin: Activity and Session after 10-15 seconds', () => {
     const sent = adapterMock.mock.calls[0][0] as InternalAxiosRequestConfig
     expect(sent.headers.get('Authorization')).toBe('Bearer ' + TOKEN_A)
     expect(useAuthStore.getState().token).toBe(TOKEN_B)
-    expect(adapterMock.mock.calls.every(([config]: [InternalAxiosRequestConfig]) =>
-      !String(config.url).includes('/refresh'))).toBe(true)
+    expect(
+      adapterMock.mock.calls.every(call => {
+        const config = call[0] as InternalAxiosRequestConfig
+        return !String(config.url).includes('/refresh')
+      })
+    ).toBe(true)
   })
 
   it('Session GET 401 with a valid sid refreshes once and retries GET once', async () => {
@@ -168,10 +174,18 @@ describe('Homepage Admin: Activity and Session after 10-15 seconds', () => {
     expect(useAuthStore.getState().token).toBe(newAccess)
     expect(localStorage.getItem('hp_admin_auth_refresh_token')).toBe('refresh-after')
     expect(adapterMock).toHaveBeenCalledTimes(3)
-    expect(adapterMock.mock.calls.filter(([config]: [InternalAxiosRequestConfig]) =>
-      String(config.url).endsWith('/refresh'))).toHaveLength(1)
-    expect(adapterMock.mock.calls.filter(([config]: [InternalAxiosRequestConfig]) =>
-      String(config.url).endsWith('/session'))).toHaveLength(2)
+    expect(
+      adapterMock.mock.calls.filter(call => {
+        const config = call[0] as InternalAxiosRequestConfig
+        return String(config.url).endsWith('/refresh')
+      })
+    ).toHaveLength(1)
+    expect(
+      adapterMock.mock.calls.filter(call => {
+        const config = call[0] as InternalAxiosRequestConfig
+        return String(config.url).endsWith('/session')
+      })
+    ).toHaveLength(2)
   })
 
   it('a rejected Refresh cannot logout a newer session adopted while the request was pending', async () => {

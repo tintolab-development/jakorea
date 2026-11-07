@@ -7,7 +7,7 @@
  */
 
 export interface ProgramDraftSaveResponse {
-  draftId?: number;
-  programType?: string;
-  saved?: boolean;
+  draftId: number;
+  programType: string;
+  saved: boolean;
 }

@@ -6,15 +6,21 @@
  * OpenAPI spec version: v9
  */
 import type { ProgramSettlementPaymentItemResponse } from './programSettlementPaymentItemResponse';
-import type { ProgramWagePolicyResponse } from './programWagePolicyResponse';
+import type { ProgramSettlementPolicyResponseWagePoliciesItem } from './programSettlementPolicyResponseWagePoliciesItem';
 
 export interface ProgramSettlementPolicyResponse {
-  structuredPolicyYn?: boolean;
-  programType?: string;
-  longDistanceThresholdKm?: number;
-  tollReimbursementYn?: boolean;
-  fixedLodgingAmount?: number;
-  deductionType?: string;
-  wagePolicies?: ProgramWagePolicyResponse[];
+  /** @nullable */
+  structuredPolicyYn?: boolean | null;
+  /** @nullable */
+  programType?: string | null;
+  /** @nullable */
+  longDistanceThresholdKm?: number | null;
+  /** @nullable */
+  tollReimbursementYn?: boolean | null;
+  /** @nullable */
+  fixedLodgingAmount?: number | null;
+  /** @nullable */
+  deductionType?: string | null;
+  wagePolicies?: ProgramSettlementPolicyResponseWagePoliciesItem[];
   paymentItems?: ProgramSettlementPaymentItemResponse[];
 }

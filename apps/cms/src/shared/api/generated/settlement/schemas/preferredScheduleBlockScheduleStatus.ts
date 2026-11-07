@@ -7,7 +7,8 @@
  */
 
 /**
- * MATCHED | UNMATCHED | INACTIVE_OR_DELETED.
+ * 희망 일정과 실제 일정 매칭 상태. 임의로 다른 일정으로 치환하지 않습니다.
+ * @nullable
  */
 export type PreferredScheduleBlockScheduleStatus = typeof PreferredScheduleBlockScheduleStatus[keyof typeof PreferredScheduleBlockScheduleStatus] | null;
 

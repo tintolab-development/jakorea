@@ -5,60 +5,71 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { TermsAgreementRequest } from './termsAgreementRequest';
+import type { AdminPreRegisterSchoolRequestTermsAgreementsItem } from './adminPreRegisterSchoolRequestTermsAgreementsItem';
 
 /**
- * [Deprecated compatibility] 기존 학교 사전등록 요청입니다. 학교는 member가 아니라 organization으로 생성되며 회원 신원 필드는 무시됩니다.
+ * Deprecated compatibility request. organizationName/address/NEIS·지역 필드만 학교 organization 생성에 사용되고 member 신원 필드는 무시됩니다.
  * @deprecated
  */
 export interface AdminPreRegisterSchoolRequest {
   /**
-     * [Deprecated/ignored] 학교 member 로그인 계정을 만들지 않습니다.
+     * [Deprecated/미사용] 학교 member 로그인 계정을 생성하지 않으므로 사용하지 않습니다.
      * @deprecated
+     * @nullable
      */
-  email?: string;
+  email?: string | null;
   /**
-     * [Deprecated/ignored] 학교 대표 member 이름. organization 생성에는 사용하지 않습니다.
+     * [Deprecated/미사용] 학교 대표 member 이름이며 organization 생성에는 사용하지 않습니다.
      * @deprecated
+     * @nullable
      */
-  name?: string;
+  name?: string | null;
   /**
-     * [Deprecated/ignored] 학교 대표 member 전화번호. organization 생성에는 사용하지 않습니다.
+     * [Deprecated/미사용] 학교 대표 member 전화번호이며 organization 생성에는 사용하지 않습니다.
      * @deprecated
+     * @nullable
      */
-  phone?: string;
+  phone?: string | null;
   /**
-     * [Deprecated/ignored] member 성별. organization 생성에는 사용하지 않습니다.
+     * [Deprecated/미사용] member 성별이며 organization 생성에는 사용하지 않습니다.
      * @deprecated
+     * @nullable
      */
-  gender?: string;
+  gender?: string | null;
   /**
-     * [Deprecated/ignored] member 생년월일. organization 생성에는 사용하지 않습니다.
+     * [Deprecated/미사용] member 생년월일이며 organization 생성에는 사용하지 않습니다.
      * @deprecated
+     * @nullable
      */
-  birthDate?: string;
-  /** @minLength 1 */
+  birthDate?: string | null;
   organizationName: string;
-  neisCode?: string;
+  /** @nullable */
+  neisCode?: string | null;
   /**
-     * [Deprecated compatibility] 신규 canonical 학교 API는 organizationCategory=SCHOOL을 서버에서 고정합니다.
+     * [Deprecated/미사용] 신규 canonical 학교 API는 서버에서 SCHOOL category를 고정합니다.
      * @deprecated
+     * @nullable
      */
-  organizationCategory?: string;
-  /** @minLength 1 */
+  organizationCategory?: string | null;
   address: string;
-  addressDetail?: string;
-  zipCode?: string;
-  regionSido?: string;
-  regionSigungu?: string;
+  /** @nullable */
+  addressDetail?: string | null;
+  /** @nullable */
+  zipCode?: string | null;
+  /** @nullable */
+  regionSido?: string | null;
+  /** @nullable */
+  regionSigungu?: string | null;
   /**
-     * [Deprecated/ignored] member 직책. organization 생성에는 사용하지 않습니다.
+     * [Deprecated/미사용] member 직책이며 organization 생성에는 사용하지 않습니다.
      * @deprecated
+     * @nullable
      */
-  position?: string;
+  position?: string | null;
   /**
-     * [Deprecated/ignored] 학교 organization 생성에는 회원 약관 동의를 기록하지 않습니다.
+     * [Deprecated/미사용] 학교 organization 생성에서는 회원 약관 동의를 기록하지 않습니다.
      * @deprecated
+     * @nullable
      */
-  termsAgreements?: TermsAgreementRequest[];
+  termsAgreements?: AdminPreRegisterSchoolRequestTermsAgreementsItem[] | null;
 }

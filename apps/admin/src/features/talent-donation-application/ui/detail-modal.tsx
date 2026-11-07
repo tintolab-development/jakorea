@@ -10,6 +10,8 @@ import '@jakorea/form-template-runtime/detail-info-form.css'
 import type { TalentDonationApplication } from '@/entities/talent-donation-application/model/types'
 import { shouldUseTalentDonationApplicationRemoteApi } from '@/features/talent-donation-application/api/capabilities'
 import { downloadTalentDonationApplicationAttachmentService } from '@/features/talent-donation-application/api/service'
+import { homepageAttachmentDownloadErrorMessage } from '@/shared/lib/protected-attachment-download'
+import { useProtectedFileDownload } from '@/shared/lib/use-protected-file-download'
 import { DEFAULT_CONFIRM_ACTOR } from '@/features/talent-donation-application/api/store'
 import {
   formatDateDot,
@@ -90,6 +92,7 @@ export function TalentDonationApplicationDetailModal({
   onDelete,
 }: Props) {
   const { showAlert } = useCmsAlert()
+  const { runProtectedDownload, filePasswordModal } = useProtectedFileDownload()
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
   useEffect(() => {
@@ -130,52 +133,44 @@ export function TalentDonationApplicationDetailModal({
     )
   })()
 
-  const attachmentView = data?.attachmentFileName ? (
-    shouldUseTalentDonationApplicationRemoteApi() ? (
+  const attachmentView =
+    data?.attachmentFileName && shouldUseTalentDonationApplicationRemoteApi() ? (
       <button
         type="button"
         className="talent-app-detail-modal__attachment"
         onClick={() => {
           if (!data?.id) return
-          void downloadTalentDonationApplicationAttachmentService(data.id, data.attachmentAssetId)
-            .then(result => {
-              if (!result?.downloadUrl) {
+          runProtectedDownload({
+            kind: 'HOMEPAGE_PII_ATTACHMENT',
+            zIndex: 1400,
+            download: async password => {
+              try {
+                await downloadTalentDonationApplicationAttachmentService(
+                  data.id,
+                  data.attachmentAssetId,
+                  password,
+                  data.attachmentFileName ?? 'download'
+                )
+              } catch (error) {
                 showAlert({
                   title: '다운로드 실패',
-                  content: '첨부파일을 불러오지 못했습니다.',
+                  content: homepageAttachmentDownloadErrorMessage(
+                    error,
+                    '첨부파일 다운로드에 실패했습니다.'
+                  ),
                 })
-                return
+                throw error
               }
-              window.open(result.downloadUrl, '_blank', 'noopener,noreferrer')
-            })
-            .catch(() => {
-              showAlert({
-                title: '다운로드 실패',
-                content: '첨부파일 다운로드에 실패했습니다.',
-              })
-            })
+            },
+          })
         }}
       >
         <FileIcon className="talent-app-detail-modal__file-icon" />
         <span>{data.attachmentFileName}</span>
       </button>
-    ) : data.attachmentUrl ? (
-      <a
-        className="talent-app-detail-modal__attachment"
-        href={data.attachmentUrl}
-        download={data.attachmentFileName}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <FileIcon className="talent-app-detail-modal__file-icon" />
-        <span>{data.attachmentFileName}</span>
-      </a>
     ) : (
-      <span>{data.attachmentFileName}</span>
+      <span>{data?.attachmentFileName || '-'}</span>
     )
-  ) : (
-    <span>-</span>
-  )
 
   const footer = (
     <>
@@ -398,6 +393,7 @@ export function TalentDonationApplicationDetailModal({
         ) : null}
       </ContentModal>
 
+      {filePasswordModal}
       <ConfirmModal
         open={deleteConfirmOpen}
         title="신청 삭제"

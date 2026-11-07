@@ -6,7 +6,10 @@
  * OpenAPI spec version: v9
  */
 
-export type WageItemResponseWageItemType = typeof WageItemResponseWageItemType[keyof typeof WageItemResponseWageItemType];
+/**
+ * @nullable
+ */
+export type WageItemResponseWageItemType = typeof WageItemResponseWageItemType[keyof typeof WageItemResponseWageItemType] | null;
 
 
 export const WageItemResponseWageItemType = {

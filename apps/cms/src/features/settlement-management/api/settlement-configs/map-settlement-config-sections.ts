@@ -14,9 +14,10 @@ import type { SettlementConfigResponse } from '@/shared/api/generated/settlement
 import { PaymentItemResponsePaymentItemType } from '@/shared/api/generated/settlement/schemas/paymentItemResponsePaymentItemType'
 import { WageItemResponseWageItemType } from '@/shared/api/generated/settlement/schemas/wageItemResponseWageItemType'
 import {
-  normalizeSettlementWithholdingItemLabel,
-  SETTLEMENT_WITHHOLDING_ITEM_LABEL,
-} from '@/shared/constants/settlement-item-type'
+  getCatalogSettlementItemDescriptionByPaymentType,
+  getCatalogSettlementItemDescriptionByWageType,
+  getCatalogSettlementItemDescriptionForWithholding,
+} from '@/features/settlement-management/model/settlement-item-setting-detail'
 
 const WAGE_TYPE_ICON: Record<string, SettlementItemSettingIconKey> = {
   [WageItemResponseWageItemType.TIER1]: 'wage_tier1',
@@ -50,7 +51,7 @@ const ICON_KEYS = new Set<SettlementItemSettingIconKey>([
   'deduct_business_33',
 ])
 
-function asIconKey(value: string | undefined): SettlementItemSettingIconKey | undefined {
+function asIconKey(value: string | null | undefined): SettlementItemSettingIconKey | undefined {
   if (!value) return undefined
   return ICON_KEYS.has(value as SettlementItemSettingIconKey)
     ? (value as SettlementItemSettingIconKey)
@@ -69,24 +70,19 @@ function sectionTitle(kind: SettlementItemSettingCategoryKind): string {
 }
 
 function formatPaymentDescription(item: {
-  description?: string
-  maxLimitWon?: number
-  maxAmount?: number
+  description?: string | null
+  paymentItemType?: string | null
 }): string {
   const trimmed = item.description?.trim()
   if (trimmed) return trimmed
-  const limit = item.maxLimitWon ?? item.maxAmount
-  if (limit != null) {
-    return `최대 ${limit.toLocaleString('ko-KR')}원`
-  }
-  return '상세 기준에 따라 적용되는 지급 항목입니다.'
+  return getCatalogSettlementItemDescriptionByPaymentType(item.paymentItemType) ?? ''
 }
 
-function normalizeWageType(value: string | undefined): string {
+function normalizeWageType(value: string | null | undefined): string {
   return value?.trim().toUpperCase() ?? ''
 }
 
-function normalizePaymentType(value: string | undefined): string {
+function normalizePaymentType(value: string | null | undefined): string {
   return value?.trim().toUpperCase() ?? ''
 }
 
@@ -103,16 +99,15 @@ export function mapSettlementConfigToSections(
       asIconKey(item.iconKey) ?? WAGE_TYPE_ICON[wageItemType] ?? 'wage_tier3'
     return {
       id: item.id != null ? `w-${item.id}` : `w-${wageItemType}`,
-      apiItemId: item.id,
+      apiItemId: item.id ?? undefined,
       sectionKind: 'wage' as const,
       wageItemType,
-      layout: item.layout,
+      layout: item.layout ?? undefined,
       title: item.name ?? '임금 항목',
       description:
         item.description?.trim() ||
-        (item.amount != null
-          ? `${item.amount.toLocaleString('ko-KR')}원`
-          : '상세 기준에 따라 적용되는 임금입니다.'),
+        getCatalogSettlementItemDescriptionByWageType(wageItemType) ||
+        '',
       iconKey,
       emojiOverride: item.emojiOverride ?? null,
     }
@@ -128,7 +123,7 @@ export function mapSettlementConfigToSections(
       asIconKey(item.iconKey) ?? PAYMENT_TYPE_ICON[paymentItemType] ?? 'pay_transport'
     return {
       id: item.id != null ? `p-${item.id}` : `p-${paymentItemType}`,
-      apiItemId: item.id,
+      apiItemId: item.id ?? undefined,
       sectionKind: 'payment' as const,
       paymentItemType,
       // ACTIVITY wire layout = activity (meal/volunteerActivity 정규화)
@@ -137,9 +132,9 @@ export function mapSettlementConfigToSections(
           ? 'activity'
           : item.layout === 'volunteerActivity'
             ? 'activity'
-            : item.layout,
+            : item.layout ?? undefined,
       title: item.itemName ?? '지급 항목',
-      description: formatPaymentDescription(item),
+      description: formatPaymentDescription({ ...item, paymentItemType }),
       iconKey,
       emojiOverride: item.emojiOverride ?? null,
       eligiblePayeeTypes: readPaymentItemEligiblePayeeTypes(item),
@@ -149,23 +144,22 @@ export function mapSettlementConfigToSections(
   const deductionItems: SettlementItemSettingRow[] = (config.deductionItems ?? [])
     .filter(item => item.useYn !== false)
     .map(item => {
-      const name = normalizeSettlementWithholdingItemLabel(item.itemName) ?? '공제 항목'
+      const name = item.itemName?.trim() || '공제 항목' // API itemName 패스스루
       const description = item.description?.trim()
       const isWithholding =
-        item.layout === 'withholdingDailyWorker' || name === SETTLEMENT_WITHHOLDING_ITEM_LABEL
+        item.layout === 'withholdingDailyWorker' ||
+        name === '일용근로자 원천징수세액' ||
+        name === '원천징수세액' ||
+        name === '원천징수'
       return {
         id: item.id != null ? `d-${item.id}` : `d-${name}`,
-        apiItemId: item.id,
+        apiItemId: item.id ?? undefined,
         sectionKind: 'deduction' as const,
-        layout: item.layout ?? (isWithholding ? 'withholdingDailyWorker' : item.layout),
+        layout: item.layout ?? (isWithholding ? 'withholdingDailyWorker' : undefined),
         title: name,
         description:
           description ||
-          (isWithholding
-            ? '소득 유형별 원천징수 기준과 세율을 설정합니다.'
-            : item.deductionRate
-              ? `공제율 ${item.deductionRate}`
-              : '상세 기준에 따라 적용되는 공제 항목입니다.'),
+          (isWithholding ? getCatalogSettlementItemDescriptionForWithholding() : ''),
         iconKey: asIconKey(item.iconKey) ?? 'deduct_business_33',
         emojiOverride: item.emojiOverride ?? null,
       }

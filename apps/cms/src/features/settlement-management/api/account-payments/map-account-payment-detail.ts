@@ -95,8 +95,8 @@ function resolveInstitutionName(
 
 function resolveSessionDisplay(
   row: AccountPaymentRow,
-  lectureSessionDisplay?: string,
-  sessionOrdinal?: number
+  lectureSessionDisplay?: string | null,
+  sessionOrdinal?: number | null
 ): string {
   const fromApi = lectureSessionDisplay?.trim()
   if (fromApi) return toRoundSessionLabel(fromApi)

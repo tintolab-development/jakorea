@@ -42,7 +42,7 @@ const approvalCancelled = mapPortalProgramApplicationListItem({
   applicationStatus: 'APPROVAL_CANCELLED',
   displayStatus: '승인 취소',
 })
-assert.equal(approvalCancelled?.displayStatus, 'approval_cancelled')
+assert.equal(approvalCancelled?.displayStatus, 'rejected')
 
 const approvalCancelledFromStatus = mapPortalProgramApplicationListItem({
   applicationId: 1691548,
@@ -54,7 +54,42 @@ const approvalCancelledFromStatus = mapPortalProgramApplicationListItem({
   applicationStatus: 'APPROVAL_CANCELLED',
   participationStatus: 'ACTIVE',
 })
-assert.equal(approvalCancelledFromStatus?.displayStatus, 'approval_cancelled')
+assert.equal(approvalCancelledFromStatus?.displayStatus, 'rejected')
+
+const rejectionCancelled = mapPortalProgramApplicationListItem({
+  applicationId: 1691550,
+  applicationType: 'INDIVIDUAL',
+  programId: 100,
+  programType: 'GENERAL_INDIVIDUAL',
+  programGroup: 'GENERAL',
+  programTitle: '반려 취소 프로그램',
+  applicationStatus: 'REJECTION_CANCELLED',
+  displayStatus: '결과 대기',
+})
+assert.equal(rejectionCancelled?.displayStatus, 'waiting_result')
+
+const rejectionCancelledFromStatus = mapPortalProgramApplicationListItem({
+  applicationId: 1691551,
+  applicationType: 'ORGANIZATION',
+  programId: 100,
+  programType: 'GENERAL_ORGANIZATION',
+  programGroup: 'GENERAL',
+  programTitle: '반려 취소 기관',
+  applicationStatus: 'REJECTION_CANCELLED',
+})
+assert.equal(rejectionCancelledFromStatus?.displayStatus, 'waiting_result')
+
+const userCancelled = mapPortalProgramApplicationListItem({
+  applicationId: 1691549,
+  applicationType: 'ORGANIZATION',
+  programId: 100,
+  programType: 'GENERAL_ORGANIZATION',
+  programGroup: 'GENERAL',
+  programTitle: '사용자 신청 취소 프로그램',
+  applicationStatus: 'CANCELLED',
+  displayStatus: '신청 취소',
+})
+assert.equal(userCancelled?.displayStatus, 'cancelled')
 
 const generalYouth = mapPortalProgramApplicationListItem({
   applicationId: 2,

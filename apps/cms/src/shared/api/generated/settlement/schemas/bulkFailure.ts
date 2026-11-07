@@ -6,9 +6,6 @@
  * OpenAPI spec version: v9
  */
 
-/**
- * 개별 실패 정보
- */
 export interface BulkFailure {
   id?: number;
   code?: string;

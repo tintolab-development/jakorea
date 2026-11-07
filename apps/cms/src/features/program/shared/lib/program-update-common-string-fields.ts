@@ -60,19 +60,15 @@ function patchHasKey(patch: Partial<Program>, key: keyof Program): boolean {
 }
 
 function patchTouchesContactName(patch: Partial<Program>): boolean {
-  return patchHasKey(patch, 'contactName') || patchHasKey(patch, 'generalCommonInfo')
+  return patchHasKey(patch, 'contactName')
 }
 
 function patchTouchesOtherMatters(patch: Partial<Program>): boolean {
-  return patchHasKey(patch, 'otherNotes') || patchHasKey(patch, 'generalCommonInfo')
+  return patchHasKey(patch, 'otherNotes')
 }
 
 function patchTouchesRecruitmentTargetDetail(patch: Partial<Program>): boolean {
-  return (
-    patchHasKey(patch, 'recruitmentTargetDetail') ||
-    patchHasKey(patch, 'educationTargetDetail') ||
-    patchHasKey(patch, 'generalCommonInfo')
-  )
+  return patchHasKey(patch, 'recruitmentTargetDetail') || patchHasKey(patch, 'educationTargetDetail')
 }
 
 function appendClearField(clearFields: string[], field: ProgramUpdateCommonStringClearField): void {

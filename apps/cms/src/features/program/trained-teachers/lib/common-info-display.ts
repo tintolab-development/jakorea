@@ -28,8 +28,9 @@ const EDUCATION_FORM_OPTIONS = getProgramRegistrationEducationFormOptions(false)
 export function educationFormLabelFromProgramType(
   type: ProgramType | string | undefined
 ): string | undefined {
-  if (type === 'online' || type === 'offline' || type === 'hybrid') {
-    return EDUCATION_FORM_OPTIONS.find(option => option.value === type)?.label
+  const normalized = type?.trim().toLowerCase()
+  if (normalized === 'online' || normalized === 'offline' || normalized === 'hybrid') {
+    return EDUCATION_FORM_OPTIONS.find(option => option.value === normalized)?.label
   }
   return undefined
 }

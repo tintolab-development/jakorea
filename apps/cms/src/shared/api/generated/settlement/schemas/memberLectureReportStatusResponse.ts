@@ -5,21 +5,34 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { MemberLectureReportStatusResponseReportStatus } from './memberLectureReportStatusResponseReportStatus';
+import type { MemberLectureReportStatusResponseScheduleStatus } from './memberLectureReportStatusResponseScheduleStatus';
 
+/**
+ * 회원 본인 assignment의 최신 강의보고서 제출 상태. 미제출이어도 현재 활성 PUBLISHED 바인딩의 templateVersionId를 반환합니다.
+ */
 export interface MemberLectureReportStatusResponse {
-  assignmentId?: number;
-  instructorApplicationId?: number;
-  programId?: number;
-  programScheduleId?: number;
-  reportId?: number;
-  submitted?: boolean;
-  submittedAt?: string;
-  formResponseId?: number;
-  templateVersionId?: number;
-  attachmentGroupId?: number;
-  reportStatus?: string;
-  scheduleStatus?: string;
-  submitDueAt?: string;
-  canSubmit?: boolean;
-  bindingId?: number;
+  assignmentId: number;
+  /** @nullable */
+  instructorApplicationId?: number | null;
+  programId: number;
+  programScheduleId: number;
+  /** @nullable */
+  reportId?: number | null;
+  submitted: boolean;
+  /** @nullable */
+  submittedAt?: string | null;
+  /** @nullable */
+  formResponseId?: number | null;
+  /** @nullable */
+  templateVersionId?: number | null;
+  /** @nullable */
+  attachmentGroupId?: number | null;
+  reportStatus: MemberLectureReportStatusResponseReportStatus;
+  scheduleStatus: MemberLectureReportStatusResponseScheduleStatus;
+  /** @nullable */
+  submitDueAt?: string | null;
+  canSubmit: boolean;
+  /** @nullable */
+  bindingId?: number | null;
 }

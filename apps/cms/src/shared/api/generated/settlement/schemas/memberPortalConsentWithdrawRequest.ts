@@ -8,8 +8,8 @@
 
 export interface MemberPortalConsentWithdrawRequest {
   /**
-     * @minLength 0
      * @maxLength 500
+     * @nullable
      */
-  reason?: string;
+  reason?: string | null;
 }

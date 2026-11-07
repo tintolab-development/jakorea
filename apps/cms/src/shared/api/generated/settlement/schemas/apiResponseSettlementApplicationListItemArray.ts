@@ -7,12 +7,14 @@
  */
 import type { SettlementApplicationListItemResponse } from './settlementApplicationListItemResponse';
 
+/**
+ * ApiResponse wrapper for settlement application list
+ */
 export interface ApiResponseSettlementApplicationListItemArray {
-  /** 요청 처리 성공 여부 */
-  success?: boolean;
+  success: boolean;
   /** 본인 정산 신청 목록. 없으면 []. */
-  data?: SettlementApplicationListItemResponse[];
-  message?: string | null;
+  data: SettlementApplicationListItemResponse[];
   /** @nullable */
-  error?: null;
+  message?: string | null;
+  error?: unknown | null;
 }

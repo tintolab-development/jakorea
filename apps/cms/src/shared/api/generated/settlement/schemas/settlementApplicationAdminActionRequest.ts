@@ -12,7 +12,6 @@
 export interface SettlementApplicationAdminActionRequest {
   /**
      * 처리 사유
-     * @minLength 0
      * @maxLength 1000
      */
   reason: string;

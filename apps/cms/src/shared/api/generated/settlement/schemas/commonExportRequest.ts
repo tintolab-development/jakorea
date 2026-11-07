@@ -8,13 +8,15 @@
 import type { CommonExportRequestQuery } from './commonExportRequestQuery';
 
 export interface CommonExportRequest {
-  /** @minLength 1 */
+  /** Worker 공통 XLSX 유형. PROGRAMS, SPONSORS, SPONSOR_YEARLY_BUSINESS, SPONSOR_PROGRAM_HISTORY, SPONSOR_CONTACTS, TEXTBOOKS, PROGRAM_MATERIALS, GEMINI_TRAINING_REPORTS, MEMBERS_ALL, MEMBERS_SCHOOL, MEMBERS_INSTRUCTOR, ADMINS, MEMBER_PERMISSION_REQUESTS, ADMIN_PERMISSION_REQUESTS, MEMBER_PROGRAM_HISTORY, MEMBER_VOLUNTEER_HISTORY, NOTICES, FAQS, INQUIRIES, ADMIN_LOGIN_HISTORY, ORGANIZATION_APPLICATIONS, PARTICIPANTS/PROGRAM_PARTICIPANTS, ACCOUNT_PAYMENTS 지원. */
   exportType: string;
   /**
-     * @minItems 0
      * @maxItems 5000
+     * @items.minimum 1
      */
   selectedIds?: number[];
+  /** exportType별 allow-list된 현재 화면 검색조건 snapshot. 임의 SQL/order 식은 허용하지 않습니다. */
   query?: CommonExportRequestQuery;
+  /** @maxLength 500 */
   reason?: string;
 }

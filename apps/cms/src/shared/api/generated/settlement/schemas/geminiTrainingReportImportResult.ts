@@ -9,19 +9,41 @@ import type { GeminiTrainingReportImportResultPaymentExclusionReason } from './g
 import type { GeminiTrainingReportImportResultStatus } from './geminiTrainingReportImportResultStatus';
 
 export interface GeminiTrainingReportImportResult {
+  /**
+     * 1-based. FE uses rowNumber-1 as upload row index.
+     * @minimum 1
+     */
   rowNumber?: number;
-  /** 대소문자 고정. SUCCESS+paymentExclusionReason=실적만(지급/정산 미생성). FAILED=시간 역전·필수값·부분 기재(NAME_AND_PHONE_REQUIRED)·모호 매칭(AMBIGUOUS)·지급완료 overwrite 차단 등 진짜 검증 실패. GEMINI_INSTRUCTOR_NOT_MATCHED(이름·연락처 있으나 미매칭)는 FAILED가 아니라 SUCCESS+paymentExclusionReason. */
+  /** SUCCESS+paymentExclusionReason=실적만(지급/정산 미생성). FAILED=시간 역전·필수값·부분 기재(NAME_AND_PHONE_REQUIRED)·모호 매칭(AMBIGUOUS)·지급완료 overwrite 차단 등. GEMINI_INSTRUCTOR_NOT_MATCHED는 FAILED가 아니라 SUCCESS+paymentExclusionReason. */
   status?: GeminiTrainingReportImportResultStatus;
-  message?: string;
-  trainingReportId?: number;
-  accountPaymentId?: number;
-  trainingMinutes?: number;
-  classCount?: number;
-  calculatedAmount?: number;
-  matchedInstructorMemberId?: number;
-  assistantInstructorCount?: number;
-  deliveryType?: string;
+  /**
+     * FAILED 시 GEMINI_INSTRUCTOR_MATCH_AMBIGUOUS, GEMINI_INSTRUCTOR_NAME_AND_PHONE_REQUIRED, GEMINI_TRAINING_REPORT_ACCOUNT_PAID 등 안정 코드 포함. SUCCESS 지급 제외는 안내 문구(코드 나열 없음).
+     * @nullable
+     */
+  message?: string | null;
+  /** @nullable */
+  trainingReportId?: number | null;
+  /**
+     * 지급완료(PAID)일 때만. 미지급·지급 제외(IDENTITY_BLANK/NOT_MATCHED)는 null.
+     * @nullable
+     */
+  accountPaymentId?: number | null;
+  /** @nullable */
+  trainingMinutes?: number | null;
+  /** @nullable */
+  classCount?: number | null;
+  /** @nullable */
+  calculatedAmount?: number | null;
+  /** @nullable */
+  matchedInstructorMemberId?: number | null;
+  /** @nullable */
+  assistantInstructorCount?: number | null;
+  /** @nullable */
+  deliveryType?: string | null;
   duplicate?: boolean;
-  /** 계좌 지급 제외 사유. 지급 대상이면 null. SUCCESS와 함께 오면 회원 검증 생략·계좌지급/정산 미생성·실적만. ZERO_CALCULATED_FEE=산출 강사비 0원, GEMINI_WAGE_RATE_NOT_CONFIGURED=해당 연수 유형·차시 단가 미설정, GEMINI_INSTRUCTOR_IDENTITY_BLANK=강사명·연락처 완전 미기재, GEMINI_INSTRUCTOR_NOT_MATCHED=이름·연락처 있으나 강사 회원 미매칭 */
+  /**
+     * 계좌 지급 제외 사유. 지급 대상이면 null. SUCCESS와 함께 오면 회원 검증 생략·계좌지급/정산 미생성·실적만. ZERO_CALCULATED_FEE / GEMINI_WAGE_RATE_NOT_CONFIGURED / GEMINI_INSTRUCTOR_IDENTITY_BLANK / GEMINI_INSTRUCTOR_NOT_MATCHED
+     * @nullable
+     */
   paymentExclusionReason?: GeminiTrainingReportImportResultPaymentExclusionReason;
 }

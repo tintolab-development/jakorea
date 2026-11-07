@@ -15,7 +15,10 @@ export function mapOrganizationApplicationDetailToParticipatingEditFields(
   const applicationReason = dto.applicationReason?.trim() || undefined
   const otherRequests = dto.otherRequests?.trim() || undefined
   const teacherName = dto.teacherName?.trim() || undefined
-  const teacherPhone = dto.teacherPhone?.trim() || undefined
+  const teacherTel = Object.prototype.hasOwnProperty.call(dto, 'teacherTel')
+    ? (dto.teacherTel?.trim() || undefined)
+    : undefined
+  const teacherMobile = dto.teacherPhone?.trim() || undefined
   const teacherEmail = dto.teacherEmail?.trim() || undefined
   const educationGrade = dto.requestedGrade?.trim() || undefined
   const textbookNameRaw = dto.textbookName?.trim() || undefined
@@ -44,7 +47,8 @@ export function mapOrganizationApplicationDetailToParticipatingEditFields(
     ...(applicationReason ? { applicationReason } : {}),
     ...(otherRequests ? { otherRequests } : {}),
     ...(teacherName ? { teacherName } : {}),
-    ...(teacherPhone ? { teacherPhone, teacherMobile: teacherPhone } : {}),
+    ...(teacherTel ? { teacherPhone: teacherTel } : {}),
+    ...(teacherMobile ? { teacherMobile } : {}),
     ...(teacherEmail ? { teacherEmail } : {}),
     ...(educationGrade ? { educationGrade } : {}),
     ...(textbookId ? { textbookId } : {}),

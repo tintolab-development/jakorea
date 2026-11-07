@@ -7,27 +7,60 @@
  */
 
 export interface MemberPortalUjatClassAssignmentRow {
-  slotId?: number;
-  /** 학년 숫자 키. 예: 1. 없으면 null. */
+  slotId: number;
+  /**
+     * 학년 숫자 키. 예: 1. 없으면 null.
+     * @nullable
+     */
   grade?: string | null;
-  /** 학년 표시. 예: 1학년. 같은 행 grade에서만 만든다. 없으면 null. */
+  /**
+     * 학년 표시. 예: 1학년. 같은 행 grade에서만 만든다. 없으면 null.
+     * @nullable
+     */
   gradeLabel?: string | null;
-  /** 학급 숫자 키. 예: 2. 없으면 null. */
+  /**
+     * 학급 숫자 키. 예: 2. 없으면 null.
+     * @nullable
+     */
   className?: string | null;
-  /** 학급 표시. 예: 2반. 같은 행 className에서만 만든다. 저장된 결합 class_label(예: 1-2)을 쓰지 않는다. */
+  /**
+     * 학급 표시. 예: 2반. 같은 행 className에서만 만든다. 저장된 결합 class_label을 쓰지 않는다.
+     * @nullable
+     */
   classLabel?: string | null;
-  /** 학급 번호. className과 같은 숫자 키. */
+  /**
+     * 학급 번호. className과 같은 숫자 키.
+     * @nullable
+     */
   classNo?: string | null;
-  /** 봉사자 A 표시 정본. 미배정은 null. 빈 문자열 금지. volunteerA 별칭 없음. */
-  volunteerAName?: string | null;
-  /** 봉사자 B 표시 정본. 미배정은 null. 빈 문자열 금지. volunteerB 별칭 없음. */
-  volunteerBName?: string | null;
-  /** 사용 교재명. 이 기관 신청에 저장된 교재. 없으면 null. */
+  /**
+     * 봉사자 A 표시 정본. 미배정은 null. 빈 문자열 금지. volunteerA 별칭 없음.
+     * @nullable
+     */
+  volunteerAName: string | null;
+  /**
+     * 봉사자 B 표시 정본. 미배정은 null. 빈 문자열 금지. volunteerB 별칭 없음.
+     * @nullable
+     */
+  volunteerBName: string | null;
+  /**
+     * 사용 교재명. 이 기관 신청에 저장된 교재. 없으면 null.
+     * @nullable
+     */
   textbookName?: string | null;
-  /** 학급 학생 수. 교재 준비수량이 아님. FE는 이 값으로 준비수량을 그리지 않는다. */
-  studentCount?: number | null;
-  /** 교재 준비수량(정수). 화면 「교재 준비수량」정본. 학생 수와 같더라도 이 필드에 넣는다. 없으면 null. */
-  textbookQuantity?: number | null;
-  /** 교재 준비수량 표시. 예: 28권. 있으면 FE는 이것만 쓴다. 없으면 textbookQuantity. 둘 다 없으면 FE가 '-'. */
-  textbookQuantityLabel?: string | null;
+  /**
+     * 학급 학생 수. 교재 준비수량이 아님. FE는 이 값으로 준비수량을 그리지 않는다.
+     * @nullable
+     */
+  studentCount: number | null;
+  /**
+     * 교재 준비수량(정수). 화면 「교재 준비수량」정본. 학생 수와 같더라도 이 필드에 넣는다. 없으면 null.
+     * @nullable
+     */
+  textbookQuantity: number | null;
+  /**
+     * 교재 준비수량 표시. 예: 28권. 있으면 FE는 이것만 쓴다. 없으면 textbookQuantity. 둘 다 없으면 FE가 '-'.
+     * @nullable
+     */
+  textbookQuantityLabel: string | null;
 }

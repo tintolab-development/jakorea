@@ -13,12 +13,24 @@ export interface GeminiTrainingDateCandidate {
   /** 희망 순위. 1=1지망 */
   preferenceRank?: number;
   trainingDate?: string;
-  /** 첫 차시 시작 시각 */
+  /**
+     * 첫 차시 시작 시각
+     * @nullable
+     */
   trainingStartTime?: string | null;
-  /** 마지막 차시 종료 시각 */
+  /**
+     * 마지막 차시 종료 시각
+     * @nullable
+     */
   trainingEndTime?: string | null;
-  /** 시간·차시 표시. 시작/종료 시각이 없으면 null */
+  /**
+     * 시간·차시 표시. 시작/종료 시각이 없으면 null
+     * @nullable
+     */
   trainingTimeText?: string | null;
-  /** 희망 차시 수 */
+  /**
+     * 희망 차시 수
+     * @nullable
+     */
   sessionCount?: number | null;
 }

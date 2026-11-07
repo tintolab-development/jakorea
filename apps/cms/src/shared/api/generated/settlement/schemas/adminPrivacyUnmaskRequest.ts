@@ -7,15 +7,12 @@
  */
 
 /**
- * 관리자 개인정보 원문 조회 요청
+ * 관리자 개인정보 원문 조회 감사 사유입니다.
  */
 export interface AdminPrivacyUnmaskRequest {
   /**
-     * 원문 조회 사유. 1자 이상 500자 이하로 입력하며 감사 로그에 저장됩니다.
      * @minLength 1
      * @maxLength 500
      */
   reason: string;
-  /** 프로그램 상세 문맥에서 조회하는 경우 프로그램 ID. 지정 시 CMS 전역 역할 대신 프로그램 PM 권한과 대상 회원의 프로그램 연관성을 검증합니다. */
-  programId?: number;
 }

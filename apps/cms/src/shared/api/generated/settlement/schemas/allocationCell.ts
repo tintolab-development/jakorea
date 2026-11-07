@@ -11,19 +11,30 @@ export interface AllocationCell {
   columnKey?: string;
   scheduleId?: number;
   organizationApplicationId?: number;
-  educationSlotId?: number;
-  assignmentGroupId?: string;
-  /** 학급 라벨. ASSIGNED/REASSIGNMENT_REQUIRED는 class_label_snapshot, 없으면 교육 슬롯 class_label. UNASSIGNED는 null. 빈 문자열 금지 */
+  /** @nullable */
+  educationSlotId?: number | null;
+  /** @nullable */
+  assignmentGroupId?: string | null;
+  /**
+     * 학급 라벨. ASSIGNED/REASSIGNMENT_REQUIRED는 class_label_snapshot, 없으면 교육 슬롯 class_label. UNASSIGNED는 null. 빈 문자열 금지
+     * @nullable
+     */
   classLabel?: string | null;
   /** 이 열(scheduleId+organizationApplicationId)의 출결 담당 여부. ASSIGNED이고 해당 기관 열에 attendance_manager_yn=true인 셀만 true. 같은 교육일의 다른 기관 열과 공유하지 않는다. UNASSIGNED/REASSIGNMENT_REQUIRED는 false. */
   attendanceManager?: boolean;
   singleAssignment?: boolean;
   unavailable?: boolean;
   needsReassignment?: boolean;
-  /** 대문자. ASSIGNED | UNASSIGNED | REASSIGNMENT_REQUIRED */
+  /** 대문자. ASSIGNED | UNASSIGNED | REASSIGNMENT_REQUIRED. 라벨만 있고 상태 없는 셀 금지 */
   assignmentStatus?: AllocationCellAssignmentStatus;
-  /** 대체 봉사자 program_participant.id. unavailable=false이면 null */
+  /**
+     * 대체 봉사자 program_participant.id. unavailable=false이면 null
+     * @nullable
+     */
   replacementParticipantId?: number | null;
-  /** 대체 봉사자 회원명 원문. 없으면 null. 빈 문자열 금지. unavailable=false이면 null */
+  /**
+     * 대체 봉사자 회원명 원문. 없으면 null. 빈 문자열 금지. unavailable=false이면 null
+     * @nullable
+     */
   replacementVolunteerName?: string | null;
 }

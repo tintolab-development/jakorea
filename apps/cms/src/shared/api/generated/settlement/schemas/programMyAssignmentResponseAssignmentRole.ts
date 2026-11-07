@@ -7,7 +7,7 @@
  */
 
 /**
- * 본인 배정 역할. PM | PARTNER | VIEWER. 배정 행이 없으면 null
+ * @nullable
  */
 export type ProgramMyAssignmentResponseAssignmentRole = typeof ProgramMyAssignmentResponseAssignmentRole[keyof typeof ProgramMyAssignmentResponseAssignmentRole] | null;
 

@@ -7,9 +7,9 @@
  */
 
 /**
- * 기관별 거리 계산 상태.
+ * @nullable
  */
-export type InstructorPreferredOrganizationResponseDistanceStatus = typeof InstructorPreferredOrganizationResponseDistanceStatus[keyof typeof InstructorPreferredOrganizationResponseDistanceStatus];
+export type InstructorPreferredOrganizationResponseDistanceStatus = typeof InstructorPreferredOrganizationResponseDistanceStatus[keyof typeof InstructorPreferredOrganizationResponseDistanceStatus] | null;
 
 
 export const InstructorPreferredOrganizationResponseDistanceStatus = {

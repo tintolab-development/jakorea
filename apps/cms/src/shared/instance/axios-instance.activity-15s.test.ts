@@ -69,7 +69,8 @@ describe('CMS: Activity and Session after 10-15 seconds', () => {
     adapterMock.mockImplementation(async (config: InternalAxiosRequestConfig) => {
       const path = String(config.url ?? '').split('?')[0]
       const authRaw = config.headers.get('Authorization')
-      const auth = authRaw == null ? null : String(authRaw)
+      const auth =
+        authRaw === undefined || authRaw === null ? null : String(authRaw)
       requests.push({ path, auth })
       if (auth !== 'Bearer ' + currentToken) throw unauthorized(config)
       if (path.endsWith('/activity')) {
@@ -178,14 +179,16 @@ describe('CMS: Activity and Session after 10-15 seconds', () => {
     expect(localStorage.getItem('auth_refresh_token')).toBe('refresh-after')
     expect(adapterMock).toHaveBeenCalledTimes(3)
     expect(
-      adapterMock.mock.calls.filter(call =>
-        String((call[0] as InternalAxiosRequestConfig).url).endsWith('/refresh')
-      )
+      adapterMock.mock.calls.filter(call => {
+        const config = call[0] as InternalAxiosRequestConfig
+        return String(config.url).endsWith('/refresh')
+      })
     ).toHaveLength(1)
     expect(
-      adapterMock.mock.calls.filter(call =>
-        String((call[0] as InternalAxiosRequestConfig).url).endsWith('/session')
-      )
+      adapterMock.mock.calls.filter(call => {
+        const config = call[0] as InternalAxiosRequestConfig
+        return String(config.url).endsWith('/session')
+      })
     ).toHaveLength(2)
   })
 

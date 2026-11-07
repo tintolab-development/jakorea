@@ -9,7 +9,7 @@ export const CONFIRM_PAYMENT_STATEMENT_ACTION = 'CONFIRM_PAYMENT_STATEMENT'
 
 /** API statementStatus → UI 지급조서 처리 현황 */
 export function mapStatementStatusToProcessingStatus(
-  status: string | undefined
+  status: string | null | undefined
 ): PaymentOrderAdminProcessingStatus {
   switch (status?.toUpperCase()) {
     case 'CONFIRMED':
@@ -34,7 +34,7 @@ export function mapStatementStatusToProcessingStatus(
 
 /** API statementStatus → UI 라인 처리 현황 (paymentStatus 축 무시 — 복합 매핑은 `mapSettlementAxesToLineStatus`) */
 export function mapStatementStatusToLineStatus(
-  status: string | undefined
+  status: string | null | undefined
 ): PaymentOrderAdminLineProcessingStatus {
   switch (status?.toUpperCase()) {
     case 'CONFIRMED':
@@ -62,8 +62,8 @@ export function mapStatementStatusToLineStatus(
  * `frontendStatus`/`payment_pending` 문자열로 「확인 대기 중」을 추론하지 않는다.
  */
 export function mapSettlementAxesToLineStatus(
-  statementStatus: string | undefined,
-  paymentStatus: string | undefined
+  statementStatus: string | null | undefined,
+  paymentStatus: string | null | undefined
 ): PaymentOrderAdminLineProcessingStatus {
   const statement = statementStatus?.toUpperCase()
   const payment = paymentStatus?.toUpperCase()
@@ -75,7 +75,7 @@ export function mapSettlementAxesToLineStatus(
 
 /** API paymentStatus → 계좌 지급 UI 상태 */
 export function mapPaymentStatusToAccountPaymentStatus(
-  status: string | undefined
+  status: string | null | undefined
 ): AccountPaymentTransferStatus {
   switch (status?.toUpperCase()) {
     case 'PAID':
@@ -130,7 +130,7 @@ export function isConfirmableStatementStatus(status: string | undefined): boolea
  */
 export function canConfirmPaymentStatement(row: {
   availableActions?: string[] | null
-  statementStatus?: string
+  statementStatus?: string | null
   canConfirmPaymentStatement?: boolean
   processingStatus?: PaymentOrderAdminLineProcessingStatus
 }): boolean {

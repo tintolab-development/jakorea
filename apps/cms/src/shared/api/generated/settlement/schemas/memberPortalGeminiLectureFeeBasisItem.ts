@@ -9,6 +9,9 @@
 export interface MemberPortalGeminiLectureFeeBasisItem {
   /** 인정 차시. 1~4 오름차순 */
   classCount?: number;
-  /** 해당 차시 고정 강사비(원). 단가 미설정이면 null. 0원은 0 */
+  /**
+     * 해당 차시 고정 강사비(원). 단가 미설정이면 null. 0원은 0
+     * @nullable
+     */
   amount?: number | null;
 }

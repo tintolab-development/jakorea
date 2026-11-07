@@ -5,18 +5,27 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { NiceIdentityAuthStartResponseFlow } from './niceIdentityAuthStartResponseFlow';
 
 export interface NiceIdentityAuthStartResponse {
   sessionId?: number;
   provider?: string;
-  providerTxId?: string;
-  statusToken?: string;
+  /** @nullable */
+  providerTxId?: string | null;
+  /** @nullable */
+  statusToken?: string | null;
   status?: string;
-  expiresAt?: string;
-  authUrl?: string;
-  requestNo?: string;
-  transactionId?: string;
-  flow?: string;
-  frontendReturnUrl?: string;
-  state?: string;
+  /** @nullable */
+  expiresAt?: string | null;
+  /** @nullable */
+  authUrl?: string | null;
+  /** @nullable */
+  requestNo?: string | null;
+  /** @nullable */
+  transactionId?: string | null;
+  flow?: NiceIdentityAuthStartResponseFlow;
+  /** @nullable */
+  frontendReturnUrl?: string | null;
+  /** @nullable */
+  state?: string | null;
 }

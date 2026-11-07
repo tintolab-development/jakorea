@@ -6,8 +6,20 @@
  * OpenAPI spec version: v9
  */
 
-export interface ProgramSponsorAssignmentRequest {
-  sponsorId?: string;
-  sponsorContactId?: string;
-  sponsorContactIds?: string[];
-}
+/**
+ * @nullable
+ */
+export type ProgramSponsorAssignmentRequest = {
+  /** @nullable */
+  sponsorId?: string | null;
+  /**
+     * Single-contact compatibility field. Omitted, null, or blank means unselected and clears existing contact links.
+     * @nullable
+     */
+  sponsorContactId?: string | null;
+  /**
+     * Complete selected contact id set for this sponsor. [] means no selected contacts.
+     * @nullable
+     */
+  sponsorContactIds?: string[] | null;
+} | null;

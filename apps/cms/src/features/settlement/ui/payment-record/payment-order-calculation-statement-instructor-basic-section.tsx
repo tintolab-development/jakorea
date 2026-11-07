@@ -17,6 +17,7 @@ import '@/features/program/shared/ui/program-detail/applicant-list/applicant-ins
 export interface PaymentOrderCalculationStatementInstructorBasicSectionProps {
   basic: PaymentOrderCalculationStatementInstructorBasicInfo
   style?: CSSProperties
+  onResendNotificationClick?: () => void
 }
 
 function NameCell({ basic }: { basic: PaymentOrderCalculationStatementInstructorBasicInfo }) {
@@ -47,6 +48,7 @@ function AddressDisplay({ basic }: { basic: PaymentOrderCalculationStatementInst
 export function PaymentOrderCalculationStatementInstructorBasicSection({
   basic,
   style,
+  onResendNotificationClick,
 }: PaymentOrderCalculationStatementInstructorBasicSectionProps) {
   const formCardClass =
     'payment-order-calc-statement-modal__detail-form-card payment-order-calc-statement-modal__detail-form-card--program'
@@ -95,7 +97,12 @@ export function PaymentOrderCalculationStatementInstructorBasicSection({
           <DetailInfoForm.Field
             label="지급조서 처리 현황"
             fullRow
-            view={<PaymentOrderCalculationStatementProcessingStatusView basic={basic} />}
+            view={
+              <PaymentOrderCalculationStatementProcessingStatusView
+                basic={basic}
+                onResendNotificationClick={onResendNotificationClick}
+              />
+            }
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">

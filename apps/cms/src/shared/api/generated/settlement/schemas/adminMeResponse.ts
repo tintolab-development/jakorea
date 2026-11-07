@@ -10,28 +10,43 @@ import type { AdminTermsAgreementResponse } from './adminTermsAgreementResponse'
 export interface AdminMeResponse {
   adminAccountId?: number;
   uuid?: string;
-  /** Email address for the authenticated administrator's own account. */
-  email?: string;
-  /** Name for the authenticated administrator's own account. */
-  name?: string;
-  /** Phone number for the authenticated administrator's own account. */
-  phone?: string;
-  /** Gender for the authenticated administrator's own account. */
-  gender?: string;
-  /** Birth date for the authenticated administrator's own account, formatted as yyyy-MM-dd. */
-  birthDate?: string;
+  /**
+     * Email address for the authenticated administrator's own account.
+     * @nullable
+     */
+  email?: string | null;
+  /**
+     * Name for the authenticated administrator's own account.
+     * @nullable
+     */
+  name?: string | null;
+  /**
+     * Phone number for the authenticated administrator's own account.
+     * @nullable
+     */
+  phone?: string | null;
+  /**
+     * Gender for the authenticated administrator's own account.
+     * @nullable
+     */
+  gender?: string | null;
+  /**
+     * Birth date for the authenticated administrator's own account, formatted as yyyy-MM-dd.
+     * @nullable
+     */
+  birthDate?: string | null;
   status?: string;
   roleCode?: string;
   roleName?: string;
   mfaRequired?: boolean;
   permissionCodes?: string[];
-  /** 현재 진행 중인 담당 프로그램 수 */
   activeManagedProgramCount?: number;
-  /** 과거 포함 전체 담당 프로그램 수 */
   totalManagedProgramCount?: number;
-  /** 관리자 약관 4종 최신 상태. MARKETING은 admin_marketing_consent를 정본으로 사용합니다. */
   termsAgreements?: AdminTermsAgreementResponse[];
-  lastLoginAt?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  /** @nullable */
+  lastLoginAt?: string | null;
+  /** @nullable */
+  createdAt?: string | null;
+  /** @nullable */
+  updatedAt?: string | null;
 }

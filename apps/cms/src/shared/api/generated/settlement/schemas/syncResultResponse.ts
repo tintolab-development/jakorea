@@ -9,11 +9,8 @@ import type { SyncResultResponseMode } from './syncResultResponseMode';
 import type { SyncResultResponseResource } from './syncResultResponseResource';
 
 export interface SyncResultResponse {
-  /** 동기화 대상 리소스 */
   resource?: SyncResultResponseResource;
-  /** 요청 channelType에 해당하는 템플릿(또는 발신 프로필) upsert/갱신 건수. 카테고리 건수·타 채널 합산 아님. */
   upsertedCount?: number;
-  /** 동기화 실행 방식. ALIMTALK NHN_LIVE_PULL의 upsertedCount는 APPROVED만. */
   mode?: SyncResultResponseMode;
   syncedAt?: string;
 }

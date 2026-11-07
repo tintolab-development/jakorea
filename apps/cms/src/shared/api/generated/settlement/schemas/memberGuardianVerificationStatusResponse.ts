@@ -5,11 +5,22 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { MemberGuardianVerificationStatusResponseStatus } from './memberGuardianVerificationStatusResponseStatus';
 
 export interface MemberGuardianVerificationStatusResponse {
-  status?: string;
-  verifiedAt?: string;
-  failureCode?: string;
-  verificationToken?: string;
-  tokenExpiresAt?: string;
+  status: MemberGuardianVerificationStatusResponseStatus;
+  /**
+     * ISO-8601 with offset. VERIFIED이면 필수.
+     * @nullable
+     */
+  verifiedAt?: string | null;
+  /** @nullable */
+  failureCode?: string | null;
+  /**
+     * VERIFIED 첫 조회 one-time. complete body guardianVerificationToken.
+     * @nullable
+     */
+  verificationToken?: string | null;
+  /** @nullable */
+  tokenExpiresAt?: string | null;
 }

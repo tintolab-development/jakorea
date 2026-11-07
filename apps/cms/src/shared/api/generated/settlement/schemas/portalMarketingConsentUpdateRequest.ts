@@ -8,14 +8,8 @@
 
 export interface PortalMarketingConsentUpdateRequest {
   agreed: boolean;
-  /**
-     * @minLength 0
-     * @maxLength 100
-     */
+  /** @maxLength 100 */
   version?: string;
-  /**
-     * @minLength 0
-     * @maxLength 500
-     */
+  /** @maxLength 500 */
   reason?: string;
 }

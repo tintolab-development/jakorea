@@ -101,6 +101,7 @@ const PROGRAM_APPLICATION_STATUSES = new Set<EducationDisplayStatus>([
   'waiting_result',
   'document_passed',
   'rejected',
+  'cancelled',
   'approval_cancelled',
 ])
 
@@ -156,15 +157,6 @@ function readEducationApplicationType(value: string | undefined): ProgramApplica
     return value as ProgramApplicationType
   }
   return null
-}
-
-/** 신청 GET `program.*Configured` boolean이 있으면 catalog GET으로 덮지 않는다. */
-function pickApplicationConfiguredFlag(
-  applicationValue: boolean | null | undefined,
-  catalogValue: boolean | undefined,
-): boolean | undefined {
-  if (applicationValue === true || applicationValue === false) return applicationValue
-  return catalogValue
 }
 
 function buildDetailPath(
@@ -232,14 +224,14 @@ export function MypageEducationDetailPage() {
           applicationProgram.educationFormLabel ?? remoteProgram.educationFormLabel,
         educationJournalEnabled:
           applicationProgram.educationJournalEnabled ?? remoteProgram.educationJournalEnabled,
-        surveyConfigured: pickApplicationConfiguredFlag(
-          applicationProgram.surveyConfigured,
-          remoteProgram.surveyConfigured,
-        ),
-        satisfactionConfigured: pickApplicationConfiguredFlag(
-          applicationProgram.satisfactionConfigured,
-          remoteProgram.satisfactionConfigured,
-        ),
+        surveyConfigured:
+          applicationProgram.surveyConfigured == null
+            ? undefined
+            : applicationProgram.surveyConfigured,
+        satisfactionConfigured:
+          applicationProgram.satisfactionConfigured == null
+            ? undefined
+            : applicationProgram.satisfactionConfigured,
       },
       application,
     )
@@ -313,14 +305,14 @@ export function MypageEducationDetailPage() {
             scheduleTabLabel: isUjatParticipant
               ? UJAT_PARTICIPANT_ASSIGNMENT_TAB_LABEL
               : EDUCATION_ACTIVITY_SCHEDULE_TAB_LABEL,
-            surveyConfigured: pickApplicationConfiguredFlag(
-              application?.programConfig?.surveyConfigured,
-              program.surveyConfigured,
-            ),
-            satisfactionConfigured: pickApplicationConfiguredFlag(
-              application?.programConfig?.satisfactionConfigured,
-              program.satisfactionConfigured,
-            ),
+            surveyConfigured:
+              application?.programConfig?.surveyConfigured == null
+                ? undefined
+                : application.programConfig.surveyConfigured,
+            satisfactionConfigured:
+              application?.programConfig?.satisfactionConfigured == null
+                ? undefined
+                : application.programConfig.satisfactionConfigured,
             educationJournalEnabled:
               isTeacher &&
               program.programType === 'TRAINED_TEACHER' &&
@@ -818,6 +810,9 @@ export function MypageEducationDetailPage() {
         <EducationSchedulePanel
           applicationType={formsApplicationType}
           applicationId={application.id}
+          programType={
+            application.programType ?? application.programConfig?.programType ?? program.programType
+          }
           lastParticipatedSession={
             isWithdrawnDuring ? application.lastParticipatedSession : undefined
           }
@@ -859,10 +854,11 @@ export function MypageEducationDetailPage() {
           kind="survey"
           displayStatus={application.displayStatus}
           withdrawalPhase={application.withdrawalPhase}
-          configured={pickApplicationConfiguredFlag(
-            application.programConfig?.surveyConfigured,
-            program.surveyConfigured,
-          )}
+          configured={
+            application.programConfig?.surveyConfigured == null
+              ? undefined
+              : application.programConfig.surveyConfigured
+          }
           remoteDetailEnabled={remoteDetailEnabled}
           programTitle={program.title}
           educationScheduleLines={program.educationScheduleLines}
@@ -876,26 +872,25 @@ export function MypageEducationDetailPage() {
       )
     }
     if (active === 'satisfaction') {
-      if (program.programType?.toUpperCase() === 'TRAINED_TEACHER') {
-        return null
-      }
       if (isGeminiTrainingProgram(program)) {
         return null
       }
       return (
         <EducationSurveySection
           kind="satisfaction"
+          displayStatus={application.displayStatus}
+          withdrawalPhase={application.withdrawalPhase}
           satisfactionAudience={
             isTeacher && isOrganizationEducationApplication(application, program)
               ? 'teacher'
               : 'student'
           }
-          displayStatus={application.displayStatus}
-          withdrawalPhase={application.withdrawalPhase}
-          configured={pickApplicationConfiguredFlag(
-            application.programConfig?.satisfactionConfigured,
-            program.satisfactionConfigured,
-          )}
+          configured={(() => {
+            const fromApplication = application.programConfig?.satisfactionConfigured
+            if (fromApplication != null) return fromApplication
+            const fromProgram = program.satisfactionConfigured
+            return fromProgram == null ? undefined : fromProgram
+          })()}
           remoteDetailEnabled={remoteDetailEnabled}
           programTitle={program.title}
           educationScheduleLines={program.educationScheduleLines}

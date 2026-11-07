@@ -6,4 +6,4 @@
  * OpenAPI spec version: v9
  */
 
-export type CommonExportDataResponseRowsItem = {[key: string]: unknown};
+export type CommonExportDataResponseRowsItem = { [key: string]: unknown };

@@ -7,8 +7,12 @@
  */
 
 export interface FormResponseFeedbackItemResponse {
-  /** form_response_feedback.id. rejectReason fallback이면 null */
+  /**
+     * form_response_feedback.id. rejectReason fallback이면 null
+     * @nullable
+     */
   feedbackId?: number | null;
   content?: string;
-  createdAt?: string;
+  /** @nullable */
+  createdAt?: string | null;
 }

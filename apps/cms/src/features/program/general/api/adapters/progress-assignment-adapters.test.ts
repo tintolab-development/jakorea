@@ -28,6 +28,7 @@ describe('buildProgressAssignmentSessionsFromRemote', () => {
               files: [
                 {
                   fileObjectId: 9001,
+                  fileName: '과제_제출.pdf',
                   originalFileName: '과제_제출.pdf',
                   downloadable: true,
                 },
@@ -236,54 +237,25 @@ describe('buildProgressAssignmentSessionsFromRemote', () => {
     expect(sessions[1]?.participants.map(row => row.name)).toEqual(['진행자'])
   })
 
-  it('fills assignment sessions that arrived without participants from the progress roster', () => {
-    const sessions = buildProgressAssignmentSessionsFromRemote(
-      {
-        items: [
-          {
-            scheduleId: 901,
-            sessionNo: 1,
-            startAt: '2026-01-09T00:20:00Z',
-            endAt: '2026-01-09T02:20:00Z',
-            participants: [],
-          },
-        ],
-      },
-      {
-        participants: [
-          {
-            participantId: 21,
-            memberName: '김제이',
-            participantType: 'INDIVIDUAL',
-            organizationName: '제이초등학교',
-            grade: '3학년',
-          },
-        ],
-      }
-    )
+  it('does not fill empty assignment participants from the progress roster', () => {
+    const sessions = buildProgressAssignmentSessionsFromRemote({
+      items: [
+        {
+          scheduleId: 901,
+          sessionNo: 1,
+          startAt: '2026-01-09T00:20:00Z',
+          endAt: '2026-01-09T02:20:00Z',
+          participants: [],
+        },
+      ],
+    })
 
     expect(sessions).toHaveLength(1)
-    expect(sessions[0]?.participants.map(row => row.name)).toEqual(['김제이'])
-    expect(sessions[0]?.participants[0]?.submission).toEqual({ kind: 'not_submitted' })
+    expect(sessions[0]?.participants).toEqual([])
   })
 
   it('does not invent schedules from dashboard when assignment items are empty', () => {
-    const sessions = buildProgressAssignmentSessionsFromRemote(
-      { items: [] },
-      {
-        participants: [
-          {
-            participantId: 11,
-            memberName: '김제이',
-            participantType: 'INDIVIDUAL',
-            organizationName: '제이초등학교',
-            grade: '3학년',
-            gender: 'FEMALE',
-            birthDate: '2000-01-01',
-          },
-        ],
-      }
-    )
+    const sessions = buildProgressAssignmentSessionsFromRemote({ items: [] })
 
     expect(sessions).toEqual([])
   })

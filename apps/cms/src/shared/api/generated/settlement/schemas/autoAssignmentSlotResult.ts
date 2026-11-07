@@ -8,18 +8,34 @@
 import type { AutoAssignmentSlotResultResult } from './autoAssignmentSlotResultResult';
 
 export interface AutoAssignmentSlotResult {
-  educationSlotId?: number;
-  scheduleId?: number;
-  organizationApplicationId?: number;
-  classLabel?: string;
-  educationRegionCode?: string;
-  /** ASSIGNED_PAIR | ASSIGNED_SINGLE(빈 슬롯에 1인만 배정) | UNASSIGNED(빈 슬롯 배정 실패) | SECONDARY_ADDED(기존 1인 슬롯에 두 번째 봉사자 추가) | SECONDARY_UNAVAILABLE(기존 1인 슬롯 보강 실패, 1인 유지). 기존 2인조에서 한 명을 옮겨 1인 커버한 경우 result는 ASSIGNED_SINGLE이고 reason=PAIR_SPLIT. PAIR_SPLIT이면 대상 학급 row의 sourceEducationSlotId가 원본 학급이고, 원본 학급 row도 results에 포함된다. */
+  /** @nullable */
+  educationSlotId?: number | null;
+  /** @nullable */
+  scheduleId?: number | null;
+  /** @nullable */
+  organizationApplicationId?: number | null;
+  /** @nullable */
+  classLabel?: string | null;
+  /** @nullable */
+  educationRegionCode?: string | null;
+  /**
+     * ASSIGNED_PAIR | ASSIGNED_SINGLE(빈 슬롯에 1인만 배정) | UNASSIGNED(빈 슬롯 배정 실패) | SECONDARY_ADDED(기존 1인 슬롯에 두 번째 봉사자 추가) | SECONDARY_UNAVAILABLE(기존 1인 슬롯 보강 실패, 1인 유지). 기존 2인조에서 한 명을 옮겨 1인 커버한 경우 result는 ASSIGNED_SINGLE이고 reason=PAIR_SPLIT. PAIR_SPLIT이면 대상 학급 row의 sourceEducationSlotId가 원본 학급이고, 원본 학급 row도 results에 포함된다.
+     * @nullable
+     */
   result?: AutoAssignmentSlotResultResult;
-  assignmentGroupId?: string;
-  primaryParticipantId?: number;
-  secondaryParticipantId?: number;
-  attendanceManagerParticipantId?: number;
-  reason?: string;
-  /** reason=PAIR_SPLIT인 대상 학급 row에서 원본 학급 educationSlotId. 그 외 result는 null. FE는 educationSlotId와 sourceEducationSlotId를 모두 새로고침한다. 생략하지 않고 null로 둔다. */
+  /** @nullable */
+  assignmentGroupId?: string | null;
+  /** @nullable */
+  primaryParticipantId?: number | null;
+  /** @nullable */
+  secondaryParticipantId?: number | null;
+  /** @nullable */
+  attendanceManagerParticipantId?: number | null;
+  /** @nullable */
+  reason?: string | null;
+  /**
+     * reason=PAIR_SPLIT인 대상 학급 row에서 원본 학급 educationSlotId. 그 외 result는 null. FE는 educationSlotId와 sourceEducationSlotId를 모두 새로고침한다. 필드를 생략하지 않고 null로 둔다.
+     * @nullable
+     */
   sourceEducationSlotId?: number | null;
 }

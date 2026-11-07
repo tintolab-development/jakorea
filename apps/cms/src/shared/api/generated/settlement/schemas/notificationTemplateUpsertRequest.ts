@@ -5,38 +5,43 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { NotificationTemplateUpsertRequestChannelType } from './notificationTemplateUpsertRequestChannelType';
+import type { NotificationTemplateUpsertRequestEmailTemplateLanguage } from './notificationTemplateUpsertRequestEmailTemplateLanguage';
 
+/**
+ * 알림 템플릿 생성/수정 body
+ */
 export interface NotificationTemplateUpsertRequest {
-  channelType?: string;
-  templateCode?: string;
-  providerTemplateCode?: string;
-  providerFlowId?: string;
-  messagePurpose?: string;
-  smsMessageType?: string;
-  providerSenderKey?: string;
-  providerSenderProfileType?: string;
-  providerSenderPhoneNumber?: string;
-  /**
-     * EMAIL From. NHN Hub 모드: harvest된 sender profile senderKey와 소문자 일치 필수(fail-closed).
-     * 프로필 0건 → 400 EMAIL_SENDER_PROFILES_EMPTY. 미일치 → 400 EMAIL_SENDER_PROFILE_NOT_HARVESTED.
-     * 템플릿 등록 FE 기본값: jakorea@jakorea.org. create 시 생략/blank이면 서버가 기본값 채운 뒤 harvest 검사.
-     */
-  providerSenderEmailAddress?: string;
-  /**
-     * 통계키. EMAIL Hub 카탈로그에 매핑 없음 — NHN Hub 모드에서는 저장하지 않음(요청 invent 무시).
-     * LOCAL만 허용.
-     */
-  providerStatsKeyId?: string;
-  titleTemplate?: string;
-  contentTemplate?: string;
-  useYn?: boolean;
+  channelType?: NotificationTemplateUpsertRequestChannelType;
+  /** @nullable */
+  templateCode?: string | null;
+  /** EMAIL NHN 템플릿명. Hangul/A-Za-z/0-9/_/- only */
   displayName?: string;
-  categoryId?: number;
-  emailTemplateLanguage?: string;
-  emailAttachmentIds?: string[];
   /**
-     * 발신자 표시명. NHN Hub 모드에서는 harvest 프로필 display_name SSOT(요청값 invent 무시).
-     * LOCAL만 FE 입력값 사용.
+     * EMAIL From. NHN Hub: harvest senderKey 소문자 일치 필수(fail-closed). 프로필 0건 → 400 EMAIL_SENDER_PROFILES_EMPTY. 미일치 → EMAIL_SENDER_PROFILE_NOT_HARVESTED. FE 기본값 jakorea@jakorea.org. create 시 생략/blank면 서버가 기본값 채운 뒤 harvest 검사.
+     * @nullable
      */
-  senderProfileDisplayName?: string;
+  providerSenderEmailAddress?: string | null;
+  /**
+     * 발신자 표시명. NHN Hub 모드에서는 harvest 프로필 display_name SSOT(요청 invent 무시). LOCAL만 FE 입력 사용.
+     * @nullable
+     */
+  senderProfileDisplayName?: string | null;
+  /**
+     * 통계키. EMAIL Hub 카탈로그 미매핑 — Hub 모드에서는 저장하지 않음(요청 invent 무시). LOCAL만 허용.
+     * @nullable
+     */
+  providerStatsKeyId?: string | null;
+  /** @nullable */
+  titleTemplate?: string | null;
+  /** @nullable */
+  contentTemplate?: string | null;
+  /** @nullable */
+  emailTemplateLanguage?: NotificationTemplateUpsertRequestEmailTemplateLanguage;
+  /** @nullable */
+  categoryId?: number | null;
+  /** @nullable */
+  useYn?: boolean | null;
+  /** @nullable */
+  emailAttachmentIds?: string[] | null;
 }

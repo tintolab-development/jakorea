@@ -8,6 +8,7 @@
 
 /**
  * 제출본 form_response.response_status. 미제출이면 null(생략). APPROVED/REJECTED/SUBMITTED/COMPLETED 등. status(FEEDBACK 등)와 별도로 승인 여부를 구분한다.
+ * @nullable
  */
 export type MemberPortalEducationScheduleAssignmentResponseStatus = typeof MemberPortalEducationScheduleAssignmentResponseStatus[keyof typeof MemberPortalEducationScheduleAssignmentResponseStatus] | null;
 

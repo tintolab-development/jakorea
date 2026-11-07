@@ -1,7 +1,14 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import customInstance from '@/shared/api/orval-mutator'
+import { getApiErrorCode } from '@/shared/lib/extract-api-error-message'
 import type { UjatBasicInfoFormValues } from '@/features/program/ujat/lib/ujat-basic-info-form'
-import { normalizeUjatTypedDetailForWrite } from '@/features/program/ujat/lib/ujat-typed-detail'
+import {
+  exclusionFromOverlay,
+  normalizeUjatTypedDetailForWrite,
+  normalizeUjatTypedHalfPlanForWrite,
+  ujatTypedDate,
+  type UjatTypedExclusionPolicy,
+} from '@/features/program/ujat/lib/ujat-typed-detail'
 
 /**
  * JABACK UJAT Typed detail v1.
@@ -15,12 +22,7 @@ export type UjatTypedTextbookPlan = {
   responsiblePerson?: string | null
 }
 
-export type UjatTypedExclusionPolicy = {
-  excludeNone?: boolean | null
-  excludeSaturday?: boolean | null
-  excludeSunday?: boolean | null
-  excludePublicHoliday?: boolean | null
-}
+export type { UjatTypedExclusionPolicy }
 
 export type UjatTypedScheduleRow = {
   rowId?: string | null
@@ -161,16 +163,32 @@ export async function fetchUjatTypedDetailRemote(programId: string): Promise<Uja
   return unwrapApiBody<UjatTypedDetail>(response)
 }
 
+function isTypedLocalDateValidationError(error: unknown): boolean {
+  return getApiErrorCode(error) === 'VALIDATION_FAILED'
+}
+
 export async function replaceUjatTypedDetailRemote(
   programId: string,
   detail: UjatTypedDetail
 ): Promise<UjatTypedDetail> {
-  const response = await customInstance<unknown>({
-    url: `/api/admin/programs/${encodeURIComponent(programId)}/ujat/typed-detail`,
-    method: 'PUT',
-    data: normalizeUjatTypedDetailForWrite(detail),
-  })
-  return unwrapApiBody<UjatTypedDetail>(response)
+  const body = normalizeUjatTypedDetailForWrite(detail)
+  try {
+    const response = await customInstance<unknown>({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/ujat/typed-detail`,
+      method: 'PUT',
+      data: body,
+    })
+    return unwrapApiBody<UjatTypedDetail>(response)
+  } catch (error) {
+    if (!isTypedLocalDateValidationError(error)) throw error
+    const retried = normalizeUjatTypedDetailForWrite(detail)
+    const response = await customInstance<unknown>({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/ujat/typed-detail`,
+      method: 'PUT',
+      data: retried,
+    })
+    return unwrapApiBody<UjatTypedDetail>(response)
+  }
 }
 
 export async function patchUjatTypedDetailRemote(
@@ -192,11 +210,29 @@ export async function updateUjatTypedDetailHalfRemote(
   expectedRevision: number,
   halfPlan: UjatTypedHalfPlan
 ): Promise<UjatTypedDetail> {
-  const response = await customInstance<unknown>({
-    url: `/api/admin/programs/${encodeURIComponent(programId)}/ujat/typed-detail/halves/${semesterType}`,
-    method: 'PUT',
-    data: { expectedRevision, halfPlan },
-  })
+  const normalizedHalf = normalizeUjatTypedHalfPlanForWrite(
+    halfPlan as Parameters<typeof normalizeUjatTypedHalfPlanForWrite>[0]
+  ) as UjatTypedHalfPlan
+  const putHalf = async (plan: UjatTypedHalfPlan) =>
+    customInstance<unknown>({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/ujat/typed-detail/halves/${semesterType}`,
+      method: 'PUT',
+      data: {
+        expectedRevision,
+        halfPlan: plan,
+      },
+    })
+  let response: unknown
+  try {
+    response = await putHalf(normalizedHalf)
+  } catch (error) {
+    if (!isTypedLocalDateValidationError(error)) throw error
+    response = await putHalf(
+      normalizeUjatTypedHalfPlanForWrite(
+        halfPlan as Parameters<typeof normalizeUjatTypedHalfPlanForWrite>[0]
+      ) as UjatTypedHalfPlan
+    )
+  }
   return unwrapApiBody<UjatTypedDetail>(response)
 }
 
@@ -340,26 +376,29 @@ function overlayStageToRows(
     ? {
         startDate:
           own(rawRange, 'start') || own(rawRange, 'startDate')
-            ? stringValue(rawRange.start ?? rawRange.startDate)
+            ? ujatTypedDate(rawRange.start ?? rawRange.startDate)
             : base.startDate ?? null,
         endDate:
           own(rawRange, 'end') || own(rawRange, 'endDate')
-            ? stringValue(rawRange.end ?? rawRange.endDate)
+            ? ujatTypedDate(rawRange.end ?? rawRange.endDate)
             : base.endDate ?? null,
       }
-    : readRange(overlay[keys.range])
+    : {
+        startDate: ujatTypedDate(readRange(overlay[keys.range]).startDate),
+        endDate: ujatTypedDate(readRange(overlay[keys.range]).endDate),
+      }
   const scheduleIds =
     numberList(overlay[keys.scheduleIds]) ?? base.scheduleIds ?? []
   const unavailableDatesKey = `ujat.${half}.eduSchedule.unavailableDates`
   const exclusionKey = `ujat.${half}.eduSchedule.exclusion`
   const excludedDates =
     Array.isArray(overlay[unavailableDatesKey])
-      ? (overlay[unavailableDatesKey] as unknown[]).filter(
-          (item): item is string => typeof item === 'string'
-        )
+      ? (overlay[unavailableDatesKey] as unknown[])
+          .map(item => ujatTypedDate(item))
+          .filter((item): item is string => item != null)
       : base.excludedDates ?? null
   const exclusion = isRecord(overlay[exclusionKey])
-    ? (overlay[exclusionKey] as UjatTypedExclusionPolicy)
+    ? exclusionFromOverlay(overlay[exclusionKey], excludedDates ?? [])
     : base.exclusion ?? null
   const textbook =
     stage === 'pre' &&
@@ -402,8 +441,8 @@ function overlayStageToRows(
           (Array.isArray(regionByRow?.[rowId])
             ? stringValue(regionByRow?.[rowId]?.[0])
             : stringValue(regionByRow?.[rowId])),
-        startDate: stage === 'event' ? stringValue(dateByRow) ?? range.startDate : stringValue(dateByRow),
-        endDate: stage === 'event' ? stringValue(dateByRow) ?? range.endDate : stringValue(dateByRow),
+        startDate: stage === 'event' ? ujatTypedDate(dateByRow) ?? range.startDate : ujatTypedDate(dateByRow),
+        endDate: stage === 'event' ? ujatTypedDate(dateByRow) ?? range.endDate : ujatTypedDate(dateByRow),
         dates: existing.dates ?? null,
         scheduleIds: existing.scheduleIds ?? scheduleIds,
         textbook: existing.textbook ?? textbook,
@@ -421,8 +460,8 @@ function overlayStageToRows(
       educationName: name,
       educationMethod: method,
       regionCode: base.regionCode ?? firstRegionCode ?? null,
-      startDate: stage === 'event' ? range.startDate : base.startDate ?? firstDate,
-      endDate: stage === 'event' ? range.endDate : base.endDate ?? firstDate,
+      startDate: stage === 'event' ? range.startDate : ujatTypedDate(base.startDate ?? firstDate),
+      endDate: stage === 'event' ? range.endDate : ujatTypedDate(base.endDate ?? firstDate),
       scheduleIds,
       textbook,
       excludedDates,

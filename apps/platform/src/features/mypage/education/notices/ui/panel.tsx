@@ -75,7 +75,6 @@ export function EducationInProgressNoticePanel({
   const [editingNoticeAttachments, setEditingNoticeAttachments] = useState<
     EducationInProgressFile[]
   >([])
-  const [isComingSoonOpen, setIsComingSoonOpen] = useState(false)
   const [isProgramInfoOpen, setIsProgramInfoOpen] = useState(false)
   const [isApplicationInfoOpen, setIsApplicationInfoOpen] = useState(false)
   const [draftFileQuery, setDraftFileQuery] = useState('')
@@ -156,10 +155,6 @@ export function EducationInProgressNoticePanel({
     writeNoticeIdToLocation(null, 'replace')
   }, [shouldDropSelectedNotice])
 
-  const openComingSoon = () => {
-    setIsComingSoonOpen(true)
-  }
-
   const openNoticeEdit = (noticeId: string, noticeAttachments: EducationInProgressFile[]) => {
     const target = modalNotices.find(notice => notice.id === noticeId)
     if (!target) return
@@ -189,9 +184,7 @@ export function EducationInProgressNoticePanel({
   const handleViewOriginal = (file: EducationInProgressFile) => {
     if (file.postId) {
       openNoticeDetail(file.postId)
-      return
     }
-    openComingSoon()
   }
 
   const deleteNotice = (_noticeId: string) => {
@@ -359,12 +352,6 @@ export function EducationInProgressNoticePanel({
           existingAttachments={editingNoticeAttachments}
         />
       ) : null}
-
-      <PFAlertModal
-        open={isComingSoonOpen}
-        title="준비 중"
-        onConfirm={() => setIsComingSoonOpen(false)}
-      />
 
       <PFAlertModal
         open={downloadErrorOpen}

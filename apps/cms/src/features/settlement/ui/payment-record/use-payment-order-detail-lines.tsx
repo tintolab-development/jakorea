@@ -549,7 +549,7 @@ export function usePaymentOrderDetailLinesController(
           if (!payload) {
             throw new Error('지급조서 발급 데이터를 만들 수 없습니다.')
           }
-          return payload
+          return { ...payload, settlementId: programLineRow.settlementId }
         }
         return buildMockProgramDetailLinePaymentStatementIssuancePayload(
           args.programRow,
@@ -577,7 +577,7 @@ export function usePaymentOrderDetailLinesController(
         if (!payload) {
           throw new Error('지급조서 발급 데이터를 만들 수 없습니다.')
         }
-        return payload
+        return { ...payload, settlementId: instructorLineRow.settlementId }
       }
       return buildMockInstructorDetailLinePaymentStatementIssuancePayload(
         args.instructorRow,

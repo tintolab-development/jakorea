@@ -6,43 +6,62 @@
  * OpenAPI spec version: v9
  */
 
-/**
- * 계좌 지급 확인 목록 행. 신청자명(instructorName)은 실명이고 계좌·예금주만 마스킹합니다.
- */
 export interface AccountPaymentListItemResponse {
   accountPaymentId?: number;
-  batchId?: number;
-  settlementId?: number;
-  /** CMS 업무 상태는 WAITING_PAYMENT | PAID만 노출합니다. 내부 FAILED는 WAITING_PAYMENT로 정규화됩니다. */
+  /** @nullable */
+  batchId?: number | null;
+  /** @nullable */
+  settlementId?: number | null;
+  /** 정산 지급 상태. WAITING_PAYMENT | PAID | FAILED. FE REQUESTED 필터는 대기 버킷으로 매핑합니다. */
   paymentStatus?: string;
-  /** 내부 계좌 지급 처리 실패 여부. true여도 paymentStatus는 WAITING_PAYMENT입니다. */
-  paymentFailureYn?: boolean;
-  /** 내부 계좌 지급 실패 사유. paymentFailureYn=true일 때만 노출합니다. */
-  paymentFailureReason?: string | null;
-  /** 신청자 실명. 서버에서 마스킹하지 않습니다. */
+  /** 신청자 실명. 마스킹하지 않습니다. */
   instructorName?: string;
-  bankName?: string;
-  maskedAccountNo?: string;
-  accountHolder?: string;
-  netPaymentAmount?: number;
-  /** 이체 예정일. 목록 필터와 캘린더 배치 기준입니다. */
+  /** @nullable */
+  bankName?: string | null;
+  /** @nullable */
+  maskedAccountNo?: string | null;
+  /** @nullable */
+  accountHolder?: string | null;
+  /** @nullable */
+  netPaymentAmount?: number | null;
+  /**
+     * 이체 예정일. 목록 필터와 캘린더 배치 기준입니다.
+     * @nullable
+     */
   scheduledPaymentDate?: string | null;
-  paidAt?: string;
-  sourceType?: string;
-  sourceId?: number;
-  programId?: number;
-  memberId?: number;
-  /** 프로그램명 (우선) */
+  /** @nullable */
+  paidAt?: string | null;
+  /** @nullable */
+  sourceType?: string | null;
+  /** @nullable */
+  sourceId?: number | null;
+  /** @nullable */
+  programId?: number | null;
+  /** @nullable */
+  memberId?: number | null;
+  /**
+     * 프로그램명 (우선)
+     * @nullable
+     */
   programNameKo?: string | null;
-  /** 호환 필드. programNameKo와 동일 값입니다. */
+  /**
+     * 호환 필드. programNameKo와 동일 값입니다.
+     * @nullable
+     */
   programName?: string | null;
-  /** 참여 기관. 개인 프로그램은 null */
+  /**
+     * 개인 프로그램은 null
+     * @nullable
+     */
   institutionName?: string | null;
-  /** 차시 번호. sessionLabel이 없으면 FE가 N차시로 표시합니다. */
+  /** @nullable */
   sessionOrdinal?: number | null;
-  /** 차시 표시. 예: 2 ~ 3차시. 개인은 null */
+  /** @nullable */
   sessionLabel?: string | null;
-  /** 교육 진행 일자(표시용). 캘린더 배치는 scheduledPaymentDate(이체 예정일)입니다. */
+  /**
+     * 교육 진행 일자(표시용). 캘린더 배치는 scheduledPaymentDate(이체 예정일)입니다.
+     * @nullable
+     */
   lectureDate?: string | null;
   availableActions?: string[];
 }

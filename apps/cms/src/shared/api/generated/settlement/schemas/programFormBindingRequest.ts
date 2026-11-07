@@ -5,35 +5,83 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { ProgramFormBindingRequestSatisfactionRunMode } from './programFormBindingRequestSatisfactionRunMode';
+import type { ProgramFormBindingRequestSatisfactionWindowDays } from './programFormBindingRequestSatisfactionWindowDays';
 
 export interface ProgramFormBindingRequest {
-  /** REGISTRATION | RECRUITMENT | APPLICATION | SURVEY | SATISFACTION | LECTURE_EVALUATION 등. 교육받은 교사 프로그램의 SATISFACTION은 교사(targetRole=TEACHER)와 학생(STUDENT) 모두 허용합니다. */
+  /** REGISTRATION | RECRUITMENT | APPLICATION | SURVEY | SATISFACTION | LECTURE_EVALUATION 등. 교육받은 교사 SATISFACTION은 교사(targetRole=TEACHER)와 학생(STUDENT) 모두 허용합니다. 1사1교 SATISFACTION은 교사만 허용합니다. */
   formType?: string;
-  templateId?: number;
+  /** @nullable */
+  templateId?: number | null;
   templateVersionId?: number;
-  targetType?: string;
-  targetRole?: string;
-  targetScope?: string;
-  targetScopeId?: number;
-  /** 선택. 생략하거나 false면 required_yn=false로 저장합니다. 생성 시 true로 강제하지 않습니다. */
-  required?: boolean;
-  active?: boolean;
-  completionRequired?: boolean;
-  certificateRequired?: boolean;
-  lectureCompletionRequired?: boolean;
-  settlementRequired?: boolean;
-  performanceRequired?: boolean;
-  reviewRequired?: boolean;
-  submissionStartAt?: string;
-  submissionEndAt?: string;
-  duplicatePolicy?: string;
-  displayOrder?: number;
-  /** SATISFACTION만. PER_SCHEDULE | ONCE_AT_END. 생략 시 targetScope=SCHEDULE이면 PER_SCHEDULE, 아니면 ONCE_AT_END. */
-  satisfactionRunMode?: string;
-  /** SATISFACTION만. 일정 종료(또는 시작일) 후 참여 일수. 허용값 3, 7, 14, 30. 생략 시 7. */
-  satisfactionWindowDays?: number;
-  /** SATISFACTION만. true면 관리자가 지정한 submissionStartAt을 이후 일정 변경이 덮어쓰지 않습니다. */
-  startAtLocked?: boolean;
-  /** SATISFACTION ONCE_AT_END만. true면 시작 시각을 현재 시각으로 둡니다. */
-  startImmediately?: boolean;
+  /** @nullable */
+  targetType?: string | null;
+  /**
+     * APPLICATION/RECRUITMENT may send ORGANIZATION. REGISTRATION may omit. (한글 계약 설명)
+     * @nullable
+     */
+  targetRole?: string | null;
+  /**
+     * PROGRAM(기본) | TERM | RECRUITMENT. LECTURE_EVALUATION은 PROGRAM scope에서 targetScopeId=null인 프로그램 공통 바인딩 또는 SCHEDULE/CURRICULUM scope를 사용할 수 있습니다. LECTURE_REPORT/INSTRUCTOR_EVALUATION/LECTURE_SURVEY의 기존 SCHEDULE/CURRICULUM 정책은 유지합니다. RECRUITMENT 는 formType=APPLICATION 에서만 쓰며 targetScopeId=모집 행 id. 모집 행마다 활성 신청서는 1개(409 RECRUITMENT_APPLICATION_FORM_ALREADY_BOUND). targetType 은 그 행 applicationType 과 맞아야 한다(400 RECRUITMENT_APPLICATION_TYPE_MISMATCH).
+     * @nullable
+     */
+  targetScope?: string | null;
+  /**
+     * targetScope=PROGRAM인 LECTURE_EVALUATION은 null이어야 합니다. targetScope=RECRUITMENT이면 모집 행 id(필수, 없으면 400 RECRUITMENT_SCOPE_ID_REQUIRED).
+     * @nullable
+     */
+  targetScopeId?: number | null;
+  /**
+     * Optional. Omitted or false stores required_yn=false. Create does not force true. (한글 계약 설명)
+     * @nullable
+     */
+  required?: boolean | null;
+  /** @nullable */
+  active?: boolean | null;
+  /** @nullable */
+  completionRequired?: boolean | null;
+  /** @nullable */
+  certificateRequired?: boolean | null;
+  /** @nullable */
+  lectureCompletionRequired?: boolean | null;
+  /** @nullable */
+  settlementRequired?: boolean | null;
+  /** @nullable */
+  performanceRequired?: boolean | null;
+  /** @nullable */
+  reviewRequired?: boolean | null;
+  /**
+     * 없으면 null. 시작·종료가 모두 null이면 기간 없음이며 화면 상태는 진행 중(in_progress)이다. 서버가 종료 시각을 만들어 finished로 두지 않는다.
+     * @nullable
+     */
+  submissionStartAt?: string | null;
+  /**
+     * 없으면 null. 시작·종료가 모두 null이면 기간 없음이며 화면 상태는 진행 중(in_progress)이다.
+     * @nullable
+     */
+  submissionEndAt?: string | null;
+  /** @nullable */
+  duplicatePolicy?: string | null;
+  /** @nullable */
+  displayOrder?: number | null;
+  /**
+     * SATISFACTION only. Omit: SCHEDULE→PER_SCHEDULE, otherwise ONCE_AT_END.
+     * @nullable
+     */
+  satisfactionRunMode?: ProgramFormBindingRequestSatisfactionRunMode;
+  /**
+     * SATISFACTION only. Days after start date through 23:59:59 KST. Default 7.
+     * @nullable
+     */
+  satisfactionWindowDays?: ProgramFormBindingRequestSatisfactionWindowDays;
+  /**
+     * SATISFACTION only. true keeps admin-chosen submissionStartAt.
+     * @nullable
+     */
+  startAtLocked?: boolean | null;
+  /**
+     * SATISFACTION ONCE_AT_END. true starts at now.
+     * @nullable
+     */
+  startImmediately?: boolean | null;
 }

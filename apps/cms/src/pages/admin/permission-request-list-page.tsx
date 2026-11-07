@@ -66,7 +66,7 @@ import {
 import { useInstructorRoleRequestMutations } from '@/features/user/api/hooks/use-instructor-role-request-mutations'
 import { useAdminApprovalRequestMutations } from '@/features/user/api/hooks/use-admin-approval-request-mutations'
 import { handleError } from '@/shared/utils/error-handler'
-import { useCmsAlert } from '@/shared/ui'
+import { showNotificationResendRequestCompletedAlert, useCmsAlert } from '@/shared/ui'
 import { guardAdminAction } from '@/shared/lib/admin-role-policy'
 import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
 import './permission-request-page.css'
@@ -1240,12 +1240,7 @@ export function PermissionRequestListPage() {
         try {
           await resendNotificationMutation.mutateAsync({ requestId, notify })
           setPermissionNotificationResend(null)
-          showAlert({
-            title: notify ? '예약 등록 완료' : '재발송 요청 완료',
-            content: notify
-              ? '알림 재발송이 예약되었습니다. 선택한 시각에 발송됩니다.'
-              : '알림 재발송을 요청했습니다.',
-          })
+          showNotificationResendRequestCompletedAlert()
         } catch (error) {
           handleError(error, { defaultMessage: getResendNotificationError(error) })
         }
@@ -1264,12 +1259,7 @@ export function PermissionRequestListPage() {
         try {
           await adminResendNotificationMutation.mutateAsync({ adminAccountId, notify })
           setPermissionNotificationResend(null)
-          showAlert({
-            title: notify ? '예약 등록 완료' : '재발송 요청 완료',
-            content: notify
-              ? '알림 재발송이 예약되었습니다. 선택한 시각에 발송됩니다.'
-              : '알림 재발송을 요청했습니다.',
-          })
+          showNotificationResendRequestCompletedAlert()
         } catch (error) {
           handleError(error, { defaultMessage: getAdminResendNotificationError(error) })
         }
@@ -1283,6 +1273,7 @@ export function PermissionRequestListPage() {
         permissionNotificationResentAt:
           resolvePermissionNotificationResendSentAt(notifyOptions).toISOString(),
       })
+      showNotificationResendRequestCompletedAlert()
     },
     [
       adminRemote,
@@ -1294,7 +1285,6 @@ export function PermissionRequestListPage() {
       instructorRemote,
       permissionNotificationResend,
       resendNotificationMutation,
-      showAlert,
     ]
   )
 

@@ -9,6 +9,7 @@
 export interface TextbookDeliveryUpdateResponse {
   participantId?: number;
   programId?: number;
+  /** @nullable */
   organizationApplicationId?: number | null;
   textbookDeliveryStatus?: string;
 }

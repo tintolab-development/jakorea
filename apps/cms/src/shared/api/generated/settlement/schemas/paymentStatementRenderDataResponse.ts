@@ -5,14 +5,15 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { JsonNode } from './jsonNode';
+import type { PaymentStatementRenderDataResponsePayload } from './paymentStatementRenderDataResponsePayload';
 
 export interface PaymentStatementRenderDataResponse {
   paymentStatementId?: number;
   settlementId?: number;
   documentType?: string;
   status?: string;
-  payload?: JsonNode;
+  /** CONFIRMED 지급조서 frozen snapshot 기반 렌더링 payload */
+  payload?: PaymentStatementRenderDataResponsePayload;
   payloadHash?: string;
   frozenAt?: string;
   availableActions?: string[];

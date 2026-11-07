@@ -362,6 +362,35 @@ describe('mapTrainedTeacherDetailToProgram educationStructure', () => {
 })
 
 describe('mapTrainedTeacherToUpdateRequest educationStructure', () => {
+  it('PATCH rounds keep GET program_schedule id', () => {
+    const request = mapTrainedTeacherToUpdateRequest({
+      id: '186551',
+      sponsorId: 'sponsor-1',
+      title: 'TT',
+      type: 'offline',
+      format: 'workshop',
+      category: 'school',
+      description: '',
+      rounds: [
+        {
+          id: '187700',
+          programId: '186551',
+          roundNumber: 1,
+          startDate: '2026-03-01T00:00:00.000Z',
+          endDate: '2026-03-01T01:00:00.000Z',
+          status: 'active',
+        },
+      ],
+      startDate: '2026-01-01',
+      endDate: '2026-12-31',
+      status: 'pending',
+      createdAt: '2026-01-01',
+      updatedAt: '2026-10-31T12:10:00.059740Z',
+    } as Program)
+    expect(request.rounds?.[0]?.id).toBe('187700')
+    expect(request.expectedUpdatedAt).toBe('2026-10-31T12:10:00.059740Z')
+  })
+
   it('writes CURRICULUM when domain is curriculum', () => {
     const program = {
       id: '186002',

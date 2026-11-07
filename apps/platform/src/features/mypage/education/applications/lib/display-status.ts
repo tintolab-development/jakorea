@@ -15,7 +15,8 @@ export const EDUCATION_DISPLAY_STATUS_LABEL: Record<EducationDisplayStatus, stri
   completed: '진행 완료',
   withdrawn: '활동 포기',
   rejected: '신청 반려',
-  approval_cancelled: '승인 취소',
+  cancelled: '신청 취소',
+  approval_cancelled: '신청 반려',
 }
 
 /** 교육현황 표시 라벨 — 승인 전 구간은 「승인 대기」로 통일 (봉사·강의현황 general과 구분) */
@@ -26,7 +27,8 @@ export const TEACHER_EDUCATION_DISPLAY_STATUS_LABEL: Record<EducationDisplayStat
   completed: '진행 완료',
   withdrawn: '활동 포기',
   rejected: '신청 반려',
-  approval_cancelled: '승인 취소',
+  cancelled: '신청 취소',
+  approval_cancelled: '신청 반려',
 }
 
 /** 목록 정렬: 결과 대기 → … → 신청 반려 */
@@ -37,7 +39,8 @@ export const EDUCATION_DISPLAY_STATUS_SORT_ORDER: Record<EducationDisplayStatus,
   completed: 3,
   withdrawn: 4,
   rejected: 5,
-  approval_cancelled: 6,
+  cancelled: 5,
+  approval_cancelled: 5,
 }
 
 export const EDUCATION_DISPLAY_STATUS_TONE: Record<
@@ -50,7 +53,8 @@ export const EDUCATION_DISPLAY_STATUS_TONE: Record<
   completed: 'completed',
   withdrawn: 'completed',
   rejected: 'rejected',
-  approval_cancelled: 'cancelled',
+  cancelled: 'cancelled',
+  approval_cancelled: 'rejected',
 }
 
 export const EDUCATION_DISPLAY_STATUS_TONE_CLASS: Record<EducationDisplayStatusTone, string> = {
@@ -74,6 +78,7 @@ export function resolveEducationApplicationTab(
     case 'completed':
     case 'withdrawn':
     case 'rejected':
+    case 'cancelled':
     case 'approval_cancelled':
       return 'completed'
   }
@@ -112,6 +117,7 @@ export function canShowEducationApplicationContent(status: EducationDisplayStatu
     status === 'waiting_result' ||
     status === 'document_passed' ||
     status === 'rejected' ||
+    status === 'cancelled' ||
     status === 'approval_cancelled' ||
     status === 'withdrawn'
   )

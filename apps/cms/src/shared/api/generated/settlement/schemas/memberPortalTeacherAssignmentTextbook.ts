@@ -12,16 +12,34 @@ import type { MemberPortalTeacherAssignmentTextbookDeliveryStatus } from './memb
  */
 export interface MemberPortalTeacherAssignmentTextbook {
   textbookId?: number;
-  /** 교재명 */
+  /**
+     * 교재명
+     * @nullable
+     */
   title?: string | null;
-  /** 신청에 저장된 키트 수 */
+  /**
+     * 신청에 저장된 키트 수
+     * @nullable
+     */
   kitCount?: number | null;
-  /** 신청에 저장된 교재 권수 */
+  /**
+     * 신청에 저장된 교재 권수
+     * @nullable
+     */
   volumeCount?: number | null;
-  /** 키트 수 표시값. 값이 없으면 null. */
+  /**
+     * 키트 수 표시값. 값이 없으면 null.
+     * @nullable
+     */
   kitCountLabel?: string | null;
-  /** 교재 권수 표시값. 값이 없으면 null. */
+  /**
+     * 교재 권수 표시값. 값이 없으면 null.
+     * @nullable
+     */
   volumeCountLabel?: string | null;
-  /** PREPARING | SHIPPING | DELIVERED. NOT_APPLICABLE은 textbook=null로 반환하며, 미설정은 null. */
+  /**
+     * NOT_APPLICABLE은 textbook=null로 반환하며, 미설정은 null.
+     * @nullable
+     */
   deliveryStatus?: MemberPortalTeacherAssignmentTextbookDeliveryStatus;
 }

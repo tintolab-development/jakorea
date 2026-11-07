@@ -8,9 +8,9 @@
 import type { InstructorApplicationListItemResponse } from './instructorApplicationListItemResponse';
 
 export interface PageResponseInstructorApplicationListItemResponse {
-  items?: InstructorApplicationListItemResponse[];
-  page?: number;
-  size?: number;
-  totalElements?: number;
-  totalPages?: number;
+  items: InstructorApplicationListItemResponse[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
 }

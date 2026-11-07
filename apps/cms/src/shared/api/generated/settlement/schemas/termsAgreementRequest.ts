@@ -10,37 +10,32 @@ import type { TermsAgreementRequestConsentStatus } from './termsAgreementRequest
 import type { TermsAgreementRequestTermsType } from './termsAgreementRequestTermsType';
 
 /**
- * 일반·학교·교사·강사 회원 등록과 회원포탈에서 사용하는 회원 동의 이력 요청
+ * 일반·학교·교사·강사 회원 등록과 회원포탈에서 사용하는 회원 동의 이력 요청. PORTRAIT_RIGHTS는 FULL/PARTIAL 작성 제출 시 agreed=true + filledDocument가 필요하고 DISAGREED는 agreed=false입니다.
  */
 export interface TermsAgreementRequest {
-  /**
-     * 회원 동의 원장에 저장 가능한 canonical TERMS_TYPE입니다. CMS 약관 문서 관리의 전체 18개 타입 중 회원 동의 테이블에 저장되는 15개 canonical 타입과 지급조서 문서 입력 별칭 1개를 사용합니다. PAYMENT_STATEMENT_PRE_CONSENT 입력은 회원 원장의 PAYMENT_STATEMENT_CONSENT로 정규화됩니다.
-     * @minLength 1
-     */
+  /** 회원 동의 원장에 저장되는 15개 canonical TERMS_TYPE와 지급조서 문서 입력 별칭 PAYMENT_STATEMENT_PRE_CONSENT를 허용합니다. 별칭은 PAYMENT_STATEMENT_CONSENT로 정규화됩니다. */
   termsType: TermsAgreementRequestTermsType;
-  /**
-     * 약관/동의서 버전
-     * @minLength 1
-     */
+  /** @minLength 1 */
   version: string;
-  /** 클라이언트 표시용 필수 여부 힌트입니다. CMS 개인/강사 pre-register에서는 서버가 등록 유형×termsType 정책으로 필수 여부를 다시 판정하므로 이 값을 신뢰하지 않습니다. */
+  /** 서버 약관 원장의 필수 여부. 서버가 최종 검증합니다. */
   required?: boolean;
-  /** 동의 여부. PORTRAIT_RIGHTS에서는 PARTIAL 작성 제출 완료이면 true, DISAGREED이면 false입니다. */
-  agreed?: boolean;
-  /** PORTRAIT_RIGHTS 전용 부분동의 상태 힌트. FULL은 deprecated이며 서버가 PARTIAL로 정규화합니다. */
-  consentStatus?: TermsAgreementRequestConsentStatus;
-  /** PORTRAIT_RIGHTS 전용 프로그램 참여 가능 여부 힌트. 서버가 filledDocument의 1·2번 항목으로 재계산합니다. */
-  programEligible?: boolean;
-  /** 호환 입력 필드입니다. 저장되는 약관 스냅샷은 서버가 게시 약관 원장에서 생성하며 이 값을 신뢰하지 않습니다. */
-  termsSnapshotJson?: string;
-  /** 선택 동의서 4종(PORTRAIT/PAYMENT/FACILITATOR/ADMINISTRATIVE)의 작성 완료 WritingFormDraft. 해당 termsType에서 agreed=true이면 필수이고 agreed=false이면 생략합니다. */
-  filledDocument?: FilledDocumentRequest;
-  /** 호환 입력 필드입니다. 성범죄 경력 조회 결과/증빙 파일은 저장하지 않으므로 신규 요청에서는 사용하지 않습니다. */
-  evidenceFileObjectId?: number;
+  agreed: boolean;
   /**
-     * 호환용 원본 파일명. 서버는 file_object 메타데이터를 우선합니다.
-     * @minLength 0
-     * @maxLength 255
+     * PORTRAIT_RIGHTS 전용 부분동의 상태 힌트. 서버가 filledDocument.schemaJson의 3개 bottomConsent를 다시 계산하여 검증합니다. FULL은 deprecated이며 PARTIAL로 정규화됩니다.
+     * @nullable
      */
+  consentStatus?: TermsAgreementRequestConsentStatus;
+  /**
+     * PORTRAIT_RIGHTS 전용 프로그램 참여 가능 여부 힌트. 서버는 항목 1·2가 모두 agree인지 재계산합니다.
+     * @nullable
+     */
+  programEligible?: boolean | null;
+  /**
+     * 호환 입력 필드. 저장 스냅샷은 서버가 게시 약관 원장에서 생성하며 클라이언트 값을 신뢰하지 않습니다.
+     * @nullable
+     */
+  termsSnapshotJson?: string | null;
+  filledDocument?: FilledDocumentRequest;
+  evidenceFileObjectId?: number;
   evidenceOriginalFileName?: string;
 }

@@ -516,6 +516,25 @@ describe('general-program-adapters', () => {
     expect(patch.rounds).toHaveLength(1)
   })
 
+  it('PATCH rounds keep GET program_schedule id and omit placeholder ids', () => {
+    const program: Program = {
+      ...sampleProgram,
+      backendProgramType: 'TRAINED_TEACHER',
+      rounds: [
+        { ...sampleProgram.rounds[0], id: '187700' },
+        {
+          ...sampleProgram.rounds[0],
+          id: '186551-round-2',
+          roundNumber: 2,
+        },
+      ],
+    }
+    const request = mapGeneralProgramToUpdateRequest(program, { rounds: program.rounds }, program)
+    expect(request.rounds?.[0]?.id).toBe('187700')
+    expect(request.rounds?.[1]).not.toHaveProperty('id')
+    expect(request.rounds?.[1]?.roundNumber).toBe(2)
+  })
+
   it('does not send featuredOnHome or homeDisplayOrder on create or PATCH', () => {
     const create = mapGeneralProgramToCreateRequest(sampleProgram) as unknown as Record<
       string,

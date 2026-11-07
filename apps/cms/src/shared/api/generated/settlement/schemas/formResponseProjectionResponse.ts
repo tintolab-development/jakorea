@@ -7,16 +7,28 @@
  */
 
 export interface FormResponseProjectionResponse {
-  formResponseId?: number;
-  programId?: number;
-  contextType?: string;
-  contextId?: number;
-  projectionKey?: string;
-  projectionValueText?: string;
-  projectionValueNumber?: number;
-  projectionValueBool?: boolean;
-  projectionValueDate?: string;
-  projectionValueJson?: string;
-  sourceQuestionKey?: string;
-  updatedAt?: string;
+  /** @nullable */
+  formResponseId?: number | null;
+  /** @nullable */
+  programId?: number | null;
+  /** @nullable */
+  contextType?: string | null;
+  /** @nullable */
+  contextId?: number | null;
+  /** @nullable */
+  projectionKey?: string | null;
+  /** @nullable */
+  projectionValueText?: string | null;
+  /** @nullable */
+  projectionValueNumber?: number | null;
+  /** @nullable */
+  projectionValueBool?: boolean | null;
+  /** @nullable */
+  projectionValueDate?: string | null;
+  /** @nullable */
+  projectionValueJson?: string | null;
+  /** @nullable */
+  sourceQuestionKey?: string | null;
+  /** @nullable */
+  updatedAt?: string | null;
 }

@@ -6,22 +6,17 @@
  * OpenAPI spec version: v9
  */
 
-/**
- * 관리자 승인 대기 계정 일괄 승인·반려 요청
- */
 export interface AdminApprovalBulkDecisionRequest {
   /**
-     * @minItems 0
+     * @minItems 1
      * @maxItems 100
+     * @items.minimum 1
      */
   ids: number[];
-  /**
-     * @minLength 0
-     * @maxLength 500
-     */
+  /** @maxLength 500 */
   reason?: string;
-  roleCode?: string;
-  requestedRoleCode?: string;
-  /** 일괄 결과 알림 예약 시각. null이면 즉시 발송 */
-  scheduledAt?: string;
+  /** @nullable */
+  roleCode?: string | null;
+  /** @nullable */
+  requestedRoleCode?: string | null;
 }

@@ -14,7 +14,9 @@ export interface AdminSelfSignupResponse {
   loginEnabled?: boolean;
   nextStep?: string;
   createdAt?: string;
+  /** 관리자 가입 신청 직후 소셜 연결 시작 API에 전달하는 일회용 token입니다. MASTER 승인 전에도 이 token으로 소셜 계정 연결만 진행할 수 있습니다. */
   signupSocialLinkToken?: string;
+  /** signupSocialLinkToken 만료 시각입니다. */
   signupSocialLinkExpiresAt?: string;
   signupSocialLinkStartEndpoint?: string;
 }

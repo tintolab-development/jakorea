@@ -5,17 +5,16 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { AdminProvisionedProfileRequestGender } from './adminProvisionedProfileRequestGender';
 
 /**
- * CMS 관리자 등록 회원의 본인 프로필 확인 요청
+ * CMS 관리자 등록 회원의 최초 포털 본인 프로필 확인 요청
  */
 export interface AdminProvisionedProfileRequest {
+  /** 회원 본인이 확인한 생년월일 */
   birthDate: string;
   /**
-     * 성별. 저장 및 본인인증 비교 시 MALE/FEMALE/OTHER로 정규화됨
-     * @minLength 0
+     * 회원 본인이 확인한 성별
      * @maxLength 20
      */
-  gender: AdminProvisionedProfileRequestGender;
+  gender: string;
 }

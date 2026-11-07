@@ -5,14 +5,16 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { SettlementApplicationItemAmountAdjustmentRequest } from './settlementApplicationItemAmountAdjustmentRequest';
+import type { SettlementApplicationAmountAdjustmentRequestItemsItem } from './settlementApplicationAmountAdjustmentRequestItemsItem';
 
+/**
+ * 승인 전 항목별 승인 금액 조정. reason은 필수이다.
+ */
 export interface SettlementApplicationAmountAdjustmentRequest {
   /** @minItems 1 */
-  items: SettlementApplicationItemAmountAdjustmentRequest[];
+  items: SettlementApplicationAmountAdjustmentRequestItemsItem[];
   /**
      * 승인 금액 조정 사유
-     * @minLength 0
      * @maxLength 1000
      */
   reason: string;

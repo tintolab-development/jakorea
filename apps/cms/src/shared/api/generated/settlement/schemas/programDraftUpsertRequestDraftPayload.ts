@@ -6,4 +6,7 @@
  * OpenAPI spec version: v9
  */
 
-export type ProgramDraftUpsertRequestDraftPayload = {[key: string]: unknown};
+/**
+ * Opaque JSON object. Unknown keys are stored and echoed. (한글 계약 설명)
+ */
+export type ProgramDraftUpsertRequestDraftPayload = { [key: string]: unknown };

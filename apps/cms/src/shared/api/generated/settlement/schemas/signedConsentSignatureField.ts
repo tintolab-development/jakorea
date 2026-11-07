@@ -6,13 +6,15 @@
  * OpenAPI spec version: v9
  */
 
-/**
- * 당시 consent_document_signature_field에서 읽은 값. signatureFileObjectId는 참조 메타데이터이며 다운로드 URL이 아닙니다.
- */
 export interface SignedConsentSignatureField {
-  fieldKey?: string;
-  required?: boolean;
-  signed?: boolean;
-  signedAt?: string;
-  signatureFileObjectId?: number;
+  fieldKey: string;
+  required: boolean;
+  signed: boolean;
+  /** @nullable */
+  signedAt: string | null;
+  /**
+     * Reference metadata only. No download URL or stream access is provided by this endpoint.
+     * @nullable
+     */
+  signatureFileObjectId: number | null;
 }

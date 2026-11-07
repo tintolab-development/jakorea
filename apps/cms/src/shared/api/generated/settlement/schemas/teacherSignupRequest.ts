@@ -8,12 +8,11 @@
 import type { MemberSignupRequest } from './memberSignupRequest';
 
 /**
- * 교사 회원 가입 요청
+ * 교사회원 가입 정보. 기존 CMS 학교는 teacher.organizationId 또는 member.schoolOrganizationId를 사용할 수 있고, organizationId 없는 NEIS 선택값은 member.schoolSelection으로 전달합니다.
  */
 export interface TeacherSignupRequest {
-  /** 기본 회원 가입 정보 */
   member: MemberSignupRequest;
-  /** 기존 CMS 학교 organizationId. teacher.organizationId 또는 member.schoolOrganizationId 중 한 곳에 전달할 수 있으며 둘 다 있으면 같아야 합니다. 미등록 학교는 member.schoolSelection을 사용합니다. */
+  /** 기존 CMS 학교/기관 숫자 PK. member.schoolOrganizationId와 함께 전달되면 두 값은 같아야 합니다. */
   organizationId?: number;
   /** 재직 상태 */
   employmentStatus?: string;

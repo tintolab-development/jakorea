@@ -106,4 +106,16 @@ describe('mergeOrganizationApplicationDetailOntoSchoolDetail', () => {
     expect(merged.region).toBe('서울시 종로구')
     expect(merged.addressDetail).toBe('3층 교무실')
   })
+
+  it('상세 GET의 승인 현황·결과 알림 시각·반려 사유를 반영한다', () => {
+    const merged = mergeOrganizationApplicationDetailOntoSchoolDetail(baseDetail, {
+      applicationStatus: 'APPROVED',
+      resultNotificationSentAt: '2026-09-27T01:00:00.000Z',
+      rejectReason: null,
+    } as unknown as import('@/shared/api/generated/dashboard/schemas/organizationApplicationDetailResponse').OrganizationApplicationDetailResponse)
+
+    expect(merged.approvalStatus).toBe('approved')
+    expect(merged.resultNotificationSentAt).toEqual(expect.stringMatching(/2026\.\d{2}\.\d{2} /))
+    expect(merged.participationRejectionReason).toBeUndefined()
+  })
 })

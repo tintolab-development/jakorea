@@ -49,6 +49,8 @@ export type PortalNoticeListResponse = {
 }
 
 export type PortalNoticeAttachment = {
+  /** 원글 program_post.id. 없으면 null이며 원글보기만 숨긴다. */
+  postId?: number | null
   attachmentId?: number
   fileObjectId?: number
   originalFileName?: string
@@ -193,6 +195,8 @@ export type PortalEducationSchedule = {
   groupTimes?: PortalEducationScheduleGroupTime[]
   assignment?: PortalEducationScheduleAssignment | null
   scheduleStatus?: string
+  /** 배정된 운영 일정의 신청 지망 순위 라벨. 행 수를 늘리지 않는다. 없으면 omit. */
+  preferenceRank?: number | null
   assignmentStatus?: string | null
   surveyCount?: number
   absenceReasonStatus?: string
@@ -356,6 +360,7 @@ export type PortalFormListItem = {
   targetScopeLabel?: string | null
   scheduleId?: number | null
   sessionNo?: number | null
+  preferenceRank?: number | null
   scheduleStartAt?: string | null
   required?: boolean
   submissionStartAt?: string | null

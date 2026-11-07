@@ -6,4 +6,7 @@
  * OpenAPI spec version: v9
  */
 
-export type MemberLectureReportSubmitRequestAnswers = {[key: string]: unknown};
+/**
+ * @nullable
+ */
+export type MemberLectureReportSubmitRequestAnswers = { [key: string]: unknown } | null;

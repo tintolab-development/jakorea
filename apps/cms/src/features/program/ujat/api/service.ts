@@ -286,9 +286,18 @@ export async function update(
     })
   )
   if (typedDetailBefore !== undefined) {
+    const editedTypedDetail = (program as Program & { ujatTypedDetail?: UjatTypedDetail }).ujatTypedDetail
     await replaceUjatTypedDetailRemote(
       programId,
-      applyUjatProgramPatchToTypedDetail(typedDetailBefore, patch ?? {})
+      applyUjatProgramPatchToTypedDetail(
+        {
+          ...typedDetailBefore,
+          ...(editedTypedDetail ?? {}),
+          revision: typedDetailBefore.revision,
+          halfPlans: editedTypedDetail?.halfPlans ?? typedDetailBefore.halfPlans,
+        },
+        patch ?? {}
+      )
     )
   }
   // PATCH echo는 서버 정규화·clearFields 적용 결과의 최종 정본이 아니다.

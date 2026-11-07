@@ -16,6 +16,7 @@ function remoteSessionEnabled(enabled: boolean): boolean {
   return enabled && isRemoteApiConfigured() && Boolean(getAccessToken())
 }
 
+/** 홈 통계 카드 — GET /api/portal/me/dashboard 의 applications만. 일정은 calendar 훅. */
 export function usePortalDashboardQuery(enabled: boolean): {
   stats: MypageProgramStats | undefined
   isLoading: boolean

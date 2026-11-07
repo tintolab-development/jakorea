@@ -21,7 +21,6 @@ import {
   clearEducationSurveyPreviewAnswers,
   applySurveyDisplayTitleToDraft,
   createEducationSurveySeedDraft,
-  EDUCATION_SURVEY_SEED_CREATED_AT,
   type EducationSatisfactionAudience,
   type EducationSurveySeedKind,
 } from '../lib/seed-survey-draft'
@@ -32,7 +31,6 @@ import {
   useSubmitEducationSurveyMutation,
 } from '../../applications/api/activity-hooks'
 import {
-  applySatisfactionScheduleLineDate,
   isPortalBoundFormVersionUsable,
   isPortalSatisfactionFormType,
   isPortalSurveyFormType,
@@ -161,7 +159,11 @@ export function EducationSurveyFillPanel({
     const items = remoteForms.enabled ? remoteForms.items : []
     return items
       .filter(entry => {
-        if (isPortalFormTargetRoleMismatch(entry.targetRole, applicationType)) return false
+        if (
+          isPortalFormTargetRoleMismatch(entry.targetRole, applicationType, satisfactionAudience)
+        ) {
+          return false
+        }
         if (kind === 'satisfaction') {
           if (!isPortalSatisfactionFormType(entry.formType)) return false
           if (
@@ -174,12 +176,8 @@ export function EducationSurveyFillPanel({
         }
         return isPortalSurveyFormType(entry.formType)
       })
-      .map((entry, index) =>
-        applySatisfactionScheduleLineDate(entry, educationScheduleLines?.[index])
-      )
   }, [
     applicationType,
-    educationScheduleLines,
     kind,
     remoteForms.enabled,
     remoteForms.items,
@@ -346,8 +344,7 @@ export function EducationSurveyFillPanel({
     [draft.paragraphs],
   )
 
-  const surveyCreatedAt =
-    selectedEntry?.createdAt ?? selectedEntry?.startAt ?? EDUCATION_SURVEY_SEED_CREATED_AT
+  const surveyCreatedAt = selectedEntry?.createdAt ?? selectedEntry?.startAt
 
   const selectedEntryWithRenderPeriod = useMemo(() => {
     if (!selectedEntry) return selectedEntry
@@ -410,7 +407,13 @@ export function EducationSurveyFillPanel({
 
   const performSubmit = () => {
     if (!canWrite || submitMutation.isPending) return
-    if (isPortalFormTargetRoleMismatch(selectedEntry?.targetRole, applicationType)) {
+    if (
+      isPortalFormTargetRoleMismatch(
+        selectedEntry?.targetRole,
+        applicationType,
+        satisfactionAudience,
+      )
+    ) {
       setConfirmOpen(false)
       setAlertTitle('제출 실패')
       setAlertDescription('현재 참여 역할에 해당하지 않는 설문입니다.')

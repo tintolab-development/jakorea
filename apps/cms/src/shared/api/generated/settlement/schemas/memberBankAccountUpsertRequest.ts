@@ -7,10 +7,14 @@
  */
 
 export interface MemberBankAccountUpsertRequest {
-  id?: number;
+  /** @nullable */
+  id?: number | null;
   /** @minLength 1 */
   bankName: string;
-  accountNumber?: string;
-  accountHolder?: string;
-  current?: boolean;
+  /** @nullable */
+  accountNumber?: string | null;
+  /** @nullable */
+  accountHolder?: string | null;
+  /** @nullable */
+  current?: boolean | null;
 }

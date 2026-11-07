@@ -8,11 +8,14 @@
 
 export interface SurveyAnswerResponse {
   answerId?: number;
-  questionId?: number;
+  /** @nullable */
+  questionId?: number | null;
   questionKey?: string;
   questionLabel?: string;
   questionType?: string;
-  answerValueJson?: string;
-  answerDisplayText?: string;
+  /** @nullable */
+  answerValueJson?: string | null;
+  /** @nullable */
+  answerDisplayText?: string | null;
   autoFilled?: boolean;
 }

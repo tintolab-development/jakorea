@@ -8,24 +8,24 @@
 import type { SettlementBudgetSummaryResponseAggregationScope } from './settlementBudgetSummaryResponseAggregationScope';
 
 /**
- * 정산 연간 예산 요약. completed* / paidCount는 paid_at(Asia/Seoul) 연도, expectedSettlementAmount만 fromDate/toDate로 좁힐 수 있다. settlementCount≠paidCount.
+ * 정산 연간 예산 요약. completed*\/paidCount는 paid_at(Asia/Seoul) 연도. expected만 fromDate/toDate로 좁힘. settlementCount≠paidCount.
  */
 export interface SettlementBudgetSummaryResponse {
-  /** 집계 기준 연도 (Asia/Seoul). completed*\/paidCount/settlementCount의 year. */
+  /** 집계 기준 연도 (Asia/Seoul). completed*\/paidCount/settlementCount. */
   year?: number;
-  /** 집계 범위. YEAR=연간(paid_at/settlement year). PERIOD는 expected만 기간 필터된 경우에도 completed*\/settlementCount/paidCount는 여전히 YEAR. */
+  /** 집계 범위. YEAR=연간(paid_at/settlement year). completed*\/settlementCount/paidCount는 항상 YEAR. */
   aggregationScope?: SettlementBudgetSummaryResponseAggregationScope;
   annualBudgetAmount?: number;
   /** 미지급/예정 정산 금액(세후 net). expected_transfer_date 범위. */
   expectedSettlementAmount?: number;
-  /** 예산 집행액(세전 gross). completedGrossTotal과 동일. paid_at Asia/Seoul 연도. */
+  /** 예산 집행액(세전 gross). completedGrossTotal과 동일. paid_at Asia/Seoul 연도 기준. */
   completedPaymentAmount?: number;
-  /** 지급완료 세전 합계(연간 세전 지급 완료 / 예산 집행액). paid_at Asia/Seoul 연도. */
+  /** 지급완료 세전 합계(연간 세전 지급 완료 / 예산 집행액). GENERAL/Gemini 동일. paid_at Asia/Seoul 연도. */
   completedGrossTotal?: number;
-  /** 지급완료 세후 합계(연간 실지급). paid_at Asia/Seoul 연도. */
+  /** 지급완료 세후 합계(연간 실지급). GENERAL/Gemini 동일. paid_at Asia/Seoul 연도. */
   completedNetTotal?: number;
   remainingBudgetAmount?: number;
-  /** 정산 건수(해당 연도 최신 정산 행 전체). paidCount와 분리. */
+  /** 정산 건수(해당 연도 최신 정산 행 전체). paidCount와 분리. expected_transfer_date/lecture_date/created_at 연도. */
   settlementCount?: number;
   /** 지급완료 건수. account_payment.paid_at Asia/Seoul 연도 기준. */
   paidCount?: number;

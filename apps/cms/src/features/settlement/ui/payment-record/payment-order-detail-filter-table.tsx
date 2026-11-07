@@ -107,6 +107,7 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
         onClose={closeIssuanceView}
         paragraphBodyOptions={currentIssuancePayload?.paragraphBodyOptions}
         fileName={currentIssuancePayload?.fileName}
+        settlementId={currentIssuancePayload?.settlementId}
         key={currentIssuancePayload?.fileName ?? 'payment-order-issuance'}
       />
       <FilterTableLayout

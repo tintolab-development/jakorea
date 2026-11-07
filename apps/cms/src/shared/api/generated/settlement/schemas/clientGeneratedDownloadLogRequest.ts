@@ -8,18 +8,20 @@
 
 export interface ClientGeneratedDownloadLogRequest {
   /**
-     * @minLength 0
+     * 브라우저 저장 파일명
      * @maxLength 255
      */
   fileName: string;
   /**
-     * @minLength 0
+     * 호환용. 서버 User-Agent 헤더를 우선 사용
      * @maxLength 255
+     * @nullable
      */
-  userAgent?: string;
+  userAgent?: string | null;
   /**
-     * @minLength 0
+     * 호환용. 감사 IP는 서버 ClientIpResolver 값이 기준
      * @maxLength 255
+     * @nullable
      */
-  ipAddress?: string;
+  ipAddress?: string | null;
 }

@@ -36,6 +36,12 @@ import {
   mapParticipantToParticipatingVolunteerRow,
   mapVolunteerApplicationToGeneralVolunteerApplicantRow,
   mapVolunteerInterviewAssignmentFromWire,
+  ADMIN_LIST_STATUS_GROUP_APPLICATION_REJECTED,
+  buildGeneralIndividualApplicationsApiQuery,
+  buildGeneralInstructorApplicationsApiQuery,
+  buildGeneralOrganizationApplicationsApiQuery,
+  mapApprovalStatusToApiFilter,
+  mapApprovalStatusToApiListQuery,
 } from '@/features/program/general/api/adapters/general-applications-adapters'
 import {
   parseGeneralProgramServiceDetailJson,
@@ -332,8 +338,46 @@ describe('general-applications-adapters', () => {
     expect(mapApiApplicationStatusToApprovalStatus('WAITING_REVIEW')).toBe('pending')
     expect(mapApiApplicationStatusToApprovalStatus('REJECTED')).toBe('rejected')
     expect(mapApiApplicationStatusToApprovalStatus('CANCELLED')).toBe('cancelled')
-    expect(mapApiApplicationStatusToApprovalStatus('APPROVAL_CANCELLED')).toBe('cancelled')
+    expect(mapApiApplicationStatusToApprovalStatus('APPROVAL_CANCELLED')).toBe('rejected')
     expect(mapApiApplicationStatusToApprovalStatus('REJECTION_CANCELLED')).toBe('pending')
+  })
+
+  it('신청 반려 목록 필터는 statusGroup=APPLICATION_REJECTED를 쓰고 단일 REJECTED를 쓰지 않는다', () => {
+    expect(mapApprovalStatusToApiListQuery('rejected')).toEqual({
+      statusGroup: ADMIN_LIST_STATUS_GROUP_APPLICATION_REJECTED,
+    })
+    expect(mapApprovalStatusToApiFilter('rejected')).toBeUndefined()
+    expect(mapApprovalStatusToApiListQuery('approved')).toEqual({ status: 'APPROVED' })
+    expect(mapApprovalStatusToApiListQuery('pending')).toEqual({})
+    expect(
+      buildGeneralOrganizationApplicationsApiQuery({
+        approvalStatus: 'rejected',
+        organizationName: '강서초',
+        teacherName: '김교사',
+      })
+    ).toEqual({
+      statusGroup: ADMIN_LIST_STATUS_GROUP_APPLICATION_REJECTED,
+      organizationName: '강서초',
+      teacherName: '김교사',
+    })
+    expect(
+      buildGeneralIndividualApplicationsApiQuery({
+        approvalStatus: 'rejected',
+        applicantName: '고종욱',
+      })
+    ).toEqual({
+      statusGroup: ADMIN_LIST_STATUS_GROUP_APPLICATION_REJECTED,
+      keyword: '고종욱',
+    })
+    expect(
+      buildGeneralInstructorApplicationsApiQuery({
+        approvalStatus: 'rejected',
+        instructorName: '김서연',
+      })
+    ).toEqual({
+      statusGroup: ADMIN_LIST_STATUS_GROUP_APPLICATION_REJECTED,
+      keyword: '김서연',
+    })
   })
 
   it('maps interview-track individual approval from document/final result when applicationStatus stays waiting', () => {

@@ -8,7 +8,8 @@
 
 export interface AdminSignupSocialLinkCompleteRequest {
   /**
-     * @minLength 0
+     * 관리자 회원가입 완료 응답에서 발급된 소셜 연동 handoff token
+     * @minLength 1
      * @maxLength 255
      */
   signupSocialLinkToken: string;

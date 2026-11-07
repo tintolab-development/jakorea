@@ -7,16 +7,23 @@
  */
 
 /**
- * 회원 포탈 회원가입 완료 응답
+ * 회원 포탈 회원가입 완료 응답입니다.
  */
 export interface HomepageSignupResponse {
+  /** 회원 ID */
   memberId?: number;
+  /** 회원 UUID */
   memberUuid?: string;
+  /** 회원 상태 */
   status?: string;
+  /** 회원 유형 */
   memberType?: string;
-  /** 가입 전에 해석 또는 등록된 CMS 학교 organizationId. 학교가 필요 없는 회원은 null입니다. */
+  /** 가입 전에 해석 또는 등록된 CMS 학교 organizationId. 미재학 일반회원은 null입니다. */
   schoolOrganizationId?: number;
+  /** 가입 후 다음 단계 */
   nextStep?: string;
+  /** 즉시 로그인 가능 여부 */
   loginEnabled?: boolean;
+  /** 화면 표시 메시지 */
   message?: string;
 }

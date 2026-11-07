@@ -8,7 +8,7 @@
 import type { ApplicationGiveUpRequestFaultParty } from './applicationGiveUpRequestFaultParty';
 
 /**
- * 신청 포기 처리 요청
+ * 신청 POST /volunteer-applications/{applicationId}/give-up 와 참여 POST /programs/{programId}/participants/{participantId}/give-up 공통 body
  */
 export interface ApplicationGiveUpRequest {
   /**
@@ -17,8 +17,15 @@ export interface ApplicationGiveUpRequest {
      * @maxLength 500
      */
   reason: string;
-  /** 선택한 회차부터 활동을 포기할 때의 기준 scheduleId. 생략하면 현재 시점 이후 회차부터 포기합니다. */
-  stopScheduleId?: number;
-  /** 활동 포기 귀책 주체. USER만 회원 일정 변경/취소 횟수에 반영됩니다. 미전달 legacy 요청은 ADMIN으로 안전 처리합니다. */
+  /**
+     * 선택한 회차부터 활동을 포기할 때의 기준 program_schedule.id. 생략하면 현재 시점 이후 회차부터 중단합니다. 신청 give-up(심사 단계)에서는 일반적으로 생략합니다.
+     * @minimum 1
+     * @nullable
+     */
+  stopScheduleId?: number | null;
+  /**
+     * 활동 포기 귀책. USER만 회원 일정 변경/취소 횟수에 반영. 생략·null이면 ADMIN으로 처리합니다. participant give-up 및 신청 APPROVED 호환 분기에서 사용. 강사 participant의 USER 활동 포기는 JA 평가 등급 강의 취소 감점에도 반영됩니다.
+     * @nullable
+     */
   faultParty?: ApplicationGiveUpRequestFaultParty;
 }

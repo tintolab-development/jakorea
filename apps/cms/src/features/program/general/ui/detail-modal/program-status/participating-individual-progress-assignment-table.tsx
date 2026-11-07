@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
 import type { ColumnsType } from 'antd/es/table'
-import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants'
 import { downloadAdminFile } from '@/shared/lib/admin-file-upload'
 import { useCmsAlert } from '@/shared/ui'
 import { handleError } from '@/shared/utils/error-handler'
@@ -32,8 +31,18 @@ function SubmissionCell({
   const { submission } = row
 
   const downloadFile = async (fileObjectId?: number, fileName?: string, downloadable?: boolean) => {
-    if (fileObjectId == null || downloadable !== true) {
-      showAlert({ title: '안내', content: FEATURE_COMING_SOON_ALERT_MESSAGE })
+    if (fileObjectId == null) {
+      showAlert({
+        title: '안내',
+        content: '첨부 파일 ID가 없어 내려받을 수 없습니다.',
+      })
+      return
+    }
+    if (downloadable !== true) {
+      showAlert({
+        title: '안내',
+        content: '이 과제는 다운로드할 수 없습니다.',
+      })
       return
     }
     try {
@@ -107,7 +116,7 @@ function SubmissionCell({
             className="participating-individual-progress-assignment-table__submission-link"
             onClick={() => void downloadFile(item.fileObjectId, item.fileName, item.downloadable)}
           >
-            {item.fileName}
+            {item.fileName.trim() || '제출 파일'}
           </button>
         )
       ))}

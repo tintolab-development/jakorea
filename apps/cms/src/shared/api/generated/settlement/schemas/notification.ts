@@ -7,10 +7,10 @@
  */
 
 /**
- * IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 기관 승인 body의 평탄 timing과 섞지 않습니다.
+ * IMMEDIATE | SCHEDULED. 기관 승인 body의 평탄 timing과 섞지 않습니다.
  */
 export interface Notification {
-  /** IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE */
+  /** IMMEDIATE | SCHEDULED. 생략하면 IMMEDIATE */
   timing?: string;
   /** timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601 */
   scheduledAt?: string;

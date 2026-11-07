@@ -29,6 +29,16 @@ export function hasRemoteAdminJwt(): boolean {
   return token.split('.').length >= 3
 }
 
+/** 실 API 관리자 세션 — 쿠키/Bearer·opaque·cms-remote 플레이스홀더 포함. mock JWT만 제외 */
+export function hasRemoteAdminSession(): boolean {
+  if (typeof window === 'undefined') return false
+  const token = localStorage.getItem('auth_token')
+  if (!token || token.startsWith('mock-jwt-token-')) {
+    return false
+  }
+  return true
+}
+
 /** DEV 우회·mock credential 로그인 세션 (`mock-jwt-token-…`) */
 export function isMockAdminSession(): boolean {
   if (typeof window === 'undefined') return false

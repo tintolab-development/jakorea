@@ -128,3 +128,12 @@
   height: auto;
   min-height: 100%;
 }
+
+/* `program-detail-fullpage-modal__content`는 padding 0 — school-detail과 동일하게 하단 52px 스페이서 */
+.ujat-education-progress-institution-detail__page-bottom-spacer {
+  display: block;
+  width: 100%;
+  height: var(--detail-fullpage-padding-bottom, 52px);
+  flex-shrink: 0;
+  pointer-events: none;
+}

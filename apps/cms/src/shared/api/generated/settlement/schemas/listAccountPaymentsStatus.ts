@@ -13,4 +13,5 @@ export const ListAccountPaymentsStatus = {
   REQUESTED: 'REQUESTED',
   WAITING_PAYMENT: 'WAITING_PAYMENT',
   PAID: 'PAID',
+  FAILED: 'FAILED',
 } as const;

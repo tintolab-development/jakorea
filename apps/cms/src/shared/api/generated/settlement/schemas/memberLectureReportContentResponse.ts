@@ -9,19 +9,24 @@ import type { MemberLectureReportContentResponseAnswers } from './memberLectureR
 import type { MemberLectureReportContentResponseForm } from './memberLectureReportContentResponseForm';
 import type { MemberLectureReportFileResponse } from './memberLectureReportFileResponse';
 
+/**
+ * 본인 assignment에 연결된 실제 제출 FormResponse의 양식, 답변, 파일 메타데이터입니다. 미제출 응답은 조회할 수 없습니다.
+ */
 export interface MemberLectureReportContentResponse {
-  assignmentId?: number;
-  reportId?: number;
-  formResponseId?: number;
-  programId?: number;
-  scheduleId?: number;
-  bindingId?: number;
-  templateVersionId?: number;
-  formType?: string;
-  title?: string;
-  responseStatus?: string;
-  submittedAt?: string;
-  form?: MemberLectureReportContentResponseForm;
-  answers?: MemberLectureReportContentResponseAnswers;
-  files?: MemberLectureReportFileResponse[];
+  assignmentId: number;
+  reportId: number;
+  formResponseId: number;
+  programId: number;
+  scheduleId: number;
+  bindingId: number;
+  templateVersionId: number;
+  formType: string;
+  /** @nullable */
+  title?: string | null;
+  responseStatus: string;
+  /** @nullable */
+  submittedAt?: string | null;
+  form: MemberLectureReportContentResponseForm;
+  answers: MemberLectureReportContentResponseAnswers;
+  files: MemberLectureReportFileResponse[];
 }

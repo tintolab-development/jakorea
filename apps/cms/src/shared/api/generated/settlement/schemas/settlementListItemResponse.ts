@@ -7,40 +7,90 @@
  */
 
 export interface SettlementListItemResponse {
-  settlementId?: number;
-  programId?: number;
-  programNameKo?: string;
-  scheduleId?: number;
-  sessionOrdinal?: number;
-  lectureDate?: string;
-  instructorAssignmentId?: number;
-  instructorMemberId?: number;
-  /** 신청자 실명. 서버에서 마스킹하지 않습니다. */
-  instructorName?: string;
-  statementId?: number;
-  /** 참여 기관명. 배정 기관 → 일정 단일 기관 → 장소명 순. 개인 참여 등으로 기관이 없으면 null */
+  /**
+     * 알림 재발송 POST /api/admin/settlements/{settlementId}/notifications/resend 의 path id입니다.
+     * @nullable
+     */
+  settlementId?: number | null;
+  /** @nullable */
+  programId?: number | null;
+  /** @nullable */
+  programNameKo?: string | null;
+  /** @nullable */
+  scheduleId?: number | null;
+  /**
+     * 강의 차시(1-based). scheduleId를 차시로 사용하지 않음
+     * @nullable
+     */
+  sessionOrdinal?: number | null;
+  /** @nullable */
+  lectureDate?: string | null;
+  /** @nullable */
+  instructorAssignmentId?: number | null;
+  /** @nullable */
+  instructorMemberId?: number | null;
+  /**
+     * 신청자 실명. 서버에서 마스킹하지 않습니다.
+     * @nullable
+     */
+  instructorName?: string | null;
+  /**
+     * 연결된 최신 지급조서 ID. 조서 미생성 시 null
+     * @nullable
+     */
+  statementId?: number | null;
+  /**
+     * 참여 기관명. 배정 기관 → 일정 단일 기관 → 장소명 순. 개인 참여 등으로 기관이 없으면 null
+     * @nullable
+     */
   institutionName?: string | null;
-  businessPeriodStart?: string;
-  businessPeriodEnd?: string;
-  sessionCompleted?: number;
-  sessionTotal?: number;
-  programSessionProgressDisplay?: string;
-  calculationStatus?: string;
-  /** 지급조서 상태. WAITING_CONFIRM | REAPPLICATION | CONFIRMED | CORRECTION_REQUESTED | REJECTED */
-  statementStatus?: string;
-  paymentStatus?: string;
-  grossAmount?: number;
-  deductionAmount?: number;
-  withholdingTaxAmount?: number;
-  netPaymentAmount?: number;
-  expectedTransferDate?: string;
-  calculatedAt?: string;
-  originalSettlementId?: number;
-  revisionNo?: number;
-  latestRevisionYn?: boolean;
-  settlementCorrectionRequestId?: number;
-  correctionReason?: string;
-  supersededBySettlementId?: number;
-  taxIncomeType?: string;
+  /** @nullable */
+  businessPeriodStart?: string | null;
+  /** @nullable */
+  businessPeriodEnd?: string | null;
+  /** @nullable */
+  sessionCompleted?: number | null;
+  /** @nullable */
+  sessionTotal?: number | null;
+  /**
+     * 프로그램 커리큘럼/스케줄 기준 진행 회차 (예: 4 / 16)
+     * @nullable
+     */
+  programSessionProgressDisplay?: string | null;
+  /** @nullable */
+  calculationStatus?: string | null;
+  /**
+     * 지급조서 상태. REQUESTED | REAPPLICATION | CONFIRMED | CORRECTION_REQUESTED | REJECTED
+     * @nullable
+     */
+  statementStatus?: string | null;
+  /** @nullable */
+  paymentStatus?: string | null;
+  /** @nullable */
+  grossAmount?: number | null;
+  /** @nullable */
+  deductionAmount?: number | null;
+  /** @nullable */
+  withholdingTaxAmount?: number | null;
+  /** @nullable */
+  netPaymentAmount?: number | null;
+  /** @nullable */
+  expectedTransferDate?: string | null;
+  /** @nullable */
+  calculatedAt?: string | null;
+  /** @nullable */
+  originalSettlementId?: number | null;
+  /** @nullable */
+  revisionNo?: number | null;
+  /** @nullable */
+  latestRevisionYn?: boolean | null;
+  /** @nullable */
+  settlementCorrectionRequestId?: number | null;
+  /** @nullable */
+  correctionReason?: string | null;
+  /** @nullable */
+  supersededBySettlementId?: number | null;
+  /** @nullable */
+  taxIncomeType?: string | null;
   availableActions?: string[];
 }

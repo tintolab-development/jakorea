@@ -70,7 +70,7 @@ export function formatWonAmountDisplay(amount?: number | null): string {
 }
 
 export function parseSessionProgressDisplay(
-  display?: string
+  display?: string | null
 ): { sessionCompleted: number; sessionTotal: number } | null {
   if (!display) return null
   const match = display.trim().match(/^(\d+)\s*\/\s*(\d+)$/)
@@ -79,9 +79,9 @@ export function parseSessionProgressDisplay(
 }
 
 export function formatProgramSessionProgressDisplay(input: {
-  programSessionProgressDisplay?: string
-  sessionCompleted?: number
-  sessionTotal?: number
+  programSessionProgressDisplay?: string | null
+  sessionCompleted?: number | null
+  sessionTotal?: number | null
 }): string {
   const display = input.programSessionProgressDisplay?.trim()
   if (display) return display
@@ -93,9 +93,9 @@ export function formatProgramSessionProgressDisplay(input: {
 
 export function pickProgramSessionProgressFromListItems(
   items: Array<{
-    sessionCompleted?: number
-    sessionTotal?: number
-    programSessionProgressDisplay?: string
+    sessionCompleted?: number | null
+    sessionTotal?: number | null
+    programSessionProgressDisplay?: string | null
   }>
 ): { sessionCompleted: number; sessionTotal: number } | null {
   const withNumbers = items.find(i => i.sessionCompleted != null && i.sessionTotal != null)
@@ -114,9 +114,9 @@ export function pickProgramSessionProgressFromListItems(
 
 export function pickBusinessPeriodFromListItems(
   items: Array<{
-    businessPeriodStart?: string
-    businessPeriodEnd?: string
-    lectureDate?: string
+    businessPeriodStart?: string | null
+    businessPeriodEnd?: string | null
+    lectureDate?: string | null
   }>
 ): { businessPeriodStart: string; businessPeriodEnd: string } {
   const withPeriod = items.find(i => i.businessPeriodStart && i.businessPeriodEnd)
@@ -137,9 +137,9 @@ export function pickBusinessPeriodFromListItems(
 }
 
 export function formatBusinessPeriodDisplay(input: {
-  period?: string
-  businessPeriodStart?: string
-  businessPeriodEnd?: string
+  period?: string | null
+  businessPeriodStart?: string | null
+  businessPeriodEnd?: string | null
   formatDate: (iso: string) => string
 }): string {
   // 사업 운영 기간 = businessPeriodStart/End. period(YYYY-MM 조회월)는 대체값이 아님.
@@ -149,7 +149,7 @@ export function formatBusinessPeriodDisplay(input: {
   return '-'
 }
 
-export function formatLectureFeeStandardTitle(title?: string): string {
+export function formatLectureFeeStandardTitle(title?: string | null): string {
   if (isGenericLectureFeeCategoryLabel(title)) return '-'
   return title?.trim() || '-'
 }
@@ -177,13 +177,13 @@ export function resolveLectureFeeStandardAmountDisplay(
   return '-'
 }
 
-export function formatBusinessIncomeEarnerLabel(label?: string): string {
+export function formatBusinessIncomeEarnerLabel(label?: string | null): string {
   const trimmed = label?.trim()
   return trimmed || '해당 없음'
 }
 
 export function needsPaymentStatementJoin(
-  items: Array<{ settlementId?: number; statementId?: number }>
+  items: Array<{ settlementId?: number | null; statementId?: number | null }>
 ): boolean {
   return items.some(item => item.settlementId != null && item.statementId == null)
 }
@@ -203,13 +203,6 @@ export function mapSettlementFrontendItemTypeToLineKind(
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
-
-function coerceTransportStudentBasisLayout(value: unknown): unknown {
-  if (!isRecord(value) || value.layout !== 'transportStudent') return value
-  if ('outbound' in value) return { ...value, layout: 'transportRoundTrip' }
-  if ('trip' in value) return { ...value, layout: 'transportOneWay' }
-  return { ...value, layout: 'transportOneWay' }
 }
 
 function hasLectureFeeAmountField(value: Record<string, unknown>): boolean {
@@ -300,7 +293,7 @@ function mapRemoteCalculationDetail(
     lineLabels,
     formulaLines,
     summaryLabels,
-    resultAmount: detail.resultAmount,
+    resultAmount: detail.resultAmount ?? undefined,
     iconKey: detail.iconKey?.trim() || undefined,
     emojiOverride: detail.emojiOverride?.trim() || undefined,
   }
@@ -320,13 +313,12 @@ export function mapCalculationDetailToBasisDetail(
   candidates.push(detail)
 
   for (const candidate of candidates) {
-    const coerced = coerceTransportStudentBasisLayout(candidate)
     if (
-      isSupportedBasisDetailLayout(coerced as PaymentOrderCalculationBasisDetail) &&
-      hasTypedBasisDetailFields(coerced)
+      isSupportedBasisDetailLayout(candidate as PaymentOrderCalculationBasisDetail) &&
+      hasTypedBasisDetailFields(candidate)
     ) {
       const normalized = normalizeTypedLectureFeeBasisDetail(
-        coerced as PaymentOrderCalculationBasisDetail,
+        candidate as PaymentOrderCalculationBasisDetail,
         candidate
       )
       // typed payload에 tier/totalWon이 없으면 mapLectureFee로 급수·특강·제미나이 필드를 채운다.

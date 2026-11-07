@@ -8,9 +8,9 @@
 import type { SettlementListItemResponse } from './settlementListItemResponse';
 
 export interface PageResponseSettlementListItemResponse {
-  items?: SettlementListItemResponse[];
-  page?: number;
-  size?: number;
-  totalElements?: number;
-  totalPages?: number;
+  items: SettlementListItemResponse[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
 }

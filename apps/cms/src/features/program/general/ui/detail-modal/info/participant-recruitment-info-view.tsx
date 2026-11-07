@@ -869,8 +869,10 @@ export function GeneralProgramParticipantRecruitmentInfoView({
               view={display.notes}
               edit={
                 isEdit && form ? (
-                  isIndividual || isGeneralOrg ? (
-                    <div className={MAX_SUFFIX_CLASS}>
+                  isIndividual || isGeneralOrg || isTrainedTeachers ? (
+                    <div
+                      className={`${MAX_SUFFIX_CLASS} participant-recruitment-info-view__notes-field`}
+                    >
                       <Controller
                         name="participantRecruitmentNotesNotApplicable"
                         control={form.control}
@@ -905,7 +907,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                             placeholder="비고란을 작성하세요"
                             inputSize="small"
                             width="100%"
-                            style={{ flex: '1 1 0', minWidth: 0 }}
+                            style={{ flex: '1 1 0', minWidth: 0, width: '100%' }}
                             className="program-detail-info-tab__notes-input"
                           />
                         )}

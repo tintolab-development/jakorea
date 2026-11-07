@@ -47,8 +47,16 @@ export function isSystemCatalogOnlyFormType(formType: string | null | undefined)
 
 /** BE templateId=1 은 registration-general (category=REGISTRATION). versions/copy 400. */
 export const REGISTRATION_GENERAL_CATALOG_TEMPLATE_ID = 1
+/** BE templateId=3 은 registration-ujat. versions/copy 400. */
+export const REGISTRATION_UJAT_CATALOG_TEMPLATE_ID = 3
 /** BE templateId=41 은 registration-trained-teachers. versions/copy 400. */
 export const REGISTRATION_TRAINED_TEACHERS_CATALOG_TEMPLATE_ID = 41
+
+const REGISTRATION_CATALOG_TEMPLATE_IDS = new Set([
+  REGISTRATION_GENERAL_CATALOG_TEMPLATE_ID,
+  REGISTRATION_UJAT_CATALOG_TEMPLATE_ID,
+  REGISTRATION_TRAINED_TEACHERS_CATALOG_TEMPLATE_ID,
+])
 
 export function isSystemCatalogOnlyTemplateCode(templateCode: string | null | undefined): boolean {
   const code = String(templateCode ?? '').trim()
@@ -60,10 +68,75 @@ export function isSystemCatalogOnlyTemplateCode(templateCode: string | null | un
 }
 
 export function isRegistrationCatalogTemplateId(templateId: number | null | undefined): boolean {
-  return (
-    templateId === REGISTRATION_GENERAL_CATALOG_TEMPLATE_ID ||
-    templateId === REGISTRATION_TRAINED_TEACHERS_CATALOG_TEMPLATE_ID
-  )
+  return templateId != null && REGISTRATION_CATALOG_TEMPLATE_IDS.has(templateId)
+}
+
+export function programFormBindingSlotKey(
+  binding: Pick<
+    ProgramFormBindingResponse,
+    'formType' | 'targetType' | 'targetRole' | 'targetScope' | 'targetScopeId'
+  >
+): string {
+  const formType = normalizeBindingType(binding.formType)
+  const targetType =
+    canonicalFormBindingTarget(binding.targetType) ||
+    canonicalFormBindingTarget(binding.targetRole)
+  const targetScope = (binding.targetScope ?? '').trim().toUpperCase()
+  const targetScopeId =
+    binding.targetScopeId == null || !Number.isFinite(Number(binding.targetScopeId))
+      ? ''
+      : String(binding.targetScopeId)
+  return `${formType}|${targetType}|${targetScope}|${targetScopeId}`
+}
+
+/** SURVEY+SCHEDULE · ISSUANCE는 슬롯당 여러 활성 바인딩을 허용한다. */
+export function allowsMultipleActiveFormBindings(
+  binding: Pick<ProgramFormBindingResponse, 'formType' | 'targetScope'>
+): boolean {
+  const formType = normalizeBindingType(binding.formType)
+  const scope = (binding.targetScope ?? '').trim().toUpperCase()
+  if (formType === 'SURVEY' && scope === 'SCHEDULE') return true
+  return formType === 'ISSUANCE'
+}
+
+function bindingRecencyMs(binding: ProgramFormBindingResponse): number {
+  const stamp = Date.parse(binding.updatedAt ?? '') || Date.parse(binding.createdAt ?? '') || 0
+  return Number.isFinite(stamp) ? stamp : 0
+}
+
+export function pickLatestProgramFormBinding(
+  bindings: readonly ProgramFormBindingResponse[]
+): ProgramFormBindingResponse | undefined {
+  if (bindings.length === 0) return undefined
+  return bindings.slice().sort((a, b) => {
+    const byTime = bindingRecencyMs(b) - bindingRecencyMs(a)
+    if (byTime !== 0) return byTime
+    return (b.bindingId ?? 0) - (a.bindingId ?? 0)
+  })[0]
+}
+
+/** GET 방어: 슬롯당 최신 1건. SURVEY+SCHEDULE·ISSUANCE는 그대로 둔다. */
+export function latestProgramFormBindingsBySlot(
+  bindings: readonly ProgramFormBindingResponse[]
+): ProgramFormBindingResponse[] {
+  const kept: ProgramFormBindingResponse[] = []
+  const groups = new Map<string, ProgramFormBindingResponse[]>()
+  for (const binding of bindings) {
+    if (binding.active === false) continue
+    if (allowsMultipleActiveFormBindings(binding)) {
+      kept.push(binding)
+      continue
+    }
+    const key = programFormBindingSlotKey(binding)
+    const list = groups.get(key) ?? []
+    list.push(binding)
+    groups.set(key, list)
+  }
+  for (const list of groups.values()) {
+    const latest = pickLatestProgramFormBinding(list)
+    if (latest != null) kept.push(latest)
+  }
+  return kept
 }
 
 export type OperationalFormSpec = {
@@ -100,6 +173,10 @@ const REGISTRATION_FORM_SPECS: readonly RegistrationCreateFormSpec[] = [
 
 const REGISTRATION_SPEC_BY_CODE = new Map(
   REGISTRATION_FORM_SPECS.map(spec => [spec.templateCode, spec])
+)
+
+export const REGISTRATION_CATALOG_TEMPLATE_CODES = REGISTRATION_FORM_SPECS.map(
+  spec => spec.templateCode
 )
 
 const OPERATIONAL_FORM_SPECS: readonly OperationalFormSpec[] = [
@@ -482,14 +559,14 @@ export function listRecruitmentRowApplicationBindings(
   if (formType !== 'APPLICATION' && formType !== 'RECRUITMENT') return []
   const programType = program.backendProgramType?.trim().toUpperCase()
   if (programType == null || !RECRUITMENT_ROW_PROGRAM_TYPES.has(programType)) return []
-  return bindings.filter(
-    item =>
-      item.active !== false &&
-      normalizeBindingType(item.formType) === formType &&
-      (item.targetScope ?? '').toUpperCase() === 'RECRUITMENT' &&
-      item.targetScopeId != null &&
-      roleMatches(item, spec.targetRole)
-  )
+  return bindings.filter(item => {
+    if (item.active === false) return false
+    if (normalizeBindingType(item.formType) !== formType) return false
+    const scope = (item.targetScope ?? '').toUpperCase()
+    if (scope !== 'RECRUITMENT' && scope !== 'TERM') return false
+    if (item.targetScopeId == null) return false
+    return roleMatches(item, spec.targetRole)
+  })
 }
 
 function roleMatches(binding: ProgramFormBindingResponse, targetRole: string | undefined): boolean {

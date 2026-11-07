@@ -6,9 +6,7 @@
  * OpenAPI spec version: v9
  */
 
-/**
- * 대한민국 관공서 공휴일. dates는 KST YYYY-MM-DD. 해당 없으면 []. null이 아니다.
- */
 export interface KoreanPublicHolidayResponse {
-  dates?: string[];
+  /** 없으면 [] */
+  dates: string[];
 }

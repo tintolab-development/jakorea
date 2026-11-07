@@ -5,6 +5,7 @@ import {
   shouldShowApplicationMaxSessionsPerDayField,
 } from '@jakorea/form-schema/program-application'
 import { normalizeTargetLevelValue } from '@/features/program/shared/lib/program-detail-info-constants'
+import { isAnnouncementUnpublished } from '@/features/program/shared/lib/participant-recruitment-form-options'
 import type { TargetLevel } from '@/types/domain'
 
 /** API·RHF 는 optional 자리에 `null` / `''` 을 줄 수 있음 — `.optional()` 만 쓰면 safeParse 실패 */
@@ -95,7 +96,10 @@ export const programParticipantRecruitmentSaveSchema = z.object({
 })
 
 const requiredText = (message: string) =>
-  z.preprocess(emptyToUndefined, z.string().min(1, message))
+  z.preprocess(
+    emptyToUndefined,
+    z.string({ required_error: message, invalid_type_error: message }).min(1, message)
+  )
 
 const requiredEnumMessage = <T extends [string, ...string[]]>(
   values: T,
@@ -120,20 +124,11 @@ export const programTrainedTeachersRecruitmentSaveSchema = programParticipantRec
       '학생 명단 제출 여부를 선택해주세요'
     ),
     participantRecruitmentMaxClassCount: requiredNonNeg('신청 가능 최대 학급 수를 입력해주세요'),
-    participantProgramOperationStartDate: requiredText(
-      '프로그램 운영 시작일을 선택해주세요'
-    ),
-    participantProgramOperationEndDate: requiredText('프로그램 운영 종료일을 선택해주세요'),
-    applicationStartDate: requiredText('참여자 모집 시작일을 선택해주세요'),
-    applicationEndDate: requiredText('참여자 모집 종료일을 선택해주세요'),
     targetLevels: z.preprocess(
       coerceTargetLevels,
       z.array(targetLevelEnum).min(1, '교육 대상을 선택해주세요')
     ),
     educationTargetDetail: requiredText('교육 대상 상세를 입력해주세요'),
-    resultAnnouncementDate: requiredText('합격자 발표일을 선택해주세요'),
-    resultAnnouncementMethod: requiredText('발표 방법을 입력해주세요'),
-    remarks: requiredText('비고를 입력해주세요'),
   })
   .superRefine((values, ctx) => {
     // zod의 extend 추론이 공통 스키마의 보조 분기 필드를 좁히지 못하는 버전과도 호환한다.
@@ -143,6 +138,54 @@ export const programTrainedTeachersRecruitmentSaveSchema = programParticipantRec
       educationScheduleMode?: 'date' | 'period'
       participantRecruitmentMaxScheduleCount?: number
       participantRecruitmentMaxSessionsPerDay?: number
+      participantRecruitmentAnnouncementPublished?: 'published' | 'unpublished'
+      participantRecruitmentNotesNotApplicable?: 'applicable' | 'not_applicable'
+      remarks?: string
+      resultAnnouncementDate?: string
+      resultAnnouncementMethod?: string
+    }
+    const requireText = (path: string, value: unknown, message: string) => {
+      if (value == null || (typeof value === 'string' && value.trim() === '')) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: [path], message })
+      }
+    }
+    const unpublished = isAnnouncementUnpublished(
+      scheduleValues.participantRecruitmentAnnouncementPublished
+    )
+    if (!unpublished) {
+      requireText(
+        'participantProgramOperationStartDate',
+        scheduleValues.participantProgramOperationStartDate,
+        '프로그램 운영 시작일을 선택해주세요'
+      )
+      requireText(
+        'participantProgramOperationEndDate',
+        scheduleValues.participantProgramOperationEndDate,
+        '프로그램 운영 종료일을 선택해주세요'
+      )
+      requireText(
+        'applicationStartDate',
+        scheduleValues.applicationStartDate,
+        '참여자 모집 시작일을 선택해주세요'
+      )
+      requireText(
+        'applicationEndDate',
+        scheduleValues.applicationEndDate,
+        '참여자 모집 종료일을 선택해주세요'
+      )
+      requireText(
+        'resultAnnouncementDate',
+        scheduleValues.resultAnnouncementDate,
+        '합격자 발표일을 선택해주세요'
+      )
+      requireText(
+        'resultAnnouncementMethod',
+        scheduleValues.resultAnnouncementMethod,
+        '발표 방법을 입력해주세요'
+      )
+    }
+    if (scheduleValues.participantRecruitmentNotesNotApplicable !== 'not_applicable') {
+      requireText('remarks', scheduleValues.remarks, '비고를 입력해주세요')
     }
     const visibility = {
       educationStructure: scheduleValues.educationStructure,

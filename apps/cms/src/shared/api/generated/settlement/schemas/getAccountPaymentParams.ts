@@ -8,7 +8,9 @@
 
 export type GetAccountPaymentParams = {
 /**
- * 쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.
+ * 사용하지 않습니다. 조회 목적은 서버가 기록합니다.
+ * @minLength 1
+ * @maxLength 500
  */
 reason?: string;
 };

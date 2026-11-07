@@ -9,10 +9,13 @@
 export interface DetailedProgramResponse {
   id?: number;
   nameKo?: string;
-  nameEn?: string;
-  businessArea?: string;
+  /** @nullable */
+  nameEn?: string | null;
+  /** @nullable */
+  businessArea?: string | null;
   useYn?: boolean;
-  createdByAdminId?: number;
+  /** @nullable */
+  createdByAdminId?: number | null;
   createdByName?: string;
   inUse?: boolean;
   version?: number;
