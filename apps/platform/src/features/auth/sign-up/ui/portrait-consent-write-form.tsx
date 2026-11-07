@@ -16,7 +16,7 @@ import {
   type WritingFormParagraph,
 } from '@jakorea/form-schema/writing-form'
 import { type FormUpdateParagraph, patchVerticalTableCell } from '@jakorea/form-template-runtime'
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { PlatformConsentFormBody } from '@/features/mypage/instructor-apply/consent/platform-consent-form-body'
 import { ConsentSignatureStatement } from '@/features/mypage/instructor-apply/consent/signature-statement'
 import consentStyles from '@/features/mypage/instructor-apply/consent/consent-form.module.css'
@@ -98,7 +98,16 @@ export function PortraitConsentWriteForm({
   saveDraftState,
   onSubmitAsync,
   onTitleAside,
+  serverDraft,
+  serverDraftPending = false,
 }: {
+  /** 서버 양식 수신 대기 중 — 입력·제출 잠금(수신 후 양식 교체로 입력값이 사라지는 것 방지) */
+  serverDraftPending?: boolean
+  /**
+   * 서버(CMS) 현재 양식 schema — 있으면 로컬 seed 대신 사용(응답 값은 비우고 성명 prefill).
+   * 회원가입(비로그인) 진입은 양식 조회 API가 없어 seed fallback(BE 요청).
+   */
+  serverDraft?: WritingFormDraft | null
   onComplete: () => void
   /** 가입 bridge 없을 때(마이페이지) 성명 prefill */
   verifiedName?: string
@@ -127,6 +136,18 @@ export function PortraitConsentWriteForm({
       signatures: {},
     }
   })
+
+  const verifiedNameRef = useRef(verifiedName)
+  verifiedNameRef.current = verifiedName
+  useEffect(() => {
+    if (serverDraft == null || !Array.isArray(serverDraft.paragraphs)) return
+    if (serverDraft.paragraphs.length === 0) return
+    const normalized = normalizeMemberConsentWriteDraft(serverDraft, TEMPLATE_ID)
+    setState(prev => ({
+      ...prev,
+      draft: prefillPortraitName(normalized, verifiedNameRef.current),
+    }))
+  }, [serverDraft])
 
   useEffect(() => {
     if (saveDraftState) {
@@ -254,7 +275,11 @@ export function PortraitConsentWriteForm({
           handleSubmit()
         }}
       >
-        <fieldset className={consentStyles.fieldset}>
+        <fieldset
+          className={consentStyles.fieldset}
+          disabled={serverDraftPending}
+          aria-busy={serverDraftPending || undefined}
+        >
           <PlatformConsentFormBody
             draft={state.draft}
             hiddenParagraphIds={hiddenParagraphIds}
@@ -264,7 +289,12 @@ export function PortraitConsentWriteForm({
           />
         </fieldset>
         <div className={consentStyles.actions}>
-          <PFButton size="xlarge" width={240} type="submit" disabled={isSubmitting}>
+          <PFButton
+            size="xlarge"
+            width={240}
+            type="submit"
+            disabled={isSubmitting || serverDraftPending}
+          >
             작성완료
           </PFButton>
         </div>

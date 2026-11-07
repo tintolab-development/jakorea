@@ -11,17 +11,27 @@ export const ConsentSignatureStatement = forwardRef<
   PFFormSignatureBlockHandle,
   {
     statement: string
+    /** 확인문 아래 회색 안내(서약서 유효·보관 기간 등) */
+    note?: string
     signerName: string
     signature?: string | FormSignatureValue | null
     onSignatureChange: (value: FormSignatureValue) => void
   }
 >(function ConsentSignatureStatement(
-  { statement, signerName, signature, onSignatureChange },
+  { statement, note, signerName, signature, onSignatureChange },
   ref,
 ) {
+  const trimmedNote = note?.trim() ?? ''
   return (
     <section className={styles.statementCard}>
-      <p className={styles.statementText}>{statement}</p>
+      {trimmedNote ? (
+        <div className={styles.statementTextGroup}>
+          <p className={styles.statementText}>{statement}</p>
+          <p className={styles.statementNote}>{trimmedNote}</p>
+        </div>
+      ) : (
+        <p className={styles.statementText}>{statement}</p>
+      )}
       <PFFormSignatureBlock
         ref={ref}
         className={styles.statementSignatureBlock}

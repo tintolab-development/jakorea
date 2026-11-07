@@ -101,8 +101,8 @@ function PlatformAgreementNoticeTableBody({
         headers={headers}
         rows={rows}
         emphasizedColumns={emphasizedColumns}
-        hideEmptyPairs={!documentPreview}
-        blankEmptyCells={documentPreview}
+        /** 시안(P5): 작성 화면도 빈 행(2~4행)을 공백 셀로 그대로 노출 */
+        blankEmptyCells
       />
       {paragraph.showBottomText || idType != null ? (
         <div className={styles.tableAfter}>

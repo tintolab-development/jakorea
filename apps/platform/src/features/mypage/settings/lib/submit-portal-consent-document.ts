@@ -230,20 +230,36 @@ export async function submitPortalConsentDocumentFromWriteState(
 }
 
 /** 마이페이지 — 초상권 수집·이용 동의서 (미성년 프로그램 신청 시 `programTarget`) */
+/** 초상권 DRAFT 문서 생성 — 응답 `formTemplateVersion.schemaJson`이 서버(CMS) 현재 양식 */
+export function createPortraitConsentDraftDocument(
+  programTarget?: { programId: number },
+): Promise<PortalConsentDocumentDetail> {
+  return createPortalConsentDocument(
+    buildPortalPortraitRightsConsentCreateRequest(
+      programTarget ? { programId: programTarget.programId } : undefined,
+    ),
+  )
+}
+
 export async function submitPortalPortraitConsentFromWriteState(
   state: PortraitPortalConsentWriteState,
   options?: {
     programTarget?: { programId: number }
     /** 만 14세 미만 complete 필수. 화면·로그에 출력하지 않는다. */
     guardianVerificationToken?: string
+    /**
+     * 작성 진입 시 이미 만든 DRAFT 문서(서버 현재 양식 버전 포함). 있으면 재생성하지 않고
+     * 화면에 보여준 양식 버전 그대로 제출한다.
+     */
+    createdDocument?: PortalConsentDocumentDetail | null
   },
 ): Promise<void> {
   const programTarget = options?.programTarget
   const guardianVerificationToken = options?.guardianVerificationToken?.trim()
-  const createBody = buildPortalPortraitRightsConsentCreateRequest(
-    programTarget ? { programId: programTarget.programId } : undefined,
-  )
-  const created = await createPortalConsentDocument(createBody)
+  const created =
+    options?.createdDocument?.documentId != null
+      ? options.createdDocument
+      : await createPortraitConsentDraftDocument(programTarget)
   const documentId = created.documentId
   if (documentId == null) {
     throw new Error('동의서 문서를 만들지 못했습니다.')

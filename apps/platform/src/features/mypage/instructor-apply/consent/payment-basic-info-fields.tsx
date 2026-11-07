@@ -35,6 +35,8 @@ export type PaymentBasicInfoFieldsProps = {
   profileValues?: PaymentStatementProfileLinkedValues | null
   /** 영수증 — 회원정보 성명(항상) · 개인 회원 자택 주소 비활성 */
   receiptLockedMember?: ReceiptLockedMemberFields | null
+  /** 영수증 — 회원정보 소속(표시 전용, 제출 payload 미포함) */
+  receiptAffiliationDisplay?: string
 }
 
 export function PaymentBasicInfoFields({
@@ -44,6 +46,7 @@ export function PaymentBasicInfoFields({
   lockProfileFields = false,
   profileValues,
   receiptLockedMember,
+  receiptAffiliationDisplay,
 }: PaymentBasicInfoFieldsProps) {
   const isReceipt = variant === 'receipt'
   const linked = isReceipt
@@ -111,7 +114,20 @@ export function PaymentBasicInfoFields({
           />
         </PFFormField>
       </PFFormFieldRow>
-      {isReceipt ? null : (
+      {isReceipt ? (
+        <PFFormFieldRow type="single">
+          {/* 시안: 영수증 지급조서 2행 `소속`(전체 폭, 읽기전용·회원정보). 영수증은 소속을 수집하지 않으므로 값은 저장하지 않음 */}
+          <PFFormField label="소속" className={styles.paymentFixedField}>
+            <PFTextInput
+              variant="formPage"
+              size="large"
+              disabled
+              placeholder="소속"
+              value={receiptAffiliationDisplay ?? ''}
+            />
+          </PFFormField>
+        </PFFormFieldRow>
+      ) : (
       <PFFormFieldRow type="double">
         <PFFormField
           label="주민등록번호"
@@ -131,7 +147,7 @@ export function PaymentBasicInfoFields({
               variant="formPage"
               size="large"
               className={styles.paymentInputW240}
-              placeholder="소속 기관명"
+              placeholder="소속"
               disabled={profileLocked || linked.noAffiliation}
               value={linked.noAffiliation ? '' : linked.affiliation}
               onValueChange={value => patch('affiliation', value)}
@@ -156,7 +172,7 @@ export function PaymentBasicInfoFields({
       )}
       <PFFormFieldRow type="single">
         <PFFormField
-          label={isReceipt ? '지역/주소' : '자택 주소'}
+          label="자택 주소"
           className={`${styles.paymentFixedField} ${styles.paymentInputW240}`}
         >
           <PFFormHomeAddressFields

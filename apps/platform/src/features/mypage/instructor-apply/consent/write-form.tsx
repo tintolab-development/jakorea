@@ -41,6 +41,7 @@ import {
   PFFormDraftSignatureProvider,
   PFFormDraftSignatureTitleAsideBridge,
   PFFormSignatureBlock,
+  type FormSignatureValue,
 } from '@/shared/ui'
 import {
   clearConsentSignatureSlotKeys,
@@ -142,7 +143,7 @@ const CONSENT_RECEIPT_RRN_NOT_ALLOWED_MESSAGE =
 const CONSENT_PAYMENT_BASIC_INFO_NOT_ALLOWED_MESSAGE =
   '이 동의서에는 지급조서 전용 항목(주민등록번호·소속)을 넣을 수 없습니다.'
 const RECEIPT_CONSENT_BASIC_INFO_REQUIRED_MESSAGE =
-  '영수증 발급 사전 동의서의 지급 확인 정보를 입력해 주세요.'
+  '영수증 사전 동의서의 지급조서 정보를 입력해 주세요.'
 const RECEIPT_CONSENT_PURPOSE_INVALID_MESSAGE =
   '영수증 발급 사전 동의서의 지급 목적을 확인해 주세요.'
 
@@ -221,6 +222,19 @@ export function SchemaConsentWriteForm({
       homeAddressDetail: draft?.homeAddressDetail || lockedBasic.homeAddressDetail,
     })
   }, [lockedBasic, submitContext, templateId])
+  /** 영수증 지급조서 `소속` — 회원정보 표시 전용(제출 payload에는 넣지 않음: 영수증은 소속 미수집) */
+  const receiptAffiliationDisplay = useMemo(() => {
+    if (templateId !== 'agreement-receipt-pre-consent') return ''
+    const linked = buildPaymentStatementProfileLinkedValues({
+      name: lockedBasic.name,
+      memberType: lockedBasic.memberType,
+      schoolName: lockedBasic.schoolName,
+      affiliationName: lockedBasic.affiliationName,
+      affiliationNone:
+        lockedBasic.memberType === 'school_teacher' ? false : Boolean(lockedBasic.affiliationNone),
+    })
+    return linked.affiliation
+  }, [lockedBasic, templateId])
   const [alertOpen, setAlertOpen] = useState(false)
   const [alertTitle, setAlertTitle] = useState('안내')
   const [alertMessage, setAlertMessage] = useState(CONSENT_WRITE_INCOMPLETE_ALERT_MESSAGE)
@@ -515,6 +529,7 @@ export function SchemaConsentWriteForm({
             lockProfileFields={!isReceipt && paymentStatementProfileValues != null}
             profileValues={isReceipt ? null : paymentStatementProfileValues}
             receiptLockedMember={isReceipt ? receiptLockedMember : null}
+            receiptAffiliationDisplay={isReceipt ? receiptAffiliationDisplay : undefined}
             onChange={next =>
               setState(prev => ({
                 ...prev,
@@ -581,9 +596,12 @@ export function SchemaConsentWriteForm({
           paragraph.kind === 'description' && paragraph.variant === 'closing'
             ? paragraph.body.trim()
             : ''
+        // 1행 = 확인문(S58), 2행 이후 = 회색 안내(S72 — 유효·보관 기간). CMS 마무리글 본문 그대로
+        const [statementLine = '', ...noteLines] = body.split('\n')
         return (
           <ConsentSignatureStatement
-            statement={body}
+            statement={statementLine.trim()}
+            note={noteLines.join('\n')}
             signerName={signerName}
             signature={state.signatures?.final}
             onSignatureChange={finalSig =>
@@ -628,22 +646,40 @@ export function SchemaConsentWriteForm({
       ) {
         return undefined
       }
+      const confirmationClosing = state.draft.paragraphs.find(
+        p => p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing,
+      )
+      const confirmationText =
+        confirmationClosing?.kind === 'description' && confirmationClosing.variant === 'closing'
+          ? confirmationClosing.body.trim()
+          : ''
+      const onSignatureChange = (finalSig: FormSignatureValue) =>
+        setState(prev => ({
+          ...prev,
+          signatures: { ...prev.signatures, final: finalSig },
+        }))
+      if (confirmationText) {
+        // 서명 카드 확인문 — CMS 저장 `confirmationClosing` 본문
+        return (
+          <ConsentSignatureStatement
+            statement={confirmationText}
+            signerName={signerName}
+            signature={state.signatures?.final}
+            onSignatureChange={onSignatureChange}
+          />
+        )
+      }
       return (
         <PFFormSignatureBlock
           className={styles.noticeSubjectSignatureCard}
           contentAlign="end"
           signerName={signerName}
           signature={state.signatures?.final}
-          onSignatureChange={finalSig =>
-            setState(prev => ({
-              ...prev,
-              signatures: { ...prev.signatures, final: finalSig },
-            }))
-          }
+          onSignatureChange={onSignatureChange}
         />
       )
     },
-    [signerName, state.signatures?.final, templateId],
+    [signerName, state.draft.paragraphs, state.signatures?.final, templateId],
   )
 
   if (isCrimeConsentTemplate(templateId) && isInstructorApplyConsentKey(consentKey)) {
