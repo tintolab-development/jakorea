@@ -80,13 +80,22 @@ function fieldClass(isEditing: boolean, ...extra: Array<string | false | undefin
     .join(' ')
 }
 
-function RequiredColumnTitle({ children }: { children: string }) {
+/** 필수 `*`는 수정 모드에서만 노출 */
+function RequiredColumnTitle({
+  children,
+  showRequired,
+}: {
+  children: string
+  showRequired: boolean
+}) {
   return (
     <span>
       {children}
-      <span className="principles-col-required" aria-hidden>
-        *
-      </span>
+      {showRequired ? (
+        <span className="principles-col-required" aria-hidden>
+          *
+        </span>
+      ) : null}
     </span>
   )
 }
@@ -244,7 +253,7 @@ export function PrinciplesFormCard({ data }: Props) {
         render: (_value, record) => <PrincipleIcon iconKey={record.iconKey} size={48} />,
       },
       {
-        title: <RequiredColumnTitle>타이틀</RequiredColumnTitle>,
+        title: <RequiredColumnTitle showRequired={isEditing}>타이틀</RequiredColumnTitle>,
         key: 'title',
         width: 320,
         className: 'principles-sortable-table__col--title',
@@ -270,7 +279,7 @@ export function PrinciplesFormCard({ data }: Props) {
         },
       },
       {
-        title: <RequiredColumnTitle>서브 텍스트</RequiredColumnTitle>,
+        title: <RequiredColumnTitle showRequired={isEditing}>서브 텍스트</RequiredColumnTitle>,
         key: 'subText',
         className: 'principles-sortable-table__col--subText',
         render: (_value, record) => {
@@ -353,7 +362,7 @@ export function PrinciplesFormCard({ data }: Props) {
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="상단 서브 텍스트"
-                required
+                required={isEditing}
                 labelWidth={200}
                 view={null}
                 edit={
@@ -377,7 +386,7 @@ export function PrinciplesFormCard({ data }: Props) {
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="메인 텍스트"
-                required
+                required={isEditing}
                 labelWidth={200}
                 view={null}
                 edit={
