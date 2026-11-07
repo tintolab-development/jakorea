@@ -79,6 +79,7 @@ export function ProgramRegistrationIpsTypeFields({
   const wrapperClassName = [
     'detail-info-form-inputs-wrapper',
     isInlineLayout && 'program-registration-paragraph__schedule-detail-row',
+    isInlineLayout && 'program-registration-ips-type-fields--inline',
     className,
   ]
     .filter(Boolean)
@@ -90,9 +91,8 @@ export function ProgramRegistrationIpsTypeFields({
         inputSize="small"
         withAllOption={false}
         placeholder={firstSelectPlaceholder}
-        // 선택값(Inspire / Prepare / Succeed)이 X·화살표 영역에 밀려 축약되지 않도록
-        // 기본 유형 선택 필드는 다른 공통 유형 셀렉트와 동일한 폭을 사용한다.
-        width={160}
+        // inline(회차 반쪽 칸)은 width 고정(minWidth+flex-shrink:0)이면 2차가 잘린다.
+        width={isInlineLayout ? undefined : 160}
         options={[...PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS]}
         value={category || undefined}
         disabled={primaryDisabled}
@@ -102,7 +102,7 @@ export function ProgramRegistrationIpsTypeFields({
         inputSize="small"
         withAllOption={false}
         placeholder={secondaryPlaceholder}
-        width={isInlineLayout ? '100%' : 360}
+        width={isInlineLayout ? undefined : 360}
         options={secondaryOptions}
         value={secondaryValue}
         disabled={secondarySelectDisabled}
