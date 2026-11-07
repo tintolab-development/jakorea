@@ -7,6 +7,11 @@ import {
   isPortalSocialAuthLinkRemoteEnabled,
   platformSocialAuthClient,
 } from '@/features/auth/social-auth'
+import { SocialConnectConsentModal } from '@/features/auth'
+import {
+  markSocialConnectionConsentAgreed,
+  resolveHasSocialConnectionConsent,
+} from '@/features/auth/lib/resolve-social-connection-consent'
 import {
   GoogleSocialLoginIcon,
   KakaoSocialLoginIcon,
@@ -71,6 +76,7 @@ export function SignUpSocialConnectPage() {
   const navigate = useNavigate()
   const [connectedMap, setConnectedMap] = useState<Record<SocialProvider, boolean>>(emptyConnectedMap)
   const [busyProvider, setBusyProvider] = useState<SocialProvider | null>(null)
+  const [consentProvider, setConsentProvider] = useState<SocialProvider | null>(null)
   const [listError, setListError] = useState<string | null>(null)
 
   const SOCIAL_CONNECT_ERROR_PATH = '/auth/sign-up/social-connect/error'
@@ -105,6 +111,7 @@ export function SignUpSocialConnectPage() {
 
   const startLink = (provider: SocialProvider) => {
     if (!isPortalSocialAuthLinkRemoteEnabled()) {
+      setConsentProvider(null)
       navigate(`${SOCIAL_CONNECT_ERROR_PATH}?reason=connection-failed`)
       return
     }
@@ -120,6 +127,7 @@ export function SignUpSocialConnectPage() {
       })
       .catch(() => {
         setBusyProvider(null)
+        setConsentProvider(null)
         navigate(`${SOCIAL_CONNECT_ERROR_PATH}?reason=connection-failed`)
       })
   }
@@ -139,13 +147,32 @@ export function SignUpSocialConnectPage() {
     }
   }
 
+  const requestConnect = async (provider: SocialProvider) => {
+    if (busyProvider) return
+    const hasLinkedAccount = Object.values(connectedMap).some(Boolean)
+    setBusyProvider(provider)
+    const alreadyAgreed = await resolveHasSocialConnectionConsent(hasLinkedAccount)
+    if (alreadyAgreed) {
+      startLink(provider)
+      return
+    }
+    setBusyProvider(null)
+    setConsentProvider(provider)
+  }
+
+  const confirmConnect = () => {
+    if (!consentProvider) return
+    markSocialConnectionConsentAgreed()
+    startLink(consentProvider)
+  }
+
   const toggleConnection = (provider: SocialProvider) => {
     if (busyProvider) return
     if (connectedMap[provider]) {
       void unlink(provider)
       return
     }
-    startLink(provider)
+    void requestConnect(provider)
   }
 
   const handleComplete = () => {
@@ -235,6 +262,16 @@ export function SignUpSocialConnectPage() {
           나중에 할게요
         </PFButton>
       </div>
+
+      <SocialConnectConsentModal
+        open={consentProvider != null}
+        confirmLoading={consentProvider != null && busyProvider === consentProvider}
+        onCancel={() => {
+          if (busyProvider) return
+          setConsentProvider(null)
+        }}
+        onConfirm={confirmConnect}
+      />
     </section>
   )
 }

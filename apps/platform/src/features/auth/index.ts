@@ -1,7 +1,9 @@
 export type { TermsViewType } from './model/terms-view.types'
 export { TERMS_VIEW_TITLES } from './lib/terms-view-config'
+export { SOCIAL_CONNECT_CONSENT_MODAL_TITLE } from './lib/social-connect-consent-copy'
 export { useTermsViewModal } from './hooks/use-terms-view-modal'
 export { TermsViewModal } from './ui/terms-view-modal'
+export { SocialConnectConsentModal } from './ui/social-connect-consent-modal'
 export { RegisterTermsAgreement } from './ui/register-terms-agreement'
 
 export {

@@ -1,6 +1,11 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import type { SocialProvider } from '@jakorea/social-auth'
 import { SocialAuthApiError } from '@jakorea/social-auth'
+import { SocialConnectConsentModal } from '@/features/auth'
+import {
+  markSocialConnectionConsentAgreed,
+  resolveHasSocialConnectionConsent,
+} from '@/features/auth/lib/resolve-social-connection-consent'
 import {
   isPortalSocialAuthLinkRemoteEnabled,
   platformSocialAuthClient,
@@ -86,6 +91,7 @@ export function SettingsSocialAccountsView({
   const [connectedMap, setConnectedMap] =
     useState<Record<SocialProvider, boolean>>(emptyConnectedMap)
   const [busyProvider, setBusyProvider] = useState<SocialProvider | null>(null)
+  const [consentProvider, setConsentProvider] = useState<SocialProvider | null>(null)
   const [listError, setListError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const remote = isPortalSocialAuthLinkRemoteEnabled() && Boolean(getAccessToken())
@@ -119,6 +125,7 @@ export function SettingsSocialAccountsView({
 
   const startLink = (provider: SocialProvider) => {
     if (!remote) {
+      setConsentProvider(null)
       setActionError('소셜 계정 연결을 시작할 수 없어요.')
       return
     }
@@ -136,6 +143,7 @@ export function SettingsSocialAccountsView({
       })
       .catch(() => {
         setBusyProvider(null)
+        setConsentProvider(null)
         setActionError('소셜 계정을 연결하지 못했어요. 잠시 후 다시 시도해 주세요.')
       })
   }
@@ -154,13 +162,32 @@ export function SettingsSocialAccountsView({
     }
   }
 
+  const requestConnect = async (provider: SocialProvider) => {
+    if (busyProvider) return
+    const hasLinkedAccount = Object.values(connectedMap).some(Boolean)
+    setBusyProvider(provider)
+    const alreadyAgreed = await resolveHasSocialConnectionConsent(hasLinkedAccount)
+    if (alreadyAgreed) {
+      startLink(provider)
+      return
+    }
+    setBusyProvider(null)
+    setConsentProvider(provider)
+  }
+
+  const confirmConnect = () => {
+    if (!consentProvider) return
+    markSocialConnectionConsentAgreed()
+    startLink(consentProvider)
+  }
+
   const toggleConnection = (provider: SocialProvider) => {
     if (busyProvider) return
     if (connectedMap[provider]) {
       void unlink(provider)
       return
     }
-    startLink(provider)
+    void requestConnect(provider)
   }
 
   return (
@@ -209,6 +236,16 @@ export function SettingsSocialAccountsView({
           )
         })}
       </div>
+
+      <SocialConnectConsentModal
+        open={consentProvider != null}
+        confirmLoading={consentProvider != null && busyProvider === consentProvider}
+        onCancel={() => {
+          if (busyProvider) return
+          setConsentProvider(null)
+        }}
+        onConfirm={confirmConnect}
+      />
     </section>
   )
 }
