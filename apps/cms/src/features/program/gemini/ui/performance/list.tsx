@@ -676,6 +676,7 @@ export function GeminiPerformanceList() {
       />
       <UploadDuplicateModal
         open={duplicateModalOpen}
+        loading={importing}
         onCancel={handleDuplicateCancel}
         onOverwrite={handleDuplicateOverwrite}
         onAppend={handleDuplicateAppend}
