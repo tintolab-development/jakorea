@@ -80,8 +80,9 @@ export function AdminRegisteredChangePasswordPage() {
     const nextPassword = newPassword.trim()
 
     if (remoteApi) {
+      let changeTokens: Awaited<ReturnType<typeof passwordChangeMutation.mutateAsync>>
       try {
-        await passwordChangeMutation.mutateAsync({
+        changeTokens = await passwordChangeMutation.mutateAsync({
           currentPassword: currentPassword.trim(),
           newPassword: nextPassword,
         })
@@ -96,6 +97,7 @@ export function AdminRegisteredChangePasswordPage() {
         const tokens = await continueAdminRegisteredSessionAfterPasswordChange({
           email,
           password: nextPassword,
+          changeTokens,
         })
         const step =
           normalizeAdminProvisionedOnboardingStep(tokens.adminProvisionedOnboardingStep) ??

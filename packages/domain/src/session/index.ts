@@ -35,4 +35,4 @@ export {
   shouldIgnoreActivityTarget,
   type ActivityEventLike,
 } from './activity-event.js'
-export { readJwtSidClaim } from './jwt-sid.js'
+export { readJwtExpiresAtMs, readJwtSidClaim } from './jwt-sid.js'

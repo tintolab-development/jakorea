@@ -35,6 +35,11 @@ export type PFModalProps = {
   /** false면 우측 상단 닫기(X) 버튼을 그리지 않음. 기본 true */
   showCloseButton?: boolean
   className?: string
+  /**
+   * portal로 렌더되는 backdrop 루트에 붙일 `data-*` 속성.
+   * 예: 세션 경고 모달의 `data-session-warning-root` (Activity 수집 제외 대상 표시)
+   */
+  backdropDataAttributes?: Record<`data-${string}`, string>
   children: ReactNode
 }
 
@@ -92,6 +97,7 @@ export function PFModal({
   closeOnEscape = true,
   showCloseButton = true,
   className,
+  backdropDataAttributes,
   children,
 }: PFModalProps) {
   const fallbackTitleId = useId()
@@ -161,6 +167,7 @@ export function PFModal({
 
   return createPortal(
     <div
+      {...backdropDataAttributes}
       ref={backdropRef}
       className={[
         styles.backdrop,

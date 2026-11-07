@@ -4,12 +4,47 @@ import {
   resolveSessionWarningView,
 } from '@jakorea/domain/session'
 import {
-  isPortalSessionApiAvailable,
-  PORTAL_SESSION_BE_CONTRACT,
-} from './portal-session-contract.ts'
+  createPortalActivityTrackerState,
+  processPortalActivityEvent,
+} from './portal-activity-tracker.ts'
 
-assert.equal(isPortalSessionApiAvailable(), false)
-assert.equal(PORTAL_SESSION_BE_CONTRACT, 'BLOCKED_BY_PORTAL_BE_CONTRACT')
+// BE 계약이 차단 상태여서는 안 된다 (JABACK main e9b5319 MEMBER Activity/Session 병합).
+// 가용성 함수는 `import.meta.env`(Vite)에 의존하므로 여기서는 Activity 판정 규칙만 순수 검증한다.
+{
+  const state = createPortalActivityTrackerState()
+  const t0 = 1_000_000
+  assert.equal(processPortalActivityEvent({ type: 'pointerdown', isTrusted: false }, state, t0, false), 'ignored')
+  assert.equal(processPortalActivityEvent({ type: 'scroll', isTrusted: true }, state, t0, false), 'ignored')
+  assert.equal(processPortalActivityEvent({ type: 'touchstart', isTrusted: true }, state, t0, false), 'network')
+  assert.equal(processPortalActivityEvent({ type: 'pointerdown', isTrusted: true }, state, t0 + 100, false), 'deduped')
+  assert.equal(processPortalActivityEvent({ type: 'keydown', isTrusted: true }, state, t0 + 1_000, false), 'throttled')
+  assert.equal(processPortalActivityEvent({ type: 'wheel', isTrusted: true }, state, t0 + 45_000, false), 'network')
+  assert.equal(processPortalActivityEvent({ type: 'keydown', isTrusted: true }, state, t0 + 99_000, true), 'ignored')
+}
+
+// idle OFF: 유휴 기한이 지나도 유휴 경고 없음, 12h 절대 만료 5분 전 경고
+{
+  const base = {
+    sessionStartedAt: '2026-11-08T00:00:00Z',
+    absoluteExpiresAt: '2026-11-08T12:00:00Z',
+    lastUserActivityAt: '2026-11-08T00:00:00Z',
+    idleExpiresAt: null,
+    refreshIdleExpiresAt: null,
+    idlePolicyEnforced: false,
+    serverNow: '2026-11-08T00:00:00Z',
+  }
+  assert.equal(resolveSessionWarningView({ session: base, nowMs: Date.parse('2026-11-08T00:26:00Z') }), null)
+  assert.equal(
+    resolveSessionWarningView({ session: base, nowMs: Date.parse('2026-11-08T11:56:00Z') })?.kind,
+    'absolute',
+  )
+  // idle ON: 25분 경과 시 유휴 경고
+  const idleOn = { ...base, idlePolicyEnforced: true, idleExpiresAt: '2026-11-08T00:30:00Z' }
+  assert.equal(
+    resolveSessionWarningView({ session: idleOn, nowMs: Date.parse('2026-11-08T00:26:00Z') })?.kind,
+    'idle',
+  )
+}
 assert.equal(
   resolveSessionWarningView({
     session: null,

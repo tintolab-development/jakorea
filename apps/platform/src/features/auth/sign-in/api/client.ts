@@ -70,9 +70,25 @@ export async function postPortalPhoneIdentityConfirm(
   return parsePhoneIdentityChangeResponse(data)
 }
 
-/** POST /api/portal/auth/password/change */
-export async function postPortalPasswordChange(body: PasswordChangeRequest): Promise<void> {
-  await axiosClient.post(portalAuthPaths.passwordChange(), body)
+export type PortalPasswordChangeTokens = AuthTokenResponse & {
+  accessToken: string
+  refreshToken: string
+}
+
+/**
+ * POST /api/portal/auth/password/change
+ * BE는 기존 세션을 폐기하고 새 sid 결속 `AuthTokenResponse`를 즉시 반환한다 — 호출자는 이 토큰을 저장해야 한다.
+ * 응답에 토큰이 없으면(구 BE 계약) null — 성공으로 토큰을 꾸며내지 않는다.
+ */
+export async function postPortalPasswordChange(
+  body: PasswordChangeRequest,
+): Promise<PortalPasswordChangeTokens | null> {
+  const { data } = await axiosClient.post<unknown>(portalAuthPaths.passwordChange(), body)
+  try {
+    return parseAuthTokenResponse(data)
+  } catch {
+    return null
+  }
 }
 
 /** POST /api/portal/me/withdrawals — 회원 탈퇴 및 개인정보 비식별화 */

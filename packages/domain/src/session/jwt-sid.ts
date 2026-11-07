@@ -22,3 +22,13 @@ export function readJwtSidClaim(accessToken: string | null | undefined): string 
   const sid = payload?.sid
   return typeof sid === 'string' && sid.trim() ? sid.trim() : null
 }
+
+/**
+ * JWT `exp`(ms) 참고값. Session GET 401 시 "Access 자체 만료" 여부를 판단하는 요청 제어 힌트일 뿐이며
+ * 보안 판정은 BE 응답이 정본이다. 읽을 수 없으면 null.
+ */
+export function readJwtExpiresAtMs(accessToken: string | null | undefined): number | null {
+  if (!accessToken?.trim()) return null
+  const exp = decodeJwtPayload(accessToken)?.exp
+  return typeof exp === 'number' && Number.isFinite(exp) && exp > 0 ? exp * 1000 : null
+}

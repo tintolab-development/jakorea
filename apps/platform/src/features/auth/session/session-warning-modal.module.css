@@ -60,3 +60,9 @@
     letter-spacing: 0;
   }
 }
+
+.error {
+  width: 100%;
+  margin: var(--spacing-8) 0 0;
+  text-align: center;
+}
