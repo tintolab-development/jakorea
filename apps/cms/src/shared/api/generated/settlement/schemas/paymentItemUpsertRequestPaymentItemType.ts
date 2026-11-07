@@ -6,10 +6,7 @@
  * OpenAPI spec version: v9
  */
 
-/**
- * @nullable
- */
-export type PaymentItemUpsertRequestPaymentItemType = typeof PaymentItemUpsertRequestPaymentItemType[keyof typeof PaymentItemUpsertRequestPaymentItemType] | null;
+export type PaymentItemUpsertRequestPaymentItemType = typeof PaymentItemUpsertRequestPaymentItemType[keyof typeof PaymentItemUpsertRequestPaymentItemType];
 
 
 export const PaymentItemUpsertRequestPaymentItemType = {

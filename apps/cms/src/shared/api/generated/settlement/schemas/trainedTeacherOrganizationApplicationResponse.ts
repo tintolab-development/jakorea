@@ -6,114 +6,67 @@
  * OpenAPI spec version: v9
  */
 import type { PreferredScheduleBlock } from './preferredScheduleBlock';
-import type { TrainedTeacherOrganizationApplicationResponseProgressLabel } from './trainedTeacherOrganizationApplicationResponseProgressLabel';
 import type { TrainedTeacherOrganizationApplicationResponseTextbookDeliveryStatus } from './trainedTeacherOrganizationApplicationResponseTextbookDeliveryStatus';
 
-/**
- * Trained-teacher organization application response. Manager identifiers use API values defined by the admin and portal contracts.
- */
 export interface TrainedTeacherOrganizationApplicationResponse {
-  preferredScheduleBlocks?: PreferredScheduleBlock[];
-  /**
-     * 교사 연수 일정을 제외한 전체 교육 일정 수.
-     * @minimum 0
-     */
-  totalEducationRoundCount?: number;
-  /**
-     * COMPLETED 완료가 연결된 교육 일정 수.
-     * @minimum 0
-     */
-  completedEducationRoundCount?: number;
-  /** @minimum 0 */
-  educationCompletionCount?: number;
-  progressLabel?: TrainedTeacherOrganizationApplicationResponseProgressLabel;
   applicationId?: number;
   programId?: number;
-  /** @nullable */
-  desiredEducationScheduleMemo?: string | null;
+  schoolId?: number;
+  schoolName?: string;
+  organizationId?: number;
+  organizationName?: string;
+  teacherMemberId?: number;
+  teacherName?: string;
+  teacherPhoneMasked?: string;
+  studentCount?: number;
+  classCount?: number;
+  desiredEducationScheduleMemo?: string;
+  preferredScheduleBlocks?: PreferredScheduleBlock[];
   applicationStatus?: string;
-  /** @nullable */
-  studentCount?: number | null;
-  /** @nullable */
-  classCount?: number | null;
-  /** @nullable */
-  teacherName?: string | null;
-  /** @nullable */
-  teacherPhoneMasked?: string | null;
-  /** @nullable */
-  institutionName?: string | null;
-  /** @nullable */
-  regionName?: string | null;
-  /**
-     * 교육 대상. TT 상세 config의 educationTarget 우선, 공통 교육 설정 fallback.
-     * @nullable
-     */
-  educationTarget?: string | null;
-  /**
-     * 신청 학년 우선. requested_grade가 있으면 그 원문(예: 2, 학년 접미사 없음). 비어 있으면 프로그램 대상 학년(예: 3학년, 3~6학년). 둘 다 없으면 null.
-     * @nullable
-     */
-  educationGrade?: string | null;
-  /**
-     * TT 프로그램 config의 교육 회차 표시값.
-     * @nullable
-     */
-  lectureRound?: string | null;
-  /**
-     * 신청에 지정한 textbook_id의 교재명. 없으면 프로그램 교재, 그다음 TT config fallback. 배송 상태는 textbookDeliveryStatus를 본다.
-     * @nullable
-     */
-  textbookName?: string | null;
-  /**
-     * 저장된 키트 수. 없으면 null이며 학생 수/24로 계산하지 않습니다. kitCount와 같은 값입니다.
-     * @minimum 0
-     * @nullable
-     */
-  textbookKits?: number | null;
-  /**
-     * 저장된 교재 권수. 없으면 null. bookCount와 같은 값입니다.
-     * @minimum 0
-     * @nullable
-     */
-  textbookQuantity?: number | null;
-  /**
-     * 저장된 키트 수. UJAT는 저장값이 없으면 null이며 학생 수/24로 계산하지 않습니다. textbookKits와 같은 값입니다.
-     * @minimum 0
-     * @nullable
-     */
-  kitCount?: number | null;
-  /**
-     * 저장된 교재 권수. 없으면 null. textbookQuantity와 같은 값입니다.
-     * @minimum 0
-     * @nullable
-     */
-  bookCount?: number | null;
-  /**
-     * 저장된 교재 배송 상태. 없으면 null. PREPARING으로 기본 채움하지 않습니다.
-     * @nullable
-     */
-  textbookDeliveryStatus?: TrainedTeacherOrganizationApplicationResponseTextbookDeliveryStatus;
-  /** 활동 포기 여부. true여도 applicationStatus는 APPROVED입니다. */
-  activityWithdrawn?: boolean;
-  /**
-     * 활동 포기 시각. 포기하지 않았으면 null.
-     * @nullable
-     */
-  giveUpAt?: string | null;
-  /**
-     * 활동 포기 기준 일정 id. 포기하지 않았으면 null.
-     * @nullable
-     */
-  giveUpStopScheduleId?: number | null;
-  /** @minimum 0 */
   educationJournalCount?: number;
-  /** educationJournalCount가 1 이상인지 나타내는 호환 필드. */
-  journalSubmitted?: boolean;
+  submittedAt?: string;
+  approvedAt?: string;
+  rejectedAt?: string;
+  /** 가장 최근 기관 승인/반려 결과 알림의 발송 시각. 즉시 발송은 요청 시각, 예약 발송은 scheduledAt. 알림이 없으면 null. 재발송해도 approvedAt·rejectedAt·applicationStatus는 바뀌지 않습니다. */
+  resultNotificationSentAt?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
   /** APPROVED 또는 REJECTED이면 RESEND_NOTIFICATION을 포함한다. AUTO_REJECTED와 미심사 상태에는 없다. */
   availableActions?: string[];
-  /**
-     * 가장 최근 기관 승인/반려 결과 알림의 발송 시각. 즉시 발송은 요청 시각, 예약 발송은 scheduledAt. 알림이 없으면 null. 재발송해도 approvedAt·rejectedAt·applicationStatus는 바뀌지 않습니다.
-     * @nullable
-     */
-  resultNotificationSentAt?: string | null;
+  institutionName?: string;
+  schoolSido?: string;
+  schoolSigungu?: string;
+  organizationSido?: string;
+  organizationSigungu?: string;
+  regionSido?: string;
+  regionSigungu?: string;
+  regionName?: string;
+  requestedStudentCount?: number;
+  requestedClassCount?: number;
+  journalSubmitted?: boolean;
+  educationTarget?: string;
+  /** 신청 학년 우선. requested_grade가 있으면 그 원문(예: 2, 학년 접미사 없음). 비어 있으면 프로그램 대상 학년(예: 3학년, 3~6학년). 둘 다 없으면 null. */
+  educationGrade?: string | null;
+  lectureRound?: string;
+  totalEducationRoundCount?: number;
+  completedEducationRoundCount?: number;
+  progressLabel?: string;
+  textbookName?: string;
+  /** 저장된 키트 수. 없으면 null이며 학생 수/24로 계산하지 않습니다. kitCount와 같은 값입니다. */
+  textbookKits?: number | null;
+  /** 저장된 교재 권수. 없으면 null. bookCount와 같은 값입니다. */
+  textbookQuantity?: number | null;
+  /** 저장된 키트 수. UJAT는 저장값이 없으면 null이며 학생 수/24로 계산하지 않습니다. textbookKits와 같은 값입니다. */
+  kitCount?: number | null;
+  /** 저장된 교재 권수. 없으면 null. textbookQuantity와 같은 값입니다. */
+  bookCount?: number | null;
+  /** 저장된 교재 배송 상태. 없으면 null. PREPARING으로 기본 채움하지 않습니다. */
+  textbookDeliveryStatus?: TrainedTeacherOrganizationApplicationResponseTextbookDeliveryStatus;
+  educationCompletionCount?: number;
+  /** 활동 포기 시각이 있으면 true. applicationStatus는 APPROVED를 유지합니다. */
+  activityWithdrawn?: boolean | null;
+  /** 활동 포기 시각. 포기하지 않았으면 null. */
+  giveUpAt?: string | null;
+  /** 활동 포기 기준 일정 id. 포기하지 않았으면 null. */
+  giveUpStopScheduleId?: number | null;
 }

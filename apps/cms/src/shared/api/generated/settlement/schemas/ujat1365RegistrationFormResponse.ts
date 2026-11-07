@@ -12,15 +12,15 @@
 export interface Ujat1365RegistrationFormResponse {
   programId?: number;
   participantId?: number;
-  /** @nullable */
-  memberId?: number | null;
-  /** @nullable */
+  memberId?: number;
+  /** 봉사자 이름. 2026-10-26 정책상 일반 이름은 마스킹하지 않습니다. */
   name?: string | null;
-  /** @nullable */
+  /** 생년월일 원문. 없으면 null. */
   birthDate?: string | null;
-  /** @nullable */
+  /** 1365 ID 원문. 없으면 null. */
   external1365Id?: string | null;
-  /** @nullable */
-  volunteerMinutes?: number | null;
+  /** 출석에 저장된 1365 인정 분 합계. 출석 행이 없으면 0. */
+  volunteerMinutes?: number;
+  /** PREVIEW 또는 DOWNLOAD */
   mode?: string;
 }

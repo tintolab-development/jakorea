@@ -9,45 +9,23 @@ import type { AttendanceItemResponseCheckInSource } from './attendanceItemRespon
 import type { AttendanceItemResponseStatus } from './attendanceItemResponseStatus';
 
 export interface AttendanceItemResponse {
-  /** @nullable */
-  attendanceId?: number | null;
-  /** @nullable */
-  programId?: number | null;
-  /** @nullable */
-  scheduleId?: number | null;
-  /** @nullable */
-  participantId?: number | null;
-  /**
-     * 출석 코드만 PRESENT, LATE, ABSENT, EXCUSED. UJAT 배정은 기록이 없으면 참여자 행을 유지하고 status를 null로 반환한다. 미기록 또는 비출석 값(COMPLETED·SCHEDULED 등)도 null.
-     * @nullable
-     */
+  attendanceId?: number;
+  programId?: number;
+  scheduleId?: number;
+  participantId?: number;
+  /** 출석 코드만 PRESENT|LATE|ABSENT|EXCUSED. UJAT 배정은 기록이 없으면 참여자 행을 유지하고 status를 null로 반환한다. 미기록·비출석 값(COMPLETED·SCHEDULED 등)도 null. */
   status?: AttendanceItemResponseStatus;
-  /** @nullable */
-  absenceReason?: string | null;
-  /** @nullable */
-  checkedByAdminId?: number | null;
-  /** @nullable */
-  checkedAt?: string | null;
-  /** @nullable */
-  arrivalTime?: string | null;
-  /** @nullable */
-  internalLate?: boolean | null;
-  /**
-     * 지각 분. arrivalTime이 JA 내부 정시 마감(08:30 Asia/Seoul wall-clock)을 넘기면 08:30부터 arrivalTime까지의 분. arrivalTime이 없거나 정시 이하면 null. status/internalLate만으로 분을 invent하지 않는다.
-     * @nullable
-     */
+  absenceReason?: string;
+  checkedByAdminId?: number;
+  checkedAt?: string;
+  arrivalTime?: string;
+  internalLate?: boolean;
+  /** 지각 분. 회차 시작 30분 전을 정시 마감으로 보고 그 시각부터 arrivalTime까지의 분. arrivalTime이 없거나 정시 이하면 null. status/internalLate만으로 분을 invent하지 않는다. */
   lateMinutes?: number | null;
-  /** @nullable */
-  volunteer1365Minutes?: number | null;
-  /** @nullable */
-  volunteer1365DurationLabel?: string | null;
-  /** @nullable */
-  checkedByMemberId?: number | null;
-  /** @nullable */
-  memberCheckedInAt?: string | null;
-  /**
-     * 출석 기록 출처. ADMIN=관리자 정정/저장, MEMBER_SELF=회원 셀프 체크인, SYSTEM=일정 시작 자동 출석.
-     * @nullable
-     */
+  volunteer1365Minutes?: number;
+  volunteer1365DurationLabel?: string;
+  checkedByMemberId?: number;
+  memberCheckedInAt?: string;
+  /** 출석 기록 출처. ADMIN=관리자 정정/저장, MEMBER_SELF=회원 셀프 체크인, SYSTEM=일정 시작 자동 출석. */
   checkInSource?: AttendanceItemResponseCheckInSource;
 }

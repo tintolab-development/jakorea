@@ -6,4 +6,4 @@
  * OpenAPI spec version: v9
  */
 
-export type FilledDocumentResponseSchemaJson = { [key: string]: unknown };
+export type FilledDocumentResponseSchemaJson = {[key: string]: unknown};

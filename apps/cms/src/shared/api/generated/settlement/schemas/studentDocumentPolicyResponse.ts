@@ -9,22 +9,12 @@
 export interface StudentDocumentPolicyResponse {
   organizationApplicationId?: number;
   programId?: number;
-  /** 프로그램이 학생 명단 및 초상권 동의 기능을 지원하는지 여부 */
   studentDocumentsSupported?: boolean;
-  /**
-     * 기존 프로그램 전체 시작일 호환 필드
-     * @nullable
-     */
-  programStartDate?: string | null;
-  /**
-     * 해당 기관 신청에 배정된 활성 교육 일정의 첫 교육일
-     * @nullable
-     */
-  firstEducationDate?: string | null;
-  /** @nullable */
-  studentRosterUploadDeadline?: string | null;
+  programStartDate?: string;
+  /** 해당 기관 신청에 배정된 활성 교육 일정의 첫 교육일. 아직 배정되지 않았으면 null */
+  firstEducationDate?: string;
+  studentRosterUploadDeadline?: string;
   studentRosterUploadAllowed?: boolean;
-  /** @nullable */
-  portraitConsentUploadDeadline?: string | null;
+  portraitConsentUploadDeadline?: string;
   portraitConsentUploadAllowed?: boolean;
 }

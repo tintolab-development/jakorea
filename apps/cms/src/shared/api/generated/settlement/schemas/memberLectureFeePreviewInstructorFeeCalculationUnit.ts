@@ -7,8 +7,7 @@
  */
 
 /**
- * 저장된 계산 단위. 레거시 PER_HOUR는 시급 비례가 아니라 차시당 단가. PER_CLASS=차시당, PER_SESSION/PER_LECTURE=출강 1회당, FIXED=고정 금액.
- * @nullable
+ * 저장된 계산 단위 와이어 값. 레거시 PER_HOUR는 시급 비례가 아니라 차시당 단가와 같다. PER_CLASS=차시당, PER_SESSION/PER_LECTURE=출강 1회당, FIXED=고정 금액.
  */
 export type MemberLectureFeePreviewInstructorFeeCalculationUnit = typeof MemberLectureFeePreviewInstructorFeeCalculationUnit[keyof typeof MemberLectureFeePreviewInstructorFeeCalculationUnit] | null;
 

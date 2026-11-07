@@ -6,18 +6,12 @@
  * OpenAPI spec version: v9
  */
 import type { AllocationColumn } from './allocationColumn';
-import type { AllocationMatrixResponseSemesterType } from './allocationMatrixResponseSemesterType';
 import type { VolunteerRow } from './volunteerRow';
 
 export interface AllocationMatrixResponse {
   programId?: number;
-  /** @nullable */
-  educationRegionCode?: string | null;
-  /**
-     * 요청 반기 필터 echo. 미지정 조회 시 null
-     * @nullable
-     */
-  semesterType?: AllocationMatrixResponseSemesterType;
+  educationRegionCode?: string;
+  semesterType?: string;
   columns?: AllocationColumn[];
   volunteers?: VolunteerRow[];
 }

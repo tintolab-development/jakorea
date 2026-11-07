@@ -7,9 +7,6 @@
  */
 import type { ProgramCalendarItemResponseCounts } from './programCalendarItemResponseCounts';
 
-/**
- * Program calendar item. Counts are aggregated; operational events may omit schedule-only values.
- */
 export interface ProgramCalendarItemResponse {
   scheduleId?: number;
   programId?: number;
@@ -31,6 +28,7 @@ export interface ProgramCalendarItemResponse {
   statusLabel?: string;
   displayLabel?: string;
   colorKey?: string;
+  counts?: ProgramCalendarItemResponseCounts;
   eventType?: string;
   eventKey?: string;
   sourceType?: string;
@@ -38,9 +36,10 @@ export interface ProgramCalendarItemResponse {
   recruitmentType?: string;
   formType?: string;
   organizationName?: string;
-  eventDate?: string;
-  scheduleStatus?: string;
-  counts?: ProgramCalendarItemResponseCounts;
-  /** Alias of eventKey. */
+  /** Asia/Seoul 달력 날짜. 종일·날짜 전용 이벤트는 이 값을 사용한다. 시각이 있는 교육 회차는 null. */
+  eventDate?: string | null;
+  /** program_schedule.schedule_status. 교육·기간 이벤트가 아니면 null. */
+  scheduleStatus?: string | null;
+  /** 이벤트 고유 ID. eventKey와 동일하다. */
   eventId?: string;
 }

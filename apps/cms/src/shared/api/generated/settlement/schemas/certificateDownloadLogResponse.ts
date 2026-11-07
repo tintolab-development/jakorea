@@ -6,19 +6,12 @@
  * OpenAPI spec version: v9
  */
 
-/**
- * 인증서 PDF 다운로드 이력 기록 결과
- */
 export interface CertificateDownloadLogResponse {
-  logId: number;
-  certificateIssueId: number;
-  /** @nullable */
-  downloadedByMemberId?: number | null;
-  /** @nullable */
-  downloadedByAdminId?: number | null;
-  downloadedAt: string;
-  /** @nullable */
-  ipAddress?: string | null;
-  /** @nullable */
-  userAgent?: string | null;
+  logId?: number;
+  certificateIssueId?: number;
+  downloadedByMemberId?: number;
+  downloadedByAdminId?: number;
+  downloadedAt?: string;
+  ipAddress?: string;
+  userAgent?: string;
 }

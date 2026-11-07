@@ -8,14 +8,11 @@
 
 export interface InterviewEvaluationSummary {
   evaluationId?: number;
-  /** 1=담당자 A, 2=담당자 B. evaluator_order가 있으면 그 값, 없으면 조회 순 1, 2 */
   evaluatorOrder?: number;
   evaluatorAdminId?: number;
   evaluatorName?: string;
-  /** @nullable */
-  score?: number | null;
+  score?: number;
   evaluationStatus?: string;
-  /** @nullable */
-  remark?: string | null;
+  remark?: string;
   submittedAt?: string;
 }

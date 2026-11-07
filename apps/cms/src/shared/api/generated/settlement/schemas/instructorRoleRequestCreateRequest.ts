@@ -17,10 +17,7 @@ export interface InstructorRoleRequestCreateRequest {
   requestedActivityType: string;
   /** @minLength 1 */
   name: string;
-  /**
-     * 성별 코드. Platform 합의값 M 또는 F.
-     * @minLength 1
-     */
+  /** @minLength 1 */
   gender: string;
   birthDate: string;
   /** @minLength 1 */
@@ -30,7 +27,6 @@ export interface InstructorRoleRequestCreateRequest {
   profile: InstructorCmsProfile;
   settlement?: InstructorCmsSettlement;
   /**
-     * PAYMENT_STATEMENT_PRE_CONSENT, FACILITATOR_PLEDGE, and CRIMINAL_HISTORY_CHECK_CONSENT are required. ADMINISTRATIVE_INFO_CONSENT is optional; if supplied, agreed=false is allowed. 3 to 4 entries.
      * @minItems 3
      * @maxItems 4
      */

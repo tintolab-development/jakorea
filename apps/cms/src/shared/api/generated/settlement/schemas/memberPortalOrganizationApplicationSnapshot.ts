@@ -7,20 +7,16 @@
  */
 
 /**
- * 기관 신청에 연결된 기관명·학년·소재지. 없으면 해당 필드는 null. teacherPosition은 저장 원천이 없으면 항상 null.
+ * 기관 신청에 연결된 기관명·학년·소재지. 컬럼/마스터에 없으면 해당 필드는 null. teacherPosition(직급)은 저장 원천이 없으면 null이며 교사명으로 채우지 않는다.
  */
 export interface MemberPortalOrganizationApplicationSnapshot {
-  /** @nullable */
   organizationName?: string | null;
-  /** @nullable */
+  /** program_organization_application.requested_grade */
   requestedGrade?: string | null;
-  /** @nullable */
+  /** organization.address */
   institutionAddress?: string | null;
-  /** @nullable */
+  /** organization_address_detail_snapshot 또는 organization.address_detail */
   institutionAddressDetail?: string | null;
-  /**
-     * 직급. 저장 컬럼이 없으면 항상 null. 교사명으로 채우지 않는다.
-     * @nullable
-     */
+  /** 직급. 저장 컬럼이 없으면 항상 null */
   teacherPosition?: string | null;
 }

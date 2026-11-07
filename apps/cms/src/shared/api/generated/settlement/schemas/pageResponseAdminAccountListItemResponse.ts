@@ -8,9 +8,9 @@
 import type { AdminAccountListItemResponse } from './adminAccountListItemResponse';
 
 export interface PageResponseAdminAccountListItemResponse {
-  items: AdminAccountListItemResponse[];
-  page: number;
-  size: number;
-  totalElements: number;
-  totalPages: number;
+  items?: AdminAccountListItemResponse[];
+  page?: number;
+  size?: number;
+  totalElements?: number;
+  totalPages?: number;
 }

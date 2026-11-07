@@ -7,13 +7,9 @@
  */
 
 export interface ApplicationTimelineEventResponse {
-  /** @nullable */
-  historyId?: number | null;
-  /** @nullable */
-  fromStatus?: string | null;
-  toStatus: string;
-  /** @nullable */
-  reason?: string | null;
-  /** @nullable */
-  changedAt?: string | null;
+  historyId?: number;
+  fromStatus?: string;
+  toStatus?: string;
+  reason?: string;
+  changedAt?: string;
 }

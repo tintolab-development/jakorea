@@ -6,9 +6,13 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * UJAT typed-detail 일정 행 제외 정책. 공휴일 정식 키는 excludeHoliday이며 excludePublicHoliday는 입력 alias다. 응답 JSON에는 excludeHoliday만 직렬화한다.
+ */
 export interface ExclusionPolicy {
   excludeNone?: boolean;
   excludeSaturday?: boolean;
   excludeSunday?: boolean;
-  excludePublicHoliday?: boolean;
+  /** 공휴일 제외. 응답·요청 정식 키. 입력 alias excludePublicHoliday는 허용하며 응답에는 excludeHoliday만 직렬화한다. */
+  excludeHoliday?: boolean | null;
 }

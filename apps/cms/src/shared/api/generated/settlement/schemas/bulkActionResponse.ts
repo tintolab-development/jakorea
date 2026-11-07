@@ -7,10 +7,13 @@
  */
 import type { BulkFailure } from './bulkFailure';
 
+/**
+ * 다건 처리 결과
+ */
 export interface BulkActionResponse {
-  requestedCount: number;
-  successCount: number;
-  failureCount: number;
-  successIds: number[];
-  failures: BulkFailure[];
+  requestedCount?: number;
+  successCount?: number;
+  failureCount?: number;
+  successIds?: number[];
+  failures?: BulkFailure[];
 }

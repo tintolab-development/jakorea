@@ -7,7 +7,7 @@
  */
 
 /**
- * 강사비 유형 코드. GRADE_1=1급 강사비, GRADE_2=2급 강사비, GRADE_3=3급 강사비. 제출 전 lectureFeePreview.lectureFeeType과 동일. 없으면 null.
+ * 강의비 유형 코드. GRADE_1=1급 강의비, GRADE_2=2급 강의비, GRADE_3=3급 강의비. 제출 전 lectureFeePreview.lectureFeeType과 동일. 없으면 null.
  */
 export type CalcInfoLectureFeeType = typeof CalcInfoLectureFeeType[keyof typeof CalcInfoLectureFeeType] | null;
 

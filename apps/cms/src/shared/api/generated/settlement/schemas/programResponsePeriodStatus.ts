@@ -7,10 +7,9 @@
  */
 
 /**
- * 목록 카드/필터 축. SCHEDULED·RECRUITING(예정)·IN_PROGRESS·COMPLETED는 상호 배타.
- * @nullable
+ * 프로그램 진행 단계(카드/필터 축). SCHEDULED·RECRUITING(예정)·IN_PROGRESS·COMPLETED는 상호 배타.
  */
-export type ProgramResponsePeriodStatus = typeof ProgramResponsePeriodStatus[keyof typeof ProgramResponsePeriodStatus] | null;
+export type ProgramResponsePeriodStatus = typeof ProgramResponsePeriodStatus[keyof typeof ProgramResponsePeriodStatus];
 
 
 export const ProgramResponsePeriodStatus = {

@@ -7,7 +7,7 @@
  */
 
 /**
- * 본문 형식
+ * 본문 형식. 현재 피그마 약관 모달은 HTML 렌더링 기준입니다.
  */
 export type TermsDocumentResponseContentFormat = typeof TermsDocumentResponseContentFormat[keyof typeof TermsDocumentResponseContentFormat];
 

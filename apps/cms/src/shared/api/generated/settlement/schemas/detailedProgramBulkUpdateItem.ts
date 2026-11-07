@@ -7,11 +7,9 @@
  */
 
 export interface DetailedProgramBulkUpdateItem {
-  id: number;
-  /** @nullable */
-  nameKo?: string | null;
-  /** @nullable */
-  useYn?: boolean | null;
+  id?: number;
+  nameKo?: string;
+  useYn?: boolean;
   /** @minimum 1 */
   version: number;
 }

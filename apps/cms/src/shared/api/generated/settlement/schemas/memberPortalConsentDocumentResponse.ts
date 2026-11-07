@@ -6,16 +6,38 @@
  * OpenAPI spec version: v9
  */
 import type { FilledDocumentRequest } from './filledDocumentRequest';
-import type { MemberPortalConsentDocumentResponseSignatureFieldsItem } from './memberPortalConsentDocumentResponseSignatureFieldsItem';
+import type { MemberPortalConsentEvent } from './memberPortalConsentEvent';
 import type { MemberPortalConsentFormTemplateVersion } from './memberPortalConsentFormTemplateVersion';
+import type { MemberPortalConsentSignatureField } from './memberPortalConsentSignatureField';
 
 export interface MemberPortalConsentDocumentResponse {
   documentId?: number;
   consentType?: string;
+  title?: string;
   documentStatus?: string;
+  contentFormat?: string;
+  content?: string;
+  contentSha256?: string;
   termsVersion?: string;
-  signatureFields?: MemberPortalConsentDocumentResponseSignatureFieldsItem[];
+  targetType?: string;
+  targetId?: number;
+  required?: boolean;
+  withdrawable?: boolean;
+  participationRestricted?: boolean;
+  paymentRestricted?: boolean;
+  signedAt?: string;
+  expiresAt?: string;
+  withdrawnAt?: string;
+  signedFileObjectId?: number;
+  generatedFileJobId?: number;
+  renderStatus?: string;
+  renderFailureReason?: string;
+  consentStatus?: string;
+  programEligible?: boolean;
+  signatureFields?: MemberPortalConsentSignatureField[];
+  events?: MemberPortalConsentEvent[];
+  /** Completed member-authored form; null for drafts and forms without a body */
   filledDocument?: FilledDocumentRequest | null;
-  /** 작성형 동의서 DRAFT에 고정된 최신 PUBLISHED CMS 양식 버전. 비작성형·성범죄 외부문서·legacy 문서는 null. */
+  /** 작성형 동의서 DRAFT에 고정된 CMS 양식 버전. 비작성형·legacy 문서는 null. */
   formTemplateVersion?: MemberPortalConsentFormTemplateVersion | null;
 }

@@ -96,4 +96,8 @@ export interface UserResponse {
   instructorStatus?: UserResponseInstructorStatus;
   /** 강사 권한 박탈 시각. 권한이 유효하거나 강사 프로필이 없으면 null입니다. */
   instructorRevokedAt?: string;
+  /** 승인 또는 반려된 강사 권한 신청 PK. PENDING이면 null. 재발송 POST /api/admin/instructor-role-requests/{requestId}/resend-notification */
+  instructorRoleRequestId?: number | null;
+  /** 승인 또는 반려된 관리자 계정 PK. PENDING_VERIFICATION이면 null. 회원 PK(memberId)가 아니다. 재발송 POST /api/admin/admin-approval-requests/{adminAccountId}/resend-notification */
+  adminAccountId?: number | null;
 }

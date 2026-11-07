@@ -5,23 +5,16 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { ProgramNavigationMenuItem } from './programNavigationMenuItem';
-import type { ProgramNavigationResponseAllowedApplicationTargetsItem } from './programNavigationResponseAllowedApplicationTargetsItem';
-import type { ProgramNavigationResponseAvailableActionsItem } from './programNavigationResponseAvailableActionsItem';
-import type { ProgramNavigationResponseDisabledApplicationTargetsItem } from './programNavigationResponseDisabledApplicationTargetsItem';
+import type { MenuItem } from './menuItem';
 
-/**
- * CMS 프로그램 탐색 응답
- */
 export interface ProgramNavigationResponse {
-  programId: number;
-  rawProgramType: string;
-  canonicalProgramType: string;
-  /** 신청 가능한 canonical 대상. ORGANIZATION 포함 여부는 ORGANIZATION_APPLICATIONS.enabled와 항상 일치합니다. */
-  allowedApplicationTargets: ProgramNavigationResponseAllowedApplicationTargetsItem[];
-  /** 참여자 유형 또는 역할별 canonical 모집 설정으로 비활성화된 신청 대상. */
-  disabledApplicationTargets: ProgramNavigationResponseDisabledApplicationTargetsItem[];
-  /** 상세 LNB 항목. enabled=true이면 reason은 null이며, 신청 메뉴의 enabled는 allowedApplicationTargets와 동일한 역할별 판정을 사용합니다. */
-  lnb: ProgramNavigationMenuItem[];
-  availableActions: ProgramNavigationResponseAvailableActionsItem[];
+  programId?: number;
+  rawProgramType?: string;
+  canonicalProgramType?: string;
+  /** 허용 신청 대상. 일반 프로그램은 역할별 canonical program_recruitment를 우선 반영하고, 해당 역할 row가 없는 구데이터만 serviceDetailJson participant types를 fallback으로 사용합니다. */
+  allowedApplicationTargets?: string[];
+  /** 정책상 비활성 신청 대상. 일반 프로그램에서 volunteer/teacher_instructor가 참여자 유형에 없으면 VOLUNTEER/INSTRUCTOR가 포함됩니다. */
+  disabledApplicationTargets?: string[];
+  lnb?: MenuItem[];
+  availableActions?: string[];
 }

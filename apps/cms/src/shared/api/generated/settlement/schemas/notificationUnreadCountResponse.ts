@@ -6,10 +6,6 @@
  * OpenAPI spec version: v9
  */
 
-/**
- * 관리자 알림 미읽음 수. GET /api/admin/notifications/unread-count 와 GET /api/admin/dashboard/notifications/count 및 dashboard/home.unreadNotificationCount 가 동일 SSOT 집계를 반환합니다.
- */
 export interface NotificationUnreadCountResponse {
-  /** hiddenAt IS NULL, readAt IS NULL, 노출 가능(available_at) 및 web_enabled catalog 조건을 만족하는 수신 row 수. null 필드 없이 0 이상 정수. */
   unreadCount?: number;
 }

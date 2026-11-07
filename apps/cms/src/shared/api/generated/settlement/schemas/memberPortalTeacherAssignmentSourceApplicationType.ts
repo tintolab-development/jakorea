@@ -8,7 +8,6 @@
 
 /**
  * 개인 신청에서 배정의 원본 신청 유형. CASE_D 연결 시 INSTRUCTOR이며 그 외에는 null.
- * @nullable
  */
 export type MemberPortalTeacherAssignmentSourceApplicationType = typeof MemberPortalTeacherAssignmentSourceApplicationType[keyof typeof MemberPortalTeacherAssignmentSourceApplicationType] | null;
 

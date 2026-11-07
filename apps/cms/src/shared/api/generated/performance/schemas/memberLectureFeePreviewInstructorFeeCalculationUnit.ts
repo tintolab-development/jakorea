@@ -7,13 +7,14 @@
  */
 
 /**
- * 강사비 배정 단위. FE 표시: PER_HOUR=1시간 당, PER_SESSION/PER_LECTURE=출강 1회당, FIXED=단위 없이 금액만. DB HOUR/SESSION/CLASS_COUNT/DAY 를 이 enum으로 정규화한다.
+ * 저장된 계산 단위 와이어 값. 레거시 PER_HOUR는 시급 비례가 아니라 차시당 단가와 같다. PER_CLASS=차시당, PER_SESSION/PER_LECTURE=출강 1회당, FIXED=고정 금액.
  */
 export type MemberLectureFeePreviewInstructorFeeCalculationUnit = typeof MemberLectureFeePreviewInstructorFeeCalculationUnit[keyof typeof MemberLectureFeePreviewInstructorFeeCalculationUnit] | null;
 
 
 export const MemberLectureFeePreviewInstructorFeeCalculationUnit = {
   PER_HOUR: 'PER_HOUR',
+  PER_CLASS: 'PER_CLASS',
   PER_SESSION: 'PER_SESSION',
   PER_LECTURE: 'PER_LECTURE',
   FIXED: 'FIXED',

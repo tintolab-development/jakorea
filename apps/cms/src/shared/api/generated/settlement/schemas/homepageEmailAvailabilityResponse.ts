@@ -7,14 +7,14 @@
  */
 
 /**
- * 회원 포탈 회원가입 이메일 중복 확인 응답입니다.
+ * 회원 포탈 회원 이메일 중복 확인 응답
  */
 export interface HomepageEmailAvailabilityResponse {
   /** 정규화된 이메일 */
   email?: string;
-  /** 이미 가입된 이메일 여부 */
+  /** 이미 가입된 이메일인지 */
   exists?: boolean;
-  /** 가입 사용 가능 여부 */
+  /** 가입에 사용할 수 있는지 */
   available?: boolean;
   /** 다음 화면 동작 */
   nextAction?: string;

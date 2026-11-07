@@ -5,15 +5,13 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { BulkDownloadJobResponseStatus } from './bulkDownloadJobResponseStatus';
 import type { GeneratedFileJobResponse } from './generatedFileJobResponse';
 
 export interface BulkDownloadJobResponse {
-  status?: BulkDownloadJobResponseStatus;
+  status?: string;
   sourceCount?: number;
   fileObjectIds?: number[];
   sourceJobs?: GeneratedFileJobResponse[];
-  zipJob?: GeneratedFileJobResponse | null;
-  /** canonical FE-rendered PDF 등록이 필요한 settlement IDs */
   renderRequiredSettlementIds?: number[];
+  zipJob?: GeneratedFileJobResponse;
 }

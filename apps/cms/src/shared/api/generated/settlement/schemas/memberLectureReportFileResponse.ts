@@ -7,15 +7,11 @@
  */
 
 export interface MemberLectureReportFileResponse {
-  formSubmissionFileId: number;
-  /** @nullable */
-  questionKey?: string | null;
-  fileObjectId: number;
-  /** @nullable */
-  originalFileName?: string | null;
-  /** @nullable */
-  contentType?: string | null;
-  /** @nullable */
-  fileSize?: number | null;
-  downloadable: boolean;
+  formSubmissionFileId?: number;
+  questionKey?: string;
+  fileObjectId?: number;
+  originalFileName?: string;
+  contentType?: string;
+  fileSize?: number;
+  downloadable?: boolean;
 }

@@ -7,8 +7,7 @@
  */
 
 /**
- * NOT_APPLICABLE은 textbook=null로 반환하며, 미설정은 null.
- * @nullable
+ * PREPARING | SHIPPING | DELIVERED. NOT_APPLICABLE은 textbook=null로 반환하며, 미설정은 null.
  */
 export type MemberPortalTeacherAssignmentTextbookDeliveryStatus = typeof MemberPortalTeacherAssignmentTextbookDeliveryStatus[keyof typeof MemberPortalTeacherAssignmentTextbookDeliveryStatus] | null;
 

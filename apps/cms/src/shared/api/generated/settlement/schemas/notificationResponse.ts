@@ -10,20 +10,34 @@
  * 관리자 알림 수신 응답
  */
 export interface NotificationResponse {
+  /** 알림 수신자 row ID */
   recipientId?: number;
+  /** 알림 이벤트 ID */
   eventId?: number;
+  /** 알림 이벤트 유형 */
   eventType?: string;
+  /** 알림 카테고리 */
   notificationCategory?: string;
+  /** 알림 제목 */
   title?: string;
+  /** 알림 메시지 */
   message?: string;
+  /** 연결 도메인 */
   sourceDomain?: string;
+  /** 연결 도메인 ID */
   sourceId?: number;
+  /** 연결 프로그램 ID */
   programId?: number;
+  /** 링크 유형 */
   linkType?: string;
+  /** 링크 대상 ID */
   linkId?: number;
   /** 읽음 처리 시각. null이면 미읽음, non-null ISO-8601이면 읽음(FE SSOT). clickedAt만 있는 경우는 미읽음. */
   readAt?: string;
+  /** 클릭 처리 시각 */
   clickedAt?: string;
+  /** 숨김 처리 시각 */
   hiddenAt?: string;
+  /** 알림 생성 시각 */
   createdAt?: string;
 }

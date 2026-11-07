@@ -9,9 +9,9 @@
 export interface EmployeeVolunteerCountEntryRequest {
   scheduleId: number;
   /** @minimum 0 */
-  newVolunteerCount: number;
+  newVolunteerCount?: number;
   /** @minimum 0 */
-  reparticipationVolunteerCount: number;
+  reparticipationVolunteerCount?: number;
   /** @minimum 0 */
-  expectedRevision: number;
+  expectedRevision?: number;
 }

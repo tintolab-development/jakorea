@@ -9,30 +9,22 @@ import type { AdminLectureReportContentResponseAnswers } from './adminLectureRep
 import type { AdminLectureReportContentResponseForm } from './adminLectureReportContentResponseForm';
 import type { AdminLectureReportFileResponse } from './adminLectureReportFileResponse';
 
-/**
- * CMS 강의보고서 미리보기/PDF의 canonical source. form/answers/files는 제출된 formResponse의 실제 데이터이며 목록 API의 요약값이나 frontend mock을 대체 사용하면 안 됩니다.
- */
 export interface AdminLectureReportContentResponse {
-  reportId: number;
-  programId: number;
-  /** @nullable */
-  scheduleId?: number | null;
-  /** @nullable */
-  instructorAssignmentId?: number | null;
-  /** @nullable */
-  instructorMemberId?: number | null;
-  formResponseId: number;
-  bindingId: number;
-  templateVersionId: number;
-  contextType: string;
-  contextId: number;
-  formType: string;
-  /** @nullable */
-  templateName?: string | null;
-  responseStatus: string;
-  /** @nullable */
-  submittedAt?: string | null;
-  form: AdminLectureReportContentResponseForm;
-  answers: AdminLectureReportContentResponseAnswers;
-  files: AdminLectureReportFileResponse[];
+  reportId?: number;
+  programId?: number;
+  scheduleId?: number;
+  instructorAssignmentId?: number;
+  instructorMemberId?: number;
+  formResponseId?: number;
+  bindingId?: number;
+  templateVersionId?: number;
+  contextType?: string;
+  contextId?: number;
+  formType?: string;
+  templateName?: string;
+  responseStatus?: string;
+  submittedAt?: string;
+  form?: AdminLectureReportContentResponseForm;
+  answers?: AdminLectureReportContentResponseAnswers;
+  files?: AdminLectureReportFileResponse[];
 }

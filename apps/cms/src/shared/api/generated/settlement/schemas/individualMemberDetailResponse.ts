@@ -7,35 +7,20 @@
  */
 import type { GuardianInfo } from './guardianInfo';
 import type { MemberDetailResponse } from './memberDetailResponse';
-import type { MemberTermsAgreementRow } from './memberTermsAgreementRow';
+import type { TermsAgreementRow } from './termsAgreementRow';
 
-/**
- * CMS 일반 회원 상세. 만 14세 미만 회원이면 guardianInfo가 함께 반환됩니다.
- */
 export interface IndividualMemberDetailResponse {
   member?: MemberDetailResponse;
-  /** @nullable */
-  address?: string | null;
-  /** @nullable */
-  addressDetail?: string | null;
-  /** @nullable */
-  zipCode?: string | null;
-  /** @nullable */
-  schoolName?: string | null;
-  /** @nullable */
-  enrollmentStatus?: string | null;
-  /** @nullable */
-  grade?: string | null;
+  address?: string;
+  addressDetail?: string;
+  zipCode?: string;
+  schoolName?: string;
+  enrollmentStatus?: string;
+  grade?: string;
   addressDetailMasked?: boolean;
-  termsAgreements?: MemberTermsAgreementRow[];
-  /**
-     * 미재학 회원의 선택 소속 기관명. 미입력 가능
-     * @nullable
-     */
-  affiliationName?: string | null;
-  /** @nullable */
-  schoolOrganizationId?: number | null;
-  /** @nullable */
-  external1365Id?: string | null;
-  guardianInfo?: GuardianInfo | null;
+  termsAgreements?: TermsAgreementRow[];
+  affiliationName?: string;
+  schoolOrganizationId?: number;
+  external1365Id?: string;
+  guardianInfo?: GuardianInfo;
 }

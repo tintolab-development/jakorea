@@ -5,24 +5,25 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { TimedBulkDecisionRequestTiming } from './timedBulkDecisionRequestTiming';
 
 /**
- * 다건 반려. timing 생략 시 즉시 발송.
+ * 다건 반려 요청. timing을 생략하면 각 건을 즉시 발송합니다.
  */
 export interface TimedBulkDecisionRequest {
   /**
-     * @minItems 1
+     * 처리 대상 숫자 ID(최대 100).
+     * @minItems 0
      * @maxItems 100
      */
   ids: number[];
   /**
+     * 반려 사유. 기관 반려는 2자 이상이어야 합니다.
+     * @minLength 0
      * @maxLength 500
-     * @nullable
      */
-  reason?: string | null;
-  /** @nullable */
-  timing?: TimedBulkDecisionRequestTiming;
-  /** @nullable */
-  scheduledAt?: string | null;
+  reason?: string;
+  /** IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE. ON_ANNOUNCEMENT는 대상 프로그램 발표일을 서버가 계산합니다. */
+  timing?: string;
+  /** timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601 */
+  scheduledAt?: string;
 }

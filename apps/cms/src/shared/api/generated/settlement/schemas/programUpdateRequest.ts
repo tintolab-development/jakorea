@@ -5,335 +5,120 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { ProgramAdminAssignmentRequest } from './programAdminAssignmentRequest';
 import type { ProgramPeriodRequest } from './programPeriodRequest';
 import type { ProgramRecruitmentRequest } from './programRecruitmentRequest';
+import type { ProgramRoundRequest } from './programRoundRequest';
 import type { ProgramScheduleRequest } from './programScheduleRequest';
 import type { ProgramSettlementPaymentItemRequest } from './programSettlementPaymentItemRequest';
 import type { ProgramSponsorAssignmentRequest } from './programSponsorAssignmentRequest';
-import type { ProgramUpdateRequestAdminAssignmentsItem } from './programUpdateRequestAdminAssignmentsItem';
 import type { ProgramUpdateRequestDraftStatus } from './programUpdateRequestDraftStatus';
 import type { ProgramUpdateRequestEducationForm } from './programUpdateRequestEducationForm';
-import type { ProgramUpdateRequestRoundsItem } from './programUpdateRequestRoundsItem';
-import type { ProgramUpdateRequestTargetLevelsItem } from './programUpdateRequestTargetLevelsItem';
-import type { ProgramUpdateRequestWagePoliciesItem } from './programUpdateRequestWagePoliciesItem';
+import type { ProgramUpdateRequestEducationStructure } from './programUpdateRequestEducationStructure';
+import type { ProgramWagePolicyRequest } from './programWagePolicyRequest';
 
 /**
- * CMS 프로그램 수정 요청 (full PATCH shape). GENERAL keeps KPI/venue top-level mirrors into generalCommonInfo(+kpi). TRAINED_TEACHER overlays posted program.* and registration.overlay.* keys onto the stored snapshot; omitted keys stay and registration/overlay is not replaced as a whole, so survey/announcement/KPI/curriculum nested values are preserved. Posted participantRecruitmentInfo keys overlay the stored object (omitted nested keys stay); omitted participantRecruitmentInfo is kept. Top-level remarks and mainTitle are GET SSOT and overwrite sidecar mirrors. Root generalCommonInfo is dropped. UJAT survey keys are survey, volunteer_satisfaction, school_satisfaction, lecture_evaluation and are not folded into satisfaction. Date-only applicationEndDate/recruitments[].endAt store inclusive 23:59:59.999 KST. schedules[] with unchanged locked rows passes; omit schedules when editing common info only.
+ * 프론트 프로그램 수정 요청. UJAT serviceDetailJson 설문은 survey, volunteer_satisfaction, school_satisfaction, lecture_evaluation 4종이며 satisfaction 한 키로 접지 않는다.
  */
 export interface ProgramUpdateRequest {
-  /**
-     * Legacy single sponsor full replacement. Contact is cleared; no primary-contact autofill. Prefer sponsors[]. (한글 계약 설명)
-     * @nullable
-     */
-  sponsorId?: string | null;
-  /**
-     * When present, this array is the complete program sponsor assignment set. Omitted keeps assignments; [] clears all. Omitted/null/blank contact id means no selected contact and clears existing links.
-     * @nullable
-     */
-  sponsors?: (ProgramSponsorAssignmentRequest | null)[] | null;
-  /**
-     * 공고용/관리명. write aliases: announcementTitle, nameKo, publicNameKo
-     * @nullable
-     */
-  title?: string | null;
-  /**
-     * Write alias for title (한글 계약 설명)
-     * @nullable
-     */
-  announcementTitle?: string | null;
-  /**
-     * Write alias for title (한글 계약 설명)
-     * @nullable
-     */
-  nameKo?: string | null;
-  /**
-     * delivery type wire: online|offline|hybrid (한글 계약 설명)
-     * @nullable
-     */
-  type?: string | null;
-  /** @nullable */
-  format?: string | null;
-  /** @nullable */
-  category?: string | null;
-  /** @nullable */
-  description?: string | null;
-  /**
-     * Compatibility business start (한글 계약 설명)
-     * @nullable
-     */
-  startDate?: string | null;
-  /**
-     * Compatibility business end (한글 계약 설명)
-     * @nullable
-     */
-  endDate?: string | null;
-  /** @nullable */
-  businessStartDate?: string | null;
-  /** @nullable */
-  businessEndDate?: string | null;
-  businessPeriod?: ProgramPeriodRequest | null;
-  /** @nullable */
-  applicationStartDate?: string | null;
-  /**
-     * 참여자 모집 마감. 날짜만(YYYY-MM-DD)이면 해당일 23:59:59.999 KST. 시각이 있으면 그대로 저장.
-     * @nullable
-     */
-  applicationEndDate?: string | null;
-  /** @nullable */
-  recruitments?: ProgramRecruitmentRequest[] | null;
-  /**
-     * Master business area name (경제금융|진로취업|기업가정신|디지털리터러시)
-     * @nullable
-     */
-  businessArea?: string | null;
-  /** @nullable */
-  detailedProgramId?: number | null;
-  /**
-     * CURRICULUM|SCHEDULE (한글 계약 설명)
-     * @nullable
-     */
-  educationStructure?: string | null;
-  /** @nullable */
-  titleEn?: string | null;
-  /**
-     * Write alias for titleEn (한글 계약 설명)
-     * @nullable
-     */
-  nameEn?: string | null;
-  /**
-     * 대표 프로그램명 정본. PATCH하면 GET mainTitle에 반영. aliases: representativeProgramNameKo, mainProgramNameKo. 공고명(title)과 별개.
-     * @nullable
-     */
-  mainTitle?: string | null;
-  /**
-     * Write alias for mainTitle (한글 계약 설명)
-     * @nullable
-     */
-  representativeProgramNameKo?: string | null;
-  /**
-     * 명시적으로 입력하는 교재명. detailedProgramName/curriculumTitle alias는 구 클라이언트 호환용이며 master 세부 프로그램명과 독립적으로 저장된다.
-     * @nullable
-     */
-  textbookName?: string | null;
-  /**
-     * 구 클라이언트 호환용 write alias. master 세부 프로그램명은 detailedProgramId로 조회한다. (한글 계약 설명)
-     * @nullable
-     */
-  detailedProgramName?: string | null;
-  /** @nullable */
-  textbookNameEn?: string | null;
-  /** @nullable */
-  schoolId?: string | null;
-  /** @nullable */
-  district?: string | null;
-  /** @nullable */
-  ips?: string | null;
-  /**
-     * Write alias for ips (한글 계약 설명)
-     * @nullable
-     */
-  ipsType?: string | null;
-  /**
-     * 교육 대상 첫 값. targetLevels가 있으면 그 첫 원소와 같다.
-     * @nullable
-     */
-  targetLevel?: string | null;
-  /**
-     * 교육 대상 복수. elementary|middle|high|university|adult. 빈 배열은 교육 대상을 지운다. serviceDetailJson.program.targetLevels와 동기화된다.
-     * @nullable
-     */
-  targetLevels?: ProgramUpdateRequestTargetLevelsItem[] | null;
-  /** @nullable */
-  institutionType?: string | null;
-  /** @nullable */
-  ipOwned?: string | null;
-  /** @nullable */
-  courseDeliveredBy?: string | null;
-  /** @nullable */
-  partnerInvolvement?: boolean | null;
-  /** @nullable */
-  programCategory?: string | null;
-  /** @nullable */
-  programChannel?: string | null;
-  /** @nullable */
-  educationTime?: number | null;
-  /** @nullable */
-  teamDivision?: string | null;
-  /** @nullable */
-  educationProcess?: string | null;
-  /** @nullable */
-  maleParticipants?: number | null;
-  /** @nullable */
-  femaleParticipants?: number | null;
-  /**
-     * 참여자 최종 인원. Mirrored to kpi.finalParticipants + generalCommonInfo
-     * @nullable
-     */
-  totalParticipants?: number | null;
-  /**
-     * Write alias for totalParticipants (한글 계약 설명)
-     * @nullable
-     */
-  finalParticipants?: number | null;
-  /** @nullable */
-  generalVolunteers?: number | null;
-  /** @nullable */
-  staffVolunteers?: number | null;
-  /** @nullable */
-  returningVolunteers?: number | null;
-  /** @nullable */
-  generalTeachers?: number | null;
-  /** @nullable */
-  educatedTeachers?: number | null;
-  /** @nullable */
-  instructors?: number | null;
-  /**
-     * 최종 파견 학교 수. Mirrored to kpi + generalCommonInfo.kpi
-     * @nullable
-     */
-  finalSchools?: number | null;
-  /**
-     * Write alias for finalSchools (한글 계약 설명)
-     * @nullable
-     */
-  schoolCount?: number | null;
-  /**
-     * 최종 파견 학급 수. Mirrored to kpi + generalCommonInfo.kpi
-     * @nullable
-     */
-  finalClasses?: number | null;
-  /**
-     * Write alias for finalClasses (한글 계약 설명)
-     * @nullable
-     */
-  classCount?: number | null;
-  /** @nullable */
-  managerName?: string | null;
-  /**
-     * 교육 장소. Always mirrored to generalCommonInfo.venue
-     * @nullable
-     */
-  venue?: string | null;
-  /** @nullable */
-  curriculum?: string | null;
-  /**
-     * 문의처/담당자 표시명. aliases: contactOrganizationName, contactPerson, inquiryName
-     * @nullable
-     */
-  contactName?: string | null;
-  /** @nullable */
-  contactEmail?: string | null;
-  /** @nullable */
-  contactPhone?: string | null;
-  /** @nullable */
-  oneLineIntroduction?: string | null;
-  /**
-     * Write alias for oneLineIntroduction (한글 계약 설명)
-     * @nullable
-     */
-  summary?: string | null;
-  /**
-     * 참여자 모집 비고 정본(≠ oneLineIntroduction). GET remarks와 왕복. participantRecruitmentInfo.remarks는 미러. Gemini는 geminiRecruitment.notes도 동일 값.
-     * @nullable
-     */
-  remarks?: string | null;
-  /** @nullable */
-  educationTargetDetail?: string | null;
-  /**
-     * 교육 장소 상세. TRAINED_TEACHER에서 venue(장소명)과 별도 저장·왕복. venue만 보내고 venueDetail을 비우면 venue로 채운다. 둘 다 보내면 각각 유지한다.
-     * @nullable
-     */
-  venueDetail?: string | null;
-  /**
-     * inside|outside|other or inside_school|outside_school|other (한글 계약 설명)
-     * @nullable
-     */
-  venueKind?: string | null;
-  /**
-     * required|not_required (한글 계약 설명)
-     * @nullable
-     */
-  studentListRequired?: string | null;
-  /** @nullable */
-  keyVisualImage?: string | null;
-  /** @nullable */
-  settlementRuleId?: string | null;
-  /**
-     * 신청 경로/템플릿 ID. 지원 방법 자유 텍스트(applicationMethod)와 혼동 금지.
-     * @nullable
-     */
-  applicationPathId?: string | null;
-  /** @nullable */
-  applicationTargetMode?: string | null;
-  /** @nullable */
-  additionalContentHtml?: string | null;
-  /** @nullable */
-  recruitmentGuide?: string | null;
-  /** @nullable */
-  learningSupportContent?: string | null;
-  /**
-     * 기타 안내. aliases: otherInformation, etcContent Gemini 전환 기간에는 비고 호환 입력으로 remarks에 매핑된다.
-     * @nullable
-     */
-  otherMatters?: string | null;
-  /**
-     * 모집 대상 상세. alias: recruitmentAudienceDetail
-     * @nullable
-     */
-  recruitmentTargetDetail?: string | null;
-  /** @nullable */
-  attachmentFileNames?: string[] | null;
-  /** @nullable */
-  rounds?: ProgramUpdateRequestRoundsItem[] | null;
-  /** @nullable */
-  adminAssignments?: ProgramUpdateRequestAdminAssignmentsItem[] | null;
-  /**
-     * 교육 일정 전체 교체. 운영 시작·출결·정산이 있는 행은 값이 기존과 같으면(생략 필드는 기존 유지) 통과하고, 값이 바뀌거나 빠지면 409 PROGRAM_SCHEDULE_LOCKED. 공통정보만 수정할 때는 생략.
-     * @nullable
-     */
-  schedules?: ProgramScheduleRequest[] | null;
-  /** @nullable */
-  wagePolicies?: ProgramUpdateRequestWagePoliciesItem[] | null;
-  /** @nullable */
-  paymentItems?: ProgramSettlementPaymentItemRequest[] | null;
-  /**
-     * TRAINED_TEACHER: overlay FE envelope {schemaVersion, program}. Posted program.* and registration.overlay.* keys replace only those keys; omitted keys stay, and registration/overlay is not replaced as a whole. This preserves survey, announcement, KPI, curriculum, venue and education-process nested values across common-info saves. program.generalCommonInfo.participantRecruitmentInfo is replaced when posted (top-level columns and nested labels echoed together) and kept when omitted so trained-teacher/detail overlay cannot wipe it. Nested aliases: announcementPublishedLabel, studentListRequiredLabel, maxClassCount, maxScheduleCount, maxSessionsPerDay, maxAssignableInstructors (always 0), preEducationNoticeRequired (always false), operationPeriodLabel, recruitmentPeriodLabel, educationTarget, educationTargetDetail, finalAnnouncementLabel, contactOrganizationName, inquiryTel, inquiryEmail, remarks. Do not copy remarks to oneLineIntroduction or educationTargetDetail to district. Root generalCommonInfo is dropped. GENERAL still RFC-7396 merges and keeps survey/satisfaction/lecture_evaluation. UJAT program.generalSurveyMenuKeys and overlay ujat.basicInfo.surveyItems use survey, volunteer_satisfaction, school_satisfaction, lecture_evaluation; satisfaction is not a fold target; overlay four booleans win on GET; recruitments-only PATCH does not recompute survey. (한글 계약 설명)
-     * @nullable
-     */
-  serviceDetailJson?: string | null;
-  /**
-     * PATCH에서 명시적으로 null로 초기화할 필드. TRAINED_TEACHER businessArea는 clearFields가 serviceDetailJson에 남은 구값보다 우선한다.
-     * @nullable
-     */
-  clearFields?: string[] | null;
-  /**
-     * 지원 방법 자유 텍스트(모집 안내와 별개). applicationPathId가 아님. 참여자 컬럼. 강사·봉사자 값은 serviceDetailJson의 instructorRecruitmentInfo / volunteerRecruitmentInfo에만 저장한다.
-     * @nullable
-     */
+  sponsorId?: string;
+  sponsors?: ProgramSponsorAssignmentRequest[];
+  title?: string;
+  type?: string;
+  format?: string;
+  category?: string;
+  description?: string;
+  startDate?: string;
+  endDate?: string;
+  businessStartDate?: string;
+  businessEndDate?: string;
+  businessPeriod?: ProgramPeriodRequest;
+  applicationStartDate?: string;
+  /** 참여자 모집 마감. 날짜만(YYYY-MM-DD) 보내면 해당일 23:59:59.999 KST로 저장한다. 시각이 있으면 그 시각 그대로 저장한다. */
+  applicationEndDate?: string;
+  /** 모집 유형별 canonical 설정. 지정 시 legacy applicationStartDate/applicationEndDate보다 우선 */
+  recruitments?: ProgramRecruitmentRequest[];
+  businessArea?: string;
+  /** 세부 프로그램 마스터 ID. 일정형 등 해당없음인 경우 null */
+  detailedProgramId?: number;
+  /** 교육 진행 구조 */
+  educationStructure?: ProgramUpdateRequestEducationStructure;
+  titleEn?: string;
+  /** 대표 프로그램명 정본. PATCH하면 GET mainTitle에 반영된다. 공고명(title/announcementTitle)과 별개. */
+  mainTitle?: string;
+  /** 명시적으로 입력하는 교재명. detailedProgramName/curriculumTitle alias는 구 클라이언트 호환용이며 master 세부 프로그램명을 변경하지 않는다. */
+  textbookName?: string;
+  textbookNameEn?: string;
+  schoolId?: string;
+  district?: string;
+  ips?: string;
+  targetLevel?: string;
+  /** 교육 대상 복수. elementary|middle|high|university|adult. 있으면 targetLevel은 첫 값과 같고, serviceDetailJson.program.targetLevels와 동기화된다. 빈 배열은 교육 대상을 지운다. */
+  targetLevels?: string[];
+  institutionType?: string;
+  ipOwned?: string;
+  courseDeliveredBy?: string;
+  partnerInvolvement?: boolean;
+  programCategory?: string;
+  programChannel?: string;
+  educationTime?: number;
+  teamDivision?: string;
+  educationProcess?: string;
+  maleParticipants?: number;
+  femaleParticipants?: number;
+  totalParticipants?: number;
+  generalVolunteers?: number;
+  staffVolunteers?: number;
+  returningVolunteers?: number;
+  generalTeachers?: number;
+  educatedTeachers?: number;
+  instructors?: number;
+  finalSchools?: number;
+  finalClasses?: number;
+  managerName?: string;
+  venue?: string;
+  curriculum?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  oneLineIntroduction?: string;
+  /** 참여자 모집 비고 정본. GET remarks와 동일. participantRecruitmentInfo.remarks는 미러이며 이 값이 있으면 nested를 덮어쓴다. recruitments[].remarks(행 단위 모집 콘텐츠)와는 별개. */
+  remarks?: string;
+  educationTargetDetail?: string;
+  venueDetail?: string;
+  venueKind?: string;
+  studentListRequired?: string;
+  contactName?: string;
+  keyVisualImage?: string;
+  settlementRuleId?: string;
+  /** 신청 경로/템플릿 ID. 지원 방법 자유 텍스트(applicationMethod)와 혼동 금지. */
+  applicationPathId?: string;
+  /** 지원 방법 자유 텍스트(모집 안내와 별개). applicationPathId가 아님. */
   applicationMethod?: string | null;
-  /**
-     * Gemini 모집 공고 게시 상태. 생략하면 기존 값을 유지한다. GENERAL / UJAT / COMPANY_SCHOOL / TRAINED_TEACHER에서는 무시한다.
-     * @nullable
-     */
-  draftStatus?: ProgramUpdateRequestDraftStatus;
-  /**
-     * 낙관적 동시성 토큰. GET 응답의 updatedAt 문자열을 그대로 보낸다. 생략하면 기존처럼 마지막 저장이 이긴다. If-Match 헤더와 함께 보내면 값이 같아야 한다. GET updatedAt이 마이크로초이면 JavaScript Date.toISOString()은 밀리초로 잘리는데, 그 밀리초 토큰은 같은 밀리초 구간의 저장된 값과 일치하면 허용한다.
-     * @nullable
-     */
-  expectedUpdatedAt?: string | null;
-  /**
-     * 교육 형태. Gemini 모집 공고에서 사용.
-     * @nullable
-     */
+  /** 교육 형태. online|offline|hybrid. Gemini 모집 공고에서 사용. */
   educationForm?: ProgramUpdateRequestEducationForm;
-  /**
-     * 연수 요청 가능기간 시작. 기관 모집 기간(application*)과 별개.
-     * @nullable
-     */
+  /** 연수 요청 가능기간 시작. 기관 모집 기간(application*)과 별개. */
   trainingRequestStartDate?: string | null;
-  /**
-     * 연수 요청 가능기간 종료.
-     * @nullable
-     */
+  /** 연수 요청 가능기간 종료. */
   trainingRequestEndDate?: string | null;
+  applicationTargetMode?: string;
+  additionalContentHtml?: string;
+  recruitmentGuide?: string;
+  learningSupportContent?: string;
+  otherMatters?: string;
+  recruitmentTargetDetail?: string;
+  attachmentFileNames?: string[];
+  rounds?: ProgramRoundRequest[];
+  adminAssignments?: ProgramAdminAssignmentRequest[];
+  /** 교육 일정 전체 교체. 운영 시작·출결·정산이 있는 행은 값이 기존과 같으면(생략 필드는 기존 유지) 통과하고, 값이 바뀌거나 빠지면 409 PROGRAM_SCHEDULE_LOCKED. 공통정보만 수정할 때는 이 배열을 보내지 않는다. */
+  schedules?: ProgramScheduleRequest[];
+  wagePolicies?: ProgramWagePolicyRequest[];
+  paymentItems?: ProgramSettlementPaymentItemRequest[];
+  /** 교육받은 교사: 요청 envelope의 program.*와 registration.overlay.*를 키 단위로 저장 snapshot에 덮어씁니다. 보낸 키는 교체하고 생략한 키는 유지합니다. registration/overlay 전체를 교체하지 않으므로 설문·공고·KPI·교육과정 nested 값이 보존됩니다. participantRecruitmentInfo는 보낸 키만 덮어쓰고 생략한 nested 키는 유지합니다(객체 통째 교체 아님). RFC-7396 깊은 병합은 하지 않으며 루트 generalCommonInfo는 제거합니다. 일반 프로그램은 기존 RFC-7396 병합이며 설문 3종(survey, satisfaction, lecture_evaluation)을 유지합니다. UJAT 설문은 survey, volunteer_satisfaction, school_satisfaction, lecture_evaluation 4종이며 satisfaction으로 접지 않고, overlay ujat.basicInfo.surveyItems 4 boolean이 있으면 keys로 덮어쓰지 않습니다. 모집 행만 PATCH하면 설문 keys/surveyItems는 재계산하지 않습니다. */
+  serviceDetailJson?: string;
+  /** PATCH에서 명시적으로 null로 초기화할 필드 목록. 생략/null은 기존 값 유지 */
+  clearFields?: string[];
+  /** Gemini 모집 공고 게시 상태. DRAFT 또는 PUBLISHED. 생략하면 기존 값을 유지한다. GENERAL / UJAT / COMPANY_SCHOOL / TRAINED_TEACHER에서는 무시한다. */
+  draftStatus?: ProgramUpdateRequestDraftStatus;
+  /** 낙관적 동시성 토큰. GET 응답의 updatedAt 문자열을 그대로 보낸다. 생략하면 기존처럼 마지막 저장이 이긴다. If-Match 헤더와 함께 보내면 값이 같아야 한다. GET updatedAt이 마이크로초이면 JavaScript Date.toISOString()은 밀리초로 잘리는데, 그 밀리초 토큰은 같은 밀리초 구간의 저장된 값과 일치하면 허용한다. */
+  expectedUpdatedAt?: string | null;
 }

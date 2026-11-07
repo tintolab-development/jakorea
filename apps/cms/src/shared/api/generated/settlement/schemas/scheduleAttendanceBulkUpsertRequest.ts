@@ -8,5 +8,5 @@
 import type { AttendanceItemRequest } from './attendanceItemRequest';
 
 export interface ScheduleAttendanceBulkUpsertRequest {
-  attendances: AttendanceItemRequest[];
+  attendances?: AttendanceItemRequest[];
 }

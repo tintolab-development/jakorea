@@ -11,21 +11,19 @@
  */
 export interface PortalWithdrawalRequest {
   /**
-     * 현재 로그인 비밀번호. 탈퇴 본인 확인 SoT.
-     * @minLength 1
+     * @minLength 0
      * @maxLength 200
      */
   currentPassword: string;
   /**
-     * 탈퇴 사유
-     * @minLength 1
+     * @minLength 0
      * @maxLength 500
      */
   reason: string;
   /**
      * 선택. 무시됩니다. 구 클라이언트가 보내던 확인 문구 호환용. 탈퇴 본인 확인 SoT는 currentPassword입니다.
+     * @minLength 0
      * @maxLength 30
-     * @nullable
      */
   confirmationText?: string | null;
 }

@@ -9,21 +9,12 @@ import type { SettlementFrontendCalculationDetailResponse } from './settlementFr
 import type { SettlementFrontendItemResponseType } from './settlementFrontendItemResponseType';
 
 export interface SettlementFrontendItemResponse {
-  /** 산출 내역서 공통 항목 코드 */
-  type: SettlementFrontendItemResponseType;
-  description: string;
-  /** 원천징수는 음수 금액 */
-  amount: number;
-  /** instructor_fee(급수·특강·제미나이)는 null이 아니어야 한다. 모달 강의 시간은 basisJson의 lectureTimeDisplay/sessionOrdinal만 사용한다. */
-  calculationDetail?: SettlementFrontendCalculationDetailResponse | null;
-  /**
-     * 소득 구분 코드. 원천징수(withholding) 행에만 설정. BUSINESS_INCOME / OTHER_INCOME / DAILY_EMPLOYMENT_INCOME(레거시 스냅샷). 비과세·강사비·경비 행은 항상 null
-     * @nullable
-     */
+  type?: SettlementFrontendItemResponseType;
+  description?: string;
+  amount?: number;
+  calculationDetail?: SettlementFrontendCalculationDetailResponse;
+  /** 소득 구분 코드. 원천징수(withholding) 행에만 설정. BUSINESS_INCOME / OTHER_INCOME / DAILY_EMPLOYMENT_INCOME(레거시 스냅샷). 비과세·강사비·경비 행은 항상 null. */
   taxIncomeType?: string | null;
-  /**
-     * 소득 구분 화면 라벨. taxIncomeType과 1:1. 원천징수 행 외에는 null(FE는 -)
-     * @nullable
-     */
+  /** 소득 구분 화면 라벨. taxIncomeType과 1:1. 원천징수 행 외에는 null(FE는 -). */
   taxIncomeTypeDisplay?: string | null;
 }

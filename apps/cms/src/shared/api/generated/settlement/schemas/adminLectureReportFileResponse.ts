@@ -5,19 +5,14 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { AdminLectureReportFileResponseSourceType } from './adminLectureReportFileResponseSourceType';
 
 export interface AdminLectureReportFileResponse {
-  sourceId: number;
-  sourceType: AdminLectureReportFileResponseSourceType;
-  /** @nullable */
-  questionKey?: string | null;
-  fileObjectId: number;
-  /** @nullable */
-  originalFileName?: string | null;
-  /** @nullable */
-  contentType?: string | null;
-  /** @nullable */
-  fileSize?: number | null;
-  downloadable: boolean;
+  sourceId?: number;
+  sourceType?: string;
+  questionKey?: string;
+  fileObjectId?: number;
+  originalFileName?: string;
+  contentType?: string;
+  fileSize?: number;
+  downloadable?: boolean;
 }

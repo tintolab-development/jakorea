@@ -8,5 +8,6 @@
 import type { TextbookDeliveryUpdateRequestTextbookDeliveryStatus } from './textbookDeliveryUpdateRequestTextbookDeliveryStatus';
 
 export interface TextbookDeliveryUpdateRequest {
+  /** @minLength 1 */
   textbookDeliveryStatus: TextbookDeliveryUpdateRequestTextbookDeliveryStatus;
 }

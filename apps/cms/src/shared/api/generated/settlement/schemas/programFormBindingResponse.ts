@@ -6,99 +6,51 @@
  * OpenAPI spec version: v9
  */
 import type { ProgramFormBindingResponseProgressStatus } from './programFormBindingResponseProgressStatus';
-import type { ProgramFormBindingResponseSatisfactionRunMode } from './programFormBindingResponseSatisfactionRunMode';
 
 export interface ProgramFormBindingResponse {
   bindingId?: number;
   programId?: number;
-  /** 생성 시 값 유지. 교육받은 교사 SATISFACTION은 교사·학생 대상 바인딩을 모두 노출한다. */
   formType?: string;
-  /** @nullable */
-  templateId?: number | null;
-  /** @nullable */
-  templateVersionId?: number | null;
-  /** @nullable */
-  templateName?: string | null;
-  /** @nullable */
-  versionLabel?: string | null;
-  /** @nullable */
-  targetType?: string | null;
-  /**
-     * 만족도 대상. 생성 시 값을 유지한다. STUDENT | TEACHER | INDIVIDUAL | VOLUNTEER | INSTRUCTOR.
-     * @nullable
-     */
-  targetRole?: string | null;
-  /**
-     * 생성 시 값 유지. 강의평가는 SCHEDULE. PROGRAM으로 바꾸지 않는다.
-     * @nullable
-     */
-  targetScope?: string | null;
-  /** @nullable */
-  targetScopeId?: number | null;
-  /** @nullable */
-  targetScopeLabel?: string | null;
-  /** @nullable */
-  required?: boolean | null;
-  /** @nullable */
-  active?: boolean | null;
-  /** @nullable */
-  completionRequired?: boolean | null;
-  /** @nullable */
-  certificateRequired?: boolean | null;
-  /** @nullable */
-  lectureCompletionRequired?: boolean | null;
-  /** @nullable */
-  settlementRequired?: boolean | null;
-  /** @nullable */
-  performanceRequired?: boolean | null;
-  /** @nullable */
-  reviewRequired?: boolean | null;
-  /**
-     * 없으면 null. 시작·종료가 모두 null이면 기간 없음=진행 중(in_progress).
-     * @nullable
-     */
-  submissionStartAt?: string | null;
-  /**
-     * 없으면 null. 시작·종료가 모두 null이면 기간 없음이며 progressStatus는 IN_PROGRESS.
-     * @nullable
-     */
-  submissionEndAt?: string | null;
-  /**
-     * 설문류(SURVEY, SATISFACTION, LECTURE_EVALUATION)만. 그 외 formType은 null. 교육받은 교사에서 과거 SATISFACTION 계열 row는 현재 사용 가능한 바인딩으로 노출하지 않는다. now < submissionStartAt이면 BEFORE_START, submissionEndAt이 있고 now > submissionEndAt이면 FINISHED, 그 외(시작 시각 null 포함)는 IN_PROGRESS. 응답 수로 바꾸지 않는다.
-     * @nullable
-     */
+  templateId?: number;
+  templateVersionId?: number;
+  templateName?: string;
+  versionLabel?: string;
+  targetType?: string;
+  targetRole?: string;
+  targetScope?: string;
+  targetScopeId?: number;
+  targetScopeLabel?: string;
+  required?: boolean;
+  active?: boolean;
+  completionRequired?: boolean;
+  certificateRequired?: boolean;
+  lectureCompletionRequired?: boolean;
+  settlementRequired?: boolean;
+  performanceRequired?: boolean;
+  reviewRequired?: boolean;
+  /** SURVEY는 항상 값이 있다. SATISFACTION·LECTURE_EVALUATION은 기간 미설정 시 null이며 화면 상태는 진행 중(in_progress)이다. */
+  submissionStartAt?: string;
+  /** SURVEY는 항상 값이 있다. SATISFACTION·LECTURE_EVALUATION은 기간 미설정 시 null이며 progressStatus는 IN_PROGRESS다. */
+  submissionEndAt?: string;
+  /** 설문류(SURVEY, SATISFACTION, LECTURE_EVALUATION)만. BEFORE_START | IN_PROGRESS | FINISHED. 그 외 formType은 null. now < submissionStartAt 이면 BEFORE_START, submissionEndAt이 있고 now > submissionEndAt 이면 FINISHED, 그 외(시작 시각 null 포함)는 IN_PROGRESS. 응답 수로 바꾸지 않는다. */
   progressStatus?: ProgramFormBindingResponseProgressStatus;
-  /** @nullable */
-  duplicatePolicy?: string | null;
-  /** @nullable */
-  displayOrder?: number | null;
-  /** @nullable */
-  submittedCount?: number | null;
-  /** @nullable */
-  createdAt?: string | null;
-  /** @nullable */
-  updatedAt?: string | null;
+  duplicatePolicy?: string;
+  displayOrder?: number;
+  submittedCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
   /** 기존 연결 동작(VIEW, EDIT, DEACTIVATE, CHANGE_TEMPLATE_VERSION, REACTIVATE_WITH_UPDATE)을 유지한다. 설문류이고 progressStatus가 BEFORE_START일 때만 DELETE, UPDATE_TEMPLATE을 추가한다. submittedCount로 이 두 값을 빼지 않는다. */
   availableActions?: string[];
-  /**
-     * ProgramSurveyResponse.expectedRespondentCount와 같은 의미. submittedCount로 대체하지 않는다.
-     * @nullable
-     */
+  /** 대상별 예상 응답 인원. submittedCount(실제 제출 수)와 별개다. 대상을 확정할 수 없으면 null. 0은 그 대상 참여 인원이 0명일 때만. */
   expectedRespondentCount?: number | null;
-  /**
-     * SATISFACTION only. true after the participation window exclusive end. All-submitted does not make this true.
-     * @nullable
-     */
+  /** SATISFACTION만. 참여 기간이 끝난 뒤에만 true. 전원 제출만으로 true가 되지 않는다. */
   resultDownloadable?: boolean | null;
-  /**
-     * SATISFACTION only. Inclusive 23:59:59 KST display deadline.
-     * @nullable
-     */
+  /** SATISFACTION만. 사용자 표시용 마감 시각(23:59:59 KST). 저장값은 exclusive next-day 00:00일 수 있다. */
   displayDeadlineAt?: string | null;
-  /** @nullable */
-  satisfactionRunMode?: ProgramFormBindingResponseSatisfactionRunMode;
-  /** @nullable */
+  /** SATISFACTION만. PER_SCHEDULE | ONCE_AT_END. */
+  satisfactionRunMode?: string | null;
+  /** SATISFACTION만. 3 | 7 | 14 | 30. */
   satisfactionWindowDays?: number | null;
-  /** @nullable */
+  /** SATISFACTION만. 관리자가 시작 시각을 고정했는지. */
   startAtLocked?: boolean | null;
 }

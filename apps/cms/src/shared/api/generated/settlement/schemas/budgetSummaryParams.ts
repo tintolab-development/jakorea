@@ -8,7 +8,7 @@
 
 export type BudgetSummaryParams = {
 /**
- * 금년도 예산·정산 완료 총액 연도. fromDate/toDate가 없으면 전년-12-01~당해-12-31을 예정금 구간으로 씁니다.
+ * 금년도 예산 및 실제 지급 완료일(paidAt) 기준 정산 완료 총액 연도. fromDate/toDate가 없으면 전년-12-01~당해-12-31을 예정금 구간으로 씁니다.
  */
 year?: number;
 /**

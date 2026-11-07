@@ -7,35 +7,57 @@
  */
 import type {
   AccountPaymentDetailResponse,
-  ApiResponseBulkDownloadJobResponse,
-  ApiResponsePaymentStatementRenderDataResponse,
+  ApiResponse,
   ApiResponseSettlementBulkStatusChangeResponse,
+  ApiResponseSettlementCorrectionResponse,
+  ApiResponseSettlementGenerateResponse,
   ApiResponseSettlementStatusChangeResponse,
   ApiResponseVoid,
   BudgetSummaryParams,
   ClientGeneratedDownloadLogRequest,
-  DownloadPaymentStatement200,
   EncryptedPaymentStatementDownloadRequest,
   GetAccountPaymentParams,
   IssueSettlementExportScopeParams,
   ListAccountPaymentsParams,
+  ListCorrectionRequestsParams,
+  ListExportHistoriesParams,
+  ListPaymentStatementsParams,
   ListSettlementAggregatesParams,
+  ListSettlementRevisionsParams,
   ListSettlementsParams,
+  ListTransportationSnapshotsParams,
   PageResponseAccountPaymentListItemResponse,
+  PageResponsePaymentStatementListItemResponse,
+  PageResponseSettlementCorrectionResponse,
+  PageResponseSettlementExportHistoryResponse,
   PageResponseSettlementListItemResponse,
+  PageResponseSettlementTransportationSnapshotResponse,
+  PaymentStatementBulkDownloadRequest,
+  PaymentStatementRenderDataResponse,
   PaymentStatementRenderedFileRegisterRequest,
-  PaymentStatementsBody,
+  Scope,
   SettlementAggregateResponse,
+  SettlementAvailableActionsResponse,
   SettlementBudgetSummaryResponse,
   SettlementBulkStatusChangeRequest,
+  SettlementCalendarItemResponse,
   SettlementCalendarParams,
+  SettlementCalendarSummaryParams,
+  SettlementCalendarSummaryResponse,
   SettlementConfigResponse,
   SettlementConfigUpdateRequest,
-  SettlementExportScopeResponse,
+  SettlementCorrectionApprovalRequest,
+  SettlementCorrectionRequest,
+  SettlementDocumentDownloadResponse,
+  SettlementExportRequest,
   SettlementFrontendResponse,
+  SettlementGenerateRequest,
   SettlementNotificationResendRequest,
   SettlementNotificationResendResponse,
-  SettlementStatusChangeRequest
+  SettlementOpenQuestion,
+  SettlementRevisionDetailResponse,
+  SettlementStatusChangeRequest,
+  SettlementStatusMappingResponse
 } from './schemas';
 
 import { customInstance } from '../../orval-mutator';
@@ -46,84 +68,50 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
   export const getJAKoreaCMSBackendAPISettlementSubset = () => {
 /**
- * 지급조서 CONFIRMED 건만 반환합니다. status=REQUESTED 는 대기 버킷(WAITING_PAYMENT, FAILED)입니다. fromDate/toDate/year 는 이체 예정일 기준입니다. 응답 대기 건의 paymentStatus는 WAITING_PAYMENT입니다.
- * @summary 계좌 지급 확인 목록
- */
-const listAccountPayments = (
-    params?: ListAccountPaymentsParams,
- options?: SecondParameter<typeof customInstance<PageResponseAccountPaymentListItemResponse>>,) => {
-      return customInstance<PageResponseAccountPaymentListItemResponse>(
-      {url: `/api/admin/account-payments`, method: 'GET',
-        params
-    },
-      options);
-    }
-
-/**
- * @summary 계좌 지급 일괄 완료 처리
- */
-const bulkPaid = (
-
- options?: SecondParameter<typeof customInstance<void>>,) => {
-      return customInstance<void>(
-      {url: `/api/admin/account-payments/bulk-paid`, method: 'PATCH'
-    },
-      options);
-    }
-
-/**
- * payment + settlement(SettlementFrontendResponse) embed. Cache-Control=no-store. Master와 Accounting Manager만 조회합니다. 계좌번호는 상세 진입 시 기본 노출되고 서버가 조회 목적을 기록합니다. 감사 저장 실패 시 원문을 반환하지 않습니다. 목록 GET에는 원문/sensitiveAccount를 넣지 않습니다.
- * @summary 계좌 지급 단건 상세 조회
- */
-const getAccountPayment = (
-    paymentId: number,
-    params?: GetAccountPaymentParams,
- options?: SecondParameter<typeof customInstance<AccountPaymentDetailResponse>>,) => {
-      return customInstance<AccountPaymentDetailResponse>(
-      {url: `/api/admin/account-payments/${paymentId}`, method: 'GET',
-        params
-    },
-      options);
-    }
-
-/**
- * @summary 개별 지급 실패
- */
-const markFailed = (
-    paymentId: string,
- options?: SecondParameter<typeof customInstance<void>>,) => {
-      return customInstance<void>(
-      {url: `/api/admin/account-payments/${paymentId}/failed`, method: 'PATCH'
-    },
-      options);
-    }
-
-/**
- * @summary 개별 지급 완료
- */
-const markPaid = (
-    paymentId: string,
- options?: SecondParameter<typeof customInstance<void>>,) => {
-      return customInstance<void>(
-      {url: `/api/admin/account-payments/${paymentId}/paid`, method: 'PATCH'
-    },
-      options);
-    }
-
-/**
- * @summary 정산/계좌 지급 삭제
- */
-const deleteCurrentConfig = (
-
- options?: SecondParameter<typeof customInstance<void>>,) => {
-      return customInstance<void>(
-      {url: `/api/admin/settlement-configs/current`, method: 'DELETE'
-    },
-      options);
-    }
-
-/**
- * @summary 정산/계좌 지급 목록 조회
+ * ### 이 API가 하는 일
+ * - 정산/계좌지급 조회
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
+ * - 프론트 담당 영역: 정산s (`settlements`)
+ * - 호출 방식: `GET /api/admin/settlement-configs/current`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
+ * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신 (mock/local provider first, production provider after staging config)
+ * - 프론트 조회 키: `get_admin_settlements_config_active`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: PROVIDER_PENDING
+ * - 외부 연동 확인: NAVER_MAPS_FUEL_PDF_XLSX_EXPORT_TEMPLATE 연동 검증 필요
+ * - 스테이징 점검 기준: REQUIRED
+ * - 목데이터 대체: 임시 목데이터/localStorage 상태를 settlements API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 조회
  */
 const currentConfig = (
 
@@ -135,7 +123,48 @@ const currentConfig = (
     }
 
 /**
- * @summary 정산/계좌 지급 수정
+ * ### 이 API가 하는 일
+ * - PUT /api/admin/settlement-configs/current
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `PUT /api/admin/settlement-configs/current`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary PUT /api/admin/settlement-configs/current
  */
 const updateCurrentConfig = (
     settlementConfigUpdateRequest: SettlementConfigUpdateRequest,
@@ -149,273 +178,168 @@ const updateCurrentConfig = (
     }
 
 /**
- * @summary 정산/계좌 지급 생성/처리
+ * ### 이 API가 하는 일
+ * - 정산/계좌지급 삭제
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `DELETE /api/admin/settlement-configs/current`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 삭제
  */
-const duplicateCurrentConfig = (
+const deleteCurrentConfig = (
 
- options?: SecondParameter<typeof customInstance<void>>,) => {
-      return customInstance<void>(
-      {url: `/api/admin/settlement-configs/current/duplicate`, method: 'POST'
+ options?: SecondParameter<typeof customInstance<ApiResponseVoid>>,) => {
+      return customInstance<ApiResponseVoid>(
+      {url: `/api/admin/settlement-configs/current`, method: 'DELETE'
     },
       options);
     }
 
 /**
- * 현재 정산 설정의 payment 항목 카드를 삭제합니다. 비활성 항목이거나 같은 paymentItemType에 다른 활성 항목이 남아 있으면(예: 복제본) 프로그램 참조와 무관하게 삭제됩니다. 해당 유형의 마지막 활성 항목이 프로그램에서 사용 중이면 409 SETTLEMENT_CONFIG_PAYMENT_ITEM_IN_USE입니다. wage/deduction은 409 SETTLEMENT_CONFIG_ITEM_KIND_LOCKED, 대상이 없으면 404 SETTLEMENT_CONFIG_ITEM_NOT_FOUND입니다.
- * @summary 정산 설정 항목 카드 삭제
+ * ### 이 API가 하는 일
+ * - POST /api/admin/settlements/{settlementId}/recalculate
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
+ * - 프론트 담당 영역: 정산s (`settlements`)
+ * - 호출 방식: `POST /api/admin/settlements/{settlementId}/recalculate`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 폼 상태 or 선택 행 action payload
+ * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신 (mock/local provider first, production provider after staging config)
+ * - 프론트 조회 키: `post_admin_settlements_settlementId_recalculate`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: PROVIDER_PENDING
+ * - 외부 연동 확인: NAVER_MAPS_FUEL_PDF_XLSX_EXPORT_TEMPLATE 연동 검증 필요
+ * - 스테이징 점검 기준: REQUIRED
+ * - 목데이터 대체: 임시 목데이터/localStorage 상태를 settlements API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary POST /api/admin/settlements/{settlementId}/recalculate
  */
-const deleteConfigItem = (
-    itemKind: 'wage' | 'payment' | 'deduction',
-    itemId: number,
- options?: SecondParameter<typeof customInstance<SettlementConfigResponse>>,) => {
-      return customInstance<SettlementConfigResponse>(
-      {url: `/api/admin/settlement-configs/current/items/${itemKind}/${itemId}`, method: 'DELETE'
-    },
-      options);
-    }
-
-/**
- * 현재 정산 설정의 payment 항목 카드를 복제합니다. 복제본은 새 id로 저장되고 원본의 모든 필드와 useYn을 그대로 복사하며 itemName 뒤에 ' (복사본)'이 붙습니다. 원본이 활성(useYn=true)이면 복제본도 활성이라 응답과 이후 GET /api/admin/settlement-configs/current의 paymentItems에 함께 포함됩니다. 같은 paymentItemType에 활성 항목이 여러 개면 정산 계산은 가장 먼저 생성된(id가 가장 작은) 활성 항목을 사용하므로, 복제본을 수정해도 원본 기준 계산은 바뀌지 않습니다. wage/deduction은 409 SETTLEMENT_CONFIG_ITEM_KIND_LOCKED, 대상이 없으면 404 SETTLEMENT_CONFIG_ITEM_NOT_FOUND입니다.
- * @summary 정산 설정 항목 카드 복제
- */
-const duplicateConfigItem = (
-    itemKind: 'wage' | 'payment' | 'deduction',
-    itemId: number,
- options?: SecondParameter<typeof customInstance<SettlementConfigResponse>>,) => {
-      return customInstance<SettlementConfigResponse>(
-      {url: `/api/admin/settlement-configs/current/items/${itemKind}/${itemId}/duplicate`, method: 'POST'
-    },
-      options);
-    }
-
-/**
- * @summary 정산/계좌 지급 목록 조회
- */
-const listSettlements = (
-    params?: ListSettlementsParams,
- options?: SecondParameter<typeof customInstance<PageResponseSettlementListItemResponse>>,) => {
-      return customInstance<PageResponseSettlementListItemResponse>(
-      {url: `/api/admin/settlements`, method: 'GET',
-        params
-    },
-      options);
-    }
-
-/**
- * CMS 지급조서 확인 리스트는 pendingItemBucket, 캘린더는 statementStatus를 사용합니다. 날짜는 출강일입니다.
- * @summary 정산 집계 목록 조회
- */
-const listSettlementAggregates = (
-    params?: ListSettlementAggregatesParams,
- options?: SecondParameter<typeof customInstance<SettlementAggregateResponse[]>>,) => {
-      return customInstance<SettlementAggregateResponse[]>(
-      {url: `/api/admin/settlements/aggregates`, method: 'GET',
-        params
-    },
-      options);
-    }
-
-/**
- * 금년도 예산 총액은 후원사 관리 연도별 기부금 합계입니다. 기간 내 정산 예정금은 조회한 이체 예정일 구간의 지급조서 확인 완료(지급 대기)만 합산합니다.
- * @summary 정산 연간 예산 요약 조회
- */
-const budgetSummary = (
-    params?: BudgetSummaryParams,
- options?: SecondParameter<typeof customInstance<SettlementBudgetSummaryResponse>>,) => {
-      return customInstance<SettlementBudgetSummaryResponse>(
-      {url: `/api/admin/settlements/budget-summary`, method: 'GET',
-        params
-    },
-      options);
-    }
-
-/**
- * @summary 정산 캘린더 조회
- */
-const settlementCalendar = (
-    params?: SettlementCalendarParams,
- options?: SecondParameter<typeof customInstance<void>>,) => {
-      return customInstance<void>(
-      {url: `/api/admin/settlements/calendar`, method: 'GET',
-        params
-    },
-      options);
-    }
-
-/**
- * @summary 정산/계좌 지급 상세 조회
- */
-const settlementCalendarDate = (
-    date: string,
- options?: SecondParameter<typeof customInstance<void>>,) => {
-      return customInstance<void>(
-      {url: `/api/admin/settlements/calendar/dates/${date}`, method: 'GET'
-    },
-      options);
-    }
-
-/**
- * @summary 정산/계좌 지급 목록 조회
- */
-const settlementCalendarSummary = (
-
- options?: SecondParameter<typeof customInstance<void>>,) => {
-      return customInstance<void>(
-      {url: `/api/admin/settlements/calendar/summary`, method: 'GET'
-    },
-      options);
-    }
-
-/**
- * @summary 정산/계좌 지급 목록 조회
- */
-const listCorrectionRequests = (
-
- options?: SecondParameter<typeof customInstance<void>>,) => {
-      return customInstance<void>(
-      {url: `/api/admin/settlements/correction-requests`, method: 'GET'
-    },
-      options);
-    }
-
-/**
- * For rejected instructor statement revisions, correction approval creates a REAPPLICATION revision only within the KST rejection-date + 14 day / program business-end deadline; expired cases return SETTLEMENT_REAPPLICATION_DEADLINE_EXPIRED. Ordinary member receipts and GEMINI/GEMINI_TRAINING payment paths are excluded.
- * @summary 정산/계좌 지급 승인
- */
-const approveCorrection = (
-    correctionRequestId: string,
- options?: SecondParameter<typeof customInstance<void>>,) => {
-      return customInstance<void>(
-      {url: `/api/admin/settlements/correction-requests/${correctionRequestId}/approve`, method: 'PATCH'
-    },
-      options);
-    }
-
-/**
- * @summary 정산/계좌 지급 반려
- */
-const rejectCorrection = (
-    correctionRequestId: string,
- options?: SecondParameter<typeof customInstance<void>>,) => {
-      return customInstance<void>(
-      {url: `/api/admin/settlements/correction-requests/${correctionRequestId}/reject`, method: 'PATCH'
-    },
-      options);
-    }
-
-/**
- * @summary 정산/계좌 지급 내보내기
- */
-const listExportHistories = (
-
- options?: SecondParameter<typeof customInstance<void>>,) => {
-      return customInstance<void>(
-      {url: `/api/admin/settlements/exports`, method: 'GET'
-    },
-      options);
-    }
-
-/**
- * 지급조서 CONFIRMED + 계좌 지급 WAITING_PAYMENT만 발급한다. MASKED_ONLY(rawPrivacyIncluded=false) SERVER_FILE에도 원문 계좌·휴대폰이 들어간다. 실지급액 행 다음에 세액>0이면 세액 행(입금은행·계좌·예금주·휴대폰 빈 셀, JA 계좌 미입력). 개인정보 조회 이력은 POST /api/admin/files/{fileObjectId}/sensitive-downloads reason=대량이체 양식 발급 이다. settlementIds와 accountPaymentIds를 모두 생략하거나 빈 배열로 두고 프로그램·강사·기간·상태 필터가 없으면 권한 안 전체 대상이다.
- * @summary 정산/계좌 지급 일괄 처리
- */
-const requestBulkTransferExport = (
-
- options?: SecondParameter<typeof customInstance<void>>,) => {
-      return customInstance<void>(
-      {url: `/api/admin/settlements/exports/bulk-transfer`, method: 'POST'
-    },
-      options);
-    }
-
-/**
- * 원문 없이 searchSnapshotHash, rowCount, effectiveStatus, fullCorpus, scopeToken을 반환한다. 무필터 전체는 빈 settlementIds·accountPaymentIds와 빈 프로그램·강사·기간이며 status가 비었거나 대량이체 WAITING_PAYMENT, 세금신고 PAID다. 그 외 제한 범위는 scopeToken으로만 승인한다. 클라이언트 해시는 받지 않는다. 토큰 rowCount보다 건수가 늘면 발급은 409다.
- * @summary 정산 원문 Export 범위 식별자 발급
- */
-const issueSettlementExportScope = (
-    params: IssueSettlementExportScopeParams,
- options?: SecondParameter<typeof customInstance<SettlementExportScopeResponse>>,) => {
-      return customInstance<SettlementExportScopeResponse>(
-      {url: `/api/admin/settlements/exports/scope`, method: 'POST',
-        params
-    },
-      options);
-    }
-
-/**
- * PAID + paid_at 건만 발급한다. MASKED_ONLY SERVER_FILE의 주민등록번호는 하이픈 포함 원문이며 미리보기 마스킹은 FE 책임이다. 개인정보 조회 이력은 POST /api/admin/files/{fileObjectId}/sensitive-downloads reason=세금신고 양식 발급 이다. settlementIds를 생략하거나 빈 배열로 두고 프로그램·강사·기간·상태 필터가 없으면 권한 안 지급완료 전체 대상이다. accountPaymentIds는 받지 않는다.
- * @summary 정산/계좌 지급 내보내기
- */
-const requestTaxReportExport = (
-
- options?: SecondParameter<typeof customInstance<void>>,) => {
-      return customInstance<void>(
-      {url: `/api/admin/settlements/exports/tax-report`, method: 'POST'
-    },
-      options);
-    }
-
-/**
- * @summary 정산/계좌 지급 목록 조회
- */
-const openQuestions = (
-
- options?: SecondParameter<typeof customInstance<void>>,) => {
-      return customInstance<void>(
-      {url: `/api/admin/settlements/open-questions`, method: 'GET'
-    },
-      options);
-    }
-
-/**
- * settlementId 기준 서버 PDF를 ZIP으로 묶어 write-only password로 암호화해 스트림합니다. html2pdf/클라이언트 PDF에 의존하지 않습니다. 암호는 저장하지 않습니다.
- */
-const paymentStatements = (
-    paymentStatementsBody: PaymentStatementsBody,
- options?: SecondParameter<typeof customInstance<ApiResponseBulkDownloadJobResponse>>,) => {
-      return customInstance<ApiResponseBulkDownloadJobResponse>(
-      {url: `/api/admin/settlements/payment-statements/bulk-download/jobs`, method: 'POST',
+const recalculate = (
+    settlementId: number,
+    settlementGenerateRequest: SettlementGenerateRequest,
+ options?: SecondParameter<typeof customInstance<ApiResponseSettlementGenerateResponse>>,) => {
+      return customInstance<ApiResponseSettlementGenerateResponse>(
+      {url: `/api/admin/settlements/${settlementId}/recalculate`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: paymentStatementsBody
+      data: settlementGenerateRequest
     },
       options);
     }
 
 /**
- * @summary 정산/계좌 지급 목록 조회
+ * ### 이 API가 하는 일
+ * - POST /api/admin/settlements/{settlementId}/payment-statement/request
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
+ * - 프론트 담당 영역: 정산s (`settlements`)
+ * - 호출 방식: `POST /api/admin/settlements/{settlementId}/payment-statement/request`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 폼 상태 or 선택 행 action payload
+ * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신 (mock/local provider first, production provider after staging config)
+ * - 프론트 조회 키: `post_admin_settlements_settlementId_payment-statement_request`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: PROVIDER_PENDING
+ * - 외부 연동 확인: NAVER_MAPS_FUEL_PDF_XLSX_EXPORT_TEMPLATE 연동 검증 필요
+ * - 스테이징 점검 기준: REQUIRED
+ * - 목데이터 대체: 임시 목데이터/localStorage 상태를 settlements API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary POST /api/admin/settlements/{settlementId}/payment-statement/request
  */
-const listPaymentStatements = (
-
- options?: SecondParameter<typeof customInstance<void>>,) => {
-      return customInstance<void>(
-      {url: `/api/admin/settlements/statements`, method: 'GET'
-    },
-      options);
-    }
-
-/**
- * @summary 정산/계좌 지급 일괄 처리
- */
-const bulkConfirmPaymentStatements = (
-    settlementBulkStatusChangeRequest: SettlementBulkStatusChangeRequest,
- options?: SecondParameter<typeof customInstance<ApiResponseSettlementBulkStatusChangeResponse>>,) => {
-      return customInstance<ApiResponseSettlementBulkStatusChangeResponse>(
-      {url: `/api/admin/settlements/statements/bulk-confirm`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: settlementBulkStatusChangeRequest
-    },
-      options);
-    }
-
-/**
- * @summary 정산/계좌 지급 수정
- */
-const confirmPaymentStatement = (
-    statementId: string,
+const requestPaymentStatement = (
+    settlementId: number,
     settlementStatusChangeRequest: SettlementStatusChangeRequest,
- options?: SecondParameter<typeof customInstance<ApiResponseSettlementStatusChangeResponse>>,) => {
-      return customInstance<ApiResponseSettlementStatusChangeResponse>(
-      {url: `/api/admin/settlements/statements/${statementId}/confirm`, method: 'PATCH',
+ options?: SecondParameter<typeof customInstance<ApiResponse>>,) => {
+      return customInstance<ApiResponse>(
+      {url: `/api/admin/settlements/${settlementId}/payment-statement/request`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: settlementStatusChangeRequest
     },
@@ -423,121 +347,111 @@ const confirmPaymentStatement = (
     }
 
 /**
- * statementId로 settlementId를 찾아 POST /api/admin/settlements/{settlementId}/notifications/resend 와 동일한 enqueue를 수행합니다. GET /api/admin/settlements/statements 의 settlementId를 우선 사용하세요.
- * @summary 지급조서 알림 재발송(settlementId alias)
+ * ### 이 API가 하는 일
+ * - 지급조서 FE 렌더링 canonical PDF 등록
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/admin/settlements/{settlementId}/payment-statement/rendered-file`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: FILE_DOWNLOAD 권한 필요
+ * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: PAYMENT_STATEMENT_SENSITIVE 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: frozen payloadHash 일치 + SETTLEMENT/PAYMENT_STATEMENT_RENDERED owner + AVAILABLE/CLEAN PDF만 등록; 이전 canonical 파일 supersede; bulk ZIP source로 사용
+ * @summary 지급조서 FE 렌더링 canonical PDF 등록
  */
-const resendSettlementStatementNotification = (
-    statementId: number,
-    settlementNotificationResendRequest: SettlementNotificationResendRequest,
- options?: SecondParameter<typeof customInstance<SettlementNotificationResendResponse>>,) => {
-      return customInstance<SettlementNotificationResendResponse>(
-      {url: `/api/admin/settlements/statements/${statementId}/notifications/resend`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: settlementNotificationResendRequest
-    },
-      options);
-    }
-
-/**
- * 선택한 지급조서를 REJECTED 처리하고 반려 사유를 지급조서와 정산 상태 이력에 기록합니다.
- * @summary 지급조서 신청 반려
- */
-const rejectPaymentStatement = (
-    statementId: string,
-    settlementStatusChangeRequest: SettlementStatusChangeRequest,
- options?: SecondParameter<typeof customInstance<ApiResponseSettlementStatusChangeResponse>>,) => {
-      return customInstance<ApiResponseSettlementStatusChangeResponse>(
-      {url: `/api/admin/settlements/statements/${statementId}/reject`, method: 'PATCH',
-      headers: {'Content-Type': 'application/json', },
-      data: settlementStatusChangeRequest
-    },
-      options);
-    }
-
-/**
- * @summary 정산/계좌 지급 목록 조회
- */
-const statusMappings = (
-
- options?: SecondParameter<typeof customInstance<void>>,) => {
-      return customInstance<void>(
-      {url: `/api/admin/settlements/status-mappings`, method: 'GET'
-    },
-      options);
-    }
-
-/**
- * @summary 정산/계좌 지급 목록 조회
- */
-const listTransportationSnapshots = (
-
- options?: SecondParameter<typeof customInstance<void>>,) => {
-      return customInstance<void>(
-      {url: `/api/admin/settlements/transportation-snapshots`, method: 'GET'
-    },
-      options);
-    }
-
-/**
- * @summary 정산/계좌 지급 상세 조회
- */
-const getSettlement = (
+const registerPaymentStatementRenderedFile = (
     settlementId: number,
- options?: SecondParameter<typeof customInstance<SettlementFrontendResponse>>,) => {
-      return customInstance<SettlementFrontendResponse>(
-      {url: `/api/admin/settlements/${settlementId}`, method: 'GET'
-    },
-      options);
-    }
-
-/**
- * @summary 정산 availableActions 조회
- */
-const getSettlementAvailableActions = (
-    settlementId: string,
- options?: SecondParameter<typeof customInstance<void>>,) => {
-      return customInstance<void>(
-      {url: `/api/admin/settlements/${settlementId}/available-actions`, method: 'GET'
-    },
-      options);
-    }
-
-/**
- * @summary 정산/계좌 지급 생성/처리
- */
-const requestCorrection = (
-    settlementId: string,
- options?: SecondParameter<typeof customInstance<void>>,) => {
-      return customInstance<void>(
-      {url: `/api/admin/settlements/${settlementId}/correction-requests`, method: 'POST'
-    },
-      options);
-    }
-
-/**
- * GET /api/admin/settlements/{settlementId} 의 최신 statementStatus·paymentStatus로 기존 알림만 재enqueue합니다. statementStatus·paymentStatus·paidAt·expectedTransferDate는 바꾸지 않습니다. REJECTED는 SETTLEMENT_APPLICATION_REJECTED(인앱+알림톡 사용자_강사비_신청_반려). CONFIRMED 또는 WAITING_PAYMENT는 SETTLEMENT_APPLICATION_CONFIRMED. PAID는 SETTLEMENT_PAYMENT_PAID. 정정 승인 replacement의 REAPPLICATION은 SETTLEMENT_CORRECTION_COMPLETED. WAITING_CONFIRM 등 미확인은 409 SETTLEMENT_NOTIFICATION_RESEND_NOT_ALLOWED. timing은 IMMEDIATE|SCHEDULED만. ON_ANNOUNCEMENT/MANUAL은 422. 저장된 반려 사유가 있으면 클라이언트가 reason을 다시 보내도 상태를 바꾸지 않고 알림 본문에만 씁니다.
- * @summary 정산 산출 내역서 알림 재발송
- */
-const resendSettlementNotification = (
-    settlementId: number,
-    settlementNotificationResendRequest: SettlementNotificationResendRequest,
- options?: SecondParameter<typeof customInstance<SettlementNotificationResendResponse>>,) => {
-      return customInstance<SettlementNotificationResendResponse>(
-      {url: `/api/admin/settlements/${settlementId}/notifications/resend`, method: 'POST',
+    paymentStatementRenderedFileRegisterRequest: PaymentStatementRenderedFileRegisterRequest,
+ options?: SecondParameter<typeof customInstance<ApiResponseVoid>>,) => {
+      return customInstance<ApiResponseVoid>(
+      {url: `/api/admin/settlements/${settlementId}/payment-statement/rendered-file`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: settlementNotificationResendRequest
+      data: paymentStatementRenderedFileRegisterRequest
     },
       options);
     }
 
 /**
- * 암호 없는 GET 미리보기 JSON입니다. 파일 바이트는 내려주지 않습니다.
- * @summary 지급조서 미리보기 상태
+ * ### 이 API가 하는 일
+ * - 정산/계좌지급 조회
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
+ * - 프론트 담당 영역: 정산s (`settlements`)
+ * - 호출 방식: `GET /api/admin/settlements/{settlementId}/payment-statement/download`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
+ * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신 (mock/local provider first, production provider after staging config)
+ * - 프론트 조회 키: `get_admin_settlements_settlementId_payment-statement_download`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: PROVIDER_PENDING
+ * - 외부 연동 확인: NAVER_MAPS_FUEL_PDF_XLSX_EXPORT_TEMPLATE 연동 검증 필요
+ * - 스테이징 점검 기준: REQUIRED
+ * - 목데이터 대체: 임시 목데이터/localStorage 상태를 settlements API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 조회
  */
 const downloadPaymentStatement = (
-    settlementId: string,
- options?: SecondParameter<typeof customInstance<DownloadPaymentStatement200>>,) => {
-      return customInstance<DownloadPaymentStatement200>(
+    settlementId: number,
+ options?: SecondParameter<typeof customInstance<SettlementDocumentDownloadResponse>>,) => {
+      return customInstance<SettlementDocumentDownloadResponse>(
       {url: `/api/admin/settlements/${settlementId}/payment-statement/download`, method: 'GET'
     },
       options);
@@ -561,7 +475,104 @@ const downloadPaymentStatementEncrypted = (
     }
 
 /**
- * 브라우저 PDF 생성 완료 후 저장 직전에 호출합니다. payment_statement 다운로드 카운터와 file_access_log를 같은 트랜잭션에서 기록합니다.
+ * ### 이 API가 하는 일
+ * - POST /api/admin/settlements/{settlementId}/payment-statement/download-requests
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/admin/settlements/{settlementId}/payment-statement/download-requests`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary POST /api/admin/settlements/{settlementId}/payment-statement/download-requests
+ */
+const requestPaymentStatementDownload = (
+    settlementId: number,
+    encryptedPaymentStatementDownloadRequest: EncryptedPaymentStatementDownloadRequest,
+ options?: SecondParameter<typeof customInstance<Blob>>,) => {
+      return customInstance<Blob>(
+      {url: `/api/admin/settlements/${settlementId}/payment-statement/download-requests`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: encryptedPaymentStatementDownloadRequest,
+        responseType: 'blob'
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 지급조서 FE PDF 다운로드 이력 기록
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/admin/settlements/{settlementId}/payment-statement/download-logs`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: FILE_DOWNLOAD 권한 필요
+ * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: PAYMENT_STATEMENT_AUDIT 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: download_count/last_downloaded_at과 file_access_log를 동일 트랜잭션으로 기록
  * @summary 지급조서 FE PDF 다운로드 이력 기록
  */
 const recordPaymentStatementClientDownload = (
@@ -577,145 +588,2077 @@ const recordPaymentStatementClientDownload = (
     }
 
 /**
- * POST body { password } 로 서버 지급조서 PDF를 암호화해 스트림합니다.
- * @summary 지급조서 암호화 다운로드 요청
+ * ### 이 API가 하는 일
+ * - 정산 산출 내역서 알림 재발송
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/admin/settlements/{settlementId}/notifications/resend`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: SETTLEMENT_WRITE 권한 필요
+ * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: 2026-11-07 notification resend without business-state mutation
+ * @summary 정산 산출 내역서 알림 재발송
  */
-const requestPaymentStatementDownload = (
-    settlementId: string,
-    encryptedPaymentStatementDownloadRequest: EncryptedPaymentStatementDownloadRequest,
- options?: SecondParameter<typeof customInstance<Blob>>,) => {
-      return customInstance<Blob>(
-      {url: `/api/admin/settlements/${settlementId}/payment-statement/download-requests`, method: 'POST',
+const resendSettlementNotification = (
+    settlementId: number,
+    settlementNotificationResendRequest: SettlementNotificationResendRequest,
+ options?: SecondParameter<typeof customInstance<SettlementNotificationResendResponse>>,) => {
+      return customInstance<SettlementNotificationResendResponse>(
+      {url: `/api/admin/settlements/${settlementId}/notifications/resend`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: encryptedPaymentStatementDownloadRequest,
-        responseType: 'blob'
+      data: settlementNotificationResendRequest
     },
       options);
     }
 
 /**
- * 현재 설정을 재계산하지 않고 CONFIRMED 지급조서의 immutable snapshot만 반환합니다. 프론트는 이 payload를 렌더링만 합니다.
+ * ### 이 API가 하는 일
+ * - POST /api/admin/settlements/{settlementId}/correction-requests
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
+ * - 프론트 담당 영역: 정산 (`settlement`)
+ * - 호출 방식: `POST /api/admin/settlements/{settlementId}/correction-requests`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 경로/쿼리/요청 본문 from 선택 행, 필터, or provider callback
+ * - 응답 사용 위치: 정산 지급정정 요청 생성 response drives 화면 state, modal, or audit detail
+ * - 프론트 조회 키: `post_api_admin_settlements_settlementid_correction_requests`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: SETTLEMENT_CORRECTION_CREATE_SMOKE
+ * - 목데이터 대체: Replace localStorage state for 정산 지급정정 요청 생성 with API response/cache.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary POST /api/admin/settlements/{settlementId}/correction-requests
+ */
+const requestCorrection = (
+    settlementId: number,
+    settlementCorrectionRequest: SettlementCorrectionRequest,
+ options?: SecondParameter<typeof customInstance<ApiResponseSettlementCorrectionResponse>>,) => {
+      return customInstance<ApiResponseSettlementCorrectionResponse>(
+      {url: `/api/admin/settlements/${settlementId}/correction-requests`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: settlementCorrectionRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 지급조서 알림 재발송(settlementId alias)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/admin/settlements/statements/{statementId}/notifications/resend`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: SETTLEMENT_WRITE 권한 필요
+ * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: 2026-11-07 notification resend without business-state mutation
+ * @summary 지급조서 알림 재발송(settlementId alias)
+ */
+const resendSettlementStatementNotification = (
+    statementId: number,
+    settlementNotificationResendRequest: SettlementNotificationResendRequest,
+ options?: SecondParameter<typeof customInstance<SettlementNotificationResendResponse>>,) => {
+      return customInstance<SettlementNotificationResendResponse>(
+      {url: `/api/admin/settlements/statements/${statementId}/notifications/resend`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: settlementNotificationResendRequest
+    },
+      options);
+    }
+
+/**
+ * 선택된 지급조서를 일괄 CONFIRMED 처리합니다(all-or-nothing).
+ * 확인 가능: WAITING_CONFIRM | REAPPLICATION.
+ * 409 PAYMENT_STATEMENT_STATUS_CONFLICT (details.statementId),
+ * 404 PAYMENT_STATEMENT_NOT_FOUND,
+ * 400 SCHEDULED_PAYMENT_DATE_REQUIRED | SCHEDULED_PAYMENT_DATE_MUST_BE_TODAY_OR_LATER.
+ * @summary 지급조서 일괄 확인 처리
+ */
+const bulkConfirmPaymentStatements = (
+    settlementBulkStatusChangeRequest: SettlementBulkStatusChangeRequest,
+ options?: SecondParameter<typeof customInstance<ApiResponseSettlementBulkStatusChangeResponse>>,) => {
+      return customInstance<ApiResponseSettlementBulkStatusChangeResponse>(
+      {url: `/api/admin/settlements/statements/bulk-confirm`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: settlementBulkStatusChangeRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 지급조서 일괄 Worker ZIP 생성
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/admin/settlements/payment-statements/bulk-download/jobs`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: FILE_DOWNLOAD 권한 필요
+ * - 접근 범위: PROGRAM_ASSIGNED 범위 정책
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: RAW_PRIVACY_APPROVAL_REQUIRED 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: 개별/대량 모두 동일 frozen snapshot 기준; FE 업로드/스캔/등록 canonical PDF만 Worker ZIP source로 사용; 누락 시 CLIENT_RENDER_REQUIRED
+ * @summary 지급조서 일괄 Worker ZIP 생성
+ */
+const paymentStatements = (
+    paymentStatementBulkDownloadRequest: PaymentStatementBulkDownloadRequest,
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
+      {url: `/api/admin/settlements/payment-statements/bulk-download/jobs`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: paymentStatementBulkDownloadRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - POST /api/admin/settlements/exports/tax-report
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
+ * - 프론트 담당 영역: 정산s (`settlements`)
+ * - 호출 방식: `POST /api/admin/settlements/exports/tax-report`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 폼 상태 or 선택 행 action payload
+ * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신 (mock/local provider first, production provider after staging config)
+ * - 프론트 조회 키: `post_admin_settlements_exports_tax-report`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: PROVIDER_PENDING
+ * - 외부 연동 확인: NAVER_MAPS_FUEL_PDF_XLSX_EXPORT_TEMPLATE 연동 검증 필요
+ * - 스테이징 점검 기준: REQUIRED
+ * - 목데이터 대체: 임시 목데이터/localStorage 상태를 settlements API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary POST /api/admin/settlements/exports/tax-report
+ */
+const requestTaxReportExport = (
+    settlementExportRequest: SettlementExportRequest,
+ options?: SecondParameter<typeof customInstance<ApiResponse>>,) => {
+      return customInstance<ApiResponse>(
+      {url: `/api/admin/settlements/exports/tax-report`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: settlementExportRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 정산 원문 Export 범위 식별자 발급
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/admin/settlements/exports/scope`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: SETTLEMENT_READ 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 개인정보 없음
+ * - 감사로그 저장: 필수 아님
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: 무필터 전체와 제한 범위를 구분하는 scopeToken. 원문 없음
+ * @summary 정산 원문 Export 범위 식별자 발급
+ */
+const issueSettlementExportScope = (
+    settlementExportRequest: SettlementExportRequest,
+    params: IssueSettlementExportScopeParams,
+ options?: SecondParameter<typeof customInstance<Scope>>,) => {
+      return customInstance<Scope>(
+      {url: `/api/admin/settlements/exports/scope`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: settlementExportRequest,
+        params
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - POST /api/admin/settlements/exports/bulk-transfer
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
+ * - 프론트 담당 영역: 정산s (`settlements`)
+ * - 호출 방식: `POST /api/admin/settlements/exports/bulk-transfer`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 폼 상태 or 선택 행 action payload
+ * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신 (mock/local provider first, production provider after staging config)
+ * - 프론트 조회 키: `post_admin_settlements_exports_bulk-transfer`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: PROVIDER_PENDING
+ * - 외부 연동 확인: NAVER_MAPS_FUEL_PDF_XLSX_EXPORT_TEMPLATE 연동 검증 필요
+ * - 스테이징 점검 기준: REQUIRED
+ * - 목데이터 대체: 임시 목데이터/localStorage 상태를 settlements API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary POST /api/admin/settlements/exports/bulk-transfer
+ */
+const requestBulkTransferExport = (
+    settlementExportRequest: SettlementExportRequest,
+ options?: SecondParameter<typeof customInstance<ApiResponse>>,) => {
+      return customInstance<ApiResponse>(
+      {url: `/api/admin/settlements/exports/bulk-transfer`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: settlementExportRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 정산 설정 항목 카드 복제
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/admin/settlement-configs/current/items/{itemKind}/{itemId}/duplicate`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: SETTLEMENT_WRITE 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Frontend settlement config card CRUD handoff
+ * @summary 정산 설정 항목 카드 복제
+ */
+const duplicateConfigItem = (
+    itemKind: string,
+    itemId: number,
+ options?: SecondParameter<typeof customInstance<SettlementConfigResponse>>,) => {
+      return customInstance<SettlementConfigResponse>(
+      {url: `/api/admin/settlement-configs/current/items/${itemKind}/${itemId}/duplicate`, method: 'POST'
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - POST /api/admin/settlement-configs/current/duplicate
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/admin/settlement-configs/current/duplicate`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary POST /api/admin/settlement-configs/current/duplicate
+ */
+const duplicateCurrentConfig = (
+    settlementConfigUpdateRequest: SettlementConfigUpdateRequest,
+ options?: SecondParameter<typeof customInstance<SettlementConfigResponse>>,) => {
+      return customInstance<SettlementConfigResponse>(
+      {url: `/api/admin/settlement-configs/current/duplicate`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: settlementConfigUpdateRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 정산/계좌지급 부분 수정
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `PATCH /api/admin/settlements/statements/{statementId}/reject`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 부분 수정
+ */
+const rejectPaymentStatement = (
+    statementId: number,
+    settlementStatusChangeRequest: SettlementStatusChangeRequest,
+ options?: SecondParameter<typeof customInstance<ApiResponseSettlementStatusChangeResponse>>,) => {
+      return customInstance<ApiResponseSettlementStatusChangeResponse>(
+      {url: `/api/admin/settlements/statements/${statementId}/reject`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: settlementStatusChangeRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 정산/계좌지급 부분 수정
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
+ * - 프론트 담당 영역: 정산s (`settlements`)
+ * - 호출 방식: `PATCH /api/admin/settlements/statements/{statementId}/confirm`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 폼 상태 or 선택 행 action payload
+ * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신 (mock/local provider first, production provider after staging config)
+ * - 프론트 조회 키: `patch_admin_settlements_statements_statementId_confirm`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: PROVIDER_PENDING
+ * - 외부 연동 확인: NAVER_MAPS_FUEL_PDF_XLSX_EXPORT_TEMPLATE 연동 검증 필요
+ * - 스테이징 점검 기준: REQUIRED
+ * - 목데이터 대체: 임시 목데이터/localStorage 상태를 settlements API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Auto-synced from implemented controller route 이체 예정일은 KST 기준 오늘 또는 이후 날짜만 허용하며, 위반 시 400 SCHEDULED_PAYMENT_DATE_MUST_BE_TODAY_OR_LATER를 반환합니다.
+ * @summary 정산/계좌지급 부분 수정
+ */
+const confirmPaymentStatement = (
+    statementId: number,
+    settlementStatusChangeRequest: SettlementStatusChangeRequest,
+ options?: SecondParameter<typeof customInstance<ApiResponseSettlementStatusChangeResponse>>,) => {
+      return customInstance<ApiResponseSettlementStatusChangeResponse>(
+      {url: `/api/admin/settlements/statements/${statementId}/confirm`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: settlementStatusChangeRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 정산/계좌지급 부분 수정
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
+ * - 프론트 담당 영역: 정산 (`settlement`)
+ * - 호출 방식: `PATCH /api/admin/settlements/correction-requests/{correctionRequestId}/reject`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 경로/쿼리/요청 본문 from 선택 행, 필터, or provider callback
+ * - 응답 사용 위치: 정산 지급정정 요청 반려 response drives 화면 state, modal, or audit detail
+ * - 프론트 조회 키: `patch_api_admin_settlements_correction_requests_correctionrequestid_reject`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: SETTLEMENT_CORRECTION_REJECT_SMOKE
+ * - 목데이터 대체: Replace localStorage state for 정산 지급정정 요청 반려 with API response/cache.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 부분 수정
+ */
+const rejectCorrection = (
+    correctionRequestId: number,
+    settlementCorrectionRequest: SettlementCorrectionRequest,
+ options?: SecondParameter<typeof customInstance<ApiResponseSettlementCorrectionResponse>>,) => {
+      return customInstance<ApiResponseSettlementCorrectionResponse>(
+      {url: `/api/admin/settlements/correction-requests/${correctionRequestId}/reject`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: settlementCorrectionRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 정산/계좌지급 부분 수정
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
+ * - 프론트 담당 영역: 정산 (`settlement`)
+ * - 호출 방식: `PATCH /api/admin/settlements/correction-requests/{correctionRequestId}/approve`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 경로/쿼리/요청 본문 from 선택 행, 필터, or provider callback
+ * - 응답 사용 위치: 정산 지급정정 요청 승인 response drives 화면 state, modal, or audit detail
+ * - 프론트 조회 키: `patch_api_admin_settlements_correction_requests_correctionrequestid_approve`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: SETTLEMENT_CORRECTION_APPROVE_SMOKE
+ * - 목데이터 대체: Replace localStorage state for 정산 지급정정 요청 승인 with API response/cache.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 부분 수정
+ */
+const approveCorrection = (
+    correctionRequestId: number,
+    settlementCorrectionApprovalRequest: SettlementCorrectionApprovalRequest,
+ options?: SecondParameter<typeof customInstance<ApiResponseSettlementCorrectionResponse>>,) => {
+      return customInstance<ApiResponseSettlementCorrectionResponse>(
+      {url: `/api/admin/settlements/correction-requests/${correctionRequestId}/approve`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: settlementCorrectionApprovalRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 개별 지급 완료
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
+ * - 프론트 담당 영역: 정산s (`settlements`)
+ * - 호출 방식: `PATCH /api/admin/account-payments/{paymentId}/paid`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 폼 상태 or 선택 행 action payload
+ * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신 (mock/local provider first, production provider after staging config)
+ * - 프론트 조회 키: `patch_admin_settlements_account-payments_accountPaymentId_paid`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: PROVIDER_PENDING
+ * - 외부 연동 확인: NAVER_MAPS_FUEL_PDF_XLSX_EXPORT_TEMPLATE 연동 검증 필요
+ * - 스테이징 점검 기준: REQUIRED
+ * - 목데이터 대체: 임시 목데이터/localStorage 상태를 settlements API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: SETTLEMENT_WRITE 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
+ * @summary 개별 지급 완료
+ */
+const markPaid = (
+    paymentId: number,
+    settlementStatusChangeRequest: SettlementStatusChangeRequest,
+ options?: SecondParameter<typeof customInstance<ApiResponseSettlementStatusChangeResponse>>,) => {
+      return customInstance<ApiResponseSettlementStatusChangeResponse>(
+      {url: `/api/admin/account-payments/${paymentId}/paid`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: settlementStatusChangeRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 개별 지급 실패
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
+ * - 프론트 담당 영역: 정산s (`settlements`)
+ * - 호출 방식: `PATCH /api/admin/account-payments/{paymentId}/failed`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 폼 상태 or 선택 행 action payload
+ * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신 (mock/local provider first, production provider after staging config)
+ * - 프론트 조회 키: `patch_admin_account-payments_paymentId_failed`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: PROVIDER_PENDING
+ * - 외부 연동 확인: NAVER_MAPS_FUEL_PDF_XLSX_EXPORT_TEMPLATE 연동 검증 필요
+ * - 스테이징 점검 기준: REQUIRED
+ * - 목데이터 대체: 임시 목데이터/localStorage 상태를 settlements API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: SETTLEMENT_WRITE 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
+ * @summary 개별 지급 실패
+ */
+const markFailed = (
+    paymentId: number,
+    settlementStatusChangeRequest: SettlementStatusChangeRequest,
+ options?: SecondParameter<typeof customInstance<ApiResponseSettlementStatusChangeResponse>>,) => {
+      return customInstance<ApiResponseSettlementStatusChangeResponse>(
+      {url: `/api/admin/account-payments/${paymentId}/failed`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: settlementStatusChangeRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 계좌 지급 일괄 완료 처리
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `PATCH /api/admin/account-payments/bulk-paid`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: SETTLEMENT_WRITE 권한 필요
+ * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: PAYMENT_AMOUNT 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Frontend CMS settlement-management P0 bulk paid handoff
+ * @summary 계좌 지급 일괄 완료 처리
+ */
+const bulkPaid = (
+    settlementBulkStatusChangeRequest: SettlementBulkStatusChangeRequest,
+ options?: SecondParameter<typeof customInstance<ApiResponseSettlementBulkStatusChangeResponse>>,) => {
+      return customInstance<ApiResponseSettlementBulkStatusChangeResponse>(
+      {url: `/api/admin/account-payments/bulk-paid`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: settlementBulkStatusChangeRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 정산/계좌지급 조회
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
+ * - 프론트 담당 영역: 정산s (`settlements`)
+ * - 호출 방식: `GET /api/admin/settlements`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
+ * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신 (mock/local provider first, production provider after staging config)
+ * - 프론트 조회 키: `get_admin_settlements`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: PROVIDER_PENDING
+ * - 외부 연동 확인: NAVER_MAPS_FUEL_PDF_XLSX_EXPORT_TEMPLATE 연동 검증 필요
+ * - 스테이징 점검 기준: REQUIRED
+ * - 목데이터 대체: 임시 목데이터/localStorage 상태를 settlements API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 조회
+ */
+const listSettlements = (
+    params?: ListSettlementsParams,
+ options?: SecondParameter<typeof customInstance<PageResponseSettlementListItemResponse>>,) => {
+      return customInstance<PageResponseSettlementListItemResponse>(
+      {url: `/api/admin/settlements`, method: 'GET',
+        params
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 정산/계좌지급 조회
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
+ * - 프론트 담당 영역: 정산s (`settlements`)
+ * - 호출 방식: `GET /api/admin/settlements/{settlementId}`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
+ * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신 (mock/local provider first, production provider after staging config)
+ * - 프론트 조회 키: `get_admin_settlements_settlementId`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: PROVIDER_PENDING
+ * - 외부 연동 확인: NAVER_MAPS_FUEL_PDF_XLSX_EXPORT_TEMPLATE 연동 검증 필요
+ * - 스테이징 점검 기준: REQUIRED
+ * - 목데이터 대체: 임시 목데이터/localStorage 상태를 settlements API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 조회
+ */
+const getSettlement = (
+    settlementId: number,
+ options?: SecondParameter<typeof customInstance<SettlementFrontendResponse>>,) => {
+      return customInstance<SettlementFrontendResponse>(
+      {url: `/api/admin/settlements/${settlementId}`, method: 'GET'
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 정산/계좌지급 조회
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
+ * - 프론트 담당 영역: 정산 (`settlement`)
+ * - 호출 방식: `GET /api/admin/settlements/{settlementId}/revisions`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 경로/쿼리/요청 본문 from 선택 행, 필터, or provider callback
+ * - 응답 사용 위치: 정산 revision 목록 조회 response drives 화면 state, modal, or audit detail
+ * - 프론트 조회 키: `get_api_admin_settlements_settlementid_revisions`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: SETTLEMENT_REVISION_LIST_SMOKE
+ * - 목데이터 대체: Replace localStorage state for 정산 revision 목록 조회 with API response/cache.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 조회
+ */
+const listSettlementRevisions = (
+    settlementId: number,
+    params?: ListSettlementRevisionsParams,
+ options?: SecondParameter<typeof customInstance<PageResponseSettlementListItemResponse>>,) => {
+      return customInstance<PageResponseSettlementListItemResponse>(
+      {url: `/api/admin/settlements/${settlementId}/revisions`, method: 'GET',
+        params
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 정산/계좌지급 조회
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
+ * - 프론트 담당 영역: 정산 (`settlement`)
+ * - 호출 방식: `GET /api/admin/settlements/{settlementId}/revisions/{revisionId}`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 경로/쿼리/요청 본문 from 선택 행, 필터, or provider callback
+ * - 응답 사용 위치: 정산 revision 상세 조회 response drives 화면 state, modal, or audit detail
+ * - 프론트 조회 키: `get_api_admin_settlements_settlementid_revisions_revisionid`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: SETTLEMENT_REVISION_DETAIL_SMOKE
+ * - 목데이터 대체: Replace localStorage state for 정산 revision 상세 조회 with API response/cache.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 조회
+ */
+const getSettlementRevisionDetail = (
+    settlementId: number,
+    revisionId: number,
+ options?: SecondParameter<typeof customInstance<SettlementRevisionDetailResponse>>,) => {
+      return customInstance<SettlementRevisionDetailResponse>(
+      {url: `/api/admin/settlements/${settlementId}/revisions/${revisionId}`, method: 'GET'
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 지급조서 FE 렌더링 frozen snapshot 조회
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `GET /api/admin/settlements/{settlementId}/payment-statement/render-data`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: SETTLEMENT_READ 권한 필요
+ * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: PAYMENT_STATEMENT_SNAPSHOT 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: 프론트는 금액/세금을 재계산하지 않고 frozen snapshot을 PDF로 렌더링
  * @summary 지급조서 FE 렌더링 frozen snapshot 조회
  */
 const paymentStatementRenderData = (
     settlementId: number,
- options?: SecondParameter<typeof customInstance<ApiResponsePaymentStatementRenderDataResponse>>,) => {
-      return customInstance<ApiResponsePaymentStatementRenderDataResponse>(
+ options?: SecondParameter<typeof customInstance<PaymentStatementRenderDataResponse>>,) => {
+      return customInstance<PaymentStatementRenderDataResponse>(
       {url: `/api/admin/settlements/${settlementId}/payment-statement/render-data`, method: 'GET'
     },
       options);
     }
 
 /**
- * Disabled with HTTP 409 PAYMENT_STATEMENT_PDF_UNVERIFIED. Upload state, malware scan, MIME, size, ownership, and payloadHash do not prove that client-supplied PDF bytes contain only the masked presentation. Existing stored files are preserved and excluded from payment-statement download and ZIP paths.
+ * ### 이 API가 하는 일
+ * - 정산 availableActions 조회
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `GET /api/admin/settlements/{settlementId}/available-actions`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: SETTLEMENT_READ 권한 필요
+ * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: PAYMENT_AMOUNT 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Stage006 settlement actions contract
+ * @summary 정산 availableActions 조회
  */
-const registerPaymentStatementRenderedFile = (
+const getSettlementAvailableActions = (
     settlementId: number,
-    paymentStatementRenderedFileRegisterRequest: PaymentStatementRenderedFileRegisterRequest,
- options?: SecondParameter<typeof customInstance<ApiResponseVoid>>,) => {
-      return customInstance<ApiResponseVoid>(
-      {url: `/api/admin/settlements/${settlementId}/payment-statement/rendered-file`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: paymentStatementRenderedFileRegisterRequest
+ options?: SecondParameter<typeof customInstance<SettlementAvailableActionsResponse>>,) => {
+      return customInstance<SettlementAvailableActionsResponse>(
+      {url: `/api/admin/settlements/${settlementId}/available-actions`, method: 'GET'
     },
       options);
     }
 
 /**
- * Rejected instructor payment statements may be reapplied through KST rejection date + 14 days or program.business_end_date, whichever comes first. Expired or unavailable legacy rejection history returns 409 SETTLEMENT_REAPPLICATION_DEADLINE_EXPIRED or SETTLEMENT_REAPPLICATION_DEADLINE_UNAVAILABLE. This rule does not apply to ordinary member receipts or GEMINI/GEMINI_TRAINING payment paths.
- * @summary 정산/계좌 지급 생성/처리
+ * ### 이 API가 하는 일
+ * - 정산/계좌지급 조회
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
+ * - 프론트 담당 영역: 정산s (`settlements`)
+ * - 호출 방식: `GET /api/admin/settlements/transportation-snapshots`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
+ * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신 (mock/local provider first, production provider after staging config)
+ * - 프론트 조회 키: `get_admin_settlements_transportation-snapshots`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: PROVIDER_PENDING
+ * - 외부 연동 확인: NAVER_MAPS_FUEL_PDF_XLSX_EXPORT_TEMPLATE 연동 검증 필요
+ * - 스테이징 점검 기준: REQUIRED
+ * - 목데이터 대체: 임시 목데이터/localStorage 상태를 settlements API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 조회
  */
-const requestPaymentStatement = (
-    settlementId: string,
- options?: SecondParameter<typeof customInstance<void>>,) => {
-      return customInstance<void>(
-      {url: `/api/admin/settlements/${settlementId}/payment-statement/request`, method: 'POST'
+const listTransportationSnapshots = (
+    params?: ListTransportationSnapshotsParams,
+ options?: SecondParameter<typeof customInstance<PageResponseSettlementTransportationSnapshotResponse>>,) => {
+      return customInstance<PageResponseSettlementTransportationSnapshotResponse>(
+      {url: `/api/admin/settlements/transportation-snapshots`, method: 'GET',
+        params
     },
       options);
     }
 
 /**
- * @summary 정산/계좌 지급 생성/처리
+ * ### 이 API가 하는 일
+ * - 정산/계좌지급 조회
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `GET /api/admin/settlements/status-mappings`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 조회
  */
-const recalculate = (
-    settlementId: string,
- options?: SecondParameter<typeof customInstance<void>>,) => {
-      return customInstance<void>(
-      {url: `/api/admin/settlements/${settlementId}/recalculate`, method: 'POST'
+const statusMappings = (
+
+ options?: SecondParameter<typeof customInstance<SettlementStatusMappingResponse>>,) => {
+      return customInstance<SettlementStatusMappingResponse>(
+      {url: `/api/admin/settlements/status-mappings`, method: 'GET'
     },
       options);
     }
 
 /**
- * @summary 정산/계좌 지급 상세 조회
+ * ### 이 API가 하는 일
+ * - 정산/계좌지급 조회
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
+ * - 프론트 담당 영역: 정산s (`settlements`)
+ * - 호출 방식: `GET /api/admin/settlements/statements`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
+ * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신 (mock/local provider first, production provider after staging config)
+ * - 프론트 조회 키: `get_admin_settlements_statements`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: PROVIDER_PENDING
+ * - 외부 연동 확인: NAVER_MAPS_FUEL_PDF_XLSX_EXPORT_TEMPLATE 연동 검증 필요
+ * - 스테이징 점검 기준: REQUIRED
+ * - 목데이터 대체: 임시 목데이터/localStorage 상태를 settlements API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 조회
  */
-const listSettlementRevisions = (
-    settlementId: string,
- options?: SecondParameter<typeof customInstance<void>>,) => {
-      return customInstance<void>(
-      {url: `/api/admin/settlements/${settlementId}/revisions`, method: 'GET'
+const listPaymentStatements = (
+    params?: ListPaymentStatementsParams,
+ options?: SecondParameter<typeof customInstance<PageResponsePaymentStatementListItemResponse>>,) => {
+      return customInstance<PageResponsePaymentStatementListItemResponse>(
+      {url: `/api/admin/settlements/statements`, method: 'GET',
+        params
     },
       options);
     }
 
 /**
- * @summary 정산/계좌 지급 상세 조회
+ * ### 이 API가 하는 일
+ * - 정산/계좌지급 조회
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
+ * - 프론트 담당 영역: 정산s (`settlements`)
+ * - 호출 방식: `GET /api/admin/settlements/open-questions`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
+ * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신 (mock/local provider first, production provider after staging config)
+ * - 프론트 조회 키: `get_admin_settlements_open-questions`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: PROVIDER_PENDING
+ * - 외부 연동 확인: NAVER_MAPS_FUEL_PDF_XLSX_EXPORT_TEMPLATE 연동 검증 필요
+ * - 스테이징 점검 기준: REQUIRED
+ * - 목데이터 대체: 임시 목데이터/localStorage 상태를 settlements API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 조회
  */
-const getSettlementRevisionDetail = (
-    settlementId: string,
-    revisionId: string,
- options?: SecondParameter<typeof customInstance<void>>,) => {
-      return customInstance<void>(
-      {url: `/api/admin/settlements/${settlementId}/revisions/${revisionId}`, method: 'GET'
+const openQuestions = (
+
+ options?: SecondParameter<typeof customInstance<SettlementOpenQuestion[]>>,) => {
+      return customInstance<SettlementOpenQuestion[]>(
+      {url: `/api/admin/settlements/open-questions`, method: 'GET'
     },
       options);
     }
 
-return {listAccountPayments,bulkPaid,getAccountPayment,markFailed,markPaid,deleteCurrentConfig,currentConfig,updateCurrentConfig,duplicateCurrentConfig,deleteConfigItem,duplicateConfigItem,listSettlements,listSettlementAggregates,budgetSummary,settlementCalendar,settlementCalendarDate,settlementCalendarSummary,listCorrectionRequests,approveCorrection,rejectCorrection,listExportHistories,requestBulkTransferExport,issueSettlementExportScope,requestTaxReportExport,openQuestions,paymentStatements,listPaymentStatements,bulkConfirmPaymentStatements,confirmPaymentStatement,resendSettlementStatementNotification,rejectPaymentStatement,statusMappings,listTransportationSnapshots,getSettlement,getSettlementAvailableActions,requestCorrection,resendSettlementNotification,downloadPaymentStatement,downloadPaymentStatementEncrypted,recordPaymentStatementClientDownload,requestPaymentStatementDownload,paymentStatementRenderData,registerPaymentStatementRenderedFile,requestPaymentStatement,recalculate,listSettlementRevisions,getSettlementRevisionDetail}};
-export type ListAccountPaymentsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['listAccountPayments']>>>
-export type BulkPaidResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['bulkPaid']>>>
-export type GetAccountPaymentResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['getAccountPayment']>>>
-export type MarkFailedResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['markFailed']>>>
-export type MarkPaidResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['markPaid']>>>
-export type DeleteCurrentConfigResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['deleteCurrentConfig']>>>
+/**
+ * ### 이 API가 하는 일
+ * - 정산/계좌지급 조회
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
+ * - 프론트 담당 영역: 정산s (`settlements`)
+ * - 호출 방식: `GET /api/admin/settlements/exports`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
+ * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신 (mock/local provider first, production provider after staging config)
+ * - 프론트 조회 키: `get_admin_settlements_exports`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: PROVIDER_PENDING
+ * - 외부 연동 확인: NAVER_MAPS_FUEL_PDF_XLSX_EXPORT_TEMPLATE 연동 검증 필요
+ * - 스테이징 점검 기준: REQUIRED
+ * - 목데이터 대체: 임시 목데이터/localStorage 상태를 settlements API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 조회
+ */
+const listExportHistories = (
+    params?: ListExportHistoriesParams,
+ options?: SecondParameter<typeof customInstance<PageResponseSettlementExportHistoryResponse>>,) => {
+      return customInstance<PageResponseSettlementExportHistoryResponse>(
+      {url: `/api/admin/settlements/exports`, method: 'GET',
+        params
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 정산/계좌지급 조회
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
+ * - 프론트 담당 영역: 정산 (`settlement`)
+ * - 호출 방식: `GET /api/admin/settlements/correction-requests`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 경로/쿼리/요청 본문 from 선택 행, 필터, or provider callback
+ * - 응답 사용 위치: 정산 지급정정 요청 목록 조회 response drives 화면 state, modal, or audit detail
+ * - 프론트 조회 키: `get_api_admin_settlements_correction_requests`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: SETTLEMENT_CORRECTION_LIST_SMOKE
+ * - 목데이터 대체: Replace localStorage state for 정산 지급정정 요청 목록 조회 with API response/cache.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 조회
+ */
+const listCorrectionRequests = (
+    params?: ListCorrectionRequestsParams,
+ options?: SecondParameter<typeof customInstance<PageResponseSettlementCorrectionResponse>>,) => {
+      return customInstance<PageResponseSettlementCorrectionResponse>(
+      {url: `/api/admin/settlements/correction-requests`, method: 'GET',
+        params
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 정산/계좌지급 조회
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
+ * - 프론트 담당 영역: 정산s (`settlements`)
+ * - 호출 방식: `GET /api/admin/settlements/calendar`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
+ * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신 (mock/local provider first, production provider after staging config)
+ * - 프론트 조회 키: `get_admin_settlements_calendar`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: PROVIDER_PENDING
+ * - 외부 연동 확인: NAVER_MAPS_FUEL_PDF_XLSX_EXPORT_TEMPLATE 연동 검증 필요
+ * - 스테이징 점검 기준: REQUIRED
+ * - 목데이터 대체: 임시 목데이터/localStorage 상태를 settlements API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 조회
+ */
+const settlementCalendar = (
+    params?: SettlementCalendarParams,
+ options?: SecondParameter<typeof customInstance<SettlementCalendarItemResponse[]>>,) => {
+      return customInstance<SettlementCalendarItemResponse[]>(
+      {url: `/api/admin/settlements/calendar`, method: 'GET',
+        params
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 정산/계좌지급 조회
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
+ * - 프론트 담당 영역: 정산s (`settlements`)
+ * - 호출 방식: `GET /api/admin/settlements/calendar/summary`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
+ * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신 (mock/local provider first, production provider after staging config)
+ * - 프론트 조회 키: `get_admin_settlements_calendar_summary`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: PROVIDER_PENDING
+ * - 외부 연동 확인: NAVER_MAPS_FUEL_PDF_XLSX_EXPORT_TEMPLATE 연동 검증 필요
+ * - 스테이징 점검 기준: REQUIRED
+ * - 목데이터 대체: 임시 목데이터/localStorage 상태를 settlements API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 조회
+ */
+const settlementCalendarSummary = (
+    params?: SettlementCalendarSummaryParams,
+ options?: SecondParameter<typeof customInstance<SettlementCalendarSummaryResponse>>,) => {
+      return customInstance<SettlementCalendarSummaryResponse>(
+      {url: `/api/admin/settlements/calendar/summary`, method: 'GET',
+        params
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 정산/계좌지급 조회
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
+ * - 프론트 담당 영역: 정산s (`settlements`)
+ * - 호출 방식: `GET /api/admin/settlements/calendar/dates/{date}`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
+ * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신 (mock/local provider first, production provider after staging config)
+ * - 프론트 조회 키: `get_admin_settlements_calendar_dates_date`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: PROVIDER_PENDING
+ * - 외부 연동 확인: NAVER_MAPS_FUEL_PDF_XLSX_EXPORT_TEMPLATE 연동 검증 필요
+ * - 스테이징 점검 기준: REQUIRED
+ * - 목데이터 대체: 임시 목데이터/localStorage 상태를 settlements API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 조회
+ */
+const settlementCalendarDate = (
+    date: string,
+ options?: SecondParameter<typeof customInstance<SettlementCalendarItemResponse[]>>,) => {
+      return customInstance<SettlementCalendarItemResponse[]>(
+      {url: `/api/admin/settlements/calendar/dates/${date}`, method: 'GET'
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 정산/계좌지급 조회
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `GET /api/admin/settlements/budget-summary`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 조회
+ */
+const budgetSummary = (
+    params?: BudgetSummaryParams,
+ options?: SecondParameter<typeof customInstance<SettlementBudgetSummaryResponse>>,) => {
+      return customInstance<SettlementBudgetSummaryResponse>(
+      {url: `/api/admin/settlements/budget-summary`, method: 'GET',
+        params
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 정산/계좌지급 조회
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `GET /api/admin/settlements/aggregates`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 정산 API는 지급조서 상태와 계좌 지급 상태가 섞이지 않는지, 금액/세금/정정 여부가 화면에 분리 표시되는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 조회
+ */
+const listSettlementAggregates = (
+    params?: ListSettlementAggregatesParams,
+ options?: SecondParameter<typeof customInstance<SettlementAggregateResponse[]>>,) => {
+      return customInstance<SettlementAggregateResponse[]>(
+      {url: `/api/admin/settlements/aggregates`, method: 'GET',
+        params
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 계좌 지급 단건 상세 조회
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `GET /api/admin/account-payments/{paymentId}`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: SETTLEMENT_READ 권한 필요
+ * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: PERSONAL_DATA 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Frontend CMS settlement-management P1 account payment detail handoff
+ * @summary 계좌 지급 단건 상세 조회
+ */
+const getAccountPayment = (
+    paymentId: number,
+    params?: GetAccountPaymentParams,
+ options?: SecondParameter<typeof customInstance<AccountPaymentDetailResponse>>,) => {
+      return customInstance<AccountPaymentDetailResponse>(
+      {url: `/api/admin/account-payments/${paymentId}`, method: 'GET',
+        params
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 계좌 지급 확인 목록
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 정산 관리 (`null`)
+ * - 프론트 담당 영역: 정산s (`settlements`)
+ * - 호출 방식: `GET /api/admin/account-payments`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
+ * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신 (canonical account payment list endpoint; mock/local provider first, production provider after staging config)
+ * - 프론트 조회 키: `get_admin_account-payments`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: PROVIDER_PENDING
+ * - 외부 연동 확인: NAVER_MAPS_FUEL_PDF_XLSX_EXPORT_TEMPLATE 연동 검증 필요
+ * - 스테이징 점검 기준: REQUIRED
+ * - 목데이터 대체: 임시 목데이터/localStorage 상태를 settlements API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: SETTLEMENT_READ 권한 필요
+ * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
+ * @summary 계좌 지급 확인 목록
+ */
+const listAccountPayments = (
+    params?: ListAccountPaymentsParams,
+ options?: SecondParameter<typeof customInstance<PageResponseAccountPaymentListItemResponse>>,) => {
+      return customInstance<PageResponseAccountPaymentListItemResponse>(
+      {url: `/api/admin/account-payments`, method: 'GET',
+        params
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 정산 설정 항목 카드 삭제
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `DELETE /api/admin/settlement-configs/current/items/{itemKind}/{itemId}`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: SETTLEMENT_WRITE 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.
+ * - 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Frontend settlement config card CRUD handoff
+ * @summary 정산 설정 항목 카드 삭제
+ */
+const deleteConfigItem = (
+    itemKind: string,
+    itemId: number,
+ options?: SecondParameter<typeof customInstance<SettlementConfigResponse>>,) => {
+      return customInstance<SettlementConfigResponse>(
+      {url: `/api/admin/settlement-configs/current/items/${itemKind}/${itemId}`, method: 'DELETE'
+    },
+      options);
+    }
+
+return {currentConfig,updateCurrentConfig,deleteCurrentConfig,recalculate,requestPaymentStatement,registerPaymentStatementRenderedFile,downloadPaymentStatement,downloadPaymentStatementEncrypted,requestPaymentStatementDownload,recordPaymentStatementClientDownload,resendSettlementNotification,requestCorrection,resendSettlementStatementNotification,bulkConfirmPaymentStatements,paymentStatements,requestTaxReportExport,issueSettlementExportScope,requestBulkTransferExport,duplicateConfigItem,duplicateCurrentConfig,rejectPaymentStatement,confirmPaymentStatement,rejectCorrection,approveCorrection,markPaid,markFailed,bulkPaid,listSettlements,getSettlement,listSettlementRevisions,getSettlementRevisionDetail,paymentStatementRenderData,getSettlementAvailableActions,listTransportationSnapshots,statusMappings,listPaymentStatements,openQuestions,listExportHistories,listCorrectionRequests,settlementCalendar,settlementCalendarSummary,settlementCalendarDate,budgetSummary,listSettlementAggregates,getAccountPayment,listAccountPayments,deleteConfigItem}};
 export type CurrentConfigResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['currentConfig']>>>
 export type UpdateCurrentConfigResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['updateCurrentConfig']>>>
-export type DuplicateCurrentConfigResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['duplicateCurrentConfig']>>>
-export type DeleteConfigItemResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['deleteConfigItem']>>>
-export type DuplicateConfigItemResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['duplicateConfigItem']>>>
-export type ListSettlementsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['listSettlements']>>>
-export type ListSettlementAggregatesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['listSettlementAggregates']>>>
-export type BudgetSummaryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['budgetSummary']>>>
-export type SettlementCalendarResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['settlementCalendar']>>>
-export type SettlementCalendarDateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['settlementCalendarDate']>>>
-export type SettlementCalendarSummaryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['settlementCalendarSummary']>>>
-export type ListCorrectionRequestsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['listCorrectionRequests']>>>
-export type ApproveCorrectionResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['approveCorrection']>>>
-export type RejectCorrectionResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['rejectCorrection']>>>
-export type ListExportHistoriesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['listExportHistories']>>>
-export type RequestBulkTransferExportResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['requestBulkTransferExport']>>>
-export type IssueSettlementExportScopeResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['issueSettlementExportScope']>>>
-export type RequestTaxReportExportResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['requestTaxReportExport']>>>
-export type OpenQuestionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['openQuestions']>>>
-export type PaymentStatementsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['paymentStatements']>>>
-export type ListPaymentStatementsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['listPaymentStatements']>>>
-export type BulkConfirmPaymentStatementsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['bulkConfirmPaymentStatements']>>>
-export type ConfirmPaymentStatementResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['confirmPaymentStatement']>>>
-export type ResendSettlementStatementNotificationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['resendSettlementStatementNotification']>>>
-export type RejectPaymentStatementResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['rejectPaymentStatement']>>>
-export type StatusMappingsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['statusMappings']>>>
-export type ListTransportationSnapshotsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['listTransportationSnapshots']>>>
-export type GetSettlementResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['getSettlement']>>>
-export type GetSettlementAvailableActionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['getSettlementAvailableActions']>>>
-export type RequestCorrectionResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['requestCorrection']>>>
-export type ResendSettlementNotificationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['resendSettlementNotification']>>>
+export type DeleteCurrentConfigResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['deleteCurrentConfig']>>>
+export type RecalculateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['recalculate']>>>
+export type RequestPaymentStatementResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['requestPaymentStatement']>>>
+export type RegisterPaymentStatementRenderedFileResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['registerPaymentStatementRenderedFile']>>>
 export type DownloadPaymentStatementResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['downloadPaymentStatement']>>>
 export type DownloadPaymentStatementEncryptedResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['downloadPaymentStatementEncrypted']>>>
-export type RecordPaymentStatementClientDownloadResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['recordPaymentStatementClientDownload']>>>
 export type RequestPaymentStatementDownloadResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['requestPaymentStatementDownload']>>>
-export type PaymentStatementRenderDataResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['paymentStatementRenderData']>>>
-export type RegisterPaymentStatementRenderedFileResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['registerPaymentStatementRenderedFile']>>>
-export type RequestPaymentStatementResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['requestPaymentStatement']>>>
-export type RecalculateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['recalculate']>>>
+export type RecordPaymentStatementClientDownloadResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['recordPaymentStatementClientDownload']>>>
+export type ResendSettlementNotificationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['resendSettlementNotification']>>>
+export type RequestCorrectionResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['requestCorrection']>>>
+export type ResendSettlementStatementNotificationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['resendSettlementStatementNotification']>>>
+export type BulkConfirmPaymentStatementsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['bulkConfirmPaymentStatements']>>>
+export type PaymentStatementsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['paymentStatements']>>>
+export type RequestTaxReportExportResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['requestTaxReportExport']>>>
+export type IssueSettlementExportScopeResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['issueSettlementExportScope']>>>
+export type RequestBulkTransferExportResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['requestBulkTransferExport']>>>
+export type DuplicateConfigItemResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['duplicateConfigItem']>>>
+export type DuplicateCurrentConfigResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['duplicateCurrentConfig']>>>
+export type RejectPaymentStatementResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['rejectPaymentStatement']>>>
+export type ConfirmPaymentStatementResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['confirmPaymentStatement']>>>
+export type RejectCorrectionResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['rejectCorrection']>>>
+export type ApproveCorrectionResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['approveCorrection']>>>
+export type MarkPaidResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['markPaid']>>>
+export type MarkFailedResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['markFailed']>>>
+export type BulkPaidResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['bulkPaid']>>>
+export type ListSettlementsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['listSettlements']>>>
+export type GetSettlementResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['getSettlement']>>>
 export type ListSettlementRevisionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['listSettlementRevisions']>>>
 export type GetSettlementRevisionDetailResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['getSettlementRevisionDetail']>>>
+export type PaymentStatementRenderDataResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['paymentStatementRenderData']>>>
+export type GetSettlementAvailableActionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['getSettlementAvailableActions']>>>
+export type ListTransportationSnapshotsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['listTransportationSnapshots']>>>
+export type StatusMappingsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['statusMappings']>>>
+export type ListPaymentStatementsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['listPaymentStatements']>>>
+export type OpenQuestionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['openQuestions']>>>
+export type ListExportHistoriesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['listExportHistories']>>>
+export type ListCorrectionRequestsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['listCorrectionRequests']>>>
+export type SettlementCalendarResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['settlementCalendar']>>>
+export type SettlementCalendarSummaryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['settlementCalendarSummary']>>>
+export type SettlementCalendarDateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['settlementCalendarDate']>>>
+export type BudgetSummaryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['budgetSummary']>>>
+export type ListSettlementAggregatesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['listSettlementAggregates']>>>
+export type GetAccountPaymentResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['getAccountPayment']>>>
+export type ListAccountPaymentsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['listAccountPayments']>>>
+export type DeleteConfigItemResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['deleteConfigItem']>>>

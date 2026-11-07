@@ -11,32 +11,26 @@ import type { InstructorPreferredOrganizationResponseDistanceStatus } from './in
  * 강사 신청이 선택한 희망 기관·교육 일정(캘린더 SSOT).
  */
 export interface InstructorPreferredOrganizationResponse {
-  /** @nullable */
+  /** 선택 순서(1부터). */
   preferenceOrder?: number | null;
-  /** @nullable */
+  /** 희망 기관(학교)명. */
   organizationName?: string | null;
-  /**
-     * 기관 신청 ID
-     * @nullable
-     */
+  /** 기관 신청 ID. 기관명 문자열 매칭 대신 사용하는 식별자. */
   organizationApplicationId?: number | null;
-  /** @nullable */
+  /** 신청 학년 등. 없으면 null. */
   educationGrade?: string | null;
-  /** @nullable */
+  /** FE 캘린더 파서용 기간 표시 문자열(공통정보 PERIOD 라인 또는 일정 라벨). */
   dateRangeLabel?: string | null;
-  /** @nullable */
+  /** program_schedule id. */
   scheduleId?: number | null;
-  /** @nullable */
+  /** 운영 일정 시작. dateRangeLabel 파싱 실패 시 FE fallback. */
   startAt?: string | null;
-  /** @nullable */
+  /** 운영 일정 종료. */
   endAt?: string | null;
-  /**
-     * 강사 자택에서 기관까지 편도 도로 이동거리(km)
-     * @nullable
-     */
+  /** 강사 자택에서 기관까지 편도 도로 이동거리(km). 계산되지 않으면 null. */
   distanceKm?: number | null;
-  /** @nullable */
+  /** 기관별 거리 계산 상태. */
   distanceStatus?: InstructorPreferredOrganizationResponseDistanceStatus;
-  /** @nullable */
+  /** 거리 계산 완료 시각. 계산되지 않으면 null. */
   distanceCalculatedAt?: string | null;
 }

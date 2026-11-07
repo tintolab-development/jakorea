@@ -10,6 +10,8 @@
  * 회원 포탈 학교·기관 검색 항목
  */
 export interface HomepageOrganizationSearchItem {
+  /** CMS 학교 PK. 회원가입 요청의 schoolOrganizationId 또는 organizationId 호환 필드로 전달합니다. */
+  organizationId?: number;
   /** 학교·기관명 */
   name?: string;
   /** 학교·기관 분류 */
@@ -22,6 +24,4 @@ export interface HomepageOrganizationSearchItem {
   zipcode?: string;
   /** 기본 주소 */
   address?: string;
-  /** CMS 학교 PK. 가입 요청의 schoolOrganizationId/organizationId 또는 schoolSelection.organizationId로 전달합니다. */
-  organizationId?: number;
 }

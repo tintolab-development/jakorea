@@ -29,7 +29,7 @@ function mapUiProcessingStatusToStatementStatus(
       return 'PARTIAL'
     case 'pending':
     default:
-      return 'REQUESTED'
+      return 'WAITING_CONFIRM'
   }
 }
 

@@ -8,9 +8,8 @@
 
 /**
  * 모집 상태
- * @nullable
  */
-export type ProgramRecruitmentRequestStatus = typeof ProgramRecruitmentRequestStatus[keyof typeof ProgramRecruitmentRequestStatus] | null;
+export type ProgramRecruitmentRequestStatus = typeof ProgramRecruitmentRequestStatus[keyof typeof ProgramRecruitmentRequestStatus];
 
 
 export const ProgramRecruitmentRequestStatus = {

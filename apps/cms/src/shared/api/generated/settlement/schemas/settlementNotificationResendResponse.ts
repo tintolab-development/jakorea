@@ -11,22 +11,14 @@
  */
 export interface SettlementNotificationResendResponse {
   settlementId?: number;
-  /** @nullable */
-  statementId?: number | null;
+  statementId?: number;
   statementStatus?: string;
   paymentStatus?: string;
-  /** @nullable */
-  paidAt?: string | null;
-  /** @nullable */
-  expectedTransferDate?: string | null;
-  /**
-     * 이번 재발송 포함 최신 결과 알림 시각. 즉시 발송은 요청 시각, 예약은 scheduledAt.
-     * @nullable
-     */
+  paidAt?: string;
+  expectedTransferDate?: string;
+  /** 이번 재발송 포함 최신 결과 알림 시각. 즉시 발송은 요청 시각, 예약은 scheduledAt. */
   resultNotificationSentAt?: string | null;
-  /** @nullable */
-  notificationEventId?: number | null;
-  /** REJECTED→SETTLEMENT_APPLICATION_REJECTED(인앱+알림톡 사용자_강사비_신청_반려), CONFIRMED/WAITING_PAYMENT→SETTLEMENT_APPLICATION_CONFIRMED, PAID→SETTLEMENT_PAYMENT_PAID, 정정완료 replacement REAPPLICATION→SETTLEMENT_CORRECTION_COMPLETED */
+  notificationEventId?: number;
   eventType?: string;
   availableActions?: string[];
 }

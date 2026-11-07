@@ -5,35 +5,31 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { MemberPortalApplicationCapabilities } from './memberPortalApplicationCapabilities';
+import type { ApplicationCapabilities } from './applicationCapabilities';
+import type { EducationScreenSummary } from './educationScreenSummary';
 import type { MemberPortalApplicationDetailAnswers } from './memberPortalApplicationDetailAnswers';
 import type { MemberPortalApplicationDetailDisplayStatus } from './memberPortalApplicationDetailDisplayStatus';
 import type { MemberPortalApplicationDetailRecruitTerm } from './memberPortalApplicationDetailRecruitTerm';
-import type { MemberPortalEducationScreenSummary } from './memberPortalEducationScreenSummary';
 import type { MemberPortalOrganizationApplicationSnapshot } from './memberPortalOrganizationApplicationSnapshot';
-import type { MemberPortalParticipationSummary } from './memberPortalParticipationSummary';
-import type { MemberPortalProgramApplicationSupplement } from './memberPortalProgramApplicationSupplement';
 import type { MemberPortalProgramSummary } from './memberPortalProgramSummary';
 import type { MemberPortalTeacherAssignment } from './memberPortalTeacherAssignment';
+import type { ParticipationSummary } from './participationSummary';
 import type { PreferredScheduleBlock } from './preferredScheduleBlock';
+import type { ProgramApplicationSupplement } from './programApplicationSupplement';
 
 /**
- * 회원 포탈 내 프로그램 신청 상세. 신청 내용 탭은 answers(및 preferredScheduleBlocks fallback), 서류 합격 면접 배너는 assignedInterviewStartAt·hasInterview·program.interviewEnabled를 사용한다. ORGANIZATION은 teacherAssignment.textbook으로 신청별 교재·배송을 읽고, INDIVIDUAL은 teacherAssignment.assignments로 동일 회원의 강사 배정을 읽는다. 개인 신청에는 동의서를 자동 노출하지 않는다.
+ * 회원 포탈 내 프로그램 신청 상세. 신청 내용 탭은 answers(및 preferredScheduleBlocks fallback), 서류 합격 면접 배너는 assignedInterviewStartAt·hasInterview·program.interviewEnabled를 사용한다.
  */
 export interface MemberPortalApplicationDetail {
   applicationId?: number;
   applicationType?: string;
   programId?: number;
-  /** 회원에게 보이는 공고명. overlay 공고명, 대표명과 다른 announcementTitle 순이며 없으면 program.name_ko. */
   programTitle?: string;
   programType?: string;
   programGroup?: string;
   recruitmentId?: number;
   recruitmentType?: string;
-  /**
-     * UJAT 봉사자 모집 상·하반기 canonical 값. 그 외에는 null.
-     * @nullable
-     */
+  /** UJAT 봉사자 신청의 상·하반기 모집 식별자. 그 외에는 null. */
   recruitTerm?: MemberPortalApplicationDetailRecruitTerm;
   applicationStatus?: string;
   submittedAt?: string;
@@ -43,43 +39,30 @@ export interface MemberPortalApplicationDetail {
   formBindingId?: number;
   templateVersionId?: number;
   formResponseStatus?: string;
-  /** 실제 최신 제출본의 원본 답변 맵. 키는 문단 id이며 preferredScheduleOptionValues의 schedule:{scheduleId} 또는 legacy line:{index} 토큰도 원본 그대로 보존합니다. MEMBER_SELF이므로 teacherEmail·teacherTel·teacherMobile 등 본인 제출 PII는 마스킹하지 않습니다. educationFormat이 없으면 기본값을 삽입하지 않습니다. UJAT 학교 신청 키는 ujat-program-application-institution-seed-basic-info(학교명·지역·주소·담당교사 연락처·기타요청), -grade-application-info, -grade-class-time, -preferred-education-schedule입니다. 없는 문단·학년·교시·희망일을 서버가 만들지 않으며 값은 `-`로 채우지 않습니다. 없으면 빈 객체 {}. */
+  /** 실제 최신 제출본의 원본 답변 맵. 키는 문단 id이며 preferredScheduleOptionValues의 schedule:{scheduleId} 또는 legacy line:{index} 토큰도 원본 그대로 보존합니다. educationFormat이 없으면 기본값을 삽입하지 않습니다. UJAT 학교 신청 키는 ujat-program-application-institution-seed-basic-info, -grade-application-info, -grade-class-time, -preferred-education-schedule입니다. 없는 문단은 만들지 않으며 없으면 빈 객체 {}. */
   answers?: MemberPortalApplicationDetailAnswers;
-  /** 희망 교육 일정 블록. ORGANIZATION 전용 저장값 또는 UJAT/TRAINED_TEACHER answers 투영. UJAT는 date-only(preferenceRank, date)이며 프로그램 운영일로 대체하지 않습니다. 없으면 []. */
+  /** 희망 교육 일정 블록. ORGANIZATION 전용 저장값 또는 UJAT/TRAINED_TEACHER answers 투영. UJAT는 date-only이며 프로그램 운영일로 대체하지 않습니다. 없으면 []. */
   preferredScheduleBlocks?: PreferredScheduleBlock[];
-  /**
-     * 관리자 배정 면접 시작 시각(ISO-8601). 미배정이면 null.
-     * @nullable
-     */
+  /** 관리자 배정 면접 시작 시각(ISO-8601). 미배정이면 null. */
   assignedInterviewStartAt?: string | null;
-  /**
-     * 관리자 배정 면접 종료 시각(ISO-8601). 미배정이면 null. 배너 표시는 start만 사용.
-     * @nullable
-     */
+  /** 관리자 배정 면접 종료 시각(ISO-8601). 미배정이면 null. 배너 표시는 start만 사용. */
   assignedInterviewEndAt?: string | null;
   /** 면접 프로그램·배정 여부. program.interviewEnabled==true 이거나 배정 슬롯이 있으면 true. */
   hasInterview?: boolean;
-  /**
-     * 서류 합격 배너용 서버 포맷 면접 시각. Asia/Seoul `YYYY년 MM월 DD일(요일), HH시`. 미배정이면 null.
-     * @nullable
-     */
+  /** 서류 합격 배너용 서버 포맷 면접 시각. Asia/Seoul `YYYY년 MM월 DD일(요일), HH시`. 미배정이면 null. */
   interviewAtLabel?: string | null;
   cancellable?: boolean;
   program?: MemberPortalProgramSummary;
-  participation?: MemberPortalParticipationSummary;
-  summary?: MemberPortalEducationScreenSummary;
-  capabilities?: MemberPortalApplicationCapabilities;
-  /** 목록과 상세가 같은 서버 산출 projection을 공유합니다. UJAT ORGANIZATION 신청에서만 supplement.ujat을 제공하며, 배너 상태는 supplement.ujat.portalBannerState를 사용합니다. CMS 임시배정 슬롯은 상세 supplement.ujat.temporarySchedule만 채우고 목록은 null입니다. */
-  supplement?: MemberPortalProgramApplicationSupplement;
+  participation?: ParticipationSummary;
+  summary?: EducationScreenSummary;
+  capabilities?: ApplicationCapabilities;
+  supplement?: ProgramApplicationSupplement;
+  /** 회원포탈 신청 표시상태. 목록 ApplicationListItemResponse.displayStatus와 같은 계산입니다. GENERAL 개인(INDIVIDUAL)은 사업기간이 종료되면 만족도 조사 없이도 진행 완료. 사업기간 중에는 개인 배정 일정이 모두 종료되고 본인 만족도를 제출했거나, 수료 투영과 본인 만족도 제출이 있을 때 진행 완료. SUBMITTED·WAITING_REVIEW는 결과 대기. 반려 취소 후 REJECTION_CANCELLED는 승인 대기. */
+  displayStatus?: MemberPortalApplicationDetailDisplayStatus;
   /** ORGANIZATION은 신청별 교재를 textbook으로 제공합니다. INDIVIDUAL은 동일 회원·동일 프로그램의 INSTRUCTOR 신청에 연결된 활성 배정이 있을 때 assignments를 제공합니다. 연결된 배정이 없으면 null이며, 개인 신청에는 동의서·교재를 자동으로 포함하지 않습니다. VOLUNTEER·INSTRUCTOR·비교사 회원은 null입니다. */
   teacherAssignment?: MemberPortalTeacherAssignment | null;
-  /** ORGANIZATION 신청의 기관명·학년·소재지 스냅샷. 비기관이거나 저장값이 없으면 null. teacherPosition은 저장 원천이 없으면 null이며 교사명으로 채우지 않는다. */
+  /** ORGANIZATION 신청의 기관 마스터·스냅샷. 비기관 신청이거나 저장값이 없으면 null. 가짜 기본값을 넣지 않는다. */
   organizationApplication?: MemberPortalOrganizationApplicationSnapshot | null;
-  /** 회원포탈 신청 표시상태. 목록 MemberPortalApplicationListItem.displayStatus와 같은 계산입니다. GENERAL 개인(INDIVIDUAL)은 사업기간이 종료되면 만족도 조사 없이도 진행 완료. 사업기간 중에는 개인 배정 일정이 모두 종료되고 본인 만족도를 제출했거나, 수료 투영과 본인 만족도 제출이 있을 때 진행 완료. SUBMITTED·WAITING_REVIEW는 결과 대기. 반려 취소 후 REJECTION_CANCELLED는 승인 대기. */
-  displayStatus?: MemberPortalApplicationDetailDisplayStatus;
-  /**
-     * 신청 recruitmentId 모집 행 대표 이미지 file_object id. program.thumbnailFileObjectId와 목록 thumbnailFileObjectId와 같은 값. 없으면 null.
-     * @nullable
-     */
+  /** 신청 recruitmentId 모집 행 대표 이미지 file_object id. program.thumbnailFileObjectId와 목록 thumbnailFileObjectId와 같은 값. 없으면 null. */
   thumbnailFileObjectId?: number | null;
 }

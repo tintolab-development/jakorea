@@ -6,17 +6,64 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * 지급조서 사전 동의서의 작성 폼 외부 기본정보 sidecar
+ */
 export interface PaymentStatementBasicInfo {
+  /**
+     * @minLength 0
+     * @maxLength 100
+     */
   nameKo?: string;
+  /**
+     * @minLength 0
+     * @maxLength 100
+     */
   nameEn?: string;
+  /**
+     * @minLength 0
+     * @maxLength 6
+     */
   residentFront?: string;
+  /**
+     * @minLength 0
+     * @maxLength 7
+     */
   residentBack?: string;
+  /**
+     * @minLength 0
+     * @maxLength 200
+     */
   affiliation?: string;
-  addressRoad?: string;
-  addressDetail?: string;
-  bankName?: string;
-  accountNumber?: string;
-  accountHolder?: string;
-  paymentPurpose?: string;
   noAffiliation?: boolean;
+  /**
+     * @minLength 0
+     * @maxLength 500
+     */
+  addressRoad?: string;
+  /**
+     * @minLength 0
+     * @maxLength 500
+     */
+  addressDetail?: string;
+  /**
+     * @minLength 0
+     * @maxLength 100
+     */
+  bankName?: string;
+  /**
+     * @minLength 0
+     * @maxLength 100
+     */
+  accountNumber?: string;
+  /**
+     * @minLength 0
+     * @maxLength 100
+     */
+  accountHolder?: string;
+  /**
+     * @minLength 0
+     * @maxLength 200
+     */
+  paymentPurpose?: string;
 }

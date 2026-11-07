@@ -5,15 +5,16 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { AdminProvisionedOnboardingResponseAdminProvisionedOnboardingStep } from './adminProvisionedOnboardingResponseAdminProvisionedOnboardingStep';
 
+/**
+ * CMS 관리자 등록 회원 온보딩 진행 상태
+ */
 export interface AdminProvisionedOnboardingResponse {
-  registeredByAdmin: boolean;
-  adminProvisionedOnboardingRequired: boolean;
-  /** @nullable */
-  adminProvisionedOnboardingStep?: AdminProvisionedOnboardingResponseAdminProvisionedOnboardingStep;
-  profileCompleted: boolean;
-  identityCompleted: boolean;
-  passwordChangeRequired: boolean;
-  identitySelfSignupCompletedAfterAdminRegistration: boolean;
+  registeredByAdmin?: boolean;
+  adminProvisionedOnboardingRequired?: boolean;
+  adminProvisionedOnboardingStep?: string;
+  profileCompleted?: boolean;
+  identityCompleted?: boolean;
+  passwordChangeRequired?: boolean;
+  identitySelfSignupCompletedAfterAdminRegistration?: boolean;
 }

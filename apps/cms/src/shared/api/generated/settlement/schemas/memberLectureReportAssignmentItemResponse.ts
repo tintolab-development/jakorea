@@ -7,76 +7,38 @@
  */
 import type { MemberInstructorTransportPreview } from './memberInstructorTransportPreview';
 import type { MemberLectureFeePreview } from './memberLectureFeePreview';
-import type { MemberLectureReportAssignmentItemResponseInstructorRole } from './memberLectureReportAssignmentItemResponseInstructorRole';
-import type { MemberLectureReportAssignmentItemResponseLectureStatus } from './memberLectureReportAssignmentItemResponseLectureStatus';
-import type { MemberLectureReportAssignmentItemResponseReportStatus } from './memberLectureReportAssignmentItemResponseReportStatus';
 
-/**
- * 회원 본인 소유 assignment와 실제 프로그램 일정의 강의보고서 상태입니다. mock/fallback 첨부정보는 포함하지 않습니다.
- */
 export interface MemberLectureReportAssignmentItemResponse {
-  assignmentId: number;
-  /** @nullable */
-  instructorApplicationId?: number | null;
-  programId: number;
-  scheduleId: number;
-  /** @nullable */
-  startAt?: string | null;
-  /** @nullable */
-  endAt?: string | null;
-  /** @nullable */
-  scheduleName?: string | null;
-  /**
-     * 본교육 회차 번호(program_schedule.session_no). 차시 개수가 아님. 사전교육은 보통 null. null만으로 사전교육이 아님.
-     * @nullable
-     */
+  assignmentId?: number;
+  instructorApplicationId?: number;
+  programId?: number;
+  scheduleId?: number;
+  startAt?: string;
+  endAt?: string;
+  scheduleName?: string;
+  /** 본교육 회차 번호(program_schedule.session_no). 차시 개수가 아님. 사전교육은 보통 null. null만으로 사전교육이 아님. */
   sessionNo?: number | null;
-  /**
-     * canonical 일정 역할. program_schedule.schedule_kind. PRE_EDUCATION|EDUCATION|SESSION|CLOSING. 없으면 null. sessionNo=null로 추정하지 않음.
-     * @nullable
-     */
+  /** canonical 일정 역할. program_schedule.schedule_kind. PRE_EDUCATION|EDUCATION|SESSION|CLOSING. 없으면 null. sessionNo=null로 추정하지 않음. */
   scheduleRole?: string | null;
-  /**
-     * canonical education_slot_key. 사전교육 general-pre-education:*, 본교육 회차 general-common-line:N 등. 없으면 null.
-     * @nullable
-     */
+  /** canonical education_slot_key. 사전교육 general-pre-education:*, 본교육 회차 general-common-line:N 등. 없으면 null. */
   educationSlotKey?: string | null;
-  /**
-     * 해당 scheduleId에 연결된 program_curriculum_session 건수(실제 커리큘럼 차시). 없으면 null. sessionNo를 넣지 않음. 사전교육은 null. 정산 인정 차시와 별개.
-     * @nullable
-     */
+  /** 해당 scheduleId에 연결된 program_curriculum_session 건수(실제 커리큘럼 차시). 없으면 null. sessionNo를 넣지 않음. 사전교육은 null. 정산 인정 차시와 별개. */
   curriculumSessionCount?: number | null;
-  /**
-     * 기관(학교) 프로그램이면 학교/기관명. 개인형이면 null. 빈 문자열 금지. 일정 locationName만 있고 학교명이 비면 기관 신청 학교명으로 채운다.
-     * @nullable
-     */
+  /** 기관(학교) 프로그램이면 학교/기관명. 개인형이면 null. 빈 문자열 금지. */
   institutionName?: string | null;
-  /**
-     * 기관 프로그램 학년(숫자 또는 n학년). 개인형이거나 없으면 null. 빈 문자열 금지.
-     * @nullable
-     */
+  /** 기관 프로그램 학년(숫자 또는 n학년). 개인형이거나 없으면 null. 빈 문자열 금지. */
   grade?: string | null;
-  lectureStatus: MemberLectureReportAssignmentItemResponseLectureStatus;
-  reportStatus: MemberLectureReportAssignmentItemResponseReportStatus;
-  /** @nullable */
-  submitDueAt?: string | null;
-  canSubmit: boolean;
-  /** @nullable */
-  reportId?: number | null;
-  /** @nullable */
-  instructorRole?: MemberLectureReportAssignmentItemResponseInstructorRole;
-  /**
-     * 기관 프로그램이면 기관 주소. 개인형(GENERAL_INDIVIDUAL)이면 program_schedule 주소(address+address_detail) 일정 출강지와 동일. CMS lecturePlaceAddress와 같은 소스. 없으면 null. 빈 문자열 금지.
-     * @nullable
-     */
-  institutionAddress?: string | null;
-  /**
-     * 자택-공식 출강지 편도 km 숫자. 문자열 아님. 없으면 null. CMS program_instructor_assignment.distance_km와 동일(CALCULATED일 때만).
-     * @nullable
-     */
-  distanceFromHome?: number | null;
-  /** 지급조서 제출 전 강의비 산출 미리보기. totalLectureFee는 실적 시간이 있을 때만 확정 금액. 없으면 null. 중첩 필드 없음은 null(생략 금지). */
+  lectureStatus?: string;
+  reportStatus?: string;
+  submitDueAt?: string;
+  canSubmit?: boolean;
+  reportId?: number;
+  instructorRole?: string;
+  institutionAddress?: string;
+  /** 자택-기관 거리(km) 숫자. 문자열 아님. 없으면 null */
+  distanceFromHome?: string | null;
+  /** 지급조서 제출 전 강의비 산출 미리보기. totalLectureFee는 실적 시간이 있을 때만 확정 금액. 없으면 null. */
   lectureFeePreview?: MemberLectureFeePreview | null;
-  /** 지급조서 제출 전 강사 교통비 미리보기. 객체는 항상 존재하고 산출 없으면 필드 null. oneWayDistanceKm는 distanceFromHome과 동일. 편도 30 미만은 금액 null. */
+  /** 지급조서 제출 전 강사 교통비 미리보기. 객체는 항상 존재. oneWayDistanceKm는 distanceFromHome과 동일. 편도 30 미만 또는 지급 항목 없으면 금액 null. 제출 CalcInfo·CMS 교통비 스냅샷과 산식 동일. */
   transportPreview?: MemberInstructorTransportPreview | null;
 }

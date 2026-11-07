@@ -8,7 +8,7 @@
 import type { ParticipantSettlementListItemResponse } from './participantSettlementListItemResponse';
 
 export interface PageResponseParticipantSettlementListItemResponse {
-  content?: ParticipantSettlementListItemResponse[];
+  items?: ParticipantSettlementListItemResponse[];
   page?: number;
   size?: number;
   totalElements?: number;

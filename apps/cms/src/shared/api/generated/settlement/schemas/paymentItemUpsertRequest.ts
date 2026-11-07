@@ -8,39 +8,18 @@
 import type { PaymentItemUpsertRequestPaymentItemType } from './paymentItemUpsertRequestPaymentItemType';
 
 export interface PaymentItemUpsertRequest {
-  /** @nullable */
-  id?: number | null;
-  /** @nullable */
+  id?: number;
   paymentItemType?: PaymentItemUpsertRequestPaymentItemType;
-  /** @nullable */
-  itemName?: string | null;
-  /** @nullable */
-  maxAmount?: number | null;
-  /** @nullable */
-  taxableYn?: boolean | null;
-  /**
-     * 정산 항목 설정의 증빙 자료 제출 필요 여부
-     * @nullable
-     */
-  evidenceRequiredYn?: boolean | null;
-  /** @nullable */
-  useYn?: boolean | null;
-  /** @nullable */
-  iconKey?: string | null;
-  /** @nullable */
-  emojiOverride?: string | null;
-  /**
-     * transport | lodging | meal | activity. ACTIVITY는 activity만. volunteerActivity는 읽기 alias
-     * @nullable
-     */
-  layout?: string | null;
-  /** @nullable */
-  maxLimitWon?: number | null;
-  /** @nullable */
-  description?: string | null;
-  /**
-     * 지급요건/비고는 여기만. 교통 minOneWayKm·minDistanceKm dual-write. 1사1교 금액 정본 fixedAmountWon
-     * @nullable
-     */
-  detailJson?: string | null;
+  itemName?: string;
+  maxAmount?: number;
+  taxableYn?: boolean;
+  evidenceRequiredYn?: boolean;
+  useYn?: boolean;
+  iconKey?: string;
+  emojiOverride?: string;
+  layout?: string;
+  maxLimitWon?: number;
+  description?: string;
+  /** 지급요건/비고는 여기만. 교통 minOneWayKm·minDistanceKm dual-write. 1사1교 금액 정본 fixedAmountWon. sessionNUniversityWon null 키 금지 */
+  detailJson?: string;
 }

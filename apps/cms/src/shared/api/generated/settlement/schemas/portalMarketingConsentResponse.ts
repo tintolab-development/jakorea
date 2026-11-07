@@ -9,10 +9,8 @@
 export interface PortalMarketingConsentResponse {
   consentType?: string;
   agreed?: boolean;
-  /** @nullable */
-  agreedAt?: string | null;
-  /** @nullable */
-  withdrawnAt?: string | null;
+  agreedAt?: string;
+  withdrawnAt?: string;
   updatedAt?: string;
   version?: string;
 }

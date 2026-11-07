@@ -8,15 +8,9 @@
 
 export interface GeneralIndividualAssignmentSubmissionFile {
   fileObjectId: number;
-  /**
-     * 원본 파일명. fileName과 동일. 없으면 null.
-     * @nullable
-     */
+  /** 원본 파일명. fileName과 동일. 없으면 null. */
   originalFileName?: string | null;
   downloadable: boolean;
-  /**
-     * 표시·다운로드용 파일명. originalFileName과 동일. 없으면 null.
-     * @nullable
-     */
+  /** 표시·다운로드용 파일명. originalFileName과 동일. 없으면 null. */
   fileName?: string | null;
 }

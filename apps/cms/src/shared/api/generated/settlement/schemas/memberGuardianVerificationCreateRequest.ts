@@ -5,20 +5,22 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { MemberGuardianVerificationCreateRequestPurpose } from './memberGuardianVerificationCreateRequestPurpose';
 
 export interface MemberGuardianVerificationCreateRequest {
-  purpose: MemberGuardianVerificationCreateRequestPurpose;
-  /** @maxLength 64 */
+  /**
+     * @minLength 0
+     * @maxLength 32
+     */
+  purpose: string;
+  /**
+     * @minLength 0
+     * @maxLength 64
+     */
   guardianRelation: string;
+  programId?: number;
   /**
-     * PROGRAM_APPLICATION일 때 필수
-     * @nullable
-     */
-  programId?: number | null;
-  /**
+     * @minLength 0
      * @maxLength 2048
-     * @nullable
      */
-  frontendReturnUrl?: string | null;
+  frontendReturnUrl?: string;
 }

@@ -8,8 +8,8 @@
 import type { GeminiRecruitmentItem } from './geminiRecruitmentItem';
 
 export interface GeminiRecruitmentListResponse {
-  content: GeminiRecruitmentItem[];
-  page: number;
-  size: number;
-  totalElements: number;
+  content?: GeminiRecruitmentItem[];
+  page?: number;
+  size?: number;
+  totalElements?: number;
 }

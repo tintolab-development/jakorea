@@ -11,65 +11,29 @@ import type { SettlementFrontendPayeeResponsePrivacyMaskingLevel } from './settl
  * 지급조서·산출 내역서 수취인 표시용. SETTLEMENT_READ 기본 조회는 MASKED. 원문 언마스크는 member consent / instructor privacy 경로.
  */
 export interface SettlementFrontendPayeeResponse {
-  /**
-     * 영문 성명. 지급조서 동의서 paymentBasicInfo.nameEn. 없으면 null
-     * @nullable
-     */
+  /** 영문 성명(마스킹). 지급조서 동의서 paymentBasicInfo.nameEn */
   nameEn?: string | null;
-  /**
-     * 주민등록번호(마스킹). residentFront-residentBack 결합. 없으면 null
-     * @nullable
-     */
+  /** 주민등록번호(마스킹). residentFront-residentBack 결합. 없으면 null */
   residentRegistrationNumber?: string | null;
-  /**
-     * 소속. noAffiliation=true 이거나 미입력이면 null
-     * @nullable
-     */
+  /** 소속(마스킹). noAffiliation=true 이거나 미입력이면 null */
   affiliation?: string | null;
-  /**
-     * 연락처(마스킹). member.phone
-     * @nullable
-     */
+  /** 연락처(마스킹). member.phone. 예: 010-****-5678 */
   phone?: string | null;
-  /**
-     * 이메일(마스킹). member.email
-     * @nullable
-     */
+  /** 이메일(마스킹). member.email */
   email?: string | null;
-  /**
-     * 성별(마스킹). 값 존재 시 **
-     * @nullable
-     */
+  /** 성별(마스킹). 값 존재 시 ** */
   gender?: string | null;
-  /**
-     * 생년월일(마스킹). yyyy-**-**
-     * @nullable
-     */
+  /** 생년월일(마스킹). Masked responses use yyyy-**-** when member.birth_date or payment-consent residentFront/back yields a birth year; gender ** requires non-null birthDate when year exists. UNMASKED paths use yyyy-MM-dd on dedicated privacy APIs. */
   birthDate?: string | null;
-  /**
-     * 자택 도로명/기본 주소(마스킹)
-     * @nullable
-     */
+  /** 자택 도로명/기본 주소(마스킹). 동의서 addressRoad 우선, 없으면 instructor_profile.home_address */
   addressRoad?: string | null;
-  /**
-     * 자택 상세 주소(마스킹)
-     * @nullable
-     */
+  /** 자택 상세 주소(마스킹). 동의서 addressDetail 우선, 없으면 instructor_profile.home_address_detail */
   addressDetail?: string | null;
-  /**
-     * 정산 계좌 은행명
-     * @nullable
-     */
+  /** 정산 계좌 은행명. 동의서 bankName 우선, 없으면 member_bank_account */
   bankName?: string | null;
-  /**
-     * 정산 계좌번호(마스킹)
-     * @nullable
-     */
+  /** 정산 계좌번호(마스킹) */
   accountNumber?: string | null;
-  /**
-     * 예금주(마스킹)
-     * @nullable
-     */
+  /** 예금주(마스킹) */
   accountHolder?: string | null;
   /** MASKED | RAW. 정산 상세 GET은 항상 MASKED. 계좌 지급 현황 상세(GET /api/admin/account-payments/{id}, 정책 CMS-09)는 RAW: phone·email·gender·birthDate(yyyy-MM-dd)·addressRoad·addressDetail·bankName·accountNumber·accountHolder 원문, residentRegistrationNumber·nameEn·affiliation은 RAW에서도 마스킹. */
   privacyMaskingLevel?: SettlementFrontendPayeeResponsePrivacyMaskingLevel;

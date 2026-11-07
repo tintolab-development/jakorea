@@ -8,33 +8,17 @@
 
 export interface AdminIdentityContactResponse {
   adminAccountId?: number;
-  /**
-     * Name for the authenticated administrator's own account.
-     * @nullable
-     */
-  name?: string | null;
-  /**
-     * Original phone number for the authenticated administrator's own account.
-     * @nullable
-     */
-  phone?: string | null;
-  /**
-     * Partially masked form of phone.
-     * @nullable
-     */
-  maskedPhone?: string | null;
-  /**
-     * Birth date for the authenticated administrator's own account, formatted as yyyy-MM-dd.
-     * @nullable
-     */
-  birthDate?: string | null;
-  /**
-     * Gender for the authenticated administrator's own account.
-     * @nullable
-     */
-  gender?: string | null;
-  /** @nullable */
-  identityVerifiedAt?: string | null;
+  /** Name for the authenticated administrator's own account. */
+  name?: string;
+  /** Original phone number for the authenticated administrator's own account. */
+  phone?: string;
+  /** Partially masked form of phone. */
+  maskedPhone?: string;
+  /** Birth date for the authenticated administrator's own account, formatted as yyyy-MM-dd. */
+  birthDate?: string;
+  /** Gender for the authenticated administrator's own account. */
+  gender?: string;
+  identityVerifiedAt?: string;
   verificationStatus?: string;
   nextAction?: string;
 }

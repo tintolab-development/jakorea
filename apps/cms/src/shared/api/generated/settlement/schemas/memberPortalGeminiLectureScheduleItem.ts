@@ -8,59 +8,28 @@
 import type { MemberPortalGeminiLectureScheduleItemInstructorRole } from './memberPortalGeminiLectureScheduleItemInstructorRole';
 
 export interface MemberPortalGeminiLectureScheduleItem {
-  /** @nullable */
   scheduleId?: number | null;
-  /**
-     * 기관명
-     * @nullable
-     */
+  /** 기관명 */
   institutionName?: string | null;
-  /**
-     * 학년. requested_grade 원문. 없으면 null
-     * @nullable
-     */
+  /** 학년. requested_grade 원문. 없으면 null */
   grade?: string | null;
-  /** @nullable */
   trainingDate?: string | null;
-  /** @nullable */
   trainingStartTime?: string | null;
-  /** @nullable */
   trainingEndTime?: string | null;
-  /**
-     * HH:mm~HH:mm. 시각이 없으면 null
-     * @nullable
-     */
+  /** HH:mm~HH:mm. 시각이 없으면 null */
   trainingTimeText?: string | null;
   /** 실제 시작·종료 시간으로 산정한 인정 차시 */
   recognizedClassCount?: number;
-  /**
-     * is_schedule_lead 기준. LEAD=주강사, ASSISTANT=보조강사. 미설정이면 null
-     * @nullable
-     */
+  /** is_schedule_lead 기준. LEAD=주강사, ASSISTANT=보조강사. 미설정이면 null */
   instructorRole?: MemberPortalGeminiLectureScheduleItemInstructorRole;
-  /**
-     * 기관 소재지(organization.address). 없으면 null
-     * @nullable
-     */
+  /** 기관 소재지(organization.address). 없으면 null */
   institutionAddress?: string | null;
-  /**
-     * 배정에 저장된 자택-기관 거리(km). CALCULATED일 때만. 없으면 null
-     * @nullable
-     */
-  distanceFromHome?: number | null;
-  /**
-     * 해당 일정(연수 실적)에 연결된 account_payment.payment_status 정규화 값. 지급 건이 없으면 null
-     * @nullable
-     */
+  /** 자택-기관 거리(km) 숫자. distance_status=CALCULATED이고 distance_km가 있을 때만. 문자열 아님. 없으면 null */
+  distanceFromHome?: string | null;
+  /** 해당 일정(연수 실적)에 연결된 account_payment.payment_status 정규화 값. 지급 건이 없으면 null */
   accountPaymentStatus?: string | null;
-  /**
-     * 화면 표시용 정산 상태 라벨. 예: 계좌 지급 완료, 확인 대기 중. 지급 건이 없으면 null
-     * @nullable
-     */
+  /** 화면 표시용 정산 상태 라벨. 예: 계좌 지급 완료, 확인 대기 중. 지급 건이 없으면 null */
   settlementStatusLabel?: string | null;
-  /**
-     * 정산 예정 금액(원 단위 정수). 연결된 지급 건이 없거나 산정 전이면 null
-     * @nullable
-     */
+  /** 정산 예정 금액(원 단위 정수). 연결된 지급 건이 없거나 산정 전이면 null */
   expectedAmount?: number | null;
 }

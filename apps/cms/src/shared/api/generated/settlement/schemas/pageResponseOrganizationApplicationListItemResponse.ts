@@ -8,7 +8,7 @@
 import type { OrganizationApplicationListItemResponse } from './organizationApplicationListItemResponse';
 
 export interface PageResponseOrganizationApplicationListItemResponse {
-  content?: OrganizationApplicationListItemResponse[];
+  items?: OrganizationApplicationListItemResponse[];
   page?: number;
   size?: number;
   totalElements?: number;

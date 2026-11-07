@@ -7,14 +7,13 @@
  */
 
 /**
- * PORTRAIT_RIGHTS 전용 부분동의 상태 힌트. 서버가 filledDocument.schemaJson의 3개 bottomConsent를 다시 계산하여 검증합니다. FULL은 deprecated이며 PARTIAL로 정규화됩니다.
- * @nullable
+ * PORTRAIT_RIGHTS 전용 부분동의 상태 힌트. FULL은 deprecated이며 서버가 PARTIAL로 정규화합니다.
  */
-export type TermsAgreementRequestConsentStatus = typeof TermsAgreementRequestConsentStatus[keyof typeof TermsAgreementRequestConsentStatus] | null;
+export type TermsAgreementRequestConsentStatus = typeof TermsAgreementRequestConsentStatus[keyof typeof TermsAgreementRequestConsentStatus];
 
 
 export const TermsAgreementRequestConsentStatus = {
-  FULL: 'FULL',
   PARTIAL: 'PARTIAL',
   DISAGREED: 'DISAGREED',
+  FULL: 'FULL',
 } as const;

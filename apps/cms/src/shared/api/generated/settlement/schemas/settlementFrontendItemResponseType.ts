@@ -6,9 +6,6 @@
  * OpenAPI spec version: v9
  */
 
-/**
- * 산출 내역서 공통 항목 코드
- */
 export type SettlementFrontendItemResponseType = typeof SettlementFrontendItemResponseType[keyof typeof SettlementFrontendItemResponseType];
 
 

@@ -8,11 +8,9 @@
 import type { ProgramDraftItemResponseDraftPayload } from './programDraftItemResponseDraftPayload';
 
 export interface ProgramDraftItemResponse {
-  draftId: number;
-  programType: string;
-  draftPayload: ProgramDraftItemResponseDraftPayload;
-  /** @nullable */
-  createdAt?: string | null;
-  /** @nullable */
-  updatedAt?: string | null;
+  draftId?: number;
+  programType?: string;
+  draftPayload?: ProgramDraftItemResponseDraftPayload;
+  createdAt?: string;
+  updatedAt?: string;
 }

@@ -8,8 +8,7 @@
 import type { GeminiTrainingReportImportResult } from './geminiTrainingReportImportResult';
 
 export interface GeminiTrainingReportImportResponse {
-  /** @nullable */
-  importBatchId?: number | null;
+  importBatchId?: number;
   totalRows?: number;
   successRows?: number;
   failedRows?: number;

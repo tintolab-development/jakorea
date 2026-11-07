@@ -7,8 +7,7 @@
  */
 
 /**
- * 기관 승인 후 또는 제미나이 강사 승인 후 일정 배정 상태. ASSIGNED는 확정 일정이 있고 UNASSIGNED는 승인됐지만 일정이 없습니다. GENERAL/UJAT/1사1교 강사 승인 등 그 외 결정에서는 null입니다.
- * @nullable
+ * 기관 승인 후 또는 제미나이 강사 승인 후 일정 배정 상태. ASSIGNED는 확정 일정(OSA 또는 강사 배정 일정)이 있고, UNASSIGNED는 승인됐지만 일정이 없습니다. GENERAL/UJAT/1사1교 강사 승인 등 그 외 결정에서는 null입니다.
  */
 export type ApplicationDecisionResponseScheduleAssignmentStatus = typeof ApplicationDecisionResponseScheduleAssignmentStatus[keyof typeof ApplicationDecisionResponseScheduleAssignmentStatus] | null;
 

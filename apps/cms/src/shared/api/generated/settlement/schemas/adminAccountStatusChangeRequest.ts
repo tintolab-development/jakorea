@@ -7,10 +7,10 @@
  */
 
 /**
- * 관리자 사용 상태 변경 요청
+ * 관리자 계정 사용 상태 변경 요청입니다. 삭제는 DELETE API를 사용합니다.
  */
 export interface AdminAccountStatusChangeRequest {
-  /** ACTIVE 또는 SUSPENDED */
+  /** 변경할 상태. ACTIVE 또는 SUSPENDED */
   status?: string;
   /** 상태 변경 사유 */
   reason?: string;

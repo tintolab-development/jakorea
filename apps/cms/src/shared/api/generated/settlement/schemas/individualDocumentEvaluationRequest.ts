@@ -5,8 +5,14 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { DocumentManagerEvaluation } from './documentManagerEvaluation';
 
+/**
+ * 개인 신청 담당자 A/B 서류 평가 저장 요청
+ */
 export interface IndividualDocumentEvaluationRequest {
-  evaluation: DocumentManagerEvaluation;
+  /**
+     * @minLength 1
+     * @pattern PASS|NEUTRAL|FAIL|UNREVIEWED
+     */
+  evaluation: string;
 }

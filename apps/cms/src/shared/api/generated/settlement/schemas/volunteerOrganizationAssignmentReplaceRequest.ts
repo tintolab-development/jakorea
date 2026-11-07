@@ -8,7 +8,11 @@
 
 export interface VolunteerOrganizationAssignmentReplaceRequest {
   organizationApplicationIds: number[];
-  /** @nullable */
+  /** 현재 배정 기관 수. 생략하면 검사하지 않는다. */
   expectedRevision?: number | null;
+  /**
+     * @minLength 2
+     * @maxLength 500
+     */
   reason: string;
 }

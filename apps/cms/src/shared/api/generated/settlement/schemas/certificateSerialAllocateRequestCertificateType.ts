@@ -7,7 +7,8 @@
  */
 
 /**
- * FE form templateCode 그대로. COMPLETION/ACTIVITY로 바꾸지 말 것
+ * FE form template code (그대로 저장)
+ * @minLength 1
  */
 export type CertificateSerialAllocateRequestCertificateType = typeof CertificateSerialAllocateRequestCertificateType[keyof typeof CertificateSerialAllocateRequestCertificateType];
 

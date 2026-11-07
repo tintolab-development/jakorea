@@ -5,14 +5,16 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { AutoAssignmentRequestSemesterType } from './autoAssignmentRequestSemesterType';
 
 export interface AutoAssignmentRequest {
   /**
+     * @minLength 0
      * @maxLength 100
-     * @nullable
      */
-  educationRegionCode?: string | null;
-  /** @nullable */
-  semesterType?: AutoAssignmentRequestSemesterType;
+  educationRegionCode?: string;
+  /**
+     * @minLength 0
+     * @maxLength 32
+     */
+  semesterType?: string;
 }

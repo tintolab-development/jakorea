@@ -7,8 +7,7 @@
  */
 
 /**
- * 봉사자 공고 노출 시점. VOLUNTEER만. null 유지.
- * @nullable
+ * 봉사자 공고 노출 시점. VOLUNTEER만. start-day|one-day-before|one-week-before. null 유지.
  */
 export type ProgramRecruitmentRequestNoticeExposureTiming = typeof ProgramRecruitmentRequestNoticeExposureTiming[keyof typeof ProgramRecruitmentRequestNoticeExposureTiming] | null;
 

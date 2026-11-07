@@ -7,31 +7,17 @@
  */
 
 export interface InstructorRoleRequestListItemResponse {
-  /** @nullable */
-  memberTypeLabel?: string | null;
-  /** @nullable */
-  organizationName?: string | null;
-  /** @nullable */
-  requestStatus?: string | null;
-  /** @nullable */
-  requestedActivityType?: string | null;
-  /** @nullable */
-  maskedName?: string | null;
-  /** @nullable */
-  maskedPhone?: string | null;
-  /** @nullable */
-  maskedEmail?: string | null;
   requestId?: number;
   memberId?: number;
-  /**
-     * 개인정보 최소 표시 정책에 따라 출생 연도만 반환
-     * @nullable
-     */
-  birthYear?: number | null;
-  /** @nullable */
-  businessIncome?: boolean | null;
-  /** @nullable */
-  requestedAt?: string | null;
-  /** @nullable */
-  reviewedAt?: string | null;
+  memberTypeLabel?: string;
+  organizationName?: string;
+  requestStatus?: string;
+  requestedActivityType?: string;
+  maskedName?: string;
+  maskedPhone?: string;
+  maskedEmail?: string;
+  birthYear?: number;
+  businessIncome?: boolean;
+  requestedAt?: string;
+  reviewedAt?: string;
 }

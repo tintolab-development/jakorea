@@ -6,4 +6,4 @@
  * OpenAPI spec version: v9
  */
 
-export type FormRuntimeSubmitRequestAnswers = { [key: string]: unknown };
+export type FormRuntimeSubmitRequestAnswers = {[key: string]: unknown};

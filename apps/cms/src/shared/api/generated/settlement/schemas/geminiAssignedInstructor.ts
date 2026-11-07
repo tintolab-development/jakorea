@@ -7,23 +7,15 @@
  */
 
 /**
- * 연수 담당 강사. 일정 배정이 있거나 같은 모집의 강사 신청이 승인되면 채운다. 둘 다 없으면 상위 assignedInstructor=null.
+ * 승인 연수에 매칭된 강사 프로필
  */
 export interface GeminiAssignedInstructor {
   memberId?: number;
-  /** @nullable */
-  name?: string | null;
-  /** @nullable */
+  name?: string;
   homeAddress?: string | null;
-  /** @nullable */
   experienceYears?: number | null;
-  /**
-     * JA 평가 등급. 예: A등급
-     * @nullable
-     */
+  /** JA 평가 등급. 예: A등급 */
   grade?: string | null;
-  /** @nullable */
   phone?: string | null;
-  /** @nullable */
   email?: string | null;
 }

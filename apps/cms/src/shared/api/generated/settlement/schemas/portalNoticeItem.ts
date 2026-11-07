@@ -7,8 +7,8 @@
  */
 
 export interface PortalNoticeItem {
-  noticeId: number;
-  title: string;
-  pinned: boolean;
-  createdAt: string;
+  noticeId?: number;
+  title?: string;
+  pinned?: boolean;
+  createdAt?: string;
 }

@@ -5,19 +5,18 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { SettlementCalendarStatementStatus } from './settlementCalendarStatementStatus';
 
 export type SettlementCalendarParams = {
 /**
- * 출강일 시작
+ * 조회 시작 기준입니다. 날짜/기간 필터 화면에서 선택한 값을 전달합니다.
  */
 fromDate?: string;
 /**
- * 출강일 종료
+ * 조회 종료 기준입니다. 날짜/기간 필터 화면에서 선택한 값을 전달합니다.
  */
 toDate?: string;
 /**
- * 현황 필터. PAID 제외.
+ * 상태 필터입니다. 응답 enum 값과 화면 배지 라벨을 매핑해서 사용합니다.
  */
-statementStatus?: SettlementCalendarStatementStatus;
+statementStatus?: string;
 };

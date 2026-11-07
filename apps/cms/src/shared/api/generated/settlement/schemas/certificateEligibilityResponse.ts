@@ -6,40 +6,34 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * 증명서 발급 가능 여부 응답
+ */
 export interface CertificateEligibilityResponse {
+  /** 참가자 ID */
   participantId?: number;
+  /** 프로그램 ID */
   programId?: number;
-  /** @nullable */
-  memberId?: number | null;
+  /** 회원 ID */
+  memberId?: number;
+  /** 프로그램 유형 */
   programType?: string;
+  /** 증명서 유형 */
   certificateType?: string;
+  /** 발급 가능 여부 */
   eligible?: boolean;
-  /** @nullable */
-  policyId?: number | null;
-  /**
-     * ELIGIBLE when issuable; otherwise the first blocking code.
-     * @nullable
-     */
-  reasonCode?: string | null;
+  /** 적용된 정책 ID */
+  policyId?: number;
+  /** 대표 차단 사유 코드. 발급 가능하면 ELIGIBLE. */
+  reasonCode?: string;
+  /** 발급 차단 사유 목록 */
   blockingReasons?: string[];
-  /**
-     * Counted PRESENT/ATTENDED/LATE sessions inside the give-up performance boundary.
-     * @nullable
-     */
-  countedParticipationCount?: number | null;
-  /**
-     * Certificate display period start (yyyy-MM-dd, Asia/Seoul).
-     * @nullable
-     */
-  certificatePeriodStartDate?: string | null;
-  /**
-     * Certificate display period end (yyyy-MM-dd, Asia/Seoul). Give-up participation uses the last counted session end.
-     * @nullable
-     */
-  certificatePeriodEndDate?: string | null;
-  /**
-     * PDF-identical Korean period label.
-     * @nullable
-     */
-  certificatePeriodLabel?: string | null;
+  /** 참가 인정 출석(PRESENT/ATTENDED/LATE) 건수. 포기 경계 이후 일정은 제외합니다. */
+  countedParticipationCount?: number;
+  /** 인증서 표시 기간 시작일(yyyy-MM-dd, Asia/Seoul). 포기 참가인증서는 최초 인정 일정일. */
+  certificatePeriodStartDate?: string;
+  /** 인증서 표시 기간 종료일(yyyy-MM-dd, Asia/Seoul). 포기 참가인증서는 마지막 인정 일정 종료일. */
+  certificatePeriodEndDate?: string;
+  /** PDF와 동일한 한글 기간 라벨 */
+  certificatePeriodLabel?: string;
 }

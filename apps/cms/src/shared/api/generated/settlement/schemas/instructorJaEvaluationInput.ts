@@ -7,7 +7,7 @@
  */
 
 /**
- * Notion JA 등급 평가 팝업의 관리자 입력값. 총점/행정능력 감점/A~D 등급은 서버가 산정합니다.
+ * JA 평가 입력. 각 항목은 1~5점이며 총점/등급은 서버가 산정합니다.
  */
 export interface InstructorJaEvaluationInput {
   /**
@@ -34,6 +34,5 @@ export interface InstructorJaEvaluationInput {
      * @maximum 5
      */
   contentUseLessonDesignScore: number;
-  /** @nullable */
-  comment?: string | null;
+  comment?: string;
 }

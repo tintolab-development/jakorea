@@ -6,11 +6,14 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * 특정 날짜의 면접 가능 슬롯 예외. overlay 키 exception.{id}.* 와 대응.
+ */
 export interface RecruitmentInterviewException {
-  /** @nullable */
+  /** 예외 블록 id. 생성 전 draft 에서 FE가 부여한 키를 보존한다. */
   id?: string | null;
-  /** @nullable */
+  /** 예외 날짜 YYYY-MM-DD 또는 ISO instant. */
   exceptionDate?: string | null;
-  /** @nullable */
+  /** 그날의 슬롯 키 배열. 명시적 [] 는 그날 슬롯 없음. */
   selectedSlotKeys?: string[] | null;
 }

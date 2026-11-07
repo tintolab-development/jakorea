@@ -6,6 +6,9 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * 동기화 대상 리소스
+ */
 export type SyncResultResponseResource = typeof SyncResultResponseResource[keyof typeof SyncResultResponseResource];
 
 

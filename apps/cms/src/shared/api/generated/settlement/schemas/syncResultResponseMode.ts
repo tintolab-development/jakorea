@@ -6,6 +6,9 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * 동기화 실행 방식. ALIMTALK NHN_LIVE_PULL의 upsertedCount는 APPROVED만.
+ */
 export type SyncResultResponseMode = typeof SyncResultResponseMode[keyof typeof SyncResultResponseMode];
 
 

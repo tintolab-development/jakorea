@@ -6,12 +6,13 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * 서류 결과. PASS/DOCUMENT_PASSED 또는 FAIL/REJECTED
+ */
 export type DocumentResultRequestResult = typeof DocumentResultRequestResult[keyof typeof DocumentResultRequestResult];
 
 
 export const DocumentResultRequestResult = {
   PASS: 'PASS',
   FAIL: 'FAIL',
-  DOCUMENT_PASSED: 'DOCUMENT_PASSED',
-  REJECTED: 'REJECTED',
 } as const;

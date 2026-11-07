@@ -72,7 +72,7 @@ export async function confirmPaymentStatementRemote(
   statementId: number,
   body: SettlementStatusChangeRequest = { reason: '지급조서 확인' }
 ): Promise<void> {
-  await settlementApi.confirmPaymentStatement(String(statementId), body)
+  await settlementApi.confirmPaymentStatement(statementId, body)
 }
 
 export async function bulkConfirmPaymentStatementsRemote(
@@ -139,7 +139,7 @@ export async function rejectPaymentStatementRemote(
   statementId: number,
   body: SettlementStatusChangeRequest
 ): Promise<void> {
-  await settlementApi.rejectPaymentStatement(String(statementId), body)
+  await settlementApi.rejectPaymentStatement(statementId, body)
 }
 
 export type SettlementNotificationResendRequestBody = {

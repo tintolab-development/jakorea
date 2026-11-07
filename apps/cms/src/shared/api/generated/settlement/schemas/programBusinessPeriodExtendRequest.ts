@@ -7,15 +7,15 @@
  */
 
 /**
- * 종료된 프로그램의 사업 종료일 연장 요청
+ * 종료된 프로그램의 사업 종료일 연장 요청. CMS 프론트는 Vite DEV에서만 호출합니다.
  */
 export interface ProgramBusinessPeriodExtendRequest {
-  /** KST 기준 연장할 사업 종료일. 오늘 이후이고 기존 종료일보다 늦어야 합니다. */
+  /** 연장할 사업 종료일. KST 달력일이며 기존 종료일보다 늦어야 하고, 오늘(KST) 이전일 수 없습니다. */
   businessEndDate: string;
   /**
-     * 연장 사유
+     * 연장 사유. trim 후 빈 문자열이면 null 저장
+     * @minLength 0
      * @maxLength 500
-     * @nullable
      */
   reason?: string | null;
 }

@@ -7,8 +7,7 @@
  */
 
 /**
- * 강의비 유형 코드. GRADE_1=1급 강의비, GRADE_2=2급 강의비, GRADE_3=3급 강의비. 없으면 null. FE 매핑: lectureFeePreview.lectureFeeType. 프로필 instructorFeeGradeLabel 사용 금지.
- * @nullable
+ * 이 배정/프로그램에 적용된 강의비 유형 코드. GRADE_1=1급 강의비, GRADE_2=2급 강의비, GRADE_3=3급 강의비. 코드만 내려 주고 표시 라벨은 FE. 없으면 null.
  */
 export type MemberLectureFeePreviewLectureFeeType = typeof MemberLectureFeePreviewLectureFeeType[keyof typeof MemberLectureFeePreviewLectureFeeType] | null;
 

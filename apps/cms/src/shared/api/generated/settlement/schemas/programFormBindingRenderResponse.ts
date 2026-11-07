@@ -17,42 +17,25 @@ export interface ProgramFormBindingRenderResponse {
   templateName: string;
   formType: string;
   category: string;
-  /** @nullable */
   templateUseYn?: boolean | null;
-  /** @nullable */
   templateDeletedAt?: string | null;
-  /** @nullable */
   versionNo?: number | null;
-  /** @nullable */
   versionLabel?: string | null;
   versionStatus: ProgramFormBindingRenderResponseVersionStatus;
-  /** @nullable */
   schemaJson?: string | null;
-  /** @nullable */
   extensionJson?: string | null;
-  /** @nullable */
   settingsJson?: string | null;
-  /** @nullable */
   effectiveFrom?: string | null;
-  /** @nullable */
   effectiveTo?: string | null;
-  /** @nullable */
   publishedAt?: string | null;
   sections: ProgramFormBindingRenderResponseSectionsItem[];
   questions: ProgramFormBindingRenderResponseQuestionsItem[];
   programFormBindingId: number;
   programId: number;
-  /** @nullable */
   targetScope?: string | null;
-  /** @nullable */
   targetScopeId?: number | null;
-  /** @nullable */
   submissionStartAt?: string | null;
-  /** @nullable */
   submissionEndAt?: string | null;
-  /**
-     * 런타임 장식 컨텍스트. UJAT 학교 신청 바인딩은 ujatPreferredEducationDateOptions를 항상 배열로 포함하며 후보가 없으면 []이다. 각 항목은 id(h1:YYYY-MM-DD|h2:YYYY-MM-DD), date(YYYY-MM-DD Asia/Seoul), label. 신청 제출 후에도 동일 규칙으로 노출한다. PortalFormRuntimeContext 계약을 따른다.
-     * @nullable
-     */
+  /** 런타임 장식 컨텍스트. UJAT 학교 신청 바인딩은 ujatPreferredEducationDateOptions를 항상 배열로 포함하며 후보가 없으면 []이다. 각 항목은 id(h1:YYYY-MM-DD|h2:YYYY-MM-DD), date(YYYY-MM-DD Asia/Seoul), label. 신청 제출 후에도 동일 규칙으로 노출한다. */
   runtimeContext?: ProgramFormBindingRenderResponseRuntimeContext;
 }

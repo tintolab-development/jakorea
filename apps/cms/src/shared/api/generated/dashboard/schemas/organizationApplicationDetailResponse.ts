@@ -26,7 +26,8 @@ export interface OrganizationApplicationDetailResponse {
   organizationAddress?: string;
   organizationAddressDetail?: string;
   requestedGrade?: string;
-  requestedEducationFormat?: string;
+  /** ONLINE, OFFLINE, HYBRID 또는 null. 저장된 교육 형태가 없거나 해당 프로그램에서 사용하지 않으면 null입니다. 프로그램 공통 교육 형태로 채우지 않습니다. 컬럼이 비어 있고 제출 답변에 educationFormat이 있으면 그 답을 투영합니다. 기존 한글 저장값(온라인/오프라인/혼합)은 ONLINE|OFFLINE|HYBRID로 정규화합니다. 인식하지 못한 신청 값은 원문을 유지합니다. 빈 문자열·'-'는 null입니다. */
+  requestedEducationFormat?: string | null;
   textbookId?: number;
   textbookName?: string;
   /** 지정 교재의 교육대상. 교재가 없으면 null. */
@@ -68,7 +69,7 @@ export interface OrganizationApplicationDetailResponse {
   mealProvided?: boolean;
   /** 식사 가능 여부 및 안내 스냅샷. Portal guidance(meal 등)에서 프로젝션. 없으면 null. UJAT에서는 guidance meal이 잔여교재 배출 장소로도 쓰이므로 leftoverTextbookDisposal을 우선한다. */
   mealNotice?: string | null;
-  /** 기타 특이사항(주차·전달사항) 스냅샷. Portal guidance(other-notes 등)에서 프로젝션. 없으면 null. 성범죄 조회서 요청은 detail 전용 컬럼 없음(form sex-offense 단락). */
+  /** 기타 특이사항(주차·전달사항) 스냅샷. Portal guidance(other-notes 등)에서 프로젝션. 없으면 null. */
   parkingInfo?: string | null;
   /** 간식(ABC초콜릿) 제공 가능 여부. Portal guidance snackAvailability(possible|impossible)에서 응답 필드로 프로젝션. 없으면 null. 빈 문자열 금지. mealProvided/mealNotice와 혼용하지 않음(UJAT meal 키는 잔여교재 배출 장소). */
   snackAvailability?: OrganizationApplicationDetailResponseSnackAvailability;
@@ -77,8 +78,10 @@ export interface OrganizationApplicationDetailResponse {
   /** UJAT 잔여교재 배출 장소. Portal guidance meal 답을 프로젝션. UJAT이 아니면 null. 없으면 mealNotice 스냅샷으로 fallback 가능. snackAvailability와 동일 필드로 쓰지 않음. */
   leftoverTextbookDisposal?: string | null;
   textbookGrade?: string;
-  textbookKits?: number;
-  textbookQuantity?: number;
+  /** 저장된 키트 수. 없으면 null이며 학생 수/24로 계산하지 않습니다. kitCount와 같은 값입니다. */
+  textbookKits?: number | null;
+  /** 저장된 교재 권수. 없으면 null. bookCount와 같은 값입니다. */
+  textbookQuantity?: number | null;
   mergeGroupId?: number;
   combinedClassYn?: boolean;
   sessions?: SessionResponse[];
@@ -108,7 +111,7 @@ export interface OrganizationApplicationDetailResponse {
   assignedInstructorCount?: number | null;
   /** UJAT 운영 학생 수. 활성 학생 명단 행 기준이며 없으면 null. */
   operatingStudentCount?: number | null;
-  /** 신청에 연결된 교재 영문명. 없으면 null. */
+  /** 신청에 연결된 교재 영문명. 교재가 없으면 null. 프로그램 공통 교재명으로 채우지 않습니다. */
   textbookNameEn?: string | null;
   /** 저장된 교재 배송 상태. 없으면 null. PREPARING으로 기본 채움하지 않습니다. */
   textbookDeliveryStatus?: OrganizationApplicationDetailResponseTextbookDeliveryStatus;

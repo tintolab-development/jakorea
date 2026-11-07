@@ -8,8 +8,8 @@
 
 export interface MemberGuardianVerificationNiceStartRequest {
   /**
+     * @minLength 0
      * @maxLength 2048
-     * @nullable
      */
-  frontendReturnUrl?: string | null;
+  frontendReturnUrl?: string;
 }

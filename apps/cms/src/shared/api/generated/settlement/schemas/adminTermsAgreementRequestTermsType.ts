@@ -8,6 +8,7 @@
 
 /**
  * 관리자 계정 등록 약관 유형
+ * @minLength 1
  */
 export type AdminTermsAgreementRequestTermsType = typeof AdminTermsAgreementRequestTermsType[keyof typeof AdminTermsAgreementRequestTermsType];
 

@@ -15,15 +15,9 @@ import type { MemberPortalTeacherAssignmentTextbook } from './memberPortalTeache
 export interface MemberPortalTeacherAssignment {
   /** ORGANIZATION 신청에 저장된 교재가 있으면 반환합니다. 개인 신청에는 null이며, 없거나 NOT_APPLICABLE이면 null. */
   textbook?: MemberPortalTeacherAssignmentTextbook | null;
-  /**
-     * 개인 신청에서 배정의 원본 신청 유형. CASE_D 연결 시 INSTRUCTOR이며 그 외에는 null.
-     * @nullable
-     */
+  /** 개인 신청에서 배정의 원본 신청 유형. CASE_D 연결 시 INSTRUCTOR이며 그 외에는 null. */
   sourceApplicationType?: MemberPortalTeacherAssignmentSourceApplicationType;
-  /**
-     * 개인 신청에서 배정의 원본 INSTRUCTOR 신청 ID. 연결된 배정이 없으면 null.
-     * @nullable
-     */
+  /** 개인 신청에서 배정의 원본 INSTRUCTOR 신청 ID. 연결된 배정이 없으면 null. */
   sourceApplicationId?: number | null;
   /** 개인 신청에 연결된 활성 강사 배정 목록. 없으면 빈 배열이며 다른 회원·프로그램·취소·대체·반려 배정은 포함하지 않습니다. */
   assignments?: MemberPortalTeacherAssignmentItem[];

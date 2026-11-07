@@ -12,8 +12,8 @@
 export interface SettlementApplicationConfirmRequest {
   /**
      * 승인 사유. 생략·공백이면 기본값 '정산 신청서 승인'을 사용한다.
+     * @minLength 0
      * @maxLength 1000
-     * @nullable
      */
   reason?: string | null;
 }

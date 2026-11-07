@@ -12,16 +12,10 @@ export interface GeneratedFileJobResponse {
   sourceDomain?: string;
   sourceId?: number;
   jobStatus?: string;
-  /** @nullable */
-  fileObjectId?: number | null;
-  /** @nullable */
-  requestPayloadJson?: string | null;
-  /** @nullable */
-  resultSnapshotJson?: string | null;
-  /** @nullable */
-  failureReason?: string | null;
-  /** @nullable */
-  requestedAt?: string | null;
-  /** @nullable */
-  completedAt?: string | null;
+  fileObjectId?: number;
+  requestPayloadJson?: string;
+  resultSnapshotJson?: string;
+  failureReason?: string;
+  requestedAt?: string;
+  completedAt?: string;
 }

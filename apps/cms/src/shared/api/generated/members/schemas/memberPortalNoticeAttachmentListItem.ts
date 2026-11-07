@@ -7,13 +7,10 @@
  */
 
 /**
- * 신청 단위 안내사항 첨부 목록 항목. 조회해도 게시글을 읽음 처리하지 않습니다.
+ * 신청 단위 안내사항 첨부 목록 항목. 조회해도 게시글을 읽음 처리하지 않습니다. postId는 원글보기용이며 없으면 null.
  */
 export interface MemberPortalNoticeAttachmentListItem {
-  /**
-     * 원글 program_post.id. 없으면 null이며 Platform은 원글보기를 숨긴다.
-     * @nullable
-     */
+  /** 원글 program_post.id. 없으면 null이며 Platform은 원글보기를 숨긴다. */
   postId?: number | null;
   postTitle?: string;
   attachmentId?: number;

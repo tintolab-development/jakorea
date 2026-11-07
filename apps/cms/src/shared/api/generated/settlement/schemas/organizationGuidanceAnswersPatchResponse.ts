@@ -7,11 +7,12 @@
  */
 import type { OrganizationGuidanceAnswersPatchResponseAnswers } from './organizationGuidanceAnswersPatchResponseAnswers';
 
+/**
+ * 기관 신청 안내·성범죄 조회 단락 부분 갱신 결과. formResponseId·answers·formResponseStatus는 같은 최신 제출본 기준이며 answers는 갱신 후 전체 응답입니다.
+ */
 export interface OrganizationGuidanceAnswersPatchResponse {
-  organizationApplicationId: number;
-  formResponseId: number;
-  /** 병합 후 최신 제출 응답 전체. null이 아닌 객체이며 body에 없던 답변 키도 유지됩니다. */
-  answers: OrganizationGuidanceAnswersPatchResponseAnswers;
-  /** formResponseId 및 answers와 동일한 최신 제출본의 상태(SUBMITTED, APPROVED 또는 COMPLETED). */
-  formResponseStatus: string;
+  organizationApplicationId?: number;
+  formResponseId?: number;
+  answers?: OrganizationGuidanceAnswersPatchResponseAnswers;
+  formResponseStatus?: string;
 }

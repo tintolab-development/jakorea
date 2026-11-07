@@ -13,6 +13,6 @@ import type { EmailAttachmentItem } from './emailAttachmentItem';
 export interface EmailAttachmentMutationResponse {
   attachmentId?: number;
   templateId?: number;
-  attachment?: EmailAttachmentItem | null;
+  attachment?: EmailAttachmentItem;
   attachments?: EmailAttachmentItem[];
 }

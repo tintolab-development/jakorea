@@ -5,19 +5,19 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { OrganizationApplicationRejectRequestTiming } from './organizationApplicationRejectRequestTiming';
 
 /**
- * 기관 신청 반려. timing 생략 시 즉시 발송.
+ * 기관 신청 반려 요청. timing을 생략하면 즉시 발송합니다.
  */
 export interface OrganizationApplicationRejectRequest {
   /**
+     * 거절 사유. 신청 상태 이력과 알림에 사용됩니다.
      * @minLength 2
      * @maxLength 500
      */
   reason: string;
-  /** @nullable */
-  timing?: OrganizationApplicationRejectRequestTiming;
-  /** @nullable */
-  scheduledAt?: string | null;
+  /** IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE. ON_ANNOUNCEMENT는 프로그램 발표일 기준으로 서버가 예약합니다. */
+  timing?: string;
+  /** timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601 */
+  scheduledAt?: string;
 }

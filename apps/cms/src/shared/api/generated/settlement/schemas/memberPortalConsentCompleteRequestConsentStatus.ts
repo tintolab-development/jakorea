@@ -7,13 +7,12 @@
  */
 
 /**
- * FULL은 deprecated이며 PARTIAL로 정규화됩니다.
- * @nullable
+ * PORTRAIT_RIGHTS 전용 부분동의 상태 힌트. FULL은 deprecated이며 서버가 PARTIAL로 정규화합니다.
  */
-export type MemberPortalConsentCompleteRequestConsentStatus = typeof MemberPortalConsentCompleteRequestConsentStatus[keyof typeof MemberPortalConsentCompleteRequestConsentStatus] | null;
+export type MemberPortalConsentCompleteRequestConsentStatus = typeof MemberPortalConsentCompleteRequestConsentStatus[keyof typeof MemberPortalConsentCompleteRequestConsentStatus];
 
 
 export const MemberPortalConsentCompleteRequestConsentStatus = {
   PARTIAL: 'PARTIAL',
-  DISAGREED: 'DISAGREED',
+  FULL: 'FULL',
 } as const;

@@ -5,25 +5,31 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { SettlementApplicationCalculationDetailResponse } from './settlementApplicationCalculationDetailResponse';
+import type { SettlementApplicationItemResponse } from './settlementApplicationItemResponse';
 
-/**
- * 정산 신청 상세/제출 응답
- */
 export interface SettlementApplicationResponse {
   applicationId?: number;
-  /** @nullable */
-  assignmentId?: number | null;
-  /** @nullable */
-  programScheduleId?: number | null;
+  applicationNo?: string;
+  assignmentId?: number;
+  programId?: number;
+  programScheduleId?: number;
+  instructorMemberId?: number;
+  lectureReportId?: number;
+  formResponseId?: number;
   status?: string;
-  /** @nullable */
-  grossAmount?: number | null;
-  /** @nullable */
-  withholdingTaxAmount?: number | null;
-  /** @nullable */
-  netPaymentAmount?: number | null;
-  /** @nullable */
-  revisionNo?: number | null;
-  /** @nullable */
-  submittedAt?: string | null;
+  originalApplicationId?: number;
+  revisionNo?: number;
+  rejectedReason?: string;
+  correctionRequestReason?: string;
+  formulaVersion?: string;
+  grossAmount?: number;
+  deductionAmount?: number;
+  withholdingTaxAmount?: number;
+  netPaymentAmount?: number;
+  submittedAt?: string;
+  createdAt?: string;
+  items?: SettlementApplicationItemResponse[];
+  calculationDetails?: SettlementApplicationCalculationDetailResponse[];
+  availableActions?: string[];
 }

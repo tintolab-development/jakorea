@@ -7,14 +7,6 @@
  */
 
 export interface EducationJournalExportRequest {
-  /**
-     * @maxItems 20000
-     * @items.minimum 1
-     */
   journalIds?: number[];
-  /**
-     * @minimum 1
-     * @nullable
-     */
-  organizationApplicationId?: number | null;
+  organizationApplicationId?: number;
 }

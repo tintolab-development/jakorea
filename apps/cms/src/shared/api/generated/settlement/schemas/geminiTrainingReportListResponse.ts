@@ -8,16 +8,8 @@
 import type { GeminiTrainingReportItem } from './geminiTrainingReportItem';
 
 export interface GeminiTrainingReportListResponse {
-  content: GeminiTrainingReportItem[];
-  /**
-     * 0-based page index
-     * @minimum 0
-     */
-  page: number;
-  /**
-     * @minimum 1
-     * @maximum 100
-     */
-  size: number;
-  totalElements: number;
+  content?: GeminiTrainingReportItem[];
+  page?: number;
+  size?: number;
+  totalElements?: number;
 }

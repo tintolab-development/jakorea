@@ -86,7 +86,7 @@ export interface ProgramResponse {
   recruitmentGuide?: string;
   learningSupportContent?: string;
   otherMatters?: string;
-  /** 참여자 모집 비고. 강사·봉사자 nested remarks와 별개. otherMatters(기타사항)와 별개. 없으면 null. */
+  /** 참여자 모집 비고 정본. PATCH remarks와 왕복. nested participantRecruitmentInfo.remarks는 같은 값의 미러. 강사·봉사자 nested remarks·otherMatters와 별개. 없으면 null. */
   remarks?: string | null;
   /** 참여자 지원 방법 자유 텍스트. 강사·봉사자 nested applicationMethod와 별개. applicationPathId가 아님. 없으면 null. */
   applicationMethod?: string | null;

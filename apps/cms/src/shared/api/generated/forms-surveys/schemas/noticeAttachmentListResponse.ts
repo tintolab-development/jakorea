@@ -5,14 +5,14 @@
  * Filtered for CMS form template / survey Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { NoticeAttachmentListItem } from './noticeAttachmentListItem';
+import type { MemberPortalNoticeAttachmentListItem } from './memberPortalNoticeAttachmentListItem';
 
 export interface NoticeAttachmentListResponse {
   applicationId?: number;
   applicationType?: string;
   programId?: number;
   /** 첨부 목록. createdAt 내림차순이며 결과가 없으면 빈 배열입니다. */
-  items?: NoticeAttachmentListItem[];
+  items?: MemberPortalNoticeAttachmentListItem[];
   page?: number;
   size?: number;
   totalElements?: number;

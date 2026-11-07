@@ -5,7 +5,6 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { AuthTokenResponseAdminProvisionedOnboardingStep } from './authTokenResponseAdminProvisionedOnboardingStep';
 import type { AuthTokenResponseAgeGroup } from './authTokenResponseAgeGroup';
 
 /**
@@ -16,24 +15,20 @@ export interface AuthTokenResponse {
   accessToken?: string;
   /** access token 재발급에 사용할 refresh token */
   refreshToken?: string;
+  /** 토큰 타입 */
   tokenType?: string;
+  /** access token 만료까지 남은 초 */
   expiresInSeconds?: number;
-  /** 관리자 발급 임시 비밀번호 변경 필요 여부 */
+  /** 관리자 발급 임시 비밀번호를 변경해야 하는지 여부 */
   passwordChangeRequired?: boolean;
-  /** CMS 관리자 등록 회원 온보딩 필요 여부 */
+  /** CMS 관리자가 등록한 회원의 포털 온보딩이 아직 남아 있는지 여부 */
   adminProvisionedOnboardingRequired?: boolean;
-  /**
-     * 다음 서버 처리 단계
-     * @nullable
-     */
-  adminProvisionedOnboardingStep?: AuthTokenResponseAdminProvisionedOnboardingStep;
-  /** CMS 관리자에 의해 등록된 회원 여부 */
+  /** 다음 서버 처리 단계. PROFILE, IDENTITY, PASSWORD, PROFILE_REVIEW, DONE 중 하나이며 일반 회원은 null입니다. */
+  adminProvisionedOnboardingStep?: string;
+  /** CMS 관리자에 의해 생성된 회원인지 여부 */
   registeredByAdmin?: boolean;
-  /** 관리자 등록 후 본인 가입 온보딩 완료 여부 */
+  /** 관리자 등록 후 본인 프로필·본인인증·비밀번호 변경까지 완료했는지 여부 */
   identitySelfSignupCompletedAfterAdminRegistration?: boolean;
-  /**
-     * 회원 포탈 로그인·토큰 갱신·소셜 로그인에서 항상 UNDER_14 또는 OVER_14. GET /api/portal/auth/me 및 GET /api/portal/me/profile 과 동일 규칙(member_signup_profile.age_group 우선, 없으면 member.is_under_14_yn). 관리자 토큰 응답은 null. 키는 항상 포함되며 회원은 빈 문자열이 아닙니다.
-     * @nullable
-     */
+  /** 회원 포탈 로그인·토큰 갱신·소셜 로그인에서 항상 UNDER_14 또는 OVER_14. GET /api/portal/auth/me 및 GET /api/portal/me/profile 과 동일 규칙(member_signup_profile.age_group 우선, 없으면 member.is_under_14_yn). 관리자 토큰 응답은 null. */
   ageGroup?: AuthTokenResponseAgeGroup;
 }

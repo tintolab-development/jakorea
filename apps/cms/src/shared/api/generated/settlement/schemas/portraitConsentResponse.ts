@@ -18,26 +18,15 @@ export interface PortraitConsentResponse {
   status?: string;
   /** 기관 신청 단위 제출 revision. 재제출할 때마다 증가하며 업로드 취소 후 재제출해도 이전 번호를 재사용하지 않습니다. DELETE의 expectedRevisionNo로 보냅니다. */
   revisionNo?: number;
-  /** @nullable */
-  submittedByMemberId?: number | null;
-  /** @nullable */
-  submittedByAdminId?: number | null;
+  submittedByMemberId?: number;
+  submittedByAdminId?: number;
   submittedAt?: string;
-  /** @nullable */
-  reviewedByAdminId?: number | null;
-  /** @nullable */
-  reviewedAt?: string | null;
-  /** @nullable */
-  rejectReason?: string | null;
-  /**
-     * 업로드 당시 원본 파일명. 파일 원장에 값이 없으면 null
-     * @nullable
-     */
+  reviewedByAdminId?: number;
+  reviewedAt?: string;
+  rejectReason?: string;
+  /** 업로드 당시 원본 파일명. 파일 원장에 값이 없으면 null */
   originalFileName?: string | null;
-  /**
-     * 파일 크기(byte). 파일 원장에 값이 없으면 null
-     * @nullable
-     */
+  /** 파일 크기(byte). 파일 원장에 값이 없으면 null */
   fileSize?: number | null;
   /** 제출 행 최종 변경 시각(ISO-8601) */
   updatedAt?: string;

@@ -10,7 +10,7 @@ export interface PaymentStatementBulkDownloadRequest {
   /**
      * @minItems 1
      * @maxItems 100
-     * @items.minimum 1
      */
   settlementIds: number[];
+  password?: string;
 }
