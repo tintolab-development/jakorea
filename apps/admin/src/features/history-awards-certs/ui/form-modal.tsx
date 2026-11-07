@@ -12,6 +12,7 @@ import type {
 } from '@/entities/history-awards-certs/model/types'
 import { deleteConfirmContent } from '@/features/history-awards-certs/lib/delete-guards'
 import { coerceRadioBoolean } from '@/features/history-awards-certs/lib/format'
+import { isHistoryFormRequiredIncomplete } from '@/features/history-awards-certs/lib/history-form-required'
 import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT,
   CmsButton,
@@ -145,6 +146,10 @@ function HacFormBody(props: BodyProps) {
 
   const handleSubmit = useCallback(() => {
     if (props.kind === 'history') {
+      if (isHistoryFormRequiredIncomplete({ year, month, content: historyContent })) {
+        showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+        return
+      }
       const yearN = Number(year)
       const monthN = Number(month)
       if (!Number.isInteger(yearN) || yearN < 1900 || yearN > 2100) {
@@ -155,12 +160,7 @@ function HacFormBody(props: BodyProps) {
         showAlert({ title: '월 확인', content: '월은 1~12 사이의 숫자로 입력해 주세요.' })
         return
       }
-      const trimmed = historyContent.trim()
-      if (!trimmed) {
-        showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
-        return
-      }
-      props.onSubmit({ isPublic, year: yearN, month: monthN, content: trimmed })
+      props.onSubmit({ isPublic, year: yearN, month: monthN, content: historyContent.trim() })
       return
     }
 
@@ -243,6 +243,7 @@ function HacFormBody(props: BodyProps) {
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="공개 여부"
+              required
               view={null}
               edit={
                 <CmsRadioGroup
@@ -265,6 +266,7 @@ function HacFormBody(props: BodyProps) {
               <DetailInfoForm.Row type="single">
                 <DetailInfoForm.Field
                   label="연혁 년도/월"
+                  required
                   view={null}
                   edit={
                     <div
@@ -305,13 +307,15 @@ function HacFormBody(props: BodyProps) {
               <DetailInfoForm.Row type="single">
                 <DetailInfoForm.Field
                   label="내용"
+                  required
                   view={null}
                   edit={
                     <CmsTextArea
                       className="hac-form-modal__content-field"
                       inputSize="medium"
                       width="100%"
-                      autoSize={{ minRows: 1, maxRows: 3 }}
+                      rows={1}
+                      autoSize={false}
                       value={historyContent}
                       onChange={e => setHistoryContent(e.target.value)}
                       placeholder="내용을 입력해 주세요"
