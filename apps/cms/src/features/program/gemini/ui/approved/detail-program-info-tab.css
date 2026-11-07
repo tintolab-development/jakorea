@@ -35,11 +35,6 @@
   width: 100%;
 }
 
-.gemini-approved-training-detail-info__assigned-instructor-form .detail-info-form__body {
-  border: 0;
-  border-radius: 0;
-}
-
 .gemini-approved-training-detail-info__empty-panel {
   display: flex;
   min-height: 150px;
@@ -63,6 +58,7 @@
   font-size: 20px;
   font-weight: 600;
   line-height: 150%;
+  opacity: 0.5;
 }
 
 .gemini-approved-training-detail-info__empty-description {
