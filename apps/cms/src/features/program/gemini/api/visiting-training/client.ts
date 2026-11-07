@@ -388,11 +388,19 @@ export async function resendGeminiOrganizationApplicationNotificationRemote(
 }
 
 export async function approveGeminiInstructorApplicationRemote(
-  applicationId: string
+  applicationId: string,
+  options?: { replacement?: boolean }
 ): Promise<void> {
+  const replacement = options?.replacement === true
   await customInstance({
     url: `${BASE}/instructor-applications/${encodeURIComponent(applicationId)}/approve`,
     method: 'POST',
+    ...(replacement
+      ? {
+          headers: { 'Content-Type': 'application/json' },
+          data: { replacement: true },
+        }
+      : {}),
   })
 }
 

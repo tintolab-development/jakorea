@@ -154,8 +154,12 @@ function mapInstructorApplicationStatus(
   status?: string
 ): GeminiInstructorApplicationApprovalStatus {
   const normalized = status?.trim().toUpperCase() ?? ''
-  if (normalized === 'APPROVED') return 'APPROVED'
-  if (normalized === 'REJECTED') return 'REJECTED'
+  if (['APPROVED', 'APPROVAL_COMPLETED', 'FINAL_SELECTED'].includes(normalized)) {
+    return 'APPROVED'
+  }
+  if (['REJECTED', 'AUTO_REJECTED', 'CANCELLED'].includes(normalized)) {
+    return 'REJECTED'
+  }
   return 'PENDING'
 }
 

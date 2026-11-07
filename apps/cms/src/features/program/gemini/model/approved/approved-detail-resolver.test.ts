@@ -263,4 +263,21 @@ describe('mapGeminiInstructorApplicationItemToRow', () => {
     )
     expect(row.grade).toBe('2급')
   })
+
+  it.each([
+    'AUTO_REJECTED',
+    'CANCELLED',
+  ])('maps %s to 신청 반려 상태', applicationStatus => {
+    const row = mapGeminiInstructorApplicationItemToRow(
+      {
+        applicationId: 2,
+        instructorName: '반려 강사',
+        applicationStatus,
+      },
+      '1',
+      0
+    )
+
+    expect(row.approvalStatus).toBe('REJECTED')
+  })
 })

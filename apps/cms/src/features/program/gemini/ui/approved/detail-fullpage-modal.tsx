@@ -265,6 +265,7 @@ export function GeminiApprovedTrainingDetailFullPageModal({
           ) : activeLnb === 'instructors' ? (
             <GeminiApprovedTrainingDetailInstructorApplicationTab
               approvedTrainingId={approvedTrainingId}
+              trainingDetail={detail}
             />
           ) : detail.programId ? (
             <div className="program-detail-fullpage-modal__info-tab program-detail-fullpage-modal__managers-tab">

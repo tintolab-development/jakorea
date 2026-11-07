@@ -158,4 +158,18 @@ describe('formatGeminiApiError', () => {
       )
     ).toBe('신청 강사 또는 교육 진행 이력이 있는 연수는 삭제할 수 없습니다.')
   })
+
+  it('maps an existing Gemini instructor winner conflict to replacement guidance', () => {
+    expect(
+      formatGeminiApiError(
+        {
+          response: {
+            status: 409,
+            data: { error: { code: 'GEMINI_INSTRUCTOR_WINNER_ALREADY_EXISTS' } },
+          },
+        },
+        '강사 승인에 실패했습니다.'
+      )
+    ).toBe('이미 승인된 강사가 있습니다. 강사 변경으로 승인해 주세요.')
+  })
 })

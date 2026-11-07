@@ -12,6 +12,8 @@ export const GEMINI_API_ERROR_MESSAGES: Record<string, string> = {
   GEMINI_INSTRUCTOR_IDENTITY_MISMATCH:
     '선택한 강사 회원과 입력한 강사명·연락처가 일치하지 않습니다.',
   GEMINI_INSTRUCTOR_NAME_AND_PHONE_REQUIRED: '강사명과 연락처를 입력해 주세요.',
+  GEMINI_INSTRUCTOR_WINNER_ALREADY_EXISTS:
+    '이미 승인된 강사가 있습니다. 강사 변경으로 승인해 주세요.',
   GEMINI_APPROVED_TRAINING_HAS_BUSINESS_HISTORY:
     '신청 강사 또는 교육 진행 이력이 있는 연수는 삭제할 수 없습니다.',
 }

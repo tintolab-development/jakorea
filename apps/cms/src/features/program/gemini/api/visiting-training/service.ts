@@ -255,9 +255,12 @@ export async function listGeminiApprovedInstructorApplicationsPage(
   }
 }
 
-export async function approveGeminiInstructorApplication(applicationId: string): Promise<void> {
+export async function approveGeminiInstructorApplication(
+  applicationId: string,
+  options?: { replacement?: boolean }
+): Promise<void> {
   assertRemoteReady()
-  await approveGeminiInstructorApplicationRemote(applicationId)
+  await approveGeminiInstructorApplicationRemote(applicationId, options)
 }
 
 export async function rejectGeminiInstructorApplication(

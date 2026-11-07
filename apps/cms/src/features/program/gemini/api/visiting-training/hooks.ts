@@ -306,7 +306,11 @@ export function usePatchGeminiApprovedTeacherEmploymentMutation(approvedTraining
 export function useApproveGeminiInstructorApplicationMutation(approvedTrainingId: string) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (applicationId: string) => approveGeminiInstructorApplication(applicationId),
+    mutationFn: (input: { applicationId: string; replacement?: boolean }) =>
+      approveGeminiInstructorApplication(input.applicationId, {
+        replacement: input.replacement,
+      }),
+    retry: false,
     onSuccess: async () => {
       await invalidateGeminiInstructorApprovalQueries(queryClient, approvedTrainingId)
     },
@@ -339,6 +343,7 @@ export function useRejectGeminiInstructorApplicationMutation(approvedTrainingId:
   return useMutation({
     mutationFn: ({ applicationId, reason }: { applicationId: string; reason?: string }) =>
       rejectGeminiInstructorApplication(applicationId, reason),
+    retry: false,
     onSuccess: async () => {
       await invalidateGeminiInstructorApprovalQueries(queryClient, approvedTrainingId)
     },
