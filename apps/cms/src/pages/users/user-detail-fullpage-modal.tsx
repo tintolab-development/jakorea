@@ -3,7 +3,7 @@
  * 전체 회원 목록 행 클릭 시 프로그램 상세와 동일한 LNB+메인 레이아웃으로 노출
  */
 
-import { useCallback, useMemo, type MutableRefObject } from 'react'
+import { useCallback, useMemo, useState, type MutableRefObject } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { DetailModalSidebar } from '@/shared/ui/detail-modal-sidebar'
 import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
@@ -34,7 +34,24 @@ import {
   type MemberBasicInfoSavedOptions,
 } from '@/features/user/detail/lib/use-user-detail-controller'
 import { useUserDetailFullpageDerived } from '@/features/user/detail/lib/use-user-detail-fullpage-derived'
-import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
+import {
+  isAdminApprovalRequestsRemoteEnabled,
+  isInstructorRoleRequestsRemoteEnabled,
+  isMembersRemoteEnabled,
+} from '@/features/user/api/member-remote-capabilities'
+import { useInstructorRoleRequestMutations } from '@/features/user/api/hooks/use-instructor-role-request-mutations'
+import { useAdminApprovalRequestMutations } from '@/features/user/api/hooks/use-admin-approval-request-mutations'
+import { PermissionNotificationResendModal } from '@/features/user/permission-management/permission-notification-resend-modal'
+import {
+  mapPermissionApprovalStatusForResend,
+  type PermissionNotificationResendApprovalStatus,
+  type PermissionNotificationResendRole,
+} from '@/features/user/permission-management/lib/permission-notification-resend'
+import { toScheduledOnlyNotifyTiming } from '@/features/program/general/lib/application-decision-notify-timing'
+import { isNotifyTimingSupported, NOTIFY_TIMING_CAPABILITY } from '@/shared/lib/notify-timing-capability'
+import type { PermissionModalPayload } from '@/shared/components/permission-modal'
+import { handleError } from '@/shared/utils/error-handler'
+import { showNotificationResendRequestCompletedAlert, useCmsAlert } from '@/shared/ui'
 import { useUserDetailModals } from '@/features/user/detail/lib/use-user-detail-modals'
 import { UserDetailLayout } from '@/features/user/detail/ui/detail-info/user-detail-layout'
 import { USER_BASIC_INFO_ENTRY_QUERY_KEY } from '@/features/user/detail/ui/user-basic-info/entry-resolver'
@@ -132,6 +149,110 @@ export function UserDetailFullPageModal({
     mode,
     permissionRole,
   })
+  const { showAlert } = useCmsAlert()
+  const { resendNotificationMutation, getResendNotificationError } =
+    useInstructorRoleRequestMutations()
+  const {
+    resendNotificationMutation: adminResendNotificationMutation,
+    getResendNotificationError: getAdminResendNotificationError,
+  } = useAdminApprovalRequestMutations()
+  const [permissionNotificationResend, setPermissionNotificationResend] = useState<{
+    userId: string
+    displayName: string
+    permissionRole: PermissionNotificationResendRole
+    approvalStatus: PermissionNotificationResendApprovalStatus
+  } | null>(null)
+
+  const handlePermissionResendNotification = useCallback(
+    (ctx: { userId: string; permissionRole: UserDetailPermissionRole }) => {
+      if (onPermissionResendNotification) {
+        onPermissionResendNotification(ctx)
+        return
+      }
+      const approvalStatus = mapPermissionApprovalStatusForResend(user?.permissionApprovalStatus)
+      if (approvalStatus == null) {
+        showAlert({
+          title: '안내',
+          content: '승인·반려 상태에서만 알림을 재발송할 수 있습니다.',
+        })
+        return
+      }
+      setPermissionNotificationResend({
+        userId: ctx.userId,
+        displayName: user?.name?.trim() || '회원',
+        permissionRole: ctx.permissionRole,
+        approvalStatus,
+      })
+    },
+    [onPermissionResendNotification, showAlert, user]
+  )
+
+  const handlePermissionNotificationResendConfirm = useCallback(
+    async (payload: PermissionModalPayload) => {
+      if (!permissionNotificationResend) return
+      if (resendNotificationMutation.isPending || adminResendNotificationMutation.isPending) {
+        return
+      }
+      if (!isNotifyTimingSupported(payload.notifyTiming, NOTIFY_TIMING_CAPABILITY.scheduledOnly)) {
+        return
+      }
+      const notify = toScheduledOnlyNotifyTiming(payload.notifyTiming, payload.manualNotifyAt)
+      const { permissionRole: role } = permissionNotificationResend
+
+      if (role === 'instructor' && isInstructorRoleRequestsRemoteEnabled()) {
+        const requestId = user?.instructorRoleRequestId
+        if (requestId == null) {
+          showAlert({
+            title: '안내',
+            content: '알림 재발송할 강사 권한 신청 ID가 회원 상세에 없습니다.',
+          })
+          return
+        }
+        try {
+          await resendNotificationMutation.mutateAsync({ requestId, notify })
+          setPermissionNotificationResend(null)
+          showNotificationResendRequestCompletedAlert()
+        } catch (error) {
+          handleError(error, { defaultMessage: getResendNotificationError(error) })
+        }
+        return
+      }
+
+      if (role === 'admin' && isAdminApprovalRequestsRemoteEnabled()) {
+        const adminAccountId = user?.adminAccountId
+        if (adminAccountId == null) {
+          showAlert({
+            title: '안내',
+            content: '알림 재발송할 관리자 신청 ID가 회원 상세에 없습니다.',
+          })
+          return
+        }
+        try {
+          await adminResendNotificationMutation.mutateAsync({ adminAccountId, notify })
+          setPermissionNotificationResend(null)
+          showNotificationResendRequestCompletedAlert()
+        } catch (error) {
+          handleError(error, { defaultMessage: getAdminResendNotificationError(error) })
+        }
+        return
+      }
+
+      showAlert({
+        title: '안내',
+        content: '권한 알림 재발송 API를 사용할 수 없습니다.',
+      })
+    },
+    [
+      adminResendNotificationMutation,
+      getAdminResendNotificationError,
+      getResendNotificationError,
+      permissionNotificationResend,
+      resendNotificationMutation,
+      showAlert,
+      user?.adminAccountId,
+      user?.instructorRoleRequestId,
+    ]
+  )
 
   const shell = useMemo((): UserDetailFullpageShellValue | null => {
     if (!open || !user || !fullpageDerived) return null
@@ -191,7 +312,7 @@ export function UserDetailFullPageModal({
       onOpenInstructorPermissionRevoke: actions.openInstructorPermissionRevoke,
       onCloseInstructorPermissionRevoke: actions.closeInstructorPermissionRevoke,
       onConfirmInstructorPermissionRevoke: actions.confirmInstructorPermissionRevoke,
-      onPermissionResendNotification,
+      onPermissionResendNotification: handlePermissionResendNotification,
     }
   }, [
     open,
@@ -229,7 +350,7 @@ export function UserDetailFullPageModal({
     actions.openJaGradeEvaluation,
     actions.closeJaGradeEvaluation,
     actions.completeJaGradeEvaluation,
-    onPermissionResendNotification,
+    handlePermissionResendNotification,
     derived.instructorResumeApplicantRow,
     derived.canPatchAdminPermissionInDetailView,
     basicInfoEntrySource,
@@ -365,6 +486,25 @@ export function UserDetailFullPageModal({
       </UserDetailLayout>
 
       {shell ? <UserDetailFullpageModalsStack /> : null}
+      <PermissionNotificationResendModal
+        open={permissionNotificationResend != null}
+        permissionRole={permissionNotificationResend?.permissionRole ?? 'instructor'}
+        userDisplayName={permissionNotificationResend?.displayName ?? ''}
+        approvalStatus={permissionNotificationResend?.approvalStatus ?? 'approved'}
+        confirmLoading={
+          resendNotificationMutation.isPending || adminResendNotificationMutation.isPending
+        }
+        onCancel={() => {
+          if (
+            resendNotificationMutation.isPending ||
+            adminResendNotificationMutation.isPending
+          ) {
+            return
+          }
+          setPermissionNotificationResend(null)
+        }}
+        onConfirm={handlePermissionNotificationResendConfirm}
+      />
     </UserDetailFullpageShellProvider>
   )
 }
