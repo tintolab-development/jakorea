@@ -64,6 +64,8 @@ interface AuthState {
   passwordChangeRequired: boolean
   /** GET /api/admin/me 동기화 중 — 역할 가드 보류 */
   adminSessionSyncPending: boolean
+  /** 부트 시 저장된 access token이 만료 임박이라 서버 갱신 결과를 기다리는 중 */
+  isBootstrapping: boolean
   // Phase 2: checkAuth 중복 호출 방지를 위한 내부 상태
   _isCheckingAuth: boolean
   _checkAuthPromise: Promise<void> | null
@@ -186,6 +188,12 @@ const loadAuthFromStorage = (): Partial<AuthState> => {
 // 초기 상태를 즉시 로드
 const initialState = loadAuthFromStorage()
 
+/** 저장된 세션이 있지만 access token 갱신이 필요하면, 갱신 결과 전까지 보호 화면을 그리지 않는다. */
+const initialIsBootstrapping =
+  !!initialState.isAuthenticated &&
+  !!initialState.expiresAt &&
+  shouldRefreshAccessToken(new Date(initialState.expiresAt).getTime(), Date.now())
+
 export const useAuthStore = create<AuthState>()((set, get) => {
   return {
     user: initialState.user ?? null,
@@ -198,6 +206,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
     requiresMfa: false, // Phase 0.5.1: MFA 필요 여부
     passwordChangeRequired: initialState.passwordChangeRequired ?? false,
     adminSessionSyncPending: false,
+    isBootstrapping: initialIsBootstrapping,
     _isCheckingAuth: false, // Phase 2: checkAuth 중복 호출 방지
     _checkAuthPromise: null, // Phase 2: checkAuth Promise 저장
 
@@ -435,6 +444,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         mfaState: null,
         requiresMfa: false,
         adminSessionSyncPending: false,
+        isBootstrapping: false,
         _isCheckingAuth: false,
         _checkAuthPromise: null,
       })
@@ -466,7 +476,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
 
       // localStorage에서 직접 토큰 확인
       if (typeof window === 'undefined' || !window.localStorage) {
-        set({ isAuthenticated: false, user: null })
+        set({ isAuthenticated: false, user: null, isBootstrapping: false })
         return
       }
 
@@ -481,7 +491,13 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         (sidAtStart ? readJwtSidClaim(token) === sidAtStart : token === tokenAtStart)
 
       if (!token || !expiresAt || !userStr) {
-        set({ isAuthenticated: false, user: null, token: null, expiresAt: null })
+        set({
+          isAuthenticated: false,
+          user: null,
+          token: null,
+          expiresAt: null,
+          isBootstrapping: false,
+        })
         return
       }
 
@@ -570,7 +586,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
             if (isCurrentLogin()) get().logout()
           }
         } finally {
-          set({ _isCheckingAuth: false, _checkAuthPromise: null })
+          set({ _isCheckingAuth: false, _checkAuthPromise: null, isBootstrapping: false })
         }
       })()
 
