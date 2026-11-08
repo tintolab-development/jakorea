@@ -77,22 +77,6 @@ export async function listGeminiPerformanceRowsPage(
   }
 }
 
-const RELOAD_LIST_MAX_PAGES = 50
-
-/** import·삭제 후 활성 목록 캐시를 서버 기준으로 다시 채운다(전체 페이지). */
-export async function reloadGeminiPerformanceListCache(
-  filters: GeminiPerformanceListFilters = {}
-): Promise<GeminiPerformanceRemoteListPage[]> {
-  assertRemoteReady()
-  const pages: GeminiPerformanceRemoteListPage[] = []
-  for (let pageParam = 0; pageParam < RELOAD_LIST_MAX_PAGES; pageParam += 1) {
-    const page = await listGeminiPerformanceRowsPage(pageParam, filters)
-    pages.push(page)
-    if (!page.hasMore) break
-  }
-  return pages
-}
-
 /** @deprecated 무한 스크롤은 `listGeminiPerformanceRowsPage` 사용 */
 export async function listGeminiPerformanceRows(): Promise<GeminiPerformanceRow[]> {
   const page = await listGeminiPerformanceRowsPage(0)

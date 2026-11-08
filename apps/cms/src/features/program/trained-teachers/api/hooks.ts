@@ -93,7 +93,8 @@ export function useTrainedTeacherPrograms(
 
   return useInfiniteQuery({
     ...trainedTeacherProgramsInfiniteQueryOptions(filters, remoteEnabled),
-    enabled,
+    // remote가 꺼진 환경에서는 조회하지 않는다 (assertRemoteReady throw → 「목록 조회 실패」 알림 방지)
+    enabled: enabled && remoteEnabled,
     // 상단 위젯 단계 이동 시 새 키 응답 전까지 이전 목록을 유지 (빈 표 → 스피너 → 표 깜빡임 방지)
     placeholderData: keepPreviousData,
   })

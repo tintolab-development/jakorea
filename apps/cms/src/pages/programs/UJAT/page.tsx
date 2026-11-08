@@ -261,7 +261,7 @@ function UjatProgramListPageContent() {
 
   const handleUjatProgramRegistrationSaved = useCallback(
     (program: Program) => {
-      void programsQuery.refetch()
+      // 목록 갱신은 등록 mutation onSuccess의 무효화가 맡는다 — 여기서 refetch하면 요청을 취소하고 전 페이지를 다시 받는다.
       closeWritingUserPreview()
       setSearchParams(
         prev => buildProgramListSearchParamsAfterRegistrationComplete(prev, program.id),
@@ -347,7 +347,7 @@ function UjatProgramListPageContent() {
       setSearchParams(prev => clearUjatDetailQueryParams(new URLSearchParams(prev)), {
         replace: true,
       })
-      void programsQuery.refetch()
+      // 목록 갱신은 삭제 mutation onSuccess의 무효화가 맡는다.
       showDeleteCompletedAlert()
     } catch (error) {
       setProgramPendingDelete(null)
@@ -391,7 +391,7 @@ function UjatProgramListPageContent() {
       await bulkDeleteProgramsMutation.mutateAsync(idsToDelete)
       setSelectedRowKeys([])
       setBulkDeleteModalOpen(false)
-      void programsQuery.refetch()
+      // 목록 갱신은 삭제 mutation onSuccess의 무효화가 맡는다.
       showDeleteCompletedAlert()
     } catch (error) {
       setBulkDeleteModalOpen(false)
@@ -640,9 +640,19 @@ function UjatProgramListPageContent() {
 
   const handleRowNavigate = useCallback(
     (program: Program) => {
-      navigate(getProgramAdminDetailUrlFromPathname(program.id, location.pathname))
+      const target = getProgramAdminDetailUrlFromPathname(program.id, location.pathname)
+      const [targetPath, targetQuery = ''] = target.split('?')
+      // 같은 목록 화면에서 상세를 열 때는 검색·진행년도·상태 필터를 유지한다.
+      // 상세 URL만 새로 만들면 필터가 지워져 목록이 필터 없이 한 번 더 조회되고, 닫은 뒤에도 필터가 사라진다.
+      if (targetPath !== location.pathname) {
+        navigate(target)
+        return
+      }
+      const next = clearUjatDetailQueryParams(new URLSearchParams(location.search))
+      new URLSearchParams(targetQuery).forEach((value, key) => next.set(key, value))
+      navigate(`${targetPath}?${next.toString()}`)
     },
-    [navigate, location.pathname]
+    [navigate, location.pathname, location.search]
   )
 
   const toolbarActionsAfterExcel = (

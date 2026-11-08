@@ -159,11 +159,11 @@ export function useBulkDeleteUjatPrograms() {
         await queryClient.cancelQueries({ queryKey: detailKey })
         queryClient.removeQueries({ queryKey: detailKey })
       }
-      void queryClient.invalidateQueries({ queryKey: queryKeys.lists() })
+      invalidateUjatProgramListCaches(queryClient)
     },
     onError: error => {
       if (!isProgramHardDeleteBlockedError(error) || error.successCount < 1) return
-      void queryClient.invalidateQueries({ queryKey: queryKeys.lists() })
+      invalidateUjatProgramListCaches(queryClient)
     },
   })
 }

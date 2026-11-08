@@ -838,3 +838,41 @@ export async function submitAdminFormResponseRemote(
     })
   )
 }
+
+export type AdminProgramOverviewStageCounts = {
+  total: number
+  scheduled: number
+  inProgress: number
+  completed: number
+}
+
+/**
+ * 목록 상단 4카드 건수 — `GET /api/admin/programs/overview-stages?programType=` (1회).
+ * BE가 목록 `periodStatus` 필터와 같은 배타 버킷으로 센다. `RECRUITING`은 예정(SCHEDULED) 버킷 별칭이라
+ * `scheduled`와 `recruiting`을 FE에서 더하지 않는다.
+ * 예전에는 `GET /programs?size=1` 여러 번(1사1교는 예정 목록 전 페이지 2벌)으로 셌다.
+ */
+export async function fetchAdminProgramOverviewStagesRemote(
+  programType: string,
+  params: { businessYear?: number } = {}
+): Promise<AdminProgramOverviewStageCounts> {
+  const data = await unwrapApiBody<{
+    total?: number
+    scheduled?: number
+    recruiting?: number
+    inProgress?: number
+    completed?: number
+  }>(
+    await customInstance({
+      url: '/api/admin/programs/overview-stages',
+      method: 'GET',
+      params: { programType, ...(params.businessYear != null ? { businessYear: params.businessYear } : {}) },
+    })
+  )
+  return {
+    total: data.total ?? 0,
+    scheduled: data.scheduled ?? 0,
+    inProgress: data.inProgress ?? 0,
+    completed: data.completed ?? 0,
+  }
+}

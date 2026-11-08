@@ -2,8 +2,8 @@
  * Gemini 실적관리 서비스 — remote(training-reports) only
  */
 
-import type { InfiniteData } from '@tanstack/react-query'
 import { queryClient } from '@/shared/lib/query-client'
+import { refetchInfiniteQueryFirstPage } from '@/shared/lib/refetch-infinite-first-page'
 import { mapUploadToDisplayRow } from '../lib/performance/map-upload-to-display-row'
 import {
   GEMINI_PERFORMANCE_INVALID_TEMPLATE_MESSAGE,
@@ -25,9 +25,6 @@ import {
   applyGeminiPerformanceImportRemote,
   deleteGeminiPerformanceRowsRemote,
   prepareGeminiPerformanceImportRemote,
-  reloadGeminiPerformanceListCache,
-  type GeminiPerformanceListFilters,
-  type GeminiPerformanceRemoteListPage,
 } from './performance-remote/service'
 
 const REMOTE_ONLY_MESSAGE = 'Gemini 실적은 Admin API를 사용하세요. mock 카탈로그는 제거되었습니다.'
@@ -41,41 +38,12 @@ export type GeminiPerformanceImportResult = {
   paymentExclusionNotes?: string
 }
 
-function parseListFiltersFromQueryKey(queryKey: readonly unknown[]): GeminiPerformanceListFilters {
-  const raw = queryKey[5]
-  if (typeof raw !== 'string' || !raw) return {}
-  try {
-    const parsed = JSON.parse(raw) as GeminiPerformanceListFilters
-    return parsed && typeof parsed === 'object' ? parsed : {}
-  } catch {
-    return {}
-  }
-}
-
-/** 활성·캐시된 실적 목록 쿼리를 서버 전체 페이지로 다시 채운다. */
+/**
+ * import·삭제 후 실적 목록을 다시 받는다.
+ * 예전에는 캐시된 필터마다 최대 50페이지를 순서대로 받아 채웠다 — 첫 페이지만 다시 받고 나머지는 스크롤로 잇는다.
+ */
 async function refreshGeminiPerformanceListCaches(): Promise<void> {
-  const queries = queryClient.getQueryCache().findAll({
-    queryKey: geminiPerformanceQueryKeys.all,
-  })
-  const listQueries = queries.filter(query => query.queryKey[4] === 'list')
-  if (listQueries.length === 0) {
-    const pages = await reloadGeminiPerformanceListCache({})
-    queryClient.setQueryData<InfiniteData<GeminiPerformanceRemoteListPage>>(
-      geminiPerformanceQueryKeys.list({}),
-      { pages, pageParams: pages.map((_, index) => index) }
-    )
-    return
-  }
-  await Promise.all(
-    listQueries.map(async query => {
-      const filters = parseListFiltersFromQueryKey(query.queryKey)
-      const pages = await reloadGeminiPerformanceListCache(filters)
-      queryClient.setQueryData<InfiniteData<GeminiPerformanceRemoteListPage>>(query.queryKey, {
-        pages,
-        pageParams: pages.map((_, index) => index),
-      })
-    })
-  )
+  await refetchInfiniteQueryFirstPage(queryClient, [...geminiPerformanceQueryKeys.all, 'list'])
 }
 
 export const geminiPerformanceService = {

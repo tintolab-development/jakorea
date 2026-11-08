@@ -5,9 +5,8 @@ import {
   fetchAdminProgramSponsorsRemote,
   fetchAdminProgramsRemote,
   updateAdminProgramRemote,
+  fetchAdminProgramOverviewStagesRemote,
 } from '@/features/program/general/api/programs-api-client'
-import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
-import customInstance from '@/shared/api/orval-mutator'
 import type { Program } from '@/types/domain'
 import {
   mapTrainedTeacherDetailToProgram,
@@ -108,28 +107,7 @@ export async function listTrainedTeacherPrograms(
  */
 export async function fetchTrainedTeacherOverviewStages(): Promise<GeneralProgramOverviewStageCounts> {
   assertRemoteReady()
-
-  const data = await unwrapApiBody<{
-    total?: number
-    scheduled?: number
-    recruiting?: number
-    inProgress?: number
-    completed?: number
-  }>(
-    await customInstance({
-      url: '/api/admin/programs/overview-stages',
-      method: 'GET',
-      params: { programType: TRAINED_TEACHER_PROGRAM_API_TYPE },
-    })
-  )
-
-  // BE: scheduled/recruiting 은 동일 예정 버킷일 수 있음 — 강제 합산하지 않음
-  return {
-    total: data.total ?? 0,
-    scheduled: data.scheduled ?? 0,
-    inProgress: data.inProgress ?? 0,
-    completed: data.completed ?? 0,
-  }
+  return fetchAdminProgramOverviewStagesRemote(TRAINED_TEACHER_PROGRAM_API_TYPE)
 }
 
 export async function getTrainedTeacherProgram(programId: string): Promise<Program> {
