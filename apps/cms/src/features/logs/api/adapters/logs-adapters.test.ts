@@ -33,8 +33,41 @@ describe('logs-adapters', () => {
       containedPiiTypes: ['RESIDENT_REGISTRATION_NUMBER', 'ACCOUNT_NUMBER'],
       downloadedAt: '2026-09-02T08:00:00Z',
     })
-    expect(row.kind).toBe('PAYMENT_STATEMENT')
+    expect(row.kind).toBe('지급조서')
     expect(row.containedPiiLabel).toBe('주민등록번호·계좌번호가 포함된 파일입니다.')
+  })
+
+  it('PERFORMANCE_EXPORT·NAME을 라벨로 바꾸고 이/가 조사를 맞춘다', () => {
+    const row = mapDownloadLogResponse({
+      id: '1234',
+      fileName: 'performance_2026-10_p94301_v1.xlsx',
+      kind: 'PERFORMANCE_EXPORT',
+      containedPiiTypes: ['NAME'],
+    })
+    expect(row.kind).toBe('실적 데이터')
+    expect(row.containedPiiLabel).toBe('이름이 포함된 파일입니다.')
+  })
+
+  it('라벨 없는 kind·PII는 코드 원문을 보여 주고, 빈 배열은 일반 문구', () => {
+    const row = mapDownloadLogResponse({
+      kind: 'SPONSOR_LOGO',
+      containedPiiTypes: ['ACCOUNT_NUMBER', 'NAME', 'PHONE_NUMBER'],
+    })
+    expect(row.kind).toBe('SPONSOR_LOGO')
+    expect(row.containedPiiLabel).toBe('계좌번호·이름·PHONE_NUMBER가 포함된 파일입니다.')
+    expect(mapDownloadLogResponse({ containedPiiTypes: [] }).containedPiiLabel).toBe(
+      '개인정보가 포함된 파일입니다.'
+    )
+  })
+
+  it.each([
+    ['PAYMENT_STATEMENT_BULK_DOWNLOAD', '지급조서'],
+    ['SETTLEMENT_EXPORT', '정산 양식(대량이체/세금신고)'],
+    ['CONSENT_DOCUMENT', '동의서'],
+    ['FORM_RESPONSE', '신청서 첨부파일(과제)'],
+    ['CLIENT_GENERATED_FILE', '기타 파일'],
+  ])('서버 기록 kind %s 를 %s 로 표시한다', (kind, label) => {
+    expect(mapDownloadLogResponse({ kind }).kind).toBe(label)
   })
 
   it('maps DownloadLogFrontendResponse including numeric id', () => {
