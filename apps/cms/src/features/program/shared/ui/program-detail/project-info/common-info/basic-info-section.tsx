@@ -23,6 +23,10 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info
 import { ProgramRegistrationAuditValue } from '@/features/program/shared/ui/program-detail/registration-audit-value'
 import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { SponsorManagerContactsView } from '@/features/program/shared/ui/sponsor-manager-inline-view'
+import {
+  ProgramSponsorHomepageView,
+  ProgramSponsorLogoView,
+} from '@/features/program/shared/ui/program-detail/sponsor-assignment-info'
 import { ProgramDetailSponsorLink } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-link'
 import { useGeneralProgramSponsorEditContext } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
 import {
@@ -266,8 +270,22 @@ export function BasicInfoSection({
   const sponsorManagementIds = isFormEdit
     ? (form?.watch('sponsorManagementIds') ?? [])
     : (program.generalCommonInfo?.sponsorManagementIds ?? [])
+  // 조회 모드는 배정 응답(GET /programs/{id}/sponsors)만 쓴다 — 후원사 상세·담당자 API는 수정 선택지용.
   const sponsorEditContext = useGeneralProgramSponsorEditContext(
-    companySchoolLayout ? sponsorManagementIds : []
+    companySchoolLayout ? sponsorManagementIds : [],
+    Boolean(isFormEdit)
+  )
+  const assignedSponsorNames = program.generalCommonInfo?.sponsorManagementNames
+  const viewSponsorEntries = useMemo(
+    () =>
+      sponsorManagementIds
+        .map(id => {
+          const row = sponsorEditContext.sponsors.find(sponsor => sponsor.id === id)
+          const name = row?.name?.trim() || assignedSponsorNames?.[id]?.trim() || ''
+          return name ? { id, name } : null
+        })
+        .filter((entry): entry is { id: string; name: string } => entry != null),
+    [assignedSponsorNames, sponsorEditContext.sponsors, sponsorManagementIds]
   )
   const selectedSponsorManagementRows = useMemo(
     () =>
@@ -756,17 +774,16 @@ export function BasicInfoSection({
             <DetailInfoForm.Field
               label="후원사"
               view={
-                selectedSponsorManagementRows.length > 0 ? (
+                viewSponsorEntries.length > 0 ? (
                   <>
-                    {selectedSponsorManagementRows.map((row, index) => (
-                      <span key={row.id}>
+                    {viewSponsorEntries.map((entry, index) => (
+                      <span key={entry.id}>
                         {index > 0 ? ', ' : null}
                         <ProgramDetailSponsorLink
-                          name={row.name}
-                          homepageUrl={row.homepageUrl}
+                          name={entry.name}
                           sponsorId={program.sponsorId}
-                          sponsorName={row.name}
-                          sponsorManagementId={row.id}
+                          sponsorName={entry.name}
+                          sponsorManagementId={entry.id}
                         />
                       </span>
                     ))}
@@ -853,6 +870,7 @@ export function BasicInfoSection({
                 <SponsorManagerContactsView
                   program={program}
                   sponsorRows={selectedSponsorManagementRows}
+                  sponsorNameById={assignedSponsorNames}
                   contactsBySponsorId={sponsorEditContext.contactsBySponsorId}
                 />
               }
@@ -915,6 +933,30 @@ export function BasicInfoSection({
               }
             />
           </DetailInfoForm.Row>
+          {!isFormEdit ? (
+            <DetailInfoForm.Row type="double">
+              <DetailInfoForm.Field
+                label="후원사 홈페이지"
+                view={
+                  <ProgramSponsorHomepageView
+                    sponsorIds={sponsorManagementIds}
+                    sponsorNameById={assignedSponsorNames}
+                    details={program.generalCommonInfo?.sponsorAssignmentDetails}
+                  />
+                }
+              />
+              <DetailInfoForm.Field
+                label="후원사 로고"
+                view={
+                  <ProgramSponsorLogoView
+                    sponsorIds={sponsorManagementIds}
+                    sponsorNameById={assignedSponsorNames}
+                    details={program.generalCommonInfo?.sponsorAssignmentDetails}
+                  />
+                }
+              />
+            </DetailInfoForm.Row>
+          ) : null}
           {isEconomyCommonInfo || hideEducationPlace ? null : (
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field

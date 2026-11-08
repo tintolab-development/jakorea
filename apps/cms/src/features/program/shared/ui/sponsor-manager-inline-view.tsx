@@ -147,17 +147,23 @@ export function SponsorManagerContactsView({
     const storedName = program.generalCommonInfo?.sponsorManagerContactNames?.[ref]?.trim()
     const contactName = contact?.name?.trim() || storedName
     if (!contactName) continue
+    // GET /programs/{id}/sponsors 배정 응답의 담당자 직책·연락처 — 있으면 이것만 쓴다(다른 API로 채우지 않음).
+    const assignedDetail = program.generalCommonInfo?.sponsorManagerContactDetails?.[ref]
     const personLabel = formatSponsorManagerPersonLabel({
       contactName,
-      position: contact?.position,
+      position: assignedDetail ? assignedDetail.position : contact?.position,
     })
-    const parts = [
+    const head = [
       multi
         ? sponsor?.name?.trim() || sponsorNameById?.[decoded.sponsorManagementId]?.trim()
         : '',
       personLabel,
-      contact?.phone?.trim(),
-    ].filter((part): part is string => Boolean(part))
+    ]
+    const parts = (
+      assignedDetail
+        ? [...head, assignedDetail.phone?.trim() || '-', assignedDetail.email?.trim() || '-']
+        : [...head, contact?.phone?.trim()]
+    ).filter((part): part is string => Boolean(part))
     if (parts.length > 0) lines.push(parts)
   }
   if (lines.length > 0) {

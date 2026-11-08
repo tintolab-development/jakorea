@@ -1,4 +1,8 @@
-import type { Program } from '@/types/domain'
+import type {
+  Program,
+  ProgramSponsorAssignmentDetail,
+  ProgramSponsorContactDetail,
+} from '@/types/domain'
 import type { AdminProgramSponsorAssignmentDto } from '@/features/program/general/api/programs-api-client'
 import { encodeSponsorManagerContactRef } from '@/features/program/general/model/common-info-edit-schema'
 import {
@@ -16,6 +20,17 @@ const SPONSOR_COMMON_INFO_KEYS = [
   'sponsorManagerContactNames',
   'sponsorDisplayName',
 ] as const
+
+function trimmedOrNull(value: string | null | undefined): string | null {
+  const trimmed = value?.trim()
+  return trimmed ? trimmed : null
+}
+
+function positiveIdOrNull(value: number | string | null | undefined): number | null {
+  if (value == null) return null
+  const parsed = typeof value === 'number' ? value : Number(String(value).trim())
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null
+}
 
 /** PATCH에 후원사·담당자 관련 키가 있을 때만 `sponsors[]`를 실어 full replace 한다. */
 export function patchTouchesProgramSponsors(patch: Partial<Program>): boolean {
@@ -53,6 +68,8 @@ export function mergeProgramSponsorAssignments(
         sponsorManagerContactId: undefined,
         sponsorManagerContactNames: {},
         sponsorManagementNames: {},
+        sponsorAssignmentDetails: {},
+        sponsorManagerContactDetails: {},
         sponsorManagerLine: undefined,
       },
     } as unknown as Program
@@ -64,14 +81,28 @@ export function mergeProgramSponsorAssignments(
   const sponsorManagerContactIds: string[] = []
   const sponsorManagerContactNames: Record<string, string> = {}
   const sponsorManagementNames: Record<string, string> = {}
+  const sponsorAssignmentDetails: Record<string, ProgramSponsorAssignmentDetail> = {}
+  const sponsorManagerContactDetails: Record<string, ProgramSponsorContactDetail> = {}
   for (const row of valid) {
     const sponsorId = String(row.sponsorId).trim()
     const sponsorName = row.sponsorName?.trim()
     if (sponsorName && !sponsorManagementNames[sponsorId]) sponsorManagementNames[sponsorId] = sponsorName
+    if (!sponsorAssignmentDetails[sponsorId]) {
+      sponsorAssignmentDetails[sponsorId] = {
+        homepageUrl: trimmedOrNull(row.sponsorHomepageUrl),
+        logoFileObjectId: positiveIdOrNull(row.sponsorLogoFileObjectId),
+        logoFileName: trimmedOrNull(row.sponsorLogoFileName),
+      }
+    }
     const nestedContacts =
       row.sponsorContacts?.map(contact => ({
         id: contact.sponsorContactId != null ? String(contact.sponsorContactId).trim() : '',
         name: contact.sponsorContactName?.trim() ?? '',
+        detail: {
+          position: trimmedOrNull(contact.sponsorContactPosition),
+          phone: trimmedOrNull(contact.sponsorContactPhone),
+          email: trimmedOrNull(contact.sponsorContactEmail),
+        } as ProgramSponsorContactDetail | undefined,
       })) ?? []
     const contacts =
       nestedContacts.length > 0
@@ -80,6 +111,7 @@ export function mergeProgramSponsorAssignments(
             {
               id: row.sponsorContactId != null ? String(row.sponsorContactId).trim() : '',
               name: row.sponsorContactName?.trim() ?? '',
+              detail: undefined,
             },
           ]
     for (const contact of contacts) {
@@ -87,6 +119,9 @@ export function mergeProgramSponsorAssignments(
       const ref = encodeSponsorManagerContactRef(sponsorId, contact.id)
       if (!sponsorManagerContactIds.includes(ref)) sponsorManagerContactIds.push(ref)
       if (contact.name) sponsorManagerContactNames[ref] = contact.name
+      if (contact.detail && !sponsorManagerContactDetails[ref]) {
+        sponsorManagerContactDetails[ref] = contact.detail
+      }
     }
   }
   const hasContact = sponsorManagerContactIds.length > 0
@@ -110,6 +145,8 @@ export function mergeProgramSponsorAssignments(
         : SPONSOR_CONTACT_UNSELECTED_VALUE,
       sponsorManagerContactNames: hasContact ? sponsorManagerContactNames : {},
       sponsorManagementNames,
+      sponsorAssignmentDetails,
+      sponsorManagerContactDetails: hasContact ? sponsorManagerContactDetails : {},
       sponsorManagerLine: hasContact ? undefined : SPONSOR_CONTACT_UNSELECTED_LABEL,
     },
   }

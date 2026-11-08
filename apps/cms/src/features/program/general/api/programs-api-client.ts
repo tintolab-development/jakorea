@@ -146,10 +146,18 @@ export type AdminProgramSponsorAssignmentDto = {
     sponsorContactName?: string | null
     sponsorContactPosition?: string | null
     displayOrder?: number | null
+    /** 휴대폰 우선, 없으면 내선. MASTER_DATA_READ 권한 없으면 null */
+    sponsorContactPhone?: string | null
+    /** MASTER_DATA_READ 권한 없으면 null */
+    sponsorContactEmail?: string | null
   }>
   sponsorYear?: number | null
   contributionAmountSnapshot?: number | null
   displayOrder?: number | null
+  sponsorHomepageUrl?: string | null
+  /** 대표 로고 fileObjectId */
+  sponsorLogoFileObjectId?: number | null
+  sponsorLogoFileName?: string | null
 }
 
 export async function fetchAdminProgramSponsorsRemote(
@@ -531,11 +539,15 @@ function parseTotalCountHeader(value: unknown): number | null {
   return Number.isFinite(total) && total >= 0 ? total : null
 }
 
-/** 응답 목록 전체 — `X-Total-Count`(없으면 마지막 페이지가 size 미만)까지 페이지 수집 */
+/**
+ * 응답 목록 전체 — `X-Total-Count`(없으면 마지막 페이지가 size 미만)까지 페이지 수집.
+ * `includeAnswers: true`면 각 item에 단건 상세와 동일한 `answers[]`가 포함된다(응답별 상세 GET 불필요).
+ */
 export async function fetchAdminProgramSurveyResponsesRemote(
   programId: string,
   templateVersionId: string,
-  bindingId?: string
+  bindingId?: string,
+  options?: { includeAnswers?: boolean }
 ): Promise<SurveyResponseListItem[]> {
   const url = `/api/admin/programs/${encodeURIComponent(programId)}/surveys/${encodeURIComponent(templateVersionId)}/responses`
   const bindingQuery = bindingId?.trim()
@@ -548,6 +560,7 @@ export async function fetchAdminProgramSurveyResponsesRemote(
         page,
         size: SURVEY_RESPONSES_PAGE_SIZE,
         ...(bindingQuery ? { bindingId: bindingQuery } : {}),
+        ...(options?.includeAnswers ? { includeAnswers: true } : {}),
       },
     })
     const body = unwrapApiBody<SurveyResponseListItem[] | { items?: SurveyResponseListItem[] }>(
