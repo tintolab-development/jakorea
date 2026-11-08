@@ -180,6 +180,15 @@
   white-space: nowrap;
 }
 
+.filter-table-layout__description-divider {
+  display: inline-block;
+  width: 1px;
+  height: 12px;
+  margin: 0 8px;
+  vertical-align: middle;
+  background: var(--Border-default, #e0e0e0);
+}
+
 .filter-table-layout__table {
   width: 100%;
   min-width: 0;
