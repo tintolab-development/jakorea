@@ -53,10 +53,13 @@ function seoulCalendarToday(): Dayjs {
   return dayjs(ymd)
 }
 
-/** 오늘 기준 해당 월 1일 ~ 말일 */
+/**
+ * 기본 조회 기간: 한 달 전 같은 날 ~ 오늘 (서울 달력일)
+ * 예) 11/9 진입 → 10/9 ~ 11/9, 2/28 진입 → 1/28 ~ 2/28 (말일이 없는 달은 그 달 말일로 맞춤: 3/31 → 2/28 ~ 3/31)
+ */
 function currentSeoulMonthRange(): [Dayjs, Dayjs] {
   const today = seoulCalendarToday()
-  return [today.startOf('month'), today.endOf('month')]
+  return [today.subtract(1, 'month'), today]
 }
 
 const periodSyncRef: UrlDateRangePendingSyncRef = { hadCompleteInUrl: false }
