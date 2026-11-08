@@ -5,7 +5,13 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { useNavigate, useSearchParams, type SetURLSearchParams } from 'react-router-dom'
+import {
+  useLocation,
+  useNavigate,
+  useNavigationType,
+  useSearchParams,
+  type SetURLSearchParams,
+} from 'react-router-dom'
 import { useNavigateToAncestor } from '@/shared/hooks/use-history-ancestor-navigation'
 import { nextSearchParamsIfChanged } from '@/shared/lib/search-params-diff'
 import { clearSponsorDetailQueryStack } from '@/features/sponsor/lib/sponsor-detail-query-stack'
@@ -912,6 +918,15 @@ export function GeneralProgramDetailFullPageModal({
       setOptimisticDetailRoute(null)
     }
   }, [open, urlDetailRoute, optimisticDetailRoute])
+
+  // 브라우저 뒤로·앞으로가기(POP)는 URL이 정답이다. 클릭한 경로가 URL에 반영되기 전에
+  // 뒤로가면 위 일치 조건을 영영 만족하지 못해 이전 메뉴가 계속 표시되므로 낙관적 경로를 버린다.
+  const routerLocationKey = useLocation().key
+  const navigationType = useNavigationType()
+  useEffect(() => {
+    if (navigationType !== 'POP') return
+    setOptimisticDetailRoute(prev => (prev ? null : prev))
+  }, [routerLocationKey, navigationType])
 
   const activeLnb = optimisticDetailRoute?.lnb ?? urlDetailRoute.lnb
   const activeTab = optimisticDetailRoute?.tab ?? urlDetailRoute.tab

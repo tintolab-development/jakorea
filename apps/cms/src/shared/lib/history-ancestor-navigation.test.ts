@@ -2,6 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   findAncestorDelta,
   findAncestorDeltaWhere,
+  isHistoryTraversalPending,
+  navigateBackToMatchingEntry,
+  recordRouterHistory,
   navigateToAncestorOrReplace,
   normalizeHistoryUrl,
   recordHistoryEntry,
@@ -172,5 +175,78 @@ describe('findAncestorDeltaWhere', () => {
         matches: isSchool,
       })
     ).toBeNull()
+  })
+})
+
+describe('뒤로 이동 진행 중 장치', () => {
+  const PATH = '/settlement-management/account-payments'
+  function stub(search: string, idx: number) {
+    vi.stubGlobal('window', {
+      location: { pathname: PATH, search },
+      history: { state: { idx } },
+    })
+  }
+  beforeEach(() => {
+    resetHistoryEntriesForTest()
+    recordHistoryEntry(0, PATH, '')
+    recordHistoryEntry(1, PATH, '?ap_detail=1')
+  })
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.useRealTimers()
+  })
+
+  it('이동이 끝나기 전(같은 엔트리) 두 번째 닫기는 무시 — navigate 1회', () => {
+    stub('?ap_detail=1', 1)
+    const navigate = vi.fn()
+    const target = { pathname: PATH, search: '' }
+    expect(navigateToAncestorOrReplace(navigate, target)).toBe('back')
+    expect(isHistoryTraversalPending()).toBe(true)
+    expect(navigateToAncestorOrReplace(navigate, target)).toBe('pending')
+    expect(navigate).toHaveBeenCalledTimes(1)
+    expect(navigate).toHaveBeenCalledWith(-1)
+  })
+
+  it('출발 엔트리를 벗어나면(idx 변경) 해제', () => {
+    stub('?ap_detail=1', 1)
+    navigateToAncestorOrReplace(vi.fn(), { pathname: PATH, search: '' })
+    stub('', 0)
+    expect(isHistoryTraversalPending()).toBe(false)
+  })
+
+  it('라우터 위치가 바뀌면 해제(앞으로가기로 같은 엔트리에 돌아온 경우)', () => {
+    stub('?ap_detail=1', 1)
+    let listener: ((state: { location: { pathname: string; search: string } }) => void) | null = null
+    const router = {
+      state: { location: { pathname: PATH, search: '?ap_detail=1' } },
+      subscribe: (fn: typeof listener & object) => {
+        listener = fn
+        return () => undefined
+      },
+    }
+    recordRouterHistory(router)
+    navigateToAncestorOrReplace(vi.fn(), { pathname: PATH, search: '' })
+    expect(isHistoryTraversalPending()).toBe(true)
+    listener!({ location: { pathname: PATH, search: '?ap_detail=1' } }) // 새 location 객체
+    expect(isHistoryTraversalPending()).toBe(false)
+  })
+
+  it('브라우저가 이동을 무시해도 1초 뒤 자동 해제', () => {
+    vi.useFakeTimers()
+    stub('?ap_detail=1', 1)
+    const navigate = vi.fn()
+    navigateToAncestorOrReplace(navigate, { pathname: PATH, search: '' })
+    vi.advanceTimersByTime(1001)
+    expect(isHistoryTraversalPending()).toBe(false)
+    expect(navigateToAncestorOrReplace(navigate, { pathname: PATH, search: '' })).toBe('back')
+    expect(navigate).toHaveBeenCalledTimes(2)
+  })
+
+  it('조건 일치 엔트리 복귀도 진행 중이면 대체 이동 없이 true', () => {
+    stub('?ap_detail=1', 1)
+    const navigate = vi.fn()
+    expect(navigateBackToMatchingEntry(navigate, search => !search.has('ap_detail'))).toBe(true)
+    expect(navigateBackToMatchingEntry(navigate, search => !search.has('ap_detail'))).toBe(true)
+    expect(navigate).toHaveBeenCalledTimes(1)
   })
 })

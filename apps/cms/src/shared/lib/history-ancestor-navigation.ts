@@ -95,8 +95,45 @@ type RouterLike = {
 export function recordRouterHistory(router: RouterLike): () => void {
   const record = (location: { pathname: string; search: string }) =>
     recordHistoryEntry(readHistoryIdx(), location.pathname, location.search)
-  record(router.state.location)
-  return router.subscribe(state => record(state.location))
+  let lastLocation = router.state.location
+  record(lastLocation)
+  return router.subscribe(state => {
+    // 위치가 실제로 바뀌면 진행 중이던 뒤로 이동은 끝난 것
+    if (state.location !== lastLocation) {
+      lastLocation = state.location
+      pendingTraversal = null
+    }
+    record(state.location)
+  })
+}
+
+/**
+ * 뒤로 이동(`navigate(-n)`) 진행 상태.
+ * 브라우저 traversal은 비동기라 완료 전까지 주소·`history.state.idx`가 출발 엔트리 그대로다.
+ * 그 사이 같은 엔트리에서 들어온 닫기(같은 틱 X 두 번 등)가 다시 -n을 계산하면 두 번 뒤로 가므로 막는다.
+ */
+let pendingTraversal: { fromIdx: number; startedAt: number } | null = null
+/** 브라우저가 이동을 무시한 경우 대비 — 이 시간이 지나면 자동 해제 */
+const PENDING_TRAVERSAL_TIMEOUT_MS = 1000
+
+/**
+ * 뒤로 이동이 진행 중인지. 출발 엔트리를 벗어났거나(idx 변경) 시간이 지나면 해제한다.
+ * 부모 닫기 콜백은 이 값이 참이면 URL 쓰기를 건너뛴다 — 아직 현재인 출발 엔트리를 덮어쓰지 않도록.
+ */
+export function isHistoryTraversalPending(): boolean {
+  if (!pendingTraversal) return false
+  const expired = Date.now() - pendingTraversal.startedAt > PENDING_TRAVERSAL_TIMEOUT_MS
+  if (expired || readHistoryIdx() !== pendingTraversal.fromIdx) {
+    pendingTraversal = null
+    return false
+  }
+  return true
+}
+
+function startTraversal(navigate: NavigateFunction, delta: number): void {
+  const fromIdx = readHistoryIdx()
+  pendingTraversal = fromIdx == null ? null : { fromIdx, startedAt: Date.now() }
+  void navigate(delta)
 }
 
 /**
@@ -150,11 +187,15 @@ export function findAncestorDeltaWhere(input: {
 
 type NavigateLike = NavigateFunction
 
-/** 조건에 맞는 직전 엔트리로 뒤로 간다. 없으면 아무것도 하지 않고 false */
+/**
+ * 조건에 맞는 직전 엔트리로 뒤로 간다. 없으면 아무것도 하지 않고 false.
+ * 이미 뒤로 이동 중이면 무시하고 true — 호출부가 대체 이동(push)으로 넘어가지 않도록.
+ */
 export function navigateBackToMatchingEntry(
   navigate: NavigateLike,
   matches: (search: URLSearchParams) => boolean
 ): boolean {
+  if (isHistoryTraversalPending()) return true
   const delta = findAncestorDeltaWhere({
     entries: loadEntries(),
     currentIdx: readHistoryIdx(),
@@ -162,11 +203,12 @@ export function navigateBackToMatchingEntry(
     matches,
   })
   if (delta == null) return false
-  void navigate(delta)
+  startTraversal(navigate, delta)
   return true
 }
 
-export type AncestorNavigationResult = 'back' | 'replace' | 'noop'
+/** pending = 이미 뒤로 이동 중이라 요청을 무시함 */
+export type AncestorNavigationResult = 'back' | 'replace' | 'noop' | 'pending'
 
 /**
  * 상위 단계로 이동 — 직전 history에 같은 URL이 있으면 뒤로, 없으면 replace.
@@ -176,6 +218,7 @@ export function navigateToAncestorOrReplace(
   navigate: NavigateLike,
   target: HistoryTarget
 ): AncestorNavigationResult {
+  if (isHistoryTraversalPending()) return 'pending'
   const currentPathname = window.location.pathname
   const currentUrl = normalizeHistoryUrl(currentPathname, window.location.search)
   if (normalizeHistoryUrl(target.pathname, target.search) === currentUrl) return 'noop'
@@ -186,7 +229,7 @@ export function navigateToAncestorOrReplace(
     target,
   })
   if (delta != null) {
-    void navigate(delta)
+    startTraversal(navigate, delta)
     return 'back'
   }
   void navigate(
@@ -213,6 +256,7 @@ export function navigateToAncestorSearch(
 /** 테스트 전용 */
 export function resetHistoryEntriesForTest(): void {
   memoryEntries = {}
+  pendingTraversal = null
   try {
     sessionStorage.removeItem(STORAGE_KEY)
   } catch {
