@@ -4,7 +4,7 @@ import { invalidateSettlementLedgerCaches } from './invalidate-settlement-ledger
 import { settlementQueryKeys } from './settlement-query-keys'
 
 describe('invalidateSettlementLedgerCaches', () => {
-  it('지급조서·캘린더·계좌 지급(목록·상세·예산)을 함께 무효화한다', async () => {
+  it('지급조서·캘린더·계좌 지급(목록·상세·예산)·강사 정산 상세를 함께 무효화한다', async () => {
     const invalidateQueries = vi.fn().mockResolvedValue(undefined)
     const queryClient = { invalidateQueries } as unknown as QueryClient
 
@@ -25,6 +25,9 @@ describe('invalidateSettlementLedgerCaches', () => {
     expect(invalidateQueries).toHaveBeenCalledWith({
       queryKey: [...settlementQueryKeys.accountPayments.all(), 'budgetSummary'],
     })
-    expect(invalidateQueries).toHaveBeenCalledTimes(5)
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ['instructor-settlement-detail'],
+    })
+    expect(invalidateQueries).toHaveBeenCalledTimes(6)
   })
 })

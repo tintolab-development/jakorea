@@ -194,23 +194,30 @@ describe('instructor-lecture-assign-schedule', () => {
       expect(parsed.slotsByDateKey.size).toBe(0)
     })
 
-    it('회차 라벨은 sessionNo만 쓰고, 시간은 시작~종료로 표기한다', () => {
+    it('회차 라벨은 sessionNo를 회차로, 확인된 classNum을 차시로 쓰고, 시간은 시작~종료로 표기한다', () => {
       const [slot] =
         parseInstructorLectureAssignScheduleFromInstitutions(
           [org('1', 10, [assignedSession({ sessionNo: 5, round: 1 })])],
           { sessionSource: 'assigned' }
         ).slotsByDateKey.get('2026-10-27') ?? []
-      expect(slot?.sessionLabel).toBe('5회차')
+      expect(slot?.sessionLabel).toBe('5회차 (99차시)')
       expect(slot?.timeRange).toBe('09:00 ~ 09:40')
     })
 
-    it('sessionNo가 없으면 round/index로 대체하지 않고 "-"로 표기한다', () => {
+    it('sessionNo가 없으면 round/index로 회차를 대체하지 않고 확인된 차시만, 없으면 "-"로 표기한다', () => {
       const [slot] =
         parseInstructorLectureAssignScheduleFromInstitutions(
           [org('1', 10, [assignedSession({ sessionNo: null, round: 3 })])],
           { sessionSource: 'assigned' }
         ).slotsByDateKey.get('2026-10-27') ?? []
-      expect(slot?.sessionLabel).toBe('-')
+      expect(slot?.sessionLabel).toBe('99차시')
+
+      const [bare] =
+        parseInstructorLectureAssignScheduleFromInstitutions(
+          [org('1', 10, [assignedSession({ sessionNo: null, round: 3, classNum: '-' })])],
+          { sessionSource: 'assigned' }
+        ).slotsByDateKey.get('2026-10-27') ?? []
+      expect(bare?.sessionLabel).toBe('-')
     })
 
     it('같은 기관·같은 일정이라도 신청(application)이 다르면 카드를 합치지 않는다', () => {

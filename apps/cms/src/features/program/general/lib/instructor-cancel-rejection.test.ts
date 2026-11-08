@@ -43,13 +43,14 @@ describe('instructor-cancel-rejection', () => {
 
   it('pendingNotification 메시지에 반려 알림 발송 취소 문구를 포함한다', () => {
     const message = buildInstructorCancelRejectionMessage('박틴토', 'pendingNotification')
-    expect(message).toContain('프로그램 참여 반려를 취소하시겠습니까?')
-    expect(message).toContain('기존의 반려 알림은 자동으로 **발송 취소**되며,')
+    expect(message).toBe(
+      '**[박틴토]** 님의 프로그램 신청 반려를 취소하시겠습니까?\n취소 시 발송 예정인 반려 알림은 자동으로 취소되며, **승인 대기 처리**됩니다.'
+    )
   })
 
   it('alreadySent 메시지에 반려 취소 알림 문구를 포함한다', () => {
-    expect(buildInstructorCancelRejectionMessage('박틴토', 'alreadySent')).toContain(
-      '반려 취소 알림이 새롭게 발송됩니다.'
+    expect(buildInstructorCancelRejectionMessage('박틴토', 'alreadySent')).toBe(
+      '**[박틴토]** 님의 프로그램 신청 반려를 취소하시겠습니까?\n취소 시 입력하신 사유가 회원에게 취소 사유로 안내되며, 알림이 발송됩니다.\n또한, 해당 강사님은 자동으로 **승인 대기 처리**됩니다.'
     )
   })
 
@@ -66,7 +67,7 @@ describe('instructor-cancel-rejection', () => {
 describe('instructor-cancel-reject-complete-modal', () => {
   it('완료 메시지에 후속 안내를 포함한다', () => {
     expect(buildInstructorCancelRejectCompleteDescription('박틴토')).toBe(
-      '[**박틴토**] 강사님의 프로그램 참여 **반려 취소** 되었습니다.\n해당 강사님은 신청 목록 또는 상세에서 **승인 및 반려**가 가능합니다.'
+      '**[박틴토]** 강사님의 프로그램 참여 **반려 취소** 되었습니다.\n해당 강사님은 신청 목록 또는 상세에서 **승인 및 반려**가 가능합니다.'
     )
   })
 })

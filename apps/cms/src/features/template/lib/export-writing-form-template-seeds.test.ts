@@ -15,12 +15,14 @@ describe('exportWritingFormTemplateSeeds', () => {
     expect(specs.some(s => s.templateCode === 'registration-general')).toBe(false)
     expect(specs.some(s => s.templateCode === 'recruitment-trained-teachers')).toBe(true)
     expect(specs.some(s => s.templateCode === 'recruitment-economy')).toBe(true)
-    expect(specs).toHaveLength(31)
+    // c18f44699: agreement-receipt-pre-consent 추가
+    expect(specs.some(s => s.templateCode === 'agreement-receipt-pre-consent')).toBe(true)
+    expect(specs).toHaveLength(32)
   })
 
   it('writes seed json files and handoff markdown', () => {
     const result = exportWritingFormTemplateSeeds()
-    expect(result.exported).toBe(31)
+    expect(result.exported).toBe(32)
   })
 
   it('writes registration-general seed separately (Payload B)', () => {
