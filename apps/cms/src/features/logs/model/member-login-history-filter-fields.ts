@@ -9,7 +9,7 @@ export const memberLoginHistoryFilterFields: FilterFieldConfig[] = [
   {
     key: 'adminName',
     type: 'search',
-    label: '관리자명',
+    label: '관리자',
     placeholder: '관리자명을 입력해 주세요',
     width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
@@ -23,7 +23,7 @@ export const memberLoginHistoryFilterFields: FilterFieldConfig[] = [
   {
     key: 'dateRange',
     type: 'dateRange',
-    label: '로그인 기간',
+    label: '로그인일',
     defaultValue: null,
     width: FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
     // 노션: 수집일로부터 1개월 보관 — 시안 예시 기간(수개월)과 불일치 → 노션 정책 우선
