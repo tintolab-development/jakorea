@@ -100,23 +100,24 @@
   min-width: 0;
 }
 
+/* Figma 34:24725(조회) · 34:27257(수정) — 라벨 열 200 고정(모드 무관), 조회 행 52 · 수정 행 64 */
 .directions-card .detail-info-form__field {
-  min-height: 54px;
-  --detail-info-label-w: 160px;
-  grid-template-columns: 160px minmax(0, 1fr);
+  min-height: 52px;
+  --detail-info-label-w: 200px;
+  grid-template-columns: 200px minmax(0, 1fr);
 }
 
 .directions-card .detail-info-form__field-label {
-  width: 160px;
-  min-width: 160px;
-  max-width: 160px;
-  min-height: 54px;
-  padding: 12px 16px;
+  width: 200px;
+  min-width: 200px;
+  max-width: 200px;
+  min-height: 52px;
+  padding: 8px 16px;
   box-sizing: border-box;
 }
 
 .directions-card .detail-info-form__field-content {
-  min-height: 54px;
+  min-height: 52px;
   padding: 12px 16px;
   box-sizing: border-box;
   justify-content: flex-start;
@@ -225,5 +226,29 @@
 .directions-card .directions-inline-field--readonly textarea.ant-input {
   padding: 0 !important;
   font-size: 14px !important;
+  line-height: 150% !important;
+}
+
+/*
+ * 수정 — 시안 34:27257: 값 칸 패딩 12(사방) · 입력 40 → 행 64, 텍스트 x 28(12 + 보더 1 + 입력 패딩 15)
+ * 글자 크기는 조회와 같은 14px/500 유지 (QA: 수정 시 테이블 자간 고정)
+ */
+.directions-card--editing .detail-info-form__field-content {
+  padding: 12px;
+}
+
+.directions-card--editing .directions-card__row--kakao .detail-info-form__field-content {
+  padding: 12px;
+}
+
+.directions-card .directions-inline-field--edit .cms-input__control,
+.directions-card .directions-inline-field--edit .cms-textarea__control {
+  padding-inline: 15px;
+}
+
+.directions-card .directions-inline-field--edit .ant-input,
+.directions-card .directions-inline-field--edit textarea.ant-input {
+  font-size: 14px !important;
+  font-weight: 500;
   line-height: 150% !important;
 }

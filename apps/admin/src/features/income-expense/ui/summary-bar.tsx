@@ -35,7 +35,10 @@ export function SummaryBar({ section, view, items }: SummaryBarProps) {
     const totalAmount = sumAmount(items)
 
     return (
-      <section className="income-expense-summary income-expense-summary--matrix" aria-label="지출 요약">
+      <section
+        className="income-expense-summary income-expense-summary--matrix"
+        aria-label="지출 요약"
+      >
         <h3 className="income-expense-summary__heading">■ {heading}</h3>
         <div className="income-expense-summary__matrix-wrap">
           <table className="income-expense-summary__matrix">
@@ -95,12 +98,12 @@ export function SummaryBar({ section, view, items }: SummaryBarProps) {
           <DetailInfoForm.Field
             label="총 비율"
             labelWidth={180}
-            view={<span>{formatRatioDisplay(totalRatio)}</span>}
+            view={<span style={{ fontWeight: 700 }}>{formatRatioDisplay(totalRatio)}</span>}
           />
           <DetailInfoForm.Field
             label="총 금액"
             labelWidth={180}
-            view={<span>{formatAmount(totalAmount)}</span>}
+            view={<span style={{ fontWeight: 700 }}>{formatAmount(totalAmount)}</span>}
           />
         </DetailInfoForm.Row>
       </DetailInfoForm>

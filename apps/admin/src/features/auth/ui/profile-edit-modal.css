@@ -58,16 +58,10 @@
   margin: 0 16px;
 }
 
-/* 본인인증 재인증 · 동의 철회하기 — Button / h32 · 폭 100 */
+/* 본인인증 재인증 · 동의하기 · 동의 철회 — Button / h32 · 폭 100 */
 .profile-edit-modal__field-action-btn.cms-button.ant-btn {
   width: 100px;
   min-width: 100px;
-}
-
-.profile-edit-modal__action-with-datetime {
-  display: inline-flex;
-  align-items: center;
-  gap: 16px;
 }
 
 .profile-edit-modal__consent-datetime {

@@ -18,13 +18,14 @@ import { useRecruitPostingWysiwygEditor } from '@/features/recruit-posting/hooks
 import { resolveCurrentAdminAuthorName } from '@/features/recruit-posting/lib/resolve-current-admin-author-name'
 import {
   CAREER_POSTING_BUTTON_LABEL_MAX_LENGTH,
+  CAREER_POSTING_LINK_URL_FORMAT_ALERT,
+  careerPostingLinkUrlFormatAlert,
   validateCareerPostingLinkFields,
 } from '@/features/recruit-posting/lib/link-fields'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
-import { HTTP_LINK_URL_FORMAT_ALERT } from '@/shared/lib/http-link-url'
 import { getRemoteRichTextBodyError, isEmptyAdminHtml, RichTextEditor } from '@/shared/rich-text'
 import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT,
@@ -220,6 +221,12 @@ export function RecruitPostingFormModal({
   }, [])
 
   const handleSubmit = useCallback(() => {
+    const linkFormatAlert = careerPostingLinkUrlFormatAlert(linkUrl)
+    if (linkFormatAlert) {
+      showAlert(linkFormatAlert)
+      return
+    }
+
     if (!publishedAt || !publishedAt.isValid()) {
       showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
@@ -273,8 +280,8 @@ export function RecruitPostingFormModal({
     const linkError = validateCareerPostingLinkFields({ buttonLabel, linkUrl })
     if (linkError) {
       showAlert(
-        linkError === HTTP_LINK_URL_FORMAT_ALERT.content
-          ? HTTP_LINK_URL_FORMAT_ALERT
+        linkError === CAREER_POSTING_LINK_URL_FORMAT_ALERT.content
+          ? CAREER_POSTING_LINK_URL_FORMAT_ALERT
           : linkError.includes('바로가기 링크')
             ? REQUIRED_FIELDS_INCOMPLETE_ALERT
             : { title: '입력 확인', content: linkError }

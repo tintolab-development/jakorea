@@ -5,7 +5,7 @@ import { useSiteFooter, type SiteFooterPartner } from '@/features/site-shell'
 import jaLogoGrayUrl from '@/shared/assets/brand/ja-logo-gray.svg'
 import chevronDownGrayUrl from '@/shared/assets/icons/chevron-down-gray.svg'
 import ministryLogoUrl from './image/logo/footer-logo-1.svg'
-import taxLogoUrl from './image/logo/footer-logo-2.svg'
+import taxLogoUrl from './image/logo/footer-logo-2.png'
 import rightsLogoUrl from './image/logo/footer-logo-3.svg'
 import styles from './footer.module.css'
 

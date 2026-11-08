@@ -2,7 +2,7 @@ import type { SettlementItemType } from '@/types/domain'
 
 /** 정산 설정 공제 항목 — BE 시드 canonical itemName (layout=withholdingDailyWorker로 식별). */
 export const SETTLEMENT_WITHHOLDING_ITEM_LABEL = '일용근로자 원천징수세액' as const
-/** UI/구 시드 짧은 표기. 정산 항목 설정 표시·PUT은 API itemName 패스스루(가공 금지). */
+/** UI/구 시드 짧은 표기. 표시는 GET itemName 그대로, PUT은 편집한 제목을 itemName으로 보낸다(별도 정규화 금지). */
 export const SHORT_SETTLEMENT_WITHHOLDING_ITEM_LABEL = '원천징수세액' as const
 /** @deprecated SHORT와 동일. 기존 import 호환 */
 export const LEGACY_SETTLEMENT_WITHHOLDING_ITEM_LABEL = SHORT_SETTLEMENT_WITHHOLDING_ITEM_LABEL

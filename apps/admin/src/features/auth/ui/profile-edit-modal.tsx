@@ -168,12 +168,14 @@ function ProfileFieldWithAction({
   onAction,
   actionDisabled,
   actionLoading,
+  trailing,
 }: {
   value: ReactNode
   actionLabel: string
   onAction: () => void
   actionDisabled?: boolean
   actionLoading?: boolean
+  trailing?: ReactNode
 }) {
   return (
     <ProfileValueSegments>
@@ -191,6 +193,7 @@ function ProfileFieldWithAction({
         >
           {actionLabel}
         </CmsButton>,
+        trailing ?? null,
       ]}
     </ProfileValueSegments>
   )
@@ -530,30 +533,20 @@ export function ProfileEditModal({ open, onCancel }: Props) {
                 labelWidth={180}
                 readOnlyDisplay
                 view={
-                  <ProfileValueSegments>
-                    {[
-                      // 미동의 상태는 상태 문구 없이 [동의하기] 버튼만 노출
-                      marketingAgreed ? <span key="status">동의</span> : null,
-                      <span key="action" className="profile-edit-modal__action-with-datetime">
-                        <CmsButton
-                          variant="secondary"
-                          size="h32"
-                          className="profile-edit-modal__field-action-btn"
-                          type="button"
-                          disabled={marketingConsentUpdating}
-                          loading={marketingConsentUpdating && !marketingWithdrawConfirmOpen}
-                          onClick={() =>
-                            handleMarketingChange(marketingAgreed ? 'disagree' : 'agree')
-                          }
-                        >
-                          {marketingAgreed ? '동의 철회하기' : '동의하기'}
-                        </CmsButton>
-                        {marketingAgreed && marketingAgreedAt !== '-' ? (
-                          <ConsentDatetime value={marketingAgreedAt} />
-                        ) : null}
-                      </span>,
-                    ]}
-                  </ProfileValueSegments>
+                  <ProfileFieldWithAction
+                    value={marketingAgreed ? '동의' : '미동의'}
+                    actionLabel={marketingAgreed ? '동의 철회' : '동의하기'}
+                    actionDisabled={marketingConsentUpdating}
+                    actionLoading={marketingConsentUpdating && !marketingWithdrawConfirmOpen}
+                    onAction={() =>
+                      handleMarketingChange(marketingAgreed ? 'disagree' : 'agree')
+                    }
+                    trailing={
+                      marketingAgreed && marketingAgreedAt !== '-' ? (
+                        <ConsentDatetime value={marketingAgreedAt} />
+                      ) : null
+                    }
+                  />
                 }
               />
               <DetailInfoForm.Field

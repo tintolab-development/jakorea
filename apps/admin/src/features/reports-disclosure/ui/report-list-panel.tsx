@@ -304,6 +304,8 @@ export function ReportListPanel({ kind }: Props) {
         title: '제목',
         dataIndex: 'title',
         key: 'title',
+        // 시안 표 폭 1538에서 연차 399 · 회계감사 369 — 제목·첨부파일명은 폭을 비워 남는 폭을 반씩 나눈다
+        // (고정 폭이면 열 합 1538이 표 최소 폭이 돼 좁은 화면에서 가로 스크롤이 생긴다)
         ellipsis: true,
         render: (value: string) => value || '-',
       },
@@ -340,21 +342,21 @@ export function ReportListPanel({ kind }: Props) {
         title: '다운로드 수',
         dataIndex: 'downloadCount',
         key: 'downloadCount',
-        width: 110,
+        width: 140,
         align: 'center',
         render: (value: number) => (typeof value === 'number' ? value.toLocaleString() : '-'),
       },
       {
         title: '작성일시',
         key: 'createdAt',
-        width: 150,
+        width: 200,
         align: 'center',
         render: (_v, record) => formatCreatedAt(record.createdAt),
       },
       {
         title: '관리',
         key: 'actions',
-        width: 120,
+        width: 140,
         align: 'center',
         render: (_v, record) => (
           <CmsButton variant="secondary" size="small" type="button" onClick={() => openEdit(record)}>

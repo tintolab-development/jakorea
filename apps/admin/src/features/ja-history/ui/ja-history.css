@@ -737,7 +737,7 @@
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain; /* 1:1 미리보기 칸 안에 잘림 없이 리사이징 */
 }
 
 .ja-history-modal__file-field {
@@ -835,4 +835,14 @@
 .ja-history-inline-field--edit.cms-textarea--medium .cms-textarea__control {
   padding-top: 8px;
   padding-bottom: 8px;
+}
+
+/* 팝업 고정값(카드 순서 등) — 입력 칸 텍스트와 같은 위치·타이포의 일반 텍스트 */
+.ja-history-form .ja-history-form__static-value {
+  padding-inline: 16px;
+  color: var(--Netural-black, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 145%;
 }

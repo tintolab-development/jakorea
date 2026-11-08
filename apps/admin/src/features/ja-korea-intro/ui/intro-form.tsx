@@ -54,7 +54,7 @@ function IntroEditArea({
       inputSize="medium"
       width="100%"
       layout="fixed"
-      autoSize={{ minRows: 1, maxRows: 2 }}
+      autoSize={{ minRows: 1 }}
       value={value}
       placeholder={placeholder}
       aria-label={ariaLabel}

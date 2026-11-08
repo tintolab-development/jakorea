@@ -162,7 +162,7 @@ export function GlobalValuePage() {
       {
         title: '아이콘',
         key: 'icon',
-        width: 88,
+        width: 110,
         align: 'center',
         className: 'global-value-table__col--icon',
         render: (_value, record) => <ValueIcon iconKey={record.iconKey} size={48} />,
@@ -170,6 +170,8 @@ export function GlobalValuePage() {
       {
         title: '메인 텍스트',
         key: 'mainText',
+        // 시안 열 폭(Figma 27:39543, 표 1538): 순서 80 · No. 80 · 사용 여부 100 · 아이콘 110 · 메인 584 · 서브 584
+        // 메인·서브는 폭 미지정 — 남는 폭을 반씩 나눠 시안(584/584)과 같고, 좁은 화면에서 가로 스크롤이 늘지 않는다
         render: (_value, record) => {
           const value = draftTexts[record.id]?.mainText ?? record.mainText
           if (isEditing) {
@@ -197,7 +199,6 @@ export function GlobalValuePage() {
       {
         title: '서브 텍스트',
         key: 'subText',
-        width: 280,
         render: (_value, record) => {
           const value = draftTexts[record.id]?.subText ?? record.subText
           if (isEditing) {

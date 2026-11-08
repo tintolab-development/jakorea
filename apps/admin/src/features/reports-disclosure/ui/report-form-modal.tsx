@@ -10,7 +10,6 @@ import type {
   ReportKind,
   TransparencyReport,
 } from '@/entities/reports-disclosure/model/types'
-import { ThumbnailEmptyIcon } from '@/features/reports-disclosure/ui/thumbnail-empty-icon'
 import {
   ATTACHMENT_ACCEPT,
   ATTACHMENT_ERROR,
@@ -30,6 +29,7 @@ import {
   ContentModal,
   FileSelectField,
   useCmsAlert,
+  ThumbnailPlaceholder,
 } from '@/shared/ui'
 
 import './report-form-modal.css'
@@ -299,7 +299,7 @@ export function ReportFormModal({
                     {thumbnailUrl ? (
                       <img src={thumbnailUrl} alt="썸네일 미리보기" />
                     ) : (
-                      <ThumbnailEmptyIcon className="rd-form-modal__preview-empty" />
+                      <ThumbnailPlaceholder />
                     )}
                   </div>
                   <FileSelectField
