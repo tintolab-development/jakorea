@@ -40,6 +40,8 @@ export const GENERAL_PROGRAM_SERVICE_DETAIL_JSON_VERSION = 1 as const
 export const GENERAL_REGISTRATION_WAGE_OVERLAY_PREFIX = 'generalRegistration.wageInfo.' as const
 
 const SPONSOR_MANAGER_CONTACT_NAMES_KEY = 'sponsorManagerContactNames'
+/** GET sponsors 배정의 후원사명 map — 표시용. persist 하지 않는다 */
+const SPONSOR_MANAGEMENT_NAMES_KEY = 'sponsorManagementNames'
 
 /**
  * 일반 프로그램 serviceDetailJson 전송 경계.
@@ -58,6 +60,7 @@ export function sanitizeGeneralProgramServiceDetailPersistValue(value: unknown):
     const next: Record<string, unknown> = {}
     for (const [key, nested] of Object.entries(value as Record<string, unknown>)) {
       if (key === SPONSOR_MANAGER_CONTACT_NAMES_KEY) continue
+      if (key === SPONSOR_MANAGEMENT_NAMES_KEY) continue
       if (key === 'registrationOverlay') continue
       next[key] = sanitizeGeneralProgramServiceDetailPersistValue(nested)
     }
