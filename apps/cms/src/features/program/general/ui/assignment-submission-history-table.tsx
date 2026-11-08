@@ -248,6 +248,6 @@ export function mapAssignmentSubmissionRowsWithNo(
 ): AssignmentSubmissionHistoryTableRow[] {
   return rows.map((row, index) => ({
     ...row,
-    no: rows.length - index,
+    no: index + 1,
   }))
 }

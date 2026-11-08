@@ -28,9 +28,8 @@ export const UJAT_ASSIGNMENT_SESSION_EXCEL_COLUMNS: ColumnsType<UjatAssignmentSe
 export function buildUjatAssignmentSessionExcelRows(
   volunteers: UjatAssignmentVolunteerRow[]
 ): UjatAssignmentSessionExcelRow[] {
-  const total = volunteers.length
   return volunteers.map((volunteer, index) => ({
-    no: total - index,
+    no: index + 1,
     name: volunteer.name,
     institutionName: volunteer.institutionName,
     assignedClass: formatUjatGradeClassDisplayLabel(volunteer.assignedClass),

@@ -152,8 +152,7 @@ export function buildCompanySchoolWaitingInstructorRows(input: {
   }
 
   const sorted = sortWaitingInstructorRowsUnavailableToBottom(rows)
-  const n = sorted.length
-  return sorted.map((row, index) => ({ ...row, no: n - index }))
+  return sorted.map((row, index) => ({ ...row, no: index + 1 }))
 }
 
 /** 기관(organizationApplicationId)에 속한 배정 행 */
@@ -183,7 +182,7 @@ export function buildCompanySchoolAssignedInstructorRows(input: {
 
     return {
       id: a.assignmentId != null ? String(a.assignmentId) : `assign-${index}`,
-      no: filtered.length - index,
+      no: index + 1,
       role: a.scheduleLead ? ('lead' as const) : ('assistant' as const),
       instructorName:
         a.instructorName?.trim() ||

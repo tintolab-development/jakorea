@@ -224,7 +224,7 @@ function buildAssignedFromVolunteerSessions(
 
   return sessions.map((session, idx) => ({
     id: `iv-vol-as-${session.date}-${session.round}-${idx}`,
-    no: sessions.length - idx,
+    no: idx + 1,
     slotKey: `${session.date.replace(/\./g, '-')}|individual-program|${session.round}`,
     serviceRegion: '-',
     distanceFromHome: '-',
@@ -267,9 +267,8 @@ function buildWaitingFromProgramSlots(
     )
   })
 
-  const n = expanded.length
   return sortWaitingInstructorRowsUnavailableToBottom(
-    expanded.map((row, idx) => ({ ...row, no: n - idx }))
+    expanded.map((row, idx) => ({ ...row, no: idx + 1 }))
   )
 }
 
@@ -342,16 +341,14 @@ export function createIndividualVolunteerWaitingRowFromAssigned(
 export function renumberIndividualVolunteerAssignedScheduleRows(
   rows: ParticipatingIndividualVolunteerAssignedScheduleRow[]
 ): ParticipatingIndividualVolunteerAssignedScheduleRow[] {
-  const n = rows.length
-  return rows.map((r, i) => ({ ...r, no: n - i }))
+  return rows.map((r, i) => ({ ...r, no: i + 1 }))
 }
 
 export function renumberIndividualVolunteerWaitingScheduleRows(
   rows: ParticipatingIndividualVolunteerWaitingScheduleRow[]
 ): ParticipatingIndividualVolunteerWaitingScheduleRow[] {
   const sorted = sortWaitingInstructorRowsUnavailableToBottom(rows)
-  const n = sorted.length
-  return sorted.map((r, i) => ({ ...r, no: n - i }))
+  return sorted.map((r, i) => ({ ...r, no: i + 1 }))
 }
 
 function dashboardScheduleToSession(schedule: DashboardProgramScheduleResponse, index: number) {

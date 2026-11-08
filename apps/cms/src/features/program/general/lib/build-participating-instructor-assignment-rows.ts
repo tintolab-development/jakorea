@@ -605,7 +605,6 @@ export function buildParticipatingInstructorWaitingScheduleRowsFromBoard(input: 
       !ownScheduleIds.has(String(schedule.id)) &&
       !isProgramSchedulePreEducation(schedule)
   )
-  const n = waiting.length
   return waiting.map((schedule, index) => {
     const scheduleKey = String(schedule.id)
     const label = input.scheduleLabelById.get(scheduleKey)
@@ -615,7 +614,7 @@ export function buildParticipatingInstructorWaitingScheduleRowsFromBoard(input: 
     const atCap = maxAssignableInstructors != null && assignedCount >= maxAssignableInstructors
     return {
       id: `schedule-${scheduleKey}`,
-      no: n - index,
+      no: index + 1,
       slotKey: scheduleKey,
       schoolId: scheduleKey,
       lectureLocation: schedule.locationName?.trim() || schedule.address?.trim() || '-',
