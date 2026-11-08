@@ -103,12 +103,12 @@ export function getPaymentOrderLineStatusTag(
 }
 
 const INSTRUCTOR_SETTLEMENT_ACCENT: Record<InstructorSettlementUiStatus, string> = {
-  payment_statement_reapplication: '#c45c00',
+  payment_statement_reapplication: 'var(--Status-orange-main, #f07917)',
   awaiting_confirmation: 'var(--color-orange, #f07917)',
   partial_confirmation: 'var(--color-purple, #8457ce)',
   payment_statement_verified: 'var(--color-green, #1e8c29)',
   account_paid: 'var(--color-blue, #017eaf)',
-  none: 'var(--color-text-primary, #333333)',
+  none: 'rgba(61, 61, 61, 0.8)',
   application_rejected: 'var(--color-red, #c32f4a)',
   payment_correction_requested: '#e8007c',
 }

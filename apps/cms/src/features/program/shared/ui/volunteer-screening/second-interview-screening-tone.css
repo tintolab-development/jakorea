@@ -17,6 +17,11 @@
   color: var(--Status-purple-main, #8457ce);
 }
 
+/* Figma 14804:19563 — Text only; badge / button palettes are independent. */
+.second-interview-screening-status-text.second-interview-screening-tone--reserve {
+  color: var(--Status-blue-main, #017eaf);
+}
+
 .second-interview-screening-tone--completed {
   color: var(--Netural-black, #3d3d3d);
 }
@@ -35,7 +40,8 @@
 }
 
 .second-interview-screening-status-badge.second-interview-screening-tone--reserve {
-  border: 1px solid var(--Status-purple-main, #8457ce);
+  border: 1px solid var(--Status-blue-main, #017eaf);
+  color: var(--Status-blue-main, #017eaf);
 }
 
 .second-interview-screening-status-badge.second-interview-screening-tone--completed {

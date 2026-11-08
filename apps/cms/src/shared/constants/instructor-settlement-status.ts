@@ -59,12 +59,12 @@ export const INSTRUCTOR_SETTLEMENT_STATUS_COLORS: Record<
   InstructorSettlementUiStatus,
   string
 > = {
-  payment_statement_reapplication: '#c45c00',
+  payment_statement_reapplication: '#f07917',
   awaiting_confirmation: '#f07917',
   partial_confirmation: '#8457ce',
   payment_statement_verified: '#1e8c29',
   account_paid: '#017eaf',
-  none: '#333333',
+  none: 'rgba(61, 61, 61, 0.8)',
   application_rejected: '#c32f4a',
   payment_correction_requested: '#e8007c',
 }
@@ -75,9 +75,9 @@ export const INSTRUCTOR_SETTLEMENT_STATUS_TAG_STYLE: Record<
   { bg: string; color: string; border: string }
 > = {
   payment_statement_reapplication: {
-    bg: 'rgba(196, 92, 0, 0.06)',
+    bg: 'rgba(240, 121, 23, 0.06)',
     color: INSTRUCTOR_SETTLEMENT_STATUS_COLORS.payment_statement_reapplication,
-    border: 'rgba(196, 92, 0, 0.1)',
+    border: 'rgba(240, 121, 23, 0.1)',
   },
   awaiting_confirmation: {
     bg: 'rgba(240, 121, 23, 0.06)',
@@ -178,7 +178,11 @@ export function getInstructorSettlementInvoiceStatusPresentation(
 ): { label: string; color: string } {
   return {
     label: INSTRUCTOR_SETTLEMENT_STATUS_LABELS[status],
-    color: INSTRUCTOR_SETTLEMENT_STATUS_TAG_STYLE[status].color,
+    // Figma 14804:19841 — invoice Short Text, independent of calendar Tag styling.
+    color:
+      status === 'payment_statement_reapplication'
+        ? 'var(--Status-orange-main, #f07917)'
+        : INSTRUCTOR_SETTLEMENT_STATUS_TAG_STYLE[status].color,
   }
 }
 

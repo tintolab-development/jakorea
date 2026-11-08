@@ -25,7 +25,7 @@
 }
 
 .payment-order-admin__status-text--reapplication {
-  color: #c45c00;
+  color: var(--Status-orange-main, #f07917);
 }
 
 .payment-order-admin__status-text--partial {
@@ -50,4 +50,8 @@
 
 .payment-order-admin__status-text--application-rejected {
   color: var(--color-red, #c32f4a);
+}
+
+.payment-order-admin__status-text--rejected {
+  color: var(--Status-blue-main, #017eaf);
 }

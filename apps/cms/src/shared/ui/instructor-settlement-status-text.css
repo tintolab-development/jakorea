@@ -1,5 +1,5 @@
 /**
- * 강사 정산 현황 — 텍스트 전용 (색상은 shared/constants/instructor-settlement-status.ts 와 동기화)
+ * 강사 정산 현황 — 텍스트 전용 (Figma 14804:19668; 배지/캘린더 팔레트와 분리)
  */
 
 .instructor-settlement-status-text {
@@ -12,7 +12,7 @@
 }
 
 .instructor-settlement-status-text--reapplication {
-  color: #c45c00;
+  color: var(--Status-orange-main, #f07917);
 }
 
 .instructor-settlement-status-text--awaiting {
@@ -32,7 +32,7 @@
 }
 
 .instructor-settlement-status-text--na {
-  color: #333333;
+  color: var(--Netural-black, #3d3d3d);
 }
 
 .instructor-settlement-status-text--rejected {
