@@ -93,7 +93,7 @@
 }
 
 /* ── 지출 테이블 항목 (시안) ──
- * 구분 ~15% · 항목명 ~35%(좌·넓음) · 비율 ~10% · 금액 ~20%(우)
+ * 구분·항목명·비율·금액 각 330 (열 폭은 items-panel.tsx COL_WIDTH) — 여기선 정렬만
  */
 .income-expense-table--expense .ant-table-thead > tr > th.income-expense-table__col--category,
 .income-expense-table--expense .ant-table-tbody > tr > td.income-expense-table__col--category {
@@ -109,9 +109,9 @@
   text-align: center !important;
 }
 
-/* 편집: 구분 라디오가 좁은 열에서 줄바꿈되도록 */
+/* 편집: 구분 라디오 2개 한 줄 가로 — Figma 94:29409 (Radio 87 · 142, 간격 16) */
 .income-expense-table--expense .ant-table-tbody > tr > td.income-expense-table__col--category {
-  white-space: normal !important;
+  white-space: nowrap !important;
 }
 
 .income-expense-table--expense
@@ -120,9 +120,10 @@
   > td.income-expense-table__col--category
   .cms-radio-group {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 16px;
 }
 
 /* 편집 모드 행 높이 점프 최소화 */
@@ -248,4 +249,9 @@
 .income-expense-table.income-expense-table--editing .ant-table-thead > tr > th.cms-table-col--no,
 .income-expense-table.income-expense-table--editing .ant-table-tbody > tr > td.cms-table-col--no {
   text-align: center !important;
+}
+
+/* 시안 선택 열 60 (공통 기본 80 대신) — 데이터 열이 남는 폭을 시안과 같게 나누도록 */
+.income-expense-panel__table-scroll .cms-data-table {
+  --table-selection-column-width: 60px;
 }
