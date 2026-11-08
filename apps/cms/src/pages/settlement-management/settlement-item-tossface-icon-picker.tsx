@@ -7,30 +7,22 @@ import { useState, type ReactNode } from 'react'
 import { Popover } from 'antd'
 import './settlement-item-tossface-icon-picker.css'
 
-/** Tossface에서 자주 쓰이는 범주 위주 임시 팔레트(표준 이모지 코드포인트) */
+/**
+ * 시안(0-1. 이모티콘 변경 시) 팔레트 — 한 줄 11개.
+ * 저장된 emojiOverride는 문자열 그대로 렌더하므로 이 목록에 없는(이전 팔레트) 값도 그대로 표시된다.
+ */
 const TOSSFACE_PICKER_EMOJI = [
-  '💰',
-  '💵',
-  '🪙',
-  '💼',
-  '🎓',
-  '🏫',
-  '🚌',
-  '🚗',
-  '✈️',
-  '🏨',
-  '🍔',
-  '☕',
-  '📅',
-  '📋',
-  '✏️',
-  '🎯',
-  '👤',
+  '🙂',
+  '😆',
+  '🥰',
+  '😲',
+  '😭',
+  '😡',
+  '😱',
   '❤️',
-  '⭐',
-  '🔔',
-  '✅',
-  '📌',
+  '👏',
+  '👍',
+  '☑️',
 ] as const
 
 export interface SettlementItemTossfaceIconPickerTriggerProps {

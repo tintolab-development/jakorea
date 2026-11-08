@@ -892,7 +892,7 @@
   .modal-spec-table__label--remark {
   min-height: 0;
   height: auto;
-  padding: 8px 12px;
+  padding: 4px 12px;
 }
 
 .settlement-item-setting-detail-modal.content-modal
@@ -908,7 +908,7 @@
   .modal-spec-table__label--remark
   + .modal-spec-table__cell {
   min-height: 0;
-  padding: 8px 10px;
+  padding: 10px;
   align-items: flex-start;
 }
 
@@ -916,7 +916,7 @@
   .modal-spec-table.modal-spec-table--condition-compact
   .modal-spec-table__textarea {
   min-height: 0 !important;
-  padding: 6px 12px;
+  padding: 8px 14px;
   font-size: 14px;
   line-height: 140%;
   field-sizing: content;
