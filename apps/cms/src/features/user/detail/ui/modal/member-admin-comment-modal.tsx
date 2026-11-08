@@ -1,3 +1,4 @@
+import { useEffect, useRef, type FocusEvent } from 'react'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsTextArea } from '@/shared/ui/cms-textarea'
 import { ContentModal } from '@/shared/ui/content-modal'
@@ -25,6 +26,18 @@ export function MemberAdminCommentModal({
   onConfirm,
 }: MemberAdminCommentModalProps) {
   const canConfirm = allowEmpty || value.trim().length > 0
+  /** 모달을 열 때 첫 포커스만 커서를 기존 내용 맨 뒤로 — 이후 클릭 위치는 그대로 둔다 */
+  const caretPlacedRef = useRef(false)
+  useEffect(() => {
+    if (!open) caretPlacedRef.current = false
+  }, [open])
+  const placeCaretAtEndOnFirstFocus = (event: FocusEvent<HTMLTextAreaElement>) => {
+    if (caretPlacedRef.current) return
+    caretPlacedRef.current = true
+    const end = event.currentTarget.value.length
+    event.currentTarget.setSelectionRange(end, end)
+    event.currentTarget.scrollTop = event.currentTarget.scrollHeight
+  }
 
   return (
     <ContentModal
@@ -71,6 +84,7 @@ export function MemberAdminCommentModal({
                 rows={4}
                 maxLength={maxLength}
                 autoFocus
+                onFocus={placeCaretAtEndOnFirstFocus}
               />
             }
           />
