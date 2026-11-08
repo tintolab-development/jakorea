@@ -23,6 +23,14 @@ function transportItem(
 }
 
 describe('mapIndividualSettlementItemToBasisDetail', () => {
+  it('제출 시점 편도 km 스냅샷을 그대로 싣고, 기존 건(null)은 null로 둔다', () => {
+    const withSnapshot = mapItem(transportItem({ oneWayDistanceKm: 35 }))
+    expect(withSnapshot).toMatchObject({ layout: 'transportOneWay', oneWayDistanceKm: 35 })
+
+    const legacy = mapItem(transportItem())
+    expect(legacy).toMatchObject({ layout: 'transportOneWay', oneWayDistanceKm: null })
+  })
+
   it('가는 편·오는 편 영수증이면 왕복 교통비 모달이다', () => {
     const detail = mapItem(
       transportItem({

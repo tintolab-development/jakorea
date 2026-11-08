@@ -8,6 +8,7 @@ import type {
   PaymentOrderCalculationBasisDetailTransportRoundTrip,
   PaymentOrderCalculationBasisDetailTransportTripLeg,
 } from './payment-order-calculation-basis-detail'
+import { formatParticipantOneWayDistanceKm } from './payment-order-calculation-basis-detail'
 import {
   BasisDetailInfoForm,
   BasisDetailInfoFormRow,
@@ -25,16 +26,24 @@ function TransportParticipantTripLegTable({
   leg,
   title,
   hideHeader = true,
+  oneWayDistanceKm,
 }: {
   leg: PaymentOrderCalculationBasisDetailTransportTripLeg
   title: string
   hideHeader?: boolean
+  oneWayDistanceKm?: number | null
 }) {
+  const distanceLabel = formatParticipantOneWayDistanceKm(oneWayDistanceKm)
   return (
     <BasisDetailInfoForm title={title} hideHeader={hideHeader}>
       <BasisDetailInfoFormRow label="구분">
         <BasisDetailReadOnlyValue>{leg.categoryLabel}</BasisDetailReadOnlyValue>
       </BasisDetailInfoFormRow>
+      {distanceLabel ? (
+        <BasisDetailInfoFormRow label="편도 거리">
+          <BasisDetailReadOnlyValue>{distanceLabel}</BasisDetailReadOnlyValue>
+        </BasisDetailInfoFormRow>
+      ) : null}
       <BasisDetailInfoFormRow label="대중교통비">
         <BasisDetailPublicTransitValue segment={leg.publicTransit} />
       </BasisDetailInfoFormRow>
@@ -53,6 +62,7 @@ export function PaymentOrderCalculationBasisDetailTransportRoundTripView({
         leg={detail.outbound}
         title="가는 편(출발)"
         hideHeader={false}
+        oneWayDistanceKm={detail.oneWayDistanceKm}
       />
       <TransportParticipantTripLegTable
         leg={detail.inbound}
@@ -69,7 +79,13 @@ export function PaymentOrderCalculationBasisDetailTransportOneWayView({
 }: {
   detail: PaymentOrderCalculationBasisDetailTransportOneWay
 }) {
-  return <TransportParticipantTripLegTable leg={detail.trip} title="교통비 산정 기준" />
+  return (
+    <TransportParticipantTripLegTable
+      leg={detail.trip}
+      title="교통비 산정 기준"
+      oneWayDistanceKm={detail.oneWayDistanceKm}
+    />
+  )
 }
 
 export function PaymentOrderCalculationBasisDetailTransportInstructorView({
