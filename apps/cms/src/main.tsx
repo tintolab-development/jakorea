@@ -13,6 +13,7 @@ import { TemplateWritingPreviewProvider } from '@/features/template/context/temp
 import { router } from './app/router'
 import { reloadOnceAfterDeployChunkMismatch } from './app/router/lazy-load'
 import './index.css'
+import '@/shared/components/detail-info-form/detail-info-form.css'
 
 if (import.meta.env.PROD && typeof window !== 'undefined') {
   window.addEventListener('vite:preloadError', event => {
