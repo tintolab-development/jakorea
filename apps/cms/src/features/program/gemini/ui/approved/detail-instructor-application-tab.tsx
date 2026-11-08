@@ -620,6 +620,7 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
           ) : null
         }
         excelExport={{
+          accessLog: { downloadKind: 'PROGRAM_INSTRUCTOR_APPLICATION_EXPORT', containedPiiTypes: ['NAME'] },
           columns,
           data: rows,
           selectedRowKeys: canWrite ? selectedRowKeys : undefined,

@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
+import { useNavigateToAncestor } from '@/shared/hooks/use-history-ancestor-navigation'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import { SponsorDetailFullPageModal } from '@/features/sponsor/ui/sponsor-detail-fullpage-modal'
 import {
@@ -16,16 +17,17 @@ import {
 
 export function ProgramDetailSponsorDetailOverlay() {
   const queryClient = useQueryClient()
-  const [searchParams, setSearchParams] = useSearchParams()
+  const [searchParams] = useSearchParams()
   const { sponsorId } = readSponsorDetailQueryStack(searchParams)
   const [sponsorRow, setSponsorRow] = useState<SponsorManagementRow | undefined>()
   const [isResolving, setIsResolving] = useState(false)
 
+  const { toSearch: navigateToAncestorSearch } = useNavigateToAncestor()
+
+  /** 닫기 — 지나온 프로그램 상세 엔트리로 뒤로, 없으면 replace */
   const handleClose = useCallback(() => {
-    setSearchParams(prev => clearSponsorDetailQueryStack(new URLSearchParams(prev)), {
-      replace: true,
-    })
-  }, [setSearchParams])
+    navigateToAncestorSearch(prev => clearSponsorDetailQueryStack(new URLSearchParams(prev)))
+  }, [navigateToAncestorSearch])
 
   useEffect(() => {
     if (!sponsorId) {

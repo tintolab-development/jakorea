@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useSiteSettings } from '../api/use-site-shell'
 
 function upsertMeta(attribute: 'name' | 'property', key: string, content: string) {
@@ -36,6 +37,11 @@ function probeImage(url: string, signal: { cancelled: boolean }, onLoad: () => v
  */
 export function SiteDocumentHead() {
   const settings = useSiteSettings()
+  const { pathname } = useLocation()
+
+  useEffect(() => {
+    return upsertMeta('property', 'og:url', `${window.location.origin}${pathname}`)
+  }, [pathname])
 
   useEffect(() => {
     if (settings.source !== 'remote' || !settings.title) return
@@ -49,6 +55,7 @@ export function SiteDocumentHead() {
       restores.push(upsertMeta('property', 'og:description', settings.description))
     }
     restores.push(upsertMeta('property', 'og:title', settings.title))
+    restores.push(upsertMeta('property', 'og:site_name', settings.title))
 
     const signal = { cancelled: false }
     if (settings.ogImageUrl) {

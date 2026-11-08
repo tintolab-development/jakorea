@@ -155,6 +155,7 @@ import type {
   InstructorColumnPreset,
   SessionLinePreset,
 } from './applicant-list-menu'
+import { resolveApplicantListAccessLog } from './applicant-list-menu'
 import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import './applicants-detail.css'
 import './applicant-list.css'
@@ -2478,6 +2479,7 @@ export function ApplicantList({
               columns,
               data: tableData,
               selectedRowKeys,
+              accessLog: resolveApplicantListAccessLog(menu),
             }}
           >
             {applicationsError ? (

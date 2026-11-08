@@ -536,6 +536,7 @@ export default function DetailedProgramPage() {
           </>
         }
         excelExport={{
+          accessLog: { downloadKind: 'DETAILED_PROGRAM_LIST_EXPORT', containedPiiTypes: ['NAME'] },
           columns,
           data: tableDisplayData,
           selectedRowKeys,

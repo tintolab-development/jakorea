@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useNavigateToAncestor } from '@/shared/hooks/use-history-ancestor-navigation'
 import { APPLICANT_ID_PARAM } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-constants'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import {
@@ -70,6 +71,18 @@ export function useGeneralVolunteerApplicantDetail({
     setSearchParams(next, { replace: true })
   }, [searchParams, setSearchParams])
 
+  const { toSearch: navigateToListAncestor } = useNavigateToAncestor()
+
+  /** 사용자가 상세를 닫을 때 — 지나온 목록 엔트리로 뒤로, 없으면 replace */
+  const closeApplicantIdToList = useCallback(() => {
+    if (!new URLSearchParams(window.location.search).has(APPLICANT_ID_PARAM)) return
+    navigateToListAncestor(current => {
+      const next = new URLSearchParams(current)
+      next.delete(APPLICANT_ID_PARAM)
+      return next
+    })
+  }, [navigateToListAncestor])
+
   const setApplicantIdInUrl = useCallback(
     (applicantId: string) => {
       const next = new URLSearchParams(searchParams)
@@ -93,12 +106,12 @@ export function useGeneralVolunteerApplicantDetail({
     const handler = () => {
       if (!selectedApplicantRef.current) return false
       setSelectedApplicant(null)
-      clearApplicantIdFromUrl()
+      closeApplicantIdToList()
       return true
     }
     onRegisterApplicantCloseHandler(handler)
     return () => onRegisterApplicantCloseHandler(null)
-  }, [clearApplicantIdFromUrl, onRegisterApplicantCloseHandler])
+  }, [closeApplicantIdToList, onRegisterApplicantCloseHandler])
 
   useEffect(() => {
     if (!onVolunteerApplicantDetailMetaChange) return

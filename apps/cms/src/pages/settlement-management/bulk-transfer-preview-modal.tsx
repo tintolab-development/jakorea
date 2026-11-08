@@ -119,7 +119,7 @@ export function BulkTransferPreviewModal({
       }
       const { exportBulkTransferExcel } =
         await import('@/pages/settlement-management/bulk-transfer-excel')
-      await exportBulkTransferExcel(previewRows)
+      await exportBulkTransferExcel(previewRows, { password })
     } catch (error) {
       notifySettlementExportDownloadError({
         error,

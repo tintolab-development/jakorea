@@ -717,6 +717,7 @@ export function MemberProgramLectureHistory({
           </div>
         }
         excelExport={{
+          accessLog: { downloadKind: 'MEMBER_PROGRAM_HISTORY_EXPORT', containedPiiTypes: ['NAME'] },
           columns,
           data: tableDataSource,
           selectedRowKeys:

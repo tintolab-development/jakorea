@@ -4,6 +4,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useNavigateToAncestor } from '@/shared/hooks/use-history-ancestor-navigation'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import '@/shared/ui/detail-fullpage-modal.css'
 import type { User } from '@/types/user'
@@ -497,19 +498,19 @@ export function PermissionRequestListPage() {
     [applyDetailRow, setSearchParams, urlPermissionRole]
   )
 
+  const { toSearch: navigateToAncestorSearch } = useNavigateToAncestor()
+
+  /** 상세 닫기 — 목록 엔트리가 history에 있으면 뒤로, 없으면 replace */
   const handleCloseDetail = useCallback(() => {
     setDetailTargetRow(null)
-    setSearchParams(
-      prev => {
-        const next = new URLSearchParams(prev)
-        next.delete(PR_DETAIL_USER)
-        next.delete(PR_DETAIL_ROLE)
-        next.delete(PR_DETAIL_REQUEST)
-        return next
-      },
-      { replace: true }
-    )
-  }, [setSearchParams])
+    navigateToAncestorSearch(prev => {
+      const next = new URLSearchParams(prev)
+      next.delete(PR_DETAIL_USER)
+      next.delete(PR_DETAIL_ROLE)
+      next.delete(PR_DETAIL_REQUEST)
+      return next
+    })
+  }, [navigateToAncestorSearch])
 
   const handlePermissionApprove = useCallback(
     (ctx: { userId: string; permissionRole: UserDetailPermissionRole }) => {

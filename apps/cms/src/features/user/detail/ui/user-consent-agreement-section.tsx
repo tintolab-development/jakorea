@@ -122,7 +122,7 @@ export type ConsentFieldValueSchema =
       agreedAtDisplay?: string
       consentStatus?: string
       consentType?: string
-      /** 초상권 동의/부분동의 라벨 전용 (`resolveConsentStatusDisplayLabel`) */
+      /** 초상권 동의/부분 동의 라벨 전용 (`resolveConsentStatusDisplayLabel`) */
       allItemsAgreed?: boolean | null
     }
   | {
@@ -130,13 +130,17 @@ export type ConsentFieldValueSchema =
       agreed: boolean
       agreedAtDisplay?: string
       consentStatus?: string
+      /** 기간제 동의서 유효기간 경과 — 「동의 만료」 */
+      expired?: boolean
+      /** 만료일 (예: 2027.10.31) — `expired`일 때만 */
+      expiredAtDisplay?: string
       formResponseId?: number
       consentRecordId?: number
       filledDocumentId?: number
       filledDocumentAvailable?: boolean
       filledDocumentRevealEndpoint?: string
       consentType?: string
-      /** 초상권 동의/부분동의 라벨 전용 (`resolveConsentStatusDisplayLabel`) */
+      /** 초상권 동의/부분 동의 라벨 전용 (`resolveConsentStatusDisplayLabel`) */
       allItemsAgreed?: boolean | null
     }
   /** 더블 행 우측 빈 절반(격자·하단 보더만 유지) */
@@ -414,7 +418,13 @@ const PORTRAIT_CONSENT_FIELD_LABEL = '초상권 수집·이용 동의'
  * 초상권은 termsType 별칭(`PORTRAIT` 등)이 와도 라벨 기준으로 `PORTRAIT_RIGHTS` 분기를 탄다(allItemsAgreed 판정).
  */
 function resolveConsentFieldStatusLabel(
-  value: { agreed: boolean; consentStatus?: string; consentType?: string; allItemsAgreed?: boolean | null },
+  value: {
+    agreed: boolean
+    consentStatus?: string
+    consentType?: string
+    allItemsAgreed?: boolean | null
+    expired?: boolean
+  },
   fieldLabel: string
 ): string {
   return resolveConsentStatusDisplayLabel({
@@ -423,6 +433,7 @@ function resolveConsentFieldStatusLabel(
     consentType:
       fieldLabel.trim() === PORTRAIT_CONSENT_FIELD_LABEL ? 'PORTRAIT_RIGHTS' : value.consentType,
     allItemsAgreed: value.allItemsAgreed,
+    expired: value.expired,
     agreedLabel: '동의',
   })
 }
@@ -432,15 +443,22 @@ function ConsentDocumentRow({
   agreed,
   agreedAtDisplay,
   statusLabel,
+  expired = false,
+  expiredAtDisplay,
   onOpenDocument,
 }: {
   agreed: boolean
   /** 동의한 경우에만 표시 (예: 2026.01.15 09:15:42) */
   agreedAtDisplay?: string
   statusLabel: string
+  /** 유효기간 경과 — 「동의 만료」 + 만료일 */
+  expired?: boolean
+  expiredAtDisplay?: string
   onOpenDocument?: () => void
 }) {
   const open = onOpenDocument
+  /** 기존 일시 자리 — 만료면 만료일, 아니면 동의 일시 */
+  const datetimeDisplay = expired ? expiredAtDisplay : agreedAtDisplay
 
   return (
     <span className="user-consent-agreement-section__value-inner">
@@ -456,12 +474,16 @@ function ConsentDocumentRow({
           <CmsButton variant="secondary" size="h32" onClick={open} disabled={!open}>
             동의서 보기
           </CmsButton>
-          {agreedAtDisplay ? (
+          {datetimeDisplay ? (
             <span className="user-consent-agreement-section__value-datetime">
-              {agreedAtDisplay}
+              {datetimeDisplay}
             </span>
           ) : null}
         </>
+      ) : expired && datetimeDisplay ? (
+        <span className="user-consent-agreement-section__value-datetime">
+          {datetimeDisplay}
+        </span>
       ) : null}
     </span>
   )
@@ -491,7 +513,8 @@ function resolveConsentFieldView(
         isSensitiveConsentDocumentLabel(fieldLabel) && !ctx.canOpenSensitiveConsentDocument
       if (sensitiveRestricted) {
         const status = resolveConsentFieldStatusLabel(value, fieldLabel)
-        const text = value.agreedAtDisplay ? `${status} | ${value.agreedAtDisplay}` : status
+        const datetime = value.expired ? value.expiredAtDisplay : value.agreedAtDisplay
+        const text = datetime ? `${status} | ${datetime}` : status
         return consentFieldContent(text)
       }
       return (
@@ -499,6 +522,8 @@ function resolveConsentFieldView(
           agreed={value.agreed}
           agreedAtDisplay={value.agreedAtDisplay}
           statusLabel={resolveConsentFieldStatusLabel(value, fieldLabel)}
+          expired={value.expired}
+          expiredAtDisplay={value.expiredAtDisplay}
           onOpenDocument={
             value.agreed ? () => ctx.openDocumentForLabel(fieldLabel, value) : undefined
           }

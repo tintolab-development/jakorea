@@ -9,6 +9,7 @@ import {
   type MutableRefObject,
 } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { nextSearchParamsIfChanged } from '@/shared/lib/search-params-diff'
 import type { Application, UserHistory } from '@/types/domain'
 import type { ApplicationProgressStatus } from '@/types/application-progress'
 import { applicationService } from '@/entities/application/api/application-service'
@@ -1621,20 +1622,19 @@ export function useUserDetailController({
         setTabState({ lnb: k })
       }
 
-      setSearchParams(
-        prev => {
-          const nextParams = new URLSearchParams(prev)
-          if (displayUser?.id) nextParams.set('id', displayUser.id)
-          nextParams.set('lnb', k)
-          if (k === 'history' && programsHistoryHasChildMenu(displayUser)) {
-            nextParams.set(programsChildQueryKey, 'enrollment')
-          } else {
-            nextParams.delete(programsChildQueryKey)
-          }
-          return nextParams
-        },
-        { replace: true }
-      )
+      const changed = nextSearchParamsIfChanged(prev => {
+        const nextParams = new URLSearchParams(prev)
+        if (displayUser?.id) nextParams.set('id', displayUser.id)
+        nextParams.set('lnb', k)
+        if (k === 'history' && programsHistoryHasChildMenu(displayUser)) {
+          nextParams.set(programsChildQueryKey, 'enrollment')
+        } else {
+          nextParams.delete(programsChildQueryKey)
+        }
+        return nextParams
+      })
+      // LNB = 브레드크럼 단계 → push (같은 메뉴 재선택은 엔트리를 만들지 않음)
+      if (changed) setSearchParams(changed, { replace: false })
     },
     [mode, displayUser, setSearchParams, programsChildQueryKey]
   )
@@ -1651,16 +1651,15 @@ export function useUserDetailController({
         return
       }
       setTabState({ lnb: 'history', child })
-      setSearchParams(
-        prev => {
-          const nextParams = new URLSearchParams(prev)
-          if (displayUser?.id) nextParams.set('id', displayUser.id)
-          nextParams.set('lnb', 'history')
-          nextParams.set(programsChildQueryKey, child)
-          return nextParams
-        },
-        { replace: true }
-      )
+      const changed = nextSearchParamsIfChanged(prev => {
+        const nextParams = new URLSearchParams(prev)
+        if (displayUser?.id) nextParams.set('id', displayUser.id)
+        nextParams.set('lnb', 'history')
+        nextParams.set(programsChildQueryKey, child)
+        return nextParams
+      })
+      // 하위 메뉴 = 브레드크럼 단계 → push
+      if (changed) setSearchParams(changed, { replace: false })
     },
     [mode, displayUser, setSearchParams, programsChildQueryKey]
   )

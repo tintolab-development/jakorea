@@ -97,7 +97,9 @@ export function InstructorList({
 
       const buffer = await workbook.xlsx.writeBuffer()
       const fileName = `강사_목록_${new Date().toISOString().split('T')[0]}${maskingEnabled ? '_마스킹' : ''}.xlsx`
-      await downloadExcel(buffer, fileName)
+      await downloadExcel(buffer, fileName, {
+        accessLog: { downloadKind: 'INSTRUCTOR_LIST_EXPORT', containedPiiTypes: ['NAME'] },
+      })
     } catch (error) {
       handleError(error, { defaultMessage: MESSAGES.error.download })
     }

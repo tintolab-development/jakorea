@@ -422,6 +422,7 @@ export function AdminInquiryPage() {
           </>
         }
         excelExport={{
+          accessLog: { downloadKind: 'INQUIRY_LIST_EXPORT', containedPiiTypes: ['NAME'] },
           columns,
           data: tableData,
           selectedRowKeys,

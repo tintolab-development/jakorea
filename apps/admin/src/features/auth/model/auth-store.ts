@@ -96,6 +96,8 @@ interface AuthState {
   isAuthenticated: boolean
   mfaState: MfaState | null
   requiresMfa: boolean
+  /** 부트 시 저장된 access token이 만료 임박이라 서버 갱신 결과를 기다리는 중 */
+  isBootstrapping: boolean
   _isCheckingAuth: boolean
   _checkAuthPromise: Promise<void> | null
 
@@ -188,6 +190,12 @@ const loadAuthFromStorage = (): Partial<AuthState> => {
 
 const initialState = loadAuthFromStorage()
 
+/** 저장된 세션이 있지만 access token 갱신이 필요하면, 갱신 결과 전까지 보호 화면을 그리지 않는다. */
+const initialIsBootstrapping =
+  !!initialState.isAuthenticated &&
+  !!initialState.expiresAt &&
+  shouldRefreshAccessToken(new Date(initialState.expiresAt).getTime(), Date.now())
+
 export const useAuthStore = create<AuthState>()((set, get) => {
   return {
     user: initialState.user ?? null,
@@ -198,6 +206,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
     error: null,
     mfaState: null,
     requiresMfa: false,
+    isBootstrapping: initialIsBootstrapping,
     _isCheckingAuth: false,
     _checkAuthPromise: null,
 
@@ -329,6 +338,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         error: null,
         mfaState: null,
         requiresMfa: false,
+        isBootstrapping: false,
         _isCheckingAuth: false,
         _checkAuthPromise: null,
       })
@@ -347,7 +357,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       }
 
       if (typeof window === 'undefined' || !window.localStorage) {
-        set({ isAuthenticated: false, user: null })
+        set({ isAuthenticated: false, user: null, isBootstrapping: false })
         return
       }
 
@@ -362,7 +372,13 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         (sidAtStart ? readJwtSidClaim(token) === sidAtStart : token === tokenAtStart)
 
       if (!token || !expiresAt || !userStr) {
-        set({ isAuthenticated: false, user: null, token: null, expiresAt: null })
+        set({
+          isAuthenticated: false,
+          user: null,
+          token: null,
+          expiresAt: null,
+          isBootstrapping: false,
+        })
         return
       }
 
@@ -408,7 +424,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
             if (isCurrentLogin()) get().logout()
           }
         } finally {
-          set({ _isCheckingAuth: false, _checkAuthPromise: null })
+          set({ _isCheckingAuth: false, _checkAuthPromise: null, isBootstrapping: false })
         }
       })()
 

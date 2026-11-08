@@ -321,6 +321,7 @@ function AdminFAQPage() {
           </>
         }
         excelExport={{
+          accessLog: { downloadKind: 'FAQ_LIST_EXPORT', containedPiiTypes: ['NAME'] },
           columns,
           data: tableData,
           selectedRowKeys,

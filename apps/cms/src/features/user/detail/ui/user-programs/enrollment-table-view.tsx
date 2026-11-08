@@ -61,6 +61,7 @@ export function EnrollmentTableView(props: RendererProps) {
       title={enrollmentSectionTitle}
       description={`총 ${displayedCount.toLocaleString()}건`}
       excelExport={{
+        accessLog: { downloadKind: 'MEMBER_PROGRAM_HISTORY_EXPORT', containedPiiTypes: ['NAME'] },
         columns: programHistoryColumns,
         data: enrollmentTableRows,
       }}

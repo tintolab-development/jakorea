@@ -1,3 +1,4 @@
+import { metadataOnlyLogging, safeHttpMethod, attachHttpMetadata } from './metadata-only-logging'
 import type { Page, TestInfo, Response } from '@playwright/test'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -70,6 +71,11 @@ export function installApiErrorCapture(page: Page): {
     // Mock 로그 API 자체·정적 자산 제외
     if (!/\/api\//.test(url)) return
     if (url.includes('/__dev__/e2e-error-logs') || url.includes('/__dev__/e2e-test-logs')) return
+
+    if (metadataOnlyLogging()) {
+      errors.push({ occurredAt: new Date().toISOString(), method: safeHttpMethod(res.request().method()), url: 'api', httpStatus: status, errorCode: `HTTP_${status}`, message: `HTTP_${status}` })
+      return
+    }
 
     const task = (async () => {
       let bodyText = ''
@@ -289,6 +295,10 @@ export async function dumpE2eErrorLogs(args: {
   captured: CapturedApiError[]
 }) {
   const { page, testInfo, captured: networkCaptured } = args
+  if (metadataOnlyLogging()) {
+    await attachHttpMetadata(testInfo, 'errors', networkCaptured)
+    return
+  }
 
   let appStorageRaw: string | null = null
   try {

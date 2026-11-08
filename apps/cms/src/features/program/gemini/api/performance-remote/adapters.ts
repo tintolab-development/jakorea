@@ -8,6 +8,7 @@ import {
   toJavaInt,
   toJavaLocalDate,
   toJavaLocalTime,
+  toKoreanPhone,
 } from '@/features/program/gemini/lib/performance/import-wire-values'
 import { isGeminiInstructorIdentityBlankExclusion } from '@/features/program/gemini/lib/performance/payment-exclusion'
 import { resolveTrainingMethod } from '@/features/program/gemini/lib/performance/resolve-training-method'
@@ -114,7 +115,10 @@ export function mapUploadAndDisplayToImportRow(
   return {
     // 회원 ID는 서버가 이름·연락처로 확정하므로 FE가 선판정하거나 재전달하지 않는다.
     instructorEmail: upload.email.trim() || undefined,
-    instructorPhone: preserveImportText(upload.contact) ?? undefined,
+    // BE `@KoreanPhoneNumber`는 하이픈 형식만 받고, 어긋나면 preview 요청 전체가 400이 된다.
+    // 공백·하이픈 없는 번호는 하이픈 형식으로 맞추고, 맞출 수 없는 값만 원문을 보낸다.
+    instructorPhone:
+      toKoreanPhone(upload.contact) ?? preserveImportText(upload.contact) ?? undefined,
     instructorName: preserveImportText(upload.instructorName) ?? undefined,
     feePayee: preserveImportText(upload.paymentDestination),
     assistantInstructorNames: upload.assistantInstructorNames.trim() || undefined,

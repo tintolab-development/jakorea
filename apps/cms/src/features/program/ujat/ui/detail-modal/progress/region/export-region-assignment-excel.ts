@@ -180,5 +180,7 @@ export async function exportRegionAssignmentExcel(
   sheet.views = [{ state: 'frozen', xSplit: 2, ySplit: 2 }]
 
   const buffer = await workbook.xlsx.writeBuffer()
-  await downloadExcel(buffer, buildRegionAssignmentExcelFilename(data.regionLabel))
+  await downloadExcel(buffer, buildRegionAssignmentExcelFilename(data.regionLabel), {
+    accessLog: { downloadKind: 'PROGRAM_REGION_ASSIGNMENT_EXPORT', containedPiiTypes: ['NAME'] },
+  })
 }

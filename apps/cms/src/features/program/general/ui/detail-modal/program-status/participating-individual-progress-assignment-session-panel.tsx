@@ -49,6 +49,7 @@ export function ParticipatingIndividualProgressAssignmentSessionPanel({
   )
 
   const { exportExcel, isExporting } = useTableExcelExport({
+    accessLog: { downloadKind: 'PROGRAM_ASSIGNMENT_EXPORT', containedPiiTypes: ['NAME'] },
     columns: PARTICIPATING_INDIVIDUAL_PROGRESS_ASSIGNMENT_EXCEL_COLUMNS,
     data: excelRows,
     filename: resolveProgressAssignmentSessionExcelFilename(session.headerTitle),

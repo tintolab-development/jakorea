@@ -5,6 +5,7 @@
 
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type Key } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useNavigateToAncestor } from '@/shared/hooks/use-history-ancestor-navigation'
 import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs, { type Dayjs } from 'dayjs'
@@ -796,16 +797,16 @@ export default function AccountPaymentsPage() {
     setAccountFormIssueBlockedOpen(false)
   }, [])
 
+  const { toSearch: navigateToAncestorSearch } = useNavigateToAncestor()
+
+  /** 상세 닫기 — 목록 엔트리가 history에 있으면 뒤로, 없으면 replace */
   const closeAccountPaymentDetail = useCallback(() => {
-    setSearchParams(
-      prev => {
-        const next = new URLSearchParams(prev)
-        next.delete(AP_DETAIL_ID)
-        return next
-      },
-      { replace: true }
-    )
-  }, [setSearchParams])
+    navigateToAncestorSearch(prev => {
+      const next = new URLSearchParams(prev)
+      next.delete(AP_DETAIL_ID)
+      return next
+    })
+  }, [navigateToAncestorSearch])
 
   const openAccountPaymentDetail = useCallback(
     (row: AccountPaymentRow) => {
@@ -975,6 +976,8 @@ export default function AccountPaymentsPage() {
       columns,
       data: filteredRows,
       selectedRowKeys: viewMode === 'list' ? selectedRowKeys : undefined,
+      // 신청자명 컬럼. 계좌번호 컬럼은 없다
+      accessLog: { downloadKind: 'ACCOUNT_PAYMENT_LIST_EXPORT', containedPiiTypes: ['NAME'] },
     }
   }, [columns, filteredRows, selectedRowKeys, viewMode])
 

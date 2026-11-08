@@ -685,6 +685,7 @@ export function ParticipatingInstructorFullpageView({
 
   const { exportExcel: exportAssignedSchoolsExcel, isExporting: isAssignedSchoolsExcelExporting } =
     useTableExcelExport({
+      accessLog: { downloadKind: 'PROGRAM_PERSON_ASSIGNMENT_EXPORT', containedPiiTypes: [] },
       columns: assignedSchoolExportColumns,
       data: assignedSchoolExportRows,
       filename: '배정된 기관 목록',
@@ -693,6 +694,7 @@ export function ParticipatingInstructorFullpageView({
 
   const { exportExcel: exportWaitingSchoolsExcel, isExporting: isWaitingSchoolsExcelExporting } =
     useTableExcelExport({
+      accessLog: { downloadKind: 'PROGRAM_PERSON_ASSIGNMENT_EXPORT', containedPiiTypes: [] },
       columns: waitingSchoolExportColumns,
       data: waitingSchoolExportRows,
       filename: '배정 대기 기관 목록',

@@ -73,6 +73,13 @@ jobs:
           VITE_PLATFORM_NAVER_CLIENT_ID: ${{ secrets.VITE_PLATFORM_NAVER_CLIENT_ID }}
         run: pnpm --filter platform build
 
+      - name: Inject site OG tags into index.html
+        env:
+          HOMEPAGE_API_BASE_URL: ${{ env.VITE_HOMEPAGE_API_BASE_URL }}
+          # 비어 있으면 og:url만 생략한다.
+          PLATFORM_PUBLIC_ORIGIN: ${{ secrets.VITE_PLATFORM_PUBLIC_ORIGIN }}
+        run: node apps/platform/scripts/inject-site-og.mjs apps/platform/dist/index.html
+
       - name: Check built API destinations
         shell: bash
         run: |

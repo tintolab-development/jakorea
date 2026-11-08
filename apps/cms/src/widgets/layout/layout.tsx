@@ -10,6 +10,7 @@ import { Suspense, useEffect, useRef } from 'react'
 import { Layout as AntLayout } from 'antd'
 import { Outlet, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { RouterLoadingFallback } from '@/app/router/loading-fallback'
+import { discardMemberDetailReturnOutsidePrograms } from '@/features/user/detail/lib/member-detail-program-navigation-return'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canAccessProgram } from '@/features/permission-request/lib/program-acl'
 import { canAccessPath } from '@/shared/config/menu-config'
@@ -36,6 +37,9 @@ const { Content } = AntLayout
 
 function LayoutContent() {
   const location = useLocation()
+  useEffect(() => {
+    discardMemberDetailReturnOutsidePrograms(location.pathname)
+  }, [location.pathname])
   const navigate = useNavigate()
   const params = useParams()
   const { user } = useAuthStore()

@@ -105,7 +105,24 @@ function getDateCellText(row: ExcelJS.Row, colNumber: number | undefined): strin
   return formatExcelDateValue(unwrapExcelValue(cell.value)) ?? getCellText(row, colNumber)
 }
 
+function formatHourMinute(totalMinutes: number): string {
+  const minutes = ((Math.round(totalMinutes) % 1440) + 1440) % 1440
+  const hh = String(Math.floor(minutes / 60)).padStart(2, '0')
+  const mm = String(minutes % 60).padStart(2, '0')
+  return `${hh}:${mm}`
+}
+
+/** 엑셀 시간 셀(Date·하루 비율 숫자)을 `HH:mm`으로 읽는다. 텍스트 셀은 기존 파싱을 따른다. */
 function getTimeCellText(row: ExcelJS.Row, colNumber: number | undefined): string {
+  if (colNumber == null) return ''
+  const value = unwrapExcelValue(row.getCell(colNumber).value)
+  // ExcelJS는 시간 셀을 1899-12-30 기준 UTC Date로 준다. 날짜로 바꾸면 시간이 사라진다.
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return formatHourMinute(value.getUTCHours() * 60 + value.getUTCMinutes() + value.getUTCSeconds() / 60)
+  }
+  if (typeof value === 'number' && Number.isFinite(value) && value >= 0) {
+    return formatHourMinute((value % 1) * 1440)
+  }
   const raw = getCellText(row, colNumber)
   if (!raw) return ''
   return toJavaLocalTime(raw)?.slice(0, 5) ?? raw

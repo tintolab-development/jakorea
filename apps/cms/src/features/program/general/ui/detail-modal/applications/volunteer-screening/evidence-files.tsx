@@ -38,7 +38,8 @@ async function saveEvidenceBlob(
       reason,
       claimPath: policy.downloadEndpoint,
     })
-    await downloadBlob(blob, fileName)
+    // sensitive-downloads/stream 이 file-access 이력을 남긴다 — client 로그 중복 방지
+    await downloadBlob(blob, fileName, { skipAccessLog: true })
     return
   }
   const endpoint = policy.downloadEndpoint?.trim()

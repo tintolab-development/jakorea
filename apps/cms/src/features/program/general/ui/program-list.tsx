@@ -245,6 +245,7 @@ export function ProgramList({
     : undefined
 
   const { exportExcel, isExporting: isExcelExporting } = useTableExcelExport({
+    accessLog: { downloadKind: 'PROGRAM_LIST_EXPORT', containedPiiTypes: [] },
     columns: antdColumns,
     data: filteredRows,
     filename: headerTitle ?? '프로그램 목록',
@@ -271,6 +272,7 @@ export function ProgramList({
           actionsAfterExcel={toolbarActionsAfterExcel}
           className={filterTableLayoutClassName}
           excelExport={{
+            accessLog: { downloadKind: 'PROGRAM_LIST_EXPORT', containedPiiTypes: [] },
             columns: antdColumns,
             data: filteredRows,
             selectedRowKeys: excelSelectedRowKeys,

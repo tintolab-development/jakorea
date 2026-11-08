@@ -108,5 +108,6 @@ export async function downloadAbsenceEvidenceFile(
     fileObjectId,
     reason: '프로그램 출결 증빙 서류 확인',
   })
-  await downloadBlob(blob, fileName.trim() || `증빙서류-${fileObjectId}`)
+  // sensitive-downloads/stream 이 file-access 이력을 남긴다 — client 로그 중복 방지
+  await downloadBlob(blob, fileName.trim() || `증빙서류-${fileObjectId}`, { skipAccessLog: true })
 }

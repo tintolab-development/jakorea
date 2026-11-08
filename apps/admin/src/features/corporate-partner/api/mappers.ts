@@ -16,9 +16,10 @@ import type { SponsorListItem } from '@/shared/api/generated/sponsorship/schemas
 import type { SponsorResponse } from '@/shared/api/generated/sponsorship/schemas/sponsorResponse'
 import type { SponsorUpdateRequest } from '@/shared/api/generated/sponsorship/schemas/sponsorUpdateRequest'
 import { resolveCorporatePartnerLogoFileName } from '@/features/corporate-partner/lib/logo-display-name'
+import { ADMIN_LIST_PAGE_SIZE } from '@/shared/lib/admin-infinite-list'
 
-/** 후원사 목록 관리 — 한 화면 50건 */
-export const LIST_PAGE_SIZE = 50
+/** 후원사 목록 — 무한 스크롤 한 번에 20건 (list-page-size.mdc) */
+export const LIST_PAGE_SIZE = ADMIN_LIST_PAGE_SIZE
 
 export function mapSponsorListItemToDomain(row: SponsorListItem): CorporatePartner {
   const id = row.id != null ? String(row.id) : ''

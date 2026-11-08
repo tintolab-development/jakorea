@@ -3,7 +3,8 @@ import type { CSSProperties, MouseEvent } from 'react'
 import { Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
+import { useNavigateToAncestor } from '@/shared/hooks/use-history-ancestor-navigation'
 import { getDataManagementApiErrorMessage } from '@/features/data-management/api/get-data-management-api-error'
 import { isDataManagementListLoading } from '@/features/data-management/lib/is-list-query-loading'
 import { serializeSponsorListFilters } from '@/features/sponsor/api/sponsor-filter-params'
@@ -73,7 +74,6 @@ export default function SponsorPage() {
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
   const { showAlert } = useCmsAlert()
-  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 
   const organizationKindParam = searchParams.get('sp_kind')
@@ -157,20 +157,25 @@ export default function SponsorPage() {
   }, [rows, sponsorIdFromUrl])
   const sponsorDetailOpen = Boolean(sponsorIdFromUrl)
 
+  const { toTarget: navigateToAncestorTarget, toSearch: navigateToAncestorSearch } =
+    useNavigateToAncestor()
+
+  /** 닫기 — 복귀 URL·목록 엔트리가 history에 있으면 뒤로, 없으면 replace (push 하지 않음) */
   const closeSponsorDetail = useCallback(() => {
     const returnTo = sanitizeInternalReturnTo(searchParams.get(SPONSOR_DETAIL_RETURN_TO_PARAM))
     if (returnTo) {
-      navigate(returnTo, { replace: true })
+      const url = new URL(returnTo, window.location.origin)
+      navigateToAncestorTarget({ pathname: url.pathname, search: url.search })
       return
     }
-    setSearchParams(prev => {
+    navigateToAncestorSearch(prev => {
       const next = new URLSearchParams(prev)
       next.delete('sponsorId')
       next.delete('sponsorLnb')
       next.delete(SPONSOR_DETAIL_RETURN_TO_PARAM)
       return next
     })
-  }, [navigate, searchParams, setSearchParams])
+  }, [navigateToAncestorSearch, navigateToAncestorTarget, searchParams])
 
   const handleDeleteSponsor = useCallback(
     async (sponsorId: string) => {
@@ -430,6 +435,7 @@ export default function SponsorPage() {
           </>
         }
         excelExport={{
+          accessLog: { downloadKind: 'SPONSOR_LIST_EXPORT', containedPiiTypes: ['NAME'] },
           columns,
           data: tableData,
           selectedRowKeys,

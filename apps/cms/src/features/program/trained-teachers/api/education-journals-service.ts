@@ -32,10 +32,6 @@ function assertRemoteReady(): void {
   )
 }
 
-function triggerBlobDownload(fileName: string, blob: Blob): void {
-  void downloadBlob(blob, fileName)
-}
-
 async function removeZipManifest(blob: Blob): Promise<Blob> {
   const zip = await JSZip.loadAsync(await blob.arrayBuffer())
   for (const path of Object.keys(zip.files)) {
@@ -53,15 +49,18 @@ async function downloadEducationJournalZip(fileName: string, blob: Blob): Promis
 
 async function downloadFromEndpoint(fileName: string, endpoint?: string): Promise<void> {
   if (!endpoint?.trim()) {
-    void downloadFile(fileName)
+    await downloadFile(fileName)
     return
   }
+  let blob: Blob
   try {
-    const blob = await fetchTrainedTeacherEducationJournalFileBlob(endpoint)
-    triggerBlobDownload(fileName, blob)
+    blob = await fetchTrainedTeacherEducationJournalFileBlob(endpoint)
   } catch {
-    void downloadFile(fileName, endpoint)
+    await downloadFile(fileName, endpoint)
+    return
   }
+  // 다운로드 이력 기록 실패도 호출부로 전달해 실패 안내를 띄운다.
+  await downloadBlob(blob, fileName)
 }
 
 async function downloadZipFromEndpoint(fileName: string, endpoint: string): Promise<void> {

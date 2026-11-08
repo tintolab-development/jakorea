@@ -8,6 +8,7 @@ import { useProgramStore } from '@/features/program/general/model/program-store'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useModalState } from '@/shared/hooks/use-modal-state'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { isHistoryTraversalPending } from '@/shared/lib/history-ancestor-navigation'
 import { ProgramStatusWidget } from '@/features/dashboard/ui/program-status-widget'
 import {
   PROGRAM_PROGRESS_STAGE_LABELS,
@@ -609,11 +610,17 @@ function ProgramListPageContent() {
 
   const handleCloseFullPageModal = useCallback(() => {
     setSelectedProgramForFullPageModal(null)
+    // 모달이 지나온 엔트리로 뒤로 이동 중이면 URL을 쓰지 않는다 — traversal 완료 전이라
+    // 지금 쓰면(replace) 출발 엔트리(상세)가 목록 URL로 덮어써져 앞으로가기로 상세가 돌아오지 않는다.
+    if (isHistoryTraversalPending()) return
+    // 이미 다른 페이지로 이동했는데(지연 로딩 동안 이전 화면이 남아 있는 상태) 이 콜백이 불리면
+    // 그 페이지 주소를 덮어쓰지 않는다 — 예: 후원사 링크 직후 남아 있던 프로그램 상세의 X
+    if (window.location.pathname !== location.pathname) return
     // functional clear — 모달 LNB sync 클로저가 stale programId를 다시 싣는 레이스 방지
     setSearchParams(prev => clearGeneralProgramDetailQueryParams(new URLSearchParams(prev)), {
       replace: true,
     })
-  }, [setSearchParams])
+  }, [location.pathname, setSearchParams])
 
   /** ProgramList `FilterTableLayout`의 `actions` 슬롯 — 제목·건수는 `headerTitle`·목록 내부 건수로 표시 */
   const programListToolbarActions = (

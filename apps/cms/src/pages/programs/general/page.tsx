@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { isHistoryTraversalPending } from '@/shared/lib/history-ancestor-navigation'
 import { ProgramList } from '@/features/program/general/ui/program-list'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { ProgramStatusWidget } from '@/features/dashboard/ui/program-status-widget'
@@ -272,6 +273,12 @@ export function GeneralProgramListPageContent() {
 
   const handleCloseFullPageModal = useCallback(() => {
     setSelectedProgramForDetail(null)
+    // 모달이 지나온 엔트리로 뒤로 이동 중이면 URL을 쓰지 않는다 — traversal 완료 전이라
+    // 지금 쓰면(replace) 출발 엔트리(상세)가 목록 URL로 덮어써져 앞으로가기로 상세가 돌아오지 않는다.
+    if (isHistoryTraversalPending()) return
+    // 이미 다른 페이지로 이동했는데(지연 로딩 동안 이전 화면이 남아 있는 상태) 이 콜백이 불리면
+    // 그 페이지 주소를 덮어쓰지 않는다 — 예: 후원사 링크 직후 남아 있던 프로그램 상세의 X
+    if (window.location.pathname !== location.pathname) return
     // 모달 open 중에는 목록 필터 UI가 가려져 pending 변경이 없다.
     // applySearch를 함께 호출하면 RR setSearchParams 클로저가 programId를
     // 다시 실어 모달이 안 닫히는 레이스가 난다 — 상세 쿼리만 제거한다.
@@ -282,7 +289,7 @@ export function GeneralProgramListPageContent() {
         ),
       { replace: true }
     )
-  }, [setSearchParams])
+  }, [location.pathname, setSearchParams])
 
   useEffect(() => {
     if (!programIdFromUrl) return

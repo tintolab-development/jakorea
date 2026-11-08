@@ -227,23 +227,27 @@ function ConsentStatusBadge({
   consentStatus,
   consentType,
   allItemsAgreed,
+  expired = false,
 }: {
   agreed: boolean
   consentStatus?: string
   consentType?: string
   allItemsAgreed?: boolean | null
+  expired?: boolean
 }) {
   const label = resolveConsentStatusDisplayLabel({
     agreed,
     consentStatus,
     consentType,
     allItemsAgreed,
+    expired,
     agreedLabel: '동의함',
   })
   return (
     <PFStateBadge
       size="small"
-      tone={label === '미동의' ? 'disabled' : 'progress'}
+      /** 「동의 만료」 색은 디자인 미정 — 기존 만료 항목 표시(미동의)와 같은 비활성 톤 유지 */
+      tone={label === '미동의' || expired ? 'disabled' : 'progress'}
       className={styles.statusBadge}
     >
       {label}
@@ -333,6 +337,7 @@ function ConsentCard({
             consentStatus={item.consentStatus}
             consentType={item.consentType}
             allItemsAgreed={item.allItemsAgreed}
+            expired={item.expired === true}
           />
           {item.kind === 'document' && agreed && (item.agreedAt || item.validityLabel) ? (
             <PFText typo="bd-sm-rg" color="neutral-cool-500">

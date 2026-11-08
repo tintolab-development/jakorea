@@ -927,7 +927,16 @@ export function usePaymentOrderDetailLinesController(
       { title: '정산 신청 금액', dataIndex: 'estimatedAmountLabel', key: 'estimatedAmountLabel' },
     ]
 
-    return { columns, data, selectedRowKeys }
+    return {
+      columns,
+      data,
+      selectedRowKeys,
+      // program 모드는 신청자(강사)명, instructor 모드는 프로그램명 컬럼
+      accessLog: {
+        downloadKind: 'PAYMENT_ORDER_DETAIL_EXPORT',
+        containedPiiTypes: mode === 'program' ? ['NAME'] : [],
+      },
+    }
   }, [filteredRows, mode, selectedRowKeys])
 
   return {

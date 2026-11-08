@@ -83,5 +83,11 @@ describe('exportTaxFilingExcel', () => {
     const buffer = mocks.downloadExcel.mock.calls[0]?.[0]
     expect(buffer).toBeTruthy()
     expect(Buffer.from(buffer).subarray(0, 8).toString('hex')).toBe('d0cf11e0a1b11ae1')
+    expect(mocks.downloadExcel.mock.calls[0]?.[2]).toEqual({
+      accessLog: {
+        downloadKind: 'SETTLEMENT_EXPORT',
+        containedPiiTypes: ['NAME', 'RESIDENT_REGISTRATION_NUMBER'],
+      },
+    })
   })
 })

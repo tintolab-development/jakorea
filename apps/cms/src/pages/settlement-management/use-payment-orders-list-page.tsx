@@ -8,6 +8,7 @@ import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import { formatNumberDisplay } from '@/shared/utils'
 import { useSearchParams } from 'react-router-dom'
+import { useNavigateToAncestor } from '@/shared/hooks/use-history-ancestor-navigation'
 import type { ColumnsType } from 'antd/es/table'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import type { FilterTableExcelExportConfig } from '@/shared/components/filter-table-layout'
@@ -349,18 +350,18 @@ export function usePaymentOrdersListPage() {
     [handleFilterChange, setSearchParams]
   )
 
+  const { toSearch: navigateToAncestorSearch } = useNavigateToAncestor()
+
+  /** 상세 닫기 — 목록 엔트리가 history에 있으면 뒤로, 없으면 replace */
   const closeDetail = useCallback(() => {
-    setSearchParams(
-      prev => {
-        const next = new URLSearchParams(prev)
-        next.delete(PO_DETAIL_TYPE)
-        next.delete(PO_DETAIL_NO)
-        next.delete(PO_DETAIL_KEY)
-        return next
-      },
-      { replace: true }
-    )
-  }, [setSearchParams])
+    navigateToAncestorSearch(prev => {
+      const next = new URLSearchParams(prev)
+      next.delete(PO_DETAIL_TYPE)
+      next.delete(PO_DETAIL_NO)
+      next.delete(PO_DETAIL_KEY)
+      return next
+    })
+  }, [navigateToAncestorSearch])
 
   const openPaymentOrderDetail = useCallback(
     (
@@ -594,9 +595,18 @@ export function usePaymentOrdersListPage() {
 
   const paymentOrdersExcelExport = useMemo((): FilterTableExcelExportConfig => {
     if (isProgram) {
-      return { columns: programColumns, data: listProgram }
+      return {
+        columns: programColumns,
+        data: listProgram,
+        accessLog: { downloadKind: 'PAYMENT_ORDER_LIST_EXPORT', containedPiiTypes: [] },
+      }
     }
-    return { columns: instructorColumns, data: listInstructor }
+    return {
+      columns: instructorColumns,
+      data: listInstructor,
+      // 신청자별 목록은 신청자명 컬럼이 있다
+      accessLog: { downloadKind: 'PAYMENT_ORDER_LIST_EXPORT', containedPiiTypes: ['NAME'] },
+    }
   }, [isProgram, programColumns, instructorColumns, listProgram, listInstructor])
 
   const renderContent = useCallback(

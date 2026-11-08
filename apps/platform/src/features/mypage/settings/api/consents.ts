@@ -41,7 +41,7 @@ export type PortalConsentSummary = {
   programEligible?: boolean
   /**
    * 초상권 — 1·2·3번 모두 agree면 true(제출 시점 스냅샷). 비초상권·판정 불가 기록은 null.
-   * 라벨(동의/부분동의) 전용. 참여 여부 판단·요청 바디에 쓰지 않는다.
+   * 라벨(동의/부분 동의) 전용. 참여 여부 판단·요청 바디에 쓰지 않는다.
    */
   allItemsAgreed?: boolean | null
 }

@@ -667,6 +667,7 @@ export function ParticipatingVolunteersSection({
           </div>
         }
         excelExport={{
+          accessLog: { downloadKind: 'PROGRAM_VOLUNTEER_LIST_EXPORT', containedPiiTypes: ['NAME'] },
           columns,
           data: filteredVolunteers,
           selectedRowKeys,

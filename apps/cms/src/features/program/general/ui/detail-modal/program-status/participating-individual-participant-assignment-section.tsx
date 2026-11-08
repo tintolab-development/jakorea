@@ -263,6 +263,7 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
   )
 
   const { exportExcel } = useTableExcelExport({
+    accessLog: { downloadKind: 'PROGRAM_ASSIGNMENT_EXPORT', containedPiiTypes: ['NAME'] },
     columns: teamFeatureApplicable
       ? PARTICIPATING_INDIVIDUAL_PARTICIPANT_ASSIGNMENT_EXCEL_COLUMNS
       : PARTICIPATING_INDIVIDUAL_PARTICIPANT_ASSIGNMENT_EXCEL_COLUMNS_WITHOUT_TEAM,

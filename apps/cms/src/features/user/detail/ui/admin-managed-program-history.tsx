@@ -465,6 +465,7 @@ export function AdminManagedProgramHistory({
           ) : null
         }
         excelExport={{
+          accessLog: { downloadKind: 'MEMBER_PROGRAM_HISTORY_EXPORT', containedPiiTypes: [] },
           columns,
           data: tableData,
           selectedRowKeys: SHOW_PROGRAM_HISTORY_DELETE ? selectedRowKeys : undefined,

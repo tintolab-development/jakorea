@@ -205,6 +205,7 @@ export function YearlyBusinessPanel({
   )
 
   const { exportExcel, isExporting } = useTableExcelExport({
+    accessLog: { downloadKind: 'SPONSOR_DONATION_EXPORT', containedPiiTypes: [] },
     columns: excelColumns,
     data: tableRows,
     filename: '연도별_후원금',

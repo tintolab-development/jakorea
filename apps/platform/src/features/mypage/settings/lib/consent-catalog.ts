@@ -36,8 +36,10 @@ export type SettingsConsentItem = {
   consentStatus?: string
   /** 서버 `consentType` (정규화) — 라벨 함수의 초상권 분기용 */
   consentType?: string
-  /** 서버 `allItemsAgreed` — 초상권 동의/부분동의 라벨 전용 */
+  /** 서버 `allItemsAgreed` — 초상권 동의/부분 동의 라벨 전용 */
   allItemsAgreed?: boolean | null
+  /** 기간제 동의서 유효기간 경과 — 「동의 만료」 표시. 기간제가 아닌 항목은 항상 false */
+  expired?: boolean
   /** 서버 `signed` — 동의서 게이트는 agreed && signed */
   signed?: boolean
   /** 서버 listed. boolean만 유지. null은 true로 올리지 않는다. */

@@ -44,6 +44,7 @@ export function UjatAssignmentSessionExcelButton({
     [session.volunteers]
   )
   const { exportExcel, isExporting } = useTableExcelExport({
+    accessLog: { downloadKind: 'PROGRAM_ASSIGNMENT_EXPORT', containedPiiTypes: ['NAME'] },
     columns: UJAT_ASSIGNMENT_SESSION_EXCEL_COLUMNS,
     data: excelRows,
     filename: resolveUjatAssignmentSessionExcelFilename(session, regionLabel),

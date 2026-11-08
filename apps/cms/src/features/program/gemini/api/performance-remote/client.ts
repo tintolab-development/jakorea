@@ -106,12 +106,16 @@ export async function previewGeminiTrainingReportImportRemote(
   request: GeminiTrainingReportImportRequest
 ): Promise<GeminiTrainingReportImportResponse> {
   return unwrapApiBody<GeminiTrainingReportImportResponse>(
-    await customInstance({
-      url: `${BASE}/import/preview`,
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      data: request,
-    })
+    await customInstance(
+      {
+        url: `${BASE}/import/preview`,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        data: request,
+      },
+      // 실패 안내는 업로드 화면이 시안 팝업 하나로 띄운다(공통 오류 Alert와 중복 방지).
+      { skipGlobalErrorAlert: true }
+    )
   )
 }
 
@@ -119,12 +123,16 @@ export async function importGeminiTrainingReportsRemote(
   request: GeminiTrainingReportImportRequest
 ): Promise<GeminiTrainingReportImportResponse> {
   return unwrapApiBody<GeminiTrainingReportImportResponse>(
-    await customInstance({
-      url: `${BASE}/import`,
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      data: request,
-    })
+    await customInstance(
+      {
+        url: `${BASE}/import`,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        data: request,
+      },
+      // 실패 안내는 업로드 화면이 시안 팝업 하나로 띄운다(공통 오류 Alert와 중복 방지).
+      { skipGlobalErrorAlert: true }
+    )
   )
 }
 

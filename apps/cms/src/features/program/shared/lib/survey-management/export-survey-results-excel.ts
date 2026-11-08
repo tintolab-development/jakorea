@@ -64,5 +64,8 @@ export async function exportSurveyResultsExcel({
 
   const buffer = await workbook.xlsx.writeBuffer()
   const filename = generateFilename(`${surveyTitle}_설문조사결과`, 'xlsx')
-  await downloadExcel(buffer, filename)
+  // 주관식 문항 시트에 응답자 이름이 들어간다
+  await downloadExcel(buffer, filename, {
+    accessLog: { downloadKind: 'PROGRAM_SURVEY_RESULT_EXPORT', containedPiiTypes: ['NAME'] },
+  })
 }
