@@ -15,9 +15,10 @@ alwaysApply: false
 
 | 영역 | 파일 |
 |------|------|
-| size 토큰 | `shared/ui/cms-button.css` · `cms-button.tsx` |
-| 모달 푸터 (폭 min 140 · 높이 40, SSOT 참고) | `packages/admin-ui/src/modal/content-modal.css` → `.content-modal__footer-actions` · `.teal-header-modal__footer` (`--h44` 높이 40) |
-| 목록 툴바 | FilterTableLayout 액션 · props `size="large"` (폭은 min-width + 라벨) |
+| size 토큰 | `packages/admin-ui/src/button/admin-button.css` · `shared/ui/cms-button.tsx` |
+| 모달 푸터 (h40 · min 120, SSOT 참고) | `packages/admin-ui/src/modal/content-modal.css` → `.content-modal__footer-actions` · `.teal-header-modal__footer` (`--h44` 높이 40) |
+| 목록 툴바 | FilterTableLayout 액션 · `FilterTableToolbarButton` (h40 고정, 폭은 min-width 120 + 라벨) |
+| 테이블 셀 버튼 | `CmsButton size="small"` (h32 · min-width 80) |
 | FileSelect medium | `shared/ui/file-select-field.tsx` (CMS 내부는 large 쓰는 경우도 있음 — 공통 SSOT는 **medium 파일 추가 버튼**) |
 
 ## 관련
@@ -25,4 +26,4 @@ alwaysApply: false
 - [file-select-detail-form](../../../../.cursor/rules/cms-admin-ui/file-select-detail-form.mdc)
 - [list-page-composition](../coding/list-page-composition.mdc)
 
-**Last updated:** 2026-08-06
+**Last updated:** 2026-11-08

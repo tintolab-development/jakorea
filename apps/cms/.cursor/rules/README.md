@@ -10,10 +10,10 @@ Homepage Admin과 **치수·필터 URL 의도·테이블 셸**을 같이 쓴다.
 
 | 공유 룰 | 용도 |
 |---------|------|
-| [filter-area-dimensions](../../../../.cursor/rules/cms-admin-ui/filter-area-dimensions.mdc) | 필터 240 · gap 12 · 조회 160 |
+| [filter-area-dimensions](../../../../.cursor/rules/cms-admin-ui/filter-area-dimensions.mdc) | 필터 260 · 높이 40 · gap 12 · 기간 500 · 조회 h40 |
 | [list-filter-url-sync](../../../../.cursor/rules/cms-admin-ui/list-filter-url-sync.mdc) | draft + searchParams |
 | [list-table-shell](../../../../.cursor/rules/cms-admin-ui/list-table-shell.mdc) | 카드·툴바 갭 |
-| [cms-button-action-sizes](../../../../.cursor/rules/cms-admin-ui/cms-button-action-sizes.mdc) | 툴바 large 140×44 · 모달 푸터 140×40 |
+| [cms-button-action-sizes](../../../../.cursor/rules/cms-admin-ui/cms-button-action-sizes.mdc) | 툴바 h40 · 테이블 셀 h32 · 모달 푸터 |
 | [file-select-detail-form](../../../../.cursor/rules/cms-admin-ui/file-select-detail-form.mdc) | FileSelect + DetailInfoForm |
 | [cms-data-table](../../../../.cursor/rules/cms-admin-ui/cms-data-table.mdc) | `cms-data-table` 패딩 |
 | [table-th](../../../../.cursor/rules/cms-admin-ui/table-th.mdc) / [table-td-divider](../../../../.cursor/rules/cms-admin-ui/table-td-divider.mdc) | th · 값 셀 디바이더 |
@@ -52,7 +52,7 @@ Admin 구현 스택: [`apps/admin/.cursor/rules`](../../../admin/.cursor/rules/R
 
 - [UI principles](./design/ui-principles.md)  
 - [숫자 입력 UX](./design/numeric-input-ux.mdc) — 정수·소수·금액·날짜 텍스트·숫자형 식별자 입력 규칙
-- **[CmsButton 액션 사이즈](./design/cms-button-action-sizes.mdc)** — 툴바 large 140×44 · 모달 푸터 140×40 (SSOT 어댑터)
+- **[CmsButton 액션 사이즈](./design/cms-button-action-sizes.mdc)** — 툴바 h40 · 테이블 셀 h32 (SSOT 어댑터)
 - [Modal viewport centering](./design/modal-viewport-centering.md) — center modals in viewport  
 - Prefer **`ContentModal`**; direct **`TealHeaderModal`** use is deprecated  
 - [CMS 공통 Alert 모달](./libraries/cms-alert-modal.md) — 단일 확인 안내 (`useCmsAlert` / `cmsAlertModal`)  

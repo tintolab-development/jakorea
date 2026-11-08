@@ -1,5 +1,5 @@
 ---
-description: CMS·Admin 공통 — CmsButton 용도별 사이즈 (툴바·모달 푸터 large · FileSelect medium, 폭은 min-width + 라벨)
+description: CMS·Admin 공통 — CmsButton 용도별 사이즈 (목록 툴바·조회·모달 푸터 h40 · 테이블 셀 h32, 폭은 min-width + 라벨)
 globs:
   - apps/cms/src/**/*.{tsx,css}
   - apps/admin/src/**/*.{tsx,css}
@@ -8,13 +8,13 @@ alwaysApply: false
 
 # CmsButton 용도별 사이즈 (CMS · Admin)
 
-**size 토큰 (Figma).** 폭은 `width: max-content` + size별 `min-width`. 호출부에 `width` prop·폭 고정 클래스를 두지 않는다.
+**size 토큰 (Figma 📗 Design Guide › Controls › Button).** 폭은 `width: max-content` + size별 `min-width`. 호출부에 `width` prop·폭 고정 클래스를 두지 않는다.
 
 | size | 높이 | min-width | padding | gap | radius | font |
 |------|------|-----------|---------|-----|--------|------|
-| **large** (h44) | **44** | **140** | 8×20 (푸터 CSS는 6×16) | 6 | 8 | 16/600 |
+| large (h44) | 44 | 140 | 8×20 | 6 | 8 | 16/600 (가이드: h44는 `text` 상태 추가 — 미구현) |
 | medium (h40) | 40 | 120 | 6×16 | 4 | 8 | 14/600 |
-| small (h32) | 32 | 100 | 8×10 | 4 | 6 | 12/600 |
+| small (h32) | 32 | **80** | 8×10 | 4 | 6 | 12/600 |
 | h52 | 52 | 없음 | 10×24 | 8 | 10 | 18 |
 | h36 | 36 | 100 | 6×12 | 4 | 6 | 14 |
 
@@ -26,16 +26,17 @@ alwaysApply: false
 
 | 위치 | size | 예시 |
 |------|------|------|
-| **목록·카드 툴바** (등록 / 선택 삭제 / 취소 / 저장 / 수정) | **large** (Admin 툴바 CSS는 높이 40) | `table-header-actions--wrapper` · `admin-list-toolbar` |
-| **모달 푸터** (취소 / 등록 / 저장 / 삭제 / 확인) | **large** | `content-modal__footer-actions` · Confirm · Alert · 등록 모달 |
+| **목록·카드 툴바** (등록 / 선택 삭제 / 엑셀 다운로드 등) | **medium (h40)** | `FilterTableToolbarButton` · `table-header-actions--wrapper` · `admin-list-toolbar` |
+| **Small 테이블(행 44) 제목줄 버튼** | **small (h32)** | 디자인 가이드 Table / Small 사용 예시 |
+| **모달 푸터** (취소 / 등록 / 저장 / 삭제 / 확인) | **medium (h40)** · min-width 120 (라벨이 길면 140) · 14/600 · 간격 8 · 우측 정렬, 좌측 텍스트 링크 슬롯 | 디자인 가이드 05 Popup (w600~w1400) · `content-modal__footer-actions` · Confirm · Alert — `content-modal.css`가 푸터 h44를 h40 스펙으로 보정 |
 | **필터 조회** | medium (높이 40) | `admin-filter-area__search-button` · [filter-area-dimensions](./filter-area-dimensions.mdc) |
 | **FileSelectField** 「파일 추가」 | **medium** | `FileSelectField` 내부 고정 secondary medium |
-| **테이블 행 관리 버튼** | medium | 열 안 「수정」 |
-| 뷰 토글·엑셀(아이콘) | large + icon | CMS 툴바 캘린더/엑셀 |
+| **테이블 셀 버튼** (내역 보기 · 수정 등) | **small (h32)** · 주로 secondary | 디자인 가이드 Table Cell `type=button` (Medium·Small 공통) |
+| 뷰 토글·엑셀(아이콘) | medium + icon | CMS 툴바 캘린더/엑셀 |
 
 ### 금지
 
-- 모달 푸터·목록 툴바에 `size="medium"`만으로 높이 정책을 깨기 — 시안 large(또는 툴바 CSS 높이 40)
+- 목록 툴바에 `size="large"`(h44) — 디자인 가이드 목록 레이아웃은 h40
 - 화면별 `!important`로 버튼 **폭**을 px 고정
 - `width` prop, `cms-button--action` / `--footer-auto` / `--toolbar-auto` / `--no-label-ellipsis` / `--application-list-bulk`
 - FileSelect 버튼만 별도로 large 확대
@@ -49,15 +50,20 @@ alwaysApply: false
 
 | 영역 | 선택자 | 강제 |
 |------|--------|------|
-| 모달 푸터 | `.content-modal__footer-actions .cms-button…` | 높이 44 · padding 6×16 · gap 8 |
+| 모달 푸터 | `.content-modal__footer-actions .cms-button…` | 높이 40 · min-width 120 · padding 6×16 · 14px · gap 8 |
+| 목록 툴바 (CMS) | `.filter-table-layout__toolbar-actions-slot .cms-button--h44` | h40 치수로 보정 |
 | 목록 툴바 (Admin) | `.table-header-actions--wrapper .cms-button…` | 높이 40 |
+
+팝업 셸: padding 24/30/34 · radius 16 · shadow `0 0 25px rgba(0,0,0,.35)` · dim `rgba(0,0,0,.3)` · 폭 토큰 XS 440 / S 600 / M 800 / L 1000 / XL 1200 / XXL 1400
+
+팝업 타이틀 ↔ 본문 간격 (Figma 05 Popup 예시 실측): 표·폼 팝업(Multiple/Table, w1000·w1200) **30** → `titleBodyGap="section"` · 검색형(w800) 16 · 타이틀 ↔ 설명 문구 12(`always` 기본). 기본값은 바꾸지 않는다 — 팝업별 CSS 보정(114곳)과 이중 적용되므로 화면 시안 비교 시 해당 팝업에만 지정한다.
 
 구현 path:
 
 | 앱 | 모달 푸터 | 툴바 |
 |----|-----------|------|
 | Admin | `@jakorea/admin-ui` `content-modal.css` | `shared/ui/table-header-label.css` |
-| CMS | `@jakorea/admin-ui` `content-modal.css` | `FilterTableLayout` / 툴바 규약 · large 또는 h40 props |
+| CMS | `@jakorea/admin-ui` `content-modal.css` | `FilterTableLayout` · `FilterTableToolbarButton`(h40 고정) |
 
 ---
 
@@ -66,15 +72,18 @@ alwaysApply: false
 ```tsx
 // 목록 툴바
 <div className="table-header-actions--wrapper">
-  <CmsButton variant="delete" size="large">선택 삭제</CmsButton>
-  <CmsButton variant="primary" size="large">○○ 등록</CmsButton>
+  <FilterTableToolbarButton variant="delete">선택 삭제</FilterTableToolbarButton>
+  <FilterTableToolbarButton variant="primary">○○ 등록</FilterTableToolbarButton>
 </div>
+
+// 테이블 셀
+<CmsButton variant="secondary" size="small">내역 보기</CmsButton>
 
 // 모달 푸터
 footer={
   <>
-    <CmsButton variant="secondary" size="large">취소</CmsButton>
-    <CmsButton variant="primary" size="large">등록</CmsButton>
+    <CmsButton variant="default" size="medium">취소</CmsButton>
+    <CmsButton variant="primary" size="medium">등록</CmsButton>
   </>
 }
 ```
@@ -84,4 +93,4 @@ footer={
 - Admin `/design-system` · Buttons / List layout / Modals
 - CMS `/design-system` · Buttons
 
-**Last updated:** 2026-10-31
+**Last updated:** 2026-11-08 — Figma 📗 Design Guide(Button · Table · Layout / 목록 · 테이블 14741:1307) 기준으로 툴바·모달 푸터 h40 · 셀 h32(min 80)
