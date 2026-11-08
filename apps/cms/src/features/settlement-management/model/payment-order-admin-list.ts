@@ -142,6 +142,10 @@ export interface PaymentOrderAdminProgramDetailInstructorRow {
   lectureFeePaymentScheduledDate?: string
   /** 신청 반려 시 산출 내역서·상세에 표시할 사유 */
   processingRejectionReason?: string
+  /** BE `settlementCorrectionRequestId` — 지급 정정 요청 건 승인·반려 대상 */
+  correctionRequestId?: number
+  /** BE `correctionReason` — 지급 정정 요청 사유 */
+  correctionReason?: string
   /** BE `availableActions`에 `CONFIRM_PAYMENT_STATEMENT` 포함 여부 */
   canConfirmPaymentStatement?: boolean
   statementStatus?: string
@@ -176,6 +180,10 @@ export interface PaymentOrderAdminInstructorDetailProgramRow {
   lectureFeePaymentScheduledDate?: string
   /** 신청 반려 시 산출 내역서·상세에 표시할 사유 */
   processingRejectionReason?: string
+  /** BE `settlementCorrectionRequestId` — 지급 정정 요청 건 승인·반려 대상 */
+  correctionRequestId?: number
+  /** BE `correctionReason` — 지급 정정 요청 사유 */
+  correctionReason?: string
   /** BE `availableActions`에 `CONFIRM_PAYMENT_STATEMENT` 포함 여부 */
   canConfirmPaymentStatement?: boolean
   statementStatus?: string
@@ -206,6 +214,10 @@ export interface PaymentOrderCalculationStatementProgramBasicInfo {
   processingStatusClass: PaymentOrderAdminLineProcessingStatus
   /** 지급 반려 시 「사유 : …」에 표시할 본문 */
   processingRejectionReason?: string
+  /** 지급 정정 요청 — 승인·반려 대상 id */
+  correctionRequestId?: number
+  /** 지급 정정 요청 사유 */
+  correctionReason?: string
   /** 지급조서 확인 완료 시 이체 예정일(요일 포함 한 줄) */
   lectureFeePaymentScheduledDateDisplay?: string
   lectureFeeStandardTitle: string
@@ -240,6 +252,10 @@ export interface PaymentOrderCalculationStatementInstructorBasicInfo {
   processingStatusDisplay: string
   processingStatusClass: PaymentOrderAdminLineProcessingStatus
   processingRejectionReason?: string
+  /** 지급 정정 요청 — 승인·반려 대상 id */
+  correctionRequestId?: number
+  /** 지급 정정 요청 사유 */
+  correctionReason?: string
   /** 지급조서 확인 완료 시 이체 예정일(요일 포함 한 줄) */
   lectureFeePaymentScheduledDateDisplay?: string
   lectureFeeStandardTitle: string

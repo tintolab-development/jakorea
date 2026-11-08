@@ -1,0 +1,91 @@
+/**
+ * 강사비 지급 정정 팝업 — w600, 라디오 간격 16, 라디오↔입력 8, 셀렉트 w120·h40
+ */
+
+.payment-order-payment-correction-modal.ant-modal .ant-modal-content {
+  padding: 26px 30px 34px;
+}
+
+.payment-order-payment-correction-modal .teal-header-modal__body {
+  padding-top: 16px;
+}
+
+.payment-order-payment-correction__footer-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--spacing-8, 8px);
+  width: 100%;
+}
+
+.payment-order-payment-correction__footer-actions .cms-button {
+  min-width: 120px;
+}
+
+.payment-order-payment-correction__line {
+  margin: 0;
+  font-size: var(--font-size-16, 16px);
+  font-weight: var(--font-weight-400, 400);
+  line-height: 150%;
+  color: var(--color-text-primary, #3d3d3d);
+}
+
+.payment-order-payment-correction__name {
+  font-weight: var(--font-weight-700, 700);
+}
+
+.payment-order-payment-correction__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8, 8px);
+  margin-top: 30px;
+}
+
+.payment-order-payment-correction__label {
+  font-size: var(--font-size-14, 14px);
+  font-weight: var(--font-weight-500, 500);
+  line-height: 150%;
+  color: var(--color-text-secondary, #666);
+}
+
+.payment-order-payment-correction__required {
+  margin-left: 2px;
+  color: var(--color-error, #ff4d4f);
+}
+
+.payment-order-payment-correction__radios.ant-radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-16, 16px);
+}
+
+.payment-order-payment-correction__inputs {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8, 8px);
+  width: 100%;
+}
+
+.payment-order-payment-correction__select.ant-select {
+  flex: 0 0 120px;
+  width: 120px;
+  height: 40px;
+}
+
+.payment-order-payment-correction__amount {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.payment-order-payment-correction__unit {
+  flex: 0 0 auto;
+  font-size: var(--font-size-16, 16px);
+  color: var(--color-text-primary, #3d3d3d);
+}
+
+.payment-order-payment-correction__error {
+  margin: 0;
+  font-size: var(--font-size-14, 14px);
+  line-height: 150%;
+  color: var(--color-error, #ff4d4f);
+}
