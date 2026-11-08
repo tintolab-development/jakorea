@@ -255,9 +255,8 @@ export function BasicInfoSection({
   const isEconomyCommonInfo = companySchoolLayout && !hideIpsTypeField && !fixedParticipantTypeLabel
   const enableEconomyTitleEn = enableTitleEnEdit || isEconomyCommonInfo
   const enableEconomyDetailedProgramSelect = useDetailedProgramSelect || isEconomyCommonInfo
-  const { options: sponsorOptions } = useSponsorSelectOptions(
-    Boolean(isFormEdit || program.sponsorId)
-  )
+  // 전체 후원사 목록은 편집 셀렉트(sponsorManagementOptions·sponsorId) 옵션에만 쓴다 — 조회 모드에서는 받지 않는다.
+  const { options: sponsorOptions } = useSponsorSelectOptions(Boolean(isFormEdit))
   const { options: detailedProgramOptions } = useDetailedProgramSelectOptions(
     Boolean(isFormEdit && enableEconomyDetailedProgramSelect)
   )

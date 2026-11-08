@@ -128,3 +128,21 @@ export async function withFetchedProgramSponsorAssignments(
     return program
   }
 }
+
+/**
+ * GET /programs/{id}/sponsors 배정 응답에서 머지된 첫 후원사 이름.
+ * 이름 하나를 보여 주려고 후원사 전체 목록(GET /sponsors 전 페이지)을 받지 않도록, 상세 화면은 이 값을 먼저 쓴다.
+ */
+export function resolveAssignedSponsorName(program: Program | null | undefined): string | undefined {
+  const common = program?.generalCommonInfo
+  const firstId = common?.sponsorManagementIds?.[0] ?? common?.sponsorManagementId
+  return firstId ? common?.sponsorManagementNames?.[firstId]?.trim() || undefined : undefined
+}
+
+/** 1사1교 어댑터가 후원사 없음 자리에 넣는 sentinel — 이 id로는 후원사를 조회하지 않는다 */
+export const COMPANY_SCHOOL_DEFAULT_SPONSOR_ID = 'sponsor-default'
+
+export function isLookupableSponsorId(sponsorId: string | null | undefined): sponsorId is string {
+  const id = sponsorId?.trim()
+  return Boolean(id) && id !== COMPANY_SCHOOL_DEFAULT_SPONSOR_ID
+}

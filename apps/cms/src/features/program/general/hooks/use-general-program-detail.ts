@@ -10,7 +10,10 @@ import { resolveGeneralProgramForDetail } from '@/features/program/general/lib/d
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useSponsorNameById } from '@/features/sponsor/hooks/use-sponsor-name-by-id'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
-import { mergeProgramSponsorAssignments } from '@/features/program/shared/lib/merge-program-sponsor-assignments'
+import {
+  mergeProgramSponsorAssignments,
+  resolveAssignedSponsorName,
+} from '@/features/program/shared/lib/merge-program-sponsor-assignments'
 
 export interface UseGeneralProgramDetailOptions {
   enabled?: boolean
@@ -82,11 +85,7 @@ export function useGeneralProgramDetail(
   const loading = remoteEnabled ? remoteQuery.isFetching : false
   const canWrite = canPerformWriteAction(user)
   // 후원사명은 배정 응답(sponsorManagementNames)에서 쓴다. 배정 조회 실패 시에만 후원사 목록으로 찾는다.
-  const assignedSponsorName = (() => {
-    const common = program?.generalCommonInfo
-    const firstId = common?.sponsorManagementIds?.[0] ?? common?.sponsorManagementId
-    return firstId ? common?.sponsorManagementNames?.[firstId]?.trim() || undefined : undefined
-  })()
+  const assignedSponsorName = resolveAssignedSponsorName(program)
   const fallbackSponsorName = useSponsorNameById(
     program?.sponsorId,
     Boolean(program?.sponsorId) && remoteEnabled && sponsorAssignmentsQuery.isError
