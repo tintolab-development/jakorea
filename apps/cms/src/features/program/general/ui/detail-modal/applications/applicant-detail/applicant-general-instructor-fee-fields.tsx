@@ -22,9 +22,7 @@ import type { ApplicantInstructorRow } from '@/features/program/shared/model/app
 
 function FieldError({ message }: { message?: string }) {
   if (!message?.trim()) return null
-  return (
-    <span className="applicant-general-instructor-basic-info__field-error">{message}</span>
-  )
+  return <span className="applicant-general-instructor-basic-info__field-error">{message}</span>
 }
 
 export function LectureFeeBasisView({ instructor }: { instructor: ApplicantInstructorRow }) {
@@ -33,9 +31,7 @@ export function LectureFeeBasisView({ instructor }: { instructor: ApplicantInstr
   if (segments.length === 1) return <span>{segments[0]}</span>
 
   return (
-    <ProgramDetailTdSegmentWrap>
-      {withProgramDetailTdDivider(segments)}
-    </ProgramDetailTdSegmentWrap>
+    <ProgramDetailTdSegmentWrap>{withProgramDetailTdDivider(segments)}</ProgramDetailTdSegmentWrap>
   )
 }
 
@@ -72,7 +68,8 @@ export function LectureFeeBasisEditField({
 
   return (
     <div className="applicant-general-instructor-basic-info__lecture-fee-edit">
-      <CmsRadioGroup size="medium"
+      <CmsRadioGroup
+        size="medium"
         className="applicant-general-instructor-basic-info__lecture-fee-radios"
         value={draft.lectureFeeBasisType}
         onChange={e =>
@@ -89,6 +86,7 @@ export function LectureFeeBasisEditField({
         <CmsSelect
           className="applicant-general-instructor-basic-info__lecture-fee-measure"
           inputSize="small"
+          width={150}
           withAllOption={false}
           disabled={isProgramBasis}
           value={
@@ -104,18 +102,21 @@ export function LectureFeeBasisEditField({
           onChange={v => onDraftChange({ lectureFeeMeasure: v != null ? String(v) : '' })}
           getPopupContainer={() => document.body}
         />
-        <CmsNumericInput
-          mode="currency"
-          className="applicant-general-instructor-basic-info__lecture-fee-amount"
-          inputSize="small"
-          value={draft.lectureFeeAmount}
-          onValueChange={value =>
-            onDraftChange({
-              lectureFeeAmount: value,
-            })
-          }
-          suffix="원"
-        />
+        <div>
+          <CmsNumericInput
+            mode="currency"
+            width={120}
+            disabled={isProgramBasis}
+            inputSize="small"
+            value={draft.lectureFeeAmount}
+            onValueChange={value =>
+              onDraftChange({
+                lectureFeeAmount: value,
+              })
+            }
+          />
+          <span style={{ marginLeft: 4 }}>원</span>
+        </div>
       </div>
       <FieldError message={validationError} />
     </div>
@@ -166,17 +167,22 @@ export function BusinessIncomeEditField({
   onDraftChange: (partial: Partial<ApplicantInstructorEditDraft>) => void
 }) {
   return (
-    <CmsRadioGroup size="medium"
+    <CmsRadioGroup
+      size="medium"
       className="applicant-general-instructor-basic-info__business-income-radios"
-        value={draft.businessIncomeEarnerStatus ?? ''}
+      value={draft.businessIncomeEarnerStatus ?? ''}
       onChange={e =>
         onDraftChange({
           businessIncomeEarnerStatus: e.target.value as ApplicantInstructorBusinessIncomeStatus,
         })
       }
     >
-      <CmsRadio size="medium" value="해당">해당</CmsRadio>
-      <CmsRadio size="medium" value="해당 없음">해당 없음</CmsRadio>
+      <CmsRadio size="medium" value="해당">
+        해당
+      </CmsRadio>
+      <CmsRadio size="medium" value="해당 없음">
+        해당 없음
+      </CmsRadio>
     </CmsRadioGroup>
   )
 }

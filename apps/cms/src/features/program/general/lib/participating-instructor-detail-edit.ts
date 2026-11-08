@@ -41,6 +41,8 @@ export const participatingInstructorEditSchema = z
     businessIncomeEarnerStatus: z.enum(['해당', '해당 없음']),
   })
   .superRefine((data, ctx) => {
+    /** 프로그램 기준 — 단위·금액 입력 비활성, 필수 아님 */
+    if (data.lectureFeeBasisType === 'program') return
     if (parseLectureFeeAmountDigits(data.lectureFeeAmount)) return
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
