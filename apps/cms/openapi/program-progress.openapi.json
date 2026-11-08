@@ -102,11 +102,11 @@
     },
     {
       "name": "기타 API",
-      "description": "회원 포탈 SSO 로그인 표준 API"
+      "description": "회원 포탈 계정 복구, 비밀번호, 보호자 동의 및 회원 인증 API"
     },
     {
       "name": "기타 API",
-      "description": "회원 포탈 계정 복구, 비밀번호, 보호자 동의 및 회원 인증 API"
+      "description": "회원 포탈 SSO 로그인 표준 API"
     },
     {
       "name": "시스템 진단/운영 검증",

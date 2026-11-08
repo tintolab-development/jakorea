@@ -14,4 +14,7 @@ export interface ItemDetail {
   evidenceRequired?: boolean;
   description?: string;
   expenses?: ExpenseDetail[];
+  tripType?: string;
+  /** 제출 시점 편도 km 스냅샷. 기존 건은 null. 문서/심사는 이 값만 사용한다. */
+  oneWayDistanceKm?: string | null;
 }

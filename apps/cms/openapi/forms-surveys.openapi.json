@@ -102,11 +102,11 @@
     },
     {
       "name": "기타 API",
-      "description": "회원 포탈 SSO 로그인 표준 API"
+      "description": "회원 포탈 계정 복구, 비밀번호, 보호자 동의 및 회원 인증 API"
     },
     {
       "name": "기타 API",
-      "description": "회원 포탈 계정 복구, 비밀번호, 보호자 동의 및 회원 인증 API"
+      "description": "회원 포탈 SSO 로그인 표준 API"
     },
     {
       "name": "시스템 진단/운영 검증",
@@ -8427,6 +8427,11 @@
             "items": {
               "$ref": "#/components/schemas/SettlementApplicationAttachmentResponse"
             }
+          },
+          "description": {
+            "type": "string",
+            "description": "제출 시점에 확정한 항목 설명. 현재 정산 설정 변경과 무관한 스냅샷.",
+            "nullable": true
           }
         }
       },
@@ -10451,6 +10456,15 @@
             "type": "integer",
             "format": "int64"
           },
+          "tripType": {
+            "type": "string",
+            "description": "학생 교통비 이동 유형. 기존 제출 데이터에는 없을 수 있음.",
+            "enum": [
+              "ROUND_TRIP",
+              "ONE_WAY"
+            ],
+            "nullable": true
+          },
           "description": {
             "type": "string",
             "maxLength": 1000,
@@ -10573,6 +10587,15 @@
             "items": {
               "$ref": "#/components/schemas/ExpenseDetail"
             }
+          },
+          "tripType": {
+            "type": "string"
+          },
+          "oneWayDistanceKm": {
+            "type": "string",
+            "format": "double",
+            "description": "제출 시점 편도 km 스냅샷. 기존 건은 null. 문서/심사는 이 값만 사용한다.",
+            "nullable": true
           }
         }
       },
@@ -12514,6 +12537,18 @@
             "type": "boolean"
           },
           "identitySelfSignupCompletedAfterAdminRegistration": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ActivityResult": {
+        "type": "object",
+        "properties": {
+          "lastUserActivityAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated": {
             "type": "boolean"
           }
         }
@@ -24706,6 +24741,12 @@
           "birthDate": {
             "type": "string"
           },
+          "age": {
+            "type": "integer",
+            "format": "int32",
+            "description": "생년월일 기준 만 나이. 생년월일이 없으면 null",
+            "nullable": true
+          },
           "gender": {
             "type": "string"
           },
@@ -25321,7 +25362,7 @@
           },
           "duplicateStrategy": {
             "type": "string",
-            "description": "overwrite=미지급 동일 키 upsert. append=미지급 중복 시 신규 insert. 기존 실적이 계좌 지급완료(PAID)인 중복이 하나라도 있으면 overwrite·append 모두 요청 전체 미커밋 (FAILED+GEMINI_TRAINING_REPORT_ACCOUNT_PAID, 부분 커밋 없음). 소문자 허용.",
+            "description": "overwrite=미지급 동일 키 upsert. append=미지급 중복 시 신규 insert. 기존 실적이 지급조서 확인완료(CONFIRMED) 또는 계좌 지급완료(PAID)인 중복이 하나라도 있으면 overwrite·append 모두 요청 전체 미커밋 (FAILED+GEMINI_TRAINING_REPORT_ACCOUNT_PAID, 부분 커밋 없음). 소문자 허용.",
             "enum": [
               "overwrite",
               "append",
@@ -26340,6 +26381,75 @@
           }
         }
       },
+      "GeminiOrganizationBulkApproveRequest": {
+        "type": "object",
+        "description": "Gemini 기관 신청 일괄 승인. timing 생략/null은 IMMEDIATE. SCHEDULED는 검증 통과 후 원자 승인(일부 실패 시 전체 롤백). IMMEDIATE는 기존 부분 성공 BulkActionResponse.",
+        "properties": {
+          "ids": {
+            "type": "array",
+            "description": "Gemini 기관 신청 id 목록(최대 100).",
+            "example": [
+              1691535,
+              1691536
+            ],
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 100,
+            "minItems": 0
+          },
+          "timing": {
+            "type": "string",
+            "description": "IMMEDIATE | SCHEDULED. 생략/null이면 IMMEDIATE.",
+            "enum": [
+              "IMMEDIATE",
+              "SCHEDULED"
+            ],
+            "example": "IMMEDIATE",
+            "nullable": true
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "timing=SCHEDULED일 때 필수. ISO-8601 Instant. IMMEDIATE이면 null·생략.",
+            "example": "2026-10-29T03:00:00.000Z",
+            "nullable": true
+          }
+        },
+        "required": [
+          "ids"
+        ]
+      },
+      "GeminiInstructorApproveRequest": {
+        "type": "object",
+        "description": "Gemini 강사 승인 요청. timing 생략/null 은 IMMEDIATE. 기존 승인 강사가 있으면 서버가 강사 변경으로 처리하므로 replacement는 하위 호환용 선택 필드입니다. ON_ANNOUNCEMENT는 사용하지 않습니다.",
+        "properties": {
+          "replacement": {
+            "type": "boolean",
+            "description": "하위 호환 필드. true면 동일 programId+recruitmentId의 기존 승인 강사를 교체합니다. 생략/false여도 기존 승인 강사가 있으면 서버가 자동으로 교체 처리합니다.",
+            "example": true,
+            "nullable": true
+          },
+          "timing": {
+            "type": "string",
+            "description": "IMMEDIATE | SCHEDULED. 생략/null이면 IMMEDIATE.",
+            "enum": [
+              "IMMEDIATE",
+              "SCHEDULED"
+            ],
+            "example": "IMMEDIATE",
+            "nullable": true
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "timing=SCHEDULED일 때 필수. UTC ISO-8601 Instant. 서버 현재 시각보다 최소 60초 이후. IMMEDIATE이면 null 또는 생략.",
+            "example": "2026-09-15T05:41:00.000Z",
+            "nullable": true
+          }
+        }
+      },
       "GeminiApprovedTrainingDetailResponse": {
         "type": "object",
         "description": "Gemini 승인 연수 상세. id=organizationApplicationId. 전화·이메일·계좌·상세주소는 목록에 넣지 않는다. 없는 값은 null.",
@@ -26427,22 +26537,22 @@
           "trainingDate": {
             "type": "string",
             "format": "date",
-            "description": "강사 식별자가 있고 취소되지 않은 기관 일정 배정이 있을 때만 채운다. 희망일 1지망으로 대체하지 않는다. 그 외에는 null",
+            "description": "취소되지 않은 기관 일정 배정(scheduleId)이 있으면 program_schedule 기준 확정일. 강사 미배정이어도 채운다. 강사 배정 후에도 동일 SSOT. 희망일 1지망·trainingDateCandidates로 대체하지 않는다. 배정 없으면 null",
             "nullable": true
           },
           "trainingStartTime": {
             "type": "string",
-            "description": "trainingDate와 같은 조건. 강사 미식별이거나 취소되지 않은 일정 배정이 없으면 null",
+            "description": "trainingDate와 같은 조건(기관 일정 배정 또는 강사 매칭). 없으면 null",
             "nullable": true
           },
           "trainingEndTime": {
             "type": "string",
-            "description": "trainingDate와 같은 조건. 강사 미식별이거나 취소되지 않은 일정 배정이 없으면 null",
+            "description": "trainingDate와 같은 조건(기관 일정 배정 또는 강사 매칭). 없으면 null",
             "nullable": true
           },
           "trainingTimeText": {
             "type": "string",
-            "description": "확정 시간 표시. trainingDate와 같은 조건일 때만 채운다. 그 외에는 null",
+            "description": "확정 시간 표시. trainingDate와 같은 조건일 때만 채운다. 없으면 null",
             "nullable": true
           },
           "lastPreferredDate": {
@@ -26552,12 +26662,12 @@
           },
           "teacherPosition": {
             "type": "string",
-            "description": "저장 원천이 없다. teacher_profile과 Gemini 기관 신청 폼에 직급 키가 없어 항상 null",
+            "description": "해당 승인 기관 신청의 Gemini 담당 교사 정보 폼(gemini-vt-inst-seed-contact) jobTitle 스냅샷. 답변이 없거나 공백이면 null이며 회원 프로필로 대체하지 않는다",
             "nullable": true
           },
           "teacherSubject": {
             "type": "string",
-            "description": "저장 원천이 없다. teacher_profile과 Gemini 기관 신청 폼에 과목 키가 없어 항상 null",
+            "description": "해당 승인 기관 신청의 Gemini 담당 교사 정보 폼(gemini-vt-inst-seed-contact) subject 스냅샷. 답변이 없거나 공백이면 null이며 다른 신청·회원 프로필 값으로 대체하지 않는다",
             "nullable": true
           },
           "teacherHomeAddress": {
@@ -29248,18 +29358,6 @@
           "email",
           "password"
         ]
-      },
-      "ActivityResult": {
-        "type": "object",
-        "properties": {
-          "lastUserActivityAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updated": {
-            "type": "boolean"
-          }
-        }
       },
       "AdminAccountApprovalDecisionRequest": {
         "type": "object",
@@ -35593,37 +35691,47 @@
         "description": "제출 시점 스냅샷만. 스냅샷 없는 필드는 null(현재 회원/동의서 값으로 채우지 않음).",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "englishName": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "residentNumberMasked": {
             "type": "string",
             "description": "예: 000915-1******. 원문 없음.",
-            "example": "000915-1******"
+            "example": "000915-1******",
+            "nullable": true
           },
           "affiliation": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "homeAddress": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "homeAddressDetail": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "bank": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "accountNumberMasked": {
             "type": "string",
-            "description": "마스킹된 계좌번호. 원문 없음."
+            "description": "마스킹된 계좌번호. 원문 없음.",
+            "nullable": true
           },
           "accountHolder": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "paymentPurpose": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -35638,6 +35746,17 @@
               "GRADE_1",
               "GRADE_2",
               "GRADE_3"
+            ],
+            "nullable": true
+          },
+          "instructorFeeCalculationUnit": {
+            "type": "string",
+            "description": "강사비 책정 단위. 제출 시점 lectureFeePreview.instructorFeeCalculationUnit과 동일 코드. 구 스냅샷에 없으면 null",
+            "enum": [
+              "PER_HOUR",
+              "PER_CLASS",
+              "PER_SESSION",
+              "PER_LECTURE"
             ],
             "nullable": true
           },
@@ -35659,8 +35778,20 @@
           "recognizedSessionCount": {
             "type": "integer",
             "format": "int32",
-            "description": "강사비 산정에 적용된 인정 차시. 지급조서 '교육 진행 차시' 표시 기준. 제출 스냅샷 recognizedSessionCount. 구 스냅샷에 없으면 null이며 educationSessionCount로 대체하지 않는다.",
+            "description": "강사비 산정에 적용된 인정 차시. 지급조서 '교육 진행 차시' 표시 기준. 구 스냅샷에 없으면 null이며 educationSessionCount로 대체하지 않는다.",
             "example": 1,
+            "nullable": true
+          },
+          "educationStartAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "제출 시점 program_schedule.start_at (ISO-8601 instant). 구 스냅샷에 없으면 null",
+            "nullable": true
+          },
+          "educationEndAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "제출 시점 program_schedule.end_at (ISO-8601 instant). 구 스냅샷에 없으면 null",
             "nullable": true
           },
           "actualTrainingMinutes": {
@@ -39444,6 +39575,32 @@
           }
         }
       },
+      "IndividualSettlementTransportPreview": {
+        "type": "object",
+        "description": "회차별 학생 교통비 편도 거리 안내. FE는 거리를 계산하지 않는다. 편도 30.0km 이상(포함)만 지급. 미달·주소 없음·산출 불가면 eligible=false이고 payableItems에서 학생 교통비 항목이 빠진다. oneWayDistanceKm는 산출 불가면 null(0 금지).",
+        "properties": {
+          "oneWayDistanceKm": {
+            "type": "string",
+            "format": "double",
+            "description": "편도 km. 소수 허용. 주소 없음·산출 불가면 null. 0으로 채우지 않는다.",
+            "example": 35,
+            "nullable": true
+          },
+          "eligible": {
+            "type": "boolean",
+            "description": "학생 교통비 신청 가능 여부. 편도 최소 거리 이상이고 거리를 산출했을 때만 true."
+          },
+          "ineligibleReason": {
+            "type": "string",
+            "description": "불가 사유. eligible=true이면 null. UNDER_MIN_DISTANCE=편도 최소 거리 미만. ADDRESS_MISSING=자택/장소 없음 또는 거리 산출 불가.",
+            "enum": [
+              "UNDER_MIN_DISTANCE",
+              "ADDRESS_MISSING"
+            ],
+            "nullable": true
+          }
+        }
+      },
       "ScheduleList": {
         "type": "object",
         "properties": {
@@ -39518,6 +39675,17 @@
             "items": {
               "$ref": "#/components/schemas/SubmittedItemSummary"
             }
+          },
+          "transportPreview": {
+            "description": "회차별 학생 교통비 편도 거리 안내. FE는 이 값만 표시하고 거리를 계산하지 않는다.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IndividualSettlementTransportPreview"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         }
       },
@@ -40426,6 +40594,38 @@
             "type": "string",
             "description": "화면 표시 메시지",
             "example": "사용 가능한 이메일입니다."
+          }
+        }
+      },
+      "SessionStatusResult": {
+        "type": "object",
+        "properties": {
+          "sessionStartedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "absoluteExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastUserActivityAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "idleExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "refreshIdleExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "idlePolicyEnforced": {
+            "type": "boolean"
+          },
+          "serverNow": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -42217,6 +42417,9 @@
             "type": "boolean"
           },
           "taxIncomeType": {
+            "type": "string"
+          },
+          "description": {
             "type": "string"
           }
         }
@@ -50331,15 +50534,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "memberId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
-          },
           "adminAccountId": {
             "type": "integer",
             "format": "int64",
             "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
           }
         }
       },
@@ -51885,7 +52088,7 @@
           },
           "availableActions": {
             "type": "array",
-            "description": "APPROVED 또는 REJECTED(AUTO_REJECTED·CANCELLED 제외)이면 RESEND_NOTIFICATION을 포함한다.",
+            "description": "대기·제출·심사 중(PENDING·SUBMITTED·WAITING·WAITING_REVIEW·REJECTION_CANCELLED)은 APPROVE·REJECT. APPROVED는 RESEND_NOTIFICATION만. REJECTED는 RESEND_NOTIFICATION 및 정책 허용 액션. AUTO_REJECTED·CANCELLED 등은 APPROVE 미포함.",
             "items": {
               "type": "string"
             }
@@ -53454,38 +53657,6 @@
             "items": {
               "type": "string"
             }
-          }
-        }
-      },
-      "SessionStatusResult": {
-        "type": "object",
-        "properties": {
-          "sessionStartedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "absoluteExpiresAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "lastUserActivityAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "idleExpiresAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "refreshIdleExpiresAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "idlePolicyEnforced": {
-            "type": "boolean"
-          },
-          "serverNow": {
-            "type": "string",
-            "format": "date-time"
           }
         }
       },

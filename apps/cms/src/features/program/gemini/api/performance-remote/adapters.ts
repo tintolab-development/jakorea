@@ -114,8 +114,8 @@ export function mapUploadAndDisplayToImportRow(
   return {
     // 회원 ID는 서버가 이름·연락처로 확정하므로 FE가 선판정하거나 재전달하지 않는다.
     instructorEmail: upload.email.trim() || undefined,
-    instructorPhone: preserveImportText(upload.contact),
-    instructorName: preserveImportText(upload.instructorName),
+    instructorPhone: preserveImportText(upload.contact) ?? undefined,
+    instructorName: preserveImportText(upload.instructorName) ?? undefined,
     feePayee: preserveImportText(upload.paymentDestination),
     assistantInstructorNames: upload.assistantInstructorNames.trim() || undefined,
     trainingLocation: upload.trainingLocation.trim() || undefined,

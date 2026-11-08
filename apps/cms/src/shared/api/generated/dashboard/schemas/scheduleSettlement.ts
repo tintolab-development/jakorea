@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type { EligibilityItem } from './eligibilityItem';
+import type { IndividualSettlementTransportPreview } from './individualSettlementTransportPreview';
 import type { SubmittedItemSummary } from './submittedItemSummary';
 
 export interface ScheduleSettlement {
@@ -24,4 +25,6 @@ export interface ScheduleSettlement {
   businessEndDate?: string;
   payableItems?: EligibilityItem[];
   submittedItems?: SubmittedItemSummary[];
+  /** 회차별 학생 교통비 편도 거리 안내. FE는 이 값만 표시하고 거리를 계산하지 않는다. */
+  transportPreview?: IndividualSettlementTransportPreview | null;
 }
