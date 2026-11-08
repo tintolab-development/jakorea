@@ -89,8 +89,9 @@
   background: var(--color-brand-primary-overlay-04);
 }
 
+/* 피그마: 우측(토글·더보기)은 내용 폭만 — 좌측 타이틀이 말줄임되지 않도록 */
 .program-schedule-widget__head-right {
-  flex: 1;
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -222,8 +223,8 @@
   color: var(--gray-85969-d, #85969d);
   text-align: center;
   font-family: Pretendard, var(--font-family-primary), sans-serif;
-  font-size: 18px;
-  font-weight: 500;
+  font-size: 16px;
+  font-weight: 600;
   text-transform: uppercase;
 }
 
@@ -601,7 +602,7 @@
   text-align: center;
   font-family: Pretendard, var(--font-family-primary), sans-serif;
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 130%;
   text-transform: uppercase;
 }
