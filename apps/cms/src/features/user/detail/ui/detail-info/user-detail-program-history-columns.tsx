@@ -102,8 +102,8 @@ export function createProgramHistoryColumns({
       render: (_: unknown, record: Application) => (
         <span className="user-detail-modal__assignment-cell" onClick={e => e.stopPropagation()}>
           <CmsButton
-            variant="default"
-            size="medium"
+            variant="secondary"
+            size="small"
             disabled={!record.hasAssignmentSubmission}
             onClick={() => onOpenAssignmentSubmission(record)}
           >

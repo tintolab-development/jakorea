@@ -503,8 +503,8 @@ export function MemberProgramLectureHistory({
               onClick={e => e.stopPropagation()}
             >
               <CmsButton
-                variant="default"
-                size="medium"
+                variant="secondary"
+                size="small"
                 disabled={!record.hasAssignmentSubmission}
                 onClick={() => {
                   if (onOpenAssignment) onOpenAssignment(record)
@@ -559,8 +559,8 @@ export function MemberProgramLectureHistory({
               onClick={e => e.stopPropagation()}
             >
               <CmsButton
-                variant="default"
-                size="medium"
+                variant="secondary"
+                size="small"
                 disabled={!canView}
                 onClick={() => {
                   if (onViewLectureReport) onViewLectureReport(record)
