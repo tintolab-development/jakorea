@@ -123,6 +123,12 @@
   border-width: 1px;
 }
 
+/* 수정 칸 autoSize(hug) — 한 줄이면 단일 입력과 같은 40px (본문 22 + 상하 8 + 보더 2) */
+.education-fields-page .education-fields-inline-field--edit.cms-textarea--medium .cms-textarea__control {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
 /* resize 핸들 없음·세로 스크롤은 공통 `cms-textarea--fixed-rows` — 여기선 box-sizing만 */
 .education-fields-page
   .education-fields-inline-field.cms-textarea--fixed-rows
@@ -133,7 +139,7 @@
 
 /*
  * 조회: autoSize(1~2줄) + 컨트롤 세로 패딩 제거 → 셀 vertical-align 으로 세로 중앙.
- * 수정(fixed-rows): 2줄 슬롯 고정 (15px × 1.5 × 2 = 3em).
+ * 수정(fixed-rows): autoSize(minRows 1) — 줄바꿈 수만큼 높이가 늘고 줄어든다(hug).
  */
 .education-fields-table
   .education-fields-inline-field--readonly.cms-textarea--medium
@@ -141,15 +147,6 @@
   min-height: 0;
   padding-top: 0;
   padding-bottom: 0;
-}
-
-.education-fields-table
-  .education-fields-inline-field--edit.cms-textarea--fixed-rows.cms-textarea--medium
-  .cms-textarea__inner
-  textarea.ant-input {
-  height: 3em !important;
-  min-height: 3em !important;
-  max-height: 3em !important;
 }
 
 /* 조회 = 가로 중앙 / 수정 = 좌측 */
