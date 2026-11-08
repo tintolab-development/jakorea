@@ -155,11 +155,10 @@ export function attendanceManagerForScheduleFromSources(
   ).find(
     item =>
       item.attendanceManagerParticipantId != null &&
-      (item.organizationApplicationId == null ||
-        sameOrganizationApplicationId(
-          item.organizationApplicationId,
-          sources.organizationApplicationId
-        ))
+      sameOrganizationApplicationId(
+        item.organizationApplicationId,
+        sources.organizationApplicationId
+      )
   )?.attendanceManagerParticipantId
 
   const resolvedManagerId = asParticipantId(managerId)
@@ -172,11 +171,11 @@ export function attendanceManagerForScheduleFromSources(
       cell =>
         cell.scheduleId === scheduleId &&
         cell.attendanceManager === true &&
-        (cell.organizationApplicationId == null ||
-          sameOrganizationApplicationId(
-            cell.organizationApplicationId,
-            sources.organizationApplicationId
-          ))
+        (cell.assignmentStatus ?? '').trim().toUpperCase() === 'ASSIGNED' &&
+        sameOrganizationApplicationId(
+          cell.organizationApplicationId,
+          sources.organizationApplicationId
+        )
     )
   )
   return fromCell?.volunteerName?.trim() || UNASSIGNED_MANAGER

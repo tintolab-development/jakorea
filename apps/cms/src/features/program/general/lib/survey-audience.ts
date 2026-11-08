@@ -7,8 +7,8 @@ import type {
 } from '@/features/program/shared/lib/survey-management/survey-copy'
 import {
   GENERAL_SATISFACTION_ACTION_LABELS,
+  GENERAL_INDIVIDUAL_SATISFACTION_EMPTY_COPY,
   GENERAL_SATISFACTION_EMPTY_COPY,
-  GENERAL_STUDENT_SATISFACTION_EMPTY_COPY,
 } from '@/features/program/shared/lib/survey-management/survey-copy'
 import { resolveProgramSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 
@@ -77,13 +77,16 @@ export function isTrainedTeachersProgram(program: Program): boolean {
   )
 }
 
-/** SATISFACTION form-binding `targetRole`. 교육받은 교사는 교사만 허용. */
+/** SATISFACTION form-binding `targetRole`. 교육받은 교사는 교사/학생 각각 바인딩. 1사1교는 교사만. */
 export function resolveSatisfactionFormBindingTargetRole(
   program: Program,
   audience: GeneralSatisfactionAudienceKey | null | undefined
 ): 'TEACHER' | 'STUDENT' | 'VOLUNTEER' | 'INDIVIDUAL' | undefined {
-  if (isTrainedTeachersProgram(program)) return 'TEACHER'
-  if (audience == null) return undefined
+  if (isCompanySchoolProgram(program)) return 'TEACHER'
+  if (audience == null) {
+    if (isTrainedTeachersProgram(program)) return 'TEACHER'
+    return undefined
+  }
   if (audience === 'teacher') return 'TEACHER'
   if (audience === 'student') return 'STUDENT'
   if (audience === 'volunteer_h1' || audience === 'volunteer_h2') return 'VOLUNTEER'
@@ -92,7 +95,7 @@ export function resolveSatisfactionFormBindingTargetRole(
 
 /** 1사1교 — 교사용 만족도조사 단일 폼, 대상 탭 미노출 */
 export function isInstitutionTeacherOnlySatisfactionProgram(program: Program): boolean {
-  return isCompanySchoolProgram(program) || isTrainedTeachersProgram(program)
+  return isCompanySchoolProgram(program)
 }
 
 export function isGeneralIndividualProgram(program: Program): boolean {
@@ -128,9 +131,11 @@ export function isGeneralIndividualParticipantTarget(
 export function getGeneralSatisfactionAudienceTabs(
   program: Program
 ): ReadonlyArray<SurveyAudienceTab<GeneralSatisfactionAudienceKey>> {
-  // 1사1교·교육받은 교사 — 교사 단일 만족도 (공통정보 체크 ↔ LNB)
-  if (isInstitutionTeacherOnlySatisfactionProgram(program)) {
+  if (isCompanySchoolProgram(program)) {
     return [{ key: 'teacher', label: '교사' }]
+  }
+  if (isTrainedTeachersProgram(program)) {
+    return GENERAL_ORGANIZATION_SATISFACTION_AUDIENCE_TABS
   }
   return isGeneralIndividualProgram(program)
     ? GENERAL_INDIVIDUAL_SATISFACTION_AUDIENCE_TABS
@@ -146,9 +151,11 @@ export function getEnabledGeneralSatisfactionAudienceTabs(
     return []
   }
 
-  // 교육받은 교사·1사1교 — 공통정보에 만족도조사 체크 시 LNB에 교사 탭만
-  if (isInstitutionTeacherOnlySatisfactionProgram(program)) {
+  if (isCompanySchoolProgram(program)) {
     return [{ key: 'teacher', label: '교사' }]
+  }
+  if (isTrainedTeachersProgram(program)) {
+    return GENERAL_ORGANIZATION_SATISFACTION_AUDIENCE_TABS
   }
 
   if (isGeneralIndividualProgram(program)) {
@@ -195,63 +202,13 @@ export function resolveGeneralSatisfactionAudienceFromNavTab(
 }
 
 export function getGeneralSatisfactionEmptyCopy(
-  audience: GeneralSatisfactionAudienceKey,
+  _audience: GeneralSatisfactionAudienceKey,
   program: Program
 ): SurveyEmptyCopy {
-  if (isInstitutionTeacherOnlySatisfactionProgram(program)) {
-    return {
-      title: GENERAL_SATISFACTION_EMPTY_COPY.title,
-      description: GENERAL_SATISFACTION_EMPTY_COPY.description,
-      secondaryDescription: '만족도조사 등록 시 해당 프로그램의 모든 학교에 동일하게 노출됩니다.',
-      registerButton: '만족도조사 등록',
-    }
-  }
-
   if (isGeneralIndividualProgram(program)) {
-    if (audience === 'teacher') {
-      return {
-        title: GENERAL_SATISFACTION_EMPTY_COPY.title,
-        description: GENERAL_SATISFACTION_EMPTY_COPY.description,
-        secondaryDescription:
-          '기관별 개별 폼이 아닌 하나의 폼으로 진행되며, 등록 시 해당 프로그램 참여 교사에게 동일하게 노출됩니다. 수업 직후 바로 진행됩니다.',
-        registerButton: '만족도조사 등록',
-      }
-    }
-    if (audience === 'volunteer_h1' || audience === 'volunteer_h2') {
-      return {
-        ...GENERAL_SATISFACTION_EMPTY_COPY,
-        secondaryDescription:
-          '만족도조사 등록 시 해당 프로그램 참여 봉사자에게 동일하게 노출됩니다. 마지막 교육 일정 이후 진행됩니다.',
-        registerButton: '만족도조사 등록',
-      }
-    }
-    return {
-      ...GENERAL_SATISFACTION_EMPTY_COPY,
-      secondaryDescription: '만족도조사 등록 시 해당 프로그램 참여자에게 동일하게 노출됩니다.',
-      registerButton: '만족도조사 등록',
-    }
+    return GENERAL_INDIVIDUAL_SATISFACTION_EMPTY_COPY
   }
-  if (audience === 'student') {
-    return {
-      ...GENERAL_STUDENT_SATISFACTION_EMPTY_COPY,
-      registerButton: '만족도조사 등록',
-    }
-  }
-  if (audience === 'volunteer_h1' || audience === 'volunteer_h2') {
-    return {
-      ...GENERAL_SATISFACTION_EMPTY_COPY,
-      secondaryDescription:
-        '만족도조사 등록 시 해당 프로그램 참여 봉사자에게 동일하게 노출됩니다. 마지막 교육 일정 이후 진행됩니다.',
-      registerButton: '만족도조사 등록',
-    }
-  }
-  return {
-    title: GENERAL_SATISFACTION_EMPTY_COPY.title,
-    description: GENERAL_SATISFACTION_EMPTY_COPY.description,
-    secondaryDescription:
-      '기관별 개별 폼이 아닌 하나의 폼으로 진행되며, 등록 시 해당 프로그램의 모든 학교에 동일하게 노출됩니다. 수업 직후 바로 진행됩니다.',
-    registerButton: '만족도조사 등록',
-  }
+  return GENERAL_SATISFACTION_EMPTY_COPY
 }
 
 export function getGeneralSatisfactionNoResponseTitle(
@@ -260,23 +217,8 @@ export function getGeneralSatisfactionNoResponseTitle(
   return `${GENERAL_SATISFACTION_AUDIENCE_LABELS[audience]}용 만족도조사는 아직 진행 전입니다.`
 }
 
-export function getGeneralSatisfactionCreateDescription(
-  audience: GeneralSatisfactionAudienceKey
-): string {
-  if (audience === 'teacher') {
-    return '교사용 만족도조사를 등록하시겠습니까?\n기관별 개별 폼이 아닌 하나의 폼으로 진행되며, 등록 시 해당 프로그램 참여 교사에게 동일하게 노출됩니다.'
-  }
-  if (audience === 'volunteer_h1' || audience === 'volunteer_h2') {
-    const label = GENERAL_SATISFACTION_AUDIENCE_LABELS[audience]
-    return `${label}용 만족도조사를 등록하시겠습니까?\n등록 시 해당 프로그램 참여 봉사자에게 동일하게 노출되며, 마지막 교육 일정 이후 진행됩니다.`
-  }
-  if (audience === 'individual') {
-    return '만족도조사를 등록하시겠습니까?\n등록 시 해당 프로그램 참여자에게 동일하게 노출되며, 기관 구분 없이 하나의 폼으로 진행됩니다.'
-  }
-  if (audience === 'student') {
-    return '만족도조사를 등록하시겠습니까?\n등록 후 링크 공유하여 비회원(학생) 대상으로 진행할 수 있습니다.\n기관 구분 없이 하나의 폼으로 진행됩니다.'
-  }
-  return '만족도조사를 등록하시겠습니까?'
+export function getGeneralSatisfactionCreateDescription(): string {
+  return '새로운 만족도조사를 등록하시겠습니까?\n만족도조사 신규 등록을 위해 사용할 템플릿 유형과 진행 방식을 선택해 주세요.'
 }
 
 export function getGeneralSatisfactionDeleteModalTitle(

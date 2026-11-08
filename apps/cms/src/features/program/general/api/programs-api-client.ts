@@ -12,6 +12,7 @@ import customInstance from '@/shared/api/orval-mutator'
 import { axiosClient } from '@/shared/instance/axios-instance'
 import type { BulkActionResponse } from '@/shared/api/generated/dashboard/schemas/bulkActionResponse'
 import type { ProgramResponse } from '@/shared/api/generated/dashboard/schemas/programResponse'
+import { latestProgramFormBindingsBySlot } from '@/features/program/general/lib/operational-form-bindings'
 
 /** GET/POST/PATCH /api/admin/programs 본문. createdByName / updatedByName 포함. */
 export type AdminProgramResponseDto = ProgramResponse
@@ -145,10 +146,18 @@ export type AdminProgramSponsorAssignmentDto = {
     sponsorContactName?: string | null
     sponsorContactPosition?: string | null
     displayOrder?: number | null
+    /** 휴대폰 우선, 없으면 내선. MASTER_DATA_READ 권한 없으면 null */
+    sponsorContactPhone?: string | null
+    /** MASTER_DATA_READ 권한 없으면 null */
+    sponsorContactEmail?: string | null
   }>
   sponsorYear?: number | null
   contributionAmountSnapshot?: number | null
   displayOrder?: number | null
+  sponsorHomepageUrl?: string | null
+  /** 대표 로고 fileObjectId */
+  sponsorLogoFileObjectId?: number | null
+  sponsorLogoFileName?: string | null
 }
 
 export async function fetchAdminProgramSponsorsRemote(
@@ -530,18 +539,29 @@ function parseTotalCountHeader(value: unknown): number | null {
   return Number.isFinite(total) && total >= 0 ? total : null
 }
 
-/** 응답 목록 전체 — `X-Total-Count`(없으면 마지막 페이지가 size 미만)까지 페이지 수집 */
+/**
+ * 응답 목록 전체 — `X-Total-Count`(없으면 마지막 페이지가 size 미만)까지 페이지 수집.
+ * `includeAnswers: true`면 각 item에 단건 상세와 동일한 `answers[]`가 포함된다(응답별 상세 GET 불필요).
+ */
 export async function fetchAdminProgramSurveyResponsesRemote(
   programId: string,
-  templateVersionId: string
+  templateVersionId: string,
+  bindingId?: string,
+  options?: { includeAnswers?: boolean }
 ): Promise<SurveyResponseListItem[]> {
   const url = `/api/admin/programs/${encodeURIComponent(programId)}/surveys/${encodeURIComponent(templateVersionId)}/responses`
+  const bindingQuery = bindingId?.trim()
   const items: SurveyResponseListItem[] = []
   for (let page = 0; page < SURVEY_RESPONSES_MAX_PAGES; page += 1) {
     const response = await axiosClient.request<unknown>({
       url,
       method: 'GET',
-      params: { page, size: SURVEY_RESPONSES_PAGE_SIZE },
+      params: {
+        page,
+        size: SURVEY_RESPONSES_PAGE_SIZE,
+        ...(bindingQuery ? { bindingId: bindingQuery } : {}),
+        ...(options?.includeAnswers ? { includeAnswers: true } : {}),
+      },
     })
     const body = unwrapApiBody<SurveyResponseListItem[] | { items?: SurveyResponseListItem[] }>(
       response.data
@@ -557,7 +577,8 @@ export async function fetchAdminProgramSurveyResponsesRemote(
 
 export async function fetchAdminProgramSurveySummaryRemote(
   programId: string,
-  templateVersionId: string
+  templateVersionId: string,
+  bindingId?: string
 ): Promise<
   import('@/shared/api/generated/dashboard/schemas/surveySummaryResponse').SurveySummaryResponse[]
 > {
@@ -570,6 +591,7 @@ export async function fetchAdminProgramSurveySummaryRemote(
     await customInstance({
       url: `/api/admin/programs/${encodeURIComponent(programId)}/surveys/${encodeURIComponent(templateVersionId)}/summary`,
       method: 'GET',
+      params: bindingId?.trim() ? { bindingId: bindingId.trim() } : undefined,
     })
   )
   if (Array.isArray(body)) return body
@@ -650,8 +672,8 @@ export async function fetchAdminProgramFormBindingsRemote(
       method: 'GET',
     })
   )
-  if (Array.isArray(body)) return body
-  return body.items ?? []
+  const items = Array.isArray(body) ? body : (body.items ?? [])
+  return latestProgramFormBindingsBySlot(items)
 }
 
 /** POST /api/admin/programs/{programId}/form-bindings */
@@ -828,4 +850,42 @@ export async function submitAdminFormResponseRemote(
       data: payload,
     })
   )
+}
+
+export type AdminProgramOverviewStageCounts = {
+  total: number
+  scheduled: number
+  inProgress: number
+  completed: number
+}
+
+/**
+ * 목록 상단 4카드 건수 — `GET /api/admin/programs/overview-stages?programType=` (1회).
+ * BE가 목록 `periodStatus` 필터와 같은 배타 버킷으로 센다. `RECRUITING`은 예정(SCHEDULED) 버킷 별칭이라
+ * `scheduled`와 `recruiting`을 FE에서 더하지 않는다.
+ * 예전에는 `GET /programs?size=1` 여러 번(1사1교는 예정 목록 전 페이지 2벌)으로 셌다.
+ */
+export async function fetchAdminProgramOverviewStagesRemote(
+  programType: string,
+  params: { businessYear?: number } = {}
+): Promise<AdminProgramOverviewStageCounts> {
+  const data = await unwrapApiBody<{
+    total?: number
+    scheduled?: number
+    recruiting?: number
+    inProgress?: number
+    completed?: number
+  }>(
+    await customInstance({
+      url: '/api/admin/programs/overview-stages',
+      method: 'GET',
+      params: { programType, ...(params.businessYear != null ? { businessYear: params.businessYear } : {}) },
+    })
+  )
+  return {
+    total: data.total ?? 0,
+    scheduled: data.scheduled ?? 0,
+    inProgress: data.inProgress ?? 0,
+    completed: data.completed ?? 0,
+  }
 }

@@ -110,7 +110,8 @@ describe('교육 예정일 CMS·서버 계약', () => {
     expect(request.programType).toBe('GENERAL_INDIVIDUAL')
     expect(toKstDateKey(request.businessStartDate)).toBe('2026-11-01')
     expect(toKstDateKey(request.businessEndDate)).toBe('2026-11-30')
-    expect(request.businessStartDate).toMatch(/^\d{4}-\d{2}-\d{2}T/)
+    // 11f8b9267: 운영(사업) 기간은 KST 달력 날짜만 보낸다.
+    expect(request.businessStartDate).toMatch(/^\d{4}-\d{2}-\d{2}$/)
     expect(request.businessStartDate).not.toContain('년')
 
     const detail = serviceDetail(request.serviceDetailJson)

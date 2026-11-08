@@ -84,6 +84,20 @@ describe('buildGeneralProgramCreateFromWizardRhf', () => {
     vi.unstubAllGlobals()
   })
 
+  it('unowned sidecar는 보존하고 스토어 owned 공통정보 키는 RHF가 이긴다', () => {
+    const result = buildGeneralProgramCreateFromWizardRhf({
+      id: 'local-general-sidecar',
+      uiValues: filledCurriculumValues(),
+      overlay: {
+        'custom.unknown.sidecar': 'keep-me',
+        'generalRegistration.basicInfo.programTitleKo': 'STALE-STORE-TITLE',
+      },
+    })
+    expect(result.persistOverlay['custom.unknown.sidecar']).toBe('keep-me')
+    expect(result.program.mainTitle).toBe('신규 프로그램')
+    expect(result.program.mainTitle).not.toBe('STALE-STORE-TITLE')
+  })
+
   it('구조 전환 후 숨겨진 커리큘럼 값은 CREATE를 오염시키지 않는다', () => {
     const switched = applyEducationStructureReset(filledCurriculumValues(), 'schedule')
     switched.schedule.eventNameByDetail = { 1: '행사1' }

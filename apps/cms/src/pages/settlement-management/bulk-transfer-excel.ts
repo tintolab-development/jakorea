@@ -22,7 +22,11 @@ export function buildBulkTransferExcelFilename(now: dayjs.Dayjs | Date = dayjs()
 
 const HEADER_FILL = 'FF01A1AF'
 
-export async function exportBulkTransferExcel(rows: AccountPaymentRow[]): Promise<void> {
+/** 계좌번호 원문이 들어가므로 암호 모달에서 받은 일회성 암호로 암호화한다(세금신고와 같은 방식). */
+export async function exportBulkTransferExcel(
+  rows: AccountPaymentRow[],
+  options: { password?: string } = {}
+): Promise<void> {
   const lines = buildBulkTransferSheetRows(rows)
   const workbook = new ExcelJS.Workbook()
   const sheet = workbook.addWorksheet('Sheet1')
@@ -82,6 +86,10 @@ export async function exportBulkTransferExcel(rows: AccountPaymentRow[]): Promis
     { width: 17 },
   ]
 
-  const buffer = await workbook.xlsx.writeBuffer()
-  await downloadExcel(buffer, buildBulkTransferExcelFilename())
+  const buffer = await workbook.xlsx.writeBuffer(
+    options.password ? { password: options.password } : undefined
+  )
+  await downloadExcel(buffer, buildBulkTransferExcelFilename(), {
+    accessLog: { downloadKind: 'SETTLEMENT_EXPORT', containedPiiTypes: ['NAME', 'ACCOUNT_NUMBER'] },
+  })
 }

@@ -49,7 +49,10 @@ import {
   resolveIdentitySelfSignupCompletedAfterAdminRegistration,
   resolveRegisteredByAdmin,
 } from '@/features/user/api/resolve-member-registration-flags'
-import { coercePositiveInt } from '@/features/user/api/user-response-row-id'
+import {
+  coercePositiveInt,
+  copyUserResponseResendIds,
+} from '@/features/user/api/user-response-row-id'
 import { applyScheduleChangeCancelCountToUser } from '@/features/user/api/resolve-schedule-change-cancel-count'
 
 const USER_AFFILIATION_PIPE_SEP = ' | ' as const
@@ -331,6 +334,12 @@ export function mapMemberDetailToUser(
       }),
     under14: detail.under14,
     guardianConsentRequired: detail.guardianConsentRequired,
+    ...copyUserResponseResendIds(
+      detail as MemberDetailResponse & {
+        instructorRoleRequestId?: number | null
+        adminAccountId?: number | null
+      }
+    ),
   }
 
   const profileFromRoles = inferInstructorMemberProfileFromRoles(detail.roles)
@@ -339,7 +348,7 @@ export function mapMemberDetailToUser(
   }
 
   if (role === 'INSTRUCTOR' && instructorProfile) {
-    applyInstructorProfile(user, instructorProfile, detail.name)
+    applyInstructorProfile(user, instructorProfile)
   }
 
   return user
@@ -489,8 +498,7 @@ function applyCmsAffiliationFromProfile(
 
 function applyInstructorProfile(
   user: Omit<User, 'password'>,
-  instructorProfile: InstructorDetailResponse,
-  memberName?: string | null
+  instructorProfile: InstructorDetailResponse
 ) {
   const profile = asInstructorProfileLoose(instructorProfile)
   const businessIncome =
@@ -500,7 +508,7 @@ function applyInstructorProfile(
   user.instructorInfo = {
     bankName: '',
     accountNumber: '',
-    accountHolder: memberName?.trim() ?? '',
+    accountHolder: '',
     isBusinessIncome: businessIncome ?? false,
   }
 
@@ -757,15 +765,13 @@ export function mapInstructorMemberDetailToUser(
     user.instructorInfo = {
       bankName: bank.bankName,
       accountNumber: bank.accountNumber,
-      accountHolder: bank.accountHolder || member.name?.trim() || '',
+      accountHolder: bank.accountHolder,
       isBusinessIncome: businessIncome ?? false,
     }
   } else {
-    // 빈 문자열이어도 API 값을 반영 (목록 빈 instructorInfo가 남는 경우 방지)
-    user.instructorInfo.bankName = bank.bankName || user.instructorInfo.bankName
-    user.instructorInfo.accountNumber = bank.accountNumber || user.instructorInfo.accountNumber
-    user.instructorInfo.accountHolder =
-      bank.accountHolder || user.instructorInfo.accountHolder || member.name?.trim() || ''
+    user.instructorInfo.bankName = bank.bankName
+    user.instructorInfo.accountNumber = bank.accountNumber
+    user.instructorInfo.accountHolder = bank.accountHolder
     if (businessIncome !== undefined) {
       user.instructorInfo.isBusinessIncome = businessIncome
     }

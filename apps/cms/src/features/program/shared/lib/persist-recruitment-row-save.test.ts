@@ -160,6 +160,190 @@ describe('persist-recruitment-row-save', () => {
     expect(body?.clearFields).toContain('startAt')
   })
 
+  it('기관 최종 발표 방법을 비우면 빈 문자열로 보낸다', () => {
+    const program = orgProgram()
+    const draft: Program = {
+      ...program,
+      programRecruitments: program.programRecruitments?.map(row =>
+        row.recruitmentType === 'PARTICIPANT'
+          ? { ...row, finalPassAnnouncementMethod: '홈페이지 공지' }
+          : row
+      ),
+    }
+    const body = buildProgramRecruitmentRowSaveRequest({
+      baseline: draft,
+      draft,
+      patch: {
+        resultAnnouncementMethod: '',
+      },
+      audience: 'participant',
+    })
+    expect(body?.finalPassAnnouncementMethod).toBe('')
+  })
+
+  it('H1 extra만 보내면 H2 행은 요청에 넣지 않는다', () => {
+    const program: Program = {
+      ...orgProgram(),
+      backendProgramType: 'UJAT',
+      programRecruitments: [
+        volunteerRow({
+          id: 1001,
+          recruitTerm: 'FIRST_HALF',
+          documentPassAnnouncementMethod: '홈페이지 공지',
+          volunteerTargetDetail: '대학생 상반기',
+        }),
+        volunteerRow({
+          id: 1002,
+          recruitTerm: 'SECOND_HALF',
+          documentPassAnnouncementMethod: '문자 안내',
+          volunteerTargetDetail: '하반기 상세',
+        }),
+      ],
+    }
+    const body = buildProgramRecruitmentRowSaveRequest({
+      baseline: program,
+      draft: program,
+      patch: {
+        documentPassAnnouncementMethod: '이메일 안내',
+        volunteerTargetDetail: '상반기 상세만',
+      },
+      audience: 'volunteer',
+      volunteerHalf: 'h1',
+    })
+    expect(body?.id).toBe(1001)
+    expect(body?.recruitTerm).toBe('FIRST_HALF')
+    expect(body?.documentPassAnnouncementMethod).toBe('이메일 안내')
+    expect(body?.volunteerTargetDetail).toBe('상반기 상세만')
+  })
+
+  it('기관 행 비고만 바꾸면 remarks만 보내고 빈 announcementTitle·summary를 넣지 않는다', () => {
+    const program: Program = {
+      ...orgProgram(),
+      programRecruitments: orgProgram().programRecruitments?.map(row =>
+        row.recruitmentType === 'PARTICIPANT'
+          ? {
+              ...row,
+              remarks: '기존 기관 비고',
+              announcementTitle: null,
+              summary: null,
+              contentRevision: 3,
+            }
+          : row
+      ),
+    }
+    const draft: Program = {
+      ...program,
+      programRecruitments: program.programRecruitments?.map(row =>
+        row.recruitmentType === 'PARTICIPANT' ? { ...row, remarks: 'G02 BOT-TEST 기관 비고' } : row
+      ),
+    }
+    const body = buildProgramRecruitmentRowSaveRequest({
+      baseline: program,
+      draft,
+      patch: {
+        generalCommonInfo: {
+          participantRecruitmentInfo: { remarks: 'G02 BOT-TEST 기관 비고' },
+        },
+        programRecruitments: draft.programRecruitments,
+      },
+      audience: 'participant',
+    })
+    expect(body?.remarks).toBe('G02 BOT-TEST 기관 비고')
+    expect(body?.expectedRevision).toBe(3)
+    expect(body).not.toHaveProperty('announcementTitle')
+    expect(body).not.toHaveProperty('summary')
+    expect(body).not.toHaveProperty('otherMatters')
+    expect(body?.clearFields ?? []).not.toContain('remarks')
+  })
+
+  it('기관 행 비고를 비우면 clearFields만 쓰고 본문에 빈 문자열을 넣지 않는다', () => {
+    const program: Program = {
+      ...orgProgram(),
+      programRecruitments: orgProgram().programRecruitments?.map(row =>
+        row.recruitmentType === 'PARTICIPANT' ? { ...row, remarks: '기존 기관 비고' } : row
+      ),
+    }
+    const draft: Program = {
+      ...program,
+      programRecruitments: program.programRecruitments?.map(row =>
+        row.recruitmentType === 'PARTICIPANT' ? { ...row, remarks: null } : row
+      ),
+    }
+    const body = buildProgramRecruitmentRowSaveRequest({
+      baseline: program,
+      draft,
+      patch: {
+        generalCommonInfo: { participantRecruitmentInfo: { remarks: undefined } },
+        programRecruitments: draft.programRecruitments,
+      },
+      audience: 'participant',
+    })
+    expect(body?.remarks).toBeUndefined()
+    expect(body?.clearFields).toEqual(expect.arrayContaining(['remarks']))
+  })
+
+  it('기관 행 비고가 같으면 remarks만 다시 보내고 revision을 유지한다', () => {
+    const program: Program = {
+      ...orgProgram(),
+      programRecruitments: orgProgram().programRecruitments?.map(row =>
+        row.recruitmentType === 'PARTICIPANT'
+          ? { ...row, remarks: 'G02 BOT-TEST 기관 비고', contentRevision: 4 }
+          : row
+      ),
+    }
+    const body = buildProgramRecruitmentRowSaveRequest({
+      baseline: program,
+      draft: program,
+      patch: {
+        generalCommonInfo: {
+          participantRecruitmentInfo: { remarks: 'G02 BOT-TEST 기관 비고' },
+        },
+        programRecruitments: program.programRecruitments,
+      },
+      audience: 'participant',
+    })
+    expect(body?.remarks).toBe('G02 BOT-TEST 기관 비고')
+    expect(body?.expectedRevision).toBe(4)
+    expect(body?.clearFields ?? []).not.toContain('remarks')
+  })
+
+  it('재조회 행 remarks가 옛값이면 저장 응답 remarks·contentRevision을 화면에 남긴다', () => {
+    const program = orgProgram()
+    const next = applySavedRecruitmentOntoProgram({
+      fetched: {
+        ...program,
+        programRecruitments: program.programRecruitments?.map(row =>
+          row.recruitmentType === 'PARTICIPANT'
+            ? { ...row, remarks: '수정 전 비고', contentRevision: 1 }
+            : row
+        ),
+      },
+      draft: program,
+      patch: {
+        generalCommonInfo: {
+          participantRecruitmentInfo: { remarks: 'G02 BOT-TEST 기관 비고' },
+        },
+        programRecruitments: program.programRecruitments?.map(row =>
+          row.recruitmentType === 'PARTICIPANT'
+            ? { ...row, remarks: 'G02 BOT-TEST 기관 비고' }
+            : row
+        ),
+      },
+      audience: 'participant',
+      row: {
+        id: 186603,
+        remarks: 'G02 BOT-TEST 기관 비고',
+        contentRevision: 2,
+      },
+    })
+    const participant = next.programRecruitments?.find(row => row.id === 186603)
+    expect(participant?.remarks).toBe('G02 BOT-TEST 기관 비고')
+    expect(participant?.contentRevision).toBe(2)
+    expect(next.generalCommonInfo?.participantRecruitmentInfo?.remarks).toBe(
+      'G02 BOT-TEST 기관 비고'
+    )
+  })
+
   it('모집 탭 fallback patch에서 rounds를 제거한다', () => {
     const next = omitRecruitmentTabScheduleFields({
       volunteerApplicationEndDate: '2026-10-31',

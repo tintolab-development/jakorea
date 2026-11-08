@@ -17,6 +17,7 @@ import {
   FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
   isFileSelectTotalSizeExceeded,
   notifyFileSelectTotalSizeExceeded,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   useCmsAlert,
 } from '@/shared/ui'
 
@@ -146,7 +147,7 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
       nextErrors.subText = '서브 텍스트를 입력해 주세요.'
     }
     if (Object.keys(nextErrors).length > 0) {
-      setErrors(nextErrors)
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     setErrors({})
@@ -167,6 +168,7 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
     initial.version,
     mainText,
     onSubmit,
+    showAlert,
     subText,
   ])
 
@@ -254,10 +256,11 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
             edit={
               <div>
                 <CmsTextArea
-                  className="cms-textarea--fixed-rows"
-                  inputSize="large"
+                  layout="fixed"
+                  inputSize="medium"
                   width="100%"
-                  rows={3}
+                  rows={1}
+                  autoSize={{ minRows: 1 }}
                   placeholder="메인 텍스트를 입력해 주세요"
                   value={mainText}
                   onChange={e => {
@@ -284,10 +287,11 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
             edit={
               <div>
                 <CmsTextArea
-                  className="cms-textarea--fixed-rows"
-                  inputSize="large"
+                  layout="fixed"
+                  inputSize="medium"
                   width="100%"
-                  rows={4}
+                  rows={1}
+                  autoSize={{ minRows: 1 }}
                   placeholder="서브 텍스트를 입력해 주세요"
                   value={subText}
                   onChange={e => {

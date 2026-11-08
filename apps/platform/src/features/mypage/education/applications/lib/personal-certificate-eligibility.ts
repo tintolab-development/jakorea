@@ -21,7 +21,6 @@ export function shouldShowPersonalCertificateAction(input: {
   detailCase?: string | null
   isTeacher?: boolean
 }): boolean {
-  if (input.isTeacher) return false
   if ((input.applicationType ?? '').trim().toUpperCase() !== 'INDIVIDUAL') return false
   if (isExcludedGeminiSurface(input)) return false
   const programType = (input.programType ?? '').trim().toUpperCase()
@@ -63,4 +62,31 @@ export function isPersonalCertificateActionable(availability: {
 } | null | undefined): boolean {
   if (!availability) return false
   return availability.canDownload === true || availability.available === true
+}
+
+export function portalCertificateDocumentLabel(
+  certificateType: string | null | undefined,
+): '수료증' | '참가인증서' {
+  const normalized = (certificateType ?? '').trim().toUpperCase()
+  if (normalized === 'PARTICIPATION' || normalized.includes('PARTICIPATION')) {
+    return '참가인증서'
+  }
+  return '수료증'
+}
+
+export function portalCertificateCtaButtonLabel(input: {
+  certificateType: string | null | undefined
+  action: 'issue' | 'download'
+}): string {
+  const documentLabel = portalCertificateDocumentLabel(input.certificateType)
+  return input.action === 'download' ? `${documentLabel} 다운로드` : `${documentLabel} 발급하기`
+}
+
+export function portalCertificateIssueType(
+  certificateType: string | null | undefined,
+): 'AUTO' | 'COMPLETION' | 'PARTICIPATION' {
+  const normalized = (certificateType ?? '').trim().toUpperCase()
+  if (normalized === 'COMPLETION') return 'COMPLETION'
+  if (normalized === 'PARTICIPATION') return 'PARTICIPATION'
+  return 'AUTO'
 }

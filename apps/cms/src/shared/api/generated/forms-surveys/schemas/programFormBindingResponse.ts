@@ -43,4 +43,14 @@ export interface ProgramFormBindingResponse {
   availableActions?: string[];
   /** 대상별 예상 응답 인원. submittedCount(실제 제출 수)와 별개다. 대상을 확정할 수 없으면 null. 0은 그 대상 참여 인원이 0명일 때만. */
   expectedRespondentCount?: number | null;
+  /** SATISFACTION만. 참여 기간이 끝난 뒤에만 true. 전원 제출만으로 true가 되지 않는다. */
+  resultDownloadable?: boolean | null;
+  /** SATISFACTION만. 사용자 표시용 마감 시각(23:59:59 KST). 저장값은 exclusive next-day 00:00일 수 있다. */
+  displayDeadlineAt?: string | null;
+  /** SATISFACTION만. PER_SCHEDULE | ONCE_AT_END. */
+  satisfactionRunMode?: string | null;
+  /** SATISFACTION만. 3 | 7 | 14 | 30. */
+  satisfactionWindowDays?: number | null;
+  /** SATISFACTION만. 관리자가 시작 시각을 고정했는지. */
+  startAtLocked?: boolean | null;
 }

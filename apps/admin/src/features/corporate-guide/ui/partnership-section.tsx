@@ -116,10 +116,10 @@ export function PartnershipSectionCard({ items }: Props) {
           if (isEditing) {
             return (
               <CmsTextArea
-                className="cms-textarea--fixed-rows"
-                inputSize="medium"
+                layout="fixed"
+                inputSize="small"
                 width="100%"
-                rows={2}
+                autoSize={{ minRows: 1 }}
                 value={value}
                 onChange={e => handleDraftChange(record.step, { title: e.target.value })}
                 placeholder="단계 제목을 입력해 주세요"
@@ -140,10 +140,10 @@ export function PartnershipSectionCard({ items }: Props) {
           if (isEditing) {
             return (
               <CmsTextArea
-                className="cms-textarea--fixed-rows"
-                inputSize="medium"
+                layout="fixed"
+                inputSize="small"
                 width="100%"
-                rows={3}
+                autoSize={{ minRows: 1 }}
                 value={value}
                 onChange={e => handleDraftChange(record.step, { description: e.target.value })}
                 placeholder="단계 설명을 입력해 주세요"

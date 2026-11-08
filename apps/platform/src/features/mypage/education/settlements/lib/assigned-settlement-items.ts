@@ -5,6 +5,11 @@ import type {
   PortalSettlementApplication,
 } from '../../applications/api/activity-client.ts'
 import type { EducationScheduleItem } from '../../schedules/model/types.ts'
+import type { InstructorTransportPreview } from '../lib/instructor-transport-preview.ts'
+import {
+  lectureFeeSettlementBlockerMessage,
+  type LectureFeePreview,
+} from '../lib/lecture-fee-preview.ts'
 import type { EducationSettlementItem } from '../model/types.ts'
 import {
   canSubmitFromAvailableActions,
@@ -16,6 +21,7 @@ import {
 } from './settlement-rules.ts'
 import {
   individualIneligibleMessage,
+  individualTransportIneligibleNotice,
   isEvidencePolicyUnconfigured,
 } from './individual-settlement-contract.ts'
 import { normalizePayableItems } from './payment-items.ts'
@@ -49,6 +55,8 @@ export type SettlementLectureReportJoin = {
   startAt?: string | null
   endAt?: string | null
   sessionNo?: number | null
+  lectureFeePreview?: LectureFeePreview | null
+  instructorTransportPreview?: InstructorTransportPreview | null
 }
 
 const COMPLETED_LECTURE = new Set(['COMPLETED', 'DONE', 'HELD', 'FINISHED'])
@@ -79,6 +87,19 @@ export function findIndividualScheduleForSession(
     const joined = readScheduleJoinId(row)
     return joined != null && ids.has(joined)
   })
+}
+
+export function findAssignedSettlementItem(
+  items: readonly EducationSettlementItem[] | undefined,
+  sessionId: string,
+): EducationSettlementItem | undefined {
+  const key = sessionId.trim()
+  if (!key || !items?.length) return undefined
+  const byId = items.find(item => item.id === key)
+  if (byId) return byId
+  const numeric = Number(key)
+  if (!Number.isSafeInteger(numeric) || numeric <= 0) return undefined
+  return items.find(item => item.scheduleId === numeric || item.assignmentId === numeric)
 }
 
 export type BuildAssignedSettlementItemsInput = {
@@ -190,10 +211,25 @@ function formatInstitutionLabel(
   lecture: SettlementLectureReportJoin | undefined,
   schedule: EducationScheduleItem,
 ): string | undefined {
-  const institution = lecture?.institutionName?.trim() || schedule.locationName?.trim()
-  const grade = lecture?.grade?.trim()
-  const label = [institution, grade].filter(Boolean).join(' · ')
+  const { institutionName, grade } = resolveInstitutionMeta(lecture, schedule)
+  const label = [institutionName, grade].filter(Boolean).join(' · ')
   return label || undefined
+}
+
+function resolveInstitutionMeta(
+  lecture: SettlementLectureReportJoin | undefined,
+  schedule: EducationScheduleItem,
+): { institutionName?: string; grade?: string } {
+  if (lecture) {
+    const institutionName = lecture.institutionName?.trim() || ''
+    const grade = lecture.grade?.trim() || ''
+    return {
+      ...(institutionName ? { institutionName } : {}),
+      ...(grade ? { grade } : {}),
+    }
+  }
+  const institutionName = schedule.locationName?.trim() || ''
+  return institutionName ? { institutionName } : {}
 }
 
 function isLectureReportSubmitted(status: string | null | undefined): boolean | null {
@@ -380,23 +416,40 @@ export function buildAssignedSettlementItems(
         submitAllowed !== false &&
         hasPayableItems !== false
     const submittedAt = settlement?.submittedAt ?? receipt?.submittedAt
-    const ineligibleMessage = individualIneligibleMessage(individual?.ineligibleReason)
+    /** 교통비만 지급 항목이었고 거리 미달·주소 없음으로 빠진 회차 — 빈 payableItems를 설정 오류로 보지 않는다 */
+    const ineligibleMessage =
+      individualIneligibleMessage(individual?.ineligibleReason) ??
+      (individual && payableItems.length === 0
+        ? (individualTransportIneligibleNotice(individual.transportPreview) ?? undefined)
+        : undefined)
+    const lectureFeeBlockerMessage = lectureFeeSettlementBlockerMessage(lecture?.lectureFeePreview)
+    const institutionMeta = resolveInstitutionMeta(lecture, schedule)
+    const institutionLabel = formatInstitutionLabel(lecture, schedule)
 
     return {
       id: scheduleId != null ? String(scheduleId) : schedule.id,
       scheduleId,
-      sessionNumber: schedule.sessionNumber,
+      ...(lecture?.assignmentId != null ? { assignmentId: lecture.assignmentId } : {}),
+      sessionNumber:
+        lecture?.sessionNo && lecture.sessionNo > 0 ? lecture.sessionNo : schedule.sessionNumber,
       heldAt: schedule.heldAt,
       sessionMeta: formatSettlementSessionMeta(schedule, lecture),
-      ...(formatInstitutionLabel(lecture, schedule)
-        ? { institutionLabel: formatInstitutionLabel(lecture, schedule) }
-        : {}),
+      ...institutionMeta,
+      ...(institutionLabel ? { institutionLabel } : {}),
+      ...(lecture?.startAt != null ? { lectureStartAt: lecture.startAt } : {}),
+      ...(lecture?.endAt != null ? { lectureEndAt: lecture.endAt } : {}),
+      ...(lecture ? { lectureFeePreview: lecture.lectureFeePreview ?? null } : {}),
+      ...(lecture ? { instructorTransportPreview: lecture.instructorTransportPreview ?? null } : {}),
       progress,
       status,
       ...(deadlineAt ? { deadlineAt } : {}),
       ...(submittedAt ? { submittedAt } : {}),
       ...(amount != null ? { amount } : {}),
-      ...(ineligibleMessage ? { submitBlockedReason: ineligibleMessage } : {}),
+      ...(ineligibleMessage
+        ? { submitBlockedReason: ineligibleMessage }
+        : lectureFeeBlockerMessage
+          ? { submitBlockedReason: lectureFeeBlockerMessage }
+          : {}),
       ...(individual?.eligible != null ? { eligible: individual.eligible } : {}),
       ...(evidencePolicyUnconfigured ? { evidencePolicyUnconfigured: true } : {}),
       ...(individual?.submittedItems?.length ? { submittedItems: [...individual.submittedItems] } : {}),
@@ -412,9 +465,12 @@ export function buildAssignedSettlementItems(
           : {}),
       ...(individual?.currentRevisionNo != null
         ? { currentRevisionNo: individual.currentRevisionNo }
-        : {}),
+        : settlement?.revisionNo != null
+          ? { currentRevisionNo: settlement.revisionNo }
+          : {}),
       ...(receipt?.receiptId != null ? { receiptId: receipt.receiptId } : {}),
       ...(payableItems.length > 0 ? { payableItems } : {}),
+      ...(individual?.transportPreview ? { transportPreview: { ...individual.transportPreview } } : {}),
       ...(hasPayableItems != null ? { hasPayableItems } : {}),
       ...(canSubmitReceipt ? { canSubmitReceipt: true } : { canSubmitReceipt: false }),
       ...(individual ? { canResubmitReceipt: individual.canResubmit === true } : {}),

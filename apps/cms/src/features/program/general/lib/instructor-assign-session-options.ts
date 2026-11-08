@@ -2,9 +2,16 @@
  * 참여 기관 회차 일정 → 강사 추가 배정 모달「교육 배정일 선택」태그 옵션
  */
 
-import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
+import {
+  formatCmsScheduleDisplayLabel,
+  formatOrganizationScheduleRangeLabel,
+} from '@/features/program/general/lib/organization-preferred-schedule-label'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import { resolveAssignableSchedulePayloadFromSession } from '@/features/program/general/lib/organization-instructor-assignable-schedule'
+import {
+  formatEducationScheduleUnitLabel,
+  parseConfirmedCurriculumSessionCount,
+} from '@/shared/lib/education-schedule-name'
 
 export interface InstructorAssignSessionOption {
   id: string
@@ -14,7 +21,7 @@ export interface InstructorAssignSessionOption {
   timeLabel?: string
   /** 예: 26년 4월 20일(월) 09:30 ~ 12:20 */
   scheduleLabel: string
-  /** 예: 2차시 */
+  /** 예: 1회차 (2차시) */
   sessionRoundLabel: string
   /** 예: 3명 */
   capacityLabel: string
@@ -49,10 +56,50 @@ function isTimeOnlyScheduleLabel(value: string): boolean {
   return /^\d{1,2}:\d{2}$/.test(start.trim()) && /^\d{1,2}:\d{2}$/.test(end.trim())
 }
 
+function splitRangeDateAndTime(range: string): { dateLabel: string; timeLabel: string } {
+  const match = range.match(/^(\d{4}\.\d{2}\.\d{2}\([^)]+\))\s+(.+)$/u)
+  if (match) return { dateLabel: match[1]!, timeLabel: match[2]! }
+  return { dateLabel: range, timeLabel: '' }
+}
+
+export function resolveAssignmentRoundSessionLabel(
+  session: Pick<
+    ParticipatingSchoolSession,
+    | 'round'
+    | 'sessionNo'
+    | 'classNum'
+    | 'duration'
+    | 'scheduleLabel'
+    | 'scheduleRole'
+    | 'educationSlotKey'
+    | 'curriculumSessionCount'
+  >
+): string {
+  return formatEducationScheduleUnitLabel({
+    sessionNo: session.sessionNo ?? session.round,
+    scheduleRole: session.scheduleRole,
+    educationSlotKey: session.educationSlotKey,
+    curriculumSessionCount:
+      session.curriculumSessionCount ??
+      parseConfirmedCurriculumSessionCount(session.classNum) ??
+      parseConfirmedCurriculumSessionCount(session.duration) ??
+      parseConfirmedCurriculumSessionCount(session.scheduleLabel),
+  })
+}
+
 /** 참여 학교 회차 일정 → 배정 모달 날짜·시간 라벨 */
 export function resolveInstructorAssignSessionDisplayLabels(
   session: ParticipatingSchoolSession
 ): { dateLabel: string; timeLabel: string; scheduleLabel: string } {
+  const fromInstant = formatOrganizationScheduleRangeLabel(session.startAt, session.endAt)
+  if (fromInstant && /\d{1,2}:\d{2}/.test(fromInstant)) {
+    const split = splitRangeDateAndTime(fromInstant)
+    return {
+      dateLabel: split.dateLabel,
+      timeLabel: split.timeLabel,
+      scheduleLabel: fromInstant,
+    }
+  }
   const timeRange = normalizeTimeRangeDisplay(session.timeRange)
   const dateRaw = session.date.trim()
 
@@ -94,7 +141,7 @@ export function mapParticipatingSessionsToInstructorAssignOptions(
       dateLabel: dateLabel || undefined,
       timeLabel,
       scheduleLabel,
-      sessionRoundLabel: `${s.round}차시`,
+      sessionRoundLabel: resolveAssignmentRoundSessionLabel(s),
       capacityLabel: '0명',
       disabled:
         s.status === 'completed' ||

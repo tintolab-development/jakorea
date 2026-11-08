@@ -6,6 +6,7 @@
 
 import { Suspense } from 'react'
 import { Navigate, createBrowserRouter, useLocation, useParams } from 'react-router-dom'
+import { recordRouterHistory } from '@/shared/lib/history-ancestor-navigation'
 import { Layout } from '@/widgets/layout'
 import { ProtectedRoute } from '@/app/components/protected-route'
 import { RouterLoadingFallback } from '@/app/router/loading-fallback'
@@ -962,3 +963,6 @@ export const router = createBrowserRouter([
     ],
   },
 ])
+
+// 풀페이지 상세 브레드크럼·닫기가 지나온 history 엔트리로 되돌아가도록 모든 엔트리 URL 기록
+recordRouterHistory(router)

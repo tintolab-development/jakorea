@@ -34,12 +34,7 @@ export function RegisterStepProgress({
                 {step}
               </span>
               {index < totalSteps - 1 ? (
-                <span
-                  className={`register-step-progress__line${
-                    step < currentStep ? ' register-step-progress__line--active' : ''
-                  }`}
-                  aria-hidden
-                />
+                <span className="register-step-progress__line" aria-hidden />
               ) : null}
             </li>
           )

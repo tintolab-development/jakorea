@@ -3,10 +3,10 @@
  * 치수·그림자·패딩은 ContentModal `modalStyles`(Ant Design `styles`)로 인라인 적용
  */
 
-/* 헤더 타이틀 ↔ 본문 문구 16px (teal-header-modal__body 기본 padding-top !important 무력화 후 margin으로 간격) */
+/* 헤더 타이틀 ↔ 본문 문구 12px (teal-header-modal__body 기본 padding-top !important 무력화 후 margin으로 간격) */
 .ant-modal.teal-header-modal.content-modal.account-payment-complete-success-modal
   .teal-header-modal__body {
-  margin-top: 16px !important;
+  margin-top: 12px !important;
   padding-top: 0 !important;
 }
 

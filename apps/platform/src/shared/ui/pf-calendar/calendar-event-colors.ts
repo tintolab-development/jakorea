@@ -15,5 +15,5 @@ export const CALENDAR_EVENT_COLORS: Record<CalendarLegendItem['key'], CalendarEv
   survey: { accent: '#FA8484', background: '#FFE3E3' },
   receipt: { accent: '#9EE9F7', background: '#E3FAFF' },
   education: { accent: '#C593FF', background: '#E0E7FF' },
-  program: { accent: '#9FE35B', background: '#E7F7D7' },
+  lecture_report_deadline: { accent: '#F07917', background: '#FFE8D4' },
 }

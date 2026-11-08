@@ -7,7 +7,7 @@
 import { calendarListItemBackground } from '@/shared/components/calendar/lib/calendar-list-item-background'
 import { Card, List, Popover } from 'antd'
 import { LeftOutlined, RightOutlined } from '@ant-design/icons'
-import { useState, useMemo, useRef, useLayoutEffect, Fragment, type ReactElement } from 'react'
+import { useState, useMemo, Fragment, type ReactElement } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { LoadingButton } from '@/shared/ui'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
@@ -34,7 +34,9 @@ import { DashboardWidgetQueryError } from './dashboard-widget-query-error'
 import { shouldUseCompanySchoolRemoteApi } from '@/features/program/1c-1s/api/capabilities'
 import { useCompanySchoolPrograms } from '@/features/program/1c-1s/api/hooks'
 
-const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const
+/** 피그마: 2단(반폭)은 한 글자, 1단(전폭)은 '일요일' 형태 */
+const WEEKDAY_LABELS_SHORT = ['일', '월', '화', '수', '목', '금', '토'] as const
+const WEEKDAY_LABELS_LONG = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'] as const
 
 /** 월간 헤더로 월을 바꾼 뒤 선택일: 이번 달(년·월)이면 오늘, 그 밖이면 해당 월 1일 */
 function selectedDateAfterMonthNavigation(visibleMonth: Dayjs): Dayjs {
@@ -346,32 +348,6 @@ function buildEventsForDate(
   })
 }
 
-/** 대시보드 SortableWidgetSlot의 data-col-span(50% = 12) — CSS만으로는 적용이 어긋날 수 있어 DOM으로 동기화 */
-function useDashboardHalfColumnSlot() {
-  const cardRef = useRef<HTMLDivElement>(null)
-  const [halfColumn, setHalfColumn] = useState(false)
-
-  useLayoutEffect(() => {
-    const root = cardRef.current
-    if (!root) {
-      setHalfColumn(false)
-      return
-    }
-    const slot = root.closest('.dashboard-widget-slot')
-    if (!slot) {
-      setHalfColumn(false)
-      return
-    }
-    const sync = () => setHalfColumn(slot.getAttribute('data-col-span') === '12')
-    sync()
-    const mo = new MutationObserver(sync)
-    mo.observe(slot, { attributes: true, attributeFilter: ['data-col-span'] })
-    return () => mo.disconnect()
-  }, [])
-
-  return { cardRef, halfColumn }
-}
-
 export interface ProgramScheduleWidgetProps {
   variant: ProgramScheduleKind
   widgetKey: string
@@ -379,6 +355,8 @@ export interface ProgramScheduleWidgetProps {
   viewAllPath: string
   /** ACL: 비마스터는 담당 프로그램만 모집 일정에 반영 */
   user?: Omit<User, 'password'> | null
+  /** 부모 슬롯의 최종 너비 */
+  isHalfColumn?: boolean
 }
 
 export function ProgramScheduleWidget({
@@ -387,9 +365,9 @@ export function ProgramScheduleWidget({
   title,
   viewAllPath,
   user,
+  isHalfColumn = false,
 }: ProgramScheduleWidgetProps) {
   const navigate = useNavigate()
-  const { cardRef, halfColumn } = useDashboardHalfColumnSlot()
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs())
   const [currentMonth, setCurrentMonth] = useState<Dayjs>(dayjs().startOf('month'))
   const [viewMode, setViewMode] = useState<'month' | 'week'>('month')
@@ -618,7 +596,7 @@ export function ProgramScheduleWidget({
         onClick={() => handleDateSelect(date)}
       >
         <div className="program-calendar-cell-date">{date.date()}</div>
-        {hasEvents && !halfColumn && (
+        {hasEvents && !isHalfColumn && (
           <div className="program-schedule-widget__cell-badges">
             {isSingleBlock ? (
               <ProgramScheduleEventPreviewPopover
@@ -696,12 +674,14 @@ export function ProgramScheduleWidget({
     return <Fragment key={dateKey}>{monthCell}</Fragment>
   }
 
+  const weekdayLabels = isHalfColumn ? WEEKDAY_LABELS_SHORT : WEEKDAY_LABELS_LONG
+
   const renderMonthGrid = () => {
     const monthDates = visibleDateRange as Dayjs[]
     return (
       <div className="program-schedule-widget__month-grid-wrap">
         <div className="program-schedule-widget__month-grid program-schedule-widget__month-grid--dow-row">
-          {WEEKDAY_LABELS.map(day => (
+          {weekdayLabels.map(day => (
             <div key={day} className="program-schedule-widget__month-grid-dow" role="columnheader">
               {day}
             </div>
@@ -744,7 +724,7 @@ export function ProgramScheduleWidget({
   const renderWeekView = () => (
     <div className="program-calendar-week">
       <div className="program-calendar-week-header">
-        {WEEKDAY_LABELS.map(day => (
+        {weekdayLabels.map(day => (
           <div key={day} className="program-calendar-week-header-cell">
             {day}
           </div>
@@ -757,9 +737,9 @@ export function ProgramScheduleWidget({
           const isToday = date.isSame(dayjs(), 'day')
           const dayEvents = eventsByDate[dateKey] || []
           // 피그마: 2단(색상 바)은 하루 최대 3개, 1단은 2개
-          const programIds = getDisplayProgramIds(dayEvents, halfColumn ? 3 : 2)
+          const programIds = getDisplayProgramIds(dayEvents, isHalfColumn ? 3 : 2)
           const hasEvents = programIds.length > 0
-          const weekColorOnly = halfColumn
+          const weekColorOnly = isHalfColumn
           // '외 N개의 항목' = 화면에 안 보이는 일정 수 (1단: 2건 이후, 2단: 표시된 프로그램에 속하지 않는 일정)
           const hiddenEventCount = weekColorOnly
             ? dayEvents.filter(ev => !programIds.includes(ev.programId)).length
@@ -945,14 +925,13 @@ export function ProgramScheduleWidget({
   const cardClassName = [
     'program-schedule-widget',
     viewMode === 'week' ? 'program-schedule-widget--week-view' : '',
-    halfColumn ? 'program-schedule-widget--dashboard-half' : '',
+    isHalfColumn ? 'program-schedule-widget--dashboard-half' : '',
   ]
     .filter(Boolean)
     .join(' ')
 
   return (
     <Card
-      ref={cardRef}
       variant="borderless"
       title={
         <div className="program-schedule-widget__head-row">

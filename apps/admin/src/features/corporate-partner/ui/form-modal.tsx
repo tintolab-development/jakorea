@@ -19,8 +19,12 @@ import {
   FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
   isFileSelectTotalSizeExceeded,
   notifyFileSelectTotalSizeExceeded,
+  ThumbnailPlaceholder,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   useCmsAlert,
 } from '@/shared/ui'
+import { getCorporatePartnerById } from '@/features/corporate-partner/api/service'
+import { resolveCorporatePartnerLogoFileName } from '@/features/corporate-partner/lib/logo-display-name'
 
 import './form-modal.css'
 
@@ -28,7 +32,7 @@ const IMAGE_ACCEPT =
   '.jpg,.jpeg,.png,.ai,.eps,.svg,image/jpeg,image/png,image/svg+xml,application/postscript,application/illustrator'
 const IMAGE_GUIDE_LINES = [
   '- 파일은 JPG, PNG, AI, EPS, SVG 형식만 등록 가능하며, 최대 20MB까지 첨부할 수 있습니다.',
-  '- 권장 로고 사이즈는 300 × 110px입니다.',
+  '- 권장 배너 사이즈는 300 × 110px입니다.',
 ]
 
 /** Notion / 시안 description */
@@ -53,7 +57,7 @@ const PartnerNameField = memo(function PartnerNameField({
   return (
     <div>
       <CmsInput
-        inputSize="large"
+        inputSize="medium"
         width="100%"
         placeholder="기업명을 입력해 주세요"
         value={value}
@@ -131,27 +135,10 @@ function readFileAsDataUrl(file: File): Promise<string> {
   })
 }
 
-function ImagePlaceholderIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="48"
-      height="48"
-      viewBox="0 0 48 48"
-      fill="none"
-      aria-hidden
-    >
-      <rect x="6" y="10" width="36" height="28" rx="3" stroke="#BDBDBD" strokeWidth="2" />
-      <circle cx="17" cy="20" r="3" fill="#BDBDBD" />
-      <path
-        d="M8 32L18 24L24 29L32 20L40 32"
-        stroke="#BDBDBD"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
+function logoAttachmentDisplayNames(logoUrl: string, logoFileName: string): string[] {
+  if (!logoUrl.trim() && !logoFileName.trim()) return []
+  const name = resolveCorporatePartnerLogoFileName(logoFileName || undefined, logoUrl || undefined)
+  return name ? [name] : []
 }
 
 export type CorporatePartnerFormValues = CorporatePartnerCreateInput
@@ -162,6 +149,7 @@ type FormBodyProps = {
   /** 현재 전체 후원사 수 (create: max=n+1, edit: max=n) */
   totalCount: number
   confirmLoading?: boolean
+  serverSortOrderError?: string
   onCancel: () => void
   onSubmit: (values: CorporatePartnerFormValues) => void
 }
@@ -171,6 +159,7 @@ function CorporatePartnerFormBody({
   initial,
   totalCount,
   confirmLoading,
+  serverSortOrderError,
   onCancel,
   onSubmit,
 }: FormBodyProps) {
@@ -184,7 +173,12 @@ function CorporatePartnerFormBody({
   const [logoUrl, setLogoUrl] = useState(() => (mode === 'edit' && initial ? initial.logoUrl : ''))
   const [logoFile, setLogoFile] = useState<File | undefined>(undefined)
   const [logoFileName, setLogoFileName] = useState(() =>
-    mode === 'edit' && initial ? (initial.logoFileName ?? '') : ''
+    mode === 'edit' && initial
+      ? resolveCorporatePartnerLogoFileName(initial.logoFileName, initial.logoUrl)
+      : ''
+  )
+  const [logoAssetId, setLogoAssetId] = useState<number | undefined>(() =>
+    mode === 'edit' && initial ? initial.logoAssetId : undefined
   )
   const initialName = mode === 'edit' && initial ? initial.name : ''
   const nameRef = useRef(initialName)
@@ -195,6 +189,31 @@ function CorporatePartnerFormBody({
     sortOrder?: string
   }>({})
 
+  useEffect(() => {
+    if (!serverSortOrderError) return
+    setErrors(prev => ({ ...prev, sortOrder: serverSortOrderError }))
+  }, [serverSortOrderError])
+
+  useEffect(() => {
+    if (mode !== 'edit' || !initial?.id) return
+    let cancelled = false
+    void getCorporatePartnerById(initial.id)
+      .then(partner => {
+        if (cancelled) return
+        setLogoUrl(partner.logoUrl)
+        setLogoFileName(
+          resolveCorporatePartnerLogoFileName(partner.logoFileName, partner.logoUrl)
+        )
+        setLogoAssetId(partner.logoAssetId)
+      })
+      .catch(() => {
+        /* 목록 row + URL 파생 파일명으로 표시 유지 */
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [initial?.id, mode])
+
   const handleNameChange = useCallback((value: string) => {
     nameRef.current = value
     setErrors(prev => {
@@ -203,8 +222,8 @@ function CorporatePartnerFormBody({
     })
   }, [])
 
-  /** 시안: * 1부터 N 사이의 숫자를 입력해 주세요. */
-  const sortHelper = `* 1부터 ${maxOrder} 사이의 숫자를 입력해 주세요.`
+  /** Figma 36:48360 — ※ 1부터 N 사이의 숫자를 입력해 주세요. */
+  const sortHelper = `※ 1부터 ${maxOrder} 사이의 숫자를 입력해 주세요.`
 
   /** 노출 순서 입력값 1…maxOrder 범위로 정규화 (빈 문자열은 허용 — 입력 중) */
   const normalizeSortOrderInput = useCallback(
@@ -262,20 +281,19 @@ function CorporatePartnerFormBody({
     setLogoUrl('')
     setLogoFile(undefined)
     setLogoFileName('')
+    setLogoAssetId(undefined)
   }, [])
 
   const handleSubmit = useCallback(() => {
     const name = nameRef.current
     const nextErrors: typeof errors = {}
-    if (!logoUrl.trim()) {
-      nextErrors.logo = '로고 이미지를 등록해 주세요.'
-    }
-    if (!name.trim()) {
-      nextErrors.name = '기업명을 입력해 주세요.'
+    if (!logoUrl.trim() || !name.trim()) {
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+      return
     }
     const orderNum = Math.floor(Number(sortOrder))
     if (!Number.isFinite(orderNum) || orderNum < 1 || orderNum > maxOrder) {
-      nextErrors.sortOrder = `* 1부터 ${maxOrder} 사이의 숫자를 입력해 주세요.`
+      nextErrors.sortOrder = `※ 1부터 ${maxOrder} 사이의 숫자를 입력해 주세요.`
     }
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors)
@@ -286,11 +304,12 @@ function CorporatePartnerFormBody({
       isPublic,
       logoUrl: logoUrl.trim(),
       logoFile,
+      logoAssetId,
       logoFileName: logoFileName || undefined,
       name: name.trim(),
       sortOrder: orderNum,
     })
-  }, [isPublic, logoFile, logoFileName, logoUrl, maxOrder, onSubmit, sortOrder])
+  }, [isPublic, logoAssetId, logoFile, logoFileName, logoUrl, maxOrder, onSubmit, showAlert, sortOrder])
 
   const title = mode === 'edit' ? '후원사 수정' : '후원사 등록'
   const confirmLabel = mode === 'edit' ? '저장' : '등록'
@@ -307,7 +326,7 @@ function CorporatePartnerFormBody({
         <>
           <CmsButton
             variant="secondary"
-            size="medium"
+            size="h40"
             type="button"
             onClick={onCancel}
             disabled={confirmLoading}
@@ -316,7 +335,7 @@ function CorporatePartnerFormBody({
           </CmsButton>
           <CmsButton
             variant="primary"
-            size="medium"
+            size="h40"
             type="button"
             loading={confirmLoading}
             disabled={confirmLoading}
@@ -363,14 +382,18 @@ function CorporatePartnerFormBody({
               <div>
                 <div className="file-select-image-cell">
                   <div className="file-select-image-cell__preview">
-                    {logoUrl ? <img src={logoUrl} alt="로고 미리보기" /> : <ImagePlaceholderIcon />}
+                    {logoUrl ? (
+                      <img src={logoUrl} alt="로고 미리보기" />
+                    ) : (
+                      <ThumbnailPlaceholder />
+                    )}
                   </div>
                   <FileSelectField
                     className="corporate-partner-form-modal__file-field"
                     multiple={false}
                     accept={IMAGE_ACCEPT}
                     buttonLabel="파일 추가"
-                    fileNames={logoFileName ? [logoFileName] : []}
+                    fileNames={logoAttachmentDisplayNames(logoUrl, logoFileName)}
                     maxTotalBytes={FILE_SELECT_IMAGE_MAX_TOTAL_BYTES}
                     onFilesChange={files => {
                       void handleFilesChange(files)
@@ -411,7 +434,7 @@ function CorporatePartnerFormBody({
               <div>
                 <div className="corporate-partner-form-modal__sort-row">
                   <CmsInput
-                    inputSize="large"
+                    inputSize="medium"
                     width={160}
                     inputMode="numeric"
                     min={1}
@@ -455,6 +478,7 @@ export function CorporatePartnerFormModal({
   initial,
   totalCount,
   confirmLoading,
+  serverSortOrderError,
   onCancel,
   onSubmit,
 }: {
@@ -463,6 +487,7 @@ export function CorporatePartnerFormModal({
   initial?: CorporatePartner | null
   totalCount: number
   confirmLoading?: boolean
+  serverSortOrderError?: string
   onCancel: () => void
   onSubmit: (values: CorporatePartnerFormValues) => void
 }) {
@@ -477,6 +502,7 @@ export function CorporatePartnerFormModal({
       initial={initial}
       totalCount={totalCount}
       confirmLoading={confirmLoading}
+      serverSortOrderError={serverSortOrderError}
       onCancel={onCancel}
       onSubmit={onSubmit}
     />

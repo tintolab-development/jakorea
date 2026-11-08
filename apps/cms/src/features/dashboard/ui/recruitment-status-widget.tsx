@@ -1,6 +1,6 @@
 /**
  * 모집 신청 현황 위젯
- * 프로그램별 모집 현황 테이블: 프로그램명, 모집 신청 현황, 참여자 모집 현황, 봉사단 모집 현황
+ * 프로그램별 모집 현황 테이블: 프로그램명, 모집 신청 현황, 참여자 모집 현황, 봉사자 모집 현황
  * td: 지원자수/전체수 nn/nn 형식 (건 단위 없음)
  * 모집 신청 현황 컬럼: dashboard recruitments.recruitmentStatus 라벨 (lifecycle 매핑 없음)
  */
@@ -8,9 +8,11 @@
 import { Card, Typography } from 'antd'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
-import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { LoadingButton } from '@/shared/ui'
+import { StatusBadge } from '@/shared/components/status-badge'
+import { PROGRAM_RECRUITMENT_APPLICATION_TEXT_COLORS } from '@/shared/constants/status'
 import {
   formatDashboardHeaderTotalCount,
   formatRecruitmentCount,
@@ -32,36 +34,29 @@ import './dashboard-widget-table.css'
 const { Text } = Typography
 
 const WIDGET_KEY = 'recruitment-status-widget'
+
+/** 시안 톤: 모집 예정 green · 모집 중 blue · 그 외 기본 (모집 신청 현황 색 정본 재사용) */
+function recruitmentWindowAccentColor(status?: string | null): string {
+  const upper = status?.trim().toUpperCase() ?? ''
+  if (upper === 'SCHEDULED' || upper === 'PLANNED') {
+    return PROGRAM_RECRUITMENT_APPLICATION_TEXT_COLORS.scheduled
+  }
+  if (upper === 'OPEN' || upper === 'RECRUITING' || upper.startsWith('RECRUITING_')) {
+    return PROGRAM_RECRUITMENT_APPLICATION_TEXT_COLORS.recruiting
+  }
+  return PROGRAM_RECRUITMENT_APPLICATION_TEXT_COLORS.completed
+}
 const EMPTY_IDS: string[] = []
 
-export function RecruitmentStatusWidget() {
+export function RecruitmentStatusWidget({ isHalfColumn = false }: { isHalfColumn?: boolean }) {
   const navigate = useNavigate()
-  const cardRef = useRef<HTMLDivElement>(null)
-  const [halfColumn, setHalfColumn] = useState(false)
   const allowedProgramIds =
     useDashboardSettingsStore(s => s.widgetProgramIds[WIDGET_KEY]) ?? EMPTY_IDS
   const { data, isLoading: loading, isError } = useRecruitmentStatusList(allowedProgramIds)
   const programs = data?.rows ?? []
   /** 시안 100% 13192:232449 — 프로그램명 가변 + 200/200/200, 50% 12360:299527 — 가변 + 180/120/120 */
-  const statusColumnWidth = halfColumn ? 180 : 200
-  const countColumnWidth = halfColumn ? 120 : 200
-  useLayoutEffect(() => {
-    const root = cardRef.current
-    if (!root) {
-      setHalfColumn(false)
-      return
-    }
-    const slot = root.closest('.dashboard-widget-slot')
-    if (!slot) {
-      setHalfColumn(false)
-      return
-    }
-    const sync = () => setHalfColumn(slot.getAttribute('data-col-span') === '12')
-    sync()
-    const mo = new MutationObserver(sync)
-    mo.observe(slot, { attributes: true, attributeFilter: ['data-col-span'] })
-    return () => mo.disconnect()
-  }, [])
+  const statusColumnWidth = isHalfColumn ? 180 : 200
+  const countColumnWidth = isHalfColumn ? 120 : 200
 
   const totalCountLabel = formatDashboardHeaderTotalCount(data?.totalCount ?? null)
 
@@ -86,7 +81,14 @@ export function RecruitmentStatusWidget() {
         align: 'center',
         className: 'dashboard-widget-table__cell--status',
         render: (_: unknown, record: DashboardRecruitmentRow) =>
-          formatRecruitmentWindowStatus(record.recruitmentWindowStatus),
+          (
+            <StatusBadge
+              domain="custom"
+              variant="text"
+              label={formatRecruitmentWindowStatus(record.recruitmentWindowStatus)}
+              accentColor={recruitmentWindowAccentColor(record.recruitmentWindowStatus)}
+            />
+          ),
       },
       {
         title: '참여자 모집 현황',
@@ -97,7 +99,7 @@ export function RecruitmentStatusWidget() {
           formatRecruitmentCount(record.participantApplied, record.participantCapacity),
       },
       {
-        title: '봉사단 모집 현황',
+        title: '봉사자 모집 현황',
         key: 'instructorRecruitment',
         width: countColumnWidth,
         align: 'center',
@@ -110,7 +112,6 @@ export function RecruitmentStatusWidget() {
 
   return (
     <Card
-      ref={cardRef}
       className="dashboard-widget-table dashboard-widget-table--recruitment"
       title={
         <WidgetTitleWithHandle>
@@ -135,6 +136,8 @@ export function RecruitmentStatusWidget() {
         <DashboardWidgetQueryError />
       ) : (
         <CmsDataTable<DashboardRecruitmentRow>
+          /* 반폭 카드 안 표 — 공통 1080 하한 미적용, 열 합·카드 폭 기준 */
+          minTableWidthFloor={0}
           columns={columns}
           dataSource={programs}
           rowKey="id"

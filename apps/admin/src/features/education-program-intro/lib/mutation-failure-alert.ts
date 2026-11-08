@@ -1,11 +1,8 @@
-import {
-  type AdminMutationAlert,
-  mapCommonRemoteMutationFailure,
-} from '@/shared/lib/api-error-message'
-import { REQUIRED_FIELDS_INCOMPLETE_ALERT } from '@/shared/ui'
+import { type AdminMutationAlert } from '@/shared/lib/api-error-message'
+import { mapAdminMutationAlert, REQUIRED_FIELDS_INCOMPLETE_ALERT } from '@/shared/ui'
 
 export function educationProgramIntroMutationFailureAlert(error: unknown): AdminMutationAlert {
-  const common = mapCommonRemoteMutationFailure(error)
+  const common = mapAdminMutationAlert(error)
   if (common) return common
 
   if (error instanceof Error && /이미지를 등록|assetId/.test(error.message)) {

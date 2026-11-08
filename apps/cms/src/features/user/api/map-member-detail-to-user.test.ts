@@ -318,7 +318,7 @@ describe('mapInstructorMemberDetailToUser', () => {
     expect(user.affiliatedSchoolName).toBe('진월초등학교')
     // GENERAL은 학교명만으로 dual(교사 상세)로 올리지 않음
     expect(user.instructorMemberProfile).toBe('instructor_only')
-    expect(user.listMetrics?.employmentStatusLabel).toBe('재직중')
+    expect(user.listMetrics?.employmentStatusLabel).toBe('재직 중')
   })
 
   it('CMS profile.affiliation.schoolName을 affiliatedSchoolName·담당 학년에 매핑한다', () => {
@@ -357,7 +357,7 @@ describe('mapInstructorMemberDetailToUser', () => {
 
     expect(user.affiliatedSchoolName).toBe('진월초등학교')
     expect(user.instructorMemberProfile).toBe('school_teacher')
-    expect(user.listMetrics?.employmentStatusLabel).toBe('재직중')
+    expect(user.listMetrics?.employmentStatusLabel).toBe('재직 중')
     expect(user.listMetrics?.instructorAssignedGrade).toBe('4학년')
     expect(user.instructorCmsProfile?.affiliation.schoolName).toBe('진월초등학교')
   })
@@ -498,6 +498,30 @@ describe('mapInstructorMemberDetailToUser', () => {
       accountNumber: '1002859723089',
       accountHolder: '김성명',
     })
+  })
+
+  it('계좌가 없으면 instructorInfo 계좌를 이름으로 채우지 않는다', () => {
+    const user = mapInstructorMemberDetailToUser(
+      baseInstructorDetail({
+        member: {
+          memberId: 101,
+          uuid: 'instructor-uuid',
+          email: 'i@example.com',
+          name: '김강사',
+          roles: ['INSTRUCTOR'],
+          status: 'ACTIVE',
+        },
+        instructorProfile: {
+          memberId: 101,
+          primaryActivityType: 'GENERAL',
+          businessIncomeYn: false,
+        },
+      })
+    )
+
+    expect(user.instructorInfo?.bankName).toBe('')
+    expect(user.instructorInfo?.accountNumber).toBe('')
+    expect(user.instructorInfo?.accountHolder).toBe('')
   })
 
   it('SCHOOL_TEACHER여도 루트 계좌를 instructorInfo에 매핑한다', () => {
@@ -760,6 +784,6 @@ describe('mapTeacherMemberDetailToUser', () => {
     expect(user.organizationId).toBe(12)
     expect(user.instructorMemberProfile).toBe('school_teacher')
     expect(user.affiliatedSchoolName).toBe('진월초등학교')
-    expect(user.listMetrics?.employmentStatusLabel).toBe('재직중')
+    expect(user.listMetrics?.employmentStatusLabel).toBe('재직 중')
   })
 })

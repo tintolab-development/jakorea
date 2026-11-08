@@ -10,6 +10,7 @@ export interface SurveyShareLinkResponse {
   shareLinkId?: number;
   programId?: number;
   bindingId?: number;
+  formType?: string;
   templateVersionId?: number;
   accessMode?: string;
   shareToken?: string;

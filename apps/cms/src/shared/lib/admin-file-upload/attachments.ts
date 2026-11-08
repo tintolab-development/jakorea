@@ -200,6 +200,7 @@ async function readDownloadBlob(downloadUrl: string, headers: Record<string, str
 type SensitiveRelayClaim = {
   relayToken?: string | null
   streamUrl?: string | null
+  containedPiiTypes?: string[] | null
 }
 
 /** responseType blob 오류 본문(JSON Blob)을 error.response.data 객체로 복원한다. */
@@ -238,7 +239,9 @@ export async function loadSensitiveAdminFileBlob(input: {
   fileObjectId: number
   reason: string
   claimPath?: string | null
+  password?: string
 }): Promise<Blob> {
+  const password = input.password?.trim()
   const claimPath =
     input.claimPath?.trim() || `/api/admin/files/${input.fileObjectId}/sensitive-downloads`
   const claim = unwrapApiBody<SensitiveRelayClaim>(
@@ -246,7 +249,7 @@ export async function loadSensitiveAdminFileBlob(input: {
       {
         url: claimPath,
         method: 'POST',
-        data: { reason: input.reason },
+        data: { reason: input.reason, ...(password ? { password } : {}) },
       },
       { skipGlobalErrorAlert: true }
     )
@@ -265,7 +268,11 @@ export async function loadSensitiveAdminFileBlob(input: {
       {
         url: streamUrl,
         method: 'POST',
-        data: { reason: input.reason, relayToken },
+        headers: {
+          Accept:
+            'application/pdf, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/zip, application/octet-stream, application/json, */*',
+        },
+        data: { reason: input.reason, relayToken, ...(password ? { password } : {}) },
         responseType: 'blob',
       },
       { skipGlobalErrorAlert: true }
@@ -293,7 +300,24 @@ export async function loadAdminFileBlob(
   return readDownloadBlob(downloadUrl, headerRecord(resolved.requiredHeaders))
 }
 
-/** 파일 다운로드 API가 준 주소로 원본 파일을 저장한다. */
+/**
+ * 서버 relay가 받는 시점에 file-access 이력(DOWNLOAD_COMPLETED)을 남기는 주소인지.
+ * 현재는 포털 제출 지출 증빙 `/api/admin/files/expense-receipts/{id}/relay/{token}` 만 해당한다.
+ */
+export function isServerRecordedRelayDownloadUrl(downloadUrl: string): boolean {
+  try {
+    const { pathname } = new URL(downloadUrl, 'http://localhost')
+    return /^\/api\/admin\/files\/expense-receipts\/\d+\/relay\/[^/]+\/?$/.test(pathname)
+  } catch {
+    return false
+  }
+}
+
+/**
+ * 파일 다운로드 API가 준 주소로 원본 파일을 저장한다.
+ * 일반 파일은 서버가 URL 발급만 기록하므로 client 이력을 남기고,
+ * 서버 relay가 기록하는 주소(지출 증빙)는 client 이력을 생략한다.
+ */
 export async function downloadAdminFile(input: {
   fileObjectId: number
   fileName: string
@@ -314,7 +338,9 @@ export async function downloadAdminFile(input: {
     }
     throw new Error('첨부파일 다운로드에 실패했습니다.')
   }
-  await downloadBlob(blob, fileName)
+  await downloadBlob(blob, fileName, {
+    skipAccessLog: isServerRecordedRelayDownloadUrl(downloadUrl),
+  })
 }
 
 export function getFileContentPath(fileObjectId: number): string {

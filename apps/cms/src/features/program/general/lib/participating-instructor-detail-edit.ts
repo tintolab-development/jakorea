@@ -19,7 +19,7 @@ export interface ParticipatingInstructorEditDraft {
   lectureFeeMeasure: string
   lectureFeeAmount: string
   instructorFeeGrade: string
-  businessIncomeEarnerStatus: ApplicantInstructorBusinessIncomeStatus
+  businessIncomeEarnerStatus?: ApplicantInstructorBusinessIncomeStatus
 }
 
 export interface ParticipatingInstructorDetailSavePayload {
@@ -41,6 +41,8 @@ export const participatingInstructorEditSchema = z
     businessIncomeEarnerStatus: z.enum(['해당', '해당 없음']),
   })
   .superRefine((data, ctx) => {
+    /** 프로그램 기준 — 단위·금액 입력 비활성, 필수 아님 */
+    if (data.lectureFeeBasisType === 'program') return
     if (parseLectureFeeAmountDigits(data.lectureFeeAmount)) return
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
@@ -49,7 +51,9 @@ export const participatingInstructorEditSchema = z
     })
   })
 
-export type ParticipatingInstructorEditFormValues = z.infer<typeof participatingInstructorEditSchema>
+export type ParticipatingInstructorEditFormValues = z.infer<
+  typeof participatingInstructorEditSchema
+>
 
 function inferLectureFeeBasisTypeFromCategory(
   category: string
@@ -77,7 +81,10 @@ export function resolveLectureFeeBasisFromParticipatingRow(
   if (display) {
     const inferred = inferLectureFeeBasisTypeFromCategory(display)
     if (inferred === 'program') {
-      const segments = display.split('|').map(s => s.trim()).filter(Boolean)
+      const segments = display
+        .split('|')
+        .map(s => s.trim())
+        .filter(Boolean)
       const amountSegment = segments.find(s => /[\d,]+/.test(s))
       return {
         type: 'program',
@@ -86,20 +93,20 @@ export function resolveLectureFeeBasisFromParticipatingRow(
       }
     }
 
-    const segments = display.split('|').map(s => s.trim()).filter(Boolean)
+    const segments = display
+      .split('|')
+      .map(s => s.trim())
+      .filter(Boolean)
     const type =
       inferred ??
       (segments[0]?.includes('특강')
         ? 'special_lecture'
         : segments[0]?.includes('기타')
           ? 'other_labor'
-          : 'special_lecture')
+          : 'program')
     const amountSegment = segments.find(s => /[\d,]+/.test(s)) ?? segments[segments.length - 1]
     const measureSegment = segments.find(
-      s =>
-        s === '출강 1회당' ||
-        s === '1시간 당' ||
-        s === '1회 기준'
+      s => s === '출강 1회당' || s === '1시간 당' || s === '1회 기준'
     )
 
     return {
@@ -120,9 +127,9 @@ export function resolveLectureFeeBasisFromParticipatingRow(
   }
 
   return {
-    type: inferred ?? 'special_lecture',
-    measure: DEFAULT_LECTURE_FEE_MEASURE,
-    amount: parseLectureFeeAmountDigits(row.lectureFeeAmount) || '915000',
+    type: inferred ?? 'program',
+    measure: LECTURE_FEE_MEASURE_NOT_APPLICABLE,
+    amount: parseLectureFeeAmountDigits(row.lectureFeeAmount),
   }
 }
 
@@ -185,10 +192,8 @@ export function parseParticipatingInstructorEditDraft(
   return { success: false, errors }
 }
 
-/** 강의비·등급 뷰 컴포넌트(`ApplicantInstructorRow`) 재사용용 어댑터 */
-export function participatingRowToApplicantFeeViewRow(
-  row: ParticipatingInstructorRow
-): {
+/** 강사비·등급 뷰 컴포넌트(`ApplicantInstructorRow`) 재사용용 어댑터 */
+export function participatingRowToApplicantFeeViewRow(row: ParticipatingInstructorRow): {
   lectureFeeBasisType?: ApplicantInstructorLectureFeeBasisType
   lectureFeeMeasure?: string
   lectureFeeAmount?: string
@@ -197,9 +202,14 @@ export function participatingRowToApplicantFeeViewRow(
   businessIncomeEarnerStatus?: string
 } {
   const fee = resolveLectureFeeBasisFromParticipatingRow(row)
+  const hasRecordedBasis =
+    Boolean(row.lectureFeeBasisType) ||
+    Boolean(row.lectureFeeBasisDisplay?.trim()) ||
+    Boolean(row.lectureFeeCategory?.trim()) ||
+    Boolean(parseLectureFeeAmountDigits(row.lectureFeeAmount))
   return {
-    lectureFeeBasisType: fee.type,
-    lectureFeeMeasure: fee.measure,
+    lectureFeeBasisType: hasRecordedBasis ? fee.type : undefined,
+    lectureFeeMeasure: row.lectureFeeMeasure?.trim() || fee.measure,
     lectureFeeAmount: fee.amount,
     lectureFeeBasisDisplay:
       row.lectureFeeBasisDisplay?.trim() ||
@@ -209,6 +219,8 @@ export function participatingRowToApplicantFeeViewRow(
   }
 }
 
-export function formatParticipatingLectureFeeAmountDisplay(amountDigits: string | undefined): string {
+export function formatParticipatingLectureFeeAmountDisplay(
+  amountDigits: string | undefined
+): string {
   return formatLectureFeeAmountWon(amountDigits)
 }

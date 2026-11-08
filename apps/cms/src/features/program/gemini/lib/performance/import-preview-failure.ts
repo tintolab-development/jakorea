@@ -2,14 +2,56 @@ import type { GeminiTrainingReportImportResult } from '@/shared/api/generated/da
 import { isGeminiPerformancePaidBlockedText } from '@/features/program/gemini/lib/performance/import-paid-duplicate'
 import {
   formatGeminiPaymentExclusionReason,
-  isGeminiInstructorSoftPaymentExclusion,
+  isGeminiInstructorPerformanceOnlyExclusion,
 } from '@/features/program/gemini/lib/performance/payment-exclusion'
 
+const GEMINI_INSTRUCTOR_FAILURE_CODES = [
+  'GEMINI_INSTRUCTOR_NOT_MATCHED',
+  'GEMINI_INSTRUCTOR_IDENTITY_MISMATCH',
+  'GEMINI_INSTRUCTOR_MATCH_AMBIGUOUS',
+  'GEMINI_INSTRUCTOR_NAME_AND_PHONE_REQUIRED',
+  'GEMINI_INSTRUCTOR_PHONE_INVALID',
+] as const
+
+export type GeminiImportPreviewFailureKind = 'INSTRUCTOR_INFO_MISMATCH' | 'GENERAL'
+
+export class GeminiImportPreviewFailureError extends Error {
+  kind: GeminiImportPreviewFailureKind
+
+  constructor(message: string, kind: GeminiImportPreviewFailureKind) {
+    super(message)
+    this.name = 'GeminiImportPreviewFailureError'
+    this.kind = kind
+  }
+}
+
+export function hasGeminiInstructorInfoMismatchFailures(
+  results: GeminiTrainingReportImportResult[] | undefined
+): boolean {
+  return (results ?? []).some(
+    result =>
+      !isGeminiImportResultSuccess(result) &&
+      GEMINI_INSTRUCTOR_FAILURE_CODES.some(code => result.message?.includes(code))
+  )
+}
+
 function describeFailure(message: string): string {
+  if (message.includes('GEMINI_TRAINING_REPORT_DUPLICATE_IN_FILE')) {
+    // BE가 메시지 끝에 「(N행과 중복)」으로 먼저 나온 행 번호를 붙인다.
+    const origin = /\((\d+)행과 중복\)/.exec(message)?.[0]
+    const base = '같은 파일 안에 프로그램·강사·교육일·시작시간·장소가 같은 행이 있습니다.'
+    return origin ? `${base} ${origin}` : base
+  }
+  if (message.includes('GEMINI_INSTRUCTOR_PHONE_INVALID')) {
+    return '강사 연락처 형식이 올바르지 않습니다. (예: 010-0000-0000)'
+  }
   if (message.includes('GEMINI_TRAINING_END_TIME_NOT_AFTER_START')) {
     return '종료 시각이 시작 시각보다 늦어야 합니다.'
   }
-  if (message.includes('programId is required') || message.includes('not a Gemini training program')) {
+  if (
+    message.includes('programId is required') ||
+    message.includes('not a Gemini training program')
+  ) {
     return '연결할 Gemini 모집 공고가 없습니다.'
   }
   if (message.includes('trainingSessionCount')) {
@@ -22,25 +64,37 @@ function describeFailure(message: string): string {
     return '연수 시작·종료 시간을 확인해 주세요. (예: 10:00)'
   }
   if (message.includes('GEMINI_INSTRUCTOR_MATCH_AMBIGUOUS')) {
-    return '동일 이름·연락처 강사가 여러 명입니다.'
+    return '동일한 이름과 연락처의 강사가 여러 명입니다. 정확한 강사 회원을 선택해 주세요.'
   }
   if (message.includes('GEMINI_INSTRUCTOR_NOT_MATCHED')) {
-    return '강사명과 연락처가 일치하는 강사 회원을 찾지 못했습니다.'
+    return '입력한 강사명·연락처가 회원 정보와 일치하지 않습니다.'
+  }
+  if (message.includes('GEMINI_INSTRUCTOR_IDENTITY_MISMATCH')) {
+    return '선택한 강사 회원과 입력한 강사명·연락처가 일치하지 않습니다.'
   }
   if (message.includes('GEMINI_INSTRUCTOR_NAME_AND_PHONE_REQUIRED')) {
-    return '강사명과 연락처를 모두 입력하거나, 둘 다 비워 실적만 등록해 주세요.'
+    return '강사명과 연락처를 입력해 주세요.'
   }
   return message || '등록할 수 없는 행입니다.'
 }
 
-export function isGeminiImportResultSuccess(
-  result: GeminiTrainingReportImportResult
-): boolean {
+export function isGeminiImportResultSuccess(result: GeminiTrainingReportImportResult): boolean {
   return result.status === 'SUCCESS'
 }
 
+export function createGeminiImportPreviewFailureError(
+  results: GeminiTrainingReportImportResult[] | undefined
+): GeminiImportPreviewFailureError | undefined {
+  const message = formatGeminiImportPreviewFailures(results)
+  if (!message) return undefined
+  return new GeminiImportPreviewFailureError(
+    message,
+    hasGeminiInstructorInfoMismatchFailures(results) ? 'INSTRUCTOR_INFO_MISMATCH' : 'GENERAL'
+  )
+}
+
 /**
- * SUCCESS + 지급 제외(실적만) 안내. FAILED가 아니므로 formatGeminiImportPreviewFailures에 넣지 않는다.
+ * SUCCESS + 지급 제외(실적만) 안내. 계약상 허용된 지급 제외 사유만 안내한다.
  */
 export function formatGeminiImportPaymentExclusionNotes(
   results: GeminiTrainingReportImportResult[] | undefined
@@ -54,8 +108,8 @@ export function formatGeminiImportPaymentExclusionNotes(
     .map(result => {
       const prefix = result.rowNumber != null ? `${result.rowNumber}행: ` : ''
       const label = formatGeminiPaymentExclusionReason(result.paymentExclusionReason)!
-      // IDENTITY_BLANK / NOT_MATCHED 라벨에 실적만 안내가 포함되므로 접두어를 붙이지 않는다.
-      if (isGeminiInstructorSoftPaymentExclusion(result.paymentExclusionReason)) {
+      // 강사 관련 실적만 등록 사유에는 이미 안내 문구가 포함되어 있다.
+      if (isGeminiInstructorPerformanceOnlyExclusion(result.paymentExclusionReason)) {
         return `${prefix}${label}`
       }
       return `${prefix}지급 제외 — ${label}`
@@ -70,8 +124,7 @@ export function formatGeminiImportPreviewFailures(
   // 지급완료 중복 FAILED는 「실적 등록 불가」전용 — 일반 행 실패 문구에 섞지 않는다.
   const failed = (results ?? []).filter(
     result =>
-      !isGeminiImportResultSuccess(result) &&
-      !isGeminiPerformancePaidBlockedText(result.message)
+      !isGeminiImportResultSuccess(result) && !isGeminiPerformancePaidBlockedText(result.message)
   )
   if (failed.length === 0) return undefined
   return failed

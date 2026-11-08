@@ -4,7 +4,10 @@
 import {
   applyMeDashboardPreferencesResponse,
   buildMeDashboardPreferencesRequest,
+  fingerprintMePreferencesClient,
+  fingerprintMePreferencesRequest,
   setCachedMePreferencesRevision,
+  shouldApplyPreferencesSaveToClient,
 } from '@/features/dashboard/api/adapters/dashboard-me-preferences-adapters'
 import {
   fetchMeDashboardPreferencesRemote,
@@ -37,18 +40,64 @@ export async function loadDashboardPreferences(): Promise<DashboardMePreferences
   return dto
 }
 
+type PreferencesSaveWaiter = {
+  payload?: DashboardMePreferencesRequest
+  resolve: (value: DashboardMePreferencesResponse | null) => void
+  reject: (reason: unknown) => void
+}
+
+let preferencesSaveWaiters: PreferencesSaveWaiter[] = []
+let preferencesSavePumpRunning = false
+
+/**
+ * PUT을 한 번에 하나만 보내고, 대기 중 요청은 최신 payload로 합친다.
+ * 응답 시점에 로컬 스토어가 이미 더 새 값이면 layout/settings를 덮지 않고 revision만 반영한다.
+ */
 export async function saveDashboardPreferences(
   payload?: DashboardMePreferencesRequest
 ): Promise<DashboardMePreferencesResponse | null> {
   if (!shouldUseDashboardRemoteApi()) {
     return null
   }
+  return new Promise((resolve, reject) => {
+    preferencesSaveWaiters.push({ payload, resolve, reject })
+    void pumpDashboardPreferencesSaves()
+  })
+}
+
+async function pumpDashboardPreferencesSaves(): Promise<void> {
+  if (preferencesSavePumpRunning) return
+  preferencesSavePumpRunning = true
+  try {
+    while (preferencesSaveWaiters.length > 0) {
+      const batch = preferencesSaveWaiters
+      preferencesSaveWaiters = []
+      const last = batch[batch.length - 1]
+      try {
+        const saved = await saveDashboardPreferencesOnce(last.payload)
+        for (const waiter of batch) waiter.resolve(saved)
+      } catch (error) {
+        for (const waiter of batch) waiter.reject(error)
+      }
+    }
+  } finally {
+    preferencesSavePumpRunning = false
+    if (preferencesSaveWaiters.length > 0) {
+      void pumpDashboardPreferencesSaves()
+    }
+  }
+}
+
+async function saveDashboardPreferencesOnce(
+  payload?: DashboardMePreferencesRequest
+): Promise<DashboardMePreferencesResponse> {
   const layoutRole = resolvePreferencesLayoutRole()
   const requestRole = resolvePreferencesRequestRole(layoutRole)
   const body = {
     ...(payload ?? buildMeDashboardPreferencesRequest(layoutRole, requestRole)),
     role: requestRole,
   }
+  const sentFingerprint = fingerprintMePreferencesRequest(body)
   const saved = await runWithRevisionConflictRetry(
     body,
     saveMeDashboardPreferencesRemote,
@@ -59,6 +108,13 @@ export async function saveDashboardPreferences(
     },
     getQueryRetryHttpStatus
   )
-  applyMeDashboardPreferencesResponse(saved, layoutRole)
+  const apply = shouldApplyPreferencesSaveToClient(
+    sentFingerprint,
+    fingerprintMePreferencesClient(layoutRole, requestRole)
+  )
+  applyMeDashboardPreferencesResponse(saved, layoutRole, {
+    applyLayout: apply,
+    applySettings: apply,
+  })
   return saved
 }

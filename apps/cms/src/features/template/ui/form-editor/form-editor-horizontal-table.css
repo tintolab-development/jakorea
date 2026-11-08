@@ -997,54 +997,6 @@
   line-height: 150%;
 }
 
-/* 제3자 「제공받는 곳」 — Field/Table/Input h36 · border #e0e0e0 · radius 8 */
-.form-editor-horizontal-table-wrap--personal-info-consent-spec
-  .form-editor-horizontal-table__td--field
-  .text-cell-input {
-  box-sizing: border-box;
-  align-self: center;
-  width: 100%;
-  max-width: 100%;
-  height: 36px;
-  min-height: 36px;
-  padding: 8px 14px;
-  border: 1px solid var(--table-line, #e0e0e0);
-  border-radius: var(--radius-8, 8px);
-  background: var(--main-WT, #fff);
-  cursor: text;
-}
-
-.form-editor-horizontal-table-wrap--personal-info-consent-spec
-  .form-editor-horizontal-table__td--field
-  .text-cell-input__control.ant-input,
-.form-editor-horizontal-table-wrap--personal-info-consent-spec
-  .form-editor-horizontal-table__td--field
-  .text-cell-input__control--area.ant-input {
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.4;
-  text-align: left;
-  height: 20px !important;
-  min-height: 20px !important;
-}
-
-.form-editor-horizontal-table-wrap--personal-info-consent-spec
-  .form-editor-horizontal-table__td--field
-  .text-cell-input__control.ant-input::placeholder,
-.form-editor-horizontal-table-wrap--personal-info-consent-spec
-  .form-editor-horizontal-table__td--field
-  .text-cell-input__control--area.ant-input::placeholder {
-  color: var(--gray-85969-d, #85969d);
-}
-
-.form-editor-horizontal-table-wrap--personal-info-consent-spec.form-editor-horizontal-table-wrap--system-settings-text-edit
-  .form-editor-horizontal-table__td--field
-  > .form-editor-horizontal-table__cell-text-hit {
-  min-height: 36px;
-  width: 100%;
-  cursor: text;
-}
-
 .form-editor-horizontal-table-wrap--personal-info-consent-spec
   .form-editor-horizontal-table__bottom {
   gap: var(--spacing-16, 16px);

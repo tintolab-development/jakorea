@@ -1,5 +1,5 @@
 /**
- * FAQ 등록/수정 모달 — 공지사항 등록(`notice-register-modal`)과 동일 large(1400) 셸
+ * FAQ 등록/수정 모달 — 시안 폭 800 (large 셸 클래스는 유지, 폭만 덮어씀)
  */
 
 .faq-form-modal-wrap {
@@ -31,8 +31,8 @@
   transform: translate(-50%, -50%) !important;
   margin: 0 !important;
   padding-bottom: 0 !important;
-  width: min(1400px, calc(100vw - 32px)) !important;
-  max-width: min(1400px, calc(100vw - 32px)) !important;
+  width: min(800px, calc(100vw - 32px)) !important;
+  max-width: min(800px, calc(100vw - 32px)) !important;
   flex: none !important;
   box-sizing: border-box !important;
 }
@@ -145,32 +145,10 @@
   margin-bottom: 24px;
 }
 
-.faq-form-modal__section--editor.cms-field {
-  display: flex;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.faq-form-modal__section--editor .cms-field__message--error {
-  white-space: normal;
-  overflow: visible;
-  text-overflow: unset;
-  color: var(--Status-red-main, #c32f4a);
-}
-
-/* 내용(답변) WYSIWYG — 공지 등록 에디터와 동일 높이·폭 */
-.faq-form-modal__editor-host {
-  width: 100%;
-  height: 369px;
-  min-height: 369px;
-  flex-shrink: 0;
-  box-sizing: border-box;
-}
-
-.faq-form-modal__editor-host .rich-text-editor {
-  height: 100%;
-  min-height: inherit;
-  border-radius: var(--rt-radius, 8px);
+/* 내용(답변) — 시안 높이 200px 일반 텍스트 입력 */
+.faq-form-modal__answer .ant-input {
+  height: 200px;
+  min-height: 200px;
 }
 
 .faq-form-modal .content-modal__footer-actions {

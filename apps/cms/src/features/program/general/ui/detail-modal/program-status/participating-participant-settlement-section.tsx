@@ -24,9 +24,11 @@ import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/or
 import {
   individualSettlementReviewStatusAccent,
   individualSettlementTableProcessingLabel,
+  resolveIndividualSettlementReviewUiStatus,
 } from '@/features/program/general/lib/individual-settlement-review-status'
 import type { IndividualSettlementReviewListRow } from '@/features/program/general/lib/map-individual-settlement-review-rows'
 import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
+import { getInstructorSettlementStatusLabel } from '@/shared/constants/instructor-settlement-status'
 import { useParticipatingParticipantSettlementList } from '@/features/program/general/hooks/use-participating-participant-settlement-list'
 import { formatBusinessPeriodDisplay } from '@/features/settlement-management/api/shared/map-frontend-fields'
 import { formatDateDotWithWeekday } from '@/shared/utils/date'
@@ -63,6 +65,7 @@ export function ParticipatingParticipantSettlementSection({
   const [detailApplicationId, setDetailApplicationId] = useState<number | null>(null)
 
   const { exportExcel, isExporting: isExcelExporting } = useTableExcelExport({
+    accessLog: { downloadKind: 'PROGRAM_SETTLEMENT_EXPORT', containedPiiTypes: ['NAME'] },
     columns: PARTICIPATING_PARTICIPANT_SETTLEMENT_EXCEL_COLUMNS,
     data: rows,
     filename: `정산내역_${participant.applicantName}`,
@@ -103,15 +106,16 @@ export function ParticipatingParticipantSettlementSection({
         align: 'center',
         width: 160,
         render: (_value, record) => {
-          const label = individualSettlementTableProcessingLabel(record.status)
-          if (record.status === 'NONE' || record.settlementApplicationId == null) {
+          if (record.settlementApplicationId == null) {
             return <InstructorSettlementStatusText status="none" />
           }
+          const uiStatus = resolveIndividualSettlementReviewUiStatus(record.status)
+          if (uiStatus) return <InstructorSettlementStatusText status={uiStatus} />
           return (
             <StatusBadge
               domain="custom"
               variant="text"
-              label={label}
+              label={individualSettlementTableProcessingLabel(record.status)}
               accentColor={individualSettlementReviewStatusAccent(record.status)}
             />
           )
@@ -173,7 +177,7 @@ export function ParticipatingParticipantSettlementSection({
       : summary.submitted > 0
         ? '확인 대기 중'
         : summary.approved > 0
-          ? '영수증 확인 완료'
+          ? getInstructorSettlementStatusLabel('payment_statement_verified')
           : summary.rejected > 0
             ? '신청 반려'
             : summary.total > 0

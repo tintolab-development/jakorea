@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import type { Program } from '@/types/domain'
 import { fetchAdminProgramSchedulesRemote } from '@/features/program/general/api/program-schedules-api-client'
+import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
 import {
   getGeneralVolunteerActivityWithdrawScheduleOptions,
   resolveGeneralVolunteerActivityWithdrawStopScheduleId,
@@ -122,9 +123,11 @@ export function useGeneralVolunteerInterview2({
     [program]
   )
   const programSchedulesQuery = useQuery({
-    queryKey: ['admin-program-schedules', programId],
+    // 다른 화면과 같은 일정 캐시 키 — 키가 다르면 같은 GET /schedules를 따로 받고, 일정 무효화도 안 걸린다.
+    queryKey: generalProgramQueryKeys.schedules(programId),
     queryFn: () => fetchAdminProgramSchedulesRemote(programId),
     enabled: remoteEnabled && Boolean(programId),
+    staleTime: 60_000,
   })
   const [bulkPassModalOpen, setBulkPassModalOpen] = useState(false)
   const [bulkFailModalOpen, setBulkFailModalOpen] = useState(false)

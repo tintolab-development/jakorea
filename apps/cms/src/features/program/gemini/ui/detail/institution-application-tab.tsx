@@ -1,3 +1,4 @@
+import { GEMINI_INSTITUTION_APPROVAL_STATUS_LABEL } from '../../lib/application-status-presentation'
 import { useCallback, useMemo, useState, type Key } from 'react'
 import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
@@ -38,6 +39,7 @@ import { GeminiInstitutionApprovalStatusBadge } from './gemini-institution-appro
 import { GeminiInstitutionApproveModal } from './institution-approve-modal'
 import { GeminiInstitutionPreferredLectureScheduleCell } from './gemini-institution-preferred-lecture-schedule-cell'
 import './institution-application-tab.css'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 type PendingFilters = {
   institutionName: string
@@ -64,9 +66,9 @@ const FILTER_FIELDS: FilterFieldConfig[] = [
     width: FILTER_CONTROL_MAX_WIDTH_PX,
     options: [
       { label: '전체', value: 'ALL' },
-      { label: '승인', value: 'APPROVED' },
-      { label: '승인 대기', value: 'PENDING' },
-      { label: '신청 반려', value: 'REJECTED' },
+      { label: GEMINI_INSTITUTION_APPROVAL_STATUS_LABEL.APPROVED, value: 'APPROVED' },
+      { label: GEMINI_INSTITUTION_APPROVAL_STATUS_LABEL.PENDING, value: 'PENDING' },
+      { label: GEMINI_INSTITUTION_APPROVAL_STATUS_LABEL.REJECTED, value: 'REJECTED' },
     ],
   },
   {
@@ -136,9 +138,11 @@ function filterRows(rows: GeminiInstitutionApplicationRow[], filters: PendingFil
 }
 
 function resolveDecisionSubjectName(row: GeminiInstitutionApplicationRow | undefined): string {
+  const institution = row?.institutionName.trim()
+  if (institution && institution !== '-') return institution
   const teacher = row?.teacherName.trim()
   if (teacher && teacher !== '-') return teacher
-  return row?.institutionName.trim() || '신청자'
+  return '기관'
 }
 
 export function GeminiInstitutionApplicationTab({
@@ -223,10 +227,7 @@ export function GeminiInstitutionApplicationTab({
   }, [remoteEnabled, remoteQuery])
 
   const showNoSelectionAlert = useCallback(() => {
-    showAlert({
-      title: '항목 선택 안내',
-      content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
-    })
+    showAlert(NO_SELECTION_ALERT)
   }, [showAlert])
 
   const handleBulkReject = useCallback(() => {
@@ -299,10 +300,19 @@ export function GeminiInstitutionApplicationTab({
       setDecisionSubmitting(true)
       try {
         if (remoteEnabled) {
-          await approveGeminiOrganizationApplications(ids, {
+          const result = await approveGeminiOrganizationApplications(ids, {
             timing: notify.timing,
             scheduledAt: notify.scheduledAt,
           })
+          if (notify.timing !== 'SCHEDULED' && result.failureCount > 0) {
+            const firstFailure = result.failures[0]
+            showAlert({
+              title: '처리 실패',
+              content:
+                firstFailure?.message?.trim() ||
+                `선택한 신청 중 ${result.failureCount}건을 처리하지 못했습니다.`,
+            })
+          }
         } else {
           patchGeminiInstitutionApplicationApprovalStatus(ids, 'APPROVED')
         }
@@ -442,6 +452,7 @@ export function GeminiInstitutionApplicationTab({
         title="참여 기관 신청 목록"
         description={`총 ${(remoteQuery.data?.pages[0]?.totalElements ?? filteredRows.length).toLocaleString()}건`}
         excelExport={{
+          accessLog: { downloadKind: 'PROGRAM_INSTITUTION_APPLICATION_EXPORT', containedPiiTypes: ['NAME'] },
           columns,
           data: filteredRows,
           selectedRowKeys: canWrite ? selectedRowKeys : undefined,
@@ -494,12 +505,13 @@ export function GeminiInstitutionApplicationTab({
 
       <ProgramApplicationRejectModal
         open={bulkRejectOpen}
-        audience="member"
+        audience="institution"
         variant={rejectTargetCount > 1 ? 'bulk' : 'single'}
         subjectName={rejectSubjectName}
         selectionCount={rejectTargetCount}
         confirmLoading={decisionSubmitting}
         notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.timedBulk}
+        notifyTimingOptions="two"
         onCancel={() => {
           if (decisionSubmitting) return
           setBulkRejectOpen(false)

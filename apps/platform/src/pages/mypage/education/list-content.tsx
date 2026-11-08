@@ -30,9 +30,22 @@ export function EducationListContent({
   const navigate = useNavigate()
   const member = useMypageMember()
   const isTeacher = hasTeacherMypageProfile(member.profile)
-  const remoteApplications = useMyProgramApplications('education')
+  const remoteApplications = useMyProgramApplications('education', {
+    tab: params.tab,
+    page: params.page,
+    pageSize: EDUCATION_APPLICATION_PAGE_SIZE,
+  })
 
   const { items, totalPages, currentPage, totalElements } = useMemo(() => {
+    if (remoteApplications.isRemoteEnabled && remoteApplications.isServerPaged) {
+      return {
+        items: remoteApplications.items,
+        totalPages: remoteApplications.totalPages,
+        currentPage: remoteApplications.currentPage,
+        totalElements: remoteApplications.totalElements,
+      }
+    }
+
     const sourceItems = remoteApplications.isRemoteEnabled
       ? remoteApplications.items
       : filterEducationStatusApplications([])
@@ -41,7 +54,16 @@ export function EducationListContent({
       page: params.page,
       pageSize: EDUCATION_APPLICATION_PAGE_SIZE,
     })
-  }, [params.page, params.tab, remoteApplications.isRemoteEnabled, remoteApplications.items])
+  }, [
+    params.page,
+    params.tab,
+    remoteApplications.currentPage,
+    remoteApplications.isRemoteEnabled,
+    remoteApplications.isServerPaged,
+    remoteApplications.items,
+    remoteApplications.totalElements,
+    remoteApplications.totalPages,
+  ])
 
   if (remoteApplications.isRemoteEnabled && remoteApplications.isLoading) {
     return <EducationApplicationListSkeleton rowCount={3} />

@@ -101,6 +101,7 @@ export function useUjatEducationProgressAssignments(
 ) {
   const remoteEnabled = shouldUseUjatApplicationsRemoteApi() && Boolean(programId)
   const educationRegionCode = toUjatEducationRegionCode(regionKey)
+  const hasEducationRegionCode = Boolean(educationRegionCode)
   const semesterType = toUjatRecruitHalfApi(half)
 
   useNotifyProgramApiUnavailableOnce(
@@ -119,7 +120,7 @@ export function useUjatEducationProgressAssignments(
   // 운영 데이터(제출·피드백 상태) — 짧은 staleTime, 피드백 등록 시 assignmentSubmissionsAll 무효화
   const remoteQuery = useQuery({
     queryKey: ujatQueryKeys.assignmentSubmissions(programId, educationRegionCode, semesterType),
-    enabled: remoteEnabled,
+    enabled: remoteEnabled && hasEducationRegionCode,
     staleTime: 15_000,
     retry: false,
     queryFn: ({ signal }) =>
@@ -186,8 +187,8 @@ export function useUjatEducationProgressAssignments(
     hasActiveFilters: hasVolunteerRowFilter(appliedFilters) ||
       appliedFilters.educationDate !== UJAT_ASSIGNMENT_FILTER_ALL,
     resetRegionState,
-    isLoading: remoteEnabled && remoteQuery.isLoading,
-    isError: remoteEnabled && remoteQuery.isError,
+    isLoading: remoteEnabled && (!hasEducationRegionCode || remoteQuery.isLoading),
+    isError: remoteEnabled && hasEducationRegionCode && remoteQuery.isError,
     isRemote: remoteEnabled,
   }
 }

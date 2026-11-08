@@ -236,3 +236,18 @@
   .ant-radio-wrapper-checked {
   color: var(--Brand-500, #00a0af) !important;
 }
+
+/* 자유 작성 항목 — 문항 제목·안내 문구를 한 흐름(inline)으로 (긴 제목도 안내가 줄 끝에 이어짐) */
+.participating-volunteer-add-registration-modal .volunteer-free-text-items__card-header {
+  display: block;
+}
+
+.participating-volunteer-add-registration-modal .volunteer-free-text-items__card-label {
+  display: inline;
+  text-align: left;
+}
+
+.participating-volunteer-add-registration-modal .volunteer-free-text-items__card-hint {
+  display: inline;
+  margin-left: 8px;
+}

@@ -1,6 +1,4 @@
 import {
-  GENERAL_VOLUNTEER_DOC_SCREENING_SELECT_ONE_APPROVE_ALERT,
-  GENERAL_VOLUNTEER_DOC_SCREENING_SELECT_ONE_REJECT_ALERT,
   type GeneralDocumentScreeningStatus,
 } from '@/features/program/general/lib/volunteer-screening-constants'
 import {
@@ -9,6 +7,7 @@ import {
 } from '@/features/program/general/lib/application-processed-selection-alert'
 import type { ScreeningSubjectKind } from '@/features/program/general/lib/screening-subject-kind'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 function toApplicationBulkSubjectNoun(
   subjectKind: ScreeningSubjectKind
@@ -36,7 +35,7 @@ export function requestGeneralVolunteerDocumentBulkApprove({
   onOpenBulkApprove: () => void
 }): void {
   if (selectedIds.length === 0) {
-    cmsAlertModal.show(GENERAL_VOLUNTEER_DOC_SCREENING_SELECT_ONE_APPROVE_ALERT)
+    cmsAlertModal.show(NO_SELECTION_ALERT)
     return
   }
   if (hasNonPendingDocumentSelection(selectedDocumentStatuses)) {
@@ -66,7 +65,7 @@ export function requestGeneralVolunteerDocumentBulkReject({
   onOpenBulkReject: () => void
 }): void {
   if (selectedIds.length === 0) {
-    cmsAlertModal.show(GENERAL_VOLUNTEER_DOC_SCREENING_SELECT_ONE_REJECT_ALERT)
+    cmsAlertModal.show(NO_SELECTION_ALERT)
     return
   }
   if (hasNonPendingDocumentSelection(selectedDocumentStatuses)) {

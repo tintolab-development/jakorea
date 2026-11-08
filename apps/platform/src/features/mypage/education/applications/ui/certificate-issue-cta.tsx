@@ -11,10 +11,14 @@ import {
 } from '../api/certificate-hooks'
 import type { ProgramApplicationType } from '../api/types'
 import {
-  resolveCertificateCtaView,
+  resolveExclusivePersonalCertificateSlot,
   shouldFetchIndividualCertificateAvailability,
 } from '../lib/certificate-cta'
 import { buildCertificateDownloadFileName } from '../lib/certificate-download-file-name'
+import {
+  portalCertificateCtaButtonLabel,
+  portalCertificateDocumentLabel,
+} from '../lib/personal-certificate-eligibility'
 import styles from './certificate-issue-cta.module.css'
 
 type CertificateIssueCtaProps = {
@@ -40,7 +44,7 @@ export function CertificateIssueCta({
   programGroup,
   detailCase,
   canIssueCertificate,
-  certificateStatus,
+  certificateStatus: _certificateStatus,
 }: CertificateIssueCtaProps) {
   const availabilityEnabled = shouldFetchIndividualCertificateAvailability({
     isTeacher,
@@ -51,10 +55,19 @@ export function CertificateIssueCta({
     canIssueCertificate,
     programId,
   })
-  const availabilityQuery = useMyCertificateAvailabilityQuery({
+  const completionQuery = useMyCertificateAvailabilityQuery({
     programId,
     enabled: availabilityEnabled,
+    certificateType: 'COMPLETION',
   })
+  const slot = resolveExclusivePersonalCertificateSlot({
+    completion: completionQuery.data,
+  })
+  const activeKind = slot.type
+  const view = slot.view
+  const availabilityQuery = {
+    data: completionQuery.data,
+  }
   const issueMutation = useIssueMyCertificateMutation({
     applicationType,
     applicationId,
@@ -67,17 +80,8 @@ export function CertificateIssueCta({
   const [completeIssueId, setCompleteIssueId] = useState<number | null>(null)
   const [alertMessage, setAlertMessage] = useState<string | null>(null)
 
-  const view = resolveCertificateCtaView({
-    isTeacher,
-    applicationType,
-    programType,
-    programGroup,
-    detailCase,
-    canIssueCertificate,
-    certificateStatus,
-    availability: availabilityQuery.data,
-  })
   const isBusy = issueMutation.isPending || downloadMutation.isPending
+  const documentLabel = portalCertificateDocumentLabel('COMPLETION')
 
   const handleDownload = async (issueId: number) => {
     if (isBusy || pendingRef.current) return
@@ -85,11 +89,14 @@ export function CertificateIssueCta({
     try {
       await downloadMutation.mutateAsync({
         certificateIssueId: issueId,
-        fileName: buildCertificateDownloadFileName({ memberName: displayName }),
+        fileName: buildCertificateDownloadFileName({
+          documentLabel,
+          memberName: displayName,
+        }),
       })
     } catch (error) {
       setAlertMessage(
-        getProgramApplicationApiErrorMessage(error, '수료증을 다운로드하지 못했습니다.'),
+        getProgramApplicationApiErrorMessage(error, `${documentLabel}을 다운로드하지 못했습니다.`),
       )
     } finally {
       pendingRef.current = false
@@ -99,15 +106,9 @@ export function CertificateIssueCta({
   const handleIssue = async () => {
     if (isBusy || pendingRef.current) return
     const availability = availabilityQuery.data
-    const existingIssueId = availability?.existingIssueId
-    if (
-      availability?.canDownload === true ||
-      (typeof existingIssueId === 'number' && existingIssueId > 0)
-    ) {
+    if (view.kind === 'download') {
       setConfirmOpen(false)
-      if (typeof existingIssueId === 'number' && existingIssueId > 0) {
-        await handleDownload(existingIssueId)
-      }
+      await handleDownload(view.issueId)
       return
     }
     const participantId = availability?.participantId
@@ -117,7 +118,7 @@ export function CertificateIssueCta({
       !Number.isInteger(parsedProgramId) ||
       parsedProgramId <= 0
     ) {
-      setAlertMessage('수료증 발급 대상 정보를 확인하지 못했습니다.')
+      setAlertMessage(`${documentLabel} 발급 대상 정보를 확인하지 못했습니다.`)
       return
     }
     pendingRef.current = true
@@ -125,24 +126,32 @@ export function CertificateIssueCta({
       const result = await issueMutation.mutateAsync({
         programId: parsedProgramId,
         participantId,
+        certificateType: 'COMPLETION',
+        issueReason: 'PERSONAL_ARCHIVE',
       })
       setConfirmOpen(false)
+      if (result.certificateIssueId == null) {
+        setAlertMessage(`${documentLabel} 발급 결과를 확인하지 못했습니다.`)
+        return
+      }
       setCompleteIssueId(result.certificateIssueId)
       setCompleteIssuedAt(result.issuedAt ?? null)
     } catch (error) {
       setConfirmOpen(false)
       setAlertMessage(
-        getProgramApplicationApiErrorMessage(error, '수료증을 발급하지 못했습니다.'),
+        getProgramApplicationApiErrorMessage(error, `${documentLabel}을 발급하지 못했습니다.`),
       )
     } finally {
       pendingRef.current = false
     }
   }
 
-  if (!availabilityEnabled || view.kind === 'hidden') return null
+  if (!availabilityEnabled || !activeKind || view.kind === 'hidden') return null
 
-  const title =
-    view.kind === 'download' ? '수료증 다운받기' : '수료증 발급하기'
+  const title = portalCertificateCtaButtonLabel({
+    certificateType: activeKind,
+    action: view.kind === 'download' ? 'download' : 'issue',
+  })
   const issuedDateLabel = completeIssuedAt ? formatDisplayDate(completeIssuedAt) : ''
 
   return (
@@ -178,11 +187,11 @@ export function CertificateIssueCta({
 
       <PFAlertModal
         open={confirmOpen}
-        title="수료증 발급하기"
+        title={`${documentLabel} 발급하기`}
         description={
           <>
-            {programTitle ? `${programTitle} 수료증을 발급합니다. ` : null}
-            발급 후에는 취소할 수 없습니다. 파일은 관리자 수료증 양식의 제목·본문·이사장명·하단
+            {programTitle ? `${programTitle} ${documentLabel}을 발급합니다. ` : null}
+            발급 후에는 취소할 수 없습니다. 파일은 관리자 양식의 제목·본문·이사장명·하단
             정보를 따릅니다.
           </>
         }
@@ -200,15 +209,15 @@ export function CertificateIssueCta({
 
       <PFAlertModal
         open={completeIssueId != null}
-        title="수료증 발급 완료"
+        title={`${documentLabel} 발급 완료`}
         description={
           <>
             {issuedDateLabel ? `발급일 ${issuedDateLabel}` : null}
             {issuedDateLabel ? <br /> : null}
-            수료증을 다운로드할 수 있습니다.
+            {documentLabel}을 다운로드할 수 있습니다.
           </>
         }
-        confirmLabel="수료증 다운받기"
+        confirmLabel={`${documentLabel} 다운받기`}
         confirmLoading={downloadMutation.isPending}
         confirmDisabled={downloadMutation.isPending}
         onConfirm={() => {
@@ -229,7 +238,7 @@ export function CertificateIssueCta({
         onConfirm={() => setAlertMessage(null)}
       />
       {downloadMutation.isPending ? (
-        <PFLoadingSpinner blocking label="수료증을 다운로드하는 중" />
+        <PFLoadingSpinner blocking label={`${documentLabel}을 다운로드하는 중`} />
       ) : null}
     </>
   )

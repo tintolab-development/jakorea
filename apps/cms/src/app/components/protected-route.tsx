@@ -8,6 +8,7 @@
  * 백그라운드 토큰 검증은 AuthProvider에 위임한다.
  */
 
+import { Spin } from 'antd'
 import { Navigate } from 'react-router-dom'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { hasPasswordChangeRequiredComplete } from '@/features/auth/password-change-required/wizard-state'
@@ -29,10 +30,34 @@ export function ProtectedRoute({
   requiredRoles,
   requireAuth = true,
 }: ProtectedRouteProps) {
-  const { isAuthenticated, user, requiresMfa, mfaState, passwordChangeRequired } = useAuthStore()
+  const isAuthenticated = useAuthStore(state => state.isAuthenticated)
+  const user = useAuthStore(state => state.user)
+  const requiresMfa = useAuthStore(state => state.requiresMfa)
+  const mfaState = useAuthStore(state => state.mfaState)
+  const passwordChangeRequired = useAuthStore(state => state.passwordChangeRequired)
+  const isBootstrapping = useAuthStore(state => state.isBootstrapping)
 
   if (hasPasswordChangeRequiredComplete()) {
     return <Navigate to={passwordChangeRequiredPaths.complete} replace />
+  }
+
+  // 만료된 토큰 갱신 결과 전에는 보호 화면을 그리지 않는다 (메인 → 로그인 깜빡임 방지).
+  if (requireAuth && isBootstrapping) {
+    return (
+      <div
+        role="status"
+        aria-label="로그인 정보 확인 중"
+        style={{
+          position: 'fixed',
+          inset: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Spin size="large" />
+      </div>
+    )
   }
 
   if (requireAuth && !isAuthenticated) {

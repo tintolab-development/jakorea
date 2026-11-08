@@ -12,6 +12,12 @@ import {
 } from '../writing-form/id-type-resident-input.js'
 import type { PaymentStatementBasicInfoValues } from './payment-statement-basic-info.js'
 import {
+  isReceiptPreConsentBasicInfoIncomplete,
+  type ReceiptPreConsentBasicInfoValues,
+} from './receipt-pre-consent-basic-info.js'
+import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '../paragraph-ids/payment-statement-pre-consent-draft.js'
+import { RECEIPT_PRE_CONSENT_IDS } from '../paragraph-ids/receipt-pre-consent-draft.js'
+import {
   isIdTypeResidentNumberFormatInvalid,
   isPaymentStatementResidentNumberFormatInvalid,
 } from './payment-statement-resident-number.js'
@@ -77,11 +83,30 @@ function isShortEssayAnswerComplete(paragraph: {
   return items.every(item => (item.bodyText ?? '').trim() !== '')
 }
 
+/**
+ * 동의 라디오는 필수, 「동의」 선택은 아님.
+ * - 초상권 3번(초상권 제공·이용)
+ * - 지급조서·영수증 사전 동의 「개인정보 제3자 제공·이용」
+ */
+const OPTIONAL_AGREE_BOTTOM_CONSENT_PARAGRAPH_IDS = new Set<string>([
+  AGREEMENT_PORTRAIT_PARAGRAPH_IDS.portraitUsageTable,
+  PAYMENT_STATEMENT_PRE_CONSENT_IDS.p3ThirdParty,
+  RECEIPT_PRE_CONSENT_IDS.p2ThirdParty,
+])
+
+function isOptionalAgreeBottomConsentParagraph(paragraph: WritingFormParagraph): boolean {
+  return OPTIONAL_AGREE_BOTTOM_CONSENT_PARAGRAPH_IDS.has(paragraph.id)
+}
+
 function isRequiredBottomConsentComplete(paragraph: WritingFormParagraph): boolean {
   if (!('showBottomConsent' in paragraph) || paragraph.showBottomConsent !== true) {
     return true
   }
-  return readParagraphBottomConsent(paragraph) === 'agree'
+  const consent = readParagraphBottomConsent(paragraph)
+  if (isOptionalAgreeBottomConsentParagraph(paragraph)) {
+    return consent === 'agree' || consent === 'disagree'
+  }
+  return consent === 'agree'
 }
 
 function isIdTypeWithInputComplete(paragraph: WritingFormParagraph): boolean {
@@ -171,9 +196,14 @@ const PAYMENT_STATEMENT_TEMPLATE_IDS = new Set([
   'document-payment-order-pre-consent',
 ])
 
+const RECEIPT_PRE_CONSENT_TEMPLATE_IDS = new Set(['agreement-receipt-pre-consent'])
+
 export type MemberConsentDraftValidationOptions = {
   templateId?: string
   paymentStatementBasicInfo?: Partial<PaymentStatementBasicInfoValues>
+  receiptPreConsentBasicInfo?:
+    | Partial<ReceiptPreConsentBasicInfoValues>
+    | Partial<PaymentStatementBasicInfoValues>
 }
 
 function resolveParagraphConsentLabel(paragraph: WritingFormParagraph): string {
@@ -186,6 +216,7 @@ function resolveParagraphConsentLabel(paragraph: WritingFormParagraph): string {
 
 function isRequiredParagraphExplicitlyDisagreed(paragraph: WritingFormParagraph): boolean {
   if (!resolveParagraphTitleRequiredMark(paragraph)) return false
+  if (isOptionalAgreeBottomConsentParagraph(paragraph)) return false
 
   if (readParagraphBottomConsent(paragraph) === 'disagree') return true
 
@@ -214,6 +245,46 @@ export function collectMemberConsentDisagreedRequiredLabels(
   return draft.paragraphs
     .filter(isRequiredParagraphExplicitlyDisagreed)
     .map(resolveParagraphConsentLabel)
+}
+
+function isRequiredConsentChoiceUnagreed(paragraph: WritingFormParagraph): boolean {
+  if (!resolveParagraphTitleRequiredMark(paragraph)) return false
+  if (isOptionalAgreeBottomConsentParagraph(paragraph)) return false
+
+  if ('showBottomConsent' in paragraph && paragraph.showBottomConsent === true) {
+    if (readParagraphBottomConsent(paragraph) !== 'agree') return true
+  }
+
+  if (paragraph.kind !== 'single_item' || paragraph.variant !== 'multiple_choice') {
+    return false
+  }
+  if (!paragraph.items.some(item => isDisagreeChoiceItem(item))) return false
+  return !isMultipleChoiceAnswerComplete(paragraph)
+}
+
+/** 필수 동의 단락 중 「동의」가 아닌 항목 (미선택 · 동의하지 않음) 라벨 */
+export function collectMemberConsentUnagreedRequiredLabels(draft: WritingFormDraft): string[] {
+  return draft.paragraphs
+    .filter(isRequiredConsentChoiceUnagreed)
+    .map(resolveParagraphConsentLabel)
+}
+
+/** Platform·동의서 작성 — 필수 항목에 「동의하지 않음」 선택 시 알림 제목 */
+export const MEMBER_CONSENT_DISAGREED_REQUIRED_ALERT_TITLE = '필수 동의 항목 안내'
+
+/**
+ * 필수 동의 단락에 명시적 「동의하지 않음」 선택 시 팝업 본문 (Platform 동의서/서약서).
+ * - 단건: `{항목}에 동의해 주세요.`
+ * - 다건: `{항목1}, {항목2}에 동의해 주세요.`
+ */
+export function formatMemberConsentDisagreedRequiredAlertMessage(
+  labels: readonly string[]
+): string {
+  const cleaned = labels.map(label => label.trim()).filter(label => label.length > 0)
+  if (cleaned.length === 0) {
+    return '필수 동의 항목에 동의해 주세요.'
+  }
+  return `${cleaned.join(', ')}에 동의해 주세요.`
 }
 
 export type MemberConsentIncompleteRequiredField = {
@@ -275,6 +346,20 @@ export function listMemberConsentIncompleteRequiredFields(
         paragraphId: 'paymentRecord',
         fieldId: 'paymentRecord',
         label: '지급조서 기본 정보',
+      })
+    }
+  }
+
+  if (templateId != null && RECEIPT_PRE_CONSENT_TEMPLATE_IDS.has(templateId)) {
+    if (
+      isReceiptPreConsentBasicInfoIncomplete(
+        options?.receiptPreConsentBasicInfo ?? options?.paymentStatementBasicInfo
+      )
+    ) {
+      fields.push({
+        paragraphId: RECEIPT_PRE_CONSENT_IDS.paymentRecord,
+        fieldId: RECEIPT_PRE_CONSENT_IDS.paymentRecord,
+        label: '지급조서',
       })
     }
   }

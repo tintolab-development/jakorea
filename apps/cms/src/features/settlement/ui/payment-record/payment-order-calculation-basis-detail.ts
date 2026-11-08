@@ -33,7 +33,7 @@ export interface PaymentOrderCalculationBasisDetailLectureFeeSpecial {
 export const SPECIAL_LECTURE_FEE_TITLE = '특강 강사비'
 export const GEMINI_LECTURE_FEE_TITLE = '제미나이 강사비'
 
-/** 제미나이 강사비 — 구분 · 강의 시간 · 강의비 책정 (합계 없음) */
+/** 제미나이 강사비 — 구분 · 강의 시간 · 강사비 책정 (합계 없음) */
 export interface PaymentOrderCalculationBasisDetailLectureFeeGemini {
   layout: 'lectureFeeGemini'
   categoryLabel: string
@@ -60,12 +60,22 @@ export interface PaymentOrderCalculationBasisDetailTransportRoundTrip {
   outbound: PaymentOrderCalculationBasisDetailTransportTripLeg
   inbound: PaymentOrderCalculationBasisDetailTransportTripLeg
   totalWon: number
+  /** 제출 시점 편도 km 스냅샷(서버). 기존 건 null → 행 미노출. FE 재계산 금지 */
+  oneWayDistanceKm?: number | null
 }
 
 /** 학생 편도 */
 export interface PaymentOrderCalculationBasisDetailTransportOneWay {
   layout: 'transportOneWay'
   trip: PaymentOrderCalculationBasisDetailTransportTripLeg
+  /** 제출 시점 편도 km 스냅샷(서버). 기존 건 null → 행 미노출. FE 재계산 금지 */
+  oneWayDistanceKm?: number | null
+}
+
+/** 학생 교통비 편도 km — 서버 스냅샷 그대로. null·비정상 값이면 행을 그리지 않는다(0km 금지). */
+export function formatParticipantOneWayDistanceKm(km: number | null | undefined): string | null {
+  if (typeof km !== 'number' || !Number.isFinite(km)) return null
+  return `${km.toLocaleString('ko-KR', { maximumFractionDigits: 3 })}km`
 }
 
 /** 강사 교통비(1사1교) */
@@ -269,9 +279,7 @@ export function resolveTravelBasisDetailTotalWon(
 }
 
 export function mapTransportationSnapshotToBasisDetail(
-  snapshot?:
-    | (SettlementTransportationSnapshotResponse & { fuelCostWon?: number | null })
-    | null
+  snapshot?: (SettlementTransportationSnapshotResponse & { fuelCostWon?: number | null }) | null
 ): PaymentOrderCalculationBasisDetailTransportSnapshot | undefined {
   if (!snapshot) return undefined
 
@@ -367,7 +375,6 @@ export function mapLectureFeeCalculationDetailToBasisDetail(
       detail.resultAmount
     const sessionOrdinal = numberValue(recordValue(candidate, 'sessionOrdinal'))
     const hours = numberValue(recordValue(candidate, 'hours'))
-    // 모달 강의 시간: canonical 차시·회차 → sessionOrdinal → hours(N시간). 시계열·일정명 금지.
     const lectureTimeDisplay = resolveLectureTimeDisplayFromCalculationFields({
       lectureTimeDisplay: stringValue(recordValue(candidate, 'lectureTimeDisplay')),
       sessionOrdinal,
@@ -633,17 +640,11 @@ export function mapWithholdingCalculationDetailToBasisDetail(
     if (!looksLikeWithholding) continue
 
     const dailySalaryTotalWon = numberValue(recordValue(candidate, 'dailySalaryTotalWon'))
-    const earnedIncomeDeductionWon = numberValue(
-      recordValue(candidate, 'earnedIncomeDeductionWon')
-    )
+    const earnedIncomeDeductionWon = numberValue(recordValue(candidate, 'earnedIncomeDeductionWon'))
     const incomeTaxRatePercent = numberValue(recordValue(candidate, 'incomeTaxRatePercent'))
     const incomeTaxWon = numberValue(recordValue(candidate, 'incomeTaxWon'))
-    const earnedIncomeTaxCreditWon = numberValue(
-      recordValue(candidate, 'earnedIncomeTaxCreditWon')
-    )
-    const withholdingTaxAmountWon = numberValue(
-      recordValue(candidate, 'withholdingTaxAmountWon')
-    )
+    const earnedIncomeTaxCreditWon = numberValue(recordValue(candidate, 'earnedIncomeTaxCreditWon'))
+    const withholdingTaxAmountWon = numberValue(recordValue(candidate, 'withholdingTaxAmountWon'))
     if (
       dailySalaryTotalWon == null ||
       earnedIncomeDeductionWon == null ||
@@ -724,9 +725,9 @@ export function buildLectureFeeTierBasisDetail(
   }
 }
 
-const GENERIC_LECTURE_FEE_LABELS = new Set(['강사비', '강의비', '—', '-'])
+const GENERIC_LECTURE_FEE_LABELS = new Set(['강사비', '강사비', '—', '-'])
 
-export function isGenericLectureFeeCategoryLabel(title: string | undefined): boolean {
+export function isGenericLectureFeeCategoryLabel(title: string | null | undefined): boolean {
   const normalized = title?.trim()
   return !normalized || GENERIC_LECTURE_FEE_LABELS.has(normalized)
 }
@@ -781,23 +782,6 @@ export function buildLectureFeeBasisDetailFromStandardTitle(
   return buildLectureFeeTierBasisDetail(lectureFeeStandardTitle, lectureFee, lectureTimeDisplay)
 }
 
-export function lectureFeeLineDescriptionFromStandardTitle(
-  lectureFeeStandardTitle: string
-): string {
-  if (isSpecialLectureFeeTitle(lectureFeeStandardTitle)) {
-    return '프로그램 1회 강의비 (특강 강사)'
-  }
-  if (isGeminiLectureFeeTitle(lectureFeeStandardTitle)) {
-    return '프로그램 1회 강의비 (제미나이 강사)'
-  }
-  const tier = LECTURE_FEE_TIER_TITLE_MAP[lectureFeeStandardTitle]
-  if (tier) {
-    return `프로그램 1회 강의비 (${tier}급 강사)`
-  }
-  const short = lectureFeeStandardTitle.replace(/ 강사비$/, '')
-  return `프로그램 1회 강의비 (${short})`
-}
-
 function hashLineSeed(lineId: string): number {
   let hash = 0
   for (let i = 0; i < lineId.length; i += 1) {
@@ -830,7 +814,7 @@ function isLectureFeeBasisDetail(
 }
 
 function isLectureFeeCalculationRow(row: { kind: string; itemLabel: string }): boolean {
-  return row.kind === 'lecture_fee' || row.itemLabel === '강의비' || row.itemLabel === '강사비'
+  return row.kind === 'lecture_fee' || row.itemLabel === '강사비' || row.itemLabel === '강사비'
 }
 
 function resolveLectureFeeStandardTitleForRow(
@@ -853,7 +837,7 @@ function resolveLectureFeeStandardTitleForRow(
 }
 
 /**
- * 순수 차시·회차 표기만 허용.
+ * 순수 차시·회차 표기. 일정 칸 표시에는 쓰지 않는다.
  * `GROK_E2E_API CS03 1회차` 같은 일정명에서 숫자를 뽑아 N차시로 오인하지 않는다.
  */
 export function isCanonicalLectureSessionDisplay(raw: string | undefined): boolean {
@@ -862,45 +846,33 @@ export function isCanonicalLectureSessionDisplay(raw: string | undefined): boole
   return /^\d+\s*(?:~\s*\d+\s*)?(?:차시|회차)$/u.test(trimmed)
 }
 
-/** 모달 「강의 시간」에 쓸 수 있는 표기 — 차시·회차 또는 N시간 */
+/** 모달 「강의 시간」: calculationDetail 원문(시계열 포함) 또는 N시간 */
 export function isUsableLectureTimeDisplay(raw: string | undefined): boolean {
   const trimmed = raw?.trim()
-  if (!trimmed || trimmed === '-') return false
-  if (isCanonicalLectureSessionDisplay(trimmed)) return true
-  return /^\d+(?:\.\d+)?\s*시간$/u.test(trimmed)
+  return Boolean(trimmed && trimmed !== '-')
 }
 
-/** lectureSessionDisplay가 일정명이면 파싱하지 않고 sessionOrdinal → N차시 */
+/** 정산 일정 칸 = lectureSessionDisplay 원문. sessionOrdinal+"차시"로 재조립하지 않는다. */
 export function resolveCanonicalLectureSessionDisplay(
   lectureSessionDisplay?: string | null,
-  sessionOrdinal?: number | null
+  _sessionOrdinal?: number | null
 ): string {
   const fromDisplay = lectureSessionDisplay?.trim()
-  if (fromDisplay && isCanonicalLectureSessionDisplay(fromDisplay)) {
-    return fromDisplay
-  }
-  if (sessionOrdinal != null && Number.isFinite(sessionOrdinal) && sessionOrdinal > 0) {
-    return `${Math.trunc(sessionOrdinal)}차시`
-  }
+  if (fromDisplay && fromDisplay !== '-') return fromDisplay
   return '-'
 }
 
 /**
  * calculationDetail(basisJson) 필드만으로 모달 강의 시간을 만든다.
- * 우선순위: canonical 차시·회차 → sessionOrdinal → hours(N시간).
+ * lectureTimeDisplay 원문 우선. sessionOrdinal+"차시"로 덮지 않는다.
  */
 export function resolveLectureTimeDisplayFromCalculationFields(input: {
   lectureTimeDisplay?: string | null
   sessionOrdinal?: number | null
   hours?: number | null
 }): string {
-  const fromSession = resolveCanonicalLectureSessionDisplay(
-    input.lectureTimeDisplay,
-    input.sessionOrdinal
-  )
-  if (fromSession !== '-') return fromSession
   const rawDisplay = input.lectureTimeDisplay?.trim()
-  if (rawDisplay && isUsableLectureTimeDisplay(rawDisplay)) return rawDisplay
+  if (rawDisplay && rawDisplay !== '-') return rawDisplay
   if (input.hours != null && Number.isFinite(input.hours) && input.hours > 0) {
     const hours = input.hours
     return Number.isInteger(hours) ? `${Math.trunc(hours)}시간` : `${hours}시간`
@@ -932,9 +904,7 @@ function resolveLectureTimeDisplayForRow(row: {
 }): string {
   if (row.basisDetail && isLectureFeeBasisDetail(row.basisDetail)) {
     const fromDetail = row.basisDetail.lectureTimeDisplay.trim()
-    if (fromDetail && fromDetail !== '-' && isUsableLectureTimeDisplay(fromDetail)) {
-      return fromDetail
-    }
+    if (fromDetail && fromDetail !== '-') return fromDetail
   }
   return '-'
 }
@@ -1022,7 +992,7 @@ export function resolvePaymentOrderCalculationBasisDetailForRow(
     return row.basisDetail
   }
 
-  // 강의비 행만 lectureFee* basisDetail을 모달에 연결한다.
+  // 강사비 행만 lectureFee* basisDetail을 모달에 연결한다.
   // BE가 withholding 등에 lectureFeeTier calculationDetail을 붙여도 강사비 모달로 열지 않는다.
   if (
     isLectureFeeCalculationRow(row) &&

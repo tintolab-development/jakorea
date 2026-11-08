@@ -8,6 +8,7 @@ import {
   EducationSettlementApplicationDocumentView,
   type SettlementApplicationDocumentPage,
 } from './application-document-view'
+import { showSettlementDocumentAttachmentsPage } from '../lib/format-application-document'
 import styles from './application-document-overlay.module.css'
 
 const PREVIEW_NOTICE = '현재 화면은 미리보기 화면입니다.'
@@ -17,6 +18,8 @@ type EducationSettlementApplicationDocumentOverlayProps = {
   open: boolean
   document: SettlementApplicationDocumentResponse | null
   programTitle?: string | null
+  /** `application.programConfig.programType` — 개인형이면 산출 내역 「참여 기관명」열 미노출 */
+  programType?: string | null
   loading?: boolean
   error?: string
   refreshing?: boolean
@@ -28,7 +31,7 @@ function resolveDocumentPages(
   applicationDocument: SettlementApplicationDocumentResponse | null,
 ): SettlementApplicationDocumentPage[] {
   if (applicationDocument == null) return ['summary']
-  if (applicationDocument.attachments.length > 0) return ['summary', 'attachments']
+  if (showSettlementDocumentAttachmentsPage(applicationDocument)) return ['summary', 'attachments']
   return ['summary']
 }
 
@@ -36,6 +39,7 @@ export function EducationSettlementApplicationDocumentOverlay({
   open,
   document: applicationDocument,
   programTitle,
+  programType,
   loading = false,
   error = '',
   refreshing = false,
@@ -97,15 +101,18 @@ export function EducationSettlementApplicationDocumentOverlay({
           </PFText>
         ) : null}
         {!loading && !error && applicationDocument != null ? (
-          <ConsentDocumentA4Page title={sheetTitle} pageIndex={safePage - 1}>
-            <EducationSettlementApplicationDocumentView
-              document={applicationDocument}
-              programTitle={programTitle}
-              page={activePage}
-              onRefreshDocument={onRefreshDocument}
-              refreshing={refreshing}
-            />
-          </ConsentDocumentA4Page>
+          <div className={styles.documentStage}>
+            <ConsentDocumentA4Page title={sheetTitle} pageIndex={safePage - 1}>
+              <EducationSettlementApplicationDocumentView
+                document={applicationDocument}
+                programTitle={programTitle}
+                programType={programType}
+                page={activePage}
+                onRefreshDocument={onRefreshDocument}
+                refreshing={refreshing}
+              />
+            </ConsentDocumentA4Page>
+          </div>
         ) : null}
       </div>
 

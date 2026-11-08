@@ -174,7 +174,7 @@ export function SettingsInstructorBasicFields({
               <PFTextInput
                 size="xlarge"
                 value={displayPhone === EMPTY_SETTINGS_VALUE ? '' : displayPhone}
-                readOnly
+                disabled
               />
               <PFButton
                 size="xlarge"
@@ -331,35 +331,6 @@ export function SettingsInstructorBasicFields({
               value={values.homeAddressDetail}
               onValueChange={value => patch({ homeAddressDetail: value })}
             />
-          </div>
-
-          <div className={styles.settlementAccountField}>
-            <PFText as="span" typo="label-md" color="inherit" className={styles.fieldLabel}>
-              정산 계좌 정보
-            </PFText>
-            <PFTextInput
-              size="xlarge"
-              placeholder="은행명"
-              value={values.bankName}
-              onValueChange={value => patch({ bankName: value })}
-              required
-            />
-            <div className={styles.settlementAccountSplit}>
-              <PFTextInput
-                size="xlarge"
-                placeholder="계좌번호"
-                value={values.accountNumber}
-                onValueChange={value => patch({ accountNumber: value })}
-                required
-              />
-              <PFTextInput
-                size="xlarge"
-                placeholder="예금주"
-                value={values.accountHolder}
-                onValueChange={value => patch({ accountHolder: value })}
-                required
-              />
-            </div>
           </div>
 
           <div className={styles.schoolStatusField}>

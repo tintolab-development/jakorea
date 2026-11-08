@@ -113,12 +113,16 @@ export function SponsorManagerPartsInlineView({ parts }: { parts: string[] }): R
 export function SponsorManagerContactsView({
   program,
   sponsorRows,
+  sponsorNameById,
   contactsBySponsorId,
 }: {
   program: Program
   sponsorRows: readonly SponsorManagementRow[]
+  /** 후원사 행이 없을 때(조회 화면) 배정 응답의 후원사명 — sponsorManagementId → 이름 */
+  sponsorNameById?: Readonly<Record<string, string>>
   contactsBySponsorId: Record<string, readonly SponsorContactRow[] | undefined>
 }): ReactNode {
+  const sponsorCount = Math.max(sponsorRows.length, Object.keys(sponsorNameById ?? {}).length)
   if (
     isProgramSponsorManagerUnselected({
       sponsorManagerContactIds: program.generalCommonInfo?.sponsorManagerContactIds,
@@ -131,7 +135,7 @@ export function SponsorManagerContactsView({
   }
 
   const refs = program.generalCommonInfo?.sponsorManagerContactIds ?? []
-  const multi = refs.length > 1 || sponsorRows.length > 1
+  const multi = refs.length > 1 || sponsorCount > 1
   const lines: string[][] = []
   for (const ref of refs) {
     const decoded = decodeSponsorManagerContactRef(ref)
@@ -143,15 +147,23 @@ export function SponsorManagerContactsView({
     const storedName = program.generalCommonInfo?.sponsorManagerContactNames?.[ref]?.trim()
     const contactName = contact?.name?.trim() || storedName
     if (!contactName) continue
+    // GET /programs/{id}/sponsors 배정 응답의 담당자 직책·연락처 — 있으면 이것만 쓴다(다른 API로 채우지 않음).
+    const assignedDetail = program.generalCommonInfo?.sponsorManagerContactDetails?.[ref]
     const personLabel = formatSponsorManagerPersonLabel({
       contactName,
-      position: contact?.position,
+      position: assignedDetail ? assignedDetail.position : contact?.position,
     })
-    const parts = [
-      multi ? sponsor?.name?.trim() : '',
+    const head = [
+      multi
+        ? sponsor?.name?.trim() || sponsorNameById?.[decoded.sponsorManagementId]?.trim()
+        : '',
       personLabel,
-      contact?.phone?.trim(),
-    ].filter((part): part is string => Boolean(part))
+    ]
+    const parts = (
+      assignedDetail
+        ? [...head, assignedDetail.phone?.trim() || '-', assignedDetail.email?.trim() || '-']
+        : [...head, contact?.phone?.trim()]
+    ).filter((part): part is string => Boolean(part))
     if (parts.length > 0) lines.push(parts)
   }
   if (lines.length > 0) {
@@ -170,7 +182,7 @@ export function SponsorManagerContactsView({
   }
   const managerName = program.managerName?.trim()
   if (!managerName || isSponsorContactUnselectedLabel(managerName)) {
-    return <>{sponsorRows.length > 0 ? SPONSOR_CONTACT_UNSELECTED_LABEL : '-'}</>
+    return <>{sponsorCount > 0 ? SPONSOR_CONTACT_UNSELECTED_LABEL : '-'}</>
   }
   return (
     <>

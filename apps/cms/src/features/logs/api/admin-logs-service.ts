@@ -81,7 +81,10 @@ export async function exportPersonalInfoAccessLogs(
       throw new Error('개인정보 조회 이력 다운로드에 실패했습니다.')
     }
   }
-  await downloadBlob(blob, `${buildPersonalInfoAccessHistoryExcelFilename()}.xlsx`)
+  // 서버 export가 file-access 이력을 남긴다 — client 로그 중복 방지
+  await downloadBlob(blob, `${buildPersonalInfoAccessHistoryExcelFilename()}.xlsx`, {
+    skipAccessLog: true,
+  })
 }
 
 export async function getMemberLoginLogsPage(
@@ -113,7 +116,10 @@ export async function exportMemberLoginLogs(
       throw new Error('관리자 로그인 이력 다운로드에 실패했습니다.')
     }
   }
-  await downloadBlob(blob, `${buildMemberLoginHistoryExcelFilename()}.xlsx`)
+  // 서버 export가 file-access 이력을 남긴다 — client 로그 중복 방지
+  await downloadBlob(blob, `${buildMemberLoginHistoryExcelFilename()}.xlsx`, {
+    skipAccessLog: true,
+  })
 }
 
 export async function getBugIssueLogsPage(
@@ -155,7 +161,10 @@ export async function exportBugIssueLogs(
       throw new Error('버그/이슈 이력 다운로드에 실패했습니다.')
     }
   }
-  await downloadBlob(blob, `${buildBugIssueHistoryExcelFilename()}.xlsx`)
+  // 서버 export가 file-access 이력을 남긴다 — client 로그 중복 방지
+  await downloadBlob(blob, `${buildBugIssueHistoryExcelFilename()}.xlsx`, {
+    skipAccessLog: true,
+  })
 }
 
 export function getLogsApiErrorMessage(error: unknown, fallback: string): string {

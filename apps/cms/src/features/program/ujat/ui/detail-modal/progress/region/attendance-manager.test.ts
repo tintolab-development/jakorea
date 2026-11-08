@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import {
+  ATTENDANCE_MANAGER_PUTS_EMPTY_MESSAGE,
+  ATTENDANCE_MANAGER_UNAPPLIED_MESSAGE,
   collectAttendanceManagerPuts,
   formatAttendanceManagerScheduleLabel,
+  getAttendanceManagerPutIssues,
   getRegionAttendanceManagerScheduleItemsFromData,
+  resolveAttendanceManagerPuts,
 } from './attendance-manager'
 import type { RegionAssignmentTableData } from './types'
 
@@ -28,6 +32,7 @@ describe('getRegionAttendanceManagerScheduleItemsFromData', () => {
         {
           id: 'c1',
           scheduleId: '10',
+          organizationApplicationId: '100',
           dateLabel: '4/3',
           isoDate: '2026-04-03',
           institutionName: '제이초',
@@ -78,6 +83,7 @@ describe('getRegionAttendanceManagerScheduleItemsFromData', () => {
         {
           id: '187580:1',
           scheduleId: '187580',
+          organizationApplicationId: '1691554',
           dateLabel: '11/1',
           isoDate: '2026-11-01',
           institutionName: '테스트초',
@@ -160,9 +166,174 @@ describe('getRegionAttendanceManagerScheduleItemsFromData', () => {
     ])
     expect(items[0]?.currentManagerId).toBe('1695055')
     expect(collectAttendanceManagerPuts(data, { '187580:1': '1695056' })).toEqual([
-      { scheduleId: 187580, participantId: 1695056 },
+      { scheduleId: 187580, organizationApplicationId: 1691554, participantId: 1695056 },
     ])
     expect(collectAttendanceManagerPuts(data, { '187580:1': '1695064' })).toEqual([])
     expect(collectAttendanceManagerPuts(data, { '187580:1': '0' })).toEqual([])
+  })
+
+  it('같은 scheduleId 여러 기관 열이면 열마다 PUT 1건을 만든다', () => {
+    const assigned = (classLabel: string, manager?: boolean) =>
+      ({
+        kind: 'assigned' as const,
+        classLabel,
+        assignmentStatus: 'ASSIGNED' as const,
+        isAttendanceManager: manager,
+      })
+    const data: RegionAssignmentTableData = {
+      regionKey: 'seoul',
+      regionLabel: '서울',
+      volunteerCount: 2,
+      columns: [
+        {
+          id: '187580:1',
+          scheduleId: '187580',
+          organizationApplicationId: '1691554',
+          dateLabel: '11월 1일',
+          isoDate: '2026-11-01',
+          institutionName: '학교A',
+          location: '강남구',
+          classSlots: [],
+        },
+        {
+          id: '187580:2',
+          scheduleId: '187580',
+          organizationApplicationId: '1691555',
+          dateLabel: '11월 1일',
+          isoDate: '2026-11-01',
+          institutionName: '학교B',
+          location: '서초구',
+          classSlots: [],
+        },
+      ],
+      rows: [
+        {
+          id: '11',
+          name: '김',
+          totalAssignedDays: 1,
+          cells: [assigned('1-1', true), assigned('2-1')],
+        },
+        {
+          id: '22',
+          name: '이',
+          totalAssignedDays: 1,
+          cells: [assigned('1-1'), assigned('2-1')],
+        },
+      ],
+    }
+
+    expect(collectAttendanceManagerPuts(data, { '187580:2': '22' })).toEqual([
+      { scheduleId: 187580, organizationApplicationId: 1691555, participantId: 22 },
+    ])
+    expect(
+      collectAttendanceManagerPuts(data, { '187580:1': '11', '187580:2': '22' })
+    ).toEqual([
+      { scheduleId: 187580, organizationApplicationId: 1691554, participantId: 11 },
+      { scheduleId: 187580, organizationApplicationId: 1691555, participantId: 22 },
+    ])
+    expect(collectAttendanceManagerPuts(data, { '187580:1': null })).toEqual([
+      { scheduleId: 187580, organizationApplicationId: 1691554, participantId: null },
+    ])
+    expect(
+      collectAttendanceManagerPuts(data, { '187580:1': null, '187580:2': '22' })
+    ).toEqual([
+      { scheduleId: 187580, organizationApplicationId: 1691554, participantId: null },
+      { scheduleId: 187580, organizationApplicationId: 1691555, participantId: 22 },
+    ])
+    expect(
+      getAttendanceManagerPutIssues(data, { '187580:1': '11', '187580:2': '22' })
+    ).toEqual({ unappliedLabels: [] })
+    expect(resolveAttendanceManagerPuts(data, { '187580:1': '11', '187580:2': '22' })).toEqual([
+      { scheduleId: 187580, organizationApplicationId: 1691554, participantId: 11 },
+      { scheduleId: 187580, organizationApplicationId: 1691555, participantId: 22 },
+    ])
+  })
+
+  it('ASSIGNED가 아닌 선택은 저장하지 않고 오류로 막는다', () => {
+    const data: RegionAssignmentTableData = {
+      regionKey: 'seoul',
+      regionLabel: '서울',
+      volunteerCount: 2,
+      columns: [
+        {
+          id: 'c1',
+          scheduleId: '10',
+          organizationApplicationId: '100',
+          dateLabel: '4/3',
+          isoDate: '2026-04-03',
+          institutionName: '제이초',
+          location: '강서구',
+          classSlots: [],
+        },
+      ],
+      rows: [
+        {
+          id: '1',
+          name: '김제이',
+          totalAssignedDays: 1,
+          cells: [
+            {
+              kind: 'assigned',
+              classLabel: '2-1',
+              isAttendanceManager: true,
+              assignmentStatus: 'ASSIGNED',
+            },
+          ],
+        },
+        {
+          id: '2',
+          name: '미배정',
+          totalAssignedDays: 0,
+          cells: [{ kind: 'empty' }],
+        },
+      ],
+    }
+
+    expect(getAttendanceManagerPutIssues(data, { c1: '2' })).toEqual({
+      unappliedLabels: ['4월 3일 (제이초)'],
+    })
+    expect(() => resolveAttendanceManagerPuts(data, { c1: '2' })).toThrow(
+      ATTENDANCE_MANAGER_UNAPPLIED_MESSAGE
+    )
+    expect(() => resolveAttendanceManagerPuts(data, {})).toThrow(
+      ATTENDANCE_MANAGER_PUTS_EMPTY_MESSAGE
+    )
+  })
+
+  it('기관 열 id가 없으면 PUT을 만들지 않는다', () => {
+    const data: RegionAssignmentTableData = {
+      regionKey: 'seoul',
+      regionLabel: '서울',
+      volunteerCount: 1,
+      columns: [
+        {
+          id: 'c1',
+          scheduleId: '10',
+          dateLabel: '11월 1일',
+          isoDate: '2026-11-01',
+          institutionName: '대산초등학교',
+          location: '강남구',
+          classSlots: [],
+        },
+      ],
+      rows: [
+        {
+          id: '11',
+          name: '김',
+          totalAssignedDays: 1,
+          cells: [
+            {
+              kind: 'assigned',
+              classLabel: '1-1',
+              assignmentStatus: 'ASSIGNED',
+            },
+          ],
+        },
+      ],
+    }
+    expect(getAttendanceManagerPutIssues(data, { c1: '11' })).toEqual({
+      unappliedLabels: ['11월 1일 (대산초등학교)'],
+    })
+    expect(collectAttendanceManagerPuts(data, { c1: '11' })).toEqual([])
   })
 })

@@ -84,7 +84,8 @@ export function useGeneralProgramCommonInfoEditForm({
   program,
   isEditMode,
 }: UseGeneralProgramCommonInfoEditFormOptions): UseFormReturn<GeneralProgramCommonInfoEditFormValues> {
-  const sponsorsQuery = useSponsorOptionsQuery(Boolean(program))
+  // 후원사 전체 목록은 수정 선택지용 — 조회 모드에서는 받지 않는다(배정 응답에 id·이름이 있다).
+  const sponsorsQuery = useSponsorOptionsQuery(Boolean(program) && isEditMode)
   const interimSponsorContext = useMemo(
     (): GeneralProgramSponsorEditContext => ({
       sponsors: sponsorsQuery.data ?? EMPTY_INTERIM_SPONSORS,
@@ -96,8 +97,11 @@ export function useGeneralProgramCommonInfoEditForm({
     () => (program ? resolveSponsorManagementIds(program, interimSponsorContext) : []),
     [interimSponsorContext, program]
   )
-  const sponsorContext = useGeneralProgramSponsorEditContext(initialSponsorIds)
-  const detailedProgramsQuery = useDetailedProgramOptionsQuery(Boolean(program))
+  const sponsorContext = useGeneralProgramSponsorEditContext(initialSponsorIds, true, {
+    sponsorRows: sponsorsQuery.data ?? EMPTY_INTERIM_SPONSORS,
+  })
+  // 세부 프로그램 옵션은 수정 모드에서만 필요하다. 수정 진입 시 handleInfoEdit이 먼저 받아 둔다.
+  const detailedProgramsQuery = useDetailedProgramOptionsQuery(Boolean(program) && isEditMode)
   const detailedProgramCatalog = useMemo(
     () => detailedProgramsQuery.data ?? EMPTY_DETAILED_PROGRAM_CATALOG,
     [detailedProgramsQuery.data]

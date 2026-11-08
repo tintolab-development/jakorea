@@ -24,6 +24,7 @@ import type {
   UjatTypedEducationStagePlan,
   UjatTypedScheduleRow,
 } from '@/features/program/ujat/api/typed-detail-client'
+import { holidayExcludedFromTyped } from '@/features/program/ujat/lib/ujat-typed-detail'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 import '@/features/template/ui/form-set/registration-form/UJAT/paragraphs/ujat-education-schedule-settings-paragraph.css'
@@ -107,7 +108,7 @@ function typedExclusionToUi(row: UjatTypedScheduleRow | undefined): UjatEducatio
     excludeNone: row?.exclusion?.excludeNone === true,
     excludeSaturday: row?.exclusion?.excludeSaturday === true,
     excludeSunday: row?.exclusion?.excludeSunday === true,
-    excludeHoliday: row?.exclusion?.excludePublicHoliday === true,
+    excludeHoliday: holidayExcludedFromTyped(row?.exclusion),
   }
 }
 
@@ -118,7 +119,7 @@ function uiExclusionToTyped(
     excludeNone: state.excludeNone,
     excludeSaturday: state.excludeSaturday,
     excludeSunday: state.excludeSunday,
-    excludePublicHoliday: state.excludeHoliday,
+    excludeHoliday: state.excludeHoliday,
   }
 }
 

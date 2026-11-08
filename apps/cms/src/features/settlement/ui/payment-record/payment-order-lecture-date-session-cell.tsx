@@ -1,5 +1,5 @@
 /**
- * 강의 진행 일자 셀 — 날짜(요일) · 세로 디바이더 · N차시
+ * 교육 진행 일자 셀 — 날짜(요일) · 세로 디바이더 · N회차
  * `ProgramDetailTdDivider` 스펙(1×13·opacity·default-BK) + 양옆 gap 10px
  */
 
@@ -20,7 +20,7 @@ export function PaymentOrderLectureDateSessionCell(props: {
       <ProgramDetailTdSegmentWrap>
         <span>{formatKoreanDateWithWeekday(lectureDate)}</span>
         <ProgramDetailTdDivider />
-        <span>{sessionOrdinal}차시</span>
+        <span>{sessionOrdinal}회차</span>
       </ProgramDetailTdSegmentWrap>
     </div>
   )

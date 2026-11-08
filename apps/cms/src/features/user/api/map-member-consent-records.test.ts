@@ -67,17 +67,19 @@ describe('applyTermsAgreementsToSchema', () => {
     expect(field('교육진행자 서약서')).toMatchObject({ type: 'document', agreed: false })
   })
 
-  it('교사(비겸직) preset에는 강사 전용 동의 항목이 없다', () => {
+  it('교사 preset(시안 4427:48695)은 교사 및 기관 정보 동의·동의서 4종을 포함한다', () => {
     const schoolTeacherSchema = CONSENT_PRESET_SCHEMA.school_teacher
     const rows = applyTermsAgreementsToSchema(schoolTeacherSchema, [
+      { termsType: 'TEACHER_INFO_COLLECTION', agreed: true },
       { termsType: 'PAYMENT_STATEMENT', agreed: true },
       { termsType: 'EDUCATOR_PLEDGE', agreed: true },
     ])
     const field = (label: string) =>
       rows.flatMap(r => r.fields).find(f => f.label === label)?.value
 
-    expect(field('지급조서 사전 동의서')).toBeUndefined()
-    expect(field('교육진행자 서약서')).toBeUndefined()
+    expect(field('교사 및 기관 정보 동의')).toMatchObject({ agreed: true })
+    expect(field('지급조서 사전 동의서')).toMatchObject({ type: 'document', agreed: true })
+    expect(field('교육진행자 서약서')).toMatchObject({ type: 'document', agreed: true })
   })
 
   it('등록 canonical termsType(상세 조회)을 동의 상태로 반영한다', () => {
@@ -118,6 +120,163 @@ describe('applyTermsAgreementsToSchema', () => {
 })
 
 describe('applyMemberConsentToSchema', () => {
+  it('Summary consentStatus PARTIAL을 필드에 전달한다', () => {
+    const rows = applyMemberConsentToSchema(individualSchema, {
+      consentSummaries: [
+        {
+          consentType: 'PRIVACY_COLLECTION',
+          agreed: true,
+          consentStatus: 'PARTIAL',
+        },
+        {
+          consentType: 'PORTRAIT_RIGHTS',
+          agreed: true,
+          consentStatus: 'PARTIAL',
+        },
+      ],
+    })
+
+    const field = (label: string) =>
+      rows.flatMap(r => r.fields).find(f => f.label === label)?.value
+
+    expect(field('개인정보 수집·이용 동의')).toMatchObject({
+      type: 'remote_consent',
+      agreed: true,
+      consentStatus: 'PARTIAL',
+    })
+    expect(field('초상권 수집·이용 동의')).toMatchObject({
+      type: 'document',
+      agreed: true,
+      consentStatus: 'PARTIAL',
+    })
+  })
+
+  describe('초상권 allItemsAgreed', () => {
+    const portraitField = (rows: ReturnType<typeof applyMemberConsentToSchema>) =>
+      rows.flatMap(r => r.fields).find(f => f.label === '초상권 수집·이용 동의')?.value
+
+    it('Summary allItemsAgreed true/false를 동의서 필드에 전달한다', () => {
+      for (const allItemsAgreed of [true, false]) {
+        const rows = applyMemberConsentToSchema(individualSchema, {
+          consentSummaries: [
+            {
+              consentType: 'PORTRAIT_RIGHTS',
+              agreed: true,
+              consentStatus: 'PARTIAL',
+              programEligible: true,
+              allItemsAgreed,
+            },
+          ],
+        })
+        expect(portraitField(rows)).toMatchObject({
+          type: 'document',
+          consentStatus: 'PARTIAL',
+          allItemsAgreed,
+        })
+      }
+    })
+
+    it('비초상권 Summary는 allItemsAgreed가 null이다', () => {
+      const rows = applyMemberConsentToSchema(individualSchema, {
+        consentSummaries: [{ consentType: 'MARKETING', agreed: true, allItemsAgreed: null }],
+      })
+      const marketing = rows
+        .flatMap(r => r.fields)
+        .find(f => f.label === '마케팅 제공 동의')?.value
+      expect(marketing).toMatchObject({ type: 'remote_consent', allItemsAgreed: null })
+    })
+
+    it('Summary에 값이 없으면 consent-records 값으로 보강하고, 있으면 Summary를 우선한다', () => {
+      const fromRecords = applyMemberConsentToSchema(individualSchema, {
+        consentSummaries: [
+          { consentType: 'PORTRAIT_RIGHTS', agreed: true, consentStatus: 'PARTIAL' },
+        ],
+        consentRecords: [
+          { consentType: 'PORTRAIT_RIGHTS', consentStatus: 'PARTIAL', allItemsAgreed: true },
+        ],
+      })
+      expect(portraitField(fromRecords)).toMatchObject({ allItemsAgreed: true })
+
+      const summaryWins = applyMemberConsentToSchema(individualSchema, {
+        consentSummaries: [
+          {
+            consentType: 'PORTRAIT_RIGHTS',
+            agreed: true,
+            consentStatus: 'PARTIAL',
+            allItemsAgreed: false,
+          },
+        ],
+        consentRecords: [
+          { consentType: 'PORTRAIT_RIGHTS', consentStatus: 'PARTIAL', allItemsAgreed: true },
+        ],
+      })
+      expect(portraitField(summaryWins)).toMatchObject({ allItemsAgreed: false })
+    })
+
+    it('Summary expired면 동의서 필드에 동의 만료와 만료일을 전달하고 동의 일시는 숨긴다', () => {
+      const rows = applyMemberConsentToSchema(individualSchema, {
+        consentSummaries: [
+          {
+            consentType: 'PORTRAIT_RIGHTS',
+            agreed: true,
+            agreedAt: '2025-10-31T03:00:00Z',
+            consentStatus: 'PARTIAL',
+            allItemsAgreed: true,
+            expired: true,
+            expiresAt: '2026-10-31T03:00:00Z',
+          },
+        ],
+      })
+      const value = portraitField(rows)
+      expect(value).toMatchObject({
+        type: 'document',
+        expired: true,
+        expiredAtDisplay: '2026.10.31',
+      })
+      expect(value && 'agreedAtDisplay' in value ? value.agreedAtDisplay : undefined).toBeUndefined()
+    })
+
+    it('만료가 아니면 expired를 붙이지 않고, 동의서형이 아닌 항목은 expired를 무시한다', () => {
+      const rows = applyMemberConsentToSchema(individualSchema, {
+        consentSummaries: [
+          {
+            consentType: 'PORTRAIT_RIGHTS',
+            agreed: true,
+            consentStatus: 'PARTIAL',
+            allItemsAgreed: true,
+            expired: false,
+            expiresAt: '2027-10-31T03:00:00Z',
+          },
+          { consentType: 'SERVICE_TERMS', agreed: true, expired: true, expiresAt: '2026-10-31T03:00:00Z' },
+        ],
+      })
+      expect(portraitField(rows)).not.toHaveProperty('expired')
+      const serviceTerms = rows
+        .flatMap(r => r.fields)
+        .find(f => f.label === '서비스 이용약관')?.value
+      expect(serviceTerms).toMatchObject({ type: 'remote_consent', agreed: true })
+      expect(serviceTerms).not.toHaveProperty('expired')
+    })
+
+    it('termsAgreements 경로에서도 allItemsAgreed를 전달한다', () => {
+      const rows = applyMemberConsentToSchema(individualSchema, {
+        termsAgreements: [
+          {
+            termsType: 'PORTRAIT_RIGHTS',
+            agreed: true,
+            consentStatus: 'PARTIAL',
+            allItemsAgreed: true,
+          },
+        ],
+      })
+      expect(portraitField(rows)).toMatchObject({
+        type: 'document',
+        agreed: true,
+        allItemsAgreed: true,
+      })
+    })
+  })
+
   it('Summary agreed가 consent-records 이력(과거 false)보다 우선한다', () => {
     const rows = applyMemberConsentToSchema(individualSchema, {
       consentSummaries: [

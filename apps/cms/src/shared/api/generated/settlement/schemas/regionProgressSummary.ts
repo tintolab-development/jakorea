@@ -13,8 +13,12 @@ export interface RegionProgressSummary {
   educationRegionName?: string | null;
   /** 해당 지역 기관 신청(APPROVED|APPROVAL_COMPLETED|FINAL_SELECTED) 학교/기관 수. 집계 불가면 null. 실제 0건이면 0. */
   appliedSchoolCount?: number | null;
+  /** 해당 프로그램·지역 봉사단 선발 예정 정원. ujat_program_region_capacity.max_volunteer_count의 반기 합. 용량 행이 없으면 null. 저장된 0은 0. */
+  plannedSelectionVolunteerCount?: number | null;
+  /** 학교 1학기·봉사단 {firstHalfActivityTerm}기 최종 합격 셀 */
   firstHalf?: HalfProgressCounts;
+  /** 학교 2학기·봉사단 {secondHalfActivityTerm}기 최종 합격 셀 */
   secondHalf?: HalfProgressCounts;
-  /** 양 반기 합산/중복 제거. progressingSchoolCount·finalPassVolunteerCount는 distinct. classCount·studentCount는 합. 반기 값이 null이면 합도 null 성분을 유지하지 않고 집계 가능한 쪽만 반영한다. */
+  /** 학교 {programYear}년 종합·{programYear} 봉사단 최종 인원. progressingSchoolCount·classCount·studentCount는 1·2학기 합(한쪽만 있으면 그 쪽). finalPassVolunteerCount는 지역 PASS 봉사자 distinct. 반기 한쪽만 있어도 집계한다. */
   total?: HalfProgressCounts;
 }

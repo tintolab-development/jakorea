@@ -3,6 +3,14 @@ import { describe, expect, it } from 'vitest'
 import { INITIAL_VALUES } from '@/features/user/shared/ui/instructor-profile-form'
 import { collectCmsInstructorRegisterValidation } from './validate-cms-instructor-register'
 
+const AGREED_REQUIRED_CONSENTS = {
+  consentTermsOfService: 'agree' as const,
+  consentPersonal: 'agree' as const,
+  consentPaymentStatement: 'agree' as const,
+  consentEducatorPledge: 'agree' as const,
+  consentSexOffenseCheck: 'agree' as const,
+}
+
 const FILLED_EDUCATION = {
   eduSchoolType: 'high',
   eduStatus: 'graduated',
@@ -70,8 +78,7 @@ describe('collectCmsInstructorRegisterValidation', () => {
       accountNumber: '123',
       accountHolder: '홍길동',
       oneLineIntro: '소개',
-      consentTermsOfService: 'agree',
-      consentPersonal: 'agree',
+      ...AGREED_REQUIRED_CONSENTS,
       careerLevel: 'new',
       careers: [],
       freeWrite1: '',
@@ -101,8 +108,7 @@ describe('collectCmsInstructorRegisterValidation', () => {
       accountNumber: '123',
       accountHolder: '홍길동',
       oneLineIntro: '소개',
-      consentTermsOfService: 'agree' as const,
-      consentPersonal: 'agree' as const,
+      ...AGREED_REQUIRED_CONSENTS,
       careerLevel: 'new' as const,
       careers: [],
       freeWrite1: '',
@@ -138,8 +144,7 @@ describe('collectCmsInstructorRegisterValidation', () => {
       accountNumber: '123',
       accountHolder: '홍길동',
       oneLineIntro: '소개',
-      consentTermsOfService: 'agree' as const,
-      consentPersonal: 'agree' as const,
+      ...AGREED_REQUIRED_CONSENTS,
       careerLevel: 'new' as const,
       careers: [],
     }

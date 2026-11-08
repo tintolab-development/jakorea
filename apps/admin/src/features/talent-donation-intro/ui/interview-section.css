@@ -4,24 +4,58 @@
 
 .talent-intro-interview .detail-info-form__field {
   min-height: 54px;
-  --detail-info-label-w: 160px !important;
-  grid-template-columns: 160px minmax(0, 1fr) !important;
-}
-
-.talent-intro-interview .detail-info-form__field-label {
-  display: flex !important;
-  width: 160px !important;
-  min-width: 160px !important;
-  max-width: 160px !important;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
 }
 
 .talent-intro-interview .detail-info-form__field-content {
   justify-content: flex-start;
   align-items: center;
   text-align: left;
+}
+
+.talent-intro-interview .detail-info-form__field-content--edit > * {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.talent-intro-interview__field .cms-input__control,
+.talent-intro-interview__field.cms-input .cms-input__control {
+  height: 36px;
+  min-height: 36px;
+  max-height: 36px;
+  border-width: 1px;
+  border-style: solid;
+  box-sizing: border-box;
+}
+
+.talent-intro-interview__field .cms-textarea__control {
+  border-width: 1px;
+  border-style: solid;
+  box-sizing: border-box;
+}
+
+.talent-intro-interview__field--readonly .cms-input__control,
+.talent-intro-interview__field--readonly .cms-textarea__control {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  cursor: default;
+}
+
+.talent-intro-interview__field--readonly .ant-input,
+.talent-intro-interview__field--readonly textarea.ant-input {
+  cursor: default;
+}
+
+.talent-intro-interview__field--readonly .talent-intro-interview__search-btn {
+  visibility: hidden;
+}
+
+.talent-intro-interview .detail-info-form__field-content--edit .ant-input,
+.talent-intro-interview .detail-info-form__field-content--edit textarea.ant-input {
+  font-size: 14px !important;
+  font-weight: 500;
+  line-height: 150%;
 }
 
 .talent-intro-interview__preline {
@@ -47,6 +81,28 @@
   color: var(--color-mint-01, #01a1af);
 }
 
+.talent-intro-interview__post-input .cms-input__control,
 .talent-intro-interview__post-input .ant-input {
   cursor: pointer;
+}
+
+/*
+ * 인터뷰 섹션 조회 — 일반 텍스트 셀 기준: 투명 입력의 안쪽 패딩·보더를 없애 셀 패딩(12×16)만 남긴다.
+ * (텍스트영역 높이는 autoSize 인라인 값 — height 강제 금지)
+ */
+.talent-intro-interview__field--readonly .cms-textarea__control {
+  min-height: 0 !important;
+  padding: 0 !important;
+  border-width: 0;
+}
+
+.talent-intro-interview__field--readonly .cms-textarea__inner textarea.ant-input {
+  min-height: 0 !important;
+  padding: 0 !important;
+  line-height: 150% !important;
+}
+
+.talent-intro-interview__field--readonly .cms-input__control {
+  padding-inline: 0 !important;
+  border-width: 0;
 }

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type {
   GeneralVolunteerApplicantRow,
   GeneralVolunteerInterviewEvaluationPayload,
@@ -7,9 +8,19 @@ import type { GeneralManagerEvaluation } from '@/features/program/general/lib/vo
 import { useGeneralInterview2EffectiveStatusTick } from '@/features/program/general/hooks/use-general-interview2-effective-status-tick'
 import { useVolunteerApplicationDetailEnrichment } from '@/features/program/general/hooks/use-application-form-detail-enrichment'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
-import { unmaskVolunteerApplicationPrivacyRemote } from '@/features/program/general/api/applications-api-client'
+import {
+  resendVolunteerDocumentResultNotification,
+  unmaskVolunteerApplicationPrivacyRemote,
+} from '@/features/program/general/api/applications-api-client'
+import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
+import {
+  canResendVolunteerDocumentResultNotification,
+  toApplicantNotificationResendNotifyOptions,
+} from '@/features/program/general/lib/applicant-notification-resend'
+import { ApplicantNotificationResendModal } from '@/features/program/shared/ui/detail-modal/components/applicant-notification-resend-modal'
+import { CmsButton, showNotificationResendRequestCompletedAlert, useCmsAlert } from '@/shared/ui'
 import { mapVolunteerApplicationDetailToApplicantRow } from '@/features/program/general/api/adapters/general-applications-adapters'
-import { CmsButton } from '@/shared/ui'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
 import { sanitizeProgramPrivacyOverlay } from '@/features/program/shared/lib/program-my-assignment'
@@ -36,9 +47,11 @@ import {
   GeneralVolunteerApplicantInterviewEvaluationSection,
   type GeneralVolunteerApplicantInterviewEvaluationSectionHandle,
 } from './interview-evaluation-section'
-import { resolveGeneralEffectiveSecondInterviewStatus } from '@/features/program/general/lib/general-volunteer-interview2-display'
 import { canReassignVolunteerInterviewAssignment } from '@/features/program/shared/lib/volunteer-interview-reassign'
-import { guardGeneralVolunteerInterview2Evaluation } from './general-volunteer-applicant-guard-actions'
+import {
+  guardGeneralVolunteerInterview2Evaluation,
+  isVolunteerAssignmentBlockedApplicationStatus,
+} from './general-volunteer-applicant-guard-actions'
 import '@/shared/components/detail-info-form/detail-info-form.css'
 import './detail.css'
 
@@ -134,8 +147,6 @@ function Interview2VolunteerApplicantDetail({
 }) {
   const evaluationSectionRef = useRef<GeneralVolunteerApplicantInterviewEvaluationSectionHandle>(null)
   const [isEvaluationEditing, setIsEvaluationEditing] = useState(false)
-  const interviewNotEnded =
-    resolveGeneralEffectiveSecondInterviewStatus(applicant) === 'waiting'
   const canCancelFinalPass = hasExplicitApplicationAction(
     applicant.availableActions,
     APPLICATION_ACTION_CANCEL_FINAL_PASS
@@ -201,7 +212,6 @@ function Interview2VolunteerApplicantDetail({
                 type="button"
                 variant="delete"
                 size="large"
-                disabled={interviewNotEnded}
                 onClick={onInterviewFail} >
                 면접 불합격
               </CmsButton>
@@ -209,7 +219,6 @@ function Interview2VolunteerApplicantDetail({
                 type="button"
                 variant="secondary"
                 size="large"
-                disabled={interviewNotEnded}
                 onClick={onInterviewPass} >
                 면접 합격
               </CmsButton>
@@ -217,7 +226,6 @@ function Interview2VolunteerApplicantDetail({
                 type="button"
                 variant="primary"
                 size="large"
-                disabled={interviewNotEnded && !isEvaluationEditing}
                 onClick={() => {
                   void handleInterviewEvaluationClick()
                 }} >
@@ -328,6 +336,7 @@ export function GeneralVolunteerApplicantDetailView(
   }, [applicant.interviewAssignmentStatus])
 
   const assignInterviewDisabled = useMemo(() => {
+    if (isVolunteerAssignmentBlockedApplicationStatus(applicant.applicationStatus)) return true
     if (applicant.interviewAssignmentStatus === 'withdrawn') return true
     if (applicant.interviewAssignmentStatus === 'not_required') return true
     if (applicant.interviewAssignmentStatus === 'assigned') {
@@ -335,6 +344,37 @@ export function GeneralVolunteerApplicantDetailView(
     }
     return false
   }, [applicant])
+
+  const { showAlert } = useCmsAlert()
+  const queryClient = useQueryClient()
+  const [documentNotificationResendOpen, setDocumentNotificationResendOpen] = useState(false)
+  const documentResendIdempotencyKeyRef = useRef<string | null>(null)
+  const isInterview2Detail = isInterview2Props(props)
+  const canResendDocumentNotification =
+    !isInterview2Detail &&
+    canResendVolunteerDocumentResultNotification({
+      documentScreeningStatus: applicant.documentScreeningStatus,
+      availableActions: applicant.availableActions,
+      secondInterviewScreeningStatus: applicant.secondInterviewScreeningStatus,
+      applicationStatus: applicant.applicationStatus,
+    })
+  const resendDocumentMutation = useMutation({
+    mutationFn: async (input: {
+      timing: 'IMMEDIATE' | 'SCHEDULED'
+      scheduledAt: string | null
+      reason: string | null
+      idempotencyKey: string
+    }) =>
+      resendVolunteerDocumentResultNotification(
+        applicant.id,
+        {
+          timing: input.timing,
+          scheduledAt: input.scheduledAt,
+          reason: input.reason,
+        },
+        input.idempotencyKey
+      ),
+  })
 
   if (isInterview2Props(props)) {
     return (
@@ -427,12 +467,78 @@ export function GeneralVolunteerApplicantDetailView(
             applicant={applicant}
             maskSensitive={!personalInfoRevealed}
             statusRow="interview_assignment"
+            onResendDocumentNotificationClick={
+              canResendDocumentNotification
+                ? () => setDocumentNotificationResendOpen(true)
+                : undefined
+            }
           />
           <GeneralVolunteerApplicantInterviewAvailability applicant={applicant} />
           <GeneralVolunteerApplicantEssaySections applicant={applicant} />
         </div>
 
         {personalInfoRevealModal}
+        <ApplicantNotificationResendModal
+          open={documentNotificationResendOpen}
+          subjectKind="volunteer_document"
+          subjectName={applicant.name}
+          approvalStatus={applicant.documentScreeningStatus === 'fail' ? 'rejected' : 'approved'}
+          storedRejectionReason={applicant.documentRejectionReason}
+          confirmLoading={resendDocumentMutation.isPending}
+          onCancel={() => {
+            if (resendDocumentMutation.isPending) return
+            documentResendIdempotencyKeyRef.current = null
+            setDocumentNotificationResendOpen(false)
+          }}
+          onConfirm={payload => {
+            if (resendDocumentMutation.isPending) return
+            if (
+              payload.notifyTiming === 'manual' &&
+              (!payload.manualNotifyAt || !payload.manualNotifyAt.isAfter(new Date()))
+            ) {
+              void showAlert({
+                title: '예약 발송 일시 확인',
+                content: '예약 발송 일시는 현재 시각보다 이후로 설정해 주세요.',
+              })
+              return
+            }
+            const notifyOptions = toApplicantNotificationResendNotifyOptions(payload)
+            const idempotencyKey =
+              documentResendIdempotencyKeyRef.current ??
+              `volunteer-document-${applicant.id}-${crypto.randomUUID()}`
+            documentResendIdempotencyKeyRef.current = idempotencyKey
+            void resendDocumentMutation
+              .mutateAsync({
+                timing: notifyOptions.notifyTiming === 'manual' ? 'SCHEDULED' : 'IMMEDIATE',
+                scheduledAt:
+                  notifyOptions.notifyTiming === 'manual'
+                    ? (notifyOptions.manualNotifyAt?.toISOString() ?? null)
+                    : null,
+                reason:
+                  applicant.documentScreeningStatus === 'fail'
+                    ? notifyOptions.rejectionReason ?? (payload.reason.trim() || null)
+                    : null,
+                idempotencyKey,
+              })
+              .then(async () => {
+                await queryClient.invalidateQueries({
+                  queryKey: generalApplicationsQueryKeys.all,
+                })
+                documentResendIdempotencyKeyRef.current = null
+                setDocumentNotificationResendOpen(false)
+                showNotificationResendRequestCompletedAlert()
+              })
+              .catch(error => {
+                void showAlert({
+                  title: '알림 재발송 실패',
+                  content: getGeneralProgramApiErrorMessage(
+                    error,
+                    '알림 재발송에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+                  ),
+                })
+              })
+          }}
+        />
       </div>
     )
   }
@@ -524,6 +630,11 @@ export function GeneralVolunteerApplicantDetailView(
           applicant={applicant}
           maskSensitive={!personalInfoRevealed}
           statusRow={interviewEnabled ? 'document_screening' : 'program_approval'}
+          onResendDocumentNotificationClick={
+            canResendDocumentNotification
+              ? () => setDocumentNotificationResendOpen(true)
+              : undefined
+          }
         />
         {showManagerEvaluation ? (
           <GeneralVolunteerApplicantManagerEvaluationSection
@@ -542,6 +653,67 @@ export function GeneralVolunteerApplicantDetailView(
       </div>
 
       {personalInfoRevealModal}
+      <ApplicantNotificationResendModal
+        open={documentNotificationResendOpen}
+        subjectKind="volunteer_document"
+        subjectName={applicant.name}
+        approvalStatus={applicant.documentScreeningStatus === 'fail' ? 'rejected' : 'approved'}
+        storedRejectionReason={applicant.documentRejectionReason}
+        confirmLoading={resendDocumentMutation.isPending}
+        onCancel={() => {
+          if (resendDocumentMutation.isPending) return
+          documentResendIdempotencyKeyRef.current = null
+          setDocumentNotificationResendOpen(false)
+        }}
+        onConfirm={payload => {
+          if (resendDocumentMutation.isPending) return
+          if (
+            payload.notifyTiming === 'manual' &&
+            (!payload.manualNotifyAt || !payload.manualNotifyAt.isAfter(new Date()))
+          ) {
+            void showAlert({
+              title: '예약 발송 일시 확인',
+              content: '예약 발송 일시는 현재 시각보다 이후로 설정해 주세요.',
+            })
+            return
+          }
+          const notifyOptions = toApplicantNotificationResendNotifyOptions(payload)
+          const idempotencyKey =
+            documentResendIdempotencyKeyRef.current ??
+            `volunteer-document-${applicant.id}-${crypto.randomUUID()}`
+          documentResendIdempotencyKeyRef.current = idempotencyKey
+          void resendDocumentMutation
+            .mutateAsync({
+              timing: notifyOptions.notifyTiming === 'manual' ? 'SCHEDULED' : 'IMMEDIATE',
+              scheduledAt:
+                notifyOptions.notifyTiming === 'manual'
+                  ? (notifyOptions.manualNotifyAt?.toISOString() ?? null)
+                  : null,
+              reason:
+                applicant.documentScreeningStatus === 'fail'
+                  ? notifyOptions.rejectionReason ?? (payload.reason.trim() || null)
+                  : null,
+              idempotencyKey,
+            })
+            .then(async () => {
+              await queryClient.invalidateQueries({
+                queryKey: generalApplicationsQueryKeys.all,
+              })
+              documentResendIdempotencyKeyRef.current = null
+              setDocumentNotificationResendOpen(false)
+              showNotificationResendRequestCompletedAlert()
+            })
+            .catch(error => {
+              void showAlert({
+                title: '알림 재발송 실패',
+                content: getGeneralProgramApiErrorMessage(
+                  error,
+                  '알림 재발송에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+                ),
+              })
+            })
+        }}
+      />
     </div>
   )
 }

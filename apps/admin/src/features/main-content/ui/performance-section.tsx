@@ -7,15 +7,15 @@ import {
   mainContentSaveFailureAlert,
   readMainContentFieldErrors,
 } from '@/features/main-content/lib/mutation-failure-alert'
+import { applyMainContentClientSaveGate } from '@/features/main-content/lib/client-save-gate'
 import {
-  hasFieldErrors,
   MAIN_CONTENT_LIMITS,
   type MainContentFieldErrors,
   PERFORMANCE_METRIC_FIELDS,
   validatePerformanceSection,
 } from '@/features/main-content/lib/validate'
 import { MainContentFieldControl } from '@/features/main-content/ui/field-control'
-import { MetricsNestedTable } from '@/features/main-content/ui/nested-tables'
+import { MainContentRequiredLabel, MetricsNestedTable } from '@/features/main-content/ui/nested-tables'
 import { MainContentSectionCard } from '@/features/main-content/ui/section-card'
 import { CmsInput, CmsTextArea, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 
@@ -46,9 +46,9 @@ export function PerformanceSectionCard({ data }: Props) {
   }, [data])
 
   const handleSave = useCallback(async () => {
-    const invalid = validatePerformanceSection(draft)
-    if (hasFieldErrors(invalid)) {
-      setFieldErrors(invalid)
+    if (
+      applyMainContentClientSaveGate(validatePerformanceSection(draft), showAlert, setFieldErrors)
+    ) {
       return
     }
     try {
@@ -105,8 +105,10 @@ export function PerformanceSectionCard({ data }: Props) {
       <DetailInfoForm title="실적 및 성과 관리" hideHeader mode={mode}>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
-            label="타이틀 텍스트"
-            required
+            labelWidth={200}
+            label={
+              <MainContentRequiredLabel required={isEditing}>타이틀 텍스트</MainContentRequiredLabel>
+            }
             view={titleText || '-'}
             edit={
               <CmsInput
@@ -126,20 +128,22 @@ export function PerformanceSectionCard({ data }: Props) {
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field label="실적 및 성과" view={metricsTable} edit={metricsTable} />
+          <DetailInfoForm.Field labelWidth={200} label="실적 및 성과" view={metricsTable} edit={metricsTable} />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
-            label="하단 텍스트"
-            required
+            labelWidth={200}
+            label={
+              <MainContentRequiredLabel required={isEditing}>하단 텍스트</MainContentRequiredLabel>
+            }
             view={<span className="main-content-preline">{bottomText || '-'}</span>}
             edit={
               <MainContentFieldControl error={fieldErrors.bottomText}>
                 <CmsTextArea
-                  className="cms-textarea--fixed-rows"
+                  layout="fixed"
                   inputSize="medium"
                   width="100%"
-                  rows={2}
+                  autoSize={{ minRows: 1 }}
                   maxLength={MAIN_CONTENT_LIMITS.bottomText}
                   status={fieldErrors.bottomText ? 'error' : undefined}
                   value={draft.bottomText}

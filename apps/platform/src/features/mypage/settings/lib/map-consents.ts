@@ -17,12 +17,45 @@ export const SETTINGS_CONSENT_TYPE_BY_ID: Record<SettingsConsentItemId, string> 
   marketing: 'MARKETING',
   portrait: 'PORTRAIT_RIGHTS',
   paymentStatement: 'PAYMENT_STATEMENT_CONSENT',
+  receiptPreConsent: 'RECEIPT_PRE_CONSENT',
   educatorPledge: 'FACILITATOR_PLEDGE',
   administrativeJoint: 'ADMINISTRATIVE_INFO_CONSENT',
   sexOffenseCheck: 'CRIMINAL_HISTORY_CHECK_CONSENT',
 }
 
 const EXPIRED_HINT = '유효기간이 만료되어 재동의가 필요해요.'
+
+/**
+ * 만료·재동의 안내 — 기획(노션 사용자 '약관 및 동의 항목') 동의서별 문구.
+ * `null`이면 문구 없이 태그만. 목록에 없는 항목은 공통 문구(`EXPIRED_HINT`)를 쓴다.
+ */
+const EXPIRED_HINT_BY_ID: Partial<Record<SettingsConsentItemId, string | null>> = {
+  portrait: '프로그램을 신청하시려면 다시 동의해 주세요.',
+  educatorPledge: '교육진행자 활동을 위해 다시 작성해 주세요.',
+  sexOffenseCheck: '교육진행자 활동을 위해 다시 동의해 주세요.',
+  paymentStatement: '정산을 신청하시려면 다시 동의해 주세요.',
+  receiptPreConsent: '정산을 신청하시려면 다시 동의해 주세요.',
+  administrativeJoint: null,
+}
+
+/**
+ * 기간제 동의서 6종 — 기획상 「동의 만료」·만료 안내 적용 대상.
+ * 서비스 이용약관·개인정보·교사 정보·법정대리인(탈퇴 시까지)과 마케팅은 만료가 없으므로
+ * 서버가 `expired`를 보내도 만료로 처리하지 않는다.
+ */
+const FIXED_TERM_CONSENT_IDS: ReadonlySet<SettingsConsentItemId> = new Set<SettingsConsentItemId>([
+  'portrait',
+  'educatorPledge',
+  'administrativeJoint',
+  'sexOffenseCheck',
+  'paymentStatement',
+  'receiptPreConsent',
+])
+
+function resolveExpiredHint(id: SettingsConsentItemId): string | undefined {
+  if (!(id in EXPIRED_HINT_BY_ID)) return EXPIRED_HINT
+  return EXPIRED_HINT_BY_ID[id] ?? undefined
+}
 
 const CATALOG_BY_TYPE = new Map(
   SETTINGS_CONSENT_CATALOG.map(item => [SETTINGS_CONSENT_TYPE_BY_ID[item.id], item]),
@@ -49,7 +82,22 @@ export function formatConsentDate(value: string | null | undefined): string | un
 
 function normalizeConsentType(value: string | undefined): string {
   const normalized = value?.trim().toUpperCase() ?? ''
-  return normalized === 'PAYMENT_STATEMENT_PRE_CONSENT' ? 'PAYMENT_STATEMENT_CONSENT' : normalized
+  if (normalized === 'PAYMENT_STATEMENT_PRE_CONSENT') return 'PAYMENT_STATEMENT_CONSENT'
+  if (normalized === 'AGREEMENT_RECEIPT_PRE_CONSENT') return 'RECEIPT_PRE_CONSENT'
+  return normalized
+}
+
+export function readPortalConsentDocumentId(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) return value
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number(value.trim())
+    if (Number.isFinite(parsed) && parsed > 0) return parsed
+  }
+  return undefined
+}
+
+function consentItemCompleteness(item: SettingsConsentItem): number {
+  return (item.signed ? 4 : 0) + (item.agreed ? 2 : 0) + (item.documentId != null ? 1 : 0)
 }
 
 /**
@@ -75,10 +123,9 @@ export function buildConsentItemsFromSummaries(summaries: PortalConsentSummary[]
       continue
     }
     const meta = CATALOG_BY_TYPE.get(consentType)
-    if (!meta || seen.has(meta.id)) continue
-    seen.add(meta.id)
+    if (!meta) continue
 
-    const expired = summary.expired === true
+    const expired = summary.expired === true && FIXED_TERM_CONSENT_IDS.has(meta.id)
     const reconsentRequired = summary.reconsentRequired === true
     const status = summary.status?.trim().toUpperCase() ?? ''
     const withdrawn = status === 'WITHDRAWN'
@@ -97,12 +144,27 @@ export function buildConsentItemsFromSummaries(summaries: PortalConsentSummary[]
       required: summary.required ?? meta.required,
       agreed,
       agreedAt: agreed ? formatConsentAgreedAt(summary.agreedAt) : undefined,
-      hint: expired || reconsentRequired ? EXPIRED_HINT : meta.hint,
-      documentId: summary.documentId ?? undefined,
+      hint: expired || reconsentRequired ? resolveExpiredHint(meta.id) : meta.hint,
+      documentId: readPortalConsentDocumentId(summary.documentId),
       withdrawable: summary.withdrawable === true,
       status: summary.status,
+      consentStatus: summary.consentStatus,
+      consentType,
+      allItemsAgreed: summary.allItemsAgreed ?? null,
+      expired,
+      signed: summary.signed === true,
+      listed: typeof summary.listed === 'boolean' ? summary.listed : undefined,
     }
-    ;(DOCUMENT_SECTION_IDS.has(meta.id) ? documentItems : basicItems).push(item)
+    const target = DOCUMENT_SECTION_IDS.has(meta.id) ? documentItems : basicItems
+    if (seen.has(meta.id)) {
+      const index = target.findIndex(row => row.id === meta.id)
+      if (index >= 0 && consentItemCompleteness(item) > consentItemCompleteness(target[index]!)) {
+        target[index] = item
+      }
+      continue
+    }
+    seen.add(meta.id)
+    target.push(item)
   }
 
   return { basicItems, documentItems }

@@ -96,7 +96,7 @@ export const PHASE1B_OVERLAY_DEPENDENCIES: readonly Phase1BOverlayDependency[] =
       'prepare-registration-create-form-bindings.ts — 일반 모집/신청 양식 overlay(collectOperationalOverlayForCatalogId: RHF 투영 + 스토어의 미디어·비소유 키)',
       '1c-1s CREATE leftover collect 제거 — 강사 모집은 instructorRecruit RHF. 양식 collectOperationalOverlayForCatalogId 는 아직 스토어+RHF peek 병행',
       'general/hooks/use-registration-flow.ts — 신청 overlay fallback(일반 RHF 미마운트 시)',
-      'general/lib/detail-operational-save-merge.ts — 상세 운영 양식 저장 병합',
+      'general/lib/detail-operational-save-merge.ts — 일반 상세 모집은 leftover+RHF. catalog peek 는 비일반만. 봉사자 면접 그리드는 overlay UI adapter',
       'UJAT/Gemini/TT 흐름 — 동작 불변 제약으로 유지',
     ],
   },

@@ -22,6 +22,8 @@ import { logGeneralProgramCommonInfoIndependentSave } from '@/features/program/g
 import { writeGeneralRegistrationOverlayFromCommonInfoFormValues } from '@/features/program/general/lib/registration-overlay-sync'
 import { useGeneralProgramSponsorEditContext } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
 import { useDetailedProgramOptionsQuery } from '@/features/detailed-program/hooks/use-detailed-program-options-query'
+import { useSponsorOptionsQuery } from '@/features/sponsor/hooks/use-sponsor-options-query'
+import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import { useProgramWagePaymentItemOptions } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import { showUpdateCompletedAlert } from '@/shared/ui'
 import type { GeneralProgramUpdateSerializeOptions } from '@/features/program/general/api/adapters/general-program-adapters'
@@ -70,6 +72,8 @@ function collectDirtyFormKeys(dirtyFields: unknown): ReadonlySet<string> | undef
   return new Set(Object.keys(dirtyFields as Record<string, unknown>))
 }
 
+const EMPTY_SPONSOR_ROWS: SponsorManagementRow[] = []
+
 export function useGeneralProgramCommonInfoSave({
   form,
   program,
@@ -77,8 +81,13 @@ export function useGeneralProgramCommonInfoSave({
 }: UseGeneralProgramCommonInfoSaveOptions) {
   const savingRef = useRef(false)
   const watchedSponsorIds = form.watch('sponsorManagementIds') ?? []
-  const sponsorContext = useGeneralProgramSponsorEditContext(watchedSponsorIds)
-  const detailedProgramsQuery = useDetailedProgramOptionsQuery(Boolean(program))
+  // 조회만 한다. 수정 모드에서 edit form 이 같은 키로 받아 둔 캐시를 쓴다.
+  const sponsorsQuery = useSponsorOptionsQuery(false)
+  const sponsorContext = useGeneralProgramSponsorEditContext(watchedSponsorIds, true, {
+    sponsorRows: sponsorsQuery.data ?? EMPTY_SPONSOR_ROWS,
+  })
+  // 조회만 한다. 수정 모드 진입 시 handleInfoEdit·edit form 이 같은 키로 받아 둔 캐시를 쓴다.
+  const detailedProgramsQuery = useDetailedProgramOptionsQuery(false)
   const detailedProgramCatalog = detailedProgramsQuery.data
   const paymentItemOptions = useProgramWagePaymentItemOptions()
   // dirtyFields 는 render 구독이 있어야 저장 시점에도 최신이다. callback 안에서만 읽으면 항상 {} 가 된다.
@@ -167,10 +176,15 @@ export function useGeneralProgramCommonInfoSave({
     dirtyFields,
   ])
 
-  const resetToProgram = useCallback(() => {
+  /** `catalogOverride`: 수정 진입 직전에 받아 둔 세부 프로그램 목록 (hook 상태가 아직 갱신 전일 때) */
+  const resetToProgram = useCallback((catalogOverride?: typeof detailedProgramCatalog) => {
     if (program) {
       form.reset(
-        programToGeneralCommonInfoEditValues(program, sponsorContext, detailedProgramCatalog),
+        programToGeneralCommonInfoEditValues(
+          program,
+          sponsorContext,
+          catalogOverride ?? detailedProgramCatalog
+        ),
         {
           keepDefaultValues: false,
         }

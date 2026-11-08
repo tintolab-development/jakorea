@@ -13,23 +13,23 @@ import type {
   MailSendStatus,
 } from '@/features/notifications/model/mail-send-history/types'
 
-/** BE sendStatus → UI 라벨 (알림톡과 동일 SSOT) */
+/** BE sendStatus → UI 라벨 (Figma Status / Text / 메일 발송 형태 14804:19688) */
 const SEND_STATUS_MAP: Record<string, Exclude<MailSendStatus, '전체'>> = {
   REQUESTED: '발송 요청',
   SCHEDULED: '예약',
-  WAITED: '대기',
-  QUEUED: '대기',
-  PENDING: '대기',
-  IN_PROGRESS: '발송중',
-  SENDING: '발송중',
-  SENT: '발송 성공',
-  SUCCESS: '발송 성공',
-  DELIVERED: '발송 성공',
+  WAITED: '발송 대기',
+  QUEUED: '발송 대기',
+  PENDING: '발송 대기',
+  IN_PROGRESS: '발송 중',
+  SENDING: '발송 중',
+  SENT: '발송 완료',
+  SUCCESS: '발송 완료',
+  DELIVERED: '발송 완료',
   SEND_FAILED: '발송 실패',
   FAILED: '발송 실패',
   FAILURE: '발송 실패',
-  CANCELED: '취소',
-  CANCELLED: '취소',
+  CANCELED: '발송 취소',
+  CANCELLED: '발송 취소',
   UNKNOWN: '확인불가',
 }
 

@@ -6,7 +6,14 @@ import {
   lookupTemplateRegistry,
   resolvePreviewHeaderTitle,
 } from '@/features/template/model/template-registry/template-registry'
-import { resolveSurveyWritingDraft } from '@/features/program/shared/lib/survey-management/survey-writing-draft'
+import {
+  applySurveyDisplayTitleToDraft,
+  resolveSurveyWritingDraft,
+} from '@/features/program/shared/lib/survey-management/survey-writing-draft'
+import {
+  applySurveyTitleCustomPeriodToDraft,
+  type SatisfactionFormEditPeriod,
+} from '@/features/program/shared/lib/survey-management/satisfaction-form-edit-period'
 
 export async function buildSurveyPreviewDraft(templateId: string, templateName?: string) {
   return resolveSurveyWritingDraft(templateId, { templateName })
@@ -16,6 +23,8 @@ export async function buildUjatSurveyWritingPreviewSession(args: {
   templateId: string
   title?: string
   versionId?: string
+  overwriteTitle?: boolean
+  displayPeriod?: SatisfactionFormEditPeriod | null
   onEditForm?: () => void
 }): Promise<TemplateWritingUserPreviewSession | null> {
   const row = findWritingTemplateRowByDefinitionId(args.templateId)
@@ -23,12 +32,19 @@ export async function buildUjatSurveyWritingPreviewSession(args: {
     const entry = lookupTemplateRegistry(row.id)
     if (entry == null || !isSurveyRegistryEntry(entry)) return null
 
-    const draft = await resolveSurveyWritingDraft(args.templateId, { templateName: row.templateName })
+    const draft = await resolveSurveyWritingDraft(args.templateId, {
+      templateName: args.title?.trim() || row.templateName,
+    })
 
     return {
-      draft,
+      draft: applySurveyTitleCustomPeriodToDraft(
+        applySurveyDisplayTitleToDraft(draft, args.title, {
+          overwrite: args.overwriteTitle === true,
+        }),
+        args.displayPeriod
+      ),
       updateParagraph: () => {},
-      headerTitle: resolvePreviewHeaderTitle(entry, row.templateName),
+      headerTitle: args.title?.trim() || resolvePreviewHeaderTitle(entry, row.templateName),
       editorKind: 'survey',
       ...(args.onEditForm != null ? { onEditForm: args.onEditForm } : {}),
     }
@@ -42,7 +58,12 @@ export async function buildUjatSurveyWritingPreviewSession(args: {
   )
   if (record?.draft == null) return null
   return {
-    draft: record.draft,
+    draft: applySurveyTitleCustomPeriodToDraft(
+      applySurveyDisplayTitleToDraft(record.draft, args.title, {
+        overwrite: args.overwriteTitle === true,
+      }),
+      args.displayPeriod
+    ),
     updateParagraph: () => {},
     headerTitle: args.title?.trim() || '설문조사',
     editorKind: 'survey',

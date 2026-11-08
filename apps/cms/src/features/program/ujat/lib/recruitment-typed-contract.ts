@@ -6,6 +6,7 @@ import type {
 } from '@/types/domain'
 import { announcementPublishedFromFormValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
+import { ujatTypedDate } from '@/features/program/ujat/lib/ujat-typed-detail'
 import { toUjatVolunteerNoticeExposurePayload } from '@/features/template/lib/ujat-volunteer-notice-exposure'
 import { ujatVolunteerRecruitInterviewNamespace } from '@/features/program/ujat/lib/ujat-recruit-volunteer-half-overlay'
 
@@ -26,7 +27,11 @@ const VOLUNTEER_TARGET_SET = new Set<string>(UJAT_RECRUITMENT_VOLUNTEER_TARGET_C
 export type UjatRecruitmentTypedRequestFields = {
   announcementPublished?: boolean | null
   documentPassAnnouncementAt?: string | null
+  documentPassAnnouncementMethod?: string | null
   finalPassAnnouncementAt?: string | null
+  finalPassAnnouncementMethod?: string | null
+  interviewMethod?: string | null
+  volunteerTargetDetail?: string | null
   noticeExposureTiming?: RecruitmentNoticeExposureTiming | null
   volunteerTargets?: string[] | null
   remarksNotApplicable?: boolean | null
@@ -247,6 +252,17 @@ export function resolveInterviewConfigForDisplay(
   )
 }
 
+/** 폼 문자열 — 빈 값은 `""`(해당 행만 비움). `null`은 기존 유지라서 쓰지 않는다. */
+function formClearableText(value: string | undefined): string | null {
+  return value == null ? null : value.trim()
+}
+
+function formDateOnly(value: unknown): string | null {
+  if (value == null) return null
+  if (typeof value === 'string') return value.trim() || null
+  return ujatTypedDate(value)
+}
+
 export function typedFieldsFromRecruitmentFormValues(
   values: ProgramDetailEditFormValues,
   kind: 'institution' | 'volunteer'
@@ -258,7 +274,8 @@ export function typedFieldsFromRecruitmentFormValues(
         null,
       remarksNotApplicable: values.participantRecruitmentNotesNotApplicable === 'not_applicable',
       // 기관 폼의 최종 합격자 발표일 → 수정 경로(adapters finalPassAnnouncementAt)와 동일
-      finalPassAnnouncementAt: values.resultAnnouncementDate?.trim() || null,
+      finalPassAnnouncementAt: formDateOnly(values.resultAnnouncementDate),
+      finalPassAnnouncementMethod: formClearableText(values.resultAnnouncementMethod),
     }
   }
   return {
@@ -267,9 +284,13 @@ export function typedFieldsFromRecruitmentFormValues(
     noticeExposureTiming:
       toUjatVolunteerNoticeExposurePayload(values.volunteerRecruitmentNoticeExposure) ?? null,
     volunteerTargets: mapUjatVolunteerTargetsToApi(values.volunteerTargets),
+    volunteerTargetDetail: formClearableText(values.volunteerTargetDetail),
     remarksNotApplicable: values.volunteerRecruitmentNotesNotApplicable === 'not_applicable',
-    documentPassAnnouncementAt: values.documentPassAnnouncementDate?.trim() || null,
-    finalPassAnnouncementAt: values.finalPassAnnouncementDate?.trim() || null,
+    documentPassAnnouncementAt: formDateOnly(values.documentPassAnnouncementDate),
+    documentPassAnnouncementMethod: formClearableText(values.documentPassAnnouncementMethod),
+    finalPassAnnouncementAt: formDateOnly(values.finalPassAnnouncementDate),
+    finalPassAnnouncementMethod: formClearableText(values.finalPassAnnouncementMethod),
+    interviewMethod: formClearableText(values.interviewMethod),
     interviewConfig: parseRecruitmentInterviewConfig(values.volunteerInterviewConfig) ?? null,
   }
 }
@@ -286,9 +307,21 @@ export function assignUjatTypedRecruitmentRequestFields(
   if (row.finalPassAnnouncementAt !== undefined) {
     body.finalPassAnnouncementAt = row.finalPassAnnouncementAt
   }
+  if (row.finalPassAnnouncementMethod !== undefined) {
+    body.finalPassAnnouncementMethod = row.finalPassAnnouncementMethod
+  }
   if (audience !== 'volunteer') return
   if (row.documentPassAnnouncementAt !== undefined) {
     body.documentPassAnnouncementAt = row.documentPassAnnouncementAt
+  }
+  if (row.documentPassAnnouncementMethod !== undefined) {
+    body.documentPassAnnouncementMethod = row.documentPassAnnouncementMethod
+  }
+  if (row.interviewMethod !== undefined) {
+    body.interviewMethod = row.interviewMethod
+  }
+  if (row.volunteerTargetDetail !== undefined) {
+    body.volunteerTargetDetail = row.volunteerTargetDetail
   }
   if (row.noticeExposureTiming !== undefined) {
     body.noticeExposureTiming = row.noticeExposureTiming
@@ -310,9 +343,26 @@ export function readUjatTypedRecruitmentWindowFields(
     next.documentPassAnnouncementAt =
       typeof row.documentPassAnnouncementAt === 'string' ? row.documentPassAnnouncementAt : null
   }
+  if ('documentPassAnnouncementMethod' in row) {
+    next.documentPassAnnouncementMethod =
+      typeof row.documentPassAnnouncementMethod === 'string'
+        ? row.documentPassAnnouncementMethod
+        : null
+  }
   if ('finalPassAnnouncementAt' in row) {
     next.finalPassAnnouncementAt =
       typeof row.finalPassAnnouncementAt === 'string' ? row.finalPassAnnouncementAt : null
+  }
+  if ('finalPassAnnouncementMethod' in row) {
+    next.finalPassAnnouncementMethod =
+      typeof row.finalPassAnnouncementMethod === 'string' ? row.finalPassAnnouncementMethod : null
+  }
+  if ('interviewMethod' in row) {
+    next.interviewMethod = typeof row.interviewMethod === 'string' ? row.interviewMethod : null
+  }
+  if ('volunteerTargetDetail' in row) {
+    next.volunteerTargetDetail =
+      typeof row.volunteerTargetDetail === 'string' ? row.volunteerTargetDetail : null
   }
   if ('noticeExposureTiming' in row) {
     next.noticeExposureTiming = isRecruitmentNoticeExposureTiming(row.noticeExposureTiming)

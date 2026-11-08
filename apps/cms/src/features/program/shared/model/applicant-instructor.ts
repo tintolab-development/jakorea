@@ -13,6 +13,7 @@ export type ApplicantInstructorApprovalStatusKey =
   | 'rejected'
   | 'approved'
   | 'cancelled'
+  | 'unknown'
 
 export type ApplicantInstructorApprovalNotifyTiming = 'immediate' | 'on_announcement' | 'manual'
 
@@ -86,7 +87,7 @@ export interface ApplicantInstructorRow {
   programId?: string
   no: number
   instructorName: string
-  lectureExperienceYears: number
+  lectureExperienceYears: number | null
   educationLevel: string
   educationSchoolName: string
   contact: string
@@ -95,6 +96,8 @@ export interface ApplicantInstructorRow {
   appliedAt?: string
   affiliation?: string
   approvalStatus: ApplicantInstructorApprovalStatusKey
+  /** 서버 원본 신청 상태. 화면용 approvalStatus와 분리한다. */
+  applicationStatus?: string
   /** 신청 학교(필터용) */
   schoolName: string
   /** 일정 변경&취소 이력 횟수. 1 이상일 때만 강사 상세 모달 강사명 옆 배지 표시 */
@@ -131,6 +134,8 @@ export interface ApplicantInstructorRow {
   accountNumber?: string
   /** 정산 계좌: 예금주 */
   accountHolder?: string
+  /** 강사 신청 상세 `settlement.businessIncome` (null·생략이면 undefined). 사업소득자 표시는 businessIncomeEarnerStatus */
+  settlementBusinessIncome?: boolean
   /** 프로필 사진 URL (없으면 플레이스홀더) */
   profileImageUrl?: string
   /** 희망 배정 학교 1~4순위 (일부 assignable: false로 배정 불가) */
@@ -163,6 +168,16 @@ export interface ApplicantInstructorRow {
   distanceKm?: number
   /** Admin API — 장거리 표기 전용(단가 아님). BE longDistance */
   longDistanceYn?: boolean
+  /**
+   * Admin API — 기관별 편도 거리(기관형). organizationDistances → preferredOrganizations 순으로 채운다.
+   * 기관별 표시(캘린더 기관 카드 등)는 위 distanceKm(신청 단위) 대신 이 값을 기관 신청 id로 찾는다.
+   */
+  organizationDistances?: Array<{
+    organizationId?: number | null
+    organizationApplicationId: number
+    distanceKm?: number | null
+    longDistance?: boolean | null
+  }>
   /** Admin API — 프로그램 내 출강 횟수 */
   programDispatchCount?: number
   /** Admin API — 프로그램 내 장거리 출강 횟수 (표기 기준) */
@@ -191,13 +206,13 @@ export interface ApplicantInstructorRow {
   managerComment?: string
   /** BE availableActions — 헤더 CTA 노출 게이트 */
   availableActions?: string[]
-  /** 승인 완료 시 기본 정보 하단: 강의비 책정 기준 (예: 특강 강사비 | 915,000원) */
+  /** 승인 완료 시 기본 정보 하단: 강사비 책정 기준 (예: 특강 강사비 | 915,000원) */
   lectureFeeBasisDisplay?: string
-  /** 강의비 책정 기준 — 유형 */
+  /** 강사비 책정 기준 — 유형 */
   lectureFeeBasisType?: ApplicantInstructorLectureFeeBasisType
-  /** 강의비 책정 기준 — 단위 (예: 출강 1회당) */
+  /** 강사비 책정 기준 — 단위 (예: 출강 1회당) */
   lectureFeeMeasure?: string
-  /** 강의비 책정 기준 — 금액(숫자만) */
+  /** 강사비 책정 기준 — 금액(숫자만) */
   lectureFeeAmount?: string
   /** 사업소득자 여부 (예: 해당 없음) — general 상세에서 승인 전에도 표시 */
   businessIncomeEarnerStatus?: string
@@ -218,7 +233,7 @@ export interface ApplicantInstructorDetailSavePayload {
   lectureFeeAmount?: string
   lectureFeeBasisDisplay?: string
   instructorFeeGradeLabel?: string
-  businessIncomeEarnerStatus?: string
+  businessIncomeEarnerStatus?: '해당' | '해당 없음'
 }
 
 export function formatApprovalNotificationSentAt(d = new Date()): string {
@@ -255,13 +270,14 @@ export function patchApplicantInstructorForApprovalStatus(
     return {
       ...row,
       approvalStatus,
-      lectureFeeBasisType: row.lectureFeeBasisType ?? 'special_lecture',
-      lectureFeeMeasure: row.lectureFeeMeasure ?? '출강 1회당',
-      lectureFeeAmount: row.lectureFeeAmount ?? '915000',
-      lectureFeeBasisDisplay: row.lectureFeeBasisDisplay ?? '특강 강사비 | 출강 1회당 | 915,000원',
-      businessIncomeEarnerStatus: row.businessIncomeEarnerStatus ?? '해당 없음',
+      lectureFeeBasisType: row.lectureFeeBasisType,
+      lectureFeeMeasure: row.lectureFeeMeasure,
+      lectureFeeAmount: row.lectureFeeAmount,
+      lectureFeeBasisDisplay: row.lectureFeeBasisDisplay,
+      businessIncomeEarnerStatus: row.businessIncomeEarnerStatus,
       approvalNotifyTiming: notifyOptions?.notifyTiming,
-      approvalNotificationSentAt: resolveApplicantInstructorApprovalNotificationSentAt(notifyOptions),
+      approvalNotificationSentAt:
+        resolveApplicantInstructorApprovalNotificationSentAt(notifyOptions),
     }
   }
   if (approvalStatus === 'rejected') {
@@ -273,10 +289,11 @@ export function patchApplicantInstructorForApprovalStatus(
       lectureFeeBasisType: undefined,
       lectureFeeMeasure: undefined,
       lectureFeeAmount: undefined,
-      businessIncomeEarnerStatus: row.businessIncomeEarnerStatus ?? '해당 없음',
+      businessIncomeEarnerStatus: row.businessIncomeEarnerStatus,
       approvalNotifyTiming: undefined,
       rejectionNotifyTiming: notifyOptions?.notifyTiming,
-      approvalNotificationSentAt: resolveApplicantInstructorApprovalNotificationSentAt(notifyOptions),
+      approvalNotificationSentAt:
+        resolveApplicantInstructorApprovalNotificationSentAt(notifyOptions),
     }
   }
 
@@ -288,26 +305,29 @@ export function patchApplicantInstructorForApprovalStatus(
     lectureFeeBasisType: undefined,
     lectureFeeMeasure: undefined,
     lectureFeeAmount: undefined,
-    businessIncomeEarnerStatus: row.businessIncomeEarnerStatus ?? '해당 없음',
+    businessIncomeEarnerStatus: row.businessIncomeEarnerStatus,
     approvalNotifyTiming: undefined,
     rejectionNotifyTiming: undefined,
     approvalNotificationSentAt: undefined,
   }
 }
 
-/** 승인 취소 — 승인 대기 복원 + 배정·승인 알림 예약 정보 제거 */
+/** 승인 취소 — 신청 반려 + 배정 해제. 승인 대기 복원은 반려 취소만. */
 export function patchApplicantInstructorForCancelApproval(
   row: ApplicantInstructorRow,
   notifyOptions: ApplicantInstructorApprovalNotifyOptions
 ): ApplicantInstructorRow {
-  const pending = patchApplicantInstructorForApprovalStatus(row, 'pending')
+  const rejected = patchApplicantInstructorForApprovalStatus(row, 'rejected', notifyOptions)
   return {
-    ...pending,
+    ...rejected,
+    applicationStatus: 'APPROVAL_CANCELLED',
+    availableActions: (row.availableActions ?? []).filter(
+      action => action !== 'APPROVE' && action !== 'REJECT' && action !== 'CANCEL_APPROVAL'
+    ),
     assignedLectures: undefined,
     assignedSchoolId: undefined,
     assignedSchoolName: undefined,
-    approvalNotificationSentAt:
-      resolveApplicantInstructorApprovalNotificationSentAt(notifyOptions),
+    approvalNotificationSentAt: resolveApplicantInstructorApprovalNotificationSentAt(notifyOptions),
   }
 }
 
@@ -316,11 +336,15 @@ export function patchApplicantInstructorForCancelRejection(
   notifyOptions?: ApplicantInstructorApprovalNotifyOptions
 ): ApplicantInstructorRow {
   const pending = patchApplicantInstructorForApprovalStatus(row, 'pending')
+  const restored = {
+    ...pending,
+    applicationStatus: 'REJECTION_CANCELLED',
+  }
   if (!notifyOptions) {
-    return pending
+    return restored
   }
   return {
-    ...pending,
+    ...restored,
     approvalNotificationSentAt: resolveApplicantInstructorApprovalNotificationSentAt(notifyOptions),
   }
 }

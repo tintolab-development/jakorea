@@ -143,5 +143,7 @@ export async function exportScheduleSheetExcel(
   }
 
   const buffer = await workbook.xlsx.writeBuffer()
-  await downloadExcel(buffer, generateFilename('임시교육일정표', 'xlsx'))
+  await downloadExcel(buffer, generateFilename('임시교육일정표', 'xlsx'), {
+    accessLog: { downloadKind: 'PROGRAM_SCHEDULE_SHEET_EXPORT', containedPiiTypes: [] },
+  })
 }

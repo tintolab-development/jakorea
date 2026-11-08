@@ -37,4 +37,8 @@ export interface GeminiInstructorApplicationItem {
   submittedAt?: string;
   approvedAt?: string;
   rejectedAt?: string;
+  /** 가장 최근 강사 승인/반려 결과 알림 시각. 없으면 null. 재발송해도 approvedAt·rejectedAt·applicationStatus는 바뀌지 않습니다. */
+  resultNotificationSentAt?: string | null;
+  /** 대기·제출·심사 중(PENDING·SUBMITTED·WAITING·WAITING_REVIEW·REJECTION_CANCELLED)은 APPROVE·REJECT. APPROVED는 RESEND_NOTIFICATION만. REJECTED는 RESEND_NOTIFICATION 및 정책 허용 액션. AUTO_REJECTED·CANCELLED 등은 APPROVE 미포함. */
+  availableActions?: string[];
 }

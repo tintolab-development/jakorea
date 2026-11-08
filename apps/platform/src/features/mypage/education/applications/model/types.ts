@@ -13,8 +13,15 @@ export type EducationDisplayStatus =
   | 'completed'
   | 'withdrawn'
   | 'rejected'
+  | 'cancelled'
+  | 'approval_cancelled'
 
-export type EducationDisplayStatusTone = 'pending' | 'progress' | 'completed' | 'rejected'
+export type EducationDisplayStatusTone =
+  | 'pending'
+  | 'progress'
+  | 'completed'
+  | 'rejected'
+  | 'cancelled'
 
 /**
  * 활동 포기 시점.
@@ -57,6 +64,9 @@ export type EducationTeacherAssignedInstructor = {
   /** 배정 강사 회원 번호. 동의서 download-requests 경로 */
   instructorMemberId?: number
   name: string
+  assignmentId?: number | null
+  programScheduleId?: number | null
+  assignmentStatus?: string | null
   phone?: string
   email?: string
   /**
@@ -159,10 +169,12 @@ export type EducationApplicationListItem = {
   pendingSurveyCount?: number
   /** 상세 `summary.satisfactionPendingCount` — 로컬 추정 금지 */
   satisfactionPendingCount?: number
-  /** 상세 `capabilities.canSubmitSatisfaction` — false면 만족도 작성 CTA 숨김 */
+  /** 상세 `capabilities.canSubmitSatisfaction` — 목록 `canSubmit`/`canResubmit`이 제출 SSOT */
   canSubmitSatisfaction?: boolean
-  /** 상세 `capabilities.canSubmitSurvey` — false면 설문 작성 CTA 숨김 */
+  /** 상세 `capabilities.canSubmitSurvey` — 목록 `canSubmit`/`canResubmit`이 제출 SSOT */
   canSubmitSurvey?: boolean
+  /** 409 `PORTAL_ANSWER_PRIVACY_UNVERIFIABLE` — answers는 유지하고 코드만 표시 */
+  portalWarningCode?: string
   /** 상세 `summary.surveyPendingCount` — 로컬 추정 금지 */
   surveyPendingCount?: number
   /**

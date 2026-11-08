@@ -167,6 +167,45 @@ function assignOptionalString(
   body[key] = value ?? ''
 }
 
+function trimmedRowText(value: string | null | undefined): string | undefined {
+  const next = value?.trim()
+  return next ? next : undefined
+}
+
+/** 값이 있을 때만 보낸다. 빈 문자열로 저장을 강제하지 않는다. */
+function assignNonEmptyString(
+  body: ProgramRecruitmentRequest,
+  key: 'announcementTitle' | 'summary',
+  value: string | null | undefined
+): void {
+  const next = trimmedRowText(value)
+  if (!next) return
+  body[key] = next
+}
+
+/**
+ * 참여자(기관) 행 remarks — 본문 `""`는 삭제가 아니다.
+ * 실값이 있으면 remarks, 이전 값을 지울 때만 clearFields.
+ */
+function assignParticipantRemarks(
+  body: ProgramRecruitmentRequest,
+  clearFields: string[],
+  nextValue: string | null | undefined,
+  previousValue: string | null | undefined
+): void {
+  const next = trimmedRowText(nextValue)
+  const previous = trimmedRowText(previousValue)
+  if (next === previous) {
+    if (next) body.remarks = next
+    return
+  }
+  if (next) {
+    body.remarks = next
+    return
+  }
+  if (previous && !clearFields.includes('remarks')) clearFields.push('remarks')
+}
+
 function assignOptionalDate(
   body: ProgramRecruitmentRequest,
   clearFields: string[],
@@ -424,15 +463,29 @@ export function buildProgramRecruitmentRowSaveRequest(args: {
   ) {
     body.recruitTerm = row.recruitTerm
   }
-  assignOptionalString(body, 'announcementTitle', row.announcementTitle)
-  assignOptionalString(body, 'summary', row.summary)
+  if (audience === 'participant') {
+    assignNonEmptyString(body, 'announcementTitle', row.announcementTitle)
+    assignNonEmptyString(body, 'summary', row.summary)
+  } else {
+    assignOptionalString(body, 'announcementTitle', row.announcementTitle)
+    assignOptionalString(body, 'summary', row.summary)
+  }
   assignOptionalString(body, 'programDescription', row.programDescription)
   assignOptionalString(body, 'recruitmentGuide', row.recruitmentGuide)
   assignOptionalString(body, 'applicationMethod', row.applicationMethod)
   assignOptionalString(body, 'learningSupportContent', row.learningSupportContent)
   assignOptionalString(body, 'additionalContentHtml', row.additionalContentHtml)
-  assignOptionalString(body, 'remarks', row.remarks)
-  assignOptionalString(body, 'otherMatters', row.otherMatters)
+  if (audience === 'participant') {
+    assignParticipantRemarks(
+      body,
+      clearFields,
+      row.remarks,
+      pickRecruitmentCopyRow(baseline, audience, volunteerHalf)?.remarks
+    )
+  } else {
+    assignOptionalString(body, 'remarks', row.remarks)
+    assignOptionalString(body, 'otherMatters', row.otherMatters)
+  }
   assignOptionalString(body, 'contactName', row.contactName)
   assignOptionalString(body, 'contactPhone', row.contactPhone)
   assignOptionalString(body, 'contactEmail', row.contactEmail)
@@ -486,6 +539,13 @@ export function buildProgramRecruitmentRowSaveRequest(args: {
         (audience === 'volunteer' &&
           Object.prototype.hasOwnProperty.call(patch, 'finalPassAnnouncementDate'))
     )
+    const finalMethod =
+      audience === 'participant' ? patch.resultAnnouncementMethod : patch.finalPassAnnouncementMethod
+    if (finalMethod !== undefined) {
+      typedBody.finalPassAnnouncementMethod = finalMethod.trim()
+    } else if (row.finalPassAnnouncementMethod !== undefined) {
+      typedBody.finalPassAnnouncementMethod = row.finalPassAnnouncementMethod
+    }
   }
   if (audience === 'volunteer') {
     if (row.noticeExposureTiming !== undefined) {
@@ -499,6 +559,21 @@ export function buildProgramRecruitmentRowSaveRequest(args: {
     })
     if (volunteerTargets !== undefined) {
       typedBody.volunteerTargets = volunteerTargets
+    }
+    if (patch.documentPassAnnouncementMethod !== undefined) {
+      typedBody.documentPassAnnouncementMethod = patch.documentPassAnnouncementMethod.trim()
+    } else if (row.documentPassAnnouncementMethod !== undefined) {
+      typedBody.documentPassAnnouncementMethod = row.documentPassAnnouncementMethod
+    }
+    if (patch.interviewMethod !== undefined) {
+      typedBody.interviewMethod = patch.interviewMethod.trim()
+    } else if (row.interviewMethod !== undefined) {
+      typedBody.interviewMethod = row.interviewMethod
+    }
+    if (patch.volunteerTargetDetail !== undefined) {
+      typedBody.volunteerTargetDetail = patch.volunteerTargetDetail.trim()
+    } else if (row.volunteerTargetDetail !== undefined) {
+      typedBody.volunteerTargetDetail = row.volunteerTargetDetail
     }
     // 일반 봉사 행 interviewConfig 는 overlay+저장 typed 합본만 보낸다(객체 단위 교체).
     // UJAT·반기는 행 값을 유지한다.
@@ -579,9 +654,13 @@ const AUDIENCE_ROW_KEYS = [
   'interviewEndAt',
   'announcementPublished',
   'documentPassAnnouncementAt',
+  'documentPassAnnouncementMethod',
   'finalPassAnnouncementAt',
+  'finalPassAnnouncementMethod',
+  'interviewMethod',
   'noticeExposureTiming',
   'volunteerTargets',
+  'volunteerTargetDetail',
   'remarksNotApplicable',
   'interviewConfig',
   'contentRevision',
@@ -643,6 +722,18 @@ function audienceColumnOntoRow(
     if (patch.generalVolunteerInterviewEnabled != null) {
       next.interviewEnabled = patch.generalVolunteerInterviewEnabled
     }
+    if (patch.documentPassAnnouncementMethod !== undefined) {
+      next.documentPassAnnouncementMethod = patch.documentPassAnnouncementMethod || null
+    }
+    if (patch.finalPassAnnouncementMethod !== undefined) {
+      next.finalPassAnnouncementMethod = patch.finalPassAnnouncementMethod || null
+    }
+    if (patch.interviewMethod !== undefined) {
+      next.interviewMethod = patch.interviewMethod || null
+    }
+    if (patch.volunteerTargetDetail !== undefined) {
+      next.volunteerTargetDetail = patch.volunteerTargetDetail || null
+    }
     return next
   }
   if (audience === 'instructor') {
@@ -656,6 +747,9 @@ function audienceColumnOntoRow(
   const end = optionalDateToApiString(patch.applicationEndDate)
   if (start) next.startAt = start
   if (end) next.endAt = end
+  if (patch.resultAnnouncementMethod !== undefined) {
+    next.finalPassAnnouncementMethod = patch.resultAnnouncementMethod || null
+  }
   return next
 }
 

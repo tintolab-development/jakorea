@@ -18,16 +18,54 @@ export function resolveEducationScheduleProgressStatus(
   return heldDay.getTime() < today.getTime() ? 'completed' : 'scheduled'
 }
 
+const OPERATIONAL_SCHEDULE_PROGRESS: Record<string, EducationScheduleProgressStatus> = {
+  COMPLETED: 'completed',
+  DONE: 'completed',
+  FINISHED: 'completed',
+  IN_PROGRESS: 'in_progress',
+  ONGOING: 'in_progress',
+  SCHEDULED: 'scheduled',
+  PENDING: 'scheduled',
+  WAITING: 'scheduled',
+  UNSCHEDULED: 'unscheduled',
+}
+
+const TRAINED_TEACHER_OPERATIONAL_PROGRESS: Record<string, EducationScheduleProgressStatus> = {
+  COMPLETED: 'completed',
+  IN_PROGRESS: 'in_progress',
+  SCHEDULED: 'scheduled',
+  UNSCHEDULED: 'unscheduled',
+}
+
+function mapOperationalScheduleProgress(
+  scheduleStatus: string | null | undefined,
+  operationalDayView = false,
+): EducationScheduleProgressStatus | null {
+  const key = (scheduleStatus ?? '').trim().toUpperCase()
+  if (!key) return null
+  if (operationalDayView) return TRAINED_TEACHER_OPERATIONAL_PROGRESS[key] ?? null
+  return OPERATIONAL_SCHEDULE_PROGRESS[key] ?? null
+}
+
 /**
  * 교육일정 행 뱃지 전용.
- * 출결이 있으면 완료, 없으면 endAt(없으면 heldAt 일 단위 규칙) 기준으로 판정.
+ * 출결이 있으면 완료. 그다음 API `scheduleStatus`를 쓴다.
+ * MATCHED는 진행 뱃지가 아니다.
+ * TT 기관(`operationalDayView`)은 COMPLETED|IN_PROGRESS|SCHEDULED|UNSCHEDULED 만 쓰고 날짜로 추정하지 않는다.
  * 정산 탭(`resolveSettlementEducationProgress`)은 기존 `resolveEducationScheduleProgressStatus`를 유지한다.
  */
 export function resolveEducationScheduleRowProgressStatus(
-  item: Pick<EducationScheduleItem, 'heldAt' | 'endAt' | 'attendanceStatus'>,
+  item: Pick<
+    EducationScheduleItem,
+    'heldAt' | 'endAt' | 'attendanceStatus' | 'scheduleStatus' | 'operationalDayView'
+  >,
   now = new Date(),
 ): EducationScheduleProgressStatus {
-  if (item.attendanceStatus != null) return 'completed'
+  const operationalDayView = item.operationalDayView === true
+  if (!operationalDayView && item.attendanceStatus != null) return 'completed'
+  const fromStatus = mapOperationalScheduleProgress(item.scheduleStatus, operationalDayView)
+  if (fromStatus) return fromStatus
+  if (operationalDayView) return 'unscheduled'
   const endRaw = item.endAt?.trim()
   if (endRaw) {
     const end = new Date(endRaw)
@@ -43,7 +81,14 @@ export const EDUCATION_SCHEDULE_PROGRESS_LABEL: Record<
   string
 > = {
   completed: '진행 완료',
+  in_progress: '진행 중',
   scheduled: '진행 예정',
+  unscheduled: '미정',
+}
+
+/** 교육일정 카드 진행 태그 — TT 기관 운영일 카드도 같은 문구(Figma 13843:112603) */
+export function educationScheduleProgressLabel(progress: EducationScheduleProgressStatus): string {
+  return EDUCATION_SCHEDULE_PROGRESS_LABEL[progress]
 }
 
 export const EDUCATION_SCHEDULE_ATTENDANCE_LABEL: Record<
@@ -116,10 +161,11 @@ export function canSubmitEducationAbsenceReason(
   if (availableActions != null) {
     return hasScheduleAction(availableActions, 'SUBMIT_ABSENCE_REASON')
   }
+  if (progress === 'unscheduled') return false
   if (status === 'NOT_SUBMITTED') {
-    return progress === 'scheduled' || attendance === 'absent'
+    return progress === 'scheduled' || progress === 'in_progress' || attendance === 'absent'
   }
-  if (progress === 'scheduled') return true
+  if (progress === 'scheduled' || progress === 'in_progress') return true
   return attendance === 'absent'
 }
 

@@ -92,6 +92,7 @@ exports[`TT overlay save parity (part3 step3) > 등록(공통정보) 양식: 불
     {
       "assignmentEnabled": false,
       "assignmentPeriod": undefined,
+      "blockKind": "event",
       "educationFormLabel": undefined,
       "ipsTypeSummary": undefined,
       "name": "",

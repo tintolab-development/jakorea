@@ -28,19 +28,21 @@ export function TeacherTextbookInfoCard({ textbook }: TeacherTextbookInfoCardPro
           <PFText as="span" typo="bd-lg-sb" color="primary-800" className={styles.title}>
             {textbook.title}
           </PFText>
-          <span className={styles.qty}>
-            <PFText as="span" typo="bd-sm-md" color="neutral-warm-500" className={styles.kit}>
-              {textbook.kitCountLabel}
+          <div className={styles.meta}>
+            <span className={styles.qty}>
+              <PFText as="span" typo="bd-sm-md" color="neutral-warm-500" className={styles.kit}>
+                {textbook.kitCountLabel}
+              </PFText>
+              <PFText as="span" typo="bd-sm-md" className={styles.volume}>
+                {textbook.volumeCountLabel}
+              </PFText>
+            </span>
+            <PFText as="span" typo="bd-sm-sb" color="white" className={styles.deliveryTag}>
+              {deliveryLabel}
             </PFText>
-            <PFText as="span" typo="bd-sm-md" className={styles.volume}>
-              {textbook.volumeCountLabel}
-            </PFText>
-          </span>
+          </div>
         </div>
       </div>
-      <PFText as="span" typo="bd-sm-sb" color="white" className={styles.deliveryTag}>
-        {deliveryLabel}
-      </PFText>
     </div>
   )
 }

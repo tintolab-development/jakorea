@@ -21,4 +21,6 @@ export interface SettlementApplicationItemResponse {
   calculationBasisJsonb?: string;
   displayOrder?: number;
   evidenceAttachments?: SettlementApplicationAttachmentResponse[];
+  /** 제출 시점에 확정한 항목 설명. 현재 정산 설정 변경과 무관한 스냅샷. */
+  description?: string | null;
 }

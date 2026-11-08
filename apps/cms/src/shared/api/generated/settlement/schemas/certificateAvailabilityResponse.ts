@@ -17,4 +17,8 @@ export interface CertificateAvailabilityResponse {
   reasonMessage?: string;
   existingIssueId?: number;
   canDownload?: boolean;
+  countedParticipationCount?: number;
+  certificatePeriodStartDate?: string;
+  certificatePeriodEndDate?: string;
+  certificatePeriodLabel?: string;
 }

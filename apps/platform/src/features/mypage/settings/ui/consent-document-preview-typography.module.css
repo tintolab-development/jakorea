@@ -80,25 +80,63 @@
   line-height: 150%;
 }
 
-.bodyPortrait :global(.form-template-vertical-table-wrap) {
-  gap: 8px;
+/* A4 always keeps the desktop table, even below the Platform write breakpoint. */
+.portraitTableDesktop {
+  display: block;
+  width: 100%;
 }
 
+.portraitTableBlock {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  gap: 16px;
+}
+
+.bodyPortrait :global(.form-template-vertical-table-wrap) {
+  gap: 16px;
+}
+
+/* CMS vertical-table-paragraph-body.css + form-document-preview-body--agreement-portrait:
+   th 16px/700/150% · td 16px/500/150% · 상하 padding 8px · 보유 기간 td 20px/700 */
 .bodyPortrait :global(.form-template-vertical-table__th),
 .bodyPortrait :global(.form-template-vertical-table__td) {
   padding-top: 8px;
   padding-bottom: 8px;
-  font-size: 20px;
+  font-size: 16px;
   line-height: 150%;
 }
 
-.bodyPortrait :global(.form-template-vertical-table__cell-text) {
-  font-size: 20px;
+.bodyPortrait :global(.form-template-vertical-table__th) {
+  font-weight: 700;
+}
+
+.bodyPortrait :global(.form-template-vertical-table__td) {
+  font-weight: 500;
+}
+
+.bodyPortrait .portraitTableBlock :global(.form-template-vertical-table__td) {
+  align-items: center;
+}
+
+.bodyPortrait :global(.form-template-vertical-table__cell-text--body),
+.bodyPortrait .portraitTableBlock :global(.form-template-vertical-table__td) > span {
+  font-size: 16px;
+  font-weight: 500;
   line-height: 150%;
 }
 
-.bodyPortrait :global(.form-template-vertical-table__bottom-text) {
+.bodyPortrait :global(.form-template-vertical-table__td[data-portrait-retention]),
+.bodyPortrait .portraitTableBlock :global(.form-template-vertical-table__td[data-portrait-retention]) > span {
   font-size: 20px;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.bodyPortrait :global(.form-template-vertical-table__bottom-static) {
+  font-size: 14px;
+  font-weight: 500;
   line-height: 150%;
 }
 
@@ -107,13 +145,45 @@
 }
 
 .bodyPortrait :global(.form-template-table-bottom-consent) {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 16px;
+  width: 203px;
+  min-width: 203px;
+  height: 40px;
+  min-height: 40px;
   margin-top: 4px;
+}
+
+.bodyPortrait :global(.form-template-table-bottom-consent .ant-radio-wrapper) {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  font-family: Pretendard, sans-serif;
+  font-weight: 500;
+  line-height: 125%;
+  gap: 6px;
+}
+
+.bodyPortrait :global(.form-template-table-bottom-consent .ant-radio-wrapper::after) {
+  display: none;
+}
+
+.bodyPortrait :global(.form-template-table-bottom-consent .ant-radio),
+.bodyPortrait :global(.form-template-table-bottom-consent .ant-radio-inner) {
+  width: 18px;
+  height: 18px;
+}
+
+.bodyPortrait :global(.form-template-table-bottom-consent .ant-radio + span) {
+  padding-inline: 0;
 }
 
 .bodyPortrait :global(.app-radio-group .ant-radio-wrapper),
 .bodyPortrait :global(.app-radio-group) {
   color: #3d3d3d;
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .bodyPortrait :global(.app-radio-group .ant-radio-inner) {
@@ -124,11 +194,6 @@
 .bodyPortrait :global(.app-radio-group .ant-radio-checked .ant-radio-inner) {
   border-color: #85969d;
   background-color: #85969d;
-}
-
-.bodyPortrait :global([class*='tableDescription']) {
-  font-size: 20px;
-  line-height: 150%;
 }
 
 .body :global(.pf-text-input),
@@ -262,6 +327,26 @@
 
 .bodyPortrait .previewDate {
   margin-bottom: 6px;
+}
+
+/* CMS closing margin owns confirm → date spacing; no extra section gap. */
+.bodyPortrait > :global([data-consent-preview-rule='confirm']) {
+  margin-bottom: 12px;
+}
+
+.bodyPortrait > :global([data-consent-preview-rule='confirm']) + * {
+  margin-top: 0;
+}
+
+.bodyPortrait .previewSignatureImage {
+  width: auto;
+  height: auto;
+  max-width: 160px;
+  max-height: 48px;
+}
+
+.bodyPortrait .previewSignatureName {
+  flex: 0 0 120px;
 }
 
 .paymentInfo {

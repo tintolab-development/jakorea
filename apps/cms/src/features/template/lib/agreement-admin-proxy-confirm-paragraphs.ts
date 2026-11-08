@@ -9,6 +9,7 @@ import { AGREEMENT_NOTICE_A4_PREVIEW_BODY_CLASS_NAME } from '@/features/template
 import { AGREEMENT_PORTRAIT_A4_PREVIEW_BODY_CLASS_NAME } from '@/features/template/model/agreement-portrait-a4-preview'
 import { PAYMENT_STATEMENT_PRE_CONSENT_A4_PREVIEW_BODY_CLASS_NAME } from '@/features/template/model/payment-statement-pre-consent-a4-preview'
 import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@/features/template/model/payment-statement-pre-consent-draft'
+import { RECEIPT_PRE_CONSENT_IDS } from '@/features/template/model/receipt-pre-consent-draft'
 
 /** 관리자 대리 동의 확인 2단 카드를 호스트하는 단락 ID */
 export const AGREEMENT_ADMIN_PROXY_CONFIRM_HOST_IDS = new Set<string>([
@@ -17,6 +18,8 @@ export const AGREEMENT_ADMIN_PROXY_CONFIRM_HOST_IDS = new Set<string>([
   EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.violationClosing,
   PAYMENT_STATEMENT_PRE_CONSENT_IDS.midConsentLine,
   PAYMENT_STATEMENT_PRE_CONSENT_IDS.finalConfirm,
+  RECEIPT_PRE_CONSENT_IDS.midConsentLine,
+  RECEIPT_PRE_CONSENT_IDS.finalConfirm,
   DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.closing,
 ])
 
@@ -47,6 +50,14 @@ export const AGREEMENT_ADMIN_PROXY_CONFIRM_HIDDEN_IDS_BY_HOST: Readonly<
     PAYMENT_STATEMENT_PRE_CONSENT_IDS.tailDate,
     PAYMENT_STATEMENT_PRE_CONSENT_IDS.tailSignature,
   ],
+  [RECEIPT_PRE_CONSENT_IDS.midConsentLine]: [
+    RECEIPT_PRE_CONSENT_IDS.midDate,
+    RECEIPT_PRE_CONSENT_IDS.midSignature,
+  ],
+  [RECEIPT_PRE_CONSENT_IDS.finalConfirm]: [
+    RECEIPT_PRE_CONSENT_IDS.tailDate,
+    RECEIPT_PRE_CONSENT_IDS.tailSignature,
+  ],
   [DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.closing]: [
     DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.systemDate,
     DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.systemSignature,
@@ -59,6 +70,7 @@ export const AGREEMENT_ADMIN_PROXY_CONFIRM_TEMPLATE_IDS = new Set<string>([
   'agreement-notice',
   'agreement-expense',
   'agreement-third-party',
+  'agreement-receipt-pre-consent',
   'document-payment-order-pre-consent',
 ])
 
@@ -72,6 +84,10 @@ const TEMPLATE_HOST_IDS: Readonly<Record<string, readonly string[]>> = {
   'agreement-notice': [AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing],
   'agreement-expense': [EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.violationClosing],
   'agreement-third-party': PAYMENT_STATEMENT_PRE_CONSENT_PROXY_HOST_IDS,
+  'agreement-receipt-pre-consent': [
+    RECEIPT_PRE_CONSENT_IDS.midConsentLine,
+    RECEIPT_PRE_CONSENT_IDS.finalConfirm,
+  ],
   'document-payment-order-pre-consent': PAYMENT_STATEMENT_PRE_CONSENT_PROXY_HOST_IDS,
 }
 
@@ -150,6 +166,10 @@ export function resolveAgreementAdminProxyConfirmHiddenIds(templateId: string): 
 /** 지급조서 사전 동의서 authoring — mid/tail 날짜·서명 숨김 */
 export function getPaymentStatementPreConsentAdminProxyHiddenIds(): Set<string> {
   return resolveAgreementAdminProxyConfirmHiddenIds('agreement-third-party')
+}
+
+export function getReceiptPreConsentAdminProxyHiddenIds(): Set<string> {
+  return resolveAgreementAdminProxyConfirmHiddenIds('agreement-receipt-pre-consent')
 }
 
 /** 초상권 수집·이용 동의서 authoring — system 날짜·서명 숨김 */

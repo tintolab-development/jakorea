@@ -8,7 +8,7 @@
 import type { SlotRequest } from './slotRequest';
 
 /**
- * 기관 신청 승인 요청. GENERAL_ORGANIZATION은 일정 미확정 승인, selectedScheduleId/slots, 또는 PERIOD 희망 행 id(requestedScheduleId) 확정을 지원합니다. TRAINED_TEACHER PERIOD는 신청 원본 preferredScheduleBlocks의 preferenceRank를 preferredScheduleRank로 확정할 수 있습니다. 일정 선택 필드는 동시에 보낼 수 없습니다.
+ * 기관 신청 승인 요청. GENERAL_ORGANIZATION은 일정 미확정 승인, selectedScheduleId/slots, 또는 PERIOD 희망 행 id(requestedScheduleId 단건 또는 requestedScheduleIds 복수) 확정을 지원합니다. TRAINED_TEACHER PERIOD는 신청 원본 preferredScheduleBlocks의 preferenceRank를 preferredScheduleRank로 확정할 수 있습니다. 일정 선택 필드는 동시에 보낼 수 없습니다.
  */
 export interface OrganizationApplicationApproveRequest {
   /**
@@ -19,9 +19,15 @@ export interface OrganizationApplicationApproveRequest {
   slots?: SlotRequest[];
   /** 선택 확정할 희망 교육 일정의 program_schedule.id. GENERAL_ORGANIZATION·TRAINED_TEACHER에서 사용하며 없으면 별도 배정합니다. */
   selectedScheduleId?: number;
-  /** GENERAL_ORGANIZATION PERIOD에서 확정할 program_application_requested_schedule.id. selectedScheduleId/slots와 동시에 보낼 수 없습니다. resolvedScheduleId가 null이어도 유효합니다. */
+  /** GENERAL_ORGANIZATION PERIOD에서 확정할 program_application_requested_schedule.id. selectedScheduleId/slots/requestedScheduleIds와 동시에 보낼 수 없습니다. resolvedScheduleId가 null이어도 유효합니다. */
   requestedScheduleId?: number | null;
-  /** TRAINED_TEACHER PERIOD에서 확정할 신청 원본 preferredScheduleBlocks[].preferenceRank. 배열 index나 program_schedule.id가 아니며, 해당 application의 블록에만 유효합니다. TRAINED_TEACHER + PERIOD + SUBMITTED에서만 사용할 수 있고, 일정 미선택 승인에서는 필드를 생략합니다. selectedScheduleId/slots/requestedScheduleId와 동시에 보낼 수 없습니다. */
+  /**
+     * GENERAL_ORGANIZATION PERIOD에서 한 번에 확정할 program_application_requested_schedule.id 목록. 행마다 기관 전용 program_schedule(APPLICATION_MATERIALIZED)을 만들고 기관 일정 배정에 연결합니다. 개수는 모집 maxScheduleCount 이하여야 하며(초과 시 ORGANIZATION_APPROVE_REQUESTED_SCHEDULE_COUNT_EXCEEDED), 같은 id를 중복으로 보낼 수 없습니다(ORGANIZATION_APPROVE_REQUESTED_SCHEDULE_DUPLICATED). 빈 배열은 생략과 같습니다(일정 미확정 승인). requestedScheduleId/selectedScheduleId/slots/preferredScheduleRank와 동시에 보낼 수 없습니다.
+     * @minItems 0
+     * @maxItems 500
+     */
+  requestedScheduleIds?: number[] | null;
+  /** TRAINED_TEACHER PERIOD에서 확정할 신청 원본 preferredScheduleBlocks[].preferenceRank. 배열 index나 program_schedule.id가 아니며, 해당 application의 블록에만 유효합니다. TRAINED_TEACHER + PERIOD + SUBMITTED에서만 사용할 수 있고, 일정 미선택 승인에서는 필드를 생략합니다. selectedScheduleId/slots/requestedScheduleId/requestedScheduleIds와 동시에 보낼 수 없습니다. */
   preferredScheduleRank?: number | null;
   /** IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE. ON_ANNOUNCEMENT는 프로그램 발표일 기준으로 서버가 예약합니다. */
   timing?: string;

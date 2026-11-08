@@ -1,9 +1,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
+  approveSettlementCorrectionRemote,
   bulkConfirmPaymentStatementsRemote,
   rejectPaymentStatementRemote,
+  rejectSettlementCorrectionRemote,
 } from '@/features/settlement-management/api/settlement-api-client'
 import { invalidateSettlementLedgerCaches } from '@/features/settlement-management/api/invalidate-settlement-ledger-caches'
+import type { SettlementCorrectionApprovalRequest } from '@/shared/api/generated/settlement/schemas'
 import type { PaymentOrderRejectNotificationType } from '@/features/settlement/lib/payment-order-reject-notification'
 
 export type ConfirmPaymentStatementsInput = {
@@ -61,6 +64,34 @@ export function useRejectPaymentStatementMutation() {
           : {}),
       })
     },
+    onSuccess: async () => {
+      await invalidateSettlementLedgerCaches(queryClient)
+    },
+  })
+}
+
+/** 산출 내역서 「지급 정정」 — 정정 요청 승인(재산정) */
+export function useApproveSettlementCorrectionMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: {
+      correctionRequestId: number
+      body: SettlementCorrectionApprovalRequest
+    }) => approveSettlementCorrectionRemote(input.correctionRequestId, input.body),
+    onSuccess: async () => {
+      await invalidateSettlementLedgerCaches(queryClient)
+    },
+  })
+}
+
+/** 산출 내역서 「신청 반려」(지급 정정 요청 상태) — 정정 요청 반려 */
+export function useRejectSettlementCorrectionMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: { correctionRequestId: number; reason: string }) =>
+      rejectSettlementCorrectionRemote(input.correctionRequestId, input.reason.trim()),
     onSuccess: async () => {
       await invalidateSettlementLedgerCaches(queryClient)
     },

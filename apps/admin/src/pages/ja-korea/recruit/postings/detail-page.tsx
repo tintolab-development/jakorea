@@ -7,6 +7,7 @@
 import { useCallback, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { EyeOutlined, PaperClipOutlined } from '@ant-design/icons'
+import { AdminDetailBackLink, AdminDetailMoreMenu } from '@jakorea/admin-ui/post-detail'
 import dayjs from 'dayjs'
 import 'dayjs/locale/ko'
 import type { RecruitPosting, RecruitPostingStatus } from '@/entities/recruit-posting/model/types'
@@ -21,6 +22,12 @@ import {
   RecruitPostingFormModal,
   type RecruitPostingFormValues,
 } from '@/features/recruit-posting/ui/posting-form-modal'
+import {
+  careerPostingLinkButtonVisible,
+  careerPostingLinkHref,
+  resolveCareerPostingLinkButtonLabel,
+} from '@/features/recruit-posting/lib/link-fields'
+import linkCtaArrowUrl from '@/features/recruit-posting/ui/assets/link-cta-arrow.svg'
 import { isAdminForbidden } from '@/features/system-inbox/lib/http-status'
 import { formatKoreanYearMonthDayWithWeekday } from '@/shared/lib/format-display'
 import { downloadFile } from '@/shared/lib/file-download'
@@ -247,9 +254,12 @@ function RecruitPostingDetailView({
       />
 
       <div className="recruit-posting-detail-page__inner">
-        <p className="recruit-posting-detail-page__hint">
-          * 작성일은 어드민 화면에서만 노출되며, 홈페이지에서는 게시일만 노출됩니다.
-        </p>
+        <div className="recruit-posting-detail-page__back-row">
+          <AdminDetailBackLink onClick={onList} />
+          <p className="recruit-posting-detail-page__hint">
+            ※ 작성일은 어드민 화면에서만 노출되며, 홈페이지에서는 게시일만 노출됩니다.
+          </p>
+        </div>
 
         <div className="recruit-posting-detail-page__card">
           <div className="recruit-posting-detail-page__top-row">
@@ -263,9 +273,12 @@ function RecruitPostingDetailView({
                 {formatRecruitPeriod(posting.recruitStart, posting.recruitEnd)}
               </span>
             </div>
-            <span className="recruit-posting-detail-page__views">
-              <EyeOutlined className="recruit-posting-detail-page__views-icon" aria-hidden />
-              {posting.viewCount.toLocaleString('ko-KR')}
+            <span className="admin-detail-top-actions">
+              <span className="recruit-posting-detail-page__views">
+                <EyeOutlined className="recruit-posting-detail-page__views-icon" aria-hidden />
+                {posting.viewCount.toLocaleString('ko-KR')}
+              </span>
+              <AdminDetailMoreMenu onEdit={onEdit} onDelete={onDelete} />
             </span>
           </div>
 
@@ -321,6 +334,34 @@ function RecruitPostingDetailView({
               <p className="recruit-posting-detail-page__body-empty">등록된 내용이 없습니다.</p>
             )}
           </div>
+
+          {/* 공고문 하단 연결 버튼 (Figma 2118:128846) — 공개 상세와 같은 조건: 링크가 있을 때만 */}
+          {careerPostingLinkButtonVisible(posting.linkUrl) && careerPostingLinkHref(posting.linkUrl) ? (
+            <a
+              className="recruit-posting-detail-page__link-cta"
+              href={careerPostingLinkHref(posting.linkUrl)}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span className="recruit-posting-detail-page__link-cta-copy">
+                <span className="recruit-posting-detail-page__link-cta-label">
+                  {resolveCareerPostingLinkButtonLabel(posting.buttonLabel)}
+                </span>
+                {posting.recruitStart && posting.recruitEnd ? (
+                  <span className="recruit-posting-detail-page__link-cta-period">
+                    {`모집 기간 : ${formatRecruitPeriod(posting.recruitStart, posting.recruitEnd)}`}
+                  </span>
+                ) : null}
+              </span>
+              <img
+                className="recruit-posting-detail-page__link-cta-arrow"
+                src={linkCtaArrowUrl}
+                alt=""
+                width={16}
+                height={16}
+              />
+            </a>
+          ) : null}
         </div>
 
         <div className="recruit-posting-detail-page__actions">

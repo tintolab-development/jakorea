@@ -1,0 +1,31 @@
+.gemini-instructor-approval-modal .permission-modal__info-callout {
+  margin-top: 28px;
+}
+
+.gemini-instructor-approval-modal__training-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  color: var(--main-bk, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.gemini-instructor-approval-modal__training-summary > span + span {
+  display: inline-flex;
+  align-items: center;
+}
+
+.gemini-instructor-approval-modal__training-summary > span + span::before {
+  content: '|';
+  margin: 0 12px;
+  color: var(--main-bk, #3d3d3d);
+  font-weight: 400;
+}
+
+.gemini-instructor-approval-modal .permission-modal__field {
+  margin-top: 28px;
+}

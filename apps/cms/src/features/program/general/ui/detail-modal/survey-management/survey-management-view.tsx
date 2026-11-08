@@ -65,7 +65,15 @@ import type {
   RegisteredSurvey,
   SurveyPollRawResponse,
 } from '@/features/program/shared/lib/survey-management/survey-management-types'
-import { resolveSurveyWritingDraft } from '@/features/program/shared/lib/survey-management/survey-writing-draft'
+import {
+  applySurveyDisplayTitleToDraft,
+  resolveSurveyWritingDraft,
+} from '@/features/program/shared/lib/survey-management/survey-writing-draft'
+import {
+  applySurveyTitleCustomPeriodToDraft,
+  resolveSatisfactionPreviewPeriod,
+  type SatisfactionFormEditPeriod,
+} from '@/features/program/shared/lib/survey-management/satisfaction-form-edit-period'
 import {
   resolvePublishedSurveyBinding,
   surveyBindingResolutionAlert,
@@ -76,15 +84,36 @@ import { resolveLectureEvalBindingTargetForCreate } from '@/features/program/sha
 import { resolveSurveyPollBindingTarget } from '@/features/program/shared/lib/survey-management/resolve-survey-poll-binding-target'
 import {
   SURVEY_POLL_SCHEDULE_ALREADY_REGISTERED_MESSAGE,
+  collectUnboundSurveyPollScheduleValues,
   isSurveyPollBindingTargetScheduleAlreadyRegistered,
+  pickLastSurveyPollEducationSlot,
+  sortSatisfactionScheduleDisplayItemsAsc,
 } from '@/features/program/shared/lib/survey-management/survey-poll-schedule-options'
 import {
   resolveSurveyPollBindingTargetWhenScheduleFieldHidden,
   shouldShowSurveyPollScheduleSelectField,
 } from '@/features/program/shared/lib/survey-management/should-show-survey-poll-schedule-field'
 import { loadProgramSurveyFormEditAfterBinding } from '@/features/program/shared/lib/survey-management/load-program-survey-form-edit'
+import {
+  findSatisfactionScheduleById,
+  resolveSatisfactionCreateSubmissionPeriod,
+} from '@/features/program/shared/lib/survey-management/satisfaction-form-edit-period'
+import { resolveSatisfactionSurveyDisplayTitle } from '@/features/program/shared/lib/survey-management/satisfaction-survey-display-title'
 import { useProgramSurveyScheduleOptions } from '@/features/program/shared/hooks/use-program-survey-schedule-options'
 import { SurveyPollRegisterModal } from '@/features/program/shared/ui/survey-management/survey-poll-register-modal'
+import { SatisfactionRegisterModal } from '@/features/program/shared/ui/survey-management/satisfaction-register-modal'
+import {
+  DEFAULT_SATISFACTION_WINDOW_DAYS,
+  SATISFACTION_RUN_MODE_ONCE_AT_END,
+  SATISFACTION_RUN_MODE_PER_SCHEDULE,
+  buildSatisfactionBindingWriteFields,
+  canDownloadSatisfactionResults,
+  formatSatisfactionOnceAtEndScheduleLabel,
+  isSatisfactionPerScheduleWritingPeriodLocked,
+  type SatisfactionFormBindingRequest,
+  type SatisfactionRunMode,
+  type SatisfactionWindowDays,
+} from '@/features/program/shared/lib/survey-management/satisfaction-binding-contract'
 import { SurveyEmptyState } from '@/features/program/shared/ui/survey-management/survey-empty-state'
 import { SurveyNoResponseState } from '@/features/program/shared/ui/survey-management/survey-no-response-state'
 import { SurveyPollResultsView } from '@/features/program/shared/ui/survey-management/survey-poll-results-view'
@@ -135,6 +164,7 @@ import {
   updateGeneralProgramFormResponse,
 } from '@/features/program/general/api/admin-general-programs-service'
 import {
+  groupSatisfactionSurveysByAudience,
   isSurveyTemplateOptionForKind,
   pickLectureEvalSurveyFromRemote,
   resolveLectureEvalSubmitContext,
@@ -147,6 +177,7 @@ import {
   getGeneralProgramApiErrorMessage,
   getProgramFormBindingErrorMessage,
 } from '@/features/program/general/api/get-general-program-api-error'
+import { formatSatisfactionPerScheduleDisplayName } from '@/shared/lib/education-schedule-name'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import { getGeneralSurveyMenuItems } from '@/features/program/general/lib/detail-meta'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
@@ -168,6 +199,8 @@ async function buildPreviewSession(args: {
   title?: string
   versionId?: string
   lecture?: boolean
+  overwriteTitle?: boolean
+  displayPeriod?: SatisfactionFormEditPeriod | null
   onEditForm?: () => void
   paragraphBodyOptions?: TemplateWritingUserPreviewSession['paragraphBodyOptions']
 }): Promise<TemplateWritingUserPreviewSession | null> {
@@ -177,11 +210,18 @@ async function buildPreviewSession(args: {
     if (entry == null || !isSurveyRegistryEntry(entry)) return null
     const draft = args.lecture
       ? await buildLectureEvalFormDraft(row.id)
-      : await resolveSurveyWritingDraft(args.templateId, { templateName: row.templateName })
+      : await resolveSurveyWritingDraft(args.templateId, {
+          templateName: args.title?.trim() || row.templateName,
+        })
     return {
-      draft,
+      draft: applySurveyTitleCustomPeriodToDraft(
+        applySurveyDisplayTitleToDraft(draft, args.title, {
+          overwrite: args.overwriteTitle === true,
+        }),
+        args.displayPeriod
+      ),
       updateParagraph: () => {},
-      headerTitle: resolvePreviewHeaderTitle(entry, row.templateName),
+      headerTitle: args.title?.trim() || resolvePreviewHeaderTitle(entry, row.templateName),
       editorKind: 'survey',
       ...(args.paragraphBodyOptions != null
         ? { paragraphBodyOptions: args.paragraphBodyOptions }
@@ -192,14 +232,24 @@ async function buildPreviewSession(args: {
 
   const versionId = Number(args.versionId)
   if (!Number.isFinite(versionId) || versionId <= 0) return null
-  const record = await loadFormTemplateVersionDraftByVersionId(args.templateId, Math.trunc(versionId))
+  const record = await loadFormTemplateVersionDraftByVersionId(
+    args.templateId,
+    Math.trunc(versionId)
+  )
   if (record?.draft == null) return null
   return {
-    draft: record.draft,
+    draft: applySurveyTitleCustomPeriodToDraft(
+      applySurveyDisplayTitleToDraft(record.draft, args.title, {
+        overwrite: args.overwriteTitle === true,
+      }),
+      args.displayPeriod
+    ),
     updateParagraph: () => {},
     headerTitle: args.title?.trim() || '설문조사',
     editorKind: 'survey',
-    ...(args.paragraphBodyOptions != null ? { paragraphBodyOptions: args.paragraphBodyOptions } : {}),
+    ...(args.paragraphBodyOptions != null
+      ? { paragraphBodyOptions: args.paragraphBodyOptions }
+      : {}),
     ...(args.onEditForm != null ? { onEditForm: args.onEditForm } : {}),
   }
 }
@@ -240,7 +290,10 @@ function buildSatisfactionResultsPdfFileName(programTitle: string, surveyTitle: 
   return `${safeProgram}_${safeSurvey}_만족도조사결과.pdf`
 }
 
-export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurveyManagementViewProps) {
+export function GeneralSurveyManagementView({
+  program,
+  activeTab,
+}: GeneralSurveyManagementViewProps) {
   const initialMock = useMemo(() => buildGeneralSurveyEmptyState(program), [program])
   const {
     registeredSurveys: remoteRegisteredSurveys,
@@ -270,16 +323,26 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   const [satisfactionSurveysByAudience, setSatisfactionSurveysByAudience] = useState<
     Partial<Record<GeneralSatisfactionAudienceKey, RegisteredSurvey>>
   >(() => (surveysRemote ? {} : initialMock.satisfactionSurveysByAudience))
-  const [activeSatisfactionAudience, setActiveSatisfactionAudience] = useState(
-    () => getDefaultGeneralSatisfactionAudience(program)
+  const [satisfactionBindingsByAudience, setSatisfactionBindingsByAudience] = useState<
+    Partial<Record<GeneralSatisfactionAudienceKey, RegisteredSurvey[]>>
+  >({})
+  const [satisfactionScheduleTab, setSatisfactionScheduleTab] = useState<string | null>(null)
+  const [satisfactionRunMode, setSatisfactionRunMode] = useState<SatisfactionRunMode>(
+    SATISFACTION_RUN_MODE_PER_SCHEDULE
+  )
+  const [satisfactionWindowDays, setSatisfactionWindowDays] = useState<SatisfactionWindowDays>(
+    DEFAULT_SATISFACTION_WINDOW_DAYS
+  )
+  const [activeSatisfactionAudience, setActiveSatisfactionAudience] = useState(() =>
+    getDefaultGeneralSatisfactionAudience(program)
   )
   const [pendingSatisfactionAudience, setPendingSatisfactionAudience] =
     useState<GeneralSatisfactionAudienceKey | null>(null)
   const [lectureEvalSurvey, setLectureEvalSurvey] = useState<RegisteredSurvey | null>(() =>
     surveysRemote ? null : initialMock.lectureEvalSurvey
   )
-  const [lectureEvalSubmitted, setLectureEvalSubmitted] = useState(
-    () => (surveysRemote ? false : initialMock.lectureEvalSubmitted)
+  const [lectureEvalSubmitted, setLectureEvalSubmitted] = useState(() =>
+    surveysRemote ? false : initialMock.lectureEvalSubmitted
   )
   const [lectureEvalFormDraft, setLectureEvalFormDraft] = useState<WritingFormDraft | null>(null)
   const lectureEvalDraftRef = useRef<WritingFormDraft | null>(null)
@@ -327,11 +390,29 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   const queryClient = useQueryClient()
   const surveyMenuEmpty = getGeneralSurveyMenuItems(program).length === 0
   const surveyPollCreateModalOpen = createModalKind === 'survey'
+  const satisfactionCreateModalOpen = createModalKind === 'satisfaction'
   const surveyScheduleOptionsQuery = useProgramSurveyScheduleOptions(
     program,
     surveyPollCreateModalOpen,
     classifiedBindings
   )
+  const satisfactionScheduleOptionsQuery = useProgramSurveyScheduleOptions(
+    program,
+    satisfactionCreateModalOpen || isGeneralSatisfactionSurveyNavTab(activeTab),
+    classifiedBindings,
+    {
+      formType: 'SATISFACTION',
+      targetRole: resolveSatisfactionFormBindingTargetRole(program, pendingSatisfactionAudience),
+    }
+  )
+  const satisfactionUnboundScheduleValues = useMemo(
+    () => collectUnboundSurveyPollScheduleValues(satisfactionScheduleOptionsQuery.options),
+    [satisfactionScheduleOptionsQuery.options]
+  )
+  const lastSatisfactionEducationScheduleLabel = useMemo(() => {
+    const last = pickLastSurveyPollEducationSlot(satisfactionScheduleOptionsQuery.schedules)
+    return last == null ? null : formatSatisfactionOnceAtEndScheduleLabel(last)
+  }, [satisfactionScheduleOptionsQuery.schedules])
   const showSurveyPollScheduleSelectField = useMemo(
     () => shouldShowSurveyPollScheduleSelectField(program),
     [program]
@@ -349,14 +430,59 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     surveyScheduleOptionsQuery.options,
   ])
 
-  const activeSatisfactionSurveyId =
-    satisfactionSurveysByAudience[activeSatisfactionAudience]?.id ?? undefined
-  const pollResponseVersionId = activeTab === 'survey' ? activeRegisteredSurveyId ?? undefined : undefined
+  const audienceSatisfactionBindingsForQuery =
+    satisfactionBindingsByAudience[activeSatisfactionAudience] ??
+    (satisfactionSurveysByAudience[activeSatisfactionAudience]
+      ? [satisfactionSurveysByAudience[activeSatisfactionAudience]!]
+      : [])
+  const satisfactionScheduleTabsForQuery = (() => {
+    const items = sortSatisfactionScheduleDisplayItemsAsc(
+      audienceSatisfactionBindingsForQuery.map(survey => {
+        const slot = satisfactionScheduleOptionsQuery.schedules.find(
+          row => row.id === survey.targetScopeId
+        )
+        return {
+          key: survey.bindingId ?? survey.id,
+          label: formatSatisfactionPerScheduleDisplayName({
+            scheduleName: slot?.scheduleName ?? survey.targetScopeLabel,
+            sessionNo: slot?.sessionNo,
+            startAt: slot?.startAt ?? slot?.startDate ?? null,
+          }),
+          sessionNo: slot?.sessionNo,
+          startAt: slot?.startAt ?? slot?.startDate ?? null,
+        }
+      })
+    ).map(({ key, label }) => ({ key, label }))
+    return items
+  })()
+  const resolvedSatisfactionScheduleTabForQuery =
+    satisfactionScheduleTab != null &&
+    satisfactionScheduleTabsForQuery.some(tab => tab.key === satisfactionScheduleTab)
+      ? satisfactionScheduleTab
+      : (satisfactionScheduleTabsForQuery[0]?.key ?? null)
+  const selectedSatisfactionBindingForQuery =
+    audienceSatisfactionBindingsForQuery.find(
+      survey => (survey.bindingId ?? survey.id) === resolvedSatisfactionScheduleTabForQuery
+    ) ??
+    audienceSatisfactionBindingsForQuery[0] ??
+    null
+  const activeSatisfactionSurveyId = selectedSatisfactionBindingForQuery?.id
+  const pollResponseVersionId =
+    activeTab === 'survey' ? (activeRegisteredSurveyId ?? undefined) : undefined
   const satisfactionResponseVersionId = isGeneralSatisfactionSurveyNavTab(activeTab)
     ? activeSatisfactionSurveyId
     : undefined
   const lectureResponseVersionId =
     activeTab === 'lecture_evaluation' ? lectureEvalSurvey?.id : undefined
+  const pollBindingId =
+    activeTab === 'survey'
+      ? registeredSurveys.find(item => item.id === activeRegisteredSurveyId)?.bindingId
+      : undefined
+  const satisfactionBindingId = isGeneralSatisfactionSurveyNavTab(activeTab)
+    ? selectedSatisfactionBindingForQuery?.bindingId
+    : undefined
+  const lectureBindingId =
+    activeTab === 'lecture_evaluation' ? lectureEvalSurvey?.bindingId : undefined
 
   const {
     pollResponses: remotePollResponses,
@@ -364,24 +490,29 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     isRemoteDataSource: pollResponsesRemote,
   } = useGeneralProgramSurveyResponses(program.id, pollResponseVersionId, {
     detailPolicy: 'public-text-only',
+    bindingId: pollBindingId,
   })
   const {
     pollResponses: remoteSatisfactionResponses,
     isRemoteDataSource: satisfactionResponsesRemote,
   } = useGeneralProgramSurveyResponses(program.id, satisfactionResponseVersionId, {
     detailPolicy: 'public-text-only',
+    bindingId: satisfactionBindingId,
   })
   const {
     pollResponses: remoteLectureResponses,
     isRemoteDataSource: lectureResponsesRemote,
-  } = useGeneralProgramSurveyResponses(program.id, lectureResponseVersionId)
+  } = useGeneralProgramSurveyResponses(program.id, lectureResponseVersionId, {
+    bindingId: lectureBindingId,
+  })
   const {
     totalResponseCount: remotePollSummaryCount,
     questionSummaries: pollQuestionSummaries,
-  } = useGeneralProgramSurveySummary(program.id, pollResponseVersionId)
+  } = useGeneralProgramSurveySummary(program.id, pollResponseVersionId, pollBindingId)
   const { questionSummaries: satisfactionQuestionSummaries } = useGeneralProgramSurveySummary(
     program.id,
-    satisfactionResponseVersionId
+    satisfactionResponseVersionId,
+    satisfactionBindingId
   )
 
   useEffect(() => {
@@ -413,15 +544,18 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
 
   useEffect(() => {
     if (!surveysRemote || !classifiedBindings) return
-    const nextSatisfaction: Partial<Record<GeneralSatisfactionAudienceKey, RegisteredSurvey>> = {}
     const fallbackSatisfactionAudience = getDefaultGeneralSatisfactionAudience(program)
-    for (const item of classifiedBindings) {
-      if (item.kind === 'satisfaction') {
-        const audience = item.satisfactionAudience ?? fallbackSatisfactionAudience
-        if (isTrainedTeachersProgram(program) && audience !== 'teacher') continue
-        nextSatisfaction[audience] = item.survey
-      }
+    const grouped = groupSatisfactionSurveysByAudience(
+      classifiedBindings,
+      fallbackSatisfactionAudience
+    )
+    const nextSatisfaction: Partial<Record<GeneralSatisfactionAudienceKey, RegisteredSurvey>> = {}
+    for (const [audience, surveys] of Object.entries(grouped) as Array<
+      [GeneralSatisfactionAudienceKey, RegisteredSurvey[] | undefined]
+    >) {
+      if (surveys?.[0]) nextSatisfaction[audience] = surveys[0]
     }
+    setSatisfactionBindingsByAudience(grouped)
     setSatisfactionSurveysByAudience(nextSatisfaction)
     setLectureEvalSurvey(
       pickLectureEvalSurveyFromRemote({
@@ -449,7 +583,9 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   const surveyTemplateOptions = useMemo(() => {
     if (remoteSurveyRows.length > 0) {
       return remoteSurveyRows
-        .filter(row => createModalKind == null || isSurveyTemplateOptionForKind(row, createModalKind))
+        .filter(
+          row => createModalKind == null || isSurveyTemplateOptionForKind(row, createModalKind)
+        )
         .map(row => ({
           label: row.templateName,
           value: row.id,
@@ -477,7 +613,11 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   const isTrainedTeacherSatisfaction = isTrainedTeachersProgram(program)
   const showSatisfactionAudienceTabs =
     !isInstitutionTeacherOnlySatisfaction && satisfactionAudienceTabs.length > 0
-  const activeSatisfactionSurvey = satisfactionSurveysByAudience[activeSatisfactionAudience] ?? null
+  const satisfactionScheduleTabs = satisfactionScheduleTabsForQuery
+  const resolvedSatisfactionScheduleTab = resolvedSatisfactionScheduleTabForQuery
+  const selectedSatisfactionBinding = selectedSatisfactionBindingForQuery
+  const activeSatisfactionSurvey = selectedSatisfactionBinding
+  const satisfactionDownloadEnabled = canDownloadSatisfactionResults(activeSatisfactionSurvey ?? {})
   const satisfactionSurveysForView = useMemo(() => {
     const next: Partial<Record<GeneralSatisfactionAudienceKey, RegisteredSurvey>> = {}
     const programTotal = isTrainedTeacherSatisfaction ? undefined : program.totalParticipants
@@ -510,8 +650,8 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
 
   const satisfactionResponses = useMemo((): SurveyPollRawResponse[] => {
     if (satisfactionResponsesRemote) return remoteSatisfactionResponses ?? []
-    return pollResponses
-  }, [pollResponses, remoteSatisfactionResponses, satisfactionResponsesRemote])
+    return []
+  }, [remoteSatisfactionResponses, satisfactionResponsesRemote])
 
   useEffect(() => {
     if (!pollResponsesRemote || !activeRegisteredSurveyId) return
@@ -521,12 +661,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         survey.id === activeRegisteredSurveyId ? { ...survey, responseCount: count } : survey
       )
     )
-  }, [
-    activeRegisteredSurveyId,
-    pollResponsesRemote,
-    remotePollResponses,
-    remotePollSummaryCount,
-  ])
+  }, [activeRegisteredSurveyId, pollResponsesRemote, remotePollResponses, remotePollSummaryCount])
 
   useEffect(() => {
     if (!lectureResponsesRemote) return
@@ -612,23 +747,35 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     kind: CreateModalKind,
     ids: { templateId: number; templateVersionId?: number } & SurveySubmissionPeriod,
     audience?: GeneralSatisfactionAudienceKey | null
-  ): ProgramFormBindingRequest {
+  ): SatisfactionFormBindingRequest {
     const formType =
-      kind === 'satisfaction' ? 'SATISFACTION' : kind === 'lecture' ? 'LECTURE_EVALUATION' : 'SURVEY'
+      kind === 'satisfaction'
+        ? 'SATISFACTION'
+        : kind === 'lecture'
+          ? 'LECTURE_EVALUATION'
+          : 'SURVEY'
     const targetRole =
       kind === 'satisfaction'
         ? resolveSatisfactionFormBindingTargetRole(program, audience)
         : kind === 'lecture'
           ? 'ADMIN'
           : undefined
-    const submissionPeriod =
-      kind === 'survey' ? ensureSurveyCreateSubmissionPeriod(ids) : ids
+    const submissionPeriod: SurveySubmissionPeriod =
+      kind === 'survey'
+        ? ensureSurveyCreateSubmissionPeriod(ids)
+        : kind === 'satisfaction'
+          ? {}
+          : ids
     return {
       formType,
       templateId: ids.templateId,
       templateVersionId: ids.templateVersionId,
-      submissionStartAt: submissionPeriod.submissionStartAt,
-      submissionEndAt: submissionPeriod.submissionEndAt,
+      ...(submissionPeriod.submissionStartAt != null
+        ? { submissionStartAt: submissionPeriod.submissionStartAt }
+        : {}),
+      ...(submissionPeriod.submissionEndAt != null
+        ? { submissionEndAt: submissionPeriod.submissionEndAt }
+        : {}),
       targetRole,
       ...(audience === 'volunteer_h1'
         ? { targetScope: 'TERM', targetScopeId: 1 }
@@ -637,6 +784,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
           : {}),
       active: true,
       required: false,
+      duplicatePolicy: kind === 'satisfaction' ? 'ONE_SUBMITTED_PER_CONTEXT' : undefined,
     }
   }
 
@@ -646,6 +794,10 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       options?: {
         allowEdit?: boolean
         lecture?: boolean
+        displayTitle?: string
+        overwriteTitle?: boolean
+        displayPeriod?: SatisfactionFormEditPeriod | null
+        lockWritingPeriodInput?: boolean
         paragraphBodyOptions?: TemplateWritingUserPreviewSession['paragraphBodyOptions']
       }
     ) => {
@@ -663,9 +815,11 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
           : undefined
       void buildPreviewSession({
         templateId: survey.templateId,
-        title: survey.title,
+        title: options?.displayTitle ?? survey.title,
         versionId: survey.id,
         lecture: options?.lecture,
+        overwriteTitle: options?.overwriteTitle,
+        displayPeriod: options?.displayPeriod,
         onEditForm: onCatalogEditForm,
         paragraphBodyOptions: options?.paragraphBodyOptions,
       })
@@ -684,7 +838,12 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
                   ...session,
                   onEditForm: () => {
                     closeWritingUserPreview()
-                    setProgramFormEdit({ target: editTarget, initialDraft: session.draft })
+                    setProgramFormEdit({
+                      target: editTarget,
+                      initialDraft: session.draft,
+                      displayPeriod: options?.displayPeriod,
+                      lockWritingPeriodInput: options?.lockWritingPeriodInput,
+                    })
                   },
                 }
               : session
@@ -701,7 +860,13 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
           })
         })
     },
-    [closeWritingUserPreview, openWritingUserPreview, program.id, requestPreviewHistoryPush, showAlert]
+    [
+      closeWritingUserPreview,
+      openWritingUserPreview,
+      program.id,
+      requestPreviewHistoryPush,
+      showAlert,
+    ]
   )
 
   const showShareCopyToast = useCallback(
@@ -725,6 +890,8 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       setCreateFieldError(null)
       if (kind === 'satisfaction' && satisfactionAudience != null) {
         setPendingSatisfactionAudience(satisfactionAudience)
+        setSatisfactionRunMode(SATISFACTION_RUN_MODE_PER_SCHEDULE)
+        setSatisfactionWindowDays(DEFAULT_SATISFACTION_WINDOW_DAYS)
         setSelectedTemplateId(
           pickRegisteredSurveyTemplateId(
             GENERAL_SATISFACTION_TEMPLATE_BY_AUDIENCE[satisfactionAudience],
@@ -786,6 +953,24 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         return
       }
     }
+    if (
+      createModalKind === 'satisfaction' &&
+      satisfactionRunMode === SATISFACTION_RUN_MODE_PER_SCHEDULE
+    ) {
+      if (satisfactionScheduleOptionsQuery.isLoading) {
+        return
+      }
+      if (satisfactionUnboundScheduleValues.length === 0) {
+        void showAlert({
+          title: '등록 실패',
+          content:
+            satisfactionScheduleOptionsQuery.options.length === 0
+              ? '확정된 교육 일정이 없습니다. 프로그램 일정을 먼저 등록한 뒤 다시 시도해 주세요.'
+              : '이미 만족도조사가 등록된 일정입니다.',
+        })
+        return
+      }
+    }
     if (!surveyTemplateOptions.some(option => option.value === selectedTemplateId)) {
       void showAlert({
         title: '등록 불가',
@@ -839,7 +1024,8 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
               return
             }
           } else {
-            const surveyTarget = await resolveSurveyPollBindingTargetWhenScheduleFieldHidden(program)
+            const surveyTarget =
+              await resolveSurveyPollBindingTargetWhenScheduleFieldHidden(program)
             if (surveyTarget == null) {
               void showAlert({
                 title: '등록 실패',
@@ -848,7 +1034,9 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
               })
               return
             }
-            if (isSurveyPollBindingTargetScheduleAlreadyRegistered(surveyTarget, classifiedBindings)) {
+            if (
+              isSurveyPollBindingTargetScheduleAlreadyRegistered(surveyTarget, classifiedBindings)
+            ) {
               void showAlert({
                 title: '등록 실패',
                 content: SURVEY_POLL_SCHEDULE_ALREADY_REGISTERED_MESSAGE,
@@ -862,24 +1050,110 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
           }
           surveyBindingTargetScope = payload.targetScope ?? undefined
         }
-        const result = await createBinding(payload)
-        if (!result.ok) {
+        const satisfactionPayloads: SatisfactionFormBindingRequest[] = []
+        if (createModalKind === 'satisfaction') {
+          const writeFields = buildSatisfactionBindingWriteFields({
+            runMode: satisfactionRunMode,
+            windowDays: satisfactionWindowDays,
+            startImmediately: false,
+            startAtLocked: false,
+          })
+          Object.assign(payload, writeFields)
+          if (satisfactionRunMode === SATISFACTION_RUN_MODE_ONCE_AT_END) {
+            payload.targetScope = 'PROGRAM'
+            delete payload.targetScopeId
+            const lastSlot = pickLastSurveyPollEducationSlot(
+              satisfactionScheduleOptionsQuery.schedules
+            )
+            const period = resolveSatisfactionCreateSubmissionPeriod(
+              lastSlot,
+              satisfactionWindowDays
+            )
+            if (period != null) Object.assign(payload, period)
+            satisfactionPayloads.push(payload)
+          } else {
+            for (const scheduleValue of satisfactionUnboundScheduleValues) {
+              try {
+                const target = resolveSurveyPollBindingTarget(scheduleValue)
+                const schedule = findSatisfactionScheduleById(
+                  satisfactionScheduleOptionsQuery.schedules,
+                  target.targetScopeId
+                )
+                const period = resolveSatisfactionCreateSubmissionPeriod(
+                  schedule,
+                  satisfactionWindowDays
+                )
+                if (period == null) {
+                  void showAlert({
+                    title: '등록 실패',
+                    content:
+                      '일정 종료 시각을 확인할 수 없습니다. 프로그램 일정을 확인한 뒤 다시 시도해 주세요.',
+                  })
+                  return
+                }
+                satisfactionPayloads.push({
+                  ...payload,
+                  ...writeFields,
+                  ...target,
+                  ...period,
+                })
+              } catch {
+                void showAlert({
+                  title: '등록 실패',
+                  content: '만족도조사 대상 일정을 다시 선택해 주세요.',
+                })
+                return
+              }
+            }
+          }
+        }
+        let result: Awaited<ReturnType<typeof createBinding>> | null = null
+        if (createModalKind === 'satisfaction') {
+          for (const item of satisfactionPayloads) {
+            result = await createBinding(item as ProgramFormBindingRequest)
+            if (!result.ok) break
+          }
+        } else {
+          result = await createBinding(payload)
+        }
+        if (!result?.ok) {
           await invalidateSurveyCaches()
-          if (result.field === 'targetRole') {
+          if (result?.field === 'targetRole') {
             setCreateFieldError({ field: result.field, message: result.message })
             return
           }
-          void showAlert({ title: '등록 실패', content: result.message })
+          void showAlert({ title: '등록 실패', content: result?.message ?? '등록에 실패했습니다.' })
           return
         }
         if (
           (createModalKind === 'survey' || createModalKind === 'satisfaction') &&
           result.binding != null
         ) {
+          const lastSatisfactionPayload =
+            createModalKind === 'satisfaction' ? satisfactionPayloads.at(-1) : undefined
           const editLoad = await loadProgramSurveyFormEditAfterBinding(
             String(program.id),
-            result.binding,
-            selectedTemplateId
+            {
+              ...result.binding,
+              formType: result.binding.formType ?? payload.formType,
+              targetScope:
+                result.binding.targetScope ?? lastSatisfactionPayload?.targetScope,
+              targetScopeId:
+                result.binding.targetScopeId ?? lastSatisfactionPayload?.targetScopeId,
+            },
+            selectedTemplateId,
+            {
+              schedules:
+                createModalKind === 'satisfaction'
+                  ? satisfactionScheduleOptionsQuery.schedules
+                  : surveyScheduleOptionsQuery.schedules,
+              windowDays:
+                createModalKind === 'satisfaction' ? satisfactionWindowDays : undefined,
+              targetScope:
+                result.binding.targetScope ?? lastSatisfactionPayload?.targetScope,
+              targetScopeId:
+                result.binding.targetScopeId ?? lastSatisfactionPayload?.targetScopeId,
+            }
           )
           setCreateModalKind(null)
           setSelectedSurveyScheduleValue(null)
@@ -894,10 +1168,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         return
       }
 
-      notifyProgramApiUnavailable(
-        'general-survey-create-binding',
-        '설문 관리 · 설문 등록'
-      )
+      notifyProgramApiUnavailable('general-survey-create-binding', '설문 관리 · 설문 등록')
       setCreateModalKind(null)
     } catch (error) {
       handleError(error, { context: 'generalSurveyManagement.createSurvey' })
@@ -930,6 +1201,13 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     registeredSurveys.length,
     selectedSurveyScheduleValue,
     selectedTemplateId,
+    satisfactionRunMode,
+    satisfactionScheduleOptionsQuery.isLoading,
+    satisfactionScheduleOptionsQuery.options.length,
+    satisfactionScheduleOptionsQuery.schedules,
+    surveyScheduleOptionsQuery.schedules,
+    satisfactionUnboundScheduleValues,
+    satisfactionWindowDays,
     showAlert,
     showSurveyPollScheduleSelectField,
     surveyScheduleOptionsQuery.hasSessionSchedules,
@@ -962,7 +1240,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       setRegisteredSurveys(prev => {
         const next = prev.filter(item => item.id !== activeRegisteredSurvey.id)
         setActiveRegisteredSurveyId(current =>
-          current === activeRegisteredSurvey.id ? next[0]?.id ?? null : current
+          current === activeRegisteredSurvey.id ? (next[0]?.id ?? null) : current
         )
         return next
       })
@@ -1014,18 +1292,13 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     async (survey: RegisteredSurvey) => {
       const bindingId = survey.bindingId?.trim()
       if (!bindingId) {
-        notifyProgramApiUnavailable(
-          'general-survey-share-link',
-          '설문 관리 · 설문 공유'
-        )
+        notifyProgramApiUnavailable('general-survey-share-link', '설문 관리 · 설문 공유')
         return
       }
       try {
         const response = await createGeneralProgramSurveyShareLink(program.id, bindingId)
         const platformOrigin = getPlatformPublicOrigin()
-        const url = response
-          ? resolveSurveyShareClipboardUrl(response, platformOrigin)
-          : null
+        const url = response ? resolveSurveyShareClipboardUrl(response, platformOrigin) : null
         if (!url) {
           void showAlert({
             title: '공유',
@@ -1055,7 +1328,10 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
 
   const shareSatisfactionSurveyUrl = useCallback(
     async (audience: GeneralSatisfactionAudienceKey) => {
-      const survey = satisfactionSurveysByAudience[audience]
+      const survey =
+        audience === activeSatisfactionAudience
+          ? activeSatisfactionSurvey
+          : satisfactionSurveysByAudience[audience]
       const bindingId = survey?.bindingId?.trim()
       if (!bindingId) {
         notifyProgramApiUnavailable(
@@ -1067,17 +1343,11 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       try {
         const response = await createGeneralProgramSurveyShareLink(program.id, bindingId)
         const platformOrigin = getPlatformPublicOrigin()
-        const url = response
-          ? resolveSurveyShareClipboardUrl(response, platformOrigin)
-          : null
+        const url = response ? resolveSurveyShareClipboardUrl(response, platformOrigin) : null
         if (!url) {
           void showAlert({
             title: '공유',
-            content: describeSurveyShareClipboardFailure(
-              response,
-              platformOrigin,
-              'satisfaction'
-            ),
+            content: describeSurveyShareClipboardFailure(response, platformOrigin, 'satisfaction'),
           })
           return
         }
@@ -1099,6 +1369,8 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       }
     },
     [
+      activeSatisfactionAudience,
+      activeSatisfactionSurvey,
       copyText,
       program.id,
       queryClient,
@@ -1247,7 +1519,10 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
           row =>
             String(row.templateVersionId ?? '') === lectureEvalSurvey.id ||
             String(row.templateId ?? '') === lectureEvalSurvey.templateId
-        ) ?? rawSurveys?.find(row => row.bindingId != null && String(row.bindingId) === lectureEvalSurvey.bindingId)
+        ) ??
+        rawSurveys?.find(
+          row => row.bindingId != null && String(row.bindingId) === lectureEvalSurvey.bindingId
+        )
       const submitContext = resolveLectureEvalSubmitContext({
         binding: lectureBinding,
         surveyDto: lectureSurveyDto,
@@ -1296,19 +1571,14 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       return [
         {
           ...pollResponse,
-          respondentId:
-            existingId != null
-              ? String(existingId)
-              : pollResponse.respondentId,
+          respondentId: existingId != null ? String(existingId) : pollResponse.respondentId,
         },
       ]
     })
     setLectureEvalSurvey(prev => {
       if (prev == null) return prev
       const nextStatus =
-        !surveysRemote &&
-        LECTURE_EVAL_DEV_AUTO_FINISH_ON_SUBMIT &&
-        prev.status === 'in_progress'
+        !surveysRemote && LECTURE_EVAL_DEV_AUTO_FINISH_ON_SUBMIT && prev.status === 'in_progress'
           ? 'finished'
           : prev.status
       return {
@@ -1365,10 +1635,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
           if (root == null) {
             throw new Error('PDF로보낼 결과 영역을 찾을 수 없습니다.')
           }
-          await exportLectureEvalResultsPdf(
-            root,
-            buildLectureEvalResultsPdfFileName(program.title)
-          )
+          await exportLectureEvalResultsPdf(root, buildLectureEvalResultsPdfFileName(program.title))
         } else {
           await exportSurveyResultsExcel({
             surveyTitle: lectureEvalSurvey.title,
@@ -1505,13 +1772,13 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
 
   const createTitle =
     createModalKind === 'satisfaction' && pendingSatisfactionAudience != null
-      ? `신규 ${getGeneralSatisfactionAudienceLabel(pendingSatisfactionAudience)} 만족도조사 등록`
+      ? `신규 만족도조사 등록`
       : createModalKind === 'lecture'
         ? GENERAL_LECTURE_EVAL_REGISTER_MODAL_COPY.title
         : '신규 설문조사 등록'
   const createDescription =
     createModalKind === 'satisfaction' && pendingSatisfactionAudience != null
-      ? getGeneralSatisfactionCreateDescription(pendingSatisfactionAudience)
+      ? getGeneralSatisfactionCreateDescription()
       : createModalKind === 'lecture'
         ? GENERAL_LECTURE_EVAL_REGISTER_MODAL_COPY.description
         : ''
@@ -1525,46 +1792,59 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       )
     }
     return (
-    <SatisfactionSurveyView
-      surveysByAudience={satisfactionSurveysForView}
-      activeAudience={activeSatisfactionAudience}
-      audienceTabs={satisfactionAudienceTabs}
-      className={
-        isInstitutionTeacherOnlySatisfaction ? 'company-school-satisfaction-survey' : undefined
-      }
-      emptyCopy={getGeneralSatisfactionEmptyCopy(activeSatisfactionAudience, program)}
-      noResponseCopy={GENERAL_SATISFACTION_NO_RESPONSE_COPY}
-      actionLabels={getGeneralSatisfactionActionLabels()}
-      showAudienceTabs={showSatisfactionAudienceTabs}
-      showShareButton
-      onAudienceChange={setActiveSatisfactionAudience}
-      onRegisterClick={() =>
-        openCreateModal(
-          'satisfaction',
-          isTrainedTeacherSatisfaction ? 'teacher' : activeSatisfactionAudience
-        )
-      }
-      onShareClick={() => shareSatisfactionSurveyUrl(activeSatisfactionAudience)}
-      onDeleteClick={() => {
-        const survey = satisfactionSurveysByAudience[activeSatisfactionAudience]
-        if (survey?.status !== 'before_start') return
-        setDeleteConfirmWord('')
-        setDeleteModalKind('satisfaction')
-      }}
-      onOpenTemplatePreview={() => {
-        const survey = satisfactionSurveysByAudience[activeSatisfactionAudience]
-        if (survey != null) {
-          openTemplatePreview(survey, {
-            allowEdit: canEditRegisteredSurveyForm(survey),
-          })
+      <SatisfactionSurveyView
+        surveysByAudience={satisfactionSurveysForView}
+        activeAudience={activeSatisfactionAudience}
+        audienceTabs={satisfactionAudienceTabs}
+        className={
+          isInstitutionTeacherOnlySatisfaction ? 'company-school-satisfaction-survey' : undefined
         }
-      }}
-      onDownloadClick={() => setSatisfactionDownloadModalOpen(true)}
-      resultsExportRef={satisfactionResultsExportRef}
-      resultsResponses={satisfactionResponses}
-      resultsTemplateVersionId={toRemoteSurveyVersionId(activeSatisfactionSurvey, surveysRemote)}
-      resultsQuestionSummaries={satisfactionQuestionSummaries}
-    />
+        emptyCopy={getGeneralSatisfactionEmptyCopy(activeSatisfactionAudience, program)}
+        noResponseCopy={GENERAL_SATISFACTION_NO_RESPONSE_COPY}
+        actionLabels={getGeneralSatisfactionActionLabels()}
+        showAudienceTabs={showSatisfactionAudienceTabs}
+        showShareButton
+        onAudienceChange={setActiveSatisfactionAudience}
+        onRegisterClick={() => openCreateModal('satisfaction', activeSatisfactionAudience)}
+        onShareClick={() => shareSatisfactionSurveyUrl(activeSatisfactionAudience)}
+        onDeleteClick={() => {
+          const survey = activeSatisfactionSurvey
+          if (survey?.status !== 'before_start') return
+          setDeleteConfirmWord('')
+          setDeleteModalKind('satisfaction')
+        }}
+        onOpenTemplatePreview={() => {
+          const survey = activeSatisfactionSurvey
+          if (survey != null) {
+            openTemplatePreview(survey, {
+              allowEdit: canEditRegisteredSurveyForm(survey),
+              displayTitle: resolveSatisfactionSurveyDisplayTitle(
+                survey,
+                satisfactionScheduleOptionsQuery.schedules
+              ),
+              overwriteTitle: true,
+              displayPeriod: resolveSatisfactionPreviewPeriod(
+                survey,
+                satisfactionScheduleOptionsQuery.schedules
+              ),
+              lockWritingPeriodInput: isSatisfactionPerScheduleWritingPeriodLocked({
+                formType: 'SATISFACTION',
+                runMode: survey.satisfactionRunMode,
+                targetScope: survey.targetScope,
+              }),
+            })
+          }
+        }}
+        onDownloadClick={() => setSatisfactionDownloadModalOpen(true)}
+        downloadEnabled={satisfactionDownloadEnabled}
+        scheduleTabs={satisfactionScheduleTabs}
+        activeScheduleKey={resolvedSatisfactionScheduleTab ?? undefined}
+        onScheduleTabChange={setSatisfactionScheduleTab}
+        resultsExportRef={satisfactionResultsExportRef}
+        resultsResponses={satisfactionResponses}
+        resultsTemplateVersionId={toRemoteSurveyVersionId(activeSatisfactionSurvey, surveysRemote)}
+        resultsQuestionSummaries={satisfactionQuestionSummaries}
+      />
     )
   }
 
@@ -1583,39 +1863,39 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
             <Spin size="large" />
           </div>
         ) : (
-        <LectureEvalSurveyView
-          survey={lectureEvalSurveyForView}
-          submitted={lectureEvalSubmitted}
-          formDraft={lectureEvalFormDraft}
-          pollResponses={lectureEvalResponses}
-          activeTab={activeLectureEvalTab}
-          downloadingResults={downloadingLectureEvalResults}
-          resultsExportRef={lectureEvalResultsExportRef}
-          emptyCopy={GENERAL_LECTURE_EVAL_EMPTY_COPY}
-          preStartCopy={GENERAL_LECTURE_EVAL_PRE_START_COPY}
-          submittedCopy={GENERAL_LECTURE_EVAL_SUBMITTED_COPY}
-          actionLabels={GENERAL_LECTURE_EVAL_ACTION_LABELS}
-          onTabChange={handleLectureEvalTabChange}
-          onRegisterClick={() => openCreateModal('lecture')}
-          onOpenTemplatePreview={handleLectureEvalPreview}
-          onFormDraftChange={handleLectureEvalDraftChange}
-          onSubmitClick={handleLectureEvalSubmit}
-          onEditResponseClick={() => {
-            if (
+          <LectureEvalSurveyView
+            survey={lectureEvalSurveyForView}
+            submitted={lectureEvalSubmitted}
+            formDraft={lectureEvalFormDraft}
+            pollResponses={lectureEvalResponses}
+            activeTab={activeLectureEvalTab}
+            downloadingResults={downloadingLectureEvalResults}
+            resultsExportRef={lectureEvalResultsExportRef}
+            emptyCopy={GENERAL_LECTURE_EVAL_EMPTY_COPY}
+            preStartCopy={GENERAL_LECTURE_EVAL_PRE_START_COPY}
+            submittedCopy={GENERAL_LECTURE_EVAL_SUBMITTED_COPY}
+            actionLabels={GENERAL_LECTURE_EVAL_ACTION_LABELS}
+            onTabChange={handleLectureEvalTabChange}
+            onRegisterClick={() => openCreateModal('lecture')}
+            onOpenTemplatePreview={handleLectureEvalPreview}
+            onFormDraftChange={handleLectureEvalDraftChange}
+            onSubmitClick={handleLectureEvalSubmit}
+            onEditResponseClick={() => {
+              if (
+                lectureEvalSurvey != null &&
+                canEditLectureEvalResponse(lectureEvalSurvey, lectureEvalFormDraft)
+              ) {
+                setLectureEvalSubmitted(false)
+              }
+            }}
+            onDownloadResultsClick={() => setLectureEvalDownloadModalOpen(true)}
+            resultsAccessible={
               lectureEvalSurvey != null &&
-              canEditLectureEvalResponse(lectureEvalSurvey, lectureEvalFormDraft)
-            ) {
-              setLectureEvalSubmitted(false)
+              (isLectureEvalResultsTabAccessible(lectureEvalSurvey) ||
+                lectureEvalSubmitted ||
+                lectureEvalResponses.length > 0)
             }
-          }}
-          onDownloadResultsClick={() => setLectureEvalDownloadModalOpen(true)}
-          resultsAccessible={
-            lectureEvalSurvey != null &&
-            (isLectureEvalResultsTabAccessible(lectureEvalSurvey) ||
-              lectureEvalSubmitted ||
-              lectureEvalResponses.length > 0)
-          }
-        />
+          />
         )
       ) : null}
 
@@ -1637,8 +1917,44 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         }}
       />
 
+      <SatisfactionRegisterModal
+        open={satisfactionCreateModalOpen}
+        submitting={submitting}
+        title={createTitle}
+        description={createDescription}
+        templateOptions={surveyTemplateOptions}
+        templateValue={selectedTemplateId}
+        onTemplateChange={setSelectedTemplateId}
+        audienceOptions={
+          isTrainedTeacherSatisfaction
+            ? [
+                { label: '교사', value: 'teacher' },
+                { label: '학생', value: 'student' },
+              ]
+            : undefined
+        }
+        audienceValue={pendingSatisfactionAudience}
+        onAudienceChange={value => {
+          if (value === 'teacher' || value === 'student') {
+            setPendingSatisfactionAudience(value)
+          }
+        }}
+        audienceError={createFieldError?.field === 'targetRole' ? createFieldError.message : null}
+        runMode={satisfactionRunMode}
+        onRunModeChange={setSatisfactionRunMode}
+        windowDays={satisfactionWindowDays}
+        onWindowDaysChange={setSatisfactionWindowDays}
+        schedulesLoading={satisfactionScheduleOptionsQuery.isLoading}
+        hasSessionSchedules={satisfactionUnboundScheduleValues.length > 0}
+        lastEducationScheduleLabel={lastSatisfactionEducationScheduleLabel}
+        onCancel={closeCreateModal}
+        onSubmit={() => {
+          void submitCreateModal()
+        }}
+      />
+
       <ContentModal
-        open={createModalKind != null && createModalKind !== 'survey'}
+        open={createModalKind === 'lecture'}
         onCancel={closeCreateModal}
         title={createTitle}
         width={600}
@@ -1651,7 +1967,8 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
               size="medium"
               type="button"
               onClick={closeCreateModal}
-              disabled={submitting} >
+              disabled={submitting}
+            >
               취소
             </CmsButton>
             <CmsButton
@@ -1662,29 +1979,14 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
                 void submitCreateModal()
               }}
               disabled={selectedTemplateId == null || selectedTemplateId === ''}
-              loading={submitting} >
+              loading={submitting}
+            >
               신규 등록
             </CmsButton>
           </>
         }
       >
         <div className="survey-management-create-modal__fields">
-          {createModalKind === 'satisfaction' && isTrainedTeacherSatisfaction ? (
-            <CmsSelect
-              width="100%"
-              withAllOption={false}
-              allowClear={false}
-              label="대상"
-              required
-              options={[{ label: '교사', value: 'TEACHER' }]}
-              value="TEACHER"
-              onChange={() => undefined}
-              error={createFieldError?.field === 'targetRole'}
-              message={
-                createFieldError?.field === 'targetRole' ? createFieldError.message : undefined
-              }
-            />
-          ) : null}
           <CmsSelect
             width="100%"
             withAllOption={false}
@@ -1716,7 +2018,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         description={`**[${
           deleteModalKind === 'satisfaction' && activeSatisfactionAudience != null
             ? `${getGeneralSatisfactionAudienceLabel(activeSatisfactionAudience)} 만족도조사`
-            : activeRegisteredSurvey?.title ?? '설문조사'
+            : (activeRegisteredSurvey?.title ?? '설문조사')
         }]** ${
           deleteModalKind === 'satisfaction' && activeSatisfactionAudience != null
             ? `${getGeneralSatisfactionAudienceLabel(activeSatisfactionAudience)} 만족도조사`
@@ -1731,7 +2033,8 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
               onClick={() => {
                 setDeleteModalKind(null)
                 setDeleteConfirmWord('')
-              }} >
+              }}
+            >
               취소
             </CmsButton>
             <CmsButton
@@ -1742,7 +2045,8 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
               loading={bindingMutating}
               onClick={() => {
                 void confirmDelete()
-              }} >
+              }}
+            >
               삭제
             </CmsButton>
           </>
@@ -1770,7 +2074,8 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
             variant="secondary"
             size="medium"
             type="button"
-            onClick={() => setLectureEvalIncompleteModalOpen(false)} >
+            onClick={() => setLectureEvalIncompleteModalOpen(false)}
+          >
             {GENERAL_LECTURE_EVAL_INCOMPLETE_MODAL_COPY.confirmButton}
           </CmsButton>
         }

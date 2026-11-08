@@ -15,6 +15,7 @@ export {
   parsePhoneIdentityChangeResponse,
   parsePortalProfileResponse,
 } from './api'
+export type { PortalPasswordChangeTokens } from './api'
 export type {
   AuthTokenResponse,
   HomepageMeResponse,

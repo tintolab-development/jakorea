@@ -7,6 +7,10 @@ import type {
 import type { LogListPage } from '@/features/logs/api/log-list-page'
 import { LOG_LIST_PAGE_SIZE } from '@/features/logs/api/log-list-page'
 import type { BugIssueLog, BugIssueLogDetail } from '@/types/bug-issue-log'
+import {
+  CONTAINED_PII_LABEL,
+  formatContainedPiiLead,
+} from '@jakorea/domain/shared/file-download-password'
 import type { DownloadLog } from '@/types/download-log'
 import type { MemberLoginLog } from '@/types/member-login-log'
 import type { PersonalInfoAccessLog } from '@/types/personal-info-access-log'
@@ -89,6 +93,55 @@ function mapLogListPage<TDto, TItem>(
   return { items, page, size, totalElements, totalPages, hasNext }
 }
 
+/**
+ * 파일 다운로드 이력 `kind` 표시 라벨 (서버 기록 코드). 없는 값은 코드 원문을 보여 준다.
+ * PAYMENT_STATEMENT_BULK_DOWNLOAD 는 기존 이력에만 남은 옛 코드다.
+ */
+const DOWNLOAD_LOG_KIND_LABEL: Record<string, string> = {
+  PERFORMANCE_EXPORT: '실적 데이터',
+  PAYMENT_STATEMENT: '지급조서',
+  PAYMENT_STATEMENT_BULK_DOWNLOAD: '지급조서',
+  SETTLEMENT_EXPORT: '정산 양식(대량이체/세금신고)',
+  CONSENT_DOCUMENT: '동의서',
+  FORM_RESPONSE: '신청서 첨부파일(과제)',
+  CLIENT_GENERATED_FILE: '기타 파일',
+}
+
+/** 이력 화면 전용 PII 라벨 — 공용 다운로드 암호 유형(주민번호·계좌)에 이력 전용 유형을 더한다. */
+const DOWNLOAD_LOG_PII_LABEL: Record<string, string> = {
+  ...CONTAINED_PII_LABEL,
+  NAME: '이름',
+}
+
+const DOWNLOAD_LOG_PII_ORDER = ['RESIDENT_REGISTRATION_NUMBER', 'ACCOUNT_NUMBER', 'NAME']
+
+export function formatDownloadLogKind(kind: string): string {
+  return DOWNLOAD_LOG_KIND_LABEL[kind] ?? kind
+}
+
+/** 받침 유무로 주격 조사(이/가)를 고른다. 한글이 아니면 '가'. */
+function subjectParticle(word: string): '이' | '가' {
+  const code = word.charCodeAt(word.length - 1) - 0xac00
+  if (code < 0 || code > 11171) return '가'
+  return code % 28 === 0 ? '가' : '이'
+}
+
+/**
+ * containedPiiTypes → "이름·계좌번호가 포함된 파일입니다."
+ * 라벨이 없는 값은 코드 원문을 그대로 쓴다. 빈 배열·null은 일반 개인정보 문구.
+ */
+export function formatDownloadLogContainedPii(value: unknown): string {
+  const types = Array.isArray(value)
+    ? [...new Set(value.filter((item): item is string => typeof item === 'string' && item.trim() !== ''))]
+    : []
+  if (types.length === 0) return formatContainedPiiLead([])
+  const known = DOWNLOAD_LOG_PII_ORDER.filter(type => types.includes(type))
+  const unknown = types.filter(type => !DOWNLOAD_LOG_PII_ORDER.includes(type))
+  const labels = [...known.map(type => DOWNLOAD_LOG_PII_LABEL[type] ?? type), ...unknown]
+  const joined = labels.join('·')
+  return `${joined}${subjectParticle(joined)} 포함된 파일입니다.`
+}
+
 export function mapDownloadLogResponse(dto: DownloadLogFrontendResponse | object): DownloadLog {
   const rec = dto as Record<string, unknown>
   const idValue = rec.id
@@ -102,11 +155,13 @@ export function mapDownloadLogResponse(dto: DownloadLogFrontendResponse | object
     fileName: readExtraString(dto, ['fileName']),
     userId: readExtraString(dto, ['userId']),
     userName: readExtraString(dto, ['userName']),
-    ipAddress: readExtraString(dto, ['ipAddress']),
+    ipAddress: readExtraString(dto, ['ipAddress', 'requestIp']),
     downloadedAt: (() => {
-      const value = readExtraString(dto, ['downloadedAt'])
+      const value = readExtraString(dto, ['downloadedAt', 'createdAt', 'requestedAt'])
       return value === '-' ? new Date().toISOString() : value
     })(),
+    kind: formatDownloadLogKind(readExtraString(dto, ['kind', 'eventType', 'fileType'])),
+    containedPiiLabel: formatDownloadLogContainedPii(rec.containedPiiTypes),
   }
 }
 

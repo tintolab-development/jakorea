@@ -18,8 +18,8 @@ import {
 const adminFaqUrlDateRangeSyncRef: UrlDateRangePendingSyncRef = { hadCompleteInUrl: false }
 
 function parseVisibility(raw: string | null): AdminFaqPendingFilters['visibility'] {
-  if (raw === 'private') return 'private'
-  return 'public'
+  if (raw === 'public' || raw === 'private') return raw
+  return 'ALL'
 }
 
 function parseCategory(
@@ -56,7 +56,7 @@ const searchSyncRules: readonly TableSearchParamRule<AdminFaqPendingFilters>[] =
     kind: 'param',
     filterKey: 'visibility',
     paramKey: 'af_vis',
-    condition: () => true,
+    condition: f => f.visibility !== 'ALL',
     transform: v => String(v),
   },
   {
@@ -94,7 +94,7 @@ export const adminFaqManagementTablePageConfig: TablePageConfig<
     initialPending: {
       title: '',
       author: '',
-      visibility: 'public',
+      visibility: 'ALL',
       category: 'ALL',
       dateRange: null,
     },
@@ -138,7 +138,7 @@ export const adminFaqManagementTablePageConfig: TablePageConfig<
     hasActiveFilters: ({ context, searchParams }) => {
       if ((searchParams.get('af_q') ?? '').trim()) return true
       if ((searchParams.get('af_auth') ?? '').trim()) return true
-      if (parseVisibility(searchParams.get('af_vis')) !== 'public') return true
+      if (parseVisibility(searchParams.get('af_vis')) !== 'ALL') return true
       if (parseCategory(searchParams.get('af_cat'), context.allowedCategoryLabels) !== 'ALL')
         return true
       if (searchParams.get('af_from') || searchParams.get('af_to')) return true
@@ -149,7 +149,7 @@ export const adminFaqManagementTablePageConfig: TablePageConfig<
 
     onFilterChange: ({ prev, key, value }) => {
       if (key === 'visibility') {
-        const v = value === 'private' ? 'private' : 'public'
+        const v = value === 'private' || value === 'public' ? value : 'ALL'
         return { ...prev, visibility: v }
       }
       if (key === 'category') {

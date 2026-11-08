@@ -112,9 +112,13 @@ function SortableWidgetSlotInner({
   const handleRectSnapshotRef = useRef<HandleRect | null>(null)
 
   const colSpanRef = useRef(colSpan)
+  const isDraggingRef = useRef(isDragging)
   const isResizingRef = useRef(false)
+  const isWidthTransitioningRef = useRef(false)
   const resizeStartXRef = useRef(0)
   const resizeLastXRef = useRef(0)
+  const measureRafRef = useRef<number | null>(null)
+  const resizeObserverRef = useRef<ResizeObserver | null>(null)
   const [isResizing, setIsResizing] = useState(false)
   const [previewColSpan, setPreviewColSpan] = useState<12 | 24 | null>(null)
   const resizeIconMaskId = useId().replace(/:/g, '')
@@ -122,6 +126,10 @@ function SortableWidgetSlotInner({
   useLayoutEffect(() => {
     colSpanRef.current = colSpan
   }, [colSpan])
+
+  useLayoutEffect(() => {
+    isDraggingRef.current = isDragging
+  }, [isDragging])
 
   const setColRef = useCallback(
     (el: HTMLDivElement | null) => {
@@ -132,7 +140,7 @@ function SortableWidgetSlotInner({
   )
 
   const measureHandle = useCallback(() => {
-    if (!hasBuiltInHandle || !slotRef.current) return
+    if (!hasBuiltInHandle || !slotRef.current || isDraggingRef.current) return
     const slot = slotRef.current
     const handle = slot.querySelector('.widget-drag-handle') as HTMLElement | null
     if (!handle) {
@@ -165,31 +173,113 @@ function SortableWidgetSlotInner({
     setHandleRect(next)
   }, [hasBuiltInHandle])
 
-  useLayoutEffect(() => {
-    if (isDragging) return
-    measureHandle()
-    const t = setTimeout(measureHandle, 100)
-    return () => clearTimeout(t)
-  }, [measureHandle, isDragging])
+  const scheduleMeasureHandle = useCallback(() => {
+    if (isDraggingRef.current || isResizingRef.current || isWidthTransitioningRef.current) return
+    if (measureRafRef.current != null) return
+    measureRafRef.current = window.requestAnimationFrame(() => {
+      measureRafRef.current = null
+      measureHandle()
+    })
+  }, [measureHandle])
+
+  useEffect(() => {
+    return () => {
+      if (measureRafRef.current != null) {
+        window.cancelAnimationFrame(measureRafRef.current)
+        measureRafRef.current = null
+      }
+    }
+  }, [])
 
   useLayoutEffect(() => {
     const slot = slotRef.current
-    if (!slot || !hasBuiltInHandle || isDragging) return
+    if (!slot || !hasBuiltInHandle) return
+    const col = colRef.current
+
+    const queryHandle = () => slot.querySelector('.widget-drag-handle') as HTMLElement | null
     const ro = new ResizeObserver(() => {
-      measureHandle()
+      if (isWidthTransitioningRef.current) return
+      scheduleMeasureHandle()
     })
+    resizeObserverRef.current = ro
     ro.observe(slot)
-    // lazy 위젯은 스켈레톤→실위젯 교체 시 슬롯 크기가 그대로라 ResizeObserver가 안 돈다.
-    // 핸들(.widget-drag-handle)이 생긴 뒤에야 그랩 오버레이를 붙인다.
-    const mo = new MutationObserver(() => {
-      measureHandle()
-    })
-    mo.observe(slot, { childList: true, subtree: true })
-    return () => {
-      ro.disconnect()
-      mo.disconnect()
+
+    const handleTransitionEnd = (event: TransitionEvent) => {
+      if (
+        !isWidthTransitioningRef.current ||
+        (event.propertyName !== 'flex-basis' && event.propertyName !== 'max-width')
+      ) {
+        return
+      }
+      isWidthTransitioningRef.current = false
+      ro.observe(slot)
+      scheduleMeasureHandle()
     }
-  }, [hasBuiltInHandle, measureHandle, isDragging])
+    col?.addEventListener('transitionend', handleTransitionEnd)
+
+    let mo: MutationObserver | null = null
+    let watchedHandle: HTMLElement | null = null
+
+    const disconnectMo = () => {
+      mo?.disconnect()
+      mo = null
+    }
+
+    const watchDiscovery = () => {
+      disconnectMo()
+      watchedHandle = null
+      mo = new MutationObserver(() => {
+        const handle = queryHandle()
+        if (handle) {
+          watchNarrow(handle)
+        }
+        scheduleMeasureHandle()
+      })
+      mo.observe(slot, { childList: true, subtree: true })
+    }
+
+    const watchNarrow = (handle: HTMLElement) => {
+      disconnectMo()
+      if (watchedHandle && watchedHandle !== handle) {
+        try {
+          ro.unobserve(watchedHandle)
+        } catch {
+          /* already detached */
+        }
+      }
+      watchedHandle = handle
+      ro.observe(handle)
+      mo = new MutationObserver(() => {
+        const current = queryHandle()
+        if (!current) {
+          watchDiscovery()
+          scheduleMeasureHandle()
+          return
+        }
+        if (current !== watchedHandle) {
+          watchNarrow(current)
+        }
+        scheduleMeasureHandle()
+      })
+      mo.observe(slot, { childList: true, subtree: false })
+      const parent = handle.parentElement
+      if (parent && parent !== slot) {
+        mo.observe(parent, { childList: true, subtree: false })
+      }
+    }
+
+    const existing = queryHandle()
+    if (existing) watchNarrow(existing)
+    else watchDiscovery()
+    scheduleMeasureHandle()
+
+    return () => {
+      disconnectMo()
+      ro.disconnect()
+      if (resizeObserverRef.current === ro) resizeObserverRef.current = null
+      col?.removeEventListener('transitionend', handleTransitionEnd)
+    }
+  }, [hasBuiltInHandle, scheduleMeasureHandle])
 
   const handleResizePointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
@@ -226,6 +316,9 @@ function SortableWidgetSlotInner({
       setPreviewColSpan(null)
       document.body.style.cursor = ''
       if (onResizeWidth && next !== startSpan) {
+        isWidthTransitioningRef.current = true
+        const slot = slotRef.current
+        if (slot) resizeObserverRef.current?.unobserve(slot)
         onResizeWidth(id, next)
       }
     },

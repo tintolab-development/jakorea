@@ -19,7 +19,13 @@ import {
   CMS_TABLE_USAGE_COL_CLASS,
   TABLE_COLUMN_WIDTHS,
 } from '@/shared/constants/table'
-import { CmsButton, CmsInput, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
+  CmsButton,
+  CmsInput,
+  showSaveCompletedAlert,
+  useCmsAlert,
+} from '@/shared/ui'
 
 import './section-shared.css'
 
@@ -114,12 +120,19 @@ export function FooterTopMenuSection() {
   const handleSave = useCallback(async () => {
     try {
       const linkDraft = linkDraftRef.current
-      await saveMutation.mutateAsync(
-        rows.map(row => ({
-          id: row.id,
-          linkUrl: linkDraft[row.id] ?? row.linkUrl,
-        }))
-      )
+      const payload = rows.map(row => ({
+        id: row.id,
+        linkUrl: linkDraft[row.id] ?? row.linkUrl,
+      }))
+      const missingExternalUrl = rows.some((row, index) => {
+        if (row.isInternal || !row.isActive) return false
+        return !payload[index]?.linkUrl.trim()
+      })
+      if (missingExternalUrl) {
+        showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+        return
+      }
+      await saveMutation.mutateAsync(payload)
       linkDraftRef.current = {}
       setIsEditing(false)
       showSaveCompletedAlert()
@@ -187,6 +200,19 @@ export function FooterTopMenuSection() {
               />
             )
           }
+          if (isEditing && record.isInternal) {
+            // Figma 43:19636 — 수정 시 내부 연결 항목은 비활성 입력 필드로 노출(수정 불가)
+            const url = record.linkUrl.trim()
+            return (
+              <CmsInput
+                inputSize="small"
+                width="100%"
+                value={url || INTERNAL_LINK_LABEL}
+                disabled
+                aria-label={`${record.name} 연결 링크`}
+              />
+            )
+          }
           if (record.isInternal) {
             const url = record.linkUrl.trim()
             return <span title={url || undefined}>{url || INTERNAL_LINK_LABEL}</span>
@@ -204,7 +230,7 @@ export function FooterTopMenuSection() {
         <div className="table-header-title--wrapper">
           <span className="table-title">■ 상단 노출 메뉴</span>
           <span className="table-description">
-            {'관련 사이트 목록은 [JA Korea] > [기관 소개] > [JA Worldwide 관리]에서 등록 및 관리된 항목이 동일하게 노출됩니다.'}
+            {'관련 사이트 목록은 [JA Korea 관리] > [기관 소개] > [JA Worldwide 관리]에서 등록 및 관리된 항목이 동일하게 노출됩니다.'}
           </span>
         </div>
         <div className="table-header-actions--wrapper">

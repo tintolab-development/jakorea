@@ -20,7 +20,7 @@ import {
 } from '@/features/global-value/ui/sortable-table'
 import { ValueIcon } from '@/features/global-value/ui/value-icon'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
-import { CmsButton, CmsTextArea, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CmsTextArea, REQUIRED_FIELDS_INCOMPLETE_ALERT, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 import {
   CMS_TABLE_NO_COL_CLASS,
   CMS_TABLE_SORT_COL_CLASS,
@@ -100,6 +100,14 @@ export function GlobalValuePage() {
   )
 
   const handleSave = useCallback(async () => {
+    const hasBlank = rows.some(row => {
+      const draft = draftTexts[row.id]
+      return !(draft?.mainText ?? row.mainText).trim() || !(draft?.subText ?? row.subText).trim()
+    })
+    if (hasBlank) {
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+      return
+    }
     try {
       await saveMutation.mutateAsync(
         rows.map(row => ({
@@ -169,7 +177,9 @@ export function GlobalValuePage() {
               <CmsTextArea
                 inputSize="medium"
                 width="100%"
-                rows={2}
+                layout="fixed"
+                // 줄바꿈만큼 늘어남(hug, 상한 없음) — 같은 행 다른 칸은 표 공통 fill로 높이 맞춤
+                autoSize={{ minRows: 1 }}
                 value={value}
                 onChange={e => handleDraftChange(record.id, 'mainText', e.target.value)}
                 placeholder="메인 텍스트를 입력해 주세요"
@@ -195,7 +205,9 @@ export function GlobalValuePage() {
               <CmsTextArea
                 inputSize="medium"
                 width="100%"
-                rows={2}
+                layout="fixed"
+                // 줄바꿈만큼 늘어남(hug, 상한 없음) — 같은 행 다른 칸은 표 공통 fill로 높이 맞춤
+                autoSize={{ minRows: 1 }}
                 value={value}
                 onChange={e => handleDraftChange(record.id, 'subText', e.target.value)}
                 placeholder="서브 텍스트를 입력해 주세요"

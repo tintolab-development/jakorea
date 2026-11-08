@@ -5,6 +5,7 @@ import {
   isCatalogFixedWritingFormTemplateCode,
   isCatalogOriginalVersionWriteBlocked,
   isCatalogSurveyOrGeneralAgreementTemplateCode,
+  isCertificateIssuanceTemplatePublishTarget,
   isSurveyOrGeneralAgreementPublishTarget,
   isDocumentOnlyAgreementTemplateCode,
   isDuplicateWritingTemplateCode,
@@ -43,6 +44,9 @@ describe('form-template-delete-policy', () => {
   it('allows new catalog survey and general agreement versions but blocks operational originals', () => {
     expect(isCatalogSurveyOrGeneralAgreementTemplateCode('survey-default')).toBe(true)
     expect(isCatalogSurveyOrGeneralAgreementTemplateCode('agreement-third-party')).toBe(true)
+    expect(isCatalogSurveyOrGeneralAgreementTemplateCode('agreement-receipt-pre-consent')).toBe(
+      true
+    )
     expect(isCatalogSurveyOrGeneralAgreementTemplateCode('agreement-crime')).toBe(false)
     expect(isCatalogOriginalVersionWriteBlocked('registration-general')).toBe(true)
     expect(isCatalogOriginalVersionWriteBlocked('recruitment-instructor')).toBe(true)
@@ -58,6 +62,11 @@ describe('form-template-delete-policy', () => {
     expect(isSurveyOrGeneralAgreementPublishTarget('issuance-3')).toBe(false)
     expect(isSurveyOrGeneralAgreementPublishTarget('registration-general')).toBe(false)
     expect(isSurveyOrGeneralAgreementPublishTarget('agreement-crime')).toBe(false)
+    expect(isCertificateIssuanceTemplatePublishTarget('document-participation-certificate')).toBe(
+      true
+    )
+    expect(isCertificateIssuanceTemplatePublishTarget('document-3')).toBe(true)
+    expect(isCertificateIssuanceTemplatePublishTarget('issuance-3')).toBe(false)
   })
 
   it('identifies catalog-fixed template codes', () => {

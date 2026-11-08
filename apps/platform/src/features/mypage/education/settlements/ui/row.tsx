@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { EducationSettlementItem } from '../model/types'
 import { EDUCATION_SETTLEMENT_PROGRESS_LABEL } from '../lib/settlement-rules'
+import { formatSettlementGradeLabel } from '../lib/format-write-draft'
+import { isLectureFeeSettlementBlocked } from '../lib/lecture-fee-preview'
 import { formatDisplayDate } from '@/shared/lib/format-display-date'
 import {
   isSettlementDeadlinePassed,
@@ -28,7 +30,8 @@ import checkMintUrl from '@/shared/assets/icons/check-mint-small.svg'
 import clockGrayUrl from '@/shared/assets/icons/clock-gray.svg'
 import alertRedUrl from '@/shared/assets/icons/alert-red.svg'
 import alertBlack24Url from '@/shared/assets/icons/alert-black-24.svg'
-import { PFButton, PFCategoryBadge, PFModal, PFStateBadge, PFText } from '@/shared/ui'
+import villaIconUrl from '@/shared/assets/icons/villa.svg'
+import { PFButton, PFMetaBadge, PFModal, PFStateBadge, PFText } from '@/shared/ui'
 import styles from './row.module.css'
 
 type EducationSettlementRowProps = {
@@ -40,7 +43,7 @@ type EducationSettlementRowProps = {
   operationEndAt?: string
   initialRejectOpen?: boolean
   hideInstructorWrite?: boolean
-  onReceiptWrite?: (path: string) => void
+  onWrite?: (path: string) => void
 }
 
 const MARK_ICON = {
@@ -48,6 +51,10 @@ const MARK_ICON = {
   alert: alertRedUrl,
   neutral: clockGrayUrl,
 } as const
+
+function formatSchoolGradeBadge(raw: string): string | undefined {
+  return formatSettlementGradeLabel(raw) || undefined
+}
 
 const UNSUBMITTED_DEADLINE_STATUSES = new Set([
   'upcoming',
@@ -65,7 +72,7 @@ export function EducationSettlementRow({
   operationEndAt,
   initialRejectOpen = false,
   hideInstructorWrite = false,
-  onReceiptWrite,
+  onWrite,
 }: EducationSettlementRowProps) {
   const navigate = useNavigate()
   const [rejectOpen, setRejectOpen] = useState(initialRejectOpen)
@@ -140,15 +147,17 @@ export function EducationSettlementRow({
     item.hasPayableItems === false &&
     item.settlementApplicationId == null &&
     item.status !== 'rejected'
-  const writeDisabled = isSettlementWriteCtaDisabled({
-    documentKind,
-    writeDisabledByStatus: config.writeDisabled,
-    hasPayableItems: item.hasPayableItems,
-    eligible: item.eligible,
-    evidencePolicyUnconfigured: item.evidencePolicyUnconfigured,
-    canSubmit: item.canSubmitReceipt,
-    status: item.status,
-  })
+  const writeDisabled =
+    isSettlementWriteCtaDisabled({
+      documentKind,
+      writeDisabledByStatus: config.writeDisabled,
+      hasPayableItems: item.hasPayableItems,
+      eligible: item.eligible,
+      evidencePolicyUnconfigured: item.evidencePolicyUnconfigured,
+      canSubmit: item.canSubmitReceipt,
+      status: item.status,
+    }) ||
+    (documentKind === 'payment_statement' && isLectureFeeSettlementBlocked(item.lectureFeePreview))
   const viewPath =
     documentKind === 'payment_statement'
       ? item.settlementApplicationId != null
@@ -168,6 +177,26 @@ export function EducationSettlementRow({
     documentKind === 'payment_statement' && item.sessionMeta
       ? `${formatEducationSessionDate(item.heldAt)} ${item.sessionMeta}`
       : formatEducationSessionDate(item.heldAt)
+  const institutionName = item.institutionName?.trim() || ''
+  const grade = item.grade?.trim() || ''
+  const institutionPrimary =
+    institutionName || (grade ? '교육 기관' : item.institutionLabel?.trim() || '')
+  const institutionMeta =
+    documentKind === 'payment_statement' && (institutionPrimary || grade) ? (
+      <PFMetaBadge
+        icon={<img src={villaIconUrl} alt="" width={20} height={20} aria-hidden="true" />}
+        primary={institutionPrimary || '교육 기관'}
+        secondary={formatSchoolGradeBadge(grade)}
+      />
+    ) : null
+  const statusMark =
+    config.markLabel && config.markTone ? (
+      <EducationSessionStatusMark
+        tone={config.markTone}
+        label={config.markLabel}
+        iconSrc={MARK_ICON[config.markTone]}
+      />
+    ) : null
   const reapplyDisabled = isSettlementDeadlinePassed(item.deadlineAt)
   const receiptReapplyUnavailable =
     documentKind === 'receipt' &&
@@ -188,12 +217,16 @@ export function EducationSettlementRow({
           onClick={() => {
             if (writeDisabled) return
             if (documentKind === 'payment_statement') {
+              if (onWrite) {
+                onWrite(writePath)
+                return
+              }
               navigate(writePath)
               return
             }
             if (!receiptSubmitPath) return
-            if (onReceiptWrite) {
-              onReceiptWrite(receiptSubmitPath)
+            if (onWrite) {
+              onWrite(receiptSubmitPath)
               return
             }
             navigate(receiptSubmitPath)
@@ -263,8 +296,8 @@ export function EducationSettlementRow({
         disabled={reapplyDisabled || reapplyUnavailable}
         onClick={() => {
           if (reapplyDisabled || reapplyUnavailable) return
-          if (documentKind === 'receipt' && onReceiptWrite) {
-            onReceiptWrite(reapplyPath)
+          if (onWrite) {
+            onWrite(reapplyPath)
             return
           }
           navigate(reapplyPath)
@@ -289,23 +322,18 @@ export function EducationSettlementRow({
           }
           date={headline}
           subtitle={
-            documentKind === 'payment_statement' && item.institutionLabel ? (
-              <PFCategoryBadge size="small" variant="secondary">
-                {item.institutionLabel}
-              </PFCategoryBadge>
-            ) : item.sessionMeta && documentKind !== 'payment_statement' ? (
+            item.sessionMeta && documentKind !== 'payment_statement' ? (
               <PFText as="span" typo="bd-lg-rg">
                 {item.sessionMeta}
               </PFText>
             ) : undefined
           }
           aside={
-            config.markLabel && config.markTone ? (
-              <EducationSessionStatusMark
-                tone={config.markTone}
-                label={config.markLabel}
-                iconSrc={MARK_ICON[config.markTone]}
-              />
+            institutionMeta || statusMark ? (
+              <div className={styles.headerAside}>
+                {institutionMeta}
+                {statusMark}
+              </div>
             ) : undefined
           }
         />
@@ -417,6 +445,10 @@ export function EducationSettlementRow({
                 onClick={() => {
                   if (reapplyDisabled) return
                   closeRejectReason()
+                  if (onWrite) {
+                    onWrite(writePath)
+                    return
+                  }
                   navigate(writePath)
                 }}
               >
@@ -433,8 +465,8 @@ export function EducationSettlementRow({
                 onClick={() => {
                   if (reapplyDisabled || receiptReapplyUnavailable) return
                   closeRejectReason()
-                  if (onReceiptWrite) {
-                    onReceiptWrite(receiptSubmitPath)
+                  if (onWrite) {
+                    onWrite(receiptSubmitPath)
                     return
                   }
                   navigate(receiptSubmitPath)

@@ -26,8 +26,15 @@ import { extractLectureDateKey } from '@/features/program/1c-1s/lib/one-school-p
 import { getParticipatingSchoolAssignmentSessions } from '@/features/program/general/lib/participating-school-assignment-sessions'
 import { hasAssignableOrganizationInstructorSchedule } from '@/features/program/general/lib/organization-instructor-assignable-schedule'
 import { formatApiDistanceKmDisplay } from '@/shared/lib/format-api-distance-km'
+import {
+  formatWaitingOrganizationDistance,
+  formatWaitingScheduleDistance,
+  type WaitingOrganizationDistance,
+  type WaitingScheduleDistance,
+} from './assignment-waiting-distance'
 import type { ProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/programScheduleResponse'
 import { isProgramSchedulePreEducation } from '@/features/program/shared/lib/program-schedule-canonical'
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 
 function scheduleLinesForSchool(school: ParticipatingSchoolRow): string[] {
   const fromSessions = buildParticipatingSchoolSessionLines(
@@ -299,6 +306,8 @@ export function buildParticipatingInstructorWaitingSchoolRowsFromBoard(input: {
   instructorMemberId: string
   /** program participantRecruitmentInfo.maxAssignableInstructors — 없거나 0 이하면 cap 미적용 */
   maxAssignableInstructors?: number | null
+  /** education-scope `organizations[]` — 배정 대기 대상 기관 전체 거리(서버값). 없으면 '-' */
+  organizationDistances?: WaitingOrganizationDistance[]
 }): InstructorWaitingSchoolRow[] {
   const assignedBySchedule = buildAssignedInstructorsBySchedule(input.assignments)
   const maxAssignableInstructors = normalizeMaxAssignableInstructors(input.maxAssignableInstructors)
@@ -355,7 +364,7 @@ export function buildParticipatingInstructorWaitingSchoolRowsFromBoard(input: {
         schoolName: school.schoolName,
         desiredGrade: school.educationGrade,
         region: school.region,
-        distanceFromHome: '-',
+        distanceFromHome: formatWaitingOrganizationDistance(input.organizationDistances, school),
         educationScheduleLines: [group.line],
         assignmentStatus,
         assignedInstructorCountLabel: '-',
@@ -429,7 +438,7 @@ function buildInstitutionWaitingScheduleRows(
         schoolName: school.schoolName,
         desiredGrade: school.educationGrade,
         region: school.region,
-        distanceFromHome: '-',
+        distanceFromHome: formatWaitingOrganizationDistance(input.organizationDistances, school),
         educationScheduleLines: buildParticipatingSchoolSessionLines(group.sessions),
         assignmentStatus,
         assignedInstructorCountLabel: '-',
@@ -465,40 +474,93 @@ export function mergeInstitutionWaitingRowsBySchool(
   return Array.from(merged.values())
 }
 
-/** 개인형 — 배정 1건 = 일정 1행 */
+function formatIndividualScheduleLine(
+  label: { date?: string; time?: string; session?: string } | undefined,
+  lectureDate?: string
+): string {
+  const date =
+    label?.date?.trim() ||
+    (lectureDate
+      ? formatCmsScheduleDisplayLabel(extractLectureDateKey(lectureDate) ?? lectureDate)
+      : '')
+  const parts = [date, label?.time?.trim(), label?.session?.trim()].filter(Boolean)
+  return parts.join(' | ') || '-'
+}
+
+/** 개인형 출강지 = 교육 진행 장소(일정 공통·일정 별 상이). 기관명이 아니다. */
+function resolveIndividualEducationPlace(
+  assignment: InstructorAssignmentListItemEnriched,
+  schedule?: ProgramScheduleResponse
+): string {
+  return (
+    assignment.lectureLocationName?.trim() ||
+    assignment.lecturePlaceAddress?.trim() ||
+    schedule?.locationName?.trim() ||
+    schedule?.address?.trim() ||
+    '-'
+  )
+}
+
+function individualAssignmentScheduleSortKey(
+  assignment: InstructorAssignmentListItemEnriched,
+  schedule?: ProgramScheduleResponse
+): string {
+  const start = schedule?.startAt ?? schedule?.startDate ?? assignment.lectureDate ?? ''
+  const sessionNo = String(schedule?.sessionNo ?? 0).padStart(4, '0')
+  const scheduleId = String(assignment.scheduleId ?? 0).padStart(8, '0')
+  return `${start}\0${sessionNo}\0${scheduleId}`
+}
+
+/** 개인형 — 배정 1건 = 일정 1행. 교육 시작 시각 오름차순. */
 export function buildParticipatingInstructorAssignedScheduleRowsFromBoard(input: {
   assignments: InstructorAssignmentListItemEnriched[]
   instructorMemberId: string
   schoolRows: ParticipatingSchoolRow[]
   scheduleLabelById: Map<string, { date?: string; time?: string; session?: string }>
+  schedules?: ProgramScheduleResponse[]
 }): ParticipatingIndividualInstructorAssignedScheduleRow[] {
-  const filtered = input.assignments.filter(a => {
-    if (a.instructorMemberId == null) return false
-    if (String(a.instructorMemberId) !== input.instructorMemberId) return false
-    const status = (a.assignmentStatus ?? '').toUpperCase()
-    return status !== 'CANCELLED' && status !== 'CANCELED'
-  })
-  const n = filtered.length
+  const scheduleById = new Map(
+    (input.schedules ?? [])
+      .filter((schedule): schedule is ProgramScheduleResponse & { id: number } => schedule.id != null)
+      .map(schedule => [String(schedule.id), schedule])
+  )
+  const filtered = input.assignments
+    .filter(a => {
+      if (a.instructorMemberId == null) return false
+      if (String(a.instructorMemberId) !== input.instructorMemberId) return false
+      const status = (a.assignmentStatus ?? '').toUpperCase()
+      return status !== 'CANCELLED' && status !== 'CANCELED'
+    })
+    .slice()
+    .sort((left, right) => {
+      const leftKey = individualAssignmentScheduleSortKey(
+        left,
+        left.scheduleId != null ? scheduleById.get(String(left.scheduleId)) : undefined
+      )
+      const rightKey = individualAssignmentScheduleSortKey(
+        right,
+        right.scheduleId != null ? scheduleById.get(String(right.scheduleId)) : undefined
+      )
+      return leftKey.localeCompare(rightKey)
+    })
   return filtered.map((a, index) => {
     const schoolId = resolveSchoolIdForAssignment(a, input.schoolRows)
     const school = input.schoolRows.find(s => s.id === schoolId)
     const scheduleId = a.scheduleId != null ? String(a.scheduleId) : ''
+    const schedule = scheduleId ? scheduleById.get(scheduleId) : undefined
     const label = scheduleId ? input.scheduleLabelById.get(scheduleId) : undefined
-    const lectureDate = extractLectureDateKey(a.lectureDate) ?? label?.date
-    const scheduleLabel =
-      [lectureDate, label?.time, label?.session].filter(Boolean).join(' | ') || '-'
     const assignmentId = a.assignmentId != null ? String(a.assignmentId) : `assign-${index}`
     return {
       id: assignmentId,
-      no: n - index,
+      no: index + 1,
       role: a.scheduleLead ? 'lead' : 'assistant',
       slotKey: scheduleId || assignmentId,
       schoolId,
-      lectureLocation: school?.schoolName ?? a.organizationName?.trim() ?? '-',
+      lectureLocation: resolveIndividualEducationPlace(a, schedule),
       distanceFromHome: formatApiDistanceKmDisplay(a.distanceKm, {
         longDistance: a.longDistance,
       }),
-      scheduleLabel,
+      scheduleLabel: formatIndividualScheduleLine(label, a.lectureDate),
       assignmentId,
       instructorMemberId: input.instructorMemberId,
       scheduleId: scheduleId || undefined,
@@ -523,6 +585,8 @@ export function buildParticipatingInstructorWaitingScheduleRowsFromBoard(input: 
   assignments: InstructorAssignmentListItemEnriched[]
   instructorMemberId: string
   maxAssignableInstructors?: number | null
+  /** education-scope `schedules[]` — scheduleId별 거리(서버값). 없으면 '-' */
+  scheduleDistances?: WaitingScheduleDistance[]
 }): ParticipatingIndividualInstructorWaitingScheduleRow[] {
   const maxAssignableInstructors = normalizeMaxAssignableInstructors(input.maxAssignableInstructors)
   const ownScheduleIds = new Set<string>()
@@ -551,7 +615,6 @@ export function buildParticipatingInstructorWaitingScheduleRowsFromBoard(input: 
       !ownScheduleIds.has(String(schedule.id)) &&
       !isProgramSchedulePreEducation(schedule)
   )
-  const n = waiting.length
   return waiting.map((schedule, index) => {
     const scheduleKey = String(schedule.id)
     const label = input.scheduleLabelById.get(scheduleKey)
@@ -561,11 +624,11 @@ export function buildParticipatingInstructorWaitingScheduleRowsFromBoard(input: 
     const atCap = maxAssignableInstructors != null && assignedCount >= maxAssignableInstructors
     return {
       id: `schedule-${scheduleKey}`,
-      no: n - index,
+      no: index + 1,
       slotKey: scheduleKey,
       schoolId: scheduleKey,
       lectureLocation: schedule.locationName?.trim() || schedule.address?.trim() || '-',
-      distanceFromHome: '-',
+      distanceFromHome: formatWaitingScheduleDistance(input.scheduleDistances, schedule.id),
       scheduleLabel,
       assignmentStatus: ownCancelledScheduleIds.has(scheduleKey)
         ? 'assignment_cancelled'

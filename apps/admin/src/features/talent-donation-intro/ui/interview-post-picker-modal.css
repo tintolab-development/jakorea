@@ -3,23 +3,120 @@
 }
 
 .talent-intro-post-picker .teal-header-modal__body {
+  display: flex;
+  flex-direction: column;
   gap: 16px;
 }
 
-.talent-intro-post-picker__filter {
+.talent-intro-post-picker__search {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
   width: 100%;
-  align-items: flex-end;
 }
 
-.talent-intro-post-picker__title-field {
-  flex: 1 1 320px;
+.talent-intro-post-picker__search .cms-input .cms-input__control,
+.talent-intro-post-picker__search .cms-select .cms-field__box,
+.talent-intro-post-picker__search .cms-select .cms-select__control {
+  height: 40px;
+  min-height: 40px;
+  max-height: 40px;
+  box-sizing: border-box;
+}
+
+.talent-intro-post-picker__title-input {
+  flex: 1 1 280px;
   min-width: 0;
 }
 
-.talent-intro-post-picker__title-field .cms-input {
-  width: 100%;
+.talent-intro-post-picker__count {
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.6;
 }
 
-.talent-intro-post-picker__table {
-  width: 100%;
+.talent-intro-post-picker__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+  padding: 40px 16px;
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 8px;
+  background: var(--color-bg-secondary, #f7f7f7);
+  text-align: center;
+}
+
+.talent-intro-post-picker__empty p {
+  margin: 0;
+  color: var(--color-text-tertiary, #9e9e9e);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.talent-intro-post-picker__empty p + p {
+  margin-top: 4px;
+}
+
+.talent-intro-post-picker__table .ant-table-tbody > tr > td,
+.talent-intro-post-picker__table .ant-table-tbody > tr:hover > td,
+.talent-intro-post-picker__table
+  .ant-table-tbody
+  > tr
+  > td.ant-table-cell-row-hover {
+  height: auto !important;
+  min-height: 54px;
+  white-space: normal !important;
+}
+
+.talent-intro-post-picker__pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding-top: 8px;
+}
+
+.talent-intro-post-picker__pager-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.talent-intro-post-picker__pager-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.talent-intro-post-picker__pager-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.talent-intro-post-picker__pager-status strong {
+  font-weight: 700;
 }

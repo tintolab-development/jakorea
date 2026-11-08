@@ -28,6 +28,7 @@ export type UjatVolunteerAddRegistrationModalProps = {
   memberId: string
   program: Program
   volunteerHalf: UjatVolunteerRecruitHalf
+  educationRegionCode?: string | null
   onClose: () => void
   onComplete: (memberId: string) => void | Promise<void>
 }
@@ -37,6 +38,7 @@ export function UjatVolunteerAddRegistrationModal({
   memberId,
   program,
   volunteerHalf,
+  educationRegionCode,
   onClose,
   onComplete,
 }: UjatVolunteerAddRegistrationModalProps) {
@@ -71,7 +73,11 @@ export function UjatVolunteerAddRegistrationModal({
         try {
           await registerVolunteerParticipantRemote(
             program.id,
-            attachUjatProgressVolunteerRegisterContext(request, volunteerHalf)
+            attachUjatProgressVolunteerRegisterContext(
+              request,
+              volunteerHalf,
+              educationRegionCode
+            )
           )
           await queryClient.invalidateQueries({
             queryKey: ujatQueryKeys.volunteerApplicationsRoot(program.id),

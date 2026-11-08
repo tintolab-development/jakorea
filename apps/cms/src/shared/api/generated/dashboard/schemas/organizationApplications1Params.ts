@@ -12,6 +12,10 @@ export type OrganizationApplications1Params = {
  */
 status?: string;
 /**
+ * 표시 그룹 필터. APPLICATION_PENDING=SUBMITTED+WAITING+WAITING_REVIEW+PENDING+REJECTION_CANCELLED. APPLICATION_REJECTED=REJECTED+APPROVAL_CANCELLED. 단일 status와 함께 주면 교집합. 알 수 없는 값은 400 UNSUPPORTED_APPLICATION_STATUS_GROUP.
+ */
+statusGroup?: string;
+/**
  * 쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
  */
 keyword?: string;

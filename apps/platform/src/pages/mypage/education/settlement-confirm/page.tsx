@@ -21,8 +21,34 @@ import {
   useApplicationSettlementsQuery,
   useSubmitIndividualSettlementMutation,
 } from '@/features/mypage/education/applications/api/activity-hooks'
-import { overlaySettlementBasicWithPaymentConsent } from '@/features/mypage/education/settlements/lib/map-payment-statement-basic-info'
-import { usePaymentStatementConsentBasicInfo } from '@/features/mypage/education/settlements/hooks/use-payment-statement-consent-basic-info'
+import { useSubmitInstructorSettlementMutation } from '@/features/mypage/education/settlements/api/use-submit-instructor-settlement-mutation'
+import { findAssignedSettlementItem } from '@/features/mypage/education/settlements/lib/assigned-settlement-items'
+import { normalizeSettlementNamedExpense } from '@/features/mypage/education/settlements/lib/build-write-draft'
+import {
+  buildInstructorSettlementCreateRequest,
+  buildInstructorSettlementResubmitRequest,
+} from '@/features/mypage/education/settlements/lib/build-instructor-settlement-submit'
+import {
+  resolveSettlementWriteValidationAlert,
+  validateSettlementWriteDraft,
+} from '@/features/mypage/education/settlements/lib/validate-write-draft'
+import {
+  instructorSettlementApiErrorMessage,
+  isInstructorPaymentStatementSubmit,
+  isPaymentStatementConsentRequiredError,
+  PAYMENT_STATEMENT_CONSENT_REQUIRED_MESSAGE,
+} from '@/features/mypage/education/settlements/lib/instructor-settlement-contract'
+import {
+  composeSettlementWriteBasic,
+  readSettlementMemberProfileBasic,
+} from '@/features/mypage/education/settlements/lib/map-payment-statement-basic-info'
+import { useSettlementConsentSidecar } from '@/features/mypage/education/settlements/hooks/use-payment-statement-consent-basic-info'
+import { usePortalProfileQuery } from '@/features/auth/sign-in'
+import { useReceiptPaymentStatementConsent } from '@/features/mypage/education/settlements/hooks/use-receipt-payment-statement-consent'
+import {
+  buildSettlementPaymentConsentPath,
+  buildSettlementReceiptConsentPath,
+} from '@/features/mypage/education/settlements/lib/consent-path'
 import { readEducationApplicationTypeFromRoute } from '@/features/mypage/education/applications/lib/education-application-route'
 import {
   buildIndividualSettlementResubmitRequest,
@@ -34,7 +60,9 @@ import {
 } from '@/features/mypage/education/settlements/lib/application-document-errors'
 import {
   INDIVIDUAL_SETTLEMENT_DISABLED_MESSAGE,
+  RECEIPT_PRE_CONSENT_REQUIRED_MESSAGE,
   individualSettlementApiErrorMessage,
+  isReceiptPreConsentRequiredError,
   shouldUseIndividualSettlementSchedulesApi,
 } from '@/features/mypage/education/settlements/lib/individual-settlement-contract'
 import { getProgramApplicationApiErrorMessage } from '@/features/program/lib/application-api-error'
@@ -69,28 +97,39 @@ export function MypageEducationSettlementConfirmPage() {
   const area = resolveSettlementAreaFromPathname(location.pathname)
   const remoteQuery = useMyProgramApplicationDetail(
     remoteEnabled ? applicationType : null,
-    remoteEnabled ? applicationId : null,
+    remoteEnabled ? applicationId : null
   )
   const application = remoteQuery.application
   const programType = application?.programConfig?.programType ?? null
   const useIndividualSettlementApi = shouldUseIndividualSettlementSchedulesApi(
     applicationType,
-    programType,
+    programType
   )
   const remoteSettlements = useApplicationSettlementsQuery(
     applicationType,
     applicationId,
     application?.programId ?? '',
-    { programType },
+    { programType }
   )
   const submitMutation = useSubmitIndividualSettlementMutation(applicationId)
-  const consentBasicQuery = usePaymentStatementConsentBasicInfo(!viewMode)
+  const instructorSubmitMutation = useSubmitInstructorSettlementMutation()
+  const isInstructorSubmit = isInstructorPaymentStatementSubmit({
+    applicationType,
+    documentKind,
+  })
+  const profileQuery = usePortalProfileQuery({ enabled: !viewMode })
+  const consentSidecarQuery = useSettlementConsentSidecar(viewMode ? null : documentKind)
+  const receiptConsent = useReceiptPaymentStatementConsent({
+    applicationId,
+    area,
+    applicationType,
+  })
   const [alertOpen, setAlertOpen] = useState(false)
   const [alertMessage, setAlertMessage] = useState('')
 
   const session = useMemo(() => {
     if (!remoteSettlements.enabled) return undefined
-    return remoteSettlements.items.find(item => item.id === sessionId)
+    return findAssignedSettlementItem(remoteSettlements.items, sessionId)
   }, [remoteSettlements.enabled, remoteSettlements.items, sessionId])
 
   const storedDraft = useMemo(() => {
@@ -119,9 +158,29 @@ export function MypageEducationSettlementConfirmPage() {
     if (!storedDraft) return null
     return {
       ...storedDraft,
-      basic: overlaySettlementBasicWithPaymentConsent(storedDraft.basic, consentBasicQuery.basic),
+      basic: composeSettlementWriteBasic({
+        kind: documentKind,
+        member: readSettlementMemberProfileBasic(profileQuery.data),
+        consent: consentSidecarQuery.sidecar,
+      }),
+      transport: {
+        ...storedDraft.transport,
+        autoPreview:
+          documentKind === 'receipt'
+            ? storedDraft.transport.autoPreview
+            : (session?.instructorTransportPreview ?? storedDraft.transport.autoPreview ?? null),
+      },
+      meal: normalizeSettlementNamedExpense(storedDraft.meal),
+      activity: normalizeSettlementNamedExpense(storedDraft.activity),
     }
-  }, [consentBasicQuery.basic, storedDraft, viewMode])
+  }, [
+    consentSidecarQuery.sidecar,
+    documentKind,
+    profileQuery.data,
+    session?.instructorTransportPreview,
+    storedDraft,
+    viewMode,
+  ])
 
   useEffect(() => {
     if (!applicationId || !sessionId) {
@@ -134,16 +193,15 @@ export function MypageEducationSettlementConfirmPage() {
       }
       return
     }
-    if (!draft) {
-      navigate(
-        buildSettlementWritePath({ applicationId, sessionId, area, applicationType }),
-        { replace: true },
-      )
+    if (!storedDraft) {
+      navigate(buildSettlementWritePath({ applicationId, sessionId, area, applicationType }), {
+        replace: true,
+      })
     }
   }, [
     applicationId,
     area,
-    draft,
+    storedDraft,
     navigate,
     remoteSettlements.isLoading,
     session,
@@ -153,8 +211,7 @@ export function MypageEducationSettlementConfirmPage() {
   ])
 
   if (viewMode) {
-    const handleClose = () =>
-      navigate(buildSettlementTabPath(applicationId, area, applicationType))
+    const handleClose = () => navigate(buildSettlementTabPath(applicationId, area, applicationType))
     if (!session || documentId == null) {
       if (remoteSettlements.isLoading) {
         return (
@@ -162,6 +219,7 @@ export function MypageEducationSettlementConfirmPage() {
             open
             document={null}
             programTitle={application?.title}
+            programType={programType}
             loading
             onClose={handleClose}
             onRefreshDocument={refreshDocument}
@@ -184,6 +242,7 @@ export function MypageEducationSettlementConfirmPage() {
         open
         document={documentQuery.document}
         programTitle={application?.title}
+        programType={programType}
         loading={documentQuery.isLoading}
         error={documentError}
         refreshing={documentQuery.isFetching}
@@ -200,15 +259,34 @@ export function MypageEducationSettlementConfirmPage() {
   const title =
     documentKind === 'receipt'
       ? '영수증 제출 전에\n정보가 맞는지 확인해 주세요.'
-      : '지급조서 신청 전에\n정보가 맞는지 확인해 주세요.'
-  const titleInnerClassName =
-    documentKind === 'receipt' ? `${styles.inner} ${styles.titleCentered}` : styles.inner
+      : '지급조서 제출 전에\n정보가 맞는지 확인해 주세요.'
+  const titleInnerClassName = `${styles.inner} ${styles.titleCentered}`
 
   if (remoteSettlements.individualDisabled) {
     return (
-      <PFFormPage aria-label={title} className={styles.page} innerClassName={titleInnerClassName} title={title}>
+      <PFFormPage
+        aria-label={title}
+        className={styles.page}
+        innerClassName={titleInnerClassName}
+        title={title}
+      >
         <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
           {INDIVIDUAL_SETTLEMENT_DISABLED_MESSAGE}
+        </PFText>
+      </PFFormPage>
+    )
+  }
+
+  if (consentSidecarQuery.isLoading || profileQuery.isPending) {
+    return (
+      <PFFormPage
+        aria-label={title}
+        className={styles.page}
+        innerClassName={titleInnerClassName}
+        title={title}
+      >
+        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+          기본 정보를 불러오는 중입니다.
         </PFText>
       </PFFormPage>
     )
@@ -220,16 +298,27 @@ export function MypageEducationSettlementConfirmPage() {
       setAlertOpen(true)
       return
     }
-    if (!useIndividualSettlementApi) {
+    if (consentSidecarQuery.isLoading || profileQuery.isPending) {
+      return
+    }
+    if (documentKind === 'receipt' && receiptConsent.isConsentLoading) {
+      return
+    }
+    if (documentKind === 'receipt' && !receiptConsent.isConsentSubmitted) {
+      setAlertMessage(RECEIPT_PRE_CONSENT_REQUIRED_MESSAGE)
+      setAlertOpen(true)
+      return
+    }
+    if (!isInstructorSubmit && !useIndividualSettlementApi) {
       setAlertMessage(
         documentKind === 'receipt'
           ? '이 신청 유형에서는 일정별 정산을 제출할 수 없습니다.'
-          : '이 신청 유형에서는 지급조서를 제출할 수 없습니다.',
+          : '이 신청 유형에서는 지급조서를 제출할 수 없습니다.'
       )
       setAlertOpen(true)
       return
     }
-    if (submitMutation.isPending) return
+    if (submitMutation.isPending || instructorSubmitMutation.isPending) return
     const submitFailedMessage =
       documentKind === 'receipt'
         ? '영수증 제출에 실패했습니다. 입력 내용을 확인한 뒤 다시 시도해 주세요.'
@@ -240,6 +329,46 @@ export function MypageEducationSettlementConfirmPage() {
         : '지급조서 제출에 필요한 일정 정보가 없습니다. 작성 화면으로 돌아가 다시 시도해 주세요.'
     try {
       const settlementApplicationId = draft.meta.settlementApplicationId
+      const writeValidationError = validateSettlementWriteDraft(draft)
+      if (writeValidationError) {
+        setAlertMessage(
+          resolveSettlementWriteValidationAlert(writeValidationError, documentKind).description
+        )
+        setAlertOpen(true)
+        return
+      }
+      if (isInstructorSubmit) {
+        const resubmit =
+          draft.meta.resubmit === true && settlementApplicationId != null
+            ? buildInstructorSettlementResubmitRequest(draft)
+            : undefined
+        const create = resubmit ? undefined : buildInstructorSettlementCreateRequest(draft)
+        void instructorSubmitMutation
+          .mutateAsync({
+            settlementApplicationId,
+            create,
+            resubmit,
+          })
+          .then(() => {
+            clearSettlementWriteDraft(applicationId, sessionId)
+            navigate(buildSettlementTabPath(applicationId, area, applicationType))
+          })
+          .catch(error => {
+            if (isPaymentStatementConsentRequiredError(error)) {
+              setAlertMessage(PAYMENT_STATEMENT_CONSENT_REQUIRED_MESSAGE)
+              setAlertOpen(true)
+              return
+            }
+            setAlertMessage(
+              instructorSettlementApiErrorMessage(
+                error,
+                getProgramApplicationApiErrorMessage(error, submitFailedMessage)
+              )
+            )
+            setAlertOpen(true)
+          })
+        return
+      }
       const resubmit =
         draft.meta.resubmit === true &&
         settlementApplicationId != null &&
@@ -258,11 +387,16 @@ export function MypageEducationSettlementConfirmPage() {
           navigate(buildSettlementTabPath(applicationId, area, applicationType))
         })
         .catch(error => {
+          if (documentKind === 'receipt' && isReceiptPreConsentRequiredError(error)) {
+            setAlertMessage(RECEIPT_PRE_CONSENT_REQUIRED_MESSAGE)
+            setAlertOpen(true)
+            return
+          }
           setAlertMessage(
             individualSettlementApiErrorMessage(
               error,
-              getProgramApplicationApiErrorMessage(error, submitFailedMessage),
-            ),
+              getProgramApplicationApiErrorMessage(error, submitFailedMessage)
+            )
           )
           setAlertOpen(true)
         })
@@ -289,7 +423,7 @@ export function MypageEducationSettlementConfirmPage() {
         draft={draft}
         programTitle={application?.title}
         session={session}
-        submitting={submitMutation.isPending}
+        submitting={submitMutation.isPending || instructorSubmitMutation.isPending}
         readOnly={false}
         onComplete={handleComplete}
         onBack={handleBack}
@@ -298,7 +432,30 @@ export function MypageEducationSettlementConfirmPage() {
         open={alertOpen}
         title="안내"
         description={alertMessage}
-        onConfirm={() => setAlertOpen(false)}
+        onConfirm={() => {
+          setAlertOpen(false)
+          if (documentKind === 'receipt' && alertMessage === RECEIPT_PRE_CONSENT_REQUIRED_MESSAGE) {
+            navigate(
+              buildSettlementReceiptConsentPath({
+                applicationId,
+                mode: 'write',
+                area,
+                applicationType,
+              })
+            )
+            return
+          }
+          if (alertMessage === PAYMENT_STATEMENT_CONSENT_REQUIRED_MESSAGE) {
+            navigate(
+              buildSettlementPaymentConsentPath({
+                applicationId,
+                mode: 'write',
+                area,
+                applicationType,
+              }),
+            )
+          }
+        }}
       />
     </PFFormPage>
   )

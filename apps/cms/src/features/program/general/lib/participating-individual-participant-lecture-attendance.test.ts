@@ -29,11 +29,11 @@ describe('participating-individual-participant-lecture-attendance', () => {
     fetchParticipantEducationScopeRemoteMock.mockReset()
   })
 
-  it('maps participant attendance and treats excused as attended', () => {
+  it('maps participant attendance and keeps excused as its own status', () => {
     expect(mapParticipantAttendanceStatusToLectureCertificate('PRESENT')).toBe('attended')
     expect(mapParticipantAttendanceStatusToLectureCertificate('LATE')).toBe('late')
     expect(mapParticipantAttendanceStatusToLectureCertificate('ABSENT')).toBe('absent')
-    expect(mapParticipantAttendanceStatusToLectureCertificate('EXCUSED')).toBe('attended')
+    expect(mapParticipantAttendanceStatusToLectureCertificate('EXCUSED')).toBe('excused')
     expect(mapParticipantAttendanceStatusToLectureCertificate('COMPLETED')).toBeNull()
     expect(mapParticipantAttendanceStatusToLectureCertificate('SCHEDULED')).toBeNull()
   })
@@ -83,7 +83,7 @@ describe('participating-individual-participant-lecture-attendance', () => {
 
     expect(sessions).toEqual([
       { roundNumber: 1, scheduleId: 10, status: 'attended' },
-      { roundNumber: 2, scheduleId: 11, status: 'attended' },
+      { roundNumber: 2, scheduleId: 11, status: 'excused' },
     ])
     expect(fetchAttendancesByScheduleIdsRemoteMock).toHaveBeenCalledTimes(1)
     expect(fetchAttendancesByScheduleIdsRemoteMock).toHaveBeenCalledWith('168001', [10, 11])

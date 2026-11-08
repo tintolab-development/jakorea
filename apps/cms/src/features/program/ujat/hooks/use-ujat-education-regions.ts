@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { shouldUseUjatEducationRegionsRemoteApi } from '@/features/program/ujat/api/education-regions/capabilities'
-import { useUjatEducationRegionsList } from '@/features/program/ujat/api/education-regions/hooks'
+import { useUjatEducationRegionsActiveList } from '@/features/program/ujat/api/education-regions/hooks'
 import { UJAT_EDUCATION_REGIONS_CHANGED_EVENT } from '@/features/program/ujat/lib/education-region-store'
 import {
   listUjatEducationRegionsActive,
   type UjatEducationRegionOption,
 } from '@/features/program/ujat/lib/ujat-education-regions'
+import { UJAT_DEFAULT_EDUCATION_REGIONS } from '@/features/program/ujat/lib/ujat-default-education-region-rows'
 
 export function useUjatEducationRegions(): {
   regions: UjatEducationRegionOption[]
@@ -13,7 +14,7 @@ export function useUjatEducationRegions(): {
   sortOrderMap: Record<string, number>
 } {
   const remoteEnabled = shouldUseUjatEducationRegionsRemoteApi()
-  const listQuery = useUjatEducationRegionsList(remoteEnabled)
+  const listQuery = useUjatEducationRegionsActiveList(remoteEnabled)
   const [version, setVersion] = useState(0)
 
   useEffect(() => {
@@ -26,11 +27,13 @@ export function useUjatEducationRegions(): {
   const regions = useMemo(() => {
     if (remoteEnabled && listQuery.data) {
       return listQuery.data
-        .filter(row => row.active)
+        .filter(row => row.active && row.regionKey.trim())
         .map(row => ({ key: row.regionKey, label: row.name }))
     }
     void version
-    return listUjatEducationRegionsActive()
+    const live = listUjatEducationRegionsActive()
+    if (live.length > 0) return live
+    return UJAT_DEFAULT_EDUCATION_REGIONS.map(row => ({ key: row.key, label: row.label }))
   }, [listQuery.data, remoteEnabled, version])
 
   const labels = useMemo(() => regions.map(row => row.label), [regions])

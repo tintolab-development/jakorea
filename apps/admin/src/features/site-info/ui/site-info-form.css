@@ -24,11 +24,12 @@
 }
 
 .site-info-form-card .table-description {
-  color: var(--main-gray1, #8a8a8a);
-  font-family: Pretendard, sans-serif;
-  font-size: 14px;
+  color: var(--Content-disabled, rgba(61, 61, 61, 0.5));
+  font-family: Pretendard;
+  font-size: 16px;
+  font-style: normal;
   font-weight: 500;
-  line-height: 150%;
+  line-height: 150%; /* 24px */
 }
 
 .site-info-form-card__body {
@@ -45,19 +46,23 @@
   grid-template-columns: 160px minmax(0, 1fr);
 }
 
+.site-info-form .detail-info-form__field-label,
+.site-info-form .detail-info-form__field-content,
+.site-info-form .detail-info-form__field-content--view,
+.site-info-form .detail-info-form__field-content--edit {
+  padding: 12px 16px;
+  box-sizing: border-box;
+}
+
 .site-info-form .detail-info-form__field-label {
   width: 160px;
   min-width: 160px;
   max-width: 160px;
   min-height: 54px;
-  padding: 12px 16px;
-  box-sizing: border-box;
 }
 
 .site-info-form .detail-info-form__field-content {
   min-height: 54px;
-  padding: 12px 16px;
-  box-sizing: border-box;
   justify-content: flex-start;
   align-items: center;
   text-align: left;
@@ -91,6 +96,16 @@
   background: transparent !important;
   box-shadow: none !important;
   cursor: default;
+  /* 인풋 chrome 패딩 제거 — 셀 12px 16px에만 맞춤 */
+  padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  border-width: 0 !important;
+}
+
+.site-info-form .site-info-inline-field--readonly .cms-input__inner,
+.site-info-form .site-info-inline-field--readonly .ant-input {
+  padding: 0 !important;
 }
 
 .site-info-form .site-info-inline-field--readonly .cms-input__control:hover {
@@ -126,7 +141,7 @@
 
 .site-info-form__image-row {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: flex-start;
   gap: 16px;
   width: 100%;
@@ -147,27 +162,14 @@
   box-sizing: border-box;
 }
 
-.site-info-form__preview--favicon {
-  width: 30px;
-  height: 30px;
-  aspect-ratio: 1 / 1;
-}
-
-.site-info-form__preview img,
-.site-info-form__preview--favicon img {
+.site-info-form__preview img {
   width: 100%;
   height: 100%;
+  max-width: none;
+  max-height: none;
   object-fit: cover;
+  object-position: center;
   display: block;
-}
-
-.site-info-form__file-name {
-  color: var(--main-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 150%;
-  word-break: break-all;
 }
 
 .site-info-form__file-field {
@@ -184,7 +186,7 @@
 .site-info-form .file-select-field__actions {
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 16px;
 }
@@ -201,4 +203,37 @@
 .site-info-form .cms-input {
   width: 100%;
   max-width: 100%;
+}
+
+/*
+ * QA(Figma 230:3429): 조회 = 라벨 200 · 행 최소 52 · 텍스트/이미지 세로 중앙
+ * (폼이 항상 edit 슬롯이라 기본 align-items:flex-start 로 텍스트가 위로 붙던 것을 조회 행만 중앙으로)
+ */
+.site-info-form .detail-info-form__field {
+  min-height: 52px;
+  --detail-info-label-w: 200px;
+  grid-template-columns: 200px minmax(0, 1fr);
+}
+
+.site-info-form .detail-info-form__field-label {
+  width: 200px;
+  min-width: 200px;
+  max-width: 200px;
+  min-height: 52px;
+  padding: 8px 16px;
+}
+
+.site-info-form .detail-info-form__field-content {
+  min-height: 52px;
+}
+
+.site-info-form .detail-info-form__field-content--edit:has(.site-info-inline-field--readonly),
+.site-info-form .detail-info-form__field-content--edit:has(.site-info-form__image-view),
+.site-info-form .detail-info-form__field-content--edit:has(> .site-info-form__text-view) {
+  align-items: center;
+}
+
+.site-info-form .site-info-inline-field--readonly .ant-input {
+  font-size: 14px !important;
+  line-height: 150% !important;
 }

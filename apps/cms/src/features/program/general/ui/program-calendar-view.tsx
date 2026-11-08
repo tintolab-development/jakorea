@@ -1,3 +1,4 @@
+import { useDebouncedValue } from '@/shared/hooks/use-debounced-value'
 import { useCallback, useMemo, useState, type Key, type ReactNode } from 'react'
 import { Spin } from 'antd'
 import dayjs from 'dayjs'
@@ -116,7 +117,9 @@ export function ProgramCalendarView({
     () => resolveProgramCalendarVisibleRange(calendarMode, currentMonth),
     [calendarMode, currentMonth]
   )
-  const apiKeyword = calendarSearchKeyword.trim() || listKeyword?.trim() || undefined
+  // 검색창 입력은 300ms 멈춘 뒤에만 API 키에 반영한다 — 한 글자마다 캘린더를 다시 조회하지 않는다.
+  const debouncedCalendarSearchKeyword = useDebouncedValue(calendarSearchKeyword, 300)
+  const apiKeyword = debouncedCalendarSearchKeyword.trim() || listKeyword?.trim() || undefined
   const calendarQueryParams = useMemo((): AdminProgramCalendarQuery => {
     return {
       includeOperationalEvents: true,

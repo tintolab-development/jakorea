@@ -6,7 +6,7 @@
 import { Card, Typography } from 'antd'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { LoadingButton } from '@/shared/ui'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
@@ -24,38 +24,20 @@ const { Text } = Typography
 const WIDGET_KEY = 'customer-inquiry-status-widget'
 const EMPTY_IDS: string[] = []
 
-export function CustomerInquiryStatusWidget() {
+export function CustomerInquiryStatusWidget({ isHalfColumn = false }: { isHalfColumn?: boolean }) {
   const navigate = useNavigate()
-  const cardRef = useRef<HTMLDivElement>(null)
-  const [halfColumn, setHalfColumn] = useState(false)
   const allowedProgramIds =
     useDashboardSettingsStore(s => s.widgetProgramIds[WIDGET_KEY]) ?? EMPTY_IDS
   const inquiryNotificationReadProgramKeys =
     useDashboardSettingsStore(s => s.inquiryNotificationReadProgramKeys) ?? {}
 
-  const { data = [], isLoading: loading, isError } = useProgramInquiryStatusList(allowedProgramIds)
-
-  const totalCount = data.length
+  const { data, isLoading: loading, isError, isFetched } = useProgramInquiryStatusList(
+    allowedProgramIds
+  )
+  const rows = data ?? []
+  const totalCount = isFetched ? rows.length : null
   /** 시안 100% 13192:232459 — 프로그램명 가변 + 200/200/200, 50% 12360:299676 — 가변 + 80/80/80 */
-  const countColumnWidth = halfColumn ? 80 : 200
-
-  useLayoutEffect(() => {
-    const root = cardRef.current
-    if (!root) {
-      setHalfColumn(false)
-      return
-    }
-    const slot = root.closest('.dashboard-widget-slot')
-    if (!slot) {
-      setHalfColumn(false)
-      return
-    }
-    const sync = () => setHalfColumn(slot.getAttribute('data-col-span') === '12')
-    sync()
-    const mo = new MutationObserver(sync)
-    mo.observe(slot, { attributes: true, attributeFilter: ['data-col-span'] })
-    return () => mo.disconnect()
-  }, [])
+  const countColumnWidth = isHalfColumn ? 80 : 200
 
   const goToInquiryListForProgram = useCallback(
     (record: ProgramInquiryRow) => {
@@ -136,13 +118,12 @@ export function CustomerInquiryStatusWidget() {
 
   return (
     <Card
-      ref={cardRef}
       className="dashboard-widget-table dashboard-widget-table--customer-inquiry"
       title={
         <WidgetTitleWithHandle>
           <span className="widget-card-title">프로그램 별 문의 현황</span>
           <Text type="secondary" className="dashboard-widget-table__header-total-count">
-            총 {totalCount}건
+            {totalCount == null ? '총 -' : `총 ${totalCount}건`}
           </Text>
         </WidgetTitleWithHandle>
       }
@@ -156,8 +137,10 @@ export function CustomerInquiryStatusWidget() {
         <DashboardWidgetQueryError />
       ) : (
         <CmsDataTable<ProgramInquiryRow>
+          /* 반폭 카드 안 표 — 공통 1080 하한 미적용, 열 합·카드 폭 기준 */
+          minTableWidthFloor={0}
           columns={columns}
-          dataSource={data}
+          dataSource={rows}
           rowKey="key"
           pagination={false}
           loading={loading}

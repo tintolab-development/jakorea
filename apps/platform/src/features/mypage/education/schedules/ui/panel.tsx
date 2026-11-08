@@ -4,14 +4,16 @@ import { DEFAULT_PROGRAM_APPLICATION_REQUEST_ERROR_MESSAGE } from '@/features/pr
 import { PFButton, PFText } from '@/shared/ui'
 import {
   canSubmitEducationAbsenceReason,
-  resolveEducationScheduleProgressStatus,
+  resolveEducationScheduleRowProgressStatus,
 } from '../lib/schedule-rules'
 import {
   filterEducationSchedulesForMemberAssignment,
   resolveEducationScheduleEmptyMessage,
 } from '../lib/scope-status'
+import { isTrainedTeacherOrganizationSchedule } from '../lib/trained-teacher-organization'
 import { useApplicationSchedulesQuery } from '../../applications/api/activity-hooks'
 import type { ProgramApplicationType } from '../../applications/api/types'
+import type { PortalPreferredScheduleBlock } from '@/features/program/api/application-types'
 import { filterItemsUpToLastParticipatedSession } from '../../applications/lib/display-status'
 import { useGeminiSettlementTabQuery } from '../../settlements/api/use-gemini-settlement-query'
 import { mapGeminiLectureSchedulesToEducationScheduleItems } from '../../settlements/lib/map-gemini-lecture-schedules'
@@ -32,11 +34,15 @@ type EducationSchedulePanelProps = {
   absenceReasonEnabled?: boolean
   /** Gemini 기관 일정은 lecture-schedules의 trainingTimeText·recognizedClassCount를 쓴다 */
   useGeminiLectureSchedules?: boolean
+  /** 신청 GET nested program.programType — TT 기관 운영일 접기 해제 */
+  programType?: string | null
+  /** 신청 상세 희망 블록 — TT 기관 운영일 `N차시`(scheduleId 매칭 sessionTimes 수) */
+  preferredScheduleBlocks?: readonly PortalPreferredScheduleBlock[] | null
 }
 
 /**
- * 교육일정 탭 — 신청 GET .../schedules 응답만 SSOT.
- * 프로그램 상세 일정이나 로컬 시드/목업 데이터는 사용하지 않는다.
+ * 교육일정 탭 — 신청 GET .../schedules 응답만 SSOT. 행 수 = 배정 items.
+ * 프로그램 상세 일정·preferred 지망으로 행을 채우거나 MATCHED를 거르지 않는다.
  */
 export function EducationSchedulePanel({
   lastParticipatedSession,
@@ -45,6 +51,8 @@ export function EducationSchedulePanel({
   applicationId,
   absenceReasonEnabled = true,
   useGeminiLectureSchedules = false,
+  programType,
+  preferredScheduleBlocks,
 }: EducationSchedulePanelProps) {
   const [page, setPage] = useState(1)
   const [absenceReasonScheduleId, setAbsenceReasonScheduleId] = useState<number | null>(null)
@@ -52,6 +60,7 @@ export function EducationSchedulePanel({
   const remoteSchedules = useApplicationSchedulesQuery(
     useGeminiLectureSchedules ? null : applicationType,
     useGeminiLectureSchedules ? null : applicationId,
+    { programType, preferredScheduleBlocks },
   )
   const geminiSchedules = useGeminiSettlementTabQuery(
     applicationType,
@@ -68,10 +77,15 @@ export function EducationSchedulePanel({
     }
     const items: EducationScheduleItem[] = remoteSchedules.enabled ? remoteSchedules.items : []
     const assigned = filterEducationSchedulesForMemberAssignment(items)
+    if (isTrainedTeacherOrganizationSchedule(applicationType, programType)) {
+      return assigned
+    }
     return filterItemsUpToLastParticipatedSession(assigned, lastParticipatedSession)
   }, [
     geminiSchedules.scheduleItems,
+    applicationType,
     lastParticipatedSession,
+    programType,
     remoteSchedules.enabled,
     remoteSchedules.items,
     useGeminiLectureSchedules,
@@ -92,7 +106,7 @@ export function EducationSchedulePanel({
         item =>
           item.scheduleId != null &&
           canSubmitEducationAbsenceReason(
-            resolveEducationScheduleProgressStatus(item.heldAt),
+            resolveEducationScheduleRowProgressStatus(item),
             item.attendanceStatus,
             item.availableActions,
             item.absenceReasonStatus,

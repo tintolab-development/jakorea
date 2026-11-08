@@ -86,11 +86,11 @@ describe('invalidateProgramListCachesAfterRegistration', () => {
     ])
   })
 
-  it('ujat: invalidates lists only (no overviewStages widget)', () => {
+  it('ujat: invalidates lists and business years (no overviewStages widget)', () => {
     const queryClient = new QueryClient()
     expect(
       invalidatedQueryKeys(queryClient, () => invalidateUjatProgramListCaches(queryClient))
-    ).toEqual([ujatProgramQueryKeys.lists()])
+    ).toEqual([ujatProgramQueryKeys.lists(), ujatProgramQueryKeys.businessYears('UJAT')])
   })
 
   it('gemini: invalidates recruitment list', () => {

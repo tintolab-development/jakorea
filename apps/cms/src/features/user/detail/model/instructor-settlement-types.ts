@@ -39,6 +39,8 @@ export type SettlementCalendarListTitleVariant =
   | 'plain-instructor'
   | 'bracket-program'
   | 'pipe-program'
+  /** 프로그램명만(괄호 없음) — 지급조서 확인 프로그램별 캘린더 시안 */
+  | 'plain-program'
 
 export interface SummarizeSettlementRowsOptions {
   allRowsForTotal?: InstructorSettlementListRow[]

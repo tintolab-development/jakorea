@@ -15,10 +15,10 @@ import '@/shared/components/detail-info-form/detail-info-form.css'
 import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 import type { Program } from '@/types/domain'
 import {
-  buildAbsenceReasonsFromRows,
   buildParticipatingIndividualParticipantAttendanceRowsFromAssigned,
   buildParticipatingIndividualParticipantAttendanceSummary,
-  mergeParticipatingIndividualAbsenceReasons,
+  resolveVisibleParticipatingIndividualAbsenceReasons,
+  type ParticipatingIndividualAdminAbsenceEvidence,
 } from '@/features/program/general/lib/participating-individual-participant-attendance'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import { resolveParticipatingIndividualParticipantAbsenceDateLabel } from '@/features/program/general/lib/participating-individual-participant-attendance-display'
@@ -37,6 +37,7 @@ import {
 import {
   downloadAbsenceEvidenceFile,
   fetchProgramAbsenceReasons,
+  resolveProgramAbsenceReasonEvidence,
 } from '@/features/program/general/api/absence-reasons'
 import { parseFileObjectId } from '@/shared/lib/admin-file-upload'
 import { resolveProgressAttendanceScheduleDateRanges } from '@/features/program/general/lib/progress-attendance-schedule-date-ranges'
@@ -55,6 +56,7 @@ import {
 import {
   buildAttendanceItemRequest,
   buildProgressAttendanceSessionsFromRemote,
+  resolveAttendanceWriteFileObjectIds,
 } from '@/features/program/general/api/adapters/progress-attendance-adapters'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
@@ -63,7 +65,8 @@ import {
   useNotifyProgramApiUnavailableOnce,
 } from '@/features/program/shared/lib/program-api-unavailable'
 import { handleError } from '@/shared/utils/error-handler'
-import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
+import { getApiErrorCode, readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
+import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import { isGlobalApiErrorAlertShown } from '@/shared/lib/show-global-api-error-alert'
 import {
   ATTENDANCE_CORRECTION_NOT_OPEN_ALERT,
@@ -86,7 +89,10 @@ function mapCorrectionPayloadToAttendanceStatus(
 ): Pick<
   ParticipatingIndividualParticipantAttendanceRow,
   'attendanceStatus' | 'lateTime' | 'remark'
-> & { evidenceFileObjectIds?: number[] } {
+> & {
+  evidenceFileObjectIds?: number[]
+  evidenceOriginalFileNames?: string[]
+} {
   if (payload.status === 'late') {
     return {
       attendanceStatus: 'late',
@@ -100,6 +106,7 @@ function mapCorrectionPayloadToAttendanceStatus(
       lateTime: undefined,
       remark: payload.reason.trim(),
       evidenceFileObjectIds: payload.evidenceFileObjectIds ?? [],
+      evidenceOriginalFileNames: payload.evidenceOriginalFileNames ?? [],
     }
   }
   if (payload.status === 'absence') {
@@ -107,12 +114,16 @@ function mapCorrectionPayloadToAttendanceStatus(
       attendanceStatus: 'absent',
       lateTime: undefined,
       remark: undefined,
+      evidenceFileObjectIds: [],
+      evidenceOriginalFileNames: [],
     }
   }
   return {
     attendanceStatus: 'present',
     lateTime: undefined,
     remark: undefined,
+    evidenceFileObjectIds: [],
+    evidenceOriginalFileNames: [],
   }
 }
 
@@ -232,15 +243,18 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
   ])
 
   const [rows, setRows] = useState(() => sourceRows)
+  const [adminAbsenceEvidenceByScheduleId, setAdminAbsenceEvidenceByScheduleId] = useState<
+    Record<string, ParticipatingIndividualAdminAbsenceEvidence>
+  >({})
   const [attendanceCorrectionModalOpen, setAttendanceCorrectionModalOpen] = useState(false)
   const programNumericId = parseFileObjectId(program.id)
   const absenceReasonQuery = useQuery({
     queryKey: generalProgramProgressQueryKeys.absenceReasons(String(program.id)),
     queryFn: () => fetchProgramAbsenceReasons(programNumericId!),
     enabled: remoteEnabled && programNumericId != null,
-    staleTime: 30_000,
+    staleTime: 0,
     gcTime: 10 * 60_000,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
   })
 
   const correctableScheduleOptions = useMemo(
@@ -264,45 +278,53 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
     setAttendanceCorrectionModalOpen(false)
   }, [participant.id, sourceRows])
 
+  useEffect(() => {
+    setAdminAbsenceEvidenceByScheduleId({})
+  }, [participant.id])
+
+  useEffect(() => {
+    const items = absenceReasonQuery.data
+    if (!items?.length) return
+    setAdminAbsenceEvidenceByScheduleId(prev => {
+      let next: Record<string, ParticipatingIndividualAdminAbsenceEvidence> | null = null
+      for (const item of items) {
+        if (String(item.participantId ?? '') !== String(participant.id)) continue
+        const scheduleId = item.scheduleId != null ? String(item.scheduleId) : ''
+        if (!scheduleId || !prev[scheduleId]) continue
+        const evidence = resolveProgramAbsenceReasonEvidence(item)
+        if (evidence.fileObjectIds.length === 0) continue
+        if (!next) next = { ...prev }
+        delete next[scheduleId]
+      }
+      return next ?? prev
+    })
+  }, [absenceReasonQuery.data, participant.id])
+
   const saveMutation = useMutation({
     mutationFn: async (payload: {
       scheduleId: string
       patch: Pick<
         ParticipatingIndividualParticipantAttendanceRow,
         'attendanceStatus' | 'lateTime' | 'remark'
-      > & { evidenceFileObjectIds?: number[] }
-    }) => {
-      const session = remoteSessions?.find(item => item.id === payload.scheduleId)
-      const requests = (session?.participants ?? []).flatMap(row => {
-        const isTarget = row.participantId === participant.id
-        if (!isTarget && !row.attendanceRecorded) return []
-        const attendanceStatus = isTarget
-          ? mapDetailStatusToProgressStatus(payload.patch.attendanceStatus)
-          : row.attendanceStatus
-        if (attendanceStatus == null) return []
-        return [
-          buildAttendanceItemRequest({
-            participantId: row.participantId,
-            attendanceStatus,
-            lateTime: isTarget ? payload.patch.lateTime : row.lateTime,
-            remark: isTarget ? payload.patch.remark : row.remark,
-            fileObjectIds: isTarget ? payload.patch.evidenceFileObjectIds : undefined,
-          }),
-        ]
-      })
-      const hasSelf = requests.some(item => String(item.participantId) === participant.id)
-      if (!hasSelf) {
-        requests.push(
-          buildAttendanceItemRequest({
-            participantId: participant.id,
-            attendanceStatus: mapDetailStatusToProgressStatus(payload.patch.attendanceStatus),
-            lateTime: payload.patch.lateTime,
-            remark: payload.patch.remark,
-            fileObjectIds: payload.patch.evidenceFileObjectIds,
-          })
-        )
+      > & {
+        evidenceFileObjectIds?: number[]
+        evidenceOriginalFileNames?: string[]
       }
-      await saveGeneralScheduleAttendances(payload.scheduleId, requests)
+    }) => {
+      const attendanceStatus = mapDetailStatusToProgressStatus(payload.patch.attendanceStatus)
+      const isAttended = attendanceStatus === 'present' || attendanceStatus === 'late'
+      await saveGeneralScheduleAttendances(payload.scheduleId, [
+        buildAttendanceItemRequest({
+          participantId: participant.id,
+          attendanceStatus,
+          lateTime: payload.patch.lateTime,
+          remark: isAttended ? undefined : payload.patch.remark,
+          fileObjectIds: resolveAttendanceWriteFileObjectIds({
+            attendanceStatus,
+            evidenceFileObjectIds: isAttended ? [] : payload.patch.evidenceFileObjectIds,
+          }),
+        }),
+      ])
     },
     onSuccess: async () => {
       const programId = String(program.id)
@@ -315,7 +337,16 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
       await queryClient.invalidateQueries({
         queryKey: [...generalProgramProgressQueryKeys.all, 'program-attendances-bulk', programId],
       })
+      await queryClient.refetchQueries({
+        queryKey: generalProgramProgressQueryKeys.programAttendancesBulk(
+          programId,
+          assignedScheduleIdsKey
+        ),
+      })
       await queryClient.invalidateQueries({
+        queryKey: generalProgramProgressQueryKeys.absenceReasons(programId),
+      })
+      await queryClient.refetchQueries({
         queryKey: generalProgramProgressQueryKeys.absenceReasons(programId),
       })
     },
@@ -347,6 +378,7 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
   )
 
   const { exportExcel } = useTableExcelExport({
+    accessLog: { downloadKind: 'PROGRAM_ATTENDANCE_EXPORT', containedPiiTypes: ['NAME'] },
     columns: PARTICIPATING_INDIVIDUAL_PARTICIPANT_ATTENDANCE_EXCEL_COLUMNS,
     data: tableData,
     filename: `참여자_출석내역_${participant.applicantName}`,
@@ -390,6 +422,13 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
         showAlert(ATTENDANCE_CORRECTION_NOT_OPEN_ALERT)
         return
       }
+      if (isParticipatingIndividualParticipantAttendanceRowWithdrawn(targetRow)) {
+        showAlert({
+          title: '안내',
+          content: '활동 포기 이후 회차에는 출결을 저장할 수 없습니다.',
+        })
+        return
+      }
 
       const patch = mapCorrectionPayloadToAttendanceStatus(payload, targetRow)
       const previousRows = rows
@@ -408,6 +447,25 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
       )
       void saveMutation.mutateAsync({ scheduleId, patch }).then(
         () => {
+          if (
+            patch.attendanceStatus === 'excused_absence' &&
+            (patch.evidenceFileObjectIds?.length ?? 0) > 0
+          ) {
+            setAdminAbsenceEvidenceByScheduleId(prev => ({
+              ...prev,
+              [scheduleId]: {
+                fileObjectIds: patch.evidenceFileObjectIds ?? [],
+                originalFileNames: patch.evidenceOriginalFileNames ?? [],
+              },
+            }))
+          } else if (patch.attendanceStatus !== 'excused_absence') {
+            setAdminAbsenceEvidenceByScheduleId(prev => {
+              if (!prev[scheduleId]) return prev
+              const next = { ...prev }
+              delete next[scheduleId]
+              return next
+            })
+          }
           setAttendanceCorrectionModalOpen(false)
           showAlert({
             title: '정정 완료',
@@ -422,6 +480,16 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
           }
           if (isGlobalApiErrorAlertShown(error)) return
           if (isInvalidAttendanceArrivalTimeError(error)) return
+          if (getApiErrorCode(error) === 'ATTENDANCE_AFTER_GIVE_UP') {
+            showAlert({
+              title: '안내',
+              content: getGeneralProgramApiErrorMessage(
+                error,
+                '활동 포기 이후 회차에는 출결을 저장할 수 없습니다.'
+              ),
+            })
+            return
+          }
           showAlert({
             title: '안내',
             content: readApiErrorAlertMessage(error, '요청 처리에 실패했습니다.'),
@@ -432,39 +500,13 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
     [remoteEnabled, rows, saveMutation, showAlert]
   )
 
-  const assignedScheduleIdSet = useMemo(
-    () =>
-      new Set(
-        rows
-          .map(row => row.scheduleId?.trim())
-          .filter((id): id is string => Boolean(id))
-      ),
-    [rows]
-  )
-
   const remoteAbsenceReasons = useMemo(() => {
     const items = absenceReasonQuery.data
-    if (!items) return null
+    if (!items) return []
     return items
-      .filter(item => {
-        const scheduleId =
-          item.scheduleId != null && String(item.scheduleId).trim() !== ''
-            ? String(item.scheduleId)
-            : null
-        if (scheduleId != null && !assignedScheduleIdSet.has(scheduleId)) return false
-        if (item.participantId != null && String(item.participantId) === participant.id) return true
-        if (
-          participant.memberId &&
-          item.memberId != null &&
-          String(item.memberId) === participant.memberId
-        ) {
-          return true
-        }
-        return false
-      })
+      .filter(item => String(item.participantId ?? '') === String(participant.id))
       .map(item => {
-        const names = item.originalFileNames ?? []
-        const fileName = names.find(name => name?.trim())?.trim() ?? null
+        const { fileObjectIds, originalFileNames: names } = resolveProgramAbsenceReasonEvidence(item)
         const matchedRow =
           item.scheduleId != null
             ? rows.find(row => row.scheduleId === String(item.scheduleId))
@@ -478,12 +520,12 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
             scheduleName: item.scheduleName,
           }),
           reason: item.reason?.trim() || '-',
-          fileName,
-          fileObjectIds: item.fileObjectIds,
+          fileName: names.find(name => name?.trim())?.trim() ?? null,
+          fileObjectIds,
           originalFileNames: names,
         } satisfies ParticipatingIndividualParticipantAbsenceReason
       })
-  }, [absenceReasonQuery.data, assignedScheduleIdSet, participant.id, participant.memberId, rows])
+  }, [absenceReasonQuery.data, participant.id, rows])
 
   const handleAbsenceFileDownload = useCallback(
     (_item: ProgramAttendanceAbsenceReasonItem, fileObjectId: number, fileName: string) => {
@@ -546,10 +588,12 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
       </DetailInfoForm>
 
       <ProgramAttendanceAbsenceReasons
-        reasons={mergeParticipatingIndividualAbsenceReasons(
-          remoteAbsenceReasons,
-          buildAbsenceReasonsFromRows(rows)
-        )}
+        reasons={resolveVisibleParticipatingIndividualAbsenceReasons({
+          remote: remoteAbsenceReasons,
+          rows,
+          adminEvidenceByScheduleId: adminAbsenceEvidenceByScheduleId,
+        })}
+        emptyMessage="해당 참여자 불참 사유 없음"
         onFileDownload={handleAbsenceFileDownload}
       />
 

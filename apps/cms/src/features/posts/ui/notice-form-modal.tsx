@@ -13,7 +13,10 @@ import { useNoticeWysiwygEditor } from '@/features/posts/hooks/use-notice-wysiwy
 import {
   isAllowedNoticeAttachment,
   NOTICE_ATTACHMENT_ACCEPT,
+  NOTICE_ATTACHMENT_GUIDE_LINES,
   NOTICE_ATTACHMENT_MAX_BYTES,
+  NOTICE_ATTACHMENT_MAX_COUNT,
+  NOTICE_ATTACHMENT_MAX_TOTAL_BYTES,
   noticeInlineImageOwner,
   parseNoticeOwnerId,
   removeNoticeFileObjects,
@@ -34,6 +37,7 @@ import {
   CmsRadioGroup,
   CmsSelect,
   FileSelectField,
+  notifyFileSelectTotalSizeExceeded,
   showDeleteCompletedAlert,
   showRegisterCompletedAlert,
   showUpdateCompletedAlert,
@@ -203,8 +207,21 @@ export function NoticeFormModal({
     }
   }
 
+  const attachmentTotalBytes = useMemo(
+    () =>
+      existingAttachments.reduce((sum, item) => sum + (item.fileSize ?? 0), 0) +
+      newFiles.reduce((sum, file) => sum + file.size, 0),
+    [existingAttachments, newFiles]
+  )
+
   const handleAttachmentAdd = (files: File[]) => {
     const ok = files.filter(isAllowedNoticeAttachment)
+    if (existingAttachments.length + newFiles.length + ok.length > NOTICE_ATTACHMENT_MAX_COUNT) {
+      notifyFileSelectTotalSizeExceeded(
+        `첨부 파일은 최대 ${NOTICE_ATTACHMENT_MAX_COUNT}개까지 등록할 수 있습니다.`
+      )
+      return
+    }
     setNewFiles(prev => [...prev, ...ok])
   }
 
@@ -473,17 +490,17 @@ export function NoticeFormModal({
                       multiple
                       accept={NOTICE_ATTACHMENT_ACCEPT}
                       fileNames={attachmentDisplayNames}
-                      maxTotalBytes={0}
+                      currentTotalBytes={attachmentTotalBytes}
+                      maxTotalBytes={NOTICE_ATTACHMENT_MAX_TOTAL_BYTES}
                       maxFileBytes={NOTICE_ATTACHMENT_MAX_BYTES}
                       uploading={uploadingAttachments}
                       onFilesChange={handleAttachmentAdd}
                       onRemoveFile={handleAttachmentRemove}
-                      guideLines={[
-                        '파일별 최대 20MB까지 업로드 가능하며,',
-                        'JPG, PNG, Excel, PDF, Word 형식만 지원됩니다.',
-                      ]}
+                      guideLines={NOTICE_ATTACHMENT_GUIDE_LINES}
                       sizeExceededMessage={file =>
-                        `${file?.name ?? '선택한 파일'}은(는) 파일별 최대 20MB를 초과했습니다.`
+                        file
+                          ? `${file.name}은(는) 파일당 최대 20MB를 초과했습니다.`
+                          : '첨부 파일은 총 100MB까지 등록할 수 있습니다.'
                       }
                     />
                     {attachmentError ? (

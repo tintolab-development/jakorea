@@ -36,7 +36,6 @@ const USAGE_API_ID: Record<UsageGuideItemId, number> = {
   education_access: 2,
 }
 
-const DONATE_CTA_LABEL = '성장 후원하기'
 const HERO_DESCRIPTION =
   'JA Korea는 소중한 후원을 통해 청소년이 미래를 준비하고, 스스로의 가능성을 펼칠 수 있도록 돕습니다.'
 const LEGACY_HERO_DESCRIPTION =
@@ -51,11 +50,6 @@ function resolveHeroDescription(value: string | undefined): string {
   return !text || normalizeCopy(text) === normalizeCopy(LEGACY_HERO_DESCRIPTION)
     ? HERO_DESCRIPTION
     : value ?? HERO_DESCRIPTION
-}
-
-function resolveDonateCtaLabel(value: string | undefined): string {
-  const label = value?.trim() ?? ''
-  return label || DONATE_CTA_LABEL
 }
 
 export function usageGuideApiId(id: UsageGuideItemId): number {
@@ -111,7 +105,8 @@ export function mapPersonalAdminToDomain(row: PersonalAdminResponse): Individual
     },
     usageGuideItems: fixedUsage,
     donateCta: {
-      buttonLabel: resolveDonateCtaLabel(row.donationButton?.label),
+      // 버튼명은 서버 값 그대로(읽기 전용). 비면 화면에서 '-'
+      buttonLabel: row.donationButton?.label?.trim() ?? '',
       linkUrl: row.donationButton?.url ?? '',
       version: row.donationButton?.version ?? settingVersion,
     },
@@ -146,8 +141,8 @@ export function toUsageUpdateRequest(items: UsageGuideSaveItem[]): FixedTextUpda
 
 export function toDonationUrlUpdateRequest(input: DonateCtaSaveInput): DonationUrlUpdateRequest {
   return {
+    // label 생략 = 서버 버튼명 유지 (버튼명은 관리자 수정 대상 아님)
     donationUrl: input.linkUrl.trim(),
-    label: input.buttonLabel.trim(),
     version: input.version,
   }
 }

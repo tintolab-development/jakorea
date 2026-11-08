@@ -106,6 +106,9 @@ const TRAINED_TEACHER_COMMON_INFO_PROGRAM_MIRROR_KEYS = [
   'managerName',
   'teacherTrainingScheduleName',
   'sponsorManagerContactNames',
+  'sponsorManagementNames',
+  'sponsorAssignmentDetails',
+  'sponsorManagerContactDetails',
 ] as const
 
 function trainedTeacherEducationSelection(
@@ -341,7 +344,10 @@ export function parseTrainedTeacherServiceDetailJson(raw?: string | null): Parti
       parsed.frontendProgramId != null ||
       parsed.seedCase != null
 
-    if (!hasPrimaryShape) return {}
+    if (!hasPrimaryShape) {
+      const leftoverOverlay = reconcileSurveyOverlay(registrationOverlay, undefined)
+      return leftoverOverlay ? { registrationOverlay: leftoverOverlay } : {}
+    }
 
     const normalized = normalizeGeneralProgramServiceDetailParsed(
       parsed as Parameters<typeof normalizeGeneralProgramServiceDetailParsed>[0]

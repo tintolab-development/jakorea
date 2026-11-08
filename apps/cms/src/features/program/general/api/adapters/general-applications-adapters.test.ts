@@ -32,10 +32,18 @@ import {
   mapOrganizationApplicationToApplicantSchoolRow,
   mapParticipantToParticipatingIndividualRow,
   mapParticipantToParticipatingInstructorRow,
+  mapParticipantRequestedSchedulesToHopeSessions,
   mapParticipantToParticipatingSchoolRow,
+  mapStoredPeriodRequestedSchedulesToHopeSessions,
   mapParticipantToParticipatingVolunteerRow,
   mapVolunteerApplicationToGeneralVolunteerApplicantRow,
   mapVolunteerInterviewAssignmentFromWire,
+  ADMIN_LIST_STATUS_GROUP_APPLICATION_REJECTED,
+  buildGeneralIndividualApplicationsApiQuery,
+  buildGeneralInstructorApplicationsApiQuery,
+  buildGeneralOrganizationApplicationsApiQuery,
+  mapApprovalStatusToApiFilter,
+  mapApprovalStatusToApiListQuery,
 } from '@/features/program/general/api/adapters/general-applications-adapters'
 import {
   parseGeneralProgramServiceDetailJson,
@@ -332,7 +340,46 @@ describe('general-applications-adapters', () => {
     expect(mapApiApplicationStatusToApprovalStatus('WAITING_REVIEW')).toBe('pending')
     expect(mapApiApplicationStatusToApprovalStatus('REJECTED')).toBe('rejected')
     expect(mapApiApplicationStatusToApprovalStatus('CANCELLED')).toBe('cancelled')
+    expect(mapApiApplicationStatusToApprovalStatus('APPROVAL_CANCELLED')).toBe('rejected')
     expect(mapApiApplicationStatusToApprovalStatus('REJECTION_CANCELLED')).toBe('pending')
+  })
+
+  it('신청 반려 목록 필터는 statusGroup=APPLICATION_REJECTED를 쓰고 단일 REJECTED를 쓰지 않는다', () => {
+    expect(mapApprovalStatusToApiListQuery('rejected')).toEqual({
+      statusGroup: ADMIN_LIST_STATUS_GROUP_APPLICATION_REJECTED,
+    })
+    expect(mapApprovalStatusToApiFilter('rejected')).toBeUndefined()
+    expect(mapApprovalStatusToApiListQuery('approved')).toEqual({ status: 'APPROVED' })
+    expect(mapApprovalStatusToApiListQuery('pending')).toEqual({})
+    expect(
+      buildGeneralOrganizationApplicationsApiQuery({
+        approvalStatus: 'rejected',
+        organizationName: '강서초',
+        teacherName: '김교사',
+      })
+    ).toEqual({
+      statusGroup: ADMIN_LIST_STATUS_GROUP_APPLICATION_REJECTED,
+      organizationName: '강서초',
+      teacherName: '김교사',
+    })
+    expect(
+      buildGeneralIndividualApplicationsApiQuery({
+        approvalStatus: 'rejected',
+        applicantName: '고종욱',
+      })
+    ).toEqual({
+      statusGroup: ADMIN_LIST_STATUS_GROUP_APPLICATION_REJECTED,
+      keyword: '고종욱',
+    })
+    expect(
+      buildGeneralInstructorApplicationsApiQuery({
+        approvalStatus: 'rejected',
+        instructorName: '김서연',
+      })
+    ).toEqual({
+      statusGroup: ADMIN_LIST_STATUS_GROUP_APPLICATION_REJECTED,
+      keyword: '김서연',
+    })
   })
 
   it('maps interview-track individual approval from document/final result when applicationStatus stays waiting', () => {
@@ -713,6 +760,82 @@ describe('general-applications-adapters', () => {
     expect(row.hopeEducationSessions?.[1]?.date).toBe('2026.12.30')
   })
 
+  it('maps participant requestedSchedules (stored period rows) to hope sessions without extra calls', () => {
+    const row = mapParticipantToParticipatingSchoolRow(
+      {
+        participantId: 1695100,
+        organizationApplicationId: 1691600,
+        organizationName: '기간형초',
+        sessions: [],
+        requestedSchedules: [
+          {
+            id: 99453,
+            preferenceOrder: 2,
+            requestedDate: '2026-11-20',
+            startPeriod: null,
+            sessionCount: 1,
+            combinedClassYn: false,
+            sessionTimes: [],
+            resolvedScheduleId: null,
+            label: null,
+            periodStartDate: null,
+            periodEndDate: null,
+            resolvedScheduleIds: [],
+          },
+          {
+            id: 99452,
+            preferenceOrder: 1,
+            requestedDate: '2026-11-18',
+            startPeriod: 1,
+            sessionCount: 1,
+            combinedClassYn: false,
+            sessionTimes: [],
+            resolvedScheduleId: null,
+            label: null,
+            periodStartDate: null,
+            periodEndDate: null,
+            resolvedScheduleIds: [],
+          },
+        ],
+      },
+      0,
+      '186500'
+    )
+    expect(row.hopeEducationSessions).toEqual(
+      mapStoredPeriodRequestedSchedulesToHopeSessions([
+        { id: 99452, preferenceOrder: 1, requestedDate: '2026-11-18', startPeriod: 1, sessionCount: 1, sessionTimes: [] },
+        { id: 99453, preferenceOrder: 2, requestedDate: '2026-11-20', startPeriod: null, sessionCount: 1, sessionTimes: [] },
+      ])
+    )
+    expect(row.hopeEducationSessions?.map(session => session.requestedScheduleId)).toEqual([
+      99452, 99453,
+    ])
+    expect(row.lectureRound).toBe('2')
+  })
+
+  it('keeps session-based lectureRound and no hope sessions when requestedSchedules is empty', () => {
+    const row = mapParticipantToParticipatingSchoolRow(
+      {
+        participantId: 1695102,
+        organizationApplicationId: 1691602,
+        requestedSchedules: [],
+        sessions: [
+          {
+            scheduleId: 801,
+            sessionNo: 1,
+            startAt: '2026-10-12T09:00:00+09:00',
+            endAt: '2026-10-12T11:00:00+09:00',
+          },
+        ],
+      },
+      0,
+      '186502'
+    )
+    expect(row.hopeEducationSessions).toBeUndefined()
+    expect(row.lectureRound).toBe('1')
+    expect(mapParticipantRequestedSchedulesToHopeSessions(undefined)).toEqual([])
+  })
+
   it.each([
     ['BEFORE_SHIPPING', 'preparing'],
     ['SHIPPING', 'shipping'],
@@ -891,7 +1014,7 @@ describe('general-applications-adapters', () => {
     expect(individual.lectureAttendanceSessions).toEqual([
       { roundNumber: 1, scheduleId: 701, status: 'attended' },
       { roundNumber: 2, scheduleId: 702, status: 'late' },
-      { roundNumber: 3, scheduleId: 703, status: 'attended' },
+      { roundNumber: 3, scheduleId: 703, status: 'excused' },
     ])
   })
 
@@ -1250,7 +1373,86 @@ describe('general-applications-adapters', () => {
     expect(row.affiliation).toBe('JA Korea 본부')
     expect(row.bankName).toBe('국민은행')
     expect(row.accountNumber).toBe('123-456-7890')
-    expect(row.businessIncomeEarnerStatus).toBe('해당 없음')
+    expect(row.businessIncomeEarnerStatus).toBeUndefined()
+  })
+
+  it('UNMASKED 신청 상세는 경력·주소·소속을 같은 GET에서만 채우고 계좌·책정은 비운다', () => {
+    const base = mapInstructorApplicationToApplicantInstructorRow(
+      instructorApplicationListItemFixture({
+        id: 1694808,
+        instructorMemberId: 190115,
+        programId: 186550,
+        instructorName: '이순규',
+        applicationStatus: 'APPROVED',
+        preferredOrganizations: [],
+        availableActions: [],
+        availableScheduleIds: [],
+      }),
+      0,
+      '186550'
+    )
+    const row = mapInstructorApplicationDetailToApplicantRow(
+      {
+        id: 1694808,
+        instructorName: '이순규',
+        homeAddress: '서울특별시 강남구 테헤란로 152 10층',
+        homeAddressDetail: '10층',
+        teachingExperience: '5년',
+        jaLectureExperienceYears: null,
+        affiliation: null,
+        feePolicy: null,
+        businessIncomeEarnerStatus: null,
+        instructorFeeGradeSnapshot: 'GRADE_1',
+        instructorCmsProfile: {
+          affiliation: { organizationNames: ['JA 강사단'] },
+          instructorCareerSummary: '5년',
+          career: { summaryYears: '5년', rows: [] },
+          homeAddress: { line: '서울특별시 강남구 테헤란로 1', detail: '10층' },
+          defaultFeeGrade: 'GRADE_1',
+        },
+      } as never,
+      base
+    )
+    expect(row.lectureExperienceYears).toBe(5)
+    expect(row.address).toBe('서울특별시 강남구 테헤란로 152 10층')
+    expect(row.affiliation).toBe('JA 강사단')
+    expect(row.instructorFeeGradeLabel).toBe('1급 강사비')
+    expect(row.lectureFeeBasisType).toBeUndefined()
+    expect(row.bankName).toBeUndefined()
+    expect(row.businessIncomeEarnerStatus).toBeUndefined()
+  })
+
+  it('신청 상세에 계좌·사업소득 필드가 없으면 비워 둔다', () => {
+    const base = mapInstructorApplicationToApplicantInstructorRow(
+      instructorApplicationListItemFixture({
+        id: 1694808,
+        instructorMemberId: 190115,
+        programId: 186550,
+        instructorName: '이순규',
+        applicationStatus: 'APPROVED',
+        preferredOrganizations: [],
+        availableActions: [],
+        availableScheduleIds: [],
+      }),
+      0,
+      '186550'
+    )
+    const row = mapInstructorApplicationDetailToApplicantRow(
+      {
+        id: 1694808,
+        programId: 186550,
+        feePolicy: null,
+        businessIncomeEarnerStatus: null,
+        instructorCmsProfile: {
+          defaultFeeGrade: 'GRADE_1',
+        },
+      } as never,
+      base
+    )
+    expect(row.bankName).toBeUndefined()
+    expect(row.accountNumber).toBeUndefined()
+    expect(row.accountHolder).toBeUndefined()
+    expect(row.businessIncomeEarnerStatus).toBeUndefined()
   })
 
   it('merges instructorCmsProfile resume onto instructor application detail', () => {

@@ -20,4 +20,6 @@ export interface FileDownloadLogItem {
   clientIp?: string;
   traceId?: string;
   createdAt?: string;
+  downloadKind?: string;
+  containedPiiTypes?: string[];
 }

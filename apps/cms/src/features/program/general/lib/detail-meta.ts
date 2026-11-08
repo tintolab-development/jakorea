@@ -58,6 +58,26 @@ export function hasGeneralInstructorApplications(program: Program): boolean {
   return getGeneralParticipantTypes(program).includes('teacher_instructor')
 }
 
+/** DRAFT/취소 모집은 강사 모집으로 보지 않는다. INSTRUCTOR·LECTURER. */
+export function hasActiveInstructorRecruitment(program: Program): boolean {
+  const rows = program.programRecruitments ?? []
+  const instructorRows = rows.filter(row => {
+    const type = String(
+      row.recruitmentType ?? row.targetType ?? row.applicationType ?? ''
+    ).toUpperCase()
+    return type === 'INSTRUCTOR' || type === 'LECTURER'
+  })
+  if (instructorRows.length === 0) return false
+  return instructorRows.some(row => {
+    const status = String(
+      (row as { recruitmentStatus?: string | null }).recruitmentStatus ??
+        (row as { status?: string | null }).status ??
+        ''
+    ).toUpperCase()
+    return status !== 'DRAFT' && status !== 'CANCELLED' && status !== 'CANCELED' && status !== 'DELETED'
+  })
+}
+
 export function hasGeneralVolunteerApplications(program: Program): boolean {
   return getGeneralParticipantTypes(program).includes('volunteer')
 }

@@ -1,4 +1,15 @@
+import {
+  CONSENT_SENSITIVE_FILE_FORBIDDEN_CODE,
+  CONSENT_SENSITIVE_FILE_FORBIDDEN_MESSAGE,
+  DOWNLOAD_PASSWORD_INVALID_CODE,
+  DOWNLOAD_PASSWORD_INVALID_SERVER_MESSAGE,
+  DOWNLOAD_PASSWORD_REQUIRED_CODE,
+  DOWNLOAD_PASSWORD_REQUIRED_MESSAGE,
+  isFileDownloadPasswordErrorCode,
+  messageForProtectedDownloadErrorCode,
+} from '@jakorea/domain/shared/file-download-password'
 import { extractApiErrorMessage } from '@/shared/lib/extract-api-error-message'
+import { getFileDownloadPasswordFormError as getSharedFileDownloadPasswordFormError } from '@/shared/lib/file-download-password-api-error'
 
 const PAYMENT_STATEMENT_STATUS_CONFLICT = 'PAYMENT_STATEMENT_STATUS_CONFLICT'
 const PAYMENT_STATEMENT_CONFLICT_FALLBACK =
@@ -8,10 +19,10 @@ const PAYMENT_STATEMENT_CONFLICT_FALLBACK =
 const GENERIC_SETTLEMENT_API_MESSAGES = new Set([
   '요청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
   '요청 처리 중 오류가 발생했습니다.',
+  '요청한 변경이 기존 데이터와 충돌합니다.',
 ])
 
-export const SETTLEMENT_EXPORT_FILE_ALREADY_DOWNLOADED =
-  'SETTLEMENT_EXPORT_FILE_ALREADY_DOWNLOADED'
+export const SETTLEMENT_EXPORT_FILE_ALREADY_DOWNLOADED = 'SETTLEMENT_EXPORT_FILE_ALREADY_DOWNLOADED'
 export const FILE_DOWNLOAD_TOKEN_INVALID_OR_EXPIRED = 'FILE_DOWNLOAD_TOKEN_INVALID_OR_EXPIRED'
 export const SENSITIVE_FILE_RELAY_REQUIRED = 'SENSITIVE_FILE_RELAY_REQUIRED'
 
@@ -21,8 +32,7 @@ export const FILE_DOWNLOAD_TOKEN_INVALID_MESSAGE =
   '다운로드 토큰이 만료되었거나 유효하지 않습니다. 양식을 새로 발급해 주세요.'
 export const SENSITIVE_FILE_RELAY_REQUIRED_MESSAGE =
   '민감 정산 파일은 일반 다운로드 주소로 받을 수 없습니다. 미리보기에서 엑셀 다운로드를 다시 시도해 주세요.'
-export const SETTLEMENT_CORRECTION_PAID_NOT_RESTORABLE =
-  'SETTLEMENT_CORRECTION_PAID_NOT_RESTORABLE'
+export const SETTLEMENT_CORRECTION_PAID_NOT_RESTORABLE = 'SETTLEMENT_CORRECTION_PAID_NOT_RESTORABLE'
 export const SETTLEMENT_CORRECTION_RESTORE_STATUS_UNAVAILABLE =
   'SETTLEMENT_CORRECTION_RESTORE_STATUS_UNAVAILABLE'
 export const SETTLEMENT_CONFIG_WITHHOLDING_RATE_INVALID =
@@ -50,7 +60,7 @@ export const TAX_REPORT_REQUIRED_IDENTITY_MISSING_MESSAGE =
 export const SETTLEMENT_CORRECTION_UNIT_AMOUNT_REQUIRED_MESSAGE =
   '기타 인건비·특강 수동 책정 단가를 입력해 주세요. 0원 이하 금액은 사용할 수 없습니다.'
 export const SETTLEMENT_CORRECTION_CALCULATION_UNIT_INVALID_MESSAGE =
-  '지급 기준 단위가 올바르지 않습니다. 출강 1회당·1시간당·1차시당 중 하나를 선택해 주세요.'
+  '지급 기준 단위가 올바르지 않습니다. 출강 1회당·차시당(레거시)·1차시당 중 하나를 선택해 주세요.'
 export const SETTLEMENT_CORRECTION_CLASS_COUNT_REQUIRED_MESSAGE =
   '1차시당 책정에 필요한 차시 수가 없어 정산을 확정할 수 없습니다. 교육 시간을 확인해 주세요.'
 
@@ -64,9 +74,10 @@ export const GEMINI_TRAINING_REPORT_MISSING_MESSAGE =
 
 /** BE 2026-09-11 bulk-confirm 계약 — 공통 메시지 없을 때 FE fallback */
 const SETTLEMENT_BULK_CONFIRM_ERROR_MESSAGES: Record<string, string> = {
-  SCHEDULED_PAYMENT_DATE_REQUIRED: '강의비 지급 예정일을 입력해 주세요.',
+  SCHEDULED_PAYMENT_DATE_REQUIRED: '계좌 지급 예정일을 입력해 주세요.',
   PAYMENT_STATEMENT_IDS_REQUIRED: '확인할 지급조서를 선택해 주세요.',
-  PAYMENT_STATEMENT_NOT_FOUND: '지급조서를 찾을 수 없습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.',
+  PAYMENT_STATEMENT_NOT_FOUND:
+    '지급조서를 찾을 수 없습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.',
   [PAYMENT_STATEMENT_STATUS_CONFLICT]: PAYMENT_STATEMENT_CONFLICT_FALLBACK,
   [SETTLEMENT_EXPORT_FILE_ALREADY_DOWNLOADED]: SETTLEMENT_EXPORT_ALREADY_DOWNLOADED_MESSAGE,
   [FILE_DOWNLOAD_TOKEN_INVALID_OR_EXPIRED]: FILE_DOWNLOAD_TOKEN_INVALID_MESSAGE,
@@ -81,8 +92,10 @@ const SETTLEMENT_BULK_CONFIRM_ERROR_MESSAGES: Record<string, string> = {
     '원천징수 금액 입력값을 확인해 주세요. 0 이상의 원 단위 금액을 입력해야 합니다.',
   SETTLEMENT_EXPORT_SCOPE_TOKEN_REQUIRED:
     '선택·필터 원본 발급은 서버 발급 범위 확인(scopeToken)이 필요합니다.',
-  SETTLEMENT_EXPORT_SCOPE_TOKEN_INVALID: '발급 범위 확인이 유효하지 않습니다. 범위를 다시 확인해 주세요.',
-  SETTLEMENT_EXPORT_SCOPE_TOKEN_EXPIRED: '발급 범위 확인이 만료되었습니다. 범위를 다시 확인해 주세요.',
+  SETTLEMENT_EXPORT_SCOPE_TOKEN_INVALID:
+    '발급 범위 확인이 유효하지 않습니다. 범위를 다시 확인해 주세요.',
+  SETTLEMENT_EXPORT_SCOPE_TOKEN_EXPIRED:
+    '발급 범위 확인이 만료되었습니다. 범위를 다시 확인해 주세요.',
   [SETTLEMENT_CORRECTION_UNIT_AMOUNT_REQUIRED]: SETTLEMENT_CORRECTION_UNIT_AMOUNT_REQUIRED_MESSAGE,
   [SETTLEMENT_CORRECTION_CALCULATION_UNIT_INVALID]:
     SETTLEMENT_CORRECTION_CALCULATION_UNIT_INVALID_MESSAGE,
@@ -90,6 +103,17 @@ const SETTLEMENT_BULK_CONFIRM_ERROR_MESSAGES: Record<string, string> = {
   [LEGACY_GEMINI_TAX_SNAPSHOT_MISSING]: LEGACY_GEMINI_TAX_SNAPSHOT_MISSING_MESSAGE,
   [TAX_REPORT_REQUIRED_IDENTITY_MISSING]: TAX_REPORT_REQUIRED_IDENTITY_MISSING_MESSAGE,
   [GEMINI_TRAINING_REPORT_MISSING]: GEMINI_TRAINING_REPORT_MISSING_MESSAGE,
+  SETTLEMENT_ASSIGNED_SCHEDULE_TIME_REQUIRED:
+    '배정 일정 시작·종료 시간이 없어 정산을 신청할 수 없습니다.',
+  SETTLEMENT_ACTUAL_TRAINING_TIME_REQUIRED: '실적 시작·종료 시간이 없어 정산을 신청할 수 없습니다.',
+  SETTLEMENT_WAGE_RATE_NOT_CONFIGURED: '프로그램 강사비 단가가 없어 정산을 신청할 수 없습니다.',
+  SETTLEMENT_BANK_ACCOUNT_REQUIRED:
+    '지급조서 사전 동의서를 작성·완료하세요. 등록된 정산 계좌가 없어 계좌이체를 생성할 수 없습니다.',
+  SETTLEMENT_ACCOUNT_UPDATE_VIA_CONSENT_ONLY:
+    '정산 계좌는 지급조서 사전 동의서에서만 입력·수정할 수 있습니다.',
+  [DOWNLOAD_PASSWORD_REQUIRED_CODE]: DOWNLOAD_PASSWORD_REQUIRED_MESSAGE,
+  [DOWNLOAD_PASSWORD_INVALID_CODE]: DOWNLOAD_PASSWORD_INVALID_SERVER_MESSAGE,
+  [CONSENT_SENSITIVE_FILE_FORBIDDEN_CODE]: CONSENT_SENSITIVE_FILE_FORBIDDEN_MESSAGE,
 }
 
 /** FE가 서버 공통 문구를 덮어쓰는 export/tax 코드 (접미사 포함 raw도 동일) */
@@ -103,6 +127,7 @@ const FORCE_FE_MAPPED_CODES = new Set([
   SETTLEMENT_CORRECTION_CALCULATION_UNIT_INVALID,
   SETTLEMENT_CORRECTION_CLASS_COUNT_REQUIRED,
   GEMINI_TRAINING_REPORT_MISSING,
+  'SETTLEMENT_BANK_ACCOUNT_REQUIRED',
 ])
 
 export type NormalizedSettlementApiErrorCode = {
@@ -190,7 +215,8 @@ function appendAdminPaymentIdsHint(baseMessage: string, paymentIds: number[]): s
   if (paymentIds.length === 0) return baseMessage
   // 관리자 화면용 — 개인정보 없는 지급 ID만. raw code/접미사 전체는 출력하지 않는다.
   const preview = paymentIds.slice(0, 20)
-  const more = paymentIds.length > preview.length ? ` 외 ${paymentIds.length - preview.length}건` : ''
+  const more =
+    paymentIds.length > preview.length ? ` 외 ${paymentIds.length - preview.length}건` : ''
   return `${baseMessage} (지급 ID: ${preview.join(', ')}${more})`
 }
 
@@ -211,6 +237,16 @@ function messageForNormalizedCode(
 export function getSettlementApiErrorMessage(error: unknown, fallback: string): string {
   const response = readAxiosResponse(error)
   if (response) {
+    const protectedDownloadMessage = messageForProtectedDownloadErrorCode(
+      normalizeSettlementApiErrorCode(readRawErrorCode(response.data))?.stableCode
+    )
+    if (protectedDownloadMessage) {
+      const serverMessage = extractApiErrorMessage(response.data, {
+        httpStatus: response.status,
+        fallback: protectedDownloadMessage,
+      }).trim()
+      return serverMessage || protectedDownloadMessage
+    }
     if (response.status === 403) {
       return '정산 관리 조회 권한이 없습니다. 관리자 계정으로 다시 로그인해 주세요.'
     }
@@ -287,6 +323,15 @@ export function getSettlementConfigErrorField(
   if (code === SETTLEMENT_CONFIG_WITHHOLDING_RATE_INVALID) return 'withholdingRate'
   if (code === SETTLEMENT_CONFIG_WITHHOLDING_AMOUNT_INVALID) return 'withholdingAmount'
   return undefined
+}
+
+export function isFileDownloadPasswordApiError(error: unknown): boolean {
+  return isFileDownloadPasswordErrorCode(getSettlementApiErrorCode(error))
+}
+
+/** 400 error.code + field=password 를 암호 입력 폼 에러로 쓴다. */
+export function getFileDownloadPasswordFormError(error: unknown): string | null {
+  return getSharedFileDownloadPasswordFormError(error)
 }
 
 export function isPaymentStatementStatusConflictError(error: unknown): boolean {

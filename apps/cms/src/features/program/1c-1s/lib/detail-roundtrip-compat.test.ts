@@ -13,21 +13,14 @@ import {
   replaceProgramRegistrationOverlayPrefix,
   resetProgramRegistrationOverlay,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
-import {
-  detailEditValuesToProgramPatch,
-  narrowProgramDetailPatchForCommonInfoSave,
-  programToDetailEditValues,
-} from '@/features/program/shared/model/program-detail-edit-schema'
+import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { buildCompanySchoolProgramFromRhf } from './build-registration-create-from-canonical'
-import { companySchoolCompatibilityOverlayFromDetailEditValues } from './detail-form-compatibility-overlay'
 import {
-  applyLiveEconomyAnnouncementToProgram,
+  buildCompanySchoolDetailTypedSave,
+  collectCompanySchoolParagraphOverlayFormPatch,
   ECONOMY_PUBLIC_PROGRAM_TITLE_KEY,
-  mergeCompanySchoolDetailSaveOverlay,
   readEconomyRegistrationOverlayForSave,
-  resolveCompanySchoolDetailSaveAnnouncementTitle,
   seedEconomyRegistrationOverlayFromProgram,
-  writeEconomyRegistrationOverlayFromProgramDraft,
 } from './registration-overlay-sync'
 import {
   emptyCompanySchoolApplicationFormState,
@@ -229,56 +222,18 @@ function getProgram(dto: ProgramResponse): Program {
 function simulateCommonInfoSave(
   loaded: Program,
   edit: Partial<ReturnType<typeof programToDetailEditValues>>,
-  options?: { skipSeed?: boolean }
+  _options?: { skipSeed?: boolean }
 ) {
-  if (!options?.skipSeed) {
-    seedEconomyRegistrationOverlayFromProgram(loaded)
-  }
   const values = { ...programToDetailEditValues(loaded), ...edit }
-  const liveOverlay = readEconomyRegistrationOverlayForSave()
-  const liveAnnouncement = resolveCompanySchoolDetailSaveAnnouncementTitle({
-    formAnnouncement: values.announcementTitle,
-    overlayAnnouncement: liveOverlay[ECONOMY_PUBLIC_PROGRAM_TITLE_KEY],
-    programAnnouncement: loaded.generalCommonInfo?.announcementTitle,
-  })
-  const valuesForPatch = { ...values, announcementTitle: liveAnnouncement }
-  const patch = narrowProgramDetailPatchForCommonInfoSave(
-    detailEditValuesToProgramPatch(valuesForPatch, loaded)
-  )
-  const formCompat = companySchoolCompatibilityOverlayFromDetailEditValues(valuesForPatch)
-  const draft = applyLiveEconomyAnnouncementToProgram(
-    {
-      ...loaded,
-      ...patch,
-      generalCommonInfo: {
-        ...loaded.generalCommonInfo,
-        ...patch.generalCommonInfo,
-        announcementTitle: liveAnnouncement ?? patch.generalCommonInfo?.announcementTitle,
-      },
-      registrationOverlay: {
-        ...(loaded.registrationOverlay ?? {}),
-        ...formCompat,
-      },
-    },
-    { ...liveOverlay, ...formCompat },
-    loaded.generalCommonInfo?.announcementTitle
-  )
-  writeEconomyRegistrationOverlayFromProgramDraft(draft)
-  const registrationOverlay = mergeCompanySchoolDetailSaveOverlay(draft, {
-    ...readEconomyRegistrationOverlayForSave(),
-  })
-  const request = mapCompanySchoolToUpdateRequest(
-    { ...draft, registrationOverlay },
-    {
-      ...patch,
-      generalCommonInfo: {
-        ...patch.generalCommonInfo,
-        announcementTitle: draft.generalCommonInfo?.announcementTitle,
-      },
-      registrationOverlay,
-    }
-  )
-  return { values: valuesForPatch, patch, request, registrationOverlay }
+  const built = buildCompanySchoolDetailTypedSave({ program: loaded, values })
+  const request = mapCompanySchoolToUpdateRequest(built.draft, built.patch)
+  return {
+    values: built.values,
+    patch: built.patch,
+    request,
+    registrationOverlay: built.registrationOverlay,
+    incomplete: built.incomplete,
+  }
 }
 
 function fixtureBLegacyProgram(): Program {
@@ -559,7 +514,11 @@ describe('1사1교 상세 GET→수정→PATCH→재GET 호환 왕복', () => {
       ...overlay,
       [ECONOMY_PUBLIC_PROGRAM_TITLE_KEY]: 'RHF-B-공고명-PATCH',
     })
-    const { request } = simulateCommonInfoSave(loaded, {}, { skipSeed: true })
+    const lifted = collectCompanySchoolParagraphOverlayFormPatch(
+      readEconomyRegistrationOverlayForSave(),
+      loaded
+    )
+    const { request } = simulateCommonInfoSave(loaded, lifted, { skipSeed: true })
     const persisted = coerceJson(request.serviceDetailJson)
     const persistedOverlay =
       isRecord(persisted.registration) && isRecord(persisted.registration.overlay)

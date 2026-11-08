@@ -1,4 +1,5 @@
 import { axiosClient } from '@/shared/api/axios-instance'
+import { readPortalDashboard } from './dashboard-stats'
 
 const DASHBOARD_PATH = '/api/portal/me/dashboard'
 const CALENDAR_PATH = '/api/portal/me/calendar'
@@ -27,26 +28,48 @@ export type PortalApplicationSummary = {
   ended?: number
 }
 
+/**
+ * GET /api/portal/me/calendar PortalScheduleItem.
+ * eventType: PROGRAM_SCHEDULE | ASSIGNMENT_DEADLINE | SATISFACTION_DEADLINE |
+ * SURVEY_DEADLINE | EXPENSE_RECEIPT_DEADLINE | LECTURE_REPORT_DEADLINE.
+ * null eventType 은 PROGRAM_SCHEDULE. PROGRAM_PERIOD 는 신규 계약에 없고, 오면 그리지 않는다.
+ */
 export type PortalScheduleItem = {
-  scheduleId?: number
-  applicationId?: number
-  applicationType?: string
-  /** BE 캘린더 이벤트 유형(과제·설문·교육 일정 등). 없으면 교육 일정으로 처리 */
-  eventType?: string
-  programId?: number
-  programTitle?: string
-  scheduleName?: string
-  startAt?: string
-  endAt?: string
-  allDay?: boolean
-  locationName?: string
-  address?: string
-  participationRole?: string
+  eventId?: number | string | null
+  eventType?: string | null
+  title?: string | null
+  id?: number | string | null
+  programId?: number | null
+  programTitle?: string | null
+  scheduleId?: number | null
+  scheduleName?: string | null
+  applicationId?: number | null
+  applicationType?: string | null
+  assignmentId?: number | null
+  lectureReportId?: number | null
+  reportStatus?: string | null
+  canSubmit?: boolean | null
+  isOverdue?: boolean | null
+  formBindingId?: number | null
+  formResponseId?: number | null
+  receiptId?: number | null
+  startAt?: string | null
+  endAt?: string | null
+  allDay?: boolean | null
+  deadlineAt?: string | null
+  deadlineDate?: string | null
+  /** 서버 effectiveDeadline Instant. deadlineDate와 동일 시각. 없으면 null. */
+  submitDueAt?: string | null
+  status?: string | null
+  participationRole?: string | null
+  timeAvailability?: string | null
+  locationName?: string | null
+  address?: string | null
 }
 
+/** 홈은 applications 카운트만 사용. pending/schedules/notices/instructorRoleRequest는 파싱하지 않는다. */
 export type PortalDashboardResponse = {
   applications?: PortalApplicationSummary
-  upcomingSchedules?: PortalScheduleItem[]
 }
 
 export type PortalCalendarResponse = {
@@ -57,7 +80,7 @@ export type PortalCalendarResponse = {
 
 export async function fetchPortalDashboard(signal?: AbortSignal): Promise<PortalDashboardResponse> {
   const { data } = await axiosClient.get<unknown>(DASHBOARD_PATH, { signal })
-  return unwrapEnvelope<PortalDashboardResponse>(data)
+  return readPortalDashboard(data)
 }
 
 export async function fetchPortalCalendar(

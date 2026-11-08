@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Spin } from 'antd'
+import { Spin, Tooltip } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
@@ -18,11 +18,9 @@ import { useProgramLectureReports } from '@/features/program/general/hooks/use-p
 import { useLectureReportPreview } from '@/features/program/general/hooks/use-lecture-report-preview'
 import type { ParticipatingInstructorLectureReportRow } from '@/features/program/general/api/adapters/lecture-reports-adapters'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
-import {
-  downloadGeneralProgramLectureReportFiles,
-  downloadGeneralProgramLectureReports,
-} from '@/features/program/general/api/admin-program-progress-service'
+import { downloadGeneralProgramLectureReportFiles } from '@/features/program/general/api/admin-program-progress-service'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
+import { LECTURE_REPORT_NO_SUBMITTED_PDF_CTA } from '@/features/program/general/lib/download-lecture-reports-bulk-pdf'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 
@@ -32,6 +30,7 @@ import {
   type LectureReportPreviewContext,
 } from '@/features/program/general/lib/build-lecture-report-issuance-preview'
 import { LectureReportIssuancePreviewModal } from '@/features/program/general/ui/detail-modal/program-status/lecture-report-issuance-preview-modal'
+import { useLectureReportBulkPdfExport } from '@/features/program/general/ui/detail-modal/program-status/lecture-report-bulk-pdf-export'
 
 const STATUS_ACCENT_DEFAULT = 'var(--default-BK, #3d3d3d)'
 const STATUS_ACCENT_SCHEDULED = 'var(--color-green, #1e8c29)'
@@ -97,8 +96,23 @@ export function ParticipatingIndividualInstructorLectureReportsSection({
 
   const [viewDownloadingId, setViewDownloadingId] = useState<string | null>(null)
   const [previewRow, setPreviewRow] = useState<ParticipatingInstructorLectureReportRow | null>(null)
-  const [bulkDownloading, setBulkDownloading] = useState(false)
   const previewQuery = useLectureReportPreview(program.id, previewRow)
+  const {
+    bulkDownloading,
+    canBulkDownloadFiles,
+    hasPdfTargets,
+    handleBulkDownload,
+    exportHost,
+  } = useLectureReportBulkPdfExport({
+    programId: program.id,
+    program,
+    instructor,
+    rows,
+    remoteEnabled,
+    hasNextPage: lectureReports.hasNextPage,
+    instructorMemberId,
+    unavailableContext: 'general-lecture-report-bulk-download-individual',
+  })
   const previewContext = useMemo<LectureReportPreviewContext | null>(() => {
     if (previewRow == null || previewQuery.data == null) return null
     return buildLectureReportPreviewContext(
@@ -112,6 +126,12 @@ export function ParticipatingIndividualInstructorLectureReportsSection({
         schoolName: previewRow.schoolName,
         educationGrade: previewRow.educationGrade,
         educationScheduleLabel: previewRow.educationScheduleLabel,
+        lectureDate: previewRow.lectureDate,
+        sessionNo: previewRow.sessionNo,
+        curriculumSessionCount: previewRow.curriculumSessionCount,
+        scheduleRole: previewRow.scheduleRole,
+        educationSlotKey: previewRow.educationSlotKey,
+        timeLabel: previewRow.timeLabel,
       },
       previewQuery.data
     )
@@ -129,9 +149,8 @@ export function ParticipatingIndividualInstructorLectureReportsSection({
     setPreviewRow(null)
   }, [previewQuery.error, showAlert])
 
-  const submittedRows = useMemo(() => rows.filter(row => row.canViewReport), [rows])
-
   const { exportExcel, isExporting: isExcelExporting } = useTableExcelExport({
+    accessLog: { downloadKind: 'PROGRAM_LECTURE_REPORT_EXPORT', containedPiiTypes: ['NAME'] },
     columns: excelColumns,
     data: rows,
     filename: `강의보고서_제출현황_${instructor.instructorName}`,
@@ -175,45 +194,6 @@ export function ParticipatingIndividualInstructorLectureReportsSection({
     },
     [remoteEnabled, showAlert]
   )
-
-  const handleBulkDownload = useCallback(async () => {
-    if (bulkDownloading) return
-    if (!remoteEnabled) {
-      notifyProgramApiUnavailable(
-        'general-lecture-report-bulk-download-individual',
-        '일반 프로그램 · 강의보고서 일괄 다운로드'
-      )
-      return
-    }
-    if (submittedRows.length === 0) {
-      showAlert({
-        title: '안내',
-        content: '다운로드할 제출 완료 강의보고서가 없습니다.',
-      })
-      return
-    }
-    setBulkDownloading(true)
-    try {
-      await downloadGeneralProgramLectureReports(program.id, { instructorMemberId })
-    } catch (error) {
-      showAlert({
-        title: '안내',
-        content: getGeneralProgramApiErrorMessage(
-          error,
-          '강의보고서 일괄 다운로드에 실패했습니다.'
-        ),
-      })
-    } finally {
-      setBulkDownloading(false)
-    }
-  }, [
-    bulkDownloading,
-    instructorMemberId,
-    program.id,
-    remoteEnabled,
-    showAlert,
-    submittedRows.length,
-  ])
 
   const columns = useMemo(
     (): ColumnsType<ParticipatingInstructorLectureReportRow> => [
@@ -313,17 +293,24 @@ export function ParticipatingIndividualInstructorLectureReportsSection({
           <span className="table-description">{rows.length}건</span>
         </div>
         <div className="info-section-buttons--wrapper">
-          <CmsButton
-            variant="secondary"
-            size="h40"
-            icon={<ButtonDownloadIcon />}
-            disabled={bulkDownloading || submittedRows.length === 0}
-            loading={bulkDownloading}
-            onClick={() => {
-              void handleBulkDownload()
-            }} >
-            강의보고서 일괄 다운로드
-          </CmsButton>
+          {canBulkDownloadFiles ? (
+            <Tooltip title={!hasPdfTargets ? LECTURE_REPORT_NO_SUBMITTED_PDF_CTA : undefined}>
+              <span>
+                <CmsButton
+                  variant="secondary"
+                  size="h40"
+                  icon={<ButtonDownloadIcon />}
+                  disabled={bulkDownloading || !hasPdfTargets}
+                  loading={bulkDownloading}
+                  onClick={() => {
+                    void handleBulkDownload()
+                  }}
+                >
+                  강의보고서 일괄 다운로드
+                </CmsButton>
+              </span>
+            </Tooltip>
+          ) : null}
           <ExcelButton onClick={exportExcel} loading={isExcelExporting} />
         </div>
       </div>
@@ -344,6 +331,7 @@ export function ParticipatingIndividualInstructorLectureReportsSection({
         context={previewContext}
         onClose={() => setPreviewRow(null)}
       />
+      {exportHost}
     </div>
   )
 }

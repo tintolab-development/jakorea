@@ -1,5 +1,5 @@
-import type { ApplyTrainedTeachersBasicInfoValues } from '../ui/apply-trained-teachers-basic-info/apply-trained-teachers-basic-info-answers.ts'
-import { findIncompleteTrainedTeachersBasicInfoMessage } from '../ui/apply-trained-teachers-basic-info/apply-trained-teachers-basic-info-incomplete.ts'
+import type { ApplyInstitutionBasicInfoValues } from '../ui/apply-institution-basic-info/apply-institution-basic-info-answers.ts'
+import { findIncompleteInstitutionBasicInfoMessage } from '../ui/apply-institution-basic-info/apply-institution-basic-info-incomplete.ts'
 
 export type ApplicationIncompleteField = {
   message: string
@@ -7,7 +7,7 @@ export type ApplicationIncompleteField = {
   field?: string
 }
 
-export function fieldForTrainedTeachersBasicInfoIncompleteMessage(
+export function fieldForInstitutionBasicInfoIncompleteMessage(
   message: string,
 ): string | undefined {
   if (message.includes('학급')) return 'classCount'
@@ -17,19 +17,22 @@ export function fieldForTrainedTeachersBasicInfoIncompleteMessage(
   if (message.includes('소재지')) return 'regionLabel'
   if (message.includes('주소')) return 'addressDetail'
   if (message.includes('신청 사유')) return 'applicationReason'
+  if (message.includes('교사명')) return 'teacherName'
+  if (message.includes('연락처')) return 'teacherTel'
+  if (message.includes('이메일')) return 'teacherEmail'
   return undefined
 }
 
 export function resolveGeneralBasicInfoApplyIncomplete(
-  values: ApplyTrainedTeachersBasicInfoValues,
+  values: ApplyInstitutionBasicInfoValues,
   paragraphId: string,
 ): ApplicationIncompleteField | null {
-  const message = findIncompleteTrainedTeachersBasicInfoMessage(values)
+  const message = findIncompleteInstitutionBasicInfoMessage(values)
   if (!message) return null
   return {
     message,
     paragraphId,
-    field: fieldForTrainedTeachersBasicInfoIncompleteMessage(message),
+    field: fieldForInstitutionBasicInfoIncompleteMessage(message),
   }
 }
 

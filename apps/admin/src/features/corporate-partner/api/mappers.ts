@@ -15,16 +15,21 @@ import type { SponsorCreateRequest } from '@/shared/api/generated/sponsorship/sc
 import type { SponsorListItem } from '@/shared/api/generated/sponsorship/schemas/sponsorListItem'
 import type { SponsorResponse } from '@/shared/api/generated/sponsorship/schemas/sponsorResponse'
 import type { SponsorUpdateRequest } from '@/shared/api/generated/sponsorship/schemas/sponsorUpdateRequest'
+import { resolveCorporatePartnerLogoFileName } from '@/features/corporate-partner/lib/logo-display-name'
+import { ADMIN_LIST_PAGE_SIZE } from '@/shared/lib/admin-infinite-list'
 
-export const LIST_PAGE_SIZE = 20
+/** 후원사 목록 — 무한 스크롤 한 번에 20건 (list-page-size.mdc) */
+export const LIST_PAGE_SIZE = ADMIN_LIST_PAGE_SIZE
 
 export function mapSponsorListItemToDomain(row: SponsorListItem): CorporatePartner {
   const id = row.id != null ? String(row.id) : ''
+  const logoUrl = row.logoUrl ?? ''
   return {
     id,
     sortOrder: row.displayOrder ?? 0,
     isPublic: Boolean(row.published),
-    logoUrl: row.logoUrl ?? '',
+    logoUrl,
+    logoFileName: resolveCorporatePartnerLogoFileName(undefined, logoUrl) || undefined,
     name: row.companyName ?? '',
     createdAt: row.createdAt ?? '',
     updatedAt: row.createdAt ?? '',
@@ -56,7 +61,7 @@ export function mapSponsorResponseToDomain(row: SponsorResponse): CorporatePartn
  */
 export function toSponsorListParams(filter?: CorporatePartnerListFilter): List2Params {
   const params: List2Params = {
-    page: 0,
+    page: filter?.page ?? 0,
     size: LIST_PAGE_SIZE,
   }
   if (!filter) return params

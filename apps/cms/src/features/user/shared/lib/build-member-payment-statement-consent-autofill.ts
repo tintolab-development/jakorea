@@ -1,14 +1,18 @@
+import {
+  buildPaymentStatementProfileLinkedValues,
+  overlayPaymentStatementProfileLinkedValues,
+  type PaymentStatementProfileLinkedValues,
+} from '@jakorea/form-schema/consent'
 import { PAYMENT_STATEMENT_PRE_CONSENT_BASIC_INFO_AUTHORING_VALUES } from '@/features/template/model/payment-statement-basic-info-sample'
 import type { PaymentStatementBasicInfoAutofillValues } from '@/features/template/ui/form-set/detail-forms/payment-statement-basic-info-detail-form'
+
+export type { PaymentStatementProfileLinkedValues }
 
 export type MemberPaymentStatementAutofillSource = {
   name?: string
   birthDate?: string
   homeAddress?: string
   homeAddressDetail?: string
-  bankName?: string
-  accountNumber?: string
-  accountHolder?: string
   memberType?: 'general' | 'school_teacher'
   affiliationNone?: boolean
   schoolName?: string
@@ -22,34 +26,12 @@ function birthDateToResidentFront(birthDate: string | undefined): string {
   return ''
 }
 
-function resolveAffiliation(source: MemberPaymentStatementAutofillSource): {
-  affiliation: string
-  noAffiliation: boolean
-} {
-  if (source.affiliationNone) {
-    return { affiliation: '', noAffiliation: true }
-  }
-
-  if (source.memberType === 'school_teacher') {
-    return {
-      affiliation: source.schoolName?.trim() ?? '',
-      noAffiliation: false,
-    }
-  }
-
-  return {
-    affiliation: source.affiliationName?.trim() ?? '',
-    noAffiliation: false,
-  }
-}
-
 /** 회원·강사 신규 등록 — 지급조서 사전 동의서 기본정보 prefill */
 export function buildMemberPaymentStatementBasicInfoAutofill(
   source: MemberPaymentStatementAutofillSource
 ): Partial<PaymentStatementBasicInfoAutofillValues> {
   const nameKo = source.name?.trim() ?? ''
-  const accountHolder = source.accountHolder?.trim() || nameKo
-  const { affiliation, noAffiliation } = resolveAffiliation(source)
+  const profile = buildInstructorRegisterPaymentStatementProfileValues(source)
 
   return {
     ...PAYMENT_STATEMENT_PRE_CONSENT_BASIC_INFO_AUTHORING_VALUES,
@@ -61,10 +43,17 @@ export function buildMemberPaymentStatementBasicInfoAutofill(
     ...(source.homeAddressDetail?.trim()
       ? { addressDetail: source.homeAddressDetail.trim() }
       : {}),
-    ...(source.bankName?.trim() ? { bankName: source.bankName.trim() } : {}),
-    ...(source.accountNumber?.trim() ? { accountNumber: source.accountNumber.trim() } : {}),
-    ...(accountHolder ? { accountHolder } : {}),
-    ...(affiliation ? { affiliation } : {}),
-    ...(noAffiliation ? { noAffiliation: true } : {}),
+    ...(nameKo ? { accountHolder: nameKo } : {}),
+    ...(profile.affiliation ? { affiliation: profile.affiliation } : {}),
+    ...(profile.noAffiliation ? { noAffiliation: true } : {}),
   }
 }
+
+/** CMS 강사 신규 등록 — 성명·소속·자택 주소를 등록 기본정보에서 복사 */
+export function buildInstructorRegisterPaymentStatementProfileValues(
+  source: MemberPaymentStatementAutofillSource
+): PaymentStatementProfileLinkedValues {
+  return buildPaymentStatementProfileLinkedValues(source)
+}
+
+export { overlayPaymentStatementProfileLinkedValues }

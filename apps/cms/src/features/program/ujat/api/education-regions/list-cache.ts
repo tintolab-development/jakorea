@@ -7,17 +7,28 @@ function isRegionList(value: unknown): value is UjatEducationRegion[] {
   return Array.isArray(value)
 }
 
+function patchList(
+  queryClient: QueryClient,
+  key: readonly unknown[],
+  updater: (old: UjatEducationRegion[] | undefined) => UjatEducationRegion[] | undefined
+): void {
+  queryClient.setQueryData<UjatEducationRegion[]>(key, old => updater(isRegionList(old) ? old : undefined))
+}
+
 export function applyCreatedEducationRegion(
   queryClient: QueryClient,
   source: 'remote' | 'local',
   created: UjatEducationRegion
 ): void {
-  const key = ujatEducationRegionQueryKeys.list(source)
-  queryClient.setQueryData<UjatEducationRegion[]>(key, old => {
-    if (!isRegionList(old)) return [created]
+  const append = (old: UjatEducationRegion[] | undefined) => {
+    if (!old) return [created]
     if (old.some(row => row.id === created.id)) return old
     return normalizeEducationRegionSort([...old, created])
-  })
+  }
+  patchList(queryClient, ujatEducationRegionQueryKeys.list(source), append)
+  if (created.active) {
+    patchList(queryClient, ujatEducationRegionQueryKeys.activeList(source), append)
+  }
 }
 
 export function applyUpdatedEducationRegion(
@@ -25,12 +36,16 @@ export function applyUpdatedEducationRegion(
   source: 'remote' | 'local',
   updated: UjatEducationRegion
 ): void {
-  const key = ujatEducationRegionQueryKeys.list(source)
-  queryClient.setQueryData<UjatEducationRegion[]>(key, old => {
-    if (!isRegionList(old)) return [updated]
+  patchList(queryClient, ujatEducationRegionQueryKeys.list(source), old => {
+    if (!old) return [updated]
     return normalizeEducationRegionSort(
       old.map(row => (row.id === updated.id ? updated : row))
     )
+  })
+  patchList(queryClient, ujatEducationRegionQueryKeys.activeList(source), old => {
+    const without = (old ?? []).filter(row => row.id !== updated.id)
+    if (!updated.active) return without
+    return normalizeEducationRegionSort([...without, updated])
   })
 }
 
@@ -39,8 +54,8 @@ export function applyDeletedEducationRegion(
   source: 'remote' | 'local',
   id: string
 ): void {
-  const key = ujatEducationRegionQueryKeys.list(source)
-  queryClient.setQueryData<UjatEducationRegion[]>(key, old =>
-    isRegionList(old) ? old.filter(row => row.id !== id) : old
-  )
+  const remove = (old: UjatEducationRegion[] | undefined) =>
+    old ? old.filter(row => row.id !== id) : old
+  patchList(queryClient, ujatEducationRegionQueryKeys.list(source), remove)
+  patchList(queryClient, ujatEducationRegionQueryKeys.activeList(source), remove)
 }

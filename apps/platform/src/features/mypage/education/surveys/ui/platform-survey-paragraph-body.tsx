@@ -46,7 +46,11 @@ export type PlatformSurveyParagraphBodyProps = {
   uploadingFile?: boolean
   /** 설문자 정보 fieldKey → 표시값 (로그인·프로그램 컨텍스트) */
   userInfoValues?: Record<string, string>
+  /** 공개 공유 설문처럼 설문자 정보를 직접 작성해야 할 때 */
+  userInfoEditable?: boolean
+  userInfoRequiredFieldKeys?: readonly string[]
   readOnly?: boolean
+  hideLectureReportInstitutionFields?: boolean
 }
 
 export function PlatformSurveyParagraphBody({
@@ -58,12 +62,36 @@ export function PlatformSurveyParagraphBody({
   onFileRemove,
   uploadingFile = false,
   userInfoValues,
+  userInfoEditable = false,
+  userInfoRequiredFieldKeys,
   readOnly = false,
+  hideLectureReportInstitutionFields = false,
 }: PlatformSurveyParagraphBodyProps) {
   if (isUserInfoParagraph(paragraph)) {
     const entries = getUserInfoSelectedEntries(paragraph)
     if (entries.length === 0) return null
-    return <SurveyUserInfoField entries={entries} values={userInfoValues} />
+    return (
+      <SurveyUserInfoField
+        entries={entries}
+        values={userInfoEditable ? paragraph.fieldAnswers : userInfoValues}
+        editable={userInfoEditable}
+        requiredFieldKeys={userInfoRequiredFieldKeys}
+        disabled={readOnly}
+        onValueChange={
+          userInfoEditable && !readOnly
+            ? (key, value) =>
+                onUpdateParagraph(paragraph.id, current =>
+                  isUserInfoParagraph(current)
+                    ? {
+                        ...current,
+                        fieldAnswers: { ...(current.fieldAnswers ?? {}), [key]: value },
+                      }
+                    : current
+                )
+            : undefined
+        }
+      />
+    )
   }
 
   if (paragraph.kind === 'single_item' && paragraph.variant === 'multiple_choice') {
@@ -175,6 +203,7 @@ export function PlatformSurveyParagraphBody({
         paragraph={paragraph as LectureReportProgramProgressParagraph}
         onUpdateParagraph={onUpdateParagraph}
         readOnly={readOnly}
+        hideInstitutionFields={hideLectureReportInstitutionFields}
       />
     )
   }

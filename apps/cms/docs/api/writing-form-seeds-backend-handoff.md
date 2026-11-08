@@ -26,7 +26,7 @@
 
 상세 계약: [form-template-json-contract.md](./form-template-json-contract.md)
 
-## 목록 (31종)
+## 목록 (32종)
 
 ### 등록 양식 (3)
 
@@ -74,13 +74,14 @@
 | `survey-teacher` | 만족도조사 (교사용) | A | [survey-teacher.json](./form-template-seeds/survey-teacher.json) | 14 |
 | `survey-admin` | 강의평가 (관리자용) | A | [survey-admin.json](./form-template-seeds/survey-admin.json) | 14 |
 
-### 동의 양식 (5)
+### 동의 양식 (6)
 
 | templateCode | templateName | Payload | 시드 JSON | 단락 수 |
 |--------------|--------------|---------|-----------|--------:|
 | `agreement-third-party` | 지급조서 사전 동의서 | A | [agreement-third-party.json](./form-template-seeds/agreement-third-party.json) | 14 |
+| `agreement-receipt-pre-consent` | 영수증 발급 사전 동의서 | A | [agreement-receipt-pre-consent.json](./form-template-seeds/agreement-receipt-pre-consent.json) | 12 |
 | `agreement-crime` | 성범죄 경력조회 동의서 | D | [agreement-crime.json](./form-template-seeds/agreement-crime.json) | 0 |
-| `agreement-notice` | 행정정보 공동이용 사전 동의서 | A | [agreement-notice.json](./form-template-seeds/agreement-notice.json) | 9 |
+| `agreement-notice` | 행정정보 공동이용 사전 동의서 | A | [agreement-notice.json](./form-template-seeds/agreement-notice.json) | 10 |
 | `agreement-expense` | JA Korea 교육진행자 서약서(안) | A | [agreement-expense.json](./form-template-seeds/agreement-expense.json) | 9 |
 | `agreement-portrait` | 초상권 수집·이용 동의 | A | [agreement-portrait.json](./form-template-seeds/agreement-portrait.json) | 8 |
 
@@ -261,11 +262,11 @@
 
 | id | kind | variant | paragraphTitle |
 |----|------|---------|----------------|
-| `gemini-vt-inst-seed-personal-info` | single_item | horizontal_table | 개인정보 수집·이용 |
-| `gemini-vt-inst-seed-third-party` | single_item | horizontal_table | 개인정보 제3자 정보 제공·이용 동의 |
-| `gemini-vt-inst-seed-portrait` | single_item | horizontal_table | 초상권 수집·이용 동의 |
+| `gemini-vt-inst-seed-personal-info` | single_item | horizontal_table | 개인 정보수집 및 제공에 대한 동의 |
+| `gemini-vt-inst-seed-third-party` | single_item | horizontal_table | 제 3자 정보 제공 동의 |
+| `gemini-vt-inst-seed-portrait` | single_item | horizontal_table | 초상권에 대한 동의 |
 | `gemini-vt-inst-seed-training-info` | single_item | horizontal_table | 연수 정보 |
-| `gemini-vt-inst-seed-contact` | single_item | horizontal_table | 담당자 정보 |
+| `gemini-vt-inst-seed-contact` | single_item | horizontal_table | 담당 교사 정보 |
 | `gemini-vt-inst-seed-preferred-schedule` | single_item | horizontal_table | 진행 희망 교육 일정 |
 
 ### `application-ujat-school` — UJAT_참여 기관 신청 폼
@@ -379,10 +380,10 @@
 |----|------|---------|----------------|
 | `payment-statement-pre-consent-seed-title` | description | survey_title_with_period |  |
 | `payment-statement-pre-consent-seed-intro` | single_item | agreement_explanation_text | 개인정보 수집‧이용 및 제공 동의서 |
-| `payment-statement-pre-consent-seed-p1-collection` | single_item | horizontal_table | 개인정보 수집·이용 |
-| `payment-statement-pre-consent-seed-p2-rrn-collection` | single_item | horizontal_table | 고유식별번호(주민등록번호) 수집·이용 |
-| `payment-statement-pre-consent-seed-p3-third-party` | single_item | horizontal_table | 개인정보 제3자 제공·이용 |
-| `payment-statement-pre-consent-seed-p4-rrn-third-party` | single_item | horizontal_table | 고유식별번호 제3자 제공·이용 |
+| `payment-statement-pre-consent-seed-p1-collection` | single_item | horizontal_table | 개인정보 수집‧이용 |
+| `payment-statement-pre-consent-seed-p2-rrn-collection` | single_item | horizontal_table | 고유식별번호(주민등록번호) 수집‧이용 (법령에 따른 수집) |
+| `payment-statement-pre-consent-seed-p3-third-party` | single_item | horizontal_table | 개인정보 제3자 제공‧이용 |
+| `payment-statement-pre-consent-seed-p4-rrn-third-party` | single_item | horizontal_table | 고유식별번호 제3자 제공·이용 (법령에 따른 제공) |
 | `payment-statement-pre-consent-seed-mid-consent-line` | single_item | agreement_explanation_text |  |
 | `payment-statement-pre-consent-seed-mid-date` | description | system | 날짜 유형 |
 | `payment-statement-pre-consent-seed-mid-signature` | description | system | 서명란 유형 |
@@ -391,6 +392,25 @@
 | `payment-statement-pre-consent-seed-tail-date` | description | system | 날짜 유형 |
 | `payment-statement-pre-consent-seed-tail-signature` | description | system | 서명란 유형 |
 | `payment-statement-pre-consent-seed-closing-recipient` | description | closing |  |
+
+### `agreement-receipt-pre-consent` — 영수증 발급 사전 동의서
+
+> 참여자/봉사자 영수증 발급 사전 동의서. 지급조서(agreement-third-party)와 독립.
+
+| id | kind | variant | paragraphTitle |
+|----|------|---------|----------------|
+| `receipt-pre-consent-seed-title` | description | survey_title_with_period |  |
+| `receipt-pre-consent-seed-intro` | single_item | agreement_explanation_text | 개인정보 수집‧이용 및 제공 동의서 |
+| `receipt-pre-consent-seed-p1-collection` | single_item | horizontal_table | 개인정보 수집‧이용 |
+| `receipt-pre-consent-seed-p2-third-party` | single_item | horizontal_table | 개인정보 제3자 제공‧이용 |
+| `receipt-pre-consent-seed-mid-consent-line` | single_item | agreement_explanation_text |  |
+| `receipt-pre-consent-seed-mid-date` | description | system | 날짜 유형 |
+| `receipt-pre-consent-seed-mid-signature` | description | system | 서명란 유형 |
+| `receipt-pre-consent-seed-payment-record` | single_item | vertical_table | 지급조서 |
+| `receipt-pre-consent-seed-final-confirm` | single_item | agreement_explanation_text |  |
+| `receipt-pre-consent-seed-tail-date` | description | system | 날짜 유형 |
+| `receipt-pre-consent-seed-tail-signature` | description | system | 서명란 유형 |
+| `receipt-pre-consent-seed-closing-recipient` | description | closing |  |
 
 ### `agreement-crime` — 성범죄 경력조회 동의서
 
@@ -408,6 +428,7 @@ _(paragraphs 없음)_
 | `agreement-notice-table` | single_item | horizontal_table | 공동이용 행정정보(구비서류) |
 | `agreement-notice-consent-static` | description | static_description_lines | 정보주체(본인) 동의사항 |
 | `agreement-notice-subject` | single_item | short_essay | 대상자 본인 |
+| `agreement-notice-subject-note` | single_item | agreement_explanation_text |  |
 | `agreement-notice-confirmation-closing` | description | closing |  |
 | `agreement-notice-system-date` | description | system | 날짜 유형 |
 | `agreement-notice-system-signature` | description | system | 서명란 유형 |
@@ -418,7 +439,7 @@ _(paragraphs 없음)_
 |----|------|---------|----------------|
 | `agreement-expense-pledge-title` | description | survey_title_with_period |  |
 | `agreement-expense-pledge-intro` | single_item | agreement_explanation_text |  |
-| `agreement-expense-pledge-clause-1` | single_item | multiple_choice | 아동·청소년 보호와 성범죄 예방 |
+| `agreement-expense-pledge-clause-1` | single_item | multiple_choice | 아동·청소년 보호 및 법령 준수 |
 | `agreement-expense-pledge-clause-2` | single_item | multiple_choice | 종교적 정치적 중립성 유지 |
 | `agreement-expense-pledge-clause-3` | single_item | multiple_choice | 개인정보 보호 |
 | `agreement-expense-pledge-clause-4` | single_item | multiple_choice | 품위 유지 및 성실한 교육 수행 |
@@ -433,7 +454,7 @@ _(paragraphs 없음)_
 | `agreement-portrait-title` | description | survey_title_with_period |  |
 | `agreement-portrait-intro` | single_item | agreement_explanation_text |  |
 | `agreement-portrait-personal-consent-table` | single_item | vertical_table | 개인정보 및 초상권 수집·이용 동의 |
-| `agreement-portrait-delegated-consent-table` | single_item | vertical_table | 개인정보처리위탁 제공 동의 |
+| `agreement-portrait-delegated-consent-table` | single_item | vertical_table | 개인정보 처리위탁 동의 |
 | `agreement-portrait-usage-table` | single_item | vertical_table | 초상권 제공·이용 동의 |
 | `agreement-portrait-confirmation-closing` | description | closing |  |
 | `agreement-portrait-system-date` | description | system | 날짜 유형 |

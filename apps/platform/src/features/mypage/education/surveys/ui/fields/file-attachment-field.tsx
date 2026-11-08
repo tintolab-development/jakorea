@@ -1,21 +1,14 @@
-import { useId, useRef, useState } from 'react'
+import { useState } from 'react'
 import type { FileAttachmentParagraph } from '@jakorea/form-schema/writing-form'
-import { formatSingleFileUploadHint, validateUploadBatch } from '@/shared/lib/file-upload-policy'
-import {
-  PFButton,
-  PFFormField,
-  PFFormFieldHintText,
-  PFFormFieldRow,
-  PFFormFieldTable,
-  PFItemDeleteButton,
-  PFText,
-} from '@/shared/ui'
+import { FILE_UPLOAD_MAX_COUNT, validateUploadBatch } from '@/shared/lib/file-upload-policy'
+import hostStyles from '@/features/program/ui/apply-form-field-host.module.css'
+import { PFFormField, PFFormFieldRow, PFFormFieldTable, PFFormFileAttach } from '@/shared/ui'
 import styles from './file-attachment-field.module.css'
 
 const IMAGE_UPLOAD_ACCEPT = '.jpg,.jpeg,.png,image/jpeg,image/png'
 const IMAGE_UPLOAD_HINTS = [
-  formatSingleFileUploadHint('JPG, PNG'),
-  '- 첨부파일명에 특수문자가 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
+  '파일은 JPG, PNG 형식만 등록 가능하며, 최대 10개(파일당 20MB, 총 100MB)까지 첨부할 수 있습니다.',
+  '첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
 ]
 
 type SurveyFileAttachmentFieldProps = {
@@ -37,79 +30,61 @@ export function SurveyFileAttachmentField({
   disabled = false,
   uploading = false,
 }: SurveyFileAttachmentFieldProps) {
-  const inputId = useId()
-  const inputRef = useRef<HTMLInputElement>(null)
   const [policyError, setPolicyError] = useState<string | null>(null)
+  const atCap = fileNames.length >= FILE_UPLOAD_MAX_COUNT
+  const busy = disabled || uploading
 
   return (
-    <div className={styles.root}>
-      {fileNames.length > 0 ? (
-        <ul className={styles.fileList}>
-          {fileNames.map((name, index) => (
-            <li key={`${index}-${name}`} className={styles.fileChip}>
-              <PFText as="span" typo="bd-md-md" color="black" className={styles.fileName}>
-                {name}
-              </PFText>
-              {disabled ? null : (
-                <PFItemDeleteButton
-                  aria-label={`${name} 삭제`}
-                  disabled={uploading}
-                  onClick={() => onFileRemove?.(index)}
-                />
-              )}
-            </li>
-          ))}
-        </ul>
-      ) : null}
+    <div className={[styles.root, hostStyles.root].join(' ')}>
       <PFFormFieldTable>
         <PFFormFieldRow type="single">
-          <PFFormField label="첨부 파일">
-            <div className={styles.attachRow}>
-              <input
-                ref={inputRef}
-                id={inputId}
-                className={styles.fileInput}
-                type="file"
-                accept={IMAGE_UPLOAD_ACCEPT}
-                multiple
-                disabled={disabled || uploading}
-                onChange={event => {
-                  const files = Array.from(event.target.files ?? [])
-                  event.target.value = ''
-                  if (files.length === 0) return
-                  const error = validateUploadBatch({
-                    currentCount: fileNames.length,
-                    currentTotalBytes: 0,
-                    incoming: files,
-                  })
-                  setPolicyError(error)
-                  if (error) return
-                  onFileAdd?.(files)
-                }}
-              />
-              <PFButton
-                type="button"
-                variant="secondary"
-                size="medium"
-                className={styles.fileButton}
-                disabled={disabled || uploading}
-                onClick={() => inputRef.current?.click()}
-              >
-                {uploading ? '업로드 중…' : '파일 추가'}
-              </PFButton>
-              <div className={styles.hints}>
-                {IMAGE_UPLOAD_HINTS.map(hint => (
-                  <PFFormFieldHintText key={hint} as="p" className={styles.hintLine}>
-                    {hint.startsWith('-') ? hint : `- ${hint}`}
-                  </PFFormFieldHintText>
-                ))}
-              </div>
+          <PFFormField label="첨부 파일" fullWidth>
+            <div className={styles.attach}>
+              {fileNames.length > 0 ? (
+                <div className={styles.files}>
+                  {fileNames.map((name, index) => (
+                    <PFFormFileAttach
+                      key={`${index}-${name}`}
+                      hideTrigger
+                      fileName={name}
+                      disabled={busy}
+                      onFileSelect={() => {}}
+                      onRemove={disabled ? undefined : () => onFileRemove?.(index)}
+                    />
+                  ))}
+                </div>
+              ) : null}
+              {disabled ? null : (
+                <div className={styles.attachRow}>
+                  <PFFormFileAttach
+                    className={styles.trigger}
+                    accept={IMAGE_UPLOAD_ACCEPT}
+                    buttonLabel="파일 추가"
+                    aria-label="교육 사진 첨부"
+                    uploading={uploading}
+                    disabled={busy || atCap}
+                    multiple
+                    onFileSelect={() => {}}
+                    onFilesSelect={files => {
+                      const error = validateUploadBatch({
+                        currentCount: fileNames.length,
+                        currentTotalBytes: 0,
+                        incoming: files,
+                      })
+                      setPolicyError(error)
+                      if (error) return
+                      onFileAdd?.(files)
+                    }}
+                  />
+                  <p className={styles.hint}>
+                    {IMAGE_UPLOAD_HINTS.map(hint => (
+                      <span key={hint}>{hint}</span>
+                    ))}
+                  </p>
+                </div>
+              )}
+              {policyError ? <p className={styles.fileError}>{policyError}</p> : null}
             </div>
-            {policyError ? (
-              <PFText as="p" role="alert" typo="bd-sm-rg" color="error" className={styles.fileError}>
-                {policyError}
-              </PFText>
-            ) : null}
           </PFFormField>
         </PFFormFieldRow>
       </PFFormFieldTable>

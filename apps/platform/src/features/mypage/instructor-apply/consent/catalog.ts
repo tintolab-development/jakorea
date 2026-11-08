@@ -10,18 +10,30 @@ export const INSTRUCTOR_APPLY_CONSENT_KEYS = [
 
 export type InstructorApplyConsentKey = (typeof INSTRUCTOR_APPLY_CONSENT_KEYS)[number]
 
-const PAGE_TITLES: Record<InstructorApplyConsentKey, string> = {
+/** 작성 화면 제목 — Platform 시안(P2~P6) */
+const PAGE_TITLES: Record<DocumentConsentWriteKey, string> = {
   consentPaymentStatement: '지급조서 사전 동의서',
-  consentEducatorPledge: 'JA Korea 교육진행자 서약서(안)',
+  consentEducatorPledge: 'JA Korea 교육진행자 서약서',
   consentAdministrativeJoint: '행정정보 공동이용 사전동의서',
-  consentSexOffenseCheck: '성범죄 경력 조회 동의서',
+  consentSexOffenseCheck: '성범죄경력 조회 동의서',
+  consentReceiptPreConsent: '영수증 사전 동의서',
 }
 
 export function isInstructorApplyConsentKey(value: string): value is InstructorApplyConsentKey {
   return (INSTRUCTOR_APPLY_CONSENT_KEYS as readonly string[]).includes(value)
 }
 
-export function getInstructorApplyConsentPageTitle(key: InstructorApplyConsentKey): string {
+export const RECEIPT_PRE_CONSENT_WRITE_KEY = 'consentReceiptPreConsent' as const
+
+export type DocumentConsentWriteKey =
+  | InstructorApplyConsentKey
+  | typeof RECEIPT_PRE_CONSENT_WRITE_KEY
+
+export function isDocumentConsentWriteKey(value: string): value is DocumentConsentWriteKey {
+  return isInstructorApplyConsentKey(value) || value === RECEIPT_PRE_CONSENT_WRITE_KEY
+}
+
+export function getInstructorApplyConsentPageTitle(key: DocumentConsentWriteKey): string {
   return PAGE_TITLES[key]
 }
 
@@ -30,9 +42,12 @@ const PAGE_DESCRIPTIONS: Partial<Record<InstructorApplyConsentKey, string>> = {
 }
 
 export function getInstructorApplyConsentPageDescription(
-  key: InstructorApplyConsentKey,
+  key: DocumentConsentWriteKey,
 ): string | undefined {
-  return PAGE_DESCRIPTIONS[key]
+  if (key === RECEIPT_PRE_CONSENT_WRITE_KEY) {
+    return '본문 수집 목적·제3자 제공·보유기간은 법무 확정 전 초안입니다. 확정된 약관으로 안내하지 않습니다.'
+  }
+  return PAGE_DESCRIPTIONS[key as InstructorApplyConsentKey]
 }
 
 export function getInstructorApplyConsentPath(key: InstructorConsentDocumentKey): string {

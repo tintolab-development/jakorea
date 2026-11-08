@@ -125,7 +125,8 @@ export function CultureSectionCard({ items }: Props) {
               className={fieldClass(isEditing)}
               inputSize="medium"
               width="100%"
-              rows={2}
+              // 조회·수정 모두 내용 줄 수만큼(hug) — 행 높이가 텍스트 높이를 따른다
+              autoSize={{ minRows: 1 }}
               value={value}
               readOnly={!isEditing}
               tabIndex={isEditing ? 0 : -1}
@@ -148,7 +149,8 @@ export function CultureSectionCard({ items }: Props) {
               className={fieldClass(isEditing)}
               inputSize="medium"
               width="100%"
-              rows={3}
+              // 조회·수정 모두 내용 줄 수만큼(hug) — 행 높이가 텍스트 높이를 따른다
+              autoSize={{ minRows: 1 }}
               value={value}
               readOnly={!isEditing}
               tabIndex={isEditing ? 0 : -1}
@@ -164,7 +166,7 @@ export function CultureSectionCard({ items }: Props) {
   )
 
   return (
-    <div className="recruit-guide-section">
+    <section className="admin-list-card recruit-guide-section">
       <div className="admin-list-toolbar">
         <div className="table-header-title--wrapper">
           <span className="table-title">■ 조직문화</span>
@@ -209,6 +211,6 @@ export function CultureSectionCard({ items }: Props) {
         rowKey="id"
         scroll={{ x: true }}
       />
-    </div>
+    </section>
   )
 }

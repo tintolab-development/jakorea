@@ -40,6 +40,11 @@ assert.equal(
   'already-applied',
 )
 assert.equal(isAlreadyAppliedApplicationReason('UJAT_ORGANIZATION_ALREADY_APPLIED'), true)
+assert.equal(isAlreadyAppliedApplicationReason('CONSTRAINT_VIOLATION'), true)
+assert.equal(
+  resolveProgramApplyGateModal(undefined, 'CONSTRAINT_VIOLATION'),
+  'already-applied',
+)
 assert.equal(isAlreadyAppliedApplicationReason('RECRUITMENT_CLOSED'), false)
 assert.equal(resolveProgramApplyGateModal(false, 'RECRUITMENT_NOT_STARTED'), 'proceed')
 assert.equal(resolveProgramApplyGateModal(false, 'RECRUITMENT_CLOSED'), 'proceed')

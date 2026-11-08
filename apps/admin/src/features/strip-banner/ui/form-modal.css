@@ -28,22 +28,9 @@
   width: 100%;
 }
 
-/*
- * th 시안 스펙
- * Field 인라인 --detail-info-label-w(기본 200) 보다 우선
- */
-.strip-banner-form-modal__form .detail-info-form__field {
-  --detail-info-label-w: 140px !important;
-  grid-template-columns: 140px minmax(0, 1fr) !important;
-}
-
+/* 라벨 폭·여백·최소 높이는 공통 small 셀(detail-info-form-modal.css · 1000 미만 팝업)을 따른다 */
 .strip-banner-form-modal__form .detail-info-form__field-label {
   display: flex !important;
-  width: 140px !important;
-  min-width: 140px !important;
-  max-width: 140px !important;
-  min-height: 52px;
-  padding: 8px 16px !important;
   justify-content: center;
   align-items: center;
   gap: 2px;

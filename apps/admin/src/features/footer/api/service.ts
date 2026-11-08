@@ -147,6 +147,9 @@ export async function saveFooterOrgInfoService(
 ): Promise<FooterOrgInfo> {
   const current = cached ?? (await getFooterAdminService()).orgInfo
   const logoAssetId = await resolveOrgLogoAssetId(current, input)
+  if (logoAssetId == null) {
+    throw new Error('LOGO_REQUIRED')
+  }
   const updated = await siteApi().updateOrganization(
     toFooterOrganizationUpdateRequest(input, current.version, logoAssetId),
   )

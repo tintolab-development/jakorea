@@ -28,7 +28,13 @@ import {
   PrincipleDragHandle,
   PrinciplesSortableTable,
 } from '@/features/operating-principles/ui/sortable-table'
-import { CmsButton, CmsTextArea, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
+import {
+  CmsButton,
+  CmsTextArea,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
+  showSaveCompletedAlert,
+  useCmsAlert,
+} from '@/shared/ui'
 import {
   CMS_TABLE_NO_COL_CLASS,
   CMS_TABLE_SORT_COL_CLASS,
@@ -46,8 +52,7 @@ type DraftTexts = Record<string, { title: string; subText: string }>
 function SectionTitle({ children, note }: { children: ReactNode; note?: ReactNode }) {
   return (
     <div className="principles-form-section-title">
-      <span className="principles-form-section-title__marker" aria-hidden />
-      <span className="principles-form-section-title__text">{children}</span>
+      <span className="principles-form-section-title__text">■ {children}</span>
       {note != null ? <span className="principles-form-section-title__note">{note}</span> : null}
     </div>
   )
@@ -64,14 +69,38 @@ function cloneIntro(intro: OperatingPrinciplesIntro): OperatingPrinciplesIntro {
   }
 }
 
+/** 수정 칸 — 줄바꿈 수만큼 높이가 늘고 줄어든다(hug). 조회는 기존 rows 고정 */
+const EDIT_AUTO_SIZE = { minRows: 1 } as const
+
 function fieldClass(isEditing: boolean, ...extra: Array<string | false | undefined>) {
   return [
     'principles-inline-field',
+    'cms-textarea--fixed-rows',
     isEditing ? 'principles-inline-field--edit' : 'principles-inline-field--readonly',
     ...extra,
   ]
     .filter(Boolean)
     .join(' ')
+}
+
+/** 필수 `*`는 수정 모드에서만 노출 */
+function RequiredColumnTitle({
+  children,
+  showRequired,
+}: {
+  children: string
+  showRequired: boolean
+}) {
+  return (
+    <span>
+      {children}
+      {showRequired ? (
+        <span className="principles-col-required" aria-hidden>
+          *
+        </span>
+      ) : null}
+    </span>
+  )
 }
 
 export function PrinciplesFormCard({ data }: Props) {
@@ -112,6 +141,18 @@ export function PrinciplesFormCard({ data }: Props) {
   }, [data.intro, rows])
 
   const handleSave = useCallback(async () => {
+    if (!draftIntro.topSubText.trim() || !draftIntro.mainText.trim()) {
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+      return
+    }
+    const hasBlankPrinciple = rows.some(row => {
+      const draft = draftTexts[row.id]
+      return !(draft?.title ?? row.title).trim() || !(draft?.subText ?? row.subText).trim()
+    })
+    if (hasBlankPrinciple) {
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+      return
+    }
     try {
       await saveMutation.mutateAsync({
         intro: draftIntro,
@@ -215,22 +256,19 @@ export function PrinciplesFormCard({ data }: Props) {
         render: (_value, record) => <PrincipleIcon iconKey={record.iconKey} size={48} />,
       },
       {
-        title: '타이틀',
+        title: <RequiredColumnTitle showRequired={isEditing}>타이틀</RequiredColumnTitle>,
         key: 'title',
-        width: 280,
+        width: 320,
         className: 'principles-sortable-table__col--title',
         render: (_value, record) => {
           const value = draftTexts[record.id]?.title ?? record.title
           return (
             <CmsTextArea
-              className={fieldClass(
-                isEditing,
-                'cms-textarea--fixed-rows',
-                'principles-title-field'
-              )}
+              className={fieldClass(isEditing, 'principles-title-field')}
               inputSize="medium"
               width="100%"
-              rows={2}
+              // 조회·수정 모두 내용 줄 수만큼(hug) — 행 높이가 텍스트 높이를 따른다
+              autoSize={EDIT_AUTO_SIZE}
               value={value}
               readOnly={!isEditing}
               tabIndex={isEditing ? 0 : -1}
@@ -245,17 +283,18 @@ export function PrinciplesFormCard({ data }: Props) {
         },
       },
       {
-        title: '서브 텍스트',
+        title: <RequiredColumnTitle showRequired={isEditing}>서브 텍스트</RequiredColumnTitle>,
         key: 'subText',
         className: 'principles-sortable-table__col--subText',
         render: (_value, record) => {
           const value = draftTexts[record.id]?.subText ?? record.subText
           return (
             <CmsTextArea
-              className={fieldClass(isEditing, 'cms-textarea--fixed-rows')}
+              className={fieldClass(isEditing)}
               inputSize="medium"
               width="100%"
-              rows={3}
+              // 조회·수정 모두 내용 줄 수만큼(hug) — 행 높이가 텍스트 높이를 따른다
+              autoSize={EDIT_AUTO_SIZE}
               value={value}
               readOnly={!isEditing}
               tabIndex={isEditing ? 0 : -1}
@@ -328,13 +367,16 @@ export function PrinciplesFormCard({ data }: Props) {
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="상단 서브 텍스트"
+                required={isEditing}
+                labelWidth={200}
                 view={null}
                 edit={
                   <CmsTextArea
-                    className={fieldClass(isEditing, 'cms-textarea--fixed-rows')}
+                    className={fieldClass(isEditing)}
                     inputSize="medium"
                     width="100%"
-                    rows={1}
+                    rows={isEditing ? undefined : 1}
+                    autoSize={isEditing ? EDIT_AUTO_SIZE : undefined}
                     value={draftIntro.topSubText}
                     readOnly={!isEditing}
                     tabIndex={isEditing ? 0 : -1}
@@ -350,13 +392,16 @@ export function PrinciplesFormCard({ data }: Props) {
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="메인 텍스트"
+                required={isEditing}
+                labelWidth={200}
                 view={null}
                 edit={
                   <CmsTextArea
-                    className={fieldClass(isEditing, 'cms-textarea--fixed-rows')}
+                    className={fieldClass(isEditing)}
                     inputSize="medium"
                     width="100%"
-                    rows={2}
+                    rows={isEditing ? undefined : 2}
+                    autoSize={isEditing ? EDIT_AUTO_SIZE : undefined}
                     value={draftIntro.mainText}
                     readOnly={!isEditing}
                     tabIndex={isEditing ? 0 : -1}

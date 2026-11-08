@@ -42,10 +42,20 @@
   overflow: hidden;
 }
 
+/* Figma 3052:78282 — `< 목록으로` 우측 안내 문구 (gap 16) */
+.impact-story-detail-page__back-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 16px;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
 .impact-story-detail-page__hint {
   margin: 0;
-  flex-shrink: 0;
-  color: var(--color-gray-02, #7d7d7d);
+  min-width: 0;
+  color: rgba(61, 61, 61, 0.5);
   font-family: Pretendard, var(--font-family-primary, sans-serif);
   font-size: 14px;
   font-weight: 500;
@@ -364,4 +374,9 @@
   margin: 0;
   color: var(--main-BK, #3d3d3d);
   font-size: 16px;
+}
+
+/* `< 목록으로` 행 — 카드와 간격 16 */
+.impact-story-detail-page__inner > .impact-story-detail-page__back-row {
+  margin-bottom: -8px;
 }

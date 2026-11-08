@@ -42,8 +42,10 @@ export function isAssignedInterviewSlot(
   return normalizeTimeRangeKey(applicant.assignedInterviewTime) === normalizeTimeRangeKey(slot)
 }
 
-export function countInterviewAvailabilitySlots(days: InterviewAvailabilityDay[]): number {
-  return days.reduce((sum, day) => sum + day.slots.length, 0)
+export function countInterviewAvailabilitySlots(
+  days: InterviewAvailabilityDay[] | null | undefined
+): number {
+  return (days ?? []).reduce((sum, day) => sum + (day?.slots ?? []).length, 0)
 }
 
 /** 배정·재배정 확정 슬롯을 면접 진행 가능 일정 목록에 반영 — 상세 `(배정)` 표시용 */
@@ -51,11 +53,12 @@ export function mergeAssignedInterviewIntoAvailability(
   applicant: InterviewAvailabilityAssignee
 ): InterviewAvailabilityDay[] {
   const {
-    interviewAvailability,
+    interviewAvailability: interviewAvailabilityRaw,
     interviewAssignmentStatus,
     assignedInterviewDateLabel,
     assignedInterviewTime,
   } = applicant
+  const interviewAvailability = interviewAvailabilityRaw ?? []
 
   if (
     interviewAssignmentStatus !== 'assigned' ||
@@ -72,14 +75,15 @@ export function mergeAssignedInterviewIntoAvailability(
 
   if (existingDayIndex >= 0) {
     const day = interviewAvailability[existingDayIndex]
-    const hasSlot = day.slots.some(
+    const daySlots = day?.slots ?? []
+    const hasSlot = daySlots.some(
       slot => normalizeTimeRangeKey(slot) === normalizedAssignedTime
     )
     if (hasSlot) return interviewAvailability
 
     return interviewAvailability.map((entry, index) =>
       index === existingDayIndex
-        ? { ...entry, slots: [...entry.slots, assignedInterviewTime] }
+        ? { ...entry, slots: [...(entry.slots ?? []), assignedInterviewTime] }
         : entry
     )
   }

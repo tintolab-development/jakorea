@@ -20,14 +20,14 @@ import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
 import '@/features/program/general/ui/program-list.css'
 
-const FILE_DOWNLOAD_HISTORY_TABLE_SCROLL_X = 1120
+const FILE_DOWNLOAD_HISTORY_TABLE_SCROLL_X = 1200
 
+/** 시안: 다운로드 파일명은 남는 폭 · 사용자 180 · 다운로드일시·IP 300 */
 const TABLE_COL_WIDTH = {
   no: 80,
-  fileName: 420,
-  userName: 150,
-  downloadedAt: 220,
-  ipAddress: 180,
+  userName: 180,
+  downloadedAt: 300,
+  ipAddress: 300,
 } as const
 
 export default function FileDownloadHistoryPage() {
@@ -78,12 +78,11 @@ export default function FileDownloadHistoryPage() {
         title: '다운로드 파일명',
         dataIndex: 'fileName',
         key: 'fileName',
-        width: TABLE_COL_WIDTH.fileName,
         align: 'center',
         ellipsis: { showTitle: true },
       },
       {
-        title: '사용자명',
+        title: '사용자',
         dataIndex: 'userName',
         key: 'userName',
         width: TABLE_COL_WIDTH.userName,
@@ -91,7 +90,7 @@ export default function FileDownloadHistoryPage() {
         ellipsis: true,
       },
       {
-        title: '다운로드 일시',
+        title: '다운로드일시',
         dataIndex: 'downloadedAt',
         key: 'downloadedAt',
         width: TABLE_COL_WIDTH.downloadedAt,
@@ -125,6 +124,7 @@ export default function FileDownloadHistoryPage() {
       description={`총 ${totalElements.toLocaleString()}건`}
       contentLoading={remoteEnabled && isLoading}
       excelExport={{
+        accessLog: { downloadKind: 'FILE_DOWNLOAD_LOG_EXPORT', containedPiiTypes: ['NAME'] },
         columns,
         data: tableData,
       }}

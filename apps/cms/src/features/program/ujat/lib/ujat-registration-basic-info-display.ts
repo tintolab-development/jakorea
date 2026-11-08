@@ -1,5 +1,5 @@
-import dayjs from 'dayjs'
 import type { Program } from '@/types/domain'
+import { ujatTypedDate } from '@/features/program/ujat/lib/ujat-typed-detail'
 import {
   createUjatRegistrationBasicInfoOverlayDefaults,
   createUjatSurveyItemsDefault,
@@ -333,8 +333,8 @@ export function applyUjatRegistrationOverlayToProgram(
   let startDate = program.startDate
   let endDate = program.endDate
   if (seal?.start && seal?.end) {
-    startDate = dayjs(seal.start).startOf('day').toISOString()
-    endDate = dayjs(seal.end).endOf('day').toISOString()
+    startDate = ujatTypedDate(seal.start) ?? seal.start
+    endDate = ujatTypedDate(seal.end) ?? seal.end
   }
 
   const ipOwnedValue = ipOwned === 'ja' ? 'JA' : ipOwned === 'partner' ? 'Partner' : ipOwned === 'jointly' ? 'Jointly' : program.ipOwned

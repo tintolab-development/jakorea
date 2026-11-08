@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { useNavigateToAncestor } from '@/shared/hooks/use-history-ancestor-navigation'
 
 export type DetailFullpageBreadcrumbTarget = {
   pathname: string
@@ -7,6 +7,7 @@ export type DetailFullpageBreadcrumbTarget = {
 
 export type DetailFullpageBreadcrumbItem = {
   label: string
+  /** 상위 단계 URL — 클릭 시 지나온 history 엔트리면 뒤로, 아니면 replace (push 하지 않음) */
   to?: DetailFullpageBreadcrumbTarget
   /** `to`보다 우선 — 풀페이지 상세 닫기 등 라우터 밖 동작 */
   onClick?: () => void
@@ -34,7 +35,7 @@ export function DetailFullpageBreadcrumb({
   items,
   className,
 }: DetailFullpageBreadcrumbProps) {
-  const navigate = useNavigate()
+  const { toTarget } = useNavigateToAncestor()
 
   if (items.length <= 1) return null
 
@@ -59,7 +60,7 @@ export function DetailFullpageBreadcrumb({
             <button
               type="button"
               className="detail-fullpage-breadcrumb__button"
-              onClick={() => navigate(item.to!, { replace: false })}
+              onClick={() => toTarget(item.to!)}
               title={item.label}
             >
               {item.label}

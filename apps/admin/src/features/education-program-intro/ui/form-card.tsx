@@ -20,7 +20,9 @@ import {
   type ProgramIntroImageSlot,
 } from '@/features/education-program-intro/lib/image-slots'
 import { educationProgramIntroMutationFailureAlert } from '@/features/education-program-intro/lib/mutation-failure-alert'
-import { CmsButton, CmsInput, CmsTextArea, FileSelectField, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
+import { hasIncompleteRequiredProgramIntroFields } from '@/features/education-program-intro/lib/required-fields'
+import { CmsButton, CmsInput, CmsTextArea, FileSelectField, REQUIRED_FIELDS_INCOMPLETE_ALERT, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
+import { FileTypeIcon } from '@/shared/ui/icons/FileTypeIcon'
 
 import './form-card.css'
 
@@ -43,39 +45,6 @@ function PrelineView({ value }: { value: string }) {
   return <span className="program-intro-preline">{value || '-'}</span>
 }
 
-function FileIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 20 20"
-      fill="none"
-      className={className}
-      aria-hidden
-    >
-      <path
-        d="M5.5 2.5h6.2L14.5 5.3V16.5a1 1 0 0 1-1 1h-8a1 1 0 0 1-1-1v-13a1 1 0 0 1 1-1Z"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M11.5 2.5V5.8H14.5"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M7 9.5h6M7 12.5h4.5"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-      />
-    </svg>
-  )
-}
-
 function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -85,12 +54,10 @@ function readFileAsDataUrl(file: File): Promise<string> {
   })
 }
 
-function inlineFieldClass(isEditing: boolean, withTextArea = false): string {
-  const base = isEditing
+function inlineFieldClass(isEditing: boolean): string {
+  return isEditing
     ? 'program-intro-inline-field program-intro-inline-field--edit'
     : 'program-intro-inline-field program-intro-inline-field--readonly'
-  if (!withTextArea) return base
-  return isEditing ? `${base} cms-textarea--fixed-rows` : base
 }
 
 function ImageFileView({ image }: { image: ProgramIntroImage }) {
@@ -99,7 +66,7 @@ function ImageFileView({ image }: { image: ProgramIntroImage }) {
   }
   return (
     <div className="program-intro-file-view">
-      <FileIcon className="program-intro-file-view__icon" />
+      <FileTypeIcon fileName={image.fileName} size={20} className="program-intro-file-view__icon" />
       <span className="program-intro-file-view__name">{image.fileName}</span>
     </div>
   )
@@ -205,6 +172,7 @@ function ProgramSection({
       <DetailInfoForm.Field
         key={slot.label}
         label={slot.label}
+        required={isEditing}
         view={null}
         edit={
           <ImageFieldControl
@@ -222,137 +190,158 @@ function ProgramSection({
   return (
     <section className="program-intro-section" aria-label={title}>
       <SectionTitle>{title}</SectionTitle>
-      <DetailInfoForm title={title} hideHeader mode="edit" className="program-intro-form">
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
-            label="프로그램 유형"
-            view={null}
-            edit={
-              <CmsInput
-                className={inlineFieldClass(isEditing)}
-                inputSize="medium"
-                width="100%"
-                value={display.programType}
-                readOnly={!isEditing}
-                tabIndex={isEditing ? 0 : -1}
-                onChange={e => {
-                  if (!isEditing) return
-                  onChange({ programType: e.target.value })
-                }}
-                aria-label={`${title} 프로그램 유형`}
-              />
-            }
-          />
-        </DetailInfoForm.Row>
-
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
-            label="프로그램 유형 설명"
-            view={null}
-            edit={
-              isEditing ? (
-                <CmsTextArea
-                  className={inlineFieldClass(true, true)}
-                  inputSize="medium"
+      <div className="program-intro-form-stack">
+        <DetailInfoForm title={`${title} 유형`} hideHeader mode="edit" className="program-intro-form">
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="프로그램 유형"
+              required={isEditing}
+              view={null}
+              edit={
+                <CmsInput
+                  className={inlineFieldClass(isEditing)}
+                  inputSize={isEditing ? 'medium' : 'small'}
                   width="100%"
-                  rows={2}
-                  autoSize={false}
-                  value={draftItem.typeDescription}
-                  onChange={e => onChange({ typeDescription: e.target.value })}
-                  aria-label={`${title} 프로그램 유형 설명`}
+                  value={display.programType}
+                  readOnly={!isEditing}
+                  tabIndex={isEditing ? 0 : -1}
+                  onChange={e => {
+                    if (!isEditing) return
+                    onChange({ programType: e.target.value })
+                  }}
+                  aria-label={`${title} 프로그램 유형`}
                 />
-              ) : (
-                <PrelineView value={item.typeDescription} />
-              )
-            }
-          />
-        </DetailInfoForm.Row>
-
-        {slots.length === 1 ? (
-          <DetailInfoForm.Row type="single">{renderImageField(0)}</DetailInfoForm.Row>
-        ) : null}
-
-        {slots.length === 2 ? (
-          <DetailInfoForm.Row type="double">
-            {renderImageField(0)}
-            {renderImageField(1)}
+              }
+            />
           </DetailInfoForm.Row>
-        ) : null}
+        </DetailInfoForm>
 
-        {slots.length >= 3 ? (
-          <>
+        <DetailInfoForm
+          title={`${title} 유형 설명·이미지`}
+          hideHeader
+          mode="edit"
+          className="program-intro-form"
+        >
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="프로그램 유형 설명"
+              required={isEditing}
+              view={null}
+              edit={
+                isEditing ? (
+                  <CmsTextArea
+                    className={inlineFieldClass(true)}
+                    inputSize="medium"
+                    width="100%"
+                    rows={2}
+                    autoSize={false}
+                    value={draftItem.typeDescription}
+                    onChange={e => onChange({ typeDescription: e.target.value })}
+                    aria-label={`${title} 프로그램 유형 설명`}
+                  />
+                ) : (
+                  <PrelineView value={item.typeDescription} />
+                )
+              }
+            />
+          </DetailInfoForm.Row>
+
+          {slots.length === 1 ? (
             <DetailInfoForm.Row type="single">{renderImageField(0)}</DetailInfoForm.Row>
+          ) : null}
+
+          {slots.length === 2 ? (
             <DetailInfoForm.Row type="double">
+              {renderImageField(0)}
               {renderImageField(1)}
-              {renderImageField(2)}
             </DetailInfoForm.Row>
-          </>
-        ) : null}
+          ) : null}
 
-        <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field
-            label="대표 프로그램"
-            view={null}
-            edit={
-              <CmsInput
-                className={inlineFieldClass(isEditing)}
-                inputSize="medium"
-                width="100%"
-                value={display.representativeProgram}
-                readOnly={!isEditing}
-                tabIndex={isEditing ? 0 : -1}
-                onChange={e => {
-                  if (!isEditing) return
-                  onChange({ representativeProgram: e.target.value })
-                }}
-                aria-label={`${title} 대표 프로그램`}
-              />
-            }
-          />
-          <DetailInfoForm.Field
-            label="후원사명"
-            view={null}
-            edit={
-              <CmsInput
-                className={inlineFieldClass(isEditing)}
-                inputSize="medium"
-                width="100%"
-                value={display.sponsorName}
-                readOnly={!isEditing}
-                tabIndex={isEditing ? 0 : -1}
-                onChange={e => {
-                  if (!isEditing) return
-                  onChange({ sponsorName: e.target.value })
-                }}
-                aria-label={`${title} 후원사명`}
-              />
-            }
-          />
-        </DetailInfoForm.Row>
+          {slots.length >= 3 ? (
+            <>
+              <DetailInfoForm.Row type="single">{renderImageField(0)}</DetailInfoForm.Row>
+              <DetailInfoForm.Row type="double">
+                {renderImageField(1)}
+                {renderImageField(2)}
+              </DetailInfoForm.Row>
+            </>
+          ) : null}
+        </DetailInfoForm>
 
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
-            label="대표 프로그램 설명"
-            view={null}
-            edit={
-              isEditing ? (
-                <CmsTextArea
-                  className={inlineFieldClass(true, true)}
-                  inputSize="medium"
+        <DetailInfoForm
+          title={`${title} 대표 프로그램`}
+          hideHeader
+          mode="edit"
+          className="program-intro-form"
+        >
+          <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Field
+              label="대표 프로그램"
+              required={isEditing}
+              view={null}
+              edit={
+                <CmsInput
+                  className={inlineFieldClass(isEditing)}
+                  inputSize={isEditing ? 'medium' : 'small'}
                   width="100%"
-                  rows={2}
-                  autoSize={false}
-                  value={draftItem.representativeDescription}
-                  onChange={e => onChange({ representativeDescription: e.target.value })}
-                  aria-label={`${title} 대표 프로그램 설명`}
+                  value={display.representativeProgram}
+                  readOnly={!isEditing}
+                  tabIndex={isEditing ? 0 : -1}
+                  onChange={e => {
+                    if (!isEditing) return
+                    onChange({ representativeProgram: e.target.value })
+                  }}
+                  aria-label={`${title} 대표 프로그램`}
                 />
-              ) : (
-                <PrelineView value={item.representativeDescription} />
-              )
-            }
-          />
-        </DetailInfoForm.Row>
-      </DetailInfoForm>
+              }
+            />
+            <DetailInfoForm.Field
+              label="후원사명"
+              required={isEditing}
+              view={null}
+              edit={
+                <CmsInput
+                  className={inlineFieldClass(isEditing)}
+                  inputSize={isEditing ? 'medium' : 'small'}
+                  width="100%"
+                  value={display.sponsorName}
+                  readOnly={!isEditing}
+                  tabIndex={isEditing ? 0 : -1}
+                  onChange={e => {
+                    if (!isEditing) return
+                    onChange({ sponsorName: e.target.value })
+                  }}
+                  aria-label={`${title} 후원사명`}
+                />
+              }
+            />
+          </DetailInfoForm.Row>
+
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="대표 프로그램 설명"
+              required={isEditing}
+              view={null}
+              edit={
+                isEditing ? (
+                  <CmsTextArea
+                    className={inlineFieldClass(true)}
+                    inputSize="medium"
+                    width="100%"
+                    rows={2}
+                    autoSize={false}
+                    value={draftItem.representativeDescription}
+                    onChange={e => onChange({ representativeDescription: e.target.value })}
+                    aria-label={`${title} 대표 프로그램 설명`}
+                  />
+                ) : (
+                  <PrelineView value={item.representativeDescription} />
+                )
+              }
+            />
+          </DetailInfoForm.Row>
+        </DetailInfoForm>
+      </div>
     </section>
   )
 }
@@ -389,6 +378,10 @@ export function ProgramIntroFormCard({ data, onEditingChange }: Props) {
   }, [data])
 
   const handleSave = useCallback(async () => {
+    if (hasIncompleteRequiredProgramIntroFields(draft)) {
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+      return
+    }
     try {
       await saveMutation.mutateAsync({
         fieldCode: draft.fieldCode,
@@ -477,11 +470,12 @@ export function ProgramIntroFormCard({ data, onEditingChange }: Props) {
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="메인 텍스트"
+                required={isEditing}
                 view={null}
                 edit={
                   isEditing ? (
                     <CmsTextArea
-                      className={inlineFieldClass(true, true)}
+                      className={inlineFieldClass(true)}
                       inputSize="medium"
                       width="100%"
                       rows={2}

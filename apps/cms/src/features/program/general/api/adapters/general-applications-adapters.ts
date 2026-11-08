@@ -3,6 +3,7 @@ import type {
   ApplicantSchoolRow,
 } from '@/features/program/shared/model/applicant-institution'
 import {
+  positiveEducationNumber,
   stripDefaultEducationSlotNameFromLabel,
   toDisplayEducationScheduleName,
 } from '@/shared/lib/education-schedule-name'
@@ -13,7 +14,10 @@ import type {
   ApplicantInstructorRow,
 } from '@/features/program/shared/model/applicant-instructor'
 import type { InstructorMemberProfile, SchoolTeacherEmploymentStatus } from '@/types/user'
-import { buildLectureFeeBasisDisplay } from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
+import {
+  buildLectureFeeBasisDisplay,
+  parseLectureFeeBasisTypeFromApi,
+} from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
 import {
   readRuntimeBoolean,
   readRuntimeNumber,
@@ -79,6 +83,8 @@ import {
   readOrganizationApplicationPreferredEducationDates,
   readOrganizationApplicationPreferredEducationSchedules,
 } from '@/features/program/general/lib/organization-application-preferred-education-schedules'
+import { requestedSchedulesToPreferredEducationSchedules } from '@/features/program/general/lib/requested-schedules-to-preferred'
+import { collectInstructorApplicationOrganizationDistances } from '@/features/program/general/lib/assignment-waiting-distance'
 import { resolveSessionCalendarDateKey } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-calendar-session'
 import { resolveStoredAffiliation } from '@/features/program/general/lib/affiliation-organization'
 import { isK12SchoolAffiliationName } from '@/features/program/general/lib/k12-school-affiliation'
@@ -115,6 +121,7 @@ export type IndividualApplicationDetailEnriched = Omit<
   }
 }
 
+/** 관리자 신청 상태: 승인 대기·승인 완료·신청 반려. 승인 취소 전용 배지는 쓰지 않는다. */
 export function mapApiApplicationStatusToApprovalStatus(
   status?: string
 ): ApplicantApprovalStatusKey {
@@ -122,7 +129,15 @@ export function mapApiApplicationStatusToApprovalStatus(
   if (['APPROVED', 'ASSIGNED', 'WAITING_ASSIGNMENT'].includes(normalized)) {
     return 'approved'
   }
-  if (['REJECTED', 'AUTO_REJECTED'].includes(normalized)) {
+  if (
+    [
+      'REJECTED',
+      'AUTO_REJECTED',
+      'INTERVIEW_FAILED',
+      'CANCELLED_BY_ADMIN',
+      'APPROVAL_CANCELLED',
+    ].includes(normalized)
+  ) {
     return 'rejected'
   }
   if (['CANCELLED', 'CANCELED'].includes(normalized)) {
@@ -176,22 +191,103 @@ export function mapIndividualApplicationToApprovalStatus(input: {
   return 'pending'
 }
 
+export const ADMIN_LIST_STATUS_GROUP_APPLICATION_REJECTED = 'APPLICATION_REJECTED'
+
+export type ApplicationApprovalApiListQuery = {
+  status?: string
+  statusGroup?: typeof ADMIN_LIST_STATUS_GROUP_APPLICATION_REJECTED
+}
+
+/**
+ * 목록 GET 필터. 「신청 반려」는 statusGroup=APPLICATION_REJECTED
+ * (REJECTED+APPROVAL_CANCELLED). 단일 status=REJECTED는 승인 취소 건을 빠뜨린다.
+ * 승인 대기는 단일 status=WAITING_REVIEW가 REJECTION_CANCELLED를 제외하므로 서버 status를 생략한다.
+ */
+export function mapApprovalStatusToApiListQuery(
+  status?: ApplicantApprovalStatusKey
+): ApplicationApprovalApiListQuery {
+  if (!status) return {}
+  switch (status) {
+    case 'approved':
+      return { status: 'APPROVED' }
+    case 'rejected':
+      return { statusGroup: ADMIN_LIST_STATUS_GROUP_APPLICATION_REJECTED }
+    case 'cancelled':
+      return { status: 'CANCELLED' }
+    case 'pending':
+      return {}
+    default:
+      return {}
+  }
+}
+
+/** 단일 status= 정확 일치. 신청 반려 그룹 조회에는 {@link mapApprovalStatusToApiListQuery}를 쓴다. */
 export function mapApprovalStatusToApiFilter(
   status?: ApplicantApprovalStatusKey
 ): string | undefined {
-  if (!status) return undefined
-  switch (status) {
-    case 'approved':
-      return 'APPROVED'
-    case 'rejected':
-      return 'REJECTED'
-    case 'cancelled':
-      return 'CANCELLED'
-    case 'pending':
-      return 'WAITING_REVIEW'
-    default:
-      return undefined
+  if (status === 'rejected') return undefined
+  if (status === 'pending') return 'WAITING_REVIEW'
+  return mapApprovalStatusToApiListQuery(status).status
+}
+
+function trimListQueryValue(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : undefined
+}
+
+function readUiApprovalStatusFilter(value: unknown): ApplicantApprovalStatusKey | undefined {
+  if (
+    value === 'pending' ||
+    value === 'approved' ||
+    value === 'rejected' ||
+    value === 'cancelled'
+  ) {
+    return value
   }
+  return undefined
+}
+
+export function buildGeneralOrganizationApplicationsApiQuery(
+  filters: Record<string, unknown> = {}
+): ApplicationApprovalApiListQuery & { organizationName?: string; teacherName?: string } {
+  const organizationName = trimListQueryValue(filters.organizationName)
+  const teacherName = trimListQueryValue(filters.teacherName)
+  return {
+    ...mapApprovalStatusToApiListQuery(readUiApprovalStatusFilter(filters.approvalStatus)),
+    ...(organizationName ? { organizationName } : {}),
+    ...(teacherName ? { teacherName } : {}),
+  }
+}
+
+export function buildGeneralIndividualApplicationsApiQuery(
+  filters: Record<string, unknown> = {}
+): ApplicationApprovalApiListQuery & { keyword?: string } {
+  const keyword = trimListQueryValue(filters.applicantName)
+  return {
+    ...mapApprovalStatusToApiListQuery(readUiApprovalStatusFilter(filters.approvalStatus)),
+    ...(keyword ? { keyword } : {}),
+  }
+}
+
+export function buildGeneralInstructorApplicationsApiQuery(
+  filters: Record<string, unknown> = {}
+): ApplicationApprovalApiListQuery & { keyword?: string } {
+  const keyword = trimListQueryValue(filters.instructorName)
+  return {
+    ...mapApprovalStatusToApiListQuery(readUiApprovalStatusFilter(filters.approvalStatus)),
+    ...(keyword ? { keyword } : {}),
+  }
+}
+
+export function serializeApplicationsApiQuery(query: Record<string, unknown>): string {
+  return JSON.stringify({
+    status: query.status ?? '',
+    statusGroup: query.statusGroup ?? '',
+    keyword: query.keyword ?? '',
+    organizationName: query.organizationName ?? '',
+    teacherName: query.teacherName ?? '',
+  })
 }
 
 /**
@@ -388,6 +484,8 @@ export function mapStoredPeriodRequestedSchedulesToHopeSessions(
       scheduleLabel,
       requestedScheduleId: row.id ?? undefined,
       resolvedScheduleId,
+      // 미확정 희망 일정 — 승인/희망 일정 확정 전에는 강사 배정 후보가 아니다(map-requested-schedules와 동일).
+      ...(resolvedScheduleId == null ? { scheduleUnresolved: true } : {}),
     }
   })
 }
@@ -484,15 +582,20 @@ export function mapOrganizationApplicationListSessionsToConfirmedSessions(
 
     const dateParts = formatPreferredScheduleDate(start)
     const round = resolveOrganizationListSessionRound(session, index)
-    const timeLabel = formatKoreanInterviewTime(start)
+    const endRaw = session.endAt?.trim()
+    const end = endRaw ? new Date(endRaw) : null
+    const timeRange =
+      end != null && !Number.isNaN(end.getTime())
+        ? `${formatKoreanInterviewTime(start)} ~ ${formatKoreanInterviewTime(end)}`
+        : formatKoreanInterviewTime(start)
 
     result.push({
       round,
       ...dateParts,
       duration: '-',
       format: '-',
-      classNum: `${round}차시`,
-      timeRange: timeLabel,
+      classNum: '',
+      timeRange,
       status: 'pending',
       resolvedScheduleId: Math.trunc(scheduleId),
       startAt: startRaw,
@@ -625,6 +728,7 @@ export function mapOrganizationApplicationToApplicantSchoolRow(
     teacherName: dto.teacherName?.trim() || '-',
     appliedAt: dto.submittedAt ?? undefined,
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
+    applicationStatus: dto.applicationStatus,
     participationRejectionReason: dto.rejectReason?.trim() || undefined,
     approvalNotificationSentAt: formatOrganizationResultNotificationSentAt(
       readResultNotificationSentAt(dto)
@@ -715,9 +819,7 @@ export function mapOrganizationApplicationDetailToApplicantSchoolRow(
   const requestedScheduleMemo = dto.requestedScheduleMemo?.trim()
   const preferredFromDetail = readOrganizationApplicationPreferredEducationSchedules(dto)
   const preferred =
-    preferredFromDetail.length > 0
-      ? preferredFromDetail
-      : (base.preferredEducationSchedules ?? [])
+    preferredFromDetail.length > 0 ? preferredFromDetail : (base.preferredEducationSchedules ?? [])
   const preferredEducationDates = readOrganizationApplicationPreferredEducationDates(dto)
   const listItemShape = dto as OrganizationApplicationListItemResponse
   const requestedHope = options?.requestedSchedules
@@ -754,6 +856,7 @@ export function mapOrganizationApplicationDetailToApplicantSchoolRow(
     contact: teacherPhone,
     appliedAt: dto.submittedAt ?? undefined,
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
+    applicationStatus: dto.applicationStatus,
     participationRejectionReason: dto.rejectReason?.trim() || undefined,
     approvalNotificationSentAt: formatOrganizationResultNotificationSentAt(
       readResultNotificationSentAt(dto)
@@ -881,6 +984,7 @@ export function mapInstructorApplicationToApplicantInstructorRow(
     schoolName: primarySchoolName && primarySchoolName !== '-' ? primarySchoolName : '',
     preferredSchools: preferredSchools.length > 0 ? preferredSchools : undefined,
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
+    applicationStatus: dto.applicationStatus,
     evaluationGrade: formatJaEvaluationGradeLabel(dto.jaEvaluationGrade),
     instructorFeeGradeLabel:
       formatInstructorFeeGradeLabel(readRuntimeString(dto, 'instructorFeeGradeSnapshot')) ||
@@ -888,6 +992,7 @@ export function mapInstructorApplicationToApplicantInstructorRow(
     rejectionReason: readRuntimeString(dto, 'rejectReason'),
     distanceKm: readRuntimeNumber(dto, 'distanceKm'),
     longDistanceYn: readRuntimeBoolean(dto, 'longDistance'),
+    organizationDistances: collectInstructorApplicationOrganizationDistances(dto),
     programDispatchCount: readRuntimeNumber(dto, 'programDispatchCount'),
     programLongDistanceDispatchCount: readRuntimeNumber(dto, 'programLongDistanceDispatchCount'),
     availableActions: dto.availableActions,
@@ -906,14 +1011,7 @@ function mapInstructorFeeMeasureFromApi(raw?: string | null): string | undefined
 function mapInstructorFeeBasisType(
   raw?: string | null
 ): ApplicantInstructorLectureFeeBasisType | undefined {
-  const trimmed = raw?.trim()
-  if (!trimmed) return undefined
-  const lower = trimmed.toLowerCase()
-  if (lower === 'program' || trimmed === 'PROGRAM') return 'program'
-  if (lower === 'special_lecture') return 'special_lecture'
-  if (lower === 'other_labor') return 'other_labor'
-  if (trimmed === 'RECRUITMENT') return 'special_lecture'
-  return undefined
+  return parseLectureFeeBasisTypeFromApi(raw)
 }
 
 function mapInstructorMemberProfileFromDetail(
@@ -933,6 +1031,50 @@ function mapAffiliationEmploymentStatus(
     return raw
   }
   return undefined
+}
+
+function parseInstructorExperienceYears(raw?: string | null): number | undefined {
+  const match = raw?.trim().match(/(\d+)/)
+  if (!match) return undefined
+  const years = Number(match[1])
+  return Number.isFinite(years) ? years : undefined
+}
+
+function resolveInstructorLectureExperienceYears(
+  dto: InstructorApplicationDetailResponse,
+  base: ApplicantInstructorRow
+): number | null {
+  if (
+    typeof dto.jaLectureExperienceYears === 'number' &&
+    Number.isFinite(dto.jaLectureExperienceYears)
+  ) {
+    return dto.jaLectureExperienceYears
+  }
+  const fromSameGet =
+    parseInstructorExperienceYears(dto.teachingExperience) ??
+    parseInstructorExperienceYears(dto.instructorCmsProfile?.instructorCareerSummary) ??
+    parseInstructorExperienceYears(dto.instructorCmsProfile?.career?.summaryYears)
+  if (fromSameGet != null) return fromSameGet
+  return base.lectureExperienceYears
+}
+
+function joinInstructorHomeAddress(
+  line?: string | null,
+  detail?: string | null
+): string | undefined {
+  const addressLine = line?.trim() ?? ''
+  const addressDetail = detail?.trim() ?? ''
+  if (!addressLine && !addressDetail) return undefined
+  if (!addressDetail) return addressLine
+  if (!addressLine) return addressDetail
+  if (
+    addressLine === addressDetail ||
+    addressLine.endsWith(addressDetail) ||
+    addressLine.includes(` ${addressDetail}`)
+  ) {
+    return addressLine
+  }
+  return `${addressLine} ${addressDetail}`
 }
 
 export function mapInstructorApplicationDetailToApplicantRow(
@@ -978,26 +1120,20 @@ export function mapInstructorApplicationDetailToApplicantRow(
         : base.instructorMemberId,
     programId: toId(dto.programId) || base.programId,
     instructorName: dto.instructorName?.trim() || base.instructorName,
-    lectureExperienceYears:
-      typeof dto.jaLectureExperienceYears === 'number' &&
-      Number.isFinite(dto.jaLectureExperienceYears)
-        ? dto.jaLectureExperienceYears
-        : base.lectureExperienceYears,
+    lectureExperienceYears: resolveInstructorLectureExperienceYears(dto, base),
     educationLevel: dto.educationLevel?.trim() || base.educationLevel,
     educationSchoolName: dto.educationSchoolName?.trim() || base.educationSchoolName,
     contact: dto.contact?.trim() || base.contact,
     email: dto.email?.trim() || base.email,
-    address:
-      [dto.homeAddress, dto.homeAddressDetail]
-        .map(part => part?.trim())
-        .filter(Boolean)
-        .join(' ') || base.address,
+    address: joinInstructorHomeAddress(dto.homeAddress, dto.homeAddressDetail) || base.address,
     appliedAt: dto.submittedAt ?? base.appliedAt,
     affiliation: basicInfoSupplement.affiliation,
     bankName: basicInfoSupplement.bankName,
     accountNumber: basicInfoSupplement.accountNumber,
     accountHolder: basicInfoSupplement.accountHolder,
+    settlementBusinessIncome: basicInfoSupplement.settlementBusinessIncome,
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
+    applicationStatus: dto.applicationStatus ?? base.applicationStatus,
     evaluationGrade: formatJaEvaluationGradeLabel(dto.jaEvaluationGrade) ?? base.evaluationGrade,
     instructorFeeGradeLabel:
       formatInstructorFeeGradeLabel(dto.feePolicy?.instructorFeeGrade) ||
@@ -1014,7 +1150,7 @@ export function mapInstructorApplicationDetailToApplicantRow(
         ? (buildLectureFeeBasisDisplay(
             mapInstructorFeeBasisType(dto.feePolicy.basisType) ??
               base.lectureFeeBasisType ??
-              'special_lecture',
+              'program',
             mapInstructorFeeMeasureFromApi(dto.feePolicy.measure) ?? base.lectureFeeMeasure ?? '',
             dto.feePolicy.amount != null
               ? String(dto.feePolicy.amount)
@@ -1038,6 +1174,7 @@ export function mapInstructorApplicationDetailToApplicantRow(
     nameHanja: dto.nameHanja?.trim() || base.nameHanja,
     nameEnglish: dto.nameEnglish?.trim() || base.nameEnglish,
     birthDate: dto.birthDate?.trim() || base.birthDate,
+    age: dto.age ?? base.age,
     gender: toGenderLabelOrRaw(dto.gender) || base.gender,
     rejectionReason: dto.rejectReason?.trim() || base.rejectionReason,
     distanceKm:
@@ -1170,17 +1307,38 @@ function formatPreferredScheduleDate(date: Date): { date: string; dayOfWeek: str
 
 function preferredScheduleLabel(schedule: PreferredEducationSchedule): string {
   return stripDefaultEducationSlotNameFromLabel(
-    typeof schedule.label === 'string' ? schedule.label : '',
+    typeof schedule.label === 'string' ? schedule.label : ''
   )
+}
+
+const PERIOD_PREFERRED_LABEL_RE = /^\d{4}-\d{2}-\d{2}$/
+
+/**
+ * 일반 기관 기간 지정(PERIOD) 희망 행 — BE는 label에 희망 날짜(`2026-11-08`)만 내려준다.
+ * 다른 유형·일정 지정(line:N) 행의 label은 날짜·시각·일정명 조합이라 여기에 해당하지 않는다.
+ */
+function isPeriodPreferredEducationSchedule(schedule: PreferredEducationSchedule): boolean {
+  return typeof schedule.label === 'string' && PERIOD_PREFERRED_LABEL_RE.test(schedule.label.trim())
 }
 
 /**
  * startAt이 있으면 시작 시각 순으로 정렬하고, 없으면 응답 순서를 유지한다.
  * line:N도 materialized program_schedule이면 startAt·scheduleId가 함께 온다.
+ * PERIOD 희망 행만으로 이뤄진 응답은 서버 지망 순서(round 오름차순)를 그대로 쓴다.
  */
 function orderPreferredEducationSchedules(
   schedules: PreferredEducationSchedule[]
 ): PreferredEducationSchedule[] {
+  if (schedules.length > 0 && schedules.every(isPeriodPreferredEducationSchedule)) {
+    return schedules
+      .map((schedule, index) => ({ schedule, index }))
+      .sort(
+        (a, b) =>
+          (a.schedule.round ?? Number.MAX_SAFE_INTEGER) -
+            (b.schedule.round ?? Number.MAX_SAFE_INTEGER) || a.index - b.index
+      )
+      .map(entry => entry.schedule)
+  }
   return schedules
     .map((schedule, index) => ({ schedule, index }))
     .sort((a, b) => {
@@ -1227,10 +1385,12 @@ export function mapPreferredEducationSchedulesToSessions(
         : `${Math.round((end.getTime() - start.getTime()) / 60_000)}분`
     const scheduleId = schedule.scheduleId
     const hasResolvedSchedule = scheduleId != null && Number.isFinite(scheduleId) && scheduleId > 0
-    const label = scheduleLabel || undefined
+    const periodRow = isPeriodPreferredEducationSchedule(schedule)
+    // PERIOD label은 날짜뿐이다. 시각이 있으면 label 대신 educationDate + startAt·endAt(서울)으로 표시한다.
+    const label = periodRow && validStart ? undefined : scheduleLabel || undefined
     const scheduleUnresolved =
       !hasResolvedSchedule &&
-      (schedule.unresolvedReason != null || schedule.scheduleId == null || Boolean(label))
+      (schedule.unresolvedReason != null || schedule.scheduleId == null || Boolean(scheduleLabel))
     const round = schedule.round ?? index + 1
     return {
       round,
@@ -1247,6 +1407,7 @@ export function mapPreferredEducationSchedulesToSessions(
       ...(schedule.startAt?.trim() ? { startAt: schedule.startAt.trim() } : {}),
       ...(schedule.endAt?.trim() ? { endAt: schedule.endAt.trim() } : {}),
       ...(scheduleUnresolved ? { scheduleUnresolved: true } : {}),
+      ...(periodRow ? { hopeScheduleConfirmed: hasResolvedSchedule } : {}),
     }
   })
 }
@@ -1260,7 +1421,7 @@ export function mapSessionProgressToParticipatingSchoolSessions(
       const byStart = (a.startAt ?? '').localeCompare(b.startAt ?? '')
       return byStart || (a.sessionNo ?? 0) - (b.sessionNo ?? 0)
     })
-    .map((session, index) => {
+    .map(session => {
       const canonical = readProgramScheduleCanonicalFields(session)
       const scheduleName = toDisplayEducationScheduleName(session.scheduleName) || ''
       const start = session.startAt ? new Date(session.startAt) : null
@@ -1278,7 +1439,11 @@ export function mapSessionProgressToParticipatingSchoolSessions(
         validStart && validEnd && end.getTime() > start.getTime()
           ? `${Math.round((end.getTime() - start.getTime()) / 60_000)}분`
           : '-'
-      const round = session.sessionNo ?? index + 1
+      const sessionNo = positiveEducationNumber(session.sessionNo)
+      const curriculumSessionCount = positiveEducationNumber(
+        (session as SessionProgress & { curriculumSessionCount?: number | null })
+          .curriculumSessionCount
+      )
       const resolvedScheduleId = session.resolvedScheduleId ?? session.scheduleId ?? null
       const scheduleUnresolved =
         session.scheduleUnresolved ??
@@ -1286,11 +1451,12 @@ export function mapSessionProgressToParticipatingSchoolSessions(
       const scheduleLabel = !validStart && scheduleName ? scheduleName : undefined
       const deliveryScheduleStatus = session.scheduleStatus?.trim() || undefined
       return {
-        round,
+        round: sessionNo ?? 0,
+        sessionNo: session.sessionNo ?? null,
         ...dateParts,
         duration,
         format: scheduleName || '-',
-        classNum: `${round}교시`,
+        classNum: '',
         timeRange,
         ...(scheduleLabel ? { scheduleLabel } : {}),
         ...(deliveryScheduleStatus ? { deliveryScheduleStatus } : {}),
@@ -1299,9 +1465,11 @@ export function mapSessionProgressToParticipatingSchoolSessions(
         requestedScheduleId: session.requestedScheduleId ?? undefined,
         scheduleUnresolved,
         startAt: session.startAt?.trim() || undefined,
+        endAt: session.endAt?.trim() || undefined,
         ...(scheduleName ? { scheduleName } : {}),
         ...(canonical.scheduleRole ? { scheduleRole: String(canonical.scheduleRole) } : {}),
         ...(canonical.educationSlotKey ? { educationSlotKey: canonical.educationSlotKey } : {}),
+        ...(curriculumSessionCount != null ? { curriculumSessionCount } : {}),
       }
     })
 }
@@ -1348,6 +1516,7 @@ export function mapIndividualApplicationToApplicantRow(
       finalResultStatus: dto.finalResultStatus,
       reserveRank: dto.reserveRank,
     }),
+    applicationStatus: dto.applicationStatus,
     memberId: dto.memberId != null ? String(dto.memberId) : undefined,
     affiliationOrganizationId: affiliation.affiliationOrganizationId,
     adminComment: dto.managerComment ?? undefined,
@@ -1361,10 +1530,21 @@ export function mapIndividualApplicationToApplicantRow(
       dto.interviewStatus,
       dto.giveUpYn
     ),
+    interviewResultStatus: (() => {
+      const candidates = [dto.finalResultStatus, dto.interviewStatus, dto.applicationStatus]
+        .map(value => (typeof value === 'string' ? value.trim().toUpperCase() : ''))
+        .filter(Boolean)
+      const pass = new Set(['EVALUATED', 'INTERVIEW_EVALUATED', 'PASSED', 'INTERVIEW_PASSED'])
+      return candidates.find(value => pass.has(value)) ?? candidates[0] ?? null
+    })(),
     secondInterviewScreeningStatus: mapApiFinalResultToSecondInterviewStatus(
       dto.finalResultStatus,
       dto.reserveRank
     ),
+    canEditManagerAEvaluation:
+      dto.availableActions?.includes('UPDATE_DOCUMENT_EVALUATION') === true,
+    canEditManagerBEvaluation:
+      dto.availableActions?.includes('UPDATE_DOCUMENT_EVALUATION') === true,
     interviewSlotCount: dto.interviewAvailabilityCount ?? 0,
     detail: {
       interviewAvailability,
@@ -1392,6 +1572,24 @@ export function mapIndividualApplicationDetailToApplicantRow(
   const canEditDocumentEvaluation =
     dto.availableActions?.includes('UPDATE_DOCUMENT_EVALUATION') === true
 
+  const interviewStatusCandidates = [
+    dto.applicationStatus,
+    screening?.finalResultStatus,
+    ...(screening?.interviewEvaluations ?? []).map(item => item.evaluationStatus),
+  ]
+    .map(value => (typeof value === 'string' ? value.trim().toUpperCase() : ''))
+    .filter(value => value.length > 0)
+  const interviewPassStatuses = new Set([
+    'EVALUATED',
+    'INTERVIEW_EVALUATED',
+    'PASSED',
+    'INTERVIEW_PASSED',
+  ])
+  const interviewResultStatus =
+    interviewStatusCandidates.find(value => interviewPassStatuses.has(value)) ??
+    interviewStatusCandidates[0] ??
+    null
+
   return {
     ...base,
     id: toId(dto.id) || base.id,
@@ -1400,8 +1598,8 @@ export function mapIndividualApplicationDetailToApplicantRow(
     availableActions: dto.availableActions ?? base.availableActions,
     privacyMaskingLevel: dto.privacyMaskingLevel === 'UNMASKED' ? 'UNMASKED' : 'MASKED',
     canRevealPersonalInfo: dto.canRevealPersonalInfo === true,
-    canEditManagerAEvaluation: dto.canEditManagerAEvaluation ?? canEditDocumentEvaluation,
-    canEditManagerBEvaluation: dto.canEditManagerBEvaluation ?? canEditDocumentEvaluation,
+    canEditManagerAEvaluation: canEditDocumentEvaluation && dto.canEditManagerAEvaluation !== false,
+    canEditManagerBEvaluation: canEditDocumentEvaluation && dto.canEditManagerBEvaluation !== false,
     affiliation: profile?.affiliationSchool?.trim() || base.affiliation || '',
     educationGrade: isK12SchoolAffiliationName(
       profile?.affiliationSchool?.trim() || base.affiliation
@@ -1415,6 +1613,7 @@ export function mapIndividualApplicationDetailToApplicantRow(
       finalResultStatus: screening?.finalResultStatus,
       reserveRank: screening?.reserveRank,
     }),
+    applicationStatus: dto.applicationStatus ?? base.applicationStatus,
     adminComment: dto.managerComment ?? undefined,
     programId: toId(dto.programId) || base.programId,
     preferredEducationSchedules:
@@ -1455,6 +1654,7 @@ export function mapIndividualApplicationDetailToApplicantRow(
       dto.assignedInterviewSlotId != null ? 'ASSIGNED' : 'WAITING_ASSIGNMENT',
       screening?.giveUpYn
     ),
+    interviewResultStatus,
     secondInterviewScreeningStatus: mapApiFinalResultToSecondInterviewStatus(
       screening?.finalResultStatus,
       screening?.reserveRank
@@ -1592,11 +1792,7 @@ export function mapVolunteerInterviewAssignmentFromWire(input: {
   giveUpYn?: boolean
 }): GeneralInterviewAssignmentStatus {
   if (input.giveUpYn) return 'withdrawn'
-  const fields = [
-    input.interviewAssignmentStatus,
-    input.interviewStatus,
-    input.applicationStatus,
-  ]
+  const fields = [input.interviewAssignmentStatus, input.interviewStatus, input.applicationStatus]
   let notRequired = false
   for (const field of fields) {
     const mapped = mapApiVolunteerInterviewStatusToAssignmentStatus(field, false)
@@ -1698,7 +1894,9 @@ export function mapVolunteerApplicationToGeneralVolunteerApplicantRow(
     canEditManagerAEvaluation: dto.canEditManagerAEvaluation === true,
     canEditManagerBEvaluation: dto.canEditManagerBEvaluation === true,
     availableActions: dto.availableActions ?? [],
+    applicationStatus: dto.applicationStatus ?? null,
     documentScreeningStatus: mapApiDocumentStatusToScreeningStatus(dto.documentStatus),
+    documentRejectionReason: dto.rejectReason?.trim() || undefined,
     interviewSlotCount: dto.interviewAvailabilityCount ?? 0,
     interviewAssignmentStatus: mapVolunteerInterviewAssignmentFromWire({
       interviewStatus: dto.interviewStatus,
@@ -1783,10 +1981,7 @@ export function mapVolunteerApplicationDetailToApplicantRow(
     contactRaw: profile?.contact?.trim() || base.contactRaw,
     emailRaw: profile?.email?.trim() || base.emailRaw,
     homeAddress:
-      profile?.homeAddressSummary?.trim() ||
-      profile?.homeAddress?.trim() ||
-      base.homeAddress ||
-      '',
+      profile?.homeAddressSummary?.trim() || profile?.homeAddress?.trim() || base.homeAddress || '',
     id1365: profile?.external1365Id?.trim() || base.id1365,
     scheduleChangeCancelCount:
       dto.application?.scheduleChangeCancelCount ?? base.scheduleChangeCancelCount,
@@ -1796,7 +1991,9 @@ export function mapVolunteerApplicationDetailToApplicantRow(
     canEditManagerAEvaluation: dto.canEditManagerAEvaluation ?? canEditEvaluation,
     canEditManagerBEvaluation: dto.canEditManagerBEvaluation ?? canEditEvaluation,
     availableActions: dto.availableActions ?? base.availableActions,
+    applicationStatus: dto.applicationStatus ?? base.applicationStatus,
     documentScreeningStatus: mapApiDocumentStatusToScreeningStatus(screening?.documentStatus),
+    documentRejectionReason: screening?.rejectReason?.trim() || base.documentRejectionReason,
     interviewSlotCount: dto.interviewAvailabilityCount ?? base.interviewSlotCount,
     interviewAssignmentStatus,
     interviewAssignmentApiStatus:
@@ -1892,6 +2089,23 @@ function readOrganizationTextbookStatus(
   return mapMaterialAssignmentStatusToTextbookStatus(dto.materialAssignmentStatus ?? undefined)
 }
 
+/**
+ * participants(ORGANIZATION) `requestedSchedules[]` → 진행 희망 교육 일정.
+ * `/requested-schedules` 응답과 같은 배열이라 행별 추가 조회 없이 기존 경로와 같은 결과를 만든다.
+ * - 기간형(종일) 원본이 있으면 `mapStoredPeriodRequestedSchedulesToHopeSessions` (기존 행별 조회 overlay와 동일)
+ * - 아니면 BE가 신청 목록 `preferredEducationSchedules`를 만들던 규칙으로 변환한 뒤 기존 preferred 매퍼
+ */
+export function mapParticipantRequestedSchedulesToHopeSessions(
+  requestedSchedules: readonly RequestedScheduleResponse[] | null | undefined
+): ParticipatingSchoolSession[] {
+  if (!requestedSchedules?.length) return []
+  const storedPeriodHopes = mapStoredPeriodRequestedSchedulesToHopeSessions(requestedSchedules)
+  if (storedPeriodHopes.length > 0) return storedPeriodHopes
+  const preferred = requestedSchedulesToPreferredEducationSchedules(requestedSchedules)
+  if (preferred.length === 0) return []
+  return mapPreferredEducationSchedulesToSessions(preferred, { useEducationDate: true })
+}
+
 export function mapParticipantToParticipatingSchoolRow(
   dto: ParticipantListItemResponse,
   index: number,
@@ -1908,11 +2122,21 @@ export function mapParticipantToParticipatingSchoolRow(
   const teacherEmail = dto.email?.trim() || undefined
   const region = [dto.regionSido, dto.regionSigungu].filter(Boolean).join(' ').trim()
   const sessions = mapSessionProgressToParticipatingSchoolSessions(dto.sessions ?? [])
-  const preferred = readOrganizationApplicationPreferredEducationSchedules(dto)
+  const preferredFromRequested = requestedSchedulesToPreferredEducationSchedules(
+    dto.requestedSchedules
+  )
+  const preferred =
+    preferredFromRequested.length > 0
+      ? preferredFromRequested
+      : readOrganizationApplicationPreferredEducationSchedules(dto)
+  const hopeFromRequested = mapParticipantRequestedSchedulesToHopeSessions(dto.requestedSchedules)
   const hopeEducationSessions =
-    preferred.length > 0
-      ? mapPreferredEducationSchedulesToSessions(preferred, { useEducationDate: true })
-      : undefined
+    hopeFromRequested.length > 0
+      ? hopeFromRequested
+      : preferred.length > 0
+        ? mapPreferredEducationSchedulesToSessions(preferred, { useEducationDate: true })
+        : undefined
+  const sessionLectureRound = sessions.length > 0 ? String(sessions.length) : ''
   return {
     id: toId(dto.participantId),
     organizationId: dto.organizationId ?? undefined,
@@ -1923,7 +2147,8 @@ export function mapParticipantToParticipatingSchoolRow(
     educationGrade: formatApplicantGradeLabel(dto.grade),
     classCount: dto.classCount ?? 0,
     studentCount: dto.studentCount ?? 0,
-    lectureRound: sessions.length > 0 ? String(sessions.length) : '',
+    lectureRound:
+      hopeFromRequested.length > 0 ? String(hopeFromRequested.length) : sessionLectureRound,
     textbookStatus: readOrganizationTextbookStatus(dto),
     textbookId: dto.textbookId != null ? String(dto.textbookId) : undefined,
     textbookName: dto.textbookName?.trim() || undefined,

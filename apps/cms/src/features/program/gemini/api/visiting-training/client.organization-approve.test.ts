@@ -61,10 +61,10 @@ describe('approveGeminiOrganizationApplicationRemote', () => {
 describe('bulkApproveGeminiOrganizationApplicationsRemote', () => {
   beforeEach(() => {
     customInstanceMock.mockReset()
-    customInstanceMock.mockResolvedValue({})
+    customInstanceMock.mockResolvedValue({ data: { successIds: [1691535, 1691536] } })
   })
 
-  it('일괄 승인은 ids 만 보낸다', async () => {
+  it('일괄 즉시 승인은 ids 만 보낸다', async () => {
     await bulkApproveGeminiOrganizationApplicationsRemote([1691535, 1691536])
 
     expect(customInstanceMock).toHaveBeenCalledWith({
@@ -72,6 +72,24 @@ describe('bulkApproveGeminiOrganizationApplicationsRemote', () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       data: { ids: [1691535, 1691536] },
+    })
+  })
+
+  it('일괄 직접 설정은 SCHEDULED + scheduledAt 을 보낸다', async () => {
+    await bulkApproveGeminiOrganizationApplicationsRemote([1691535, 1691536], {
+      timing: 'SCHEDULED',
+      scheduledAt: '2026-10-29T03:00:00.000Z',
+    })
+
+    expect(customInstanceMock).toHaveBeenCalledWith({
+      url: '/api/admin/gemini/trainings/organization-applications/bulk-approve',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      data: {
+        ids: [1691535, 1691536],
+        timing: 'SCHEDULED',
+        scheduledAt: '2026-10-29T03:00:00.000Z',
+      },
     })
   })
 })

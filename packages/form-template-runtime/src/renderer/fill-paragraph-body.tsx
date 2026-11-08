@@ -170,12 +170,14 @@ function ShortEssayTextControl({
   placeholder,
   disabled,
   rows,
+  maxLength,
   onChange,
 }: {
   value: string
   placeholder: string
   disabled: boolean
   rows: 1 | 5
+  maxLength?: number
   onChange: (next: string) => void
 }) {
   if (rows === 1) {
@@ -185,6 +187,7 @@ function ShortEssayTextControl({
         value={value}
         placeholder={placeholder}
         disabled={disabled}
+        maxLength={maxLength}
         onChange={event => onChange(event.target.value)}
       />
     )
@@ -197,6 +200,7 @@ function ShortEssayTextControl({
       placeholder={placeholder}
       disabled={disabled}
       rows={rows}
+      maxLength={maxLength}
       onChange={event => onChange(event.target.value)}
     />
   )
@@ -217,6 +221,10 @@ function ShortEssayFill({
   const items = paragraph.items ?? []
   const rows = resolveShortEssayRows(paragraph)
   const fallbackPlaceholder = paragraph.bodyPlaceholder || '답변을 입력해 주세요'
+  const maxLength =
+    'maxLength' in paragraph && typeof paragraph.maxLength === 'number' && paragraph.maxLength > 0
+      ? paragraph.maxLength
+      : 1000
 
   if (items.length === 0) {
     return (
@@ -225,6 +233,7 @@ function ShortEssayFill({
         placeholder={fallbackPlaceholder}
         disabled={readonly}
         rows={rows}
+        maxLength={maxLength}
         onChange={next => {
           onUpdateParagraph?.(paragraph.id, current =>
             current.kind === 'single_item' &&
@@ -249,6 +258,7 @@ function ShortEssayFill({
             placeholder={item.placeholder || fallbackPlaceholder}
             disabled={readonly}
             rows={rows}
+            maxLength={maxLength}
             onChange={nextRaw => {
               const nextValue = applyConsentShortEssayItemInput(item.id, nextRaw)
               onUpdateParagraph?.(paragraph.id, current => {

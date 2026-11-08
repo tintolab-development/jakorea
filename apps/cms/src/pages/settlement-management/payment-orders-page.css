@@ -27,6 +27,15 @@
   overflow: visible;
 }
 
+/*
+ * 지급조서 확인 목록 카드 — 시안(12432:438585) 패딩 24 · R16 (list-table-shell 카드 스펙)
+ * 계좌 지급 확인(account-payments-page)은 같은 래퍼를 쓰므로 제외한다.
+ */
+.payment-orders-page:not(.account-payments-page) > .payment-orders-page__content-wrapper {
+  padding: var(--spacing-24);
+  border-radius: 16px;
+}
+
 /* FilterTableLayout: 카드 내부 세로 플렉스 — 리스트·캘린더 공통 (account-payments-page.css 패턴) */
 .payment-orders-page__content-wrapper
   > .payment-orders-page__filter-list-layout.filter-table-layout {
@@ -107,14 +116,15 @@
   min-width: 0;
 }
 
+/* 명시 폭(Col flex `0 0 Npx`) 칸은 제외 — auto로 덮으면 기간(500px) 칸이 260px로 줄어 조회 버튼과 겹친다 */
 .payment-orders-page
   .payment-orders-page__filter-list-layout
   .table-filter-group__fields-inner.ant-row
-  > .ant-col,
+  > .ant-col:not(.table-filter-group__col--explicit-width),
 .payment-orders-page
   .payment-orders-page__filter-list-layout
   .table-filter-group__merged-inline-wrap
-  > .table-filter-group__grid-cell {
+  > .table-filter-group__grid-cell:not(.table-filter-group__grid-cell--explicit-width) {
   flex: 0 0 auto !important;
   min-width: 0;
   max-width: none;
@@ -138,17 +148,6 @@
 }
 
 /*
- * 프로그램별·강사별 목록: 동일 열 정의를 써도 fluid 기본(table-layout:auto)이면
- * 셀 텍스트 길이에 따라 열 비율이 달라짐 → 한쪽만 고정 레이아웃으로 통일
- */
-.payment-orders-page
-  .participating-institutions-section__table-wrap
-  .cms-data-table.cms-data-table--fluid
-  table.ant-table {
-  table-layout: fixed !important;
-}
-
-/*
  * FilterTableLayout 간격 — 교재목록·참여기관·계좌지급과 동일
  * 필터↔구분선: divider padding 32px / 툴바↔테이블(레이블↔본문): toolbar margin-bottom 16px
  */
@@ -156,9 +155,15 @@
   padding: var(--spacing-32) 0;
 }
 
+/* 시안 Title: items-end — 제목·건수는 버튼(h40) 하단 기준선에 맞춘다 */
 .payment-orders-page .payment-orders-page__filter-list-layout .filter-table-layout__toolbar {
-  align-items: center;
+  align-items: flex-end;
   margin-bottom: var(--spacing-16);
+}
+
+/* 캘린더 뷰 우측 목록 — 시안 폭 400 (공통 기본 394) */
+.payment-orders-page .payment-orders-page__filter-list-layout .calendar-set {
+  --calendar-sub-right-list-max-width: 400px;
 }
 
 .payment-orders-page .payment-orders-page__filter-list-layout .filter-table-layout__toolbar-actions {
@@ -190,18 +195,23 @@
   text-align: center !important;
 }
 
-/* 실적관리 리스트 셀 텍스트가 칼럼 너비를 넘지 않도록 말줄임 처리 */
-.payment-orders-page .list-page-layout__table-shell .cms-data-table table.ant-table {
-  table-layout: fixed !important;
-}
-
-.payment-orders-page .list-page-layout__table-shell .cms-data-table td.ant-table-cell {
+/* 말줄임은 데이터 행만 — 빈 목록 행(.ant-table-placeholder)에 걸면 안내 아이콘·문구 정렬이 깨진다 */
+.payment-orders-page
+  .list-page-layout__table-shell
+  .cms-data-table
+  tr:not(.ant-table-placeholder)
+  > td.ant-table-cell {
   max-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.payment-orders-page .list-page-layout__table-shell .cms-data-table td.ant-table-cell > * {
+.payment-orders-page
+  .list-page-layout__table-shell
+  .cms-data-table
+  tr:not(.ant-table-placeholder)
+  > td.ant-table-cell
+  > * {
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;

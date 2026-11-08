@@ -5,6 +5,7 @@
  * Filtered for CMS notifications / kakao alimtalk Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { CertificateIssueRequestCertificateType } from './certificateIssueRequestCertificateType';
 import type { CertificateIssueRequestIssueReason } from './certificateIssueRequestIssueReason';
 
 /**
@@ -13,8 +14,8 @@ import type { CertificateIssueRequestIssueReason } from './certificateIssueReque
 export interface CertificateIssueRequest {
   programId: number;
   participantId: number;
-  /** 증명서 유형. 생략 또는 AUTO면 수료조건에 따라 COMPLETION/PARTICIPATION을 서버가 결정합니다. */
-  certificateType?: string;
+  /** 증명서 유형. COMPLETION | PARTICIPATION | INSTRUCTOR_ACTIVITY | VOLUNTEER_ACTIVITY | AUTO. 생략 또는 AUTO는 COMPLETION만 평가한다. 포털 자가 발급은 COMPLETION만 허용한다. PARTICIPATION은 409 MEMBER_PARTICIPATION_CERTIFICATE_SELF_ISSUE_NOT_ALLOWED. */
+  certificateType?: CertificateIssueRequestCertificateType;
   /** 발급 사유 코드 */
   issueReason?: CertificateIssueRequestIssueReason;
 }

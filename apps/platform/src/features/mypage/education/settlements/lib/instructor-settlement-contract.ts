@@ -1,0 +1,124 @@
+import { isAxiosError } from 'axios'
+
+function extractApiErrorCode(data: unknown): string | null {
+  if (!data || typeof data !== 'object') return null
+  const body = data as { code?: unknown; error?: { code?: unknown } }
+  const nested = body.error?.code
+  if (typeof nested === 'string' && nested.trim()) return nested.trim().toUpperCase()
+  if (typeof body.code === 'string' && body.code.trim()) return body.code.trim().toUpperCase()
+  return null
+}
+
+export const INSTRUCTOR_PAYMENT_STATEMENT_CONSENT_REQUIRED_CODE =
+  'PAYMENT_STATEMENT_CONSENT_REQUIRED'
+
+export const PAYMENT_STATEMENT_CONSENT_REQUIRED_MESSAGE =
+  '지급조서 작성 동의를 완료한 뒤 정산을 신청할 수 있습니다.'
+
+export const INSTRUCTOR_SETTLEMENT_ERROR_MESSAGE: Record<string, string> = {
+  SETTLEMENT_ASSIGNED_SCHEDULE_TIME_REQUIRED:
+    '배정 일정 시작·종료 시간이 없어 정산을 신청할 수 없습니다.',
+  SETTLEMENT_ACTUAL_TRAINING_TIME_REQUIRED:
+    '실적 시작·종료 시간이 없어 정산을 신청할 수 없습니다.',
+  SETTLEMENT_WAGE_RATE_NOT_CONFIGURED:
+    '프로그램 강사비 단가가 없어 정산을 신청할 수 없습니다.',
+  LECTURE_REPORT_REQUIRED: '강의보고서/강의평가 제출 이후 정산 신청이 가능합니다.',
+  LECTURE_NOT_ENDED: '강의가 종료된 이후에 지급조서를 제출할 수 있습니다.',
+  ACTIVE_APPLICATION_EXISTS: '이미 제출된 지급조서가 있습니다. 재제출이 필요하면 기존 신청에서 진행해 주세요.',
+  PAYMENT_STATEMENT_CONSENT_REQUIRED: PAYMENT_STATEMENT_CONSENT_REQUIRED_MESSAGE,
+  ASSIGNMENT_SCHEDULE_MISMATCH: '선택한 일정이 강사 배정과 일치하지 않습니다.',
+  IDEMPOTENCY_KEY_PAYLOAD_CONFLICT:
+    '같은 요청을 다른 내용으로 다시 보낼 수 없습니다. 작성 화면에서 다시 시도해 주세요.',
+  SETTLEMENT_APPLICATION_STATE_CONFLICT: '현재 상태에서는 지급조서를 제출할 수 없습니다.',
+  SETTLEMENT_REAPPLICATION_DEADLINE_EXPIRED: '재제출 기한이 지나 지급조서를 다시 제출할 수 없습니다.',
+  SETTLEMENT_REAPPLICATION_DEADLINE_UNAVAILABLE: '재제출 기한을 확인할 수 없습니다. 잠시 후 다시 시도해 주세요.',
+}
+
+export function isInstructorPaymentStatementSubmit(input: {
+  applicationType?: string | null
+  documentKind?: string | null
+}): boolean {
+  return (
+    input.applicationType?.trim().toUpperCase() === 'INSTRUCTOR' &&
+    input.documentKind === 'payment_statement'
+  )
+}
+
+export function readInstructorSettlementErrorCode(error: unknown): string | null {
+  if (!isAxiosError(error)) return null
+  return extractApiErrorCode(error.response?.data)
+}
+
+export function isPaymentStatementConsentRequiredError(error: unknown): boolean {
+  return readInstructorSettlementErrorCode(error) === INSTRUCTOR_PAYMENT_STATEMENT_CONSENT_REQUIRED_CODE
+}
+
+/**
+ * 409 — 교통비 거리 계산에 필요한 주소/경로를 찾지 못함 (외부 연동 장애 503 PROVIDER_UNAVAILABLE과 별개).
+ * 재시도로 해결되지 않으므로 서버 message + addressSide별 보조 안내만 보여 준다. 신청은 생성되지 않는다.
+ */
+export const SETTLEMENT_TRANSPORTATION_ADDRESS_UNRESOLVED_CODE =
+  'SETTLEMENT_TRANSPORTATION_ADDRESS_UNRESOLVED'
+
+export const SETTLEMENT_TRANSPORTATION_ADDRESS_UNRESOLVED_MESSAGE =
+  '교통비 계산에 필요한 주소를 찾을 수 없습니다. 자택 주소 또는 교육 장소 주소를 확인하거나 관리자에게 문의해 주세요.'
+
+const TRANSPORTATION_ADDRESS_SIDE_GUIDE: Record<string, string> = {
+  ORIGIN: '마이페이지 > 강사 정보에서 자택 주소를 확인해 주세요.',
+  DESTINATION: '교육 장소 주소 확인이 필요합니다. 관리자에게 문의해 주세요.',
+}
+
+const TRANSPORTATION_ADDRESS_DEFAULT_GUIDE = '관리자에게 문의해 주세요.'
+
+type ApiErrorBody = {
+  message?: unknown
+  error?: { message?: unknown; details?: unknown }
+}
+
+function readApiErrorBody(error: unknown): ApiErrorBody | null {
+  if (!isAxiosError(error)) return null
+  const data = error.response?.data
+  return data && typeof data === 'object' ? (data as ApiErrorBody) : null
+}
+
+/** `error.details` — Record<string, string> | null 로 취급 */
+function readTransportationAddressSide(error: unknown): string | null {
+  const details = readApiErrorBody(error)?.error?.details
+  if (!details || typeof details !== 'object' || Array.isArray(details)) return null
+  const side = (details as Record<string, unknown>).addressSide
+  return typeof side === 'string' && side.trim() ? side.trim().toUpperCase() : null
+}
+
+function readServerErrorMessage(error: unknown): string | null {
+  const body = readApiErrorBody(error)
+  for (const candidate of [body?.error?.message, body?.message]) {
+    if (typeof candidate === 'string' && candidate.trim()) return candidate.trim()
+  }
+  return null
+}
+
+export function isSettlementTransportationAddressUnresolvedError(error: unknown): boolean {
+  return readInstructorSettlementErrorCode(error) === SETTLEMENT_TRANSPORTATION_ADDRESS_UNRESOLVED_CODE
+}
+
+/** 서버 message 그대로 + addressSide별 보조 안내 (ROUTE·UNKNOWN·값 없음·모르는 값 → 관리자 문의) */
+export function settlementTransportationAddressUnresolvedMessage(error: unknown): string {
+  const message = readServerErrorMessage(error) ?? SETTLEMENT_TRANSPORTATION_ADDRESS_UNRESOLVED_MESSAGE
+  const side = readTransportationAddressSide(error)
+  const guide = (side && TRANSPORTATION_ADDRESS_SIDE_GUIDE[side]) || TRANSPORTATION_ADDRESS_DEFAULT_GUIDE
+  return message.includes(guide) ? message : `${message} ${guide}`
+}
+
+export function instructorSettlementApiErrorMessage(
+  error: unknown,
+  fallback = '지급조서 제출에 실패했습니다. 입력 내용을 확인한 뒤 다시 시도해 주세요.',
+): string {
+  if (isSettlementTransportationAddressUnresolvedError(error)) {
+    return settlementTransportationAddressUnresolvedMessage(error)
+  }
+  const code = readInstructorSettlementErrorCode(error)
+  if (code && INSTRUCTOR_SETTLEMENT_ERROR_MESSAGE[code]) {
+    return INSTRUCTOR_SETTLEMENT_ERROR_MESSAGE[code]
+  }
+  return fallback
+}

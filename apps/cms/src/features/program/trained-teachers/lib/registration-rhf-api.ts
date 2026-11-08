@@ -93,12 +93,22 @@ export function readActiveTrainedTeachersRecruitmentOverlayValue(
   const current = api
   if (current == null || !isTrainedTeachersRecruitmentOverlayKey(key)) return defaultValue
   const raw = readTrainedTeachersRecruitmentOverlayValue(current.getValues().recruitment, key)
-  return raw === undefined ? defaultValue : raw
+  if (raw === undefined) {
+    if (typeof defaultValue === 'number') return undefined
+    return defaultValue
+  }
+  return raw
 }
 
 export function peekActiveTrainedTeachersRecruitmentOverlayRecord(): Record<string, unknown> | null {
   if (api == null) return null
   return serializeTrainedTeachersRecruitmentForFormVersion(api.getValues().recruitment)
+}
+
+/** COPY/PUT 대상 — 사용자가 고친 모집 양식만. */
+export function peekDirtyTrainedTeachersRecruitmentOverlayRecord(): Record<string, unknown> | null {
+  if (api == null || !api.isDirty()) return null
+  return peekActiveTrainedTeachersRecruitmentOverlayRecord()
 }
 
 /** TT 모집 overlay 키를 RHF에만 기록. store에 쓰지 않는다. 소비되지 않은 키를 반환한다. */
@@ -109,12 +119,10 @@ export function patchActiveTrainedTeachersRecruitmentOverlay(
   const { recruitment, rest } = splitTrainedTeachersRecruitmentOverlay(partial)
   if (Object.keys(recruitment).length === 0) return partial
   const values = api.getValues()
-  api.reset(
-    {
-      ...values,
-      recruitment: applyTrainedTeachersRecruitmentOverlayRecord(values.recruitment, recruitment),
-    },
-    { keepDefaultValues: true }
+  api.setPath(
+    'recruitment',
+    applyTrainedTeachersRecruitmentOverlayRecord(values.recruitment, recruitment),
+    { shouldDirty: true }
   )
   return rest
 }
@@ -170,6 +178,12 @@ export function readActiveTrainedTeachersApplicationOverlayValue(
 export function peekActiveTrainedTeachersApplicationOverlayRecord(): Record<string, unknown> | null {
   if (api == null) return null
   return serializeTrainedTeachersApplicationForFormVersion(api.getValues().application)
+}
+
+/** COPY/PUT 대상 — 사용자가 고친 신청 양식만. */
+export function peekDirtyTrainedTeachersApplicationOverlayRecord(): Record<string, unknown> | null {
+  if (api == null || !api.isDirty()) return null
+  return peekActiveTrainedTeachersApplicationOverlayRecord()
 }
 
 /** TT 신청 overlay 키를 RHF에만 기록. store에 쓰지 않는다. 소비되지 않은 키를 반환한다. */

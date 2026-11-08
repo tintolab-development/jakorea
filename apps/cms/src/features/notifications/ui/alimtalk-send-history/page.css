@@ -56,24 +56,3 @@
   background: var(--color-table-row-hover, rgba(1, 161, 175, 0.06)) !important;
 }
 
-.alimtalk-send-history-page__table.cms-data-table colgroup > col:nth-child(1),
-.alimtalk-send-history-page__table.cms-data-table th.alimtalk-send-history-page__col-no,
-.alimtalk-send-history-page__table.cms-data-table td.alimtalk-send-history-page__col-no {
-  width: 80px !important;
-  min-width: 80px !important;
-  max-width: 80px !important;
-}
-
-.alimtalk-send-history-page__table.cms-data-table th.alimtalk-send-history-page__col-datetime,
-.alimtalk-send-history-page__table.cms-data-table td.alimtalk-send-history-page__col-datetime {
-  width: 180px !important;
-  min-width: 180px !important;
-  max-width: 180px !important;
-}
-
-.alimtalk-send-history-page__table.cms-data-table th.alimtalk-send-history-page__col-template-name,
-.alimtalk-send-history-page__table.cms-data-table td.alimtalk-send-history-page__col-template-name {
-  width: 280px !important;
-  min-width: 280px !important;
-  max-width: 280px !important;
-}

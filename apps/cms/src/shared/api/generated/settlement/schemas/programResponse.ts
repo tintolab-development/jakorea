@@ -86,7 +86,7 @@ export interface ProgramResponse {
   recruitmentGuide?: string;
   learningSupportContent?: string;
   otherMatters?: string;
-  /** 참여자 모집 비고. 강사·봉사자 nested remarks와 별개. otherMatters(기타사항)와 별개. 없으면 null. */
+  /** 참여자 모집 비고 정본. PATCH remarks와 왕복. nested participantRecruitmentInfo.remarks는 같은 값의 미러. 강사·봉사자 nested remarks·otherMatters와 별개. 없으면 null. */
   remarks?: string | null;
   /** 참여자 지원 방법 자유 텍스트. 강사·봉사자 nested applicationMethod와 별개. applicationPathId가 아님. 없으면 null. */
   applicationMethod?: string | null;
@@ -95,7 +95,7 @@ export interface ProgramResponse {
   venueDetail?: string;
   venueKind?: string;
   studentListRequired?: string;
-  /** 유형별 config JSON 문자열. TRAINED_TEACHER: {schemaVersion, program}. Nested program.generalCommonInfo.participantRecruitmentInfo is the 모집 정보 display SSOT. remarks ≠ oneLineIntroduction. educationTargetDetail ≠ district. maxAssignableInstructors is always 0. instructorRecruitmentInfo/volunteerRecruitmentInfo omitted. */
+  /** 유형별 config JSON 문자열. TRAINED_TEACHER: {schemaVersion, program}. CMS 모집 정보 표시 정본은 recruitments[] 행(문의처·운영기간·모집기간). nested participantRecruitmentInfo 기간 라벨은 행과 같은 구간이다. remarks ≠ oneLineIntroduction. educationTargetDetail ≠ district. maxAssignableInstructors is always 0. instructorRecruitmentInfo/volunteerRecruitmentInfo omitted. */
   serviceDetailJson?: string;
   attachmentFileNames?: string[];
   adminAssignments?: ProgramAdminAssignmentResponse[];

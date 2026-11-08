@@ -63,6 +63,7 @@ function byStartAt(a: ProgramRecruitmentWindow, b: ProgramRecruitmentWindow): nu
 /**
  * 저장 요청 행에 기존 행은 `id`, 새 행은 `applicationType`을 붙인다.
  * 같은 유형 행이 여럿이면 모집 시작일이 빠른 행부터 차례로 맞춘다.
+ * 요청에 recruitTerm이 있으면 같은 recruitTerm 행만 고른다. UJAT 반기를 startAt으로 추측하지 않는다.
  * BE는 id·applicationType이 하나라도 있으면 보내지 않은 행을 그대로 둔다.
  */
 export function attachRecruitmentRowIdentity(
@@ -84,9 +85,7 @@ export function attachRecruitmentRowIdentity(
         (candidate.recruitmentType ?? '').toUpperCase() ===
           (row.recruitmentType ?? '').toUpperCase() &&
         rowApplicationType(candidate) === applicationType &&
-        (row.recruitTerm == null ||
-          candidate.recruitTerm == null ||
-          candidate.recruitTerm === row.recruitTerm)
+        (row.recruitTerm == null || candidate.recruitTerm === row.recruitTerm)
     )
     if (match) {
       claimed.add(match.id!)

@@ -11,20 +11,24 @@
 
 import { useCallback, useState, type Key } from 'react'
 import type { ColumnsType } from 'antd/es/table'
+import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
 import { guardAdminDownload } from '@/shared/lib/session-admin-role'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import { exportTableToExcel } from '@/shared/utils/table-export'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
+import {
+  resolveDownloadAccessLogMeta,
+  type DownloadAccessLogMeta,
+  type DownloadAccessLogMetaInput,
+} from '@/shared/lib/download-access-log-meta'
 
 export type TableExcelExporter<T extends object> = (
   columns: ColumnsType<T>,
   data: T[],
-  filename: string
+  filename: string,
+  /** `accessLog`가 있을 때만 넘어온다. 커스텀 exporter는 무시해도 된다. */
+  options?: { accessLog?: DownloadAccessLogMeta }
 ) => Promise<void>
-
-export const TABLE_EXCEL_NO_SELECTION_ALERT = {
-  title: '항목 선택 안내',
-  content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
-} as const
 
 export function defaultTableExcelRowKey<T extends object>(row: T): string {
   const record = row as Record<string, unknown>
@@ -47,6 +51,8 @@ export type UseTableExcelExportOptions<T extends object> = {
   filename: string
   /** 기본: exportTableToExcel */
   exporter?: TableExcelExporter<T>
+  /** client 이력에 함께 남길 파일 종류·포함 개인정보. 화면 상태에 따라 바뀌면 함수로 넘긴다. */
+  accessLog?: DownloadAccessLogMetaInput
   /** 빈 데이터 시 alert — 기본 true (선택 필수 미선택은 항상 안내) */
   alertOnEmpty?: boolean
   emptyAlertTitle?: string
@@ -60,6 +66,10 @@ const DEFAULT_EMPTY_CONTENT = '다운로드할 데이터가 없습니다.'
 const DEFAULT_ERROR_TITLE = '다운로드 실패'
 const DEFAULT_ERROR_CONTENT = '엑셀 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.'
 
+function defaultExcelExportErrorContent(error: unknown): string {
+  return readApiErrorAlertMessage(error, DEFAULT_ERROR_CONTENT)
+}
+
 export function useTableExcelExport<T extends object>({
   columns,
   data,
@@ -68,11 +78,12 @@ export function useTableExcelExport<T extends object>({
   getRowKey = defaultTableExcelRowKey,
   filename,
   exporter = exportTableToExcel,
+  accessLog,
   alertOnEmpty = true,
   emptyAlertTitle = DEFAULT_EMPTY_TITLE,
   emptyAlertContent = DEFAULT_EMPTY_CONTENT,
   errorAlertTitle = DEFAULT_ERROR_TITLE,
-  errorAlertContent = DEFAULT_ERROR_CONTENT,
+  errorAlertContent = defaultExcelExportErrorContent,
 }: UseTableExcelExportOptions<T>) {
   const [isExporting, setIsExporting] = useState(false)
 
@@ -82,8 +93,8 @@ export function useTableExcelExport<T extends object>({
     const requireSelection = selectedRowKeys !== undefined
     if (requireSelection && selectedRowKeys.length === 0) {
       cmsAlertModal.show({
-        title: TABLE_EXCEL_NO_SELECTION_ALERT.title,
-        content: TABLE_EXCEL_NO_SELECTION_ALERT.content,
+        title: NO_SELECTION_ALERT.title,
+        content: NO_SELECTION_ALERT.content,
       })
       return
     }
@@ -96,8 +107,8 @@ export function useTableExcelExport<T extends object>({
       if (exportData.length === 0) {
         if (requireSelection) {
           cmsAlertModal.show({
-            title: TABLE_EXCEL_NO_SELECTION_ALERT.title,
-            content: TABLE_EXCEL_NO_SELECTION_ALERT.content,
+            title: NO_SELECTION_ALERT.title,
+            content: NO_SELECTION_ALERT.content,
           })
           return
         }
@@ -106,7 +117,12 @@ export function useTableExcelExport<T extends object>({
         }
         return
       }
-      await exporter(columns, exportData, filename)
+      const accessLogMeta = resolveDownloadAccessLogMeta(accessLog)
+      if (accessLogMeta) {
+        await exporter(columns, exportData, filename, { accessLog: accessLogMeta })
+      } else {
+        await exporter(columns, exportData, filename)
+      }
     } catch (error) {
       console.error('[useTableExcelExport] excel export failed', error)
       const content =
@@ -116,6 +132,7 @@ export function useTableExcelExport<T extends object>({
       setIsExporting(false)
     }
   }, [
+    accessLog,
     alertOnEmpty,
     columns,
     data,

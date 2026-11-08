@@ -1,9 +1,4 @@
 import type { GeminiApprovedTrainingDetail } from '@/features/program/gemini/model/approved/detail-types'
-import {
-  mapGeminiApprovedTrainingPrivacyUnmask,
-  toGeminiApprovedTrainingUnmaskError,
-  type GeminiApprovedTrainingPrivacyUnmasked,
-} from '@/features/program/gemini/lib/approved/privacy-unmask'
 import type { GeminiInstructorApplicationRow } from '@/features/program/gemini/model/approved/instructor-application-types'
 import type { GeminiApprovedTrainingRow } from '@/features/program/gemini/model/approved/types'
 import type { GeminiRecruitmentDetail } from '@/features/program/gemini/model/recruitment/detail-types'
@@ -37,6 +32,11 @@ import {
   syncProgramInlineImagesKeepProgram,
 } from '@/features/program/shared/api/program-inline-images'
 import { resolveGeminiAttachmentFileObjectIdsForSave } from '../../lib/recruitment/attachment-file-objects'
+import {
+  mapGeminiApprovedTrainingPrivacyUnmask,
+  toGeminiApprovedTrainingUnmaskError,
+  type GeminiApprovedTrainingPrivacyUnmasked,
+} from '../../lib/approved/privacy-unmask'
 import { shouldUseGeminiVisitingTrainingRemoteApi } from './capabilities'
 import { canGeminiRecruitmentInfoEdit } from '../../lib/recruitment/info-edit-policy'
 import {
@@ -50,18 +50,21 @@ import {
   deleteGeminiApprovedTrainingRemote,
   deleteGeminiRecruitmentRemote,
   fetchGeminiApprovedInstructorApplicationsRemote,
+  fetchGeminiInstructorApplicationDetailRemote,
   fetchGeminiApprovedTrainingDetailRemote,
   fetchGeminiApprovedTrainingsRemote,
   fetchGeminiOrganizationApplicationsRemote,
   fetchGeminiRecruitmentDetailRemote,
   fetchGeminiRecruitmentsRemotePage,
   rejectGeminiInstructorApplicationRemote,
+  resendGeminiInstructorApplicationNotificationRemote,
   rejectGeminiOrganizationApplicationRemote,
   resendGeminiOrganizationApplicationNotificationRemote,
   unmaskGeminiApprovedTrainingPrivacyRemote,
   updateGeminiRecruitmentRemote,
   type GeminiApprovedTrainingRemoteFilters,
   type GeminiInstructorApplicationRemoteFilters,
+  type GeminiInstructorNotificationResendPayload,
   type GeminiOrganizationApplicationApprovePayload,
   type GeminiOrganizationNotificationResendPayload,
   type GeminiRecruitmentRemoteFilters,
@@ -124,10 +127,7 @@ export async function listGeminiRecruitmentsPage(
   const baseNo = page.page * page.size
   return {
     rows: page.items.map((item, index) =>
-      mapGeminiRecruitmentItemToRow(
-        item,
-        Math.max(page.totalElements - baseNo - index - 1, 0)
-      )
+      mapGeminiRecruitmentItemToRow(item, Math.max(page.totalElements - baseNo - index - 1, 0))
     ),
     page: page.page,
     size: page.size,
@@ -253,9 +253,26 @@ export async function listGeminiApprovedInstructorApplicationsPage(
   }
 }
 
-export async function approveGeminiInstructorApplication(applicationId: string): Promise<void> {
+export async function getGeminiInstructorApplicationDetail(
+  approvedTrainingId: string,
+  applicationId: string
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/instructorApplicationDetailResponse').InstructorApplicationDetailResponse
+> {
   assertRemoteReady()
-  await approveGeminiInstructorApplicationRemote(applicationId)
+  return fetchGeminiInstructorApplicationDetailRemote(approvedTrainingId, applicationId)
+}
+
+export async function approveGeminiInstructorApplication(
+  applicationId: string,
+  options?: {
+    timing?: 'IMMEDIATE' | 'SCHEDULED' | null
+    scheduledAt?: string | null
+    replacement?: boolean | null
+  }
+): Promise<void> {
+  assertRemoteReady()
+  await approveGeminiInstructorApplicationRemote(applicationId, options)
 }
 
 export async function rejectGeminiInstructorApplication(
@@ -264,6 +281,14 @@ export async function rejectGeminiInstructorApplication(
 ): Promise<void> {
   assertRemoteReady()
   await rejectGeminiInstructorApplicationRemote(applicationId, reason)
+}
+
+export async function resendGeminiInstructorApplicationNotification(
+  applicationId: string,
+  payload: GeminiInstructorNotificationResendPayload
+): Promise<void> {
+  assertRemoteReady()
+  await resendGeminiInstructorApplicationNotificationRemote(applicationId, payload)
 }
 
 export async function createGeminiRecruitment(
@@ -321,9 +346,7 @@ export async function updateGeminiRecruitment(
   )
   const request = mapGeminiRecruitmentDetailToUpdateRequest(draft, { recruitmentWindowLocked })
   const prepared = await prepareProgramInlineImageBind(programId, request)
-  const body = (
-    prepared.didAdopt ? prepared.rewritten : request
-  ) as ProgramUpdateRequest
+  const body = (prepared.didAdopt ? prepared.rewritten : request) as ProgramUpdateRequest
   await updateGeminiRecruitmentRemote(programId, body)
   if (prepared.fileObjectIds.length > 0) {
     await putProgramInlineImages(programId, prepared.fileObjectIds)
@@ -359,6 +382,11 @@ export async function deleteGeminiRecruitments(ids: string[]): Promise<void> {
 export type GeminiApprovedTrainingsDeleteResult = {
   successIds: string[]
   failureCount: number
+  failures: Array<{
+    id: string
+    code?: string
+    message?: string
+  }>
 }
 
 export async function deleteGeminiApprovedTrainings(
@@ -371,36 +399,83 @@ export async function deleteGeminiApprovedTrainings(
   }
   if (numericIds.length === 1) {
     await deleteGeminiApprovedTrainingRemote(String(numericIds[0]))
-    return { successIds: [String(numericIds[0])], failureCount: 0 }
+    return { successIds: [String(numericIds[0])], failureCount: 0, failures: [] }
   }
   const result = await bulkDeleteGeminiApprovedTrainingsRemote(numericIds)
   const successIds = (result?.successIds ?? []).map(String)
+  const failures = (result?.failures ?? [])
+    .filter(failure => failure.id != null)
+    .map(failure => ({
+      id: String(failure.id),
+      ...(failure.code ? { code: failure.code } : {}),
+      ...(failure.message ? { message: failure.message } : {}),
+    }))
   return {
     successIds,
     failureCount: result?.failureCount ?? numericIds.length - successIds.length,
+    failures,
+  }
+}
+
+export type GeminiOrganizationApplicationsApproveResult = {
+  successIds: string[]
+  failureCount: number
+  failures: Array<{
+    id: string
+    code?: string
+    message?: string
+  }>
+}
+
+function mapGeminiBulkApproveResult(
+  result: Awaited<ReturnType<typeof bulkApproveGeminiOrganizationApplicationsRemote>>,
+  requestedIds: number[]
+): GeminiOrganizationApplicationsApproveResult {
+  const successIds = (result?.successIds ?? []).map(String)
+  const failures = (result?.failures ?? [])
+    .filter(failure => failure.id != null)
+    .map(failure => ({
+      id: String(failure.id),
+      ...(failure.code ? { code: failure.code } : {}),
+      ...(failure.message ? { message: failure.message } : {}),
+    }))
+  return {
+    successIds,
+    failureCount: result?.failureCount ?? requestedIds.length - successIds.length,
+    failures,
   }
 }
 
 export async function approveGeminiOrganizationApplications(
   ids: string[],
   payload?: GeminiOrganizationApplicationApprovePayload
-): Promise<void> {
+): Promise<GeminiOrganizationApplicationsApproveResult> {
   assertRemoteReady()
   const numericIds = toGeminiNumericIds(ids)
   if (numericIds.length === 0) {
     throw new Error('승인할 신청 ID가 올바르지 않습니다.')
   }
-  const usesSingleApprovePath =
-    numericIds.length === 1 ||
-    payload?.timing === 'SCHEDULED' ||
-    payload?.timing === 'ON_ANNOUNCEMENT'
-  if (usesSingleApprovePath) {
+  if (numericIds.length === 1) {
+    await approveGeminiOrganizationApplicationRemote(String(numericIds[0]), payload)
+    return {
+      successIds: [String(numericIds[0])],
+      failureCount: 0,
+      failures: [],
+    }
+  }
+  const timing = payload?.timing ?? 'IMMEDIATE'
+  if (timing === 'ON_ANNOUNCEMENT') {
     for (const id of numericIds) {
       await approveGeminiOrganizationApplicationRemote(String(id), payload)
     }
-    return
+    return {
+      successIds: numericIds.map(String),
+      failureCount: 0,
+      failures: [],
+    }
   }
-  await bulkApproveGeminiOrganizationApplicationsRemote(numericIds)
+  const result = await bulkApproveGeminiOrganizationApplicationsRemote(numericIds, payload)
+  return mapGeminiBulkApproveResult(result, numericIds)
 }
 
 export async function rejectGeminiOrganizationApplications(

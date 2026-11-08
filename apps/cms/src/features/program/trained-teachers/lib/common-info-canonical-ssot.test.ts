@@ -221,8 +221,8 @@ describe('TRAINED_TEACHER canonical SSOT', () => {
     expect(json.program?.generalCommonInfo?.detailedProgramName).toBeUndefined()
     expect(request.textbookName).toBe('1사1교 금융특강')
     expect(request.partnerInvolvement).toBe(false)
-    expect(request.rounds).toHaveLength(1)
-    expect(request.applicationStartDate).toBe('2026-11-03')
+    expect(request.rounds).toBeUndefined()
+    expect(request.applicationStartDate).toBeUndefined()
   })
 
   it('잘못된 B configJson 은 기존 nested 를 지우지 않는다', () => {

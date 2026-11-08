@@ -14,18 +14,17 @@ import {
   useExportFileDownloadLogs,
   useFileDownloadLogsList,
 } from '@/features/file-download-log/api/hooks'
+import { displayLogField } from '@/features/logs/shared/lib/display-log-field'
 import { formatLogDateTime } from '@/features/logs/shared/lib/format-datetime'
-import {
-  logListRowNumber,
-  logTablePagination,
-  parseLogListPage,
-  setLogListPageParam,
-} from '@/features/logs/shared/lib/list-page'
+import { LogListAccessDenied } from '@/features/logs/shared/ui/log-list-access-denied'
+import { isAdminForbidden } from '@/features/system-inbox/lib/http-status'
+import { logListRowNumber } from '@/features/logs/shared/lib/list-page'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
 import type { TableSearchParamRule } from '@/shared/lib/use-table-search'
 import {
@@ -36,6 +35,7 @@ import {
   type UrlDateRangePendingSyncRef,
 } from '@/shared/lib/url-date-range-pending-sync'
 import {
+  AdminInfiniteTableFooter,
   CmsButton,
   CmsDateRangePicker,
   AdminFilterTextInput,
@@ -70,7 +70,6 @@ function parseApplied(searchParams: URLSearchParams): FileDownloadListFilter {
   const to = searchParams.get('fd_to')
   if (from) filter.from = from
   if (to) filter.to = to
-  filter.page = parseLogListPage(searchParams.get('fd_page'))
   return filter
 }
 
@@ -104,7 +103,9 @@ function rangeAsPicker(period: PendingDateRange): [Dayjs | null, Dayjs | null] {
 
 const COL = {
   no: TABLE_COLUMN_WIDTHS.index,
-  fileName: 280,
+  fileName: 240,
+  downloadKind: 140,
+  containedPii: 240,
   userName: 140,
   downloadedAt: 180,
   ip: 140,
@@ -119,13 +120,13 @@ export function FileDownloadLogPage() {
     patchPendingFilters,
     applied: appliedFilter,
     applySearch,
-    patchSearchParams,
     hasActiveFilters,
   } = useListFilterUrl<PendingFilters, FileDownloadListFilter>({
     initialPending: INITIAL_PENDING,
     paramConfig: searchSyncRules,
     parseApplied,
     afterApplyParams: nextParams => {
+      // 무한 스크롤 전환 전 링크에 남은 페이지 번호 정리
       nextParams.delete('fd_page')
     },
     syncPendingFromUrl: ({ searchParams, setPendingFilters: setPending }) => {
@@ -157,17 +158,16 @@ export function FileDownloadLogPage() {
 
   const listQuery = useFileDownloadLogsList(appliedFilter)
   const exportMutation = useExportFileDownloadLogs()
-  const rows = listQuery.data?.rows ?? []
-  const total = listQuery.data?.total ?? 0
-  const page = appliedFilter.page ?? 0
-  const loading = listQuery.isLoading || listQuery.isFetching
+  const rows = listQuery.rows
+  const total = listQuery.totalCount
 
-  const handlePageChange = useCallback(
-    (nextPage: number) => {
-      patchSearchParams(next => setLogListPageParam(next, 'fd_page', nextPage))
-    },
-    [patchSearchParams]
-  )
+  const { sentinelRef } = useGatedInfiniteScroll({
+    hasNextPage: listQuery.hasNextPage,
+    isFetchingNextPage: listQuery.isFetchingNextPage,
+    fetchNextPage: listQuery.fetchNextPage,
+    resetKey: JSON.stringify(appliedFilter),
+  })
+  const forbidden = isAdminForbidden(listQuery.error)
 
   const handleExcel = useCallback(() => {
     void exportMutation.mutateAsync(appliedFilter).catch(() => {
@@ -185,7 +185,7 @@ export function FileDownloadLogPage() {
         key: 'no',
         width: COL.no,
         className: CMS_TABLE_NO_COL_CLASS,
-        render: (_v, _r, index) => logListRowNumber(total, page, index),
+        render: (_v, _r, index) => logListRowNumber(total, 0, index),
       },
       {
         title: '다운로드 파일명',
@@ -193,6 +193,23 @@ export function FileDownloadLogPage() {
         key: 'fileName',
         width: COL.fileName,
         ellipsis: true,
+        render: (v: string) => displayLogField(v),
+      },
+      {
+        title: '종류',
+        dataIndex: 'downloadKind',
+        key: 'downloadKind',
+        width: COL.downloadKind,
+        ellipsis: true,
+        render: (v: string) => displayLogField(v),
+      },
+      {
+        title: '포함 개인정보',
+        dataIndex: 'containedPiiLabel',
+        key: 'containedPiiLabel',
+        width: COL.containedPii,
+        ellipsis: true,
+        render: (v: string) => displayLogField(v),
       },
       {
         title: '사용자명',
@@ -200,23 +217,29 @@ export function FileDownloadLogPage() {
         key: 'userName',
         width: COL.userName,
         ellipsis: true,
+        render: (v: string) => displayLogField(v),
       },
       {
         title: '다운로드 일시',
         dataIndex: 'downloadedAt',
         key: 'downloadedAt',
         width: COL.downloadedAt,
-        render: (v: string) => formatLogDateTime(v),
+        render: (v: string) => (v?.trim() ? formatLogDateTime(v) : '-'),
       },
       {
         title: 'IP',
         dataIndex: 'ip',
         key: 'ip',
         width: COL.ip,
+        render: (v: string) => displayLogField(v),
       },
     ],
-    [total, page]
+    [total]
   )
+
+  if (forbidden) {
+    return <LogListAccessDenied />
+  }
 
   return (
     <div className="log-list-page">
@@ -283,11 +306,15 @@ export function FileDownloadLogPage() {
           rowKey="id"
           columns={columns}
           dataSource={rows}
-          loading={loading}
-          pagination={logTablePagination({ page, total, onChange: handlePageChange })}
+          loading={listQuery.isLoading}
+          pagination={false}
           scroll={{
             x: COL.no + COL.fileName + COL.userName + COL.downloadedAt + COL.ip,
           }}
+        />
+        <AdminInfiniteTableFooter
+          sentinelRef={sentinelRef}
+          isFetchingNextPage={listQuery.isFetchingNextPage}
         />
       </FilterTableLayout>
     </div>

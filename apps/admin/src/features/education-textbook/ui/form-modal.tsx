@@ -118,65 +118,6 @@ function looksLikeHtml(value: string): boolean {
   return /^\s*</.test(value)
 }
 
-function decodeBasicEntities(value: string): string {
-  return value
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-}
-
-function stripUnitIntroToPlainText(raw: string): string {
-  const trimmed = raw.trim()
-  if (!trimmed) return ''
-  if (looksLikeHtml(trimmed)) {
-    return decodeBasicEntities(
-      trimmed
-        .replace(/<\s*br\s*\/?\s*>/gi, '\n')
-        .replace(/<\/\s*(p|div|h[1-6]|li|tr)\s*>/gi, '\n')
-        .replace(/<[^>]+>/g, '')
-    )
-      .replace(/\u00a0/g, ' ')
-      .replace(/\r\n/g, '\n')
-      .trim()
-  }
-  return trimmed
-    .replace(/\*\*/g, '')
-    .replace(/^#{1,6}\s+/gm, '')
-    .replace(/\r\n/g, '\n')
-    .trim()
-}
-
-type TextbookUnitIntroItem = {
-  unitNo: string
-  title: string
-  body: string
-}
-
-/** 시안: `N단원` + 제목 + 본문. 헤딩 패턴이 없으면 빈 배열 → RichTextViewer fallback */
-function parseTextbookUnitIntros(raw: string): TextbookUnitIntroItem[] {
-  const text = stripUnitIntroToPlainText(raw)
-  if (!text) return []
-  const matches = [...text.matchAll(/(?:^|\n)\s*(\d+)\s*단원[ \t]+([^\n]+)/g)]
-  if (matches.length === 0) return []
-  return matches.map((match, index) => {
-    const rawMatch = match[0]
-    const heading = rawMatch.replace(/^\n/, '')
-    const start = match.index ?? 0
-    const headingStart = rawMatch.startsWith('\n') ? start + 1 : start
-    const headingEnd = headingStart + heading.length
-    const next = matches[index + 1]
-    const nextStart = next ? (next.index ?? text.length) : text.length
-    return {
-      unitNo: match[1] ?? '',
-      title: (match[2] ?? '').trim(),
-      body: text.slice(headingEnd, nextStart).trim(),
-    }
-  })
-}
-
 function ThumbnailFileIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -388,7 +329,7 @@ function TextbookFormBody({
     }
     const unitIntroMarkdown = canEdit ? getHTML().trim() : (initial?.unitIntroMarkdown ?? '')
     if (canEdit && isEmptyAdminHtml(unitIntroMarkdown)) {
-      showAlert({ title: '입력 확인', content: '단원 소개를 입력해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (canEdit) {
@@ -459,7 +400,7 @@ function TextbookFormBody({
           disabled={confirmLoading || deleteLoading}
           onClick={() => setDeleteConfirmOpen(true)}
         >
-          교재 삭제
+          삭제
         </CmsButton>
       ) : null}
       <CmsButton
@@ -505,10 +446,6 @@ function TextbookFormBody({
       : null
 
   const unitIntroContent = mode === 'view' ? (initial?.unitIntroMarkdown ?? '').trim() : ''
-  const unitIntroItems = useMemo(
-    () => (isView ? parseTextbookUnitIntros(unitIntroContent) : []),
-    [isView, unitIntroContent]
-  )
 
   const fieldLabel = businessFieldId ? (fieldNameById.get(businessFieldId) ?? '-') : '-'
   const targetsLabel =
@@ -688,10 +625,11 @@ function TextbookFormBody({
                   }
                   edit={
                     <CmsTextArea
-                      className="cms-textarea--fixed-rows"
+                      className="education-textbook-form-modal__desc-input"
                       inputSize="small"
                       width="100%"
-                      rows={3}
+                      layout="fixed"
+                      autoSize={{ minRows: 1, maxRows: 3 }}
                       placeholder="교재 설명을 입력해 주세요"
                       value={description}
                       onChange={e => setDescription(e.target.value)}
@@ -794,30 +732,7 @@ function TextbookFormBody({
                   label={<TableHeaderLabel marked={!isView}>단원 소개</TableHeaderLabel>}
                   required={!isView}
                   view={
-                    unitIntroItems.length > 0 ? (
-                      <div className="education-textbook-form-modal__unit-list">
-                        {unitIntroItems.map(item => (
-                          <div
-                            key={`${item.unitNo}-${item.title}`}
-                            className="education-textbook-form-modal__unit-item"
-                          >
-                            <p className="education-textbook-form-modal__unit-heading">
-                              <span className="education-textbook-form-modal__unit-no">
-                                {item.unitNo}단원
-                              </span>
-                              <span className="education-textbook-form-modal__unit-title">
-                                {item.title}
-                              </span>
-                            </p>
-                            {item.body ? (
-                              <p className="education-textbook-form-modal__unit-body">
-                                {item.body}
-                              </p>
-                            ) : null}
-                          </div>
-                        ))}
-                      </div>
-                    ) : unitIntroContent ? (
+                    unitIntroContent ? (
                       <div className="education-textbook-form-modal__rt-view">
                         <RichTextViewer
                           content={unitIntroContent}

@@ -83,6 +83,40 @@ describe('useTableExcelExport viewer guard', () => {
     expect(cmsAlertModal.show).not.toHaveBeenCalled()
   })
 
+  it('AUDIT_LOG_UNAVAILABLE이면 서버 문구를 보여주고 exporter 실패를 일반 500으로 바꾸지 않는다', async () => {
+    useAuthStore.setState({ user: masterUser })
+    const { exportTableToExcel } = await import('@/shared/utils/table-export')
+    const serverMessage =
+      '보안 기록을 저장할 수 없어 요청이 중단되었습니다. 잠시 후 다시 시도해 주세요.'
+    vi.mocked(exportTableToExcel).mockRejectedValueOnce({
+      response: {
+        status: 503,
+        data: {
+          success: false,
+          data: null,
+          message: serverMessage,
+          error: {
+            code: 'AUDIT_LOG_UNAVAILABLE',
+            message: serverMessage,
+          },
+        },
+      },
+    })
+
+    const { result } = renderHook(() =>
+      useTableExcelExport({ columns, data, filename: '계좌 지급 대상 목록' })
+    )
+
+    await act(async () => {
+      await result.current.exportExcel()
+    })
+
+    expect(cmsAlertModal.show).toHaveBeenCalledWith({
+      title: '다운로드 실패',
+      content: serverMessage,
+    })
+  })
+
   it('resolveData가 있으면 화면에 로드된 데이터 대신 해석된 전체 데이터를 exporter에 전달한다', async () => {
     useAuthStore.setState({ user: masterUser })
     const { exportTableToExcel } = await import('@/shared/utils/table-export')
@@ -234,5 +268,34 @@ describe('useTableExcelExport selection', () => {
 
     expect(exportTableToExcel).toHaveBeenCalledWith(keyedColumns, keyedData, '목록')
     expect(cmsAlertModal.show).not.toHaveBeenCalled()
+  })
+})
+
+describe('useTableExcelExport accessLog', () => {
+  beforeEach(async () => {
+    vi.clearAllMocks()
+    useAuthStore.setState({ user: masterUser })
+  })
+
+  it('accessLog를 exporter 4번째 인자로 넘기고, 함수면 다운로드 시점 값을 쓴다', async () => {
+    const { exportTableToExcel } = await import('@/shared/utils/table-export')
+    let pii: ('NAME')[] = []
+    const { result } = renderHook(() =>
+      useTableExcelExport({
+        columns,
+        data,
+        filename: '목록',
+        accessLog: () => ({ downloadKind: 'MEMBER_LIST_EXPORT', containedPiiTypes: pii }),
+      })
+    )
+    pii = ['NAME']
+
+    await act(async () => {
+      await result.current.exportExcel()
+    })
+
+    expect(exportTableToExcel).toHaveBeenCalledWith(columns, data, '목록', {
+      accessLog: { downloadKind: 'MEMBER_LIST_EXPORT', containedPiiTypes: ['NAME'] },
+    })
   })
 })

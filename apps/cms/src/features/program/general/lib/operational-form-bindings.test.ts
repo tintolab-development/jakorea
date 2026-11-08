@@ -2,7 +2,10 @@ import { afterEach, describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
 import {
   getOperationalFormSpec,
+  isRegistrationCatalogTemplateId,
   isSystemCatalogOnlyFormType,
+  isSystemCatalogOnlyTemplateCode,
+  latestProgramFormBindingsBySlot,
   listAllRegistrationCreateFormSpecs,
   listRecruitmentRowApplicationBindings,
   listVisibleOperationalFormSpecs,
@@ -22,6 +25,68 @@ describe('isSystemCatalogOnlyFormType', () => {
     expect(isSystemCatalogOnlyFormType('CERTIFICATE')).toBe(true)
     expect(isSystemCatalogOnlyFormType('APPLICATION')).toBe(false)
     expect(isSystemCatalogOnlyFormType('RECRUITMENT')).toBe(false)
+    expect(isSystemCatalogOnlyTemplateCode('registration-general')).toBe(true)
+    expect(isSystemCatalogOnlyTemplateCode('registration-trained-teachers')).toBe(true)
+    expect(isSystemCatalogOnlyTemplateCode('application-participant-school')).toBe(false)
+    expect(isSystemCatalogOnlyTemplateCode('registration-ujat')).toBe(true)
+    expect(isRegistrationCatalogTemplateId(1)).toBe(true)
+    expect(isRegistrationCatalogTemplateId(3)).toBe(true)
+    expect(isRegistrationCatalogTemplateId(41)).toBe(true)
+    expect(isRegistrationCatalogTemplateId(2)).toBe(false)
+    expect(isRegistrationCatalogTemplateId(19)).toBe(false)
+  })
+})
+
+describe('latestProgramFormBindingsBySlot', () => {
+  it('같은 슬롯은 최신 1건만 남기고 SURVEY+SCHEDULE은 여러 건을 유지한다', () => {
+    const bindings = [
+      {
+        bindingId: 1,
+        formType: 'APPLICATION',
+        targetType: 'VOLUNTEER',
+        targetScope: 'PROGRAM',
+        updatedAt: '2026-11-01T00:00:00+09:00',
+        active: true,
+      },
+      {
+        bindingId: 2,
+        formType: 'APPLICATION',
+        targetType: 'VOLUNTEER',
+        targetScope: 'PROGRAM',
+        updatedAt: '2026-11-07T00:00:00+09:00',
+        active: true,
+      },
+      {
+        bindingId: 3,
+        formType: 'RECRUITMENT',
+        targetType: 'VOLUNTEER',
+        targetScope: 'TERM',
+        targetScopeId: 1,
+        active: true,
+      },
+      {
+        bindingId: 4,
+        formType: 'SURVEY',
+        targetScope: 'SCHEDULE',
+        targetScopeId: 101,
+        active: true,
+      },
+      {
+        bindingId: 5,
+        formType: 'SURVEY',
+        targetScope: 'SCHEDULE',
+        targetScopeId: 102,
+        active: true,
+      },
+    ] as ProgramFormBindingResponse[]
+    const latest = latestProgramFormBindingsBySlot(bindings)
+    expect(latest.filter(item => item.formType === 'APPLICATION').map(item => item.bindingId)).toEqual([2])
+    expect(
+      latest
+        .filter(item => item.formType === 'RECRUITMENT')
+        .map(item => item.bindingId)
+    ).toEqual([3])
+    expect(latest.filter(item => item.formType === 'SURVEY').map(item => item.bindingId)).toEqual([4, 5])
   })
 })
 
@@ -167,6 +232,31 @@ describe('listAllRegistrationCreateFormSpecs', () => {
         targetRole: 'VOLUNTEER',
       }).map(binding => binding.bindingId)
     ).toEqual([189456])
+  })
+
+  it('UJAT 봉사자 양식은 ORGANIZATION 바인딩을 고르지 않는다', () => {
+    const orgBinding: ProgramFormBindingResponse = {
+      bindingId: 11,
+      formType: 'RECRUITMENT',
+      targetType: 'ORGANIZATION',
+      targetRole: 'ORGANIZATION',
+      templateName: '참여 기관 모집',
+      templateVersionId: 301,
+    }
+    expect(
+      pickOperationalFormBinding([orgBinding], {
+        formType: 'RECRUITMENT',
+        targetRole: 'VOLUNTEER',
+        nameHints: ['봉사자 모집', 'UJAT 봉사자 모집'],
+      })
+    ).toBeUndefined()
+    expect(
+      pickOperationalFormBinding([orgBinding], {
+        formType: 'RECRUITMENT',
+        targetRole: 'ORGANIZATION',
+        nameHints: ['참여 기관 모집', 'UJAT 기관 모집'],
+      })?.bindingId
+    ).toBe(11)
   })
 
   it('서로 다른 스펙에 이미 선택된 bindingId는 고르지 않는다', () => {

@@ -63,6 +63,7 @@ import {
   showRegisterCompletedAlert,
   showUpdateCompletedAlert,
   useCmsAlert,
+  FilterTableDescriptionDivider,
   FilterTableLayout,
 } from '@/shared/ui'
 
@@ -518,8 +519,9 @@ export function StripBannersPage() {
         title="메인 상단 띠배너 목록"
         description={
           <>
-            총 {totalCount.toLocaleString()}건 (배너는 최대 {MAX_ACTIVE_STRIP_BANNERS}
-            개까지 동시 사용 가능합니다.)
+            총 {totalCount.toLocaleString()}건
+            <FilterTableDescriptionDivider />
+            배너는 최대 {MAX_ACTIVE_STRIP_BANNERS}개까지 동시 사용 가능합니다.
           </>
         }
         actions={

@@ -1,6 +1,6 @@
 import type { TimeParagraph } from '@jakorea/form-schema/writing-form'
-import { PFTextInput } from '@/shared/ui'
-import styles from '../survey-fields.module.css'
+import hostStyles from '@/features/program/ui/apply-form-field-host.module.css'
+import { PFFormField, PFFormFieldRow, PFFormFieldTable, PFTextInput } from '@/shared/ui'
 
 type SurveyTimeFieldProps = {
   paragraph: TimeParagraph
@@ -16,15 +16,21 @@ export function SurveyTimeField({
   disabled = false,
 }: SurveyTimeFieldProps) {
   return (
-    <div className={styles.surveyFields}>
-      <PFTextInput
-        type="time"
-        variant="formPage"
-        placeholder="시간 선택"
-        value={value}
-        onValueChange={onValueChange}
-        disabled={disabled}
-      />
+    <div className={hostStyles.root}>
+      <PFFormFieldTable>
+        <PFFormFieldRow type="single">
+          <PFFormField label={_paragraph.paragraphTitle?.trim() || '시간'}>
+            <PFTextInput
+              type="time"
+              variant="formPage"
+              placeholder="시간 선택"
+              value={value}
+              onValueChange={onValueChange}
+              disabled={disabled}
+            />
+          </PFFormField>
+        </PFFormFieldRow>
+      </PFFormFieldTable>
     </div>
   )
 }

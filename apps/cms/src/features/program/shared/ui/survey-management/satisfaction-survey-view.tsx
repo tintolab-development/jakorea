@@ -1,4 +1,5 @@
 import type { RefObject } from 'react'
+import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import type {
   RegisteredSurvey,
@@ -28,6 +29,10 @@ export type SatisfactionSurveyViewProps<TKey extends string> = {
   onDeleteClick: () => void
   onOpenTemplatePreview: () => void
   onDownloadClick: () => void
+  downloadEnabled?: boolean
+  scheduleTabs?: ReadonlyArray<{ key: string; label: string }>
+  activeScheduleKey?: string
+  onScheduleTabChange?: (key: string) => void
   resultsExportRef?: RefObject<HTMLDivElement | null>
   resultsResponses?: SurveyPollRawResponse[]
   /** 결과 집계 기준 게시 version (remote 바인딩) */
@@ -52,6 +57,10 @@ export function SatisfactionSurveyView<TKey extends string>({
   onDeleteClick,
   onOpenTemplatePreview,
   onDownloadClick,
+  downloadEnabled = true,
+  scheduleTabs,
+  activeScheduleKey,
+  onScheduleTabChange,
   resultsExportRef,
   resultsResponses,
   resultsTemplateVersionId,
@@ -79,6 +88,7 @@ export function SatisfactionSurveyView<TKey extends string>({
         onShareClick={onShareClick}
         onOpenTemplatePreview={onOpenTemplatePreview}
         onDownloadClick={onDownloadClick}
+        downloadEnabled={downloadEnabled}
       />
     ) : null
 
@@ -117,6 +127,17 @@ export function SatisfactionSurveyView<TKey extends string>({
   return (
     <div className={rootClassName}>
       {audienceTabRow}
+      {scheduleTabs != null && scheduleTabs.length > 1 && onScheduleTabChange != null ? (
+        <CmsSelect
+          className="survey-management-satisfaction__schedule-select"
+          width={360}
+          withAllOption={false}
+          allowClear={false}
+          options={scheduleTabs.map(tab => ({ label: tab.label, value: tab.key }))}
+          value={activeScheduleKey ?? scheduleTabs[0]?.key}
+          onChange={value => onScheduleTabChange(String(value ?? ''))}
+        />
+      ) : null}
       {activeSurvey.status === 'before_start' ? (
         <SurveyNoResponseState
           title={noResponseCopy.title ?? `${activeAudienceLabel}용 만족도조사는 아직 진행 전입니다.`}

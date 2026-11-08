@@ -1,0 +1,67 @@
+/* 자택 주소 `*****` / `****` 블러 구간 — 서버 `*` 마스킹(전화·메일)과 시각 구분 */
+.privacy-home-address-blur {
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: baseline;
+  filter: blur(5px);
+  -webkit-filter: blur(5px);
+  user-select: none;
+}
+
+.privacy-home-address-value {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+  line-height: 150%;
+}
+
+.detail-info-form__field-content--view:has(.privacy-home-address-value) {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  align-items: center;
+}
+
+.detail-info-form__field-content--view > .privacy-home-address-value {
+  overflow: visible;
+  text-overflow: clip;
+}
+
+/* CMS program-pii-display 레거시 클래스 alias */
+.program-pii-address-blur {
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: baseline;
+  filter: blur(5px);
+  -webkit-filter: blur(5px);
+  user-select: none;
+}
+
+.program-detail-home-address-value {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+  line-height: 150%;
+}
+
+.detail-info-form__field-content--view:has(.program-detail-home-address-value) {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  align-items: center;
+}
+
+.detail-info-form__field-content--view > .program-detail-home-address-value {
+  overflow: visible;
+  text-overflow: clip;
+}

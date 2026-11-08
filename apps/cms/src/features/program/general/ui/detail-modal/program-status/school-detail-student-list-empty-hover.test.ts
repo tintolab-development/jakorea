@@ -24,8 +24,9 @@ describe('참여 학생 목록 empty hover shift (CSS contract)', () => {
 
   it('수정 모드 셀 패딩 규칙도 placeholder·measure-row를 제외한다', () => {
     const css = readCss('school-detail-student-list-section.css')
+    // 3f8b80fa4: 수정 모드 본문 셀 선택자를 `.ant-table-wrapper…--edit.cms-data-table`로 좁혔다.
     expect(css).toContain(
-      '.school-detail-modal__student-table--edit\n  .ant-table-tbody\n  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)'
+      '.ant-table-wrapper.school-detail-modal__student-table--edit.cms-data-table\n  .ant-table-tbody\n  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)'
     )
     expect(css).not.toMatch(
       /\.school-detail-modal__student-table--edit \.ant-table-tbody > tr > td\.ant-table-cell \{/

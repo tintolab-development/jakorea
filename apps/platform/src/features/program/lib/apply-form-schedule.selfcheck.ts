@@ -55,6 +55,18 @@ import {
   hasPreferredScheduleDateOutsideBounds,
   hasPreferredScheduleDateOutsideEducationConstraint,
   resolveEducationScheduleApplyConstraint,
+  seoulTodayIsoDate,
+  clampIsoMinDateToToday,
+  isIsoDateBeforeSeoulToday,
+  isSeoulScheduleStartPassed,
+  clampEducationScheduleApplyConstraint,
+  hasPreferredScheduleDateBeforeSeoulToday,
+  hasSelectedFixedScheduleChoicesPast,
+  hasSelectedScheduleIdsBeforeSeoulToday,
+  isFixedScheduleChoicePast,
+  isScheduleChoicePast,
+  parseScheduleChoiceStartTime,
+  PAST_SCHEDULE_NOT_SELECTABLE_MESSAGE,
   filterItemsByScheduleDateBounds,
   filterGeminiInstructorSlotsByTrainingRequestPeriod,
   isGeminiTrainingRequestPeriodConfigured,
@@ -65,6 +77,7 @@ import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@jakorea/form-schema/paragr
 import {
   capFixedScheduleSelectedIds,
   findIncompletePreferredScheduleMessage,
+  GENERAL_INSTITUTION_SESSION_COUNT_UNAVAILABLE_MESSAGE,
   selectedFixedScheduleIdsFromDraftAnswer,
   toFixedScheduleOptionAnswerValue,
   toPortalPreferredScheduleBlocks,
@@ -558,6 +571,75 @@ function testTrainedTeacherPeriodDateBounds() {
   } as never
   assert.equal(hasMissingRequiredBottomConsent(consentDraft), true)
 
+  const institutionConsentDraft = {
+    schemaVersion: 1,
+    formSettings: {},
+    paragraphs: [
+      {
+        id: 'program-application-institution-seed-personal-info',
+        kind: 'single_item',
+        variant: 'vertical_table',
+        showBottomConsent: true,
+        requiredMark: false,
+        answerRequired: false,
+        bottomConsent: 'disagree',
+      },
+      {
+        id: 'program-application-institution-seed-marketing',
+        kind: 'single_item',
+        variant: 'vertical_table',
+        showBottomConsent: true,
+        requiredMark: false,
+        answerRequired: false,
+        bottomConsent: 'disagree',
+      },
+    ],
+  }
+  assert.equal(
+    findMissingRequiredBottomConsentId(institutionConsentDraft as never),
+    'program-application-institution-seed-personal-info',
+  )
+  assert.equal(
+    findMissingRequiredBottomConsentId({
+      ...institutionConsentDraft,
+      paragraphs: [
+        {
+          ...institutionConsentDraft.paragraphs[0],
+          bottomConsent: 'agree',
+        },
+        institutionConsentDraft.paragraphs[1],
+      ],
+    } as never),
+    null,
+  )
+  assert.equal(
+    findMissingRequiredBottomConsentId({
+      schemaVersion: 1,
+      formSettings: {},
+      paragraphs: [
+        {
+          id: 'program-application-institution-seed-sex-offense-consent-submission',
+          kind: 'single_item',
+          variant: 'vertical_table',
+          showBottomConsent: true,
+          requiredMark: true,
+          answerRequired: true,
+          bottomConsent: null,
+        },
+        {
+          id: 'program-application-institution-seed-personal-info',
+          kind: 'single_item',
+          variant: 'vertical_table',
+          showBottomConsent: true,
+          requiredMark: true,
+          answerRequired: true,
+          bottomConsent: 'agree',
+        },
+      ],
+    } as never),
+    null,
+  )
+
   assert.equal(
     findIncompletePreferredScheduleMessage([
       { date: '2026-11-10', classPeriod: '1', startTime: '14:00', endTime: '03:03' },
@@ -715,7 +797,7 @@ assert.deepEqual(
     { scheduleInputMode: 'fixed_schedule_options', scheduleOptions: [{ scheduleId: 187123 }] },
     { items: [] }
   ),
-  [{ id: 'schedule:187123', label: '187123' }]
+  [{ id: 'schedule:187123', label: '187123', scheduleId: 187123 }]
 )
 assert.deepEqual(
   readRuntimeFixedScheduleChoiceItems(
@@ -1368,6 +1450,100 @@ function testEducationScheduleApplyConstraint() {
 
 testEducationScheduleApplyConstraint()
 
+function testPastScheduleSeoulTodayClamp() {
+  const now = new Date('2026-11-05T03:00:00.000Z')
+  assert.equal(seoulTodayIsoDate(now), '2026-11-05')
+  assert.equal(isIsoDateBeforeSeoulToday('2026-11-04', now), true)
+  assert.equal(isIsoDateBeforeSeoulToday('2026-11-05', now), false)
+  assert.equal(isIsoDateBeforeSeoulToday('2026-11-06', now), false)
+  assert.equal(clampIsoMinDateToToday(null, now), '2026-11-05')
+  assert.equal(clampIsoMinDateToToday('2026-10-01', now), '2026-11-05')
+  assert.equal(clampIsoMinDateToToday('2026-12-01', now), '2026-12-01')
+  assert.equal(isScheduleChoicePast('26년 11월 4일(수) 09:30 ~ 12:20', now), true)
+  assert.equal(isScheduleChoicePast('26년 11월 5일(목) 09:30 ~ 12:20', now), false)
+  assert.equal(isSeoulScheduleStartPassed('2026-11-05', '09:00', now), true)
+  assert.equal(isSeoulScheduleStartPassed('2026-11-05', '15:00', now), false)
+  assert.equal(isSeoulScheduleStartPassed('2026-11-05', '00:00', now), false)
+  assert.equal(isSeoulScheduleStartPassed('2026-11-06', '09:00', now), false)
+  // 일반 기관 고정 일정 — runtime startAt 우선, 당일 지난 시각도 지난 슬롯 (now = 서울 12:00)
+  assert.equal(parseScheduleChoiceStartTime('26년 11월 5일(목) 9:30 ~ 11:30'), '09:30')
+  assert.equal(parseScheduleChoiceStartTime('26년 11월 5일(목)'), null)
+  assert.equal(isFixedScheduleChoicePast({ startAt: '2026-11-05T09:30:00+09:00' }, now), true)
+  assert.equal(isFixedScheduleChoicePast({ startAt: '2026-11-05T15:00:00+09:00' }, now), false)
+  assert.equal(isFixedScheduleChoicePast({ startAt: '2026-11-04T23:00:00Z' }, now), true)
+  assert.equal(
+    isFixedScheduleChoicePast(
+      { label: '26년 11월 4일(수) 09:30 ~ 12:20', startAt: '2026-11-06T09:30:00+09:00' },
+      now,
+    ),
+    false,
+  )
+  assert.equal(isFixedScheduleChoicePast({ label: '26년 11월 5일(목) 9:30 ~ 11:30' }, now), true)
+  assert.equal(isFixedScheduleChoicePast({ label: '26년 11월 5일(목) 15:00 ~ 17:00' }, now), false)
+  assert.equal(isFixedScheduleChoicePast({ label: '26년 11월 5일(목)' }, now), false)
+  assert.equal(isFixedScheduleChoicePast({ label: '1회차 교육' }, now), false)
+  assert.equal(
+    hasSelectedFixedScheduleChoicesPast(
+      ['a', 'b'],
+      [
+        { id: 'a', label: '26년 11월 5일(목) 15:00 ~ 17:00' },
+        { id: 'b', label: '26년 11월 5일(목) 09:30 ~ 11:30', startAt: '2026-11-05T09:30:00+09:00' },
+      ],
+      now,
+    ),
+    true,
+  )
+  assert.equal(
+    hasSelectedFixedScheduleChoicesPast(
+      ['a'],
+      [{ id: 'a', label: '26년 11월 5일(목) 15:00 ~ 17:00' }],
+      now,
+    ),
+    false,
+  )
+  assert.equal(
+    hasPreferredScheduleDateBeforeSeoulToday([{ date: '2026-11-04' }, { date: '2026-11-05' }], now),
+    true,
+  )
+  assert.equal(hasPreferredScheduleDateBeforeSeoulToday([{ date: '2026-11-05' }], now), false)
+  assert.equal(
+    hasSelectedScheduleIdsBeforeSeoulToday(
+      ['a', 'b'],
+      [
+        { id: 'a', label: '26년 11월 5일(목)' },
+        { id: 'b', label: '26년 11월 4일(수)' },
+      ],
+      now,
+    ),
+    true,
+  )
+  const clamped = clampEducationScheduleApplyConstraint(
+    {
+      minDate: '2026-10-01',
+      maxDate: '2026-12-31',
+      enabledDates: new Set(['2026-11-04', '2026-11-05', '2026-11-10']),
+      configured: true,
+    },
+    now,
+  )
+  assert.equal(clamped.minDate, '2026-11-05')
+  assert.equal(clamped.enabledDates?.has('2026-11-04'), false)
+  assert.equal(clamped.enabledDates?.has('2026-11-05'), true)
+  const futureMin = clampEducationScheduleApplyConstraint(
+    {
+      minDate: '2026-12-01',
+      maxDate: '2026-12-31',
+      enabledDates: null,
+      configured: true,
+    },
+    now,
+  )
+  assert.equal(futureMin.minDate, '2026-12-01')
+  assert.equal(PAST_SCHEDULE_NOT_SELECTABLE_MESSAGE, '이미 지난 일정은 선택할 수 없습니다.')
+}
+
+testPastScheduleSeoulTodayClamp()
+
 function testEmptyFixedScheduleApplyGate() {
   const education = { id: 'schedule:187653', scheduleId: 187653, label: '본교육' }
   const preEducation = {
@@ -1514,5 +1690,79 @@ function testEmptyFixedScheduleApplyGate() {
 }
 
 testEmptyFixedScheduleApplyGate()
+
+/** 일반 기관 커리큘럼·기간 — 교시 개념 없음(교육받은교사 전용) */
+function testGeneralInstitutionPreferredScheduleWithoutClassPeriod(): void {
+  const singleRound = { generalInstitution: { sessionCount: 3 } }
+  const singleBlocks = toPortalPreferredScheduleBlocks(
+    [{ date: '2026-11-02', classPeriod: '', startTime: '9:30', endTime: '12:00' }],
+    singleRound,
+  )
+  assert.deepEqual(singleBlocks, [
+    {
+      preferenceRank: 1,
+      date: '2026-11-02',
+      sessionCount: 3,
+      startTime: '09:30',
+      endTime: '12:00',
+      sessionTimes: [
+        { sessionIndex: 1, startTime: '09:30', endTime: '12:00', timeRange: '09:30~12:00' },
+      ],
+    },
+  ])
+  assert.ok(!('classPeriod' in (singleBlocks[0]?.sessionTimes?.[0] ?? {})))
+  assert.equal(
+    findIncompletePreferredScheduleMessage(
+      [{ date: '2026-11-02', classPeriod: '', startTime: '09:30', endTime: '12:00' }],
+      singleRound,
+    ),
+    null,
+  )
+  assert.equal(
+    findIncompletePreferredScheduleMessage(
+      [{ date: '2026-11-02', classPeriod: '', startTime: '09:30', endTime: '' }],
+      singleRound,
+    ),
+    '진행 희망 교육 일정에 날짜·시작/종료 시간을 모두 입력해 주세요.',
+  )
+
+  // 단일 회차인데 커리큘럼 차시 수를 못 읽으면 1로 보내지 않고 제출을 막는다.
+  const singleRoundUnknown = { generalInstitution: { singleRound: true } }
+  const completeBlock = [
+    { date: '2026-11-02', classPeriod: '', startTime: '09:30', endTime: '12:00' },
+  ]
+  assert.deepEqual(toPortalPreferredScheduleBlocks(completeBlock, singleRoundUnknown), [])
+  assert.equal(
+    findIncompletePreferredScheduleMessage(completeBlock, singleRoundUnknown),
+    GENERAL_INSTITUTION_SESSION_COUNT_UNAVAILABLE_MESSAGE,
+  )
+
+  const multiRound = { generalInstitution: {} }
+  assert.equal(
+    findIncompletePreferredScheduleMessage(
+      [{ date: '2026-11-02', classPeriod: '', startTime: '09:30', endTime: '12:00' }],
+      multiRound,
+    ),
+    '진행 희망 교육 일정에 날짜·희망 차시·시작/종료 시간을 모두 입력해 주세요.',
+  )
+  const multiRoundBlock = toPortalPreferredScheduleBlocks(
+    [{ date: '2026-11-02', classPeriod: '3', startTime: '09:00', endTime: '10:00' }],
+    multiRound,
+  )[0]
+  // 희망 차시 3 = 총 3차시 분량. 교시 번호(classPeriod)는 보내지 않고 시간 구간은 1개.
+  assert.equal(multiRoundBlock?.sessionCount, 3)
+  assert.equal(multiRoundBlock?.sessionTimes?.length, 1)
+  assert.ok(!('classPeriod' in (multiRoundBlock?.sessionTimes?.[0] ?? {})))
+  // Gemini·교육받은교사 경로는 그대로 classPeriod를 보낸다.
+  assert.equal(
+    toPortalPreferredScheduleBlocks(
+      [{ date: '2026-11-02', classPeriod: '2', startTime: '09:30', endTime: '12:00' }],
+      undefined,
+    )[0]?.sessionTimes?.[0]?.classPeriod,
+    '2',
+  )
+}
+
+testGeneralInstitutionPreferredScheduleWithoutClassPeriod()
 
 console.log('apply-form-schedule.selfcheck: ok')

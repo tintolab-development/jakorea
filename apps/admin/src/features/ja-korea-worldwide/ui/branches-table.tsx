@@ -38,7 +38,7 @@ export function BranchesTable({ branches, mode, onChangeLink }: BranchesTablePro
             <div className="ja-worldwide-branches__cell" role="cell">
               {mode === 'edit' ? (
                 <CmsInput
-                  inputSize="medium"
+                  inputSize="small"
                   width="100%"
                   value={branch.linkUrl}
                   onChange={e => onChangeLink(branch.id, e.target.value)}
@@ -46,7 +46,9 @@ export function BranchesTable({ branches, mode, onChangeLink }: BranchesTablePro
                   aria-label={`${branch.name} 연결 링크`}
                 />
               ) : (
-                <span className="ja-worldwide-branches__url">{branch.linkUrl || '-'}</span>
+                <span className="ja-worldwide-branches__url" title={branch.linkUrl || undefined}>
+                  {branch.linkUrl || '-'}
+                </span>
               )}
             </div>
           </div>

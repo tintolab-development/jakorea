@@ -4,7 +4,7 @@
 
 import { useCallback, useMemo, useState, type Key } from 'react'
 import type { Dayjs } from 'dayjs'
-import { Image, Switch } from 'antd'
+import { Switch } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { MAX_ACTIVE_POPUPS, type Popup, type PopupListFilter } from '@/entities/popup/model/types'
 import {
@@ -50,6 +50,7 @@ import {
   AdminFilterTextInput,
   CmsSelect,
   ConfirmModal,
+  FilterTableDescriptionDivider,
   FilterTableLayout,
   NO_SELECTION_ALERT,
   showDeleteCompletedAlert,
@@ -415,15 +416,14 @@ export function PopupsPage() {
       {
         title: '이미지',
         key: 'image',
-        width: 160,
+        width: 140,
         align: 'center',
         render: (_value, record) => (
           <div className="popups-page__thumb-wrap">
-            <Image
+            <img
               className="popups-page__thumb"
               src={record.imageUrl}
               alt={record.altText || record.imageFileName || '팝업 이미지'}
-              preview={{ mask: '이미지 보기' }}
             />
           </div>
         ),
@@ -559,8 +559,9 @@ export function PopupsPage() {
         title="팝업 목록"
         description={
           <>
-            총 {totalCount.toLocaleString()}건 | 팝업은 최대 {MAX_ACTIVE_POPUPS}
-            개까지 동시 사용 가능합니다.
+            총 {totalCount.toLocaleString()}건
+            <FilterTableDescriptionDivider />
+            팝업은 최대 {MAX_ACTIVE_POPUPS}개까지 동시 사용 가능합니다.
           </>
         }
         actions={

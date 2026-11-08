@@ -253,11 +253,19 @@ export async function fetchProgramLectureReportsRemote(
   programId: string,
   params?: { page?: number; size?: number; instructorMemberId?: number }
 ): Promise<ProgramLectureReportsPageDto> {
+  const instructorMemberId =
+    params?.instructorMemberId != null && params.instructorMemberId > 0
+      ? params.instructorMemberId
+      : undefined
   const body = await unwrapApiBody<unknown[] | ProgramLectureReportsPageDto>(
     await customInstance({
       url: `/api/admin/programs/${encodeURIComponent(programId)}/lecture-reports`,
       method: 'GET',
-      params,
+      params: {
+        page: params?.page,
+        size: params?.size,
+        ...(instructorMemberId != null ? { instructorMemberId } : {}),
+      },
     })
   )
   if (Array.isArray(body)) {
@@ -274,24 +282,25 @@ export async function fetchProgramLectureReportsRemote(
 
 /**
  * GET /api/admin/programs/{programId}/lecture-reports/download
- * OpenAPI 응답 스키마 미정 — 회원 일괄과 동일하게 `FileDownloadJobResponse`(`downloadUrl`) 가정.
- * `downloadEndpoint` additive 도 수용.
+ * 제출 첨부 ZIP Job. 본문 PDF가 아니다. 빈 대상은 HTTP 409 LECTURE_REPORT_NO_DOWNLOADABLE_FILES.
  */
 export async function downloadProgramLectureReportsRemote(
   programId: string,
   params?: { instructorMemberId?: number }
-): Promise<{
-  downloadUrl?: string
-  downloadEndpoint?: string
-  fileObjectId?: number
-  status?: string
-}> {
+): Promise<import('@/shared/lib/lecture-report-bulk-download').LectureReportBulkDownloadJob> {
+  const query =
+    params?.instructorMemberId != null && params.instructorMemberId > 0
+      ? { instructorMemberId: params.instructorMemberId }
+      : undefined
   return unwrapApiBody(
-    await customInstance({
-      url: `/api/admin/programs/${encodeURIComponent(programId)}/lecture-reports/download`,
-      method: 'GET',
-      params,
-    })
+    await customInstance(
+      {
+        url: `/api/admin/programs/${encodeURIComponent(programId)}/lecture-reports/download`,
+        method: 'GET',
+        params: query,
+      },
+      { skipGlobalErrorAlert: true }
+    )
   )
 }
 
@@ -441,7 +450,7 @@ export async function changeParticipantSchedulesRemote(
 
 /**
  * education-scope GET/PUT additive enrich — CmsParticipantEducationScopeScheduleEnrich.
- * GENERAL_INDIVIDUAL VOLUNTEER는 configured/scheduleIds와 무관하게
+ * GENERAL_INDIVIDUAL 봉사자·강사는 configured/scheduleIds와 무관하게
  * 프로그램 ACTIVE/COMPLETED 일정이 들어올 수 있다 (배정 대기 행의 distanceKm용).
  */
 export type ParticipantEducationScopeScheduleEnrich = {
@@ -451,7 +460,8 @@ export type ParticipantEducationScopeScheduleEnrich = {
   /** 일정 주소 표시. distanceKm와 별개 */
   address?: string | null
   /**
-   * member_personal_profile 자택 ↔ 일정 장소 편도 km. NAVER Maps 실측, 소수 1자리.
+   * 자택 ↔ 일정 장소 편도 km. NAVER Maps 실측, 소수 1자리.
+   * 자택 우선순위(서버): 봉사자 가입 프로필 → 개인 프로필 / 강사 강사 프로필 → 가입 프로필 → 개인 프로필.
    * null: LOCAL_DISTANCE, 자택·일정 주소 없음, 지오코딩·경로 실패,
    * 자택과 장소가 같아 서버가 0km 이하로 버린 경우. FE는 재계산하지 않는다.
    */
@@ -470,6 +480,22 @@ export type ParticipantEducationScopeResponse = {
   scheduleIds?: number[]
   /** additive. [] 가능, null 아님. 없으면 FE는 []로 취급 */
   schedules?: ParticipantEducationScopeScheduleEnrich[]
+  /** additive. 기관형 강사 참여자만 채워짐(배정 대기 대상 기관 전체), 그 외 []. 없으면 FE는 []로 취급 */
+  organizations?: ParticipantEducationScopeOrganizationEnrich[]
+}
+
+/**
+ * education-scope 기관 거리 — CmsParticipantEducationScopeOrganizationEnrich.
+ * 매칭은 organizationApplicationId 우선, 행에 없을 때만 organizationId(null끼리는 매칭하지 않음).
+ */
+export type ParticipantEducationScopeOrganizationEnrich = {
+  organizationId?: number | null
+  organizationApplicationId: number
+  organizationName?: string | null
+  /** 강사 자택 ↔ 기관 편도 km, 소수 1자리. 산출 불가면 null(0으로 채우지 않음) */
+  distanceKm?: number | null
+  /** 장거리 표기 전용(단가 아님). distanceKm가 null이면 null */
+  longDistance?: boolean | null
 }
 
 export type ParticipantEducationScopeUpdateRequest = {
@@ -578,7 +604,8 @@ export async function fetchProgramSubmissionTeamsRemote(
 
 export type GeneralAssignmentSubmissionFileDto = {
   fileObjectId?: number
-  originalFileName?: string
+  fileName?: string | null
+  originalFileName?: string | null
   downloadable?: boolean
 }
 

@@ -57,6 +57,7 @@ export type IsolatedNetworkOptions = {
   failMode?: IsolatedFailMode
   includeRecruitmentRow?: boolean
   portalDraftAnswers?: Record<string, unknown> | null
+  seedLegacyOverlayProgram?: boolean
 }
 
 const LOCAL_HOSTS = new Set(['127.0.0.1', 'localhost'])
@@ -346,6 +347,71 @@ type IsolatedProgramStore = {
   includeRecruitmentRow: boolean
 }
 
+function legacyOverlayOnlyProgram(): Record<string, unknown> {
+  const overlay: Record<string, unknown> = {
+    'economyRegistration.basicInfo.repKo': '레거시 1사1교',
+    'economyRegistration.basicInfo.repEn': 'Legacy Company School',
+    'economyRegistration.basicInfo.publicProgramTitle': '레거시 공고',
+    'economyRegistration.basicInfo.sponsorId': String(CS_ISOLATED_IDS.SPONSOR_ID),
+    'economyRegistration.basicInfo.managerContactIds': [String(CS_ISOLATED_IDS.CONTACT_ID)],
+    'economyRegistration.kpi.participantCount': 11,
+    'economyRegistration.kpi.instructor': 2,
+    'economyRegistration.kpi.dispatchedSchool': 1,
+    'economyRegistration.kpi.dispatchedClass': 3,
+    'economyRegistration.kpi.volunteer': 9,
+    'economyRegistration.kpi.educationProgress.note': '',
+    'economyRegistration.wageInfo.grade1Fee': 111000,
+    'economyRegistration.wageInfo.grade1DistanceFee': 112000,
+    'economyRegistration.wageInfo.grade2Fee': 121000,
+    'economyRegistration.wageInfo.grade2DistanceFee': 122000,
+    'economyRegistration.wageInfo.grade3Fee': 131000,
+    'economyRegistration.wageInfo.grade3DistanceFee': 132000,
+    'economyRegistration.wageInfo.paymentItemValues': [
+      String(CS_ISOLATED_IDS.PAYMENT_B),
+      String(CS_ISOLATED_IDS.PAYMENT_B2),
+    ],
+    'economyRegistration.educationCurriculum.session1.title': '레거시 1차시',
+    'economyRegistration.educationCurriculum.session1.description': '레거시 내용1',
+    'economyRegistration.educationCurriculum.session2.title': '레거시 2차시',
+    'economyRegistration.educationCurriculum.session2.description': '레거시 내용2',
+    'application.instructor.memo': 'legacy-memo',
+    'recruit.announcementPublished': 'published',
+    'recruit.programRangeSeal': { start: '2026-04-01', end: '2026-12-31' },
+    'recruit.recruitRangeSeal': { start: '2026-03-01', end: '2026-03-31' },
+    'recruit.finalAnnounceIso': '2026-04-02',
+    'recruit.finalAnnounceMethod': '홈페이지',
+    'recruit.maxAssignableInstructors': 5,
+    'recruit.maxClassCount': 20,
+    'recruit.targetLevels': ['ELEMENTARY'],
+    'recruit.targetLevelDetail': '초등',
+    'recruit.inquiryContact': '레거시기관담당',
+    'recruit.inquiryTel': '02-0000-0000',
+    'recruit.inquiryEmail': 'legacy@example.com',
+    'recruit.notes': '레거시기관비고',
+    'recruit.preguidanceRequired': 'need',
+    'recruit.studentListRequired': 'need',
+    'recruit.certificateProvided': 'provided',
+    'instructorRecruit.inquiryContact': '레거시강사담당',
+  }
+  return {
+    id: CS_ISOLATED_IDS.PROGRAM_ID,
+    programType: 'COMPANY_SCHOOL',
+    title: '컬럼 제목',
+    mainTitle: '컬럼 제목',
+    status: 'PENDING',
+    lifecycleStatus: 'RECRUITING_STUDENTS',
+    periodStatus: 'RECRUITING',
+    startDate: '2026-01-01',
+    endDate: '2026-12-31',
+    recruitments: [],
+    serviceDetailJson: JSON.stringify({
+      schemaVersion: 1,
+      program: {},
+      registration: { overlay },
+    }),
+  }
+}
+
 function persistCreateBody(store: IsolatedProgramStore, body: Record<string, unknown>) {
   if (body.serviceDetailJson != null) {
     body = {
@@ -486,6 +552,7 @@ export async function installCsIsolatedNetwork(
   options?: IsolatedNetworkOptions
 ): Promise<IsolatedNetworkLog> {
   const failMode = options?.failMode ?? 'none'
+  let createFailCount = 0
   const log: IsolatedNetworkLog = {
     api: [],
     mutations: [],
@@ -516,8 +583,18 @@ export async function installCsIsolatedNetwork(
   let nextCopiedVersionId = 900201
   let nextFileId = CS_ISOLATED_IDS.THUMB_FILE_ID
   const store: IsolatedProgramStore = {
-    program: null,
-    sponsors: [],
+    program: options?.seedLegacyOverlayProgram ? legacyOverlayOnlyProgram() : null,
+    sponsors: options?.seedLegacyOverlayProgram
+      ? [
+          {
+            sponsorId: String(CS_ISOLATED_IDS.SPONSOR_ID),
+            sponsorName: 'RHF-B-후원사',
+            sponsorContactId: String(CS_ISOLATED_IDS.CONTACT_ID),
+            sponsorContactName: 'RHF-B-담당자',
+            displayOrder: 0,
+          },
+        ]
+      : [],
     includeRecruitmentRow: options?.includeRecruitmentRow === true,
   }
   let createdBindings: unknown[] = []
@@ -823,6 +900,10 @@ export async function installCsIsolatedNetwork(
           recruitmentStatus: 'OPEN',
           periodStatus: 'RECRUITING',
           applicationTargetMode: 'ORGANIZATION',
+          educationScheduleRange: {
+            start: '2026-01-01',
+            end: '2026-12-31',
+          },
           recruitments: [
             {
               recruitmentId: CS_ISOLATED_IDS.RECRUITMENT_ID,
@@ -931,11 +1012,14 @@ export async function installCsIsolatedNetwork(
         return
       }
       if (failMode === 'create' && method === 'POST' && pathname === '/api/admin/programs') {
-        log.createProgram = mutation
-        await route.fulfill(
-          json({ error: { code: 'CREATE_FAILED', message: 'mock create fail' } }, 500)
-        )
-        return
+        if (createFailCount === 0) {
+          createFailCount += 1
+          log.createProgram = mutation
+          await route.fulfill(
+            json({ error: { code: 'CREATE_FAILED', message: 'mock create fail' } }, 500)
+          )
+          return
+        }
       }
       if (failMode === 'media' && method === 'POST' && pathname.startsWith('/api/admin/files')) {
         log.filePosts.push(mutation)
@@ -1194,7 +1278,12 @@ export async function installCsIsolatedNetwork(
         if (failMode === 'portalDuplicate' && portalSubmitted) {
           await route.fulfill(
             json(
-              { error: { code: 'DUPLICATE_APPLICATION', message: 'mock duplicate apply' } },
+              {
+                error: {
+                  code: 'APPLICATION_ALREADY_SUBMITTED',
+                  message: '이미 제출한 신청이 있습니다.',
+                },
+              },
               409
             )
           )

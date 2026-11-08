@@ -1,7 +1,7 @@
-import type { SettlementExportHistoryResponse } from '@/shared/api/generated/settlement/schemas'
+import type { SettlementExportResponse } from './settlement-export-response'
 import { loadSensitiveAdminFileBlob } from '@/shared/lib/admin-file-upload/attachments'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
-import { downloadBlob, recordDownloadAccessLog } from '@/shared/utils/file-download'
+import { downloadBlob } from '@/shared/utils/file-download'
 import {
   getSettlementApiErrorMessage,
   isSettlementExportAlreadyDownloadedError,
@@ -14,8 +14,9 @@ import {
 } from '@/features/settlement-management/api/account-payments/settlement-form-download'
 
 export async function downloadIssuedSettlementExportFile(input: {
-  serverExport: SettlementExportHistoryResponse
+  serverExport: SettlementExportResponse
   kind: SettlementFormExportKind
+  password?: string
 }): Promise<void> {
   const fileObjectId = input.serverExport.fileObjectId
   if (fileObjectId == null) {
@@ -23,19 +24,21 @@ export async function downloadIssuedSettlementExportFile(input: {
   }
   const filename = buildSettlementFormExcelFilename(input.kind)
   const reason = SETTLEMENT_FORM_DOWNLOAD_REASON[input.kind]
-  await recordDownloadAccessLog(filename)
+  // sensitive-downloads/stream 이 file-access 이력을 남긴다 — client 로그를 따로 남기지 않는다
   const blob = await loadSensitiveAdminFileBlob({
     fileObjectId,
     reason,
+    password: input.password,
   })
   await downloadBlob(blob, filename, { skipAccessLog: true })
 }
 
 /** 409 SETTLEMENT_EXPORT_FILE_ALREADY_DOWNLOADED면 한 번만 재발급 후 다시 받는다. */
 export async function downloadIssuedSettlementExportFileOrReissue(input: {
-  serverExport: SettlementExportHistoryResponse
+  serverExport: SettlementExportResponse
   kind: SettlementFormExportKind
-  onReissue: () => Promise<SettlementExportHistoryResponse | null>
+  password?: string
+  onReissue: () => Promise<SettlementExportResponse | null>
 }): Promise<void> {
   try {
     await downloadIssuedSettlementExportFile(input)
@@ -46,6 +49,7 @@ export async function downloadIssuedSettlementExportFileOrReissue(input: {
     await downloadIssuedSettlementExportFile({
       serverExport: next,
       kind: input.kind,
+      password: input.password,
     })
   }
 }

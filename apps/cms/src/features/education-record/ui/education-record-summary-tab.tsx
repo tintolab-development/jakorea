@@ -63,7 +63,7 @@ export function EducationRecordSummaryTab({
 
       <section className="er-summary__category" aria-label="전체 합계">
         <div className="er-summary__category-card er-summary__category-card--grand">
-          <h3 className="er-summary__category-title">합계</h3>
+          <h3 className="er-summary__category-title">총 합계</h3>
           <div className="er-summary__sub-row er-summary__sub-row--mint">
             <EducationRecordSummaryTable row={data.grandTotal} variant="mint" />
           </div>

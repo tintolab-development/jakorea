@@ -33,6 +33,7 @@ import { shouldShowInstitutionApplicationDetailScheduleSection } from '@/feature
 import { formatClassStudentCountSegments } from '@/features/program/general/lib/detail-value-helpers'
 import type { Program } from '@/types/domain'
 import { CmsSelect } from '@/shared/ui/cms-select'
+import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
 import { TEXTBOOK_NOT_USED_OPTION_VALUE } from '@/features/program/general/lib/individual-applicant-textbook'
 import { TrainedTeachersPreferredScheduleDetailSection } from './preferred-schedule-detail-section'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-basic-info.css'
@@ -43,6 +44,7 @@ import {
   InstitutionApplicationTableRowTwoCols,
 } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-application-info-table'
 import '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-basic-info.css'
+import '@/features/program/general/ui/detail-modal/program-status/participating-institution-application-info.css'
 
 export interface TrainedTeachersApplicantInstitutionBasicInfoProps {
   institution: ApplicantSchoolRow
@@ -231,7 +233,28 @@ export function TrainedTeachersApplicantInstitutionBasicInfo({
   const textbookViewValue =
     (textbookDisplayLabel?.trim() && textbookDisplayLabel.trim() !== '해당 없음'
       ? textbookDisplayLabel.trim()
-      : institution.textbookName?.trim()) || '미정'
+      : institution.textbookName?.trim()) || '-'
+  const hasSelectedTextbook =
+    textbookViewValue !== '-' && textbookViewValue !== '해당 없음'
+  const textbookDeliveryStatus =
+    hasSelectedTextbook &&
+    institution.textbookStatus &&
+    institution.textbookStatus !== 'not_applicable'
+      ? institution.textbookStatus
+      : null
+  const textbookViewCell =
+    textbookDeliveryStatus != null ? (
+      <div className="participating-institution-application-info__textbook-value">
+        <ProgramDetailTdSegmentWrap>
+          {withProgramDetailTdDivider([
+            textbookViewValue,
+            <TextbookStatusBadge status={textbookDeliveryStatus} />,
+          ])}
+        </ProgramDetailTdSegmentWrap>
+      </div>
+    ) : (
+      textbookViewValue
+    )
 
   const textbookEditValue =
     isEditMode && draft && onDraftChange ? (
@@ -263,7 +286,7 @@ export function TrainedTeachersApplicantInstitutionBasicInfo({
 
   const schoolNameValue =
     isEditMode && draft ? (
-      <InstitutionReadonlyInput value={institution.schoolName ?? ''} />
+      <InstitutionReadonlyInput width={240} value={institution.schoolName ?? ''} />
     ) : (
       institution.schoolName ?? '-'
     )
@@ -319,7 +342,7 @@ export function TrainedTeachersApplicantInstitutionBasicInfo({
                 />
                 <InstitutionApplicationTableRowFullWidth
                   label="교재명"
-                  value={textbookEditValue ?? textbookViewValue}
+                  value={textbookEditValue ?? textbookViewCell}
                 />
               </tbody>
             </table>

@@ -8,18 +8,17 @@ import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import type { PiiAccessListFilter, PiiAccessLog } from '@/entities/pii-access-log/model/types'
 import { useExportPiiAccessLogs, usePiiAccessLogsList } from '@/features/pii-access-log/api/hooks'
+import { displayLogField } from '@/features/logs/shared/lib/display-log-field'
 import { formatLogDateTime } from '@/features/logs/shared/lib/format-datetime'
-import {
-  logListRowNumber,
-  logTablePagination,
-  parseLogListPage,
-  setLogListPageParam,
-} from '@/features/logs/shared/lib/list-page'
+import { LogListAccessDenied } from '@/features/logs/shared/ui/log-list-access-denied'
+import { isAdminForbidden } from '@/features/system-inbox/lib/http-status'
+import { logListRowNumber } from '@/features/logs/shared/lib/list-page'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
 import type { TableSearchParamRule } from '@/shared/lib/use-table-search'
 import {
@@ -30,6 +29,7 @@ import {
   type UrlDateRangePendingSyncRef,
 } from '@/shared/lib/url-date-range-pending-sync'
 import {
+  AdminInfiniteTableFooter,
   CmsButton,
   CmsDateRangePicker,
   AdminFilterTextInput,
@@ -68,7 +68,6 @@ function parseApplied(searchParams: URLSearchParams): PiiAccessListFilter {
   const to = searchParams.get('pii_to')
   if (from) filter.from = from
   if (to) filter.to = to
-  filter.page = parseLogListPage(searchParams.get('pi_page'))
   return filter
 }
 
@@ -125,13 +124,13 @@ export function PiiAccessLogPage() {
     patchPendingFilters,
     applied: appliedFilter,
     applySearch,
-    patchSearchParams,
     hasActiveFilters,
   } = useListFilterUrl<PendingFilters, PiiAccessListFilter>({
     initialPending: INITIAL_PENDING,
     paramConfig: searchSyncRules,
     parseApplied,
     afterApplyParams: nextParams => {
+      // 무한 스크롤 전환 전 링크에 남은 페이지 번호 정리
       nextParams.delete('pi_page')
     },
     syncPendingFromUrl: ({ searchParams, setPendingFilters: setPending }) => {
@@ -165,17 +164,16 @@ export function PiiAccessLogPage() {
 
   const listQuery = usePiiAccessLogsList(appliedFilter)
   const exportMutation = useExportPiiAccessLogs()
-  const rows = listQuery.data?.rows ?? []
-  const total = listQuery.data?.total ?? 0
-  const page = appliedFilter.page ?? 0
-  const loading = listQuery.isLoading || listQuery.isFetching
+  const rows = listQuery.rows
+  const total = listQuery.totalCount
 
-  const handlePageChange = useCallback(
-    (nextPage: number) => {
-      patchSearchParams(next => setLogListPageParam(next, 'pi_page', nextPage))
-    },
-    [patchSearchParams]
-  )
+  const { sentinelRef } = useGatedInfiniteScroll({
+    hasNextPage: listQuery.hasNextPage,
+    isFetchingNextPage: listQuery.isFetchingNextPage,
+    fetchNextPage: listQuery.fetchNextPage,
+    resetKey: JSON.stringify(appliedFilter),
+  })
+  const forbidden = isAdminForbidden(listQuery.error)
 
   const handleExcel = useCallback(() => {
     void exportMutation.mutateAsync(appliedFilter).catch(() => {
@@ -193,7 +191,7 @@ export function PiiAccessLogPage() {
         key: 'no',
         width: COL.no,
         className: CMS_TABLE_NO_COL_CLASS,
-        render: (_v, _r, index) => logListRowNumber(total, page, index),
+        render: (_v, _r, index) => logListRowNumber(total, 0, index),
       },
       {
         title: '조회 대상',
@@ -201,6 +199,7 @@ export function PiiAccessLogPage() {
         key: 'targetName',
         width: COL.targetName,
         ellipsis: true,
+        render: (v: string) => displayLogField(v),
       },
       {
         title: '조회 목적',
@@ -208,6 +207,7 @@ export function PiiAccessLogPage() {
         key: 'purpose',
         width: COL.purpose,
         ellipsis: true,
+        render: (v: string) => displayLogField(v),
       },
       {
         title: '조회자명',
@@ -215,23 +215,29 @@ export function PiiAccessLogPage() {
         key: 'accessorName',
         width: COL.accessorName,
         ellipsis: true,
+        render: (v: string) => displayLogField(v),
       },
       {
         title: '조회 일시',
         dataIndex: 'accessedAt',
         key: 'accessedAt',
         width: COL.accessedAt,
-        render: (v: string) => formatLogDateTime(v),
+        render: (v: string) => (v?.trim() ? formatLogDateTime(v) : '-'),
       },
       {
         title: 'IP',
         dataIndex: 'ip',
         key: 'ip',
         width: COL.ip,
+        render: (v: string) => displayLogField(v),
       },
     ],
-    [total, page]
+    [total]
   )
+
+  if (forbidden) {
+    return <LogListAccessDenied />
+  }
 
   return (
     <div className="log-list-page">
@@ -298,11 +304,15 @@ export function PiiAccessLogPage() {
           rowKey="id"
           columns={columns}
           dataSource={rows}
-          loading={loading}
-          pagination={logTablePagination({ page, total, onChange: handlePageChange })}
+          loading={listQuery.isLoading}
+          pagination={false}
           scroll={{
             x: COL.no + COL.targetName + COL.purpose + COL.accessorName + COL.accessedAt + COL.ip,
           }}
+        />
+        <AdminInfiniteTableFooter
+          sentinelRef={sentinelRef}
+          isFetchingNextPage={listQuery.isFetchingNextPage}
         />
       </FilterTableLayout>
     </div>

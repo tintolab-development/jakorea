@@ -11,18 +11,29 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  /* 본문 스크롤 영역이 셸 우측 여백(30)까지 넓어지도록 잘라내지 않는다 — 셸(.ant-modal-content)이 자른다 */
+  overflow: visible;
 }
 
-/* 타이틀 ↔ 본문 24px (content-modal 기본 always 16px 오버라이드) */
+/*
+ * 타이틀 ↔ 본문 24px (content-modal 기본 always 16px 오버라이드)
+ * 스크롤바가 입력 영역 위에 겹치지 않도록 스크롤 영역을 셸 우측 여백(30)까지 넓히고
+ * 같은 폭만큼 안쪽 여백을 줘서, 스크롤바는 콘텐츠 오른쪽 여백 위에 그려지게 한다.
+ */
 .notice-form-modal.content-modal.content-modal--title-body-gap-always .teal-header-modal__body,
 .notice-form-modal.content-modal .teal-header-modal__body {
+  --notice-form-modal-side-pad: 30px;
+
   padding-top: 24px !important;
+  padding-right: var(--notice-form-modal-side-pad) !important;
+  margin-right: calc(var(--notice-form-modal-side-pad) * -1);
   flex: 1 1 auto;
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
-  width: 100%;
+  width: auto;
+  align-self: stretch;
+  box-sizing: border-box;
   align-items: stretch;
 }
 

@@ -29,14 +29,20 @@ export function readProgramAuditNames(dto: unknown): ProgramAuditNameFields {
 
 function readExpectedUpdatedAt(updatedAt: string | Date | null | undefined): string | undefined {
   if (updatedAt == null) return undefined
+  if (typeof updatedAt === 'string') {
+    const trimmed = updatedAt.trim()
+    return trimmed || undefined
+  }
   if (updatedAt instanceof Date) {
     return Number.isNaN(updatedAt.getTime()) ? undefined : updatedAt.toISOString()
   }
-  const trimmed = updatedAt.trim()
-  return trimmed || undefined
+  return undefined
 }
 
-/** PATCH `/api/admin/programs/{id}` 낙관적 잠금. GET `updatedAt`이 있을 때만 실어 보낸다. */
+/**
+ * PATCH `/api/admin/programs/{id}` 낙관적 잠금.
+ * GET `updatedAt` 원문 문자열을 그대로 보낸다. Date → toISOString()만 쓰면 마이크로초가 잘릴 수 있다.
+ */
 export function withExpectedUpdatedAt<T extends object>(
   body: T,
   updatedAt: string | Date | null | undefined

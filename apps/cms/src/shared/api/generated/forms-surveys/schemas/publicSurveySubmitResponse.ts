@@ -8,6 +8,8 @@
 
 export interface PublicSurveySubmitResponse {
   formResponseId?: number;
+  bindingId?: number;
+  formType?: string;
   templateVersionId?: number;
   responseStatus?: string;
   submittedAt?: string;

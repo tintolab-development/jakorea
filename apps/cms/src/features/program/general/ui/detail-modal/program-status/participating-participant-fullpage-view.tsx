@@ -69,17 +69,30 @@ import {
   getParticipatingInstitutionActivityWithdrawScheduleOptions,
   buildParticipatingSchoolSessionKey,
 } from '@/features/program/general/lib/participating-institution-activity-withdraw'
+import {
+  activityWithdrawAssignedScheduleBlockAlert,
+  filterSessionsToAssignedSchedules,
+  readAssignedScheduleIds,
+  readAssignedScheduleIdsFromSessions,
+  resolveActivityWithdrawAssignedScheduleStatus,
+  type ActivityWithdrawAssignedScheduleStatus,
+} from '@/features/program/general/lib/activity-withdraw-assigned-schedule'
 import { screeningWithdrawCompleteContent } from '@/features/program/general/lib/screening-subject-kind'
 import {
   CERTIFICATE_ELIGIBILITY_TYPE_COMPLETION,
-  certificateIssuePrecheckBlockMessage,
+  CERTIFICATE_ELIGIBILITY_TYPE_PARTICIPATION,
+  certificateCertifiedPeriodIssueBlockMessage,
+  readCertificateCertifiedPeriod,
+  selectIssuableCertificatePlan,
+  type CertificateIssuePlan,
 } from '@/features/program/shared/lib/certificate-eligibility'
 import {
   CERTIFICATE_ELIGIBILITY_FETCH_FALLBACK,
   fetchCertificateEligibility,
   getCertificateEligibilityErrorMessage,
-  resolveCertificateIssuePrecheckMessage,
+  resolveCertificateIssuePlan,
 } from '@/features/program/shared/api/certificate-serial-api'
+import { certificateKindFromEligibilityApiType } from '@/features/program/general/lib/build-student-certificate-issuance'
 import { parseCertificateSerialInt64 } from '@/features/program/shared/lib/certificate-serial'
 import { cmsQueryKeys } from '@/shared/api/query-keys'
 import type { StudentCertificateDownloadContext } from '@/features/program/general/lib/build-student-certificate-issuance'
@@ -159,6 +172,9 @@ export function ParticipatingParticipantFullpageView({
     useState<StudentCertificateDownloadContext | null>(null)
   const [certificateExportActive, setCertificateExportActive] = useState(false)
   const [certificateEligibilityChecking, setCertificateEligibilityChecking] = useState(false)
+  const [certificateIssuePlan, setCertificateIssuePlan] = useState<CertificateIssuePlan | null>(
+    null
+  )
   const availableTabKeys = useMemo(() => getParticipantDetailTabKeys(program), [program])
   const visibleActiveTab = availableTabKeys.includes(activeTab) ? activeTab : 'application'
 
@@ -190,9 +206,35 @@ export function ParticipatingParticipantFullpageView({
       }),
     enabled: certificateParticipantId != null,
   })
-  const certificateIssueBlockMessage = certificateIssuePrecheckBlockMessage(
-    certificateEligibilityQuery.data
+  const certificateParticipationQuery = useQuery({
+    queryKey: cmsQueryKeys.certificates.eligibility(
+      certificateParticipantId ?? 0,
+      CERTIFICATE_ELIGIBILITY_TYPE_PARTICIPATION
+    ),
+    queryFn: () =>
+      fetchCertificateEligibility({
+        participantId: certificateParticipantId as number,
+        certificateType: CERTIFICATE_ELIGIBILITY_TYPE_PARTICIPATION,
+      }),
+    enabled: certificateParticipantId != null,
+  })
+  const certificatePlan = useMemo(
+    () =>
+      selectIssuableCertificatePlan({
+        activityWithdrawn: isActivityWithdrawn,
+        completion: certificateEligibilityQuery.data,
+        participation: certificateParticipationQuery.data,
+      }),
+    [
+      certificateEligibilityQuery.data,
+      certificateParticipationQuery.data,
+      isActivityWithdrawn,
+    ]
   )
+  const certificateQueriesReady =
+    certificateEligibilityQuery.isSuccess && certificateParticipationQuery.isSuccess
+  const certificateIssueBlockMessage =
+    certificateQueriesReady && !certificatePlan.eligible ? certificatePlan.blockMessage : null
 
   const educationScopeQuery = useQuery({
     queryKey: generalProgramProgressQueryKeys.educationScope(program.id, mergedParticipant.id),
@@ -240,13 +282,44 @@ export function ParticipatingParticipantFullpageView({
     mergedParticipant.approvalStatus === 'approved' &&
     educationScopeQuery.isLoading
 
+  /**
+   * 활동 포기 — 실제 배정 일정 기준.
+   * 승인 참여자(remote): education-scope `scheduleIds`(개인 배정 SSOT). 그 외 remote: 목록 sessions(배정만).
+   * mock 모드는 기존 동작 유지.
+   */
+  const activityWithdrawScopeActive =
+    progressRemoteEnabled && mergedParticipant.approvalStatus === 'approved'
+  const activityWithdrawAssignedStatus: ActivityWithdrawAssignedScheduleStatus = !progressRemoteEnabled
+    ? 'assigned'
+    : activityWithdrawScopeActive
+      ? resolveActivityWithdrawAssignedScheduleStatus({
+          isPending: educationScopeQuery.isPending,
+          isError: educationScopeQuery.isError,
+          data: educationScopeQuery.data,
+        })
+      : readAssignedScheduleIdsFromSessions(sessions).size > 0
+        ? 'assigned'
+        : 'none'
+
+  /** 중단 일정 후보·stopScheduleId 해석에 같은 목록을 쓴다(인덱스 키 불일치 방지) */
+  const activityWithdrawSessions = useMemo(() => {
+    if (progressScheduleSessions.length > 0) return progressScheduleSessions
+    if (!progressRemoteEnabled) return sessions
+    const assignedIds = activityWithdrawScopeActive
+      ? readAssignedScheduleIds(educationScopeQuery.data)
+      : readAssignedScheduleIdsFromSessions(sessions)
+    return filterSessionsToAssignedSchedules(sessions, assignedIds)
+  }, [
+    activityWithdrawScopeActive,
+    educationScopeQuery.data,
+    progressRemoteEnabled,
+    progressScheduleSessions,
+    sessions,
+  ])
+
   const activityWithdrawScheduleOptions = useMemo(
-    () =>
-      getParticipatingInstitutionActivityWithdrawScheduleOptions(
-        program,
-        progressScheduleSessions.length > 0 ? progressScheduleSessions : sessions
-      ),
-    [program, progressScheduleSessions, sessions]
+    () => getParticipatingInstitutionActivityWithdrawScheduleOptions(program, activityWithdrawSessions),
+    [program, activityWithdrawSessions]
   )
 
   const hasStudentSatisfactionSurvey = useMemo(
@@ -433,6 +506,13 @@ export function ParticipatingParticipantFullpageView({
       })
       return
     }
+    const assignedScheduleBlock = activityWithdrawAssignedScheduleBlockAlert(
+      activityWithdrawAssignedStatus
+    )
+    if (assignedScheduleBlock) {
+      showAlert(assignedScheduleBlock)
+      return
+    }
     if (activityWithdrawScheduleOptions.length === 0) {
       showAlert({
         title: '안내',
@@ -443,6 +523,7 @@ export function ParticipatingParticipantFullpageView({
     if (isApplicationInfoEditing) return
     setActivityWithdrawModalOpen(true)
   }, [
+    activityWithdrawAssignedStatus,
     activityWithdrawScheduleOptions.length,
     isActivityWithdrawn,
     isApplicationInfoEditing,
@@ -451,7 +532,7 @@ export function ParticipatingParticipantFullpageView({
 
   const handleConfirmActivityWithdraw = useCallback(
     async (payload: ActivityWithdrawScheduleModalPayload) => {
-      const matched = sessions
+      const matched = activityWithdrawSessions
         .map((session, index) => ({
           session,
           key: buildParticipatingSchoolSessionKey(session, index),
@@ -506,12 +587,12 @@ export function ParticipatingParticipantFullpageView({
       )
     },
     [
+      activityWithdrawSessions,
       mergedParticipant.applicantName,
       mergedParticipant.id,
       program.id,
       progressRemoteEnabled,
       queryClient,
-      sessions,
       showAlert,
     ]
   )
@@ -526,11 +607,20 @@ export function ParticipatingParticipantFullpageView({
     }
     setCertificateEligibilityChecking(true)
     try {
-      const blockMessage = await resolveCertificateIssuePrecheckMessage(mergedParticipant.id)
-      if (blockMessage) {
-        showAlert({ title: '안내', content: blockMessage })
+      const plan = await resolveCertificateIssuePlan({
+        participantId: mergedParticipant.id,
+        activityWithdrawn: isActivityWithdrawn,
+      })
+      if (plan == null) {
+        setCertificateIssuePlan(null)
+        setCertificateIssueModalOpen(true)
         return
       }
+      if (!plan.eligible) {
+        showAlert({ title: '안내', content: plan.blockMessage ?? '발급할 수 없습니다.' })
+        return
+      }
+      setCertificateIssuePlan(plan)
       setCertificateIssueModalOpen(true)
     } catch (error) {
       showAlert({
@@ -545,6 +635,7 @@ export function ParticipatingParticipantFullpageView({
     certificateEligibilityChecking,
     certificateExportActive,
     certificateIssueBlockMessage,
+    isActivityWithdrawn,
     isApplicationInfoEditing,
     mergedParticipant.id,
     showAlert,
@@ -556,6 +647,13 @@ export function ParticipatingParticipantFullpageView({
 
   const handleCertificateIssueConfirm = useCallback(
     async (_reason: CertificateIssueReasonValue, reasonLabel: string) => {
+      if (certificateIssuePlan != null && !certificateIssuePlan.eligible) {
+        showAlert({
+          title: '안내',
+          content: certificateIssuePlan.blockMessage ?? '발급할 수 없습니다.',
+        })
+        return
+      }
       try {
         const [lectureAttendanceSessions, profileHydrated] = await Promise.all([
           progressRemoteEnabled
@@ -570,12 +668,30 @@ export function ParticipatingParticipantFullpageView({
             : mergedParticipant,
         ])
 
+        const certifiedPeriod = readCertificateCertifiedPeriod(
+          certificateIssuePlan?.eligibility as object | null | undefined
+        )
+        const certifiedPeriodBlock = certificateCertifiedPeriodIssueBlockMessage({
+          activityWithdrawn: isActivityWithdrawn,
+          period: certifiedPeriod,
+        })
+        if (certifiedPeriodBlock) {
+          showAlert({ title: '안내', content: certifiedPeriodBlock })
+          return
+        }
         setCertificateExportContext(
           buildParticipatingParticipantCertificateContext({
             participant: { ...profileHydrated, lectureAttendanceSessions },
             program,
             hasStudentSatisfactionSurvey,
             issuanceReasonLabel: reasonLabel,
+            ...(certificateIssuePlan
+              ? { certificateKind: certificateKindFromEligibilityApiType(certificateIssuePlan.apiType) }
+              : {}),
+            certifiedPeriodLabel: certifiedPeriod?.label,
+            certifiedPeriodStart: certifiedPeriod?.start,
+            certifiedPeriodEnd: certifiedPeriod?.end,
+            requireCertifiedPeriod: isActivityWithdrawn,
           })
         )
         setCertificateExportActive(true)
@@ -589,19 +705,42 @@ export function ParticipatingParticipantFullpageView({
         })
       }
     },
-    [hasStudentSatisfactionSurvey, mergedParticipant, program, progressRemoteEnabled, showAlert]
+    [
+      certificateIssuePlan,
+      hasStudentSatisfactionSurvey,
+      isActivityWithdrawn,
+      mergedParticipant,
+      program,
+      progressRemoteEnabled,
+      showAlert,
+    ]
   )
 
   const handleCertificateExportComplete = useCallback((success: boolean) => {
     setCertificateExportContext(null)
     setCertificateExportActive(false)
     setCertificateIssueModalOpen(false)
+    setCertificateIssuePlan(null)
+    if (success && certificateParticipantId != null) {
+      void queryClient.invalidateQueries({
+        queryKey: cmsQueryKeys.certificates.eligibility(
+          certificateParticipantId,
+          CERTIFICATE_ELIGIBILITY_TYPE_COMPLETION
+        ),
+      })
+      void queryClient.invalidateQueries({
+        queryKey: cmsQueryKeys.certificates.eligibility(
+          certificateParticipantId,
+          CERTIFICATE_ELIGIBILITY_TYPE_PARTICIPATION
+        ),
+      })
+    }
     if (!success) {
       handleError(new Error('participant certificate pdf export failed'), {
         context: 'participatingParticipantFullpageView.certificateDownload',
       })
     }
-  }, [])
+  }, [certificateParticipantId, queryClient])
 
   const handleAdminCommentEditEnter = useCallback(() => {
     if (isApplicationInfoEditing) return
@@ -726,8 +865,7 @@ export function ParticipatingParticipantFullpageView({
                     size="h40"
                     disabled={
                       isActivityWithdrawn ||
-                      activityWithdrawSubmitting ||
-                      activityWithdrawScheduleOptions.length === 0
+                      activityWithdrawSubmitting
                     }
                     onClick={handleRequestActivityWithdraw} >
                     활동 포기
@@ -738,13 +876,12 @@ export function ParticipatingParticipantFullpageView({
                     icon={<ButtonDownloadIcon />}
                     disabled={
                       certificateExportActive ||
-                      certificateEligibilityChecking ||
-                      certificateIssueBlockMessage != null
+                      certificateEligibilityChecking
                     }
                     onClick={() => {
                       void handleCertificateIssueClick()
                     }} >
-                    수료증/참여인증서 발급
+                    수료증/참가인증서 발급
                   </CmsButton>
                 </>
               ) : null}

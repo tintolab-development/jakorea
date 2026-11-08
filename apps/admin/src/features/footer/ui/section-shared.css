@@ -129,7 +129,7 @@
   border-bottom: none !important;
 }
 
-/* 관리 열(마지막) 최소 폭: 88 버튼 + 좌우 패딩 */
+/* 관리 열(마지막): Figma 2100:89719 폭 140 · 좌우 12 → 수정 버튼(h32 · 100) 중앙 */
 .footer-section
   .footer-related-logos-table.cms-data-table
   .ant-table-thead
@@ -140,11 +140,8 @@
   .ant-table-tbody
   > tr
   > td:last-child {
-  width: 120px !important;
-  min-width: 120px !important;
-  max-width: 120px !important;
-  padding-left: 16px !important;
-  padding-right: 16px !important;
+  padding-left: 12px !important;
+  padding-right: 12px !important;
   overflow: visible !important;
 }
 
@@ -153,6 +150,15 @@
  * 공통 .cms-data-table 규칙도 같은 !important 우선순위를 사용하므로
  * footer-sortable-table을 선택자에 포함해 푸터 치수 규칙이 이기게 한다.
  */
+.footer-section
+  .footer-top-menu-table.footer-sortable-table.cms-data-table
+  .ant-table-thead
+  > tr
+  > th {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+}
+
 .footer-section
   .footer-top-menu-table.footer-sortable-table.cms-data-table
   .ant-table-tbody
@@ -183,6 +189,7 @@
   max-height: 54px !important;
   padding: 10px 16px !important;
   overflow: hidden !important;
+  font-size: 14px !important;
 }
 
 /* 수정 모드: 입력 높이 반영, 상태 간 동일 */
@@ -208,7 +215,16 @@
   overflow: hidden !important;
 }
 
-/* —— 유관기관 로고: 72(thumb)+12+12=96 고정 —— */
+/* —— 유관기관 로고: 72(thumb)+12+12=96 고정, 텍스트 14px —— */
+.footer-section
+  .footer-related-logos-table.footer-sortable-table.cms-data-table
+  .ant-table-thead
+  > tr
+  > th {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+}
+
 .footer-section
   .footer-related-logos-table.footer-sortable-table.cms-data-table
   .ant-table-tbody
@@ -238,6 +254,7 @@
   min-height: 96px !important;
   max-height: 96px !important;
   padding: 12px !important;
+  font-size: 14px !important;
   /* 로고 셀만 썸네일 클립 — 관리 열 overflow 는 last-child 규칙으로 visible */
   overflow: hidden !important;
 }
@@ -258,7 +275,7 @@
   > tr
   > td.ant-table-cell-row-hover:last-child {
   overflow: visible !important;
-  padding: 12px 16px !important;
+  padding: 12px !important;
 }
 
 .footer-section__table-scroll {
@@ -277,29 +294,26 @@
 }
 
 .footer-section__thumb {
+  /* 표 안 미리보기: 스트로크·라운드·배경 없이 가로 고정, 세로는 이미지 원본 비율 */
   width: 72px;
-  height: 72px;
-  aspect-ratio: 1 / 1;
   margin: 0 auto;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
-  overflow: hidden;
-  background: var(--color-bg-secondary, #f7f7f7);
-  border: 1px solid var(--table-line, #e0e0e0);
-  box-sizing: border-box;
+  background: transparent;
 }
 
 .footer-section__thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
   display: block;
+  width: 100%;
+  height: auto;
+  max-width: none;
+  max-height: none;
 }
 
 .footer-section__thumb--empty {
+  height: 72px;
   color: var(--color-text-tertiary, #9e9e9e);
   font-size: 11px;
 }

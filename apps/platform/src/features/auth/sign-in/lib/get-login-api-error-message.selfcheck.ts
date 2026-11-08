@@ -63,7 +63,23 @@ assert.equal(
     }),
     '회원 정보를 수정하지 못했습니다.',
   ),
-  'GUARDIAN_RELATION_INVALID: 보호자 관계를 확인해 주세요. 관계는 1~64자여야 합니다.',
+  '보호자 관계를 확인해 주세요. 관계는 1~64자여야 합니다.',
+)
+
+assert.equal(
+  getLoginApiErrorMessage(
+    axiosErr(409, { error: { code: 'SETTLEMENT_ACCOUNT_UPDATE_VIA_CONSENT_ONLY' } }),
+    '회원 정보를 수정하지 못했습니다.',
+  ),
+  '정산 계좌는 지급조서 사전 동의서에서만 입력·수정할 수 있습니다.',
+)
+
+assert.equal(
+  formatPortalProfileUpdateError(
+    axiosErr(409, { error: { code: 'SETTLEMENT_ACCOUNT_UPDATE_VIA_CONSENT_ONLY' } }),
+    '회원 정보를 수정하지 못했습니다.',
+  ),
+  '정산 계좌는 지급조서 사전 동의서에서만 입력·수정할 수 있습니다.',
 )
 
 console.log('get-login-api-error-message.selfcheck: ok')

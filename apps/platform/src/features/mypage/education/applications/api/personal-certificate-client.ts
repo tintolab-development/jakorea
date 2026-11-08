@@ -1,6 +1,7 @@
 import { axiosClient } from '@/shared/api/axios-instance'
 import { messageForPortalCertificateReasonCode } from '../lib/certificate-reason-messages'
 import { savePortalCertificatePdfDownload } from '../lib/personal-certificate-render-download'
+import { mapPortalCertificateAvailability } from './certificate-map'
 import type {
   MemberCertificateAvailabilityResponse,
   PortalCertificateIssueRequest,
@@ -12,8 +13,8 @@ const AVAILABILITY_PATH = (programId: number | string) =>
 
 const ISSUE_PATH = '/api/portal/me/certificates/issues'
 
-const GENERIC_ISSUE_ERROR = '수료증을 발급하지 못했습니다. 잠시 후 다시 시도해 주세요.'
-const GENERIC_DOWNLOAD_ERROR = '수료증을 다운로드하지 못했습니다. 잠시 후 다시 시도해 주세요.'
+const GENERIC_ISSUE_ERROR = '증명서를 발급하지 못했습니다. 잠시 후 다시 시도해 주세요.'
+const GENERIC_DOWNLOAD_ERROR = '증명서를 다운로드하지 못했습니다. 잠시 후 다시 시도해 주세요.'
 
 function unwrapEnvelope<T>(payload: unknown): T {
   if (payload && typeof payload === 'object') {
@@ -78,22 +79,26 @@ export async function fetchPersonalCertificateAvailability(
   programId: number | string,
   options?: { certificateType?: string; signal?: AbortSignal },
 ): Promise<MemberCertificateAvailabilityResponse> {
-  const certificateType = options?.certificateType?.trim() || 'AUTO'
+  const certificateType = options?.certificateType?.trim() || 'COMPLETION'
   const { data } = await axiosClient.get<unknown>(AVAILABILITY_PATH(programId), {
     signal: options?.signal,
     params: { certificateType },
   })
-  return unwrapEnvelope<MemberCertificateAvailabilityResponse>(data)
+  return mapPortalCertificateAvailability(data)
 }
 
 export async function issuePersonalCertificate(
   body: PortalCertificateIssueRequest,
 ): Promise<PortalCertificateIssueResponse> {
+  const certificateType = body.certificateType?.trim() || 'COMPLETION'
+  if (certificateType.toUpperCase() === 'PARTICIPATION') {
+    throw new Error('참가인증서는 CMS 관리자만 발급할 수 있습니다.')
+  }
   try {
     const { data } = await axiosClient.post<unknown>(ISSUE_PATH, {
       programId: body.programId,
       participantId: body.participantId,
-      certificateType: body.certificateType?.trim() || 'AUTO',
+      certificateType,
       issueReason: body.issueReason ?? 'PERSONAL_ARCHIVE',
     })
     const unwrapped = unwrapEnvelope<PortalCertificateIssueResponse>(data)

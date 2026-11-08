@@ -4,6 +4,7 @@ import { resolveParticipatingProgressAssignedSessions } from '@/features/program
 import { resolveEducationProgressFromScheduleBounds } from '@/features/program/general/lib/dashboard-schedule-delivery-status'
 import type { ProgramEducationSlotResponse } from '@/shared/api/generated/dashboard/schemas/programEducationSlotResponse'
 import type { SessionProgress } from '@/shared/api/generated/dashboard/schemas/sessionProgress'
+import type { SessionProgressScheduleRole } from '@/shared/api/generated/dashboard/schemas/sessionProgressScheduleRole'
 import type { SessionProgressScheduleStatus } from '@/shared/api/generated/dashboard/schemas/sessionProgressScheduleStatus'
 
 function positiveScheduleId(value: unknown): number | null {
@@ -36,22 +37,20 @@ function educationSlotDeliveryScheduleStatus(
 }
 
 function educationSlotToParticipatingSession(
-  slot: ProgramEducationSlotResponse,
-  index: number
+  slot: ProgramEducationSlotResponse
 ): ParticipatingSchoolSession | null {
   const scheduleId = positiveScheduleId(slot.scheduleId)
   if (scheduleId == null) return null
   const progress: SessionProgress & {
     educationSlotKey?: string
-    scheduleRole?: string
   } = {
     scheduleId,
-    sessionNo: slot.sessionNo ?? index + 1,
+    sessionNo: slot.sessionNo,
     startAt: slot.startAt,
     endAt: slot.endAt,
     scheduleStatus: educationSlotDeliveryScheduleStatus(slot),
     ...(slot.educationSlotKey?.trim() ? { educationSlotKey: slot.educationSlotKey.trim() } : {}),
-    ...(slot.scheduleRole?.trim() ? { scheduleRole: slot.scheduleRole.trim() } : {}),
+    ...(slot.scheduleRole?.trim() ? { scheduleRole: slot.scheduleRole.trim() as SessionProgressScheduleRole } : {}),
   }
   return mapSessionProgressToParticipatingSchoolSessions([progress])[0] ?? null
 }
@@ -81,7 +80,7 @@ export function resolveParticipatingIndividualProgressScheduleSessions(input: {
   }
 
   const result: ParticipatingSchoolSession[] = []
-  assignedIds.forEach((scheduleId, index) => {
+  assignedIds.forEach(scheduleId => {
     const fromParticipant = sessionByScheduleId.get(scheduleId)
     if (fromParticipant) {
       result.push(fromParticipant)
@@ -89,7 +88,7 @@ export function resolveParticipatingIndividualProgressScheduleSessions(input: {
     }
     const slot = slotByScheduleId.get(scheduleId)
     if (!slot) return
-    const fromSlot = educationSlotToParticipatingSession(slot, index)
+    const fromSlot = educationSlotToParticipatingSession(slot)
     if (fromSlot) result.push(fromSlot)
   })
   return result

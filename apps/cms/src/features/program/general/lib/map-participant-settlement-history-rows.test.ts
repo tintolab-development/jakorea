@@ -51,7 +51,7 @@ describe('mapParticipantSettlementHistoryRows', () => {
     })
 
     expect(rows).toHaveLength(2)
-    expect(rows[0]?.no).toBe(2)
+    expect(rows[0]?.no).toBe(1)
     expect(rows[0]?.lectureProgress).toBe('scheduled')
     expect(rows[0]?.paymentStatementStatus).toBe('none')
     expect(rows[0]?.canViewPaymentStatement).toBe(false)
@@ -83,6 +83,9 @@ describe('mapParticipantSettlementHistoryRows', () => {
       {
         id: '9',
         settlementId: 9,
+        settlementApplicationId: null,
+        isPendingApplication: false,
+        availableActions: [],
         no: 1,
         institutionName: '-',
         educationGrade: '-',

@@ -1,21 +1,106 @@
+import { isAxiosError } from 'axios'
+import { axiosClient } from '@/shared/api/axios-instance'
 import crimeConsentFormDocumentAssetUrl from '@/shared/assets/documents/crime_consent_form.pdf'
+import { portalPublicFileDownloadUrl } from '@/shared/lib/portal-public-file-url'
+import {
+  CRIME_CONSENT_MESSAGES,
+  readCrimeConsentErrorCodeFromBody,
+  resolveCrimeConsentApiErrorMessage,
+} from './crime-consent-original'
 
-/** CMS `apps/cms/src/shared/assets/documents/crime_consent_form.pdf` 와 동일 */
-export const CRIME_CONSENT_FORM_DOWNLOAD_FILENAME = '성범죄 경력 조회 동의서_양식.pdf'
+export class CrimeConsentCatalogDownloadError extends Error {
+  readonly code: string | null
+  readonly status: number | null
 
-export const crimeConsentFormDocumentUrl = crimeConsentFormDocumentAssetUrl
+  constructor(message: string, code: string | null = null, status: number | null = null) {
+    super(message)
+    this.name = 'CrimeConsentCatalogDownloadError'
+    this.code = code
+    this.status = status
+  }
+}
 
-export async function downloadCrimeConsentFormDocument(): Promise<void> {
-  const res = await fetch(crimeConsentFormDocumentUrl)
-  if (!res.ok) throw new Error('fetch failed')
-  const blob = await res.blob()
+function saveBlobFile(fileName: string, blob: Blob): void {
   const objectUrl = URL.createObjectURL(blob)
   const anchor = document.createElement('a')
   anchor.href = objectUrl
-  anchor.download = CRIME_CONSENT_FORM_DOWNLOAD_FILENAME
+  anchor.download = fileName
   anchor.rel = 'noopener'
   document.body.appendChild(anchor)
   anchor.click()
   anchor.remove()
   window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0)
+}
+
+async function readErrorBody(data: unknown): Promise<unknown> {
+  if (data instanceof Blob) {
+    try {
+      return JSON.parse(await data.text())
+    } catch {
+      return null
+    }
+  }
+  return data
+}
+
+/**
+ * 관리자가 게시한 성범죄 동의서 양식 파일.
+ * `fileObjectId`는 포털 응답의 catalogDocument에서만 오고, FE가 만들지 않는다.
+ * 회원 완성본 `.../documents/{documentId}/content` 와 구분한다.
+ */
+export async function downloadCrimeConsentCatalogDocument(input: {
+  fileObjectId: number
+  fileName: string
+}): Promise<void> {
+  const fileObjectId = input.fileObjectId
+  if (!Number.isSafeInteger(fileObjectId) || fileObjectId <= 0) {
+    throw new CrimeConsentCatalogDownloadError(CRIME_CONSENT_MESSAGES.formFileUnavailable)
+  }
+  const fileName = input.fileName.trim() || CRIME_CONSENT_MESSAGES.formFileFallbackName
+  const path = portalPublicFileDownloadUrl(fileObjectId)
+  try {
+    const res = await axiosClient.get<Blob>(path, { responseType: 'blob' })
+    const blob = res.data
+    if (!(blob instanceof Blob) || blob.size === 0) {
+      throw new CrimeConsentCatalogDownloadError(CRIME_CONSENT_MESSAGES.formFileUnavailable)
+    }
+    saveBlobFile(fileName, blob)
+  } catch (error) {
+    if (error instanceof CrimeConsentCatalogDownloadError) throw error
+    if (!isAxiosError(error)) {
+      throw new CrimeConsentCatalogDownloadError(CRIME_CONSENT_MESSAGES.formFileUnavailable)
+    }
+    if (error.response == null) {
+      throw new CrimeConsentCatalogDownloadError(CRIME_CONSENT_MESSAGES.network)
+    }
+    const status = error.response.status
+    const code = readCrimeConsentErrorCodeFromBody(await readErrorBody(error.response.data))
+    throw new CrimeConsentCatalogDownloadError(
+      resolveCrimeConsentApiErrorMessage({ code, status }, CRIME_CONSENT_MESSAGES.formFileUnavailable),
+      code,
+      status,
+    )
+  }
+}
+
+/**
+ * 성범죄 동의서 양식 다운로드.
+ * CMS 게시 PDF(`catalogDocument`)는 포털 API에 노출되면 `downloadCrimeConsentCatalogDocument`로 전환한다.
+ * 현재는 agreement-crime 시드와 동일한 앱 번들 PDF를 받는다(CMS `crime-consent-form-document`와 동일).
+ */
+export async function downloadCrimeConsentFormDocument(): Promise<void> {
+  try {
+    const res = await fetch(crimeConsentFormDocumentAssetUrl)
+    if (!res.ok) {
+      throw new CrimeConsentCatalogDownloadError(CRIME_CONSENT_MESSAGES.formFileUnavailable)
+    }
+    const blob = await res.blob()
+    if (!(blob instanceof Blob) || blob.size === 0) {
+      throw new CrimeConsentCatalogDownloadError(CRIME_CONSENT_MESSAGES.formFileUnavailable)
+    }
+    saveBlobFile(CRIME_CONSENT_MESSAGES.formFileFallbackName, blob)
+  } catch (error) {
+    if (error instanceof CrimeConsentCatalogDownloadError) throw error
+    throw new CrimeConsentCatalogDownloadError(CRIME_CONSENT_MESSAGES.formFileUnavailable)
+  }
 }

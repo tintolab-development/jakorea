@@ -36,6 +36,7 @@ import { AgreementAdminProxyConfirmBlock } from '@/features/template/ui/paragrap
 import { PaymentPreConsentFixedBlock } from '@/features/template/ui/paragraph/explanation/payment-pre-consent-fixed-block'
 import { StaticDescriptionLines } from '@/features/template/ui/paragraph/explanation/static-description-lines'
 import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@/features/template/model/payment-statement-pre-consent-draft'
+import { RECEIPT_PRE_CONSENT_IDS } from '@/features/template/model/receipt-pre-consent-draft'
 import { HorizontalTableParagraphBody } from '@/features/template/ui/paragraph/table/horizontal-table-paragraph-body'
 import { VerticalTableParagraphBody } from '@/features/template/ui/paragraph/table/vertical-table-paragraph-body'
 import { UserProfileParagraphBody } from '@/features/template/ui/paragraph/single-item/user-profile-paragraph-body'
@@ -407,6 +408,7 @@ function renderBody(
         <DocumentEducationPhotosReadonly
           paragraph={p as FileAttachmentParagraph}
           files={paragraphBodyOptions?.lectureReportFiles}
+          hideRequiredMark={paragraphBodyOptions?.hideTitleRequiredMark === true}
         />
       )
     }
@@ -442,7 +444,9 @@ function renderBody(
       const isPaymentPreConsentSheetBar =
         renderMode !== 'contentOnly' &&
         (p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.midConsentLine ||
-          p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.finalConfirm)
+          p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.finalConfirm ||
+          p.id === RECEIPT_PRE_CONSENT_IDS.midConsentLine ||
+          p.id === RECEIPT_PRE_CONSENT_IDS.finalConfirm)
       if (isPaymentPreConsentSheetBar) {
         return (
           <PaymentPreConsentFixedBlock tone="disabled">{body || ph}</PaymentPreConsentFixedBlock>
@@ -552,10 +556,21 @@ function renderBody(
           onChange={noopOnParagraphChange}
           isEditMode={false}
           isTemplateAuthoringMode={paragraphBodyOptions?.lectureReportProgramLinkedPreview !== true}
+          previewReadonly={
+            renderMode === 'contentOnly' ||
+            paragraphBodyOptions?.lectureReportProgramLinkedPreview === true
+          }
+          previewSkin={renderMode === 'contentOnly' ? 'a4Document' : 'surface'}
+          hideInstitutionFields={
+            paragraphBodyOptions?.lectureReportHideInstitutionFields === true
+          }
         />
       )
     case 'vertical_table':
-      if (p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.paymentRecord) {
+      if (
+        p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.paymentRecord ||
+        p.id === RECEIPT_PRE_CONSENT_IDS.paymentRecord
+      ) {
         return (
           <BasicInfoParagraph
             values={paragraphBodyOptions?.paymentStatementBasicInfoValues}
@@ -565,6 +580,10 @@ function renderBody(
             }
             onlyPaymentPurposeLocked={
               paragraphBodyOptions?.paymentStatementBasicInfoOnlyPaymentPurposeLocked
+            }
+            hideResidentFields={
+              paragraphBodyOptions?.paymentStatementBasicInfoHideResidentFields === true ||
+              p.id === RECEIPT_PRE_CONSENT_IDS.paymentRecord
             }
           />
         )
@@ -682,7 +701,9 @@ function renderBody(
             <UserInfoPreviewTable
               selectedEntries={getUserInfoPreviewSelectedEntries(ui)}
               skin="a4Document"
-              previewValues={paragraphBodyOptions?.userInfoPreviewValues}
+              previewValues={
+                paragraphBodyOptions?.userInfoPreviewValues ?? ui.fieldAnswers
+              }
               forceTwoColumnRow={
                 ui.id === UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.volunteerInfo
               }
@@ -731,8 +752,10 @@ function renderBody(
       if (
         renderMode === 'contentOnly' &&
         c.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing &&
-        paragraphBodyOptions?.agreementAdminProxyConfirm !== true
+        paragraphBodyOptions?.agreementAdminProxyConfirm !== true &&
+        !safeTrim(c.body)
       ) {
+        /** 구버전(본문 빈 값)은 구분선만 — 확인 문구가 있으면 시안(C10)대로 표시 */
         return null
       }
       return (
@@ -907,7 +930,11 @@ export function FormDocumentPreviewParagraph({
           <ContentOnlyParagraphHeader
             displayTitle={displayTitle}
             description={viewModel.description}
-            requiredMark={resolveParagraphTitleRequiredMark(paragraph)}
+            requiredMark={
+              paragraphBodyOptions?.hideTitleRequiredMark === true
+                ? false
+                : resolveParagraphTitleRequiredMark(paragraph)
+            }
             titleHint={multipleChoiceAllowMultipleTitleHint(paragraph)}
           />
         ) : null}

@@ -25,8 +25,10 @@ import {
   assertSettlementServerExportReady,
   waitForSettlementExportDownload,
 } from '@/features/settlement-management/api/settlement-api-client'
+import type { SettlementExportResponse } from '@/features/settlement-management/api/account-payments/settlement-export-response'
 import type { AccountPaymentRow } from '@/features/settlement-management/model/account-payments-list'
-import type { SettlementExportHistoryResponse } from '@/shared/api/generated/settlement/schemas'
+import { isFileDownloadPasswordApiError } from '@/shared/lib/file-download-password-api-error'
+import { useProtectedFileDownload } from '@/shared/lib/use-protected-file-download'
 import { CmsButton } from '@/shared/ui/cms-button'
 
 type RawExportKind = 'bulk-transfer' | 'tax-report'
@@ -74,7 +76,7 @@ export function RawSettlementExportApprovalModal({
   onRequestExport: (
     kind: RawExportKind,
     body: ReturnType<typeof buildRawExportBodyForScope>
-  ) => Promise<SettlementExportHistoryResponse>
+  ) => Promise<SettlementExportResponse>
   onClose: () => void
 }) {
   const [approvalIdText, setApprovalIdText] = useState('')
@@ -89,6 +91,9 @@ export function RawSettlementExportApprovalModal({
     effectiveStatus: string
   } | null>(null)
   const scopeTokenRef = useRef<string | null>(null)
+  /** 서버가 만든 원본 파일. 암호 오류로 다시 받을 때 발급 요청(승인 1회용)을 반복하지 않는다. */
+  const readyExportRef = useRef<SettlementExportResponse | null>(null)
+  const { runProtectedDownload, filePasswordModal } = useProtectedFileDownload()
   const label = kind === 'bulk-transfer' ? '대량이체' : '세금신고'
   const canSelectRows = selectedRows.length > 0
   const usingFullCorpus = scopeMode === 'full'
@@ -100,6 +105,7 @@ export function RawSettlementExportApprovalModal({
     setRequestedKind(null)
     setScopeSummary(null)
     scopeTokenRef.current = null
+    readyExportRef.current = null
     setBusy(false)
     onClose()
   }
@@ -200,36 +206,57 @@ export function RawSettlementExportApprovalModal({
       setMessage('승인 요청 이후 발급 종류가 바뀌었습니다. 새 승인을 요청해 주세요.')
       return
     }
+    // 원본(주민등록번호·계좌번호)이 들어가므로 일회성 파일 암호를 받은 뒤 발급한다.
+    runProtectedDownload({
+      kind: kind === 'bulk-transfer' ? 'BULK_TRANSFER_EXCEL' : 'TAX_REPORT_EXCEL',
+      zIndex: 1400,
+      download: password => issueAndDownloadRaw(approvalId, sessionAdminAccountId, password),
+    })
+  }
+
+  const issueAndDownloadRaw = async (
+    approvalId: number,
+    adminAccountId: number,
+    password: string
+  ) => {
     setBusy(true)
     setMessage(null)
     let downloaded = false
     try {
-      const current = await fetchPrivacyExportApprovalRemote(approvalId)
-      const approvalReference = assertOwnApprovedRawExport(
-        current,
-        sessionAdminAccountId,
-        RAW_SETTLEMENT_EXPORT_DOMAIN[kind]
-      )
-      const body = buildRawExportBodyForScope({
-        kind,
-        approvalReference,
-        fullCorpus: usingFullCorpus,
-        selectedRows: usingFullCorpus ? undefined : selectedRows,
-      })
-      if (usingFullCorpus && !isUnfilteredFullRawExportBody(body)) {
-        throw new Error('무필터 전체 원본 요청 body가 아닙니다.')
+      let ready = readyExportRef.current
+      if (ready == null) {
+        const current = await fetchPrivacyExportApprovalRemote(approvalId)
+        const approvalReference = assertOwnApprovedRawExport(
+          current,
+          adminAccountId,
+          RAW_SETTLEMENT_EXPORT_DOMAIN[kind]
+        )
+        const body = buildRawExportBodyForScope({
+          kind,
+          approvalReference,
+          fullCorpus: usingFullCorpus,
+          selectedRows: usingFullCorpus ? undefined : selectedRows,
+        })
+        if (usingFullCorpus && !isUnfilteredFullRawExportBody(body)) {
+          throw new Error('무필터 전체 원본 요청 body가 아닙니다.')
+        }
+        const requested = await onRequestExport(kind, body)
+        ready = assertSettlementServerExportReady(
+          await waitForSettlementExportDownload(requested),
+          '서버 파일이 준비되지 않았습니다. 클라이언트 파일로 대체하지 않습니다.'
+        )
+        readyExportRef.current = ready
       }
-      const requested = await onRequestExport(kind, body)
-      const ready = assertSettlementServerExportReady(
-        await waitForSettlementExportDownload(requested),
-        '서버 파일이 준비되지 않았습니다. 클라이언트 파일로 대체하지 않습니다.'
-      )
       await downloadIssuedSettlementExportFile({
         serverExport: ready,
         kind,
+        password,
       })
       downloaded = true
     } catch (error) {
+      // 암호 형식 오류는 암호 모달에 표시하고, 같은 서버 파일로 다시 받게 둔다.
+      if (isFileDownloadPasswordApiError(error)) throw error
+      readyExportRef.current = null
       setMessage(rawExportFailureMessage(error, '원본 발급에 실패했습니다.'))
     } finally {
       scopeTokenRef.current = null
@@ -339,6 +366,7 @@ export function RawSettlementExportApprovalModal({
         )}
       </div>
       {message ? <p>{message}</p> : null}
+      {filePasswordModal}
     </Modal>
   )
 }

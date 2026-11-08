@@ -12,6 +12,7 @@ import {
   isInstructorApplyConsentKey,
 } from '@/features/mypage'
 import { parseSafeInternalPath } from '@/features/mypage/lib/safe-internal-path'
+import { useListConsentOnWriteEnter } from '@/features/mypage/settings/hooks/use-list-consent-on-write-enter'
 
 export function MypageInstructorApplyConsentPage() {
   useInstructorApplySessionCacheOnLeave()
@@ -22,6 +23,8 @@ export function MypageInstructorApplyConsentPage() {
   const isValidKey = isInstructorApplyConsentKey(consentKey)
   const returnTo = parseSafeInternalPath(searchParams.get('returnTo')) ?? INSTRUCTOR_APPLY_PATH
   const isView = searchParams.get('mode') === 'view'
+  const [titleAside, setTitleAside] = useState<ReactNode>(null)
+  useListConsentOnWriteEnter(consentKey, isValidKey && !isView)
 
   useEffect(() => {
     if (!isValidKey) {
@@ -35,7 +38,6 @@ export function MypageInstructorApplyConsentPage() {
 
   const title = getInstructorApplyConsentPageTitle(consentKey)
   const description = getInstructorApplyConsentPageDescription(consentKey)
-  const [titleAside, setTitleAside] = useState<ReactNode>(null)
 
   return (
     <ConsentWriteFormPage

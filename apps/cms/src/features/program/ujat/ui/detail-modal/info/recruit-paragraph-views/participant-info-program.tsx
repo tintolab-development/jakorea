@@ -38,6 +38,7 @@ import '@/features/program/shared/ui/program-detail/project-info/project-info-fo
 import '@/features/template/ui/form-editor/form-editor.css'
 import './volunteer-info-program.css'
 import './participant-info-program.css'
+import { RecruitmentLifecycleStatusText } from '@/features/program/shared/ui/recruitment-lifecycle-status-text'
 
 function LifecycleStatusView({
   lifecycle,
@@ -48,11 +49,10 @@ function LifecycleStatusView({
 }) {
   if (!lifecycle) return <>-</>
   return (
-    <span
-      className={`program-detail-info-tab__lifecycle-status-text program-detail-info-tab__lifecycle-status-text--${lifecycle.replace(/_/g, '-')}`}
-    >
-      {getRecruitmentStatusLabelForStatus(status, 'participant')}
-    </span>
+    <RecruitmentLifecycleStatusText
+      status={lifecycle}
+      label={getRecruitmentStatusLabelForStatus(status, 'participant')}
+    />
   )
 }
 
@@ -64,11 +64,12 @@ function resolveParticipantNotesDisplay(program: Program): string {
 function resolveEducationTargetLabel(program: Program, isTemplateAuthoring: boolean): string {
   const fromLevels = formatTargetLevelsLabel(resolveProgramTargetLevels(program))
   if (fromLevels !== '-') return fromLevels
+  if (!isTemplateAuthoring) return '-'
   const nested =
     program.generalCommonInfo?.participantRecruitmentInfo?.educationTarget?.trim() ||
     program.generalCommonInfo?.participantRecruitmentInfo?.recruitmentTarget?.trim()
   if (nested) return nested
-  return isTemplateAuthoring ? '초등학교' : '-'
+  return '초등학교'
 }
 
 export function UjatRecruitParticipantInfoProgramView({

@@ -5,15 +5,10 @@
 @import './payment-order-admin-status-tag.css';
 
 /**
- * 메인 열 헤더(타이틀·닫기): `detail-fullpage-modal.css` 기본 `--detail-fullpage-header-padding-top`(30px) 유지.
- * LNB는 `.teal-header-modal__body` 패딩 제거로 본문 상단 정렬 — 헤더 여백은 __header만 담당.
+ * 메인 열 헤더(타이틀·닫기): `detail-fullpage-modal.css` 기본 헤더(높이 84 · 타이틀·닫기 세로 중앙) 유지.
+ * 본문 여백: 시안(12432:439120) GNB 바로 아래 기본 정보(상단 0) · 좌우 52 — 공통 `__content` 기본값
+ * (0 52 52, 헤더 좌우 52와 같은 시작선)을 그대로 쓴다. 화면 전용 padding 재정의 없음.
  */
-.payment-order-program-status-detail-fullpage-modal.detail-fullpage-modal
-  .detail-fullpage-modal__content {
-  padding: 24px 32px 32px;
-  box-sizing: border-box;
-  overflow: auto;
-}
 
 .payment-order-program-status-detail__root {
   max-width: 100%;
@@ -28,8 +23,18 @@
   margin-top: 0;
 }
 
-.payment-order-program-status-detail__basic-block .program-detail-info-tab__section-title {
+/*
+ * 기본 정보 제목 ↔ 표 간격 10 — 시안 프로그램별(12432:439120: 제목 28 → 표 y38)·신청자별(15524:543381: 제목줄 40 → 표 y50).
+ * DetailInfoForm 공통 헤더 margin 16을 이 블록에서만 10으로 맞춘다.
+ */
+.payment-order-program-status-detail__basic-block .detail-info-form__header {
   margin-bottom: 10px;
+}
+
+/* 프로그램별: 제목줄 버튼 없음 → 시안처럼 제목 높이(28)만 차지 (공통 header-lead 40 고정 해제) */
+.payment-order-program-status-detail__basic-block:not(.payment-order-instructor-status-detail__basic-block)
+  .detail-info-form__header-lead {
+  height: auto;
 }
 
 .payment-order-program-status-detail__basic-block .program-detail-info-tab__table-wrapper--top {
@@ -40,11 +45,6 @@
   .ant-table-container {
   border-inline-start: none !important;
   border-inline-end: none !important;
-}
-
-.payment-order-program-status-detail__table.participating-institutions-section__table
-  table.ant-table {
-  border-inline: none !important;
 }
 
 .payment-order-program-status-detail__table.participating-institutions-section__table
@@ -116,57 +116,6 @@
   vertical-align: middle !important;
   padding-top: 0 !important;
   padding-bottom: 0 !important;
-}
-
-.payment-order-program-status-detail-fullpage-modal
-  .payment-order-program-status-detail__table.participating-institutions-section__table
-  .ant-table-tbody
-  > tr:has(td.status-dropdown-cell__cell-status),
-.payment-order-instructor-status-detail-fullpage-modal
-  .payment-order-program-status-detail__table.participating-institutions-section__table
-  .ant-table-tbody
-  > tr:has(td.status-dropdown-cell__cell-status) {
-  height: 52px !important;
-  min-height: 52px !important;
-  max-height: 52px !important;
-}
-
-.payment-order-program-status-detail-fullpage-modal
-  .payment-order-program-status-detail__table.participating-institutions-section__table
-  .ant-table-tbody
-  > tr:has(td .status-dropdown-cell__status-trigger--open)
-  > td,
-.payment-order-instructor-status-detail-fullpage-modal
-  .payment-order-program-status-detail__table.participating-institutions-section__table
-  .ant-table-tbody
-  > tr:has(td .status-dropdown-cell__status-trigger--open)
-  > td {
-  height: 52px !important;
-  min-height: 52px !important;
-  max-height: 52px !important;
-}
-
-.payment-order-program-status-detail-fullpage-modal
-  .payment-order-program-status-detail__table.participating-institutions-section__table
-  .ant-table-tbody
-  > tr:has(td.status-dropdown-cell__cell-status)
-  > td.status-dropdown-cell__cell-status,
-.payment-order-instructor-status-detail-fullpage-modal
-  .payment-order-program-status-detail__table.participating-institutions-section__table
-  .ant-table-tbody
-  > tr:has(td.status-dropdown-cell__cell-status)
-  > td.status-dropdown-cell__cell-status {
-  width: 176px;
-  min-width: 176px;
-  max-width: 176px;
-  height: 52px !important;
-  min-height: 52px !important;
-  max-height: 52px !important;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-  box-sizing: border-box !important;
 }
 
 /* 기본 정보 표: 집계 상태 문구 좌측 정렬 */

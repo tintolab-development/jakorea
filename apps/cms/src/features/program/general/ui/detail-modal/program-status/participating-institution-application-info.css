@@ -24,21 +24,21 @@
 }
 
 /*
- * 교재 배송 StatusDropdown 행:
- * - 인라인 배지: STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME (116×48 고정 셸)
- * - 표 래퍼 width/max-width/min-width:0 — 열림 시 overview 표만 가로로 커지던 회귀 차단
+ * 교재 배송 현황 행 (교재명 | 수량 | 배송 현황 태그·드롭다운):
+ * - 행 높이 54 / 세로 패딩 0 — 드롭다운 트리거(48)가 들어가도 행이 늘지 않게
+ * - 표 래퍼 contain — 열림 시 overview 표만 가로로 커지던 회귀 차단
  */
 .participating-institution-application-info__table-wrap--overview {
   contain: inline-size;
 }
 
 .participating-institution-application-info__table-wrap--overview
-  .detail-info-form__row:has(.status-dropdown-cell__status-trigger) {
+  .detail-info-form__row:has(.participating-institution-application-info__textbook-value) {
   min-height: 54px;
 }
 
 .participating-institution-application-info__table-wrap--overview
-  .detail-info-form__row:has(.status-dropdown-cell__status-trigger)
+  .detail-info-form__row:has(.participating-institution-application-info__textbook-value)
   .detail-info-form__field-content {
   padding-top: 0;
   padding-bottom: 0;
@@ -70,11 +70,64 @@
   color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
 }
 
+/* Figma 5416:115668 / 14931:806953 — Table / Vertical / Medium */
+.participating-institution-application-info .applicant-institution-basic-info__title {
+  padding: 0 8px;
+}
+
+.participating-institution-application-info .applicant-institution-basic-info__table-wrap {
+  border-color: #e0e0e0;
+}
+
+.participating-institution-application-info .applicant-institution-basic-info__table tbody tr {
+  height: 52px;
+}
+
+.participating-institution-application-info
+  .applicant-institution-basic-info__cell--label {
+  width: 180px;
+  min-width: 180px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 150%;
+  color: #3d3d3d;
+  white-space: nowrap;
+}
+
+.participating-institution-application-info
+  .applicant-institution-basic-info__cell--value {
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+  color: #3d3d3d;
+  overflow: hidden;
+}
+
+.participating-institution-application-info__schedule-value {
+  flex-wrap: nowrap;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.participating-institution-application-info__schedule-value > span {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.participating-institution-application-info__schedule-value > span:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .participating-institution-application-info__session-status {
   font-family: 'Pretendard', sans-serif;
   font-size: 14px;
   font-style: normal;
-  font-weight: 700;
+  font-weight: 500;
   line-height: 150%; /* 24px */
 }
 

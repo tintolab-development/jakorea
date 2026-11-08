@@ -7,6 +7,7 @@ import { useParams } from 'react-router-dom'
 import { formatDateTimeSecondsDot } from '@/shared/utils/date'
 import { Spin } from 'antd'
 import { EyeOutlined, PaperClipOutlined } from '@ant-design/icons'
+import { AdminDetailBackLink, AdminDetailMoreMenu } from '@jakorea/admin-ui/post-detail'
 import { AttachmentDownloadIcon } from '@/shared/ui'
 import { downloadNoticeAttachment } from '@/features/posts/api/notices/notice-attachments'
 import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
@@ -138,6 +139,7 @@ export function AdminNoticeDetailPage() {
         onClose={() => setActionResultOpen(false)}
       />
       <div className="admin-notice-detail-page__inner">
+        <AdminDetailBackLink onClick={goList} />
         <div className="admin-notice-detail-page__card">
           <div className="admin-notice-detail-page__header">
             <div className="admin-notice-detail-page__top-row">
@@ -155,9 +157,16 @@ export function AdminNoticeDetailPage() {
                   <span className="admin-notice-detail-page__category">{notice.category}</span>
                 ) : null}
               </div>
-              <span className="admin-notice-detail-page__views">
-                <EyeOutlined className="admin-notice-detail-page__views-icon" aria-hidden />
-                {notice.viewCount.toLocaleString('ko-KR')}
+              <span className="admin-detail-top-actions">
+                <span className="admin-notice-detail-page__views">
+                  <EyeOutlined className="admin-notice-detail-page__views-icon" aria-hidden />
+                  {notice.viewCount.toLocaleString('ko-KR')}
+                </span>
+                <AdminDetailMoreMenu
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  disabled={!canWrite}
+                />
               </span>
             </div>
             <h1 className="admin-notice-detail-page__title">{notice.title}</h1>
@@ -171,12 +180,14 @@ export function AdminNoticeDetailPage() {
               ) : null}
             </div>
           </div>
-          <hr className="admin-notice-detail-page__section-divider" />
+          {attachmentItems.length > 0 ? null : (
+            <hr className="admin-notice-detail-page__section-divider" />
+          )}
           {attachmentItems.length > 0 ? (
             <div className="admin-notice-detail-page__attachments">
               <div className="admin-notice-detail-page__attachments-head">
                 <PaperClipOutlined className="admin-notice-detail-page__clip" aria-hidden />
-                <span>첨부파일</span>
+                <span>첨부 파일</span>
               </div>
               <ul className="admin-notice-detail-page__attachments-list">
                 {attachmentItems.map((item, index) => (

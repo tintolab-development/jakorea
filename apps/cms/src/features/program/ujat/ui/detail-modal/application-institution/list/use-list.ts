@@ -67,6 +67,7 @@ import { toTimedBulkNotifyTiming } from '@/features/program/general/lib/applicat
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import { getNotificationTimingApiErrorMessage } from '@/shared/lib/notification-schedule'
 import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 /** 필터 조건은 모두 서버 query로 보낸다. 응답이 다른 지역 코드를 섞어 보낼 때만 탭 기준으로 거른다. */
 function filterRowsByRegion(
@@ -219,10 +220,7 @@ export function useUjatInstitutionApplicationList(
   )
 
   const showNoSelectionAlert = useCallback(() => {
-    showAlert({
-      title: '항목 선택 안내',
-      content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
-    })
+    showAlert(NO_SELECTION_ALERT)
   }, [showAlert])
 
   const eligibleApplicationRejectRows = useMemo(
@@ -383,9 +381,7 @@ export function useUjatInstitutionApplicationList(
           const successIds = (result.successIds ?? []).map(String)
           if (failureCount > 0) {
             const lines = failures.map(failure => {
-              const message = failure.message?.trim() || '현재 상태에서는 처리할 수 없습니다.'
-              const code = failure.code?.trim()
-              return code ? `${message} (${code})` : message
+              return failure.message?.trim() || '현재 상태에서는 처리할 수 없습니다.'
             })
             showAlert({
               title: successIds.length > 0 ? '일부 처리 실패' : '처리 실패',

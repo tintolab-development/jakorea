@@ -4,7 +4,6 @@ import {
   inferParticipatingInstructorLectureProgress,
   mapSettlementsToParticipatingInstructorSettlementRows,
   summarizeParticipatingInstructorPaymentStatementStatus,
-  summarizeParticipatingInstructorSettlementProgress,
 } from '@/features/program/general/lib/map-settlement-to-participating-instructor-settlement-row'
 import { shouldShowIndividualSettlementDash } from '@/features/program/general/lib/participating-individual-instructor-settlement-display'
 
@@ -35,7 +34,7 @@ describe('mapSettlementsToParticipatingInstructorSettlementRows', () => {
 
     expect(rows).toHaveLength(2)
     expect(rows[0]?.settlementId).toBe(102)
-    expect(rows[0]?.no).toBe(2)
+    expect(rows[0]?.no).toBe(1)
     expect(rows[1]?.institutionName).toBe('강서초등학교')
     expect(rows[1]?.paymentStatementStatus).toBe('payment_statement_verified')
     expect(rows[1]?.scheduledSettlementAmount).toBe(915_000)
@@ -57,26 +56,49 @@ describe('mapSettlementsToParticipatingInstructorSettlementRows', () => {
     ).toContain('2회차')
   })
 
-  it('summarizes completed lecture count and total sessions', () => {
+  it('확정 전 신청서 행(settlementId null)을 신청서 ID·서버 actions 그대로 표시한다', () => {
     const rows = mapSettlementsToParticipatingInstructorSettlementRows([
       {
-        settlementId: 1,
-        lectureDate: '2025-01-01',
-        sessionTotal: 7,
-        statementStatus: 'CONFIRMED',
-        paymentStatus: 'PAID',
-      },
-      {
-        settlementId: 2,
-        lectureDate: '2027-01-01',
-        sessionTotal: 7,
+        settlementId: null as unknown as undefined,
+        settlementApplicationId: 14,
+        lectureDate: '2026-11-08',
+        sessionOrdinal: 1,
+        statementStatus: 'WAITING_CONFIRM',
+        grossAmount: 503_000,
+        netPaymentAmount: 488_150,
+        availableActions: ['VIEW', 'CONFIRM_SETTLEMENT_APPLICATION', 'REJECT_SETTLEMENT_APPLICATION'],
       },
     ])
 
-    expect(summarizeParticipatingInstructorSettlementProgress(rows)).toEqual({
-      completed: 1,
-      total: 7,
+    expect(rows).toHaveLength(1)
+    expect(rows[0]).toMatchObject({
+      id: 'application:14',
+      settlementId: null,
+      settlementApplicationId: 14,
+      isPendingApplication: true,
+      canViewPaymentStatement: false,
+      scheduledSettlementAmount: 488_150,
+      paymentStatementStatus: 'awaiting_confirmation',
+      availableActions: ['VIEW', 'CONFIRM_SETTLEMENT_APPLICATION', 'REJECT_SETTLEMENT_APPLICATION'],
     })
+  })
+
+  it('같은 신청서가 확정 정산 행과 신청서 행으로 동시에 오면 확정 행만 남긴다', () => {
+    const rows = mapSettlementsToParticipatingInstructorSettlementRows([
+      { settlementId: 500, settlementApplicationId: 14, lectureDate: '2026-11-08' },
+      { settlementApplicationId: 14, lectureDate: '2026-11-08' },
+      { settlementApplicationId: 15, lectureDate: '2026-11-01' },
+    ])
+
+    expect(rows.map(row => row.id)).toEqual(['500', 'application:15'])
+    expect(rows.map(row => row.no)).toEqual([1, 2])
+  })
+
+  it('settlementId·settlementApplicationId가 모두 없으면 행을 만들지 않는다', () => {
+    expect(mapSettlementsToParticipatingInstructorSettlementRows([{ lectureDate: '2026-11-08' }])).toEqual([])
+  })
+
+  it('infers lecture progress from lecture date', () => {
     expect(inferParticipatingInstructorLectureProgress({ lectureDate: '2025-01-01' })).toBe(
       'completed'
     )

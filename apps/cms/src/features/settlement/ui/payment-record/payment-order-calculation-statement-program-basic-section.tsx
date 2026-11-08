@@ -1,22 +1,32 @@
 /**
- * 산출 내역서 — 기본 정보(프로그램명·회차·사업기간·지급조서·강의비·사업소득) 공통 블록
+ * 산출 내역서 — 기본 정보(프로그램명·회차·사업기간·지급조서·강사비·사업소득) 공통 블록
  */
 
 import type { CSSProperties } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
 import type { PaymentOrderCalculationStatementProgramBasicInfo } from '@/features/settlement-management/model/payment-order-admin-list'
-import { PaymentOrderCalculationStatementProcessingStatusView } from './payment-order-calculation-statement-processing-status-view'
+import {
+  isPaymentOrderTransferScheduledStatus,
+  PaymentOrderCalculationStatementProcessingStatusView,
+  isPaymentOrderCorrectionRequestedStatus,
+} from './payment-order-calculation-statement-processing-status-view'
 
 export interface PaymentOrderCalculationStatementProgramBasicSectionProps {
   basic: PaymentOrderCalculationStatementProgramBasicInfo
   style?: CSSProperties
+  onResendNotificationClick?: () => void
 }
 
 export function PaymentOrderCalculationStatementProgramBasicSection({
   basic,
   style,
+  onResendNotificationClick,
 }: PaymentOrderCalculationStatementProgramBasicSectionProps) {
+  const showTransferScheduledDate = isPaymentOrderTransferScheduledStatus(
+    basic.processingStatusClass
+  )
+  const showCorrectionReason = isPaymentOrderCorrectionRequestedStatus(basic.processingStatusClass)
   const formCardClass =
     'payment-order-calc-statement-modal__detail-form-card payment-order-calc-statement-modal__detail-form-card--program'
 
@@ -49,20 +59,41 @@ export function PaymentOrderCalculationStatementProgramBasicSection({
 
       <div className="payment-order-calc-statement-modal__basic-split-gap" aria-hidden />
 
-      <DetailInfoForm title="기본 정보 — 지급 조서" hideHeader className={formCardClass}>
+      <DetailInfoForm title="기본 정보 — 지급조서" hideHeader className={formCardClass}>
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
-            label="지급 조서 처리 현황"
-            fullRow
-            view={<PaymentOrderCalculationStatementProcessingStatusView basic={basic} />}
+            label="지급조서 처리 현황"
+            fullRow={!showTransferScheduledDate && !showCorrectionReason}
+            view={
+              <PaymentOrderCalculationStatementProcessingStatusView
+                basic={basic}
+                onResendNotificationClick={onResendNotificationClick}
+                separateTransferScheduledDate
+              />
+            }
           />
+          {showTransferScheduledDate ? (
+            <DetailInfoForm.Field
+              label="이체 예정일"
+              view={<span>{basic.lectureFeePaymentScheduledDateDisplay ?? '-'}</span>}
+            />
+          ) : null}
+          {showCorrectionReason ? (
+            <DetailInfoForm.Field
+              label="정정 요청 사유"
+              view={<span>{basic.correctionReason?.trim() || '-'}</span>}
+            />
+          ) : null}
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
-            label="강의비 책정 기준"
+            label="강사비 책정 기준"
             view={
               <div className="payment-order-calc-statement-modal__td-divider-wrap payment-order-calc-statement-modal__td-divider-wrap--start">
-                {withProgramDetailTdDivider([basic.lectureFeeStandardTitle, basic.lectureFeeStandardAmount])}
+                {withProgramDetailTdDivider([
+                  basic.lectureFeeStandardTitle,
+                  basic.lectureFeeStandardAmount,
+                ])}
               </div>
             }
           />

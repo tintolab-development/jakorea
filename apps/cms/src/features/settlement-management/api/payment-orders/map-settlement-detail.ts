@@ -54,7 +54,7 @@ function toProgramDetailInstructorRow(
   return {
     id: settlementId != null ? String(settlementId) : `line-${index}`,
     no: index + 1,
-    settlementId,
+    settlementId: settlementId ?? undefined,
     statementId: resolveStatementId(item, statementMap),
     instructorName: item.instructorName ?? '-',
     institutionName: formatPaymentOrderInstitutionDisplay(item.institutionName),
@@ -62,15 +62,25 @@ function toProgramDetailInstructorRow(
     sessionOrdinal: item.sessionOrdinal ?? 0,
     processingStatus: mapSettlementAxesToLineStatus(item.statementStatus, item.paymentStatus),
     estimatedAmount: item.netPaymentAmount ?? 0,
-    lectureFeePaymentScheduledDate: item.expectedTransferDate,
-    statementStatus: item.statementStatus,
-    paymentStatus: item.paymentStatus,
+    lectureFeePaymentScheduledDate: item.expectedTransferDate ?? undefined,
+    correctionRequestId: item.settlementCorrectionRequestId ?? undefined,
+    correctionReason: item.correctionReason?.trim() || undefined,
+    statementStatus: item.statementStatus ?? undefined,
+    paymentStatus: item.paymentStatus ?? undefined,
     availableActions,
     canConfirmPaymentStatement: canConfirmPaymentStatement({
       availableActions,
       statementStatus: item.statementStatus,
     }),
   }
+}
+
+/** 정산 목록 단건 → 산출 내역서(프로그램형) 라인 행 — 참여 강사 상세 등 단건 진입용 */
+export function mapSettlementListItemToProgramDetailLineRow(
+  item: SettlementListItemResponse,
+  index = 0
+): PaymentOrderAdminProgramDetailInstructorRow {
+  return toProgramDetailInstructorRow(item, index, new Map())
 }
 
 function toInstructorDetailProgramRow(
@@ -83,7 +93,7 @@ function toInstructorDetailProgramRow(
   return {
     id: settlementId != null ? String(settlementId) : `line-${index}`,
     no: index + 1,
-    settlementId,
+    settlementId: settlementId ?? undefined,
     statementId: resolveStatementId(item, statementMap),
     programName: item.programNameKo ?? '-',
     institutionName: formatPaymentOrderInstitutionDisplay(item.institutionName),
@@ -91,9 +101,11 @@ function toInstructorDetailProgramRow(
     sessionOrdinal: item.sessionOrdinal ?? 0,
     processingStatus: mapSettlementAxesToLineStatus(item.statementStatus, item.paymentStatus),
     estimatedAmount: item.netPaymentAmount ?? 0,
-    lectureFeePaymentScheduledDate: item.expectedTransferDate,
-    statementStatus: item.statementStatus,
-    paymentStatus: item.paymentStatus,
+    lectureFeePaymentScheduledDate: item.expectedTransferDate ?? undefined,
+    correctionRequestId: item.settlementCorrectionRequestId ?? undefined,
+    correctionReason: item.correctionReason?.trim() || undefined,
+    statementStatus: item.statementStatus ?? undefined,
+    paymentStatus: item.paymentStatus ?? undefined,
     availableActions,
     canConfirmPaymentStatement: canConfirmPaymentStatement({
       availableActions,

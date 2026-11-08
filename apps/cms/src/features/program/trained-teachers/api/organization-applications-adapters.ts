@@ -1,7 +1,8 @@
 import {
-  formatRequestedEducationFormat,
   mapApiApplicationStatusToApprovalStatus,
+  mapTextbookDeliveryStatusToBadge,
 } from '@/features/program/general/api/adapters/general-applications-adapters'
+import type { TextbookStatusKey } from '@/features/program/general/model/participating-schools'
 import {
   stripDefaultEducationSlotNameFromLabel,
   toDisplayEducationScheduleName,
@@ -19,6 +20,7 @@ import type { PreferredScheduleSessionTime } from '@/shared/api/generated/dashbo
 import type { ProgramSchedule } from '@/types/domain'
 import type { TrainedTeacherOrganizationApplicationDetailResponse } from './organization-applications-types'
 import type { TrainedTeacherOrganizationApplicationResponse } from '@/shared/api/generated/dashboard/schemas/trainedTeacherOrganizationApplicationResponse'
+import type { GradeBlock } from '@/shared/api/generated/dashboard/schemas/gradeBlock'
 
 /** YYYY-MM-DD → YYYY.MM.DD (목록 세션 표시용). 이미 점 구분 문자열이면 공백만 정리. */
 function formatPreferredScheduleDateForSession(raw: string): string {
@@ -132,8 +134,8 @@ function kstDateTimeParts(value: string | null | undefined): { date: string; tim
 }
 
 /**
- * TT 상세 `educationSchedules[]`(기관 실제 진행 일정) → 출석 세션.
- * 출석 조회 scheduleIds SSOT — 희망 일정(preferredScheduleBlocks)으로 대체하지 않는다.
+ * TT 상세 `educationSchedules[]`(승인으로 확정된 운영 일정) → 출석 세션.
+ * 출석 조회 scheduleIds SSOT — 희망 일정(preferredScheduleBlocks)으로 채우거나 자르지 않는다.
  */
 export function mapTrainedTeacherEducationSchedulesToSessions(
   schedules: ReadonlyArray<TrainedTeacherOrganizationEducationSchedule> | null | undefined
@@ -151,18 +153,27 @@ export function mapTrainedTeacherEducationSchedulesToSessions(
       const isoDate = start?.date ?? ''
       const startTime = start?.time ?? ''
       const endTime = end?.time ?? ''
+      const scheduleStatus =
+        typeof schedule.scheduleStatus === 'string' ? schedule.scheduleStatus.trim() : ''
+      const hasRound =
+        typeof schedule.round === 'number' && Number.isFinite(schedule.round)
+      const strippedLabel = stripDefaultEducationSlotNameFromLabel(schedule.label)
       return {
-        round: schedule.round ?? index + 1,
+        round:
+          hasRound && schedule.round != null && schedule.round > 0
+            ? Math.trunc(schedule.round)
+            : index + 1,
         date: isoDate ? formatPreferredScheduleDateForSession(isoDate) : '',
         dayOfWeek: isoDate ? dayOfWeekFromIsoDate(isoDate) : '',
-        duration: '1차시',
+        duration: hasRound ? '' : strippedLabel || '',
         format: '',
         classNum: '',
         timeRange: startTime && endTime ? `${startTime}~${endTime}` : startTime || endTime,
         resolvedScheduleId: schedule.scheduleId,
-        ...(stripDefaultEducationSlotNameFromLabel(schedule.label)
-          ? { educationScheduleLabel: stripDefaultEducationSlotNameFromLabel(schedule.label) }
-          : {}),
+        startAt: schedule.startAt ?? null,
+        endAt: schedule.endAt ?? null,
+        ...(scheduleStatus ? { deliveryScheduleStatus: scheduleStatus } : {}),
+        ...(strippedLabel ? { educationScheduleLabel: strippedLabel } : {}),
       }
     })
 }
@@ -238,7 +249,82 @@ type TrainedTeacherOrganizationApplicationDto = (
   applicationReason?: string | null
   otherRequests?: string | null
   requestedEducationFormat?: string | null
+  /** 신청 답 educationFormat (online|offline|hybrid). requestedEducationFormat과 동일 의미 */
+  educationFormat?: string | null
   textbookId?: number | string | null
+  textbookDeliveryStatus?: string | null
+  textbookKits?: number | null
+  textbookQuantity?: number | null
+  kitCount?: number | null
+  bookCount?: number | null
+  gradeBlocks?: GradeBlock[] | null
+}
+
+function ownDeliveryStatus(source: object, key = 'textbookDeliveryStatus'): unknown {
+  return Object.prototype.hasOwnProperty.call(source, key)
+    ? (source as Record<string, unknown>)[key]
+    : undefined
+}
+
+/**
+ * TT 신청 교육 형태. ONLINE→온라인, OFFLINE→오프라인, HYBRID→혼합.
+ * 이미 한글이면 그대로. 프로그램 공통 교육 형태로 채우지 않는다.
+ */
+export function formatTrainedTeacherRequestedEducationFormat(
+  raw: string | null | undefined
+): string {
+  const trimmed = raw?.trim() ?? ''
+  if (!trimmed || trimmed === '-') return ''
+  if (
+    trimmed === '온라인' ||
+    trimmed === '오프라인' ||
+    trimmed === '혼합' ||
+    trimmed === '온/오프라인' ||
+    trimmed === '온·오프라인' ||
+    trimmed === '온오프라인'
+  ) {
+    return trimmed === '온·오프라인' || trimmed === '온오프라인' ? '온/오프라인' : trimmed
+  }
+  switch (trimmed.toUpperCase()) {
+    case 'ONLINE':
+      return '온라인'
+    case 'OFFLINE':
+      return '오프라인'
+    case 'HYBRID':
+      return '혼합'
+    default:
+      return ''
+  }
+}
+
+/** TT 상세/목록 루트 키트·권수. gradeBlocks·프로그램 materials로 채우지 않는다. */
+export function readTrainedTeacherTextbookKitFields(
+  dto: TrainedTeacherOrganizationApplicationDto
+): { textbookKits?: number; textbookQuantity?: number } {
+  const textbookKits = toNonNegativeCount(dto.textbookKits) ?? toNonNegativeCount(dto.kitCount)
+  const textbookQuantity =
+    toNonNegativeCount(dto.textbookQuantity) ?? toNonNegativeCount(dto.bookCount)
+  return {
+    ...(textbookKits != null ? { textbookKits } : {}),
+    ...(textbookQuantity != null ? { textbookQuantity } : {}),
+  }
+}
+
+/** 루트 textbookDeliveryStatus 와이어 → 배지. null/빈값은 omit. NOT_APPLICABLE은 해당 없음. */
+function mapStoredTextbookDeliveryToBadge(
+  raw: unknown
+): TextbookStatusKey | undefined {
+  if (typeof raw !== 'string') return undefined
+  const normalized = raw.trim()
+  if (!normalized || normalized === '-') return undefined
+  const mapped = mapTextbookDeliveryStatusToBadge(normalized)
+  if (mapped !== 'not_applicable') return mapped
+  const upper = normalized.toUpperCase()
+  if (upper === 'NOT_APPLICABLE') return 'not_applicable'
+  if (upper === 'BEFORE_SHIPPING' || upper === 'PREPARE') return 'preparing'
+  if (upper === 'IN_TRANSIT' || upper === 'SHIP') return 'shipping'
+  if (upper === 'DELIVERY_COMPLETED' || upper === 'DELIVER') return 'delivered'
+  return undefined
 }
 
 function formatResultNotificationSentAt(iso?: string | null): string | undefined {
@@ -271,13 +357,13 @@ function mapPreferredScheduleSession(
     typeof session.sessionIndex === 'number' && Number.isFinite(session.sessionIndex)
       ? session.sessionIndex
       : fallbackIndex
-  const classPeriod = session.classPeriod?.trim() || ''
+  const classPeriod = session.classPeriod?.trim() ?? ''
   const timeRange = buildTimeRange(session)
   if (!classPeriod && !timeRange) return null
   return {
     sessionIndex,
-    classPeriod: classPeriod || '-',
-    timeRange: timeRange || '-',
+    classPeriod,
+    timeRange,
     startTime: session.startTime?.trim() || undefined,
     endTime: session.endTime?.trim() || undefined,
   }
@@ -327,6 +413,33 @@ export function mapPreferredScheduleBlocks(
     .sort((a, b) => a.preferenceRank - b.preferenceRank)
 }
 
+/**
+ * 교재 배송 배지. TT 진행 현황 SSOT는 루트 textbookDeliveryStatus만.
+ * gradeBlocks[].textbookDeliveryStatus는 쓰지 않는다. 없으면 invent하지 않는다.
+ */
+export function readTrainedTeacherTextbookDeliveryStatus(
+  dto: TrainedTeacherOrganizationApplicationDto
+): TextbookStatusKey | undefined {
+  if (!Object.prototype.hasOwnProperty.call(dto, 'textbookDeliveryStatus')) return undefined
+  return mapStoredTextbookDeliveryToBadge(ownDeliveryStatus(dto))
+}
+
+/** 저장된 루트 상태 + 교재 선택 여부 → 화면 배지. GET null은 교재 있으면 배송 전. */
+export function resolveTrainedTeacherTextbookDeliveryBadge(
+  stored: TextbookStatusKey | undefined,
+  hasSelectedTextbook: boolean
+): TextbookStatusKey {
+  if (
+    stored === 'preparing' ||
+    stored === 'shipping' ||
+    stored === 'delivered' ||
+    stored === 'not_applicable'
+  ) {
+    return stored
+  }
+  return hasSelectedTextbook ? 'preparing' : 'not_applicable'
+}
+
 /** TT organization-application DTO → ApplicantSchoolRow */
 export function mapTrainedTeacherOrganizationApplicationToRow(
   dto: TrainedTeacherOrganizationApplicationDto,
@@ -350,7 +463,9 @@ export function mapTrainedTeacherOrganizationApplicationToRow(
   /** BE 계약: otherRequests는 answers 투영만. memo로 덮지 않음 */
   const otherRequests = dto.otherRequests?.trim() || undefined
   const educationType =
-    formatRequestedEducationFormat(dto.requestedEducationFormat) || undefined
+    formatTrainedTeacherRequestedEducationFormat(
+      dto.requestedEducationFormat ?? dto.educationFormat
+    ) || undefined
   const lectureRound = dto.lectureRound?.trim() || undefined
   const progressLabel = dto.progressLabel?.trim() || undefined
   const textbookName = dto.textbookName?.trim() || undefined
@@ -368,6 +483,8 @@ export function mapTrainedTeacherOrganizationApplicationToRow(
   const teacherEmailMasked =
     dto.teacherEmailMasked?.trim() || dto.teacherEmail?.trim() || undefined
   const textbookId = dto.textbookId == null ? undefined : String(dto.textbookId)
+  const textbookStatus = readTrainedTeacherTextbookDeliveryStatus(dto)
+  const textbookKitFields = readTrainedTeacherTextbookKitFields(dto)
   const detailFields = {
     ...(addressDetail ? { addressDetail } : {}),
     ...(applicationReason ? { applicationReason } : {}),
@@ -405,6 +522,8 @@ export function mapTrainedTeacherOrganizationApplicationToRow(
     totalEducationRoundCount,
     completedEducationRoundCount,
     textbookName,
+    ...(textbookStatus ? { textbookStatus } : {}),
+    ...textbookKitFields,
     educationJournalCount,
     journalSubmitted,
     educationCompletionCount,

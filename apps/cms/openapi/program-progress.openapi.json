@@ -33,16 +33,16 @@
       "description": "회원 본인의 통합 동의 조회, 전자서명, 철회 API"
     },
     {
-      "name": "수료증/참여인증서",
-      "description": "수료증과 참여인증서 발급, 조회, 다운로드, 상태 확인 API입니다."
-    },
-    {
       "name": "기타 API",
       "description": "교사회원의 UJAT 교육일별 배정 봉사자 민감 동의서 일괄 다운로드 API"
     },
     {
       "name": "기타 API",
       "description": "회원 포탈 일반 사용자 로그인/세션 API. 관리자 인증과 분리된 canonical surface입니다."
+    },
+    {
+      "name": "수료증/참가인증서",
+      "description": "수료증과 참가인증서 발급, 조회, 다운로드, 상태 확인 API입니다."
     },
     {
       "name": "기타 API",
@@ -102,11 +102,11 @@
     },
     {
       "name": "기타 API",
-      "description": "회원 포탈 SSO 로그인 표준 API"
+      "description": "회원 포탈 계정 복구, 비밀번호, 보호자 동의 및 회원 인증 API"
     },
     {
       "name": "기타 API",
-      "description": "회원 포탈 계정 복구, 비밀번호, 보호자 동의 및 회원 인증 API"
+      "description": "회원 포탈 SSO 로그인 표준 API"
     },
     {
       "name": "시스템 진단/운영 검증",
@@ -225,6 +225,10 @@
       "description": "UJAT 신청기관 임시배정, 기관 일정 확인 및 지역별 교육배정 준비 API"
     },
     {
+      "name": "수료증/참가인증서",
+      "description": "수료증/참가인증서 발급, 이력, 차단 사유 API"
+    },
+    {
       "name": "기타 API",
       "description": "GENERAL_ORGANIZATION 동일 기관 신청 학년 합반 canonical API"
     },
@@ -279,10 +283,6 @@
     {
       "name": "알림",
       "description": "알림 템플릿, 이벤트, 발송 상태 API"
-    },
-    {
-      "name": "수료증/참여인증서",
-      "description": "수료증/참여인증서 발급, 이력, 차단 사유 API"
     },
     {
       "name": "기타 API",
@@ -793,35 +793,48 @@
     },
     "/api/portal/me/generated-files/jobs/{jobId}": {
       "get": {
-        "operationId": "getMyGeneratedFileJob",
+        "tags": [
+          "기타 API"
+        ],
         "summary": "내 생성 파일 작업 조회",
-        "description": "로그인 회원이 requested_by_member_id인 작업만 반환합니다. 다른 회원의 jobId와 없는 jobId는 404 GENERATED_FILE_JOB_NOT_FOUND입니다. 응답 필드는 관리자 작업 조회와 같고 requestPayloadJson·resultSnapshotJson은 null입니다. jobStatus는 REQUESTED, PROCESSING, RENDERING, COMPLETED, FAILED입니다. CERTIFICATE_RENDER 완료 후 PDF는 GET /api/portal/me/certificates/{certificateIssueId}/download 의 downloadUrl(감사 포함)로 받습니다. fileObjectId만으로 /api/portal/me/files/{fileObjectId}/download-requests 를 호출할 수 있지만 시스템 생성 수료증은 certificate download URL을 우선 사용하세요. 관리자 API는 포털 토큰으로 열리지 않습니다.",
-        "responses": {
-          "200": {
-            "description": "본인 생성 파일 작업",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GeneratedFileJobResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "GENERATED_FILE_JOB_NOT_FOUND"
-          }
-        },
+        "description": "### 이 API가 하는 일\n- 내 생성 파일 작업 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/portal/me/generated-files/jobs/{jobId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: SELF_OWNED 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 처리 기준 없음\n- 감사로그 저장: 필수 아님\n\n### 상태값/화면 배지 기준\n- 개인정보/파일 API는 마스킹 응답과 원문 접근을 구분합니다. 원문 조회, export, 민감파일 다운로드는 감사로그가 저장되어야 성공으로 취급합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Owner-only generated file job poll. Other members and missing jobs are 404. Admin payload is not returned.",
+        "operationId": "getMyGeneratedFileJob",
         "parameters": [
           {
             "name": "jobId",
             "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
             "required": true,
             "schema": {
               "type": "integer",
               "format": "int64"
             }
           }
-        ]
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneratedFileJobResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "500": {
+            "description": "서버 내부 오류입니다. requestId와 서버 로그를 확인합니다."
+          }
+        }
       }
     },
     "/api/admin/programs/{programId}/participant-register-candidates": {
@@ -1277,6 +1290,32 @@
           "programYear"
         ]
       },
+      "PreviousUjatTermRequest": {
+        "type": "object",
+        "properties": {
+          "term": {
+            "type": "string",
+            "minLength": 1
+          },
+          "year": {
+            "type": "string",
+            "minLength": 1
+          },
+          "certificateFileIds": {
+            "type": "array",
+            "description": "이전 기수 수료증 fileObjectId 문자열 목록. 숫자만 허용. 본인(ADMIN) 업로드·VOLUNTEER_APPLICATION_EVIDENCE·대상 PROGRAM owner·CLEAN·AVAILABLE/CONFIRMED. 연결 키는 ujat-program-application-volunteer-seed-previous-term. 없는 id/타 프로그램 owner/CERTIFICATE_TEMPLATE·CERTIFICATE_ASSET purpose → 400 VOLUNTEER_PREVIOUS_UJAT_FILE_INVALID. PENDING_SCAN·미확정 업로드 → 409 VOLUNTEER_PREVIOUS_UJAT_FILE_PENDING_SCAN.",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "nullable": true
+          }
+        },
+        "required": [
+          "term",
+          "year"
+        ]
+      },
       "ProgramParticipantRegisterCandidateResponse": {
         "type": "object",
         "description": "봉사자 추가 등록 모달 회원 후보",
@@ -1394,10 +1433,10 @@
           },
           "thirdPartyRecipient": {
             "type": "string",
-            "nullable": true,
-            "minLength": 1,
+            "description": "제3자 동의 「제공받는 곳(기관명)」. trim 후 1~200자. CMS_PROGRESS_ADD(일반 GENERAL* 및 UJAT 교육 진행 추가 등록)에서 thirdPartyConsent=AGREE이면 필수이며 누락·공백·'-'는 422 VOLUNTEER_THIRD_PARTY_RECIPIENT_REQUIRED. wire에 빈 문자열·'-'를 보내지 말고 미입력은 null/생략. 저장 위치: form_response.raw_answers_jsonb 및 form_response_answer의 program-volunteer-application-seed-third-party(UJAT는 ujat-…-seed-third-party) 객체(dataRows[0][0]·fieldDataRows[0][0].value·thirdPartyRecipient).",
             "maxLength": 200,
-            "description": "제3자 동의 「제공받는 곳(기관명)」. trim 후 1~200자. CMS_PROGRESS_ADD(일반 GENERAL* 및 UJAT 교육 진행 추가 등록)에서 thirdPartyConsent=AGREE이면 필수이며 누락·공백·'-'는 422 VOLUNTEER_THIRD_PARTY_RECIPIENT_REQUIRED. wire에 빈 문자열·'-'를 보내지 말고 미입력은 null/생략. 저장 위치: form_response.raw_answers_jsonb 및 form_response_answer의 program-volunteer-application-seed-third-party(UJAT는 ujat-…-seed-third-party) 객체(dataRows[0][0]·fieldDataRows[0][0].value·thirdPartyRecipient)."
+            "minLength": 0,
+            "nullable": true
           },
           "id1365": {
             "type": "string",
@@ -1417,12 +1456,20 @@
             "$ref": "#/components/schemas/PreviousJaProgramRequest"
           },
           "previousUjatTerm": {
-            "$ref": "#/components/schemas/VolunteerPreviousUjatTermRequest"
+            "description": "사용자 홈 UJAT 봉사 신청서의 이전 활동 기수. CMS_PROGRESS_ADD에서는 생략 가능하며 없으면 기수를 invent하지 않습니다. certificateFileIds가 있으면 ADMIN이 업로드한 VOLUNTEER_APPLICATION_EVIDENCE(CLEAN·AVAILABLE)만 받으며 form_submission_file에 연결됩니다.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PreviousUjatTermRequest"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "educationRegionCode": {
             "type": "string",
-            "nullable": true,
-            "description": "사용자 홈 UJAT 봉사 신청서의 희망 교육 활동 지역. CMS_PROGRESS_ADD에서는 생략 가능. UJAT 교육지역 code. 불일치 시 400 UJAT_EDUCATION_REGION_CODE_UNKNOWN. 서울 치환 없음. 생략 시 지역 null."
+            "description": "사용자 홈 UJAT 봉사 신청서의 희망 교육 활동 지역. CMS_PROGRESS_ADD에서는 생략 가능. GET /api/admin/ujat/education-regions 의 code. 대소문자 무시. 없거나 매핑 실패 시 서울로 채우지 않습니다. 생략하면 preferred region은 null입니다.",
+            "nullable": true
           },
           "recruitHalf": {
             "type": "string",
@@ -1439,14 +1486,14 @@
           },
           "applicationType": {
             "type": "string",
-            "nullable": true,
+            "description": "사용자 홈 UJAT 봉사 신청서 유형. CMS_PROGRESS_ADD에서는 생략 가능(없으면 NEW/기수를 invent하지 않음). UJAT_GRADUATE여도 freeTextItems 4문항(intro, educationExperience, necessity, jaExperience)은 필수입니다.",
             "enum": [
               "NEW",
               "UJAT_GRADUATE",
               "new",
               "ujat-graduate"
             ],
-            "description": "사용자 홈 UJAT 봉사 신청서 유형. CMS_PROGRESS_ADD에서는 생략 가능(없으면 NEW/기수를 invent하지 않음). UJAT_GRADUATE여도 freeTextItems 4문항(intro, educationExperience, necessity, jaExperience)은 필수입니다."
+            "nullable": true
           },
           "freeTextItems": {
             "$ref": "#/components/schemas/FreeTextItemsRequest"
@@ -1485,29 +1532,6 @@
           },
           "participantStatus": {
             "type": "string"
-          }
-        }
-      },
-      "VolunteerPreviousUjatTermRequest": {
-        "type": "object",
-        "required": [
-          "term",
-          "year"
-        ],
-        "properties": {
-          "term": {
-            "type": "string"
-          },
-          "year": {
-            "type": "string"
-          },
-          "certificateFileIds": {
-            "type": "array",
-            "nullable": true,
-            "items": {
-              "type": "string"
-            },
-            "description": "이전 기수 수료증 fileObjectId 문자열 목록. 숫자만 허용. 본인(ADMIN) 업로드·VOLUNTEER_APPLICATION_EVIDENCE·대상 PROGRAM owner·CLEAN·AVAILABLE/CONFIRMED. 연결 키는 ujat-program-application-volunteer-seed-previous-term. 없는 id/타 프로그램 owner/CERTIFICATE_TEMPLATE·CERTIFICATE_ASSET purpose → 400 VOLUNTEER_PREVIOUS_UJAT_FILE_INVALID. PENDING_SCAN·미확정 업로드 → 409 VOLUNTEER_PREVIOUS_UJAT_FILE_PENDING_SCAN."
           }
         }
       }

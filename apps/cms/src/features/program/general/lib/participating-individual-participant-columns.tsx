@@ -2,22 +2,22 @@ import { useMemo } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 import type { InstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
+import { shouldShowInstitutionApplicationSessionsColumn } from '@/features/program/general/lib/institution-application-session-display'
 import {
-  getInstitutionApplicationSessionsTableSlice,
-  shouldShowInstitutionApplicationSessionsColumn,
-} from '@/features/program/general/lib/institution-application-session-display'
-import { PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH } from '@/features/program/general/lib/participating-institutions-table'
+  PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
+  participatingScheduleTableColumnLayout,
+} from '@/features/program/general/lib/participating-institutions-table'
 import { CMS_TABLE_NO_COL_CLASS } from '@/shared/constants/table'
 import { resolveParticipatingIndividualProgressScheduleSessionsFallback } from '@/features/program/general/lib/participating-individual-progress-schedule-sessions'
-import { prepareGeneralEducationScheduleSessions } from '@/features/program/general/lib/participating-school-session-display'
+import { ParticipatingProgressEducationScheduleCell } from '@/features/program/general/lib/participating-progress-education-schedule-cell'
 import { generalEducationScheduleShapeFromBridge } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-session-format'
-import { GeneralDetailSessionLine } from '@/features/program/shared/ui/program-detail/applicant-list/general-detail-session-line'
 import { PrivacyHomeAddressDisplay } from '@/features/program/shared/lib/program-pii-display'
+import type { GeneralEducationCurriculumSessionRef } from '@/features/program/general/lib/participating-school-session-display'
 
-const PARTICIPANT_NAME_COL_WIDTH = 120
-const AFFILIATION_COL_WIDTH = 160
-const GRADE_COL_WIDTH = 120
-const HOME_ADDRESS_COL_WIDTH = 200
+const PARTICIPANT_NAME_COL_WIDTH = 100
+const AFFILIATION_COL_WIDTH = 140
+const GRADE_COL_WIDTH = 100
+const HOME_ADDRESS_COL_WIDTH = 220
 
 export const PARTICIPATING_INDIVIDUAL_PARTICIPANTS_TABLE_MIN_SCROLL_X =
   48 +
@@ -33,6 +33,7 @@ export function useParticipatingIndividualParticipantColumns(
   scheduleDisplay?: {
     detailScheduleTimeSpan?: string | null
     curriculumSessionLabels?: readonly string[] | null
+    curriculumSessions?: readonly GeneralEducationCurriculumSessionRef[] | null
   } | null
 ): ColumnsType<ParticipatingIndividualParticipantRow> {
   const hasScheduleMultiLines =
@@ -45,6 +46,11 @@ export function useParticipatingIndividualParticipantColumns(
     shouldShowInstitutionApplicationSessionsColumn(programBridge)
 
   return useMemo(() => {
+    const progressShape = {
+      ...generalEducationScheduleShapeFromBridge(programBridge),
+      curriculumSessionLabels: scheduleDisplay?.curriculumSessionLabels,
+      curriculumSessions: scheduleDisplay?.curriculumSessions,
+    }
     const columns: ColumnsType<ParticipatingIndividualParticipantRow> = [
       {
         title: 'No.',
@@ -92,50 +98,17 @@ export function useParticipatingIndividualParticipantColumns(
       {
         title: '교육 진행 일정',
         key: 'sessions',
-        width: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
-        align: 'center',
-        className: 'participating-institutions-section__th-sessions',
-        onHeaderCell: () => ({
-          className: 'participating-institutions-section__th-sessions',
-        }),
-        onCell: () => ({ className: 'participating-institutions-section__td-sessions' }),
-        render: (_: unknown, record: ParticipatingIndividualParticipantRow) => {
-          const assignedSessions = resolveParticipatingIndividualProgressScheduleSessionsFallback(
-            record.sessions
-          )
-          const sessions = prepareGeneralEducationScheduleSessions(
-            assignedSessions,
-            generalEducationScheduleShapeFromBridge(programBridge),
-            {
-              detailScheduleTimeSpan: scheduleDisplay?.detailScheduleTimeSpan,
-            }
-          )
-          if (sessions.length === 0) return '-'
-          const { displaySessions, restCount } =
-            getInstitutionApplicationSessionsTableSlice(sessions)
-          return (
-            <div className="participating-institutions-section__sessions-cell">
-              {displaySessions.map((session, index) => (
-                <div
-                  key={`${session.round}-${session.date}-${index}`}
-                  className="participating-institutions-section__session-line"
-                >
-                  <GeneralDetailSessionLine
-                    session={session}
-                    bridge={programBridge}
-                    detailScheduleTimeSpan={scheduleDisplay?.detailScheduleTimeSpan}
-                    curriculumSessionLabels={scheduleDisplay?.curriculumSessionLabels}
-                  />
-                </div>
-              ))}
-              {restCount > 0 && (
-                <div className="participating-institutions-section__session-more">
-                  외 {restCount}개의 교육 일정
-                </div>
-              )}
-            </div>
-          )
-        },
+        // width 미지정 — fixed layout 에서 남는 폭을 일정 열이 흡수 (이름·소속 등은 고정 폭 유지)
+        minWidth: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
+        ...participatingScheduleTableColumnLayout(),
+        render: (_: unknown, record: ParticipatingIndividualParticipantRow) => (
+          <ParticipatingProgressEducationScheduleCell
+            sessions={resolveParticipatingIndividualProgressScheduleSessionsFallback(
+              record.sessions
+            )}
+            shape={progressShape}
+          />
+        ),
       },
     ]
 

@@ -65,8 +65,9 @@ assert.deepEqual(
   [2, 1],
 )
 
-assert.equal(formatWonAmount(null), '-')
+assert.equal(formatWonAmount(null), '0원')
 assert.equal(formatWonAmount(0), '0원')
+assert.equal(formatWonNumber(null), '0')
 assert.equal(formatWonNumber(2_500_000), '2,500,000')
 assert.equal(
   formatSettlementHeldAt('2026-01-09T10:00:00+09:00', '2026-01-09T11:20:00+09:00'),

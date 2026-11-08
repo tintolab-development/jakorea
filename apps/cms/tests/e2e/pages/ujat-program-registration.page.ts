@@ -57,6 +57,39 @@ export class UjatProgramRegistrationPage {
     this.programTitle = createUniqueProgramTitle()
   }
 
+  /**
+   * complete 이벤트는 클릭 전에 구독한다. 실패 다이얼로그가 뜨면 360s가 아니라 즉시 실패한다.
+   */
+  private async clickDevAutofill() {
+    const autofill = this.page.getByRole('button', { name: '자동입력(개발용)' })
+    await this.page.evaluate(() => {
+      const w = window as unknown as { __ujatAutofillDone?: boolean }
+      w.__ujatAutofillDone = false
+      window.addEventListener(
+        'cms:registration-dev-autofill-complete',
+        () => {
+          w.__ujatAutofillDone = true
+        },
+        { once: true }
+      )
+    })
+    await autofill.click()
+    const failDialog = this.page.getByRole('dialog').filter({ hasText: '자동입력 실패' })
+    try {
+      await this.page.waitForFunction(
+        () => (window as unknown as { __ujatAutofillDone?: boolean }).__ujatAutofillDone === true,
+        null,
+        { timeout: 30_000 }
+      )
+    } catch (error) {
+      const failed = await failDialog.isVisible().catch(() => false)
+      if (failed) {
+        throw new Error(`UJAT 자동입력 실패: ${(await failDialog.innerText()).trim()}`)
+      }
+      throw error
+    }
+  }
+
   async openNewRegistration() {
     await this.page.getByRole('button', { name: /신규 등록/ }).click()
 
@@ -81,16 +114,7 @@ export class UjatProgramRegistrationPage {
     // 이후 고유 제목을 다시 입력해 테스트 데이터가 겹치지 않도록 한다.
     const autofill = this.page.getByRole('button', { name: '자동입력(개발용)' })
     if (await autofill.isVisible().catch(() => false)) {
-      const autofillCompleted = this.page.evaluate(
-        () =>
-          new Promise<void>(resolve => {
-            window.addEventListener('cms:registration-dev-autofill-complete', () => resolve(), {
-              once: true,
-            })
-          })
-      )
-      await autofill.click()
-      await autofillCompleted
+      await this.clickDevAutofill()
       this.devAutofillApplied = true
       await expect(
         this.page.getByPlaceholder('대표 프로그램명을 입력해 주세요').first()
@@ -277,21 +301,12 @@ export class UjatProgramRegistrationPage {
   async fillRecruitmentInfo() {
     const autofill = this.page.getByRole('button', { name: '자동입력(개발용)' })
     if (await autofill.isVisible().catch(() => false)) {
-      const autofillCompleted = this.page.evaluate(
-        () =>
-          new Promise<void>(resolve => {
-            window.addEventListener('cms:registration-dev-autofill-complete', () => resolve(), {
-              once: true,
-            })
-          })
-      )
-      await autofill.click()
-      await autofillCompleted
+      await this.clickDevAutofill()
       const autofillAlert = this.page.getByRole('dialog').filter({ hasText: '자동입력 완료' })
       if (await autofillAlert.isVisible().catch(() => false)) {
         await autofillAlert.getByRole('button', { name: '확인' }).click()
       }
-      await expect(this.page.getByRole('heading', { name: '참여 기관 모집 정보' })).toBeVisible({
+      await expect(this.page.getByRole('tab', { name: '참여 기관 모집 정보' })).toBeVisible({
         timeout: 15_000,
       })
 

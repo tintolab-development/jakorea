@@ -112,17 +112,13 @@ export type AutoAssignResultAlert = {
   content: string
 }
 
-export function buildAutoAssignResultAlert(
-  response: UjatAutoAssignmentResponse | null | undefined
-): AutoAssignResultAlert {
-  const { lines, warnings } = summarizeAutoAssignResult(response)
-  const head = ['교육일 자동 배정이 완료되었습니다.', ...lines]
+export const AUTO_ASSIGN_COMPLETE_ALERT: AutoAssignResultAlert = {
+  title: '배정 완료',
+  content: '교육일 자동 배정이 완료되었습니다.',
+}
 
-  if (warnings.length === 0) {
-    return { title: '안내', content: head.join('\n') }
-  }
-  return {
-    title: '확인 필요',
-    content: [...head, '', ...warnings.map(warning => `· ${warning}`)].join('\n'),
-  }
+export function buildAutoAssignResultAlert(
+  _response?: UjatAutoAssignmentResponse | null
+): AutoAssignResultAlert {
+  return AUTO_ASSIGN_COMPLETE_ALERT
 }

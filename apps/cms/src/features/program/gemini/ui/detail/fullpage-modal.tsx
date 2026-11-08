@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
+import { nextSearchParamsIfChanged } from '@/shared/lib/search-params-diff'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
@@ -176,7 +177,7 @@ export function GeminiRecruitmentDetailFullPageModal({
 
   const setActiveLnb = useCallback(
     (lnb: GeminiRecruitmentDetailLnbKey) => {
-      setSearchParams(
+      const nextParams = nextSearchParamsIfChanged(
         prev => {
           const next = new URLSearchParams(prev)
           if (lnb === 'info') {
@@ -186,9 +187,10 @@ export function GeminiRecruitmentDetailFullPageModal({
             next.delete(GEMINI_RECRUITMENT_EDIT_PARAM)
           }
           return next
-        },
-        { replace: true }
+        }
       )
+      // LNB = 브레드크럼 단계 → push (같은 메뉴 재선택은 엔트리를 만들지 않음)
+      if (nextParams) setSearchParams(nextParams, { replace: false })
     },
     [setSearchParams]
   )
@@ -281,7 +283,7 @@ export function GeminiRecruitmentDetailFullPageModal({
   }, [onClose, queryClient, recruitmentId, showAlert])
 
   const open = Boolean(recruitmentId)
-  const deleteGuide = resolveGeminiDeleteGuideModalCopy('공고', 1)
+  const deleteGuide = resolveGeminiDeleteGuideModalCopy('공고', 1, detail?.title ? [detail.title] : [])
 
   return (
     <>

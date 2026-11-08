@@ -12,6 +12,10 @@ import { useGeneralProgramSponsorEditContext } from '@/features/program/general/
 import { resolveSponsorManagerViewLines } from '@/features/program/general/model/common-info-edit-schema'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import { ProgramDetailSponsorLink } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-link'
+import {
+  ProgramSponsorHomepageView,
+  ProgramSponsorLogoView,
+} from '@/features/program/shared/ui/program-detail/sponsor-assignment-info'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 const BLOCK_GAP_STYLE = { marginTop: 16 } as const
@@ -28,10 +32,9 @@ function UjatSponsorManagerFieldView({
   display: UjatRegistrationBasicInfoDisplay
 }) {
   const sponsorIds = program?.generalCommonInfo?.sponsorManagementIds ?? []
-  const sponsorEditContext = useGeneralProgramSponsorEditContext(
-    sponsorIds,
-    sponsorIds.length > 0
-  )
+  // 조회 전용 — 담당자 직책·연락처는 배정 응답(GET /programs/{id}/sponsors)만 쓴다.
+  // 후원사 상세·담당자 API를 부르지 않는다(캐시에 있으면 그 값만 재사용).
+  const sponsorEditContext = useGeneralProgramSponsorEditContext(sponsorIds, false)
   const selectedSponsors = useMemo(
     () =>
       sponsorIds
@@ -56,6 +59,7 @@ function UjatSponsorManagerFieldView({
       <SponsorManagerContactsView
         program={program}
         sponsorRows={selectedSponsors}
+        sponsorNameById={program.generalCommonInfo?.sponsorManagementNames}
         contactsBySponsorId={sponsorEditContext.contactsBySponsorId}
       />
     )
@@ -152,6 +156,30 @@ export function UjatBasicInfoReadonlyView({
             view={<UjatSponsorManagerFieldView program={program} display={display} />}
           />
         </DetailInfoForm.Row>
+        {program ? (
+          <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Field
+              label="후원사 홈페이지"
+              view={
+                <ProgramSponsorHomepageView
+                  sponsorIds={program.generalCommonInfo?.sponsorManagementIds ?? []}
+                  sponsorNameById={program.generalCommonInfo?.sponsorManagementNames}
+                  details={program.generalCommonInfo?.sponsorAssignmentDetails}
+                />
+              }
+            />
+            <DetailInfoForm.Field
+              label="후원사 로고"
+              view={
+                <ProgramSponsorLogoView
+                  sponsorIds={program.generalCommonInfo?.sponsorManagementIds ?? []}
+                  sponsorNameById={program.generalCommonInfo?.sponsorManagementNames}
+                  details={program.generalCommonInfo?.sponsorAssignmentDetails}
+                />
+              }
+            />
+          </DetailInfoForm.Row>
+        ) : null}
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field label="설문 진행 항목" fullRow view={display.surveyItems} />
         </DetailInfoForm.Row>

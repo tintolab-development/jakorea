@@ -50,9 +50,16 @@
   overflow: visible;
 }
 
-/* 기본 DetailInfoForm required (정기후원 타이틀은 main-content-required-label 사용) */
+/*
+ * Field `required` 마크는 패키지가 position:absolute; left:100% 이다.
+ * relative만 덮으면 left:100%가 남아 별표가 값 셀(인풋)로 밀린다.
+ * 메인 콘텐츠 섹션은 MainContentRequiredLabel을 쓴다.
+ */
 .main-content-section-card .detail-info-form__field-required {
   position: relative;
+  left: auto;
+  right: auto;
+  bottom: auto;
   top: -6px;
   margin-left: 1px;
   width: 9px;
@@ -109,22 +116,15 @@
 }
 
 /*
- * 2줄 Field — resize 없음, 고정 2라인 높이
- * control padding 9×16 + 본문 44px (15px × 1.45 × 2)
+ * 여러 줄 Field — resize 없음, 줄바꿈 수만큼 높이가 늘고 줄어든다(autoSize minRows 1)
+ * control padding 8×16 · 한 줄이면 단일 입력과 같은 40px (본문 22 + 상하 8 + 보더 2)
  */
 .main-content-section-card .cms-textarea--fixed-rows.cms-textarea--medium .cms-textarea__control {
-  min-height: 62px;
-  height: 62px;
-  padding: 9px 16px;
+  padding: 8px 16px;
 }
 
 .main-content-section-card .cms-textarea--fixed-rows .cms-textarea__inner textarea.ant-input {
-  resize: none;
-  overflow-x: hidden;
-  overflow-y: auto;
   box-sizing: border-box;
-  height: 44px;
-  min-height: 44px;
   font-size: 15px;
   font-weight: 500;
   line-height: 1.45;
@@ -133,7 +133,7 @@
 /*
  * td 안 중첩 테이블 (Figma 25:15966 edit / 25:15933)
  * — 바깥 Medium 값 셀: padding 12×16
- * — 내부 Small: 라벨 180 / min-h 44 / padding 4×12 / Input 120×36 py8 px14
+ * — 내부 Small: 라벨 200 / min-h 44 / padding 4×12 / Input 120×36 py8 px14
  * — 필수 *: 16px #C32F4A, 라벨 텍스트 우측 상단
  * — edit 슬롯의 `> * { display:flex }` 오버라이드 필수
  */
@@ -177,7 +177,7 @@
   background: #fff;
 }
 
-/* 실적: 2열 × 2행 — Figma Small 라벨 180 고정, 열이 min-content로 밀려 * 가 잘리지 않게 */
+/* 실적: 2열 × 2행 — Figma Small 라벨 200 고정, 열이 min-content로 밀려 * 가 잘리지 않게 */
 .main-content-section-card
   .detail-info-form__field-content:has(.main-content-nested-table)
   > .main-content-nested-table--metrics,
@@ -208,32 +208,15 @@
 
 /*
  * 셀: 라벨(회색) | 값
- * 실적 라벨은 한 줄(nowrap). CTA 짧은 라벨은 180px 고정.
+ * 라벨 열은 조회·수정 모두 200px 고정 (Figma 25:14919 view · 2350:4584 edit · 25:16132 CTA).
  */
 .main-content-nested-table__cell {
   display: grid;
-  grid-template-columns: 180px minmax(0, 1fr);
+  grid-template-columns: 200px minmax(0, 1fr);
   align-items: stretch;
   min-width: 0;
   min-height: 44px;
   box-sizing: border-box;
-}
-
-.main-content-nested-table--metrics > .main-content-nested-table__cell {
-  grid-template-columns: 180px minmax(0, 1fr);
-}
-
-/* Figma 25:14919 view Small header 200 / 25:15966 edit 180 */
-.main-content-nested-table--metrics.main-content-nested-table--view
-  > .main-content-nested-table__cell {
-  grid-template-columns: 200px minmax(0, 1fr);
-}
-
-.main-content-nested-table--metrics.main-content-nested-table--view
-  .main-content-nested-table__label {
-  width: 200px;
-  min-width: 200px;
-  max-width: 200px;
 }
 
 .main-content-nested-table--view .main-content-nested-table__value {
@@ -263,9 +246,9 @@
   gap: 8px;
   box-sizing: border-box;
   overflow: visible;
-  width: 180px;
-  min-width: 180px;
-  max-width: 180px;
+  width: 200px;
+  min-width: 200px;
+  max-width: 200px;
   min-height: 44px;
   padding: 4px 12px;
   background: var(

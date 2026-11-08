@@ -46,7 +46,8 @@
   margin: 0;
   padding: 0;
   border: 0;
-  border-top: 1px solid #c4cdd1;
+  /* 디자인 가이드 목록 레이아웃 구분선 — Content/weak #BDC6C9 (CMS e7b8a0ed7) */
+  border-top: 1px solid var(--Content-weak, #bdc6c9);
 }
 
 .filter-table-layout__top-nav {
@@ -82,6 +83,16 @@
   font-weight: 500;
   line-height: 150%;
   white-space: nowrap;
+}
+
+/* Figma 3045:76233 — 1×12 세로선, 텍스트와 같은 색(설명 opacity 공유) · 좌우 10px */
+.filter-table-layout__description-divider {
+  display: inline-block;
+  width: 1px;
+  height: 12px;
+  margin: 0 10px;
+  vertical-align: middle;
+  background: currentColor;
 }
 
 .filter-table-layout__toolbar-actions {

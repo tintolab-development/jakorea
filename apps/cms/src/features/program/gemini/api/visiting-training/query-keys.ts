@@ -4,7 +4,12 @@ export const geminiVisitingTrainingQueryKeys = {
   recruitmentList: (filtersKey?: string) =>
     filtersKey === undefined
       ? ([...geminiVisitingTrainingQueryKeys.recruitments(), 'list'] as const)
-      : ([...geminiVisitingTrainingQueryKeys.recruitments(), 'list', 'remote', filtersKey] as const),
+      : ([
+          ...geminiVisitingTrainingQueryKeys.recruitments(),
+          'list',
+          'remote',
+          filtersKey,
+        ] as const),
   recruitmentDetail: (programId: string) =>
     [...geminiVisitingTrainingQueryKeys.recruitments(), 'detail', programId] as const,
   organizationApplications: (programId: string, filtersKey = '') =>
@@ -36,5 +41,18 @@ export const geminiVisitingTrainingQueryKeys = {
           'instructor-applications',
           approvedTrainingId,
           filtersKey,
+        ] as const),
+  approvedInstructorApplicationDetail: (approvedTrainingId: string, applicationId?: string) =>
+    applicationId === undefined
+      ? ([
+          ...geminiVisitingTrainingQueryKeys.approved(),
+          'instructor-application-detail',
+          approvedTrainingId,
+        ] as const)
+      : ([
+          ...geminiVisitingTrainingQueryKeys.approved(),
+          'instructor-application-detail',
+          approvedTrainingId,
+          applicationId,
         ] as const),
 }

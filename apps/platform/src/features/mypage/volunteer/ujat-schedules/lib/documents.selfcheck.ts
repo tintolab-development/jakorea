@@ -7,6 +7,7 @@ import {
   parseUjatEducationDocumentsResponse,
   resolveUjatEducationDocumentGuide,
   ujatEducationDocumentStatusLabel,
+  ujatEducationDocumentStatusTone,
 } from './documents.ts'
 
 const parsed = parseUjatEducationDocumentsResponse({
@@ -82,6 +83,38 @@ assert.equal(parsed.items[0]?.plan.files[0]?.downloadable, true)
 assert.equal(formatUjatEducationDocumentDeadline(parsed.items[0]!.plan), '2026-04-02 24:00')
 assert.equal(ujatEducationDocumentStatusLabel('REVISED'), '수정 제출 완료')
 assert.equal(ujatEducationDocumentStatusLabel('APPROVED'), '승인 완료')
+assert.equal(ujatEducationDocumentStatusLabel('FEEDBACK_REQUESTED'), '제출 완료')
+assert.equal(ujatEducationDocumentStatusTone('FEEDBACK_REQUESTED'), 'submitted')
+assert.equal(ujatEducationDocumentStatusTone('DEADLINE_MISSED'), 'submitted')
+assert.equal(ujatEducationDocumentStatusTone('NOT_SUBMITTED'), 'unsubmitted')
+
+const feedbackRequested = parseUjatEducationDocumentsResponse({
+  items: [
+    {
+      scheduleId: 104,
+      plan: {
+        documentKind: 'PLAN',
+        status: 'FEEDBACK_REQUESTED',
+        hasFeedback: false,
+        formResponseId: 88,
+        programFormBindingId: 1,
+        templateVersionId: 1,
+      },
+      journal: { documentKind: 'JOURNAL', status: 'DEADLINE_MISSED', formResponseId: 89 },
+    },
+  ],
+})
+assert.equal(feedbackRequested.items[0]?.plan.status, 'FEEDBACK_REQUESTED')
+assert.equal(feedbackRequested.items[0]?.journal.status, 'DEADLINE_MISSED')
+assert.equal(
+  resolveUjatEducationDocumentGuide('PLAN', feedbackRequested.items[0]!.plan, null).message,
+  '담당자의 피드백이 있어요',
+)
+assert.equal(
+  resolveUjatEducationDocumentGuide('JOURNAL', feedbackRequested.items[0]!.journal, null)
+    .statusLabel,
+  '기한 미준수',
+)
 assert.equal(canEnterUjatEducationDocumentWrite(parsed.items[0]!.plan), true)
 assert.equal(canEnterUjatEducationDocumentRevise(parsed.items[0]!.plan), false)
 assert.equal(canEnterUjatEducationDocumentRevise(parsed.items[0]!.journal), true)

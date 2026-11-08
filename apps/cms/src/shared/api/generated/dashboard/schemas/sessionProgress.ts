@@ -5,6 +5,7 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { SessionProgressScheduleRole } from './sessionProgressScheduleRole';
 import type { SessionProgressScheduleStatus } from './sessionProgressScheduleStatus';
 
 /**
@@ -33,4 +34,6 @@ export interface SessionProgress {
   attendanceStatus?: string | null;
   /** 배정 상태. 없으면 null이며 화면은 대기 처리 */
   assignmentStatus?: string | null;
+  /** canonical 일정 역할. program_schedule.schedule_kind. PRE_EDUCATION|EDUCATION|CLOSING|SESSION. 없으면 null(라벨 없이 날짜·시간만). sessionNo=null·scheduleName으로 추정하지 않는다. */
+  scheduleRole?: SessionProgressScheduleRole;
 }

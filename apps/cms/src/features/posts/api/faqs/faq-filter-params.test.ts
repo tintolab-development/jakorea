@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest'
 import { faqsParamsFromSearchParams } from './faq-filter-params'
 
 describe('faqsParamsFromSearchParams', () => {
-  it('sends visibility and omits empty optional filters', () => {
+  it('sends ALL visibility by default and omits empty optional filters', () => {
     expect(faqsParamsFromSearchParams(new URLSearchParams())).toEqual({
       page: 0,
       size: 20,
-      visibility: 'public',
+      visibility: 'ALL',
     })
   })
 
@@ -32,13 +32,13 @@ describe('faqsParamsFromSearchParams', () => {
     expect(faqsParamsFromSearchParams(new URLSearchParams('af_from=2026-01-01'))).toEqual({
       page: 0,
       size: 20,
-      visibility: 'public',
+      visibility: 'ALL',
       createdFrom: '2026-01-01',
     })
     expect(faqsParamsFromSearchParams(new URLSearchParams('af_to=2026-01-31'))).toEqual({
       page: 0,
       size: 20,
-      visibility: 'public',
+      visibility: 'ALL',
       createdTo: '2026-01-31',
     })
   })

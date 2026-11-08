@@ -26,8 +26,14 @@ export type EducationSurveyFormBodyProps = {
   uploadingFile?: boolean
   /** 설문자 정보 fieldKey → 표시값 */
   userInfoValues?: Record<string, string>
+  userInfoEditable?: boolean
+  userInfoRequiredFieldKeys?: readonly string[]
   readOnly?: boolean
+  hideLectureReportInstitutionFields?: boolean
 }
+
+/** 공개(외부) 만족도·설문 공유 — 설문자 정보 중 이름만 필수 */
+export const PUBLIC_SURVEY_REQUIRED_USER_INFO_FIELD_KEYS = ['name', 'birthDate'] as const
 
 function isBodyOnlyParagraph(paragraph: WritingFormParagraph): boolean {
   return paragraph.kind === 'description' && paragraph.variant === 'closing'
@@ -50,7 +56,10 @@ export function EducationSurveyFormBody({
   onFileRemove,
   uploadingFile,
   userInfoValues,
+  userInfoEditable = false,
+  userInfoRequiredFieldKeys,
   readOnly = false,
+  hideLectureReportInstitutionFields = false,
 }: EducationSurveyFormBodyProps) {
   return (
     <div className={styles.form}>
@@ -104,7 +113,10 @@ export function EducationSurveyFormBody({
               onFileRemove={onFileRemove}
               uploadingFile={uploadingFile}
               userInfoValues={userInfoValues}
+              userInfoEditable={userInfoEditable}
+              userInfoRequiredFieldKeys={userInfoRequiredFieldKeys}
               readOnly={readOnly}
+              hideLectureReportInstitutionFields={hideLectureReportInstitutionFields}
             />
           </PFFormSection>,
         ]

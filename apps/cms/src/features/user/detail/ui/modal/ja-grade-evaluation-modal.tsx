@@ -9,6 +9,7 @@ import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/left-pan
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { showSaveCompletedAlert } from '@/shared/ui/show-save-completed-alert'
 import {
   fetchInstructorJaEvaluationRemote,
   submitInstructorJaEvaluationRemote,
@@ -36,7 +37,10 @@ import {
   JA_GRADE_POLICY_NOT_READY_MESSAGE,
   JA_GRADE_SCALE_QUESTION_IDS,
 } from '@/features/user/detail/lib/ja-grade-evaluation-constants'
-import { REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE } from '@/shared/constants/messages'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+} from '@/shared/constants/messages'
 import { handleError } from '@/shared/utils/error-handler'
 import '@/features/template/ui/form-editor/form-editor.css'
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
@@ -183,7 +187,7 @@ export function JaGradeEvaluationModal({
     const validation = validateJaGradeEvaluationDraft(draft)
     if (!validation.valid) {
       showAlert({
-        title: '안내',
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
         content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
       })
       return
@@ -250,6 +254,10 @@ export function JaGradeEvaluationModal({
         jaEvaluation,
       })
       onClose()
+      /** 서버 저장 성공 시에만 — 등록 모달 localOnly(초안 보관)는 저장 완료가 아니다 */
+      if (persistMode === 'remote' && isMembersRemoteEnabled()) {
+        showSaveCompletedAlert()
+      }
     } catch (error) {
       showAlert({
         title: '안내',

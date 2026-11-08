@@ -3,7 +3,7 @@ import { fetchAllAdminListPages, toAdminListPage, type AdminListPage } from '@/s
 import { getJAKoreaHomepageAdminAPISponsorshipSubset } from '@/shared/api/generated/sponsorship/sponsorship-api';
 import { mapConsultationDetailToDomain, mapConsultationListItemToDomain, toBulkRequest, toConsultationListParams, toStatusUpdateRequest, } from './mappers';
 import { isAdminForbidden, isAdminNotFound } from '@/features/system-inbox/lib/http-status';
-import { toRevealPiiQueryParam } from '@/shared/lib/homepage-pii';
+import { downloadHomepageProtectedAttachment, homepageCorporateConsultationAttachmentUrl } from '@/shared/lib/protected-attachment-download';
 function sponsorshipApi() {
     return getJAKoreaHomepageAdminAPISponsorshipSubset();
 }
@@ -18,17 +18,18 @@ function resolveRowsFromCache(ids: string[], cachedRows?: CorporateConsultation[
 export async function listCorporateConsultationsPageService(filter: CorporateConsultationListFilter = {}, page = 0): Promise<AdminListPage<CorporateConsultation>> {
     return listRemoteConsultations(filter, page);
 }
-export async function getCorporateConsultationService(id: string, actorName?: string, options?: {
-    revealPii?: boolean;
-}): Promise<CorporateConsultation | null> {
+/**
+ * 상세 진입 = 개인정보 원문 조회. 버튼 없이 진입 시 바로 `revealPii=true`로 원문을 받는다.
+ * 열람 기록은 BE가 상세 GET 200마다 남긴다(homepage_admin_audit_log PII_READ · homepage_privacy_access_log) —
+ * FE에서 별도 로그 POST를 하지 않는다. 상세 쿼리는 staleTime/gcTime 0이라 진입할 때마다 GET(=로그 1건).
+ */
+export async function getCorporateConsultationService(id: string, actorName?: string): Promise<CorporateConsultation | null> {
     void actorName;
     const numericId = Number(id);
     if (!Number.isFinite(numericId) || numericId <= 0)
         return null;
     try {
-        const row = await sponsorshipApi().detail8(numericId, {
-            revealPii: toRevealPiiQueryParam(options?.revealPii),
-        });
+        const row = await sponsorshipApi().detail8(numericId, { revealPii: true });
         return mapConsultationDetailToDomain(row);
     }
     catch (error) {
@@ -37,22 +38,17 @@ export async function getCorporateConsultationService(id: string, actorName?: st
         return null;
     }
 }
-export async function downloadCorporateConsultationAttachmentService(id: string, assetId?: number | null): Promise<{
-    downloadUrl: string;
-    originalName?: string;
-} | null> {
+/** applicationId·consultationId 진입 모두 상담 PK를 path id로 쓴다. */
+export async function downloadCorporateConsultationAttachmentService(id: string, assetId: number | null | undefined, password: string, fallbackFileName: string): Promise<void> {
     const numericId = Number(id);
-    if (!Number.isFinite(numericId) || numericId <= 0)
-        return null;
-    const response = assetId != null && assetId > 0
-        ? await sponsorshipApi().attachmentDownloadByAsset1(numericId, assetId)
-        : await sponsorshipApi().attachmentDownload1(numericId);
-    if (!response.downloadUrl)
-        return null;
-    return {
-        downloadUrl: response.downloadUrl,
-        originalName: response.originalName,
-    };
+    if (!Number.isFinite(numericId) || numericId <= 0) {
+        throw new Error('첨부파일을 불러오지 못했습니다.');
+    }
+    await downloadHomepageProtectedAttachment({
+        url: homepageCorporateConsultationAttachmentUrl(numericId, assetId),
+        password,
+        fallbackFileName,
+    });
 }
 export async function removeCorporateConsultationsService(ids: string[], cachedRows?: CorporateConsultation[]): Promise<void> {
     if (ids.length === 0)

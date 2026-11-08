@@ -26,13 +26,6 @@ export const UJAT_INSTITUTION_APPLICATION_REGIONS = UJAT_DEFAULT_EDUCATION_REGIO
 
 export type UjatInstitutionApplicationRegionKey = string
 
-function mapDefaultRegions(): UjatEducationRegionOption[] {
-  return UJAT_DEFAULT_EDUCATION_REGIONS.map(row => ({
-    key: row.key,
-    label: row.label,
-  }))
-}
-
 function readActiveRowsOrdered() {
   if (shouldUseUjatEducationRegionsRemoteApi()) {
     clearUjatEducationRegionsLocalStorage()
@@ -54,11 +47,11 @@ function readAllRows() {
   return readUjatEducationRegions()
 }
 
-/** 사용 중(active) 교육 지역 — 교육 지역 관리 sortOrder 순 */
+/** 사용 중(active) 교육 지역 — GET education-regions displayOrder 순. 상수 8개로 채우지 않는다. */
 export function listUjatEducationRegionsActive(): UjatEducationRegionOption[] {
-  const rows = readActiveRowsOrdered()
-  if (rows.length === 0) return mapDefaultRegions()
-  return rows.map(row => ({ key: row.regionKey, label: row.name }))
+  return readActiveRowsOrdered()
+    .filter(row => row.regionKey.trim())
+    .map(row => ({ key: row.regionKey, label: row.name }))
 }
 
 /** @deprecated `listUjatEducationRegionsActive` — 기관 신청·탭·셀렉트 공통 */
@@ -71,14 +64,25 @@ export function getUjatEducationRegionLabel(
   regionKey: string,
   fallback: string = regionKey
 ): string {
-  const fromActive = listUjatEducationRegionsActive().find(row => row.key === regionKey)
+  const normalized = regionKey.trim().toLowerCase()
+  const fromActive = listUjatEducationRegionsActive().find(
+    row => row.key.toLowerCase() === normalized || row.label === regionKey
+  )
   if (fromActive) return fromActive.label
 
-  const fromAll = readAllRows().find(row => row.regionKey === regionKey)
+  const fromAll = readAllRows().find(
+    row =>
+      row.regionKey.toLowerCase() === normalized ||
+      row.name === regionKey
+  )
   if (fromAll) return fromAll.name
 
-  const fromDefault = UJAT_DEFAULT_EDUCATION_REGIONS.find(row => row.key === regionKey)
-  return fromDefault?.label ?? fallback
+  const fromDefault = UJAT_DEFAULT_EDUCATION_REGIONS.find(
+    row => row.key === normalized || row.label === regionKey
+  )
+  if (fromDefault) return fromDefault.label
+
+  return fallback
 }
 
 /** 희망 교육 활동 지역 셀렉트·정렬용 라벨 목록 */
@@ -121,36 +125,38 @@ export function buildUjatRegionCapacityPairRows(): Array<{ left: string; right: 
 export function isUjatInstitutionApplicationRegionKey(
   value: string
 ): value is UjatInstitutionApplicationRegionKey {
-  if (UJAT_DEFAULT_EDUCATION_REGIONS.some(row => row.key === value)) return true
-  return readAllRows().some(row => row.regionKey === value)
+  const trimmed = value.trim()
+  if (!trimmed) return false
+  if (readAllRows().some(row => row.regionKey === trimmed)) return true
+  return /^[A-Z0-9_]+$/.test(trimmed)
 }
 
 export function findUjatEducationRegionKeyByLabel(label: string): string | undefined {
   const trimmed = label.trim()
+  if (!trimmed) return undefined
   const fromActive = listUjatEducationRegionsActive().find(row => row.label === trimmed)
   if (fromActive) return fromActive.key
-  const fromDefault = UJAT_DEFAULT_EDUCATION_REGIONS.find(row => row.label === trimmed)
-  return fromDefault?.key
+  return readAllRows().find(row => row.name === trimmed)?.regionKey
 }
 
-/** 백엔드 `educationRegionCode`(예: `GYEONGGI_SOUTH`) → regionKey. 대소문자 무시, 매칭 실패 시 undefined */
+/** 백엔드 `educationRegionCode` → 마스터 `code`. 매칭 실패 시 undefined. 서울 치환 없음. */
 export function findUjatEducationRegionKeyByCode(
   code: string | null | undefined
 ): string | undefined {
-  const normalized = code?.trim().toLowerCase()
-  if (!normalized) return undefined
+  const trimmed = code?.trim()
+  if (!trimmed) return undefined
+  const normalized = trimmed.toLowerCase()
   const fromActive = listUjatEducationRegionsActive().find(
     row => row.key.toLowerCase() === normalized
   )
   if (fromActive) return fromActive.key
   const fromAll = readAllRows().find(row => row.regionKey.toLowerCase() === normalized)
   if (fromAll) return fromAll.regionKey
-  return UJAT_DEFAULT_EDUCATION_REGIONS.find(row => row.key.toLowerCase() === normalized)?.key
+  if (/^[A-Z0-9_]+$/.test(trimmed)) return trimmed
+  return undefined
 }
 
-/** 탭·필터 기본 선택 — 교육 지역 관리 sortOrder 1번째 active 지역 */
+/** 탭·필터 기본 선택 — 교육 지역 관리 displayOrder 1번째 active. 없으면 빈 문자열. */
 export function getDefaultUjatEducationRegionKey(): string {
-  const first = listUjatEducationRegionsActive()[0]?.key?.trim()
-  if (first) return first
-  return UJAT_DEFAULT_EDUCATION_REGIONS[0]?.key ?? ''
+  return listUjatEducationRegionsActive()[0]?.key?.trim() ?? ''
 }

@@ -158,3 +158,73 @@ const sparse = mapPublicJaHistoryPage(
 assert.equal(sparse.world.periods.length, 1)
 assert.equal(sparse.world.periods[0]?.title, '')
 assert.equal(sparse.hero.mainText, 'FALLBACK')
+
+const labels = mapPublicJaHistoryPage(
+  {
+    worldTimeline: {
+      periods: [
+        {
+          id: '1969-2000',
+          label: '1969-2000',
+          title: '',
+          events: [
+            { year: '1980 ~ 1990', text: '아프리카, 중남미, 유럽, 아시아로 JA 네트워크 확장' },
+          ],
+        },
+        {
+          id: '2019-now',
+          label: '2019-Now',
+          title: '',
+          events: [{ year: 'Now', text: '2050년까지 청소년에게 연간 1억 건의 학습 경험 제공 목표' }],
+        },
+      ],
+    },
+  },
+  resolveMedia,
+  fallback,
+)
+assert.equal(labels.world.periods.length, 2)
+assert.equal(labels.world.periods[0]?.events[0]?.year, '1980 ~ 1990')
+assert.equal(labels.world.periods[1]?.events[0]?.year, 'Now')
+assert.equal(labels.korea.periods.length, 0)
+
+const philosophyRemote = mapPublicJaHistoryPage(
+  {
+    philosophy: {
+      cards: [
+        {
+          id: 'practice',
+          title: '직접 해보며 익힙니다',
+          description: '설명',
+          image: {
+            assetId: 101,
+            fileName: 'practice.png',
+            alt: '헤드셋을 착용하고 미소 짓는 청소년',
+            url: 'https://cdn.example/assets/practice.png',
+          },
+        },
+      ],
+    },
+  },
+  resolveMedia,
+  fallback,
+)
+assert.equal(philosophyRemote.philosophy.cards[0]?.image.url, 'https://cdn.example/assets/practice.png')
+
+const philosophyEmptyImage = mapPublicJaHistoryPage(
+  {
+    philosophy: {
+      cards: [
+        {
+          id: 'practice',
+          title: '직접 해보며 익힙니다',
+          description: '설명',
+          image: { fileName: 'philosophy-practice.png', url: null },
+        },
+      ],
+    },
+  },
+  resolveMedia,
+  fallback,
+)
+assert.equal(philosophyEmptyImage.philosophy.cards[0]?.image.url, '')

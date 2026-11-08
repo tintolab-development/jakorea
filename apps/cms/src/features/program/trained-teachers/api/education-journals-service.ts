@@ -2,6 +2,7 @@ import JSZip from 'jszip'
 import type { TrainedTeachersEducationJournalEntry } from '@/features/program/trained-teachers/model/institution-detail'
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
+import { TEXTBOOK_NOT_USED_OPTION_VALUE } from '@/features/program/general/lib/individual-applicant-textbook'
 import { downloadAdminFile, loadAdminFileBlob } from '@/shared/lib/admin-file-upload'
 import { downloadFile } from '@/shared/lib/file-download'
 import { downloadBlob } from '@/shared/utils/file-download'
@@ -18,7 +19,10 @@ import {
 } from './education-journals-client'
 import type { EducationJournalGeneratedFileJobResponse } from '@/shared/api/generated/dashboard/schemas/educationJournalGeneratedFileJobResponse'
 import { listTrainedTeacherOrganizationApplications } from './organization-applications-service'
-import { mapPreferredScheduleBlocksToSessions } from './organization-applications-adapters'
+import {
+  mapPreferredScheduleBlocksToSessions,
+  resolveTrainedTeacherTextbookDeliveryBadge,
+} from './organization-applications-adapters'
 import type { EducationJournalCreateRequest } from '@/shared/api/generated/dashboard/schemas/educationJournalCreateRequest'
 
 function assertRemoteReady(): void {
@@ -26,10 +30,6 @@ function assertRemoteReady(): void {
   throw new Error(
     '교육받은 교사 교육일지 API가 활성화되지 않았습니다. VITE_TRAINED_TEACHER_PROGRAMS_REMOTE_ENABLED(또는 trainedTeacherPrograms)와 programs 모듈을 확인해 주세요. mock 폴백은 사용하지 않습니다.'
   )
-}
-
-function triggerBlobDownload(fileName: string, blob: Blob): void {
-  void downloadBlob(blob, fileName)
 }
 
 async function removeZipManifest(blob: Blob): Promise<Blob> {
@@ -49,15 +49,18 @@ async function downloadEducationJournalZip(fileName: string, blob: Blob): Promis
 
 async function downloadFromEndpoint(fileName: string, endpoint?: string): Promise<void> {
   if (!endpoint?.trim()) {
-    void downloadFile(fileName)
+    await downloadFile(fileName)
     return
   }
+  let blob: Blob
   try {
-    const blob = await fetchTrainedTeacherEducationJournalFileBlob(endpoint)
-    triggerBlobDownload(fileName, blob)
+    blob = await fetchTrainedTeacherEducationJournalFileBlob(endpoint)
   } catch {
-    void downloadFile(fileName, endpoint)
+    await downloadFile(fileName, endpoint)
+    return
   }
+  // 다운로드 이력 기록 실패도 호출부로 전달해 실패 안내를 띄운다.
+  await downloadBlob(blob, fileName)
 }
 
 async function downloadZipFromEndpoint(fileName: string, endpoint: string): Promise<void> {
@@ -179,6 +182,32 @@ export async function downloadTrainedTeacherEducationJournalZipJob(
   await downloadZipFromEndpoint(fileName, job.generatedFileEndpoint)
 }
 
+function hasSelectedTrainedTeacherTextbook(row: ApplicantSchoolRow): boolean {
+  const textbookId = row.detail?.textbookId?.trim() ?? ''
+  const textbookName = row.textbookName?.trim() ?? ''
+  const hasKits =
+    (typeof row.textbookKits === 'number' && row.textbookKits > 0) ||
+    (typeof row.textbookQuantity === 'number' && row.textbookQuantity > 0)
+  return (
+    (textbookId !== '' && textbookId !== TEXTBOOK_NOT_USED_OPTION_VALUE) ||
+    (textbookName !== '' && textbookName !== '해당 없음' && textbookName !== '-') ||
+    hasKits
+  )
+}
+
+/**
+ * 목록 교재 배송 현황. 저장 상태가 없고 교재가 지정돼 있으면 배송 전.
+ * 교재가 없으면 해당 없음(-).
+ */
+export function resolveTrainedTeacherParticipatingTextbookStatus(
+  row: ApplicantSchoolRow
+): ParticipatingSchoolRow['textbookStatus'] {
+  return resolveTrainedTeacherTextbookDeliveryBadge(
+    row.textbookStatus,
+    hasSelectedTrainedTeacherTextbook(row)
+  )
+}
+
 /** 승인된 기관 신청 → 진행 현황 참여 기관 목록 */
 export function mapApplicantSchoolToParticipatingSchool(
   row: ApplicantSchoolRow,
@@ -198,8 +227,7 @@ export function mapApplicantSchoolToParticipatingSchool(
     classCount: row.classCount,
     studentCount: row.studentCount,
     lectureRound: row.lectureRound?.trim() || lectureRoundFromCounts || '',
-    /** BE에 배송 원장 없음 — 교재명·수량만 표시. 배송 전/중/완료를 API로 invent 하지 않음 */
-    textbookStatus: 'not_applicable',
+    textbookStatus: resolveTrainedTeacherParticipatingTextbookStatus(row),
     approvalStatus: 'approved',
     teacherName: row.teacherName || '-',
     teacherMemberId: row.teacherMemberId,
@@ -208,9 +236,9 @@ export function mapApplicantSchoolToParticipatingSchool(
     /** TT는 강사 Relation 없음 — 합성하지 않음 */
     instructors: '',
     programId: row.programId,
-    sessions: row.sessions?.length
-      ? row.sessions
-      : mapPreferredScheduleBlocksToSessions(row.preferredScheduleBlocks),
+    /** 운영 일정 SSOT. 목록 GET에는 educationSchedules가 없으므로 []. 희망 지망으로 채우지 않는다. */
+    sessions: row.educationScheduleSessions ?? [],
+    hopeEducationSessions: mapPreferredScheduleBlocksToSessions(row.preferredScheduleBlocks),
     preferredScheduleBlocks: row.preferredScheduleBlocks,
     educationTarget: row.educationTarget,
     progressLabel: row.progressLabel,
@@ -218,6 +246,8 @@ export function mapApplicantSchoolToParticipatingSchool(
     completedEducationRoundCount: row.completedEducationRoundCount,
     textbookName: row.textbookName,
     textbookId: row.detail?.textbookId,
+    ...(row.textbookKits != null ? { textbookKits: row.textbookKits } : {}),
+    ...(row.textbookQuantity != null ? { textbookQuantity: row.textbookQuantity } : {}),
     teacherPhone: row.contact,
     teacherMobile: row.contact,
     teacherEmail: row.detail?.teacherEmail,

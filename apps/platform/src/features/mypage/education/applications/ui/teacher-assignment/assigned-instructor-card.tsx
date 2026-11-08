@@ -67,7 +67,9 @@ function ConsentList({
   const [downloadingDocumentId, setDownloadingDocumentId] = useState<number | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const consents =
-    instructor.consentDocumentsRequested === true ? (instructor.consents ?? []) : []
+    instructor.consentDocumentsRequested === true && (instructor.consents?.length ?? 0) > 0
+      ? instructor.consents ?? []
+      : []
 
   if (consents.length === 0) return null
 
@@ -234,15 +236,36 @@ export function TeacherAssignedInstructorCard({
           />
         </div>
       </div>
-      {instructor.phone?.trim() || instructor.email?.trim() ? (
-        <>
-          <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
-            연락처 {instructor.phone?.trim() || '-'}
-          </PFText>
-          <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
-            이메일 {instructor.email?.trim() || '-'}
-          </PFText>
-        </>
+      {instructor.assignmentId != null ||
+      instructor.programScheduleId != null ||
+      instructor.assignmentStatus?.trim() ? (
+        <div className={styles.assignmentMeta}>
+          {instructor.assignmentId != null ? (
+            <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
+              배정 {instructor.assignmentId}
+            </PFText>
+          ) : null}
+          {instructor.programScheduleId != null ? (
+            <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
+              일정 {instructor.programScheduleId}
+            </PFText>
+          ) : null}
+          {instructor.assignmentStatus?.trim() ? (
+            <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
+              {instructor.assignmentStatus.trim()}
+            </PFText>
+          ) : null}
+        </div>
+      ) : null}
+      {instructor.phone?.trim() ? (
+        <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
+          연락처 {instructor.phone.trim()}
+        </PFText>
+      ) : null}
+      {instructor.email?.trim() ? (
+        <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
+          이메일 {instructor.email.trim()}
+        </PFText>
       ) : null}
 
       {siteMessage ? (

@@ -1,4 +1,4 @@
-/* 지급조서(발급용) 「강의비 산출 내역」— 네이티브 표 (편집·A4 미리보기 동일) */
+/* 지급조서(발급용) 「강사비 산출 내역」— 네이티브 표 (편집·A4 미리보기 동일) */
 
 .payment-statement-issuance-calculation-lines-table__wrap {
   width: 100%;
@@ -42,6 +42,114 @@
 
 .payment-statement-issuance-calculation-lines-table__col--amount {
   width: 16.4%;
+}
+
+/*
+ * 산출 내역서(관리자) — 산정 기준 상세 열 추가.
+ * 고정 비율 합이 100%에 가까우면 항목 설명(auto)이 몇 %만 남아 글자 단위로 줄바꿈된다 → 비율을 다시 배분.
+ * 참여 기관명 있음: 13 + 18 + 8 + 10 + (항목 설명 auto ≈ 25) + 12 + 14
+ */
+.payment-statement-issuance-calculation-lines-table--with-trailing
+  .payment-statement-issuance-calculation-lines-table__col--institution {
+  width: 13%;
+}
+
+.payment-statement-issuance-calculation-lines-table--with-trailing
+  .payment-statement-issuance-calculation-lines-table__col--date {
+  width: 18%;
+}
+
+.payment-statement-issuance-calculation-lines-table--with-trailing
+  .payment-statement-issuance-calculation-lines-table__col--pay {
+  width: 8%;
+}
+
+.payment-statement-issuance-calculation-lines-table--with-trailing
+  .payment-statement-issuance-calculation-lines-table__col--category {
+  width: 10%;
+}
+
+.payment-statement-issuance-calculation-lines-table--with-trailing
+  .payment-statement-issuance-calculation-lines-table__col--item {
+  width: auto;
+}
+
+.payment-statement-issuance-calculation-lines-table--with-trailing
+  .payment-statement-issuance-calculation-lines-table__col--amount {
+  width: 12%;
+}
+
+.payment-statement-issuance-calculation-lines-table__col--trailing {
+  width: 14%;
+}
+
+/* 참여 기관명 없음(개인형): 22 + 9 + 11 + (항목 설명 auto ≈ 30) + 13 + 15 */
+.payment-statement-issuance-calculation-lines-table--with-trailing.payment-statement-issuance-calculation-lines-table--no-institution
+  .payment-statement-issuance-calculation-lines-table__col--date {
+  width: 22%;
+}
+
+.payment-statement-issuance-calculation-lines-table--with-trailing.payment-statement-issuance-calculation-lines-table--no-institution
+  .payment-statement-issuance-calculation-lines-table__col--pay {
+  width: 9%;
+}
+
+.payment-statement-issuance-calculation-lines-table--with-trailing.payment-statement-issuance-calculation-lines-table--no-institution
+  .payment-statement-issuance-calculation-lines-table__col--category {
+  width: 11%;
+}
+
+.payment-statement-issuance-calculation-lines-table--with-trailing.payment-statement-issuance-calculation-lines-table--no-institution
+  .payment-statement-issuance-calculation-lines-table__col--amount {
+  width: 13%;
+}
+
+.payment-statement-issuance-calculation-lines-table--with-trailing.payment-statement-issuance-calculation-lines-table--no-institution
+  .payment-statement-issuance-calculation-lines-table__col--trailing {
+  width: 15%;
+}
+
+/* 개인형 프로그램 — 참여 기관명 열 없음: 남는 폭은 항목명 열이 가져간다 */
+.payment-statement-issuance-calculation-lines-table--no-institution
+  .payment-statement-issuance-calculation-lines-table__col--item {
+  width: auto;
+}
+
+/*
+ * 정산 산출 내역서(관리자, columnPreset="calculation-statement") — Figma w1400(콘텐츠 1340)
+ * 참여 기관명 180 · 교육 진행 일자 260 · 산정 항목 140 · 항목 설명(auto ≈ 400) · 정산 금액 180 · 산정 기준 상세 180
+ */
+.payment-statement-issuance-calculation-lines-table--calculation-statement
+  .payment-statement-issuance-calculation-lines-table__col--institution {
+  width: 13.4%;
+}
+
+.payment-statement-issuance-calculation-lines-table--calculation-statement
+  .payment-statement-issuance-calculation-lines-table__col--date {
+  width: 19.4%;
+}
+
+.payment-statement-issuance-calculation-lines-table--calculation-statement
+  .payment-statement-issuance-calculation-lines-table__col--item-label {
+  width: 10.4%;
+}
+
+.payment-statement-issuance-calculation-lines-table--calculation-statement
+  .payment-statement-issuance-calculation-lines-table__col--item {
+  width: auto;
+}
+
+.payment-statement-issuance-calculation-lines-table--calculation-statement
+  .payment-statement-issuance-calculation-lines-table__col--amount,
+.payment-statement-issuance-calculation-lines-table--calculation-statement
+  .payment-statement-issuance-calculation-lines-table__col--trailing {
+  width: 13.4%;
+}
+
+/* 참여 기관명 없음(개인형): 교육 진행 일자가 기관 열 폭을 더 가져간다 */
+.payment-statement-issuance-calculation-lines-table--calculation-statement.payment-statement-issuance-calculation-lines-table--no-institution
+  .payment-statement-issuance-calculation-lines-table__col--date {
+  width: 26%;
 }
 
 .payment-statement-issuance-calculation-lines-table th,

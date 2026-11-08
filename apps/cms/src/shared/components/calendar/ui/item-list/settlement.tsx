@@ -6,6 +6,7 @@ import {
   type InstructorSettlementListRow,
 } from '@/features/settlement-management/model/instructor-member-settlements'
 import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
+import { StatusOutlineTag } from '@/shared/components/status-outline-tag'
 
 import './settlement-list-item.css'
 
@@ -21,6 +22,24 @@ type CalendarListItemContentSettlementProps = {
   onToggle: (key: React.Key, checked: boolean) => void
 }
 
+/**
+ * 계좌 지급 확인(`pipe-program`) — Figma 14858:591093: 신청자명 Bold + 1px 세로선 + 프로그램명 회색.
+ * 그 외 변형은 `settlementCalendarPrimaryTitle` 단일 문자열 (프로그램명 / 강사명 등).
+ */
+function renderSettlementListItemTitle(row: InstructorSettlementListRow) {
+  const applicantName = row.instructorName?.trim()
+  if (row.settlementListTitleVariant === 'pipe-program' && applicantName) {
+    return (
+      <div className="settlement-list-item__title settlement-list-item__title--split">
+        <span className="settlement-list-item__title-name">{applicantName}</span>
+        <span className="settlement-list-item__divider" aria-hidden />
+        <span className="settlement-list-item__title-sub">{row.programName}</span>
+      </div>
+    )
+  }
+  return <div className="settlement-list-item__title">{settlementCalendarPrimaryTitle(row)}</div>
+}
+
 export function CalendarListItemContentSettlement({
   row,
   checked,
@@ -32,7 +51,13 @@ export function CalendarListItemContentSettlement({
 }: CalendarListItemContentSettlementProps) {
   return (
     <div
-      className="settlement-list-item"
+      className={[
+        'calendar-list-item',
+        'settlement-list-item',
+        checked ? 'calendar-list-item--selected' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
       style={
         {
           backgroundColor: calendarListItemBackground(colors.bg),
@@ -43,22 +68,12 @@ export function CalendarListItemContentSettlement({
       }
     >
       <button type="button" className="settlement-list-item__open" onClick={() => onRowClick(row)}>
-        <div className="settlement-list-item__title">{settlementCalendarPrimaryTitle(row)}</div>
+        {renderSettlementListItemTitle(row)}
 
         <div className="settlement-list-item__meta">
-          <span
-            className="settlement-list-item__badge"
-            style={{
-              color: statusStyle.color,
-              borderColor: statusStyle.color,
-            }}
-          >
-            {badgeLabel}
-          </span>
+          <StatusOutlineTag label={badgeLabel} accentColor={statusStyle.color} />
 
-          <span className="settlement-list-item__meta-sep" aria-hidden>
-            |
-          </span>
+          <span className="settlement-list-item__divider" aria-hidden />
 
           <span className="settlement-list-item__amount">
             +{row.scheduledAmount.toLocaleString()}원

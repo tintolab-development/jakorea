@@ -82,7 +82,12 @@ function PartnerLogoImage({
 
   if (partner.href) {
     return (
-      <a className={styles.partnerLogoArea} href={partner.href} target="_blank" rel="noreferrer">
+      <a
+        className={styles.partnerLogoArea}
+        href={partner.href}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
         {image}
       </a>
     )

@@ -32,6 +32,10 @@ import {
   renderDetailInfoPipeSeparated,
 } from '@/features/program/shared/ui/program-detail-td-divider'
 import { SponsorManagerContactsView } from '@/features/program/shared/ui/sponsor-manager-inline-view'
+import {
+  ProgramSponsorHomepageView,
+  ProgramSponsorLogoView,
+} from '@/features/program/shared/ui/program-detail/sponsor-assignment-info'
 import { EducationScheduleChangeTitleAction } from '@/features/program/shared/ui/education-schedule-change-title-action'
 import {
   isEducationScheduleSelectionDateDisabled,
@@ -400,7 +404,9 @@ function BasicInfoSection({
       ),
     [lockDetailedProgramToNone, remoteDetailedProgramOptions]
   )
-  const { options: sponsorOptions, data: sponsorRows = [] } = useSponsorSelectOptions(true)
+  // 후원사 전체 목록은 수정 선택지에만 필요하다. 조회 화면은 배정 응답의 후원사명(sponsorManagementNames)을 쓴다.
+  const { options: sponsorOptions, data: sponsorRows = [] } = useSponsorSelectOptions(isFormEdit)
+  const assignedSponsorNames = commonInfo.sponsorManagementNames
   const viewSponsorContext = useMemo(
     () => ({
       sponsors: sponsorRows,
@@ -418,7 +424,11 @@ function BasicInfoSection({
   const sponsorDisplayEntries = sponsorManagementIds
     .map((sponsorManagementId, index) => {
       const sponsorRow = sponsorRows.find(row => row.id === sponsorManagementId) ?? null
-      const name = sponsorRow?.name?.trim() || (index === 0 ? sponsorName?.trim() : '') || ''
+      const name =
+        sponsorRow?.name?.trim() ||
+        assignedSponsorNames?.[sponsorManagementId]?.trim() ||
+        (index === 0 ? sponsorName?.trim() : '') ||
+        ''
       if (!name) return null
       return { sponsorManagementId, sponsorRow, name }
     })
@@ -473,10 +483,13 @@ function BasicInfoSection({
   )
   const sponsorIdsForContacts =
     isFormEdit && watchedSponsorIds.length > 0 ? watchedSponsorIds : sponsorManagementIds
-  // 후원사 상세·담당자 연락처는 수정 시 담당자 선택지를 만들 때만 필요하다.
+  // 후원사 id·이름은 이미 받은 후원사 목록에서 찾는다(후원사 상세·로고 조회 없음).
+  // 조회 화면의 담당자 직책·연락처·홈페이지·로고는 배정 응답(GET /programs/{id}/sponsors)만 쓴다.
+  // contacts API는 수정 모드 담당자 선택지에만 필요하다.
   const sponsorEditContext = useGeneralProgramSponsorEditContext(
     sponsorIdsForContacts,
-    sponsorIdsForContacts.length > 0
+    isFormEdit && sponsorIdsForContacts.length > 0,
+    { sponsorRows }
   )
   const selectedSponsors = useMemo(
     () =>
@@ -895,6 +908,7 @@ function BasicInfoSection({
               <SponsorManagerContactsView
                 program={program}
                 sponsorRows={selectedSponsors}
+                sponsorNameById={commonInfo.sponsorManagementNames}
                 contactsBySponsorId={sponsorEditContext.contactsBySponsorId}
               />
             }
@@ -938,6 +952,30 @@ function BasicInfoSection({
             }
           />
         </DetailInfoForm.Row>
+        {!isFormEdit ? (
+          <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Field
+              label="후원사 홈페이지"
+              view={
+                <ProgramSponsorHomepageView
+                  sponsorIds={sponsorManagementIds}
+                  sponsorNameById={commonInfo.sponsorManagementNames}
+                  details={commonInfo.sponsorAssignmentDetails}
+                />
+              }
+            />
+            <DetailInfoForm.Field
+              label="후원사 로고"
+              view={
+                <ProgramSponsorLogoView
+                  sponsorIds={sponsorManagementIds}
+                  sponsorNameById={commonInfo.sponsorManagementNames}
+                  details={commonInfo.sponsorAssignmentDetails}
+                />
+              }
+            />
+          </DetailInfoForm.Row>
+        ) : null}
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="교육 장소"

@@ -2,10 +2,12 @@ export {
   getInstructorApplyConsentPageDescription,
   getInstructorApplyConsentPageTitle,
   getInstructorApplyConsentPath,
+  isDocumentConsentWriteKey,
   isInstructorApplyConsentKey,
   InstructorApplyConsentWriteForm,
+  RECEIPT_PRE_CONSENT_WRITE_KEY,
 } from './consent'
-export type { InstructorApplyConsentKey } from './consent'
+export type { DocumentConsentWriteKey, InstructorApplyConsentKey } from './consent'
 export { InstructorApplyForm } from './instructor-apply-form'
 export type { InstructorApplyFormProps } from './instructor-apply-form'
 export { InstructorApplyPendingReviewView } from './instructor-apply-pending-review-view'

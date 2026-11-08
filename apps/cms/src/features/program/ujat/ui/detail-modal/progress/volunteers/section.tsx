@@ -53,6 +53,7 @@ import type { UjatEducationProgressVolunteerRow } from './types'
 import { Volunteer1365PreviewModal } from './volunteer-1365-preview-modal'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './section.css'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 export function UjatEducationProgressVolunteersSection({
   program,
@@ -80,12 +81,13 @@ export function UjatEducationProgressVolunteersSection({
   const [volunteer1365PreviewOpen, setVolunteer1365PreviewOpen] = useState(false)
   const { regions: educationRegions } = useUjatEducationRegions()
   const filterFields = useMemo(
-    () => buildUjatEducationProgressVolunteerFilterFields(),
+    () => buildUjatEducationProgressVolunteerFilterFields(educationRegions),
     [educationRegions]
   )
 
   const {
     pendingFilters,
+    appliedFilters,
     handleFilterChange,
     handleSearch,
     tableData,
@@ -98,6 +100,12 @@ export function UjatEducationProgressVolunteersSection({
     addVolunteerFromMember,
     refreshVolunteerList,
   } = useUjatEducationProgressVolunteers(program.id, half)
+
+  const selectedRegionKey =
+    appliedFilters.regionKey.trim() || pendingFilters.regionKey.trim()
+  const registerEducationRegionCode = selectedRegionKey
+    ? toUjatEducationRegionCode(selectedRegionKey)
+    : undefined
 
   const selectedVolunteerId = selectedRowKeys.length === 1 ? String(selectedRowKeys[0]) : ''
   const { detail: selectedVolunteerDetail } = useUjatEducationProgressVolunteerDetail({
@@ -145,10 +153,7 @@ export function UjatEducationProgressVolunteersSection({
   )
 
   const showNoMemberSelectedAlert = useCallback(() => {
-    showAlert({
-      title: '안내',
-      content: '추가 등록할 회원을 선택해 주세요.',
-    })
+    showAlert(NO_SELECTION_ALERT)
   }, [showAlert])
 
   const handleRegisterVolunteerClick = useCallback(() => {
@@ -327,7 +332,7 @@ export function UjatEducationProgressVolunteersSection({
       if (!success) {
         showAlert({
           title: '안내',
-          content: '수료증/참여인증서 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+          content: '수료증/참가인증서 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.',
         })
       }
     },
@@ -364,7 +369,7 @@ export function UjatEducationProgressVolunteersSection({
               disabled={studentCertificateExportActive || certificateProgressLoading}
               onClick={handleStudentCertificateIssueClick}
             >
-              수료증/참여인증서 발급
+              수료증/참가인증서 발급
             </FilterTableToolbarButton>
             <FilterTableToolbarButton
               type="button"
@@ -388,6 +393,7 @@ export function UjatEducationProgressVolunteersSection({
         excelExport={
           canWrite
             ? {
+                accessLog: { downloadKind: 'PROGRAM_VOLUNTEER_LIST_EXPORT', containedPiiTypes: ['NAME'] },
                 columns,
                 data: tableData,
                 selectedRowKeys,
@@ -438,6 +444,7 @@ export function UjatEducationProgressVolunteersSection({
         memberId={addRegistrationMemberId ?? ''}
         program={program}
         volunteerHalf={half}
+        educationRegionCode={registerEducationRegionCode}
         onClose={() => setAddRegistrationMemberId(null)}
         onComplete={memberId => addVolunteerFromMember(memberId)}
       />

@@ -12,11 +12,8 @@ import {
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import {
-  prepareGeneralEducationScheduleSessions,
-  readCurriculumSessionLabels,
-  readProgramEducationScheduleLines,
   resolveParticipatingInstitutionScheduleRowLabel,
-  resolveScheduleDetailTimeSpan,
+  withParticipatingProgressCurriculumShape,
 } from '@/features/program/general/lib/participating-school-session-display'
 import { generalEducationScheduleShapeFromBridge } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-session-format'
 import { ApplicantAdminCommentSection } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-admin-comment-section'
@@ -45,6 +42,8 @@ export interface ParticipatingInstitutionApplicationInfoProps {
   onAdminCommentDraftChange?: (value: string) => void
   adminCommentError?: string
   programProgressCell: ReactNode
+  /** 프로그램 승인 현황 + 알림 재발송. 없으면 행을 숨긴다. */
+  programApprovalStatusCell?: ReactNode
   textbookCell: ReactNode
   combinedClassCell: ReactNode
   hideCombinedClass?: boolean
@@ -166,6 +165,7 @@ export function ParticipatingInstitutionApplicationInfo({
   onAdminCommentDraftChange,
   adminCommentError,
   programProgressCell,
+  programApprovalStatusCell,
   textbookCell,
   combinedClassCell,
   hideCombinedClass = false,
@@ -190,22 +190,11 @@ export function ParticipatingInstitutionApplicationInfo({
   useCompanySchoolScheduleFormat = false,
 }: ParticipatingInstitutionApplicationInfoProps) {
   const institutionApplicationBridge = resolveInstitutionApplicationProgramBridge(program)
-  const scheduleShape = generalEducationScheduleShapeFromBridge(institutionApplicationBridge)
-  const detailScheduleTimeSpan = resolveScheduleDetailTimeSpan(
-    program.generalCommonInfo?.scheduleDetails
+  const scheduleShape = withParticipatingProgressCurriculumShape(
+    generalEducationScheduleShapeFromBridge(institutionApplicationBridge),
+    program
   )
-  const curriculumSessionLabels = readCurriculumSessionLabels(program)
-  const displaySessions = useCompanySchoolScheduleFormat
-    ? sessions
-    : prepareGeneralEducationScheduleSessions(
-        sessions,
-        scheduleShape ? { ...scheduleShape, curriculumSessionLabels } : null,
-        {
-          detailScheduleTimeSpan,
-          educationScheduleLines:
-            sessions.length === 0 ? readProgramEducationScheduleLines(program) : [],
-        }
-      )
+  const displaySessions = sessions
   const showGuidanceSection = shouldShowInstitutionApplicationGuidanceParagraph(
     institutionApplicationBridge
   )
@@ -238,6 +227,16 @@ export function ParticipatingInstitutionApplicationInfo({
               edit={programProgressCell}
             />
           </DetailInfoForm.Row>
+          {programApprovalStatusCell ? (
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="프로그램 승인 현황"
+                fullRow
+                readOnlyDisplay
+                view={programApprovalStatusCell}
+              />
+            </DetailInfoForm.Row>
+          ) : null}
           {hideCombinedClass ? (
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
@@ -417,10 +416,7 @@ export function ParticipatingInstitutionApplicationInfo({
                 view={
                   <ParticipatingProgressScheduleValue
                     session={session}
-                    shape={
-                      scheduleShape ? { ...scheduleShape, curriculumSessionLabels } : null
-                    }
-                    detailScheduleTimeSpan={detailScheduleTimeSpan}
+                    shape={scheduleShape}
                   />
                 }
               />

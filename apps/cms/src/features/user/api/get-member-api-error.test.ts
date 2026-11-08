@@ -109,4 +109,19 @@ describe('getMemberApiErrorMessage', () => {
       '현재 비밀번호가 일치하지 않습니다.\n비밀번호를 확인 후 다시 시도해 주세요.'
     )
   })
+
+  it('maps SETTLEMENT_ACCOUNT_UPDATE_VIA_CONSENT_ONLY', () => {
+    const error = {
+      response: {
+        status: 409,
+        data: {
+          success: false,
+          error: { code: 'SETTLEMENT_ACCOUNT_UPDATE_VIA_CONSENT_ONLY', field: 'settlement' },
+        },
+      },
+    }
+    expect(getMemberApiErrorMessage(error, 'fallback')).toBe(
+      '정산 계좌는 지급조서 사전 동의서에서만 입력·수정할 수 있습니다.'
+    )
+  })
 })

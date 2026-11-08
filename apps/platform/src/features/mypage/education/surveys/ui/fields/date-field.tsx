@@ -1,6 +1,6 @@
 import type { DateParagraph } from '@jakorea/form-schema/writing-form'
-import { PFDateInput } from '@/shared/ui'
-import styles from '../survey-fields.module.css'
+import hostStyles from '@/features/program/ui/apply-form-field-host.module.css'
+import { PFDateInput, PFFormField, PFFormFieldRow, PFFormFieldTable } from '@/shared/ui'
 
 type SurveyDateFieldProps = {
   paragraph: DateParagraph
@@ -16,15 +16,21 @@ export function SurveyDateField({
   disabled = false,
 }: SurveyDateFieldProps) {
   return (
-    <div className={styles.surveyFields}>
-      <PFDateInput
-        picker="date"
-        variant="formPage"
-        placeholder="YYYY-MM-DD"
-        value={value}
-        onValueChange={onValueChange}
-        disabled={disabled}
-      />
+    <div className={hostStyles.root}>
+      <PFFormFieldTable>
+        <PFFormFieldRow type="single">
+          <PFFormField label={_paragraph.paragraphTitle?.trim() || '날짜'}>
+            <PFDateInput
+              picker="date"
+              variant="formPage"
+              placeholder="YYYY-MM-DD"
+              value={value}
+              onValueChange={onValueChange}
+              disabled={disabled}
+            />
+          </PFFormField>
+        </PFFormFieldRow>
+      </PFFormFieldTable>
     </div>
   )
 }

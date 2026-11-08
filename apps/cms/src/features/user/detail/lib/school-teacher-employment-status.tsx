@@ -1,10 +1,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
-import { EditableStatusBadge, StatusDropdownCell } from '@/shared/components'
-import { STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME } from '@/shared/components/status-dropdown-cell'
-import {
-  getEmploymentBadgeTone,
-  SCHOOL_TEACHER_EMPLOYMENT_BADGE_LABEL,
-} from '@/shared/constants/editable-status-badge-tones'
+import { StatusDropdownCell } from '@/shared/components/status-dropdown-cell'
+import { StatusTag } from '@/shared/components/status-tag'
+import { getEmploymentStatusTag } from '@/shared/lib/status-tag-specs'
 import {
   canAdminAction,
   guardAdminAction,
@@ -24,15 +21,6 @@ export const SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS = [
   'ON_LEAVE',
   'TRANSFERRED',
 ] as const satisfies readonly SchoolTeacherEmploymentStatus[]
-
-export const SCHOOL_TEACHER_EMPLOYMENT_BADGE_CELL_STYLE = {
-  width: 100,
-  minWidth: 100,
-  maxWidth: 100,
-  height: 32,
-  minHeight: 32,
-  maxHeight: 32,
-} as const
 
 const SCHOOL_TEACHER_EMPLOYMENT_MUTED_TEXT_STATUSES: ReadonlySet<SchoolTeacherEmploymentStatus> =
   new Set(['ON_LEAVE', 'TRANSFERRED'])
@@ -80,12 +68,7 @@ export function SchoolTeacherEmploymentStatusBadge({
 }: {
   status: SchoolTeacherEmploymentStatus
 }) {
-  return (
-    <EditableStatusBadge
-      label={SCHOOL_TEACHER_EMPLOYMENT_BADGE_LABEL[status]}
-      tone={getEmploymentBadgeTone(status)}
-    />
-  )
+  return <StatusTag {...getEmploymentStatusTag(status)} />
 }
 
 /** 재직 현황 태그 드롭다운 — 교사 상세·교사 겸 강사 「재직 현황」 필드 공통 */
@@ -144,20 +127,16 @@ export function SchoolTeacherEmploymentStatusDropdown({
   }
 
   return (
-    <span
-      className={`user-basic-info-section__teacher-employment-dropdown ${STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME}`}
-    >
+    <span className="user-basic-info-section__teacher-employment-dropdown">
       <StatusDropdownCell<SchoolTeacherEmploymentStatus>
         status={employmentStatus}
         statusOptions={SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS}
-        renderBadge={status => <SchoolTeacherEmploymentStatusBadge status={status} />}
+        getTag={getEmploymentStatusTag}
         isItemDisabled={(cur, opt) => cur === opt}
         onChange={handleEmploymentStatusChange}
         isUpdating={isUpdating}
         isOpen={employmentDropdownOpen}
         onOpenChange={handleOpenChange}
-        tagLayout="tag100"
-        style={SCHOOL_TEACHER_EMPLOYMENT_BADGE_CELL_STYLE}
       />
     </span>
   )

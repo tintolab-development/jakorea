@@ -1,3 +1,4 @@
+import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useMemo } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
@@ -126,7 +127,7 @@ export function SchoolDetailAttendanceTable({
         title: '이메일',
         dataIndex: 'email',
         key: 'email',
-        width: 180,
+        width: TABLE_COLUMN_WIDTHS.email,
         align: 'center',
         ellipsis: true,
         render: (value: string | undefined) => maskEmail(value),

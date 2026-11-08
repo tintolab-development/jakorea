@@ -516,6 +516,25 @@ describe('general-program-adapters', () => {
     expect(patch.rounds).toHaveLength(1)
   })
 
+  it('PATCH rounds keep GET program_schedule id and omit placeholder ids', () => {
+    const program: Program = {
+      ...sampleProgram,
+      backendProgramType: 'TRAINED_TEACHER',
+      rounds: [
+        { ...sampleProgram.rounds[0], id: '187700' },
+        {
+          ...sampleProgram.rounds[0],
+          id: '186551-round-2',
+          roundNumber: 2,
+        },
+      ],
+    }
+    const request = mapGeneralProgramToUpdateRequest(program, { rounds: program.rounds }, program)
+    expect(request.rounds?.[0]?.id).toBe('187700')
+    expect(request.rounds?.[1]).not.toHaveProperty('id')
+    expect(request.rounds?.[1]?.roundNumber).toBe(2)
+  })
+
   it('does not send featuredOnHome or homeDisplayOrder on create or PATCH', () => {
     const create = mapGeneralProgramToCreateRequest(sampleProgram) as unknown as Record<
       string,
@@ -1622,6 +1641,79 @@ describe('general-program-adapters', () => {
       start: '2026-12-01',
       end: '2027-01-15',
     })
+  })
+
+  it('공고명만 있는 부분 PATCH는 저장된 문의처·모집대상상세를 비우지 않는다', () => {
+    const existing: Program = {
+      ...sampleProgram,
+      generalCommonInfo: {
+        participantRecruitmentInfo: {
+          contactOrganizationName: 'JA Korea 프로그램 운영팀',
+          recruitmentTargetDetail: '초·중·고 학생 대상',
+        },
+      },
+    }
+    const patch: Partial<Program> = {
+      generalCommonInfo: { announcementTitle: '수정 공고' },
+    }
+    const requests = [
+      mapGeneralProgramToUpdateRequest({ ...existing, ...patch }, patch, existing),
+      mapGeneralProgramToUpdateRequest(existing, patch, existing),
+      mapGeneralProgramToUpdateRequest(
+        {
+          ...existing,
+          contactName: '[BOT-TEST] 문의처',
+          recruitmentTargetDetail: '[BOT-TEST] 모집대상상세',
+        },
+        patch,
+        {
+          ...existing,
+          contactName: '[BOT-TEST] 문의처',
+          recruitmentTargetDetail: '[BOT-TEST] 모집대상상세',
+        }
+      ),
+    ]
+    for (const request of requests) {
+      expect(request.clearFields ?? []).not.toContain('contactName')
+      expect(request.clearFields ?? []).not.toContain('recruitmentTargetDetail')
+      expect(request.contactName).toBeUndefined()
+      expect(request.recruitmentTargetDetail).toBeUndefined()
+    }
+  })
+
+  it('문의처·모집대상상세를 명시적으로 비우면 clearFields에만 싣는다', () => {
+    const existing: Program = {
+      ...sampleProgram,
+      contactName: 'JA Korea 프로그램 운영팀',
+      recruitmentTargetDetail: '초·중·고 학생 대상',
+      generalCommonInfo: {
+        participantRecruitmentInfo: {
+          contactOrganizationName: 'JA Korea 프로그램 운영팀',
+          contactName: 'JA Korea 프로그램 운영팀',
+          recruitmentTargetDetail: '초·중·고 학생 대상',
+        },
+      },
+    }
+    const request = mapGeneralProgramToUpdateRequest(
+      existing,
+      {
+        contactName: '',
+        recruitmentTargetDetail: '',
+        generalCommonInfo: {
+          participantRecruitmentInfo: {
+            contactName: '',
+            contactOrganizationName: '',
+            recruitmentTargetDetail: '',
+          },
+        },
+      },
+      existing
+    )
+    expect(request.contactName).toBeUndefined()
+    expect(request.recruitmentTargetDetail).toBeUndefined()
+    expect(request.clearFields).toEqual(
+      expect.arrayContaining(['contactName', 'recruitmentTargetDetail'])
+    )
   })
 
   it('지원 방법·비고를 비우면 clearFields에만 싣는다', () => {

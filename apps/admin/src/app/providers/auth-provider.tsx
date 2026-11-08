@@ -3,6 +3,11 @@
  */
 
 import { useEffect } from 'react'
+import {
+  isAdminAuthForbiddenError,
+  isAdminAuthUnauthorizedError,
+  postAdminAuthActivity,
+} from '@/features/auth/api/admin-session-fetcher'
 import { startUserActivityTracking } from '@/features/auth/lib/session-keepalive'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
@@ -10,6 +15,7 @@ import {
   AUTH_REFRESH_TOKEN_KEY,
   AUTH_TOKEN_KEY,
 } from '@/features/auth/model/auth-storage'
+import { SessionWarningModal } from '@/features/auth/ui/session-warning-modal'
 
 interface AuthProviderProps {
   children: React.ReactNode
@@ -56,7 +62,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     if (!isAuthenticated) return
 
-    const stopActivityTracking = startUserActivityTracking()
+    const stopActivityTracking = startUserActivityTracking(window, () => {
+      const initial = useAuthStore.getState()
+      if (!initial.isAuthenticated || !initial.token) return
+      const requestedToken = initial.token
+      void postAdminAuthActivity().catch(error => {
+        const current = useAuthStore.getState()
+        // A delayed 401 from the previous access token must not end a refreshed login.
+        if (!current.isAuthenticated || current.token !== requestedToken) return
+        if (isAdminAuthUnauthorizedError(error)) {
+          current.logout()
+        } else if (isAdminAuthForbiddenError(error)) {
+          // Permission/account-type mismatch is not token expiration.
+          console.warn('[ADMIN_SESSION] Activity was denied (403); verify ADMIN JWT and sid.')
+        }
+      })
+    })
 
     const interval = setInterval(() => {
       useAuthStore.getState().checkSessionExpiry()
@@ -68,5 +89,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [isAuthenticated])
 
-  return <>{children}</>
+  return (
+    <>
+      {children}
+      <SessionWarningModal />
+    </>
+  )
 }

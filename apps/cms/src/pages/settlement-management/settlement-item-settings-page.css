@@ -20,7 +20,7 @@
 
 .settlement-item-settings__section {
   background: var(--default-WT, #fff);
-  border-radius: 12px;
+  border-radius: 16px;
   padding: var(--spacing-24);
   box-sizing: border-box;
   box-shadow: 0 0 16px 0 var(--shadow-card-soft);
@@ -30,9 +30,10 @@
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-end;
   gap: 8px;
-  margin-bottom: var(--spacing-24);
+  margin-bottom: 16px;
+  padding-left: 8px;
 }
 
 .settlement-item-settings__section-title {
@@ -41,7 +42,7 @@
   font-size: 20px;
   font-weight: 700;
   color: var(--default-BK, #3d3d3d);
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 .settlement-item-settings__section-count {
@@ -49,17 +50,16 @@
   font-family: Pretendard, sans-serif;
   font-size: 16px;
   font-weight: 500;
-  color: var(--default-BK, #3d3d3d);
-  opacity: 0.6;
+  color: rgba(61, 61, 61, 0.5);
   line-height: 1.5;
 }
 
-/* 카드 간 가로·세로 16px — 한 row 최대 3열(1fr 균등), 4번째 카드는 다음 줄 첫 열부터(스크린샷과 동일) */
+/* 카드 간 가로·세로 18px — 한 row 최대 3열, 카드 최대 폭 498(시안 max-w-[498px]), 4번째 카드는 다음 줄 첫 열부터 */
 .settlement-item-settings__grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  row-gap: 16px;
-  column-gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 498px));
+  row-gap: 18px;
+  column-gap: 18px;
   width: 100%;
   box-sizing: border-box;
 }
@@ -89,7 +89,7 @@
   align-items: center;
   gap: 0;
   border-radius: 12px;
-  border: 1px solid #d4d4d4;
+  border: 1px solid var(--table-line, #e0e0e0);
   background: var(--default-WT, #fff);
   overflow: hidden;
 }
@@ -105,7 +105,8 @@
   align-items: center;
   gap: 24px;
   box-sizing: border-box;
-  padding: 26px 30px;
+  /* 시안 패딩 30은 inside stroke 기준 — 카드 border 1px을 빼 아이콘 x=30 */
+  padding: 26px 29px;
   margin: 0;
   border: none;
   background: transparent;
@@ -116,10 +117,12 @@
   border-radius: inherit;
 }
 
-/* 지급 항목: 우측 ⋯ 메뉴 공간을 남기고 hit가 나머지를 채움 */
-.settlement-item-settings__card:has(.settlement-item-settings__card-more-wrap)
-  .settlement-item-settings__card-hit {
-  padding-right: 12px;
+/*
+ * 지급 항목(시안 12603:444664): ⋮는 타이틀 행(높이 29) 우측 끝, 타이틀과 세로 중앙 정렬.
+ * hit는 카드 전체를 유지하고, 타이틀만 ⋮(24) + 간격(8)만큼 우측을 비운다. 설명은 전체 폭.
+ */
+.settlement-item-settings__card--has-menu .settlement-item-settings__card-title-row {
+  padding-right: 32px;
 }
 
 /* 전역 button:focus-visible(index.css) 내부 링 차단 — 포커스는 카드(위젯)에만 */
@@ -136,13 +139,16 @@
   outline-offset: 3px;
 }
 
+/*
+ * 카드 높이 108 고정 · 본문(56) 세로 중앙 → 타이틀 행 상단 26, ⋮ 상단 26 + (29 - 24) / 2 = 28.5 (보더 1 포함 외곽 기준).
+ * absolute 기준은 패딩 박스(보더 안쪽)이므로 1px씩 뺀다. 우측은 카드 패딩 30.
+ */
 .settlement-item-settings__card-more-wrap {
-  position: relative;
+  position: absolute;
   z-index: 1;
-  flex-shrink: 0;
+  top: 27.5px;
+  right: 29px;
   display: flex;
-  align-items: center;
-  padding-right: 30px;
 }
 
 .settlement-item-settings__card-icon {

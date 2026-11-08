@@ -2,7 +2,6 @@ import { calculateInstructorCount } from './calculate-instructor-count'
 import { calculatePaymentAmount } from './calculate-payment-amount'
 import { calculateTrainingHours, formatDetailTimeText } from './calculate-training-hours'
 import { buildPerformanceDuplicateKey } from './duplicate-key'
-import { matchInstructorMemberId } from './match-instructor-member'
 import { toJavaLocalDate } from './import-wire-values'
 import { resolveTrainingMethod } from './resolve-training-method'
 import type {
@@ -18,12 +17,11 @@ function createRowId(): string {
   return `gperf-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
 }
 
-export async function mapUploadToDisplayRow(
+export function mapUploadToDisplayRow(
   upload: GeminiPerformanceUploadRow
-): Promise<GeminiPerformanceRow> {
+): GeminiPerformanceRow {
   const trainingDate = parseTrainingDate(upload.trainingDate)
   const classCount = upload.classCount
-  const instructorMemberId = await matchInstructorMemberId(upload.instructorName, upload.contact)
 
   return {
     id: createRowId(),
@@ -48,7 +46,6 @@ export async function mapUploadToDisplayRow(
     trainingFormat: upload.trainingFormat.trim(),
     trainingMethod: resolveTrainingMethod(upload.trainingLocation),
     contact: upload.contact.trim(),
-    instructorMemberId,
     calculatedAmount: calculatePaymentAmount(classCount),
     classCount,
   }
@@ -58,9 +55,8 @@ export function assignDisplayNumbers(rows: GeminiPerformanceRow[]): GeminiPerfor
   const sorted = [...rows].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   )
-  const total = sorted.length
   return sorted.map((row, index) => ({
     ...row,
-    no: total - index,
+    no: index + 1,
   }))
 }

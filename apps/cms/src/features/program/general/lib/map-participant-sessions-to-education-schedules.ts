@@ -1,7 +1,13 @@
 import type { ParticipatingInstructorEducationScheduleRow } from '@/features/program/general/model/participating-instructors'
-import { toDisplayEducationScheduleName } from '@/shared/lib/education-schedule-name'
+import {
+  formatEducationScheduleUnitLabel,
+  positiveEducationNumber,
+  toDisplayEducationScheduleName,
+} from '@/shared/lib/education-schedule-name'
 import type { SessionProgress } from '@/shared/api/generated/dashboard/schemas/sessionProgress'
 import { normalizeDashboardScheduleDeliveryStatus } from '@/features/program/general/lib/dashboard-schedule-delivery-status'
+import { isProgramSchedulePreEducation } from '@/features/program/shared/lib/program-schedule-canonical'
+import { PRE_EDUCATION_DISPLAY_LABEL } from '@/features/program/general/lib/schedule-detail-form'
 import { getSeoulCalendarDate } from '@/shared/utils/date'
 
 function mapSessionProgressStatus(
@@ -22,16 +28,26 @@ function toSeoulCalendarDate(startAt: string): string {
   return startAt.slice(0, 10)
 }
 
-function formatSessionProgressLabel(session: SessionProgress, index: number): string {
+function formatSessionProgressLabel(session: SessionProgress): string {
   const parts: string[] = []
-  if (session.sessionNo != null) parts.push(`${session.sessionNo}차시`)
+  if (isProgramSchedulePreEducation(session)) {
+    parts.push(PRE_EDUCATION_DISPLAY_LABEL)
+  } else {
+    const roundLabel = formatEducationScheduleUnitLabel({
+      sessionNo: session.sessionNo,
+      curriculumSessionCount: positiveEducationNumber(
+        (session as SessionProgress & { curriculumSessionCount?: number | null }).curriculumSessionCount
+      ),
+    })
+    if (roundLabel) parts.push(roundLabel)
+  }
   const scheduleName = toDisplayEducationScheduleName(session.scheduleName)
-  if (scheduleName) parts.push(scheduleName)
+  if (scheduleName && scheduleName !== PRE_EDUCATION_DISPLAY_LABEL) parts.push(scheduleName)
   if (session.startAt?.trim()) {
     const date = toSeoulCalendarDate(session.startAt.trim()).replace(/-/g, '.')
     parts.push(date)
   }
-  if (parts.length === 0) return `교육 일정 ${index + 1}`
+  if (parts.length === 0) return '교육 일정'
   return parts.join(' · ')
 }
 
@@ -50,7 +66,7 @@ export function mapParticipantSessionsToEducationSchedules(
           : `session-${index}`
     return {
       id,
-      scheduleLabel: formatSessionProgressLabel(session, index),
+      scheduleLabel: formatSessionProgressLabel(session),
       progress: mapSessionProgressStatus(session.scheduleStatus),
     }
   })

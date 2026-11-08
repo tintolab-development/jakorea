@@ -12,11 +12,16 @@ import {
   writingFormDraftToCatalogSchemaJson,
   writingFormDraftToSchemaJson,
 } from '@/features/template/api/adapters/form-template-draft-adapters'
-import { ISSUANCE_FORM_TYPE, WRITING_FORM_TYPE } from '@/features/template/api/form-template-catalog'
+import {
+  ISSUANCE_FORM_TYPE,
+  TEMPLATE_CODE_CATALOG,
+  WRITING_FORM_TYPE,
+} from '@/features/template/api/form-template-catalog'
 import {
   isCatalogOriginalVersionWriteBlocked,
   isCatalogSurveyOrGeneralAgreementTemplateCode,
   isDocumentOnlyAgreementTemplateCode,
+  isCertificateIssuanceTemplatePublishTarget,
   isSurveyOrGeneralAgreementPublishTarget,
   resolveWritingFormCatalogCategory,
   shouldOmitImmutableFormSchemaJson,
@@ -44,7 +49,10 @@ import {
   updateFormTemplateRemote,
   updateFormTemplateVersionRemote,
 } from '@/features/template/api/form-templates-api-client'
-import { normalizeWritingFormDraftFromApi } from '@/features/template/lib/form-template-seed-registry'
+import {
+  getFormTemplateSeedDraft,
+  normalizeWritingFormDraftFromApi,
+} from '@/features/template/lib/form-template-seed-registry'
 import { shouldUseRemoteDraftApiForTemplateCode } from '@/features/template/lib/form-template-remote-draft'
 import {
   removeWritingFormTemplateSave,
@@ -98,14 +106,14 @@ export function shouldUseFormsSurveysRemoteApi(): boolean {
 
 const FORM_TEMPLATE_LIST_PAGE_SIZE = 20
 const FORM_TEMPLATE_LIST_MAX_PAGES = 100
+const RECEIPT_PRE_CONSENT_TEMPLATE_CODE = 'agreement-receipt-pre-consent'
 
 async function fetchAllFormTemplateListItems(
   params: Omit<ListTemplatesParams, 'page' | 'size'>
 ): Promise<FormTemplateListItemResponse[]> {
   const items: FormTemplateListItemResponse[] = []
   let page = 0
-  let totalPages = 1
-  while (page < totalPages && page < FORM_TEMPLATE_LIST_MAX_PAGES) {
+  while (page < FORM_TEMPLATE_LIST_MAX_PAGES) {
     const result = await fetchFormTemplatesRemote({
       ...params,
       page,
@@ -113,19 +121,99 @@ async function fetchAllFormTemplateListItems(
     })
     const pageItems = result.items ?? []
     items.push(...pageItems)
-    totalPages = result.totalPages ?? page + 1
-    if (pageItems.length === 0) break
+    if (pageItems.length < FORM_TEMPLATE_LIST_PAGE_SIZE) break
     page += 1
   }
   return items
 }
 
+function listHasTemplateCode(
+  items: readonly FormTemplateListItemResponse[],
+  templateCode: string
+): boolean {
+  return items.some(item => item.templateCode?.trim() === templateCode)
+}
+
+function listItemFromPayload(
+  payload: Awaited<ReturnType<typeof fetchFormTemplatePayloadByCodeRemote>>,
+  templateCode: string
+): FormTemplateListItemResponse {
+  return {
+    templateId: payload.templateId,
+    templateCode: payload.templateCode?.trim() || templateCode,
+    templateName: payload.templateName,
+    formType: payload.formType,
+    category: payload.category,
+    useYn: payload.useYn,
+    latestVersionId: payload.latestVersionId ?? payload.templateVersionId,
+    latestVersionNo: payload.versionNo,
+    latestVersionStatus: payload.latestVersionStatus ?? payload.versionStatus,
+    systemTemplate: payload.systemTemplate,
+    createdAt: payload.createdAt,
+    updatedAt: payload.updatedAt,
+    baseTemplateCode: payload.baseTemplateCode,
+    deletable: payload.deletable,
+  }
+}
+
+async function ensureReceiptPreConsentWritingListItem(
+  items: FormTemplateListItemResponse[]
+): Promise<FormTemplateListItemResponse[]> {
+  if (listHasTemplateCode(items, RECEIPT_PRE_CONSENT_TEMPLATE_CODE)) return items
+
+  try {
+    const payload = await fetchFormTemplatePayloadByCodeRemote(RECEIPT_PRE_CONSENT_TEMPLATE_CODE)
+    if (payload.templateId == null && payload.templateCode == null) return items
+    return [...items, listItemFromPayload(payload, RECEIPT_PRE_CONSENT_TEMPLATE_CODE)]
+  } catch {
+    /* 목록·코드 조회에 없으면 카탈로그 시드로 1회 생성 (게시하지 않음) */
+  }
+
+  const seed = getFormTemplateSeedDraft(RECEIPT_PRE_CONSENT_TEMPLATE_CODE)
+  if (seed == null) return items
+  try {
+    const created = await createFormTemplateRemote({
+      templateCode: RECEIPT_PRE_CONSENT_TEMPLATE_CODE,
+      templateName:
+        TEMPLATE_CODE_CATALOG[RECEIPT_PRE_CONSENT_TEMPLATE_CODE]?.templateName ??
+        '영수증 발급 사전 동의서',
+      formType: WRITING_FORM_TYPE,
+      category: 'AGREEMENT',
+      useYn: true,
+      versionLabel: 'v1',
+      schemaJson: writingFormDraftToSchemaJson(seed),
+    })
+    const createdCode = created.templateCode?.trim() || RECEIPT_PRE_CONSENT_TEMPLATE_CODE
+    return [
+      ...items,
+      {
+        templateId: created.templateId,
+        templateCode: createdCode,
+        templateName: created.templateName,
+        formType: created.formType,
+        category: created.category,
+        useYn: created.useYn,
+        latestVersionId: created.latestVersionId ?? created.versions?.[0]?.templateVersionId,
+        latestVersionNo: created.versions?.[0]?.versionNo,
+        latestVersionStatus: created.versions?.[0]?.versionStatus,
+        systemTemplate: created.systemTemplate,
+        createdAt: created.createdAt,
+        updatedAt: created.updatedAt,
+        baseTemplateCode: created.baseTemplateCode,
+        deletable: created.deletable,
+      },
+    ]
+  } catch {
+    return items
+  }
+}
+
 export async function getWritingFormSectionsRemote(): Promise<TemplateSection[]> {
   assertFormsSurveysRemoteReady()
-  const items = await fetchAllFormTemplateListItems({
+  const listed = await fetchAllFormTemplateListItems({
     formType: WRITING_FORM_TYPE,
-    useYn: true,
   })
+  const items = await ensureReceiptPreConsentWritingListItem(listed)
   upsertFormTemplateVersionCacheFromListItems(items)
   return buildWritingFormSectionsFromApiItems(items)
 }
@@ -134,23 +222,31 @@ export async function getIssuanceFormSectionsRemote(): Promise<TemplateSection[]
   assertFormsSurveysRemoteReady()
   const items = await fetchAllFormTemplateListItems({
     formType: ISSUANCE_FORM_TYPE,
-    useYn: true,
   })
   upsertFormTemplateVersionCacheFromListItems(items)
   return buildIssuanceFormSectionsFromApiItems(items)
 }
 
+/** 동시에 여러 템플릿 코드를 해석할 때 WRITING·ISSUANCE 전 페이지 조회를 한 번만 하도록 진행 중 요청을 공유한다. */
+let warmTemplateListCachesInflight: Promise<void> | null = null
+
 async function warmTemplateListCaches(): Promise<void> {
-  try {
-    await getWritingFormSectionsRemote()
-  } catch {
-    /* issuance-only codes may miss writing list */
-  }
-  try {
-    await getIssuanceFormSectionsRemote()
-  } catch {
-    /* ignore */
-  }
+  if (warmTemplateListCachesInflight) return warmTemplateListCachesInflight
+  warmTemplateListCachesInflight = (async () => {
+    try {
+      await getWritingFormSectionsRemote()
+    } catch {
+      /* issuance-only codes may miss writing list */
+    }
+    try {
+      await getIssuanceFormSectionsRemote()
+    } catch {
+      /* ignore */
+    }
+  })().finally(() => {
+    warmTemplateListCachesInflight = null
+  })
+  return warmTemplateListCachesInflight
 }
 
 async function resolveTemplateVersionId(templateCode: string): Promise<number | null> {
@@ -487,10 +583,11 @@ export async function saveFormTemplateVersionDraft(args: {
   const fingerprint = fingerprintVersionBody(body)
   const cached = getFormTemplateVersionCacheEntry(args.templateCode)
   const wantPublish =
-    args.publishAfterSave === true &&
-    isSurveyOrGeneralAgreementPublishTarget(args.templateCode, {
-      baseTemplateCode: cached?.baseTemplateCode,
-    })
+    isCertificateIssuanceTemplatePublishTarget(args.templateCode) ||
+    (args.publishAfterSave === true &&
+      isSurveyOrGeneralAgreementPublishTarget(args.templateCode, {
+        baseTemplateCode: cached?.baseTemplateCode,
+      }))
 
   const pending = wantPublish ? unpublishedDraftByTemplateCode.get(args.templateCode) : undefined
   let leftoverDraftVersionIds: number[] = []

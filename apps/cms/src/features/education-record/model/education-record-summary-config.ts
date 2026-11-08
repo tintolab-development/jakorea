@@ -1,7 +1,8 @@
 /**
  * 실적 관리 > 합계 탭 컬럼 · 카테고리 · 서브 행 메타
  * - 카테고리별 서브 행 구성은 서로 다름:
- *   경제금융 / 진로취업 / 기업가정신 → 초/중/고/성인/합계
+ *   경제금융 / 진로취업 → 초/중/고/대학교/성인/합계 (Figma 02. 합계)
+ *   기업가정신 → 초/중/고/대학교/합계 (시안 기준 성인 행 없음)
  *   디지털리터러시 → 고/대학교/성인/합계
  */
 
@@ -25,10 +26,10 @@ export const SUMMARY_COLUMNS: readonly SummaryColumnMeta[] = [
   { key: 'classCount', kind: '개수', label: '학급수' },
   { key: 'participants', kind: '합계', label: '총 참가자' },
   { key: 'educationHours', kind: '합계', label: '교육시간' },
-  { key: 'generalVolunteers', kind: '합계', label: '일반 자원봉사자' },
-  { key: 'staffVolunteers', kind: '합계', label: '임직원 자원봉사자' },
-  { key: 'generalTeachers', kind: '합계', label: '일반 담당교사' },
-  { key: 'educatedTeachers', kind: '합계', label: '교육받은 교사' },
+  { key: 'generalVolunteers', kind: '합계', label: '일반자원봉사자' },
+  { key: 'staffVolunteers', kind: '합계', label: '임직원자원봉사자' },
+  { key: 'generalTeachers', kind: '합계', label: '일반담당교사' },
+  { key: 'educatedTeachers', kind: '합계', label: '교육받은교사' },
   { key: 'instructors', kind: '합계', label: '강사' },
 ] as const
 
@@ -54,21 +55,21 @@ export const SUMMARY_CATEGORIES: readonly SummaryCategoryMeta[] = [
   {
     key: 'economyFinance',
     label: '경제금융',
-    subRows: ['elementary', 'middle', 'high', 'adult', 'total'],
+    subRows: ['elementary', 'middle', 'high', 'university', 'adult', 'total'],
   },
   {
     key: 'careerEmployment',
     label: '진로취업',
-    subRows: ['elementary', 'middle', 'high', 'adult', 'total'],
+    subRows: ['elementary', 'middle', 'high', 'university', 'adult', 'total'],
   },
   {
     key: 'entrepreneurship',
     label: '기업가정신',
-    subRows: ['elementary', 'middle', 'high', 'adult', 'total'],
+    subRows: ['elementary', 'middle', 'high', 'university', 'total'],
   },
   {
     key: 'digitalLiteracy',
-    label: '디지털리터러시',
+    label: '디지털 리터러시',
     subRows: ['high', 'university', 'adult', 'total'],
   },
 ] as const

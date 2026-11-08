@@ -175,44 +175,14 @@
   width: auto;
 }
 
-/* 기본 정보 — 프로그램 진행 현황 읽기 전용 (`ProgramEnrollmentStatusText` / status-badge.css) */
-.program-detail-info-tab__lifecycle-status-text {
+/* 기본 정보 — 모집 현황 Text 블록·말줄임 (색·타이포: RecruitmentLifecycleStatusText → StatusBadge text) */
+.status-badge.program-detail-info-tab__lifecycle-status-text {
   display: block;
   box-sizing: border-box;
   max-width: 100%;
   overflow: hidden;
-  text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-family: Pretendard, sans-serif;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-}
-
-/* 참여자·강사·봉사 모집 현황: 태그 없이 텍스트만, 상태별 대표색 (program-lifecycle-status-badge 교육 그룹 톤) */
-.program-detail-info-tab__lifecycle-status-text--planned,
-.program-detail-info-tab__lifecycle-status-text--instructor-recruitment-planned,
-.program-detail-info-tab__lifecycle-status-text--volunteer-recruitment-planned,
-.program-detail-info-tab__lifecycle-status-text--participant-instructor-recruitment-planned {
-  color: var(--Status-green-main, #1e8c29);
-}
-
-.program-detail-info-tab__lifecycle-status-text--recruiting-students,
-.program-detail-info-tab__lifecycle-status-text--recruiting-instructors,
-.program-detail-info-tab__lifecycle-status-text--recruiting-volunteers,
-.program-detail-info-tab__lifecycle-status-text--participant-instructor-recruiting {
-  color: var(--Status-blue-main, #017eaf);
-}
-
-.program-detail-info-tab__lifecycle-status-text--matching-completed,
-.program-detail-info-tab__lifecycle-status-text--education-before-textbook,
-.program-detail-info-tab__lifecycle-status-text--education-after-textbook,
-.program-detail-info-tab__lifecycle-status-text--education-completed,
-.program-detail-info-tab__lifecycle-status-text--document-processing-completed,
-.program-detail-info-tab__lifecycle-status-text--participant-instructor-recruitment-completed {
-  color: var(--Netural-black, #3d3d3d);
 }
 
 /* 교육 커리큘럼 테이블 — 기본 정보와 동일 스타일(라벨 200px, #F9F9F9, 구분선 #E0E0E0) */
@@ -299,7 +269,7 @@
   min-height: 320px;
 }
 
-/* 추가 내용 td 이미지 래퍼: 확대보기 마스크 영역까지 200px로 제한 */
+/* 추가 내용 td 이미지 래퍼: 200px로 제한 */
 .program-detail-info-tab__additional-image-wrap {
   display: inline-block;
   max-width: 200px;
@@ -307,19 +277,7 @@
   line-height: 0;
 }
 
-.program-detail-info-tab__additional-image-wrap .ant-image {
-  display: block;
-  max-width: 200px;
-  max-height: 200px;
-}
-
-.program-detail-info-tab__additional-image-wrap .ant-image-img {
-  max-width: 200px;
-  max-height: 200px;
-  object-fit: contain;
-}
-
-/* 추가 내용 td 이미지: 미리보기 클릭 시 확대 */
+.program-detail-info-tab__additional-image-wrap img,
 .program-detail-info-tab__additional-image {
   display: block;
   max-width: 200px;
@@ -327,7 +285,6 @@
   width: auto;
   height: auto;
   object-fit: contain;
-  cursor: pointer;
 }
 
 /* 추가 내용 뷰어 — 행간·단락 여백은 @jakorea/rich-text content.css SSOT */
@@ -518,7 +475,7 @@
   min-width: 0;
 }
 
-/* 모집 정보 — 비고(수정): CmsInput 기본 240px 대신 값 셀 가로 100% */
+/* 모집 정보 — 비고(수정): CmsInput 기본 240px 대신 값 셀 가로를 채움 */
 .detail-info-form__field-content--edit
   > .detail-info-form-inputs-wrapper-no-gap:has(.program-detail-info-tab__notes-input) {
   flex: 1 1 auto;
@@ -526,12 +483,26 @@
   min-width: 0;
 }
 
-.detail-info-form__field-content--edit .cms-input.program-detail-info-tab__notes-input {
+/* 강사·봉사자처럼 비고 단독 입력: 값 셀 100% */
+.detail-info-form__field-content--edit > .cms-input.program-detail-info-tab__notes-input {
   flex: 1 1 auto;
   width: 100% !important;
   max-width: 100% !important;
   min-width: 0;
   box-sizing: border-box;
+}
+
+/*
+ * 해당 없음 + 비고(교육받은 교사·일반 기관/개인·Gemini·UJAT):
+ * 루트 width 100% 는 체크박스 위를 덮어 태그처럼 보이므로 남은 폭만 쓴다.
+ */
+.detail-info-form__field-content--edit
+  > .detail-info-form-inputs-wrapper-no-gap
+  > .cms-input.program-detail-info-tab__notes-input {
+  flex: 1 1 0 !important;
+  width: auto !important;
+  max-width: none !important;
+  min-width: 0;
 }
 
 .detail-info-form__field-content--edit

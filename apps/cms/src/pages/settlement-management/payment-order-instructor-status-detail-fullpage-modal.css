@@ -3,17 +3,7 @@
  */
 @import './payment-order-program-status-detail-fullpage-modal.css';
 
-.payment-order-instructor-status-detail-fullpage-modal.detail-fullpage-modal
-  .detail-fullpage-modal__content {
-  padding: 24px 32px 32px;
-  box-sizing: border-box;
-  overflow: auto;
-}
-
-/* 기본 정보 테이블 ↔ 필터 영역 간격 48px */
-.payment-order-program-status-detail__basic-block {
-  margin-bottom: 48px;
-}
+/* 본문 padding·기본 정보 ↔ 필터 간격(32)은 프로그램 모달과 동일 — 시안 15524:543381 (기본 정보 하단 258 → 필터 290) */
 
 /* 기본 정보 제목과 개인정보 버튼 한 줄 (PersonalInfoRevealButton 내부 CmsButton size=large, width=160 → 160×44) */
 .payment-order-instructor-status-detail__basic-header {
@@ -86,13 +76,9 @@
   text-align: left;
 }
 
-.payment-order-instructor-status-detail__basic-split-gap {
-  height: 16px;
-  flex-shrink: 0;
-}
-
+/* 시안: 총 정산 신청 금액 값은 다른 값 셀과 같은 Medium(500) */
 .payment-order-instructor-status-detail__total-amount-cell {
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .payment-order-instructor-status-detail__aggregate-status-value {

@@ -1,17 +1,30 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MYPAGE_SETTINGS_CONSENTS_TAB } from '@/features/mypage/lib/constants'
 import { useSettingsConsents } from '@/features/mypage/settings/hooks/use-settings-consents'
 import { isPaymentStatementPreConsentSubmitted } from '@/features/mypage/settings/lib/payment-statement-consent-status'
-import { pinSettingsConsentsMenu } from '@/features/mypage/settings/lib/settings-consents-menu'
+import { isReceiptPreConsentSubmitted } from '../lib/receipt-consent-status'
+import {
+  buildSettlementPaymentConsentPath,
+  buildSettlementReceiptConsentPath,
+} from '../lib/consent-path'
+import type { SettlementDocumentKind } from '../lib/settlement-status-ui'
+import type { SettlementArea } from '../lib/write-path'
 
-export function useReceiptPaymentStatementConsent() {
+export function useSettlementPreConsent(options: {
+  documentKind: SettlementDocumentKind
+  applicationId?: string
+  area?: SettlementArea
+  applicationType?: string
+}) {
   const navigate = useNavigate()
   const consents = useSettingsConsents()
   const [modalOpen, setModalOpen] = useState(false)
-  const submitted = isPaymentStatementPreConsentSubmitted(consents.documentItems)
+  const submitted =
+    options.documentKind === 'receipt'
+      ? isReceiptPreConsentSubmitted(consents.documentItems)
+      : isPaymentStatementPreConsentSubmitted(consents.documentItems)
 
-  const tryWriteReceipt = (path: string) => {
+  const tryWrite = (path: string) => {
     if (consents.isLoading) return
     if (submitted) {
       navigate(path)
@@ -21,9 +34,27 @@ export function useReceiptPaymentStatementConsent() {
   }
 
   const goToConsents = () => {
-    pinSettingsConsentsMenu()
     setModalOpen(false)
-    navigate(MYPAGE_SETTINGS_CONSENTS_TAB)
+    if (!options.applicationId) return
+    if (options.documentKind === 'receipt') {
+      navigate(
+        buildSettlementReceiptConsentPath({
+          applicationId: options.applicationId,
+          mode: 'write',
+          area: options.area,
+          applicationType: options.applicationType,
+        }),
+      )
+      return
+    }
+    navigate(
+      buildSettlementPaymentConsentPath({
+        applicationId: options.applicationId,
+        mode: 'write',
+        area: options.area,
+        applicationType: options.applicationType,
+      }),
+    )
   }
 
   return {
@@ -31,7 +62,21 @@ export function useReceiptPaymentStatementConsent() {
     isConsentSubmitted: submitted,
     modalOpen,
     closeModal: () => setModalOpen(false),
-    tryWriteReceipt,
+    tryWrite,
+    tryWriteReceipt: tryWrite,
     goToConsents,
   }
+}
+
+export function useReceiptPaymentStatementConsent(options?: {
+  applicationId?: string
+  area?: SettlementArea
+  applicationType?: string
+}) {
+  return useSettlementPreConsent({
+    documentKind: 'receipt',
+    applicationId: options?.applicationId,
+    area: options?.area,
+    applicationType: options?.applicationType,
+  })
 }

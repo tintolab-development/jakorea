@@ -11,6 +11,7 @@ function sanitizeDraftForStorage(draft: SettlementWriteDraft): SettlementWriteDr
     ...draft,
     basic: {
       ...draft.basic,
+      nameEn: draft.basic.nameEn ?? '',
       residentFront: '',
       residentBack: '',
       accountNumber: '',
@@ -41,6 +42,10 @@ export function loadSettlementWriteDraft(
       },
       enabledItemTypes: parsed.enabledItemTypes ?? [],
       extraItems: parsed.extraItems ?? [],
+      basic: {
+        ...parsed.basic,
+        nameEn: parsed.basic?.nameEn ?? '',
+      },
       transport: {
         ...parsed.transport,
         depart: {
@@ -54,8 +59,16 @@ export function loadSettlementWriteDraft(
           attachments: parsed.transport.return?.attachments ?? [],
         },
       },
-      meal: parsed.meal ?? { amount: '', fileNames: [] },
-      activity: parsed.activity ?? { amount: '', fileNames: [] },
+      meal: {
+        amount: parsed.meal?.amount ?? '',
+        fileNames: parsed.meal?.fileNames ?? [],
+        attachments: parsed.meal?.attachments ?? [],
+      },
+      activity: {
+        amount: parsed.activity?.amount ?? '',
+        fileNames: parsed.activity?.fileNames ?? [],
+        attachments: parsed.activity?.attachments ?? [],
+      },
     }
   } catch {
     return null

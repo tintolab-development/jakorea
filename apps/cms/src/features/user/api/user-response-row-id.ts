@@ -30,6 +30,22 @@ export function coercePositiveInt(value: unknown): number | undefined {
   return undefined
 }
 
+/** UserResponse 재발송 ID — 0/null/omit 이면 복사하지 않는다. */
+export function copyUserResponseResendIds(source: {
+  instructorRoleRequestId?: number | null
+  adminAccountId?: number | null
+}): {
+  instructorRoleRequestId?: number
+  adminAccountId?: number
+} {
+  const instructorRoleRequestId = coercePositiveInt(source.instructorRoleRequestId)
+  const adminAccountId = coercePositiveInt(source.adminAccountId)
+  return {
+    ...(instructorRoleRequestId != null ? { instructorRoleRequestId } : {}),
+    ...(adminAccountId != null ? { adminAccountId } : {}),
+  }
+}
+
 type CanonicalUserDetailIdSource = {
   id?: string
   adminAccountId?: number

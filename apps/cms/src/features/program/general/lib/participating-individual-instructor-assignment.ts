@@ -152,9 +152,8 @@ function buildWaitingFromProgramSlots(
     )
   })
 
-  const n = expanded.length
   return sortWaitingInstructorRowsUnavailableToBottom(
-    expanded.map((row, idx) => ({ ...row, no: n - idx }))
+    expanded.map((row, idx) => ({ ...row, no: idx + 1 }))
   )
 }
 
@@ -223,14 +222,12 @@ export function createIndividualWaitingRowFromAssigned(
 export function renumberIndividualAssignedScheduleRows(
   rows: ParticipatingIndividualInstructorAssignedScheduleRow[]
 ): ParticipatingIndividualInstructorAssignedScheduleRow[] {
-  const n = rows.length
-  return rows.map((r, i) => ({ ...r, no: n - i }))
+  return rows.map((r, i) => ({ ...r, no: i + 1 }))
 }
 
 export function renumberIndividualWaitingScheduleRows(
   rows: ParticipatingIndividualInstructorWaitingScheduleRow[]
 ): ParticipatingIndividualInstructorWaitingScheduleRow[] {
   const sorted = sortWaitingInstructorRowsUnavailableToBottom(rows)
-  const n = sorted.length
-  return sorted.map((r, i) => ({ ...r, no: n - i }))
+  return sorted.map((r, i) => ({ ...r, no: i + 1 }))
 }

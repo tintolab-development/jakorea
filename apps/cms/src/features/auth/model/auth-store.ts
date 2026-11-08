@@ -4,6 +4,7 @@
  */
 
 import { create } from 'zustand'
+import { readJwtSidClaim } from '@jakorea/domain/session'
 import type { User, LoginRequest } from '@/types/user'
 import type { MfaState } from '@/types/mfa'
 import {
@@ -46,6 +47,7 @@ import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { withSessionAdminRole } from '@/shared/lib/admin-role-policy'
 import {
   PASSWORD_CHANGE_REQUIRED_STORAGE_KEY,
+  assignLoginAfterSessionEnd,
   isAdminFirstLoginOnboardingIncomplete,
 } from '@/shared/utils/post-auth-redirect'
 
@@ -62,6 +64,8 @@ interface AuthState {
   passwordChangeRequired: boolean
   /** GET /api/admin/me 동기화 중 — 역할 가드 보류 */
   adminSessionSyncPending: boolean
+  /** 부트 시 저장된 access token이 만료 임박이라 서버 갱신 결과를 기다리는 중 */
+  isBootstrapping: boolean
   // Phase 2: checkAuth 중복 호출 방지를 위한 내부 상태
   _isCheckingAuth: boolean
   _checkAuthPromise: Promise<void> | null
@@ -184,6 +188,12 @@ const loadAuthFromStorage = (): Partial<AuthState> => {
 // 초기 상태를 즉시 로드
 const initialState = loadAuthFromStorage()
 
+/** 저장된 세션이 있지만 access token 갱신이 필요하면, 갱신 결과 전까지 보호 화면을 그리지 않는다. */
+const initialIsBootstrapping =
+  !!initialState.isAuthenticated &&
+  !!initialState.expiresAt &&
+  shouldRefreshAccessToken(new Date(initialState.expiresAt).getTime(), Date.now())
+
 export const useAuthStore = create<AuthState>()((set, get) => {
   return {
     user: initialState.user ?? null,
@@ -196,6 +206,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
     requiresMfa: false, // Phase 0.5.1: MFA 필요 여부
     passwordChangeRequired: initialState.passwordChangeRequired ?? false,
     adminSessionSyncPending: false,
+    isBootstrapping: initialIsBootstrapping,
     _isCheckingAuth: false, // Phase 2: checkAuth 중복 호출 방지
     _checkAuthPromise: null, // Phase 2: checkAuth Promise 저장
 
@@ -433,6 +444,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         mfaState: null,
         requiresMfa: false,
         adminSessionSyncPending: false,
+        isBootstrapping: false,
         _isCheckingAuth: false,
         _checkAuthPromise: null,
       })
@@ -452,6 +464,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       clearPerformanceQueryCache()
       clearProgramQueryCache()
       clearNotificationsQueryCache()
+      assignLoginAfterSessionEnd()
     },
 
     checkAuth: async () => {
@@ -463,16 +476,28 @@ export const useAuthStore = create<AuthState>()((set, get) => {
 
       // localStorage에서 직접 토큰 확인
       if (typeof window === 'undefined' || !window.localStorage) {
-        set({ isAuthenticated: false, user: null })
+        set({ isAuthenticated: false, user: null, isBootstrapping: false })
         return
       }
 
       let token = localStorage.getItem(TOKEN_STORAGE_KEY)
       let expiresAt = localStorage.getItem(TOKEN_EXPIRY_KEY)
       const userStr = localStorage.getItem('auth_user')
+      const tokenAtStart = token
+      const sidAtStart = readJwtSidClaim(token)
+      const isCurrentLogin = () => Boolean(token) &&
+        localStorage.getItem(TOKEN_STORAGE_KEY) === token &&
+        localStorage.getItem('auth_user') === userStr &&
+        (sidAtStart ? readJwtSidClaim(token) === sidAtStart : token === tokenAtStart)
 
       if (!token || !expiresAt || !userStr) {
-        set({ isAuthenticated: false, user: null, token: null, expiresAt: null })
+        set({
+          isAuthenticated: false,
+          user: null,
+          token: null,
+          expiresAt: null,
+          isBootstrapping: false,
+        })
         return
       }
 
@@ -485,15 +510,16 @@ export const useAuthStore = create<AuthState>()((set, get) => {
           if (shouldRefreshAccessToken(expiryTime.getTime(), now.getTime())) {
             const refreshed = await get().refreshToken()
             if (!refreshed) {
-              get().logout()
+              if (isCurrentLogin()) get().logout()
               return
             }
             token = localStorage.getItem(TOKEN_STORAGE_KEY)
             expiresAt = localStorage.getItem(TOKEN_EXPIRY_KEY)
             if (!token || !expiresAt) {
-              get().logout()
+              if (!localStorage.getItem(TOKEN_STORAGE_KEY)) get().logout()
               return
             }
+            if (!isCurrentLogin()) return
             expiryTime = new Date(expiresAt)
           }
 
@@ -515,6 +541,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
             }
           }
 
+          if (!isCurrentLogin()) return
           const commitSessionUser = (sessionUser: Omit<User, 'password'>) => {
             const normalizedUser = withSessionAdminRole(sessionUser)
             localStorage.setItem('auth_user', JSON.stringify(normalizedUser))
@@ -532,13 +559,14 @@ export const useAuthStore = create<AuthState>()((set, get) => {
             commitSessionUser(storedUser)
           } else {
             console.warn('User not found or inactive, logging out')
-            get().logout()
+            if (isCurrentLogin()) get().logout()
             return
           }
 
           await refreshAdminSessionFromMe()
         } catch (error) {
           console.error('Unexpected error in checkAuth:', error)
+          if (!isCurrentLogin()) return
           try {
             const storedUser = JSON.parse(userStr)
             if (storedUser && storedUser.isActive) {
@@ -552,13 +580,13 @@ export const useAuthStore = create<AuthState>()((set, get) => {
               })
               await refreshAdminSessionFromMe()
             } else {
-              get().logout()
+              if (isCurrentLogin()) get().logout()
             }
           } catch {
-            get().logout()
+            if (isCurrentLogin()) get().logout()
           }
         } finally {
-          set({ _isCheckingAuth: false, _checkAuthPromise: null })
+          set({ _isCheckingAuth: false, _checkAuthPromise: null, isBootstrapping: false })
         }
       })()
 
@@ -701,10 +729,23 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         return false
       }
 
+      const accessAtRefreshStart = state.token
+      const refreshAtRefreshStart = refreshToken
       void get()
         .refreshToken()
         .then(ok => {
-          if (!ok && nearExpiry) get().logout()
+          if (ok || !nearExpiry) return
+          const current = get()
+          // Another tab or login may have rotated the session while this refresh
+          // was in flight. Never revoke that replacement because of an old failure.
+          const storedAccess = hasStorage ? localStorage.getItem(TOKEN_STORAGE_KEY) : current.token
+          const storedRefresh = hasStorage ? localStorage.getItem(AUTH_REFRESH_TOKEN_KEY) : refreshAtRefreshStart
+          if (current.isAuthenticated &&
+              current.token === accessAtRefreshStart &&
+              storedAccess === accessAtRefreshStart &&
+              storedRefresh === refreshAtRefreshStart) {
+            current.logout()
+          }
         })
       return false
     },

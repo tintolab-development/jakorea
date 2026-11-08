@@ -37,7 +37,7 @@
         "paragraphDescription": "",
         "participatesInTitleNumbering": true,
         "bodyPlaceholder": "예시 이용기관명",
-        "bodyText": "",
+        "bodyText": "JA Korea 및 교육진행자가 배정된 학교·기관 (학교·기관 배정 강의가 아닌 경우 JA Korea)",
         "answerRequired": false
       },
       {
@@ -70,13 +70,7 @@
         "dataRows": [
           [
             "1",
-            "성범죄경력 및 아동학대 관련 범죄전력 조회",
-            "",
-            ""
-          ],
-          [
-            "",
-            "",
+            "성범죄경력 및 아동학대관련 범죄전력 조회",
             "",
             ""
           ],
@@ -101,7 +95,7 @@
         ],
         "columnFields": [],
         "fieldDataRows": [],
-        "bottomText": "* 이용기관은 본인이 동의한 위 공동이용 행정정보를 확인하기 위해 「개인정보 보호법」 시행령 제19조에 따라 주민등록번호, 여권번호, 운전면허번호 또는 외국인등록번호가 포함된 행정정보를 처리할 수 있습니다.\n이용기관이 요청하는 경우 기재하여 주십시오(필요시 기재사항)",
+        "bottomText": "※ 이용기관은 본인이 동의한 위 공동이용 행정정보를 확인하기 위해 「개인정보 보호법」 시행령 제19조에 따라 주민등록번호, 여권번호, 운전면허의 면허번호 또는 외국인등록번호가 포함된 행정정보를 처리할 수 있습니다.\n이용기관이 요청하는 경우 기재하여 주십시오(필요시 기재사항).",
         "showBottomText": true,
         "showBottomConsent": false,
         "bottomConsent": "agree",
@@ -147,8 +141,7 @@
         "paragraphDescription": "",
         "participatesInTitleNumbering": true,
         "lines": [
-          "○ 본인은 위 사무의 처리를 위하여 「전자정부법」 제36조에 따른 행정정보 공동이용을 통해 이용기관의 업무처리담당자가 전자적으로 본인의 구비서류(공동이용 행정정보)를 확인하는 것에 동의합니다.",
-          "* 만일, 본인이 위 행정정보 이용에 대해 동의를 하지 아니할 경우에도 불이익은 없습니다. 다만, 동의하지 아니한 경우에는 본인이 해당 구비서류를 제출하여야 합니다."
+          "본인은 위 사무의 처리를 위하여 「전자정부법」제36조에 따른 행정정보 공동이용을 통해 이용기관의 업무처리담당자가 전자적으로 본인의 구비서류(공동이용 행정정보)를 확인하는 것에 동의합니다. ※ 만일, 본인이 위 행정정보 이용에 대해 동의를 하지 아니할 경우에도 불이익은 없습니다. 다만, 동의하지 아니한 경우에는 본인이 해당 구비서류를 제출하여야 합니다."
         ]
       },
       {
@@ -184,7 +177,19 @@
         ],
         "bodyPlaceholder": "답변을 입력해 주세요",
         "bodyText": "",
-        "maxLength": 2000
+        "maxLength": 1000
+      },
+      {
+        "id": "agreement-notice-subject-note",
+        "kind": "single_item",
+        "variant": "agreement_explanation_text",
+        "requiredMark": false,
+        "paragraphTitle": "",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": false,
+        "bodyPlaceholder": "한 줄 안내를 입력해 주세요",
+        "bodyText": "작성한 동의서는 범죄경력 확인에만 사용합니다. JA Korea는 권한이 있는 담당자가 열람하며, 교육진행자가 배정된 학교·기관은 기관이 [JA 시스템 내에서 동의서 확인]을 선택한 경우에만 열람할 수 있습니다.\n학교·기관의 보유기간은 해당 교육 종료 시까지입니다. 본 동의는 동의일로부터 1년간 유효하며, 동의서는 활동 종료 후 3년간 보관한 뒤 파기합니다.",
+        "answerRequired": false
       },
       {
         "id": "agreement-notice-confirmation-closing",
@@ -194,7 +199,7 @@
         "paragraphTitle": "",
         "paragraphDescription": "",
         "participatesInTitleNumbering": false,
-        "body": ""
+        "body": "위와 같은 행정정보 공동이용 사전 동의에 대한 내용을 모두 확인했습니다."
       },
       {
         "id": "agreement-notice-system-date",

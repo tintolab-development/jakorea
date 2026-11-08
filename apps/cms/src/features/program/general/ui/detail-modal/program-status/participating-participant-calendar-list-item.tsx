@@ -1,3 +1,4 @@
+import { Fragment } from 'react'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import '@/shared/components/calendar/ui/item-list/general-individual-application-list-item.css'
 
@@ -5,8 +6,8 @@ export type ParticipatingParticipantCalendarListRow = {
   id: string
   participantId: string
   participantName: string
-  affiliationLabel: string
-  gradeLabel: string
+  /** 이름 아래 메타 (참여자: 소속·학년 / 봉사자: 배정 기관) — 디바이더로 구분 */
+  metaLabels: readonly string[]
   sessionLabel: string
 }
 
@@ -30,16 +31,25 @@ export function ParticipatingParticipantCalendarListItem({
           </span>
         </div>
         <div className="general-individual-application-list-item__meta">
-          <span className="general-individual-application-list-item__meta-item">
-            {row.affiliationLabel}
-          </span>
-          <span className="general-individual-application-list-item__title-divider" aria-hidden />
-          <span className="general-individual-application-list-item__meta-item">
-            {row.gradeLabel}
-          </span>
+          {row.metaLabels.map((label, index) => (
+            <Fragment key={`${label}-${index}`}>
+              {index > 0 ? (
+                <span
+                  className="general-individual-application-list-item__title-divider"
+                  aria-hidden
+                />
+              ) : null}
+              <span className="general-individual-application-list-item__meta-item">{label}</span>
+            </Fragment>
+          ))}
           {row.sessionLabel !== '-' ? (
             <>
-              <span className="general-individual-application-list-item__title-divider" aria-hidden />
+              {row.metaLabels.length > 0 ? (
+                <span
+                  className="general-individual-application-list-item__title-divider"
+                  aria-hidden
+                />
+              ) : null}
               <span className="general-individual-application-list-item__meta-item general-individual-application-list-item__meta-item--session">
                 {row.sessionLabel}
               </span>

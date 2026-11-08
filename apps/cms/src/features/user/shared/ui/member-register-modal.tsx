@@ -67,7 +67,8 @@ export function MemberRegisterModal({
       open={open}
       title="회원 신규 등록"
       onCancel={onClose}
-      width={1400}
+      width={1200}
+      titleBodyGap="section"
       className="member-register-modal"
       footer={
         <>
@@ -76,8 +77,9 @@ export function MemberRegisterModal({
             size="medium"
             type="button"
             onClick={onClose}
-            disabled={loading} >
-            닫기
+            disabled={loading}
+          >
+            취소
           </CmsButton>
           <CmsButton
             variant="primary"

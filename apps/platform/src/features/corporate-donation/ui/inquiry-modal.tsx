@@ -2,6 +2,12 @@ import { type ChangeEvent, useRef, useState } from 'react'
 import axios from 'axios'
 import { Controller, useForm, type SubmitHandler } from 'react-hook-form'
 import {
+  formatKoreanPhoneNumber,
+  isValidKoreanPhoneNumber,
+  KOREAN_MOBILE_PREFIX,
+  normalizeKoreanPhoneDigits,
+} from '@jakorea/domain/shared/korean-phone'
+import {
   PFAlertModal,
   PFAttachedFileList,
   PFButton,
@@ -11,7 +17,7 @@ import {
   PFTextInput,
   PFTextarea,
 } from '@/shared/ui'
-import { validateUploadFileSize } from '@/shared/lib/file-upload-policy'
+import { validateUploadBatch } from '@/shared/lib/file-upload-policy'
 import {
   useCreatePublicCorporateConsultation,
   useUploadPublicCorporateConsultationAttachments,
@@ -53,25 +59,6 @@ const EMPTY_VALUES: InquiryValues = {
 const ACCEPTED_ATTACHMENT_TYPES = new Set(['image/jpeg', 'image/png'])
 const ACCEPTED_ATTACHMENT_EXTENSIONS = new Set(['jpg', 'jpeg', 'png'])
 
-function formatContactPhone(value: string): string {
-  const digits = value.replace(/\D/g, '')
-
-  if (digits.startsWith('02')) {
-    if (digits.length <= 2) return digits
-    if (digits.length <= 6) return `${digits.slice(0, 2)}-${digits.slice(2)}`
-    return `${digits.slice(0, 2)}-${digits.slice(2, -4)}-${digits.slice(-4)}`
-  }
-
-  if (/^1[568]\d{2}/.test(digits)) {
-    if (digits.length <= 4) return digits
-    return `${digits.slice(0, 4)}-${digits.slice(4)}`
-  }
-
-  if (digits.length <= 3) return digits
-  if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`
-  return `${digits.slice(0, 3)}-${digits.slice(3, -4)}-${digits.slice(-4)}`
-}
-
 function validateRequiredText(
   value: string,
   requiredMessage: string,
@@ -84,15 +71,16 @@ function validateRequiredText(
 }
 
 function validateContactPhone(value: string): true | string {
-  if (!value.trim()) return '연락처를 입력해 주세요.'
+  if (!value.trim()) return '휴대폰 번호를 입력해 주세요.'
 
-  const digits = value.replace(/\D/g, '')
-  if (digits.length < 9 || digits.length > 11) {
-    return '연락처를 올바르게 입력해 주세요.'
-  }
+  const digits = normalizeKoreanPhoneDigits(value)
+  const isMobile =
+    digits.startsWith(KOREAN_MOBILE_PREFIX) &&
+    digits.length === 11 &&
+    isValidKoreanPhoneNumber(value)
 
-  if (!/^(02|0\d{2,3}|1[568]\d{2})-\d{3,4}-\d{4}$/.test(value.trim())) {
-    return '연락처를 올바르게 입력해 주세요.'
+  if (!isMobile) {
+    return '휴대폰 번호 형식(010-0000-0000)으로 입력해 주세요.'
   }
 
   return true
@@ -117,10 +105,7 @@ function messageFromError(error: unknown): string {
   return '문의 접수에 실패했습니다. 잠시 후 다시 시도해 주세요.'
 }
 
-function attachmentValidationMessage(file: File): string | null {
-  const sizeError = validateUploadFileSize(file)
-  if (sizeError) return sizeError
-
+function attachmentTypeValidationMessage(file: File): string | null {
   const extension = file.name.split('.').pop()?.toLowerCase() ?? ''
   if (!ACCEPTED_ATTACHMENT_TYPES.has(file.type) && !ACCEPTED_ATTACHMENT_EXTENSIONS.has(extension)) {
     return 'JPG, PNG 형식의 파일만 첨부할 수 있습니다.'
@@ -137,7 +122,7 @@ function buildRequest(
     companyName: values.companyName.trim(),
     contactName: values.contactName.trim(),
     departmentTitle: values.departmentTitle.trim(),
-    contactPhone: values.contactPhone.trim(),
+    contactPhone: formatKoreanPhoneNumber(values.contactPhone.trim()),
     consultationContent: values.consultationContent.trim(),
     privacyConsent: true,
   }
@@ -200,11 +185,21 @@ export function CorporateDonationInquiryModal({
     event.target.value = ''
     if (selected.length === 0) return
     for (const file of selected) {
-      const validationError = attachmentValidationMessage(file)
-      if (validationError) {
-        setUploadError(validationError)
+      const typeError = attachmentTypeValidationMessage(file)
+      if (typeError) {
+        setUploadError(typeError)
         return
       }
+    }
+    // 플랫폼 공통 업로드 정책: 최대 10개 · 파일당 20MB · 총 100MB
+    const batchError = validateUploadBatch({
+      currentCount: attachedFiles.length,
+      currentTotalBytes: attachedFiles.reduce((sum, item) => sum + item.file.size, 0),
+      incoming: selected,
+    })
+    if (batchError) {
+      setUploadError(batchError)
+      return
     }
     setUploadError(null)
     setFormError(null)
@@ -242,7 +237,6 @@ export function CorporateDonationInquiryModal({
   return (
     <>
       <PFModal
-        showCloseButton={false}
         open={open}
         onClose={handleClose}
         title="기업후원 상담하기"
@@ -357,15 +351,16 @@ export function CorporateDonationInquiryModal({
                   rules={{
                     validate: validateContactPhone,
                   }}
-                  render={({ field, fieldState }) => (
+                  render={({ field: { onChange, ...field }, fieldState }) => (
                     <PFTextInput
                       {...field}
-                      label="연락처"
-                      placeholder="연락처를 입력해 주세요"
+                      label="휴대폰 번호"
+                      placeholder="휴대폰 번호를 입력해 주세요"
                       size="xlarge"
                       width="100%"
                       maxLength={13}
-                      inputMode="tel"
+                      type="tel"
+                      inputMode="numeric"
                       autoComplete="tel"
                       error={Boolean(fieldState.error)}
                       message={fieldState.error?.message}
@@ -373,7 +368,7 @@ export function CorporateDonationInquiryModal({
                       required
                       value={field.value}
                       onValueChange={value => {
-                        field.onChange(formatContactPhone(value))
+                        onChange(formatKoreanPhoneNumber(value))
                         setFormError(null)
                       }}
                     />
@@ -457,7 +452,12 @@ export function CorporateDonationInquiryModal({
                 />
 
               <div className={styles.fileField}>
-                <PFText as="label" typo="label-md" color="black" className={styles.fieldLabel}>
+                <PFText
+                  as="label"
+                  typo="label-md"
+                  color="neutral-warm-600"
+                  className={styles.fieldLabel}
+                >
                   파일 첨부
                 </PFText>
                 <div className={styles.filePicker}>
@@ -482,8 +482,11 @@ export function CorporateDonationInquiryModal({
                   />
                 </div>
                 <ul className={styles.fileHint}>
-                  <li>파일은 최대 20MB까지 JPG, PNG 형식만 등록 가능합니다.</li>
-                  <li>첨부파일명에 특수문자가 포함된 경우, 등록 시 오류가 발생할 수 있습니다.</li>
+                  <li>
+                    파일은 JPG, PNG 형식만 등록 가능하며, 최대 10개(파일당 20MB, 총 100MB)까지
+                    첨부할 수 있습니다.
+                  </li>
+                  <li>첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.</li>
                 </ul>
                 <PFAttachedFileList
                   files={attachedFiles.map(item => ({ id: item.id, name: item.file.name }))}

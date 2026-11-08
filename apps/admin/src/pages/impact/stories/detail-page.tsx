@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { Spin } from 'antd'
 import { EyeOutlined } from '@ant-design/icons'
+import { AdminDetailBackLink, AdminDetailMoreMenu } from '@jakorea/admin-ui/post-detail'
 import type { ImpactStory } from '@/entities/impact-stories/model/types'
 import { formatDateTimeDot } from '@/shared/lib/format-display'
 import {
@@ -330,9 +331,12 @@ function ImpactStoryDetailView({
       />
 
       <div className="impact-story-detail-page__inner">
-        <p className="impact-story-detail-page__hint">
-          * 작성일은 어드민 화면에서만 노출되며, 홈페이지에서는 게시일만 노출됩니다.
-        </p>
+        <div className="impact-story-detail-page__back-row">
+          <AdminDetailBackLink onClick={onList} />
+          <p className="impact-story-detail-page__hint">
+            ※ 작성일은 어드민 화면에서만 노출되며, 홈페이지에서는 게시일만 노출됩니다.
+          </p>
+        </div>
 
         <div className="impact-story-detail-page__card">
           <div className="impact-story-detail-page__top-row">
@@ -352,9 +356,12 @@ function ImpactStoryDetailView({
                 </span>
               ) : null}
             </div>
-            <span className="impact-story-detail-page__views">
-              <EyeOutlined className="impact-story-detail-page__views-icon" aria-hidden />
-              {story.viewCount.toLocaleString('ko-KR')}
+            <span className="admin-detail-top-actions">
+              <span className="impact-story-detail-page__views">
+                <EyeOutlined className="impact-story-detail-page__views-icon" aria-hidden />
+                {story.viewCount.toLocaleString('ko-KR')}
+              </span>
+              <AdminDetailMoreMenu onEdit={onEdit} onDelete={onDelete} />
             </span>
           </div>
 

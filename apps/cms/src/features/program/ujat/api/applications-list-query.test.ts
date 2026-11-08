@@ -155,12 +155,12 @@ describe('volunteer server filters', () => {
       buildUjatVolunteerDoc1ListQuery({
         ...DEFAULT_UJAT_VOLUNTEER_DOC_SCREENING_FILTERS,
         grade: '휴학생',
-        preferredRegion: '서울',
+        preferredRegion: 'SEOUL',
         educationExperience: 'no',
       })
     ).toEqual({
       grade: '휴학',
-      preferredRegion: '서울',
+      preferredRegion: 'SEOUL',
       hasEducationExperience: false,
     })
   })

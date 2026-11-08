@@ -83,12 +83,6 @@
   min-width: 0;
 }
 
-.ujat-volunteer-applicant-manager-evaluation
-  .detail-info-form__field-content
-  > .status-dropdown-cell__inline-tag100 {
-  flex: 0 0 116px;
-}
-
 /* program-detail-info-tab / detail-info-form 외곽 */
 .applicant-detail .program-detail-info-tab__table-wrapper {
   border: 1px solid var(--ujat-volunteer-detail-table-line);
@@ -225,7 +219,7 @@
 /*
  * 담당자 서류 평가 — 행 높이 54px
  * StatusDropdownCell 트리거(8+배지32+8=48px) + td 상하 padding(12×2)이 겹치면 ~74px로 늘어남
- * → 값 셀만 상하 padding 0 (목록 테이블 status-dropdown-cell__cell-status 와 동일 원리)
+ * → 값 셀만 상하 padding 0 (목록 테이블 STATUS_DROPDOWN_CELL_CLASSNAME 과 동일 원리)
  */
 .ujat-volunteer-applicant-manager-evaluation
   .applicant-detail__table--horizontal

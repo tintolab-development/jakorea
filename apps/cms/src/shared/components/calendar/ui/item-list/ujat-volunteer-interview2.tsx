@@ -2,10 +2,9 @@ import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import type { SecondInterviewScreeningEffectiveStatus } from '@/features/program/shared/lib/volunteer-screening/second-interview-screening-ui'
 import {
   formatSecondInterviewListScoreLabel,
-  resolveSecondInterviewScreeningListBadgeLabel,
-  resolveSecondInterviewScreeningTone,
+  resolveSecondInterviewScreeningTagPresentation,
 } from '@/features/program/shared/lib/volunteer-screening/second-interview-screening-ui'
-import '@/features/program/shared/ui/volunteer-screening/second-interview-screening-tone.css'
+import { StatusOutlineTag } from '@/shared/components/status-outline-tag'
 import './ujat-volunteer-interview2-list-item.css'
 
 export type CalendarVolunteerInterview2ListRow = {
@@ -30,7 +29,6 @@ export function CalendarListItemContentVolunteerInterview2({
   checked,
   onToggle,
 }: CalendarListItemContentVolunteerInterview2Props) {
-  const tone = resolveSecondInterviewScreeningTone(row.screeningStatus)
   return (
     <div className="ujat-volunteer-interview2-list-item">
       <div className="ujat-volunteer-interview2-list-item__body">
@@ -42,14 +40,7 @@ export function CalendarListItemContentVolunteerInterview2({
           <span className="ujat-volunteer-interview2-list-item__slot">{row.slotLabel}</span>
         </div>
         <div className="ujat-volunteer-interview2-list-item__meta">
-          <span
-            className={[
-              'second-interview-screening-status-badge',
-              `second-interview-screening-tone--${tone}`,
-            ].join(' ')}
-          >
-            {resolveSecondInterviewScreeningListBadgeLabel(row.screeningStatus)}
-          </span>
+          <StatusOutlineTag {...resolveSecondInterviewScreeningTagPresentation(row.screeningStatus)} />
           <span className="ujat-volunteer-interview2-list-item__sep" aria-hidden>
             |
           </span>

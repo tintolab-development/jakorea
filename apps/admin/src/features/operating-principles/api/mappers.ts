@@ -85,13 +85,40 @@ export function toPrincipleUpdateItem(
 }
 
 export function toPrincipleUpdateRequest(doc: OperatingPrinciplesDoc): PrincipleUpdateRequest {
-  if (doc.principles.length !== 5) {
-    throw new Error(`Principles update requires exactly 5 items, got ${doc.principles.length}`)
+  const ordered = [...doc.principles].sort((a, b) => a.sortOrder - b.sortOrder)
+  if (ordered.length !== 5) {
+    throw new Error(`Principles update requires exactly 5 items, got ${ordered.length}`)
+  }
+  const numericIds = ordered.map(row => numericIdFromPrincipleId(row.id))
+  const uniqueIds = new Set(numericIds)
+  if (uniqueIds.size !== 5 || numericIds.some(id => id < 1 || id > 5)) {
+    throw new Error('Principles update requires unique ids 1..5')
   }
   return {
     introSubText: doc.intro.topSubText.trim() || undefined,
     introMainText: doc.intro.mainText.trim() || undefined,
     settingVersion: doc.settingVersion,
-    items: doc.principles.map((row, index) => toPrincipleUpdateItem(row, index + 1)),
+    items: ordered.map((row, index) => toPrincipleUpdateItem(row, index + 1)),
+  }
+}
+
+/** 409 재시도 — 의도한 순서·문구는 유지하고 GET 버전만 덮어쓴다. */
+export function applyFreshPrincipleLock(
+  intended: OperatingPrinciplesDoc,
+  fresh: OperatingPrinciplesDoc,
+): OperatingPrinciplesDoc {
+  const freshById = new Map(fresh.principles.map(row => [row.id, row]))
+  return {
+    ...intended,
+    settingVersion: fresh.settingVersion,
+    principles: intended.principles.map(row => {
+      const latest = freshById.get(row.id)
+      if (!latest) return row
+      return {
+        ...row,
+        version: latest.version,
+        iconKey: latest.iconKey,
+      }
+    }),
   }
 }

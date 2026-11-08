@@ -31,6 +31,21 @@ describe('clearTeacherTrainingScheduleIfOff', () => {
     expect(next.scheduleDetails?.[0]?.name).toBe('')
   })
 
+  it('OFF 토글에서 회차 라벨 「교육 연수」를 1회차로 되돌린다', () => {
+    const next = clearTeacherTrainingScheduleIfOff(
+      {
+        teacherTrainingEnabled: true,
+        curriculumSessions: [
+          { sessionLabel: '교육 연수', title: '사전교육', description: '' },
+          { sessionLabel: '2회차', title: '본교육', description: '' },
+        ],
+      },
+      { teacherTrainingEnabled: false, teacherTrainingScheduleName: '교육 연수' }
+    )
+    expect(next.curriculumSessions?.[0]?.sessionLabel).toBe('1회차')
+    expect(next.curriculumSessions?.[0]?.title).toBe('사전교육')
+  })
+
   it('does not strip other first-session titles when schedule name is empty', () => {
     const next = clearTeacherTrainingScheduleIfOff(
       {

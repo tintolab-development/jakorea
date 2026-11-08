@@ -82,6 +82,7 @@ import {
   readProgramAuditNames,
   withExpectedUpdatedAt,
 } from '@/features/program/shared/lib/program-audit-names'
+import { mapProgramRoundsToWriteRequest } from '@/features/program/shared/lib/round-write'
 import {
   resolveAudienceProgramOperationIsoRange,
   toOperationCalendarDate,
@@ -682,16 +683,7 @@ function mapProgramRoundsToUpdateRequest(
 }
 
 function mapProgramRoundsToRequest(program: Program): ProgramCreateRequest['rounds'] {
-  return program.rounds?.map(round => ({
-    roundNumber: round.roundNumber,
-    startDate: toRequestDate(round.startDate),
-    endDate: toRequestDate(round.endDate),
-    capacity: round.capacity,
-    classCount: round.classCount,
-    status: round.status,
-    curriculum: round.curriculum,
-    deliveryType: round.deliveryType,
-  }))
+  return mapProgramRoundsToWriteRequest(program, toRequestDate)
 }
 
 
@@ -1586,6 +1578,53 @@ function mapProgramPatchFieldsToRequest(
   return body
 }
 
+const GENERAL_COMMON_NESTED_KEEP_IF_OMITTED = [
+  'participantRecruitmentInfo',
+  'instructorRecruitmentInfo',
+  'volunteerRecruitmentInfo',
+  'volunteerInterviewScheduleInfo',
+] as const satisfies ReadonlyArray<keyof NonNullable<Program['generalCommonInfo']>>
+
+function isPlainNestedRecord(value: unknown): value is Record<string, unknown> {
+  return value != null && typeof value === 'object' && !Array.isArray(value)
+}
+
+/**
+ * 부분 PATCH `{ ...program, ...patch }`는 `generalCommonInfo`를 통째로 바꿔
+ * 미전송 nested(participantRecruitmentInfo 등)가 빠진다.
+ * 빠진 nested는 baseline·program에서 유지하고, patch가 보낸 nested 객체는 한 단계 병합한다.
+ * kpi·강사비 등 그 외 키는 sparse PATCH 그대로 둔다.
+ */
+function mergeGeneralProgramPartialPatch(
+  program: Program,
+  patch: Partial<Program>,
+  baseline: Program
+): Program {
+  const merged: Program = { ...program, ...patch }
+  if (!Object.prototype.hasOwnProperty.call(patch, 'generalCommonInfo')) {
+    return merged
+  }
+  const patchCommon = patch.generalCommonInfo ?? {}
+  const programCommon = program.generalCommonInfo
+  const baselineCommon = baseline.generalCommonInfo
+  const next: NonNullable<Program['generalCommonInfo']> = { ...(merged.generalCommonInfo ?? {}) }
+  for (const key of GENERAL_COMMON_NESTED_KEEP_IF_OMITTED) {
+    const existingNested = programCommon?.[key] ?? baselineCommon?.[key]
+    if (!Object.prototype.hasOwnProperty.call(patchCommon, key)) {
+      if (existingNested !== undefined) {
+        Object.assign(next, { [key]: existingNested })
+      }
+      continue
+    }
+    const patchNested = patchCommon[key]
+    if (isPlainNestedRecord(patchNested) && isPlainNestedRecord(existingNested)) {
+      Object.assign(next, { [key]: { ...existingNested, ...patchNested } })
+    }
+  }
+  merged.generalCommonInfo = next
+  return merged
+}
+
 /**
  * @param patch 있으면 **해당 키만** PATCH body에 포함 (부분 수정).
  *   없으면 기존처럼 프로그램 코어 필드 전체를 직렬화(생성 직후 전체 동기화 등).
@@ -1601,7 +1640,7 @@ export function mapGeneralProgramToUpdateRequest(
   const body =
     patch && Object.keys(patch).length > 0
       ? mapProgramPatchFieldsToRequest(
-          { ...program, ...patch },
+          mergeGeneralProgramPartialPatch(program, patch, baselineProgram),
           patch,
           baselineProgram,
           serializeOptions

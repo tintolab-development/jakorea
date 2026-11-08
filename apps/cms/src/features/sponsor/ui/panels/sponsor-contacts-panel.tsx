@@ -24,6 +24,7 @@ import {
 import { useCmsAlert, FilterTableToolbarButton } from '@/shared/ui'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 const contactFilterFields: FilterFieldConfig[] = [
   {
@@ -114,10 +115,7 @@ export function SponsorContactsPanel({
   const handleDeleteClick = useCallback((): void => {
     if (!canWrite || isEditing || isDeleting) return
     if (selectedKeys.length === 0) {
-      showAlert({
-        title: '항목 선택 안내',
-        content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
-      })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setDeleteModalOpen(true)
@@ -193,6 +191,7 @@ export function SponsorContactsPanel({
         description={`${tableRows.length.toLocaleString()}건`}
         toolbarAdminAction="sponsorContactWrite"
         excelExport={{
+          accessLog: { downloadKind: 'SPONSOR_CONTACT_LIST_EXPORT', containedPiiTypes: ['NAME'] },
           columns: excelColumns,
           data: tableRows,
           selectedRowKeys: selectedKeys,
@@ -249,7 +248,7 @@ export function SponsorContactsPanel({
         <div ref={tableWrapRef} className="cms-data-table-fit-scroll-wrap">
           <CmsDataTable<SponsorContactRow>
             rowKey="id"
-            className="cms-data-table cms-data-table--fluid"
+            className="cms-data-table"
             columns={columns}
             dataSource={tableRows}
             loading={isLoading}

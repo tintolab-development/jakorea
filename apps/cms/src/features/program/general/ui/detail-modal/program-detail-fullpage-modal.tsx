@@ -18,6 +18,8 @@ import { useQueryClient } from '@tanstack/react-query'
 import { invalidateProgramAdminSchedulesQuery } from '@/features/program/general/lib/invalidate-program-admin-schedules-query'
 import { useLocation, useNavigate, useSearchParams, type SetURLSearchParams } from 'react-router-dom'
 import { tryNavigateMemberDetailReturn } from '@/features/user/detail/lib/member-detail-program-navigation-return'
+import { useNavigateToAncestor } from '@/shared/hooks/use-history-ancestor-navigation'
+import { clearSponsorDetailQueryStack } from '@/features/sponsor/lib/sponsor-detail-query-stack'
 import { Spin, Typography } from 'antd'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
@@ -31,6 +33,10 @@ import {
 } from '@/shared/lib/detail-fullpage-query-stack'
 import { nextSearchParamsIfChanged } from '@/shared/lib/search-params-diff'
 import { useProgramDetail } from '@/pages/programs/use-program-detail'
+import {
+  isLookupableSponsorId,
+  resolveAssignedSponsorName,
+} from '@/features/program/shared/lib/merge-program-sponsor-assignments'
 import { useSponsorNameById } from '@/features/sponsor/hooks/use-sponsor-name-by-id'
 import { useProgramDetailEditForm } from '../../hooks/use-program-detail-edit-form'
 import { useProgramDetailInfoSave } from '../../hooks/use-program-detail-info-save'
@@ -65,6 +71,8 @@ import {
 import { ParticipatingVolunteersSection } from './program-status/participating-volunteers-section'
 import { ParticipatingInstructorsSection } from './program-status/participating-instructors-section'
 import { ApplicantList } from '../../../shared/ui/program-detail/applicant-list/applicant-list'
+import { GeneralVolunteerApplicationsView } from './applications/general-volunteer-applications-view'
+import { ParticipantRecruitmentPreviewModal } from './info/participant-recruitment-preview-modal'
 import type { ApplicantDetailMeta } from '../../../shared/ui/program-detail/applicant-list/use-applicants-detail'
 import { generalOrganizationApplicationFilterFields } from '@/features/program/general/lib/application-filter-fields'
 import { ProjectInfoDetailPanels } from '../../../shared/ui/program-detail/project-info/project-info-detail'
@@ -83,24 +91,16 @@ import {
   shouldPatchGeneralProgramDetailUrl,
 } from '@/features/program/general/lib/general-program-detail-route'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
-import { companySchoolCompatibilityOverlayFromDetailEditValues } from '@/features/program/1c-1s/lib/detail-form-compatibility-overlay'
 import {
-  applyLiveEconomyAnnouncementToProgram,
-  ECONOMY_PUBLIC_PROGRAM_TITLE_KEY,
-  mergeCompanySchoolDetailSaveOverlay,
+  buildCompanySchoolDetailTypedSave,
+  collectCompanySchoolParagraphOverlayFormPatch,
   readEconomyRegistrationOverlayForSave,
-  resolveCompanySchoolDetailSaveAnnouncementTitle,
-  resolveCompanySchoolDetailSaveTitleFields,
-  resolveCompanySchoolDetailSaveLiveFormValues,
   seedEconomyRegistrationOverlayFromProgram,
-  writeEconomyRegistrationOverlayFromProgramDraft,
+  serializeCompanySchoolDetailPatchOverlay,
 } from '@/features/program/1c-1s/lib/registration-overlay-sync'
+import { subscribeProgramRegistrationOverlay } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { prepareRecruitOperationalEditFromProgram } from '@/features/program/general/lib/detail-operational-save-merge'
 import { listIncompleteDetailRecruitmentHighlightKeys } from '@/features/program/general/lib/detail-recruitment-required-highlight'
-import {
-  hasIncompleteEconomyProgramRegistrationRequiredFields,
-  listIncompleteEconomyProgramRegistrationRequiredFields,
-} from '@/features/program/general/lib/economy-program-registration-required-fields'
 import type { RegistrationWizardIncompleteMapVariant } from '@/features/program/shared/lib/registration-wizard-incomplete-map'
 import {
   RegistrationWizardValidationHighlightProvider,
@@ -108,11 +108,7 @@ import {
   useDetailEditRequiredHighlightRequest,
 } from '@/features/program/shared/ui/registration/registration-wizard-validation-highlight'
 import { useProgramOperationDateErrorFocus } from '@/features/program/shared/lib/use-program-operation-date-error-focus'
-import {
-  detailEditValuesToProgramPatch,
-  narrowProgramDetailPatchForCommonInfoSave,
-  programToDetailEditValues,
-} from '@/features/program/shared/model/program-detail-edit-schema'
+import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
   getGeneralRecruitmentRemoteUnavailableReason,
   programToRecruitmentTabEditValues,
@@ -130,13 +126,13 @@ import { TrainedTeachersCommonInfoView } from '@/features/program/trained-teache
 import { resolveGeneralProgramDisplayTitle } from '@/features/program/general/lib/detail-common-info-display'
 import { TrainedTeachersApplicationInfoView } from '@/features/program/trained-teachers/ui/application-info/application-info-view'
 import {
-  FEATURE_COMING_SOON_ALERT_MESSAGE,
   GENERAL_SURVEY_MENU_EMPTY_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
 } from '@/shared/constants/messages'
 import { PRE_EDUCATION_SCHEDULE_REQUIRED_MESSAGE } from '@/features/program/general/model/common-info-edit-schema'
 import { handleError } from '@/shared/utils/error-handler'
+import { showUpdateCompletedAlert } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { isProgramTypeSettingsSaveBlocked } from '@/features/program/shared/lib/program-edit-window'
 import {
@@ -160,9 +156,11 @@ import { TAB_KEYS, type TabKey, type LnbKey } from './program-detail-nav-types'
 import type { GeneralRecruitTabKey } from '@/features/program/general/lib/recruitment-tabs'
 import {
   getGeneralSurveyMenuItems,
+  getGeneralVolunteerInterviewEnabled,
   isGeneralProgramId,
   type GeneralSurveyNavKey,
 } from '@/features/program/general/lib/detail-meta'
+import { previewAudienceFromGeneralRecruitTab } from '@/features/program/general/lib/platform-preview-payload'
 import {
   APPLICANT_ID_PARAM,
   DETAIL_TAB_PARAM,
@@ -340,6 +338,8 @@ export function ProgramDetailFullPageModal({
     }
     rawSetSearchParams(nextInit, navigateOpts)
   }, [rawSetSearchParams])
+  const { toTarget: navigateToAncestorTarget, toSearch: navigateToAncestorSearch } =
+    useNavigateToAncestor()
   const { showAlert } = useCmsAlert()
   const queryClient = useQueryClient()
   const detailRequiredHighlight = useDetailEditRequiredHighlightRequest()
@@ -353,10 +353,13 @@ export function ProgramDetailFullPageModal({
     sponsorName: legacySponsorName,
     updateProgram,
   } = useProgramDetail(onUpdateProgram ? undefined : (open ? programId : undefined))
-  const externalSponsorName = useSponsorNameById(
+  // 배정 응답에 이름이 있으면 그대로 쓴다 — 없을 때만 후원사 전체 목록에서 찾는다.
+  const assignedSponsorName = resolveAssignedSponsorName(program)
+  const lookedUpSponsorName = useSponsorNameById(
     program?.sponsorId,
-    Boolean(onUpdateProgram && program?.sponsorId)
+    Boolean(onUpdateProgram) && !assignedSponsorName && isLookupableSponsorId(program?.sponsorId)
   )
+  const externalSponsorName = assignedSponsorName ?? lookedUpSponsorName
   const loading = onUpdateProgram ? externalLoading : legacyLoading
   const sponsorName = onUpdateProgram ? externalSponsorName : legacySponsorName
   // remote 부모(onUpdateProgram): 로딩 중 목록/stub program으로 본문 채우지 않음
@@ -815,16 +818,17 @@ export function ProgramDetailFullPageModal({
       onClose()
       return
     }
-    setSearchParams(
-      prev => {
-        if (!prev.get('programId')) return prev
-        return clearGeneralProgramDetailQueryParams(new URLSearchParams(prev))
-      },
-      { replace: true }
-    )
+    // 목록 엔트리가 history에 있으면 그 엔트리로 되돌아가 상세 엔트리를 앞쪽에 남기지 않는다.
+    navigateToAncestorSearch(prev => {
+      if (!prev.get('programId')) return prev
+      return clearGeneralProgramDetailQueryParams(
+        clearSponsorDetailQueryStack(new URLSearchParams(prev))
+      )
+    })
     onClose()
-  }, [navigate, onClose, setSearchParams])
+  }, [navigate, navigateToAncestorSearch, onClose])
 
+  // LNB·하위 메뉴 = 브레드크럼 단계 → push (값이 같으면 setSearchParams 래퍼가 건너뜀)
   const setLnb = (key: LnbKey, childTab?: TabKey) => {
     setEditingTab(null)
     setSearchParams(
@@ -885,10 +889,11 @@ export function ProgramDetailFullPageModal({
         if (next.toString() === prev.toString()) return prev
         return next
       },
-      { replace: true }
+      { replace: false }
     )
   }
 
+  // LNB·하위 메뉴 = 브레드크럼 단계 → push (값이 같으면 setSearchParams 래퍼가 건너뜀)
   const setApplicantsChild = (tab: TabKey) => {
     setSearchParams(
       prev => {
@@ -900,10 +905,11 @@ export function ProgramDetailFullPageModal({
         if (next.toString() === prev.toString()) return prev
         return next
       },
-      { replace: true }
+      { replace: false }
     )
   }
 
+  // LNB·하위 메뉴 = 브레드크럼 단계 → push (값이 같으면 setSearchParams 래퍼가 건너뜀)
   const setProgressChild = (tab: TabKey) => {
     setSearchParams(
       prev => {
@@ -923,10 +929,11 @@ export function ProgramDetailFullPageModal({
         if (next.toString() === prev.toString()) return prev
         return next
       },
-      { replace: true }
+      { replace: false }
     )
   }
 
+  // LNB·하위 메뉴 = 브레드크럼 단계 → push (값이 같으면 setSearchParams 래퍼가 건너뜀)
   const setSurveyChild = (tab: GeneralSurveyNavKey | 'main') => {
     setSearchParams(
       prev => {
@@ -945,7 +952,7 @@ export function ProgramDetailFullPageModal({
         if (next.toString() === prev.toString()) return prev
         return next
       },
-      { replace: true }
+      { replace: false }
     )
   }
 
@@ -1151,10 +1158,6 @@ export function ProgramDetailFullPageModal({
       setActiveTab(childKey as TabKey)
       return
     }
-    if (groupKey === 'applicants' && childKey === 'volunteers') {
-      window.alert(FEATURE_COMING_SOON_ALERT_MESSAGE)
-      return
-    }
     if (groupKey === 'applicants') setApplicantsChild(childKey as TabKey)
     else if (groupKey === 'progress') setProgressChild(childKey as TabKey)
     else if (groupKey === 'survey') {
@@ -1167,6 +1170,13 @@ export function ProgramDetailFullPageModal({
       }
       setSurveyChild(childKey as GeneralSurveyNavKey)
     }
+  }
+
+  /** 중첩 상세 닫기 — 지나온 목록 엔트리로 뒤로, 없으면 replace (push 하지 않음) */
+  const closeDetailLevel = (next: URLSearchParams) => {
+    if (isClosingRef.current) return
+    const search = next.toString()
+    navigateToAncestorTarget({ pathname: location.pathname, search: search ? `?${search}` : '' })
   }
 
   const setSchoolId = (id: string | null) => {
@@ -1182,7 +1192,8 @@ export function ProgramDetailFullPageModal({
       next.delete(SCHOOL_ID_PARAM)
       next.delete(SCHOOL_TAB_PARAM)
     }
-    setSearchParams(next, { replace: id == null })
+    if (id == null) closeDetailLevel(next)
+    else setSearchParams(next, { replace: false })
   }
 
   const setInstructorId = (id: string | null) => {
@@ -1199,7 +1210,8 @@ export function ProgramDetailFullPageModal({
       next.delete(INSTRUCTOR_TAB_PARAM)
     }
     if (programId) next.set('programId', programId)
-    setSearchParams(next, { replace: id == null })
+    if (id == null) closeDetailLevel(next)
+    else setSearchParams(next, { replace: false })
   }
 
   const setVolunteerId = (id: string | null) => {
@@ -1222,7 +1234,8 @@ export function ProgramDetailFullPageModal({
       next.delete(VOLUNTEER_TAB_PARAM)
     }
     if (programId) next.set('programId', programId)
-    setSearchParams(next, { replace: id == null })
+    if (id == null) closeDetailLevel(next)
+    else setSearchParams(next, { replace: false })
   }
 
   const setInstructorTab = (tab: InstructorDetailTabKey) => {
@@ -1265,7 +1278,7 @@ export function ProgramDetailFullPageModal({
       const next = new URLSearchParams(searchParams)
       next.delete(APPLICANT_ID_PARAM)
       next.delete(DETAIL_TAB_PARAM)
-      setSearchParams(next, { replace: true })
+      closeDetailLevel(next)
       return
     }
     if (schoolIdFromUrl) {
@@ -1290,6 +1303,7 @@ export function ProgramDetailFullPageModal({
     handleRequestClose,
   ])
 
+  // LNB·하위 메뉴 = 브레드크럼 단계 → push (값이 같으면 setSearchParams 래퍼가 건너뜀)
   const setActiveTab = (key: TabKey) => {
     setEditingTab(null)
     setSearchParams(
@@ -1304,7 +1318,7 @@ export function ProgramDetailFullPageModal({
         if (next.toString() === prev.toString()) return prev
         return next
       },
-      { replace: true }
+      { replace: false }
     )
   }
 
@@ -1351,6 +1365,8 @@ export function ProgramDetailFullPageModal({
   const [trainedTeachersFormEditPreflightLoading, setTrainedTeachersFormEditPreflightLoading] =
     useState(false)
   const [trainedTeachersFormPreviewReloadKey, setTrainedTeachersFormPreviewReloadKey] = useState(0)
+  const [recruitmentPreviewAudience, setRecruitmentPreviewAudience] =
+    useState<GeneralRecruitTabKey | null>(null)
   /** 1사1교 — 신청 정보 양식 수정 모달·미리보기 갱신 키 */
   const [companySchoolApplicationFormEditOpen, setCompanySchoolApplicationFormEditOpen] =
     useState(false)
@@ -1535,17 +1551,16 @@ export function ProgramDetailFullPageModal({
           ? async (draft, patch) => {
               try {
                 if (isCompanySchoolDetail && !isTrainedTeachersDetail) {
-                  const liveOverlay = { ...readEconomyRegistrationOverlayForSave() }
-                  const draftForSave = applyLiveEconomyAnnouncementToProgram(
-                    draft,
-                    liveOverlay,
-                    displayProgram.generalCommonInfo?.announcementTitle
-                  )
-                  const registrationOverlay = mergeCompanySchoolDetailSaveOverlay(
-                    draftForSave,
-                    liveOverlay
-                  )
-                  const merged = { ...draftForSave, registrationOverlay }
+                  const built = buildCompanySchoolDetailTypedSave({
+                    program: displayProgram,
+                    values: infoForm.getValues(),
+                  })
+                  const registrationOverlay = serializeCompanySchoolDetailPatchOverlay({
+                    typedProgram: built.draft,
+                    leftoverOverlay: displayProgram.registrationOverlay ?? {},
+                    liveOverlay: built.registrationOverlay,
+                  })
+                  const merged = { ...draft, ...built.draft, registrationOverlay }
                   const roundsChanged =
                     JSON.stringify(merged.rounds ?? []) !== JSON.stringify(draft.rounds ?? [])
                   const periodUnchanged =
@@ -1553,23 +1568,20 @@ export function ProgramDetailFullPageModal({
                     String(merged.endDate ?? '') === String(displayProgram.endDate ?? '')
                   const patchForSave: Partial<Program> = periodUnchanged
                     ? (Object.fromEntries(
-                        Object.entries(patch).filter(
+                        Object.entries({ ...patch, ...built.patch }).filter(
                           ([key]) => key !== 'startDate' && key !== 'endDate'
                         )
                       ) as Partial<Program>)
-                    : patch
-                  await persistProgramPatch(
-                    merged,
-                    {
-                      ...patchForSave,
-                      generalCommonInfo: {
-                        ...patchForSave.generalCommonInfo,
-                        announcementTitle: merged.generalCommonInfo?.announcementTitle,
-                      },
-                      registrationOverlay,
-                      ...(roundsChanged && merged.rounds ? { rounds: merged.rounds } : {}),
-                    }
-                  )
+                    : { ...patch, ...built.patch }
+                  await persistProgramPatch(merged, {
+                    ...patchForSave,
+                    generalCommonInfo: {
+                      ...patchForSave.generalCommonInfo,
+                      announcementTitle: merged.generalCommonInfo?.announcementTitle,
+                    },
+                    registrationOverlay,
+                    ...(roundsChanged && merged.rounds ? { rounds: merged.rounds } : {}),
+                  })
                   return
                 }
                 await persistProgramPatch(draft, patch)
@@ -1580,6 +1592,29 @@ export function ProgramDetailFullPageModal({
             }
           : undefined,
     })
+
+  useEffect(() => {
+    if (!isCompanySchoolDetail || isTrainedTeachersDetail || !isEditModeInfo || !displayProgram) {
+      return
+    }
+    const flushParagraphOverlayIntoTypedForm = () => {
+      const patch = collectCompanySchoolParagraphOverlayFormPatch(
+        readEconomyRegistrationOverlayForSave(),
+        displayProgram
+      )
+      for (const [field, value] of Object.entries(patch)) {
+        infoForm.setValue(field as never, value as never, { shouldDirty: true })
+      }
+    }
+    flushParagraphOverlayIntoTypedForm()
+    return subscribeProgramRegistrationOverlay(flushParagraphOverlayIntoTypedForm)
+  }, [
+    displayProgram,
+    infoForm,
+    isCompanySchoolDetail,
+    isEditModeInfo,
+    isTrainedTeachersDetail,
+  ])
 
   const handleInfoSave = useCallback(async () => {
     if (displayProgram) {
@@ -1598,59 +1633,12 @@ export function ProgramDetailFullPageModal({
       }
     }
     if (isCompanySchoolDetail && !isTrainedTeachersDetail && displayProgram) {
-      const values = infoForm.getValues()
-      const liveOverlay = readEconomyRegistrationOverlayForSave()
-      const liveAnnouncement = resolveCompanySchoolDetailSaveAnnouncementTitle({
-        formAnnouncement: values.announcementTitle,
-        overlayAnnouncement: liveOverlay[ECONOMY_PUBLIC_PROGRAM_TITLE_KEY],
-        programAnnouncement: displayProgram.generalCommonInfo?.announcementTitle,
+      const built = buildCompanySchoolDetailTypedSave({
+        program: displayProgram,
+        values: infoForm.getValues(),
       })
-      if (typeof liveAnnouncement === 'string') {
-        infoForm.setValue('announcementTitle', liveAnnouncement)
-      }
-      // 등록 단락에서 바꾼 대표 프로그램명이 아래 overlay 재작성(폼 기준)에 덮이지 않고 PATCH에 실리게 한다.
-      const liveTitles = resolveCompanySchoolDetailSaveTitleFields(liveOverlay, displayProgram)
-      if (liveTitles.mainTitle !== undefined) infoForm.setValue('mainTitle', liveTitles.mainTitle)
-      if (liveTitles.title !== undefined) infoForm.setValue('title', liveTitles.title)
-      if (liveTitles.titleEn !== undefined) infoForm.setValue('titleEn', liveTitles.titleEn)
-      // 기본정보·공통정보 단락(overlay) 수정값도 폼에 올려, 아래 재작성·PATCH에서 이전 값으로 덮이지 않게 한다.
-      const liveFormValues = resolveCompanySchoolDetailSaveLiveFormValues(liveOverlay, displayProgram)
-      for (const [field, value] of Object.entries(liveFormValues)) {
-        infoForm.setValue(field as keyof typeof liveFormValues, value as never)
-      }
-      const valuesForPatch = infoForm.getValues()
-      const patch = narrowProgramDetailPatchForCommonInfoSave(
-        detailEditValuesToProgramPatch(valuesForPatch, displayProgram)
-      )
-      const formCompat = companySchoolCompatibilityOverlayFromDetailEditValues({
-        ...valuesForPatch,
-        announcementTitle: liveAnnouncement,
-      })
-      const draftFromForm = {
-        ...displayProgram,
-        ...patch,
-        generalCommonInfo: {
-          ...displayProgram.generalCommonInfo,
-          ...patch.generalCommonInfo,
-          announcementTitle: liveAnnouncement ?? patch.generalCommonInfo?.announcementTitle,
-        },
-        registrationOverlay: {
-          ...(displayProgram.registrationOverlay ?? {}),
-          ...formCompat,
-        },
-      }
-      writeEconomyRegistrationOverlayFromProgramDraft(draftFromForm)
-      const overlay = readEconomyRegistrationOverlayForSave()
-      const economyParticipant = {
-        individual: false,
-        organization: true,
-        teacherInstructor: true,
-        volunteer: false,
-      }
-      if (hasIncompleteEconomyProgramRegistrationRequiredFields(overlay, economyParticipant)) {
-        detailRequiredHighlight.report(
-          listIncompleteEconomyProgramRegistrationRequiredFields(overlay, economyParticipant)
-        )
+      if (built.incomplete.length > 0) {
+        detailRequiredHighlight.report(built.incomplete)
         void showAlert({
           title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
           content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
@@ -1921,9 +1909,12 @@ export function ProgramDetailFullPageModal({
   }
 
   const handlePreview = () => {
-    if (displayProgram) {
-      window.alert(FEATURE_COMING_SOON_ALERT_MESSAGE)
-    }
+    if (!displayProgram) return
+    const audience: GeneralRecruitTabKey =
+      activeTab === 'instructors' || activeTab === 'volunteers' || activeTab === 'institutions'
+        ? activeTab
+        : 'institutions'
+    setRecruitmentPreviewAudience(audience)
   }
 
   const handleCompanySchoolRecruitTabChange = (tab: GeneralRecruitTabKey) => {
@@ -2246,7 +2237,9 @@ export function ProgramDetailFullPageModal({
                   }
                   throw new Error('trainedTeacherBasicInfoValidationFailed')
                 }
-                const basicOk = await infoTriggerSave(progressTables)
+                const basicOk = await infoTriggerSave(progressTables, {
+                  skipSuccessAlert: trainedTeacherRemoteEnabled,
+                })
                 if (!basicOk) {
                   // API 오류는 onSaveEdit → handleError 에서 이미 안내
                   throw new Error('trainedTeacherBasicInfoSaveFailed')
@@ -2263,6 +2256,7 @@ export function ProgramDetailFullPageModal({
                             commonInfo: payload.commonInfo,
                           },
                         })
+                        showUpdateCompletedAlert()
                       } catch (error) {
                         handleError(error, {
                           context: 'programDetailFullpageModal.trainedTeacherInfoSave',
@@ -2363,13 +2357,24 @@ export function ProgramDetailFullPageModal({
                   onRegisterApplicantCloseHandler={registerApplicantCloseHandler}
                 />
               </div>
+            ) : !isOverviewProgramDetail &&
+              activeLnb === 'applicants' &&
+              (activeChildMenu || 'institutions') === 'volunteers' ? (
+              <div className="participant-applications">
+                <GeneralVolunteerApplicationsView
+                  program={displayProgram}
+                  activeTab="vol_all"
+                  interviewEnabled={getGeneralVolunteerInterviewEnabled(displayProgram)}
+                  onRegisterApplicantCloseHandler={registerApplicantCloseHandler}
+                />
+              </div>
             ) : (
               <ApplicantList
                 menu={activeChildMenu || 'institutions'}
                 program={displayProgram ?? null}
                 programId={displayProgram.id}
                 institutionColumnPreset={isOverviewProgramDetail ? 'company-school' : undefined}
-                detailVariant="legacy"
+                detailVariant="general"
                 onRegisterApplicantCloseHandler={registerApplicantCloseHandler}
               />
             ))}
@@ -2465,6 +2470,19 @@ export function ProgramDetailFullPageModal({
             setCompanySchoolApplicationPreviewReloadKey(key => key + 1)
           }}
           onSaved={() => setCompanySchoolApplicationPreviewReloadKey(key => key + 1)}
+        />
+      ) : null}
+      {displayProgram ? (
+        <ParticipantRecruitmentPreviewModal
+          open={recruitmentPreviewAudience != null}
+          onClose={() => setRecruitmentPreviewAudience(null)}
+          program={displayProgram}
+          sponsorName={sponsorName}
+          audience={
+            recruitmentPreviewAudience
+              ? previewAudienceFromGeneralRecruitTab(recruitmentPreviewAudience, displayProgram)
+              : 'institutions'
+          }
         />
       ) : null}
     </>

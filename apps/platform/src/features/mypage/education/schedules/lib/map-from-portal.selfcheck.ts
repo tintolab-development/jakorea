@@ -36,6 +36,19 @@ assert.equal(lateCorrected.attendanceStatus, 'late')
 assert.equal(lateCorrected.absenceReasonStatus, 'NOT_REQUIRED')
 assert.equal(lateCorrected.absenceReason, undefined)
 
+const absentCorrected = mapPortalEducationSchedule(
+  {
+    scheduleId: 187273,
+    attendanceStatus: 'ABSENT',
+    absenceReasonStatus: 'NOT_REQUIRED',
+    absenceReason: '늦잠',
+    availableActions: ['VIEW_ATTENDANCE'],
+  },
+  0,
+)
+assert.equal(absentCorrected.attendanceStatus, 'absent')
+assert.equal(absentCorrected.absenceReason, undefined)
+
 const noScheduleId = mapPortalEducationSchedule(
   {
     sessionNo: 3,
@@ -379,5 +392,125 @@ const emptySessions = mapPortalEducationSchedule(
   0,
 )
 assert.equal(emptySessions.curriculumSessions, undefined)
+
+const preferenceRankLabel = mapPortalEducationSchedule(
+  { scheduleId: 187703, preferenceRank: 1, startAt: '2026-11-13T15:07:00+09:00' },
+  0,
+)
+assert.equal(preferenceRankLabel.rowLabel, '1지망')
+
+const sessionLabelWinsOverRank = mapPortalEducationSchedule(
+  {
+    scheduleId: 187704,
+    preferenceRank: 2,
+    sessionLabel: '2차시',
+    startAt: '2026-11-16T15:07:00+09:00',
+  },
+  0,
+  { educationStructure: 'CURRICULUM' },
+)
+assert.equal(sessionLabelWinsOverRank.rowLabel, '2차시')
+
+const ttOrgDay = mapPortalEducationSchedule(
+  {
+    scheduleId: 187703,
+    sessionNo: 3,
+    title: '공통 교육 예정 3',
+    startAt: '2026-11-13T06:07:00Z',
+    endAt: '2026-11-13T07:07:00Z',
+    scheduleStatus: 'SCHEDULED',
+    sessionLabel: '1지망',
+    preferenceRank: 1,
+    curriculumSessions: [
+      { sessionNo: 1, sessionLabel: '1차시', title: '교육받은교사 테스트' },
+      { sessionNo: 2, sessionLabel: '2차시', title: '교육받은교사 테스트2' },
+    ],
+  },
+  0,
+  {
+    applicationType: 'ORGANIZATION',
+    programType: 'TRAINED_TEACHER',
+    educationStructure: 'CURRICULUM',
+    sessionRound: 'SINGLE',
+  },
+)
+assert.equal(ttOrgDay.rowLabel, '1지망')
+assert.equal(ttOrgDay.title, '1지망')
+// 차시 근거(groupTimes·희망 블록)가 없으면 `1차시`를 지어내지 않는다.
+assert.equal(ttOrgDay.durationLabel, undefined)
+assert.equal(ttOrgDay.preferenceRank, 1)
+assert.equal(ttOrgDay.sessionNumber, 3)
+assert.equal(ttOrgDay.operationalDayView, true)
+assert.equal(ttOrgDay.curriculumSessions, undefined)
+assert.equal(ttOrgDay.scheduleStatus, 'SCHEDULED')
+assert.equal(ttOrgDay.progressTimeLabel, '2026년 11월 13일(금) 15:07 ~ 16:07')
+
+const ttOrgRankOnly = mapPortalEducationSchedule(
+  {
+    scheduleId: 187704,
+    sessionNo: 4,
+    title: '공통 교육 예정 4',
+    preferenceRank: 2,
+    startAt: '2026-11-16T06:07:00Z',
+  },
+  6,
+  { applicationType: 'ORGANIZATION', programType: 'TRAINED_TEACHER' },
+)
+assert.equal(ttOrgRankOnly.rowLabel, '2지망')
+
+const ttOrgFromPreferredBlock = mapPortalEducationSchedule(
+  {
+    scheduleId: 187701,
+    sessionNo: 1,
+    startAt: '2026-04-17T00:00:00Z',
+    endAt: '2026-04-17T03:30:00Z',
+    preferenceRank: 3,
+  },
+  0,
+  {
+    applicationType: 'ORGANIZATION',
+    programType: 'TRAINED_TEACHER',
+    preferredScheduleBlocks: [
+      { scheduleId: 187703, preferenceRank: 1, sessionTimes: [{ startTime: '15:07', endTime: '16:07' }] },
+      {
+        scheduleId: 187701,
+        preferenceRank: 3,
+        sessionCount: 1,
+        sessionTimes: [
+          { startTime: '09:00', endTime: '09:50' },
+          { startTime: '10:00', endTime: '10:50' },
+          { startTime: '11:40', endTime: '12:30' },
+        ],
+      },
+    ],
+  },
+)
+assert.equal(ttOrgFromPreferredBlock.durationLabel, '3차시')
+
+const ttOrgSessionCountOnly = mapPortalEducationSchedule(
+  { scheduleId: 187702, startAt: '2026-11-19T06:07:00Z' },
+  0,
+  {
+    applicationType: 'ORGANIZATION',
+    programType: 'TRAINED_TEACHER',
+    preferredScheduleBlocks: [{ scheduleId: 187702, sessionCount: 2 }],
+  },
+)
+assert.equal(ttOrgSessionCountOnly.durationLabel, '2차시')
+
+const ttOrgGroupTimesWin = mapPortalEducationSchedule(
+  {
+    scheduleId: 187701,
+    startAt: '2026-11-17T06:07:00Z',
+    groupTimes: [{ startTime: '15:07', endTime: '16:07' }],
+  },
+  0,
+  {
+    applicationType: 'ORGANIZATION',
+    programType: 'TRAINED_TEACHER',
+    preferredScheduleBlocks: [{ scheduleId: 187701, sessionCount: 4 }],
+  },
+)
+assert.equal(ttOrgGroupTimesWin.durationLabel, '1차시')
 
 console.log('map-from-portal.selfcheck: ok')

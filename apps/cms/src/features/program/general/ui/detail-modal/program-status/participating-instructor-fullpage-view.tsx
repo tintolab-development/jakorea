@@ -1,3 +1,5 @@
+import { INSTRUCTOR_ASSIGNMENT_STATUS_LABELS as ASSIGNMENT_STATUS_LABELS } from '@/features/program/general/lib/assignment-status-presentation'
+import { ProgramAssignmentStatusText } from '@/features/program/shared/ui/program-assignment-status-text'
 /**
  * 참여 강사 상세 풀페이지 인라인 뷰
  * 프로그램 진행 현황 > 참여 강사 — instructorId 쿼리 시 목록 대신 표시
@@ -6,6 +8,8 @@
 import { useState, useEffect, useMemo, useCallback, useRef, type Key } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { cacheProjectedProgramPrivacy } from '@/features/program/shared/lib/program-my-assignment'
+import type { InstructorApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationDetailResponse'
+import { retainMaskedInstructorApplicationSettlement } from '@/features/program/general/lib/instructor-application-basic-info-supplement'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
@@ -17,8 +21,6 @@ import type {
 } from '@/features/program/general/model/participating-instructors'
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
 import {
-  INSTRUCTOR_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
-  INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
   PARTICIPATING_INSTRUCTOR_ALREADY_ACTIVITY_WITHDRAWN_ALERT_MESSAGE,
   MESSAGES,
 } from '@/shared/constants/messages'
@@ -33,6 +35,7 @@ import { resolveSessionProgramRole } from '@/entities/program/lib/program-privac
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
+import { ScheduleLinesCell } from '@/features/program/shared/ui/schedule-lines-cell'
 import { ProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
 import { shouldUseOrganizationApplicationRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import {
@@ -43,6 +46,10 @@ import { fetchMemberRolePrivacyUnmask } from '@/features/user/api/member-privacy
 import { mapInstructorApplicationDetailToParticipatingRow } from '@/features/program/general/lib/participating-instructor-application-detail'
 import { giveUpGeneralParticipatingInstitution } from '@/features/program/general/api/admin-program-progress-service'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
+import {
+  GENERAL_INSTRUCTOR_ASSIGNMENT_REQUIRES_RECRUITMENT_MESSAGE,
+  programHasActiveInstructorRecruitment,
+} from '@/features/program/general/lib/general-instructor-recruitment-required'
 import {
   generalApplicationsQueryKeys,
   generalProgramProgressQueryKeys,
@@ -62,14 +69,8 @@ import {
   INSTRUCTOR_ROLE_LABELS,
   type InstructorRoleKey,
 } from '@/features/program/general/model/school-detail-types'
-import {
-  EditableStatusBadge,
-  StatusDropdownCell,
-  STATUS_DROPDOWN_CELL_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME,
-} from '@/shared/components'
-import { getInstructorRoleBadgeTone } from '@/shared/constants/editable-status-badge-tones'
+import { StatusDropdownCell, STATUS_DROPDOWN_CELL_CLASSNAME } from '@/shared/components'
+import { getInstructorRoleTag } from '@/shared/lib/status-tag-specs'
 import {
   type InstructorAssignedSchoolRow,
   type InstructorWaitingSchoolRow,
@@ -120,23 +121,9 @@ import { isGeneralIndividualProgram } from '@/features/program/general/lib/surve
 import { ActivityCertificateIssuancePreviewModal } from './activity-certificate-issuance-preview-modal'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './participating-institutions-section.css'
-import './instructor-assignment-status-text.css'
 import './school-detail-fullpage-view.css'
 import './participating-instructor-fullpage-view.css'
-
-const ASSIGNMENT_STATUS_LABELS: Record<InstructorWaitingAssignmentStatus, string> = {
-  waiting: '배정 대기',
-  cancelled: '배정 불가',
-  assigned: '배정 완료',
-  no_assignable_schedule: '배정 가능 일정 없음',
-  unavailable: '배정 불가',
-  assignment_cancelled: '배정 취소',
-}
-
-/** 기관형 배정 불가/배정 취소 — 기존 배정 불가(cancelled) 칩 스타일 재사용 */
-function assignmentStatusChipModifier(status: InstructorWaitingAssignmentStatus): string {
-  return status === 'unavailable' || status === 'assignment_cancelled' ? 'cancelled' : status
-}
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 function sessionOptionId(session: ParticipatingSchoolSession): string {
   return `session-${session.round}-${session.date}-${session.timeRange}`
@@ -161,25 +148,7 @@ function listAssignableSessionsForWaitingRow(
 }
 
 function renderEducationScheduleLines(lines: string[]) {
-  if (lines.length === 0) return <>-</>
-  const total = lines.length
-  const showCount = total <= 3 ? total : 2
-  const displayLines = lines.slice(0, showCount).map(line => formatCmsScheduleDisplayLabel(line))
-  const restCount = total - showCount
-  return (
-    <div className="participating-institutions-section__sessions-cell">
-      {displayLines.map((line, index) => (
-        <div key={`${line}-${index}`} className="participating-institutions-section__session-line">
-          {line}
-        </div>
-      ))}
-      {restCount > 0 ? (
-        <div className="participating-institutions-section__session-more">
-          외 {restCount}개의 교육 일정
-        </div>
-      ) : null}
-    </div>
-  )
+  return <ScheduleLinesCell lines={lines.map(line => formatCmsScheduleDisplayLabel(line))} />
 }
 
 function renderWaitingTableEmpty() {
@@ -394,12 +363,14 @@ export function ParticipatingInstructorFullpageView({
           reason,
           Number.isFinite(programIdNumber) ? programIdNumber : undefined
         )
-        const safeDto = cacheProjectedProgramPrivacy(
-          queryClient,
-          generalApplicationsQueryKeys.instructorDetail(applicationId),
-          program.id,
-          dto
+        const detailKey = generalApplicationsQueryKeys.instructorDetail(applicationId)
+        const previousDetail =
+          queryClient.getQueryData<InstructorApplicationDetailResponse>(detailKey)
+        const safeDto = retainMaskedInstructorApplicationSettlement(
+          cacheProjectedProgramPrivacy(queryClient, detailKey, program.id, dto),
+          previousDetail
         )
+        queryClient.setQueryData(detailKey, safeDto)
         const mapped = mapInstructorApplicationDetailToParticipatingRow(
           safeDto,
           mergedInstructor,
@@ -415,6 +386,9 @@ export function ParticipatingInstructorFullpageView({
           nameEnglish: mapped.nameEnglish,
           birthDate: mapped.birthDate,
           gender: mapped.gender,
+          bankName: mapped.bankName,
+          accountNumber: mapped.accountNumber,
+          accountHolder: mapped.accountHolder,
         }))
         return {
           name: safeDto.instructorName?.trim() || undefined,
@@ -583,26 +557,17 @@ export function ParticipatingInstructorFullpageView({
         key: 'role',
         width: 116,
         align: 'center',
-        onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME }),
-        onCell: () => ({
-          className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME}`,
-        }),
+        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
         render: (role: InstructorRoleKey, record: InstructorAssignedSchoolRow) => (
           <StatusDropdownCell<InstructorRoleKey>
             status={role}
             statusOptions={['lead', 'assistant']}
-            renderBadge={r => (
-              <EditableStatusBadge
-                label={INSTRUCTOR_ROLE_LABELS[r]}
-                tone={getInstructorRoleBadgeTone(r)}
-              />
-            )}
+            getTag={getInstructorRoleTag}
             isItemDisabled={(cur, opt) => cur === opt}
             onChange={key => handleRoleChange(record.id, key as InstructorRoleKey)}
             isOpen={openRoleDropdownId === record.id}
             onOpenChange={open => setOpenRoleDropdownId(open ? record.id : null)}
             emptyPlaceholder="-"
-            tagLayout="tag100"
           />
         ),
       },
@@ -720,6 +685,7 @@ export function ParticipatingInstructorFullpageView({
 
   const { exportExcel: exportAssignedSchoolsExcel, isExporting: isAssignedSchoolsExcelExporting } =
     useTableExcelExport({
+      accessLog: { downloadKind: 'PROGRAM_PERSON_ASSIGNMENT_EXPORT', containedPiiTypes: [] },
       columns: assignedSchoolExportColumns,
       data: assignedSchoolExportRows,
       filename: '배정된 기관 목록',
@@ -728,6 +694,7 @@ export function ParticipatingInstructorFullpageView({
 
   const { exportExcel: exportWaitingSchoolsExcel, isExporting: isWaitingSchoolsExcelExporting } =
     useTableExcelExport({
+      accessLog: { downloadKind: 'PROGRAM_PERSON_ASSIGNMENT_EXPORT', containedPiiTypes: [] },
       columns: waitingSchoolExportColumns,
       data: waitingSchoolExportRows,
       filename: '배정 대기 기관 목록',
@@ -766,25 +733,17 @@ export function ParticipatingInstructorFullpageView({
         title: '배정 현황',
         dataIndex: 'assignmentStatus',
         key: 'assignmentStatus',
-        width: 180,
+        width: 120,
         align: 'center',
         render: (_status: InstructorWaitingAssignmentStatus, record: InstructorWaitingSchoolRow) => (
-          <span
-            className={`school-detail-fullpage-view__assignment-status school-detail-fullpage-view__assignment-status--${assignmentStatusChipModifier(record.assignmentStatus)}`}
-          >
-            {waitingAssignmentStatusLabel(
-              record.assignmentStatus,
-              ASSIGNMENT_STATUS_LABELS,
-              record.assignmentStatusLabel
-            )}
-          </span>
+          <ProgramAssignmentStatusText status={record.assignmentStatus} context="instructor-institution" assignmentStatusLabel={record.assignmentStatusLabel} />
         ),
       },
       {
         title: '배정 강사 수',
         dataIndex: 'assignedInstructorCountLabel',
         key: 'assignedInstructorCountLabel',
-        width: 110,
+        width: 100,
         align: 'center',
       },
     ],
@@ -793,7 +752,7 @@ export function ParticipatingInstructorFullpageView({
 
   const handleUnassignClick = useCallback(() => {
     if (selectedAssignedSchoolKeys.length === 0) {
-      showAlert({ title: '안내', content: INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setUnassignConfirmOpen(true)
@@ -801,7 +760,7 @@ export function ParticipatingInstructorFullpageView({
 
   const handleSelectAssignClick = useCallback(() => {
     if (selectedWaitingSchoolKeys.length === 0) {
-      showAlert({ title: '안내', content: INSTRUCTOR_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     const movable = waitingSchools.some(
@@ -892,6 +851,14 @@ export function ParticipatingInstructorFullpageView({
     if (!assignGuideMode || !assignGuideSchoolId) return false
     if (assignGuideInFlightRef.current) return false
 
+    if (!programHasActiveInstructorRecruitment(program)) {
+      showAlert({
+        title: '배정 실패',
+        content: GENERAL_INSTRUCTOR_ASSIGNMENT_REQUIRES_RECRUITMENT_MESSAGE,
+      })
+      return false
+    }
+
     const memberId = Number(mergedInstructor.memberId)
     if (!Number.isFinite(memberId) || memberId <= 0) {
       showAlert({
@@ -966,10 +933,7 @@ export function ParticipatingInstructorFullpageView({
         )
 
         if (targetSessions.length === 0) {
-          showAlert({
-            title: '안내',
-            content: '교육 배정일을 선택해 주세요.',
-          })
+          showAlert(NO_SELECTION_ALERT)
           return false
         }
 
@@ -1044,7 +1008,7 @@ export function ParticipatingInstructorFullpageView({
     mergedInstructor,
     mergedInstructor.instructorApplicationId,
     mergedInstructor.memberId,
-    program.id,
+    program,
     queryClient,
     schoolRows,
     selectedWaitingSchoolKeys,

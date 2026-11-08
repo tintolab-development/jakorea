@@ -9,6 +9,7 @@ import {
 import {
   GEMINI_APPROVED_TRAINING_ID_PARAM,
   GEMINI_APPROVED_TRAINING_LNB_PARAM,
+  GEMINI_APPROVED_INSTRUCTOR_APPLICATION_ID_PARAM,
   type GeminiApprovedTrainingDetailLnbKey,
 } from './detail-url'
 
@@ -18,6 +19,7 @@ export const APPROVED_TAB_VALUE = 'approved'
 export const APPROVED_DETAIL_QUERY_SWEEP = [
   GEMINI_APPROVED_TRAINING_ID_PARAM,
   GEMINI_APPROVED_TRAINING_LNB_PARAM,
+  GEMINI_APPROVED_INSTRUCTOR_APPLICATION_ID_PARAM,
   GEMINI_RECRUITMENT_ID_PARAM,
   GEMINI_RECRUITMENT_LNB_PARAM,
   GEMINI_RECRUITMENT_ADD_PARAM,
@@ -41,8 +43,18 @@ export function buildGeminiApprovedTrainingBreadcrumbItems(options: {
   approvedTrainingId: string
   recruitmentTitle: string
   activeLnb: GeminiApprovedTrainingDetailLnbKey
+  instructorApplicationName?: string | null
+  institutionName?: string | null
 }): DetailFullpageBreadcrumbItem[] {
-  const { pathname, searchParams, approvedTrainingId, recruitmentTitle, activeLnb } = options
+  const {
+    pathname,
+    searchParams,
+    approvedTrainingId,
+    recruitmentTitle,
+    activeLnb,
+    instructorApplicationName,
+    institutionName,
+  } = options
   const activeLnbLabel = getGeminiApprovedTrainingLnbLabel(activeLnb)
 
   const visitingTrainingParams = buildSearchParams(searchParams, {
@@ -55,6 +67,7 @@ export function buildGeminiApprovedTrainingBreadcrumbItems(options: {
   const detailParams = buildSearchParams(searchParams, {
     delete: [
       GEMINI_APPROVED_TRAINING_LNB_PARAM,
+      GEMINI_APPROVED_INSTRUCTOR_APPLICATION_ID_PARAM,
       GEMINI_RECRUITMENT_ID_PARAM,
       GEMINI_RECRUITMENT_LNB_PARAM,
       GEMINI_RECRUITMENT_ADD_PARAM,
@@ -65,6 +78,19 @@ export function buildGeminiApprovedTrainingBreadcrumbItems(options: {
       [GEMINI_APPROVED_TRAINING_ID_PARAM]: approvedTrainingId,
     },
   })
+  if (activeLnb === 'instructors' && instructorApplicationName) {
+    const trainingDetailParams = buildSearchParams(searchParams, {
+      delete: [GEMINI_APPROVED_INSTRUCTOR_APPLICATION_ID_PARAM],
+      set: { [GEMINI_APPROVED_TRAINING_LNB_PARAM]: 'instructors' },
+    })
+    return [
+      makeBreadcrumbItem('찾아가는 연수', pathname, visitingTrainingParams),
+      makeBreadcrumbItem(recruitmentTitle, pathname, detailParams),
+      makeBreadcrumbItem('승인 연수', pathname, approvedListParams),
+      makeBreadcrumbItem(institutionName || '승인 연수', pathname, trainingDetailParams),
+      { label: instructorApplicationName },
+    ]
+  }
   const items: DetailFullpageBreadcrumbItem[] = [
     makeBreadcrumbItem('찾아가는 연수', pathname, visitingTrainingParams),
     makeBreadcrumbItem('승인 연수', pathname, approvedListParams),

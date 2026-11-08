@@ -18,6 +18,12 @@ describe('settlement export scope', () => {
     expect(body.programId).toBeUndefined()
   })
 
+  it('세금신고 전체 범위 확인에는 accountPaymentIds를 넣지 않는다', () => {
+    const body = buildFullCorpusScopeRequest('tax-report')
+    expect(body.settlementIds).toEqual([])
+    expect(body.accountPaymentIds).toBeUndefined()
+  })
+
   it('선택 범위는 선택한 원장 ID만 넣고 클라이언트 해시는 만들지 않는다', () => {
     const body = buildSelectedScopeRequest({
       kind: 'bulk-transfer',

@@ -7,7 +7,7 @@ import {
   getInstructorApplyConsentPageDescription,
   getInstructorApplyConsentPageTitle,
   InstructorApplyConsentWriteForm,
-  isInstructorApplyConsentKey,
+  isDocumentConsentWriteKey,
   MYPAGE_SETTINGS_CONSENTS_TAB,
 } from '@/features/mypage'
 import { MEMBER_CONSENT_TEMPLATE_MAP } from '@jakorea/form-schema/consent'
@@ -17,6 +17,7 @@ import {
 } from '@/features/mypage/settings/lib/settings-consent-key'
 import { MypagePortraitConsentWriteForm } from '@/features/mypage/settings/ui/mypage-portrait-consent-write-form'
 import { parseSafeInternalPath } from '@/features/mypage/lib/safe-internal-path'
+import { useListConsentOnWriteEnter } from '@/features/mypage/settings/hooks/use-list-consent-on-write-enter'
 import { parsePortalProgramId } from '@/features/program/api/mappers'
 import {
   markProgramMinorPortraitConsentCompleted,
@@ -51,6 +52,8 @@ export function MypageSettingsConsentPage() {
     routeState?.guardianVerificationToken ??
     routeState?.portraitGuardian?.guardianVerificationToken ??
     routeState?.programMinorPortrait?.guardianVerificationToken
+  const [titleAside, setTitleAside] = useState<ReactNode>(null)
+  useListConsentOnWriteEnter(consentKey, isValidKey && !isView)
 
   useEffect(() => {
     if (!isValidKey) {
@@ -71,13 +74,12 @@ export function MypageSettingsConsentPage() {
 
   const title = isPortraitKey
     ? MEMBER_CONSENT_TEMPLATE_MAP.consentPortrait.modalTitle
-    : isInstructorApplyConsentKey(consentKey)
+    : isDocumentConsentWriteKey(consentKey)
       ? getInstructorApplyConsentPageTitle(consentKey)
       : ''
-  const description =
-    isInstructorApplyConsentKey(consentKey)
-      ? getInstructorApplyConsentPageDescription(consentKey)
-      : undefined
+  const description = isDocumentConsentWriteKey(consentKey)
+    ? getInstructorApplyConsentPageDescription(consentKey)
+    : undefined
 
   const handleComplete = () => {
     void queryClient.invalidateQueries({ queryKey: platformQueryKeys.mypage.consents() })
@@ -89,7 +91,6 @@ export function MypageSettingsConsentPage() {
     }
     navigate(returnTo)
   }
-  const [titleAside, setTitleAside] = useState<ReactNode>(null)
 
   return (
     <ConsentWriteFormPage
@@ -108,7 +109,7 @@ export function MypageSettingsConsentPage() {
           }
           guardianVerificationToken={minorGuardianVerificationToken}
         />
-      ) : isInstructorApplyConsentKey(consentKey) ? (
+      ) : isDocumentConsentWriteKey(consentKey) ? (
         <InstructorApplyConsentWriteForm
           consentKey={consentKey}
           readOnly={isView}

@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { isAxiosError } from 'axios'
+import { resolveConsentStatusDisplayLabel } from '@jakorea/domain/shared/required-consent-alert'
 import { settingsConsentWritePath } from '@/features/mypage'
 import { useQueryClient } from '@tanstack/react-query'
 import { TermsViewModal, useTermsViewModal } from '@/features/auth'
@@ -24,6 +25,7 @@ import {
 import { useSettingsConsents } from '../hooks/use-settings-consents'
 import { useSettingsView } from '../hooks/use-settings-view'
 import type { SettingsConsentItem, SettingsConsentItemId } from '../lib/consent-catalog'
+import { filterListedDocumentConsentItems } from '../lib/consent-visibility'
 import {
   canWithdrawConsent,
   CONSENT_WITHDRAW_CONFLICT_MESSAGE,
@@ -220,14 +222,35 @@ function ConsentRequirementLabel({ required }: { required: boolean }) {
   )
 }
 
-function ConsentStatusBadge({ agreed }: { agreed: boolean }) {
+function ConsentStatusBadge({
+  agreed,
+  consentStatus,
+  consentType,
+  allItemsAgreed,
+  expired = false,
+}: {
+  agreed: boolean
+  consentStatus?: string
+  consentType?: string
+  allItemsAgreed?: boolean | null
+  expired?: boolean
+}) {
+  const label = resolveConsentStatusDisplayLabel({
+    agreed,
+    consentStatus,
+    consentType,
+    allItemsAgreed,
+    expired,
+    agreedLabel: '동의함',
+  })
   return (
     <PFStateBadge
       size="small"
-      tone={agreed ? 'progress' : 'disabled'}
+      /** 「동의 만료」 색은 디자인 미정 — 기존 만료 항목 표시(미동의)와 같은 비활성 톤 유지 */
+      tone={label === '미동의' || expired ? 'disabled' : 'progress'}
       className={styles.statusBadge}
     >
-      {agreed ? '동의함' : '미동의'}
+      {label}
     </PFStateBadge>
   )
 }
@@ -309,7 +332,13 @@ function ConsentCard({
               : styles.statusInfo
           }
         >
-          <ConsentStatusBadge agreed={agreed} />
+          <ConsentStatusBadge
+            agreed={agreed}
+            consentStatus={item.consentStatus}
+            consentType={item.consentType}
+            allItemsAgreed={item.allItemsAgreed}
+            expired={item.expired === true}
+          />
           {item.kind === 'document' && agreed && (item.agreedAt || item.validityLabel) ? (
             <PFText typo="bd-sm-rg" color="neutral-cool-500">
               {[
@@ -626,7 +655,10 @@ export function SettingsConsentsView() {
   }
 
   const basicItems = applyLocalWithdrawn(consents.basicItems, withdrawnIds)
-  const documentItems = applyLocalWithdrawn(consents.documentItems, withdrawnIds)
+  const documentItems = filterListedDocumentConsentItems(
+    applyLocalWithdrawn(consents.documentItems, withdrawnIds),
+    { isRemoteSession: consents.isRemoteSession, isInstructor: consents.isInstructor },
+  )
 
   /** 원격 세션: PUT 후 목록 재조회. 성공 시 철회 일시 반환, 409는 안내 후 동기화 */
   const saveMarketingConsent = async (
@@ -765,6 +797,7 @@ export function SettingsConsentsView() {
         ))}
       </section>
 
+      {documentItems.length > 0 ? (
       <section className={styles.section}>
         <PFText as="h2" typo="hl-lg" color="black" className={styles.sectionTitle}>
           동의서·서약서
@@ -788,6 +821,7 @@ export function SettingsConsentsView() {
           />
         ))}
       </section>
+      ) : null}
 
       <ConsentDocumentPreviewOverlay
         open={documentPreviewItem != null}

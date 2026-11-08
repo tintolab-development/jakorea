@@ -132,8 +132,17 @@ export function applyUjatKpiWageCapacityFromFormValues(
     finalClasses: values.kpiFinalClasses ?? existingKpi?.finalClasses ?? 0,
   }
   const paymentItemIds = values.wagePaymentItemIds
+  const ips =
+    values.ipsCategory === 'inspire'
+      ? 'Inspire'
+      : values.ipsCategory === 'succeed'
+        ? 'Succeed'
+        : values.ipsCategory === 'prepare'
+          ? 'Prepare'
+          : program.ips
   return {
     ...program,
+    ...(ips != null ? { ips } : {}),
     ...(values.kpiFinalParticipants !== undefined
       ? {
           totalParticipants: values.kpiFinalParticipants ?? undefined,

@@ -55,30 +55,37 @@ export function formatAssignmentPeriodLabel(
   return `${from ?? '-'} ~ ${to ?? '-'}`
 }
 
+/** BE 슬롯 6종 → 목록 조합용 4종. 마감 후 미제출은 BE가 NOT_SUBMITTED를 유지한다. */
 function toReportStatus(dto: UjatAssignmentDocumentDto | null | undefined): UjatAssignmentReportStatus {
   switch (dto?.status?.trim().toUpperCase()) {
     case 'SUBMITTED':
     case 'APPROVED':
     case 'FEEDBACK_REQUESTED':
-      // OpenAPI APPROVED = 관리자 승인 제출본 → 목록에서는 제출 완료로 표기
       return 'submitted'
     case 'REVISED':
       return 'revised'
     case 'DEADLINE_MISSED':
       return 'deadline_missed'
+    case 'NOT_SUBMITTED':
     default:
       return 'not_submitted'
   }
+}
+
+function parseFormResponseId(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) return value
+  if (typeof value === 'string' && /^\d+$/.test(value.trim())) {
+    const parsed = Number(value.trim())
+    if (Number.isSafeInteger(parsed) && parsed > 0) return parsed
+  }
+  return undefined
 }
 
 function toReportState(dto: UjatAssignmentDocumentDto | null | undefined): UjatAssignmentReportState {
   const rawStatus = dto?.status?.trim().toUpperCase()
   const status = toReportStatus(dto)
   if (status === 'not_submitted') return { status }
-  const formResponseId =
-    typeof dto?.formResponseId === 'number' && Number.isFinite(dto.formResponseId)
-      ? dto.formResponseId
-      : undefined
+  const formResponseId = parseFormResponseId(dto?.formResponseId)
   return {
     status,
     submittedDateLabel: formatAssignmentWeekdayDate(dto?.submittedAt),

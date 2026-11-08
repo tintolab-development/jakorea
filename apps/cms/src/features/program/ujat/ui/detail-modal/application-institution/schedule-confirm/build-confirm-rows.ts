@@ -110,7 +110,7 @@ export function buildUjatScheduleConfirmRows(
     return {
       id: row.id,
       regionKey: row.regionKey,
-      no: source.length - index,
+      no: index + 1,
       institutionName: row.institutionName,
       scheduleConfirmStatus: row.scheduleConfirmStatus ?? null,
       assignedInstructorCount: row.assignedInstructorCount ?? null,

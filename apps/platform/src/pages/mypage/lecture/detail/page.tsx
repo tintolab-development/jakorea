@@ -70,6 +70,8 @@ const PROGRAM_APPLICATION_STATUSES = new Set<EducationDisplayStatus>([
   'waiting_result',
   'document_passed',
   'rejected',
+  'cancelled',
+  'approval_cancelled',
 ])
 
 const ACTIVITY_STATUSES = new Set<EducationDisplayStatus>(['in_progress', 'completed'])
@@ -192,17 +194,18 @@ export function MypageLectureDetailPage() {
   const institutionAssignmentProgram = supportsInstructorInstitutionAssignment(program?.programType)
   const individualAssignmentProgram = supportsInstructorIndividualAssignment(program?.programType)
 
-  /** 배정 현황 탭 — lecture-report-assignments (존재하지 않는 instructor-assignments/waitings 호출 금지) */
+  /** 배정 현황 탭 — 제미나이는 gemini-lecture-schedules, 그 외 lecture-report-assignments (instructor-assignments/waitings 호출 금지) */
   const instructorAssignmentQuery = useInstructorAssignmentStatusQuery(
     program?.id,
     routeApplicationType === 'INSTRUCTOR' && (isActivityStatus || isWithdrawnDuring),
+    { geminiApplicationId: isGeminiProgram ? applicationId : null },
   )
   /**
    * 강의현황 상세: 배정 현황 탭은 유형·배정 여부와 무관하게 항상 첫 번째(기본) 탭이다.
    * 강의 일정 탭은 두지 않는다. 목록이 비어 있으면 패널의 빈 상태 문구를 보여준다.
    */
   const instructorAssignmentVisible = true
-  /** 기관형·제미나이 외(일반 개인형 등): 배정 현황 뒤에 안내사항·강의보고서·설문·만족도·정산 탭을 둔다. */
+  /** 기관형·제미나이 외(일반 개인형 등): 배정 현황 뒤에 안내사항·강의보고서·정산 탭을 둔다. */
   const instructorAssignmentWithActivityTabs = !institutionAssignmentProgram && !isGeminiProgram
 
   const activityTabOptions = useMemo(
@@ -513,6 +516,9 @@ export function MypageLectureDetailPage() {
         <InstructorAssignmentPanel
           assignedItems={instructorAssignmentQuery.assignedItems}
           waitingItems={instructorAssignmentQuery.waitingItems}
+          useScheduleName={
+            program.educationStructure === 'schedule' && program.sessionRound === 'multi'
+          }
         />
       )
     }
@@ -534,7 +540,7 @@ export function MypageLectureDetailPage() {
           applicationId={application.id}
           programId={program.id}
           pendingSurveyCount={application.pendingSurveyCount}
-          canSubmitSurvey={application.canSubmitSurvey}
+          participantId={application.participantId}
         />
       )
     }
@@ -553,7 +559,7 @@ export function MypageLectureDetailPage() {
           applicationType={routeApplicationType}
           applicationId={application.id}
           programId={program.id}
-          canSubmitSatisfaction={application.canSubmitSatisfaction}
+          participantId={application.participantId}
         />
       )
     }

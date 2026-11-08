@@ -13,16 +13,19 @@ const MEMBER_DELETE_IMPACT_LINES = [
   '즉시 삭제됩니다. 삭제된 정보는 복구할 수 없습니다.',
 ] as const
 
+/** 전체 회원 목록 > 탈퇴 처리 안내 — 질문 다음 본문(시안 3줄) */
+export const MEMBER_LIST_WITHDRAW_IMPACT_LINES = [
+  '탈퇴 시 개인정보는 관련 법령 및 개인정보처리방침에 따라 삭제∙처리되며,',
+  '수료증 재발급 등 로그인이 필요한 서비스를 이용할 수 없습니다.',
+  '삭제된 정보는 복구할 수 없습니다.',
+] as const
+
 /** 회원 상세 > 탈퇴 안내 본문 */
 export function buildMemberWithdrawMessageLines(params: { displayName: string } | null): string[] {
   if (!params) return []
   const name = params.displayName.trim()
   if (!name) return []
-  return [
-    `**[${name}] 님**을 탈퇴 처리하시겠습니까?`,
-    '탈퇴 시 개인정보는 관련 법령 및 당사의 개인정보처리방침에 따라 삭제∙처리됩니다.',
-    '삭제된 정보는 복구할 수 없습니다.',
-  ]
+  return [`**[${name}]** 님을 탈퇴 처리하시겠습니까?`, ...MEMBER_LIST_WITHDRAW_IMPACT_LINES]
 }
 
 /** 회원 상세 > 학교 삭제 안내 본문 */
@@ -50,6 +53,11 @@ export function buildMemberSingleDeleteGuideLines(displayName: string): string[]
 }
 
 /** 회원 목록 > 삭제 안내 본문 (단일·일괄·학교) */
+/** 시안: 전체·강사·관리자 회원 목록의 삭제 = 회원 탈퇴 처리 (문구·확인 입력만 다름, API 동일) */
+export function isMemberWithdrawListKind(kind: MemberListKind): boolean {
+  return kind === 'all' || kind === 'instructors' || kind === 'admins'
+}
+
 export function buildMemberListDeleteGuideLines(names: string[], kind: MemberListKind): string[] {
   const normalized = names.map(name => name.trim()).filter(Boolean)
   if (normalized.length === 0) return []
@@ -59,6 +67,15 @@ export function buildMemberListDeleteGuideLines(names: string[], kind: MemberLis
       `**[${normalized[0]}] 외 ${othersCount}개**를 삭제하시겠습니까?`,
       SCHOOL_DELETE_IMPACT_LINE,
     ]
+  }
+  if (isMemberWithdrawListKind(kind)) {
+    if (normalized.length >= 2) {
+      return [
+        `**[${normalized[0]}] 님 외 ${normalized.length - 1}명**을 탈퇴 처리하시겠습니까?`,
+        ...MEMBER_LIST_WITHDRAW_IMPACT_LINES,
+      ]
+    }
+    return [`**[${normalized[0]}]** 님을 탈퇴 처리하시겠습니까?`, ...MEMBER_LIST_WITHDRAW_IMPACT_LINES]
   }
   if (normalized.length >= 2) {
     const othersCount = normalized.length - 1

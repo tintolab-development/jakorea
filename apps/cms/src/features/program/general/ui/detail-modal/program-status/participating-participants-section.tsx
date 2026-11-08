@@ -24,12 +24,16 @@ import { useProgressIndividualParticipantList } from '@/features/program/general
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { normalizeGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 import { useParticipatingIndividualParticipantColumns } from '@/features/program/general/lib/participating-individual-participant-columns'
+import { resolveParticipatingIndividualProgressScheduleSessionsFallback } from '@/features/program/general/lib/participating-individual-progress-schedule-sessions'
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import { resolveInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import {
+  formatParticipatingProgressEducationScheduleLine,
   readCurriculumSessionLabels,
   resolveScheduleDetailTimeSpan,
+  withParticipatingProgressCurriculumShape,
 } from '@/features/program/general/lib/participating-school-session-display'
+import { generalEducationScheduleShapeFromBridge } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-session-format'
 import {
   buildParticipatingParticipantCertificateContext,
   hydrateParticipatingParticipantCertificateProfile,
@@ -38,8 +42,14 @@ import { hydrateParticipatingIndividualLectureAttendanceSessions } from '@/featu
 import {
   CERTIFICATE_ELIGIBILITY_FETCH_FALLBACK,
   getCertificateEligibilityErrorMessage,
-  resolveCertificateIssuePrecheckMessage,
+  resolveCertificateIssuePlan,
 } from '@/features/program/shared/api/certificate-serial-api'
+import {
+  certificateCertifiedPeriodIssueBlockMessage,
+  readCertificateCertifiedPeriod,
+  type CertificateIssuePlan,
+} from '@/features/program/shared/lib/certificate-eligibility'
+import { certificateKindFromEligibilityApiType } from '@/features/program/general/lib/build-student-certificate-issuance'
 import { shouldUseGeneralProgramProgressRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { CertificateBulkIssueReasonModal } from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
@@ -120,8 +130,17 @@ export function ParticipatingParticipantsSection({
         program?.generalCommonInfo?.scheduleDetails
       ),
       curriculumSessionLabels: readCurriculumSessionLabels(program),
+      curriculumSessions: program?.generalCommonInfo?.curriculumSessions ?? null,
     }),
     [program]
+  )
+  const progressScheduleShape = useMemo(
+    () =>
+      withParticipatingProgressCurriculumShape(
+        generalEducationScheduleShapeFromBridge(programBridge),
+        program
+      ),
+    [program, programBridge]
   )
   const columns = useParticipatingIndividualParticipantColumns(programBridge, scheduleDisplay)
   const { tableWrapRef, tableScrollX } = useContainerFitTableScrollX(
@@ -141,6 +160,9 @@ export function ParticipatingParticipantsSection({
     useState<StudentCertificateDownloadContext | null>(null)
   const [certificateExportActive, setCertificateExportActive] = useState(false)
   const [certificateEligibilityChecking, setCertificateEligibilityChecking] = useState(false)
+  const [certificateIssuePlan, setCertificateIssuePlan] = useState<CertificateIssuePlan | null>(
+    null
+  )
 
   const hasStudentSatisfactionSurvey = useMemo(
     () =>
@@ -236,11 +258,15 @@ export function ParticipatingParticipantsSection({
 
     setCertificateEligibilityChecking(true)
     try {
-      const blockMessage = await resolveCertificateIssuePrecheckMessage(participant.id)
-      if (blockMessage) {
-        showAlert({ title: '안내', content: blockMessage })
+      const plan = await resolveCertificateIssuePlan({
+        participantId: participant.id,
+        activityWithdrawn: participant.activityWithdrawn === true,
+      })
+      if (plan != null && !plan.eligible) {
+        showAlert({ title: '안내', content: plan.blockMessage ?? '발급할 수 없습니다.' })
         return
       }
+      setCertificateIssuePlan(plan)
       setCertificateIssueModalOpen(true)
     } catch (error) {
       showAlert({
@@ -270,6 +296,13 @@ export function ParticipatingParticipantsSection({
       const selectedId = String(selectedRowKeys[0])
       const participant = filteredParticipants.find(row => row.id === selectedId)
       if (participant == null) return
+      if (certificateIssuePlan != null && !certificateIssuePlan.eligible) {
+        showAlert({
+          title: '안내',
+          content: certificateIssuePlan.blockMessage ?? '발급할 수 없습니다.',
+        })
+        return
+      }
 
       try {
         const [lectureAttendanceSessions, profileHydrated] = await Promise.all([
@@ -285,12 +318,31 @@ export function ParticipatingParticipantsSection({
             : participant,
         ])
 
+        const certifiedPeriod = readCertificateCertifiedPeriod(
+          certificateIssuePlan?.eligibility as object | null | undefined
+        )
+        const activityWithdrawn = participant.activityWithdrawn === true
+        const certifiedPeriodBlock = certificateCertifiedPeriodIssueBlockMessage({
+          activityWithdrawn,
+          period: certifiedPeriod,
+        })
+        if (certifiedPeriodBlock) {
+          showAlert({ title: '안내', content: certifiedPeriodBlock })
+          return
+        }
         setCertificateExportContext(
           buildParticipatingParticipantCertificateContext({
             participant: { ...profileHydrated, lectureAttendanceSessions },
             program,
             hasStudentSatisfactionSurvey,
             issuanceReasonLabel: reasonLabel,
+            ...(certificateIssuePlan
+              ? { certificateKind: certificateKindFromEligibilityApiType(certificateIssuePlan.apiType) }
+              : {}),
+            certifiedPeriodLabel: certifiedPeriod?.label,
+            certifiedPeriodStart: certifiedPeriod?.start,
+            certifiedPeriodEnd: certifiedPeriod?.end,
+            requireCertifiedPeriod: activityWithdrawn,
           })
         )
         setCertificateExportActive(true)
@@ -304,12 +356,20 @@ export function ParticipatingParticipantsSection({
         })
       }
     },
-    [filteredParticipants, hasStudentSatisfactionSurvey, program, selectedRowKeys, showAlert]
+    [
+      certificateIssuePlan,
+      filteredParticipants,
+      hasStudentSatisfactionSurvey,
+      program,
+      selectedRowKeys,
+      showAlert,
+    ]
   )
 
   const handleCertificateExportComplete = useCallback((success: boolean) => {
     setCertificateExportContext(null)
     setCertificateExportActive(false)
+    setCertificateIssuePlan(null)
     if (!success) {
       handleError(new Error('participant certificate pdf export failed'), {
         context: 'participatingParticipantsSection.certificateDownload',
@@ -323,23 +383,26 @@ export function ParticipatingParticipantsSection({
         return {
           ...column,
           render: (_: unknown, record: ParticipatingIndividualParticipantRow) => {
-            const sessions = record.sessions ?? []
+            const sessions = resolveParticipatingIndividualProgressScheduleSessionsFallback(
+              record.sessions
+            )
             if (sessions.length === 0) return '-'
             return sessions
-              .map(session => {
-                const date = session.date?.trim() ?? ''
-                const time = session.timeRange?.trim() ?? ''
-                const round = session.classNum ?? (session.round ? `${session.round}차시` : '')
-                const line = session.scheduleLabel?.trim() || [date, time].filter(Boolean).join(' ')
-                return formatCmsScheduleDisplayLabel(round ? `${line} | ${round}` : line)
-              })
+              .map(session =>
+                formatCmsScheduleDisplayLabel(
+                  formatParticipatingProgressEducationScheduleLine(
+                    session,
+                    progressScheduleShape
+                  )
+                )
+              )
               .join('\n')
           },
         }
       }
       return column
     })
-  }, [columns])
+  }, [columns, progressScheduleShape])
 
   if (participantsLoading && participantList.length === 0) {
     return (
@@ -392,7 +455,7 @@ export function ParticipatingParticipantsSection({
               onClick={() => {
                 void handleCertificateIssueClick()
               }} >
-              수료증/참여인증서 발급
+              수료증/참가인증서 발급
             </FilterTableToolbarButton>
             {viewMode === 'list' ? (
               <FilterTableToolbarButton
@@ -412,6 +475,7 @@ export function ParticipatingParticipantsSection({
           </div>
         }
         excelExport={{
+          accessLog: { downloadKind: 'PROGRAM_PARTICIPANT_LIST_EXPORT', containedPiiTypes: ['NAME'] },
           columns: excelColumns,
           data: filteredParticipants,
           selectedRowKeys,

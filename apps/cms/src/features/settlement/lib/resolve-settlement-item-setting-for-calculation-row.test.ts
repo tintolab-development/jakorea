@@ -52,7 +52,7 @@ function mockRow(
     institutionName: '테스트학교',
     lectureDateDisplay: '2026.01.01(목)',
     lectureSessionDisplay: '1 ~ 2차시',
-    itemLabel: '강의비',
+    itemLabel: '강사비',
     description: 'desc',
     amount: 100000,
     lineId: 'line-1',
@@ -62,8 +62,8 @@ function mockRow(
 }
 
 describe('resolveSettlementItemSettingForCalculationRow', () => {
-  it('강의비 행 + 강의비 책정 기준 → 해당 등급 임금 항목', () => {
-    const row = mockRow({ itemLabel: '강의비', kind: 'lecture_fee' })
+  it('강사비 행 + 강사비 책정 기준 → 해당 등급 임금 항목', () => {
+    const row = mockRow({ itemLabel: '강사비', kind: 'lecture_fee' })
     const item = resolveSettlementItemSettingForCalculationRow(row, {
       lectureFeeStandardTitle: '2급 강사비',
     })

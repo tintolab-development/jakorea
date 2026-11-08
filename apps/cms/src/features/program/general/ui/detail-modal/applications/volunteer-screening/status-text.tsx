@@ -1,14 +1,14 @@
 import {
-  GENERAL_INTERVIEW_ASSIGNMENT_STATUS_LABELS,
+  getGeneralInterviewAssignmentTextPresentation,
   type GeneralDocumentScreeningStatus,
   type GeneralInterviewAssignmentStatus,
   type GeneralManagerEvaluation,
   type GeneralSecondInterviewScreeningStatus,
 } from '@/features/program/general/lib/volunteer-screening-constants'
-import { DocumentScreeningStatusText } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/shared/document-screening-status-text'
+import { DocumentScreeningStatusText } from '@/features/program/shared/ui/volunteer-screening/document-screening-status-text'
 import { ManagerEvaluationBadge } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/shared/manager-evaluation-badge'
 import { SecondInterviewScreeningStatusText } from '@/features/program/shared/ui/volunteer-screening/second-interview-screening-status-text'
-import '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/shared/interview-assignment-status-text.css'
+import { StatusBadge } from '@/shared/components/status-badge'
 
 export function GeneralManagerEvaluationBadge({
   evaluation,
@@ -32,11 +32,8 @@ export function GeneralInterviewAssignmentStatusText({
   status: GeneralInterviewAssignmentStatus
 }) {
   return (
-    <span
-      className={`ujat-interview-assignment-status-text ujat-interview-assignment-status-text--${status}`}
-    >
-      {GENERAL_INTERVIEW_ASSIGNMENT_STATUS_LABELS[status]}
-    </span>
+    <StatusBadge domain="custom" variant="text" {...getGeneralInterviewAssignmentTextPresentation(status)}
+      className={`ujat-interview-assignment-status-text ujat-interview-assignment-status-text--${status}`} />
   )
 }
 

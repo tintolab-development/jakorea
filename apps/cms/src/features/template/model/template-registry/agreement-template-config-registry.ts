@@ -37,6 +37,20 @@ import {
   PAYMENT_STATEMENT_PRE_CONSENT_A4_PAGE_BREAK_BEFORE_PARAGRAPH_IDS,
 } from '@/features/template/model/payment-statement-pre-consent-a4-preview'
 import {
+  createReceiptPreConsentDraft,
+  RECEIPT_PRE_CONSENT_IDS,
+  RECEIPT_PRE_CONSENT_SEED_PARAGRAPH_IDS,
+} from '@/features/template/model/receipt-pre-consent-draft'
+import {
+  getReceiptPreConsentA4ParagraphGap,
+  RECEIPT_PRE_CONSENT_A4_HIDDEN_PARAGRAPH_IDS,
+  RECEIPT_PRE_CONSENT_A4_PAGE_BREAK_BEFORE_PARAGRAPH_IDS,
+} from '@/features/template/model/receipt-pre-consent-a4-preview'
+import {
+  RECEIPT_PRE_CONSENT_HIDDEN_DRAG_HANDLE_IDS,
+  RECEIPT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS,
+} from '@/features/template/ui/form-set/receipt-pre-consent/paragraph-config'
+import {
   PAYMENT_STATEMENT_PRE_CONSENT_HIDDEN_DRAG_HANDLE_IDS,
   PAYMENT_STATEMENT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS,
 } from '@/features/template/ui/form-set/payment-statement-pre-consent/paragraph-config'
@@ -53,6 +67,7 @@ export type AgreementTemplateConfigKey =
   | 'agreement-notice'
   | 'agreement-portrait'
   | 'agreement-third-party'
+  | 'agreement-receipt-pre-consent'
 
 export type AgreementWritingFormConfig = Omit<AgreementWritingFormShellProps, 'onClose'>
 
@@ -137,6 +152,27 @@ export const AGREEMENT_TEMPLATE_CONFIG_REGISTRY: Record<
       a4ParagraphGapPx: getPaymentStatementPreConsentA4ParagraphGap,
       paragraphBodyOptions: PAYMENT_STATEMENT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS,
       /** 시안: 귀하만 (작성완료는 회원 fill) */
+      agreementClosingFooter: { showSubmitButton: false, showRecipient: true },
+    }
+  },
+  'agreement-receipt-pre-consent': () => {
+    const title = resolveRowTitle('agreement-receipt-pre-consent', '영수증 발급 사전 동의서')
+    return {
+      initialDraft: createReceiptPreConsentDraft,
+      defaultActiveParagraphId: RECEIPT_PRE_CONSENT_IDS.title,
+      modalTitle: title,
+      modalDescription: TEMPLATE_FORM_MODAL_DESCRIPTION,
+      writingPreviewHeaderTitle: title,
+      structureLockedParagraphIds: RECEIPT_PRE_CONSENT_SEED_PARAGRAPH_IDS,
+      hideDragHandleForParagraphIds: RECEIPT_PRE_CONSENT_HIDDEN_DRAG_HANDLE_IDS,
+      /** 템플릿 관리 잠금 해제 후에도 유지 — 영수증은 항목(단락·표 행/열) 추가·삭제·이동 불가, 문구만 수정(0647) */
+      authoringStructureControlLockedParagraphIds: RECEIPT_PRE_CONSENT_SEED_PARAGRAPH_IDS,
+      previewLayout: 'a4-document',
+      a4HiddenParagraphIds: RECEIPT_PRE_CONSENT_A4_HIDDEN_PARAGRAPH_IDS,
+      a4PageBreakBeforeParagraphIds: RECEIPT_PRE_CONSENT_A4_PAGE_BREAK_BEFORE_PARAGRAPH_IDS,
+      a4RenderMode: 'contentOnly',
+      a4ParagraphGapPx: getReceiptPreConsentA4ParagraphGap,
+      paragraphBodyOptions: RECEIPT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS,
       agreementClosingFooter: { showSubmitButton: false, showRecipient: true },
     }
   },

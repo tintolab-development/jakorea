@@ -30,7 +30,7 @@ import {
 } from '@/features/program/shared/ui/program-detail-td-divider'
 import {
   AffiliationEmploymentStatusField,
-  formatAccountDisplayContent,
+  formatServerAccountDisplayContent,
   formatBirthDateAndAge,
   HomeAddressDisplay,
   InstructorBasicInfoDetailForm,
@@ -38,6 +38,7 @@ import {
 import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-general-instructor-basic-info.css'
 import './participating-instructor-application-info.css'
+import { InstructorJaGradeField } from '../instructor-ja-grade-field'
 
 export interface ParticipatingInstructorApplicationInfoProps {
   instructor: ParticipatingInstructorRow
@@ -153,7 +154,13 @@ export function ParticipatingInstructorApplicationInfo({
         <DetailInfoForm.Field
           label="JA 평가 등급"
           readOnlyDisplay
-          view={instructor.jaEvaluationGrade?.trim() || '-'}
+          view={
+            <InstructorJaGradeField
+              grade={instructor.jaEvaluationGrade}
+              memberId={instructor.memberId}
+              editable
+            />
+          }
         />
       </DetailInfoForm.Row>
       <DetailInfoForm.Row type="single">
@@ -166,7 +173,7 @@ export function ParticipatingInstructorApplicationInfo({
       </DetailInfoForm.Row>
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
-          label="강의비 책정 기준"
+          label="강사비 책정 기준"
           fullRow
           view={lectureFeeView}
           edit={lectureFeeEdit}
@@ -193,7 +200,7 @@ export function ParticipatingInstructorApplicationInfo({
           readOnlyDisplay
           view={<InstructorSettlementStatusText status={instructor.settlementStatus} />}
         />
-        <DetailInfoForm.Field label="강의비 책정 기준" readOnlyDisplay view={lectureFeeView} />
+        <DetailInfoForm.Field label="강사비 책정 기준" readOnlyDisplay view={lectureFeeView} />
       </DetailInfoForm.Row>
     </>
   )
@@ -220,7 +227,7 @@ export function ParticipatingInstructorApplicationInfo({
           homeAddressDisplay: (
             <HomeAddressDisplay address={instructor.address} mask={privacyMasked} />
           ),
-          accountDisplay: formatAccountDisplayContent(instructor, privacyMasked),
+          accountDisplay: formatServerAccountDisplayContent(instructor),
           instructorFeeGradeView: <InstructorFeeGradeView instructor={feeViewRow} />,
           instructorFeeGradeEdit:
             isEditMode && feeEditDraft ? (

@@ -60,7 +60,7 @@ import {
 
 const BASIS_UNIT_OPTIONS_SIMPLE = [{ value: '전체', label: '전체' }]
 
-const CONDITION_TEXTAREA_PLACEHOLDER = '내용을 입력해 주세요.'
+const CONDITION_TEXTAREA_PLACEHOLDER = '내용을 입력해 주세요'
 
 function SettlementItemBasisNumericInput(props: CmsNumericInputProps) {
   return <CmsNumericInput allowClear={false} {...props} />
@@ -97,9 +97,12 @@ function parsePercentToNullableNumber(s: string): number | null {
 }
 
 function hasZeroNumericSettlementValue(detail: SettlementItemSettingDetail): boolean {
-  return Object.entries(detail).some(
-    ([, value]) => typeof value === 'number' && Number.isFinite(value) && value === 0
-  )
+  return Object.entries(detail).some(([key, value]) => {
+    if (typeof value !== 'number' || !Number.isFinite(value) || value !== 0) return false
+    // Gemini 시안: 1차시 자체/대학생 0은 유효값 (blank/null ≠ 0)
+    if (detail.layout === 'gemini' && key.startsWith('geminiSession')) return false
+    return true
+  })
 }
 
 function linesToEditableText(lines: string[]): string {
@@ -280,6 +283,7 @@ function SettlementItemSettingDetailTier1Body({ itemId }: { itemId: string }) {
 
   useRegisterSettlementDetailSnapshot(
     () => ({
+      ...detail,
       layout: 'tier1',
       basisUnit: '시간',
       basisHours: Number.parseInt(basisHoursStr, 10) || 0,
@@ -290,7 +294,7 @@ function SettlementItemSettingDetailTier1Body({ itemId }: { itemId: string }) {
       qualificationLines: parseEditableLines(qualificationText),
       remarkLines: parseEditableLines(remarkText),
     }),
-    [qualificationText, remarkText, basisHoursStr, maxLimitStr]
+    [itemId, detail, qualificationText, remarkText, basisHoursStr, maxLimitStr]
   )
 
   return (
@@ -302,22 +306,24 @@ function SettlementItemSettingDetailTier1Body({ itemId }: { itemId: string }) {
         >
           조건
         </h3>
-        <ModalSpecTable aria-label="조건">
+        <ModalSpecTable aria-label="조건" className="modal-spec-table--condition-compact">
           <ModalSpecTableRow label="지급 요건" labelVariant="paymentRequirement">
             <textarea
               className="modal-spec-table__textarea"
-              rows={6}
+              rows={4}
               value={qualificationText}
               onChange={e => setQualificationText(e.target.value)}
+              placeholder={CONDITION_TEXTAREA_PLACEHOLDER}
               aria-label="지급 요건"
             />
           </ModalSpecTableRow>
           <ModalSpecTableRow label="비고" labelVariant="remark">
             <textarea
               className="modal-spec-table__textarea"
-              rows={5}
+              rows={3}
               value={remarkText}
               onChange={e => setRemarkText(e.target.value)}
+              placeholder={CONDITION_TEXTAREA_PLACEHOLDER}
               aria-label="비고"
             />
           </ModalSpecTableRow>
@@ -330,6 +336,9 @@ function SettlementItemSettingDetailTier1Body({ itemId }: { itemId: string }) {
           className="settlement-item-setting-detail-modal__section-label"
         >
           산정 기준
+          <span className="settlement-item-setting-detail-modal__required-mark" aria-hidden="true">
+            *
+          </span>
         </h3>
         <ModalSpecTable aria-label="산정 기준">
           <ModalSpecTableRow label="산정 기준 단위" labelVariant="basis">
@@ -340,6 +349,7 @@ function SettlementItemSettingDetailTier1Body({ itemId }: { itemId: string }) {
                   inputSize="medium"
                   value={basisHoursStr}
                   onValueChange={setBasisHoursStr}
+                  aria-label="산정 기준 단위"
                 />
               </div>
               <span className="modal-spec-table__suffix-text">시간 기준</span>
@@ -353,6 +363,7 @@ function SettlementItemSettingDetailTier1Body({ itemId }: { itemId: string }) {
                   inputSize="medium"
                   value={maxLimitStr}
                   onValueChange={setMaxLimitStr}
+                  aria-label="최대 한도 금액"
                 />
               </div>
               <span className="modal-spec-table__suffix-text">원</span>
@@ -377,10 +388,13 @@ function SettlementItemSettingDetailSpecialLectureBody({ itemId }: { itemId: str
     () => ({
       ...detail,
       layout: 'specialLecture',
+      maxLimitWon: null,
+      basicFeeWon: null,
+      longDistanceFeeWon: null,
       qualificationLines: parseEditableLines(qualificationText),
       remarkLines: parseEditableLines(remarkText),
     }),
-    [itemId, qualificationText, remarkText]
+    [itemId, detail, qualificationText, remarkText]
   )
 
   return (
@@ -392,7 +406,7 @@ function SettlementItemSettingDetailSpecialLectureBody({ itemId }: { itemId: str
         >
           조건
         </h3>
-        <ModalSpecTable aria-label="조건">
+        <ModalSpecTable aria-label="조건" className="modal-spec-table--condition-compact">
           <ModalSpecTableRow label="지급 요건" labelVariant="paymentRequirementShort">
             <textarea
               className="modal-spec-table__textarea"
@@ -406,7 +420,7 @@ function SettlementItemSettingDetailSpecialLectureBody({ itemId }: { itemId: str
           <ModalSpecTableRow label="비고" labelVariant="remark">
             <textarea
               className="modal-spec-table__textarea"
-              rows={5}
+              rows={3}
               value={remarkText}
               onChange={e => setRemarkText(e.target.value)}
               placeholder={CONDITION_TEXTAREA_PLACEHOLDER}
@@ -419,14 +433,19 @@ function SettlementItemSettingDetailSpecialLectureBody({ itemId }: { itemId: str
   )
 }
 
-const GEMINI_SESSION_ROWS: { key: 's1' | 's2' | 's3' | 's4'; label: string }[] = [
+const GEMINI_SESSION_ROWS: {
+  key: 's1' | 's2' | 's3' | 's4'
+  label: string
+}[] = [
   { key: 's1', label: '1차시' },
   { key: 's2', label: '2차시' },
   { key: 's3', label: '3차시' },
   { key: 's4', label: '4차시' },
 ]
 
-/** 제미나이 강사비: 조건 가로 표 + 1~4차시 산정 기준 표 */
+const GEMINI_AMOUNT_PLACEHOLDER = '금액'
+
+/** Gemini 강사비: 조건 + 1~4차시(자체 연수 | 대학생 연수) — 0과 blank(placeholder「금액」) 구분 */
 function SettlementItemSettingDetailGeminiBody({ itemId }: { itemId: string }) {
   const detail = useSettlementItemSettingDetailSource(itemId)
 
@@ -434,17 +453,21 @@ function SettlementItemSettingDetailGeminiBody({ itemId }: { itemId: string }) {
     linesToEditableText(detail.qualificationLines)
   )
   const [remarkText, setRemarkText] = useState(() => linesToEditableText(detail.remarkLines))
-  const [session1Str, setSession1Str] = useState(() =>
-    formatWonDisplay(detail.geminiSession1Won ?? 0)
+  const [self1Str, setSelf1Str] = useState(() => formatWonDisplay(detail.geminiSession1Won))
+  const [self2Str, setSelf2Str] = useState(() => formatWonDisplay(detail.geminiSession2Won))
+  const [self3Str, setSelf3Str] = useState(() => formatWonDisplay(detail.geminiSession3Won))
+  const [self4Str, setSelf4Str] = useState(() => formatWonDisplay(detail.geminiSession4Won))
+  const [uni1Str, setUni1Str] = useState(() =>
+    formatWonDisplay(detail.geminiSession1UniversityWon)
   )
-  const [session2Str, setSession2Str] = useState(() =>
-    formatWonDisplay(detail.geminiSession2Won ?? null)
+  const [uni2Str, setUni2Str] = useState(() =>
+    formatWonDisplay(detail.geminiSession2UniversityWon)
   )
-  const [session3Str, setSession3Str] = useState(() =>
-    formatWonDisplay(detail.geminiSession3Won ?? null)
+  const [uni3Str, setUni3Str] = useState(() =>
+    formatWonDisplay(detail.geminiSession3UniversityWon)
   )
-  const [session4Str, setSession4Str] = useState(() =>
-    formatWonDisplay(detail.geminiSession4Won ?? null)
+  const [uni4Str, setUni4Str] = useState(() =>
+    formatWonDisplay(detail.geminiSession4UniversityWon)
   )
 
   useRegisterSettlementDetailSnapshot(
@@ -453,29 +476,57 @@ function SettlementItemSettingDetailGeminiBody({ itemId }: { itemId: string }) {
       layout: 'gemini',
       qualificationLines: parseEditableLines(qualificationText),
       remarkLines: parseEditableLines(remarkText),
-      geminiSession1Won: parseWonStringToNumber(session1Str) ?? 0,
-      geminiSession2Won: parseWonStringToNumber(session2Str),
-      geminiSession3Won: parseWonStringToNumber(session3Str),
-      geminiSession4Won: parseWonStringToNumber(session4Str),
+      geminiSession1Won: parseWonStringToNumber(self1Str),
+      geminiSession2Won: parseWonStringToNumber(self2Str),
+      geminiSession3Won: parseWonStringToNumber(self3Str),
+      geminiSession4Won: parseWonStringToNumber(self4Str),
+      geminiSession1UniversityWon: parseWonStringToNumber(uni1Str),
+      geminiSession2UniversityWon: parseWonStringToNumber(uni2Str),
+      geminiSession3UniversityWon: parseWonStringToNumber(uni3Str),
+      geminiSession4UniversityWon: parseWonStringToNumber(uni4Str),
     }),
-    [itemId, qualificationText, remarkText, session1Str, session2Str, session3Str, session4Str]
+    [
+      itemId,
+      detail,
+      qualificationText,
+      remarkText,
+      self1Str,
+      self2Str,
+      self3Str,
+      self4Str,
+      uni1Str,
+      uni2Str,
+      uni3Str,
+      uni4Str,
+    ]
   )
 
-  const sessionValue = (key: (typeof GEMINI_SESSION_ROWS)[number]['key']) => {
-    if (key === 's1') return session1Str
-    if (key === 's2') return session2Str
-    if (key === 's3') return session3Str
-    return session4Str
+  const selfValue = (key: (typeof GEMINI_SESSION_ROWS)[number]['key']) => {
+    if (key === 's1') return self1Str
+    if (key === 's2') return self2Str
+    if (key === 's3') return self3Str
+    return self4Str
   }
 
-  const setSessionValue = (
-    key: (typeof GEMINI_SESSION_ROWS)[number]['key'],
-    next: string
-  ) => {
-    if (key === 's1') setSession1Str(next)
-    else if (key === 's2') setSession2Str(next)
-    else if (key === 's3') setSession3Str(next)
-    else setSession4Str(next)
+  const setSelfValue = (key: (typeof GEMINI_SESSION_ROWS)[number]['key'], next: string) => {
+    if (key === 's1') setSelf1Str(next)
+    else if (key === 's2') setSelf2Str(next)
+    else if (key === 's3') setSelf3Str(next)
+    else setSelf4Str(next)
+  }
+
+  const uniValue = (key: (typeof GEMINI_SESSION_ROWS)[number]['key']) => {
+    if (key === 's1') return uni1Str
+    if (key === 's2') return uni2Str
+    if (key === 's3') return uni3Str
+    return uni4Str
+  }
+
+  const setUniValue = (key: (typeof GEMINI_SESSION_ROWS)[number]['key'], next: string) => {
+    if (key === 's1') setUni1Str(next)
+    else if (key === 's2') setUni2Str(next)
+    else if (key === 's3') setUni3Str(next)
+    else setUni4Str(next)
   }
 
   return (
@@ -487,11 +538,11 @@ function SettlementItemSettingDetailGeminiBody({ itemId }: { itemId: string }) {
         >
           조건
         </h3>
-        <ModalSpecTable aria-label="조건">
+        <ModalSpecTable aria-label="조건" className="modal-spec-table--condition-compact">
           <ModalSpecTableRow label="지급 요건" labelVariant="paymentRequirementShort">
             <textarea
               className="modal-spec-table__textarea"
-              rows={2}
+              rows={1}
               value={qualificationText}
               onChange={e => setQualificationText(e.target.value)}
               placeholder={CONDITION_TEXTAREA_PLACEHOLDER}
@@ -501,7 +552,7 @@ function SettlementItemSettingDetailGeminiBody({ itemId }: { itemId: string }) {
           <ModalSpecTableRow label="비고" labelVariant="remark">
             <textarea
               className="modal-spec-table__textarea"
-              rows={5}
+              rows={2}
               value={remarkText}
               onChange={e => setRemarkText(e.target.value)}
               placeholder={CONDITION_TEXTAREA_PLACEHOLDER}
@@ -517,20 +568,43 @@ function SettlementItemSettingDetailGeminiBody({ itemId }: { itemId: string }) {
           className="settlement-item-setting-detail-modal__section-label"
         >
           산정 기준
+          <span className="settlement-item-setting-detail-modal__required-mark" aria-hidden="true">
+            *
+          </span>
         </h3>
         <ModalSpecTable aria-label="산정 기준">
           {GEMINI_SESSION_ROWS.map(row => (
             <ModalSpecTableRow key={row.key} label={row.label} labelVariant="basis">
-              <div className="modal-spec-table__field-row">
-                <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--w160">
-                  <SettlementItemBasisNumericInput
-                    mode="currency"
-                    inputSize="medium"
-                    suffix="원"
-                    value={sessionValue(row.key)}
-                    onValueChange={next => setSessionValue(row.key, next)}
-                    aria-label={`${row.label} 금액`}
-                  />
+              {/* 시안: 자체 연수 : [input] 원 | 대학생 연수 : [input] 원 — 라벨 인라인 */}
+              <div className="modal-spec-table__gemini-dual modal-spec-table__gemini-dual--inline">
+                <div className="modal-spec-table__field-row modal-spec-table__gemini-dual-inline-group">
+                  <span className="modal-spec-table__gemini-dual-label">자체 연수 :</span>
+                  <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--w160">
+                    <SettlementItemBasisNumericInput
+                      mode="currency"
+                      inputSize="medium"
+                      value={selfValue(row.key)}
+                      onValueChange={next => setSelfValue(row.key, next)}
+                      placeholder={GEMINI_AMOUNT_PLACEHOLDER}
+                      aria-label={`${row.label} 자체 연수 금액`}
+                    />
+                  </div>
+                  <span className="modal-spec-table__suffix-text">원</span>
+                </div>
+                <span className="modal-spec-table__gemini-dual-pipe" aria-hidden="true" />
+                <div className="modal-spec-table__field-row modal-spec-table__gemini-dual-inline-group">
+                  <span className="modal-spec-table__gemini-dual-label">대학생 연수 :</span>
+                  <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--w160">
+                    <SettlementItemBasisNumericInput
+                      mode="currency"
+                      inputSize="medium"
+                      value={uniValue(row.key)}
+                      onValueChange={next => setUniValue(row.key, next)}
+                      placeholder={GEMINI_AMOUNT_PLACEHOLDER}
+                      aria-label={`${row.label} 대학생 연수 금액`}
+                    />
+                  </div>
+                  <span className="modal-spec-table__suffix-text">원</span>
                 </div>
               </div>
             </ModalSpecTableRow>
@@ -577,22 +651,24 @@ function SettlementItemSettingDetailAssistantBody({ itemId }: { itemId: string }
         >
           조건
         </h3>
-        <ModalSpecTable aria-label="조건">
+        <ModalSpecTable aria-label="조건" className="modal-spec-table--condition-compact">
           <ModalSpecTableRow label="지급 요건" labelVariant="paymentRequirementShort">
             <textarea
               className="modal-spec-table__textarea"
               rows={3}
               value={qualificationText}
               onChange={e => setQualificationText(e.target.value)}
+              placeholder={CONDITION_TEXTAREA_PLACEHOLDER}
               aria-label="지급 요건"
             />
           </ModalSpecTableRow>
           <ModalSpecTableRow label="비고" labelVariant="remark">
             <textarea
               className="modal-spec-table__textarea"
-              rows={5}
+              rows={3}
               value={remarkText}
               onChange={e => setRemarkText(e.target.value)}
+              placeholder={CONDITION_TEXTAREA_PLACEHOLDER}
               aria-label="비고"
             />
           </ModalSpecTableRow>
@@ -833,22 +909,24 @@ function SettlementItemSettingDetailSimpleLaborBody({ itemId }: { itemId: string
         >
           조건
         </h3>
-        <ModalSpecTable aria-label="조건">
+        <ModalSpecTable aria-label="조건" className="modal-spec-table--condition-compact">
           <ModalSpecTableRow label="지급 요건" labelVariant="paymentRequirementShort">
             <textarea
               className="modal-spec-table__textarea"
               rows={3}
               value={qualificationText}
               onChange={e => setQualificationText(e.target.value)}
+              placeholder={CONDITION_TEXTAREA_PLACEHOLDER}
               aria-label="지급 요건"
             />
           </ModalSpecTableRow>
           <ModalSpecTableRow label="비고" labelVariant="remark">
             <textarea
               className="modal-spec-table__textarea"
-              rows={5}
+              rows={3}
               value={remarkText}
               onChange={e => setRemarkText(e.target.value)}
+              placeholder={CONDITION_TEXTAREA_PLACEHOLDER}
               aria-label="비고"
             />
           </ModalSpecTableRow>
@@ -908,6 +986,7 @@ function SettlementItemSettingDetailSimpleLaborBody({ itemId }: { itemId: string
               onChange={setEvidenceSubmission}
               options={SIMPLE_LABOR_EVIDENCE_RADIO_OPTIONS}
               aria-label="증빙 자료 제출 여부"
+              size="medium"
             />
           </ModalSpecTableRow>
         </ModalSpecTable>
@@ -956,7 +1035,7 @@ function SettlementItemSettingDetailLodgingBody({
         evidenceSubmission,
       }
     },
-    [itemId, qualificationText, remarkText, basisDaysStr, maxLimitStr, evidenceSubmission]
+    [itemId, detail, qualificationText, remarkText, basisDaysStr, maxLimitStr, evidenceSubmission]
   )
 
   return (
@@ -970,7 +1049,7 @@ function SettlementItemSettingDetailLodgingBody({
         </h3>
         <ModalSpecTable
           aria-label="조건"
-          className="modal-spec-table--lodging-condition"
+          className="modal-spec-table--lodging-condition modal-spec-table--condition-compact"
         >
           <ModalSpecTableRow label="지급 요건" labelVariant="paymentRequirement">
             <textarea
@@ -978,6 +1057,7 @@ function SettlementItemSettingDetailLodgingBody({
               rows={3}
               value={qualificationText}
               onChange={e => setQualificationText(e.target.value)}
+              placeholder={CONDITION_TEXTAREA_PLACEHOLDER}
               aria-label="지급 요건"
             />
           </ModalSpecTableRow>
@@ -987,6 +1067,7 @@ function SettlementItemSettingDetailLodgingBody({
               rows={3}
               value={remarkText}
               onChange={e => setRemarkText(e.target.value)}
+              placeholder={CONDITION_TEXTAREA_PLACEHOLDER}
               aria-label="비고"
             />
           </ModalSpecTableRow>
@@ -999,6 +1080,9 @@ function SettlementItemSettingDetailLodgingBody({
           className="settlement-item-setting-detail-modal__section-label"
         >
           산정 기준
+          <span className="settlement-item-setting-detail-modal__required-mark" aria-hidden="true">
+            *
+          </span>
         </h3>
         <ModalSpecTable aria-label="산정 기준">
           <ModalSpecTableRow label="산정 기준 단위" labelVariant="basis">
@@ -1009,6 +1093,7 @@ function SettlementItemSettingDetailLodgingBody({
                   inputSize="medium"
                   value={basisDaysStr}
                   onValueChange={setBasisDaysStr}
+                  aria-label="산정 기준 단위"
                 />
               </div>
               <span className="modal-spec-table__suffix-text">박 기준</span>
@@ -1023,20 +1108,22 @@ function SettlementItemSettingDetailLodgingBody({
                 <SettlementItemBasisNumericInput
                   mode="currency"
                   inputSize="medium"
-                  suffix="원"
                   value={maxLimitStr}
                   onValueChange={setMaxLimitStr}
                   aria-label={isLodgingOneToOne ? '지급액' : '최대 한도 금액'}
                 />
               </div>
+              <span className="modal-spec-table__suffix-text">원</span>
             </div>
           </ModalSpecTableRow>
           <ModalSpecTableRow label="증빙 자료 제출 여부" labelVariant="basis">
+            {/* Figma variant B: active Brand teal (교통비 disabled와 구분) */}
             <ModalSpecTableRadioCell
               value={evidenceSubmission}
               onChange={setEvidenceSubmission}
               options={SIMPLE_LABOR_EVIDENCE_RADIO_OPTIONS}
               aria-label="증빙 자료 제출 여부"
+              size="medium"
             />
           </ModalSpecTableRow>
         </ModalSpecTable>
@@ -1077,7 +1164,7 @@ function SettlementItemSettingDetailMealBody({ itemId }: { itemId: string }) {
         evidenceSubmission,
       }
     },
-    [itemId, qualificationText, remarkText, maxLimitStr, evidenceSubmission]
+    [itemId, detail, qualificationText, remarkText, maxLimitStr, evidenceSubmission]
   )
 
   return (
@@ -1089,13 +1176,14 @@ function SettlementItemSettingDetailMealBody({ itemId }: { itemId: string }) {
         >
           조건
         </h3>
-        <ModalSpecTable aria-label="조건" className="modal-spec-table--meal-condition">
+        <ModalSpecTable aria-label="조건" className="modal-spec-table--meal-condition modal-spec-table--condition-compact">
           <ModalSpecTableRow label="지급 요건" labelVariant="paymentRequirement">
             <textarea
               className="modal-spec-table__textarea"
               rows={3}
               value={qualificationText}
               onChange={e => setQualificationText(e.target.value)}
+              placeholder={CONDITION_TEXTAREA_PLACEHOLDER}
               aria-label="지급 요건"
             />
           </ModalSpecTableRow>
@@ -1105,6 +1193,7 @@ function SettlementItemSettingDetailMealBody({ itemId }: { itemId: string }) {
               rows={3}
               value={remarkText}
               onChange={e => setRemarkText(e.target.value)}
+              placeholder={CONDITION_TEXTAREA_PLACEHOLDER}
               aria-label="비고"
             />
           </ModalSpecTableRow>
@@ -1117,6 +1206,9 @@ function SettlementItemSettingDetailMealBody({ itemId }: { itemId: string }) {
           className="settlement-item-setting-detail-modal__section-label"
         >
           산정 기준
+          <span className="settlement-item-setting-detail-modal__required-mark" aria-hidden="true">
+            *
+          </span>
         </h3>
         <ModalSpecTable aria-label="산정 기준">
           <ModalSpecTableRow label="최대 한도 금액" labelVariant="basis">
@@ -1125,20 +1217,22 @@ function SettlementItemSettingDetailMealBody({ itemId }: { itemId: string }) {
                 <SettlementItemBasisNumericInput
                   mode="currency"
                   inputSize="medium"
-                  suffix="원"
                   value={maxLimitStr}
                   onValueChange={setMaxLimitStr}
                   aria-label="최대 한도 금액"
                 />
               </div>
+              <span className="modal-spec-table__suffix-text">원</span>
             </div>
           </ModalSpecTableRow>
           <ModalSpecTableRow label="증빙 자료 제출 여부" labelVariant="basis">
+            {/* Figma variant B: active Brand teal (교통비 disabled와 구분) */}
             <ModalSpecTableRadioCell
               value={evidenceSubmission}
               onChange={setEvidenceSubmission}
               options={SIMPLE_LABOR_EVIDENCE_RADIO_OPTIONS}
               aria-label="증빙 자료 제출 여부"
+              size="medium"
             />
           </ModalSpecTableRow>
         </ModalSpecTable>
@@ -1167,7 +1261,7 @@ function SettlementItemSettingDetailVolunteerActivityBody({ itemId }: { itemId: 
       const merged = detail
       return {
         ...merged,
-        layout: 'volunteerActivity' as const,
+        layout: 'activity' as const,
         basisUnit: '시간',
         basisHours: merged.basisHours ?? 1,
         compareKind: 'standard',
@@ -1179,7 +1273,7 @@ function SettlementItemSettingDetailVolunteerActivityBody({ itemId }: { itemId: 
         evidenceSubmission,
       }
     },
-    [itemId, qualificationText, remarkText, maxLimitStr, evidenceSubmission]
+    [itemId, detail, qualificationText, remarkText, maxLimitStr, evidenceSubmission]
   )
 
   return (
@@ -1193,23 +1287,25 @@ function SettlementItemSettingDetailVolunteerActivityBody({ itemId }: { itemId: 
         </h3>
         <ModalSpecTable
           aria-label="조건"
-          className="modal-spec-table--volunteer-activity-condition"
+          className="modal-spec-table--volunteer-activity-condition modal-spec-table--condition-compact"
         >
-          <ModalSpecTableRow label="지급 요건" labelVariant="paymentRequirement">
+          <ModalSpecTableRow label="지급 요건" labelVariant="paymentRequirementShort">
             <textarea
               className="modal-spec-table__textarea"
-              rows={3}
+              rows={1}
               value={qualificationText}
               onChange={e => setQualificationText(e.target.value)}
+              placeholder={CONDITION_TEXTAREA_PLACEHOLDER}
               aria-label="지급 요건"
             />
           </ModalSpecTableRow>
           <ModalSpecTableRow label="비고" labelVariant="remark">
             <textarea
               className="modal-spec-table__textarea"
-              rows={3}
+              rows={1}
               value={remarkText}
               onChange={e => setRemarkText(e.target.value)}
+              placeholder={CONDITION_TEXTAREA_PLACEHOLDER}
               aria-label="비고"
             />
           </ModalSpecTableRow>
@@ -1222,6 +1318,9 @@ function SettlementItemSettingDetailVolunteerActivityBody({ itemId }: { itemId: 
           className="settlement-item-setting-detail-modal__section-label"
         >
           산정 기준
+          <span className="settlement-item-setting-detail-modal__required-mark" aria-hidden="true">
+            *
+          </span>
         </h3>
         <ModalSpecTable aria-label="산정 기준">
           <ModalSpecTableRow label="최대 한도 금액" labelVariant="basis">
@@ -1230,20 +1329,22 @@ function SettlementItemSettingDetailVolunteerActivityBody({ itemId }: { itemId: 
                 <SettlementItemBasisNumericInput
                   mode="currency"
                   inputSize="medium"
-                  suffix="원"
                   value={maxLimitStr}
                   onValueChange={setMaxLimitStr}
                   aria-label="최대 한도 금액"
                 />
               </div>
+              <span className="modal-spec-table__suffix-text">원</span>
             </div>
           </ModalSpecTableRow>
           <ModalSpecTableRow label="증빙 자료 제출 여부" labelVariant="basis">
+            {/* Figma variant B: active Brand teal (교통비 disabled와 구분) */}
             <ModalSpecTableRadioCell
               value={evidenceSubmission}
               onChange={setEvidenceSubmission}
               options={SIMPLE_LABOR_EVIDENCE_RADIO_OPTIONS}
               aria-label="증빙 자료 제출 여부"
+              size="medium"
             />
           </ModalSpecTableRow>
         </ModalSpecTable>
@@ -1375,7 +1476,7 @@ function SettlementItemSettingDetailMeetingAttendanceBody({ itemId }: { itemId: 
   )
 }
 
-/** 원천징수세액(d-1): 조건·근로소득공제·소득 유형별 원천징수율 */
+/** 원천징수세액(d-1 / Figma 12432:447641): 조건(공제요건·소액부징수) + 소득 유형별 원천징수율* */
 function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { itemId: string }) {
   const detail = useSettlementItemSettingDetailSource(itemId)
   const setDetailValid = useContext(SettlementDetailValidationContext)
@@ -1385,12 +1486,6 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
   )
   const [exclusionMaxStr, setExclusionMaxStr] = useState(() =>
     formatWonDisplay(detail.withholdingExclusionMaxWon ?? null)
-  )
-  const [earnedDeductionStr, setEarnedDeductionStr] = useState(() =>
-    formatWonDisplay(detail.withholdingEarnedIncomeDeductionWon ?? null)
-  )
-  const [rateDailyWorkerStr, setRateDailyWorkerStr] = useState(() =>
-    formatPercentField(detail.withholdingTaxRateDailyWorker ?? null)
   )
   const [rateBusinessStr, setRateBusinessStr] = useState(() =>
     formatPercentField(detail.withholdingTaxRateBusiness ?? null)
@@ -1404,19 +1499,13 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
   const [rateInterviewStr, setRateInterviewStr] = useState(() =>
     formatPercentField(detail.withholdingTaxRateInterview ?? null)
   )
-  const [taxCreditRateStr, setTaxCreditRateStr] = useState(() =>
-    formatPercentField(detail.withholdingEarnedIncomeTaxCreditRate ?? null)
-  )
   const [inputErrors, setInputErrors] = useState<WithholdingInputErrors>(() => ({
     ...EMPTY_WITHHOLDING_INPUT_ERRORS,
     exclusionMax: validateWithholdingAmount(exclusionMaxStr),
-    earnedDeduction: validateWithholdingAmount(earnedDeductionStr),
-    rateDailyWorker: validateWithholdingRate(rateDailyWorkerStr),
     rateBusiness: validateWithholdingRate(rateBusinessStr),
     rateOther: validateWithholdingRate(rateOtherStr),
     ratePrize: validateWithholdingRate(ratePrizeStr),
     rateInterview: validateWithholdingRate(rateInterviewStr),
-    taxCreditRate: validateWithholdingRate(taxCreditRateStr),
   }))
 
   const updateInput = (
@@ -1442,8 +1531,13 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
     () => {
       if (Object.values(inputErrors).some(Boolean)) return null
       const merged = detail
+      const {
+        withholdingTaxRateDailyWorker: _deprecatedDaily,
+        withholdingEarnedIncomeTaxCreditRate: _deprecatedCredit,
+        ...rest
+      } = merged
       return {
-        ...merged,
+        ...rest,
         layout: 'withholdingDailyWorker' as const,
         basisUnit: '전체',
         basisHours: 1,
@@ -1454,26 +1548,23 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
         qualificationLines: parseEditableLines(qualificationText),
         remarkLines: merged.remarkLines,
         withholdingExclusionMaxWon: parseWonStringToNumber(exclusionMaxStr),
-        withholdingEarnedIncomeDeductionWon: parseWonStringToNumber(earnedDeductionStr),
-        withholdingTaxRateDailyWorker: parsePercentToNullableNumber(rateDailyWorkerStr),
+        // UI 미표시 — config/detailJson seed 유지 (DEPRECATED 일용·세액공제율은 미전파)
+        withholdingEarnedIncomeDeductionWon: merged.withholdingEarnedIncomeDeductionWon,
         withholdingTaxRateBusiness: parsePercentToNullableNumber(rateBusinessStr),
         withholdingTaxRateOther: parsePercentToNullableNumber(rateOtherStr),
         withholdingTaxRatePrize: parsePercentToNullableNumber(ratePrizeStr),
         withholdingTaxRateInterview: parsePercentToNullableNumber(rateInterviewStr),
-        withholdingEarnedIncomeTaxCreditRate: parsePercentToNullableNumber(taxCreditRateStr),
       }
     },
     [
       itemId,
+      detail,
       qualificationText,
       exclusionMaxStr,
-      earnedDeductionStr,
-      rateDailyWorkerStr,
       rateBusinessStr,
       rateOtherStr,
       ratePrizeStr,
       rateInterviewStr,
-      taxCreditRateStr,
       inputErrors,
     ]
   )
@@ -1486,20 +1577,24 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
           className="settlement-item-setting-detail-modal__section-label"
         >
           조건
+          <span className="settlement-item-setting-detail-modal__required-mark" aria-hidden="true">
+            *
+          </span>
         </h3>
-        <ModalSpecTable aria-label="조건">
+        <ModalSpecTable aria-label="조건" className="modal-spec-table--condition-compact">
           <ModalSpecTableRow label="공제 요건" labelVariant="paymentRequirementShort">
             <textarea
               className="modal-spec-table__textarea"
               rows={3}
               value={qualificationText}
               onChange={e => setQualificationText(e.target.value)}
+              placeholder={CONDITION_TEXTAREA_PLACEHOLDER}
               aria-label="공제 요건"
             />
           </ModalSpecTableRow>
           <ModalSpecTableRow label="소액부징수 기준" labelVariant="basis">
             <div className="modal-spec-table__field-row modal-spec-table__field-row--withholding-inline">
-              <span className="modal-spec-table__suffix-text">원천징수세액이</span>
+              <span className="modal-spec-table__suffix-text">원천징수세액(소득세)이</span>
               <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--w160">
                 <SettlementItemBasisNumericInput
                   mode="decimal"
@@ -1519,81 +1614,15 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
         </ModalSpecTable>
       </section>
 
-      <section aria-labelledby="settlement-withholding-earned-label">
-        <h3
-          id="settlement-withholding-earned-label"
-          className="settlement-item-setting-detail-modal__section-label"
-        >
-          근로소득공제
-        </h3>
-        <ModalSpecTable aria-label="근로소득공제">
-          <ModalSpecTableRow label="1일 근로소득공제액" labelVariant="basis">
-            <div className="modal-spec-table__field-row">
-              <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--w160">
-                <SettlementItemBasisNumericInput
-                  mode="decimal"
-                  inputSize="medium"
-                  suffix="원"
-                  value={earnedDeductionStr}
-                  error={Boolean(inputErrors.earnedDeduction)}
-                  message={inputErrors.earnedDeduction ?? undefined}
-                  onValueChange={value =>
-                    updateInput('earnedDeduction', value, setEarnedDeductionStr, validateWithholdingAmount)
-                  }
-                  aria-label="1일 근로소득공제액"
-                />
-              </div>
-            </div>
-          </ModalSpecTableRow>
-          <ModalSpecTableRow label="일용근로소득 세율" labelVariant="basis">
-            <div className="modal-spec-table__field-row">
-              <div className="modal-spec-table__input-wrap">
-                <SettlementItemBasisNumericInput
-                  mode="decimal"
-                  groupThousands={false}
-                  precision={2}
-                  inputSize="medium"
-                  suffix="%"
-                  value={rateDailyWorkerStr}
-                  error={Boolean(inputErrors.rateDailyWorker)}
-                  message={inputErrors.rateDailyWorker ?? undefined}
-                  onValueChange={value =>
-                    updateInput('rateDailyWorker', value, setRateDailyWorkerStr, validateWithholdingRate)
-                  }
-                  aria-label="일용근로소득 세율"
-                />
-              </div>
-            </div>
-          </ModalSpecTableRow>
-          <ModalSpecTableRow label="근로소득세액공제율" labelVariant="basis">
-            <div className="modal-spec-table__field-row">
-              <div className="modal-spec-table__input-wrap">
-                <SettlementItemBasisNumericInput
-                  mode="decimal"
-                  groupThousands={false}
-                  precision={2}
-                  inputSize="medium"
-                  suffix="%"
-                  value={taxCreditRateStr}
-                  error={Boolean(inputErrors.taxCreditRate)}
-                  message={inputErrors.taxCreditRate ?? undefined}
-                  onValueChange={value =>
-                    updateInput('taxCreditRate', value, setTaxCreditRateStr, validateWithholdingRate)
-                  }
-                  aria-label="근로소득세액공제율"
-                />
-              </div>
-            </div>
-          </ModalSpecTableRow>
-        </ModalSpecTable>
-      </section>
-
       <section aria-labelledby="settlement-withholding-rates-label">
         <h3
           id="settlement-withholding-rates-label"
           className="settlement-item-setting-detail-modal__section-label"
         >
           소득 유형별 원천징수율
+          <span className="settlement-item-setting-detail-modal__required-mark" aria-hidden="true">
+            *
+          </span>
         </h3>
         <ModalSpecTable aria-label="소득 유형별 원천징수율">
           <ModalSpecTableRow label="사업소득" labelVariant="basis">
@@ -1604,7 +1633,6 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
                   groupThousands={false}
                   precision={2}
                   inputSize="medium"
-                  suffix="%"
                   value={rateBusinessStr}
                   error={Boolean(inputErrors.rateBusiness)}
                   message={inputErrors.rateBusiness ?? undefined}
@@ -1614,6 +1642,7 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
                   aria-label="사업소득 세율"
                 />
               </div>
+              <span className="modal-spec-table__suffix-text">%</span>
             </div>
           </ModalSpecTableRow>
           <ModalSpecTableRow label="기타소득" labelVariant="basis">
@@ -1624,7 +1653,6 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
                   groupThousands={false}
                   precision={2}
                   inputSize="medium"
-                  suffix="%"
                   value={rateOtherStr}
                   error={Boolean(inputErrors.rateOther)}
                   message={inputErrors.rateOther ?? undefined}
@@ -1634,9 +1662,19 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
                   aria-label="기타소득 세율"
                 />
               </div>
+              <span className="modal-spec-table__suffix-text">%</span>
             </div>
           </ModalSpecTableRow>
-          <ModalSpecTableRow label="상금 (기타소득)" labelVariant="basis">
+          <ModalSpecTableRow
+            label={
+              <>
+                상금
+                <br />
+                (기타소득)
+              </>
+            }
+            labelVariant="basis"
+          >
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap">
                 <SettlementItemBasisNumericInput
@@ -1644,7 +1682,6 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
                   groupThousands={false}
                   precision={2}
                   inputSize="medium"
-                  suffix="%"
                   value={ratePrizeStr}
                   error={Boolean(inputErrors.ratePrize)}
                   message={inputErrors.ratePrize ?? undefined}
@@ -1654,6 +1691,7 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
                   aria-label="상금 기타소득 세율"
                 />
               </div>
+              <span className="modal-spec-table__suffix-text">%</span>
             </div>
           </ModalSpecTableRow>
           <ModalSpecTableRow
@@ -1673,7 +1711,6 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
                   groupThousands={false}
                   precision={2}
                   inputSize="medium"
-                  suffix="%"
                   value={rateInterviewStr}
                   error={Boolean(inputErrors.rateInterview)}
                   message={inputErrors.rateInterview ?? undefined}
@@ -1683,6 +1720,7 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
                   aria-label="면접비·지원금·경품 기타소득 세율"
                 />
               </div>
+              <span className="modal-spec-table__suffix-text">%</span>
             </div>
           </ModalSpecTableRow>
         </ModalSpecTable>
@@ -1691,10 +1729,17 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
   )
 }
 
-/** 교통비(p-1·p-2): 조건(지급 요건·비고 textarea) + 산정(km·이용 수단·증빙). p-2는 조건 행 최소 104px */
-function SettlementItemSettingDetailTransportBody({ itemId }: { itemId: string }) {
+/** 교통비: 조건 + 산정(km·이용 수단·증빙). 학생=104px·대중교통/필요. 라디오 disabled */
+function SettlementItemSettingDetailTransportBody({
+  itemId,
+  paymentItemType,
+}: {
+  itemId: string
+  paymentItemType?: string
+}) {
   const detail = useSettlementItemSettingDetailSource(itemId)
-  const isStudentTransport = itemId === 'p-2'
+  const isStudentTransport =
+    paymentItemType?.trim().toUpperCase() === 'TRANSPORT_STUDENT' || itemId === 'p-2'
 
   const [qualificationText, setQualificationText] = useState(() =>
     linesToEditableText(detail.qualificationLines)
@@ -1709,7 +1754,9 @@ function SettlementItemSettingDetailTransportBody({ itemId }: { itemId: string }
     return isStudentTransport ? 'public_transit' : 'private_car'
   })
   const [evidenceSubmission, setEvidenceSubmission] = useState<SettlementItemEvidenceSubmission>(
-    () => (detail.evidenceSubmission ?? 'required') as SettlementItemEvidenceSubmission
+    () =>
+      (detail.evidenceSubmission ??
+        (isStudentTransport ? 'required' : 'not_required')) as SettlementItemEvidenceSubmission
   )
 
   useRegisterSettlementDetailSnapshot(
@@ -1730,7 +1777,7 @@ function SettlementItemSettingDetailTransportBody({ itemId }: { itemId: string }
         evidenceSubmission,
       }
     },
-    [itemId, qualificationText, remarkText, distanceKmStr, commuteMode, evidenceSubmission]
+    [itemId, detail, qualificationText, remarkText, distanceKmStr, commuteMode, evidenceSubmission]
   )
 
   return (
@@ -1745,24 +1792,28 @@ function SettlementItemSettingDetailTransportBody({ itemId }: { itemId: string }
         <ModalSpecTable
           aria-label="조건"
           className={
-            isStudentTransport ? 'modal-spec-table--transport-student-condition' : undefined
+            isStudentTransport
+              ? 'modal-spec-table--transport-student-condition modal-spec-table--condition-compact'
+              : 'modal-spec-table--condition-compact'
           }
         >
           <ModalSpecTableRow label="지급 요건" labelVariant="paymentRequirement">
             <textarea
               className="modal-spec-table__textarea"
-              rows={isStudentTransport ? 3 : 6}
+              rows={isStudentTransport ? 3 : 4}
               value={qualificationText}
               onChange={e => setQualificationText(e.target.value)}
+              placeholder={CONDITION_TEXTAREA_PLACEHOLDER}
               aria-label="지급 요건"
             />
           </ModalSpecTableRow>
           <ModalSpecTableRow label="비고" labelVariant="remark">
             <textarea
               className="modal-spec-table__textarea"
-              rows={isStudentTransport ? 3 : 5}
+              rows={isStudentTransport ? 3 : 3}
               value={remarkText}
               onChange={e => setRemarkText(e.target.value)}
+              placeholder={CONDITION_TEXTAREA_PLACEHOLDER}
               aria-label="비고"
             />
           </ModalSpecTableRow>
@@ -1775,6 +1826,9 @@ function SettlementItemSettingDetailTransportBody({ itemId }: { itemId: string }
           className="settlement-item-setting-detail-modal__section-label"
         >
           산정 기준
+          <span className="settlement-item-setting-detail-modal__required-mark" aria-hidden="true">
+            *
+          </span>
         </h3>
         <ModalSpecTable aria-label="산정 기준">
           <ModalSpecTableRow label="산정 기준 단위" labelVariant="basis">
@@ -1785,17 +1839,21 @@ function SettlementItemSettingDetailTransportBody({ itemId }: { itemId: string }
                   inputSize="medium"
                   value={distanceKmStr}
                   onValueChange={setDistanceKmStr}
+                  aria-label="산정 기준 단위"
                 />
               </div>
-              <span className="modal-spec-table__suffix-text">km(편도) 초과 시</span>
+              <span className="modal-spec-table__suffix-text">km(편도) 이상</span>
             </div>
           </ModalSpecTableRow>
           <ModalSpecTableRow label="이용 수단" labelVariant="basis">
+            {/* Figma variant A: disabled 스타일(Brand teal 활성 아님) */}
             <ModalSpecTableRadioCell
               value={commuteMode}
               onChange={setCommuteMode}
               options={TRANSPORT_COMMUTE_RADIO_OPTIONS}
               aria-label="이용 수단"
+              size="medium"
+              disabled
             />
           </ModalSpecTableRow>
           <ModalSpecTableRow label="증빙 자료 제출 여부" labelVariant="basis">
@@ -1804,6 +1862,8 @@ function SettlementItemSettingDetailTransportBody({ itemId }: { itemId: string }
               onChange={setEvidenceSubmission}
               options={SIMPLE_LABOR_EVIDENCE_RADIO_OPTIONS}
               aria-label="증빙 자료 제출 여부"
+              size="medium"
+              disabled
             />
           </ModalSpecTableRow>
         </ModalSpecTable>
@@ -1953,7 +2013,12 @@ function SettlementItemSettingDetailModalBody({
   }
 
   if (detail.layout === 'transport') {
-    return <SettlementItemSettingDetailTransportBody itemId={itemId} />
+    return (
+      <SettlementItemSettingDetailTransportBody
+        itemId={itemId}
+        paymentItemType={paymentItemType}
+      />
+    )
   }
 
   if (detail.layout === 'lodging') {
@@ -1965,12 +2030,17 @@ function SettlementItemSettingDetailModalBody({
     )
   }
 
-  if (detail.layout === 'meal') {
-    return <SettlementItemSettingDetailMealBody itemId={itemId} />
+  // ACTIVITY / layout activity (legacy volunteerActivity alias)
+  if (
+    paymentItemType === 'ACTIVITY' ||
+    detail.layout === 'activity' ||
+    detail.layout === 'volunteerActivity'
+  ) {
+    return <SettlementItemSettingDetailVolunteerActivityBody itemId={itemId} />
   }
 
-  if (detail.layout === 'volunteerActivity') {
-    return <SettlementItemSettingDetailVolunteerActivityBody itemId={itemId} />
+  if (detail.layout === 'meal') {
+    return <SettlementItemSettingDetailMealBody itemId={itemId} />
   }
 
   if (detail.layout === 'meetingAttendance') {
@@ -2129,8 +2199,10 @@ export function SettlementItemSettingDetailModal({
         itemLayout === 'meal' && item?.paymentItemType === 'MEAL'
           ? 'settlement-item-setting-detail-modal--meal'
           : '',
-        itemLayout === 'meal' && item?.paymentItemType === 'ACTIVITY'
-          ? 'settlement-item-setting-detail-modal--meal settlement-item-setting-detail-modal--activity'
+        item?.paymentItemType === 'ACTIVITY' ||
+        itemLayout === 'activity' ||
+        itemLayout === 'volunteerActivity'
+          ? 'settlement-item-setting-detail-modal--activity'
           : '',
         item?.id === 'p-5' ? 'settlement-item-setting-detail-modal--meeting-attendance' : '',
         itemLayout === 'withholdingDailyWorker'
@@ -2146,6 +2218,7 @@ export function SettlementItemSettingDetailModal({
           'transport',
           'lodging',
           'meal',
+          'activity',
           'volunteerActivity',
           'meetingAttendance',
           'withholdingDailyWorker',
@@ -2157,14 +2230,15 @@ export function SettlementItemSettingDetailModal({
         .join(' ')}
       footer={
         <>
-          <CmsButton variant="secondary" size="large" onClick={onCancel} disabled={saving}>
+          <CmsButton variant="secondary" size="h40" onClick={onCancel} disabled={saving}>
             취소
           </CmsButton>
           <CmsButton
             variant="primary"
-            size="large"
+            size="h40"
             onClick={() => void handleSave()}
-            disabled={saving || !detailValid || !canEdit} >
+            disabled={saving || !detailValid || !canEdit}
+          >
             저장
           </CmsButton>
         </>

@@ -7,11 +7,11 @@ import type { PaymentOrderCalculationTableRow } from '@/features/settlement/ui/p
 export { mapSettlementFrontendItemTypeToLineKind } from '@/features/settlement-management/api/shared/map-frontend-fields'
 
 export type PaymentOrderCalculationStatementDetailContext = {
-  /** 산출 내역서 기본정보 — 강의비 책정 기준 (예: `2급 강사비`) */
+  /** 산출 내역서 기본정보 — 강사비 책정 기준 (예: `2급 강사비`) */
   lectureFeeStandardTitle?: string
 }
 
-const LECTURE_FEE_ITEM_LABELS = new Set(['강의비', '강사비'])
+const LECTURE_FEE_ITEM_LABELS = new Set(['강사비', '강사비'])
 
 function findSettlementItemSettingById(id: string): SettlementItemSettingRow | null {
   for (const section of settlementItemSettingSections) {
@@ -31,7 +31,9 @@ export function findSettlementItemSettingByTitle(title: string): SettlementItemS
   return null
 }
 
-function isLectureFeeRow(row: Pick<PaymentOrderCalculationTableRow, 'kind' | 'itemLabel'>): boolean {
+function isLectureFeeRow(
+  row: Pick<PaymentOrderCalculationTableRow, 'kind' | 'itemLabel'>
+): boolean {
   return row.kind === 'lecture_fee' || LECTURE_FEE_ITEM_LABELS.has(row.itemLabel)
 }
 

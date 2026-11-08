@@ -31,7 +31,7 @@ export interface CertificateBulkIssueReasonModalProps {
   onCancel: () => void
   /** 발급 대상 신청·이력 id (추후 다운로드 요청에 사용) */
   applicationIds: readonly string[]
-  /** 제목·설명에 들어가는 발급 문서명 (기본: 수료증/참여인증서) */
+  /** 제목·설명에 들어가는 발급 문서명 (기본: 수료증/참가인증서) */
   certificateDocumentLabel?: string
   /** 지정 시 발급 클릭 후 사유와 함께 호출 */
   onIssue: (reason: CertificateIssueReasonValue, reasonLabel: string) => void
@@ -41,7 +41,7 @@ export function CertificateBulkIssueReasonModal({
   open,
   onCancel,
   applicationIds,
-  certificateDocumentLabel = '수료증/참여인증서',
+  certificateDocumentLabel = '수료증/참가인증서',
   onIssue,
 }: CertificateBulkIssueReasonModalProps) {
   void applicationIds
@@ -71,7 +71,7 @@ export function CertificateBulkIssueReasonModal({
       open={open}
       onCancel={onCancel}
       title={`${certificateDocumentLabel} 발급 사유`}
-      description={`${certificateDocumentLabel} 발급 사유를 선택해 주세요.\n선택한 사유는 발급 문서에 기입됩니다.`}
+      description={`${certificateDocumentLabel}의 발급 사유를 선택해 주세요.\n선택한 사유는 발급 문서에 기입됩니다.`}
       width={600}
       footer={
         <>
@@ -89,7 +89,7 @@ export function CertificateBulkIssueReasonModal({
           className="certificate-bulk-issue-reason-modal__label"
           id="certificate-issue-reason-label"
         >
-          발급 사유{' '}
+          발급 사유
           <span className="certificate-bulk-issue-reason-modal__required" aria-hidden>
             *
           </span>

@@ -24,6 +24,8 @@ export interface MemberListItemResponse {
   createdByAdmin?: boolean
   registeredByAdmin?: boolean
   adminAccountId?: number
+  /** 승인/반려된 강사 권한 신청 PK. 목록 UserResponse는 보통 null */
+  instructorRoleRequestId?: number | null
   /** BE가 `adminAccountId` 대신 내려주는 경우 (legacy) */
   adminId?: number
   adminLevel?: string

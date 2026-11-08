@@ -123,7 +123,8 @@
   --color-settlement-light: #fff1f0;
   --color-settlement-dark: #cf1322;
 
-  --color-required-mark: var(--color-settlement);
+  /* 가이드: 필드 라벨 필수(*) = Status/red/main #C32F4A */
+  --color-required-mark: var(--color-red);
 
   /* 입력 컴포넌트 시안 토큰 (Figma Input / Select / Time / Search) */
   --White: #fff;

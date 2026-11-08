@@ -1,7 +1,14 @@
-/* Figma 2136:57789 — popup / multiple / w600 */
+/*
+ * Figma 2136:57789 — popup / multiple / w600
+ * 타이틀 ↔ 안내 12 (ContentModal 기본) · 안내 ↔ 표 30.
+ * 바디 기본 gap 16에 margin 30을 더하면 46이 되므로 간격은 바디 gap 하나로만 준다.
+ */
+.education-targets-modal .teal-header-modal__body {
+  gap: var(--spacing-30, 30px);
+}
 
 .education-targets-modal__note {
-  margin: 0 0 30px;
+  margin: 0;
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
   font-size: 16px;

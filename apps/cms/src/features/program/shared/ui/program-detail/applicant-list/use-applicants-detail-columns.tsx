@@ -1,9 +1,7 @@
+import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useMemo } from 'react'
 import type { ColumnsType } from 'antd/es/table'
-import {
-  ApprovalStatusBadge,
-  type ApprovalStatusKey,
-} from '@/shared/components/approval-status-badge'
+import { getApprovalStatusTag, type ApprovalStatusKey } from '@/shared/lib/status-tag-specs'
 import { ApprovalStatusText } from '@/shared/components/approval-status-text'
 import {
   StatusDropdownCell,
@@ -13,17 +11,21 @@ import type { ApplicantInstructorRow } from '@/features/program/shared/model/app
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 import { formatJaEvaluationGradeCellDisplay } from '@/features/program/general/lib/ja-evaluation-grade-display'
 import type { ApplicantSessionLineInput } from './applicants-detail-session-format'
-import { GeneralDetailSessionLine } from './general-detail-session-line'
+import { ScheduleLinesCell } from '@/features/program/shared/ui/schedule-lines-cell'
 import type { InstitutionColumnPreset } from './applicant-list-menu'
 import type { InstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
-import {
-  getInstitutionApplicationSessionsTableSlice,
-  shouldShowInstitutionApplicationSessionsColumn,
-} from '@/features/program/general/lib/institution-application-session-display'
+import { shouldShowInstitutionApplicationSessionsColumn } from '@/features/program/general/lib/institution-application-session-display'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { prepareGeneralEducationScheduleSessions } from '@/features/program/general/lib/participating-school-session-display'
-import { generalEducationScheduleShapeFromBridge } from './applicants-detail-session-format'
+import {
+  formatGeneralDetailSessionLine,
+  generalEducationScheduleShapeFromBridge,
+} from './applicants-detail-session-format'
 import { formatInstitutionApplicationGradeDisplay } from '@/features/program/general/lib/institution-application-detail-edit-policy'
+import {
+  formatTrainedTeacherPreferredScheduleLines,
+  trainedTeacherPreferredScheduleLineKey,
+} from '@/features/program/trained-teachers/lib/preferred-schedule-display'
 
 const GENERAL_DETAIL_INSTITUTION_TEXT_COL_MIN_WIDTH = 185
 /** legacy 기관 목록 일정 열 `480px`와 동일 — 한 줄 일정·디바이더·차시 말줄임 방지 */
@@ -149,6 +151,32 @@ export function useInstitutionApplicantColumns(params: {
                 'applicant-details__td-sessions applicant-details__td-sessions--center applicant-details__td-sessions--schedule',
             }),
             render: (_: unknown, record: ApplicantSchoolRow) => {
+              if (Array.isArray(record.preferredScheduleBlocks)) {
+                const hopeBlocks = record.preferredScheduleBlocks
+                if (hopeBlocks.length === 0) {
+                  return (
+                    <div className="applicant-details__sessions-cell">
+                      <div className="applicant-details__session-line applicant-details__session-line--nowrap">
+                        -
+                      </div>
+                    </div>
+                  )
+                }
+                return (
+                  <div className="applicant-details__sessions-cell">
+                    {hopeBlocks.flatMap(block =>
+                      formatTrainedTeacherPreferredScheduleLines(block).map((line, sessionIndex) => (
+                        <div
+                          key={`${record.id}-${trainedTeacherPreferredScheduleLineKey(block, sessionIndex)}`}
+                          className="applicant-details__session-line applicant-details__session-line--nowrap"
+                        >
+                          {line}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )
+              }
               const hopeSessions = record.sessions ?? []
               if (hopeSessions.length === 0) {
                 return (
@@ -295,7 +323,7 @@ export function useInstitutionApplicantColumns(params: {
               <StatusDropdownCell<ApprovalStatusKey>
                 status={status ?? null}
                 statusOptions={approvalStatusKeys}
-                renderBadge={s => <ApprovalStatusBadge status={s} />}
+                getTag={getApprovalStatusTag}
                 isItemDisabled={(cur, opt) => cur === opt}
                 onChange={newStatus => handleInstitutionApprovalStatusChange(record.id, newStatus)}
                 isOpen={openApprovalDropdownId === record.id}
@@ -338,40 +366,18 @@ export function useInstitutionApplicantColumns(params: {
                 }
               )
             : (record.sessions ?? [])
-          if (sessions.length === 0) return '-'
-          const { displaySessions, restCount } = getInstitutionApplicationSessionsTableSlice(sessions)
-          return (
-            <div className="applicant-details__sessions-cell">
-              {displaySessions.map(s => {
-                if (isGeneralDetail) {
-                  return (
-                    <div key={s.round} className="applicant-details__session-line">
-                      <GeneralDetailSessionLine
-                        session={s}
-                        bridge={programBridge}
-                        detailScheduleTimeSpan={detailScheduleTimeSpan}
-                        curriculumSessionLabels={curriculumSessionLabels}
-                        preferFormOptionLabel
-                      />
-                    </div>
-                  )
-                }
-                const { datePart, durationPart, periodPart } = getSessionLineParts(s)
-                return (
-                  <div key={s.round} className="applicant-details__session-line">
-                    {datePart}
-                    <span className="applicant-details__session-divider" aria-hidden />
-                    {durationPart}
-                    <span className="applicant-details__session-divider" aria-hidden />
-                    {periodPart}
-                  </div>
-                )
-              })}
-              {restCount > 0 && (
-                <div className="applicant-details__session-more">외 {restCount}개의 교육 일정</div>
-              )}
-            </div>
-          )
+          const lines = sessions.map(s => {
+            if (isGeneralDetail) {
+              return formatGeneralDetailSessionLine(s, programBridge, {
+                detailScheduleTimeSpan,
+                curriculumSessionLabels,
+                preferFormOptionLabel: true,
+              })
+            }
+            const { datePart, durationPart, periodPart } = getSessionLineParts(s)
+            return [datePart, durationPart, periodPart].filter(Boolean).join(' | ')
+          })
+          return <ScheduleLinesCell lines={lines} />
         },
       },
       {
@@ -539,7 +545,7 @@ export function useInstructorApplicantColumns(params: {
         title: '이메일',
         dataIndex: 'email',
         key: 'email',
-        width: 160,
+        width: TABLE_COLUMN_WIDTHS.email,
         align: 'center',
         ellipsis: true,
       },
@@ -555,7 +561,7 @@ export function useInstructorApplicantColumns(params: {
             <StatusDropdownCell<ApprovalStatusKey>
               status={status ?? null}
               statusOptions={approvalStatusKeys}
-              renderBadge={s => <ApprovalStatusBadge status={s} />}
+              getTag={getApprovalStatusTag}
               isItemDisabled={(cur, opt) => cur === opt}
               onChange={newStatus => handleInstructorApprovalStatusChange(record.id, newStatus)}
               isOpen={openApprovalDropdownId === record.id}

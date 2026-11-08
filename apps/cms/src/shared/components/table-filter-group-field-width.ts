@@ -23,9 +23,12 @@ export const FILTER_CONTROL_MIN_WIDTH_PX = 240
  */
 export const FILTER_CONTROL_MAX_WIDTH_PX = 260
 
-/** 분리형 `dateRange`·`selectPair` 열: 2×260 + 구분 gap(20px) = 540 */
+/** 분리형 `dateRange` 각 칸 폭 — 디자인 가이드 Field / Sorting 기간(240) · `--filter-control-range-segment-width` */
+export const FILTER_CONTROL_RANGE_SEGMENT_WIDTH_PX = 240
+
+/** 분리형 `dateRange` 열: 2×240 + 구분자(~ 좌우 6px 포함 20px) = 500 */
 export const FILTER_CONTROL_WIDE_FIELD_WIDTH_PX =
-  FILTER_CONTROL_MAX_WIDTH_PX * 2 + 20
+  FILTER_CONTROL_RANGE_SEGMENT_WIDTH_PX * 2 + 20
 
 export function isCompactSelectPairField(field: FilterFieldConfig): boolean {
   return field.type === 'selectPair' && field.selectPair?.compact === true

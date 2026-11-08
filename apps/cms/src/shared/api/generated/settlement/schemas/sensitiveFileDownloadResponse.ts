@@ -26,6 +26,8 @@ export interface SensitiveFileDownloadResponse {
   streamUrl?: string;
   /** relay token 또는 stream URL 만료 시각 */
   expiresAt?: string;
+  /** 다운로드 파일에 포함된 개인정보 유형. 지급조서·대량이체·세금신고는 RESIDENT_REGISTRATION_NUMBER+ACCOUNT_NUMBER, 성범죄·행정정보 동의서는 RESIDENT_REGISTRATION_NUMBER. 없으면 [] */
+  containedPiiTypes?: string[];
   /** 민감 파일 relay claim 이후 가능한 프론트 액션 */
   availableActions?: string[];
 }

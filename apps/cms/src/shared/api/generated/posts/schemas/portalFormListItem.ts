@@ -22,4 +22,14 @@ export interface PortalFormListItem {
   canSubmit?: boolean;
   canResubmit?: boolean;
   retentionExpiresAt?: string;
+  /** 작성 대상 역할. 교사 작성 만족도면 TEACHER. 없으면 null. */
+  targetRole?: string | null;
+  /** 일정 스코프일 때 program_schedule.session_no. 지망 순서가 아니다. 없으면 null. */
+  sessionNo?: number | null;
+  /** TRAINED_TEACHER MATCHED 지망 순위. 없으면 null. */
+  preferenceRank?: number | null;
+  /** 일정 시작 시각(Asia/Seoul instant). 없으면 null. 빈 문자열 금지. */
+  scheduleStartAt?: string | null;
+  /** 일정 카드 제목용 라벨. 지망이면 N지망. 없으면 null. */
+  targetScopeLabel?: string | null;
 }

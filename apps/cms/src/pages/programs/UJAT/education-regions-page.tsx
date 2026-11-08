@@ -386,7 +386,7 @@ export default function UjatEducationRegionsPage() {
             <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
               <CmsButton
                 variant="default"
-                size="medium"
+                size="h32"
                 adminAction="delete"
                 loading={deleteMutation.isPending && deleteTarget?.id === record.id}
                 onClick={e => {
@@ -398,7 +398,7 @@ export default function UjatEducationRegionsPage() {
               </CmsButton>
               <CmsButton
                 variant="secondary"
-                size="medium"
+                size="h32"
                 adminAction="write"
                 loading={isEditing ? updateMutation.isPending : false}
                 disabled={isEditing ? !editDraft.name.trim() : false}
@@ -460,6 +460,7 @@ export default function UjatEducationRegionsPage() {
         excelExport={
           canWrite
             ? {
+                accessLog: { downloadKind: 'EDUCATION_REGION_LIST_EXPORT', containedPiiTypes: ['NAME'] },
                 columns: visibleColumns,
                 data: filteredRows,
               }

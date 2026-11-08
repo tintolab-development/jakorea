@@ -10,7 +10,6 @@ import {
   toJavaLocalTime,
   toKoreanPhone,
 } from '@/features/program/gemini/lib/performance/import-wire-values'
-import { isGeminiInstructorIdentityBlank } from '@/features/program/gemini/lib/performance/instructor-identity'
 import { isGeminiInstructorIdentityBlankExclusion } from '@/features/program/gemini/lib/performance/payment-exclusion'
 import { resolveTrainingMethod } from '@/features/program/gemini/lib/performance/resolve-training-method'
 
@@ -38,6 +37,11 @@ function formatDetailTimeText(dto: GeminiTrainingReportItem): string {
   if (start && end) return `${start} ~ ${end}`
   if (dto.trainingMinutes != null && dto.trainingMinutes > 0) return `${dto.trainingMinutes}분`
   return '-'
+}
+
+function preserveImportText(value: string | null | undefined): string | null {
+  if (value == null || value.trim() === '') return null
+  return value
 }
 
 function resolveListTrainingMethod(
@@ -108,29 +112,15 @@ export function mapUploadAndDisplayToImportRow(
   upload: GeminiPerformanceUploadRow,
   display: GeminiPerformanceRow
 ): GeminiTrainingReportImportRow {
-  const instructorBlank = isGeminiInstructorIdentityBlank(
-    upload.instructorName,
-    upload.contact
-  )
-  const memberId = display.instructorMemberId ? Number(display.instructorMemberId) : undefined
-
-  // 강사명·연락처 모두 미기재 → 신원 필드를 생략해 BE가「실적만」분기로 보낸다.
-  // 부분 기재는 필드를 보내 BE가 기존 NAME_AND_PHONE_REQUIRED / NOT_MATCHED로 거절한다.
-  const instructorFields: Pick<
-    GeminiTrainingReportImportRow,
-    'instructorMemberId' | 'instructorEmail' | 'instructorPhone' | 'instructorName'
-  > = instructorBlank
-    ? {}
-    : {
-        instructorMemberId:
-          memberId != null && Number.isFinite(memberId) ? memberId : undefined,
-        instructorEmail: upload.email.trim() || undefined,
-        instructorPhone: toKoreanPhone(upload.contact),
-        instructorName: upload.instructorName.trim() || undefined,
-      }
-
   return {
-    ...instructorFields,
+    // 회원 ID는 서버가 이름·연락처로 확정하므로 FE가 선판정하거나 재전달하지 않는다.
+    instructorEmail: upload.email.trim() || undefined,
+    // BE `@KoreanPhoneNumber`는 하이픈 형식만 받고, 어긋나면 preview 요청 전체가 400이 된다.
+    // 공백·하이픈 없는 번호는 하이픈 형식으로 맞추고, 맞출 수 없는 값만 원문을 보낸다.
+    instructorPhone:
+      toKoreanPhone(upload.contact) ?? preserveImportText(upload.contact) ?? undefined,
+    instructorName: preserveImportText(upload.instructorName) ?? undefined,
+    feePayee: preserveImportText(upload.paymentDestination),
     assistantInstructorNames: upload.assistantInstructorNames.trim() || undefined,
     trainingLocation: upload.trainingLocation.trim() || undefined,
     schoolOrOrganizationName: upload.school.trim() || undefined,

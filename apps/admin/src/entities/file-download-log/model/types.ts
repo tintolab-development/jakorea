@@ -8,6 +8,8 @@ export type FileDownloadLog = {
   userName: string
   downloadedAt: string
   ip: string
+  downloadKind: string
+  containedPiiLabel: string
 }
 
 export type FileDownloadListFilter = {

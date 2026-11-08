@@ -226,12 +226,20 @@ function recruitmentCountsFromItem(item: RecruitmentCountFields): {
 }
 
 export function mapDashboardHomeResponse(dto: DashboardHomeResponse): DashboardHomeSummary {
+  const source = unwrapHomeDto(dto)
   return {
-    version: dto.version ?? '',
-    programCount: nullableNumber(dto.programCount),
-    memberCount: nullableNumber(dto.memberCount),
-    unreadNotificationCount: nullableNumber(dto.unreadNotificationCount),
+    version: source.version ?? '',
+    programCount: nullableNumber(source.programCount),
+    memberCount: nullableNumber(source.memberCount),
+    unreadNotificationCount: nullableNumber(source.unreadNotificationCount),
   }
+}
+
+function unwrapHomeDto(dto: DashboardHomeResponse): DashboardHomeResponse {
+  if (dto && typeof dto === 'object' && 'programCount' in dto) return dto
+  const nested = (dto as { data?: DashboardHomeResponse } | null)?.data
+  if (nested && typeof nested === 'object') return nested
+  return dto
 }
 
 export function mapRecruitmentListResponse(

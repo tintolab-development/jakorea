@@ -18,4 +18,10 @@ export interface ReplaceRequest {
      * @maxLength 500
      */
   changeReason?: string;
+  /**
+     * 이미 승인된 GENERAL_ORGANIZATION PERIOD 신청의 희망 일정 행 id(program_application_requested_schedule.id) 목록. 승인 API의 requestedScheduleIds와 같은 규칙으로 행마다 기관 전용 program_schedule을 만들고 현재 배정을 이 목록으로 교체합니다. 모집 maxScheduleCount 이하만 허용하며 slots와 동시에 보낼 수 없습니다. 빈 배열은 생략과 같습니다.
+     * @minItems 0
+     * @maxItems 500
+     */
+  requestedScheduleIds?: number[] | null;
 }

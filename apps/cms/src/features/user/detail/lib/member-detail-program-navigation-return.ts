@@ -1,4 +1,5 @@
 import type { NavigateFunction } from 'react-router-dom'
+import { navigateToAncestorOrReplace } from '@/shared/lib/history-ancestor-navigation'
 
 const STORAGE_KEY = 'cms:member-detail-return-after-program'
 
@@ -22,10 +23,25 @@ function consumeMemberDetailReturnAfterProgram(): string | null {
   return value
 }
 
-/** 프로그램 상세 닫기 — 저장된 회원 상세 URL이 있으면 이동하고 true */
+/**
+ * 프로그램 상세 닫기 — 저장된 회원 상세 URL이 있으면 이동하고 true.
+ * 회원 상세 엔트리가 바로 앞 history에 있으면 뒤로(앞쪽에 프로그램 엔트리를 남기지 않음), 없으면 replace.
+ */
 export function tryNavigateMemberDetailReturn(navigate: NavigateFunction): boolean {
   const target = consumeMemberDetailReturnAfterProgram()
   if (!target?.trim()) return false
-  navigate(target)
+  const url = new URL(target, window.location.origin)
+  navigateToAncestorOrReplace(navigate, { pathname: url.pathname, search: url.search })
   return true
+}
+
+/**
+ * 프로그램 화면을 벗어나면(브라우저 뒤로가기로 회원 상세 복귀, 다른 메뉴 이동) 저장된 복귀 URL을 버린다.
+ * 남겨 두면 이후 무관한 프로그램 상세를 닫을 때 예전 회원 상세로 이동한다.
+ */
+export function discardMemberDetailReturnOutsidePrograms(pathname: string): void {
+  if (typeof window === 'undefined') return
+  if (pathname.startsWith('/programs')) return
+  if (!peekMemberDetailReturnAfterProgram()) return
+  sessionStorage.removeItem(STORAGE_KEY)
 }

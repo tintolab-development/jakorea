@@ -93,13 +93,13 @@
     .table-filter-group__grid-cell--explicit-width
   ):has(.cms-datepicker--range-split) {
   width: calc(
-    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-range-segment-width, 240px) + var(--filter-control-range-split-between, 20px)
   );
   min-width: calc(
-    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-range-segment-width, 240px) + var(--filter-control-range-split-between, 20px)
   );
   max-width: calc(
-    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-range-segment-width, 240px) + var(--filter-control-range-split-between, 20px)
   );
 }
 
@@ -211,10 +211,10 @@
     .table-filter-group__col--explicit-width
   ):has(.cms-datepicker--range-split) {
   min-width: calc(
-    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-range-segment-width, 240px) + var(--filter-control-range-split-between, 20px)
   );
   max-width: calc(
-    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-range-segment-width, 240px) + var(--filter-control-range-split-between, 20px)
   );
 }
 
@@ -333,13 +333,13 @@
 .table-filter-group__grid-cell--pct-width:has(.cms-datepicker--range-split)
   .table-filter-group__field {
   min-width: calc(
-    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-range-segment-width, 240px) + var(--filter-control-range-split-between, 20px)
   );
   width: calc(
-    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-range-segment-width, 240px) + var(--filter-control-range-split-between, 20px)
   );
   max-width: calc(
-    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-range-segment-width, 240px) + var(--filter-control-range-split-between, 20px)
   );
 }
 
@@ -638,44 +638,44 @@
   box-sizing: border-box;
 }
 
-/* 기간(분리 UI): 래퍼 2×260 + 구분자, 각 세그먼트 260px 고정 (% Col 포함) */
+/* 기간(분리 UI): 래퍼 2×240 + 구분자, 각 세그먼트 240px 고정 (% Col 포함) — 디자인 가이드 */
 .table-filter-group__fields-inner .cms-datepicker.cms-datepicker--range-split,
 .table-filter-group__grid-cell .cms-datepicker.cms-datepicker--range-split {
   min-width: calc(
-    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-range-segment-width, 240px) + var(--filter-control-range-split-between, 20px)
   );
   max-width: calc(
-    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-range-segment-width, 240px) + var(--filter-control-range-split-between, 20px)
   );
   width: calc(
-    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-range-segment-width, 240px) + var(--filter-control-range-split-between, 20px)
   );
   box-sizing: border-box;
 }
 
 .table-filter-group__container .cms-datepicker--range-split .cms-datepicker__segment {
-  flex: 0 0 var(--filter-control-max-width, 260px) !important;
-  min-width: var(--filter-control-max-width, 260px) !important;
-  max-width: var(--filter-control-max-width, 260px) !important;
-  width: var(--filter-control-max-width, 260px) !important;
+  flex: 0 0 var(--filter-control-range-segment-width, 240px) !important;
+  min-width: var(--filter-control-range-segment-width, 240px) !important;
+  max-width: var(--filter-control-range-segment-width, 240px) !important;
+  width: var(--filter-control-range-segment-width, 240px) !important;
 }
 
-/* `width="100%"` 등 explicit-width 클래스가 붙어도 시작·종료 각 260px 유지 */
+/* `width="100%"` 등 explicit-width 클래스가 붙어도 시작·종료 각 240px 유지 */
 .table-filter-group__container
   .cms-datepicker--range-split.cms-datepicker--explicit-width
   .cms-datepicker__segment {
-  flex: 0 0 var(--filter-control-max-width, 260px) !important;
-  min-width: var(--filter-control-max-width, 260px) !important;
-  max-width: var(--filter-control-max-width, 260px) !important;
-  width: var(--filter-control-max-width, 260px) !important;
+  flex: 0 0 var(--filter-control-range-segment-width, 240px) !important;
+  min-width: var(--filter-control-range-segment-width, 240px) !important;
+  max-width: var(--filter-control-range-segment-width, 240px) !important;
+  width: var(--filter-control-range-segment-width, 240px) !important;
 }
 
 .table-filter-group__container .cms-datepicker--range-split.cms-datepicker--explicit-width {
   width: calc(
-    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-range-segment-width, 240px) + var(--filter-control-range-split-between, 20px)
   ) !important;
   max-width: calc(
-    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-range-segment-width, 240px) + var(--filter-control-range-split-between, 20px)
   ) !important;
 }
 
@@ -834,7 +834,7 @@
 }
 
 /*
- * 기간(분리 세그먼트): 기본 cms-datepicker 218px 상한은 필터에서 각 칸 260px까지 쓰도록
+ * 기간(분리 세그먼트): 기본 cms-datepicker 218px 상한은 필터에서 각 칸 240px(디자인 가이드)까지 쓰도록
  * table-filter-group__container .cms-datepicker__segment 규칙으로 통일(그리드·단행 공통).
  */
 
@@ -848,6 +848,36 @@
 
 .table-filter-group__address-region-selects {
   gap: var(--filter-address-region-pair-gap, 6px);
+}
+
+/*
+ * 기관 소재지는 Figma의 235.5px(114.75px × 2 + 6px) 외곽 치수를 유지한다.
+ * 다만 114.75px 안에서 CmsSelect의 일반 여백(좌 16px·우 40px)을 그대로
+ * 사용하면 `시/군/구` placeholder부터 잘린다. 좁은 두 단계 주소 필터에만
+ * 내부 여백을 조정해 placeholder와 선택값이 가능한 한 많이 보이게 한다.
+ * 선택된 긴 행정구역명은 셀렉트의 title(옵션 label)로 전체 값을 확인할 수 있다.
+ */
+.table-filter-group__field--address-region-filter
+  .table-filter-group__address-region-selects
+  > .cms-select {
+  --cms-control-pl: 12px;
+  --cms-control-pr: 8px;
+  --cms-control-gap: 4px;
+}
+
+/* 선택 시 X까지 예약하면 114.75px 안에서 텍스트가 다시 과도하게 줄어든다.
+ * X는 화살표 영역 위에 표시되는 보조 동작이므로 주소 필터에서는 화살표 폭만
+ * 텍스트 레이아웃에 예약하고, 긴 선택값은 ellipsis + native title로 보완한다. */
+.table-filter-group__field--address-region-filter
+  .table-filter-group__address-region-selects
+  > .cms-select.cms-select--clearable {
+  --cms-select-suffix-w: var(--cms-icon-size, 20px);
+}
+
+/* 고정된 필터 칸을 넓히지 않고, 긴 행정구역명은 팝업에서 전체를 읽을 수 있게 한다. */
+.cms-select-dropdown.table-filter-group__address-region-dropdown {
+  min-width: 180px !important;
+  max-width: min(320px, calc(100vw - 24px));
 }
 
 .table-filter-group__fields-inner
@@ -1048,13 +1078,13 @@
     .cms-datepicker--range-split
   ) {
   width: calc(
-    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-range-segment-width, 240px) + var(--filter-control-range-split-between, 20px)
   );
   max-width: calc(
-    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-range-segment-width, 240px) + var(--filter-control-range-split-between, 20px)
   );
   min-width: calc(
-    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-range-segment-width, 240px) + var(--filter-control-range-split-between, 20px)
   );
 }
 

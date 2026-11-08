@@ -83,68 +83,12 @@
   cursor: pointer;
 }
 
-/* 문의일시·답변일시 — 시안 200px */
-.admin-inquiry-page__table.cms-data-table colgroup > col:nth-child(8),
-.admin-inquiry-page__table.cms-data-table colgroup > col:nth-child(9),
-.admin-inquiry-page__table.cms-data-table th.admin-inquiry-page__col-datetime,
-.admin-inquiry-page__table.cms-data-table td.admin-inquiry-page__col-datetime {
-  width: 200px !important;
-  min-width: 200px !important;
-  max-width: 200px !important;
-  overflow: hidden;
-  vertical-align: middle;
-}
-
-/* 답변 현황 — 시안 120px */
-.admin-inquiry-page__table.cms-data-table colgroup > col:nth-child(3),
-.admin-inquiry-page__table.cms-data-table th.admin-inquiry-page__col-status,
-.admin-inquiry-page__table.cms-data-table td.admin-inquiry-page__col-status {
-  width: 120px !important;
-  min-width: 120px !important;
-  max-width: 120px !important;
-}
-
-/* 카테고리 — 시안 140px */
-.admin-inquiry-page__table.cms-data-table colgroup > col:nth-child(4),
-.admin-inquiry-page__table.cms-data-table th.admin-inquiry-page__col-category,
-.admin-inquiry-page__table.cms-data-table td.admin-inquiry-page__col-category {
-  width: 140px !important;
-  min-width: 140px !important;
-  max-width: 140px !important;
-}
-
-/*
- * 프로그램명 · 제목 — 시안 flex: 1 0 0 (남은 폭 균등 분배)
- * td/th display:flex 금지 — table-cell + auto width
- */
-.admin-inquiry-page__table.cms-data-table colgroup > col:nth-child(5),
-.admin-inquiry-page__table.cms-data-table colgroup > col:nth-child(6),
-.admin-inquiry-page__table.cms-data-table th.admin-inquiry-page__col-flex,
-.admin-inquiry-page__table.cms-data-table td.admin-inquiry-page__col-flex {
-  width: auto !important;
-  min-width: 140px !important;
-  max-width: none !important;
-  text-align: center !important;
-}
-
 .admin-inquiry-page__flex-text {
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   text-align: center;
-}
-
-/* 문의 회원명 · 담당자명 — 시안 120px */
-.admin-inquiry-page__table.cms-data-table colgroup > col:nth-child(7),
-.admin-inquiry-page__table.cms-data-table th.admin-inquiry-page__col-member,
-.admin-inquiry-page__table.cms-data-table td.admin-inquiry-page__col-member,
-.admin-inquiry-page__table.cms-data-table colgroup > col:nth-child(10),
-.admin-inquiry-page__table.cms-data-table th.admin-inquiry-page__col-assignee,
-.admin-inquiry-page__table.cms-data-table td.admin-inquiry-page__col-assignee {
-  width: 120px !important;
-  min-width: 120px !important;
-  max-width: 120px !important;
 }
 
 .admin-inquiry-page__datetime-text {
@@ -155,4 +99,77 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* 열 폭은 컬럼 정의(width / 유연 열 minWidth) — 여기선 정렬·말줄임만 */
+.admin-inquiry-page__table.cms-data-table th.admin-inquiry-page__col-datetime,
+.admin-inquiry-page__table.cms-data-table td.admin-inquiry-page__col-datetime {
+  overflow: hidden;
+  vertical-align: middle;
+}
+
+/* 프로그램명 · 제목 — 유연 열 */
+.admin-inquiry-page__table.cms-data-table th.admin-inquiry-page__col-flex,
+.admin-inquiry-page__table.cms-data-table td.admin-inquiry-page__col-flex {
+  text-align: center !important;
+}
+
+/*
+ * 시안 열 폭 — 공통 규칙(admin-data-table.css `selection-col + col ~ col { width: auto }`)이
+ * 선택 열이 있는 필터 목록 표의 열을 균등 분배하므로 이 화면만 시안 폭으로 되돌린다.
+ * 프로그램명·제목(5·6번째 col)은 auto로 남는 폭을 나눠 가진다.
+ */
+
+.admin-inquiry-page
+  .filter-table-layout
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  col.ant-table-selection-col
+  ~ col:nth-child(3) {
+  width: 120px !important;
+}
+
+.admin-inquiry-page
+  .filter-table-layout
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  col.ant-table-selection-col
+  ~ col:nth-child(4) {
+  width: 140px !important;
+}
+
+.admin-inquiry-page
+  .filter-table-layout
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  col.ant-table-selection-col
+  ~ col:nth-child(7) {
+  width: 120px !important;
+}
+
+.admin-inquiry-page
+  .filter-table-layout
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  col.ant-table-selection-col
+  ~ col:nth-child(8) {
+  width: 180px !important;
+}
+
+.admin-inquiry-page
+  .filter-table-layout
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  col.ant-table-selection-col
+  ~ col:nth-child(9) {
+  width: 180px !important;
+}
+
+.admin-inquiry-page
+  .filter-table-layout
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  col.ant-table-selection-col
+  ~ col:nth-child(10) {
+  width: 120px !important;
 }

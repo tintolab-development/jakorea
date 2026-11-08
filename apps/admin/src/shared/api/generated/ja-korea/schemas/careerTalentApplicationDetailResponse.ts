@@ -11,26 +11,41 @@ import type { CareerTalentApplicationDetailResponseEducationLevel } from './care
 import type { CareerTalentApplicationDetailResponseJobInterest } from './careerTalentApplicationDetailResponseJobInterest';
 import type { CareerTalentApplicationDetailResponseStatus } from './careerTalentApplicationDetailResponseStatus';
 
+/**
+ * Admin detail is always stored original PII. Empty strings are null. List items remain masked.
+ */
 export interface CareerTalentApplicationDetailResponse {
   id?: number;
   status?: CareerTalentApplicationDetailResponseStatus;
   version?: number;
   jobInterest?: CareerTalentApplicationDetailResponseJobInterest;
-  name?: string;
-  phone?: string;
-  email?: string;
-  addressRoad?: string;
+  /** Stored applicant name (original). Empty is null, never "". */
+  name?: string | null;
+  /** Stored phone (original). Empty is null, never "". */
+  phone?: string | null;
+  /** Stored email (original). Empty is null, never "". */
+  email?: string | null;
+  /** Stored road address (original). Empty is null, never "". */
+  addressRoad?: string | null;
+  /** Stored address detail (original). Empty is null, never "". */
   addressDetail?: string | null;
+  /** Stored education level. */
   educationLevel?: CareerTalentApplicationDetailResponseEducationLevel;
-  schoolName?: string;
+  /** Stored school name (original). Empty is null, never "". */
+  schoolName?: string | null;
+  /** Stored major (original). Empty is null, never "". */
   major?: string | null;
-  educationInfo?: string;
+  /** Stored education information (original). Empty is null, never "". */
+  educationInfo?: string | null;
   careerType?: CareerTalentApplicationDetailResponseCareerType;
-  careerInfo?: string;
+  /** Stored career information (original). Empty is null, never "". */
+  careerInfo?: string | null;
   privacyAgreed?: boolean;
   appliedAt?: string;
   confirmedAt?: string | null;
   confirmedByName?: string | null;
+  /** First stored attachment original name. Empty is null, never "". */
   attachmentOriginalName?: string | null;
+  /** Stored attachments in display order, including originalName. Empty when no attachments exist. */
   attachments?: ApplicationAttachmentItem[];
 }

@@ -16,8 +16,12 @@ import {
   ABSENT_PREFERRED_SCHEDULE_MESSAGE,
   allowsMultipleOrganizationEducationScheduleAssignment,
   buildOrganizationApplicationApproveSchedulePayload,
-  buildPeriodSingleRequestedScheduleApprovePayload,
-  isGeneralOrganizationPeriodSingleRequestedScheduleApproval,
+  buildPeriodRequestedScheduleApprovePayload,
+  isGeneralOrganizationPeriodRequestedScheduleApproval,
+  isRequestedScheduleStartPassed,
+  ORGANIZATION_APPROVE_PERIOD_UNASSIGNED_NOTICE,
+  ORGANIZATION_APPROVE_REQUESTED_SCHEDULE_COUNT_EXCEEDED_MESSAGE,
+  resolveRequestedScheduleSelectionLimit,
   ORGANIZATION_APPROVE_SCHEDULE_REQUIRED_MESSAGE,
   ORGANIZATION_EDUCATION_SINGLE_SCHEDULE_HINT,
   organizationEducationScheduleAssignmentHint,
@@ -27,6 +31,7 @@ import {
   type OrganizationApproveEducationScheduleMode,
 } from '@/features/program/general/lib/organization-application-approve-slots'
 import { formatOrganizationApproveScheduleCard } from '@/features/program/general/lib/organization-preferred-schedule-label'
+import { stripDefaultEducationSlotNameFromLabel } from '@/shared/lib/education-schedule-name'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
@@ -40,7 +45,9 @@ export type InstitutionApproveScheduleConfig = {
 }
 
 export type InstitutionApproveConfirmPayload = PermissionModalPayload & {
-  /** 기간형 단일 회차 희망 일정 행 id. selectedScheduleId·slots와 함께 두지 않는다. */
+  /** 일반 기관 기간 지정 — 확정할 희망 일정 행 id 목록. 생략 = 일정 미확정 승인. 다른 선택 필드와 함께 두지 않는다. */
+  requestedScheduleIds?: number[]
+  /** 레거시 단건. 신규 화면은 requestedScheduleIds를 쓴다. */
   requestedScheduleId?: number
   /** TRAINED_TEACHER + PERIOD에서 서버가 내려준 희망 순위. scheduleId가 아니다. */
   preferredScheduleRank?: number
@@ -56,7 +63,7 @@ export type InstitutionApproveModalProps = {
   scheduleConfig?: InstitutionApproveScheduleConfig | null
   /**
    * 기본 `participation`은 「기관 승인 안내」·프로그램 참여 카피.
-   * `program-application`은 일반 기관과 같은 「프로그램 신청 승인 안내」카피(일정 배정 UI와 무관).
+   * `program-application`은 1사1교처럼 일정 배정 UI 없이 「프로그램 신청 승인 안내」카피만 쓴다.
    */
   copyVariant?: InstitutionApproveCopyVariant
   onCancel: () => void
@@ -154,41 +161,31 @@ function resolveTrainedTeacherScheduleDateTimes(block: ApplicantPreferredSchedul
   }
 }
 
+type TrainedTeacherPreferredScheduleProjection = PreferredEducationSchedule & {
+  preferenceOrder?: number
+  sessionCount?: number
+  /** 신청 sessionTimes[].classPeriod — round/session_no를 차시로 바꾸지 않는다. */
+  classPeriod?: string | null
+}
+
 function mapTrainedTeacherPreferredScheduleBlock(
   block: ApplicantPreferredScheduleBlock
-): PreferredEducationSchedule & { preferenceOrder?: number; sessionCount?: number } {
+): TrainedTeacherPreferredScheduleProjection {
   const derivedDateTimes = resolveTrainedTeacherScheduleDateTimes(block)
   const startAt = block.startAt?.trim() || derivedDateTimes.startAt
   const endAt = block.endAt?.trim() || derivedDateTimes.endAt || startAt
-  const baseLabel = block.label?.trim() || ''
-  const sessionLabelNumber = block.round ?? block.sessionCount
-  const sessionDetail =
-    sessionLabelNumber > 0 && !/\d+\s*(?:차시|회차)/u.test(baseLabel)
-      ? `${sessionLabelNumber}차시`
-      : ''
-  const label = [baseLabel, sessionDetail].filter(Boolean).join(' | ') || undefined
+  const classPeriod = block.sessionTimes[0]?.classPeriod?.trim() || null
+  const strippedLabel = stripDefaultEducationSlotNameFromLabel(block.label?.trim() || '')
   return {
     scheduleId: block.scheduleId ?? null,
     round: block.round ?? null,
     startAt,
     endAt,
-    label,
+    label: strippedLabel || undefined,
     preferenceOrder: block.preferenceRank,
     sessionCount: block.sessionCount,
     scheduleStatus: block.scheduleStatus?.trim().toUpperCase() || null,
-  }
-}
-
-function preferredScheduleStatusLabel(status: string | null | undefined): string | null {
-  switch (status?.trim().toUpperCase()) {
-    case 'MATCHED':
-      return '운영 일정 연결됨'
-    case 'UNMATCHED':
-      return '승인 시 실제 일정 생성'
-    case 'INACTIVE_OR_DELETED':
-      return '사용할 수 없음'
-    default:
-      return null
+    classPeriod,
   }
 }
 
@@ -264,8 +261,8 @@ export function InstitutionApproveModal({
         educationScheduleMode,
         requestedSchedules,
         hasStructuredPreferredScheduleSource,
-        hasStructuredPreferredScheduleSource,
-        hasStructuredPreferredScheduleSource
+        false,
+        hasStructuredPreferredScheduleSource && !periodSchedule
       ),
     [
       educationScheduleMode,
@@ -325,20 +322,19 @@ export function InstitutionApproveModal({
             sessionsPerRound,
             educationRoundCount,
           })
+          const ttClassPeriod = hasStructuredPreferredScheduleSource
+            ? (source as TrainedTeacherPreferredScheduleProjection | undefined)?.classPeriod?.trim()
+            : ''
           return {
             key: option.optionKey ?? String(option.scheduleId),
             title: card.title || option.label,
-            detail: card.detail,
+            detail: ttClassPeriod || card.detail,
             confirmableScheduleId: option.confirmableScheduleId,
             preferredScheduleRank: sourceMetadata?.preferenceOrder,
             scheduleStatus: sourceMetadata?.scheduleStatus ?? null,
-            statusLabel: preferredScheduleStatusLabel(sourceMetadata?.scheduleStatus),
+            statusLabel: null,
             requestedScheduleId: undefined as number | undefined,
-            note:
-              isTrainedTeacherPeriodApproval &&
-              sourceMetadata?.scheduleStatus?.trim().toUpperCase() === 'UNMATCHED'
-                ? '승인 시 선택한 희망 일정이 기관별 교육 일정으로 생성됩니다.'
-                : option.assignmentNote ?? null,
+            note: option.assignmentNote ?? null,
           }
         }),
     [
@@ -347,25 +343,29 @@ export function InstitutionApproveModal({
       educationRoundCount,
       educationScheduleMode,
       educationStructure,
+      hasStructuredPreferredScheduleSource,
       preferredSource,
       requestedRowsForDetail,
       scheduleOptions,
       sessionRound,
       sessionsPerRound,
-      isTrainedTeacherPeriodApproval,
     ]
   )
-  const periodSingleRequestedApproval =
+  /** 일반 기관 기간 지정 — 희망 일정 행을 여러 개(모집 상한까지) 골라 requestedScheduleIds로 확정 */
+  const periodRequestedApproval =
     !hasStructuredPreferredScheduleSource &&
-    isGeneralOrganizationPeriodSingleRequestedScheduleApproval({
+    !isTrainedTeacherProgram &&
+    isGeneralOrganizationPeriodRequestedScheduleApproval({
       educationScheduleMode,
       sessionRound,
       educationStructure,
     })
   const requestedScheduleCards = useMemo(() => {
-    if (!periodSingleRequestedApproval) return []
+    if (!periodRequestedApproval) return []
     return requestedRowsForDetail.flatMap(row => {
       if (typeof row.id !== 'number' || !Number.isInteger(row.id) || row.id <= 0) return []
+      // 시작 시각이 지난 희망 일정은 확정할 수 없어(서버 409) 목록에서 뺀다.
+      if (isRequestedScheduleStartPassed(row)) return []
       const requestedDate = row.requestedDate?.trim() || row.periodStartDate?.trim() || ''
       const card = formatOrganizationApproveScheduleCard({
         label: row.label,
@@ -401,28 +401,37 @@ export function InstitutionApproveModal({
     educationRoundCount,
     educationScheduleMode,
     educationStructure,
-    periodSingleRequestedApproval,
+    periodRequestedApproval,
     requestedRowsForDetail,
     sessionRound,
     sessionsPerRound,
   ])
-  const scheduleCardsForView = periodSingleRequestedApproval
+  const scheduleCardsForView = periodRequestedApproval
     ? requestedScheduleCards
     : scheduleCards
-  const allowsMultipleSchedules = periodSingleRequestedApproval
-    ? false
-    : allowsMultipleOrganizationEducationScheduleAssignment({
-        sessionRound,
-        educationScheduleMode,
-        maxScheduleCount,
-      })
-  const assignmentHint = periodSingleRequestedApproval
-    ? ORGANIZATION_EDUCATION_SINGLE_SCHEDULE_HINT
-    : organizationEducationScheduleAssignmentHint({
-        sessionRound,
-        educationScheduleMode,
-        maxScheduleCount,
-      })
+  const trainedTeacherDateSingleSelect =
+    isTrainedTeacherProgram && !periodSchedule && !isTrainedTeacherPeriodApproval
+  const requestedScheduleSelectionLimit = resolveRequestedScheduleSelectionLimit(maxScheduleCount)
+  const allowsMultipleSchedules = periodRequestedApproval
+    ? requestedScheduleSelectionLimit !== 1
+    : trainedTeacherDateSingleSelect
+      ? false
+      : allowsMultipleOrganizationEducationScheduleAssignment({
+          sessionRound,
+          educationScheduleMode,
+          maxScheduleCount,
+        })
+  const assignmentHint = periodRequestedApproval
+    ? requestedScheduleSelectionLimit != null
+      ? `희망 일정 중 최대 ${requestedScheduleSelectionLimit}개까지 확정할 수 있습니다.`
+      : '확정할 희망 일정을 모두 선택해 주세요.'
+    : trainedTeacherDateSingleSelect
+      ? ORGANIZATION_EDUCATION_SINGLE_SCHEDULE_HINT
+      : organizationEducationScheduleAssignmentHint({
+          sessionRound,
+          educationScheduleMode,
+          maxScheduleCount,
+        })
   const [selectedOptionKeys, setSelectedOptionKeys] = useState<string[]>([])
   const [selectedPreferredScheduleRank, setSelectedPreferredScheduleRank] = useState<number | null>(
     null
@@ -449,10 +458,10 @@ export function InstitutionApproveModal({
     !hasStructuredPreferredScheduleSource &&
     educationStructure === 'schedule' &&
     sessionRound === 'multi'
-  const hasPreferredSchedules = periodSingleRequestedApproval
+  const hasPreferredSchedules = periodRequestedApproval
     ? requestedScheduleCards.length > 0
     : scheduleOptions.length > 0
-  const awaitingRequestedSchedules = periodSingleRequestedApproval
+  const awaitingRequestedSchedules = periodRequestedApproval
     ? usesScheduleSection && requestedApplicationId.length > 0 && requestedSchedulesQuery.isLoading
     : usesScheduleSection &&
       !autoAssignSchedule &&
@@ -513,16 +522,17 @@ export function InstitutionApproveModal({
     periodSchedule,
     scheduleValidation.commonSlotOptions,
   ])
-  const selectableCards = periodSingleRequestedApproval
+  const selectableCards = periodRequestedApproval
     ? requestedScheduleCards
-      : hasPreferredSchedules
-        ? scheduleCards.filter(card =>
+    : hasPreferredSchedules
+      ? scheduleCards.filter(card =>
           isTrainedTeacherPeriodApproval
             ? card.preferredScheduleRank != null &&
               card.scheduleStatus?.trim().toUpperCase() !== 'INACTIVE_OR_DELETED'
             : hasStructuredPreferredScheduleSource
-            ? card.confirmableScheduleId != null
-            : periodSchedule || card.confirmableScheduleId != null
+              ? card.confirmableScheduleId != null &&
+                card.scheduleStatus?.trim().toUpperCase() !== 'INACTIVE_OR_DELETED'
+              : periodSchedule || card.confirmableScheduleId != null
         )
       : commonAssignmentCards
   const selectedCards = selectableCards.filter(card =>
@@ -542,13 +552,23 @@ export function InstitutionApproveModal({
     setSelectedOptionKeys(prev => {
       if (prev.includes(optionKey)) return prev.filter(key => key !== optionKey)
       if (!allowsMultipleSchedules) return [optionKey]
+      if (
+        periodRequestedApproval &&
+        requestedScheduleSelectionLimit != null &&
+        prev.length >= requestedScheduleSelectionLimit
+      ) {
+        showAlert({
+          title: '선택 불가',
+          content: ORGANIZATION_APPROVE_REQUESTED_SCHEDULE_COUNT_EXCEEDED_MESSAGE,
+        })
+        return prev
+      }
       return [...prev, optionKey]
     })
   }
 
-  const allowUnassignedApproval =
-    isTrainedTeacherPeriodApproval ||
-    (hasStructuredPreferredScheduleSource && selectableCards.length === 0)
+  /** 기간 지정: 선택 0개 = 일정 미확정 승인 (교육받은 교사 기간형과 동일하게 허용) */
+  const allowUnassignedApproval = isTrainedTeacherPeriodApproval || periodRequestedApproval
   const scheduleSelectionRequired =
     usesScheduleSection && !autoAssignSchedule && !allowUnassignedApproval
   const handleConfirm = (payload: PermissionModalPayload) => {
@@ -580,6 +600,23 @@ export function InstitutionApproveModal({
       })
       return
     }
+    if (periodRequestedApproval) {
+      const requestedResult = buildPeriodRequestedScheduleApprovePayload(
+        selectedCards.flatMap(card =>
+          card.requestedScheduleId != null ? [card.requestedScheduleId] : []
+        ),
+        maxScheduleCount
+      )
+      if (!requestedResult.ok) {
+        showAlert({
+          title: '승인 불가',
+          content: ORGANIZATION_APPROVE_REQUESTED_SCHEDULE_COUNT_EXCEEDED_MESSAGE,
+        })
+        return
+      }
+      onConfirm({ ...payload, ...requestedResult.payload })
+      return
+    }
     if (!scheduleSelectionRequired) {
       onConfirm(payload)
       return
@@ -591,13 +628,13 @@ export function InstitutionApproveModal({
       })
       return
     }
-    if (periodSingleRequestedApproval) {
-      const requestedPayload = buildPeriodSingleRequestedScheduleApprovePayload(
-        selectedCards.flatMap(card =>
-          card.requestedScheduleId != null ? [card.requestedScheduleId] : []
-        )
+    if (hasStructuredPreferredScheduleSource) {
+      const scheduleIds = selectedCards.flatMap(card =>
+        card.confirmableScheduleId != null && card.confirmableScheduleId > 0
+          ? [card.confirmableScheduleId]
+          : []
       )
-      if (requestedPayload == null) {
+      if (scheduleIds.length === 0) {
         showAlert({
           title: '승인 불가',
           content: ORGANIZATION_APPROVE_SCHEDULE_REQUIRED_MESSAGE,
@@ -606,7 +643,9 @@ export function InstitutionApproveModal({
       }
       onConfirm({
         ...payload,
-        requestedScheduleId: requestedPayload.requestedScheduleId,
+        ...(scheduleIds.length === 1
+          ? { selectedScheduleId: scheduleIds[0] }
+          : { slots: scheduleIds.map(scheduleId => ({ scheduleId })) }),
       })
       return
     }
@@ -721,18 +760,22 @@ export function InstitutionApproveModal({
                     {card.detail}
                   </span>
                 ) : null}
-                {!isTrainedTeacherPeriodApproval && card.statusLabel ? (
+                {card.statusLabel ? (
                   <span className="institution-approve-modal__schedule-card-status">
                     {card.statusLabel}
                   </span>
                 ) : null}
-                {!isTrainedTeacherPeriodApproval && card.note ? (
+                {card.note ? (
                   <span className="institution-approve-modal__schedule-card-note">{card.note}</span>
                 ) : null}
               </button>
             )
           })}
         </div>
+      ) : periodRequestedApproval ? (
+        <p className="institution-approve-modal__notice">
+          {ORGANIZATION_APPROVE_PERIOD_UNASSIGNED_NOTICE}
+        </p>
       ) : (
         <p className="institution-approve-modal__notice institution-approve-modal__notice--warn">
           {scheduleValidation.invalidReason ?? ABSENT_PREFERRED_SCHEDULE_MESSAGE}
@@ -793,7 +836,9 @@ export function InstitutionApproveModal({
                     </div>
                   ) : (
                     <span className="institution-approve-modal__assigned-empty">
-                      {ORGANIZATION_APPROVE_SCHEDULE_REQUIRED_MESSAGE}
+                      {periodRequestedApproval
+                        ? ORGANIZATION_APPROVE_PERIOD_UNASSIGNED_NOTICE
+                        : ORGANIZATION_APPROVE_SCHEDULE_REQUIRED_MESSAGE}
                     </span>
                   )
                 }
@@ -802,6 +847,10 @@ export function InstitutionApproveModal({
             </DetailInfoForm.Row>
           </DetailInfoForm>
         </div>
+      ) : periodRequestedApproval && hasPreferredSchedules ? (
+        <p className="institution-approve-modal__notice">
+          {ORGANIZATION_APPROVE_PERIOD_UNASSIGNED_NOTICE}
+        </p>
       ) : !periodSchedule && hasPreferredSchedules && scheduleValidation.slotsResolved ? (
         <p className="institution-approve-modal__notice">
           신청 희망 일정과 연결된 배정 후보가 없습니다.{' '}
@@ -830,6 +879,7 @@ export function InstitutionApproveModal({
       onConfirm={handleConfirm}
       zIndex={zIndex}
       width={600}
+      notifyTimingOptions={copyVariant === 'program-application' ? 'two' : undefined}
     >
       <PermissionModalMessage
         text={buildInstitutionApproveMessage(

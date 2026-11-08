@@ -6,6 +6,7 @@ import { queryRetryDelay, shouldRetryQuery } from '@/shared/lib/query-retry'
 import type { EducationApplicationListItem, EducationApplicationTab } from '../model/types'
 import { EDUCATION_APPLICATION_PAGE_SIZE } from '../model/types'
 import { parsePortalProgramId } from '@/features/program/api/mappers'
+import { getApplicationApiErrorCode } from '@/features/program/lib/application-api-error'
 import {
   cancelMyProgramApplication,
   fetchMyProgramApplicationDetail,
@@ -57,6 +58,7 @@ type MyProgramApplicationDetailQueryResult = {
   application: EducationApplicationListItem | undefined
   isLoading: boolean
   isError: boolean
+  errorCode: string | null
   isRemoteEnabled: boolean
   refetch: () => void
 }
@@ -86,8 +88,8 @@ function emptyRemoteResult(refetch: () => void): MyProgramApplicationsQueryResul
 
 /**
  * 내 프로그램 신청 목록.
- * - `options.tab` 없음: applicationType별 전체(최대 100) 조회 — 교육/봉사 기존 클라이언트 탭 필터용
- * - `options.tab` 있음: 탭별 statusGroup 1회 + 서버 page/size (강의현황)
+ * - `options.tab` 없음: applicationType별 전체(최대 20) 조회 — 봉사 등 클라이언트 탭 필터용
+ * - `options.tab` 있음: 탭별 statusGroup + 서버 page/size (교육·강의현황)
  */
 export function useMyProgramApplications(
   scope: MypageApplicationScope,
@@ -224,6 +226,7 @@ export function useProbeEducationApplicationType(
           return applicationType
         } catch (error) {
           if (isNotFoundApplicationDetailError(error)) continue
+          if (isAxiosError(error) && error.response?.status === 409) return applicationType
           throw error
         }
       }
@@ -257,6 +260,7 @@ export function useMyProgramApplicationDetail(
     enabled,
     staleTime: APPLICATIONS_STALE_MS,
     gcTime: APPLICATIONS_GC_MS,
+    refetchOnMount: 'always',
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
     retry: shouldRetryQuery,
@@ -272,6 +276,7 @@ export function useMyProgramApplicationDetail(
       application: undefined,
       isLoading: false,
       isError: true,
+      errorCode: null,
       isRemoteEnabled: false,
       refetch,
     }
@@ -281,6 +286,7 @@ export function useMyProgramApplicationDetail(
       application: undefined,
       isLoading: false,
       isError: true,
+      errorCode: null,
       isRemoteEnabled: true,
       refetch,
     }
@@ -290,6 +296,7 @@ export function useMyProgramApplicationDetail(
       application: undefined,
       isLoading: true,
       isError: false,
+      errorCode: null,
       isRemoteEnabled: true,
       refetch,
     }
@@ -299,17 +306,20 @@ export function useMyProgramApplicationDetail(
       application: undefined,
       isLoading: false,
       isError: true,
+      errorCode: getApplicationApiErrorCode(query.error),
       isRemoteEnabled: true,
       refetch,
     }
   }
 
+  const application = query.data
+    ? (mapPortalProgramApplicationDetail(query.data, applicationType ?? undefined) ?? undefined)
+    : undefined
   return {
-    application: query.data
-      ? (mapPortalProgramApplicationDetail(query.data, applicationType ?? undefined) ?? undefined)
-      : undefined,
+    application,
     isLoading: false,
     isError: false,
+    errorCode: application?.portalWarningCode ?? null,
     isRemoteEnabled: true,
     refetch,
   }

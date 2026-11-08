@@ -6,10 +6,10 @@ import {
   ACHIEVEMENT_SEARCH_PLACEHOLDER,
   ACHIEVEMENT_SECTION_TITLE,
   ACHIEVEMENT_TAB_ITEMS,
-  DEFAULT_HISTORY_PERIOD_ID,
-  DEFAULT_HISTORY_YEAR,
   filterAchievementRecords,
   HISTORY_PERIODS,
+  resolveHistorySelection,
+  resolveYearForPeriod,
   type AchievementRecordItem,
   type AchievementTabKey,
   type HistoryYearData,
@@ -162,14 +162,13 @@ function HistoryContent({
 }: {
   historyByYear: Readonly<Record<number, HistoryYearData>>
 }) {
-  const [activePeriodId, setActivePeriodId] = useState(DEFAULT_HISTORY_PERIOD_ID)
-  const [activeYear, setActiveYear] = useState(DEFAULT_HISTORY_YEAR)
+  const initialSelection = resolveHistorySelection(historyByYear)
+  const [activePeriodId, setActivePeriodId] = useState(initialSelection.periodId)
+  const [activeYear, setActiveYear] = useState(initialSelection.year)
 
   const handlePeriodSelect = (periodId: string) => {
     setActivePeriodId(periodId)
-    const period = HISTORY_PERIODS.find(item => item.id === periodId)
-    const nextYear = period?.years[0]
-    if (nextYear != null) setActiveYear(nextYear)
+    setActiveYear(resolveYearForPeriod(periodId, historyByYear))
   }
 
   return (

@@ -6,7 +6,6 @@
 import { Form, Input, Select, Switch, Space } from 'antd'
 import type { AdminLevel, ProgramRole, UserRole } from '@/types/user'
 import { getRoleLabel, getAdminLevelLabel, getProgramRoleLabel } from '@/shared/ui'
-import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
 import { isValidKoreanPhoneNumber } from '@/shared/utils/phone-validation'
 import type { CreateUserRequest } from '@/entities/user/api/user-service'
@@ -52,12 +51,8 @@ export function UserCreateForm({ onSubmit, onCancel, loading = false }: UserCrea
       }
     }
 
-    // 강사 정보 설정
-    if (values.role === 'INSTRUCTOR' && values.bankName) {
+    if (values.role === 'INSTRUCTOR') {
       request.instructorInfo = {
-        bankName: values.bankName,
-        accountNumber: values.accountNumber,
-        accountHolder: values.accountHolder,
         isBusinessIncome: values.isBusinessIncome ?? false,
       }
     }
@@ -150,20 +145,9 @@ export function UserCreateForm({ onSubmit, onCancel, loading = false }: UserCrea
       )}
 
       {selectedRole === 'INSTRUCTOR' && (
-        <>
-          <Form.Item name="bankName" label="은행명">
-            <Input placeholder="은행명을 입력해 주세요" />
-          </Form.Item>
-          <Form.Item name="accountNumber" label="계좌번호" trigger="onValueChange">
-            <CmsNumericInput mode="numericText" placeholder="계좌번호를 입력해 주세요" />
-          </Form.Item>
-          <Form.Item name="accountHolder" label="예금주">
-            <Input placeholder="예금주를 입력해 주세요" />
-          </Form.Item>
-          <Form.Item name="isBusinessIncome" label="사업소득자" valuePropName="checked">
-            <Switch />
-          </Form.Item>
-        </>
+        <Form.Item name="isBusinessIncome" label="사업소득자" valuePropName="checked">
+          <Switch />
+        </Form.Item>
       )}
 
       <Form.Item name="isActive" label="활성 상태" valuePropName="checked" initialValue={true}>

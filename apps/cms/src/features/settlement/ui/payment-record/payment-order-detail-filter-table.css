@@ -3,34 +3,8 @@
  * (`PaymentOrderDetailFilterTable` — mode program / instructor 공통)
  */
 
-/* 필터 — TableFilterGroup 공통 치수(240 · gap 12 · dateRange 500) */
-.payment-order-detail-filter-table__filters.filter-table-layout .table-filter-group__container {
-  --filter-field-gap: 12px;
-  --table-filter-field-gap: 12px;
-  gap: var(--filter-field-gap);
-  align-items: flex-end;
-}
-
-.payment-order-detail-filter-table__filters.filter-table-layout
-  .table-filter-group__fields-container {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.payment-order-detail-filter-table__filters.filter-table-layout
-  .table-filter-group__fields-inner.ant-row
-  > .ant-col,
-.payment-order-detail-filter-table__filters.filter-table-layout
-  .table-filter-group__merged-inline-wrap
-  > .table-filter-group__grid-cell {
-  flex: 0 0 auto !important;
-  min-width: 0;
-  max-width: none;
-}
-
-.payment-order-detail-filter-table__filters.filter-table-layout .filter-table-layout__filter {
-  flex-shrink: 0;
-}
+/* 필터 레이아웃은 FilterTableLayout 공통(fields 4개 이상 → responsive wrap·조회 inline)을 그대로 쓴다.
+ * 이 파일에서 table-filter-group Col/flex를 재정의하지 않는다 (겹침 원인 — table-filter-group-layout 룰). */
 /* 강사 별 / 프로그램 별 정산 목록: 본문·헤더 셀 가운데 정렬 (내부 flex·문구 포함) */
 .payment-order-detail-filter-table
   .cms-data-table.ant-table-wrapper
@@ -76,6 +50,25 @@
   vertical-align: middle !important;
   padding-top: 0 !important;
   padding-bottom: 0 !important;
+}
+
+/* 시안(12432:439120 · 15524:543381) 선택 열 60 — cms-data-table 룰: 화면 시안이 60이면 변수로 지정 */
+.payment-order-detail-filter-table .cms-data-table {
+  --table-selection-column-width: 60px;
+}
+
+/*
+ * 산출 내역 「상세 보기」: 시안 Button / h32가 셀(padding 12) 안을 가득 채운다 (220 열 → 196).
+ * 공통 calculation-detail-view-button(156 고정)은 다른 화면용 — 이 표에서만 셀 폭에 맞춘다.
+ */
+.payment-order-detail-filter-table
+  .cms-data-table
+  td
+  .calculation-detail-view-button.cms-button.ant-btn.cms-button--h32 {
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  min-width: 80px !important;
+  max-width: 100% !important;
 }
 
 /* 지급 조서 처리 현황 열: 가운데 정렬 */

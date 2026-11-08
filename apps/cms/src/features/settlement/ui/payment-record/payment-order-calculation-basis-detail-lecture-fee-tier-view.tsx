@@ -33,7 +33,7 @@ function PaymentOrderCalculationBasisDetailLectureFeeTable({
       <BasisDetailInfoFormRow label="구분">
         <BasisDetailReadOnlyValue>{detail.categoryLabel}</BasisDetailReadOnlyValue>
       </BasisDetailInfoFormRow>
-      <BasisDetailInfoFormRow label="강의비 책정">
+      <BasisDetailInfoFormRow label="강사비 책정">
         <BasisDetailReadOnlyValue>
           {formatPaymentOrderCalculationWonPlain(detail.feeAssessmentWon)}
         </BasisDetailReadOnlyValue>
@@ -58,10 +58,7 @@ export function PaymentOrderCalculationBasisDetailLectureFeeTierView({
   detail,
 }: PaymentOrderCalculationBasisDetailLectureFeeTierViewProps) {
   return (
-    <PaymentOrderCalculationBasisDetailLectureFeeTable
-      detail={detail}
-      title="강사비 산정 기준"
-    />
+    <PaymentOrderCalculationBasisDetailLectureFeeTable detail={detail} title="강사비 산정 기준" />
   )
 }
 
@@ -95,7 +92,7 @@ export function PaymentOrderCalculationBasisDetailLectureFeeGeminiView({
       <BasisDetailInfoFormRow label="강의 시간">
         <BasisDetailReadOnlyValue>{detail.lectureTimeDisplay}</BasisDetailReadOnlyValue>
       </BasisDetailInfoFormRow>
-      <BasisDetailInfoFormRow label="강의비 책정">
+      <BasisDetailInfoFormRow label="강사비 책정">
         <BasisDetailReadOnlyValue>
           {formatPaymentOrderCalculationWonPlain(detail.feeAssessmentWon)}
         </BasisDetailReadOnlyValue>

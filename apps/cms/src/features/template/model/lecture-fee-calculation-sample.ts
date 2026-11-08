@@ -1,6 +1,6 @@
 /**
- * 강의비 산출 정보 단락 — 발급 양식 미리보기용 목 데이터.
- * 지급조서(발급용): 교육 진행 차시·총 학생 수·총 강의비는 기본값 없음.
+ * 강사비 산출 정보 단락 — 발급 양식 미리보기용 목 데이터.
+ * 지급조서(발급용): 교육 진행 차시·총 학생 수·총 강사비는 기본값 없음.
  */
 
 import type { LectureFeeCalculationAutofillValues } from '@/features/template/ui/form-set/detail-forms/lecture-fee-calculation-detail-form'
@@ -19,7 +19,7 @@ export const LECTURE_FEE_CALCULATION_SAMPLE_VALUES: LectureFeeCalculationAutofil
   totalLectureFee: '',
 }
 
-/** 정산 신청서 「강의비 산출 내역」— 교육 진행 차시·총 강의비는 기본값 없음 */
+/** 정산 신청서 「강사비 산출 내역」— 교육 진행 차시·총 강사비는 기본값 없음 */
 export const SETTLEMENT_APPLICATION_LECTURE_FEE_CALCULATION_SAMPLE_VALUES: LectureFeeCalculationAutofillValues =
   {
     ...LECTURE_FEE_CALCULATION_SAMPLE_VALUES,

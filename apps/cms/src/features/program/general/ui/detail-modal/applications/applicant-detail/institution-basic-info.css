@@ -92,3 +92,16 @@
   flex: 1 1 0;
   min-width: 0;
 }
+
+/* 담당 교사 정보: 신청 양식과 같은 입력 폭. flex shrink로 placeholder가 잘리지 않게 한다. */
+.institution-basic-info__teacher-edit.detail-info-form-inputs-wrapper-no-gap {
+  flex-wrap: wrap;
+  row-gap: 8px;
+  min-width: 0;
+}
+
+.institution-basic-info__teacher-edit > .cms-select,
+.institution-basic-info__teacher-edit > .cms-input {
+  flex-shrink: 0;
+  min-width: unset;
+}

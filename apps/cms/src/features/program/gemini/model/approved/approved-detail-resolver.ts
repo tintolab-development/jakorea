@@ -1,3 +1,4 @@
+import { formatBusinessIncomeDisplay } from '@jakorea/domain/instructor/business-income'
 import type { GeminiApprovedTrainingDetailResponse } from '@/shared/api/generated/dashboard/schemas/geminiApprovedTrainingDetailResponse'
 import type { GeminiAssignedInstructor } from '@/shared/api/generated/dashboard/schemas/geminiAssignedInstructor'
 import type { GeminiInstructorApplicationItem } from '@/shared/api/generated/dashboard/schemas/geminiInstructorApplicationItem'
@@ -10,18 +11,17 @@ import type {
   GeminiInstructorApplicationApprovalStatus,
   GeminiInstructorApplicationRow,
 } from './instructor-application-types'
-import type { GeminiApprovedTrainingRow, GeminiApprovedTrainingStatus } from './types'
-import { getGeminiApprovedTrainingRowsSnapshot } from './approved-training-store'
+import type { GeminiApprovedTrainingStatus } from './types'
 import { formatInstructorFeeGradeLabel } from '@/shared/constants/instructor-fee-grade'
 import { formatGeminiInstructorApplicationGrade } from '../../lib/instructor-application-grade-label'
 import { toGenderLabelOrRaw } from '@/features/user/api/map-member-gender-birth'
 import { mapGeminiTrainingDateCandidates } from '../../lib/approved/training-date-candidates'
+import { coercePositiveInt } from '@/features/user/api/user-response-row-id'
 
 function toId(value: number | string | null | undefined): string {
   if (value == null) return ''
   return String(value)
 }
-
 function trimmed(value: string | null | undefined): string {
   return value?.trim() ?? ''
 }
@@ -38,16 +38,18 @@ function emptyInstructor(): GeminiApprovedTrainingInstructorInfo {
 }
 
 /** 섹션 노출은 assignedInstructor 객체만. instructorName·일정 매칭으로 대체하지 않는다. */
-function mapAssignedInstructor(
-  assigned: GeminiAssignedInstructor | null | undefined
-): { instructor: GeminiApprovedTrainingInstructorInfo; instructorAssigned: boolean } {
-  if (assigned == null) {
+function mapAssignedInstructor(assigned: GeminiAssignedInstructor | null | undefined): {
+  instructor: GeminiApprovedTrainingInstructorInfo
+  instructorAssigned: boolean
+} {
+  const assignedMemberId = coercePositiveInt(assigned?.memberId)
+  if (assigned == null || assignedMemberId == null) {
     return { instructor: emptyInstructor(), instructorAssigned: false }
   }
   return {
     instructorAssigned: true,
     instructor: {
-      memberId: assigned.memberId != null ? String(assigned.memberId) : undefined,
+      memberId: String(assignedMemberId),
       name: trimmed(assigned.name) || '-',
       region: trimmed(assigned.homeAddress) || '-',
       experienceYears: assigned.experienceYears ?? null,
@@ -95,7 +97,13 @@ export function mapGeminiApprovedTrainingDetailResponseToDetail(
   dto: GeminiApprovedTrainingDetailResponse
 ): GeminiApprovedTrainingDetail {
   const { instructor, instructorAssigned } = mapAssignedInstructor(dto.assignedInstructor)
-  const officialRequired = dto.officialDocumentRequired === true
+  const officialRequired =
+    dto.officialDocumentRequired === true
+      ? true
+      : dto.officialDocumentRequired === false
+        ? false
+        : null
+  const officialInfo = trimmed(dto.officialDocumentRequiredInfo)
   const teacherName = trimmed(dto.teacherName) || trimmed(dto.managerName)
 
   return {
@@ -103,8 +111,9 @@ export function mapGeminiApprovedTrainingDetailResponseToDetail(
     programId: toId(dto.programId),
     recruitmentTitle: trimmed(dto.recruitmentTitle),
     institutionName: trimmed(dto.institutionName) || '기관명 없음',
-    trainingDate: trimmed(dto.trainingDate),
-    trainingTimeText: trimmed(dto.trainingTimeText) || '-',
+    trainingDate: dto.trainingDate ?? '',
+    trainingTimeText: dto.trainingTimeText ?? '',
+    classCount: dto.classCount ?? null,
     trainingDateCandidates: mapGeminiTrainingDateCandidates(dto.trainingDateCandidates),
     studentCount: dto.studentCount ?? null,
     recruitmentCount: dto.institutionApplicationCount ?? null,
@@ -112,6 +121,7 @@ export function mapGeminiApprovedTrainingDetailResponseToDetail(
     institutionAddress: buildInstitutionAddress(dto),
     joinedAt: trimmed(dto.institutionJoinedAt),
     managerMemberId: dto.teacherMemberId != null ? String(dto.teacherMemberId) : undefined,
+    teacherSchoolOrganizationId: coercePositiveInt(dto.teacherSchoolOrganizationId) ?? null,
     managerNameKo: teacherName,
     managerScheduleChangeCount: dto.teacherScheduleChangeCount ?? 0,
     managerGender: toGenderLabelOrRaw(dto.teacherGender) ?? '',
@@ -126,19 +136,18 @@ export function mapGeminiApprovedTrainingDetailResponseToDetail(
     managerAccountNumber: trimmed(dto.teacherAccountNumber),
     managerAccountHolder: trimmed(dto.teacherAccountHolder),
     managerInstructorFeeGrade: formatInstructorFeeGradeLabel(dto.teacherInstructorFeeGrade),
-    managerBusinessIncomeLabel: trimmed(dto.teacherBusinessIncomeLabel),
+    managerBusinessIncomeLabel:
+      formatBusinessIncomeDisplay(dto.teacherBusinessIncomeLabel) ??
+      trimmed(dto.teacherBusinessIncomeLabel),
     managerOneLineIntro: trimmed(dto.teacherOneLineIntro),
-    managerPosition: trimmed(dto.teacherPosition),
-    managerSubject: trimmed(dto.teacherSubject),
+    managerPosition: dto.teacherPosition ?? '',
+    managerSubject: dto.teacherSubject ?? '',
     instructor,
-    officialDocumentType: officialRequired ? '필요' : '필요 없음',
-    officialDocumentRequiredInfo: officialRequired
-      ? '이름, 소속(학교), 연수예정일시, 연수인원'
-      : '-',
     trainingContent: '',
     instructorAssigned,
     lastPreferredDate: trimmed(dto.lastPreferredDate),
     officialDocumentRequired: officialRequired,
+    officialDocumentRequiredInfo: officialInfo || null,
     progressStatus: mapProgressStatus(dto.progressStatus),
   }
 }
@@ -147,9 +156,20 @@ function mapInstructorApplicationStatus(
   status?: string
 ): GeminiInstructorApplicationApprovalStatus {
   const normalized = status?.trim().toUpperCase() ?? ''
-  if (normalized === 'APPROVED') return 'APPROVED'
-  if (normalized === 'REJECTED') return 'REJECTED'
-  return 'PENDING'
+  if (['APPROVED', 'APPROVAL_COMPLETED', 'FINAL_SELECTED'].includes(normalized)) {
+    return 'APPROVED'
+  }
+  if (['REJECTED', 'AUTO_REJECTED', 'CANCELLED'].includes(normalized)) {
+    return 'REJECTED'
+  }
+  if (
+    ['PENDING', 'SUBMITTED', 'WAITING', 'WAITING_REVIEW', 'REJECTION_CANCELLED'].includes(
+      normalized
+    )
+  ) {
+    return 'PENDING'
+  }
+  return 'UNKNOWN'
 }
 
 export function mapGeminiInstructorApplicationItemToRow(
@@ -164,71 +184,12 @@ export function mapGeminiInstructorApplicationItemToRow(
     instructorName: trimmed(dto.instructorName) || '강사명 없음',
     homeSido: trimmed(dto.homeSido),
     homeSigungu: trimmed(dto.homeSigungu),
-    experienceYears: dto.experienceYears ?? 0,
+    experienceYears: dto.experienceYears ?? null,
     grade: formatGeminiInstructorApplicationGrade(dto.grade, dto.instructorFeeGradeSnapshot),
     contact: trimmed(dto.phone) || '-',
     email: trimmed(dto.email) || '-',
     monthlyAssignmentCount: dto.monthlyAssignmentCount ?? 0,
     approvalStatus: mapInstructorApplicationStatus(dto.applicationStatus),
+    availableActions: dto.availableActions ?? [],
   }
-}
-
-/** @deprecated 목록 캐시 폴백 — 상세 GET 전환 후 호출하지 않는다. */
-export function mapGeminiApprovedTrainingRowToDetail(
-  row: GeminiApprovedTrainingRow
-): GeminiApprovedTrainingDetail {
-  const instructorAssigned = row.instructorAssigned
-  return {
-    id: row.id,
-    programId: '',
-    recruitmentTitle: row.recruitmentTitle ?? '',
-    recruitmentCount: null,
-    completedRecruitmentCount: null,
-    institutionAddress: `${row.institutionSido} ${row.institutionSigungu}`.trim(),
-    joinedAt: '',
-    managerMemberId: '',
-    managerNameKo: row.managerName,
-    managerScheduleChangeCount: 0,
-    managerGender: '',
-    managerBirthDate: '',
-    managerEmploymentStatus: null,
-    managerContact: '',
-    managerEmail: '',
-    managerSchool: '',
-    managerHomeAddress: '',
-    managerLectureExperience: '',
-    managerAccountBank: '',
-    managerAccountNumber: '',
-    managerAccountHolder: '',
-    managerInstructorFeeGrade: '',
-    managerBusinessIncomeLabel: '',
-    managerOneLineIntro: '',
-    managerPosition: '',
-    managerSubject: '',
-    trainingContent: '',
-    institutionName: row.institutionName,
-    trainingDate: row.trainingDate,
-    trainingTimeText: row.trainingTimeText,
-    trainingDateCandidates: row.trainingDateCandidates,
-    studentCount: row.studentCount,
-    instructor: emptyInstructor(),
-    officialDocumentType: row.officialDocumentRequired ? '필요' : '필요 없음',
-    officialDocumentRequiredInfo: row.officialDocumentRequired
-      ? '이름, 소속(학교), 연수예정일시, 연수인원'
-      : '-',
-    instructorAssigned,
-    lastPreferredDate: row.lastPreferredDate,
-    officialDocumentRequired: row.officialDocumentRequired,
-    progressStatus: null,
-  }
-}
-
-export function getGeminiApprovedTrainingDetail(rowId: string): GeminiApprovedTrainingDetail | null {
-  const row = getGeminiApprovedTrainingRowsSnapshot().find(x => x.id === rowId)
-  if (!row) return null
-  return mapGeminiApprovedTrainingRowToDetail(row)
-}
-
-export function getGeminiApprovedTrainingRowById(rowId: string): GeminiApprovedTrainingRow | null {
-  return getGeminiApprovedTrainingRowsSnapshot().find(x => x.id === rowId) ?? null
 }

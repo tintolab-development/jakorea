@@ -51,5 +51,7 @@ export interface SettlementFrontendResponse {
   updatedAt?: string;
   /** 지급조서·산출 내역서 수취인 표시 블록(MASKED). instructorMemberId가 없으면 null */
   payee?: SettlementFrontendPayeeResponse | null;
+  /** 가장 최근 정산 결과 알림(확인/반려/지급완료/정정완료 재발송 포함) 시각. 없으면 null. statementStatus·paymentStatus·paidAt는 재발송으로 바뀌지 않습니다. */
+  resultNotificationSentAt?: string | null;
   availableActions?: string[];
 }

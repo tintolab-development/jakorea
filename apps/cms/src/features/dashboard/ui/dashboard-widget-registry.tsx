@@ -150,6 +150,8 @@ export interface DashboardWidgetRenderProps {
   instructorActivity: InstructorActivitySummary | null
   instructorActivityLoading: boolean
   instructorCount: number | null
+  /** 부모 슬롯의 최종 너비. 위젯 내부 감시자 없이 테이블·캘린더 표시를 결정한다. */
+  isHalfColumn?: boolean
   /** 관리자 프로그램 일정 위젯 ACL */
   user?: Omit<User, 'password'> | null
 }
@@ -308,9 +310,9 @@ export const DASHBOARD_WIDGET_REGISTRY: Partial<
       <NotificationWidget />
     </LazyWidget>
   ),
-  'customer-inquiry-status-widget': () => (
+  'customer-inquiry-status-widget': p => (
     <LazyWidget height={338}>
-      <CustomerInquiryStatusWidget />
+      <CustomerInquiryStatusWidget isHalfColumn={p.isHalfColumn} />
     </LazyWidget>
   ),
   'program-schedule-general-widget': p => (
@@ -321,6 +323,7 @@ export const DASHBOARD_WIDGET_REGISTRY: Partial<
         title="일반 프로그램 일정"
         viewAllPath={programScheduleMorePath('general')}
         user={p.user}
+        isHalfColumn={p.isHalfColumn}
       />
     </LazyWidget>
   ),
@@ -332,6 +335,7 @@ export const DASHBOARD_WIDGET_REGISTRY: Partial<
         title="1사1교 프로그램 일정"
         viewAllPath={programScheduleMorePath('company_school')}
         user={p.user}
+        isHalfColumn={p.isHalfColumn}
       />
     </LazyWidget>
   ),
@@ -343,6 +347,7 @@ export const DASHBOARD_WIDGET_REGISTRY: Partial<
         title="UJAT 프로그램 일정"
         viewAllPath={programScheduleMorePath('ujat')}
         user={p.user}
+        isHalfColumn={p.isHalfColumn}
       />
     </LazyWidget>
   ),
@@ -354,6 +359,7 @@ export const DASHBOARD_WIDGET_REGISTRY: Partial<
         title="Gemini 프로그램 일정"
         viewAllPath={programScheduleMorePath('gemini')}
         user={p.user}
+        isHalfColumn={p.isHalfColumn}
       />
     </LazyWidget>
   ),
@@ -362,9 +368,9 @@ export const DASHBOARD_WIDGET_REGISTRY: Partial<
       <MenuShortcutWidget />
     </LazyWidget>
   ),
-  'recruitment-status-widget': () => (
+  'recruitment-status-widget': p => (
     <LazyWidget height={340}>
-      <RecruitmentStatusWidget />
+      <RecruitmentStatusWidget isHalfColumn={p.isHalfColumn} />
     </LazyWidget>
   ),
   'kpi-achievement-widget': () => (

@@ -461,6 +461,74 @@ describe('resolvePersistedProgramTargetLevels', () => {
   })
 })
 
+describe('programToRecruitmentTabEditValues TRAINED_TEACHER participant row', () => {
+  const ttProgram = {
+    id: '186546',
+    title: 'TT',
+    type: 'offline' as const,
+    format: 'workshop' as const,
+    category: 'school' as const,
+    description: '',
+    backendProgramType: 'TRAINED_TEACHER',
+    contactName: '컬럼담당',
+    contactPhone: '02-0000-0000',
+    contactEmail: 'column@jakorea.org',
+    remarks: '컬럼 비고',
+    generalParticipantTypes: ['school_institution'],
+    programRecruitments: [
+      {
+        id: 187105,
+        recruitmentType: 'PARTICIPANT',
+        applicationType: 'ORGANIZATION',
+        startAt: '2026-11-30T15:00:00Z',
+        endAt: '2026-12-13T15:00:00Z',
+        operationStartDate: '2026-11-28',
+        operationEndDate: '2026-12-31',
+        contactName: '이하은',
+        contactPhone: '031-234-5678',
+        contactEmail: 'recruit@jakorea.org',
+        remarks: '일정은 학교 사정에 따라 조율할 수 있습니다.',
+        applicationFormBindingId: 190427,
+      },
+    ],
+  } as Program
+
+  it('참여자 행 문의처·기간을 컬럼보다 우선 시드한다', () => {
+    const values = programToRecruitmentTabEditValues(ttProgram, 'participant', {
+      strictRemote: true,
+    })
+    expect(values.recruitmentContactOrganizationName).toBe('이하은')
+    expect(values.contactPhone).toBe('031-234-5678')
+    expect(values.contactEmail).toBe('recruit@jakorea.org')
+    expect(values.remarks).toBe('일정은 학교 사정에 따라 조율할 수 있습니다.')
+    expect(values.applicationStartDate).toBe('2026-11-30T15:00:00Z')
+    expect(values.applicationEndDate).toBe('2026-12-13T15:00:00Z')
+    expect(values.participantProgramOperationStartDate).toBe('2026-11-28')
+    expect(values.participantProgramOperationEndDate).toBe('2026-12-31')
+  })
+
+  it('행 문의처가 null이면 컬럼으로 채우지 않는다', () => {
+    const values = programToRecruitmentTabEditValues(
+      {
+        ...ttProgram,
+        programRecruitments: [
+          {
+            ...ttProgram.programRecruitments![0],
+            contactName: null,
+            contactPhone: null,
+            contactEmail: null,
+          },
+        ],
+      },
+      'participant',
+      { strictRemote: true }
+    )
+    expect(values.recruitmentContactOrganizationName).toBe('')
+    expect(values.contactPhone).toBe('')
+    expect(values.contactEmail).toBe('')
+  })
+})
+
 describe('parse helpers', () => {
   it('parseTargetLevelsFromDisplayLabel', () => {
     expect(parseTargetLevelsFromDisplayLabel('초등, 중학교')).toEqual(['elementary', 'middle'])
@@ -487,6 +555,6 @@ describe('parse helpers', () => {
   it('formatDateRange keeps clock when present', () => {
     expect(
       formatDateRange('2026-04-03T09:30:00+09:00', '2026-11-20T18:00:00+09:00')
-    ).toBe('2026.04.03(금) 09:30 ~ 2026.11.20(금) 18:00')
+    ).toBe('2026.04.03 09:30 ~ 2026.11.20 18:00')
   })
 })

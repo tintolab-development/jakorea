@@ -20,6 +20,8 @@ type LectureReportPreviewModalProps = {
   onClose: () => void
   loading?: boolean
   error?: string
+  instructorName?: string
+  hideInstitutionFields?: boolean
 }
 
 function splitLectureReportPages(draft: WritingFormDraft): WritingFormDraft['paragraphs'][] {
@@ -47,6 +49,8 @@ export function LectureReportPreviewModal({
   onClose,
   loading = false,
   error = '',
+  instructorName,
+  hideInstitutionFields = false,
 }: LectureReportPreviewModalProps) {
   const [currentPage, setCurrentPage] = useState(1)
 
@@ -103,7 +107,12 @@ export function LectureReportPreviewModal({
           ) : null}
           {!loading && !error && pageDraft != null ? (
             <LectureReportPreviewPage title={title} pageIndex={safePage - 1}>
-              <LectureReportPreviewBody draft={pageDraft} content={content} />
+              <LectureReportPreviewBody
+                draft={pageDraft}
+                content={content}
+                instructorName={safePage === 1 ? instructorName : undefined}
+                hideInstitutionFields={hideInstitutionFields}
+              />
             </LectureReportPreviewPage>
           ) : null}
         </div>

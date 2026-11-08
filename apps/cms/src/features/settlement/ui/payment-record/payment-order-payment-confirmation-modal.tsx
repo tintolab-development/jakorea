@@ -2,13 +2,13 @@
  * 산출 내역서 — 「확인 처리」 시 노출되는 지급조서 확인 모달 (프로그램·강사 상세 공통)
  */
 
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import type { Dayjs } from 'dayjs'
 import { formatDateDotWithWeekday, isBeforeSeoulToday } from '@/shared/utils/date'
-import { CalendarOutlined } from '@ant-design/icons'
-import { DatePicker } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
+import { CmsDatePicker } from '@/shared/ui/cms-datepicker'
+import { ProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
 import type { PaymentOrderProgramCalculationStatement } from '@/features/settlement-management/model/payment-order-admin-list'
 import { defaultLectureFeePaymentScheduledDate } from '@/features/settlement/lib/third-tuesday-of-month'
 import './payment-order-payment-confirmation-modal.css'
@@ -20,9 +20,11 @@ function formatKoreanDateWithWeekday(value: Dayjs): string {
 export interface PaymentOrderPaymentConfirmationModalProps {
   open: boolean
   onCancel: () => void
-  /** 선택한 강의비 지급 예정일(ISO YYYY-MM-DD) */
+  /** 선택한 계좌 지급 예정일(ISO YYYY-MM-DD) — 강사·봉사자·참여자 공통 */
   onConfirm: (payload: { lectureFeePaymentScheduledDateIso: string }) => void
   data: PaymentOrderProgramCalculationStatement | null
+  /** 산출 내역서를 풀페이지 위(zIndex 지정)에서 열었을 때 그보다 위 */
+  zIndex?: number
 }
 
 function getInstructorName(statement: PaymentOrderProgramCalculationStatement): string {
@@ -35,8 +37,17 @@ export function PaymentOrderPaymentConfirmationModal({
   onCancel,
   onConfirm,
   data,
+  zIndex,
 }: PaymentOrderPaymentConfirmationModalProps) {
   const block0 = data?.blocks[0]
+  /** 기관·교육일·회차 중 값이 있는 것만 — 회차/차시가 없는 개인 정산 등에서 끝 구분선이 남지 않게 */
+  const detailParts = [
+    block0?.institutionName,
+    block0?.lectureDateDisplay,
+    block0?.lectureSessionDisplay,
+  ]
+    .map(part => part?.trim() ?? '')
+    .filter(part => part !== '' && part !== '-' && part !== '—')
   const instructorName = data ? getInstructorName(data) : ''
 
   const [expectedDate, setExpectedDate] = useState<Dayjs>(() =>
@@ -55,21 +66,23 @@ export function PaymentOrderPaymentConfirmationModal({
     <ContentModal
       open={canShow}
       onCancel={onCancel}
-      title="지급조서 확인"
+      title="지급조서 확인 안내"
       width={600}
+      zIndex={zIndex}
       className="payment-order-payment-confirm-modal"
       footer={
         <div className="payment-order-payment-confirm__footer-actions">
-          <CmsButton variant="secondary" size="large" onClick={onCancel}>
+          <CmsButton variant="secondary" size="h40" onClick={onCancel}>
             취소
           </CmsButton>
           <CmsButton
             variant="primary"
-            size="large"
+            size="h40"
             onClick={() =>
               onConfirm({ lectureFeePaymentScheduledDateIso: expectedDate.format('YYYY-MM-DD') })
-            } >
-            지급조서 확인 완료
+            }
+          >
+            확인 완료
           </CmsButton>
         </div>
       }
@@ -77,35 +90,36 @@ export function PaymentOrderPaymentConfirmationModal({
       {block0 ? (
         <div className="payment-order-payment-confirm">
           <p className="payment-order-payment-confirm__line">
-            아래 항목에 대한 <strong className="payment-order-payment-confirm__name">{instructorName}</strong>
-            님의 강의비 지급 요청을 확인 처리하시겠습니까?
+            <strong className="payment-order-payment-confirm__name">[{instructorName}]</strong>{' '}
+            님의 강사비 지급조서 신청을 확인 처리하시겠습니까?
           </p>
           <p className="payment-order-payment-confirm__line">
-            강의비는 <strong>매월 셋째주 화요일</strong>에 지급됩니다.
+            정산된 금액은 <strong>매월 셋째 주 화요일에 계좌 지급</strong>됩니다.
           </p>
-          <div className="payment-order-payment-confirm__detail-line" aria-label="참여 기관·강의일·회차">
-            <span>{block0.institutionName}</span>
-            <span className="payment-order-payment-confirm__sep" aria-hidden>
-              |
-            </span>
-            <span>{block0.lectureDateDisplay}</span>
-            <span className="payment-order-payment-confirm__sep" aria-hidden>
-              |
-            </span>
-            <span>{block0.lectureSessionDisplay}</span>
+          <div
+            className="payment-order-payment-confirm__detail-line"
+            aria-label="참여 기관·강의일·회차"
+          >
+            {detailParts.map((part, index) => (
+              <Fragment key={`${index}-${part}`}>
+                {index > 0 ? <ProgramDetailTdDivider /> : null}
+                <span>{part}</span>
+              </Fragment>
+            ))}
           </div>
           <div className="payment-order-payment-confirm__date-block">
-            <span className="payment-order-payment-confirm__date-label">강의비 지급 예정일</span>
-            <DatePicker
+            <CmsDatePicker
               className="payment-order-payment-confirm__date-picker"
+              label="계좌 지급 예정일"
+              required
+              inputSize="medium"
+              width="100%"
               value={expectedDate}
               onChange={d => d && setExpectedDate(d)}
               disabledDate={current => isBeforeSeoulToday(current)}
               format={formatKoreanDateWithWeekday}
-              suffixIcon={<CalendarOutlined />}
               allowClear={false}
-              inputReadOnly
-              popupStyle={{ zIndex: 1200 }}
+              popupStyle={{ zIndex: (zIndex ?? 1000) + 200 }}
             />
           </div>
         </div>

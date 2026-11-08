@@ -31,7 +31,8 @@ export const generalProgramQueryKeys = {
     [...generalProgramQueryKeys.all, 'managers', programId] as const,
   managers: (programId: string, filtersKey = '') =>
     [...generalProgramQueryKeys.managersRoot(programId), filtersKey] as const,
-  managerCandidates: () => [...generalProgramQueryKeys.all, 'manager-candidates'] as const,
+  managerCandidates: (keyword = '') =>
+    [...generalProgramQueryKeys.all, 'manager-candidates', keyword] as const,
   surveys: (programId: string) => [...generalProgramQueryKeys.all, 'surveys', programId] as const,
   surveyDisplayTitles: (programId: string, versionIdsKey: string) =>
     [...generalProgramQueryKeys.all, 'survey-display-titles', programId, versionIdsKey] as const,
@@ -45,8 +46,14 @@ export const generalProgramQueryKeys = {
   /** 프로그램 공통 교육 예정 슬롯 — GET education-slots (schedules 캐시와 분리) */
   educationSlots: (programId: string) =>
     [...generalProgramQueryKeys.all, 'education-slots', programId] as const,
-  surveyResponses: (programId: string, templateVersionId: string) =>
-    [...generalProgramQueryKeys.all, 'survey-responses', programId, templateVersionId] as const,
+  surveyResponses: (programId: string, templateVersionId: string, bindingId = '') =>
+    [
+      ...generalProgramQueryKeys.all,
+      'survey-responses',
+      programId,
+      templateVersionId,
+      bindingId,
+    ] as const,
   surveyResponseDetail: (programId: string, templateVersionId: string, formResponseId: string) =>
     [
       ...generalProgramQueryKeys.all,
@@ -55,8 +62,14 @@ export const generalProgramQueryKeys = {
       templateVersionId,
       formResponseId,
     ] as const,
-  surveySummary: (programId: string, templateVersionId: string) =>
-    [...generalProgramQueryKeys.all, 'survey-summary', programId, templateVersionId] as const,
+  surveySummary: (programId: string, templateVersionId: string, bindingId = '') =>
+    [
+      ...generalProgramQueryKeys.all,
+      'survey-summary',
+      programId,
+      templateVersionId,
+      bindingId,
+    ] as const,
   mutations: {
     create: () => [...generalProgramQueryKeys.all, 'mutation', 'create'] as const,
     update: (programId: string) =>

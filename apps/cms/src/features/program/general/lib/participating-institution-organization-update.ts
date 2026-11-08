@@ -7,6 +7,7 @@ import {
 import { toRequestedEducationFormatApiValue } from '@/features/program/general/api/adapters/general-applications-adapters'
 import type { OrganizationApplicationUpdateRequest } from '@/shared/api/generated/dashboard/schemas/organizationApplicationUpdateRequest'
 import type { SchoolDetailForModal } from '@/features/program/general/model/school-detail-types'
+import { buildOrganizationApplicationTeacherContactPatch } from '@/features/program/general/lib/organization-application-teacher-contact-patch'
 
 /** OpenAPI는 number만 표기하지만 교재 미지정은 null 전송이 계약 */
 export type OrganizationApplicationUpdateRequestWithNullTextbook =
@@ -41,6 +42,11 @@ export function buildParticipatingInstitutionOrganizationUpdateRequest(params: {
    * false면 값이 달라도 requestedEducationFormat을 넣지 않는다.
    */
   allowEducationFormatChange?: boolean
+  /** 담당 교사 Tel/M/이메일은 이 기준과 다를 때만 PATCH에 넣는다. */
+  baselineTeacherContact?: Pick<
+    ParticipatingInstitutionEditDraft,
+    'teacherPhone' | 'teacherMobile' | 'teacherEmail'
+  >
 }): OrganizationApplicationUpdateRequestWithNullTextbook {
   const { draft, teacherOptions, fallbackTeacherMemberId } = params
   const selectedTeacher = teacherOptions.find(option => option.label === draft.teacherName)
@@ -82,8 +88,7 @@ export function buildParticipatingInstitutionOrganizationUpdateRequest(params: {
       ? { requestedEducationFormat }
       : {}),
     teacherMemberId,
-    teacherPhone: draft.teacherMobile.trim() || draft.teacherPhone.trim() || undefined,
-    teacherEmail: draft.teacherEmail.trim() || undefined,
+    ...buildOrganizationApplicationTeacherContactPatch(draft, params.baselineTeacherContact ?? draft),
     applicationReason: draft.applicationReason.trim() || undefined,
     otherRequests: draft.otherRequests.trim() || undefined,
     computerInRoom: draft.computerInRoom.trim() || undefined,

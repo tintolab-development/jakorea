@@ -3,12 +3,15 @@ import type { ProgramApplicationType } from '../../applications/api/types'
 import {
   canSubmitEducationAbsenceReason,
   EDUCATION_SCHEDULE_ATTENDANCE_LABEL,
-  EDUCATION_SCHEDULE_PROGRESS_LABEL,
+  educationScheduleProgressLabel,
   resolveEducationScheduleRowProgressStatus,
   shouldDisplayEducationAbsenceReason,
   shouldShowEducationAssignment,
 } from '../lib/schedule-rules'
-import { resolveEducationScheduleRowDateLabel } from '../lib/format'
+import {
+  resolveEducationScheduleDateLabel,
+  resolveEducationScheduleRowDateLabel,
+} from '../lib/format'
 import {
   educationCurriculumSessionSummaryLabel,
   hasEducationCurriculumSessions,
@@ -44,7 +47,10 @@ export function EducationScheduleRow({
   showAbsenceReason = true,
 }: EducationScheduleRowProps) {
   const progress = resolveEducationScheduleRowProgressStatus(item)
-  const heldLabel = resolveEducationScheduleRowDateLabel(item)
+  const heldLabel =
+    item.operationalDayView === true
+      ? resolveEducationScheduleDateLabel(item)
+      : resolveEducationScheduleRowDateLabel(item)
   const showAssignment = assignmentAllowed && shouldShowEducationAssignment(item)
   const hasOperationalSchedule = item.scheduleId !== null
   const showAbsenceSubmit =
@@ -60,13 +66,18 @@ export function EducationScheduleRow({
   const curriculumSessions = hasEducationCurriculumSessions(item.curriculumSessions)
     ? visibleEducationCurriculumSessions(item.curriculumSessions)
     : []
-  const showCurriculumSessions = curriculumSessions.length > 0
+  const showCurriculumSessions =
+    item.operationalDayView !== true && curriculumSessions.length > 0
   const sessionSummary = showCurriculumSessions
     ? educationCurriculumSessionSummaryLabel(curriculumSessions)
     : undefined
+  // TT 기관 운영일 — Figma 13843:112603: 일시 옆에 `N차시`만. 지망 순위는 카드에 쓰지 않는다.
   const subtitle = showCurriculumSessions
     ? sessionSummary || '전 차시'
-    : item.rowLabel?.trim() || '-'
+    : item.operationalDayView === true
+      ? item.durationLabel?.trim() || '-'
+      : item.rowLabel?.trim() || '-'
+  const showSubtitleText = !(item.operationalDayView === true && subtitle === '-')
   const sessionHeading = subtitle === '-' ? heldLabel : `${heldLabel}, ${subtitle}`
   const absenceReason =
     showAbsenceReason &&
@@ -86,15 +97,17 @@ export function EducationScheduleRow({
           mobileStack
           badge={
             <PFStateBadge size="small" tone={progress === 'completed' ? 'success' : 'progress'}>
-              {EDUCATION_SCHEDULE_PROGRESS_LABEL[progress]}
+              {educationScheduleProgressLabel(progress)}
             </PFStateBadge>
           }
           date={heldLabel}
           subtitle={
             <>
-              <PFText as="span" typo="bd-lg-sb" color="primary-500">
-                {subtitle}
-              </PFText>
+              {showSubtitleText ? (
+                <PFText as="span" typo="bd-lg-sb" color="primary-500">
+                  {subtitle}
+                </PFText>
+              ) : null}
               {item.team ? (
                 <span className={styles.teamInfo}>
                   <span className={styles.teamDivider} aria-hidden="true" />

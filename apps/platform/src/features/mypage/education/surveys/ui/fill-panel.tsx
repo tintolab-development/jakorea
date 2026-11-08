@@ -19,8 +19,8 @@ import { useSettingsView } from '@/features/mypage/settings/hooks/use-settings-v
 import { PFAlertModal, PFButton, PFText } from '@/shared/ui'
 import {
   clearEducationSurveyPreviewAnswers,
+  applySurveyDisplayTitleToDraft,
   createEducationSurveySeedDraft,
-  EDUCATION_SURVEY_SEED_CREATED_AT,
   type EducationSatisfactionAudience,
   type EducationSurveySeedKind,
 } from '../lib/seed-survey-draft'
@@ -31,7 +31,11 @@ import {
   useSubmitEducationSurveyMutation,
 } from '../../applications/api/activity-hooks'
 import {
+  applySatisfactionScheduleLineDate,
   isPortalBoundFormVersionUsable,
+  isPortalSatisfactionFormType,
+  isPortalSurveyFormType,
+  isVolunteerFacingSatisfactionForm,
   PORTAL_SATISFACTION_FORM_TYPE_QUERIES,
   PORTAL_SURVEY_FORM_TYPE_QUERIES,
 } from '../../applications/lib/portal-form-list'
@@ -39,6 +43,7 @@ import type { ProgramApplicationType } from '../../applications/api/types'
 import type { EducationSurveyListEntry } from '../lib/survey-list-types'
 import { resolveEducationSurveyFillNotice } from '../lib/fill-notice'
 import {
+  portalFormSubmissionPeriodBlockMessage,
   resolvePortalFormSubmissionPeriodBlockForEntry,
   type PortalFormSubmissionPeriodBlockReason,
 } from '../lib/portal-form-submission-period'
@@ -60,6 +65,7 @@ import { EducationSurveyHeader } from './survey-header'
 import { EducationSurveyList } from './survey-list'
 import { EducationSurveyPeriodEndedPanel } from './period-ended-panel'
 import { EducationSurveySubmitConfirm } from './submit-confirm'
+import { isPortalFormTargetRoleMismatch } from '../lib/portal-form-target-role'
 import styles from './fill-panel.module.css'
 
 export type EducationSurveyFillPanelProps = {
@@ -76,11 +82,9 @@ export type EducationSurveyFillPanelProps = {
   applicationType?: ProgramApplicationType | null
   applicationId?: string | null
   programId?: string | null
+  /** 상세 `participation.participantId` — submit `contextType=PARTICIPANT` */
+  participantId?: number | null
   pendingSurveyCount?: number
-  /** 상세 `capabilities.canSubmitSatisfaction` — false면 작성 CTA 숨김 */
-  canSubmitSatisfaction?: boolean
-  /** 상세 `capabilities.canSubmitSurvey` — false면 작성 CTA 숨김 */
-  canSubmitSurvey?: boolean
 }
 
 function surveyRenderLoadFallback(kind: EducationSurveySeedKind): string {
@@ -117,7 +121,11 @@ function resolveFillDraft(options: {
   const hasAnswers = Boolean(remoteAnswers && Object.keys(remoteAnswers).length > 0)
   const submitted = options.selectedEntry?.status === 'submitted'
   const forFill = submitted || hasAnswers ? seeded : clearEducationSurveyPreviewAnswers(seeded)
-  return applyEducationSurveyAnswersToDraft(forFill, remoteAnswers)
+  return applySurveyDisplayTitleToDraft(
+    applyEducationSurveyAnswersToDraft(forFill, remoteAnswers),
+    options.selectedEntry?.title,
+    options.kind === 'satisfaction' ? { overwrite: true } : undefined,
+  )
 }
 
 export function EducationSurveyFillPanel({
@@ -132,26 +140,54 @@ export function EducationSurveyFillPanel({
   applicationType,
   applicationId,
   programId,
+  participantId,
   pendingSurveyCount,
-  canSubmitSatisfaction,
-  canSubmitSurvey,
 }: EducationSurveyFillPanelProps) {
+  const hasApplicationContext = Boolean(applicationType && applicationId)
   const applicationForms = useApplicationFormsQuery(
     applicationType,
     applicationId,
     kind === 'satisfaction' ? 'SATISFACTION' : 'SURVEY',
   )
   const availableForms = useAvailableProgramFormsQuery(
-    programId,
+    hasApplicationContext ? null : programId,
     kind === 'satisfaction'
       ? PORTAL_SATISFACTION_FORM_TYPE_QUERIES
       : PORTAL_SURVEY_FORM_TYPE_QUERIES,
   )
-  const remoteForms = applicationForms.enabled ? applicationForms : availableForms
-  const surveyList = useMemo(
-    () => (remoteForms.enabled ? remoteForms.items : []),
-    [remoteForms.enabled, remoteForms.items],
-  )
+  const remoteForms = hasApplicationContext ? applicationForms : availableForms
+  const surveyList = useMemo(() => {
+    const items = remoteForms.enabled ? remoteForms.items : []
+    return items
+      .filter(entry => {
+        if (
+          isPortalFormTargetRoleMismatch(entry.targetRole, applicationType, satisfactionAudience)
+        ) {
+          return false
+        }
+        if (kind === 'satisfaction') {
+          if (!isPortalSatisfactionFormType(entry.formType)) return false
+          if (
+            satisfactionAudience === 'teacher' &&
+            isVolunteerFacingSatisfactionForm(entry)
+          ) {
+            return false
+          }
+          return true
+        }
+        return isPortalSurveyFormType(entry.formType)
+      })
+      .map((entry, index) =>
+        applySatisfactionScheduleLineDate(entry, educationScheduleLines?.[index])
+      )
+  }, [
+    applicationType,
+    educationScheduleLines,
+    kind,
+    remoteForms.enabled,
+    remoteForms.items,
+    satisfactionAudience,
+  ])
   const showList = surveyList.length >= 2
   const [selectedId, setSelectedId] = useState(() => surveyList[0]?.id ?? '')
   const [rewriteEntryId, setRewriteEntryId] = useState<string | null>(null)
@@ -313,8 +349,7 @@ export function EducationSurveyFillPanel({
     [draft.paragraphs],
   )
 
-  const surveyCreatedAt =
-    selectedEntry?.createdAt ?? selectedEntry?.startAt ?? EDUCATION_SURVEY_SEED_CREATED_AT
+  const surveyCreatedAt = selectedEntry?.createdAt ?? selectedEntry?.startAt
 
   const selectedEntryWithRenderPeriod = useMemo(() => {
     if (!selectedEntry) return selectedEntry
@@ -342,9 +377,7 @@ export function EducationSurveyFillPanel({
   )
 
   const canWrite =
-    periodBlockReason == null &&
-    (kind === 'satisfaction' ? canSubmitSatisfaction !== false : canSubmitSurvey !== false) &&
-    (selectedEntry?.canSubmit === true || selectedEntry?.canResubmit === true)
+    selectedEntry?.canSubmit === true || selectedEntry?.canResubmit === true
 
   const readOnly = !canWrite
 
@@ -379,6 +412,19 @@ export function EducationSurveyFillPanel({
 
   const performSubmit = () => {
     if (!canWrite || submitMutation.isPending) return
+    if (
+      isPortalFormTargetRoleMismatch(
+        selectedEntry?.targetRole,
+        applicationType,
+        satisfactionAudience,
+      )
+    ) {
+      setConfirmOpen(false)
+      setAlertTitle('제출 실패')
+      setAlertDescription('현재 참여 역할에 해당하지 않는 설문입니다.')
+      setAlertOpen(true)
+      return
+    }
     const answers = buildEducationSurveyAnswers(draft, sidecar)
     const bindingId = parsePortalProgramId(selectedEntryId)
     const templateVersionId =
@@ -391,7 +437,14 @@ export function EducationSurveyFillPanel({
       templateVersionId != null
     ) {
       submitMutation.mutate(
-        { bindingId, answers, templateVersionId },
+        {
+          bindingId,
+          answers,
+          templateVersionId,
+          ...(typeof participantId === 'number' && participantId > 0
+            ? { contextType: 'PARTICIPANT', contextId: participantId }
+            : {}),
+        },
         {
           onSuccess: showSubmitSuccessAlert,
           onError: error => {
@@ -549,7 +602,17 @@ export function EducationSurveyFillPanel({
   const body = (
     <div className={styles.body}>
       {titleParagraph ? (
-        <EducationSurveyHeader paragraph={titleParagraph} surveyCreatedAt={surveyCreatedAt} />
+        <EducationSurveyHeader
+          paragraph={titleParagraph}
+          surveyCreatedAt={surveyCreatedAt}
+          fallbackTitle={selectedEntry?.title}
+        />
+      ) : null}
+
+      {readOnly && effectivePeriodBlockReason === 'closed' ? (
+        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.periodInlineNotice}>
+          {portalFormSubmissionPeriodBlockMessage('closed', kind)}
+        </PFText>
       ) : null}
 
       <EducationSurveyFormBody

@@ -514,7 +514,7 @@ describe('saveFormTemplateVersionDraft / loadFormTemplateVersionDraft', () => {
     )
   })
 
-  it('does not publish issuance templates even with publishAfterSave', async () => {
+  it('does not publish report issuance templates even with publishAfterSave', async () => {
     getCacheMock.mockReturnValue({
       templateCode: 'issuance-3',
       templateId: 40,
@@ -531,6 +531,28 @@ describe('saveFormTemplateVersionDraft / loadFormTemplateVersionDraft', () => {
 
     expect(publishRemoteMock).not.toHaveBeenCalled()
     expect(createVersionMock).not.toHaveBeenCalled()
+  })
+
+  it('publishes certificate issuance template on save (document-participation-certificate)', async () => {
+    getCacheMock.mockReturnValue({
+      templateCode: 'document-participation-certificate',
+      templateId: 41,
+      templateVersionId: 410,
+      latestVersionId: 410,
+    })
+    updateRemoteMock.mockResolvedValue({})
+    publishRemoteMock.mockResolvedValue({
+      versionStatus: 'PUBLISHED',
+      templateVersionId: 410,
+    })
+
+    await saveFormTemplateVersionDraft({
+      templateCode: 'document-participation-certificate',
+      draft: createProgramRegistrationDraft('general'),
+      settingsJson: { titleName: '참가인증서', bodyContent: 'updated' },
+    })
+
+    expect(publishRemoteMock).toHaveBeenCalledWith(410, {})
   })
 
   it('does not publish when saving a program-owned version by id', async () => {

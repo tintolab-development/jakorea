@@ -1,3 +1,4 @@
+import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 /**
  * 프로그램 상세 - 신청자 목록 탭
  * 서브 탭(신청 학교 | 신청 강사) + 필터 + 조회 + 테이블 (진행 현황 탭 패턴 재사용)
@@ -27,10 +28,10 @@ import {
   type ApplicantInstructorRow,
 } from '@/features/program/shared/model/applicant-instructor'
 import {
-  ApprovalStatusBadge,
   APPROVAL_STATUS_LABELS,
+  getApprovalStatusTag,
   type ApprovalStatusKey,
-} from '@/shared/components/approval-status-badge'
+} from '@/shared/lib/status-tag-specs'
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
@@ -410,7 +411,7 @@ export function ProgramApplicantsTab({
           <StatusDropdownCell<ApprovalStatusKey>
             status={status ?? null}
             statusOptions={approvalStatusKeys}
-            renderBadge={s => <ApprovalStatusBadge status={s} />}
+            getTag={getApprovalStatusTag}
             isItemDisabled={(cur, opt) => cur === opt}
             onChange={newStatus => handleSchoolApprovalStatusChange(record.id, newStatus)}
             isOpen={openApprovalDropdownId === record.id}
@@ -464,7 +465,7 @@ export function ProgramApplicantsTab({
         title: '이메일',
         dataIndex: 'email',
         key: 'email',
-        width: 140,
+        width: TABLE_COLUMN_WIDTHS.email,
         align: 'center',
         ellipsis: true,
       },
@@ -487,7 +488,7 @@ export function ProgramApplicantsTab({
           <StatusDropdownCell<ApprovalStatusKey>
             status={status ?? null}
             statusOptions={approvalStatusKeys}
-            renderBadge={s => <ApprovalStatusBadge status={s} />}
+            getTag={getApprovalStatusTag}
             isItemDisabled={(cur, opt) => cur === opt}
             onChange={newStatus => handleInstructorApprovalStatusChange(record.id, newStatus)}
             isOpen={openApprovalDropdownId === record.id}

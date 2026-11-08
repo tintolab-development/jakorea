@@ -41,6 +41,10 @@ export interface AccountPaymentRow {
   accountHolder?: string
   depositAccountNumber?: string
   recipientMobile?: string
+  /** 정산 상세 withholding 항목 합(원). 목록에 없으면 미리보기에서 세액 행을 만들지 않는다 */
+  withholdingTaxAmount?: number
+  /** 정산 상세 payee 마스킹 주민등록번호. 원문 금지 */
+  residentRegistrationNumberMasked?: string
   paymentOrderStatus: Extract<PaymentOrderAdminProcessingStatus, 'confirmed'>
 }
 
@@ -111,4 +115,21 @@ export interface AccountPaymentStatusDetail {
   formulaLabel: string
   totalAmount: number
   plainAccountForPaymentConfirm: AccountPaymentPlainAccountForConfirm
+  /** 상세 GET settlement.programId — 개인형 판정(참여 기관명 열 숨김)용. 목록 행에 없을 수 있다. */
+  programId?: string
+}
+
+/**
+ * 계좌 지급 대상 「사람 수」 — 같은 신청자가 여러 행(회차)이어도 1명.
+ * 식별은 BE `instructorMemberId`. 없는 행만 신청자명으로 묶는다.
+ */
+export function countAccountPaymentRecipients(
+  rows: readonly Pick<AccountPaymentRow, 'instructorMemberId' | 'instructorName' | 'id'>[]
+): number {
+  const keys = new Set<string>()
+  for (const row of rows) {
+    if (row.instructorMemberId != null) keys.add(`member:${row.instructorMemberId}`)
+    else keys.add(`name:${row.instructorName?.trim() || row.id}`)
+  }
+  return keys.size
 }

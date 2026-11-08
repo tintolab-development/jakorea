@@ -39,10 +39,10 @@ export function DocPassedSection({
   onVolunteerApplicantDetailMetaChange,
 }: DocPassedSectionProps) {
   const canWrite = useUjatCanWrite()
-  const { labels: educationRegionLabels } = useUjatEducationRegions()
+  const { regions: educationRegions } = useUjatEducationRegions()
   const filterFields = useMemo(
-    () => buildUjatVolunteerDocPassedFilterRows()[0] ?? [],
-    [educationRegionLabels]
+    () => buildUjatVolunteerDocPassedFilterRows(educationRegions)[0] ?? [],
+    [educationRegions]
   )
 
   const {
@@ -215,6 +215,7 @@ export function DocPassedSection({
         excelExport={
           canWrite
             ? {
+                accessLog: { downloadKind: 'PROGRAM_SCREENING_DOC_PASSED_EXPORT', containedPiiTypes: ['NAME'] },
                 columns,
                 data: tableData,
               }

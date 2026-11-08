@@ -160,6 +160,8 @@
 }
 
 .main-header-user-name {
+  /* 시안: 이름 ↔ 설정 아이콘 20px (gap 12 + 8) — 프로필 아바타 미노출 */
+  margin-right: 8px;
   color: var(--default-BK, #3d3d3d);
   font-size: 18px;
   font-weight: 700;
@@ -167,30 +169,10 @@
   margin: 0;
 }
 
-.main-header-avatar {
-  flex-shrink: 0;
-  transition: all 0.2s;
-  width: 32px;
-  height: 32px;
-  aspect-ratio: 1 / 1;
-}
-
-.main-header-avatar-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: 4px;
-  margin-right: 16px;
-}
-
 .main-header-account-trigger svg {
   width: 28px;
   height: 28px;
   aspect-ratio: 1 / 1;
-}
-
-.main-header-avatar:hover {
-  opacity: 1;
 }
 
 .main-header-account-dropdown {

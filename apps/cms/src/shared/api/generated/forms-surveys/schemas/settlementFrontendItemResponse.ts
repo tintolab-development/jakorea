@@ -10,7 +10,8 @@ import type { SettlementFrontendItemResponseType } from './settlementFrontendIte
 
 export interface SettlementFrontendItemResponse {
   type?: SettlementFrontendItemResponseType;
-  description?: string;
+  /** 산출 항목 설명. 백엔드가 정산 제출 시점에 생성·저장한 값이며 이후 설정 변경에도 바뀌지 않는다. FE는 그대로 표시하고 조립·재생성하지 않는다. 없으면 null. */
+  description?: string | null;
   amount?: number;
   calculationDetail?: SettlementFrontendCalculationDetailResponse;
   /** 소득 구분 코드. 원천징수(withholding) 행에만 설정. BUSINESS_INCOME / OTHER_INCOME / DAILY_EMPLOYMENT_INCOME(레거시 스냅샷). 비과세·강사비·경비 행은 항상 null. */

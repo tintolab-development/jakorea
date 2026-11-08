@@ -1,4 +1,8 @@
 import { resolveDeleteBlockedGuideCopy } from '@/shared/lib/delete-blocked-guide-copy'
+import {
+  buildDeleteGuideOverflowHeadline,
+  normalizeDeleteGuideEntityDisplayNames,
+} from '@/shared/ui/delete-guide-messages'
 
 /** Gemini 찾아가는 연수·실적 — 텍스트 삭제 안내 (공통 프로그램 삭제 문구와 분리) */
 
@@ -6,26 +10,53 @@ export const GEMINI_DELETE_IRREVERSIBLE_LINE = '삭제된 정보는 되돌릴 �
 
 export type GeminiDeleteNoun = '공고' | '연수' | '실적'
 
+export const GEMINI_APPROVED_TRAINING_DELETE_BLOCKED_CODE =
+  'GEMINI_APPROVED_TRAINING_HAS_BUSINESS_HISTORY'
+
 const DELETE_OBJECT_PARTICLE: Record<GeminiDeleteNoun, '을' | '를'> = {
   공고: '를',
   연수: '를',
   실적: '을',
 }
 
-export function buildGeminiDeleteGuideLines(noun: GeminiDeleteNoun, selectedCount: number): string[] {
+export function buildGeminiDeleteGuideLines(
+  noun: GeminiDeleteNoun,
+  selectedCount: number,
+  entityNames: string[] = []
+): string[] {
   const particle = DELETE_OBJECT_PARTICLE[noun]
-  const subject =
-    selectedCount <= 1 ? `해당 ${noun}` : `선택한 **${selectedCount}**개의 ${noun}`
-  return [`${subject}${particle} 삭제하시겠습니까?`, GEMINI_DELETE_IRREVERSIBLE_LINE]
+  const displayNames = normalizeDeleteGuideEntityDisplayNames(entityNames)
+  let question: string
+
+  if (displayNames.length > 0) {
+    question =
+      selectedCount <= 1
+        ? `**[${displayNames[0]}]** ${noun}${particle} 삭제하시겠습니까?`
+        : buildDeleteGuideOverflowHeadline(
+            displayNames[0],
+            selectedCount,
+            ` ${noun}${particle} 삭제하시겠습니까?`
+          )
+  } else {
+    const subject = selectedCount <= 1 ? `해당 ${noun}` : `선택한 **${selectedCount}**개의 ${noun}`
+    question = `${subject}${particle} 삭제하시겠습니까?`
+  }
+
+  const lines = [question, GEMINI_DELETE_IRREVERSIBLE_LINE]
+  if (noun === '연수') {
+    lines.push('신청 강사 또는 교육 진행 이력이 있는 연수는 삭제할 수 없습니다.')
+  }
+  return lines
 }
 
 export function resolveGeminiDeleteGuideModalCopy(
   noun: GeminiDeleteNoun,
-  selectedCount: number
+  selectedCount: number,
+  entityNames: string[] = []
 ): { title: string; lines: string[] } {
   return {
     title: `${noun} 삭제 안내`,
-    lines: buildGeminiDeleteGuideLines(noun, selectedCount),
+    lines: buildGeminiDeleteGuideLines(noun, selectedCount, entityNames),
   }
 }
 
@@ -43,11 +74,6 @@ export function geminiRecruitmentDeleteBlocked(row: {
 }): boolean {
   if (row.isDraft) return false
   return (row.organizationApplicationCount ?? 0) > 0 || (row.approvedOrganizationApplicationCount ?? 0) > 0
-}
-
-/** 강사가 매핑되면 신청 강사·교육 진행 이력이 있는 연수로 본다 */
-export function geminiApprovedTrainingDeleteBlocked(row: { instructorAssigned: boolean }): boolean {
-  return row.instructorAssigned
 }
 
 export function resolveGeminiDeleteBlockedAlert(

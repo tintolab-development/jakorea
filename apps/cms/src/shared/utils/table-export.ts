@@ -6,10 +6,13 @@ import { isValidElement, type ReactNode } from 'react'
 import ExcelJS from '@zurmokeeper/exceljs'
 import type { ColumnsType, ColumnType } from 'antd/es/table'
 import { downloadExcel, generateFilename } from './file-download'
+import type { DownloadAccessLogMeta } from '@/shared/lib/download-access-log-meta'
 
 export type ExportTableToExcelOptions = {
   /** true면 `filename`을 그대로 사용(확장자 없으면 `.xlsx`). 기본은 `_YYYYMMDD` 접미사 */
   exactFilename?: boolean
+  /** client 이력에 함께 남길 파일 종류·포함 개인정보 */
+  accessLog?: DownloadAccessLogMeta
 }
 
 function resolveExcelDownloadFilename(filename: string, exactFilename?: boolean): string {
@@ -60,17 +63,17 @@ function extractExportCellText(node: unknown, depth = 0): string {
     return String(props.label)
   }
 
-  // StatusDropdownCell: 배지는 children이 아니라 renderBadge(status)
-  if (typeof props.renderBadge === 'function' && props.status != null) {
-    const badge = (props.renderBadge as (status: unknown) => unknown)(props.status)
-    const fromBadge = extractExportCellText(badge, depth + 1)
-    if (fromBadge) return fromBadge
+  // StatusDropdownCell: 태그는 children이 아니라 getTag(status).label
+  if (typeof props.getTag === 'function' && props.status != null) {
+    const spec = (props.getTag as (status: unknown) => { label?: unknown })(props.status)
+    const fromTag = extractExportCellText(spec?.label, depth + 1)
+    if (fromTag) return fromTag
   }
 
   const fromChildren = extractExportCellText(props.children as ReactNode, depth + 1)
   if (fromChildren) return fromChildren
 
-  // <SponsorSponsorshipStatusBadge status="active" /> → EditableStatusBadge label
+  // <SponsorSponsorshipStatusBadge status="active" /> → StatusTag label
   // 훅을 쓰는 컴포넌트는 호출 시 throw → 빈 문자열
   if (typeof node.type === 'function') {
     try {
@@ -183,7 +186,12 @@ export async function exportTableToExcel<T extends Record<string, any>>(
   })
 
   const buffer = await workbook.xlsx.writeBuffer()
-  await downloadExcel(buffer, resolveExcelDownloadFilename(filename, options?.exactFilename))
+  const resolvedFilename = resolveExcelDownloadFilename(filename, options?.exactFilename)
+  if (options?.accessLog) {
+    await downloadExcel(buffer, resolvedFilename, { accessLog: options.accessLog })
+    return
+  }
+  await downloadExcel(buffer, resolvedFilename)
 }
 
 /**

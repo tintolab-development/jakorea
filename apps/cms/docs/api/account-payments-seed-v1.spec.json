@@ -58,7 +58,13 @@
     "multiSessionLabelExample": "2 ~ 3차시"
   },
   "requiredLinkedFieldsPerRow": {
-    "member": ["fullNameKo", "settlementBankName", "settlementAccountNumber", "accountHolder", "mobile"],
+    "member": [
+      "fullNameKo",
+      "settlementBankName",
+      "settlementAccountNumber",
+      "accountHolder",
+      "mobile"
+    ],
     "settlement": [
       "settlementId",
       "statementStatus=CONFIRMED",
@@ -120,7 +126,7 @@
       "scheduledPaymentDate": "2026-02-12",
       "lectureDate": "2026-01-28",
       "bankName": "농협",
-      "detailScenario": "강의비+교통+숙박+원천징수 items for fullpage detail",
+      "detailScenario": "강사비+교통+숙박+원천징수 items for fullpage detail",
       "note": "지급조서 박틴토(170201)와 memberId 다름"
     },
     {

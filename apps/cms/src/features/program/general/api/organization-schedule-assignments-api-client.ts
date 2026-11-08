@@ -16,6 +16,12 @@ export type OrganizationScheduleAssignmentSlotRequest = {
 export type OrganizationScheduleAssignmentReplaceRequest = {
   slots?: OrganizationScheduleAssignmentSlotRequest[]
   changeReason?: string
+  /**
+   * GENERAL_ORGANIZATION + PERIOD 승인 후 희망 일정 확정. program_application_requested_schedule.id 목록.
+   * 아직 시작 안 된 기관 일정 배정을 이 목록으로 교체한다. slots와 동시 전송 금지(400 SELECTOR_CONFLICT).
+   * BE 신규 필드 — 저장소 OpenAPI 미동기화라 수동 반영.
+   */
+  requestedScheduleIds?: number[]
 }
 
 export async function fetchOrganizationScheduleAssignmentsRemote(

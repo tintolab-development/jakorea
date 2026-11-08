@@ -25,8 +25,9 @@ const IMAGE_GUIDE_LINES = [
   '- 권장 배너 사이즈는 1920 × 968px입니다.',
 ]
 
+/** Figma 20:12458 */
 const MODAL_DESCRIPTION =
-  '메인 화면에 노출할 배너 이미지와 문구를 선정해 주세요.\n문구는 미작성 시 해당 영역 비노출 되며, 연결 링크를 설정하면 배너 클릭 시 입력된 주소가 새 창에서 열립니다.'
+  '메인 화면에 노출할 배너 이미지와 텍스트를 설정해 주세요.\n텍스트는 미작성 시 해당 영역 비노출 되며, 연결 링크를 설정하면 배너 클릭 시 입력된 주소가 새 창에서 열립니다.'
 
 function coerceRadioBoolean(raw: unknown): boolean {
   if (raw === true || raw === 1) return true
@@ -54,6 +55,12 @@ function readFileAsDataUrl(file: File): Promise<string> {
     reader.readAsDataURL(file)
   })
 }
+
+/**
+ * 메인 타이틀만 줄바꿈 허용(사용자 홈페이지에 그대로 반영) — 한 줄일 때는 다른 입력과 같은 높이(시안),
+ * 줄바꿈할수록 늘어난다.
+ */
+const MAIN_TITLE_AUTO_SIZE = { minRows: 1, maxRows: 4 }
 
 export type HeroBannerFormValues = HeroBannerCreateInput
 
@@ -280,10 +287,11 @@ function HeroBannerFormBody({ mode, initial, confirmLoading, onCancel, onSubmit 
             view={null}
             edit={
               <CmsTextArea
-                inputSize="large"
+                className="hero-banner-form-modal__main-title"
+                inputSize="medium"
                 width="100%"
-                rows={2}
-                autoSize={{ minRows: 2, maxRows: 8 }}
+                rows={1}
+                autoSize={MAIN_TITLE_AUTO_SIZE}
                 placeholder="메인 타이틀을 입력해 주세요"
                 value={mainTitle}
                 onChange={e => setMainTitle(e.target.value)}
@@ -293,13 +301,13 @@ function HeroBannerFormBody({ mode, initial, confirmLoading, onCancel, onSubmit 
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
-            label="하단 문구"
+            label="하단 텍스트"
             view={null}
             edit={
               <CmsInput
                 inputSize="medium"
                 width="100%"
-                placeholder="하단 문구를 입력해 주세요"
+                placeholder="하단 텍스트를 입력해 주세요"
                 value={bottomText}
                 onChange={e => setBottomText(e.target.value.replace(/\r?\n/g, ' '))}
               />

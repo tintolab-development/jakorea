@@ -1,9 +1,6 @@
-/**
- * 프로그램 승인 현황 — 테이블·필터용 텍스트 표기 (배지 배경 없음, 상태별 글자색)
- */
-
-import { APPROVAL_STATUS_LABELS, type ApprovalStatusKey } from './textbook-status-badge'
-import './approval-status-text.css'
+/** 프로그램 승인 Text — 업무별 spec과 공통 Text renderer를 조합한다. */
+import { getApprovalStatusTextPresentation, type ApprovalStatusKey } from '@/shared/lib/status-tag-specs'
+import { StatusBadge } from './status-badge'
 
 export type { ApprovalStatusKey }
 
@@ -14,12 +11,13 @@ interface ApprovalStatusTextProps {
 
 export function ApprovalStatusText({ status, className }: ApprovalStatusTextProps) {
   return (
-    <span
+    <StatusBadge
+      domain="custom"
+      variant="text"
+      {...getApprovalStatusTextPresentation(status)}
       className={['approval-status-text', `approval-status-text--${status}`, className]
         .filter(Boolean)
         .join(' ')}
-    >
-      {APPROVAL_STATUS_LABELS[status]}
-    </span>
+    />
   )
 }

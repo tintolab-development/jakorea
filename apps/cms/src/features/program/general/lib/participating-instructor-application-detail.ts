@@ -53,6 +53,10 @@ export function mergeInstructorApplicationIntoParticipatingRow(
     birthDate: applicant.birthDate ?? base.birthDate,
     gender: applicant.gender ?? base.gender,
     affiliation: applicant.affiliation ?? base.affiliation,
+    bankName: applicant.bankName ?? base.bankName,
+    accountNumber: applicant.accountNumber ?? base.accountNumber,
+    accountHolder: applicant.accountHolder ?? base.accountHolder,
+    settlementBusinessIncome: applicant.settlementBusinessIncome ?? base.settlementBusinessIncome,
     oneLineIntro: applicant.oneLineIntro ?? base.oneLineIntro,
     lectureExperienceYears: applicant.lectureExperienceYears ?? base.lectureExperienceYears,
     educationLevel: applicant.educationLevel || base.educationLevel,
@@ -88,5 +92,14 @@ export function mapInstructorApplicationDetailToParticipatingRow(
 ): ParticipatingInstructorRow {
   const seed = participatingRowToInstructorApplicationSeed(base, programId)
   const applicant = mapInstructorApplicationDetailToApplicantRow(dto, seed)
-  return mergeInstructorApplicationIntoParticipatingRow(base, applicant)
+  const merged = mergeInstructorApplicationIntoParticipatingRow(base, applicant)
+  // 정산·사업소득자는 GET 정본만 사용한다. 값 없음이면 목록 row 값으로 보완하지 않는다.
+  return {
+    ...merged,
+    bankName: applicant.bankName,
+    accountNumber: applicant.accountNumber,
+    accountHolder: applicant.accountHolder,
+    settlementBusinessIncome: applicant.settlementBusinessIncome,
+    businessIncomeEarnerStatus: applicant.businessIncomeEarnerStatus,
+  }
 }

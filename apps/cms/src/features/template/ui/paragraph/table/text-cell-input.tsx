@@ -25,7 +25,11 @@ function hasExplicitLineBreak(value: string, placeholder: string) {
 }
 
 /** view 셀과 동일 타이포로 soft-wrap 시 두 줄 이상인지 측정 */
-function measureSoftWrapsToMultipleLines(text: string, availableWidthPx: number): boolean {
+function measureSoftWrapsToMultipleLines(
+  text: string,
+  availableWidthPx: number,
+  typography: { fontSize: string; lineHeight: string }
+): boolean {
   if (availableWidthPx <= 0 || text.trim() === '') return false
   const measure = document.createElement('span')
   measure.setAttribute('aria-hidden', 'true')
@@ -39,17 +43,18 @@ function measureSoftWrapsToMultipleLines(text: string, availableWidthPx: number)
     'overflow-wrap:break-word',
     'word-break:break-word',
     'font-family:Pretendard,sans-serif',
-    'font-size:16px',
+    `font-size:${typography.fontSize}`,
     'font-weight:500',
     'font-style:normal',
-    'line-height:24px',
+    `line-height:${typography.lineHeight}`,
     `width:${Math.floor(availableWidthPx)}px`,
   ].join(';')
   measure.textContent = text
   document.body.appendChild(measure)
   const height = measure.getBoundingClientRect().height
+  const singleLine = Number.parseFloat(getComputedStyle(measure).lineHeight) || 24
   document.body.removeChild(measure)
-  return height > 28
+  return height > singleLine + 4
 }
 
 /** 테이블 텍스트형 셀 전용 인풋 — 각진 모서리 + 파란 테두리 (CmsInput / 주관식형과 분리) */
@@ -92,7 +97,13 @@ export function TextCellInput({
     }
     const availableWidth = parent.clientWidth - 16
     const sample = editValue.trim() !== '' ? editValue : placeholder
-    setSoftWrapsMultiline(measureSoftWrapsToMultipleLines(sample, availableWidth))
+    // 조회 셀과 같은 표 타이포(--ht-font-size·--ht-line-height)로 측정
+    const style = getComputedStyle(parent)
+    const fontSize = style.getPropertyValue('--ht-font-size').trim() || '16px'
+    const lineHeight = style.getPropertyValue('--ht-line-height').trim() || '24px'
+    setSoftWrapsMultiline(
+      measureSoftWrapsToMultipleLines(sample, availableWidth, { fontSize, lineHeight })
+    )
   }, [variant, editValue, placeholder, explicitMultiline])
 
   const className = [

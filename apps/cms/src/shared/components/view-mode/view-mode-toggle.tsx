@@ -38,7 +38,7 @@ export function ViewModeToggle<V extends string = ViewMode>({
     <div className={['view-mode-toggle', className].filter(Boolean).join(' ')}>
       <CmsButton
         variant="secondary"
-        size="large" style={{ minWidth: 180 }}
+        size="large" style={{ minWidth: 160 }}
         icon={target.icon}
         onClick={() => onChange(target.value)} >
         {target.label}

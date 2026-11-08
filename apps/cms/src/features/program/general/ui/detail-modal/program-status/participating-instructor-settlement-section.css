@@ -15,3 +15,9 @@
   align-items: center;
   width: 100%;
 }
+
+.participating-instructor-settlement-section__application-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}

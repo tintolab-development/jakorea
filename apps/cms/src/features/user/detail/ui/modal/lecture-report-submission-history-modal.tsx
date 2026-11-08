@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { Tooltip } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Application } from '@/types/domain'
 import { ContentModal } from '@/shared/ui/content-modal'
@@ -9,7 +10,6 @@ import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/p
 import { AssignmentSubmissionCellActionButton } from '@/features/program/general/ui/assignment-submission-history-table'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
-  bulkDownloadMemberLectureReportsRemote,
   downloadFormSubmissionFileRemote,
   downloadMemberLectureReportRemote,
   fetchMemberLectureReportsRemote,
@@ -17,8 +17,13 @@ import {
 import { mapMemberLectureReportsToTableRows } from '@/features/user/api/map-member-lecture-reports'
 import type { MemberLectureReportTableRow } from '@/features/user/api/map-member-lecture-reports'
 import { resolveMemberApplicationIdFromApplication } from '@/features/user/api/member-program-history-ids'
-import { downloadFromBulkEndpoint } from '@/features/user/api/download-bulk-endpoint'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
+import { downloadAllMemberLectureReportsRemote } from '@/features/user/api/members-api-client'
+import {
+  LECTURE_REPORT_NO_ATTACHMENT_CTA,
+  hasFileDownloadPermission,
+  saveLectureReportBulkDownloadJob,
+} from '@/shared/lib/lecture-report-bulk-download'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './lecture-report-submission-history-modal.css'
@@ -100,17 +105,19 @@ export function LectureReportSubmissionHistoryModal({
     return '프로그램'
   }, [application])
 
+  const hasZipTargets = rows.some(row => (row.reportFileIds?.length ?? 0) > 0)
+  const canBulkDownloadFiles = hasFileDownloadPermission()
+
   const handleBulkDownload = useCallback(async () => {
-    if (memberId == null || applicationId == null) return
+    if (memberId == null || !canBulkDownloadFiles) return
+    if (!hasZipTargets) {
+      showAlert({ title: '안내', content: LECTURE_REPORT_NO_ATTACHMENT_CTA })
+      return
+    }
     setBulkDownloading(true)
     try {
-      const reportIds = rows.map(row => row.reportId).filter((id): id is number => id != null)
-      const response = await bulkDownloadMemberLectureReportsRemote(memberId, applicationId, {
-        reportIds: reportIds.length > 0 ? reportIds : undefined,
-      })
-      if (response.downloadEndpoint) {
-        await downloadFromBulkEndpoint(response.downloadEndpoint, '강의보고서_일괄')
-      }
+      const job = await downloadAllMemberLectureReportsRemote(memberId)
+      await saveLectureReportBulkDownloadJob(job, '강의보고서_일괄')
     } catch (error) {
       showAlert({
         title: '안내',
@@ -119,7 +126,7 @@ export function LectureReportSubmissionHistoryModal({
     } finally {
       setBulkDownloading(false)
     }
-  }, [memberId, applicationId, rows, showAlert])
+  }, [memberId, canBulkDownloadFiles, hasZipTargets, showAlert])
 
   const handleViewReport = useCallback(
     async (record: MemberLectureReportTableRow) => {
@@ -220,15 +227,22 @@ export function LectureReportSubmissionHistoryModal({
           <CmsButton variant="secondary" size="medium" onClick={onCancel}>
             닫기
           </CmsButton>
-          <CmsButton
-            variant="primary"
-            size="medium"
-            icon={<ButtonDownloadIcon />}
-            loading={bulkDownloading}
-            disabled={memberId == null || applicationId == null}
-            onClick={() => void handleBulkDownload()} >
-            강의보고서 일괄 다운로드
-          </CmsButton>
+          {canBulkDownloadFiles ? (
+            <Tooltip title={!hasZipTargets ? LECTURE_REPORT_NO_ATTACHMENT_CTA : undefined}>
+              <span>
+                <CmsButton
+                  variant="primary"
+                  size="medium"
+                  icon={<ButtonDownloadIcon />}
+                  loading={bulkDownloading}
+                  disabled={memberId == null || !hasZipTargets}
+                  onClick={() => void handleBulkDownload()}
+                >
+                  강의보고서 일괄 다운로드
+                </CmsButton>
+              </span>
+            </Tooltip>
+          ) : null}
         </>
       }
     >
@@ -248,7 +262,7 @@ export function LectureReportSubmissionHistoryModal({
         >
           <div className="lecture-report-submission-history-modal__table-outer">
             <CmsDataTable<MemberLectureReportTableRow>
-              className="cms-data-table cms-data-table--fluid"
+              className="cms-data-table"
               rowKey="id"
               dataSource={rows}
               columns={columns}

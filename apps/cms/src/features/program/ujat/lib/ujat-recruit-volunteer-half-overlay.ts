@@ -174,6 +174,7 @@ export function blankUjatVolunteerRecruitProgramFields(program: Program): Progra
     interviewMethod: undefined,
     finalPassAnnouncementDate: undefined,
     finalPassAnnouncementMethod: undefined,
+    contactName: undefined,
     contactPhone: undefined,
     contactEmail: undefined,
     oneLineIntroduction: undefined,

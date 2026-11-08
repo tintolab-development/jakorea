@@ -25,7 +25,8 @@ function omitBlankWireValue(value: string | null | undefined): string | undefine
 /** Figma 추가 등록 폼 body + UJAT 진행 탭 반기. 사용자 홈 전용 필드는 보내지 않는다. */
 export function attachUjatProgressVolunteerRegisterContext(
   request: VolunteerParticipantRegisterRequest,
-  volunteerHalf: UjatVolunteerRecruitHalf
+  volunteerHalf: UjatVolunteerRecruitHalf,
+  educationRegionCodeOverride?: string | null
 ): VolunteerParticipantRegisterRequest {
   const recruitHalf =
     toUjatRecruitHalfApi(volunteerHalf) === 'SECOND_HALF'
@@ -33,18 +34,20 @@ export function attachUjatProgressVolunteerRegisterContext(
       : VolunteerParticipantRegisterRequestRecruitHalf.FIRST_HALF
   const {
     previousUjatTerm: _previousUjatTerm,
-    educationRegionCode: _educationRegionCode,
+    educationRegionCode,
     applicationType: _applicationType,
     id1365: _id1365,
     thirdPartyRecipient,
     ...rest
   } = request
   const recipient = omitBlankWireValue(thirdPartyRecipient)
+  const regionCode = omitBlankWireValue(educationRegionCodeOverride) ?? omitBlankWireValue(educationRegionCode)
   return {
     ...rest,
     volunteerKind: VolunteerParticipantRegisterRequestVolunteerKind.GENERAL,
     reason: REGISTER_REASON,
     recruitHalf,
     ...(recipient ? { thirdPartyRecipient: recipient } : {}),
+    ...(regionCode ? { educationRegionCode: regionCode } : {}),
   }
 }

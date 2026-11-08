@@ -155,6 +155,42 @@ export function isResubmittedSettlement(
   )
 }
 
+/** DRAFT/NOT_SUBMITTED가 아닌 지급조서 신청이 있으면 제출된 것으로 본다. */
+export function isKnownSettlementApplicationSubmitted(
+  settlement: PortalSettlementApplication | undefined,
+): boolean {
+  if (!settlement) return false
+  if (settlement.submittedAt || settlement.applicationId != null) {
+    const status = (settlement.status ?? '').trim().toUpperCase()
+    return status !== 'DRAFT' && status !== 'NOT_SUBMITTED'
+  }
+  return false
+}
+
+export function findSettlementApplicationForLectureAssignment(
+  settlements: readonly PortalSettlementApplication[] | undefined,
+  input: { assignmentId: number; scheduleId: number; programId?: number | string | null },
+): PortalSettlementApplication | undefined {
+  if (!settlements?.length) return undefined
+  const programKey =
+    input.programId == null || String(input.programId).trim() === ''
+      ? null
+      : String(input.programId)
+  const scoped = settlements.filter(row => {
+    if (programKey == null || row.programId == null) return true
+    return matchesSettlementProgram(row, programKey)
+  })
+  const byAssignment = scoped.filter(
+    row => readSettlementAssignmentJoinId(row) === input.assignmentId,
+  )
+  const pool =
+    byAssignment.length > 0
+      ? byAssignment
+      : scoped.filter(row => readSettlementScheduleJoinId(row) === input.scheduleId)
+  if (pool.length === 0) return undefined
+  return pool.reduce((latest, row) => (isNewerSettlementRecord(row, latest) ? row : latest))
+}
+
 export function matchesSettlementProgram(
   settlement: PortalSettlementApplication,
   programId: string | null | undefined,

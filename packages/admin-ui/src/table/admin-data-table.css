@@ -23,21 +23,10 @@
   border-bottom: none !important;
 }
 
-/* scroll.x(숫자)·고정 열 합계용 — 기본은 fixed */
-.cms-data-table table.ant-table {
-  table-layout: fixed !important;
-  width: 100% !important;
-}
-
 /* scroll.x 없이 컨테이너 너비 100%·열 자동 분배 (상세/모달 등) */
 .cms-data-table.cms-data-table--fluid .ant-table-container {
   width: 100%;
   min-width: 1080px;
-}
-
-.cms-data-table.cms-data-table--fluid table.ant-table {
-  table-layout: auto !important;
-  width: 100%;
 }
 
 /**
@@ -91,6 +80,12 @@
 /* rowSelection.columnWidth·colgroup 과 동일 폭 유지 — 총폭 80px·좌 8px 패딩 포함 */
 .cms-data-table .ant-table-thead > tr > th.ant-table-cell.ant-table-selection-column,
 .cms-data-table .ant-table-tbody > tr > td.ant-table-cell.ant-table-selection-column,
+/* 비호버도 공통 본문 td(아래 `tr:not(placeholder):not(measure-row) > td`)보다 구체적으로 —
+ * 아니면 기본 상태엔 본문 padding 8×12, 호버 시에만 선택 열 padding이 적용돼 체크박스가 흔들린다 */
+.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.ant-table-cell.ant-table-selection-column,
 .cms-data-table
   .ant-table-tbody
   > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
@@ -115,13 +110,21 @@
 /*
  * table-layout:fixed + width:100% 이면 남은 폭이 모든 지정 열에 분배되어 No.가 80을 넘는다.
  * No. 이후 col을 auto로 두어 남는 폭을 흡수한다.
+ * 단 `--overflow`(좁은 화면 · 최소 폭 고정 + 가로 스크롤)에서는 열 폭을 그대로 쓴다
+ * (여유분은 `AdminDataTable`이 유연 열/본문 열 width에 미리 배분).
+ * `--exact`(CMS)는 넓은 화면에서도 열 폭 그대로 — 남는 폭은 유연 열(width 미지정)이 흡수.
  */
-.cms-data-table:not(.cms-data-table--skip-auto-no-col) col.ant-table-selection-col + col ~ col {
+.cms-data-table:not(.cms-data-table--skip-auto-no-col):not(.cms-data-table--overflow):not(.cms-data-table--exact)
+  col.ant-table-selection-col
+  + col
+  ~ col {
   width: auto !important;
   max-width: none !important;
 }
 
-.cms-data-table:not(.cms-data-table--skip-auto-no-col):not(:has(col.ant-table-selection-col))
+.cms-data-table:not(.cms-data-table--skip-auto-no-col):not(.cms-data-table--overflow):not(.cms-data-table--exact):not(
+    :has(col.ant-table-selection-col)
+  )
   colgroup
   > col:first-child
   ~ col {
@@ -648,9 +651,10 @@
   max-width: var(--table-no-column-width, 80px) !important;
 }
 
+/* 균등 분배는 정확 폭 모드(`--exact`)·좁은 화면(`--overflow`)이 아닐 때만 — 위 공통 규칙과 동일 조건 */
 .filter-table-layout
   .filter-table-layout__table
-  .ant-table-wrapper.cms-data-table
+  .ant-table-wrapper.cms-data-table:not(.cms-data-table--exact):not(.cms-data-table--overflow)
   col.ant-table-selection-col
   + col
   ~ col {
@@ -783,7 +787,8 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: rgba(255, 255, 255, 0.55);
+  /* Figma Table disabled = opacity 40% → 흰 오버레이 60% */
+  background: rgba(255, 255, 255, 0.6);
   pointer-events: none;
   z-index: 1;
 }

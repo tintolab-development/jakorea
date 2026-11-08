@@ -1,5 +1,18 @@
 import { describe, expect, it } from 'vitest'
-import { buildGeneralVolunteerApplicationBulkApproveCopy } from './general-volunteer-application-bulk-approve-modal'
+import {
+  buildGeneralVolunteerApplicationApproveCopy,
+  buildGeneralVolunteerApplicationBulkApproveCopy,
+} from './general-volunteer-application-bulk-approve-modal'
+
+describe('buildGeneralVolunteerApplicationApproveCopy', () => {
+  it('단건 승인 안내 문구를 만든다', () => {
+    expect(buildGeneralVolunteerApplicationApproveCopy('김봉사')).toEqual({
+      title: '프로그램 신청 승인 안내',
+      message:
+        '**[김봉사]** 님의 프로그램 신청을 승인하시겠습니까?\n승인 시 회원에게 승인 알림이 발송됩니다.',
+    })
+  })
+})
 
 describe('buildGeneralVolunteerApplicationBulkApproveCopy', () => {
   it('대표 봉사자명과 나머지 인원으로 안내 문구를 만든다', () => {

@@ -1,5 +1,5 @@
 /**
- * 강사 배정 일정 선택 칩 — `ParagraphChip` + 일정 | 차시 + 인원 배지
+ * 강사 배정 일정 선택 칩 — `ParagraphChip` + 일정 | 회차(+차시) + 인원 배지
  * 강의 배정 안내(개별) · 참여 기관 추가 배정 모달 공통
  */
 
@@ -11,7 +11,7 @@ export interface InstructorAssignSessionSlotChipProps {
   scheduleLabel: string
   /** 지정 시 scheduleLabel은 날짜만, timeLabel은 진행 시간으로 분리 표시 */
   timeLabel?: string
-  /** 빈 값이면 차시 구분선·라벨을 생략 */
+  /** 빈 값이면 회차 구분선·라벨을 생략 */
   sessionRoundLabel: string
   capacityLabel: string
   selected?: boolean

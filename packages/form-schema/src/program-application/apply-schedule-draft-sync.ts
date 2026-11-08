@@ -7,6 +7,7 @@ import { shouldShowApplicationScheduleParagraphResolved } from './application-sc
 import {
   readApplicationScheduleRecruitmentLimitsFromRuntime,
   resolveApplicationScheduleParagraphDescription,
+  resolveApplicationScheduleParagraphDescriptionKeepingCustom,
 } from './application-schedule-paragraph-copy.js'
 import { resolveFixedScheduleLinesToChoiceItems } from './curriculum-multi-date-fixed-schedule.js'
 import {
@@ -38,6 +39,8 @@ export type ApplyScheduleDraftSyncInput = ApplicationScheduleVisibilityInput & {
 
 /**
  * 시드·remote draft의 schedule choice 단락 items를 프로그램·binding SSOT에 맞춘다.
+ * 설명은 기본값(빈 값·시드 안내·자동 생성 안내)일 때만 기본 안내로 채우고,
+ * 프로그램 등록 시 관리자가 수정한 문구는 유지한다. 선택지·입력 구조는 항상 SSOT를 따른다.
  */
 function scheduleCopyInputFromSync(
   input: ApplyScheduleDraftSyncInput
@@ -92,7 +95,10 @@ export function syncApplicationScheduleChoiceParagraphsInDraft(
         }
         return {
           ...paragraph,
-          paragraphDescription: scheduleParagraphDescription,
+          paragraphDescription: resolveApplicationScheduleParagraphDescriptionKeepingCustom(
+            paragraph.paragraphDescription,
+            scheduleParagraphDescription
+          ),
           items: [],
           selectedPreviewMultipleIds: [],
         }
@@ -133,7 +139,10 @@ export function syncApplicationScheduleChoiceParagraphsInDraft(
         if (choiceItems.length === 0) return paragraph
         return {
           ...paragraph,
-          paragraphDescription: scheduleParagraphDescription,
+          paragraphDescription: resolveApplicationScheduleParagraphDescriptionKeepingCustom(
+            paragraph.paragraphDescription,
+            scheduleParagraphDescription
+          ),
           items: choiceItems.map(item => ({ id: item.id, label: item.label })),
           selectedPreviewSingleId: null,
         }
@@ -141,12 +150,21 @@ export function syncApplicationScheduleChoiceParagraphsInDraft(
 
       if (lines.length === 0) {
         if (!scheduleParagraphDescription) return paragraph
-        return { ...paragraph, paragraphDescription: scheduleParagraphDescription }
+        return {
+          ...paragraph,
+          paragraphDescription: resolveApplicationScheduleParagraphDescriptionKeepingCustom(
+            paragraph.paragraphDescription,
+            scheduleParagraphDescription
+          ),
+        }
       }
       const choiceItems = resolveFixedScheduleLinesToChoiceItems(input, lines, input)
       return {
         ...paragraph,
-        paragraphDescription: scheduleParagraphDescription,
+        paragraphDescription: resolveApplicationScheduleParagraphDescriptionKeepingCustom(
+            paragraph.paragraphDescription,
+            scheduleParagraphDescription
+          ),
         items: choiceItems.map(item => ({ id: item.id, label: item.label })),
         selectedPreviewSingleId: null,
         selectedPreviewMultipleIds: [],

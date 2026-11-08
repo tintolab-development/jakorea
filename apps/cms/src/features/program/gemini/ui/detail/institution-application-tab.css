@@ -30,24 +30,3 @@
 .gemini-institution-application-tab__schedule-line .program-detail-td-divider {
   margin: 0 16px;
 }
-
-.gemini-institution-approval-status {
-  display: inline-block;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 150%;
-  text-align: center;
-  white-space: nowrap;
-}
-
-.gemini-institution-approval-status--pending {
-  color: var(--color-green, #1e8c29);
-}
-
-.gemini-institution-approval-status--approved {
-  color: var(--Brand-500, #00a0af);
-}
-
-.gemini-institution-approval-status--rejected {
-  color: var(--Status-red-main, #c32f4a);
-}

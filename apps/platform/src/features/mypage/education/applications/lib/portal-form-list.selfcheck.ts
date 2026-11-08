@@ -7,6 +7,7 @@ import {
   isPortalBoundFormVersionUsable,
   isPortalSatisfactionFormType,
   isPortalSurveyFormType,
+  isVolunteerFacingSatisfactionForm,
   mapAvailableProgramFormToListItem,
   mapPortalFormListItemToSurveyEntry,
   resolveCanonicalPortalFormBindingId,
@@ -44,6 +45,24 @@ assert.equal(isPortalSurveyFormType('SATISFACTION'), false)
 assert.equal(isPortalSurveyFormType('LECTURE_EVALUATION'), false)
 assert.equal(isPortalSatisfactionFormType('SATISFACTION'), true)
 assert.equal(isPortalSatisfactionFormType('LECTURE_EVALUATION'), false)
+assert.equal(
+  isVolunteerFacingSatisfactionForm({ formType: 'SATISFACTION', title: '봉사자 만족도조사' }),
+  true,
+)
+assert.equal(
+  isVolunteerFacingSatisfactionForm({ formType: 'SATISFACTION', title: '만족도조사 (교사용)' }),
+  false,
+)
+assert.equal(
+  mapPortalFormListItemToSurveyEntry({
+    bindingId: 188868,
+    formType: 'SURVEY',
+    targetScope: 'SCHEDULE',
+    scheduleId: '187582',
+    status: 'NOT_SUBMITTED',
+  } as never)?.scheduleId,
+  187582,
+)
 assert.equal(isPortalBoundFormVersionUsable('PUBLISHED'), true)
 assert.equal(isPortalBoundFormVersionUsable('ARCHIVED'), true)
 assert.equal(isPortalBoundFormVersionUsable(undefined), true)
@@ -77,6 +96,19 @@ assert.notDeepEqual(
   })
 )
 
+assert.equal(
+  mapPortalFormListItemToSurveyEntry({
+    bindingId: 201,
+    formType: 'SATISFACTION',
+    templateName: '만족도조사 (학생용)',
+    targetScope: 'SCHEDULE',
+    targetScopeLabel: '공통 교육 예정 1',
+    scheduleStartAt: '2026-11-12T03:00:00.000Z',
+    status: 'NOT_SUBMITTED',
+  })?.title,
+  '1회차 · 2026.11.12(목) 만족도조사 (학생용)',
+)
+
 const scheduleBinding = mapPortalFormListItemToSurveyEntry({
   bindingId: 188865,
   title: '행사 설문',
@@ -90,6 +122,26 @@ assert.equal(scheduleBinding?.id, '188865')
 assert.equal(scheduleBinding?.targetScope, 'SCHEDULE')
 assert.equal(scheduleBinding?.scheduleId, 187156)
 assert.equal(scheduleBinding?.required, true)
+assert.equal(
+  mapPortalFormListItemToSurveyEntry({
+    bindingId: 188866,
+    formType: 'SURVEY',
+    targetScope: 'SCHEDULE',
+    targetScopeId: 187582,
+    status: 'NOT_SUBMITTED',
+  })?.scheduleId,
+  187582,
+)
+assert.equal(
+  mapPortalFormListItemToSurveyEntry({
+    bindingId: 188867,
+    formType: 'SURVEY',
+    targetScope: 'SCHEDULE',
+    scheduleId: Number('187582'),
+    status: 'NOT_SUBMITTED',
+  })?.scheduleId,
+  187582,
+)
 
 assert.equal(mapPortalFormListItemToSurveyEntry({ title: 'id 없음' }), null)
 
@@ -213,5 +265,32 @@ const submittedByResponse = mapPortalFormListItemToSurveyEntry({
 })
 assert.equal(submittedByResponse?.status, 'submitted')
 assert.equal(submittedByResponse?.responseStatus, 'APPROVED')
+
+assert.equal(
+  mapPortalFormListItemToSurveyEntry({
+    bindingId: 1,
+    formType: 'SATISFACTION',
+    title: '만족도조사',
+    targetScope: 'SCHEDULE',
+    targetScopeLabel: '1지망',
+    preferenceRank: 1,
+    sessionNo: 3,
+    scheduleId: 187703,
+    scheduleStartAt: '2026-11-13T06:07:00Z',
+    status: 'NOT_SUBMITTED',
+    targetRole: 'TEACHER',
+  })?.title,
+  '1지망',
+)
+assert.equal(
+  mapPortalFormListItemToSurveyEntry({
+    bindingId: 2,
+    formType: 'SATISFACTION',
+    title: '만족도조사',
+    preferenceRank: 2,
+    status: 'NOT_SUBMITTED',
+  })?.title,
+  '2지망',
+)
 
 console.log('portal-form-list.selfcheck: ok')

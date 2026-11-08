@@ -66,7 +66,7 @@ describe('instructor-fee-approval-modal', () => {
     ).toBe(true)
   })
 
-  it('확정 payload에 강의비 표시 문자열을 포함한다', () => {
+  it('확정 payload에 강사비 표시 문자열을 포함한다', () => {
     const detail = buildInstructorFeeApprovalConfirmDetail({
       lectureFeeBasisType: 'special_lecture',
       instructorFeeGrade: '3급 강사비',

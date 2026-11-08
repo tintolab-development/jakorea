@@ -6,6 +6,9 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * @nullable
+ */
 export type MemberPortalEducationScheduleItemBlockKind = typeof MemberPortalEducationScheduleItemBlockKind[keyof typeof MemberPortalEducationScheduleItemBlockKind] | null;
 
 

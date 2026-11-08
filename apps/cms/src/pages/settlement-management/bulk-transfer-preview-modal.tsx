@@ -3,13 +3,13 @@
  * Workbook·ExcelJS는 동적 import 청크로 분리해 Vite dev에서 모듈 fetch 실패를 줄입니다.
  */
 
-import { lazy, Suspense, useCallback, useMemo } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { Spin } from 'antd'
 import type { Sheet } from '@fortune-sheet/core'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
 import type { AccountPaymentRow } from '@/features/settlement-management/model/account-payments-list'
-import type { SettlementExportHistoryResponse } from '@/shared/api/generated/settlement/schemas'
+import type { SettlementExportResponse } from '@/features/settlement-management/api/account-payments/settlement-export-response'
 import {
   downloadIssuedSettlementExportFile,
   downloadIssuedSettlementExportFileOrReissue,
@@ -21,7 +21,12 @@ import {
   BULK_TRANSFER_SHEET_COLUMN_COUNT,
   buildBulkTransferFortuneSheet,
 } from '@/pages/settlement-management/bulk-transfer-fortune-data'
+import {
+  applyBulkTransferWithholdingAmounts,
+  loadBulkTransferWithholdingAmounts,
+} from '@/pages/settlement-management/bulk-transfer-withholding'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
+import { useProtectedFileDownload } from '@/shared/lib/use-protected-file-download'
 import './bulk-transfer-preview-modal.css'
 
 const Workbook = lazy(() => import('./bulk-transfer-fortune-workbook'))
@@ -30,8 +35,8 @@ export interface BulkTransferPreviewModalProps {
   open: boolean
   onCancel: () => void
   rows: AccountPaymentRow[]
-  serverExport?: SettlementExportHistoryResponse | null
-  onReissueExport?: () => Promise<SettlementExportHistoryResponse | null>
+  serverExport?: SettlementExportResponse | null
+  onReissueExport?: () => Promise<SettlementExportResponse | null>
 }
 
 export function BulkTransferPreviewModal({
@@ -41,17 +46,43 @@ export function BulkTransferPreviewModal({
   serverExport,
   onReissueExport,
 }: BulkTransferPreviewModalProps) {
+  const { runProtectedDownload, filePasswordModal } = useProtectedFileDownload()
   const usesServerFile = serverExport?.deliveryMethod === 'SERVER_FILE'
   const serverFileReady =
     usesServerFile &&
     serverExport?.fileObjectId != null &&
     Number.isFinite(serverExport.fileObjectId)
-  const sheetData: Sheet[] = useMemo(() => {
-    const sheet = buildBulkTransferFortuneSheet(rows)
-    return [sheet]
-  }, [rows])
+  const [previewRows, setPreviewRows] = useState(rows)
 
-  const handleDownload = useCallback(async () => {
+  useEffect(() => {
+    if (!open) return
+    setPreviewRows(rows)
+    if (!shouldUseSettlementRemote('accountPayments')) return
+    let cancelled = false
+    void loadBulkTransferWithholdingAmounts(rows)
+      .then(withholding => {
+        if (cancelled) return
+        setPreviewRows(applyBulkTransferWithholdingAmounts(rows, withholding))
+      })
+      .catch(() => {
+        if (cancelled) return
+        setPreviewRows(rows)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [open, rows])
+
+  const sheetData: Sheet[] = useMemo(() => {
+    const sheet = buildBulkTransferFortuneSheet(previewRows)
+    return [sheet]
+  }, [previewRows])
+
+  const handleDownload = useCallback(() => {
+    runProtectedDownload({
+      kind: 'BULK_TRANSFER_EXCEL',
+      zIndex: 1400,
+      download: async password => {
     try {
       if (serverExport?.deliveryMethod === 'SERVER_FILE') {
         if (serverExport.fileObjectId == null) {
@@ -66,12 +97,14 @@ export function BulkTransferPreviewModal({
           await downloadIssuedSettlementExportFileOrReissue({
             serverExport,
             kind: 'bulk-transfer',
+            password,
             onReissue: onReissueExport,
           })
         } else {
           await downloadIssuedSettlementExportFile({
             serverExport,
             kind: 'bulk-transfer',
+            password,
           })
         }
         return
@@ -86,7 +119,7 @@ export function BulkTransferPreviewModal({
       }
       const { exportBulkTransferExcel } =
         await import('@/pages/settlement-management/bulk-transfer-excel')
-      await exportBulkTransferExcel(rows)
+      await exportBulkTransferExcel(previewRows, { password })
     } catch (error) {
       notifySettlementExportDownloadError({
         error,
@@ -94,15 +127,20 @@ export function BulkTransferPreviewModal({
         issueButtonLabel: '대량이체 양식 발급',
         onAlreadyDownloaded: onCancel,
       })
+      throw error
     }
-  }, [onCancel, onReissueExport, rows, serverExport])
+      },
+    })
+  }, [onCancel, onReissueExport, previewRows, runProtectedDownload, serverExport])
 
   return (
+    <>
+    {filePasswordModal}
     <ContentModal
       open={open}
       onCancel={onCancel}
       title="대량이체 양식 미리보기"
-      description="지급조서 확인 완료 및 계좌 지급 대기 항목만 양식에 반영됩니다. 발급만으로 지급 완료 처리되지 않습니다."
+      description="지급조서 확인이 완료 처리된 항목만 양식에 반영됩니다."
       width={1400}
       size="large"
       className="bulk-transfer-preview-modal"
@@ -117,7 +155,8 @@ export function BulkTransferPreviewModal({
             icon={<ButtonDownloadIcon />}
             adminAction="download"
             disabled={usesServerFile && !serverFileReady}
-            onClick={() => void handleDownload()} >
+            onClick={() => void handleDownload()}
+          >
             엑셀 다운로드
           </CmsButton>
         </>
@@ -146,5 +185,6 @@ export function BulkTransferPreviewModal({
         ) : null}
       </div>
     </ContentModal>
+    </>
   )
 }

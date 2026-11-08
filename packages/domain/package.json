@@ -36,6 +36,10 @@
       "types": "./dist/shared/required-consent-alert.d.ts",
       "import": "./dist/shared/required-consent-alert.js"
     },
+    "./session": {
+      "types": "./dist/session/index.d.ts",
+      "import": "./dist/session/index.js"
+    },
     "./shared/required-address": {
       "types": "./dist/shared/required-address.d.ts",
       "import": "./dist/shared/required-address.js"
@@ -51,6 +55,14 @@
     "./shared/identity-module-copy": {
       "types": "./dist/shared/identity-module-copy.d.ts",
       "import": "./dist/shared/identity-module-copy.js"
+    },
+    "./shared/file-download-password": {
+      "types": "./dist/shared/file-download-password.d.ts",
+      "import": "./dist/shared/file-download-password.js"
+    },
+    "./shared/protected-file-download-kinds": {
+      "types": "./dist/shared/protected-file-download-kinds.d.ts",
+      "import": "./dist/shared/protected-file-download-kinds.js"
     },
     "./instructor/gender": {
       "types": "./dist/instructor/gender.d.ts",

@@ -64,6 +64,24 @@ describe('applyRegistrationFormsAfterCreate', () => {
     expect(saveProgramScopedOperationalFormVersion).not.toHaveBeenCalled()
   })
 
+  it('formType이 APPLICATION이어도 registration-* 코드는 COPY하지 않는다', async () => {
+    fetchGeneralProgramFormBindings.mockResolvedValue([
+      { bindingId: 1, formType: 'APPLICATION', templateId: 1, templateVersionId: 51, active: true },
+    ])
+    const result = await applyRegistrationFormsAfterCreate({
+      program: generalProgram,
+      forms: [
+        {
+          templateCode: 'registration-general',
+          formType: 'APPLICATION',
+          draft,
+        },
+      ],
+    })
+    expect(result.failed).toEqual([])
+    expect(saveProgramScopedOperationalFormVersion).not.toHaveBeenCalled()
+  })
+
   it('1사1교: 기관 양식이 차지한 BE 자동 바인딩을 강사 양식이 덮어쓰지 않는다(새 바인딩, 카탈로그 원본)', async () => {
     const csProgram = { id: '186500', backendProgramType: 'COMPANY_SCHOOL' } as Program
     fetchGeneralProgramFormBindings.mockResolvedValue([

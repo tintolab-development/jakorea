@@ -17,7 +17,6 @@ import {
   describeSurveyShareClipboardFailure,
   resolveSurveyShareClipboardUrl,
   mapSurveySummaryToQuestionSummaries,
-  surveyResponseNeedsDetail,
   surveySummaryHasPublicTextAnswers,
 } from './program-survey-adapters'
 
@@ -85,18 +84,6 @@ describe('isSurveyTemplateOptionForKind', () => {
   })
 })
 
-describe('surveyResponseNeedsDetail', () => {
-  it('skips detail when preview covers every answer', () => {
-    const preview = JSON.stringify([{ questionKey: 'q1', answerDisplayText: 'a' }])
-    expect(
-      surveyResponseNeedsDetail({ formResponseId: 1, answerCount: 1, answerPreviewJson: preview })
-    ).toBe(false)
-    expect(
-      surveyResponseNeedsDetail({ formResponseId: 1, answerCount: 6, answerPreviewJson: preview })
-    ).toBe(true)
-  })
-})
-
 describe('mapSurveyAnswersToRecord', () => {
   it('maps questionKey to display text', () => {
     expect(
@@ -134,10 +121,54 @@ describe('mapSurveyResponseListItemToPollResponse', () => {
       answerPreviewJson: '{"a":"1"}',
     })
     expect(row.answers).toEqual({ a: '1' })
-    expect(surveyResponseNeedsDetail({ formResponseId: 11 })).toBe(true)
-    expect(surveyResponseNeedsDetail({ formResponseId: 11, answerPreviewJson: '{"a":"1"}' })).toBe(
-      false
+  })
+
+  it('uses includeAnswers list item.answers for full narrative text (same mapper as detail)', () => {
+    const fullText = '강의가 아주 길고 '.repeat(40).trim()
+    const answers = [
+      {
+        answerId: 99812,
+        questionId: 99712,
+        questionKey: 'comment',
+        questionLabel: '의견',
+        questionType: 'TEXTAREA',
+        answerValueJson: JSON.stringify(fullText),
+        answerDisplayText: fullText,
+        autoFilled: false,
+      },
+      { answerId: 99813, questionId: 99713, questionKey: 'score', answerDisplayText: '5' },
+    ]
+    const preview = JSON.stringify([
+      { questionKey: 'comment', questionLabel: '의견', answerDisplayText: '강의가 아주' },
+    ])
+    const fromList = mapSurveyResponseListItemToPollResponse({
+      formResponseId: 12,
+      submittedByMemberName: '김응답',
+      answerCount: 2,
+      answerPreviewJson: preview,
+      answers,
+    })
+    const fromDetail = mapSurveyResponseListItemToPollResponse(
+      { formResponseId: 12, submittedByMemberName: '김응답', answerCount: 2, answerPreviewJson: preview },
+      { formResponseId: 12, answers }
     )
+    expect(fromList.answers).toEqual({ comment: fullText, score: '5' })
+    expect(fromList).toEqual(fromDetail)
+  })
+
+  it('falls back to answerPreviewJson when list answers is empty or omitted', () => {
+    const preview = JSON.stringify([{ questionKey: 'q1', answerDisplayText: '만족' }])
+    expect(
+      mapSurveyResponseListItemToPollResponse({
+        formResponseId: 13,
+        answerPreviewJson: preview,
+        answers: [],
+      }).answers
+    ).toEqual({ q1: '만족' })
+    expect(
+      mapSurveyResponseListItemToPollResponse({ formResponseId: 13, answerPreviewJson: preview })
+        .answers
+    ).toEqual({ q1: '만족' })
   })
 })
 
@@ -306,6 +337,21 @@ describe('classifyFormBindingByTemplateId', () => {
     expect(classifyFormBindingByTemplateId({ templateId: 99, templateName: '일반 설문' })).toBe(
       'poll'
     )
+  })
+
+  it('keeps SATISFACTION aliases on the satisfaction tab', () => {
+    expect(
+      classifyFormBindingByTemplateId({
+        formType: 'SATISFACTION_SURVEY',
+        templateName: '설문조사',
+      })
+    ).toBe('satisfaction')
+    expect(
+      classifyFormBindingByTemplateId({
+        formType: 'PROGRAM_SATISFACTION',
+        templateName: '설문조사',
+      })
+    ).toBe('satisfaction')
   })
 
   it('keeps a SURVEY slot on the poll list even when the template name is satisfaction or lecture', () => {
@@ -603,6 +649,15 @@ describe('resolveSurveyShareClipboardUrl', () => {
     ).toBe('https://platform.example.com/surveys/share/abc')
   })
 
+  it('builds the Platform UI URL when accessMode is omitted but a public token exists', () => {
+    expect(
+      resolveSurveyShareClipboardUrl(
+        { shareToken: 'abc' },
+        'https://platform.example.com'
+      )
+    ).toBe('https://platform.example.com/surveys/share/abc')
+  })
+
   it('builds the Platform UI URL from a public formPath token when shareToken is omitted', () => {
     const backendResponse = {
       accessMode: 'PUBLIC_ANONYMOUS',
@@ -640,10 +695,24 @@ describe('describeSurveyShareClipboardFailure', () => {
   it('explains member-only surveys', () => {
     expect(
       describeSurveyShareClipboardFailure(
-        { accessMode: 'MEMBER_AUTHENTICATED', shareToken: 'abc' },
+        {
+          accessMode: 'MEMBER_AUTHENTICATED',
+          shareToken: 'abc',
+          formPath: '/api/portal/me/programs/1/form-bindings/2/render',
+          submitPath: '/api/portal/me/programs/1/form-bindings/2/responses',
+        },
         'https://platform.example.com'
       )
     ).toContain('회원 전용')
+    expect(
+      describeSurveyShareClipboardFailure(
+        {
+          accessMode: 'MEMBER_AUTHENTICATED',
+          formPath: '/api/portal/me/programs/1/form-bindings/2/render',
+        },
+        'https://platform.example.com'
+      )
+    ).toContain('/api/portal/me/programs/1/form-bindings/2/render')
   })
 
   it('explains a missing Platform origin', () => {

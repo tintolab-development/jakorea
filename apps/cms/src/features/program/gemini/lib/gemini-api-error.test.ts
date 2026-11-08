@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { formatGeminiApiError } from './gemini-api-error'
 import {
+  createGeminiImportPreviewFailureError,
   formatGeminiImportPaymentExclusionNotes,
   formatGeminiImportPreviewFailures,
 } from './performance/import-preview-failure'
@@ -44,7 +45,7 @@ describe('formatGeminiApiError', () => {
           rowNumber: 2,
           message: 'GEMINI_TRAINING_END_TIME_NOT_AFTER_START',
         },
-      ]),
+      ])
     ).toBe('2행: 종료 시각이 시작 시각보다 늦어야 합니다.')
   })
 
@@ -56,8 +57,8 @@ describe('formatGeminiApiError', () => {
           rowNumber: 3,
           message: 'GEMINI_INSTRUCTOR_MATCH_AMBIGUOUS',
         },
-      ]),
-    ).toBe('3행: 동일 이름·연락처 강사가 여러 명입니다.')
+      ])
+    ).toBe('3행: 동일한 이름과 연락처의 강사가 여러 명입니다. 정확한 강사 회원을 선택해 주세요.')
   })
 
   it('does not treat IDENTITY_BLANK SUCCESS as a preview failure', () => {
@@ -71,7 +72,7 @@ describe('formatGeminiApiError', () => {
           matchedInstructorMemberId: undefined,
           accountPaymentId: undefined,
         },
-      ]),
+      ])
     ).toBeUndefined()
     expect(
       formatGeminiImportPaymentExclusionNotes([
@@ -80,40 +81,142 @@ describe('formatGeminiApiError', () => {
           rowNumber: 1,
           paymentExclusionReason: 'GEMINI_INSTRUCTOR_IDENTITY_BLANK',
         },
-      ]),
-    ).toBe('1행: 강사 정보 미기재 (실적만 등록, 지급 없음)')
+      ])
+    ).toBe('1행: 강사 정보 미기재 (실적만 등록, 계좌 지급 제외)')
   })
 
-  it('does not treat NOT_MATCHED SUCCESS as a preview failure; notes include label', () => {
+  it('treats NOT_MATCHED as a failed import row, not a payment exclusion', () => {
     expect(
       formatGeminiImportPreviewFailures([
         {
-          status: 'SUCCESS',
+          status: 'FAILED',
           rowNumber: 1,
           message:
-            '일치하는 강사 회원을 찾지 못해 실적만 등록하고 계좌 지급·정산 대상에서 제외했습니다.',
-          trainingReportId: 186512,
-          accountPaymentId: undefined,
-          matchedInstructorMemberId: undefined,
-          paymentExclusionReason: 'GEMINI_INSTRUCTOR_NOT_MATCHED',
+            'GEMINI_INSTRUCTOR_NOT_MATCHED: 입력한 강사명·연락처가 회원 정보와 일치하지 않습니다.',
         },
-      ]),
+      ])
+    ).toBe('1행: 입력한 강사명·연락처가 회원 정보와 일치하지 않습니다.')
+    expect(
+      formatGeminiImportPaymentExclusionNotes([
+        {
+          status: 'FAILED',
+          rowNumber: 1,
+          paymentExclusionReason: 'GEMINI_INSTRUCTOR_NOT_MATCHED' as never,
+        },
+      ])
     ).toBeUndefined()
+  })
+
+  it('shows external-payee SUCCESS as performance-only', () => {
     expect(
       formatGeminiImportPaymentExclusionNotes([
         {
           status: 'SUCCESS',
-          rowNumber: 1,
-          paymentExclusionReason: 'GEMINI_INSTRUCTOR_NOT_MATCHED',
+          rowNumber: 4,
+          paymentExclusionReason: 'GEMINI_INSTRUCTOR_EXTERNAL_PAYEE',
         },
-      ]),
-    ).toBe('1행: 강사 회원 미매칭 (실적만 등록, 지급·정산 없음)')
+      ])
+    ).toBe('4행: 외부 지급처 (실적만 등록, 계좌 지급 제외)')
+  })
+
+  it('maps identity mismatch and partial identity failures', () => {
+    expect(
+      formatGeminiImportPreviewFailures([
+        {
+          status: 'FAILED',
+          rowNumber: 5,
+          message: 'GEMINI_INSTRUCTOR_IDENTITY_MISMATCH: 불일치',
+        },
+        {
+          status: 'FAILED',
+          rowNumber: 6,
+          message: 'GEMINI_INSTRUCTOR_NAME_AND_PHONE_REQUIRED: 부분 입력',
+        },
+      ])
+    ).toBe(
+      '5행: 선택한 강사 회원과 입력한 강사명·연락처가 일치하지 않습니다.\n6행: 강사명과 연락처를 입력해 주세요.'
+    )
+  })
+
+  it('classifies instructor identity failures for the dedicated alert modal', () => {
+    const error = createGeminiImportPreviewFailureError([
+      {
+        status: 'FAILED',
+        rowNumber: 5,
+        message: 'GEMINI_INSTRUCTOR_IDENTITY_MISMATCH: 불일치',
+      },
+    ])
+
+    expect(error?.kind).toBe('INSTRUCTOR_INFO_MISMATCH')
+    expect(error?.message).toBe('5행: 선택한 강사 회원과 입력한 강사명·연락처가 일치하지 않습니다.')
+  })
+
+  it('classifies an invalid instructor phone as instructor info mismatch', () => {
+    const error = createGeminiImportPreviewFailureError([
+      { status: 'SUCCESS', rowNumber: 1, message: 'OK', duplicate: false },
+      {
+        status: 'FAILED',
+        rowNumber: 2,
+        message:
+          'GEMINI_INSTRUCTOR_PHONE_INVALID: 강사 연락처 형식이 올바르지 않습니다. 010-0000-0000 형식으로 입력해 주세요.',
+        duplicate: false,
+      },
+    ])
+
+    expect(error?.kind).toBe('INSTRUCTOR_INFO_MISMATCH')
+    expect(error?.message).toBe('2행: 강사 연락처 형식이 올바르지 않습니다. (예: 010-0000-0000)')
+  })
+
+  it('treats an in-file duplicate row as a general failure with the origin row', () => {
+    const error = createGeminiImportPreviewFailureError([
+      { status: 'SUCCESS', rowNumber: 1, message: 'OK', duplicate: false },
+      {
+        status: 'FAILED',
+        rowNumber: 2,
+        message:
+          'GEMINI_TRAINING_REPORT_DUPLICATE_IN_FILE: 같은 파일 안에 프로그램·강사·교육일·시작시간·장소가 같은 행이 있습니다. 중복 행을 삭제해 주세요. (1행과 중복)',
+        duplicate: false,
+      },
+    ])
+
+    expect(error?.kind).toBe('GENERAL')
+    expect(error?.message).toBe(
+      '2행: 같은 파일 안에 프로그램·강사·교육일·시작시간·장소가 같은 행이 있습니다. (1행과 중복)'
+    )
   })
 
   it('does not show axios status 400 as the user message', () => {
     const error = new Error('Request failed with status code 400')
     expect(formatGeminiApiError(error, '실적 등록에 실패했습니다.')).toBe(
-      '실적 등록에 실패했습니다.',
+      '실적 등록에 실패했습니다.'
     )
+  })
+
+  it('maps approved-training history conflicts to the delete-blocked copy', () => {
+    expect(
+      formatGeminiApiError(
+        {
+          response: {
+            status: 409,
+            data: { error: { code: 'GEMINI_APPROVED_TRAINING_HAS_BUSINESS_HISTORY' } },
+          },
+        },
+        '연수 삭제에 실패했습니다.'
+      )
+    ).toBe('신청 강사 또는 교육 진행 이력이 있는 연수는 삭제할 수 없습니다.')
+  })
+
+  it('maps an existing Gemini instructor winner conflict to replacement guidance', () => {
+    expect(
+      formatGeminiApiError(
+        {
+          response: {
+            status: 409,
+            data: { error: { code: 'GEMINI_INSTRUCTOR_WINNER_ALREADY_EXISTS' } },
+          },
+        },
+        '강사 승인에 실패했습니다.'
+      )
+    ).toBe('이미 승인된 강사가 있습니다. 강사 변경으로 승인해 주세요.')
   })
 })

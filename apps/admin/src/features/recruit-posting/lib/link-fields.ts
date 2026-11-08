@@ -9,6 +9,22 @@ import { HTTP_LINK_URL_FORMAT_ALERT, isValidHttpLinkUrl } from '../../../shared/
 
 export const CAREER_POSTING_BUTTON_LABEL_MAX_LENGTH = 15
 
+/** 공개 상세와 같은 기본 버튼 문구 — 버튼명이 비고 링크만 있을 때 (apps/platform `link-cta.ts`와 동일) */
+export const CAREER_POSTING_DEFAULT_BUTTON_LABEL = '채용 공고 바로가기'
+
+export function resolveCareerPostingLinkButtonLabel(buttonLabel: string): string {
+  return buttonLabel.trim() || CAREER_POSTING_DEFAULT_BUTTON_LABEL
+}
+
+/** 공개 상세와 같은 href 정규화 — javascript: 차단, 스킴 없으면 https:// */
+export function careerPostingLinkHref(linkUrl: string): string {
+  const url = linkUrl.trim()
+  if (!url) return ''
+  if (/^javascript:/i.test(url)) return ''
+  if (/^(https?:\/\/|mailto:|\/)/i.test(url)) return url
+  return `https://${url}`
+}
+
 export type CareerPostingLinkFields = {
   buttonLabel: string
   linkUrl: string

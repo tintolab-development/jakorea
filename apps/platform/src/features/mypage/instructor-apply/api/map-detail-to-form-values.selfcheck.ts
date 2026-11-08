@@ -91,4 +91,22 @@ assert.equal(
   '2026-01-15T09:15:42+09:00',
 )
 
+const universityLocked = mapInstructorRoleRequestDetailToSubmittedSnapshot({
+  ...detail,
+  profile: {
+    ...detail.profile!,
+    education: {
+      highestSchoolType: 'college4',
+      highestStatus: 'enrolled',
+      detailKeys: ['high'],
+      highSchool: {
+        schoolName: '고양외국어고등학교',
+        admitYear: '2013-01',
+        gradYear: '2016-01',
+      },
+    },
+  },
+})
+assert.deepEqual(universityLocked.values.educationDetailKeys, ['high', 'college4'])
+
 console.log('map-detail-to-form-values.selfcheck: ok')

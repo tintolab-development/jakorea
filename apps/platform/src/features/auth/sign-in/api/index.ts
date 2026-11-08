@@ -15,6 +15,7 @@ export {
   parsePhoneIdentityChangeResponse,
   parsePortalProfileResponse,
 } from './parse-portal-member'
+export type { PortalPasswordChangeTokens } from './client'
 export type {
   AuthTokenResponse,
   HomepageMeResponse,

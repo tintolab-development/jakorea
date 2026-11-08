@@ -11,6 +11,7 @@ import type { WageItemUpsertRequestWageItemType } from './wageItemUpsertRequestW
 export interface WageItemUpsertRequest {
   id?: number;
   wageItemType?: WageItemUpsertRequestWageItemType;
+  /** PUT 임금 제목. GET WageItemResponse.name */
   itemName?: string;
   amount?: number;
   calculationUnit?: string;

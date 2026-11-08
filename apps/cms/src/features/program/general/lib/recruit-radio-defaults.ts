@@ -24,6 +24,9 @@ export const RECRUIT_ANNOUNCEMENT_PUBLISHED_DEFAULT = 'published' as const
 export const RECRUIT_INTERVIEW_REQUIRED_DEFAULT = 'yes' as const
 /** 학생 명단 제출·사전 안내 사항 작성 여부 화면 기본값(일반 기관 모집, limitDefaults 없을 때) */
 export const RECRUIT_NEED_OR_NOT_DEFAULT = 'need' as const
+/** 강사 모집 대상 화면 기본값 — 라디오는 아니지만 같은 위저드 KV 보정 정책을 쓴다 */
+export const RECRUIT_INSTRUCTOR_TARGETS_KEY = 'recruit.instructor.recruitTargets'
+export const RECRUIT_INSTRUCTOR_TARGETS_DEFAULT: string[] = ['adult']
 
 /**
  * 모집 단락 라디오 키 → 화면 기본값 (단락·검사·저장·수정이 모두 이 표를 따른다).
@@ -148,6 +151,43 @@ function listRadioDefaultEntries(
   return entries
 }
 
+type ArrayDefaultEntry = {
+  key: string
+  value: string[]
+  store: OperationalSeedDefaultStore
+}
+
+function listArrayDefaultEntries(
+  participant: Pick<
+    ProgramRegistrationParticipantSelection,
+    'individual' | 'organization' | 'teacherInstructor' | 'volunteer'
+  >
+): ArrayDefaultEntry[] {
+  if (!participant.teacherInstructor) return []
+  return [
+    {
+      key: RECRUIT_INSTRUCTOR_TARGETS_KEY,
+      value: RECRUIT_INSTRUCTOR_TARGETS_DEFAULT,
+      store: 'general-recruit',
+    },
+  ]
+}
+
+function shouldFillWizardArrayDefault(
+  raw: unknown,
+  entry: ArrayDefaultEntry,
+  options: GeneralRecruitRadioDefaultsOptions
+): boolean {
+  if (raw !== undefined) return false
+  if (
+    options.wizardKv !== true &&
+    isOperationalSeedDefaultSuppressed(entry.store, entry.key)
+  ) {
+    return false
+  }
+  return options.wizardKv === true
+}
+
 /**
  * 선택된 모집 탭의 라디오 중 화면이 기본값으로 그리는 것만 그 값으로 채운다.
  * 사용자가 고른 값·명시적 빈 값(공고 게시 `''` 등 화면 미선택)은 그대로 둔다. 바뀐 것이 없으면 같은 객체를 돌려준다.
@@ -176,6 +216,11 @@ export function withGeneralRecruitRadioDefaults(
     }
     if (next === kv) next = { ...kv }
     next[entry.key] = entry.value
+  }
+  for (const entry of listArrayDefaultEntries(participant)) {
+    if (!shouldFillWizardArrayDefault(kv[entry.key], entry, options)) continue
+    if (next === kv) next = { ...kv }
+    next[entry.key] = [...entry.value]
   }
   return next
 }

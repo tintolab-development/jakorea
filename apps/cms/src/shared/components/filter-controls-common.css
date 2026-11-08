@@ -2,10 +2,10 @@
  * 필터 영역 Select(드롭다운) 및 검색 인풋 공통 크기
  *
  * ## 공통 규격 (FilterTableGroup · FilterTableLayout)
- * - 단일 검색·셀렉트: **기본 260×44px** · **최소 240px**
+ * - 단일 검색·셀렉트: **기본 260×40px** · **최소 240px**
  *   (`--filter-control-width` = `--filter-control-max-width` = 260px, `--filter-control-min-width` = 240px)
  * - **radio**: 폭 고정 없음(콘텐츠 허그) · 옵션 gap 16px · 칸 사이는 --filter-field-gap 12px
- * - 분리형 dateRange·selectPair: 열 540px (2×260 + --filter-control-range-split-between 20px)
+ * - 분리형 dateRange: 열 500px (각 칸 --filter-control-range-segment-width 240 × 2 + 구분자 20px) — 디자인 가이드 Field / Sorting 기간
  * - addressRegion(기관 소재지): 열 235.5px (시/도·시/군/구 각 114.75px + 사이 gap 6px)
  * - 필터 칸 사이 gap: --filter-field-gap (12px)
  * - 레이블·컨트롤 gap: --filter-label-control-gap (6px)
@@ -13,7 +13,7 @@
  * - 조회 버튼: 높이 40px · 폭은 CmsButton medium min-width + 라벨 (table-filter-group.css)
  *
  * FilterFieldConfig.width: 단일 검색·셀렉트는 `FILTER_CONTROL_MAX_WIDTH_PX`(260), 기간·이중셀렉트는
- * `FILTER_CONTROL_WIDE_FIELD_WIDTH_PX`(540). **radio에는 width를 두지 않음.** `%` 폭은 행 전체 stretch — 목록 필터에 쓰지 않음.
+ * `FILTER_CONTROL_WIDE_FIELD_WIDTH_PX`(500). **radio에는 width를 두지 않음.** `%` 폭은 행 전체 stretch — 목록 필터에 쓰지 않음.
  *
  * 상세: apps/cms/.cursor/rules/design/filter-area-layout.mdc
  */
@@ -23,18 +23,22 @@
   --filter-control-max-width: 260px;
   /** 분리형 기간(시작·종료 두 칸): 구분자(~) 좌우 margin 6px 등 포함한 가운데 간격 */
   --filter-control-range-split-between: 20px;
+  /** 분리형 기간 각 칸 폭 (디자인 가이드: 240) */
+  --filter-control-range-segment-width: 240px;
   /** 필터 칸 사이·TableFilterGroup 행 간격 */
   --filter-field-gap: 12px;
   /** addressRegion(시/도·시/군/구) 하위 셀렉트 사이 gap */
   --filter-address-region-pair-gap: 6px;
   /** addressRegion 하위 셀렉트 각 폭 */
   --filter-address-region-segment-width: 114.75px;
-  --filter-control-height: 44px;
+  /** 필터 컨트롤 높이 — 디자인 가이드 Field / Sorting M (40) */
+  --filter-control-height: 40px;
   --filter-control-min-width: 240px;
   /** 필터 레이블 = CmsField L 라벨 스펙: 15px × 140%(21px) + padding-bottom 2px */
   --filter-label-height: 23px;
   --filter-label-control-gap: var(--spacing-6, 6px);
-  --filter-area-label-color: var(--Content-secondary, #525252);
+  /** 필터 레이블 색 — 시안 Field / Sorting 라벨 Neutral black #3D3D3D (폼 CmsField 라벨 Content/secondary #525252와 다름) */
+  --filter-area-label-color: var(--Netural-black, #3d3d3d);
   --filter-area-label-font-family: var(--font-family-primary, 'Pretendard', sans-serif);
   --filter-area-label-font-size: 15px;
   --filter-area-label-font-weight: 500;
@@ -76,7 +80,16 @@
   }
 }
 
-/* 필터 영역 레이블 — TableFilterGroup은 `.cms-field__label` + `cms-control--medium` (CmsField M) */
+/*
+ * 필터 영역 레이블 — TableFilterGroup은 `.cms-field__label` + `cms-control--medium` (CmsField M).
+ * 색만 Field / Sorting 시안(#3D3D3D)으로 덮는다 — 공용 `.cms-field__label`(#525252)은 폼 필드용.
+ * LabeledSearchInput은 목록 필터 전용(TableFilterGroup·ListPageFilters·진행 현황 필터)이라 컨테이너 밖도 포함.
+ */
+.table-filter-group__container .table-filter-group__label.cms-field__label,
+.labeled-search-input__label.cms-field__label {
+  color: var(--filter-area-label-color);
+}
+
 .table-filter-group__container .table-filter-group__label.cms-field__label,
 .table-filter-group__container .labeled-search-input__label.cms-field__label {
   box-sizing: border-box;
@@ -143,23 +156,23 @@
   gap: var(--filter-label-control-gap, 6px);
   height: auto !important;
   min-height: calc(
-    var(--filter-label-height, 23px) + var(--filter-label-control-gap, 6px) + var(--filter-control-height, 44px)
+    var(--filter-label-height, 23px) + var(--filter-label-control-gap, 6px) + var(--filter-control-height, 40px)
   );
 }
 
-/* 분리형 기간: 바깥 2×260 + 구분자, 각 세그먼트 260px 고정 */
+/* 분리형 기간: 바깥 2×240 + 구분자, 각 세그먼트 240px 고정 */
 .table-filter-group .table-filter-group__field .app-datepicker.app-datepicker--range-split,
 .table-filter-group .app-datepicker.app-datepicker--range-split,
 .table-filter-group .table-filter-group__field .cms-datepicker.cms-datepicker--range-split,
 .table-filter-group .cms-datepicker.cms-datepicker--range-split {
   min-width: calc(
-    2 * var(--filter-control-max-width) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-range-segment-width, 240px) + var(--filter-control-range-split-between, 20px)
   );
   max-width: calc(
-    2 * var(--filter-control-max-width) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-range-segment-width, 240px) + var(--filter-control-range-split-between, 20px)
   );
   width: calc(
-    2 * var(--filter-control-max-width) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-range-segment-width, 240px) + var(--filter-control-range-split-between, 20px)
   );
   height: var(--filter-control-height) !important;
   box-sizing: border-box;
@@ -170,10 +183,10 @@
 
 .table-filter-group .app-datepicker--range-split .app-datepicker__segment,
 .table-filter-group .cms-datepicker--range-split .cms-datepicker__segment {
-  flex: 0 0 var(--filter-control-max-width);
-  min-width: var(--filter-control-max-width);
-  max-width: var(--filter-control-max-width);
-  width: var(--filter-control-max-width);
+  flex: 0 0 var(--filter-control-range-segment-width, 240px);
+  min-width: var(--filter-control-range-segment-width, 240px);
+  max-width: var(--filter-control-range-segment-width, 240px);
+  width: var(--filter-control-range-segment-width, 240px);
 }
 
 .table-filter-group .table-filter-group__field .app-datepicker,
@@ -322,7 +335,7 @@
 .table-filter-group .ant-picker-range {
   max-width: min(
     100%,
-    calc(2 * var(--filter-control-max-width) + var(--filter-control-range-split-between, 20px))
+    calc(2 * var(--filter-control-range-segment-width, 240px) + var(--filter-control-range-split-between, 20px))
   );
 }
 
@@ -425,7 +438,7 @@
 .program-filter-wrapper .ant-picker-range {
   max-width: min(
     100%,
-    calc(2 * var(--filter-control-max-width) + var(--filter-control-range-split-between, 20px))
+    calc(2 * var(--filter-control-range-segment-width, 240px) + var(--filter-control-range-split-between, 20px))
   ) !important;
 }
 
@@ -751,7 +764,7 @@
     width: 100% !important;
     max-width: min(
       100%,
-      calc(2 * var(--filter-control-max-width) + var(--filter-control-range-split-between, 20px))
+      calc(2 * var(--filter-control-range-segment-width, 240px) + var(--filter-control-range-split-between, 20px))
     ) !important;
     min-width: var(--filter-control-min-width);
   }
@@ -775,7 +788,7 @@
     width: 100% !important;
     max-width: min(
       100%,
-      calc(2 * var(--filter-control-max-width) + var(--filter-control-range-split-between, 20px))
+      calc(2 * var(--filter-control-range-segment-width, 240px) + var(--filter-control-range-split-between, 20px))
     ) !important;
     min-width: var(--filter-control-min-width);
   }

@@ -59,6 +59,7 @@ import {
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import '@/features/template/ui/form-editor/form-editor.css'
 import './volunteer-info-program.css'
+import { RecruitmentLifecycleStatusText } from '@/features/program/shared/ui/recruitment-lifecycle-status-text'
 
 function LifecycleStatusView({
   lifecycle,
@@ -69,11 +70,10 @@ function LifecycleStatusView({
 }) {
   if (!lifecycle) return <>-</>
   return (
-    <span
-      className={`program-detail-info-tab__lifecycle-status-text program-detail-info-tab__lifecycle-status-text--${lifecycle.replace(/_/g, '-')}`}
-    >
-      {getRecruitmentStatusLabelForStatus(status, 'volunteer')}
-    </span>
+    <RecruitmentLifecycleStatusText
+      status={lifecycle}
+      label={getRecruitmentStatusLabelForStatus(status, 'volunteer')}
+    />
   )
 }
 
@@ -83,14 +83,13 @@ function resolveVolunteerNotesDisplay(program: Program): string {
   return (program.oneLineIntroduction ?? '').trim() || '-'
 }
 
-function dateMethodLine(
-  date: string | Date | undefined,
-  method: string | undefined,
-  fallbackMethod: string
-) {
+function dateMethodLine(date: string | Date | undefined, method: string | undefined) {
   if (!date) return '-'
-  const methodLabel = method?.trim() || fallbackMethod
-  return <UjatInlineDividedSegments segments={[formatUjatDotDateWithWeekday(date), methodLabel]} />
+  return (
+    <UjatInlineDividedSegments
+      segments={[formatUjatDotDateWithWeekday(date), method?.trim() || '-']}
+    />
+  )
 }
 
 function resolveInterviewMethodLabel(method: string | undefined): string {
@@ -157,10 +156,7 @@ export function UjatRecruitVolunteerInfoProgramView({
         : isTemplateAuthoring
           ? UJAT_VOLUNTEER_RECRUIT_DEFAULT_TARGET_LABELS.join(', ')
           : '-'
-  const volunteerTargetDetail =
-    program.volunteerTargetDetail?.trim() ||
-    program.generalCommonInfo?.volunteerRecruitmentInfo?.recruitmentTargetDetail?.trim() ||
-    '-'
+  const volunteerTargetDetail = program.volunteerTargetDetail?.trim() || '-'
   const notes = resolveVolunteerNotesDisplay(program)
   const activityTerm = isTemplateAuthoring
     ? resolveActivityTermDisplay(program, volunteerHalf)
@@ -433,8 +429,7 @@ export function UjatRecruitVolunteerInfoProgramView({
             validationKey={recruitKey('docAnnounce')}
             view={dateMethodLine(
               program.documentPassAnnouncementDate,
-              program.documentPassAnnouncementMethod,
-              '홈페이지 공지'
+              program.documentPassAnnouncementMethod
             )}
             edit={
               isEdit && form ? (
@@ -470,9 +465,8 @@ export function UjatRecruitVolunteerInfoProgramView({
             label="최종 합격자 발표"
             validationKey={[recruitKey('finalAnnounceIso'), recruitKey('finalAnnounceMethod')]}
             view={dateMethodLine(
-              program.finalPassAnnouncementDate ?? program.resultAnnouncementDate,
-              program.finalPassAnnouncementMethod ?? program.resultAnnouncementMethod,
-              '홈페이지 공지'
+              program.finalPassAnnouncementDate,
+              program.finalPassAnnouncementMethod
             )}
             edit={
               isEdit && form ? (

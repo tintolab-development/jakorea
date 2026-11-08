@@ -10,6 +10,7 @@ export type { DashboardQueryScope }
  */
 export function useDashboardQueryScope(): DashboardQueryScope {
   useAuthStore(s => s.token)
+  useAuthStore(s => s.isAuthenticated)
   return shouldUseDashboardRemoteApi() ? 'remote' : 'mock'
 }
 

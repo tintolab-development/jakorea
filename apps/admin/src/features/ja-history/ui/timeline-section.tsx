@@ -7,8 +7,9 @@ import {
   useSaveJaHistoryWorldTimeline,
 } from '@/features/ja-history/api/hooks'
 import { CmsTextTabs, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
-import { InlineText, MediaPreview, SectionFrame, jaHistorySaveAlert } from './chrome'
+import { HistoryCopy, MediaPreview, SectionFrame, jaHistorySaveAlert } from './chrome'
 import { TimelineFormModal } from './timeline-form-modal'
+import { TABLE_ROW_FILL_FIELDS_CLASS } from '@/shared/ui/table-row-fill-fields'
 
 const eventColumns: ColumnsType<JaHistoryTimelineEvent> = [
   { title: '연도', dataIndex: 'year', width: 200, align: 'center' },
@@ -17,11 +18,11 @@ const eventColumns: ColumnsType<JaHistoryTimelineEvent> = [
     dataIndex: 'text',
     className: 'ja-history-col-text',
     ellipsis: false,
-    render: (value: string) => (
-      <InlineText editing={false} value={value} onChange={() => undefined} rows={2} label="설명 텍스트" />
-    ),
+    render: (value: string) => <HistoryCopy value={value} align="center" />,
   },
 ]
+
+type IntroRow = { key: 'intro' }
 
 type Props = {
   title: string
@@ -48,29 +49,44 @@ export function TimelineSection({ title, modalTitle, timeline, variant }: Props)
     [timeline.periods],
   )
 
+  const introColumns = useMemo<ColumnsType<IntroRow>>(
+    () => [
+      {
+        title: '이미지',
+        key: 'image',
+        width: 240,
+        align: 'center',
+        render: () => <MediaPreview media={timeline.image} size="wide" />,
+      },
+      {
+        title: '타이틀',
+        key: 'title',
+        width: 320,
+        align: 'center',
+        ellipsis: false,
+        render: () => <HistoryCopy value={timeline.title} align="center" />,
+      },
+      {
+        title: '서브 텍스트',
+        key: 'body',
+        align: 'center',
+        ellipsis: false,
+        render: () => <HistoryCopy value={timeline.body} align="center" />,
+      },
+    ],
+    [timeline.body, timeline.image, timeline.title]
+  )
+
   return (
     <>
-      <SectionFrame title={title} onEdit={() => setOpen(true)}>
-        <div className="ja-history-timeline-intro" role="group" aria-label={`${title} 소개`}>
-          <div className="ja-history-timeline-intro__cell">
-            <div className="ja-history-timeline-intro__label">이미지</div>
-            <div className="ja-history-timeline-intro__value">
-              <MediaPreview media={timeline.image} size="wide" />
-            </div>
-          </div>
-          <div className="ja-history-timeline-intro__cell">
-            <div className="ja-history-timeline-intro__label">타이틀</div>
-            <div className="ja-history-timeline-intro__value ja-history-timeline-intro__value--text">
-              <p className="ja-history-timeline-intro__text">{timeline.title}</p>
-            </div>
-          </div>
-          <div className="ja-history-timeline-intro__cell">
-            <div className="ja-history-timeline-intro__label">서브 텍스트</div>
-            <div className="ja-history-timeline-intro__value ja-history-timeline-intro__value--text">
-              <p className="ja-history-timeline-intro__text">{timeline.body}</p>
-            </div>
-          </div>
-        </div>
+      <SectionFrame title={title} marker={false} onEdit={() => setOpen(true)}>
+        <CmsDataTable<IntroRow>
+          className={`cms-data-table cms-data-table--skip-auto-no-col ja-history-table ${TABLE_ROW_FILL_FIELDS_CLASS}`}
+          columns={introColumns}
+          dataSource={[{ key: 'intro' }]}
+          pagination={false}
+          rowKey="key"
+        />
 
         <div className="ja-history-timeline-periods">
           <CmsTextTabs
@@ -88,11 +104,11 @@ export function TimelineSection({ title, modalTitle, timeline, variant }: Props)
                 <p className="ja-history-empty">이 기간에 등록된 연혁이 없습니다.</p>
               ) : (
                 <CmsDataTable<JaHistoryTimelineEvent>
-                  className="cms-data-table cms-data-table--skip-auto-no-col ja-history-table"
+                  className={`cms-data-table cms-data-table--skip-auto-no-col ja-history-table ${TABLE_ROW_FILL_FIELDS_CLASS}`}
                   columns={eventColumns}
                   dataSource={active.events}
                   pagination={false}
-                  rowKey="year"
+                  rowKey={(_, index) => `${active.id}-${index}`}
                 />
               )}
             </div>

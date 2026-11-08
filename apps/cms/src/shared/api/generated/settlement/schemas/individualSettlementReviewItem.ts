@@ -13,7 +13,10 @@ export interface IndividualSettlementReviewItem {
   itemName: string;
   amount: number;
   evidenceRequired: boolean;
-  /** 관리자 조회 시 현재 정산 항목 설정에서 매칭된 지급/임금/공제 항목 description. 신청자 입력 요약이 아님. 매칭 실패 또는 설정 문구 공백이면 null. */
+  /**
+     * 관리자 조회 시 현재 정산 항목 설정에서 매칭된 지급/임금/공제 항목 description. 신청자 입력 요약이 아님. 매칭 실패 또는 설정 문구 공백이면 null.
+     * @nullable
+     */
   description?: string | null;
   receipts: IndividualSettlementReviewReceipt[];
 }

@@ -1,19 +1,16 @@
 /**
- * 세금신고 양식 xlsx (미리보기와 동일 데이터)
+ * 세금신고 양식 local fallback XLSX.
+ * remote에서는 이 모듈을 사용하지 않고 SERVER_FILE을 그대로 다운로드한다.
  */
 
 import ExcelJS from '@zurmokeeper/exceljs'
 import { downloadExcel } from '@/shared/utils/file-download'
 import { buildSettlementFormExcelFilename } from '@/features/settlement-management/api/account-payments/settlement-form-download'
-import type { AccountPaymentRow } from '@/features/settlement-management/model/account-payments-list'
 import {
-  buildTaxFilingSheetLines,
-  computeTaxFilingGrandTotals,
-  TAX_FILING_HEADER_LABELS,
-  TAX_FILING_INCOME_GROUPS,
-  type TaxFilingDetailLine,
-  type TaxFilingSubtotalLine,
-} from '@/pages/settlement-management/tax-filing-fortune-data'
+  TAX_REPORT_PREVIEW_COLUMNS,
+  type TaxReportPreviewCell,
+  type TaxReportPreviewWorkbook,
+} from '@/features/settlement-management/api/account-payments/tax-report-preview'
 
 const HEADER_FILL = 'FF01A1AF'
 const SUBTOTAL_FILL = 'FFE8F5F6'
@@ -36,13 +33,12 @@ function applyHeaderStyle(row: ExcelJS.Row) {
     }
   })
 }
-
 function applyDataRowStyle(row: ExcelJS.Row, options?: { subtotal?: boolean }) {
-  const sub = options?.subtotal ?? false
-  row.eachCell((cell, col) => {
+  const subtotal = options?.subtotal ?? false
+  row.eachCell((cell, column) => {
     cell.font = {
       size: 11,
-      ...(sub && col === 1 ? { bold: true, color: { argb: 'FF3D3D3D' } } : {}),
+      ...(subtotal && column === 1 ? { bold: true, color: { argb: 'FF3D3D3D' } } : {}),
     }
     cell.border = {
       top: { style: 'thin', color: { argb: BORDER_LIGHT } },
@@ -52,10 +48,10 @@ function applyDataRowStyle(row: ExcelJS.Row, options?: { subtotal?: boolean }) {
     }
     cell.alignment = {
       vertical: 'middle',
-      horizontal: col === 1 && sub ? 'left' : 'center',
+      horizontal: subtotal && column === 1 ? 'left' : 'center',
       wrapText: true,
     }
-    if (sub) {
+    if (subtotal) {
       cell.fill = {
         type: 'pattern',
         pattern: 'solid',
@@ -64,131 +60,51 @@ function applyDataRowStyle(row: ExcelJS.Row, options?: { subtotal?: boolean }) {
     }
   })
 }
-
-function detailToExcelValues(line: TaxFilingDetailLine): (string | number)[] {
-  const dash = (n: number | null) => (n == null ? '-' : n)
-  return [
-    '',
-    line.paymentDate,
-    line.paymentAmount == null ? '-' : line.paymentAmount,
-    dash(line.incomeTax),
-    dash(line.residenceTax),
-    dash(line.afterDeduction),
-    line.name,
-    line.residentId,
-    line.project,
-  ]
+function excelValue(value: TaxReportPreviewCell, column: number): string | number {
+  if (value == null) return column === 1 ? '' : '-'
+  return value
 }
-
-function subtotalToExcelValues(line: TaxFilingSubtotalLine): (string | number)[] {
-  const { sums } = line
-  return [
-    '소계',
-    '-',
-    sums.paymentAmount,
-    sums.incomeTax,
-    sums.residenceTax,
-    sums.afterDeduction,
-    '-',
-    '-',
-    '-',
-  ]
+function applyNumberFormat(row: ExcelJS.Row) {
+  for (const column of [3, 4, 5, 6] as const) {
+    const cell = row.getCell(column)
+    if (typeof cell.value === 'number') cell.numFmt = '#,##0'
+  }
 }
-
-export async function exportTaxFilingExcel(rows: AccountPaymentRow[]): Promise<void> {
-  const lines = buildTaxFilingSheetLines(rows)
+export async function exportTaxFilingExcel(
+  previewWorkbook: TaxReportPreviewWorkbook,
+  options: { password?: string } = {}
+): Promise<void> {
   const workbook = new ExcelJS.Workbook()
-  const sheet = workbook.addWorksheet('Sheet1')
+  const sheet = workbook.addWorksheet(previewWorkbook.sheetName)
+  sheet.properties.defaultRowHeight = previewWorkbook.defaultRowHeight
+  sheet.views = [{ state: 'frozen', ySplit: previewWorkbook.freezeRows }]
+  sheet.autoFilter = previewWorkbook.autoFilter
 
-  const headerRow = sheet.addRow([...TAX_FILING_HEADER_LABELS])
+  const headerRow = sheet.addRow([...TAX_REPORT_PREVIEW_COLUMNS])
   applyHeaderStyle(headerRow)
 
-  let lineIdx = 0
-  let excelRow = 2
-
-  for (const g of TAX_FILING_INCOME_GROUPS) {
-    const mergeTop = excelRow
-    for (let i = 0; i < g.detailRows; i += 1) {
-      const line = lines[lineIdx]!
-      lineIdx += 1
-      if (line.kind !== 'detail') throw new Error('tax-filing excel: expected detail')
-      const values = detailToExcelValues(line)
-      const row = sheet.addRow(values)
-      applyDataRowStyle(row)
-      if (i === 0) {
-        const a1 = row.getCell(1)
-        a1.value = g.label
-        a1.font = { bold: true, size: 11, color: { argb: 'FF3D3D3D' } }
-        a1.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true }
-      } else {
-        row.getCell(1).value = ''
-      }
-      for (const col of [3, 4, 5, 6] as const) {
-        const c = row.getCell(col)
-        if (typeof c.value === 'number') {
-          c.numFmt = '#,##0'
-        }
-      }
-      excelRow += 1
-    }
-
-    sheet.mergeCells(`A${mergeTop}:A${excelRow - 1}`)
-
-    const subLine = lines[lineIdx]!
-    lineIdx += 1
-    if (subLine.kind !== 'subtotal') throw new Error('tax-filing excel: expected subtotal')
-    const subValues = subtotalToExcelValues(subLine)
-    const subRow = sheet.addRow(subValues)
-    applyDataRowStyle(subRow, { subtotal: true })
-    for (const col of [3, 4, 5, 6] as const) {
-      const c = subRow.getCell(col)
-      if (typeof c.value === 'number') {
-        c.numFmt = '#,##0'
-      }
-    }
-    excelRow += 1
+  for (const previewRow of previewWorkbook.rows) {
+    const values = TAX_REPORT_PREVIEW_COLUMNS.map((column, index) =>
+      excelValue(previewRow[column], index + 1)
+    )
+    const row = sheet.addRow(values)
+    const subtotal = previewRow['소득구분'] === '소계' || previewRow['소득구분'] === '합계'
+    applyDataRowStyle(row, { subtotal })
+    applyNumberFormat(row)
   }
 
-  if (lineIdx !== lines.length) {
-    throw new Error('tax-filing excel: line count mismatch')
-  }
+  for (const merge of previewWorkbook.merges) sheet.mergeCells(merge)
 
-  const grandTotals = computeTaxFilingGrandTotals(lines)
-  const grandRow = sheet.addRow([
-    '합계',
-    '',
-    grandTotals.paymentAmount,
-    grandTotals.incomeTax,
-    grandTotals.residenceTax,
-    grandTotals.afterDeduction,
-    '-',
-    '-',
-    '-',
-  ])
-  applyDataRowStyle(grandRow, { subtotal: true })
-  const grandA = grandRow.getCell(1)
-  grandA.font = { bold: true, size: 11, color: { argb: 'FF3D3D3D' } }
-  grandA.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true }
-  sheet.mergeCells(`A${excelRow}:B${excelRow}`)
-  for (const col of [3, 4, 5, 6] as const) {
-    const c = grandRow.getCell(col)
-    if (typeof c.value === 'number') {
-      c.numFmt = '#,##0'
-    }
-  }
+  sheet.columns = previewWorkbook.columnWidths.map(width => ({ width }))
 
-  sheet.columns = [
-    { width: 36 },
-    { width: 22 },
-    { width: 14 },
-    { width: 12 },
-    { width: 12 },
-    { width: 14 },
-    { width: 14 },
-    { width: 18 },
-    { width: 26 },
-  ]
-
-  const buffer = await workbook.xlsx.writeBuffer()
-  await downloadExcel(buffer, buildSettlementFormExcelFilename('tax-report'))
+  const buffer = await workbook.xlsx.writeBuffer(
+    options.password ? { password: options.password } : undefined
+  )
+  // 주민등록번호는 마스킹 값만 들어가지만 컬럼이 있으므로 기록한다
+  await downloadExcel(buffer, buildSettlementFormExcelFilename('tax-report'), {
+    accessLog: {
+      downloadKind: 'SETTLEMENT_EXPORT',
+      containedPiiTypes: ['NAME', 'RESIDENT_REGISTRATION_NUMBER'],
+    },
+  })
 }

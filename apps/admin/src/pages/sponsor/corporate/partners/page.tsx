@@ -4,7 +4,7 @@
 
 import { useCallback, useMemo, useState, type Key } from 'react'
 import type { Dayjs } from 'dayjs'
-import { Image, Switch } from 'antd'
+import { Switch } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type {
   CorporatePartner,
@@ -40,6 +40,7 @@ import {
   CMS_TABLE_USAGE_COL_CLASS,
   TABLE_COLUMN_WIDTHS,
 } from '@/shared/constants/table'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
 import type { TableSearchParamRule } from '@/shared/lib/use-table-search'
@@ -52,6 +53,7 @@ import {
   ymdFromParam,
 } from '@/shared/lib/url-date-range-pending-sync'
 import {
+  AdminInfiniteTableFooter,
   CmsButton,
   CmsDateRangePicker,
   AdminFilterTextInput,
@@ -189,7 +191,9 @@ export function CorporatePartnersPage() {
     )
   }, [appliedFilter])
 
-  const listQuery = useCorporatePartnersList(appliedFilter)
+  const listFilter = appliedFilter
+
+  const listQuery = useCorporatePartnersList(listFilter)
   /**
    * 등록 모달용 전체 건수.
    * 필터 없는 목록이면 listQuery.totalCount로 충분하고,
@@ -200,16 +204,23 @@ export function CorporatePartnersPage() {
     formOpen && formMode === 'create' && hasActiveFilter
   )
   const createMutation = useCreateCorporatePartner()
-  const updateMutation = useUpdateCorporatePartner(appliedFilter)
-  const removeMutation = useRemoveCorporatePartners(appliedFilter)
-  const reorderMutation = useReorderCorporatePartners(appliedFilter)
-  const setPublicMutation = useSetCorporatePartnerPublic(appliedFilter)
+  const updateMutation = useUpdateCorporatePartner(listFilter)
+  const removeMutation = useRemoveCorporatePartners(listFilter)
+  const reorderMutation = useReorderCorporatePartners(listFilter)
+  const setPublicMutation = useSetCorporatePartnerPublic(listFilter)
 
-  const rows = useMemo(() => listQuery.data?.items ?? [], [listQuery.data?.items])
-  const totalCount = listQuery.data?.totalCount ?? rows.length
-  const allCount = hasActiveFilter
-    ? (unfilteredCountQuery.data?.totalCount ?? unfilteredCountQuery.data?.items.length ?? 0)
-    : totalCount
+  const rows = useMemo(() => {
+    return [...listQuery.rows].sort((a, b) => a.sortOrder - b.sortOrder)
+  }, [listQuery.rows])
+  const totalCount = listQuery.totalCount
+  const allCount = hasActiveFilter ? unfilteredCountQuery.totalCount : totalCount
+
+  const { sentinelRef } = useGatedInfiniteScroll({
+    hasNextPage: listQuery.hasNextPage,
+    isFetchingNextPage: listQuery.isFetchingNextPage,
+    fetchNextPage: listQuery.fetchNextPage,
+    resetKey: JSON.stringify(appliedFilter),
+  })
 
   useInvalidateOnWindowEvent(CORPORATE_PARTNERS_CHANGED_EVENT, corporatePartnerQueryKeys.lists())
 
@@ -347,11 +358,10 @@ export function CorporatePartnersPage() {
         align: 'center',
         render: (_value, record) => (
           <div className="corporate-partners-page__thumb-wrap">
-            <Image
+            <img
               className="corporate-partners-page__thumb"
               src={record.logoUrl}
               alt={record.logoFileName || record.name || '후원사 로고'}
-              preview={{ mask: '이미지 보기' }}
             />
           </div>
         ),
@@ -425,7 +435,7 @@ export function CorporatePartnersPage() {
               <AdminFilterTextInput
                 inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="기업명 검색"
+                placeholder="기업명을 입력해 주세요"
                 value={pendingFilters.name}
                 onChange={value => patchPendingFilters(prev => ({ ...prev, name: value }))}
                 onPressEnter={handleSearch}
@@ -485,6 +495,10 @@ export function CorporatePartnersPage() {
             selectedRowKeys,
             onChange: keys => setSelectedRowKeys(keys),
           }}
+        />
+        <AdminInfiniteTableFooter
+          sentinelRef={sentinelRef}
+          isFetchingNextPage={listQuery.isFetchingNextPage}
         />
       </FilterTableLayout>
 

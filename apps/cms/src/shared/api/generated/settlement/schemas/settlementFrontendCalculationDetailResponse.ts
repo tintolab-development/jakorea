@@ -5,9 +5,11 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { SettlementFrontendCalculationDetailResponseLayout } from './settlementFrontendCalculationDetailResponseLayout';
 
 export interface SettlementFrontendCalculationDetailResponse {
-  layout?: string;
+  /** CMS 산정 기준 상세 viewer layout. FE가 렌더할 수 있는 값만 반환한다. 미지원 지급 항목은 remote. */
+  layout?: SettlementFrontendCalculationDetailResponseLayout;
   basisJson?: string;
   resultAmount?: number;
   title?: string;

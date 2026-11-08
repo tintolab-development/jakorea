@@ -138,6 +138,30 @@ describe('individual settlement review remote', () => {
     })
   })
 
+  it('rejects with notificationType and scheduledNotificationAt', async () => {
+    vi.mocked(customInstance).mockResolvedValue({
+      success: true,
+      data: { settlementApplicationId: 1, revisionNo: 1, status: 'REJECTED' },
+    })
+    await rejectIndividualSettlementReviewRemote({
+      settlementApplicationId: 1,
+      expectedRevisionNo: 1,
+      reason: '증빙 보완 필요',
+      notificationType: 'MANUAL',
+      scheduledNotificationAt: '2026-03-09T09:15:00',
+    })
+    expect(customInstance).toHaveBeenCalledWith({
+      url: individualSettlementReviewRejectUrl(1),
+      method: 'PATCH',
+      data: {
+        expectedRevisionNo: 1,
+        reason: '증빙 보완 필요',
+        notificationType: 'MANUAL',
+        scheduledNotificationAt: '2026-03-09T09:15:00',
+      },
+    })
+  })
+
   it('treats HTTP 409 as review conflict', () => {
     expect(isIndividualSettlementReviewConflict({ response: { status: 409 } })).toBe(true)
     expect(isIndividualSettlementReviewConflict({ response: { status: 400 } })).toBe(false)

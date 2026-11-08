@@ -43,6 +43,7 @@ import {
   PAYMENT_STATEMENT_PRE_CONSENT_HORIZONTAL_TABLE_IDS,
   PAYMENT_STATEMENT_PRE_CONSENT_IDS,
 } from '@jakorea/form-schema/paragraph-ids/payment-statement-pre-consent-draft'
+import { RECEIPT_PRE_CONSENT_HORIZONTAL_TABLE_IDS } from '@jakorea/form-schema/paragraph-ids/receipt-pre-consent-draft'
 import previewTypography from '@/features/mypage/settings/ui/consent-document-preview-typography.module.css'
 import styles from './consent-form.module.css'
 
@@ -100,8 +101,8 @@ function PlatformAgreementNoticeTableBody({
         headers={headers}
         rows={rows}
         emphasizedColumns={emphasizedColumns}
-        hideEmptyPairs={!documentPreview}
-        blankEmptyCells={documentPreview}
+        /** 시안(P5): 작성 화면도 빈 행(2~4행)을 공백 셀로 그대로 노출 */
+        blankEmptyCells
       />
       {paragraph.showBottomText || idType != null ? (
         <div className={styles.tableAfter}>
@@ -152,7 +153,9 @@ function PlatformHorizontalTableBody({
   const idType = paragraph.idTypeWithInput
   /** 지급조서 작성 화면(A4 미리보기 제외) — Figma 강조 열·라디오 24px */
   const isPaymentStatementWrite =
-    !documentPreview && PAYMENT_STATEMENT_PRE_CONSENT_HORIZONTAL_TABLE_IDS.has(paragraph.id)
+    !documentPreview &&
+    (PAYMENT_STATEMENT_PRE_CONSENT_HORIZONTAL_TABLE_IDS.has(paragraph.id) ||
+      RECEIPT_PRE_CONSENT_HORIZONTAL_TABLE_IDS.has(paragraph.id))
   const emphasizedColumns = isPaymentStatementWrite
     ? resolvePaymentStatementWriteEmphasizedColumns(paragraph.id) ?? view.emphasizedColumns
     : view.emphasizedColumns

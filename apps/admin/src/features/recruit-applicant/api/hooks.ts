@@ -42,17 +42,12 @@ export function useRecruitApplicantsList(filter: RecruitApplicantListFilter) {
   })
 }
 
-export function useRecruitApplicantDetail(
-  id: string | null,
-  options?: { revealPii?: boolean; enabled?: boolean },
-) {
+export function useRecruitApplicantDetail(id: string | null, enabled = true) {
   const dataSource = source()
-  const revealPii = options?.revealPii === true
-  const extraEnabled = options?.enabled ?? true
   return useQuery({
-    queryKey: recruitApplicantQueryKeys.detail(dataSource, id ?? '', revealPii),
-    queryFn: () => getRecruitApplicantService(id ?? '', { revealPii }),
-    enabled: Boolean(id) && extraEnabled,
+    queryKey: recruitApplicantQueryKeys.detail(dataSource, id ?? ''),
+    queryFn: () => getRecruitApplicantService(id ?? ''),
+    enabled: Boolean(id) && enabled,
     staleTime: dataSource === 'remote' ? 0 : Number.POSITIVE_INFINITY,
     gcTime: dataSource === 'remote' ? 0 : 15 * 60_000,
     retry: false,

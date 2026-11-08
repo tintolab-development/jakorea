@@ -48,13 +48,10 @@ export async function saveUsageGuideService(items: UsageGuideSaveItem[], cached?
     return mergeUsageIntoPersonal(prev, rows ?? []);
 }
 export async function saveDonateCtaService(input: DonateCtaSaveInput, cached?: IndividualDonationData): Promise<IndividualDonationData> {
-    const buttonLabel = input.buttonLabel.trim();
     const linkUrl = input.linkUrl.trim();
-    if (!buttonLabel)
-        throw new Error('DONATE_LABEL_REQUIRED');
     if (!linkUrl)
         throw new Error('DONATE_LINK_REQUIRED');
     const prev = await resolvePrev(cached);
-    const button = await sponsorshipApi().updateDonationUrl(toDonationUrlUpdateRequest({ ...input, buttonLabel, linkUrl }));
+    const button = await sponsorshipApi().updateDonationUrl(toDonationUrlUpdateRequest({ ...input, linkUrl }));
     return mergeDonateCtaIntoPersonal(prev, button);
 }

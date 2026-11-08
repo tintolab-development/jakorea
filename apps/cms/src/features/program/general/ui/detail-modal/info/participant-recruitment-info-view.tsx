@@ -50,6 +50,7 @@ import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teach
 import dayjs from 'dayjs'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import './participant-recruitment-info-view.css'
+import { RecruitmentLifecycleStatusText } from '@/features/program/shared/ui/recruitment-lifecycle-status-text'
 
 const toDayjs = (d: string | Date | undefined) => (d ? dayjs(d) : null)
 
@@ -215,11 +216,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
   const showMaxSessionsPerDayField = display.showMaxSessionsPerDayField
   const lifecycle = display.recruitmentStatusLifecycle
   const statusView = lifecycle ? (
-    <span
-      className={`program-detail-info-tab__lifecycle-status-text program-detail-info-tab__lifecycle-status-text--${lifecycle.replace(/_/g, '-')}`}
-    >
-      {display.recruitmentStatusLabel}
-    </span>
+    <RecruitmentLifecycleStatusText status={lifecycle} label={display.recruitmentStatusLabel} />
   ) : (
     display.recruitmentStatusLabel
   )
@@ -869,8 +866,10 @@ export function GeneralProgramParticipantRecruitmentInfoView({
               view={display.notes}
               edit={
                 isEdit && form ? (
-                  isIndividual || isGeneralOrg ? (
-                    <div className={MAX_SUFFIX_CLASS}>
+                  isIndividual || isGeneralOrg || isTrainedTeachers ? (
+                    <div
+                      className={`${MAX_SUFFIX_CLASS} participant-recruitment-info-view__notes-field`}
+                    >
                       <Controller
                         name="participantRecruitmentNotesNotApplicable"
                         control={form.control}
@@ -905,7 +904,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                             placeholder="비고란을 작성하세요"
                             inputSize="small"
                             width="100%"
-                            style={{ flex: '1 1 0', minWidth: 0 }}
+                            style={{ flex: '1 1 0', minWidth: 0, width: '100%' }}
                             className="program-detail-info-tab__notes-input"
                           />
                         )}

@@ -110,6 +110,7 @@ describe('buildVolunteerParticipantRegisterRequest', () => {
       })
       expect(result.ok).toBe(false)
       if (result.ok) return
+      expect(result.kind).toBe('required')
       expect(result.message).toContain('제공받는 기관명')
     }
   })
@@ -138,6 +139,7 @@ describe('buildVolunteerParticipantRegisterRequest', () => {
     })
     expect(result.ok).toBe(false)
     if (result.ok) return
+    expect(result.kind).toBe('invalid')
     expect(result.message).toContain(`${VOLUNTEER_THIRD_PARTY_RECIPIENT_MAX_LENGTH}자`)
   })
 
@@ -189,6 +191,7 @@ describe('buildVolunteerParticipantRegisterRequest', () => {
     })
     expect(result.ok).toBe(false)
     if (result.ok) return
+    expect(result.kind).toBe('required')
     expect(result.message).toContain('이전 참여 JA')
   })
 })

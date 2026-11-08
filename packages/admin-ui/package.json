@@ -103,6 +103,10 @@
     "./auth/styles": {
       "types": "./css-side-effect.d.ts",
       "import": "./dist/auth/admin-auth.css"
+    },
+    "./post-detail": {
+      "types": "./dist/post-detail/index.d.ts",
+      "import": "./dist/post-detail/index.js"
     }
   }
 }

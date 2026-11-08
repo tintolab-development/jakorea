@@ -45,7 +45,8 @@ describe('TT 문의처 등록→상세', () => {
     expect(request.recruitments).toBeUndefined()
   })
 
-  it('모집 행 문의처가 비어 있어도 nested·컬럼 문의처를 상세에 보여 준다', () => {
+  // d24ea7f34: GET recruitments[] 행이 정본. 행 문의처가 null이면 nested·컬럼으로 채우지 않고 '-'.
+  it('모집 행 문의처가 비어 있으면 nested·컬럼 문의처로 채우지 않고 -를 보여 준다', () => {
     const program = programWithInquiry()
     const withEmptyRows: Program = {
       ...program,
@@ -65,8 +66,12 @@ describe('TT 문의처 등록→상세', () => {
     }
 
     const display = resolveGeneralProgramParticipantRecruitmentDisplay(withEmptyRows)
-    expect(display.contactOrganizationName).toBe('김문의')
-    expect(display.contactPhone).toBe('02-1234-5678')
-    expect(display.contactEmail).toBe('ask@jakorea.org')
+    expect(
+      withEmptyRows.generalCommonInfo?.participantRecruitmentInfo?.contactOrganizationName
+    ).toBe('김문의')
+    expect(withEmptyRows.contactPhone).toBe('02-1234-5678')
+    expect(display.contactOrganizationName).toBe('-')
+    expect(display.contactPhone).toBe('-')
+    expect(display.contactEmail).toBe('-')
   })
 })

@@ -20,8 +20,12 @@ export function usePaymentOrderStatementCommitBridge(closeCalculationStatement: 
   const handleStatementLineCommitted = useCallback(
     (payload: PaymentOrderCalculationStatementCommitPayload) => {
       statementCommitSinkRef.current?.(payload)
-      /* 신청 반려는 결과 안내 모달을 닫을 때까지 산출 내역서 데이터를 유지(형제 모달 언마운트 방지) */
-      if (payload.status !== 'application_rejected') {
+      /*
+       * 확인 처리·신청 반려 모두 결과 안내 모달(시안 3-6-2 / 3-3-2)을 산출 내역서 위에 띄운다.
+       * 여기서 닫으면 산출 내역서가 언마운트되며 결과 모달도 같이 사라진다.
+       * 확인 완료 후에는 산출 내역서가 「지급조서 확인 완료」 상태로 남는다(시안 3-6-3).
+       */
+      if (payload.status !== 'application_rejected' && payload.status !== 'confirmed') {
         closeCalculationStatement()
       }
     },

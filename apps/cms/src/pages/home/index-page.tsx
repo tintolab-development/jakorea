@@ -3,20 +3,18 @@
  */
 
 import { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { Dashboard } from '@/pages/dashboard'
 import { Spin } from 'antd'
 
 export function IndexPage() {
-  const { user } = useAuthStore()
+  const isAuthenticated = useAuthStore(state => state.isAuthenticated)
+  const user = useAuthStore(state => state.user)
   const navigate = useNavigate()
 
   useEffect(() => {
-    if (!user) {
-      navigate('/login', { replace: true })
-      return
-    }
+    if (!isAuthenticated || !user) return
 
     if (user.role !== 'ADMIN') {
       switch (user.role) {
@@ -34,9 +32,13 @@ export function IndexPage() {
           break
       }
     }
-  }, [user, navigate])
+  }, [isAuthenticated, user, navigate])
 
-  if (user?.role === 'ADMIN') {
+  if (!isAuthenticated || !user) {
+    return <Navigate to="/login" replace />
+  }
+
+  if (user.role === 'ADMIN') {
     return <Dashboard />
   }
 

@@ -3,8 +3,8 @@
  * 등록 에디터 재개용이며 관리 목록 카탈로그에 합치지 않는다.
  */
 
-import dayjs from 'dayjs'
 import type { Program, ProgramRound } from '@/types/domain'
+import { ujatTypedDate } from '@/features/program/ujat/lib/ujat-typed-detail'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import { stripUjatTypedLegacyOverlay } from '@/features/program/ujat/api/typed-detail-client'
 import {
@@ -60,6 +60,13 @@ function resolveDefaultSponsorId(): string {
 function overlayString(overlay: Record<string, unknown>, key: string): string | undefined {
   const v = overlay[key]
   return typeof v === 'string' ? v : undefined
+}
+
+function ipsFromRegistrationCategory(category: string | undefined): Program['ips'] {
+  if (category === 'inspire') return 'Inspire'
+  if (category === 'succeed') return 'Succeed'
+  if (category === 'prepare') return 'Prepare'
+  return undefined
 }
 
 function cloneJson<T>(value: T): T {
@@ -136,11 +143,11 @@ export function buildUjatProgramListRowFromRegistrationSnapshot(args: {
   const basicInfoStart = args.basicInfo?.startDate?.trim()
   const basicInfoEnd = args.basicInfo?.endDate?.trim()
   if (basicInfoStart && basicInfoEnd) {
-    startDate = dayjs(basicInfoStart).startOf('day').toISOString()
-    endDate = dayjs(basicInfoEnd).endOf('day').toISOString()
+    startDate = ujatTypedDate(basicInfoStart) ?? basicInfoStart
+    endDate = ujatTypedDate(basicInfoEnd) ?? basicInfoEnd
   } else if (seal?.start && seal?.end) {
-    startDate = dayjs(seal.start).startOf('day').toISOString()
-    endDate = dayjs(seal.end).endOf('day').toISOString()
+    startDate = ujatTypedDate(seal.start) ?? String(seal.start)
+    endDate = ujatTypedDate(seal.end) ?? String(seal.end)
   }
 
   const id = args.id
@@ -193,6 +200,9 @@ export function buildUjatProgramListRowFromRegistrationSnapshot(args: {
       args.basicInfo?.detailedProgramId?.trim() ||
       overlayString(overlay, 'ujat.basicInfo.detailedProgramId') ||
       undefined,
+    ips: ipsFromRegistrationCategory(
+      args.basicInfo?.ipsCategory ?? overlayString(overlay, 'ujat.basicInfo.ipsCategory')
+    ),
     educationProcess:
       args.basicInfo?.educationProcess?.trim() ||
       overlayString(overlay, 'ujat.basicInfo.educationCourse') ||

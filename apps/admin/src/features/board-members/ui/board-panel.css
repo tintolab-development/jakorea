@@ -8,12 +8,13 @@
   min-height: 0;
 }
 
+/* 페이지 스크롤형 — 카드는 내용만큼 늘어나고(최소는 패널 높이), 안쪽 고정 높이 스크롤 없음 */
 .board-panel__card.admin-list-card {
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   min-height: 0;
-  height: 100%;
+  height: auto;
   margin-bottom: 0;
 }
 
@@ -28,14 +29,15 @@
   gap: 24px;
   flex: 1 1 auto;
   min-width: 0;
-  min-height: 0;
+  overflow: visible;
 }
 
 .board-panel__group {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   min-width: 0;
+  flex-shrink: 0;
 }
 
 .board-panel__group-title {
@@ -71,13 +73,6 @@
   transition: none;
 }
 
-/* scroll.x 합계 유지 — cms-data-table width:100% 가 열 합을 잡아먹지 않도록 */
-.board-panel .board-members-table.cms-data-table table.ant-table {
-  table-layout: fixed !important;
-  width: max(100%, 1228px) !important;
-  min-width: 1228px !important;
-}
-
 .board-panel .board-members-table .ant-table-thead > tr > th,
 .board-panel .board-members-table .ant-table-tbody > tr > td {
   overflow: hidden;
@@ -103,65 +98,8 @@
 }
 
 /* ── 고정 컬럼 폭 (cms-data-table 강제 규칙 override) ──
- * 선택 60 | 순서 80 | No. 80 | 공개 100 | 한글 140 | 영문 188 | 직위 120 | 소속 460
+ * 선택 60 | 순서 80 | No. 80 | 공개 100 | 한글 305 | 영문 304 | 직위 305 | 소속 304
  */
-
-/* selection-col 다음을 No.로 가정하는 공통 규칙 덮어쓰기 → 순서 80 */
-.board-panel .board-members-table.cms-data-table col.ant-table-selection-col + col {
-  width: 80px !important;
-  min-width: 80px !important;
-  max-width: 80px !important;
-}
-
-.board-panel .board-members-table .ant-table-thead > tr > th.board-members-table__col--sort,
-.board-panel .board-members-table .ant-table-tbody > tr > td.board-members-table__col--sort {
-  width: 80px !important;
-  min-width: 80px !important;
-  max-width: 80px !important;
-}
-
-.board-panel .board-members-table .ant-table-thead > tr > th.board-members-table__col--no,
-.board-panel .board-members-table .ant-table-tbody > tr > td.board-members-table__col--no,
-.board-panel .board-members-table .ant-table-thead > tr > th.cms-table-col--no,
-.board-panel .board-members-table .ant-table-tbody > tr > td.cms-table-col--no {
-  width: 80px !important;
-  min-width: 80px !important;
-  max-width: 80px !important;
-}
-
-.board-panel .board-members-table .ant-table-thead > tr > th.board-members-table__col--public,
-.board-panel .board-members-table .ant-table-tbody > tr > td.board-members-table__col--public {
-  width: 100px !important;
-  min-width: 100px !important;
-  max-width: 100px !important;
-}
-
-.board-panel .board-members-table .ant-table-thead > tr > th.board-members-table__col--name-ko,
-.board-panel .board-members-table .ant-table-tbody > tr > td.board-members-table__col--name-ko {
-  width: 140px !important;
-  min-width: 140px !important;
-  max-width: 140px !important;
-}
-
-.board-panel .board-members-table .ant-table-thead > tr > th.board-members-table__col--name-en,
-.board-panel .board-members-table .ant-table-tbody > tr > td.board-members-table__col--name-en {
-  width: 188px !important;
-  min-width: 188px !important;
-  max-width: 188px !important;
-}
-
-.board-panel .board-members-table .ant-table-thead > tr > th.board-members-table__col--position,
-.board-panel .board-members-table .ant-table-tbody > tr > td.board-members-table__col--position {
-  width: 120px !important;
-  min-width: 120px !important;
-  max-width: 120px !important;
-}
-
-.board-panel .board-members-table .ant-table-thead > tr > th.board-members-table__col--affiliation,
-.board-panel .board-members-table .ant-table-tbody > tr > td.board-members-table__col--affiliation {
-  width: 460px !important;
-  min-width: 280px !important;
-}
 
 .board-panel-inline-field.cms-input {
   width: 100%;
@@ -189,4 +127,23 @@
 
 .board-panel-inline-field--edit .cms-input__control {
   cursor: text;
+}
+
+/*
+ * QA: 조회 = 텍스트 높이만큼(행 최소 52), 수정 = 입력 칸(40) 높이만큼 행이 늘어남 + 입력 텍스트 좌측 정렬
+ * 조회는 같은 CmsInput을 투명 처리하므로 컨트롤의 높이·패딩·보더를 없애 텍스트만 남긴다.
+ */
+.board-panel .board-members-table .ant-table-tbody > tr > td {
+  height: 52px;
+}
+
+.board-panel .board-panel-inline-field--readonly .cms-input__control {
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border-width: 0 !important;
+}
+
+.board-panel-inline-field--edit .cms-input__control input {
+  text-align: left !important;
 }

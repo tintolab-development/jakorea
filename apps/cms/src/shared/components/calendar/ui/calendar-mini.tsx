@@ -1,20 +1,12 @@
 import { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import { useMemo, type CSSProperties } from 'react'
 import type { Dayjs } from 'dayjs'
-import dayjs from 'dayjs'
-import updateLocale from 'dayjs/plugin/updateLocale'
 import {
   buildMiniCalendarGridDays,
   countMiniCalendarWeekRows,
   miniCalendarWeekdayLabels,
 } from '../lib/calendar-mini-layout'
 import '../styles/calendar.css'
-
-dayjs.extend(updateLocale)
-dayjs.updateLocale('en', {
-  weekdaysMin: ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'],
-})
-dayjs.locale('en')
 
 interface CalendarMiniProps {
   currentMonth: Dayjs
@@ -175,7 +167,7 @@ export function CalendarMini({
         <button type="button" className="calendar-mini-nav-btn" onClick={handlePrevMonth}>
           <LeftOutlined />
         </button>
-        <span className="calendar-mini-title">{currentMonth.format('YYYY.MM')}</span>
+        <span className="calendar-mini-title">{currentMonth.format('YYYY. MM')}</span>
         <button type="button" className="calendar-mini-nav-btn" onClick={handleNextMonth}>
           <RightOutlined />
         </button>

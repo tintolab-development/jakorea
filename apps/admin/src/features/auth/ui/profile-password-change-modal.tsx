@@ -97,7 +97,7 @@ function PasswordFieldRow({
           <CmsInput
             id={`profile-password-${name}`}
             type="password"
-            inputSize="large"
+            inputSize="medium"
             width="100%"
             placeholder={placeholder}
             autoComplete={autoComplete}

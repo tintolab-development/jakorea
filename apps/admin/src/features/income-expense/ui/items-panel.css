@@ -60,36 +60,6 @@
   vertical-align: middle;
 }
 
-/* ── 공통 고정열 ── */
-.income-expense-table .ant-table-thead > tr > th.income-expense-table__col--sort,
-.income-expense-table .ant-table-tbody > tr > td.income-expense-table__col--sort {
-  width: 80px !important;
-  min-width: 80px !important;
-  max-width: 80px !important;
-}
-
-.income-expense-table .ant-table-thead > tr > th.cms-table-col--no,
-.income-expense-table .ant-table-tbody > tr > td.cms-table-col--no {
-  width: 80px !important;
-  min-width: 80px !important;
-  max-width: 80px !important;
-}
-
-/* ── 수입 · 지출그래프 항목 테이블 ──
- * 항목명 ~40%(좌) · 비율 ~15%(중앙) · 금액 ~30%(우)
- */
-.income-expense-table:not(.income-expense-table--expense)
-  .ant-table-thead
-  > tr
-  > th.income-expense-table__col--name,
-.income-expense-table:not(.income-expense-table--expense)
-  .ant-table-tbody
-  > tr
-  > td.income-expense-table__col--name {
-  min-width: 240px;
-  text-align: left !important;
-}
-
 .income-expense-table:not(.income-expense-table--expense)
   .ant-table-thead
   > tr
@@ -98,25 +68,7 @@
   .ant-table-tbody
   > tr
   > td.income-expense-table__col--ratio {
-  width: 160px !important;
-  min-width: 140px !important;
-  max-width: 180px !important;
   text-align: center !important;
-}
-
-.income-expense-table:not(.income-expense-table--expense)
-  .ant-table-thead
-  > tr
-  > th.income-expense-table__col--amount,
-.income-expense-table:not(.income-expense-table--expense)
-  .ant-table-tbody
-  > tr
-  > td.income-expense-table__col--amount {
-  width: 280px !important;
-  min-width: 220px !important;
-  max-width: 320px !important;
-  text-align: right !important;
-  padding-right: 20px !important;
 }
 
 .income-expense-table:not(.income-expense-table--expense)
@@ -145,33 +97,12 @@
  */
 .income-expense-table--expense .ant-table-thead > tr > th.income-expense-table__col--category,
 .income-expense-table--expense .ant-table-tbody > tr > td.income-expense-table__col--category {
-  width: 160px !important;
-  min-width: 140px !important;
-  max-width: 200px !important;
   text-align: center !important;
-}
-
-.income-expense-table--expense .ant-table-thead > tr > th.income-expense-table__col--name,
-.income-expense-table--expense .ant-table-tbody > tr > td.income-expense-table__col--name {
-  min-width: 220px;
-  text-align: left !important;
 }
 
 .income-expense-table--expense .ant-table-thead > tr > th.income-expense-table__col--ratio,
 .income-expense-table--expense .ant-table-tbody > tr > td.income-expense-table__col--ratio {
-  width: 120px !important;
-  min-width: 100px !important;
-  max-width: 140px !important;
   text-align: center !important;
-}
-
-.income-expense-table--expense .ant-table-thead > tr > th.income-expense-table__col--amount,
-.income-expense-table--expense .ant-table-tbody > tr > td.income-expense-table__col--amount {
-  width: 220px !important;
-  min-width: 180px !important;
-  max-width: 260px !important;
-  text-align: right !important;
-  padding-right: 20px !important;
 }
 
 .income-expense-table--expense .ant-table-thead > tr > th.income-expense-table__col--amount {
@@ -198,6 +129,28 @@
 .income-expense-table .ant-table-tbody > tr > td .cms-input .ant-input,
 .income-expense-table .ant-table-tbody > tr > td .ant-input {
   min-height: 36px;
+}
+
+/* 조회: 그래프·테이블 모두 텍스트 중앙 */
+.income-expense-table:not(.income-expense-table--editing) .ant-table-thead > tr > th,
+.income-expense-table:not(.income-expense-table--editing) .ant-table-tbody > tr > td,
+.income-expense-table:not(.income-expense-table--editing)
+  .ant-table-thead
+  > tr
+  > th.income-expense-table__col--name,
+.income-expense-table:not(.income-expense-table--editing)
+  .ant-table-tbody
+  > tr
+  > td.income-expense-table__col--name,
+.income-expense-table:not(.income-expense-table--editing)
+  .ant-table-thead
+  > tr
+  > th.income-expense-table__col--amount,
+.income-expense-table:not(.income-expense-table--editing)
+  .ant-table-tbody
+  > tr
+  > td.income-expense-table__col--amount {
+  text-align: center !important;
 }
 
 /* ── 지출 그래프 · 수입/지출 테이블 탭 — 조회 중앙 / 수정 좌측 · 인풋 h40 ── */
@@ -285,4 +238,14 @@
 .income-expense-table--editing .ant-table-tbody > tr > td .cms-input .ant-input,
 .income-expense-table--editing .ant-table-tbody > tr > td .ant-input {
   min-height: 40px;
+}
+
+/* 수정 모드에서도 선택·순서·No. 열은 중앙 정렬 유지 (위 uniform 수정 좌측 정렬 규칙보다 우선) */
+.income-expense-table.income-expense-table--editing .ant-table-thead > tr > th.ant-table-selection-column,
+.income-expense-table.income-expense-table--editing .ant-table-tbody > tr > td.ant-table-selection-column,
+.income-expense-table.income-expense-table--editing .ant-table-thead > tr > th.cms-table-col--sort,
+.income-expense-table.income-expense-table--editing .ant-table-tbody > tr > td.cms-table-col--sort,
+.income-expense-table.income-expense-table--editing .ant-table-thead > tr > th.cms-table-col--no,
+.income-expense-table.income-expense-table--editing .ant-table-tbody > tr > td.cms-table-col--no {
+  text-align: center !important;
 }

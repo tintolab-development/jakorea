@@ -351,6 +351,7 @@
         "paragraphDescription": "없다면 ‘없음’으로 기재해 주세요",
         "participatesInTitleNumbering": true,
         "showItemTitle": false,
+        "itemInputRows": 4,
         "items": [
           {
             "id": "survey-short-essay-item-1",
@@ -361,7 +362,7 @@
         ],
         "bodyPlaceholder": "답변을 입력해 주세요",
         "bodyText": "",
-        "maxLength": 2000
+        "maxLength": 1000
       },
       {
         "id": "survey-paragraph-subjective-2",
@@ -373,6 +374,7 @@
         "paragraphDescription": "없다면 ‘없음’으로 기재해 주세요",
         "participatesInTitleNumbering": true,
         "showItemTitle": false,
+        "itemInputRows": 4,
         "items": [
           {
             "id": "survey-short-essay-item-2",
@@ -383,7 +385,7 @@
         ],
         "bodyPlaceholder": "답변을 입력해 주세요",
         "bodyText": "",
-        "maxLength": 2000
+        "maxLength": 1000
       },
       {
         "id": "survey-paragraph-subjective-3",
@@ -395,6 +397,7 @@
         "paragraphDescription": "없다면 ‘없음’으로 기재해 주세요",
         "participatesInTitleNumbering": true,
         "showItemTitle": false,
+        "itemInputRows": 4,
         "items": [
           {
             "id": "survey-short-essay-item-3",
@@ -405,7 +408,7 @@
         ],
         "bodyPlaceholder": "답변을 입력해 주세요",
         "bodyText": "",
-        "maxLength": 2000
+        "maxLength": 1000
       },
       {
         "id": "survey-paragraph-star",

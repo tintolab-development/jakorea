@@ -21,6 +21,9 @@ import { UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@jakorea/form-schem
 import { isVolunteerApplyFormCase, type ProgramApplyFormCase } from './apply-form-case.ts'
 import { shouldShowIndividualTeamInfoParagraph } from './apply-form-case.ts'
 import type { ProgramDetail } from '../model/types.ts'
+import {
+  isIndividualInterviewScheduleParagraphId,
+} from './apply-form-paragraph-ids.ts'
 import { isApplyScheduleChoiceParagraphId } from './apply-form-schedule.ts'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -83,6 +86,8 @@ export type ResolvePortalApplicationHiddenParagraphIdsInput = {
   /** 성범죄 조회 방식 단락 — 동의서 제출 요청이 아니면 false */
   showSexOffenseConsentInquiryParagraph?: boolean
   volunteerInterviewEnabled?: boolean
+  /** 개인 참여자 면접 가능 일정 — INDIVIDUAL 키 전용 */
+  individualInterviewEnabled?: boolean
   /** 봉사 진행 가능 일정 — 면접과 독립 (optionCount 0이면 false) */
   volunteerActivityScheduleEnabled?: boolean
   /** 강사 강의 진행 가능 일정 — OSA 0건이면 false */
@@ -117,13 +122,14 @@ export function resolvePortalApplicationHiddenParagraphIds(
     educationScheduleLines: scheduleLines,
   })
 
-  if (
-    !shouldShowApplicationScheduleParagraphResolved({
-      ...scheduleVisibility,
-      runtimeContext,
-      scheduleParagraphRaw,
-    })
-  ) {
+  /** 일반 개인·기관 공통 — form-bindings runtime 선택지까지 반영한 일정 단락 노출 판정 */
+  const scheduleParagraphVisible = shouldShowApplicationScheduleParagraphResolved({
+    ...scheduleVisibility,
+    runtimeContext,
+    scheduleParagraphRaw,
+  })
+
+  if (!scheduleParagraphVisible) {
     for (const paragraph of paragraphs) {
       if (isApplyScheduleChoiceParagraphId(paragraph.id)) hidden.add(paragraph.id)
     }
@@ -142,6 +148,7 @@ export function resolvePortalApplicationHiddenParagraphIds(
     if (applyCase === 'institution-general') {
       const institutionHidden = getInstitutionApplicationFormHiddenParagraphIds({
         ...scheduleVisibility,
+        scheduleParagraphVisible,
         preEducationNoticeRequired: preEducation,
         showSexOffenseConsentInquiryParagraph:
           input.showSexOffenseConsentInquiryParagraph ?? true,
@@ -177,17 +184,24 @@ export function resolvePortalApplicationHiddenParagraphIds(
 
   if (
     (applyCase === 'individual-general' || applyCase === 'individual-team') &&
-    !shouldShowApplicationScheduleParagraphResolved({
-      ...scheduleVisibility,
-      runtimeContext,
-      scheduleParagraphRaw,
-    })
+    !scheduleParagraphVisible
   ) {
     hidden.add(PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice)
   }
 
   if (applyCase === 'instructor' && input.instructorAvailableScheduleEnabled === false) {
     hidden.add(PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule)
+  }
+
+  if (
+    (applyCase === 'individual-general' || applyCase === 'individual-team') &&
+    input.individualInterviewEnabled === false
+  ) {
+    for (const paragraph of paragraphs) {
+      if (isIndividualInterviewScheduleParagraphId(paragraph.id)) {
+        hidden.add(paragraph.id)
+      }
+    }
   }
 
   if (isVolunteerApplyFormCase(applyCase)) {

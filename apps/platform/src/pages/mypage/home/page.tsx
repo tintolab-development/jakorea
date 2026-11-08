@@ -12,7 +12,6 @@ import {
   useMypagePageAuthReady,
   type MypageLnbItemKey,
 } from '@/features/mypage'
-import { useMyProgramApplications } from '@/features/mypage/education/applications/api/hooks'
 import { usePortalCalendarQuery, usePortalDashboardQuery } from '@/features/mypage/home/api/hooks'
 import { MypageLayout } from '@/widgets/mypage-layout'
 import { MypageHomeContent } from './home-content'
@@ -31,10 +30,9 @@ export function MypageHomePage() {
   const isAuthReady = useMypagePageAuthReady(MYPAGE_PATH)
   const dashboard = usePortalDashboardQuery(member.isRemoteSession)
   const calendar = usePortalCalendarQuery(calendarMonth, member.isRemoteSession)
-  useMyProgramApplications('education')
-  useMyProgramApplications('lecture')
-  useMyProgramApplications('volunteer')
-  const programStats = member.isRemoteSession ? (dashboard.stats ?? EMPTY_PROGRAM_STATS) : EMPTY_PROGRAM_STATS
+  const programStatsLoading = member.isRemoteSession && dashboard.isLoading
+  const programStats =
+    member.isRemoteSession && dashboard.stats ? dashboard.stats : EMPTY_PROGRAM_STATS
   const scheduleEvents = member.isRemoteSession ? calendar.events : []
 
   const handleLnbItemSelect = (key: MypageLnbItemKey) => {
@@ -53,7 +51,7 @@ export function MypageHomePage() {
     )
   }
 
-  if (member.isRemoteSession && (member.isLoading || dashboard.isLoading)) {
+  if (member.isRemoteSession && member.isLoading) {
     return (
       <MypageLayout
         lnbItems={lnbItems}
@@ -74,6 +72,7 @@ export function MypageHomePage() {
       <MypageHomeContent
         member={member}
         programStats={programStats}
+        programStatsLoading={programStatsLoading}
         scheduleEvents={scheduleEvents}
         scheduleEventsLoading={member.isRemoteSession && calendar.isLoading}
         useMockDemoMonth={!member.isRemoteSession}

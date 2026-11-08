@@ -88,6 +88,26 @@ describe('buildWritingFormSectionsFromApiItems', () => {
     expect(survey?.rows.some(row => row.id === 'survey-custom-01')).toBe(true)
   })
 
+  it('places receipt pre-consent in the agreement section', () => {
+    const sections = buildWritingFormSectionsFromApiItems([
+      listItem({
+        templateCode: 'agreement-third-party',
+        templateName: '지급조서 사전 동의서',
+        category: 'AGREEMENT',
+      }),
+      listItem({
+        templateCode: 'agreement-receipt-pre-consent',
+        templateName: '영수증 발급 사전 동의서',
+        category: 'AGREEMENT',
+      }),
+    ])
+    const agreement = sections.find(section => section.key === 'agreement')
+    expect(agreement?.rows.map(row => row.id)).toEqual([
+      'agreement-third-party',
+      'agreement-receipt-pre-consent',
+    ])
+  })
+
   it('places copy codes into the catalog section even when API category is missing', () => {
     const sections = buildWritingFormSectionsFromApiItems([
       listItem({

@@ -130,7 +130,7 @@ export function ScheduleSection({
             </div>
             <ul className={styles.listItems}>
               {selectedEvents.map(event => {
-                const colors = CALENDAR_EVENT_COLORS[event.type]
+                const colors = CALENDAR_EVENT_COLORS[event.type] ?? CALENDAR_EVENT_COLORS.education
                 const detailPath = resolveMypageScheduleEventDetailPath(queryClient, event)
                 const isNavigable = detailPath != null
                 return (
@@ -155,9 +155,11 @@ export function ScheduleSection({
                         <PFText as="p" typo="bd-md-sb" color="black" className={styles.listTitle}>
                           {event.title}
                         </PFText>
-                        <PFText as="p" typo="bd-sm-rg" color="black" className={styles.listTime}>
-                          {event.time}
-                        </PFText>
+                        {event.time ? (
+                          <PFText as="p" typo="bd-sm-rg" color="black" className={styles.listTime}>
+                            {event.time}
+                          </PFText>
+                        ) : null}
                       </div>
                     </button>
                   </li>

@@ -33,6 +33,7 @@ import {
 } from '@/shared/constants/table'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { isTableSelectionClick } from '@/shared/lib/is-table-selection-click'
+import { buildPinnedListRowNoMap, sortPinnedRowsFirst } from '@/shared/lib/pinned-list-row-no'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
 import type { TableSearchParamRule } from '@/shared/lib/use-table-search'
@@ -221,30 +222,17 @@ export function NoticesPage() {
 
   useInvalidateOnWindowEvent(NOTICES_CHANGED_EVENT, noticesQueryKeys.all)
 
-  const rows = listQuery.rows
+  const rows = useMemo(() => sortPinnedRowsFirst(listQuery.rows), [listQuery.rows])
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [formOpen, setFormOpen] = useState(false)
   const [formMode, setFormMode] = useState<'create' | 'edit'>('create')
   const [editing, setEditing] = useState<Notice | null>(null)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
 
-  /** 고정이 아닌 행의 No. — 목록 끝에서 역산하진 않고 1-based 증가 번호 */
-  const rowNoMap = useMemo(() => {
-    const map = new Map<string, number>()
-    let n = 0
-    // 정렬: pinned first then published desc — fixed get No label
-    // numbered items: count only non-pinned from bottom visual (like design 152,151…)
-    const nonPinned = rows.filter(r => !r.isPinned)
-    const totalNonPinned = nonPinned.length
-    for (const row of rows) {
-      if (row.isPinned) continue
-      const idx = nonPinned.findIndex(r => r.id === row.id)
-      map.set(row.id, totalNonPinned - idx)
-      n++
-    }
-    void n
-    return map
-  }, [rows])
+  const rowNoMap = useMemo(
+    () => buildPinnedListRowNoMap(rows, listQuery.totalCount),
+    [rows, listQuery.totalCount]
+  )
 
   const handleSearch = useCallback(() => {
     applySearch()
@@ -375,7 +363,8 @@ export function NoticesPage() {
         title: '작성자명',
         dataIndex: 'authorName',
         key: 'authorName',
-        width: 120,
+        width: TABLE_COLUMN_WIDTHS.author,
+        ellipsis: true,
       },
       {
         title: '게시일시',
@@ -555,7 +544,6 @@ export function NoticesPage() {
               },
               style: { cursor: 'pointer' },
             })}
-            scroll={{ x: true }}
           />
           <AdminInfiniteTableFooter
             sentinelRef={sentinelRef}

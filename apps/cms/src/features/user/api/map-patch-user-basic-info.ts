@@ -203,15 +203,6 @@ export function mapPatchUserBasicInfoToApiRequest(
   }
   if (patch.instructorInfo != null) {
     body.instructorInfo = {
-      ...(patch.instructorInfo.bankName !== undefined
-        ? { bankName: patch.instructorInfo.bankName }
-        : {}),
-      ...(patch.instructorInfo.accountNumber !== undefined
-        ? { accountNumber: patch.instructorInfo.accountNumber }
-        : {}),
-      ...(patch.instructorInfo.accountHolder !== undefined
-        ? { accountHolder: patch.instructorInfo.accountHolder }
-        : {}),
       ...(patch.instructorInfo.isBusinessIncome !== undefined
         ? { isBusinessIncome: patch.instructorInfo.isBusinessIncome }
         : {}),

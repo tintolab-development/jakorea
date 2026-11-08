@@ -291,7 +291,7 @@
         ],
         "bodyPlaceholder": "자유롭게 작성해 주세요",
         "bodyText": "",
-        "maxLength": 2000
+        "maxLength": 1000
       },
       {
         "id": "ujat-edu-journal-education-photos",

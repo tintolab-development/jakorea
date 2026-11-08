@@ -1,18 +1,13 @@
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react'
-import { clearAdminRegisteredWizardState } from '@/features/auth/admin-registered'
-import { clearInstructorApplySessionCache } from '@/features/mypage/instructor-apply/lib/instructor-apply-session-cache'
-import { postPortalLogout } from '@/features/auth/sign-in'
+import { logoutPortalSession } from '@/features/auth/session/portal-logout'
 import { ScrollRestoration, useLocation, useNavigate } from 'react-router-dom'
 import { parseProgramRoute } from '@/features/program/lib/routes'
 import { isTalentDonationApplyPath } from '@/features/talent-donation'
 import {
   DEV_AUTH_CHANGE_EVENT,
-  clearAuthTokens,
   getDevAuthLoggedIn,
   getFileUploadOverlayActive,
   getFileUploadOverlayServerSnapshot,
-  getRefreshToken,
-  setDevAuthLoggedIn,
   subscribeFileUploadOverlay,
 } from '@/shared/lib'
 import { PFLoadingSpinner } from '@/shared/ui'
@@ -75,22 +70,13 @@ export function AppLayout({
   }, [])
 
   const handleLogout = () => {
-    const refreshToken = getRefreshToken()
-    void (async () => {
-      if (refreshToken) {
-        try {
-          await postPortalLogout(refreshToken)
-        } catch {
-          // 로컬 세션은 항상 정리
-        }
-      }
-      clearAuthTokens()
-      clearAdminRegisteredWizardState()
-      clearInstructorApplySessionCache()
-      setDevAuthLoggedIn(false)
-      setIsLoggedIn(false)
-      navigate('/')
-    })()
+    // 서버 Logout → Access/Refresh·['platform'] 캐시·Wizard·강사신청 임시상태 정리 (세션 경고 모달과 공통 경로)
+    void logoutPortalSession({
+      navigate: () => {
+        setIsLoggedIn(false)
+        navigate('/')
+      },
+    })
   }
 
   const mainContent = useContentShell ? (

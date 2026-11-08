@@ -1,6 +1,7 @@
 import type { User } from '@/types/user'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui'
+import { ADMIN_COMMENT_SENSITIVE_INFO_NOTICE } from '@/features/user/detail/lib/admin-comment-copy'
 import './user-detail-admin-comment-section.css'
 
 export type UserDetailAdminCommentSectionProps = {
@@ -22,6 +23,7 @@ export function UserDetailAdminCommentSection({
     return (
       <DetailInfoForm
         title="관리자 코멘트"
+        description={ADMIN_COMMENT_SENSITIVE_INFO_NOTICE}
         mode="edit"
         className="user-detail-admin-comment-section user-detail-admin-comment-section--editing"
       >
@@ -40,7 +42,12 @@ export function UserDetailAdminCommentSection({
   }
 
   return (
-    <DetailInfoForm title="관리자 코멘트" mode="view" className="user-detail-admin-comment-section">
+    <DetailInfoForm
+      title="관리자 코멘트"
+      description={ADMIN_COMMENT_SENSITIVE_INFO_NOTICE}
+      mode="view"
+      className="user-detail-admin-comment-section"
+    >
       <DetailInfoForm.Row type="custom">
         <div
           className={

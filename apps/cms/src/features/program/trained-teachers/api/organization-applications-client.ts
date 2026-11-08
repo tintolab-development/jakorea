@@ -1,7 +1,12 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import customInstance from '@/shared/api/orval-mutator'
 import type { OrganizationActivityGiveUpRequest } from '@/shared/api/generated/dashboard/schemas/organizationActivityGiveUpRequest'
-import type { OrganizationApplicationApprovePayload } from '@/features/program/general/api/applications-api-client'
+import type {
+  ApplicationDecisionCancelRequestWithNotification,
+  OrganizationApplicationApprovePayload,
+} from '@/features/program/general/api/applications-api-client'
+import { buildTrainedTeacherOrganizationCancelApprovalRequest } from './trained-teacher-organization-cancel-approval-payload'
+import type { ApplicationDecisionResponse } from '@/shared/api/generated/dashboard/schemas/applicationDecisionResponse'
 import type { TrainedTeacherOrganizationApplicationResponse } from '@/shared/api/generated/dashboard/schemas/trainedTeacherOrganizationApplicationResponse'
 import type { TrainedTeacherOrganizationApplicationsListQuery } from './organization-applications-list-query'
 import type { TrainedTeacherOrganizationApplicationDetailResponse } from './organization-applications-types'
@@ -58,6 +63,22 @@ export async function approveTrainedTeacherOrganizationApplicationRemote(
       url: `${listUrl(programId)}/${encodeURIComponent(applicationId)}/approve`,
       method: 'POST',
       ...(payload ? { data: payload } : {}),
+    })
+  )
+}
+
+/** OpenAPI operationId: cancelTrainedTeacherOrganizationApproval */
+export async function cancelTrainedTeacherOrganizationApplicationApprovalRemote(
+  programId: string,
+  applicationId: string,
+  payload: ApplicationDecisionCancelRequestWithNotification
+): Promise<ApplicationDecisionResponse> {
+  return unwrapApiBody<ApplicationDecisionResponse>(
+    await customInstance({
+      url: `${listUrl(programId)}/${encodeURIComponent(applicationId)}/cancel-approval`,
+      method: 'POST',
+      data: buildTrainedTeacherOrganizationCancelApprovalRequest(payload),
+      headers: { 'Content-Type': 'application/json' },
     })
   )
 }

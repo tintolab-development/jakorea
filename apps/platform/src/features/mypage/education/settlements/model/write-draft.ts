@@ -1,3 +1,4 @@
+import type { InstructorTransportPreview } from '../lib/instructor-transport-preview'
 import type { SettlementDocumentKind } from '../lib/settlement-status-ui'
 
 export type SettlementTripType = 'one_way' | 'round_trip'
@@ -27,6 +28,8 @@ export type SettlementWriteDraft = {
     applicationId: string
     sessionId: string
     scheduleId?: number
+    /** 강사 배정 ID. 프로그램 신청 ID가 아님 */
+    assignmentId?: number
     isInstructor: boolean
     documentKind: SettlementDocumentKind
     programTitle?: string
@@ -38,6 +41,7 @@ export type SettlementWriteDraft = {
   }
   basic: {
     name: string
+    nameEn: string
     residentFront: string
     residentBack: string
     homeAddress: string
@@ -51,6 +55,7 @@ export type SettlementWriteDraft = {
     itemType?: string
     itemName?: string
     evidenceRequired?: boolean
+    autoPreview?: InstructorTransportPreview | null
     tripType: SettlementTripType
     depart: SettlementTripLegDraft
     return: SettlementTripLegDraft
@@ -59,10 +64,12 @@ export type SettlementWriteDraft = {
   meal: {
     amount: string
     fileNames: string[]
+    attachments: SettlementReceiptAttachment[]
   }
   activity: {
     amount: string
     fileNames: string[]
+    attachments: SettlementReceiptAttachment[]
   }
 }
 

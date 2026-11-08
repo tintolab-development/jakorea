@@ -1,18 +1,48 @@
 import type { InternalAxiosRequestConfig } from 'axios'
 import { axiosClient } from '@/shared/api/axios-instance'
+import {
+  composeSatisfactionSurveyDisplayTitle,
+  formatSatisfactionPerScheduleDisplayName,
+  hasSatisfactionScheduleDisplayParts,
+  isSatisfactionPerScheduleBinding,
+} from '@/shared/lib/education-schedule-name'
+
+export type PublicSurveyFormType =
+  | 'SURVEY'
+  | 'SATISFACTION'
+  | 'SATISFACTION_SURVEY'
+  | 'PROGRAM_SATISFACTION'
+  | 'LECTURE_EVALUATION'
+  | string
+
+const SATISFACTION_FORM_TYPES = new Set([
+  'SATISFACTION',
+  'SATISFACTION_SURVEY',
+  'PROGRAM_SATISFACTION',
+])
 
 export type PublicSurveyFormResponse = {
   programId?: number
   bindingId?: number
   templateVersionId?: number
+  formType?: PublicSurveyFormType
   targetScope?: string
   targetScopeId?: number
+  targetScopeLabel?: string
+  sessionNo?: number
+  scheduleStartAt?: string
+  startAt?: string
+  satisfactionRunMode?: string
+  templateName?: string
+  title?: string
   form?: Record<string, unknown>
 }
 
 export type PublicSurveySubmitResponse = {
   formResponseId?: number
+  bindingId?: number
   templateVersionId?: number
+  formType?: PublicSurveyFormType
   responseStatus?: string
   submittedAt?: string
 }
@@ -49,6 +79,84 @@ function encodeShareToken(shareToken: string): string {
   return encodeURIComponent(token)
 }
 
+function normalizeFormType(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined
+  const next = value.trim().toUpperCase()
+  return next || undefined
+}
+
+function readOptionalName(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined
+  const next = value.trim()
+  return next || undefined
+}
+
+function readNestedFormName(form: unknown): string | undefined {
+  if (!form || typeof form !== 'object') return undefined
+  const record = form as Record<string, unknown>
+  return readOptionalName(record.templateName) ?? readOptionalName(record.title)
+}
+
+export function resolvePublicSurveyDisplayTitle(
+  response: Pick<
+    PublicSurveyFormResponse,
+    | 'templateName'
+    | 'title'
+    | 'form'
+    | 'formType'
+    | 'targetScope'
+    | 'targetScopeLabel'
+    | 'sessionNo'
+    | 'scheduleStartAt'
+    | 'startAt'
+    | 'satisfactionRunMode'
+  >
+): string | undefined {
+  const formName =
+    readOptionalName(response.templateName) ??
+    readOptionalName(response.title) ??
+    readNestedFormName(response.form)
+  if (resolvePublicSurveyKind(response.formType) !== 'satisfaction') return formName
+  const perSchedule = isSatisfactionPerScheduleBinding({
+    runMode: response.satisfactionRunMode,
+    targetScope: response.targetScope,
+  })
+  if (!perSchedule) return formName
+  const scheduleInput = {
+    scheduleName: response.targetScopeLabel,
+    sessionNo: response.sessionNo,
+    startAt: response.scheduleStartAt ?? response.startAt,
+  }
+  if (!hasSatisfactionScheduleDisplayParts(scheduleInput)) return formName
+  return (
+    composeSatisfactionSurveyDisplayTitle({
+      formName: formName ?? '',
+      perSchedule: true,
+      scheduleDisplayName: formatSatisfactionPerScheduleDisplayName(scheduleInput),
+    }) || formName
+  )
+}
+
+export function resolvePublicSurveyKind(
+  formType: string | undefined
+): 'survey' | 'satisfaction' {
+  const normalized = formType?.trim().toUpperCase()
+  return normalized && SATISFACTION_FORM_TYPES.has(normalized) ? 'satisfaction' : 'survey'
+}
+
+export function publicSurveySubmitMatchesForm(
+  form: Pick<PublicSurveyFormResponse, 'bindingId' | 'formType'>,
+  submitted: Pick<PublicSurveySubmitResponse, 'bindingId' | 'formType'>
+): boolean {
+  if (form.bindingId != null && submitted.bindingId != null && form.bindingId !== submitted.bindingId) {
+    return false
+  }
+  if (form.formType && submitted.formType && form.formType !== submitted.formType) {
+    return false
+  }
+  return true
+}
+
 export async function fetchPublicSurveyForm(
   shareToken: string,
   signal?: AbortSignal
@@ -62,7 +170,12 @@ export async function fetchPublicSurveyForm(
   if (!response || typeof response !== 'object' || !response.form) {
     throw new Error('PUBLIC_SURVEY_FORM_INVALID')
   }
-  return response
+  return {
+    ...response,
+    formType: normalizeFormType(response.formType),
+    templateName: readOptionalName(response.templateName) ?? readNestedFormName(response.form),
+    title: readOptionalName(response.title),
+  }
 }
 
 export async function submitPublicSurveyResponse(
@@ -75,5 +188,9 @@ export async function submitPublicSurveyResponse(
     { answers },
     PUBLIC_REQUEST_CONFIG
   )
-  return unwrapEnvelope<PublicSurveySubmitResponse>(data)
+  const response = unwrapEnvelope<PublicSurveySubmitResponse>(data)
+  return {
+    ...response,
+    formType: normalizeFormType(response.formType),
+  }
 }

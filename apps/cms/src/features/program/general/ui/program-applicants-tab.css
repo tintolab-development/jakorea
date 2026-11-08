@@ -206,57 +206,6 @@
     color: #262626;
 }
 
-/* 결재 현황 드롭다운: 셀/트리거 클릭 시 행 클릭(상세 모달) 방지 */
-/* 프로그램 승인 현황: shared StatusDropdownCell 사용 — participating-institutions-section과 동일 스타일 */
-.program-applicants-tab .ant-table-tbody
-  > tr:has(td.status-dropdown-cell__cell-status) {
-  height: 53px;
-  min-height: 53px;
-  max-height: 53px;
-  overflow: visible;
-}
-
-.program-applicants-tab .ant-table-thead
-  > tr
-  > th.status-dropdown-cell__cell-status,
-.program-applicants-tab .ant-table-tbody
-  > tr:has(td.status-dropdown-cell__cell-status)
-  > td.status-dropdown-cell__cell-status {
-  width: 136px;
-  min-width: 136px;
-  max-width: 136px;
-  padding-top: 0;
-  padding-bottom: 0;
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-  text-align: center !important;
-  vertical-align: middle !important;
-  overflow: visible;
-  box-sizing: border-box;
-}
-
-.program-applicants-tab .status-dropdown-cell__status-trigger--open {
-  box-sizing: border-box !important;
-  width: 136px !important;
-  min-width: 136px !important;
-  max-width: 136px !important;
-}
-
-.program-applicants-tab .ant-table-tbody
-  > tr:has(td .status-dropdown-cell__status-trigger--open)
-  > td {
-  height: 53px !important;
-  min-height: 53px !important;
-  max-height: 53px !important;
-}
-
-.program-applicants-tab .ant-table-tbody
-  > tr:has(td.status-dropdown-cell__cell-status)
-  > td.status-dropdown-cell__cell-status {
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-}
-
 @media (max-width: 1200px) {
     .program-applicants-tab__filters .ant-row.program-applicants-tab__filter-row {
         flex-wrap: wrap;

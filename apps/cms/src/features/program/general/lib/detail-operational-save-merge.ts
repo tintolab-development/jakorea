@@ -31,6 +31,8 @@ import {
   operationalOverlayKeyPrefixesForCatalogId,
 } from '@/features/program/general/lib/registration-operational-form-drafts'
 import { announcementPublishedFromFormValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
+import { isGeneralRecruitmentRowProgram } from '@/features/program/general/lib/is-general-recruitment-row-program'
+import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 
 const VOLUNTEER_RECRUIT_CATALOG = 'recruitment-volunteer'
 const VOLUNTEER_INTERVIEW_PREFIX = 'recruit.volunteer.interview'
@@ -230,34 +232,22 @@ function peekRecruitOverlaySlicesForCatalogs(
   return merged
 }
 
-function selectedSlotKeyCount(value: unknown): number {
-  return Array.isArray(value)
-    ? value.filter(item => typeof item === 'string' && item.trim() !== '').length
-    : -1
-}
-
-/** 면접 selectedSlotKeys는 그리드가 쓴 버킷(default/active/catalog) 중 가장 긴 배열을 택한다. */
+/**
+ * 면접 overlay는 source 순서 last-write.
+ * peek 입력이 catalog → `__default__` → 활성 스코프라, 활성에 키가 있으면 그 값이 최종이다.
+ */
 function mergeVolunteerInterviewOverlaySources(
   ...sources: Array<Record<string, unknown>>
 ): Record<string, unknown> {
   const merged: Record<string, unknown> = {}
-  const richestSlotKeys = new Map<string, unknown>()
   for (const source of sources) {
     for (const [key, value] of Object.entries(source)) {
       if (key !== VOLUNTEER_INTERVIEW_PREFIX && !key.startsWith(`${VOLUNTEER_INTERVIEW_PREFIX}.`)) {
         continue
       }
-      if (key === 'selectedSlotKeys' || key.endsWith('.selectedSlotKeys')) {
-        const prev = richestSlotKeys.get(key)
-        if (selectedSlotKeyCount(value) >= selectedSlotKeyCount(prev)) {
-          richestSlotKeys.set(key, value)
-        }
-        continue
-      }
       merged[key] = value
     }
   }
-  for (const [key, value] of richestSlotKeys) merged[key] = value
   return merged
 }
 
@@ -274,6 +264,14 @@ function peekVolunteerInterviewOverlayForSave(catalogCodes: readonly string[]): 
   )
 }
 
+function skipLiveCatalogPeekForTypedRecruitSave(program: Program): boolean {
+  return (
+    isGeneralRecruitmentRowProgram(program) ||
+    isTrainedTeachersDetailProgram(program) ||
+    program.backendProgramType?.trim().toUpperCase() === 'UJAT'
+  )
+}
+
 export function buildMergedRegistrationOverlayForRecruitSave(args: {
   program: Program
   remotePatch: Partial<Program>
@@ -284,13 +282,16 @@ export function buildMergedRegistrationOverlayForRecruitSave(args: {
 }): Record<string, unknown> {
   const catalogCodes = recruitCatalogTemplateCodesForAudience(args.program, args.audience)
   const formPatch = recruitOverlayPatchFromDetailEditValues(args.values, args.audience)
-  const peeked = args.strictRemote
-    ? {}
-    : peekRecruitOverlaySlicesForCatalogs(
+  const peekLiveCatalog =
+    !args.strictRemote &&
+    !skipLiveCatalogPeekForTypedRecruitSave(args.program)
+  const peeked = peekLiveCatalog
+    ? peekRecruitOverlaySlicesForCatalogs(
         args.audience === 'volunteer' && catalogCodes.length === 0
           ? [VOLUNTEER_RECRUIT_CATALOG]
           : catalogCodes
       )
+    : {}
   const volunteerInterview =
     !args.strictRemote && args.audience === 'volunteer'
       ? peekVolunteerInterviewOverlayForSave(catalogCodes)

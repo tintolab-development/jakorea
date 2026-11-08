@@ -47,12 +47,6 @@
   overscroll-behavior-x: contain;
 }
 
-.ujat-volunteer-doc-screening__table-wrap .ujat-volunteer-doc-screening__table table.ant-table {
-  table-layout: fixed !important;
-  width: max-content !important;
-  min-width: 100%;
-}
-
 /* 행 클릭 → 지원자 상세: 포인터·호버 배경 (고정 열 포함 불투명 배경) */
 .ujat-volunteer-doc-screening
   .clickable-table
@@ -460,14 +454,6 @@
   max-width: 200px !important;
   padding-left: 0 !important;
   padding-right: 0 !important;
-}
-
-.ujat-volunteer-doc-screening
-  .status-dropdown-cell__dropdown-overlay.status-dropdown-cell__dropdown-overlay--cell-style
-  .ant-dropdown-menu {
-  min-width: 216px !important;
-  width: 216px !important;
-  max-width: 216px !important;
 }
 
 .ujat-volunteer-doc-screening .ujat-volunteer-doc-screening__screening-status-cell {

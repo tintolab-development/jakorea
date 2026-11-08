@@ -11,6 +11,7 @@ import type {
   UjatVolunteerApplicantRow,
   UjatVolunteerInterviewEvaluationPayload,
 } from '@/features/program/ujat/model/ujat-volunteer-applicant'
+import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
 import { buildUjatVolunteerInterview2FilterRows } from './filter-fields'
 import { useUjatVolunteerInterview2 } from './use-list'
 import { ActivityWithdrawScheduleModal } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
@@ -88,6 +89,7 @@ export function Interview2Section({
     isFetchingNextPage,
     infiniteScrollResetKey,
   } = useUjatVolunteerInterview2({ programId, half })
+  const { regions: educationRegions } = useUjatEducationRegions()
   const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
     hasNextPage,
     isFetchingNextPage,
@@ -108,8 +110,9 @@ export function Interview2Section({
     () =>
       buildUjatVolunteerInterview2FilterRows(filterRowsSource, {
         includeInterviewDate: viewMode === 'list',
+        regions: educationRegions,
       })[0] ?? [],
-    [filterRowsSource, viewMode]
+    [educationRegions, filterRowsSource, viewMode]
   )
 
   const { tableWrapRef, tableScrollX } = useContainerFitTableScrollX(
@@ -313,6 +316,7 @@ export function Interview2Section({
         excelExport={
           canWrite
             ? {
+                accessLog: { downloadKind: 'PROGRAM_SCREENING_INTERVIEW_EXPORT', containedPiiTypes: ['NAME'] },
                 columns,
                 data: tableData,
                 selectedRowKeys,

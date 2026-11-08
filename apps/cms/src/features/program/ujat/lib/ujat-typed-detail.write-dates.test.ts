@@ -177,4 +177,84 @@ describe('UJAT typed 날짜 쓰기 — 문자열만', () => {
     expect(JSON.stringify(typed)).toContain('"startDate":"2027-03-19"')
     expect(JSON.stringify(typed)).toContain('"excludedDates":["2027-03-26","2027-04-09"]')
   })
+
+  it('KST 자정 Instant·월말·연말·윤년 2월 29일을 YYYY-MM-DD로 유지한다', () => {
+    const out = normalizeUjatTypedDetailForWrite({
+      schemaVersion: 1,
+      halfPlans: [
+        {
+          semesterType: 'FIRST_HALF',
+          stages: [
+            {
+              stage: 'PRE_EDUCATION',
+              rows: [
+                {
+                  rowId: 'pre-1',
+                  startDate: '2027-03-08T15:00:00.000Z',
+                  endDate: '2027-03-08T15:00:00.000Z',
+                  excludedDates: ['2028-02-29', '2027-12-31', '2027-04-30'],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    })
+    const row = out.halfPlans?.[0]?.stages?.[0]?.rows?.[0]
+    expect(row?.startDate).toBe('2027-03-09')
+    expect(row?.endDate).toBe('2027-03-09')
+    expect(row?.excludedDates).toEqual(['2028-02-29', '2027-12-31', '2027-04-30'])
+  })
+
+  it('excludeHoliday overlay 키를 excludeHoliday만 남긴다', () => {
+    const out = normalizeUjatTypedHalfPlanForWrite({
+      semesterType: 'FIRST_HALF',
+      stages: [
+        {
+          stage: 'MAIN_EDUCATION',
+          rows: [
+            {
+              rowId: 'main-1',
+              exclusion: { excludeHoliday: true, excludeSaturday: false } as never,
+            },
+          ],
+        },
+      ],
+    })
+    expect(out.stages?.[0]?.rows?.[0]?.exclusion).toEqual({
+      excludeSaturday: false,
+      excludeHoliday: true,
+    })
+    expect(JSON.stringify(out)).not.toContain('excludePublicHoliday')
+  })
+
+  it('exclusion omit/null/false를 서로 다른 값으로 유지하고 구키는 버린다', () => {
+    const out = normalizeUjatTypedHalfPlanForWrite({
+      semesterType: 'FIRST_HALF',
+      stages: [
+        {
+          stage: 'MAIN_EDUCATION',
+          rows: [
+            {
+              rowId: 'null-holiday',
+              exclusion: {
+                excludeNone: false,
+                excludeSaturday: false,
+                excludeSunday: false,
+                excludeHoliday: null,
+                excludePublicHoliday: true,
+              } as never,
+            },
+          ],
+        },
+      ],
+    })
+    expect(out.stages?.[0]?.rows?.[0]?.exclusion).toEqual({
+      excludeNone: false,
+      excludeSaturday: false,
+      excludeSunday: false,
+      excludeHoliday: null,
+    })
+    expect(JSON.stringify(out)).not.toContain('excludePublicHoliday')
+  })
 })

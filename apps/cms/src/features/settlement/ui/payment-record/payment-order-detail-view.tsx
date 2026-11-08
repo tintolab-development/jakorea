@@ -60,6 +60,10 @@ type PaymentOrderDetailViewShared = {
   calcStatementLoading?: boolean
   calcStatementError?: unknown
   calcStatementId?: number | null
+  calcSettlementId?: number | null
+  calcAvailableActions?: readonly string[] | null
+  /** 개인형 프로그램 — 산출 내역 「참여 기관명」열 미노출 */
+  calcHideInstitutionColumn?: boolean
   openCalculationStatement: (lineRow: PaymentOrderCalculationStatementLineRow) => void
   closeCalculationStatement: () => void
   resetCalcAndClose: () => void
@@ -110,6 +114,9 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
     calcStatementLoading,
     calcStatementError,
     calcStatementId,
+    calcSettlementId,
+    calcAvailableActions,
+    calcHideInstitutionColumn,
     openCalculationStatement,
     closeCalculationStatement,
     resetCalcAndClose,
@@ -184,7 +191,8 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
         ],
       })
     ),
-    { label: title },
+    // 시안: 마지막 breadcrumb는 화면 제목이 아니라 대상 이름(프로그램명 / 신청자명)
+    { label: kind === 'program' ? row.programName : row.instructorName },
   ]
 
   const mainContent =
@@ -245,9 +253,14 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
         loadError={calcStatementError}
         paymentOrdersRemote={paymentOrdersRemote}
         statementId={calcStatementId}
+        settlementId={calcSettlementId}
+        availableActions={calcAvailableActions}
+        hideInstitutionColumn={calcHideInstitutionColumn}
         detailContextQuery={detailContextQuery}
         onStatementLineCommitted={handleStatementLineCommitted}
         onAfterRejectResultClosed={closeCalculationStatement}
+        paymentCorrectionEnabled
+        onAfterCorrectionProcessed={closeCalculationStatement}
       />
       <DetailFullPageModal
         open={isOpen}

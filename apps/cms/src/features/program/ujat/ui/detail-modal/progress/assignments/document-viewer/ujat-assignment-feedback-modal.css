@@ -1,0 +1,58 @@
+.ujat-assignment-feedback-modal__form {
+  margin-top: 30px;
+}
+
+.ujat-assignment-feedback-modal__form .detail-info-form__field {
+  min-height: 122px;
+}
+
+.ujat-assignment-feedback-modal__form .detail-info-form__field-label {
+  padding: 4px 12px;
+}
+
+.ujat-assignment-feedback-modal__form .detail-info-form__field-content--edit {
+  padding: 10px;
+  align-items: stretch;
+}
+
+.ujat-assignment-feedback-modal__form .detail-info-form__field-content--edit > * {
+  width: 100%;
+  margin-block: 0;
+  align-items: stretch;
+}
+
+.ujat-assignment-feedback-modal__textarea,
+.ujat-assignment-feedback-modal__textarea .cms-textarea__control {
+  width: 100%;
+}
+
+.ujat-assignment-feedback-modal__textarea.cms-textarea .cms-textarea__inner textarea.ant-input {
+  min-height: 70px;
+  padding: 16px !important;
+  font-size: 15px !important;
+  line-height: 1.45;
+}
+
+.ujat-assignment-feedback-modal__textarea.cms-textarea
+  .cms-textarea__inner
+  textarea.ant-input::placeholder {
+  color: #85969d;
+}
+
+.ujat-assignment-feedback-modal__form--view .detail-info-form__field,
+.ujat-assignment-feedback-modal__form--view .detail-info-form__field-content {
+  min-height: 44px;
+}
+
+.ujat-assignment-feedback-modal__form--view .detail-info-form__field-content {
+  padding: 4px 12px;
+}
+
+.ujat-assignment-feedback-modal__feedback-content {
+  width: 100%;
+  font-size: 14px;
+  font-weight: 500;
+  color: #3d3d3d;
+  line-height: 150%;
+  white-space: pre-wrap;
+}

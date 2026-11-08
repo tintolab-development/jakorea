@@ -61,6 +61,8 @@ const PROGRAM_APPLICATION_STATUSES = new Set<EducationDisplayStatus>([
   'waiting_result',
   'document_passed',
   'rejected',
+  'cancelled',
+  'approval_cancelled',
 ])
 
 const ACTIVITY_STATUSES = new Set<EducationDisplayStatus>(['in_progress', 'completed'])
@@ -511,7 +513,7 @@ export function MypageVolunteerDetailPage() {
           applicationId={application.id}
           programId={program.id}
           pendingSurveyCount={application.pendingSurveyCount}
-          canSubmitSurvey={application.canSubmitSurvey}
+          participantId={application.participantId}
         />
       )
     }
@@ -530,7 +532,7 @@ export function MypageVolunteerDetailPage() {
           applicationType={routeApplicationType}
           applicationId={application.id}
           programId={program.id}
-          canSubmitSatisfaction={application.canSubmitSatisfaction}
+          participantId={application.participantId}
         />
       )
     }

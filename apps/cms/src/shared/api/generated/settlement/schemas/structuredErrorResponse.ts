@@ -15,10 +15,16 @@ export interface StructuredErrorResponse {
   success?: boolean;
   /** 오류 응답에서는 null입니다. */
   data?: unknown | null;
-  /** 사용자에게 표시할 안전한 오류 메시지 */
+  /**
+     * 사용자에게 표시할 안전한 오류 메시지
+     * @nullable
+     */
   message?: string | null;
   /** MASKED에서는 null이며 UNMASKED에서만 원문 */
   error?: ApiErrorDetail | null;
-  /** 기본 응답에서 표시 가능한 출생 연도 */
+  /**
+     * 기본 응답에서 표시 가능한 출생 연도
+     * @nullable
+     */
   birthYear?: number | null;
 }

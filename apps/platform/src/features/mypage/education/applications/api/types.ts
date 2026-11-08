@@ -176,6 +176,11 @@ export type PortalTeacherAssignment = {
  * @see JABACK `docs/frontend/mypage-application-content-interview-banner-frontend-handoff-2026-10-09.md`
  */
 export type PortalProgramApplicationDetail = PortalProgramApplicationListItem & {
+  /**
+   * FE overlay. 409 `PORTAL_ANSWER_PRIVACY_UNVERIFIABLE` 때 answers를 버리지 않고 코드를 표시한다.
+   * OpenAPI 필드가 아니다.
+   */
+  portalWarningCode?: string
   resultReason?: string | null
   formResponseId?: number
   formBindingId?: number
@@ -229,6 +234,9 @@ export type PortalProgramApplicationDetail = PortalProgramApplicationListItem & 
   participation?: {
     participantId?: number
     status?: string
+    progressPercent?: number
+    firstEducationAt?: string
+    lastEducationAt?: string
     completionStatus?: string
     /** 표시용. 발급 CTA 최종 판정은 availability API */
     certificateStatus?: string

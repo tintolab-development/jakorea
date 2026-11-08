@@ -67,6 +67,7 @@ import {
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
 } from '@/shared/components/table-filter-group-field-width'
 import { PaymentOrderLectureDateSessionCell } from './payment-order-lecture-date-session-cell'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 export type PaymentOrderDetailLineRow =
   | PaymentOrderAdminProgramDetailInstructorRow
@@ -209,6 +210,7 @@ export function usePaymentOrderDetailLinesController(
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [rowsState, setRowsState] = useState<PaymentOrderDetailLineRow[]>([])
   const [batchConfirmOpen, setBatchConfirmOpen] = useState(false)
+  const [batchConfirmDoneOpen, setBatchConfirmDoneOpen] = useState(false)
   const [paymentStatementIssueBlocked, setPaymentStatementIssueBlocked] = useState<{
     open: boolean
     variant: 'single' | 'multi'
@@ -224,6 +226,7 @@ export function usePaymentOrderDetailLinesController(
   useEffect(() => {
     if (!isOpen) {
       setBatchConfirmOpen(false)
+      setBatchConfirmDoneOpen(false)
       setPaymentStatementIssueBlocked({ open: false, variant: 'single', selectedCount: 0 })
       setIssuanceViewOpen(false)
       setIssuanceQueue([])
@@ -447,6 +450,7 @@ export function usePaymentOrderDetailLinesController(
             )
             setBatchConfirmOpen(false)
             setSelectedRowKeys([])
+            setBatchConfirmDoneOpen(true)
             await detailContextQuery?.refetch()
           })
           .catch(async error => {
@@ -479,6 +483,7 @@ export function usePaymentOrderDetailLinesController(
       )
       setBatchConfirmOpen(false)
       setSelectedRowKeys([])
+      setBatchConfirmDoneOpen(true)
     },
     [
       selectedRowKeys,
@@ -495,14 +500,53 @@ export function usePaymentOrderDetailLinesController(
     return selected
   }, [rowsState, selectedRowKeys])
 
+  /** 일괄 확인 안내 — 「[첫 신청자] 님 외 N명」(신청자 기준 상세는 본인 1명) */
+  const batchConfirmApplicantSummary = useMemo(() => {
+    const names =
+      mode === 'program'
+        ? selectedConfirmableRows.map(row =>
+            'instructorName' in row ? row.instructorName.trim() : ''
+          )
+        : selectedConfirmableRows.map(() => args.instructorRow.instructorName.trim())
+    const distinct = [...new Set(names.filter(name => name !== ''))]
+    return {
+      leadApplicantName: distinct[0] ?? '',
+      otherApplicantCount: Math.max(distinct.length - 1, 0),
+    }
+  }, [args, mode, selectedConfirmableRows])
+
   const canBatchConfirm = useMemo(() => {
     if (selectedConfirmableRows.length === 0) return false
     return selectedConfirmableRows.every(row => canConfirmPaymentStatement(row))
   }, [selectedConfirmableRows])
 
-  const isLineCheckboxDisabled = useCallback((row: PaymentOrderDetailLineRow) => {
-    return !canConfirmPaymentStatement(row)
-  }, [])
+  /**
+   * 일괄 확인 — 버튼은 항상 활성. 선택 없음·확인 불가 항목 포함 시 안내 모달.
+   * (체크박스도 전부 선택 가능 — 확인 완료 건은 지급조서 발급 대상)
+   */
+  const handleBatchConfirmClick = useCallback(() => {
+    if (selectedConfirmableRows.length === 0) {
+      showAlert(NO_SELECTION_ALERT)
+      return
+    }
+    if (!canBatchConfirm) {
+      showAlert({
+        title: '지급조서 확인 불가 안내',
+        content: (
+          <>
+            <strong>선택한 {selectedConfirmableRows.length}개의 항목</strong> 중 확인이 불가한
+            항목이 있습니다.
+            <br />
+            지급조서는 확인 대기 중 또는 재신청 상태의 건만 확인 가능합니다.
+            <br />
+            처리 현황을 확인 후 다시 시도하여 주세요.
+          </>
+        ),
+      })
+      return
+    }
+    setBatchConfirmOpen(true)
+  }, [canBatchConfirm, selectedConfirmableRows.length, showAlert])
 
   const filteredRows = useMemo(
     () => filterDetailRows(rowsState, mode, applied, remoteServerFiltered && paymentOrdersRemote),
@@ -549,7 +593,7 @@ export function usePaymentOrderDetailLinesController(
           if (!payload) {
             throw new Error('지급조서 발급 데이터를 만들 수 없습니다.')
           }
-          return payload
+          return { ...payload, settlementId: programLineRow.settlementId }
         }
         return buildMockProgramDetailLinePaymentStatementIssuancePayload(
           args.programRow,
@@ -577,7 +621,7 @@ export function usePaymentOrderDetailLinesController(
         if (!payload) {
           throw new Error('지급조서 발급 데이터를 만들 수 없습니다.')
         }
-        return payload
+        return { ...payload, settlementId: instructorLineRow.settlementId }
       }
       return buildMockInstructorDetailLinePaymentStatementIssuancePayload(
         args.instructorRow,
@@ -599,7 +643,10 @@ export function usePaymentOrderDetailLinesController(
   }, [])
 
   const handlePaymentStatementIssue = useCallback(() => {
-    if (selectedRowKeys.length === 0) return
+    if (selectedRowKeys.length === 0) {
+      showAlert(NO_SELECTION_ALERT)
+      return
+    }
     const selected = rowsState.filter(r => selectedRowKeys.includes(r.id))
     if (selected.length === 0) return
 
@@ -667,8 +714,8 @@ export function usePaymentOrderDetailLinesController(
         type: 'select' as const,
         label: '지급조서 처리 현황',
         placeholder: '전체',
-        options: lineStatusSelectOptions.filter(o => o.value !== 'all'),
-        allowClear: true,
+        // 시안: 기본값은 「전체」 옵션이 선택된 값으로 노출(placeholder 회색 아님)
+        options: lineStatusSelectOptions,
         width: FILTER_CONTROL_MAX_WIDTH_PX,
       },
       {
@@ -684,7 +731,7 @@ export function usePaymentOrderDetailLinesController(
     () => ({
       [keywordFieldKey]: draftKeyword,
       institutionName: draftInstitutionName,
-      status: draftStatus === 'all' ? undefined : draftStatus,
+      status: draftStatus,
       dateRange: draftDateRange,
     }),
     [draftDateRange, draftInstitutionName, draftKeyword, draftStatus, keywordFieldKey]
@@ -711,27 +758,41 @@ export function usePaymentOrderDetailLinesController(
     [keywordFieldKey]
   )
 
+  const filteredRowCount = filteredRows.length
+
   const columns: ColumnsType<PaymentOrderDetailLineRow> = useMemo(() => {
-    const w =
+    /**
+     * 시안 열 폭 (선택 60 · No. 80 별도)
+     * - 프로그램별 상세(12432:439120): 신청자명 180 · 기관 220 · 교육 진행 일자 유연(346) · 나머지 220
+     * - 신청자별 상세(15524:543381): 프로그램명 유연(436) · 기관 180 · 교육 진행 일자 250 · 나머지 180
+     * `undefined` 열은 width 없이 minWidth만 두어 남는 폭을 흡수한다.
+     */
+    const w: Record<
+      'no' | 'title' | 'institution' | 'lecture' | 'processing' | 'amount' | 'breakdown',
+      number | undefined
+    > =
       mode === 'instructor'
         ? {
             no: 80,
-            title: 312,
-            institution: 136,
-            lecture: 204,
-            processing: 164,
-            amount: 124,
-            breakdown: 148,
+            title: undefined,
+            institution: 180,
+            lecture: 250,
+            processing: 180,
+            amount: 180,
+            breakdown: 180,
           }
         : {
             no: 80,
-            title: 120,
-            institution: 160,
-            lecture: 220,
-            processing: 176,
-            amount: 140,
-            breakdown: 196,
+            title: 180,
+            institution: 220,
+            lecture: undefined,
+            processing: 220,
+            amount: 220,
+            breakdown: 220,
           }
+    const FLEX_COLUMN_MIN_WIDTH = 220
+    const widthOf = (value: number | undefined) =>
+      value == null ? { minWidth: FLEX_COLUMN_MIN_WIDTH } : { width: value }
 
     const nameColumn: ColumnsType<PaymentOrderDetailLineRow>[0] =
       mode === 'program'
@@ -740,7 +801,7 @@ export function usePaymentOrderDetailLinesController(
             dataIndex: 'instructorName',
             key: 'instructorName',
             ellipsis: { showTitle: true },
-            width: w.title,
+            ...widthOf(w.title),
             align: 'center',
           }
         : {
@@ -748,7 +809,7 @@ export function usePaymentOrderDetailLinesController(
             dataIndex: 'programName',
             key: 'programName',
             ellipsis: { showTitle: true },
-            width: w.title,
+            ...widthOf(w.title),
             align: 'center',
           }
 
@@ -759,6 +820,9 @@ export function usePaymentOrderDetailLinesController(
         key: 'no',
         width: w.no,
         align: 'center',
+        // 시안: 번호는 총 건수부터 역순(10 → 1)
+        render: (_: number, __: PaymentOrderDetailLineRow, index: number) =>
+          filteredRowCount - index,
       },
       nameColumn,
       {
@@ -766,13 +830,13 @@ export function usePaymentOrderDetailLinesController(
         dataIndex: 'institutionName',
         key: 'institutionName',
         ellipsis: { showTitle: true },
-        width: w.institution,
+        ...widthOf(w.institution),
         align: 'center',
       },
       {
         title: '교육 진행 일자',
         key: 'lecture',
-        width: w.lecture,
+        ...widthOf(w.lecture),
         align: 'center',
         render: (_: unknown, row: PaymentOrderDetailLineRow) => (
           <PaymentOrderLectureDateSessionCell
@@ -784,7 +848,7 @@ export function usePaymentOrderDetailLinesController(
       {
         title: '지급조서 처리 현황',
         key: 'processingStatus',
-        width: w.processing,
+        ...widthOf(w.processing),
         align: 'center',
         onCell: () => ({
           className: 'payment-order-detail-filter-table__td--processing-status',
@@ -796,7 +860,7 @@ export function usePaymentOrderDetailLinesController(
         title: '정산 신청 금액',
         dataIndex: 'estimatedAmount',
         key: 'estimatedAmount',
-        width: w.amount,
+        ...widthOf(w.amount),
         align: 'center',
         render: (amount: number, row: PaymentOrderDetailLineRow) => (
           <span
@@ -813,7 +877,7 @@ export function usePaymentOrderDetailLinesController(
       {
         title: '산출 내역',
         key: 'breakdown',
-        width: w.breakdown,
+        ...widthOf(w.breakdown),
         align: 'center',
         render: (_: unknown, row: PaymentOrderDetailLineRow) => (
           <CalculationDetailViewButton
@@ -829,7 +893,7 @@ export function usePaymentOrderDetailLinesController(
         ),
       },
     ]
-  }, [mode, onOpenCalculationStatement])
+  }, [mode, onOpenCalculationStatement, filteredRowCount])
 
   const sectionTitle = mode === 'program' ? '신청자별 정산 목록' : '프로그램별 정산 목록'
 
@@ -845,7 +909,7 @@ export function usePaymentOrderDetailLinesController(
           ? (row as PaymentOrderAdminProgramDetailInstructorRow).instructorName
           : (row as PaymentOrderAdminInstructorDetailProgramRow).programName,
       institutionName: row.institutionName,
-      lectureDateSession: `${formatKoreanDateWithWeekday(row.lectureDate)} | ${row.sessionOrdinal}차시`,
+      lectureDateSession: `${formatKoreanDateWithWeekday(row.lectureDate)} | ${row.sessionOrdinal}회차`,
       processingStatusLabel: PAYMENT_ORDER_LINE_STATUS_LABELS_FULL[row.processingStatus],
       estimatedAmountLabel: formatWon(row.estimatedAmount),
     }))
@@ -863,18 +927,30 @@ export function usePaymentOrderDetailLinesController(
       { title: '정산 신청 금액', dataIndex: 'estimatedAmountLabel', key: 'estimatedAmountLabel' },
     ]
 
-    return { columns, data, selectedRowKeys }
+    return {
+      columns,
+      data,
+      selectedRowKeys,
+      // program 모드는 신청자(강사)명, instructor 모드는 프로그램명 컬럼
+      accessLog: {
+        downloadKind: 'PAYMENT_ORDER_DETAIL_EXPORT',
+        containedPiiTypes: mode === 'program' ? ['NAME'] : [],
+      },
+    }
   }, [filteredRows, mode, selectedRowKeys])
 
   return {
     filteredRows,
     batchConfirmOpen,
     setBatchConfirmOpen,
+    batchConfirmDoneOpen,
+    setBatchConfirmDoneOpen,
+    batchConfirmApplicantSummary,
     paymentStatementIssueBlocked,
     setPaymentStatementIssueBlocked,
     handleBatchConfirm,
     canBatchConfirm,
-    isLineCheckboxDisabled,
+    handleBatchConfirmClick,
     handlePaymentStatementIssue,
     closeIssuanceView,
     issuanceViewOpen,

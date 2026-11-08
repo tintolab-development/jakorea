@@ -4,6 +4,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useNavigateToAncestor } from '@/shared/hooks/use-history-ancestor-navigation'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import '@/shared/ui/detail-fullpage-modal.css'
 import type { User } from '@/types/user'
@@ -66,7 +67,7 @@ import {
 import { useInstructorRoleRequestMutations } from '@/features/user/api/hooks/use-instructor-role-request-mutations'
 import { useAdminApprovalRequestMutations } from '@/features/user/api/hooks/use-admin-approval-request-mutations'
 import { handleError } from '@/shared/utils/error-handler'
-import { useCmsAlert } from '@/shared/ui'
+import { showNotificationResendRequestCompletedAlert, useCmsAlert } from '@/shared/ui'
 import { guardAdminAction } from '@/shared/lib/admin-role-policy'
 import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
 import './permission-request-page.css'
@@ -497,19 +498,19 @@ export function PermissionRequestListPage() {
     [applyDetailRow, setSearchParams, urlPermissionRole]
   )
 
+  const { toSearch: navigateToAncestorSearch } = useNavigateToAncestor()
+
+  /** 상세 닫기 — 목록 엔트리가 history에 있으면 뒤로, 없으면 replace */
   const handleCloseDetail = useCallback(() => {
     setDetailTargetRow(null)
-    setSearchParams(
-      prev => {
-        const next = new URLSearchParams(prev)
-        next.delete(PR_DETAIL_USER)
-        next.delete(PR_DETAIL_ROLE)
-        next.delete(PR_DETAIL_REQUEST)
-        return next
-      },
-      { replace: true }
-    )
-  }, [setSearchParams])
+    navigateToAncestorSearch(prev => {
+      const next = new URLSearchParams(prev)
+      next.delete(PR_DETAIL_USER)
+      next.delete(PR_DETAIL_ROLE)
+      next.delete(PR_DETAIL_REQUEST)
+      return next
+    })
+  }, [navigateToAncestorSearch])
 
   const handlePermissionApprove = useCallback(
     (ctx: { userId: string; permissionRole: UserDetailPermissionRole }) => {
@@ -1240,12 +1241,7 @@ export function PermissionRequestListPage() {
         try {
           await resendNotificationMutation.mutateAsync({ requestId, notify })
           setPermissionNotificationResend(null)
-          showAlert({
-            title: notify ? '예약 등록 완료' : '재발송 요청 완료',
-            content: notify
-              ? '알림 재발송이 예약되었습니다. 선택한 시각에 발송됩니다.'
-              : '알림 재발송을 요청했습니다.',
-          })
+          showNotificationResendRequestCompletedAlert()
         } catch (error) {
           handleError(error, { defaultMessage: getResendNotificationError(error) })
         }
@@ -1264,12 +1260,7 @@ export function PermissionRequestListPage() {
         try {
           await adminResendNotificationMutation.mutateAsync({ adminAccountId, notify })
           setPermissionNotificationResend(null)
-          showAlert({
-            title: notify ? '예약 등록 완료' : '재발송 요청 완료',
-            content: notify
-              ? '알림 재발송이 예약되었습니다. 선택한 시각에 발송됩니다.'
-              : '알림 재발송을 요청했습니다.',
-          })
+          showNotificationResendRequestCompletedAlert()
         } catch (error) {
           handleError(error, { defaultMessage: getAdminResendNotificationError(error) })
         }
@@ -1283,6 +1274,7 @@ export function PermissionRequestListPage() {
         permissionNotificationResentAt:
           resolvePermissionNotificationResendSentAt(notifyOptions).toISOString(),
       })
+      showNotificationResendRequestCompletedAlert()
     },
     [
       adminRemote,
@@ -1294,7 +1286,6 @@ export function PermissionRequestListPage() {
       instructorRemote,
       permissionNotificationResend,
       resendNotificationMutation,
-      showAlert,
     ]
   )
 

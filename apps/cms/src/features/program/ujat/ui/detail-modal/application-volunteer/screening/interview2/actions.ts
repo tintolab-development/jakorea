@@ -7,6 +7,7 @@ import {
   isUjatVolunteerInterview2SelectableForResult,
   type UjatVolunteerInterview2ResultSelectRow,
 } from './display'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 export type UjatInterview2ConfirmRequest = {
   title: string
@@ -32,10 +33,7 @@ export function confirmUjatVolunteerInterview2Fail({
   onOpen: () => void
 }): void {
   if (count === 0) {
-    cmsAlertModal.show({
-      title: '항목 선택 안내',
-      content: '불합격 처리할 항목을 선택해 주세요.',
-    })
+    cmsAlertModal.show(NO_SELECTION_ALERT)
     return
   }
   onOpen()
@@ -51,10 +49,7 @@ export function confirmUjatVolunteerInterview2Pass({
   onConfirm: () => void
 }): void {
   if (count === 0) {
-    cmsAlertModal.show({
-      title: '항목 선택 안내',
-      content: '합격 처리할 항목을 선택해 주세요.',
-    })
+    cmsAlertModal.show(NO_SELECTION_ALERT)
     return
   }
   showConfirm({
@@ -85,10 +80,7 @@ export function openUjatVolunteerInterview2BulkPassModal({
   onOpen: () => void
 }): void {
   if (selectedIds.length === 0) {
-    cmsAlertModal.show({
-      title: '항목 선택 안내',
-      content: '합격 처리할 항목을 선택해 주세요.',
-    })
+    cmsAlertModal.show(NO_SELECTION_ALERT)
     return
   }
   if (hasProcessedInterview2Selection(selectedRows)) {

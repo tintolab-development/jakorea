@@ -30,6 +30,8 @@ type WritingFormPeriodDatePickerFieldProps = {
   disabledDate?: (date: Dayjs) => boolean
   /** 비선택 단락 표시용 — 열림 차단, 회색 비활성 스킨 없음 */
   readOnly?: boolean
+  /** 회색 비활성 스킨 + 열림 차단 */
+  disabled?: boolean
 }
 
 /**
@@ -52,6 +54,7 @@ export function WritingFormPeriodDatePickerField({
   dualEndPlaceholder = '마감 없음',
   disabledDate,
   readOnly,
+  disabled,
 }: WritingFormPeriodDatePickerFieldProps) {
   return (
     <ParagraphDatePicker
@@ -72,6 +75,7 @@ export function WritingFormPeriodDatePickerField({
       dualEndPlaceholder={dualEndPlaceholder}
       disabledDate={disabledDate}
       readOnly={readOnly}
+      disabled={disabled}
       onRangeChange={onCommitRange}
       onChange={() => {
         // presetMode period + [설정]은 onCommitRange만 사용 (onChange는 ParagraphDatePicker 내부 동기용).

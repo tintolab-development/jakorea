@@ -1,6 +1,9 @@
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
-import { listUjatEducationRegionsActive } from '@/features/program/ujat/lib/ujat-education-regions'
+import {
+  listUjatEducationRegionsActive,
+  type UjatEducationRegionOption,
+} from '@/features/program/ujat/lib/ujat-education-regions'
 import {
   UJAT_EDU_PROGRESS_VOLUNTEER_ASSIGNMENT_STATUS_LABEL,
   UJAT_EDU_PROGRESS_VOLUNTEER_GRADE_OPTIONS,
@@ -24,10 +27,12 @@ const assignmentStatusOptions = [
   ).map(([value, label]) => ({ label, value })),
 ]
 
-export function buildUjatEducationProgressVolunteerFilterFields(): FilterFieldConfig[] {
+export function buildUjatEducationProgressVolunteerFilterFields(
+  regions: readonly UjatEducationRegionOption[] = listUjatEducationRegionsActive()
+): FilterFieldConfig[] {
   const regionOptions = [
     { label: '전체', value: UJAT_EDU_PROGRESS_VOLUNTEER_FILTER_ALL },
-    ...listUjatEducationRegionsActive().map(region => ({
+    ...regions.map(region => ({
       label: region.label,
       value: region.key,
     })),

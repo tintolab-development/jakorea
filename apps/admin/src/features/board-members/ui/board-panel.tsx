@@ -41,6 +41,7 @@ import {
   CmsInput,
   ConfirmModal,
   NO_SELECTION_ALERT,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   PageContentLoading,
   showDeleteCompletedAlert,
   showRegisterCompletedAlert,
@@ -54,15 +55,16 @@ import './board-panel.css'
  * 시안 이사회 테이블 컬럼 폭
  * 선택 60 · 순서·No 80 · 공개 100 (공통 상수) + 나머지 비율
  */
+/** Figma 01-2 함께하는 사람들_이사회 — 테이블 합계 1538px */
 const BOARD_COLUMN_WIDTHS = {
   selection: TABLE_COLUMN_WIDTHS.checkbox,
   sort: TABLE_COLUMN_WIDTHS.sort,
   no: TABLE_COLUMN_WIDTHS.index,
   isPublic: TABLE_COLUMN_WIDTHS.usage,
-  nameKo: 140,
-  nameEn: 188,
-  position: 120,
-  affiliation: 460,
+  nameKo: 305,
+  nameEn: 304,
+  position: 305,
+  affiliation: 304,
 } as const
 
 const BOARD_TABLE_SCROLL_X =
@@ -237,6 +239,18 @@ export function BoardPanel() {
       position: draftMap[row.id]?.position ?? row.position,
       affiliation: draftMap[row.id]?.affiliation ?? row.affiliation,
     }))
+    if (
+      patches.some(
+        row =>
+          !row.nameKo.trim() ||
+          !row.nameEn.trim() ||
+          !row.position.trim() ||
+          !row.affiliation.trim()
+      )
+    ) {
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+      return
+    }
     try {
       await bulkUpdateMutation.mutateAsync(patches)
       draftMapRef.current = {}
@@ -333,7 +347,8 @@ export function BoardPanel() {
       {
         title: '한글 성명',
         key: 'nameKo',
-        width: BOARD_COLUMN_WIDTHS.nameKo,
+        // 유연 열: 넓은 화면에서 남는 폭 흡수 (CmsDataTable 정확 폭 모드)
+        minWidth: BOARD_COLUMN_WIDTHS.nameKo,
         align: 'center',
         ellipsis: true,
         className: 'board-members-table__col--name-ko',
@@ -352,7 +367,8 @@ export function BoardPanel() {
       {
         title: '영문 성명',
         key: 'nameEn',
-        width: BOARD_COLUMN_WIDTHS.nameEn,
+        // 유연 열: 넓은 화면에서 남는 폭 흡수 (CmsDataTable 정확 폭 모드)
+        minWidth: BOARD_COLUMN_WIDTHS.nameEn,
         align: 'center',
         ellipsis: true,
         className: 'board-members-table__col--name-en',
@@ -371,7 +387,8 @@ export function BoardPanel() {
       {
         title: '직위',
         key: 'position',
-        width: BOARD_COLUMN_WIDTHS.position,
+        // 유연 열: 넓은 화면에서 남는 폭 흡수 (CmsDataTable 정확 폭 모드)
+        minWidth: BOARD_COLUMN_WIDTHS.position,
         align: 'center',
         ellipsis: true,
         className: 'board-members-table__col--position',
@@ -390,7 +407,8 @@ export function BoardPanel() {
       {
         title: '소속 및 직책',
         key: 'affiliation',
-        width: BOARD_COLUMN_WIDTHS.affiliation,
+        // 유연 열: 넓은 화면에서 남는 폭 흡수 (CmsDataTable 정확 폭 모드)
+        minWidth: BOARD_COLUMN_WIDTHS.affiliation,
         align: 'center',
         ellipsis: true,
         className: 'board-members-table__col--affiliation',

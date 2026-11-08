@@ -20,6 +20,9 @@ import { useSettlementDetailQuery } from '@/features/settlement-management/hooks
 import { useSettlementTransportationSnapshotQuery } from '@/features/settlement-management/hooks/use-settlement-transportation-snapshot-query'
 import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
 import { useCmsAlert } from '@/shared/ui'
+import { useQuery } from '@tanstack/react-query'
+import { generalProgramDetailQueryOptions } from '@/features/program/general/hooks/use-general-program-detail'
+import { isIndividualProgramForSettlement } from '@/features/settlement/lib/settlement-program-individual'
 import { isAwaitingFirstQueryData } from '@/shared/lib/is-awaiting-first-query-data'
 import type {
   PaymentOrderAdminInstructorDetailProgramRow,
@@ -72,6 +75,20 @@ export function usePaymentOrderDetailFullPageModalState(
     calcSettlementId,
     calcStatementOpen && paymentOrdersRemote
   )
+
+  /**
+   * 산출 내역서 — 개인형 프로그램이면 「참여 기관명」열 미노출.
+   * 정산 응답에는 프로그램 유형이 없어 정산 상세의 programId로 프로그램 정본(GET /programs/{id})을 읽는다.
+   * 조회 실패·비숫자 id면 기관명 열을 그대로 둔다.
+   */
+  const calcProgramId = settlementDetailQuery.data?.programId?.trim() ?? ''
+  const calcProgramQuery = useQuery({
+    ...generalProgramDetailQueryOptions(calcProgramId),
+    enabled: calcStatementOpen && paymentOrdersRemote && /^\d+$/.test(calcProgramId),
+  })
+  const calcHideInstitutionColumn = calcProgramQuery.data
+    ? isIndividualProgramForSettlement(calcProgramQuery.data)
+    : false
 
   const shouldFetchTransportationSnapshot = useMemo(() => {
     if (!calcStatementOpen || !paymentOrdersRemote || calcSettlementId == null) return false
@@ -152,7 +169,10 @@ export function usePaymentOrderDetailFullPageModalState(
     switch (type) {
       case 'program': {
         if (!('programName' in detail)) return
-        const line = calcLineRow as PaymentOrderAdminProgramDetailInstructorRow
+        /* 확인 처리 등으로 상세 목록이 다시 조회되면 같은 정산 라인의 최신 처리 현황으로 산출 내역서를 다시 그린다 */
+        const line =
+          detail.instructorRows.find(r => r.id === calcLineRow.id) ??
+          (calcLineRow as PaymentOrderAdminProgramDetailInstructorRow)
         setCalcStatementData(
           mapSettlementDetailToInstructorPageCalculationStatement(
             line,
@@ -166,7 +186,9 @@ export function usePaymentOrderDetailFullPageModalState(
       }
       case 'instructor': {
         if (!('nameKo' in detail)) return
-        const line = calcLineRow as PaymentOrderAdminInstructorDetailProgramRow
+        const line =
+          detail.programRows.find(r => r.id === calcLineRow.id) ??
+          (calcLineRow as PaymentOrderAdminInstructorDetailProgramRow)
         setCalcStatementData(
           mapSettlementDetailToProgramCalculationStatement(
             line,
@@ -260,6 +282,9 @@ export function usePaymentOrderDetailFullPageModalState(
     calcStatementLoading,
     calcStatementError: paymentOrdersRemote ? settlementDetailQuery.error : null,
     calcStatementId: calcLineRow?.statementId ?? null,
+    calcSettlementId: calcLineRow?.settlementId ?? null,
+    calcAvailableActions: settlementDetailQuery.data?.availableActions,
+    calcHideInstitutionColumn,
     openCalculationStatement,
     closeCalculationStatement,
     resetCalcAndClose,

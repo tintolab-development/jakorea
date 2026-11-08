@@ -8,6 +8,8 @@ export type EducationDetailHeaderLayoutProps = {
   aside?: ReactNode
   /** aside 세로 정렬 — 'end'면 header 하단에 맞춤(수료증 CTA) */
   asideAlign?: 'start' | 'end'
+  /** 강사 카드 + 증명서 버튼을 세로로 쌓을 때. 강사 카드는 상단 정렬을 유지한다 */
+  asideStacked?: boolean
 }
 
 /**
@@ -20,6 +22,7 @@ export function EducationDetailHeaderLayout({
   header,
   aside,
   asideAlign = 'start',
+  asideStacked = false,
 }: EducationDetailHeaderLayoutProps) {
   if (!aside) {
     return (
@@ -31,15 +34,19 @@ export function EducationDetailHeaderLayout({
   }
 
   return (
-    <div className={styles.row}>
+    <div className={asideStacked ? `${styles.row} ${styles.rowStacked}` : styles.row}>
       <div className={styles.leftColumn}>
         {leading}
         {header}
       </div>
       <div
-        className={
-          asideAlign === 'end' ? `${styles.asideSlot} ${styles.asideSlotEnd}` : styles.asideSlot
-        }
+        className={[
+          styles.asideSlot,
+          asideAlign === 'end' ? styles.asideSlotEnd : '',
+          asideStacked ? styles.asideSlotStack : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
       >
         {aside}
       </div>

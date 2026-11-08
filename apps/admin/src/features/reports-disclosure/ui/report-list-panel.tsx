@@ -3,7 +3,6 @@
  */
 
 import { useCallback, useMemo, useState, type Key } from 'react'
-import { Image } from 'antd'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import type { Dayjs } from 'dayjs'
@@ -292,11 +291,10 @@ export function ReportListPanel({ kind }: Props) {
             }
           >
             <div className={`rd-list__thumb-wrap ${thumbMod}`}>
-              <Image
+              <img
                 className="rd-list__thumb"
                 src={record.thumbnailUrl}
                 alt={record.thumbnailFileName || '썸네일'}
-                preview={{ mask: '이미지 보기' }}
               />
             </div>
           </div>
@@ -453,7 +451,6 @@ export function ReportListPanel({ kind }: Props) {
               onChange: keys => setSelectedRowKeys(keys),
               columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
             }}
-            scroll={{ x: true }}
           />
           <AdminInfiniteTableFooter
             sentinelRef={sentinelRef}

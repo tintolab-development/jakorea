@@ -28,8 +28,11 @@ import {
   INSTRUCTOR_SETTLEMENT_STATUS_ORDER,
   type InstructorSettlementUiStatus,
 } from '@/shared/constants/instructor-settlement-status'
-import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
-import { InstructorPaymentStatusBadge } from '@/shared/components/instructor-payment-status-badge'
+import { StatusTag } from '@/shared/components/status-tag'
+import {
+  getInstructorSettlementStatusTag,
+  getTextbookStatusTag,
+} from '@/shared/lib/status-tag-specs'
 import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
 import { SegmentedTab } from '@/shared/ui'
 import { AddInstructorModal } from '../../add-instructor-modal'
@@ -42,11 +45,7 @@ import {
 import { getSchoolDetailByRow, getInstructorRowsForSchool } from '../../../lib/school-detail'
 import { useProgressSchoolList } from '../../../hooks/use-progress-school-list'
 import { useProgressInstructorList } from '../../../hooks/use-progress-instructor-list'
-import {
-  StatusDropdownCell,
-  STATUS_DROPDOWN_CELL_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
-} from '@/shared/components'
+import { StatusDropdownCell, STATUS_DROPDOWN_CELL_CLASSNAME } from '@/shared/components'
 import { Divider } from '@/shared/components/divider'
 import { useIsTrainedTeachersProgramsSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { useTrainedTeacherPerformanceSummary } from '@/features/program/trained-teachers/api/performance-summary-hooks'
@@ -324,25 +323,22 @@ export function ProgramProgressTab({ programId }: ProgramProgressTabProps) {
         key: 'textbookStatus',
         width: 116,
         align: 'center',
-        onCell: () => ({
-          className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME}`,
-        }),
+        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
         render: (status: TextbookStatusKey, record: ParticipatingSchoolRow) =>
           record.textbookId || record.textbookName ? (
             <div onClick={e => e.stopPropagation()} style={{ display: 'inline-block' }}>
               <StatusDropdownCell<TextbookStatusKey>
                 status={status}
                 statusOptions={textbookStatusKeys.filter(key => key !== 'not_applicable')}
-                renderBadge={s => <TextbookStatusBadge status={s} />}
+                getTag={getTextbookStatusTag}
                 isItemDisabled={(cur, opt) => cur === opt}
                 onChange={key => handleTextbookStatusChange(record.id, key)}
                 isOpen={openTextbookDropdownSchoolId === record.id}
                 onOpenChange={open => setOpenTextbookDropdownSchoolId(open ? record.id : null)}
-                tagLayout="tag100"
               />
             </div>
           ) : (
-            <TextbookStatusBadge status="not_applicable" />
+            <StatusTag {...getTextbookStatusTag('not_applicable')} />
           ),
       },
       {
@@ -430,7 +426,7 @@ export function ProgramProgressTab({ programId }: ProgramProgressTabProps) {
             <StatusDropdownCell<InstructorSettlementUiStatus>
               status={status}
               statusOptions={settlementStatusKeys}
-              renderBadge={s => <InstructorPaymentStatusBadge status={s} />}
+              getTag={getInstructorSettlementStatusTag}
               isItemDisabled={(cur, opt) => cur === opt}
               onChange={key => handleSettlementStatusChange(record.id, key)}
               isOpen={openSettlementDropdownInstructorId === record.id}

@@ -44,16 +44,14 @@ export function SettlementSummaryCards({ month, summary }: SettlementSummaryCard
               >
                 {formatWonNumber(amount)}
               </PFText>
-              {amount != null ? (
-                <PFText
-                  as="span"
-                  typo="bd-lg-sb"
-                  color={card.amountColor}
-                  className={styles.unit}
-                >
-                  원
-                </PFText>
-              ) : null}
+              <PFText
+                as="span"
+                typo="bd-lg-sb"
+                color={card.amountColor}
+                className={styles.unit}
+              >
+                원
+              </PFText>
             </p>
           </article>
         )

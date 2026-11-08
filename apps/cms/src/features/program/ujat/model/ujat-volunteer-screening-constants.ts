@@ -58,13 +58,8 @@ export const UJAT_VOLUNTEER_APPLICATION_TYPE_LABELS: Record<UjatVolunteerApplica
   'ujat-graduate': 'UJAT 수료자 봉사자',
 }
 
-export type UjatDocumentScreeningStatus = 'pass' | 'fail' | 'pending'
-
-export const UJAT_DOCUMENT_SCREENING_STATUS_LABELS: Record<UjatDocumentScreeningStatus, string> = {
-  pending: '신청 및 대기 중',
-  fail: '서류 불합격',
-  pass: '서류 합격',
-}
+export type { DocumentScreeningStatus as UjatDocumentScreeningStatus } from '@/features/program/shared/lib/volunteer-screening/document-screening-presentation'
+export { DOCUMENT_SCREENING_STATUS_LABELS as UJAT_DOCUMENT_SCREENING_STATUS_LABELS } from '@/features/program/shared/lib/volunteer-screening/document-screening-presentation'
 
 /** 담당자 평가 (○ / △ / X / 미검토) */
 export type UjatManagerEvaluation = 'pass' | 'neutral' | 'fail' | 'unreviewed'

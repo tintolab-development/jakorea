@@ -52,6 +52,7 @@ export function ParticipatingVolunteerAddRegistrationPreviousJaProgramParagraph(
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
           label="참여 JA 봉사 프로그램"
+          required
           fullRow
           edit={
             <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap">
@@ -83,6 +84,7 @@ export function ParticipatingVolunteerAddRegistrationPreviousJaProgramParagraph(
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
           label="증빙서류 첨부"
+          required
           fullRow
           edit={
             <ParagraphFileUpload

@@ -3,11 +3,8 @@ import { Space } from 'antd'
 import dayjs from 'dayjs'
 import type { SponsorRegisterPayload } from '@/features/sponsor/model/sponsor-management.types'
 import { SPONSOR_SPONSORSHIP_STATUS_VALUES } from '@/features/sponsor/model/sponsorship-status'
-import { SponsorSponsorshipStatusBadge } from '@/features/sponsor/ui/sponsor-sponsorship-status-badge'
-import {
-  STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME,
-  StatusDropdownCell,
-} from '@/shared/components/status-dropdown-cell'
+import { StatusDropdownCell } from '@/shared/components/status-dropdown-cell'
+import { getSponsorSponsorshipStatusTag } from '@/shared/lib/status-tag-specs'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { LAYOUT_CONSTANTS } from '@/shared/constants'
 import {
@@ -230,18 +227,15 @@ export function SponsorRegisterModal({
             required
             view={noopView}
             edit={
-              <span className={STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME}>
-                <StatusDropdownCell<SponsorSponsorshipStatus>
-                  status={form.sponsorshipStatus}
-                  statusOptions={SPONSOR_SPONSORSHIP_STATUS_VALUES}
-                  renderBadge={status => <SponsorSponsorshipStatusBadge status={status} />}
-                  isItemDisabled={(currentStatus, optionStatus) => currentStatus === optionStatus}
-                  onChange={next => setField('sponsorshipStatus', next)}
-                  isOpen={isSponsorshipStatusOpen}
-                  onOpenChange={setIsSponsorshipStatusOpen}
-                  tagLayout="tag100"
-                />
-              </span>
+              <StatusDropdownCell<SponsorSponsorshipStatus>
+                status={form.sponsorshipStatus}
+                statusOptions={SPONSOR_SPONSORSHIP_STATUS_VALUES}
+                getTag={getSponsorSponsorshipStatusTag}
+                isItemDisabled={(currentStatus, optionStatus) => currentStatus === optionStatus}
+                onChange={next => setField('sponsorshipStatus', next)}
+                isOpen={isSponsorshipStatusOpen}
+                onOpenChange={setIsSponsorshipStatusOpen}
+              />
             }
           />
         </DetailInfoForm.Row>

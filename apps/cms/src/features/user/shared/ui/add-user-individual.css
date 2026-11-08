@@ -5,31 +5,31 @@
 }
 
 .add-user-individual__section--basic .detail-info-form__field {
-  height: 64px;
-  min-height: 64px;
-  max-height: 64px;
+  height: 60px;
+  min-height: 60px;
+  max-height: 60px;
 }
 
 .add-user-individual__section--basic .detail-info-form__field-label,
 .add-user-individual__section--basic .detail-info-form__field-content {
-  height: 64px;
-  min-height: 64px;
-  max-height: 64px;
+  height: 60px;
+  min-height: 60px;
+  max-height: 60px;
   box-sizing: border-box;
 }
 
 .add-user-individual__section--terms .detail-info-form__field {
-  min-height: 50px;
+  min-height: 52px;
 }
 
 .add-user-individual__section--terms .detail-info-form__field-label,
 .add-user-individual__section--terms .detail-info-form__field-content {
-  min-height: 50px;
+  min-height: 52px;
   box-sizing: border-box;
   padding-block: 5px;
 }
 
-/** 동의서 작성(상태 + 버튼) 셀 — DetailInfoForm 기본 상하 12px */
+/** 동의서 작성(상태 + 버튼 h32) 셀 — 시안 상하 12px */
 .add-user-individual__section--terms
   .detail-info-form__field:has(.add-user-individual__consent-document) {
   min-height: auto;
@@ -43,14 +43,6 @@
   .detail-info-form__field-content {
   min-height: auto;
   padding-block: 12px;
-}
-
-.add-user-individual__terms-consent-heading
-  > .detail-info-form__header
-  .detail-info-form__title::after {
-  content: '*';
-  margin-left: 2px;
-  color: var(--color-error, #ff4d4f);
 }
 
 .add-user-individual__terms-consent-heading.detail-info-form > .detail-info-form__body {
@@ -88,13 +80,6 @@
   font-weight: 500;
   line-height: 150%;
   color: var(--default-BK, #3d3d3d);
-}
-
-.add-user-individual__consent-sep {
-  flex-shrink: 0;
-  color: #d0d0d0;
-  font-weight: 400;
-  user-select: none;
 }
 
 .add-user-individual__affiliation-row {

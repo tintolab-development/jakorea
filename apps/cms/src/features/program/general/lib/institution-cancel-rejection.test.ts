@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildInstitutionCancelRejectionMessage,
+  patchInstitutionForCancelRejection,
   resolveInstitutionCancelRejectionNotifyVariant,
 } from '@/features/program/general/lib/institution-cancel-rejection'
 import { buildInstitutionCancelRejectCompleteDescription } from '@/features/program/shared/ui/detail-modal/components/institution-cancel-reject-complete-modal'
@@ -51,12 +52,21 @@ describe('institution-cancel-rejection', () => {
       '반려 취소 알림이 새롭게 발송됩니다.'
     )
   })
+
+  it('반려 취소 패치는 REJECTION_CANCELLED로 복원한다', () => {
+    const restored = patchInstitutionForCancelRejection({
+      ...baseRow,
+      applicationStatus: 'APPROVAL_CANCELLED',
+    })
+    expect(restored.approvalStatus).toBe('pending')
+    expect(restored.applicationStatus).toBe('REJECTION_CANCELLED')
+  })
 })
 
 describe('institution-cancel-reject-complete-modal', () => {
   it('완료 메시지에 후속 안내를 포함한다', () => {
     expect(buildInstitutionCancelRejectCompleteDescription('진월초등학교')).toBe(
-      '[**진월초등학교**]의 프로그램 참여 **반려 취소** 되었습니다.\n해당 기관은 신청 목록 또는 상세에서 **승인 및 반려**가 가능합니다.'
+      '**[진월초등학교]**의 프로그램 참여 **반려 취소** 되었습니다.\n해당 기관은 신청 목록 또는 상세에서 **승인 및 반려**가 가능합니다.'
     )
   })
 })

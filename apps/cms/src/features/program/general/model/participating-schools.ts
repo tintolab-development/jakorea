@@ -37,6 +37,11 @@ export interface ParticipatingSchoolSession {
   resolvedScheduleId?: number | null
   /** resolvedScheduleId === null 일 때 true */
   scheduleUnresolved?: boolean
+  /**
+   * 일반 기관 기간 지정(PERIOD) 희망 행만 — `preferredEducationSchedules[].scheduleId` 유무로 확정/미확정(희망).
+   * 다른 유형·일정 지정 행은 undefined (표시 문구를 붙이지 않는다).
+   */
+  hopeScheduleConfirmed?: boolean
   /** OSA `assignmentId` — 동일 program scheduleId·학급별 row 구분 */
   osaAssignmentId?: number
   /** 원본 시작 시각(ISO). 합반 교육일 비교용. 표시 라벨을 파싱하지 않는다. */
@@ -53,6 +58,8 @@ export interface ParticipatingSchoolSession {
   scheduleRole?: string
   /** GET schedules / education-slots `educationSlotKey` */
   educationSlotKey?: string
+  /** 해당 일정의 program_curriculum_session 건수. 없으면 생략. sessionNo로 채우지 않는다. */
+  curriculumSessionCount?: number | null
 }
 
 export interface ParticipatingSchoolRow {
@@ -115,6 +122,10 @@ export interface ParticipatingSchoolRow {
   textbookName?: string
   /** TT 교재 마스터 id (상세 GET 병합 시) */
   textbookId?: string
+  /** 기관 신청 루트 키트 수. 없으면 omit — 클라이언트 재계산 금지 */
+  textbookKits?: number
+  /** 기관 신청 루트 권수. 없으면 omit */
+  textbookQuantity?: number
   /** 담당 교사 전화(마스킹 가능) — contact와 동일 출처일 수 있음 */
   teacherPhone?: string
   teacherMobile?: string

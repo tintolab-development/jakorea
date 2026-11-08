@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useNavigateToAncestor } from '@/shared/hooks/use-history-ancestor-navigation'
 import { GEMINI_RECRUITMENT_ADD_PARAM } from '../../lib/recruitment/add-url'
 import {
   GEMINI_RECRUITMENT_EDIT_PARAM,
@@ -27,8 +28,11 @@ export function useGeminiRecruitmentDetailUrl() {
     [setSearchParams]
   )
 
+  const { toSearch: navigateToAncestorSearch } = useNavigateToAncestor()
+
+  // 목록 엔트리가 history에 있으면 그 엔트리로 되돌아가 상세 엔트리를 앞쪽에 남기지 않는다.
   const closeDetail = useCallback(() => {
-    setSearchParams(
+    navigateToAncestorSearch(
       prev => {
         const next = new URLSearchParams(prev)
         next.delete(GEMINI_RECRUITMENT_ID_PARAM)
@@ -36,10 +40,9 @@ export function useGeminiRecruitmentDetailUrl() {
         next.delete(GEMINI_RECRUITMENT_ADD_PARAM)
         next.delete(GEMINI_RECRUITMENT_EDIT_PARAM)
         return next
-      },
-      { replace: true }
+      }
     )
-  }, [setSearchParams])
+  }, [navigateToAncestorSearch])
 
   return { recruitmentId, openDetail, closeDetail }
 }

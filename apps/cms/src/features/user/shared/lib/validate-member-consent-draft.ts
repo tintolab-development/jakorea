@@ -1,6 +1,8 @@
 export {
   applyAgreementNoticeSubjectMemberName,
   collectMemberConsentDisagreedRequiredLabels,
+  collectMemberConsentUnagreedRequiredLabels,
+  formatMemberConsentDisagreedRequiredAlertMessage,
   formatMemberConsentIncompleteRequiredAlertMessage,
   getMemberConsentInvalidNoticeSubjectContactAlertMessage,
   hasMemberConsentIncompleteRequiredFields,

@@ -36,12 +36,16 @@ export function UjatAttendanceSessionGroupHeader({
   return (
     <div className="table-header-title--wrapper">
       <span className="table-title">{session.dateLabel}</span>
-      <span className="table-description--black">
+      <span className="table-description">
         <UjatInlineDividedSegments
-          segments={[session.institutionName, session.district, session.timeRange]}
+          segments={[
+            session.institutionName,
+            session.district,
+            session.timeRange,
+            `총 ${totalCount}건`,
+          ]}
         />
       </span>
-      <span className="table-description">총 {totalCount}건</span>
     </div>
   )
 }
@@ -89,6 +93,7 @@ export function UjatAttendanceSessionGroupPanel({
   const excelRows = useMemo(() => buildUjatAttendanceSessionExcelRows(displayRows), [displayRows])
 
   const { exportExcel, isExporting } = useTableExcelExport({
+    accessLog: { downloadKind: 'PROGRAM_ATTENDANCE_EXPORT', containedPiiTypes: ['NAME'] },
     columns: UJAT_ATTENDANCE_SESSION_EXCEL_COLUMNS,
     data: excelRows,
     filename: resolveUjatAttendanceSessionExcelFilename(session),

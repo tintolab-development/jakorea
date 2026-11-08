@@ -3,6 +3,7 @@ import { parseAdminAccountIdFromUserId } from '@/features/user/api/fetch-admin-m
 import { registerMemberIdMapping } from '@/features/user/api/member-id-registry'
 import {
   coercePositiveInt,
+  copyUserResponseResendIds,
   isUserResponseDisplayRowId,
 } from '@/features/user/api/user-response-row-id'
 import {
@@ -158,6 +159,10 @@ export function mapMemberListItemToUser(item: MemberListItemResponse): Omit<User
       }),
     id1365: item.external1365Id?.trim() || undefined,
     ...(adminAccountId != null ? { adminAccountId } : {}),
+    ...copyUserResponseResendIds({
+      instructorRoleRequestId: item.instructorRoleRequestId,
+      adminAccountId,
+    }),
     ...(item.affiliation?.trim() ? { affiliation: item.affiliation.trim() } : {}),
     ...(item.affiliatedSchoolUserId?.trim()
       ? { affiliatedSchoolUserId: item.affiliatedSchoolUserId.trim() }
@@ -215,7 +220,7 @@ export function mapMemberListItemToUser(item: MemberListItemResponse): Omit<User
     user.instructorInfo = {
       bankName: info.bankName?.trim() ?? '',
       accountNumber: info.accountNumber?.trim() ?? '',
-      accountHolder: info.accountHolder?.trim() ?? user.name,
+      accountHolder: info.accountHolder?.trim() ?? '',
       isBusinessIncome: Boolean(info.isBusinessIncome),
     }
   }

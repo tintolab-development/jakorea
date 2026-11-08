@@ -15,7 +15,6 @@ import type {
   RecruitPostingVisibility,
 } from '@/entities/recruit-posting/model/types'
 import {
-  useCanToggleRecruitPostingPublic,
   useCreateRecruitPosting,
   useRecruitPostingsList,
   useRemoveRecruitPostings,
@@ -253,7 +252,6 @@ export function RecruitPostingsPage() {
   })
 
   const listQuery = useRecruitPostingsList(appliedFilter)
-  const canTogglePublic = useCanToggleRecruitPostingPublic()
   const setPublicMutation = useSetRecruitPostingPublic()
   const createMutation = useCreateRecruitPosting()
   const updateMutation = useUpdateRecruitPosting()
@@ -291,7 +289,6 @@ export function RecruitPostingsPage() {
 
   const handleTogglePublic = useCallback(
     (id: string, isPublic: boolean, version: number) => {
-      if (!canTogglePublic) return
       void setPublicMutation.mutateAsync({ id, isPublic, version }).catch(() => {
         showAlert({
           title: '공개 여부 변경 실패',
@@ -300,7 +297,7 @@ export function RecruitPostingsPage() {
         void listQuery.refetch()
       })
     },
-    [canTogglePublic, listQuery, setPublicMutation, showAlert]
+    [listQuery, setPublicMutation, showAlert]
   )
 
   const handleBulkDeleteClick = useCallback(() => {
@@ -415,7 +412,6 @@ export function RecruitPostingsPage() {
         render: (value: boolean, row) => (
           <Switch
             checked={value}
-            disabled={!canTogglePublic}
             onClick={(_, e) => e.stopPropagation()}
             onChange={checked => {
               handleTogglePublic(row.id, checked, row.version)
@@ -444,10 +440,11 @@ export function RecruitPostingsPage() {
         render: (value: string) => value || '-',
       },
       {
-        title: '작성자명',
+        title: '작성자',
         dataIndex: 'authorName',
         key: 'authorName',
-        width: 120,
+        width: TABLE_COLUMN_WIDTHS.author,
+        ellipsis: true,
         align: 'center',
         render: (value: string) => value || '-',
       },
@@ -494,7 +491,7 @@ export function RecruitPostingsPage() {
         ),
       },
     ],
-    [canTogglePublic, handleTogglePublic, openEdit, rowNoMap]
+    [handleTogglePublic, openEdit, rowNoMap]
   )
 
   return (
@@ -502,122 +499,116 @@ export function RecruitPostingsPage() {
       <FilterTableLayout
         hasActiveFilters={hasActiveFilters}
         filter={
-          <div className="admin-filter-area admin-filter-area--split recruit-postings-page__filter">
-            <div className="admin-filter-area__head">
-              <div className="admin-filter-area__field admin-filter-area__field--control">
-                <p className="admin-filter-area__label">공개 여부</p>
-                <CmsSelect
-                  inputSize="medium"
-                  width={FILTER_CONTROL_MAX_WIDTH_PX}
-                  withAllOption
-                  value={pendingFilters.visibility}
-                  placeholder="전체"
-                  options={[
-                    { value: 'public', label: '공개' },
-                    { value: 'private', label: '비공개' },
-                  ]}
-                  onChange={value =>
-                    setPendingFilters(prev => ({
-                      ...prev,
-                      visibility: (value as VisibilityPending) || '',
-                    }))
-                  }
-                />
-              </div>
-              <div className="admin-filter-area__field admin-filter-area__field--control">
-                <p className="admin-filter-area__label">게시 유형</p>
-                <CmsSelect
-                  inputSize="medium"
-                  width={FILTER_CONTROL_MAX_WIDTH_PX}
-                  withAllOption
-                  value={pendingFilters.status}
-                  placeholder="전체"
-                  options={STATUS_OPTIONS}
-                  onChange={value =>
-                    setPendingFilters(prev => ({
-                      ...prev,
-                      status: (value as StatusPending) || '',
-                    }))
-                  }
-                />
-              </div>
-              <div className="admin-filter-area__field admin-filter-area__field--control">
-                <p className="admin-filter-area__label">제목</p>
-                <AdminFilterTextInput
-                  inputSize="medium"
-                  width={FILTER_CONTROL_MAX_WIDTH_PX}
-                  value={pendingFilters.title}
-                  placeholder="제목을 입력해 주세요"
-                  onChange={value => patchPendingFilters(prev => ({ ...prev, title: value }))}
-                  onPressEnter={handleSearch}
-                />
-              </div>
-              <div className="admin-filter-area__field admin-filter-area__field--control">
-                <p className="admin-filter-area__label">작성자명</p>
-                <AdminFilterTextInput
-                  inputSize="medium"
-                  width={FILTER_CONTROL_MAX_WIDTH_PX}
-                  value={pendingFilters.authorName}
-                  placeholder="작성자명을 입력해 주세요"
-                  onChange={value => patchPendingFilters(prev => ({ ...prev, authorName: value }))}
-                  onPressEnter={handleSearch}
-                />
-              </div>
+          <div className="admin-filter-area recruit-postings-page__filter">
+            <div className="admin-filter-area__field admin-filter-area__field--control">
+              <p className="admin-filter-area__label">공개 여부</p>
+              <CmsSelect
+                inputSize="medium"
+                width={FILTER_CONTROL_MAX_WIDTH_PX}
+                withAllOption
+                value={pendingFilters.visibility}
+                placeholder="전체"
+                options={[
+                  { value: 'public', label: '공개' },
+                  { value: 'private', label: '비공개' },
+                ]}
+                onChange={value =>
+                  setPendingFilters(prev => ({
+                    ...prev,
+                    visibility: (value as VisibilityPending) || '',
+                  }))
+                }
+              />
             </div>
-            <div className="admin-filter-area__bottom">
-              <div className="admin-filter-area__bottom-fields">
-                <div className="admin-filter-area__field admin-filter-area__field--date-range">
-                  <p className="admin-filter-area__label">모집 기간</p>
-                  <CmsDateRangePicker
-                    inputSize="medium"
-                    width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
-                    value={rangeAsPicker(pendingFilters.recruitRange)}
-                    placeholder={['시작일', '종료일']}
-                    allowClear
-                    onChange={dates => {
-                      if (!dates || (!dates[0] && !dates[1])) {
-                        setPendingFilters(prev => ({ ...prev, recruitRange: null }))
-                        return
-                      }
-                      setPendingFilters(prev => ({
-                        ...prev,
-                        recruitRange: [dates[0] ?? null, dates[1] ?? null],
-                      }))
-                    }}
-                  />
-                </div>
-                <div className="admin-filter-area__field admin-filter-area__field--date-range">
-                  <p className="admin-filter-area__label">게시일</p>
-                  <CmsDateRangePicker
-                    inputSize="medium"
-                    width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
-                    value={rangeAsPicker(pendingFilters.publishedRange)}
-                    placeholder={['시작일', '종료일']}
-                    allowClear
-                    onChange={dates => {
-                      if (!dates || (!dates[0] && !dates[1])) {
-                        setPendingFilters(prev => ({ ...prev, publishedRange: null }))
-                        return
-                      }
-                      setPendingFilters(prev => ({
-                        ...prev,
-                        publishedRange: [dates[0] ?? null, dates[1] ?? null],
-                      }))
-                    }}
-                  />
-                </div>
-              </div>
-              <div className="admin-filter-area__actions">
-                <CmsButton
-                  className="admin-filter-area__search-button"
-                  variant="primary"
-                  size="medium"
-                  type="button"
-                  onClick={handleSearch}
-                >
-                  조회
-                </CmsButton>
-              </div>
+            <div className="admin-filter-area__field admin-filter-area__field--control">
+              <p className="admin-filter-area__label">게시 유형</p>
+              <CmsSelect
+                inputSize="medium"
+                width={FILTER_CONTROL_MAX_WIDTH_PX}
+                withAllOption
+                value={pendingFilters.status}
+                placeholder="전체"
+                options={STATUS_OPTIONS}
+                onChange={value =>
+                  setPendingFilters(prev => ({
+                    ...prev,
+                    status: (value as StatusPending) || '',
+                  }))
+                }
+              />
+            </div>
+            <div className="admin-filter-area__field admin-filter-area__field--control">
+              <p className="admin-filter-area__label">제목</p>
+              <AdminFilterTextInput
+                inputSize="medium"
+                width={FILTER_CONTROL_MAX_WIDTH_PX}
+                value={pendingFilters.title}
+                placeholder="제목을 입력해 주세요"
+                onChange={value => patchPendingFilters(prev => ({ ...prev, title: value }))}
+                onPressEnter={handleSearch}
+              />
+            </div>
+            <div className="admin-filter-area__field admin-filter-area__field--control">
+              <p className="admin-filter-area__label">작성자</p>
+              <AdminFilterTextInput
+                inputSize="medium"
+                width={FILTER_CONTROL_MAX_WIDTH_PX}
+                value={pendingFilters.authorName}
+                placeholder="작성자명을 입력해 주세요"
+                onChange={value => patchPendingFilters(prev => ({ ...prev, authorName: value }))}
+                onPressEnter={handleSearch}
+              />
+            </div>
+            <div className="admin-filter-area__field admin-filter-area__field--date-range">
+              <p className="admin-filter-area__label">모집 기간</p>
+              <CmsDateRangePicker
+                inputSize="medium"
+                width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
+                value={rangeAsPicker(pendingFilters.recruitRange)}
+                placeholder={['시작일', '종료일']}
+                allowClear
+                onChange={dates => {
+                  if (!dates || (!dates[0] && !dates[1])) {
+                    setPendingFilters(prev => ({ ...prev, recruitRange: null }))
+                    return
+                  }
+                  setPendingFilters(prev => ({
+                    ...prev,
+                    recruitRange: [dates[0] ?? null, dates[1] ?? null],
+                  }))
+                }}
+              />
+            </div>
+            <div className="admin-filter-area__field admin-filter-area__field--date-range">
+              <p className="admin-filter-area__label">게시일</p>
+              <CmsDateRangePicker
+                inputSize="medium"
+                width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
+                value={rangeAsPicker(pendingFilters.publishedRange)}
+                placeholder={['시작일', '종료일']}
+                allowClear
+                onChange={dates => {
+                  if (!dates || (!dates[0] && !dates[1])) {
+                    setPendingFilters(prev => ({ ...prev, publishedRange: null }))
+                    return
+                  }
+                  setPendingFilters(prev => ({
+                    ...prev,
+                    publishedRange: [dates[0] ?? null, dates[1] ?? null],
+                  }))
+                }}
+              />
+            </div>
+            <div className="admin-filter-area__actions">
+              <CmsButton
+                className="admin-filter-area__search-button"
+                variant="primary"
+                size="medium"
+                type="button"
+                onClick={handleSearch}
+              >
+                조회
+              </CmsButton>
             </div>
           </div>
         }
@@ -660,7 +651,6 @@ export function RecruitPostingsPage() {
               },
               style: { cursor: 'pointer' },
             })}
-            scroll={{ x: true }}
           />
           <AdminInfiniteTableFooter
             sentinelRef={sentinelRef}

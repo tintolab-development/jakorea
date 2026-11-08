@@ -91,6 +91,16 @@ describe('buildMemberConsentAgreeOnlyPreviewDraft', () => {
     expect(result?.participantName).toBe('홍길동')
   })
 
+  it('영수증 발급 사전 동의서 — 주민등록번호 없이 autofill', () => {
+    const result = buildMemberConsentAgreeOnlyPreviewDraft(
+      'agreement-receipt-pre-consent',
+      baseUser()
+    )
+    expect(result?.paymentBasicInfo?.nameKo).toBe('홍길동')
+    expect(result?.paymentBasicInfo).not.toHaveProperty('residentFront')
+    expect(result?.paymentBasicInfo).not.toHaveProperty('residentBack')
+  })
+
   it('교육진행자 — 동의 선택 + participantName', () => {
     const result = buildMemberConsentAgreeOnlyPreviewDraft('agreement-expense', baseUser())
     expect(result?.participantName).toBe('홍길동')

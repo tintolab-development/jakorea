@@ -15,8 +15,21 @@
   margin-top: 30px;
 }
 
+.corporate-partner-form-modal .teal-header-modal__footer .cms-button {
+  min-width: 120px;
+}
+
+.corporate-partner-form-modal .file-select-image-cell .file-select-field__guide-line {
+  white-space: normal;
+}
+
 .corporate-partner-form-modal__form {
   width: 100%;
+}
+
+.corporate-partner-form-modal__file-field {
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 /* DetailInfoForm edit 슬롯 — FileSelect/Input 레이아웃 보존 */
@@ -48,6 +61,18 @@
 
 .corporate-partner-form-modal .app-radio-group .ant-radio-wrapper {
   margin-inline-end: 0;
+}
+
+.corporate-partner-form-modal
+  .detail-info-form__field-content--edit
+  > .file-select-image-cell {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  margin-block: 0 !important;
+  width: 100% !important;
+  min-width: 0 !important;
 }
 
 /* 노출 순서: input 160×40 + helper 가로, gap 16px */

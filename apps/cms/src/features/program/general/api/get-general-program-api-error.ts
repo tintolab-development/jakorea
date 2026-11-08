@@ -23,6 +23,10 @@ import {
   resolveProgramRecruitmentPolicyErrorMessage,
 } from '@/shared/lib/program-edit-window-error-message'
 import { resolveProgramScheduleLineErrorMessage } from '@/features/program/shared/lib/program-schedule-line-error'
+import {
+  LECTURE_REPORT_NO_DOWNLOADABLE_FILES,
+  LECTURE_REPORT_NO_DOWNLOADABLE_FILES_MESSAGE,
+} from '@/shared/lib/lecture-report-bulk-download'
 
 const BUSINESS_START_LOCK_PATTERN =
   /business_start_date|schedule lock|only be modified before/i
@@ -43,11 +47,29 @@ const PROGRESS_INSTRUCTOR_ERROR_MESSAGES: Record<string, string> = {
   VOLUNTEER_ASSIGNMENT_STARTED_USE_GIVE_UP:
     '이미 시작된 봉사 일정은 배정 해제가 아니라 활동 포기로 처리해야 합니다.',
   VOLUNTEER_ASSIGNMENT_SCHEDULE_REQUIRED: '활성 교육 일정이 있는 기관만 배정할 수 있습니다.',
+  VOLUNTEER_ASSIGNMENT_ORGANIZATION_SCHEDULE_REQUIRED:
+    '기관이 배정되지 않은 회차에는 봉사자를 배정할 수 없습니다.',
+  GENERAL_ORGANIZATION_ATTENDANCE_ASSIGNMENT_SCOPE_REQUIRED:
+    '배정되지 않은 일정의 학생 출결은 저장할 수 없습니다.',
+  ATTENDANCE_SCOPE_UNVERIFIED: '배정되지 않은 일정의 학생 출결은 저장할 수 없습니다.',
+  APPLICATION_DECISION_CONFLICT:
+    '현재 신청 상태에서는 승인·반려·취소 처리를 수행할 수 없습니다.',
   INSTRUCTOR_REPRESENTATIVE_NOT_CURRENT: '현재 대표 강사가 아니면 일반 강사로 변경할 수 없습니다.',
   PROGRAM_PARTICIPANT_GIVE_UP_BEFORE_FIRST_ACTIVITY:
     '첫 교육이 시작되기 전에는 활동 포기할 수 없습니다.',
   INVALID_BUSINESS_INCOME_EARNER_STATUS: '사업소득자 여부는 해당 또는 해당 없음만 저장할 수 있습니다.',
   FORBIDDEN_APPLICATION_ACTION: '이 프로그램 유형에서는 해당 작업을 할 수 없습니다.',
+  INDIVIDUAL_INTERVIEW_REQUIRED: '면접 합격 후 최종 승인',
+  GENERAL_INDIVIDUAL_SCHEDULE_MODE_FIXED_DATE_ONLY:
+    '기간형(PERIOD) 교육 일정은 개인 승인에 사용할 수 없습니다.',
+  GENERAL_INSTRUCTOR_ASSIGNMENT_REQUIRES_RECRUITMENT:
+    '강사 모집이 없는 프로그램에는 강사를 배정할 수 없습니다.',
+  ATTENDANCE_AFTER_GIVE_UP: '활동 포기 이후 회차에는 출결을 저장할 수 없습니다.',
+  FORM_ANSWER_TYPE_INVALID: '입력 형식이 올바르지 않습니다.',
+  FORM_ANSWER_REQUIRED: '필수 입력값을 입력해 주세요.',
+  FORM_ANSWER_TOO_LONG: '입력 가능한 글자 수를 초과했습니다. 1,000자 이하로 작성해 주세요.',
+  FORM_REQUIRED_CONSENT_NOT_AGREED: '필수 동의 항목에 동의해 주세요.',
+  FORM_BINDING_TARGET_ROLE_MISMATCH: '현재 참여 역할에 해당하지 않는 설문입니다.',
   FORM_RESPONSE_ALREADY_SUBMITTED:
     '이미 제출된 응답입니다. 수정은 응답 수정으로 해 주세요.',
   INSTRUCTOR_PARTICIPATION_CONSENT_REQUIRED:
@@ -127,13 +149,25 @@ const FORM_BINDING_ACTIVE_SLOT_CONFLICT_DEFAULT_MESSAGE =
   '같은 프로그램 양식 슬롯에 이미 활성 양식이 연결되어 있습니다. 기존 바인딩을 확인하거나 다른 대상을 선택해 주세요.'
 
 const TRAINED_TEACHER_SATISFACTION_TEACHER_ONLY_MESSAGE =
-  '교육받은 교사 프로그램의 만족도조사는 교사만 대상으로 할 수 있습니다.'
+  '교육받은 교사 프로그램의 만족도조사는 교사 또는 학생만 대상으로 할 수 있습니다.'
+
+const COMPANY_SCHOOL_SATISFACTION_TEACHER_ONLY_MESSAGE =
+  '1사1교 프로그램의 만족도조사는 교사만 대상으로 할 수 있습니다.'
+
+const SATISFACTION_WINDOW_DAYS_INVALID_MESSAGE =
+  '만족도조사 참여 기간은 3, 7, 14, 30일 중에서만 선택할 수 있습니다.'
+
+const FORM_BINDING_NOT_DELETABLE_MESSAGE =
+  '진행 중이거나 종료된 만족도조사는 삭제할 수 없습니다.'
 
 const PROGRAM_EDUCATION_SLOT_KEY_MISMATCH_MESSAGE =
   '교육 일정의 논리 슬롯 식별자(educationSlotKey)는 변경할 수 없습니다. 일정 시간만 수정하거나 새 일정을 추가해 주세요.'
 
 const PROGRAM_SCHEDULE_NOT_ACTIVE_MESSAGE =
   '비활성·취소된 교육 일정에는 새로 배정할 수 없습니다. 프로그램 일정 목록을 확인해 주세요.'
+
+const PROGRAM_SCHEDULE_LOCKED_MESSAGE =
+  '이미 시작되었거나 출결·정산이 있는 교육 일정은 변경할 수 없습니다. 최신 정보를 확인한 뒤 다시 시도해 주세요.'
 
 const PROGRAM_SCHEDULE_NOT_EDUCATION_SLOT_MESSAGE =
   '사전교육·폐회 등 교육 슬롯이 아닌 일정에는 배정할 수 없습니다. EDUCATION·SESSION 일정을 선택해 주세요.'
@@ -158,6 +192,17 @@ export function getProgramFormBindingErrorMessage(
   }
   if (code === 'FORM_BINDING_TEMPLATE_LOCKED') {
     return FORM_BINDING_TEMPLATE_LOCKED_MESSAGE
+  }
+  if (code === 'FORM_BINDING_NOT_DELETABLE') {
+    return FORM_BINDING_NOT_DELETABLE_MESSAGE
+  }
+  if (code === 'SATISFACTION_WINDOW_DAYS_INVALID') {
+    return SATISFACTION_WINDOW_DAYS_INVALID_MESSAGE
+  }
+  if (code === 'COMPANY_SCHOOL_SATISFACTION_TEACHER_ONLY') {
+    const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()
+    if (raw && raw !== code) return raw
+    return COMPANY_SCHOOL_SATISFACTION_TEACHER_ONLY_MESSAGE
   }
   if (code === 'TRAINED_TEACHER_SATISFACTION_TEACHER_ONLY') {
     const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()
@@ -207,6 +252,21 @@ export function getGeneralProgramApiErrorMessage(error: unknown, fallback: strin
   if (organizationAssignmentMessage) return organizationAssignmentMessage
 
   const code = extractApiErrorCode(error)
+  if (code === LECTURE_REPORT_NO_DOWNLOADABLE_FILES) {
+    const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()
+    if (raw && raw !== code) return raw
+    return LECTURE_REPORT_NO_DOWNLOADABLE_FILES_MESSAGE
+  }
+  if (code === 'PERMISSION_DENIED' || code === 'RESOURCE_SCOPE_DENIED') {
+    const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()
+    if (raw && raw !== code) return raw
+    return '파일 다운로드 권한이 없습니다.'
+  }
+  if (code === 'INTERNAL_SERVER_ERROR') {
+    const raw = extractRawApiMessage(error)?.replace(/^INTERNAL_SERVER_ERROR:\s*/i, '').trim()
+    if (raw && raw !== code && !/^internal server error$/i.test(raw)) return raw
+    return '서버 오류가 발생했습니다. 잠시 후 다시 시도하거나 관리자에게 문의해 주세요.'
+  }
   if (code && PROGRAM_INLINE_IMAGE_ERROR_MESSAGES[code]) {
     return PROGRAM_INLINE_IMAGE_ERROR_MESSAGES[code]
   }
@@ -224,6 +284,11 @@ export function getGeneralProgramApiErrorMessage(error: unknown, fallback: strin
     if (raw && raw !== code) return raw
     return PROGRAM_EDUCATION_SLOT_KEY_MISMATCH_MESSAGE
   }
+  if (code === 'PROGRAM_SCHEDULE_LOCKED') {
+    const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()
+    if (raw && raw !== code) return raw
+    return PROGRAM_SCHEDULE_LOCKED_MESSAGE
+  }
   if (code === 'PROGRAM_SCHEDULE_NOT_ACTIVE') {
     const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()
     if (raw && raw !== code) return raw
@@ -233,6 +298,11 @@ export function getGeneralProgramApiErrorMessage(error: unknown, fallback: strin
     const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()
     if (raw && raw !== code) return raw
     return PROGRAM_SCHEDULE_NOT_EDUCATION_SLOT_MESSAGE
+  }
+  if (code === 'PROGRAM_SCHEDULE_LOCKED') {
+    const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()
+    if (raw && raw !== code) return raw
+    return '이미 시작했거나 출결·정산이 있는 일정은 변경하거나 요청에서 빠뜨릴 수 없습니다.'
   }
   if (code === 'PROGRAM_DATE_OUTSIDE_OPEN_PERIOD') {
     return '모집·운영 기간이 사업(오픈) 기간 밖입니다. 모집 창은 모집 행으로만 저장되고, 신청일·프로그램 운영일은 사업 기간 안에 있을 때만 함께 전송됩니다.'

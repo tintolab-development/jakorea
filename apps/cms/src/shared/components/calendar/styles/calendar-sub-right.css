@@ -9,9 +9,12 @@
   border-radius: var(--calendar-shell-radius, 12px);
   border: var(--calendar-shell-border, 1px solid #d4d4d4);
   box-shadow: var(--calendar-shell-shadow, none);
-  /* 상단: Empty 아이콘 클리핑 방지 + 리스트 스크롤 시 첫 줄 여유 */
-  padding: 20px var(--spacing-16) var(--spacing-16);
-  scroll-padding-top: 20px;
+  /*
+   * Figma Calendar(12954:534648) — p 20 · 1px inside stroke → CSS는 border만큼 뺀 19px.
+   * 400px 패널에서 행 너비 360px (List / Item 360×75).
+   */
+  padding: 19px;
+  scroll-padding-top: 19px;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -32,8 +35,11 @@
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
-  /* 피그마 List/Item — padding 12 16 12 12 · radius 8 */
-  padding: 12px 16px 12px 12px;
+  /*
+   * 피그마 List/Item — padding 12 16 12 12 · radius 8 (stroke inside).
+   * CSS border(1px)만큼 padding을 빼서 Figma 외곽 치수(예: 정산 360×75)와 일치시킨다.
+   */
+  padding: 11px 15px 11px 11px;
   border: 1px solid #f0f0f0;
   background: #fcfcfc;
   cursor: pointer;
@@ -47,8 +53,8 @@
 }
 
 .calendar-list-item:hover {
-  /* 2px 테두리만큼 padding 1px 보정 — 크기 고정 */
-  padding: 11px 15px 11px 11px;
+  /* 2px 테두리만큼 padding 1px 추가 보정 — 크기 고정 */
+  padding: 10px 14px 10px 10px;
   border: 2px solid #00a0af !important;
   background: var(--default-WT, #fff) !important;
   box-shadow:
@@ -57,7 +63,7 @@
 }
 
 .calendar-list-item--selected {
-  padding: 11px 15px 11px 11px;
+  padding: 10px 14px 10px 10px;
   border: 2px solid #00a0af !important;
   background: var(--default-WT, #fff) !important;
   box-shadow:

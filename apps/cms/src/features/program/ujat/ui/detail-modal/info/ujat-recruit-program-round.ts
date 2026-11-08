@@ -44,18 +44,9 @@ export function getUjatVolunteerRecruitPeriod(
   half: UjatVolunteerRecruitHalf
 ): { start?: DateValue; end?: DateValue } {
   const row = pickUjatVolunteerRecruitmentRow(program, half)
-  if (row) {
-    return {
-      start: row.startAt?.trim() ? row.startAt : undefined,
-      end: row.endAt?.trim() ? row.endAt : undefined,
-    }
-  }
-  const volunteerRows = (program.programRecruitments ?? []).filter(
-    item => (item.recruitmentType ?? '').toUpperCase() === 'VOLUNTEER'
-  )
-  if (volunteerRows.length > 0) return {}
+  if (!row) return {}
   return {
-    start: program.volunteerApplicationStartDate,
-    end: program.volunteerApplicationEndDate,
+    start: row.startAt?.trim() ? row.startAt : undefined,
+    end: row.endAt?.trim() ? row.endAt : undefined,
   }
 }

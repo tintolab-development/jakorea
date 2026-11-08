@@ -23,8 +23,6 @@ export const LINE_STATUS_OPTIONS: readonly PaymentOrderAdminLineProcessingStatus
 
 export type AppliedLineStatus = 'all' | PaymentOrderAdminLineProcessingStatus
 
-export const defaultDateRange: [Dayjs, Dayjs] = [dayjs('2025-08-01'), dayjs('2026-06-30')]
-
 /** 목록(지급조서 확인)에 조회 적용된 기간 → 상세 모달 기간 필터 초기값 (양쪽 모두 있을 때만) */
 export function resolveDetailInitialDateRange(
   listPageRange: [Dayjs | null, Dayjs | null] | null | undefined
@@ -86,6 +84,6 @@ export interface PaymentOrderCalculationStatementCommitPayload {
   lineId: string
   status: PaymentOrderAdminLineProcessingStatus
   rejectionReason?: string
-  /** 확인 처리 시 강의비 지급 예정일 (ISO YYYY-MM-DD) */
+  /** 확인 처리 시 강사비 지급 예정일 (ISO YYYY-MM-DD) */
   lectureFeePaymentScheduledDate?: string
 }

@@ -25,7 +25,10 @@ import {
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { isValidKoreanPhoneNumber } from '@/shared/utils/phone-validation'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
-import { REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE } from '@/shared/constants/messages'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+} from '@/shared/constants/messages'
 import { resolveIndividualEnrolledSchoolSubmitBlock } from '@/features/user/api/individual-enrolled-school-selection'
 import {
   REQUIRED_CONSENT_DISAGREE_ALERT_TITLE,
@@ -112,10 +115,13 @@ const CONSENT_RADIO_OPTIONS = [
   { label: '미동의', value: 'disagree' },
 ]
 
-const TERMS_CONSENT_DESCRIPTION =
-  '미동의 시 서비스 가입 및 프로그램 참여에 제한이 있을 수 있습니다. (마케팅 제공 동의 항목은 해당 없음)'
+const TERMS_CONSENT_DESCRIPTION = '당사자의 서면 동의를 확인한 후 동의 항목을 처리해 주세요.'
 
-const TERMS_CONSENT_LABEL_WIDTH = 220 as const
+/** 시안: 기본 정보·약관 및 동의 라벨 셀 180px */
+const FIELD_LABEL_WIDTH = 180 as const
+/** 시안: 테이블 인풋 기본 200px · 주소 240px */
+const FIELD_INPUT_WIDTH = 200 as const
+const ADDRESS_INPUT_WIDTH = 240 as const
 
 function ConsentDocumentFieldEdit({
   value,
@@ -129,10 +135,8 @@ function ConsentDocumentFieldEdit({
       <span className="add-user-individual__consent-status">
         {value === 'agree' ? '동의' : '미동의'}
       </span>
-      <span className="add-user-individual__consent-sep" aria-hidden>
-        |
-      </span>
-      <CmsButton variant="secondary" size="medium" type="button" onClick={onWrite}>
+      <DetailInfoForm.InputsSeparator />
+      <CmsButton variant="secondary" size="small" type="button" onClick={onWrite}>
         동의서 작성
       </CmsButton>
     </span>
@@ -284,6 +288,10 @@ export function AddUserIndividual({
   }
 
   const handleConsentComplete = (fieldKey: MemberConsentFieldKey) => {
+    if (fieldKey === 'consentReceiptPreConsent') {
+      setActiveConsentField(null)
+      return
+    }
     form.setFieldValue(fieldKey, 'agree')
     setActiveConsentField(null)
   }
@@ -382,7 +390,7 @@ export function AddUserIndividual({
   const handleSubmitAttempt = (values: AddUserIndividualFormValues) => {
     if (hasUnsetConsentSelections(values, MEMBER_REGISTER_ALL_CONSENT_KEYS)) {
       showAlert({
-        title: '안내',
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
         content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
       })
       return
@@ -402,7 +410,7 @@ export function AddUserIndividual({
     const { missingRequired, formatMessages } = collectMemberRegisterValidation(values)
     if (missingRequired) {
       showAlert({
-        title: '안내',
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
         content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
       })
       return
@@ -490,18 +498,18 @@ export function AddUserIndividual({
               <DetailInfoForm.Field
                 label="성명"
                 required
-                labelWidth={200}
+                labelWidth={FIELD_LABEL_WIDTH}
                 view="-"
                 edit={
                   <Form.Item name="name" style={FORM_ITEM_STYLE}>
-                    <CmsInput placeholder="성명" inputSize="small" width="100%" />
+                    <CmsInput placeholder="성명" inputSize="small" width={FIELD_INPUT_WIDTH} />
                   </Form.Item>
                 }
               />
               <DetailInfoForm.Field
                 label="성별 및 생년월일"
                 required
-                labelWidth={200}
+                labelWidth={FIELD_LABEL_WIDTH}
                 view="-"
                 edit={
                   <span className="detail-info-form-inputs-wrapper-no-gap">
@@ -511,7 +519,7 @@ export function AddUserIndividual({
                     <DetailInfoForm.InputsSeparator />
                     <Form.Item
                       name="birthDate"
-                      style={{ ...FORM_ITEM_STYLE, flex: '1 1 0', minWidth: 0 }}
+                      style={{ ...FORM_ITEM_STYLE, width: FIELD_INPUT_WIDTH }}
                       trigger="onValueChange"
                       getValueFromEvent={(value: string) => value}
                     >
@@ -529,9 +537,34 @@ export function AddUserIndividual({
 
             <DetailInfoForm.Row type="double">
               <DetailInfoForm.Field
+                label="연락처"
+                required
+                labelWidth={FIELD_LABEL_WIDTH}
+                view="-"
+                edit={
+                  <Form.Item name="contact" style={FORM_ITEM_STYLE}>
+                    <CmsPhoneInput placeholder="연락처" inputSize="small" width={FIELD_INPUT_WIDTH} />
+                  </Form.Item>
+                }
+              />
+              <DetailInfoForm.Field
+                label="이메일"
+                required
+                labelWidth={FIELD_LABEL_WIDTH}
+                view="-"
+                edit={
+                  <Form.Item name="email" style={FORM_ITEM_STYLE}>
+                    <CmsInput placeholder="이메일" inputSize="small" width={FIELD_INPUT_WIDTH} />
+                  </Form.Item>
+                }
+              />
+            </DetailInfoForm.Row>
+
+            <DetailInfoForm.Row type="double">
+              <DetailInfoForm.Field
                 label="현재 학교 재학 여부"
                 required
-                labelWidth={200}
+                labelWidth={FIELD_LABEL_WIDTH}
                 view="-"
                 edit={
                   <Form.Item name="schoolEnrollmentStatus" noStyle>
@@ -542,12 +575,12 @@ export function AddUserIndividual({
               <DetailInfoForm.Field
                 label="소속"
                 required={isEnrolled}
-                labelWidth={200}
+                labelWidth={FIELD_LABEL_WIDTH}
                 view="-"
                 edit={
                   isEnrolled ? (
                     <div className="detail-info-form-inputs-wrapper">
-                      <div style={{ flex: '1 1 0', minWidth: 0 }}>
+                      <div style={{ width: FIELD_INPUT_WIDTH, minWidth: 0 }}>
                         <Form.Item name="schoolName" noStyle>
                           <SchoolSearch
                             value={schoolName}
@@ -595,7 +628,7 @@ export function AddUserIndividual({
                     <div className="add-user-individual__affiliation-row">
                       <Form.Item
                         name="affiliationOrganization"
-                        style={{ ...FORM_ITEM_STYLE, flex: 1, minWidth: 0 }}
+                        style={{ ...FORM_ITEM_STYLE, width: FIELD_INPUT_WIDTH }}
                       >
                         <CmsInput
                           placeholder="소속 기관명"
@@ -613,42 +646,19 @@ export function AddUserIndividual({
               />
             </DetailInfoForm.Row>
 
-            <DetailInfoForm.Row type="double">
-              <DetailInfoForm.Field
-                label="연락처"
-                required
-                labelWidth={200}
-                view="-"
-                edit={
-                  <Form.Item name="contact" style={FORM_ITEM_STYLE}>
-                    <CmsPhoneInput placeholder="연락처" inputSize="small" width="100%" />
-                  </Form.Item>
-                }
-              />
-              <DetailInfoForm.Field
-                label="이메일"
-                required
-                labelWidth={200}
-                view="-"
-                edit={
-                  <Form.Item name="email" style={FORM_ITEM_STYLE}>
-                    <CmsInput placeholder="이메일" inputSize="small" width="100%" />
-                  </Form.Item>
-                }
-              />
-            </DetailInfoForm.Row>
-
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="자택 주소지"
                 required
                 fullRow
-                labelWidth={200}
+                labelWidth={FIELD_LABEL_WIDTH}
                 view="-"
                 edit={
                   <Space.Compact style={{ width: '100%' }}>
                     <Form.Item name="address" noStyle>
-                      <AddressSearch inputSize="small"
+                      <AddressSearch
+                        inputSize="small"
+                        width={ADDRESS_INPUT_WIDTH}
                         value={address}
                         onChange={nextAddress => form.setFieldValue('address', nextAddress)}
                         placeholder="건물명, 도로명 또는 지번"
@@ -656,7 +666,7 @@ export function AddUserIndividual({
                     </Form.Item>
                     <DetailInfoForm.InputsSeparator />
                     <Form.Item name="detailAddress" noStyle>
-                      <CmsInput placeholder="상세 주소" inputSize="small" width="100%" />
+                      <CmsInput placeholder="상세 주소" inputSize="small" width={ADDRESS_INPUT_WIDTH} />
                     </Form.Item>
                   </Space.Compact>
                 }
@@ -667,11 +677,11 @@ export function AddUserIndividual({
               <DetailInfoForm.Field
                 label="1365 ID"
                 fullRow
-                labelWidth={200}
+                labelWidth={FIELD_LABEL_WIDTH}
                 view="-"
                 edit={
                   <Form.Item name="volunteerId" noStyle>
-                    <CmsInput placeholder="1365 ID" inputSize="small" width={200} />
+                    <CmsInput placeholder="1365 ID" inputSize="small" width={FIELD_INPUT_WIDTH} />
                   </Form.Item>
                 }
               />
@@ -693,8 +703,9 @@ export function AddUserIndividual({
               >
                 <DetailInfoForm.Row type="double">
                   <DetailInfoForm.Field
-                    label="서비스 이용약관"
-                    labelWidth={TERMS_CONSENT_LABEL_WIDTH}
+                    label="서비스 이용약관 동의"
+                    required
+                    labelWidth={FIELD_LABEL_WIDTH}
                     view="-"
                     edit={
                       <Form.Item name="consentTermsOfService" noStyle>
@@ -704,7 +715,8 @@ export function AddUserIndividual({
                   />
                   <DetailInfoForm.Field
                     label="개인정보 수집·이용 동의"
-                    labelWidth={TERMS_CONSENT_LABEL_WIDTH}
+                    required
+                    labelWidth={FIELD_LABEL_WIDTH}
                     view="-"
                     edit={
                       <Form.Item name="consentPersonalInfo" noStyle>
@@ -715,8 +727,8 @@ export function AddUserIndividual({
                 </DetailInfoForm.Row>
                 <DetailInfoForm.Row type="double">
                   <DetailInfoForm.Field
-                    label="마케팅 제공 동의"
-                    labelWidth={TERMS_CONSENT_LABEL_WIDTH}
+                    label="마케팅 정보 수신 동의"
+                    labelWidth={FIELD_LABEL_WIDTH}
                     view="-"
                     edit={
                       <Form.Item name="consentMarketing" noStyle>
@@ -729,8 +741,8 @@ export function AddUserIndividual({
                     }
                   />
                   <DetailInfoForm.Field
-                    label="초상권 수집·이용 동의"
-                    labelWidth={TERMS_CONSENT_LABEL_WIDTH}
+                    label="초상권 수집·이용 동의서"
+                    labelWidth={FIELD_LABEL_WIDTH}
                     view="-"
                     edit={
                       <>
@@ -753,8 +765,8 @@ export function AddUserIndividual({
               >
                 <DetailInfoForm.Row type="double">
                   <DetailInfoForm.Field
-                    label="지급조서 사전 동의서"
-                    labelWidth={TERMS_CONSENT_LABEL_WIDTH}
+                    label="지급조서 사전동의서"
+                    labelWidth={FIELD_LABEL_WIDTH}
                     view="-"
                     edit={
                       <>
@@ -770,7 +782,7 @@ export function AddUserIndividual({
                   />
                   <DetailInfoForm.Field
                     label="교육진행자 서약서"
-                    labelWidth={TERMS_CONSENT_LABEL_WIDTH}
+                    labelWidth={FIELD_LABEL_WIDTH}
                     view="-"
                     edit={
                       <>
@@ -788,8 +800,22 @@ export function AddUserIndividual({
                 </DetailInfoForm.Row>
                 <DetailInfoForm.Row type="double">
                   <DetailInfoForm.Field
+                    label="성범죄경력 조회 동의서"
+                    labelWidth={FIELD_LABEL_WIDTH}
+                    view="-"
+                    edit={
+                      <>
+                        <Form.Item name="consentSexOffenseCheck" hidden preserve />
+                        <ConsentDocumentFieldEdit
+                          value={
+                            allValues?.consentSexOffenseCheck ??
+                            INITIAL_VALUES.consentSexOffenseCheck
+                          }
+                          onWrite={() => handleConsentWrite('consentSexOffenseCheck')}
+                        />
+                  <DetailInfoForm.Field
                     label="행정정보 공동이용 동의서"
-                    labelWidth={TERMS_CONSENT_LABEL_WIDTH}
+                    labelWidth={FIELD_LABEL_WIDTH}
                     view="-"
                     edit={
                       <>
@@ -804,20 +830,6 @@ export function AddUserIndividual({
                       </>
                     }
                   />
-                  <DetailInfoForm.Field
-                    label="성범죄경력 조회 동의서"
-                    labelWidth={TERMS_CONSENT_LABEL_WIDTH}
-                    view="-"
-                    edit={
-                      <>
-                        <Form.Item name="consentSexOffenseCheck" hidden preserve />
-                        <ConsentDocumentFieldEdit
-                          value={
-                            allValues?.consentSexOffenseCheck ??
-                            INITIAL_VALUES.consentSexOffenseCheck
-                          }
-                          onWrite={() => handleConsentWrite('consentSexOffenseCheck')}
-                        />
                       </>
                     }
                   />

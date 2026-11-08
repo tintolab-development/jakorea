@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict'
 import { buildSettlementWriteDraft } from './build-write-draft.ts'
-import { validateSettlementWriteDraft } from './validate-write-draft.ts'
+import {
+  resolveSettlementWriteValidationAlert,
+  validateSettlementWriteDraft,
+} from './validate-write-draft.ts'
 
 const base = {
   applicationId: '12',
@@ -84,5 +87,64 @@ const transportTrueMissingFile = buildSettlementWriteDraft({
   departAmount: '5,000',
 })
 assert.equal(validateSettlementWriteDraft(transportTrueMissingFile), 'receipt_required')
+
+const instructorPaymentMissingReceipt = buildSettlementWriteDraft({
+  ...base,
+  isInstructor: true,
+  documentKind: 'payment_statement',
+  transportItemType: 'TRANSPORTATION',
+  departTransit: 'bus',
+  departAmount: '5,000',
+})
+assert.equal(validateSettlementWriteDraft(instructorPaymentMissingReceipt), null)
+assert.equal(
+  resolveSettlementWriteValidationAlert('receipt_required').title,
+  '영수증 제출 안내',
+)
+assert.equal(
+  resolveSettlementWriteValidationAlert('required_incomplete').title,
+  '필수 항목 미입력 안내',
+)
+
+const instructorPaymentMissingTransit = buildSettlementWriteDraft({
+  ...base,
+  isInstructor: true,
+  documentKind: 'payment_statement',
+  transportItemType: 'TRANSPORTATION',
+  departTransit: '',
+  departAmount: '5,000',
+  departFiles: ['receipt.jpg'],
+})
+assert.equal(validateSettlementWriteDraft(instructorPaymentMissingTransit), null)
+
+const instructorMealMissingReceipt = buildSettlementWriteDraft({
+  ...base,
+  isInstructor: true,
+  documentKind: 'payment_statement',
+  mealAmount: '30,000',
+})
+assert.equal(validateSettlementWriteDraft(instructorMealMissingReceipt), 'receipt_required')
+
+const instructorMealNamesOnly = buildSettlementWriteDraft({
+  ...base,
+  isInstructor: true,
+  documentKind: 'payment_statement',
+  mealAmount: '30,000',
+  mealFiles: ['주진2.png'],
+})
+assert.equal(validateSettlementWriteDraft(instructorMealNamesOnly), 'upload_incomplete')
+
+const instructorMealUploaded = buildSettlementWriteDraft({
+  ...base,
+  isInstructor: true,
+  documentKind: 'payment_statement',
+  mealAmount: '30,000',
+  mealFiles: ['주진2.png'],
+  mealAttachments: [{ fileObjectId: 101, fileName: '주진2.png' }],
+  activityAmount: '23,000',
+  activityFiles: ['act.png'],
+  activityAttachments: [{ fileObjectId: 102, fileName: 'act.png' }],
+})
+assert.equal(validateSettlementWriteDraft(instructorMealUploaded), null)
 
 console.log('validate-write-draft.selfcheck: ok')

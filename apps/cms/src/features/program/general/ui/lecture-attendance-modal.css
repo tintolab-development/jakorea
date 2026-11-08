@@ -118,27 +118,9 @@
   opacity: 0.6;
 }
 
-.lecture-attendance-modal__status-text {
+/* 출결 Text 색·타이포는 ProgramAttendanceStatusText(StatusBadge text) 정본. 미진행은 커서만 */
+.lecture-attendance-modal__not-held {
   display: inline-block;
-  text-align: center;
-  font-family: Pretendard, sans-serif;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-}
-
-.lecture-attendance-modal__status-text--attended {
-  color: var(--Netural-black, #3d3d3d);
-}
-
-.lecture-attendance-modal__status-text--late,
-.lecture-attendance-modal__status-text--absent {
-  color: var(--Status-red-main, #c32f4a);
-}
-
-.lecture-attendance-modal__status-text--not_held {
-  color: var(--Content-disabled, rgba(61, 61, 61, 0.5));
   cursor: not-allowed;
 }
 

@@ -13,13 +13,19 @@ import {
   makeBreadcrumbItem,
 } from '@/shared/lib/detail-fullpage-query-stack'
 import { tryNavigateMemberDetailReturn } from '@/features/user/detail/lib/member-detail-program-navigation-return'
+import { useNavigateToAncestor } from '@/shared/hooks/use-history-ancestor-navigation'
 import { useProgramDetail } from '@/pages/programs/use-program-detail'
+import {
+  isLookupableSponsorId,
+  resolveAssignedSponsorName,
+} from '@/features/program/shared/lib/merge-program-sponsor-assignments'
 import { useSponsorNameById } from '@/features/sponsor/hooks/use-sponsor-name-by-id'
 import { useProgramDetailEditForm } from '@/features/program/general/hooks/use-program-detail-edit-form'
 import { useProgramDetailInfoSave } from '@/features/program/general/hooks/use-program-detail-info-save'
 import { handleError } from '@/shared/utils/error-handler'
 import {
   programDetailUjatCommonInfoEditSchema,
+  programDetailUjatRecruitEditSchema,
 } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
   applyUjatRecruitFormValuesToProgram,
@@ -32,6 +38,7 @@ import { UjatInstitutionApplicationDetailPage } from './application-institution/
 import { UjatInstitutionScheduleAssignPage } from './application-institution/schedule-assign/page'
 import { UjatInstitutionScheduleConfirmList } from './application-institution/schedule-confirm/list'
 import { UjatEducationProgressSummarySection } from './progress/progress-summary/section'
+import { UjatEducationProgressSummaryExcelButton } from './progress/progress-summary/excel-button'
 import { UjatEducationProgressAssignmentsSection } from './progress/assignments/section'
 import { UjatEducationProgressAttendanceSection } from './progress/attendance/section'
 import { UjatEducationProgressInstitutionsSection } from './progress/institutions/section'
@@ -103,6 +110,7 @@ import {
   updateUjatTypedDetailHalfRemote,
   type UjatTypedDetail,
 } from '@/features/program/ujat/api/typed-detail-client'
+import { normalizeUjatTypedDetailForWrite } from '@/features/program/ujat/lib/ujat-typed-detail'
 import {
   omitRecruitmentTabScheduleFields,
   persistRecruitmentTabSave,
@@ -136,7 +144,6 @@ import {
   UJAT_INSTITUTION_APP_CHILD_ROWS,
   UJAT_INSTITUTION_APPLICATIONS_LNB_LABEL,
 } from './application-institution/tabs'
-import { programDetailInstitutionsEditSchema } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
   formatUjatRegistrationRequiredFieldReasons,
   listIncompleteUjatProgramRecruitmentInterviewScheduleRequiredFields,
@@ -564,10 +571,13 @@ export function UjatProgramDetailFullPageModal({
     sponsorName: legacySponsorName,
     updateProgram,
   } = useProgramDetail(onUpdateProgram ? undefined : (open ? programId : undefined))
-  const externalSponsorName = useSponsorNameById(
+  // 배정 응답에 이름이 있으면 그대로 쓴다 — 없을 때만 후원사 전체 목록에서 찾는다.
+  const assignedSponsorName = resolveAssignedSponsorName(program)
+  const lookedUpSponsorName = useSponsorNameById(
     program?.sponsorId,
-    Boolean(onUpdateProgram && program?.sponsorId)
+    Boolean(onUpdateProgram) && !assignedSponsorName && isLookupableSponsorId(program?.sponsorId)
   )
+  const externalSponsorName = assignedSponsorName ?? lookedUpSponsorName
   const loading = onUpdateProgram ? externalLoading : legacyLoading
   const sponsorName = onUpdateProgram ? externalSponsorName : legacySponsorName
   const canWrite = useUjatCanWrite()
@@ -583,33 +593,35 @@ export function UjatProgramDetailFullPageModal({
     defaultValues: EMPTY_UJAT_TYPED_DETAIL,
   })
   const educationScheduleBaselineRef = useRef<UjatTypedDetail>(EMPTY_UJAT_TYPED_DETAIL)
-  const educationScheduleIsDirty = educationScheduleForm.formState.isDirty
   const resetEducationScheduleForm = educationScheduleForm.reset
 
   useEffect(() => {
     if (!displayProgram) return
+    if (searchParams.get(EDIT_PARAM) === 'info') return
     const next = displayProgram.ujatTypedDetail ?? EMPTY_UJAT_TYPED_DETAIL
     educationScheduleBaselineRef.current = next
     resetEducationScheduleForm(next)
-  }, [displayProgram, resetEducationScheduleForm])
+  }, [displayProgram, resetEducationScheduleForm, searchParams])
 
   const persistUjatEducationSchedule = useCallback(
     async (id: string) => {
-      if (!educationScheduleIsDirty) return
-      const snapshot = educationScheduleForm.getValues()
+      const snapshot = normalizeUjatTypedDetailForWrite(educationScheduleForm.getValues())
+      const baseline = normalizeUjatTypedDetailForWrite(educationScheduleBaselineRef.current)
+      const changedHalves = (['FIRST_HALF', 'SECOND_HALF'] as const).filter(semesterType => {
+        const halfPlan = snapshot.halfPlans?.find(item => item.semesterType === semesterType)
+        const baselineHalfPlan = baseline.halfPlans?.find(item => item.semesterType === semesterType)
+        return JSON.stringify(halfPlan ?? null) !== JSON.stringify(baselineHalfPlan ?? null)
+      })
+      if (changedHalves.length === 0) {
+        return snapshot
+      }
       let current = snapshot
       let expectedRevision = snapshot.revision ?? 0
-      const changedSemesters: Array<'FIRST_HALF' | 'SECOND_HALF'> = []
-      for (const semesterType of ['FIRST_HALF', 'SECOND_HALF'] as const) {
+      for (const semesterType of changedHalves) {
         const halfPlan = current.halfPlans?.find(item => item.semesterType === semesterType) ?? {
           semesterType,
           stages: [],
         }
-        const baselineHalfPlan = educationScheduleBaselineRef.current.halfPlans?.find(
-          item => item.semesterType === semesterType
-        ) ?? { semesterType, stages: [] }
-        if (JSON.stringify(halfPlan) === JSON.stringify(baselineHalfPlan)) continue
-        changedSemesters.push(semesterType)
         current = await updateUjatTypedDetailHalfRemote(
           id,
           semesterType,
@@ -618,11 +630,12 @@ export function UjatProgramDetailFullPageModal({
         )
         expectedRevision = current.revision ?? expectedRevision
       }
-      current = await syncUjatTypedDetailPhysicalSchedulesRemote(id, current, changedSemesters)
+      current = await syncUjatTypedDetailPhysicalSchedulesRemote(id, current, changedHalves)
       educationScheduleBaselineRef.current = current
       educationScheduleForm.reset(current)
+      return current
     },
-    [educationScheduleForm, educationScheduleIsDirty]
+    [educationScheduleForm]
   )
 
   const volunteerRecruitKindRef = useRef<UjatRecruitDisplayKind>('volunteer_h1')
@@ -780,6 +793,29 @@ export function UjatProgramDetailFullPageModal({
     institutionListVersion,
   ])
 
+  const { toTarget: navigateToAncestorTarget } = useNavigateToAncestor()
+
+  /**
+   * 중첩 상세 닫기·모달 닫기 — 지나온 history 엔트리면 뒤로, 아니면 replace.
+   * push 하지 않아 브라우저 뒤로가기와 브레드크럼 단계가 어긋나지 않는다.
+   */
+  const navigateDetailToAncestor = useCallback(
+    (next: URLSearchParams) => {
+      const search = next.toString()
+      navigateToAncestorTarget({ pathname: location.pathname, search: search ? `?${search}` : '' })
+    },
+    [location.pathname, navigateToAncestorTarget]
+  )
+
+  /** LNB·하위 메뉴 = 브레드크럼 단계 → push. 값이 같으면 엔트리를 만들지 않는다. */
+  const pushDetailLevel = useCallback(
+    (next: URLSearchParams) => {
+      if (next.toString() === new URLSearchParams(window.location.search).toString()) return
+      setSearchParams(next, { replace: false })
+    },
+    [setSearchParams]
+  )
+
   const setInstitutionApplicationId = useCallback(
     (id: string | null) => {
       if (!programId) return
@@ -796,9 +832,10 @@ export function UjatProgramDetailFullPageModal({
         next.delete(UJAT_INST_APP_ID_PARAM)
       }
       next.delete(EDIT_PARAM)
-      setSearchParams(next, { replace: id == null })
+      if (id == null) navigateDetailToAncestor(next)
+      else setSearchParams(next, { replace: false })
     },
-    [programId, searchParams, setSearchParams, activeTab]
+    [navigateDetailToAncestor, programId, searchParams, setSearchParams, activeTab]
   )
 
   const setLnbTab = useCallback(
@@ -827,9 +864,9 @@ export function UjatProgramDetailFullPageModal({
       if (!shouldKeepUjatInstitutionApplicationViewParams(lnb, tab)) {
         clearUjatInstitutionApplicationViewParams(next)
       }
-      setSearchParams(next, { replace: true })
+      pushDetailLevel(next)
     },
-    [programId, searchParams, setSearchParams, activeTab]
+    [programId, pushDetailLevel, searchParams, activeTab]
   )
 
   const setEduInstitutionId = useCallback(
@@ -851,9 +888,10 @@ export function UjatProgramDetailFullPageModal({
       next.delete(UJAT_APPLICANT_ID_PARAM)
       next.delete(UJAT_INST_APP_ID_PARAM)
       next.delete(EDIT_PARAM)
-      setSearchParams(next, { replace: id == null })
+      if (id == null) navigateDetailToAncestor(next)
+      else setSearchParams(next, { replace: false })
     },
-    [programId, searchParams, setSearchParams]
+    [navigateDetailToAncestor, programId, searchParams, setSearchParams]
   )
 
   const setEduVolunteerId = useCallback(
@@ -876,9 +914,11 @@ export function UjatProgramDetailFullPageModal({
       next.delete(UJAT_APPLICANT_ID_PARAM)
       next.delete(UJAT_INST_APP_ID_PARAM)
       next.delete(EDIT_PARAM)
-      setSearchParams(next, { replace: true })
+      // 봉사자 상세 = 브레드크럼 단계 — 열 때 push(기존 replace라 뒤로가기 시 모달이 닫힘), 닫을 때 뒤로
+      if (id == null) navigateDetailToAncestor(next)
+      else setSearchParams(next, { replace: false })
     },
-    [programId, searchParams, setSearchParams]
+    [navigateDetailToAncestor, programId, searchParams, setSearchParams]
   )
 
   const setEduVolunteerDetailTab = useCallback(
@@ -955,12 +995,18 @@ export function UjatProgramDetailFullPageModal({
                     buildUjatRegionCapacityUpserts(draft)
                   )
                 }
-                if (onUpdateProgram) {
-                  await onUpdateProgram(draft.id, draft, commonPatch)
-                } else {
-                  await updateProgram(draft.id, draft)
+                const typedAfterSchedule = await persistUjatEducationSchedule(draft.id)
+                const draftWithTyped = {
+                  ...draft,
+                  ujatTypedDetail:
+                    typedAfterSchedule ??
+                    normalizeUjatTypedDetailForWrite(educationScheduleForm.getValues()),
                 }
-                await persistUjatEducationSchedule(draft.id)
+                if (onUpdateProgram) {
+                  await onUpdateProgram(draft.id, draftWithTyped, commonPatch)
+                } else {
+                  await updateProgram(draft.id, draftWithTyped)
+                }
                 const next = new URLSearchParams(searchParams)
                 next.delete(EDIT_PARAM)
                 if (programId) next.set('programId', programId)
@@ -1085,7 +1131,7 @@ export function UjatProgramDetailFullPageModal({
   const institutionsForm = useProgramDetailEditForm({
     program: displayProgram,
     isEditMode: isEditModeRecruitParticipant,
-    schema: programDetailInstitutionsEditSchema,
+    schema: programDetailUjatRecruitEditSchema,
     mapToValues: mapInstitutionRecruitmentEditValues,
     holdValuesWhileEditing: true,
   })
@@ -1096,6 +1142,7 @@ export function UjatProgramDetailFullPageModal({
   } = useProgramDetailInfoSave({
     form: institutionsForm,
     program: displayProgram ?? ({} as Program),
+    validateSchema: programDetailUjatRecruitEditSchema,
     mapToValues: mapInstitutionRecruitmentEditValues,
     recruitmentAudience: 'participant',
     recruitmentNotesField: 'oneLineIntroduction',
@@ -1164,12 +1211,14 @@ export function UjatProgramDetailFullPageModal({
   const volunteersH1Form = useProgramDetailEditForm({
     program: displayProgram,
     isEditMode: isEditModeRecruitVolunteerH1,
+    schema: programDetailUjatRecruitEditSchema,
     mapToValues: mapVolunteerH1RecruitmentEditValues,
     holdValuesWhileEditing: true,
   })
   const volunteersH2Form = useProgramDetailEditForm({
     program: displayProgram,
     isEditMode: isEditModeRecruitVolunteerH2,
+    schema: programDetailUjatRecruitEditSchema,
     mapToValues: mapVolunteerH2RecruitmentEditValues,
     holdValuesWhileEditing: true,
   })
@@ -1182,6 +1231,7 @@ export function UjatProgramDetailFullPageModal({
   } = useProgramDetailInfoSave({
     form: volunteersForm,
     program: displayProgram ?? ({} as Program),
+    validateSchema: programDetailUjatRecruitEditSchema,
     mapToValues: mapVolunteerRecruitmentEditValues,
     recruitmentAudience: 'volunteer',
     recruitmentNotesField: 'oneLineIntroduction',
@@ -1320,9 +1370,9 @@ export function UjatProgramDetailFullPageModal({
       next.set(TAB_PARAM, tab)
       next.delete(EDIT_PARAM)
       next.delete(UJAT_INST_APP_ID_PARAM)
-      setSearchParams(next, { replace: true })
+      pushDetailLevel(next)
     },
-    [programId, searchParams, setSearchParams]
+    [programId, pushDetailLevel, searchParams]
   )
 
   const [recruitmentPreviewTab, setRecruitmentPreviewTab] = useState<UjatRecruitTabKey | null>(null)
@@ -1470,8 +1520,10 @@ export function UjatProgramDetailFullPageModal({
   }, [activeLnb, activeTab])
 
   const handleClose = useCallback(() => {
-    onClose()
-    if (tryNavigateMemberDetailReturn(navigate)) return
+    if (tryNavigateMemberDetailReturn(navigate)) {
+      onClose()
+      return
+    }
     const next = clearSponsorDetailQueryStack(new URLSearchParams(searchParams))
     next.delete('programId')
     next.delete(LNB_PARAM)
@@ -1484,13 +1536,34 @@ export function UjatProgramDetailFullPageModal({
     next.delete(UJAT_VOL_ADD_MEMBER_ID_PARAM)
     next.delete(UJAT_EDU_VOL_ID_PARAM)
     next.delete(UJAT_EDU_VOL_TAB_PARAM)
-    navigate(
-      { pathname: location.pathname, search: next.toString() ? `?${next}` : '' },
-      {
-        replace: true,
-      }
-    )
-  }, [location.pathname, navigate, onClose, searchParams])
+    // 목록 엔트리가 history에 있으면 그 엔트리로 되돌아가 상세 엔트리를 앞쪽에 남기지 않는다.
+    navigateDetailToAncestor(next)
+    onClose()
+  }, [navigate, navigateDetailToAncestor, onClose, searchParams])
+
+  /** 헤더 X / ESC — 중첩 상세면 한 단계 위(목록)로, 아니면 모달 닫기 */
+  const handleHeaderClose = useCallback(() => {
+    if (volunteerApplicantCloseHandlerRef.current?.()) return
+    if (searchParams.get(UJAT_EDU_VOL_ID_PARAM)) {
+      setEduVolunteerId(null)
+      return
+    }
+    if (searchParams.get(UJAT_EDU_INST_ID_PARAM)) {
+      setEduInstitutionId(null)
+      return
+    }
+    if (searchParams.get(UJAT_INST_APP_ID_PARAM)) {
+      setInstitutionApplicationId(null)
+      return
+    }
+    handleClose()
+  }, [
+    handleClose,
+    searchParams,
+    setEduInstitutionId,
+    setEduVolunteerId,
+    setInstitutionApplicationId,
+  ])
   if (!open) return null
 
   const programTitle = displayProgram
@@ -1593,8 +1666,16 @@ export function UjatProgramDetailFullPageModal({
     <DetailFullPageModal
       open={open}
       onClose={handleClose}
+      onHeaderClose={handleHeaderClose}
       title={title}
       headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
+      contentExtra={
+        activeLnb === 'education_progress' && activeTab === 'edu_summary' ? (
+          <UjatEducationProgressSummaryExcelButton
+            programId={displayProgram?.id ?? programId}
+          />
+        ) : undefined
+      }
       closeAriaLabel="닫기"
       className="program-detail-fullpage-modal ujat-program-detail-fullpage-modal"
       sidebar={
@@ -1843,7 +1924,9 @@ export function UjatProgramDetailFullPageModal({
           )}
           {activeLnb === 'education_progress' && activeTab === 'edu_summary' && (
             <div className="program-detail-fullpage-modal__info-tab">
-              <UjatEducationProgressSummarySection programId={displayProgram?.id ?? programId} />
+              <UjatEducationProgressSummarySection
+                programId={displayProgram?.id ?? programId}
+              />
             </div>
           )}
 

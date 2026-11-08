@@ -1,7 +1,4 @@
-import {
-  ProgramDetailTdSegmentWrap,
-  withProgramDetailTdDivider,
-} from '@/features/program/shared/ui/program-detail-td-divider'
+import { ScheduleLinesCell } from '@/features/program/shared/ui/schedule-lines-cell'
 import './institution-application-tab.css'
 
 function normalizeClockRange(value: string): string {
@@ -44,32 +41,17 @@ export function parsePreferredLectureScheduleLine(line: string): {
   return { preference, datetime, session }
 }
 
+/** 희망 강의 일정 — 공통 일정 셀 (최대 3줄·디바이더·블록 중앙) */
 export function GeminiInstitutionPreferredLectureScheduleCell({ value }: { value: string }) {
   const lines = value
     .split('\n')
     .map(parsePreferredLectureScheduleLine)
     .filter((line): line is NonNullable<typeof line> => line != null)
-
-  if (lines.length === 0) return <>-</>
-
-  return (
-    <div className="gemini-institution-application-tab__schedule">
-      {lines.map((line, index) => {
-        const datetimeLabel = line.preference
-          ? `${line.preference} : ${line.datetime}`
-          : line.datetime
-        const segments = line.session ? [datetimeLabel, line.session] : [datetimeLabel]
-        return (
-          <div
-            key={`${line.preference}-${index}`}
-            className="gemini-institution-application-tab__schedule-line"
-          >
-            <ProgramDetailTdSegmentWrap>
-              {withProgramDetailTdDivider(segments)}
-            </ProgramDetailTdSegmentWrap>
-          </div>
-        )
-      })}
-    </div>
-  )
+    .map(line => {
+      const datetimeLabel = line.preference
+        ? `${line.preference} : ${line.datetime}`
+        : line.datetime
+      return line.session ? `${datetimeLabel} | ${line.session}` : datetimeLabel
+    })
+  return <ScheduleLinesCell lines={lines} />
 }

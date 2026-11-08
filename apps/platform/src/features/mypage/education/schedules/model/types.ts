@@ -1,5 +1,9 @@
-/** 일정 진행 태그 — 교육일 지나면 예정→완료 */
-export type EducationScheduleProgressStatus = 'completed' | 'scheduled'
+/** 일정 진행 태그 — API `scheduleStatus` 우선. TT 기관은 COMPLETED|IN_PROGRESS|SCHEDULED|UNSCHEDULED 만 */
+export type EducationScheduleProgressStatus =
+  | 'completed'
+  | 'in_progress'
+  | 'scheduled'
+  | 'unscheduled'
 
 /** 출석 현황 — 미진행(예정) 건은 null */
 export type EducationScheduleAttendanceStatus =
@@ -121,6 +125,15 @@ export type EducationScheduleItem = {
   assignmentStatus?: string | null
   /** 일정 운영 상태. CANCELLED 등은 본인 현재 활동으로 표시하지 않는다. */
   scheduleStatus?: string | null
+  /** 배정된 운영 일정의 신청 지망 순위 라벨. 없으면 omit. 0·index로 채우지 않는다. */
+  preferenceRank?: number
+  /**
+   * TRAINED_TEACHER 기관 운영일 1행=1일.
+   * curriculumSessions·educationStructure 차시 접기를 쓰지 않는다.
+   */
+  operationalDayView?: boolean
+  /** CMS 교육 진행 duration. 슬롯 수 `N차시`. sessionNo(회차)로 만들지 않는다. */
+  durationLabel?: string
   classLabel?: string
   locationName?: string
   organizationName?: string

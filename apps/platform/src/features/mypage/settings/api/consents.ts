@@ -18,6 +18,12 @@ export type PortalConsentSummary = {
   required?: boolean
   agreed?: boolean
   signed?: boolean
+  /**
+   * RECEIPT_PRE_CONSENT / PAYMENT_STATEMENT_CONSENT / FACILITATOR_PLEDGE /
+   * ADMINISTRATIVE_INFO_CONSENT / CRIMINAL_HISTORY_CHECK_CONSENT 만 boolean.
+   * 그 외 타입은 omit/null — true로 정규화하지 않는다.
+   */
+  listed?: boolean | null
   status?: string
   agreedAt?: string
   expiresAt?: string
@@ -33,6 +39,11 @@ export type PortalConsentSummary = {
   consentStatus?: string
   /** 초상권 — 프로그램 참여 게이트는 이 값만 사용 */
   programEligible?: boolean
+  /**
+   * 초상권 — 1·2·3번 모두 agree면 true(제출 시점 스냅샷). 비초상권·판정 불가 기록은 null.
+   * 라벨(동의/부분 동의) 전용. 참여 여부 판단·요청 바디에 쓰지 않는다.
+   */
+  allItemsAgreed?: boolean | null
 }
 
 /** PUT /api/portal/me/marketing-consent — PortalMarketingConsentUpdateRequest */
@@ -123,6 +134,14 @@ export async function putPortalMarketingConsent(
 ): Promise<PortalMarketingConsentResponse> {
   const res = await axiosClient.put(PORTAL_MARKETING_CONSENT_PATH, body)
   return unwrapEnvelope<PortalMarketingConsentResponse>(res.data) ?? {}
+}
+
+/**
+ * POST /api/portal/me/consents/listed — 동의서·서약서 카드 노출 고정 (listPortalConsentTypes).
+ * 동의 효력과 무관하게 해당 유형 `listed`를 true로 만든다. 되돌리는 API는 없다.
+ */
+export async function listPortalConsentTypes(consentTypes: readonly string[]): Promise<void> {
+  await axiosClient.post(`${PORTAL_CONSENTS_PATH}/listed`, { consentTypes })
 }
 
 export async function fetchPortalConsents(signal?: AbortSignal): Promise<PortalConsentSummary[]> {

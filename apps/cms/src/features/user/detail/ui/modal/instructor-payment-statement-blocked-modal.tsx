@@ -86,7 +86,7 @@ export function InstructorPaymentStatementBlockedModal({
       zIndex={zIndex}
       className={rootClass}
       footer={
-        <CmsButton variant="secondary" size="large" type="button" onClick={onClose}>
+        <CmsButton variant="secondary" size="h40" type="button" onClick={onClose}>
           확인
         </CmsButton>
       }

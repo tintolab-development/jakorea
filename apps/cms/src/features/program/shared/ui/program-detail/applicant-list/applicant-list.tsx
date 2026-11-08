@@ -7,6 +7,7 @@ import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   showApplicationApprovalCompletedAlert,
   showApplicationRejectionCompletedAlert,
+  showNotificationResendRequestCompletedAlert,
   useCmsAlert,
   FilterTableToolbarButton,
 } from '@/shared/ui'
@@ -131,7 +132,10 @@ import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import { fetchTrainedTeacherOrganizationApplicationRemote } from '@/features/program/trained-teachers/api/organization-applications-client'
 import { mapTrainedTeacherOrganizationApplicationToRow } from '@/features/program/trained-teachers/api/organization-applications-adapters'
-import { buildTrainedTeacherApproveRequest } from '@/features/program/trained-teachers/api/trained-teacher-organization-approve-payload'
+import {
+  buildTrainedTeacherApproveRequest,
+  isTrainedTeacherPeriodApproveMode,
+} from '@/features/program/trained-teachers/api/trained-teacher-organization-approve-payload'
 import { ProgramApplicationRejectModal } from '@/features/program/shared/ui/detail-modal/components/program-application-reject-modal'
 import { NOTIFY_TIMING_CAPABILITY } from '@/shared/lib/notify-timing-capability'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
@@ -151,9 +155,11 @@ import type {
   InstructorColumnPreset,
   SessionLinePreset,
 } from './applicant-list-menu'
+import { resolveApplicantListAccessLog } from './applicant-list-menu'
 import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import './applicants-detail.css'
 import './applicant-list.css'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 export interface ApplicantListProps {
   menu: ApplicantListMenu | ''
   /** 신청 강사 상세 게시글 탭 등에 사용 */
@@ -649,10 +655,7 @@ export function ApplicantList({
   }, [participantCancelRejectTarget, individualList, selectedItem])
 
   const showNoSelectionAlert = useCallback(() => {
-    showAlert({
-      title: '항목 선택 안내',
-      content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
-    })
+    showAlert(NO_SELECTION_ALERT)
   }, [showAlert])
 
   const blockProcessedBulkSelection = useCallback((): boolean => {
@@ -1380,6 +1383,7 @@ export function ApplicantList({
         subjectName={firstSelectedInstitutionName}
         selectionCount={selectedRowKeys.length}
         notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.timedBulk}
+        notifyTimingOptions="two"
         onCancel={() => setInstitutionBulkRejectOpen(false)}
         onConfirm={payload => {
           void (async () => {
@@ -1414,7 +1418,12 @@ export function ApplicantList({
         programId={programId}
         organizationApplicationId={institutionApproveTarget?.id}
         educationScheduleMode={
-          program?.generalCommonInfo?.educationScheduleMode === 'period' ? 'period' : 'date'
+          isTrainedTeacherPeriodApproveMode(
+            program?.generalCommonInfo?.educationScheduleMode ??
+              institutionApproveScheduleMeta.educationScheduleMode
+          )
+            ? 'period'
+            : 'date'
         }
         isTrainedTeacherProgram={isTrainedTeacherProgram}
         applicationStatus={institutionApproveRow?.applicationStatus}
@@ -1450,6 +1459,9 @@ export function ApplicantList({
                   ? buildTrainedTeacherApproveRequest({
                       timing: notify?.timing,
                       scheduledAt: notify?.scheduledAt,
+                      educationScheduleMode:
+                        program?.generalCommonInfo?.educationScheduleMode ??
+                        institutionApproveScheduleMeta.educationScheduleMode,
                       preferredScheduleRank: payload.preferredScheduleRank,
                       selectedScheduleId: payload.selectedScheduleId,
                       selectedScheduleIds: payload.slots?.map(slot => slot.scheduleId),
@@ -1457,6 +1469,7 @@ export function ApplicantList({
                   : mergeOrganizationApplicationApproveBody({
                       timing: notify?.timing,
                       scheduledAt: notify?.scheduledAt,
+                      requestedScheduleIds: payload.requestedScheduleIds,
                       requestedScheduleId: payload.requestedScheduleId,
                       selectedScheduleId: payload.selectedScheduleId,
                       slots: payload.slots,
@@ -1512,6 +1525,7 @@ export function ApplicantList({
         variant="single"
         subjectName={institutionRejectTarget?.name ?? ''}
         notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.timedBulk}
+        notifyTimingOptions="two"
         onCancel={() => setInstitutionRejectTarget(null)}
         onConfirm={payload => {
           if (!institutionRejectTarget) return
@@ -2172,7 +2186,9 @@ export function ApplicantList({
                   },
                   `org-${id}-${crypto.randomUUID()}`
                 )
-                if (ok) setNotificationResendTarget(null)
+                if (!ok) return
+                setNotificationResendTarget(null)
+                showNotificationResendRequestCompletedAlert()
               })()
               return
             }
@@ -2184,19 +2200,23 @@ export function ApplicantList({
             return
           }
 
-          setNotificationResendTarget(null)
-
           if (subjectKind === 'instructor') {
             if (detailVariant === 'general') {
-              void resendInstructorNotification(id, {
-                timing: notifyOptions.notifyTiming === 'manual' ? 'SCHEDULED' : 'IMMEDIATE',
-                scheduledAt:
-                  notifyOptions.notifyTiming === 'manual'
-                    ? (notifyOptions.manualNotifyAt?.toISOString() ?? null)
-                    : null,
-              })
+              void (async () => {
+                const ok = await resendInstructorNotification(id, {
+                  timing: notifyOptions.notifyTiming === 'manual' ? 'SCHEDULED' : 'IMMEDIATE',
+                  scheduledAt:
+                    notifyOptions.notifyTiming === 'manual'
+                      ? (notifyOptions.manualNotifyAt?.toISOString() ?? null)
+                      : null,
+                })
+                if (!ok) return
+                setNotificationResendTarget(null)
+                showNotificationResendRequestCompletedAlert()
+              })()
               return
             }
+            setNotificationResendTarget(null)
             setInstructorList(prev => {
               const next = prev.map(row =>
                 row.id === id
@@ -2210,9 +2230,11 @@ export function ApplicantList({
               }
               return next
             })
+            showNotificationResendRequestCompletedAlert()
             return
           }
 
+          setNotificationResendTarget(null)
           setIndividualList(prev => {
             const next = prev.map(row =>
               row.id === id
@@ -2231,6 +2253,7 @@ export function ApplicantList({
           updateGeneralIndividualApplicantNotificationResend(id, sentAt, {
             rejectionReason: notifyOptions.rejectionReason,
           })
+          showNotificationResendRequestCompletedAlert()
         }}
       />
       <InstructorBulkApproveModal
@@ -2456,6 +2479,7 @@ export function ApplicantList({
               columns,
               data: tableData,
               selectedRowKeys,
+              accessLog: resolveApplicantListAccessLog(menu),
             }}
           >
             {applicationsError ? (
@@ -2483,7 +2507,7 @@ export function ApplicantList({
                   }
                   dataSource={tableData}
                   loading={applicationsLoading}
-                  className="cms-data-table cms-data-table--fluid"
+                  className="cms-data-table"
                   onRow={record => ({
                     onClick: e => {
                       const target = e.target as HTMLElement

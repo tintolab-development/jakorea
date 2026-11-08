@@ -1,3 +1,8 @@
+import type { InstructorTransportPreview } from '../lib/instructor-transport-preview'
+import type { LectureFeePreview } from '../lib/lecture-fee-preview'
+
+export type { LectureFeePreview }
+
 export type EducationSettlementProgress = 'completed' | 'upcoming'
 
 export type EducationSettlementStatus =
@@ -19,12 +24,26 @@ export type SettlementDeadlineNotice = 'overdue' | 'operation_ended'
 export type EducationSettlementItem = {
   id: string
   scheduleId?: number | null
+  /** 강사 배정 ID. lecture-report-assignments.assignmentId */
+  assignmentId?: number | null
   sessionNumber: number
   heldAt: string
   /** 예: 10:00~11:20 3차시 */
   sessionMeta: string
   /** 배정 학교·기관명. API에 값이 있을 때만 채운다. */
   institutionLabel?: string
+  /** 학교·기관명. 강의보고서 뱃지 `primary` */
+  institutionName?: string
+  /** 학년. 강의보고서 뱃지 `secondary` */
+  grade?: string
+  /** 강의 시작. lecture-report-assignments.startAt */
+  lectureStartAt?: string | null
+  /** 강의 종료. lecture-report-assignments.endAt */
+  lectureEndAt?: string | null
+  /** 지급조서 확인 강사비 산출. 조인된 배정에만. 없으면 null */
+  lectureFeePreview?: LectureFeePreview | null
+  /** 강사 교통비 자동 산출. 서버 미리보기만. 없으면 null */
+  instructorTransportPreview?: InstructorTransportPreview | null
   progress: EducationSettlementProgress
   status: EducationSettlementStatus
   deadlineAt?: string
@@ -44,12 +63,19 @@ export type EducationSettlementItem = {
     itemType: string
     itemName: string
     evidenceRequired: boolean | null
+    maxLimitWon?: number | null
   }>
   submittedItems?: Array<{
     itemType?: string
     amount?: number
     evidenceRequired?: boolean | null
   }>
+  /** 개인형 회차 학생 교통비 편도 거리 안내(서버). 신청란 노출은 payableItems 기준 */
+  transportPreview?: {
+    oneWayDistanceKm?: number | null
+    eligible?: boolean
+    ineligibleReason?: string | null
+  } | null
   submitBlockedReason?: string
   deadlineNotice?: SettlementDeadlineNotice
   previousAmount?: number

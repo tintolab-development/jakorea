@@ -251,15 +251,17 @@
   z-index: -1;
 }
 
+/* 고정 height + overflow:hidden 이면 2페이지 이후 문항이 잘린다. 페이지 분할과 함께 auto 높이를 쓴다. */
 .ujat-survey-poll-results__pdf-page {
   display: flex;
   width: 794px;
-  height: 1123px;
+  min-height: 1123px;
+  height: auto;
   padding: 44px;
   flex-direction: column;
   gap: 20px;
   box-sizing: border-box;
-  overflow: hidden;
+  overflow: visible;
   background: #fff;
 }
 
@@ -311,7 +313,6 @@
 .ujat-survey-poll-results__pdf-section {
   display: flex;
   min-height: 176px;
-  max-height: 220px;
   padding: 16px;
   flex-direction: column;
   gap: 10px;
@@ -329,7 +330,7 @@
 .ujat-survey-poll-results__pdf-section .ujat-survey-poll-results__section-body {
   flex: 1 1 auto;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .ujat-survey-poll-results__pdf-section .ujat-survey-scale-chart {
@@ -337,8 +338,8 @@
 }
 
 .ujat-survey-poll-results__pdf-section .ujat-survey-text-responses-table {
-  height: 132px;
-  overflow: hidden;
+  height: auto;
+  overflow: visible;
 }
 
 .ujat-survey-poll-results__pdf-page .ujat-survey-poll-results__summary-text,

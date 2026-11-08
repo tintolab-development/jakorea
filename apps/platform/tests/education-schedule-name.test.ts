@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
+  composeSatisfactionSurveyDisplayTitle,
+  formatSatisfactionPerScheduleDisplayName,
   isDefaultEducationSlotName,
   stripDefaultEducationSlotNameFromLabel,
   toDisplayEducationScheduleName,
@@ -71,6 +73,49 @@ describe('portal mypage surfaces', () => {
     ).toBe('-')
     expect(resolveEducationScheduleRowLabel({ educationStructure: 'SCHEDULE', scheduleName: '발대식' })).toBe(
       '발대식',
+    )
+  })
+})
+
+describe('formatSatisfactionPerScheduleDisplayName', () => {
+  it('matches CMS list/select copy', () => {
+    expect(
+      formatSatisfactionPerScheduleDisplayName({
+        scheduleName: '공통 교육 예정 1',
+        sessionNo: 1,
+        startAt: '2026-11-12T03:00:00.000Z',
+      }),
+    ).toBe('1회차 · 2026.11.12(목)')
+  })
+})
+
+describe('composeSatisfactionSurveyDisplayTitle', () => {
+  it('joins schedule and mapped form name for per-schedule', () => {
+    expect(
+      composeSatisfactionSurveyDisplayTitle({
+        formName: '만족도조사 (학생용)',
+        perSchedule: true,
+        scheduleDisplayName: '1회차 · 2026.11.12(목)',
+      }),
+    ).toBe('1회차 · 2026.11.12(목) 만족도조사 (학생용)')
+  })
+})
+
+describe('기관 승인 일정 내부명 (기관 확정 YYYY-MM-DD)', () => {
+  it('내부 일정명만 판별하고 라벨에서 그 구간만 제거한다', async () => {
+    const { isAutoMaterializedScheduleName, stripAutoMaterializedScheduleNameFromLabel } =
+      await import('../src/shared/lib/education-schedule-name')
+    expect(isAutoMaterializedScheduleName('기관 확정 2026-11-09')).toBe(true)
+    expect(isAutoMaterializedScheduleName('계남중학교')).toBe(false)
+    expect(isAutoMaterializedScheduleName('기관 확정 일정 안내')).toBe(false)
+    expect(
+      stripAutoMaterializedScheduleNameFromLabel(
+        '계남중학교 | 26년 11월 9일(월) 09:00 ~ 10:00 | 기관 확정 2026-11-09',
+      ),
+    ).toBe('계남중학교 | 26년 11월 9일(월) 09:00 ~ 10:00')
+    expect(stripAutoMaterializedScheduleNameFromLabel('기관 확정 2026-11-09')).toBe('')
+    expect(stripAutoMaterializedScheduleNameFromLabel('1차시 | 09:00 ~ 10:00 | 오전반')).toBe(
+      '1차시 | 09:00 ~ 10:00 | 오전반',
     )
   })
 })

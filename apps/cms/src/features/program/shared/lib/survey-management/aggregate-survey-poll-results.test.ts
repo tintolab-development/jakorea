@@ -93,7 +93,7 @@ describe('toOptionSummaryChartData', () => {
 })
 
 describe('buildSurveyPollResultSectionsFromSummary', () => {
-  it('numbers questions like the editor and skips title/closing/orphan rows', () => {
+  it('skips title, closing and user-info from Q numbers', () => {
     const sections = buildSurveyPollResultSectionsFromSummary(
       [
         {
@@ -157,8 +157,8 @@ describe('buildSurveyPollResultSectionsFromSummary', () => {
         required,
       }))
     ).toEqual([
-      { kind: 'scale', paragraphId: 'score', title: 'Q2. 만족도', required: true },
-      { kind: 'text', paragraphId: 'subjective', title: 'Q4. 의견', required: false },
+      { kind: 'scale', paragraphId: 'score', title: 'Q1. 만족도', required: true },
+      { kind: 'text', paragraphId: 'subjective', title: 'Q3. 의견', required: false },
     ])
     expect(sections[1]).toMatchObject({
       rows: [

@@ -341,7 +341,7 @@ export async function fillRegistrationThroughComplete(page: Page) {
   await institutionRecruitTab.click()
   await waitActiveWizardTabPanel(page, institutionRecruitTab)
   await fillIsolatedInstitutionRecruitExtras(page)
-  const requiredDialog = page.getByRole('dialog').filter({ hasText: '필수 항목 미입력' })
+  const requiredDialog = page.getByRole('dialog').filter({ hasText: '필수 항목 입력 안내' })
   if (await requiredDialog.isVisible().catch(() => false)) {
     await requiredDialog.getByRole('button', { name: '확인' }).click()
   }
@@ -360,11 +360,8 @@ async function openAndCloseRegistrationPreview(page: Page) {
   await expect(page.getByText('현재 화면은 미리보기 화면입니다.')).toBeVisible({ timeout: 15_000 })
   await expect(page.getByText(THIRD_PARTY_RECIPIENT_VALUE).first()).toBeVisible({ timeout: 10_000 })
   const closePreview = page.getByRole('button', { name: '미리보기 닫기' })
-  if (await closePreview.isVisible().catch(() => false)) {
-    await closePreview.click()
-  } else {
-    await page.keyboard.press('Escape')
-  }
+  await expect(closePreview).toBeVisible({ timeout: 10_000 })
+  await closePreview.click()
   await expect(page.getByRole('button', { name: '프로그램 등록 완료' })).toBeVisible({
     timeout: 10_000,
   })
@@ -474,10 +471,10 @@ export async function completeAndCapture(page: Page, log: IsolatedNetworkLog) {
         .first()
     ).toBeVisible({ timeout: 15_000 })
   }
-  const requiredDialog = page.getByRole('dialog').filter({ hasText: '필수 항목 미입력' })
+  const requiredDialog = page.getByRole('dialog').filter({ hasText: '필수 항목 입력 안내' })
   await page.getByRole('button', { name: '프로그램 등록 완료' }).click()
   if (await requiredDialog.isVisible().catch(() => false)) {
-    throw new Error('등록 완료가 필수 항목 미입력으로 차단되어 CREATE가 호출되지 않았습니다')
+    throw new Error('등록 완료가 필수 항목 입력 안내로 차단되어 CREATE가 호출되지 않았습니다')
   }
   await expect.poll(() => log.createProgram, { timeout: 90_000 }).not.toBeNull()
   await expect
@@ -519,7 +516,7 @@ export function bindingCodes(log: IsolatedNetworkLog): string {
 export async function dismissVisibleDialogs(page: Page) {
   const dialog = page
     .getByRole('dialog')
-    .filter({ hasText: /임시 저장|필수 항목|입력 확인|등록 실패/ })
+    .filter({ hasText: /임시 저장|필수 항목|입력 확인|등록 실패|서버 오류/ })
   if (
     !(await dialog
       .first()
@@ -619,7 +616,7 @@ export async function fillInstitutionRecruitMedia(page: Page) {
 }
 
 export async function expectRequiredIncompleteAlert(page: Page) {
-  const dialog = page.getByRole('dialog').filter({ hasText: '필수 항목 미입력' })
+  const dialog = page.getByRole('dialog').filter({ hasText: '필수 항목 입력 안내' })
   await expect(dialog).toBeVisible({ timeout: 15_000 })
   await expect(dialog.getByText(/필수 항목을 모두 작성/)).toBeVisible()
   await dialog.getByRole('button', { name: '확인' }).click()

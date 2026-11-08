@@ -55,8 +55,11 @@ import {
   FilterTableToolbarButton,
 } from '@/shared/ui'
 import { downloadAllMemberLectureReportsRemote } from '@/features/user/api/members-api-client'
-import { downloadFromBulkEndpoint } from '@/features/user/api/download-bulk-endpoint'
-import { handleError } from '@/shared/utils/error-handler'
+import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
+import {
+  hasFileDownloadPermission,
+  saveLectureReportBulkDownloadJob,
+} from '@/shared/lib/lecture-report-bulk-download'
 import { CertificateBulkIssueReasonModal } from './modal/certificate-bulk-issue-reason-modal'
 import type { CertificateIssueReasonValue } from './modal/certificate-bulk-issue-reason-modal'
 import { LectureReportSubmissionHistoryModal } from './modal/lecture-report-submission-history-modal'
@@ -106,7 +109,7 @@ export interface MemberProgramLectureHistoryProps {
     reason: CertificateIssueReasonValue,
     reasonLabel: string
   ) => void | Promise<void>
-  /** 수료증/참여인증서 일괄 발급 (수강·봉사 이력) */
+  /** 수료증/참가인증서 일괄 발급 (수강·봉사 이력) */
   onStudentCertificateIssue?: (
     rowIds: readonly string[],
     reason: CertificateIssueReasonValue,
@@ -281,21 +284,24 @@ export function MemberProgramLectureHistory({
     []
   )
 
+  const canBulkDownloadFiles = hasFileDownloadPermission()
+
   const handleDownloadAllLectureReports = useCallback(async () => {
     if (memberId == null || allLectureReportsDownloading) return
+    if (!canBulkDownloadFiles) return
     setAllLectureReportsDownloading(true)
     try {
       const job = await downloadAllMemberLectureReportsRemote(memberId)
-      await downloadFromBulkEndpoint(job.downloadUrl, 'lecture-reports-all', 'zip')
+      await saveLectureReportBulkDownloadJob(job, 'lecture-reports-all')
     } catch (error) {
-      const info = handleError(error, {
-        defaultMessage: '강의보고서 일괄 다운로드에 실패했습니다.',
+      showAlert({
+        title: '안내',
+        content: getMemberApiErrorMessage(error, '강의보고서 일괄 다운로드에 실패했습니다.'),
       })
-      showAlert({ title: '안내', content: info.detail })
     } finally {
       setAllLectureReportsDownloading(false)
     }
-  }, [allLectureReportsDownloading, memberId, showAlert])
+  }, [allLectureReportsDownloading, canBulkDownloadFiles, memberId, showAlert])
 
   const historyDeleteGuide = useMemo(() => {
     if (selectedRowKeys.length === 0) return null
@@ -463,10 +469,11 @@ export function MemberProgramLectureHistory({
           key: 'lectureAttendance',
           align: 'center',
           render: (_: string | undefined, record: Application) => {
-            const text = record.lectureAttendance ?? '0 / 0'
+            /** 시안: 「0 / 4」 — API가 「0/4」·「0 / 4」 어느 쪽이어도 공백 1칸 */
+            const text = (record.lectureAttendance ?? '0/0').replace(/\s*\/\s*/, ' / ')
             const showLink = lectureAttendanceHasAtLeastOne(record.lectureAttendance)
             if (!showLink) {
-              return text.replace('/', ' / ')
+              return text
             }
             return (
               <span
@@ -480,7 +487,7 @@ export function MemberProgramLectureHistory({
                     if (onOpenAttendance) onOpenAttendance(record)
                   }}
                 >
-                  {text.replace('/', ' / ')}
+                  {text}
                 </button>
               </span>
             )
@@ -496,8 +503,8 @@ export function MemberProgramLectureHistory({
               onClick={e => e.stopPropagation()}
             >
               <CmsButton
-                variant="default"
-                size="medium"
+                variant="secondary"
+                size="small"
                 disabled={!record.hasAssignmentSubmission}
                 onClick={() => {
                   if (onOpenAssignment) onOpenAssignment(record)
@@ -552,8 +559,8 @@ export function MemberProgramLectureHistory({
               onClick={e => e.stopPropagation()}
             >
               <CmsButton
-                variant="default"
-                size="medium"
+                variant="secondary"
+                size="small"
                 disabled={!canView}
                 onClick={() => {
                   if (onViewLectureReport) onViewLectureReport(record)
@@ -652,7 +659,7 @@ export function MemberProgramLectureHistory({
                       openCertificateIssueModal(selectedRowKeys.map(String), 'completion')
                     }
                   >
-                    수료증/참여인증서 발급
+                    수료증/참가인증서 발급
                   </FilterTableToolbarButton>
                 )}
               {mode === 'volunteerProgram' && showCertificateBulkIssue && (
@@ -675,7 +682,7 @@ export function MemberProgramLectureHistory({
                       openCertificateIssueModal(selectedRowKeys.map(String), 'completion')
                     }
                   >
-                    수료증/참여인증서 발급
+                    수료증/참가인증서 발급
                   </FilterTableToolbarButton>
                 </>
               )}
@@ -689,7 +696,10 @@ export function MemberProgramLectureHistory({
                   활동인증서 발급
                 </FilterTableToolbarButton>
               )}
-              {mode === 'instructorLecture' && memberId != null && isMembersRemoteEnabled() && (
+              {mode === 'instructorLecture' &&
+                memberId != null &&
+                isMembersRemoteEnabled() &&
+                canBulkDownloadFiles && (
                 <FilterTableToolbarButton
                   variant="secondary"
                   icon={<ButtonDownloadIcon />}
@@ -707,6 +717,7 @@ export function MemberProgramLectureHistory({
           </div>
         }
         excelExport={{
+          accessLog: { downloadKind: 'MEMBER_PROGRAM_HISTORY_EXPORT', containedPiiTypes: ['NAME'] },
           columns,
           data: tableDataSource,
           selectedRowKeys:
@@ -715,7 +726,7 @@ export function MemberProgramLectureHistory({
       >
         <div ref={tableWrapRef} className="cms-data-table-fit-scroll-wrap">
           <CmsDataTable<Application | UserHistory>
-            className="cms-data-table cms-data-table--fluid cms-data-table--fit-scroll"
+            className="cms-data-table cms-data-table--fit-scroll"
             size={TABLE_CONFIG.size}
             scroll={tableScrollX != null ? { x: tableScrollX } : undefined}
             loading={loading}
@@ -765,7 +776,7 @@ export function MemberProgramLectureHistory({
             onCancel={() => setCertificateIssueModalOpen(false)}
             applicationIds={certificateIssueTargetIds}
             certificateDocumentLabel={
-              certificateIssueKind === 'activity' ? '활동인증서' : '수료증/참여인증서'
+              certificateIssueKind === 'activity' ? '활동인증서' : '수료증/참가인증서'
             }
             onIssue={(reason, reasonLabel) => {
               const handler =

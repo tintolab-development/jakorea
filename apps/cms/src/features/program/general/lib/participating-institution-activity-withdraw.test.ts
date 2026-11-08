@@ -37,7 +37,7 @@ function baseSession(overrides: Partial<ParticipatingSchoolSession> = {}): Parti
 }
 
 describe('participating-institution-activity-withdraw', () => {
-  it('단일 회차 라벨은 날짜·시간·차시로 표시한다', () => {
+  it('단일 회차 라벨은 날짜·시간·회차로 표시한다', () => {
     const label = formatParticipatingInstitutionActivityWithdrawScheduleOptionLabel(
       baseProgram({
         generalProgramSessionRound: 'single',
@@ -48,7 +48,7 @@ describe('participating-institution-activity-withdraw', () => {
       baseSession()
     )
 
-    expect(label).toBe('2026.01.09(금) 09:20 ~ 11:20 | 1차시')
+    expect(label).toBe('2026.01.09(금) 09:20 ~ 11:20 | 1회차')
   })
 
   it('복수 커리큘럼형 옵션은 회차명을 포함한다', () => {
@@ -88,7 +88,7 @@ describe('participating-institution-activity-withdraw', () => {
     expect(patch).toEqual({
       activityWithdrawn: true,
       activityWithdrawStopSessionKey: key,
-      activityWithdrawStopScheduleLabel: '2026.01.09(금) 09:20 ~ 11:20 | 1차시',
+      activityWithdrawStopScheduleLabel: '2026.01.09(금) 09:20 ~ 11:20 | 1회차',
     })
   })
 

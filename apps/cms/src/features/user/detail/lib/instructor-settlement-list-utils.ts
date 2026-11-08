@@ -10,6 +10,9 @@ export function settlementCalendarPrimaryTitle(row: InstructorSettlementListRow)
   if (row.settlementListTitleVariant === 'plain-instructor' && row.instructorName?.trim()) {
     return row.instructorName.trim()
   }
+  if (row.settlementListTitleVariant === 'plain-program') {
+    return row.programName
+  }
   if (row.settlementListTitleVariant === 'pipe-program' && row.instructorName?.trim()) {
     return `${row.instructorName.trim()} | ${row.programName}`
   }

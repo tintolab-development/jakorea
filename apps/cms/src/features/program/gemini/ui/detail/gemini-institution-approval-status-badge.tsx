@@ -1,14 +1,8 @@
+import { StatusBadge } from '@/shared/components/status-badge'
+import { getGeminiInstitutionApprovalStatusPresentation } from '../../lib/application-status-presentation'
+export { GEMINI_INSTITUTION_APPROVAL_STATUS_LABEL } from '../../lib/application-status-presentation'
 import type { GeminiInstitutionApprovalStatus } from '../../model/recruitment/institution-application-types'
 import './institution-application-tab.css'
-
-export const GEMINI_INSTITUTION_APPROVAL_STATUS_LABEL: Record<
-  GeminiInstitutionApprovalStatus,
-  string
-> = {
-  PENDING: '승인 대기',
-  APPROVED: '승인',
-  REJECTED: '신청 반려',
-}
 
 const STATUS_MODIFIER: Record<GeminiInstitutionApprovalStatus, string> = {
   PENDING: 'pending',
@@ -22,10 +16,11 @@ export function GeminiInstitutionApprovalStatusBadge({
   status: GeminiInstitutionApprovalStatus
 }) {
   return (
-    <span
+    <StatusBadge
+      domain="custom"
+      variant="text"
+      {...getGeminiInstitutionApprovalStatusPresentation(status)}
       className={`gemini-institution-approval-status gemini-institution-approval-status--${STATUS_MODIFIER[status]}`}
-    >
-      {GEMINI_INSTITUTION_APPROVAL_STATUS_LABEL[status]}
-    </span>
+    />
   )
 }

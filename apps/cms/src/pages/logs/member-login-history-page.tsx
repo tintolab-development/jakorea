@@ -12,7 +12,10 @@ import { useLogsRemoteQueryEnabled } from '@/features/logs/hooks/use-logs-query-
 import { memberLoginHistoryFilterFields } from '@/features/logs/model/member-login-history-filter-fields'
 import { memberLoginHistoryTablePageConfig } from '@/features/logs/model/member-login-history-table.config'
 import { LogsQueryError } from '@/features/logs/ui/logs-query-error'
-import { FilterTableLayout } from '@/shared/components/filter-table-layout'
+import {
+  FilterTableDescriptionDivider,
+  FilterTableLayout,
+} from '@/shared/components/filter-table-layout'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   EMPTY_TABLE_PAGE_CONTEXT,
@@ -27,12 +30,9 @@ import '@/features/program/general/ui/program-list.css'
 
 const MEMBER_LOGIN_HISTORY_TABLE_SCROLL_X = 1120
 
+/** 시안: No. 80 고정 · 관리자·아이디·로그인일시·IP 균등 분배(폭 미지정) */
 const TABLE_COL_WIDTH = {
   no: 80,
-  adminName: 160,
-  loginId: 320,
-  loggedAt: 220,
-  ipAddress: 180,
 } as const
 
 export default function MemberLoginHistoryPage() {
@@ -76,10 +76,9 @@ export default function MemberLoginHistoryPage() {
           totalElements === 0 ? '-' : totalElements - index,
       },
       {
-        title: '관리자명',
+        title: '관리자',
         dataIndex: 'adminName',
         key: 'adminName',
-        width: TABLE_COL_WIDTH.adminName,
         align: 'center',
         ellipsis: true,
       },
@@ -87,15 +86,13 @@ export default function MemberLoginHistoryPage() {
         title: '아이디',
         dataIndex: 'loginId',
         key: 'loginId',
-        width: TABLE_COL_WIDTH.loginId,
         align: 'center',
         ellipsis: { showTitle: true },
       },
       {
-        title: '로그인 일시',
+        title: '로그인일시',
         dataIndex: 'loggedAt',
         key: 'loggedAt',
-        width: TABLE_COL_WIDTH.loggedAt,
         align: 'center',
         render: (iso: string) => dayjs(iso).format('YYYY.MM.DD HH:mm:ss'),
       },
@@ -103,7 +100,6 @@ export default function MemberLoginHistoryPage() {
         title: 'IP',
         dataIndex: 'ipAddress',
         key: 'ipAddress',
-        width: TABLE_COL_WIDTH.ipAddress,
         align: 'center',
       },
     ],
@@ -127,7 +123,7 @@ export default function MemberLoginHistoryPage() {
     }
   }, [isExporting, remoteEnabled, searchParams, showAlert])
 
-  const descriptionNum = useMemo(() => `총 ${totalElements.toLocaleString()}건 |`, [totalElements])
+  const descriptionNum = useMemo(() => `총 ${totalElements.toLocaleString()}건`, [totalElements])
   const descriptionText = (
     <span>
       홈페이지 어드민과 사용자 플랫폼의 로그인 이력은{' '}
@@ -153,10 +149,12 @@ export default function MemberLoginHistoryPage() {
       }}
       onFilterChange={handleFilterChange}
       onSearch={applySearch}
-      title="관리자 로그인 이력"
+      title="CMS 관리자 로그인 이력"
       description={
         <>
-          {descriptionNum} {descriptionText}
+          {descriptionNum}
+          <FilterTableDescriptionDivider />
+          {descriptionText}
         </>
       }
       contentLoading={remoteEnabled && isLoading}

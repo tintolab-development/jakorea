@@ -5,7 +5,6 @@
  */
 
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Image } from 'antd'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
@@ -35,8 +34,7 @@ import type {
   ApplicantSchoolRow,
   ApplicantApprovalStatusKey,
 } from '@/features/program/shared/model/applicant-institution'
-import { ApprovalStatusBadge } from '@/shared/components/approval-status-badge'
-import type { ApprovalStatusKey } from '@/shared/components/approval-status-badge'
+import { getApprovalStatusTag, type ApprovalStatusKey } from '@/shared/lib/status-tag-specs'
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
@@ -180,7 +178,7 @@ export function EnrollmentStatusDetailModal({
             <StatusDropdownCell<ApprovalStatusKey>
               status={APPROVAL_STATUS_MAP[status]}
               statusOptions={APPROVAL_STATUS_KEYS}
-              renderBadge={s => <ApprovalStatusBadge status={s} />}
+              getTag={getApprovalStatusTag}
               isItemDisabled={(cur, opt) => cur === opt}
               onChange={key => handleSchoolApprovalStatusChange(record.id, key)}
               isOpen={openApprovalDropdownId === record.id}
@@ -223,13 +221,12 @@ export function EnrollmentStatusDetailModal({
           <div className="enrollment-status-detail-modal__program-inner">
             <div className="enrollment-status-detail-modal__poster-wrap">
               {program.posterImage || program.keyVisualImage ? (
-                <Image
+                <img
                   src={program.keyVisualImage || program.posterImage}
                   alt={program.title}
                   width={336}
                   height={336}
-                  style={{ objectFit: 'cover', aspectRatio: '1/1' }}
-                  preview={{ mask: '확대 보기' }}
+                  className="enrollment-status-detail-modal__poster-img"
                 />
               ) : (
                 <div className="enrollment-status-detail-modal__poster-placeholder">

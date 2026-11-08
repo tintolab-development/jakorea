@@ -30,6 +30,8 @@ export type PortalConsentDocumentDetail = {
   signatureFields?: PortalConsentSignatureField[]
   filledDocument?: PortalFilledDocumentRequest | null
   formTemplateVersion?: PortalConsentFormTemplateVersion | null
+  /** 초상권 — 1·2·3번 모두 agree면 true. 응답 전용(라벨). complete 요청 바디에 넣지 않는다 */
+  allItemsAgreed?: boolean | null
 }
 
 export type PortalConsentSignFieldRequest = {

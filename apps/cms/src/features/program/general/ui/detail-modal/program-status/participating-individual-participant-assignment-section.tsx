@@ -5,14 +5,13 @@ import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
+import { StatusTag } from '@/shared/components/status-tag'
+import { getAssignmentTeamRoleTag } from '@/shared/lib/status-tag-specs'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import '@/shared/components/detail-info-form/detail-info-form.css'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
-import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants'
 import { downloadAdminFile } from '@/shared/lib/admin-file-upload'
 import { FilterTableToolbarButton, useCmsAlert } from '@/shared/ui'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
@@ -31,7 +30,6 @@ import { GENERAL_SATISFACTION_NAV_TAB } from '@/features/program/general/lib/sur
 import type { ProgressAssignmentSurveyNavTab } from './participating-individual-progress-assignment-table'
 import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 import type { Program } from '@/types/domain'
-import { assignmentTeamRoleTagClassName, ASSIGNMENT_TEAM_ROLE_TAG_DROPDOWN_STYLE } from '@/features/program/general/lib/assignment-team-role-tag'
 import {
   applyTeamNameFromSessionOrder,
   buildParticipatingIndividualParticipantAssignmentRowsFromAssigned,
@@ -61,10 +59,7 @@ import type {
   ParticipatingIndividualParticipantAssignmentRow,
   ParticipatingIndividualParticipantAssignmentTeamRole,
 } from '@/features/program/general/lib/participating-individual-participant-assignment-types'
-import {
-  ASSIGNMENT_TEAM_ROLE_LABELS,
-  LECTURE_PROGRESS_DISPLAY_LABELS,
-} from '@/features/program/general/model/school-detail-types'
+import { LECTURE_PROGRESS_DISPLAY_LABELS } from '@/features/program/general/model/school-detail-types'
 import { ProgramAttendanceRateValue } from '@/features/program/shared/ui/program-attendance-rate-value'
 import {
   ParticipatingIndividualParticipantTeamChangeModal,
@@ -196,7 +191,6 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
       ? buildProgressAssignmentSessionsFromRemote(assignmentSubmissionsQuery.data, {
           program,
           giveUpParticipants: assignmentSubmissionsQuery.data.giveUpParticipants,
-          participants: assignmentSubmissionsQuery.data.giveUpParticipants,
         })
       : []
     const assignedRows = assignedSessionsLoading
@@ -269,6 +263,7 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
   )
 
   const { exportExcel } = useTableExcelExport({
+    accessLog: { downloadKind: 'PROGRAM_ASSIGNMENT_EXPORT', containedPiiTypes: ['NAME'] },
     columns: teamFeatureApplicable
       ? PARTICIPATING_INDIVIDUAL_PARTICIPANT_ASSIGNMENT_EXCEL_COLUMNS
       : PARTICIPATING_INDIVIDUAL_PARTICIPANT_ASSIGNMENT_EXCEL_COLUMNS_WITHOUT_TEAM,
@@ -323,8 +318,18 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
 
   const downloadAssignmentFile = useCallback(
     async (fileObjectId?: number, fileName?: string, downloadable?: boolean) => {
-      if (fileObjectId == null || downloadable !== true) {
-        showAlert({ title: '안내', content: FEATURE_COMING_SOON_ALERT_MESSAGE })
+      if (fileObjectId == null) {
+        showAlert({
+          title: '안내',
+          content: '첨부 파일 ID가 없어 내려받을 수 없습니다.',
+        })
+        return
+      }
+      if (downloadable !== true) {
+        showAlert({
+          title: '안내',
+          content: '이 과제는 다운로드할 수 없습니다.',
+        })
         return
       }
       try {
@@ -507,10 +512,6 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
     ]
   )
 
-  const showComingSoon = useCallback(() => {
-    showAlert({ title: '안내', content: FEATURE_COMING_SOON_ALERT_MESSAGE })
-  }, [showAlert])
-
   const openSurveyResponseView = useCallback(
     async (
       title: string,
@@ -524,7 +525,10 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
         !Number.isFinite(templateVersionId) ||
         !Number.isFinite(formResponseId)
       ) {
-        showComingSoon()
+        showAlert({
+          title: '안내',
+          content: '설문 응답 ID가 없어 열 수 없습니다.',
+        })
         return
       }
       setSurveyViewLoading(true)
@@ -536,7 +540,10 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
           String(formResponseId)
         )
         if (detail == null) {
-          showComingSoon()
+          showAlert({
+            title: '안내',
+            content: '설문 응답을 찾을 수 없습니다.',
+          })
           return
         }
         setSurveyViewAnswers(detail.answers ?? [])
@@ -546,7 +553,7 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
         setSurveyViewLoading(false)
       }
     },
-    [program.id, showComingSoon]
+    [program.id, showAlert]
   )
 
   const renderSubmissionCell = useCallback(
@@ -592,7 +599,7 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
                     )
                   }
                 >
-                  {item.fileName}
+                  {item.fileName.trim() || '제출 파일'}
                 </button>
               )
             )}
@@ -614,7 +621,7 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
                 )
               }
             >
-              {submission.fileName}
+              {submission.fileName.trim() || '제출 파일'}
             </button>
             {submission.secondaryFileName ? (
               <button
@@ -703,17 +710,12 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
           key: 'teamRole',
           width: 140,
           align: 'center',
-          onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME }),
-          onCell: () => ({
-            className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME}`,
-          }),
+          onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
           render: (_value, record) => {
             if (record.teamRole === 'individual') {
               return (
                 <div className="participating-individual-participant-assignment-section__role-static">
-                  <span className={assignmentTeamRoleTagClassName('individual')}>
-                    {ASSIGNMENT_TEAM_ROLE_LABELS.individual}
-                  </span>
+                  <StatusTag {...getAssignmentTeamRoleTag('individual')} />
                 </div>
               )
             }
@@ -722,18 +724,12 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
               <StatusDropdownCell<ParticipatingIndividualParticipantAssignmentTeamRole>
                 status={record.teamRole}
                 statusOptions={TEAM_ASSIGNMENT_ROLE_OPTIONS}
-                renderBadge={role => (
-                  <span className={assignmentTeamRoleTagClassName(role)}>
-                    {ASSIGNMENT_TEAM_ROLE_LABELS[role]}
-                  </span>
-                )}
+                getTag={getAssignmentTeamRoleTag}
                 isItemDisabled={(cur, opt) => cur === opt}
                 onChange={newRole => handleTeamRoleChange(record.id, newRole)}
                 isOpen={openTeamRoleDropdownRowId === record.id}
                 onOpenChange={open => setOpenTeamRoleDropdownRowId(open ? record.id : null)}
                 emptyPlaceholder="-"
-                tagLayout="tag100"
-                style={ASSIGNMENT_TEAM_ROLE_TAG_DROPDOWN_STYLE}
               />
             )
           },
@@ -764,7 +760,7 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
         {
           title: '교육 진행 일정',
           dataIndex: 'scheduleLabel',
-          width: 300,
+          width: 440,
           key: 'scheduleLabel',
           align: 'center',
           render: (value: string | undefined) =>
@@ -773,7 +769,7 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
         {
           title: '과제 제출 기간',
           key: 'assignmentPeriodLabel',
-          width: 300,
+          width: 240,
           align: 'center',
           render: (_value, record) => {
             const period = record.assignmentPeriodLabel?.trim()
@@ -783,7 +779,7 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
         {
           title: '제출 파일',
           key: 'submission',
-          width: 300,
+          width: 240,
           align: 'center',
           className: 'participating-individual-participant-assignment-section__submission-column',
           render: (_value, record) => renderSubmissionCell(record),
@@ -831,7 +827,7 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
         <div className="participating-individual-participant-assignment-section__table-outer assignment-submission-modal__table-outer">
           <CmsDataTable<ParticipatingIndividualParticipantAssignmentRow & { no: number }>
             rowKey="id"
-            className="cms-data-table cms-data-table--fluid"
+            className="cms-data-table"
             columns={columns}
             dataSource={tableData}
             pagination={false}

@@ -5,8 +5,12 @@
  * Filtered for CMS posts management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { OrganizationEnrich } from './organizationEnrich';
 import type { ScheduleEnrich } from './scheduleEnrich';
 
+/**
+ * 참여자 교육 범위. CMS OpenAPI의 CmsParticipantEducationScopeResponse와 동일 계약이다.
+ */
 export interface ScopeResponse {
   programId?: number;
   participantId?: number;
@@ -14,4 +18,5 @@ export interface ScopeResponse {
   configured?: boolean;
   scheduleIds?: number[];
   schedules?: ScheduleEnrich[];
+  organizations?: OrganizationEnrich[];
 }

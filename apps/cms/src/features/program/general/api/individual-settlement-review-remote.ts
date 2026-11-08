@@ -11,6 +11,7 @@ import type { IndividualSettlementReviewDecision } from '@/shared/api/generated/
 import type { IndividualSettlementReviewDetail } from '@/shared/api/generated/dashboard/schemas/individualSettlementReviewDetail'
 import type { IndividualSettlementReviewListItem } from '@/shared/api/generated/dashboard/schemas/individualSettlementReviewListItem'
 import type { IndividualSettlementReviewRequest } from '@/shared/api/generated/dashboard/schemas/individualSettlementReviewRequest'
+import type { SettlementStatusChangeRequestNotificationType } from '@/shared/api/generated/settlement/schemas/settlementStatusChangeRequestNotificationType'
 import type { PageResponseIndividualSettlementReviewListItem } from '@/shared/api/generated/dashboard/schemas/pageResponseIndividualSettlementReviewListItem'
 
 export const INDIVIDUAL_SETTLEMENT_REVIEW_LIST_URL =
@@ -150,9 +151,24 @@ export async function fetchIndividualSettlementReviewDetailRemote(
 export async function approveIndividualSettlementReviewRemote(input: {
   settlementApplicationId: number
   expectedRevisionNo: number
+  /**
+   * 「지급조서 확인 안내」에서 고른 계좌 지급 예정일(YYYY-MM-DD).
+   * 강사 지급조서 확인과 같은 키(scheduledPaymentDate·lectureFeePaymentScheduledDate)로 보낸다.
+   * BE 개인 정산 승인 계약에 아직 없으면 무시된다 — 저장은 BE 반영 후.
+   */
+  scheduledPaymentDate?: string
 }): Promise<IndividualSettlementReviewDecision> {
-  const body: IndividualSettlementReviewRequest = {
+  const body: IndividualSettlementReviewRequest & {
+    scheduledPaymentDate?: string
+    lectureFeePaymentScheduledDate?: string
+  } = {
     expectedRevisionNo: input.expectedRevisionNo,
+    ...(input.scheduledPaymentDate
+      ? {
+          scheduledPaymentDate: input.scheduledPaymentDate,
+          lectureFeePaymentScheduledDate: input.scheduledPaymentDate,
+        }
+      : {}),
   }
   const response = await customInstance<unknown>({
     url: individualSettlementReviewApproveUrl(input.settlementApplicationId),
@@ -166,12 +182,19 @@ export async function rejectIndividualSettlementReviewRemote(input: {
   settlementApplicationId: number
   expectedRevisionNo: number
   reason: string
+  notificationType?: SettlementStatusChangeRequestNotificationType
+  scheduledNotificationAt?: string
 }): Promise<IndividualSettlementReviewDecision> {
   const reason = input.reason.trim()
-  const body: IndividualSettlementReviewRequest = {
+  const body: IndividualSettlementReviewRequest & {
+    notificationType?: SettlementStatusChangeRequestNotificationType
+    scheduledNotificationAt?: string
+  } = {
     expectedRevisionNo: input.expectedRevisionNo,
     reason,
   }
+  if (input.notificationType) body.notificationType = input.notificationType
+  if (input.scheduledNotificationAt) body.scheduledNotificationAt = input.scheduledNotificationAt
   const response = await customInstance<unknown>({
     url: individualSettlementReviewRejectUrl(input.settlementApplicationId),
     method: 'PATCH',

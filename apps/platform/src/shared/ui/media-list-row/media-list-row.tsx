@@ -69,7 +69,7 @@ export function MediaListRow({
           .join(' ')}
       >
         {hasThumbnailImage ? (
-          <img className={styles.thumbnail} src={imageSrc} alt="" />
+          <img className={styles.thumbnail} src={imageSrc} alt="" loading="lazy" decoding="async" />
         ) : (
           <img
             className={styles.thumbnailPlaceholderLogo}

@@ -11,63 +11,55 @@
   padding: 0;
 }
 
+/* 시안(0-1. 이모티콘 변경 시): 흰 배경 · 민트 1px 테두리 · radius 8 · 패딩 10×14 · 30px 이모지 간격 6 */
+.settlement-item-tossface-picker-popover .ant-popover-inner {
+  border: 1px solid var(--Brand-500, #00a0af);
+  border-radius: 8px;
+  background: var(--White, #fff);
+  box-shadow:
+    0 0 4px 0 rgba(0, 136, 148, 0.06),
+    0 4px 12px 0 rgba(0, 136, 148, 0.14);
+}
+
+.settlement-item-tossface-picker-popover .ant-popover-arrow {
+  display: none;
+}
+
 .settlement-item-tossface-picker {
   box-sizing: border-box;
-  width: min(252px, calc(100vw - 48px));
-  max-width: 100%;
-  padding: 12px;
+  width: max-content;
+  max-width: calc(100vw - 48px);
+  padding: 10px 14px;
   margin: 0;
 }
 
 .settlement-item-tossface-picker__grid {
   display: grid;
   box-sizing: border-box;
-  width: 100%;
-  min-width: 0;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(11, 30px);
+  gap: 6px;
 }
 
 .settlement-item-tossface-picker__cell {
   box-sizing: border-box;
   margin: 0;
-  min-width: 0;
-  width: 100%;
-  max-width: 100%;
-  padding: 4px;
-  border: 1px solid var(--color-border-secondary, #e8e8e8);
-  border-radius: 8px;
-  background: #fafafa;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
   cursor: pointer;
-  font-size: 20px;
+  /* 시안: 이모지 30×30 */
+  font-size: 30px;
   line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  aspect-ratio: 1;
 }
 
 .settlement-item-tossface-picker__cell:hover {
-  border-color: var(--color-primary-teal, #47a9ad);
-  background: #f0fafb;
+  background: var(--Brand-50, #e6f6f7);
 }
 
-.settlement-item-tossface-picker__reset {
-  box-sizing: border-box;
-  margin: 12px 0 0;
-  padding: 8px 10px;
-  width: 100%;
-  border: 1px dashed var(--color-border-secondary, #d9d9d9);
-  border-radius: 8px;
-  background: transparent;
-  cursor: pointer;
-  font-family: Pretendard, sans-serif;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--default-BK, #3d3d3d);
-}
 
-.settlement-item-tossface-picker__reset:hover {
-  border-color: var(--color-primary-teal, #47a9ad);
-  color: var(--color-primary-teal, #47a9ad);
-}

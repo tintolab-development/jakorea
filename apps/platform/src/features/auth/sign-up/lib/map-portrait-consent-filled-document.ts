@@ -14,10 +14,19 @@ const PORTRAIT_FILLED_DOCUMENT_TERMS_TYPES = new Set([
   'RIGHTS_OF_PUBLICITY',
 ])
 
-/** CMS `mapAgreementSnapshotToFilledDocument` — 작성 완료 draft를 그대로 제출 (bottomConsent 유지) */
-export function buildPortraitFilledDocument(draft: WritingFormDraft): SignupFilledDocumentRequest {
+/** 작성 완료 draft. templateCode·templateVersionId는 서버가 준 값만 붙인다. */
+export function buildPortraitFilledDocument(
+  draft: WritingFormDraft,
+  identifiers?: {
+    templateVersionId?: number | null
+    templateCode?: string | null
+  },
+): SignupFilledDocumentRequest {
+  const templateCode = identifiers?.templateCode?.trim()
+  const templateVersionId = identifiers?.templateVersionId
   return {
-    templateCode: 'agreement-portrait',
+    ...(templateVersionId != null ? { templateVersionId } : {}),
+    ...(templateCode ? { templateCode } : {}),
     schemaJson: draft as unknown as Record<string, unknown>,
   }
 }

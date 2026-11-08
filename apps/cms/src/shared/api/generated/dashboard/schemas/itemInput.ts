@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type { ExpenseInput } from './expenseInput';
+import type { ItemInputTripType } from './itemInputTripType';
 
 export interface ItemInput {
   /**
@@ -14,6 +15,8 @@ export interface ItemInput {
      */
   itemType: string;
   amount: number;
+  /** 학생 교통비 이동 유형. 기존 제출 데이터에는 없을 수 있음. */
+  tripType?: ItemInputTripType;
   /**
      * @minLength 0
      * @maxLength 1000

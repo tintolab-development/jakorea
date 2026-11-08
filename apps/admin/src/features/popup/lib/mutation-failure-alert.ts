@@ -3,11 +3,10 @@
  */
 
 import { MAX_ACTIVE_POPUPS, PopupActiveLimitError } from '@/entities/popup/model/types'
-import { REQUIRED_FIELDS_INCOMPLETE_ALERT } from '@/shared/ui'
+import { mapAdminMutationAlert, REQUIRED_FIELDS_INCOMPLETE_ALERT } from '@/shared/ui'
 import {
   type AdminMutationAlert,
   isEnabledLimitError,
-  mapCommonRemoteMutationFailure,
   readApiErrorMessage,
 } from '@/shared/lib/api-error-message'
 
@@ -30,7 +29,7 @@ export function popupMutationFailureAlert(
 ): AdminMutationAlert {
   if (isPopupActiveLimit(error)) return { ...ACTIVE_LIMIT_ALERT }
 
-  const common = mapCommonRemoteMutationFailure(error)
+  const common = mapAdminMutationAlert(error)
   if (common) return common
 
   if (error instanceof Error) {

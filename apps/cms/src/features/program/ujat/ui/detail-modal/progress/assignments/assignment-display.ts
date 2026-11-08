@@ -13,6 +13,7 @@ export function isAssignmentReportSubmitted(status: UjatAssignmentReportStatus):
   return status === 'submitted' || status === 'revised' || status === 'deadline_missed'
 }
 
+/** 미제출 > 기한 미준수 > 제출 완료. 마감만 지난 미제출은 not_submitted다. */
 export function resolveAssignmentSubmissionStatus(
   row: Pick<UjatAssignmentVolunteerRow, 'plan' | 'log'>
 ): UjatAssignmentSubmissionStatusKey {
@@ -34,16 +35,11 @@ export function resolveAssignmentSubmissionStatus(
   return 'completed'
 }
 
-export function assignmentSubmissionStatusLabel(
-  key: UjatAssignmentSubmissionStatusKey
-): string {
+export function assignmentSubmissionStatusLabel(key: UjatAssignmentSubmissionStatusKey): string {
   return UJAT_ASSIGNMENT_SUBMISSION_STATUS_LABEL[key]
 }
 
-export type UjatAssignmentSubmissionStatusTone =
-  | 'completed'
-  | 'not_submitted'
-  | 'deadline_missed'
+export type UjatAssignmentSubmissionStatusTone = 'completed' | 'not_submitted' | 'deadline_missed'
 
 export const UJAT_ASSIGNMENT_SUBMISSION_STATUS_COLOR: Record<
   UjatAssignmentSubmissionStatusTone,
@@ -54,23 +50,10 @@ export const UJAT_ASSIGNMENT_SUBMISSION_STATUS_COLOR: Record<
   deadline_missed: 'var(--Status-green-main, #1E8C29)',
 } as const
 
-export const UJAT_ASSIGNMENT_SUBMISSION_STATUS_CLASSNAME: Record<
-  UjatAssignmentSubmissionStatusTone,
-  string
-> = {
-  completed: 'ujat-education-progress-assignments__status--completed',
-  not_submitted: 'ujat-education-progress-assignments__status--not-submitted',
-  deadline_missed: 'ujat-education-progress-assignments__status--deadline-missed',
-} as const
-
 export function assignmentSubmissionStatusTone(
   key: UjatAssignmentSubmissionStatusKey
 ): UjatAssignmentSubmissionStatusTone {
-  if (
-    key === 'plan_not_submitted' ||
-    key === 'log_not_submitted' ||
-    key === 'not_submitted'
-  ) {
+  if (key === 'plan_not_submitted' || key === 'log_not_submitted' || key === 'not_submitted') {
     return 'not_submitted'
   }
   if (
@@ -83,22 +66,11 @@ export function assignmentSubmissionStatusTone(
   return 'completed'
 }
 
-export function assignmentSubmissionStatusClassName(
-  key: UjatAssignmentSubmissionStatusKey
-): string {
-  return UJAT_ASSIGNMENT_SUBMISSION_STATUS_CLASSNAME[assignmentSubmissionStatusTone(key)]
-}
-
-export function assignmentSubmissionStatusColor(
-  key: UjatAssignmentSubmissionStatusKey
-): string {
+export function assignmentSubmissionStatusColor(key: UjatAssignmentSubmissionStatusKey): string {
   return UJAT_ASSIGNMENT_SUBMISSION_STATUS_COLOR[assignmentSubmissionStatusTone(key)]
 }
 
-function remarkForReport(
-  reportLabel: string,
-  report: UjatAssignmentReportState
-): string | null {
+function remarkForReport(reportLabel: string, report: UjatAssignmentReportState): string | null {
   if (report.status === 'deadline_missed' && report.submittedDateLabel) {
     return `${reportLabel} 기한 미준수 (${report.submittedDateLabel})`
   }

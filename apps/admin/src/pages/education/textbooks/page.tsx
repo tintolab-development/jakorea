@@ -4,7 +4,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import type { Dayjs } from 'dayjs'
-import { Image, Switch } from 'antd'
+import { Switch } from 'antd'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import type {
@@ -469,11 +469,10 @@ export function EducationTextbooksPage() {
           <div className="education-textbooks-page__thumb-cell">
             <div className="education-textbooks-page__thumb-wrap">
               {row.thumbnailUrl ? (
-                <Image
+                <img
                   className="education-textbooks-page__thumb"
                   src={row.thumbnailUrl}
                   alt=""
-                  preview={false}
                 />
               ) : (
                 <span className="education-textbooks-page__thumb-empty">-</span>
@@ -486,7 +485,7 @@ export function EducationTextbooksPage() {
         title: '교재명',
         dataIndex: 'title',
         key: 'title',
-        width: TEXTBOOK_COL.title,
+        minWidth: TEXTBOOK_COL.title,
         ellipsis: true,
         align: 'center',
         className: 'education-textbooks-page__title-col',
@@ -497,7 +496,7 @@ export function EducationTextbooksPage() {
       {
         title: '사업 분야',
         key: 'businessField',
-        width: TEXTBOOK_COL.field,
+        minWidth: TEXTBOOK_COL.field,
         align: 'center',
         ellipsis: true,
         className: 'education-textbooks-page__field-col',
@@ -508,7 +507,7 @@ export function EducationTextbooksPage() {
       {
         title: '교육 대상',
         key: 'educationTargets',
-        width: TEXTBOOK_COL.target,
+        minWidth: TEXTBOOK_COL.target,
         align: 'center',
         ellipsis: true,
         className: 'education-textbooks-page__target-col',
@@ -523,7 +522,7 @@ export function EducationTextbooksPage() {
         title: '교육 효과',
         dataIndex: 'educationEffect',
         key: 'educationEffect',
-        width: TEXTBOOK_COL.effect,
+        minWidth: TEXTBOOK_COL.effect,
         ellipsis: true,
         align: 'center',
         className: 'education-textbooks-page__effect-col',
@@ -535,7 +534,7 @@ export function EducationTextbooksPage() {
         title: '등록일시',
         dataIndex: 'createdAt',
         key: 'createdAt',
-        width: TEXTBOOK_COL.date,
+        minWidth: TEXTBOOK_COL.date,
         align: 'center',
         className: 'education-textbooks-page__date-col',
         onHeaderCell: () => fluidCell(TEXTBOOK_COL.date),
@@ -669,7 +668,7 @@ export function EducationTextbooksPage() {
               type="button"
               onClick={() => setTargetsOpen(true)}
             >
-              교육 대상 설정
+              교육 대상 관리
             </CmsButton>
             <CmsButton variant="primary" size="h40" type="button" onClick={openCreate}>
               교재 등록

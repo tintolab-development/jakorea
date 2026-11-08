@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import axios from 'axios'
 import { useQueryClient } from '@tanstack/react-query'
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
@@ -43,8 +43,10 @@ import {
 import { useIndividualApplicantTextbookOptions } from '@/features/textbook/hooks/use-individual-applicant-textbook-options'
 import {
   fetchOrganizationApplicationDetailRemote,
+  unmaskOrganizationApplicationPrivacyRemote,
   updateOrganizationApplicationRemote,
 } from '@/features/program/general/api/applications-api-client'
+import { buildOrganizationApplicationTeacherContactPatch } from '@/features/program/general/lib/organization-application-teacher-contact-patch'
 import {
   mapOrganizationApplicationDetailToApplicantSchoolRow,
   toRequestedEducationFormatApiValue,
@@ -93,6 +95,7 @@ export function useApplicantInstitutionDetailEdit({
   const [isSaving, setIsSaving] = useState(false)
   const [draft, setDraft] = useState<ApplicantInstitutionEditDraft | null>(null)
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
+  const editBaselineRef = useRef<ApplicantInstitutionEditDraft | null>(null)
 
   const applicantEducationGrade = useMemo(() => {
     if (isEditing && draft?.educationGrade) {
@@ -110,6 +113,7 @@ export function useApplicantInstitutionDetailEdit({
     setIsEditing(false)
     setDraft(null)
     setValidationErrors({})
+    editBaselineRef.current = null
   }, [])
 
   /* eslint-disable react-hooks/set-state-in-effect -- institution 변경 시 편집 draft 초기화 */
@@ -197,9 +201,10 @@ export function useApplicantInstitutionDetailEdit({
   const canApplyCombinedClass =
     isCombinedClassProgramEligibleFlag && !isCombinedClassApplyRadioDisabled
 
-  const enterEdit = useCallback(() => {
-    if (!institution) return
-    let nextDraft = rowToEditDraft(institution)
+  const enterEdit = useCallback((institutionOverride?: ApplicantSchoolRow) => {
+    const source = institutionOverride ?? institution
+    if (!source) return
+    let nextDraft = rowToEditDraft(source)
     if (!isCombinedClassProgramEligibleFlag) {
       nextDraft = {
         ...nextDraft,
@@ -208,6 +213,7 @@ export function useApplicantInstitutionDetailEdit({
       }
     }
     setDraft(nextDraft)
+    editBaselineRef.current = nextDraft
     setValidationErrors({})
     setIsEditing(true)
   }, [institution, isCombinedClassProgramEligibleFlag])
@@ -291,7 +297,7 @@ export function useApplicantInstitutionDetailEdit({
       setValidationErrors({ form: '저장할 수 없습니다. 입력값을 확인해 주세요.' })
       return false
     }
-    const baselineDraft = rowToEditDraft(institution)
+    const baselineDraft = editBaselineRef.current ?? rowToEditDraft(institution)
 
     setIsSaving(true)
     try {
@@ -348,11 +354,7 @@ export function useApplicantInstitutionDetailEdit({
             teacherMemberId != null && Number.isFinite(teacherMemberId)
               ? teacherMemberId
               : institution.teacherMemberId,
-          teacherPhone:
-            normalizedDraft.teacherMobile.trim() ||
-            normalizedDraft.teacherPhone.trim() ||
-            undefined,
-          teacherEmail: normalizedDraft.teacherEmail.trim() || undefined,
+          ...buildOrganizationApplicationTeacherContactPatch(normalizedDraft, baselineDraft),
           ...textbookPatch,
           applicationReason: normalizedDraft.applicationReason.trim() || undefined,
           otherRequests: normalizedDraft.otherRequests.trim() || undefined,
@@ -367,10 +369,32 @@ export function useApplicantInstitutionDetailEdit({
             : undefined,
           parkingInfo: normalizedDraft.parkingInfo.trim() || undefined,
         })
-        // PATCH 응답/목록 캐시가 아니라 상세 GET을 저장 후 canonical source로 사용한다.
+        // PATCH 응답은 마스킹되므로 전화 입력칸을 응답값으로 덮지 않고 GET + 원문 unmask를 쓴다.
         const response = await fetchOrganizationApplicationDetailRemote(institution.id)
+        const programIdNumber = program?.id != null ? Number(program.id) : NaN
+        let unmaskedContact: {
+          teacherTel?: string | null
+          teacherPhone?: string | null
+          teacherEmail?: string | null
+        } | null = null
+        try {
+          unmaskedContact = await unmaskOrganizationApplicationPrivacyRemote(
+            institution.id,
+            '신청 정보 수정',
+            Number.isFinite(programIdNumber) ? programIdNumber : undefined
+          )
+        } catch {
+          unmaskedContact = null
+        }
         const remotelyUpdatedInstitution = mapOrganizationApplicationDetailToApplicantSchoolRow(
-          response,
+          unmaskedContact
+            ? {
+                ...response,
+                teacherTel: unmaskedContact.teacherTel ?? undefined,
+                teacherPhone: unmaskedContact.teacherPhone ?? undefined,
+                teacherEmail: unmaskedContact.teacherEmail ?? undefined,
+              }
+            : response,
           institution
         )
         for (const queryKey of organizationApplicationDetailCacheKeys(

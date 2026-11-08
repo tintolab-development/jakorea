@@ -6,6 +6,7 @@ import { useCallback, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { formatDateTimeSecondsDot } from '@/shared/utils/date'
 import { Spin } from 'antd'
+import { AdminDetailBackLink, AdminDetailMoreMenu } from '@jakorea/admin-ui/post-detail'
 import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
 import { postsQueryKeys } from '@/features/posts/api/posts-query-keys'
 import { useFaqDetailQuery } from '@/features/posts/hooks/use-faq-detail-query'
@@ -16,7 +17,6 @@ import { resolvePostsDeleteConfirmCopy } from '@/features/posts/lib/posts-delete
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
 
 const FAQ_SINGLE_DELETE_COPY = resolvePostsDeleteConfirmCopy('faq', 'single')
-import { RichTextViewer } from '@/shared/rich-text'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { ActionResultModal, CmsButton, showDeleteCompletedAlert } from '@/shared/ui'
@@ -128,6 +128,7 @@ export function AdminFaqDetailPage() {
         onClose={() => setActionResultOpen(false)}
       />
       <div className="admin-faq-detail-page__inner">
+        <AdminDetailBackLink onClick={goList} />
         <div className="admin-faq-detail-page__card">
           <div className="admin-faq-detail-page__header">
             <div className="admin-faq-detail-page__top-row">
@@ -145,6 +146,13 @@ export function AdminFaqDetailPage() {
                   <span className="admin-faq-detail-page__category">{faq.category}</span>
                 ) : null}
               </div>
+              <span className="admin-detail-top-actions">
+                <AdminDetailMoreMenu
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  disabled={!canWrite}
+                />
+              </span>
             </div>
             <h1 className="admin-faq-detail-page__title">{faq.question}</h1>
             <div className="admin-faq-detail-page__meta">
@@ -159,7 +167,8 @@ export function AdminFaqDetailPage() {
           </div>
           <hr className="admin-faq-detail-page__section-divider" />
           <div className="admin-faq-detail-page__body">
-            <RichTextViewer content={faq.answer} maxHeight="100%" />
+            {/* 답변은 일반 텍스트 — 줄바꿈 그대로 표시 */}
+            <p className="admin-faq-detail-page__answer">{faq.answer}</p>
           </div>
         </div>
         <div className="admin-faq-detail-page__actions">

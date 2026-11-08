@@ -18,6 +18,10 @@ import type {
   SurveyQuestionOptionCount,
   SurveyResultQuestionSummary,
 } from '@/features/program/shared/lib/survey-management/survey-management-types'
+import {
+  mapSatisfactionProgressStatus,
+  readSatisfactionBindingFields,
+} from '@/features/program/shared/lib/survey-management/satisfaction-binding-contract'
 
 export type ClassifiedFormBindingKind = 'poll' | 'satisfaction' | 'lecture_evaluation'
 
@@ -32,6 +36,8 @@ export type ClassifiedFormBinding = {
 const PROGRAM_SURVEY_MANAGEMENT_FORM_TYPES = new Set([
   'SURVEY',
   'SATISFACTION',
+  'SATISFACTION_SURVEY',
+  'PROGRAM_SATISFACTION',
   'LECTURE_EVALUATION',
 ])
 
@@ -69,6 +75,7 @@ type SurveyShareLinkClipboardSource = {
   shareToken?: string | null
   accessMode?: string | null
   formPath?: string | null
+  submitPath?: string | null
 }
 
 function readPublicSurveyShareToken(response: SurveyShareLinkClipboardSource): string | null {
@@ -89,10 +96,13 @@ export function resolveSurveyShareClipboardUrl(
   response: SurveyShareLinkClipboardSource,
   platformOrigin: string | null | undefined
 ): string | null {
-  if (response.accessMode?.trim().toUpperCase() !== 'PUBLIC_ANONYMOUS') return null
+  const accessMode = response.accessMode?.trim().toUpperCase()
+  if (accessMode === 'MEMBER_AUTHENTICATED') return null
   const token = readPublicSurveyShareToken(response)
+  if (!token) return null
+  if (accessMode && accessMode !== 'PUBLIC_ANONYMOUS') return null
   const origin = platformOrigin?.trim().replace(/\/$/, '')
-  if (!origin || !token) return null
+  if (!origin) return null
   return `${origin}/surveys/share/${encodeURIComponent(token)}`
 }
 
@@ -103,7 +113,12 @@ export function describeSurveyShareClipboardFailure(
 ): string {
   const subject = kind === 'satisfaction' ? '만족도조사' : '설문'
   if (response?.accessMode?.trim().toUpperCase() === 'MEMBER_AUTHENTICATED') {
-    return `회원 전용 ${subject}는 비로그인 공유 링크를 만들 수 없습니다.`
+    const memberPaths = [response.formPath, response.submitPath]
+      .map(path => path?.trim())
+      .filter((path): path is string => Boolean(path))
+    const pathHint =
+      memberPaths.length > 0 ? ` 회원 전용 경로: ${memberPaths.join(' · ')}` : ''
+    return `회원 전용 ${subject}는 비로그인 공유 링크를 만들 수 없습니다.${pathHint}`
   }
   const origin = platformOrigin?.trim()
   if (!origin) {
@@ -170,7 +185,7 @@ export function mapProgramSurveyToRegisteredSurvey(
       binding?.templateName?.trim() ||
       '설문',
     templateId: String(dto.templateId ?? binding?.templateId ?? ''),
-    status: resolveSurveyStatusFromBinding(binding),
+    status: mapSatisfactionProgressStatus(binding, resolveSurveyStatusFromBinding(binding)),
     responseCount: dto.responseCount ?? dto.submittedCount ?? binding?.submittedCount ?? 0,
     participantTotal: expectedRespondentCount ?? 0,
     expectedRespondentCount,
@@ -180,6 +195,34 @@ export function mapProgramSurveyToRegisteredSurvey(
         : dto.bindingId != null
           ? String(dto.bindingId)
           : undefined,
+    ...satisfactionSurveyMeta(binding),
+  }
+}
+
+function satisfactionSurveyMeta(
+  binding?: ProgramFormBindingResponse
+): Pick<
+  RegisteredSurvey,
+  | 'targetScope'
+  | 'targetScopeId'
+  | 'targetScopeLabel'
+  | 'displayDeadlineAt'
+  | 'resultDownloadable'
+  | 'satisfactionRunMode'
+  | 'satisfactionWindowDays'
+  | 'startAtLocked'
+> {
+  if (!binding) return {}
+  const extra = readSatisfactionBindingFields(binding)
+  return {
+    targetScope: binding.targetScope ?? null,
+    targetScopeId: binding.targetScopeId ?? null,
+    targetScopeLabel: binding.targetScopeLabel ?? null,
+    displayDeadlineAt: extra.displayDeadlineAt,
+    resultDownloadable: extra.resultDownloadable,
+    satisfactionRunMode: extra.satisfactionRunMode ?? null,
+    satisfactionWindowDays: extra.satisfactionWindowDays ?? null,
+    startAtLocked: extra.startAtLocked ?? null,
   }
 }
 
@@ -192,11 +235,12 @@ export function mapFormBindingToRegisteredSurvey(
     id: String(binding.templateVersionId ?? binding.templateId ?? binding.bindingId ?? index),
     title: binding.templateName?.trim() || binding.versionLabel?.trim() || '설문',
     templateId: String(binding.templateId ?? ''),
-    status: resolveSurveyStatusFromBinding(binding),
+    status: mapSatisfactionProgressStatus(binding, resolveSurveyStatusFromBinding(binding)),
     responseCount: binding.submittedCount ?? 0,
     participantTotal: expectedRespondentCount ?? 0,
     expectedRespondentCount,
     bindingId: binding.bindingId != null ? String(binding.bindingId) : undefined,
+    ...satisfactionSurveyMeta(binding),
   }
 }
 
@@ -217,7 +261,13 @@ export function classifyFormBindingByTemplateId(
   // 설문조사 탭은 비는데 같은 SURVEY 슬롯 재등록은 서버가 거절한다.
   const formType = normalizeProgramFormBindingType(binding.formType)
   if (formType === 'LECTURE_EVALUATION') return 'lecture_evaluation'
-  if (formType === 'SATISFACTION') return 'satisfaction'
+  if (
+    formType === 'SATISFACTION' ||
+    formType === 'SATISFACTION_SURVEY' ||
+    formType === 'PROGRAM_SATISFACTION'
+  ) {
+    return 'satisfaction'
+  }
   if (formType === 'SURVEY') return 'poll'
 
   const templateId = String(binding.templateId ?? '').trim()
@@ -267,6 +317,21 @@ export function classifyProgramFormBindings(
         survey: mapFormBindingToRegisteredSurvey(binding, index),
       }
     })
+}
+
+export function groupSatisfactionSurveysByAudience(
+  classified: readonly ClassifiedFormBinding[],
+  fallbackAudience: GeneralSatisfactionAudienceKey
+): Partial<Record<GeneralSatisfactionAudienceKey, RegisteredSurvey[]>> {
+  const grouped: Partial<Record<GeneralSatisfactionAudienceKey, RegisteredSurvey[]>> = {}
+  for (const item of classified) {
+    if (item.kind !== 'satisfaction') continue
+    const audience = item.satisfactionAudience ?? fallbackAudience
+    const list = grouped[audience] ?? []
+    list.push(item.survey)
+    grouped[audience] = list
+  }
+  return grouped
 }
 
 export function parseAnswerPreviewJson(raw: string | undefined | null): Record<string, string> {
@@ -343,7 +408,8 @@ export function mapSurveyResponseListItemToPollResponse(
   item: SurveyResponseListItemResponse,
   detail?: SurveyResponseDetailResponse | null
 ): SurveyPollRawResponse {
-  const fromDetail = mapSurveyAnswersToRecord(detail?.answers)
+  // `includeAnswers=true` 목록의 `item.answers`는 단건 상세 `answers`와 동일 — 같은 mapper로 전문을 채운다
+  const fromDetail = mapSurveyAnswersToRecord(detail?.answers ?? item.answers)
   const fromPreview = parseAnswerPreviewJson(item.answerPreviewJson)
   const answers = Object.keys(fromDetail).length > 0 ? fromDetail : fromPreview
 
@@ -358,14 +424,6 @@ export function mapSurveyResponseListItemToPollResponse(
     addressRegion: '',
     answers,
   }
-}
-
-/** preview가 전체 답(answerCount)을 담지 못하면 detail fetch가 필요 */
-export function surveyResponseNeedsDetail(item: SurveyResponseListItemResponse): boolean {
-  if (item.formResponseId == null) return false
-  const previewCount = Object.keys(parseAnswerPreviewJson(item.answerPreviewJson)).length
-  if (previewCount === 0) return true
-  return item.answerCount != null && previewCount < item.answerCount
 }
 
 type ParsedSurveySummaryJson = {

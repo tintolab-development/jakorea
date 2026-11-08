@@ -14,9 +14,7 @@ import type {
 import type { CareerTalentApplicationDetailResponse } from '@/shared/api/generated/careers/schemas/careerTalentApplicationDetailResponse'
 import type { CareerTalentApplicationDetailResponseEducationLevel } from '@/shared/api/generated/careers/schemas/careerTalentApplicationDetailResponseEducationLevel'
 import type { CareerTalentApplicationListItem } from '@/shared/api/generated/careers/schemas/careerTalentApplicationListItem'
-import type { CareerTalentApplicationListItemCareerType } from '@/shared/api/generated/careers/schemas/careerTalentApplicationListItemCareerType'
 import type { CareerTalentApplicationListItemJobInterest } from '@/shared/api/generated/careers/schemas/careerTalentApplicationListItemJobInterest'
-import type { CareerTalentApplicationListItemStatus } from '@/shared/api/generated/careers/schemas/careerTalentApplicationListItemStatus'
 import type { List15Params } from '@/shared/api/generated/careers/schemas/list15Params'
 import { List15CareerType } from '@/shared/api/generated/careers/schemas/list15CareerType'
 import { List15JobInterest } from '@/shared/api/generated/careers/schemas/list15JobInterest'
@@ -25,6 +23,18 @@ import { List15Status } from '@/shared/api/generated/careers/schemas/list15Statu
 import { ADMIN_LIST_PAGE_SIZE } from '@/shared/lib/admin-infinite-list'
 
 export const APPLICANT_LIST_PAGE_SIZE = ADMIN_LIST_PAGE_SIZE
+
+/** API 문자열: null/undefined/빈·공백만 → null. `""` 로 바꾸지 않는다. */
+function mapApiNullableString(value: string | null | undefined): string | null {
+  if (value == null) return null
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : null
+}
+
+/** @deprecated 이름만 구분; 동작은 mapApiNullableString 과 동일 */
+function mapApiPiiString(value: string | null | undefined): string | null {
+  return mapApiNullableString(value)
+}
 
 const JOB_INTEREST: Record<CareerTalentApplicationListItemJobInterest, RecruitJobInterest> = {
   MANAGEMENT_PLANNING: 'managementPlanning',
@@ -44,17 +54,13 @@ const JOB_INTEREST_TO_API: Record<RecruitJobInterest, List15JobInterest> = {
   other: List15JobInterest.OTHER,
 }
 
-function mapStatus(
-  status: CareerTalentApplicationListItemStatus | undefined,
-): RecruitApplicantStatus | null {
+function mapStatus(status: string | undefined): RecruitApplicantStatus | null {
   if (status === 'PENDING') return 'pending'
   if (status === 'CONFIRMED') return 'confirmed'
   return null
 }
 
-function mapCareer(
-  careerType: CareerTalentApplicationListItemCareerType | undefined,
-): RecruitCareerType | null {
+function mapCareer(careerType: string | undefined): RecruitCareerType | null {
   if (careerType === 'NEWBIE') return 'newbie'
   if (careerType === 'EXPERIENCED') return 'experienced'
   return null
@@ -72,9 +78,9 @@ export function mapCareerTalentApplicationListItem(
     id: String(row.id),
     status,
     jobInterest,
-    applicantName: row.name ?? '',
-    phone: row.phone ?? '',
-    email: row.email ?? '',
+    applicantName: mapApiPiiString(row.name),
+    phone: mapApiPiiString(row.phone),
+    email: mapApiPiiString(row.email),
     careerType,
     appliedAt: row.appliedAt ?? '',
     confirmedAt: row.confirmedAt ?? null,
@@ -110,7 +116,7 @@ export function toTalentApplicationListParams(
 }
 
 const EDUCATION_LEVEL: Record<
-  CareerTalentApplicationDetailResponseEducationLevel,
+  Exclude<CareerTalentApplicationDetailResponseEducationLevel, null>,
   RecruitEducationLevel
 > = {
   HIGH_SCHOOL: 'highSchool',
@@ -121,56 +127,42 @@ const EDUCATION_LEVEL: Record<
   OTHER: 'other',
 }
 
-export function detailFromListItem(row: RecruitApplicant): RecruitApplicantDetail {
-  return {
-    ...row,
-    addressRoad: '',
-    addressDetail: '',
-    educationLevel: null,
-    schoolName: '',
-    major: '',
-    educationInfo: '',
-    careerInfo: '',
-    privacyAgreed: false,
-    attachmentFileName: null,
-    confirmedByName: null,
-  }
-}
-
 export function mapCareerTalentApplicationDetail(
   row: CareerTalentApplicationDetailResponse,
 ): RecruitApplicantDetail | null {
-  const base = mapCareerTalentApplicationListItem({
-    id: row.id,
-    status: row.status,
-    jobInterest: row.jobInterest,
-    careerType: row.careerType,
-    name: row.name,
-    phone: row.phone,
-    email: row.email,
-    appliedAt: row.appliedAt,
-    confirmedAt: row.confirmedAt ?? undefined,
-    version: row.version,
-  })
-  if (!base) return null
+  if (row.id == null) return null
+  const status = mapStatus(row.status)
+  const jobInterest = row.jobInterest
+    ? JOB_INTEREST[row.jobInterest as CareerTalentApplicationListItemJobInterest]
+    : undefined
+  const careerType = mapCareer(row.careerType)
+  if (!status || !jobInterest || !careerType) return null
   const educationLevel = row.educationLevel ? EDUCATION_LEVEL[row.educationLevel] : undefined
-  const firstAttachment = row.attachments?.find(
-    item => item.assetId != null || Boolean(item.originalName?.trim()),
+  const attachmentFileName = mapApiNullableString(row.attachmentOriginalName)
+  const firstAttachment = (row.attachments ?? []).find(
+    item => item.assetId != null && item.assetId > 0,
   )
-  const attachmentFileName =
-    row.attachmentOriginalName?.trim() || firstAttachment?.originalName?.trim() || null
   return {
-    ...base,
-    addressRoad: row.addressRoad?.trim() ?? '',
-    addressDetail: row.addressDetail?.trim() ?? '',
+    id: String(row.id),
+    status,
+    jobInterest,
+    applicantName: mapApiPiiString(row.name),
+    phone: mapApiPiiString(row.phone),
+    email: mapApiPiiString(row.email),
+    careerType,
+    appliedAt: row.appliedAt ?? '',
+    confirmedAt: row.confirmedAt ?? null,
+    version: row.version ?? 0,
+    addressRoad: mapApiPiiString(row.addressRoad),
+    addressDetail: mapApiPiiString(row.addressDetail),
     educationLevel: educationLevel ?? null,
-    schoolName: row.schoolName?.trim() ?? '',
-    major: row.major?.trim() ?? '',
-    educationInfo: row.educationInfo ?? '',
-    careerInfo: row.careerInfo ?? '',
+    schoolName: mapApiNullableString(row.schoolName),
+    major: mapApiNullableString(row.major),
+    educationInfo: mapApiNullableString(row.educationInfo),
+    careerInfo: mapApiNullableString(row.careerInfo),
     privacyAgreed: row.privacyAgreed === true,
     attachmentFileName,
-    attachmentAssetId: firstAttachment?.assetId,
+    attachmentAssetId: attachmentFileName ? firstAttachment?.assetId : undefined,
     confirmedByName: row.confirmedByName?.trim() ? row.confirmedByName.trim() : null,
   }
 }

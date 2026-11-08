@@ -57,13 +57,6 @@
   margin-top: 4px;
 }
 
-.recruit-guide-interview-modal__table .ant-table-thead > tr > th.recruit-guide-interview-modal__year,
-.recruit-guide-interview-modal__table .ant-table-tbody > tr > td.recruit-guide-interview-modal__year {
-  width: 160px !important;
-  min-width: 160px !important;
-  max-width: 160px !important;
-}
-
 .recruit-guide-interview-modal__table .ant-table-tbody > tr > td,
 .recruit-guide-interview-modal__table .ant-table-tbody > tr:hover > td,
 .recruit-guide-interview-modal__table

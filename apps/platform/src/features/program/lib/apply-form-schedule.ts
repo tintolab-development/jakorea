@@ -34,7 +34,12 @@ import {
 } from '../../../shared/lib/education-schedule-name.ts'
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
+import {
+  isApplicationSexOffenseInquiryParagraphId,
+  isApplicationSexOffenseSubmissionParagraphId,
+} from './apply-form-paragraph-ids.ts'
 import type { WritingFormDraft } from '@jakorea/form-schema/writing-form'
+import { toSeoulDateOnly, toSeoulDisplayParts } from '../../../shared/lib/format-display-date.ts'
 import { readApplyScheduleMetaFromProgram } from './apply-form-schedule-meta.ts'
 import type { ApplyPreferredScheduleBlock } from '../ui/apply-preferred-schedule/apply-preferred-schedule'
 import type {
@@ -593,6 +598,163 @@ export const PREFERRED_SCHEDULE_OUTSIDE_EDUCATION_RANGE_MESSAGE =
 export const PREFERRED_SCHEDULE_EDUCATION_RANGE_UNCONFIGURED_MESSAGE =
   '신청 가능한 교육 일정이 설정되지 않았습니다. 관리자에게 확인해 주세요.'
 
+/** 기간 지정 기관 신청 — 허용 기간이 없어 날짜 입력을 닫았을 때 단락 안 안내 (제출 전 노출) */
+export const PREFERRED_SCHEDULE_EDUCATION_RANGE_UNCONFIGURED_NOTICE =
+  '신청 가능한 교육 기간이 아직 설정되지 않았습니다. 담당자에게 문의해 주세요.'
+
+export const PAST_SCHEDULE_NOT_SELECTABLE_MESSAGE = '이미 지난 일정은 선택할 수 없습니다.'
+
+/** Asia/Seoul 달력 `YYYY-MM-DD`. */
+export function seoulTodayIsoDate(now: Date = new Date()): string {
+  return toSeoulDateOnly(now) ?? ''
+}
+
+export function clampIsoMinDateToToday(minDate: string | null | undefined, now: Date = new Date()): string {
+  const today = seoulTodayIsoDate(now)
+  const min = readIsoDateOrNull(minDate)
+  if (min == null) return today
+  return min > today ? min : today
+}
+
+export function isIsoDateBeforeSeoulToday(date: string | null | undefined, now: Date = new Date()): boolean {
+  const iso = readIsoDateOrNull(date)
+  if (!iso) return false
+  const today = seoulTodayIsoDate(now)
+  return Boolean(today) && iso < today
+}
+
+/** 라벨(`26년 11월 5일`) 또는 ISO에서 첫 달력일을 읽는다. 없으면 null. */
+export function parseScheduleChoiceIsoDate(label: string | null | undefined): string | null {
+  if (label == null) return null
+  const trimmed = label.trim()
+  if (!trimmed) return null
+  const iso = readIsoDateOrNull(trimmed)
+  if (iso) return iso
+  const dates = extractEducationScheduleCalendarDates([trimmed])
+  return [...dates][0] ?? null
+}
+
+export function isScheduleChoicePast(label: string | null | undefined, now: Date = new Date()): boolean {
+  const date = parseScheduleChoiceIsoDate(label)
+  if (date == null) return false
+  return isIsoDateBeforeSeoulToday(date, now)
+}
+
+/**
+ * 당일 슬롯: 시작 시각(`HH:mm`)이 서울 현재 시각보다 이전이면 지남.
+ * `00:00`·없음은 날짜만 본다.
+ */
+export function isSeoulScheduleStartPassed(
+  date: string | null | undefined,
+  startHHmm: string | null | undefined,
+  now: Date = new Date(),
+): boolean {
+  const iso = readIsoDateOrNull(date)
+  if (!iso) return false
+  if (isIsoDateBeforeSeoulToday(iso, now)) return true
+  if (iso !== seoulTodayIsoDate(now)) return false
+  const match = startHHmm?.trim().match(/^(\d{1,2}):(\d{2})$/)
+  if (!match) return false
+  const hour = Number(match[1])
+  const minute = Number(match[2])
+  if (!Number.isInteger(hour) || !Number.isInteger(minute)) return false
+  if (hour === 0 && minute === 0) return false
+  const parts = toSeoulDisplayParts(now)
+  if (!parts?.hasTime) return false
+  const nowMinutes = parts.hour * 60 + parts.minute
+  return nowMinutes >= hour * 60 + minute
+}
+
+export function clampEducationScheduleApplyConstraint(
+  constraint: EducationScheduleApplyConstraint,
+  now: Date = new Date(),
+): EducationScheduleApplyConstraint {
+  const today = seoulTodayIsoDate(now)
+  const minDate = clampIsoMinDateToToday(constraint.minDate, now)
+  if (constraint.enabledDates == null) {
+    return { ...constraint, minDate }
+  }
+  const enabledDates = new Set([...constraint.enabledDates].filter(date => !today || date >= today))
+  const sorted = [...enabledDates].sort()
+  return {
+    ...constraint,
+    minDate: sorted[0] ?? minDate,
+    enabledDates,
+  }
+}
+
+export function hasPreferredScheduleDateBeforeSeoulToday(
+  blocks: readonly Pick<ApplyPreferredScheduleBlock, 'date'>[],
+  now: Date = new Date(),
+): boolean {
+  return blocks.some(block => isIsoDateBeforeSeoulToday(block.date, now))
+}
+
+export type FixedScheduleChoicePastInput = {
+  label?: string | null
+  /** runtime `startAt`(ISO date-time). 있으면 라벨 대신 쓴다. */
+  startAt?: string | null
+  date?: string | null
+}
+
+const SCHEDULE_LABEL_START_TIME_RE = /(\d{1,2}):(\d{2})/
+
+/** 라벨(`26년 11월 5일(목) 9:30 ~ 11:30`)의 첫 `H:mm`을 시작 시각으로 읽는다. 없으면 null. */
+export function parseScheduleChoiceStartTime(label: string | null | undefined): string | null {
+  const match = label?.match(SCHEDULE_LABEL_START_TIME_RE)
+  if (!match) return null
+  return `${match[1]!.padStart(2, '0')}:${match[2]}`
+}
+
+/**
+ * 일반 기관 고정 일정 선택지의 지난 슬롯 판정.
+ * runtime `startAt`이 있으면 서울 기준 날짜·시작 시각으로, 없으면 라벨의 날짜·첫 시각으로 본다.
+ * 당일이라도 시작 시각이 지났으면 지난 슬롯이다(`isSeoulScheduleStartPassed`).
+ */
+export function isFixedScheduleChoicePast(
+  item: FixedScheduleChoicePastInput,
+  now: Date = new Date(),
+): boolean {
+  const startAtDate = toSeoulDateOnly(item.startAt ?? null)
+  if (startAtDate) {
+    const parts = toSeoulDisplayParts(item.startAt ?? null)
+    const startHHmm =
+      parts?.hasTime
+        ? `${String(parts.hour).padStart(2, '0')}:${String(parts.minute).padStart(2, '0')}`
+        : null
+    return isSeoulScheduleStartPassed(startAtDate, startHHmm, now)
+  }
+  const date = readIsoDateOrNull(item.date) ?? parseScheduleChoiceIsoDate(item.label)
+  return isSeoulScheduleStartPassed(date, parseScheduleChoiceStartTime(item.label), now)
+}
+
+/** 일반 기관 고정 일정 제출 검증 — 선택한 id 중 지난 슬롯이 있는지 (`isFixedScheduleChoicePast`). */
+export function hasSelectedFixedScheduleChoicesPast(
+  selectedIds: readonly string[],
+  items: readonly (FixedScheduleChoicePastInput & { id: string })[],
+  now: Date = new Date(),
+): boolean {
+  const byId = new Map(items.map(item => [item.id, item]))
+  return selectedIds.some(id => {
+    const item = byId.get(id)
+    return item != null && isFixedScheduleChoicePast(item, now)
+  })
+}
+
+export function hasSelectedScheduleIdsBeforeSeoulToday(
+  selectedIds: readonly string[],
+  items: readonly { id: string; date?: string | null; label?: string | null }[],
+  now: Date = new Date(),
+): boolean {
+  const byId = new Map(items.map(item => [item.id, item]))
+  return selectedIds.some(id => {
+    const item = byId.get(id)
+    if (!item) return false
+    const date = readIsoDateOrNull(item.date) ?? parseScheduleChoiceIsoDate(item.label ?? '')
+    return isIsoDateBeforeSeoulToday(date, now)
+  })
+}
+
 function readEducationScheduleRangeBounds(
   range: { start?: string | null; end?: string | null } | null | undefined
 ): ApplyScheduleDateBounds {
@@ -780,6 +942,23 @@ export const TRAINED_TEACHERS_REQUIRED_CONSENT_IDS = [
   'program-application-trained-teachers-seed-third-party',
 ] as const
 
+const FORM_REQUIRED_CONSENT_ID_MARKERS = ['seed-personal-info', 'seed-third-party'] as const
+
+function isAlwaysRequiredApplicationConsentParagraphId(id: string): boolean {
+  return FORM_REQUIRED_CONSENT_ID_MARKERS.some(marker => id.includes(marker))
+}
+
+function isRequiredBottomConsentParagraph(paragraph: WritingFormDraft['paragraphs'][number]): boolean {
+  if (isApplicationSexOffenseSubmissionParagraphId(paragraph.id)) return false
+  if (isApplicationSexOffenseInquiryParagraphId(paragraph.id)) return false
+  if (!('showBottomConsent' in paragraph) || paragraph.showBottomConsent !== true) return false
+  if (isAlwaysRequiredApplicationConsentParagraphId(paragraph.id)) return true
+  return (
+    ('answerRequired' in paragraph && paragraph.answerRequired === true) ||
+    ('requiredMark' in paragraph && paragraph.requiredMark === true)
+  )
+}
+
 export function findMissingRequiredBottomConsentId(
   draft: WritingFormDraft | null | undefined
 ): string | null {
@@ -801,12 +980,8 @@ export function findMissingRequiredBottomConsentId(
   }
 
   const requiredConsent = draft.paragraphs.find(paragraph => {
-    if (!('showBottomConsent' in paragraph) || paragraph.showBottomConsent !== true) return false
-    const required =
-      ('answerRequired' in paragraph && paragraph.answerRequired === true) ||
-      ('requiredMark' in paragraph && paragraph.requiredMark === true)
-    if (!required) return false
-    return paragraph.bottomConsent !== 'agree'
+    if (!isRequiredBottomConsentParagraph(paragraph)) return false
+    return !('bottomConsent' in paragraph) || paragraph.bottomConsent !== 'agree'
   })
   return requiredConsent?.id ?? null
 }

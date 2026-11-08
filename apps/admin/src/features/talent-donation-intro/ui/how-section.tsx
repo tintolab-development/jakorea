@@ -15,6 +15,17 @@ import './section-shared.css'
 
 type DraftMap = Record<number, { title: string; description: string }>
 
+function requiredColumnTitle(label: string) {
+  return (
+    <span className="talent-intro-how-table__th-label">
+      {label}
+      <span className="talent-intro-how-table__required" aria-hidden>
+        *
+      </span>
+    </span>
+  )
+}
+
 function buildDrafts(items: HowItem[]): DraftMap {
   return Object.fromEntries(
     items.map(item => [item.id, { title: item.title, description: item.description }])
@@ -105,52 +116,64 @@ export function HowSectionCard({ items }: Props) {
         render: (_value, record) => record.id,
       },
       {
-        title: '타이틀',
+        title: isEditing ? requiredColumnTitle('타이틀') : '타이틀',
         key: 'title',
-        width: 240,
+        width: 360,
         align: 'center',
         className: 'talent-intro-col--title',
         render: (_value, record) => {
           const value = drafts[record.id]?.title ?? record.title
-          if (isEditing) {
-            return (
-              <CmsTextArea
-                className="cms-textarea--fixed-rows"
-                inputSize="medium"
-                width="100%"
-                rows={2}
-                value={value}
-                onChange={e => handleDraftChange(record.id, { title: e.target.value })}
-                placeholder="타이틀을 입력해 주세요"
-                aria-label={`${record.id}번 타이틀`}
-              />
-            )
-          }
-          return <span className="talent-intro-preline">{value || '-'}</span>
+          return (
+            <CmsTextArea
+              className={[
+                'cms-textarea--fixed-rows',
+                isEditing ? 'talent-intro-how-field--edit' : 'talent-intro-how-field--readonly',
+              ].join(' ')}
+              inputSize="small"
+              width="100%"
+              // 조회·수정 모두 내용 줄 수만큼(hug) — 행 높이가 텍스트 높이를 따른다. 리사이즈 핸들 없음(fixed-rows)
+              autoSize={{ minRows: 1 }}
+              value={value}
+              readOnly={!isEditing}
+              tabIndex={isEditing ? 0 : -1}
+              onChange={e => {
+                if (!isEditing) return
+                handleDraftChange(record.id, { title: e.target.value })
+              }}
+              placeholder="타이틀을 입력해 주세요"
+              aria-label={`${record.id}번 타이틀`}
+            />
+          )
         },
       },
       {
-        title: '설명 텍스트',
+        title: isEditing ? requiredColumnTitle('설명 텍스트') : '설명 텍스트',
         key: 'description',
         align: 'center',
         className: 'talent-intro-col--desc',
         render: (_value, record) => {
           const value = drafts[record.id]?.description ?? record.description
-          if (isEditing) {
-            return (
-              <CmsTextArea
-                className="cms-textarea--fixed-rows"
-                inputSize="medium"
-                width="100%"
-                rows={3}
-                value={value}
-                onChange={e => handleDraftChange(record.id, { description: e.target.value })}
-                placeholder="설명 텍스트를 입력해 주세요"
-                aria-label={`${record.id}번 설명 텍스트`}
-              />
-            )
-          }
-          return <span className="talent-intro-preline">{value || '-'}</span>
+          return (
+            <CmsTextArea
+              className={[
+                'cms-textarea--fixed-rows',
+                isEditing ? 'talent-intro-how-field--edit' : 'talent-intro-how-field--readonly',
+              ].join(' ')}
+              inputSize="small"
+              width="100%"
+              // 조회·수정 모두 내용 줄 수만큼(hug) — 행 높이가 텍스트 높이를 따른다. 리사이즈 핸들 없음(fixed-rows)
+              autoSize={{ minRows: 1 }}
+              value={value}
+              readOnly={!isEditing}
+              tabIndex={isEditing ? 0 : -1}
+              onChange={e => {
+                if (!isEditing) return
+                handleDraftChange(record.id, { description: e.target.value })
+              }}
+              placeholder="설명 텍스트를 입력해 주세요"
+              aria-label={`${record.id}번 설명 텍스트`}
+            />
+          )
         },
       },
     ],
@@ -196,7 +219,12 @@ export function HowSectionCard({ items }: Props) {
       </div>
 
       <CmsDataTable<HowItem>
-        className="cms-data-table cms-data-table--skip-auto-no-col talent-intro-how-table"
+        className={[
+          'cms-data-table cms-data-table--skip-auto-no-col talent-intro-how-table',
+          isEditing ? 'talent-intro-how-table--editing' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
         columns={columns}
         dataSource={items}
         pagination={false}

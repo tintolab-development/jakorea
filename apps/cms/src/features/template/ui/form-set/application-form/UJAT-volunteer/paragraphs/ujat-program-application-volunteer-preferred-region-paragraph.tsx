@@ -8,24 +8,30 @@ import '@/features/template/ui/paragraph/single-item/multiple-choice.css'
 
 /** UJAT 프로그램 봉사자 신청 폼 — 희망 교육 활동 지역 (객관식형 가로 라디오) */
 export function UjatProgramApplicationVolunteerPreferredRegionParagraph() {
-  const { labels: regionOptions } = useUjatEducationRegions()
+  const { regions } = useUjatEducationRegions()
   const [region, setRegion] = useUjatApplicationVolunteerOverlayKv<string>(
     UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.preferredRegion,
     ''
   )
+  const selectedRegion = regions.find(
+    option =>
+      option.key === region ||
+      option.key.toLowerCase() === region.trim().toLowerCase() ||
+      option.label === region
+  )?.key
 
   return (
     <div className="multiple-choice-body">
       <CmsRadioGroup
         className="multiple-choice-radio-group multiple-choice-radio-group--inline-wrap"
         size="medium"
-        value={region || undefined}
+        value={selectedRegion || undefined}
         onChange={e => setRegion(e.target.value)}
       >
-        {regionOptions.map(option => (
-          <div key={option} role="presentation" className="multiple-choice-row">
-            <CmsRadio value={option} />
-            <span className="multiple-choice-row__label">{option}</span>
+        {regions.map(option => (
+          <div key={option.key} role="presentation" className="multiple-choice-row">
+            <CmsRadio value={option.key} />
+            <span className="multiple-choice-row__label">{option.label}</span>
           </div>
         ))}
       </CmsRadioGroup>

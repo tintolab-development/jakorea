@@ -44,8 +44,8 @@ exports[`UJAT typed 날짜 쓰기 parity (part6) > 레거시 배열 날짜가 �
                   "2027-05-07",
                 ],
                 "exclusion": {
+                  "excludeHoliday": true,
                   "excludeNone": false,
-                  "excludePublicHoliday": true,
                   "excludeSaturday": true,
                   "excludeSunday": true,
                 },
@@ -110,8 +110,8 @@ exports[`UJAT typed 날짜 쓰기 parity (part6) > 레거시 배열 날짜가 �
                 "endDate": "2027-11-19",
                 "excludedDates": [],
                 "exclusion": {
+                  "excludeHoliday": false,
                   "excludeNone": true,
-                  "excludePublicHoliday": false,
                   "excludeSaturday": false,
                   "excludeSunday": false,
                 },

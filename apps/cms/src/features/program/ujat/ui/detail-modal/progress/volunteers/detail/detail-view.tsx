@@ -451,7 +451,7 @@ export function UjatEducationProgressVolunteerDetailView({
       if (!success) {
         showAlert({
           title: '안내',
-          content: '수료증/참여인증서 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+          content: '수료증/참가인증서 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.',
         })
       }
     },
@@ -490,7 +490,7 @@ export function UjatEducationProgressVolunteerDetailView({
             title={certificateProgressBlockReason ?? undefined}
             onClick={handleStudentCertificateIssueClick}
           >
-            수료증/참여인증서 발급
+            수료증/참가인증서 발급
           </FilterTableToolbarButton>
         </>
       ) : null}

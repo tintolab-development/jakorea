@@ -1,3 +1,8 @@
+import {
+  composeSatisfactionSurveyDisplayTitle,
+  formatSatisfactionPerScheduleDisplayName,
+  hasSatisfactionScheduleDisplayParts,
+} from '../../../../../shared/lib/education-schedule-name.ts'
 import { toSeoulDateOnly } from '../../../../../shared/lib/format-display-date.ts'
 import type {
   PortalAvailableProgramForm,
@@ -31,6 +36,49 @@ export function isPortalBoundFormVersionUsable(
   return (versionStatus ?? '').trim().toUpperCase() !== 'DRAFT'
 }
 
+function positivePreferenceRank(value: unknown): number | undefined {
+  const parsed =
+    typeof value === 'number'
+      ? value
+      : typeof value === 'string' && value.trim().length > 0
+        ? Number(value)
+        : Number.NaN
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : undefined
+}
+
+function resolveSatisfactionListTitle(item: {
+  formType?: string
+  title?: string | null
+  templateName?: string | null
+  targetScope?: string | null
+  targetScopeLabel?: string | null
+  sessionNo?: number | null
+  preferenceRank?: number | null
+  scheduleStartAt?: string | null
+  startAt?: string | null
+}): string {
+  if (!isPortalSatisfactionFormType(item.formType)) {
+    return item.title?.trim() || item.templateName?.trim() || '설문'
+  }
+  const scopeLabel = item.targetScopeLabel?.trim()
+  const preferenceRank = positivePreferenceRank(item.preferenceRank)
+  if (scopeLabel && /^\d+지망$/u.test(scopeLabel)) return scopeLabel
+  if (preferenceRank != null) return `${preferenceRank}지망`
+  const formName = item.templateName?.trim() || item.title?.trim() || '만족도조사'
+  if (!isPortalScheduleTargetScope(item.targetScope ?? undefined)) return formName
+  const scheduleInput = {
+    scheduleName: item.targetScopeLabel,
+    sessionNo: item.sessionNo,
+    startAt: item.scheduleStartAt ?? item.startAt,
+  }
+  if (!hasSatisfactionScheduleDisplayParts(scheduleInput)) return formName
+  return composeSatisfactionSurveyDisplayTitle({
+    formName,
+    perSchedule: true,
+    scheduleDisplayName: formatSatisfactionPerScheduleDisplayName(scheduleInput),
+  })
+}
+
 export function mapAvailableProgramFormToListItem(
   item: PortalAvailableProgramForm
 ): PortalFormListItem {
@@ -38,14 +86,16 @@ export function mapAvailableProgramFormToListItem(
     bindingId: item.bindingId,
     templateVersionId: item.templateVersionId,
     formType: item.formType,
-    title: item.templateName,
+    title: resolveSatisfactionListTitle(item),
     targetScope: item.targetScope,
     targetScopeId: item.targetScopeId,
+    targetScopeLabel: item.targetScopeLabel,
     required: item.required,
     submissionStartAt: item.submissionStartAt,
     submissionEndAt: item.submissionEndAt,
     status: item.alreadySubmitted ? 'SUBMITTED' : 'NOT_SUBMITTED',
     canSubmit: item.alreadySubmitted !== true,
+    targetRole: item.targetRole ?? undefined,
   }
 }
 
@@ -61,6 +111,17 @@ export function isPortalSatisfactionFormType(formType: string | undefined): bool
     normalized === 'SATISFACTION_SURVEY' ||
     normalized === 'PROGRAM_SATISFACTION'
   )
+}
+
+/** 교사 마이페이지 만족도 — 봉사자 대상 카드를 그리지 않는다. OpenAPI 필드 추가 없음. */
+export function isVolunteerFacingSatisfactionForm(item: {
+  title?: string | null
+  formType?: string
+}): boolean {
+  if (!isPortalSatisfactionFormType(item.formType) && item.formType != null) return false
+  const title = (item.title ?? '').trim()
+  if (!title) return false
+  return /봉사/.test(title) || /VOLUNTEER/i.test(title)
 }
 
 export function isPortalAssignmentFormType(formType: string | undefined): boolean {
@@ -139,21 +200,16 @@ export function mapPortalFormListItemToSurveyEntry(
     responseStatus !== 'REJECTED'
   const submitted = submittedByStatus || submittedByResponse || submittedByEvidence
   const targetScope = item.targetScope?.trim() || undefined
-  const targetScopeId =
-    typeof item.targetScopeId === 'number' && Number.isFinite(item.targetScopeId)
-      ? Math.trunc(item.targetScopeId)
-      : undefined
+  const targetScopeId = toPositiveInt(item.targetScopeId) ?? undefined
   const scheduleId =
-    typeof item.scheduleId === 'number' && Number.isFinite(item.scheduleId)
-      ? Math.trunc(item.scheduleId)
-      : undefined
+    resolvePortalAssignmentScheduleId(item) ?? toPositiveInt(item.scheduleId) ?? undefined
 
   const submissionStartAt = item.submissionStartAt ?? undefined
   const submissionEndAt = item.submissionEndAt ?? undefined
 
   return {
     id: String(bindingId),
-    title: item.title?.trim() || '설문',
+    title: resolveSatisfactionListTitle(item),
     status: resolveEducationSurveyListStatus(submitted, {
       submissionStartAt,
       submissionEndAt,
@@ -178,9 +234,31 @@ export function mapPortalFormListItemToSurveyEntry(
     bindingId: resolveCanonicalPortalFormBindingId(item) ?? undefined,
     canSubmit: item.canSubmit === true,
     canResubmit: item.canResubmit === true,
+    targetRole: item.targetRole ?? undefined,
     ...(responseStatus ? { responseStatus } : {}),
     revisionNo: item.revisionNo,
     retentionExpiresAt: item.retentionExpiresAt,
+  }
+}
+
+export function applySatisfactionScheduleLineDate(
+  entry: EducationSurveyListEntry,
+  scheduleLine: string | null | undefined
+): EducationSurveyListEntry {
+  if (!isPortalSatisfactionFormType(entry.formType)) return entry
+  if (!isPortalScheduleTargetScope(entry.targetScope)) return entry
+  if (entry.title.includes(' · ') || !scheduleLine?.trim()) return entry
+  const roundMatch = /^(\d+)회차$/u.exec(entry.title.trim())
+  return {
+    ...entry,
+    title: composeSatisfactionSurveyDisplayTitle({
+      formName: roundMatch ? undefined : entry.title,
+      perSchedule: true,
+      scheduleDisplayName: formatSatisfactionPerScheduleDisplayName({
+        sessionNo: roundMatch ? Number(roundMatch[1]) : null,
+        scheduleLine,
+      }),
+    }),
   }
 }
 

@@ -30,7 +30,7 @@
   width: 100%;
   justify-content: flex-start;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
 }
 
 .settlement-item-setting-detail-modal .modal-spec-table__label--basis + .modal-spec-table__cell {
@@ -39,9 +39,9 @@
 
 .settlement-item-setting-detail-modal .modal-spec-table__input-wrap {
   flex: 0 0 auto;
-  height: 40px;
-  min-height: 40px;
-  max-height: 40px;
+  height: 36px;
+  min-height: 36px;
+  max-height: 36px;
   overflow: hidden;
 }
 
@@ -56,26 +56,26 @@
 
 .settlement-item-setting-detail-modal .modal-spec-table__input-wrap .cms-input__control {
   box-sizing: border-box;
-  height: 40px !important;
-  min-height: 40px !important;
-  max-height: 40px !important;
-  padding: 0 12px 0 14px;
+  height: 36px !important;
+  min-height: 36px !important;
+  max-height: 36px !important;
+  padding: 0 14px;
 }
 
 .settlement-item-setting-detail-modal
   .modal-spec-table__input-wrap:not(.modal-spec-table__input-wrap--w160)
   .cms-input__control {
-  width: 120px !important;
-  min-width: 120px !important;
-  max-width: 120px !important;
-  flex: 0 0 120px !important;
+  width: 124px !important;
+  min-width: 124px !important;
+  max-width: 124px !important;
+  flex: 0 0 124px !important;
 }
 
 .settlement-item-setting-detail-modal .modal-spec-table__input-wrap--w160 .cms-input__control {
-  width: 160px !important;
-  min-width: 160px !important;
-  max-width: 160px !important;
-  flex: 0 0 160px !important;
+  width: 124px !important;
+  min-width: 124px !important;
+  max-width: 124px !important;
+  flex: 0 0 124px !important;
 }
 
 .settlement-item-setting-detail-modal .modal-spec-table__input-wrap .cms-input__inner {
@@ -277,9 +277,11 @@
 }
 
 /* 읽기·편집 동일: inline-flex + gap (높이는 line-height·field-sizing으로 맞춤) */
+/* 시안 6718:3928: 설명(16px · line-height normal=19) + 연필 16px 세로 중앙 · gap 4
+ * — block flex: 부모 슬롯 line box(strut)로 높이가 늘지 않게 */
 .settlement-item-setting-detail-modal__header-description-row {
-  display: inline-flex;
-  align-items: flex-start;
+  display: flex;
+  align-items: center;
   gap: 4px;
   width: fit-content;
   max-width: 100%;
@@ -296,7 +298,7 @@
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
-  line-height: 1.5;
+  line-height: normal;
   opacity: 0.6;
 }
 
@@ -340,11 +342,11 @@
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
-  line-height: 1.5;
+  line-height: normal;
   color: var(--default-BK, #3d3d3d);
   opacity: 0.6;
   field-sizing: content;
-  min-height: 1.5em;
+  min-height: 1.2em;
   max-height: 12em;
 }
 
@@ -478,14 +480,6 @@
   gap: 0;
 }
 
-/* 제미나이: 산정 기준 금액 입력 우측 정렬 */
-.settlement-item-setting-detail-modal--gemini
-  .modal-spec-table__input-wrap--w160
-  .cms-input__control
-  input.ant-input {
-  text-align: right;
-}
-
 /* 섹션 내부: 레이블 ↔ 컨트롤(산정 기준·자격·비고) 세로 간격 6px — 블록 간 간격은 body gap 30px */
 .settlement-item-setting-detail-modal .teal-header-modal__body > section {
   display: flex;
@@ -498,7 +492,17 @@
   margin-top: 30px;
   padding: 0;
   justify-content: flex-end;
+  gap: 8px;
   background: transparent;
+}
+
+/* Figma ButtonH40 — 120×40 (export h-[168px] anomaly ignored) */
+.settlement-item-setting-detail-modal .teal-header-modal__footer .cms-button.ant-btn {
+  width: 120px;
+  min-width: 120px;
+  height: 40px !important;
+  min-height: 40px !important;
+  padding-block: 0 !important;
 }
 
 /**
@@ -512,12 +516,12 @@
   --settlement-modal-item-title-font-weight: 700;
   --settlement-modal-item-title-line-height: 140%;
   --settlement-modal-item-title-color: var(--default-BK, #3d3d3d);
-  --settlement-modal-item-title-gap-below: 6px;
+  --settlement-modal-item-title-gap-below: 10px;
 }
 
 .settlement-item-setting-detail-modal__section-label {
   margin: 0 0 var(--settlement-modal-item-title-gap-below);
-  padding: 0;
+  padding: 0 8px;
   color: var(--settlement-modal-item-title-color);
   font-family: Pretendard, sans-serif;
   font-size: var(--settlement-modal-item-title-font-size);
@@ -788,6 +792,212 @@
 .settlement-item-setting-detail-modal--withholding-daily-worker
   .modal-spec-table__field-row--withholding-inline {
   flex-wrap: wrap;
-  gap: 6px 8px;
-  row-gap: 8px;
+  gap: 8px 4px;
+}
+
+/* 섹션 레이블 필수 표시(*) — 시안 Status/red/main */
+.settlement-item-setting-detail-modal__required-mark {
+  margin-left: 2px;
+  color: var(--color-required-mark, #c32f4a);
+}
+
+/*
+ * 2026-11 시안 표 셀: th 패딩 4×12·배경 #f1f3f5.
+ * min-height는 variant별(지급요건 176/80/104, 비고 128/104, basis 44)을
+ * 공용 modal-spec-table.css 에 맡기고, 여기서 전역 44로 덮지 않음.
+ */
+.settlement-item-setting-detail-modal.content-modal .modal-spec-table .modal-spec-table__row > .modal-spec-table__label {
+  padding: 4px 12px;
+  /* solid — --BG-header gradient+#fff 는 시안 대비 너무 옅음 */
+  background: #f1f3f5;
+}
+
+.settlement-item-setting-detail-modal.content-modal
+  .modal-spec-table
+  .modal-spec-table__row
+  > .modal-spec-table__label--basis {
+  min-height: 44px;
+}
+
+.settlement-item-setting-detail-modal.content-modal
+  .modal-spec-table
+  .modal-spec-table__row
+  > .modal-spec-table__label--basis
+  + .modal-spec-table__cell {
+  min-height: 44px;
+  padding: 10px;
+  align-items: center;
+}
+
+.settlement-item-setting-detail-modal.content-modal
+  .modal-spec-table
+  .modal-spec-table__row
+  > .modal-spec-table__label:not(.modal-spec-table__label--basis)
+  + .modal-spec-table__cell {
+  padding: 10px;
+}
+
+.settlement-item-setting-detail-modal.content-modal
+  .modal-spec-table
+  .modal-spec-table__row
+  > .modal-spec-table__label
+  + .modal-spec-table__cell
+  .modal-spec-table__textarea {
+  min-height: 36px;
+  padding: 8px 14px;
+  border-color: var(--table-line, #e0e0e0);
+  color: var(--default-BK, #3d3d3d);
+  font-size: 14px;
+  line-height: 140%;
+}
+
+.settlement-item-setting-detail-modal.content-modal
+  .modal-spec-table
+  .modal-spec-table__textarea::placeholder {
+  font-size: 14px;
+  line-height: 140%;
+}
+
+.settlement-item-setting-detail-modal.content-modal
+  .modal-spec-table
+  .modal-spec-table__textarea:focus {
+  border-color: var(--ja-mint-01, #01a1af);
+}
+
+/* 시안 라디오 TD: 패딩 4×12 · 옵션 간격 16 · 원(18px)–텍스트 8px (CmsRadio medium 기본 6px 덮어씀) */
+.settlement-item-setting-detail-modal.content-modal
+  .modal-spec-table
+  .modal-spec-table__row
+  > .modal-spec-table__label
+  + .modal-spec-table__cell:has(> .modal-spec-table__radio-cell) {
+  padding: 4px 12px;
+}
+
+.settlement-item-setting-detail-modal .modal-spec-table__radio-cell.app-radio-group--medium .ant-radio-wrapper {
+  gap: 8px !important;
+}
+
+
+
+/*
+ * 시안 우선: 조건(지급요건·비고) 행은 내용 높이.
+ * 공용 modal-spec-table 의 176/128/104 min-height 는 export 수치이며 시안보다 과도하게 큼.
+ */
+.settlement-item-setting-detail-modal.content-modal
+  .modal-spec-table.modal-spec-table--condition-compact
+  .modal-spec-table__label--payment-requirement,
+.settlement-item-setting-detail-modal.content-modal
+  .modal-spec-table.modal-spec-table--condition-compact
+  .modal-spec-table__label--payment-requirement-short,
+.settlement-item-setting-detail-modal.content-modal
+  .modal-spec-table.modal-spec-table--condition-compact
+  .modal-spec-table__label--remark {
+  min-height: 0;
+  height: auto;
+  padding: 4px 12px;
+}
+
+.settlement-item-setting-detail-modal.content-modal
+  .modal-spec-table.modal-spec-table--condition-compact
+  .modal-spec-table__label--payment-requirement
+  + .modal-spec-table__cell,
+.settlement-item-setting-detail-modal.content-modal
+  .modal-spec-table.modal-spec-table--condition-compact
+  .modal-spec-table__label--payment-requirement-short
+  + .modal-spec-table__cell,
+.settlement-item-setting-detail-modal.content-modal
+  .modal-spec-table.modal-spec-table--condition-compact
+  .modal-spec-table__label--remark
+  + .modal-spec-table__cell {
+  min-height: 0;
+  padding: 10px;
+  align-items: flex-start;
+}
+
+.settlement-item-setting-detail-modal.content-modal
+  .modal-spec-table.modal-spec-table--condition-compact
+  .modal-spec-table__textarea {
+  min-height: 0 !important;
+  padding: 8px 14px;
+  font-size: 14px;
+  line-height: 140%;
+  field-sizing: content;
+}
+
+/* 표 라벨·본문 — 시안 대비 가독 (th 14→14 유지, 섹션 타이틀 이미 16) */
+.settlement-item-setting-detail-modal.content-modal .modal-spec-table__label {
+  font-size: 14px;
+}
+
+.settlement-item-setting-detail-modal.content-modal .modal-spec-table__suffix-text {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Gemini 산정 기준 시안: 자체 연수 : [input] 원 | 대학생 연수 : [input] 원 (인라인) */
+/* 시안 14199:102412: 셀 패딩 10×16 — 공통 basis 셀(padding 10) 보다 우선하도록 동일 체인 + 모디파이어 */
+.settlement-item-setting-detail-modal--gemini.content-modal
+  .modal-spec-table
+  .modal-spec-table__row
+  > .modal-spec-table__label--basis
+  + .modal-spec-table__cell {
+  padding: 10px 16px;
+}
+
+/* 시안: 필드 그룹 ↔ 구분선 ↔ 필드 그룹 gap 16 */
+.settlement-item-setting-detail-modal .modal-spec-table__gemini-dual--inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  width: 100%;
+  min-width: 0;
+}
+
+/* 시안: 접두 라벨 ↔ 인풋 ↔ 「원」 gap 4 */
+.settlement-item-setting-detail-modal .modal-spec-table__gemini-dual-inline-group {
+  flex: 0 1 auto;
+  width: auto;
+  gap: 4px;
+}
+
+.settlement-item-setting-detail-modal .modal-spec-table__gemini-dual-label {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+/* 시안 line: 1×13 · #3d3d3d · opacity 0.5 */
+.settlement-item-setting-detail-modal .modal-spec-table__gemini-dual-pipe {
+  flex: 0 0 auto;
+  width: 1px;
+  height: 13px;
+  background: var(--default-BK, #3d3d3d);
+  opacity: 0.5;
+}
+
+/* 시안 Field / Table / Input: 값 14px · line-height 1.4 · #3d3d3d, placeholder Content/tertiary
+ * (CmsInput medium 글자 크기는 .cms-control--medium 의 --cms-control-font 변수로 받음 → 표 인풋만 14 / 140%) */
+.settlement-item-setting-detail-modal .modal-spec-table__input-wrap .cms-control--medium {
+  --cms-control-font: 14px;
+  --cms-control-lh: 140%;
+}
+
+.settlement-item-setting-detail-modal .modal-spec-table__input-wrap input {
+  color: var(--default-BK, #3d3d3d);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.settlement-item-setting-detail-modal .modal-spec-table__input-wrap input::placeholder {
+  color: #85969d;
+}
+
+/* 시안 24/Feather Icon/x: 24×24 아이콘이 헤더 우측 끝에 붙음(공통 32px 히트 영역이면 4px 안쪽으로 밀림) */
+.settlement-item-setting-detail-modal.content-modal .teal-header-modal__close {
+  width: 24px;
+  height: 24px;
 }

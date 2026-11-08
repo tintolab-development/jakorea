@@ -1,6 +1,9 @@
+import axios from 'axios';
 import type { CorporatePartner, CorporatePartnerCreateInput, CorporatePartnerListFilter, CorporatePartnerListResult, CorporatePartnerUpdateInput, } from '@/entities/corporate-partner/model/types';
 import { getJAKoreaHomepageAdminAPISponsorshipSubset } from '@/shared/api/generated/sponsorship/sponsorship-api';
-import { mapSponsorListItemToDomain, mapSponsorResponseToDomain, toBulkDeleteRequest, toPublishedToggleRequest, toSponsorCreateRequest, toSponsorListParams, toSponsorUpdateRequest, } from './mappers';
+import { isOptimisticLockConflictError } from '@/shared/lib/api-error-message';
+import { toAdminListPage, type AdminListPage } from '@/shared/lib/admin-infinite-list';
+import { LIST_PAGE_SIZE, mapSponsorListItemToDomain, mapSponsorResponseToDomain, toBulkDeleteRequest, toPublishedToggleRequest, toSponsorCreateRequest, toSponsorListParams, toSponsorUpdateRequest, } from './mappers';
 import { uploadSponsorLogoAsset } from './upload-logo';
 function sponsorshipApi() {
     return getJAKoreaHomepageAdminAPISponsorshipSubset();
@@ -15,12 +18,40 @@ function rememberLogoAssetId(partner: Pick<CorporatePartner, 'id' | 'logoAssetId
 function logoAssetIdFromCache(id: string): number | undefined {
     return logoAssetIdByPartnerId.get(id);
 }
+function sortPartnersByOrder(rows: CorporatePartner[]): CorporatePartner[] {
+    return [...rows].sort((a, b) => a.sortOrder - b.sortOrder);
+}
+function isSponsorLockConflict(error: unknown): boolean {
+    if (isOptimisticLockConflictError(error))
+        return true;
+    return axios.isAxiosError(error) && error.response?.status === 409;
+}
 async function listRemotePartners(filter?: CorporatePartnerListFilter): Promise<CorporatePartnerListResult> {
     const response = await sponsorshipApi().list2(toSponsorListParams(filter));
     return {
-        items: (response.items ?? []).map(mapSponsorListItemToDomain),
+        items: sortPartnersByOrder((response.items ?? []).map(mapSponsorListItemToDomain)),
         totalCount: response.totalCount ?? response.items?.length ?? 0,
     };
+}
+async function listAllRemotePartners(): Promise<CorporatePartner[]> {
+    const acc: CorporatePartner[] = [];
+    let page = 0;
+    let totalCount = Number.POSITIVE_INFINITY;
+    while (acc.length < totalCount) {
+        const response = await sponsorshipApi().list2({ page, size: LIST_PAGE_SIZE });
+        const chunk = (response.items ?? []).map(mapSponsorListItemToDomain);
+        totalCount = response.totalCount ?? acc.length + chunk.length;
+        if (chunk.length === 0)
+            break;
+        acc.push(...chunk);
+        page += 1;
+        if (page > 200)
+            break;
+    }
+    return sortPartnersByOrder(acc);
+}
+export async function getCorporatePartnerById(id: string): Promise<CorporatePartner> {
+    return getRemotePartner(id);
 }
 async function getRemotePartner(id: string): Promise<CorporatePartner> {
     const numericId = Number(id);
@@ -62,8 +93,10 @@ async function resolveLogoAssetIdForUpdate(current: CorporatePartner, patch: Cor
 function resolveCurrentRow(id: string, cachedRows?: CorporatePartner[]): CorporatePartner | undefined {
     return cachedRows?.find(row => row.id === id);
 }
-export async function listCorporatePartnersService(filter?: CorporatePartnerListFilter): Promise<CorporatePartnerListResult> {
-    return listRemotePartners(filter);
+export async function listCorporatePartnersPageService(filter: CorporatePartnerListFilter | undefined, page: number): Promise<AdminListPage<CorporatePartner>> {
+    const response = await sponsorshipApi().list2(toSponsorListParams({ ...filter, page }));
+    const items = sortPartnersByOrder((response.items ?? []).map(mapSponsorListItemToDomain));
+    return toAdminListPage(items, page, response);
 }
 export async function countCorporatePartnersService(): Promise<number> {
     const response = await listRemotePartners();
@@ -79,13 +112,28 @@ export async function createCorporatePartnerService(input: CorporatePartnerCreat
     rememberLogoAssetId(mapped);
     return mapped;
 }
+async function putSponsorUpdate(id: string, current: CorporatePartner, patch: CorporatePartnerUpdateInput, logoAssetId: number): Promise<CorporatePartner> {
+    try {
+        const updated = await sponsorshipApi().update(Number(id), toSponsorUpdateRequest(current, patch, logoAssetId));
+        const mapped = mapSponsorResponseToDomain(updated);
+        rememberLogoAssetId(mapped);
+        return mapped;
+    }
+    catch (error) {
+        if (!isSponsorLockConflict(error))
+            throw error;
+        const fresh = await getRemotePartner(id);
+        const nextLogo = await resolveLogoAssetIdForUpdate(fresh, patch);
+        const retried = await sponsorshipApi().update(Number(id), toSponsorUpdateRequest(fresh, patch, nextLogo));
+        const mapped = mapSponsorResponseToDomain(retried);
+        rememberLogoAssetId(mapped);
+        return mapped;
+    }
+}
 export async function updateCorporatePartnerService(id: string, patch: CorporatePartnerUpdateInput, cachedRows?: CorporatePartner[]): Promise<CorporatePartner> {
     const current = resolveCurrentRow(id, cachedRows) ?? (await getRemotePartner(id));
     const logoAssetId = await resolveLogoAssetIdForUpdate(current, patch);
-    const updated = await sponsorshipApi().update(Number(id), toSponsorUpdateRequest(current, patch, logoAssetId));
-    const mapped = mapSponsorResponseToDomain(updated);
-    rememberLogoAssetId(mapped);
-    return mapped;
+    return putSponsorUpdate(id, current, patch, logoAssetId);
 }
 export async function removeCorporatePartnersService(ids: string[], cachedRows?: CorporatePartner[]): Promise<void> {
     if (ids.length === 0)
@@ -100,9 +148,6 @@ export async function removeCorporatePartnersService(ids: string[], cachedRows?:
         return;
     await sponsorshipApi().delete1(toBulkDeleteRequest(rows));
     return;
-}
-function sortPartnersByOrder(rows: CorporatePartner[]): CorporatePartner[] {
-    return [...rows].sort((a, b) => a.sortOrder - b.sortOrder || Number(a.id) - Number(b.id));
 }
 /**
  * BE update의 displayOrder shift와 동일하게 로컬 목록을 맞춘다.
@@ -170,7 +215,7 @@ export async function reorderCorporatePartnersService(orderedIds: string[], cach
         fullSorted = cacheSorted;
     }
     else {
-        fullSorted = sortPartnersByOrder((await listRemotePartners()).items);
+        fullSorted = await listAllRemotePartners();
     }
     const fullIds = fullSorted.map(row => row.id);
     const orderedSet = new Set(orderedIds);
@@ -216,9 +261,7 @@ export async function reorderCorporatePartnersService(orderedIds: string[], cach
     if (prepared.logoAssetId == null) {
         throw new Error('LOGO_REQUIRED');
     }
-    const updated = await sponsorshipApi().update(Number(movedId), toSponsorUpdateRequest(prepared, { sortOrder: targetOrder }, prepared.logoAssetId));
-    const mapped = mapSponsorResponseToDomain(updated);
-    rememberLogoAssetId(mapped);
+    const mapped = await putSponsorUpdate(movedId, prepared, { sortOrder: targetOrder }, prepared.logoAssetId);
     return applyLocalReorderAfterMove(fullSorted, movedId, targetOrder, mapped);
 }
 export async function setCorporatePartnerPublicService(id: string, isPublic: boolean, cachedRows?: CorporatePartner[]): Promise<CorporatePartner> {

@@ -1,8 +1,12 @@
 /**
  * SettlementFrontendResponse.payee (MASKED) → 산출 내역서·지급조서 발급 기본정보
  * 목록/다른 API로 PII 보완 금지 — payee만 SSOT.
- * BE가 마스킹한 문자열을 그대로 표시한다. FE 마스킹·블러·날짜 재포맷을 덧씌우지 않는다.
+ * BE가 마스킹한 문자열을 그대로 표시한다. FE 마스킹·블러를 덧씌우지 않는다.
+ * 예외: 성별·생년월일은 API 원문(FEMALE, 1990-07-21) 대신 회원 상세와 같은 표기(여성, 1990. 07. 21 (만 N세))로 보여 준다.
+ * 마스킹된 자리(**)는 그대로 둔다.
  */
+import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
+import { formatBirthDisplayWithManAge } from '@/features/user/api/format-gender-birth-display'
 
 import type { SettlementFrontendPayeeResponse } from '@/shared/api/generated/settlement/schemas'
 
@@ -29,10 +33,25 @@ export function formatPayeeGenderBirthDisplay(
   payee: NonNullable<SettlementFrontendPayeeResponse> | null | undefined
 ): string {
   if (!payee) return '-'
-  const genderPart = displayOrDash(payee.gender)
-  const birthPart = displayOrDash(payee.birthDate)
+  // API 원문(FEMALE · 1990-07-21)을 그대로 쓰지 않고 회원 상세와 같은 표기로 바꾼다.
+  const genderPart = toDisplayGender(payee.gender)
+  const birthPart = formatPayeeBirthDisplay(payee.birthDate)
   if (genderPart === '-' && birthPart === '-') return '-'
   return `${genderPart} | ${birthPart}`
+}
+
+/**
+ * 원문 생년월일: `1990. 07. 21 (만 36세)` (나이는 원문 날짜로 계산).
+ * 마스킹(`1990-**-**`): `1990.**.**` — 월·일을 모르면 만 나이가 틀릴 수 있어 붙이지 않는다(서버 age 필드 요청 중).
+ */
+function formatPayeeBirthDisplay(birthDate: string | null | undefined): string {
+  const raw = birthDate?.trim()
+  if (!raw) return '-'
+  if (raw.includes('*')) {
+    const year = raw.match(/^(\d{4})/)?.[1]
+    return year ? `${year}.**.**` : raw
+  }
+  return formatBirthDisplayWithManAge(raw)
 }
 
 /** `900101-*******` / `900101*******` → front/back (이미 MASKED 원문 유지) */

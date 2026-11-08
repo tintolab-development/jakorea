@@ -8,6 +8,7 @@
 
 /**
  * UJAT 봉사자 일정 배정 상태. CMS allocation-matrix 셀과 같은 스냅샷. ASSIGNED | UNASSIGNED | REASSIGNMENT_REQUIRED. 비UJAT 또는 미배정이면 null
+ * @nullable
  */
 export type MemberPortalEducationScheduleItemAssignmentStatus = typeof MemberPortalEducationScheduleItemAssignmentStatus[keyof typeof MemberPortalEducationScheduleItemAssignmentStatus] | null;
 

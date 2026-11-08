@@ -79,10 +79,10 @@ export function AdminRegisterStepTerms({
           <>
             서비스 이용을 위한
             <br />
-            약관에 동의해 주세요
+            약관에 동의해 주세요.
           </>
         }
-        description="필수 항목 동의는 가입을 위해 꼭 필요합니다."
+        description="필수 항목 동의는 가입을 위해 꼭 필요해요."
       />
 
       <div style={{ marginTop: '40px' }}>

@@ -90,6 +90,7 @@ import type { PaymentStatementBasicInfoAutofillValues } from '@/features/templat
 import type { LectureFeeCalculationAutofillValues } from '@/features/template/ui/form-set/detail-forms/lecture-fee-calculation-detail-form'
 import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/template/ui/form-set/payment-statement-issuance/display-mode'
 import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@/features/template/model/payment-statement-pre-consent-draft'
+import { RECEIPT_PRE_CONSENT_IDS } from '@/features/template/model/receipt-pre-consent-draft'
 import { AGREEMENT_NOTICE_PARAGRAPH_IDS } from '@/features/template/model/writing-form-draft.schema'
 import { AgreementNoticeSubjectFillFields } from '@/features/template/ui/form-set/agreement-notice/agreement-notice-subject-fill-fields'
 import { BasicInfoParagraph } from '@/features/template/ui/form-set/payment-statement-issuance/paragraphs/basic-info-paragraph'
@@ -159,13 +160,17 @@ export type RenderFormParagraphBodyOptions = {
   paymentStatementBasicInfoValues?: Partial<PaymentStatementBasicInfoAutofillValues>
   /** true: 지급조서 기본정보에서 「지급 목적」만 비활성, 나머지 필드는 편집 가능(사전 동의 템플릿 등) */
   paymentStatementBasicInfoOnlyPaymentPurposeLocked?: boolean
+  /** CMS 강사 신규 등록 fill — 성명·소속·자택 주소 비활성(등록 기본정보 연동) */
+  paymentStatementBasicInfoLockedProfileFields?: boolean
+  /** 영수증 발급 사전 동의서 — 주민등록번호·소속 행 숨김 */
+  paymentStatementBasicInfoHideResidentFields?: boolean
   /** 편집 가능 모드 — 기본정보 값 변경(성명 → 확인·서명란 동기화) */
   paymentStatementBasicInfoOnValuesChange?: (
     values: PaymentStatementBasicInfoAutofillValues
   ) => void
-  /** 강의비 산출 정보 단락 미리 채움 */
+  /** 강사비 산출 정보 단락 미리 채움 */
   lectureFeeCalculationValues?: Partial<LectureFeeCalculationAutofillValues>
-  /** 강의비 산출 내역 단락 — 발급용 테이블 목·실데이터 */
+  /** 강사비 산출 내역 단락 — 발급용 테이블 목·실데이터 */
   paymentStatementCalculationLines?: PaymentStatementCalculationLinesViewModel
   /** 지급조서 A4 문서 렌더링 시 disabled 입력 UI를 정적 텍스트로 전환 */
   paymentStatementDisplayMode?: PaymentStatementIssuanceParagraphDisplayMode
@@ -288,6 +293,10 @@ export type RenderFormParagraphBodyOptions = {
   surveyPeriodReadonly?: boolean
   /** 강의보고서 프로그램 진행 정보 — 프로그램·배정 연동 미리보기(템플릿 안내 대신 실값) */
   lectureReportProgramLinkedPreview?: boolean
+  /** 개인형 강의보고서 — 기관명·기관 소재지 숨김 */
+  lectureReportHideInstitutionFields?: boolean
+  /** 강의보고서 미리보기·PDF — 단락 타이틀 필수(*) 숨김 */
+  hideTitleRequiredMark?: boolean
   /** 제출 강의보고서 미리보기 — 실제 첨부 파일 메타데이터 */
   lectureReportFiles?: readonly {
     fileObjectId: number
@@ -297,6 +306,8 @@ export type RenderFormParagraphBodyOptions = {
   hideSurveyWritingPeriod?: boolean
   /** 프로그램 > 설문조사 수정 — 제목 단락「작성 기간」토글 ON 고정(카드 하단 토글 disabled) */
   lockSurveyWritingPeriodToggleOn?: boolean
+  /** 만족도조사 일정별 — 제목 단락「작성 기간」날짜 인풋 비활성 */
+  lockSurveyWritingPeriodInput?: boolean
 }
 
 export function renderFormParagraphBody(
@@ -378,6 +389,7 @@ export function renderFormParagraphBody(
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
           isEditMode={titlePeriodEditMode}
+          periodInputDisabled={options?.lockSurveyWritingPeriodInput === true}
         />
       )
     case 'user_profile':
@@ -428,10 +440,14 @@ export function renderFormParagraphBody(
         )
       }
       const isPaymentPreConsentIntro =
-        p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.intro && structureLocked
+        (p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.intro ||
+          p.id === RECEIPT_PRE_CONSENT_IDS.intro) &&
+        structureLocked
       const isPaymentPreConsentWhiteSheetBar =
         (p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.midConsentLine ||
-          p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.finalConfirm) &&
+          p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.finalConfirm ||
+          p.id === RECEIPT_PRE_CONSENT_IDS.midConsentLine ||
+          p.id === RECEIPT_PRE_CONSENT_IDS.finalConfirm) &&
         structureLocked &&
         options?.agreementAdminProxyConfirm !== true
       const isAgreementNoticeExplanationParagraph =
@@ -638,25 +654,36 @@ export function renderFormParagraphBody(
     }
     case 'lecture_report_program_progress': {
       const lr = p as LectureReportProgramProgressParagraph
+      const linkedPreview = options?.lectureReportProgramLinkedPreview === true
       return (
         <LectureReportProgramProgress
           paragraph={lr}
           onChange={next => updateParagraph(lr.id, () => next)}
           isEditMode={isBodyInteractive}
           isTemplateAuthoringMode={
-            paragraphInteractionMode === 'authoring' &&
-            options?.lectureReportProgramLinkedPreview !== true
+            paragraphInteractionMode === 'authoring' && !linkedPreview
           }
+          previewReadonly={linkedPreview || isPreviewReadonly}
+          previewSkin="surface"
+          hideInstitutionFields={options?.lectureReportHideInstitutionFields === true}
         />
       )
     }
     case 'vertical_table': {
-      if (p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.paymentRecord) {
+      if (
+        p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.paymentRecord ||
+        p.id === RECEIPT_PRE_CONSENT_IDS.paymentRecord
+      ) {
         return (
           <BasicInfoParagraph
             values={options?.paymentStatementBasicInfoValues}
             displayMode={options?.paymentStatementDisplayMode ?? 'editor'}
             onlyPaymentPurposeLocked={options?.paymentStatementBasicInfoOnlyPaymentPurposeLocked}
+            lockedProfileFields={options?.paymentStatementBasicInfoLockedProfileFields}
+            hideResidentFields={
+              options?.paymentStatementBasicInfoHideResidentFields === true ||
+              p.id === RECEIPT_PRE_CONSENT_IDS.paymentRecord
+            }
             onValuesChange={options?.paymentStatementBasicInfoOnValuesChange}
           />
         )

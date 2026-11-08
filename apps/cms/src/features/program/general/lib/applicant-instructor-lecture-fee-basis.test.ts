@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { toInstructorApplicationFeePolicy } from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
+import {
+  buildLectureFeeBasisViewSegments,
+  parseLectureFeeBasisTypeFromApi,
+  toInstructorApplicationFeePolicy,
+} from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 
 const PROGRAM_WAGE_ROWS = [
   { grade: '1급 강사비', pricing: '1시간 당 | 기본 : 1원' },
@@ -65,5 +70,77 @@ describe('toInstructorApplicationFeePolicy', () => {
         instructorFeeGrade: '미지정',
       })
     ).toBeNull()
+  })
+})
+
+describe('buildLectureFeeBasisViewSegments', () => {
+  it('값이 없으면 빈 배열이다', () => {
+    expect(buildLectureFeeBasisViewSegments({} as ApplicantInstructorRow)).toEqual([])
+  })
+
+  it('특강은 유형·지급 기준·금액을 모두 보여 준다', () => {
+    expect(
+      buildLectureFeeBasisViewSegments({
+        lectureFeeBasisType: 'special_lecture',
+        lectureFeeMeasure: '출강 1회당',
+        lectureFeeAmount: '915000',
+      } as ApplicantInstructorRow)
+    ).toEqual(['특강 강사비', '출강 1회당', '915,000원'])
+  })
+
+  it('프로그램 기준도 API 지급 단위가 있으면 보여 준다', () => {
+    expect(
+      buildLectureFeeBasisViewSegments({
+        lectureFeeBasisType: 'program',
+        lectureFeeMeasure: '1시간 당',
+        lectureFeeAmount: '120000',
+      } as ApplicantInstructorRow)
+    ).toEqual(['프로그램 기준', '1시간 당', '120,000원'])
+  })
+
+  it('유형이 없어도 금액만 있으면 프로그램 기준으로 본다', () => {
+    expect(
+      buildLectureFeeBasisViewSegments({
+        lectureFeeAmount: '120000',
+      } as ApplicantInstructorRow)
+    ).toEqual(['프로그램 기준', '120,000원'])
+  })
+
+  it('강사비 등급만 있고 feePolicy가 없으면 책정 기준을 만들지 않는다', () => {
+    expect(
+      buildLectureFeeBasisViewSegments({
+        instructorFeeGradeLabel: '1급 강사비',
+      } as ApplicantInstructorRow)
+    ).toEqual([])
+  })
+})
+
+describe('parseLectureFeeBasisTypeFromApi', () => {
+  it('PROGRAM과 program은 프로그램 기준이다', () => {
+    expect(parseLectureFeeBasisTypeFromApi('PROGRAM')).toBe('program')
+    expect(parseLectureFeeBasisTypeFromApi('program')).toBe('program')
+  })
+
+  it('RECRUITMENT만 특강으로 본다', () => {
+    expect(parseLectureFeeBasisTypeFromApi('RECRUITMENT')).toBe('special_lecture')
+    expect(parseLectureFeeBasisTypeFromApi('special_lecture')).toBe('special_lecture')
+  })
+})
+
+describe('businessIncomeEarnerStatusPatchField', () => {
+  it('표시값과 같으면 필드를 생략해 기존 신청값(또는 프로필 fallback)을 유지한다', async () => {
+    const { businessIncomeEarnerStatusPatchField } = await import('./applicant-instructor-lecture-fee-basis')
+    expect(businessIncomeEarnerStatusPatchField('해당', '해당')).toEqual({})
+    expect(businessIncomeEarnerStatusPatchField('해당', undefined)).toEqual({})
+  })
+
+  it('바뀌면 신청 override로 보낸다', async () => {
+    const { businessIncomeEarnerStatusPatchField } = await import('./applicant-instructor-lecture-fee-basis')
+    expect(businessIncomeEarnerStatusPatchField('해당', '해당 없음')).toEqual({
+      businessIncomeEarnerStatus: '해당 없음',
+    })
+    expect(businessIncomeEarnerStatusPatchField(null, '해당')).toEqual({
+      businessIncomeEarnerStatus: '해당',
+    })
   })
 })

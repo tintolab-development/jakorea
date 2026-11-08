@@ -24,6 +24,7 @@ export function FinanceItemsSortableTable({
   withCategory = false,
   uniformLayout = false,
   isEditing = false,
+  tableView = false,
 }: {
   rows: FinanceItem[]
   columns: ColumnsType<FinanceItem>
@@ -35,6 +36,8 @@ export function FinanceItemsSortableTable({
   /** 지출 그래프 · 수입/지출 테이블 탭 — 조회 중앙 / 수정 좌측 · 필수 */
   uniformLayout?: boolean
   isEditing?: boolean
+  /** 그래프|테이블 중 테이블 탭 */
+  tableView?: boolean
 }) {
   const { items, rowIds, dndContextProps } = useAdminTableDndReorder({
     rows,
@@ -47,6 +50,7 @@ export function FinanceItemsSortableTable({
     'income-expense-table',
     withCategory && 'income-expense-table--expense',
     uniformLayout && 'income-expense-table--uniform',
+    tableView && 'income-expense-table--table-view',
     isEditing && 'income-expense-table--editing',
   ]
     .filter(Boolean)

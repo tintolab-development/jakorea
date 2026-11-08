@@ -49,6 +49,8 @@ export type PortalNoticeListResponse = {
 }
 
 export type PortalNoticeAttachment = {
+  /** 원글 program_post.id. 없으면 null이며 원글보기만 숨긴다. */
+  postId?: number | null
   attachmentId?: number
   fileObjectId?: number
   originalFileName?: string
@@ -193,6 +195,8 @@ export type PortalEducationSchedule = {
   groupTimes?: PortalEducationScheduleGroupTime[]
   assignment?: PortalEducationScheduleAssignment | null
   scheduleStatus?: string
+  /** 배정된 운영 일정의 신청 지망 순위 라벨. 행 수를 늘리지 않는다. 없으면 omit. */
+  preferenceRank?: number | null
   assignmentStatus?: string | null
   surveyCount?: number
   absenceReasonStatus?: string
@@ -351,8 +355,13 @@ export type PortalFormListItem = {
   templateVersionId?: number
   formType?: string
   title?: string
+  templateName?: string | null
   targetScope?: string
+  targetScopeLabel?: string | null
   scheduleId?: number | null
+  sessionNo?: number | null
+  preferenceRank?: number | null
+  scheduleStartAt?: string | null
   required?: boolean
   submissionStartAt?: string | null
   submissionEndAt?: string | null
@@ -373,6 +382,8 @@ export type PortalFormListItem = {
   form?: Record<string, unknown> | null
   answers?: Record<string, unknown> | null
   draftAnswers?: Record<string, unknown> | null
+  /** 바인딩 대상 역할. 없으면 untyped로 제출 가능 */
+  targetRole?: string | null
 }
 
 export type PortalAvailableProgramForm = {
@@ -389,6 +400,7 @@ export type PortalAvailableProgramForm = {
   submissionStartAt?: string | null
   submissionEndAt?: string | null
   alreadySubmitted: boolean
+  targetRole?: string | null
 }
 
 export type PortalFormListResponse = {
@@ -1036,12 +1048,26 @@ export type PortalIndividualPayableItem = {
   itemType?: string
   itemName?: string
   evidenceRequired?: boolean | null
+  maxLimitWon?: number | null
+  maxAmount?: number | null
 }
 
 export type PortalIndividualSubmittedItem = {
   itemType?: string
   amount?: number
   evidenceRequired?: boolean | null
+}
+
+/**
+ * 회차별 학생 교통비 편도 거리 안내 (서버 판단). FE는 거리를 계산하지 않는다.
+ * 신청란 노출 스위치는 payableItems — 이 값은 안내 문구용.
+ */
+export type PortalIndividualTransportPreview = {
+  /** 편도 km. 산출 불가면 null — 0으로 렌더링하지 않는다 */
+  oneWayDistanceKm?: number | null
+  eligible?: boolean
+  /** UNDER_MIN_DISTANCE | ADDRESS_MISSING | null */
+  ineligibleReason?: string | null
 }
 
 export type PortalIndividualScheduleSettlement = {
@@ -1062,6 +1088,7 @@ export type PortalIndividualScheduleSettlement = {
   businessEndDate?: string
   payableItems?: PortalIndividualPayableItem[]
   submittedItems?: PortalIndividualSubmittedItem[]
+  transportPreview?: PortalIndividualTransportPreview | null
 }
 
 export type PortalIndividualScheduleList = {
@@ -1095,6 +1122,8 @@ export type PortalIndividualSettlementItemDetail = {
   evidenceRequired?: boolean
   description?: string
   expenses?: PortalIndividualSettlementExpense[]
+  /** 제출 시점 편도 km 스냅샷. 기존 건 null — 재계산하지 않는다 */
+  oneWayDistanceKm?: number | null
 }
 
 export type PortalIndividualSettlementRevision = {
@@ -1128,9 +1157,14 @@ export type PortalIndividualSettlementExpenseInput = {
   fileObjectIds?: number[]
 }
 
+/** 학생 교통비 왕복/편도. 서버가 항목 설명(왕복·편도 교통비 실비 지급)을 만든다. null·생략이면 서버 description null */
+export type PortalIndividualSettlementTripType = 'ROUND_TRIP' | 'ONE_WAY'
+
 export type PortalIndividualSettlementItemInput = {
   itemType: string
   amount: number
+  tripType?: PortalIndividualSettlementTripType | null
+  /** 입력 메모(교통 구간·영수증 복원용). 화면 항목 설명 열은 서버 저장 description을 쓴다 */
   description?: string
   expenses?: PortalIndividualSettlementExpenseInput[]
 }

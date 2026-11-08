@@ -55,6 +55,13 @@ export const trainedTeacherQueryKeys = {
       ...trainedTeacherQueryKeys.participatingInstitutionsProgram(programId),
       filtersKey,
     ] as const,
+  organizationParticipantId: (programId: string, applicationId: string) =>
+    [
+      ...trainedTeacherQueryKeys.all,
+      'organization-participant-id',
+      programId,
+      applicationId,
+    ] as const,
   performanceSummary: (programId: string) =>
     [...trainedTeacherQueryKeys.all, 'performance-summary', programId] as const,
   programSchedules: (programId: string) =>

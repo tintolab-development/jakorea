@@ -1,7 +1,6 @@
 import { type ChangeEvent, useRef, useState } from 'react'
 import axios from 'axios'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Link } from 'react-router-dom'
 import {
   buildRequiredConsentDisagreeAlertMessage,
   REQUIRED_CONSENT_DISAGREE_ALERT_TITLE,
@@ -20,7 +19,6 @@ import {
 } from '@/shared/ui'
 import { validateUploadFileSize } from '@/shared/lib/file-upload-policy'
 import { useCreatePublicCareerTalentApplication } from '../api/hooks'
-import { CAREERS_PATH } from '../lib/constants'
 import {
   CAREERS_TALENT_APPLY_PLACEHOLDERS as PH,
   CAREERS_TALENT_APPLY_REQUIRED_INCOMPLETE_MESSAGE,
@@ -137,13 +135,14 @@ export function TalentApplyForm() {
   const [alert, setAlert] = useState<AlertState>(null)
   const [attachedFiles, setAttachedFiles] = useState<Array<{ id: string; file: File }>>([])
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
+  const [successOpen, setSuccessOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const mutation = useCreatePublicCareerTalentApplication()
 
   const {
     control,
     handleSubmit,
+    reset,
     setValue,
     clearErrors,
     watch,
@@ -192,7 +191,11 @@ export function TalentApplyForm() {
     mutation.mutate(
       { values: parsed, attachmentFiles: attachedFiles.map(item => item.file) },
       {
-        onSuccess: () => setSubmitted(true),
+        onSuccess: () => {
+          reset(EMPTY_CAREERS_TALENT_APPLY_FORM_VALUES)
+          setAttachedFiles([])
+          setSuccessOpen(true)
+        },
         onError: error =>
           setAlert({
             title: '안내',
@@ -226,19 +229,6 @@ export function TalentApplyForm() {
     CAREERS_TALENT_JOB_OPTIONS.slice(2, 4),
     CAREERS_TALENT_JOB_OPTIONS.slice(4, 6),
   ]
-
-  if (submitted) {
-    return (
-      <div className={styles.success}>
-        <PFText as="p" typo="bd-lg-rg" color="black">
-          {CAREERS_TALENT_APPLY_SUBMIT_SUCCESS_MESSAGE}
-        </PFText>
-        <Link to={CAREERS_PATH} className={styles.backLink}>
-          인재채용으로 돌아가기
-        </Link>
-      </div>
-    )
-  }
 
   return (
     <>
@@ -788,6 +778,13 @@ export function TalentApplyForm() {
         title={alert?.title ?? ''}
         description={alert?.description}
         onConfirm={() => setAlert(null)}
+      />
+
+      <PFAlertModal
+        open={successOpen}
+        title="등록 완료"
+        description={CAREERS_TALENT_APPLY_SUBMIT_SUCCESS_MESSAGE}
+        onConfirm={() => setSuccessOpen(false)}
       />
     </>
   )

@@ -28,6 +28,7 @@ import { resolveGeneralProgramInstructorRecruitmentDisplay } from '@/features/pr
 import dayjs from 'dayjs'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import './instructor-recruitment-info-view.css'
+import { RecruitmentLifecycleStatusText } from '@/features/program/shared/ui/recruitment-lifecycle-status-text'
 
 const toDayjs = (d: string | Date | undefined) => (d ? dayjs(d) : null)
 
@@ -48,11 +49,7 @@ export function GeneralProgramInstructorRecruitmentInfoView({
   const formMode = isEdit && form ? 'edit' : 'view'
   const lifecycle = display.recruitmentStatusLifecycle
   const statusView = lifecycle ? (
-    <span
-      className={`program-detail-info-tab__lifecycle-status-text program-detail-info-tab__lifecycle-status-text--${lifecycle.replace(/_/g, '-')}`}
-    >
-      {display.recruitmentStatusLabel}
-    </span>
+    <RecruitmentLifecycleStatusText status={lifecycle} label={display.recruitmentStatusLabel} />
   ) : (
     display.recruitmentStatusLabel
   )

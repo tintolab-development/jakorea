@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CalculationDetailViewButton } from '@/features/settlement/ui/payment-record/calculation-detail-view-button'
-import { useCmsAlert } from '@/shared/ui'
+import { showNotificationResendRequestCompletedAlert, useCmsAlert } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { getInstructorSettlementInvoiceStatusPresentation } from '@/shared/constants/instructor-settlement-status'
 import type {
@@ -18,9 +18,7 @@ import {
   PaymentOrderCalculationBasisDetailModal,
   usePaymentOrderCalculationBasisDetailModal,
 } from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail-modal'
-import {
-  computePaymentOrderCalculationSubtotalBeforeWithholding,
-} from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail'
+import { computePaymentOrderCalculationSubtotalBeforeWithholding } from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail'
 import type { PaymentOrderCalculationTableRow } from '@/features/settlement/ui/payment-record/payment-order-calculation-breakdown-table'
 import { buildPaymentOrderStatementFromInstructorInvoice } from '@/features/user/detail/lib/instructor-invoice-payment-statement-bridge'
 import {
@@ -32,26 +30,36 @@ import {
   useConfirmPaymentStatementMutation,
   useRejectPaymentStatementMutation,
 } from '@/features/settlement-management/hooks/use-confirm-payment-statement-mutation'
-import type { PaymentOrderRejectSubmitPayload } from '@/features/settlement/lib/payment-order-reject-notification'
-import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
+import { useResendSettlementNotificationMutation } from '@/features/settlement-management/hooks/use-resend-settlement-notification-mutation'
+import { SettlementNotificationResendModal } from '@/features/settlement/ui/payment-record/settlement-notification-resend-modal'
+import { SendNotiButton } from '@/features/program/shared/ui/detail-modal/components/send-noti-button'
 import {
-  mapSettlementDetailToInstructorInvoice,
-} from '@/features/user/api/map-settlement-to-instructor-member-row'
-import { downloadFromBulkEndpoint } from '@/features/user/api/download-bulk-endpoint'
+  canResendInstructorInvoiceNotification,
+  resolveInstructorInvoiceNotificationResendKind,
+} from '@/features/settlement/lib/settlement-notification-resend'
+import type { PaymentOrderRejectSubmitPayload } from '@/features/settlement/lib/payment-order-reject-notification'
+import {
+  getSettlementApiErrorMessage,
+  isFileDownloadPasswordApiError,
+} from '@/features/settlement-management/api/get-settlement-api-error'
+import { mapSettlementDetailToInstructorInvoice } from '@/features/user/api/map-settlement-to-instructor-member-row'
+import { useProtectedFileDownload } from '@/shared/lib/use-protected-file-download'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
+import '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-basic-info.css'
 import './instructor-invoice-modal.css'
 
 function buildBasisDetailTableRow(input: {
   lineId: string
-  item: Pick<InstructorSettlementInvoiceLineItem, '산정항목' | '항목설명' | '정산금액' | 'isPositive' | 'kind' | 'basisDetail'>
+  item: Pick<
+    InstructorSettlementInvoiceLineItem,
+    '산정항목' | '항목설명' | '정산금액' | 'isPositive' | 'kind' | 'basisDetail'
+  >
   institutionName: string
   lectureDateDisplay: string
   lectureSessionDisplay: string
 }): PaymentOrderCalculationTableRow {
   const amount =
-    input.item.isPositive === false
-      ? -Math.abs(input.item.정산금액)
-      : input.item.정산금액
+    input.item.isPositive === false ? -Math.abs(input.item.정산금액) : input.item.정산금액
   return {
     key: input.lineId,
     blockRowSpan: 1,
@@ -84,8 +92,12 @@ export function InstructorInvoiceModal({
   onSettlementUpdated,
 }: InstructorInvoiceModalProps) {
   const { showAlert } = useCmsAlert()
+  const { runProtectedDownload, filePasswordModal } = useProtectedFileDownload()
   const confirmMutation = useConfirmPaymentStatementMutation()
   const rejectMutation = useRejectPaymentStatementMutation()
+  const resendNotificationMutation = useResendSettlementNotificationMutation()
+  const resendIdempotencyKeyRef = useRef<string | null>(null)
+  const [notificationResendOpen, setNotificationResendOpen] = useState(false)
   const [paymentConfirmOpen, setPaymentConfirmOpen] = useState(false)
   const [paymentConfirmDoneOpen, setPaymentConfirmDoneOpen] = useState(false)
   const [paymentRejectOpen, setPaymentRejectOpen] = useState(false)
@@ -125,11 +137,7 @@ export function InstructorInvoiceModal({
       statementStatus: undefined,
       paymentStatus: undefined,
     }
-    return mapSettlementDetailToInstructorInvoice(
-      settlementDetailQuery.data,
-      listItem,
-      row.status
-    )
+    return mapSettlementDetailToInstructorInvoice(settlementDetailQuery.data, listItem, row.status)
   }, [row, settlementDetailQuery.data])
 
   const effectiveRow = useMemo(() => {
@@ -159,12 +167,8 @@ export function InstructorInvoiceModal({
     }
   }, [statementData])
 
-  const {
-    basisDetailOpen,
-    selectedBasisDetail,
-    handleBasisDetailClick,
-    closeBasisDetailModal,
-  } = usePaymentOrderCalculationBasisDetailModal(open, basisDetailContext)
+  const { basisDetailOpen, selectedBasisDetail, handleBasisDetailClick, closeBasisDetailModal } =
+    usePaymentOrderCalculationBasisDetailModal(open, basisDetailContext)
 
   const lectureDateParts = useMemo(() => {
     const raw = effectiveRow?.invoice.lectureDateSessions ?? '-'
@@ -182,6 +186,8 @@ export function InstructorInvoiceModal({
       setPaymentRejectOpen(false)
       setPaymentRejectDoneOpen(false)
       setPaymentRejectReason('')
+      setNotificationResendOpen(false)
+      resendIdempotencyKeyRef.current = null
     }
   }, [open])
 
@@ -193,6 +199,17 @@ export function InstructorInvoiceModal({
   const hideStatementActionButtons =
     effectiveRow?.invoice.paymentStatementStatus === 'payment_statement_verified' ||
     effectiveRow?.invoice.paymentStatementStatus === 'account_paid'
+  const invoiceResendKind = effectiveRow
+    ? resolveInstructorInvoiceNotificationResendKind(effectiveRow.invoice.paymentStatementStatus)
+    : null
+  const canResendInvoiceNotification =
+    settlementId != null &&
+    invoiceResendKind != null &&
+    effectiveRow != null &&
+    canResendInstructorInvoiceNotification(
+      effectiveRow.invoice.paymentStatementStatus,
+      settlementDetailQuery.data?.availableActions
+    )
 
   const handleRemoteConfirm = async (lectureFeePaymentScheduledDateIso: string) => {
     const statementId = statementIdQuery.data
@@ -247,28 +264,35 @@ export function InstructorInvoiceModal({
     }
   }
 
-  const handleDownloadPaymentStatement = async () => {
+  const handleDownloadPaymentStatement = () => {
     if (settlementId == null) return
-    setDownloadLoading(true)
-    try {
-      const doc = await downloadPaymentStatementRemote(settlementId)
-      if (doc.downloadUrl) {
-        await downloadFromBulkEndpoint(doc.downloadUrl, `지급조서_${settlementId}`, 'pdf')
-      }
-    } catch (error) {
-      showAlert({
-        title: '안내',
-        content: getSettlementApiErrorMessage(error, '지급조서 다운로드에 실패했습니다.'),
-      })
-    } finally {
-      setDownloadLoading(false)
-    }
+    runProtectedDownload({
+      kind: 'PAYMENT_STATEMENT',
+      zIndex: 1400,
+      download: async password => {
+        setDownloadLoading(true)
+        try {
+          await downloadPaymentStatementRemote(settlementId, { password })
+        } catch (error) {
+          if (!isFileDownloadPasswordApiError(error)) {
+            showAlert({
+              title: '안내',
+              content: getSettlementApiErrorMessage(error, '지급조서 다운로드에 실패했습니다.'),
+            })
+          }
+          throw error
+        } finally {
+          setDownloadLoading(false)
+        }
+      },
+    })
   }
 
   const showLineActions = Boolean(statementData && statementIdQuery.data != null)
 
   return (
     <>
+      {filePasswordModal}
       {open && effectiveRow && paymentStatementPresentation ? (
         <ContentModal
           open={open}
@@ -312,8 +336,24 @@ export function InstructorInvoiceModal({
                       <DetailInfoForm.Field
                         label="지급조서 처리 현황"
                         view={
-                          <span style={{ color: paymentStatementPresentation.color, fontWeight: 600 }}>
-                            {paymentStatementPresentation.label}
+                          <span className="applicant-institution-basic-info__approval-status-row">
+                            <span
+                              style={{ color: paymentStatementPresentation.color, fontWeight: 600 }}
+                            >
+                              {paymentStatementPresentation.label}
+                            </span>
+                            {canResendInvoiceNotification ? (
+                              <>
+                                <span
+                                  className="applicant-institution-basic-info__approval-status-vbar"
+                                  aria-hidden
+                                />
+                                <SendNotiButton
+                                  mode="resend"
+                                  onClick={() => setNotificationResendOpen(true)}
+                                />
+                              </>
+                            ) : null}
                           </span>
                         }
                       />
@@ -324,7 +364,7 @@ export function InstructorInvoiceModal({
                         view={<span>{effectiveRow.invoice.expectedTransferDate}</span>}
                       />
                       <DetailInfoForm.Field
-                        label="강의비 책정 기준"
+                        label="강사비 책정 기준"
                         view={<span>{effectiveRow.invoice.lectureFeeBasis}</span>}
                       />
                     </DetailInfoForm.Row>
@@ -351,13 +391,22 @@ export function InstructorInvoiceModal({
                       <CmsButton
                         variant="delete"
                         size="large"
-                        onClick={() => setPaymentRejectOpen(true)} >
+                        disabled
+                        onClick={() =>
+                          showAlert({
+                            title: '안내',
+                            content:
+                              '산출 내역서에서는 신청 반려를 처리할 수 없습니다. 개인 일정별 정산 신청 상세에서만 반려할 수 있습니다.',
+                          })
+                        }
+                      >
                         신청 반려
                       </CmsButton>
                       <CmsButton
                         variant="primary"
                         size="large"
-                        onClick={() => setPaymentConfirmOpen(true)} >
+                        onClick={() => setPaymentConfirmOpen(true)}
+                      >
                         확인 처리
                       </CmsButton>
                     </div>
@@ -406,7 +455,7 @@ export function InstructorInvoiceModal({
                                     : 'instructor-invoice-modal__amount--minus'
                                 }
                               >
-                                {item.isPositive !== false ? '+' : ''}
+                                {item.isPositive !== false && item.정산금액 !== 0 ? '+' : ''}
                                 {item.정산금액.toLocaleString()}원
                               </td>
                               <td>
@@ -474,7 +523,8 @@ export function InstructorInvoiceModal({
                               size="large"
                               icon={<ButtonDownloadIcon />}
                               loading={downloadLoading}
-                              onClick={() => void handleDownloadPaymentStatement()} >
+                              onClick={() => void handleDownloadPaymentStatement()}
+                            >
                               지급조서 발급
                             </CmsButton>
                           </div>
@@ -509,8 +559,6 @@ export function InstructorInvoiceModal({
       <PaymentOrderPaymentRejectionResultModal
         open={paymentRejectDoneOpen}
         onClose={() => setPaymentRejectDoneOpen(false)}
-        data={statementData}
-        reason={paymentRejectReason}
       />
       <PaymentOrderCalculationBasisDetailModal
         open={basisDetailOpen}
@@ -518,6 +566,66 @@ export function InstructorInvoiceModal({
         onCancel={closeBasisDetailModal}
         zIndex={1400}
       />
+      {invoiceResendKind != null ? (
+        <SettlementNotificationResendModal
+          open={notificationResendOpen}
+          kind={invoiceResendKind}
+          hasStoredRejectionReason={Boolean(paymentRejectReason.trim())}
+          confirmLoading={resendNotificationMutation.isPending}
+          zIndex={1500}
+          onCancel={() => {
+            if (resendNotificationMutation.isPending) return
+            resendIdempotencyKeyRef.current = null
+            setNotificationResendOpen(false)
+          }}
+          onConfirm={payload => {
+            if (settlementId == null || resendNotificationMutation.isPending) return
+            if (
+              payload.notifyTiming === 'manual' &&
+              (!payload.manualNotifyAt || !payload.manualNotifyAt.isAfter(new Date()))
+            ) {
+              void showAlert({
+                title: '예약 발송 일시 확인',
+                content: '예약 발송 일시는 현재 시각보다 이후로 설정해 주세요.',
+              })
+              return
+            }
+            const idempotencyKey =
+              resendIdempotencyKeyRef.current ??
+              `settlement-${settlementId}-${crypto.randomUUID()}`
+            resendIdempotencyKeyRef.current = idempotencyKey
+            void resendNotificationMutation
+              .mutateAsync({
+                settlementId,
+                idempotencyKey,
+                body: {
+                  timing: payload.notifyTiming === 'manual' ? 'SCHEDULED' : 'IMMEDIATE',
+                  scheduledAt:
+                    payload.notifyTiming === 'manual'
+                      ? (payload.manualNotifyAt?.toISOString() ?? null)
+                      : null,
+                  reason:
+                    invoiceResendKind === 'rejected' ? payload.reason.trim() || null : null,
+                },
+              })
+              .then(() => {
+                resendIdempotencyKeyRef.current = null
+                setNotificationResendOpen(false)
+                showNotificationResendRequestCompletedAlert()
+                onSettlementUpdated?.()
+              })
+              .catch(error => {
+                showAlert({
+                  title: '알림 재발송 실패',
+                  content: getSettlementApiErrorMessage(
+                    error,
+                    '알림 재발송에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+                  ),
+                })
+              })
+          }}
+        />
+      ) : null}
     </>
   )
 }

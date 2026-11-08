@@ -7,13 +7,20 @@ import {
   lectureApplicationDetailPath,
   volunteerApplicationDetailPath,
 } from '@/features/mypage/lib/constants'
+import { lectureReportPreviewPath } from '@/features/mypage/education/schedules/lib/lecture-report-path'
 import type { MypageScheduleEvent, MypageScheduleEventType } from '../model/schedule-types'
 
-export type MypageScheduleActivitySection = 'schedule' | 'satisfaction' | 'survey' | 'settlement'
+export type MypageScheduleActivitySection =
+  | 'schedule'
+  | 'assignment'
+  | 'satisfaction'
+  | 'survey'
+  | 'settlement'
+  | 'lecture-report'
 
 export function resolveMypageScheduleActivitySection(
   type: MypageScheduleEventType,
-): MypageScheduleActivitySection {
+): MypageScheduleActivitySection | null {
   switch (type) {
     case 'satisfaction':
       return 'satisfaction'
@@ -21,17 +28,35 @@ export function resolveMypageScheduleActivitySection(
       return 'survey'
     case 'receipt':
       return 'settlement'
-    default:
+    case 'lecture_report_deadline':
+      return 'lecture-report'
+    case 'assignment':
+      return 'assignment'
+    case 'education':
       return 'schedule'
   }
+}
+
+function appendQuery(path: string, extra: Record<string, string | undefined>): string {
+  const hashIndex = path.indexOf('#')
+  const withoutHash = hashIndex >= 0 ? path.slice(0, hashIndex) : path
+  const hash = hashIndex >= 0 ? path.slice(hashIndex) : ''
+  const qIndex = withoutHash.indexOf('?')
+  const base = qIndex >= 0 ? withoutHash.slice(0, qIndex) : withoutHash
+  const params = new URLSearchParams(qIndex >= 0 ? withoutHash.slice(qIndex + 1) : '')
+  for (const [key, value] of Object.entries(extra)) {
+    if (value) params.set(key, value)
+  }
+  const query = params.toString()
+  return `${base}${query ? `?${query}` : ''}${hash}`
 }
 
 function buildApplicationDetailPath(
   applicationId: string,
   applicationType: ProgramApplicationType | undefined,
-  section: MypageScheduleActivitySection,
+  section: MypageScheduleActivitySection | null,
 ): string {
-  const sectionQuery = `?section=${section}`
+  const sectionQuery = section ? `?section=${section}` : ''
   if (applicationType === 'INSTRUCTOR') {
     return `${lectureApplicationDetailPath(applicationId, applicationType)}${sectionQuery}`
   }
@@ -75,6 +100,12 @@ export function findMypageApplicationForScheduleEvent(
   return undefined
 }
 
+function parsePositiveInt(value: string | undefined): number | null {
+  if (!value || !/^\d+$/.test(value)) return null
+  const parsed = Number(value)
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null
+}
+
 export function resolveMypageScheduleEventDetailPath(
   queryClient: QueryClient,
   event: MypageScheduleEvent,
@@ -85,6 +116,29 @@ export function resolveMypageScheduleEventDetailPath(
   const applicationId = event.applicationId ?? application?.id
   if (!applicationId) return null
 
-  const applicationType = application?.applicationType ?? event.applicationType
-  return buildApplicationDetailPath(applicationId, applicationType, section)
+  const applicationType =
+    event.type === 'lecture_report_deadline'
+      ? 'INSTRUCTOR'
+      : (application?.applicationType ?? event.applicationType)
+
+  if (event.type === 'receipt' && applicationType === 'INSTRUCTOR') {
+    return null
+  }
+
+  if (event.type === 'lecture_report_deadline') {
+    const assignmentId = parsePositiveInt(event.assignmentId)
+    if (assignmentId != null && event.reportStatus === 'SUBMITTED') {
+      return lectureReportPreviewPath(applicationId, assignmentId)
+    }
+    return buildApplicationDetailPath(applicationId, 'INSTRUCTOR', 'lecture-report')
+  }
+
+  const path = buildApplicationDetailPath(applicationId, applicationType, section)
+  if (event.type === 'education') {
+    return appendQuery(path, { scheduleId: event.scheduleId })
+  }
+  if (event.type === 'assignment' || event.type === 'satisfaction' || event.type === 'survey') {
+    return appendQuery(path, { formBindingId: event.formBindingId })
+  }
+  return path
 }

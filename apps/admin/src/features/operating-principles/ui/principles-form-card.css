@@ -49,18 +49,12 @@
   flex-shrink: 0;
 }
 
-.principles-form-section-title__marker {
-  flex-shrink: 0;
-  width: 10px;
-  height: 10px;
-  background: var(--default-BK, #3d3d3d);
-}
-
 .principles-form-section-title__text {
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
   font-size: 16px;
   font-weight: 700;
+  padding: 0 8px;
   line-height: 140%;
 }
 
@@ -80,14 +74,14 @@
  */
 .principles-form-card .detail-info-form__field {
   min-height: 54px;
-  --detail-info-label-w: 160px;
-  grid-template-columns: 160px minmax(0, 1fr);
+  --detail-info-label-w: 200px;
+  grid-template-columns: 200px minmax(0, 1fr);
 }
 
 .principles-form-card .detail-info-form__field-label {
-  width: 160px;
-  min-width: 160px;
-  max-width: 160px;
+  width: 200px;
+  min-width: 200px;
+  max-width: 200px;
   min-height: 54px;
   padding: 12px 16px;
   box-sizing: border-box;
@@ -133,12 +127,8 @@
   cursor: default;
 }
 
-.principles-form-card
-  .principles-inline-field--readonly
-  .cms-input__control:hover,
-.principles-form-card
-  .principles-inline-field--readonly
-  .cms-textarea__control:hover {
+.principles-form-card .principles-inline-field--readonly .cms-input__control:hover,
+.principles-form-card .principles-inline-field--readonly .cms-textarea__control:hover {
   border-color: transparent !important;
 }
 
@@ -149,22 +139,44 @@
   font-weight: 500;
 }
 
-.principles-form-card
-  .principles-inline-field--readonly.cms-input
-  .ant-input {
+.principles-form-card .principles-inline-field--readonly.cms-input .ant-input {
   font-weight: 600;
 }
 
-/* 수정: 일반 컨트롤 + resize 비활성 (detail-document-form-card) */
-.principles-form-card .principles-inline-field--edit .cms-textarea--fixed-rows
-  .cms-textarea__inner
-  textarea.ant-input,
+/*
+ * 소개글 조회 — 기본 DetailInfoForm 조회와 같은 텍스트 위치
+ * (조회 시 입력 박스의 투명 테두리·안쪽 패딩을 없애 셀 패딩 12×16만 남김, 세로 중앙)
+ */
 .principles-form-card
-  .principles-inline-field--edit.cms-textarea--fixed-rows
+  .detail-info-form__field-content--edit:has(.principles-inline-field--readonly) {
+  align-items: center;
+}
+
+.principles-form-card
+  .detail-info-form
+  .principles-inline-field--readonly
+  .cms-textarea__control {
+  min-height: 0 !important;
+  padding: 0 !important;
+  border-width: 0;
+}
+
+.principles-form-card
+  .detail-info-form
+  .principles-inline-field--readonly
   .cms-textarea__inner
   textarea.ant-input {
-  resize: none !important;
-  overflow-y: auto;
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  line-height: 150% !important;
+}
+
+/* resize 핸들 없음·세로 스크롤은 공통 `cms-textarea--fixed-rows`(CmsTextArea layout="fixed") */
+
+.principles-col-required {
+  margin-left: 2px;
+  color: #c32f4a;
 }
 
 /* 사용 여부 Switch — DS mint-01 */
@@ -172,35 +184,8 @@
   background: var(--color-mint-01, #01a1af) !important;
 }
 
-.principles-sortable-table .ant-table {
-  table-layout: fixed;
-}
-
 .principles-sortable-table .ant-table-tbody > tr > td {
   vertical-align: middle;
-}
-
-/* 긴 텍스트 열만 상단 — 아이콘·스위치·순서 등은 middle 유지 */
-.principles-form-card--editing
-  .principles-sortable-table
-  .ant-table-tbody
-  > tr
-  > td.principles-sortable-table__col--title,
-.principles-form-card--editing
-  .principles-sortable-table
-  .ant-table-tbody
-  > tr
-  > td.principles-sortable-table__col--subText {
-  vertical-align: top;
-}
-
-.principles-form-card--editing
-  .principles-sortable-table
-  .principles-title-field.principles-inline-field--edit
-  .cms-textarea__inner
-  textarea.ant-input {
-  min-height: 72px;
-  line-height: 150%;
 }
 
 .principles-sortable-table .ant-table-tbody > tr > td.principles-sortable-table__col--icon {
@@ -222,4 +207,29 @@
 .principles-sortable-table .ant-table-tbody > tr > td .cms-input {
   display: block;
   max-width: 100%;
+}
+
+/* 수정 칸 autoSize(hug) — 한 줄이면 단일 입력과 같은 40px (본문 22 + 상하 8 + 보더 2) */
+.principles-form-card .principles-inline-field--edit.cms-textarea--medium .cms-textarea__control {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+/*
+ * 운영 원칙 표 조회 — 텍스트 높이만큼만 차지(시안): 투명 입력의 안쪽 패딩·보더·최소 높이를 없애
+ * 행 높이 = 셀 패딩 + 텍스트 줄 수. (높이는 autoSize 인라인 값을 그대로 쓴다 — height 강제 금지)
+ */
+.principles-sortable-table .principles-inline-field--readonly .cms-textarea__control {
+  min-height: 0 !important;
+  padding: 0 !important;
+  border-width: 0;
+}
+
+.principles-sortable-table
+  .principles-inline-field--readonly
+  .cms-textarea__inner
+  textarea.ant-input {
+  min-height: 0 !important;
+  padding: 0 !important;
+  line-height: 150% !important;
 }

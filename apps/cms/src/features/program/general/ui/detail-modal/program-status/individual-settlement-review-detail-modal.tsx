@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Spin } from 'antd'
 import { useQuery } from '@tanstack/react-query'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { ActionResultModal, CmsButton, CmsTextArea, ContentModal, ConfirmModal } from '@/shared/ui'
+import { ActionResultModal, CmsButton, ContentModal } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
 import {
@@ -21,7 +21,15 @@ import {
 } from '@/features/program/general/lib/general-program-modal-z-index'
 import { mapIndividualSettlementReviewToCalculationStatement } from '@/features/program/general/lib/map-individual-settlement-review-to-calculation-statement'
 import { PaymentOrderCalculationStatementProcessingStatusView } from '@/features/settlement/ui/payment-record/payment-order-calculation-statement-processing-status-view'
-import type { PaymentOrderCalculationStatementProgramBasicInfo } from '@/features/settlement-management/model/payment-order-admin-list'
+import type {
+  PaymentOrderCalculationStatementProgramBasicInfo,
+  PaymentOrderProgramCalculationStatement,
+} from '@/features/settlement-management/model/payment-order-admin-list'
+import { PaymentOrderPaymentConfirmationModal } from '@/features/settlement/ui/payment-record/payment-order-payment-confirmation-modal'
+import {
+  PaymentOrderPaymentRejectionModal,
+  type PaymentOrderRejectSubmitPayload,
+} from '@/features/settlement/ui/payment-record/payment-order-payment-rejection-modal'
 import { PaymentOrderCalculationBreakdownTable } from '@/features/settlement/ui/payment-record/payment-order-calculation-breakdown-table'
 import {
   PaymentOrderCalculationBasisDetailModal,
@@ -58,7 +66,7 @@ function IndividualSettlementReviewBasicInfo({
       <DetailInfoForm title="기본 정보" hideHeader mode="view">
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
-            label="지급 조서 처리 현황"
+            label="지급조서 처리 현황"
             fullRow
             view={<PaymentOrderCalculationStatementProcessingStatusView basic={basic} />}
             readOnlyDisplay
@@ -110,7 +118,6 @@ export function IndividualSettlementReviewDetailModal({
   const [approveOpen, setApproveOpen] = useState(false)
   const [approveDoneOpen, setApproveDoneOpen] = useState(false)
   const [rejectOpen, setRejectOpen] = useState(false)
-  const [rejectReason, setRejectReason] = useState('')
 
   const {
     basisDetailOpen,
@@ -125,7 +132,6 @@ export function IndividualSettlementReviewDetailModal({
       setApproveOpen(false)
       setApproveDoneOpen(false)
       setRejectOpen(false)
-      setRejectReason('')
     }
   }, [open])
   /* eslint-enable react-hooks/set-state-in-effect */
@@ -146,6 +152,29 @@ export function IndividualSettlementReviewDetailModal({
     [businessPeriodDisplay, detail, programSessionProgressDisplay]
   )
 
+  const rejectStatement = useMemo((): PaymentOrderProgramCalculationStatement | null => {
+    if (statementView == null) return null
+    const blocks =
+      statementView.blocks.length > 0
+        ? statementView.blocks
+        : [
+            {
+              institutionName: statementView.basic.programName,
+              lectureDateDisplay: '-',
+              lectureSessionDisplay: '-',
+              lines: [],
+            },
+          ]
+    return {
+      context: 'program',
+      sourceLineRowId: String(settlementApplicationId ?? ''),
+      basic: statementView.basic,
+      blocks,
+      formulaLabel: statementView.formulaLabel,
+      totalAmount: statementView.totalAmount,
+    }
+  }, [settlementApplicationId, statementView])
+
   const showMutationError = useCallback(
     (error: unknown) => {
       showAlert({
@@ -156,12 +185,13 @@ export function IndividualSettlementReviewDetailModal({
     [showAlert]
   )
 
-  const handleApprove = useCallback(async () => {
+  const handleApprove = useCallback(async (scheduledPaymentDate: string) => {
     if (settlementApplicationId == null || expectedRevisionNo == null) return
     try {
       await approveMutation.mutateAsync({
         settlementApplicationId,
         expectedRevisionNo,
+        scheduledPaymentDate,
       })
       setApproveOpen(false)
       setApproveDoneOpen(true)
@@ -170,36 +200,29 @@ export function IndividualSettlementReviewDetailModal({
     }
   }, [approveMutation, expectedRevisionNo, settlementApplicationId, showMutationError])
 
-  const handleReject = useCallback(async () => {
-    const reason = rejectReason.trim()
-    if (!reason) {
-      showAlert({ title: '안내', content: '반려 사유를 입력해 주세요.' })
-      return
-    }
-    if (reason.length > 1000) {
-      showAlert({ title: '안내', content: '반려 사유는 1000자 이하로 입력해 주세요.' })
-      return
-    }
-    if (settlementApplicationId == null || expectedRevisionNo == null) return
-    try {
-      await rejectMutation.mutateAsync({
-        settlementApplicationId,
-        expectedRevisionNo,
-        reason,
-      })
-      setRejectOpen(false)
-      setRejectReason('')
-    } catch (error) {
-      showMutationError(error)
-    }
-  }, [
-    expectedRevisionNo,
-    rejectMutation,
-    rejectReason,
-    settlementApplicationId,
-    showAlert,
-    showMutationError,
-  ])
+  const handleReject = useCallback(
+    async (payload: PaymentOrderRejectSubmitPayload) => {
+      const reason = payload.reason.trim()
+      if (!reason) {
+        showAlert({ title: '안내', content: '반려 사유를 입력해 주세요.' })
+        return
+      }
+      if (settlementApplicationId == null || expectedRevisionNo == null) return
+      try {
+        await rejectMutation.mutateAsync({
+          settlementApplicationId,
+          expectedRevisionNo,
+          reason,
+          notificationType: payload.notificationType,
+          scheduledNotificationAt: payload.scheduledNotificationAt,
+        })
+        setRejectOpen(false)
+      } catch (error) {
+        showMutationError(error)
+      }
+    },
+    [expectedRevisionNo, rejectMutation, settlementApplicationId, showAlert, showMutationError]
+  )
 
   const reviewing = approveMutation.isPending || rejectMutation.isPending
   const isStatementActionLocked = !canApprove && !canReject
@@ -239,7 +262,7 @@ export function IndividualSettlementReviewDetailModal({
               blocks={statementView.blocks}
               formulaLabel={statementView.formulaLabel}
               totalAmount={statementView.totalAmount}
-              institutionColumnTitle="프로그램명"
+              hideInstitutionColumn
               dateColumnTitle="교육 진행 일자"
               lectureSessionSegmentLabel="round"
               tableCellSpec="cms-data-table"
@@ -279,16 +302,15 @@ export function IndividualSettlementReviewDetailModal({
         )}
       </ContentModal>
 
-      <ConfirmModal
+      {/* 강사 산출 내역서와 같은 「지급조서 확인 안내」(대상·일정 + 계좌 지급 예정일) */}
+      <PaymentOrderPaymentConfirmationModal
         open={approveOpen}
-        title="지급조서 확인 안내"
-        content="지급조서 확인 처리 하시겠습니까?"
-        cancelText="취소"
-        confirmText="확인 처리"
+        data={rejectStatement}
         zIndex={INDIVIDUAL_SETTLEMENT_REVIEW_NESTED_MODAL_Z_INDEX}
         onCancel={() => setApproveOpen(false)}
-        onConfirm={() => void handleApprove()}
-        confirmLoading={approveMutation.isPending}
+        onConfirm={({ lectureFeePaymentScheduledDateIso }) =>
+          void handleApprove(lectureFeePaymentScheduledDateIso)
+        }
       />
 
       <ActionResultModal
@@ -299,64 +321,13 @@ export function IndividualSettlementReviewDetailModal({
         onClose={() => setApproveDoneOpen(false)}
       />
 
-      <ContentModal
+      <PaymentOrderPaymentRejectionModal
         open={rejectOpen}
         onCancel={() => setRejectOpen(false)}
-        title="개인 정산 반려"
-        zIndex={INDIVIDUAL_SETTLEMENT_REVIEW_NESTED_MODAL_Z_INDEX}
-        className="individual-settlement-review-reject-modal"
-        footer={
-          <div className="individual-settlement-review-detail-modal__footer">
-            <CmsButton
-              variant="secondary"
-              size="large"
-              type="button"
-              onClick={() => setRejectOpen(false)}
-              disabled={rejectMutation.isPending}
-            >
-              취소
-            </CmsButton>
-            <CmsButton
-              variant="delete"
-              size="large"
-              type="button"
-              onClick={() => void handleReject()}
-              loading={rejectMutation.isPending}
-              disabled={rejectMutation.isPending || !rejectReason.trim()}
-            >
-              반려
-            </CmsButton>
-          </div>
-        }
-      >
-        <DetailInfoForm
-          title=""
-          hideHeader
-          mode="edit"
-          className="individual-settlement-review-reject-modal__form"
-        >
-          <DetailInfoForm.Row type="single">
-            <DetailInfoForm.Field
-              label="반려 사유"
-              fullRow
-              edit={
-                <CmsTextArea
-                  inputSize="small"
-                  width="100%"
-                  rows={4}
-                  value={rejectReason}
-                  maxLength={1000}
-                  onChange={event => setRejectReason(event.target.value)}
-                  placeholder="반려 사유를 입력해 주세요"
-                  aria-label="반려 사유"
-                  className="individual-settlement-review-reject-modal__textarea"
-                />
-              }
-              view={rejectReason}
-            />
-          </DetailInfoForm.Row>
-        </DetailInfoForm>
-      </ContentModal>
+        onReject={payload => void handleReject(payload)}
+        data={rejectStatement}
+        confirmLoading={rejectMutation.isPending}
+      />
 
       <PaymentOrderCalculationBasisDetailModal
         open={basisDetailOpen}

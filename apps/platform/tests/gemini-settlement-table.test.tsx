@@ -26,9 +26,15 @@ describe('GeminiSettlementTable', () => {
             recognizedClassCount: 1,
           },
         ]}
-      />,
+      />
     )
-    for (const header of ['기관명', '교육 학년', '교육 진행 일정', '정산 처리 현황', '정산 예정 금액']) {
+    for (const header of [
+      '기관명',
+      '교육 학년',
+      '교육 진행 일정',
+      '정산 처리 현황',
+      '정산 예정 금액',
+    ]) {
       expect(html).toContain(`<th scope="col">${header}</th>`)
     }
     expect(html).toContain('2건')
@@ -64,7 +70,7 @@ describe('GeminiSettlementTable', () => {
             expectedAmount: null,
           },
         ]}
-      />,
+      />
     )
     const rows = html.split('<tr>').slice(2)
     expect(rows[0]).toMatch(/class="[^"]*statusPaid[^"]*">계좌 지급 완료<\/span>/)
@@ -86,15 +92,22 @@ describe('EducationSettlementSummary gemini', () => {
     layout: 'gemini' as const,
   }
 
-  it('강의비 책정 기준을 차시별로 구분선과 함께 나열한다', () => {
+  it('강사비 책정 기준을 차시별로 구분선과 함께 나열한다', () => {
     const html = renderToStaticMarkup(
       <EducationSettlementSummary
         {...base}
         feeGradeLabel=""
         feeBasisItems={['1차시 0원', '2차시 170,000원', '3차시 220,000원', '4차시 270,000원']}
-      />,
+      />
     )
-    const order = ['확인진행중', '프로그램 진행 회차', '해당 없음', '1차시 0원', '2차시 170,000원', '4차시 270,000원']
+    const order = [
+      '확인진행중',
+      '프로그램 진행 회차',
+      '해당 없음',
+      '1차시 0원',
+      '2차시 170,000원',
+      '4차시 270,000원',
+    ]
     const positions = order.map(text => html.indexOf(text))
     expect(positions.every(position => position >= 0)).toBe(true)
     expect([...positions].sort((a, b) => a - b)).toEqual(positions)
@@ -103,10 +116,13 @@ describe('EducationSettlementSummary gemini', () => {
 
   it('항목이 없으면 lectureFeeBasis 한 줄을 그대로 보인다', () => {
     const html = renderToStaticMarkup(
-      <EducationSettlementSummary {...base} feeGradeLabel="인정 2차시 고정 강사비 170000원" feeBasisItems={[]} />,
+      <EducationSettlementSummary
+        {...base}
+        feeGradeLabel="인정 2차시 고정 강사비 170000원"
+        feeBasisItems={[]}
+      />
     )
     expect(html).toContain('인정 2차시 고정 강사비 170000원')
     expect(html).not.toContain('feeBasisDivider')
   })
 })
-

@@ -12,4 +12,5 @@ export interface PaymentStatementBulkDownloadRequest {
      * @maxItems 100
      */
   settlementIds: number[];
+  password?: string;
 }

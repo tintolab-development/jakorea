@@ -8,8 +8,11 @@ import type {
   ParticipatingSchoolRow,
   ParticipatingSchoolSession,
 } from '@/features/program/general/model/participating-schools'
-import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import type { InstructorAssignSessionOption } from './instructor-assign-session-options'
+import {
+  resolveAssignmentRoundSessionLabel,
+  resolveInstructorAssignSessionDisplayLabels,
+} from './instructor-assign-session-options'
 
 export interface SchoolAddInstructorAssignOption {
   value: string
@@ -28,23 +31,6 @@ function parseSessionDateKey(dateRaw: string): string | null {
   const m = parts[1]!.padStart(2, '0')
   const d = parts[2]!.padStart(2, '0')
   return `${y}-${m}-${d}`
-}
-
-function formatScheduleDateLabel(dateRaw: string, dayOfWeek: string): string {
-  const cleaned = dateRaw.trim()
-  const formatted = formatCmsScheduleDisplayLabel(cleaned)
-  if (formatted !== cleaned || /\([월화수목금토일]\)/u.test(formatted)) return formatted
-  return formatCmsScheduleDisplayLabel(`${cleaned}(${dayOfWeek})`)
-}
-
-function normalizeTimeRangeDisplay(timeRange: string): string {
-  const parts = timeRange.split('~').map(part => {
-    const p = part.trim()
-    const m = p.match(/^(\d{1,2}):(\d{2})$/)
-    if (m) return `${m[1]!.padStart(2, '0')}:${m[2]}`
-    return p
-  })
-  return parts.join(' ~ ')
 }
 
 export function buildSchoolAddInstructorSessionSlotKey(
@@ -185,8 +171,8 @@ export function buildSchoolAddInstructorAssignSessionOptions(params: {
   if (!sessions?.length) return []
 
   return sessions.map(session => {
-    const dateLabel = formatScheduleDateLabel(session.date, session.dayOfWeek)
-    const timeLabel = normalizeTimeRangeDisplay(session.timeRange)
+    const { dateLabel, timeLabel, scheduleLabel } =
+      resolveInstructorAssignSessionDisplayLabels(session)
     const dateKey = parseSessionDateKey(session.date)
     const slotKey = buildSchoolAddInstructorSessionSlotKey(schoolId, session)
     const disabled = isSessionDisabledForInstructor({
@@ -203,10 +189,10 @@ export function buildSchoolAddInstructorAssignSessionOptions(params: {
 
     return {
       id: slotKey,
-      dateLabel,
+      dateLabel: dateLabel || undefined,
       timeLabel,
-      scheduleLabel: `${dateLabel} ${timeLabel}`,
-      sessionRoundLabel: `${session.round}차시`,
+      scheduleLabel,
+      sessionRoundLabel: resolveAssignmentRoundSessionLabel(session),
       capacityLabel: '0명',
       dateKey: dateKey ?? undefined,
       slotKey,

@@ -3,6 +3,7 @@ import {
   getSettlementConfigErrorField,
   getSettlementApiErrorMessage,
   getSettlementApiErrorCode,
+  getFileDownloadPasswordFormError,
   getNormalizedSettlementApiError,
   isSettlementExportAlreadyDownloadedError,
   isSettlementExportReissueRequiredError,
@@ -284,6 +285,85 @@ describe('normalizeSettlementApiErrorCode', () => {
         missingCount: null,
         paymentIds: [],
       }
+    )
+  })
+
+  it('409 SETTLEMENT_BANK_ACCOUNT_REQUIRED는 지급조서 사전 동의서 완료를 안내한다', () => {
+    const error = {
+      response: {
+        status: 409,
+        data: {
+          message: '요청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
+          error: { code: 'SETTLEMENT_BANK_ACCOUNT_REQUIRED', field: 'bankAccount' },
+        },
+      },
+    }
+    expect(getSettlementApiErrorMessage(error, 'fallback')).toBe(
+      '지급조서 사전 동의서를 작성·완료하세요. 등록된 정산 계좌가 없어 계좌이체를 생성할 수 없습니다.'
+    )
+  })
+
+  it('400 DOWNLOAD_PASSWORD_REQUIRED/INVALID는 서버 파일 암호 문구를 쓴다', () => {
+    expect(
+      getSettlementApiErrorMessage(
+        {
+          response: {
+            status: 400,
+            data: {
+              message: '파일 암호를 입력해 주세요.',
+              error: { code: 'DOWNLOAD_PASSWORD_REQUIRED', field: 'password' },
+            },
+          },
+        },
+        'fallback'
+      )
+    ).toBe('파일 암호를 입력해 주세요.')
+    expect(
+      getSettlementApiErrorMessage(
+        {
+          response: {
+            status: 400,
+            data: {
+              message:
+                '파일 암호는 8자 이상이며 영문, 숫자, 특수문자를 포함하고 공백이 없어야 합니다.',
+              error: { code: 'DOWNLOAD_PASSWORD_INVALID', field: 'password' },
+            },
+          },
+        },
+        'fallback'
+      )
+    ).toBe('파일 암호는 8자 이상이며 영문, 숫자, 특수문자를 포함하고 공백이 없어야 합니다.')
+    expect(
+      getFileDownloadPasswordFormError({
+        response: {
+          status: 400,
+          data: {
+            message:
+              '파일 암호는 8자 이상이며 영문, 숫자, 특수문자를 포함하고 공백이 없어야 합니다.',
+            error: { code: 'DOWNLOAD_PASSWORD_INVALID', field: 'password' },
+          },
+        },
+      })
+    ).toBe('파일 암호는 8자 이상이며 영문, 숫자, 특수문자를 포함하고 공백이 없어야 합니다.')
+  })
+
+  it('403 CONSENT_SENSITIVE_FILE_FORBIDDEN는 정산 조회 권한 문구로 덮지 않는다', () => {
+    expect(
+      getSettlementApiErrorMessage(
+        {
+          response: {
+            status: 403,
+            data: {
+              message:
+                '성범죄 경력조회 동의서와 행정정보 공동이용 사전동의서는 Master와 해당 프로그램 Program Owner만 열람·다운로드할 수 있습니다.',
+              error: { code: 'CONSENT_SENSITIVE_FILE_FORBIDDEN' },
+            },
+          },
+        },
+        'fallback'
+      )
+    ).toBe(
+      '성범죄 경력조회 동의서와 행정정보 공동이용 사전동의서는 Master와 해당 프로그램 Program Owner만 열람·다운로드할 수 있습니다.'
     )
   })
 
