@@ -3,16 +3,7 @@
  * 필터·목록: `FilterTableLayout` (`title`·`description`·`actions`) + 테이블·캘린더 본문
  */
 
-import {
-  lazy,
-  Suspense,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type Key,
-} from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type Key } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
@@ -37,9 +28,7 @@ import {
 } from '@/features/settlement-management/api/settlement-api-client'
 import type { SettlementExportResponse } from '@/features/settlement-management/api/account-payments/settlement-export-response'
 import type { TaxReportPreviewWorkbook } from '@/features/settlement-management/api/account-payments/tax-report-preview'
-import type {
-  SettlementExportRequest,
-} from '@/shared/api/generated/settlement/schemas'
+import type { SettlementExportRequest } from '@/shared/api/generated/settlement/schemas'
 import { pickEligibleAccountPaymentFormIssueRows } from './resolve-toolbar-form-issue-rows'
 import { useAccountPaymentsListQuery } from '@/features/settlement-management/hooks/use-account-payments-list-query'
 import {
@@ -77,6 +66,7 @@ import './payment-orders-page.css'
 import './account-payments-page.css'
 import { AccountPaymentsCalendarView } from './account-payments-calendar-view'
 import { getPaymentOrdersDefaultDateRange } from './payment-orders-date-range'
+import { AccountPaymentStatusText } from './account-payment-status-text'
 import {
   AP_YEAR_PARAM,
   parseAccountPaymentsYearParam,
@@ -189,21 +179,6 @@ const statusSelectOptions: { value: AppliedAccountStatus; label: string }[] = [
   })),
 ]
 
-function getAccountPaymentStatusClassName(status: AccountPaymentTransferStatus): string {
-  switch (status) {
-    case 'awaiting_confirmation':
-      return 'account-payments-page__status-text--awaiting-confirmation'
-    case 'partial_confirmation':
-      return 'account-payments-page__status-text--partial-confirmation'
-    case 'account_paid':
-      return 'account-payments-page__status-text--account-paid'
-    case 'payment_correction_requested':
-      return 'account-payments-page__status-text--payment-correction-requested'
-    default:
-      return ''
-  }
-}
-
 function useCalendarYear(): number {
   const [y, setY] = useState(() => dayjs().year())
   useEffect(() => {
@@ -293,9 +268,7 @@ export default function AccountPaymentsPage() {
   const [issuedFormPreviewRows, setIssuedFormPreviewRows] = useState<AccountPaymentRow[] | null>(
     null
   )
-  const [issuedFormExport, setIssuedFormExport] = useState<SettlementExportResponse | null>(
-    null
-  )
+  const [issuedFormExport, setIssuedFormExport] = useState<SettlementExportResponse | null>(null)
   const [issuedTaxReportPreview, setIssuedTaxReportPreview] =
     useState<TaxReportPreviewWorkbook | null>(null)
   const taxReportPreviewRequestSequence = useRef(0)
@@ -581,9 +554,7 @@ export default function AccountPaymentsPage() {
         width: 130,
         align: 'center',
         render: (s: AccountPaymentTransferStatus) => (
-          <span className={getAccountPaymentStatusClassName(s)}>
-            {ACCOUNT_PAYMENT_STATUS_LABELS[s]}
-          </span>
+          <AccountPaymentStatusText status={s} label={ACCOUNT_PAYMENT_STATUS_LABELS[s]} />
         ),
       },
       {
@@ -1081,11 +1052,7 @@ export default function AccountPaymentsPage() {
       setBulkTransferPreviewOpen(true)
       showIssueCompletedAlert()
     })()
-  }, [
-    accountPaymentCompleteSuccessContext,
-    notifyExportError,
-    waitReadyFormExport,
-  ])
+  }, [accountPaymentCompleteSuccessContext, notifyExportError, waitReadyFormExport])
 
   const filterLayoutClassName = 'account-payments-page__filter-table'
 

@@ -18,6 +18,7 @@ import type { SectionSchema } from '@/features/program/shared/model/recruitment-
 import { DateRangeEdit, ProgramDetailContactReadRow } from '../components/recruitment-form-parts'
 import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import dayjs from 'dayjs'
+import { RecruitmentLifecycleStatusText } from '@/features/program/shared/ui/recruitment-lifecycle-status-text'
 
 const toDayjs = (d: string | Date | undefined) => (d ? dayjs(d) : null)
 
@@ -75,11 +76,10 @@ export function createInstitutionsSchema({
           {
             label: '참여자 모집 현황',
             view: participantRecruitmentLifecycle ? (
-              <span
-                className={`program-detail-info-tab__lifecycle-status-text program-detail-info-tab__lifecycle-status-text--${participantRecruitmentLifecycle.replace(/_/g, '-')}`}
-              >
-                {participantRecruitmentStatusLabel}
-              </span>
+              <RecruitmentLifecycleStatusText
+                status={participantRecruitmentLifecycle}
+                label={participantRecruitmentStatusLabel}
+              />
             ) : (
               '-'
             ),

@@ -89,7 +89,14 @@ const reviewDetail: IndividualSettlementReviewDetail = {
               amount: 20000,
               description: null,
               receiptStatus: 'SUBMITTED',
-              files: [{ fileObjectId: 100, fileName: 'receipt-1.jpg', contentType: 'image/jpeg', fileSize: 12345 }],
+              files: [
+                {
+                  fileObjectId: 100,
+                  fileName: 'receipt-1.jpg',
+                  contentType: 'image/jpeg',
+                  fileSize: 12345,
+                },
+              ],
             },
           ],
         },
@@ -127,7 +134,9 @@ const reviewDetail: IndividualSettlementReviewDetail = {
               expenseDate: '2026-10-01',
               amount: 10000,
               receiptStatus: 'SUBMITTED',
-              files: [{ fileObjectId: 102, fileName: 'receipt-3.pdf', contentType: 'application/pdf' }],
+              files: [
+                { fileObjectId: 102, fileName: 'receipt-3.pdf', contentType: 'application/pdf' },
+              ],
             },
           ],
         },
@@ -175,10 +184,12 @@ describe('mapIndividualSettlementReviewListRows', () => {
       ],
       applications: [submittedApplication],
     })
-    expect(assignedSessionsForIndividualSettlementReview([
-      session(null, { requestedScheduleId: 999001, scheduleUnresolved: true }),
-      session(187231),
-    ]).map(item => item.resolvedScheduleId)).toEqual([187231])
+    expect(
+      assignedSessionsForIndividualSettlementReview([
+        session(null, { requestedScheduleId: 999001, scheduleUnresolved: true }),
+        session(187231),
+      ]).map(item => item.resolvedScheduleId)
+    ).toEqual([187231])
     expect(rows.map(row => row.programScheduleId)).toEqual([187231])
   })
 
@@ -268,12 +279,11 @@ describe('individual settlement review detail display', () => {
     expect(individualSettlementTableProcessingLabel('SUBMITTED')).toBe('확인 대기 중')
   })
 
-  it('shows APPROVED as 지급조서 확인 완료 and does not promote PAID to account payment', () => {
+  it('shows APPROVED as 지급조서 확인 완료 and PAID as 계좌 지급 완료', () => {
     expect(individualSettlementReviewStatusLabel('APPROVED')).toBe('지급조서 확인 완료')
     expect(individualSettlementReviewStatusLabel('REJECTED')).toBe('신청 반려')
     expect(individualSettlementReviewStatusLabel('NONE')).toBe('해당 없음')
-    expect(individualSettlementReviewStatusLabel('PAID')).toBe('PAID')
-    expect(individualSettlementReviewStatusLabel('PAID')).not.toContain('계좌 지급 완료')
+    expect(individualSettlementReviewStatusLabel('PAID')).toBe('계좌 지급 완료')
   })
 
   it('keeps LODGING visible as not payable and not an instructor statement id', () => {
@@ -298,7 +308,9 @@ describe('individual settlement review detail display', () => {
         },
       ],
     }
-    expect(latestIndividualSettlementReviewRevision(rejected)?.rejectionReason).toBe('증빙 보완 필요')
+    expect(latestIndividualSettlementReviewRevision(rejected)?.rejectionReason).toBe(
+      '증빙 보완 필요'
+    )
     expect(canReviewIndividualSettlement(rejected)).toBe(false)
   })
 })

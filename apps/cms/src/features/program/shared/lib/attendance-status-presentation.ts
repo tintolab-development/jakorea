@@ -11,6 +11,7 @@ export type ProgramAttendanceStatusTextKind =
   | 'withdrawn'
   | 'pending'
   | 'dash'
+  | 'not_held'
 
 const NEUTRAL = 'var(--Netural-black, #3d3d3d)'
 const RED = 'var(--Status-red-main, #c32f4a)'
@@ -26,6 +27,8 @@ const ATTENDANCE_TEXT_ACCENT: Record<ProgramAttendanceStatusTextKind, string> = 
   /** 미기록 `-` — 시안 `-`는 기본 검정 */
   pending: NEUTRAL,
   dash: NEUTRAL,
+  /** 미진행 회차 — 비활성 텍스트 50% */
+  not_held: 'var(--Content-disabled, rgba(61, 61, 61, 0.5))',
 }
 
 export function getProgramAttendanceTextPresentation<L>(
@@ -42,7 +45,10 @@ export function getProgramAttendanceTextPresentation<L>(
 }
 
 /** 수료 여부 — 라벨 기준(수료 불가·수료 불가(활동 포기) 적색, 수료 완료 청색, 그 외 검정) */
-export function getProgramCompletionTextPresentation(label: string): { label: string; accentColor: string } {
+export function getProgramCompletionTextPresentation(label: string): {
+  label: string
+  accentColor: string
+} {
   const accentColor = label.startsWith('수료 불가') ? RED : label === '수료 완료' ? BLUE : NEUTRAL
   return { label, accentColor }
 }
