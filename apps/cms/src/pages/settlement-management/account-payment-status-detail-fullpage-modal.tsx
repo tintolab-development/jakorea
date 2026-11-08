@@ -3,6 +3,9 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { generalProgramDetailQueryOptions } from '@/features/program/general/hooks/use-general-program-detail'
+import { isIndividualProgramForSettlement } from '@/features/settlement/lib/settlement-program-individual'
 import { ACCOUNT_PAYMENT_DETAIL_FORBIDDEN_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
 import { getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
@@ -68,6 +71,19 @@ export function AccountPaymentStatusDetailFullPageModal({
   const detailQuery = useAccountPaymentDetailQuery(row, open && accountPaymentsRemote)
 
   const detail = accountPaymentsRemote ? (detailQuery.data ?? null) : null
+  /**
+   * 개인형 프로그램이면 산출 표 「참여 기관명」열 미노출 — 산출 내역서(use-payment-order-detail-fullpage-modal)와 같은 판정.
+   * 정산 응답에 프로그램 유형이 없어 프로그램 정본을 읽는다. 조회 실패 시 열을 그대로 둔다.
+   */
+  const detailProgramId =
+    detail?.programId ?? (row?.programId != null ? String(row.programId) : '')
+  const detailProgramQuery = useQuery({
+    ...generalProgramDetailQueryOptions(detailProgramId),
+    enabled: open && accountPaymentsRemote && /^\d+$/.test(detailProgramId),
+  })
+  const hideInstitutionColumn = detailProgramQuery.data
+    ? isIndividualProgramForSettlement(detailProgramQuery.data)
+    : false
   const detailLoading = accountPaymentsRemote && open && isAwaitingFirstQueryData(detailQuery)
   const detailError = accountPaymentsRemote
     ? detailQuery.error
@@ -208,6 +224,7 @@ export function AccountPaymentStatusDetailFullPageModal({
                 formulaLabel={detail.formulaLabel}
                 totalAmount={detail.totalAmount}
                 lectureSessionSegmentLabel="round"
+                hideInstitutionColumn={hideInstitutionColumn}
                 columnWidthPreset="account-payment-detail"
                 actionButtonSize="h32"
                 onBasisDetailClick={handleBasisDetailClick}

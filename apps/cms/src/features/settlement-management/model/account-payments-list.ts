@@ -115,6 +115,8 @@ export interface AccountPaymentStatusDetail {
   formulaLabel: string
   totalAmount: number
   plainAccountForPaymentConfirm: AccountPaymentPlainAccountForConfirm
+  /** 상세 GET settlement.programId — 개인형 판정(참여 기관명 열 숨김)용. 목록 행에 없을 수 있다. */
+  programId?: string
 }
 
 /**

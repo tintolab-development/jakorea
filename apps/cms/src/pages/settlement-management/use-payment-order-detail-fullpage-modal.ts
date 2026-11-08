@@ -22,7 +22,7 @@ import { shouldUseSettlementRemote } from '@/features/settlement-management/hook
 import { useCmsAlert } from '@/shared/ui'
 import { useQuery } from '@tanstack/react-query'
 import { generalProgramDetailQueryOptions } from '@/features/program/general/hooks/use-general-program-detail'
-import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
+import { isIndividualProgramForSettlement } from '@/features/settlement/lib/settlement-program-individual'
 import { isAwaitingFirstQueryData } from '@/shared/lib/is-awaiting-first-query-data'
 import type {
   PaymentOrderAdminInstructorDetailProgramRow,
@@ -87,7 +87,7 @@ export function usePaymentOrderDetailFullPageModalState(
     enabled: calcStatementOpen && paymentOrdersRemote && /^\d+$/.test(calcProgramId),
   })
   const calcHideInstitutionColumn = calcProgramQuery.data
-    ? isGeneralIndividualProgram(calcProgramQuery.data)
+    ? isIndividualProgramForSettlement(calcProgramQuery.data)
     : false
 
   const shouldFetchTransportationSnapshot = useMemo(() => {
