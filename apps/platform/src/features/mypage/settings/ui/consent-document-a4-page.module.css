@@ -2,7 +2,8 @@
 .stage {
   --consent-a4-design-page-width: 1464px;
   --consent-a4-design-page-height: 2072px;
-  --consent-a4-display-width: min(794px, calc(100vw - 56px));
+  /* CMS template-preview-modal과 같이 디자인 캔버스를 ~1:1로 표시 (794px 고정 시 본문 20px→약 10.8px로 축소되던 문제) */
+  --consent-a4-display-width: min(var(--consent-a4-design-page-width), calc(100vw - 56px));
   --consent-a4-scale: calc(var(--consent-a4-display-width) / var(--consent-a4-design-page-width));
 
   display: flex;

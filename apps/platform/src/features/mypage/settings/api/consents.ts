@@ -131,6 +131,14 @@ export async function putPortalMarketingConsent(
   return unwrapEnvelope<PortalMarketingConsentResponse>(res.data) ?? {}
 }
 
+/**
+ * POST /api/portal/me/consents/listed — 동의서·서약서 카드 노출 고정 (listPortalConsentTypes).
+ * 동의 효력과 무관하게 해당 유형 `listed`를 true로 만든다. 되돌리는 API는 없다.
+ */
+export async function listPortalConsentTypes(consentTypes: readonly string[]): Promise<void> {
+  await axiosClient.post(`${PORTAL_CONSENTS_PATH}/listed`, { consentTypes })
+}
+
 export async function fetchPortalConsents(signal?: AbortSignal): Promise<PortalConsentSummary[]> {
   const res = await axiosClient.get(PORTAL_CONSENTS_PATH, { signal })
   const data = unwrapEnvelope<unknown>(res.data)

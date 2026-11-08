@@ -641,7 +641,7 @@ export function SettingsConsentsView() {
   const basicItems = applyLocalWithdrawn(consents.basicItems, withdrawnIds)
   const documentItems = filterListedDocumentConsentItems(
     applyLocalWithdrawn(consents.documentItems, withdrawnIds),
-    consents.isRemoteSession,
+    { isRemoteSession: consents.isRemoteSession, isInstructor: consents.isInstructor },
   )
 
   /** 원격 세션: PUT 후 목록 재조회. 성공 시 철회 일시 반환, 409는 안내 후 동기화 */
