@@ -184,10 +184,6 @@
   background: var(--color-mint-01, #01a1af) !important;
 }
 
-.principles-sortable-table .ant-table {
-  table-layout: fixed;
-}
-
 .principles-sortable-table .ant-table-tbody > tr > td {
   vertical-align: middle;
 }

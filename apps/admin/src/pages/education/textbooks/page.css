@@ -38,8 +38,6 @@
  * (antd col 인라인 width 덮어쓰기 위해 !important)
  */
 .education-textbooks-table.cms-data-table {
-  width: 100%;
-  max-width: 100%;
   overflow-x: auto;
 }
 
@@ -47,13 +45,6 @@
   table-layout: fixed !important;
   width: 100% !important;
   min-width: 1220px !important;
-  max-width: none !important;
-}
-
-.education-textbooks-table.cms-data-table .ant-table,
-.education-textbooks-table.cms-data-table .ant-table-container,
-.education-textbooks-table.cms-data-table .ant-table-content {
-  width: 100% !important;
   max-width: none !important;
 }
 
@@ -255,9 +246,6 @@
   .ant-table-tbody
   > tr:hover
   > td.education-textbooks-page__title-col {
-  width: auto !important;
-  min-width: 220px !important;
-  max-width: none !important;
   text-align: center !important;
   box-sizing: border-box !important;
 }
@@ -274,9 +262,6 @@
   .ant-table-tbody
   > tr:hover
   > td.education-textbooks-page__field-col {
-  width: auto !important;
-  min-width: 140px !important;
-  max-width: none !important;
   box-sizing: border-box !important;
   text-align: center !important;
 }
@@ -293,9 +278,6 @@
   .ant-table-tbody
   > tr:hover
   > td.education-textbooks-page__target-col {
-  width: auto !important;
-  min-width: 120px !important;
-  max-width: none !important;
   box-sizing: border-box !important;
   text-align: center !important;
 }
@@ -312,9 +294,6 @@
   .ant-table-tbody
   > tr:hover
   > td.education-textbooks-page__effect-col {
-  width: auto !important;
-  min-width: 200px !important;
-  max-width: none !important;
   text-align: center !important;
   box-sizing: border-box !important;
 }
@@ -331,9 +310,6 @@
   .ant-table-tbody
   > tr:hover
   > td.education-textbooks-page__date-col {
-  width: auto !important;
-  min-width: 180px !important;
-  max-width: none !important;
   box-sizing: border-box !important;
   text-align: center !important;
 }

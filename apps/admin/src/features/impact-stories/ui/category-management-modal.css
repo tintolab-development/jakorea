@@ -94,11 +94,6 @@
   overflow: hidden;
 }
 
-.is-category-modal__table.ant-table-wrapper {
-  width: 100%;
-  max-width: 100%;
-}
-
 .is-category-modal__table .ant-table,
 .is-category-modal__table .ant-table-container,
 .is-category-modal__table .ant-table-content,
@@ -263,11 +258,6 @@
 
 .is-category-modal__table .ant-table-tbody > tr {
   transition: none !important;
-}
-
-.is-category-modal__table .ant-table {
-  table-layout: fixed;
-  width: 100%;
 }
 
 /* Figma Button / h32 — min-width 80 (공통 H32 기본 100 덮어씀) */

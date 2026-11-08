@@ -180,10 +180,6 @@
   background: var(--color-mint-01, #01a1af) !important;
 }
 
-.education-fields-table.cms-data-table .ant-table {
-  table-layout: fixed;
-}
-
 .education-fields-table .ant-table-tbody > tr {
   transition: none;
 }
