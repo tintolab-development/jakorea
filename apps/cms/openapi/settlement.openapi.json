@@ -11049,6 +11049,21 @@
             "type": "string",
             "maxLength": 500,
             "minLength": 0
+          },
+          "requestedScheduleIds": {
+            "type": "array",
+            "description": "이미 승인된 GENERAL_ORGANIZATION PERIOD 신청의 희망 일정 행 id(program_application_requested_schedule.id) 목록. 승인 API의 requestedScheduleIds와 같은 규칙으로 행마다 기관 전용 program_schedule을 만들고 현재 배정을 이 목록으로 교체합니다. 모집 maxScheduleCount 이하만 허용하며 slots와 동시에 보낼 수 없습니다. 빈 배열은 생략과 같습니다.",
+            "example": [
+              185037,
+              185038
+            ],
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 500,
+            "minItems": 0,
+            "nullable": true
           }
         }
       },
@@ -12198,12 +12213,13 @@
           "startPeriod": {
             "type": "integer",
             "format": "int32",
-            "description": "시작 교시(1~12). 일반 기관 날짜 지정형은 교시 개념이 없어 null.",
+            "description": "시작 교시(1~12). 일반 기관(날짜 지정형·기간 지정형 모두)은 교시 개념이 없어 null.",
             "nullable": true
           },
           "sessionCount": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "희망 차시 수. 일반 기관은 신청자가 보낸 총 차시 수 그대로이며 sessionTimes 개수와 다를 수 있다(예: 3차시, sessionTimes 1구간 09:00~10:00). 시간 길이로 재계산하지 않는다."
           },
           "combinedClassYn": {
             "type": "boolean"
@@ -23978,7 +23994,7 @@
       },
       "OrganizationApplicationApproveRequest": {
         "type": "object",
-        "description": "기관 신청 승인 요청. GENERAL_ORGANIZATION은 일정 미확정 승인, selectedScheduleId/slots, 또는 PERIOD 희망 행 id(requestedScheduleId) 확정을 지원합니다. TRAINED_TEACHER PERIOD는 신청 원본 preferredScheduleBlocks의 preferenceRank를 preferredScheduleRank로 확정할 수 있습니다. 일정 선택 필드는 동시에 보낼 수 없습니다.",
+        "description": "기관 신청 승인 요청. GENERAL_ORGANIZATION은 일정 미확정 승인, selectedScheduleId/slots, 또는 PERIOD 희망 행 id(requestedScheduleId 단건 또는 requestedScheduleIds 복수) 확정을 지원합니다. TRAINED_TEACHER PERIOD는 신청 원본 preferredScheduleBlocks의 preferenceRank를 preferredScheduleRank로 확정할 수 있습니다. 일정 선택 필드는 동시에 보낼 수 없습니다.",
         "properties": {
           "slots": {
             "type": "array",
@@ -23998,14 +24014,29 @@
           "requestedScheduleId": {
             "type": "integer",
             "format": "int64",
-            "description": "GENERAL_ORGANIZATION PERIOD에서 확정할 program_application_requested_schedule.id. selectedScheduleId/slots와 동시에 보낼 수 없습니다. resolvedScheduleId가 null이어도 유효합니다.",
+            "description": "GENERAL_ORGANIZATION PERIOD에서 확정할 program_application_requested_schedule.id. selectedScheduleId/slots/requestedScheduleIds와 동시에 보낼 수 없습니다. resolvedScheduleId가 null이어도 유효합니다.",
             "example": 184944,
+            "nullable": true
+          },
+          "requestedScheduleIds": {
+            "type": "array",
+            "description": "GENERAL_ORGANIZATION PERIOD에서 한 번에 확정할 program_application_requested_schedule.id 목록. 행마다 기관 전용 program_schedule(APPLICATION_MATERIALIZED)을 만들고 기관 일정 배정에 연결합니다. 개수는 모집 maxScheduleCount 이하여야 하며(초과 시 ORGANIZATION_APPROVE_REQUESTED_SCHEDULE_COUNT_EXCEEDED), 같은 id를 중복으로 보낼 수 없습니다(ORGANIZATION_APPROVE_REQUESTED_SCHEDULE_DUPLICATED). 빈 배열은 생략과 같습니다(일정 미확정 승인). requestedScheduleId/selectedScheduleId/slots/preferredScheduleRank와 동시에 보낼 수 없습니다.",
+            "example": [
+              185037,
+              185038
+            ],
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 500,
+            "minItems": 0,
             "nullable": true
           },
           "preferredScheduleRank": {
             "type": "integer",
             "format": "int32",
-            "description": "TRAINED_TEACHER PERIOD에서 확정할 신청 원본 preferredScheduleBlocks[].preferenceRank. 배열 index나 program_schedule.id가 아니며, 해당 application의 블록에만 유효합니다. TRAINED_TEACHER + PERIOD + SUBMITTED에서만 사용할 수 있고, 일정 미선택 승인에서는 필드를 생략합니다. selectedScheduleId/slots/requestedScheduleId와 동시에 보낼 수 없습니다.",
+            "description": "TRAINED_TEACHER PERIOD에서 확정할 신청 원본 preferredScheduleBlocks[].preferenceRank. 배열 index나 program_schedule.id가 아니며, 해당 application의 블록에만 유효합니다. TRAINED_TEACHER + PERIOD + SUBMITTED에서만 사용할 수 있고, 일정 미선택 승인에서는 필드를 생략합니다. selectedScheduleId/slots/requestedScheduleId/requestedScheduleIds와 동시에 보낼 수 없습니다.",
             "example": 1,
             "nullable": true
           },
@@ -30998,7 +31029,10 @@
             "type": "string"
           },
           "instructorPhone": {
-            "type": "string"
+            "type": "string",
+            "description": "하이픈·공백 없는 숫자도 허용(예: 01033275124, 010 3327 5124). 서버가 행 단위로 숫자만 추출해 하이픈 형식으로 정규화한다. 한국 번호로 바꿀 수 없으면 요청 전체 400이 아니라 해당 행만 FAILED(GEMINI_INSTRUCTOR_PHONE_INVALID).",
+            "example": "010-0000-0000",
+            "nullable": true
           },
           "instructorName": {
             "type": "string"
