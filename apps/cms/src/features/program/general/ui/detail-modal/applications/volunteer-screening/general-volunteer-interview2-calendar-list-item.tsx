@@ -2,10 +2,9 @@ import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import type { GeneralVolunteerInterview2CalendarListRow } from '@/features/program/general/lib/general-volunteer-interview2-calendar-list-rows'
 import {
   formatSecondInterviewListScoreLabel,
-  resolveSecondInterviewScreeningListBadgeLabel,
-  resolveSecondInterviewScreeningTone,
+  resolveSecondInterviewScreeningTagPresentation,
 } from '@/features/program/shared/lib/volunteer-screening/second-interview-screening-ui'
-import '@/features/program/shared/ui/volunteer-screening/second-interview-screening-tone.css'
+import { StatusOutlineTag } from '@/shared/components/status-outline-tag'
 import './general-volunteer-interview2-calendar-list-item.css'
 
 export function GeneralVolunteerInterview2CalendarListItem({
@@ -17,7 +16,6 @@ export function GeneralVolunteerInterview2CalendarListItem({
   checked: boolean
   onToggle: (key: string, checked: boolean) => void
 }) {
-  const tone = resolveSecondInterviewScreeningTone(row.effectiveStatus)
   const checkboxDisabled = !row.selectableForResult
 
   return (
@@ -35,14 +33,7 @@ export function GeneralVolunteerInterview2CalendarListItem({
           </span>
         </div>
         <div className="general-volunteer-interview2-calendar-list-item__meta-row">
-          <span
-            className={[
-              'second-interview-screening-status-badge',
-              `second-interview-screening-tone--${tone}`,
-            ].join(' ')}
-          >
-            {resolveSecondInterviewScreeningListBadgeLabel(row.effectiveStatus)}
-          </span>
+          <StatusOutlineTag {...resolveSecondInterviewScreeningTagPresentation(row.effectiveStatus)} />
           <span className="general-volunteer-interview2-calendar-list-item__sep" aria-hidden>
             |
           </span>

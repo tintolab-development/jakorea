@@ -39,16 +39,16 @@ export const INSTRUCTOR_SETTLEMENT_STATUS_LABELS: Record<
   payment_correction_requested: '지급 정정 요청',
 }
 
-/** 캘린더 스트립·짧은 표기 */
+/** Short Text·Tag 표기 (Figma Status / Short Text·Tag / 정산 현황 14804:19841·19759) — 캘린더 스트립·카드·툴팁 */
 export const INSTRUCTOR_SETTLEMENT_STATUS_LABELS_SHORT: Record<
   InstructorSettlementUiStatus,
   string
 > = {
   payment_statement_reapplication: '재신청',
-  awaiting_confirmation: '지급대기',
-  partial_confirmation: '일부 확인',
+  awaiting_confirmation: '확인 대기',
+  partial_confirmation: '확인 중',
   payment_statement_verified: '확인 완료',
-  account_paid: '지급완료',
+  account_paid: '지급 완료',
   none: '해당 없음',
   application_rejected: '신청 반려',
   payment_correction_requested: '정정 요청',
@@ -87,7 +87,7 @@ export type InstructorSettlementPresentationKind = 'text' | 'short' | 'tag' | 'i
 
 /**
  * 동일 업무축의 표현 SSOT. Text 해당 없음은 검정, Short/Tag는 80% 검정.
- * invoice는 현행 전체 라벨을 보존한다(S13). Short 라벨 차이(S05)도 임의 교정하지 않는다.
+ * invoice는 현행 전체 라벨을 보존한다(S13). Short 라벨은 Figma Short Text 정산 현황을 따른다.
  * raw API 상태·권한·전이의 정규화는 이 presentation 계층에서 하지 않는다.
  */
 export function getInstructorSettlementStatusPresentation(

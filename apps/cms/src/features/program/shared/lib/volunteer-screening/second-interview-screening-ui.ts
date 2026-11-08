@@ -29,6 +29,28 @@ export function resolveSecondInterviewScreeningTone(
   return 'reserve'
 }
 
+/**
+ * Figma Status / Tag / 면접 결과(14804:19719) — 리스트 Tag 글자·테두리 색.
+ * 활동 포기는 Tag 시안에 없어 기존 적색 톤을 유지한다.
+ */
+const SECOND_INTERVIEW_SCREENING_TAG_ACCENT: Record<SecondInterviewScreeningTone, string> = {
+  waiting: 'var(--Status-green-main, #1e8c29)',
+  fail: 'var(--Status-red-main, #c32f4a)',
+  withdrawn: 'var(--Status-red-main, #c32f4a)',
+  pass: 'var(--Status-blue-main, #017eaf)',
+  reserve: 'var(--Status-blue-main, #017eaf)',
+  completed: 'rgba(61, 61, 61, 0.8)',
+}
+
+export function resolveSecondInterviewScreeningTagPresentation(
+  status: SecondInterviewScreeningEffectiveStatus
+): { label: string; accentColor: string } {
+  return {
+    label: resolveSecondInterviewScreeningListBadgeLabel(status),
+    accentColor: SECOND_INTERVIEW_SCREENING_TAG_ACCENT[resolveSecondInterviewScreeningTone(status)],
+  }
+}
+
 export function resolveSecondInterviewScreeningPopoverLabel(
   status: SecondInterviewScreeningEffectiveStatus
 ): string {

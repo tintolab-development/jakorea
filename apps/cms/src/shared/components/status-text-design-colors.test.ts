@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { PAYMENT_ORDER_STATUS_LIST_TEXT_COLOR } from '../constants/payment-order-status-list-colors'
 import { getInstructorSettlementInvoiceStatusPresentation, getInstructorSettlementStatusPresentation, INSTRUCTOR_SETTLEMENT_STATUS_TAG_STYLE } from '../constants/instructor-settlement-status'
+import { resolveSecondInterviewScreeningTagPresentation } from '../../features/program/shared/lib/volunteer-screening/second-interview-screening-ui'
 
 const css = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8')
 const declaration = (source: string, selector: string) => {
@@ -23,8 +24,9 @@ describe('CMS Figma status Text colors', () => {
     const source = css('../../features/program/shared/ui/volunteer-screening/second-interview-screening-tone.css')
     expect(declaration(source, '.second-interview-screening-status-text.second-interview-screening-tone--reserve'))
       .toContain('color: var(--Status-blue-main, #017eaf)')
-    expect(declaration(source, '.second-interview-screening-status-badge.second-interview-screening-tone--reserve'))
-      .toContain('border: 1px solid var(--Status-blue-main, #017eaf)')
+    expect(resolveSecondInterviewScreeningTagPresentation('reserve1').accentColor)
+      .toBe('var(--Status-blue-main, #017eaf)')
+    expect(source).not.toContain('second-interview-screening-status-badge')
   })
 
   it('uses red for interview-failed Text only', () => {

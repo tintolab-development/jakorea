@@ -6,6 +6,7 @@ import {
   type InstructorSettlementListRow,
 } from '@/features/settlement-management/model/instructor-member-settlements'
 import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
+import { StatusOutlineTag } from '@/shared/components/status-outline-tag'
 
 import './settlement-list-item.css'
 
@@ -46,15 +47,7 @@ export function CalendarListItemContentSettlement({
         <div className="settlement-list-item__title">{settlementCalendarPrimaryTitle(row)}</div>
 
         <div className="settlement-list-item__meta">
-          <span
-            className="settlement-list-item__badge"
-            style={{
-              color: statusStyle.color,
-              borderColor: statusStyle.color,
-            }}
-          >
-            {badgeLabel}
-          </span>
+          <StatusOutlineTag label={badgeLabel} accentColor={statusStyle.color} />
 
           <span className="settlement-list-item__meta-sep" aria-hidden>
             |

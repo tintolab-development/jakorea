@@ -4,7 +4,7 @@
  * - badge: 액센트 색 + border 10% + background 6%
  */
 
-import type { CSSProperties } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
 import { programEnrollmentDisplayConfig } from '@/shared/constants/status'
 import {
@@ -39,7 +39,7 @@ type StatusBadgeSettlementProps = {
 
 type StatusBadgeCustomProps = {
   domain: 'custom'
-  label: string
+  label: ReactNode
   accentColor: string
   /** 문구·색과 독립적인 약화 표현(현행 opacity 50%). */
   muted?: boolean

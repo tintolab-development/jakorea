@@ -42,7 +42,9 @@ globs:
 |------|---------------------|
 | **배지** (테두리·배경 6%) | `InstructorPaymentStatusBadge` → `status-badge.css` `status-badge--instructor-settlement-*` |
 | **텍스트만** (테이블 열) | `InstructorSettlementStatusText` → `instructor-settlement-status-text.css` |
-| **캘린더·인라인 태그** | `INSTRUCTOR_SETTLEMENT_STATUS_TAG_STYLE` (bg/color/border) |
+| **캘린더 카드·일별 리스트 Tag** | `StatusOutlineTag` + `getInstructorSettlementStatusPresentation(status, 'short')` (Figma Status / Tag 64×24, 라벨은 Short) |
+| **캘린더 셀 배경·테두리** | `INSTRUCTOR_SETTLEMENT_STATUS_TAG_STYLE` (bg/color/border) |
+| **Short 라벨** | `INSTRUCTOR_SETTLEMENT_STATUS_LABELS_SHORT` — Figma Short Text 14804:19841 (재신청·확인 대기·확인 중·확인 완료·지급 완료·해당 없음·신청 반려·정정 요청) |
 
 ## 금지 · deprecated
 
@@ -63,4 +65,4 @@ globs:
 
 - 지급조서 발급 조건: `docs/features/instructor-settlement-payment-statement-issue-rules.md`
 
-**Last updated:** 2026-07-15
+**Last updated:** 2026-11-08

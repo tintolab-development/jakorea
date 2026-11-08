@@ -157,8 +157,9 @@ export const DS_IMPACT_ADOPTION_ROWS: DsImpactAdoptionRow[] = [
   { primitive: 'ActionResultModal', files: '15', note: '작업 완료·설정 불가 안내' },
   { primitive: 'useCmsAlert / cmsAlertModal', files: '104', note: 'AlertModal(ContentModal) API · 유니크 파일' },
   { primitive: 'CalendarMain', files: '25', note: '일정·스케줄' },
-  { primitive: 'CalendarApprovalStatusBadge', files: '5', note: 'outline 셸 SSOT 공유' },
-  { primitive: 'InstitutionApplicationStatusBadge', files: '2', note: 'outline 셸 SSOT 공유' },
+  { primitive: 'CalendarApprovalStatusBadge', files: '5', note: 'StatusOutlineTag 공유' },
+  { primitive: 'InstitutionApplicationStatusBadge', files: '2', note: 'StatusOutlineTag 공유' },
+  { primitive: 'StatusOutlineTag', files: '6', note: '상태 표시 Tag 셸 SSOT (값 태그 StatusTag와 별개)' },
   { primitive: 'ExcelButton', files: '21', note: '목록 툴바 엑셀' },
   { primitive: 'EmptyState', files: '38', note: 'Wave D · antd Empty 소비자 0' },
   { primitive: 'CmsTextTabs', files: '32', note: '민트 밑줄 텍스트 탭 · 프로그램 상세·목록' },
@@ -290,9 +291,9 @@ export const DS_IMPACT_TOUCHPOINT_ROWS: DsImpactTouchpointRow[] = [
     tone: 'warning',
   },
   {
-    touchpoint: 'calendar/.../calendar-outline-status-badge.css',
-    change: '캘린더 우측 outline 배지 셸',
-    blast: 'CalendarApproval 5 + InstitutionApplication 2',
+    touchpoint: 'shared/components/status-outline-tag.css',
+    change: '상태 표시 Tag(Figma Status / Tag 64×24) 셸',
+    blast: 'CalendarApproval 5 + InstitutionApplication 2 + 면접2 리스트 2 + 정산 캘린더 리스트·카드 2',
     risk: 'Medium',
     tone: 'warning',
   },
@@ -368,7 +369,7 @@ export const DS_IMPACT_PHASE_ROWS: DsImpactPhaseRow[] = [
   {
     phase: 'Wave A outline 배지',
     status: '완료',
-    note: 'calendar-outline-status-badge.css 셸 SSOT',
+    note: 'status-outline-tag.css 셸 SSOT (구 calendar-outline-status-badge.css)',
     tone: 'success',
   },
   {

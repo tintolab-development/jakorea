@@ -42,10 +42,12 @@ describe('instructor settlement presentation consumers share one registry', () =
       .toContain(`--status-accent:${tag.color}`)
   })
 
-  it('does not collapse Text neutral into Tag neutral or silently fix Short/invoice labels', () => {
+  it('does not collapse Text neutral into Tag neutral and keeps Short labels on the Figma Short spec', () => {
     expect(getInstructorSettlementStatusPresentation('none', 'text').color).toBe('var(--Netural-black, #3d3d3d)')
     expect(getInstructorSettlementStatusPresentation('none', 'tag').color).toBe('rgba(61, 61, 61, 0.8)')
-    expect(getInstructorSettlementStatusPresentation('awaiting_confirmation', 'short').label).toBe('지급대기')
+    expect(getInstructorSettlementStatusPresentation('awaiting_confirmation', 'short').label).toBe('확인 대기')
+    expect(getInstructorSettlementStatusPresentation('partial_confirmation', 'short').label).toBe('확인 중')
+    expect(getInstructorSettlementStatusPresentation('account_paid', 'short').label).toBe('지급 완료')
     expect(getInstructorSettlementStatusPresentation('partial_confirmation', 'invoice').label).toBe('확인 진행 중')
   })
 

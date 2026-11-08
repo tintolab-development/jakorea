@@ -18,6 +18,11 @@ globs: ["**/shared/components/status-tag*.tsx", "**/shared/components/status-tag
    - padding 6px 10px · gap 4px · 12px / 600 / line-height 110% · radius 6px
 4. `StatusTag`는 `className`·`style`을 받지 않는다. 새 색이 필요하면 `status-tag.css`에 tone 프리셋을 추가하거나 `accentColor`를 쓴다.
 
+## 상태 표시 Tag와 구분
+
+캘린더 일별 리스트·카드의 **읽기 전용 상태 Tag**(Figma Status / Tag, 64×24 · 흰 배경 · 상태색 테두리 · 12px/600)는 값 태그가 아니다.
+`shared/components/status-outline-tag.tsx`의 `StatusOutlineTag`(`label`, `accentColor`)를 쓰고, `StatusTag`의 32×100 규칙을 적용하지 않는다.
+
 ## 구성
 
 | 파일 | 역할 |
