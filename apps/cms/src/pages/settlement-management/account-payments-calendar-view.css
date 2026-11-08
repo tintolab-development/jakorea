@@ -6,3 +6,8 @@
 .account-payments-calendar-view .calendar-main-container .calendar-main {
   margin-bottom: var(--spacing-32, 32px);
 }
+
+/* hover 미리보기 — 시안(14858:591061) 신청자명 Pretendard Bold 14 */
+.account-payments-calendar-view__preview-name {
+  font-weight: 700;
+}

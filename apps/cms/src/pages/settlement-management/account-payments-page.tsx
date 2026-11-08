@@ -396,8 +396,9 @@ export default function AccountPaymentsPage() {
 
   const filteredRows = useMemo(() => {
     // Remote: 서버가 status·이체일·이름 필터를 적용. mock만 클라이언트 filterRows
-    if (accountPaymentsRemote) return accountPaymentRows
-    return filterRows(accountPaymentRows, applied)
+    const rows = accountPaymentsRemote ? accountPaymentRows : filterRows(accountPaymentRows, applied)
+    // 시안(12432:443040) No.: 다른 CMS 목록과 같이 총 건수부터 역순 (첫 행 = 총 n건)
+    return rows.map((row, index) => ({ ...row, no: rows.length - index }))
   }, [accountPaymentsRemote, accountPaymentRows, applied])
 
   const accountPaymentConfirmModalData = useMemo(() => {
@@ -516,8 +517,12 @@ export default function AccountPaymentsPage() {
         key: 'programName',
         className: 'account-payments-page__col-program',
         ellipsis: { showTitle: true },
-        /** 유연 열 — 넓은 화면의 남는 폭 흡수 (공통 표 최소 폭 계산) */
-        minWidth: 416,
+        /**
+         * 유연 열 — 넓은 화면의 남는 폭 흡수 (공통 표 최소 폭 계산).
+         * 시안 416은 표 폭 1546 기준 — 실화면 카드 padding 24·표 테두리로 본문 1536이라 400으로 두어
+         * 1920 뷰포트에서 가로 스크롤 없이 남는 폭(≈406)을 받는다.
+         */
+        minWidth: 400,
         align: 'center',
       },
       {
@@ -843,7 +848,13 @@ export default function AccountPaymentsPage() {
           })
           return
         }
-        void markPaidMutation.mutateAsync([paymentId]).catch(notifyAccountPaymentPaidError)
+        // 시안 6-2(12432:442846): 상세「지급 완료 처리」성공 후「계좌 지급 확인 완료」안내
+        void markPaidMutation
+          .mutateAsync([paymentId])
+          .then(() => {
+            setAccountPaymentCompleteSuccessContext(buildAccountPaymentCompleteSuccessContext([target]))
+          })
+          .catch(notifyAccountPaymentPaidError)
         return
       }
 
@@ -852,6 +863,7 @@ export default function AccountPaymentsPage() {
           r.id === rowId ? { ...r, accountPaymentStatus: 'account_paid' as const } : r
         )
       )
+      setAccountPaymentCompleteSuccessContext(buildAccountPaymentCompleteSuccessContext([target]))
     },
     [accountPaymentRows, accountPaymentsRemote, markPaidMutation, notifyAccountPaymentPaidError]
   )

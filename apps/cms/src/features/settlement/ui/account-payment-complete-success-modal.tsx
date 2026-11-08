@@ -5,7 +5,10 @@
  */
 
 import type { ModalProps } from 'antd'
-import type { AccountPaymentRow } from '@/features/settlement-management/model/account-payments-list'
+import {
+  countAccountPaymentRecipients,
+  type AccountPaymentRow,
+} from '@/features/settlement-management/model/account-payments-list'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
@@ -14,7 +17,8 @@ import './account-payment-complete-success-modal.css'
 /** 인라인 적용 — teal-header-modal·content-modal 전역 CSS보다 우선 */
 const ACCOUNT_PAYMENT_COMPLETE_SUCCESS_MODAL_STYLES: NonNullable<ModalProps['styles']> = {
   content: {
-    minHeight: 206,
+    // 시안 Popup / Text / w600(12432:444319 · 12432:443039) 높이 200
+    minHeight: 200,
     padding: '24px 30px 34px',
     borderRadius: 16,
     background: '#fff',
@@ -53,7 +57,7 @@ export function buildAccountPaymentCompleteSuccessContext(
   return {
     kind: 'bulk',
     recipientName,
-    otherRecipientCount: rows.length - 1,
+    otherRecipientCount: countAccountPaymentRecipients(rows) - 1,
     completedRows: rows,
   }
 }
@@ -120,7 +124,9 @@ export function AccountPaymentCompleteSuccessModal({
           {context.kind === 'bulk' ? (
             <>
               <strong className="account-payment-complete-success-modal__name">
-                [{context.recipientName}] 님 외 {context.otherRecipientCount}명
+                {context.otherRecipientCount > 0
+                  ? `[${context.recipientName}] 님 외 ${context.otherRecipientCount}명`
+                  : `[${context.recipientName}] 님`}
               </strong>
               의 계좌 지급 처리가 완료되었습니다.
             </>

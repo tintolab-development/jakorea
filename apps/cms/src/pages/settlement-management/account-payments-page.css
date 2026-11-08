@@ -76,6 +76,16 @@
   overflow: visible;
 }
 
+/*
+ * 헤더(GNB) ↔ 연도 탭 16px — 시안(12432:443040) 탭 y=80(GNB 64 + 16).
+ * 디자인 가이드(14741:2)는 일반 목록만 32(content y=96)를 정의하므로 탭이 맨 위에 오는 이 화면만
+ * layout-content 상단 패딩을 16으로 줄인다 (kakao-alimtalk·sms·mail·템플릿 목록과 같은 방식).
+ */
+.layout-content:has(.account-payments-page) {
+  --cms-layout-content-padding-top: 16px;
+  padding-top: 16px;
+}
+
 /* 요약 위젯(3카드) 상단 — 탭과 요약 사이 16px (education-record-list-page__top-nav 과 동일 역할) */
 .account-payments-page__top-nav {
   width: 100%;
@@ -87,18 +97,23 @@
   padding: 0;
 }
 
+/* 시안(12432:443040) 선택 열 60 — cms-data-table 룰: 화면 시안이 60이면 변수로 지정 */
+.account-payments-page__table.cms-data-table {
+  --table-selection-column-width: 60px;
+}
+
 /* disabled 버튼에 Tooltip 표시용 (포인터 이벤트가 자식 span으로 전달됨) */
 .account-payments-page__tooltip-trigger-wrap {
   display: inline-block;
 }
 
-/* 화면 너비에 따라 3열 동일 비율 배분 → 좁으면 1열 */
+/* 화면 너비에 따라 3열 동일 비율 배분 → 좁으면 1열. 요약 ↔ 목록 카드·캘린더 툴바 24 (Figma 12432:443040·443398) */
 .account-payments-page__summary-row {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 24px;
   width: 100%;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 }
 
 @media (max-width: 768px) {

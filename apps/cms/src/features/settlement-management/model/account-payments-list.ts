@@ -116,3 +116,18 @@ export interface AccountPaymentStatusDetail {
   totalAmount: number
   plainAccountForPaymentConfirm: AccountPaymentPlainAccountForConfirm
 }
+
+/**
+ * 계좌 지급 대상 「사람 수」 — 같은 신청자가 여러 행(회차)이어도 1명.
+ * 식별은 BE `instructorMemberId`. 없는 행만 신청자명으로 묶는다.
+ */
+export function countAccountPaymentRecipients(
+  rows: readonly Pick<AccountPaymentRow, 'instructorMemberId' | 'instructorName' | 'id'>[]
+): number {
+  const keys = new Set<string>()
+  for (const row of rows) {
+    if (row.instructorMemberId != null) keys.add(`member:${row.instructorMemberId}`)
+    else keys.add(`name:${row.instructorName?.trim() || row.id}`)
+  }
+  return keys.size
+}

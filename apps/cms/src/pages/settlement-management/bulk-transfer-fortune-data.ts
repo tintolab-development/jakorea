@@ -27,6 +27,9 @@ const COL_COUNT = BULK_TRANSFER_HEADER_LABELS.length
 export const BULK_TRANSFER_SHEET_COLUMN_COUNT = COL_COUNT
 const MINT_BG = '#01A1AF'
 const HEADER_FG = '#FFFFFF'
+/** 시안: 헤더 Pretendard Bold 14 #FFF · 본문 Pretendard Regular 14 #3D3D3D (캔버스 기본 Times New Roman 대체) */
+const SHEET_FONT_FAMILY = 'Pretendard'
+const BODY_FG = '#3D3D3D'
 const DEPOSIT_LABEL = 'JA코리아'
 const DASH = '-'
 
@@ -125,6 +128,8 @@ function headerCell(text: string): Cell {
     m: text,
     bg: MINT_BG,
     fc: HEADER_FG,
+    ff: SHEET_FONT_FAMILY,
+    bl: 1,
     /** Fortune Sheet: ht 0=가운데, 1=왼쪽, 2=오른쪽 / vt 0=가운데, 1=위, 2=아래 */
     ht: 0,
     vt: 0,
@@ -133,7 +138,7 @@ function headerCell(text: string): Cell {
 
 function dataCell(text: string | number): Cell {
   const m = typeof text === 'number' ? text.toLocaleString('ko-KR') : text
-  return { v: m, m, ht: 0, vt: 0 }
+  return { v: m, m, ff: SHEET_FONT_FAMILY, fc: BODY_FG, ht: 0, vt: 0 }
 }
 
 function toSheetLine(
@@ -220,19 +225,21 @@ export function buildBulkTransferFortuneSheet(rows: AccountPaymentRow[]): Sheet 
    * 열 너비 합은 모달 본문 가용 폭에 맞춤 (그리드가 컨테이너보다 좁으면 오른쪽에 흰 여백만 커짐).
    * Fortune Sheet `calcRowColSize`: 각 열 (너비+1)px 누적 후 끝에 고정 120px 추가.
    * 대략 usable ≈ 내부폭 - 행머리(~45) - 9 - 120 → 열 합 ~1200–1260px면 1400 모달에서 여백·스크롤 균형.
-   * 아래는 기존 비율 유지 채로 합계 1240px.
+   * 시안(12432:444679) 열 비율 120·165·140·120·140·140·200·120·165(합 1310)을 합계 1242px로 축소.
    */
   const columnlen: Record<string, number> = {
-    '0': 150,
-    '1': 187,
-    '2': 125,
-    '3': 130,
-    '4': 153,
-    '5': 153,
-    '6': 96,
-    '7': 111,
-    '8': 135,
+    '0': 114,
+    '1': 156,
+    '2': 133,
+    '3': 114,
+    '4': 133,
+    '5': 133,
+    '6': 189,
+    '7': 114,
+    '8': 156,
   }
+  /** 시안 행 높이: 헤더 31 · 본문 25 (Fortune 행 높이 + 격자선 1px) */
+  const rowlen: Record<string, number> = { '0': 30 }
 
   return {
     name: 'Sheet1',
@@ -240,11 +247,12 @@ export function buildBulkTransferFortuneSheet(rows: AccountPaymentRow[]): Sheet 
     order: 0,
     row: totalRows,
     column: BULK_TRANSFER_SHEET_COLUMN_COUNT,
-    defaultRowHeight: 22,
+    defaultRowHeight: 24,
     defaultColWidth: 88,
     celldata,
     config: {
       columnlen,
+      rowlen,
       authority: {},
     },
     frozen: {

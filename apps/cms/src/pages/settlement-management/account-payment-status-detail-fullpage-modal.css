@@ -6,7 +6,8 @@
 
 .account-payment-status-detail-fullpage-modal.detail-fullpage-modal
   .detail-fullpage-modal__content {
-  padding: 16px 52px 32px 52px;
+  /* 시안(12432:442293): GNB 바로 아래 「기본 정보」 — 상단 추가 여백 없음 */
+  padding: 0 52px 32px 52px;
   box-sizing: border-box;
   /* 중첩 스크롤 방지: 세로는 .detail-fullpage-modal__main 한 곳에서만 */
   flex: 1 0 auto;
@@ -101,9 +102,11 @@
 
 .account-payment-status-detail-fullpage-modal
   .account-payment-status-detail__calc-table.payment-order-calc-statement-modal__table.ant-table-wrapper
+  .ant-table.ant-table-middle
   .ant-table-thead
   > tr
   > th.ant-table-cell {
+  /* 시안 헤더 Pretendard Bold 14 — 위 공통 셀 규칙(500)보다 구체적으로 */
   font-weight: 700;
 }
 
@@ -144,4 +147,29 @@
   max-width: 100%;
   height: 32px !important;
   min-height: 32px !important;
+}
+
+/* 시안 합계 행 56 (본문 54 · 헤더 52) — 버튼 셀만 공통 52 고정이 걸려 있어 셀 단위로 맞춘다 */
+.account-payment-status-detail-fullpage-modal
+  .account-payment-status-detail__calc-table.ant-table-wrapper
+  .ant-table-summary
+  .payment-order-calc-statement-modal__summary-row
+  > td.ant-table-cell {
+  height: 56px !important;
+  min-height: 56px !important;
+  max-height: 56px !important;
+}
+
+/*
+ * 산정 기준 상세「상세 보기」: 시안 Button / h32가 셀(padding 12) 안을 가득 채운다 (200 열 → 176).
+ * 공통 calculation-detail-view-button(156 고정)은 다른 화면용 — 이 표에서만 셀 폭에 맞춘다.
+ */
+.account-payment-status-detail-fullpage-modal
+  .account-payment-status-detail__calc-table
+  td
+  .calculation-detail-view-button.cms-button.ant-btn.cms-button--h32 {
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  min-width: 80px !important;
+  max-width: 100% !important;
 }

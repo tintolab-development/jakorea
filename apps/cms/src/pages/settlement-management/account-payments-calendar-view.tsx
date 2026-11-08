@@ -117,15 +117,23 @@ function pickAnchorDate(rows: AccountPaymentRow[]): Dayjs {
   return min
 }
 
+/**
+ * 캘린더 칩·우측 카드·hover 색은 공통 정산 상태 팔레트(`INSTRUCTOR_SETTLEMENT_STATUS_TAG_STYLE`)를 쓴다.
+ * 계좌 지급 「지급 대기」는 시안(12432:443398)·목록 Text(`ACCOUNT_PAYMENT_AGGREGATE_TEXT_COLOR`)과 같은 초록 —
+ * 정산 팔레트의 `awaiting_confirmation`(주황)이 아니라 초록 키(`payment_statement_verified`)로 매핑한다.
+ */
 function accountPaymentStatusToUiStatus(
   s: AccountPaymentRow['accountPaymentStatus']
 ): InstructorSettlementUiStatus {
-  return s
+  return s === 'awaiting_confirmation' ? 'payment_statement_verified' : s
 }
 
-function accountPaymentStatusShortLabel(status: AccountPaymentRow['accountPaymentStatus']): string {
+function accountPaymentStatusShortLabel(
+  status: AccountPaymentRow['accountPaymentStatus'] | InstructorSettlementUiStatus
+): string {
   switch (status) {
     case 'awaiting_confirmation':
+    case 'payment_statement_verified':
       return '지급 대기'
     case 'partial_confirmation':
       return '확인 중'
@@ -148,13 +156,22 @@ function renderAccountPaymentEventsTooltipContent({ events: dayEvents }: { event
           .status as AccountPaymentRow['accountPaymentStatus']
         return (
           <div key={String(ev.id)} className="instructor-settlement-preview">
+            {/* 시안 Calendar / List / Preview(14858:591061): 이름 Bold · 구분선 · 프로그램명 Medium */}
             <div className="instructor-settlement-preview__title">
-              {row.instructorName?.trim()
-                ? `${row.instructorName.trim()} | ${row.programName}`
-                : row.programName}
+              {row.instructorName?.trim() ? (
+                <>
+                  <span className="account-payments-calendar-view__preview-name">
+                    {row.instructorName.trim()}
+                  </span>
+                  <span className="settlement-preview-tooltip__sep">|</span>
+                  {row.programName}
+                </>
+              ) : (
+                row.programName
+              )}
             </div>
             <div>
-              <span style={{ color: colors.text, fontWeight: 700, fontSize: '14px' }}>
+              <span style={{ color: colors.text, fontWeight: 600, fontSize: '14px' }}>
                 {accountPaymentStatusShortLabel(accountStatus)}
               </span>
               <span className="settlement-preview-tooltip__text">
