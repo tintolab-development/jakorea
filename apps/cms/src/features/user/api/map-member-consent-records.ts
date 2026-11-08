@@ -19,6 +19,7 @@ export const TERMS_TYPE_TO_LABEL: Record<string, string> = {
   PRIVACY_COLLECTION: '개인정보 수집·이용 동의',
   PRIVACY: '개인정보 수집·이용 동의',
   CHILD_PRIVACY_COLLECTION: '개인정보 수집·이용 동의',
+  GUARDIAN_CONSENT: '법정대리인 동의',
   MARKETING: '마케팅 제공 동의',
   MARKETING_CONSENT: '마케팅 제공 동의',
   PORTRAIT_RIGHTS: '초상권 수집·이용 동의',
@@ -52,6 +53,7 @@ export const CONSENT_LABEL_TO_CANONICAL_TERMS_TYPE: Record<string, string> = {
   '서비스 이용약관': 'SERVICE_TERMS',
   '개인정보 수집·이용 동의': 'PRIVACY_COLLECTION',
   '마케팅 제공 동의': 'MARKETING',
+  '법정대리인 동의': 'GUARDIAN_CONSENT',
   '2단계 인증(MFA) 설정 동의': 'MFA_SETUP_CONSENT',
   ...CONSENT_LABEL_TO_EDITABLE_TERMS_TYPE,
 }
@@ -77,6 +79,8 @@ type AgreementOverlay = {
   filledDocumentAvailable?: boolean
   filledDocumentRevealEndpoint?: string
   consentType?: string
+  /** 초상권 — 1·2·3 모두 agree면 true. 라벨(동의/부분동의) 전용. undefined = 응답에 없음(구버전 BE) */
+  allItemsAgreed?: boolean | null
 }
 
 export function resolveTermsTypeToConsentLabel(type: string | undefined): string | undefined {
@@ -121,6 +125,7 @@ function agreementToFieldValue(
       filledDocumentRevealEndpoint: agreement.filledDocumentRevealEndpoint,
       consentType: agreement.consentType,
       consentRecordId: agreement.consentRecordId,
+      allItemsAgreed: agreement.allItemsAgreed,
     }
   }
 
@@ -129,6 +134,8 @@ function agreementToFieldValue(
     agreed,
     agreedAtDisplay,
     consentStatus: agreement.consentStatus,
+    consentType: agreement.consentType,
+    allItemsAgreed: agreement.allItemsAgreed,
   }
 }
 
@@ -212,6 +219,7 @@ function toConsentRecordOverlay(record: MemberConsentRecordResponse): AgreementO
     filledDocumentAvailable: record.filledDocumentAvailable,
     filledDocumentRevealEndpoint: record.filledDocumentRevealEndpoint,
     consentType: record.consentType,
+    allItemsAgreed: record.allItemsAgreed,
   }
 }
 
@@ -268,6 +276,7 @@ function buildTermsAgreementLabelMap(
       consentStatus: row.consentStatus,
       consentRecordId: readTermsConsentRecordId(row),
       consentType: row.termsType,
+      allItemsAgreed: row.allItemsAgreed,
     })
   }
   return map
@@ -288,6 +297,8 @@ function mergeRecordMetaIntoOverlay(
       meta.filledDocumentRevealEndpoint ?? overlay.filledDocumentRevealEndpoint,
     consentType: meta.consentType ?? overlay.consentType,
     consentStatus: overlay.consentStatus ?? meta.consentStatus,
+    // 동의 여부와 같은 출처(Summary·termsAgreements) 우선, 없으면 consent-records 최신값
+    allItemsAgreed: overlay.allItemsAgreed ?? meta.allItemsAgreed,
   }
 }
 
@@ -344,6 +355,7 @@ function buildLabelMapFromSummaries(
         agreedAt: agreed ? summary.agreedAt : undefined,
         consentType: summary.consentType,
         consentStatus: summary.consentStatus,
+        allItemsAgreed: summary.allItemsAgreed,
       }
       labelMap.set(
         field.label,

@@ -149,6 +149,34 @@ describe('applyMemberConsentToSchema', () => {
     })
   })
 
+  it('초상권 allItemsAgreed를 Summary·records·termsAgreements 경로 모두 필드에 전달한다', () => {
+    const field = (rows: ReturnType<typeof applyMemberConsentToSchema>) =>
+      rows.flatMap(r => r.fields).find(f => f.label === '초상권 수집·이용 동의')?.value
+
+    const fromSummary = applyMemberConsentToSchema(individualSchema, {
+      consentSummaries: [
+        { consentType: 'PORTRAIT_RIGHTS', agreed: true, consentStatus: 'PARTIAL', allItemsAgreed: false },
+      ],
+    })
+    expect(field(fromSummary)).toMatchObject({ type: 'document', allItemsAgreed: false })
+
+    // Summary에 값이 없으면(구버전) consent-records 최신값으로 보강
+    const fromRecords = applyMemberConsentToSchema(individualSchema, {
+      consentSummaries: [{ consentType: 'PORTRAIT_RIGHTS', agreed: true, consentStatus: 'PARTIAL' }],
+      consentRecords: [
+        { consentRecordId: 1696284, consentType: 'PORTRAIT_RIGHTS', consentStatus: 'PARTIAL', allItemsAgreed: true },
+      ],
+    })
+    expect(field(fromRecords)).toMatchObject({ type: 'document', allItemsAgreed: true })
+
+    const fromTerms = applyMemberConsentToSchema(individualSchema, {
+      termsAgreements: [
+        { termsType: 'PORTRAIT_RIGHTS', agreed: true, consentStatus: 'PARTIAL', allItemsAgreed: true },
+      ],
+    })
+    expect(field(fromTerms)).toMatchObject({ type: 'document', agreed: true, allItemsAgreed: true })
+  })
+
   it('Summary agreed가 consent-records 이력(과거 false)보다 우선한다', () => {
     const rows = applyMemberConsentToSchema(individualSchema, {
       consentSummaries: [

@@ -47,6 +47,8 @@ Spec for consent UI in **member detail**, **registration modals**, and related f
 
 **ADMIN** preset may hide items — if code diverges, update both this doc and the component.
 
+**만 14세 미만 개인 회원(본인 가입)** — 보호자 정보 섹션과 같은 조건(`role=INDIVIDUAL` · `under14` · 관리자 등록 아님)에서 상단 약관 블록이 3행이 된다: 서비스·개인정보 / **법정대리인 동의**·마케팅 / 초상권. 법정대리인 동의는 `GUARDIAN_CONSENT`(Platform 가입 시 저장) Summary를 조회만 한다(수정 불가). FE: `withGuardianConsentRows` · 행 블록 구분은 `ConsentRowSchema.block`.
+
 ## 상세 수정 모드 (관리자 등록 회원)
 
 | 구분 | `termsType` | UI | PATCH |

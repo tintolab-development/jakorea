@@ -225,13 +225,19 @@ function ConsentRequirementLabel({ required }: { required: boolean }) {
 function ConsentStatusBadge({
   agreed,
   consentStatus,
+  consentType,
+  allItemsAgreed,
 }: {
   agreed: boolean
   consentStatus?: string
+  consentType?: string
+  allItemsAgreed?: boolean | null
 }) {
   const label = resolveConsentStatusDisplayLabel({
     agreed,
     consentStatus,
+    consentType,
+    allItemsAgreed,
     agreedLabel: '동의함',
   })
   return (
@@ -322,7 +328,12 @@ function ConsentCard({
               : styles.statusInfo
           }
         >
-          <ConsentStatusBadge agreed={agreed} consentStatus={item.consentStatus} />
+          <ConsentStatusBadge
+            agreed={agreed}
+            consentStatus={item.consentStatus}
+            consentType={item.consentType}
+            allItemsAgreed={item.allItemsAgreed}
+          />
           {item.kind === 'document' && agreed && (item.agreedAt || item.validityLabel) ? (
             <PFText typo="bd-sm-rg" color="neutral-cool-500">
               {[

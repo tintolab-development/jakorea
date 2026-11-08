@@ -44,15 +44,43 @@ export function isPartialConsentStatus(value: string | null | undefined): boolea
 
 export const PARTIAL_CONSENT_DISPLAY_LABEL = '부분동의'
 
-/** 동의 상태 표시. `PARTIAL`이면 동의/미동의보다 부분동의를 우선한다. */
+export const PORTRAIT_RIGHTS_CONSENT_TYPE = 'PORTRAIT_RIGHTS'
+
+export function isPortraitRightsConsentType(value: string | null | undefined): boolean {
+  return (value ?? '').trim().toUpperCase() === PORTRAIT_RIGHTS_CONSENT_TYPE
+}
+
+/**
+ * 동의 상태 표시 라벨.
+ *
+ * 초상권(`PORTRAIT_RIGHTS`)은 동의 시 `consentStatus`가 항상 `PARTIAL`이라 그 값으로 전체/부분을 구분할 수 없다.
+ * 서버 응답 전용 `allItemsAgreed`(1·2·3번 모두 agree 여부, 제출 시점 스냅샷)로만 판정한다.
+ * - 미동의·철회(`agreed=false` 또는 `DISAGREED`) → 기존 미동의 라벨
+ * - `allItemsAgreed === false` → 부분동의
+ * - `true` 또는 `null`/생략(판정 불가 과거 기록·구버전 BE) → 동의 라벨
+ * 참여 가능 여부는 `programEligible`만 쓴다. 이 함수는 라벨만 정한다.
+ *
+ * 그 외 유형은 기존대로 `PARTIAL`이면 부분동의를 우선한다.
+ */
 export function resolveConsentStatusDisplayLabel(options: {
   agreed: boolean
   consentStatus?: string | null
   agreedLabel: string
   disagreedLabel?: string
+  /** 서버 `consentType` — 초상권 분기 판단 */
+  consentType?: string | null
+  /** 서버 `allItemsAgreed` — 초상권에서만 의미. undefined와 null은 같게 다룬다 */
+  allItemsAgreed?: boolean | null
 }): string {
+  const disagreedLabel = options.disagreedLabel ?? '미동의'
+  if (isPortraitRightsConsentType(options.consentType)) {
+    const disagreedStatus = (options.consentStatus ?? '').trim().toUpperCase() === 'DISAGREED'
+    if (!options.agreed || disagreedStatus) return disagreedLabel
+    if (options.allItemsAgreed === false) return PARTIAL_CONSENT_DISPLAY_LABEL
+    return options.agreedLabel
+  }
   if (isPartialConsentStatus(options.consentStatus)) return PARTIAL_CONSENT_DISPLAY_LABEL
-  return options.agreed ? options.agreedLabel : (options.disagreedLabel ?? '미동의')
+  return options.agreed ? options.agreedLabel : disagreedLabel
 }
 
 export function hasUnsetConsentSelections<TKey extends string>(
