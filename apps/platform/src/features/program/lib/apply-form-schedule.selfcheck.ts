@@ -1651,4 +1651,58 @@ function testEmptyFixedScheduleApplyGate() {
 
 testEmptyFixedScheduleApplyGate()
 
+/** 일반 기관 커리큘럼·기간 — 교시 개념 없음(교육받은교사 전용) */
+function testGeneralInstitutionPreferredScheduleWithoutClassPeriod(): void {
+  const singleRound = { generalInstitution: { sessionCount: 3 } }
+  const singleBlocks = toPortalPreferredScheduleBlocks(
+    [{ date: '2026-11-02', classPeriod: '', startTime: '9:30', endTime: '12:00' }],
+    singleRound,
+  )
+  assert.deepEqual(singleBlocks, [
+    {
+      preferenceRank: 1,
+      date: '2026-11-02',
+      sessionCount: 3,
+      startTime: '09:30',
+      endTime: '12:00',
+      sessionTimes: [
+        { sessionIndex: 1, startTime: '09:30', endTime: '12:00', timeRange: '09:30~12:00' },
+      ],
+    },
+  ])
+  assert.ok(!('classPeriod' in (singleBlocks[0]?.sessionTimes?.[0] ?? {})))
+  assert.equal(
+    findIncompletePreferredScheduleMessage(
+      [{ date: '2026-11-02', classPeriod: '', startTime: '09:30', endTime: '12:00' }],
+      singleRound,
+    ),
+    null,
+  )
+  assert.equal(
+    findIncompletePreferredScheduleMessage(
+      [{ date: '2026-11-02', classPeriod: '', startTime: '09:30', endTime: '' }],
+      singleRound,
+    ),
+    '진행 희망 교육 일정에 날짜·시작/종료 시간을 모두 입력해 주세요.',
+  )
+
+  const multiRound = { generalInstitution: {} }
+  assert.equal(
+    findIncompletePreferredScheduleMessage(
+      [{ date: '2026-11-02', classPeriod: '', startTime: '09:30', endTime: '12:00' }],
+      multiRound,
+    ),
+    '진행 희망 교육 일정에 날짜·희망 차시·시작/종료 시간을 모두 입력해 주세요.',
+  )
+  assert.equal(
+    toPortalPreferredScheduleBlocks(
+      [{ date: '2026-11-02', classPeriod: '2', startTime: '09:30', endTime: '12:00' }],
+      multiRound,
+    )[0]?.sessionCount,
+    2,
+  )
+}
+
+testGeneralInstitutionPreferredScheduleWithoutClassPeriod()
+
 console.log('apply-form-schedule.selfcheck: ok')
