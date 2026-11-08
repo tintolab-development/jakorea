@@ -98,6 +98,7 @@ export function ImpactStorySectionCard({ data, options }: Props) {
       <DetailInfoForm title="임팩트 스토리 관리" hideHeader mode={mode}>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
+            labelWidth={200}
             label={
               <MainContentRequiredLabel required={isEditing}>타이틀 텍스트</MainContentRequiredLabel>
             }
@@ -124,6 +125,7 @@ export function ImpactStorySectionCard({ data, options }: Props) {
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
+            labelWidth={200}
             label={
               <MainContentRequiredLabel required={isEditing}>
                 메인 영상 유튜브 링크
@@ -149,6 +151,7 @@ export function ImpactStorySectionCard({ data, options }: Props) {
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
+            labelWidth={200}
             label={
               <MainContentRequiredLabel required={isEditing}>대표 콘텐츠 설정</MainContentRequiredLabel>
             }

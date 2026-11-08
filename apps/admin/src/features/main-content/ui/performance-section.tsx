@@ -105,6 +105,7 @@ export function PerformanceSectionCard({ data }: Props) {
       <DetailInfoForm title="실적 및 성과 관리" hideHeader mode={mode}>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
+            labelWidth={200}
             label={
               <MainContentRequiredLabel required={isEditing}>타이틀 텍스트</MainContentRequiredLabel>
             }
@@ -127,10 +128,11 @@ export function PerformanceSectionCard({ data }: Props) {
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field label="실적 및 성과" view={metricsTable} edit={metricsTable} />
+          <DetailInfoForm.Field labelWidth={200} label="실적 및 성과" view={metricsTable} edit={metricsTable} />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
+            labelWidth={200}
             label={
               <MainContentRequiredLabel required={isEditing}>하단 텍스트</MainContentRequiredLabel>
             }
