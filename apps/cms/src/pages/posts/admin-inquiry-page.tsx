@@ -258,7 +258,8 @@ export function AdminInquiryPage() {
         title: '프로그램명',
         dataIndex: 'programName',
         key: 'programName',
-        width: INQUIRY_LIST_COL_WIDTH.programName,
+        // 유연 열: 넓은 화면에서 남는 폭 흡수 (CmsDataTable 정확 폭 모드)
+        minWidth: INQUIRY_LIST_COL_WIDTH.programName,
         align: 'center',
         ellipsis: true,
         className: 'admin-inquiry-page__col-flex',
@@ -271,7 +272,8 @@ export function AdminInquiryPage() {
         title: '제목',
         dataIndex: 'title',
         key: 'title',
-        width: INQUIRY_LIST_COL_WIDTH.title,
+        // 유연 열: 넓은 화면에서 남는 폭 흡수 (CmsDataTable 정확 폭 모드)
+        minWidth: INQUIRY_LIST_COL_WIDTH.title,
         align: 'center',
         ellipsis: { showTitle: true },
         className: 'admin-inquiry-page__col-flex',

@@ -130,11 +130,6 @@
   -webkit-overflow-scrolling: touch;
 }
 
-.ujat-attendance-session-group__table-wrap .ujat-attendance-table table.ant-table {
-  table-layout: fixed !important;
-  width: max(100%, var(--ujat-attendance-table-min-width, 1546px)) !important;
-}
-
 /*
  * cms-data-table 기본: No. 이후 col width:auto → Ant Design width 무시.
  * Figma 4082:112548 열 폭을 colgroup·th/td 모두 고정.

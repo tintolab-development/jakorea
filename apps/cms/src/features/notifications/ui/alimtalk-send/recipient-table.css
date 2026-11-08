@@ -8,10 +8,6 @@
   overflow-x: hidden;
 }
 
-.alimtalk-send-recipient-table.cms-data-table table.ant-table {
-  width: 100% !important;
-}
-
 .alimtalk-send-recipient-table__variables {
   display: flex;
   flex-direction: column;

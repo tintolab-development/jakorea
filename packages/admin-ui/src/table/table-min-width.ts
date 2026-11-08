@@ -84,3 +84,27 @@ export function distributeAdminDataTableSurplusWidth<T>(
   })
   return next
 }
+
+/**
+ * 넓은 화면(열 합 ≤ 래퍼) 정확 폭 모드: 열은 지정 폭 그대로, 남는 폭은 유연 열(width 미지정)이 흡수.
+ * 유연 열이 하나도 없으면 No.를 뺀 가장 넓은 본문 열(동률이면 뒤쪽)을 유연 열로 바꾼다(width → minWidth).
+ */
+export function ensureAdminDataTableFlexColumn<T>(columns: readonly T[]): T[] {
+  const leaves = columns
+    .map((column, index) => ({ column: column as unknown as ColumnType<unknown>, index }))
+    .filter(({ column }) => column && typeof column === 'object' && !('children' in column))
+  if (leaves.some(({ column }) => typeof column.width !== 'number')) return [...columns]
+  const candidates = leaves.filter(({ column }) => !isNoColumn(column))
+  if (candidates.length === 0) return [...columns]
+  let pick = candidates[0]!
+  for (const c of candidates) {
+    if ((c.column.width as number) >= (pick.column.width as number)) pick = c
+  }
+  const next = [...columns]
+  const { width, ...restColumn } = pick.column as ColumnType<unknown> & { minWidth?: number }
+  next[pick.index] = {
+    ...restColumn,
+    minWidth: Math.max(Number(width) || 0, restColumn.minWidth ?? 0),
+  } as unknown as T
+  return next
+}

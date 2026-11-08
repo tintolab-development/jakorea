@@ -89,19 +89,6 @@
   padding-bottom: 10px !important;
 }
 
-/*
- * 후원 상태(tag100): cms-data-table 패딩 + table-layout:auto 가 행·배지 호버 시
- * 열 너비를 다시 잡으며 배지가 흔들리는 현상 방지 → fixed + 트리거 치수 고정
- */
-.filter-table-layout.sponsor-page
-  .filter-table-layout__table
-  .sponsor-page__table.cms-data-table
-  table.ant-table {
-  table-layout: fixed !important;
-  width: 100%;
-  min-width: var(--sponsor-table-min-width, 1214px);
-}
-
 .filter-table-layout.sponsor-page
   .filter-table-layout__table
   .sponsor-page__table.cms-data-table

@@ -47,12 +47,6 @@
   overscroll-behavior-x: contain;
 }
 
-.ujat-volunteer-doc-screening__table-wrap .ujat-volunteer-doc-screening__table table.ant-table {
-  table-layout: fixed !important;
-  width: max-content !important;
-  min-width: 100%;
-}
-
 /* 행 클릭 → 지원자 상세: 포인터·호버 배경 (고정 열 포함 불투명 배경) */
 .ujat-volunteer-doc-screening
   .clickable-table

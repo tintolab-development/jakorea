@@ -66,17 +66,6 @@
   overscroll-behavior-x: contain;
 }
 
-/*
- * cms-data-table 기본 width:100% 때문에 열 width가 늘어남 → 합계 폭으로 고정.
- * 개별 열은 아래 !important 로 픽셀 고정 (UJAT 서류 심사와 동일).
- */
-.general-volunteer-screening__table-wrap .general-volunteer-screening__table table.ant-table {
-  table-layout: fixed !important;
-  width: var(--general-doc-screening-table-width) !important;
-  min-width: var(--general-doc-screening-table-width) !important;
-  max-width: none !important;
-}
-
 .general-volunteer-screening th.general-volunteer-screening__col-name,
 .general-volunteer-screening td.general-volunteer-screening__col-name {
   box-sizing: border-box !important;
@@ -124,15 +113,6 @@
   width: 740px !important;
   min-width: 740px !important;
   max-width: 740px !important;
-}
-
-/*
- * 면접 미진행(봉사자 신청 목록) — 래퍼 폭 채움.
- * 열 합계(--general-doc-screening-table-width)는 최소폭.
- * 선택·No. 를 뺀 열은 균등 분배 → 공통 열 고정 폭(!important) 해제.
- */
-.general-volunteer-screening__table-wrap--fluid .general-volunteer-screening__table table.ant-table {
-  width: 100% !important;
 }
 
 .general-volunteer-screening__table-wrap--fluid th.general-volunteer-screening__col-name,

@@ -7,6 +7,7 @@ import {
   ADMIN_DATA_TABLE_MIN_WIDTH_FLOOR,
   ADMIN_DATA_TABLE_SELECTION_COLUMN_WIDTH,
   distributeAdminDataTableSurplusWidth,
+  ensureAdminDataTableFlexColumn,
   resolveAdminDataTableColumnsWidth,
 } from './table-min-width.js'
 import './admin-data-table.css'
@@ -18,11 +19,17 @@ export type AdminDataTableProps<RecordType extends object = object> = TableProps
    * `0`이면 하한 없이 열 합만 사용한다.
    */
   minTableWidthFloor?: number
+  /**
+   * 넓은 화면에서도 열 지정 폭을 그대로 쓴다(기존: No. 이후 열 균등 분배).
+   * 남는 폭은 유연 열(width 미지정, 없으면 가장 넓은 본문 열)이 흡수. CMS `CmsDataTable`이 켠다.
+   */
+  exactColumnWidths?: boolean
 }
 
 export { mergeAdminDataTableClassName } from './table-class.js'
 
 const OVERFLOW_CLASS = 'cms-data-table--overflow'
+const EXACT_CLASS = 'cms-data-table--exact'
 const MIN_WIDTH_VAR = '--admin-data-table-min-width'
 
 /**
@@ -36,6 +43,7 @@ export function AdminDataTable<RecordType extends object = object>({
   locale,
   emptyText,
   minTableWidthFloor = ADMIN_DATA_TABLE_MIN_WIDTH_FLOOR,
+  exactColumnWidths = false,
   scroll,
   style,
   ...rest
@@ -87,13 +95,13 @@ export function AdminDataTable<RecordType extends object = object>({
 
   const overflow = overflowMinWidth != null
   /** 좁은 화면: 열은 코드 폭 그대로, 최소 폭 여유분(하한·scroll.x)은 유연 열/본문 열에 배분 */
-  const mergedColumns = useMemo(
-    () =>
-      overflow && columns
-        ? distributeAdminDataTableSurplusWidth(columns, overflowMinWidth - columnsWidth)
-        : columns,
-    [overflow, columns, overflowMinWidth, columnsWidth]
-  )
+  const exact = exactColumnWidths && managed
+  const mergedColumns = useMemo(() => {
+    if (!columns) return columns
+    if (overflow) return distributeAdminDataTableSurplusWidth(columns, overflowMinWidth - columnsWidth)
+    if (exact) return ensureAdminDataTableFlexColumn(columns)
+    return columns
+  }, [overflow, exact, columns, overflowMinWidth, columnsWidth])
   const mergedScroll = overflow ? { ...scroll, x: overflowMinWidth } : scroll
   const mergedStyle = overflow
     ? ({ ...style, [MIN_WIDTH_VAR]: `${overflowMinWidth}px` } as CSSProperties)
@@ -106,7 +114,9 @@ export function AdminDataTable<RecordType extends object = object>({
       columns={mergedColumns}
       scroll={mergedScroll}
       style={mergedStyle}
-      className={overflow ? `${mergedClassName} ${OVERFLOW_CLASS}` : mergedClassName}
+      className={[mergedClassName, exact ? EXACT_CLASS : '', overflow ? OVERFLOW_CLASS : '']
+        .filter(Boolean)
+        .join(' ')}
       locale={mergedLocale}
     />
   )
