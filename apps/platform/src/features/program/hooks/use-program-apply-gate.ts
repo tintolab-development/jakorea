@@ -48,6 +48,7 @@ export function useProgramApplyGate(
   })
   const { checkPending: checkMinorPortraitPending, rememberReturnTo: rememberMinorReturnTo } =
     minorPortrait
+  const startMinorPortrait = minorPortrait.flowProps.onStart
 
   const readGateModalForOptions = useCallback(
     (canApply?: boolean, blockedReason?: string | null) => {
@@ -149,13 +150,16 @@ export function useProgramApplyGate(
       const isMinorPortrait = minorPortraitPendingRef.current
       if (isMinorPortrait) {
         rememberMinorReturnTo(minorReturnToRef.current)
+        // 만 14세 미만: 「필수 항목에 동의해 주세요」 시트 없이 보호자 본인인증부터 연다.
+        // (보호자 본인인증 → 보호자 정보 입력 안내 → 프로그램 초상권 동의서)
+        startMinorPortrait()
       }
       minorReturnToRef.current = undefined
       setRequiredConsentVariant(isMinorPortrait ? 'minor' : 'default')
       setMissingConsents(missing)
       setGateModal('required-consent')
     },
-    [rememberMinorReturnTo],
+    [rememberMinorReturnTo, startMinorPortrait],
   )
 
   const runApplyGate = useCallback(

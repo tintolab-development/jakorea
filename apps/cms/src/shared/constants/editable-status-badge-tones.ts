@@ -7,6 +7,7 @@ import type { InstructorRoleKey } from '@/features/program/general/model/school-
 import type { UjatManagerEvaluation } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import type { SponsorSponsorshipStatus } from '@/types/domain'
 import type { ProgramRole, SchoolTeacherEmploymentStatus } from '@/types/user'
+import type { StatusTagTone } from '@/shared/components/status-tag'
 
 export const SCHOOL_TEACHER_EMPLOYMENT_BADGE_LABEL: Record<SchoolTeacherEmploymentStatus, string> = {
   ACTIVE: '재직중',
@@ -15,26 +16,8 @@ export const SCHOOL_TEACHER_EMPLOYMENT_BADGE_LABEL: Record<SchoolTeacherEmployme
   WITHDRAWN: '탈퇴',
 }
 
-export const EDITABLE_STATUS_BADGE_BASE_CLASS = 'editable-status-badge' as const
-
-export type EditableStatusBadgeTone = 'blue' | 'gray' | 'green' | 'greenOverlay' | 'red'
-
-export const EDITABLE_STATUS_BADGE_TONE_CLASS: Record<EditableStatusBadgeTone, string> = {
-  blue: `${EDITABLE_STATUS_BADGE_BASE_CLASS}--blue`,
-  gray: `${EDITABLE_STATUS_BADGE_BASE_CLASS}--gray`,
-  green: `${EDITABLE_STATUS_BADGE_BASE_CLASS}--green`,
-  greenOverlay: `${EDITABLE_STATUS_BADGE_BASE_CLASS}--green-overlay`,
-  red: `${EDITABLE_STATUS_BADGE_BASE_CLASS}--red`,
-}
-
-export function getEditableStatusBadgeClassName(
-  tone: EditableStatusBadgeTone,
-  className?: string
-): string {
-  return [EDITABLE_STATUS_BADGE_BASE_CLASS, EDITABLE_STATUS_BADGE_TONE_CLASS[tone], className]
-    .filter(Boolean)
-    .join(' ')
-}
+/** 공통 StatusTag tone — 값별 색은 이 tone으로만 지정 */
+export type EditableStatusBadgeTone = StatusTagTone
 
 export function getEmploymentBadgeTone(
   status: SchoolTeacherEmploymentStatus

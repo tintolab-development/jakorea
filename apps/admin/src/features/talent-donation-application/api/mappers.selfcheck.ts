@@ -33,12 +33,13 @@ assert.equal(displayServerPiiAsIs(mapped.phone), '010-****-5678')
 assert.equal(mapped.email, 'hong***@example.com')
 assert.equal(displayServerPiiAsIs(mapped.email), 'hong***@example.com')
 
+// 스펙은 nullable이 아니지만 BE 런타임은 빈 값을 null로 보낼 수 있다 — null 입력을 그대로 검증한다.
 const emptyName = mapTalentApplicationListItemToDomain({
   id: 2,
   name: null,
   phone: '010-****-1111',
   email: 'a***@b.com',
-})
+} as unknown as Parameters<typeof mapTalentApplicationListItemToDomain>[0])
 assert.equal(emptyName.applicantName, '')
 assert.equal(displayServerPiiAsIs(emptyName.applicantName), '-')
 assert.notEqual(emptyName.applicantName, '홍**')

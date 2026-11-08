@@ -15,17 +15,13 @@ import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message
 import { guardAdminDownload } from '@/shared/lib/session-admin-role'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import { exportTableToExcel } from '@/shared/utils/table-export'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 export type TableExcelExporter<T extends object> = (
   columns: ColumnsType<T>,
   data: T[],
   filename: string
 ) => Promise<void>
-
-export const TABLE_EXCEL_NO_SELECTION_ALERT = {
-  title: '항목 선택 안내',
-  content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
-} as const
 
 export function defaultTableExcelRowKey<T extends object>(row: T): string {
   const record = row as Record<string, unknown>
@@ -87,8 +83,8 @@ export function useTableExcelExport<T extends object>({
     const requireSelection = selectedRowKeys !== undefined
     if (requireSelection && selectedRowKeys.length === 0) {
       cmsAlertModal.show({
-        title: TABLE_EXCEL_NO_SELECTION_ALERT.title,
-        content: TABLE_EXCEL_NO_SELECTION_ALERT.content,
+        title: NO_SELECTION_ALERT.title,
+        content: NO_SELECTION_ALERT.content,
       })
       return
     }
@@ -101,8 +97,8 @@ export function useTableExcelExport<T extends object>({
       if (exportData.length === 0) {
         if (requireSelection) {
           cmsAlertModal.show({
-            title: TABLE_EXCEL_NO_SELECTION_ALERT.title,
-            content: TABLE_EXCEL_NO_SELECTION_ALERT.content,
+            title: NO_SELECTION_ALERT.title,
+            content: NO_SELECTION_ALERT.content,
           })
           return
         }

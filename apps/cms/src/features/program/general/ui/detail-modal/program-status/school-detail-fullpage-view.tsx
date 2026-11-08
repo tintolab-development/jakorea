@@ -1,3 +1,5 @@
+import { getProgramAssignmentRowClass } from '@/features/program/general/lib/assignment-status-presentation'
+import { ProgramAssignmentStatusText } from '@/features/program/shared/ui/program-assignment-status-text'
 /**
  * 일반 프로그램 > 진행 현황 > 참여 기관 상세 (풀페이지 인라인)
  * UJAT 참여 기관 상세는 `features/program/ujat/ui/detail-modal/progress/institutions/detail/` — 별도 구현.
@@ -72,24 +74,15 @@ import {
   PrivacyHomeAddressDisplay,
 } from '@/features/program/shared/lib/program-pii-display'
 import {
-  INSTRUCTOR_ASSIGN_SELECT_INSTRUCTOR_ALERT_MESSAGE,
   INSTRUCTOR_ASSIGN_SELECT_UNAPPROVED_SINGLE_ONLY_ALERT_MESSAGE,
-  INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_INSTRUCTOR_ALERT_MESSAGE,
   PARTICIPATING_INSTITUTION_ALREADY_ACTIVITY_WITHDRAWN_ALERT_MESSAGE,
 } from '@/shared/constants/messages'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { getInstructorSettlementStatusLabel } from '@/shared/constants/instructor-settlement-status'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
-import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
-import {
-  EditableStatusBadge,
-  StatusDropdownCell,
-  STATUS_DROPDOWN_CELL_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME,
-  STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME,
-} from '@/shared/components'
-import { getInstructorRoleBadgeTone } from '@/shared/constants/editable-status-badge-tones'
+import { StatusDropdownCell, STATUS_DROPDOWN_CELL_CLASSNAME } from '@/shared/components'
+import { StatusTag } from '@/shared/components/status-tag'
+import { getInstructorRoleTag, getTextbookStatusTag } from '@/shared/lib/status-tag-specs'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import { shouldUseCompanySchoolProgramProgressRemoteApi } from '@/features/program/1c-1s/api/capabilities'
 import { companySchoolQueryKeys } from '@/features/program/1c-1s/api/query-keys'
@@ -205,7 +198,6 @@ import { formatClassStudentCountSegments } from '@/features/program/general/lib/
 import { isCmsAdminUser } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import './participating-institutions-section.css'
-import './instructor-assignment-status-text.css'
 import { ParticipatingInstitutionApplicationInfo } from './participating-institution-application-info'
 import {
   getParticipatingInstitutionActivityWithdrawScheduleOptions,
@@ -241,6 +233,7 @@ import {
 import type { GeneralProgramNavigationCapabilities } from '../../../hooks/use-general-program-navigation'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import { TrainedTeachersParticipatingInstitutionDetailView } from '@/features/program/trained-teachers/ui/institution-detail/participating-institution-detail-view'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 export {
   GENERAL_PARTICIPATING_INSTITUTION_DETAIL_TAB_KEYS,
@@ -1677,10 +1670,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         sessionIds.includes(buildSchoolAddInstructorSessionSlotKey(row.id, session))
       )
       if (selectedSessions.length === 0) {
-        showAlert({
-          title: '안내',
-          content: '배정할 교육 일정을 선택해 주세요.',
-        })
+        showAlert(NO_SELECTION_ALERT)
         return
       }
       const applicationIdRaw = assignmentBoard.approvedInstructorApplications.find(
@@ -1788,10 +1778,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
 
   const handleUnassignClick = useCallback(() => {
     if (selectedAssignedKeys.length === 0) {
-      showAlert({
-        title: '안내',
-        content: INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_INSTRUCTOR_ALERT_MESSAGE,
-      })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setUnassignConfirmOpen(true)
@@ -1799,7 +1786,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
 
   const handleSelectAssignClick = useCallback(() => {
     if (selectedWaitingRows.length === 0) {
-      showAlert({ title: '안내', content: INSTRUCTOR_ASSIGN_SELECT_INSTRUCTOR_ALERT_MESSAGE })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
 
@@ -2023,26 +2010,17 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         key: 'role',
         width: 116,
         align: 'center',
-        onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME }),
-        onCell: () => ({
-          className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME}`,
-        }),
+        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
         render: (role: InstructorRoleKey, record: AssignedInstructorDisplayRow) => (
           <StatusDropdownCell<InstructorRoleKey>
             status={role}
             statusOptions={['lead', 'assistant']}
-            renderBadge={r => (
-              <EditableStatusBadge
-                label={INSTRUCTOR_ROLE_LABELS[r]}
-                tone={getInstructorRoleBadgeTone(r)}
-              />
-            )}
+            getTag={getInstructorRoleTag}
             isItemDisabled={(cur, opt) => cur === opt}
             onChange={key => handleRoleChange(record.id, key as InstructorRoleKey)}
             isOpen={openRoleDropdownId === record.id}
             onOpenChange={open => setOpenRoleDropdownId(open ? record.id : null)}
             emptyPlaceholder="-"
-            tagLayout="tag100"
           />
         ),
       },
@@ -2170,11 +2148,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         width: 100,
         align: 'center',
         render: (status: WaitingInstructorRow['assignmentStatus']) => (
-          <span
-            className={`school-detail-fullpage-view__assignment-status school-detail-fullpage-view__assignment-status--${status}`}
-          >
-            {WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS[status]}
-          </span>
+          <ProgramAssignmentStatusText status={status} context="school-instructor" />
         ),
       },
     ],
@@ -2278,20 +2252,17 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
       mergedDetail.textbookName?.trim() !== '해당 없음')
   const textbookStatusCell =
     onTextbookStatusChange != null && hasSelectedTextbook ? (
-      <span className={STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME}>
-        <StatusDropdownCell<TextbookStatusKey>
-          status={mergedDetail.textbookStatus}
-          statusOptions={TEXTBOOK_STATUS_OPTION_KEYS.filter(key => key !== 'not_applicable')}
-          renderBadge={s => <TextbookStatusBadge status={s} />}
-          isItemDisabled={(cur, opt) => cur === opt}
-          onChange={newStatus => onTextbookStatusChange(detail.id, newStatus)}
-          isOpen={textbookStatusDropdownOpen}
-          onOpenChange={setTextbookStatusDropdownOpen}
-          tagLayout="tag100"
-        />
-      </span>
+      <StatusDropdownCell<TextbookStatusKey>
+        status={mergedDetail.textbookStatus}
+        statusOptions={TEXTBOOK_STATUS_OPTION_KEYS.filter(key => key !== 'not_applicable')}
+        getTag={getTextbookStatusTag}
+        isItemDisabled={(cur, opt) => cur === opt}
+        onChange={newStatus => onTextbookStatusChange(detail.id, newStatus)}
+        isOpen={textbookStatusDropdownOpen}
+        onOpenChange={setTextbookStatusDropdownOpen}
+      />
     ) : (
-      <TextbookStatusBadge status={mergedDetail.textbookStatus} />
+      <StatusTag {...getTextbookStatusTag(mergedDetail.textbookStatus)} />
     )
 
   const textbookNameView = textbookDisplay.textbookName?.trim() || '-'
@@ -2758,11 +2729,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                   columns={waitingInstructorColumns}
                   dataSource={waitingRows}
                   locale={{ emptyText: renderWaitingInstructorTableEmpty() }}
-                  rowClassName={record =>
-                    record.assignmentStatus === 'unavailable'
-                      ? 'school-detail-fullpage-view__waiting-row--unavailable'
-                      : ''
-                  }
+                  rowClassName={record => getProgramAssignmentRowClass(record.assignmentStatus, "school-instructor")}
                 />
               </div>
             </div>
@@ -2830,10 +2797,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                       sessionIds.includes(buildSchoolAddInstructorSessionSlotKey(row.id, session))
                     )
                     if (selectedSessions.length === 0) {
-                      showAlert({
-                        title: '안내',
-                        content: '배정할 교육 일정을 선택해 주세요.',
-                      })
+                      showAlert(NO_SELECTION_ALERT)
                       return
                     }
 

@@ -99,6 +99,7 @@ import {
   ButtonDownloadIcon,
   ButtonListIcon,
 } from '@/shared/ui/icons/ButtonIcons'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 /** Fortune Sheet·ExcelJS 분리 — lazy 라우트 청크 과대로 인한 dev 동적 import 실패 완화 */
 const BulkTransferPreviewModal = lazy(async () => {
@@ -622,10 +623,7 @@ export default function AccountPaymentsPage() {
   const resolveToolbarFormIssueRows = useCallback(
     (kind: 'bulk-transfer' | 'tax-report'): AccountPaymentRow[] | null => {
       if (selectedRowKeys.length === 0) {
-        cmsAlertModal.show({
-          title: '항목 선택 안내',
-          content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
-        })
+        cmsAlertModal.show(NO_SELECTION_ALERT)
         return null
       }
       const keySet = new Set(selectedRowKeys.map(String))
@@ -904,10 +902,7 @@ export default function AccountPaymentsPage() {
       return
     }
     if (selectedRowKeys.length === 0) {
-      cmsAlertModal.show({
-        title: '항목 선택 안내',
-        content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
-      })
+      cmsAlertModal.show(NO_SELECTION_ALERT)
       return
     }
     const keySet = new Set(selectedRowKeys.map(String))

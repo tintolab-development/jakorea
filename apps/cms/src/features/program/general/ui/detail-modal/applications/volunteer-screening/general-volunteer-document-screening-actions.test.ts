@@ -1,10 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import { buildApplicationProcessedSelectionAlert } from '@/features/program/general/lib/application-processed-selection-alert'
-import {
-  GENERAL_VOLUNTEER_DOC_SCREENING_SELECT_ONE_APPROVE_ALERT,
-  GENERAL_VOLUNTEER_DOC_SCREENING_SELECT_ONE_REJECT_ALERT,
-} from '@/features/program/general/lib/volunteer-screening-constants'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 import {
   requestGeneralVolunteerDocumentBulkApprove,
   requestGeneralVolunteerDocumentBulkReject,
@@ -32,7 +29,7 @@ describe('general-volunteer-document-screening-actions', () => {
       onOpenBulkApprove,
     })
     expect(cmsAlertModal.show).toHaveBeenCalledWith(
-      GENERAL_VOLUNTEER_DOC_SCREENING_SELECT_ONE_APPROVE_ALERT
+      NO_SELECTION_ALERT
     )
     expect(onOpenSingleApprove).not.toHaveBeenCalled()
     expect(onOpenBulkApprove).not.toHaveBeenCalled()
@@ -118,7 +115,7 @@ describe('general-volunteer-document-screening-actions', () => {
       onOpenBulkReject,
     })
     expect(cmsAlertModal.show).toHaveBeenCalledWith(
-      GENERAL_VOLUNTEER_DOC_SCREENING_SELECT_ONE_REJECT_ALERT
+      NO_SELECTION_ALERT
     )
   })
 })

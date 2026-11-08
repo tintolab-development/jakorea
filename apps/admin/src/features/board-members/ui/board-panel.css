@@ -75,13 +75,6 @@
   transition: none;
 }
 
-/* scroll.x 합계 유지 — cms-data-table width:100% 가 열 합을 잡아먹지 않도록 */
-.board-panel .board-members-table.cms-data-table table.ant-table {
-  table-layout: fixed !important;
-  width: max(100%, 1538px) !important;
-  min-width: 1538px !important;
-}
-
 .board-panel .board-members-table .ant-table-thead > tr > th,
 .board-panel .board-members-table .ant-table-tbody > tr > td {
   overflow: hidden;

@@ -17,29 +17,13 @@
   color: var(--Status-purple-main, #8457ce);
 }
 
+/* Figma 14804:19563 — Text only; badge / button palettes are independent. */
+.second-interview-screening-status-text.second-interview-screening-tone--reserve {
+  color: var(--Status-blue-main, #017eaf);
+}
+
 .second-interview-screening-tone--completed {
   color: var(--Netural-black, #3d3d3d);
-}
-
-.second-interview-screening-status-badge.second-interview-screening-tone--waiting {
-  border: 1px solid var(--Status-green-main, #1e8c29);
-}
-
-.second-interview-screening-status-badge.second-interview-screening-tone--fail,
-.second-interview-screening-status-badge.second-interview-screening-tone--withdrawn {
-  border: 1px solid var(--Status-red-main, #c32f4a);
-}
-
-.second-interview-screening-status-badge.second-interview-screening-tone--pass {
-  border: 1px solid var(--Status-blue-main, #017eaf);
-}
-
-.second-interview-screening-status-badge.second-interview-screening-tone--reserve {
-  border: 1px solid var(--Status-purple-main, #8457ce);
-}
-
-.second-interview-screening-status-badge.second-interview-screening-tone--completed {
-  border: 1px solid var(--Netural-black, #3d3d3d);
 }
 
 .second-interview-screening-status-text {
@@ -50,26 +34,6 @@
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
-}
-
-.second-interview-screening-status-badge {
-  box-sizing: border-box;
-  flex: 0 0 auto;
-  display: inline-flex;
-  min-width: 68px;
-  height: 26px;
-  padding: 5px 12px 4px;
-  justify-content: center;
-  align-items: center;
-  gap: 4px;
-  border-radius: var(--6, 6px);
-  background: var(--main-WT, #fff);
-  font-family: Pretendard, sans-serif;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 150%;
-  white-space: nowrap;
 }
 
 .second-interview-screening-popover-status {

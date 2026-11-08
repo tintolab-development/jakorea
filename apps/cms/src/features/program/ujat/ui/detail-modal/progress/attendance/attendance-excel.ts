@@ -31,9 +31,8 @@ export const UJAT_ATTENDANCE_SESSION_EXCEL_COLUMNS: ColumnsType<UjatAttendanceSe
 export function buildUjatAttendanceSessionExcelRows(
   volunteers: UjatAttendanceVolunteerRow[]
 ): UjatAttendanceSessionExcelRow[] {
-  const total = volunteers.length
   return volunteers.map((volunteer, index) => ({
-    no: total - index,
+    no: index + 1,
     name: volunteer.name,
     assignedClass: formatUjatGradeClassDisplayLabel(volunteer.assignedClass),
     contact: maskAttendanceContact(volunteer.contact),

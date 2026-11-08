@@ -34,7 +34,8 @@ export type BuildVolunteerParticipantRegisterRequestInput = {
 
 export type BuildVolunteerParticipantRegisterRequestResult =
   | { ok: true; request: VolunteerParticipantRegisterRequest }
-  | { ok: false; message: string }
+  /** required = 필수 항목 미입력(공통 「필수 항목 입력 안내」), invalid = 형식·길이 오류 */
+  | { ok: false; kind: 'required' | 'invalid'; message: string }
 
 function resolveConsentAgreed(
   paragraphs: WritingFormParagraph[],
@@ -101,10 +102,10 @@ export function buildVolunteerParticipantRegisterRequest(
     PARTICIPATING_VOLUNTEER_ADD_REGISTRATION_IDS.thirdPartyConsent
   )
   if (!personalAgreed) {
-    return { ok: false, message: '개인정보 수집·이용에 동의해 주세요.' }
+    return { ok: false, kind: 'required', message: '개인정보 수집·이용에 동의해 주세요.' }
   }
   if (!thirdPartyAgreed) {
-    return { ok: false, message: '개인정보 제3자 정보 제공·이용에 동의해 주세요.' }
+    return { ok: false, kind: 'required', message: '개인정보 제3자 정보 제공·이용에 동의해 주세요.' }
   }
 
   const thirdPartyRecipient = includeThirdPartyRecipientInWire
@@ -112,11 +113,12 @@ export function buildVolunteerParticipantRegisterRequest(
     : null
   if (includeThirdPartyRecipientInWire) {
     if (!thirdPartyRecipient) {
-      return { ok: false, message: '제공받는 기관명을 입력해 주세요.' }
+      return { ok: false, kind: 'required', message: '제공받는 기관명을 입력해 주세요.' }
     }
     if (thirdPartyRecipient.length > VOLUNTEER_THIRD_PARTY_RECIPIENT_MAX_LENGTH) {
       return {
         ok: false,
+        kind: 'invalid',
         message: `제공받는 기관명은 ${VOLUNTEER_THIRD_PARTY_RECIPIENT_MAX_LENGTH}자 이내로 입력해 주세요.`,
       }
     }
@@ -128,12 +130,12 @@ export function buildVolunteerParticipantRegisterRequest(
   const jaExperience = resolveJaVolunteerExperienceFromParagraph(jaParagraph)
   const jaProgramExperienceConsentRequest = mapJaExperienceToConsentRequest(jaExperience)
   if (!jaProgramExperienceConsentRequest) {
-    return { ok: false, message: 'JA 봉사 프로그램 진행 경험 여부를 선택해 주세요.' }
+    return { ok: false, kind: 'required', message: 'JA 봉사 프로그램 진행 경험 여부를 선택해 주세요.' }
   }
 
   const trimmedId1365 = input.pluginValues.id1365.trim()
   if (!input.hideBasicInfoSection && trimmedId1365.length === 0) {
-    return { ok: false, message: '1365 ID를 입력해 주세요.' }
+    return { ok: false, kind: 'required', message: '1365 ID를 입력해 주세요.' }
   }
 
   const previousJa = input.pluginValues.previousJaProgram
@@ -142,13 +144,13 @@ export function buildVolunteerParticipantRegisterRequest(
     VolunteerParticipantRegisterRequestJaProgramExperienceConsentRequest.REQUESTED
   ) {
     if (!/^\d{4}$/.test(previousJa.programYear.trim())) {
-      return { ok: false, message: '이전 참여 JA 봉사 프로그램의 진행년도를 선택해 주세요.' }
+      return { ok: false, kind: 'required', message: '이전 참여 JA 봉사 프로그램의 진행년도를 선택해 주세요.' }
     }
     if (!previousJa.programName.trim()) {
-      return { ok: false, message: '이전 참여 JA 봉사 프로그램명을 입력해 주세요.' }
+      return { ok: false, kind: 'required', message: '이전 참여 JA 봉사 프로그램명을 입력해 주세요.' }
     }
     if (previousJa.certificateFiles.length === 0) {
-      return { ok: false, message: '이전 참여 JA 봉사 프로그램 증빙서류를 첨부해 주세요.' }
+      return { ok: false, kind: 'required', message: '이전 참여 JA 봉사 프로그램 증빙서류를 첨부해 주세요.' }
     }
   }
 
@@ -156,11 +158,12 @@ export function buildVolunteerParticipantRegisterRequest(
   for (const question of PROGRAM_VOLUNTEER_FREE_TEXT_QUESTIONS) {
     const bodyText = (input.pluginValues.freeTextById[question.id] ?? '').trim()
     if (!bodyText) {
-      return { ok: false, message: '자유 작성 항목을 모두 작성해 주세요.' }
+      return { ok: false, kind: 'required', message: '자유 작성 항목을 모두 작성해 주세요.' }
     }
     if (bodyText.length > PROGRAM_VOLUNTEER_FREE_TEXT_MAX_LENGTH) {
       return {
         ok: false,
+        kind: 'invalid',
         message: `자유 작성 항목은 항목당 ${PROGRAM_VOLUNTEER_FREE_TEXT_MAX_LENGTH}자 이내로 작성해 주세요.`,
       }
     }

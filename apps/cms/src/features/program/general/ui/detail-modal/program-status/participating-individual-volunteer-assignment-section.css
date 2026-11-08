@@ -59,15 +59,3 @@
   white-space: normal;
   word-break: keep-all;
 }
-
-.participating-individual-volunteer-assignment-section
-  .school-detail-fullpage-view__assignment-status--unavailable {
-  color: var(--default-BK, #3d3d3d);
-}
-
-.participating-individual-volunteer-assignment-section
-  .school-detail-fullpage-view__waiting-row--unavailable
-  > td {
-  color: var(--default-BK, #3d3d3d);
-  opacity: 0.5;
-}

@@ -18,6 +18,9 @@ vi.mock('@/features/program/general/hooks/use-general-program-sponsor-edit-conte
 vi.mock('@/features/detailed-program/hooks/use-detailed-program-options-query', () => ({
   useDetailedProgramOptionsQuery: () => ({ data: [] }),
 }))
+vi.mock('@/features/sponsor/hooks/use-sponsor-options-query', () => ({
+  useSponsorOptionsQuery: () => ({ data: [] }),
+}))
 vi.mock('@/features/program/shared/lib/program-wage-payment-item-helpers', async importOriginal => {
   const actual =
     await importOriginal<

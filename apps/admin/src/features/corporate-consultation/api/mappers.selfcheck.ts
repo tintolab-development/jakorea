@@ -32,11 +32,12 @@ assert.equal(displayServerPiiAsIs(mapped.contactName), '홍길동')
 assert.equal(mapped.phone, '010-****-5678')
 assert.equal(displayServerPiiAsIs(mapped.phone), '010-****-5678')
 
+// 스펙은 nullable이 아니지만 BE 런타임은 빈 값을 null로 보낼 수 있다 — null 입력을 그대로 검증한다.
 const emptyName = mapConsultationListItemToDomain({
   id: 2,
   contactName: null,
   maskedContactPhone: '010-****-1111',
-})
+} as unknown as Parameters<typeof mapConsultationListItemToDomain>[0])
 assert.equal(emptyName.contactName, '')
 assert.equal(displayServerPiiAsIs(emptyName.contactName), '-')
 assert.notEqual(emptyName.contactName, '홍**')

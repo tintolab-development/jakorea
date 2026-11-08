@@ -67,6 +67,7 @@ import {
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
 } from '@/shared/components/table-filter-group-field-width'
 import { PaymentOrderLectureDateSessionCell } from './payment-order-lecture-date-session-cell'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 export type PaymentOrderDetailLineRow =
   | PaymentOrderAdminProgramDetailInstructorRow
@@ -506,7 +507,7 @@ export function usePaymentOrderDetailLinesController(
    */
   const handleBatchConfirmClick = useCallback(() => {
     if (selectedConfirmableRows.length === 0) {
-      showAlert({ title: '안내', content: '일괄 확인할 항목을 선택해 주세요.' })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     if (!canBatchConfirm) {
@@ -616,7 +617,7 @@ export function usePaymentOrderDetailLinesController(
 
   const handlePaymentStatementIssue = useCallback(() => {
     if (selectedRowKeys.length === 0) {
-      showAlert({ title: '안내', content: '지급조서를 발급할 항목을 선택해 주세요.' })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     const selected = rowsState.filter(r => selectedRowKeys.includes(r.id))

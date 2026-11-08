@@ -25,6 +25,7 @@ import {
 import { useSettingsConsents } from '../hooks/use-settings-consents'
 import { useSettingsView } from '../hooks/use-settings-view'
 import type { SettingsConsentItem, SettingsConsentItemId } from '../lib/consent-catalog'
+import { filterListedDocumentConsentItems } from '../lib/consent-visibility'
 import {
   canWithdrawConsent,
   CONSENT_WITHDRAW_CONFLICT_MESSAGE,
@@ -638,7 +639,10 @@ export function SettingsConsentsView() {
   }
 
   const basicItems = applyLocalWithdrawn(consents.basicItems, withdrawnIds)
-  const documentItems = applyLocalWithdrawn(consents.documentItems, withdrawnIds)
+  const documentItems = filterListedDocumentConsentItems(
+    applyLocalWithdrawn(consents.documentItems, withdrawnIds),
+    consents.isRemoteSession,
+  )
 
   /** 원격 세션: PUT 후 목록 재조회. 성공 시 철회 일시 반환, 409는 안내 후 동기화 */
   const saveMarketingConsent = async (
@@ -777,6 +781,7 @@ export function SettingsConsentsView() {
         ))}
       </section>
 
+      {documentItems.length > 0 ? (
       <section className={styles.section}>
         <PFText as="h2" typo="hl-lg" color="black" className={styles.sectionTitle}>
           동의서·서약서
@@ -800,6 +805,7 @@ export function SettingsConsentsView() {
           />
         ))}
       </section>
+      ) : null}
 
       <ConsentDocumentPreviewOverlay
         open={documentPreviewItem != null}

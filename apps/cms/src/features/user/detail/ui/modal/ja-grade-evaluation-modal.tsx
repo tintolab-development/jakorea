@@ -9,6 +9,7 @@ import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/left-pan
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { showSaveCompletedAlert } from '@/shared/ui/show-save-completed-alert'
 import {
   fetchInstructorJaEvaluationRemote,
   submitInstructorJaEvaluationRemote,
@@ -253,6 +254,10 @@ export function JaGradeEvaluationModal({
         jaEvaluation,
       })
       onClose()
+      /** 서버 저장 성공 시에만 — 등록 모달 localOnly(초안 보관)는 저장 완료가 아니다 */
+      if (persistMode === 'remote' && isMembersRemoteEnabled()) {
+        showSaveCompletedAlert()
+      }
     } catch (error) {
       showAlert({
         title: '안내',

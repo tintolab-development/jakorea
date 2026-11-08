@@ -7,7 +7,6 @@ import { useMemo, useState } from 'react'
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import type { ColumnsType } from 'antd/es/table'
 import '@/features/program/general/ui/program-list.css'
-import './admin-permission-tag.css'
 import './user-list.css'
 import type { User } from '@/types/user'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
@@ -29,17 +28,13 @@ import { formatAdminManagedProgramCountForList } from '@/features/user/detail/li
 import { formatJaEvaluationGradeCellDisplay } from '@/features/program/general/lib/ja-evaluation-grade-display'
 import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
 import {
-  INSTRUCTOR_SETTLEMENT_STATUS_LABELS,
-  getInstructorSettlementStatusTextClassName,
   resolveInstructorSettlementUiStatusFromListLabel,
 } from '@/shared/constants/instructor-settlement-status'
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_160_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_160_HEADER_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
-import { AppStatusBadge } from '@/shared/components/app-status-badge'
+import { getAdminPermissionTag } from '@/shared/lib/status-tag-specs'
 
 type Row = Omit<User, 'password'>
 
@@ -85,15 +80,7 @@ function renderInstructorSettlementStatusCell(labelRaw?: string) {
 
   const status = resolveInstructorSettlementUiStatusFromListLabel(label)
   if (status) {
-    const canonical = INSTRUCTOR_SETTLEMENT_STATUS_LABELS[status]
-    if (canonical === label) {
-      return <InstructorSettlementStatusText status={status} />
-    }
-    return (
-      <span className={getInstructorSettlementStatusTextClassName(status)} role="status">
-        {label}
-      </span>
-    )
+    return <InstructorSettlementStatusText status={status} label={label} />
   }
 
   return <span>{label}</span>
@@ -123,18 +110,12 @@ function AdminPermissionDropdownCell({
   onOpenChange: (open: boolean) => void
 }) {
   const current = getAdminPermissionVariant(record)
-  const renderBadge = (variant: AdminPermissionTagVariant) => (
-    <AppStatusBadge
-      label={ADMIN_PERMISSION_TAG_LABEL[variant]}
-      className={`user-list-admin-perm-badge user-list-admin-perm-badge--${variant}`}
-    />
-  )
 
   return (
     <StatusDropdownCell<AdminPermissionTagVariant>
       status={current}
       statusOptions={ADMIN_PERMISSION_OPTIONS.map(option => option.value)}
-      renderBadge={renderBadge}
+      getTag={getAdminPermissionTag}
       isItemDisabled={(cur, option) => cur === option}
       onChange={
         onChange
@@ -147,7 +128,6 @@ function AdminPermissionDropdownCell({
       isUpdating={loading}
       isOpen={isOpen}
       onOpenChange={onOpenChange}
-      tagLayout="tag160"
       emptyPlaceholder="-"
     />
   )
@@ -314,10 +294,7 @@ function columnsForKind(
         title: '권한 유형',
         key: 'permission',
         align: 'center',
-        onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_160_HEADER_CLASSNAME }),
-        onCell: () => ({
-          className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_160_CLASSNAME}`,
-        }),
+        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
         render: (_: unknown, r: Row) => {
           return (
             <AdminPermissionDropdownCell

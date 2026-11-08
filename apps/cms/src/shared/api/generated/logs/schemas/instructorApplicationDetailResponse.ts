@@ -20,6 +20,8 @@ export interface InstructorApplicationDetailResponse {
   nameHanja?: string;
   nameEnglish?: string;
   birthDate?: string;
+  /** 생년월일 기준 만 나이. 생년월일이 없으면 null */
+  age?: number | null;
   gender?: string;
   contact?: string;
   email?: string;

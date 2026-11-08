@@ -15,6 +15,7 @@ import {
 import { InstitutionSelectAssignConfirmModal } from './institution-select-assign-confirm-modal'
 import { InstitutionAssignCompleteModal } from './institution-assign-complete-modal'
 import { GeneralParticipantAddAssignModal } from './general-participant-add-assign-modal'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 type InstitutionOption = {
   value: string
@@ -75,17 +76,11 @@ export function AssignGuideModal({
 
   const handleSelectConfirm = () => {
     if (!selectedInstitutionId) {
-      showAlert({
-        title: '기관 추가 배정 안내',
-        content: '배정할 기관을 선택해 주세요.',
-      })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     if (selectedSessionIds.length === 0) {
-      showAlert({
-        title: '기관 추가 배정 안내',
-        content: '교육 배정일을 선택해 주세요.',
-      })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setConfirmedInstitutionName(

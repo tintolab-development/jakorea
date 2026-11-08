@@ -113,12 +113,16 @@ export function SponsorManagerPartsInlineView({ parts }: { parts: string[] }): R
 export function SponsorManagerContactsView({
   program,
   sponsorRows,
+  sponsorNameById,
   contactsBySponsorId,
 }: {
   program: Program
   sponsorRows: readonly SponsorManagementRow[]
+  /** 후원사 행이 없을 때(조회 화면) 배정 응답의 후원사명 — sponsorManagementId → 이름 */
+  sponsorNameById?: Readonly<Record<string, string>>
   contactsBySponsorId: Record<string, readonly SponsorContactRow[] | undefined>
 }): ReactNode {
+  const sponsorCount = Math.max(sponsorRows.length, Object.keys(sponsorNameById ?? {}).length)
   if (
     isProgramSponsorManagerUnselected({
       sponsorManagerContactIds: program.generalCommonInfo?.sponsorManagerContactIds,
@@ -131,7 +135,7 @@ export function SponsorManagerContactsView({
   }
 
   const refs = program.generalCommonInfo?.sponsorManagerContactIds ?? []
-  const multi = refs.length > 1 || sponsorRows.length > 1
+  const multi = refs.length > 1 || sponsorCount > 1
   const lines: string[][] = []
   for (const ref of refs) {
     const decoded = decodeSponsorManagerContactRef(ref)
@@ -148,7 +152,9 @@ export function SponsorManagerContactsView({
       position: contact?.position,
     })
     const parts = [
-      multi ? sponsor?.name?.trim() : '',
+      multi
+        ? sponsor?.name?.trim() || sponsorNameById?.[decoded.sponsorManagementId]?.trim()
+        : '',
       personLabel,
       contact?.phone?.trim(),
     ].filter((part): part is string => Boolean(part))
@@ -170,7 +176,7 @@ export function SponsorManagerContactsView({
   }
   const managerName = program.managerName?.trim()
   if (!managerName || isSponsorContactUnselectedLabel(managerName)) {
-    return <>{sponsorRows.length > 0 ? SPONSOR_CONTACT_UNSELECTED_LABEL : '-'}</>
+    return <>{sponsorCount > 0 ? SPONSOR_CONTACT_UNSELECTED_LABEL : '-'}</>
   }
   return (
     <>

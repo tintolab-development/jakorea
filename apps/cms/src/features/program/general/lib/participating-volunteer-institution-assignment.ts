@@ -146,7 +146,7 @@ export function buildInitialVolunteerAssignedRows(
   return picked.map((school, idx) => {
     return {
       id: `${school.id}__assigned`,
-      no: picked.length - idx,
+      no: idx + 1,
       schoolName: school.schoolName,
       educationGrade: school.educationGrade,
       region: school.region,
@@ -209,9 +209,8 @@ export function buildVolunteerWaitingInstitutionRows(
     expandSchoolSessionsToWaitingRows(school, volunteer, volunteerList, occupiedSlots, program)
   )
 
-  const n = expanded.length
   return sortWaitingInstructorRowsUnavailableToBottom(
-    expanded.map((row, idx) => ({ ...row, no: n - idx }))
+    expanded.map((row, idx) => ({ ...row, no: idx + 1 }))
   )
 }
 
@@ -237,16 +236,14 @@ export function schoolRowToVolunteerAssignedRow(
 export function renumberVolunteerAssignedRows(
   rows: VolunteerAssignedInstitutionRow[]
 ): VolunteerAssignedInstitutionRow[] {
-  const n = rows.length
-  return rows.map((r, i) => ({ ...r, no: n - i }))
+  return rows.map((r, i) => ({ ...r, no: i + 1 }))
 }
 
 export function renumberVolunteerWaitingRows(
   rows: VolunteerWaitingInstitutionRow[]
 ): VolunteerWaitingInstitutionRow[] {
   const sorted = sortWaitingInstructorRowsUnavailableToBottom(rows)
-  const n = sorted.length
-  return sorted.map((r, i) => ({ ...r, no: n - i }))
+  return sorted.map((r, i) => ({ ...r, no: i + 1 }))
 }
 
 export function resolveVolunteerAssignedOrganizationApplicationIds(

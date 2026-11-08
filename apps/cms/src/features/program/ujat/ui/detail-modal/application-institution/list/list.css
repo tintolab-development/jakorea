@@ -69,15 +69,6 @@
   -webkit-overflow-scrolling: touch;
 }
 
-/* 열 너비 고정·텍스트 잘림 방지(ellipsis·fluid 자동 축소 미사용) */
-.ujat-institution-application-list__table-wrap
-  .ujat-institution-application-list__table
-  table.ant-table {
-  table-layout: fixed !important;
-  width: max-content !important;
-  min-width: 100%;
-}
-
 .ujat-institution-application-list__table-wrap
   .ujat-institution-application-list__table
   .ant-table-thead

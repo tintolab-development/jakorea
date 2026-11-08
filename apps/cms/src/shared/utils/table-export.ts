@@ -60,17 +60,17 @@ function extractExportCellText(node: unknown, depth = 0): string {
     return String(props.label)
   }
 
-  // StatusDropdownCell: 배지는 children이 아니라 renderBadge(status)
-  if (typeof props.renderBadge === 'function' && props.status != null) {
-    const badge = (props.renderBadge as (status: unknown) => unknown)(props.status)
-    const fromBadge = extractExportCellText(badge, depth + 1)
-    if (fromBadge) return fromBadge
+  // StatusDropdownCell: 태그는 children이 아니라 getTag(status).label
+  if (typeof props.getTag === 'function' && props.status != null) {
+    const spec = (props.getTag as (status: unknown) => { label?: unknown })(props.status)
+    const fromTag = extractExportCellText(spec?.label, depth + 1)
+    if (fromTag) return fromTag
   }
 
   const fromChildren = extractExportCellText(props.children as ReactNode, depth + 1)
   if (fromChildren) return fromChildren
 
-  // <SponsorSponsorshipStatusBadge status="active" /> → EditableStatusBadge label
+  // <SponsorSponsorshipStatusBadge status="active" /> → StatusTag label
   // 훅을 쓰는 컴포넌트는 호출 시 throw → 빈 문자열
   if (typeof node.type === 'function') {
     try {

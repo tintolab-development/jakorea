@@ -15,8 +15,7 @@ export interface PrivacyAccessLogItem {
   action?: PrivacyAccessLogItemAction;
   targetType?: string;
   targetId?: string;
-  /** Stored target name (original). Empty is null, never "". */
-  targetName?: string | null;
+  targetName?: string;
   accessPurpose?: string;
   clientIp?: string;
   traceId?: string;

@@ -311,10 +311,10 @@ describe('buildParticipatingInstructorWaitingScheduleRowsFromBoard (개인형)',
     })
   }
 
-  it('본인 배정 일정은 제외하고 서버 순서·역순 번호를 유지한다', () => {
+  it('본인 배정 일정은 제외하고 서버 순서·오름차순 번호를 유지한다', () => {
     const rows = buildIndividual({ memberId: '10', assignments: [individualAssignment(1, 10, 302)] })
     expect(rows.map(r => r.resolvedScheduleId)).toEqual([301, 303])
-    expect(rows.map(r => r.no)).toEqual([2, 1])
+    expect(rows.map(r => r.no)).toEqual([1, 2])
     expect(rows[0]).toMatchObject({
       lectureLocation: '서울 강의장',
       scheduleLabel: '2026.11.03 | 10:00 ~ 12:00 | 1차시',

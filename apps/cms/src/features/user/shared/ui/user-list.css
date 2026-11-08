@@ -30,35 +30,3 @@
 .user-list__settlement-status--payment-correction-requested {
   color: #c32f4a;
 }
-
-/* 관리자 목록 — 권한 유형(StatusDropdownCell tag160) 행 높이·중앙 정렬 고정 */
-.cms-data-table.user-list-table
-  .ant-table-tbody
-  > tr:has(td.status-dropdown-cell__cell-status--tag-160) {
-  height: 52px;
-  min-height: 52px;
-  max-height: 52px;
-  overflow: visible;
-}
-
-.cms-data-table.user-list-table
-  .ant-table-tbody
-  > tr:has(td .status-dropdown-cell__status-trigger--open)
-  > td {
-  height: 52px !important;
-  min-height: 52px !important;
-  max-height: 52px !important;
-}
-
-.cms-data-table.user-list-table
-  .ant-table-tbody
-  > tr
-  > td.status-dropdown-cell__cell-status--tag-160,
-.cms-data-table.user-list-table
-  .ant-table-tbody
-  > tr:hover
-  > td.status-dropdown-cell__cell-status--tag-160 {
-  text-align: center !important;
-  vertical-align: middle !important;
-  padding: 0 !important;
-}

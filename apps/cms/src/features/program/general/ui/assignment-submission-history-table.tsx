@@ -1,24 +1,19 @@
 /**
  * 과제·설문 제출 내역 테이블 — 회원 상세 모달·프로그램 참여자 상세 공통 SSOT
- * (열 순서·라벨·제출 파일 셀·역할 tag100)
+ * (열 순서·라벨·제출 파일 셀·역할 태그)
  */
 
 import { useMemo, type ReactNode } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import { CMS_DATA_TABLE_CELL_H40_ACTION_STACK_CLASS } from '@/shared/constants/table'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
-import {
-  StatusDropdownCell,
-  STATUS_DROPDOWN_CELL_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME,
-} from '@/shared/components'
+import { StatusDropdownCell, STATUS_DROPDOWN_CELL_CLASSNAME } from '@/shared/components'
+import { StatusTag } from '@/shared/components/status-tag'
+import { getAssignmentTeamRoleTag } from '@/shared/lib/status-tag-specs'
 import { CmsButton } from '@/shared/ui'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
-import { assignmentTeamRoleTagClassName, ASSIGNMENT_TEAM_ROLE_TAG_DROPDOWN_STYLE } from '@/features/program/general/lib/assignment-team-role-tag'
 import {
-  ASSIGNMENT_TEAM_ROLE_LABELS,
   ASSIGNMENT_TEAM_ROLE_OPTIONS,
   LECTURE_PROGRESS_DISPLAY_LABELS,
   type AssignmentSubmissionTableRow,
@@ -140,17 +135,12 @@ export function useAssignmentSubmissionHistoryColumns(options: {
         key: 'teamRole',
         width: 140,
         align: 'center',
-        onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME }),
-        onCell: () => ({
-          className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME}`,
-        }),
+        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
         render: (_value, record) => {
           if (record.teamRole === 'individual' || isRemoteDetail) {
             return (
               <div className="assignment-submission-modal__role-static">
-                <span className={assignmentTeamRoleTagClassName(record.teamRole)}>
-                  {ASSIGNMENT_TEAM_ROLE_LABELS[record.teamRole]}
-                </span>
+                <StatusTag {...getAssignmentTeamRoleTag(record.teamRole)} />
               </div>
             )
           }
@@ -159,18 +149,12 @@ export function useAssignmentSubmissionHistoryColumns(options: {
             <StatusDropdownCell<AssignmentTeamRoleKey>
               status={record.teamRole}
               statusOptions={ASSIGNMENT_TEAM_ROLE_OPTIONS}
-              renderBadge={role => (
-                <span className={assignmentTeamRoleTagClassName(role)}>
-                  {ASSIGNMENT_TEAM_ROLE_LABELS[role]}
-                </span>
-              )}
+              getTag={getAssignmentTeamRoleTag}
               isItemDisabled={(cur, opt) => cur === opt}
               onChange={newRole => onTeamRoleChange(record.id, newRole)}
               isOpen={openTeamRoleDropdownRowId === record.id}
               onOpenChange={open => onTeamRoleDropdownOpenChange(record.id, open)}
               emptyPlaceholder="-"
-              tagLayout="tag100"
-              style={ASSIGNMENT_TEAM_ROLE_TAG_DROPDOWN_STYLE}
             />
           )
         },
@@ -264,6 +248,6 @@ export function mapAssignmentSubmissionRowsWithNo(
 ): AssignmentSubmissionHistoryTableRow[] {
   return rows.map((row, index) => ({
     ...row,
-    no: rows.length - index,
+    no: index + 1,
   }))
 }

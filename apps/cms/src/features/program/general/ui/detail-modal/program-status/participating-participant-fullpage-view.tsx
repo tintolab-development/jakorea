@@ -69,6 +69,14 @@ import {
   getParticipatingInstitutionActivityWithdrawScheduleOptions,
   buildParticipatingSchoolSessionKey,
 } from '@/features/program/general/lib/participating-institution-activity-withdraw'
+import {
+  activityWithdrawAssignedScheduleBlockAlert,
+  filterSessionsToAssignedSchedules,
+  readAssignedScheduleIds,
+  readAssignedScheduleIdsFromSessions,
+  resolveActivityWithdrawAssignedScheduleStatus,
+  type ActivityWithdrawAssignedScheduleStatus,
+} from '@/features/program/general/lib/activity-withdraw-assigned-schedule'
 import { screeningWithdrawCompleteContent } from '@/features/program/general/lib/screening-subject-kind'
 import {
   CERTIFICATE_ELIGIBILITY_TYPE_COMPLETION,
@@ -274,13 +282,44 @@ export function ParticipatingParticipantFullpageView({
     mergedParticipant.approvalStatus === 'approved' &&
     educationScopeQuery.isLoading
 
+  /**
+   * 활동 포기 — 실제 배정 일정 기준.
+   * 승인 참여자(remote): education-scope `scheduleIds`(개인 배정 SSOT). 그 외 remote: 목록 sessions(배정만).
+   * mock 모드는 기존 동작 유지.
+   */
+  const activityWithdrawScopeActive =
+    progressRemoteEnabled && mergedParticipant.approvalStatus === 'approved'
+  const activityWithdrawAssignedStatus: ActivityWithdrawAssignedScheduleStatus = !progressRemoteEnabled
+    ? 'assigned'
+    : activityWithdrawScopeActive
+      ? resolveActivityWithdrawAssignedScheduleStatus({
+          isPending: educationScopeQuery.isPending,
+          isError: educationScopeQuery.isError,
+          data: educationScopeQuery.data,
+        })
+      : readAssignedScheduleIdsFromSessions(sessions).size > 0
+        ? 'assigned'
+        : 'none'
+
+  /** 중단 일정 후보·stopScheduleId 해석에 같은 목록을 쓴다(인덱스 키 불일치 방지) */
+  const activityWithdrawSessions = useMemo(() => {
+    if (progressScheduleSessions.length > 0) return progressScheduleSessions
+    if (!progressRemoteEnabled) return sessions
+    const assignedIds = activityWithdrawScopeActive
+      ? readAssignedScheduleIds(educationScopeQuery.data)
+      : readAssignedScheduleIdsFromSessions(sessions)
+    return filterSessionsToAssignedSchedules(sessions, assignedIds)
+  }, [
+    activityWithdrawScopeActive,
+    educationScopeQuery.data,
+    progressRemoteEnabled,
+    progressScheduleSessions,
+    sessions,
+  ])
+
   const activityWithdrawScheduleOptions = useMemo(
-    () =>
-      getParticipatingInstitutionActivityWithdrawScheduleOptions(
-        program,
-        progressScheduleSessions.length > 0 ? progressScheduleSessions : sessions
-      ),
-    [program, progressScheduleSessions, sessions]
+    () => getParticipatingInstitutionActivityWithdrawScheduleOptions(program, activityWithdrawSessions),
+    [program, activityWithdrawSessions]
   )
 
   const hasStudentSatisfactionSurvey = useMemo(
@@ -467,6 +506,13 @@ export function ParticipatingParticipantFullpageView({
       })
       return
     }
+    const assignedScheduleBlock = activityWithdrawAssignedScheduleBlockAlert(
+      activityWithdrawAssignedStatus
+    )
+    if (assignedScheduleBlock) {
+      showAlert(assignedScheduleBlock)
+      return
+    }
     if (activityWithdrawScheduleOptions.length === 0) {
       showAlert({
         title: '안내',
@@ -477,6 +523,7 @@ export function ParticipatingParticipantFullpageView({
     if (isApplicationInfoEditing) return
     setActivityWithdrawModalOpen(true)
   }, [
+    activityWithdrawAssignedStatus,
     activityWithdrawScheduleOptions.length,
     isActivityWithdrawn,
     isApplicationInfoEditing,
@@ -485,7 +532,7 @@ export function ParticipatingParticipantFullpageView({
 
   const handleConfirmActivityWithdraw = useCallback(
     async (payload: ActivityWithdrawScheduleModalPayload) => {
-      const matched = sessions
+      const matched = activityWithdrawSessions
         .map((session, index) => ({
           session,
           key: buildParticipatingSchoolSessionKey(session, index),
@@ -540,12 +587,12 @@ export function ParticipatingParticipantFullpageView({
       )
     },
     [
+      activityWithdrawSessions,
       mergedParticipant.applicantName,
       mergedParticipant.id,
       program.id,
       progressRemoteEnabled,
       queryClient,
-      sessions,
       showAlert,
     ]
   )
@@ -818,8 +865,7 @@ export function ParticipatingParticipantFullpageView({
                     size="h40"
                     disabled={
                       isActivityWithdrawn ||
-                      activityWithdrawSubmitting ||
-                      activityWithdrawScheduleOptions.length === 0
+                      activityWithdrawSubmitting
                     }
                     onClick={handleRequestActivityWithdraw} >
                     활동 포기

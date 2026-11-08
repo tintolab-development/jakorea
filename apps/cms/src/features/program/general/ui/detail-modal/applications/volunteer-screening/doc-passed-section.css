@@ -32,11 +32,6 @@
   overflow-x: hidden !important;
 }
 
-.general-volunteer-doc-passed__table-wrap .general-volunteer-doc-passed__table table.ant-table {
-  table-layout: fixed !important;
-  width: 100% !important;
-}
-
 .general-volunteer-doc-passed
   .clickable-table
   .ant-table-tbody

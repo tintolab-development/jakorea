@@ -129,7 +129,7 @@ export function TrainedTeachersEducationJournalSection({
   const isLoading = journalsQuery.isFetching
 
   const tableData = useMemo(
-    () => entries.map((entry, index) => ({ ...entry, no: entries.length - index })),
+    () => entries.map((entry, index) => ({ ...entry, no: index + 1 })),
     [entries]
   )
 

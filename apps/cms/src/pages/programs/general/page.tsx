@@ -30,7 +30,7 @@ import {
   resolveProgramHardDeleteBlockedModalCopy,
 } from '@/features/program/shared/lib/program-delete-guide'
 import { DeleteBlockedGuideModal } from '@/shared/ui/delete-blocked-guide-modal'
-import { PROGRAM_LIST_NO_SELECTION_ALERT } from '@/features/program/shared/lib/program-list-no-selection-alert'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 import { useProgramListActions } from '@/pages/programs/use-program-list-actions'
 import {
   TemplateWritingPreviewProvider,
@@ -314,7 +314,7 @@ export function GeneralProgramListPageContent() {
   const handleBulkDeleteClick = () => {
     const programsToDelete = filteredPrograms.filter(p => selectedRowKeys.includes(p.id))
     if (programsToDelete.length === 0) {
-      showAlert(PROGRAM_LIST_NO_SELECTION_ALERT)
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setProgramsPendingBulkDelete(programsToDelete)

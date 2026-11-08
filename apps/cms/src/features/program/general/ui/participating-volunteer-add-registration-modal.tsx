@@ -7,6 +7,10 @@ import { useEffect, useMemo, useState } from 'react'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+} from '@/shared/constants/messages'
 import type { WritingFormParagraph } from '@/features/template/model/writing-form-draft.schema'
 import {
   createParticipatingVolunteerAddRegistrationDraft,
@@ -97,7 +101,15 @@ function ParticipatingVolunteerAddRegistrationModalBody({
       hideBasicInfoSection: hideBasicInfoSection ?? false,
     })
     if (!built.ok) {
-      showAlert({ title: '안내', content: built.message })
+      // 필수 항목 미입력은 공통 「필수 항목 입력 안내」 모달로 통일. 길이 등 형식 오류만 개별 문구.
+      showAlert(
+        built.kind === 'required'
+          ? {
+              title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+              content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+            }
+          : { title: '안내', content: built.message }
+      )
       return
     }
 

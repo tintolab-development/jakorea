@@ -69,6 +69,7 @@ import {
   ButtonDownloadIcon,
   ButtonListIcon,
 } from '@/shared/ui/icons/ButtonIcons'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 const SETTLEMENT_STATUS_OPTIONS = INSTRUCTOR_SETTLEMENT_FILTER_STATUS_OPTIONS.map(option => ({
   label: option.label,
@@ -245,7 +246,7 @@ export function InstructorPaymentTab({
     if (!settlementsRemote) return
     const selected = baseRows.filter(row => selectedRowKeys.includes(row.id))
     if (selected.length === 0) {
-      showAlert({ title: '안내', content: '지급조서를 발급할 정산 건을 선택해 주세요.' })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
 

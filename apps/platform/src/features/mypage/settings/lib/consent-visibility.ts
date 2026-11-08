@@ -45,3 +45,16 @@ export function filterBasicConsentItemsByAudience(
     return true
   })
 }
+
+/**
+ * 마이페이지 「동의서·서약서」 카드 노출 — 기본 미노출, 서버 `listed === true`만 노출.
+ * `listed`는 BE가 카드 노출 고정(작성 완료 시 DB 트리거·POST /consents/listed)으로 기록한 값이며
+ * 동의 효력과는 무관하다. 원격 세션이 아니면(mock) 기존처럼 카탈로그를 그대로 둔다.
+ */
+export function filterListedDocumentConsentItems(
+  items: SettingsConsentItem[],
+  isRemoteSession: boolean,
+): SettingsConsentItem[] {
+  if (!isRemoteSession) return items
+  return items.filter(item => item.listed === true)
+}

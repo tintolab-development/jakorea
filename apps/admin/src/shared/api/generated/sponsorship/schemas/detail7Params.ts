@@ -7,8 +7,5 @@
  */
 
 export type Detail7Params = {
-/**
- * Deprecated no-op. Omitted, false, and true all return original PII and write a privacy/audit log.
- */
 revealPii?: boolean;
 };

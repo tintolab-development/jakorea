@@ -9,19 +9,48 @@ import {
   type TeachingHistoryRow,
   type TeachingProgramStatus,
   type TeachingSettlementStatus,
+  TEACHING_PROGRAM_STATUS_LABELS,
+  TEACHING_SETTLEMENT_STATUS_LABELS,
 } from '@/features/school/model/school-detail-types'
-import { StatusBadge } from '@/shared/components/status-badge'
 import { EmptyState } from '@/shared/ui'
-import { InstructorPaymentStatusBadge } from '@/shared/components/instructor-payment-status-badge'
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
+import type { StatusTagSpec, StatusTagTone } from '@/shared/components/status-tag'
 import { PROGRAM_ENROLLMENT_DISPLAY_STATUS_ORDER } from '@/shared/constants/status'
-import type { InstructorSettlementUiStatus } from '@/shared/constants/instructor-settlement-status'
 
 const PROGRAM_STATUS_KEYS: TeachingProgramStatus[] = PROGRAM_ENROLLMENT_DISPLAY_STATUS_ORDER
 const SETTLEMENT_STATUS_KEYS: TeachingSettlementStatus[] = ['na', 'pending', 'partial', 'completed']
+
+/** 모집 신청 현황 — programEnrollmentDisplayConfig.colors 계열을 StatusTag tone으로 */
+const TEACHING_PROGRAM_STATUS_TONE: Record<TeachingProgramStatus, StatusTagTone> = {
+  WAITING_RESULT: 'orange',
+  DOCUMENT_PASS: 'purple',
+  EDUCATION_SCHEDULED: 'green',
+  EDUCATION_IN_PROGRESS: 'blue',
+  PROGRAM_ENDED: 'gray',
+  INTERVIEW_FAILED: 'gray',
+  REJECTED: 'red',
+}
+
+const TEACHING_SETTLEMENT_STATUS_TONE: Record<TeachingSettlementStatus, StatusTagTone> = {
+  na: 'gray',
+  pending: 'orange',
+  partial: 'purple',
+  completed: 'green',
+}
+
+function getTeachingProgramStatusTag(status: TeachingProgramStatus): StatusTagSpec {
+  return { label: TEACHING_PROGRAM_STATUS_LABELS[status], tone: TEACHING_PROGRAM_STATUS_TONE[status] }
+}
+
+function getTeachingSettlementStatusTag(status: TeachingSettlementStatus): StatusTagSpec {
+  return {
+    label: TEACHING_SETTLEMENT_STATUS_LABELS[status],
+    tone: TEACHING_SETTLEMENT_STATUS_TONE[status],
+  }
+}
 
 export interface TeacherTeachingHistoryTabProps {
   initialData: TeachingHistoryRow[]
@@ -84,9 +113,7 @@ export function TeacherTeachingHistoryTab({ initialData }: TeacherTeachingHistor
             <StatusDropdownCell<TeachingProgramStatus>
               status={record.programStatus}
               statusOptions={PROGRAM_STATUS_KEYS}
-              renderBadge={s => (
-                <StatusBadge domain="programEnrollment" status={s} variant="badge" />
-              )}
+              getTag={getTeachingProgramStatusTag}
               isItemDisabled={(cur, opt) => cur === opt}
               onChange={s => handleProgramStatusChange(record.id, s)}
               isOpen={openProgramDropdownId === record.id}
@@ -107,9 +134,7 @@ export function TeacherTeachingHistoryTab({ initialData }: TeacherTeachingHistor
             <StatusDropdownCell<TeachingSettlementStatus>
               status={record.settlementStatus}
               statusOptions={SETTLEMENT_STATUS_KEYS}
-              renderBadge={s => (
-                <InstructorPaymentStatusBadge status={s as InstructorSettlementUiStatus} />
-              )}
+              getTag={getTeachingSettlementStatusTag}
               isItemDisabled={(cur, opt) => cur === opt}
               onChange={s => handleSettlementStatusChange(record.id, s)}
               isOpen={openSettlementDropdownId === record.id}

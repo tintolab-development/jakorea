@@ -158,6 +158,7 @@ import type {
 import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import './applicants-detail.css'
 import './applicant-list.css'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 export interface ApplicantListProps {
   menu: ApplicantListMenu | ''
   /** 신청 강사 상세 게시글 탭 등에 사용 */
@@ -653,10 +654,7 @@ export function ApplicantList({
   }, [participantCancelRejectTarget, individualList, selectedItem])
 
   const showNoSelectionAlert = useCallback(() => {
-    showAlert({
-      title: '항목 선택 안내',
-      content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
-    })
+    showAlert(NO_SELECTION_ALERT)
   }, [showAlert])
 
   const blockProcessedBulkSelection = useCallback((): boolean => {

@@ -45,24 +45,4 @@
   vertical-align: middle !important;
 }
 
-/* 권한 승인 현황 · 상태값 (회원 권한 승인 — 피그마 타이포) */
-.members-permission-list__approval-status {
-  text-align: center;
-  font-family: Pretendard;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%; /* 21px */
-}
-
-.members-permission-list__approval-status--pending {
-  color: var(--color-green, #1e8c29);
-}
-
-.members-permission-list__approval-status--approved {
-  color: var(--main-BK, #3d3d3d);
-}
-
-.members-permission-list__approval-status--rejected {
-  color: #c32f4a;
-}
+/* 권한 승인 Text의 typography/색은 공통 primitive + 회원권한 registry에 둔다. */

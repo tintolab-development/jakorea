@@ -102,6 +102,8 @@ function mapTravelBasisDetail(
   item: IndividualSettlementReviewItem
 ): PaymentOrderCalculationBasisDetail {
   const receipts = item.receipts ?? []
+  /** 제출 시점 편도 km 스냅샷만 사용 — 관리자 화면에서 재계산·목록 preview로 덮지 않는다. */
+  const oneWayDistanceKm = item.oneWayDistanceKm ?? null
   const outboundReceipt = receipts.find(isOutboundReceipt)
   const inboundReceipt = receipts.find(isInboundReceipt)
 
@@ -113,6 +115,7 @@ function mapTravelBasisDetail(
       outbound,
       inbound,
       totalWon: outbound.publicTransit.amountWon + inbound.publicTransit.amountWon,
+      oneWayDistanceKm,
     }
   }
 
@@ -122,6 +125,7 @@ function mapTravelBasisDetail(
     return {
       layout: 'transportOneWay',
       trip: travelLeg(item, receipt, leg, finiteAmount(receipt?.amount)),
+      oneWayDistanceKm,
     }
   }
 
@@ -133,6 +137,7 @@ function mapTravelBasisDetail(
       outbound,
       inbound,
       totalWon: outbound.publicTransit.amountWon + inbound.publicTransit.amountWon,
+      oneWayDistanceKm,
     }
   }
 
@@ -140,6 +145,7 @@ function mapTravelBasisDetail(
   return {
     layout: 'transportOneWay',
     trip: travelLeg(item, receipt, 'outbound', finiteAmount(receipt?.amount ?? item.amount)),
+    oneWayDistanceKm,
   }
 }
 

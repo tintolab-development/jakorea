@@ -1,32 +1,15 @@
 /**
- * 강사 상세 > 정산 현황 상태 배지 — `status-badge.css` instructor-settlement-* 와 동일 색
+ * 강사 정산 현황 태그 — 공통 `StatusTag` (`getInstructorSettlementStatusTag`, 8종 accentColor)
  */
 
-import {
-  INSTRUCTOR_SETTLEMENT_STATUS_BADGE_CLASS,
-  INSTRUCTOR_SETTLEMENT_STATUS_LABELS,
-  type InstructorSettlementUiStatus,
-} from '@/shared/constants/instructor-settlement-status'
-import '@/shared/components/status-badge.css'
-import './instructor-payment-status-badge.css'
+import type { InstructorSettlementUiStatus } from '@/shared/constants/instructor-settlement-status'
+import { getInstructorSettlementStatusTag } from '@/shared/lib/status-tag-specs'
+import { StatusTag } from './status-tag'
 
 export interface InstructorPaymentStatusBadgeProps {
   status: InstructorSettlementUiStatus
-  className?: string
 }
 
-export function InstructorPaymentStatusBadge({
-  status,
-  className,
-}: InstructorPaymentStatusBadgeProps) {
-  const mod = INSTRUCTOR_SETTLEMENT_STATUS_BADGE_CLASS[status]
-  const label = INSTRUCTOR_SETTLEMENT_STATUS_LABELS[status]
-  return (
-    <span
-      role="status"
-      className={`status-badge status-badge--variant-badge ${mod} instructor-payment-status-badge ${className ?? ''}`.trim()}
-    >
-      {label}
-    </span>
-  )
+export function InstructorPaymentStatusBadge({ status }: InstructorPaymentStatusBadgeProps) {
+  return <StatusTag {...getInstructorSettlementStatusTag(status)} />
 }

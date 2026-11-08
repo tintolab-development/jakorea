@@ -1,3 +1,4 @@
+import { ProgramAssignmentStatusText } from '@/features/program/shared/ui/program-assignment-status-text'
 /**
  * 참여 봉사자 상세 — 봉사 배정 현황 탭
  */
@@ -15,14 +16,11 @@ import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
-  VOLUNTEER_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
-  VOLUNTEER_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
 } from '@/shared/constants/messages'
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
-import { ContentModal } from '@/shared/ui/content-modal'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
-import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
+import { ScheduleLinesCell } from '@/features/program/shared/ui/schedule-lines-cell'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import {
   buildInitialVolunteerAssignedRows,
@@ -41,40 +39,22 @@ import { buildVolunteerInstitutionAddAssignOptions } from '@/features/program/ge
 import { GeneralParticipantAddAssignModal } from './general-participant-add-assign-modal'
 import { ParticipatingVolunteerUnassignConfirmModal } from './participating-volunteer-unassign-confirm-modal'
 import { ParticipatingVolunteerUnassignCompleteModal } from './participating-volunteer-unassign-complete-modal'
-import './instructor-assignment-status-text.css'
+import { InstitutionSelectAssignConfirmModal } from './institution-select-assign-confirm-modal'
 import './participating-institutions-section.css'
 import './participating-volunteer-assignment-section.css'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 function renderVolunteerScheduleLines(lines: string[]) {
-  if (lines.length === 0) return <>-</>
-  const total = lines.length
-  const showCount = total <= 3 ? total : 2
-  const displayLines = lines.slice(0, showCount)
-  const restCount = total - showCount
   return (
-    <div className="participating-institutions-section__sessions-cell">
-      {displayLines.map((line, index) => (
-        <div key={`${line}-${index}`} className="participating-institutions-section__session-line">
-          {renderProgramDetailPipeSeparated(formatCmsScheduleDisplayLabel(line))}
-        </div>
-      ))}
-      {restCount > 0 ? (
-        <div className="participating-institutions-section__session-more">
-          외 {restCount}개의 봉사 일정
-        </div>
-      ) : null}
-    </div>
+    <ScheduleLinesCell
+      lines={lines.map(line => formatCmsScheduleDisplayLabel(line))}
+      moreUnit="봉사 일정"
+    />
   )
 }
 
 function renderHopeScheduleLine(line: string) {
-  return (
-    <div className="participating-institutions-section__sessions-cell">
-      <div className="participating-institutions-section__session-line">
-        {renderProgramDetailPipeSeparated(formatCmsScheduleDisplayLabel(line))}
-      </div>
-    </div>
-  )
+  return <ScheduleLinesCell lines={[formatCmsScheduleDisplayLabel(line)]} />
 }
 
 /** 추가 배정 — Figma CMS 9760:8214 ‘기관 추가 배정 안내’ (C: 기관형 참여 봉사자) */
@@ -144,7 +124,7 @@ export function ParticipatingVolunteerAssignmentSection({
         title: '기관명',
         dataIndex: 'schoolName',
         key: 'schoolName',
-        width: 277,
+        width: 200,
         align: 'center',
         ellipsis: true,
       },
@@ -152,14 +132,14 @@ export function ParticipatingVolunteerAssignmentSection({
         title: '담당 학년',
         dataIndex: 'educationGrade',
         key: 'educationGrade',
-        width: 160,
+        width: 100,
         align: 'center',
       },
       {
         title: '기관 소재지',
         dataIndex: 'region',
         key: 'region',
-        width: 277,
+        width: 200,
         align: 'center',
         ellipsis: true,
       },
@@ -167,13 +147,13 @@ export function ParticipatingVolunteerAssignmentSection({
         title: '자택과의 거리',
         dataIndex: 'distanceFromHome',
         key: 'distanceFromHome',
-        width: 277,
+        width: 120,
         align: 'center',
       },
       {
         title: '담당 봉사 진행 일정',
         key: 'volunteerScheduleLines',
-        width: 415,
+        width: 600,
         ...participatingScheduleTableColumnLayout(),
         render: (_: unknown, record) => renderVolunteerScheduleLines(record.volunteerScheduleLines),
       },
@@ -188,7 +168,7 @@ export function ParticipatingVolunteerAssignmentSection({
         title: '기관명',
         dataIndex: 'schoolName',
         key: 'schoolName',
-        width: 200,
+        width: 180,
         align: 'center',
         ellipsis: true,
       },
@@ -196,14 +176,14 @@ export function ParticipatingVolunteerAssignmentSection({
         title: '희망 학년',
         dataIndex: 'desiredGrade',
         key: 'desiredGrade',
-        width: 140,
+        width: 100,
         align: 'center',
       },
       {
         title: '기관 소재지',
         dataIndex: 'region',
         key: 'region',
-        width: 250,
+        width: 180,
         align: 'center',
         ellipsis: true,
       },
@@ -211,13 +191,13 @@ export function ParticipatingVolunteerAssignmentSection({
         title: '자택과의 거리',
         dataIndex: 'distanceFromHome',
         key: 'distanceFromHome',
-        width: 140,
+        width: 120,
         align: 'center',
       },
       {
         title: '봉사 진행 희망 일정',
         key: 'hopeScheduleLine',
-        width: 356,
+        width: 560,
         ...participatingScheduleTableColumnLayout(),
         render: (_: unknown, record) => renderHopeScheduleLine(record.hopeScheduleLine),
       },
@@ -225,21 +205,17 @@ export function ParticipatingVolunteerAssignmentSection({
         title: '배정 현황',
         dataIndex: 'assignmentStatus',
         key: 'assignmentStatus',
-        width: 160,
+        width: 120,
         align: 'center',
         render: (status: VolunteerWaitingAssignmentStatus) => (
-          <span
-            className={`participating-volunteer-assignment-section__status participating-volunteer-assignment-section__status--${status}`}
-          >
-            {WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS[status]}
-          </span>
+          <ProgramAssignmentStatusText status={status} context="institution-volunteer" />
         ),
       },
       {
         title: '배정 봉사자 수',
         dataIndex: 'assignedVolunteerCountLabel',
         key: 'assignedVolunteerCountLabel',
-        width: 160,
+        width: 120,
         align: 'center',
       },
     ],
@@ -341,7 +317,7 @@ export function ParticipatingVolunteerAssignmentSection({
   const handleUnassignClick = useCallback(() => {
     if (assignedInstitutions.length === 0) return
     if (selectedAssignedKeys.length === 0) {
-      showAlert({ title: '안내', content: VOLUNTEER_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setUnassignConfirmOpen(true)
@@ -349,7 +325,7 @@ export function ParticipatingVolunteerAssignmentSection({
 
   const handleSelectAssignClick = useCallback(() => {
     if (selectedWaitingKeys.length === 0) {
-      showAlert({ title: '안내', content: VOLUNTEER_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     const movable = waitingInstitutions.some(
@@ -499,7 +475,7 @@ export function ParticipatingVolunteerAssignmentSection({
   const handleAddAssignConfirm = useCallback(() => {
     if (addAssignInFlightRef.current) return
     if (!addAssignSchoolId) {
-      showAlert({ title: ADD_ASSIGN_MODAL_TITLE, content: '배정할 기관을 선택해 주세요.' })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     if (!addAssignWaitingRowId) {
@@ -601,11 +577,12 @@ export function ParticipatingVolunteerAssignmentSection({
     [assignedInstitutions, selectedAssignedKeys]
   )
 
-  const selectAssignLabels = useMemo(
+  /** 선택 배정 안내 — 첫 기관 + 외 N개 */
+  const selectAssignTargets = useMemo(
     () =>
-      waitingInstitutions
-        .filter(w => selectedWaitingKeys.includes(w.id) && w.assignmentStatus === 'waiting')
-        .map(w => `${w.schoolName} (${w.hopeScheduleLine})`),
+      waitingInstitutions.filter(
+        w => selectedWaitingKeys.includes(w.id) && w.assignmentStatus === 'waiting'
+      ),
     [waitingInstitutions, selectedWaitingKeys]
   )
 
@@ -739,35 +716,18 @@ export function ParticipatingVolunteerAssignmentSection({
         reason={unassignCompleteModal?.reason ?? ''}
       />
 
-      <ContentModal
+      <InstitutionSelectAssignConfirmModal
         open={selectAssignConfirmOpen}
         onCancel={() => setSelectAssignConfirmOpen(false)}
-        title="기관 배정 안내"
-        width={600}
-        footer={
-          <>
-            <CmsButton
-              variant="secondary"
-              size="large"
-              onClick={() => setSelectAssignConfirmOpen(false)}
-            >
-              취소
-            </CmsButton>
-            <CmsButton variant="primary" size="large" onClick={handleSelectAssignConfirm}>
-              배정
-            </CmsButton>
-          </>
-        }
-      >
-        <p>
-          [<strong>{volunteer.volunteerName}</strong>] 봉사자님을 다음 기관에 배정하시겠습니까?{' '}
-          {selectAssignLabels.map((label, i) => (
-            <span key={`${label}-${i}`}>
-              [<strong>{label}</strong>]{i < selectAssignLabels.length - 1 ? ', ' : ''}
-            </span>
-          ))}
-        </p>
-      </ContentModal>
+        onConfirm={handleSelectAssignConfirm}
+        targetNoun="기관"
+        institutionName={selectAssignTargets[0]?.schoolName ?? ''}
+        extraTargetCount={Math.max(0, selectAssignTargets.length - 1)}
+        instructorName={volunteer.volunteerName}
+        currentCount={null}
+        requiredCount={null}
+        countLabel={selectAssignTargets[0]?.assignedVolunteerCountLabel ?? null}
+      />
 
       <GeneralParticipantAddAssignModal
         open={addAssignModalOpen}

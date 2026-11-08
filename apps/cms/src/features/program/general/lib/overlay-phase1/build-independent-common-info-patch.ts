@@ -113,6 +113,7 @@ const SPONSOR_ASSIGNMENT_COMMON_INFO_KEYS = [
   'sponsorManagerContactId',
   'sponsorManagerLine',
   'sponsorManagerContactNames',
+  'sponsorManagementNames',
 ] as const
 
 function normalizeSponsorIdList(value: unknown): string[] {
@@ -161,6 +162,7 @@ function omitUnchangedSponsorAssignments(
 ) {
   // 이름 map은 선택 SSOT가 아니다. 변경/미변경 모두 write source로 보내지 않는다.
   delete patchCommon.sponsorManagerContactNames
+  delete patchCommon.sponsorManagementNames
   const hasAssignmentIds = [
     'sponsorManagementIds',
     'sponsorManagementId',

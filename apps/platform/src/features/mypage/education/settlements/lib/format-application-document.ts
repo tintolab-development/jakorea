@@ -15,6 +15,7 @@ import {
   instructorFeeUnitDisplayLabel,
   lectureFeeTypeDisplayLabel,
 } from './lecture-fee-preview.ts'
+import { formatIndividualOneWayDistanceKm } from './individual-settlement-contract.ts'
 
 export const SETTLEMENT_DOCUMENT_EMPTY = '-'
 
@@ -214,6 +215,18 @@ export function buildSettlementDocumentBasicRows(
       fullRow: true,
     },
   ]
+}
+
+/**
+ * 영수증 정산 신청서 — 학생 교통비 제출 시점 편도 km 스냅샷 행.
+ * 스냅샷(calcInfo.oneWayDistanceKm)만 사용하고 현재 주소로 다시 구하지 않는다. 없으면 행 미노출.
+ */
+export function buildReceiptTransportDistanceRow(
+  document: Pick<SettlementApplicationDocumentResponse, 'documentType' | 'calcInfo'>
+): SettlementDocumentInfoRow | null {
+  if (document.documentType !== 'RECEIPT_SETTLEMENT') return null
+  const km = formatIndividualOneWayDistanceKm(document.calcInfo?.oneWayDistanceKm)
+  return km ? { label: '교통비 편도 거리', value: km, fullRow: true } : null
 }
 
 /** ISO instant → Asia/Seoul `HH:mm`. 시각이 없는 값(날짜만)·파싱 불가면 null */

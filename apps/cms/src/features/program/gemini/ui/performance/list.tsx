@@ -54,6 +54,7 @@ import { GeminiImportPreviewFailureError } from '../../lib/performance/import-pr
 import '@/pages/programs/program-list-page.css'
 import '../page.css'
 import './list.css'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 type PendingFilters = {
   instructorName: string
@@ -199,10 +200,7 @@ export function GeminiPerformanceList() {
   const listCount = remoteEnabled ? totalElements : filteredRows.length
 
   const showNoSelectionAlert = useCallback(() => {
-    showAlert({
-      title: '항목 선택 안내',
-      content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
-    })
+    showAlert(NO_SELECTION_ALERT)
   }, [showAlert])
 
   const showRegisterBlockedAlert = useCallback(() => {

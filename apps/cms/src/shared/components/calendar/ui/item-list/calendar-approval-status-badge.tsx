@@ -2,23 +2,15 @@ import {
   APPROVAL_STATUS_LABELS,
   type ApprovalStatusKey,
 } from '@/shared/components/approval-status-badge'
-import { CALENDAR_APPROVAL_STATUS_COLORS } from '@/shared/constants/approval-status-calendar-colors'
-import './calendar-approval-status-badge.css'
+import { CALENDAR_APPROVAL_STATUS_TEXT_COLOR } from '@/shared/constants/approval-status-calendar-colors'
+import { StatusOutlineTag } from '@/shared/components/status-outline-tag'
 
-/** 캘린더 우측 일별 리스트 전용 승인 상태 태그 (테이블 배지와 스타일 분리) */
+/** 캘린더 우측 일별 리스트 전용 승인 상태 Tag (Figma Status / Tag / 승인 현황 14804:19711) */
 export function CalendarApprovalStatusBadge({ status }: { status: ApprovalStatusKey }) {
-  const colors = CALENDAR_APPROVAL_STATUS_COLORS[status]
-
   return (
-    <span
-      className="calendar-outline-status-badge calendar-approval-status-badge"
-      style={{
-        color: colors.text,
-        borderColor: colors.border,
-        background: colors.background,
-      }}
-    >
-      {APPROVAL_STATUS_LABELS[status]}
-    </span>
+    <StatusOutlineTag
+      label={APPROVAL_STATUS_LABELS[status]}
+      accentColor={CALENDAR_APPROVAL_STATUS_TEXT_COLOR[status]}
+    />
   )
 }

@@ -24,6 +24,11 @@ export const CMS_DATA_TABLE_CELL_H40_ACTION_CLASS = 'cms-data-table__cell--h40-a
 /** h40 버튼 세로 스택(2개+) — height auto · min-height 52px */
 export const CMS_DATA_TABLE_CELL_H40_ACTION_STACK_CLASS = 'cms-data-table__cell--h40-action-stack'
 
+/**
+ * 열 종류별 공통 폭 (px) — 같은 종류 열은 화면이 달라도 같은 폭.
+ * `CmsDataTable`은 열 `width`를 그대로 쓰고(넓은 화면 균등 분배 없음), 남는 폭은 width 미지정(유연) 열이 흡수한다.
+ * 유연 열(일정·제목 등)은 `width` 대신 `minWidth`만 지정.
+ */
 export const TABLE_COLUMN_WIDTHS = {
   status: 110,
   date: 120,
@@ -37,6 +42,14 @@ export const TABLE_COLUMN_WIDTHS = {
   email: 200,
   phone: 130,
   id: 100,
+  /** 자택 주소지 등 */
+  address: 200,
+  /** 기관명·소속·배정 기관 */
+  institution: 160,
+  /** 학년 */
+  grade: 100,
+  /** 유연 열(진행 일정 등) 최소 폭 — `minWidth`로 사용 */
+  scheduleMin: 360,
 } as const
 
 export const TABLE_CONFIG = {

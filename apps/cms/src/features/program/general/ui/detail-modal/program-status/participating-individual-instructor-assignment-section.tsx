@@ -1,3 +1,5 @@
+import { getProgramAssignmentRowClass } from '@/features/program/general/lib/assignment-status-presentation'
+import { ProgramAssignmentStatusText } from '@/features/program/shared/ui/program-assignment-status-text'
 /**
  * 참여 강사 상세 — 교육 배정 현황 탭 (일반 프로그램 · 개인)
  */
@@ -9,8 +11,6 @@ import type { ParticipatingInstructorRow } from '@/features/program/general/mode
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
-  INSTRUCTOR_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
-  INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
 } from '@/shared/constants/messages'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
@@ -18,14 +18,8 @@ import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { PermissionModal, type PermissionModalPayload } from '@/shared/components/permission-modal'
 import { NOTIFY_TIMING_CAPABILITY } from '@/shared/lib/notify-timing-capability'
 import { toScheduledOnlyNotifyTiming } from '@/features/program/general/lib/application-decision-notify-timing'
-import {
-  EditableStatusBadge,
-  StatusDropdownCell,
-  STATUS_DROPDOWN_CELL_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME,
-} from '@/shared/components'
-import { getInstructorRoleBadgeTone } from '@/shared/constants/editable-status-badge-tones'
+import { StatusDropdownCell, STATUS_DROPDOWN_CELL_CLASSNAME } from '@/shared/components'
+import { getInstructorRoleTag } from '@/shared/lib/status-tag-specs'
 import {
   INSTRUCTOR_ROLE_LABELS,
   type InstructorRoleKey,
@@ -65,12 +59,14 @@ import {
 } from '@/features/program/general/lib/general-instructor-recruitment-required'
 import { SchoolDetailUnassignCompleteModal } from './school-detail-unassign-complete-modal'
 import { SchoolDetailUnassignConfirmModal } from './school-detail-unassign-confirm-modal'
-import './instructor-assignment-status-text.css'
+import { InstitutionSelectAssignConfirmModal } from './institution-select-assign-confirm-modal'
+import { INSTITUTION_SELECT_ASSIGN_DEFAULT_NOTIFY_PAYLOAD } from '@/features/program/general/lib/institution-select-assign'
 import './participating-institutions-section.css'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
-import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
+import { ScheduleLinesCell } from '@/features/program/shared/ui/schedule-lines-cell'
 import { buildAddAssignWaitingScheduleChipOptions } from '@/features/program/general/lib/general-add-assign-session-chips'
 import { GeneralParticipantAddAssignModal } from './general-participant-add-assign-modal'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 /** 추가 배정 — Figma CMS 9760:8214 ‘추가 배정 안내’ (D: 개인형 참여 강사) */
 const ADD_ASSIGN_MODAL_TITLE = '추가 배정 안내'
@@ -79,13 +75,7 @@ const ASSIGNED_EMPTY_TEXT = '배정된 일정이 없습니다.'
 const WAITING_EMPTY_TEXT = '배정 대기 중인 일정이 없습니다.'
 
 function renderScheduleCell(label: string) {
-  return (
-    <div className="participating-institutions-section__sessions-cell">
-      <div className="participating-institutions-section__session-line">
-        {renderProgramDetailPipeSeparated(formatCmsScheduleDisplayLabel(label))}
-      </div>
-    </div>
-  )
+  return <ScheduleLinesCell lines={[formatCmsScheduleDisplayLabel(label)]} />
 }
 
 export interface ParticipatingIndividualInstructorAssignmentSectionProps {
@@ -207,26 +197,17 @@ export function ParticipatingIndividualInstructorAssignmentSection({
           key: 'role',
           width: 116,
           align: 'center',
-          onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME }),
-          onCell: () => ({
-            className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME}`,
-          }),
+          onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
           render: (role: InstructorRoleKey, record) => (
             <StatusDropdownCell<InstructorRoleKey>
               status={role}
               statusOptions={['lead', 'assistant']}
-              renderBadge={r => (
-                <EditableStatusBadge
-                  label={INSTRUCTOR_ROLE_LABELS[r]}
-                  tone={getInstructorRoleBadgeTone(r)}
-                />
-              )}
+              getTag={getInstructorRoleTag}
               isItemDisabled={(cur, opt) => cur === opt}
               onChange={key => handleRoleChange(record.id, key as InstructorRoleKey)}
               isOpen={openRoleDropdownId === record.id}
               onOpenChange={open => setOpenRoleDropdownId(open ? record.id : null)}
               emptyPlaceholder="-"
-              tagLayout="tag100"
             />
           ),
         },
@@ -234,7 +215,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
           title: '출강지',
           dataIndex: 'lectureLocation',
           key: 'lectureLocation',
-          width: 180,
+          width: 160,
         },
         {
           title: '자택과의 거리',
@@ -263,7 +244,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
         title: '출강지',
         dataIndex: 'lectureLocation',
         key: 'lectureLocation',
-        width: 180,
+        width: 160,
       },
       {
         title: '자택과의 거리',
@@ -285,28 +266,20 @@ export function ParticipatingIndividualInstructorAssignmentSection({
         title: '배정 현황',
         dataIndex: 'assignmentStatus',
         key: 'assignmentStatus',
-        width: 180,
+        width: 120,
         align: 'center',
         render: (
           _status: ParticipatingIndividualInstructorWaitingScheduleRow['assignmentStatus'],
           record: ParticipatingIndividualInstructorWaitingScheduleRow
         ) => (
-          <span
-            className={`school-detail-fullpage-view__assignment-status school-detail-fullpage-view__assignment-status--${record.assignmentStatus === 'unavailable' || record.assignmentStatus === 'assignment_cancelled' ? 'cancelled' : record.assignmentStatus}`}
-          >
-            {waitingAssignmentStatusLabel(
-              record.assignmentStatus,
-              PARTICIPATING_INDIVIDUAL_INSTRUCTOR_WAITING_STATUS_LABELS,
-              record.assignmentStatusLabel
-            )}
-          </span>
+          <ProgramAssignmentStatusText status={record.assignmentStatus} context="instructor-individual" assignmentStatusLabel={record.assignmentStatusLabel} />
         ),
       },
       {
         title: '배정 강사 수',
         dataIndex: 'assignedInstructorCountLabel',
         key: 'assignedInstructorCountLabel',
-        width: 110,
+        width: 100,
         align: 'center',
       },
     ],
@@ -362,7 +335,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
 
   const handleUnassignClick = useCallback(() => {
     if (selectedAssignedKeys.length === 0) {
-      showAlert({ title: '안내', content: INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setUnassignConfirmOpen(true)
@@ -377,7 +350,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
       return
     }
     if (selectedWaitingKeys.length === 0) {
-      showAlert({ title: '안내', content: INSTRUCTOR_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     const movable = waitingSchedules.some(
@@ -558,7 +531,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
 
   const handleAddAssignSchedulePicked = useCallback(() => {
     if (!addAssignWaitingRowId) {
-      showAlert({ title: ADD_ASSIGN_MODAL_TITLE, content: '교육 배정일을 선택해 주세요.' })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     const waitingRow = waitingSchedules.find(w => w.id === addAssignWaitingRowId)
@@ -619,11 +592,12 @@ export function ParticipatingIndividualInstructorAssignmentSection({
     [assignedSchedules, selectedAssignedKeys]
   )
 
-  const selectAssignLabels = useMemo(
+  /** 선택 배정 안내 — 첫 일정 + 외 N개 */
+  const selectAssignTargets = useMemo(
     () =>
-      waitingSchedules
-        .filter(w => selectedWaitingKeys.includes(w.id) && w.assignmentStatus === 'waiting')
-        .map(w => w.scheduleLabel),
+      waitingSchedules.filter(
+        w => selectedWaitingKeys.includes(w.id) && w.assignmentStatus === 'waiting'
+      ),
     [waitingSchedules, selectedWaitingKeys]
   )
 
@@ -735,12 +709,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
             dataSource={waitingSchedules}
             emptyTitle={WAITING_EMPTY_TEXT}
             emptyDescription={null}
-            rowClassName={record =>
-              record.assignmentStatus === 'unavailable' ||
-              record.assignmentStatus === 'assignment_cancelled'
-                ? 'school-detail-fullpage-view__waiting-row--unavailable'
-                : ''
-            }
+            rowClassName={record => getProgramAssignmentRowClass(record.assignmentStatus, "instructor-individual")}
           />
         </div>
       </div>
@@ -760,23 +729,28 @@ export function ParticipatingIndividualInstructorAssignmentSection({
         reason={unassignCompleteModal?.reason ?? ''}
       />
 
-      <PermissionModal
+      {/* 선택 배정 안내 — 공통 모달(알림은 기관형 선택 배정과 같은 기본값) */}
+      <InstitutionSelectAssignConfirmModal
         open={selectAssignConfirmOpen}
         onCancel={() => {
           if (assignSubmitting) return
           setSelectAssignConfirmOpen(false)
         }}
-        onConfirm={handleSelectAssignConfirm}
+        onConfirm={() => {
+          void handleSelectAssignConfirm(INSTITUTION_SELECT_ASSIGN_DEFAULT_NOTIFY_PAYLOAD)
+        }}
         confirmLoading={assignSubmitting}
-        variant="approve"
-        title="교육 일정 배정 안내"
-        width={600}
-        message={`[**${instructor.instructorName}**] 강사님을 다음 교육 일정에 배정하시겠습니까?\n${selectAssignLabels.map(label => `[**${label}**]`).join('\n')}`}
-        confirmLabel="배정"
-        confirmVariant="primary"
-        requireReason={false}
-        notifyTimingOptions="two"
-        notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.scheduledOnly}
+        targetNoun="일정"
+        institutionName={
+          selectAssignTargets[0]
+            ? formatCmsScheduleDisplayLabel(selectAssignTargets[0].scheduleLabel)
+            : ''
+        }
+        extraTargetCount={Math.max(0, selectAssignTargets.length - 1)}
+        instructorName={instructor.instructorName}
+        currentCount={null}
+        requiredCount={null}
+        countLabel={selectAssignTargets[0]?.assignedInstructorCountLabel ?? null}
       />
 
       <GeneralParticipantAddAssignModal

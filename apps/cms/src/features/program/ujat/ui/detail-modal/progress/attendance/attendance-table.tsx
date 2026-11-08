@@ -73,10 +73,9 @@ export function UjatAttendanceTable({
   rows: UjatAttendanceVolunteerRow[]
 }) {
   const tableData = useMemo(() => {
-    const total = rows.length
     return rows.map((row, index) => ({
       ...row,
-      no: total - index,
+      no: index + 1,
     }))
   }, [rows])
 

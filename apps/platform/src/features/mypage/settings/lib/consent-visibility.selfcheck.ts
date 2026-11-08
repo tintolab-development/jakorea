@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict'
 import {
   filterBasicConsentItemsByAudience,
+  filterListedDocumentConsentItems,
   isMinorSettingsMember,
   isTeacherSettingsProfile,
   isUnder14FromBirthDate,
 } from './consent-visibility.ts'
-import { getBasicConsentItems } from './consent-catalog.ts'
+import { DOCUMENT_CONSENT_ITEMS, getBasicConsentItems } from './consent-catalog.ts'
 
 assert.equal(isTeacherSettingsProfile('individual'), false)
 assert.equal(isTeacherSettingsProfile('instructor_only'), false)
@@ -33,5 +34,17 @@ assert.deepEqual(
   minorRemoteFiltered.map(item => item.id),
   ['serviceTerms', 'marketing', 'portrait'],
 )
+
+// 동의서·서약서 카드 — 기본 미노출, 서버 listed === true만
+const listedSample = DOCUMENT_CONSENT_ITEMS.map((item, index) => ({
+  ...item,
+  listed: index === 0 ? true : index === 1 ? false : undefined,
+}))
+assert.deepEqual(
+  filterListedDocumentConsentItems(listedSample, true).map(item => item.id),
+  [DOCUMENT_CONSENT_ITEMS[0]!.id],
+)
+assert.equal(filterListedDocumentConsentItems(listedSample, false).length, listedSample.length)
+assert.equal(filterListedDocumentConsentItems([], true).length, 0)
 
 console.log('consent-visibility.selfcheck: ok')

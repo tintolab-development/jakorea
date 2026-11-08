@@ -103,7 +103,7 @@ function paymentOrderStatusShortLabelFromUiStatus(status: InstructorSettlementUi
     case 'payment_statement_reapplication':
       return '재신청'
     case 'partial_confirmation':
-      return '일부 확인'
+      return '확인 중'
     case 'payment_statement_verified':
       return '확인 완료'
     case 'account_paid':

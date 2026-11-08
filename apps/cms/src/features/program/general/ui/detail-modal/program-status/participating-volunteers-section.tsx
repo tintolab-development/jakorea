@@ -18,7 +18,6 @@ import {
   PARTICIPATING_EMPLOYEE_VOLUNTEER_REGISTER_COUNTS_REQUIRED_ALERT_MESSAGE,
   PARTICIPATING_EMPLOYEE_VOLUNTEER_REGISTER_SELECT_INSTITUTION_ALERT_MESSAGE,
   PARTICIPATING_VOLUNTEER_ADD_COMPLETE_ALERT_MESSAGE,
-  PARTICIPATING_VOLUNTEER_ADD_SELECT_ALERT_MESSAGE,
 } from '@/shared/constants/messages'
 import { CMS_TABLE_NO_COL_CLASS } from '@/shared/constants/table'
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
@@ -66,8 +65,12 @@ import {
 } from '../../../lib/participating-institutions-table'
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import { SCHEDULE_COLORS } from '@/features/program/shared/ui/program-schedule-colors'
-import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
+import { ScheduleLinesCell } from '@/features/program/shared/ui/schedule-lines-cell'
 import { ParticipatingInstitutionsCalendarView } from './participating-institutions-calendar-view'
+import {
+  IndividualPersonCalendarView,
+  type IndividualPersonCalendarAccessors,
+} from './individual-person-calendar-view'
 import { renderParticipatingVolunteerCalendarMonthEventContent } from './participating-volunteer-calendar-month-event'
 import { ParticipatingVolunteersCalendarRight } from './participating-volunteers-calendar-right'
 import {
@@ -77,6 +80,7 @@ import {
 } from '@/shared/ui/icons/ButtonIcons'
 import './participating-institutions-section.css'
 import './program-progress-tab.css'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 export interface ParticipatingVolunteersSectionProps {
   programId?: string
@@ -209,6 +213,18 @@ export function ParticipatingVolunteersSection({
   const filteredVolunteers = useMemo(
     () => filterParticipatingVolunteers(volunteerList, appliedFilters),
     [volunteerList, appliedFilters]
+  )
+
+  /** 개인형 — 캘린더 뷰는 참여자 목록과 동일 로직(기관 검색·기관 색 없음) */
+  const isIndividualProgram = program != null && isGeneralIndividualProgram(program)
+  const individualVolunteerCalendarAccessors = useMemo(
+    (): IndividualPersonCalendarAccessors<ParticipatingVolunteerRow> => ({
+      getId: volunteer => volunteer.id,
+      getName: volunteer => volunteer.volunteerName?.trim() || '봉사자',
+      getSessions: volunteer => volunteer.sessions,
+      getMetaLabels: volunteer => [formatParticipatingVolunteerInstitutionCell(volunteer, program)],
+    }),
+    [program]
   )
 
   const volunteerCalendarEvents = useMemo(
@@ -494,7 +510,7 @@ export function ParticipatingVolunteersSection({
         title: '참여 봉사자명',
         dataIndex: 'volunteerName',
         key: 'volunteerName',
-        width: 120,
+        width: 100,
         align: 'center',
       },
       {
@@ -507,8 +523,9 @@ export function ParticipatingVolunteersSection({
       {
         title: institutionColumnTitle,
         key: 'assignedInstitutionNames',
-        width: 220,
-        minWidth: 220,
+        width: 160,
+        minWidth: 160,
+        ellipsis: { showTitle: true },
         align: 'center',
         render: (_: unknown, record) =>
           formatParticipatingVolunteerInstitutionCell(record, program),
@@ -516,39 +533,14 @@ export function ParticipatingVolunteersSection({
       {
         title: '봉사 진행 일정',
         key: 'sessions',
-        width: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
+        // width 미지정 — fixed layout 에서 남는 폭을 일정 열이 흡수 (이름·기관 등은 고정 폭 유지)
         minWidth: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
         ...participatingScheduleTableColumnLayout(),
         render: (_: unknown, record) => {
-          const sessions = record.sessions ?? []
-          const total = sessions.length
-          const showCount = total <= 3 ? total : 2
-          const displaySessions = sessions.slice(0, showCount)
-          const restCount = total - showCount
-          if (total === 0) {
-            return (
-              <div className="participating-institutions-section__sessions-cell">
-                <div className="participating-institutions-section__session-line">일정 미배정</div>
-              </div>
-            )
-          }
-          return (
-            <div className="participating-institutions-section__sessions-cell">
-              {displaySessions.map((s: ParticipatingSchoolSession, index) => (
-                <div
-                  key={`${record.id}-session-${s.round}-${index}`}
-                  className="participating-institutions-section__session-line"
-                >
-                  {renderProgramDetailPipeSeparated(formatParticipatingSchoolSessionLine(s))}
-                </div>
-              ))}
-              {restCount > 0 && (
-                <div className="participating-institutions-section__session-more">
-                  외 {restCount}개의 봉사 일정
-                </div>
-              )}
-            </div>
+          const lines = (record.sessions ?? []).map((s: ParticipatingSchoolSession) =>
+            formatParticipatingSchoolSessionLine(s)
           )
+          return <ScheduleLinesCell lines={lines} moreUnit="봉사 일정" emptyText="일정 미배정" />
         },
       },
       {
@@ -636,7 +628,8 @@ export function ParticipatingVolunteersSection({
             <FilterTableToolbarButton
               variant="secondary"
               icon={<ButtonDownloadIcon />}
-              onClick={handleActivityCertificateIssueClick} >
+              onClick={handleActivityCertificateIssueClick}
+            >
               활동확인서 발급
             </FilterTableToolbarButton>
             <FilterTableToolbarButton variant="secondary" onClick={handle1365RegistrationFormClick}>
@@ -646,20 +639,23 @@ export function ParticipatingVolunteersSection({
               <FilterTableToolbarButton
                 variant="secondary"
                 icon={<ButtonCalendarIcon />}
-                onClick={handleCalendarView} >
+                onClick={handleCalendarView}
+              >
                 캘린더 뷰로 보기
               </FilterTableToolbarButton>
             ) : (
               <FilterTableToolbarButton
                 variant="secondary"
                 icon={<ButtonListIcon />}
-                onClick={handleListView} >
+                onClick={handleListView}
+              >
                 리스트 뷰로 보기
               </FilterTableToolbarButton>
             )}
             <FilterTableToolbarButton
               variant="primary"
-              onClick={handleRegisterEmployeeVolunteerClick} >
+              onClick={handleRegisterEmployeeVolunteerClick}
+            >
               임직원 자원봉사자 등록
             </FilterTableToolbarButton>
             <FilterTableToolbarButton variant="primary" onClick={handleRegisterVolunteerClick}>
@@ -714,30 +710,42 @@ export function ParticipatingVolunteersSection({
           </div>
         ) : (
           <div className="participating-institutions-section__calendar-wrap">
-            <ParticipatingInstitutionsCalendarView
-              schools={schoolRows}
-              selectedRowKeys={[]}
-              onSelectionChange={() => {}}
-              onSchoolClick={() => {}}
-              onDateSelect={setCalendarSelectedDate}
-              calendarGranularity={progressCalendarGranularity}
-              onCalendarGranularityChange={setProgressCalendarGranularity}
-              customEvents={volunteerCalendarEvents}
-              renderMonthEventContent={renderParticipatingVolunteerCalendarMonthEventContent}
-              rightContent={
-                <ParticipatingVolunteersCalendarRight
-                  events={volunteerEventsForCalendarDate}
-                  schoolFilterOptions={calendarSchoolFilterOptions}
-                  effectiveSelectedSchools={effectiveCalendarSelectedSchools}
-                  onSelectedSchoolsChange={setCalendarSelectedSchools}
-                  getColorForSchool={school =>
-                    schoolNameToScheduleColor.get(school) ?? SCHEDULE_COLORS[0]
-                  }
-                  selectedVolunteerIds={selectedRowKeys}
-                  onVolunteerSelectionChange={setSelectedRowKeys}
-                />
-              }
-            />
+            {isIndividualProgram ? (
+              <IndividualPersonCalendarView
+                people={filteredVolunteers}
+                accessors={individualVolunteerCalendarAccessors}
+                selectedRowKeys={selectedRowKeys}
+                onSelectionChange={setSelectedRowKeys}
+                onPersonClick={volunteer => onVolunteerRowClick?.(volunteer)}
+                calendarGranularity={progressCalendarGranularity}
+                onCalendarGranularityChange={setProgressCalendarGranularity}
+              />
+            ) : (
+              <ParticipatingInstitutionsCalendarView
+                schools={schoolRows}
+                selectedRowKeys={[]}
+                onSelectionChange={() => {}}
+                onSchoolClick={() => {}}
+                onDateSelect={setCalendarSelectedDate}
+                calendarGranularity={progressCalendarGranularity}
+                onCalendarGranularityChange={setProgressCalendarGranularity}
+                customEvents={volunteerCalendarEvents}
+                renderMonthEventContent={renderParticipatingVolunteerCalendarMonthEventContent}
+                rightContent={
+                  <ParticipatingVolunteersCalendarRight
+                    events={volunteerEventsForCalendarDate}
+                    schoolFilterOptions={calendarSchoolFilterOptions}
+                    effectiveSelectedSchools={effectiveCalendarSelectedSchools}
+                    onSelectedSchoolsChange={setCalendarSelectedSchools}
+                    getColorForSchool={school =>
+                      schoolNameToScheduleColor.get(school) ?? SCHEDULE_COLORS[0]
+                    }
+                    selectedVolunteerIds={selectedRowKeys}
+                    onVolunteerSelectionChange={setSelectedRowKeys}
+                  />
+                }
+              />
+            )}
           </div>
         )}
         <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
@@ -799,7 +807,7 @@ export function ParticipatingVolunteersSection({
         onCancel={() => setAddVolunteerModalOpen(false)}
         memberOptions={volunteerMemberOptions}
         onNoMemberSelected={() =>
-          showAlert({ title: '안내', content: PARTICIPATING_VOLUNTEER_ADD_SELECT_ALERT_MESSAGE })
+          showAlert(NO_SELECTION_ALERT)
         }
         onProceedToRegistration={handleProceedToVolunteerConsent}
       />

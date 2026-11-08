@@ -50,13 +50,7 @@
   .cms-data-table:not(.cms-data-table--fit-scroll)
   .ant-table-tbody
   > tr
-  > td {
+  > td:not(.status-dropdown-cell__cell-status) {
   padding-top: 10px !important;
   padding-bottom: 10px !important;
-}
-
-/* 담당자 유형 등 StatusDropdownCell: 52px 행에서 상하 패딩만 제거 */
-.sponsor-detail-fullpage-modal .cms-data-table .ant-table-tbody > tr > td.status-dropdown-cell__cell-status {
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
 }

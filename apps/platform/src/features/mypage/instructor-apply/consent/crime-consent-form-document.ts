@@ -1,5 +1,6 @@
 import { isAxiosError } from 'axios'
 import { axiosClient } from '@/shared/api/axios-instance'
+import crimeConsentFormDocumentAssetUrl from '@/shared/assets/documents/crime_consent_form.pdf'
 import { portalPublicFileDownloadUrl } from '@/shared/lib/portal-public-file-url'
 import {
   CRIME_CONSENT_MESSAGES,
@@ -82,7 +83,24 @@ export async function downloadCrimeConsentCatalogDocument(input: {
   }
 }
 
-/** OpenAPI 포털 동의 문서에 catalogDocument가 없어 양식 파일을 고를 수 없다. */
+/**
+ * 성범죄 동의서 양식 다운로드.
+ * CMS 게시 PDF(`catalogDocument`)는 포털 API에 노출되면 `downloadCrimeConsentCatalogDocument`로 전환한다.
+ * 현재는 agreement-crime 시드와 동일한 앱 번들 PDF를 받는다(CMS `crime-consent-form-document`와 동일).
+ */
 export async function downloadCrimeConsentFormDocument(): Promise<void> {
-  throw new CrimeConsentCatalogDownloadError(CRIME_CONSENT_MESSAGES.formFileUnavailable)
+  try {
+    const res = await fetch(crimeConsentFormDocumentAssetUrl)
+    if (!res.ok) {
+      throw new CrimeConsentCatalogDownloadError(CRIME_CONSENT_MESSAGES.formFileUnavailable)
+    }
+    const blob = await res.blob()
+    if (!(blob instanceof Blob) || blob.size === 0) {
+      throw new CrimeConsentCatalogDownloadError(CRIME_CONSENT_MESSAGES.formFileUnavailable)
+    }
+    saveBlobFile(CRIME_CONSENT_MESSAGES.formFileFallbackName, blob)
+  } catch (error) {
+    if (error instanceof CrimeConsentCatalogDownloadError) throw error
+    throw new CrimeConsentCatalogDownloadError(CRIME_CONSENT_MESSAGES.formFileUnavailable)
+  }
 }

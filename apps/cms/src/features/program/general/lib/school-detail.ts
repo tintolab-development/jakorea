@@ -119,10 +119,9 @@ export interface AssignedInstructorDisplayRowMock extends SchoolDetailInstructor
 export function getAssignedInstructorDisplayRows(
   instructors: SchoolDetailInstructorRow[]
 ): AssignedInstructorDisplayRowMock[] {
-  const n = instructors.length
   return instructors.map((inv, idx) => ({
     ...inv,
-    no: n - idx,
+    no: idx + 1,
     homeAddress: '-',
     distanceToSchool: '-',
     assignedDate: '-',
@@ -191,7 +190,6 @@ export function getWaitingInstructorRows(
 
   const notAssignedToThisSchool = instructorList.filter(r => r.schoolName !== schoolName)
   const slice = notAssignedToThisSchool.slice(0, 12)
-  const n = slice.length
   return sortWaitingInstructorRowsUnavailableToBottom(
     slice.map((r, idx) => {
       const hopeFromSchool = hopeSchedulePool[idx % Math.max(hopeSchedulePool.length, 1)]
@@ -201,7 +199,7 @@ export function getWaitingInstructorRows(
       const hopeSchedule = { hopeDate, hopeTime, hopeSession }
       return {
         id: r.id,
-        no: n - idx,
+        no: idx + 1,
         instructorName: r.instructorName,
         homeAddress: r.address?.trim() || '-',
         distanceToSchool: '-',
@@ -271,8 +269,7 @@ export function getCompanySchoolWaitingInstructorScheduleRows(
   })
 
   const sorted = sortWaitingInstructorRowsUnavailableToBottom(rows)
-  const n = sorted.length
-  return sorted.map((row, index) => ({ ...row, no: n - index }))
+  return sorted.map((row, index) => ({ ...row, no: index + 1 }))
 }
 
 /**

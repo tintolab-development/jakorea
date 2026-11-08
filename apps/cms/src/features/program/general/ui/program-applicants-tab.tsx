@@ -27,10 +27,10 @@ import {
   type ApplicantInstructorRow,
 } from '@/features/program/shared/model/applicant-instructor'
 import {
-  ApprovalStatusBadge,
   APPROVAL_STATUS_LABELS,
+  getApprovalStatusTag,
   type ApprovalStatusKey,
-} from '@/shared/components/approval-status-badge'
+} from '@/shared/lib/status-tag-specs'
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
@@ -410,7 +410,7 @@ export function ProgramApplicantsTab({
           <StatusDropdownCell<ApprovalStatusKey>
             status={status ?? null}
             statusOptions={approvalStatusKeys}
-            renderBadge={s => <ApprovalStatusBadge status={s} />}
+            getTag={getApprovalStatusTag}
             isItemDisabled={(cur, opt) => cur === opt}
             onChange={newStatus => handleSchoolApprovalStatusChange(record.id, newStatus)}
             isOpen={openApprovalDropdownId === record.id}
@@ -487,7 +487,7 @@ export function ProgramApplicantsTab({
           <StatusDropdownCell<ApprovalStatusKey>
             status={status ?? null}
             statusOptions={approvalStatusKeys}
-            renderBadge={s => <ApprovalStatusBadge status={s} />}
+            getTag={getApprovalStatusTag}
             isItemDisabled={(cur, opt) => cur === opt}
             onChange={newStatus => handleInstructorApprovalStatusChange(record.id, newStatus)}
             isOpen={openApprovalDropdownId === record.id}

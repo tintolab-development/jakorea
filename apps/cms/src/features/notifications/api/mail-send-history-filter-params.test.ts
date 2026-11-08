@@ -37,11 +37,18 @@ describe('mail send-history 4-1 filters', () => {
     expect(params.sendStatus).toBe('SCHEDULED')
     expect(params.receiptStatus).toBe('CONFIRM_WAITED')
 
-    filters.sendStatus = '발송중'
+    filters.sendStatus = '발송 중'
     filters.receiveStatus = '수신 실패'
     const params2 = mailSendHistoryParamsFromFilters(filters)
     expect(params2.sendStatus).toBe('IN_PROGRESS')
     expect(params2.receiptStatus).toBe('DELIVERY_FAILED')
+  })
+
+  it('이전 라벨로 저장된 URL의 발송 현황도 같은 enum으로 매핑', () => {
+    const params = mailSendHistoryParamsFromFilters(
+      readMailSendHistoryFiltersFromParams(new URLSearchParams('mail_send_status=발송중'))
+    )
+    expect(params.sendStatus).toBe('IN_PROGRESS')
   })
 
   it('메일 제목 검색은 title|subject|renderedTitle (templateName 위장 금지)', () => {

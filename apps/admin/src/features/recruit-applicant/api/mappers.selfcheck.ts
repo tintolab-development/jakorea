@@ -69,6 +69,7 @@ assert.equal(detail.careerInfo, '경력 본문')
 assert.equal(detail.attachmentFileName, 'resume.pdf')
 assert.equal(detail.privacyAgreed, true)
 
+// 스펙은 nullable이 아니지만 BE 런타임은 빈 값을 null로 보낼 수 있다 — null 입력을 그대로 검증한다.
 const emptyDetail = mapCareerTalentApplicationDetail({
   id: 124,
   status: CareerTalentApplicationDetailResponseStatus.PENDING,
@@ -87,7 +88,7 @@ const emptyDetail = mapCareerTalentApplicationDetail({
   privacyAgreed: true,
   appliedAt: '2026-11-07T10:00:00Z',
   attachments: [],
-})
+} as unknown as Parameters<typeof mapCareerTalentApplicationDetail>[0])
 assert.ok(emptyDetail)
 assert.equal(emptyDetail.applicantName, null)
 assert.equal(emptyDetail.phone, null)

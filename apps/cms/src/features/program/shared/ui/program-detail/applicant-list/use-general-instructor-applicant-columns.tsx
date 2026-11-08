@@ -17,7 +17,9 @@ export function useGeneralInstructorApplicantColumns(params: {
         title: '신청 강사명',
         dataIndex: 'instructorName',
         key: 'instructorName',
+        width: 120,
         align: 'center',
+        ellipsis: true,
         render: (text: string, record) => (
           <a
             onClick={() => setSelectedItem(record)}
@@ -31,6 +33,8 @@ export function useGeneralInstructorApplicantColumns(params: {
         title: '자택 주소지',
         dataIndex: 'address',
         key: 'address',
+        // width 미지정 — fixed layout 에서 남는 폭을 주소·이메일 열이 흡수
+        minWidth: 200,
         align: 'center',
         ellipsis: true,
         render: (text: string) => {
@@ -42,6 +46,7 @@ export function useGeneralInstructorApplicantColumns(params: {
         title: 'JA 강의 경력',
         dataIndex: 'lectureExperienceYears',
         key: 'lectureExperienceYears',
+        width: 120,
         align: 'center',
         render: (years: number) => (years != null ? `${years}년` : '-'),
       },
@@ -49,6 +54,7 @@ export function useGeneralInstructorApplicantColumns(params: {
         title: 'JA 평가 등급',
         dataIndex: 'evaluationGrade',
         key: 'evaluationGrade',
+        width: 120,
         align: 'center',
         render: (v: string | undefined) => formatJaEvaluationGradeCellDisplay(v),
       },
@@ -56,12 +62,14 @@ export function useGeneralInstructorApplicantColumns(params: {
         title: '연락처',
         dataIndex: 'contact',
         key: 'contact',
+        width: 140,
         align: 'center',
       },
       {
         title: '이메일',
         dataIndex: 'email',
         key: 'email',
+        minWidth: 200,
         align: 'center',
         ellipsis: true,
       },

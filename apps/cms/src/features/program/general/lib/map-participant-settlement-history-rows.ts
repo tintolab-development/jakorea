@@ -69,8 +69,7 @@ function emptyPaymentFields(): Pick<
 
 function overlaySettlement(
   item: SettlementListItemResponse | undefined,
-  index: number,
-  totalCount: number
+  index: number
 ): Pick<
   ParticipatingParticipantSettlementHistoryRow,
   | 'hasPaymentStatementApplication'
@@ -80,7 +79,7 @@ function overlaySettlement(
   | 'sourceSettlement'
 > {
   if (item == null) return emptyPaymentFields()
-  const mapped = mapSettlementToParticipatingInstructorSettlementRow(item, index, totalCount)
+  const mapped = mapSettlementToParticipatingInstructorSettlementRow(item, index)
   if (mapped == null) return emptyPaymentFields()
   return {
     hasPaymentStatementApplication: mapped.hasPaymentStatementApplication,
@@ -120,11 +119,11 @@ export function mapParticipantSettlementHistoryRows(input: {
     const settlement = scheduleId != null ? settlementsByScheduleId.get(scheduleId) : undefined
     return {
       id: scheduleId != null ? `schedule:${scheduleId}` : `session:${index}`,
-      no: sortedSessions.length - index,
+      no: index + 1,
       educationScheduleLabel: sessionScheduleLabel(session),
       lectureProgress,
       lectureProgressLabel,
-      ...overlaySettlement(settlement, index, sortedSessions.length),
+      ...overlaySettlement(settlement, index),
     }
   })
 }

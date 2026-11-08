@@ -38,6 +38,7 @@ import {
 import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-general-instructor-basic-info.css'
 import './participating-instructor-application-info.css'
+import { InstructorJaGradeField } from '../instructor-ja-grade-field'
 
 export interface ParticipatingInstructorApplicationInfoProps {
   instructor: ParticipatingInstructorRow
@@ -153,7 +154,13 @@ export function ParticipatingInstructorApplicationInfo({
         <DetailInfoForm.Field
           label="JA 평가 등급"
           readOnlyDisplay
-          view={instructor.jaEvaluationGrade?.trim() || '-'}
+          view={
+            <InstructorJaGradeField
+              grade={instructor.jaEvaluationGrade}
+              memberId={instructor.memberId}
+              editable
+            />
+          }
         />
       </DetailInfoForm.Row>
       <DetailInfoForm.Row type="single">

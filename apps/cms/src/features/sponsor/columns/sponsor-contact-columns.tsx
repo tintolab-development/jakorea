@@ -6,8 +6,8 @@ import { SponsorContactTypeBadge } from '@/features/sponsor/ui/sponsor-contact-t
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_160_HEADER_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
+import { getSponsorContactTypeTag } from '@/shared/lib/status-tag-specs'
 import { CmsInput, CmsPhoneInput } from '@/shared/ui'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 
@@ -16,7 +16,7 @@ const CONTACT_TYPE_OPTIONS = [
   'assistant',
 ] as const satisfies readonly SponsorContactRow['contactType'][]
 
-export const SPONSOR_CONTACT_TYPE_CELL_CLASSNAME = `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_160_HEADER_CLASSNAME}`
+export const SPONSOR_CONTACT_TYPE_CELL_CLASSNAME = STATUS_DROPDOWN_CELL_CLASSNAME
 
 export interface BuildContactColumnsParams {
   contacts: SponsorContactRow[]
@@ -79,10 +79,6 @@ const SponsorContactTypeCell = memo(function SponsorContactTypeCell({
     [onDropdownOpenChange, row.id]
   )
 
-  const renderBadge = useCallback((type: SponsorContactRow['contactType']) => {
-    return <SponsorContactTypeBadge type={type} />
-  }, [])
-
   const isItemDisabled = useCallback(
     (
       current: SponsorContactRow['contactType'],
@@ -98,12 +94,11 @@ const SponsorContactTypeCell = memo(function SponsorContactTypeCell({
     <StatusDropdownCell<SponsorContactRow['contactType']>
       status={row.contactType}
       statusOptions={CONTACT_TYPE_OPTIONS}
-      renderBadge={renderBadge}
+      getTag={getSponsorContactTypeTag}
       isItemDisabled={isItemDisabled}
       onChange={canWrite ? handleChange : undefined}
       isOpen={openDropdownId === row.id}
       onOpenChange={handleOpenChange}
-      tagLayout="tag100"
     />
   )
 })
@@ -141,7 +136,6 @@ export function buildContactColumns(
       key: 'contactType',
       width: 160,
       align: 'center',
-      onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_160_HEADER_CLASSNAME }),
       onCell: () => ({ className: SPONSOR_CONTACT_TYPE_CELL_CLASSNAME }),
       render: (_: SponsorContactRow['contactType'], row: SponsorContactRow) =>
         isEditing ? (

@@ -1,24 +1,13 @@
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_160_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
-import {
-  UJAT_VOLUNTEER_SCHEDULE_ROLE_LABEL,
-  UJAT_VOLUNTEER_SCHEDULE_ROLE_ORDER,
-  type UjatVolunteerScheduleRole,
-} from './assignment-types'
+import { StatusTag } from '@/shared/components/status-tag'
+import { getUjatVolunteerScheduleRoleTag } from '@/shared/lib/status-tag-specs'
+import { UJAT_VOLUNTEER_SCHEDULE_ROLE_ORDER, type UjatVolunteerScheduleRole } from './assignment-types'
 
 export function UjatVolunteerAssignmentRoleBadge({ role }: { role: UjatVolunteerScheduleRole }) {
-  const mod =
-    role === 'attendance_manager'
-      ? 'ujat-volunteer-assignment-role-badge--attendance-manager'
-      : 'ujat-volunteer-assignment-role-badge--none'
-  return (
-    <span className={`ujat-volunteer-assignment-role-badge ujat-volunteer-assignment-role-badge--static ${mod}`}>
-      {UJAT_VOLUNTEER_SCHEDULE_ROLE_LABEL[role]}
-    </span>
-  )
+  return <StatusTag {...getUjatVolunteerScheduleRoleTag(role)} />
 }
 
 export function UjatVolunteerAssignmentRoleCell({
@@ -49,16 +38,15 @@ export function UjatVolunteerAssignmentRoleCell({
     <StatusDropdownCell<UjatVolunteerScheduleRole>
       status={role}
       statusOptions={statusOptions}
-      renderBadge={status => <UjatVolunteerAssignmentRoleBadge role={status} />}
+      getTag={getUjatVolunteerScheduleRoleTag}
       isItemDisabled={(current, option) =>
         current === option || (option === 'attendance_manager' && !canAssignAttendanceManager)
       }
       onChange={onChange}
       isOpen={isOpen}
       onOpenChange={onOpenChange}
-      tagLayout="tag160"
     />
   )
 }
 
-export const UJAT_VOLUNTEER_ASSIGNMENT_ROLE_CELL_CLASSNAME = `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_160_CLASSNAME}`
+export const UJAT_VOLUNTEER_ASSIGNMENT_ROLE_CELL_CLASSNAME = STATUS_DROPDOWN_CELL_CLASSNAME

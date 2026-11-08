@@ -1,3 +1,5 @@
+import { StatusBadge } from '@/shared/components/status-badge'
+import { getGeminiRecruitmentStatusPresentation } from '../../lib/recruitment/status-presentation'
 /**
  * Gemini 찾아가는 연수 — 모집 공고 탭 목록
  */
@@ -47,13 +49,7 @@ import { useGeminiRecruitmentAddUrl } from './recruitment-add-url'
 import '@/pages/programs/program-list-page.css'
 import '../page.css'
 import './list.css'
-
-const RECRUITMENT_STATUS_LABEL: Record<GeminiRecruitmentDisplayStatus, string> = {
-  SCHEDULED: '예정',
-  IN_PROGRESS: '진행 중',
-  ENDED: '종료',
-  DRAFT: '임시저장',
-}
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 /** Figma 4315:124836 찾아가는 연수 모집 공고 목록 열 폭 */
 const RECRUITMENT_SELECTION_COL_WIDTH = 60
@@ -84,7 +80,7 @@ function recruitmentStatusCell(status: GeminiRecruitmentDisplayStatus) {
         : status === 'ENDED'
           ? `${base}--ended`
           : `${base}--draft`
-  return <span className={`${base} ${modifier}`}>{RECRUITMENT_STATUS_LABEL[status]}</span>
+  return <StatusBadge domain="custom" variant="text" {...getGeminiRecruitmentStatusPresentation(status)} className={`${base} ${modifier}`} />
 }
 
 function formatPeriodCell(start: string, end: string): string {
@@ -154,10 +150,7 @@ export function GeminiRecruitmentList() {
   })
 
   const showNoSelectionAlert = useCallback(() => {
-    showAlert({
-      title: '항목 선택 안내',
-      content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
-    })
+    showAlert(NO_SELECTION_ALERT)
   }, [showAlert])
 
   const showRemoteMutationUnavailable = useCallback(() => {

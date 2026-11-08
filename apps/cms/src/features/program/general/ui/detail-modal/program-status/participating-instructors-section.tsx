@@ -18,7 +18,6 @@ import {
   ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONE_ALERT_MESSAGE,
   ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_ALERT_MESSAGE,
   PARTICIPATING_INSTRUCTOR_ADD_COMPLETE_ALERT_MESSAGE,
-  PARTICIPATING_INSTRUCTOR_ADD_SELECT_ALERT_MESSAGE,
 } from '@/shared/constants/messages'
 import {
   fetchParticipatingInstructorMemberCandidates,
@@ -59,9 +58,10 @@ import {
 import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
 import { getInstructorSettlementStatusLabel } from '@/shared/constants/instructor-settlement-status'
 import {
-  INSTRUCTOR_SETTLEMENT_STATUS_LABELS_SHORT,
+  getInstructorSettlementStatusPresentation,
   type InstructorSettlementUiStatus,
 } from '@/shared/constants/instructor-settlement-status'
+import { StatusOutlineTag } from '@/shared/components/status-outline-tag'
 import { CMS_TABLE_NO_COL_CLASS } from '@/shared/constants/table'
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
@@ -78,6 +78,7 @@ import {
 } from '@/shared/ui/icons/ButtonIcons'
 import './participating-institutions-section.css'
 import './program-progress-tab.css'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 const INSTRUCTOR_ELLIPSIS_CELL_CLASS = 'participating-instructors-section__ellipsis-cell'
 
@@ -441,7 +442,7 @@ export function ParticipatingInstructorsSection({
   }, [isRemoteDataSource, registeredInstructorNames])
 
   const showInstructorAddSelectAlert = useCallback(() => {
-    showAlert({ title: '안내', content: PARTICIPATING_INSTRUCTOR_ADD_SELECT_ALERT_MESSAGE })
+    showAlert(NO_SELECTION_ALERT)
   }, [showAlert])
 
   const handleCalendarView = () => {
@@ -848,14 +849,10 @@ export function ParticipatingInstructorsSection({
                                 </span>
                               </div>
                               <div className="participating-instructors-section__calendar-card-tags">
-                                <span
-                                  className={
-                                    'participating-instructors-section__calendar-card-tag participating-instructors-section__calendar-card-tag--settlement participating-instructors-section__calendar-card-tag--' +
-                                    row.settlementStatus
-                                  }
-                                >
-                                  {INSTRUCTOR_SETTLEMENT_STATUS_LABELS_SHORT[row.settlementStatus]}
-                                </span>
+                                <StatusOutlineTag
+                                  label={getInstructorSettlementStatusPresentation(row.settlementStatus, 'short').label}
+                                  accentColor={getInstructorSettlementStatusPresentation(row.settlementStatus, 'short').color}
+                                />
                                 <span className="participating-instructors-section__calendar-card-tag participating-instructors-section__calendar-card-tag--report">
                                   강의보고서 : {row.lectureReportSubmitted ? '제출' : '미제출'}
                                 </span>

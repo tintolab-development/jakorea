@@ -21,6 +21,10 @@ import { unmaskVolunteerApplicationPrivacyRemote } from '@/features/program/gene
 import { upsertAdminCommentByTargetRemote } from '@/features/program/general/api/admin-comments-api-client'
 import { giveUpGeneralParticipatingInstitution } from '@/features/program/general/api/admin-program-progress-service'
 import {
+  activityWithdrawAssignedScheduleBlockAlert,
+  readAssignedScheduleIdsFromSessions,
+} from '@/features/program/general/lib/activity-withdraw-assigned-schedule'
+import {
   generalApplicationsQueryKeys,
   generalProgramProgressQueryKeys,
 } from '@/features/program/general/api/general-applications-query-keys'
@@ -120,6 +124,17 @@ export function ParticipatingVolunteerFullpageView({
   const activityWithdrawScheduleOptions = useMemo(
     () => getParticipatingVolunteerActivityWithdrawScheduleOptions(mergedVolunteer),
     [mergedVolunteer]
+  )
+
+  /**
+   * 활동 포기 — 실제 배정 일정 기준. 목록 `sessions[]`는 BE 계약상 이 봉사자에 실제 배정된 일정만이다.
+   * 목록 행 데이터라 별도 로딩 상태가 없다. mock 모드는 기존 동작 유지.
+   */
+  const activityWithdrawHasAssignedSchedule = useMemo(
+    () =>
+      !progressRemoteEnabled ||
+      readAssignedScheduleIdsFromSessions(mergedVolunteer.sessions ?? []).size > 0,
+    [mergedVolunteer.sessions, progressRemoteEnabled]
   )
 
   const resolveParticipatingVolunteerFullpageAccessItem = useCallback(
@@ -247,6 +262,13 @@ export function ParticipatingVolunteerFullpageView({
       })
       return
     }
+    const assignedScheduleBlock = activityWithdrawAssignedScheduleBlockAlert(
+      activityWithdrawHasAssignedSchedule ? 'assigned' : 'none'
+    )
+    if (assignedScheduleBlock) {
+      showAlert(assignedScheduleBlock)
+      return
+    }
     if (activityWithdrawScheduleOptions.length === 0) {
       showAlert({
         title: '안내',
@@ -255,7 +277,12 @@ export function ParticipatingVolunteerFullpageView({
       return
     }
     setActivityWithdrawModalOpen(true)
-  }, [activityWithdrawScheduleOptions.length, mergedVolunteer.activityWithdrawn, showAlert])
+  }, [
+    activityWithdrawHasAssignedSchedule,
+    activityWithdrawScheduleOptions.length,
+    mergedVolunteer.activityWithdrawn,
+    showAlert,
+  ])
 
   const handleConfirmActivityWithdraw = useCallback(
     async (payload: ActivityWithdrawScheduleModalPayload) => {
@@ -392,8 +419,7 @@ export function ParticipatingVolunteerFullpageView({
                 size="h40"
                 disabled={
                   mergedVolunteer.activityWithdrawn ||
-                  activityWithdrawSubmitting ||
-                  activityWithdrawScheduleOptions.length === 0
+                  activityWithdrawSubmitting
                 }
                 onClick={handleRequestActivityWithdraw} >
                 활동 포기

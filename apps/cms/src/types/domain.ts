@@ -159,6 +159,8 @@ export interface GeneralProgramCommonInfoExtension {
   sponsorManagerContactIds?: string[]
   /** GET sponsors 의 담당자 표시명. ref → 이름. 저장 SSOT 아님 */
   sponsorManagerContactNames?: Record<string, string>
+  /** GET `/programs/{id}/sponsors` 배정의 후원사명. sponsorManagementId → 이름. 표시용(저장 SSOT 아님) */
+  sponsorManagementNames?: Record<string, string>
   educationFormLabel?: string
   /** 참여 방식 — 개인 대상 · 일정 공통 (등록 폼·상세 조회 mock) */
   participationMethod?: 'individual' | 'team'

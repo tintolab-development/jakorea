@@ -46,6 +46,40 @@ export const RECEIPT_PRE_CONSENT_REQUIRED_CODE = 'RECEIPT_PRE_CONSENT_REQUIRED'
 export const RECEIPT_PRE_CONSENT_REQUIRED_MESSAGE =
   '영수증 발급 사전 동의를 완료한 뒤 정산을 신청할 수 있습니다.'
 
+export const TRANSPORTATION_DISTANCE_NOT_ELIGIBLE_CODE = 'TRANSPORTATION_DISTANCE_NOT_ELIGIBLE'
+export const TRANSPORTATION_UNDER_MIN_DISTANCE_MESSAGE =
+  '편도 30km 이상 이동 시에만 교통비를 신청할 수 있습니다.'
+export const TRANSPORTATION_ADDRESS_MISSING_MESSAGE =
+  '자택 주소 또는 교육 장소를 확인할 수 없어 교통비를 신청할 수 없습니다.'
+
+type IndividualTransportPreviewLike = {
+  oneWayDistanceKm?: number | null
+  eligible?: boolean
+  ineligibleReason?: string | null
+}
+
+/** 서버 편도 km 그대로 표시. null·비정상 값은 null(0km로 채우지 않는다). */
+export function formatIndividualOneWayDistanceKm(km: number | null | undefined): string | null {
+  if (typeof km !== 'number' || !Number.isFinite(km)) return null
+  return `${km.toLocaleString('ko-KR', { maximumFractionDigits: 3 })}km`
+}
+
+/**
+ * 회차 transportPreview → 교통비 신청 불가 안내. 지급 가능(eligible)이거나 preview가 없으면 null.
+ * 신청란 숨김 여부는 payableItems가 결정하고, 이 문구는 안내용이다.
+ */
+export function individualTransportIneligibleNotice(
+  preview: IndividualTransportPreviewLike | null | undefined,
+): string | null {
+  if (!preview || preview.eligible !== false) return null
+  const reason = normalizeIndividualIneligibleReason(preview.ineligibleReason)
+  if (reason === 'ADDRESS_MISSING') return TRANSPORTATION_ADDRESS_MISSING_MESSAGE
+  const km = formatIndividualOneWayDistanceKm(preview.oneWayDistanceKm)
+  return km
+    ? `${TRANSPORTATION_UNDER_MIN_DISTANCE_MESSAGE} (편도 ${km})`
+    : TRANSPORTATION_UNDER_MIN_DISTANCE_MESSAGE
+}
+
 export const INDIVIDUAL_INELIGIBLE_REASON = {
   ATTENDANCE_NOT_QUALIFIED: 'ATTENDANCE_NOT_QUALIFIED',
   SCHEDULE_NOT_ENDED: 'SCHEDULE_NOT_ENDED',
@@ -76,6 +110,7 @@ const INELIGIBLE_REASON_MESSAGES: Record<string, string> = {
   SETTLEMENT_NOT_FOUND:
     '개인 프로그램 신청 정산만 이 화면에서 조회할 수 있습니다. 강사·기관 프로그램은 강사 배정 정산을 이용해 주세요.',
   RECEIPT_PRE_CONSENT_REQUIRED: RECEIPT_PRE_CONSENT_REQUIRED_MESSAGE,
+  TRANSPORTATION_DISTANCE_NOT_ELIGIBLE: TRANSPORTATION_UNDER_MIN_DISTANCE_MESSAGE,
 }
 
 export function normalizeIndividualIneligibleReason(
@@ -116,6 +151,18 @@ function readConflictReason(data: unknown): string | null {
   return null
 }
 
+/** 서버 오류 message (error.message → message). 없으면 null */
+function readApiErrorMessage(error: unknown): string | null {
+  if (!isAxiosError(error)) return null
+  const data = error.response?.data
+  if (!data || typeof data !== 'object') return null
+  const body = data as { message?: unknown; error?: { message?: unknown } }
+  const nested = body.error?.message
+  if (typeof nested === 'string' && nested.trim()) return nested.trim()
+  if (typeof body.message === 'string' && body.message.trim()) return body.message.trim()
+  return null
+}
+
 export function readIndividualSettlementErrorCode(error: unknown): string | null {
   if (!isAxiosError(error)) return null
   return extractApiErrorCode(error.response?.data) ?? readConflictReason(error.response?.data)
@@ -126,6 +173,9 @@ export function individualSettlementApiErrorMessage(
   fallback = '영수증 제출에 실패했습니다. 입력 내용을 확인한 뒤 다시 시도해 주세요.',
 ): string {
   const code = readIndividualSettlementErrorCode(error)
+  if (code === TRANSPORTATION_DISTANCE_NOT_ELIGIBLE_CODE) {
+    return readApiErrorMessage(error) ?? TRANSPORTATION_UNDER_MIN_DISTANCE_MESSAGE
+  }
   if (code && INELIGIBLE_REASON_MESSAGES[code]) return INELIGIBLE_REASON_MESSAGES[code]
   return fallback
 }

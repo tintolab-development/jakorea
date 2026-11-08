@@ -106,6 +106,7 @@ const TRAINED_TEACHER_COMMON_INFO_PROGRAM_MIRROR_KEYS = [
   'managerName',
   'teacherTrainingScheduleName',
   'sponsorManagerContactNames',
+  'sponsorManagementNames',
 ] as const
 
 function trainedTeacherEducationSelection(

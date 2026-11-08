@@ -15,12 +15,9 @@ export interface CareerTalentApplicationListItem {
   confirmedAt?: string;
   jobInterest?: CareerTalentApplicationListItemJobInterest;
   careerType?: CareerTalentApplicationListItemCareerType;
-  /** Applicant name. Always PrivacyMaskingSupport.maskName (first character + asterisks). Full name is never returned on the list. */
   name?: string;
-  /** Always PrivacyMaskingSupport.maskPhone. Empty is null, never "". List never returns plaintext. Example keeps hyphens and masks the middle four digits. */
-  phone?: string | null;
-  /** Always PrivacyMaskingSupport.maskEmail (local prefix + *** + @domain). Empty is null, never "". List never returns plaintext. */
-  email?: string | null;
+  phone?: string;
+  email?: string;
   appliedAt?: string | null;
   version?: number;
 }

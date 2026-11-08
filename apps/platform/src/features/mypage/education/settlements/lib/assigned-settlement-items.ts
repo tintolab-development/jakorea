@@ -21,6 +21,7 @@ import {
 } from './settlement-rules.ts'
 import {
   individualIneligibleMessage,
+  individualTransportIneligibleNotice,
   isEvidencePolicyUnconfigured,
 } from './individual-settlement-contract.ts'
 import { normalizePayableItems } from './payment-items.ts'
@@ -415,7 +416,12 @@ export function buildAssignedSettlementItems(
         submitAllowed !== false &&
         hasPayableItems !== false
     const submittedAt = settlement?.submittedAt ?? receipt?.submittedAt
-    const ineligibleMessage = individualIneligibleMessage(individual?.ineligibleReason)
+    /** 교통비만 지급 항목이었고 거리 미달·주소 없음으로 빠진 회차 — 빈 payableItems를 설정 오류로 보지 않는다 */
+    const ineligibleMessage =
+      individualIneligibleMessage(individual?.ineligibleReason) ??
+      (individual && payableItems.length === 0
+        ? (individualTransportIneligibleNotice(individual.transportPreview) ?? undefined)
+        : undefined)
     const lectureFeeBlockerMessage = lectureFeeSettlementBlockerMessage(lecture?.lectureFeePreview)
     const institutionMeta = resolveInstitutionMeta(lecture, schedule)
     const institutionLabel = formatInstitutionLabel(lecture, schedule)
@@ -464,6 +470,7 @@ export function buildAssignedSettlementItems(
           : {}),
       ...(receipt?.receiptId != null ? { receiptId: receipt.receiptId } : {}),
       ...(payableItems.length > 0 ? { payableItems } : {}),
+      ...(individual?.transportPreview ? { transportPreview: { ...individual.transportPreview } } : {}),
       ...(hasPayableItems != null ? { hasPayableItems } : {}),
       ...(canSubmitReceipt ? { canSubmitReceipt: true } : { canSubmitReceipt: false }),
       ...(individual ? { canResubmitReceipt: individual.canResubmit === true } : {}),

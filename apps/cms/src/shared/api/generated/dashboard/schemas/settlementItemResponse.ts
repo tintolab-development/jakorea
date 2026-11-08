@@ -17,4 +17,5 @@ export interface SettlementItemResponse {
   taxableYn?: boolean;
   manualInputYn?: boolean;
   taxIncomeType?: string;
+  description?: string;
 }

@@ -72,15 +72,6 @@
   -webkit-overflow-scrolling: touch;
 }
 
-.school-detail-attendance-session__table-wrap
-  .school-detail-attendance-table
-  table.ant-table {
-  table-layout: fixed !important;
-  /* cms-data-table width:100% 가 scroll.x·열 width 를 덮지 않도록 고정 */
-  width: 1110px !important;
-  min-width: 1110px;
-}
-
 /*
  * cms-data-table 이 No. 이후 col 을 width:auto 로 풀어 열 width prop 이 무시됨.
  * 학생명·성별은 th/td 로 폭을 강제한다.

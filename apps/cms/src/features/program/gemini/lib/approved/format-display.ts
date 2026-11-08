@@ -13,6 +13,22 @@ export const APPROVED_TRAINING_STATUS_LABEL: Record<GeminiApprovedTrainingStatus
   NOT_CONDUCTED: '프로그램 미진행',
 }
 
+/** 승인 연수 Text 표현 — 목록·상세·엑셀은 같은 label registry를 사용한다. */
+const APPROVED_TRAINING_STATUS_ACCENT: Record<GeminiApprovedTrainingStatus, string> = {
+  SCHEDULED: 'var(--color-green, #1e8c29)',
+  IN_PROGRESS: 'var(--color-blue, #017eaf)',
+  COMPLETED: 'var(--main-BK, #3d3d3d)',
+  NOT_CONDUCTED: 'var(--main-BK, #3d3d3d)',
+}
+
+export function getGeminiApprovedTrainingStatusPresentation(status: GeminiApprovedTrainingStatus) {
+  return {
+    label: APPROVED_TRAINING_STATUS_LABEL[status],
+    accentColor: APPROVED_TRAINING_STATUS_ACCENT[status],
+    muted: status === 'NOT_CONDUCTED',
+  }
+}
+
 const KOREAN_WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'] as const
 
 type AssignedTrainingScheduleRow = Pick<
