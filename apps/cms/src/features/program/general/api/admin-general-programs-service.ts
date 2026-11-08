@@ -375,11 +375,12 @@ export async function createGeneralProgramPostUnreadReminder(
 export async function fetchGeneralProgramSurveyResponses(
   programId: string,
   templateVersionId: string,
-  bindingId?: string
+  bindingId?: string,
+  options?: { includeAnswers?: boolean }
 ) {
   if (!shouldUseProgramsHttpRemoteApi()) return []
   assertProgramsHttpRemoteReady()
-  return fetchAdminProgramSurveyResponsesRemote(programId, templateVersionId, bindingId)
+  return fetchAdminProgramSurveyResponsesRemote(programId, templateVersionId, bindingId, options)
 }
 
 export async function fetchGeneralProgramSurveySummary(
