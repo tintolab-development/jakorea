@@ -55,11 +55,6 @@
   min-width: 0;
 }
 
-.file-select-field__type-icon {
-  flex-shrink: 0;
-  display: block;
-}
-
 .file-select-field__name,
 .file-select-field__empty {
   overflow: hidden;
@@ -115,7 +110,7 @@
   align-items: center;
   gap: 16px;
   min-width: 0;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .file-select-field__actions > .cms-button,
@@ -136,9 +131,11 @@
   border-radius: var(--Radius-6, 6px);
 }
 
+/* 버튼 | 안내 문구 항상 가로 — 안내 문구는 남는 폭 안에서 줄바꿈 (버튼 아래로 내려가지 않음) */
 .file-select-field__guide {
   display: flex;
   flex-direction: column;
+  flex: 1 1 0;
   min-width: 0;
   color: var(--Content-disabled, rgba(61, 61, 61, 0.5));
   font-family: Pretendard, sans-serif;

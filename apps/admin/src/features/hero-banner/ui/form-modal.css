@@ -81,7 +81,7 @@
 .hero-banner-form-modal .file-select-field__actions {
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 16px;
 }
