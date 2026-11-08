@@ -8,6 +8,7 @@ import { CmsButton, CmsDataTable, showSaveCompletedAlert, useCmsAlert } from '@/
 import { MediaPreview, SectionFrame, jaHistorySaveAlert } from './chrome'
 import { PhilosophyCardFormModal, type PhilosophyCardFormValues } from './philosophy-card-form-modal'
 import { PhilosophyIntroFormModal } from './philosophy-intro-form-modal'
+import { TABLE_ROW_FILL_FIELDS_CLASS } from '@/shared/ui/table-row-fill-fields'
 
 function cardOrderLabel(index: number): string {
   return String(index + 1).padStart(2, '0')
@@ -141,7 +142,7 @@ export function PhilosophySection({ philosophy }: { philosophy: JaHistoryPhiloso
           </DetailInfoForm>
 
           <CmsDataTable<PhilosophyCardRow>
-            className="cms-data-table cms-data-table--skip-auto-no-col ja-history-table ja-history-philosophy-table"
+            className={`cms-data-table cms-data-table--skip-auto-no-col ja-history-table ja-history-philosophy-table ${TABLE_ROW_FILL_FIELDS_CLASS}`}
             columns={columns}
             dataSource={rows}
             pagination={false}

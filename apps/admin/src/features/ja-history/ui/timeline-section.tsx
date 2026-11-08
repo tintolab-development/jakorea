@@ -9,6 +9,7 @@ import {
 import { CmsTextTabs, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 import { HistoryCopy, MediaPreview, SectionFrame, jaHistorySaveAlert } from './chrome'
 import { TimelineFormModal } from './timeline-form-modal'
+import { TABLE_ROW_FILL_FIELDS_CLASS } from '@/shared/ui/table-row-fill-fields'
 
 const eventColumns: ColumnsType<JaHistoryTimelineEvent> = [
   { title: '연도', dataIndex: 'year', width: 200, align: 'center' },
@@ -80,7 +81,7 @@ export function TimelineSection({ title, modalTitle, timeline, variant }: Props)
     <>
       <SectionFrame title={title} marker={false} onEdit={() => setOpen(true)}>
         <CmsDataTable<IntroRow>
-          className="cms-data-table cms-data-table--skip-auto-no-col ja-history-table"
+          className={`cms-data-table cms-data-table--skip-auto-no-col ja-history-table ${TABLE_ROW_FILL_FIELDS_CLASS}`}
           columns={introColumns}
           dataSource={[{ key: 'intro' }]}
           pagination={false}
@@ -103,7 +104,7 @@ export function TimelineSection({ title, modalTitle, timeline, variant }: Props)
                 <p className="ja-history-empty">이 기간에 등록된 연혁이 없습니다.</p>
               ) : (
                 <CmsDataTable<JaHistoryTimelineEvent>
-                  className="cms-data-table cms-data-table--skip-auto-no-col ja-history-table"
+                  className={`cms-data-table cms-data-table--skip-auto-no-col ja-history-table ${TABLE_ROW_FILL_FIELDS_CLASS}`}
                   columns={eventColumns}
                   dataSource={active.events}
                   pagination={false}

@@ -291,19 +291,20 @@
 }
 
 .ja-history-preview--thumb {
+  /* 표 안 미리보기: 스트로크·라운드·배경 없이 가로 고정, 세로는 이미지 원본 비율 */
   width: 86px;
-  height: 86px;
   max-width: 86px;
-  aspect-ratio: 1 / 1;
-  overflow: hidden;
+  border: none;
+  border-radius: 0;
+  background: transparent;
 }
 
 .ja-history-preview--thumb img {
+  display: block;
   width: 100%;
-  height: 100%;
+  height: auto;
   max-width: none;
   max-height: none;
-  object-fit: cover;
 }
 
 .ja-history-preview--era {
