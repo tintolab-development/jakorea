@@ -44,7 +44,7 @@ export const PAYMENT_ORDER_CALENDAR_STATUS_SHORT_LIST: Record<
 > = {
   pending: '확인 대기',
   reapplication: '재신청',
-  partial: '일부 확인',
+  partial: '확인 중',
   confirmed: '확인 완료',
   application_rejected: '신청 반려',
   correction: '정정 요청',
