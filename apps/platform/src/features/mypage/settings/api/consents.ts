@@ -39,6 +39,8 @@ export type PortalConsentSummary = {
   consentStatus?: string
   /** 초상권 — 프로그램 참여 게이트는 이 값만 사용 */
   programEligible?: boolean
+  /** 초상권 — 1·2·3번 모두 동의면 true. 비초상권·판정 불가 과거 기록은 null. 표시 전용 */
+  allItemsAgreed?: boolean | null
 }
 
 /** PUT /api/portal/me/marketing-consent — PortalMarketingConsentUpdateRequest */
