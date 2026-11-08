@@ -57,6 +57,7 @@ import { UJAT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS } from '@/features/tem
 import { ProgramRegistrationCurriculumTitleActions } from '@/features/program/shared/ui/program-registration-curriculum-title-actions'
 import { resolveProgramRegistrationScheduleCurriculumEditDescription } from '@/features/template/lib/program-registration-curriculum-description'
 import { getInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
+import { isApplicationScheduleDefaultParagraphDescription } from '@jakorea/form-schema/program-application'
 import {
   isProgramApplicationScheduleChoiceParagraphId,
   isProgramLinkedGeneralApplicationSchedulePreview,
@@ -375,14 +376,36 @@ export function withInstitutionApplicationPreferredScheduleHeading(
   if (!shouldUseInstitutionPreferredScheduleCardCopy(bridge)) {
     return heading
   }
-  const description = resolveInstitutionPreferredScheduleDescription(bridge)
+  return {
+    ...withApplicationScheduleDefaultDescription(
+      heading,
+      resolveInstitutionPreferredScheduleDescription(bridge)
+    ),
+    titleTrailing: <InstitutionPreferredScheduleCardTitleTrailing />,
+  }
+}
+
+/**
+ * 진행 희망 교육 일정 설명 — 기본 안내는 신청 양식 기본값일 뿐, 프로그램 등록 시 수정 가능.
+ * 관리자 수정 문구가 있으면 유지하고, 기본값(빈 값·시드 안내·자동 생성 안내)이면 기본 안내를 보여준다.
+ * 편집 가능 여부는 상위 heading을 따른다(구조 잠금과 무관하게 문구만 다룬다).
+ */
+function withApplicationScheduleDefaultDescription(
+  heading: ParagraphCardEditableHeading,
+  defaultDescription: string
+): ParagraphCardEditableHeading {
+  if (!isApplicationScheduleDefaultParagraphDescription(heading.descriptionValue)) {
+    return { ...heading, showDescription: true }
+  }
+  const descriptionEditMode = heading.descriptionIsEditMode ?? heading.isEditMode
+  if (descriptionEditMode) {
+    return { ...heading, descriptionValue: defaultDescription, showDescription: true }
+  }
   return {
     ...heading,
-    descriptionValue: description,
+    descriptionValue: defaultDescription,
     descriptionIsEditMode: false,
-    showDescription: true,
-    descriptionViewContent: <>{description}</>,
-    titleTrailing: <InstitutionPreferredScheduleCardTitleTrailing />,
+    showDescription: Boolean(defaultDescription.trim()),
   }
 }
 
@@ -411,17 +434,10 @@ export function withProgramApplicationFixedScheduleHeading(
     getInstitutionApplicationProgramBridge()
   if (shouldUseInstitutionPreferredScheduleCardCopy(bridge)) return heading
   if (!shouldUseInstitutionFixedScheduleCardCopy(bridge)) return heading
-  const currentDescription = heading.descriptionValue?.trim() ?? ''
-  if (currentDescription && !isPlaceholderParagraphDescription(currentDescription)) {
-    return heading
-  }
-  const description = resolveInstitutionFixedScheduleDescription(bridge)
-  return {
-    ...heading,
-    descriptionValue: description,
-    descriptionIsEditMode: false,
-    showDescription: Boolean(description.trim()),
-  }
+  return withApplicationScheduleDefaultDescription(
+    heading,
+    resolveInstitutionFixedScheduleDescription(bridge)
+  )
 }
 
 /** 프로그램 봉사자 신청 폼 — 면접 진행 가능 일정 단락: 카드 제목 줄 우측「예외 일정 추가」 */

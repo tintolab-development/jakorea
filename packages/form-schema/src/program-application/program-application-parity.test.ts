@@ -4,6 +4,7 @@ import {
   countUniqueEducationScheduleCalendarDays,
   expandEducationScheduleChoiceSlots,
   getInstitutionApplicationFormHiddenParagraphIds,
+  isApplicationScheduleDefaultParagraphDescription,
   readCurriculumMultiDateFixedScheduleMeta,
   readInstitutionFixedScheduleChoiceItems,
   resolveFixedScheduleLinesToChoiceItems,
@@ -120,10 +121,10 @@ const patchedSchedule = patched.paragraphs.find(
 assert.ok(patchedSchedule && patchedSchedule.variant === 'multiple_choice')
 const patchedItems = (patchedSchedule as MultipleChoiceParagraph).items
 assert.equal(patchedItems.length, 3)
-// ① 커리큘럼·단일·날짜 — 차시 메타 없으면 N placeholder
+// ① 커리큘럼·단일·날짜 — 일정형 단일과 같은 1타임 배정 안내
 assert.equal(
   patchedSchedule.paragraphDescription,
-  '진행 가능한 일정을 모두 선택해 주세요. 수업은 1일, N차시 운영됩니다.'
+  '진행 가능한 일정을 모두 선택해 주세요. 모두 동일한 커리큘럼이며, 선택한 일정 중 1타임에 배정됩니다.'
 )
 
 assert.equal(
@@ -381,7 +382,7 @@ assert.ok(
 assert.equal((individualScheduleParagraph as MultipleChoiceParagraph).items.length, 2)
 assert.equal(
   individualScheduleParagraph.paragraphDescription,
-  '진행 가능한 일정을 모두 선택해 주세요. 수업은 1일, 2차시 운영됩니다.'
+  '진행 가능한 일정을 모두 선택해 주세요. 모두 동일한 커리큘럼이며, 선택한 일정 중 1타임에 배정됩니다.'
 )
 // ① 모든 예정일 줄 = 커리큘럼 총 차시
 assert.equal(
@@ -478,5 +479,82 @@ assert.equal(
   }).sessionsPerRound,
   2
 )
+
+// 안내 문구 = 신청 양식 기본값. 프로그램 등록 시 관리자가 수정한 문구는 유지, 구조(선택지)는 SSOT.
+const CUSTOM_SCHEDULE_DESCRIPTION = '희망 일정을 모두 골라 주세요. 담당자가 개별 연락드립니다.'
+const customDescriptionPatched = syncApplicationScheduleChoiceParagraphsInDraft(
+  {
+    ...institutionDraft,
+    paragraphs: [{ ...scheduleParagraph, paragraphDescription: CUSTOM_SCHEDULE_DESCRIPTION }],
+  },
+  {
+    educationStructure: 'schedule',
+    sessionRound: 'single',
+    educationScheduleMode: 'date',
+    educationScheduleLines: [
+      '26년 10월 26일(월) 10:00 ~ 12:00',
+      '26년 11월 2일(월) 13:30 ~ 16:00',
+    ],
+  }
+)
+const customDescriptionSchedule = customDescriptionPatched.paragraphs[0] as MultipleChoiceParagraph
+assert.equal(customDescriptionSchedule.paragraphDescription, CUSTOM_SCHEDULE_DESCRIPTION)
+assert.equal(customDescriptionSchedule.items.length, 2)
+
+const customPreferredPatched = syncApplicationScheduleChoiceParagraphsInDraft(
+  {
+    ...institutionDraft,
+    paragraphs: [{ ...scheduleParagraph, paragraphDescription: CUSTOM_SCHEDULE_DESCRIPTION }],
+  },
+  {
+    educationStructure: 'curriculum',
+    sessionRound: 'multi',
+    educationScheduleMode: 'period',
+    maxScheduleCount: 3,
+    maxSessionsPerDay: 4,
+  }
+)
+const customPreferredSchedule = customPreferredPatched.paragraphs[0] as MultipleChoiceParagraph
+assert.equal(customPreferredSchedule.paragraphDescription, CUSTOM_SCHEDULE_DESCRIPTION)
+assert.deepEqual(customPreferredSchedule.items, [])
+
+// 과거 자동 생성 문구가 저장돼 있으면 현행 기본 안내로 다시 계산한다.
+const legacyDescriptionPatched = syncApplicationScheduleChoiceParagraphsInDraft(
+  {
+    ...institutionDraft,
+    paragraphs: [
+      {
+        ...scheduleParagraph,
+        paragraphDescription: '진행할 일정을 1개 선택해 주세요. 수업은 1일, 3차시 운영됩니다.',
+      },
+    ],
+  },
+  {
+    educationStructure: 'curriculum',
+    sessionRound: 'single',
+    educationScheduleMode: 'date',
+    educationScheduleLines: [
+      '26년 10월 26일(월) 10:00 ~ 12:00',
+      '26년 11월 2일(월) 13:30 ~ 16:00',
+    ],
+  }
+)
+assert.equal(
+  legacyDescriptionPatched.paragraphs[0]?.paragraphDescription,
+  '진행 가능한 일정을 모두 선택해 주세요. 모두 동일한 커리큘럼이며, 선택한 일정 중 1타임에 배정됩니다.'
+)
+
+for (const defaultText of [
+  '',
+  '프로그램 등록 시 노출되는 항목에 따라 설명글을 작성해 주세요.',
+  '진행할 일정을 1개 선택해 주세요. 모두 동일한 커리큘럼이며, 선택한 일정에 배정됩니다.',
+  '진행 가능한 일정을 모두 선택해 주세요.',
+  '2차시*3회로 구성된 프로그램입니다. 진행 가능한 일정을 모두 선택해 주세요.',
+  '교육을 희망하는 날짜를 모두 작성해 주세요. (최대 N개까지 희망 일정 신청이 가능합니다.)',
+  '교육을 희망하는 날짜와 수업 시간을 모두 작성해 주세요. 수업은 1일, 4차시 운영됩니다. (최대 3개까지 희망 일정 신청이 가능합니다.)',
+]) {
+  assert.equal(isApplicationScheduleDefaultParagraphDescription(defaultText), true, defaultText)
+}
+assert.equal(isApplicationScheduleDefaultParagraphDescription(CUSTOM_SCHEDULE_DESCRIPTION), false)
 
 console.log('program-application-parity.test: ok')

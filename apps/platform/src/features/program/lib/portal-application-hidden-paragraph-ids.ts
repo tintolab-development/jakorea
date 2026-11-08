@@ -122,13 +122,14 @@ export function resolvePortalApplicationHiddenParagraphIds(
     educationScheduleLines: scheduleLines,
   })
 
-  if (
-    !shouldShowApplicationScheduleParagraphResolved({
-      ...scheduleVisibility,
-      runtimeContext,
-      scheduleParagraphRaw,
-    })
-  ) {
+  /** 일반 개인·기관 공통 — form-bindings runtime 선택지까지 반영한 일정 단락 노출 판정 */
+  const scheduleParagraphVisible = shouldShowApplicationScheduleParagraphResolved({
+    ...scheduleVisibility,
+    runtimeContext,
+    scheduleParagraphRaw,
+  })
+
+  if (!scheduleParagraphVisible) {
     for (const paragraph of paragraphs) {
       if (isApplyScheduleChoiceParagraphId(paragraph.id)) hidden.add(paragraph.id)
     }
@@ -147,6 +148,7 @@ export function resolvePortalApplicationHiddenParagraphIds(
     if (applyCase === 'institution-general') {
       const institutionHidden = getInstitutionApplicationFormHiddenParagraphIds({
         ...scheduleVisibility,
+        scheduleParagraphVisible,
         preEducationNoticeRequired: preEducation,
         showSexOffenseConsentInquiryParagraph:
           input.showSexOffenseConsentInquiryParagraph ?? true,
@@ -182,11 +184,7 @@ export function resolvePortalApplicationHiddenParagraphIds(
 
   if (
     (applyCase === 'individual-general' || applyCase === 'individual-team') &&
-    !shouldShowApplicationScheduleParagraphResolved({
-      ...scheduleVisibility,
-      runtimeContext,
-      scheduleParagraphRaw,
-    })
+    !scheduleParagraphVisible
   ) {
     hidden.add(PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice)
   }
