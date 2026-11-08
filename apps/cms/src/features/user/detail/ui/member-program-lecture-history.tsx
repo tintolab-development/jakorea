@@ -469,10 +469,11 @@ export function MemberProgramLectureHistory({
           key: 'lectureAttendance',
           align: 'center',
           render: (_: string | undefined, record: Application) => {
-            const text = record.lectureAttendance ?? '0 / 0'
+            /** 시안: 「0 / 4」 — API가 「0/4」·「0 / 4」 어느 쪽이어도 공백 1칸 */
+            const text = (record.lectureAttendance ?? '0/0').replace(/\s*\/\s*/, ' / ')
             const showLink = lectureAttendanceHasAtLeastOne(record.lectureAttendance)
             if (!showLink) {
-              return text.replace('/', ' / ')
+              return text
             }
             return (
               <span
@@ -486,7 +487,7 @@ export function MemberProgramLectureHistory({
                     if (onOpenAttendance) onOpenAttendance(record)
                   }}
                 >
-                  {text.replace('/', ' / ')}
+                  {text}
                 </button>
               </span>
             )

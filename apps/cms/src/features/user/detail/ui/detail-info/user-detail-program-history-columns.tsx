@@ -76,7 +76,8 @@ export function createProgramHistoryColumns({
       key: 'lectureAttendance',
       align: 'center',
       render: (v: string | undefined, record: Application) => {
-        const label = v ?? '0/0'
+        /** 시안: 「0 / 4」 — 슬래시 앞뒤 공백 */
+        const label = (v ?? '0/0').replace(/\s*\/\s*/, ' / ')
         if (!lectureAttendanceHasAtLeastOne(v)) {
           return label
         }
@@ -104,7 +105,8 @@ export function createProgramHistoryColumns({
             variant="default"
             size="medium"
             disabled={!record.hasAssignmentSubmission}
-            onClick={() => onOpenAssignmentSubmission(record)} >
+            onClick={() => onOpenAssignmentSubmission(record)}
+          >
             내역 보기
           </CmsButton>
         </span>

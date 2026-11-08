@@ -31,12 +31,12 @@ export function mapParticipantAttendanceStatusToLectureCertificate(
   if (
     key === 'PRESENT' ||
     key === 'ATTEND' ||
-    key === 'ATTENDED' ||
-    key === 'EXCUSED' ||
-    key === 'EXCUSED_ABSENCE' ||
-    key === 'REASON_ABSENT'
+    key === 'ATTENDED'
   ) {
     return 'attended'
+  }
+  if (key === 'EXCUSED' || key === 'EXCUSED_ABSENCE' || key === 'REASON_ABSENT') {
+    return 'excused'
   }
   if (key === 'NOT_HELD' || key === 'NOT_PLANNED' || key === 'CANCELLED' || key === 'CANCELED') {
     return 'not_held'
