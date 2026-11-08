@@ -37,7 +37,8 @@
   /** 필터 레이블 = CmsField L 라벨 스펙: 15px × 140%(21px) + padding-bottom 2px */
   --filter-label-height: 23px;
   --filter-label-control-gap: var(--spacing-6, 6px);
-  --filter-area-label-color: var(--Content-secondary, #525252);
+  /** 필터 레이블 색 — 시안 Field / Sorting 라벨 Neutral black #3D3D3D (폼 CmsField 라벨 Content/secondary #525252와 다름) */
+  --filter-area-label-color: var(--Netural-black, #3d3d3d);
   --filter-area-label-font-family: var(--font-family-primary, 'Pretendard', sans-serif);
   --filter-area-label-font-size: 15px;
   --filter-area-label-font-weight: 500;
@@ -79,7 +80,16 @@
   }
 }
 
-/* 필터 영역 레이블 — TableFilterGroup은 `.cms-field__label` + `cms-control--medium` (CmsField M) */
+/*
+ * 필터 영역 레이블 — TableFilterGroup은 `.cms-field__label` + `cms-control--medium` (CmsField M).
+ * 색만 Field / Sorting 시안(#3D3D3D)으로 덮는다 — 공용 `.cms-field__label`(#525252)은 폼 필드용.
+ * LabeledSearchInput은 목록 필터 전용(TableFilterGroup·ListPageFilters·진행 현황 필터)이라 컨테이너 밖도 포함.
+ */
+.table-filter-group__container .table-filter-group__label.cms-field__label,
+.labeled-search-input__label.cms-field__label {
+  color: var(--filter-area-label-color);
+}
+
 .table-filter-group__container .table-filter-group__label.cms-field__label,
 .table-filter-group__container .labeled-search-input__label.cms-field__label {
   box-sizing: border-box;
