@@ -8,12 +8,13 @@
   min-height: 0;
 }
 
+/* 페이지 스크롤형 — 카드는 내용만큼 늘어나고(최소는 패널 높이), 안쪽 고정 높이 스크롤 없음 */
 .board-panel__card.admin-list-card {
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   min-height: 0;
-  height: 100%;
+  height: auto;
   margin-bottom: 0;
 }
 
@@ -28,10 +29,7 @@
   gap: 24px;
   flex: 1 1 auto;
   min-width: 0;
-  min-height: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow: visible;
 }
 
 .board-panel__group {
@@ -129,4 +127,23 @@
 
 .board-panel-inline-field--edit .cms-input__control {
   cursor: text;
+}
+
+/*
+ * QA: 조회 = 텍스트 높이만큼(행 최소 52), 수정 = 입력 칸(40) 높이만큼 행이 늘어남 + 입력 텍스트 좌측 정렬
+ * 조회는 같은 CmsInput을 투명 처리하므로 컨트롤의 높이·패딩·보더를 없애 텍스트만 남긴다.
+ */
+.board-panel .board-members-table .ant-table-tbody > tr > td {
+  height: 52px;
+}
+
+.board-panel .board-panel-inline-field--readonly .cms-input__control {
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border-width: 0 !important;
+}
+
+.board-panel-inline-field--edit .cms-input__control input {
+  text-align: left !important;
 }

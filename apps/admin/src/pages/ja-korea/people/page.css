@@ -10,6 +10,14 @@
   height: calc(100vh - var(--header-height, 64px) - 64px);
 }
 
+/*
+ * 이사회 탭: 목록과 같은 페이지 스크롤 — 높이 고정을 풀어 표가 내용만큼 늘어나고 화면(.layout-content)이 스크롤된다.
+ * (최소 높이는 유지해 행이 적어도 흰 카드가 화면을 채운다. 조직도 탭은 기존 고정 높이 유지)
+ */
+.people-page:has(> .board-panel) {
+  height: auto;
+}
+
 .people-page__tabs {
   flex-shrink: 0;
   margin-bottom: 0;

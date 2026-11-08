@@ -214,3 +214,22 @@
   padding-top: 8px;
   padding-bottom: 8px;
 }
+
+/*
+ * 운영 원칙 표 조회 — 텍스트 높이만큼만 차지(시안): 투명 입력의 안쪽 패딩·보더·최소 높이를 없애
+ * 행 높이 = 셀 패딩 + 텍스트 줄 수. (높이는 autoSize 인라인 값을 그대로 쓴다 — height 강제 금지)
+ */
+.principles-sortable-table .principles-inline-field--readonly .cms-textarea__control {
+  min-height: 0 !important;
+  padding: 0 !important;
+  border-width: 0;
+}
+
+.principles-sortable-table
+  .principles-inline-field--readonly
+  .cms-textarea__inner
+  textarea.ant-input {
+  min-height: 0 !important;
+  padding: 0 !important;
+  line-height: 150% !important;
+}
