@@ -52,8 +52,8 @@ const INQUIRY_LIST_COL_WIDTH = {
   programName: 160,
   title: 160,
   memberName: 120,
-  createdAt: 200,
-  answeredAt: 200,
+  createdAt: 180,
+  answeredAt: 180,
   assignee: 120,
 } as const
 
@@ -287,7 +287,7 @@ export function AdminInquiryPage() {
           ),
       },
       {
-        title: '문의 회원명',
+        title: '문의 회원',
         dataIndex: 'memberName',
         key: 'memberName',
         width: INQUIRY_LIST_COL_WIDTH.memberName,
@@ -330,7 +330,7 @@ export function AdminInquiryPage() {
         ),
       },
       {
-        title: '담당자명',
+        title: '담당자',
         dataIndex: 'assignee',
         key: 'assignee',
         width: INQUIRY_LIST_COL_WIDTH.assignee,

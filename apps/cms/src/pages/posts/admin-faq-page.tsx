@@ -53,7 +53,7 @@ const FAQ_LIST_TABLE_SCROLL_X = 1140
 const FAQ_LIST_COL_WIDTH = {
   no: 80,
   visibility: 100,
-  category: 160,
+  category: 200,
   title: 280,
   author: 140,
   datetime: 200,
@@ -222,7 +222,7 @@ function AdminFAQPage() {
         ),
       },
       {
-        title: '작성자명',
+        title: '작성자',
         dataIndex: 'author',
         key: 'author',
         width: FAQ_LIST_COL_WIDTH.author,

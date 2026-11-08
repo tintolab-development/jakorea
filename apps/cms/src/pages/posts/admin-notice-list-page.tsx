@@ -227,7 +227,7 @@ export function AdminNoticeListPage() {
         ),
       },
       {
-        title: '작성자명',
+        title: '작성자',
         dataIndex: 'author',
         key: 'author',
         width: NOTICE_LIST_COL_WIDTH.author,

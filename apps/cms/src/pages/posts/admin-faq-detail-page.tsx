@@ -17,7 +17,6 @@ import { resolvePostsDeleteConfirmCopy } from '@/features/posts/lib/posts-delete
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
 
 const FAQ_SINGLE_DELETE_COPY = resolvePostsDeleteConfirmCopy('faq', 'single')
-import { RichTextViewer } from '@/shared/rich-text'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { ActionResultModal, CmsButton, showDeleteCompletedAlert } from '@/shared/ui'
@@ -168,7 +167,8 @@ export function AdminFaqDetailPage() {
           </div>
           <hr className="admin-faq-detail-page__section-divider" />
           <div className="admin-faq-detail-page__body">
-            <RichTextViewer content={faq.answer} maxHeight="100%" />
+            {/* 답변은 일반 텍스트 — 줄바꿈 그대로 표시 */}
+            <p className="admin-faq-detail-page__answer">{faq.answer}</p>
           </div>
         </div>
         <div className="admin-faq-detail-page__actions">
