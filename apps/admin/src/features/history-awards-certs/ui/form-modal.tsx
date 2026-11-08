@@ -37,7 +37,7 @@ type FormVariant = 'create' | 'edit'
 const KIND_COPY = {
   history: {
     resourceLabel: '연혁',
-    description: '년도와 월, 내용을 기재해 주세요.',
+    description: '연도와 월, 내용을 기재해 주세요.',
   },
   award: {
     resourceLabel: '수상',
@@ -156,7 +156,7 @@ function HacFormBody(props: BodyProps) {
       const yearN = Number(year)
       const monthN = Number(month)
       if (!Number.isInteger(yearN) || yearN < 1900 || yearN > 2100) {
-        showAlert({ title: '연도 확인', content: '올바른 연혁 년도를 입력해 주세요.' })
+        showAlert({ title: '연도 확인', content: '올바른 연혁 연도를 입력해 주세요.' })
         return
       }
       if (!Number.isInteger(monthN) || monthN < 1 || monthN > 12) {
@@ -260,14 +260,14 @@ function HacFormBody(props: BodyProps) {
             <>
               <DetailInfoForm.Row type="single">
                 <DetailInfoForm.Field
-                  label="연혁 년도/월"
+                  label="연혁 연도/월"
                   required
                   view={null}
                   edit={
                     <div
                       className="hac-form-modal__year-month"
                       role="group"
-                      aria-label="연혁 년도/월"
+                      aria-label="연혁 연도/월"
                     >
                       <label className="hac-form-modal__unit-field">
                         <CmsInput
@@ -275,8 +275,8 @@ function HacFormBody(props: BodyProps) {
                           width={100}
                           value={year}
                           onChange={e => setYear(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                          placeholder="년도"
-                          aria-label="연혁 년도"
+                          placeholder="연도"
+                          aria-label="연혁 연도"
                         />
                         <span className="hac-form-modal__unit" aria-hidden>
                           년
