@@ -29,6 +29,15 @@
   width: 100% !important;
 }
 
+/*
+ * 좁은 화면 공통 (`AdminDataTable`이 래퍼 < 최소 폭일 때 `--overflow` + 변수 부여)
+ * 최소 폭 = max(열 합, 1080 · 모달/드로어는 열 합) — 테이블은 줄지 않고 가로 스크롤
+ */
+.cms-data-table.cms-data-table--overflow table.ant-table {
+  width: var(--admin-data-table-min-width) !important;
+  min-width: var(--admin-data-table-min-width) !important;
+}
+
 /* scroll.x 없이 컨테이너 너비 100%·열 자동 분배 (상세/모달 등) */
 .cms-data-table.cms-data-table--fluid .ant-table-container {
   width: 100%;
@@ -91,6 +100,12 @@
 /* rowSelection.columnWidth·colgroup 과 동일 폭 유지 — 총폭 80px·좌 8px 패딩 포함 */
 .cms-data-table .ant-table-thead > tr > th.ant-table-cell.ant-table-selection-column,
 .cms-data-table .ant-table-tbody > tr > td.ant-table-cell.ant-table-selection-column,
+/* 비호버도 공통 본문 td(아래 `tr:not(placeholder):not(measure-row) > td`)보다 구체적으로 —
+ * 아니면 기본 상태엔 본문 padding 8×12, 호버 시에만 선택 열 padding이 적용돼 체크박스가 흔들린다 */
+.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.ant-table-cell.ant-table-selection-column,
 .cms-data-table
   .ant-table-tbody
   > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
@@ -115,13 +130,20 @@
 /*
  * table-layout:fixed + width:100% 이면 남은 폭이 모든 지정 열에 분배되어 No.가 80을 넘는다.
  * No. 이후 col을 auto로 두어 남는 폭을 흡수한다.
+ * 단 `--overflow`(좁은 화면 · 최소 폭 고정 + 가로 스크롤)에서는 열 폭을 그대로 쓴다
+ * (여유분은 `AdminDataTable`이 유연 열/본문 열 width에 미리 배분).
  */
-.cms-data-table:not(.cms-data-table--skip-auto-no-col) col.ant-table-selection-col + col ~ col {
+.cms-data-table:not(.cms-data-table--skip-auto-no-col):not(.cms-data-table--overflow)
+  col.ant-table-selection-col
+  + col
+  ~ col {
   width: auto !important;
   max-width: none !important;
 }
 
-.cms-data-table:not(.cms-data-table--skip-auto-no-col):not(:has(col.ant-table-selection-col))
+.cms-data-table:not(.cms-data-table--skip-auto-no-col):not(.cms-data-table--overflow):not(
+    :has(col.ant-table-selection-col)
+  )
   colgroup
   > col:first-child
   ~ col {
