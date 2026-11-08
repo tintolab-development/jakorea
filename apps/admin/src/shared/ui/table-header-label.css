@@ -24,6 +24,16 @@
 .table-title {
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, var(--font-family-primary, sans-serif);
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%;
+  padding-right: 0;
+}
+
+.table-title-20 {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
   font-size: 20px;
   font-style: normal;
   font-weight: 700;
@@ -39,13 +49,12 @@
 }
 
 .table-description {
-  color: var(--default-BK, #3d3d3d);
+  color: var(--Content-disabled, rgba(61, 61, 61, 0.5));
   font-family: Pretendard, var(--font-family-primary, sans-serif);
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
-  opacity: 0.6;
 }
 
 .table-header-actions--wrapper {

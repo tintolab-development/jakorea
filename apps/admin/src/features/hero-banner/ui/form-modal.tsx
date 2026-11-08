@@ -290,6 +290,7 @@ function HeroBannerFormBody({ mode, initial, confirmLoading, onCancel, onSubmit 
                 className="hero-banner-form-modal__main-title"
                 inputSize="medium"
                 width="100%"
+                rows={1}
                 autoSize={MAIN_TITLE_AUTO_SIZE}
                 placeholder="메인 타이틀을 입력해 주세요"
                 value={mainTitle}

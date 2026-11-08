@@ -400,7 +400,7 @@ function TextbookFormBody({
           disabled={confirmLoading || deleteLoading}
           onClick={() => setDeleteConfirmOpen(true)}
         >
-          교재 삭제
+          삭제
         </CmsButton>
       ) : null}
       <CmsButton

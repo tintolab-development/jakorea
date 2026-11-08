@@ -26,12 +26,10 @@
 }
 
 .recruit-guide-thumb {
+  /* 표 안 미리보기: 스트로크·라운드·배경 없이 가로 86 고정, 세로는 이미지 원본 비율 */
   width: 86px;
-  height: 86px;
-  aspect-ratio: 1 / 1;
   flex-shrink: 0;
   margin: 0 auto;
-  overflow: hidden;
   background: transparent;
   display: flex;
   align-items: center;
@@ -39,12 +37,14 @@
 }
 
 .recruit-guide-thumb img {
+  display: block;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
+  max-width: none;
 }
 
 .recruit-guide-thumb--empty {
+  height: 86px;
   border: 1px solid var(--table-line, #e0e0e0);
   border-radius: 4px;
   background: var(--color-bg-secondary, #f7f7f7);
@@ -134,4 +134,23 @@
 .recruit-guide-section .recruit-guide-inline-field--edit.cms-textarea--medium .cms-textarea__control {
   padding-top: 8px;
   padding-bottom: 8px;
+}
+
+/*
+ * 조직문화 표 조회 — 텍스트 높이만큼만 차지(운영 원칙과 동일): 투명 입력의 안쪽 패딩·보더·최소 높이를 없애
+ * 행 높이 = 셀 패딩 + 텍스트 줄 수. (높이는 autoSize 인라인 값을 그대로 쓴다 — height 강제 금지)
+ */
+.recruit-guide-culture-table .recruit-guide-inline-field--readonly .cms-textarea__control {
+  min-height: 0 !important;
+  padding: 0 !important;
+  border-width: 0;
+}
+
+.recruit-guide-culture-table
+  .recruit-guide-inline-field--readonly
+  .cms-textarea__inner
+  textarea.ant-input {
+  min-height: 0 !important;
+  padding: 0 !important;
+  line-height: 150% !important;
 }

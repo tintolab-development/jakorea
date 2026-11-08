@@ -31,8 +31,6 @@
 
 .board-member-form-modal__form .detail-info-form__field-label {
   display: flex !important;
-  min-height: 52px;
-  padding: 8px 16px !important;
   justify-content: center;
   align-items: center;
   box-sizing: border-box;

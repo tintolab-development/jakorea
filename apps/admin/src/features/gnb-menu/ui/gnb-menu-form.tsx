@@ -1,15 +1,24 @@
 /**
- * GNB 메뉴 관리 — 조회 / 메뉴명 수정 모드
+ * GNB 메뉴 관리 — 대메뉴(그룹)별 섹션 카드 · 섹션별 수정/저장
+ * 시안 36:59834: 통합 타이틀 없음 · 카드마다 「■ 대메뉴명」(20 Bold) + [수정](h40)
+ *
+ * 저장 API는 GNB 20개 메뉴 전체 PUT 하나뿐이다.
+ * - 섹션 저장: 서버 현재값(`data`)에서 해당 섹션 items만 draft로 바꿔 보낸다 (다른 섹션 draft 섞지 않음)
+ * - 조회 상태 사용 여부 토글·순서 드래그: 같은 방식으로 즉시 저장
+ * - 어느 섹션이든 저장 중이면 다른 섹션 저장·토글·드래그 잠금 (version 충돌 방지)
  *
  * 타이핑 버벅임 방지: 메뉴명 draft는 ref + 행 단위 로컬 state.
- * 키마다 부모 setDraft/columns 재생성 → 전 테이블 리렌더하지 않음.
  */
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Switch } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import type { GnbMenuDoc, GnbSubMenu } from '@/entities/gnb-menu/model/types'
-import { useSaveGnbMenu } from '@/features/gnb-menu/api/hooks'
+import type { GnbMenuDoc, GnbSubMenu, GnbTopMenu } from '@/entities/gnb-menu/model/types'
+import { useIsGnbMenuSaving, useSaveGnbMenu } from '@/features/gnb-menu/api/hooks'
+import {
+  GNB_MENU_NAME_MAX_LENGTH,
+  gnbMenuMutationFailureAlert,
+} from '@/features/gnb-menu/lib/mutation-failure-alert'
 import {
   GnbMenuDragHandle,
   GnbMenuSortableTable,
@@ -21,38 +30,37 @@ import {
   TABLE_COLUMN_WIDTHS,
 } from '@/shared/constants/table'
 import {
-  REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsInput, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
+  CmsButton,
+  CmsInput,
+  showSaveCompletedAlert,
+  useCmsAlert,
+} from '@/shared/ui'
 
 import './gnb-menu-form.css'
 
-type Props = {
-  data: GnbMenuDoc
-}
-
 type NameDraftMap = Record<string, string>
 
-function cloneDoc(doc: GnbMenuDoc): GnbMenuDoc {
-  return {
-    updatedAt: doc.updatedAt,
-    groups: doc.groups.map(g => ({
-      ...g,
-      items: g.items.map(item => ({ ...item })),
-    })),
-  }
+function cloneItems(items: GnbSubMenu[]): GnbSubMenu[] {
+  return items.map(item => ({ ...item }))
 }
 
 function renumberItems(items: GnbSubMenu[]): GnbSubMenu[] {
   return items.map((row, index) => ({ ...row, sortOrder: index + 1 }))
 }
 
-function buildNameDraftMap(doc: GnbMenuDoc): NameDraftMap {
+function buildNameDraftMap(items: GnbSubMenu[]): NameDraftMap {
   const map: NameDraftMap = {}
-  for (const group of doc.groups) {
-    for (const item of group.items) {
-      map[item.id] = item.name
-    }
-  }
+  for (const item of items) map[item.id] = item.name
   return map
+}
+
+/** 서버 현재 문서에서 한 섹션의 items만 교체 */
+function withGroupItems(doc: GnbMenuDoc, groupId: string, items: GnbSubMenu[]): GnbMenuDoc {
+  return {
+    ...doc,
+    groups: doc.groups.map(g => (g.id === groupId ? { ...g, items: renumberItems(items) } : g)),
+  }
 }
 
 const GnbInlineNameField = memo(function GnbInlineNameField({
@@ -84,6 +92,7 @@ const GnbInlineNameField = memo(function GnbInlineNameField({
       inputSize="medium"
       width="100%"
       value={localValue}
+      maxLength={GNB_MENU_NAME_MAX_LENGTH}
       readOnly={!isEditing}
       tabIndex={isEditing ? 0 : -1}
       onChange={e => {
@@ -98,124 +107,88 @@ const GnbInlineNameField = memo(function GnbInlineNameField({
   )
 })
 
-export function GnbMenuFormCard({ data }: Props) {
+function GnbMenuGroupCard({ data, group }: { data: GnbMenuDoc; group: GnbTopMenu }) {
   const { showAlert } = useCmsAlert()
   const saveMutation = useSaveGnbMenu()
+  const anySaving = useIsGnbMenuSaving()
   const [isEditing, setIsEditing] = useState(false)
-  /** 순서·사용 여부용. 메뉴명 타이핑은 nameDraftRef만 갱신. 조회 모드 사용 여부는 즉시 저장 */
-  const [draft, setDraft] = useState<GnbMenuDoc>(() => cloneDoc(data))
+  /** 수정 모드 순서·사용 여부. 메뉴명 타이핑은 nameDraftRef만 갱신 */
+  const [draftItems, setDraftItems] = useState<GnbSubMenu[]>(() => cloneItems(group.items))
   const nameDraftRef = useRef<NameDraftMap>({})
   const [nameResetKey, setNameResetKey] = useState(0)
 
-  useEffect(() => {
-    if (isEditing) return
-    setDraft(cloneDoc(data))
-  }, [data, isEditing])
+  const groupId = group.id
+  const groupLabel = group.label
 
   const handleEdit = useCallback(() => {
-    const next = cloneDoc(data)
-    setDraft(next)
-    nameDraftRef.current = buildNameDraftMap(next)
+    setDraftItems(cloneItems(group.items))
+    nameDraftRef.current = buildNameDraftMap(group.items)
     setIsEditing(true)
-  }, [data])
+  }, [group.items])
 
   const handleCancel = useCallback(() => {
     nameDraftRef.current = {}
-    setDraft(cloneDoc(data))
+    setDraftItems(cloneItems(group.items))
     setIsEditing(false)
     setNameResetKey(key => key + 1)
-  }, [data])
+  }, [group.items])
 
   /** 타이핑 중 부모 setState 금지 — ref만 갱신 */
   const handleNameDraftChange = useCallback((itemId: string, value: string) => {
-    nameDraftRef.current = {
-      ...nameDraftRef.current,
-      [itemId]: value,
-    }
+    nameDraftRef.current = { ...nameDraftRef.current, [itemId]: value }
   }, [])
 
   const handleSave = useCallback(async () => {
     const nameMap = nameDraftRef.current
-    const nextDoc: GnbMenuDoc = {
-      ...draft,
-      groups: draft.groups.map(g => ({
-        ...g,
-        items: g.items.map(item => ({
-          ...item,
-          name: nameMap[item.id] ?? item.name,
-        })),
-      })),
-    }
-    for (const group of nextDoc.groups) {
-      for (const item of group.items) {
-        if (!item.name.trim()) {
-          showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
-          return
-        }
-      }
+    const nextItems = draftItems.map(item => ({
+      ...item,
+      name: (nameMap[item.id] ?? item.name).trim(),
+    }))
+    if (nextItems.some(item => !item.name)) {
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+      return
     }
     try {
-      await saveMutation.mutateAsync(nextDoc)
+      await saveMutation.mutateAsync(withGroupItems(data, groupId, nextItems))
       nameDraftRef.current = {}
       setIsEditing(false)
       showSaveCompletedAlert()
-    } catch {
-      showAlert({
-        title: '저장 실패',
-        content: 'GNB 메뉴 저장에 실패했습니다. 다시 시도해 주세요.',
-      })
+    } catch (error) {
+      showAlert(gnbMenuMutationFailureAlert(error, groupLabel, 'save'))
     }
-  }, [draft, saveMutation, showAlert])
+  }, [data, draftItems, groupId, groupLabel, saveMutation, showAlert])
 
-  const updateGroupItems = useCallback((groupId: string, nextItems: GnbSubMenu[]) => {
-    setDraft(prev => ({
-      ...prev,
-      groups: prev.groups.map(g =>
-        g.id === groupId ? { ...g, items: renumberItems(nextItems) } : g
-      ),
-    }))
-  }, [])
-
-  /** 조회 모드: 사용 여부 즉시 저장. 수정 모드: draft에 반영 후 저장 시 함께 반영 */
+  /** 조회: 즉시 저장. 수정: draft에 반영 후 [저장] 시 함께 반영 */
   const handleToggleActive = useCallback(
-    (groupId: string, itemId: string, isActive: boolean) => {
+    (itemId: string, isActive: boolean) => {
       if (isEditing) {
-        setDraft(prev => ({
-          ...prev,
-          groups: prev.groups.map(g => {
-            if (g.id !== groupId) return g
-            return {
-              ...g,
-              items: g.items.map(item => (item.id === itemId ? { ...item, isActive } : item)),
-            }
-          }),
-        }))
+        setDraftItems(prev => prev.map(item => (item.id === itemId ? { ...item, isActive } : item)))
         return
       }
-      const nextDoc: GnbMenuDoc = {
-        ...data,
-        groups: data.groups.map(g => {
-          if (g.id !== groupId) return g
-          return {
-            ...g,
-            items: g.items.map(item => (item.id === itemId ? { ...item, isActive } : item)),
-          }
-        }),
-      }
-      void saveMutation.mutateAsync(nextDoc).catch(() => {
-        showAlert({
-          title: '사용 여부 변경 실패',
-          content: '사용 여부 변경에 실패했습니다. 다시 시도해 주세요.',
-        })
+      const nextItems = group.items.map(item => (item.id === itemId ? { ...item, isActive } : item))
+      void saveMutation.mutateAsync(withGroupItems(data, groupId, nextItems)).catch(error => {
+        showAlert(gnbMenuMutationFailureAlert(error, groupLabel, 'toggle'))
       })
     },
-    [data, isEditing, saveMutation, showAlert]
+    [data, group.items, groupId, groupLabel, isEditing, saveMutation, showAlert]
   )
 
-  const displayGroups = isEditing ? draft.groups : data.groups
+  /** 조회: 드래그 즉시 저장(낙관적 반영). 수정: draft 순서만 변경 */
+  const handleRowsReorder = useCallback(
+    (next: GnbSubMenu[]) => {
+      if (isEditing) {
+        setDraftItems(renumberItems(next))
+        return
+      }
+      void saveMutation.mutateAsync(withGroupItems(data, groupId, next)).catch(error => {
+        showAlert(gnbMenuMutationFailureAlert(error, groupLabel, 'reorder'))
+      })
+    },
+    [data, groupId, groupLabel, isEditing, saveMutation, showAlert]
+  )
 
-  const buildColumns = useCallback(
-    (groupId: string): ColumnsType<GnbSubMenu> => [
+  const columns = useMemo<ColumnsType<GnbSubMenu>>(
+    () => [
       {
         title: '순서',
         key: 'sort',
@@ -241,9 +214,9 @@ export function GnbMenuFormCard({ data }: Props) {
         render: (_value, record) => (
           <Switch
             checked={record.isActive}
-            disabled={saveMutation.isPending}
+            disabled={anySaving}
             onChange={checked => {
-              handleToggleActive(groupId, record.id, checked)
+              handleToggleActive(record.id, checked)
             }}
             aria-label={`${record.name} 사용 여부`}
           />
@@ -268,23 +241,16 @@ export function GnbMenuFormCard({ data }: Props) {
         ),
       },
     ],
-    [handleNameDraftChange, handleToggleActive, isEditing, nameResetKey, saveMutation.isPending]
+    [anySaving, handleNameDraftChange, handleToggleActive, isEditing, nameResetKey]
   )
 
-  /** displayGroups(토글/순서)에 묶지 않음 — columns 재생성으로 인풋 remount 방지 */
-  const columnsByGroup = useMemo(() => {
-    const map = new Map<string, ColumnsType<GnbSubMenu>>()
-    for (const group of data.groups) {
-      map.set(group.id, buildColumns(group.id))
-    }
-    return map
-  }, [buildColumns, data.groups])
+  const rows = isEditing ? draftItems : group.items
 
   return (
-    <div className="admin-list-card gnb-menu-form-card">
+    <section className="admin-list-card gnb-menu-form-card">
       <div className="admin-list-toolbar">
         <div className="table-header-title--wrapper">
-          <span className="table-title">GNB 메뉴 관리</span>
+          <span className="table-title-20">■ {groupLabel}</span>
         </div>
         <div className="table-header-actions--wrapper">
           {isEditing ? (
@@ -294,7 +260,8 @@ export function GnbMenuFormCard({ data }: Props) {
                 size="h40"
                 type="button"
                 onClick={handleCancel}
-                disabled={saveMutation.isPending} >
+                disabled={saveMutation.isPending}
+              >
                 취소
               </CmsButton>
               <CmsButton
@@ -302,42 +269,45 @@ export function GnbMenuFormCard({ data }: Props) {
                 size="h40"
                 type="button"
                 loading={saveMutation.isPending}
-                disabled={saveMutation.isPending}
+                disabled={anySaving}
                 onClick={() => {
                   void handleSave()
-                }} >
+                }}
+              >
                 저장
               </CmsButton>
             </>
           ) : (
-            <CmsButton variant="primary" size="h40" type="button" onClick={handleEdit}>
-              메뉴명 수정
+            <CmsButton
+              variant="primary"
+              size="h40"
+              type="button"
+              disabled={anySaving}
+              onClick={handleEdit}
+            >
+              수정
             </CmsButton>
           )}
         </div>
       </div>
 
-      <div className="gnb-menu-form-card__body">
-        {displayGroups.map(group => (
-          <section key={group.id} className="gnb-menu-form-section">
-            <div className="gnb-menu-form-section-title">
-              <span className="gnb-menu-form-section-title__marker" aria-hidden>
-                ■
-              </span>
-              <span className="gnb-menu-form-section-title__text">{group.label}</span>
-            </div>
-            <GnbMenuSortableTable
-              rows={group.items}
-              columns={columnsByGroup.get(group.id) ?? []}
-              dragDisabled={!isEditing}
-              onRowsReorder={next => {
-                if (!isEditing) return
-                updateGroupItems(group.id, next)
-              }}
-            />
-          </section>
-        ))}
-      </div>
+      <GnbMenuSortableTable
+        rows={rows}
+        columns={columns}
+        dragDisabled={anySaving}
+        onRowsReorder={handleRowsReorder}
+      />
+    </section>
+  )
+}
+
+/** 대메뉴별 섹션 카드 목록 */
+export function GnbMenuSectionCards({ data }: { data: GnbMenuDoc }) {
+  return (
+    <div className="gnb-menu-sections">
+      {data.groups.map(group => (
+        <GnbMenuGroupCard key={group.id} data={data} group={group} />
+      ))}
     </div>
   )
 }

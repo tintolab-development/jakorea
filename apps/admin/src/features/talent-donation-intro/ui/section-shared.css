@@ -16,27 +16,26 @@
 }
 
 .talent-intro-thumb {
+  /* 표 안 미리보기: 스트로크·라운드·배경 없이 가로 고정, 세로는 이미지 원본 비율 */
   width: 86px;
-  height: 86px;
   flex-shrink: 0;
-  aspect-ratio: 1 / 1;
   margin: 0 auto;
-  border-radius: 4px;
-  overflow: hidden;
-  background: var(--color-bg-secondary, #f7f7f7);
-  border: 1px solid var(--table-line, #e0e0e0);
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .talent-intro-thumb img {
+  display: block;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
+  max-width: none;
+  max-height: none;
 }
 
 .talent-intro-thumb--empty {
+  height: 86px;
   color: var(--color-text-tertiary, #9e9e9e);
   font-size: 12px;
   font-weight: 500;
@@ -75,10 +74,17 @@
 
 .talent-intro-section .cms-data-table,
 .talent-intro-section .cms-data-table .ant-table,
-.talent-intro-section .cms-data-table .ant-table-container,
 .talent-intro-section .cms-data-table .ant-table-content,
 .talent-intro-section .cms-data-table .ant-table-body {
   overflow: visible !important;
+}
+
+/*
+ * 표 외곽(둥근 테두리)은 clip으로 잘라 마지막 행 셀 배경이 좌·우하단 R값을 덮지 않게 한다.
+ * clip은 스크롤 컨테이너를 만들지 않아 위의 '세로 휠 가로채기 방지'와 충돌하지 않는다.
+ */
+.talent-intro-section .cms-data-table .ant-table-container {
+  overflow: clip !important;
 }
 
 .talent-intro-how-table__th-label {
@@ -130,4 +136,23 @@
 
 .talent-intro-how-field--readonly textarea.ant-input {
   cursor: default;
+}
+
+/*
+ * JA와 함께하는 방법 조회 — 일반 텍스트 셀 기준(시안 496:39011): 투명 입력의 안쪽 패딩·보더·최소 높이를 없애
+ * 셀 패딩(12×16) + 텍스트 높이만 남긴다. (높이는 autoSize 인라인 값 — height 강제 금지)
+ */
+.talent-intro-how-table .talent-intro-how-field--readonly .cms-textarea__control {
+  min-height: 0 !important;
+  padding: 0 !important;
+  border-width: 0;
+}
+
+.talent-intro-how-table
+  .talent-intro-how-field--readonly
+  .cms-textarea__inner
+  textarea.ant-input {
+  min-height: 0 !important;
+  padding: 0 !important;
+  line-height: 150% !important;
 }

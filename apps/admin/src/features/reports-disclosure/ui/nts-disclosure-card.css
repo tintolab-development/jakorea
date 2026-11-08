@@ -1,6 +1,6 @@
-/* 국세청 공시 단건 카드 — Figma 32:14201 / 32:14711
- * 조회 행 52 · 수정 행 64 시안이지만, 모드 전환 시 높이 점프를 막기 위해
- * 양쪽 모두 수정 시안(라벨 200 · 행 64 · 인풋 40)으로 고정한다.
+/* 국세청 공시 단건 카드 — Figma 조회 32:14201(행 52) / 수정 32:14732(행 64)
+ * 수정: 라벨 200 · 행 64 · 인풋 40. 조회: 행 52 · 값 칸 패딩 12×16 · 텍스트 14/1.5 (파일 하단 override)
+ * (QA: 조회 화면이 수정 필드 높이 64로 노출되던 것을 시안 52로)
  */
 
 .rd-nts-card.admin-list-card {
@@ -130,4 +130,31 @@
 .rd-nts-card .rd-nts-inline-field--edit .ant-input {
   font-size: 15px !important;
   line-height: 145% !important;
+}
+
+/*
+ * 조회(읽기 전용 인풋) — Figma 32:14653: 행 52 · 값 칸 padding 12×16 · 텍스트 14/1.5
+ * 같은 인풋을 쓰므로 인풋 40을 칸 세로 패딩 6으로 감싸 52를 맞추고,
+ * 텍스트 x(16)는 인풋 좌측 테두리 1 + 패딩 15로 맞춘다.
+ */
+.rd-nts-card .detail-info-form__field:has(.rd-nts-inline-field--readonly),
+.rd-nts-card
+  .detail-info-form__field:has(.rd-nts-inline-field--readonly)
+  .detail-info-form__field-label,
+.rd-nts-card
+  .detail-info-form__field:has(.rd-nts-inline-field--readonly)
+  .detail-info-form__field-content {
+  height: 52px;
+  min-height: 52px;
+  max-height: 52px;
+}
+
+.rd-nts-card
+  .detail-info-form__field:has(.rd-nts-inline-field--readonly)
+  .detail-info-form__field-content {
+  padding: 6px 0;
+}
+
+.rd-nts-card .rd-nts-inline-field--readonly .cms-input__control {
+  padding-inline: 15px;
 }

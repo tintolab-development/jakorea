@@ -26,7 +26,7 @@ type SummaryBarProps = {
 
 export function SummaryBar({ section, view, items }: SummaryBarProps) {
   const isExpenseTable = section === 'expense' && view === 'table'
-  const heading = section === 'income' ? '수입총계' : '지출총계'
+  const heading = section === 'income' ? '수익총계' : '지출총계'
 
   if (isExpenseTable) {
     const direct = sumByCategory(items, 'direct')
@@ -49,7 +49,7 @@ export function SummaryBar({ section, view, items }: SummaryBarProps) {
               <tr>
                 <th scope="col">구분</th>
                 <th scope="col">직접사업비 합계</th>
-                <th scope="col">직접사업비 이외비용 합계</th>
+                <th scope="col">직접사업비 이외 비용 합계</th>
                 <th scope="col" className="income-expense-summary__matrix-total">
                   지출총계
                 </th>

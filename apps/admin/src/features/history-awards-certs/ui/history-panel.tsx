@@ -71,6 +71,10 @@ const MONTH_OPTIONS = Array.from({ length: 12 }, (_, i) => ({
   value: String(i + 1),
 }))
 
+/** 검색 필터 — 미선택(전체) 표기를 셀렉트별로 구분 (값 '' 항목이 있으면 공통 '전체'를 덧붙이지 않음) */
+const YEAR_FILTER_OPTIONS = [{ label: '연도 전체', value: '' }, ...YEAR_OPTIONS]
+const MONTH_FILTER_OPTIONS = [{ label: '월 전체', value: '' }, ...MONTH_OPTIONS]
+
 type HistoryPendingFilters = {
   isPublic: PublicFilterValue
   year: string
@@ -337,7 +341,7 @@ export function HistoryPanel() {
         ),
       },
       {
-        title: '연혁년도/월',
+        title: '연혁 연도/월',
         key: 'yearMonth',
         width: 120,
         align: 'center',
@@ -405,11 +409,11 @@ export function HistoryPanel() {
               />
             </div>
             <div className="admin-filter-area__field admin-filter-area__field--address-region">
-              <p className="admin-filter-area__label">연혁년도/월</p>
+              <p className="admin-filter-area__label">연혁 연도/월</p>
               <div
                 className="admin-filter-area__address-region-selects"
                 role="group"
-                aria-label="연혁년도/월"
+                aria-label="연혁 연도/월"
               >
                 <CmsSelect
                   inputSize="medium"
@@ -417,7 +421,7 @@ export function HistoryPanel() {
                   popupMatchSelectWidth={false}
                   value={pendingFilters.year}
                   onChange={v => setPendingFilters(prev => ({ ...prev, year: String(v ?? '') }))}
-                  options={YEAR_OPTIONS}
+                  options={YEAR_FILTER_OPTIONS}
                 />
                 <CmsSelect
                   inputSize="medium"
@@ -425,7 +429,7 @@ export function HistoryPanel() {
                   popupMatchSelectWidth={false}
                   value={pendingFilters.month}
                   onChange={v => setPendingFilters(prev => ({ ...prev, month: String(v ?? '') }))}
-                  options={MONTH_OPTIONS}
+                  options={MONTH_FILTER_OPTIONS}
                 />
               </div>
             </div>
@@ -496,7 +500,6 @@ export function HistoryPanel() {
             columns={columns}
             dataSource={rows}
             pagination={false}
-            scroll={{ x: 'max-content' }}
             rowSelection={{
               selectedRowKeys,
               onChange: keys => setSelectedRowKeys(keys),

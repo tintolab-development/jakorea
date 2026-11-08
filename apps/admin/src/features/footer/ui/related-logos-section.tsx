@@ -29,7 +29,7 @@ import { CmsButton, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 import './section-shared.css'
 
 /** 수정 버튼 88 + 좌우 패딩 (TABLE_COLUMN_WIDTHS.action=72 로는 부족) */
-const RELATED_LOGO_ACTION_COL_WIDTH = 120
+const RELATED_LOGO_ACTION_COL_WIDTH = 140
 
 const EMPTY_NAME = '등록된 기관 로고가 없습니다'
 const EMPTY_LINK = '연결된 링크가 없습니다'
@@ -170,7 +170,7 @@ export function FooterRelatedLogosSection() {
       {
         title: '관리',
         key: 'action',
-        /* 수정 버튼 88 + 좌우 패딩 여유 (TABLE_COLUMN_WIDTHS.action=72 는 부족) */
+        /* Figma 2100:89719 — 관리 열 140 (수정 버튼 h32 100 + 좌우 12) */
         width: RELATED_LOGO_ACTION_COL_WIDTH,
         align: 'center',
         render: (_v, record) => (

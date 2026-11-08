@@ -106,3 +106,44 @@
   box-sizing: border-box;
   padding: 0;
 }
+
+/*
+ * QA: 조회 = 텍스트 높이만큼(셀 패딩 12×16 → 행 52), 수정 = 셀 패딩 12 + 입력 36 → 행 60
+ * 조회는 같은 CmsInput을 투명 처리하므로 컨트롤의 높이·패딩·보더를 없애 텍스트만 남긴다(셀 패딩 16부터 시작).
+ */
+.participate-links-card .detail-info-form__field {
+  min-height: 52px;
+}
+
+.participate-links-card
+  .detail-info-form__field-content:has(.participate-links-inline-field--readonly),
+.participate-links-card .detail-info-form__field-content:has(> .participate-links-empty) {
+  min-height: 52px;
+  padding: 12px 16px;
+}
+
+.participate-links-card
+  .detail-info-form__field-content:has(.participate-links-inline-field--edit) {
+  min-height: 52px;
+  padding: 12px;
+}
+
+.participate-links-card .participate-links-inline-field--readonly .cms-input__control {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  padding: 0 !important;
+  border-width: 0 !important;
+}
+
+.participate-links-card .participate-links-inline-field--readonly .ant-input {
+  padding: 0 !important;
+}
+
+.participate-links-card .participate-links-inline-field--edit .ant-input {
+  text-align: left !important;
+}
+
+.participate-links-card .participate-links-empty {
+  min-height: 0;
+}

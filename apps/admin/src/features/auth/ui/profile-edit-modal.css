@@ -32,7 +32,7 @@
 }
 
 .profile-edit-modal__section.detail-info-form {
-  --detail-info-label-w: 220px;
+  --detail-info-label-w: 180px;
   margin-top: 0;
   width: 100%;
 }
@@ -106,14 +106,14 @@
 
 /* 행 최소 높이 52 (Figma Cell / Medium min-h 52) — 버튼 행(연락처)은 h32 + py12 = 56 */
 .profile-edit-modal__section .detail-info-form__field {
-  grid-template-columns: 220px minmax(0, 1fr);
+  grid-template-columns: 180px minmax(0, 1fr);
   min-height: 52px;
 }
 
 .profile-edit-modal__section--basic-info .detail-info-form__field-label {
-  width: 220px;
-  min-width: 220px;
-  max-width: 220px;
+  width: 180px;
+  min-width: 180px;
+  max-width: 180px;
 }
 
 .profile-edit-modal__section .profile-edit-modal__row .detail-info-form__field-label,
@@ -121,9 +121,9 @@
   min-height: 52px;
 }
 
-/* 약관 및 동의 — 단일 테이블, 라벨(th) 220px */
+/* 약관 및 동의 — 단일 테이블, 라벨(th) 180px */
 .profile-edit-modal__section--terms {
-  --detail-info-label-w: 220px;
+  --detail-info-label-w: 180px;
 }
 
 .profile-edit-modal__section--terms .detail-info-form__body {
@@ -150,9 +150,9 @@
 }
 
 .profile-edit-modal__section--terms .detail-info-form__field-label {
-  width: 220px;
-  min-width: 220px;
-  max-width: 220px;
+  width: 180px;
+  min-width: 180px;
+  max-width: 180px;
 }
 
 .profile-edit-modal .content-modal__footer-actions {
@@ -210,4 +210,24 @@
   text-underline-position: from-font;
   cursor: pointer;
   flex-shrink: 0;
+}
+
+/*
+ * 내 정보 확인 — 라벨 열 180 (공통 detail-info-form-modal.css 의 1400 미만 팝업 160 규칙 예외)
+ * 공통 규칙 특이도(.ant-modal.teal-header-modal:not():not() …)보다 높게 이 팝업 클래스를 더한다.
+ */
+.ant-modal.teal-header-modal.profile-edit-modal:not(.teal-header-modal--large):not(.teal-header-modal--full)
+  .detail-info-form
+  .detail-info-form__field {
+  --detail-info-label-w: 180px !important;
+  grid-template-columns: 180px minmax(0, 1fr) !important;
+}
+
+.ant-modal.teal-header-modal.profile-edit-modal:not(.teal-header-modal--large):not(.teal-header-modal--full)
+  .detail-info-form
+  .detail-info-form__field
+  > .detail-info-form__field-label {
+  width: 180px !important;
+  min-width: 180px !important;
+  max-width: 180px !important;
 }

@@ -46,7 +46,8 @@
   margin: 0;
   padding: 0;
   border: 0;
-  border-top: 1px solid #c4cdd1;
+  /* 디자인 가이드 목록 레이아웃 구분선 — Content/weak #BDC6C9 (CMS e7b8a0ed7) */
+  border-top: 1px solid var(--Content-weak, #bdc6c9);
 }
 
 .filter-table-layout__top-nav {

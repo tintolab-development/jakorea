@@ -36,7 +36,7 @@
 
 .org-chart-form-modal .detail-info-form__field-content--edit > .org-chart-form-modal__image-row {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: flex-start;
   justify-content: flex-start;
   gap: 16px;
@@ -105,7 +105,7 @@
 .org-chart-form-modal .file-select-field__actions {
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 16px;
   width: 100%;

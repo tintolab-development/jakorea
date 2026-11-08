@@ -124,6 +124,13 @@ export function ParticipatingVolunteerAssignmentSection({
         : '-',
     [organizationDistances]
   )
+  /** 표 셀 — 응답 전에는 비워 둔다('-'는 미산출 뜻이라 로딩 중에 보이면 값이 깜빡인다) */
+  const distanceLoading = educationScopeQuery.isLoading
+  const renderDistanceCell = useCallback(
+    (organizationApplicationId: string | undefined): string =>
+      distanceLoading ? '' : resolveDistanceLabel(organizationApplicationId),
+    [distanceLoading, resolveDistanceLabel]
+  )
 
   useEffect(() => {
     const assigned = buildInitialVolunteerAssignedRows(volunteer, schoolRows, program)
@@ -173,7 +180,7 @@ export function ParticipatingVolunteerAssignmentSection({
         key: 'distanceFromHome',
         width: 120,
         align: 'center',
-        render: (_: unknown, record) => resolveDistanceLabel(record.organizationApplicationId),
+        render: (_: unknown, record) => renderDistanceCell(record.organizationApplicationId),
       },
       {
         title: '담당 봉사 진행 일정',
@@ -183,7 +190,7 @@ export function ParticipatingVolunteerAssignmentSection({
         render: (_: unknown, record) => renderVolunteerScheduleLines(record.volunteerScheduleLines),
       },
     ],
-    [resolveDistanceLabel]
+    [renderDistanceCell]
   )
 
   const waitingColumns: ColumnsType<VolunteerWaitingInstitutionRow> = useMemo(
@@ -218,7 +225,7 @@ export function ParticipatingVolunteerAssignmentSection({
         key: 'distanceFromHome',
         width: 120,
         align: 'center',
-        render: (_: unknown, record) => resolveDistanceLabel(record.organizationApplicationId),
+        render: (_: unknown, record) => renderDistanceCell(record.organizationApplicationId),
       },
       {
         title: '봉사 진행 희망 일정',
@@ -245,7 +252,7 @@ export function ParticipatingVolunteerAssignmentSection({
         align: 'center',
       },
     ],
-    [resolveDistanceLabel]
+    [renderDistanceCell]
   )
 
   const assignedExportColumns: ColumnsType<{

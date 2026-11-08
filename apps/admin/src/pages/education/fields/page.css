@@ -53,10 +53,11 @@
   content: '■ ';
 }
 
+/* 소개글 — Figma 35:18726: 라벨 200 · 행 최소 52 */
 .education-fields-page__intro-form .detail-info-form__field {
-  min-height: 54px;
-  --detail-info-label-w: 160px;
-  grid-template-columns: 160px minmax(0, 1fr);
+  min-height: 52px;
+  --detail-info-label-w: 200px;
+  grid-template-columns: 200px minmax(0, 1fr);
 }
 
 /* 소개글 th(메인 텍스트) — 텍스트 중앙 정렬 */
@@ -65,12 +66,12 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  width: 160px;
-  min-width: 160px;
-  max-width: 160px;
-  min-height: 54px;
+  width: 200px;
+  min-width: 200px;
+  max-width: 200px;
+  min-height: 52px;
   height: 100%;
-  padding: 12px 16px;
+  padding: 8px 16px;
   box-sizing: border-box;
   align-self: stretch;
 }
@@ -215,4 +216,41 @@
   min-height: 1.5em;
   padding-top: 0;
   padding-bottom: 0;
+}
+
+/*
+ * 소개글 값 칸 — 조회: 텍스트만(셀 패딩 12×16 · 14/1.5 · 좌측) → 행 52
+ *               수정: 셀 패딩 12 + 입력 40 → 행 64, 입력 텍스트 좌측
+ */
+.education-fields-page__intro-form
+  .detail-info-form__field-content:has(.education-fields-inline-field--readonly) {
+  min-height: 52px;
+  padding: 12px 16px;
+  align-items: center;
+}
+
+.education-fields-page__intro-form
+  .detail-info-form__field-content:has(.education-fields-inline-field--edit) {
+  padding: 12px;
+  align-items: center;
+}
+
+.education-fields-page__intro-form
+  .education-fields-inline-field--readonly
+  .cms-input__control {
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border-width: 0 !important;
+}
+
+.education-fields-page__intro-form .education-fields-inline-field--readonly .ant-input {
+  padding: 0 !important;
+  font-size: 14px !important;
+  line-height: 150% !important;
+  text-align: left !important;
+}
+
+.education-fields-page__intro-form .education-fields-inline-field--edit .ant-input {
+  text-align: left !important;
 }

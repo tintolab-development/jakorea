@@ -76,6 +76,7 @@ export function EducationSectionCard({ data }: Props) {
       <DetailInfoForm title="교육 프로그램 관리" hideHeader mode={mode}>
         <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
+            labelWidth={200}
             label={
               <MainContentRequiredLabel required={isEditing}>타이틀 텍스트</MainContentRequiredLabel>
             }

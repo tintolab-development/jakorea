@@ -328,7 +328,7 @@ export function EducationFieldsPage() {
                           ? 'education-fields-inline-field education-fields-inline-field--edit'
                           : 'education-fields-inline-field education-fields-inline-field--readonly'
                       }
-                      inputSize="large"
+                      inputSize="medium"
                       width="100%"
                       value={displayMainText}
                       readOnly={!isEditing}

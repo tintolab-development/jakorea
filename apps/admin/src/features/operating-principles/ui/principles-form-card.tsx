@@ -267,8 +267,8 @@ export function PrinciplesFormCard({ data }: Props) {
               className={fieldClass(isEditing, 'principles-title-field')}
               inputSize="medium"
               width="100%"
-              rows={isEditing ? undefined : 2}
-              autoSize={isEditing ? EDIT_AUTO_SIZE : undefined}
+              // 조회·수정 모두 내용 줄 수만큼(hug) — 행 높이가 텍스트 높이를 따른다
+              autoSize={EDIT_AUTO_SIZE}
               value={value}
               readOnly={!isEditing}
               tabIndex={isEditing ? 0 : -1}
@@ -293,8 +293,8 @@ export function PrinciplesFormCard({ data }: Props) {
               className={fieldClass(isEditing)}
               inputSize="medium"
               width="100%"
-              rows={isEditing ? undefined : 3}
-              autoSize={isEditing ? EDIT_AUTO_SIZE : undefined}
+              // 조회·수정 모두 내용 줄 수만큼(hug) — 행 높이가 텍스트 높이를 따른다
+              autoSize={EDIT_AUTO_SIZE}
               value={value}
               readOnly={!isEditing}
               tabIndex={isEditing ? 0 : -1}

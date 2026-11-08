@@ -84,7 +84,7 @@ function termsKindOf(row: CmsAdminTermsAgreement): TermsKind | undefined {
 
 function resolveTermsAgreement(
   terms: CmsAdminTermsAgreement[] | undefined,
-  kind: TermsKind,
+  kind: TermsKind
 ): { agreed: boolean; agreedAtDisplay: string } {
   const record = (terms ?? []).find(item => termsKindOf(item) === kind)
   if (!record) return { agreed: false, agreedAtDisplay: '-' }
@@ -110,7 +110,10 @@ function formatBirthWithManAge(birthDate: string | undefined): string {
   if (!parsed.isValid()) return raw
   const today = dayjs()
   let age = today.year() - parsed.year()
-  if (today.month() < parsed.month() || (today.month() === parsed.month() && today.date() < parsed.date())) {
+  if (
+    today.month() < parsed.month() ||
+    (today.month() === parsed.month() && today.date() < parsed.date())
+  ) {
     age -= 1
   }
   const date = parsed.format('YYYY.MM.DD')
@@ -194,7 +197,7 @@ function ProfileFieldWithAction({
 }
 
 async function resolveMarketingConsentVersion(
-  termsAgreements: CmsAdminTermsAgreement[] | undefined,
+  termsAgreements: CmsAdminTermsAgreement[] | undefined
 ): Promise<string> {
   const fromRow = termsAgreements?.find(row => termsKindOf(row) === 'MARKETING')?.version?.trim()
   if (fromRow) return fromRow
@@ -263,7 +266,7 @@ export function ProfileEditModal({ open, onCancel }: Props) {
         }
       })()
     },
-    [showAlert],
+    [showAlert]
   )
 
   const { verify, isVerifying, errorMessage, resetError } = useIdentityVerification({
@@ -505,7 +508,7 @@ export function ProfileEditModal({ open, onCancel }: Props) {
           <div className="profile-edit-modal__terms-table">
             <DetailInfoForm.Row type="double" className="profile-edit-modal__row">
               <DetailInfoForm.Field
-                labelWidth={220}
+                labelWidth={180}
                 label="서비스 이용약관"
                 readOnlyDisplay
                 view={consentReadonlyContent(serviceTerms.agreed, serviceTerms.agreedAtDisplay)}
@@ -513,10 +516,10 @@ export function ProfileEditModal({ open, onCancel }: Props) {
               <DetailInfoForm.Field
                 label="개인정보 수집·이용 동의"
                 readOnlyDisplay
-                labelWidth={220}
+                labelWidth={180}
                 view={consentReadonlyContent(
                   personalInfoTerms.agreed,
-                  personalInfoTerms.agreedAtDisplay,
+                  personalInfoTerms.agreedAtDisplay
                 )}
               />
             </DetailInfoForm.Row>
@@ -524,7 +527,7 @@ export function ProfileEditModal({ open, onCancel }: Props) {
             <DetailInfoForm.Row type="double" className="profile-edit-modal__row">
               <DetailInfoForm.Field
                 label="마케팅 제공 동의"
-                labelWidth={220}
+                labelWidth={180}
                 readOnlyDisplay
                 view={
                   <ProfileValueSegments>
@@ -554,8 +557,8 @@ export function ProfileEditModal({ open, onCancel }: Props) {
                 }
               />
               <DetailInfoForm.Field
-                label="2단계 인증(MFA) 설정 동의"
-                labelWidth={220}
+                label="2단계 인증 설정 동의"
+                labelWidth={180}
                 readOnlyDisplay
                 view={consentReadonlyContent(mfaSetupTerms.agreed, mfaSetupTerms.agreedAtDisplay)}
               />
@@ -574,7 +577,7 @@ export function ProfileEditModal({ open, onCancel }: Props) {
         title="회원 탈퇴 안내"
         description={[
           'JA KOREA 서비스를 탈퇴하시겠습니까?',
-          '탈퇴 시 개인정보는 관련 법령 및 당사의 개인정보처리방침에 따라 삭제∙처리됩니다.',
+          '탈퇴 시 개인정보는 관련 법령 및 당사의 개인정보 처리방침에 따라 삭제∙처리됩니다.',
           '삭제된 정보는 복구할 수 없습니다. 탈퇴하시려면 로그인 비밀번호를 입력해 주세요.',
         ].join('\n')}
         width={600}

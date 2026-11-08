@@ -16,50 +16,25 @@
 }
 
 /*
- * 2행 (CMS merged-auto-fill + trailing keys 미러)
- * 상단: 필드 flex-wrap
- * 하단: trailing 필드 + 조회 (우측)
+ * 2행 마크업(head / bottom) — CMS merged-auto-fill + `mergedAutoFillInlineSearch` 미러
+ * 화면 너비에 따라 한 줄에 들어가는 필터 수가 달라져야 하므로(QA) head·bottom을 별도 줄로 나누지 않는다.
+ * 래퍼는 `display: contents`로 풀어 모든 필드 + 조회가 하나의 flex-wrap 흐름에 들어간다.
+ * - 넓으면 하단(trailing) 필드도 윗줄 빈 자리로 올라오고, 좁으면 윗줄 필드와 함께 아래로 내려간다
+ * - 조회는 마지막 줄 우측(`margin-left: auto`)
  */
 .admin-filter-area--split {
-  display: flex;
-  flex-direction: column;
-  flex-wrap: nowrap;
-  align-items: stretch;
-  gap: var(--filter-field-gap, 12px);
-}
-
-.admin-filter-area__head {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
   align-items: flex-end;
   justify-content: flex-start;
   gap: var(--filter-field-gap, 12px);
-  width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
 }
 
-.admin-filter-area__bottom {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--filter-field-gap, 12px);
-  width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-}
-
+.admin-filter-area__head,
+.admin-filter-area__bottom,
 .admin-filter-area__bottom-fields {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: var(--filter-field-gap, 12px);
-  flex: 1 1 auto;
-  min-width: 0;
+  display: contents;
 }
 
 .admin-filter-area--split .admin-filter-area__actions {
@@ -269,11 +244,6 @@
     min-width: 0;
     max-width: none;
     flex: 1 1 auto;
-  }
-
-  .admin-filter-area--split .admin-filter-area__bottom {
-    flex-direction: column;
-    align-items: stretch;
   }
 
   .admin-filter-area--split .admin-filter-area__actions {
