@@ -336,32 +336,35 @@ export function AwardPanel() {
         title: '상명',
         dataIndex: 'title',
         key: 'title',
+        // 시안(Figma 27:39925, 표 1538): 선택 60 · No. 80 · 공개 100 · 상명 526 · 수여 기관명 272 · 수상일 160 · 작성일시 200 · 관리 140
+        // 상명은 폭 미지정 — 남는 폭(시안 기준 526)을 흡수
         ellipsis: true,
       },
       {
         title: '수여 기관명',
         dataIndex: 'organization',
         key: 'organization',
+        width: 272,
         ellipsis: true,
       },
       {
         title: '수상일',
         key: 'awardedOn',
-        width: 120,
+        width: 160,
         align: 'center',
         render: (_v, record) => formatYmdDot(record.awardedOn),
       },
       {
         title: '작성일시',
         key: 'createdAt',
-        width: 160,
+        width: 200,
         align: 'center',
         render: (_v, record) => formatCreatedDateTime(record.createdAt),
       },
       {
         title: '관리',
         key: 'actions',
-        width: 120,
+        width: 140,
         align: 'center',
         render: (_v, record) => (
           <CmsButton
@@ -494,7 +497,7 @@ export function AwardPanel() {
       >
         <div className="hac-panel__table-scroll">
           <CmsDataTable<AwardItem>
-            className="cms-data-table"
+            className="cms-data-table hac-table"
             rowKey="id"
             loading={listQuery.isLoading}
             columns={columns}

@@ -106,10 +106,11 @@
   text-align: left;
 }
 
-/* 수정 중 FileSelect만 상단 정렬 (다줄 가이드) */
+/* 수정 중 FileSelect만 상단 정렬 (다줄 가이드) · 파일 칸 여백 12×16 (Figma 2118:152691 Table / Common / Cell / File) */
 .program-intro-card .detail-info-form__field-content--edit:has(.file-select-field) {
   align-items: flex-start;
   align-content: flex-start;
+  padding: 12px 16px;
 }
 
 /* DetailInfoForm edit 자식 */

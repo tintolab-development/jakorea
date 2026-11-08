@@ -48,6 +48,12 @@
   min-width: 0;
 }
 
+/* 로고 파일 칸 — Figma 2100:91656 Table / Common / Cell / File 여백 12×16 */
+.footer-org-section .detail-info-form__field-content--edit:has(.footer-org-section__image-row) {
+  padding: 12px 16px !important;
+  padding-block: 12px !important;
+}
+
 /* logo/FileSelect 행: 값 영역 상단 정렬 */
 .footer-org-section
   .detail-info-form__row--single

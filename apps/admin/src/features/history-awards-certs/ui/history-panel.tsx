@@ -343,7 +343,7 @@ export function HistoryPanel() {
       {
         title: '연혁 연도/월',
         key: 'yearMonth',
-        width: 120,
+        width: 240,
         align: 'center',
         render: (_v, record) => formatYearMonth(record.year, record.month),
       },
@@ -351,19 +351,21 @@ export function HistoryPanel() {
         title: '내용',
         dataIndex: 'content',
         key: 'content',
+        // 시안(Figma 2094:131215, 표 1538): 선택 60 · No. 80 · 공개 100 · 연도/월 240 · 내용 718 · 작성일시 200 · 관리 140
+        // 내용은 폭 미지정 — 남는 폭(시안 기준 718)을 흡수
         ellipsis: true,
       },
       {
         title: '작성일시',
         key: 'createdAt',
-        width: 160,
+        width: 200,
         align: 'center',
         render: (_v, record) => formatCreatedDateTime(record.createdAt),
       },
       {
         title: '관리',
         key: 'actions',
-        width: 120,
+        width: 140,
         align: 'center',
         render: (_v, record) => (
           <CmsButton
@@ -408,10 +410,10 @@ export function HistoryPanel() {
                 ]}
               />
             </div>
-            <div className="admin-filter-area__field admin-filter-area__field--address-region">
+            <div className="admin-filter-area__field admin-filter-area__field--select-pair">
               <p className="admin-filter-area__label">연혁 연도/월</p>
               <div
-                className="admin-filter-area__address-region-selects"
+                className="admin-filter-area__select-pair"
                 role="group"
                 aria-label="연혁 연도/월"
               >
@@ -494,7 +496,7 @@ export function HistoryPanel() {
       >
         <div className="hac-panel__table-scroll">
           <CmsDataTable<HistoryItem>
-            className="cms-data-table"
+            className="cms-data-table hac-table"
             rowKey="id"
             loading={listQuery.isLoading}
             columns={columns}

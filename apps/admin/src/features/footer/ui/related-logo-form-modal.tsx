@@ -14,6 +14,7 @@ import {
   ContentModal,
   REQUIRED_FIELDS_INCOMPLETE_ALERT,
   FileSelectField,
+  ThumbnailPlaceholder,
   FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
   isFileSelectTotalSizeExceeded,
   notifyFileSelectTotalSizeExceeded,
@@ -59,28 +60,6 @@ function readFileAsDataUrl(file: File): Promise<string> {
   })
 }
 
-function ImagePlaceholderIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="48"
-      height="48"
-      viewBox="0 0 48 48"
-      fill="none"
-      aria-hidden
-    >
-      <rect x="6" y="10" width="36" height="28" rx="3" stroke="#BDBDBD" strokeWidth="2" />
-      <circle cx="17" cy="20" r="3" fill="#BDBDBD" />
-      <path
-        d="M8 32L18 24L24 29L32 20L40 32"
-        stroke="#BDBDBD"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
 
 export type RelatedLogoFormValues = {
   isActive: boolean
@@ -277,12 +256,12 @@ export function RelatedLogoFormModal({
             label="로고 이미지"
             view={null}
             edit={
-              <div className="footer-related-logo-form-modal__image-row">
-                <div className="footer-related-logo-form-modal__preview">
-                  {logoUrl ? <img src={logoUrl} alt="로고 미리보기" /> : <ImagePlaceholderIcon />}
+              /* Figma 36:65433 Table / Common / Cell / File — 미리보기 72·모서리 8·흰 배경·간격 12 (공통 파일 칸) */
+              <div className="file-select-image-cell">
+                <div className="file-select-image-cell__preview">
+                  {logoUrl ? <img src={logoUrl} alt="로고 미리보기" /> : <ThumbnailPlaceholder />}
                 </div>
                 <FileSelectField
-                  className="footer-related-logo-form-modal__file-field"
                   multiple={false}
                   accept={IMAGE_ACCEPT}
                   buttonLabel="파일 추가"
