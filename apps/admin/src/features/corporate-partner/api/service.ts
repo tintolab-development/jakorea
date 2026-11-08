@@ -2,6 +2,7 @@ import axios from 'axios';
 import type { CorporatePartner, CorporatePartnerCreateInput, CorporatePartnerListFilter, CorporatePartnerListResult, CorporatePartnerUpdateInput, } from '@/entities/corporate-partner/model/types';
 import { getJAKoreaHomepageAdminAPISponsorshipSubset } from '@/shared/api/generated/sponsorship/sponsorship-api';
 import { isOptimisticLockConflictError } from '@/shared/lib/api-error-message';
+import { toAdminListPage, type AdminListPage } from '@/shared/lib/admin-infinite-list';
 import { LIST_PAGE_SIZE, mapSponsorListItemToDomain, mapSponsorResponseToDomain, toBulkDeleteRequest, toPublishedToggleRequest, toSponsorCreateRequest, toSponsorListParams, toSponsorUpdateRequest, } from './mappers';
 import { uploadSponsorLogoAsset } from './upload-logo';
 function sponsorshipApi() {
@@ -92,8 +93,10 @@ async function resolveLogoAssetIdForUpdate(current: CorporatePartner, patch: Cor
 function resolveCurrentRow(id: string, cachedRows?: CorporatePartner[]): CorporatePartner | undefined {
     return cachedRows?.find(row => row.id === id);
 }
-export async function listCorporatePartnersService(filter?: CorporatePartnerListFilter): Promise<CorporatePartnerListResult> {
-    return listRemotePartners(filter);
+export async function listCorporatePartnersPageService(filter: CorporatePartnerListFilter | undefined, page: number): Promise<AdminListPage<CorporatePartner>> {
+    const response = await sponsorshipApi().list2(toSponsorListParams({ ...filter, page }));
+    const items = sortPartnersByOrder((response.items ?? []).map(mapSponsorListItemToDomain));
+    return toAdminListPage(items, page, response);
 }
 export async function countCorporatePartnersService(): Promise<number> {
     const response = await listRemotePartners();

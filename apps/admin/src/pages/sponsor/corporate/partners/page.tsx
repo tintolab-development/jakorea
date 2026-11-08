@@ -2,7 +2,7 @@
  * 후원사 목록 관리
  */
 
-import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
+import { useCallback, useMemo, useState, type Key } from 'react'
 import type { Dayjs } from 'dayjs'
 import { Switch } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
@@ -19,7 +19,6 @@ import {
   useSetCorporatePartnerPublic,
   useUpdateCorporatePartner,
 } from '@/features/corporate-partner/api/hooks'
-import { LIST_PAGE_SIZE } from '@/features/corporate-partner/api/mappers'
 import { corporatePartnerQueryKeys } from '@/features/corporate-partner/api/query-keys'
 import { CORPORATE_PARTNERS_CHANGED_EVENT } from '@/features/corporate-partner/api/store'
 import { corporatePartnerMutationFailureAlert } from '@/features/corporate-partner/lib/mutation-failure-alert'
@@ -41,6 +40,7 @@ import {
   CMS_TABLE_USAGE_COL_CLASS,
   TABLE_COLUMN_WIDTHS,
 } from '@/shared/constants/table'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
 import type { TableSearchParamRule } from '@/shared/lib/use-table-search'
@@ -53,6 +53,7 @@ import {
   ymdFromParam,
 } from '@/shared/lib/url-date-range-pending-sync'
 import {
+  AdminInfiniteTableFooter,
   CmsButton,
   CmsDateRangePicker,
   AdminFilterTextInput,
@@ -175,7 +176,6 @@ export function CorporatePartnersPage() {
     },
   })
 
-  const [listPage, setListPage] = useState(0)
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [formOpen, setFormOpen] = useState(false)
   const [formMode, setFormMode] = useState<'create' | 'edit'>('create')
@@ -191,24 +191,7 @@ export function CorporatePartnersPage() {
     )
   }, [appliedFilter])
 
-  const listFilter = useMemo(
-    () => ({ ...appliedFilter, page: listPage }),
-    [appliedFilter, listPage],
-  )
-  const appliedFilterKey = useMemo(
-    () =>
-      JSON.stringify({
-        isPublic: appliedFilter.isPublic ?? '',
-        name: appliedFilter.name ?? '',
-        from: appliedFilter.registeredFrom ?? '',
-        to: appliedFilter.registeredTo ?? '',
-      }),
-    [appliedFilter],
-  )
-
-  useEffect(() => {
-    setListPage(0)
-  }, [appliedFilterKey])
+  const listFilter = appliedFilter
 
   const listQuery = useCorporatePartnersList(listFilter)
   /**
@@ -227,17 +210,22 @@ export function CorporatePartnersPage() {
   const setPublicMutation = useSetCorporatePartnerPublic(listFilter)
 
   const rows = useMemo(() => {
-    const items = listQuery.data?.items ?? []
-    return [...items].sort((a, b) => a.sortOrder - b.sortOrder)
-  }, [listQuery.data?.items])
-  const totalCount = listQuery.data?.totalCount ?? 0
-  const allCount = hasActiveFilter ? (unfilteredCountQuery.data?.totalCount ?? 0) : totalCount
+    return [...listQuery.rows].sort((a, b) => a.sortOrder - b.sortOrder)
+  }, [listQuery.rows])
+  const totalCount = listQuery.totalCount
+  const allCount = hasActiveFilter ? unfilteredCountQuery.totalCount : totalCount
+
+  const { sentinelRef } = useGatedInfiniteScroll({
+    hasNextPage: listQuery.hasNextPage,
+    isFetchingNextPage: listQuery.isFetchingNextPage,
+    fetchNextPage: listQuery.fetchNextPage,
+    resetKey: JSON.stringify(appliedFilter),
+  })
 
   useInvalidateOnWindowEvent(CORPORATE_PARTNERS_CHANGED_EVENT, corporatePartnerQueryKeys.lists())
 
   const handleSearch = useCallback(() => {
     applySearch()
-    setListPage(0)
     setSelectedRowKeys([])
   }, [applySearch])
 
@@ -346,7 +334,7 @@ export function CorporatePartnersPage() {
         width: TABLE_COLUMN_WIDTHS.index,
         className: CMS_TABLE_NO_COL_CLASS,
         align: 'center',
-        render: (_value, _record, index) => listPage * LIST_PAGE_SIZE + index + 1,
+        render: (_value, _record, index) => index + 1,
       },
       {
         title: '공개 여부',
@@ -411,7 +399,7 @@ export function CorporatePartnersPage() {
         ),
       },
     ],
-    [handleTogglePublic, listPage, openEdit, setPublicMutation.isPending]
+    [handleTogglePublic, openEdit, setPublicMutation.isPending]
   )
 
   const formLoading = formMode === 'edit' ? updateMutation.isPending : createMutation.isPending
@@ -503,21 +491,14 @@ export function CorporatePartnersPage() {
           loading={listQuery.isLoading || reorderMutation.isPending}
           disabled={reorderMutation.isPending}
           onRowsReorder={handleRowsReorder}
-          pagination={{
-            current: listPage + 1,
-            pageSize: LIST_PAGE_SIZE,
-            total: totalCount,
-            showSizeChanger: false,
-            hideOnSinglePage: true,
-            onChange: current => {
-              setListPage(Math.max(0, (current ?? 1) - 1))
-              setSelectedRowKeys([])
-            },
-          }}
           rowSelection={{
             selectedRowKeys,
             onChange: keys => setSelectedRowKeys(keys),
           }}
+        />
+        <AdminInfiniteTableFooter
+          sentinelRef={sentinelRef}
+          isFetchingNextPage={listQuery.isFetchingNextPage}
         />
       </FilterTableLayout>
 
