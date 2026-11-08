@@ -4,11 +4,13 @@ import { ApprovalStatusText } from '@/shared/components/approval-status-text'
 import type { ApprovalStatusKey } from '@/shared/components/approval-status-badge'
 import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
 import type { InstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
-import { getInstitutionApplicationSessionsTableSlice } from '@/features/program/general/lib/institution-application-session-display'
 import { PARTICIPANT_APPLICANT_NAME_COL_WIDTH } from '@/features/program/general/lib/participant-screening-table-widths'
 import { prepareGeneralEducationScheduleSessions } from '@/features/program/general/lib/participating-school-session-display'
-import { generalEducationScheduleShapeFromBridge } from './applicants-detail-session-format'
-import { GeneralDetailSessionLine } from './general-detail-session-line'
+import {
+  formatGeneralDetailSessionLine,
+  generalEducationScheduleShapeFromBridge,
+} from './applicants-detail-session-format'
+import { ScheduleLinesCell } from '@/features/program/shared/ui/schedule-lines-cell'
 
 /** 기관 신청 목록(general-detail)과 동일한 여유 폭 */
 const GENERAL_DETAIL_INDIVIDUAL_AFFILIATION_COL_WIDTH = 200
@@ -114,27 +116,14 @@ export function useGeneralIndividualApplicantColumns(
                 educationScheduleLines ?? programBridge?.educationScheduleLines,
             }
           )
-          if (sessions.length === 0) return '-'
-          const { displaySessions, restCount } =
-            getInstitutionApplicationSessionsTableSlice(sessions)
-          return (
-            <div className="applicant-details__sessions-cell">
-              {displaySessions.map(s => (
-                <div key={s.round} className="applicant-details__session-line">
-                  <GeneralDetailSessionLine
-                    session={s}
-                    bridge={programBridge}
-                    detailScheduleTimeSpan={detailScheduleTimeSpan}
-                    curriculumSessionLabels={curriculumSessionLabels}
-                    preferFormOptionLabel
-                  />
-                </div>
-              ))}
-              {restCount > 0 && (
-                <div className="applicant-details__session-more">외 {restCount}개의 교육 일정</div>
-              )}
-            </div>
+          const lines = sessions.map(s =>
+            formatGeneralDetailSessionLine(s, programBridge, {
+              detailScheduleTimeSpan,
+              curriculumSessionLabels,
+              preferFormOptionLabel: true,
+            })
           )
+          return <ScheduleLinesCell lines={lines} />
         },
       },
     ]

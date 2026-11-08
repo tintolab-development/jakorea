@@ -1,0 +1,58 @@
+/*
+ * 테이블 일정 셀 — schedule-lines-cell.tsx
+ * 바깥(flex center)이 열 가운데에 블록을 두고, 블록 안 줄은 좌측 정렬.
+ * 블록 폭 = 가장 긴 줄 → 긴 줄 기준 중앙 정렬.
+ */
+.schedule-lines-cell {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.schedule-lines-cell__block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+  text-align: left;
+  line-height: 150%;
+  /* 시각 숫자 폭 고정 → 줄마다 디바이더 위치가 맞음 */
+  font-variant-numeric: tabular-nums;
+}
+
+.schedule-lines-cell__line {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.schedule-lines-cell__line > span {
+  flex-shrink: 0;
+}
+
+.schedule-lines-cell__line > span:last-child {
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 차시·회차 구분 디바이더 — 양옆 16px */
+.schedule-lines-cell__line > .program-detail-td-divider {
+  margin: 0 16px;
+}
+
+.schedule-lines-cell__more {
+  color: var(--default-BK, #3d3d3d);
+  opacity: 0.5;
+  white-space: nowrap;
+}

@@ -1,4 +1,6 @@
 import type { ColumnsType } from 'antd/es/table'
+import { ScheduleLinesCell } from '@/features/program/shared/ui/schedule-lines-cell'
+import { formatScheduleColumnTitle } from '@/features/program/ujat/ui/detail-modal/application-institution/education-schedule'
 import {
   UJAT_EDU_PROGRESS_INSTITUTION_GRADE_LABELS,
   type UjatEducationProgressInstitutionRow,
@@ -11,11 +13,12 @@ function renderGradeCell(count: number) {
   return `${count}학급`
 }
 
-function renderEducationScheduleCell(value: string) {
+/** 교육 진행 일정 — 공통 일정 셀 (일정당 한 줄·최대 3줄·블록 중앙) */
+function renderEducationScheduleCell(record: UjatEducationProgressInstitutionRow) {
   return (
-    <div className="ujat-education-progress-institutions__schedule-cell">
-      <span className="ujat-education-progress-institutions__schedule-text">{value || '-'}</span>
-    </div>
+    <ScheduleLinesCell
+      lines={record.educationScheduleIsoDates.map(formatScheduleColumnTitle)}
+    />
   )
 }
 
@@ -59,7 +62,7 @@ export function buildUjatEducationProgressInstitutionColumns(): ColumnsType<Ujat
       width: 320,
       align: 'center',
       className: 'ujat-education-progress-institutions__cell-education-schedule',
-      render: (value: string) => renderEducationScheduleCell(value),
+      render: (_: string, record) => renderEducationScheduleCell(record),
     },
     ...gradeColumns,
     {

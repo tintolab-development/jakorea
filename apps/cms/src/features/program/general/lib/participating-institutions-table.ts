@@ -20,19 +20,6 @@ export function participatingScheduleTableColumnLayout() {
 /** 교재 배송 현황 테이블 열 최소 폭 */
 export const PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_COLUMN_WIDTH = 140
 
-/** 교재 배송 현황 StatusDropdownCell 배지 폭 (editable-status-badge 스펙) */
-export const PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_DROPDOWN_BADGE_WIDTH = 100
-
-/** StatusDropdownCell `style` — 배지 100×32, max-width 200 (tag100 레이아웃과 병행) */
-export const PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_DROPDOWN_STYLE = {
-  width: PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_DROPDOWN_BADGE_WIDTH,
-  minWidth: PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_DROPDOWN_BADGE_WIDTH,
-  maxWidth: 200,
-  height: 32,
-  minHeight: 32,
-  maxHeight: 32,
-} as const
-
 /** 교육 학급 수 열 폭 (헤더 잘림 방지) */
 export const PARTICIPATING_INSTITUTIONS_CLASS_COUNT_COLUMN_WIDTH = 112
 

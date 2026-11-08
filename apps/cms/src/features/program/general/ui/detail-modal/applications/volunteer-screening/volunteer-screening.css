@@ -127,6 +127,26 @@
 }
 
 /*
+ * 면접 미진행(봉사자 신청 목록) — 래퍼 폭 채움.
+ * 열 합계(--general-doc-screening-table-width)는 최소폭.
+ * 선택·No. 를 뺀 열은 균등 분배 → 공통 열 고정 폭(!important) 해제.
+ */
+.general-volunteer-screening__table-wrap--fluid .general-volunteer-screening__table table.ant-table {
+  width: 100% !important;
+}
+
+.general-volunteer-screening__table-wrap--fluid th.general-volunteer-screening__col-name,
+.general-volunteer-screening__table-wrap--fluid td.general-volunteer-screening__col-name,
+.general-volunteer-screening__table-wrap--fluid th.general-volunteer-screening__col-contact,
+.general-volunteer-screening__table-wrap--fluid td.general-volunteer-screening__col-contact,
+.general-volunteer-screening__table-wrap--fluid th.general-volunteer-screening__col-email,
+.general-volunteer-screening__table-wrap--fluid td.general-volunteer-screening__col-email {
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+}
+
+/*
  * 1차 서류 심사 — 좌측 고정 열(선택·No.·신청 봉사자명):
  * 가로 스크롤·행 hover 시 본문 텍스트가 고정 열 아래로 비치지 않도록
  * (background + background-color 동시 지정: cms-data-table이 background-color !important 사용)
@@ -422,7 +442,7 @@ td.general-volunteer-screening__essay-cell .general-volunteer-screening__essay-t
   color: #777;
 }
 
-/* 담당자 평가 StatusDropdownCell — UJAT 서류 심사 대상자 컬럼과 동일 배지 톤 */
+/* 담당자 평가 StatusDropdownCell 열 — 셀 패딩만 (태그·트리거 크기는 공통 정본) */
 .general-volunteer-screening .ant-table-tbody
   > tr:has(td.general-volunteer-screening__manager-eval-dropdown-cell)
   > td.general-volunteer-screening__manager-eval-dropdown-cell {
@@ -446,14 +466,6 @@ td.general-volunteer-screening__essay-cell .general-volunteer-screening__essay-t
   max-width: 200px !important;
   padding-left: 0 !important;
   padding-right: 0 !important;
-}
-
-.general-volunteer-screening
-  .status-dropdown-cell__dropdown-overlay.status-dropdown-cell__dropdown-overlay--cell-style
-  .ant-dropdown-menu {
-  min-width: 216px !important;
-  width: 216px !important;
-  max-width: 216px !important;
 }
 
 /* 풀페이지 상세 — cms-data-table 전역 52px보다 서술형 행 우선 */

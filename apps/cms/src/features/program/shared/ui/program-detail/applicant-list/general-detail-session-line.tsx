@@ -8,6 +8,7 @@ import {
   type ApplicantSessionLineInput,
 } from './applicants-detail-session-format'
 import type { InstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
+import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import './general-detail-session-line.css'
 
 export function GeneralDetailSessionLine({
@@ -29,9 +30,5 @@ export function GeneralDetailSessionLine({
     preferFormOptionLabel,
   })
   if (!line) return <>-</>
-  return (
-    <div className="general-detail-session-line">
-      <span>{line}</span>
-    </div>
-  )
+  return <div className="general-detail-session-line">{renderProgramDetailPipeSeparated(line)}</div>
 }

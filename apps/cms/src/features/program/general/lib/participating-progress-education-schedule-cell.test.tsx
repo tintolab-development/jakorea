@@ -8,6 +8,13 @@ import type { SessionProgress } from '@/shared/api/generated/dashboard/schemas/s
 import { formatParticipatingSchoolSessionLine } from './participating-school-session-display'
 import { formatEducationRoundSessionLabel } from '@/shared/lib/education-schedule-name'
 
+const LINE_SELECTOR = '.schedule-lines-cell__line'
+
+/** 일정 줄은 디바이더로 쪼개 렌더 — 원문은 줄 title 로 확인 */
+function findLineByTitle(title: string): Element | null {
+  return document.querySelector(`${LINE_SELECTOR}[title="${title}"]`)
+}
+
 function session(overrides: Partial<ParticipatingSchoolSession> = {}): ParticipatingSchoolSession {
   return {
     round: 1,
@@ -43,7 +50,7 @@ describe('ParticipatingProgressEducationScheduleCell', () => {
         sessions={[session({ sessionNo: 1, round: 1 })]}
       />
     )
-    expect(screen.getByText('2026.04.20(월) 09:30 ~ 12:20 | 1회차')).toBeTruthy()
+    expect(findLineByTitle('2026.04.20(월) 09:30 ~ 12:20 | 1회차')).toBeTruthy()
     expect(screen.queryByText(/사전교육/)).toBeNull()
   })
 
@@ -62,12 +69,12 @@ describe('ParticipatingProgressEducationScheduleCell', () => {
         ]}
       />
     )
-    expect(screen.getByText('2026.04.20(월) 09:30 ~ 12:20 | 1회차')).toBeTruthy()
-    expect(screen.getByText('2026.04.27(월) 13:30 ~ 15:20 | 2회차')).toBeTruthy()
+    expect(findLineByTitle('2026.04.20(월) 09:30 ~ 12:20 | 1회차')).toBeTruthy()
+    expect(findLineByTitle('2026.04.27(월) 13:30 ~ 15:20 | 2회차')).toBeTruthy()
     expect(screen.queryByText(/외 /)).toBeNull()
   })
 
-  it('3. 사전교육 없음 + 본교육 5회차 — 전부 표시하고 slice 하지 않는다', () => {
+  it('3. 사전교육 없음 + 본교육 5회차 — 최대 3줄: 앞 2건 + 외 3개', () => {
     const sessions = [1, 2, 3, 4, 5].map(n =>
       session({ sessionNo: n, round: n, resolvedScheduleId: n, date: `2026.04.2${n}` })
     )
@@ -75,10 +82,10 @@ describe('ParticipatingProgressEducationScheduleCell', () => {
       <ParticipatingProgressEducationScheduleCell sessions={sessions} />
     )
     expect(container.textContent).toContain('1회차')
-    expect(container.textContent).toContain('5회차')
-    expect(container.querySelectorAll('.participating-institutions-section__session-line')).toHaveLength(
-      5
-    )
+    expect(container.textContent).toContain('2회차')
+    expect(container.textContent).not.toContain('5회차')
+    expect(container.querySelectorAll(LINE_SELECTOR)).toHaveLength(2)
+    expect(container.textContent).toContain('외 3개의 교육 일정')
   })
 
   it('4. 사전교육 있음 + 본교육 3회차', () => {
@@ -101,10 +108,8 @@ describe('ParticipatingProgressEducationScheduleCell', () => {
     )
     expect(container.textContent).toContain('사전교육')
     expect(container.textContent).toContain('1회차')
-    expect(container.textContent).toContain('3회차')
-    expect(container.querySelectorAll('.participating-institutions-section__session-line')).toHaveLength(
-      4
-    )
+    expect(container.querySelectorAll(LINE_SELECTOR)).toHaveLength(2)
+    expect(container.textContent).toContain('외 2개의 교육 일정')
   })
 
   it('5. 사전교육 있음 + 본교육 10회차', () => {
@@ -123,10 +128,8 @@ describe('ParticipatingProgressEducationScheduleCell', () => {
     const { container } = render(
       <ParticipatingProgressEducationScheduleCell sessions={sessions} />
     )
-    expect(container.querySelectorAll('.participating-institutions-section__session-line')).toHaveLength(
-      11
-    )
-    expect(container.textContent).toContain('10회차')
+    expect(container.querySelectorAll(LINE_SELECTOR)).toHaveLength(2)
+    expect(container.textContent).toContain('외 9개의 교육 일정')
   })
 
   it('6. 회차별 차시가 모두 다르다', () => {
@@ -163,7 +166,7 @@ describe('ParticipatingProgressEducationScheduleCell', () => {
         ]}
       />
     )
-    expect(container.querySelectorAll('.participating-institutions-section__session-line')).toHaveLength(
+    expect(container.querySelectorAll(LINE_SELECTOR)).toHaveLength(
       2
     )
     expect(container.textContent).toContain('1회차')
@@ -227,7 +230,7 @@ describe('ParticipatingProgressEducationScheduleCell', () => {
         ]}
       />
     )
-    expect(container.querySelectorAll('.participating-institutions-section__session-line')).toHaveLength(
+    expect(container.querySelectorAll(LINE_SELECTOR)).toHaveLength(
       2
     )
   })
@@ -238,7 +241,7 @@ describe('ParticipatingProgressEducationScheduleCell', () => {
         sessions={[session({ sessionNo: 2, round: 2, classNum: '2교시' })]}
       />
     )
-    expect(screen.getByText('2026.04.20(월) 09:30 ~ 12:20 | 2회차')).toBeTruthy()
+    expect(findLineByTitle('2026.04.20(월) 09:30 ~ 12:20 | 2회차')).toBeTruthy()
     expect(screen.queryByText(/차시/)).toBeNull()
   })
 

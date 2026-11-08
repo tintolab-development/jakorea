@@ -22,7 +22,7 @@ import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
-import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
+import { ScheduleLinesCell } from '@/features/program/shared/ui/schedule-lines-cell'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import {
   buildInitialVolunteerAssignedRows,
@@ -46,35 +46,16 @@ import './participating-institutions-section.css'
 import './participating-volunteer-assignment-section.css'
 
 function renderVolunteerScheduleLines(lines: string[]) {
-  if (lines.length === 0) return <>-</>
-  const total = lines.length
-  const showCount = total <= 3 ? total : 2
-  const displayLines = lines.slice(0, showCount)
-  const restCount = total - showCount
   return (
-    <div className="participating-institutions-section__sessions-cell">
-      {displayLines.map((line, index) => (
-        <div key={`${line}-${index}`} className="participating-institutions-section__session-line">
-          {renderProgramDetailPipeSeparated(formatCmsScheduleDisplayLabel(line))}
-        </div>
-      ))}
-      {restCount > 0 ? (
-        <div className="participating-institutions-section__session-more">
-          외 {restCount}개의 봉사 일정
-        </div>
-      ) : null}
-    </div>
+    <ScheduleLinesCell
+      lines={lines.map(line => formatCmsScheduleDisplayLabel(line))}
+      moreUnit="봉사 일정"
+    />
   )
 }
 
 function renderHopeScheduleLine(line: string) {
-  return (
-    <div className="participating-institutions-section__sessions-cell">
-      <div className="participating-institutions-section__session-line">
-        {renderProgramDetailPipeSeparated(formatCmsScheduleDisplayLabel(line))}
-      </div>
-    </div>
-  )
+  return <ScheduleLinesCell lines={[formatCmsScheduleDisplayLabel(line)]} />
 }
 
 /** 추가 배정 — Figma CMS 9760:8214 ‘기관 추가 배정 안내’ (C: 기관형 참여 봉사자) */

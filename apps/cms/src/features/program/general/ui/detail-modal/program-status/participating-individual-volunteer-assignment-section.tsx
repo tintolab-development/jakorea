@@ -17,7 +17,7 @@ import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
-import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
+import { ScheduleLinesCell } from '@/features/program/shared/ui/schedule-lines-cell'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import {
   PARTICIPATING_INDIVIDUAL_VOLUNTEER_ASSIGNED_SCHEDULE_EXCEL_COLUMNS,
@@ -69,13 +69,7 @@ const ASSIGNED_EMPTY_TEXT = '배정된 봉사 일정이 없습니다.'
 const WAITING_EMPTY_TEXT = '배정 대기 중인 봉사 일정이 없습니다.'
 
 function renderScheduleCell(label: string) {
-  return (
-    <div className="participating-institutions-section__sessions-cell">
-      <div className="participating-institutions-section__session-line">
-        {renderProgramDetailPipeSeparated(formatCmsScheduleDisplayLabel(label))}
-      </div>
-    </div>
-  )
+  return <ScheduleLinesCell lines={[formatCmsScheduleDisplayLabel(label)]} />
 }
 
 export interface ParticipatingIndividualVolunteerAssignmentSectionProps {
