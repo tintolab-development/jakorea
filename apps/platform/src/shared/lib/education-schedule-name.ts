@@ -32,6 +32,32 @@ export function toDisplayEducationScheduleName(
 }
 
 /**
+ * 일반 기관형 기관 신청 승인 시 서버가 만든 기관 전용 일정(APPLICATION_MATERIALIZED)의
+ * 내부 일정명(`기관 확정 2026-11-09`). 기관명·일정명으로 화면에 노출하지 않는다.
+ */
+const AUTO_MATERIALIZED_SCHEDULE_NAME_RE = /^기관\s*확정\s*\d{4}-\d{2}-\d{2}$/u
+
+export function isAutoMaterializedScheduleName(value: string | null | undefined): boolean {
+  const trimmed = typeof value === 'string' ? value.trim() : ''
+  return trimmed.length > 0 && AUTO_MATERIALIZED_SCHEDULE_NAME_RE.test(trimmed)
+}
+
+/**
+ * 라벨(`기관명 | 일시 | 기관 확정 YYYY-MM-DD`)에서 내부 일정명 구간만 제거한다.
+ * 구버전 응답·이미 저장된 신청 문구(answer_display_text 등) 대비. 라벨 전체가 내부 일정명이면 빈 문자열.
+ */
+export function stripAutoMaterializedScheduleNameFromLabel(
+  label: string | null | undefined,
+): string {
+  const trimmed = typeof label === 'string' ? label.trim() : ''
+  if (!trimmed) return ''
+  return trimmed
+    .split(/\s*\|\s*/u)
+    .filter(segment => !isAutoMaterializedScheduleName(segment))
+    .join(' | ')
+}
+
+/**
  * 서버가 조합한 일정 라벨(`일시 | 일정명`)에서 자동 기본명 구간만 제거한다.
  * 라벨 전체가 기본명이면 빈 문자열.
  */

@@ -313,3 +313,109 @@ describe('instructor/volunteer available schedule runtime options', () => {
     )
   })
 })
+
+describe('기관 확정 일정 선택지 (APPLICATION_MATERIALIZED)', () => {
+  const osaItem = (overrides: Record<string, unknown> = {}) => ({
+    id: 'schedule:187748:organization-application:1691634',
+    label: '계남중학교 | 26년 11월 9일(월) 09:00 ~ 10:00',
+    scheduleId: 187748,
+    organizationApplicationId: 1691634,
+    organizationId: 190136,
+    organizationName: '계남중학교',
+    scheduleName: '기관 확정 2026-11-09',
+    timeRange: '09:00 ~ 10:00',
+    startAt: '2026-11-09T00:00:00Z',
+    endAt: '2026-11-09T01:00:00Z',
+    ...overrides,
+  })
+
+  it('새 응답: 장소는 organizationName, 시각은 timeRange(서울), 내부 일정명은 노출하지 않는다', () => {
+    const slot = readRuntimeInstructorScheduleSlots({ runtimeResolved: true, items: [osaItem()] })?.[0]
+    expect(slot?.id).toBe('schedule:187748:organization-application:1691634')
+    expect(slot?.dateKey).toBe('2026-11-09')
+    expect(slot?.title).toBe('계남중학교')
+    expect(slot?.detail).toBe('09:00 ~ 10:00')
+    expect(slot?.label).not.toContain('기관 확정')
+    const summary = slot ? formatApplyScheduleSummarySegment(slot) : ''
+    expect(summary).toContain('계남중학교')
+    expect(summary).toContain('09:00 ~ 10:00')
+    expect(summary).not.toContain('기관 확정')
+  })
+
+  it('QA 사례: 00:00 ~ 01:00 KST 일정은 해당 날짜 00:00 ~ 01:00으로 표시한다', () => {
+    const slot = readRuntimeInstructorScheduleSlots({
+      runtimeResolved: true,
+      items: [
+        osaItem({
+          label: '계남중학교 | 26년 11월 9일(월) 00:00 ~ 01:00',
+          timeRange: '00:00 ~ 01:00',
+          startAt: '2026-11-08T15:00:00Z',
+          endAt: '2026-11-08T16:00:00Z',
+        }),
+      ],
+    })?.[0]
+    expect(slot?.dateKey).toBe('2026-11-09')
+    expect(slot?.detail).toBe('00:00 ~ 01:00')
+  })
+
+  it('timeRange가 없으면 startAt·endAt을 서울 시각으로 계산한다 (00:30 KST 경계)', () => {
+    const slot = readRuntimeInstructorScheduleSlots({
+      runtimeResolved: true,
+      items: [
+        osaItem({
+          label: '계남중학교 | 26년 11월 9일(월) 00:30 ~ 01:30',
+          timeRange: undefined,
+          startAt: '2026-11-08T15:30:00Z',
+          endAt: '2026-11-08T16:30:00Z',
+        }),
+      ],
+    })?.[0]
+    expect(slot?.dateKey).toBe('2026-11-09')
+    expect(slot?.detail).toBe('00:30 ~ 01:30')
+  })
+
+  it('구버전 응답: label 끝 `| 기관 확정 YYYY-MM-DD`를 떼고, 내부 일정명을 기관명으로 쓰지 않는다', () => {
+    const slots = readRuntimeInstructorScheduleSlots({
+      runtimeResolved: true,
+      items: [
+        osaItem({
+          label: '계남중학교 | 26년 11월 9일(월) 09:00 ~ 10:00 | 기관 확정 2026-11-09',
+          timeRange: undefined,
+        }),
+        {
+          id: 'schedule:190002',
+          label: '기관 확정 2026-11-09 | 09:00 ~ 10:00',
+          startAt: '2026-11-09T00:00:00Z',
+          endAt: '2026-11-09T01:00:00Z',
+        },
+      ],
+    })
+    expect(slots?.[0]?.label).toBe('계남중학교 | 26년 11월 9일(월) 09:00 ~ 10:00')
+    expect(slots?.[0]?.title).toBe('계남중학교')
+    expect(slots?.[0]?.detail).toBe('09:00 ~ 10:00')
+    expect(slots?.[1]?.label).not.toContain('기관 확정')
+    expect(slots?.[1]?.title ?? '').not.toContain('기관 확정')
+    expect(slots?.[1]?.detail).toBe('09:00 ~ 10:00')
+  })
+
+  it('신청 내용 조회: 기존 저장 문구의 `| 기관 확정 YYYY-MM-DD` 꼬리는 표시하지 않는다', () => {
+    const fromLabels = resolveInstructorAvailableScheduleLines({
+      answers: {
+        [instructorKey]: {
+          selectedSlotIds: ['schedule:187748:organization-application:1691636'],
+          selectedLabels: ['계남중학교 | 26년 11월 9일(월) 00:00 ~ 01:00 | 기관 확정 2026-11-09'],
+        },
+      },
+    })
+    expect(fromLabels.length).toBe(1)
+    expect(fromLabels[0]).toContain('계남중학교')
+    expect(fromLabels[0]).toContain('00:00 ~ 01:00')
+    expect(fromLabels[0]).not.toContain('기관 확정')
+
+    const fromStored = resolveInstructorAvailableScheduleLines({
+      preferredEducationScheduleLabel:
+        '2026년 11월 9일(월) 00:00 ~ 01:00 | 계남중학교 | 기관 확정 2026-11-09',
+    })
+    expect(fromStored).toEqual(['2026년 11월 9일(월) 00:00 ~ 01:00 | 계남중학교'])
+  })
+})
