@@ -17,7 +17,6 @@ import {
 import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
 import type { ApplicantInstructorEditDraft } from '@/features/program/general/lib/applicant-instructor-detail-edit'
-import { formatJaEvaluationGradeCellDisplay } from '@/features/program/general/lib/ja-evaluation-grade-display'
 import {
   BusinessIncomeEditField,
   BusinessIncomeView,
@@ -34,6 +33,7 @@ import {
   InstructorBasicInfoDetailForm,
 } from './instructor-basic-info-detail-form'
 import './applicant-general-instructor-basic-info.css'
+import { InstructorJaGradeField } from '../../instructor-ja-grade-field'
 
 export interface ApplicantGeneralInstructorBasicInfoProps {
   instructor: ApplicantInstructorRow
@@ -130,8 +130,6 @@ export function ApplicantGeneralInstructorBasicInfo({
 
   const emailDisplay = displayServerPiiAsIs(instructor.email)
 
-  const evaluationGradeDisplay = formatJaEvaluationGradeCellDisplay(instructor.evaluationGrade)
-
   const lectureFeeView = <LectureFeeBasisView instructor={instructor} />
   const lectureFeeEdit =
     isEditMode && draft && onDraftChange ? (
@@ -155,7 +153,17 @@ export function ApplicantGeneralInstructorBasicInfo({
             />
           }
         />
-        <DetailInfoForm.Field label="JA 평가 등급" readOnlyDisplay view={evaluationGradeDisplay} />
+        <DetailInfoForm.Field
+          label="JA 평가 등급"
+          readOnlyDisplay
+          view={
+            <InstructorJaGradeField
+              grade={instructor.evaluationGrade}
+              memberId={instructor.instructorMemberId}
+              editable={isEditMode}
+            />
+          }
+        />
       </DetailInfoForm.Row>
       {showPostApprovalFields ? (
         <DetailInfoForm.Row type="single">
