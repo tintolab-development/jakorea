@@ -3,7 +3,7 @@ import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-inst
 import { institutionHasRegisteredTeachers } from '@/features/user/shared/lib/institution-delete-guard'
 
 /** 회원 상세 기본 정보 `DetailInfoForm` description에 붙는 문구 (별표 포함) */
-export const ADMIN_REGISTERED_MEMBER_DETAIL_CAPTION = '*관리자에 의해 등록된 회원입니다'
+export const ADMIN_REGISTERED_MEMBER_DETAIL_CAPTION = '관리자에 의해 등록된 회원입니다.'
 
 /** 학교(기관) 상세 기본 정보 `DetailInfoForm` description에 붙는 문구 */
 export const ADMIN_REGISTERED_SCHOOL_DETAIL_CAPTION = '관리자에 의해 등록된 학교입니다'
