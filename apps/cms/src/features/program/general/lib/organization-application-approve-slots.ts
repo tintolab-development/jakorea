@@ -992,7 +992,29 @@ const ORGANIZATION_APPROVE_ERROR_FALLBACKS: Record<string, string> = {
 /** 서버가 원인 없이 내려주는 공통 충돌 문구 — 이 경우 코드별 FE 안내를 보여준다. */
 const GENERIC_SERVER_CONFLICT_MESSAGE_PREFIX = '현재 데이터 또는 처리 상태와 충돌하여'
 
+/**
+ * PERIOD 승인에서 직접 고른 일정(selectedScheduleId/slots)이 희망 행과 맞지 않을 때 —
+ * 서버 메시지 뒤에 희망 일정 행(requestedScheduleIds) 확정 안내를 붙인다.
+ */
+export const ORGANIZATION_APPROVE_USE_REQUESTED_SCHEDULE_GUIDE =
+  '기관이 신청한 희망 일정 행을 선택해 확정해 주세요.'
+
+const ORGANIZATION_APPROVE_REQUESTED_SCHEDULE_GUIDE_CODES = new Set([
+  'ORGANIZATION_APPROVE_PREFERRED_SCHEDULE_REQUIRED',
+  'ORGANIZATION_APPROVE_SCHEDULE_NOT_REQUESTED',
+])
+
 export function formatOrganizationApplicationApproveErrorMessage(error: unknown): string | null {
+  const message = formatOrganizationApplicationApproveErrorMessageBase(error)
+  const code = getApiErrorCode(error)
+  if (!message || !code || !ORGANIZATION_APPROVE_REQUESTED_SCHEDULE_GUIDE_CODES.has(code)) {
+    return message
+  }
+  if (message.includes(ORGANIZATION_APPROVE_USE_REQUESTED_SCHEDULE_GUIDE)) return message
+  return `${message} ${ORGANIZATION_APPROVE_USE_REQUESTED_SCHEDULE_GUIDE}`
+}
+
+function formatOrganizationApplicationApproveErrorMessageBase(error: unknown): string | null {
   const code = getApiErrorCode(error)
   if (!code || !(code in ORGANIZATION_APPROVE_ERROR_FALLBACKS)) {
     return null
