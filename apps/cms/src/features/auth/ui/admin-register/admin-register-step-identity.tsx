@@ -1,5 +1,6 @@
+import { useEffect } from 'react'
 import type { ReactNode } from 'react'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, cmsAlertModal } from '@/shared/ui'
 
 import type { IdentityVerificationHookStatus } from '@/features/auth/identity-verification'
 
@@ -27,10 +28,28 @@ export function AdminRegisterStepIdentity({
   idleTitle,
   idleDescription,
 }: AdminRegisterStepIdentityProps) {
+  useEffect(() => {
+    if (status !== 'error' || !errorMessage) {
+      return
+    }
+    cmsAlertModal.show({
+      title: '본인인증 실패',
+      content: (
+        <>
+          본인인증을 완료하지 못했습니다.
+          <br />
+          정보를 확인한 뒤 다시 시도해 주세요.
+        </>
+      ),
+      width: 600,
+      confirmLabel: '확인',
+    })
+  }, [status, errorMessage])
+
   return (
     <div style={{ width: '100%' }}>
       <RegisterStepHeader
-        title="본인인증을 진행해 주세요"
+        title="본인인증을 진행해 주세요."
         description={
           <>
             안전하게 가입하기 위해 휴대폰 본인인증이 필요합니다.
@@ -43,7 +62,6 @@ export function AdminRegisterStepIdentity({
       <div style={{ marginTop: '30px' }}>
         <RegisterIdentityStatusPanel
           status={status}
-          errorMessage={errorMessage}
           verifiedName={verifiedName}
           verifiedPhone={verifiedPhone}
           idleTitle={idleTitle}

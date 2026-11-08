@@ -29,7 +29,7 @@ export function RegisterJakoreaEmailField({
     <div className={`register-email-field${label ? ' register-email-field--has-label' : ''}`}>
       <CmsInput
         className="register-email-field__input"
-        inputSize="large"
+        inputSize="xlarge"
         width="100%"
         label={label}
         required={required}
@@ -44,10 +44,12 @@ export function RegisterJakoreaEmailField({
       <span className="register-email-field__domain">{JAKOREA_EMAIL_DOMAIN}</span>
       <CmsButton
         variant="secondary"
-        size="large" className="register-email-field__check-btn"
+        size="h52"
+        className="register-email-field__check-btn"
         loading={checking}
         disabled={disabled || !value.trim()}
-        onClick={onCheckDuplicate} >
+        onClick={onCheckDuplicate}
+      >
         중복확인
       </CmsButton>
     </div>

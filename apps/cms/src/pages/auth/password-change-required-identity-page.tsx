@@ -14,10 +14,8 @@ import {
   hasPasswordChangeRequiredComplete,
   updatePasswordChangeRequiredWizardState,
   usePasswordChangeRequiredGuard,
-  PASSWORD_CHANGE_REQUIRED_TOTAL_STEPS,
 } from '@/features/auth/password-change-required'
 import { AdminRegisterStepIdentity } from '@/features/auth/ui/admin-register/admin-register-step-identity'
-import { RegisterStepProgress } from '@/features/auth/ui/admin-register/register-step-progress'
 import { AuthPageShell } from '@/features/auth/ui/auth-page-shell'
 import { passwordChangeRequiredPaths } from '@/shared/utils/post-auth-redirect'
 
@@ -57,11 +55,6 @@ export function PasswordChangeRequiredIdentityPage() {
 
   return (
     <AuthPageShell showLogo={false} cardClassName="register-card">
-      <RegisterStepProgress
-        currentStep={1}
-        totalSteps={PASSWORD_CHANGE_REQUIRED_TOTAL_STEPS}
-        className="register-step-progress--password-change-required"
-      />
       <AdminRegisterStepIdentity
         onStartVerify={verify}
         status={status}

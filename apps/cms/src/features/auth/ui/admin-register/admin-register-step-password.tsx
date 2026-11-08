@@ -5,6 +5,7 @@ import { CmsButton, CmsInput } from '@/shared/ui'
 import {
   isValidRegisterPassword,
   REGISTER_PASSWORD_CONDITION_MESSAGE,
+  REGISTER_PASSWORD_CONFIRM_CONDITION_MESSAGE,
   REGISTER_PASSWORD_HELP_TEXT,
   REGISTER_PASSWORD_MIN_LENGTH,
   REGISTER_PASSWORD_MISMATCH_MESSAGE,
@@ -54,7 +55,7 @@ export function AdminRegisterStepPassword({
   return (
     <div>
       <RegisterStepHeader
-        title="비밀번호를 입력해 주세요"
+        title="비밀번호를 입력해 주세요."
         description={
           <>
             안전한 계정 이용을 위해
@@ -106,7 +107,13 @@ export function AdminRegisterStepPassword({
             placeholder="비밀번호를 한 번 더 입력해 주세요"
             autoComplete="new-password"
             error={isConfirmMismatch || isPasswordConditionError}
-            message={isConfirmMismatch ? REGISTER_PASSWORD_MISMATCH_MESSAGE : undefined}
+            message={
+              isConfirmMismatch
+                ? REGISTER_PASSWORD_MISMATCH_MESSAGE
+                : isPasswordConditionError && passwordConfirm
+                  ? REGISTER_PASSWORD_CONFIRM_CONDITION_MESSAGE
+                  : undefined
+            }
           />
         </Form.Item>
 
