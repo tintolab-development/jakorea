@@ -1,14 +1,16 @@
-import type { MemberLoginListFilter, MemberLoginListResult } from '@/entities/member-login-log/model/types';
+import type { MemberLoginListFilter, MemberLoginLog } from '@/entities/member-login-log/model/types';
 import { defaultXlsxFilename, downloadBinaryFile, } from '@/features/logs/shared/lib/download-binary';
 import { getJAKoreaHomepageAdminAPILogsSubset } from '@/shared/api/generated/logs/logs-api';
 import { axiosInstance } from '@/shared/instance/axios-instance';
+import { toAdminListPage, type AdminListPage } from '@/shared/lib/admin-infinite-list';
 import { mapMemberLoginsPageToDomain, toMemberLoginsExportParams, toMemberLoginsParams, } from './mappers';
 function logsApi() {
     return getJAKoreaHomepageAdminAPILogsSubset();
 }
-export async function listMemberLoginLogsService(filter: MemberLoginListFilter): Promise<MemberLoginListResult> {
-    const response = await logsApi().memberLogins(toMemberLoginsParams(filter));
-    return mapMemberLoginsPageToDomain(response);
+export async function listMemberLoginLogsPageService(filter: MemberLoginListFilter, page: number): Promise<AdminListPage<MemberLoginLog>> {
+    const response = await logsApi().memberLogins(toMemberLoginsParams({ ...filter, page }));
+    const { rows, total } = mapMemberLoginsPageToDomain(response);
+    return toAdminListPage(rows, page, { page: response.page, totalPages: response.totalPages, totalCount: total });
 }
 export async function exportMemberLoginLogsService(filter: MemberLoginListFilter): Promise<'remote-downloaded'> {
     const response = await axiosInstance.get<ArrayBuffer>('/api/admin/logs/member-logins/export', {

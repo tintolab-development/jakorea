@@ -64,6 +64,7 @@ export function useAdminInfiniteList<TItem>(options: {
     hasNextPage: query.hasNextPage ?? false,
     fetchNextPage: query.fetchNextPage,
     isError: query.isError,
+    error: query.error,
     refetch: query.refetch,
   }
 }

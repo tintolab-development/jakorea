@@ -12,6 +12,5 @@ export const piiAccessLogQueryKeys = {
       filter.accessorName ?? '',
       filter.from ?? '',
       filter.to ?? '',
-      filter.page ?? 0,
     ] as const,
 }
