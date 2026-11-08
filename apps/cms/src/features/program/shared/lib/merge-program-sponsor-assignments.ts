@@ -52,6 +52,7 @@ export function mergeProgramSponsorAssignments(
         sponsorManagerContactIds: [],
         sponsorManagerContactId: undefined,
         sponsorManagerContactNames: {},
+        sponsorManagementNames: {},
         sponsorManagerLine: undefined,
       },
     } as unknown as Program
@@ -62,8 +63,11 @@ export function mergeProgramSponsorAssignments(
   ]
   const sponsorManagerContactIds: string[] = []
   const sponsorManagerContactNames: Record<string, string> = {}
+  const sponsorManagementNames: Record<string, string> = {}
   for (const row of valid) {
     const sponsorId = String(row.sponsorId).trim()
+    const sponsorName = row.sponsorName?.trim()
+    if (sponsorName && !sponsorManagementNames[sponsorId]) sponsorManagementNames[sponsorId] = sponsorName
     const nestedContacts =
       row.sponsorContacts?.map(contact => ({
         id: contact.sponsorContactId != null ? String(contact.sponsorContactId).trim() : '',
@@ -105,6 +109,7 @@ export function mergeProgramSponsorAssignments(
         ? sponsorManagerContactIds[0]
         : SPONSOR_CONTACT_UNSELECTED_VALUE,
       sponsorManagerContactNames: hasContact ? sponsorManagerContactNames : {},
+      sponsorManagementNames,
       sponsorManagerLine: hasContact ? undefined : SPONSOR_CONTACT_UNSELECTED_LABEL,
     },
   }

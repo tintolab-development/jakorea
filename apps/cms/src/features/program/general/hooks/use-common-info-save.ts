@@ -81,7 +81,8 @@ export function useGeneralProgramCommonInfoSave({
 }: UseGeneralProgramCommonInfoSaveOptions) {
   const savingRef = useRef(false)
   const watchedSponsorIds = form.watch('sponsorManagementIds') ?? []
-  const sponsorsQuery = useSponsorOptionsQuery(Boolean(program))
+  // 조회만 한다. 수정 모드에서 edit form 이 같은 키로 받아 둔 캐시를 쓴다.
+  const sponsorsQuery = useSponsorOptionsQuery(false)
   const sponsorContext = useGeneralProgramSponsorEditContext(watchedSponsorIds, true, {
     sponsorRows: sponsorsQuery.data ?? EMPTY_SPONSOR_ROWS,
   })

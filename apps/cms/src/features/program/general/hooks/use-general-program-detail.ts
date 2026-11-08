@@ -81,7 +81,17 @@ export function useGeneralProgramDetail(
   const program = remoteEnabled ? remoteProgram : resolvedMock
   const loading = remoteEnabled ? remoteQuery.isFetching : false
   const canWrite = canPerformWriteAction(user)
-  const sponsorName = useSponsorNameById(program?.sponsorId, Boolean(program?.sponsorId))
+  // 후원사명은 배정 응답(sponsorManagementNames)에서 쓴다. 배정 조회 실패 시에만 후원사 목록으로 찾는다.
+  const assignedSponsorName = (() => {
+    const common = program?.generalCommonInfo
+    const firstId = common?.sponsorManagementIds?.[0] ?? common?.sponsorManagementId
+    return firstId ? common?.sponsorManagementNames?.[firstId]?.trim() || undefined : undefined
+  })()
+  const fallbackSponsorName = useSponsorNameById(
+    program?.sponsorId,
+    Boolean(program?.sponsorId) && remoteEnabled && sponsorAssignmentsQuery.isError
+  )
+  const sponsorName = assignedSponsorName ?? fallbackSponsorName
 
   return {
     program,

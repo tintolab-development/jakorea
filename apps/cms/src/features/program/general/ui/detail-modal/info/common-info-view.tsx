@@ -400,7 +400,9 @@ function BasicInfoSection({
       ),
     [lockDetailedProgramToNone, remoteDetailedProgramOptions]
   )
-  const { options: sponsorOptions, data: sponsorRows = [] } = useSponsorSelectOptions(true)
+  // 후원사 전체 목록은 수정 선택지에만 필요하다. 조회 화면은 배정 응답의 후원사명(sponsorManagementNames)을 쓴다.
+  const { options: sponsorOptions, data: sponsorRows = [] } = useSponsorSelectOptions(isFormEdit)
+  const assignedSponsorNames = commonInfo.sponsorManagementNames
   const viewSponsorContext = useMemo(
     () => ({
       sponsors: sponsorRows,
@@ -418,7 +420,11 @@ function BasicInfoSection({
   const sponsorDisplayEntries = sponsorManagementIds
     .map((sponsorManagementId, index) => {
       const sponsorRow = sponsorRows.find(row => row.id === sponsorManagementId) ?? null
-      const name = sponsorRow?.name?.trim() || (index === 0 ? sponsorName?.trim() : '') || ''
+      const name =
+        sponsorRow?.name?.trim() ||
+        assignedSponsorNames?.[sponsorManagementId]?.trim() ||
+        (index === 0 ? sponsorName?.trim() : '') ||
+        ''
       if (!name) return null
       return { sponsorManagementId, sponsorRow, name }
     })
@@ -897,6 +903,7 @@ function BasicInfoSection({
               <SponsorManagerContactsView
                 program={program}
                 sponsorRows={selectedSponsors}
+                sponsorNameById={commonInfo.sponsorManagementNames}
                 contactsBySponsorId={sponsorEditContext.contactsBySponsorId}
               />
             }
