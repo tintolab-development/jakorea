@@ -436,7 +436,7 @@ export function RecruitApplicantsPage() {
         render: (value: RecruitJobInterest) => jobLabel(value),
       },
       {
-        title: '지원자명',
+        title: '지원자',
         dataIndex: 'applicantName',
         key: 'applicantName',
         width: TABLE_COLUMN_WIDTHS.name,
@@ -534,7 +534,7 @@ export function RecruitApplicantsPage() {
                 />
               </div>
               <div className="admin-filter-area__field admin-filter-area__field--control">
-                <p className="admin-filter-area__label">지원자명</p>
+                <p className="admin-filter-area__label">지원자</p>
                 <AdminFilterTextInput
                   inputSize="medium"
                   width={FILTER_CONTROL_MAX_WIDTH_PX}
@@ -706,7 +706,6 @@ export function RecruitApplicantsPage() {
               },
               style: { cursor: 'pointer' },
             })}
-            scroll={{ x: true }}
           />
           <AdminInfiniteTableFooter
             sentinelRef={sentinelRef}
