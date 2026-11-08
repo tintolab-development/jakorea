@@ -65,10 +65,9 @@ export default function PaymentOrdersPage() {
             exposureMode: pendingFilters.exposureMode,
             programName: pendingFilters.programName,
             instructorName: pendingFilters.instructorName,
-            processingStatus:
-              pendingFilters.processingStatus === 'all'
-                ? undefined
-                : pendingFilters.processingStatus,
+            // 시안: 미선택 시 placeholder가 아니라 「전체」 옵션이 선택된 값으로 보인다
+            processingStatus: pendingFilters.processingStatus,
+            pendingItemBucket: pendingFilters.pendingItemBucket,
             dateRange: pendingFilters.dateRange,
           }}
           onFilterChange={handleFilterChange}

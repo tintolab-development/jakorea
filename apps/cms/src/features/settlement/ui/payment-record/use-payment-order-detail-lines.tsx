@@ -714,8 +714,8 @@ export function usePaymentOrderDetailLinesController(
         type: 'select' as const,
         label: '지급조서 처리 현황',
         placeholder: '전체',
-        options: lineStatusSelectOptions.filter(o => o.value !== 'all'),
-        allowClear: true,
+        // 시안: 기본값은 「전체」 옵션이 선택된 값으로 노출(placeholder 회색 아님)
+        options: lineStatusSelectOptions,
         width: FILTER_CONTROL_MAX_WIDTH_PX,
       },
       {
@@ -731,7 +731,7 @@ export function usePaymentOrderDetailLinesController(
     () => ({
       [keywordFieldKey]: draftKeyword,
       institutionName: draftInstitutionName,
-      status: draftStatus === 'all' ? undefined : draftStatus,
+      status: draftStatus,
       dateRange: draftDateRange,
     }),
     [draftDateRange, draftInstitutionName, draftKeyword, draftStatus, keywordFieldKey]
@@ -758,27 +758,41 @@ export function usePaymentOrderDetailLinesController(
     [keywordFieldKey]
   )
 
+  const filteredRowCount = filteredRows.length
+
   const columns: ColumnsType<PaymentOrderDetailLineRow> = useMemo(() => {
-    const w =
+    /**
+     * 시안 열 폭 (선택 60 · No. 80 별도)
+     * - 프로그램별 상세(12432:439120): 신청자명 180 · 기관 220 · 교육 진행 일자 유연(346) · 나머지 220
+     * - 신청자별 상세(15524:543381): 프로그램명 유연(436) · 기관 180 · 교육 진행 일자 250 · 나머지 180
+     * `undefined` 열은 width 없이 minWidth만 두어 남는 폭을 흡수한다.
+     */
+    const w: Record<
+      'no' | 'title' | 'institution' | 'lecture' | 'processing' | 'amount' | 'breakdown',
+      number | undefined
+    > =
       mode === 'instructor'
         ? {
             no: 80,
-            title: 312,
-            institution: 136,
-            lecture: 204,
-            processing: 164,
-            amount: 124,
-            breakdown: 148,
+            title: undefined,
+            institution: 180,
+            lecture: 250,
+            processing: 180,
+            amount: 180,
+            breakdown: 180,
           }
         : {
             no: 80,
-            title: 120,
-            institution: 160,
-            lecture: 220,
-            processing: 176,
-            amount: 140,
-            breakdown: 196,
+            title: 180,
+            institution: 220,
+            lecture: undefined,
+            processing: 220,
+            amount: 220,
+            breakdown: 220,
           }
+    const FLEX_COLUMN_MIN_WIDTH = 220
+    const widthOf = (value: number | undefined) =>
+      value == null ? { minWidth: FLEX_COLUMN_MIN_WIDTH } : { width: value }
 
     const nameColumn: ColumnsType<PaymentOrderDetailLineRow>[0] =
       mode === 'program'
@@ -787,7 +801,7 @@ export function usePaymentOrderDetailLinesController(
             dataIndex: 'instructorName',
             key: 'instructorName',
             ellipsis: { showTitle: true },
-            width: w.title,
+            ...widthOf(w.title),
             align: 'center',
           }
         : {
@@ -795,7 +809,7 @@ export function usePaymentOrderDetailLinesController(
             dataIndex: 'programName',
             key: 'programName',
             ellipsis: { showTitle: true },
-            width: w.title,
+            ...widthOf(w.title),
             align: 'center',
           }
 
@@ -806,6 +820,9 @@ export function usePaymentOrderDetailLinesController(
         key: 'no',
         width: w.no,
         align: 'center',
+        // 시안: 번호는 총 건수부터 역순(10 → 1)
+        render: (_: number, __: PaymentOrderDetailLineRow, index: number) =>
+          filteredRowCount - index,
       },
       nameColumn,
       {
@@ -813,13 +830,13 @@ export function usePaymentOrderDetailLinesController(
         dataIndex: 'institutionName',
         key: 'institutionName',
         ellipsis: { showTitle: true },
-        width: w.institution,
+        ...widthOf(w.institution),
         align: 'center',
       },
       {
         title: '교육 진행 일자',
         key: 'lecture',
-        width: w.lecture,
+        ...widthOf(w.lecture),
         align: 'center',
         render: (_: unknown, row: PaymentOrderDetailLineRow) => (
           <PaymentOrderLectureDateSessionCell
@@ -831,7 +848,7 @@ export function usePaymentOrderDetailLinesController(
       {
         title: '지급조서 처리 현황',
         key: 'processingStatus',
-        width: w.processing,
+        ...widthOf(w.processing),
         align: 'center',
         onCell: () => ({
           className: 'payment-order-detail-filter-table__td--processing-status',
@@ -843,7 +860,7 @@ export function usePaymentOrderDetailLinesController(
         title: '정산 신청 금액',
         dataIndex: 'estimatedAmount',
         key: 'estimatedAmount',
-        width: w.amount,
+        ...widthOf(w.amount),
         align: 'center',
         render: (amount: number, row: PaymentOrderDetailLineRow) => (
           <span
@@ -860,7 +877,7 @@ export function usePaymentOrderDetailLinesController(
       {
         title: '산출 내역',
         key: 'breakdown',
-        width: w.breakdown,
+        ...widthOf(w.breakdown),
         align: 'center',
         render: (_: unknown, row: PaymentOrderDetailLineRow) => (
           <CalculationDetailViewButton
@@ -876,7 +893,7 @@ export function usePaymentOrderDetailLinesController(
         ),
       },
     ]
-  }, [mode, onOpenCalculationStatement])
+  }, [mode, onOpenCalculationStatement, filteredRowCount])
 
   const sectionTitle = mode === 'program' ? '신청자별 정산 목록' : '프로그램별 정산 목록'
 

@@ -18,10 +18,11 @@
   overflow-y: hidden;
 }
 
-/* Figma root gap: title/header와 본문 사이 30px */
+/* Figma: 타이틀 ↔ 기본 정보 24px, 기본 정보 ↔ 산출 내역 상세 24px (본문 gap) */
 .payment-order-calc-statement-modal.teal-header-modal .teal-header-modal__body {
   align-items: stretch;
   min-width: 0;
+  gap: 24px;
 }
 
 .payment-order-calc-statement-modal .payment-order-calc-statement-modal__basic,
@@ -29,6 +30,11 @@
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
+  margin-top: 0;
+}
+
+/* 본문 padding-top 12 + 12 = 타이틀 아래 24px */
+.payment-order-calc-statement-modal .payment-order-calc-statement-modal__basic {
   margin-top: 12px;
 }
 
@@ -100,9 +106,9 @@
   max-width: 100%;
 }
 
-/* 모달 헤더(산출 내역서) 아래 — 기본 정보 레이블과 첫 테이블 사이 16px */
+/* 모달 헤더(산출 내역서) 아래 — 기본 정보 레이블과 첫 테이블 사이 10px (Figma gap 10) */
 .payment-order-calc-statement-modal__basic-heading {
-  margin: 0 0 16px;
+  margin: 0 0 10px;
   padding: 0 8px;
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
@@ -119,22 +125,23 @@
 }
 
 .payment-order-calc-statement-modal__detail-form-card--program .detail-info-form__field {
-  min-height: 50px;
+  min-height: 51px;
 }
 
+/* Figma Table / Vertical / Cell: 행 52(하단 보더 포함) · 헤더 셀 180 · 값 셀 py12 (버튼 h32가 들어가면 행 56) */
 .payment-order-calc-statement-modal__detail-form-card--program .detail-info-form__field-label {
-  width: 200px;
-  min-width: 200px;
-  max-width: 200px;
-  min-height: 50px;
+  width: 180px;
+  min-width: 180px;
+  max-width: 180px;
+  min-height: 51px;
   padding-top: 0;
   padding-bottom: 0;
 }
 
 .payment-order-calc-statement-modal__detail-form-card--program .detail-info-form__field-content {
-  min-height: 50px;
-  padding-top: 0;
-  padding-bottom: 0;
+  min-height: 51px;
+  padding-top: 12px;
+  padding-bottom: 12px;
 }
 
 /* 기본 정보 — 각 테이블 첫 행(프로그램명 / 지급 조서) 값 좌측 정렬 */
@@ -234,7 +241,7 @@
 }
 
 .payment-order-calc-statement-modal__basic {
-  margin-bottom: 30px;
+  margin-bottom: 0;
 }
 
 /* 산출 내역 상세(테이블 블록)와 하단 푸터(닫기) 사이 30px — content-modal 기본과 동일 스펙 명시 */
@@ -257,6 +264,30 @@
   gap: 12px;
   flex: 1;
   min-width: 0;
+}
+
+/* Figma 산출 내역서: 제목·설명은 버튼(h40) 하단에 맞추고, 제목 18/140% · 제목↔설명 10 */
+.payment-order-calc-statement-modal .payment-order-calc-statement-modal__detail-header {
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.payment-order-calc-statement-modal .payment-order-calc-statement-modal__detail-header-left {
+  align-items: center;
+  gap: 10px;
+}
+
+.payment-order-calc-statement-modal
+  .payment-order-calc-statement-modal__detail-header
+  .info-section-title {
+  padding-right: 0;
+  font-size: 18px;
+  line-height: 140%;
+}
+
+/* 값 셀 세그먼트 구분선 양옆 16 (Figma Table / Cell gap 16) */
+.payment-order-calc-statement-modal .program-detail-td-divider {
+  margin: 0 16px;
 }
 
 .payment-order-calc-statement-modal__detail-actions {
@@ -476,4 +507,55 @@
   .payment-statement-issuance-calculation-lines-table__summary-row
   > td.payment-statement-issuance-calculation-lines-table__summary-total {
   font-size: 14px;
+}
+
+/*
+ * 산출 내역 상세(layout="payment-statement") — Figma `Popup / Table / w1400 / 산출 내역서`
+ * 헤더 52 · --BG-header / 합계 행 56 · Brand-500-06 · 전 셀 Bold 14 #3d3d3d / 버튼 셀 p12
+ * (지급조서 문서 표 원본 CSS는 그대로 두고 산출 내역서 모달 안에서만 덮는다)
+ */
+.payment-order-calc-statement-modal
+  .payment-order-calc-statement-modal__lines-table
+  thead
+  th {
+  height: 52px;
+  min-height: 52px;
+  background: var(--BG-header, #f1f3f5);
+}
+
+.payment-order-calc-statement-modal
+  .payment-order-calc-statement-modal__lines-table
+  .payment-statement-issuance-calculation-lines-table__summary-row
+  > th,
+.payment-order-calc-statement-modal
+  .payment-order-calc-statement-modal__lines-table
+  .payment-statement-issuance-calculation-lines-table__summary-row
+  > td {
+  height: 56px;
+  min-height: 56px;
+  background: linear-gradient(
+      0deg,
+      var(--Brand-500-06, rgba(1, 161, 175, 0.06)) 0%,
+      var(--Brand-500-06, rgba(1, 161, 175, 0.06)) 100%
+    ),
+    #fff !important;
+  font-weight: 700;
+}
+
+.payment-order-calc-statement-modal
+  .payment-order-calc-statement-modal__lines-table
+  .payment-statement-issuance-calculation-lines-table__summary-row
+  > td.payment-statement-issuance-calculation-lines-table__summary-total {
+  color: var(--default-BK, #3d3d3d);
+}
+
+.payment-order-calc-statement-modal
+  .payment-order-calc-statement-modal__lines-table.payment-statement-issuance-calculation-lines-table--with-trailing
+  tbody
+  td:last-child,
+.payment-order-calc-statement-modal
+  .payment-order-calc-statement-modal__lines-table.payment-statement-issuance-calculation-lines-table--with-trailing
+  .payment-statement-issuance-calculation-lines-table__summary-row
+  > td:last-child {
+  padding: 0 12px;
 }

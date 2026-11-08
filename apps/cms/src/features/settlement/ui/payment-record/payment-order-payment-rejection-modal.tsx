@@ -68,15 +68,16 @@ export function PaymentOrderPaymentRejectionModal({
   const manualRadioAnchorRef = useRef<HTMLSpanElement>(null)
 
   const [reason, setReason] = useState('')
+  /** 시안 3-3-1: 알림 발송 기본 미선택 — 고르기 전에는 반려 불가 */
   const [notificationType, setNotificationType] =
-    useState<PaymentOrderRejectNotificationType>('IMMEDIATE')
+    useState<PaymentOrderRejectNotificationType | null>(null)
   const [scheduledAt, setScheduledAt] = useState<Dayjs>(() => getDefaultManualNotifyAt())
   const [dateTimePickerOpen, setDateTimePickerOpen] = useState(false)
 
   useEffect(() => {
     if (open) {
       setReason('')
-      setNotificationType('IMMEDIATE')
+      setNotificationType(null)
       setScheduledAt(getDefaultManualNotifyAt())
       setDateTimePickerOpen(false)
     }
@@ -86,6 +87,7 @@ export function PaymentOrderPaymentRejectionModal({
   const trimmed = reason.trim()
   const canReject =
     trimmed.length > 0 &&
+    notificationType != null &&
     !confirmLoading &&
     (notificationType !== 'MANUAL' || isFutureNotificationTime(scheduledAt))
 
@@ -124,7 +126,7 @@ export function PaymentOrderPaymentRejectionModal({
               loading={confirmLoading}
               disabled={!canReject}
               onClick={() => {
-                if (!canReject) return
+                if (!canReject || notificationType == null) return
                 onReject({
                   reason: trimmed,
                   notificationType,
@@ -142,25 +144,24 @@ export function PaymentOrderPaymentRejectionModal({
       >
         {contextLine ? (
           <div ref={modalContentRef} className="payment-order-payment-reject">
-            <p className="payment-order-payment-reject__line">
-              <strong className="payment-order-payment-reject__name">[{memberName}]</strong>{' '}
-              님의 지급조서 신청을 반려하시겠습니까?
-              <br />
-              반려 시 입력하신 사유가 회원에게 반려 사유로 안내되며, 알림이 발송됩니다.
-            </p>
+            <div className="payment-order-payment-reject__desc">
+              <p className="payment-order-payment-reject__line">
+                <strong className="payment-order-payment-reject__name">[{memberName}]</strong>{' '}
+                님의 지급조서 신청을 반려하시겠습니까?
+              </p>
+              <p className="payment-order-payment-reject__line">
+                반려 시 입력하신 사유가 회원에게 반려 사유로 안내되며, 알림이 발송됩니다.
+              </p>
+            </div>
 
             <div
               className="payment-order-payment-reject__detail-line"
               aria-label="대상·진행 일자·회차"
             >
               <span>{contextLine.first}</span>
-              <span className="payment-order-payment-reject__sep" aria-hidden>
-                |
-              </span>
+              <span className="payment-order-payment-reject__sep" aria-hidden />
               <span>{contextLine.lectureDateDisplay}</span>
-              <span className="payment-order-payment-reject__sep" aria-hidden>
-                |
-              </span>
+              <span className="payment-order-payment-reject__sep" aria-hidden />
               <span>{contextLine.lectureSessionDisplay}</span>
             </div>
             <div className="payment-order-payment-reject__reason-block">
@@ -173,7 +174,7 @@ export function PaymentOrderPaymentRejectionModal({
               <CmsInput
                 value={reason}
                 width="100%"
-                inputSize="large"
+                inputSize="medium"
                 onChange={e => setReason(e.target.value)}
                 placeholder="반려 사유를 입력해 주세요"
                 maxLength={100}
@@ -189,7 +190,7 @@ export function PaymentOrderPaymentRejectionModal({
               </span>
               <CmsRadio.Group
                 size="medium"
-                value={notificationType}
+                value={notificationType ?? undefined}
                 onChange={e =>
                   handleNotifyTimingChange(e.target.value as PaymentOrderRejectNotificationType)
                 }

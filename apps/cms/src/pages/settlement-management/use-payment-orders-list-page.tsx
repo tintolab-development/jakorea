@@ -75,17 +75,26 @@ export type PaymentOrdersDetailState =
   | null
 
 
-const PROCESSING_STATUS_FILTER_OPTIONS: {
-  value: PaymentOrderAdminProcessingStatus
-  label: string
-}[] = (
-  Object.entries(PAYMENT_ORDER_STATUS_LABELS_LIST) as [PaymentOrderAdminProcessingStatus, string][]
-).map(([value, label]) => ({ value, label }))
+/** 시안: 셀렉트 기본값은 「전체」 옵션(값 `all`) — placeholder가 아니라 선택값으로 노출 */
+const ALL_FILTER_OPTION = { value: 'all', label: '전체' } as const
 
-const PENDING_ITEM_BUCKET_FILTER_OPTIONS = PAYMENT_ORDER_PENDING_ITEM_BUCKETS.map(value => ({
-  value,
-  label: PAYMENT_ORDER_PENDING_ITEM_BUCKET_LABELS[value],
-}))
+const PROCESSING_STATUS_FILTER_OPTIONS: {
+  value: PaymentOrderAdminProcessingStatus | 'all'
+  label: string
+}[] = [
+  ALL_FILTER_OPTION,
+  ...(
+    Object.entries(PAYMENT_ORDER_STATUS_LABELS_LIST) as [PaymentOrderAdminProcessingStatus, string][]
+  ).map(([value, label]) => ({ value, label })),
+]
+
+const PENDING_ITEM_BUCKET_FILTER_OPTIONS = [
+  ALL_FILTER_OPTION,
+  ...PAYMENT_ORDER_PENDING_ITEM_BUCKETS.map(value => ({
+    value,
+    label: PAYMENT_ORDER_PENDING_ITEM_BUCKET_LABELS[value],
+  })),
+]
 
 /** 풀페이지 상세 — `replace: false`로 열어 뒤로가기 시 목록 복귀 */
 const PO_DETAIL_TYPE = PAYMENT_ORDERS_DETAIL_TYPE_PARAM
@@ -431,6 +440,9 @@ export function usePaymentOrdersListPage() {
         key: 'no',
         width: 80,
         align: 'center',
+        // 시안: 번호는 총 건수부터 역순(13 → 1). 행 식별자 `no`(상세 URL 키)는 그대로 둔다.
+        render: (_: number, __: PaymentOrderAdminProgramRow, index: number) =>
+          listProgram.length - index,
       },
       {
         title: '프로그램명',
@@ -466,7 +478,7 @@ export function usePaymentOrdersListPage() {
         render: (amount: number) => formatWon(amount),
       },
     ],
-    []
+    [listProgram.length]
   )
   const instructorColumns: ColumnsType<PaymentOrderAdminInstructorRow> = useMemo(
     () => [
@@ -476,13 +488,15 @@ export function usePaymentOrdersListPage() {
         key: 'no',
         width: 80,
         align: 'center',
+        render: (_: number, __: PaymentOrderAdminInstructorRow, index: number) =>
+          listInstructor.length - index,
       },
       {
         title: '신청자명',
         dataIndex: 'instructorName',
         key: 'instructorName',
         ellipsis: { showTitle: true },
-        // 유연 열 — 남는 폭 흡수 (시안: No. 80 · 나머지 240)
+        // 시안(12432:441236): No. 80 외 4열 균등(364.5) — 모두 유연 열로 남는 폭을 나눈다
         minWidth: 240,
         align: 'center',
       },
@@ -490,7 +504,7 @@ export function usePaymentOrdersListPage() {
         title: '정산 대상 프로그램',
         dataIndex: 'programCount',
         key: 'programCount',
-        width: 240,
+        minWidth: 240,
         align: 'center',
         render: (n: number) => `${n}개`,
       },
@@ -498,7 +512,7 @@ export function usePaymentOrdersListPage() {
         title: '지급 대기 항목',
         dataIndex: 'pendingPaymentSettlementItemCount',
         key: 'pendingPaymentSettlementItemCount',
-        width: 240,
+        minWidth: 240,
         align: 'center',
         render: (count: number) => `${count}개`,
       },
@@ -506,12 +520,12 @@ export function usePaymentOrdersListPage() {
         title: '총 정산 신청 금액',
         dataIndex: 'estimatedAmount',
         key: 'estimatedAmount',
-        width: 240,
+        minWidth: 240,
         align: 'center',
         render: (amount: number) => formatWon(amount),
       },
     ],
-    []
+    [listInstructor.length]
   )
 
   const total = isProgram ? listProgram.length : listInstructor.length
@@ -543,7 +557,6 @@ export function usePaymentOrdersListPage() {
             label: '지급조서 처리 현황',
             placeholder: '전체',
             options: PROCESSING_STATUS_FILTER_OPTIONS,
-            allowClear: true,
             width: FILTER_CONTROL_MAX_WIDTH_PX,
           }
         : {
@@ -552,7 +565,6 @@ export function usePaymentOrdersListPage() {
             label: '지급 대기 항목',
             placeholder: '전체',
             options: PENDING_ITEM_BUCKET_FILTER_OPTIONS,
-            allowClear: true,
             width: FILTER_CONTROL_MAX_WIDTH_PX,
           }
 

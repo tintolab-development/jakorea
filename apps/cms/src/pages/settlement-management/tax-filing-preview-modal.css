@@ -32,9 +32,10 @@
 .tax-filing-preview-modal__sheet-host {
   flex: 1 1 auto;
   min-height: 400px;
-  height: 620px;
+  /* 시안 Popup / View / w1400(880): 설명 ↔ 시트 30 · 시트 650 · 시트 ↔ 푸터 30 */
+  height: 650px;
   width: 100%;
-  margin-top: 8px;
+  margin-top: 14px;
   border: 1px solid var(--color-border-secondary, #e8e8e8);
   border-radius: 4px;
   overflow: hidden;

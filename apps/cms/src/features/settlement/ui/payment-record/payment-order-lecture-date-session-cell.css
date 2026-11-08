@@ -1,6 +1,6 @@
 /**
- * 테이블 td 내 `ProgramDetailTdDivider` — 기본 12px → 스펙 양옆 10px
+ * 테이블 td 내 `ProgramDetailTdDivider` — 시안(12432:439120 교육 진행 일자 셀) gap 16 → 양옆 16px
  */
 .payment-order-lecture-date-session-cell .program-detail-td-divider {
-  margin: 0 10px;
+  margin: 0 16px;
 }

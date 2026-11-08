@@ -379,6 +379,16 @@ export function PaymentOrderCalculationStatementModalImpl({
     }
   }
 
+  /**
+   * 신청 반려(지급조서 반려) — 확인 처리와 같은 잠금 상태를 따르고,
+   * 원격이면 BE `availableActions`의 REJECT_PAYMENT_STATEMENT가 있을 때만 연다(목록에 없으면 잠금 기준).
+   */
+  const canRejectStatement =
+    !isStatementActionLocked &&
+    (!paymentOrdersRemote ||
+      availableActions == null ||
+      availableActions.includes('REJECT_PAYMENT_STATEMENT'))
+
   const handleRemoteConfirm = async (lectureFeePaymentScheduledDateIso: string) => {
     if (statementId == null) {
       showAlert({
@@ -546,14 +556,8 @@ export function PaymentOrderCalculationStatementModalImpl({
                 <CmsButton
                   variant="delete"
                   size="medium"
-                  disabled
-                  onClick={() =>
-                    showAlert({
-                      title: '안내',
-                      content:
-                        '산출 내역서에서는 신청 반려를 처리할 수 없습니다. 개인 일정별 정산 신청 상세에서만 반려할 수 있습니다.',
-                    })
-                  }
+                  disabled={!canRejectStatement || rejectMutation.isPending}
+                  onClick={() => setPaymentRejectOpen(true)}
                 >
                   신청 반려
                 </CmsButton>
@@ -614,6 +618,7 @@ export function PaymentOrderCalculationStatementModalImpl({
       />
       <PaymentOrderPaymentRejectionResultModal
         open={paymentRejectDoneOpen}
+        zIndex={nestedZIndex}
         onClose={() => {
           setPaymentRejectDoneOpen(false)
           onAfterRejectResultClosed?.()

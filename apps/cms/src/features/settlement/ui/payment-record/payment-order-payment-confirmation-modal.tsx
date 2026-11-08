@@ -5,10 +5,10 @@
 import { Fragment, useEffect, useState } from 'react'
 import type { Dayjs } from 'dayjs'
 import { formatDateDotWithWeekday, isBeforeSeoulToday } from '@/shared/utils/date'
-import { CalendarOutlined } from '@ant-design/icons'
-import { DatePicker } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
+import { CmsDatePicker } from '@/shared/ui/cms-datepicker'
+import { ProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
 import type { PaymentOrderProgramCalculationStatement } from '@/features/settlement-management/model/payment-order-admin-list'
 import { defaultLectureFeePaymentScheduledDate } from '@/features/settlement/lib/third-tuesday-of-month'
 import './payment-order-payment-confirmation-modal.css'
@@ -102,31 +102,23 @@ export function PaymentOrderPaymentConfirmationModal({
           >
             {detailParts.map((part, index) => (
               <Fragment key={`${index}-${part}`}>
-                {index > 0 ? (
-                  <span className="payment-order-payment-confirm__sep" aria-hidden>
-                    |
-                  </span>
-                ) : null}
+                {index > 0 ? <ProgramDetailTdDivider /> : null}
                 <span>{part}</span>
               </Fragment>
             ))}
           </div>
           <div className="payment-order-payment-confirm__date-block">
-            <span className="payment-order-payment-confirm__date-label">
-              계좌 지급 예정일
-              <span className="cms-field__required" aria-hidden>
-                *
-              </span>
-            </span>
-            <DatePicker
+            <CmsDatePicker
               className="payment-order-payment-confirm__date-picker"
+              label="계좌 지급 예정일"
+              required
+              inputSize="medium"
+              width="100%"
               value={expectedDate}
               onChange={d => d && setExpectedDate(d)}
               disabledDate={current => isBeforeSeoulToday(current)}
               format={formatKoreanDateWithWeekday}
-              suffixIcon={<CalendarOutlined />}
               allowClear={false}
-              inputReadOnly
               popupStyle={{ zIndex: (zIndex ?? 1000) + 200 }}
             />
           </div>

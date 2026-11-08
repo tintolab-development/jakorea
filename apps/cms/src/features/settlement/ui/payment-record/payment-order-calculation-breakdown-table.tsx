@@ -441,7 +441,6 @@ export function PaymentOrderCalculationBreakdownTable({
         open={issueBlockedOpen}
         onClose={() => setIssueBlockedOpen(false)}
         variant="single"
-        layout="detailFullpage"
         zIndex={CMS_ALERT_MODAL_Z_INDEX}
       />
     </div>

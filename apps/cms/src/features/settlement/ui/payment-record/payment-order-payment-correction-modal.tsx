@@ -2,7 +2,7 @@
  * 산출 내역서 — 지급 정정 요청 건 「지급 정정」 팝업 (시안 12432:437066, w600)
  *
  * - 프로그램 기준 적용: 강사비 유형(1~3급) 셀렉트만. 단가는 프로그램 저장값을 BE가 쓴다.
- * - 특강 강사비 / 기타 인건비: 지급 기준 셀렉트(w120) + 강사비 입력 + 「원」
+ * - 특강 강사비 / 기타 인건비: 지급 기준 셀렉트(w170 — 시안 w120은 선택값 「1급 강사비」가 잘려 넓힘) + 강사비 입력 + 「원」
  */
 
 import { useEffect, useState } from 'react'
@@ -99,11 +99,15 @@ export function PaymentOrderPaymentCorrectionModal({
         </div>
       }
     >
-      <p className="payment-order-payment-correction__line">
-        <span className="payment-order-payment-correction__name">[{name}]</span> 님의 강사비 책정
-        방식을 정정해 주세요.
-      </p>
-      <p className="payment-order-payment-correction__line">선택한 방식으로 강사비가 재산정됩니다.</p>
+      <div className="payment-order-payment-correction__desc">
+        <p className="payment-order-payment-correction__line">
+          <span className="payment-order-payment-correction__name">[{name}]</span> 님의 강사비
+          책정 방식을 정정해 주세요.
+        </p>
+        <p className="payment-order-payment-correction__line">
+          선택한 방식으로 강사비가 재산정됩니다.
+        </p>
+      </div>
 
       <div className="payment-order-payment-correction__field">
         <span className="payment-order-payment-correction__label">
@@ -137,6 +141,8 @@ export function PaymentOrderPaymentCorrectionModal({
           <div className="payment-order-payment-correction__inputs">
             <CmsSelect
               className="payment-order-payment-correction__select"
+              inputSize="medium"
+              width={170}
               placeholder="강사비 유형"
               aria-label="강사비 유형"
               disabled={confirmLoading}
@@ -153,6 +159,8 @@ export function PaymentOrderPaymentCorrectionModal({
           <div className="payment-order-payment-correction__inputs">
             <CmsSelect
               className="payment-order-payment-correction__select"
+              inputSize="medium"
+              width={170}
               placeholder="지급 기준"
               aria-label="지급 기준"
               disabled={confirmLoading}
@@ -166,6 +174,7 @@ export function PaymentOrderPaymentCorrectionModal({
               mode="currency"
               className="payment-order-payment-correction__amount"
               inputSize="medium"
+              width="100%"
               placeholder="강사비를 입력해 주세요"
               aria-label="강사비"
               disabled={confirmLoading}

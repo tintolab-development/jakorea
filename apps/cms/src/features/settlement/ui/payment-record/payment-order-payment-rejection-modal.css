@@ -1,15 +1,16 @@
 /**
- * 지급 반려 모달 — 텍스트 16px 간격, 기관|일자|차시 8px·볼드
- * 알림 발송 라디오·직접 설정은 PermissionModal 공통 패턴
+ * 지급 반려 모달 — Figma `Popup / Multiple / w600 / 지급조서 신청 반려 안내` (12432:437674)
+ * padding 24/30/34 · 섹션(안내 묶음·반려 사유·알림 발송·버튼) 간격 30
+ * 안내 묶음: 제목↔설명↔기관|일자|회차 12 · 구분선 1×13 #3d3d3d 50%
+ * 필드: 라벨(14 Medium #525252 140% pb2) ↔ 입력 h40 6 · 라벨 ↔ 라디오 그룹(h40, 간격 16) 4
  */
 
 .payment-order-payment-reject-modal.ant-modal .ant-modal-content {
-  /* figma spec: top 26, horizontal 30, bottom 34 */
-  padding: 26px 30px 34px;
+  padding: 24px 30px 34px;
 }
 
 .payment-order-payment-reject-modal .teal-header-modal__body {
-  padding-top: 16px;
+  padding-top: 12px;
 }
 
 .payment-order-payment-reject-modal .teal-header-modal__footer {
@@ -43,16 +44,17 @@
   min-width: 0;
 }
 
+.payment-order-payment-reject__desc {
+  display: flex;
+  flex-direction: column;
+}
+
 .payment-order-payment-reject__line {
   margin: 0;
   font-size: var(--font-size-16, 16px);
-  font-weight: var(--font-weight-400, 400);
+  font-weight: var(--font-weight-500, 500);
   line-height: 150%;
   color: var(--color-text-primary, #3d3d3d);
-}
-
-.payment-order-payment-reject__line + .payment-order-payment-reject__line {
-  margin-top: 16px;
 }
 
 .payment-order-payment-reject__name {
@@ -64,7 +66,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  margin-top: 16px;
+  margin-top: 12px;
   font-size: var(--font-size-16, 16px);
   font-weight: var(--font-weight-700, 700);
   line-height: 150%;
@@ -72,14 +74,17 @@
 }
 
 .payment-order-payment-reject__sep {
-  font-weight: var(--font-weight-700, 700);
-  color: var(--color-text-primary, #3d3d3d);
+  flex: 0 0 auto;
+  width: 1px;
+  height: 13px;
+  background: var(--color-text-primary, #3d3d3d);
+  opacity: 0.5;
 }
 
 .payment-order-payment-reject__reason-block {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   margin-top: 30px;
   width: 100%;
   min-width: 0;
@@ -87,19 +92,22 @@
 }
 
 .payment-order-payment-reject__reason-label {
-  color: var(--default-BK, #3d3d3d);
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding-bottom: 2px;
+  color: var(--Content-secondary, #525252);
   font-family: Pretendard, sans-serif;
   font-size: 14px;
   font-style: normal;
   font-weight: 500;
-  line-height: 150%;
+  line-height: 140%;
 }
 
 .payment-order-payment-reject__required {
-  margin-left: 1px;
   color: var(--color-red, #c32f4a);
   font-family: Pretendard, sans-serif;
-  font-size: 12px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 700;
   line-height: 120%;
@@ -123,8 +131,8 @@
 .payment-order-payment-reject__notify-block {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-top: 24px;
+  gap: 4px;
+  margin-top: 30px;
   width: 100%;
   min-width: 0;
 }
@@ -141,7 +149,12 @@
 
 /* PermissionModal과 동일 — 직접 설정(span)과 라디오 행 세로 중앙 */
 .payment-order-payment-reject__notify-block > .app-radio-group.ant-radio-group {
+  display: flex;
   align-items: center;
+  gap: 16px;
+  min-height: 40px;
+  margin: 0;
+  padding: 0;
 }
 
 .payment-order-payment-reject__notify-block > .app-radio-group .ant-radio-wrapper {

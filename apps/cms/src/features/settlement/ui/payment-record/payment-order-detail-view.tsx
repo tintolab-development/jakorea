@@ -191,7 +191,8 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
         ],
       })
     ),
-    { label: title },
+    // 시안: 마지막 breadcrumb는 화면 제목이 아니라 대상 이름(프로그램명 / 신청자명)
+    { label: kind === 'program' ? row.programName : row.instructorName },
   ]
 
   const mainContent =

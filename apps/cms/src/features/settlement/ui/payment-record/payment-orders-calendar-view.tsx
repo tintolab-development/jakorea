@@ -28,9 +28,14 @@ import {
   settlementRowFromCalendarItem,
   settlementEventStatusColorPair,
   type CalendarItem,
+  type RenderCalendarMonthEventContentArgs,
 } from '@/shared/components/calendar'
-import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
+import {
+  SCHEDULE_COLORS,
+  type ScheduleColorPair,
+} from '@/features/program/shared/ui/program-schedule-colors'
 import '@/shared/components/calendar/styles/calendar.css'
+import './payment-orders-calendar-view.css'
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
@@ -94,6 +99,34 @@ function paymentOrderCalendarStatusColorPair(status: InstructorSettlementUiStatu
     return settlementEventStatusColorPair('application_rejected')
   }
   return settlementEventStatusColorPair(status)
+}
+
+function scheduleTagColor(name: (typeof SCHEDULE_COLORS)[number]['name']): ScheduleColorPair {
+  const c = SCHEDULE_COLORS.find(item => item.name === name) ?? SCHEDULE_COLORS[0]
+  return { name: c.name, bg: c.bg, border: c.border, text: c.accent }
+}
+
+/**
+ * 시안(12432:438814) 월간 칩: Tag 팔레트 배경 + 상태 메인색 문구
+ * (우측 목록 카드는 기존 0.06 틴트 `paymentOrderCalendarStatusColorPair` 유지)
+ */
+function paymentOrderCalendarChipColorPair(status: InstructorSettlementUiStatus): ScheduleColorPair {
+  switch (status) {
+    case 'awaiting_confirmation':
+    case 'payment_statement_reapplication':
+      return scheduleTagColor('yellow')
+    case 'payment_statement_verified':
+      return scheduleTagColor('green')
+    case 'partial_confirmation':
+      return scheduleTagColor('purple')
+    case 'payment_correction_requested':
+    case 'application_rejected':
+      return scheduleTagColor('pink')
+    case 'account_paid':
+      return scheduleTagColor('sky')
+    default:
+      return settlementEventStatusColorPair(status)
+  }
 }
 
 function paymentOrderStatusShortLabelFromUiStatus(status: InstructorSettlementUiStatus): string {
@@ -209,7 +242,8 @@ function paymentEventToSettlementListRow(
       : ev.sourceInstructorRow
         ? instructorDisplayTitle(ev.sourceInstructorRow.instructorName)
         : undefined,
-    settlementListTitleVariant: isProgramExposure ? 'bracket-program' : 'plain-instructor',
+    // 시안: 툴팁·우측 목록 제목은 프로그램명 그대로(대괄호 없음)
+    settlementListTitleVariant: isProgramExposure ? 'plain-program' : 'plain-instructor',
     institutionName,
     lectureDateDisplay: formatYmdCompactWithKoreanWeekday(ev.date),
     calendarDate,
@@ -450,10 +484,35 @@ export function PaymentOrdersCalendarView({
     for (const item of items) {
       const ev = eventById.get(String(item.id))
       if (!ev) continue
-      map.set(item.id, paymentOrderCalendarStatusColorPair(paymentOrderStatusToInstructorUiStatus(ev.status)))
+      map.set(item.id, paymentOrderCalendarChipColorPair(paymentOrderStatusToInstructorUiStatus(ev.status)))
     }
     return map
   }, [eventById])
+
+  /** 시안 칩: 「+금액 | 상태」 금액·구분선·상태 모두 상태 메인색 */
+  const renderMonthEventContent = useCallback(
+    ({ row, colors }: RenderCalendarMonthEventContentArgs) => {
+      const ev = eventById.get(String(row.sourceEvent.id))
+      if (!ev) {
+        return <span className="calendar-event-title">{String(row.sourceEvent.title ?? '')}</span>
+      }
+      return (
+        <div
+          className="calendar-event-title calendar-event-title--with-divider"
+          style={{ color: colors.text }}
+        >
+          <span className="calendar-event-title__left">
+            +{ev.amount.toLocaleString('ko-KR')}원
+          </span>
+          <span className="calendar-event-title__divider" aria-hidden />
+          <span className="calendar-event-title__right">
+            {paymentStatusShortLabelForCalendarPreview(ev.status)}
+          </span>
+        </div>
+      )
+    },
+    [eventById]
+  )
 
   const resolveSettlementRowColors = useCallback(
     (row: InstructorSettlementListRow): ScheduleColorPair | undefined => {
@@ -544,7 +603,7 @@ export function PaymentOrdersCalendarView({
   )
 
   return (
-    <div className="calendar-set">
+    <div className="calendar-set payment-orders-calendar-view">
       <div className="calendar-main-container">
         <CalendarMain
           mode="month"
@@ -558,6 +617,7 @@ export function PaymentOrdersCalendarView({
           onTodayClick={onTodayClick}
           selectedRowKeys={selectedRowKeys}
           overrideEventColorMap={overrideEventColorMap}
+          renderMonthEventContent={renderMonthEventContent}
           eventsTooltipScope="full-day"
           eventsTooltipTrigger="cell"
           formatEventsOverflowText={n => `외 ${n}개의 항목`}

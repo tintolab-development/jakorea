@@ -115,6 +115,8 @@ export function PaymentOrderInstructorBasicInfo({
             labelMode="toggle"
             revealed={personalInfoRevealed}
             onClick={onPersonalInfoButtonClick}
+            // 시안(15524:543381) 기본 정보 제목줄 버튼 = Button / h40
+            cmsSize="medium"
           />
         }
       >

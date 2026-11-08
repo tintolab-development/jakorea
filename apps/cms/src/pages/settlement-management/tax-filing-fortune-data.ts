@@ -22,6 +22,8 @@ const HEADER_FG = '#FFFFFF'
 const INCOME_COL_FG = '#3D3D3D'
 const SUBTOTAL_BG = '#E8F5F6'
 const PREVIEW_UNIFIED_FS = 11
+/** 시안: 시트 전체 Pretendard (캔버스 기본 Times New Roman 대체) */
+const PREVIEW_FONT_FAMILY = 'Pretendard'
 const DASH = '-'
 
 export const TAX_FILING_MAX_DETAIL_ROWS = 19
@@ -108,6 +110,7 @@ function headerCell(text: string): Cell {
     m: text,
     bg: MINT_BG,
     fc: HEADER_FG,
+    ff: PREVIEW_FONT_FAMILY,
     ht: 0,
     vt: 0,
     fs: PREVIEW_UNIFIED_FS,
@@ -123,7 +126,16 @@ function displayValue(value: TaxReportPreviewCell): string | number {
 function dataCell(value: TaxReportPreviewCell): Cell {
   const displayed = displayValue(value)
   const m = typeof displayed === 'number' ? displayed.toLocaleString('ko-KR') : displayed
-  return { v: displayed, m, ht: 0, vt: 0, fs: PREVIEW_UNIFIED_FS, tb: '2' }
+  return {
+    v: displayed,
+    m,
+    ff: PREVIEW_FONT_FAMILY,
+    fc: INCOME_COL_FG,
+    ht: 0,
+    vt: 0,
+    fs: PREVIEW_UNIFIED_FS,
+    tb: '2',
+  }
 }
 
 function subtotalCell(value: TaxReportPreviewCell, leftAlign: boolean): Cell {
@@ -135,6 +147,8 @@ function subtotalCell(value: TaxReportPreviewCell, leftAlign: boolean): Cell {
     ht: leftAlign ? 1 : 0,
     vt: 0,
     bg: SUBTOTAL_BG,
+    ff: PREVIEW_FONT_FAMILY,
+    fc: INCOME_COL_FG,
     fs: PREVIEW_UNIFIED_FS,
     ...(leftAlign ? { fc: INCOME_COL_FG, bl: 1, tb: '2' } : {}),
   }
@@ -145,6 +159,7 @@ function mergedLabelCell(text: string, useInlineNewlines = false): Cell {
     v: text,
     m: text,
     fc: INCOME_COL_FG,
+    ff: PREVIEW_FONT_FAMILY,
     ht: 0,
     vt: 0,
     tb: '2',
@@ -157,7 +172,7 @@ function mergedLabelCell(text: string, useInlineNewlines = false): Cell {
     ct: {
       fa: 'General',
       t: 'inlineStr',
-      s: [{ v: text, fc: INCOME_COL_FG, fs: PREVIEW_UNIFIED_FS, bl: 1 }],
+      s: [{ v: text, fc: INCOME_COL_FG, ff: PREVIEW_FONT_FAMILY, fs: PREVIEW_UNIFIED_FS, bl: 1 }],
     },
   }
 }
