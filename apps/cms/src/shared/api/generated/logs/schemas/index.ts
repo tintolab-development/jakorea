@@ -1381,6 +1381,7 @@ export * from './serverErrorResponse';
 export * from './serverErrorResponseError';
 export * from './session';
 export * from './sessionProgress';
+export * from './sessionProgressScheduleRole';
 export * from './sessionProgressScheduleStatus';
 export * from './sessionResponse';
 export * from './sessionStatusResult';
