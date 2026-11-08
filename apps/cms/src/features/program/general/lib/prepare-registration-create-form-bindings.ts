@@ -129,7 +129,13 @@ export async function prepareRegistrationCreateFormBindings(args: {
     })
     const hasWizardOperationalDraft =
       wizardSaved?.draft != null && wizardSaved.draft.paragraphs.length > 0
-    const hasOverlay = overlayRecordHasUserValues(overlay)
+    // 교육받은 교사 양식은 사용자가 고친 칸만(dirty) 넘어오므로, 값을 지워 빈 값이 된 칸도 수정으로 본다.
+    const isTrainedTeachersDirtyOverlay =
+      spec.templateCode === 'recruitment-trained-teachers' ||
+      spec.templateCode === 'application-trained-teachers'
+    const hasOverlay = isTrainedTeachersDirtyOverlay
+      ? overlay != null && Object.keys(overlay).length > 0
+      : overlayRecordHasUserValues(overlay)
     if (!hasWizardOperationalDraft && !hasOverlay) {
       // 수정하지 않은 GENERAL 신청 양식: 본문 없이 담아 두면 `applyOne`이 바인딩된 카탈로그 버전 본문을
       // (loadFormTemplateVersionDraftByVersionId → createSeedDraftForOperationalCatalogId 순) 채워 COPY·발행한다.
