@@ -416,6 +416,7 @@ export function GeneralVolunteerInterview2Section({
           </div>
         }
         excelExport={{
+          accessLog: { downloadKind: 'PROGRAM_SCREENING_INTERVIEW_EXPORT', containedPiiTypes: ['NAME'] },
           columns,
           data: tableData,
           selectedRowKeys,

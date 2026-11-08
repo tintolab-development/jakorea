@@ -1319,6 +1319,7 @@ export function UserListPage() {
           </>
         }
         excelExport={{
+          accessLog: { downloadKind: 'MEMBER_LIST_EXPORT', containedPiiTypes: ['NAME'] },
           columns: userExcelColumns,
           data: userExcelData,
           selectedRowKeys,

@@ -678,6 +678,7 @@ function UjatProgramListPageContent() {
         }
         actionsAfterExcel={toolbarActionsAfterExcel}
         excelExport={{
+          accessLog: { downloadKind: 'PROGRAM_LIST_EXPORT', containedPiiTypes: [] },
           columns,
           data: filteredRows,
           selectedRowKeys,

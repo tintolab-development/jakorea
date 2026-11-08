@@ -285,6 +285,7 @@ export function SponsorProgramHistoryPanel({
           ) : null
         }
         excelExport={{
+          accessLog: { downloadKind: 'SPONSOR_PROGRAM_HISTORY_EXPORT', containedPiiTypes: ['NAME'] },
           columns,
           data: filteredRows,
           selectedRowKeys: rowSelection != null ? selectedKeys : undefined,

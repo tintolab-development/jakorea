@@ -586,6 +586,7 @@ export function ParticipatingInstitutionsSection({
           </div>
         }
         excelExport={{
+          accessLog: { downloadKind: 'PROGRAM_PARTICIPATING_INSTITUTION_LIST_EXPORT', containedPiiTypes: ['NAME'] },
           columns,
           data: filteredSchools,
         }}

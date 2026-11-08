@@ -281,6 +281,7 @@ export function InstructorListPage() {
           </PermissionButton>
         }
         excelExport={{
+          accessLog: { downloadKind: 'INSTRUCTOR_LIST_EXPORT', containedPiiTypes: ['NAME'] },
           columns: instructorExcelColumns,
           data: instructorExcelData,
         }}

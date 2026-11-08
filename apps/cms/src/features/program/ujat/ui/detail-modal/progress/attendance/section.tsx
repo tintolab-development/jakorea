@@ -77,6 +77,7 @@ export function UjatEducationProgressAttendanceSection({
 
   const { exportExcel: exportFirstSessionExcel, isExporting: isFirstSessionExporting } =
     useTableExcelExport({
+      accessLog: { downloadKind: 'PROGRAM_ATTENDANCE_EXPORT', containedPiiTypes: ['NAME'] },
       columns: UJAT_ATTENDANCE_SESSION_EXCEL_COLUMNS,
       data: firstSessionExcelRows,
       filename: firstSession ? resolveUjatAttendanceSessionExcelFilename(firstSession) : '출석관리',

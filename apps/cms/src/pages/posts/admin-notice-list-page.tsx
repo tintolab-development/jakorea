@@ -339,6 +339,7 @@ export function AdminNoticeListPage() {
           </>
         }
         excelExport={{
+          accessLog: { downloadKind: 'NOTICE_LIST_EXPORT', containedPiiTypes: ['NAME'] },
           columns,
           data: tableData,
           selectedRowKeys,

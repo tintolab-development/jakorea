@@ -378,6 +378,7 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
   )
 
   const { exportExcel } = useTableExcelExport({
+    accessLog: { downloadKind: 'PROGRAM_ATTENDANCE_EXPORT', containedPiiTypes: ['NAME'] },
     columns: PARTICIPATING_INDIVIDUAL_PARTICIPANT_ATTENDANCE_EXCEL_COLUMNS,
     data: tableData,
     filename: `참여자_출석내역_${participant.applicantName}`,

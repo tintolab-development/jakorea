@@ -639,6 +639,7 @@ export default function TextbookPage() {
           </>
         }
         excelExport={{
+          accessLog: { downloadKind: 'TEXTBOOK_LIST_EXPORT', containedPiiTypes: ['NAME'] },
           columns,
           data: filteredRows,
           selectedRowKeys,

@@ -191,6 +191,7 @@ export function SponsorContactsPanel({
         description={`${tableRows.length.toLocaleString()}건`}
         toolbarAdminAction="sponsorContactWrite"
         excelExport={{
+          accessLog: { downloadKind: 'SPONSOR_CONTACT_LIST_EXPORT', containedPiiTypes: ['NAME'] },
           columns: excelColumns,
           data: tableRows,
           selectedRowKeys: selectedKeys,

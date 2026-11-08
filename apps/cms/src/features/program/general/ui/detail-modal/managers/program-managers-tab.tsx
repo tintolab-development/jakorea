@@ -400,6 +400,7 @@ export function ProgramManagersTab({
         title="담당자 목록"
         description={`${filteredManagers.length}건`}
         excelExport={{
+          accessLog: { downloadKind: 'PROGRAM_MANAGER_LIST_EXPORT', containedPiiTypes: ['NAME'] },
           columns: excelColumns,
           data: filteredManagers,
           selectedRowKeys,

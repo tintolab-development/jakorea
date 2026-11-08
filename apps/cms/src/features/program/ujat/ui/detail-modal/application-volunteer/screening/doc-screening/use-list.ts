@@ -209,6 +209,7 @@ export function useUjatVolunteerDocScreening({
 
   const excelExport = useMemo<FilterTableExcelExportConfig>(
     () => ({
+      accessLog: { downloadKind: 'PROGRAM_VOLUNTEER_APPLICATION_EXPORT', containedPiiTypes: ['NAME'] },
       columns: EXPORT_COLUMNS_UJAT,
       data: exportRows,
     }),

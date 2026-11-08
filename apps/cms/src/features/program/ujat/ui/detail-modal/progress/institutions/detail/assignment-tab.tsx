@@ -128,6 +128,7 @@ export function useInstitutionAssignmentTabModel({
   )
   const excelRows = useMemo(() => buildAssignmentExcelRows(sections), [sections])
   const { exportExcel, isExporting } = useTableExcelExport({
+    accessLog: { downloadKind: 'PROGRAM_INSTITUTION_ASSIGNMENT_EXPORT', containedPiiTypes: ['NAME'] },
     columns: ASSIGNMENT_EXCEL_COLUMNS,
     data: excelRows,
     filename: `${detail.institutionName}_교육_배정_및_진행_현황`,

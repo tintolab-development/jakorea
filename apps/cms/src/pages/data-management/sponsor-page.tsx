@@ -435,6 +435,7 @@ export default function SponsorPage() {
           </>
         }
         excelExport={{
+          accessLog: { downloadKind: 'SPONSOR_LIST_EXPORT', containedPiiTypes: ['NAME'] },
           columns,
           data: tableData,
           selectedRowKeys,

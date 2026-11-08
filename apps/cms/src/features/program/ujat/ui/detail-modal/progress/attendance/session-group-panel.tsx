@@ -93,6 +93,7 @@ export function UjatAttendanceSessionGroupPanel({
   const excelRows = useMemo(() => buildUjatAttendanceSessionExcelRows(displayRows), [displayRows])
 
   const { exportExcel, isExporting } = useTableExcelExport({
+    accessLog: { downloadKind: 'PROGRAM_ATTENDANCE_EXPORT', containedPiiTypes: ['NAME'] },
     columns: UJAT_ATTENDANCE_SESSION_EXCEL_COLUMNS,
     data: excelRows,
     filename: resolveUjatAttendanceSessionExcelFilename(session),

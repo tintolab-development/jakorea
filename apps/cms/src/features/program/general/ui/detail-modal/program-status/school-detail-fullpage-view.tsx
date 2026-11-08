@@ -2228,6 +2228,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     exportExcel: exportAssignedInstructorsExcel,
     isExporting: isAssignedInstructorsExcelExporting,
   } = useTableExcelExport({
+    accessLog: { downloadKind: 'PROGRAM_SCHOOL_INSTRUCTOR_ASSIGNMENT_EXPORT', containedPiiTypes: ['NAME'] },
     columns: assignedInstructorExportColumns,
     data: assignedInstructorExportRows,
     filename: '배정된 강사 목록',
@@ -2238,6 +2239,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     exportExcel: exportWaitingInstructorsExcel,
     isExporting: isWaitingInstructorsExcelExporting,
   } = useTableExcelExport({
+    accessLog: { downloadKind: 'PROGRAM_SCHOOL_INSTRUCTOR_ASSIGNMENT_EXPORT', containedPiiTypes: ['NAME'] },
     columns: waitingInstructorExportColumns,
     data: waitingInstructorExportRows,
     filename: '배정 대기 강사 목록',

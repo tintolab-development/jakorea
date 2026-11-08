@@ -191,6 +191,7 @@ export function ParticipatingInstructorSettlementSection({
   )
 
   const { exportExcel, isExporting: isExcelExporting } = useTableExcelExport({
+    accessLog: { downloadKind: 'PROGRAM_SETTLEMENT_EXPORT', containedPiiTypes: [] },
     columns: settlementExportColumns,
     data: rows,
     filename: '정산 내역',

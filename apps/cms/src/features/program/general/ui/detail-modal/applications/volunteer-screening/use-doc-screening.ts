@@ -215,6 +215,7 @@ export function useGeneralVolunteerDocScreening({
 
   const excelExport = useMemo<FilterTableExcelExportConfig>(
     () => ({
+      accessLog: { downloadKind: 'PROGRAM_VOLUNTEER_APPLICATION_EXPORT', containedPiiTypes: ['NAME'] },
       columns: resolveDocScreeningExportColumns(interviewEnabled),
       data: exportRows,
     }),

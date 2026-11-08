@@ -374,6 +374,7 @@ export function InstructorPaymentTab({
   }, [_instructorName, currentMonth])
 
   const { exportExcel, isExporting: excelExporting } = useTableExcelExport({
+    accessLog: { downloadKind: 'INSTRUCTOR_SETTLEMENT_EXPORT', containedPiiTypes: ['NAME'] },
     columns: excelExportColumns,
     data: filteredRows,
     filename: excelFilename,

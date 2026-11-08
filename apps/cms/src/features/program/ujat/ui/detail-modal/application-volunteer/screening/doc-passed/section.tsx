@@ -215,6 +215,7 @@ export function DocPassedSection({
         excelExport={
           canWrite
             ? {
+                accessLog: { downloadKind: 'PROGRAM_SCREENING_DOC_PASSED_EXPORT', containedPiiTypes: ['NAME'] },
                 columns,
                 data: tableData,
               }

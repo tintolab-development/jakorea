@@ -977,6 +977,8 @@ export default function AccountPaymentsPage() {
       columns,
       data: filteredRows,
       selectedRowKeys: viewMode === 'list' ? selectedRowKeys : undefined,
+      // 신청자명 컬럼. 계좌번호 컬럼은 없다
+      accessLog: { downloadKind: 'ACCOUNT_PAYMENT_LIST_EXPORT', containedPiiTypes: ['NAME'] },
     }
   }, [columns, filteredRows, selectedRowKeys, viewMode])
 

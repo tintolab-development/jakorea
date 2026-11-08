@@ -732,6 +732,7 @@ export function ParticipatingInstructorsSection({
           </div>
         }
         excelExport={{
+          accessLog: { downloadKind: 'PROGRAM_PARTICIPATING_INSTRUCTOR_LIST_EXPORT', containedPiiTypes: ['NAME'] },
           columns: instructorListExportColumns,
           data: instructorListExportRows,
           selectedRowKeys: selectedInstructorRowKeys,

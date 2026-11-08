@@ -300,6 +300,7 @@ export function ParticipatingVolunteerAssignmentSection({
 
   const { exportExcel: exportAssignedExcel, isExporting: isAssignedExcelExporting } =
     useTableExcelExport({
+      accessLog: { downloadKind: 'PROGRAM_PERSON_ASSIGNMENT_EXPORT', containedPiiTypes: [] },
       columns: assignedExportColumns,
       data: assignedExportRows,
       filename: '배정된 기관 목록',
@@ -308,6 +309,7 @@ export function ParticipatingVolunteerAssignmentSection({
 
   const { exportExcel: exportWaitingExcel, isExporting: isWaitingExcelExporting } =
     useTableExcelExport({
+      accessLog: { downloadKind: 'PROGRAM_PERSON_ASSIGNMENT_EXPORT', containedPiiTypes: [] },
       columns: waitingExportColumns,
       data: waitingExportRows,
       filename: '배정 대기 기관 목록',

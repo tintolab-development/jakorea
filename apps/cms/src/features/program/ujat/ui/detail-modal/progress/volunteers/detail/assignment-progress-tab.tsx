@@ -335,6 +335,7 @@ export function UjatEducationProgressVolunteerAssignmentProgressTab({
   const exportRows = useMemo(() => buildAssignmentProgressExportRows(rows), [rows])
 
   const { exportExcel, isExporting } = useTableExcelExport({
+    accessLog: { downloadKind: 'PROGRAM_PERSON_ASSIGNMENT_EXPORT', containedPiiTypes: ['NAME'] },
     columns: ASSIGNMENT_PROGRESS_EXPORT_COLUMNS,
     data: exportRows,
     filename: '교육_배정_및_진행_현황',

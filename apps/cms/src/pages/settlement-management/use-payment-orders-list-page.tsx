@@ -585,9 +585,18 @@ export function usePaymentOrdersListPage() {
 
   const paymentOrdersExcelExport = useMemo((): FilterTableExcelExportConfig => {
     if (isProgram) {
-      return { columns: programColumns, data: listProgram }
+      return {
+        columns: programColumns,
+        data: listProgram,
+        accessLog: { downloadKind: 'PAYMENT_ORDER_LIST_EXPORT', containedPiiTypes: [] },
+      }
     }
-    return { columns: instructorColumns, data: listInstructor }
+    return {
+      columns: instructorColumns,
+      data: listInstructor,
+      // 신청자별 목록은 신청자명 컬럼이 있다
+      accessLog: { downloadKind: 'PAYMENT_ORDER_LIST_EXPORT', containedPiiTypes: ['NAME'] },
+    }
   }, [isProgram, programColumns, instructorColumns, listProgram, listInstructor])
 
   const renderContent = useCallback(
