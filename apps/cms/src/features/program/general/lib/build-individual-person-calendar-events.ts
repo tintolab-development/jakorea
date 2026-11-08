@@ -1,5 +1,4 @@
 import dayjs from 'dayjs'
-import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import type { CalendarMainEventInput } from '@/shared/components/calendar'
 import { parseParticipatingSessionTimeRange } from '@/features/program/general/ui/detail-modal/program-status/participating-institutions-calendar-day-list'
@@ -9,24 +8,36 @@ function parseSessionDate(dateStr: string): dayjs.Dayjs {
   return dayjs(normalized)
 }
 
-export type ParticipatingIndividualParticipantCalendarEvent = CalendarMainEventInput & {
+/**
+ * 개인형 진행 현황 캘린더(참여자·참여 봉사자 공통) — 사람 1명 × 일정 1건 = 이벤트 1개
+ */
+export type IndividualPersonCalendarEvent<T> = CalendarMainEventInput & {
   id: string
   title: string
   startDate: string
   endDate: string
   originalItem: {
-    participant: ParticipatingIndividualParticipantRow
+    person: T
+    personId: string
+    personName: string
     session: ParticipatingSchoolSession
   }
 }
 
-export function buildParticipatingIndividualParticipantCalendarEvents(
-  participants: ParticipatingIndividualParticipantRow[]
-): ParticipatingIndividualParticipantCalendarEvent[] {
-  const events: ParticipatingIndividualParticipantCalendarEvent[] = []
+export function buildIndividualPersonCalendarEvents<T>(
+  people: readonly T[],
+  accessors: {
+    getId: (person: T) => string
+    getName: (person: T) => string
+    getSessions: (person: T) => readonly ParticipatingSchoolSession[] | null | undefined
+  }
+): IndividualPersonCalendarEvent<T>[] {
+  const events: IndividualPersonCalendarEvent<T>[] = []
 
-  for (const participant of participants) {
-    for (const session of participant.sessions ?? []) {
+  for (const person of people) {
+    const personId = accessors.getId(person)
+    const personName = accessors.getName(person)
+    for (const session of accessors.getSessions(person) ?? []) {
       if (session.status === 'not_planned') continue
       const d = parseSessionDate(session.date)
       if (!d.isValid()) continue
@@ -35,13 +46,13 @@ export function buildParticipatingIndividualParticipantCalendarEvents(
       const times = parseParticipatingSessionTimeRange(session.timeRange)
 
       events.push({
-        id: `${participant.id}_${dateKey}_r${session.round}`,
-        title: participant.applicantName?.trim() || '참여자',
+        id: `${personId}_${dateKey}_r${session.round}`,
+        title: personName,
         startDate: dateKey,
         endDate: dateKey,
         startTime: times?.startTime,
         endTime: times?.endTime,
-        originalItem: { participant, session },
+        originalItem: { person, personId, personName, session },
       })
     }
   }
