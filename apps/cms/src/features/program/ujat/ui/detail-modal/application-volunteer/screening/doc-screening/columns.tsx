@@ -13,7 +13,7 @@ import {
   type UjatEssayColumnKey,
   type UjatManagerEvaluation,
 } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
-import { DocumentScreeningStatusText } from '../shared/document-screening-status-text'
+import { DocumentScreeningStatusText } from '@/features/program/shared/ui/volunteer-screening/document-screening-status-text'
 
 export const UJAT_DOC_SCREENING_SELECTION_COLUMN_WIDTH = 60
 

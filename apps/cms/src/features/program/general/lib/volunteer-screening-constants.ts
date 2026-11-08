@@ -1,3 +1,4 @@
+import { getInterviewAssignmentTextAccent } from '@/features/program/shared/lib/volunteer-screening/interview-assignment-text-presentation'
 /**
  * 일반 프로그램(기관) 봉사자 신청·심사 UI 상수
  */
@@ -20,16 +21,8 @@ export const GENERAL_VOLUNTEER_APPLICATION_TYPE_LABELS: Record<
   'ujat-graduate': 'UJAT 수료자 봉사자',
 }
 
-export type GeneralDocumentScreeningStatus = 'pass' | 'fail' | 'pending'
-
-export const GENERAL_DOCUMENT_SCREENING_STATUS_LABELS: Record<
-  GeneralDocumentScreeningStatus,
-  string
-> = {
-  pending: '신청 및 대기 중',
-  fail: '서류 불합격',
-  pass: '서류 합격',
-}
+export type { DocumentScreeningStatus as GeneralDocumentScreeningStatus } from '@/features/program/shared/lib/volunteer-screening/document-screening-presentation'
+export { DOCUMENT_SCREENING_STATUS_LABELS as GENERAL_DOCUMENT_SCREENING_STATUS_LABELS } from '@/features/program/shared/lib/volunteer-screening/document-screening-presentation'
 
 export type GeneralManagerEvaluation = 'pass' | 'neutral' | 'fail' | 'unreviewed'
 
@@ -192,3 +185,11 @@ export const GENERAL_VOLUNTEER_DOC_SCREENING_PROCESSED_SELECTION_ALERT =
 /** @deprecated `buildInterview2ProcessedSelectionAlert('volunteer')` 사용 */
 export const GENERAL_VOLUNTEER_INTERVIEW2_PROCESSED_SELECTION_ALERT =
   buildInterview2ProcessedSelectionAlert('volunteer')
+
+/** 일반 봉사자만의 면접 불필요는 현행 inherited 색/라벨을 유지한다. */
+export function getGeneralInterviewAssignmentTextPresentation(status: GeneralInterviewAssignmentStatus) {
+  return {
+    label: GENERAL_INTERVIEW_ASSIGNMENT_STATUS_LABELS[status],
+    accentColor: status === 'not_required' ? 'inherit' : getInterviewAssignmentTextAccent(status),
+  }
+}

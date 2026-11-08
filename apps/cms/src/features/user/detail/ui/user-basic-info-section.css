@@ -86,28 +86,7 @@
   min-width: 0;
 }
 
-/* 권한 승인 현황 — 목록·상세 동일 색/타이포 */
-.user-basic-info-section__approval-status {
-  text-align: center;
-  font-family: Pretendard, var(--font-family-primary), sans-serif;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-}
-
-.user-basic-info-section__approval-status--pending {
-  color: var(--color-green, #1e8c29);
-}
-
-.user-basic-info-section__approval-status--approved {
-  color: var(--main-BK, #3d3d3d);
-}
-
-.user-basic-info-section__approval-status--rejected {
-  color: #c32f4a;
-}
-
+/* 권한 상태색은 MemberPermissionStatusText 공통 표현에서 공급한다. */
 .user-basic-info-section__permission-approval-meta {
   display: inline-flex;
   align-items: center;

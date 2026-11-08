@@ -43,11 +43,6 @@
 }
 
 .payment-order-program-status-detail__table.participating-institutions-section__table
-  table.ant-table {
-  border-inline: none !important;
-}
-
-.payment-order-program-status-detail__table.participating-institutions-section__table
   .ant-table-thead
   > tr
   > th,

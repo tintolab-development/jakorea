@@ -1,6 +1,6 @@
 import type { UjatInterviewAssignmentStatus } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
-import { UJAT_INTERVIEW_ASSIGNMENT_STATUS_LABELS } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
-import './interview-assignment-status-text.css'
+import { StatusBadge } from '@/shared/components/status-badge'
+import { getUjatInterviewAssignmentTextPresentation } from '@/features/program/ujat/model/ujat-volunteer-status-presentation'
 
 export interface InterviewAssignmentStatusTextProps {
   status: UjatInterviewAssignmentStatus
@@ -8,10 +8,7 @@ export interface InterviewAssignmentStatusTextProps {
 
 export function InterviewAssignmentStatusText({ status }: InterviewAssignmentStatusTextProps) {
   return (
-    <span
-      className={`ujat-interview-assignment-status-text ujat-interview-assignment-status-text--${status}`}
-    >
-      {UJAT_INTERVIEW_ASSIGNMENT_STATUS_LABELS[status]}
-    </span>
+    <StatusBadge domain="custom" variant="text" {...getUjatInterviewAssignmentTextPresentation(status)}
+      className={`ujat-interview-assignment-status-text ujat-interview-assignment-status-text--${status}`} />
   )
 }

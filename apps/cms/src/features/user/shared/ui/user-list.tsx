@@ -28,8 +28,6 @@ import { formatAdminManagedProgramCountForList } from '@/features/user/detail/li
 import { formatJaEvaluationGradeCellDisplay } from '@/features/program/general/lib/ja-evaluation-grade-display'
 import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
 import {
-  INSTRUCTOR_SETTLEMENT_STATUS_LABELS,
-  getInstructorSettlementStatusTextClassName,
   resolveInstructorSettlementUiStatusFromListLabel,
 } from '@/shared/constants/instructor-settlement-status'
 import {
@@ -82,15 +80,7 @@ function renderInstructorSettlementStatusCell(labelRaw?: string) {
 
   const status = resolveInstructorSettlementUiStatusFromListLabel(label)
   if (status) {
-    const canonical = INSTRUCTOR_SETTLEMENT_STATUS_LABELS[status]
-    if (canonical === label) {
-      return <InstructorSettlementStatusText status={status} />
-    }
-    return (
-      <span className={getInstructorSettlementStatusTextClassName(status)} role="status">
-        {label}
-      </span>
-    )
+    return <InstructorSettlementStatusText status={status} label={label} />
   }
 
   return <span>{label}</span>

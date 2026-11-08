@@ -1,3 +1,5 @@
+import { getProgramAssignmentRowClass } from '@/features/program/general/lib/assignment-status-presentation'
+import { ProgramAssignmentStatusText } from '@/features/program/shared/ui/program-assignment-status-text'
 /**
  * 일반 프로그램 > 진행 현황 > 참여 기관 상세 (풀페이지 인라인)
  * UJAT 참여 기관 상세는 `features/program/ujat/ui/detail-modal/progress/institutions/detail/` — 별도 구현.
@@ -196,7 +198,6 @@ import { formatClassStudentCountSegments } from '@/features/program/general/lib/
 import { isCmsAdminUser } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import './participating-institutions-section.css'
-import './instructor-assignment-status-text.css'
 import { ParticipatingInstitutionApplicationInfo } from './participating-institution-application-info'
 import {
   getParticipatingInstitutionActivityWithdrawScheduleOptions,
@@ -2147,11 +2148,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         width: 100,
         align: 'center',
         render: (status: WaitingInstructorRow['assignmentStatus']) => (
-          <span
-            className={`school-detail-fullpage-view__assignment-status school-detail-fullpage-view__assignment-status--${status}`}
-          >
-            {WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS[status]}
-          </span>
+          <ProgramAssignmentStatusText status={status} context="school-instructor" />
         ),
       },
     ],
@@ -2732,11 +2729,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                   columns={waitingInstructorColumns}
                   dataSource={waitingRows}
                   locale={{ emptyText: renderWaitingInstructorTableEmpty() }}
-                  rowClassName={record =>
-                    record.assignmentStatus === 'unavailable'
-                      ? 'school-detail-fullpage-view__waiting-row--unavailable'
-                      : ''
-                  }
+                  rowClassName={record => getProgramAssignmentRowClass(record.assignmentStatus, "school-instructor")}
                 />
               </div>
             </div>

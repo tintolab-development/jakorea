@@ -1,3 +1,4 @@
+import { ProgramAssignmentStatusText } from '@/features/program/shared/ui/program-assignment-status-text'
 /**
  * 참여 봉사자 상세 — 봉사 배정 현황 탭
  */
@@ -39,7 +40,6 @@ import { GeneralParticipantAddAssignModal } from './general-participant-add-assi
 import { ParticipatingVolunteerUnassignConfirmModal } from './participating-volunteer-unassign-confirm-modal'
 import { ParticipatingVolunteerUnassignCompleteModal } from './participating-volunteer-unassign-complete-modal'
 import { InstitutionSelectAssignConfirmModal } from './institution-select-assign-confirm-modal'
-import './instructor-assignment-status-text.css'
 import './participating-institutions-section.css'
 import './participating-volunteer-assignment-section.css'
 import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
@@ -208,11 +208,7 @@ export function ParticipatingVolunteerAssignmentSection({
         width: 120,
         align: 'center',
         render: (status: VolunteerWaitingAssignmentStatus) => (
-          <span
-            className={`participating-volunteer-assignment-section__status participating-volunteer-assignment-section__status--${status}`}
-          >
-            {WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS[status]}
-          </span>
+          <ProgramAssignmentStatusText status={status} context="institution-volunteer" />
         ),
       },
       {

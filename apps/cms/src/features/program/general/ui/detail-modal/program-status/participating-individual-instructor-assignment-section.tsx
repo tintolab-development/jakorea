@@ -1,3 +1,5 @@
+import { getProgramAssignmentRowClass } from '@/features/program/general/lib/assignment-status-presentation'
+import { ProgramAssignmentStatusText } from '@/features/program/shared/ui/program-assignment-status-text'
 /**
  * 참여 강사 상세 — 교육 배정 현황 탭 (일반 프로그램 · 개인)
  */
@@ -59,7 +61,6 @@ import { SchoolDetailUnassignCompleteModal } from './school-detail-unassign-comp
 import { SchoolDetailUnassignConfirmModal } from './school-detail-unassign-confirm-modal'
 import { InstitutionSelectAssignConfirmModal } from './institution-select-assign-confirm-modal'
 import { INSTITUTION_SELECT_ASSIGN_DEFAULT_NOTIFY_PAYLOAD } from '@/features/program/general/lib/institution-select-assign'
-import './instructor-assignment-status-text.css'
 import './participating-institutions-section.css'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { ScheduleLinesCell } from '@/features/program/shared/ui/schedule-lines-cell'
@@ -271,15 +272,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
           _status: ParticipatingIndividualInstructorWaitingScheduleRow['assignmentStatus'],
           record: ParticipatingIndividualInstructorWaitingScheduleRow
         ) => (
-          <span
-            className={`school-detail-fullpage-view__assignment-status school-detail-fullpage-view__assignment-status--${record.assignmentStatus === 'unavailable' || record.assignmentStatus === 'assignment_cancelled' ? 'cancelled' : record.assignmentStatus}`}
-          >
-            {waitingAssignmentStatusLabel(
-              record.assignmentStatus,
-              PARTICIPATING_INDIVIDUAL_INSTRUCTOR_WAITING_STATUS_LABELS,
-              record.assignmentStatusLabel
-            )}
-          </span>
+          <ProgramAssignmentStatusText status={record.assignmentStatus} context="instructor-individual" assignmentStatusLabel={record.assignmentStatusLabel} />
         ),
       },
       {
@@ -716,12 +709,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
             dataSource={waitingSchedules}
             emptyTitle={WAITING_EMPTY_TEXT}
             emptyDescription={null}
-            rowClassName={record =>
-              record.assignmentStatus === 'unavailable' ||
-              record.assignmentStatus === 'assignment_cancelled'
-                ? 'school-detail-fullpage-view__waiting-row--unavailable'
-                : ''
-            }
+            rowClassName={record => getProgramAssignmentRowClass(record.assignmentStatus, "instructor-individual")}
           />
         </div>
       </div>

@@ -1,3 +1,5 @@
+import { INSTRUCTOR_ASSIGNMENT_STATUS_LABELS as ASSIGNMENT_STATUS_LABELS } from '@/features/program/general/lib/assignment-status-presentation'
+import { ProgramAssignmentStatusText } from '@/features/program/shared/ui/program-assignment-status-text'
 /**
  * 참여 강사 상세 풀페이지 인라인 뷰
  * 프로그램 진행 현황 > 참여 강사 — instructorId 쿼리 시 목록 대신 표시
@@ -119,24 +121,9 @@ import { isGeneralIndividualProgram } from '@/features/program/general/lib/surve
 import { ActivityCertificateIssuancePreviewModal } from './activity-certificate-issuance-preview-modal'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './participating-institutions-section.css'
-import './instructor-assignment-status-text.css'
 import './school-detail-fullpage-view.css'
 import './participating-instructor-fullpage-view.css'
 import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
-
-const ASSIGNMENT_STATUS_LABELS: Record<InstructorWaitingAssignmentStatus, string> = {
-  waiting: '배정 대기',
-  cancelled: '배정 불가',
-  assigned: '배정 완료',
-  no_assignable_schedule: '배정 가능 일정 없음',
-  unavailable: '배정 불가',
-  assignment_cancelled: '배정 취소',
-}
-
-/** 기관형 배정 불가/배정 취소 — 기존 배정 불가(cancelled) 칩 스타일 재사용 */
-function assignmentStatusChipModifier(status: InstructorWaitingAssignmentStatus): string {
-  return status === 'unavailable' || status === 'assignment_cancelled' ? 'cancelled' : status
-}
 
 function sessionOptionId(session: ParticipatingSchoolSession): string {
   return `session-${session.round}-${session.date}-${session.timeRange}`
@@ -747,15 +734,7 @@ export function ParticipatingInstructorFullpageView({
         width: 120,
         align: 'center',
         render: (_status: InstructorWaitingAssignmentStatus, record: InstructorWaitingSchoolRow) => (
-          <span
-            className={`school-detail-fullpage-view__assignment-status school-detail-fullpage-view__assignment-status--${assignmentStatusChipModifier(record.assignmentStatus)}`}
-          >
-            {waitingAssignmentStatusLabel(
-              record.assignmentStatus,
-              ASSIGNMENT_STATUS_LABELS,
-              record.assignmentStatusLabel
-            )}
-          </span>
+          <ProgramAssignmentStatusText status={record.assignmentStatus} context="instructor-institution" assignmentStatusLabel={record.assignmentStatusLabel} />
         ),
       },
       {

@@ -1,3 +1,5 @@
+import { MemberPermissionStatusText } from '@/features/user/shared/ui/member-permission-status-text'
+import { getMemberPermissionApprovalFilterOptions } from '@/features/user/shared/lib/member-permission-status-presentation'
 /**
  * 회원 권한 신청 목록 — 강사·관리자 공통 UI (`FilterTableLayout` / user-list·program-list 스타일 정렬)
  */
@@ -74,14 +76,10 @@ function listTitle(memberType: 'instructor' | 'admin'): string {
 }
 
 function memberPermissionApprovalStatusTextTag(status: MemberPermissionApplicationStatus) {
+  // 현행 unknown -> pending fallback은 이 업무 분기에 보존한다.
+  const normalized = status === 'APPROVED' || status === 'REJECTED' ? status : 'PENDING'
   const base = 'members-permission-list__approval-status'
-  if (status === 'APPROVED') {
-    return <span className={`${base} ${base}--approved`}>승인 완료</span>
-  }
-  if (status === 'REJECTED') {
-    return <span className={`${base} ${base}--rejected`}>신청 반려</span>
-  }
-  return <span className={`${base} ${base}--pending`}>승인 대기</span>
+  return <MemberPermissionStatusText status={normalized} className={`${base} ${base}--${normalized.toLowerCase()}`} />
 }
 
 export interface MembersPermissionListProps {
@@ -596,12 +594,7 @@ export const MembersPermissionList = forwardRef<
       label: '권한 승인 현황',
       placeholder: '전체',
       width: memberType === 'admin' ? '30%' : '20%',
-      options: [
-        { label: '전체', value: 'ALL' },
-        { label: '승인 대기', value: 'PENDING' },
-        { label: '승인 완료', value: 'APPROVED' },
-        { label: '신청 반려', value: 'REJECTED' },
-      ],
+      options: getMemberPermissionApprovalFilterOptions(),
     }
     const dateField: FilterFieldConfig = {
       key: 'createdAtRange',

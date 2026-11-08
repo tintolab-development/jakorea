@@ -54,7 +54,7 @@ export const INSTRUCTOR_SETTLEMENT_STATUS_LABELS_SHORT: Record<
   payment_correction_requested: '정정 요청',
 }
 
-/** 텍스트·배지 글자색 (status-badge instructor-settlement-* 와 동기화) */
+/** 정산 팔레트 원색 — Text/Short/Tag 표현은 getInstructorSettlementStatusPresentation 사용 */
 export const INSTRUCTOR_SETTLEMENT_STATUS_COLORS: Record<
   InstructorSettlementUiStatus,
   string
@@ -67,6 +67,44 @@ export const INSTRUCTOR_SETTLEMENT_STATUS_COLORS: Record<
   none: 'rgba(61, 61, 61, 0.8)',
   application_rejected: '#c32f4a',
   payment_correction_requested: '#e8007c',
+}
+
+/** 색 토큰명만 보관한다. 원색 fallback은 위 팔레트 한 곳에서 가져온다. */
+const INSTRUCTOR_SETTLEMENT_COLOR_TOKENS: Record<
+  Exclude<InstructorSettlementUiStatus, 'none'>,
+  string
+> = {
+  payment_statement_reapplication: '--Status-orange-main',
+  awaiting_confirmation: '--color-orange',
+  partial_confirmation: '--color-purple',
+  payment_statement_verified: '--color-green',
+  account_paid: '--color-blue',
+  application_rejected: '--color-red',
+  payment_correction_requested: '--Status-pink-main',
+}
+
+export type InstructorSettlementPresentationKind = 'text' | 'short' | 'tag' | 'invoice'
+
+/**
+ * 동일 업무축의 표현 SSOT. Text 해당 없음은 검정, Short/Tag는 80% 검정.
+ * invoice는 현행 전체 라벨을 보존한다(S13). Short 라벨 차이(S05)도 임의 교정하지 않는다.
+ * raw API 상태·권한·전이의 정규화는 이 presentation 계층에서 하지 않는다.
+ */
+export function getInstructorSettlementStatusPresentation(
+  status: InstructorSettlementUiStatus,
+  kind: InstructorSettlementPresentationKind = 'text'
+): { label: string; color: string } {
+  const color = status === 'none'
+    ? kind === 'text'
+      ? 'var(--Netural-black, #3d3d3d)'
+      : INSTRUCTOR_SETTLEMENT_STATUS_COLORS.none
+    : `var(${INSTRUCTOR_SETTLEMENT_COLOR_TOKENS[status]}, ${INSTRUCTOR_SETTLEMENT_STATUS_COLORS[status]})`
+  return {
+    label: kind === 'short'
+      ? INSTRUCTOR_SETTLEMENT_STATUS_LABELS_SHORT[status]
+      : INSTRUCTOR_SETTLEMENT_STATUS_LABELS[status],
+    color,
+  }
 }
 
 /** 캘린더 셀·인라인 태그 — 6% / 10% mix */
@@ -176,14 +214,7 @@ export function getInstructorSettlementStatusTextClassName(
 export function getInstructorSettlementInvoiceStatusPresentation(
   status: InstructorSettlementUiStatus
 ): { label: string; color: string } {
-  return {
-    label: INSTRUCTOR_SETTLEMENT_STATUS_LABELS[status],
-    // Figma 14804:19841 — invoice Short Text, independent of calendar Tag styling.
-    color:
-      status === 'payment_statement_reapplication'
-        ? 'var(--Status-orange-main, #f07917)'
-        : INSTRUCTOR_SETTLEMENT_STATUS_TAG_STYLE[status].color,
-  }
+  return getInstructorSettlementStatusPresentation(status, 'invoice')
 }
 
 export const INSTRUCTOR_SETTLEMENT_FILTER_STATUS_OPTIONS = [

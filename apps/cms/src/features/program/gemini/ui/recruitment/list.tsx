@@ -1,3 +1,5 @@
+import { StatusBadge } from '@/shared/components/status-badge'
+import { getGeminiRecruitmentStatusPresentation } from '../../lib/recruitment/status-presentation'
 /**
  * Gemini 찾아가는 연수 — 모집 공고 탭 목록
  */
@@ -49,13 +51,6 @@ import '../page.css'
 import './list.css'
 import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
-const RECRUITMENT_STATUS_LABEL: Record<GeminiRecruitmentDisplayStatus, string> = {
-  SCHEDULED: '예정',
-  IN_PROGRESS: '진행 중',
-  ENDED: '종료',
-  DRAFT: '임시저장',
-}
-
 /** Figma 4315:124836 찾아가는 연수 모집 공고 목록 열 폭 */
 const RECRUITMENT_SELECTION_COL_WIDTH = 60
 
@@ -85,7 +80,7 @@ function recruitmentStatusCell(status: GeminiRecruitmentDisplayStatus) {
         : status === 'ENDED'
           ? `${base}--ended`
           : `${base}--draft`
-  return <span className={`${base} ${modifier}`}>{RECRUITMENT_STATUS_LABEL[status]}</span>
+  return <StatusBadge domain="custom" variant="text" {...getGeminiRecruitmentStatusPresentation(status)} className={`${base} ${modifier}`} />
 }
 
 function formatPeriodCell(start: string, end: string): string {

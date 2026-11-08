@@ -1,3 +1,4 @@
+import { GEMINI_INSTITUTION_APPROVAL_STATUS_LABEL } from '../../lib/application-status-presentation'
 import { useCallback, useMemo, useState, type Key } from 'react'
 import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
@@ -65,9 +66,9 @@ const FILTER_FIELDS: FilterFieldConfig[] = [
     width: FILTER_CONTROL_MAX_WIDTH_PX,
     options: [
       { label: '전체', value: 'ALL' },
-      { label: '승인', value: 'APPROVED' },
-      { label: '승인 대기', value: 'PENDING' },
-      { label: '신청 반려', value: 'REJECTED' },
+      { label: GEMINI_INSTITUTION_APPROVAL_STATUS_LABEL.APPROVED, value: 'APPROVED' },
+      { label: GEMINI_INSTITUTION_APPROVAL_STATUS_LABEL.PENDING, value: 'PENDING' },
+      { label: GEMINI_INSTITUTION_APPROVAL_STATUS_LABEL.REJECTED, value: 'REJECTED' },
     ],
   },
   {

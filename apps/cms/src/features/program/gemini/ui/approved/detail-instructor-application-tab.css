@@ -1,26 +1,3 @@
-.gemini-approved-instructor-application-tab__approval {
-  font-family: Pretendard, var(--font-family-primary), sans-serif;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-}
-
-.gemini-approved-instructor-application-tab__approval--pending {
-  color: var(--color-green, #1e8c29);
-}
-
-.gemini-approved-instructor-application-tab__approval--approved {
-  color: var(--color-blue, #017eaf);
-}
-
-.gemini-approved-instructor-application-tab__approval--rejected {
-  color: var(--color-red, #c32f4a);
-}
-
-.gemini-approved-instructor-application-tab__approval--unknown {
-  color: var(--color-text-secondary, #8c8c8c);
-}
 .gemini-approved-instructor-application-tab__detail-loading,
 .gemini-approved-instructor-application-tab__detail-error {
   min-height: 320px;

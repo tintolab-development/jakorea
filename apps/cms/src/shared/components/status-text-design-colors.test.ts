@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { PAYMENT_ORDER_STATUS_LIST_TEXT_COLOR } from '../constants/payment-order-status-list-colors'
-import { getInstructorSettlementInvoiceStatusPresentation, INSTRUCTOR_SETTLEMENT_STATUS_TAG_STYLE } from '../constants/instructor-settlement-status'
+import { getInstructorSettlementInvoiceStatusPresentation, getInstructorSettlementStatusPresentation, INSTRUCTOR_SETTLEMENT_STATUS_TAG_STYLE } from '../constants/instructor-settlement-status'
 
 const css = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8')
 const declaration = (source: string, selector: string) => {
@@ -32,17 +32,15 @@ describe('CMS Figma status Text colors', () => {
       .toContain('--status-accent: var(--Status-red-main, #c32f4a)')
   })
 
-  it('uses orange / neutral for both standalone and StatusBadge settlement Text', () => {
-    const source = css('../ui/instructor-settlement-status-text.css')
-    expect(declaration(source, '.instructor-settlement-status-text--reapplication'))
-      .toContain('color: var(--Status-orange-main, #f07917)')
-    expect(declaration(source, '.instructor-settlement-status-text--na'))
-      .toContain('color: var(--Netural-black, #3d3d3d)')
-    const badge = css('./status-badge.css')
-    expect(declaration(badge, '.status-badge--variant-text.status-badge--instructor-settlement-reapplication'))
-      .toContain('--status-accent: var(--Status-orange-main, #f07917)')
-    expect(declaration(badge, '.status-badge--variant-text.status-badge--instructor-settlement-na'))
-      .toContain('--status-accent: var(--Netural-black, #3d3d3d)')
+  it('shares standalone and StatusBadge settlement Text through the presentation registry', () => {
+    expect(getInstructorSettlementStatusPresentation('payment_statement_reapplication', 'text').color)
+      .toBe('var(--Status-orange-main, #f07917)')
+    expect(getInstructorSettlementStatusPresentation('none', 'text').color)
+      .toBe('var(--Netural-black, #3d3d3d)')
+    expect(declaration(css('./status-badge.css'), '.status-badge--settlement-presentation'))
+      .toContain('color: var(--status-accent)')
+    expect(css('../ui/instructor-settlement-status-text.css')).not.toContain('color:')
+    expect(css('./status-badge.css')).not.toContain('--instructor-settlement-reapplication {')
   })
   it('keeps line/menu colors aligned without changing state labels', () => {
     expect(PAYMENT_ORDER_STATUS_LIST_TEXT_COLOR).toEqual({

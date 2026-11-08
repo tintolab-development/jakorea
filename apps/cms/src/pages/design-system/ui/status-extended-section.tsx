@@ -12,7 +12,7 @@ import { GeminiInstitutionApprovalStatusBadge } from '@/features/program/gemini/
 import { SponsorContactTypeBadge } from '@/features/sponsor/ui/sponsor-contact-type-badge'
 import { SponsorSponsorshipStatusBadge } from '@/features/sponsor/ui/sponsor-sponsorship-status-badge'
 import { UjatInstitutionApplicationStatusBadge } from '@/features/program/ujat/ui/detail-modal/application-institution/list/status-badge'
-import { DocumentScreeningStatusText } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/shared/document-screening-status-text'
+import { DocumentScreeningStatusText } from '@/features/program/shared/ui/volunteer-screening/document-screening-status-text'
 import { UjatInstitutionScheduleConfirmStatusBadge } from '@/features/program/ujat/ui/detail-modal/application-institution/schedule-confirm/status-badge'
 import {
   UJAT_INSTITUTION_SCHEDULE_CONFIRM_STATUS_ORDER,

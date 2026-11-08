@@ -157,71 +157,17 @@
   border-color: color-mix(in srgb, var(--status-accent) 10%, transparent);
 }
 
-/* ----- instructor settlement (강사 정산 현황 8종 — shared/constants/instructor-settlement-status.ts) ----- */
-.status-badge--variant-text.status-badge--instructor-settlement-reapplication {
-  --status-accent: var(--Status-orange-main, #f07917);
+/* 강사 정산 색·kind 예외는 instructor-settlement-status registry가 공급한다. */
+.status-badge--settlement-presentation {
   color: var(--status-accent);
 }
 
-.status-badge--variant-badge.status-badge--instructor-settlement-reapplication {
-  --status-accent: var(--Status-orange-main, #f07917);
-  color: var(--status-accent);
-}
-
-.status-badge--variant-text.status-badge--instructor-settlement-awaiting,
-.status-badge--variant-badge.status-badge--instructor-settlement-awaiting {
-  --status-accent: var(--color-orange, #f07917);
-  color: var(--status-accent);
-}
-
-.status-badge--variant-text.status-badge--instructor-settlement-partial,
-.status-badge--variant-badge.status-badge--instructor-settlement-partial {
-  --status-accent: var(--color-purple, #8457ce);
-  color: var(--status-accent);
-}
-
-.status-badge--variant-text.status-badge--instructor-settlement-statement-verified,
-.status-badge--variant-badge.status-badge--instructor-settlement-statement-verified {
-  --status-accent: var(--color-green, #1e8c29);
-  color: var(--status-accent);
-}
-
-.status-badge--variant-text.status-badge--instructor-settlement-account-paid,
-.status-badge--variant-badge.status-badge--instructor-settlement-account-paid {
-  --status-accent: var(--color-blue, #017eaf);
-  color: var(--status-accent);
-}
-
-.status-badge--variant-text.status-badge--instructor-settlement-na {
-  --status-accent: var(--Netural-black, #3d3d3d);
-  color: var(--status-accent);
-}
-
-.status-badge--variant-badge.status-badge--instructor-settlement-na {
-  --status-accent: rgba(61, 61, 61, 0.8);
-  color: var(--status-accent);
-}
-
-.status-badge--variant-text.status-badge--instructor-settlement-rejected,
-.status-badge--variant-badge.status-badge--instructor-settlement-rejected {
-  --status-accent: var(--color-red, #c32f4a);
-  color: var(--status-accent);
-}
-
-.status-badge--variant-text.status-badge--instructor-settlement-correction,
-.status-badge--variant-badge.status-badge--instructor-settlement-correction {
-  --status-accent: #e8007c;
-  color: var(--status-accent);
-}
-
-.status-badge--variant-badge.status-badge--instructor-settlement-reapplication,
-.status-badge--variant-badge.status-badge--instructor-settlement-awaiting,
-.status-badge--variant-badge.status-badge--instructor-settlement-partial,
-.status-badge--variant-badge.status-badge--instructor-settlement-statement-verified,
-.status-badge--variant-badge.status-badge--instructor-settlement-account-paid,
-.status-badge--variant-badge.status-badge--instructor-settlement-na,
-.status-badge--variant-badge.status-badge--instructor-settlement-rejected,
-.status-badge--variant-badge.status-badge--instructor-settlement-correction {
+.status-badge--variant-badge.status-badge--settlement-presentation {
   background: color-mix(in srgb, var(--status-accent) 6%, transparent);
   border-color: color-mix(in srgb, var(--status-accent) 10%, transparent);
+}
+
+/* 같은 상태의 미진행/비활성 표현은 소비처 CSS에서 재정의하지 않는다. */
+.status-badge--muted {
+  opacity: 0.5;
 }

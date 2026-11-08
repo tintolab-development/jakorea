@@ -1,3 +1,5 @@
+import { StatusBadge } from '@/shared/components/status-badge'
+import { getGeminiInstructorApprovalStatusPresentation } from '../../lib/application-status-presentation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import type { Key } from 'react'
@@ -44,13 +46,6 @@ type PendingFilters = {
   approvalStatus: GeminiInstructorApplicationApprovalStatus | 'ALL'
 }
 
-const APPROVAL_STATUS_LABEL: Record<GeminiInstructorApplicationApprovalStatus, string> = {
-  PENDING: '승인 대기',
-  APPROVED: '승인 완료',
-  REJECTED: '신청 반려',
-  UNKNOWN: '상태 확인 필요',
-}
-
 const INITIAL_PENDING_FILTERS: PendingFilters = {
   instructorName: '',
   homeSido: '',
@@ -94,7 +89,7 @@ function approvalStatusText(status: GeminiInstructorApplicationApprovalStatus) {
         : status === 'REJECTED'
           ? `${base}--rejected`
           : `${base}--unknown`
-  return <span className={`${base} ${modifier}`}>{APPROVAL_STATUS_LABEL[status]}</span>
+  return <StatusBadge domain="custom" variant="text" {...getGeminiInstructorApprovalStatusPresentation(status)} className={`${base} ${modifier}`} />
 }
 
 function toHomeRegionText(row: GeminiInstructorApplicationRow): string {

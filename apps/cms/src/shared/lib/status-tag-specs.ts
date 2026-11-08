@@ -17,7 +17,7 @@ import {
   type ManagerEvaluationBadgeKey,
 } from '@/shared/constants/editable-status-badge-tones'
 import {
-  INSTRUCTOR_SETTLEMENT_STATUS_LABELS,
+  getInstructorSettlementStatusPresentation,
   type InstructorSettlementUiStatus,
 } from '@/shared/constants/instructor-settlement-status'
 import { PAYMENT_ORDER_STATUS_LIST_TEXT_COLOR } from '@/shared/constants/payment-order-status-list-colors'
@@ -79,6 +79,28 @@ export const APPROVAL_STATUS_LABELS: Record<ApprovalStatusKey, string> = {
   cancelled: '신청 취소',
 }
 
+/** Program application Text — Tag와 표현 종류를 구분하고 현행 문구·색을 보존한다. */
+const APPROVAL_STATUS_TEXT_ACCENT: Record<ApprovalStatusKey, string> = {
+  pending: 'var(--Status-green-main, #1e8c29)',
+  rejected: 'var(--Status-red-main, #c32f4a)',
+  approved: 'var(--Netural-black, #3d3d3d)',
+  cancelled: '#e65100',
+}
+
+export function getApprovalStatusTextPresentation(status: ApprovalStatusKey) {
+  return { label: APPROVAL_STATUS_LABELS[status], accentColor: APPROVAL_STATUS_TEXT_ACCENT[status] }
+}
+
+/** 기관·개인·강사 신청의 동일 필터. 순서/값/허용 상태는 현행 그대로. */
+export function getApprovalStatusFilterOptions() {
+  return [
+    { label: '전체', value: 'all' },
+    ...(['pending', 'rejected', 'approved'] as const).map(value => ({
+      label: APPROVAL_STATUS_LABELS[value], value,
+    })),
+  ]
+}
+
 const APPROVAL_STATUS_TONE: Record<ApprovalStatusKey, StatusTagTone> = {
   pending: 'green',
   rejected: 'red',
@@ -102,23 +124,10 @@ export function getPaymentOrderLineStatusTag(
   }
 }
 
-const INSTRUCTOR_SETTLEMENT_ACCENT: Record<InstructorSettlementUiStatus, string> = {
-  payment_statement_reapplication: 'var(--Status-orange-main, #f07917)',
-  awaiting_confirmation: 'var(--color-orange, #f07917)',
-  partial_confirmation: 'var(--color-purple, #8457ce)',
-  payment_statement_verified: 'var(--color-green, #1e8c29)',
-  account_paid: 'var(--color-blue, #017eaf)',
-  none: 'rgba(61, 61, 61, 0.8)',
-  application_rejected: 'var(--color-red, #c32f4a)',
-  payment_correction_requested: '#e8007c',
-}
-
 /** 강사 정산 현황 8종 */
 export function getInstructorSettlementStatusTag(status: InstructorSettlementUiStatus): StatusTagSpec {
-  return {
-    label: INSTRUCTOR_SETTLEMENT_STATUS_LABELS[status],
-    accentColor: INSTRUCTOR_SETTLEMENT_ACCENT[status],
-  }
+  const presentation = getInstructorSettlementStatusPresentation(status, 'tag')
+  return { label: presentation.label, accentColor: presentation.color }
 }
 
 /* ----- 역할·권한 ----- */

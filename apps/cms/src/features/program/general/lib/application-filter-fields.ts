@@ -1,5 +1,5 @@
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
-import { APPROVAL_STATUS_LABELS } from '@/shared/components/textbook-status-badge'
+import { getApprovalStatusFilterOptions } from '@/shared/lib/status-tag-specs'
 import {
   createHomeAddressRegionFilterField,
   createInstitutionAddressRegionFilterField,
@@ -20,12 +20,7 @@ const GRADE_OPTIONS = [
   { label: '6학년', value: '6학년' },
 ]
 
-const APPROVAL_STATUS_OPTIONS = [
-  { label: '전체', value: 'all' },
-  { label: APPROVAL_STATUS_LABELS.pending, value: 'pending' },
-  { label: APPROVAL_STATUS_LABELS.rejected, value: 'rejected' },
-  { label: APPROVAL_STATUS_LABELS.approved, value: 'approved' },
-]
+const APPROVAL_STATUS_OPTIONS = getApprovalStatusFilterOptions()
 
 /** 시안 — 검색·셀렉트(신청 학년·프로그램 승인 현황 등) */
 const GENERAL_APPLICATION_FILTER_CONTROL_WIDTH = FILTER_CONTROL_MAX_WIDTH_PX

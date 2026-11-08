@@ -1,35 +1,3 @@
-/**
- * 프로그램 승인 현황 텍스트 — ApprovalStatusBadge와 동일 상태·라벨, 글자색만 적용
+/* Compatibility file. ApprovalStatusText uses StatusBadge text typography and
+ * getApprovalStatusTextPresentation; no independent state-color CSS here.
  */
-
-.approval-status-text {
-  display: inline-block;
-  margin: 0;
-  padding: 0;
-  background: none;
-  border: none;
-  box-shadow: none;
-  text-align: center;
-  font-family: Pretendard, var(--font-family-primary, 'Pretendard'), sans-serif;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-  white-space: nowrap;
-}
-
-.approval-status-text--pending {
-  color: var(--Status-green-main, #1e8c29);
-}
-
-.approval-status-text--rejected {
-  color: var(--Status-red-main, #c32f4a);
-}
-
-.approval-status-text--approved {
-  color: var(--Netural-black, #3d3d3d);
-}
-
-.approval-status-text--cancelled {
-  color: #e65100;
-}

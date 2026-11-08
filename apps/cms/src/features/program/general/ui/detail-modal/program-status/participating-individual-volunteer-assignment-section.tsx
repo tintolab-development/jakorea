@@ -1,3 +1,5 @@
+import { getProgramAssignmentRowClass } from '@/features/program/general/lib/assignment-status-presentation'
+import { ProgramAssignmentStatusText } from '@/features/program/shared/ui/program-assignment-status-text'
 /**
  * 참여 봉사자 상세 — 봉사 배정 현황 탭 (일반 프로그램 · 개인)
  */
@@ -49,7 +51,6 @@ import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api
 import { buildAddAssignWaitingScheduleChipOptions } from '@/features/program/general/lib/general-add-assign-session-chips'
 import { GeneralParticipantAddAssignModal } from './general-participant-add-assign-modal'
 import { InstitutionSelectAssignConfirmModal } from './institution-select-assign-confirm-modal'
-import './instructor-assignment-status-text.css'
 import './participating-institutions-section.css'
 import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
@@ -188,11 +189,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
         render: (
           status: ParticipatingIndividualVolunteerWaitingScheduleRow['assignmentStatus']
         ) => (
-          <span
-            className={`school-detail-fullpage-view__assignment-status school-detail-fullpage-view__assignment-status--${status === 'unavailable' ? 'cancelled' : status}`}
-          >
-            {WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS[status]}
-          </span>
+          <ProgramAssignmentStatusText status={status} context="individual-volunteer" />
         ),
       },
       {
@@ -555,11 +552,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
             dataSource={waitingSchedules}
             emptyTitle={WAITING_EMPTY_TEXT}
             emptyDescription={null}
-            rowClassName={record =>
-              record.assignmentStatus === 'unavailable'
-                ? 'school-detail-fullpage-view__waiting-row--unavailable'
-                : ''
-            }
+            rowClassName={record => getProgramAssignmentRowClass(record.assignmentStatus, "individual-volunteer")}
           />
         </div>
       </div>

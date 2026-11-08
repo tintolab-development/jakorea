@@ -1,3 +1,4 @@
+import { GEMINI_INSTRUCTOR_APPROVAL_STATUS_LABEL } from '../../lib/application-status-presentation'
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
 import { createHomeAddressRegionFilterField } from '@/shared/config/institution-address-region-filter-field'
@@ -51,9 +52,9 @@ export const GEMINI_INSTRUCTOR_APPLICATION_FILTER_FIELDS: FilterFieldConfig[] = 
     width: FILTER_CONTROL_MAX_WIDTH_PX,
     options: [
       { label: '전체', value: 'ALL' },
-      { label: '승인 대기', value: 'PENDING' },
-      { label: '승인 완료', value: 'APPROVED' },
-      { label: '신청 반려', value: 'REJECTED' },
+      { label: GEMINI_INSTRUCTOR_APPROVAL_STATUS_LABEL.PENDING, value: 'PENDING' },
+      { label: GEMINI_INSTRUCTOR_APPROVAL_STATUS_LABEL.APPROVED, value: 'APPROVED' },
+      { label: GEMINI_INSTRUCTOR_APPROVAL_STATUS_LABEL.REJECTED, value: 'REJECTED' },
     ],
   },
 ]
