@@ -6,7 +6,10 @@
 import assert from 'node:assert/strict'
 import {
   CAREER_POSTING_BUTTON_LABEL_MAX_LENGTH,
+  CAREER_POSTING_LINK_URL_FORMAT_ALERT,
   careerPostingLinkButtonVisible,
+  careerPostingLinkUrlFormatAlert,
+  careerPostingMutationLinkFormatAlert,
   normalizeCareerPostingLinkFields,
   readCareerPostingLinkFields,
   validateCareerPostingLinkFields,
@@ -40,16 +43,31 @@ assert.equal(
 )
 assert.equal(
   validateCareerPostingLinkFields({ buttonLabel: '', linkUrl: 'example.test' }),
-  '연결 링크는 http:// 또는 https://로 시작하는 주소를 입력해 주세요.',
+  CAREER_POSTING_LINK_URL_FORMAT_ALERT.content,
 )
+assert.equal(CAREER_POSTING_LINK_URL_FORMAT_ALERT.title, '등록 불가 안내')
 assert.equal(
   validateCareerPostingLinkFields({ buttonLabel: '채용 바로가기', linkUrl: 'javascript:alert(1)' }),
-  '연결 링크는 http:// 또는 https://로 시작하는 주소를 입력해 주세요.',
+  CAREER_POSTING_LINK_URL_FORMAT_ALERT.content,
 )
 assert.equal(
   validateCareerPostingLinkFields({ buttonLabel: '', linkUrl: 'ftp://example.test' }),
-  '연결 링크는 http:// 또는 https://로 시작하는 주소를 입력해 주세요.',
+  CAREER_POSTING_LINK_URL_FORMAT_ALERT.content,
 )
+assert.equal(careerPostingLinkUrlFormatAlert(''), null)
+assert.equal(careerPostingLinkUrlFormatAlert('https://jobs.example.test'), null)
+assert.equal(careerPostingLinkUrlFormatAlert('example.test'), CAREER_POSTING_LINK_URL_FORMAT_ALERT)
+assert.equal(careerPostingLinkUrlFormatAlert('http://'), CAREER_POSTING_LINK_URL_FORMAT_ALERT)
+assert.equal(careerPostingLinkUrlFormatAlert('https://'), CAREER_POSTING_LINK_URL_FORMAT_ALERT)
+assert.equal(
+  validateCareerPostingLinkFields({ buttonLabel: '가나다', linkUrl: 'http://' }),
+  CAREER_POSTING_LINK_URL_FORMAT_ALERT.content,
+)
+assert.equal(
+  careerPostingMutationLinkFormatAlert(new Error('linkUrl invalid format')),
+  CAREER_POSTING_LINK_URL_FORMAT_ALERT,
+)
+assert.equal(careerPostingMutationLinkFormatAlert(new Error('network timeout')), null)
 
 const hydrated = readCareerPostingLinkFields({
   buttonLabel: '  지원하기  ',

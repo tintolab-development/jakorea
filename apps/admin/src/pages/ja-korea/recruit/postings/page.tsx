@@ -24,6 +24,7 @@ import {
 import { getRecruitPostingService } from '@/features/recruit-posting/api/service'
 import { recruitPostingQueryKeys } from '@/features/recruit-posting/api/query-keys'
 import { RECRUIT_POSTINGS_CHANGED_EVENT } from '@/features/recruit-posting/api/store'
+import { careerPostingMutationLinkFormatAlert } from '@/features/recruit-posting/lib/link-fields'
 import {
   RecruitPostingFormModal,
   type RecruitPostingFormValues,
@@ -362,6 +363,11 @@ export function RecruitPostingsPage() {
         }
         closeForm()
       } catch (error) {
+        const linkAlert = careerPostingMutationLinkFormatAlert(error)
+        if (linkAlert) {
+          showAlert(linkAlert)
+          return
+        }
         const message =
           error instanceof Error && error.message
             ? error.message
