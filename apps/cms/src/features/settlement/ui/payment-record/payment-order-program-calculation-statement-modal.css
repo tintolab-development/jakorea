@@ -201,6 +201,19 @@
   justify-content: center;
 }
 
+/*
+ * 값이 칸보다 길면(예: 서버 lectureSessionDisplay에 시간·제목이 섞인 경우) 칸 안에서 줄바꿈 — 옆 칸으로 넘침 금지.
+ * 상위 표의 white-space: nowrap 상속을 끊는다.
+ */
+.payment-order-calc-statement-modal__td-divider-wrap > span:not(.program-detail-td-divider) {
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
 .payment-order-calc-statement-modal__td-divider-wrap--start {
   justify-content: flex-start;
 }
