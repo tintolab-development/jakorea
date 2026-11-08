@@ -25,8 +25,11 @@ import {
 } from '@/features/program/general/api/managers-list-query'
 import { useProgramsReadsRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import type { ProgramManagerRow } from '@/features/program/general/model/program-managers'
-import { fetchAdminsPageRemote } from '@/features/user/api/members-api-client'
-import { fetchAllApiPages } from '@/shared/lib/fetch-all-api-pages'
+import {
+  fetchAssignableManagerCandidates,
+  normalizeManagerCandidateKeyword,
+  type AssignableManagerCandidate,
+} from '@/features/program/general/api/manager-candidates-query'
 import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
 import {
   canAssignProgramRoleToCmsAdmin,
@@ -34,23 +37,24 @@ import {
 } from '@/entities/program/lib/program-pm-role-policy'
 import type { ProgramRole } from '@/types/user'
 
-export type AssignableManagerCandidate = {
-  id: string
-  name: string
-  email: string
-  phone: string
-  adminId?: number
-  cmsRoleCode?: string
+export type { AssignableManagerCandidate }
+
+export type ProgramManagerCandidatesSearch = {
+  /** 담당자 추가 모달이 열려 있을 때만 true — 탭 진입 시 /admin-accounts 호출 금지 */
+  enabled: boolean
+  keyword?: string
 }
 
-/** GET /api/admin/admin-accounts 서버 size 상한 */
-const ADMIN_ACCOUNTS_LIST_MAX_PAGE_SIZE = 100
+const DISABLED_CANDIDATES_SEARCH: ProgramManagerCandidatesSearch = Object.freeze({
+  enabled: false,
+})
 
 const EMPTY_MANAGERS_LIST_FILTERS: ProgramManagersUiFilters = Object.freeze({})
 
 export function useProgramManagers(
   programId: string | undefined,
-  listFilters: ProgramManagersUiFilters = EMPTY_MANAGERS_LIST_FILTERS
+  listFilters: ProgramManagersUiFilters = EMPTY_MANAGERS_LIST_FILTERS,
+  candidatesSearch: ProgramManagerCandidatesSearch = DISABLED_CANDIDATES_SEARCH
 ) {
   const remoteEnabled = useProgramsReadsRemoteEnabledForSurface(programId)
 
@@ -65,10 +69,7 @@ export function useProgramManagers(
   const managersListAllowed =
     !myAssignment.pending && canListProgramManagers(myAssignment.assignment)
 
-  const managersListQuery = useMemo(
-    () => buildProgramManagersListQuery(listFilters),
-    [listFilters]
-  )
+  const managersListQuery = useMemo(() => buildProgramManagersListQuery(listFilters), [listFilters])
   const filtersKey = useMemo(
     () => serializeProgramManagersListQuery(managersListQuery),
     [managersListQuery]
@@ -82,27 +83,13 @@ export function useProgramManagers(
     retry: false,
   })
 
+  const candidateKeyword = normalizeManagerCandidateKeyword(candidatesSearch.keyword)
+  // 담당자 추가 모달에서만 키워드 검색으로 조회한다. 표 연락처·CMS 권한은 …/managers 응답을 쓴다.
   const candidatesQuery = useQuery({
-    queryKey: generalProgramQueryKeys.managerCandidates(),
-    queryFn: async (): Promise<AssignableManagerCandidate[]> => {
-      // GET /admin-accounts는 size 최대 100을 받는다(서버 Math.min(size, 100)) — 20건씩 순차 조회하지 않는다.
-      const adminItems = await fetchAllApiPages(
-        (page, size) => fetchAdminsPageRemote({ page, size, status: 'ACTIVE' }),
-        { pageSize: ADMIN_ACCOUNTS_LIST_MAX_PAGE_SIZE }
-      )
-      return adminItems
-        .filter(item => item.adminAccountId != null && item.name?.trim())
-        .map(item => ({
-          id: String(item.adminAccountId),
-          name: item.name!.trim(),
-          email: item.email?.trim() || '',
-          phone: item.phone?.trim() || '',
-          adminId: item.adminAccountId,
-          cmsRoleCode: item.roleCode?.trim() || undefined,
-        }))
-    },
-    enabled: remoteEnabled && managersListAllowed,
-    staleTime: 5 * 60_000,
+    queryKey: generalProgramQueryKeys.managerCandidates(candidateKeyword),
+    queryFn: () => fetchAssignableManagerCandidates(candidateKeyword),
+    enabled: remoteEnabled && managersListAllowed && candidatesSearch.enabled,
+    staleTime: 30_000,
     retry: false,
   })
 
@@ -110,23 +97,8 @@ export function useProgramManagers(
     if (!programId) return []
     if (!remoteEnabled) return []
     if (listQuery.isError) return []
-    const rows = listQuery.data ?? []
-    const candidateByAdminId = new Map(
-      (candidatesQuery.data ?? [])
-        .filter(c => c.adminId != null)
-        .map(c => [c.adminId!, c] as const)
-    )
-    return rows.map(row => {
-      if (row.adminId == null) return row
-      const candidate = candidateByAdminId.get(row.adminId)
-      if (!candidate) return row
-      return {
-        ...row,
-        phone: row.phone.trim() ? row.phone : candidate.phone,
-        cmsRoleCode: candidate.cmsRoleCode,
-      }
-    })
-  }, [candidatesQuery.data, listQuery.data, listQuery.isError, programId, remoteEnabled])
+    return listQuery.data ?? []
+  }, [listQuery.data, listQuery.isError, programId, remoteEnabled])
 
   const invalidateManagers = useCallback(async () => {
     if (!programId) return
@@ -199,11 +171,11 @@ export function useProgramManagers(
     managers,
     loading: remoteEnabled ? listQuery.isLoading || listQuery.isFetching : false,
     isRemoteDataSource: remoteEnabled && !listQuery.isError,
-    isMutating:
-      addMutation.isPending || updateRoleMutation.isPending || deleteMutation.isPending,
+    isMutating: addMutation.isPending || updateRoleMutation.isPending || deleteMutation.isPending,
     isUpdatingRole: updateRoleMutation.isPending,
     getAssignableCandidates,
-    candidatesLoading: remoteEnabled ? candidatesQuery.isFetching : false,
+    candidatesLoading:
+      remoteEnabled && candidatesSearch.enabled ? candidatesQuery.isFetching : false,
     addManager: async (payload: {
       adminId?: number
       role: ProgramRole
