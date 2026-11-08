@@ -396,6 +396,11 @@ function educationScheduleLineSession(line: string, index: number): Participatin
  * 목록·상세·진행이 같은 세션 목록을 포맷터에 넣도록 맞춘다.
  * 일정·복수는 교육 진행(일정형) 줄, 일정·단일·기간은 날짜당 한 줄이다.
  */
+function sessionHasOwnClockRange(session: ParticipatingSchoolSession): boolean {
+  const time = session.timeRange?.replace(/\s/g, '') ?? ''
+  return /^\d{1,2}:\d{2}~\d{1,2}:\d{2}$/.test(time) && time !== '00:00~00:00'
+}
+
 export function prepareGeneralEducationScheduleSessions(
   sessions: readonly ParticipatingSchoolSession[],
   shape?: GeneralEducationScheduleShape | null,
@@ -418,6 +423,11 @@ export function prepareGeneralEducationScheduleSessions(
     const seen = new Set<string>()
     const collapsed: ParticipatingSchoolSession[] = []
     for (const session of sessions) {
+      // 기관이 시각까지 저장한 PERIOD 희망 행은 그 행의 시각을 그대로 쓰고, 날짜로 합치지 않는다.
+      if (session.hopeScheduleConfirmed !== undefined && sessionHasOwnClockRange(session)) {
+        collapsed.push(session)
+        continue
+      }
       const key = `${session.date}|${session.dayOfWeek}`
       if (seen.has(key)) continue
       seen.add(key)

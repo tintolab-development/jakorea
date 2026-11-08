@@ -86,7 +86,17 @@ export const CmsTextArea = forwardRef<TextAreaRef, CmsTextAreaProps>(
 
     const inputNode = (
       <span className={rootCn} style={{ ...widthStyle, ...style }}>
-        <span className={controlCn}>
+        <span
+          className={controlCn}
+          // 표 안에서 행 높이에 맞춰 늘어난 박스의 빈 영역을 눌러도 입력이 시작되도록
+          onMouseDown={event => {
+            if (event.target instanceof HTMLTextAreaElement) return
+            const textarea = event.currentTarget.querySelector('textarea')
+            if (!textarea || textarea.readOnly || textarea.disabled) return
+            event.preventDefault()
+            textarea.focus()
+          }}
+        >
           <span className="cms-textarea__inner">
             <Input.TextArea
               ref={ref}

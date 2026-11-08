@@ -253,18 +253,20 @@ function IndividualApplicantScreeningTeamSection({
           fullRow
           readOnlyDisplay
           view={
-            detail?.teamRole
-              ? onTeamRoleChange != null
-                ? (
-                    <GeneralIndividualTeamRoleDropdown
-                      applicantId={applicant.id}
-                      teamRole={detail.teamRole}
-                      canEdit
-                      onChange={onTeamRoleChange}
-                    />
-                  )
-                : <GeneralIndividualTeamRoleView teamRole={detail.teamRole} />
-              : '-'
+            detail?.teamRole ? (
+              onTeamRoleChange != null ? (
+                <GeneralIndividualTeamRoleDropdown
+                  applicantId={applicant.id}
+                  teamRole={detail.teamRole}
+                  canEdit
+                  onChange={onTeamRoleChange}
+                />
+              ) : (
+                <GeneralIndividualTeamRoleView teamRole={detail.teamRole} />
+              )
+            ) : (
+              '-'
+            )
           }
         />
       </DetailInfoForm.Row>
@@ -339,12 +341,7 @@ function IndividualApplicantProgressScheduleSection({
               label={resolveParticipatingInstitutionScheduleRowLabel(program, session)}
               fullRow
               readOnlyDisplay
-              view={
-                <ParticipatingProgressScheduleValue
-                  session={session}
-                  shape={shape}
-                />
-              }
+              view={<ParticipatingProgressScheduleValue session={session} shape={shape} />}
             />
           </DetailInfoForm.Row>
         ))
@@ -464,20 +461,26 @@ export function ApplicantGeneralIndividualBasicInfo({
   )
 
   const id1365Raw = detail?.id1365?.trim()
-  const id1365Cell = !id1365Raw
-    ? '-'
-    : shouldMask
-      ? (
-          <ProgramDetailTdSegmentWrap>
-            {withProgramDetailTdDivider([
-              maskId1365(id1365Raw),
-              <CmsButton key="1365-link" type="button" size="medium" onClick={openPortal1365Main}>
-                1365 바로가기
-              </CmsButton>,
-            ])}
-          </ProgramDetailTdSegmentWrap>
-        )
-      : <IndividualApplicantId1365Cell id1365={id1365Raw} />
+  const id1365Cell = !id1365Raw ? (
+    '-'
+  ) : shouldMask ? (
+    <ProgramDetailTdSegmentWrap>
+      {withProgramDetailTdDivider([
+        maskId1365(id1365Raw),
+        <CmsButton
+          key="1365-link"
+          variant="secondary"
+          type="button"
+          size="h32"
+          onClick={openPortal1365Main}
+        >
+          1365 바로가기
+        </CmsButton>,
+      ])}
+    </ProgramDetailTdSegmentWrap>
+  ) : (
+    <IndividualApplicantId1365Cell id1365={id1365Raw} />
+  )
 
   const teamNameAndMemberEditCell =
     isEditMode && draft && onDraftChange ? (
@@ -554,18 +557,20 @@ export function ApplicantGeneralIndividualBasicInfo({
           fullRow
           readOnlyDisplay
           view={
-            detail?.teamRole
-              ? onTeamRoleChange != null
-                ? (
-                    <GeneralIndividualTeamRoleDropdown
-                      applicantId={applicant.id}
-                      teamRole={detail.teamRole}
-                      canEdit
-                      onChange={onTeamRoleChange}
-                    />
-                  )
-                : <GeneralIndividualTeamRoleView teamRole={detail.teamRole} />
-              : '-'
+            detail?.teamRole ? (
+              onTeamRoleChange != null ? (
+                <GeneralIndividualTeamRoleDropdown
+                  applicantId={applicant.id}
+                  teamRole={detail.teamRole}
+                  canEdit
+                  onChange={onTeamRoleChange}
+                />
+              ) : (
+                <GeneralIndividualTeamRoleView teamRole={detail.teamRole} />
+              )
+            ) : (
+              '-'
+            )
           }
         />
       </DetailInfoForm.Row>
@@ -651,10 +656,7 @@ export function ApplicantGeneralIndividualBasicInfo({
   return (
     <div className="general-volunteer-applicant-detail__body">
       {showAdminComment ? (
-        <ApplicantAdminCommentSection
-          adminComment={applicant.adminComment}
-          mode="view"
-        />
+        <ApplicantAdminCommentSection adminComment={applicant.adminComment} mode="view" />
       ) : null}
 
       <section className="general-volunteer-applicant-basic-info">

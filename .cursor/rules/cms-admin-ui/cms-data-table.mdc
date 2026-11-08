@@ -18,20 +18,29 @@ alwaysApply: false
 
 ## 셀 패딩·헤더 (공유 CSS 패턴 — 화면 override 금지)
 
-| 항목 | 값 (현재 admin 정렬 스펙) |
-|------|---------------------------|
-| thead 높이 | **54px** |
-| thead 패딩 | **12px 20px** |
-| thead 타이포 | 16px / 700 / center (관례) |
-| thead 배경 | `var(--table-th-bg)` → `var(--BG-header)` — [table-th.mdc](./table-th.mdc) |
-| thead/tbody 보더 | `1px solid var(--table-line)` |
-| tbody 패딩 | **10px 16px** (CMS 공통 8×12) |
-| tbody 높이 | **min-height 52px(CMS) / 54px(Admin)**, 다줄 셀은 `height: auto`; 단줄 고정은 `cms-data-table--fixed-row-height` |
-| 외곽 | `1px solid var(--table-line)` · radius **8px** 관례 |
-| 선택 열 폭 | **68px** (`--table-selection-column-width` 또는 앱 상수) |
-| No. 열 폭 | **~80px** (앱 `TABLE_COLUMN_WIDTHS.index`) |
+정본: Figma 디자인 가이드 `04 Views_01 Table` (Medium `14808:20506` · Small `14808:23110`). 공유 CSS: `packages/admin-ui/src/table/admin-data-table.css`.
 
-> CMS 구 문서의 ~57px / `#EDF0F2` 단독 표기는 **레거시 메모**. 신규·정렬 작업은 **`--BG-header` + 54px 패턴**을 따른다.
+| 항목 | Medium (목록 기본) | Small |
+|------|--------------------|-------|
+| 행 높이 (th·td) | **52px** (min-height) | **44px** |
+| 셀 패딩 | **8px 12px** (field·button·tag 셀은 12px → 60/56px) | **4px 12px** |
+| th 타이포 | 14px / **700** / 150% / center · `#3d3d3d` | 동일 |
+| td 타이포 | 14px / **500** / 150% / center · `#3d3d3d` | 동일 |
+| th 배경 | `var(--BG-header)` (= `rgba(231,235,239,.6)` over `#fff`) — [table-th.mdc](./table-th.mdc) | 동일 |
+| 보더 | `1px solid var(--table-line)` (`#e0e0e0`) · 외곽 radius **8px** | 동일 |
+| hover | 배경만 `var(--color-table-row-hover)` (`rgba(1,161,175,.06)`) | 동일 |
+| disabled | 시안 opacity 40% → `cms-data-table__row--disabled` 흰 오버레이 **60%** | 동일 |
+| 링크 셀 | `#0070e7` (`--Content-link`) 14/500 · 좌측 정렬 | 동일 |
+| placeholder 셀 | `rgba(61,61,61,.5)` | 동일 |
+| 셀 내 버튼 | Button **h32** secondary (12px SemiBold) | 동일 |
+| 셀 내 필드 | Field / Table **S(36)** (Medium 테이블 기준) | — |
+
+| 열 | 값 |
+|----|----|
+| 선택 열 폭 | 공유 기본 **80px** (`ADMIN_DATA_TABLE_SELECTION_COLUMN_WIDTH`) — 실제 CMS 목록 시안(Layout / 목록·테이블)과 동일. 가이드 컴포넌트 시트는 60(Medium)/48(Small): 화면 시안이 60이면 `--table-selection-column-width: 60px` (Admin 일부 페이지 적용 중) |
+| No. 열 폭 | **80px** (`--table-no-column-width`) |
+
+> 구 문서의 54px · 12×20 · 16px · 10×16 · 선택 열 68px 표기는 **폐기**(공유 CSS·가이드 모두 52 / 8×12 / 14px).
 
 ## Columns
 
@@ -62,4 +71,4 @@ alwaysApply: false
 | Admin | [table-implementation](../../../apps/admin/.cursor/rules/tables/table-implementation.mdc) |
 | CMS | [table-implementation](../../../apps/cms/.cursor/rules/tables/table-implementation.md) · [table-management](../../../apps/cms/.cursor/rules/tables/table-management.md) |
 
-**Last updated:** 2026-08-06
+**Last updated:** 2026-11-08

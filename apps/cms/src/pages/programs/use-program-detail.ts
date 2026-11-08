@@ -9,6 +9,10 @@
 import { useEffect, useState } from 'react'
 import { useProgramStore } from '@/features/program/general/model/program-store'
 import { useSponsorNameById } from '@/features/sponsor/hooks/use-sponsor-name-by-id'
+import {
+  isLookupableSponsorId,
+  resolveAssignedSponsorName,
+} from '@/features/program/shared/lib/merge-program-sponsor-assignments'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 
@@ -22,7 +26,14 @@ export function useProgramDetail(id: string | undefined) {
     updateProgram,
   } = useProgramStore()
   const canWrite = canPerformWriteAction(user)
-  const sponsorName = useSponsorNameById(program?.sponsorId, Boolean(program?.sponsorId))
+  // id 없이 마운트된 경우(remote 부모가 상세를 담당) store에 남은 이전 프로그램으로 조회하지 않는다.
+  // 배정 응답 이름이 있으면 후원사 전체 목록을 받지 않는다.
+  const assignedSponsorName = resolveAssignedSponsorName(program)
+  const lookedUpSponsorName = useSponsorNameById(
+    program?.sponsorId,
+    Boolean(id) && !assignedSponsorName && isLookupableSponsorId(program?.sponsorId)
+  )
+  const sponsorName = assignedSponsorName ?? lookedUpSponsorName
   /** fetch 완료된 id — 성공/실패 모두. 요청 중에는 id와 불일치 → 스피너 */
   const [resolvedId, setResolvedId] = useState<string | null>(null)
 

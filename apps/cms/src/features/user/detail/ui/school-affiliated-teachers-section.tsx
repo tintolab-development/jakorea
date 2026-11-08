@@ -12,24 +12,21 @@ import { formatDateDot } from '@/shared/utils'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
-  SCHOOL_TEACHER_EMPLOYMENT_BADGE_CELL_STYLE,
   SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS,
   isSchoolAffiliatedTeacherRowSelectable,
   isSchoolTeacherEmploymentMutedStatus,
   requestSchoolTeacherEmploymentDropdownOpen,
-  SchoolTeacherEmploymentStatusBadge,
 } from '@/features/user/detail/lib/school-teacher-employment-status'
 import { guardAdminAction } from '@/shared/lib/admin-role-policy'
 import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
-import {
-  StatusDropdownCell,
-  STATUS_DROPDOWN_CELL_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME,
-} from '@/shared/components'
+import { StatusDropdownCell, STATUS_DROPDOWN_CELL_CLASSNAME } from '@/shared/components'
+import { getEmploymentStatusTag } from '@/shared/lib/status-tag-specs'
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import './school-affiliated-teachers-section.css'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
+
+const SCHOOL_AFFILIATED_TEACHER_EMPLOYMENT_COLUMN_WIDTH = 160
 
 export interface SchoolAffiliatedTeachersSectionProps {
   rows: SchoolAffiliatedTeacherRow[]
@@ -124,14 +121,12 @@ export function SchoolAffiliatedTeachersSection({
         title: '교사명',
         dataIndex: 'name',
         key: 'name',
-        width: TABLE_COLUMN_WIDTHS.name,
         align: 'center',
       },
       {
         title: '연락처',
         dataIndex: 'phone',
         key: 'phone',
-        width: TABLE_COLUMN_WIDTHS.phone,
         align: 'center',
         render: (phone: string) =>
           personalInfoRevealed ? (phone?.trim() ? phone : '-') : MASKING_POLICY.phone(phone),
@@ -140,7 +135,7 @@ export function SchoolAffiliatedTeachersSection({
         title: '이메일',
         dataIndex: 'email',
         key: 'email',
-        width: TABLE_COLUMN_WIDTHS.email,
+        ellipsis: true,
         align: 'center',
         render: (email: string) =>
           personalInfoRevealed ? (email?.trim() ? email : '-') : MASKING_POLICY.email(email),
@@ -149,18 +144,18 @@ export function SchoolAffiliatedTeachersSection({
         title: '재직 현황',
         dataIndex: 'employmentStatus',
         key: 'employmentStatus',
-        width: 140,
+        /** 시안(4427:46312) — No 80 · 재직 현황 160 고정, 교사명·연락처·이메일·가입일은 남은 폭 균등 */
+        width: SCHOOL_AFFILIATED_TEACHER_EMPLOYMENT_COLUMN_WIDTH,
         align: 'center',
-        onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME }),
         onCell: () => ({
-          className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME}`,
+          className: STATUS_DROPDOWN_CELL_CLASSNAME,
           onClick: (e: React.MouseEvent<HTMLTableCellElement>) => e.stopPropagation(),
         }),
         render: (_: unknown, record: Row) => (
           <StatusDropdownCell<SchoolTeacherEmploymentStatus>
             status={record.employmentStatus}
             statusOptions={SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS}
-            renderBadge={s => <SchoolTeacherEmploymentStatusBadge status={s} />}
+            getTag={getEmploymentStatusTag}
             isItemDisabled={(cur, opt) => cur === opt}
             onChange={next => handleEmploymentStatusChange(record.id, next)}
             isOpen={openEmploymentDropdownId === record.id}
@@ -169,8 +164,6 @@ export function SchoolAffiliatedTeachersSection({
                 setOpenEmploymentDropdownId(nextOpen ? record.id : null)
               )
             }
-            style={SCHOOL_TEACHER_EMPLOYMENT_BADGE_CELL_STYLE}
-            tagLayout="tag100"
           />
         ),
       },
@@ -178,7 +171,6 @@ export function SchoolAffiliatedTeachersSection({
         title: '가입일',
         dataIndex: 'joinedAt',
         key: 'joinedAt',
-        width: TABLE_COLUMN_WIDTHS.date,
         align: 'center',
         render: (d: Row['joinedAt']) => formatDateDot(d),
       },
@@ -202,10 +194,7 @@ export function SchoolAffiliatedTeachersSection({
 
   const handleWithdraw = () => {
     if (selectedRowKeys.length === 0) {
-      showAlert({
-        title: '항목 선택 안내',
-        content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
-      })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     onWithdrawSelected?.(selectedRowKeys.map(String))
@@ -242,7 +231,7 @@ export function SchoolAffiliatedTeachersSection({
         <DetailInfoForm.Row type="custom">
           <div ref={tableWrapRef} className="school-affiliated-teachers-section__body cms-data-table-fit-scroll-wrap">
             <CmsDataTable
-              className="cms-data-table cms-data-table--fluid cms-data-table--fit-scroll school-affiliated-teachers-section__table"
+              className="cms-data-table cms-data-table--fit-scroll school-affiliated-teachers-section__table"
               rowSelection={{
                 columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
                 selectedRowKeys,
@@ -256,6 +245,8 @@ export function SchoolAffiliatedTeachersSection({
               pagination={false}
               size={TABLE_CONFIG.size}
               bordered={TABLE_CONFIG.bordered}
+              /* 고정 폭 없는 열(교사명·연락처·이메일·가입일)을 내용 길이와 무관하게 균등 분배 */
+              tableLayout="fixed"
               scroll={tableScrollX != null ? { x: tableScrollX } : undefined}
               rowKey="id"
               onRow={record => {

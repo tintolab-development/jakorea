@@ -331,10 +331,12 @@ function ImpactStoryDetailView({
       />
 
       <div className="impact-story-detail-page__inner">
-        <p className="impact-story-detail-page__hint">
-          * 작성일은 어드민 화면에서만 노출되며, 홈페이지에서는 게시일만 노출됩니다.
-        </p>
-        <AdminDetailBackLink onClick={onList} />
+        <div className="impact-story-detail-page__back-row">
+          <AdminDetailBackLink onClick={onList} />
+          <p className="impact-story-detail-page__hint">
+            ※ 작성일은 어드민 화면에서만 노출되며, 홈페이지에서는 게시일만 노출됩니다.
+          </p>
+        </div>
 
         <div className="impact-story-detail-page__card">
           <div className="impact-story-detail-page__top-row">

@@ -32,7 +32,7 @@ export type ProgramMinorPortraitFlowProps = {
   relationError: string | null
   identityError: string | null
   verifying: boolean
-  /** 1단계 하단 시트 `동의서 작성하기` */
+  /** 흐름 시작 — 보호자 본인인증 모달을 연다 (apply gate 가 미성년 판정 시 바로 호출) */
   onStart: () => void
   /** 2·3단계 닫기/취소 — 흐름만 초기화(게이트 모달 닫기는 호출 측) */
   onCancel: () => void

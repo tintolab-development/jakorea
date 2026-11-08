@@ -460,6 +460,7 @@ export default function UjatEducationRegionsPage() {
         excelExport={
           canWrite
             ? {
+                accessLog: { downloadKind: 'EDUCATION_REGION_LIST_EXPORT', containedPiiTypes: ['NAME'] },
                 columns: visibleColumns,
                 data: filteredRows,
               }

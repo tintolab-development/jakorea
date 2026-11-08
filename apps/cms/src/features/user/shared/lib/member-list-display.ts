@@ -97,3 +97,21 @@ export function getMemberSignupTypeLabel(
 ): '직접 가입' | '관리자 등록' {
   return user.registeredByAdmin === true ? '관리자 등록' : '직접 가입'
 }
+
+/**
+ * 학교 목록 「기관 소재지」 — 시·도 + 시·군·구만 (예: `서울특별시 중구`).
+ * 서버 `regionSido`·`regionSigungu`가 있으면 우선, 없으면 도로명 주소 앞 두 토큰에서 추출.
+ * 둘째 토큰이 시·군·구가 아니면(세종 등) 시·도만 표시한다.
+ */
+export function formatSchoolRegionLabel(
+  schoolInfo: Pick<NonNullable<User['schoolInfo']>, 'address' | 'regionSido' | 'regionSigungu'> | undefined
+): string {
+  const sido = schoolInfo?.regionSido?.trim()
+  const sigungu = schoolInfo?.regionSigungu?.trim()
+  if (sido) return sigungu ? `${sido} ${sigungu}` : sido
+  const tokens = (schoolInfo?.address ?? '').trim().split(/\s+/).filter(Boolean)
+  if (tokens.length === 0) return '-'
+  const [first, second] = tokens
+  if (second && /(시|군|구)$/.test(second)) return `${first} ${second}`
+  return first
+}

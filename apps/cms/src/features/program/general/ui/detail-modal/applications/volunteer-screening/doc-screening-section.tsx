@@ -296,7 +296,12 @@ export function GeneralVolunteerDocScreeningSection({
           excelExport={excelExport}
         >
           <div
-            className="general-volunteer-screening__table-wrap"
+            className={[
+              'general-volunteer-screening__table-wrap',
+              interviewEnabled ? null : 'general-volunteer-screening__table-wrap--fluid',
+            ]
+              .filter(Boolean)
+              .join(' ')}
             style={
               {
                 '--general-doc-screening-table-width': `${tableScrollX}px`,

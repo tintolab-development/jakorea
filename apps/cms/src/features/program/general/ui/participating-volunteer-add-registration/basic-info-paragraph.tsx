@@ -15,6 +15,7 @@ export function ParticipatingVolunteerAddRegistrationBasicInfoParagraph(
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="1365 ID"
+            required
             fullRow
             edit={
               <CmsInput

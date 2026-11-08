@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import { buildApplicationProcessedSelectionAlert } from '@/features/program/general/lib/application-processed-selection-alert'
-import { GENERAL_VOLUNTEER_DOC_SCREENING_SELECT_ONE_APPROVE_ALERT } from '@/features/program/general/lib/volunteer-screening-constants'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 import { VOLUNTEER_1365_APPROVAL_BLOCKED_ALERT } from '@/features/program/shared/lib/application-eligibility-conflict'
 import {
   canSelectVolunteerApplicationForDecision,
@@ -40,7 +40,7 @@ describe('general-volunteer-application-decision-actions', () => {
       onOpenBulkApprove,
     })
     expect(cmsAlertModal.show).toHaveBeenCalledWith(
-      GENERAL_VOLUNTEER_DOC_SCREENING_SELECT_ONE_APPROVE_ALERT
+      NO_SELECTION_ALERT
     )
   })
 

@@ -1,0 +1,11 @@
+/**
+ * 지급조서 확인 — 캘린더 월간 칩 (시안 12432:438814 Calendar / Tag / 1 Line)
+ * 금액·구분선·상태 문구 모두 상태 메인색(칩 루트 inline color), 구분선 opacity 50%, 상태 문구 불투명.
+ */
+.payment-orders-calendar-view .calendar-event-title--with-divider .calendar-event-title__divider {
+  border-left-color: currentColor;
+}
+
+.payment-orders-calendar-view .calendar-event-title--with-divider .calendar-event-title__right {
+  opacity: 1;
+}

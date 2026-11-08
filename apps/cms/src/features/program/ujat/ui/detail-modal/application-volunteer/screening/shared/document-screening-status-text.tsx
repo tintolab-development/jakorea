@@ -1,15 +1,2 @@
-import type { UjatDocumentScreeningStatus } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
-import { UJAT_DOCUMENT_SCREENING_STATUS_LABELS } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
-import './document-screening-status-text.css'
-
-export interface DocumentScreeningStatusTextProps {
-  status: UjatDocumentScreeningStatus
-}
-
-export function DocumentScreeningStatusText({ status }: DocumentScreeningStatusTextProps) {
-  return (
-    <span className={`ujat-doc-screening-status-text ujat-doc-screening-status-text--${status}`}>
-      {UJAT_DOCUMENT_SCREENING_STATUS_LABELS[status]}
-    </span>
-  )
-}
+/** 기존 외부 import 호환. 운영 소비처는 program/shared의 정본 renderer를 직접 사용한다. */
+export { DocumentScreeningStatusText, type DocumentScreeningStatusTextProps } from '@/features/program/shared/ui/volunteer-screening/document-screening-status-text'

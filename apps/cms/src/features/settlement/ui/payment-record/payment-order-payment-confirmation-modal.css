@@ -1,14 +1,11 @@
 /**
- * 지급조서 확인 모달 — 본문 간격(텍스트 16px, 상세↔날짜 32px), 기관|일자|차시 8px·볼드
+ * 지급조서 확인 모달 — Figma `Popup / Calendar / w600 / 지급조서 확인`
+ * 패딩 24/30/34(ContentModal 기본) · 타이틀↔본문 12 · 본문 문단 간 0 · 본문↔기관|일자|회차 12
+ * · 기관 줄↔계좌 지급 예정일 30 · 필드(라벨 + h40) · 푸터 30
  */
 
-.payment-order-payment-confirm-modal.ant-modal .ant-modal-content {
-  /* figma spec: top 26, horizontal 30, bottom 34 */
-  padding: 26px 30px 34px;
-}
-
 .payment-order-payment-confirm-modal .teal-header-modal__body {
-  padding-top: 16px;
+  padding-top: 12px;
 }
 
 .payment-order-payment-confirm-modal .teal-header-modal__footer {
@@ -26,7 +23,7 @@
 .payment-order-payment-confirm__line {
   margin: 0;
   font-size: var(--font-size-16, 16px);
-  font-weight: var(--font-weight-400, 400);
+  font-weight: var(--font-weight-500, 500);
   line-height: 150%;
   color: var(--color-text-primary, #3d3d3d);
 }
@@ -35,44 +32,28 @@
   font-weight: var(--font-weight-700, 700);
 }
 
+/* 기관 | 일자 | 회차 — Bold 16, 구분선 1×13 양옆 8 */
 .payment-order-payment-confirm__detail-line {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  margin-top: 16px;
+  margin-top: 12px;
   font-size: var(--font-size-16, 16px);
   font-weight: var(--font-weight-700, 700);
   line-height: 150%;
   color: var(--color-text-primary, #3d3d3d);
 }
 
-.payment-order-payment-confirm__sep {
-  font-weight: var(--font-weight-700, 700);
-  color: var(--color-text-primary, #3d3d3d);
+.payment-order-payment-confirm__detail-line .program-detail-td-divider {
+  margin: 0 8px;
 }
 
 .payment-order-payment-confirm__date-block {
   display: flex;
   flex-direction: column;
-  gap: 8px;
   margin-top: 30px;
-}
-
-.payment-order-payment-confirm__date-label {
-  font-size: var(--font-size-14, 14px);
-  font-weight: var(--font-weight-500, 500);
-  line-height: 150%;
-  color: var(--color-text-secondary, #666);
 }
 
 .payment-order-payment-confirm__date-picker {
   width: 100%;
-  height: 44px;
-  border-radius: var(--radius-8, 8px);
-}
-
-.payment-order-payment-confirm__date-picker.ant-picker .ant-picker-input > input {
-  font-size: var(--font-size-16, 16px);
-  font-weight: var(--font-weight-500, 500);
 }

@@ -8,6 +8,20 @@
   justify-content: flex-start;
 }
 
+/* 공통 `.login-card` padding이 !important — 시안 하단 80px */
+.login-page .login-card:not(.login-card--social-already-linked) {
+  padding-bottom: 80px !important;
+}
+
+/* 시안: 입력 필드 간 20px, 입력 영역 ↔ 로그인 버튼 40px */
+.login-form .ant-form-item {
+  margin-bottom: 20px;
+}
+
+.login-form .ant-form-item:has(+ .login-submit-actions) {
+  margin-bottom: 40px;
+}
+
 .login-card--social-already-linked {
   align-self: center;
   margin-inline: auto;

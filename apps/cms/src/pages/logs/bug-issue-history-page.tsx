@@ -28,11 +28,11 @@ import '@/features/program/general/ui/program-list.css'
 
 const BUG_ISSUE_HISTORY_TABLE_SCROLL_X = 980
 
+/** 시안: 에러 메시지는 남는 폭 · 사용자 180 · 발생일시 300 */
 const TABLE_COL_WIDTH = {
   no: 80,
-  errorMessage: 520,
-  userName: 150,
-  occurredAt: 220,
+  userName: 180,
+  occurredAt: 300,
 } as const
 
 export default function BugIssueHistoryPage() {
@@ -79,12 +79,11 @@ export default function BugIssueHistoryPage() {
         title: '에러 메시지',
         dataIndex: 'errorMessage',
         key: 'errorMessage',
-        width: TABLE_COL_WIDTH.errorMessage,
         align: 'center',
         ellipsis: { showTitle: true },
       },
       {
-        title: '사용자명',
+        title: '사용자',
         dataIndex: 'userName',
         key: 'userName',
         width: TABLE_COL_WIDTH.userName,

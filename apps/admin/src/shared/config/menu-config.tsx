@@ -76,7 +76,7 @@ export const menuItems: MenuItemConfig[] = [
         label: '투명경영',
         children: [
           { key: '/ja-korea/principles', label: '운영원칙 관리' },
-          { key: '/ja-korea/income-expense', label: '수입&지출 관리' },
+          { key: '/ja-korea/income-expense', label: '수익&지출 관리' },
           { key: '/ja-korea/reports-disclosure', label: '보고서 및 공시 관리' },
         ],
       },
@@ -259,7 +259,7 @@ const PAGE_TITLE_BY_PATH: Record<string, string> = {
   '/ja-korea/history-awards-certs': '연혁/수상/인증 관리',
   '/ja-korea/bi': 'BI 소개 관리',
   '/ja-korea/principles': '운영원칙 관리',
-  '/ja-korea/income-expense': '수입&지출 관리',
+  '/ja-korea/income-expense': '수익&지출 관리',
   '/ja-korea/reports-disclosure': '보고서 및 공시 관리',
   '/ja-korea/ja-history': 'JA History',
   '/ja-korea/recruit/guide': '채용 안내 관리',

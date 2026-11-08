@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import {
   formatPayeeGenderBirthDisplay,
   mapSettlementPayeeToInstructorBasicFields,
@@ -15,15 +15,24 @@ describe('splitMaskedResidentRegistrationNumber', () => {
 })
 
 describe('formatPayeeGenderBirthDisplay', () => {
-  it('BE 마스킹 성별·생년월일 문자열을 그대로 조합한다', () => {
+  it('마스킹 성별은 그대로, 마스킹 생년월일은 점 표기(나이 없음)', () => {
     expect(formatPayeeGenderBirthDisplay({ gender: '**', birthDate: '1990-**-**' })).toBe(
-      '** | 1990-**-**'
+      '** | 1990.**.**'
     )
+  })
+
+  it('원문 성별·생년월일은 라벨·점 표기·만 나이로 바꾼다 (FEMALE·1990-07-21 그대로 노출 금지)', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-11-09T12:00:00+09:00'))
+    expect(formatPayeeGenderBirthDisplay({ gender: 'FEMALE', birthDate: '1990-07-21' })).toBe(
+      '여성 | 1990. 07. 21 (만 36세)'
+    )
+    vi.useRealTimers()
   })
 
   it('한쪽만 있으면 나머지는 -', () => {
     expect(formatPayeeGenderBirthDisplay({ gender: null, birthDate: '1990-**-**' })).toBe(
-      '- | 1990-**-**'
+      '- | 1990.**.**'
     )
     expect(formatPayeeGenderBirthDisplay({ gender: null, birthDate: null })).toBe('-')
   })
@@ -61,7 +70,7 @@ describe('mapSettlementPayeeToInstructorBasicFields', () => {
       addressDetail: '***',
       settlementAccountBankNumberPart: '국민은행 ***********',
       settlementAccountHolderPart: '이*',
-      genderBirthDisplay: '** | 1990-**-**',
+      genderBirthDisplay: '** | 1990.**.**',
       affiliation: 'JA**',
       residentRegistrationNumber: '900101-*******',
     })

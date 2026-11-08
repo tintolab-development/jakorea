@@ -1,13 +1,13 @@
 /**
  * 작업 완료 안내 모달 — Figma (회원 삭제 완료 등)
- * width 600 · padding 24 30 32 · 타이틀↔본문 12 · 본문↔확인 30 · height hug
+ * width 600 · padding 24 30 34 · 타이틀↔본문 12 · 본문↔확인 30 · height hug
  */
 
 .action-result-modal.content-modal.ant-modal .ant-modal-content {
   box-sizing: border-box;
   width: 600px !important;
   max-width: 600px;
-  padding: 24px 30px 32px 30px !important;
+  padding: 24px 30px 34px 30px !important;
 }
 
 .action-result-modal.content-modal .teal-header-modal__body {

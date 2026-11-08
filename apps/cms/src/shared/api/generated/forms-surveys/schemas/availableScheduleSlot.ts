@@ -13,4 +13,8 @@ export interface AvailableScheduleSlot {
   assignable?: boolean;
   /** 교육 진행 예정일 구간 표시 문자열. PERIOD 단일/다중 구간 선택이면 non-null. 지정일·운영일정만 선택한 경우 null. */
   label?: string | null;
+  /** 강사 자택↔일정 장소 편도 km. 산출 불가면 null. */
+  distanceKm?: number | null;
+  /** 장거리 표기. 단가와 무관. 산출 불가면 null. */
+  longDistance?: boolean | null;
 }

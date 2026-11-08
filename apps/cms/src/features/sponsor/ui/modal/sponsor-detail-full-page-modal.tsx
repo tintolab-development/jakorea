@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
+import { nextSearchParamsIfChanged } from '@/shared/lib/search-params-diff'
 import { useQueryClient } from '@tanstack/react-query'
 import { LnbIconProjectInfo } from '@/features/program/general/ui/detail-modal/program-detail-lnb-icons'
 import {
@@ -238,15 +239,14 @@ function SponsorDetailFullPageModalInner({
   const handleSelectLnbTop = useCallback(
     (key: string): void => {
       if (!isSponsorDetailLnbKey(key)) return
-      setSearchParams(
-        prev => {
-          const next = new URLSearchParams(prev)
-          next.set('sponsorId', sponsor.id)
-          next.set(SPONSOR_LNB_PARAM, key)
-          return next
-        },
-        { replace: true }
-      )
+      const nextParams = nextSearchParamsIfChanged(prev => {
+        const next = new URLSearchParams(prev)
+        next.set('sponsorId', sponsor.id)
+        next.set(SPONSOR_LNB_PARAM, key)
+        return next
+      })
+      // LNB = 브레드크럼 단계 → push (같은 메뉴 재선택은 엔트리를 만들지 않음)
+      if (nextParams) setSearchParams(nextParams, { replace: false })
     },
     [setSearchParams, sponsor.id]
   )

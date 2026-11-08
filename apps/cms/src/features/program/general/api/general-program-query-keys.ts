@@ -31,7 +31,8 @@ export const generalProgramQueryKeys = {
     [...generalProgramQueryKeys.all, 'managers', programId] as const,
   managers: (programId: string, filtersKey = '') =>
     [...generalProgramQueryKeys.managersRoot(programId), filtersKey] as const,
-  managerCandidates: () => [...generalProgramQueryKeys.all, 'manager-candidates'] as const,
+  managerCandidates: (keyword = '') =>
+    [...generalProgramQueryKeys.all, 'manager-candidates', keyword] as const,
   surveys: (programId: string) => [...generalProgramQueryKeys.all, 'surveys', programId] as const,
   surveyDisplayTitles: (programId: string, versionIdsKey: string) =>
     [...generalProgramQueryKeys.all, 'survey-display-titles', programId, versionIdsKey] as const,

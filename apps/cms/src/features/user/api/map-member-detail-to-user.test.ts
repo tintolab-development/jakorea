@@ -318,7 +318,7 @@ describe('mapInstructorMemberDetailToUser', () => {
     expect(user.affiliatedSchoolName).toBe('진월초등학교')
     // GENERAL은 학교명만으로 dual(교사 상세)로 올리지 않음
     expect(user.instructorMemberProfile).toBe('instructor_only')
-    expect(user.listMetrics?.employmentStatusLabel).toBe('재직중')
+    expect(user.listMetrics?.employmentStatusLabel).toBe('재직 중')
   })
 
   it('CMS profile.affiliation.schoolName을 affiliatedSchoolName·담당 학년에 매핑한다', () => {
@@ -357,7 +357,7 @@ describe('mapInstructorMemberDetailToUser', () => {
 
     expect(user.affiliatedSchoolName).toBe('진월초등학교')
     expect(user.instructorMemberProfile).toBe('school_teacher')
-    expect(user.listMetrics?.employmentStatusLabel).toBe('재직중')
+    expect(user.listMetrics?.employmentStatusLabel).toBe('재직 중')
     expect(user.listMetrics?.instructorAssignedGrade).toBe('4학년')
     expect(user.instructorCmsProfile?.affiliation.schoolName).toBe('진월초등학교')
   })
@@ -784,6 +784,6 @@ describe('mapTeacherMemberDetailToUser', () => {
     expect(user.organizationId).toBe(12)
     expect(user.instructorMemberProfile).toBe('school_teacher')
     expect(user.affiliatedSchoolName).toBe('진월초등학교')
-    expect(user.listMetrics?.employmentStatusLabel).toBe('재직중')
+    expect(user.listMetrics?.employmentStatusLabel).toBe('재직 중')
   })
 })

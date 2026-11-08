@@ -10,7 +10,7 @@ import {
   formatUjatVolunteerBirthDateAndAge,
   formatUjatVolunteerUniversityDisplay,
 } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
-import { DocumentScreeningStatusText } from '../shared/document-screening-status-text'
+import { DocumentScreeningStatusText } from '@/features/program/shared/ui/volunteer-screening/document-screening-status-text'
 import { InterviewAssignmentStatusText } from '../shared/interview-assignment-status-text'
 import { SecondInterviewScreeningStatusText } from '@/features/program/shared/ui/volunteer-screening/second-interview-screening-status-text'
 import {

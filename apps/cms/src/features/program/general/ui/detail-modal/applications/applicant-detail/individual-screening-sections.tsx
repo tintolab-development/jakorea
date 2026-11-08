@@ -1,15 +1,12 @@
 import { CmsButton } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import {
-  StatusDropdownCell,
-  STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME,
-} from '@/shared/components/status-dropdown-cell'
+import { StatusDropdownCell } from '@/shared/components/status-dropdown-cell'
+import { getManagerEvaluationTag } from '@/shared/lib/status-tag-specs'
 import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
 import {
   GENERAL_MANAGER_EVALUATION_ORDER,
   type GeneralManagerEvaluation,
 } from '@/features/program/general/lib/volunteer-screening-constants'
-import { GeneralManagerEvaluationBadge } from '@/features/program/general/ui/detail-modal/applications/volunteer-screening/status-text'
 import { openPortal1365Main } from '@/shared/constants/external-urls'
 import '@/features/program/general/ui/detail-modal/applications/volunteer-screening/detail.css'
 
@@ -22,7 +19,7 @@ export function IndividualApplicantId1365Cell({ id1365 }: { id1365: string }) {
     <span className="general-volunteer-applicant-basic-info__id1365-cell">
       <span>{id1365}</span>
       <DetailInfoForm.InputsSeparator />
-      <CmsButton type="button" size="medium" onClick={openPortal1365Main}>
+      <CmsButton variant="secondary" type="button" size="h32" onClick={openPortal1365Main}>
         1365 바로가기
       </CmsButton>
     </span>
@@ -55,53 +52,47 @@ export function IndividualApplicantManagerEvaluationSection({
           <DetailInfoForm.Field
             label="담당자 A"
             view={
-              <span className={STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME}>
-                <StatusDropdownCell<GeneralManagerEvaluation>
-                  status={applicant.managerAEvaluation ?? 'unreviewed'}
-                  statusOptions={GENERAL_MANAGER_EVALUATION_ORDER}
-                  renderBadge={evaluation => <GeneralManagerEvaluationBadge evaluation={evaluation} />}
-                  isItemDisabled={(current, option) => current === option}
-                  onChange={
-                    canEditManagerAEvaluation
-                      ? evaluation => onManagerAEvaluationChange(applicant.id, evaluation)
-                      : undefined
-                  }
-                  isOpen={
-                    openManagerDropdown?.rowId === applicant.id &&
-                    openManagerDropdown.manager === 'A'
-                  }
-                  onOpenChange={open =>
-                    setOpenManagerDropdown(open ? { rowId: applicant.id, manager: 'A' } : null)
-                  }
-                  tagLayout="tag100"
-                />
-              </span>
+              <StatusDropdownCell<GeneralManagerEvaluation>
+                status={applicant.managerAEvaluation ?? 'unreviewed'}
+                statusOptions={GENERAL_MANAGER_EVALUATION_ORDER}
+                getTag={getManagerEvaluationTag}
+                isItemDisabled={(current, option) => current === option}
+                onChange={
+                  canEditManagerAEvaluation
+                    ? evaluation => onManagerAEvaluationChange(applicant.id, evaluation)
+                    : undefined
+                }
+                isOpen={
+                  openManagerDropdown?.rowId === applicant.id &&
+                  openManagerDropdown.manager === 'A'
+                }
+                onOpenChange={open =>
+                  setOpenManagerDropdown(open ? { rowId: applicant.id, manager: 'A' } : null)
+                }
+              />
             }
           />
           <DetailInfoForm.Field
             label="담당자 B"
             view={
-              <span className={STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME}>
-                <StatusDropdownCell<GeneralManagerEvaluation>
-                  status={applicant.managerBEvaluation ?? 'unreviewed'}
-                  statusOptions={GENERAL_MANAGER_EVALUATION_ORDER}
-                  renderBadge={evaluation => <GeneralManagerEvaluationBadge evaluation={evaluation} />}
-                  isItemDisabled={(current, option) => current === option}
-                  onChange={
-                    canEditManagerBEvaluation
-                      ? evaluation => onManagerBEvaluationChange(applicant.id, evaluation)
-                      : undefined
-                  }
-                  isOpen={
-                    openManagerDropdown?.rowId === applicant.id &&
-                    openManagerDropdown.manager === 'B'
-                  }
-                  onOpenChange={open =>
-                    setOpenManagerDropdown(open ? { rowId: applicant.id, manager: 'B' } : null)
-                  }
-                  tagLayout="tag100"
-                />
-              </span>
+              <StatusDropdownCell<GeneralManagerEvaluation>
+                status={applicant.managerBEvaluation ?? 'unreviewed'}
+                statusOptions={GENERAL_MANAGER_EVALUATION_ORDER}
+                getTag={getManagerEvaluationTag}
+                isItemDisabled={(current, option) => current === option}
+                onChange={
+                  canEditManagerBEvaluation
+                    ? evaluation => onManagerBEvaluationChange(applicant.id, evaluation)
+                    : undefined
+                }
+                isOpen={
+                  openManagerDropdown?.rowId === applicant.id &&
+                  openManagerDropdown.manager === 'B'
+                }
+                onOpenChange={open =>
+                  setOpenManagerDropdown(open ? { rowId: applicant.id, manager: 'B' } : null)
+                }
+              />
             }
           />
         </DetailInfoForm.Row>

@@ -8,6 +8,7 @@ import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import { formatNumberDisplay } from '@/shared/utils'
 import { useSearchParams } from 'react-router-dom'
+import { useNavigateToAncestor } from '@/shared/hooks/use-history-ancestor-navigation'
 import type { ColumnsType } from 'antd/es/table'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import type { FilterTableExcelExportConfig } from '@/shared/components/filter-table-layout'
@@ -74,20 +75,27 @@ export type PaymentOrdersDetailState =
   | { type: 'instructor'; data: PaymentOrderAdminInstructorRow }
   | null
 
-const PAYMENT_ORDERS_LIST_SCROLL_X_PROGRAM = 64 + 360 + 180 + 200 + 168
-const PAYMENT_ORDERS_LIST_SCROLL_X_INSTRUCTOR = 64 + 340 + 180 + 200 + 180
+
+/** 시안: 셀렉트 기본값은 「전체」 옵션(값 `all`) — placeholder가 아니라 선택값으로 노출 */
+const ALL_FILTER_OPTION = { value: 'all', label: '전체' } as const
 
 const PROCESSING_STATUS_FILTER_OPTIONS: {
-  value: PaymentOrderAdminProcessingStatus
+  value: PaymentOrderAdminProcessingStatus | 'all'
   label: string
-}[] = (
-  Object.entries(PAYMENT_ORDER_STATUS_LABELS_LIST) as [PaymentOrderAdminProcessingStatus, string][]
-).map(([value, label]) => ({ value, label }))
+}[] = [
+  ALL_FILTER_OPTION,
+  ...(
+    Object.entries(PAYMENT_ORDER_STATUS_LABELS_LIST) as [PaymentOrderAdminProcessingStatus, string][]
+  ).map(([value, label]) => ({ value, label })),
+]
 
-const PENDING_ITEM_BUCKET_FILTER_OPTIONS = PAYMENT_ORDER_PENDING_ITEM_BUCKETS.map(value => ({
-  value,
-  label: PAYMENT_ORDER_PENDING_ITEM_BUCKET_LABELS[value],
-}))
+const PENDING_ITEM_BUCKET_FILTER_OPTIONS = [
+  ALL_FILTER_OPTION,
+  ...PAYMENT_ORDER_PENDING_ITEM_BUCKETS.map(value => ({
+    value,
+    label: PAYMENT_ORDER_PENDING_ITEM_BUCKET_LABELS[value],
+  })),
+]
 
 /** 풀페이지 상세 — `replace: false`로 열어 뒤로가기 시 목록 복귀 */
 const PO_DETAIL_TYPE = PAYMENT_ORDERS_DETAIL_TYPE_PARAM
@@ -342,18 +350,18 @@ export function usePaymentOrdersListPage() {
     [handleFilterChange, setSearchParams]
   )
 
+  const { toSearch: navigateToAncestorSearch } = useNavigateToAncestor()
+
+  /** 상세 닫기 — 목록 엔트리가 history에 있으면 뒤로, 없으면 replace */
   const closeDetail = useCallback(() => {
-    setSearchParams(
-      prev => {
-        const next = new URLSearchParams(prev)
-        next.delete(PO_DETAIL_TYPE)
-        next.delete(PO_DETAIL_NO)
-        next.delete(PO_DETAIL_KEY)
-        return next
-      },
-      { replace: true }
-    )
-  }, [setSearchParams])
+    navigateToAncestorSearch(prev => {
+      const next = new URLSearchParams(prev)
+      next.delete(PO_DETAIL_TYPE)
+      next.delete(PO_DETAIL_NO)
+      next.delete(PO_DETAIL_KEY)
+      return next
+    })
+  }, [navigateToAncestorSearch])
 
   const openPaymentOrderDetail = useCallback(
     (
@@ -433,13 +441,16 @@ export function usePaymentOrdersListPage() {
         key: 'no',
         width: 80,
         align: 'center',
+        // 시안: 번호는 총 건수부터 역순(13 → 1). 행 식별자 `no`(상세 URL 키)는 그대로 둔다.
+        render: (_: number, __: PaymentOrderAdminProgramRow, index: number) =>
+          listProgram.length - index,
       },
       {
         title: '프로그램명',
         dataIndex: 'programName',
         key: 'programName',
         ellipsis: { showTitle: true },
-        width: 360,
+        // 유연 열 — 남는 폭 흡수 (시안: No. 80 · 나머지 240)
         minWidth: 240,
         align: 'center',
       },
@@ -447,7 +458,7 @@ export function usePaymentOrdersListPage() {
         title: '정산 대상자',
         dataIndex: 'instructorCount',
         key: 'instructorCount',
-        width: 180,
+        width: 240,
         align: 'center',
         render: (n: number) => `${n}명`,
       },
@@ -455,7 +466,7 @@ export function usePaymentOrdersListPage() {
         title: '지급 대기 항목',
         dataIndex: 'pendingPaymentSettlementItemCount',
         key: 'pendingPaymentSettlementItemCount',
-        width: 200,
+        width: 240,
         align: 'center',
         render: (count: number) => `${count}개`,
       },
@@ -463,12 +474,12 @@ export function usePaymentOrdersListPage() {
         title: '총 정산 신청 금액',
         dataIndex: 'estimatedAmount',
         key: 'estimatedAmount',
-        width: 168,
+        width: 240,
         align: 'center',
         render: (amount: number) => formatWon(amount),
       },
     ],
-    []
+    [listProgram.length]
   )
   const instructorColumns: ColumnsType<PaymentOrderAdminInstructorRow> = useMemo(
     () => [
@@ -478,13 +489,15 @@ export function usePaymentOrdersListPage() {
         key: 'no',
         width: 80,
         align: 'center',
+        render: (_: number, __: PaymentOrderAdminInstructorRow, index: number) =>
+          listInstructor.length - index,
       },
       {
         title: '신청자명',
         dataIndex: 'instructorName',
         key: 'instructorName',
         ellipsis: { showTitle: true },
-        width: 340,
+        // 시안(12432:441236): No. 80 외 4열 균등(364.5) — 모두 유연 열로 남는 폭을 나눈다
         minWidth: 240,
         align: 'center',
       },
@@ -492,7 +505,7 @@ export function usePaymentOrdersListPage() {
         title: '정산 대상 프로그램',
         dataIndex: 'programCount',
         key: 'programCount',
-        width: 180,
+        minWidth: 240,
         align: 'center',
         render: (n: number) => `${n}개`,
       },
@@ -500,7 +513,7 @@ export function usePaymentOrdersListPage() {
         title: '지급 대기 항목',
         dataIndex: 'pendingPaymentSettlementItemCount',
         key: 'pendingPaymentSettlementItemCount',
-        width: 200,
+        minWidth: 240,
         align: 'center',
         render: (count: number) => `${count}개`,
       },
@@ -508,12 +521,12 @@ export function usePaymentOrdersListPage() {
         title: '총 정산 신청 금액',
         dataIndex: 'estimatedAmount',
         key: 'estimatedAmount',
-        width: 180,
+        minWidth: 240,
         align: 'center',
         render: (amount: number) => formatWon(amount),
       },
     ],
-    []
+    [listInstructor.length]
   )
 
   const total = isProgram ? listProgram.length : listInstructor.length
@@ -545,16 +558,14 @@ export function usePaymentOrdersListPage() {
             label: '지급조서 처리 현황',
             placeholder: '전체',
             options: PROCESSING_STATUS_FILTER_OPTIONS,
-            allowClear: true,
             width: FILTER_CONTROL_MAX_WIDTH_PX,
           }
         : {
             key: 'pendingItemBucket',
             type: 'select',
-            label: '지급 대기 정산 항목',
+            label: '지급 대기 항목',
             placeholder: '전체',
             options: PENDING_ITEM_BUCKET_FILTER_OPTIONS,
-            allowClear: true,
             width: FILTER_CONTROL_MAX_WIDTH_PX,
           }
 
@@ -584,9 +595,18 @@ export function usePaymentOrdersListPage() {
 
   const paymentOrdersExcelExport = useMemo((): FilterTableExcelExportConfig => {
     if (isProgram) {
-      return { columns: programColumns, data: listProgram }
+      return {
+        columns: programColumns,
+        data: listProgram,
+        accessLog: { downloadKind: 'PAYMENT_ORDER_LIST_EXPORT', containedPiiTypes: [] },
+      }
     }
-    return { columns: instructorColumns, data: listInstructor }
+    return {
+      columns: instructorColumns,
+      data: listInstructor,
+      // 신청자별 목록은 신청자명 컬럼이 있다
+      accessLog: { downloadKind: 'PAYMENT_ORDER_LIST_EXPORT', containedPiiTypes: ['NAME'] },
+    }
   }, [isProgram, programColumns, instructorColumns, listProgram, listInstructor])
 
   const renderContent = useCallback(
@@ -618,7 +638,6 @@ export function usePaymentOrdersListPage() {
               rowKey="no"
               columns={programColumns}
               dataSource={listProgram}
-              scroll={{ x: PAYMENT_ORDERS_LIST_SCROLL_X_PROGRAM }}
               onRowClick={record => openPaymentOrderDetail('program', record)}
             />
           ) : (
@@ -627,7 +646,6 @@ export function usePaymentOrdersListPage() {
               rowKey="no"
               columns={instructorColumns}
               dataSource={listInstructor}
-              scroll={{ x: PAYMENT_ORDERS_LIST_SCROLL_X_INSTRUCTOR }}
               onRowClick={record => openPaymentOrderDetail('instructor', record)}
             />
           )}

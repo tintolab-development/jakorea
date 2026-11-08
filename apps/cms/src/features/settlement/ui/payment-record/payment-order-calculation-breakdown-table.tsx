@@ -91,7 +91,7 @@ export function getPaymentOrderCalculationColumns(options?: {
   columnWidthPreset?: 'statement-modal' | 'compact' | 'account-payment-detail'
   /** 1열 헤더. 기본 참여 기관명 */
   institutionColumnTitle?: string
-  /** 2열 헤더. 기본 강의 진행 일자 */
+  /** 2열 헤더. 기본 교육 진행 일자 */
   dateColumnTitle?: string
   /** true면 항목 설명 말줄임 대신 개행 */
   wrapDescription?: boolean
@@ -141,7 +141,7 @@ export function getPaymentOrderCalculationColumns(options?: {
       }),
     },
     {
-      title: options?.dateColumnTitle ?? '강의 진행 일자',
+      title: options?.dateColumnTitle ?? '교육 진행 일자',
       key: 'lectureProgress',
       width: columnWidths.date,
       align: 'center',
@@ -246,8 +246,8 @@ export interface PaymentOrderCalculationBreakdownTableProps {
    */
   tableCellSpec?: 'statement-modal' | 'cms-data-table'
   /**
-   * `payment-statement`: 지급조서 내부 「강사비 산출 내역」표와 같은 구성·스타일
-   * (참여 기관명 · 강의 진행 일자 · 지급/공제 · 구분 · 항목 설명 · 금액 + 산정 기준 상세).
+   * `payment-statement`: 지급조서 내부 「강사비 산출 내역」표와 같은
+   * 네이티브 표 스타일로 (참여 기관명 · 교육 진행 일자 · 산정 항목 · 항목 설명 · 정산 금액 + 산정 기준 상세).
    */
   layout?: 'data-table' | 'payment-statement'
   /** `payment-statement` — 기관 프로그램이 아니면 참여 기관명 열 미노출 */
@@ -354,7 +354,7 @@ export function PaymentOrderCalculationBreakdownTable({
           totalAmount={totalAmount}
           hideInstitutionColumn={hideInstitutionColumn}
           className="payment-order-calc-statement-modal__lines-table"
-          itemColumn="description"
+          columnPreset="calculation-statement"
           trailingColumn={{
             title: '산정 기준 상세',
             renderCell: row => {
@@ -441,7 +441,6 @@ export function PaymentOrderCalculationBreakdownTable({
         open={issueBlockedOpen}
         onClose={() => setIssueBlockedOpen(false)}
         variant="single"
-        layout="detailFullpage"
         zIndex={CMS_ALERT_MODAL_Z_INDEX}
       />
     </div>

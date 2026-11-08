@@ -45,7 +45,7 @@ export type CorporatePartnerListFilter = {
   registeredFrom?: string
   /** YYYY-MM-DD */
   registeredTo?: string
-  /** 0-based list page. Size is LIST_PAGE_SIZE (50). */
+  /** 0-based list page. Size is LIST_PAGE_SIZE (20). */
   page?: number
 }
 

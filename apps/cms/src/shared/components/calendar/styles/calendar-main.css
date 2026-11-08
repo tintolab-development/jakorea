@@ -1,7 +1,7 @@
 .calendar-main {
   box-sizing: border-box;
   min-width: var(--calendar-main-month-min-width, calc(116px * 7 + 42px));
-  min-height: var(--calendar-main-month-min-height, calc(124px * 6 + 37px + 50px + 32px));
+  min-height: var(--calendar-main-month-min-height, calc(124px * 6 + 29px + 50px + 32px));
   background: var(--main-WT, #fff);
   border-radius: var(--calendar-shell-radius, 12px);
   border: var(--calendar-shell-border, 1px solid #d4d4d4);
@@ -55,8 +55,9 @@
 }
 
 .calendar-header-title {
+  /* Figma 12954:536198 — Outfit Bold 24 · 130% (`YYYY. MM`) */
   font-size: 24px;
-  font-weight: 500;
+  font-weight: 700;
   line-height: 130%;
   text-align: left;
   white-space: nowrap;

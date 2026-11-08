@@ -3,11 +3,14 @@
  * 필터(담당자명, 권한) + 조회 + 담당자 목록 테이블 + 삭제/등록
  *
  * Remote only: GET/POST/PATCH/DELETE …/managers
+ * 연락처·CMS 권한은 GET …/managers `adminPhone`·`adminRoleCode` — 탭 진입 시 /admin-accounts 미호출.
+ * 등록 후보(GET /admin-accounts?keyword=…)는 담당자 추가 모달이 열려 있을 때만 검색 조회.
  * 권한 변경 → PATCH …/managers/{assignmentId} (`ProgramManagerUpdateRequest.role`)
  * 공유 탭 — 일반·UJAT·1사1교·Gemini 상세에서 재사용 (program-type-isolation).
  */
 
 import { useMemo, useState, useEffect, useCallback } from 'react'
+import { useDebouncedValue } from '@/shared/hooks/use-debounced-value'
 import { Spin } from 'antd'
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { ActionResultModal, FilterTableToolbarButton } from '@/shared/ui'
@@ -33,12 +36,8 @@ import {
 } from '@/entities/program/lib/program-pm-role-policy'
 import { AddManagerModal, type AddManagerFormValues } from '../../add-manager-modal'
 import { ManagerDeleteGuideModal } from '../../manager-delete-guide-modal'
-import {
-  EditableStatusBadge,
-  StatusDropdownCell,
-  STATUS_DROPDOWN_CELL_CLASSNAME,
-} from '@/shared/components'
-import { getProgramRoleBadgeTone } from '@/shared/constants/editable-status-badge-tones'
+import { StatusDropdownCell, STATUS_DROPDOWN_CELL_CLASSNAME } from '@/shared/components'
+import { getProgramRoleTag } from '@/shared/lib/status-tag-specs'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import {
   PROGRAM_MANAGER_ADD_COMPLETE_BODY,
@@ -85,6 +84,8 @@ export function ProgramManagersTab({
   const [appliedFilters, setAppliedFilters] = useState<ProgramManagersFilters>(filters)
   const [openRoleDropdownId, setOpenRoleDropdownId] = useState<string | null>(null)
   const [addModalOpen, setAddModalOpen] = useState(false)
+  const [candidateKeywordInput, setCandidateKeywordInput] = useState('')
+  const candidateKeyword = useDebouncedValue(candidateKeywordInput, 300)
   const [deleteGuideModalOpen, setDeleteGuideModalOpen] = useState(false)
   const [actionResult, setActionResult] = useState<ProgramManagerActionResult | null>(null)
 
@@ -108,7 +109,10 @@ export function ProgramManagersTab({
     deleteManagers,
     managersListAllowed,
     managersListPending,
-  } = useProgramManagers(programId, managersListFilters)
+  } = useProgramManagers(programId, managersListFilters, {
+    enabled: addModalOpen && actionResult == null,
+    keyword: candidateKeyword,
+  })
 
   useEffect(() => {
     setPendingFilters({ ...filters })
@@ -233,6 +237,7 @@ export function ProgramManagersTab({
       return false
     }
     setAddModalOpen(false)
+    setCandidateKeywordInput('')
     setActionResult({
       title: PROGRAM_MANAGER_ADD_COMPLETE_TITLE,
       body: PROGRAM_MANAGER_ADD_COMPLETE_BODY,
@@ -284,16 +289,6 @@ export function ProgramManagersTab({
     [managerList]
   )
 
-  const renderRoleBadge = useCallback((r: ProgramRole) => {
-    return (
-      <EditableStatusBadge
-        label={PROGRAM_ROLE_LABELS[r]}
-        tone={getProgramRoleBadgeTone(r)}
-        className="program-managers-tab__role-badge"
-      />
-    )
-  }, [])
-
   const columns: ColumnsType<ProgramManagerRow> = useMemo(
     () => [
       { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
@@ -314,7 +309,7 @@ export function ProgramManagersTab({
           <StatusDropdownCell<ProgramRole>
             status={role}
             statusOptions={TABLE_ROLE_ORDER}
-            renderBadge={renderRoleBadge}
+            getTag={getProgramRoleTag}
             isItemDisabled={(_cur, opt) => roleItemDisabled(record, opt)}
             onChange={key => {
               void handleTableRoleChange(record.id, key)
@@ -323,7 +318,6 @@ export function ProgramManagersTab({
             isOpen={openRoleDropdownId === record.id}
             onOpenChange={open => setOpenRoleDropdownId(open ? record.id : null)}
             emptyPlaceholder="-"
-            style={{ width: 176, minWidth: 176, maxWidth: 176 }}
           />
         ),
       },
@@ -352,7 +346,7 @@ export function ProgramManagersTab({
         align: 'center',
       },
     ],
-    [handleTableRoleChange, isUpdatingRole, openRoleDropdownId, renderRoleBadge, roleItemDisabled]
+    [handleTableRoleChange, isUpdatingRole, openRoleDropdownId, roleItemDisabled]
   )
 
   const excelColumns: ColumnsType<ProgramManagerRow> = useMemo(
@@ -406,6 +400,7 @@ export function ProgramManagersTab({
         title="담당자 목록"
         description={`${filteredManagers.length}건`}
         excelExport={{
+          accessLog: { downloadKind: 'PROGRAM_MANAGER_LIST_EXPORT', containedPiiTypes: ['NAME'] },
           columns: excelColumns,
           data: filteredManagers,
           selectedRowKeys,
@@ -422,7 +417,10 @@ export function ProgramManagersTab({
             <FilterTableToolbarButton
               variant="primary"
               disabled={isMutating}
-              onClick={() => setAddModalOpen(true)}
+              onClick={() => {
+                setCandidateKeywordInput('')
+                setAddModalOpen(true)
+              }}
             >
               담당자 등록
             </FilterTableToolbarButton>
@@ -430,7 +428,7 @@ export function ProgramManagersTab({
         }
       >
         <CmsDataTable<ProgramManagerRow>
-          className="cms-data-table cms-data-table--fluid program-managers-tab__managers-table"
+          className="cms-data-table program-managers-tab__managers-table"
           rowKey="id"
           pagination={false}
           loading={loading}
@@ -450,11 +448,15 @@ export function ProgramManagersTab({
       {actionResult == null ? (
         <AddManagerModal
           open={addModalOpen}
-          onCancel={() => setAddModalOpen(false)}
+          onCancel={() => {
+            setAddModalOpen(false)
+            setCandidateKeywordInput('')
+          }}
           currentOwnerCount={managerList.filter(m => m.role === 'OWNER').length}
           excludeManagerNames={excludeManagerNames}
           candidates={assignableCandidates}
           candidatesLoading={candidatesLoading}
+          onCandidateSearch={setCandidateKeywordInput}
           confirmLoading={isMutating}
           onAdd={handleAdd}
         />

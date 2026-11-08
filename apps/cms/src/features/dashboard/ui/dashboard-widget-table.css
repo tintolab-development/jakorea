@@ -85,8 +85,8 @@
   border-right: 1px solid var(--table-line, #e0e0e0);
 }
 
-.dashboard-widget-table__data .ant-table-tbody > tr > td,
-.dashboard-widget-table__data .ant-table-tbody > tr:hover > td {
+.dashboard-widget-table__data .ant-table-tbody > tr:not(.ant-table-measure-row) > td,
+.dashboard-widget-table__data .ant-table-tbody > tr:not(.ant-table-measure-row):hover > td {
   overflow: hidden;
   color: var(--default-BK, #3d3d3d);
   text-align: center !important;

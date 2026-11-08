@@ -1,17 +1,12 @@
 import type { UjatManagerEvaluation } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
-import { UJAT_MANAGER_EVALUATION_LABELS } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
-import { EditableStatusBadge } from '@/shared/components'
-import { getManagerEvaluationBadgeTone } from '@/shared/constants/editable-status-badge-tones'
+import { StatusTag } from '@/shared/components/status-tag'
+import { getManagerEvaluationTag } from '@/shared/lib/status-tag-specs'
 
 export interface ManagerEvaluationBadgeProps {
   evaluation: UjatManagerEvaluation
 }
 
+/** 담당자 서류 평가 태그 (공통 StatusTag) */
 export function ManagerEvaluationBadge({ evaluation }: ManagerEvaluationBadgeProps) {
-  return (
-    <EditableStatusBadge
-      label={UJAT_MANAGER_EVALUATION_LABELS[evaluation]}
-      tone={getManagerEvaluationBadgeTone(evaluation)}
-    />
-  )
+  return <StatusTag {...getManagerEvaluationTag(evaluation)} />
 }

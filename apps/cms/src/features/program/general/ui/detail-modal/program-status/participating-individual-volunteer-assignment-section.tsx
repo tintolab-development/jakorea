@@ -1,3 +1,5 @@
+import { getProgramAssignmentRowClass } from '@/features/program/general/lib/assignment-status-presentation'
+import { ProgramAssignmentStatusText } from '@/features/program/shared/ui/program-assignment-status-text'
 /**
  * 참여 봉사자 상세 — 봉사 배정 현황 탭 (일반 프로그램 · 개인)
  */
@@ -9,15 +11,12 @@ import type { Program } from '@/types/domain'
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
-  VOLUNTEER_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
-  VOLUNTEER_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
 } from '@/shared/constants/messages'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
-import { ContentModal } from '@/shared/ui/content-modal'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
-import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
+import { ScheduleLinesCell } from '@/features/program/shared/ui/schedule-lines-cell'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import {
   PARTICIPATING_INDIVIDUAL_VOLUNTEER_ASSIGNED_SCHEDULE_EXCEL_COLUMNS,
@@ -51,8 +50,9 @@ import { getApiErrorCode } from '@/shared/lib/extract-api-error-message'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import { buildAddAssignWaitingScheduleChipOptions } from '@/features/program/general/lib/general-add-assign-session-chips'
 import { GeneralParticipantAddAssignModal } from './general-participant-add-assign-modal'
-import './instructor-assignment-status-text.css'
+import { InstitutionSelectAssignConfirmModal } from './institution-select-assign-confirm-modal'
 import './participating-institutions-section.css'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 /** 추가 배정 — Figma CMS 9760:8214 ‘추가 배정 안내’ (E: 개인형 참여 봉사자, 대표 강사 필드 없음) */
 const ADD_ASSIGN_MODAL_TITLE = '추가 배정 안내'
@@ -69,13 +69,7 @@ const ASSIGNED_EMPTY_TEXT = '배정된 봉사 일정이 없습니다.'
 const WAITING_EMPTY_TEXT = '배정 대기 중인 봉사 일정이 없습니다.'
 
 function renderScheduleCell(label: string) {
-  return (
-    <div className="participating-institutions-section__sessions-cell">
-      <div className="participating-institutions-section__session-line">
-        {renderProgramDetailPipeSeparated(formatCmsScheduleDisplayLabel(label))}
-      </div>
-    </div>
-  )
+  return <ScheduleLinesCell lines={[formatCmsScheduleDisplayLabel(label)]} />
 }
 
 export interface ParticipatingIndividualVolunteerAssignmentSectionProps {
@@ -133,7 +127,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
         title: '봉사 지역',
         dataIndex: 'serviceRegion',
         key: 'serviceRegion',
-        width: 445,
+        width: 240,
         align: 'center',
         ellipsis: true,
       },
@@ -141,7 +135,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
         title: '자택과의 거리',
         dataIndex: 'distanceFromHome',
         key: 'distanceFromHome',
-        width: 445,
+        width: 140,
         align: 'center',
         render: (value: string) => renderDistanceFromHomeCell(value, scopeQuery.isFetching),
       },
@@ -149,8 +143,8 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
         title: '담당 봉사 진행 일정',
         dataIndex: 'scheduleLabel',
         key: 'scheduleLabel',
-        width: 500,
-        minWidth: 500,
+        width: 700,
+        minWidth: 700,
         ...participatingScheduleTableColumnLayout(),
         render: (label: string) => renderScheduleCell(label),
       },
@@ -165,7 +159,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
         title: '봉사 지역',
         dataIndex: 'serviceRegion',
         key: 'serviceRegion',
-        width: 285,
+        width: 200,
         align: 'center',
         ellipsis: true,
       },
@@ -173,7 +167,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
         title: '자택과의 거리',
         dataIndex: 'distanceFromHome',
         key: 'distanceFromHome',
-        width: 285,
+        width: 120,
         align: 'center',
         render: (value: string) => renderDistanceFromHomeCell(value, scopeQuery.isFetching),
       },
@@ -181,8 +175,8 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
         title: '봉사 진행 희망 일정',
         dataIndex: 'scheduleLabel',
         key: 'scheduleLabel',
-        width: 500,
-        minWidth: 500,
+        width: 640,
+        minWidth: 640,
         ...participatingScheduleTableColumnLayout(),
         render: (label: string) => renderScheduleCell(label),
       },
@@ -190,23 +184,19 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
         title: '배정 현황',
         dataIndex: 'assignmentStatus',
         key: 'assignmentStatus',
-        width: 160,
+        width: 120,
         align: 'center',
         render: (
           status: ParticipatingIndividualVolunteerWaitingScheduleRow['assignmentStatus']
         ) => (
-          <span
-            className={`school-detail-fullpage-view__assignment-status school-detail-fullpage-view__assignment-status--${status === 'unavailable' ? 'cancelled' : status}`}
-          >
-            {WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS[status]}
-          </span>
+          <ProgramAssignmentStatusText status={status} context="individual-volunteer" />
         ),
       },
       {
         title: '배정 봉사자 수',
         dataIndex: 'assignedVolunteerCountLabel',
         key: 'assignedVolunteerCountLabel',
-        width: 160,
+        width: 120,
         align: 'center',
       },
     ],
@@ -241,6 +231,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
 
   const { exportExcel: exportAssignedExcel, isExporting: isAssignedExcelExporting } =
     useTableExcelExport({
+      accessLog: { downloadKind: 'PROGRAM_PERSON_ASSIGNMENT_EXPORT', containedPiiTypes: [] },
       columns: PARTICIPATING_INDIVIDUAL_VOLUNTEER_ASSIGNED_SCHEDULE_EXCEL_COLUMNS,
       data: assignedExportRows,
       filename: '배정된 봉사 일정',
@@ -249,6 +240,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
 
   const { exportExcel: exportWaitingExcel, isExporting: isWaitingExcelExporting } =
     useTableExcelExport({
+      accessLog: { downloadKind: 'PROGRAM_PERSON_ASSIGNMENT_EXPORT', containedPiiTypes: [] },
       columns: PARTICIPATING_INDIVIDUAL_VOLUNTEER_WAITING_SCHEDULE_EXCEL_COLUMNS,
       data: waitingExportRows,
       filename: '배정 대기 봉사 일정',
@@ -325,7 +317,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
 
   const handleUnassignClick = useCallback(() => {
     if (selectedAssignedKeys.length === 0) {
-      showAlert({ title: '안내', content: VOLUNTEER_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setUnassignConfirmOpen(true)
@@ -333,7 +325,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
 
   const handleSelectAssignClick = useCallback(() => {
     if (selectedWaitingKeys.length === 0) {
-      showAlert({ title: '안내', content: VOLUNTEER_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     const movable = waitingSchedules.some(
@@ -463,11 +455,12 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
     [assignedSchedules, selectedAssignedKeys]
   )
 
-  const selectAssignLabels = useMemo(
+  /** 선택 배정 안내 — 첫 일정 + 외 N개 */
+  const selectAssignTargets = useMemo(
     () =>
-      waitingSchedules
-        .filter(w => selectedWaitingKeys.includes(w.id) && w.assignmentStatus === 'waiting')
-        .map(w => w.scheduleLabel),
+      waitingSchedules.filter(
+        w => selectedWaitingKeys.includes(w.id) && w.assignmentStatus === 'waiting'
+      ),
     [waitingSchedules, selectedWaitingKeys]
   )
 
@@ -561,11 +554,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
             dataSource={waitingSchedules}
             emptyTitle={WAITING_EMPTY_TEXT}
             emptyDescription={null}
-            rowClassName={record =>
-              record.assignmentStatus === 'unavailable'
-                ? 'school-detail-fullpage-view__waiting-row--unavailable'
-                : ''
-            }
+            rowClassName={record => getProgramAssignmentRowClass(record.assignmentStatus, "individual-volunteer")}
           />
         </div>
       </div>
@@ -585,35 +574,24 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
         reason={unassignCompleteModal?.reason ?? ''}
       />
 
-      <ContentModal
+      <InstitutionSelectAssignConfirmModal
         open={selectAssignConfirmOpen}
         onCancel={() => setSelectAssignConfirmOpen(false)}
-        title="봉사 일정 배정 안내"
-        width={600}
-        footer={
-          <>
-            <CmsButton
-              variant="secondary"
-              size="large"
-              onClick={() => setSelectAssignConfirmOpen(false)}
-            >
-              취소
-            </CmsButton>
-            <CmsButton variant="primary" size="large" onClick={handleSelectAssignConfirm}>
-              배정
-            </CmsButton>
-          </>
+        onConfirm={() => {
+          void handleSelectAssignConfirm()
+        }}
+        targetNoun="일정"
+        institutionName={
+          selectAssignTargets[0]
+            ? formatCmsScheduleDisplayLabel(selectAssignTargets[0].scheduleLabel)
+            : ''
         }
-      >
-        <p>
-          [<strong>{volunteer.volunteerName}</strong>] 봉사자님을 다음 봉사 일정에 배정하시겠습니까?{' '}
-          {selectAssignLabels.map((label, i) => (
-            <span key={`${label}-${i}`}>
-              [<strong>{label}</strong>]{i < selectAssignLabels.length - 1 ? ', ' : ''}
-            </span>
-          ))}
-        </p>
-      </ContentModal>
+        extraTargetCount={Math.max(0, selectAssignTargets.length - 1)}
+        instructorName={volunteer.volunteerName}
+        currentCount={null}
+        requiredCount={null}
+        countLabel={selectAssignTargets[0]?.assignedVolunteerCountLabel ?? null}
+      />
 
       <GeneralParticipantAddAssignModal
         open={addAssignModalOpen}

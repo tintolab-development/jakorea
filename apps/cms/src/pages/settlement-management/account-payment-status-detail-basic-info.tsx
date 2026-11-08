@@ -1,5 +1,5 @@
 /**
- * 계좌 지급 현황 상세 — 기본 정보(인적 1블록 + 프로그램·지급 1블록)
+ * 계좌 지급 현황 상세 — 기본 정보(인적 · 프로그램 · 지급 3블록)
  */
 
 import type { AccountPaymentStatusDetailBasic } from '@/features/settlement-management/model/account-payments-list'
@@ -13,23 +13,7 @@ import '@/features/program/shared/ui/program-detail/applicant-list/applicant-ins
 import '@/features/settlement/ui/payment-record/payment-order-program-calculation-statement-modal.css'
 import './account-payments-page.css'
 import './payment-order-instructor-status-detail-fullpage-modal.css'
-
-function getAccountPaymentStatusClassName(
-  status: AccountPaymentStatusDetailBasic['accountPaymentStatus']
-): string {
-  switch (status) {
-    case 'awaiting_confirmation':
-      return 'account-payments-page__status-text--awaiting-confirmation'
-    case 'partial_confirmation':
-      return 'account-payments-page__status-text--partial-confirmation'
-    case 'account_paid':
-      return 'account-payments-page__status-text--account-paid'
-    case 'payment_correction_requested':
-      return 'account-payments-page__status-text--payment-correction-requested'
-    default:
-      return ''
-  }
-}
+import { AccountPaymentStatusText } from './account-payment-status-text'
 
 function NameCell({
   nameKo,
@@ -114,7 +98,7 @@ export function AccountPaymentStatusDetailBasicInfo({
       </DetailInfoForm>
 
       <DetailInfoForm
-        title="프로그램·지급 정보"
+        title="프로그램 정보"
         hideHeader
         className="account-payment-status-detail-fullpage-modal__detail-form-card"
       >
@@ -131,13 +115,21 @@ export function AccountPaymentStatusDetailBasicInfo({
             view={<span>{basic.businessPeriodDisplay}</span>}
           />
         </DetailInfoForm.Row>
+      </DetailInfoForm>
+
+      <DetailInfoForm
+        title="지급 정보"
+        hideHeader
+        className="account-payment-status-detail-fullpage-modal__detail-form-card"
+      >
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="계좌 지급 현황"
             view={
-              <span className={getAccountPaymentStatusClassName(basic.accountPaymentStatus)}>
-                {basic.accountPaymentStatusLabel}
-              </span>
+              <AccountPaymentStatusText
+                status={basic.accountPaymentStatus}
+                label={basic.accountPaymentStatusLabel}
+              />
             }
           />
           <DetailInfoForm.Field

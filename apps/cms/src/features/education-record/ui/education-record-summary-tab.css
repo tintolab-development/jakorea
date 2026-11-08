@@ -2,7 +2,8 @@
  * 실적 관리 > 합계 탭 레이아웃
  * - 루트 래퍼: 각 카테고리 그룹들을 30px gap 으로 세로 배치하는 컨테이너 (배경 없음)
  * - 카테고리 그룹(.er-summary__category): 타이틀 + 카드 (16px gap, 배경 없음)
- * - 카드(.er-summary__category-card): 흰 카드 (padding 18 20 20 20, radius 16, shadow) — 서브행 32px gap
+ * - 카드(.er-summary__category-card): 흰 카드 (padding 24, radius 16, shadow) — 서브행 32px gap
+ * - 시안: Figma 01. 실적 관리 / 02. 합계 (9270:105224) — 미니 테이블은 Table / Horizontal / Small(44)
  * - 서브행 합계 variant: mint 강조
  */
 
@@ -38,10 +39,10 @@
   display: flex;
   flex: none;
   flex-direction: column;
-  gap: 16px;
+  gap: 32px;
   width: 100%;
   min-width: 0;
-  padding: 18px 20px 20px 20px;
+  padding: 24px;
   border-radius: 16px;
   background: var(--default-WT, #fff);
   box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
@@ -51,6 +52,8 @@
 /* 전체 합계 카드 — 타이틀이 카드 내부에 위치 */
 .er-summary__category-card--grand {
   align-items: stretch;
+  /* 시안: 「총 합계」 라벨 ↔ 테이블 16 */
+  gap: 16px;
   border: 1px solid var(--JA-mint-01, #01a1af);
   background: var(
     --color-bg-mint,
@@ -68,6 +71,7 @@
   font-style: normal;
   font-weight: 700;
   line-height: 140%; /* 28px */
+  padding: 0 8px;
 }
 
 .er-summary__category-title {
@@ -77,13 +81,13 @@
   font-size: 24px;
   font-style: normal;
   font-weight: 700;
-  line-height: 24px;
+  line-height: 150%;
 }
 
 .er-summary__sub-row {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 16px;
   width: 100%;
   min-width: 0;
 }
@@ -95,15 +99,16 @@
   font-style: normal;
   font-weight: 700;
   line-height: 140%; /* 28px */
+  padding: 0 8px;
 }
 
 .er-summary__table {
   display: grid;
   grid-template-columns: repeat(9, minmax(0, 1fr));
   width: 100%;
-  border-radius: 6px;
+  border-radius: 8px;
   overflow: hidden;
-  border: 1px solid var(--color-border-secondary, #ececec);
+  border: 1px solid var(--Border-default, #e0e0e0);
 }
 
 .er-summary__table-header,
@@ -117,13 +122,17 @@
   justify-content: center;
   width: 100%;
   min-width: 0;
-  height: 40px;
-  padding: 0 8px;
-  background: var(--color-bg-soft, #f5f5f5);
+  height: 44px;
+  padding: 4px 12px;
+  background: var(
+    --BG-header,
+    linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%),
+    #fff
+  );
   color: var(--default-BK, #3d3d3d);
   text-align: center;
   font-family: var(--font-family-primary, 'Pretendard', sans-serif);
-  font-size: 13px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 700;
   line-height: 150%; /* 19.5px */
@@ -131,8 +140,8 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  border-right: 1px solid var(--color-border-secondary, #ececec);
-  border-bottom: 1px solid var(--color-border-secondary, #ececec);
+  border-right: 1px solid var(--Border-default, #e0e0e0);
+  border-bottom: 1px solid var(--Border-default, #e0e0e0);
 }
 
 .er-summary__td {
@@ -141,8 +150,8 @@
   justify-content: center;
   width: 100%;
   min-width: 0;
-  height: 40px;
-  padding: 0 8px;
+  height: 44px;
+  padding: 4px 12px;
   background: var(--default-WT, #fff);
   color: var(--default-BK, #3d3d3d);
   font-family: var(--font-family-primary, 'Pretendard', sans-serif);
@@ -153,7 +162,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  border-right: 1px solid var(--color-border-secondary, #ececec);
+  border-right: 1px solid var(--Border-default, #e0e0e0);
 }
 
 /* 마지막 컬럼은 우측 보더 제거 (outer border 가 담당) */
@@ -164,18 +173,18 @@
 
 /* 합계 variant — 헤더만 mint 배경 + 흰 텍스트, 값 영역은 흰 배경 유지 */
 .er-summary__sub-row--mint .er-summary__table {
-  border-radius: 6px;
-  border-color: var(--color-border-secondary, #ececec);
+  border-radius: 8px;
+  border-color: var(--Border-default, #e0e0e0);
 }
 
 .er-summary__sub-row--mint .er-summary__th {
   background: var(--JA-mint-01, #01a1af);
   color: var(--default-WT, #fff);
-  border-right-color: rgba(255, 255, 255, 0.24);
-  border-bottom-color: rgba(255, 255, 255, 0.24);
+  border-right-color: var(--Border-default, #e0e0e0);
+  border-bottom-color: var(--Border-default, #e0e0e0);
   text-align: center;
   font-family: var(--font-family-primary, 'Pretendard', sans-serif);
-  font-size: 13px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 700;
   line-height: 150%; /* 19.5px */
@@ -186,9 +195,9 @@
   color: var(--default-BK, #3d3d3d);
   text-align: center;
   font-family: var(--font-family-primary, 'Pretendard', sans-serif);
-  font-size: 13px;
+  font-size: 14px;
   font-style: normal;
-  font-weight: 700;
+  font-weight: 500;
   line-height: 150%; /* 19.5px */
 }
 

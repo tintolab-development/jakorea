@@ -1,10 +1,7 @@
 import { useMemo, type Dispatch, type SetStateAction } from 'react'
 import type { ColumnsType } from 'antd/es/table'
-import {
-  STATUS_DROPDOWN_CELL_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
-  StatusDropdownCell,
-} from '@/shared/components'
+import { STATUS_DROPDOWN_CELL_CLASSNAME, StatusDropdownCell } from '@/shared/components'
+import { getManagerEvaluationTag } from '@/shared/lib/status-tag-specs'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import {
   GENERAL_ESSAY_COLUMN_DEFAULT_WIDTHS,
@@ -17,10 +14,9 @@ import {
 } from '@/features/program/general/lib/volunteer-screening-constants'
 import { ApprovalStatusText } from '@/shared/components/approval-status-text'
 import { mapVolunteerProgramApprovalStatus } from '@/features/program/general/lib/volunteer-application-detail-visibility'
-import { GeneralDocumentScreeningStatusText, GeneralManagerEvaluationBadge } from './status-text'
+import { GeneralDocumentScreeningStatusText } from './status-text'
 
 const NAME_COLUMN_WIDTH = 140
-const HOME_ADDRESS_COLUMN_WIDTH = 200
 const CONTACT_COLUMN_WIDTH = 200
 const EMAIL_COLUMN_WIDTH = 200
 const JA_VOLUNTEER_EXPERIENCE_COLUMN_WIDTH = 160
@@ -29,6 +25,13 @@ const SELECTION_COLUMN_WIDTH = 68
 const NO_COLUMN_WIDTH = 80
 const MANAGER_EVAL_COLUMN_WIDTH = 200
 const DOCUMENT_STATUS_COLUMN_WIDTH = 160
+
+/*
+ * 면접 미진행(신청 목록) — 래퍼 폭을 채우는 fluid 테이블.
+ * 선택·No. 를 뺀 나머지 열은 width 미지정(minWidth 동일) → fixed layout 에서 균등 분배.
+ */
+const APPLICATION_EQUAL_COLUMN_MIN_WIDTH = 160
+const APPLICATION_EQUAL_COLUMN_COUNT = 5
 
 const GENERAL_DOC_SCREENING_TABLE_SCROLL_X_BASE =
   SELECTION_COLUMN_WIDTH +
@@ -46,11 +49,7 @@ export const GENERAL_DOC_SCREENING_TABLE_SCROLL_X =
 const GENERAL_VOLUNTEER_APPLICATION_TABLE_SCROLL_X =
   SELECTION_COLUMN_WIDTH +
   NO_COLUMN_WIDTH +
-  NAME_COLUMN_WIDTH +
-  HOME_ADDRESS_COLUMN_WIDTH +
-  CONTACT_COLUMN_WIDTH +
-  EMAIL_COLUMN_WIDTH +
-  DOCUMENT_STATUS_COLUMN_WIDTH
+  APPLICATION_EQUAL_COLUMN_MIN_WIDTH * APPLICATION_EQUAL_COLUMN_COUNT
 
 export function resolveGeneralDocScreeningTableScrollX(interviewEnabled: boolean): number {
   return interviewEnabled
@@ -67,7 +66,7 @@ const JA_EXPERIENCE_CELL_CLASS = 'general-volunteer-screening__col-ja-experience
 const ESSAY_CELL_CLASS = 'general-volunteer-screening__essay-cell'
 const ESSAY_CELL_WIDE_CLASS = 'general-volunteer-screening__essay-cell--wide'
 const ESSAY_TEXT_CELL_CLASS = 'general-volunteer-screening__essay-text'
-const MANAGER_EVALUATION_CELL_CLASS = `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME} general-volunteer-screening__manager-eval-dropdown-cell`
+const MANAGER_EVALUATION_CELL_CLASS = `${STATUS_DROPDOWN_CELL_CLASSNAME} general-volunteer-screening__manager-eval-dropdown-cell`
 
 function renderEssayCell(value: string | undefined, record: GeneralVolunteerApplicantRow) {
   const display = formatGeneralVolunteerEssayCellValue(
@@ -118,8 +117,7 @@ export function useGeneralVolunteerDocScreeningColumns({
           title: '신청 봉사자명',
           dataIndex: 'name',
           key: 'name',
-          width: NAME_COLUMN_WIDTH,
-          minWidth: NAME_COLUMN_WIDTH,
+          minWidth: APPLICATION_EQUAL_COLUMN_MIN_WIDTH,
           align: 'center',
           fixed: 'left',
           ellipsis: { showTitle: true },
@@ -132,8 +130,7 @@ export function useGeneralVolunteerDocScreeningColumns({
           title: '자택 주소지',
           dataIndex: 'homeAddress',
           key: 'homeAddress',
-          width: HOME_ADDRESS_COLUMN_WIDTH,
-          minWidth: HOME_ADDRESS_COLUMN_WIDTH,
+          minWidth: APPLICATION_EQUAL_COLUMN_MIN_WIDTH,
           align: 'center',
           ellipsis: { showTitle: true },
           onHeaderCell: () => ({ className: CENTER_CELL_CLASS }),
@@ -144,8 +141,7 @@ export function useGeneralVolunteerDocScreeningColumns({
           title: '연락처',
           dataIndex: 'contact',
           key: 'contact',
-          width: CONTACT_COLUMN_WIDTH,
-          minWidth: CONTACT_COLUMN_WIDTH,
+          minWidth: APPLICATION_EQUAL_COLUMN_MIN_WIDTH,
           align: 'center',
           ellipsis: { showTitle: true },
           onHeaderCell: () => ({ className: `${CENTER_CELL_CLASS} ${CONTACT_CELL_CLASS}` }),
@@ -157,8 +153,7 @@ export function useGeneralVolunteerDocScreeningColumns({
           title: '이메일',
           dataIndex: 'email',
           key: 'email',
-          width: EMAIL_COLUMN_WIDTH,
-          minWidth: EMAIL_COLUMN_WIDTH,
+          minWidth: APPLICATION_EQUAL_COLUMN_MIN_WIDTH,
           align: 'center',
           ellipsis: { showTitle: true },
           onHeaderCell: () => ({ className: `${CENTER_CELL_CLASS} ${EMAIL_CELL_CLASS}` }),
@@ -170,8 +165,7 @@ export function useGeneralVolunteerDocScreeningColumns({
           title: '프로그램 승인 현황',
           dataIndex: 'documentScreeningStatus',
           key: 'documentScreeningStatus',
-          width: DOCUMENT_STATUS_COLUMN_WIDTH,
-          minWidth: DOCUMENT_STATUS_COLUMN_WIDTH,
+          minWidth: APPLICATION_EQUAL_COLUMN_MIN_WIDTH,
           align: 'center',
           onCell: () => ({ className: 'general-volunteer-screening__screening-status-cell' }),
           render: (_: unknown, record) => (
@@ -282,7 +276,7 @@ export function useGeneralVolunteerDocScreeningColumns({
           <StatusDropdownCell<GeneralManagerEvaluation>
             status={record.managerAEvaluation}
             statusOptions={GENERAL_MANAGER_EVALUATION_ORDER}
-            renderBadge={evaluation => <GeneralManagerEvaluationBadge evaluation={evaluation} />}
+            getTag={getManagerEvaluationTag}
             isItemDisabled={(current, option) => current === option}
             onChange={
               record.canEditManagerAEvaluation
@@ -300,7 +294,6 @@ export function useGeneralVolunteerDocScreeningColumns({
                 open && record.canEditManagerAEvaluation ? { rowId: record.id, manager: 'A' } : null
               )
             }
-            tagLayout="tag100"
           />
         ),
       },
@@ -318,7 +311,7 @@ export function useGeneralVolunteerDocScreeningColumns({
           <StatusDropdownCell<GeneralManagerEvaluation>
             status={record.managerBEvaluation}
             statusOptions={GENERAL_MANAGER_EVALUATION_ORDER}
-            renderBadge={evaluation => <GeneralManagerEvaluationBadge evaluation={evaluation} />}
+            getTag={getManagerEvaluationTag}
             isItemDisabled={(current, option) => current === option}
             onChange={
               record.canEditManagerBEvaluation
@@ -336,7 +329,6 @@ export function useGeneralVolunteerDocScreeningColumns({
                 open && record.canEditManagerBEvaluation ? { rowId: record.id, manager: 'B' } : null
               )
             }
-            tagLayout="tag100"
           />
         ),
       },

@@ -24,7 +24,7 @@
   width: 100%;
 }
 
-/* 기본 정보 테이블 col(100+80+180)을 덮어써, 동의 섹션 라벨 열을 240px로 통일 */
+/* 기본 정보 테이블 col을 덮어써, 동의 섹션 라벨 열을 시안 180px로 통일 */
 .user-consent-agreement-section .user-detail-modal__basic-table-col-label-left {
   width: 120px;
   min-width: 120px;
@@ -36,21 +36,21 @@
 }
 
 .user-consent-agreement-section .user-detail-modal__basic-table-cell--row-label {
-  width: 240px !important;
-  min-width: 240px !important;
-  max-width: 240px !important;
+  width: 180px !important;
+  min-width: 180px !important;
+  max-width: 180px !important;
 }
 
 .user-consent-agreement-section .user-detail-modal__basic-table-col-label-right {
-  width: 240px;
-  min-width: 240px;
+  width: 180px;
+  min-width: 180px;
 }
 
 .user-consent-agreement-section
   .user-detail-modal__basic-table-cell--label.user-detail-modal__basic-table-cell--label-right {
-  width: 240px;
-  min-width: 240px;
-  max-width: 240px;
+  width: 180px;
+  min-width: 180px;
+  max-width: 180px;
 }
 
 .user-consent-agreement-section__action-cell {
@@ -75,10 +75,20 @@
 }
 
 .user-consent-agreement-section__document-edit-status {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
   line-height: 150%;
   color: var(--default-BK, #3d3d3d);
+}
+
+/* 시안: 상태 · 디바이더 · 버튼 간격은 셀 gap 16만 — 공통 디바이더 양옆 12px 여백 제거 */
+.user-consent-agreement-section__document-edit > .detail-info-form-inputs-separator {
+  margin: 0;
+}
+
+/* 시안(12239:235392) 「동의서 작성」 h32 버튼 폭 100 — 공통 h32 min-width 80 대비 */
+.user-consent-agreement-section__document-edit > .cms-button.ant-btn.cms-button--h32 {
+  min-width: 100px;
 }
 
 .user-consent-agreement-section__value-sep {
@@ -90,13 +100,13 @@
 }
 
 .user-consent-agreement-section__value-datetime {
-  color: var(--default-BK, #3d3d3d);
+  /* 시안: 14px Medium · rgba(61,61,61,0.5) */
+  color: rgba(61, 61, 61, 0.5);
   font-family: Pretendard, var(--font-sans, system-ui), sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
-  opacity: 0.6;
 }
 
 /* 강사(강사만) 상세: 마지막 더블 행 우측 빈 절반 — 라벨 없이 값 영역만(DetailInfoForm 격자선 유지) */

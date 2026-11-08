@@ -1,5 +1,5 @@
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
-import { APPROVAL_STATUS_LABELS } from '@/shared/components/textbook-status-badge'
+import { getApprovalStatusFilterOptions } from '@/shared/lib/status-tag-specs'
 
 const GRADE_OPTIONS = [
   { label: '전체', value: 'all' },
@@ -11,12 +11,7 @@ const GRADE_OPTIONS = [
   { label: '6학년', value: '6학년' },
 ]
 
-const APPROVAL_STATUS_OPTIONS = [
-  { label: '전체', value: 'all' },
-  { label: APPROVAL_STATUS_LABELS.pending, value: 'pending' },
-  { label: APPROVAL_STATUS_LABELS.rejected, value: 'rejected' },
-  { label: APPROVAL_STATUS_LABELS.approved, value: 'approved' },
-]
+const APPROVAL_STATUS_OPTIONS = getApprovalStatusFilterOptions()
 
 /** 신청 기관(Institutions) 필터 필드 */
 export const institutionFilterFields: FilterFieldConfig[] = [

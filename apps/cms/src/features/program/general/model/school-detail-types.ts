@@ -205,7 +205,7 @@ export const INSTRUCTOR_ROLE_LABELS: Record<InstructorRoleKey, string> = {
 }
 
 /** 강의 출석 내역 모달: 회차별 출석 상태 (명세: docs/design/lecture-attendance-modal-spec.md) */
-export type LectureAttendanceStatusKey = 'attended' | 'absent' | 'late' | 'not_held'
+export type LectureAttendanceStatusKey = 'attended' | 'absent' | 'late' | 'excused' | 'not_held'
 
 export interface LectureAttendanceSession {
   roundNumber: number
@@ -234,6 +234,7 @@ export const LECTURE_ATTENDANCE_STATUS_LABELS: Record<LectureAttendanceStatusKey
   attended: '출석',
   absent: '결석',
   late: '지각',
+  excused: '사유 불참',
   not_held: '강의 미진행',
 }
 

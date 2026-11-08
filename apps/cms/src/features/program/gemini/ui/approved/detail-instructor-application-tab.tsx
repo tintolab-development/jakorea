@@ -1,3 +1,5 @@
+import { StatusBadge } from '@/shared/components/status-badge'
+import { getGeminiInstructorApprovalStatusPresentation } from '../../lib/application-status-presentation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import type { Key } from 'react'
@@ -33,6 +35,7 @@ import type {
 } from '../../model/approved/instructor-application-types'
 import { GeminiInstructorApprovalModal } from './instructor-approval-modal'
 import './detail-instructor-application-tab.css'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 type PendingFilters = {
   instructorName: string
@@ -41,13 +44,6 @@ type PendingFilters = {
   experienceYears: string
   grade: string
   approvalStatus: GeminiInstructorApplicationApprovalStatus | 'ALL'
-}
-
-const APPROVAL_STATUS_LABEL: Record<GeminiInstructorApplicationApprovalStatus, string> = {
-  PENDING: '승인 대기',
-  APPROVED: '승인 완료',
-  REJECTED: '신청 반려',
-  UNKNOWN: '상태 확인 필요',
 }
 
 const INITIAL_PENDING_FILTERS: PendingFilters = {
@@ -93,7 +89,7 @@ function approvalStatusText(status: GeminiInstructorApplicationApprovalStatus) {
         : status === 'REJECTED'
           ? `${base}--rejected`
           : `${base}--unknown`
-  return <span className={`${base} ${modifier}`}>{APPROVAL_STATUS_LABEL[status]}</span>
+  return <StatusBadge domain="custom" variant="text" {...getGeminiInstructorApprovalStatusPresentation(status)} className={`${base} ${modifier}`} />
 }
 
 function toHomeRegionText(row: GeminiInstructorApplicationRow): string {
@@ -248,10 +244,7 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
   }, [hasApprovedInstructor, rows, selectedRowKeys])
 
   const showNoSelectionAlert = useCallback(() => {
-    showAlert({
-      title: '항목 선택 안내',
-      content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
-    })
+    showAlert(NO_SELECTION_ALERT)
   }, [showAlert])
 
   const handleBulkApprove = useCallback(() => {
@@ -627,6 +620,7 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
           ) : null
         }
         excelExport={{
+          accessLog: { downloadKind: 'PROGRAM_INSTRUCTOR_APPLICATION_EXPORT', containedPiiTypes: ['NAME'] },
           columns,
           data: rows,
           selectedRowKeys: canWrite ? selectedRowKeys : undefined,

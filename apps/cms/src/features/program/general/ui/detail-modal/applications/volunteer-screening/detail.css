@@ -131,12 +131,6 @@
   min-width: 0;
 }
 
-.general-volunteer-applicant-manager-evaluation
-  .detail-info-form__field-content
-  > .status-dropdown-cell__inline-tag100 {
-  flex: 0 0 116px;
-}
-
 .general-volunteer-applicant-detail .program-detail-info-tab__table-wrapper {
   border: 1px solid var(--general-volunteer-detail-table-line);
   border-radius: 6px;

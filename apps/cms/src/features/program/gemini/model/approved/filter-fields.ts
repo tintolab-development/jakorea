@@ -1,3 +1,4 @@
+import { APPROVED_TRAINING_STATUS_LABEL } from '../../lib/approved/format-display'
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { createInstitutionAddressRegionFilterField } from '@/shared/config/institution-address-region-filter-field'
 import {
@@ -25,10 +26,10 @@ export const GEMINI_APPROVED_TRAINING_FILTER_FIELDS: FilterFieldConfig[] = [
     width: FILTER_CONTROL_MAX_WIDTH_PX,
     options: [
       { label: '전체', value: 'ALL' },
-      { label: '프로그램 진행 예정', value: 'SCHEDULED' },
-      { label: '프로그램 진행 중', value: 'IN_PROGRESS' },
-      { label: '프로그램 미진행', value: 'NOT_CONDUCTED' },
-      { label: '프로그램 진행 완료', value: 'COMPLETED' },
+      { label: APPROVED_TRAINING_STATUS_LABEL.SCHEDULED, value: 'SCHEDULED' },
+      { label: APPROVED_TRAINING_STATUS_LABEL.IN_PROGRESS, value: 'IN_PROGRESS' },
+      { label: APPROVED_TRAINING_STATUS_LABEL.NOT_CONDUCTED, value: 'NOT_CONDUCTED' },
+      { label: APPROVED_TRAINING_STATUS_LABEL.COMPLETED, value: 'COMPLETED' },
     ],
   },
   {

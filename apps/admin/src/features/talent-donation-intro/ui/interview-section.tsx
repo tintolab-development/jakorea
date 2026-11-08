@@ -197,8 +197,9 @@ export function InterviewSectionCard({ slot, siblingLinkedStoryIds = [] }: Props
                 className={inlineFieldClass(isEditing)}
                 inputSize="small"
                 width="100%"
-                rows={2}
-                autoSize={false}
+                // 높이 조절 핸들 없음(layout fixed) · 조회·수정 모두 내용 줄 수만큼(hug)
+                layout="fixed"
+                autoSize={{ minRows: 1 }}
                 value={draft.mainText}
                 readOnly={!isEditing}
                 tabIndex={isEditing ? 0 : -1}
@@ -221,8 +222,9 @@ export function InterviewSectionCard({ slot, siblingLinkedStoryIds = [] }: Props
                 className={inlineFieldClass(isEditing)}
                 inputSize="small"
                 width="100%"
-                rows={4}
-                autoSize={false}
+                // 높이 조절 핸들 없음(layout fixed) · 조회·수정 모두 내용 줄 수만큼(hug)
+                layout="fixed"
+                autoSize={{ minRows: 1 }}
                 value={draft.subText}
                 readOnly={!isEditing}
                 tabIndex={isEditing ? 0 : -1}

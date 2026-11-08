@@ -1,14 +1,16 @@
-import type { PiiAccessListFilter, PiiAccessListResult } from '@/entities/pii-access-log/model/types';
+import type { PiiAccessListFilter, PiiAccessLog } from '@/entities/pii-access-log/model/types';
 import { defaultXlsxFilename, downloadBinaryFile, } from '@/features/logs/shared/lib/download-binary';
 import { getJAKoreaHomepageAdminAPILogsSubset } from '@/shared/api/generated/logs/logs-api';
 import { axiosInstance } from '@/shared/instance/axios-instance';
+import { toAdminListPage, type AdminListPage } from '@/shared/lib/admin-infinite-list';
 import { mapPrivacyAccessPageToDomain, toPrivacyAccessExportParams, toPrivacyAccessParams, } from './mappers';
 function logsApi() {
     return getJAKoreaHomepageAdminAPILogsSubset();
 }
-export async function listPiiAccessLogsService(filter: PiiAccessListFilter): Promise<PiiAccessListResult> {
-    const response = await logsApi().privacyAccess(toPrivacyAccessParams(filter));
-    return mapPrivacyAccessPageToDomain(response);
+export async function listPiiAccessLogsPageService(filter: PiiAccessListFilter, page: number): Promise<AdminListPage<PiiAccessLog>> {
+    const response = await logsApi().privacyAccess(toPrivacyAccessParams({ ...filter, page }));
+    const { rows, total } = mapPrivacyAccessPageToDomain(response);
+    return toAdminListPage(rows, page, { page: response.page, totalPages: response.totalPages, totalCount: total });
 }
 /** remote: 서버 xlsx export / local: 필터 전체 CSV (페이지 무시) */
 export async function exportPiiAccessLogsService(filter: PiiAccessListFilter): Promise<'remote-downloaded'> {

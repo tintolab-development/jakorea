@@ -1,16 +1,23 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query'
 import type {
   CorporatePartner,
   CorporatePartnerCreateInput,
   CorporatePartnerListFilter,
-  CorporatePartnerListResult,
   CorporatePartnerUpdateInput,
 } from '@/entities/corporate-partner/model/types'
+import { useAdminInfiniteList } from '@/shared/hooks/use-admin-infinite-list'
+import {
+  collectInfiniteCachedRows,
+  flattenAdminListPages,
+  patchInfiniteListRow,
+  removeInfiniteListRows,
+  type AdminListPage,
+} from '@/shared/lib/admin-infinite-list'
 import { shouldUseCorporatePartnerRemoteApi } from './capabilities'
 import { corporatePartnerQueryKeys } from './query-keys'
 import {
   createCorporatePartnerService,
-  listCorporatePartnersService,
+  listCorporatePartnersPageService,
   removeCorporatePartnersService,
   reorderCorporatePartnersService,
   setCorporatePartnerPublicService,
@@ -27,16 +34,30 @@ function filterKey(filter?: CorporatePartnerListFilter): string {
     name: filter?.name ?? '',
     from: filter?.registeredFrom ?? '',
     to: filter?.registeredTo ?? '',
-    page: filter?.page ?? 0,
   })
 }
 
-function cachedList(
+function cachedPages(
   queryClient: ReturnType<typeof useQueryClient>,
   filter?: CorporatePartnerListFilter,
-): CorporatePartnerListResult | undefined {
-  return queryClient.getQueryData<CorporatePartnerListResult>(
+): InfiniteData<AdminListPage<CorporatePartner>> | undefined {
+  return queryClient.getQueryData<InfiniteData<AdminListPage<CorporatePartner>>>(
     corporatePartnerQueryKeys.list(source(), filterKey(filter)),
+  )
+}
+
+/** 해당 필터로 지금까지 불러온 행 (무한 스크롤 페이지 합침) */
+function cachedRows(
+  queryClient: ReturnType<typeof useQueryClient>,
+  filter?: CorporatePartnerListFilter,
+): CorporatePartner[] | undefined {
+  const data = cachedPages(queryClient, filter)
+  return data ? flattenAdminListPages(data) : undefined
+}
+
+function allCachedRows(queryClient: ReturnType<typeof useQueryClient>): CorporatePartner[] {
+  return (
+    collectInfiniteCachedRows<CorporatePartner>(queryClient, corporatePartnerQueryKeys.lists()) ?? []
   )
 }
 
@@ -61,32 +82,15 @@ function patchPartnerInLists(
   /** 현재 화면 필터 — 조건 불일치 행은 해당 캐시에서 제거 */
   activeFilter?: CorporatePartnerListFilter,
 ) {
-  queryClient.setQueriesData<CorporatePartnerListResult>(
-    { queryKey: corporatePartnerQueryKeys.lists() },
-    old => {
-      if (!old) return old
-      const idx = old.items.findIndex(row => row.id === partner.id)
-      if (idx < 0) return old
-      const items = [...old.items]
-      items[idx] = partner
-      return { ...old, items }
-    },
-  )
+  patchInfiniteListRow(queryClient, corporatePartnerQueryKeys.lists(), partner)
 
   if (!activeFilter) return
   if (partnerMatchesListFilter(partner, activeFilter)) return
 
-  queryClient.setQueryData(
+  removeInfiniteListRows(
+    queryClient,
     corporatePartnerQueryKeys.list(source(), filterKey(activeFilter)),
-    (old: CorporatePartnerListResult | undefined) => {
-      if (!old) return old
-      const items = old.items.filter(row => row.id !== partner.id)
-      if (items.length === old.items.length) return old
-      return {
-        items,
-        totalCount: Math.max(0, (old.totalCount ?? old.items.length) - 1),
-      }
-    },
+    [partner.id],
   )
 }
 
@@ -94,13 +98,11 @@ export function useCorporatePartnersList(
   filter?: CorporatePartnerListFilter,
   enabled = true,
 ) {
-  const dataSource = source()
-  return useQuery({
-    queryKey: corporatePartnerQueryKeys.list(dataSource, filterKey(filter)),
-    queryFn: () => listCorporatePartnersService(filter),
+  return useAdminInfiniteList({
+    queryKey: corporatePartnerQueryKeys.list(source(), filterKey(filter)),
     enabled,
-    staleTime: dataSource === 'remote' ? 30_000 : Number.POSITIVE_INFINITY,
-    retry: dataSource === 'remote' ? 1 : false,
+    isRemote: shouldUseCorporatePartnerRemoteApi(),
+    fetchPage: page => listCorporatePartnersPageService(filter, page),
   })
 }
 
@@ -124,7 +126,7 @@ export function useUpdateCorporatePartner(filter?: CorporatePartnerListFilter) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: CorporatePartnerUpdateInput }) =>
-      updateCorporatePartnerService(id, patch, cachedList(queryClient, filter)?.items),
+      updateCorporatePartnerService(id, patch, cachedRows(queryClient, filter)),
     retry: false,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: corporatePartnerQueryKeys.lists() })
@@ -136,14 +138,8 @@ export function useRemoveCorporatePartners(filter?: CorporatePartnerListFilter) 
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (ids: string[]) => {
-      const cached = cachedList(queryClient, filter)?.items
-      const merged = new Map<string, CorporatePartner>()
-      for (const [, result] of queryClient.getQueriesData<CorporatePartnerListResult>({
-        queryKey: corporatePartnerQueryKeys.lists(),
-      })) {
-        for (const row of result?.items ?? []) merged.set(row.id, row)
-      }
-      return removeCorporatePartnersService(ids, cached ?? [...merged.values()])
+      const cached = cachedRows(queryClient, filter)
+      return removeCorporatePartnersService(ids, cached ?? allCachedRows(queryClient))
     },
     retry: false,
     onSuccess: () => {
@@ -157,12 +153,13 @@ export function useReorderCorporatePartners(_filter?: CorporatePartnerListFilter
   return useMutation({
     mutationFn: (orderedIds: string[]) => {
       // 필터 없는 전체 캐시 우선 (reorder는 전역 순서 기준)
-      const unfiltered = cachedList(queryClient, undefined)
-      const unfilteredComplete =
-        unfiltered != null && unfiltered.items.length >= (unfiltered.totalCount ?? 0)
+      const unfilteredPages = cachedPages(queryClient, undefined)
+      const unfiltered = unfilteredPages ? flattenAdminListPages(unfilteredPages) : undefined
+      const unfilteredTotal = unfilteredPages?.pages[0]?.totalCount ?? 0
+      const unfilteredComplete = unfiltered != null && unfiltered.length >= unfilteredTotal
       return reorderCorporatePartnersService(
         orderedIds,
-        unfilteredComplete ? unfiltered.items : undefined,
+        unfilteredComplete ? unfiltered : undefined,
       )
     },
     retry: false,
@@ -176,17 +173,11 @@ export function useSetCorporatePartnerPublic(filter?: CorporatePartnerListFilter
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ id, isPublic }: { id: string; isPublic: boolean }) => {
-      const cached = cachedList(queryClient, filter)?.items
+      const cached = cachedRows(queryClient, filter)
       if (cached) {
         return setCorporatePartnerPublicService(id, isPublic, cached)
       }
-      const merged = new Map<string, CorporatePartner>()
-      for (const [, result] of queryClient.getQueriesData<CorporatePartnerListResult>({
-        queryKey: corporatePartnerQueryKeys.lists(),
-      })) {
-        for (const row of result?.items ?? []) merged.set(row.id, row)
-      }
-      return setCorporatePartnerPublicService(id, isPublic, [...merged.values()])
+      return setCorporatePartnerPublicService(id, isPublic, allCachedRows(queryClient))
     },
     retry: false,
     onSuccess: data => {

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
+import { useNavigateToAncestor } from '@/shared/hooks/use-history-ancestor-navigation'
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
@@ -57,6 +58,7 @@ import {
 } from '@/features/textbook/api/textbook-filter-params'
 import type { TextbookRow } from '@/features/textbook/model/textbook.types'
 import './textbook-page.css'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 type TextbookFilters = TextbookListFilters
 
@@ -234,19 +236,34 @@ export default function TextbookPage() {
     [detailTextbookId, rows]
   )
 
+  const { toSearch: navigateToAncestorSearch } = useNavigateToAncestor()
+
+  /**
+   * 상세 열기·수정 진입은 push.
+   * 닫기·같은 교재의 수정 취소·저장 후 보기 복귀는 지나온 엔트리로 뒤로(없으면 replace) — 앞쪽에 수정 엔트리를 남기지 않는다.
+   */
   const setDetailRoute = useCallback(
     (id: string | null, mode: 'view' | 'edit' = 'view') => {
-      const next = new URLSearchParams(searchParams)
-      if (!id) {
-        next.delete('textbookId')
-        next.delete('textbookMode')
-      } else {
-        next.set('textbookId', id)
-        next.set('textbookMode', mode)
+      const apply = (prev: URLSearchParams) => {
+        const next = new URLSearchParams(prev)
+        if (!id) {
+          next.delete('textbookId')
+          next.delete('textbookMode')
+        } else {
+          next.set('textbookId', id)
+          next.set('textbookMode', mode)
+        }
+        return next
       }
-      setSearchParams(next)
+      // 같은 교재 안에서 보기로 돌아가거나 닫을 때만 되돌아가기
+      const isReturn = !id || (mode === 'view' && id === searchParams.get('textbookId'))
+      if (isReturn) {
+        navigateToAncestorSearch(apply)
+        return
+      }
+      setSearchParams(apply(new URLSearchParams(searchParams)))
     },
-    [searchParams, setSearchParams]
+    [navigateToAncestorSearch, searchParams, setSearchParams]
   )
 
   const filteredRows = rows
@@ -298,10 +315,7 @@ export default function TextbookPage() {
 
   const handleDeleteSelected = useCallback(() => {
     if (selectedRowKeys.length === 0) {
-      showAlert({
-        title: '항목 선택 안내',
-        content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
-      })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setDeleteConfirmOpen(true)
@@ -625,6 +639,7 @@ export default function TextbookPage() {
           </>
         }
         excelExport={{
+          accessLog: { downloadKind: 'TEXTBOOK_LIST_EXPORT', containedPiiTypes: ['NAME'] },
           columns,
           data: filteredRows,
           selectedRowKeys,

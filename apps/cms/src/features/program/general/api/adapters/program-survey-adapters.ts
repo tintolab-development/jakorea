@@ -408,7 +408,8 @@ export function mapSurveyResponseListItemToPollResponse(
   item: SurveyResponseListItemResponse,
   detail?: SurveyResponseDetailResponse | null
 ): SurveyPollRawResponse {
-  const fromDetail = mapSurveyAnswersToRecord(detail?.answers)
+  // `includeAnswers=true` 목록의 `item.answers`는 단건 상세 `answers`와 동일 — 같은 mapper로 전문을 채운다
+  const fromDetail = mapSurveyAnswersToRecord(detail?.answers ?? item.answers)
   const fromPreview = parseAnswerPreviewJson(item.answerPreviewJson)
   const answers = Object.keys(fromDetail).length > 0 ? fromDetail : fromPreview
 
@@ -423,14 +424,6 @@ export function mapSurveyResponseListItemToPollResponse(
     addressRegion: '',
     answers,
   }
-}
-
-/** preview가 전체 답(answerCount)을 담지 못하면 detail fetch가 필요 */
-export function surveyResponseNeedsDetail(item: SurveyResponseListItemResponse): boolean {
-  if (item.formResponseId == null) return false
-  const previewCount = Object.keys(parseAnswerPreviewJson(item.answerPreviewJson)).length
-  if (previewCount === 0) return true
-  return item.answerCount != null && previewCount < item.answerCount
 }
 
 type ParsedSurveySummaryJson = {

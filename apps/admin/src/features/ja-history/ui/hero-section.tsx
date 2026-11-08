@@ -4,6 +4,7 @@ import type { JaHistoryHero } from '@/entities/ja-history/model/types'
 import { useSaveJaHistoryHero } from '@/features/ja-history/api/hooks'
 import { showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
+import { TABLE_ROW_FILL_FIELDS_CLASS } from '@/shared/ui/table-row-fill-fields'
 import { HistoryCopy, MediaPreview, SectionFrame, jaHistorySaveAlert } from './chrome'
 import { HeroFormModal } from './hero-form-modal'
 
@@ -38,7 +39,7 @@ export function HeroSection({ hero }: { hero: JaHistoryHero }) {
     <>
       <SectionFrame title="히어로 배너" marker={false} onEdit={() => setOpen(true)}>
         <CmsDataTable<HeroRow>
-          className="cms-data-table cms-data-table--skip-auto-no-col ja-history-table"
+          className={`cms-data-table cms-data-table--skip-auto-no-col ja-history-table ${TABLE_ROW_FILL_FIELDS_CLASS}`}
           columns={columns}
           dataSource={[{ key: 'hero' }]}
           pagination={false}

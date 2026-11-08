@@ -62,6 +62,7 @@ import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
 import '@/features/program/general/ui/program-list.css'
 import './detailed-program-page.css'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 const USAGE_RADIO_OPTIONS = [
   { label: '사용', value: true },
@@ -310,10 +311,7 @@ export default function DetailedProgramPage() {
   const handleBulkDelete = useCallback(() => {
     if (!canWrite) return
     if (selectedRowKeys.length === 0) {
-      showAlert({
-        title: '항목 선택 안내',
-        content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
-      })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
 
@@ -538,6 +536,7 @@ export default function DetailedProgramPage() {
           </>
         }
         excelExport={{
+          accessLog: { downloadKind: 'DETAILED_PROGRAM_LIST_EXPORT', containedPiiTypes: ['NAME'] },
           columns,
           data: tableDisplayData,
           selectedRowKeys,

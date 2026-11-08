@@ -64,7 +64,8 @@ describe('postEncryptedAdminFile', () => {
         data: { password: 'Jafile1!' },
       })
     )
-    expect(downloadBlob).toHaveBeenCalledWith(blob, 'a.pdf')
+    // 서버가 file-access 이력을 남기므로 client 로그는 생략한다
+    expect(downloadBlob).toHaveBeenCalledWith(blob, 'a.pdf', { skipAccessLog: true })
   })
 
   it('200 PDF는 filename*를 저장 파일명으로 쓴다', async () => {
@@ -83,7 +84,7 @@ describe('postEncryptedAdminFile', () => {
       fallbackFileName: '지급조서_1.pdf',
     })
 
-    expect(downloadBlob).toHaveBeenCalledWith(blob, '지급조서.pdf')
+    expect(downloadBlob).toHaveBeenCalledWith(blob, '지급조서.pdf', { skipAccessLog: true })
   })
 
   it('404/405일 때만 download-requests로 한 번 폴백한다', async () => {

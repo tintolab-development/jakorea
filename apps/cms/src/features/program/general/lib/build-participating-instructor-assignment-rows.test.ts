@@ -271,6 +271,36 @@ describe('buildParticipatingInstructorWaitingSchoolRowsFromBoard', () => {
   })
 })
 
+describe('배정 대기 자택과의 거리 (기관형 · education-scope organizations[])', () => {
+  it('희망하지 않은 기관 행까지 organizationApplicationId로 서버 km를 표시한다', () => {
+    for (const isCompanySchool of [false, true]) {
+      const rows = buildParticipatingInstructorWaitingSchoolRowsFromBoard({
+        instructor: instructor('190102'),
+        schoolRows,
+        instructorList: [],
+        assignedSchoolIds: new Set(),
+        isCompanySchool,
+        assignments,
+        instructorMemberId: '190102',
+        maxAssignableInstructors: 2,
+        organizationDistances: [
+          { organizationId: 1, organizationApplicationId: 1691530, distanceKm: 34.5, longDistance: false },
+          { organizationId: null, organizationApplicationId: 1691529, distanceKm: 231.5, longDistance: true },
+        ],
+      })
+      const byOrgApp = new Map(rows.map(r => [r.organizationApplicationId, r.distanceFromHome]))
+      expect(byOrgApp.get('1691530')).toBe('34.5km')
+      expect(byOrgApp.get('1691529')).toBe('231.5km (장거리)')
+    }
+  })
+
+  it('거리 목록이 없거나 매칭되지 않으면 -', () => {
+    const rows = build({ memberId: '190102', maxAssignableInstructors: 2 })
+    expect(rows.length).toBeGreaterThan(0)
+    expect(rows.every(r => r.distanceFromHome === '-')).toBe(true)
+  })
+})
+
 describe('buildParticipatingInstructorWaitingScheduleRowsFromBoard (개인형)', () => {
   const schedules: ProgramScheduleResponse[] = [
     { id: 301, locationName: '서울 강의장', scheduleStatus: 'ACTIVE' },
@@ -300,6 +330,7 @@ describe('buildParticipatingInstructorWaitingScheduleRowsFromBoard (개인형)',
     memberId: string
     assignments: InstructorAssignmentListItemEnriched[]
     maxAssignableInstructors?: number | null
+    scheduleDistances?: Array<{ scheduleId: number; distanceKm: number | null; longDistance: boolean | null }>
   }) {
     return buildParticipatingInstructorWaitingScheduleRowsFromBoard({
       instructor: instructor(input.memberId),
@@ -308,13 +339,26 @@ describe('buildParticipatingInstructorWaitingScheduleRowsFromBoard (개인형)',
       assignments: input.assignments,
       instructorMemberId: input.memberId,
       maxAssignableInstructors: input.maxAssignableInstructors,
+      scheduleDistances: input.scheduleDistances,
     })
   }
 
-  it('본인 배정 일정은 제외하고 서버 순서·역순 번호를 유지한다', () => {
+  it('scheduleId로 서버 km를 매칭한다 (null·미매칭 → -, 0.0km 유지)', () => {
+    const rows = buildIndividual({
+      memberId: '10',
+      assignments: [],
+      scheduleDistances: [
+        { scheduleId: 301, distanceKm: 18.7, longDistance: false },
+        { scheduleId: 302, distanceKm: 0, longDistance: false },
+      ],
+    })
+    expect(rows.map(r => r.distanceFromHome)).toEqual(['18.7km', '0.0km', '-'])
+  })
+
+  it('본인 배정 일정은 제외하고 서버 순서·오름차순 번호를 유지한다', () => {
     const rows = buildIndividual({ memberId: '10', assignments: [individualAssignment(1, 10, 302)] })
     expect(rows.map(r => r.resolvedScheduleId)).toEqual([301, 303])
-    expect(rows.map(r => r.no)).toEqual([2, 1])
+    expect(rows.map(r => r.no)).toEqual([1, 2])
     expect(rows[0]).toMatchObject({
       lectureLocation: '서울 강의장',
       scheduleLabel: '2026.11.03 | 10:00 ~ 12:00 | 1차시',
@@ -490,7 +534,7 @@ describe('buildParticipatingInstructorAssignedScheduleRowsFromBoard (개인형)'
     expect(rows[1]?.scheduleLabel).toBe('2026.11.06(목) | 14:00 ~ 16:00 | 2차시')
     expect(rows[0]?.lectureLocation).toBe('서울 강의장 주소')
     expect(rows[1]?.lectureLocation).toBe('일정별 장소 B')
-    expect(rows[0]?.distanceFromHome).toBe('3km (장거리)')
+    expect(rows[0]?.distanceFromHome).toBe('3.0km (장거리)')
     expect(rows[1]?.distanceFromHome).toBe('12.3km')
   })
 

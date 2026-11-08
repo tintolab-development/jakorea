@@ -113,9 +113,6 @@
 
 .school-search__table.cms-data-table .ant-table-thead > tr > th.school-search__col-select,
 .school-search__table.cms-data-table .ant-table-tbody > tr > td.school-search__col-select {
-  width: 120px !important;
-  min-width: 120px !important;
-  max-width: 120px !important;
   padding-inline: 10px !important;
   box-sizing: border-box;
 }

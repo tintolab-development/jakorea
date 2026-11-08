@@ -64,13 +64,6 @@
 
 .ujat-schedule-confirm-list__table-wrap
   .ujat-schedule-confirm-list__table
-  table.ant-table {
-  table-layout: fixed !important;
-  width: max(100%, var(--ujat-schedule-confirm-table-min-width, 1560px)) !important;
-}
-
-.ujat-schedule-confirm-list__table-wrap
-  .ujat-schedule-confirm-list__table
   .ant-table-thead
   > tr
   > th:not(.ant-table-cell-scrollbar),

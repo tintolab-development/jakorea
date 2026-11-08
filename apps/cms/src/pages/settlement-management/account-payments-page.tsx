@@ -3,17 +3,9 @@
  * 필터·목록: `FilterTableLayout` (`title`·`description`·`actions`) + 테이블·캘린더 본문
  */
 
-import {
-  lazy,
-  Suspense,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type Key,
-} from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type Key } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useNavigateToAncestor } from '@/shared/hooks/use-history-ancestor-navigation'
 import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs, { type Dayjs } from 'dayjs'
@@ -37,9 +29,7 @@ import {
 } from '@/features/settlement-management/api/settlement-api-client'
 import type { SettlementExportResponse } from '@/features/settlement-management/api/account-payments/settlement-export-response'
 import type { TaxReportPreviewWorkbook } from '@/features/settlement-management/api/account-payments/tax-report-preview'
-import type {
-  SettlementExportRequest,
-} from '@/shared/api/generated/settlement/schemas'
+import type { SettlementExportRequest } from '@/shared/api/generated/settlement/schemas'
 import { pickEligibleAccountPaymentFormIssueRows } from './resolve-toolbar-form-issue-rows'
 import { useAccountPaymentsListQuery } from '@/features/settlement-management/hooks/use-account-payments-list-query'
 import {
@@ -77,6 +67,7 @@ import './payment-orders-page.css'
 import './account-payments-page.css'
 import { AccountPaymentsCalendarView } from './account-payments-calendar-view'
 import { getPaymentOrdersDefaultDateRange } from './payment-orders-date-range'
+import { AccountPaymentStatusText } from './account-payment-status-text'
 import {
   AP_YEAR_PARAM,
   parseAccountPaymentsYearParam,
@@ -99,6 +90,7 @@ import {
   ButtonDownloadIcon,
   ButtonListIcon,
 } from '@/shared/ui/icons/ButtonIcons'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 /** Fortune Sheet·ExcelJS 분리 — lazy 라우트 청크 과대로 인한 dev 동적 import 실패 완화 */
 const BulkTransferPreviewModal = lazy(async () => {
@@ -125,14 +117,6 @@ interface AppliedFilters {
 /** 계좌 지급 풀페이지 상세 — URL 동기화(뒤로가기로 목록 복귀) */
 const AP_DETAIL_ID = 'ap_detail'
 
-/** `FilterTableLayout` 툴바 — `FilterTableToolbarButton` h40, width=auto에 최소 폭 180px 적용 */
-const ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE = { minWidth: 160 } as const
-
-/**
- * 목록 가로 스크롤 기준 폭.
- * 선택80 + No.80 + 신청자88 + 프로그램420 + 기관130 + 차시100 + 현황130 + 금액110 + 이체일140
- */
-const ACCOUNT_PAYMENTS_LIST_SCROLL_X = 80 + 80 + 88 + 420 + 130 + 100 + 130 + 110 + 140
 
 /** 세 번째 요약 위젯 — 이체 예정일 구간 표기 `YYYY.MM.DD ~ YYYY.MM.DD` */
 function formatYyMmDd(d: Dayjs): string {
@@ -187,21 +171,6 @@ const statusSelectOptions: { value: AppliedAccountStatus; label: string }[] = [
     label: ACCOUNT_PAYMENT_STATUS_LABELS[value],
   })),
 ]
-
-function getAccountPaymentStatusClassName(status: AccountPaymentTransferStatus): string {
-  switch (status) {
-    case 'awaiting_confirmation':
-      return 'account-payments-page__status-text--awaiting-confirmation'
-    case 'partial_confirmation':
-      return 'account-payments-page__status-text--partial-confirmation'
-    case 'account_paid':
-      return 'account-payments-page__status-text--account-paid'
-    case 'payment_correction_requested':
-      return 'account-payments-page__status-text--payment-correction-requested'
-    default:
-      return ''
-  }
-}
 
 function useCalendarYear(): number {
   const [y, setY] = useState(() => dayjs().year())
@@ -292,9 +261,7 @@ export default function AccountPaymentsPage() {
   const [issuedFormPreviewRows, setIssuedFormPreviewRows] = useState<AccountPaymentRow[] | null>(
     null
   )
-  const [issuedFormExport, setIssuedFormExport] = useState<SettlementExportResponse | null>(
-    null
-  )
+  const [issuedFormExport, setIssuedFormExport] = useState<SettlementExportResponse | null>(null)
   const [issuedTaxReportPreview, setIssuedTaxReportPreview] =
     useState<TaxReportPreviewWorkbook | null>(null)
   const taxReportPreviewRequestSequence = useRef(0)
@@ -430,8 +397,9 @@ export default function AccountPaymentsPage() {
 
   const filteredRows = useMemo(() => {
     // Remote: 서버가 status·이체일·이름 필터를 적용. mock만 클라이언트 filterRows
-    if (accountPaymentsRemote) return accountPaymentRows
-    return filterRows(accountPaymentRows, applied)
+    const rows = accountPaymentsRemote ? accountPaymentRows : filterRows(accountPaymentRows, applied)
+    // 시안(12432:443040) No.: 다른 CMS 목록과 같이 총 건수부터 역순 (첫 행 = 총 n건)
+    return rows.map((row, index) => ({ ...row, no: rows.length - index }))
   }, [accountPaymentsRemote, accountPaymentRows, applied])
 
   const accountPaymentConfirmModalData = useMemo(() => {
@@ -532,7 +500,7 @@ export default function AccountPaymentsPage() {
         title: 'No.',
         dataIndex: 'no',
         key: 'no',
-        width: 64,
+        width: 80,
         align: 'center',
       },
       {
@@ -541,7 +509,7 @@ export default function AccountPaymentsPage() {
         key: 'instructorName',
         className: 'account-payments-page__col-instructor',
         ellipsis: { showTitle: true },
-        width: 88,
+        width: 140,
         align: 'center',
       },
       {
@@ -550,7 +518,12 @@ export default function AccountPaymentsPage() {
         key: 'programName',
         className: 'account-payments-page__col-program',
         ellipsis: { showTitle: true },
-        width: 420,
+        /**
+         * 유연 열 — 넓은 화면의 남는 폭 흡수 (공통 표 최소 폭 계산).
+         * 시안 416은 표 폭 1546 기준 — 실화면 카드 padding 24·표 테두리로 본문 1536이라 400으로 두어
+         * 1920 뷰포트에서 가로 스크롤 없이 남는 폭(≈406)을 받는다.
+         */
+        minWidth: 400,
         align: 'center',
       },
       {
@@ -559,7 +532,7 @@ export default function AccountPaymentsPage() {
         key: 'institutionName',
         className: 'account-payments-page__col-institution',
         ellipsis: { showTitle: true },
-        width: 130,
+        width: 180,
         align: 'center',
         render: (v: string) => formatAccountPaymentInstitutionDisplay(v),
       },
@@ -568,7 +541,7 @@ export default function AccountPaymentsPage() {
         dataIndex: 'sessionLabel',
         key: 'sessionLabel',
         className: 'account-payments-page__col-session',
-        width: 100,
+        width: 150,
         align: 'center',
         render: (v: string) => formatAccountPaymentSessionLabelDisplay(v),
       },
@@ -577,12 +550,10 @@ export default function AccountPaymentsPage() {
         dataIndex: 'accountPaymentStatus',
         key: 'accountPaymentStatus',
         className: 'account-payments-page__col-status',
-        width: 130,
+        width: 160,
         align: 'center',
         render: (s: AccountPaymentTransferStatus) => (
-          <span className={getAccountPaymentStatusClassName(s)}>
-            {ACCOUNT_PAYMENT_STATUS_LABELS[s]}
-          </span>
+          <AccountPaymentStatusText status={s} label={ACCOUNT_PAYMENT_STATUS_LABELS[s]} />
         ),
       },
       {
@@ -590,7 +561,7 @@ export default function AccountPaymentsPage() {
         dataIndex: 'amount',
         key: 'amount',
         className: 'account-payments-page__col-amount',
-        width: 110,
+        width: 180,
         align: 'center',
         render: (amount: number) => formatWon(amount),
       },
@@ -599,7 +570,7 @@ export default function AccountPaymentsPage() {
         dataIndex: 'transferScheduledDate',
         key: 'transferScheduledDate',
         className: 'account-payments-page__col-transfer-date',
-        width: 140,
+        width: 180,
         align: 'center',
         render: (iso: string) => formatTransferCell(iso),
       },
@@ -622,10 +593,7 @@ export default function AccountPaymentsPage() {
   const resolveToolbarFormIssueRows = useCallback(
     (kind: 'bulk-transfer' | 'tax-report'): AccountPaymentRow[] | null => {
       if (selectedRowKeys.length === 0) {
-        cmsAlertModal.show({
-          title: '항목 선택 안내',
-          content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
-        })
+        cmsAlertModal.show(NO_SELECTION_ALERT)
         return null
       }
       const keySet = new Set(selectedRowKeys.map(String))
@@ -829,16 +797,16 @@ export default function AccountPaymentsPage() {
     setAccountFormIssueBlockedOpen(false)
   }, [])
 
+  const { toSearch: navigateToAncestorSearch } = useNavigateToAncestor()
+
+  /** 상세 닫기 — 목록 엔트리가 history에 있으면 뒤로, 없으면 replace */
   const closeAccountPaymentDetail = useCallback(() => {
-    setSearchParams(
-      prev => {
-        const next = new URLSearchParams(prev)
-        next.delete(AP_DETAIL_ID)
-        return next
-      },
-      { replace: true }
-    )
-  }, [setSearchParams])
+    navigateToAncestorSearch(prev => {
+      const next = new URLSearchParams(prev)
+      next.delete(AP_DETAIL_ID)
+      return next
+    })
+  }, [navigateToAncestorSearch])
 
   const openAccountPaymentDetail = useCallback(
     (row: AccountPaymentRow) => {
@@ -881,7 +849,13 @@ export default function AccountPaymentsPage() {
           })
           return
         }
-        void markPaidMutation.mutateAsync([paymentId]).catch(notifyAccountPaymentPaidError)
+        // 시안 6-2(12432:442846): 상세「지급 완료 처리」성공 후「계좌 지급 확인 완료」안내
+        void markPaidMutation
+          .mutateAsync([paymentId])
+          .then(() => {
+            setAccountPaymentCompleteSuccessContext(buildAccountPaymentCompleteSuccessContext([target]))
+          })
+          .catch(notifyAccountPaymentPaidError)
         return
       }
 
@@ -890,6 +864,7 @@ export default function AccountPaymentsPage() {
           r.id === rowId ? { ...r, accountPaymentStatus: 'account_paid' as const } : r
         )
       )
+      setAccountPaymentCompleteSuccessContext(buildAccountPaymentCompleteSuccessContext([target]))
     },
     [accountPaymentRows, accountPaymentsRemote, markPaidMutation, notifyAccountPaymentPaidError]
   )
@@ -904,10 +879,7 @@ export default function AccountPaymentsPage() {
       return
     }
     if (selectedRowKeys.length === 0) {
-      cmsAlertModal.show({
-        title: '항목 선택 안내',
-        content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
-      })
+      cmsAlertModal.show(NO_SELECTION_ALERT)
       return
     }
     const keySet = new Set(selectedRowKeys.map(String))
@@ -924,7 +896,6 @@ export default function AccountPaymentsPage() {
         {viewMode === 'list' ? (
           <FilterTableToolbarButton
             variant="secondary"
-            style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
             icon={<ButtonCalendarIcon />}
             type="button"
             onClick={() => setViewMode('calendar')}
@@ -934,7 +905,6 @@ export default function AccountPaymentsPage() {
         ) : (
           <FilterTableToolbarButton
             variant="secondary"
-            style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
             icon={<ButtonListIcon />}
             type="button"
             onClick={() => setViewMode('list')}
@@ -944,7 +914,6 @@ export default function AccountPaymentsPage() {
         )}
         <FilterTableToolbarButton
           variant="primary"
-          style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
           icon={<ButtonDownloadIcon />}
           type="button"
           onClick={openBulkTransferPreview}
@@ -953,18 +922,16 @@ export default function AccountPaymentsPage() {
         </FilterTableToolbarButton>
         <FilterTableToolbarButton
           variant="primary"
-          style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
           icon={<ButtonDownloadIcon />}
           type="button"
           onClick={openTaxFilingPreview}
         >
-          세금 신고 양식 발급
+          세금신고 양식 발급
         </FilterTableToolbarButton>
         {canRequestRawExport ? (
           <>
             <FilterTableToolbarButton
               variant="secondary"
-              style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
               type="button"
               onClick={() => openRawExportRequest('bulk-transfer')}
             >
@@ -972,7 +939,6 @@ export default function AccountPaymentsPage() {
             </FilterTableToolbarButton>
             <FilterTableToolbarButton
               variant="secondary"
-              style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
               type="button"
               onClick={() => openRawExportRequest('tax-report')}
             >
@@ -1010,6 +976,8 @@ export default function AccountPaymentsPage() {
       columns,
       data: filteredRows,
       selectedRowKeys: viewMode === 'list' ? selectedRowKeys : undefined,
+      // 신청자명 컬럼. 계좌번호 컬럼은 없다
+      accessLog: { downloadKind: 'ACCOUNT_PAYMENT_LIST_EXPORT', containedPiiTypes: ['NAME'] },
     }
   }, [columns, filteredRows, selectedRowKeys, viewMode])
 
@@ -1086,11 +1054,7 @@ export default function AccountPaymentsPage() {
       setBulkTransferPreviewOpen(true)
       showIssueCompletedAlert()
     })()
-  }, [
-    accountPaymentCompleteSuccessContext,
-    notifyExportError,
-    waitReadyFormExport,
-  ])
+  }, [accountPaymentCompleteSuccessContext, notifyExportError, waitReadyFormExport])
 
   const filterLayoutClassName = 'account-payments-page__filter-table'
 
@@ -1227,7 +1191,6 @@ export default function AccountPaymentsPage() {
                 dataSource={filteredRows}
                 pagination={false}
                 rowSelection={rowSelection}
-                scroll={{ x: ACCOUNT_PAYMENTS_LIST_SCROLL_X }}
                 rowClassName={() => 'account-payments-page__table-row--clickable'}
                 onRow={record => ({
                   onClick: e => {

@@ -52,19 +52,23 @@ export interface UseProgressInstructorListOptions {
   appliedFilters: ProgressFilters
   programId?: string
   program?: Program | null
+  /** false면 강사 목록·배정 보드를 조회하지 않는다 (예: 개인형 봉사자 진행 탭은 강사 목록을 쓰지 않음) */
+  enabled?: boolean
 }
 
 export function useProgressInstructorList({
   appliedFilters,
   programId,
+  enabled = true,
 }: UseProgressInstructorListOptions) {
   const isTrainedTeachersSurface = useIsTrainedTeachersProgramsSurface()
   const isCompanySchoolSurface = useIsCompanySchoolProgramsSurface()
   const queryClient = useQueryClient()
-  const remoteEnabled = useProgramProgressRemoteEnabledForSurface(programId)
+  const surfaceRemoteEnabled = useProgramProgressRemoteEnabledForSurface(programId)
+  const remoteEnabled = surfaceRemoteEnabled && enabled
 
   useNotifyProgramApiUnavailableOnce(
-    !remoteEnabled && !isTrainedTeachersSurface,
+    enabled && !surfaceRemoteEnabled && !isTrainedTeachersSurface,
     'general-progress-instructors',
     '프로그램 진행 현황 · 강사'
   )

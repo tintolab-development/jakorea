@@ -9,6 +9,7 @@ import {
   type MutableRefObject,
 } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { nextSearchParamsIfChanged } from '@/shared/lib/search-params-diff'
 import type { Application, UserHistory } from '@/types/domain'
 import type { ApplicationProgressStatus } from '@/types/application-progress'
 import { applicationService } from '@/entities/application/api/application-service'
@@ -155,6 +156,11 @@ import { resolveInstructorRevokeBlockedAlert } from '@/features/user/permission-
 import { unmaskMemberForCertificateIssue } from '@/features/program/shared/lib/unmask-for-certificate-issue'
 import { revokeInstructorPermission } from '@/entities/user/api/user-service'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
+import { parseContentModalDescriptionLine } from '@/shared/ui/content-modal-description'
+import {
+  INSTRUCTOR_PERMISSION_REVOKE_COMPLETE_TITLE,
+  buildInstructorPermissionRevokeCompleteMessage,
+} from './instructor-permission-revoke-copy'
 import { guardAdminAction, resolveAdminRoleCodeFromUser } from '@/shared/lib/admin-role-policy'
 
 const PERSONAL_INFO_REVEAL_MODAL_Z_INDEX = 1100
@@ -1479,8 +1485,10 @@ export function useUserDetailController({
         onMemberBasicInfoSaved?.(revoked)
         setInstructorPermissionRevokeOpen(false)
         showAlert({
-          title: '권한 종료 완료',
-          content: '강사 권한 종료가 완료되었습니다.',
+          title: INSTRUCTOR_PERMISSION_REVOKE_COMPLETE_TITLE,
+          content: parseContentModalDescriptionLine(
+            buildInstructorPermissionRevokeCompleteMessage(displayUser.name ?? '')
+          ),
         })
       } catch (error) {
         const blockedAlert = resolveInstructorRevokeBlockedAlert(error)
@@ -1614,20 +1622,19 @@ export function useUserDetailController({
         setTabState({ lnb: k })
       }
 
-      setSearchParams(
-        prev => {
-          const nextParams = new URLSearchParams(prev)
-          if (displayUser?.id) nextParams.set('id', displayUser.id)
-          nextParams.set('lnb', k)
-          if (k === 'history' && programsHistoryHasChildMenu(displayUser)) {
-            nextParams.set(programsChildQueryKey, 'enrollment')
-          } else {
-            nextParams.delete(programsChildQueryKey)
-          }
-          return nextParams
-        },
-        { replace: true }
-      )
+      const changed = nextSearchParamsIfChanged(prev => {
+        const nextParams = new URLSearchParams(prev)
+        if (displayUser?.id) nextParams.set('id', displayUser.id)
+        nextParams.set('lnb', k)
+        if (k === 'history' && programsHistoryHasChildMenu(displayUser)) {
+          nextParams.set(programsChildQueryKey, 'enrollment')
+        } else {
+          nextParams.delete(programsChildQueryKey)
+        }
+        return nextParams
+      })
+      // LNB = 브레드크럼 단계 → push (같은 메뉴 재선택은 엔트리를 만들지 않음)
+      if (changed) setSearchParams(changed, { replace: false })
     },
     [mode, displayUser, setSearchParams, programsChildQueryKey]
   )
@@ -1644,16 +1651,15 @@ export function useUserDetailController({
         return
       }
       setTabState({ lnb: 'history', child })
-      setSearchParams(
-        prev => {
-          const nextParams = new URLSearchParams(prev)
-          if (displayUser?.id) nextParams.set('id', displayUser.id)
-          nextParams.set('lnb', 'history')
-          nextParams.set(programsChildQueryKey, child)
-          return nextParams
-        },
-        { replace: true }
-      )
+      const changed = nextSearchParamsIfChanged(prev => {
+        const nextParams = new URLSearchParams(prev)
+        if (displayUser?.id) nextParams.set('id', displayUser.id)
+        nextParams.set('lnb', 'history')
+        nextParams.set(programsChildQueryKey, child)
+        return nextParams
+      })
+      // 하위 메뉴 = 브레드크럼 단계 → push
+      if (changed) setSearchParams(changed, { replace: false })
     },
     [mode, displayUser, setSearchParams, programsChildQueryKey]
   )

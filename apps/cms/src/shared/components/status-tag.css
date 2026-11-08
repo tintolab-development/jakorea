@@ -1,0 +1,96 @@
+/**
+ * 공통 상태 태그 — 상태·역할·권한·평가 등 값 태그의 유일한 크기·색 정본.
+ *
+ * 크기: 높이 32 · 최소 너비 100 · 최대 너비 없음(텍스트 길이에 따름) · padding 6/10 · 12px/600/110%.
+ * 색: `tone` 프리셋 또는 `accentColor`(prop)로만 지정한다.
+ * 화면별 CSS로 이 태그의 크기·색·폰트를 덮어쓰지 않는다.
+ */
+
+.status-tag {
+  --status-tag-min-width: 100px;
+
+  display: inline-flex;
+  box-sizing: border-box;
+  width: auto;
+  height: 32px;
+  min-width: var(--status-tag-min-width);
+  max-width: none;
+  padding: var(--Spacing-6, 6px) var(--Spacing-10, 10px);
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  border-radius: var(--6, 6px);
+  border: 1px solid transparent;
+  text-align: center;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 110%;
+  white-space: nowrap;
+  vertical-align: middle;
+  transition: none;
+}
+
+.status-tag__label--muted {
+  opacity: 0.4;
+}
+
+/* ----- tone 프리셋 ----- */
+
+.status-tag--blue {
+  border-color: var(--editable-badge-blue-border);
+  background: var(--editable-badge-blue-bg);
+  color: var(--editable-badge-blue-text);
+}
+
+.status-tag--gray {
+  border-color: var(--editable-badge-gray-border);
+  background: var(--editable-badge-gray-bg);
+  color: var(--editable-badge-gray-text);
+}
+
+.status-tag--green {
+  border-color: var(--editable-badge-green-border);
+  background: var(--editable-badge-green-bg);
+  color: var(--editable-badge-green-text);
+}
+
+.status-tag--green-overlay {
+  border-color: var(--editable-badge-green-border);
+  background: var(--editable-badge-green-overlay-bg);
+  color: var(--editable-badge-green-text);
+}
+
+.status-tag--red {
+  border-color: var(--editable-badge-red-border);
+  background: var(--editable-badge-red-bg);
+  color: var(--editable-badge-red-text);
+}
+
+.status-tag--orange {
+  border-color: rgba(230, 81, 0, 0.1);
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.status-tag--purple {
+  border-color: rgba(132, 87, 206, 0.1);
+  background: #f3eef9;
+  color: var(--color-purple, #8457ce);
+}
+
+.status-tag--pink {
+  border-color: rgba(228, 73, 112, 0.1);
+  background: #fef5f7;
+  color: #e44970;
+}
+
+/* accentColor prop — 글자색 = accent, 배경 6% · 테두리 10% */
+.status-tag--accent {
+  border-color: color-mix(in srgb, var(--status-tag-accent) 10%, transparent);
+  background: color-mix(in srgb, var(--status-tag-accent) 6%, #fff);
+  color: var(--status-tag-accent);
+}

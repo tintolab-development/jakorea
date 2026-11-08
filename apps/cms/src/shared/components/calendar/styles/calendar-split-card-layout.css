@@ -38,6 +38,15 @@
   box-sizing: border-box;
 }
 
+/*
+ * 월간: 해당 월에 필요한 주(4~6행)만 그리므로 격자 높이가 달라진다.
+ * 900px 고정 하한 대신 우측 카드(리스트 743 + padding 20×2)를 하한으로 두어 5주 월에 좌측 카드 하단 공백이 생기지 않게 한다.
+ * 6주 월은 콘텐츠 높이만큼 늘어난다.
+ */
+.calendar-split-card-layout:has(.calendar-main[data-month-week-rows]) {
+  --calendar-split-card-height: calc(var(--calendar-sub-right-list-height, 743px) + 40px);
+}
+
 .calendar-split-card-layout:has(.calendar-week--time-grid) {
   grid-template-columns:
     minmax(var(--calendar-main-week-min-width, calc(40px + 8px + 108px * 7 + 42px)), 1fr)
@@ -184,10 +193,15 @@
   overflow-y: visible;
 }
 
+/*
+ * 좌측 카드(border-box)가 padding 20×2 + border 1×2 = 42px inset을 담당하고 내부 calendar-main은 padding 0.
+ * 여기서 `--calendar-main-week-min-width`(격자 + 42px)를 쓰면 카드 콘텐츠 박스보다 42px 넓어져
+ * 폭이 좁을 때 `overflow-x: clip`에 마지막 요일 열이 잘린다 → 격자 min-width만 요구한다.
+ */
 .calendar-split-card-layout:has(.calendar-week--time-grid) .calendar-split-card--left > .calendar-main {
   flex: 0 0 auto;
   flex-shrink: 0;
-  min-width: var(--calendar-main-week-min-width, calc(40px + 8px + 108px * 7 + 42px));
+  min-width: var(--calendar-week-time-grid-min-width, calc(40px + 8px + 108px * 7));
   max-width: none;
   width: 100%;
   overflow: hidden;

@@ -86,8 +86,7 @@ function hasPaymentStatementApplication(
 
 export function mapSettlementToParticipatingInstructorSettlementRow(
   item: SettlementListItemResponse,
-  index: number,
-  totalCount: number
+  index: number
 ): ParticipatingInstructorSettlementApiRow | null {
   const settlementId = item.settlementId ?? null
   const settlementApplicationId = item.settlementApplicationId ?? null
@@ -107,7 +106,7 @@ export function mapSettlementToParticipatingInstructorSettlementRow(
     settlementApplicationId,
     isPendingApplication,
     availableActions: item.availableActions ?? [],
-    no: totalCount - index,
+    no: index + 1,
     institutionName: item.institutionName?.trim() || '-',
     educationGrade: '-',
     educationScheduleLabel: buildParticipatingInstructorEducationScheduleLabel(item),
@@ -146,9 +145,9 @@ export function mapSettlementsToParticipatingInstructorSettlementRows(
   )
 
   const rows = deduped
-    .map((item, index) => mapSettlementToParticipatingInstructorSettlementRow(item, index, 0))
+    .map((item, index) => mapSettlementToParticipatingInstructorSettlementRow(item, index))
     .filter((row): row is ParticipatingInstructorSettlementApiRow => row != null)
-  return rows.map((row, index) => ({ ...row, no: rows.length - index }))
+  return rows.map((row, index) => ({ ...row, no: index + 1 }))
 }
 
 /** 요약 카드 — 표시 가능한 지급조서 상태 집계 */

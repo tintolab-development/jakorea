@@ -258,6 +258,7 @@ export function GeneralVolunteerDocPassedSection({
         description={`${count.toLocaleString()}건`}
         actions={viewToggleButton}
         excelExport={{
+          accessLog: { downloadKind: 'PROGRAM_SCREENING_DOC_PASSED_EXPORT', containedPiiTypes: ['NAME'] },
           columns,
           data: tableData,
         }}

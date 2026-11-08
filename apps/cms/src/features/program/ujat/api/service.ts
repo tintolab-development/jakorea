@@ -117,41 +117,40 @@ export async function list(params: ListParams = {}): Promise<Program[]> {
 
 export async function detail(programId: string): Promise<Program | null> {
   assertRemoteReady()
-  const dto = await fetchAdminProgramByIdRemote(programId)
-  let typedDetail: UjatTypedDetail | undefined
-  try {
-    // The backend endpoint returns a typed document for both new and legacy programs. A missing
-    // route on an older local backend must not make the existing read-only fallback disappear.
-    typedDetail = await fetchUjatTypedDetailRemote(programId)
-  } catch (error) {
-    if (!isTypedDetailRouteMissing(error)) throw error
-    typedDetail = undefined
-  }
+  // 상세·typed-detail·지역 정원·후원사 배정은 서로의 응답에 의존하지 않으므로 동시에 요청한다(직렬 4RTT → 1RTT).
+  // 후원사 배정은 미리 시작만 해 두고, 실패 처리·병합은 기존 withFetchedProgramSponsorAssignments에 맡긴다.
+  const sponsorAssignmentsPromise = import('@/features/program/general/api/programs-api-client').then(
+    ({ fetchAdminProgramSponsorsRemote }) => fetchAdminProgramSponsorsRemote(programId)
+  )
+  sponsorAssignmentsPromise.catch(() => undefined)
+  const [dto, typedDetail, capacities, { withFetchedProgramSponsorAssignments }] =
+    await Promise.all([
+      fetchAdminProgramByIdRemote(programId),
+      // The backend endpoint returns a typed document for both new and legacy programs. A missing
+      // route on an older local backend must not make the existing read-only fallback disappear.
+      Promise.resolve()
+        .then(() => fetchUjatTypedDetailRemote(programId))
+        .catch((error: unknown): UjatTypedDetail | undefined => {
+          if (!isTypedDetailRouteMissing(error)) throw error
+          return undefined
+        }),
+      // 지역 정원 권한/구버전 백엔드로 상세 전체가 막히지 않도록 실패 시 기존 상세 응답을 유지한다.
+      Promise.resolve()
+        .then(() => fetchUjatRegionCapacitiesRemote(programId))
+        .catch(() => null),
+      import('@/features/program/shared/lib/merge-program-sponsor-assignments'),
+    ])
   const mapped = fromDetail(dto, typedDetail)
   // 지역별 정원은 프로그램 상세 JSON이 아닌 실행 도메인의 별도 테이블에 저장된다.
   // 상세 조회에서도 같은 값을 overlay에 주입해야 정보 탭이 0/빈 값으로 남지 않는다.
-  let mappedWithRegionCapacities = mapped
-  try {
-    const capacities = await fetchUjatRegionCapacitiesRemote(programId)
-    if (capacities.length > 0) {
-      mappedWithRegionCapacities = {
-        ...mapped,
-        ujatRegionCapacity: regionCapacityStateFromRows(capacities),
-      }
-    }
-  } catch {
-    // 지역 정원 권한/구버전 백엔드로 상세 전체가 막히지 않도록 기존 상세 응답을 유지한다.
-  }
-  const { withFetchedProgramSponsorAssignments } = await import(
-    '@/features/program/shared/lib/merge-program-sponsor-assignments'
-  )
-  const { fetchAdminProgramSponsorsRemote } = await import(
-    '@/features/program/general/api/programs-api-client'
-  )
+  const mappedWithRegionCapacities =
+    capacities != null && capacities.length > 0
+      ? { ...mapped, ujatRegionCapacity: regionCapacityStateFromRows(capacities) }
+      : mapped
   return withFetchedProgramSponsorAssignments(
     mappedWithRegionCapacities,
     programId,
-    fetchAdminProgramSponsorsRemote
+    () => sponsorAssignmentsPromise
   )
 }
 

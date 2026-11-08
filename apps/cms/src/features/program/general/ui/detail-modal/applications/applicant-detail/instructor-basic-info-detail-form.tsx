@@ -13,13 +13,9 @@ import { updateTeacherEmploymentStatusRemote } from '@/features/user/api/members
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { StatusDropdownCell } from '@/shared/components'
-import { STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME } from '@/shared/components/status-dropdown-cell'
+import { getEmploymentStatusTag } from '@/shared/lib/status-tag-specs'
 import type { SchoolTeacherEmploymentStatus } from '@/types/user'
-import {
-  SCHOOL_TEACHER_EMPLOYMENT_BADGE_CELL_STYLE,
-  SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS,
-  SchoolTeacherEmploymentStatusBadge,
-} from '@/features/user/detail/lib/school-teacher-employment-status'
+import { SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS } from '@/features/user/detail/lib/school-teacher-employment-status'
 import {
   ProgramDetailTdSegmentWrap,
   withProgramDetailTdDivider,
@@ -28,11 +24,6 @@ import { HomeAddressDisplay } from '@/features/program/shared/lib/program-pii-di
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-basic-info.css'
 
 export { HomeAddressDisplay }
-
-const AFFILIATION_EMPLOYMENT_BADGE_CELL_STYLE = {
-  ...SCHOOL_TEACHER_EMPLOYMENT_BADGE_CELL_STYLE,
-  maxWidth: 200,
-} as const
 
 export function formatBirthDateAndAge(birthDate?: string, age?: number): string {
   if (!birthDate && age == null) return '-'
@@ -164,20 +155,16 @@ export function AffiliationEmploymentStatusField({
   }
 
   return (
-    <span
-      className={`applicant-general-instructor-basic-info__employment-dropdown ${STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME}`}
-    >
+    <span className="applicant-general-instructor-basic-info__employment-dropdown">
       <StatusDropdownCell<SchoolTeacherEmploymentStatus>
         status={employmentStatus}
         statusOptions={SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS}
-        renderBadge={status => <SchoolTeacherEmploymentStatusBadge status={status} />}
+        getTag={getEmploymentStatusTag}
         isItemDisabled={(cur, opt) => cur === opt}
         onChange={handleEmploymentStatusChange}
         isUpdating={saving}
         isOpen={employmentDropdownOpen}
         onOpenChange={setEmploymentDropdownOpen}
-        tagLayout="tag100"
-        style={AFFILIATION_EMPLOYMENT_BADGE_CELL_STYLE}
       />
     </span>
   )

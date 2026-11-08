@@ -10,9 +10,7 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { buildGeminiApprovedManagerTableItems } from '../../lib/approved/build-manager-profile-fields'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
-  approvedTrainingStatusModifier,
   formatTrainingTimeTextWithClassCount,
-  formatStatusLabel,
 } from '../../lib/approved/format-display'
 import {
   formatOfficialDocumentRequiredInfo,
@@ -21,7 +19,6 @@ import {
 import { mapGeminiApprovedEmploymentToSchoolStatus } from '../../lib/approved/employment-status'
 import type { VerticalInfoTableItem } from '../../lib/approved/vertical-info-table'
 import type { GeminiApprovedTrainingDetail } from '../../model/approved/detail-types'
-import type { GeminiApprovedTrainingStatus } from '../../model/approved/types'
 import { usePatchGeminiApprovedTeacherEmploymentMutation } from '../../api/visiting-training/hooks'
 import { coercePositiveInt } from '@/features/user/api/user-response-row-id'
 import { handleError } from '@/shared/utils/error-handler'
@@ -31,10 +28,8 @@ import '@/shared/components/detail-info-form/detail-info-form.css'
 import '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-general-instructor-basic-info.css'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import './detail-program-info-tab.css'
+import { GeminiApprovedTrainingStatusText } from './training-status-text'
 
-function statusClassName(status: GeminiApprovedTrainingStatus) {
-  return `gemini-approved-training-detail-info__status--${approvedTrainingStatusModifier(status)}`
-}
 
 function dash(value: string | null | undefined): string {
   const trimmed = value?.trim() ?? ''
@@ -54,14 +49,6 @@ export function formatDetailTrainingDatetime(detail: GeminiApprovedTrainingDetai
   return time === '-' ? `${datePart} | -` : `${datePart} | ${time}`
 }
 
-function progressStatusView(status: GeminiApprovedTrainingStatus | null): ReactNode {
-  if (status == null) return '-'
-  return (
-    <span className={`gemini-approved-training-detail-info__status ${statusClassName(status)}`}>
-      {formatStatusLabel(status)}
-    </span>
-  )
-}
 
 type AssignedInstructorRow = {
   key: string
@@ -251,7 +238,7 @@ export function GeminiApprovedTrainingDetailProgramInfoTab({
       {
         key: 'status',
         label: '프로그램 진행 현황',
-        children: progressStatusView(detail.progressStatus),
+        children: <GeminiApprovedTrainingStatusText status={detail.progressStatus} context="detail" />,
       },
       {
         key: 'studentCount',

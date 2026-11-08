@@ -1,3 +1,4 @@
+import { GEMINI_RECRUITMENT_STATUS_LABEL } from '../../lib/recruitment/status-presentation'
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
@@ -20,10 +21,10 @@ export const GEMINI_RECRUITMENT_FILTER_FIELDS: FilterFieldConfig[] = [
     width: FILTER_CONTROL_MAX_WIDTH_PX,
     options: [
       { label: '전체', value: 'ALL' },
-      { label: '예정', value: 'SCHEDULED' },
-      { label: '진행 중', value: 'IN_PROGRESS' },
-      { label: '종료', value: 'ENDED' },
-      { label: '임시저장', value: 'DRAFT' },
+      { label: GEMINI_RECRUITMENT_STATUS_LABEL.SCHEDULED, value: 'SCHEDULED' },
+      { label: GEMINI_RECRUITMENT_STATUS_LABEL.IN_PROGRESS, value: 'IN_PROGRESS' },
+      { label: GEMINI_RECRUITMENT_STATUS_LABEL.ENDED, value: 'ENDED' },
+      { label: GEMINI_RECRUITMENT_STATUS_LABEL.DRAFT, value: 'DRAFT' },
     ],
   },
   {

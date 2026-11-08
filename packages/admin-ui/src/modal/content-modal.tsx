@@ -43,7 +43,11 @@ export interface AdminContentModalProps {
   closeIcon?: ReactNode
   description?: string
   descriptionGap?: 'default' | 'compact'
-  titleBodyGap?: 'auto' | 'always' | 'none' | 'list-settings'
+  /**
+   * 타이틀 ↔ 본문 간격. always 12(기본) · section 30(Figma Popup Multiple/Table — 표·폼 팝업, 설명 문구 없을 때)
+   * · list-settings 30 + 목록 설정 테이블 보정 · none 0 · auto 설명 있을 때만.
+   */
+  titleBodyGap?: 'auto' | 'always' | 'section' | 'none' | 'list-settings'
   zIndex?: number
   wrapClassName?: string
   rootClassName?: string
@@ -76,6 +80,7 @@ export function AdminContentModal({
     'content-modal',
     description != null && descriptionGap === 'compact' ? 'content-modal--description-gap-compact' : '',
     titleBodyGap === 'always' ? 'content-modal--title-body-gap-always' : '',
+    titleBodyGap === 'section' ? 'content-modal--title-body-gap-section' : '',
     titleBodyGap === 'none' ? 'content-modal--title-body-gap-none' : '',
     titleBodyGap === 'list-settings' ? 'content-modal--title-body-gap-list-settings' : '',
     className,

@@ -81,7 +81,16 @@
 .hero-banner-form-modal .file-select-field__actions {
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 16px;
+}
+
+/*
+ * 메인 타이틀(줄바꿈 허용 텍스트영역): 한 줄일 때 다른 입력(40px)과 같은 높이.
+ * autoSize가 한 줄 높이를 22px로 잡아 위아래 9px이면 42px이 된다 → 8px.
+ */
+.hero-banner-form-modal .hero-banner-form-modal__main-title .cms-textarea__control {
+  padding-top: 8px;
+  padding-bottom: 8px;
 }

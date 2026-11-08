@@ -72,3 +72,8 @@
 .education-record-list-page__tabs.cms-text-tabs .cms-text-tabs__row {
   padding: 0 0 16px;
 }
+
+/* 시안: 탭 줄 엑셀 다운로드 h44 × 180 */
+.education-record-list-page__excel.cms-button.ant-btn {
+  min-width: 180px;
+}

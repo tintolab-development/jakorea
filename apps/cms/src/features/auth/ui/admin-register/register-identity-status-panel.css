@@ -10,7 +10,9 @@
   align-items: center;
   align-self: stretch;
   border-radius: var(--Radius-8, 8px);
-  background: var(--Color-netural-cool-50, #f5f7f7);
+  background:
+    linear-gradient(0deg, rgba(34, 64, 75, 0.05) 0%, rgba(34, 64, 75, 0.05) 100%),
+    var(--main-WT, #fff);
   box-sizing: border-box;
 }
 

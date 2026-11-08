@@ -38,7 +38,7 @@ const KIND_META = {
   annual: {
     label: '연차보고서',
     description:
-      '연차보고서 제목 작성 및 썸네일 이미지와 첨부파일을 업로드 해주세요.\n썸네일 이미지는 A4 비율로 반영 및 노출됩니다.',
+      '연차보고서 제목 작성 및 썸네일 이미지와 첨부파일을 업로드해 주세요.\n썸네일 이미지는 A4 비율로 반영 및 노출됩니다.',
     thumbGuide: [
       ATTACHMENT_SINGLE_JPG_PNG_GUIDE_LINE,
       '- 권장 썸네일 사이즈는 328 × 463px입니다.',
@@ -47,7 +47,7 @@ const KIND_META = {
   audit: {
     label: '회계감사 보고서',
     description:
-      '회계감사 보고서 제목 작성 및 썸네일 이미지와 첨부파일을 업로드 해주세요.\n썸네일 이미지는 16:9 비율로 반영 및 노출됩니다.',
+      '회계감사 보고서 제목 작성 및 썸네일 이미지와 첨부파일을 업로드해 주세요.\n썸네일 이미지는 16:9 비율로 반영 및 노출됩니다.',
     thumbGuide: [
       ATTACHMENT_SINGLE_JPG_PNG_GUIDE_LINE,
       '- 권장 썸네일 사이즈는 461 × 256px입니다.',

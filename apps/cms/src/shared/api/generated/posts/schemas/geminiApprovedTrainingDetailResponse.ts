@@ -38,13 +38,13 @@ export interface GeminiApprovedTrainingDetailResponse {
   institutionJoinedAt?: string | null;
   scheduleId?: number;
   scheduleName?: string;
-  /** 강사 식별자가 있고 취소되지 않은 기관 일정 배정이 있을 때만 채운다. 희망일 1지망으로 대체하지 않는다. 그 외에는 null */
+  /** 취소되지 않은 기관 일정 배정(scheduleId)이 있으면 program_schedule 기준 확정일. 강사 미배정이어도 채운다. 강사 배정 후에도 동일 SSOT. 희망일 1지망·trainingDateCandidates로 대체하지 않는다. 배정 없으면 null */
   trainingDate?: string | null;
-  /** trainingDate와 같은 조건. 강사 미식별이거나 취소되지 않은 일정 배정이 없으면 null */
+  /** trainingDate와 같은 조건(기관 일정 배정 또는 강사 매칭). 없으면 null */
   trainingStartTime?: string | null;
-  /** trainingDate와 같은 조건. 강사 미식별이거나 취소되지 않은 일정 배정이 없으면 null */
+  /** trainingDate와 같은 조건(기관 일정 배정 또는 강사 매칭). 없으면 null */
   trainingEndTime?: string | null;
-  /** 확정 시간 표시. trainingDate와 같은 조건일 때만 채운다. 그 외에는 null */
+  /** 확정 시간 표시. trainingDate와 같은 조건일 때만 채운다. 없으면 null */
   trainingTimeText?: string | null;
   /** 희망 일정 마지막 순위(3지망) 날짜. 확정 trainingDate와 분리 */
   lastPreferredDate?: string | null;
@@ -81,9 +81,9 @@ export interface GeminiApprovedTrainingDetailResponse {
   /** 담당 교사 teacher_profile.current_organization_id. PATCH /api/admin/organizations/schools/{organizationId}/teachers/{teacherMemberId}/employment-status 의 path organizationId와 동일 PK. 교사 프로필/학교 소속이 없거나 삭제된 학교면 null. 다른 API로 채우지 않는다. */
   teacherSchoolOrganizationId?: number | null;
   teacherEmploymentStatus?: GeminiApprovedTrainingDetailResponseTeacherEmploymentStatus;
-  /** 저장 원천이 없다. teacher_profile과 Gemini 기관 신청 폼에 직급 키가 없어 항상 null */
+  /** 해당 승인 기관 신청의 Gemini 담당 교사 정보 폼(gemini-vt-inst-seed-contact) jobTitle 스냅샷. 답변이 없거나 공백이면 null이며 회원 프로필로 대체하지 않는다 */
   teacherPosition?: string | null;
-  /** 저장 원천이 없다. teacher_profile과 Gemini 기관 신청 폼에 과목 키가 없어 항상 null */
+  /** 해당 승인 기관 신청의 Gemini 담당 교사 정보 폼(gemini-vt-inst-seed-contact) subject 스냅샷. 답변이 없거나 공백이면 null이며 다른 신청·회원 프로필 값으로 대체하지 않는다 */
   teacherSubject?: string | null;
   teacherHomeAddress?: string | null;
   /** 이 기관 신청의 program_organization_schedule_assignment_revision 행 수. 일정 교체 이력이 없으면 0. null이 아니다 */

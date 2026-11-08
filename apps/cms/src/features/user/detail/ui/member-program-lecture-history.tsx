@@ -469,10 +469,11 @@ export function MemberProgramLectureHistory({
           key: 'lectureAttendance',
           align: 'center',
           render: (_: string | undefined, record: Application) => {
-            const text = record.lectureAttendance ?? '0 / 0'
+            /** 시안: 「0 / 4」 — API가 「0/4」·「0 / 4」 어느 쪽이어도 공백 1칸 */
+            const text = (record.lectureAttendance ?? '0/0').replace(/\s*\/\s*/, ' / ')
             const showLink = lectureAttendanceHasAtLeastOne(record.lectureAttendance)
             if (!showLink) {
-              return text.replace('/', ' / ')
+              return text
             }
             return (
               <span
@@ -486,7 +487,7 @@ export function MemberProgramLectureHistory({
                     if (onOpenAttendance) onOpenAttendance(record)
                   }}
                 >
-                  {text.replace('/', ' / ')}
+                  {text}
                 </button>
               </span>
             )
@@ -502,8 +503,8 @@ export function MemberProgramLectureHistory({
               onClick={e => e.stopPropagation()}
             >
               <CmsButton
-                variant="default"
-                size="medium"
+                variant="secondary"
+                size="small"
                 disabled={!record.hasAssignmentSubmission}
                 onClick={() => {
                   if (onOpenAssignment) onOpenAssignment(record)
@@ -558,8 +559,8 @@ export function MemberProgramLectureHistory({
               onClick={e => e.stopPropagation()}
             >
               <CmsButton
-                variant="default"
-                size="medium"
+                variant="secondary"
+                size="small"
                 disabled={!canView}
                 onClick={() => {
                   if (onViewLectureReport) onViewLectureReport(record)
@@ -716,6 +717,7 @@ export function MemberProgramLectureHistory({
           </div>
         }
         excelExport={{
+          accessLog: { downloadKind: 'MEMBER_PROGRAM_HISTORY_EXPORT', containedPiiTypes: ['NAME'] },
           columns,
           data: tableDataSource,
           selectedRowKeys:
@@ -724,7 +726,7 @@ export function MemberProgramLectureHistory({
       >
         <div ref={tableWrapRef} className="cms-data-table-fit-scroll-wrap">
           <CmsDataTable<Application | UserHistory>
-            className="cms-data-table cms-data-table--fluid cms-data-table--fit-scroll"
+            className="cms-data-table cms-data-table--fit-scroll"
             size={TABLE_CONFIG.size}
             scroll={tableScrollX != null ? { x: tableScrollX } : undefined}
             loading={loading}

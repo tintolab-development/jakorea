@@ -1,10 +1,8 @@
 import type { UjatInstitutionApplicationRegionKey } from '../../application-institution/list/regions'
 
-/** 교육 배정 현황 */
-export type UjatEducationProgressVolunteerAssignmentStatus =
-  | 'assignment_waiting'
-  | 'assignment_completed'
-  | 'activity_abandoned'
+import type { UjatEducationProgressVolunteerAssignmentStatus } from '@/features/program/ujat/model/ujat-volunteer-status-presentation'
+export type { UjatEducationProgressVolunteerAssignmentStatus } from '@/features/program/ujat/model/ujat-volunteer-status-presentation'
+export { UJAT_EDU_PROGRESS_VOLUNTEER_ASSIGNMENT_STATUS_LABEL } from '@/features/program/ujat/model/ujat-volunteer-status-presentation'
 
 export type UjatEducationProgressVolunteerGrade =
   | '1학년'
@@ -58,15 +56,6 @@ export const UJAT_EDU_PROGRESS_VOLUNTEER_GRADE_OPTIONS = [
   '휴학',
   '졸업유예',
 ] as const satisfies readonly UjatEducationProgressVolunteerGrade[]
-
-export const UJAT_EDU_PROGRESS_VOLUNTEER_ASSIGNMENT_STATUS_LABEL: Record<
-  UjatEducationProgressVolunteerAssignmentStatus,
-  string
-> = {
-  assignment_waiting: '배정 대기',
-  assignment_completed: '배정 완료',
-  activity_abandoned: '활동 포기',
-}
 
 export const EMPTY_UJAT_EDU_PROGRESS_VOLUNTEER_FILTERS: UjatEducationProgressVolunteerFilters = {
   volunteerName: '',

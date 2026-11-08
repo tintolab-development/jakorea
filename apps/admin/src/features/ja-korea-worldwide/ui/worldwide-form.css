@@ -155,16 +155,14 @@
 }
 
 /*
- * 하단 문구 값 셀 — 조회/수정 높이 동일 고정 (모드 전환 시 흔들림 없음)
- * 셀 108 = padding 10×2 + 박스 88
- * 박스 88 = border 1×2 + padding 9×2 + 본문 3줄(14px × 160% × 3 ≈ 67)
- * 조회 텍스트도 같은 박스 위치(border+padding)에 놓아 글자 위치가 그대로 유지됨
+ * 하단 문구 값 셀 — Figma 2498:54595: 셀 min-height 54 · padding 12×16 · 텍스트 14/1.5
+ * QA: 표·입력 필드 높이가 텍스트 길이·줄바꿈에 따라 변동(조회·수정 모두). 고정 108 제거.
+ * 수정 칸은 autoSize(hug), 조회는 일반 텍스트 셀.
  */
 .ja-worldwide-bottom .detail-info-form__field-content {
-  height: 108px;
-  min-height: 108px;
-  padding: 10px 16px;
-  align-items: flex-start;
+  min-height: 54px;
+  padding: 12px 16px;
+  align-items: center;
   justify-content: flex-start;
   text-align: left;
 }
@@ -173,31 +171,19 @@
   margin-block: 0;
 }
 
-.ja-worldwide-bottom .cms-textarea .cms-textarea__control {
-  height: 88px;
-  min-height: 88px;
-  padding: 9px 16px;
-}
-
 .ja-worldwide-bottom .cms-textarea .cms-textarea__inner textarea.ant-input {
-  height: 100% !important;
   font-size: 14px;
-  line-height: 160%;
+  line-height: 150%;
 }
 
 .ja-worldwide-bottom .detail-info-form__field-content--view > .ja-worldwide-bottom__text {
   display: block;
-  box-sizing: border-box;
   width: 100%;
   min-width: 0;
-  height: 88px;
-  padding: 10px 17px;
-  overflow-x: hidden;
-  overflow-y: auto;
   white-space: pre-line;
   font-size: 14px;
   font-weight: 500;
-  line-height: 160%;
+  line-height: 150%;
   text-align: left;
 }
 

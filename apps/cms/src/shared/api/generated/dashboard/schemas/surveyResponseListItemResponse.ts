@@ -5,6 +5,7 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { SurveyAnswerResponse } from './surveyAnswerResponse';
 
 export interface SurveyResponseListItemResponse {
   formResponseId?: number;
@@ -25,4 +26,6 @@ export interface SurveyResponseListItemResponse {
   answerPreviewJson?: string;
   submittedAt?: string;
   createdAt?: string;
+  /** includeAnswers=true일 때만 포함. GET …/responses/{formResponseId}의 answers와 같은 항목·순서·마스킹입니다. 답이 없으면 []. includeAnswers를 생략하거나 false이면 이 필드는 응답에 없습니다. */
+  answers?: SurveyAnswerResponse[] | null;
 }

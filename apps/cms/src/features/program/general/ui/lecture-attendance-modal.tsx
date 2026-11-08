@@ -26,9 +26,25 @@ import {
   formatLectureAttendanceSessionLabel,
   lectureAttendanceSessionKey,
 } from '../lib/lecture-attendance-session-identity'
+import { ProgramAttendanceStatusText } from '@/features/program/shared/ui/program-attendance-status-text'
+import type { ProgramAttendanceStatusTextKind } from '@/features/program/shared/lib/attendance-status-presentation'
 import './lecture-attendance-modal.css'
 
-type EditableAttendanceStatus = Extract<LectureAttendanceStatusKey, 'attended' | 'absent' | 'late'>
+const LECTURE_ATTENDANCE_TEXT_KIND: Record<
+  LectureAttendanceStatusKey,
+  ProgramAttendanceStatusTextKind
+> = {
+  attended: 'present',
+  late: 'late',
+  absent: 'absent',
+  excused: 'excused_absence',
+  not_held: 'not_held',
+}
+
+type EditableAttendanceStatus = Extract<
+  LectureAttendanceStatusKey,
+  'attended' | 'absent' | 'late' | 'excused'
+>
 
 function SessionStatusCell({
   session,
@@ -41,22 +57,21 @@ function SessionStatusCell({
 }) {
   if (session.status === 'not_held' && !(editing && session.recordingOpen)) {
     return (
-      <span
-        className="lecture-attendance-modal__status-text lecture-attendance-modal__status-text--not_held"
-        aria-disabled
-      >
-        {LECTURE_ATTENDANCE_STATUS_LABELS.not_held}
+      <span className="lecture-attendance-modal__not-held" aria-disabled>
+        <ProgramAttendanceStatusText
+          kind="not_held"
+          label={LECTURE_ATTENDANCE_STATUS_LABELS.not_held}
+        />
       </span>
     )
   }
 
   if (!editing) {
     return (
-      <span
-        className={`lecture-attendance-modal__status-text lecture-attendance-modal__status-text--${session.status}`}
-      >
-        {LECTURE_ATTENDANCE_STATUS_LABELS[session.status]}
-      </span>
+      <ProgramAttendanceStatusText
+        kind={LECTURE_ATTENDANCE_TEXT_KIND[session.status]}
+        label={LECTURE_ATTENDANCE_STATUS_LABELS[session.status]}
+      />
     )
   }
 
@@ -77,6 +92,9 @@ function SessionStatusCell({
       </CmsRadio>
       <CmsRadio value="late" size="medium">
         지각
+      </CmsRadio>
+      <CmsRadio value="excused" size="medium">
+        사유 불참
       </CmsRadio>
     </CmsRadioGroup>
   )
@@ -185,14 +203,11 @@ export function LectureAttendanceModal({
     return pairs
   }, [tableSessions])
 
-  const patchSessionStatus = useCallback(
-    (sessionKey: string, status: EditableAttendanceStatus) => {
-      setSessionDraft(prev =>
-        prev.map(s => (lectureAttendanceSessionKey(s) === sessionKey ? { ...s, status } : s))
-      )
-    },
-    []
-  )
+  const patchSessionStatus = useCallback((sessionKey: string, status: EditableAttendanceStatus) => {
+    setSessionDraft(prev =>
+      prev.map(s => (lectureAttendanceSessionKey(s) === sessionKey ? { ...s, status } : s))
+    )
+  }, [])
 
   const startCorrection = useCallback(() => {
     setSessionDraft(sessions.map(s => ({ ...s })))

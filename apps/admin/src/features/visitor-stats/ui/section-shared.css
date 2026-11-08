@@ -50,11 +50,6 @@
   background: var(--color-bg-base, #fff);
 }
 
-.visitor-stats-table.cms-data-table {
-  width: 100%;
-  min-width: 0;
-}
-
 .visitor-stats-table.cms-data-table colgroup > col {
   width: 50% !important;
   min-width: 0 !important;

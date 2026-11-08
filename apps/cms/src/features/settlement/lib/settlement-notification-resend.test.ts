@@ -57,4 +57,10 @@ describe('settlement-notification-resend', () => {
     expect(buildSettlementNotificationResendMessage('rejected')).toContain('반려 사유')
     expect(buildSettlementNotificationResendMessage('confirmed')).toContain('확인 완료')
   })
+
+  it('확인 완료 재발송 문구는 지급조서 시안 문구를 쓴다', () => {
+    expect(buildSettlementNotificationResendMessage('confirmed')).toBe(
+      '지급조서 확인 완료 알림을 재발송하시겠습니까?\n발송 예정인 알림이 있는 경우, 자동으로 취소되며 해당 건만 발송됩니다.'
+    )
+  })
 })

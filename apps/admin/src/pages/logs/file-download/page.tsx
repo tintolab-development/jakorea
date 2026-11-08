@@ -18,17 +18,13 @@ import { displayLogField } from '@/features/logs/shared/lib/display-log-field'
 import { formatLogDateTime } from '@/features/logs/shared/lib/format-datetime'
 import { LogListAccessDenied } from '@/features/logs/shared/ui/log-list-access-denied'
 import { isAdminForbidden } from '@/features/system-inbox/lib/http-status'
-import {
-  logListRowNumber,
-  logTablePagination,
-  parseLogListPage,
-  setLogListPageParam,
-} from '@/features/logs/shared/lib/list-page'
+import { logListRowNumber } from '@/features/logs/shared/lib/list-page'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
 import type { TableSearchParamRule } from '@/shared/lib/use-table-search'
 import {
@@ -39,6 +35,7 @@ import {
   type UrlDateRangePendingSyncRef,
 } from '@/shared/lib/url-date-range-pending-sync'
 import {
+  AdminInfiniteTableFooter,
   CmsButton,
   CmsDateRangePicker,
   AdminFilterTextInput,
@@ -73,7 +70,6 @@ function parseApplied(searchParams: URLSearchParams): FileDownloadListFilter {
   const to = searchParams.get('fd_to')
   if (from) filter.from = from
   if (to) filter.to = to
-  filter.page = parseLogListPage(searchParams.get('fd_page'))
   return filter
 }
 
@@ -124,13 +120,13 @@ export function FileDownloadLogPage() {
     patchPendingFilters,
     applied: appliedFilter,
     applySearch,
-    patchSearchParams,
     hasActiveFilters,
   } = useListFilterUrl<PendingFilters, FileDownloadListFilter>({
     initialPending: INITIAL_PENDING,
     paramConfig: searchSyncRules,
     parseApplied,
     afterApplyParams: nextParams => {
+      // 무한 스크롤 전환 전 링크에 남은 페이지 번호 정리
       nextParams.delete('fd_page')
     },
     syncPendingFromUrl: ({ searchParams, setPendingFilters: setPending }) => {
@@ -162,18 +158,16 @@ export function FileDownloadLogPage() {
 
   const listQuery = useFileDownloadLogsList(appliedFilter)
   const exportMutation = useExportFileDownloadLogs()
-  const rows = listQuery.data?.rows ?? []
-  const total = listQuery.data?.total ?? 0
-  const page = appliedFilter.page ?? 0
-  const loading = listQuery.isLoading || listQuery.isFetching
-  const forbidden = isAdminForbidden(listQuery.error)
+  const rows = listQuery.rows
+  const total = listQuery.totalCount
 
-  const handlePageChange = useCallback(
-    (nextPage: number) => {
-      patchSearchParams(next => setLogListPageParam(next, 'fd_page', nextPage))
-    },
-    [patchSearchParams]
-  )
+  const { sentinelRef } = useGatedInfiniteScroll({
+    hasNextPage: listQuery.hasNextPage,
+    isFetchingNextPage: listQuery.isFetchingNextPage,
+    fetchNextPage: listQuery.fetchNextPage,
+    resetKey: JSON.stringify(appliedFilter),
+  })
+  const forbidden = isAdminForbidden(listQuery.error)
 
   const handleExcel = useCallback(() => {
     void exportMutation.mutateAsync(appliedFilter).catch(() => {
@@ -191,7 +185,7 @@ export function FileDownloadLogPage() {
         key: 'no',
         width: COL.no,
         className: CMS_TABLE_NO_COL_CLASS,
-        render: (_v, _r, index) => logListRowNumber(total, page, index),
+        render: (_v, _r, index) => logListRowNumber(total, 0, index),
       },
       {
         title: '다운로드 파일명',
@@ -240,7 +234,7 @@ export function FileDownloadLogPage() {
         render: (v: string) => displayLogField(v),
       },
     ],
-    [total, page]
+    [total]
   )
 
   if (forbidden) {
@@ -312,11 +306,15 @@ export function FileDownloadLogPage() {
           rowKey="id"
           columns={columns}
           dataSource={rows}
-          loading={loading}
-          pagination={logTablePagination({ page, total, onChange: handlePageChange })}
+          loading={listQuery.isLoading}
+          pagination={false}
           scroll={{
             x: COL.no + COL.fileName + COL.userName + COL.downloadedAt + COL.ip,
           }}
+        />
+        <AdminInfiniteTableFooter
+          sentinelRef={sentinelRef}
+          isFetchingNextPage={listQuery.isFetchingNextPage}
         />
       </FilterTableLayout>
     </div>

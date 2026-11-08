@@ -100,3 +100,22 @@ describe('composeSatisfactionSurveyDisplayTitle', () => {
     ).toBe('1회차 · 2026.11.12(목) 만족도조사 (학생용)')
   })
 })
+
+describe('기관 승인 일정 내부명 (기관 확정 YYYY-MM-DD)', () => {
+  it('내부 일정명만 판별하고 라벨에서 그 구간만 제거한다', async () => {
+    const { isAutoMaterializedScheduleName, stripAutoMaterializedScheduleNameFromLabel } =
+      await import('../src/shared/lib/education-schedule-name')
+    expect(isAutoMaterializedScheduleName('기관 확정 2026-11-09')).toBe(true)
+    expect(isAutoMaterializedScheduleName('계남중학교')).toBe(false)
+    expect(isAutoMaterializedScheduleName('기관 확정 일정 안내')).toBe(false)
+    expect(
+      stripAutoMaterializedScheduleNameFromLabel(
+        '계남중학교 | 26년 11월 9일(월) 09:00 ~ 10:00 | 기관 확정 2026-11-09',
+      ),
+    ).toBe('계남중학교 | 26년 11월 9일(월) 09:00 ~ 10:00')
+    expect(stripAutoMaterializedScheduleNameFromLabel('기관 확정 2026-11-09')).toBe('')
+    expect(stripAutoMaterializedScheduleNameFromLabel('1차시 | 09:00 ~ 10:00 | 오전반')).toBe(
+      '1차시 | 09:00 ~ 10:00 | 오전반',
+    )
+  })
+})

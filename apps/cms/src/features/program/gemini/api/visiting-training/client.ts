@@ -71,9 +71,30 @@ function appendPageParams(query: URLSearchParams, page: number, size: number): v
   query.set('size', String(size))
 }
 
+export type GeminiRecruitmentDraftStatusWire = 'DRAFT' | 'PUBLISHED'
+
+/** 모집 공고 목록 서버 검색 조건. 연수요청기간은 `YYYY-MM-DD`(Asia/Seoul, 양끝 포함) 겹침 조건. */
 export type GeminiRecruitmentRemoteFilters = {
   keyword?: string
   periodStatus?: string
+  draftStatus?: GeminiRecruitmentDraftStatusWire
+  trainingRequestFrom?: string
+  trainingRequestTo?: string
+}
+
+export function buildGeminiRecruitmentListQuery(
+  filters: GeminiRecruitmentRemoteFilters,
+  page: number,
+  size: number
+): URLSearchParams {
+  const query = new URLSearchParams()
+  if (filters.keyword) query.set('keyword', filters.keyword)
+  if (filters.periodStatus) query.set('periodStatus', filters.periodStatus)
+  if (filters.draftStatus) query.set('draftStatus', filters.draftStatus)
+  if (filters.trainingRequestFrom) query.set('trainingRequestFrom', filters.trainingRequestFrom)
+  if (filters.trainingRequestTo) query.set('trainingRequestTo', filters.trainingRequestTo)
+  appendPageParams(query, page, size)
+  return query
 }
 
 export async function fetchGeminiRecruitmentsRemotePage(
@@ -81,10 +102,7 @@ export async function fetchGeminiRecruitmentsRemotePage(
   page = 0,
   size = GEMINI_VISITING_TRAINING_LIST_PAGE_SIZE
 ): Promise<PageEnvelope<GeminiRecruitmentItem>> {
-  const query = new URLSearchParams()
-  if (filters.keyword) query.set('keyword', filters.keyword)
-  if (filters.periodStatus) query.set('periodStatus', filters.periodStatus)
-  appendPageParams(query, page, size)
+  const query = buildGeminiRecruitmentListQuery(filters, page, size)
   const body = await unwrapApiBody<GeminiRecruitmentListResponse | GeminiRecruitmentItem[]>(
     await customInstance({
       url: `${BASE}/recruitments?${query.toString()}`,

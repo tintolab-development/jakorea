@@ -34,7 +34,9 @@ import { DashboardWidgetQueryError } from './dashboard-widget-query-error'
 import { shouldUseCompanySchoolRemoteApi } from '@/features/program/1c-1s/api/capabilities'
 import { useCompanySchoolPrograms } from '@/features/program/1c-1s/api/hooks'
 
-const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const
+/** 피그마: 2단(반폭)은 한 글자, 1단(전폭)은 '일요일' 형태 */
+const WEEKDAY_LABELS_SHORT = ['일', '월', '화', '수', '목', '금', '토'] as const
+const WEEKDAY_LABELS_LONG = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'] as const
 
 /** 월간 헤더로 월을 바꾼 뒤 선택일: 이번 달(년·월)이면 오늘, 그 밖이면 해당 월 1일 */
 function selectedDateAfterMonthNavigation(visibleMonth: Dayjs): Dayjs {
@@ -672,12 +674,14 @@ export function ProgramScheduleWidget({
     return <Fragment key={dateKey}>{monthCell}</Fragment>
   }
 
+  const weekdayLabels = isHalfColumn ? WEEKDAY_LABELS_SHORT : WEEKDAY_LABELS_LONG
+
   const renderMonthGrid = () => {
     const monthDates = visibleDateRange as Dayjs[]
     return (
       <div className="program-schedule-widget__month-grid-wrap">
         <div className="program-schedule-widget__month-grid program-schedule-widget__month-grid--dow-row">
-          {WEEKDAY_LABELS.map(day => (
+          {weekdayLabels.map(day => (
             <div key={day} className="program-schedule-widget__month-grid-dow" role="columnheader">
               {day}
             </div>
@@ -720,7 +724,7 @@ export function ProgramScheduleWidget({
   const renderWeekView = () => (
     <div className="program-calendar-week">
       <div className="program-calendar-week-header">
-        {WEEKDAY_LABELS.map(day => (
+        {weekdayLabels.map(day => (
           <div key={day} className="program-calendar-week-header-cell">
             {day}
           </div>

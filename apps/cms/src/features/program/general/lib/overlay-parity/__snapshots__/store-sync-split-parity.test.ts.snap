@@ -22,6 +22,7 @@ exports[`store·sync 순수 함수 분리 parity > UJAT 신청 키·봉사 신�
     "preferredRegion": "ujatVolunteerApplication.preferredRegion",
     "previousTerm": "ujatVolunteerApplication.previousTerm",
     "previousTermFileNames": "ujatVolunteerApplication.previousTermFileNames",
+    "previousTermFileObjectIds": "ujatVolunteerApplication.previousTermFileObjectIds",
     "previousYear": "ujatVolunteerApplication.previousYear",
     "universityName": "ujatVolunteerApplication.universityName",
   },

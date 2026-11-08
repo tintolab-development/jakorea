@@ -30,15 +30,9 @@ export { ProgramLifecycleStatusTableCell } from './program-lifecycle-status-tabl
 export type { ProgramLifecycleStatusTableCellProps } from './program-lifecycle-status-table-cell'
 export { ProgramLifecycleStatusText } from './program-lifecycle-status-text'
 export type { ProgramLifecycleStatusTextProps } from './program-lifecycle-status-text'
-export {
-  StatusDropdownCell,
-  STATUS_DROPDOWN_CELL_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME,
-  STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_160_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_160_HEADER_CLASSNAME,
-} from './status-dropdown-cell'
+export { StatusTag } from './status-tag'
+export type { StatusTagSpec, StatusTagTone } from './status-tag'
+export { StatusDropdownCell, STATUS_DROPDOWN_CELL_CLASSNAME } from './status-dropdown-cell'
 export type { StatusDropdownCellProps } from './status-dropdown-cell'
 export { ProgramLifecycleStatusCell } from './program-lifecycle-status-cell'
 export type { ProgramLifecycleStatusCellProps } from './program-lifecycle-status-cell'

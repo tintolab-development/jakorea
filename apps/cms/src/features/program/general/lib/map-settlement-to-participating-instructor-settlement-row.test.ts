@@ -34,7 +34,7 @@ describe('mapSettlementsToParticipatingInstructorSettlementRows', () => {
 
     expect(rows).toHaveLength(2)
     expect(rows[0]?.settlementId).toBe(102)
-    expect(rows[0]?.no).toBe(2)
+    expect(rows[0]?.no).toBe(1)
     expect(rows[1]?.institutionName).toBe('강서초등학교')
     expect(rows[1]?.paymentStatementStatus).toBe('payment_statement_verified')
     expect(rows[1]?.scheduledSettlementAmount).toBe(915_000)
@@ -91,7 +91,7 @@ describe('mapSettlementsToParticipatingInstructorSettlementRows', () => {
     ])
 
     expect(rows.map(row => row.id)).toEqual(['500', 'application:15'])
-    expect(rows.map(row => row.no)).toEqual([2, 1])
+    expect(rows.map(row => row.no)).toEqual([1, 2])
   })
 
   it('settlementId·settlementApplicationId가 모두 없으면 행을 만들지 않는다', () => {

@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { listExportHistories } = vi.hoisted(() => ({
+const { listExportHistories, customInstance } = vi.hoisted(() => ({
   listExportHistories: vi.fn(),
+  customInstance: vi.fn(),
 }))
 
 vi.mock('@/shared/api/generated/settlement/settlement-api', () => ({
@@ -17,7 +18,7 @@ vi.mock('@/features/data-management/api/unwrap-api-body', () => ({
 }))
 
 vi.mock('@/shared/api/orval-mutator', () => ({
-  default: vi.fn(),
+  default: customInstance,
 }))
 
 import {
@@ -56,6 +57,7 @@ describe('isSettlementExportFileReady', () => {
 describe('waitForSettlementExportDownload', () => {
   beforeEach(() => {
     listExportHistories.mockReset()
+    customInstance.mockReset()
   })
 
   it('SERVER_FILE + fileObjectId면 즉시 반환한다', async () => {
@@ -66,11 +68,12 @@ describe('waitForSettlementExportDownload', () => {
       exportType: 'TAX_REPORT',
     }
     await expect(waitForSettlementExportDownload(requested)).resolves.toBe(requested)
+    expect(customInstance).not.toHaveBeenCalled()
     expect(listExportHistories).not.toHaveBeenCalled()
   })
 
   it('이력이 fileObjectId를 채우면 폴링을 종료한다', async () => {
-    listExportHistories.mockResolvedValue({
+    customInstance.mockResolvedValue({
       items: [
         {
           exportHistoryId: 9,
@@ -90,7 +93,11 @@ describe('waitForSettlementExportDownload', () => {
       { attempts: 2, intervalMs: 1 }
     )
     expect(ready.fileObjectId).toBe(77)
-    expect(listExportHistories).toHaveBeenCalled()
+    expect(customInstance).toHaveBeenCalledWith({
+      url: '/api/admin/settlements/exports',
+      method: 'GET',
+      params: { exportType: 'TAX_REPORT', page: 0, size: 20 },
+    })
   })
 })
 

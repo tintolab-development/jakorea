@@ -10,8 +10,9 @@ export interface GeminiTrainingReportImportRow {
   programId?: number;
   instructorMemberId?: number;
   instructorEmail?: string;
+  /** 하이픈·공백 없는 숫자도 허용(예: 01033275124, 010 3327 5124). 서버가 행 단위로 숫자만 추출해 하이픈 형식으로 정규화한다. 한국 번호로 바꿀 수 없으면 요청 전체 400이 아니라 해당 행만 FAILED(GEMINI_INSTRUCTOR_PHONE_INVALID). */
   instructorPhone?: string | null;
-  instructorName?: string | null;
+  instructorName?: string;
   assistantInstructorNames?: string;
   trainingLocation?: string;
   schoolOrOrganizationName?: string;

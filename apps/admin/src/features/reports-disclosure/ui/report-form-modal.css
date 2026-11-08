@@ -20,10 +20,9 @@
   min-height: 54px;
 }
 
+/* 라벨 폭·여백·최소 높이는 공통 small 셀(detail-info-form-modal.css · 1000 미만 팝업)을 따른다 */
 .rd-form-modal .detail-info-form__field-label {
   display: flex !important;
-  min-height: 48px;
-  padding: 10px !important;
   justify-content: center;
   align-items: center;
   gap: 2px;

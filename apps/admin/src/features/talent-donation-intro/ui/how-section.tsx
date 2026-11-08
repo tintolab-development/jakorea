@@ -131,8 +131,8 @@ export function HowSectionCard({ items }: Props) {
               ].join(' ')}
               inputSize="small"
               width="100%"
-              rows={2}
-              autoSize={false}
+              // 조회·수정 모두 내용 줄 수만큼(hug) — 행 높이가 텍스트 높이를 따른다. 리사이즈 핸들 없음(fixed-rows)
+              autoSize={{ minRows: 1 }}
               value={value}
               readOnly={!isEditing}
               tabIndex={isEditing ? 0 : -1}
@@ -161,8 +161,8 @@ export function HowSectionCard({ items }: Props) {
               ].join(' ')}
               inputSize="small"
               width="100%"
-              rows={3}
-              autoSize={false}
+              // 조회·수정 모두 내용 줄 수만큼(hug) — 행 높이가 텍스트 높이를 따른다. 리사이즈 핸들 없음(fixed-rows)
+              autoSize={{ minRows: 1 }}
               value={value}
               readOnly={!isEditing}
               tabIndex={isEditing ? 0 : -1}

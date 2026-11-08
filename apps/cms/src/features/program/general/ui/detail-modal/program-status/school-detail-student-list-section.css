@@ -138,21 +138,6 @@
   white-space: nowrap;
 }
 
-/*
- * FilterTableLayout이 No. 다음 col을 `width: auto !important`로 덮고,
- * `.cms-data-table table`은 `width: 100% !important`라 남는 폭이 열에 분배된다.
- * 학생명단만 배열에서 넘긴 변수로 열·표 너비를 고정한다.
- */
-.filter-table-layout
-  .filter-table-layout__table
-  .school-detail-student-list-section__table-wrap
-  .ant-table-wrapper.school-detail-modal__student-table.cms-data-table
-  table.ant-table {
-  width: var(--student-list-table-min-width) !important;
-  min-width: var(--student-list-table-min-width) !important;
-  max-width: var(--student-list-table-min-width) !important;
-}
-
 .filter-table-layout
   .filter-table-layout__table
   .school-detail-student-list-section__table-wrap

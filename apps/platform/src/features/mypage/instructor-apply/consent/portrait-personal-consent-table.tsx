@@ -14,6 +14,7 @@ import {
   PortraitVerticalTableBottom,
   PortraitVerticalTableMobileBody,
 } from './portrait-vertical-table-mobile'
+import previewTypography from '@/features/mypage/settings/ui/consent-document-preview-typography.module.css'
 import styles from './consent-form.module.css'
 
 /** 초상권 1번 표 — 성명·소속(+소속 없음) 입력 + 나머지 행(읽기 전용)·하단 동의 */
@@ -49,9 +50,9 @@ export function PlatformPortraitPersonalConsentTable({
   }
 
   return (
-    <div className={styles.tableBlock}>
-      <div className={styles.portraitTableDesktop}>
-        <FormTemplateHost surface="platformUser">
+    <div className={readOnly ? previewTypography.portraitTableBlock : styles.tableBlock}>
+      <div className={readOnly ? previewTypography.portraitTableDesktop : styles.portraitTableDesktop}>
+        <FormTemplateHost surface={readOnly ? 'cmsAdmin' : 'platformUser'}>
           <div className={styles.portraitPersonalVerticalTableWrap}>
             <div
               className={`form-template-vertical-table ${styles.portraitPersonalVerticalTable}`}
@@ -132,7 +133,13 @@ export function PlatformPortraitPersonalConsentTable({
                       <div className="form-template-vertical-table__th" role="columnheader">
                         {row.headers[stageIndex] ?? ''}
                       </div>
-                      <div className="form-template-vertical-table__td" role="gridcell">
+                      <div
+                        className="form-template-vertical-table__td"
+                        role="gridcell"
+                        data-portrait-retention={
+                          (row.headers[stageIndex] ?? '').trim() === '보유 기간' ? '' : undefined
+                        }
+                      >
                         <span className={styles.cellText}>{row.cells[stageIndex] ?? ''}</span>
                       </div>
                     </div>
@@ -144,13 +151,15 @@ export function PlatformPortraitPersonalConsentTable({
         </FormTemplateHost>
       </div>
 
-      <div className={styles.portraitTableMobile}>
-        <PortraitVerticalTableMobileBody
-          paragraph={paragraph}
-          onUpdateParagraph={onUpdateParagraph}
-          editableFirstRow={!readOnly}
-        />
-      </div>
+      {!readOnly ? (
+        <div className={styles.portraitTableMobile}>
+          <PortraitVerticalTableMobileBody
+            paragraph={paragraph}
+            onUpdateParagraph={onUpdateParagraph}
+            editableFirstRow
+          />
+        </div>
+      ) : null}
 
       <PortraitVerticalTableBottom
         paragraph={paragraph}

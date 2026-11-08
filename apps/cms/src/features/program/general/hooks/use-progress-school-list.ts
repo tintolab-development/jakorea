@@ -76,7 +76,9 @@ export function useProgressSchoolList({
   const { showAlert } = useCmsAlert()
   const isTrainedTeachersSurface = useIsTrainedTeachersProgramsSurface()
   void useIsCompanySchoolProgramsSurface()
-  const remoteEnabled = enabled && useProgramProgressRemoteEnabledForSurface(programId)
+  // 훅은 조건 없이 호출한 뒤 AND — `enabled && useX()`는 enabled가 바뀌면 훅 순서가 깨진다.
+  const surfaceRemoteEnabled = useProgramProgressRemoteEnabledForSurface(programId)
+  const remoteEnabled = enabled && surfaceRemoteEnabled
   const ttRemoteEnabled =
     enabled &&
     isTrainedTeachersSurface &&

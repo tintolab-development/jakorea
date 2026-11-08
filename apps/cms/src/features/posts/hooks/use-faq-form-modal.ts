@@ -5,12 +5,8 @@ import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-erro
 import { getApiErrorField } from '@/shared/lib/extract-api-error-message'
 import { useFaqCategoriesQuery } from '@/features/posts/hooks/use-faq-categories-query'
 import { useFaqMutations } from '@/features/posts/hooks/use-faq-mutations'
-import { useNoticeWysiwygEditor } from '@/features/posts/hooks/use-notice-wysiwyg-editor'
 import type { FaqFormFieldValues, FaqFormModalProps } from '@/features/posts/model/faq-form-types'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { faqInlineImageOwner, type AdminFileUploadOwner } from '@/shared/lib/admin-file-upload'
-import { parseOwnerResourceId } from '@/shared/lib/admin-file-upload/attachments'
-import type { Editor } from '@/shared/rich-text'
 import {
   showDeleteCompletedAlert,
   showRegisterCompletedAlert,
@@ -33,9 +29,6 @@ export type UseFaqFormModalResult = {
   canWrite: boolean
   /** `mode === 'edit'` 인데 `faq` 없음 — 렌더 생략 */
   isBroken: boolean
-  editor: Editor | null
-  editorMinHeight: string
-  fileUploadOwner: AdminFileUploadOwner | null
 }
 
 export function useFaqFormModal({
@@ -54,20 +47,6 @@ export function useFaqFormModal({
 
   const isEdit = mode === 'edit' && faq != null
   const isBroken = mode === 'edit' && open && !faq
-  const editorResetKey = open ? `${mode}-${faq?.id ?? 'new'}` : 'closed'
-  const fileUploadOwner = useMemo(() => {
-    const ownerId = isEdit && faq ? (faq.resourceId ?? parseOwnerResourceId(faq.id)) : null
-    return faqInlineImageOwner(ownerId)
-  }, [faq, isEdit])
-  const { editor, editorMinHeight, getMarkdown } = useNoticeWysiwygEditor(
-    open,
-    open && isEdit && faq ? (faq.answer ?? '') : '',
-    editorResetKey,
-    {
-      placeholder: 'FAQ 내용을 입력해 주세요',
-      fileUploadOwner,
-    }
-  )
 
   useEffect(() => {
     if (!open) return
@@ -104,7 +83,6 @@ export function useFaqFormModal({
   const handleSubmit = useCallback(async () => {
     if (!canWrite) return
     try {
-      form.setFieldValue('answer', getMarkdown())
       const v = await form.validateFields()
       const answer = v.answer.trim()
       const category = v.category.trim()
@@ -161,7 +139,6 @@ export function useFaqFormModal({
     faq,
     onCancel,
     onSuccess,
-    getMarkdown,
     updateMutation,
     user?.name,
   ])
@@ -206,8 +183,5 @@ export function useFaqFormModal({
     isEdit,
     canWrite,
     isBroken,
-    editor,
-    editorMinHeight,
-    fileUploadOwner,
   }
 }

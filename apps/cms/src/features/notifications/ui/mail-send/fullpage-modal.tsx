@@ -101,6 +101,7 @@ import { RecipientSelectModal } from '@/features/notifications/ui/shared/recipie
 import { TemplateSelectField } from '@/features/notifications/ui/shared/template-select-field'
 import '@/features/notifications/ui/shared/notification-fullpage-modal.css'
 import './fullpage-modal.css'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 type SenderNameFieldProps = {
   seed: string
@@ -509,7 +510,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
 
   const handleDeleteSelected = () => {
     if (selectedRecipientIds.length === 0) {
-      showAlert({ title: '안내', content: '삭제할 수신자를 선택해 주세요.' })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     form.removeRecipients(selectedRecipientIds)

@@ -39,34 +39,72 @@ export const INSTRUCTOR_SETTLEMENT_STATUS_LABELS: Record<
   payment_correction_requested: '지급 정정 요청',
 }
 
-/** 캘린더 스트립·짧은 표기 */
+/** Short Text·Tag 표기 (Figma Status / Short Text·Tag / 정산 현황 14804:19841·19759) — 캘린더 스트립·카드·툴팁 */
 export const INSTRUCTOR_SETTLEMENT_STATUS_LABELS_SHORT: Record<
   InstructorSettlementUiStatus,
   string
 > = {
   payment_statement_reapplication: '재신청',
-  awaiting_confirmation: '지급대기',
-  partial_confirmation: '일부 확인',
+  awaiting_confirmation: '확인 대기',
+  partial_confirmation: '확인 중',
   payment_statement_verified: '확인 완료',
-  account_paid: '지급완료',
+  account_paid: '지급 완료',
   none: '해당 없음',
   application_rejected: '신청 반려',
   payment_correction_requested: '정정 요청',
 }
 
-/** 텍스트·배지 글자색 (status-badge instructor-settlement-* 와 동기화) */
+/** 정산 팔레트 원색 — Text/Short/Tag 표현은 getInstructorSettlementStatusPresentation 사용 */
 export const INSTRUCTOR_SETTLEMENT_STATUS_COLORS: Record<
   InstructorSettlementUiStatus,
   string
 > = {
-  payment_statement_reapplication: '#c45c00',
+  payment_statement_reapplication: '#f07917',
   awaiting_confirmation: '#f07917',
   partial_confirmation: '#8457ce',
   payment_statement_verified: '#1e8c29',
   account_paid: '#017eaf',
-  none: '#333333',
+  none: 'rgba(61, 61, 61, 0.8)',
   application_rejected: '#c32f4a',
   payment_correction_requested: '#e8007c',
+}
+
+/** 색 토큰명만 보관한다. 원색 fallback은 위 팔레트 한 곳에서 가져온다. */
+const INSTRUCTOR_SETTLEMENT_COLOR_TOKENS: Record<
+  Exclude<InstructorSettlementUiStatus, 'none'>,
+  string
+> = {
+  payment_statement_reapplication: '--Status-orange-main',
+  awaiting_confirmation: '--color-orange',
+  partial_confirmation: '--color-purple',
+  payment_statement_verified: '--color-green',
+  account_paid: '--color-blue',
+  application_rejected: '--color-red',
+  payment_correction_requested: '--Status-pink-main',
+}
+
+export type InstructorSettlementPresentationKind = 'text' | 'short' | 'tag' | 'invoice'
+
+/**
+ * 동일 업무축의 표현 SSOT. Text 해당 없음은 검정, Short/Tag는 80% 검정.
+ * invoice는 현행 전체 라벨을 보존한다(S13). Short 라벨은 Figma Short Text 정산 현황을 따른다.
+ * raw API 상태·권한·전이의 정규화는 이 presentation 계층에서 하지 않는다.
+ */
+export function getInstructorSettlementStatusPresentation(
+  status: InstructorSettlementUiStatus,
+  kind: InstructorSettlementPresentationKind = 'text'
+): { label: string; color: string } {
+  const color = status === 'none'
+    ? kind === 'text'
+      ? 'var(--Netural-black, #3d3d3d)'
+      : INSTRUCTOR_SETTLEMENT_STATUS_COLORS.none
+    : `var(${INSTRUCTOR_SETTLEMENT_COLOR_TOKENS[status]}, ${INSTRUCTOR_SETTLEMENT_STATUS_COLORS[status]})`
+  return {
+    label: kind === 'short'
+      ? INSTRUCTOR_SETTLEMENT_STATUS_LABELS_SHORT[status]
+      : INSTRUCTOR_SETTLEMENT_STATUS_LABELS[status],
+    color,
+  }
 }
 
 /** 캘린더 셀·인라인 태그 — 6% / 10% mix */
@@ -75,9 +113,9 @@ export const INSTRUCTOR_SETTLEMENT_STATUS_TAG_STYLE: Record<
   { bg: string; color: string; border: string }
 > = {
   payment_statement_reapplication: {
-    bg: 'rgba(196, 92, 0, 0.06)',
+    bg: 'rgba(240, 121, 23, 0.06)',
     color: INSTRUCTOR_SETTLEMENT_STATUS_COLORS.payment_statement_reapplication,
-    border: 'rgba(196, 92, 0, 0.1)',
+    border: 'rgba(240, 121, 23, 0.1)',
   },
   awaiting_confirmation: {
     bg: 'rgba(240, 121, 23, 0.06)',
@@ -176,10 +214,7 @@ export function getInstructorSettlementStatusTextClassName(
 export function getInstructorSettlementInvoiceStatusPresentation(
   status: InstructorSettlementUiStatus
 ): { label: string; color: string } {
-  return {
-    label: INSTRUCTOR_SETTLEMENT_STATUS_LABELS[status],
-    color: INSTRUCTOR_SETTLEMENT_STATUS_TAG_STYLE[status].color,
-  }
+  return getInstructorSettlementStatusPresentation(status, 'invoice')
 }
 
 export const INSTRUCTOR_SETTLEMENT_FILTER_STATUS_OPTIONS = [

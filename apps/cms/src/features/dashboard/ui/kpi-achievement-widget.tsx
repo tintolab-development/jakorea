@@ -129,6 +129,10 @@ export function KpiAchievementWidget() {
           <Text type="secondary" className="kpi-achievement-widget__total-count">
             총 {totalCount}건
           </Text>
+          <Text type="secondary" className="kpi-achievement-widget__description">
+            최종 달성 인원은 프로그램 종료 시점까지 참여한 학생 수이며, 해당 항목의 목표 인원은 프로그램
+            등록 시 KPI에 설정한 참여자 최종 인원을 의미합니다.
+          </Text>
         </WidgetTitleWithHandle>
       }
       extra={

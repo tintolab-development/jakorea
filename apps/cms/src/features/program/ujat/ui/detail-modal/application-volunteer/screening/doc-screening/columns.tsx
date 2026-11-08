@@ -1,10 +1,7 @@
 import { useMemo, type Dispatch, type SetStateAction } from 'react'
 import type { ColumnsType } from 'antd/es/table'
-import {
-  STATUS_DROPDOWN_CELL_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
-  StatusDropdownCell,
-} from '@/shared/components'
+import { STATUS_DROPDOWN_CELL_CLASSNAME, StatusDropdownCell } from '@/shared/components'
+import { getManagerEvaluationTag } from '@/shared/lib/status-tag-specs'
 import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import { formatUjatVolunteerApplicationType } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import {
@@ -16,8 +13,7 @@ import {
   type UjatEssayColumnKey,
   type UjatManagerEvaluation,
 } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
-import { DocumentScreeningStatusText } from '../shared/document-screening-status-text'
-import { ManagerEvaluationBadge } from '../shared/manager-evaluation-badge'
+import { DocumentScreeningStatusText } from '@/features/program/shared/ui/volunteer-screening/document-screening-status-text'
 
 export const UJAT_DOC_SCREENING_SELECTION_COLUMN_WIDTH = 60
 
@@ -70,7 +66,7 @@ function renderEssayCell(value: string | undefined, record: UjatVolunteerApplica
   return <span className="ujat-volunteer-doc-screening__text-cell">{display}</span>
 }
 
-const MANAGER_EVALUATION_CELL_CLASS = `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME} ujat-volunteer-doc-screening__manager-eval-dropdown-cell`
+const MANAGER_EVALUATION_CELL_CLASS = `${STATUS_DROPDOWN_CELL_CLASSNAME} ujat-volunteer-doc-screening__manager-eval-dropdown-cell`
 
 export function useUjatVolunteerDocScreeningColumns({
   onManagerAEvaluationChange,
@@ -201,7 +197,7 @@ export function useUjatVolunteerDocScreeningColumns({
           <StatusDropdownCell<UjatManagerEvaluation>
             status={record.managerAEvaluation}
             statusOptions={UJAT_MANAGER_EVALUATION_ORDER}
-            renderBadge={evaluation => <ManagerEvaluationBadge evaluation={evaluation} />}
+            getTag={getManagerEvaluationTag}
             isItemDisabled={(current, option) => current === option}
             onChange={evaluation => onManagerAEvaluationChange(record.id, evaluation)}
             isOpen={
@@ -210,7 +206,6 @@ export function useUjatVolunteerDocScreeningColumns({
             onOpenChange={open =>
               setOpenManagerDropdown(open ? { rowId: record.id, manager: 'A' } : null)
             }
-            tagLayout="tag100"
           />
         ),
       },
@@ -228,7 +223,7 @@ export function useUjatVolunteerDocScreeningColumns({
           <StatusDropdownCell<UjatManagerEvaluation>
             status={record.managerBEvaluation}
             statusOptions={UJAT_MANAGER_EVALUATION_ORDER}
-            renderBadge={evaluation => <ManagerEvaluationBadge evaluation={evaluation} />}
+            getTag={getManagerEvaluationTag}
             isItemDisabled={(current, option) => current === option}
             onChange={evaluation => onManagerBEvaluationChange(record.id, evaluation)}
             isOpen={
@@ -237,7 +232,6 @@ export function useUjatVolunteerDocScreeningColumns({
             onOpenChange={open =>
               setOpenManagerDropdown(open ? { rowId: record.id, manager: 'B' } : null)
             }
-            tagLayout="tag100"
           />
         ),
       },

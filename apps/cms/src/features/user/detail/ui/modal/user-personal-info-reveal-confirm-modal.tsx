@@ -41,15 +41,15 @@ export function UserPersonalInfoRevealConfirmModal({
     <ContentModal
       open
       onCancel={onCancel}
-      title="개인정보 상세보기"
+      title="개인정보 열람 안내"
       width={600}
       zIndex={zIndex}
       footer={
         <>
-          <CmsButton variant="secondary" size="large" type="button" onClick={onCancel}>
+          <CmsButton variant="secondary" size="medium" type="button" onClick={onCancel}>
             취소
           </CmsButton>
-          <CmsButton variant="primary" size="large" type="button" onClick={handleConfirm}>
+          <CmsButton variant="primary" size="medium" type="button" onClick={handleConfirm}>
             정보 열람
           </CmsButton>
         </>

@@ -10,6 +10,8 @@ import type { FeePolicy } from './feePolicy';
 import type { InstructorCmsProfile } from './instructorCmsProfile';
 import type { InstructorCmsSettlement } from './instructorCmsSettlement';
 import type { InstructorMemberProfile } from './instructorMemberProfile';
+import type { InstructorOrganizationDistanceResponse } from './instructorOrganizationDistanceResponse';
+import type { InstructorScheduleDistanceResponse } from './instructorScheduleDistanceResponse';
 
 export interface InstructorApplicationDetailResponse {
   id?: number;
@@ -20,6 +22,8 @@ export interface InstructorApplicationDetailResponse {
   nameHanja?: string;
   nameEnglish?: string;
   birthDate?: string;
+  /** 생년월일 기준 만 나이. 생년월일이 없으면 null */
+  age?: number | null;
   gender?: string;
   contact?: string;
   email?: string;
@@ -34,6 +38,10 @@ export interface InstructorApplicationDetailResponse {
   oneLineIntro?: string;
   availableScheduleMemo?: string;
   availableScheduleSlots?: AvailableScheduleSlot[];
+  /** 개인형 강사 배정 대기 일정별 편도 거리. GENERAL_INDIVIDUAL이 아니면 []. */
+  scheduleDistances?: InstructorScheduleDistanceResponse[];
+  /** 기관형 강사 배정 대기 대상 기관 전체의 편도 거리. 개인형이면 []. */
+  organizationDistances?: InstructorOrganizationDistanceResponse[];
   managerComment?: string;
   /** 정규화된 application_status. 목록과 상세는 같은 코드를 반환한다. CMS 「승인 대기」=statusGroup=APPLICATION_PENDING(SUBMITTED, WAITING, WAITING_REVIEW, PENDING, REJECTION_CANCELLED; REVIEWING 등 WAITING_REVIEW 별칭 포함). 「신청 반려」=statusGroup=APPLICATION_REJECTED(REJECTED, APPROVAL_CANCELLED). REJECTION_CANCELLED는 반려 취소 후 승인 대기이며 상세에서 대기 중으로 바꾸지 않는다. 단일 status=는 정규화 등호이며 그룹의 다른 상태를 포함하지 않는다. */
   applicationStatus?: string;

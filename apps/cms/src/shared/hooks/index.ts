@@ -70,7 +70,6 @@ export type { FormInputsWidthOptions } from './use-form-inputs-width'
 export { useDeleteGuideMessages } from './use-delete-guide-messages'
 export {
   defaultTableExcelRowKey,
-  TABLE_EXCEL_NO_SELECTION_ALERT,
   useTableExcelExport,
 } from './use-table-excel-export'
 export type {

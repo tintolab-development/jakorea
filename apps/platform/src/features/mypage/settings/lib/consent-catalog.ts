@@ -32,8 +32,14 @@ export type SettingsConsentItem = {
   withdrawable?: boolean
   /** 서버 `status` — WITHDRAWN이면 철회 버튼 비활성 */
   status?: string
-  /** 서버 `consentStatus` — `PARTIAL`이면 부분동의 */
+  /** 서버 `consentStatus` — 초상권은 동의 시 항상 `PARTIAL`이라 라벨 판정에 `allItemsAgreed`를 쓴다 */
   consentStatus?: string
+  /** 서버 `consentType` (정규화) — 라벨 함수의 초상권 분기용 */
+  consentType?: string
+  /** 서버 `allItemsAgreed` — 초상권 동의/부분 동의 라벨 전용 */
+  allItemsAgreed?: boolean | null
+  /** 기간제 동의서 유효기간 경과 — 「동의 만료」 표시. 기간제가 아닌 항목은 항상 false */
+  expired?: boolean
   /** 서버 `signed` — 동의서 게이트는 agreed && signed */
   signed?: boolean
   /** 서버 listed. boolean만 유지. null은 true로 올리지 않는다. */
@@ -155,7 +161,7 @@ export const DOCUMENT_CONSENT_ITEMS: SettingsConsentItem[] = [
     kind: 'document',
     agreed: false,
     validityLabel: '10년',
-    hint: '영수증 제출 시 최초 1회 작성 · 유효기간 10년',
+    hint: '지급조서 제출 시 최초 1회 작성 · 유효기간 10년',
   },
   {
     id: 'receiptPreConsent',
@@ -163,7 +169,7 @@ export const DOCUMENT_CONSENT_ITEMS: SettingsConsentItem[] = [
     required: false,
     kind: 'document',
     agreed: false,
-    hint: '정산·영수증 신규 제출 시 작성. 본문은 법무 확정 전 초안이며, 유효기간은 서버 정책을 따릅니다.',
+    hint: '영수증 제출 시 최초 1회 작성 · 유효기간 10년',
   },
   {
     id: 'educatorPledge',

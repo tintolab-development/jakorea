@@ -82,7 +82,6 @@ export function shouldShowVolunteerSettlementDash(row: {
 export function mapSettlementToParticipatingVolunteerSettlementRow(
   item: SettlementListItemResponse,
   index: number,
-  totalCount: number,
   volunteer: ParticipatingVolunteerRow
 ): ParticipatingVolunteerSettlementApiRow | null {
   const settlementId = item.settlementId
@@ -116,7 +115,7 @@ export function mapSettlementToParticipatingVolunteerSettlementRow(
   return {
     id: String(settlementId),
     settlementId,
-    no: totalCount - index,
+    no: index + 1,
     institutionName: item.institutionName?.trim() || '-',
     assignedGrade,
     volunteerScheduleLabel: buildParticipatingInstructorEducationScheduleLabel(item),
@@ -144,7 +143,7 @@ export function mapSettlementsToParticipatingVolunteerSettlementRows(
 
   return sorted
     .map((item, index) =>
-      mapSettlementToParticipatingVolunteerSettlementRow(item, index, sorted.length, volunteer)
+      mapSettlementToParticipatingVolunteerSettlementRow(item, index, volunteer)
     )
     .filter((row): row is ParticipatingVolunteerSettlementApiRow => row != null)
 }

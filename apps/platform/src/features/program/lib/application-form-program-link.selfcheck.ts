@@ -39,7 +39,7 @@ assert.ok(schedule && schedule.kind === 'single_item' && schedule.variant === 'm
 assert.equal(schedule.items.length, 3)
 assert.equal(
   schedule.paragraphDescription,
-  '진행 가능한 일정을 모두 선택해 주세요. 수업은 1일, N차시 운영됩니다.'
+  '진행 가능한 일정을 모두 선택해 주세요. 모두 동일한 커리큘럼이며, 선택한 일정 중 1타임에 배정됩니다.'
 )
 
 const scheduleTypeProgram = {
@@ -132,7 +132,7 @@ assert.ok(
 assert.equal(individualSchedule.items.length, 3)
 assert.equal(
   individualSchedule.paragraphDescription,
-  '진행 가능한 일정을 모두 선택해 주세요. 수업은 1일, 2차시 운영됩니다.'
+  '진행 가능한 일정을 모두 선택해 주세요. 모두 동일한 커리큘럼이며, 선택한 일정 중 1타임에 배정됩니다.'
 )
 assert.equal(
   individualSchedule.items[0]?.label,

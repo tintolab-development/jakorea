@@ -1,3 +1,4 @@
+import { MemberPermissionStatusText } from '@/features/user/shared/ui/member-permission-status-text'
 import dayjs from 'dayjs'
 import type { User } from '@/types/user'
 import type { MemberPermissionApplicationStatus } from '@/types/member-permission-application'
@@ -5,8 +6,6 @@ import { CmsButton } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { isInstructorPermissionRevoked } from '@/features/user/shared/lib/member-list-display'
 import {
-  INSTRUCTOR_SETTLEMENT_STATUS_LABELS,
-  getInstructorSettlementStatusTextClassName,
   resolveInstructorSettlementUiStatusFromListLabel,
 } from '@/shared/constants/instructor-settlement-status'
 import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
@@ -27,33 +26,14 @@ export function settlementStatusView(user: Omit<User, 'password'>) {
 
   const status = resolveInstructorSettlementUiStatusFromListLabel(label)
   if (status) {
-    const canonical = INSTRUCTOR_SETTLEMENT_STATUS_LABELS[status]
-    if (canonical === label) {
-      return (
-        <span className="user-basic-info-section__settlement-status">
-          <InstructorSettlementStatusText status={status} />
-        </span>
-      )
-    }
     return (
-      <span
-        className={[
-          'user-basic-info-section__settlement-status',
-          getInstructorSettlementStatusTextClassName(status),
-        ].join(' ')}
-        role="status"
-      >
-        {label}
+      <span className="user-basic-info-section__settlement-status">
+        <InstructorSettlementStatusText status={status} label={label} />
       </span>
     )
   }
 
   return <span className="user-basic-info-section__settlement-status">{label}</span>
-}
-
-export function activityChangeCountView(user: Omit<User, 'password'>) {
-  const count = user.scheduleChangeCancelCount
-  return <span>{count != null && count >= 0 ? `${count}회` : '-'}</span>
 }
 
 export function normalizePermissionApprovalStatus(
@@ -67,33 +47,17 @@ export function normalizePermissionApprovalStatus(
   return 'PENDING'
 }
 
-function approvalStatusClass(status: User['permissionApprovalStatus']) {
-  const normalized = normalizePermissionApprovalStatus(status)
-  if (normalized === 'APPROVED') {
-    return 'user-basic-info-section__approval-status user-basic-info-section__approval-status--approved'
-  }
-  if (normalized === 'REJECTED') {
-    return 'user-basic-info-section__approval-status user-basic-info-section__approval-status--rejected'
-  }
-  return 'user-basic-info-section__approval-status user-basic-info-section__approval-status--pending'
-}
-
 export function permissionApprovalStatusTextView(user: Omit<User, 'password'>) {
-  if (isInstructorPermissionRevoked(user)) {
-    return (
-      <span className="user-basic-info-section__approval-status user-basic-info-section__approval-status--rejected">
-        권한 종료
-      </span>
-    )
-  }
-  const status = normalizePermissionApprovalStatus(user.permissionApprovalStatus)
-  if (status === 'APPROVED') {
-    return <span className={approvalStatusClass(status)}>승인 완료</span>
-  }
-  if (status === 'REJECTED') {
-    return <span className={approvalStatusClass(status)}>신청 반려</span>
-  }
-  return <span className={approvalStatusClass(status)}>승인 대기</span>
+  const revoked = isInstructorPermissionRevoked(user)
+  const status = revoked ? 'REJECTED' : normalizePermissionApprovalStatus(user.permissionApprovalStatus)
+  const base = 'user-basic-info-section__approval-status'
+  return (
+    <MemberPermissionStatusText
+      status={status}
+      revoked={revoked}
+      className={`${base} ${base}--${status.toLowerCase()}`}
+    />
+  )
 }
 
 export function permissionApprovalStatusListToneView(user: Omit<User, 'password'>) {

@@ -60,12 +60,22 @@ export interface PaymentOrderCalculationBasisDetailTransportRoundTrip {
   outbound: PaymentOrderCalculationBasisDetailTransportTripLeg
   inbound: PaymentOrderCalculationBasisDetailTransportTripLeg
   totalWon: number
+  /** 제출 시점 편도 km 스냅샷(서버). 기존 건 null → 행 미노출. FE 재계산 금지 */
+  oneWayDistanceKm?: number | null
 }
 
 /** 학생 편도 */
 export interface PaymentOrderCalculationBasisDetailTransportOneWay {
   layout: 'transportOneWay'
   trip: PaymentOrderCalculationBasisDetailTransportTripLeg
+  /** 제출 시점 편도 km 스냅샷(서버). 기존 건 null → 행 미노출. FE 재계산 금지 */
+  oneWayDistanceKm?: number | null
+}
+
+/** 학생 교통비 편도 km — 서버 스냅샷 그대로. null·비정상 값이면 행을 그리지 않는다(0km 금지). */
+export function formatParticipantOneWayDistanceKm(km: number | null | undefined): string | null {
+  if (typeof km !== 'number' || !Number.isFinite(km)) return null
+  return `${km.toLocaleString('ko-KR', { maximumFractionDigits: 3 })}km`
 }
 
 /** 강사 교통비(1사1교) */

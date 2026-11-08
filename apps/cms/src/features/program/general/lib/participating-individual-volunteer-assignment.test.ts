@@ -104,7 +104,7 @@ describe('buildIndividualVolunteerAssignmentRowsFromEducationScope', () => {
       ...base,
       scopeScheduleEnrich: [{ scheduleId: 9003, assignedVolunteerCount: 0, distanceKm: 0 }],
     })
-    expect(zeroDistance.waiting[0]?.distanceFromHome).toBe('0km')
+    expect(zeroDistance.waiting[0]?.distanceFromHome).toBe('0.0km')
   })
 
   it('puts assigned scheduleIds in assigned only, not waiting', () => {
@@ -152,19 +152,19 @@ describe('buildIndividualVolunteerAssignmentRowsFromEducationScope', () => {
 })
 
 describe('formatVolunteerAssignmentDistanceKm', () => {
-  it('returns - for nullish and keeps 0', () => {
+  it('returns - for nullish and keeps 0.0', () => {
     expect(formatVolunteerAssignmentDistanceKm(null)).toBe('-')
     expect(formatVolunteerAssignmentDistanceKm(undefined)).toBe('-')
-    expect(formatVolunteerAssignmentDistanceKm(0)).toBe('0km')
+    expect(formatVolunteerAssignmentDistanceKm(0)).toBe('0.0km')
   })
 
-  it('does not round the server value', () => {
+  it('shows one decimal and 장거리 only when BE longDistance is true', () => {
     expect(formatVolunteerAssignmentDistanceKm(12.3)).toBe('12.3km')
-    expect(formatVolunteerAssignmentDistanceKm(287.44)).toBe('287.44km')
-    expect(formatVolunteerAssignmentDistanceKm(100)).toBe('100km')
-    expect(formatVolunteerAssignmentDistanceKm(250, { longDistance: false })).toBe('250km')
+    expect(formatVolunteerAssignmentDistanceKm(100)).toBe('100.0km')
+    expect(formatVolunteerAssignmentDistanceKm(250, { longDistance: false })).toBe('250.0km')
+    expect(formatVolunteerAssignmentDistanceKm(250, { longDistance: null })).toBe('250.0km')
     expect(formatVolunteerAssignmentDistanceKm(250, { longDistance: true })).toBe(
-      '250km (장거리)'
+      '250.0km (장거리)'
     )
   })
 })
@@ -175,7 +175,7 @@ describe('resolveVolunteerAssignmentDistanceCellLabel', () => {
       VOLUNTEER_ASSIGNMENT_DISTANCE_CALCULATING_LABEL
     )
     expect(resolveVolunteerAssignmentDistanceCellLabel('12.3km', true)).toBe('12.3km')
-    expect(resolveVolunteerAssignmentDistanceCellLabel('0km', true)).toBe('0km')
+    expect(resolveVolunteerAssignmentDistanceCellLabel('0.0km', true)).toBe('0.0km')
     expect(resolveVolunteerAssignmentDistanceCellLabel('-', false)).toBe('-')
   })
 })

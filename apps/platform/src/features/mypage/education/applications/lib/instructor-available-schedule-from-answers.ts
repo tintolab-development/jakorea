@@ -17,6 +17,10 @@ import {
   isScheduleDateLikeText,
   normalizeScheduleDisplayLabel,
 } from '@/shared/lib/format-display-date'
+import {
+  isAutoMaterializedScheduleName,
+  stripAutoMaterializedScheduleNameFromLabel,
+} from '@/shared/lib/education-schedule-name'
 
 /** 강사 「강의 진행 가능일」·봉사 「봉사 활동 가능 일정」 등 슬롯 피커 제출 형식 */
 const SLOT_PICKER_SCHEDULE_ANSWER_KEYS = [
@@ -54,6 +58,8 @@ export function convertApplyScheduleSummarySegmentToMypageLine(segment: string):
     const school = trimmed.slice(0, colon).trim()
     const rest = trimmed.slice(colon + 1).trim()
     if (school && isScheduleDateLikeText(rest)) {
+      // 서버 자동 이름(`기관 확정 2026-11-09`)은 기관명이 아니므로 뺀다.
+      if (isAutoMaterializedScheduleName(school)) return normalizeScheduleDisplayLabel(rest)
       return `${normalizeScheduleDisplayLabel(rest)} | ${school}`
     }
   }
@@ -207,18 +213,31 @@ export function instructorAvailableScheduleHasSubmittedSelection(input: {
   return (input.preferredScheduleOptionValues?.length ?? 0) > 0
 }
 
-/**
- * 강의 현황 · 신청 내용 — 「강의 진행 가능일」 한 줄 포맷.
- * `2026년 04월 20일(월) 9:30 ~ 12:20 | 강서초등학교`
- */
-export function resolveInstructorAvailableScheduleLines(input: {
+type InstructorAvailableScheduleLinesInput = {
   answers?: Record<string, unknown> | null
   preferredEducationScheduleLabel?: string
   preferredScheduleOptionValues?: readonly string[]
   preferredScheduleBlocks?: readonly unknown[] | null
   program?: PreferredScheduleProgramLookup
   bindingSlots?: readonly ApplyInstructorScheduleSlot[]
-}): string[] {
+}
+
+/**
+ * 강의 현황 · 신청 내용 — 「강의 진행 가능일」·「봉사 진행 가능 일정」 한 줄 포맷.
+ * `2026년 04월 20일(월) 9:30 ~ 12:20 | 강서초등학교`
+ * 기존 저장 문구에 남은 기관 승인 일정 내부명(`| 기관 확정 YYYY-MM-DD`)은 표시에서 뺀다 (BE 데이터 마이그레이션 없음).
+ */
+export function resolveInstructorAvailableScheduleLines(
+  input: InstructorAvailableScheduleLinesInput,
+): string[] {
+  return resolveInstructorAvailableScheduleLinesRaw(input)
+    .map(line => stripAutoMaterializedScheduleNameFromLabel(line))
+    .filter(Boolean)
+}
+
+function resolveInstructorAvailableScheduleLinesRaw(
+  input: InstructorAvailableScheduleLinesInput,
+): string[] {
   const row = readSlotPickerScheduleAnswerRow(input.answers ?? undefined)
   if (row) {
     const fromRow = linesFromSlotPickerScheduleAnswerRow(row)

@@ -100,5 +100,11 @@ export async function exportTaxFilingExcel(
   const buffer = await workbook.xlsx.writeBuffer(
     options.password ? { password: options.password } : undefined
   )
-  await downloadExcel(buffer, buildSettlementFormExcelFilename('tax-report'))
+  // 주민등록번호는 마스킹 값만 들어가지만 컬럼이 있으므로 기록한다
+  await downloadExcel(buffer, buildSettlementFormExcelFilename('tax-report'), {
+    accessLog: {
+      downloadKind: 'SETTLEMENT_EXPORT',
+      containedPiiTypes: ['NAME', 'RESIDENT_REGISTRATION_NUMBER'],
+    },
+  })
 }

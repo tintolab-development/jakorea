@@ -93,7 +93,26 @@ export function resolveUserConsentAgreementPreset(
 
 const SAMPLE_AGREED_AT_DISPLAY = '2026.01.15 09:15:42'
 
-const CONSENT_LABEL_WIDTH = 240 as const
+const CONSENT_LABEL_WIDTH = 180 as const
+
+/**
+ * 화면 표시용 라벨(시안). `field.label`은 동의 종류·동의서 양식 매핑 키로 쓰이므로 바꾸지 않는다
+ * (`member-basic-info-terms-patch.ts`, `member-consent-template-map.ts`).
+ */
+const CONSENT_FIELD_DISPLAY_LABELS: Record<string, string> = {
+  '서비스 이용약관': '서비스 이용약관 동의',
+  '마케팅 제공 동의': '마케팅 정보 수신 동의',
+  '초상권 수집·이용 동의': '초상권 수집·이용 동의서',
+  '지급조서 사전 동의서': '지급조서 사전동의서',
+  '2단계 인증(MFA) 설정 동의': '2단계 인증 설정 동의',
+}
+
+/** 수정 모드에서도 조회 표시만 하는 동의 (키 라벨) */
+const CONSENT_VIEW_ONLY_IN_EDIT_LABELS = new Set(['마케팅 제공 동의', '초상권 수집·이용 동의'])
+
+export function resolveConsentFieldDisplayLabel(label: string): string {
+  return CONSENT_FIELD_DISPLAY_LABELS[label] ?? label
+}
 
 /** 단일 필드 값 — 동의 상태 또는 동의서 행 */
 export type ConsentFieldValueSchema =
@@ -102,18 +121,27 @@ export type ConsentFieldValueSchema =
       agreed: boolean
       agreedAtDisplay?: string
       consentStatus?: string
+      consentType?: string
+      /** 초상권 동의/부분 동의 라벨 전용 (`resolveConsentStatusDisplayLabel`) */
+      allItemsAgreed?: boolean | null
     }
   | {
       type: 'document'
       agreed: boolean
       agreedAtDisplay?: string
       consentStatus?: string
+      /** 기간제 동의서 유효기간 경과 — 「동의 만료」 */
+      expired?: boolean
+      /** 만료일 (예: 2027.10.31) — `expired`일 때만 */
+      expiredAtDisplay?: string
       formResponseId?: number
       consentRecordId?: number
       filledDocumentId?: number
       filledDocumentAvailable?: boolean
       filledDocumentRevealEndpoint?: string
       consentType?: string
+      /** 초상권 동의/부분 동의 라벨 전용 (`resolveConsentStatusDisplayLabel`) */
+      allItemsAgreed?: boolean | null
     }
   /** 더블 행 우측 빈 절반(격자·하단 보더만 유지) */
   | { type: 'empty_half' }
@@ -128,6 +156,8 @@ export interface ConsentFieldSchema {
 export interface ConsentRowSchema {
   rowType: 'single' | 'double'
   fields: ConsentFieldSchema[]
+  /** 하단 동의서 블록(지급조서·서약·행정·성범죄) 행. 없으면 상단 약관 블록. */
+  block?: 'documents'
 }
 
 export type ConsentPresetSchema = Record<UserConsentAgreementPreset, ConsentRowSchema[]>
@@ -180,8 +210,51 @@ const MARKETING_AND_PORTRAIT_ROW: ConsentRowSchema = {
   ],
 }
 
+/** 교사·교사 겸 강사 — 「교사 및 기관 정보 동의 | 마케팅」 (TEACHER_INFO_COLLECTION) */
+const TEACHER_INFO_AND_MARKETING_ROW: ConsentRowSchema = {
+  rowType: 'double',
+  fields: [
+    {
+      label: '교사 및 기관 정보 동의',
+      labelWidth: CONSENT_LABEL_WIDTH,
+      value: {
+        type: 'remote_consent',
+        agreed: true,
+        agreedAtDisplay: SAMPLE_AGREED_AT_DISPLAY,
+      },
+    },
+    {
+      label: '마케팅 제공 동의',
+      labelWidth: CONSENT_LABEL_WIDTH,
+      value: {
+        type: 'remote_consent',
+        agreed: false,
+        agreedAtDisplay: SAMPLE_AGREED_AT_DISPLAY,
+      },
+    },
+  ],
+}
+
+/** 교사·교사 겸 강사 — 초상권 한 행 전체 */
+const PORTRAIT_FULL_ROW: ConsentRowSchema = {
+  rowType: 'single',
+  fields: [
+    {
+      label: '초상권 수집·이용 동의',
+      labelWidth: CONSENT_LABEL_WIDTH,
+      fullRow: true,
+      value: {
+        type: 'document',
+        agreed: true,
+        agreedAtDisplay: SAMPLE_AGREED_AT_DISPLAY,
+      },
+    },
+  ],
+}
+
 const PAYMENT_AND_EDUCATOR_ROW: ConsentRowSchema = {
   rowType: 'double',
+  block: 'documents',
   fields: [
     {
       label: '지급조서 사전 동의서',
@@ -198,6 +271,7 @@ const PAYMENT_AND_EDUCATOR_ROW: ConsentRowSchema = {
 
 const ADMIN_AND_CRIME_ROW: ConsentRowSchema = {
   rowType: 'double',
+  block: 'documents',
   fields: [
     {
       label: '행정정보 공동이용 동의서',
@@ -239,10 +313,16 @@ const MARKETING_AND_MFA_ROW: ConsentRowSchema = {
 /** 관리자 회원 — 약관·동의 4항목(2열×2행) */
 export const CONSENT_ROWS_ADMIN: ConsentRowSchema[] = [TERMS_AND_PRIVACY_ROW, MARKETING_AND_MFA_ROW]
 
-/** 일반·교사(비겸직) — 서비스·개인정보·마케팅·초상권 (2열×2행) */
-const CONSENT_ROWS_INDIVIDUAL_LIKE: ConsentRowSchema[] = [
+/**
+ * 교사(4427:48695)·교사 겸 강사(4427:48874) 시안
+ * — 서비스|개인정보 / 교사 및 기관 정보|마케팅 / 초상권(전체 행) + 동의서 4종
+ */
+const CONSENT_ROWS_TEACHER: ConsentRowSchema[] = [
   TERMS_AND_PRIVACY_ROW,
-  MARKETING_AND_PORTRAIT_ROW,
+  TEACHER_INFO_AND_MARKETING_ROW,
+  PORTRAIT_FULL_ROW,
+  PAYMENT_AND_EDUCATOR_ROW,
+  ADMIN_AND_CRIME_ROW,
 ]
 
 /**
@@ -259,19 +339,45 @@ const CONSENT_ROWS_INDIVIDUAL: ConsentRowSchema[] = [
 /** 강사(순수·겸직) — 개인과 동일 8항목 */
 const CONSENT_ROWS_INSTRUCTOR: ConsentRowSchema[] = CONSENT_ROWS_INDIVIDUAL
 
-const ADMIN_CONSENT_CAPTION = '* 미동의 시 서비스 가입 및 관리자 활동에 제한이 있을 수 있습니다.'
+/** 관리자 상세·관리자 권한 신청 상세 — 시안: 동의 현황 안내 */
+const ADMIN_CONSENT_CAPTION =
+  '각 항목의 동의 현황과 해당 일시를 확인할 수 있으며, 미동의 항목은 일시가 표시되지 않습니다.'
 
 /** 프리셋별 행·필드 구조 (표시 데이터와 분리) */
 export const CONSENT_PRESET_SCHEMA: ConsentPresetSchema = {
   admin: CONSENT_ROWS_ADMIN,
   individual: CONSENT_ROWS_INDIVIDUAL,
-  /** 교사(겸직 아님) — 강사 전용 동의(지급조서·서약·행정·성범죄) 미노출 */
-  school_teacher: CONSENT_ROWS_INDIVIDUAL_LIKE,
-  instructor_dual: CONSENT_ROWS_INSTRUCTOR,
+  school_teacher: CONSENT_ROWS_TEACHER,
+  instructor_dual: CONSENT_ROWS_TEACHER,
   instructor_only: CONSENT_ROWS_INSTRUCTOR,
 }
 
 export const CONSENT_ROWS_PERMISSION_INSTRUCTOR: ConsentRowSchema[] = CONSENT_ROWS_INSTRUCTOR
+
+export const GUARDIAN_CONSENT_LABEL = '법정대리인 동의'
+
+/**
+ * 만 14세 미만 개인 회원(본인 가입) — 상단 약관 블록 3행 (Figma 0-3 일반 회원 상세_14세 미만).
+ * 서비스·개인정보 / 법정대리인·마케팅 / 초상권. 법정대리인 동의는 조회 전용(`GUARDIAN_CONSENT`).
+ */
+export function withGuardianConsentRows(schema: ConsentRowSchema[]): ConsentRowSchema[] {
+  const index = schema.indexOf(MARKETING_AND_PORTRAIT_ROW)
+  if (index < 0) return schema
+  const [marketing, portrait] = MARKETING_AND_PORTRAIT_ROW.fields
+  const guardianAndMarketing: ConsentRowSchema = {
+    rowType: 'double',
+    fields: [
+      {
+        label: GUARDIAN_CONSENT_LABEL,
+        labelWidth: CONSENT_LABEL_WIDTH,
+        value: { type: 'remote_consent', agreed: false },
+      },
+      marketing,
+    ],
+  }
+  const portraitOnly: ConsentRowSchema = { rowType: 'single', fields: [portrait] }
+  return [...schema.slice(0, index), guardianAndMarketing, portraitOnly, ...schema.slice(index + 1)]
+}
 
 export interface ConsentRenderCtx {
   openDocumentForLabel: (
@@ -305,50 +411,80 @@ function ConsentValueDisplay({ value }: { value: ReactNode }) {
   )
 }
 
+const PORTRAIT_CONSENT_FIELD_LABEL = '초상권 수집·이용 동의'
+
+/**
+ * 동의 상태 라벨 — 공통 `resolveConsentStatusDisplayLabel`.
+ * 초상권은 termsType 별칭(`PORTRAIT` 등)이 와도 라벨 기준으로 `PORTRAIT_RIGHTS` 분기를 탄다(allItemsAgreed 판정).
+ */
+function resolveConsentFieldStatusLabel(
+  value: {
+    agreed: boolean
+    consentStatus?: string
+    consentType?: string
+    allItemsAgreed?: boolean | null
+    expired?: boolean
+  },
+  fieldLabel: string
+): string {
+  return resolveConsentStatusDisplayLabel({
+    agreed: value.agreed,
+    consentStatus: value.consentStatus,
+    consentType:
+      fieldLabel.trim() === PORTRAIT_CONSENT_FIELD_LABEL ? 'PORTRAIT_RIGHTS' : value.consentType,
+    allItemsAgreed: value.allItemsAgreed,
+    expired: value.expired,
+    agreedLabel: '동의',
+  })
+}
+
 /** 초상권·지급조서 등 동의서 제출형 항목 — 동의 시 보기+일시, 미동의 시 비활성 보기 */
 function ConsentDocumentRow({
   agreed,
   agreedAtDisplay,
-  consentStatus,
+  statusLabel,
+  expired = false,
+  expiredAtDisplay,
   onOpenDocument,
 }: {
   agreed: boolean
   /** 동의한 경우에만 표시 (예: 2026.01.15 09:15:42) */
   agreedAtDisplay?: string
-  consentStatus?: string
+  statusLabel: string
+  /** 유효기간 경과 — 「동의 만료」 + 만료일 */
+  expired?: boolean
+  expiredAtDisplay?: string
   onOpenDocument?: () => void
 }) {
   const open = onOpenDocument
-  const statusLabel = resolveConsentStatusDisplayLabel({
-    agreed,
-    consentStatus,
-    agreedLabel: '동의',
-  })
+  /** 기존 일시 자리 — 만료면 만료일, 아니면 동의 일시 */
+  const datetimeDisplay = expired ? expiredAtDisplay : agreedAtDisplay
 
   return (
     <span className="user-consent-agreement-section__value-inner">
       <span className="user-consent-agreement-section__value-status">
         {statusLabel}
       </span>
-      <span className="user-consent-agreement-section__value-sep" aria-hidden>
-        |
-      </span>
+      {/* 시안: 미동의는 상태 문구만 — 구분선·동의서 보기 없음 */}
       {agreed ? (
         <>
+          <span className="user-consent-agreement-section__value-sep" aria-hidden>
+            |
+          </span>
           <CmsButton variant="secondary" size="h32" onClick={open} disabled={!open}>
             동의서 보기
           </CmsButton>
-          {agreedAtDisplay ? (
+          {datetimeDisplay ? (
             <span className="user-consent-agreement-section__value-datetime">
-              {agreedAtDisplay}
+              {datetimeDisplay}
             </span>
           ) : null}
         </>
-      ) : (
-        <CmsButton variant="default" size="h32" disabled>
-          동의서 보기
-        </CmsButton>
-      )}
+      ) : expired && datetimeDisplay ? (
+        <span className="user-consent-agreement-section__value-datetime">
+          {datetimeDisplay}
+        </span>
+      ) : null}
     </span>
   )
 }
@@ -368,11 +504,7 @@ function resolveConsentFieldView(
 ): ReactNode {
   switch (value.type) {
     case 'remote_consent': {
-      const status = resolveConsentStatusDisplayLabel({
-        agreed: value.agreed,
-        consentStatus: value.consentStatus,
-        agreedLabel: '동의',
-      })
+      const status = resolveConsentFieldStatusLabel(value, fieldLabel)
       const text = value.agreedAtDisplay ? `${status} | ${value.agreedAtDisplay}` : status
       return consentFieldContent(text)
     }
@@ -380,19 +512,18 @@ function resolveConsentFieldView(
       const sensitiveRestricted =
         isSensitiveConsentDocumentLabel(fieldLabel) && !ctx.canOpenSensitiveConsentDocument
       if (sensitiveRestricted) {
-        const status = resolveConsentStatusDisplayLabel({
-          agreed: value.agreed,
-          consentStatus: value.consentStatus,
-          agreedLabel: '동의',
-        })
-        const text = value.agreedAtDisplay ? `${status} | ${value.agreedAtDisplay}` : status
+        const status = resolveConsentFieldStatusLabel(value, fieldLabel)
+        const datetime = value.expired ? value.expiredAtDisplay : value.agreedAtDisplay
+        const text = datetime ? `${status} | ${datetime}` : status
         return consentFieldContent(text)
       }
       return (
         <ConsentDocumentRow
           agreed={value.agreed}
           agreedAtDisplay={value.agreedAtDisplay}
-          consentStatus={value.consentStatus}
+          statusLabel={resolveConsentFieldStatusLabel(value, fieldLabel)}
+          expired={value.expired}
+          expiredAtDisplay={value.expiredAtDisplay}
           onOpenDocument={
             value.agreed ? () => ctx.openDocumentForLabel(fieldLabel, value) : undefined
           }
@@ -414,9 +545,7 @@ function ConsentDocumentFieldEdit({ agreed, onWrite }: { agreed: boolean; onWrit
       <span className="user-consent-agreement-section__document-edit-status">
         {agreed ? '동의' : '미동의'}
       </span>
-      <span className="user-consent-agreement-section__value-sep" aria-hidden>
-        |
-      </span>
+      <DetailInfoForm.TdDivider />
       <CmsButton variant="secondary" size="h32" type="button" onClick={onWrite}>
         동의서 작성
       </CmsButton>
@@ -430,6 +559,8 @@ function resolveConsentFieldEdit(
 ): ReactNode | undefined {
   if (!ctx.editing) return undefined
   if (field.value.type === 'empty_half') return undefined
+  // 시안(회원 상세_수정): 마케팅·초상권은 수정 모드에서도 조회와 같은 글자 표시 — 관리자가 바꾸지 않는다
+  if (CONSENT_VIEW_ONLY_IN_EDIT_LABELS.has(field.label)) return undefined
 
   const fallbackAgreed =
     field.value.type === 'remote_consent' || field.value.type === 'document'
@@ -509,7 +640,7 @@ export function renderConsentField(
   return (
     <DetailInfoForm.Field
       key={fieldKey}
-      label={field.label}
+      label={resolveConsentFieldDisplayLabel(field.label)}
       labelWidth={field.labelWidth}
       {...(field.fullRow ? { fullRow: true } : {})}
       view={view}
@@ -618,8 +749,8 @@ export function UserConsentAgreementSection({
       ? CONSENT_ROWS_PERMISSION_INSTRUCTOR
       : CONSENT_PRESET_SCHEMA[preset]
   const schema = remoteConsentRows ?? baseSchema
-  const upperRows = schema.slice(0, 2)
-  const lowerRows = schema.slice(2)
+  const upperRows = schema.filter(row => row.block !== 'documents')
+  const lowerRows = schema.filter(row => row.block === 'documents')
   const ctx: ConsentRenderCtx = {
     openDocumentForLabel,
     canOpenSensitiveConsentDocument,
@@ -651,7 +782,9 @@ export function UserConsentAgreementSection({
               className="user-consent-agreement-section__form"
               mode={formMode}
             >
-              {lowerRows.map((row, rowIndex) => renderConsentRow(row, ctx, rowIndex + 2))}
+              {lowerRows.map((row, rowIndex) =>
+                renderConsentRow(row, ctx, rowIndex + upperRows.length)
+              )}
             </DetailInfoForm>
           ) : null}
         </div>

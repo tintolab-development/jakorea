@@ -222,9 +222,13 @@ function isGeneralPreEducationKindToken(value: string | undefined | null): boole
   return token === 'PREEDUCATION' || token === 'PRE_EDUCATION'
 }
 
-export function inferScheduleDetailBlockKind(scheduleLabel: string): ScheduleDetailBlockKind {
-  if (isGeneralPreEducationName(scheduleLabel)) return 'preEducation'
-  return scheduleLabel.includes('행사 일정') ? 'event' : 'sub'
+/** 레거시 구조 라벨로 블록 종류 추론. 서버 상세에 scheduleLabel이 없을 수 있어 빈 값은 'sub'. */
+export function inferScheduleDetailBlockKind(
+  scheduleLabel: string | null | undefined
+): ScheduleDetailBlockKind {
+  const label = scheduleLabel ?? ''
+  if (isGeneralPreEducationName(label)) return 'preEducation'
+  return label.includes('행사 일정') ? 'event' : 'sub'
 }
 
 export function isPreEducationScheduleBlock(detail: {

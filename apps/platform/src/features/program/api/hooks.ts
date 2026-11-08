@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMemo } from 'react'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { platformQueryKeys } from '@/shared/api/query-keys'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { getQueryRetryHttpStatus, queryRetryDelay, shouldRetryQuery } from '@/shared/lib/query-retry'
@@ -125,6 +126,8 @@ export function usePortalProgramsList(params: ProgramsListParams): PortalProgram
     queryKey: platformQueryKeys.program.list(listKeyParams(portalQuery)),
     queryFn: ({ signal }) => fetchPortalPrograms(portalQuery, signal),
     enabled: remote,
+    // 페이지·필터 전환 중에는 이전 목록을 유지해 스켈레톤으로 깜빡이지 않게 한다.
+    placeholderData: keepPreviousData,
     staleTime: LIST_STALE_MS,
     gcTime: LIST_GC_MS,
     refetchOnWindowFocus: false,
@@ -237,6 +240,22 @@ export function useProgramDetail(
     void detailQuery.refetch()
   }
 
+  /**
+   * 매 렌더마다 매핑하면 `program` 참조가 계속 바뀌어, `[program]` 의존 effect가 setState를
+   * 반복하는 무한 재렌더가 생긴다(라우터 이동 transition이 커밋되지 못함). 응답·포커스 값이
+   * 같으면 같은 객체를 돌려준다. 호출부가 focus 객체를 매번 새로 만들어도 값 기준으로 비교한다.
+   */
+  const focusKey = options?.focus ? JSON.stringify(options.focus) : ''
+  const stableFocus = useMemo(
+    () => (focusKey ? (JSON.parse(focusKey) as PortalRecruitmentFocus) : null),
+    [focusKey],
+  )
+  const detailData = detailQuery.data
+  const mappedProgram = useMemo(
+    () => (detailData ? mapPortalProgramDetail(detailData, stableFocus) : null),
+    [detailData, stableFocus],
+  )
+
   if (!programId || numericId == null) {
     return {
       program: undefined,
@@ -278,9 +297,7 @@ export function useProgramDetail(
     }
   }
 
-  const program = detailQuery.data
-    ? mapPortalProgramDetail(detailQuery.data, options?.focus)
-    : null
+  const program = mappedProgram
   if (!program) {
     return {
       program: undefined,

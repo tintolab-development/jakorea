@@ -1,6 +1,6 @@
 /**
  * 7:3 split-card 좌측 CalendarMain — 그리드·일정 칩 레이아웃만.
- * 요일 헤더는 `calendar-antd-override.css` 공통 (3열과 동일 SUN/MON 표기).
+ * 요일 헤더는 `calendar-antd-override.css` 공통 (3열과 동일 일요일/월요일 표기).
  * 선택/호버/오늘/타월 셀 상호작용은 `calendar-cell.css` 단일 소스 (페이지에서 재정의 금지).
  */
 

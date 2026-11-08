@@ -200,7 +200,7 @@ function ProgramSection({
               edit={
                 <CmsInput
                   className={inlineFieldClass(isEditing)}
-                  inputSize="small"
+                  inputSize={isEditing ? 'medium' : 'small'}
                   width="100%"
                   value={display.programType}
                   readOnly={!isEditing}
@@ -231,7 +231,7 @@ function ProgramSection({
                 isEditing ? (
                   <CmsTextArea
                     className={inlineFieldClass(true)}
-                    inputSize="small"
+                    inputSize="medium"
                     width="100%"
                     rows={2}
                     autoSize={false}
@@ -282,7 +282,7 @@ function ProgramSection({
               edit={
                 <CmsInput
                   className={inlineFieldClass(isEditing)}
-                  inputSize="small"
+                  inputSize={isEditing ? 'medium' : 'small'}
                   width="100%"
                   value={display.representativeProgram}
                   readOnly={!isEditing}
@@ -302,7 +302,7 @@ function ProgramSection({
               edit={
                 <CmsInput
                   className={inlineFieldClass(isEditing)}
-                  inputSize="small"
+                  inputSize={isEditing ? 'medium' : 'small'}
                   width="100%"
                   value={display.sponsorName}
                   readOnly={!isEditing}
@@ -326,7 +326,7 @@ function ProgramSection({
                 isEditing ? (
                   <CmsTextArea
                     className={inlineFieldClass(true)}
-                    inputSize="small"
+                    inputSize="medium"
                     width="100%"
                     rows={2}
                     autoSize={false}
@@ -476,7 +476,7 @@ export function ProgramIntroFormCard({ data, onEditingChange }: Props) {
                   isEditing ? (
                     <CmsTextArea
                       className={inlineFieldClass(true)}
-                      inputSize="small"
+                      inputSize="medium"
                       width="100%"
                       rows={2}
                       autoSize={false}

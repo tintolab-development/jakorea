@@ -66,7 +66,7 @@ describe('institution-cancel-rejection', () => {
 describe('institution-cancel-reject-complete-modal', () => {
   it('완료 메시지에 후속 안내를 포함한다', () => {
     expect(buildInstitutionCancelRejectCompleteDescription('진월초등학교')).toBe(
-      '[**진월초등학교**]의 프로그램 참여 **반려 취소** 되었습니다.\n해당 기관은 신청 목록 또는 상세에서 **승인 및 반려**가 가능합니다.'
+      '**[진월초등학교]**의 프로그램 참여 **반려 취소** 되었습니다.\n해당 기관은 신청 목록 또는 상세에서 **승인 및 반려**가 가능합니다.'
     )
   })
 })

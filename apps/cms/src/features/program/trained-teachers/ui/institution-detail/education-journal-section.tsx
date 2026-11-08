@@ -129,7 +129,7 @@ export function TrainedTeachersEducationJournalSection({
   const isLoading = journalsQuery.isFetching
 
   const tableData = useMemo(
-    () => entries.map((entry, index) => ({ ...entry, no: entries.length - index })),
+    () => entries.map((entry, index) => ({ ...entry, no: index + 1 })),
     [entries]
   )
 
@@ -216,6 +216,7 @@ export function TrainedTeachersEducationJournalSection({
   )
 
   const { exportExcel, isExporting } = useTableExcelExport({
+    accessLog: { downloadKind: 'PROGRAM_EDUCATION_JOURNAL_EXPORT', containedPiiTypes: [] },
     columns: isProgressVariant ? progressExcelColumns : defaultExcelColumns,
     data: tableData,
     filename: `${institutionName ?? '참여기관'}_교육일지`,

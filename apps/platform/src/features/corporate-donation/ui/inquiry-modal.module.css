@@ -40,16 +40,20 @@
   align-self: stretch;
 }
 
+/* Figma 13025:85814 — 라벨(20, px 8)·버튼 gap 4 · 버튼↔안내 10 */
 .fileField {
   display: flex;
   width: 100%;
   flex-direction: column;
-  gap: var(--spacing-8);
+  gap: var(--spacing-4);
 }
 
 .fieldLabel {
-  display: block;
+  display: flex;
+  height: 20px;
+  align-items: center;
   margin: 0;
+  padding-inline: var(--spacing-8);
 }
 
 .filePicker {
@@ -74,15 +78,19 @@
   outline-offset: 2px;
 }
 
+/* Figma 13025:85816 — 13 Medium · cool-600 · opacity 0.6 · 불릿 들여쓰기 19.5 · 좌우 4 */
 .fileHint {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  margin: 0;
-  padding-left: 20px;
-  color: var(--color-neutral-cool-500);
-  font-size: 14px;
-  line-height: 150%;
+  gap: 0;
+  margin: 6px 0 0;
+  padding: 0 var(--spacing-4) 0 calc(var(--spacing-4) + 19.5px);
+  color: var(--color-neutral-cool-600);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  list-style: disc;
+  opacity: 0.6;
 }
 
 .fileRow {

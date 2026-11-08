@@ -63,13 +63,15 @@ import './items-panel.css'
 const COL_WIDTH = {
   sort: TABLE_COLUMN_WIDTHS.sort,
   no: TABLE_COLUMN_WIDTHS.index,
-  name: 480,
+  /** 유연 열 최소 폭 (넓은 화면에선 남는 폭 흡수) */
+  name: 240,
   ratio: 160,
   amount: 280,
   /** 지출 테이블 전용 */
   expense: {
     category: 160,
-    name: 400,
+    /** 유연 열 최소 폭 */
+    name: 220,
     ratio: 120,
     amount: 220,
   },
@@ -96,8 +98,8 @@ type DraftRow = {
 type DraftMap = Record<string, DraftRow>
 
 function itemsTitle(section: FinanceSection, view: FinanceViewKind): string {
-  if (section === 'income' && view === 'graph') return '그래프 수입 항목'
-  if (section === 'income' && view === 'table') return '테이블 수입 항목'
+  if (section === 'income' && view === 'graph') return '그래프 수익 항목'
+  if (section === 'income' && view === 'table') return '테이블 수익 항목'
   if (section === 'expense' && view === 'graph') return '지출 그래프 항목'
   return '테이블 지출 항목'
 }
@@ -291,16 +293,14 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
     [createMutation, showAlert]
   )
 
+  // 수정 모드에서도 선택 열을 유지해 열 구성·너비가 조회와 같게 둔다 (QA: 수정 시 선택 열 사라지며 열 너비 변동)
   const rowSelection = useMemo<TableProps<FinanceItem>['rowSelection']>(
-    () =>
-      isEditing
-        ? undefined
-        : {
-            selectedRowKeys,
-            onChange: keys => setSelectedRowKeys(keys),
-            columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-          },
-    [isEditing, selectedRowKeys]
+    () => ({
+      selectedRowKeys,
+      onChange: keys => setSelectedRowKeys(keys),
+      columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+    }),
+    [selectedRowKeys]
   )
 
   const columns = useMemo<ColumnsType<FinanceItem>>(() => {
@@ -380,7 +380,8 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
       {
         title: nameTitle,
         key: 'name',
-        width: dataCols.name,
+        // 유연 열: 넓은 화면에서 남는 폭 흡수 (CmsDataTable 정확 폭 모드)
+        minWidth: dataCols.name,
         align: isEditing ? 'left' : 'center',
         className: 'income-expense-table__col--name',
         render: (_value, record) => {

@@ -230,6 +230,8 @@ export function mapSettlementDetailToProgramCalculationStatement(
       processingStatusDisplay: PAYMENT_ORDER_ADMIN_LINE_STATUS_LABELS[lineRow.processingStatus],
       processingStatusClass: lineRow.processingStatus,
       processingRejectionReason: lineRow.processingRejectionReason,
+      correctionRequestId: lineRow.correctionRequestId,
+      correctionReason: settlement.correctionReason?.trim() || lineRow.correctionReason,
       lectureFeePaymentScheduledDateDisplay: lineRow.lectureFeePaymentScheduledDate
         ? formatIsoToKoreanWeekday(lineRow.lectureFeePaymentScheduledDate)
         : settlement.expectedTransferDate
@@ -312,6 +314,8 @@ export function mapSettlementDetailToInstructorPageCalculationStatement(
       processingStatusDisplay: PAYMENT_ORDER_ADMIN_LINE_STATUS_LABELS[lineRow.processingStatus],
       processingStatusClass: lineRow.processingStatus,
       processingRejectionReason: lineRow.processingRejectionReason,
+      correctionRequestId: lineRow.correctionRequestId,
+      correctionReason: settlement.correctionReason?.trim() || lineRow.correctionReason,
       lectureFeePaymentScheduledDateDisplay: lineRow.lectureFeePaymentScheduledDate
         ? formatIsoToKoreanWeekday(lineRow.lectureFeePaymentScheduledDate)
         : settlement.expectedTransferDate

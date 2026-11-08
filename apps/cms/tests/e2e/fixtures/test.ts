@@ -1,3 +1,4 @@
+import { metadataOnlyLogging, captureContextPages, sanitizeTestErrors } from '../helpers/metadata-only-logging'
 /**
  * CMS Playwright E2E 공통 fixture
  *
@@ -33,11 +34,12 @@ export const test = base.extend<{
   _backendErrorCapture: [
     async ({ page }, use, testInfo) => {
       await installE2eApiProxy(page)
-      const capture = installApiErrorCapture(page)
+      const group = captureContextPages(page, installApiErrorCapture)
+      const capture = group.captures[0]
       await use(capture)
 
       // body 파싱 in-flight 를 기다린 뒤 덤프 (아니면 로그 누락)
-      const errors = await capture.getErrors()
+      const errors = (await Promise.all(group.captures.map(item => item.getErrors()))).flat()
       const failed = testInfo.status !== 'passed' && testInfo.status !== 'skipped'
       if (failed || errors.length > 0) {
         await dumpE2eErrorLogs({
@@ -46,7 +48,10 @@ export const test = base.extend<{
           captured: errors,
         })
       }
-      capture.dispose()
+      group.dispose()
+      if (metadataOnlyLogging()) {
+        try { expect(errors.length, 'HTTP API error count (metadata-only)').toBe(0) } finally { sanitizeTestErrors(testInfo) }
+      }
     },
     { auto: true },
   ],
@@ -54,15 +59,17 @@ export const test = base.extend<{
     async ({ page }, use, testInfo) => {
       await installE2eApiProxy(page)
       const startedAtIso = new Date().toISOString()
-      const capture = installApiCallCapture(page)
+      const group = captureContextPages(page, installApiCallCapture)
+      const capture = group.captures[0]
       await use()
-      const calls = await capture.getCalls()
-      capture.dispose()
+      const calls = (await Promise.all(group.captures.map(item => item.getCalls()))).flat()
+      group.dispose()
       await dumpE2eTestLogs({
         testInfo,
         calls,
         startedAtIso,
       })
+      sanitizeTestErrors(testInfo)
     },
     { auto: true },
   ],

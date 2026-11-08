@@ -55,9 +55,8 @@ export function assignDisplayNumbers(rows: GeminiPerformanceRow[]): GeminiPerfor
   const sorted = [...rows].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   )
-  const total = sorted.length
   return sorted.map((row, index) => ({
     ...row,
-    no: total - index,
+    no: index + 1,
   }))
 }

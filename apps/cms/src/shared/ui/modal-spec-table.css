@@ -14,16 +14,32 @@
   overflow: clip;
 }
 
+/*
+ * 행 구분선은 행 높이 안쪽에 그린다(시안 셀 stroke inside — 예: 정산 항목 설정 12432:445650 행 136/56).
+ * border-bottom 으로 두면 행마다 1px씩 커지므로 ::after 1px 선을 셀 위에 겹쳐 그린다.
+ */
 .modal-spec-table__row {
+  position: relative;
   display: flex;
   width: 100%;
   align-items: stretch;
   align-self: stretch;
-  border-bottom: 1px solid var(--modal-spec-table-line);
 }
 
-.modal-spec-table__row:last-child {
-  border-bottom: none;
+.modal-spec-table__row::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1;
+  height: 1px;
+  background: var(--modal-spec-table-line);
+  pointer-events: none;
+}
+
+.modal-spec-table__row:last-child::after {
+  content: none;
 }
 
 /* 테이블 필드 th(라벨 셀) 텍스트 */

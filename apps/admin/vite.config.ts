@@ -16,6 +16,8 @@ function withNgrokSkip(target: string, skipHeader: string | undefined): ProxyOpt
     changeOrigin: true,
     secure: false,
     ws: true,
+    // 로그 IP: 백엔드가 프록시(127.0.0.1) 대신 원래 접속 IP를 알 수 있게 X-Forwarded-* 를 붙인다.
+    xfwd: true,
     configure(proxy) {
       proxy.on('proxyReq', proxyReq => {
         if (skipHeader || isNgrokTarget) {

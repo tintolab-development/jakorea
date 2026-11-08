@@ -73,11 +73,12 @@ export function mapProgramManagerResponsesToRows(
       no: rows.length + 1,
       name: dto.adminName?.trim() || '-',
       role,
-      // ProgramManagerResponse에 phone 없음 — 연락처 컬럼은 '-'
-      phone: '',
+      // GET …/managers adminPhone — /admin-accounts 목록과 동일 마스킹. 서버 값을 그대로 쓴다.
+      phone: dto.adminPhone?.trim() || '',
       email: dto.adminEmail?.trim() || '',
       registeredAt: formatAssignedAt(dto.assignedAt),
       adminId: dto.adminId,
+      cmsRoleCode: dto.adminRoleCode?.trim() || undefined,
       removableYn: dto.removableYn,
     })
   }

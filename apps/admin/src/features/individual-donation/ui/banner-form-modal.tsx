@@ -256,10 +256,11 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
             edit={
               <div>
                 <CmsTextArea
-                  className="cms-textarea--fixed-rows"
-                  inputSize="small"
+                  layout="fixed"
+                  inputSize="medium"
                   width="100%"
-                  rows={2}
+                  rows={1}
+                  autoSize={{ minRows: 1 }}
                   placeholder="메인 텍스트를 입력해 주세요"
                   value={mainText}
                   onChange={e => {
@@ -286,10 +287,11 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
             edit={
               <div>
                 <CmsTextArea
-                  className="cms-textarea--fixed-rows"
-                  inputSize="small"
+                  layout="fixed"
+                  inputSize="medium"
                   width="100%"
-                  rows={2}
+                  rows={1}
+                  autoSize={{ minRows: 1 }}
                   placeholder="서브 텍스트를 입력해 주세요"
                   value={subText}
                   onChange={e => {

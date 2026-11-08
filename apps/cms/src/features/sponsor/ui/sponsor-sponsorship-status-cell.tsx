@@ -1,13 +1,12 @@
 import { memo, useCallback, useState } from 'react'
 import type { SponsorSponsorshipStatus } from '@/types/domain'
 import { SPONSOR_SPONSORSHIP_STATUS_VALUES } from '@/features/sponsor/model/sponsorship-status'
-import { SponsorSponsorshipStatusBadge } from '@/features/sponsor/ui/sponsor-sponsorship-status-badge'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import {
   STATUS_DROPDOWN_CELL_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
   StatusDropdownCell,
 } from '@/shared/components/status-dropdown-cell'
+import { getSponsorSponsorshipStatusTag } from '@/shared/lib/status-tag-specs'
 
 const SPONSORSHIP_STATUS_OPTIONS = SPONSOR_SPONSORSHIP_STATUS_VALUES
 
@@ -39,14 +38,13 @@ export const SponsorSponsorshipStatusCell = memo(function SponsorSponsorshipStat
     <StatusDropdownCell<SponsorSponsorshipStatus>
       status={row.sponsorshipStatus ?? 'active'}
       statusOptions={SPONSORSHIP_STATUS_OPTIONS}
-      renderBadge={s => <SponsorSponsorshipStatusBadge status={s} />}
+      getTag={getSponsorSponsorshipStatusTag}
       isItemDisabled={(cur, opt) => cur === opt}
       onChange={canWrite ? handleChange : undefined}
       isOpen={open}
       onOpenChange={setOpen}
-      tagLayout="tag100"
     />
   )
 })
 
-export const SPONSOR_STATUS_CELL_CLASSNAME = `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME}`
+export const SPONSOR_STATUS_CELL_CLASSNAME = STATUS_DROPDOWN_CELL_CLASSNAME

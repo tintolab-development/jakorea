@@ -19,6 +19,7 @@ import dayjs from 'dayjs'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsDatePicker, CmsInput, CmsPhoneInput } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { RecruitmentLifecycleStatusText } from '@/features/program/shared/ui/recruitment-lifecycle-status-text'
 
 const toDayjs = (d: string | Date | undefined) => (d ? dayjs(d) : null)
 
@@ -64,11 +65,10 @@ export function createVolunteersSchema({
           {
             label: '봉사자 모집 현황',
             view: volunteerRecruitmentLifecycle ? (
-              <span
-                className={`program-detail-info-tab__lifecycle-status-text program-detail-info-tab__lifecycle-status-text--${volunteerRecruitmentLifecycle.replace(/_/g, '-')}`}
-              >
-                {recruitmentStatusLabel}
-              </span>
+              <RecruitmentLifecycleStatusText
+                status={volunteerRecruitmentLifecycle}
+                label={recruitmentStatusLabel}
+              />
             ) : (
               '-'
             ),

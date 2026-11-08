@@ -34,10 +34,20 @@
   margin-inline: auto;
 }
 
+/* Figma 2118:111543 — `< 목록으로` 우측 안내 문구 (gap 16) */
+.recruit-posting-detail-page__back-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 16px;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
 .recruit-posting-detail-page__hint {
   margin: 0;
-  flex-shrink: 0;
-  color: var(--color-gray-02, #7d7d7d);
+  min-width: 0;
+  color: rgba(61, 61, 61, 0.5);
   font-family: Pretendard, var(--font-family-primary, sans-serif);
   font-size: 14px;
   font-weight: 500;
@@ -336,7 +346,72 @@
   }
 }
 
-/* `< 목록으로` (admin-ui post-detail) — 카드와 간격 16 */
-.recruit-posting-detail-page__inner > .admin-detail-back-link {
+/* `< 목록으로` 행 — 카드와 간격 16 */
+.recruit-posting-detail-page__inner > .recruit-posting-detail-page__back-row {
   margin-bottom: -8px;
+}
+
+/* 공고문 하단 연결 버튼 — Figma 2118:128846 (400×80 · 민트 · R12 · 16×20 · 18 SemiBold / 14 Regular · 화살표 16) */
+.recruit-posting-detail-page__link-cta {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  align-self: flex-start;
+  width: 100%;
+  max-width: 400px;
+  height: 80px;
+  min-height: 80px;
+  margin-top: 24px; /* 본문 ↔ 버튼 24 (시안) */
+  padding: 16px 20px;
+  border-radius: 12px;
+  background: var(--color-primary-500, #01a1af);
+  color: #fff;
+  text-decoration: none;
+  overflow: hidden;
+}
+
+.recruit-posting-detail-page__link-cta:hover,
+.recruit-posting-detail-page__link-cta:focus-visible {
+  color: #fff;
+}
+
+.recruit-posting-detail-page__link-cta-copy {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  min-width: 0;
+}
+
+.recruit-posting-detail-page__link-cta-label,
+.recruit-posting-detail-page__link-cta-period {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #fff;
+  font-family: Pretendard, sans-serif;
+}
+
+.recruit-posting-detail-page__link-cta-label {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: -0.18px;
+}
+
+.recruit-posting-detail-page__link-cta-period {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+.recruit-posting-detail-page__link-cta-arrow {
+  display: block;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
 }

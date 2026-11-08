@@ -1,14 +1,16 @@
-import type { BugIssueListFilter, BugIssueListResult } from '@/entities/bug-issue-log/model/types';
+import type { BugIssueListFilter, BugIssueLog } from '@/entities/bug-issue-log/model/types';
 import { defaultXlsxFilename, downloadBinaryFile, } from '@/features/logs/shared/lib/download-binary';
 import { getJAKoreaHomepageAdminAPILogsSubset } from '@/shared/api/generated/logs/logs-api';
 import { axiosInstance } from '@/shared/instance/axios-instance';
+import { toAdminListPage, type AdminListPage } from '@/shared/lib/admin-infinite-list';
 import { mapSystemIssuesPageToDomain, toSystemIssuesExportParams, toSystemIssuesParams, } from './mappers';
 function logsApi() {
     return getJAKoreaHomepageAdminAPILogsSubset();
 }
-export async function listBugIssueLogsService(filter: BugIssueListFilter): Promise<BugIssueListResult> {
-    const response = await logsApi().systemIssues(toSystemIssuesParams(filter));
-    return mapSystemIssuesPageToDomain(response);
+export async function listBugIssueLogsPageService(filter: BugIssueListFilter, page: number): Promise<AdminListPage<BugIssueLog>> {
+    const response = await logsApi().systemIssues(toSystemIssuesParams({ ...filter, page }));
+    const { rows, total } = mapSystemIssuesPageToDomain(response);
+    return toAdminListPage(rows, page, { page: response.page, totalPages: response.totalPages, totalCount: total });
 }
 export async function exportBugIssueLogsService(filter: BugIssueListFilter): Promise<'remote-downloaded'> {
     const response = await axiosInstance.get<ArrayBuffer>('/api/admin/logs/system-issues/export', {

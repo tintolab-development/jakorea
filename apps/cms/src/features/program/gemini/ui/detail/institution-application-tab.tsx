@@ -1,3 +1,4 @@
+import { GEMINI_INSTITUTION_APPROVAL_STATUS_LABEL } from '../../lib/application-status-presentation'
 import { useCallback, useMemo, useState, type Key } from 'react'
 import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
@@ -38,6 +39,7 @@ import { GeminiInstitutionApprovalStatusBadge } from './gemini-institution-appro
 import { GeminiInstitutionApproveModal } from './institution-approve-modal'
 import { GeminiInstitutionPreferredLectureScheduleCell } from './gemini-institution-preferred-lecture-schedule-cell'
 import './institution-application-tab.css'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 type PendingFilters = {
   institutionName: string
@@ -64,9 +66,9 @@ const FILTER_FIELDS: FilterFieldConfig[] = [
     width: FILTER_CONTROL_MAX_WIDTH_PX,
     options: [
       { label: '전체', value: 'ALL' },
-      { label: '승인', value: 'APPROVED' },
-      { label: '승인 대기', value: 'PENDING' },
-      { label: '신청 반려', value: 'REJECTED' },
+      { label: GEMINI_INSTITUTION_APPROVAL_STATUS_LABEL.APPROVED, value: 'APPROVED' },
+      { label: GEMINI_INSTITUTION_APPROVAL_STATUS_LABEL.PENDING, value: 'PENDING' },
+      { label: GEMINI_INSTITUTION_APPROVAL_STATUS_LABEL.REJECTED, value: 'REJECTED' },
     ],
   },
   {
@@ -225,10 +227,7 @@ export function GeminiInstitutionApplicationTab({
   }, [remoteEnabled, remoteQuery])
 
   const showNoSelectionAlert = useCallback(() => {
-    showAlert({
-      title: '항목 선택 안내',
-      content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
-    })
+    showAlert(NO_SELECTION_ALERT)
   }, [showAlert])
 
   const handleBulkReject = useCallback(() => {
@@ -453,6 +452,7 @@ export function GeminiInstitutionApplicationTab({
         title="참여 기관 신청 목록"
         description={`총 ${(remoteQuery.data?.pages[0]?.totalElements ?? filteredRows.length).toLocaleString()}건`}
         excelExport={{
+          accessLog: { downloadKind: 'PROGRAM_INSTITUTION_APPLICATION_EXPORT', containedPiiTypes: ['NAME'] },
           columns,
           data: filteredRows,
           selectedRowKeys: canWrite ? selectedRowKeys : undefined,

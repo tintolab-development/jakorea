@@ -71,5 +71,7 @@ export async function exportVolunteer1365Excel(
   }))
 
   const buffer = await workbook.xlsx.writeBuffer()
-  await downloadExcel(buffer, generateFilename('1365_봉사시간_등록_양식', 'xlsx'))
+  await downloadExcel(buffer, generateFilename('1365_봉사시간_등록_양식', 'xlsx'), {
+    accessLog: { downloadKind: 'VOLUNTEER_1365_HOURS_EXPORT', containedPiiTypes: ['NAME'] },
+  })
 }

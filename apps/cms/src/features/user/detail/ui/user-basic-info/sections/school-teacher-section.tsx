@@ -24,8 +24,7 @@ import { GENDER_EDIT_OPTIONS } from './constants'
 import type { BasicInfoSectionContext } from './types'
 import { genderBirthView, resolveSchoolTeacherAffiliationDisplay, socialView } from '../display'
 import { useBasicInfoEditing } from '../use-basic-info-editing'
-import { formatDate } from '@/shared/utils'
-import { activityChangeCountView } from '../status'
+import { formatDateDot } from '@/shared/utils'
 
 function schoolTeacherSchoolNameView(user: BasicInfoSectionContext['user']): string {
   return resolveSchoolTeacherAffiliationDisplay(user).school || '-'
@@ -40,12 +39,9 @@ export function SchoolTeacherMetaSection(ctx: BasicInfoSectionContext) {
         <EditableField
           label="가입일"
           readOnlyDisplay
-          view={<span>{formatDate(user.createdAt)}</span>}
+          view={<span>{formatDateDot(user.createdAt)}</span>}
         />
         <EditableField label="연동된 소셜 계정" readOnlyDisplay view={socialView(user)} />
-      </EditableRow>
-      <EditableRow type="single">
-        <EditableField label="활동 변경 횟수" readOnlyDisplay view={activityChangeCountView(user)} />
       </EditableRow>
     </>
   )

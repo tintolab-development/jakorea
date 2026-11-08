@@ -27,7 +27,7 @@ describe('mapMailDeliveryToSendHistoryRow', () => {
     expect(row?.templateName).toBe('워크숍 안내')
     expect(row?.senderInfo).toBe('홍길동 <gildong@jakorea.org>')
     expect(row?.broadcastTiming).toBe('즉시')
-    expect(row?.sendStatus).toBe('발송 성공')
+    expect(row?.sendStatus).toBe('발송 완료')
     expect(row?.receiveStatus).toBe('수신 성공')
     expect(row?.readStatus).toBe('읽음')
   })
@@ -108,18 +108,18 @@ describe('mapMailDeliveryToSendHistoryRow', () => {
     expect(withRendered?.subject).toBe('렌더 제목')
   })
 
-  it('maps sendStatus/receiptStatus to alimtalk-identical labels', () => {
+  it('maps sendStatus/receiptStatus to the Figma mail send labels', () => {
     expect(mapMailDeliveryToSendHistoryRow({ deliveryId: 1, sendStatus: 'SCHEDULED' })?.sendStatus).toBe(
       '예약'
     )
     expect(mapMailDeliveryToSendHistoryRow({ deliveryId: 2, sendStatus: 'WAITED' })?.sendStatus).toBe(
-      '대기'
+      '발송 대기'
     )
     expect(
       mapMailDeliveryToSendHistoryRow({ deliveryId: 3, sendStatus: 'IN_PROGRESS' })?.sendStatus
-    ).toBe('발송중')
+    ).toBe('발송 중')
     expect(mapMailDeliveryToSendHistoryRow({ deliveryId: 4, sendStatus: 'CANCELED' })?.sendStatus).toBe(
-      '취소'
+      '발송 취소'
     )
     expect(mapMailDeliveryToSendHistoryRow({ deliveryId: 5, sendStatus: 'WEIRD' })?.sendStatus).toBe(
       '확인불가'

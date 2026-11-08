@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { InstructorAssignmentListItemEnriched } from '@/features/program/general/api/instructor-assignment-types'
 import { fetchGeneralInstructorAssignmentBoard } from '@/features/program/general/api/instructor-assignment-board-service'
 import { fetchCompanySchoolAssignmentBoard } from '@/features/program/1c-1s/api/instructor-assignment-conflict-service'
+import { fetchGeneralParticipantEducationScope } from '@/features/program/general/api/admin-program-progress-service'
 import { companySchoolQueryKeys } from '@/features/program/1c-1s/api/query-keys'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import {
@@ -16,6 +17,7 @@ import {
   buildParticipatingInstructorWaitingSchoolRowsFromBoard,
   buildParticipatingInstructorWaitingScheduleRowsFromBoard,
 } from '@/features/program/general/lib/build-participating-instructor-assignment-rows'
+import type { InstructorApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationListItemResponse'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
 import type {
@@ -27,6 +29,10 @@ import type {
   ParticipatingIndividualInstructorWaitingScheduleRow,
 } from '@/features/program/general/lib/participating-individual-instructor-assignment-types'
 import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
+import {
+  collectInstructorApplicationOrganizationDistances,
+  mergeWaitingOrganizationDistances,
+} from '@/features/program/general/lib/assignment-waiting-distance'
 
 /**
  * 배정 현황 SSOT = GET /api/admin/program-execution/instructor-assignments (board.assignments).
@@ -96,6 +102,40 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
     retry: false,
   })
 
+  /**
+   * 배정 대기 「자택과의 거리」 — education-scope 서버값만 쓴다(개인형 schedules[] · 기관형 organizations[]).
+   * 실패해도 배정 표는 그대로 두고 거리 칸만 '-'.
+   */
+  const participantId = input.instructor.id?.trim() ?? ''
+  const distanceScopeQuery = useQuery({
+    queryKey: generalProgramProgressQueryKeys.educationScope(input.programId, participantId),
+    queryFn: () => fetchGeneralParticipantEducationScope(input.programId, participantId),
+    enabled: queryEnabled && Boolean(participantId),
+    staleTime: 15_000,
+    retry: false,
+  })
+  const scheduleDistances = distanceScopeQuery.data?.schedules
+  const scopeOrganizationDistances = distanceScopeQuery.data?.organizations
+  /**
+   * 기관형 거리 — education-scope `organizations[]`를 먼저 쓰고, 비어 있는 기관은
+   * 같은 강사의 강사 신청 응답(organizationDistances·preferredOrganizations)으로 채운다.
+   */
+  const approvedInstructorApplications = useCompanySchoolBoard
+    ? undefined
+    : (boardQuery.data as { approvedInstructorApplications?: InstructorApplicationListItemResponse[] } | undefined)
+        ?.approvedInstructorApplications
+  const organizationDistances = useMemo(() => {
+    // 1사1교는 기존처럼 education-scope 값만 쓴다
+    if (!approvedInstructorApplications) return scopeOrganizationDistances
+    const ownApplication = approvedInstructorApplications?.find(
+      app => app.instructorMemberId != null && String(app.instructorMemberId) === instructorMemberId
+    )
+    return mergeWaitingOrganizationDistances(
+      scopeOrganizationDistances,
+      collectInstructorApplicationOrganizationDistances(ownApplication)
+    )
+  }, [approvedInstructorApplications, instructorMemberId, scopeOrganizationDistances])
+
   const queryClient = useQueryClient()
   const queryError = boardQuery.error
 
@@ -147,6 +187,7 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
           assignments: board.assignments,
           instructorMemberId,
           maxAssignableInstructors: input.maxAssignableInstructors,
+          organizationDistances,
         }),
         assignedSchedules,
         waitingSchedules: buildParticipatingInstructorWaitingScheduleRowsFromBoard({
@@ -156,6 +197,7 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
           assignments: board.assignments,
           instructorMemberId,
           maxAssignableInstructors: input.maxAssignableInstructors,
+          scheduleDistances,
         }),
       }
     }
@@ -171,6 +213,7 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
         isCompanySchool: false,
         instructorMemberId,
         maxAssignableInstructors: input.maxAssignableInstructors,
+        organizationDistances,
       }),
       assignedSchedules,
       waitingSchedules: buildParticipatingInstructorWaitingScheduleRowsFromBoard({
@@ -180,6 +223,7 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
         assignments: board.assignments,
         instructorMemberId,
         maxAssignableInstructors: input.maxAssignableInstructors,
+        scheduleDistances,
       }),
     }
   }, [
@@ -190,12 +234,21 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
     input.maxAssignableInstructors,
     input.schoolRows,
     instructorMemberId,
+    organizationDistances,
     remoteEnabled,
+    scheduleDistances,
     useCompanySchoolBoard,
   ])
 
   const invalidate = async () => {
-    await queryClient.invalidateQueries({ queryKey: assignmentQueryKey })
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: assignmentQueryKey }),
+      participantId
+        ? queryClient.invalidateQueries({
+            queryKey: generalProgramProgressQueryKeys.educationScope(input.programId, participantId),
+          })
+        : Promise.resolve(),
+    ])
   }
 
   const boardLoading = queryEnabled && boardQuery.isFetching && boardQuery.data === undefined

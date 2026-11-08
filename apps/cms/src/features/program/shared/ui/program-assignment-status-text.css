@@ -1,0 +1,8 @@
+/* 상태별 행 약화는 컨텍스트 class로 명시. 셀 Text 자체 opacity와 합쳐 바꾸지 않는다. */
+.program-assignment-row--unavailable.ant-table-row > td {
+  color: var(--default-BK, #3d3d3d);
+  opacity: var(--program-assignment-row-opacity, 0.6);
+}
+.program-assignment-row--individual-volunteer {
+  --program-assignment-row-opacity: 0.5;
+}

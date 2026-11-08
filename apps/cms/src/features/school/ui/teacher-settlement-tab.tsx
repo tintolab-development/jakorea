@@ -18,12 +18,11 @@ import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 const CAL_WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 import { CmsButton, EmptyState } from '@/shared/ui'
-import { InstructorPaymentStatusBadge } from '@/shared/components/instructor-payment-status-badge'
-import type { InstructorSettlementUiStatus } from '@/shared/constants/instructor-settlement-status'
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
+import type { StatusTagSpec, StatusTagTone } from '@/shared/components/status-tag'
 import {
   type SettlementDetail,
   type SettlementOverviewData,
@@ -48,6 +47,17 @@ const SETTLEMENT_ROW_STATUS_KEYS: SettlementRowStatus[] = [
   'completed',
   'rejected',
 ]
+
+const SETTLEMENT_ROW_STATUS_TONE: Record<SettlementRowStatus, StatusTagTone> = {
+  pending: 'green',
+  reviewing: 'orange',
+  completed: 'blue',
+  rejected: 'red',
+}
+
+function getSettlementRowStatusTag(status: SettlementRowStatus): StatusTagSpec {
+  return { label: SETTLEMENT_ROW_STATUS_LABELS[status], tone: SETTLEMENT_ROW_STATUS_TONE[status] }
+}
 
 const STATUS_TAG_STYLE: Record<SettlementRowStatus, { bg: string; color: string }> = {
   pending: { bg: '#e8f5e9', color: '#1e8c29' },
@@ -261,9 +271,7 @@ export function TeacherSettlementTab({ data, teacherName, bankInfo }: TeacherSet
           <StatusDropdownCell<SettlementRowStatus>
             status={record.status}
             statusOptions={SETTLEMENT_ROW_STATUS_KEYS}
-            renderBadge={s => (
-              <InstructorPaymentStatusBadge status={s as InstructorSettlementUiStatus} />
-            )}
+            getTag={getSettlementRowStatusTag}
             isItemDisabled={(cur, opt) => cur === opt}
             onChange={s => handleStatusChange(record.id, s)}
             isOpen={openStatusDropdownId === record.id}

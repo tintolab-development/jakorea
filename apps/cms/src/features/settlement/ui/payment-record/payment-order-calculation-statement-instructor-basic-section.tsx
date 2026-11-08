@@ -11,7 +11,11 @@ import {
   withProgramDetailTdDivider,
 } from '@/features/program/shared/ui/program-detail-td-divider'
 import type { PaymentOrderCalculationStatementInstructorBasicInfo } from '@/features/settlement-management/model/payment-order-admin-list'
-import { PaymentOrderCalculationStatementProcessingStatusView } from './payment-order-calculation-statement-processing-status-view'
+import {
+  isPaymentOrderTransferScheduledStatus,
+  PaymentOrderCalculationStatementProcessingStatusView,
+  isPaymentOrderCorrectionRequestedStatus,
+} from './payment-order-calculation-statement-processing-status-view'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-basic-info.css'
 
 export interface PaymentOrderCalculationStatementInstructorBasicSectionProps {
@@ -50,6 +54,10 @@ export function PaymentOrderCalculationStatementInstructorBasicSection({
   style,
   onResendNotificationClick,
 }: PaymentOrderCalculationStatementInstructorBasicSectionProps) {
+  const showTransferScheduledDate = isPaymentOrderTransferScheduledStatus(
+    basic.processingStatusClass
+  )
+  const showCorrectionReason = isPaymentOrderCorrectionRequestedStatus(basic.processingStatusClass)
   const formCardClass =
     'payment-order-calc-statement-modal__detail-form-card payment-order-calc-statement-modal__detail-form-card--program'
 
@@ -92,18 +100,31 @@ export function PaymentOrderCalculationStatementInstructorBasicSection({
 
       <div className="payment-order-calc-statement-modal__basic-split-gap" aria-hidden />
 
-      <DetailInfoForm title="기본 정보 — 지급 조서" hideHeader className={formCardClass}>
+      <DetailInfoForm title="기본 정보 — 지급조서" hideHeader className={formCardClass}>
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="지급조서 처리 현황"
-            fullRow
+            fullRow={!showTransferScheduledDate && !showCorrectionReason}
             view={
               <PaymentOrderCalculationStatementProcessingStatusView
                 basic={basic}
                 onResendNotificationClick={onResendNotificationClick}
+                separateTransferScheduledDate
               />
             }
           />
+          {showTransferScheduledDate ? (
+            <DetailInfoForm.Field
+              label="이체 예정일"
+              view={<span>{basic.lectureFeePaymentScheduledDateDisplay ?? '-'}</span>}
+            />
+          ) : null}
+          {showCorrectionReason ? (
+            <DetailInfoForm.Field
+              label="정정 요청 사유"
+              view={<span>{basic.correctionReason?.trim() || '-'}</span>}
+            />
+          ) : null}
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field

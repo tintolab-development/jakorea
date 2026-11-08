@@ -6,9 +6,9 @@ import { GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS } from '@jako
 import type { ProgramDetailCase } from '@/features/program'
 import {
   basicInfoValuesFromDraftAnswer,
-  emptyTrainedTeachersBasicInfo,
-  type ApplyTrainedTeachersBasicInfoValues,
-} from '@/features/program/ui/apply-trained-teachers-basic-info/apply-trained-teachers-basic-info'
+  emptyInstitutionBasicInfo,
+  type ApplyInstitutionBasicInfoValues,
+} from '@/features/program/ui/apply-institution-basic-info/apply-institution-basic-info'
 import type { EducationTeacherApplicationInstitution } from '../model/types'
 
 const EDUCATION_FORMAT_LABELS: Record<string, string> = {
@@ -69,7 +69,7 @@ function formatApplicationGradeLabel(raw: string): string {
   return trimmed
 }
 
-function formatClassAndHeadcount(values: ApplyTrainedTeachersBasicInfoValues): string {
+function formatClassAndHeadcount(values: ApplyInstitutionBasicInfoValues): string {
   const classCount = Number.parseInt(values.classCount, 10)
   const studentCount = Number.parseInt(values.studentCount, 10)
   const classPart =
@@ -83,7 +83,7 @@ function formatClassAndHeadcount(values: ApplyTrainedTeachersBasicInfoValues): s
 }
 
 /** 이름 | 내선 | 휴대폰 | 이메일 — Portal 본인 상세는 원문(비마스킹)을 그대로 표시 */
-function formatTeacherContact(values: ApplyTrainedTeachersBasicInfoValues): string {
+function formatTeacherContact(values: ApplyInstitutionBasicInfoValues): string {
   const parts = [
     values.teacherName.trim(),
     values.teacherTel.trim(),
@@ -93,7 +93,7 @@ function formatTeacherContact(values: ApplyTrainedTeachersBasicInfoValues): stri
   return parts.join(' | ')
 }
 
-function formatVenue(values: ApplyTrainedTeachersBasicInfoValues): string | undefined {
+function formatVenue(values: ApplyInstitutionBasicInfoValues): string | undefined {
   const place = values.educationPlace.trim()
   if (!place) return undefined
   const base = EDUCATION_PLACE_LABELS[place] ?? place
@@ -136,7 +136,7 @@ function readAnswerStringField(row: Record<string, unknown>, ...keys: string[]):
 
 function readPreferredFieldsFromAnswerRow(
   row: Record<string, unknown>,
-  values: ApplyTrainedTeachersBasicInfoValues,
+  values: ApplyInstitutionBasicInfoValues,
 ): Pick<EducationTeacherApplicationInstitution, 'preferredEducationForm' | 'venue'> {
   const preferred: Pick<EducationTeacherApplicationInstitution, 'preferredEducationForm' | 'venue'> =
     {}
@@ -164,7 +164,7 @@ function readPreferredFieldsFromAnswerRow(
 }
 
 function institutionFromBasicInfoValues(
-  values: ApplyTrainedTeachersBasicInfoValues,
+  values: ApplyInstitutionBasicInfoValues,
   preferredFromAnswers?: Pick<
     EducationTeacherApplicationInstitution,
     'preferredEducationForm' | 'venue'
@@ -320,7 +320,7 @@ function readGeminiInstitutionFromAnswers(
     .join(' | ')
 
   const classAndHeadcount = formatClassAndHeadcount({
-    ...emptyTrainedTeachersBasicInfo(),
+    ...emptyInstitutionBasicInfo(),
     classCount: classCountRaw,
     studentCount: studentCountRaw,
   })

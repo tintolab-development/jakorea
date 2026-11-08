@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsButton } from '@/shared/ui'
-import { STATUS_DROPDOWN_CELL_TAG_160_HEADER_CLASSNAME } from '@/shared/components/status-dropdown-cell'
 import {
   CMS_DATA_TABLE_CELL_H40_ACTION_CLASS,
   CMS_DATA_TABLE_ROW_DISABLED_CLASS,
@@ -257,7 +256,6 @@ export function UjatEducationProgressVolunteerAssignmentTable({
         key: 'role',
         width: 140,
         align: 'center',
-        onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_160_HEADER_CLASSNAME }),
         onCell: () => ({
           className: UJAT_VOLUNTEER_ASSIGNMENT_ROLE_CELL_CLASSNAME,
         }),

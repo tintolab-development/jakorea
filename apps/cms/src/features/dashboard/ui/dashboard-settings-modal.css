@@ -4,11 +4,11 @@
  * 시안: 아코디언 카드 = 민트 1px 보더 · 8px 라운드 · 헤더 민트 틴트 · 본문 흰 배경
  */
 
-/* ContentModal + 대시보드 설정: 최대 높이 720px(뷰포트 안), 본문만 스크롤 */
+/* ContentModal + 대시보드 설정: 시안 최대 높이 880px(뷰포트 안), 본문만 스크롤 */
 .content-modal.dashboard-settings-content-modal.ant-modal .ant-modal-content {
   box-sizing: border-box;
-  max-height: min(720px, calc(100vh - 48px));
-  max-height: min(720px, calc(100dvh - 48px));
+  max-height: min(880px, calc(100vh - 48px));
+  max-height: min(880px, calc(100dvh - 48px));
   display: flex;
   flex-direction: column;
   overflow: hidden;

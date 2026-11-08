@@ -316,6 +316,7 @@ export function Interview2Section({
         excelExport={
           canWrite
             ? {
+                accessLog: { downloadKind: 'PROGRAM_SCREENING_INTERVIEW_EXPORT', containedPiiTypes: ['NAME'] },
                 columns,
                 data: tableData,
                 selectedRowKeys,

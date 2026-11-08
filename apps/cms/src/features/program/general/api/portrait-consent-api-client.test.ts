@@ -87,6 +87,8 @@ describe('downloadOrganizationPortraitConsentFile', () => {
       fileObjectId: 88001,
       reason: PORTRAIT_CONSENT_FILE_DOWNLOAD_REASON,
     })
-    expect(downloadBlobMock).toHaveBeenCalledWith(blob, '학교전체_초상권.docx')
+    expect(downloadBlobMock).toHaveBeenCalledWith(blob, '학교전체_초상권.docx', {
+      skipAccessLog: true,
+    })
   })
 })

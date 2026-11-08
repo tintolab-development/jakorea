@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict'
-import { emptyTrainedTeachersBasicInfo } from '../ui/apply-trained-teachers-basic-info/apply-trained-teachers-basic-info-answers.ts'
+import { emptyInstitutionBasicInfo } from '../ui/apply-institution-basic-info/apply-institution-basic-info-answers.ts'
 import { resolveGeneralBasicInfoApplyIncomplete } from './application-apply-incomplete.ts'
 
 const paragraphId = 'program-application-form-institution-basic-info'
 
 const classCountMissing = resolveGeneralBasicInfoApplyIncomplete(
   {
-    ...emptyTrainedTeachersBasicInfo(),
+    ...emptyInstitutionBasicInfo(),
     schoolName: '테스트학교',
     regionLabel: '서울',
     applicationGrade: '3',

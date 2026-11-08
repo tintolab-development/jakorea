@@ -113,6 +113,10 @@ export type PermissionModalProps = {
   reasonRequiredMessage?: string
   /** 사유 입력 maxLength. 기본 500. 강사 승인 취소 API는 1000 */
   reasonMaxLength?: number
+  /** 사유 최소 글자 수(trim 기준). 미지정이면 검사하지 않는다. 신청 반려 API는 2자 이상 */
+  reasonMinLength?: number
+  /** reasonMinLength 미달 시 안내 문구 */
+  reasonMinLengthMessage?: string
   showNotifyTiming?: boolean
   /** 기본 three — 즉시 / 발표일에 맞춰서 / 직접 설정 */
   notifyTimingOptions?: 'two' | 'three'
@@ -178,6 +182,8 @@ export function PermissionModal({
   reasonPlaceholder: reasonPlaceholderProp,
   reasonRequiredMessage: _reasonRequiredMessageProp,
   reasonMaxLength = 500,
+  reasonMinLength,
+  reasonMinLengthMessage,
   showNotifyTiming = true,
   notifyTimingOptions = 'three',
   notifyTimingCapability = NOTIFY_TIMING_CAPABILITY.full,
@@ -222,6 +228,14 @@ export function PermissionModal({
     const trimmed = reason.trim()
     if (requireReason && !trimmed) {
       showIncompleteRequiredAlert()
+      return
+    }
+    if (requireReason && reasonMinLength != null && trimmed.length < reasonMinLength) {
+      showAlert({
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+        content:
+          reasonMinLengthMessage ?? `${reasonLabel}을(를) ${reasonMinLength}자 이상 입력해 주세요.`,
+      })
       return
     }
     if (faultPartyRequired && faultParty !== 'USER' && faultParty !== 'ADMIN') {

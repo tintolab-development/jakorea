@@ -3,7 +3,7 @@
  */
 
 import dayjs from 'dayjs'
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
 import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
@@ -29,7 +29,6 @@ import { readApiErrorMessage } from '@/shared/lib/api-error-message'
 import {
   CmsButton,
   CmsInput,
-  CmsRadioGroup,
   ConfirmModal,
   ContentModal,
   showWithdrawCompletedAlert,
@@ -45,11 +44,6 @@ type Props = {
 
 type MarketingConsentValue = 'agree' | 'disagree'
 type TermsKind = 'SERVICE_TERMS' | 'PERSONAL_INFO' | 'MARKETING' | 'MFA_SETUP'
-
-const MARKETING_RADIO_OPTIONS = [
-  { label: '동의', value: 'agree' as const },
-  { label: '미동의', value: 'disagree' as const },
-]
 
 const ADMIN_MARKETING_CONSENT_WITHDRAW_CONFIRM = {
   title: '동의 철회 안내',
@@ -90,7 +84,7 @@ function termsKindOf(row: CmsAdminTermsAgreement): TermsKind | undefined {
 
 function resolveTermsAgreement(
   terms: CmsAdminTermsAgreement[] | undefined,
-  kind: TermsKind,
+  kind: TermsKind
 ): { agreed: boolean; agreedAtDisplay: string } {
   const record = (terms ?? []).find(item => termsKindOf(item) === kind)
   if (!record) return { agreed: false, agreedAtDisplay: '-' }
@@ -116,51 +110,55 @@ function formatBirthWithManAge(birthDate: string | undefined): string {
   if (!parsed.isValid()) return raw
   const today = dayjs()
   let age = today.year() - parsed.year()
-  if (today.month() < parsed.month() || (today.month() === parsed.month() && today.date() < parsed.date())) {
+  if (
+    today.month() < parsed.month() ||
+    (today.month() === parsed.month() && today.date() < parsed.date())
+  ) {
     age -= 1
   }
   const date = parsed.format('YYYY.MM.DD')
   return age >= 0 ? `${date} (만 ${age}세)` : date
 }
 
-function genderBirthView(me: CmsAdminMeResponse | null): string {
-  const gender = toDisplayGender(me?.gender)
-  const birth = formatBirthWithManAge(me?.birthDate)
-  if (gender === '-' && birth === '-') return '-'
-  return `${gender}  |  ${birth}`
-}
-
-function ConsentValueDisplay({ value }: { value: ReactNode }) {
-  if (typeof value !== 'string') return value
-  const idx = value.indexOf('|')
-  if (idx === -1) return value
-  const status = value.slice(0, idx).trim()
-  const datetime = value.slice(idx + 1).trim()
-  if (!datetime) return value
+/** 값 셀 안 여러 조각 — 조각 사이에 공통 세로 구분선(`TdDivider`) */
+function ProfileValueSegments({ children }: { children: ReactNode[] }) {
+  const segments = children.filter(child => child != null && child !== false)
   return (
-    <span className="user-consent-agreement-section__value-inner">
-      <span className="user-consent-agreement-section__value-status">{status}</span>
-      <span className="user-consent-agreement-section__value-sep" aria-hidden>
-        |
-      </span>
-      <span className="user-consent-agreement-section__value-datetime">{datetime}</span>
+    <span className="profile-edit-modal__value-segments">
+      {segments.map((segment, index) => (
+        <Fragment key={index}>
+          {index > 0 ? <DetailInfoForm.TdDivider /> : null}
+          {segment}
+        </Fragment>
+      ))}
     </span>
   )
 }
 
-function consentReadonlyContent(agreed: boolean, agreedAtDisplay?: string) {
-  if (!agreed) {
-    return (
-      <span className="user-consent-agreement-section__value-inner">
-        <ConsentValueDisplay value="미동의" />
-      </span>
-    )
-  }
-  const text = agreedAtDisplay && agreedAtDisplay !== '-' ? `동의 | ${agreedAtDisplay}` : '동의'
+function GenderBirthView({ me }: { me: CmsAdminMeResponse | null }) {
+  const gender = toDisplayGender(me?.gender)
+  const birth = formatBirthWithManAge(me?.birthDate)
+  if (gender === '-' && birth === '-') return '-'
   return (
-    <span className="user-consent-agreement-section__value-inner">
-      <ConsentValueDisplay value={text} />
-    </span>
+    <ProfileValueSegments>
+      {[<span key="gender">{gender}</span>, <span key="birth">{birth}</span>]}
+    </ProfileValueSegments>
+  )
+}
+
+function ConsentDatetime({ value }: { value: string }) {
+  return <span className="profile-edit-modal__consent-datetime">{value}</span>
+}
+
+function consentReadonlyContent(agreed: boolean, agreedAtDisplay?: string) {
+  const hasDatetime = agreed && Boolean(agreedAtDisplay) && agreedAtDisplay !== '-'
+  return (
+    <ProfileValueSegments>
+      {[
+        <span key="status">{agreed ? '동의' : '미동의'}</span>,
+        hasDatetime ? <ConsentDatetime key="datetime" value={agreedAtDisplay!} /> : null,
+      ]}
+    </ProfileValueSegments>
   )
 }
 
@@ -178,25 +176,28 @@ function ProfileFieldWithAction({
   actionLoading?: boolean
 }) {
   return (
-    <span className="profile-edit-modal__value-with-action">
-      <span className="profile-edit-modal__value-with-action-text">{value}</span>
-      <CmsButton
-        variant="secondary"
-        size="medium"
-        className="profile-edit-modal__field-action-btn"
-        type="button"
-        disabled={actionDisabled}
-        loading={actionLoading}
-        onClick={onAction}
-      >
-        {actionLabel}
-      </CmsButton>
-    </span>
+    <ProfileValueSegments>
+      {[
+        <span key="value">{value}</span>,
+        <CmsButton
+          key="action"
+          variant="secondary"
+          size="h32"
+          className="profile-edit-modal__field-action-btn"
+          type="button"
+          disabled={actionDisabled}
+          loading={actionLoading}
+          onClick={onAction}
+        >
+          {actionLabel}
+        </CmsButton>,
+      ]}
+    </ProfileValueSegments>
   )
 }
 
 async function resolveMarketingConsentVersion(
-  termsAgreements: CmsAdminTermsAgreement[] | undefined,
+  termsAgreements: CmsAdminTermsAgreement[] | undefined
 ): Promise<string> {
   const fromRow = termsAgreements?.find(row => termsKindOf(row) === 'MARKETING')?.version?.trim()
   if (fromRow) return fromRow
@@ -215,11 +216,12 @@ function ManagedProgramCountView({ me }: { me: CmsAdminMeResponse | null }) {
   const total = me?.totalManagedProgramCount
   if (active == null && total == null) return '-'
   return (
-    <>
-      <span>{`진행 중 : ${active ?? 0}건`}</span>
-      <DetailInfoForm.TdDivider />
-      <span>{`전체 : ${total ?? 0}건`}</span>
-    </>
+    <ProfileValueSegments>
+      {[
+        <span key="active">{`진행 중 : ${active ?? 0}건`}</span>,
+        <span key="total">{`전체 : ${total ?? 0}건`}</span>,
+      ]}
+    </ProfileValueSegments>
   )
 }
 
@@ -264,7 +266,7 @@ export function ProfileEditModal({ open, onCancel }: Props) {
         }
       })()
     },
-    [showAlert],
+    [showAlert]
   )
 
   const { verify, isVerifying, errorMessage, resetError } = useIdentityVerification({
@@ -384,6 +386,7 @@ export function ProfileEditModal({ open, onCancel }: Props) {
   const serviceTerms = resolveTermsAgreement(me?.termsAgreements, 'SERVICE_TERMS')
   const personalInfoTerms = resolveTermsAgreement(me?.termsAgreements, 'PERSONAL_INFO')
   const mfaSetupTerms = resolveTermsAgreement(me?.termsAgreements, 'MFA_SETUP')
+  const marketingAgreed = marketingConsent === 'agree'
   const permissionLabel = me?.roleName?.trim() || formatAdminGnbRoleLabel(me?.roleCode)
   const phone = me?.phone?.trim() ? formatKoreanPhoneNumber(me.phone) : '-'
 
@@ -432,10 +435,7 @@ export function ProfileEditModal({ open, onCancel }: Props) {
         >
           <div className="profile-edit-modal__basic-info-stack">
             <div className="profile-edit-modal__basic-info-table profile-edit-modal__basic-info-table--top">
-              <DetailInfoForm.Row
-                type="single"
-                className="profile-edit-modal__row profile-edit-modal__row--tall"
-              >
+              <DetailInfoForm.Row type="single" className="profile-edit-modal__row">
                 <DetailInfoForm.Field
                   label="가입일"
                   readOnlyDisplay
@@ -454,7 +454,7 @@ export function ProfileEditModal({ open, onCancel }: Props) {
                 <DetailInfoForm.Field
                   label="성별 및 생년월일"
                   readOnlyDisplay
-                  view={<span>{genderBirthView(me)}</span>}
+                  view={<GenderBirthView me={me} />}
                 />
               </DetailInfoForm.Row>
 
@@ -493,11 +493,7 @@ export function ProfileEditModal({ open, onCancel }: Props) {
                 <DetailInfoForm.Field
                   label="담당 프로그램 수"
                   readOnlyDisplay
-                  view={
-                    <span className="profile-edit-modal__managed-programs">
-                      <ManagedProgramCountView me={me} />
-                    </span>
-                  }
+                  view={<ManagedProgramCountView me={me} />}
                 />
               </DetailInfoForm.Row>
             </div>
@@ -510,9 +506,9 @@ export function ProfileEditModal({ open, onCancel }: Props) {
           className="profile-edit-modal__section profile-edit-modal__section--terms"
         >
           <div className="profile-edit-modal__terms-table">
-            <DetailInfoForm.Row type="double" className="profile-edit-modal__terms-row--standard">
+            <DetailInfoForm.Row type="double" className="profile-edit-modal__row">
               <DetailInfoForm.Field
-                labelWidth={220}
+                labelWidth={180}
                 label="서비스 이용약관"
                 readOnlyDisplay
                 view={consentReadonlyContent(serviceTerms.agreed, serviceTerms.agreedAtDisplay)}
@@ -520,41 +516,49 @@ export function ProfileEditModal({ open, onCancel }: Props) {
               <DetailInfoForm.Field
                 label="개인정보 수집·이용 동의"
                 readOnlyDisplay
-                labelWidth={220}
+                labelWidth={180}
                 view={consentReadonlyContent(
                   personalInfoTerms.agreed,
-                  personalInfoTerms.agreedAtDisplay,
+                  personalInfoTerms.agreedAtDisplay
                 )}
               />
             </DetailInfoForm.Row>
 
-            <DetailInfoForm.Row type="double" className="profile-edit-modal__terms-row--bottom">
+            <DetailInfoForm.Row type="double" className="profile-edit-modal__row">
               <DetailInfoForm.Field
                 label="마케팅 제공 동의"
-                labelWidth={220}
-                mode="edit"
-                view={consentReadonlyContent(marketingConsent === 'agree', marketingAgreedAt)}
-                edit={
-                  <span className="profile-edit-modal__marketing-consent">
-                    <CmsRadioGroup
-                      size="medium"
-                      options={MARKETING_RADIO_OPTIONS}
-                      value={marketingConsent}
-                      disabled={marketingConsentUpdating}
-                      onChange={event =>
-                        void handleMarketingChange(event.target.value as MarketingConsentValue)
-                      }
-                    />
-                    <DetailInfoForm.TdDivider />
-                    <span className="user-consent-agreement-section__value-datetime">
-                      {marketingAgreedAt}
-                    </span>
-                  </span>
+                labelWidth={180}
+                readOnlyDisplay
+                view={
+                  <ProfileValueSegments>
+                    {[
+                      // 미동의 상태는 상태 문구 없이 [동의하기] 버튼만 노출
+                      marketingAgreed ? <span key="status">동의</span> : null,
+                      <span key="action" className="profile-edit-modal__action-with-datetime">
+                        <CmsButton
+                          variant="secondary"
+                          size="h32"
+                          className="profile-edit-modal__field-action-btn"
+                          type="button"
+                          disabled={marketingConsentUpdating}
+                          loading={marketingConsentUpdating && !marketingWithdrawConfirmOpen}
+                          onClick={() =>
+                            handleMarketingChange(marketingAgreed ? 'disagree' : 'agree')
+                          }
+                        >
+                          {marketingAgreed ? '동의 철회하기' : '동의하기'}
+                        </CmsButton>
+                        {marketingAgreed && marketingAgreedAt !== '-' ? (
+                          <ConsentDatetime value={marketingAgreedAt} />
+                        ) : null}
+                      </span>,
+                    ]}
+                  </ProfileValueSegments>
                 }
               />
               <DetailInfoForm.Field
-                label="2단계 인증(MFA) 설정 동의"
-                labelWidth={220}
+                label="2단계 인증 설정 동의"
+                labelWidth={180}
                 readOnlyDisplay
                 view={consentReadonlyContent(mfaSetupTerms.agreed, mfaSetupTerms.agreedAtDisplay)}
               />
@@ -573,7 +577,7 @@ export function ProfileEditModal({ open, onCancel }: Props) {
         title="회원 탈퇴 안내"
         description={[
           'JA KOREA 서비스를 탈퇴하시겠습니까?',
-          '탈퇴 시 개인정보는 관련 법령 및 당사의 개인정보처리방침에 따라 삭제∙처리됩니다.',
+          '탈퇴 시 개인정보는 관련 법령 및 당사의 개인정보 처리방침에 따라 삭제∙처리됩니다.',
           '삭제된 정보는 복구할 수 없습니다. 탈퇴하시려면 로그인 비밀번호를 입력해 주세요.',
         ].join('\n')}
         width={600}

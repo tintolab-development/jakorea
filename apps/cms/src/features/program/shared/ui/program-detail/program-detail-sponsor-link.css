@@ -19,3 +19,51 @@
 .program-detail-sponsor-link:hover {
   color: #005bb5;
 }
+
+/* 프로그램 상세 — 후원사 홈페이지·대표 로고 (배정 응답) */
+.program-detail-sponsor-assignment-info__stack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.program-detail-sponsor-assignment-info__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.program-detail-sponsor-assignment-info__sponsor-name {
+  flex-shrink: 0;
+  color: var(--color-text-secondary, #595959);
+}
+
+.program-detail-sponsor-assignment-info__logo-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.program-detail-sponsor-assignment-info__logo-btn:hover .program-detail-sponsor-assignment-info__logo-name {
+  text-decoration: underline;
+}
+
+.program-detail-sponsor-assignment-info__logo-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-body, #262626);
+}
+
+.program-detail-sponsor-assignment-info__logo-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--color-text-tertiary, #8c8c8c);
+}

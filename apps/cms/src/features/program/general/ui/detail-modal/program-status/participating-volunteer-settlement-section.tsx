@@ -155,6 +155,7 @@ export function ParticipatingVolunteerSettlementSection({
   )
 
   const { exportExcel, isExporting: isExcelExporting } = useTableExcelExport({
+    accessLog: { downloadKind: 'PROGRAM_SETTLEMENT_EXPORT', containedPiiTypes: [] },
     columns: settlementExportColumns,
     data: displayRows,
     filename: '정산 내역',

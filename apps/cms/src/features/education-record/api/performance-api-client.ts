@@ -1,5 +1,5 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
-import { loadAdminFileBlob } from '@/shared/lib/admin-file-upload/attachments'
+import { loadSensitiveAdminFileBlob } from '@/shared/lib/admin-file-upload/attachments'
 import { getJAKoreaCMSBackendAPIPerformanceSubset } from '@/shared/api/generated/performance/performance-api'
 import type {
   ExportRecordsParams,
@@ -198,6 +198,9 @@ function canStartPerformanceExport(): boolean {
   return permissionCodes == null || permissionCodes.includes('PERFORMANCE_EXPORT_WRITE')
 }
 
+/** 실적 export 생성 파일 sensitive-downloads claim 사유 */
+export const PERFORMANCE_EXPORT_DOWNLOAD_REASON = '실적 데이터 엑셀 다운로드'
+
 /** 공식 BE export API를 통해 현재 필터 전체를 XLSX로 생성·다운로드한다. */
 export async function exportPerformanceRecordsRemote(
   params: ExportRecordsParams,
@@ -241,6 +244,11 @@ export async function exportPerformanceRecordsRemote(
   const job = await waitForGeneratedFileJob(jobId)
   const fileObjectId = readPositiveId(job.fileObjectId)
   if (!fileObjectId) throw new Error('생성된 엑셀 파일을 찾지 못했습니다.')
-  const blob = await loadAdminFileBlob(fileObjectId, { skipGlobalErrorAlert: true })
+  // 생성 파일은 민감 파일 — GET /files/{id}/download 는 409 SENSITIVE_FILE_RELAY_REQUIRED.
+  // claim → stream 으로 받고, stream 이 file-access 이력(DOWNLOAD_COMPLETED)을 남긴다.
+  const blob = await loadSensitiveAdminFileBlob({
+    fileObjectId,
+    reason: PERFORMANCE_EXPORT_DOWNLOAD_REASON,
+  })
   await downloadBlob(blob, filename, { skipAccessLog: true })
 }

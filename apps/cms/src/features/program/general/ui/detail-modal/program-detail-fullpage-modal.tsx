@@ -18,6 +18,8 @@ import { useQueryClient } from '@tanstack/react-query'
 import { invalidateProgramAdminSchedulesQuery } from '@/features/program/general/lib/invalidate-program-admin-schedules-query'
 import { useLocation, useNavigate, useSearchParams, type SetURLSearchParams } from 'react-router-dom'
 import { tryNavigateMemberDetailReturn } from '@/features/user/detail/lib/member-detail-program-navigation-return'
+import { useNavigateToAncestor } from '@/shared/hooks/use-history-ancestor-navigation'
+import { clearSponsorDetailQueryStack } from '@/features/sponsor/lib/sponsor-detail-query-stack'
 import { Spin, Typography } from 'antd'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
@@ -31,6 +33,10 @@ import {
 } from '@/shared/lib/detail-fullpage-query-stack'
 import { nextSearchParamsIfChanged } from '@/shared/lib/search-params-diff'
 import { useProgramDetail } from '@/pages/programs/use-program-detail'
+import {
+  isLookupableSponsorId,
+  resolveAssignedSponsorName,
+} from '@/features/program/shared/lib/merge-program-sponsor-assignments'
 import { useSponsorNameById } from '@/features/sponsor/hooks/use-sponsor-name-by-id'
 import { useProgramDetailEditForm } from '../../hooks/use-program-detail-edit-form'
 import { useProgramDetailInfoSave } from '../../hooks/use-program-detail-info-save'
@@ -332,6 +338,8 @@ export function ProgramDetailFullPageModal({
     }
     rawSetSearchParams(nextInit, navigateOpts)
   }, [rawSetSearchParams])
+  const { toTarget: navigateToAncestorTarget, toSearch: navigateToAncestorSearch } =
+    useNavigateToAncestor()
   const { showAlert } = useCmsAlert()
   const queryClient = useQueryClient()
   const detailRequiredHighlight = useDetailEditRequiredHighlightRequest()
@@ -345,10 +353,13 @@ export function ProgramDetailFullPageModal({
     sponsorName: legacySponsorName,
     updateProgram,
   } = useProgramDetail(onUpdateProgram ? undefined : (open ? programId : undefined))
-  const externalSponsorName = useSponsorNameById(
+  // 배정 응답에 이름이 있으면 그대로 쓴다 — 없을 때만 후원사 전체 목록에서 찾는다.
+  const assignedSponsorName = resolveAssignedSponsorName(program)
+  const lookedUpSponsorName = useSponsorNameById(
     program?.sponsorId,
-    Boolean(onUpdateProgram && program?.sponsorId)
+    Boolean(onUpdateProgram) && !assignedSponsorName && isLookupableSponsorId(program?.sponsorId)
   )
+  const externalSponsorName = assignedSponsorName ?? lookedUpSponsorName
   const loading = onUpdateProgram ? externalLoading : legacyLoading
   const sponsorName = onUpdateProgram ? externalSponsorName : legacySponsorName
   // remote 부모(onUpdateProgram): 로딩 중 목록/stub program으로 본문 채우지 않음
@@ -807,16 +818,17 @@ export function ProgramDetailFullPageModal({
       onClose()
       return
     }
-    setSearchParams(
-      prev => {
-        if (!prev.get('programId')) return prev
-        return clearGeneralProgramDetailQueryParams(new URLSearchParams(prev))
-      },
-      { replace: true }
-    )
+    // 목록 엔트리가 history에 있으면 그 엔트리로 되돌아가 상세 엔트리를 앞쪽에 남기지 않는다.
+    navigateToAncestorSearch(prev => {
+      if (!prev.get('programId')) return prev
+      return clearGeneralProgramDetailQueryParams(
+        clearSponsorDetailQueryStack(new URLSearchParams(prev))
+      )
+    })
     onClose()
-  }, [navigate, onClose, setSearchParams])
+  }, [navigate, navigateToAncestorSearch, onClose])
 
+  // LNB·하위 메뉴 = 브레드크럼 단계 → push (값이 같으면 setSearchParams 래퍼가 건너뜀)
   const setLnb = (key: LnbKey, childTab?: TabKey) => {
     setEditingTab(null)
     setSearchParams(
@@ -877,10 +889,11 @@ export function ProgramDetailFullPageModal({
         if (next.toString() === prev.toString()) return prev
         return next
       },
-      { replace: true }
+      { replace: false }
     )
   }
 
+  // LNB·하위 메뉴 = 브레드크럼 단계 → push (값이 같으면 setSearchParams 래퍼가 건너뜀)
   const setApplicantsChild = (tab: TabKey) => {
     setSearchParams(
       prev => {
@@ -892,10 +905,11 @@ export function ProgramDetailFullPageModal({
         if (next.toString() === prev.toString()) return prev
         return next
       },
-      { replace: true }
+      { replace: false }
     )
   }
 
+  // LNB·하위 메뉴 = 브레드크럼 단계 → push (값이 같으면 setSearchParams 래퍼가 건너뜀)
   const setProgressChild = (tab: TabKey) => {
     setSearchParams(
       prev => {
@@ -915,10 +929,11 @@ export function ProgramDetailFullPageModal({
         if (next.toString() === prev.toString()) return prev
         return next
       },
-      { replace: true }
+      { replace: false }
     )
   }
 
+  // LNB·하위 메뉴 = 브레드크럼 단계 → push (값이 같으면 setSearchParams 래퍼가 건너뜀)
   const setSurveyChild = (tab: GeneralSurveyNavKey | 'main') => {
     setSearchParams(
       prev => {
@@ -937,7 +952,7 @@ export function ProgramDetailFullPageModal({
         if (next.toString() === prev.toString()) return prev
         return next
       },
-      { replace: true }
+      { replace: false }
     )
   }
 
@@ -1157,6 +1172,13 @@ export function ProgramDetailFullPageModal({
     }
   }
 
+  /** 중첩 상세 닫기 — 지나온 목록 엔트리로 뒤로, 없으면 replace (push 하지 않음) */
+  const closeDetailLevel = (next: URLSearchParams) => {
+    if (isClosingRef.current) return
+    const search = next.toString()
+    navigateToAncestorTarget({ pathname: location.pathname, search: search ? `?${search}` : '' })
+  }
+
   const setSchoolId = (id: string | null) => {
     const next = new URLSearchParams(searchParams)
     if (id) {
@@ -1170,7 +1192,8 @@ export function ProgramDetailFullPageModal({
       next.delete(SCHOOL_ID_PARAM)
       next.delete(SCHOOL_TAB_PARAM)
     }
-    setSearchParams(next, { replace: id == null })
+    if (id == null) closeDetailLevel(next)
+    else setSearchParams(next, { replace: false })
   }
 
   const setInstructorId = (id: string | null) => {
@@ -1187,7 +1210,8 @@ export function ProgramDetailFullPageModal({
       next.delete(INSTRUCTOR_TAB_PARAM)
     }
     if (programId) next.set('programId', programId)
-    setSearchParams(next, { replace: id == null })
+    if (id == null) closeDetailLevel(next)
+    else setSearchParams(next, { replace: false })
   }
 
   const setVolunteerId = (id: string | null) => {
@@ -1210,7 +1234,8 @@ export function ProgramDetailFullPageModal({
       next.delete(VOLUNTEER_TAB_PARAM)
     }
     if (programId) next.set('programId', programId)
-    setSearchParams(next, { replace: id == null })
+    if (id == null) closeDetailLevel(next)
+    else setSearchParams(next, { replace: false })
   }
 
   const setInstructorTab = (tab: InstructorDetailTabKey) => {
@@ -1253,7 +1278,7 @@ export function ProgramDetailFullPageModal({
       const next = new URLSearchParams(searchParams)
       next.delete(APPLICANT_ID_PARAM)
       next.delete(DETAIL_TAB_PARAM)
-      setSearchParams(next, { replace: true })
+      closeDetailLevel(next)
       return
     }
     if (schoolIdFromUrl) {
@@ -1278,6 +1303,7 @@ export function ProgramDetailFullPageModal({
     handleRequestClose,
   ])
 
+  // LNB·하위 메뉴 = 브레드크럼 단계 → push (값이 같으면 setSearchParams 래퍼가 건너뜀)
   const setActiveTab = (key: TabKey) => {
     setEditingTab(null)
     setSearchParams(
@@ -1292,7 +1318,7 @@ export function ProgramDetailFullPageModal({
         if (next.toString() === prev.toString()) return prev
         return next
       },
-      { replace: true }
+      { replace: false }
     )
   }
 

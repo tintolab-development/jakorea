@@ -11,6 +11,5 @@ export const fileDownloadLogQueryKeys = {
       filter.userName ?? '',
       filter.from ?? '',
       filter.to ?? '',
-      filter.page ?? 0,
     ] as const,
 }

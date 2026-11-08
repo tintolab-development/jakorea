@@ -81,7 +81,7 @@ export function InstructorResumeDetailForms({
         </DetailInfoForm.Row>
       </DetailInfoForm>
 
-      <div className="detail-info-form--gap detail-info-form--gap-bottom">
+      <div className="detail-info-form--gap detail-info-form--gap-bottom instructor-resume-detail-forms__free-writing">
         <InstructorResumeFreeWritingSections d={instructor} />
       </div>
     </>

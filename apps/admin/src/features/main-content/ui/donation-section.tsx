@@ -112,6 +112,7 @@ export function DonationSectionCard({ data }: Props) {
       <DetailInfoForm title="정기후원 관리" hideHeader mode={mode}>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
+            labelWidth={200}
             label={
               <MainContentRequiredLabel required={isEditing}>타이틀 텍스트</MainContentRequiredLabel>
             }
@@ -119,10 +120,10 @@ export function DonationSectionCard({ data }: Props) {
             edit={
               <MainContentFieldControl error={fieldErrors.title}>
                 <CmsTextArea
-                  className="cms-textarea--fixed-rows"
+                  layout="fixed"
                   inputSize="medium"
                   width="100%"
-                  rows={2}
+                  autoSize={{ minRows: 1 }}
                   maxLength={MAIN_CONTENT_LIMITS.donationTitle}
                   status={fieldErrors.title ? 'error' : undefined}
                   value={draft.title}
@@ -137,7 +138,7 @@ export function DonationSectionCard({ data }: Props) {
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field label="CTA 버튼" view={ctaTable} edit={ctaTable} />
+          <DetailInfoForm.Field labelWidth={200} label="CTA 버튼" view={ctaTable} edit={ctaTable} />
         </DetailInfoForm.Row>
       </DetailInfoForm>
     </MainContentSectionCard>

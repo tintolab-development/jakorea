@@ -28,12 +28,10 @@ import {
   GEMINI_APPROVED_TRAINING_EXCEL_COLUMNS,
 } from '../../lib/approved/build-excel-export'
 import {
-  approvedTrainingStatusModifier,
   formatApprovedTrainingDeleteDisplayName,
   formatConfirmedTrainingDatetimeDisplay,
   formatInstructorDisplay,
   formatRegionDisplay,
-  formatStatusLabel,
 } from '../../lib/approved/format-display'
 import { resolveApprovedTrainingStatus } from '../../lib/approved/resolve-status'
 import { useGeminiApprovedTrainingRows } from '../../hooks/use-gemini-approved-training-rows'
@@ -51,6 +49,8 @@ import { useGeminiApprovedTrainingDetailUrl } from './approved-training-detail-u
 import '@/pages/programs/program-list-page.css'
 import '../page.css'
 import './list.css'
+import { GeminiApprovedTrainingStatusText } from './training-status-text'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 type PendingFilters = {
   institutionName: string
@@ -93,11 +93,6 @@ const INITIAL_PENDING_FILTERS: PendingFilters = {
   trainingDateRange: null,
 }
 
-function statusText(status: GeminiApprovedTrainingStatus) {
-  const base = 'gemini-approved-training-list__status'
-  const modifier = `${base}--${approvedTrainingStatusModifier(status)}`
-  return <span className={`${base} ${modifier}`}>{formatStatusLabel(status)}</span>
-}
 
 function instructorNameText(name: string) {
   if (name === '미지정') {
@@ -184,10 +179,7 @@ export function GeminiApprovedTrainingList() {
   )
 
   const showNoSelectionAlert = useCallback(() => {
-    showAlert({
-      title: '항목 선택 안내',
-      content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
-    })
+    showAlert(NO_SELECTION_ALERT)
   }, [showAlert])
 
   const handleBulkDeleteClick = useCallback(() => {
@@ -268,7 +260,7 @@ export function GeminiApprovedTrainingList() {
         width: COL.status,
         align: 'center',
         render: (_: unknown, row) =>
-          statusText(resolveApprovedTrainingStatus(row, dayjs(todayKey))),
+          <GeminiApprovedTrainingStatusText status={resolveApprovedTrainingStatus(row, dayjs(todayKey))} context="list" />,
       },
       {
         title: '연수일시',
@@ -370,6 +362,7 @@ export function GeminiApprovedTrainingList() {
           </>
         }
         excelExport={{
+          accessLog: { downloadKind: 'GEMINI_APPROVED_TRAINING_LIST_EXPORT', containedPiiTypes: ['NAME'] },
           columns: GEMINI_APPROVED_TRAINING_EXCEL_COLUMNS,
           data: excelRows,
           selectedRowKeys: canWrite ? selectedRowKeys : undefined,

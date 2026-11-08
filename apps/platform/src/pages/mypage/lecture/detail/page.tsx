@@ -194,10 +194,11 @@ export function MypageLectureDetailPage() {
   const institutionAssignmentProgram = supportsInstructorInstitutionAssignment(program?.programType)
   const individualAssignmentProgram = supportsInstructorIndividualAssignment(program?.programType)
 
-  /** 배정 현황 탭 — lecture-report-assignments (존재하지 않는 instructor-assignments/waitings 호출 금지) */
+  /** 배정 현황 탭 — 제미나이는 gemini-lecture-schedules, 그 외 lecture-report-assignments (instructor-assignments/waitings 호출 금지) */
   const instructorAssignmentQuery = useInstructorAssignmentStatusQuery(
     program?.id,
     routeApplicationType === 'INSTRUCTOR' && (isActivityStatus || isWithdrawnDuring),
+    { geminiApplicationId: isGeminiProgram ? applicationId : null },
   )
   /**
    * 강의현황 상세: 배정 현황 탭은 유형·배정 여부와 무관하게 항상 첫 번째(기본) 탭이다.

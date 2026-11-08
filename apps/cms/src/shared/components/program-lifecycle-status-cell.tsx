@@ -1,13 +1,17 @@
 /**
  * 프로그램 진행 현황(모집 신청 현황) 전용 셀
- * 공통 StatusDropdownCell + ProgramLifecycleStatusBadge + lifecycle 규칙 조합
+ * 공통 StatusDropdownCell + `getProgramLifecycleStatusTag` 조합 (4탭 목록 경로는 3단계 라벨)
  * 대시보드 위젯·교육프로그램 테이블 등에서 동일 UI/로직 재사용
  */
 
+import { useLocation } from 'react-router-dom'
 import type { Program } from '@/types/domain'
 import type { ProgramLifecycleStatus } from '@/types/domain'
-import { ProgramLifecycleStatusBadge } from '@/shared/components/program-lifecycle-status-badge'
 import { StatusDropdownCell } from '@/shared/components/status-dropdown-cell'
+import {
+  getProgramLifecycleStatusTag,
+  isProgramOverviewListPath,
+} from '@/shared/lib/status-tag-specs'
 
 /** 드롭다운 표시 순서: 예정(4) → 모집 중(4) → 완료(4) */
 const LIFECYCLE_STATUS_ORDER: ProgramLifecycleStatus[] = [
@@ -49,17 +53,17 @@ export function ProgramLifecycleStatusCell({
   openDropdownId,
   onOpenDropdownChange,
 }: ProgramLifecycleStatusCellProps) {
+  const { pathname } = useLocation()
+  const overviewListPage = isProgramOverviewListPath(pathname)
   const status = record.lifecycleStatus
 
   return (
     <StatusDropdownCell<ProgramLifecycleStatus>
       status={status ?? null}
       statusOptions={LIFECYCLE_STATUS_ORDER}
-      renderBadge={s => <ProgramLifecycleStatusBadge status={s} variant="table" />}
+      getTag={s => getProgramLifecycleStatusTag(s, { overviewListPage })}
       isItemDisabled={(cur, opt) => cur === opt}
-      getItemClassName={opt =>
-        DROPDOWN_GROUP_START_KEYS.has(opt) ? 'status-dropdown-cell__dropdown-group-start' : undefined
-      }
+      isGroupStart={opt => DROPDOWN_GROUP_START_KEYS.has(opt)}
       onChange={
         onStatusChange ? newStatus => onStatusChange(record, newStatus) : undefined
       }

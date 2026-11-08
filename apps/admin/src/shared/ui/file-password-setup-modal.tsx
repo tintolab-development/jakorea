@@ -101,14 +101,13 @@ export function FilePasswordSetupModal({
             <br />
             {FILE_DOWNLOAD_PASSWORD_NOT_STORED_MESSAGE}
           </p>
-          <label className="file-password-setup-modal__label" htmlFor={passwordId}>
-            파일 암호{' '}
-            <span className="file-password-setup-modal__required" aria-hidden>
-              *
-            </span>
-          </label>
+          {/* 시안 Field / Input M(40): 라벨↔입력 6 · 필드 사이 30 (15984:378448, CMS e05dbbaf6) */}
           <CmsInput
             id={passwordId}
+            className="file-password-setup-modal__field"
+            label="파일 암호"
+            required
+            inputSize="medium"
             type="password"
             autoComplete="new-password"
             allowClear={false}
@@ -117,14 +116,12 @@ export function FilePasswordSetupModal({
             width="100%"
             placeholder="사용할 암호를 입력해 주세요"
           />
-          <label className="file-password-setup-modal__label" htmlFor={confirmId}>
-            파일 암호 확인{' '}
-            <span className="file-password-setup-modal__required" aria-hidden>
-              *
-            </span>
-          </label>
           <CmsInput
             id={confirmId}
+            className="file-password-setup-modal__field"
+            label="파일 암호 확인"
+            required
+            inputSize="medium"
             type="password"
             autoComplete="new-password"
             allowClear={false}

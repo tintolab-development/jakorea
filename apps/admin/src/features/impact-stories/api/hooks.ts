@@ -108,10 +108,15 @@ export function useImpactStoriesList(filter: ImpactStoryListFilter, enabled = tr
 
 export function useImpactStoriesPagedList(filter: ImpactStoryListFilter, enabled = true) {
   const dataSource = source()
+  // filterKey는 무한 목록과 공유해 page를 빼므로, 페이지 단위 목록은 page를 키에 따로 넣는다
+  // (없으면 페이지를 넘겨도 같은 키 → 0페이지 캐시만 보임)
+  const pagedKey = `${filterKey(filter)}|p:${filter.page ?? 0}`
   return useQuery({
-    queryKey: impactStoriesQueryKeys.listPage(dataSource, filterKey(filter)),
+    queryKey: impactStoriesQueryKeys.listPage(dataSource, pagedKey),
     queryFn: () => listStoriesPageService(filter),
     enabled,
+    // 페이지 이동 중 이전 페이지를 유지해 표·페이지 이동 버튼이 깜빡이지 않게
+    placeholderData: previous => previous,
     staleTime: dataSource === 'remote' ? 30_000 : Number.POSITIVE_INFINITY,
     retry: dataSource === 'remote' ? 1 : false,
   })

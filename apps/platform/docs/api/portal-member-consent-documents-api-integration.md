@@ -47,7 +47,7 @@ CMS Orval 타입과 동일한 계약을 Platform `settings/api`에서 hand-writt
 
 ## 파일 업로드
 
-- 전자서명 이미지: `uploadMemberPortalFile` — `filePurpose: MEMBER_ELECTRONIC_SIGNATURE` (서버 enum과 불일치 시 BE 확인)
+- 전자서명 이미지: `uploadMemberPortalFile` — `filePurpose: MEMBER_ELECTRONIC_SIGNATURE` 또는 `ELECTRONIC_SIGNATURE`. 운영 API는 upload-requests·confirm에 **SHA-256 hex(`checksumSha256`)** 가 저장되어 있어야 `signature-fields/.../sign`이 통과한다. FE는 전자서명 용도 업로드 시 체크섬을 자동 계산해 보낸다.
 - 성범죄 증빙: `CRIMINAL_HISTORY_EVIDENCE` (마이페이지 complete는 evidence 미전송 정책 — 업로드·완료 플로우는 BE와 추가 정합 가능)
 
 ## FE 구현 위치

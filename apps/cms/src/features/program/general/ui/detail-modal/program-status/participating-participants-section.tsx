@@ -475,6 +475,7 @@ export function ParticipatingParticipantsSection({
           </div>
         }
         excelExport={{
+          accessLog: { downloadKind: 'PROGRAM_PARTICIPANT_LIST_EXPORT', containedPiiTypes: ['NAME'] },
           columns: excelColumns,
           data: filteredParticipants,
           selectedRowKeys,

@@ -97,7 +97,8 @@
  */
 .ja-korea-intro-card .detail-info-form__field-content:has(.ja-korea-intro-nested-form) {
   display: flex;
-  padding: 20px;
+  /* Figma 27:41397 — 셀과 중첩 표 사이 여백 상하 12 · 좌우 16 */
+  padding: 12px 16px;
   justify-content: stretch;
   align-items: stretch;
   gap: 0;

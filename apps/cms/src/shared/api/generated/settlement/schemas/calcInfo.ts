@@ -14,6 +14,8 @@ import type { CalcInfoLectureFeeType } from './calcInfoLectureFeeType';
 export interface CalcInfo {
   /** 강의비 유형 코드. GRADE_1=1급 강의비, GRADE_2=2급 강의비, GRADE_3=3급 강의비. 제출 전 lectureFeePreview.lectureFeeType과 동일. 없으면 null. */
   lectureFeeType?: CalcInfoLectureFeeType;
+  /** 강사비 책정 단위. 제출 시점 lectureFeePreview.instructorFeeCalculationUnit과 동일 코드. 구 스냅샷에 없으면 null */
+  instructorFeeCalculationUnit?: CalcInfoInstructorFeeCalculationUnit;
   /** 강사비 책정 단가(원). 총액 아님. 제출 전 lectureFeePreview.instructorFeeAmount와 동일. 없으면 null. */
   instructorFeeAmount?: number;
   /** 사업소득자 여부 */
@@ -22,6 +24,10 @@ export interface CalcInfo {
   educationSessionCount?: number | null;
   /** 강사비 산정에 적용된 인정 차시. 지급조서 '교육 진행 차시' 표시 기준. 구 스냅샷에 없으면 null이며 educationSessionCount로 대체하지 않는다. */
   recognizedSessionCount?: number | null;
+  /** 제출 시점 program_schedule.start_at (ISO-8601 instant). 구 스냅샷에 없으면 null */
+  educationStartAt?: string | null;
+  /** 제출 시점 program_schedule.end_at (ISO-8601 instant). 구 스냅샷에 없으면 null */
+  educationEndAt?: string | null;
   /** 강사비 산정에 사용한 진행 시간(분). 기관·개인=배정 일정, 제미나이=실적. 구 스냅샷에 없으면 null. */
   actualTrainingMinutes?: number | null;
   /** 총 학생 수. 제출 스냅샷에 없으면 null */
@@ -36,10 +42,4 @@ export interface CalcInfo {
   tollFeeWon?: number | null;
   /** 총 산정 교통비(원, 정수)=유류비+톨비. 제출 전 transportPreview.calculatedTransportAmount와 동일. 편도 30 미만 미지급은 null. 원천징수·과세 합산에 넣지 않음. */
   calculatedTransportAmount?: number | null;
-  /** 강사비 책정 단위. 제출 시점 lectureFeePreview.instructorFeeCalculationUnit과 동일 코드. 구 스냅샷에 없으면 null */
-  instructorFeeCalculationUnit?: CalcInfoInstructorFeeCalculationUnit;
-  /** 제출 시점 program_schedule.start_at (ISO-8601 instant). 구 스냅샷에 없으면 null */
-  educationStartAt?: string | null;
-  /** 제출 시점 program_schedule.end_at (ISO-8601 instant). 구 스냅샷에 없으면 null */
-  educationEndAt?: string | null;
 }

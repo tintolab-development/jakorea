@@ -138,7 +138,7 @@ export function buildInitialAssignedSchoolRows(
   return pickedSchools.map((school, idx) => {
     return {
       id: school.id,
-      no: pickedSchools.length - idx,
+      no: idx + 1,
       role: idx === 0 ? ('lead' satisfies InstructorRoleKey) : ('assistant' satisfies InstructorRoleKey),
       schoolName: school.schoolName,
       educationGrade: school.educationGrade,
@@ -161,13 +161,12 @@ export function buildWaitingSchoolRows(
     (a, b) => hash(a.id + instructor.id + 'w') - hash(b.id + instructor.id + 'w')
   )
   const slice = sorted.slice(0, 12)
-  const n = slice.length
 
   return sortWaitingRowsAssignedToBottom(
     slice.map((school, idx) => {
       return {
         id: school.id,
-        no: n - idx,
+        no: idx + 1,
         schoolName: school.schoolName,
         desiredGrade: school.educationGrade,
         region: school.region,
@@ -257,14 +256,12 @@ export function createWaitingRowForSchool(
 
 /** No. 컬럼 재계산 (내림차순) */
 export function renumberAssignedRows(rows: InstructorAssignedSchoolRow[]): InstructorAssignedSchoolRow[] {
-  const n = rows.length
-  return rows.map((r, i) => ({ ...r, no: n - i }))
+  return rows.map((r, i) => ({ ...r, no: i + 1 }))
 }
 
 export function renumberWaitingRows(rows: InstructorWaitingSchoolRow[]): InstructorWaitingSchoolRow[] {
   const sorted = sortWaitingRowsAssignedToBottom(rows)
-  const n = sorted.length
-  return sorted.map((r, i) => ({ ...r, no: n - i }))
+  return sorted.map((r, i) => ({ ...r, no: i + 1 }))
 }
 
 /** TODO(temp-mock): 참여 강사 상세 — 로컬 기관 배정 */

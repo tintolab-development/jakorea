@@ -1,3 +1,5 @@
+import { StatusBadge } from '@/shared/components/status-badge'
+import { getGeminiRecruitmentStatusPresentation } from '../../lib/recruitment/status-presentation'
 /**
  * Gemini 찾아가는 연수 — 모집 공고 탭 목록
  */
@@ -11,6 +13,9 @@ import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
+import { useQueryClient } from '@tanstack/react-query'
+import { refetchInfiniteQueryFirstPage } from '@/shared/lib/refetch-infinite-first-page'
+import { geminiVisitingTrainingQueryKeys } from '../../api/visiting-training/query-keys'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
@@ -47,13 +52,7 @@ import { useGeminiRecruitmentAddUrl } from './recruitment-add-url'
 import '@/pages/programs/program-list-page.css'
 import '../page.css'
 import './list.css'
-
-const RECRUITMENT_STATUS_LABEL: Record<GeminiRecruitmentDisplayStatus, string> = {
-  SCHEDULED: '예정',
-  IN_PROGRESS: '진행 중',
-  ENDED: '종료',
-  DRAFT: '임시저장',
-}
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 /** Figma 4315:124836 찾아가는 연수 모집 공고 목록 열 폭 */
 const RECRUITMENT_SELECTION_COL_WIDTH = 60
@@ -84,7 +83,7 @@ function recruitmentStatusCell(status: GeminiRecruitmentDisplayStatus) {
         : status === 'ENDED'
           ? `${base}--ended`
           : `${base}--draft`
-  return <span className={`${base} ${modifier}`}>{RECRUITMENT_STATUS_LABEL[status]}</span>
+  return <StatusBadge domain="custom" variant="text" {...getGeminiRecruitmentStatusPresentation(status)} className={`${base} ${modifier}`} />
 }
 
 function formatPeriodCell(start: string, end: string): string {
@@ -112,11 +111,15 @@ export function GeminiRecruitmentList() {
   const [draftNoticeOpen, setDraftNoticeOpen] = useState(false)
   const [draftNoticeTitle, setDraftNoticeTitle] = useState('')
   const detailOpen = Boolean(recruitmentId)
+  const queryClient = useQueryClient()
   const queryFilters = useMemo(() => {
     const params = new URLSearchParams(searchParamsKey)
+    // 조회한 조건은 모두 서버 검색 쿼리로 보낸다(총 N건 = 표 행). 기간 기본값(연초~오늘)은 URL에 없으면 보내지 않는다.
     return {
       title: params.get('gvt_title') ?? undefined,
       status: params.get('gvt_status') ?? undefined,
+      from: params.get('gvt_from') ?? undefined,
+      to: params.get('gvt_to') ?? undefined,
     }
   }, [searchParamsKey])
   const {
@@ -124,7 +127,6 @@ export function GeminiRecruitmentList() {
     remoteEnabled,
     isFetching,
     isFetchingNextPage,
-    refetch,
     fetchNextPage,
     hasNextPage,
     totalElements,
@@ -154,10 +156,7 @@ export function GeminiRecruitmentList() {
   })
 
   const showNoSelectionAlert = useCallback(() => {
-    showAlert({
-      title: '항목 선택 안내',
-      content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
-    })
+    showAlert(NO_SELECTION_ALERT)
   }, [showAlert])
 
   const showRemoteMutationUnavailable = useCallback(() => {
@@ -191,12 +190,18 @@ export function GeminiRecruitmentList() {
       setSelectedRowKeys([])
       setDeleteTargetNames([])
       setDeleteModalOpen(false)
-      if (remoteEnabled) void refetch()
+      // 무한 목록 전 페이지를 다시 받지 않고 첫 페이지만 다시 받는다.
+      if (remoteEnabled) {
+        void refetchInfiniteQueryFirstPage(
+          queryClient,
+          geminiVisitingTrainingQueryKeys.recruitmentList()
+        )
+      }
       showDeleteCompletedAlert()
     } catch {
       showRemoteMutationUnavailable()
     }
-  }, [refetch, remoteEnabled, selectedRowKeys, showRemoteMutationUnavailable])
+  }, [queryClient, remoteEnabled, selectedRowKeys, showRemoteMutationUnavailable])
 
   const handleCancelDelete = useCallback(() => {
     setDeleteTargetNames([])
@@ -241,7 +246,8 @@ export function GeminiRecruitmentList() {
         dataIndex: 'title',
         key: 'title',
         className: 'gemini-recruitment-list__col-title',
-        width: RECRUITMENT_COL_WIDTH.title,
+        // 유연 열: 넓은 화면에서 남는 폭 흡수 (CmsDataTable 정확 폭 모드)
+        minWidth: RECRUITMENT_COL_WIDTH.title,
         ellipsis: { showTitle: true },
       },
       {
@@ -306,6 +312,7 @@ export function GeminiRecruitmentList() {
           </>
         }
         excelExport={{
+          accessLog: { downloadKind: 'GEMINI_RECRUITMENT_LIST_EXPORT', containedPiiTypes: [] },
           columns,
           data: tableData,
           selectedRowKeys: canWrite ? selectedRowKeys : undefined,

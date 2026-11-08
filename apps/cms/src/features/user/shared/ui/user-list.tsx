@@ -3,12 +3,10 @@
  * 회원 유형(`listKind`)별 컬럼 구성 — `member-list-kinds`와 동기화
  */
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type CSSProperties } from 'react'
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import type { ColumnsType } from 'antd/es/table'
 import '@/features/program/general/ui/program-list.css'
-import './admin-permission-tag.css'
-import './user-list.css'
 import type { User } from '@/types/user'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
@@ -18,6 +16,7 @@ import {
 } from '@/features/user/shared/lib/admin-permission-display'
 import { formatDateDot } from '@/shared/utils'
 import {
+  formatSchoolRegionLabel,
   getAllMemberListRoleTypeLabel,
   getMemberSignupTypeLabel,
 } from '@/features/user/shared/lib/member-list-display'
@@ -28,20 +27,36 @@ import { type MemberListKind, DEFAULT_MEMBER_LIST_KIND } from '@/shared/config/m
 import { formatAdminManagedProgramCountForList } from '@/features/user/detail/lib/user-detail-fullpage-helpers'
 import { formatJaEvaluationGradeCellDisplay } from '@/features/program/general/lib/ja-evaluation-grade-display'
 import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
-import {
-  INSTRUCTOR_SETTLEMENT_STATUS_LABELS,
-  getInstructorSettlementStatusTextClassName,
-  resolveInstructorSettlementUiStatusFromListLabel,
-} from '@/shared/constants/instructor-settlement-status'
+import { resolveInstructorSettlementUiStatusFromListLabel } from '@/shared/constants/instructor-settlement-status'
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_160_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_160_HEADER_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
-import { AppStatusBadge } from '@/shared/components/app-status-badge'
+import { getAdminPermissionTag } from '@/shared/lib/status-tag-specs'
 
 type Row = Omit<User, 'password'>
+
+/** 전체 회원 목록(Figma 1142:84965) 이메일 열 폭 */
+const ALL_MEMBER_LIST_EMAIL_COLUMN_WIDTH = 300
+
+/** 강사·관리자 회원 목록 시안 고정 열 폭 — 나머지 열은 남은 폭 균등 */
+const MEMBER_LIST_FIXED_COLUMN_WIDTH = {
+  instructorName: 200,
+  jaGrade: 160,
+  settlement: 200,
+  adminName: 200,
+  adminPermission: 170,
+  adminProgramCount: 200,
+} as const
+
+/** 강사·관리자 회원 목록 시안 — 선택 열 60 (cms-data-table 룰: 화면별 `--table-selection-column-width`) */
+const COMPACT_SELECTION_COLUMN_WIDTH = 60
+
+function resolveListSelectionColumnWidth(kind: MemberListKind): number {
+  return kind === 'instructors' || kind === 'admins'
+    ? COMPACT_SELECTION_COLUMN_WIDTH
+    : TABLE_COLUMN_WIDTHS.checkbox
+}
 
 interface UserListProps {
   data: Row[]
@@ -79,21 +94,19 @@ function displayMetric(n: number | undefined | null) {
   return String(n)
 }
 
+/** 학교 목록 「프로그램 수강 횟수」 — 시안: `N회`, 0·미집계는 `-` */
+function displayProgramAttendanceCount(n: number | undefined | null) {
+  if (n === undefined || n === null || n === 0) return '-'
+  return `${n}회`
+}
+
 function renderInstructorSettlementStatusCell(labelRaw?: string) {
   const label = labelRaw?.trim()
   if (!label || label === '-') return '-'
 
   const status = resolveInstructorSettlementUiStatusFromListLabel(label)
   if (status) {
-    const canonical = INSTRUCTOR_SETTLEMENT_STATUS_LABELS[status]
-    if (canonical === label) {
-      return <InstructorSettlementStatusText status={status} />
-    }
-    return (
-      <span className={getInstructorSettlementStatusTextClassName(status)} role="status">
-        {label}
-      </span>
-    )
+    return <InstructorSettlementStatusText status={status} label={label} />
   }
 
   return <span>{label}</span>
@@ -123,18 +136,12 @@ function AdminPermissionDropdownCell({
   onOpenChange: (open: boolean) => void
 }) {
   const current = getAdminPermissionVariant(record)
-  const renderBadge = (variant: AdminPermissionTagVariant) => (
-    <AppStatusBadge
-      label={ADMIN_PERMISSION_TAG_LABEL[variant]}
-      className={`user-list-admin-perm-badge user-list-admin-perm-badge--${variant}`}
-    />
-  )
 
   return (
     <StatusDropdownCell<AdminPermissionTagVariant>
       status={current}
       statusOptions={ADMIN_PERMISSION_OPTIONS.map(option => option.value)}
-      renderBadge={renderBadge}
+      getTag={getAdminPermissionTag}
       isItemDisabled={(cur, option) => cur === option}
       onChange={
         onChange
@@ -147,7 +154,6 @@ function AdminPermissionDropdownCell({
       isUpdating={loading}
       isOpen={isOpen}
       onOpenChange={onOpenChange}
-      tagLayout="tag160"
       emptyPlaceholder="-"
     />
   )
@@ -201,13 +207,8 @@ function columnsForKind(
         key: 'address',
         ellipsis: true,
         align: 'center',
-        render: (_: unknown, r: Row) => {
-          const parts = [
-            r.schoolInfo?.address?.trim(),
-            r.schoolInfo?.addressDetail?.trim(),
-          ].filter(Boolean)
-          return parts.length > 0 ? parts.join(' ') : '-'
-        },
+        /** 시안: 시·도 + 시·군·구만 */
+        render: (_: unknown, r: Row) => formatSchoolRegionLabel(r.schoolInfo),
       },
       {
         title: '프로그램 수강 횟수',
@@ -215,7 +216,7 @@ function columnsForKind(
         align: 'center',
         width: 200,
         render: (_: unknown, r: Row) =>
-          displayMetric(r.listMetrics?.institutionProgramAttendanceCount),
+          displayProgramAttendanceCount(r.listMetrics?.institutionProgramAttendanceCount),
       },
       {
         title: '등록된 교사 수',
@@ -243,6 +244,7 @@ function columnsForKind(
         title: '강사명',
         dataIndex: 'name',
         key: 'name',
+        width: MEMBER_LIST_FIXED_COLUMN_WIDTH.instructorName,
         ellipsis: true,
         align: 'center',
       },
@@ -264,6 +266,7 @@ function columnsForKind(
       {
         title: 'JA 평가 등급',
         key: 'jaGrade',
+        width: MEMBER_LIST_FIXED_COLUMN_WIDTH.jaGrade,
         align: 'center',
         render: (_: unknown, r: Row) =>
           formatJaEvaluationGradeCellDisplay(r.listMetrics?.jaEvaluationGrade),
@@ -271,6 +274,7 @@ function columnsForKind(
       {
         title: '정산 현황',
         key: 'settlement',
+        width: MEMBER_LIST_FIXED_COLUMN_WIDTH.settlement,
         align: 'center',
         render: (_: unknown, r: Row) =>
           renderInstructorSettlementStatusCell(r.listMetrics?.settlementStatusLabel),
@@ -292,6 +296,7 @@ function columnsForKind(
         title: '관리자명',
         dataIndex: 'name',
         key: 'name',
+        width: MEMBER_LIST_FIXED_COLUMN_WIDTH.adminName,
         ellipsis: true,
         align: 'center',
       },
@@ -313,11 +318,9 @@ function columnsForKind(
       {
         title: '권한 유형',
         key: 'permission',
+        width: MEMBER_LIST_FIXED_COLUMN_WIDTH.adminPermission,
         align: 'center',
-        onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_160_HEADER_CLASSNAME }),
-        onCell: () => ({
-          className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_160_CLASSNAME}`,
-        }),
+        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
         render: (_: unknown, r: Row) => {
           return (
             <AdminPermissionDropdownCell
@@ -335,6 +338,7 @@ function columnsForKind(
       {
         title: '담당 프로그램 수',
         key: 'programCount',
+        width: MEMBER_LIST_FIXED_COLUMN_WIDTH.adminProgramCount,
         align: 'center',
         ellipsis: true,
         render: (_: unknown, r: Row) => formatAdminManagedProgramCountForList(r),
@@ -369,6 +373,8 @@ function columnsForKind(
       title: '이메일',
       dataIndex: 'email',
       key: 'email',
+      /** 전체 회원 목록 시안 — 이메일 열만 300 고정, 나머지 열은 남은 폭 균등 */
+      width: ALL_MEMBER_LIST_EMAIL_COLUMN_WIDTH,
       ellipsis: true,
       align: 'center',
       render: (email: string | undefined) => displayEmail(email, maskListPii),
@@ -428,55 +434,66 @@ export function UserList({
     ]
   )
 
+  const selectionColumnWidth = resolveListSelectionColumnWidth(listKind)
   const { tableWrapRef, tableScrollX } = useContainerFitTableScrollX(
     columns as ColumnsType<unknown>,
     {
       includeSelection: onSelectionChange != null,
-      selectionWidth: TABLE_COLUMN_WIDTHS.checkbox,
+      selectionWidth: selectionColumnWidth,
     }
   )
 
   return (
-    <div ref={tableWrapRef} className="cms-data-table-fit-scroll-wrap">
-    <CmsDataTable
-      className="cms-data-table cms-data-table--fluid cms-data-table--fit-scroll user-list-table"
-      columns={columns}
-      dataSource={data}
-      loading={loading}
-      scroll={tableScrollX != null ? { x: tableScrollX } : undefined}
-      rowKey="id"
-      onRow={
-        onView
-          ? record => ({
-              onClick: (e: React.MouseEvent<HTMLElement>) => {
-                if ((e.target as HTMLElement).closest('.ant-table-selection-column')) return
-                if ((e.target as HTMLElement).closest('.status-dropdown-cell__status-trigger'))
-                  return
-                onView(record)
-              },
-              style: { cursor: 'pointer' },
-            })
+    <div
+      ref={tableWrapRef}
+      className="cms-data-table-fit-scroll-wrap"
+      style={
+        selectionColumnWidth !== TABLE_COLUMN_WIDTHS.checkbox
+          ? ({
+              '--table-selection-column-width': `${selectionColumnWidth}px`,
+            } as CSSProperties)
           : undefined
       }
-      rowSelection={
-        onSelectionChange
-          ? {
-              columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-              selectedRowKeys,
-              preserveSelectedRowKeys: true,
-              onChange: (keys, rows) => onSelectionChange(keys, rows),
-            }
-          : undefined
-      }
-      pagination={
-        pagination
-          ? {
-              ...PAGINATION_CONFIG,
-              showTotal: (total: number) => `총 ${total}명`,
-            }
-          : false
-      }
-    />
+    >
+      <CmsDataTable
+        className="cms-data-table cms-data-table--fit-scroll user-list-table"
+        columns={columns}
+        dataSource={data}
+        loading={loading}
+        scroll={tableScrollX != null ? { x: tableScrollX } : undefined}
+        rowKey="id"
+        onRow={
+          onView
+            ? record => ({
+                onClick: (e: React.MouseEvent<HTMLElement>) => {
+                  if ((e.target as HTMLElement).closest('.ant-table-selection-column')) return
+                  if ((e.target as HTMLElement).closest('.status-dropdown-cell__status-trigger'))
+                    return
+                  onView(record)
+                },
+                style: { cursor: 'pointer' },
+              })
+            : undefined
+        }
+        rowSelection={
+          onSelectionChange
+            ? {
+                columnWidth: selectionColumnWidth,
+                selectedRowKeys,
+                preserveSelectedRowKeys: true,
+                onChange: (keys, rows) => onSelectionChange(keys, rows),
+              }
+            : undefined
+        }
+        pagination={
+          pagination
+            ? {
+                ...PAGINATION_CONFIG,
+                showTotal: (total: number) => `총 ${total}명`,
+              }
+            : false
+        }
+      />
     </div>
   )
 }

@@ -21,8 +21,6 @@ const OPTIONAL_TERMS_ITEMS: TermsItemConfig[] = [
   { key: 'marketingConsent', required: false, label: '마케팅 정보 수신 동의' },
 ]
 
-const TERMS_ITEMS: TermsItemConfig[] = [...REQUIRED_TERMS_ITEMS, ...OPTIONAL_TERMS_ITEMS]
-
 interface RegisterTermsAgreementProps {
   value: ConsentFormData
   onChange: (value: ConsentFormData) => void
@@ -39,15 +37,16 @@ export function RegisterTermsAgreement({
   onMfaSetupAgreedChange,
 }: RegisterTermsAgreementProps) {
   const includesMfaConsent = onMfaSetupAgreedChange != null
-  const allChecked =
-    TERMS_ITEMS.every(item => value[item.key]) && (!includesMfaConsent || mfaSetupAgreed)
+  /** 필수 항목 전체 동의 — 선택(마케팅) 항목은 건드리지 않는다. */
+  const allRequiredChecked =
+    REQUIRED_TERMS_ITEMS.every(item => value[item.key]) && (!includesMfaConsent || mfaSetupAgreed)
 
   const handleAgreeAll = () => {
-    const nextChecked = !allChecked
+    const nextChecked = !allRequiredChecked
     onChange({
+      ...value,
       termsOfService: nextChecked,
       privacyPolicy: nextChecked,
-      marketingConsent: nextChecked,
     })
     if (includesMfaConsent) {
       onMfaSetupAgreedChange(nextChecked)
@@ -64,18 +63,18 @@ export function RegisterTermsAgreement({
         <button
           type="button"
           className="register-terms-agree-all"
-          aria-pressed={allChecked}
+          aria-pressed={allRequiredChecked}
           onClick={handleAgreeAll}
         >
           <span
             className={`register-terms-check register-terms-check--static register-terms-check--agree-all${
-              allChecked ? ' register-terms-check--checked' : ''
+              allRequiredChecked ? ' register-terms-check--checked' : ''
             }`}
             aria-hidden
           >
-            <RegisterTermsAgreeAllCheckIcon checked={allChecked} />
+            <RegisterTermsAgreeAllCheckIcon checked={allRequiredChecked} />
           </span>
-          <span className="register-terms-agree-all__label">전체 동의하기</span>
+          <span className="register-terms-agree-all__label">필수 항목 전체 동의하기</span>
         </button>
 
         <ul className="register-terms-agreement__list">

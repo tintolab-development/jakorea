@@ -86,6 +86,7 @@ import { useSmsSendForm } from './use-form'
 import '@/features/notifications/ui/shared/notification-fullpage-modal.css'
 import '@/features/notifications/ui/mail-send/fullpage-modal.css'
 import './fullpage-modal.css'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 function createIdempotencyKey(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
@@ -389,7 +390,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
 
   function handleDeleteSelected() {
     if (selectedRecipientIds.length === 0) {
-      showAlert({ title: '안내', content: '삭제할 수신자를 선택해 주세요.' })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     form.removeRecipients(selectedRecipientIds)

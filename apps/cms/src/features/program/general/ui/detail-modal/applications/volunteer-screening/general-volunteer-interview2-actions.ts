@@ -8,6 +8,7 @@ import {
 import { buildInterview2ProcessedSelectionAlert } from '@/features/program/general/lib/application-processed-selection-alert'
 import type { ScreeningSubjectKind } from '@/features/program/general/lib/screening-subject-kind'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 /**
  * 선택 합격/불합격 가능 — 면접 종료·평가 완료·최종 결과 미입력 상태.
@@ -90,10 +91,7 @@ export function requestGeneralVolunteerInterview2BulkPass({
   onOpenBulkPass: () => void
 }): void {
   if (selectedIds.length === 0) {
-    cmsAlertModal.show({
-      title: '항목 선택 안내',
-      content: '합격 처리할 항목을 선택해 주세요.',
-    })
+    cmsAlertModal.show(NO_SELECTION_ALERT)
     return
   }
   if (hasProcessedInterview2Selection(selectedRows)) {
@@ -132,10 +130,7 @@ export function requestGeneralVolunteerInterview2BulkFail({
   onOpenBulkFail: () => void
 }): void {
   if (selectedIds.length === 0) {
-    cmsAlertModal.show({
-      title: '항목 선택 안내',
-      content: '불합격 처리할 항목을 선택해 주세요.',
-    })
+    cmsAlertModal.show(NO_SELECTION_ALERT)
     return
   }
   if (hasProcessedInterview2Selection(selectedRows)) {

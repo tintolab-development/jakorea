@@ -1,3 +1,5 @@
+import { getProgramAssignmentRowClass } from '@/features/program/general/lib/assignment-status-presentation'
+import { ProgramAssignmentStatusText } from '@/features/program/shared/ui/program-assignment-status-text'
 /**
  * 신청자 목록 > 신청 기관 상세 — 강사 배정 현황 탭 (API only, mock 없음)
  */
@@ -9,8 +11,7 @@ import type { ColumnsType } from 'antd/es/table'
 import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
 import type { SettlementStatusKey } from '@/features/program/general/model/participating-instructors'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
-import { WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS } from '@/features/program/general/lib/waiting-instructor-assignment'
-import { INSTRUCTOR_ROLE_LABELS, type InstructorRoleKey } from '@/features/program/general/model/school-detail-types'
+import type { InstructorRoleKey } from '@/features/program/general/model/school-detail-types'
 import { shouldUseCompanySchoolApplicationsRemoteApi } from '@/features/program/1c-1s/api/capabilities'
 import { companySchoolQueryKeys } from '@/features/program/1c-1s/api/query-keys'
 import { fetchCompanySchoolAssignmentBoard } from '@/features/program/1c-1s/api/instructor-assignment-conflict-service'
@@ -22,8 +23,8 @@ import {
 } from '@/features/program/1c-1s/lib/build-company-school-assignment-rows'
 import { organizationRequestedSchedulesQueryOptions } from '@/features/program/general/api/organization-requested-schedules-query'
 import { mapRequestedSchedulesToSessions } from '@/features/program/1c-1s/lib/map-requested-schedules'
-import '@/features/program/general/ui/detail-modal/program-status/instructor-assignment-role-tag.css'
-import '@/features/program/general/ui/detail-modal/program-status/instructor-assignment-status-text.css'
+import { StatusTag } from '@/shared/components/status-tag'
+import { getInstructorRoleTag } from '@/shared/lib/status-tag-specs'
 import '@/features/program/general/ui/detail-modal/program-status/school-detail-fullpage-view.css'
 
 function TdDivider() {
@@ -100,17 +101,7 @@ export function ApplicantInstitutionInstructorAssignTab({
         key: 'role',
         width: 100,
         align: 'center',
-        render: (role: InstructorRoleKey) => (
-          <span
-            className={
-              role === 'lead'
-                ? 'school-detail-fullpage-view__role-tag school-detail-fullpage-view__role-tag--lead'
-                : 'school-detail-fullpage-view__role-tag school-detail-fullpage-view__role-tag--assistant'
-            }
-          >
-            {INSTRUCTOR_ROLE_LABELS[role]}
-          </span>
-        ),
+        render: (role: InstructorRoleKey) => <StatusTag {...getInstructorRoleTag(role)} />,
       },
       { title: '강사명', dataIndex: 'instructorName', key: 'instructorName', width: 100 },
       {
@@ -180,8 +171,9 @@ export function ApplicantInstitutionInstructorAssignTab({
         key: 'assignmentStatus',
         width: 100,
         align: 'center',
-        render: (status: CompanySchoolWaitingInstructorRow['assignmentStatus']) =>
-          WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS[status],
+        render: (status: CompanySchoolWaitingInstructorRow['assignmentStatus']) => (
+          <ProgramAssignmentStatusText status={status} context="company-school-applicant" />
+        ),
       },
       {
         title: '희망 일정',
@@ -240,11 +232,7 @@ export function ApplicantInstitutionInstructorAssignTab({
         loading={boardQuery.isFetching || schedulesQuery.isFetching}
         columns={waitingColumns}
         dataSource={waitingRows}
-        rowClassName={record =>
-          record.assignmentStatus === 'unavailable'
-            ? 'school-detail-fullpage-view__waiting-row--unavailable'
-            : ''
-        }
+        rowClassName={record => getProgramAssignmentRowClass(record.assignmentStatus, "company-school-applicant")}
         locale={{ emptyText: '배정 대기 중인 강사가 없습니다.' }}
       />
     </div>

@@ -5,7 +5,9 @@
  * Filtered for CMS logs management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { InstructorOrganizationDistanceResponse } from './instructorOrganizationDistanceResponse';
 import type { InstructorPreferredOrganizationResponse } from './instructorPreferredOrganizationResponse';
+import type { InstructorScheduleDistanceResponse } from './instructorScheduleDistanceResponse';
 
 export interface InstructorApplicationListItemResponse {
   id?: number;
@@ -40,6 +42,10 @@ export interface InstructorApplicationListItemResponse {
   availableScheduleMemo?: string;
   /** 캘린더용 희망 기관·교육 일정. form answer 기반. 없으면 []. */
   preferredOrganizations?: InstructorPreferredOrganizationResponse[];
+  /** 개인형 강사 배정 대기 일정별 편도 거리. GENERAL_INDIVIDUAL이 아니면 []. 산출 불가면 항목의 distanceKm/longDistance는 null. */
+  scheduleDistances?: InstructorScheduleDistanceResponse[];
+  /** 기관형 강사 배정 대기 대상 기관 전체의 편도 거리. 희망 기관만 담는 preferredOrganizations와 다르다. 개인형이면 []. 산출 불가면 항목의 distanceKm/longDistance는 null. */
+  organizationDistances?: InstructorOrganizationDistanceResponse[];
   submittedAt?: string;
   approvedAt?: string;
   rejectedAt?: string;

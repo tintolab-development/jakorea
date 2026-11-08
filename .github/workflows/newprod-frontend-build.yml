@@ -133,6 +133,12 @@ jobs:
           VITE_PLATFORM_NAVER_CLIENT_ID: ${{ secrets.VITE_PLATFORM_NAVER_CLIENT_ID }}
           VITE_HOMEPAGE_API_BASE_URL: ${{ inputs.homepage_api_base_url }}
         run: pnpm --filter platform build
+      - name: Inject site OG tags into Platform index.html
+        if: matrix.app == 'platform' && inputs.homepage_api_base_url != ''
+        env:
+          HOMEPAGE_API_BASE_URL: ${{ inputs.homepage_api_base_url }}
+          PLATFORM_PUBLIC_ORIGIN: ${{ steps.targets.outputs.platform_origin }}
+        run: node apps/platform/scripts/inject-site-og.mjs apps/platform/dist/index.html
       - name: Build Homepage Admin
         if: matrix.app == 'admin' && inputs.homepage_api_base_url != ''
         env:

@@ -61,4 +61,40 @@ describe('mapProgramManagerResponsesToRows', () => {
     expect(rows[1]).toMatchObject({ id: '2', no: 2, name: '후배', role: 'PARTNER' })
     expect(rows[0].phone).toBe('')
   })
+
+  it('maps adminPhone/adminRoleCode from GET …/managers (no /admin-accounts merge)', () => {
+    const [row] = mapProgramManagerResponsesToRows([
+      {
+        id: 1,
+        programId: 99201,
+        adminId: 99101,
+        adminName: 'N1관리자99101',
+        adminEmail: 'n1-99101@example.test',
+        adminStatus: 'ACTIVE',
+        role: 'PM',
+        assignedAt: '2026-01-01T10:00:00Z',
+        primaryManagerYn: true,
+        removableYn: false,
+        adminPhone: '010-****-5678',
+        adminRoleCode: 'MASTER',
+      },
+    ])
+    expect(row).toMatchObject({
+      name: 'N1관리자99101',
+      email: 'n1-99101@example.test',
+      phone: '010-****-5678',
+      cmsRoleCode: 'MASTER',
+      adminId: 99101,
+      removableYn: false,
+      role: 'OWNER',
+    })
+  })
+
+  it('falls back to empty phone and undefined cmsRoleCode when null', () => {
+    const [row] = mapProgramManagerResponsesToRows([
+      { id: 3, adminName: 'x', role: 'VIEWER', adminPhone: null, adminRoleCode: null },
+    ])
+    expect(row.phone).toBe('')
+    expect(row.cmsRoleCode).toBeUndefined()
+  })
 })

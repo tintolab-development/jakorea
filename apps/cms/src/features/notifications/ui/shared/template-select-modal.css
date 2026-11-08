@@ -86,19 +86,6 @@
 }
 
 .send-template-select-modal__table.cms-data-table
-  .ant-table-thead
-  > tr
-  > th.send-template-select-modal__col-actions,
-.send-template-select-modal__table.cms-data-table
-  .ant-table-tbody
-  > tr
-  > td.send-template-select-modal__col-actions {
-  width: 220px !important;
-  min-width: 80px;
-  max-width: 220px !important;
-}
-
-.send-template-select-modal__table.cms-data-table
   .ant-table-tbody
   > tr
   > td.send-template-select-modal__col-actions {

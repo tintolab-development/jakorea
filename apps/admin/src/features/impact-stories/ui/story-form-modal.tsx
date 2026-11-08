@@ -383,6 +383,7 @@ export function StoryFormModal({
                     format: 'HH:mm',
                     minuteStep: 30 as const,
                   }}
+                  showNow={false}
                   format="YYYY.MM.DD HH:mm"
                   value={publishedAt}
                   onChange={v => setPublishedAt(v)}
@@ -423,7 +424,7 @@ export function StoryFormModal({
                   onChange={e => setIsPinned(e.target.value === 'on')}
                 >
                   <CmsRadio size="medium" value="off">
-                    고정 안함
+                    고정 안 함
                   </CmsRadio>
                   <CmsRadio size="medium" value="on">
                     고정

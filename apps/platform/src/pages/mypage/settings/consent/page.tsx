@@ -17,6 +17,7 @@ import {
 } from '@/features/mypage/settings/lib/settings-consent-key'
 import { MypagePortraitConsentWriteForm } from '@/features/mypage/settings/ui/mypage-portrait-consent-write-form'
 import { parseSafeInternalPath } from '@/features/mypage/lib/safe-internal-path'
+import { useListConsentOnWriteEnter } from '@/features/mypage/settings/hooks/use-list-consent-on-write-enter'
 import { parsePortalProgramId } from '@/features/program/api/mappers'
 import {
   markProgramMinorPortraitConsentCompleted,
@@ -51,6 +52,8 @@ export function MypageSettingsConsentPage() {
     routeState?.guardianVerificationToken ??
     routeState?.portraitGuardian?.guardianVerificationToken ??
     routeState?.programMinorPortrait?.guardianVerificationToken
+  const [titleAside, setTitleAside] = useState<ReactNode>(null)
+  useListConsentOnWriteEnter(consentKey, isValidKey && !isView)
 
   useEffect(() => {
     if (!isValidKey) {
@@ -88,7 +91,6 @@ export function MypageSettingsConsentPage() {
     }
     navigate(returnTo)
   }
-  const [titleAside, setTitleAside] = useState<ReactNode>(null)
 
   return (
     <ConsentWriteFormPage

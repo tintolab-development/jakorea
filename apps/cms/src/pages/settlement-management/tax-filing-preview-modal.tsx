@@ -16,6 +16,7 @@ import {
 } from '@/features/settlement-management/api/account-payments/download-issued-export-file'
 import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
+import { showIssueCompletedAlert } from '@/shared/ui/show-issue-completed-alert'
 import {
   TAX_FILING_SHEET_COLUMN_COUNT,
   buildTaxFilingFortuneSheet,
@@ -77,7 +78,7 @@ export function TaxFilingPreviewModal({
               cmsAlertModal.show({
                 title: '다운로드 불가',
                 content:
-                  '세금신고 서버 파일이 아직 준비되지 않았습니다. 목록에서 「세금 신고 양식 발급」을 다시 눌러 주세요.',
+                  '세금신고 서버 파일이 아직 준비되지 않았습니다. 목록에서 「세금신고 양식 발급」을 다시 눌러 주세요.',
               })
               return
             }
@@ -95,6 +96,8 @@ export function TaxFilingPreviewModal({
                 password,
               })
             }
+            // 대량이체 흐름과 동일 — 이번 클릭에서 서버 발급이 일어났으면 다운로드 후 「발급 완료」 안내
+            if (requestedExport) showIssueCompletedAlert()
             return
           }
           if (shouldUseSettlementRemote('accountPayments')) {
@@ -128,7 +131,7 @@ export function TaxFilingPreviewModal({
           notifySettlementExportDownloadError({
             error,
             fallback: '세금신고 파일 다운로드에 실패했습니다.',
-            issueButtonLabel: '세금 신고 양식 발급',
+            issueButtonLabel: '세금신고 양식 발급',
             onAlreadyDownloaded: onCancel,
           })
           throw error
@@ -152,18 +155,18 @@ export function TaxFilingPreviewModal({
       open={open}
       onCancel={onCancel}
       title="세금신고 양식 미리보기"
-      description="계좌 지급 완료 처리된 정산 항목에 한해서 양식에 반영됩니다."
+      description="계좌 지급이 완료 처리된 항목만 양식에 반영됩니다."
       width={1400}
       size="large"
       className="tax-filing-preview-modal"
       footer={
         <>
-          <CmsButton variant="secondary" size="large" onClick={onCancel}>
+          <CmsButton variant="secondary" size="h40" onClick={onCancel}>
             닫기
           </CmsButton>
           <CmsButton
             variant="primary"
-            size="large"
+            size="h40"
             icon={<ButtonDownloadIcon />}
             adminAction="download"
             disabled={

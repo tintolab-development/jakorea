@@ -70,6 +70,12 @@ export type EducationSettlementItem = {
     amount?: number
     evidenceRequired?: boolean | null
   }>
+  /** 개인형 회차 학생 교통비 편도 거리 안내(서버). 신청란 노출은 payableItems 기준 */
+  transportPreview?: {
+    oneWayDistanceKm?: number | null
+    eligible?: boolean
+    ineligibleReason?: string | null
+  } | null
   submitBlockedReason?: string
   deadlineNotice?: SettlementDeadlineNotice
   previousAmount?: number

@@ -3,6 +3,7 @@ import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import { buildInterview2ProcessedSelectionAlert } from '@/features/program/general/lib/application-processed-selection-alert'
 import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import { openUjatVolunteerInterview2BulkPassModal } from './actions'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 vi.mock('@/shared/ui/cms-alert-modal-api', () => ({
   cmsAlertModal: { show: vi.fn() },
@@ -32,10 +33,7 @@ describe('openUjatVolunteerInterview2BulkPassModal', () => {
       selectedRows: [],
       onOpen,
     })
-    expect(cmsAlertModal.show).toHaveBeenCalledWith({
-      title: '항목 선택 안내',
-      content: '합격 처리할 항목을 선택해 주세요.',
-    })
+    expect(cmsAlertModal.show).toHaveBeenCalledWith(NO_SELECTION_ALERT)
     expect(onOpen).not.toHaveBeenCalled()
   })
 

@@ -1,4 +1,5 @@
 import type { LectureAttendanceSession } from '../model/school-detail-types'
+import { isLectureAttendanceCountedAsAttended } from './lecture-attendance-count'
 
 export type StudentCertificateKind = 'completion' | 'participation'
 
@@ -51,7 +52,7 @@ export function resolveStudentCertificateKind(
   if (hasDisqualifyingAbsence) return 'participation'
 
   const completedAllHeldSessions = heldSessions.every(
-    session => session.status === 'attended' || session.status === 'late'
+    session => isLectureAttendanceCountedAsAttended(session.status)
   )
   if (!completedAllHeldSessions) return 'participation'
 

@@ -14,13 +14,18 @@ async function listRemote(filter: TalentDonationApplicationListFilter, page: num
 export async function listTalentDonationApplicationsPageService(filter: TalentDonationApplicationListFilter = {}, page = 0): Promise<AdminListPage<TalentDonationApplication>> {
     return listRemote(filter, page);
 }
+/**
+ * 상세 진입 = 개인정보 원문 조회. 버튼 없이 진입 시 바로 `revealPii=true`로 원문을 받는다.
+ * 열람 기록은 BE가 상세 GET 200마다 남긴다(homepage_admin_audit_log PII_READ · homepage_privacy_access_log) —
+ * FE에서 별도 로그 POST를 하지 않는다. 상세 쿼리는 staleTime/gcTime 0이라 진입할 때마다 GET(=로그 1건).
+ */
 export async function getTalentDonationApplicationService(id: string, actorName?: string): Promise<TalentDonationApplication | null> {
     void actorName;
     const numericId = Number(id);
     if (!Number.isFinite(numericId) || numericId <= 0)
         return null;
     try {
-        const row = await sponsorshipApi().detail7(numericId);
+        const row = await sponsorshipApi().detail7(numericId, { revealPii: true });
         return mapTalentApplicationDetailToDomain(row);
     }
     catch (error) {
