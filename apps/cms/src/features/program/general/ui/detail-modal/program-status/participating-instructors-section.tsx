@@ -62,7 +62,7 @@ import {
   type InstructorSettlementUiStatus,
 } from '@/shared/constants/instructor-settlement-status'
 import { StatusOutlineTag } from '@/shared/components/status-outline-tag'
-import { CMS_TABLE_NO_COL_CLASS } from '@/shared/constants/table'
+import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
 import { ParticipatingInstitutionsCalendarView } from './participating-institutions-calendar-view'
@@ -526,7 +526,7 @@ export function ParticipatingInstructorsSection({
       {
         title: '자택 주소지',
         key: 'homeAddress',
-        width: 160,
+        width: TABLE_COLUMN_WIDTHS.address,
         ellipsis: { showTitle: true },
         className: INSTRUCTOR_ELLIPSIS_CELL_CLASS,
         onHeaderCell: () => ({ className: INSTRUCTOR_ELLIPSIS_CELL_CLASS }),
@@ -603,8 +603,8 @@ export function ParticipatingInstructorsSection({
         title: '이메일',
         dataIndex: 'email',
         key: 'email',
-        width: 220,
-        minWidth: 220,
+        width: TABLE_COLUMN_WIDTHS.email,
+        minWidth: TABLE_COLUMN_WIDTHS.email,
         ellipsis: { showTitle: true },
         className: `${INSTRUCTOR_ELLIPSIS_CELL_CLASS} participating-instructors-section__col-email`,
         onHeaderCell: () => ({

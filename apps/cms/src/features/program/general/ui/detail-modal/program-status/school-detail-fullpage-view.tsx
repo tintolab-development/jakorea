@@ -2096,8 +2096,8 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         title: '담당 교육 진행 일정',
         dataIndex: 'assignedDate',
         key: 'assignedDate',
-        // 유연 열: 넓은 화면에서 남는 폭 흡수
-        minWidth: TABLE_COLUMN_WIDTHS.scheduleMin,
+        // 넓은 화면 남는 폭은 공통 규칙(열 폭 비율)으로 배분 — 일정이 가장 넓어 가장 많이 늘어남
+        width: TABLE_COLUMN_WIDTHS.scheduleMin,
         align: 'center',
         render: (v: string | undefined, record: AssignedInstructorDisplayRow) => {
           if (record.assignedScheduleLine) {
@@ -2163,8 +2163,8 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         title: '교육 진행 희망 일정',
         dataIndex: 'hopeDate',
         key: 'hopeDate',
-        // 유연 열: 넓은 화면에서 남는 폭 흡수
-        minWidth: TABLE_COLUMN_WIDTHS.scheduleMin,
+        // 넓은 화면 남는 폭은 공통 규칙(열 폭 비율)으로 배분 — 일정이 가장 넓어 가장 많이 늘어남
+        width: TABLE_COLUMN_WIDTHS.scheduleMin,
         align: 'center',
         render: (v: string | undefined, record: WaitingInstructorRow) => {
           if (record.hopeScheduleLine) {

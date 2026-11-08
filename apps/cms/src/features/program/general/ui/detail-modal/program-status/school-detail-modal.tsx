@@ -1,3 +1,4 @@
+import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 /**
  * 학교 상세 정보 모달
  * 프로그램 진행현황 > 참여 학교 정보 탭에서 행 클릭 시 노출 (large 모달, 탭: 기본 정보 | 학생 명단)
@@ -305,7 +306,7 @@ export function SchoolDetailModal({
         title: '이메일',
         dataIndex: 'email',
         key: 'email',
-        width: 200,
+        width: TABLE_COLUMN_WIDTHS.email,
         align: 'center',
         ellipsis: true,
       },
@@ -391,7 +392,7 @@ export function SchoolDetailModal({
             {
               title: '이메일',
               key: 'email',
-              width: 200,
+              width: TABLE_COLUMN_WIDTHS.email,
               align: 'center',
               render: (_: unknown, __: unknown, index: number) => (
                 <Controller

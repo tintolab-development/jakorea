@@ -8,6 +8,7 @@ import {
   ADMIN_DATA_TABLE_SELECTION_COLUMN_WIDTH,
   distributeAdminDataTableSurplusWidth,
   ensureAdminDataTableFlexColumn,
+  hasAdminDataTableFlexColumn,
   resolveAdminDataTableColumnsWidth,
 } from './table-min-width.js'
 import './admin-data-table.css'
@@ -77,6 +78,8 @@ export function AdminDataTable<RecordType extends object = object>({
   )
 
   const [overflowMinWidth, setOverflowMinWidth] = useState<number | null>(null)
+  /** 넓은 화면에서 열이 실제로 쓸 수 있는 폭(테이블 테두리·세로 스크롤바 제외) */
+  const [wideAvailableWidth, setWideAvailableWidth] = useState<number | null>(null)
 
   useLayoutEffect(() => {
     const el = tableRef.current?.nativeElement
@@ -97,6 +100,11 @@ export function AdminDataTable<RecordType extends object = object>({
       const width = Math.floor(el.clientWidth)
       if (width <= 0) return
       setOverflowMinWidth(width < minWidth ? minWidth : null)
+      const container = el.querySelector<HTMLElement>('.ant-table-container')
+      const body = el.querySelector<HTMLElement>('.ant-table-body')
+      const scrollbar = body ? Math.max(0, body.offsetWidth - body.clientWidth) : 0
+      const available = Math.floor((container?.clientWidth ?? width) - scrollbar)
+      setWideAvailableWidth(available > 0 ? available : null)
     }
     update()
     const observer = new ResizeObserver(update)
@@ -110,9 +118,16 @@ export function AdminDataTable<RecordType extends object = object>({
   const mergedColumns = useMemo(() => {
     if (!columns) return columns
     if (overflow) return distributeAdminDataTableSurplusWidth(columns, overflowMinWidth - columnsWidth)
-    if (exact) return ensureAdminDataTableFlexColumn(columns)
+    if (exact) {
+      // 유연 열(width 미지정)이 있으면 그 열이 남는 폭 흡수.
+      // 없으면 남는 폭을 본문 열 폭 비율대로 배분(선택·No. 고정) — 한 열만 과도하게 넓어지지 않게
+      if (hasAdminDataTableFlexColumn(columns) || wideAvailableWidth == null) {
+        return ensureAdminDataTableFlexColumn(columns)
+      }
+      return distributeAdminDataTableSurplusWidth(columns, wideAvailableWidth - columnsWidth)
+    }
     return columns
-  }, [overflow, exact, columns, overflowMinWidth, columnsWidth])
+  }, [overflow, exact, columns, overflowMinWidth, columnsWidth, wideAvailableWidth])
   const mergedScroll = overflow ? { ...scroll, x: overflowMinWidth } : scroll
 
   return (
