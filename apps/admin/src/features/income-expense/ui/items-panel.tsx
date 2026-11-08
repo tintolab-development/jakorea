@@ -98,8 +98,8 @@ type DraftRow = {
 type DraftMap = Record<string, DraftRow>
 
 function itemsTitle(section: FinanceSection, view: FinanceViewKind): string {
-  if (section === 'income' && view === 'graph') return '그래프 수입 항목'
-  if (section === 'income' && view === 'table') return '테이블 수입 항목'
+  if (section === 'income' && view === 'graph') return '그래프 수익 항목'
+  if (section === 'income' && view === 'table') return '테이블 수익 항목'
   if (section === 'expense' && view === 'graph') return '지출 그래프 항목'
   return '테이블 지출 항목'
 }
@@ -293,16 +293,14 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
     [createMutation, showAlert]
   )
 
+  // 수정 모드에서도 선택 열을 유지해 열 구성·너비가 조회와 같게 둔다 (QA: 수정 시 선택 열 사라지며 열 너비 변동)
   const rowSelection = useMemo<TableProps<FinanceItem>['rowSelection']>(
-    () =>
-      isEditing
-        ? undefined
-        : {
-            selectedRowKeys,
-            onChange: keys => setSelectedRowKeys(keys),
-            columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-          },
-    [isEditing, selectedRowKeys]
+    () => ({
+      selectedRowKeys,
+      onChange: keys => setSelectedRowKeys(keys),
+      columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+    }),
+    [selectedRowKeys]
   )
 
   const columns = useMemo<ColumnsType<FinanceItem>>(() => {

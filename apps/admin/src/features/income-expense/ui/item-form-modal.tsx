@@ -23,8 +23,8 @@ import './item-form-modal.css'
 
 const MODAL_TITLE: Record<FinanceSection, Record<FinanceViewKind, string>> = {
   income: {
-    graph: '수입총계 그래프 항목 등록',
-    table: '수입총계 테이블 항목 등록',
+    graph: '수익총계 그래프 항목 등록',
+    table: '수익총계 테이블 항목 등록',
   },
   expense: {
     graph: '지출총계 그래프 항목 등록',
@@ -33,7 +33,7 @@ const MODAL_TITLE: Record<FinanceSection, Record<FinanceViewKind, string>> = {
 }
 
 const MODAL_DESCRIPTION =
-  '수입총계 그래프에 신규 등록할 항목의 항목명, 비율 및 금액을 설정해 주세요.'
+  '수익총계 그래프에 신규 등록할 항목의 항목명, 비율 및 금액을 설정해 주세요.'
 
 type ItemFormModalProps = {
   open: boolean

@@ -239,3 +239,13 @@
 .income-expense-table--editing .ant-table-tbody > tr > td .ant-input {
   min-height: 40px;
 }
+
+/* 수정 모드에서도 선택·순서·No. 열은 중앙 정렬 유지 (위 uniform 수정 좌측 정렬 규칙보다 우선) */
+.income-expense-table.income-expense-table--editing .ant-table-thead > tr > th.ant-table-selection-column,
+.income-expense-table.income-expense-table--editing .ant-table-tbody > tr > td.ant-table-selection-column,
+.income-expense-table.income-expense-table--editing .ant-table-thead > tr > th.cms-table-col--sort,
+.income-expense-table.income-expense-table--editing .ant-table-tbody > tr > td.cms-table-col--sort,
+.income-expense-table.income-expense-table--editing .ant-table-thead > tr > th.cms-table-col--no,
+.income-expense-table.income-expense-table--editing .ant-table-tbody > tr > td.cms-table-col--no {
+  text-align: center !important;
+}

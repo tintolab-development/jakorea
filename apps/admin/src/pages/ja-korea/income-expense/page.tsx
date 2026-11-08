@@ -11,7 +11,7 @@ import { CmsTextTabs } from '@/shared/ui'
 import './page.css'
 
 const SECTION_ITEMS = [
-  { key: 'income' as const, label: '수입총계' },
+  { key: 'income' as const, label: '수익총계' },
   { key: 'expense' as const, label: '지출총계' },
 ]
 
@@ -69,7 +69,7 @@ export function IncomeExpensePage() {
     [setSearchParams]
   )
 
-  const pageTitle = section === 'income' ? '수입총계 관리' : '지출총계 관리'
+  const pageTitle = section === 'income' ? '수익총계 관리' : '지출총계 관리'
 
   return (
     <div className="income-expense-page">
@@ -78,7 +78,7 @@ export function IncomeExpensePage() {
         activeKey={section}
         onChange={handleSectionChange}
         items={SECTION_ITEMS}
-        ariaLabel="수입 지출 탭"
+        ariaLabel="수익 지출 탭"
         className="income-expense-page__tabs income-expense-page__tabs--section"
       />
 
