@@ -43,6 +43,9 @@ export type AssignableManagerCandidate = {
   cmsRoleCode?: string
 }
 
+/** GET /api/admin/admin-accounts 서버 size 상한 */
+const ADMIN_ACCOUNTS_LIST_MAX_PAGE_SIZE = 100
+
 const EMPTY_MANAGERS_LIST_FILTERS: ProgramManagersUiFilters = Object.freeze({})
 
 export function useProgramManagers(
@@ -82,8 +85,10 @@ export function useProgramManagers(
   const candidatesQuery = useQuery({
     queryKey: generalProgramQueryKeys.managerCandidates(),
     queryFn: async (): Promise<AssignableManagerCandidate[]> => {
-      const adminItems = await fetchAllApiPages((page, size) =>
-        fetchAdminsPageRemote({ page, size, status: 'ACTIVE' })
+      // GET /admin-accounts는 size 최대 100을 받는다(서버 Math.min(size, 100)) — 20건씩 순차 조회하지 않는다.
+      const adminItems = await fetchAllApiPages(
+        (page, size) => fetchAdminsPageRemote({ page, size, status: 'ACTIVE' }),
+        { pageSize: ADMIN_ACCOUNTS_LIST_MAX_PAGE_SIZE }
       )
       return adminItems
         .filter(item => item.adminAccountId != null && item.name?.trim())
