@@ -109,21 +109,57 @@
   max-height: none;
 }
 
-/* 월간 뷰: 요일 행 (SUN, MON, …) — CalendarMain 공통 (3열·split-card 동일) */
+/*
+ * 월간 뷰: 요일 행 (일요일, 월요일, …) — CalendarMain 공통 (3열·split-card 동일).
+ * Figma 16128:2 — Pretendard SemiBold 16 · 130% · #85969d, 그리드까지 8px.
+ * 라벨은 month-view.tsx `locale.lang.shortWeekDays` (전역 dayjs locale 미사용).
+ */
 .calendar-main
   .ant-picker-calendar-mini
   .ant-picker-content
   thead
   th {
-  padding: 12px 0 8px 0;
+  padding: 0 0 8px 0;
   color: var(--gray-85969-d, #85969d);
   text-align: center;
   font-family: Pretendard, sans-serif;
   font-size: 16px;
   font-style: normal;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 130%;
   text-transform: uppercase;
+}
+
+/*
+ * 월간 뷰: antd Calendar는 항상 6행 — 해당 월에 필요한 주만 표시 (`data-month-week-rows`, calendar-main.tsx).
+ * 숨긴 행 앞의 마지막 표시 행은 tbody 외곽선과 겹치지 않게 하단 선 제거.
+ */
+.calendar-main[data-month-week-rows='4']
+  .ant-picker-calendar-mini
+  .ant-picker-content
+  tbody
+  tr:nth-child(n + 5),
+.calendar-main[data-month-week-rows='5']
+  .ant-picker-calendar-mini
+  .ant-picker-content
+  tbody
+  tr:nth-child(n + 6) {
+  display: none;
+}
+
+.calendar-main[data-month-week-rows='4']
+  .ant-picker-calendar-mini
+  .ant-picker-content
+  tbody
+  tr:nth-child(4)
+  td,
+.calendar-main[data-month-week-rows='5']
+  .ant-picker-calendar-mini
+  .ant-picker-content
+  tbody
+  tr:nth-child(5)
+  td {
+  border-bottom: none;
 }
 
 .calendar-mini .ant-picker-calendar .ant-picker-panel .ant-picker-body {

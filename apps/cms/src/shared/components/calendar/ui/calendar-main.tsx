@@ -42,6 +42,7 @@ import {
   syncViewAnchorOnModeChange,
   type CalendarViewMode,
 } from '../lib/calendar-navigation'
+import { countMiniCalendarWeekRows } from '../lib/calendar-mini-layout'
 
 export type { CalendarMainEventInput } from '../model/calendar-main-event-input'
 
@@ -171,7 +172,7 @@ function useCalendarNavigation({
   const headerTitle =
     mode === 'week'
       ? resolveWeekViewHeaderTitle(selectedDate, weekDates)
-      : currentMonth.format('YYYY.MM')
+      : currentMonth.format('YYYY. MM')
 
   return { handleToday, handlePrev, handleNext, headerTitle }
 }
@@ -423,6 +424,9 @@ export const CalendarMain = forwardRef<HTMLDivElement, CalendarMainProps>(
       ]
     )
 
+    /** 월간: antd Calendar는 항상 6행 — 해당 월에 필요한 주(4~6)만 CSS로 표시 */
+    const monthWeekRows = useMemo(() => countMiniCalendarWeekRows(currentMonth), [currentMonth])
+
     const weekTimeGrid = (
       <WeekView
         weekDates={weekDates}
@@ -439,7 +443,11 @@ export const CalendarMain = forwardRef<HTMLDivElement, CalendarMainProps>(
     )
 
     return (
-      <div ref={ref} className={['calendar-main', className].filter(Boolean).join(' ')}>
+      <div
+        ref={ref}
+        className={['calendar-main', className].filter(Boolean).join(' ')}
+        data-month-week-rows={mode === 'month' ? monthWeekRows : undefined}
+      >
         {!hideHeader && (
           <CalendarHeader
             headerTitle={headerTitle}
