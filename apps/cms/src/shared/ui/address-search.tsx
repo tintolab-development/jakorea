@@ -297,7 +297,7 @@ export function AddressSearch({
         zIndex={modalZIndex}
       >
         <div className="address-search__body">
-          <Flex className="address-search__search-row" gap={10} align="center">
+          <Flex className="address-search__search-row" gap={8} align="center">
             <span className="address-search__search-input-wrap">
               <CmsInput
                 value={keyword}
@@ -313,7 +313,7 @@ export function AddressSearch({
                 }}
                 onPressEnter={() => void runSearch(1)}
                 placeholder={MODAL_SEARCH_PLACEHOLDER}
-                inputSize="large"
+                inputSize="medium"
                 width="100%"
                 error={Boolean(keywordValidationError)}
                 message={keywordValidationError ?? undefined}
@@ -331,7 +331,6 @@ export function AddressSearch({
                           onClick={() => handleSelect(item)}
                         >
                           {highlightKeyword(label, keyword)}
-                          {item.zipNo ? ` (${item.zipNo})` : ''}
                         </button>
                       </li>
                     )
@@ -342,8 +341,9 @@ export function AddressSearch({
             <CmsButton
               type="button"
               variant="primary"
-              size="large"
-              onClick={() => void runSearch(1)} >
+              size="medium"
+              onClick={() => void runSearch(1)}
+            >
               검색
             </CmsButton>
           </Flex>
@@ -491,7 +491,10 @@ export function AddressSearch({
                   </p>
                 </div>
                 <div className="address-search__result-empty" role="status">
-                  {'검색 결과가 없습니다.\n검색어를 확인한 후 다시 시도해 주세요.'}
+                  <p className="address-search__result-empty-title">검색 결과가 없습니다</p>
+                  <p className="address-search__result-empty-description">
+                    검색 조건 및 검색어를 확인한 후 다시 시도해 주세요.
+                  </p>
                 </div>
               </>
             ) : null}
