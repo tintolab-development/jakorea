@@ -362,6 +362,7 @@ export function GeminiApprovedTrainingList() {
           </>
         }
         excelExport={{
+          accessLog: { downloadKind: 'GEMINI_APPROVED_TRAINING_LIST_EXPORT', containedPiiTypes: ['NAME'] },
           columns: GEMINI_APPROVED_TRAINING_EXCEL_COLUMNS,
           data: excelRows,
           selectedRowKeys: canWrite ? selectedRowKeys : undefined,

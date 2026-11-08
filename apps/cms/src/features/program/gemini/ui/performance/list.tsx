@@ -39,6 +39,8 @@ import {
   GEMINI_PERFORMANCE_OVERWRITE_DONE_TITLE,
   GEMINI_PERFORMANCE_REGISTER_BLOCKED_MESSAGE,
   GEMINI_PERFORMANCE_REGISTER_BLOCKED_TITLE,
+  GEMINI_PERFORMANCE_UPLOAD_FAILED_MESSAGE,
+  GEMINI_PERFORMANCE_UPLOAD_FAILED_TITLE,
 } from '../../lib/performance/import-popup-copy'
 import { useGeminiPerformanceRows } from '../../hooks/use-gemini-performance-rows'
 import {
@@ -54,7 +56,15 @@ import type {
 import type { GeminiTrainingReportImportRow } from '@/shared/api/generated/dashboard/schemas/geminiTrainingReportImportRow'
 import { UploadDuplicateModal } from './upload-duplicate-modal'
 import { GeminiImportPreviewFailureError } from '../../lib/performance/import-preview-failure'
-import { summarizeGeminiImportFailure } from '../../lib/performance/import-failure-log'
+import {
+  isGeminiImportAuthFailure,
+  isGeminiImportTransientFailure,
+  summarizeGeminiImportFailure,
+} from '../../lib/performance/import-failure-log'
+import {
+  isGlobalApiErrorAlertShown,
+  showGlobalApiErrorAlert,
+} from '@/shared/lib/show-global-api-error-alert'
 import '@/pages/programs/program-list-page.css'
 import '../page.css'
 import './list.css'
@@ -191,6 +201,21 @@ export function GeminiPerformanceList() {
         showAlert({
           title: GEMINI_PERFORMANCE_INSTRUCTOR_MISMATCH_TITLE,
           content: GEMINI_PERFORMANCE_INSTRUCTOR_MISMATCH_MESSAGE,
+        })
+        return
+      }
+      // 공통 인터셉터가 이미 오류 Alert를 띄웠으면(예: 모집 공고 조회 실패) 중복으로 띄우지 않는다.
+      if (isGlobalApiErrorAlertShown(error)) return
+      // preview·import는 공통 Alert를 끄므로 로그인·권한 오류는 공통 안내를 직접 띄운다.
+      if (isGeminiImportAuthFailure(error)) {
+        showGlobalApiErrorAlert(error)
+        return
+      }
+      // 서버·네트워크 실패는 파일 문제가 아니므로 업로드 실패 안내를 띄운다(기능정의 0837).
+      if (isGeminiImportTransientFailure(error)) {
+        showAlert({
+          title: GEMINI_PERFORMANCE_UPLOAD_FAILED_TITLE,
+          content: GEMINI_PERFORMANCE_UPLOAD_FAILED_MESSAGE,
         })
         return
       }
@@ -518,6 +543,7 @@ export function GeminiPerformanceList() {
           ) : null
         }
         excelExport={{
+          accessLog: { downloadKind: 'GEMINI_TRAINING_PERFORMANCE_EXPORT', containedPiiTypes: ['NAME'] },
           columns,
           data: allRows,
           selectedRowKeys: showBulkDelete ? selectedRowKeys : undefined,

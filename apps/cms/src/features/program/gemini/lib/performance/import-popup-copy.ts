@@ -32,3 +32,8 @@ export const GEMINI_PERFORMANCE_DELETE_BLOCKED_TITLE = '실적 삭제 불가 안
 
 export const GEMINI_PERFORMANCE_DELETE_BLOCKED_MESSAGE =
   '선택한 실적 중 이미 지급조서 확인이 끝난 건이 포함되어 있습니다.\n지급조서 확인 또는 계좌 지급이 완료된 항목은 삭제할 수 없습니다.'
+
+export const GEMINI_PERFORMANCE_UPLOAD_FAILED_TITLE = '업로드 실패 안내'
+
+export const GEMINI_PERFORMANCE_UPLOAD_FAILED_MESSAGE =
+  '파일을 업로드하지 못했습니다.\n잠시 후 다시 시도해 주세요.'

@@ -452,6 +452,7 @@ export function GeminiInstitutionApplicationTab({
         title="참여 기관 신청 목록"
         description={`총 ${(remoteQuery.data?.pages[0]?.totalElements ?? filteredRows.length).toLocaleString()}건`}
         excelExport={{
+          accessLog: { downloadKind: 'PROGRAM_INSTITUTION_APPLICATION_EXPORT', containedPiiTypes: ['NAME'] },
           columns,
           data: filteredRows,
           selectedRowKeys: canWrite ? selectedRowKeys : undefined,

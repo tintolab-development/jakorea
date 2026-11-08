@@ -10,6 +10,7 @@ const GEMINI_INSTRUCTOR_FAILURE_CODES = [
   'GEMINI_INSTRUCTOR_IDENTITY_MISMATCH',
   'GEMINI_INSTRUCTOR_MATCH_AMBIGUOUS',
   'GEMINI_INSTRUCTOR_NAME_AND_PHONE_REQUIRED',
+  'GEMINI_INSTRUCTOR_PHONE_INVALID',
 ] as const
 
 export type GeminiImportPreviewFailureKind = 'INSTRUCTOR_INFO_MISMATCH' | 'GENERAL'
@@ -35,6 +36,15 @@ export function hasGeminiInstructorInfoMismatchFailures(
 }
 
 function describeFailure(message: string): string {
+  if (message.includes('GEMINI_TRAINING_REPORT_DUPLICATE_IN_FILE')) {
+    // BE가 메시지 끝에 「(N행과 중복)」으로 먼저 나온 행 번호를 붙인다.
+    const origin = /\((\d+)행과 중복\)/.exec(message)?.[0]
+    const base = '같은 파일 안에 프로그램·강사·교육일·시작시간·장소가 같은 행이 있습니다.'
+    return origin ? `${base} ${origin}` : base
+  }
+  if (message.includes('GEMINI_INSTRUCTOR_PHONE_INVALID')) {
+    return '강사 연락처 형식이 올바르지 않습니다. (예: 010-0000-0000)'
+  }
   if (message.includes('GEMINI_TRAINING_END_TIME_NOT_AFTER_START')) {
     return '종료 시각이 시작 시각보다 늦어야 합니다.'
   }

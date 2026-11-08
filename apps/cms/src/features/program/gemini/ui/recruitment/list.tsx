@@ -312,6 +312,7 @@ export function GeminiRecruitmentList() {
           </>
         }
         excelExport={{
+          accessLog: { downloadKind: 'GEMINI_RECRUITMENT_LIST_EXPORT', containedPiiTypes: [] },
           columns,
           data: tableData,
           selectedRowKeys: canWrite ? selectedRowKeys : undefined,

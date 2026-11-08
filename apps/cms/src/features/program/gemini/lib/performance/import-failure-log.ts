@@ -1,4 +1,4 @@
-import { isAxiosError } from 'axios'
+import { isAxiosError, type AxiosError } from 'axios'
 import type { ApiErrorEnvelope } from '@/shared/lib/extract-api-error-message'
 import { GeminiImportPreviewFailureError } from './import-preview-failure'
 
@@ -35,4 +35,24 @@ export function summarizeGeminiImportFailure(error: unknown): GeminiImportFailur
     kind: 'UNKNOWN',
     message: error instanceof Error ? error.message : String(error),
   }
+}
+
+const TRANSIENT_HTTP_STATUSES = new Set([408, 429])
+
+/**
+ * 서버·네트워크 문제로 업로드가 실패했는지 판정한다(기능정의 0837).
+ * 응답이 없거나(네트워크) 5xx·408·429이면 파일 문제가 아니므로 양식 불일치로 안내하지 않는다.
+ */
+export function isGeminiImportTransientFailure(error: unknown): boolean {
+  if (!isAxiosError(error)) return false
+  const status = error.response?.status
+  if (status == null) return true
+  return status >= 500 || TRANSIENT_HTTP_STATUSES.has(status)
+}
+
+/** 로그인·권한 오류는 업로드 실패가 아니라 공통 안내(로그인 만료·권한 없음)로 처리한다. */
+export function isGeminiImportAuthFailure(error: unknown): error is AxiosError {
+  if (!isAxiosError(error)) return false
+  const status = error.response?.status
+  return status === 401 || status === 403
 }
