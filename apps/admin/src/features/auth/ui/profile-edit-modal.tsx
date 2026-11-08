@@ -14,6 +14,7 @@ import {
   updateCmsAdminIdentityContact,
   updateCmsAdminMarketingConsent,
   withdrawCmsAdminSelf,
+  type CmsAdminMarketingConsentResponse,
   type CmsAdminMeResponse,
   type CmsAdminTermsAgreement,
 } from '@/features/auth/api/cms-admin-me'
@@ -42,7 +43,6 @@ type Props = {
   onCancel: () => void
 }
 
-type MarketingConsentValue = 'agree' | 'disagree'
 type TermsKind = 'SERVICE_TERMS' | 'PERSONAL_INFO' | 'MARKETING' | 'MFA_SETUP'
 
 const ADMIN_MARKETING_CONSENT_WITHDRAW_CONFIRM = {
@@ -54,6 +54,34 @@ const ADMIN_MARKETING_CONSENT_WITHDRAW_CONFIRM = {
   ].join('\n'),
   confirmText: '철회하기',
   cancelText: '취소',
+}
+
+const ADMIN_MARKETING_CONSENT_AGREE_DONE_TITLE = '동의 완료'
+
+function formatConsentDoneDate(iso?: string): string {
+  const parsed = iso?.trim() ? dayjs(iso) : dayjs()
+  return (parsed.isValid() ? parsed : dayjs()).format('YYYY.MM.DD')
+}
+
+/** 동의 완료 안내 — 동의일은 응답 agreedAt(없으면 오늘) 기준 YYYY.MM.DD */
+function buildMarketingAgreeDoneContent(agreedAt?: string): string {
+  return [
+    '마케팅 정보 수신 동의가 완료되었습니다.',
+    '수신 동의는 [내 정보 확인]에서 언제든지 철회할 수 있습니다.',
+    `동의일 : ${formatConsentDoneDate(agreedAt)}`,
+  ].join('\n')
+}
+
+const ADMIN_MARKETING_CONSENT_WITHDRAW_DONE_TITLE = '동의 철회 완료'
+
+/** 동의 철회 완료 안내 — 철회일은 응답 withdrawnAt(없으면 오늘) 기준 YYYY.MM.DD */
+function buildMarketingWithdrawDoneContent(withdrawnAt?: string): string {
+  const date = formatConsentDoneDate(withdrawnAt)
+  return [
+    '마케팅 정보 수신 동의가 철회되었습니다.',
+    '홍보 안내를 받으시려면 [내 정보 확인]에서 다시 동의해 주세요.',
+    `동의 철회일 : ${date}`,
+  ].join('\n')
 }
 
 const TERMS_TYPE_TO_KIND: Record<string, TermsKind> = {
@@ -175,27 +203,30 @@ function ProfileFieldWithAction({
   onAction: () => void
   actionDisabled?: boolean
   actionLoading?: boolean
+  /** 버튼 뒤 부가 정보 — 구분선 없이 16px 간격 (Figma 8193:140673 마케팅 동의 일시) */
   trailing?: ReactNode
 }) {
   return (
-    <ProfileValueSegments>
-      {[
-        <span key="value">{value}</span>,
-        <CmsButton
-          key="action"
-          variant="secondary"
-          size="h32"
-          className="profile-edit-modal__field-action-btn"
-          type="button"
-          disabled={actionDisabled}
-          loading={actionLoading}
-          onClick={onAction}
-        >
-          {actionLabel}
-        </CmsButton>,
-        trailing ?? null,
-      ]}
-    </ProfileValueSegments>
+    <span className="profile-edit-modal__field-with-action">
+      <ProfileValueSegments>
+        {[
+          <span key="value">{value}</span>,
+          <CmsButton
+            key="action"
+            variant="secondary"
+            size="h32"
+            className="profile-edit-modal__field-action-btn"
+            type="button"
+            disabled={actionDisabled}
+            loading={actionLoading}
+            onClick={onAction}
+          >
+            {actionLabel}
+          </CmsButton>,
+        ]}
+      </ProfileValueSegments>
+      {trailing}
+    </span>
   )
 }
 
@@ -236,10 +267,12 @@ export function ProfileEditModal({ open, onCancel }: Props) {
   const [withdrawPassword, setWithdrawPassword] = useState('')
   const [passwordChangeModalOpen, setPasswordChangeModalOpen] = useState(false)
   const [withdrawing, setWithdrawing] = useState(false)
-  const [marketingConsent, setMarketingConsent] = useState<MarketingConsentValue>('disagree')
+  const [marketingAgreed, setMarketingAgreed] = useState(false)
   const [marketingAgreedAt, setMarketingAgreedAt] = useState('-')
   const [marketingConsentUpdating, setMarketingConsentUpdating] = useState(false)
   const [marketingWithdrawConfirmOpen, setMarketingWithdrawConfirmOpen] = useState(false)
+  /** 철회 성공 후 안내 팝업이 닫힌 뒤 띄울 완료 안내(withdrawnAt) — 팝업 전환 겹침 방지 */
+  const pendingWithdrawDoneRef = useRef<{ withdrawnAt?: string } | null>(null)
   const identityVerifyAttemptRef = useRef(false)
 
   const handleIdentitySuccess = useCallback(
@@ -307,7 +340,7 @@ export function ProfileEditModal({ open, onCancel }: Props) {
         if (cancelled) return
         setMe(next)
         const marketing = resolveTermsAgreement(next.termsAgreements, 'MARKETING')
-        setMarketingConsent(marketing.agreed ? 'agree' : 'disagree')
+        setMarketingAgreed(marketing.agreed)
         setMarketingAgreedAt(marketing.agreedAtDisplay)
       } catch (error) {
         if (cancelled) return
@@ -327,37 +360,45 @@ export function ProfileEditModal({ open, onCancel }: Props) {
     onCancel()
   }
 
-  const applyMarketingConsentChange = async (next: MarketingConsentValue): Promise<boolean> => {
-    if (next === marketingConsent || marketingConsentUpdating) return false
+  /** 마케팅 정보 수신 동의 변경 — PUT /api/admin/me/marketing-consent */
+  const applyMarketingConsentChange = async (
+    agree: boolean
+  ): Promise<CmsAdminMarketingConsentResponse | null> => {
+    if (agree === marketingAgreed || marketingConsentUpdating) return null
     setMarketingConsentUpdating(true)
     try {
       const version = await resolveMarketingConsentVersion(me?.termsAgreements)
-      const response = await updateCmsAdminMarketingConsent({
-        agreed: next === 'agree',
-        version,
-      })
+      const response = await updateCmsAdminMarketingConsent({ agreed: agree, version })
       const agreed = response.agreed === true
-      setMarketingConsent(agreed ? 'agree' : 'disagree')
+      setMarketingAgreed(agreed)
       setMarketingAgreedAt(agreed ? formatTermsAgreedAt(response.agreedAt) : '-')
-      return true
+      return response
     } catch (error) {
       showAlert({
         title: '마케팅 동의 변경 실패',
-        content: readApiErrorMessage(error) ?? '마케팅 제공 동의를 변경하지 못했습니다.',
+        content: readApiErrorMessage(error) ?? '마케팅 정보 수신 동의를 변경하지 못했습니다.',
       })
-      return false
+      return null
     } finally {
       setMarketingConsentUpdating(false)
     }
   }
 
-  const handleMarketingChange = (next: MarketingConsentValue) => {
-    if (next === marketingConsent || marketingConsentUpdating) return
-    if (next === 'disagree' && marketingConsent === 'agree') {
+  /** 미동의 → 즉시 동의, 동의 → 철회 확인 모달 */
+  const handleMarketingAction = () => {
+    if (marketingConsentUpdating) return
+    if (marketingAgreed) {
       setMarketingWithdrawConfirmOpen(true)
       return
     }
-    void applyMarketingConsentChange(next)
+    void (async () => {
+      const response = await applyMarketingConsentChange(true)
+      if (!response) return
+      showAlert({
+        title: ADMIN_MARKETING_CONSENT_AGREE_DONE_TITLE,
+        content: buildMarketingAgreeDoneContent(response.agreedAt),
+      })
+    })()
   }
 
   const handleWithdraw = async () => {
@@ -389,7 +430,6 @@ export function ProfileEditModal({ open, onCancel }: Props) {
   const serviceTerms = resolveTermsAgreement(me?.termsAgreements, 'SERVICE_TERMS')
   const personalInfoTerms = resolveTermsAgreement(me?.termsAgreements, 'PERSONAL_INFO')
   const mfaSetupTerms = resolveTermsAgreement(me?.termsAgreements, 'MFA_SETUP')
-  const marketingAgreed = marketingConsent === 'agree'
   const permissionLabel = me?.roleName?.trim() || formatAdminGnbRoleLabel(me?.roleCode)
   const phone = me?.phone?.trim() ? formatKoreanPhoneNumber(me.phone) : '-'
 
@@ -403,7 +443,7 @@ export function ProfileEditModal({ open, onCancel }: Props) {
           setWithdrawModalOpen(true)
         }}
       >
-        회원탈퇴
+        회원 탈퇴
       </button>
       <div className="profile-edit-modal__footer-actions">
         <CmsButton variant="default" size="medium" type="button" onClick={handleCancel}>
@@ -512,7 +552,7 @@ export function ProfileEditModal({ open, onCancel }: Props) {
             <DetailInfoForm.Row type="double" className="profile-edit-modal__row">
               <DetailInfoForm.Field
                 labelWidth={180}
-                label="서비스 이용약관"
+                label="서비스 이용약관 동의"
                 readOnlyDisplay
                 view={consentReadonlyContent(serviceTerms.agreed, serviceTerms.agreedAtDisplay)}
               />
@@ -529,7 +569,7 @@ export function ProfileEditModal({ open, onCancel }: Props) {
 
             <DetailInfoForm.Row type="double" className="profile-edit-modal__row">
               <DetailInfoForm.Field
-                label="마케팅 제공 동의"
+                label="마케팅 정보 수신 동의"
                 labelWidth={180}
                 readOnlyDisplay
                 view={
@@ -538,9 +578,7 @@ export function ProfileEditModal({ open, onCancel }: Props) {
                     actionLabel={marketingAgreed ? '동의 철회' : '동의하기'}
                     actionDisabled={marketingConsentUpdating}
                     actionLoading={marketingConsentUpdating && !marketingWithdrawConfirmOpen}
-                    onAction={() =>
-                      handleMarketingChange(marketingAgreed ? 'disagree' : 'agree')
-                    }
+                    onAction={handleMarketingAction}
                     trailing={
                       marketingAgreed && marketingAgreedAt !== '-' ? (
                         <ConsentDatetime value={marketingAgreedAt} />
@@ -570,8 +608,9 @@ export function ProfileEditModal({ open, onCancel }: Props) {
         title="회원 탈퇴 안내"
         description={[
           'JA KOREA 서비스를 탈퇴하시겠습니까?',
-          '탈퇴 시 개인정보는 관련 법령 및 당사의 개인정보 처리방침에 따라 삭제∙처리됩니다.',
-          '삭제된 정보는 복구할 수 없습니다. 탈퇴하시려면 로그인 비밀번호를 입력해 주세요.',
+          '탈퇴 시 개인정보는 관련 법령 및 개인정보처리방침에 따라 삭제·처리되며,',
+          '수료증 재발급 등 로그인이 필요한 서비스를 이용할 수 없습니다.',
+          '삭제된 정보는 복구할 수 없습니다. 탈퇴하시려면 계정 비밀번호를 입력해 주세요.',
         ].join('\n')}
         width={600}
         zIndex={2600}
@@ -610,7 +649,7 @@ export function ProfileEditModal({ open, onCancel }: Props) {
           type="password"
           value={withdrawPassword}
           onChange={e => setWithdrawPassword(e.target.value)}
-          placeholder="현재 비밀번호를 입력해 주세요"
+          placeholder="현재 사용 중인 비밀번호를 입력해 주세요"
           autoComplete="current-password"
         />
       </ContentModal>
@@ -623,8 +662,10 @@ export function ProfileEditModal({ open, onCancel }: Props) {
         cancelText={ADMIN_MARKETING_CONSENT_WITHDRAW_CONFIRM.cancelText}
         onConfirm={() => {
           void (async () => {
-            const succeeded = await applyMarketingConsentChange('disagree')
-            if (succeeded) setMarketingWithdrawConfirmOpen(false)
+            const response = await applyMarketingConsentChange(false)
+            if (!response) return
+            pendingWithdrawDoneRef.current = { withdrawnAt: response.withdrawnAt }
+            setMarketingWithdrawConfirmOpen(false)
           })()
         }}
         onCancel={() => {
@@ -633,6 +674,15 @@ export function ProfileEditModal({ open, onCancel }: Props) {
         }}
         confirmLoading={marketingConsentUpdating}
         zIndex={2600}
+        afterOpenChange={isOpen => {
+          const pending = pendingWithdrawDoneRef.current
+          if (isOpen || !pending) return
+          pendingWithdrawDoneRef.current = null
+          showAlert({
+            title: ADMIN_MARKETING_CONSENT_WITHDRAW_DONE_TITLE,
+            content: buildMarketingWithdrawDoneContent(pending.withdrawnAt),
+          })
+        }}
       />
     </ContentModal>
   )

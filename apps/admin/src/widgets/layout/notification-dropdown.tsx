@@ -4,7 +4,7 @@
  */
 
 import { useMemo, useState } from 'react'
-import { Spin, Typography } from 'antd'
+import { Empty, Spin, Typography } from 'antd'
 import { CmsButton } from '@/shared/ui'
 import './notification-dropdown.css'
 
@@ -13,6 +13,7 @@ const { Text } = Typography
 export type NotificationCategoryKey =
   | 'all'
   | 'matching'
+  | 'progress'
   | 'settlement'
   | 'inquiry'
   | 'schedule'
@@ -20,7 +21,7 @@ export type NotificationCategoryKey =
 
 export type HeaderNotification = {
   id: string
-  type: Exclude<NotificationCategoryKey, 'all' | 'inquiry'>
+  type: Exclude<NotificationCategoryKey, 'all' | 'inquiry' | 'progress'>
   message: string
   createdAt: string
   read: boolean
@@ -33,6 +34,7 @@ export type NotificationDropdownStatus = 'ready' | 'loading' | 'error' | 'forbid
 const CATEGORIES: { key: NotificationCategoryKey; label: string }[] = [
   { key: 'all', label: '전체' },
   { key: 'matching', label: '신청·매칭' },
+  { key: 'progress', label: '프로그램 진행' },
   { key: 'settlement', label: '정산' },
   { key: 'inquiry', label: '문의' },
   { key: 'schedule', label: '업데이트' },
@@ -49,6 +51,18 @@ const TYPE_TO_CATEGORY: Record<HeaderNotification['type'], NotificationCategoryK
 function getCategoryLabel(type: HeaderNotification['type']): string {
   const key = TYPE_TO_CATEGORY[type]
   return CATEGORIES.find(c => c.key === key)?.label ?? '알림'
+}
+
+function NotificationReadBadge({ read }: { read: boolean }) {
+  return (
+    <span
+      className={`notification-dropdown-item-badge${
+        read ? ' notification-dropdown-item-badge--read' : ''
+      }`}
+    >
+      {read ? '읽음' : '읽지 않음'}
+    </span>
+  )
 }
 
 function formatNotificationDate(iso: string): string {
@@ -78,7 +92,7 @@ export function NotificationDropdown({
     const base =
       category === 'all'
         ? notifications
-        : category === 'inquiry'
+        : category === 'inquiry' || category === 'progress'
           ? []
           : notifications.filter(n => n.type === category)
 
@@ -97,13 +111,26 @@ export function NotificationDropdown({
     <div className="notification-dropdown-panel">
       <div className="notification-dropdown-header">
         {CATEGORIES.map(({ key, label }) => (
-          <CmsButton
+          <button
             key={key}
-            variant={key === category ? 'primary' : 'default'}
-            size="small" className={`notification-dropdown-category-btn ${key === category ? 'notification-dropdown-category-btn--active' : ''}`}
-            onClick={() => setCategory(key)} >
+            type="button"
+            role="tab"
+            aria-selected={key === category}
+            className={`notification-dropdown-tab${
+              key === category ? ' notification-dropdown-tab--active' : ''
+            }`}
+            onClick={event => {
+              setCategory(key)
+              // 가로 스크롤 탭 — 선택한 탭이 잘리지 않도록 보이는 영역으로 이동
+              event.currentTarget.scrollIntoView({
+                block: 'nearest',
+                inline: 'nearest',
+                behavior: 'smooth',
+              })
+            }}
+          >
             {label}
-          </CmsButton>
+          </button>
         ))}
       </div>
       <div className="notification-dropdown-body">
@@ -123,7 +150,14 @@ export function NotificationDropdown({
             ) : null}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="notification-dropdown-empty">알림이 없습니다</div>
+          <div className="notification-dropdown-empty">
+            {/* CMS EmptyState(notification-dropdown)와 동일 — antd 기본 이미지 · 높이 60 */}
+            <Empty
+              description="알림이 없습니다"
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              styles={{ image: { height: 60 } }}
+            />
+          </div>
         ) : (
           <div className="notification-dropdown-list">
             {filtered.map(notification => (
@@ -140,22 +174,28 @@ export function NotificationDropdown({
                   }
                 }}
               >
-                <div className="notification-dropdown-item-title-row">
-                  <Text className="notification-dropdown-item-tag">
-                    [{getCategoryLabel(notification.type)}]
-                  </Text>
-                  <Text
-                    className="notification-dropdown-item-message"
-                    title={notification.message}
-                  >
-                    {notification.message}
-                  </Text>
+                <div className="notification-dropdown-item-main">
+                  <div className="notification-dropdown-item-title-row">
+                    <Text className="notification-dropdown-item-tag">
+                      [{getCategoryLabel(notification.type)}]
+                    </Text>
+                    <Text
+                      className="notification-dropdown-item-message"
+                      title={notification.message}
+                    >
+                      {notification.message}
+                    </Text>
+                    <NotificationReadBadge read={notification.read} />
+                  </div>
+                  {notification.programName ? (
+                    <Text
+                      className="notification-dropdown-item-sub"
+                      title={notification.programName}
+                    >
+                      {notification.programName}
+                    </Text>
+                  ) : null}
                 </div>
-                {notification.programName ? (
-                  <Text className="notification-dropdown-item-sub" title={notification.programName}>
-                    {notification.programName}
-                  </Text>
-                ) : null}
                 <Text className="notification-dropdown-item-date">
                   {formatNotificationDate(notification.createdAt)}
                 </Text>

@@ -19,6 +19,8 @@ export interface AdminConfirmModalProps {
   zIndex?: number
   confirmLoading?: boolean
   footerButtonSize?: AdminButtonSize
+  /** 열림/닫힘 애니메이션 완료 후 호출 — 닫힌 뒤 후속 알림을 띄울 때 사용 */
+  afterOpenChange?: (open: boolean) => void
 }
 
 export function AdminConfirmModal({
@@ -35,6 +37,7 @@ export function AdminConfirmModal({
   zIndex = 1001,
   confirmLoading = false,
   footerButtonSize = 'medium',
+  afterOpenChange,
 }: AdminConfirmModalProps) {
   return (
     <AdminContentModal
@@ -44,6 +47,7 @@ export function AdminConfirmModal({
       width={width}
       zIndex={zIndex}
       className="confirm-modal"
+      afterOpenChange={afterOpenChange}
       footer={
         <>
           <AdminButton

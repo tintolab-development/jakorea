@@ -31,6 +31,8 @@ export interface DeleteGuideModalProps {
   confirmInputPlaceholder?: string
   /** phrase(기본) | password — 회원 삭제/탈퇴 시 관리자 비밀번호 확인 */
   confirmInputMode?: DeleteGuideConfirmInputMode
+  /** password 모드 입력 라벨 숨김 (본인 탈퇴 시안: 라벨 없이 placeholder만) */
+  hideConfirmInputLabel?: boolean
   zIndex?: number
   /** 확인 버튼 로딩 (비동기 탈퇴 등) */
   confirmLoading?: boolean
@@ -88,6 +90,7 @@ export function DeleteGuideModal({
   requiredConfirmInput,
   confirmInputPlaceholder = DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   confirmInputMode = 'phrase',
+  hideConfirmInputLabel = false,
   zIndex = 2500,
   confirmLoading = false,
   afterOpenChange,
@@ -150,7 +153,7 @@ export function DeleteGuideModal({
             width={'100%'}
             inputSize="large"
             type={isPasswordMode ? 'password' : 'text'}
-            label={isPasswordMode ? '비밀번호' : undefined}
+            label={isPasswordMode && !hideConfirmInputLabel ? '비밀번호' : undefined}
             placeholder={
               isPasswordMode
                 ? (confirmInputPlaceholder || '비밀번호를 입력해 주세요')
