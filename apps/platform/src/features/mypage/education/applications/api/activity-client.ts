@@ -1058,6 +1058,18 @@ export type PortalIndividualSubmittedItem = {
   evidenceRequired?: boolean | null
 }
 
+/**
+ * 회차별 학생 교통비 편도 거리 안내 (서버 판단). FE는 거리를 계산하지 않는다.
+ * 신청란 노출 스위치는 payableItems — 이 값은 안내 문구용.
+ */
+export type PortalIndividualTransportPreview = {
+  /** 편도 km. 산출 불가면 null — 0으로 렌더링하지 않는다 */
+  oneWayDistanceKm?: number | null
+  eligible?: boolean
+  /** UNDER_MIN_DISTANCE | ADDRESS_MISSING | null */
+  ineligibleReason?: string | null
+}
+
 export type PortalIndividualScheduleSettlement = {
   scheduleId?: number
   educationScheduleId?: number
@@ -1076,6 +1088,7 @@ export type PortalIndividualScheduleSettlement = {
   businessEndDate?: string
   payableItems?: PortalIndividualPayableItem[]
   submittedItems?: PortalIndividualSubmittedItem[]
+  transportPreview?: PortalIndividualTransportPreview | null
 }
 
 export type PortalIndividualScheduleList = {
@@ -1109,6 +1122,8 @@ export type PortalIndividualSettlementItemDetail = {
   evidenceRequired?: boolean
   description?: string
   expenses?: PortalIndividualSettlementExpense[]
+  /** 제출 시점 편도 km 스냅샷. 기존 건 null — 재계산하지 않는다 */
+  oneWayDistanceKm?: number | null
 }
 
 export type PortalIndividualSettlementRevision = {

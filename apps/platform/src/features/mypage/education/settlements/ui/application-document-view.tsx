@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { SettlementApplicationDocumentResponse } from '../api/application-document-types'
 import { requestSettlementApplicationDocumentAttachmentDownload } from '../api/application-document-client'
 import {
+  buildReceiptTransportDistanceRow,
   buildSettlementDocumentBasicRows,
   buildSettlementDocumentCalcRows,
   displaySettlementDocumentText,
@@ -170,7 +171,11 @@ export function EducationSettlementApplicationDocumentView({
   /** 영수증(RECEIPT_SETTLEMENT)은 calcInfo = null — 지급조서 전용 산출 정보는 그리지 않는다 */
   const calcInfo = document.documentType === 'PAYMENT_STATEMENT' ? document.calcInfo : null
   const showCalc = calcInfo != null
-  const basicRows = buildSettlementDocumentBasicRows(document.basicInfo)
+  const receiptDistanceRow = buildReceiptTransportDistanceRow(document)
+  const basicRows = [
+    ...buildSettlementDocumentBasicRows(document.basicInfo),
+    ...(receiptDistanceRow ? [receiptDistanceRow] : []),
+  ]
   const calcRows = calcInfo != null ? buildSettlementDocumentCalcRows(calcInfo, document.lines) : []
   const showFirstColumn = shouldShowSettlementDocumentFirstColumn(document.documentType, programType)
   const linesColumnCount = showFirstColumn ? 6 : 5

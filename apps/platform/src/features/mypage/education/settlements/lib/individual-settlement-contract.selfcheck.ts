@@ -4,7 +4,11 @@ import {
   INDIVIDUAL_SETTLEMENT_DISABLED_MESSAGE,
   RECEIPT_PRE_CONSENT_REQUIRED_CODE,
   RECEIPT_PRE_CONSENT_REQUIRED_MESSAGE,
+  TRANSPORTATION_ADDRESS_MISSING_MESSAGE,
+  TRANSPORTATION_UNDER_MIN_DISTANCE_MESSAGE,
+  formatIndividualOneWayDistanceKm,
   individualIneligibleMessage,
+  individualTransportIneligibleNotice,
   individualSettlementApiErrorMessage,
   isEvidencePolicyUnconfigured,
   isGeneralIndividualProgramType,
@@ -102,5 +106,53 @@ const receiptConsentAxios = Object.assign(new Error('conflict'), {
 })
 assert.equal(isReceiptPreConsentRequiredError(receiptConsentAxios), true)
 assert.equal(individualSettlementApiErrorMessage(receiptConsentAxios), RECEIPT_PRE_CONSENT_REQUIRED_MESSAGE)
+
+// 학생 교통비 편도 30km — 서버 transportPreview 안내만, null km는 0km로 표시하지 않음
+assert.equal(formatIndividualOneWayDistanceKm(29.9), '29.9km')
+assert.equal(formatIndividualOneWayDistanceKm(30), '30km')
+assert.equal(formatIndividualOneWayDistanceKm(null), null)
+assert.equal(formatIndividualOneWayDistanceKm(undefined), null)
+assert.equal(
+  individualTransportIneligibleNotice({ oneWayDistanceKm: 35, eligible: true, ineligibleReason: null }),
+  null,
+)
+assert.equal(individualTransportIneligibleNotice(null), null)
+assert.equal(
+  individualTransportIneligibleNotice({
+    oneWayDistanceKm: 29.9,
+    eligible: false,
+    ineligibleReason: 'UNDER_MIN_DISTANCE',
+  }),
+  `${TRANSPORTATION_UNDER_MIN_DISTANCE_MESSAGE} (편도 29.9km)`,
+)
+assert.equal(
+  individualTransportIneligibleNotice({
+    oneWayDistanceKm: null,
+    eligible: false,
+    ineligibleReason: 'ADDRESS_MISSING',
+  }),
+  TRANSPORTATION_ADDRESS_MISSING_MESSAGE,
+)
+
+const distanceAxios = Object.assign(new Error('bad request'), {
+  isAxiosError: true,
+  response: {
+    status: 400,
+    data: {
+      success: false,
+      message: '편도 30km 이상 이동 시에만 교통비를 신청할 수 있습니다.',
+      error: {
+        code: 'TRANSPORTATION_DISTANCE_NOT_ELIGIBLE',
+        message: '편도 30km 이상 이동 시에만 교통비를 신청할 수 있습니다.',
+        field: 'items',
+      },
+    },
+  },
+})
+assert.equal(readIndividualSettlementErrorCode(distanceAxios), 'TRANSPORTATION_DISTANCE_NOT_ELIGIBLE')
+assert.equal(
+  individualSettlementApiErrorMessage(distanceAxios),
+  '편도 30km 이상 이동 시에만 교통비를 신청할 수 있습니다.',
+)
 
 console.log('individual-settlement-contract.selfcheck: ok')

@@ -25,6 +25,7 @@ import {
 import { InstructorTransportFeeBlock } from './instructor-transport-fee-block'
 import {
   individualIneligibleMessage,
+  individualTransportIneligibleNotice,
   isEvidencePolicyUnconfigured,
   shouldUseIndividualSettlementSchedulesApi,
 } from '../lib/individual-settlement-contract'
@@ -517,6 +518,13 @@ export function EducationSettlementWriteForm({
       session?.eligible === false ||
       matchedIndividual?.eligible === false)
   const transportItem = pickTransportPayableItem(payableItems)
+  /** 교통비 신청란이 없을 때만 — 서버 transportPreview 사유 안내(거리 계산 없음) */
+  const transportIneligibleNotice =
+    isReceipt && !transportItem
+      ? individualTransportIneligibleNotice(
+          session?.transportPreview ?? matchedIndividual?.transportPreview,
+        )
+      : null
   const amountItems = useMemo(() => pickAmountPayableItems(payableItems), [payableItems])
 
   const initialDraft = (location.state as SettlementWriteDraftLocationState | null)?.draft
@@ -672,7 +680,8 @@ export function EducationSettlementWriteForm({
     }
     if (isReceipt && payableItems.length === 0) {
       showAlert(
-        individualIneligibleMessage('NO_PAYABLE_ITEMS') ??
+        transportIneligibleNotice ??
+          individualIneligibleMessage('NO_PAYABLE_ITEMS') ??
           '이 프로그램에 신청할 수 있는 지급 항목이 없습니다.',
       )
       return
@@ -810,6 +819,11 @@ export function EducationSettlementWriteForm({
         {isReceipt && evidencePolicyUnconfigured ? (
           <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
             {individualIneligibleMessage('EVIDENCE_POLICY_UNCONFIGURED')}
+          </PFText>
+        ) : null}
+        {transportIneligibleNotice ? (
+          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+            {transportIneligibleNotice}
           </PFText>
         ) : null}
         {isReceipt && submittedItems.length > 0 ? (
