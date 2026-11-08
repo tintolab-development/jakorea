@@ -24,7 +24,8 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
         token: {
           colorSuccess: domainColorsHex.matching.primary,
           colorWarning: domainColorsHex.schedule.primary,
-          colorError: domainColorsHex.settlement.primary,
+          // 오류·필수 표시(*)는 디자인 토큰 Status/red/main(#C32F4A) — 정산 도메인색(#FF4D4F)을 쓰지 않는다
+          colorError: '#c32f4a',
         },
         components: {
           /**
