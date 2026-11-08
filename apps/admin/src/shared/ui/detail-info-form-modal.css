@@ -24,3 +24,78 @@
   min-width: var(--detail-info-label-w, 160px) !important;
   max-width: var(--detail-info-label-w, 160px) !important;
 }
+
+/*
+ * 팝업 실제 폭 1000 미만(`content-modal--narrow` — shared/ui/content-modal.tsx가 size·width로 판단) — Table / Vertical / Cell / Small
+ * Figma 689:42261(팝업 800) · 924:10920(Cell / Small)
+ * - 라벨: 폭 140 · 패딩 4×12 · 최소 높이 44 · 14 Bold
+ * - 값: 최소 높이 44 · 패딩 10 · 입력 Field / Table / Input S(h36 · 8×14 · 14 / 1.4)
+ * - 파일 칸(Table / Common / Cell / File)은 기존 패딩 12×16 유지
+ * medium(1000) · wide(1200)는 위 1400 미만 규칙(라벨 160 · Medium 셀) 그대로.
+ * `--bounded`까지 붙여 위 1400 미만 규칙과 특이도를 맞추고, 파일 뒤쪽이라 우선한다.
+ */
+.ant-modal.teal-header-modal.teal-header-modal--bounded.content-modal--narrow
+  .detail-info-form
+  .detail-info-form__field {
+  --detail-info-label-w: 140px !important;
+}
+
+.ant-modal.teal-header-modal.teal-header-modal--bounded.content-modal--narrow
+  .detail-info-form
+  .detail-info-form__field
+  > .detail-info-form__field-label {
+  width: var(--detail-info-label-w, 140px) !important;
+  min-width: var(--detail-info-label-w, 140px) !important;
+  max-width: var(--detail-info-label-w, 140px) !important;
+  min-height: 44px;
+  padding: 4px 12px;
+}
+
+.ant-modal.teal-header-modal.teal-header-modal--bounded.content-modal--narrow
+  .detail-info-form
+  .detail-info-form__field
+  > .detail-info-form__field-content:not(:has(.file-select-image-cell)):not(
+    :has(.file-select-field)
+  ) {
+  min-height: 44px;
+  padding: 10px;
+}
+
+/* 입력·셀렉트: medium(40) 컨트롤을 Small(36) 변수로 */
+.ant-modal.teal-header-modal.teal-header-modal--bounded.content-modal--narrow
+  .detail-info-form
+  .cms-control--medium {
+  --cms-control-h: 36px;
+  --cms-control-pt: 8px;
+  --cms-control-pr: 14px;
+  --cms-control-pb: 8px;
+  --cms-control-pl: 14px;
+  --cms-control-gap: 6px;
+  --cms-control-font: 14px;
+  --cms-control-lh: 140%;
+  --cms-control-pr-clear: 10px;
+}
+
+.ant-modal.teal-header-modal.teal-header-modal--bounded.content-modal--narrow
+  .detail-info-form
+  .cms-select.cms-control--medium {
+  --cms-control-pr: 10px;
+}
+
+/* 텍스트영역: medium 패딩·글자를 Small 입력과 같게 */
+.ant-modal.teal-header-modal.teal-header-modal--bounded.content-modal--narrow
+  .detail-info-form
+  .cms-textarea--medium
+  .cms-textarea__control {
+  min-height: 36px;
+  padding: 8px 14px;
+}
+
+.ant-modal.teal-header-modal.teal-header-modal--bounded.content-modal--narrow
+  .detail-info-form
+  .cms-textarea--medium
+  .cms-textarea__inner
+  textarea.ant-input {
+  font-size: 14px;
+  line-height: 140%;
+}
