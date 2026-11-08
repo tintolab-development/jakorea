@@ -1,4 +1,5 @@
-/* 테이블 텍스트형 셀 인풋 — CmsInput(민트·라운드) / 주관식형과 별도 */
+/* 테이블 텍스트형 셀 인풋 — CmsInput(민트·라운드) / 주관식형과 별도
+ * 글자 크기·줄 높이는 표의 --ht-font-size / --ht-line-height를 따른다(조회 셀과 동일 — 포커스 시 크기 변화 금지). */
 
 .text-cell-input {
   box-sizing: border-box;
@@ -49,10 +50,10 @@
   color: var(--main-BK, #3d3d3d);
   -webkit-text-fill-color: var(--main-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
-  font-size: 16px;
+  font-size: var(--ht-font-size, 16px);
   font-style: normal;
   font-weight: 500;
-  line-height: 24px;
+  line-height: var(--ht-line-height, 24px);
   resize: none;
   overflow: hidden;
 }
@@ -83,10 +84,10 @@
   color: var(--main-BK, #3d3d3d);
   -webkit-text-fill-color: var(--main-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
-  font-size: 16px;
+  font-size: var(--ht-font-size, 16px);
   font-style: normal;
   font-weight: 500;
-  line-height: 24px !important;
+  line-height: var(--ht-line-height, 24px) !important;
   resize: none;
   overflow: hidden;
   white-space: nowrap;
@@ -107,10 +108,10 @@
   color: var(--main-BK, #3d3d3d);
   -webkit-text-fill-color: var(--main-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
-  font-size: 16px;
+  font-size: var(--ht-font-size, 16px);
   font-style: normal;
   font-weight: 500;
-  line-height: 24px;
+  line-height: var(--ht-line-height, 24px);
   resize: none;
   overflow: hidden;
   white-space: pre-wrap;
@@ -135,8 +136,8 @@
 
 .text-cell-input__control.ant-input::placeholder,
 .text-cell-input__control--area.ant-input::placeholder {
-  color: var(--gray-85969-d, #85969d);
-  -webkit-text-fill-color: var(--gray-85969-d, #85969d);
+  color: var(--ht-color-text-muted, var(--gray-85969-d, #85969d));
+  -webkit-text-fill-color: var(--ht-color-text-muted, var(--gray-85969-d, #85969d));
   opacity: 1;
 }
 
