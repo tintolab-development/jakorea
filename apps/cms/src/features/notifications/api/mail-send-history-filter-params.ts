@@ -22,12 +22,17 @@ function rangeToParams(
 const SEND_STATUS_TO_API: Record<string, string> = {
   '발송 요청': 'REQUESTED',
   예약: 'SCHEDULED',
+  '발송 대기': 'WAITED',
+  '발송 중': 'IN_PROGRESS',
+  '발송 실패': 'SEND_FAILED',
+  '발송 완료': 'SENT',
+  '발송 취소': 'CANCELED',
+  확인불가: 'UNKNOWN',
+  // 이전 라벨로 저장된 URL 호환
   대기: 'WAITED',
   발송중: 'IN_PROGRESS',
-  '발송 실패': 'SEND_FAILED',
   '발송 성공': 'SENT',
   취소: 'CANCELED',
-  확인불가: 'UNKNOWN',
 }
 
 const RECEIVE_STATUS_TO_API: Record<string, string> = {

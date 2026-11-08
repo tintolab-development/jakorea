@@ -1,15 +1,15 @@
 import type { Dayjs } from 'dayjs'
 
-/** 알림톡 sendStatus와 동일 SSOT 라벨 */
+/** 메일 발송 형태 라벨 (Figma Status / Text / 메일 발송 형태 14804:19688). 발송 요청·예약·확인불가는 시안 대응이 불명확해 현행 유지 */
 export const MAIL_SEND_STATUS_OPTIONS = [
   '전체',
   '발송 요청',
   '예약',
-  '대기',
-  '발송중',
-  '발송 성공',
+  '발송 대기',
+  '발송 중',
+  '발송 완료',
   '발송 실패',
-  '취소',
+  '발송 취소',
   '확인불가',
 ] as const
 

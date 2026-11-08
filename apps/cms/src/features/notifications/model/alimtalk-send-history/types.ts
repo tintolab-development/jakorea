@@ -7,7 +7,7 @@ export const ALIMTALK_SEND_STATUS_OPTIONS = [
   '예약',
   '대기',
   '발송중',
-  '발송 성공',
+  '발송 완료',
   '발송 실패',
   '취소',
   '확인불가',
