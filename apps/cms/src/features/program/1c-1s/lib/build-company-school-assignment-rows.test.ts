@@ -7,6 +7,56 @@ import {
 } from './build-company-school-assignment-rows'
 
 describe('buildCompanySchoolWaitingInstructorRows', () => {
+  const hopeSession = {
+    round: 1,
+    date: '2026.11.20',
+    dayOfWeek: '금',
+    duration: '3차시',
+    format: '-',
+    classNum: '1지망',
+    timeRange: '09:00 ~ 10:00',
+    status: 'pending' as const,
+    resolvedScheduleId: 9001,
+  }
+  const generalApplication = asOpenApiFixture<InstructorApplicationListItemResponse>({
+    id: 1,
+    instructorMemberId: 170024,
+    instructorName: '한서연',
+    applicationStatus: 'APPROVED',
+    distanceKm: 77.7,
+    longDistance: false,
+    organizationDistances: [
+      { organizationId: 11, organizationApplicationId: 501, distanceKm: 12.3, longDistance: false },
+      { organizationId: 12, organizationApplicationId: 502, distanceKm: 231.4, longDistance: true },
+    ],
+    preferredOrganizations: [],
+    availableScheduleIds: [],
+    availableActions: [],
+  })
+
+  it('일반 기관형은 이 기관 신청까지의 거리만 쓴다 (신청 단위 거리 대체 금지)', () => {
+    const base = {
+      schoolName: '계남중학교',
+      sessions: [hopeSession],
+      approvedInstructors: [generalApplication],
+      assignedInstructorMemberIds: new Set<string>(),
+    }
+    expect(
+      buildCompanySchoolWaitingInstructorRows({ ...base, organizationApplicationId: '501' })[0]
+        ?.distanceToSchool
+    ).toBe('12.3km')
+    expect(
+      buildCompanySchoolWaitingInstructorRows({ ...base, organizationApplicationId: '502' })[0]
+        ?.distanceToSchool
+    ).toBe('231.4km (장거리)')
+    expect(
+      buildCompanySchoolWaitingInstructorRows({ ...base, organizationApplicationId: '999' })[0]
+        ?.distanceToSchool
+    ).toBeUndefined()
+    // 1사1교(기관 신청 id 미전달)는 기존 신청 단위 거리
+    expect(buildCompanySchoolWaitingInstructorRows(base)[0]?.distanceToSchool).toBe('77.7km')
+  })
+
   it('희망일(session)이 없으면 행을 만들지 않는다 (가짜 일정 금지)', () => {
     const rows = buildCompanySchoolWaitingInstructorRows({
       schoolName: '인천가온고등학교',

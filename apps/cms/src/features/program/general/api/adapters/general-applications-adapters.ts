@@ -84,6 +84,7 @@ import {
   readOrganizationApplicationPreferredEducationSchedules,
 } from '@/features/program/general/lib/organization-application-preferred-education-schedules'
 import { requestedSchedulesToPreferredEducationSchedules } from '@/features/program/general/lib/requested-schedules-to-preferred'
+import { collectInstructorApplicationOrganizationDistances } from '@/features/program/general/lib/assignment-waiting-distance'
 import { resolveSessionCalendarDateKey } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-calendar-session'
 import { resolveStoredAffiliation } from '@/features/program/general/lib/affiliation-organization'
 import { isK12SchoolAffiliationName } from '@/features/program/general/lib/k12-school-affiliation'
@@ -991,6 +992,7 @@ export function mapInstructorApplicationToApplicantInstructorRow(
     rejectionReason: readRuntimeString(dto, 'rejectReason'),
     distanceKm: readRuntimeNumber(dto, 'distanceKm'),
     longDistanceYn: readRuntimeBoolean(dto, 'longDistance'),
+    organizationDistances: collectInstructorApplicationOrganizationDistances(dto),
     programDispatchCount: readRuntimeNumber(dto, 'programDispatchCount'),
     programLongDistanceDispatchCount: readRuntimeNumber(dto, 'programLongDistanceDispatchCount'),
     availableActions: dto.availableActions,

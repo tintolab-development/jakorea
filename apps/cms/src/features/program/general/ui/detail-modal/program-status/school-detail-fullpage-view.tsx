@@ -1361,6 +1361,8 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         approvedInstructors: assignmentBoard.approvedInstructorApplications,
         assignedInstructorMemberIds: assignedMemberIds,
         occupiedLectureDatesByInstructorId,
+        // 일반 기관형: 강사 신청의 기관별 거리에서 이 기관을 찾는다(1사1교는 기존 신청 단위 거리)
+        organizationApplicationId: isGeneralOrgProgram ? row.organizationApplicationId : null,
       })
         .filter(waitingRow => !completedWaitingRowKeys.has(waitingRow.id))
         .map(waitingRow => {

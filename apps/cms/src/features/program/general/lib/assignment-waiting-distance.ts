@@ -49,6 +49,68 @@ export function findWaitingOrganizationDistance(
   return list.find(d => d?.organizationId != null && d.organizationId === row.organizationId)
 }
 
+type ApplicationOrganizationDistanceSource = {
+  organizationId?: number | null
+  organizationApplicationId?: number | null
+  distanceKm?: number | null
+  longDistance?: boolean | null
+}
+
+function toWaitingOrganizationDistance(
+  item: ApplicationOrganizationDistanceSource | null | undefined
+): WaitingOrganizationDistance | null {
+  const appId = item?.organizationApplicationId
+  if (typeof appId !== 'number' || !Number.isFinite(appId)) return null
+  const km = item?.distanceKm
+  return {
+    organizationId: item?.organizationId ?? null,
+    organizationApplicationId: appId,
+    distanceKm: typeof km === 'number' && Number.isFinite(km) ? km : null,
+    longDistance: item?.longDistance ?? null,
+  }
+}
+
+/**
+ * 강사 신청(목록·상세) 응답의 기관별 거리.
+ * `organizationDistances`(배정 대기 대상 기관 전체)를 먼저 쓰고, 거리가 없는 기관만
+ * `preferredOrganizations`(희망 기관) 값으로 채운다. 신청 단위 `distanceKm`는 쓰지 않는다
+ * (배정할 때마다 마지막 배정 기관 거리로 바뀌어 기관별 값이 아니다).
+ */
+export function collectInstructorApplicationOrganizationDistances(application: {
+  organizationDistances?: readonly ApplicationOrganizationDistanceSource[] | null
+  preferredOrganizations?: readonly ApplicationOrganizationDistanceSource[] | null
+} | null | undefined): WaitingOrganizationDistance[] {
+  const byAppId = new Map<number, WaitingOrganizationDistance>()
+  const sources = [application?.organizationDistances, application?.preferredOrganizations]
+  for (const source of sources) {
+    for (const item of source ?? []) {
+      const next = toWaitingOrganizationDistance(item)
+      if (!next) continue
+      const prev = byAppId.get(next.organizationApplicationId)
+      if (prev?.distanceKm != null) continue
+      if (prev && next.distanceKm == null) continue
+      byAppId.set(next.organizationApplicationId, next)
+    }
+  }
+  return [...byAppId.values()]
+}
+
+/** 앞 목록에 거리가 없는 기관만 뒤 목록으로 채운다 */
+export function mergeWaitingOrganizationDistances(
+  primary: readonly WaitingOrganizationDistance[] | null | undefined,
+  fallback: readonly WaitingOrganizationDistance[] | null | undefined
+): WaitingOrganizationDistance[] {
+  const byAppId = new Map<number, WaitingOrganizationDistance>()
+  for (const item of [...(primary ?? []), ...(fallback ?? [])]) {
+    if (item?.organizationApplicationId == null) continue
+    const prev = byAppId.get(item.organizationApplicationId)
+    if (prev?.distanceKm != null) continue
+    if (prev && item.distanceKm == null) continue
+    byAppId.set(item.organizationApplicationId, item)
+  }
+  return [...byAppId.values()]
+}
+
 export function formatWaitingOrganizationDistance(
   distances: readonly WaitingOrganizationDistance[] | null | undefined,
   row: { organizationApplicationId?: string | number | null; organizationId?: number | null }
