@@ -32,7 +32,9 @@ import {
   mapOrganizationApplicationToApplicantSchoolRow,
   mapParticipantToParticipatingIndividualRow,
   mapParticipantToParticipatingInstructorRow,
+  mapParticipantRequestedSchedulesToHopeSessions,
   mapParticipantToParticipatingSchoolRow,
+  mapStoredPeriodRequestedSchedulesToHopeSessions,
   mapParticipantToParticipatingVolunteerRow,
   mapVolunteerApplicationToGeneralVolunteerApplicantRow,
   mapVolunteerInterviewAssignmentFromWire,
@@ -756,6 +758,82 @@ describe('general-applications-adapters', () => {
     expect(row.hopeEducationSessions?.[0]?.date).toBe('2026.12.23')
     expect(row.hopeEducationSessions?.[0]?.timeRange).toBe('03:00 ~ 06:00')
     expect(row.hopeEducationSessions?.[1]?.date).toBe('2026.12.30')
+  })
+
+  it('maps participant requestedSchedules (stored period rows) to hope sessions without extra calls', () => {
+    const row = mapParticipantToParticipatingSchoolRow(
+      {
+        participantId: 1695100,
+        organizationApplicationId: 1691600,
+        organizationName: '기간형초',
+        sessions: [],
+        requestedSchedules: [
+          {
+            id: 99453,
+            preferenceOrder: 2,
+            requestedDate: '2026-11-20',
+            startPeriod: null,
+            sessionCount: 1,
+            combinedClassYn: false,
+            sessionTimes: [],
+            resolvedScheduleId: null,
+            label: null,
+            periodStartDate: null,
+            periodEndDate: null,
+            resolvedScheduleIds: [],
+          },
+          {
+            id: 99452,
+            preferenceOrder: 1,
+            requestedDate: '2026-11-18',
+            startPeriod: 1,
+            sessionCount: 1,
+            combinedClassYn: false,
+            sessionTimes: [],
+            resolvedScheduleId: null,
+            label: null,
+            periodStartDate: null,
+            periodEndDate: null,
+            resolvedScheduleIds: [],
+          },
+        ],
+      },
+      0,
+      '186500'
+    )
+    expect(row.hopeEducationSessions).toEqual(
+      mapStoredPeriodRequestedSchedulesToHopeSessions([
+        { id: 99452, preferenceOrder: 1, requestedDate: '2026-11-18', startPeriod: 1, sessionCount: 1, sessionTimes: [] },
+        { id: 99453, preferenceOrder: 2, requestedDate: '2026-11-20', startPeriod: null, sessionCount: 1, sessionTimes: [] },
+      ])
+    )
+    expect(row.hopeEducationSessions?.map(session => session.requestedScheduleId)).toEqual([
+      99452, 99453,
+    ])
+    expect(row.lectureRound).toBe('2')
+  })
+
+  it('keeps session-based lectureRound and no hope sessions when requestedSchedules is empty', () => {
+    const row = mapParticipantToParticipatingSchoolRow(
+      {
+        participantId: 1695102,
+        organizationApplicationId: 1691602,
+        requestedSchedules: [],
+        sessions: [
+          {
+            scheduleId: 801,
+            sessionNo: 1,
+            startAt: '2026-10-12T09:00:00+09:00',
+            endAt: '2026-10-12T11:00:00+09:00',
+          },
+        ],
+      },
+      0,
+      '186502'
+    )
+    expect(row.hopeEducationSessions).toBeUndefined()
+    expect(row.lectureRound).toBe('1')
+    expect(mapParticipantRequestedSchedulesToHopeSessions(undefined)).toEqual([])
   })
 
   it.each([

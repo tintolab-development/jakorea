@@ -83,6 +83,7 @@ import {
   readOrganizationApplicationPreferredEducationDates,
   readOrganizationApplicationPreferredEducationSchedules,
 } from '@/features/program/general/lib/organization-application-preferred-education-schedules'
+import { requestedSchedulesToPreferredEducationSchedules } from '@/features/program/general/lib/requested-schedules-to-preferred'
 import { resolveSessionCalendarDateKey } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-calendar-session'
 import { resolveStoredAffiliation } from '@/features/program/general/lib/affiliation-organization'
 import { isK12SchoolAffiliationName } from '@/features/program/general/lib/k12-school-affiliation'
@@ -2060,6 +2061,23 @@ function readOrganizationTextbookStatus(
   return mapMaterialAssignmentStatusToTextbookStatus(dto.materialAssignmentStatus ?? undefined)
 }
 
+/**
+ * participants(ORGANIZATION) `requestedSchedules[]` → 진행 희망 교육 일정.
+ * `/requested-schedules` 응답과 같은 배열이라 행별 추가 조회 없이 기존 경로와 같은 결과를 만든다.
+ * - 기간형(종일) 원본이 있으면 `mapStoredPeriodRequestedSchedulesToHopeSessions` (기존 행별 조회 overlay와 동일)
+ * - 아니면 BE가 신청 목록 `preferredEducationSchedules`를 만들던 규칙으로 변환한 뒤 기존 preferred 매퍼
+ */
+export function mapParticipantRequestedSchedulesToHopeSessions(
+  requestedSchedules: readonly RequestedScheduleResponse[] | null | undefined
+): ParticipatingSchoolSession[] {
+  if (!requestedSchedules?.length) return []
+  const storedPeriodHopes = mapStoredPeriodRequestedSchedulesToHopeSessions(requestedSchedules)
+  if (storedPeriodHopes.length > 0) return storedPeriodHopes
+  const preferred = requestedSchedulesToPreferredEducationSchedules(requestedSchedules)
+  if (preferred.length === 0) return []
+  return mapPreferredEducationSchedulesToSessions(preferred, { useEducationDate: true })
+}
+
 export function mapParticipantToParticipatingSchoolRow(
   dto: ParticipantListItemResponse,
   index: number,
@@ -2076,11 +2094,21 @@ export function mapParticipantToParticipatingSchoolRow(
   const teacherEmail = dto.email?.trim() || undefined
   const region = [dto.regionSido, dto.regionSigungu].filter(Boolean).join(' ').trim()
   const sessions = mapSessionProgressToParticipatingSchoolSessions(dto.sessions ?? [])
-  const preferred = readOrganizationApplicationPreferredEducationSchedules(dto)
+  const preferredFromRequested = requestedSchedulesToPreferredEducationSchedules(
+    dto.requestedSchedules
+  )
+  const preferred =
+    preferredFromRequested.length > 0
+      ? preferredFromRequested
+      : readOrganizationApplicationPreferredEducationSchedules(dto)
+  const hopeFromRequested = mapParticipantRequestedSchedulesToHopeSessions(dto.requestedSchedules)
   const hopeEducationSessions =
-    preferred.length > 0
-      ? mapPreferredEducationSchedulesToSessions(preferred, { useEducationDate: true })
-      : undefined
+    hopeFromRequested.length > 0
+      ? hopeFromRequested
+      : preferred.length > 0
+        ? mapPreferredEducationSchedulesToSessions(preferred, { useEducationDate: true })
+        : undefined
+  const sessionLectureRound = sessions.length > 0 ? String(sessions.length) : ''
   return {
     id: toId(dto.participantId),
     organizationId: dto.organizationId ?? undefined,
@@ -2091,7 +2119,8 @@ export function mapParticipantToParticipatingSchoolRow(
     educationGrade: formatApplicantGradeLabel(dto.grade),
     classCount: dto.classCount ?? 0,
     studentCount: dto.studentCount ?? 0,
-    lectureRound: sessions.length > 0 ? String(sessions.length) : '',
+    lectureRound:
+      hopeFromRequested.length > 0 ? String(hopeFromRequested.length) : sessionLectureRound,
     textbookStatus: readOrganizationTextbookStatus(dto),
     textbookId: dto.textbookId != null ? String(dto.textbookId) : undefined,
     textbookName: dto.textbookName?.trim() || undefined,
