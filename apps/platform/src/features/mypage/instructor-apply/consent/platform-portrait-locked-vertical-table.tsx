@@ -21,6 +21,15 @@ export function PlatformPortraitLockedVerticalTable({
   onUpdateParagraph: FormUpdateParagraph
   documentPreview?: boolean
 }) {
+  // A4 is a fixed document canvas, not the responsive/interactive write screen.
+  if (documentPreview) {
+    return (
+      <FormTemplateHost surface="cmsAdmin">
+        <VerticalTablePreviewBody paragraph={paragraph} interactionMode="preview" />
+      </FormTemplateHost>
+    )
+  }
+
   return (
     <div className={styles.tableBlock}>
       <div className={styles.portraitTableDesktop}>
