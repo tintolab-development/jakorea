@@ -4,6 +4,7 @@
 
 import { useId } from 'react'
 import type { SettlementItemSettingIconKey } from '@/features/settlement-management/model/settlement-item-settings'
+import geminiIconUrl from './settlement-item-gemini.svg'
 import multiInstructorIconUrl from './settlement-item-multi-instructor.svg'
 
 export function SettlementItemCardMoreIcon() {
@@ -188,30 +189,17 @@ function IconOtherLabor() {
   return <IconSpecialLecture fill="#FFDC42" />
 }
 
-/** 시안: 노란 스파클(✨) — Figma/시안 아이콘 톤 */
+/** 시안(12603:444652 「✨️ 블링블링」) 에셋 그대로 — 목록 40px · 모달 헤더 30px(CSS) */
 function IconGemini() {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
+    <img
+      src={geminiIconUrl}
       width={40}
       height={40}
-      viewBox="0 0 40 40"
-      fill="none"
-      aria-hidden
-    >
-      <path
-        d="M20 5.5L22.15 14.35L31 16.5L22.15 18.65L20 27.5L17.85 18.65L9 16.5L17.85 14.35L20 5.5Z"
-        fill="#F5C518"
-      />
-      <path
-        d="M30 21.5L31.05 25.7L35.25 26.75L31.05 27.8L30 32L28.95 27.8L24.75 26.75L28.95 25.7L30 21.5Z"
-        fill="#FFD84D"
-      />
-      <path
-        d="M11 20.5L11.8 23.7L15 24.5L11.8 25.3L11 28.5L10.2 25.3L7 24.5L10.2 23.7L11 20.5Z"
-        fill="#FFD84D"
-      />
-    </svg>
+      alt=""
+      draggable={false}
+      className="settlement-item-settings__icon-img"
+    />
   )
 }
 
@@ -494,11 +482,12 @@ function PaySimpleLaborIcon() {
 
 function IconWithholding() {
   const clipId = `${useId().replace(/:/g, '')}-withholding-clip`
+  // 시안(14931:760031 「🪙 동전」) 목록 카드 40px — 30 viewBox 그대로 확대
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width={30}
-      height={30}
+      width={40}
+      height={40}
       viewBox="0 0 30 30"
       fill="none"
       aria-hidden

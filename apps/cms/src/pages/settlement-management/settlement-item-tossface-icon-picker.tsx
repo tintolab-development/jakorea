@@ -27,7 +27,8 @@ const TOSSFACE_PICKER_EMOJI = [
 
 export interface SettlementItemTossfaceIconPickerTriggerProps {
   children: ReactNode
-  onPickEmoji: (emoji: string | null) => void
+  /** 시안에 「기본 아이콘으로」 되돌리기 버튼 없음 — 팔레트 선택만 */
+  onPickEmoji: (emoji: string) => void
 }
 
 export function SettlementItemTossfaceIconPickerTrigger({
@@ -42,6 +43,8 @@ export function SettlementItemTossfaceIconPickerTrigger({
       onOpenChange={setOpen}
       trigger="click"
       placement="bottomLeft"
+      // 시안 8999:140664: 모달 기준 left 16 · top 68 → 헤더 아이콘(left 30, 하단 57) 대비 x −14 · y +11
+      align={{ offset: [-14, 11] }}
       zIndex={11000}
       overlayClassName="settlement-item-tossface-picker-popover"
       content={
@@ -62,16 +65,6 @@ export function SettlementItemTossfaceIconPickerTrigger({
               </button>
             ))}
           </div>
-          <button
-            type="button"
-            className="settlement-item-tossface-picker__reset"
-            onClick={() => {
-              onPickEmoji(null)
-              setOpen(false)
-            }}
-          >
-            기본 아이콘(SVG)으로
-          </button>
         </div>
       }
     >

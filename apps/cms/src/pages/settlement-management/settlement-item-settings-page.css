@@ -54,10 +54,10 @@
   line-height: 1.5;
 }
 
-/* 카드 간 가로·세로 18px — 한 row 최대 3열(1fr 균등), 4번째 카드는 다음 줄 첫 열부터(스크린샷과 동일) */
+/* 카드 간 가로·세로 18px — 한 row 최대 3열, 카드 최대 폭 498(시안 max-w-[498px]), 4번째 카드는 다음 줄 첫 열부터 */
 .settlement-item-settings__grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 498px));
   row-gap: 18px;
   column-gap: 18px;
   width: 100%;
@@ -105,7 +105,8 @@
   align-items: center;
   gap: 24px;
   box-sizing: border-box;
-  padding: 26px 30px;
+  /* 시안 패딩 30은 inside stroke 기준 — 카드 border 1px을 빼 아이콘 x=30 */
+  padding: 26px 29px;
   margin: 0;
   border: none;
   background: transparent;

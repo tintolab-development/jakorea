@@ -277,9 +277,11 @@
 }
 
 /* 읽기·편집 동일: inline-flex + gap (높이는 line-height·field-sizing으로 맞춤) */
+/* 시안 6718:3928: 설명(16px · line-height normal=19) + 연필 16px 세로 중앙 · gap 4
+ * — block flex: 부모 슬롯 line box(strut)로 높이가 늘지 않게 */
 .settlement-item-setting-detail-modal__header-description-row {
-  display: inline-flex;
-  align-items: flex-start;
+  display: flex;
+  align-items: center;
   gap: 4px;
   width: fit-content;
   max-width: 100%;
@@ -296,7 +298,7 @@
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
-  line-height: 1.5;
+  line-height: normal;
   opacity: 0.6;
 }
 
@@ -340,11 +342,11 @@
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
-  line-height: 1.5;
+  line-height: normal;
   color: var(--default-BK, #3d3d3d);
   opacity: 0.6;
   field-sizing: content;
-  min-height: 1.5em;
+  min-height: 1.2em;
   max-height: 12em;
 }
 
@@ -933,25 +935,30 @@
 }
 
 /* Gemini 산정 기준 시안: 자체 연수 : [input] 원 | 대학생 연수 : [input] 원 (인라인) */
-.settlement-item-setting-detail-modal--gemini
-  .modal-spec-table__label--basis
+/* 시안 14199:102412: 셀 패딩 10×16 — 공통 basis 셀(padding 10) 보다 우선하도록 동일 체인 + 모디파이어 */
+.settlement-item-setting-detail-modal--gemini.content-modal
+  .modal-spec-table
+  .modal-spec-table__row
+  > .modal-spec-table__label--basis
   + .modal-spec-table__cell {
   padding: 10px 16px;
 }
 
+/* 시안: 필드 그룹 ↔ 구분선 ↔ 필드 그룹 gap 16 */
 .settlement-item-setting-detail-modal .modal-spec-table__gemini-dual--inline {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 12px;
+  gap: 8px 16px;
   width: 100%;
   min-width: 0;
 }
 
+/* 시안: 접두 라벨 ↔ 인풋 ↔ 「원」 gap 4 */
 .settlement-item-setting-detail-modal .modal-spec-table__gemini-dual-inline-group {
   flex: 0 1 auto;
   width: auto;
-  gap: 6px;
+  gap: 4px;
 }
 
 .settlement-item-setting-detail-modal .modal-spec-table__gemini-dual-label {
@@ -963,12 +970,34 @@
   white-space: nowrap;
 }
 
+/* 시안 line: 1×13 · #3d3d3d · opacity 0.5 */
 .settlement-item-setting-detail-modal .modal-spec-table__gemini-dual-pipe {
   flex: 0 0 auto;
-  color: #3d3d3d;
+  width: 1px;
+  height: 13px;
+  background: var(--default-BK, #3d3d3d);
   opacity: 0.5;
+}
+
+/* 시안 Field / Table / Input: 값 14px · line-height 1.4 · #3d3d3d, placeholder Content/tertiary
+ * (CmsInput medium 글자 크기는 .cms-control--medium 의 --cms-control-font 변수로 받음 → 표 인풋만 14 / 140%) */
+.settlement-item-setting-detail-modal .modal-spec-table__input-wrap .cms-control--medium {
+  --cms-control-font: 14px;
+  --cms-control-lh: 140%;
+}
+
+.settlement-item-setting-detail-modal .modal-spec-table__input-wrap input {
+  color: var(--default-BK, #3d3d3d);
   font-size: 14px;
-  font-weight: 500;
-  line-height: 1;
-  user-select: none;
+  line-height: 1.4;
+}
+
+.settlement-item-setting-detail-modal .modal-spec-table__input-wrap input::placeholder {
+  color: #85969d;
+}
+
+/* 시안 24/Feather Icon/x: 24×24 아이콘이 헤더 우측 끝에 붙음(공통 32px 히트 영역이면 4px 안쪽으로 밀림) */
+.settlement-item-setting-detail-modal.content-modal .teal-header-modal__close {
+  width: 24px;
+  height: 24px;
 }

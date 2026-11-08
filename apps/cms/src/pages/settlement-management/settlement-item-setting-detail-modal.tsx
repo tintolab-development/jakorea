@@ -591,9 +591,7 @@ function SettlementItemSettingDetailGeminiBody({ itemId }: { itemId: string }) {
                   </div>
                   <span className="modal-spec-table__suffix-text">원</span>
                 </div>
-                <span className="modal-spec-table__gemini-dual-pipe" aria-hidden="true">
-                  |
-                </span>
+                <span className="modal-spec-table__gemini-dual-pipe" aria-hidden="true" />
                 <div className="modal-spec-table__field-row modal-spec-table__gemini-dual-inline-group">
                   <span className="modal-spec-table__gemini-dual-label">대학생 연수 :</span>
                   <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--w160">
