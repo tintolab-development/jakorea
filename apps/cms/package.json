@@ -11,7 +11,7 @@
     "build:workspace-deps": "pnpm --filter @jakorea/utils --filter @jakorea/ui --filter @jakorea/identity-verification --filter @jakorea/social-auth --filter @jakorea/rich-text --filter @jakorea/location --filter @jakorea/domain --filter @jakorea/form-schema --filter @jakorea/form-template-runtime --filter @jakorea/admin-ui build",
     "dev": "node ../../packages/form-template-runtime/scripts/run-with-dev.mjs vite",
     "build": "vite build",
-    "lint": "eslint . --max-warnings=-1",
+    "lint": "eslint . --max-warnings=-1 --cache --cache-location node_modules/.cache/eslint/",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "check:no-mock-imports": "node scripts/check-no-mock-imports.mjs",
     "test": "vitest run",
