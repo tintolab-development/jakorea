@@ -143,6 +143,7 @@ export default function FileDownloadHistoryPage() {
       description={`총 ${totalElements.toLocaleString()}건`}
       contentLoading={remoteEnabled && isLoading}
       excelExport={{
+        accessLog: { downloadKind: 'FILE_DOWNLOAD_LOG_EXPORT', containedPiiTypes: ['NAME'] },
         columns,
         data: tableData,
       }}

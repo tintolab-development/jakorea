@@ -52,6 +52,7 @@ export async function recordFileDownload(payload: RecordDownloadPayload): Promis
       ...(typeof navigator !== 'undefined' && navigator.userAgent
         ? { userAgent: navigator.userAgent }
         : {}),
+      ...(payload.accessLog ? { accessLog: payload.accessLog } : {}),
     })
     void queryClient.invalidateQueries({ queryKey: ['cms', 'logs'] })
     return {

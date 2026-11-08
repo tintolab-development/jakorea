@@ -187,6 +187,7 @@ export function FilterTableLayout({
     getRowKey: excelExport?.getRowKey,
     filename: excelFilename,
     exporter: excelExport?.exporter,
+    accessLog: excelExport?.accessLog,
     alertOnEmpty: excelExport?.alertOnEmpty,
     emptyAlertTitle: excelExport?.emptyAlertTitle,
     emptyAlertContent: excelExport?.emptyAlertContent,

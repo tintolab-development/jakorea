@@ -1,4 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { FILE_ACCESS_CLIENT_LOG_META_ENV } from '@/shared/lib/download-access-log-meta'
 import { customInstance } from '@/shared/api/orval-mutator'
 import {
   FILE_ACCESS_LOG_CREATE_PATH,
@@ -60,6 +61,42 @@ describe('postFileAccessLog', () => {
         },
       }),
       { skipGlobalErrorAlert: true }
+    )
+  })
+})
+
+describe('postFileAccessLog accessLog (downloadKind·containedPiiTypes)', () => {
+  beforeEach(() => {
+    vi.mocked(customInstance).mockReset()
+    vi.mocked(customInstance).mockResolvedValue({ success: true, data: null })
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  const accessLog = { downloadKind: 'MEMBER_LIST_EXPORT', containedPiiTypes: ['NAME'] } as const
+
+  it('플래그가 꺼져 있으면 기존 body(fileName·userAgent)만 보낸다', async () => {
+    vi.stubEnv(FILE_ACCESS_CLIENT_LOG_META_ENV, 'false')
+    await postFileAccessLog({ fileName: '회원목록.xlsx', userAgent: 'UA', accessLog })
+    expect(vi.mocked(customInstance).mock.calls[0]?.[0]).toEqual(
+      expect.objectContaining({ data: { fileName: '회원목록.xlsx', userAgent: 'UA' } })
+    )
+  })
+
+  it('플래그가 켜지면 downloadKind·containedPiiTypes를 함께 보낸다', async () => {
+    vi.stubEnv(FILE_ACCESS_CLIENT_LOG_META_ENV, 'true')
+    await postFileAccessLog({ fileName: '회원목록.xlsx', userAgent: 'UA', accessLog })
+    expect(vi.mocked(customInstance).mock.calls[0]?.[0]).toEqual(
+      expect.objectContaining({
+        data: {
+          fileName: '회원목록.xlsx',
+          userAgent: 'UA',
+          downloadKind: 'MEMBER_LIST_EXPORT',
+          containedPiiTypes: ['NAME'],
+        },
+      })
     )
   })
 })

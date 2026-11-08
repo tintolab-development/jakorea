@@ -6,10 +6,13 @@ import { isValidElement, type ReactNode } from 'react'
 import ExcelJS from '@zurmokeeper/exceljs'
 import type { ColumnsType, ColumnType } from 'antd/es/table'
 import { downloadExcel, generateFilename } from './file-download'
+import type { DownloadAccessLogMeta } from '@/shared/lib/download-access-log-meta'
 
 export type ExportTableToExcelOptions = {
   /** true면 `filename`을 그대로 사용(확장자 없으면 `.xlsx`). 기본은 `_YYYYMMDD` 접미사 */
   exactFilename?: boolean
+  /** client 이력에 함께 남길 파일 종류·포함 개인정보 */
+  accessLog?: DownloadAccessLogMeta
 }
 
 function resolveExcelDownloadFilename(filename: string, exactFilename?: boolean): string {
@@ -183,7 +186,12 @@ export async function exportTableToExcel<T extends Record<string, any>>(
   })
 
   const buffer = await workbook.xlsx.writeBuffer()
-  await downloadExcel(buffer, resolveExcelDownloadFilename(filename, options?.exactFilename))
+  const resolvedFilename = resolveExcelDownloadFilename(filename, options?.exactFilename)
+  if (options?.accessLog) {
+    await downloadExcel(buffer, resolvedFilename, { accessLog: options.accessLog })
+    return
+  }
+  await downloadExcel(buffer, resolvedFilename)
 }
 
 /**
