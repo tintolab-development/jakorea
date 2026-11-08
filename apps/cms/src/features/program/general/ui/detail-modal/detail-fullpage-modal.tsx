@@ -36,7 +36,8 @@ import {
 import { invalidateGeneralProgramListCaches } from '@/features/program/shared/lib/invalidate-program-list-caches-after-registration'
 import type { ProgramDetailRecruitmentAudience } from '@/features/program/shared/lib/apply-recruitment-additional-content-html'
 import { useProgramStore } from '@/features/program/general/model/program-store'
-import { refreshAdminSessionFromMe } from '@/features/auth/model/auth-store'
+import { dataManagementQueryKeys } from '@/features/data-management/api/data-management-query-keys'
+import { getDetailedProgramOptionsList } from '@/features/detailed-program/api/admin-detailed-programs-service'
 import type { Program } from '@/types/domain'
 import {
   GENERAL_ORGANIZATION_APPLICATIONS_LNB_LABEL,
@@ -573,11 +574,6 @@ export function GeneralProgramDetailFullPageModal({
   const programId =
     program?.id ?? programIdHint ?? searchParams.get('programId') ?? undefined
 
-  useEffect(() => {
-    if (!open || !programId) return
-    void refreshAdminSessionFromMe()
-  }, [open, programId])
-
   const { updateProgram, setSelectedProgram } = useProgramStore()
   const queryClient = useQueryClient()
   const remoteEnabled = useGeneralProgramsRemoteEnabled(
@@ -1031,9 +1027,19 @@ export function GeneralProgramDetailFullPageModal({
     }
     seedGeneralRegistrationOverlayFromProgram(displayProgram)
     logGeneralProgramCommonInfoEditCurrentPayload(displayProgram, 'enter')
-    infoResetToProgram()
-    setEditMode('info')
-  }, [activeLnb, activeTab, displayProgram, infoResetToProgram, setEditMode, showAlert])
+    // 세부 프로그램 옵션은 수정 모드에서만 조회한다. 진입 전에 받아 두고 그 목록으로 폼을 맞춘다.
+    void queryClient
+      .ensureQueryData({
+        queryKey: dataManagementQueryKeys.detailedPrograms.options(),
+        queryFn: getDetailedProgramOptionsList,
+        staleTime: 60_000,
+      })
+      .catch(() => undefined)
+      .then(catalog => {
+        infoResetToProgram(catalog)
+        setEditMode('info')
+      })
+  }, [activeLnb, activeTab, displayProgram, infoResetToProgram, queryClient, setEditMode, showAlert])
 
   useEffect(() => {
     if (!open) {

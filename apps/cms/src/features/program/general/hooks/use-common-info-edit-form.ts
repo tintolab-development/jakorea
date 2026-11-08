@@ -96,8 +96,11 @@ export function useGeneralProgramCommonInfoEditForm({
     () => (program ? resolveSponsorManagementIds(program, interimSponsorContext) : []),
     [interimSponsorContext, program]
   )
-  const sponsorContext = useGeneralProgramSponsorEditContext(initialSponsorIds)
-  const detailedProgramsQuery = useDetailedProgramOptionsQuery(Boolean(program))
+  const sponsorContext = useGeneralProgramSponsorEditContext(initialSponsorIds, true, {
+    sponsorRows: sponsorsQuery.data ?? EMPTY_INTERIM_SPONSORS,
+  })
+  // 세부 프로그램 옵션은 수정 모드에서만 필요하다. 수정 진입 시 handleInfoEdit이 먼저 받아 둔다.
+  const detailedProgramsQuery = useDetailedProgramOptionsQuery(Boolean(program) && isEditMode)
   const detailedProgramCatalog = useMemo(
     () => detailedProgramsQuery.data ?? EMPTY_DETAILED_PROGRAM_CATALOG,
     [detailedProgramsQuery.data]

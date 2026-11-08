@@ -473,10 +473,12 @@ function BasicInfoSection({
   )
   const sponsorIdsForContacts =
     isFormEdit && watchedSponsorIds.length > 0 ? watchedSponsorIds : sponsorManagementIds
-  // 후원사 상세·담당자 연락처는 수정 시 담당자 선택지를 만들 때만 필요하다.
+  // 후원사 id·이름은 이미 받은 후원사 목록에서 찾는다(후원사 상세·로고 조회 없음).
+  // 담당자 연락처(전화)는 배정 응답에 없어 contacts API만 조회한다.
   const sponsorEditContext = useGeneralProgramSponsorEditContext(
     sponsorIdsForContacts,
-    sponsorIdsForContacts.length > 0
+    sponsorIdsForContacts.length > 0,
+    { sponsorRows }
   )
   const selectedSponsors = useMemo(
     () =>
