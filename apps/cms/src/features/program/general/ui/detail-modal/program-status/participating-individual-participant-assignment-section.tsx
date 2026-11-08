@@ -826,7 +826,7 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
         <div className="participating-individual-participant-assignment-section__table-outer assignment-submission-modal__table-outer">
           <CmsDataTable<ParticipatingIndividualParticipantAssignmentRow & { no: number }>
             rowKey="id"
-            className="cms-data-table cms-data-table--fluid"
+            className="cms-data-table"
             columns={columns}
             dataSource={tableData}
             pagination={false}

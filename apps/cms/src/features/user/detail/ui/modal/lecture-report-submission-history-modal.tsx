@@ -262,7 +262,7 @@ export function LectureReportSubmissionHistoryModal({
         >
           <div className="lecture-report-submission-history-modal__table-outer">
             <CmsDataTable<MemberLectureReportTableRow>
-              className="cms-data-table cms-data-table--fluid"
+              className="cms-data-table"
               rowKey="id"
               dataSource={rows}
               columns={columns}

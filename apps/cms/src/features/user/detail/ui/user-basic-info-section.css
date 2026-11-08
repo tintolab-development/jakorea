@@ -138,33 +138,12 @@
   color: var(--main-bk, #3d3d3d);
 }
 
-.user-basic-info-section__settlement-status--awaiting-confirmation {
-  color: #f07917;
-}
 
-.user-basic-info-section__settlement-status--partially-confirmed {
-  color: #8457ce;
-}
 
-.user-basic-info-section__settlement-status--payment-statement-verified {
-  color: #1e8c29;
-}
 
-.user-basic-info-section__settlement-status--account-paid {
-  color: #017eaf;
-}
 
-.user-basic-info-section__settlement-status--none {
-  color: #333333;
-}
 
-.user-basic-info-section__settlement-status--application-rejected {
-  color: #c32f4a;
-}
 
-.user-basic-info-section__settlement-status--payment-correction-requested {
-  color: #c32f4a;
-}
 
 /* 강사비 행 — 스펙: "유형 | 금액" */
 .basic-info-fee {

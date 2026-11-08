@@ -15,12 +15,8 @@
   width: 100%;
 }
 
-/* 컬럼 width 합 68+80+246+208+246+246+246 = 1340 */
-.program-managers-tab .program-managers-tab__managers-table.cms-data-table--fluid .ant-table-container {
-  min-width: 1340px;
-}
-
-.program-managers-tab .program-managers-tab__managers-table.cms-data-table--fluid {
+/* 선택 열 68px — 최소 폭(열 합 68+80+246+208+246+246+246)은 CmsDataTable이 계산 */
+.program-managers-tab .program-managers-tab__managers-table {
   --table-selection-column-width: 68px;
 }
 

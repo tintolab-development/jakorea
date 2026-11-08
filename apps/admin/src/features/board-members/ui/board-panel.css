@@ -103,64 +103,6 @@
  * 선택 60 | 순서 80 | No. 80 | 공개 100 | 한글 305 | 영문 304 | 직위 305 | 소속 304
  */
 
-/* selection-col 다음을 No.로 가정하는 공통 규칙 덮어쓰기 → 순서 80 */
-.board-panel .board-members-table.cms-data-table col.ant-table-selection-col + col {
-  width: 80px !important;
-  min-width: 80px !important;
-  max-width: 80px !important;
-}
-
-.board-panel .board-members-table .ant-table-thead > tr > th.board-members-table__col--sort,
-.board-panel .board-members-table .ant-table-tbody > tr > td.board-members-table__col--sort {
-  width: 80px !important;
-  min-width: 80px !important;
-  max-width: 80px !important;
-}
-
-.board-panel .board-members-table .ant-table-thead > tr > th.board-members-table__col--no,
-.board-panel .board-members-table .ant-table-tbody > tr > td.board-members-table__col--no,
-.board-panel .board-members-table .ant-table-thead > tr > th.cms-table-col--no,
-.board-panel .board-members-table .ant-table-tbody > tr > td.cms-table-col--no {
-  width: 80px !important;
-  min-width: 80px !important;
-  max-width: 80px !important;
-}
-
-.board-panel .board-members-table .ant-table-thead > tr > th.board-members-table__col--public,
-.board-panel .board-members-table .ant-table-tbody > tr > td.board-members-table__col--public {
-  width: 100px !important;
-  min-width: 100px !important;
-  max-width: 100px !important;
-}
-
-.board-panel .board-members-table .ant-table-thead > tr > th.board-members-table__col--name-ko,
-.board-panel .board-members-table .ant-table-tbody > tr > td.board-members-table__col--name-ko {
-  width: 305px !important;
-  min-width: 305px !important;
-  max-width: 305px !important;
-}
-
-.board-panel .board-members-table .ant-table-thead > tr > th.board-members-table__col--name-en,
-.board-panel .board-members-table .ant-table-tbody > tr > td.board-members-table__col--name-en {
-  width: 304px !important;
-  min-width: 304px !important;
-  max-width: 304px !important;
-}
-
-.board-panel .board-members-table .ant-table-thead > tr > th.board-members-table__col--position,
-.board-panel .board-members-table .ant-table-tbody > tr > td.board-members-table__col--position {
-  width: 305px !important;
-  min-width: 305px !important;
-  max-width: 305px !important;
-}
-
-.board-panel .board-members-table .ant-table-thead > tr > th.board-members-table__col--affiliation,
-.board-panel .board-members-table .ant-table-tbody > tr > td.board-members-table__col--affiliation {
-  width: 304px !important;
-  min-width: 304px !important;
-  max-width: 304px !important;
-}
-
 .board-panel-inline-field.cms-input {
   width: 100%;
   max-width: 100%;

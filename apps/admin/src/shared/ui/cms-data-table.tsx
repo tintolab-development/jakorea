@@ -18,6 +18,7 @@ export function CmsDataTable<RecordType extends object = object>({
   emptyDescription,
   cmsEmpty = true,
   emptyText,
+  exactColumnWidths = true,
   ...rest
 }: CmsDataTableProps<RecordType>) {
   const emptyVariantFromContext = useCmsTableEmptyVariantFromContext()
@@ -42,7 +43,17 @@ export function CmsDataTable<RecordType extends object = object>({
         ? { ...locale, emptyText: mergedEmptyText }
         : locale
 
-  return <AdminDataTable<RecordType> {...rest} locale={mergedLocale} />
+  /**
+   * CMS와 동일: 열 `width`를 넓은 화면에서도 그대로 사용(균등 분배 없음).
+   * 남는 폭은 width 미지정 열(유연 열 · `minWidth`만 지정)이 흡수. 좁으면 max(열 합, 1080)에서 가로 스크롤.
+   */
+  return (
+    <AdminDataTable<RecordType>
+      {...rest}
+      exactColumnWidths={exactColumnWidths}
+      locale={mergedLocale}
+    />
+  )
 }
 
 CmsDataTable.Summary = AdminDataTable.Summary

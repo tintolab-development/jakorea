@@ -66,13 +66,6 @@
   margin-top: 4px;
 }
 
-.talent-intro-post-picker__table .ant-table-thead > tr > th.talent-intro-post-picker__year-col,
-.talent-intro-post-picker__table .ant-table-tbody > tr > td.talent-intro-post-picker__year-col {
-  width: 160px !important;
-  min-width: 160px !important;
-  max-width: 160px !important;
-}
-
 .talent-intro-post-picker__table .ant-table-tbody > tr > td,
 .talent-intro-post-picker__table .ant-table-tbody > tr:hover > td,
 .talent-intro-post-picker__table

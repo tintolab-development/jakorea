@@ -81,27 +81,6 @@
   overflow: visible !important;
 }
 
-.talent-intro-banner-table .ant-table-thead > tr > th.talent-intro-col--image,
-.talent-intro-banner-table .ant-table-tbody > tr > td.talent-intro-col--image {
-  width: 200px !important;
-  min-width: 200px !important;
-  max-width: 200px !important;
-}
-
-.talent-intro-how-table .ant-table-thead > tr > th.talent-intro-col--no,
-.talent-intro-how-table .ant-table-tbody > tr > td.talent-intro-col--no {
-  width: 80px !important;
-  min-width: 80px !important;
-  max-width: 80px !important;
-}
-
-.talent-intro-how-table .ant-table-thead > tr > th.talent-intro-col--title,
-.talent-intro-how-table .ant-table-tbody > tr > td.talent-intro-col--title {
-  width: 360px !important;
-  min-width: 280px !important;
-  max-width: 420px !important;
-}
-
 .talent-intro-how-table__th-label {
   display: inline-flex;
   align-items: center;

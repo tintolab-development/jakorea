@@ -92,9 +92,6 @@
   .ant-table-tbody
   > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
   > td.ant-table-selection-column.ant-table-cell-row-hover {
-  width: 60px !important;
-  min-width: 60px !important;
-  max-width: 60px !important;
   padding: 12px 4px 12px 8px !important;
   box-sizing: border-box !important;
 }
@@ -115,9 +112,6 @@
   > td.rd-list__thumb-col.ant-table-cell-row-hover {
   box-sizing: border-box !important;
   padding: 0 !important;
-  width: 120px !important;
-  min-width: 120px !important;
-  max-width: 120px !important;
   overflow: hidden !important;
   text-align: center !important;
   white-space: normal !important;
@@ -132,24 +126,6 @@
   > * {
   width: 100%;
   margin-inline: auto;
-}
-
-.rd-list__table--audit.cms-data-table .ant-table-thead > tr > th.rd-list__thumb-col,
-.rd-list__table--audit.cms-data-table
-  .ant-table-tbody
-  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
-  > td.rd-list__thumb-col,
-.rd-list__table--audit.cms-data-table
-  .ant-table-tbody
-  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):hover
-  > td.rd-list__thumb-col,
-.rd-list__table--audit.cms-data-table
-  .ant-table-tbody
-  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
-  > td.rd-list__thumb-col.ant-table-cell-row-hover {
-  width: 180px !important;
-  min-width: 180px !important;
-  max-width: 180px !important;
 }
 
 /**

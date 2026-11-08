@@ -347,7 +347,8 @@ export function BoardPanel() {
       {
         title: '한글 성명',
         key: 'nameKo',
-        width: BOARD_COLUMN_WIDTHS.nameKo,
+        // 유연 열: 넓은 화면에서 남는 폭 흡수 (CmsDataTable 정확 폭 모드)
+        minWidth: BOARD_COLUMN_WIDTHS.nameKo,
         align: 'center',
         ellipsis: true,
         className: 'board-members-table__col--name-ko',
@@ -366,7 +367,8 @@ export function BoardPanel() {
       {
         title: '영문 성명',
         key: 'nameEn',
-        width: BOARD_COLUMN_WIDTHS.nameEn,
+        // 유연 열: 넓은 화면에서 남는 폭 흡수 (CmsDataTable 정확 폭 모드)
+        minWidth: BOARD_COLUMN_WIDTHS.nameEn,
         align: 'center',
         ellipsis: true,
         className: 'board-members-table__col--name-en',
@@ -385,7 +387,8 @@ export function BoardPanel() {
       {
         title: '직위',
         key: 'position',
-        width: BOARD_COLUMN_WIDTHS.position,
+        // 유연 열: 넓은 화면에서 남는 폭 흡수 (CmsDataTable 정확 폭 모드)
+        minWidth: BOARD_COLUMN_WIDTHS.position,
         align: 'center',
         ellipsis: true,
         className: 'board-members-table__col--position',
@@ -404,7 +407,8 @@ export function BoardPanel() {
       {
         title: '소속 및 직책',
         key: 'affiliation',
-        width: BOARD_COLUMN_WIDTHS.affiliation,
+        // 유연 열: 넓은 화면에서 남는 폭 흡수 (CmsDataTable 정확 폭 모드)
+        minWidth: BOARD_COLUMN_WIDTHS.affiliation,
         align: 'center',
         ellipsis: true,
         className: 'board-members-table__col--affiliation',

@@ -7,7 +7,6 @@ import { useMemo, useState } from 'react'
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import type { ColumnsType } from 'antd/es/table'
 import '@/features/program/general/ui/program-list.css'
-import './user-list.css'
 import type { User } from '@/types/user'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
@@ -27,9 +26,7 @@ import { type MemberListKind, DEFAULT_MEMBER_LIST_KIND } from '@/shared/config/m
 import { formatAdminManagedProgramCountForList } from '@/features/user/detail/lib/user-detail-fullpage-helpers'
 import { formatJaEvaluationGradeCellDisplay } from '@/features/program/general/lib/ja-evaluation-grade-display'
 import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
-import {
-  resolveInstructorSettlementUiStatusFromListLabel,
-} from '@/shared/constants/instructor-settlement-status'
+import { resolveInstructorSettlementUiStatusFromListLabel } from '@/shared/constants/instructor-settlement-status'
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
@@ -182,10 +179,9 @@ function columnsForKind(
         ellipsis: true,
         align: 'center',
         render: (_: unknown, r: Row) => {
-          const parts = [
-            r.schoolInfo?.address?.trim(),
-            r.schoolInfo?.addressDetail?.trim(),
-          ].filter(Boolean)
+          const parts = [r.schoolInfo?.address?.trim(), r.schoolInfo?.addressDetail?.trim()].filter(
+            Boolean
+          )
           return parts.length > 0 ? parts.join(' ') : '-'
         },
       },
@@ -415,45 +411,45 @@ export function UserList({
 
   return (
     <div ref={tableWrapRef} className="cms-data-table-fit-scroll-wrap">
-    <CmsDataTable
-      className="cms-data-table cms-data-table--fluid cms-data-table--fit-scroll user-list-table"
-      columns={columns}
-      dataSource={data}
-      loading={loading}
-      scroll={tableScrollX != null ? { x: tableScrollX } : undefined}
-      rowKey="id"
-      onRow={
-        onView
-          ? record => ({
-              onClick: (e: React.MouseEvent<HTMLElement>) => {
-                if ((e.target as HTMLElement).closest('.ant-table-selection-column')) return
-                if ((e.target as HTMLElement).closest('.status-dropdown-cell__status-trigger'))
-                  return
-                onView(record)
-              },
-              style: { cursor: 'pointer' },
-            })
-          : undefined
-      }
-      rowSelection={
-        onSelectionChange
-          ? {
-              columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-              selectedRowKeys,
-              preserveSelectedRowKeys: true,
-              onChange: (keys, rows) => onSelectionChange(keys, rows),
-            }
-          : undefined
-      }
-      pagination={
-        pagination
-          ? {
-              ...PAGINATION_CONFIG,
-              showTotal: (total: number) => `총 ${total}명`,
-            }
-          : false
-      }
-    />
+      <CmsDataTable
+        className="cms-data-table cms-data-table--fit-scroll user-list-table"
+        columns={columns}
+        dataSource={data}
+        loading={loading}
+        scroll={tableScrollX != null ? { x: tableScrollX } : undefined}
+        rowKey="id"
+        onRow={
+          onView
+            ? record => ({
+                onClick: (e: React.MouseEvent<HTMLElement>) => {
+                  if ((e.target as HTMLElement).closest('.ant-table-selection-column')) return
+                  if ((e.target as HTMLElement).closest('.status-dropdown-cell__status-trigger'))
+                    return
+                  onView(record)
+                },
+                style: { cursor: 'pointer' },
+              })
+            : undefined
+        }
+        rowSelection={
+          onSelectionChange
+            ? {
+                columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+                selectedRowKeys,
+                preserveSelectedRowKeys: true,
+                onChange: (keys, rows) => onSelectionChange(keys, rows),
+              }
+            : undefined
+        }
+        pagination={
+          pagination
+            ? {
+                ...PAGINATION_CONFIG,
+                showTotal: (total: number) => `총 ${total}명`,
+              }
+            : false
+        }
+      />
     </div>
   )
 }

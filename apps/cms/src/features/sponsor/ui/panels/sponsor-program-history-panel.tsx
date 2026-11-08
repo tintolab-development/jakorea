@@ -293,7 +293,7 @@ export function SponsorProgramHistoryPanel({
         <div ref={tableWrapRef} className="cms-data-table-fit-scroll-wrap">
           <CmsDataTable<SponsorProgramHistoryRow>
             rowKey="id"
-            className="cms-data-table cms-data-table--fluid cms-data-table--fit-scroll"
+            className="cms-data-table cms-data-table--fit-scroll"
             columns={columns}
             dataSource={filteredRows}
             loading={loading}

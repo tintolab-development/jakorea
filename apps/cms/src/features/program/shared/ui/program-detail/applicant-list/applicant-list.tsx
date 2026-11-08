@@ -2504,7 +2504,7 @@ export function ApplicantList({
                   }
                   dataSource={tableData}
                   loading={applicationsLoading}
-                  className="cms-data-table cms-data-table--fluid"
+                  className="cms-data-table"
                   onRow={record => ({
                     onClick: e => {
                       const target = e.target as HTMLElement

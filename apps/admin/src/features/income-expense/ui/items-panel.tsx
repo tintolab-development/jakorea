@@ -63,13 +63,15 @@ import './items-panel.css'
 const COL_WIDTH = {
   sort: TABLE_COLUMN_WIDTHS.sort,
   no: TABLE_COLUMN_WIDTHS.index,
-  name: 480,
+  /** 유연 열 최소 폭 (넓은 화면에선 남는 폭 흡수) */
+  name: 240,
   ratio: 160,
   amount: 280,
   /** 지출 테이블 전용 */
   expense: {
     category: 160,
-    name: 400,
+    /** 유연 열 최소 폭 */
+    name: 220,
     ratio: 120,
     amount: 220,
   },
@@ -380,7 +382,8 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
       {
         title: nameTitle,
         key: 'name',
-        width: dataCols.name,
+        // 유연 열: 넓은 화면에서 남는 폭 흡수 (CmsDataTable 정확 폭 모드)
+        minWidth: dataCols.name,
         align: isEditing ? 'left' : 'center',
         className: 'income-expense-table__col--name',
         render: (_value, record) => {

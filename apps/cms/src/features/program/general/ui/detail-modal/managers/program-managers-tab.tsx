@@ -415,7 +415,7 @@ export function ProgramManagersTab({
         }
       >
         <CmsDataTable<ProgramManagerRow>
-          className="cms-data-table cms-data-table--fluid program-managers-tab__managers-table"
+          className="cms-data-table program-managers-tab__managers-table"
           rowKey="id"
           pagination={false}
           loading={loading}

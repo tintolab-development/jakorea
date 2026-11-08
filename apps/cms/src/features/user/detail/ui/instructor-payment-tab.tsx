@@ -516,7 +516,7 @@ export function InstructorPaymentTab({
                 dataSource={filteredRows}
                 pagination={false}
                 scroll={tableScrollX != null ? { x: tableScrollX } : undefined}
-                className="cms-data-table cms-data-table--fluid cms-data-table--fit-scroll"
+                className="cms-data-table cms-data-table--fit-scroll"
                 rowClassName={record =>
                   isInstructorSettlementInactive(record.status)
                     ? 'cms-data-table__row--disabled instructor-payment-tab__row--inactive'

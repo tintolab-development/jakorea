@@ -8,16 +8,6 @@
   width: 100%;
 }
 
-/*
- * cms-data-table은 No. 이후 col을 width:auto로 푼다.
- * 사용 여부(체크+No. 다음)는 colgroup·th/td 모두 240px 고정.
- */
-.detailed-program-page__table.cms-data-table col.ant-table-selection-col + col + col {
-  width: 240px !important;
-  min-width: 240px !important;
-  max-width: 240px !important;
-}
-
 .detailed-program-page__table.cms-data-table
   .ant-table-thead
   > tr
@@ -26,9 +16,6 @@
   .ant-table-tbody
   > tr
   > td.ant-table-cell.detailed-program-page__usage-col {
-  width: 240px !important;
-  min-width: 240px !important;
-  max-width: 240px !important;
   box-sizing: border-box !important;
   padding: 12px 16px !important;
   vertical-align: middle !important;
@@ -71,19 +58,6 @@
   width: 100%;
 }
 
-/* 등록자명 180 · 등록일시 240 (colgroup + th/td) */
-.detailed-program-page__table.cms-data-table colgroup > col:nth-last-child(2) {
-  width: 180px !important;
-  min-width: 180px !important;
-  max-width: 180px !important;
-}
-
-.detailed-program-page__table.cms-data-table colgroup > col:last-child {
-  width: 240px !important;
-  min-width: 240px !important;
-  max-width: 240px !important;
-}
-
 .detailed-program-page__table.cms-data-table
   .ant-table-thead
   > tr
@@ -92,9 +66,6 @@
   .ant-table-tbody
   > tr
   > td.ant-table-cell.detailed-program-page__registrant-col {
-  width: 180px !important;
-  min-width: 180px !important;
-  max-width: 180px !important;
   box-sizing: border-box !important;
   padding: 12px 16px !important;
   vertical-align: middle !important;
@@ -109,9 +80,6 @@
   .ant-table-tbody
   > tr
   > td.ant-table-cell.detailed-program-page__registered-at-col {
-  width: 240px !important;
-  min-width: 240px !important;
-  max-width: 240px !important;
   box-sizing: border-box !important;
   padding: 12px 16px !important;
   vertical-align: middle !important;
