@@ -71,14 +71,13 @@ export function EducationScheduleRow({
   const sessionSummary = showCurriculumSessions
     ? educationCurriculumSessionSummaryLabel(curriculumSessions)
     : undefined
-  const operationalSubtitle = [item.rowLabel?.trim(), item.durationLabel?.trim()]
-    .filter((part): part is string => Boolean(part) && part !== '-')
-    .join(' · ')
+  // TT 기관 운영일 — Figma 13843:112603: 일시 옆에 `N차시`만. 지망 순위는 카드에 쓰지 않는다.
   const subtitle = showCurriculumSessions
     ? sessionSummary || '전 차시'
     : item.operationalDayView === true
-      ? operationalSubtitle || '-'
+      ? item.durationLabel?.trim() || '-'
       : item.rowLabel?.trim() || '-'
+  const showSubtitleText = !(item.operationalDayView === true && subtitle === '-')
   const sessionHeading = subtitle === '-' ? heldLabel : `${heldLabel}, ${subtitle}`
   const absenceReason =
     showAbsenceReason &&
@@ -98,15 +97,17 @@ export function EducationScheduleRow({
           mobileStack
           badge={
             <PFStateBadge size="small" tone={progress === 'completed' ? 'success' : 'progress'}>
-              {educationScheduleProgressLabel(progress, item.operationalDayView === true)}
+              {educationScheduleProgressLabel(progress)}
             </PFStateBadge>
           }
           date={heldLabel}
           subtitle={
             <>
-              <PFText as="span" typo="bd-lg-sb" color="primary-500">
-                {subtitle}
-              </PFText>
+              {showSubtitleText ? (
+                <PFText as="span" typo="bd-lg-sb" color="primary-500">
+                  {subtitle}
+                </PFText>
+              ) : null}
               {item.team ? (
                 <span className={styles.teamInfo}>
                   <span className={styles.teamDivider} aria-hidden="true" />
