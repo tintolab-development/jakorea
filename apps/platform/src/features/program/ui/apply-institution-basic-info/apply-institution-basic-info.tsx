@@ -182,7 +182,7 @@ export function ApplyInstitutionBasicInfo({
           <PFSelect
             variant="formPage"
             size="large"
-            width={120}
+            width={130}
             placeholder="학년 선택"
             options={APPLICATION_GRADE_OPTIONS}
             value={value.applicationGrade || undefined}

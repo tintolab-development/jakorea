@@ -16,7 +16,7 @@ import {
   PFTextInput,
 } from '@/shared/ui'
 import hostStyles from '../apply-form-field-host.module.css'
-import teacherStyles from '../apply-trained-teachers-basic-info/apply-trained-teachers-basic-info.module.css'
+import teacherStyles from '../apply-institution-basic-info/apply-institution-basic-info.module.css'
 import styles from './apply-ujat-institution-basic-info.module.css'
 
 export type ApplyUjatInstitutionBasicInfoValues = {
