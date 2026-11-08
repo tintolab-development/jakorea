@@ -137,7 +137,7 @@ const reviewDetail: IndividualSettlementReviewDetail = {
 }
 
 describe('mapIndividualSettlementReviewListRows', () => {
-  it('keeps unsubmitted assigned schedules as 미신청 and maps SUBMITTED amount', () => {
+  it('keeps unsubmitted assigned schedules as 해당 없음 and maps SUBMITTED amount', () => {
     const rows = mapIndividualSettlementReviewListRows({
       assignedSessions: [session(187231), session(187232)],
       applications: [submittedApplication],
@@ -158,7 +158,7 @@ describe('mapIndividualSettlementReviewListRows', () => {
       programScheduleId: 187232,
       lectureProgress: 'scheduled',
       status: 'NONE',
-      statusLabel: '미신청',
+      statusLabel: '해당 없음',
       totalAmount: null,
       totalAmountLabel: '-',
       canOpenDetail: false,
@@ -188,7 +188,7 @@ describe('mapIndividualSettlementReviewListRows', () => {
       applications: [submittedApplication],
     })
     expect(rows).toHaveLength(2)
-    expect(rows[0]?.statusLabel).toBe('미신청')
+    expect(rows[0]?.statusLabel).toBe('해당 없음')
     expect(rows[1]).toMatchObject({
       settlementApplicationId: 1,
       orphanApplication: true,
@@ -240,9 +240,9 @@ describe('individual settlement review detail display', () => {
     expect(canReviewIndividualSettlement(reviewDetail)).toBe(true)
   })
 
-  it('hides review actions for WITHDRAWN and DRAFT', () => {
-    expect(individualSettlementReviewStatusLabel('WITHDRAWN')).toBe('철회')
-    expect(individualSettlementReviewStatusLabel('DRAFT')).toBe('작성중')
+  it('hides review actions for WITHDRAWN and DRAFT and shows them as 해당 없음', () => {
+    expect(individualSettlementReviewStatusLabel('WITHDRAWN')).toBe('해당 없음')
+    expect(individualSettlementReviewStatusLabel('DRAFT')).toBe('해당 없음')
     expect(
       canReviewIndividualSettlement({
         ...reviewDetail,
@@ -268,9 +268,10 @@ describe('individual settlement review detail display', () => {
     expect(individualSettlementTableProcessingLabel('SUBMITTED')).toBe('확인 대기 중')
   })
 
-  it('does not promote APPROVED or PAID to account payment labels', () => {
-    expect(individualSettlementReviewStatusLabel('APPROVED')).toBe('영수증 확인 완료')
-    expect(individualSettlementReviewStatusLabel('APPROVED')).not.toContain('계좌 지급')
+  it('shows APPROVED as 지급조서 확인 완료 and does not promote PAID to account payment', () => {
+    expect(individualSettlementReviewStatusLabel('APPROVED')).toBe('지급조서 확인 완료')
+    expect(individualSettlementReviewStatusLabel('REJECTED')).toBe('신청 반려')
+    expect(individualSettlementReviewStatusLabel('NONE')).toBe('해당 없음')
     expect(individualSettlementReviewStatusLabel('PAID')).toBe('PAID')
     expect(individualSettlementReviewStatusLabel('PAID')).not.toContain('계좌 지급 완료')
   })

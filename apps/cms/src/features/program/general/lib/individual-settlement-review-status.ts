@@ -3,15 +3,32 @@ import { formatDateDot, formatDateTimeDot } from '@/shared/utils/date'
 import type { IndividualSettlementReviewDetail } from '@/shared/api/generated/dashboard/schemas/individualSettlementReviewDetail'
 import type { IndividualSettlementReviewReceipt } from '@/shared/api/generated/dashboard/schemas/individualSettlementReviewReceipt'
 import type { IndividualSettlementReviewRevision } from '@/shared/api/generated/dashboard/schemas/individualSettlementReviewRevision'
+import {
+  getInstructorSettlementStatusLabel,
+  getInstructorSettlementStatusPresentation,
+  type InstructorSettlementUiStatus,
+} from '@/shared/constants/instructor-settlement-status'
 
-export const INDIVIDUAL_SETTLEMENT_REVIEW_STATUS_LABELS = {
-  NONE: '미신청',
-  SUBMITTED: '확인 대기 중',
-  APPROVED: '영수증 확인 완료',
-  REJECTED: '신청 반려',
-  WITHDRAWN: '철회',
-  DRAFT: '작성중',
-} as const
+/**
+ * 개인 정산(영수증) 검토 상태 → 정산 현황 8종 표시 연결. 서버 값·검토 가능 조건은 바꾸지 않고 표시만 공통화한다.
+ * 미신청·철회·작성중은 「해당 없음」. PAID는 영수증 계약에 없는 값이라 계좌 지급으로 올리지 않는다.
+ */
+const INDIVIDUAL_SETTLEMENT_REVIEW_UI_STATUS: Record<string, InstructorSettlementUiStatus> = {
+  NONE: 'none',
+  WITHDRAWN: 'none',
+  DRAFT: 'none',
+  SUBMITTED: 'awaiting_confirmation',
+  APPROVED: 'payment_statement_verified',
+  REJECTED: 'application_rejected',
+}
+
+export function resolveIndividualSettlementReviewUiStatus(
+  status: string | null | undefined
+): InstructorSettlementUiStatus | null {
+  const key = normalizeIndividualSettlementReviewStatus(status)
+  if (!key) return 'none'
+  return INDIVIDUAL_SETTLEMENT_REVIEW_UI_STATUS[key] ?? null
+}
 
 export const INDIVIDUAL_SETTLEMENT_LODGING_NOT_PAYABLE_LABEL = '지급 대상 아님'
 
@@ -19,44 +36,34 @@ export function isIndividualSettlementLodgingType(value: string | null | undefin
   return normalizeIndividualSettlementReviewStatus(value) === 'LODGING'
 }
 
-export type IndividualSettlementReviewStatusKey =
-  keyof typeof INDIVIDUAL_SETTLEMENT_REVIEW_STATUS_LABELS
-
 export function normalizeIndividualSettlementReviewStatus(
   status: string | null | undefined
 ): string {
   return (status ?? '').trim().toUpperCase()
 }
 
+/** 목록·엑셀 처리 현황 — 상세·산출내역과 같은 라벨 */
 export function individualSettlementTableProcessingLabel(
   status: string | null | undefined
 ): string {
-  const key = normalizeIndividualSettlementReviewStatus(status)
-  if (!key || key === 'NONE') return '해당 없음'
   return individualSettlementReviewStatusLabel(status)
 }
 
 export function individualSettlementReviewStatusLabel(
   status: string | null | undefined
 ): string {
-  const key = normalizeIndividualSettlementReviewStatus(status)
-  if (!key) return INDIVIDUAL_SETTLEMENT_REVIEW_STATUS_LABELS.NONE
-  if (key === 'PAID') return key
-  if (key in INDIVIDUAL_SETTLEMENT_REVIEW_STATUS_LABELS) {
-    return INDIVIDUAL_SETTLEMENT_REVIEW_STATUS_LABELS[key as IndividualSettlementReviewStatusKey]
-  }
-  return status?.trim() || INDIVIDUAL_SETTLEMENT_REVIEW_STATUS_LABELS.NONE
+  const uiStatus = resolveIndividualSettlementReviewUiStatus(status)
+  if (uiStatus) return getInstructorSettlementStatusLabel(uiStatus)
+  return status?.trim() ?? ''
 }
 
 export function individualSettlementReviewStatusAccent(
   status: string | null | undefined
 ): string {
-  const key = normalizeIndividualSettlementReviewStatus(status)
-  if (key === 'SUBMITTED') return 'var(--color-orange, #f07917)'
-  if (key === 'APPROVED') return 'var(--color-green, #1e8c29)'
-  if (key === 'REJECTED') return 'var(--color-red, #c32f4a)'
-  if (key === 'WITHDRAWN' || key === 'DRAFT') return 'var(--default-BK, #3d3d3d)'
-  return 'var(--default-BK, #3d3d3d)'
+  const uiStatus = resolveIndividualSettlementReviewUiStatus(status)
+  return uiStatus
+    ? getInstructorSettlementStatusPresentation(uiStatus, 'text').color
+    : 'var(--Netural-black, #3d3d3d)'
 }
 
 export function formatIndividualSettlementWon(amount: number | null | undefined): string {
