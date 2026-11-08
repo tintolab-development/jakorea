@@ -210,6 +210,7 @@ export function usePaymentOrderDetailLinesController(
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [rowsState, setRowsState] = useState<PaymentOrderDetailLineRow[]>([])
   const [batchConfirmOpen, setBatchConfirmOpen] = useState(false)
+  const [batchConfirmDoneOpen, setBatchConfirmDoneOpen] = useState(false)
   const [paymentStatementIssueBlocked, setPaymentStatementIssueBlocked] = useState<{
     open: boolean
     variant: 'single' | 'multi'
@@ -225,6 +226,7 @@ export function usePaymentOrderDetailLinesController(
   useEffect(() => {
     if (!isOpen) {
       setBatchConfirmOpen(false)
+      setBatchConfirmDoneOpen(false)
       setPaymentStatementIssueBlocked({ open: false, variant: 'single', selectedCount: 0 })
       setIssuanceViewOpen(false)
       setIssuanceQueue([])
@@ -448,6 +450,7 @@ export function usePaymentOrderDetailLinesController(
             )
             setBatchConfirmOpen(false)
             setSelectedRowKeys([])
+            setBatchConfirmDoneOpen(true)
             await detailContextQuery?.refetch()
           })
           .catch(async error => {
@@ -480,6 +483,7 @@ export function usePaymentOrderDetailLinesController(
       )
       setBatchConfirmOpen(false)
       setSelectedRowKeys([])
+      setBatchConfirmDoneOpen(true)
     },
     [
       selectedRowKeys,
@@ -495,6 +499,21 @@ export function usePaymentOrderDetailLinesController(
     const selected = rowsState.filter(r => selectedRowKeys.includes(r.id))
     return selected
   }, [rowsState, selectedRowKeys])
+
+  /** 일괄 확인 안내 — 「[첫 신청자] 님 외 N명」(신청자 기준 상세는 본인 1명) */
+  const batchConfirmApplicantSummary = useMemo(() => {
+    const names =
+      mode === 'program'
+        ? selectedConfirmableRows.map(row =>
+            'instructorName' in row ? row.instructorName.trim() : ''
+          )
+        : selectedConfirmableRows.map(() => args.instructorRow.instructorName.trim())
+    const distinct = [...new Set(names.filter(name => name !== ''))]
+    return {
+      leadApplicantName: distinct[0] ?? '',
+      otherApplicantCount: Math.max(distinct.length - 1, 0),
+    }
+  }, [args, mode, selectedConfirmableRows])
 
   const canBatchConfirm = useMemo(() => {
     if (selectedConfirmableRows.length === 0) return false
@@ -512,9 +531,17 @@ export function usePaymentOrderDetailLinesController(
     }
     if (!canBatchConfirm) {
       showAlert({
-        title: '일괄 확인 불가 안내',
-        content:
-          '선택한 항목 중 확인 처리할 수 없는 지급조서가 있습니다.\n확인 대기 중인 지급조서만 선택해 주세요.',
+        title: '지급조서 확인 불가 안내',
+        content: (
+          <>
+            <strong>선택한 {selectedConfirmableRows.length}개의 항목</strong> 중 확인이 불가한
+            항목이 있습니다.
+            <br />
+            지급조서는 확인 대기 중 또는 재신청 상태의 건만 확인 가능합니다.
+            <br />
+            처리 현황을 확인 후 다시 시도하여 주세요.
+          </>
+        ),
       })
       return
     }
@@ -865,7 +892,7 @@ export function usePaymentOrderDetailLinesController(
           ? (row as PaymentOrderAdminProgramDetailInstructorRow).instructorName
           : (row as PaymentOrderAdminInstructorDetailProgramRow).programName,
       institutionName: row.institutionName,
-      lectureDateSession: `${formatKoreanDateWithWeekday(row.lectureDate)} | ${row.sessionOrdinal}차시`,
+      lectureDateSession: `${formatKoreanDateWithWeekday(row.lectureDate)} | ${row.sessionOrdinal}회차`,
       processingStatusLabel: PAYMENT_ORDER_LINE_STATUS_LABELS_FULL[row.processingStatus],
       estimatedAmountLabel: formatWon(row.estimatedAmount),
     }))
@@ -890,6 +917,9 @@ export function usePaymentOrderDetailLinesController(
     filteredRows,
     batchConfirmOpen,
     setBatchConfirmOpen,
+    batchConfirmDoneOpen,
+    setBatchConfirmDoneOpen,
+    batchConfirmApplicantSummary,
     paymentStatementIssueBlocked,
     setPaymentStatementIssueBlocked,
     handleBatchConfirm,

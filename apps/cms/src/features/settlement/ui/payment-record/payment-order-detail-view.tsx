@@ -258,6 +258,8 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
         detailContextQuery={detailContextQuery}
         onStatementLineCommitted={handleStatementLineCommitted}
         onAfterRejectResultClosed={closeCalculationStatement}
+        paymentCorrectionEnabled
+        onAfterCorrectionProcessed={closeCalculationStatement}
       />
       <DetailFullPageModal
         open={isOpen}

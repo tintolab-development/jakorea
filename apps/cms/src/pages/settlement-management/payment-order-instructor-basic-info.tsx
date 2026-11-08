@@ -114,7 +114,8 @@ export function PaymentOrderInstructorBasicInfo({
           <PersonalInfoRevealButton
             labelMode="toggle"
             revealed={personalInfoRevealed}
-            onClick={onPersonalInfoButtonClick} />
+            onClick={onPersonalInfoButtonClick}
+          />
         }
       >
         <DetailInfoForm.Row type="double">
@@ -143,15 +144,6 @@ export function PaymentOrderInstructorBasicInfo({
             view={renderDetailInfoPipeSeparated(accountDisplay)}
           />
         </DetailInfoForm.Row>
-      </DetailInfoForm>
-
-      <div className="payment-order-instructor-status-detail__basic-split-gap" aria-hidden />
-
-      <DetailInfoForm
-        title="지급조서 처리 현황 및 총 정산 신청 금액"
-        hideHeader
-        className="payment-order-instructor-status-detail__detail-form"
-      >
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="지급조서 처리 현황"

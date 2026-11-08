@@ -6,14 +6,19 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Spin } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
 import {
-  ActionResultModal,
   CmsButton,
   showNotificationResendRequestCompletedAlert,
   useCmsAlert,
 } from '@/shared/ui'
 import type { PaymentOrderProgramCalculationStatement } from '@/features/settlement-management/model/payment-order-admin-list'
 import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
-import { useConfirmPaymentStatementMutation, useRejectPaymentStatementMutation } from '@/features/settlement-management/hooks/use-confirm-payment-statement-mutation'
+import {
+  useApproveSettlementCorrectionMutation,
+  useConfirmPaymentStatementMutation,
+  useRejectPaymentStatementMutation,
+  useRejectSettlementCorrectionMutation,
+} from '@/features/settlement-management/hooks/use-confirm-payment-statement-mutation'
+import { canProcessPaymentCorrection } from '@/features/settlement/lib/payment-correction'
 import { useResendSettlementNotificationMutation } from '@/features/settlement-management/hooks/use-resend-settlement-notification-mutation'
 import { SettlementNotificationResendModal } from '@/features/settlement/ui/payment-record/settlement-notification-resend-modal'
 import {
@@ -36,8 +41,14 @@ import '@/features/program/shared/ui/program-detail/project-info/project-info-fo
 import '@/pages/settlement-management/payment-order-admin-status-tag.css'
 import './payment-order-program-calculation-statement-modal.css'
 import { PaymentOrderPaymentConfirmationModal } from './payment-order-payment-confirmation-modal'
-import { PaymentOrderPaymentRejectionModal } from './payment-order-payment-rejection-modal'
+import { PaymentOrderPaymentConfirmationResultModal } from './payment-order-payment-confirmation-result-modal'
+import {
+  PaymentOrderPaymentRejectionModal,
+  type PaymentOrderRejectNotificationType,
+} from './payment-order-payment-rejection-modal'
 import { PaymentOrderPaymentRejectionResultModal } from './payment-order-payment-rejection-result-modal'
+import { PaymentOrderPaymentCorrectionModal } from './payment-order-payment-correction-modal'
+import { PaymentOrderCorrectionRejectModal } from './payment-order-correction-reject-modal'
 import {
   PAYMENT_ORDER_CALC_STATEMENT_MIN_WIDTH,
   PaymentOrderCalculationBreakdownTable,
@@ -106,6 +117,13 @@ export interface PaymentOrderCalculationStatementModalImplProps {
    * 지정하지 않으면 기존처럼 산출 내역서에서 만든다.
    */
   issuanceParagraphBodyOptionsOverride?: RenderFormParagraphBodyOptions
+  /**
+   * 지급 정정 요청 건의 「신청 반려 / 지급 정정」 처리 — 정산 관리 > 지급조서 확인 진입에서만 연다.
+   * 일반 프로그램·회원 상세 진입은 기본(false)으로 기존 동작 유지.
+   */
+  paymentCorrectionEnabled?: boolean
+  /** 지급 정정 완료·정정 요청 반려 후 산출 내역서를 닫을 때 (승인 시 원 정산은 새 정산으로 대체됨) */
+  onAfterCorrectionProcessed?: () => void
 }
 
 export function PaymentOrderCalculationStatementModalImpl({
@@ -127,17 +145,23 @@ export function PaymentOrderCalculationStatementModalImpl({
   statementActionOverride,
   hideInstitutionColumn = false,
   issuanceParagraphBodyOptionsOverride,
+  paymentCorrectionEnabled = false,
+  onAfterCorrectionProcessed,
 }: PaymentOrderCalculationStatementModalImplProps) {
   const { showAlert } = useCmsAlert()
   const confirmMutation = useConfirmPaymentStatementMutation()
   const rejectMutation = useRejectPaymentStatementMutation()
+  const approveCorrectionMutation = useApproveSettlementCorrectionMutation()
+  const rejectCorrectionMutation = useRejectSettlementCorrectionMutation()
+  const [paymentCorrectionOpen, setPaymentCorrectionOpen] = useState(false)
+  const [paymentCorrectionDoneOpen, setPaymentCorrectionDoneOpen] = useState(false)
+  const [correctionRejectOpen, setCorrectionRejectOpen] = useState(false)
   const resendNotificationMutation = useResendSettlementNotificationMutation()
   const resendIdempotencyKeyRef = useRef<string | null>(null)
   const [paymentConfirmOpen, setPaymentConfirmOpen] = useState(false)
   const [paymentConfirmDoneOpen, setPaymentConfirmDoneOpen] = useState(false)
   const [paymentRejectOpen, setPaymentRejectOpen] = useState(false)
   const [paymentRejectDoneOpen, setPaymentRejectDoneOpen] = useState(false)
-  const [paymentRejectReason, setPaymentRejectReason] = useState('')
   const [issuanceViewOpen, setIssuanceViewOpen] = useState(false)
   const [notificationResendOpen, setNotificationResendOpen] = useState(false)
 
@@ -175,9 +199,11 @@ export function PaymentOrderCalculationStatementModalImpl({
       setPaymentConfirmDoneOpen(false)
       setPaymentRejectOpen(false)
       setPaymentRejectDoneOpen(false)
-      setPaymentRejectReason('')
       setIssuanceViewOpen(false)
       setNotificationResendOpen(false)
+      setPaymentCorrectionOpen(false)
+      setPaymentCorrectionDoneOpen(false)
+      setCorrectionRejectOpen(false)
       resendIdempotencyKeyRef.current = null
     }
   }, [open])
@@ -305,6 +331,54 @@ export function PaymentOrderCalculationStatementModalImpl({
     processingStatusClass === 'rejected' ||
     processingStatusClass === 'application_rejected'
 
+  const correctionRequestId = statement.basic.correctionRequestId
+  const canProcessCorrection = canProcessPaymentCorrection({
+    enabled: paymentCorrectionEnabled && !statementActionOverride,
+    paymentOrdersRemote,
+    processingStatusClass,
+    correctionRequestId,
+  })
+  const correctionPending = approveCorrectionMutation.isPending || rejectCorrectionMutation.isPending
+  const nestedZIndex = zIndex != null ? zIndex + 100 : undefined
+  const statementInstructorName =
+    statement.context === 'instructor' ? statement.basic.nameKo : statement.basic.instructorNameKo
+
+  const handleApproveCorrection = async (
+    body: Parameters<typeof approveCorrectionMutation.mutateAsync>[0]['body']
+  ) => {
+    if (correctionRequestId == null) return
+    try {
+      await approveCorrectionMutation.mutateAsync({ correctionRequestId, body })
+      await detailContextQuery?.refetch()
+      setPaymentCorrectionOpen(false)
+      setPaymentCorrectionDoneOpen(true)
+    } catch (error) {
+      showAlert({
+        title: '안내',
+        content: getSettlementApiErrorMessage(error, '지급 정정 처리에 실패했습니다.'),
+      })
+    }
+  }
+
+  const handleRejectCorrection = async (reason: string) => {
+    if (correctionRequestId == null) return
+    try {
+      await rejectCorrectionMutation.mutateAsync({ correctionRequestId, reason })
+      await detailContextQuery?.refetch()
+      setCorrectionRejectOpen(false)
+      showAlert({
+        title: '지급 정정 요청 반려 완료',
+        content: '지급 정정 요청이 반려되었습니다.',
+      })
+      onAfterCorrectionProcessed?.()
+    } catch (error) {
+      showAlert({
+        title: '안내',
+        content: getSettlementApiErrorMessage(error, '지급 정정 요청 반려에 실패했습니다.'),
+      })
+    }
+  }
+
   const handleRemoteConfirm = async (lectureFeePaymentScheduledDateIso: string) => {
     if (statementId == null) {
       showAlert({
@@ -336,7 +410,7 @@ export function PaymentOrderCalculationStatementModalImpl({
 
   const handleReject = async (payload: {
     reason: string
-    notificationType: 'IMMEDIATE' | 'ON_ANNOUNCEMENT' | 'MANUAL'
+    notificationType: PaymentOrderRejectNotificationType
     scheduledNotificationAt?: string
   }) => {
     if (paymentOrdersRemote) {
@@ -369,7 +443,6 @@ export function PaymentOrderCalculationStatementModalImpl({
       rejectionReason: payload.reason,
     })
     setPaymentRejectOpen(false)
-    setPaymentRejectReason(payload.reason)
     setPaymentRejectDoneOpen(true)
   }
 
@@ -423,11 +496,7 @@ export function PaymentOrderCalculationStatementModalImpl({
           blocks={statement.blocks}
           formulaLabel={statement.formulaLabel}
           totalAmount={statement.totalAmount}
-          detailDescription={
-            entryKind === 'instructor'
-              ? '교통비 및 숙소비는 강사가 지급 신청한 경우에만 항목 노출됩니다.'
-              : undefined
-          }
+          detailDescription="교통비 및 숙박비는 강사가 지급 신청한 경우에만 항목 노출됩니다."
           paymentStatementIssueDisabled={!canIssuePaymentStatement}
           lectureSessionSegmentLabel={entryKind === 'instructor' ? 'round' : 'session'}
           onBasisDetailClick={handleBasisDetailClick}
@@ -452,8 +521,28 @@ export function PaymentOrderCalculationStatementModalImpl({
                   확인 처리
                 </CmsButton>
               </>
-            ) : isStatementActionLocked ? null : (
+            ) : canProcessCorrection ? (
               <>
+                <CmsButton
+                  variant="delete"
+                  size="medium"
+                  disabled={correctionPending}
+                  onClick={() => setCorrectionRejectOpen(true)}
+                >
+                  신청 반려
+                </CmsButton>
+                <CmsButton
+                  variant="primary"
+                  size="medium"
+                  disabled={correctionPending}
+                  onClick={() => setPaymentCorrectionOpen(true)}
+                >
+                  지급 정정
+                </CmsButton>
+              </>
+            ) : (
+              <>
+                {/* 확인 완료·반려 등 처리 이후에도 버튼은 노출하고 비활성 */}
                 <CmsButton
                   variant="delete"
                   size="medium"
@@ -471,8 +560,9 @@ export function PaymentOrderCalculationStatementModalImpl({
                 <CmsButton
                   variant="primary"
                   size="medium"
-                  disabled={confirmMutation.isPending}
-                  onClick={() => setPaymentConfirmOpen(true)} >
+                  disabled={isStatementActionLocked || confirmMutation.isPending}
+                  onClick={() => setPaymentConfirmOpen(true)}
+                >
                   확인 처리
                 </CmsButton>
               </>
@@ -508,10 +598,8 @@ export function PaymentOrderCalculationStatementModalImpl({
         data={statement}
         zIndex={zIndex != null ? zIndex + 100 : undefined}
       />
-      <ActionResultModal
+      <PaymentOrderPaymentConfirmationResultModal
         open={paymentConfirmDoneOpen}
-        title="지급조서 확인 완료"
-        body="지급조서 확인이 완료되었습니다."
         zIndex={zIndex != null ? zIndex + 100 : undefined}
         onClose={() => setPaymentConfirmDoneOpen(false)}
       />
@@ -530,8 +618,39 @@ export function PaymentOrderCalculationStatementModalImpl({
           setPaymentRejectDoneOpen(false)
           onAfterRejectResultClosed?.()
         }}
-        data={statement}
-        reason={paymentRejectReason}
+      />
+      {canProcessCorrection ? (
+        <>
+          <PaymentOrderPaymentCorrectionModal
+            open={paymentCorrectionOpen}
+            instructorName={statementInstructorName}
+            confirmLoading={approveCorrectionMutation.isPending}
+            zIndex={nestedZIndex}
+            onCancel={() => setPaymentCorrectionOpen(false)}
+            onConfirm={body => {
+              void handleApproveCorrection(body)
+            }}
+          />
+          <PaymentOrderCorrectionRejectModal
+            open={correctionRejectOpen}
+            confirmLoading={rejectCorrectionMutation.isPending}
+            zIndex={nestedZIndex}
+            onCancel={() => setCorrectionRejectOpen(false)}
+            onConfirm={reason => {
+              void handleRejectCorrection(reason)
+            }}
+          />
+        </>
+      ) : null}
+      <PaymentOrderPaymentConfirmationResultModal
+        open={paymentCorrectionDoneOpen}
+        title="지급조서 정정 완료"
+        message="지급조서 정정이 완료되었습니다."
+        zIndex={nestedZIndex}
+        onClose={() => {
+          setPaymentCorrectionDoneOpen(false)
+          onAfterCorrectionProcessed?.()
+        }}
       />
       <PaymentStatementIssuanceViewModal
         open={issuanceViewOpen && Boolean(issuanceParagraphBodyOptions)}

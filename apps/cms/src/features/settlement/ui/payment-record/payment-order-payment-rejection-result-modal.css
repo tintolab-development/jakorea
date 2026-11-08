@@ -32,11 +32,3 @@
   color: var(--color-text-primary, #3d3d3d);
   padding-top: 16px !important;
 }
-
-.payment-order-payment-reject-result__line + .payment-order-payment-reject-result__line {
-  margin-top: 8px;
-}
-
-.payment-order-payment-reject-result__name {
-  font-weight: var(--font-weight-700, 700);
-}

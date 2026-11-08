@@ -12,7 +12,22 @@ export type PaymentOrderCalculationStatementProcessingStatusFields = {
   processingStatusDisplay: string
   processingStatusClass: PaymentOrderAdminLineProcessingStatus
   processingRejectionReason?: string
+  correctionReason?: string
   lectureFeePaymentScheduledDateDisplay?: string
+}
+
+/** 지급 정정 요청 — 처리 현황 오른쪽에 「정정 요청 사유」 필드를 노출하는 상태 */
+export function isPaymentOrderCorrectionRequestedStatus(
+  status: PaymentOrderAdminLineProcessingStatus
+): boolean {
+  return status === 'correction'
+}
+
+/** 확인 완료·계좌 지급 대기 — 「이체 예정일」을 노출하는 상태 */
+export function isPaymentOrderTransferScheduledStatus(
+  status: PaymentOrderAdminLineProcessingStatus
+): boolean {
+  return status === 'confirmed' || status === 'awaiting_payment'
 }
 
 function ProcessingStatusText({
@@ -46,9 +61,14 @@ function ResendSlot({ onClick }: { onClick?: () => void }) {
 export function PaymentOrderCalculationStatementProcessingStatusView({
   basic,
   onResendNotificationClick,
+  separateTransferScheduledDate = false,
 }: {
   basic: PaymentOrderCalculationStatementProcessingStatusFields
   onResendNotificationClick?: () => void
+  /**
+   * true면 「이체 예정일」을 상태 셀에 붙이지 않는다 — 호출부가 별도 필드(시안: 처리 현황 | 이체 예정일)로 그린다.
+   */
+  separateTransferScheduledDate?: boolean
 }) {
   if (
     basic.processingStatusClass === 'application_rejected' ||
@@ -74,8 +94,8 @@ export function PaymentOrderCalculationStatementProcessingStatusView({
   }
 
   if (
-    basic.processingStatusClass === 'confirmed' ||
-    basic.processingStatusClass === 'awaiting_payment'
+    !separateTransferScheduledDate &&
+    isPaymentOrderTransferScheduledStatus(basic.processingStatusClass)
   ) {
     return (
       <div className="payment-order-calc-statement-modal__processing-status-row payment-order-calc-statement-modal__processing-status-row--pd-divider">

@@ -274,7 +274,7 @@ function eventsFromPrograms(rows: PaymentOrderAdminProgramRow[]): PaymentOrderCa
 
 function instructorDisplayTitle(name: string): string {
   const n = name.trim()
-  return n ? `${n} 강사` : '강사'
+  return n || '강사'
 }
 
 function eventsFromInstructors(

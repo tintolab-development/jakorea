@@ -34,7 +34,7 @@ export function PaymentOrderProgramBasicInfo({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field label="프로그램 진행 회차" view={<span>{sessionLabel}</span>} />
           <DetailInfoForm.Field
-            label="지급 조서 처리 현황"
+            label="지급조서 처리 현황"
             view={
               <span className="payment-order-instructor-status-detail__aggregate-status-value">
                 {renderAggregateStatus(aggregateStatus)}

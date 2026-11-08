@@ -115,6 +115,43 @@
   width: auto;
 }
 
+/*
+ * 정산 산출 내역서(관리자, columnPreset="calculation-statement") — Figma w1400(콘텐츠 1340)
+ * 참여 기관명 180 · 교육 진행 일자 260 · 산정 항목 140 · 항목 설명(auto ≈ 400) · 정산 금액 180 · 산정 기준 상세 180
+ */
+.payment-statement-issuance-calculation-lines-table--calculation-statement
+  .payment-statement-issuance-calculation-lines-table__col--institution {
+  width: 13.4%;
+}
+
+.payment-statement-issuance-calculation-lines-table--calculation-statement
+  .payment-statement-issuance-calculation-lines-table__col--date {
+  width: 19.4%;
+}
+
+.payment-statement-issuance-calculation-lines-table--calculation-statement
+  .payment-statement-issuance-calculation-lines-table__col--item-label {
+  width: 10.4%;
+}
+
+.payment-statement-issuance-calculation-lines-table--calculation-statement
+  .payment-statement-issuance-calculation-lines-table__col--item {
+  width: auto;
+}
+
+.payment-statement-issuance-calculation-lines-table--calculation-statement
+  .payment-statement-issuance-calculation-lines-table__col--amount,
+.payment-statement-issuance-calculation-lines-table--calculation-statement
+  .payment-statement-issuance-calculation-lines-table__col--trailing {
+  width: 13.4%;
+}
+
+/* 참여 기관명 없음(개인형): 교육 진행 일자가 기관 열 폭을 더 가져간다 */
+.payment-statement-issuance-calculation-lines-table--calculation-statement.payment-statement-issuance-calculation-lines-table--no-institution
+  .payment-statement-issuance-calculation-lines-table__col--date {
+  width: 26%;
+}
+
 .payment-statement-issuance-calculation-lines-table th,
 .payment-statement-issuance-calculation-lines-table td {
   box-sizing: border-box;

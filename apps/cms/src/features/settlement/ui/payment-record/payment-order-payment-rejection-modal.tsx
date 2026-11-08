@@ -112,14 +112,15 @@ export function PaymentOrderPaymentRejectionModal({
           <div className="payment-order-payment-reject__footer-actions">
             <CmsButton
               variant="secondary"
-              size="medium"
+              size="h40"
               onClick={onCancel}
-              disabled={confirmLoading} >
+              disabled={confirmLoading}
+            >
               취소
             </CmsButton>
             <CmsButton
               variant="delete"
-              size="medium"
+              size="h40"
               loading={confirmLoading}
               disabled={!canReject}
               onClick={() => {
@@ -132,7 +133,8 @@ export function PaymentOrderPaymentRejectionModal({
                       ? scheduledAt.format('YYYY-MM-DDTHH:mm:ss')
                       : undefined,
                 })
-              }} >
+              }}
+            >
               반려
             </CmsButton>
           </div>
@@ -173,7 +175,7 @@ export function PaymentOrderPaymentRejectionModal({
                 width="100%"
                 inputSize="large"
                 onChange={e => setReason(e.target.value)}
-                placeholder="반려 사유를 입력해 주세요."
+                placeholder="반려 사유를 입력해 주세요"
                 maxLength={100}
                 disabled={confirmLoading}
               />
@@ -195,9 +197,6 @@ export function PaymentOrderPaymentRejectionModal({
               >
                 <CmsRadio value="IMMEDIATE" size="medium">
                   즉시
-                </CmsRadio>
-                <CmsRadio value="ON_ANNOUNCEMENT" size="medium">
-                  발표일에 맞춰서
                 </CmsRadio>
                 <span
                   ref={manualRadioAnchorRef}

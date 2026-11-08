@@ -66,23 +66,23 @@ export function PaymentOrderPaymentConfirmationModal({
     <ContentModal
       open={canShow}
       onCancel={onCancel}
-      title="지급조서 확인"
+      title="지급조서 확인 안내"
       width={600}
       zIndex={zIndex}
       className="payment-order-payment-confirm-modal"
       footer={
         <div className="payment-order-payment-confirm__footer-actions">
-          <CmsButton variant="secondary" size="large" onClick={onCancel}>
+          <CmsButton variant="secondary" size="h40" onClick={onCancel}>
             취소
           </CmsButton>
           <CmsButton
             variant="primary"
-            size="large"
+            size="h40"
             onClick={() =>
               onConfirm({ lectureFeePaymentScheduledDateIso: expectedDate.format('YYYY-MM-DD') })
             }
           >
-            지급조서 확인 완료
+            확인 완료
           </CmsButton>
         </div>
       }
@@ -90,9 +90,8 @@ export function PaymentOrderPaymentConfirmationModal({
       {block0 ? (
         <div className="payment-order-payment-confirm">
           <p className="payment-order-payment-confirm__line">
-            아래 항목에 대한{' '}
-            <strong className="payment-order-payment-confirm__name">{instructorName}</strong>
-            님의 지급조서 신청을 확인 처리하시겠습니까?
+            <strong className="payment-order-payment-confirm__name">[{instructorName}]</strong>{' '}
+            님의 강사비 지급조서 신청을 확인 처리하시겠습니까?
           </p>
           <p className="payment-order-payment-confirm__line">
             정산된 금액은 <strong>매월 셋째 주 화요일에 계좌 지급</strong>됩니다.
@@ -113,7 +112,12 @@ export function PaymentOrderPaymentConfirmationModal({
             ))}
           </div>
           <div className="payment-order-payment-confirm__date-block">
-            <span className="payment-order-payment-confirm__date-label">계좌 지급 예정일</span>
+            <span className="payment-order-payment-confirm__date-label">
+              계좌 지급 예정일
+              <span className="cms-field__required" aria-hidden>
+                *
+              </span>
+            </span>
             <DatePicker
               className="payment-order-payment-confirm__date-picker"
               value={expectedDate}

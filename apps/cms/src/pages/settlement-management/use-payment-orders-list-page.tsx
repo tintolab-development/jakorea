@@ -74,8 +74,6 @@ export type PaymentOrdersDetailState =
   | { type: 'instructor'; data: PaymentOrderAdminInstructorRow }
   | null
 
-const PAYMENT_ORDERS_LIST_SCROLL_X_PROGRAM = 64 + 360 + 180 + 200 + 168
-const PAYMENT_ORDERS_LIST_SCROLL_X_INSTRUCTOR = 64 + 340 + 180 + 200 + 180
 
 const PROCESSING_STATUS_FILTER_OPTIONS: {
   value: PaymentOrderAdminProcessingStatus
@@ -439,7 +437,7 @@ export function usePaymentOrdersListPage() {
         dataIndex: 'programName',
         key: 'programName',
         ellipsis: { showTitle: true },
-        width: 360,
+        // 유연 열 — 남는 폭 흡수 (시안: No. 80 · 나머지 240)
         minWidth: 240,
         align: 'center',
       },
@@ -447,7 +445,7 @@ export function usePaymentOrdersListPage() {
         title: '정산 대상자',
         dataIndex: 'instructorCount',
         key: 'instructorCount',
-        width: 180,
+        width: 240,
         align: 'center',
         render: (n: number) => `${n}명`,
       },
@@ -455,7 +453,7 @@ export function usePaymentOrdersListPage() {
         title: '지급 대기 항목',
         dataIndex: 'pendingPaymentSettlementItemCount',
         key: 'pendingPaymentSettlementItemCount',
-        width: 200,
+        width: 240,
         align: 'center',
         render: (count: number) => `${count}개`,
       },
@@ -463,7 +461,7 @@ export function usePaymentOrdersListPage() {
         title: '총 정산 신청 금액',
         dataIndex: 'estimatedAmount',
         key: 'estimatedAmount',
-        width: 168,
+        width: 240,
         align: 'center',
         render: (amount: number) => formatWon(amount),
       },
@@ -484,7 +482,7 @@ export function usePaymentOrdersListPage() {
         dataIndex: 'instructorName',
         key: 'instructorName',
         ellipsis: { showTitle: true },
-        width: 340,
+        // 유연 열 — 남는 폭 흡수 (시안: No. 80 · 나머지 240)
         minWidth: 240,
         align: 'center',
       },
@@ -492,7 +490,7 @@ export function usePaymentOrdersListPage() {
         title: '정산 대상 프로그램',
         dataIndex: 'programCount',
         key: 'programCount',
-        width: 180,
+        width: 240,
         align: 'center',
         render: (n: number) => `${n}개`,
       },
@@ -500,7 +498,7 @@ export function usePaymentOrdersListPage() {
         title: '지급 대기 항목',
         dataIndex: 'pendingPaymentSettlementItemCount',
         key: 'pendingPaymentSettlementItemCount',
-        width: 200,
+        width: 240,
         align: 'center',
         render: (count: number) => `${count}개`,
       },
@@ -508,7 +506,7 @@ export function usePaymentOrdersListPage() {
         title: '총 정산 신청 금액',
         dataIndex: 'estimatedAmount',
         key: 'estimatedAmount',
-        width: 180,
+        width: 240,
         align: 'center',
         render: (amount: number) => formatWon(amount),
       },
@@ -551,7 +549,7 @@ export function usePaymentOrdersListPage() {
         : {
             key: 'pendingItemBucket',
             type: 'select',
-            label: '지급 대기 정산 항목',
+            label: '지급 대기 항목',
             placeholder: '전체',
             options: PENDING_ITEM_BUCKET_FILTER_OPTIONS,
             allowClear: true,
@@ -618,7 +616,6 @@ export function usePaymentOrdersListPage() {
               rowKey="no"
               columns={programColumns}
               dataSource={listProgram}
-              scroll={{ x: PAYMENT_ORDERS_LIST_SCROLL_X_PROGRAM }}
               onRowClick={record => openPaymentOrderDetail('program', record)}
             />
           ) : (
@@ -627,7 +624,6 @@ export function usePaymentOrdersListPage() {
               rowKey="no"
               columns={instructorColumns}
               dataSource={listInstructor}
-              scroll={{ x: PAYMENT_ORDERS_LIST_SCROLL_X_INSTRUCTOR }}
               onRowClick={record => openPaymentOrderDetail('instructor', record)}
             />
           )}
