@@ -32,6 +32,28 @@ color · spacing · typography · radius · shadow 는 **토큰 우선**. 토큰
 }
 ```
 
+## 디자인 가이드 Foundation 토큰 (SSOT: Figma `📗 Design Guide (Component)` › 01 Foundation)
+
+정의 파일: `packages/admin-ui/src/styles/tokens.css` (CMS·Admin 공통 `:root`). Figma 변수명 `A/B/c` → CSS `--A-B-c`.
+
+| 가이드 | CSS 토큰 | 비고 |
+|---|---|---|
+| Brand/500 · 500-04/06/10/50 · 700 · 800 | `--Brand-500` … `--Brand-800` | 레거시 `--color-brand-primary`(#01a1af)는 시각 동일, 유지 |
+| Content/secondary·tertiary·quaternary·weak·disabled·lnb·breadcrumb·black·link | `--Content-*` | 레거시 `--color-text-secondary`(#8c8c8c)·`--color-text-body`(#595959)는 가이드 값 아님 — 신규 코드는 `--Content-*` |
+| Border/default·alpha-06/10/16·disabled-selected·input·black-06 | `--Border-*` | 입력 테두리 가이드 = `--Border-input` #C4CDD1 |
+| Background/subtle·dim·overlay·preview-dim·alpha-04·white-60·avatar | `--Background-*` | 흰 배경 위 알파 겹침(header·page·weak·disabled, Brand/50·100)은 `background` 전용 — `--BG-header` 또는 `linear-gradient(...), #fff` |
+| Status/{red,blue,green,orange,purple,pink,neutral}/{main,border,bg,bg-06} | `--Status-*` | `Status/red/bg`(알파 겹침)는 미정의 |
+| Tag/* · Social/* · File/* · Chart/* | `--Tag-*` · `--Social-*` · `--File-*` · `--Chart-*` | |
+| Spacing/1 ~ 100 | `--Spacing-*` | 레거시 `--spacing-*` 도 같은 값 |
+| Radius/4 ~ 999 | `--Radius-*` | |
+| shadow/default·hover·focus · pop up · preview | `--Shadow-default` · `--Shadow-hover` · `--Shadow-focus` · `--Shadow-popup` · `--Shadow-preview` | 레거시 `--shadow-hover`(회색)와 다름 |
+| Page/small · Popup/XS~XXL | `--Width-page-small` · `--Width-popup-xs` … `xxl` | 480 · 440 · 600 · 800 · 1000 · 1200 · 1400 |
+| Layout | `--header-height` 64 · `--sidebar-width` 270 · `--layout-content-padding-x` 32 · `--layout-section-card-radius` 16 · `--layout-section-card-padding` 24 | |
+
+필드 라벨 필수(*) 색 = Status/red/main → CMS `--color-required-mark: var(--color-red)`.
+
+Type scale(가이드): GNB 제목 Bold 26/120% · Title 20/18/16 Bold 140% · LNB 1depth Bold 18/120%, 2·3depth Bold 16/120% · 라벨 Medium 14/140% · 필드 값 Medium 15/145% · 도움말 Medium 12/150% · 테이블 헤더 Bold 14/150% · 테이블 값 Medium 14/150% · 버튼 h52 SemiBold 18/135%, h44 16/125%, h40·h36 14/125%, h32 12/115% · Alert Medium 16/150%.
+
 ## 목록·테이블 관련 요약
 
 | 용도 | 참조 |
@@ -54,4 +76,4 @@ color · spacing · typography · radius · shadow 는 **토큰 우선**. 토큰
 
 - 3rd-party override에 리터럴 필요 시 최소 범위 + 주석
 
-**Last updated:** 2026-08-06
+**Last updated:** 2026-11-08

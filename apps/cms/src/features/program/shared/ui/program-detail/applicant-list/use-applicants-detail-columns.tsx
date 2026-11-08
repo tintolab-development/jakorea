@@ -1,3 +1,4 @@
+import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useMemo } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import { getApprovalStatusTag, type ApprovalStatusKey } from '@/shared/lib/status-tag-specs'
@@ -544,7 +545,7 @@ export function useInstructorApplicantColumns(params: {
         title: '이메일',
         dataIndex: 'email',
         key: 'email',
-        width: 160,
+        width: TABLE_COLUMN_WIDTHS.email,
         align: 'center',
         ellipsis: true,
       },

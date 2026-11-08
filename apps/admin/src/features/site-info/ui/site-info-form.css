@@ -24,11 +24,12 @@
 }
 
 .site-info-form-card .table-description {
-  color: var(--main-gray1, #8a8a8a);
-  font-family: Pretendard, sans-serif;
-  font-size: 14px;
+  color: var(--Content-disabled, rgba(61, 61, 61, 0.5));
+  font-family: Pretendard;
+  font-size: 16px;
+  font-style: normal;
   font-weight: 500;
-  line-height: 150%;
+  line-height: 150%; /* 24px */
 }
 
 .site-info-form-card__body {
@@ -140,7 +141,7 @@
 
 .site-info-form__image-row {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: flex-start;
   gap: 16px;
   width: 100%;
@@ -185,7 +186,7 @@
 .site-info-form .file-select-field__actions {
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 16px;
 }
@@ -202,4 +203,37 @@
 .site-info-form .cms-input {
   width: 100%;
   max-width: 100%;
+}
+
+/*
+ * QA(Figma 230:3429): 조회 = 라벨 200 · 행 최소 52 · 텍스트/이미지 세로 중앙
+ * (폼이 항상 edit 슬롯이라 기본 align-items:flex-start 로 텍스트가 위로 붙던 것을 조회 행만 중앙으로)
+ */
+.site-info-form .detail-info-form__field {
+  min-height: 52px;
+  --detail-info-label-w: 200px;
+  grid-template-columns: 200px minmax(0, 1fr);
+}
+
+.site-info-form .detail-info-form__field-label {
+  width: 200px;
+  min-width: 200px;
+  max-width: 200px;
+  min-height: 52px;
+  padding: 8px 16px;
+}
+
+.site-info-form .detail-info-form__field-content {
+  min-height: 52px;
+}
+
+.site-info-form .detail-info-form__field-content--edit:has(.site-info-inline-field--readonly),
+.site-info-form .detail-info-form__field-content--edit:has(.site-info-form__image-view),
+.site-info-form .detail-info-form__field-content--edit:has(> .site-info-form__text-view) {
+  align-items: center;
+}
+
+.site-info-form .site-info-inline-field--readonly .ant-input {
+  font-size: 14px !important;
+  line-height: 150% !important;
 }

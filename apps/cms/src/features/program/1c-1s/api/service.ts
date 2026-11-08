@@ -8,6 +8,7 @@ import {
   fetchAdminProgramByIdRemote,
   fetchAdminProgramsRemote,
   updateAdminProgramRemote,
+  fetchAdminProgramOverviewStagesRemote,
 } from '@/features/program/general/api/programs-api-client'
 import type { Program } from '@/types/domain'
 import {
@@ -20,14 +21,11 @@ import {
 import { shouldUseCompanySchoolRemoteApi } from './capabilities'
 import {
   COMPANY_SCHOOL_PROGRAM_LIST_PAGE_SIZE,
-  COMPANY_SCHOOL_SCHEDULED_PERIOD_STATUSES,
   companySchoolListParams,
   type CompanySchoolListFilters,
 } from './list-params'
 import type { CompanySchoolOverviewStageCounts } from '@/features/program/1c-1s/lib/overview-stage-counts'
-import { API_LIST_PAGE_SIZE, fetchAllApiPages } from '@/shared/lib/fetch-all-api-pages'
 
-const COMPANY_SCHOOL_PERIOD_UNION_PAGE_SIZE = API_LIST_PAGE_SIZE
 
 function assertRemoteReady(): void {
   if (shouldUseCompanySchoolRemoteApi()) return
@@ -44,72 +42,11 @@ export type CompanySchoolProgramsRemoteListPage = {
   hasMore: boolean
 }
 
-async function fetchCompanySchoolProgramsForPeriodStatus(
-  filters: CompanySchoolListFilters,
-  periodStatus: string
-) {
-  return fetchAllApiPages((page, size) =>
-    fetchAdminProgramsRemote({
-      programType: COMPANY_SCHOOL_PROGRAM_API_TYPE,
-      keyword: filters.keyword?.trim() || undefined,
-      periodStatus,
-      businessYear: filters.businessYear,
-      page,
-      size,
-    })
-  )
-}
-
-async function listCompanySchoolProgramsByPeriodStatusUnion(
-  filters: CompanySchoolListFilters,
-  periodStatuses: readonly string[]
-): Promise<CompanySchoolProgramsRemoteListPage> {
-  const remotes = await Promise.all(
-    periodStatuses.map(periodStatus =>
-      fetchCompanySchoolProgramsForPeriodStatus(filters, periodStatus)
-    )
-  )
-
-  const byId = new Map<string, Program>()
-  for (const items of remotes) {
-    for (const item of items) {
-      const program = mapCompanySchoolListItemToProgram(item)
-      if (!program.id) continue
-      byId.set(program.id, program)
-    }
-  }
-
-  const programs = [...byId.values()]
-  return {
-    programs,
-    page: 0,
-    size: COMPANY_SCHOOL_PERIOD_UNION_PAGE_SIZE,
-    totalElements: programs.length,
-    hasMore: false,
-  }
-}
-
 export async function listCompanySchoolProgramsPage(
   filters: CompanySchoolListFilters = {},
   pageParam = 0
 ): Promise<CompanySchoolProgramsRemoteListPage> {
   assertRemoteReady()
-
-  const unionStatuses = filters.periodStatuses
-  if (unionStatuses && unionStatuses.length > 0) {
-    // 합집합은 page0 1회 적재 — 위젯 scheduled 건수와 동일 집합
-    if (pageParam > 0) {
-      return {
-        programs: [],
-        page: pageParam,
-        size: COMPANY_SCHOOL_PERIOD_UNION_PAGE_SIZE,
-        totalElements: 0,
-        hasMore: false,
-      }
-    }
-    return listCompanySchoolProgramsByPeriodStatusUnion(filters, unionStatuses)
-  }
-
   const page = await fetchAdminProgramsRemote(companySchoolListParams(filters, pageParam))
   const programs = (page.items ?? []).map(mapCompanySchoolListItemToProgram)
   const size = page.size ?? COMPANY_SCHOOL_PROGRAM_LIST_PAGE_SIZE
@@ -143,36 +80,25 @@ export async function listCompanySchoolPrograms(
 export async function fetchCompanySchoolOverviewStages(): Promise<CompanySchoolOverviewStageCounts> {
   assertRemoteReady()
 
-  const base = {
-    programType: COMPANY_SCHOOL_PROGRAM_API_TYPE,
-    page: 0,
-    size: 1,
-  } as const
-  const [all, inProgress, completed, scheduledUnion] = await Promise.all([
-    fetchAdminProgramsRemote({ ...base }),
-    fetchAdminProgramsRemote({ ...base, periodStatus: 'IN_PROGRESS' }),
-    fetchAdminProgramsRemote({ ...base, periodStatus: 'COMPLETED' }),
-    listCompanySchoolProgramsByPeriodStatusUnion({}, COMPANY_SCHOOL_SCHEDULED_PERIOD_STATUSES),
-  ])
-
-  return {
-    total: all.totalElements ?? all.items?.length ?? 0,
-    scheduled: scheduledUnion.totalElements,
-    inProgress: inProgress.totalElements ?? inProgress.items?.length ?? 0,
-    completed: completed.totalElements ?? completed.items?.length ?? 0,
-  }
+  return fetchAdminProgramOverviewStagesRemote(COMPANY_SCHOOL_PROGRAM_API_TYPE)
 }
 
 export async function getCompanySchoolProgram(programId: string): Promise<Program> {
   assertRemoteReady()
-  const mapped = mapCompanySchoolDetailToProgram(await fetchAdminProgramByIdRemote(programId))
-  const { withFetchedProgramSponsorAssignments } = await import(
-    '@/features/program/shared/lib/merge-program-sponsor-assignments'
+  // 상세와 후원사 배정은 서로 의존하지 않으므로 동시에 요청한다. 후원사 실패 시 상세만 보여 준다.
+  const sponsorAssignmentsPromise = import('@/features/program/general/api/programs-api-client').then(
+    ({ fetchAdminProgramSponsorsRemote }) => fetchAdminProgramSponsorsRemote(programId)
   )
-  const { fetchAdminProgramSponsorsRemote } = await import(
-    '@/features/program/general/api/programs-api-client'
+  sponsorAssignmentsPromise.catch(() => undefined)
+  const [dto, { withFetchedProgramSponsorAssignments }] = await Promise.all([
+    fetchAdminProgramByIdRemote(programId),
+    import('@/features/program/shared/lib/merge-program-sponsor-assignments'),
+  ])
+  return withFetchedProgramSponsorAssignments(
+    mapCompanySchoolDetailToProgram(dto),
+    programId,
+    () => sponsorAssignmentsPromise
   )
-  return withFetchedProgramSponsorAssignments(mapped, programId, fetchAdminProgramSponsorsRemote)
 }
 
 export async function createCompanySchoolProgram(

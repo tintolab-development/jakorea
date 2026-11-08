@@ -135,14 +135,24 @@ export async function hydrateNoticeAttachments(notice: Notice): Promise<Notice> 
   }
 }
 
-/** 서버 allow-list. 첨부 파일마다 최대 20MiB이며 파일 전체 합계 제한은 없다. */
+/** 시안 정책: 파일당 최대 20MB · 최대 10개 · 총 100MB */
 export const NOTICE_ATTACHMENT_MAX_BYTES = 20 * 1024 * 1024
-export const NOTICE_ATTACHMENT_ACCEPT = '.jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx'
+export const NOTICE_ATTACHMENT_MAX_COUNT = 10
+export const NOTICE_ATTACHMENT_MAX_TOTAL_BYTES = 100 * 1024 * 1024
+export const NOTICE_ATTACHMENT_ACCEPT = '.jpg,.jpeg,.png,.hwp,.hwpx,.pdf,.doc,.docx,.xls,.xlsx'
+
+/** 첨부 영역 안내 (시안 문구) */
+export const NOTICE_ATTACHMENT_GUIDE_LINES = [
+  '- 파일은 JPG, PNG, HWP, Excel, PDF, Word 형식만 등록 가능하며, 최대 10개(파일당 20MB, 총 100MB)까지 첨부할 수 있습니다.',
+  '- 첨부 파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
+]
 
 const NOTICE_ATTACHMENT_EXTENSIONS = new Set([
   'jpg',
   'jpeg',
   'png',
+  'hwp',
+  'hwpx',
   'pdf',
   'doc',
   'docx',

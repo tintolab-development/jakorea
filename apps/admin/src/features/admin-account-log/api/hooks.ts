@@ -1,11 +1,12 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { AdminAccountListFilter } from '@/entities/admin-account-log/model/types'
+import { useAdminInfiniteList } from '@/shared/hooks/use-admin-infinite-list'
 import { fileDownloadLogQueryKeys } from '@/features/file-download-log/api/query-keys'
 import { shouldUseAdminAccountLogRemoteApi } from './capabilities'
 import { adminAccountLogQueryKeys } from './query-keys'
 import {
   exportAdminAccountLogsService,
-  listAdminAccountLogsService,
+  listAdminAccountLogsPageService,
 } from './service'
 
 function source(): 'remote' | 'local' {
@@ -13,12 +14,12 @@ function source(): 'remote' | 'local' {
 }
 
 export function useAdminAccountLogsList(filter: AdminAccountListFilter) {
-  const dataSource = source()
-  return useQuery({
-    queryKey: adminAccountLogQueryKeys.list(dataSource, filter),
-    queryFn: () => listAdminAccountLogsService(filter),
+  return useAdminInfiniteList({
+    queryKey: adminAccountLogQueryKeys.list(source(), filter),
+    isRemote: shouldUseAdminAccountLogRemoteApi(),
     staleTime: 0,
     retry: false,
+    fetchPage: page => listAdminAccountLogsPageService(filter, page),
   })
 }
 

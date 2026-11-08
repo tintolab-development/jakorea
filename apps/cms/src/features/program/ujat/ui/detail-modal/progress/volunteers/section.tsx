@@ -393,6 +393,7 @@ export function UjatEducationProgressVolunteersSection({
         excelExport={
           canWrite
             ? {
+                accessLog: { downloadKind: 'PROGRAM_VOLUNTEER_LIST_EXPORT', containedPiiTypes: ['NAME'] },
                 columns,
                 data: tableData,
                 selectedRowKeys,

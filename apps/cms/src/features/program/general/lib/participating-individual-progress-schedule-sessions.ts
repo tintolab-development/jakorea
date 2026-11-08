@@ -4,6 +4,7 @@ import { resolveParticipatingProgressAssignedSessions } from '@/features/program
 import { resolveEducationProgressFromScheduleBounds } from '@/features/program/general/lib/dashboard-schedule-delivery-status'
 import type { ProgramEducationSlotResponse } from '@/shared/api/generated/dashboard/schemas/programEducationSlotResponse'
 import type { SessionProgress } from '@/shared/api/generated/dashboard/schemas/sessionProgress'
+import type { SessionProgressScheduleRole } from '@/shared/api/generated/dashboard/schemas/sessionProgressScheduleRole'
 import type { SessionProgressScheduleStatus } from '@/shared/api/generated/dashboard/schemas/sessionProgressScheduleStatus'
 
 function positiveScheduleId(value: unknown): number | null {
@@ -42,7 +43,6 @@ function educationSlotToParticipatingSession(
   if (scheduleId == null) return null
   const progress: SessionProgress & {
     educationSlotKey?: string
-    scheduleRole?: string
   } = {
     scheduleId,
     sessionNo: slot.sessionNo,
@@ -50,7 +50,7 @@ function educationSlotToParticipatingSession(
     endAt: slot.endAt,
     scheduleStatus: educationSlotDeliveryScheduleStatus(slot),
     ...(slot.educationSlotKey?.trim() ? { educationSlotKey: slot.educationSlotKey.trim() } : {}),
-    ...(slot.scheduleRole?.trim() ? { scheduleRole: slot.scheduleRole.trim() } : {}),
+    ...(slot.scheduleRole?.trim() ? { scheduleRole: slot.scheduleRole.trim() as SessionProgressScheduleRole } : {}),
   }
   return mapSessionProgressToParticipatingSchoolSessions([progress])[0] ?? null
 }

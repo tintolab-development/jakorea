@@ -500,7 +500,6 @@ export function AwardPanel() {
             columns={columns}
             dataSource={rows}
             pagination={false}
-            scroll={{ x: 'max-content' }}
             rowSelection={{
               selectedRowKeys,
               onChange: keys => setSelectedRowKeys(keys),

@@ -305,7 +305,7 @@ export function RecruitApplicantDetailModal({
                 >
                   <DetailInfoForm.Row type="double">
                     <DetailInfoForm.Field
-                      label="지원자명"
+                      label="지원자"
                       view={<span>{nameDisplay}</span>}
                       edit={null}
                       readOnlyDisplay

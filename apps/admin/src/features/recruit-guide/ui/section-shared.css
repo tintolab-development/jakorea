@@ -26,12 +26,10 @@
 }
 
 .recruit-guide-thumb {
+  /* 표 안 미리보기: 스트로크·라운드·배경 없이 가로 86 고정, 세로는 이미지 원본 비율 */
   width: 86px;
-  height: 86px;
-  aspect-ratio: 1 / 1;
   flex-shrink: 0;
   margin: 0 auto;
-  overflow: hidden;
   background: transparent;
   display: flex;
   align-items: center;
@@ -39,12 +37,14 @@
 }
 
 .recruit-guide-thumb img {
+  display: block;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
+  max-width: none;
 }
 
 .recruit-guide-thumb--empty {
+  height: 86px;
   border: 1px solid var(--table-line, #e0e0e0);
   border-radius: 4px;
   background: var(--color-bg-secondary, #f7f7f7);
@@ -81,40 +81,9 @@
   width: 100% !important;
 }
 
-.recruit-guide-banner-table colgroup > col:first-child,
-.recruit-guide-banner-table .ant-table-thead > tr > th.recruit-guide-col--image,
-.recruit-guide-banner-table .ant-table-tbody > tr > td.recruit-guide-col--image {
-  width: 200px !important;
-  min-width: 200px !important;
-  max-width: 200px !important;
-}
-
 .recruit-guide-banner-table .ant-table-thead > tr > th.recruit-guide-col--copy,
 .recruit-guide-banner-table .ant-table-tbody > tr > td.recruit-guide-col--copy {
   width: calc((100% - 200px) / 3) !important;
-}
-
-.recruit-guide-culture-table .ant-table-thead > tr > th.recruit-guide-col--label,
-.recruit-guide-culture-table .ant-table-tbody > tr > td.recruit-guide-col--label {
-  width: 320px !important;
-  min-width: 320px !important;
-  max-width: 320px !important;
-}
-
-.recruit-guide-interview-table.cms-data-table col.ant-table-selection-col + col,
-.recruit-guide-interview-table.cms-data-table .ant-table-thead > tr > th.cms-table-col--no,
-.recruit-guide-interview-table.cms-data-table .ant-table-tbody > tr > td.cms-table-col--no {
-  width: 100px !important;
-  min-width: 100px !important;
-  max-width: 100px !important;
-}
-
-.recruit-guide-interview-table.cms-data-table col.ant-table-selection-col + col + col + col,
-.recruit-guide-interview-table .ant-table-thead > tr > th.recruit-guide-col--actions,
-.recruit-guide-interview-table .ant-table-tbody > tr > td.recruit-guide-col--actions {
-  width: 140px !important;
-  min-width: 140px !important;
-  max-width: 140px !important;
 }
 
 .recruit-guide-section .recruit-guide-inline-field {
@@ -159,4 +128,29 @@
 
 .recruit-guide-section .cms-data-table .ant-table-tbody > tr {
   transition: none;
+}
+
+/* 수정 칸 autoSize(hug) — 한 줄이면 단일 입력과 같은 40px (본문 22 + 상하 8 + 보더 2) */
+.recruit-guide-section .recruit-guide-inline-field--edit.cms-textarea--medium .cms-textarea__control {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+/*
+ * 조직문화 표 조회 — 텍스트 높이만큼만 차지(운영 원칙과 동일): 투명 입력의 안쪽 패딩·보더·최소 높이를 없애
+ * 행 높이 = 셀 패딩 + 텍스트 줄 수. (높이는 autoSize 인라인 값을 그대로 쓴다 — height 강제 금지)
+ */
+.recruit-guide-culture-table .recruit-guide-inline-field--readonly .cms-textarea__control {
+  min-height: 0 !important;
+  padding: 0 !important;
+  border-width: 0;
+}
+
+.recruit-guide-culture-table
+  .recruit-guide-inline-field--readonly
+  .cms-textarea__inner
+  textarea.ant-input {
+  min-height: 0 !important;
+  padding: 0 !important;
+  line-height: 150% !important;
 }

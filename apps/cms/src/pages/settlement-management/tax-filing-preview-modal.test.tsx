@@ -124,5 +124,8 @@ describe('TaxFilingPreviewModal SERVER_FILE 다운로드', () => {
         password: 'Jafile1!',
       })
     })
+    await waitFor(() => {
+      expect(screen.getByText('발급 완료')).toBeTruthy()
+    })
   })
 })

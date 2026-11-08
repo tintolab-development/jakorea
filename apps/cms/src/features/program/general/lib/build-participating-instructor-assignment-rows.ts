@@ -26,6 +26,12 @@ import { extractLectureDateKey } from '@/features/program/1c-1s/lib/one-school-p
 import { getParticipatingSchoolAssignmentSessions } from '@/features/program/general/lib/participating-school-assignment-sessions'
 import { hasAssignableOrganizationInstructorSchedule } from '@/features/program/general/lib/organization-instructor-assignable-schedule'
 import { formatApiDistanceKmDisplay } from '@/shared/lib/format-api-distance-km'
+import {
+  formatWaitingOrganizationDistance,
+  formatWaitingScheduleDistance,
+  type WaitingOrganizationDistance,
+  type WaitingScheduleDistance,
+} from './assignment-waiting-distance'
 import type { ProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/programScheduleResponse'
 import { isProgramSchedulePreEducation } from '@/features/program/shared/lib/program-schedule-canonical'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
@@ -300,6 +306,8 @@ export function buildParticipatingInstructorWaitingSchoolRowsFromBoard(input: {
   instructorMemberId: string
   /** program participantRecruitmentInfo.maxAssignableInstructors — 없거나 0 이하면 cap 미적용 */
   maxAssignableInstructors?: number | null
+  /** education-scope `organizations[]` — 배정 대기 대상 기관 전체 거리(서버값). 없으면 '-' */
+  organizationDistances?: WaitingOrganizationDistance[]
 }): InstructorWaitingSchoolRow[] {
   const assignedBySchedule = buildAssignedInstructorsBySchedule(input.assignments)
   const maxAssignableInstructors = normalizeMaxAssignableInstructors(input.maxAssignableInstructors)
@@ -356,7 +364,7 @@ export function buildParticipatingInstructorWaitingSchoolRowsFromBoard(input: {
         schoolName: school.schoolName,
         desiredGrade: school.educationGrade,
         region: school.region,
-        distanceFromHome: '-',
+        distanceFromHome: formatWaitingOrganizationDistance(input.organizationDistances, school),
         educationScheduleLines: [group.line],
         assignmentStatus,
         assignedInstructorCountLabel: '-',
@@ -430,7 +438,7 @@ function buildInstitutionWaitingScheduleRows(
         schoolName: school.schoolName,
         desiredGrade: school.educationGrade,
         region: school.region,
-        distanceFromHome: '-',
+        distanceFromHome: formatWaitingOrganizationDistance(input.organizationDistances, school),
         educationScheduleLines: buildParticipatingSchoolSessionLines(group.sessions),
         assignmentStatus,
         assignedInstructorCountLabel: '-',
@@ -577,6 +585,8 @@ export function buildParticipatingInstructorWaitingScheduleRowsFromBoard(input: 
   assignments: InstructorAssignmentListItemEnriched[]
   instructorMemberId: string
   maxAssignableInstructors?: number | null
+  /** education-scope `schedules[]` — scheduleId별 거리(서버값). 없으면 '-' */
+  scheduleDistances?: WaitingScheduleDistance[]
 }): ParticipatingIndividualInstructorWaitingScheduleRow[] {
   const maxAssignableInstructors = normalizeMaxAssignableInstructors(input.maxAssignableInstructors)
   const ownScheduleIds = new Set<string>()
@@ -618,7 +628,7 @@ export function buildParticipatingInstructorWaitingScheduleRowsFromBoard(input: 
       slotKey: scheduleKey,
       schoolId: scheduleKey,
       lectureLocation: schedule.locationName?.trim() || schedule.address?.trim() || '-',
-      distanceFromHome: '-',
+      distanceFromHome: formatWaitingScheduleDistance(input.scheduleDistances, schedule.id),
       scheduleLabel,
       assignmentStatus: ownCancelledScheduleIds.has(scheduleKey)
         ? 'assignment_cancelled'

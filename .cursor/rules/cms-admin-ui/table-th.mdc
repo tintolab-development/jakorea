@@ -29,9 +29,20 @@ background: var(--BG-header);
 
 화면별 th `background: #f5f6f7` 등 단색 하드코딩 금지.
 
+## 세로형(라벨) 셀 치수 — DetailInfoForm
+
+정본: Figma `Table / Vertical / Cell` (Medium `670:49209` · Small `12053:10613`). 구현: `packages/form-template-runtime/src/detail-info-form/detail-info-form.css`.
+
+| 항목 | Medium (기본) | Small |
+|------|---------------|-------|
+| 라벨(th) 폭 | **180px** (`--detail-info-label-w`) | 180px (min 140) |
+| 라벨 패딩 | **8px 16px** · min-height 52 · 14/700 center | 4px 12px · min-height 44 |
+| 값(td) 패딩 | **12px 16px** · min-height 52 · 14/500 | 4px 12px · min-height 44 |
+| 값 셀 내부 간격 | 16px | 16px |
+
 ## 관련
 
 - [cms-data-table.mdc](./cms-data-table.mdc)
 - [styling-tokens.mdc](./styling-tokens.mdc)
 
-**Last updated:** 2026-08-06
+**Last updated:** 2026-11-08

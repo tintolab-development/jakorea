@@ -32,7 +32,7 @@
 }
 
 .profile-edit-modal__section.detail-info-form {
-  --detail-info-label-w: 220px;
+  --detail-info-label-w: 180px;
   margin-top: 0;
   width: 100%;
 }
@@ -41,34 +41,37 @@
   margin-bottom: 10px;
 }
 
-.profile-edit-modal__field-action-btn {
-  margin-left: 16px !important;
-}
-
-/* 소셜 3개(카카오·구글·네이버) + 액션 버튼이 한 줄에 들어가도록 디바이더 갭 축소 */
-.profile-edit-modal__value-with-action-text .user-basic-info-section__inline-segments {
+/*
+ * 값 셀 조각 (Figma 2991:83312 Table / Vertical / Cell / Medium)
+ * — 텍스트 14 / Medium / 150% · 조각 간격 16 · 세로 구분선 1×13 (TdDivider)
+ */
+.profile-edit-modal__value-segments {
   display: inline-flex;
   align-items: center;
   flex-wrap: nowrap;
-  gap: 6px;
-  max-width: 100%;
+  gap: 0;
+  min-width: 0;
   white-space: nowrap;
 }
 
-.profile-edit-modal__section .user-consent-agreement-section__value-status {
-  color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
+.profile-edit-modal__value-segments .detail-info-form-inputs-separator {
+  margin: 0 16px;
 }
 
-.profile-edit-modal__managed-programs {
+/* 본인인증 재인증 · 동의 철회하기 — Button / h32 · 폭 100 */
+.profile-edit-modal__field-action-btn.cms-button.ant-btn {
+  width: 100px;
+  min-width: 100px;
+}
+
+.profile-edit-modal__action-with-datetime {
   display: inline-flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 0 8px;
+  gap: 16px;
+}
+
+.profile-edit-modal__consent-datetime {
+  color: rgba(61, 61, 61, 0.5);
 }
 
 /* 기본 정보 — 가입일·소셜 분리 테이블 + 나머지 단일 테이블 */
@@ -101,42 +104,26 @@
   border-bottom: none;
 }
 
-.profile-edit-modal__section--basic-info .detail-info-form__field {
-  grid-template-columns: 220px minmax(0, 1fr);
-  min-height: 50px;
+/* 행 최소 높이 52 (Figma Cell / Medium min-h 52) — 버튼 행(연락처)은 h32 + py12 = 56 */
+.profile-edit-modal__section .detail-info-form__field {
+  grid-template-columns: 180px minmax(0, 1fr);
+  min-height: 52px;
 }
 
 .profile-edit-modal__section--basic-info .detail-info-form__field-label {
-  width: 220px;
-  min-width: 220px;
-  max-width: 220px;
+  width: 180px;
+  min-width: 180px;
+  max-width: 180px;
 }
 
-.profile-edit-modal__section--basic-info .profile-edit-modal__row--tall .detail-info-form__field {
-  min-height: 56px;
+.profile-edit-modal__section .profile-edit-modal__row .detail-info-form__field-label,
+.profile-edit-modal__section .profile-edit-modal__row .detail-info-form__field-content {
+  min-height: 52px;
 }
 
-.profile-edit-modal__section--basic-info
-  .profile-edit-modal__row--tall
-  .detail-info-form__field-label,
-.profile-edit-modal__section--basic-info
-  .profile-edit-modal__row--tall
-  .detail-info-form__field-content {
-  min-height: 56px;
-}
-
-.profile-edit-modal__section--basic-info
-  .profile-edit-modal__row:not(.profile-edit-modal__row--tall)
-  .detail-info-form__field-label,
-.profile-edit-modal__section--basic-info
-  .profile-edit-modal__row:not(.profile-edit-modal__row--tall)
-  .detail-info-form__field-content {
-  min-height: 50px;
-}
-
-/* 약관 및 동의 — 단일 테이블, 라벨(th) 220px */
+/* 약관 및 동의 — 단일 테이블, 라벨(th) 180px */
 .profile-edit-modal__section--terms {
-  --detail-info-label-w: 220px;
+  --detail-info-label-w: 180px;
 }
 
 .profile-edit-modal__section--terms .detail-info-form__body {
@@ -162,110 +149,10 @@
   border-bottom: none;
 }
 
-.profile-edit-modal__section--terms .detail-info-form__field {
-  grid-template-columns: 220px minmax(0, 1fr);
-}
-
 .profile-edit-modal__section--terms .detail-info-form__field-label {
-  width: 220px;
-  min-width: 220px;
-  max-width: 220px;
-}
-
-/* 서비스 이용약관 · 개인정보 수집·이용 — 50px */
-.profile-edit-modal__section--terms
-  .profile-edit-modal__terms-row--standard
-  .detail-info-form__field {
-  min-height: 50px;
-}
-
-.profile-edit-modal__section--terms
-  .profile-edit-modal__terms-row--standard
-  .detail-info-form__field-label,
-.profile-edit-modal__section--terms
-  .profile-edit-modal__terms-row--standard
-  .detail-info-form__field-content {
-  min-height: 50px;
-}
-
-/* 마케팅 · MFA — 64px, 라디오·일시 한 줄 */
-.profile-edit-modal__section--terms .profile-edit-modal__terms-row--bottom {
-  min-height: 64px;
-}
-
-.profile-edit-modal__section--terms
-  .profile-edit-modal__terms-row--bottom
-  .detail-info-form__field {
-  height: 64px;
-  min-height: 64px;
-  max-height: 64px;
-  width: 100%;
-}
-
-.profile-edit-modal__section--terms
-  .profile-edit-modal__terms-row--bottom
-  .detail-info-form__field-label,
-.profile-edit-modal__section--terms
-  .profile-edit-modal__terms-row--bottom
-  .detail-info-form__field-content {
-  height: 64px;
-  min-height: 64px;
-  max-height: 64px;
-  padding-top: 0;
-  padding-bottom: 0;
-  padding-left: 16px;
-  padding-right: 16px;
-}
-
-.profile-edit-modal__section--terms
-  .profile-edit-modal__terms-row--bottom
-  .detail-info-form__field-content--edit {
-  overflow: hidden;
-}
-
-.profile-edit-modal__value-with-action {
-  display: flex;
-  align-items: center;
-  flex-wrap: nowrap;
-  gap: 0;
-  width: 100%;
-  min-width: 0;
-}
-
-.profile-edit-modal__section--terms
-  .profile-edit-modal__terms-row--bottom
-  .detail-info-form__field-content--edit
-  > .profile-edit-modal__marketing-consent {
-  display: inline-flex;
-  margin-block: 0;
-}
-
-.profile-edit-modal__marketing-consent {
-  display: inline-flex;
-  align-items: center;
-  flex-wrap: nowrap;
-  gap: 0;
-  width: auto;
-  max-width: 100%;
-  min-width: 0;
-  white-space: nowrap;
-}
-
-.profile-edit-modal__marketing-consent .app-radio-group.ant-radio-group {
-  display: inline-flex;
-  flex-wrap: nowrap;
-  flex-shrink: 0;
-  gap: 12px;
-}
-
-.profile-edit-modal__marketing-consent .detail-info-form-inputs-separator {
-  margin: 0 0 0 16px;
-}
-
-.profile-edit-modal__marketing-consent .user-consent-agreement-section__value-datetime {
-  flex-shrink: 0;
-  white-space: nowrap;
-  margin-left: 12px;
+  width: 180px;
+  min-width: 180px;
+  max-width: 180px;
 }
 
 .profile-edit-modal .content-modal__footer-actions {
@@ -325,34 +212,22 @@
   flex-shrink: 0;
 }
 
-.user-consent-agreement-section__value-inner {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0 8px;
+/*
+ * 내 정보 확인 — 라벨 열 180 (공통 detail-info-form-modal.css 의 1400 미만 팝업 160 규칙 예외)
+ * 공통 규칙 특이도(.ant-modal.teal-header-modal:not():not() …)보다 높게 이 팝업 클래스를 더한다.
+ */
+.ant-modal.teal-header-modal.profile-edit-modal:not(.teal-header-modal--large):not(.teal-header-modal--full)
+  .detail-info-form
+  .detail-info-form__field {
+  --detail-info-label-w: 180px !important;
+  grid-template-columns: 180px minmax(0, 1fr) !important;
 }
 
-.user-consent-agreement-section__value-status {
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 150%;
-  color: var(--default-BK, #3d3d3d);
-}
-
-.user-consent-agreement-section__value-sep {
-  flex-shrink: 0;
-  color: #d0d0d0;
-  font-weight: 400;
-  padding: 0 2px;
-  user-select: none;
-}
-
-.user-consent-agreement-section__value-datetime {
-  color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard, var(--font-sans, system-ui), sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-  opacity: 0.6;
+.ant-modal.teal-header-modal.profile-edit-modal:not(.teal-header-modal--large):not(.teal-header-modal--full)
+  .detail-info-form
+  .detail-info-form__field
+  > .detail-info-form__field-label {
+  width: 180px !important;
+  min-width: 180px !important;
+  max-width: 180px !important;
 }

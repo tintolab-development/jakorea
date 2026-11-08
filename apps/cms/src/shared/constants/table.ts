@@ -39,11 +39,14 @@ export const TABLE_COLUMN_WIDTHS = {
   /** 사용 여부 열 — 고정 80px */
   usage: 80,
   name: 120,
-  email: 200,
+  /** 마스킹 이메일 `seed.instructor***@test.jakorea.local`(14px ≈ 238) + 좌우 패딩 16 */
+  email: 280,
   phone: 130,
   id: 100,
-  /** 자택 주소지 등 */
-  address: 200,
+  /** 자택 주소지 등 — `시/도 구 도로명 ***` 한 줄 + 좌우 패딩, 넘치면 말줄임 */
+  address: 260,
+  /** 기관과의 거리 등 짧은 수치 */
+  distance: 120,
   /** 기관명·소속·배정 기관 */
   institution: 160,
   /** 학년 */

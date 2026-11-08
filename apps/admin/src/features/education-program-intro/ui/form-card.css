@@ -143,33 +143,38 @@
   height: auto;
 }
 
-/* Figma 프로그램 01 이미지 셀: 파일명 · 파일 추가 · 안내를 한 줄 */
+/*
+ * Figma 496:42284 Table/Common/Cell/File — 파일명 줄 위, [파일 추가]+안내 줄 아래(세로 gap 8).
+ * 버튼과 안내 문구는 서로 가로(공통 규칙 유지).
+ */
 .program-intro-card .file-select-field {
   display: flex !important;
-  flex-direction: row !important;
-  flex-wrap: wrap;
-  align-items: center !important;
-  gap: 8px 16px;
+  flex-direction: column !important;
+  flex-wrap: nowrap;
+  align-items: stretch !important;
+  gap: 8px;
 }
 
 .program-intro-card .file-select-field__names,
 .program-intro-card .file-select-field__empty {
-  flex: 0 1 auto;
+  flex: none;
   min-width: 0;
 }
 
 .program-intro-card .file-select-field__actions {
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
-  align-items: center;
+  flex-wrap: nowrap;
+  align-items: flex-start;
   gap: 16px;
-  flex: 1 1 200px;
+  flex: none;
+  width: 100%;
   min-width: 0;
 }
 
-.program-intro-card .file-select-field__guide-line {
-  white-space: nowrap;
+/* 수정 칸 — Figma 2407:48838: 셀 패딩 12 · Field/Table/Input(h40, 9×16, 15px) → 행 64 */
+.program-intro-card .detail-info-form__field-content--edit:has(.program-intro-inline-field--edit) {
+  padding: 12px;
 }
 
 .program-intro-card .program-intro-inline-field {

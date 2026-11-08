@@ -119,7 +119,7 @@ export function BulkTransferPreviewModal({
       }
       const { exportBulkTransferExcel } =
         await import('@/pages/settlement-management/bulk-transfer-excel')
-      await exportBulkTransferExcel(previewRows)
+      await exportBulkTransferExcel(previewRows, { password })
     } catch (error) {
       notifySettlementExportDownloadError({
         error,
@@ -140,7 +140,7 @@ export function BulkTransferPreviewModal({
       open={open}
       onCancel={onCancel}
       title="대량이체 양식 미리보기"
-      description="지급조서 확인 완료 및 계좌 지급 대기 항목만 양식에 반영됩니다. 발급만으로 지급 완료 처리되지 않습니다."
+      description="지급조서 확인이 완료 처리된 항목만 양식에 반영됩니다."
       width={1400}
       size="large"
       className="bulk-transfer-preview-modal"

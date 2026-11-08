@@ -56,6 +56,7 @@ import {
   updateAdminProgramManagerRemote,
   updateAdminProgramRemote,
   updateAdminProgramPostRemote,
+  fetchAdminProgramOverviewStagesRemote,
 } from '@/features/program/general/api/programs-api-client'
 import { mergeProgramSponsorAssignments } from '@/features/program/shared/lib/merge-program-sponsor-assignments'
 import { updateFormResponseRemote } from '@/features/program/general/api/form-responses-api-client'
@@ -140,20 +141,7 @@ export async function fetchGeneralProgramsRemoteList(
 export async function fetchGeneralProgramOverviewStages(): Promise<GeneralProgramOverviewStageCounts> {
   assertGeneralProgramsRemoteReady()
 
-  const base = { programType: GENERAL_PROGRAM_API_TYPE, page: 0, size: 1 } as const
-  const [all, scheduled, inProgress, completed] = await Promise.all([
-    fetchAdminProgramsRemote({ ...base }),
-    fetchAdminProgramsRemote({ ...base, periodStatus: 'RECRUITING' }),
-    fetchAdminProgramsRemote({ ...base, periodStatus: 'IN_PROGRESS' }),
-    fetchAdminProgramsRemote({ ...base, periodStatus: 'COMPLETED' }),
-  ])
-
-  return {
-    total: all.totalElements ?? all.items?.length ?? 0,
-    scheduled: scheduled.totalElements ?? scheduled.items?.length ?? 0,
-    inProgress: inProgress.totalElements ?? inProgress.items?.length ?? 0,
-    completed: completed.totalElements ?? completed.items?.length ?? 0,
-  }
+  return fetchAdminProgramOverviewStagesRemote(GENERAL_PROGRAM_API_TYPE)
 }
 
 /** 핵심 프로그램 상세만 조회한다. 첫 상세 화면의 critical path에서 사용한다. */
@@ -387,11 +375,12 @@ export async function createGeneralProgramPostUnreadReminder(
 export async function fetchGeneralProgramSurveyResponses(
   programId: string,
   templateVersionId: string,
-  bindingId?: string
+  bindingId?: string,
+  options?: { includeAnswers?: boolean }
 ) {
   if (!shouldUseProgramsHttpRemoteApi()) return []
   assertProgramsHttpRemoteReady()
-  return fetchAdminProgramSurveyResponsesRemote(programId, templateVersionId, bindingId)
+  return fetchAdminProgramSurveyResponsesRemote(programId, templateVersionId, bindingId, options)
 }
 
 export async function fetchGeneralProgramSurveySummary(

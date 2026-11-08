@@ -270,3 +270,32 @@ describe('useTableExcelExport selection', () => {
     expect(cmsAlertModal.show).not.toHaveBeenCalled()
   })
 })
+
+describe('useTableExcelExport accessLog', () => {
+  beforeEach(async () => {
+    vi.clearAllMocks()
+    useAuthStore.setState({ user: masterUser })
+  })
+
+  it('accessLog를 exporter 4번째 인자로 넘기고, 함수면 다운로드 시점 값을 쓴다', async () => {
+    const { exportTableToExcel } = await import('@/shared/utils/table-export')
+    let pii: ('NAME')[] = []
+    const { result } = renderHook(() =>
+      useTableExcelExport({
+        columns,
+        data,
+        filename: '목록',
+        accessLog: () => ({ downloadKind: 'MEMBER_LIST_EXPORT', containedPiiTypes: pii }),
+      })
+    )
+    pii = ['NAME']
+
+    await act(async () => {
+      await result.current.exportExcel()
+    })
+
+    expect(exportTableToExcel).toHaveBeenCalledWith(columns, data, '목록', {
+      accessLog: { downloadKind: 'MEMBER_LIST_EXPORT', containedPiiTypes: ['NAME'] },
+    })
+  })
+})

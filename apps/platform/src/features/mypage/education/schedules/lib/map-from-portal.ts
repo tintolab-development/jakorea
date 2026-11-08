@@ -7,6 +7,7 @@ import type {
   PortalSessionRound,
 } from '../../applications/api/activity-client'
 import type { ProgramApplicationType } from '../../applications/api/types'
+import type { PortalPreferredScheduleBlock } from '../../../../program/api/application-types.ts'
 import {
   EDUCATION_SCHEDULE_EMPTY_LABEL,
   resolveEducationScheduleCommonInfoLabel,
@@ -231,6 +232,8 @@ export type MapPortalEducationScheduleMeta = {
   sessionRound?: PortalSessionRound | null
   applicationType?: ProgramApplicationType | null
   programType?: string | null
+  /** 신청 상세 `preferredScheduleBlocks` — TT 기관 운영일 차시 수(scheduleId 매칭 블록의 sessionTimes) */
+  preferredScheduleBlocks?: readonly PortalPreferredScheduleBlock[] | null
 }
 
 function resolveOperationalDayRowLabel(
@@ -242,14 +245,38 @@ function resolveOperationalDayRowLabel(
   return EDUCATION_SCHEDULE_EMPTY_LABEL
 }
 
-/** 이 행(portal item)의 groupTimes 슬롯 수. sessionNo·커리큘럼 차시로 접지 않고, 다른 지망 item과 합치지 않는다. */
+function countFilledSlots(
+  slots: readonly { startTime?: string; endTime?: string; start?: string; end?: string; timeRange?: string }[] | undefined,
+): number {
+  return (slots ?? []).filter(
+    slot =>
+      Boolean(slot.startTime?.trim()) ||
+      Boolean(slot.endTime?.trim()) ||
+      Boolean(slot.start?.trim()) ||
+      Boolean(slot.end?.trim()) ||
+      Boolean(slot.timeRange?.trim()),
+  ).length
+}
+
+/**
+ * TT 기관 운영일 `N차시` — 그날 진행 슬롯 수.
+ * 1) schedules 응답 groupTimes 2) 같은 scheduleId 의 신청 희망 블록 sessionTimes/sessionCount.
+ * 근거가 없으면 undefined — `1차시`를 지어내지 않는다. sessionNo·커리큘럼 차시로 접지 않는다.
+ */
 function resolveOperationalDayDurationLabel(
   groupTimes: PortalEducationScheduleGroupTime[] | undefined,
-): string {
-  const slotCount = (groupTimes ?? []).filter(
-    slot => Boolean(slot.startTime?.trim()) || Boolean(slot.endTime?.trim()),
-  ).length
-  return `${slotCount > 0 ? slotCount : 1}차시`
+  scheduleId: number | null | undefined,
+  preferredScheduleBlocks: readonly PortalPreferredScheduleBlock[] | null | undefined,
+): string | undefined {
+  const fromGroupTimes = countFilledSlots(groupTimes)
+  if (fromGroupTimes > 0) return `${fromGroupTimes}차시`
+  if (scheduleId == null) return undefined
+  const block = (preferredScheduleBlocks ?? []).find(row => row.scheduleId === scheduleId)
+  if (!block) return undefined
+  const fromBlock = countFilledSlots(block.sessionTimes) || countFilledSlots(block.times)
+  if (fromBlock > 0) return `${fromBlock}차시`
+  const sessionCount = positiveInteger(block.sessionCount)
+  return sessionCount != null ? `${sessionCount}차시` : undefined
 }
 
 /**
@@ -331,6 +358,9 @@ export function mapPortalEducationSchedule(
     attendanceStatus === 'present' ||
     attendanceStatus === 'late'
   const absenceReason = hideAbsenceReason ? undefined : optionalText(item.absenceReason)
+  const durationLabel = operationalDayView
+    ? resolveOperationalDayDurationLabel(item.groupTimes, item.scheduleId, meta?.preferredScheduleBlocks)
+    : undefined
   const curriculumSessions = operationalDayView
     ? undefined
     : mapCurriculumSessions(item.curriculumSessions)
@@ -348,12 +378,8 @@ export function mapPortalEducationSchedule(
     title,
     rowLabel,
     ...(preferenceRank != null ? { preferenceRank } : {}),
-    ...(operationalDayView
-      ? {
-          operationalDayView: true,
-          durationLabel: resolveOperationalDayDurationLabel(item.groupTimes),
-        }
-      : {}),
+    ...(operationalDayView ? { operationalDayView: true } : {}),
+    ...(durationLabel ? { durationLabel } : {}),
     attendanceStatus,
     ...(absenceReason ? { absenceReason } : {}),
     ...(absenceReasonStatus ? { absenceReasonStatus } : {}),

@@ -135,7 +135,7 @@ describe('mapSettlementDetailToProgramCalculationStatement', () => {
     expect(mapped.basic.phoneDisplay).toBe('010-****-5678')
     expect(mapped.basic.affiliation).toBe('JA')
     expect(mapped.basic.residentRegistrationNumber).toBe('900101-*******')
-    expect(mapped.basic.genderBirthDisplay).toBe('** | 1990-**-**')
+    expect(mapped.basic.genderBirthDisplay).toBe('** | 1990.**.**')
     expect(mapped.basic.addressDisplay).toBe('서울시 강남구 테헤란로 *** ***')
     expect(mapped.basic.addressBlurredTail).toBeUndefined()
     expect(mapped.blocks[0]?.institutionName).toBe('-')

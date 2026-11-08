@@ -492,20 +492,23 @@ describe('일반 공통정보 저장 왕복', () => {
       }
       registration?: { overlay?: Record<string, unknown> }
     }
+    // 3e3e1c1c1: 회차 행 라벨은 CMS 형식으로 정규화 후 서버 형식으로 직렬화된다(시각 `9:30` → `09:30`).
+    const persistedFirst = '26년 5월 4일(월) 09:30 ~ 12:20'
     expect(detail.generalCommonInfo?.scheduleDetails?.map(row => row.scheduleDateLabel)).toEqual([
-      changedFirst,
+      persistedFirst,
       changedSecond,
     ])
     expect(
       detail.registration?.overlay?.[
         'generalRegistration.educationScheduleCurriculum.scheduleDateByDetailIso'
       ]
-    ).toEqual({ 1: changedFirst, 2: changedSecond })
+    ).toEqual({ 1: persistedFirst, 2: changedSecond })
 
+    // 재조회는 CMS 표시 형식으로 읽는다(같은 일자·시각).
     const reloaded = reload(request)
     expect(reloaded.generalCommonInfo?.scheduleDetails?.map(row => row.scheduleDateLabel)).toEqual([
-      changedFirst,
-      changedSecond,
+      '2026.05.04(월) 09:30 ~ 12:20',
+      '2026.05.11(월) 13:00 ~ 15:00',
     ])
   })
 })

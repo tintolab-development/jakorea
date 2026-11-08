@@ -16,8 +16,9 @@
 }
 
 /**
- * 지급 현황 상세 풀페이지 시안: 600×230, 패딩·섀도우·라운드
- * (`content-modal` 기본 패딩과 구분 — modifier 내에서만 덮어씀)
+ * 지급 현황 상세 풀페이지 시안(15524:543992 Popup / Text / w600 / 발급 불가 안내): 600×200(내용 높이),
+ * padding 24·30·34 · R16 · 타이틀↔본문 12 · 본문↔푸터 30
+ * (`content-modal` 기본 패딩과 구분 — modifier 내에서만 덮어씀. 사용처: 지급 현황 상세만)
  */
 .instructor-payment-statement-blocked-modal--detail-fullpage.ant-modal .ant-modal-content {
   display: flex !important;
@@ -26,10 +27,10 @@
   gap: 30px !important;
   width: 600px !important;
   max-width: 100% !important;
-  min-height: 230px !important;
-  padding: 26px 30px 34px !important;
+  min-height: 0 !important;
+  padding: 24px 30px 34px !important;
   box-sizing: border-box !important;
-  border-radius: 12px !important;
+  border-radius: 16px !important;
   background: #fff !important;
   box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35) !important;
 }

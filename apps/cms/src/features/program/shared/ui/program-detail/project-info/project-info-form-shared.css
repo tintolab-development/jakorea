@@ -175,44 +175,14 @@
   width: auto;
 }
 
-/* 기본 정보 — 프로그램 진행 현황 읽기 전용 (`ProgramEnrollmentStatusText` / status-badge.css) */
-.program-detail-info-tab__lifecycle-status-text {
+/* 기본 정보 — 모집 현황 Text 블록·말줄임 (색·타이포: RecruitmentLifecycleStatusText → StatusBadge text) */
+.status-badge.program-detail-info-tab__lifecycle-status-text {
   display: block;
   box-sizing: border-box;
   max-width: 100%;
   overflow: hidden;
-  text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-family: Pretendard, sans-serif;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-}
-
-/* 참여자·강사·봉사 모집 현황: 태그 없이 텍스트만, 상태별 대표색 (program-lifecycle-status-badge 교육 그룹 톤) */
-.program-detail-info-tab__lifecycle-status-text--planned,
-.program-detail-info-tab__lifecycle-status-text--instructor-recruitment-planned,
-.program-detail-info-tab__lifecycle-status-text--volunteer-recruitment-planned,
-.program-detail-info-tab__lifecycle-status-text--participant-instructor-recruitment-planned {
-  color: var(--Status-green-main, #1e8c29);
-}
-
-.program-detail-info-tab__lifecycle-status-text--recruiting-students,
-.program-detail-info-tab__lifecycle-status-text--recruiting-instructors,
-.program-detail-info-tab__lifecycle-status-text--recruiting-volunteers,
-.program-detail-info-tab__lifecycle-status-text--participant-instructor-recruiting {
-  color: var(--Status-blue-main, #017eaf);
-}
-
-.program-detail-info-tab__lifecycle-status-text--matching-completed,
-.program-detail-info-tab__lifecycle-status-text--education-before-textbook,
-.program-detail-info-tab__lifecycle-status-text--education-after-textbook,
-.program-detail-info-tab__lifecycle-status-text--education-completed,
-.program-detail-info-tab__lifecycle-status-text--document-processing-completed,
-.program-detail-info-tab__lifecycle-status-text--participant-instructor-recruitment-completed {
-  color: var(--Netural-black, #3d3d3d);
 }
 
 /* 교육 커리큘럼 테이블 — 기본 정보와 동일 스타일(라벨 200px, #F9F9F9, 구분선 #E0E0E0) */

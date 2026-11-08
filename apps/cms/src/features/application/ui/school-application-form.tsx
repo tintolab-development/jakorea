@@ -89,7 +89,10 @@ export function SchoolApplicationForm({
       const { fileUploadService } = await import('@/entities/application/api/file-upload-service')
       const blob = await fileUploadService.createSampleStudentListBlob()
       const filename = `참여학생명단_샘플_${new Date().toISOString().split('T')[0]}.xlsx`
-      await downloadBlob(blob, filename)
+      // 실제 데이터가 없는 업로드용 빈 양식(예시 이름은 더미)
+      await downloadBlob(blob, filename, {
+        accessLog: { downloadKind: 'STUDENT_LIST_TEMPLATE_EXPORT', containedPiiTypes: [] },
+      })
     } catch (error) {
       handleError(error, { context: 'schoolApplicationForm.sampleDownload' })
     }

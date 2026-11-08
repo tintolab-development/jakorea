@@ -12,6 +12,7 @@ import {
   UserConsentAgreementSection,
   resolveUserConsentAgreementPreset,
   CONSENT_PRESET_SCHEMA,
+  withGuardianConsentRows,
   CONSENT_ROWS_PERMISSION_INSTRUCTOR,
 } from '@/features/user/detail/ui/user-consent-agreement-section'
 import { InstructorResumeDetailForms } from '@/features/user/detail/ui/instructor-resume-detail-forms'
@@ -23,6 +24,7 @@ import {
   canEditAdminMemberInfo,
   shouldShowAdminCommentForAdminPermissionApplicationDetail,
   shouldShowAdminCommentSectionForViewer,
+  shouldShowAdminRegisteredMemberDetailCaption,
 } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
@@ -69,6 +71,11 @@ import { memberQueryKeys } from '@/features/user/api/member-query-keys'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 import { MemberDetailMockDataBanner } from '@/features/user/detail/ui/member-detail-mock-data-banner'
 import { handleError } from '@/shared/utils/error-handler'
+
+const INDIVIDUAL_CONSENT_CAPTION =
+  '각 항목의 동의 현황과 해당 일시를 확인할 수 있으며, 미동의 항목은 일시가 표시되지 않습니다.'
+const INDIVIDUAL_ADMIN_REGISTERED_CONSENT_CAPTION =
+  '당사자의 서면 동의를 확인한 후 동의 항목을 처리해 주세요.'
 
 export interface UserDetailFullpageBasicTabContentProps {
   mode: 'default' | 'permission'
@@ -134,6 +141,24 @@ export function UserDetailFullpageBasicTabContent({
     shouldShowAdminCommentForAdminPermissionApplicationDetail(mode, user)
 
   const consentPreset = resolveUserConsentAgreementPreset(user)
+  /**
+   * 약관·동의 description (시안)
+   * - 일반 회원: 관리자 등록 회원은 서면 동의 처리 안내, 그 외 동의 현황 안내
+   * - 교사(4427:48695)·교사 겸 강사(4427:48874): 동의 현황 안내
+   * - 강사 권한 신청 상세: 동의 현황 안내
+   */
+  const individualConsentCaption =
+    mode !== 'default'
+      ? mode === 'permission' && permissionRole === 'instructor'
+        ? INDIVIDUAL_CONSENT_CAPTION
+        : undefined
+      : consentPreset === 'individual'
+        ? shouldShowAdminRegisteredMemberDetailCaption(user)
+          ? INDIVIDUAL_ADMIN_REGISTERED_CONSENT_CAPTION
+          : INDIVIDUAL_CONSENT_CAPTION
+        : consentPreset === 'school_teacher' || consentPreset === 'instructor_dual'
+          ? INDIVIDUAL_CONSENT_CAPTION
+          : undefined
   const consentViewVariant =
     mode === 'permission' && permissionRole === 'instructor' ? 'permission_instructor' : 'default'
 
@@ -348,10 +373,15 @@ export function UserDetailFullpageBasicTabContent({
 
   const remoteConsentRows = useMemo(() => {
     if (!membersRemote || !basicTab.showConsentAgreement) return undefined
-    const baseSchema =
+    const presetSchema =
       consentViewVariant === 'permission_instructor'
         ? CONSENT_ROWS_PERMISSION_INSTRUCTOR
         : CONSENT_PRESET_SCHEMA[consentPreset]
+    /** 만 14세 미만 본인 가입 — 보호자 정보 섹션과 같은 조건으로 법정대리인 동의 행 추가 */
+    const baseSchema =
+      consentPreset === 'individual' && user.under14 === true && user.registeredByAdmin !== true
+        ? withGuardianConsentRows(presetSchema)
+        : presetSchema
 
     if (user.role === 'ADMIN') {
       return applyMemberConsentToSchema(baseSchema, {
@@ -391,6 +421,8 @@ export function UserDetailFullpageBasicTabContent({
     shouldLoadMemberCurrentConsents,
     user.role,
     user.termsAgreements,
+    user.under14,
+    user.registeredByAdmin,
   ])
 
   const isInstructorPermissionDetail = mode === 'permission' && permissionRole === 'instructor'
@@ -498,6 +530,7 @@ export function UserDetailFullpageBasicTabContent({
       {basicTab.showConsentAgreement ? (
         <UserConsentAgreementSection
           preset={consentPreset}
+          caption={individualConsentCaption}
           viewVariant={consentViewVariant}
           remoteConsentRows={remoteConsentRows}
           remoteConsentLoading={membersRemote && consentLoading}

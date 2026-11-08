@@ -1,13 +1,14 @@
 import { Table } from 'antd'
 import type { TableProps } from 'antd/es/table'
 import type { TableRef } from 'antd/es/table'
-import { useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { mergeAdminDataTableClassName } from './table-class.js'
 import {
   ADMIN_DATA_TABLE_MIN_WIDTH_FLOOR,
   ADMIN_DATA_TABLE_SELECTION_COLUMN_WIDTH,
   distributeAdminDataTableSurplusWidth,
   ensureAdminDataTableFlexColumn,
+  hasAdminDataTableFlexColumn,
   resolveAdminDataTableColumnsWidth,
 } from './table-min-width.js'
 import './admin-data-table.css'
@@ -30,7 +31,6 @@ export { mergeAdminDataTableClassName } from './table-class.js'
 
 const OVERFLOW_CLASS = 'cms-data-table--overflow'
 const EXACT_CLASS = 'cms-data-table--exact'
-const MIN_WIDTH_VAR = '--admin-data-table-min-width'
 
 /**
  * 좁은 화면 공통 규칙 (CMS·Admin `cms-data-table`)
@@ -57,10 +57,16 @@ export function AdminDataTable<RecordType extends object = object>({
   const managed = !isFluid && (scroll?.x === undefined || explicitScrollX !== undefined)
 
   const { columns, rowSelection } = rest
+  /**
+   * 선택 열 실제 폭 = CSS `--table-selection-column-width`(공통 CSS가 col에 !important로 적용).
+   * 코드의 `rowSelection.columnWidth`는 CSS에 덮이므로 변수 값을 우선한다.
+   */
+  const [cssSelectionWidth, setCssSelectionWidth] = useState<number | null>(null)
   const selectionWidth = rowSelection
-    ? typeof rowSelection.columnWidth === 'number'
-      ? Math.max(rowSelection.columnWidth, ADMIN_DATA_TABLE_SELECTION_COLUMN_WIDTH)
-      : ADMIN_DATA_TABLE_SELECTION_COLUMN_WIDTH
+    ? (cssSelectionWidth ??
+      (typeof rowSelection.columnWidth === 'number'
+        ? rowSelection.columnWidth
+        : ADMIN_DATA_TABLE_SELECTION_COLUMN_WIDTH))
     : null
   const columnsWidth = useMemo(
     () =>
@@ -72,6 +78,8 @@ export function AdminDataTable<RecordType extends object = object>({
   )
 
   const [overflowMinWidth, setOverflowMinWidth] = useState<number | null>(null)
+  /** 넓은 화면에서 열이 실제로 쓸 수 있는 폭(테이블 테두리·세로 스크롤바 제외) */
+  const [wideAvailableWidth, setWideAvailableWidth] = useState<number | null>(null)
 
   useLayoutEffect(() => {
     const el = tableRef.current?.nativeElement
@@ -79,6 +87,12 @@ export function AdminDataTable<RecordType extends object = object>({
       setOverflowMinWidth(null)
       return
     }
+    const varWidth = Number.parseFloat(
+      getComputedStyle(el).getPropertyValue('--table-selection-column-width')
+    )
+    setCssSelectionWidth(
+      Number.isFinite(varWidth) && varWidth > 0 ? varWidth : ADMIN_DATA_TABLE_SELECTION_COLUMN_WIDTH
+    )
     const inOverlay = el.closest('.ant-modal, .ant-drawer') != null
     const floor = inOverlay ? 0 : Math.max(0, minTableWidthFloor)
     const minWidth = Math.max(columnsWidth, explicitScrollX ?? 0, floor)
@@ -86,6 +100,11 @@ export function AdminDataTable<RecordType extends object = object>({
       const width = Math.floor(el.clientWidth)
       if (width <= 0) return
       setOverflowMinWidth(width < minWidth ? minWidth : null)
+      const container = el.querySelector<HTMLElement>('.ant-table-container')
+      const body = el.querySelector<HTMLElement>('.ant-table-body')
+      const scrollbar = body ? Math.max(0, body.offsetWidth - body.clientWidth) : 0
+      const available = Math.floor((container?.clientWidth ?? width) - scrollbar)
+      setWideAvailableWidth(available > 0 ? available : null)
     }
     update()
     const observer = new ResizeObserver(update)
@@ -99,13 +118,17 @@ export function AdminDataTable<RecordType extends object = object>({
   const mergedColumns = useMemo(() => {
     if (!columns) return columns
     if (overflow) return distributeAdminDataTableSurplusWidth(columns, overflowMinWidth - columnsWidth)
-    if (exact) return ensureAdminDataTableFlexColumn(columns)
+    if (exact) {
+      // 유연 열(width 미지정)이 있으면 그 열이 남는 폭 흡수.
+      // 없으면 남는 폭을 본문 열 폭 비율대로 배분(선택·No. 고정) — 한 열만 과도하게 넓어지지 않게
+      if (hasAdminDataTableFlexColumn(columns) || wideAvailableWidth == null) {
+        return ensureAdminDataTableFlexColumn(columns)
+      }
+      return distributeAdminDataTableSurplusWidth(columns, wideAvailableWidth - columnsWidth)
+    }
     return columns
-  }, [overflow, exact, columns, overflowMinWidth, columnsWidth])
+  }, [overflow, exact, columns, overflowMinWidth, columnsWidth, wideAvailableWidth])
   const mergedScroll = overflow ? { ...scroll, x: overflowMinWidth } : scroll
-  const mergedStyle = overflow
-    ? ({ ...style, [MIN_WIDTH_VAR]: `${overflowMinWidth}px` } as CSSProperties)
-    : style
 
   return (
     <Table<RecordType>
@@ -113,7 +136,7 @@ export function AdminDataTable<RecordType extends object = object>({
       ref={tableRef}
       columns={mergedColumns}
       scroll={mergedScroll}
-      style={mergedStyle}
+      style={style}
       className={[mergedClassName, exact ? EXACT_CLASS : '', overflow ? OVERFLOW_CLASS : '']
         .filter(Boolean)
         .join(' ')}

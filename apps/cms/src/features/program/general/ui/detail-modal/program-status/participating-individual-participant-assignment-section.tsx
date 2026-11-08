@@ -263,6 +263,7 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
   )
 
   const { exportExcel } = useTableExcelExport({
+    accessLog: { downloadKind: 'PROGRAM_ASSIGNMENT_EXPORT', containedPiiTypes: ['NAME'] },
     columns: teamFeatureApplicable
       ? PARTICIPATING_INDIVIDUAL_PARTICIPANT_ASSIGNMENT_EXCEL_COLUMNS
       : PARTICIPATING_INDIVIDUAL_PARTICIPANT_ASSIGNMENT_EXCEL_COLUMNS_WITHOUT_TEAM,
@@ -826,7 +827,7 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
         <div className="participating-individual-participant-assignment-section__table-outer assignment-submission-modal__table-outer">
           <CmsDataTable<ParticipatingIndividualParticipantAssignmentRow & { no: number }>
             rowKey="id"
-            className="cms-data-table cms-data-table--fluid"
+            className="cms-data-table"
             columns={columns}
             dataSource={tableData}
             pagination={false}

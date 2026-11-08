@@ -129,6 +129,7 @@ export function ParticipatingIndividualInstructorSettlementSection({
   )
 
   const { exportExcel, isExporting: isExcelExporting } = useTableExcelExport({
+    accessLog: { downloadKind: 'PROGRAM_SETTLEMENT_EXPORT', containedPiiTypes: ['NAME'] },
     columns: PARTICIPATING_INDIVIDUAL_INSTRUCTOR_SETTLEMENT_EXCEL_COLUMNS,
     data: rows,
     filename: `정산내역_${instructor.instructorName}`,

@@ -61,8 +61,9 @@ CMS: `multiRowResponsiveLayout="merged-auto-fill"` + `mergedAutoFillTrailingFiel
 </div>
 ```
 
-- 행 간 gap = `--filter-field-gap` (12px)
-- 조회는 하단 행 `margin-left: auto` (우측)
+- **반응형 (QA 2026-11-09):** `__head` · `__bottom` · `__bottom-fields`는 CSS에서 `display: contents` — 필드 전부와 조회가 **하나의 flex-wrap 흐름**(CMS `mergedAutoFillInlineSearch`와 동일). 화면이 넓으면 하단 필드가 윗줄로 올라오고, 좁으면 윗줄 필드와 섞여 줄바꿈된다. head/bottom을 별도 줄로 고정하는 CSS를 화면에서 추가하지 않는다.
+- 행·칸 gap = `--filter-field-gap` (12px)
+- 조회는 마지막 줄 `margin-left: auto` (우측)
 - 필드 폭 stretch(`flex: 1` · `%`) 금지 — 공유 치수 SSOT
 
 ## 관련 (Admin)
@@ -72,4 +73,4 @@ CMS: `multiRowResponsiveLayout="merged-auto-fill"` + `mergedAutoFillTrailingFiel
 - [styling-tokens.mdc](./styling-tokens.mdc)
 - CMS: [table-filter-group-layout.mdc](../../../cms/.cursor/rules/design/table-filter-group-layout.mdc)
 
-**Last updated:** 2026-10-30
+**Last updated:** 2026-11-09

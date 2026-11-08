@@ -73,7 +73,14 @@ export function CategoryManagementModal({
 
   const columns: ColumnsType<PostsCategoryRow> = [
     {
-      title: '카테고리명',
+      title: (
+        <>
+          카테고리명
+          <span className="notice-category-management-modal__required" aria-hidden>
+            *
+          </span>
+        </>
+      ),
       dataIndex: 'name',
       key: 'name',
       width: NAME_COL_WIDTH,
@@ -144,7 +151,7 @@ export function CategoryManagementModal({
         size="h40"
         type="button"
         onClick={ctrl.handleClose} >
-        닫기
+        취소
       </CmsButton>
       <CmsButton
         variant="secondary"
@@ -198,7 +205,7 @@ export function CategoryManagementModal({
                                 ref={ctrl.newInputRef}
                                 inputSize="medium"
                                 width="100%"
-                                placeholder="카테고리명을 입력해주세요"
+                                placeholder="카테고리명을 입력해 주세요"
                                 value={ctrl.newDraft}
                                 onChange={e => ctrl.setNewDraft(e.target.value)}
                                 onPressEnter={ctrl.submitNew}

@@ -207,13 +207,14 @@ export function EducationFieldsPage() {
             <CmsTextArea
               className={
                 isEditing
-                  ? 'education-fields-inline-field education-fields-inline-field--edit cms-textarea--fixed-rows'
+                  ? 'education-fields-inline-field education-fields-inline-field--edit'
                   : 'education-fields-inline-field education-fields-inline-field--readonly'
               }
               inputSize="medium"
               width="100%"
-              rows={isEditing ? 2 : 1}
-              autoSize={isEditing ? false : { minRows: 1, maxRows: 2 }}
+              layout={isEditing ? 'fixed' : 'default'}
+              rows={isEditing ? undefined : 1}
+              autoSize={isEditing ? { minRows: 1 } : { minRows: 1, maxRows: 2 }}
               value={value}
               readOnly={!isEditing}
               tabIndex={isEditing ? 0 : -1}
@@ -237,13 +238,14 @@ export function EducationFieldsPage() {
             <CmsTextArea
               className={
                 isEditing
-                  ? 'education-fields-inline-field education-fields-inline-field--edit cms-textarea--fixed-rows'
+                  ? 'education-fields-inline-field education-fields-inline-field--edit'
                   : 'education-fields-inline-field education-fields-inline-field--readonly'
               }
               inputSize="medium"
               width="100%"
-              rows={isEditing ? 2 : 1}
-              autoSize={isEditing ? false : { minRows: 1, maxRows: 2 }}
+              layout={isEditing ? 'fixed' : 'default'}
+              rows={isEditing ? undefined : 1}
+              autoSize={isEditing ? { minRows: 1 } : { minRows: 1, maxRows: 2 }}
               value={value}
               placeholder={GUIDE_PLACEHOLDER}
               readOnly={!isEditing}
@@ -326,7 +328,7 @@ export function EducationFieldsPage() {
                           ? 'education-fields-inline-field education-fields-inline-field--edit'
                           : 'education-fields-inline-field education-fields-inline-field--readonly'
                       }
-                      inputSize="large"
+                      inputSize="medium"
                       width="100%"
                       value={displayMainText}
                       readOnly={!isEditing}

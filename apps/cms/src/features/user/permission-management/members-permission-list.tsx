@@ -636,6 +636,7 @@ export const MembersPermissionList = forwardRef<
           </>
         }
         excelExport={{
+          accessLog: { downloadKind: 'MEMBER_PERMISSION_REQUEST_EXPORT', containedPiiTypes: ['NAME'] },
           columns,
           data: tableData,
           selectedRowKeys,

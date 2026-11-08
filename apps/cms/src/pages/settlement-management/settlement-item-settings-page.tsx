@@ -235,7 +235,14 @@ export default function SettlementItemSettingsPage() {
               </header>
               <div className="settlement-item-settings__grid">
                 {section.items.map(item => (
-                  <article key={item.id} className="settlement-item-settings__card">
+                  <article
+                    key={item.id}
+                    className={
+                      section.kind === 'payment'
+                        ? 'settlement-item-settings__card settlement-item-settings__card--has-menu'
+                        : 'settlement-item-settings__card'
+                    }
+                  >
                     <button
                       type="button"
                       className="settlement-item-settings__card-hit"

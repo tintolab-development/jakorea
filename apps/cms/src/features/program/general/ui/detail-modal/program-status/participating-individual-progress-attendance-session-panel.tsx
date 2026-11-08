@@ -115,6 +115,7 @@ export function ParticipatingIndividualProgressAttendanceSessionPanel({
   )
 
   const { exportExcel, isExporting } = useTableExcelExport({
+    accessLog: { downloadKind: 'PROGRAM_ATTENDANCE_EXPORT', containedPiiTypes: ['NAME'] },
     columns: PARTICIPATING_INDIVIDUAL_PROGRESS_ATTENDANCE_EXCEL_COLUMNS,
     data: excelRows,
     filename: resolveProgressAttendanceSessionExcelFilename(session.headerTitle),

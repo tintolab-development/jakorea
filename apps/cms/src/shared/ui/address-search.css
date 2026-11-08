@@ -263,20 +263,33 @@
   padding: 40px;
   justify-content: center;
   align-items: center;
-  gap: 10px;
+  gap: var(--Spacing-4, 4px);
   align-self: stretch;
   box-sizing: border-box;
-  border-radius: 8px;
-  border: 1px solid var(--disabled-txt, rgba(61, 61, 61, 0.5));
-  background: rgba(61, 61, 61, 0.04);
-  color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
+  border-radius: var(--Radius-8, 8px);
+  border: 1px solid var(--Border-default, #e0e0e0);
+  background: var(--main-WT, #fff);
+  color: var(--Netural-black, #3d3d3d);
   text-align: center;
   font-family: Pretendard, sans-serif;
-  font-size: 16px;
   font-style: normal;
-  font-weight: 500;
   line-height: 150%;
-  white-space: pre-line;
+}
+
+.address-search__result-empty-title,
+.address-search__result-empty-description {
+  margin: 0;
+  opacity: 0.5;
+}
+
+.address-search__result-empty-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.address-search__result-empty-description {
+  font-size: 14px;
+  font-weight: 400;
 }
 
 .address-search-modal .address-search__results--no-results {

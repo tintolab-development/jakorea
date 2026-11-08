@@ -69,7 +69,8 @@ export function UjatProgramDetailCommonInfoView({
   infoForm,
   scheduleForm,
 }: UjatProgramDetailCommonInfoViewProps) {
-  const sponsorsQuery = useSponsorOptionsQuery(true)
+  // 전체 후원사 목록은 편집 선택지, 또는 배정 응답에 이름이 없을 때의 이름 찾기에만 쓴다.
+  const sponsorsQuery = useSponsorOptionsQuery(isEditMode || !sponsorName?.trim())
   const basicInfoDisplay = resolveUjatRegistrationBasicInfoDisplay(
     program,
     sponsorName,

@@ -5,6 +5,10 @@ import {
   type ProgramApplicationRejectAudience,
   type ProgramApplicationRejectVariant,
 } from '@/features/program/shared/lib/program-application-reject-copy'
+import {
+  APPLICATION_REJECT_REASON_LENGTH_MESSAGE,
+  APPLICATION_REJECT_REASON_MIN_LENGTH,
+} from '@/features/program/shared/lib/application-reject-reason'
 import './instructor-bulk-approve-modal.css'
 
 export type ProgramApplicationRejectModalProps = {
@@ -57,6 +61,8 @@ export function ProgramApplicationRejectModal({
       reasonLabel="반려 사유"
       reasonPlaceholder={reasonPlaceholder}
       reasonRequiredMessage="반려 사유를 입력해 주세요."
+      reasonMinLength={APPLICATION_REJECT_REASON_MIN_LENGTH}
+      reasonMinLengthMessage={APPLICATION_REJECT_REASON_LENGTH_MESSAGE}
       confirmLoading={confirmLoading}
       onCancel={onCancel}
       onConfirm={onConfirm}

@@ -21,10 +21,6 @@
   min-width: 0;
 }
 
-.file-attachment-row__icon {
-  flex-shrink: 0;
-}
-
 .file-attachment-row__name,
 .file-attachment-empty {
   overflow: hidden;

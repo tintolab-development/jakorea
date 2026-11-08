@@ -34,6 +34,7 @@ import {
   isMemberBasicInfoPatchRemoteEnabled,
   isMembersRemoteEnabled,
 } from '@/features/user/api/member-remote-capabilities'
+import './user-detail-fullpage-header-actions.css'
 
 export type UserDetailPermissionRole = 'instructor' | 'admin'
 
@@ -194,6 +195,7 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
         revealed={personalInfoRevealed}
         cmsVariant={personalInfoButton.variant}
         cmsSize="large"
+        className="user-detail-fullpage-header-actions__personal-info"
         onClick={personalInfoButton.onClick} />
     ) : null
 

@@ -42,6 +42,13 @@ export function resolveAdminDataTableColumnsWidth(
   return sum
 }
 
+/** 고정 폭 열 — 숫자 또는 px 문자열(`'480px'`). % 문자열·미지정은 유연 열 */
+function hasFixedWidth(column: ColumnType<unknown>): boolean {
+  const width = column.width
+  if (typeof width === 'number') return Number.isFinite(width)
+  return typeof width === 'string' && /^\s*\d+(\.\d+)?(px)?\s*$/.test(width)
+}
+
 function isNoColumn(column: ColumnType<unknown>): boolean {
   const className = typeof column.className === 'string' ? column.className : ''
   return (
@@ -61,18 +68,23 @@ export function distributeAdminDataTableSurplusWidth<T>(
   columns: readonly T[],
   surplus: number
 ): T[] {
-  if (surplus <= 0) return [...columns]
   const leaves = columns
     .map((column, index) => ({ column: column as unknown as ColumnType<unknown>, index }))
     .filter(({ column }) => column && typeof column === 'object' && !('children' in column))
-  const flex = leaves.filter(({ column }) => typeof column.width !== 'number')
+  const flex = leaves.filter(({ column }) => !hasFixedWidth(column))
+  const next0 = [...columns]
+  // 좁은 화면에서는 유연 열도 최소 폭(minWidth)을 실제 width로 — 없으면 auto 균등 분배로 최소 폭 아래로 줄어든다
+  for (const { column, index } of flex) {
+    next0[index] = { ...next0[index], width: columnWidthPx(column) } as T
+  }
+  if (surplus <= 0) return next0
   const targets =
     flex.length > 0 ? flex : leaves.filter(({ column }) => !isNoColumn(column))
-  if (targets.length === 0) return [...columns]
+  if (targets.length === 0) return next0
 
   const base = targets.map(({ column }) => columnWidthPx(column))
   const baseSum = base.reduce((a, b) => a + b, 0)
-  const next = [...columns]
+  const next = next0
   let given = 0
   targets.forEach(({ index }, i) => {
     const share =
@@ -93,18 +105,26 @@ export function ensureAdminDataTableFlexColumn<T>(columns: readonly T[]): T[] {
   const leaves = columns
     .map((column, index) => ({ column: column as unknown as ColumnType<unknown>, index }))
     .filter(({ column }) => column && typeof column === 'object' && !('children' in column))
-  if (leaves.some(({ column }) => typeof column.width !== 'number')) return [...columns]
+  if (leaves.some(({ column }) => !hasFixedWidth(column))) return [...columns]
   const candidates = leaves.filter(({ column }) => !isNoColumn(column))
   if (candidates.length === 0) return [...columns]
   let pick = candidates[0]!
   for (const c of candidates) {
-    if ((c.column.width as number) >= (pick.column.width as number)) pick = c
+    if (columnWidthPx(c.column) >= columnWidthPx(pick.column)) pick = c
   }
   const next = [...columns]
-  const { width, ...restColumn } = pick.column as ColumnType<unknown> & { minWidth?: number }
+  const { width: _width, ...restColumn } = pick.column as ColumnType<unknown> & { minWidth?: number }
   next[pick.index] = {
     ...restColumn,
-    minWidth: Math.max(Number(width) || 0, restColumn.minWidth ?? 0),
+    minWidth: Math.max(columnWidthPx(pick.column), restColumn.minWidth ?? 0),
   } as unknown as T
   return next
+}
+
+/** width 미지정(또는 % 폭) 유연 열이 하나라도 있는지 — 그룹 헤더는 제외 */
+export function hasAdminDataTableFlexColumn<T>(columns: readonly T[]): boolean {
+  return columns.some(column => {
+    const c = column as unknown as ColumnType<unknown>
+    return c && typeof c === 'object' && !('children' in c) && !hasFixedWidth(c)
+  })
 }

@@ -101,7 +101,14 @@ export function CategoryManagementModal({
   const columns: ColumnsType<ImpactStoryCategory> = useMemo(
     () => [
       {
-        title: '카테고리명',
+        title: (
+          <span className="is-category-modal__name-th">
+            카테고리명
+            <span className="is-category-modal__required" aria-hidden>
+              *
+            </span>
+          </span>
+        ),
         dataIndex: 'name',
         key: 'name',
         width: NAME_COL_WIDTH,

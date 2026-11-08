@@ -1,4 +1,6 @@
 import { fetchFormTemplateVersionRemote } from '@/features/template/api/form-templates-api-client'
+import { formTemplateQueryKeys } from '@/features/template/api/form-template-query-keys'
+import { queryClient } from '@/shared/lib/query-client'
 import type { RegisteredSurvey } from '@/features/program/shared/lib/survey-management/survey-management-types'
 import { readSurveyTitleFromSchema } from '@/features/program/shared/lib/survey-management/resolve-published-survey-binding'
 
@@ -18,7 +20,12 @@ export async function fetchSurveyTitlesByTemplateVersionIds(
   await Promise.all(
     unique.map(async versionId => {
       try {
-        const version = await fetchFormTemplateVersionRemote(versionId)
+        // 신청·설문 탭이 같은 version을 이미 받았으면 캐시를 쓴다 (loadFormTemplateVersionDraftByVersionId와 같은 키·staleTime).
+        const version = await queryClient.fetchQuery({
+          queryKey: formTemplateQueryKeys.versionById(versionId),
+          queryFn: () => fetchFormTemplateVersionRemote(versionId),
+          staleTime: 30_000,
+        })
         const title = readSurveyTitleFromSchema(version.schemaJson)
         if (title != null) {
           titles.set(String(versionId), title)

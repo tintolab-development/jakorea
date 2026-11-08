@@ -134,7 +134,7 @@ function buildDefaultProgramsItem(
   }
 }
 
-/** 학교 상세: LNB 1뎁스 «프로그램 수강 이력» */
+/** 학교 상세: LNB 1뎁스 «프로그램 참여 이력» (다른 회원 상세와 통일) */
 function buildSchoolProgramsItem(
   _user: SidebarUser,
   _programsLabel: string,
@@ -142,7 +142,7 @@ function buildSchoolProgramsItem(
 ): DetailModalSidebarNavItem {
   return {
     key: 'history',
-    label: '프로그램 수강 이력',
+    label: '프로그램 참여 이력',
     icon: programsIcon,
   }
 }

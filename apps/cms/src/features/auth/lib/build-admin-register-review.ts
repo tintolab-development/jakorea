@@ -29,7 +29,7 @@ export function buildAdminRegisterReviewItems(
   data: AdminRegisterWizardData
 ): AdminRegisterReviewItem[] {
   return [
-    { label: '회원유형', value: '관리자회원' },
+    { label: '회원 유형', value: '관리자 회원' },
     { label: '이름', value: data.verifiedName?.trim() || '-' },
     {
       label: '휴대폰 번호',

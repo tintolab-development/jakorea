@@ -7,9 +7,10 @@
   width: 100%;
   height: 100%;
   box-sizing: border-box;
-  border-radius: var(--radius-8);
-  border: 1px solid var(--JA-mint-01, #01a1af);
-  box-shadow: var(--shadow-drag-overlay);
+  /* 시안 12360:300352: 2px 민트 보더 · r16 · 민트 톤 그림자 */
+  border-radius: var(--radius-16, 16px);
+  border: 2px solid var(--JA-mint-01, #01a1af);
+  box-shadow: 0 4px 12px 0 rgba(0, 89, 97, 0.2);
   opacity: 0.95;
   cursor: grabbing;
   overflow: visible;
@@ -30,6 +31,7 @@
   width: 100%;
   height: 100%;
   background: #fff;
+  border-radius: 14px; /* 보더 2px 안쪽 */
   padding: 24px;
   box-sizing: border-box;
 }

@@ -7,6 +7,11 @@
  */
 
 import { customInstance } from '@/shared/api/orval-mutator'
+import {
+  buildFileAccessLogMetaBody,
+  type DownloadAccessLogMeta,
+  type FileAccessLogMetaBody,
+} from '@/shared/lib/download-access-log-meta'
 
 /** BE 확정 path — GET file-access 와 다름 */
 export const FILE_ACCESS_LOG_CREATE_PATH = '/api/admin/logs/file-access/client'
@@ -16,7 +21,14 @@ const FILE_ACCESS_LOG_STRING_MAX = 255
 export type PostFileAccessLogBody = {
   fileName: string
   userAgent?: string
+  /** 파일 종류·포함 개인정보. 플래그가 켜졌을 때만 body에 실린다. */
+  accessLog?: DownloadAccessLogMeta
 }
+
+type PostFileAccessLogPayload = {
+  fileName: string
+  userAgent?: string
+} & FileAccessLogMetaBody
 
 export type PostFileAccessLogResult = {
   id?: string
@@ -36,9 +48,10 @@ export async function postFileAccessLog(
     throw new Error('다운로드 파일명이 없습니다.')
   }
   const userAgent = body.userAgent?.trim()
-  const payload: PostFileAccessLogBody = {
+  const payload: PostFileAccessLogPayload = {
     fileName,
     ...(userAgent ? { userAgent: clipLogField(userAgent) } : {}),
+    ...buildFileAccessLogMetaBody(body.accessLog),
   }
   await customInstance<unknown>(
     {

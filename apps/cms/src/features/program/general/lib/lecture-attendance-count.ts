@@ -6,9 +6,7 @@ export function countLectureAttendanceHeldAndAttended(sessions: LectureAttendanc
   held: number
 } {
   const held = sessions.filter(s => s.status !== 'not_held').length
-  const attended = sessions.filter(
-    s => s.status === 'attended' || s.status === 'late'
-  ).length
+  const attended = sessions.filter(s => isLectureAttendanceCountedAsAttended(s.status)).length
   return { attended, held }
 }
 
@@ -18,8 +16,9 @@ export function isLectureAttendanceHeldStatus(
   return status !== 'not_held'
 }
 
+/** 출석·지각·사유 불참은 출석 건수에 포함한다(사유 불참은 수료 규칙상 결석이 아님). */
 export function isLectureAttendanceCountedAsAttended(
   status: LectureAttendanceSession['status']
 ): boolean {
-  return status === 'attended' || status === 'late'
+  return status === 'attended' || status === 'late' || status === 'excused'
 }

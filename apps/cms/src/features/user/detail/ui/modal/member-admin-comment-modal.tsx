@@ -3,6 +3,7 @@ import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsTextArea } from '@/shared/ui/cms-textarea'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { ADMIN_COMMENT_SENSITIVE_INFO_NOTICE } from '@/features/user/detail/lib/admin-comment-copy'
 
 export interface MemberAdminCommentModalProps {
   open: boolean
@@ -44,7 +45,7 @@ export function MemberAdminCommentModal({
       open={open}
       onCancel={onCancel}
       title="코멘트 작성"
-      titleBodyGap="always"
+      titleBodyGap="section"
       width={800}
       zIndex={2600}
       footer={
@@ -64,7 +65,7 @@ export function MemberAdminCommentModal({
             loading={loading}
             disabled={!canConfirm}
             onClick={onConfirm} >
-            코멘트 작성
+            저장
           </CmsButton>
         </>
       }
@@ -73,13 +74,14 @@ export function MemberAdminCommentModal({
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="코멘트"
+            required
             fullRow
             view={value}
             edit={
               <CmsTextArea inputSize="small"
                 value={value}
                 onChange={event => onChange(event.target.value)}
-                placeholder="코멘트를 작성해 주세요"
+                placeholder={ADMIN_COMMENT_SENSITIVE_INFO_NOTICE}
                 width="100%"
                 rows={4}
                 maxLength={maxLength}

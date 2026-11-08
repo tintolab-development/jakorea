@@ -6,7 +6,7 @@
  * - 쿼리 파라미터: `?tab=data`(기본) / `?tab=summary`
  */
 
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { Alert } from 'antd'
 import { useSearchParams } from 'react-router-dom'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
@@ -19,6 +19,10 @@ import type {
   EducationRecordTableContext,
 } from '@/features/education-record/model/education-record-types'
 import { getAvailableYearsFromRows } from '@/features/education-record/lib/education-record-region'
+import {
+  buildEducationRecordYearOptions,
+  withDefaultEducationRecordPeriod,
+} from '@/features/education-record/lib/education-record-default-period'
 import { EducationRecordDataTab } from '@/features/education-record/ui/education-record-data-tab'
 import { EducationRecordSummaryTab } from '@/features/education-record/ui/education-record-summary-tab'
 import { usePerformanceListQuery } from '@/features/education-record/hooks/use-performance-list-query'
@@ -47,13 +51,25 @@ export function EducationRecordListPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const activeKey = parseTabKey(searchParams.get(TAB_PARAM))
 
+  /** 첫 진입: 년도·분기 쿼리가 없으면 현재 연도·분기로 채운다(초기화 후에는 다시 채우지 않음) */
+  const didSeedPeriodRef = useRef(false)
+  useEffect(() => {
+    if (didSeedPeriodRef.current) return
+    didSeedPeriodRef.current = true
+    const seeded = withDefaultEducationRecordPeriod(searchParams)
+    if (seeded) setSearchParams(seeded, { replace: true })
+  }, [searchParams, setSearchParams])
+
   const listQuery = usePerformanceListQuery(searchParams)
   const remoteRows = listQuery.data?.rows
   const sourceRows = useMemo(() => remoteRows ?? [], [remoteRows])
   const isDataTab = activeKey === 'data'
   const summaryQuery = usePerformanceSummaryQuery(searchParams, activeKey === 'summary')
 
-  const availableYears = useMemo(() => getAvailableYearsFromRows(sourceRows), [sourceRows])
+  const availableYears = useMemo(
+    () => buildEducationRecordYearOptions(getAvailableYearsFromRows(sourceRows)),
+    [sourceRows]
+  )
   const context = useMemo<EducationRecordTableContext>(() => ({ availableYears }), [availableYears])
 
   const {
@@ -163,6 +179,8 @@ export function EducationRecordListPage() {
         ]}
         trailing={
           <ExcelButton
+            size="h44"
+            className="education-record-list-page__excel"
             onClick={handleExportExcel}
             loading={isExporting}
             disabled={tableData.length === 0 || listQuery.isLoading || listQuery.isError} />

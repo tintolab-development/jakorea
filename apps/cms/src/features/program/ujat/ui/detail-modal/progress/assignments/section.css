@@ -1,7 +1,4 @@
 .ujat-education-progress-assignments {
-  --ujat-assignment-status-completed-color: var(--Netural-black, #3d3d3d);
-  --ujat-assignment-status-not-submitted-color: var(--Status-red-main, #c32f4a);
-  --ujat-assignment-status-deadline-missed-color: var(--Status-green-main, #1e8c29);
   width: 100%;
   min-width: 0;
 }
@@ -284,26 +281,9 @@
   white-space: normal !important;
 }
 
-.ujat-education-progress-assignments__status {
+/* 제출 현황 Text 블록 배치만. 색·타이포는 StatusBadge text + UJAT_ASSIGNMENT_SUBMISSION_STATUS_COLOR */
+.status-badge.ujat-education-progress-assignments__status {
   display: block;
-  text-align: center;
-  font-family: Pretendard, sans-serif;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-}
-
-.ujat-education-progress-assignments__status--completed {
-  color: var(--ujat-assignment-status-completed-color);
-}
-
-.ujat-education-progress-assignments__status--not-submitted {
-  color: var(--ujat-assignment-status-not-submitted-color);
-}
-
-.ujat-education-progress-assignments__status--deadline-missed {
-  color: var(--ujat-assignment-status-deadline-missed-color);
 }
 
 .ujat-education-progress-assignments__remarks {

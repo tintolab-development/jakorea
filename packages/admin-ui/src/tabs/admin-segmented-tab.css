@@ -6,11 +6,12 @@
   display: flex;
   align-items: stretch;
   gap: 0;
-  padding: 3px;
-  border-radius: 10px;
+  /* Figma Tab / Toggle — Background/subtle · Border/alpha-10 · p4 · r8 */
+  padding: 4px;
+  border-radius: 8px;
   box-sizing: border-box;
-  background: #f2f4f5;
-  border: 1px solid #e5e7eb;
+  background: var(--Background-subtle, #f2f3f5);
+  border: 1px solid var(--Border-alpha-10, rgba(61, 61, 61, 0.1));
 }
 
 /* small: 위젯 헤더용 */
@@ -56,13 +57,13 @@
 
 .segmented-tab__btn {
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: 6px;
   background: transparent;
-  color: #7d7d7d;
+  color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
-  line-height: 150%; /* 22.5px */
+  line-height: 120%;
   cursor: pointer;
   transition:
     color 0.2s,

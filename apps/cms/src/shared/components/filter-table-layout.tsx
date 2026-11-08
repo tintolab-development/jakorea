@@ -44,6 +44,11 @@ export type FilterTableExcelExportConfig<T extends object = any> = Omit<
   'filename'
 >
 
+/** 제목 옆 description 안 구분선(시안 1×12 세로선) — 텍스트 `|` 대신 사용 */
+export function FilterTableDescriptionDivider() {
+  return <span className="filter-table-layout__description-divider" aria-hidden />
+}
+
 export interface FilterTableLayoutProps extends TableFilterGroupProps {
   /** false면 `TableFilterGroup`·필터 하단 구분선을 숨김(캘린더 전용 뷰 등) */
   showFilter?: boolean
@@ -187,6 +192,7 @@ export function FilterTableLayout({
     getRowKey: excelExport?.getRowKey,
     filename: excelFilename,
     exporter: excelExport?.exporter,
+    accessLog: excelExport?.accessLog,
     alertOnEmpty: excelExport?.alertOnEmpty,
     emptyAlertTitle: excelExport?.emptyAlertTitle,
     emptyAlertContent: excelExport?.emptyAlertContent,

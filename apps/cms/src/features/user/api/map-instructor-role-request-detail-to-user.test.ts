@@ -175,7 +175,7 @@ describe('mapInstructorRoleRequestDetailToUser', () => {
     })
 
     expect(user.instructorMemberProfile).toBe('instructor_dual')
-    expect(user.listMetrics?.employmentStatusLabel).toBe('재직중')
+    expect(user.listMetrics?.employmentStatusLabel).toBe('재직 중')
   })
 
   it('승인 알림 CASE·상태·시각을 상세 루트에서 매핑한다', () => {

@@ -27,21 +27,13 @@
   min-width: 0;
 }
 
-/* 라벨 열 160 — DetailInfoForm 그리드 안정화 */
+/* 라벨·값 칸 규격은 공통 팝업 규칙(1000 미만 Small: 라벨 140·4×12, 값 10)을 따른다 */
 .footer-related-logo-form-modal .detail-info-form__field {
-  min-height: 54px;
-  --detail-info-label-w: 160px !important;
-  grid-template-columns: 160px minmax(0, 1fr) !important;
   align-items: stretch;
 }
 
 .footer-related-logo-form-modal .detail-info-form__field-label {
   display: flex !important;
-  width: 160px !important;
-  min-width: 160px !important;
-  max-width: 160px !important;
-  min-height: 54px;
-  padding: 12px !important;
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
@@ -52,8 +44,6 @@
 .footer-related-logo-form-modal .detail-info-form__field-content {
   display: flex !important;
   min-width: 0;
-  min-height: 54px;
-  padding: 12px !important;
   align-items: center;
   justify-content: flex-start;
   box-sizing: border-box;
@@ -111,7 +101,7 @@
 /* 로고 미리보기 + 파일 선택 */
 .footer-related-logo-form-modal__image-row {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: flex-start;
   gap: 16px;
   width: 100%;
@@ -156,7 +146,7 @@
 .footer-related-logo-form-modal .file-select-field__actions {
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 16px;
 }

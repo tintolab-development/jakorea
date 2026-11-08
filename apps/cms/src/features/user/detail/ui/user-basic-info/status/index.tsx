@@ -36,11 +36,6 @@ export function settlementStatusView(user: Omit<User, 'password'>) {
   return <span className="user-basic-info-section__settlement-status">{label}</span>
 }
 
-export function activityChangeCountView(user: Omit<User, 'password'>) {
-  const count = user.scheduleChangeCancelCount
-  return <span>{count != null && count >= 0 ? `${count}회` : '-'}</span>
-}
-
 export function normalizePermissionApprovalStatus(
   status: User['permissionApprovalStatus']
 ): MemberPermissionApplicationStatus {

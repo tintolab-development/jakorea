@@ -3,7 +3,7 @@
  */
 
 import { useGnbMenu } from '@/features/gnb-menu/api/hooks'
-import { GnbMenuFormCard } from '@/features/gnb-menu/ui/gnb-menu-form'
+import { GnbMenuSectionCards } from '@/features/gnb-menu/ui/gnb-menu-form'
 import { PageContentLoading } from '@/shared/ui'
 
 import './page.css'
@@ -33,7 +33,7 @@ export function GnbMenuPage() {
 
   return (
     <div className="gnb-menu-page">
-      <GnbMenuFormCard data={data} />
+      <GnbMenuSectionCards data={data} />
     </div>
   )
 }

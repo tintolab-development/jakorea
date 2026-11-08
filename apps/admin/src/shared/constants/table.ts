@@ -34,7 +34,10 @@ export const TABLE_COLUMN_WIDTHS = {
   /** 사용 여부 열 (Switch) */
   usage: 100,
   name: 120,
-  email: 200,
+  /** 작성자명 — `테스트 마스터 관리자`(14px ≈ 116) + 좌우 패딩 12, 넘치면 말줄임 */
+  author: 160,
+  /** 마스킹 이메일 `seed.instructor***@test.jakorea.local`(14px ≈ 238) + 좌우 패딩 (CMS와 동일) */
+  email: 280,
   phone: 130,
   id: 100,
 } as const

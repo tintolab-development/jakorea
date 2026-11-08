@@ -147,6 +147,7 @@ export function UjatInstitutionApplicationList({
         excelExport={
           canWrite
             ? {
+                accessLog: { downloadKind: 'PROGRAM_INSTITUTION_APPLICATION_EXPORT', containedPiiTypes: ['NAME'] },
                 columns,
                 data: tableData,
                 selectedRowKeys,

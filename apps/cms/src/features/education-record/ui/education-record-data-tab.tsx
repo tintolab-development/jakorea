@@ -11,8 +11,8 @@ import '@/shared/components/list-page/list-page-layout.css'
 import './education-record-data-tab.css'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
-/** 실적 데이터 테이블 가로 스크롤 기준(33개 컬럼 width 합 + 여유) */
-const EDUCATION_RECORD_TABLE_SCROLL_X = 5250
+/** 실적 데이터 테이블 가로 스크롤 기준 — 시안 32열 합 5100 + 시군구 140 */
+const EDUCATION_RECORD_TABLE_SCROLL_X = 5240
 
 export type EducationRecordDataTabProps = {
   antdColumns: ColumnsType<EducationRecordRow>

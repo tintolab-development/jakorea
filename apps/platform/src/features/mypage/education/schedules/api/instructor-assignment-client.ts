@@ -1,3 +1,4 @@
+import type { GeminiLectureScheduleItem } from '../../settlements/lib/gemini-settlement-status'
 import type { LectureReportAssignment } from './lecture-report-client'
 
 /*
@@ -8,7 +9,9 @@ import type { LectureReportAssignment } from './lecture-report-client'
  * - GET .../instructor-assignment-waitings
  *
  * 배정된 목록 SSOT:
- * GET /api/portal/me/programs/{programId}/lecture-report-assignments
+ * - 제미나이: GET /api/portal/me/program-applications/INSTRUCTOR/{applicationId}/gemini-lecture-schedules
+ *   (제미나이 배정은 기관 신청 ID 없이 일정↔기관(OSA)으로 연결되어 lecture-report-assignments에는 기관 정보가 없다)
+ * - 그 외: GET /api/portal/me/programs/{programId}/lecture-report-assignments
  *
  * 신청 대기 상태(결과 대기·서류 합격 등)는
  * GET /api/portal/me/program-applications?applicationType=INSTRUCTOR 의 displayStatus를 쓴다.
@@ -61,16 +64,39 @@ export type InstructorAssignmentWaitingItem = {
   unavailableReason: 'SCHEDULE_CONFLICT' | 'CAPACITY_FULL' | null
 }
 
-function asFiniteNumber(value: unknown): number | null {
-  if (typeof value === 'number' && Number.isFinite(value)) return value
+/** gemini-lecture-schedules 클라이언트 타입은 string | number — 숫자로만 받는다. */
+function asNumericKm(value: unknown): number | null {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number(value.trim())
+    return Number.isFinite(parsed) ? parsed : null
+  }
   return null
+}
+
+function asPositiveInt(value: unknown): number | null {
+  return typeof value === 'number' && Number.isInteger(value) && value > 0 ? value : null
+}
+
+/** 서버 LocalDate + LocalTime(서울 기준) → `yyyy-MM-ddTHH:mm:ss+09:00`. 없으면 null */
+function seoulDateTime(date: string | null | undefined, time: string | null | undefined): string | null {
+  const day = date?.trim() ?? ''
+  const clock = time?.trim() ?? ''
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return null
+  const match = /^(\d{2}):(\d{2})(?::(\d{2}))?/.exec(clock)
+  if (!match) return null
+  return `${day}T${match[1]}:${match[2]}:${match[3] ?? '00'}+09:00`
 }
 
 /** lecture-report-assignments item → 배정 현황 패널 행 */
 export function mapLectureReportAssignmentToInstructorItem(
   row: LectureReportAssignment,
 ): InstructorAssignmentItem {
-  const distanceKm = asFiniteNumber(row.distanceFromHome)
+  /** 계약상 number(km). 문자열은 파싱하지 않는다. */
+  const distanceKm =
+    typeof row.distanceFromHome === 'number' && Number.isFinite(row.distanceFromHome)
+      ? row.distanceFromHome
+      : null
   return {
     assignmentId: row.assignmentId,
     organizationApplicationId: null,
@@ -89,6 +115,39 @@ export function mapLectureReportAssignmentToInstructorItem(
     educationSlotKey: row.educationSlotKey ?? null,
     scheduleKind: row.scheduleKind ?? null,
     curriculumSessionCount: row.curriculumSessionCount ?? null,
+    distanceKm,
+    distanceStatus: distanceKm != null ? 'CALCULATED' : null,
+  }
+}
+
+/**
+ * gemini-lecture-schedules item → 배정 현황 패널 행.
+ * 응답에 있는 값만 쓴다. 단위 라벨은 서버 인정 차시(recognizedClassCount) → `N차시`.
+ */
+export function mapGeminiLectureScheduleToInstructorItem(
+  row: GeminiLectureScheduleItem,
+  index: number,
+): InstructorAssignmentItem {
+  const distanceKm = asNumericKm(row.distanceFromHome)
+  const scheduleId = row.scheduleId ?? -(index + 1)
+  return {
+    assignmentId: scheduleId,
+    organizationApplicationId: null,
+    scheduleId,
+    institutionName: row.institutionName ?? null,
+    grade: row.grade ?? null,
+    requestedGrade: null,
+    instructorRole: row.instructorRole ?? null,
+    institutionAddress: row.institutionAddress ?? null,
+    scheduleLocation: row.institutionAddress ?? row.institutionName ?? null,
+    startAt: row.startAt ?? seoulDateTime(row.trainingDate, row.trainingStartTime),
+    endAt: row.endAt ?? seoulDateTime(row.trainingDate, row.trainingEndTime),
+    sessionNo: null,
+    scheduleName: null,
+    scheduleRole: null,
+    educationSlotKey: null,
+    scheduleKind: null,
+    curriculumSessionCount: asPositiveInt(row.recognizedClassCount),
     distanceKm,
     distanceStatus: distanceKm != null ? 'CALCULATED' : null,
   }

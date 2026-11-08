@@ -16,6 +16,7 @@ import type { PaymentOrdersDetailContextQueryResult } from '@/features/settlemen
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { PaymentOrderBatchConfirmModal } from './payment-order-batch-confirm-modal'
+import { PaymentOrderPaymentConfirmationResultModal } from './payment-order-payment-confirmation-result-modal'
 import { InstructorPaymentStatementBlockedModal } from '@/features/user/detail/ui/modal/instructor-payment-statement-blocked-modal'
 import { PaymentStatementIssuanceViewModal } from '@/features/program/shared/ui/payment-statement-issuance-view-modal'
 import { FilterTableToolbarButton } from '@/shared/ui'
@@ -63,6 +64,9 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
     filteredRows,
     batchConfirmOpen,
     setBatchConfirmOpen,
+    batchConfirmDoneOpen,
+    setBatchConfirmDoneOpen,
+    batchConfirmApplicantSummary,
     paymentStatementIssueBlocked,
     setPaymentStatementIssueBlocked,
     handleBatchConfirm,
@@ -89,8 +93,13 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
       <PaymentOrderBatchConfirmModal
         open={batchConfirmOpen}
         onCancel={() => setBatchConfirmOpen(false)}
-        selectedCount={selectedRowKeys.length}
+        leadApplicantName={batchConfirmApplicantSummary.leadApplicantName}
+        otherApplicantCount={batchConfirmApplicantSummary.otherApplicantCount}
         onConfirm={handleBatchConfirm}
+      />
+      <PaymentOrderPaymentConfirmationResultModal
+        open={batchConfirmDoneOpen}
+        onClose={() => setBatchConfirmDoneOpen(false)}
       />
       <InstructorPaymentStatementBlockedModal
         open={paymentStatementIssueBlocked.open}

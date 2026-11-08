@@ -5,6 +5,7 @@
 import { saveAs } from 'file-saver'
 import { recordFileDownload } from '@/entities/download-log/api/download-log-service'
 import { guardAdminDownload } from '@/shared/lib/session-admin-role'
+import type { DownloadAccessLogMeta } from '@/shared/lib/download-access-log-meta'
 
 type RuntimeAuthUser = {
   id?: string
@@ -14,6 +15,8 @@ type RuntimeAuthUser = {
 export type DownloadBlobOptions = {
   /** true면 서버/stub 다운로드 이력 기록 생략 (인증서 download-logs 등 이미 기록한 경우) */
   skipAccessLog?: boolean
+  /** client 이력에 함께 남길 파일 종류·포함 개인정보 */
+  accessLog?: DownloadAccessLogMeta
 }
 
 function readRuntimeAuthUser(): RuntimeAuthUser | null {
@@ -27,13 +30,17 @@ function readRuntimeAuthUser(): RuntimeAuthUser | null {
   }
 }
 
-export async function recordDownloadAccessLog(filename: string): Promise<void> {
+export async function recordDownloadAccessLog(
+  filename: string,
+  accessLog?: DownloadAccessLogMeta
+): Promise<void> {
   const user = readRuntimeAuthUser()
   // ipAddress 생략 — 서버가 요청 IP를 기록 (가짜 IP 전송 시 검증 실패 가능)
   await recordFileDownload({
     fileName: filename,
     userId: user?.id ?? 'unknown-user',
     userName: user?.name ?? '알 수 없음',
+    ...(accessLog ? { accessLog } : {}),
   })
 }
 
@@ -47,7 +54,11 @@ export async function downloadBlob(
 ): Promise<void> {
   if (!guardAdminDownload()) return
   if (!options?.skipAccessLog) {
-    await recordDownloadAccessLog(filename)
+    if (options?.accessLog) {
+      await recordDownloadAccessLog(filename, options.accessLog)
+    } else {
+      await recordDownloadAccessLog(filename)
+    }
   }
   saveAs(blob, filename)
 }
@@ -55,10 +66,18 @@ export async function downloadBlob(
 /**
  * Excel 파일 다운로드
  */
-export async function downloadExcel(buffer: ArrayBuffer, filename: string): Promise<void> {
+export async function downloadExcel(
+  buffer: ArrayBuffer,
+  filename: string,
+  options?: Pick<DownloadBlobOptions, 'accessLog'>
+): Promise<void> {
   const blob = new Blob([buffer], {
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   })
+  if (options?.accessLog) {
+    await downloadBlob(blob, filename, { accessLog: options.accessLog })
+    return
+  }
   await downloadBlob(blob, filename)
 }
 

@@ -14,8 +14,10 @@ import './payment-order-batch-confirm-modal.css'
 export interface PaymentOrderBatchConfirmModalProps {
   open: boolean
   onCancel: () => void
-  /** 선택된 정산 행 수 */
-  selectedCount: number
+  /** 선택한 신청자 중 첫 번째 이름 — 「[이름] 님 외 N명」 */
+  leadApplicantName: string
+  /** 첫 신청자를 제외한 나머지 신청자 수 (0이면 「외 N명」 생략) */
+  otherApplicantCount: number
   /** 계좌 지급 예정일 초기값 */
   initialScheduledDate?: Dayjs
   /** 확인 완료 (추후 API 연동) */
@@ -25,7 +27,8 @@ export interface PaymentOrderBatchConfirmModalProps {
 export function PaymentOrderBatchConfirmModal({
   open,
   onCancel,
-  selectedCount,
+  leadApplicantName,
+  otherApplicantCount,
   initialScheduledDate,
   onConfirm,
 }: PaymentOrderBatchConfirmModalProps) {
@@ -56,30 +59,37 @@ export function PaymentOrderBatchConfirmModal({
     <ContentModal
       open={open}
       onCancel={onCancel}
-      title="지급조서 일괄 확인"
+      title="지급조서 일괄 확인 안내"
       width={600}
       className="payment-order-batch-confirm-modal"
       footer={
         <>
-          <CmsButton variant="secondary" size="medium" onClick={onCancel}>
+          <CmsButton variant="secondary" size="h40" onClick={onCancel}>
             취소
           </CmsButton>
-          <CmsButton variant="primary" size="large" onClick={handleConfirm}>
-            지급조서 확인 완료
+          <CmsButton variant="primary" size="h40" onClick={handleConfirm}>
+            확인 완료
           </CmsButton>
         </>
       }
     >
       <div className="payment-order-batch-confirm-modal__inner">
         <p className="payment-order-batch-confirm-modal__lead">
-          <strong>선택한 {selectedCount}개의 항목</strong>
-          에 대한 지급조서 신청을 일괄 확인 처리하시겠습니까?
+          <strong>
+            [{leadApplicantName}] 님{otherApplicantCount > 0 ? ` 외 ${otherApplicantCount}명` : ''}
+          </strong>
+          의 강사비 지급조서 신청을 일괄 확인 처리하시겠습니까?
           <br />
           정산된 금액은 <strong>매월 셋째 주 화요일에 계좌 지급</strong>
           됩니다.
         </p>
         <div className="payment-order-batch-confirm-modal__field">
-          <span className="payment-order-batch-confirm-modal__label">계좌 지급 예정일</span>
+          <span className="payment-order-batch-confirm-modal__label">
+            계좌 지급 예정일
+            <span className="cms-field__required" aria-hidden>
+              *
+            </span>
+          </span>
           <CmsDatePicker
             className="payment-order-batch-confirm-modal__datepicker"
             value={scheduledDate}

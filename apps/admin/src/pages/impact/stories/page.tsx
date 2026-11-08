@@ -38,6 +38,7 @@ import {
 } from '@/shared/constants/table'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { isTableSelectionClick } from '@/shared/lib/is-table-selection-click'
+import { buildPinnedListRowNoMap, sortPinnedRowsFirst } from '@/shared/lib/pinned-list-row-no'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
 import type { TableSearchParamRule } from '@/shared/lib/use-table-search'
@@ -60,6 +61,7 @@ import {
   showUpdateCompletedAlert,
   NO_SELECTION_ALERT,
   useCmsAlert,
+  FilterTableDescriptionDivider,
   FilterTableLayout,
 } from '@/shared/ui'
 
@@ -245,7 +247,8 @@ export function ImpactStoriesPage() {
   // lists만 — all이면 공개 토글 시 categories GET까지 과호출됨
   useInvalidateOnWindowEvent(IMPACT_STORIES_CHANGED_EVENT, impactStoriesQueryKeys.lists())
 
-  const rows = listQuery.rows
+  // 상단 고정 게시글은 항상 최상단 (불러온 행 기준, 고정·일반 각각 서버 순서 유지)
+  const rows = useMemo(() => sortPinnedRowsFirst(listQuery.rows), [listQuery.rows])
   const categories = useMemo(() => categoriesQuery.data ?? [], [categoriesQuery.data])
   const allStories = allStoriesQuery.rows
   const categoryNameMap = useMemo(() => new Map(categories.map(c => [c.id, c.name])), [categories])
@@ -257,17 +260,10 @@ export function ImpactStoriesPage() {
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [categoryOpen, setCategoryOpen] = useState(false)
 
-  const rowNoMap = useMemo(() => {
-    const map = new Map<string, number>()
-    const nonPinned = rows.filter(r => !r.isPinned)
-    const totalNonPinned = nonPinned.length
-    for (const row of rows) {
-      if (row.isPinned) continue
-      const idx = nonPinned.findIndex(r => r.id === row.id)
-      map.set(row.id, totalNonPinned - idx)
-    }
-    return map
-  }, [rows])
+  const rowNoMap = useMemo(
+    () => buildPinnedListRowNoMap(rows, listQuery.totalCount),
+    [rows, listQuery.totalCount]
+  )
 
   const handleSearch = useCallback(() => {
     applySearch()
@@ -419,7 +415,8 @@ export function ImpactStoriesPage() {
         title: '작성자명',
         dataIndex: 'authorName',
         key: 'authorName',
-        width: 120,
+        width: TABLE_COLUMN_WIDTHS.author,
+        ellipsis: true,
       },
       {
         title: '게시일시',
@@ -579,8 +576,9 @@ export function ImpactStoriesPage() {
         title="임팩트 스토리 목록"
         description={
           <>
-            총 {listQuery.totalCount.toLocaleString('ko-KR')}건 · 상단 고정 게시글은 최대 9개까지
-            설정 가능합니다.
+            총 {listQuery.totalCount.toLocaleString('ko-KR')}건
+            <FilterTableDescriptionDivider />
+            상단 고정 게시글은 최대 9개까지 설정 가능합니다.
           </>
         }
         actions={
@@ -628,7 +626,6 @@ export function ImpactStoriesPage() {
               },
               style: { cursor: 'pointer' },
             })}
-            scroll={{ x: true }}
           />
           <AdminInfiniteTableFooter
             sentinelRef={sentinelRef}

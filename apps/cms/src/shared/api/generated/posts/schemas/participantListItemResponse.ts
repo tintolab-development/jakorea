@@ -7,6 +7,7 @@
  */
 import type { AssignmentInstructor } from './assignmentInstructor';
 import type { FormResponseRef } from './formResponseRef';
+import type { RequestedScheduleResponse } from './requestedScheduleResponse';
 import type { SessionProgress } from './sessionProgress';
 
 export interface ParticipantListItemResponse {
@@ -66,4 +67,6 @@ export interface ParticipantListItemResponse {
   birthDate?: string | null;
   /** 참여자 성별 원시 코드 (스냅샷 우선, 없으면 회원 정보). 회원 없는 행은 null */
   gender?: string | null;
+  /** 기관(ORGANIZATION) 행의 신청 희망 일정. GET /api/admin/organization-applications/{organizationApplicationId}/requested-schedules 응답과 같은 항목·순서·필드입니다. organizationApplicationId가 없거나 희망 일정이 없으면 []. 기관이 아닌 행은 항상 []. null은 반환하지 않는다. */
+  requestedSchedules?: RequestedScheduleResponse[];
 }

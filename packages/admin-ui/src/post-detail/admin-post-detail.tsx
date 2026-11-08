@@ -3,8 +3,9 @@
  * - AdminDetailBackLink: 카드 위 `< 목록으로`
  * - AdminDetailMoreMenu: 조회수 옆 ⋮ → 삭제 / 수정 (하단 버튼과 같은 핸들러를 연결)
  */
-import { LeftOutlined, MoreOutlined } from '@ant-design/icons'
+import { MoreOutlined } from '@ant-design/icons'
 import { Dropdown, type MenuProps } from 'antd'
+import chevronBackwardUrl from '../icons/assets/chevron-backward-default.svg'
 import { joinClassNames } from '../lib/join-class-names.js'
 import './admin-post-detail.css'
 
@@ -26,7 +27,13 @@ export function AdminDetailBackLink({
       onClick={onClick}
     >
       <span className="admin-detail-back-link__icon" aria-hidden>
-        <LeftOutlined />
+        <img
+          className="admin-detail-back-link__icon-img"
+          src={chevronBackwardUrl}
+          width={20}
+          height={20}
+          alt=""
+        />
       </span>
       <span className="admin-detail-back-link__label">{label}</span>
     </button>

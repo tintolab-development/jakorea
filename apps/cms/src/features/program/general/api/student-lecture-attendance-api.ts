@@ -27,9 +27,8 @@ import {
 function mapApiStatusToLecture(status?: string | null): LectureAttendanceStatusKey {
   const normalized = (status ?? '').trim().toUpperCase()
   if (normalized === 'LATE') return 'late'
-  if (normalized === 'ABSENT' || normalized === 'EXCUSED' || normalized === 'EXCUSED_ABSENCE') {
-    return 'absent'
-  }
+  if (normalized === 'ABSENT') return 'absent'
+  if (normalized === 'EXCUSED' || normalized === 'EXCUSED_ABSENCE') return 'excused'
   if (
     normalized === 'PRESENT' ||
     normalized === 'ATTEND' ||
@@ -47,6 +46,7 @@ function mapLectureStatusToApi(
   if (status === 'attended') return 'PRESENT'
   if (status === 'late') return 'LATE'
   if (status === 'absent') return 'ABSENT'
+  if (status === 'excused') return 'EXCUSED'
   return null
 }
 

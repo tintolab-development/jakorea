@@ -137,6 +137,20 @@ export interface GeneralProgramCalendarScheduleRow {
 }
 
 /** 일반 프로그램 상세 공통 정보 확장 (등록 폼 저장값 mock/API 연동 전) */
+/** GET `/programs/{id}/sponsors` 배정 항목의 후원사 표시 정보 */
+export interface ProgramSponsorAssignmentDetail {
+  homepageUrl: string | null
+  logoFileObjectId: number | null
+  logoFileName: string | null
+}
+
+/** GET `/programs/{id}/sponsors` 배정 담당자 표시 정보 — 권한 없으면 phone·email null */
+export interface ProgramSponsorContactDetail {
+  position: string | null
+  phone: string | null
+  email: string | null
+}
+
 export interface GeneralProgramCommonInfoExtension {
   /** 공고용 프로그램명 — 미설정 시 `Program.title` */
   announcementTitle?: string
@@ -161,6 +175,10 @@ export interface GeneralProgramCommonInfoExtension {
   sponsorManagerContactNames?: Record<string, string>
   /** GET `/programs/{id}/sponsors` 배정의 후원사명. sponsorManagementId → 이름. 표시용(저장 SSOT 아님) */
   sponsorManagementNames?: Record<string, string>
+  /** GET `/programs/{id}/sponsors` 배정의 후원사 홈페이지·대표 로고. sponsorManagementId → 값. 표시용(저장 SSOT 아님) */
+  sponsorAssignmentDetails?: Record<string, ProgramSponsorAssignmentDetail>
+  /** GET `/programs/{id}/sponsors` 배정의 담당자 직책·연락처. 담당자 ref → 값. 표시용(저장 SSOT 아님) */
+  sponsorManagerContactDetails?: Record<string, ProgramSponsorContactDetail>
   educationFormLabel?: string
   /** 참여 방식 — 개인 대상 · 일정 공통 (등록 폼·상세 조회 mock) */
   participationMethod?: 'individual' | 'team'

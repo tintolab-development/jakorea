@@ -19,7 +19,7 @@ import {
   PARTICIPATING_EMPLOYEE_VOLUNTEER_REGISTER_SELECT_INSTITUTION_ALERT_MESSAGE,
   PARTICIPATING_VOLUNTEER_ADD_COMPLETE_ALERT_MESSAGE,
 } from '@/shared/constants/messages'
-import { CMS_TABLE_NO_COL_CLASS } from '@/shared/constants/table'
+import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 import { participatingVolunteersFilterFields } from '@/features/program/general/lib/participating-volunteers-filter-fields'
 import {
@@ -147,17 +147,20 @@ export function ParticipatingVolunteersSection({
     }),
     []
   )
+  const isIndividualVolunteerProgram = program != null && isGeneralIndividualProgram(program)
   const { instructorList } = useProgressInstructorList({
     appliedFilters: schoolFilters,
     programId,
     program,
+    // 개인형은 schoolRows를 쓰지 않으므로 강사 목록·배정 보드(5건)를 조회하지 않는다.
+    enabled: !isIndividualVolunteerProgram,
   })
   const { schoolList: schoolRows } = useProgressSchoolList({
     appliedFilters: schoolFilters,
     instructorList,
     programId,
     program,
-    enabled: !(program != null && isGeneralIndividualProgram(program)),
+    enabled: !isIndividualVolunteerProgram,
   })
   const excludedVolunteerMemberIds = useMemo(
     () =>
@@ -560,8 +563,8 @@ export function ParticipatingVolunteersSection({
         title: '이메일',
         dataIndex: 'email',
         key: 'email',
-        width: 220,
-        minWidth: 220,
+        width: TABLE_COLUMN_WIDTHS.email,
+        minWidth: TABLE_COLUMN_WIDTHS.email,
         align: 'center',
         ellipsis: { showTitle: true },
         className: 'participating-volunteers-section__col-email',
@@ -664,6 +667,7 @@ export function ParticipatingVolunteersSection({
           </div>
         }
         excelExport={{
+          accessLog: { downloadKind: 'PROGRAM_VOLUNTEER_LIST_EXPORT', containedPiiTypes: ['NAME'] },
           columns,
           data: filteredVolunteers,
           selectedRowKeys,

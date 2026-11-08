@@ -1,5 +1,7 @@
 /**
- * StatusBadge — text(글자색만) / badge(액센트 + border 10% + bg 6%)
+ * StatusBadge — text(글자색만) / badge(액센트 + border 10% + bg 10%)
+ * Figma: Text = Status / Text (14 Medium) · badge = Status / Button
+ * (h32 · min-w 80 · max-w 200 · 6×10 · radius 6 · 12 SemiBold 110% · bg = status/bg)
  */
 
 .status-badge {
@@ -32,13 +34,17 @@
   justify-content: center;
   align-items: center;
   gap: 4px;
-  min-width: 100px;
+  min-width: 80px;
+  max-width: 200px;
   height: 32px;
-  padding: 6px 12px;
+  padding: 6px 10px;
   border-radius: var(--6, 6px);
   border-width: 1px;
   border-style: solid;
-  font-size: 14px;
+  font-family: Pretendard, var(--font-family-primary, 'Pretendard'), sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 110%;
 }
 
 /* ----- programEnrollment 액센트 (7단계 진행 현황 텍스트·배지 공통, CMS 전역 SSOT) ----- */
@@ -95,54 +101,7 @@
 .status-badge--variant-badge.status-badge--program-enrollment-program-ended,
 .status-badge--variant-badge.status-badge--program-enrollment-interview-failed,
 .status-badge--variant-badge.status-badge--program-enrollment-rejected {
-  background: color-mix(in srgb, var(--status-accent) 6%, transparent);
-  border-color: color-mix(in srgb, var(--status-accent) 10%, transparent);
-}
-
-/* ----- settlement (기존 settlement-status-badge 톤) ----- */
-.status-badge--variant-text.status-badge--settlement-pending,
-.status-badge--variant-badge.status-badge--settlement-pending {
-  --status-accent: #1e8c29;
-  color: var(--status-accent);
-}
-
-.status-badge--variant-text.status-badge--settlement-partial,
-.status-badge--variant-badge.status-badge--settlement-partial {
-  --status-accent: #8457ce;
-  color: var(--status-accent);
-}
-
-.status-badge--variant-text.status-badge--settlement-completed,
-.status-badge--variant-badge.status-badge--settlement-completed {
-  --status-accent: #1976d2;
-  color: var(--status-accent);
-}
-
-.status-badge--variant-text.status-badge--settlement-na,
-.status-badge--variant-badge.status-badge--settlement-na {
-  --status-accent: #464646;
-  color: var(--status-accent);
-}
-
-.status-badge--variant-text.status-badge--settlement-reviewing,
-.status-badge--variant-badge.status-badge--settlement-reviewing {
-  --status-accent: #e67e22;
-  color: var(--status-accent);
-}
-
-.status-badge--variant-text.status-badge--settlement-rejected,
-.status-badge--variant-badge.status-badge--settlement-rejected {
-  --status-accent: #d32f2f;
-  color: var(--status-accent);
-}
-
-.status-badge--variant-badge.status-badge--settlement-pending,
-.status-badge--variant-badge.status-badge--settlement-partial,
-.status-badge--variant-badge.status-badge--settlement-completed,
-.status-badge--variant-badge.status-badge--settlement-na,
-.status-badge--variant-badge.status-badge--settlement-reviewing,
-.status-badge--variant-badge.status-badge--settlement-rejected {
-  background: color-mix(in srgb, var(--status-accent) 6%, transparent);
+  background: color-mix(in srgb, var(--status-accent) 10%, #fff);
   border-color: color-mix(in srgb, var(--status-accent) 10%, transparent);
 }
 
@@ -153,7 +112,7 @@
 
 .status-badge--variant-badge.status-badge--custom {
   color: var(--status-accent);
-  background: color-mix(in srgb, var(--status-accent) 6%, transparent);
+  background: color-mix(in srgb, var(--status-accent) 10%, #fff);
   border-color: color-mix(in srgb, var(--status-accent) 10%, transparent);
 }
 
@@ -163,7 +122,7 @@
 }
 
 .status-badge--variant-badge.status-badge--settlement-presentation {
-  background: color-mix(in srgb, var(--status-accent) 6%, transparent);
+  background: color-mix(in srgb, var(--status-accent) 10%, #fff);
   border-color: color-mix(in srgb, var(--status-accent) 10%, transparent);
 }
 

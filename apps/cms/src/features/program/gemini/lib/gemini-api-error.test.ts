@@ -151,6 +151,40 @@ describe('formatGeminiApiError', () => {
     expect(error?.message).toBe('5행: 선택한 강사 회원과 입력한 강사명·연락처가 일치하지 않습니다.')
   })
 
+  it('classifies an invalid instructor phone as instructor info mismatch', () => {
+    const error = createGeminiImportPreviewFailureError([
+      { status: 'SUCCESS', rowNumber: 1, message: 'OK', duplicate: false },
+      {
+        status: 'FAILED',
+        rowNumber: 2,
+        message:
+          'GEMINI_INSTRUCTOR_PHONE_INVALID: 강사 연락처 형식이 올바르지 않습니다. 010-0000-0000 형식으로 입력해 주세요.',
+        duplicate: false,
+      },
+    ])
+
+    expect(error?.kind).toBe('INSTRUCTOR_INFO_MISMATCH')
+    expect(error?.message).toBe('2행: 강사 연락처 형식이 올바르지 않습니다. (예: 010-0000-0000)')
+  })
+
+  it('treats an in-file duplicate row as a general failure with the origin row', () => {
+    const error = createGeminiImportPreviewFailureError([
+      { status: 'SUCCESS', rowNumber: 1, message: 'OK', duplicate: false },
+      {
+        status: 'FAILED',
+        rowNumber: 2,
+        message:
+          'GEMINI_TRAINING_REPORT_DUPLICATE_IN_FILE: 같은 파일 안에 프로그램·강사·교육일·시작시간·장소가 같은 행이 있습니다. 중복 행을 삭제해 주세요. (1행과 중복)',
+        duplicate: false,
+      },
+    ])
+
+    expect(error?.kind).toBe('GENERAL')
+    expect(error?.message).toBe(
+      '2행: 같은 파일 안에 프로그램·강사·교육일·시작시간·장소가 같은 행이 있습니다. (1행과 중복)'
+    )
+  })
+
   it('does not show axios status 400 as the user message', () => {
     const error = new Error('Request failed with status code 400')
     expect(formatGeminiApiError(error, '실적 등록에 실패했습니다.')).toBe(

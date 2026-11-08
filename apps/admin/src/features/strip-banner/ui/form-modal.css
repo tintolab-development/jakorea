@@ -28,10 +28,9 @@
   width: 100%;
 }
 
+/* 라벨 폭·여백·최소 높이는 공통 small 셀(detail-info-form-modal.css · 1000 미만 팝업)을 따른다 */
 .strip-banner-form-modal__form .detail-info-form__field-label {
   display: flex !important;
-  min-height: 52px;
-  padding: 8px 16px !important;
   justify-content: center;
   align-items: center;
   gap: 2px;

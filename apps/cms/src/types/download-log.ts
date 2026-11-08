@@ -5,6 +5,7 @@
  */
 
 import type { UUID, DateValue } from './index'
+import type { DownloadAccessLogMeta } from '@/shared/lib/download-access-log-meta'
 
 export interface DownloadLog {
   id: UUID
@@ -31,4 +32,6 @@ export interface RecordDownloadPayload {
   userId?: UUID
   userName?: string
   ipAddress?: string
+  /** 파일 종류·포함 개인정보 (client 로그 body 확장) */
+  accessLog?: DownloadAccessLogMeta
 }

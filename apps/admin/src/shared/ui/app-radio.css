@@ -91,7 +91,7 @@
   opacity: 1 !important;
 }
 
-/* ----- medium: 원 18px, 본문 14px, 원–텍스트 6px ----- */
+/* ----- medium: 원 18px, 본문 14px, 원–텍스트 8px (Figma Radio size=18 · CMS e7b8a0ed7) ----- */
 .app-radio-group--medium.ant-radio-group {
   font-size: 14px;
 }
@@ -100,7 +100,7 @@
 .app-radio--medium.ant-radio-wrapper {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   margin-inline-end: 0;
   font-size: 14px;
   font-weight: 500;
@@ -140,8 +140,9 @@
 
 .app-radio-group--medium .ant-radio-wrapper .ant-radio-inner::after,
 .app-radio--medium.ant-radio-wrapper .ant-radio-inner::after {
-  width: 9px !important;
-  height: 9px !important;
+  /* Figma: 18 − 테두리 2 − 패딩 4×2 = 8 */
+  width: 8px !important;
+  height: 8px !important;
   margin-block-start: 0 !important;
   margin-inline-start: 0 !important;
   inset-block-start: 50% !important;
@@ -177,11 +178,12 @@
   display: none !important;
 }
 
-.app-radio-group--large .ant-radio-checked .ant-radio-inner,
-.app-radio-group--medium .ant-radio-checked .ant-radio-inner,
-.app-radio--large .ant-radio-checked .ant-radio-inner,
-.app-radio--medium .ant-radio-checked .ant-radio-inner {
-  border-color: #4da1af;
+/* 사이즈별 원 기본 규칙(.ant-radio-wrapper .ant-radio .ant-radio-inner)보다 특이도를 높여 선택 테두리가 회색에 덮이지 않게 */
+.app-radio-group--large .ant-radio-wrapper .ant-radio-checked .ant-radio-inner,
+.app-radio-group--medium .ant-radio-wrapper .ant-radio-checked .ant-radio-inner,
+.app-radio--large.ant-radio-wrapper .ant-radio-checked .ant-radio-inner,
+.app-radio--medium.ant-radio-wrapper .ant-radio-checked .ant-radio-inner {
+  border-color: var(--Brand-500, #00a0af);
   background-color: #fff;
 }
 
@@ -189,7 +191,7 @@
 .app-radio-group--medium .ant-radio-checked .ant-radio-inner::after,
 .app-radio--large .ant-radio-checked .ant-radio-inner::after,
 .app-radio--medium .ant-radio-checked .ant-radio-inner::after {
-  background-color: #4da1af;
+  background-color: var(--Brand-500, #00a0af);
 }
 
 .app-radio-group--large
@@ -207,21 +209,25 @@
 .app-radio-group--medium .ant-radio-wrapper-checked,
 .app-radio--large.ant-radio-wrapper-checked,
 .app-radio--medium.ant-radio-wrapper-checked {
-  color: var(--JA-mint-01, #01a1af) !important;
+  overflow: hidden;
+  color: var(--Brand-500, #00a0af) !important;
+  text-overflow: ellipsis;
 }
 
 .app-radio-group--large .ant-radio-wrapper-checked:hover,
 .app-radio-group--medium .ant-radio-wrapper-checked:hover,
 .app-radio--large.ant-radio-wrapper-checked:hover,
 .app-radio--medium.ant-radio-wrapper-checked:hover {
-  color: var(--JA-mint-01, #01a1af) !important;
+  overflow: hidden;
+  color: var(--Brand-500, #00a0af) !important;
+  text-overflow: ellipsis;
 }
 
 .app-radio-group--large .ant-radio-wrapper-checked:hover .ant-radio-checked .ant-radio-inner,
 .app-radio-group--medium .ant-radio-wrapper-checked:hover .ant-radio-checked .ant-radio-inner,
 .app-radio--large.ant-radio-wrapper-checked:hover .ant-radio-checked .ant-radio-inner,
 .app-radio--medium.ant-radio-wrapper-checked:hover .ant-radio-checked .ant-radio-inner {
-  border-color: #4da1af;
+  border-color: var(--Brand-500, #00a0af);
 }
 
 /* ----- disabled ----- */

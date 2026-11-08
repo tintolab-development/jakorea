@@ -11,11 +11,9 @@ import {
   type ApplicationScheduleVisibilityInput,
 } from './schedule-paragraph-visibility.js'
 
+/** 단일 회차 + 날짜 지정(커리큘럼·일정형) — 복수 선택, 승인 시 선택한 일정 중 1타임 배정 */
 const FIXED_SCHEDULE_DESCRIPTION_SINGLE_ROUND =
-  '진행할 일정을 1개 선택해 주세요. 모두 동일한 커리큘럼이며, 선택한 일정에 배정됩니다.'
-
-const FIXED_SCHEDULE_DESCRIPTION_CURRICULUM_SINGLE_ROUND_PREFIX =
-  '진행할 일정을 1개 선택해 주세요.'
+  '진행 가능한 일정을 모두 선택해 주세요. 모두 동일한 커리큘럼이며, 선택한 일정 중 1타임에 배정됩니다.'
 
 const FIXED_SCHEDULE_DESCRIPTION_MULTI_ROUND_SELECT_ALL =
   '진행 가능한 일정을 모두 선택해 주세요.'
@@ -88,29 +86,7 @@ export function resolveApplicationFixedScheduleParagraphDescription(
   if (input.sessionRound === 'multi') {
     return resolveMultiRoundFixedScheduleDescription(input)
   }
-  if (input.educationStructure === 'curriculum') {
-    // ① 커리큘럼·단일·날짜 — 예정일 줄 = 차시. 「수업은 1일, N차시 운영됩니다」
-    const sessions = countOrN(readCurriculumPreferredScheduleDailySessionCountForCopy(input))
-    return `${FIXED_SCHEDULE_DESCRIPTION_CURRICULUM_SINGLE_ROUND_PREFIX} 수업은 1일, ${sessions}차시 운영됩니다.`
-  }
   return FIXED_SCHEDULE_DESCRIPTION_SINGLE_ROUND
-}
-
-/**
- * 날짜 지정 고정 일정 체크박스 상한.
- * 단일 회차 + 날짜 지정(커리큘럼·일정형)은 승인 배정 「희망 일정 중 1개」이므로 신청도 1개만 선택.
- * 복수 회차 날짜 지정은 모집 `maxScheduleCount`가 있을 때만 제한한다.
- */
-export function resolveApplicationFixedScheduleMaxSelectionCount(
-  input: ApplicationScheduleParagraphCopyInput
-): number | null {
-  if (input.educationScheduleMode === 'date' && input.sessionRound === 'single') {
-    return 1
-  }
-  if (input.maxScheduleCount != null && input.maxScheduleCount >= 1) {
-    return Math.floor(input.maxScheduleCount)
-  }
-  return null
 }
 
 /** 기간 지정 지망 카드 설명 — 일정형 단일은 날짜만, 커리큘럼은 차시·시간 포함 */
@@ -153,6 +129,53 @@ export function resolveApplicationScheduleParagraphDescription(
     return resolveApplicationFixedScheduleParagraphDescription(input)
   }
   return ''
+}
+
+/** 템플릿 시드 작성 안내 — 프로그램 매핑 후 사용자 화면에는 기본 안내로 대체한다. */
+const SCHEDULE_PARAGRAPH_PLACEHOLDER_DESCRIPTIONS = new Set([
+  '설명 입력',
+  '설명을 입력해 주세요',
+  '프로그램 등록 시 노출되는 항목에 따라 설명글을 작성해 주세요.',
+])
+
+const COUNT = String.raw`(?:\d+|N)`
+
+/** 자동 생성 기본 안내(현행·과거 문구). 저장돼 있어도 프로그램 설정 기준으로 다시 계산한다. */
+const SCHEDULE_PARAGRAPH_GENERATED_DESCRIPTION_PATTERNS: readonly RegExp[] = [
+  new RegExp(
+    `^진행할 일정을 1개 선택해 주세요\\.(?: 수업은 1일, ${COUNT}차시 운영됩니다\\.| 모두 동일한 커리큘럼이며, 선택한 일정에 배정됩니다\\.)?$`
+  ),
+  new RegExp(
+    `^진행 가능한 일정을 모두 선택해 주세요\\.(?: 수업은 1일, ${COUNT}차시 운영됩니다\\.| 모두 동일한 커리큘럼이며, 선택한 일정 중 1타임에 배정됩니다\\.)?$`
+  ),
+  new RegExp(
+    `^${COUNT}차시\\*${COUNT}회로 구성된 프로그램입니다\\. 진행 가능한 일정을 모두 선택해 주세요\\.$`
+  ),
+  new RegExp(
+    `^교육을 희망하는 (?:날짜를|날짜와 수업 시간을) 모두 작성해 주세요\\.(?: 수업은 1일, ${COUNT}차시 운영됩니다\\.)? \\(최대 ${COUNT}개까지 희망 일정 신청이 가능합니다\\.\\)$`
+  ),
+]
+
+/**
+ * 진행 희망 교육 일정 단락 설명이 기본값(빈 값·시드 안내·자동 생성 안내)인지.
+ * 기본값이 아니면 프로그램 등록 시 관리자가 수정한 문구로 보고 유지한다.
+ */
+export function isApplicationScheduleDefaultParagraphDescription(
+  value: string | null | undefined
+): boolean {
+  const trimmed = value?.trim() ?? ''
+  if (!trimmed) return true
+  if (SCHEDULE_PARAGRAPH_PLACEHOLDER_DESCRIPTIONS.has(trimmed)) return true
+  return SCHEDULE_PARAGRAPH_GENERATED_DESCRIPTION_PATTERNS.some(pattern => pattern.test(trimmed))
+}
+
+/** 관리자 수정 문구는 유지하고, 기본값이면 프로그램 설정 기준 기본 안내로 채운다. */
+export function resolveApplicationScheduleParagraphDescriptionKeepingCustom(
+  current: string | null | undefined,
+  defaultDescription: string
+): string {
+  if (!isApplicationScheduleDefaultParagraphDescription(current)) return current!.trim()
+  return defaultDescription
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

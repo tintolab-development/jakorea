@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
 import { mapGeneralProgramToUpdateRequest } from '@/features/program/general/api/adapters/general-program-adapters'
+import { parseGeneralProgramServiceDetailJson } from '@/features/program/general/lib/general-program-service-detail-json'
 import {
   programToGeneralCommonInfoEditValues,
   type GeneralProgramCommonInfoEditFormValues,
@@ -16,6 +17,9 @@ import { GENERAL_SCHEDULE_DETAILS_STATUS } from './general-detail-rhf-save-path'
 
 const DETAIL_01_DATE = '2026.11.05(목) 10:00 ~ 12:00'
 const DETAIL_02_DATE = '2026.11.12(목) 10:00 ~ 12:00'
+/** 3e3e1c1c1: serviceDetailJson scheduleDetails 라벨은 서버 형식으로 직렬화한다(같은 일자·시각). */
+const DETAIL_01_WIRE = '26년 11월 5일(목) 10:00 ~ 12:00'
+const DETAIL_02_WIRE = '26년 11월 12일(목) 10:00 ~ 12:00'
 const PRE_DATE = '2026.11.01(일) 09:00 ~ 10:00'
 const TIME_SUMMARY = '13:30 ~ 15:30'
 const DETAIL_01_NAME = '필요와 욕구, 현명한 소비'
@@ -183,10 +187,10 @@ describe('GENERAL_SCHEDULE_DETAILS', () => {
     )
     const details = jsonScheduleDetails(parsed)
     const updated = details?.find(row => row.name === '수정된 교육명')
-    expect(updated?.scheduleDateLabel).toBe(DETAIL_01_DATE)
+    expect(updated?.scheduleDateLabel).toBe(DETAIL_01_WIRE)
     expect(updated?.progressTimeSummary).toBe(TIME_SUMMARY)
     const other = details?.find(row => row.name === DETAIL_02_NAME)
-    expect(other?.scheduleDateLabel).toBe(DETAIL_02_DATE)
+    expect(other?.scheduleDateLabel).toBe(DETAIL_02_WIRE)
     expect(other?.progressTimeSummary).toBe(TIME_SUMMARY)
     expect(body).not.toHaveProperty('sponsors')
     expect(body).not.toHaveProperty('wagePolicies')
@@ -206,7 +210,7 @@ describe('GENERAL_SCHEDULE_DETAILS', () => {
       new Set(['scheduleDetails'])
     )
     const updated = jsonScheduleDetails(parsed)?.find(row => row.name === DETAIL_01_NAME)
-    expect(updated?.scheduleDateLabel).toBe(DETAIL_01_DATE)
+    expect(updated?.scheduleDateLabel).toBe(DETAIL_01_WIRE)
     expect(updated?.progressTimeSummary).toBe('14:00 ~ 16:00')
   })
 
@@ -229,7 +233,7 @@ describe('GENERAL_SCHEDULE_DETAILS', () => {
     expect(details?.[0]?.scheduleLabel).toBe(PRE_EDUCATION_SCHEDULE_LABEL)
     expect(details?.[0]?.blockKind).toBe('preEducation')
     const kept = details?.find(row => row.name === DETAIL_01_NAME)
-    expect(kept?.scheduleDateLabel).toBe(DETAIL_01_DATE)
+    expect(kept?.scheduleDateLabel).toBe(DETAIL_01_WIRE)
     expect(kept?.progressTimeSummary).toBe(TIME_SUMMARY)
   })
 
@@ -250,8 +254,8 @@ describe('GENERAL_SCHEDULE_DETAILS', () => {
     )
     const details = jsonScheduleDetails(parsed)
     expect(details?.some(row => row.scheduleLabel === PRE_EDUCATION_SCHEDULE_LABEL)).toBe(false)
-    expect(details?.find(row => row.name === DETAIL_01_NAME)?.scheduleDateLabel).toBe(DETAIL_01_DATE)
-    expect(details?.find(row => row.name === DETAIL_02_NAME)?.scheduleDateLabel).toBe(DETAIL_02_DATE)
+    expect(details?.find(row => row.name === DETAIL_01_NAME)?.scheduleDateLabel).toBe(DETAIL_01_WIRE)
+    expect(details?.find(row => row.name === DETAIL_02_NAME)?.scheduleDateLabel).toBe(DETAIL_02_WIRE)
   })
 
   it('SCH-FE-06 세부 일정을 추가해도 기존 항목 필드를 유지한다', () => {
@@ -266,7 +270,7 @@ describe('GENERAL_SCHEDULE_DETAILS', () => {
       new Set(['scheduleDetails'])
     )
     const details = jsonScheduleDetails(parsed)
-    expect(details?.find(row => row.name === DETAIL_01_NAME)?.scheduleDateLabel).toBe(DETAIL_01_DATE)
+    expect(details?.find(row => row.name === DETAIL_01_NAME)?.scheduleDateLabel).toBe(DETAIL_01_WIRE)
     expect(details?.some(row => row.name === '새 세부 일정')).toBe(true)
   })
 
@@ -281,7 +285,7 @@ describe('GENERAL_SCHEDULE_DETAILS', () => {
     )
     const details = jsonScheduleDetails(parsed)
     expect(details?.some(row => row.name === DETAIL_02_NAME)).toBe(false)
-    expect(details?.find(row => row.name === DETAIL_01_NAME)?.scheduleDateLabel).toBe(DETAIL_01_DATE)
+    expect(details?.find(row => row.name === DETAIL_01_NAME)?.scheduleDateLabel).toBe(DETAIL_01_WIRE)
   })
 
   it('SCH-FE-08 일정 순서를 바꿔도 다른 행 데이터가 섞이지 않는다', () => {
@@ -295,8 +299,8 @@ describe('GENERAL_SCHEDULE_DETAILS', () => {
       new Set(['scheduleDetails'])
     )
     const details = jsonScheduleDetails(parsed)
-    expect(details?.find(row => row.name === DETAIL_01_NAME)?.scheduleDateLabel).toBe(DETAIL_01_DATE)
-    expect(details?.find(row => row.name === DETAIL_02_NAME)?.scheduleDateLabel).toBe(DETAIL_02_DATE)
+    expect(details?.find(row => row.name === DETAIL_01_NAME)?.scheduleDateLabel).toBe(DETAIL_01_WIRE)
+    expect(details?.find(row => row.name === DETAIL_02_NAME)?.scheduleDateLabel).toBe(DETAIL_02_WIRE)
   })
 
   it('SCH-FE-09 DATE → PERIOD 전환 시 세부 일정 DATE 전용 라벨은 정리한다', () => {
@@ -353,17 +357,19 @@ describe('GENERAL_SCHEDULE_DETAILS', () => {
     const nextDetails = values.scheduleDetails.map(row =>
       row.name === DETAIL_01_NAME ? { ...row, name: '수정된 교육명' } : row
     )
-    const { parsed } = saveBody(
+    const { body } = saveBody(
       existing,
       { ...values, scheduleDetails: nextDetails },
       new Set(['scheduleDetails'])
     )
+    // GET 재진입: 서버 형식 라벨을 상세 조회 파서로 CMS 형식으로 다시 읽는다.
+    const reread = parseGeneralProgramServiceDetailJson(body.serviceDetailJson)
     const merged: Program = {
       ...existing,
       generalCommonInfo: {
         ...existing.generalCommonInfo,
-        ...(parsed.generalCommonInfo as Program['generalCommonInfo']),
-      },
+        ...reread.generalCommonInfo,
+      } as Program['generalCommonInfo'],
     }
     const reseed = programToGeneralCommonInfoEditValues(merged)
     const row = reseed.scheduleDetails.find(item => item.name === '수정된 교육명')

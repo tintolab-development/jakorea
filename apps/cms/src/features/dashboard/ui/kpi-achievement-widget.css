@@ -29,6 +29,20 @@
   opacity: 0.5;
 }
 
+.kpi-achievement-widget__description.ant-typography {
+  overflow: hidden;
+  padding-left: var(--spacing-8);
+  border-left: 1px solid rgba(61, 61, 61, 0.2);
+  color: var(--main-BK, #3d3d3d) !important;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  opacity: 0.5;
+}
+
 .kpi-achievement-widget .ant-card-head {
   flex-shrink: 0;
 }
@@ -121,7 +135,7 @@
   text-align: left;
   overflow: hidden;
   font-family: Pretendard, sans-serif;
-  font-size: 16px;
+  font-size: 18px;
   font-style: normal;
   font-weight: 700;
   line-height: 150%;
@@ -167,17 +181,17 @@
 
 /* 최종 달성 인원 텍스트 스펙 — 남는 폭은 메인이 쓰고 단위는 margin-left 8px로 분리 */
 .kpi-achievement-widget__kpi-label-main {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-width: 0;
   overflow: hidden;
   color: var(--default-BK, #3d3d3d);
   text-overflow: ellipsis;
   font-family: Pretendard, sans-serif;
-  font-size: 14px;
+  font-size: 16px;
   font-style: normal;
   font-weight: 600;
   line-height: 130%;
-  letter-spacing: -0.14px;
+  letter-spacing: -0.16px;
   white-space: nowrap;
 }
 
@@ -193,11 +207,11 @@
   text-overflow: ellipsis;
   color: rgba(61, 61, 61, 0.6);
   font-family: Pretendard, sans-serif;
-  font-size: 12px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 500;
   line-height: 140%;
-  letter-spacing: -0.12px;
+  letter-spacing: -0.14px;
 }
 
 /* 바 차트: 배경(회색) = 100%, 채움 = 달성률(%)만큼 색상 */
@@ -218,7 +232,7 @@
   height: 100%;
   width: var(--kpi-bar-percent, 0);
   max-width: 100%;
-  border-radius: 30px;
+  border-radius: 0;
   transition: width 0.2s ease;
   background: var(--JA-mint-01, #01a1af);
 }

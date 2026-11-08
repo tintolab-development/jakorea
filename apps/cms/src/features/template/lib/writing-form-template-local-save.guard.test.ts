@@ -40,12 +40,29 @@ describe('persistWritingFormTemplateDraft(templateVersionId) 공용 버전 가�
     expect(saveFormTemplateVersionDraftByVersionId).not.toHaveBeenCalled()
   })
 
-  it('소유 정보가 없는 DRAFT(현재 BE 응답)도 저장하지 않는다 — fail-closed', async () => {
-    fetchFormTemplateVersionRemote.mockResolvedValue({ templateId: 501, versionStatus: 'DRAFT', activeBindingCount: 1 })
+  it('COPY 스코프 DRAFT에는 제자리 저장하지 않는다', async () => {
+    fetchFormTemplateVersionRemote.mockResolvedValue({
+      templateId: 501,
+      versionStatus: 'DRAFT',
+      templateScope: 'COPY',
+    })
     await expect(
       persistWritingFormTemplateDraft({ templateId: 'application-participant-school', draft, templateVersionId: 9002 })
-    ).rejects.toThrow()
+    ).rejects.toThrow(/공용 또는 발행된 양식 버전/)
     expect(saveFormTemplateVersionDraftByVersionId).not.toHaveBeenCalled()
+  })
+
+  // 489f03235: 소유 정보(templateScope·ownerProgramId)가 없는 구버전 응답은 catalog templateId 비교로만 판단한다.
+  it('소유 정보가 없는 구버전 DRAFT는 카탈로그와 템플릿이 다르면 전용 복사본으로 보고 저장한다', async () => {
+    fetchFormTemplateVersionRemote.mockResolvedValue({ templateId: 501, versionStatus: 'DRAFT', activeBindingCount: 1 })
+    await persistWritingFormTemplateDraft({
+      templateId: 'application-participant-school',
+      draft,
+      templateVersionId: 9002,
+    })
+    expect(saveFormTemplateVersionDraftByVersionId).toHaveBeenCalledWith(
+      expect.objectContaining({ versionId: 9002 })
+    )
   })
 
 })

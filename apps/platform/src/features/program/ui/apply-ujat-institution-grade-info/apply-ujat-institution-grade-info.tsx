@@ -61,23 +61,27 @@ export function emptyUjatInstitutionGradeBlocks(): ApplyUjatGradeBlock[] {
 }
 
 export function appendUjatInstitutionGradeBlock(
-  blocks: ApplyUjatGradeBlock[],
+  blocks: ApplyUjatGradeBlock[]
 ): ApplyUjatGradeBlock[] {
   return [...blocks, createGradeBlock(blocks.length)]
 }
 
 export function findIncompleteUjatInstitutionGradeInfoMessage(
-  blocks: ApplyUjatGradeBlock[],
+  blocks: ApplyUjatGradeBlock[]
 ): string | null {
   if (blocks.length === 0) return '학년 별 신청 정보를 입력해 주세요.'
   for (const [index, block] of blocks.entries()) {
-    if (!block.grade) return `신청 학년 ${String(index + 1).padStart(2, '0')}의 학년을 선택해 주세요.`
+    if (!block.grade)
+      return `신청 학년 ${String(index + 1).padStart(2, '0')}의 학년을 선택해 주세요.`
     const classCount = parseClassCount(block.classCountInput)
     if (classCount < 1) {
       return `신청 학년 ${String(index + 1).padStart(2, '0')}의 총 학급 수를 입력해 주세요.`
     }
     for (let classIndex = 0; classIndex < classCount; classIndex += 1) {
-      if (!block.classNoByIndex[classIndex]?.trim() || !block.studentCountByIndex[classIndex]?.trim()) {
+      if (
+        !block.classNoByIndex[classIndex]?.trim() ||
+        !block.studentCountByIndex[classIndex]?.trim()
+      ) {
         return `신청 학년 ${String(index + 1).padStart(2, '0')}의 학급 별 학생 수를 입력해 주세요.`
       }
     }
@@ -86,7 +90,7 @@ export function findIncompleteUjatInstitutionGradeInfoMessage(
 }
 
 export function ujatInstitutionGradeAnswerFromValues(
-  blocks: ApplyUjatGradeBlock[],
+  blocks: ApplyUjatGradeBlock[]
 ): Record<string, unknown> {
   const applicationGradeByBlockId: Record<string, string> = {}
   const gradeDetailByBlock: Record<string, ApplyUjatGradeBlock> = {}
@@ -123,7 +127,7 @@ function asRecord(value: unknown): Record<string, unknown> | null {
 }
 
 export function ujatInstitutionGradeValuesFromDraftAnswer(
-  answer: unknown,
+  answer: unknown
 ): ApplyUjatGradeBlock[] | null {
   const record = asRecord(answer)
   if (!record) return null
@@ -137,15 +141,17 @@ export function ujatInstitutionGradeValuesFromDraftAnswer(
     const detailByBlock = asRecord(
       nested?.gradeDetailByBlock ??
         record['ujatApplication.gradeDetailByBlock'] ??
-        record.gradeDetailByBlock,
+        record.gradeDetailByBlock
     )
     const gradeByBlock = asRecord(
       nested?.applicationGradeByBlockId ??
         record['ujatApplication.applicationGradeByBlockId'] ??
-        record.applicationGradeByBlockId,
+        record.applicationGradeByBlockId
     )
     if (!detailByBlock && !gradeByBlock) return null
-    const ids = [...new Set([...Object.keys(gradeByBlock ?? {}), ...Object.keys(detailByBlock ?? {})])]
+    const ids = [
+      ...new Set([...Object.keys(gradeByBlock ?? {}), ...Object.keys(detailByBlock ?? {})]),
+    ]
     if (ids.length === 0) return null
     return ids.map(id => {
       const detail = asRecord(detailByBlock?.[id])
@@ -154,7 +160,10 @@ export function ujatInstitutionGradeValuesFromDraftAnswer(
         grade: String(gradeByBlock?.[id] ?? ''),
         classCountInput: String(detail?.classCountInput ?? ''),
         classNoByIndex: (asRecord(detail?.classNoByIndex) ?? {}) as Record<number, string>,
-        studentCountByIndex: (asRecord(detail?.studentCountByIndex) ?? {}) as Record<number, string>,
+        studentCountByIndex: (asRecord(detail?.studentCountByIndex) ?? {}) as Record<
+          number,
+          string
+        >,
       }
     })
   }

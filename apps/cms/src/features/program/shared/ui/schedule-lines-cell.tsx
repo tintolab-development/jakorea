@@ -23,7 +23,8 @@ export function sliceScheduleLines<T>(items: readonly T[]): { visible: T[]; rest
 
 function renderScheduleLineSegments(line: string): ReactNode {
   const parts = splitPipeSeparatedText(line)
-  if (parts.length <= 1) return parts[0] ?? line
+  // 단일 세그먼트도 span으로 — 좁을 때 `…` 말줄임(마지막 span 규칙)이 적용되도록
+  if (parts.length <= 1) return <span>{parts[0] ?? line}</span>
   return parts.reduce<ReactNode[]>((acc, part, index) => {
     if (index > 0) acc.push(<ProgramDetailTdDivider key={`div-${index}`} />)
     acc.push(<span key={`seg-${index}`}>{part}</span>)

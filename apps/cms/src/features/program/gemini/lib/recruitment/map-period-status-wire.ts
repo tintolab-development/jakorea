@@ -3,7 +3,7 @@
  *
  * Primary Case(185xxx) SoT: SCHEDULED · RECRUITING · COMPLETED.
  * CMS UI는 신청기간 파생 라벨(SCHEDULED / IN_PROGRESS / ENDED)을 쓴다.
- * `DRAFT`는 draftStatus 축이라 periodStatus 쿼리에 넣지 않는다(클라이언트 isDraft 필터).
+ * `DRAFT`는 draftStatus 축이라 periodStatus 쿼리에 넣지 않는다(`list-remote-filters`의 draftStatus).
  *
  * @see JABACK docs/frontend/gemini-primary-case-seed-handoff-2026-09.md
  */

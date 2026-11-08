@@ -51,10 +51,18 @@ export function filterBasicConsentItemsByAudience(
  * `listed`는 BE가 카드 노출 고정(작성 완료 시 DB 트리거·POST /consents/listed)으로 기록한 값이며
  * 동의 효력과는 무관하다. 원격 세션이 아니면(mock) 기존처럼 카탈로그를 그대로 둔다.
  */
+/**
+ * 동의 관리 「동의서·서약서」 카드 노출.
+ * - 원격: 서버 `listed === true`인 카드만 (기본 미노출)
+ * - 지급조서 사전 동의서: 강사 회원(`instructor_only`·`instructor_dual`)만
+ * 정산·신청 게이트 판정용 `documentItems`에는 적용하지 않는다 (화면 노출 전용).
+ */
 export function filterListedDocumentConsentItems(
   items: SettingsConsentItem[],
-  isRemoteSession: boolean,
+  options: { isRemoteSession: boolean; isInstructor: boolean },
 ): SettingsConsentItem[] {
-  if (!isRemoteSession) return items
-  return items.filter(item => item.listed === true)
+  return items.filter(item => {
+    if (item.id === 'paymentStatement' && !options.isInstructor) return false
+    return !options.isRemoteSession || item.listed === true
+  })
 }

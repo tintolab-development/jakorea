@@ -352,6 +352,18 @@ export const APPLICATION_OVERLAY_KEY_INVENTORY: readonly ApplicationOverlayKeyEn
   },
   {
     catalog: 'application-volunteer',
+    key: 'application.volunteer.previousProgram.fileObjectIds',
+    kind: 'array',
+    input: 'volunteer-previous-ja-program-paragraph',
+    defaultValue: '[]',
+    required: false,
+    preview: true,
+    bridge: false,
+    notes: 'fileNames와 같은 순서의 업로드 fileObjectId (4a3518d2d)',
+    ...FORM_VERSION_AND_DRAFT,
+  },
+  {
+    catalog: 'application-volunteer',
     key: 'application.volunteer.applicant.currentMonth',
     kind: 'static',
     input: 'volunteer-interview-applicant-schedule-paragraph',

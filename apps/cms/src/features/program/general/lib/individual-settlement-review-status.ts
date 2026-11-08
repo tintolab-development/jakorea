@@ -11,7 +11,7 @@ import {
 
 /**
  * 개인 정산(영수증) 검토 상태 → 정산 현황 8종 표시 연결. 서버 값·검토 가능 조건은 바꾸지 않고 표시만 공통화한다.
- * 미신청·철회·작성중은 「해당 없음」. PAID는 영수증 계약에 없는 값이라 계좌 지급으로 올리지 않는다.
+ * 미신청·철회·작성중은 「해당 없음」. PAID(지급 완료)는 「계좌 지급 완료」.
  */
 const INDIVIDUAL_SETTLEMENT_REVIEW_UI_STATUS: Record<string, InstructorSettlementUiStatus> = {
   NONE: 'none',
@@ -20,6 +20,7 @@ const INDIVIDUAL_SETTLEMENT_REVIEW_UI_STATUS: Record<string, InstructorSettlemen
   SUBMITTED: 'awaiting_confirmation',
   APPROVED: 'payment_statement_verified',
   REJECTED: 'application_rejected',
+  PAID: 'account_paid',
 }
 
 export function resolveIndividualSettlementReviewUiStatus(
@@ -49,17 +50,13 @@ export function individualSettlementTableProcessingLabel(
   return individualSettlementReviewStatusLabel(status)
 }
 
-export function individualSettlementReviewStatusLabel(
-  status: string | null | undefined
-): string {
+export function individualSettlementReviewStatusLabel(status: string | null | undefined): string {
   const uiStatus = resolveIndividualSettlementReviewUiStatus(status)
   if (uiStatus) return getInstructorSettlementStatusLabel(uiStatus)
   return status?.trim() ?? ''
 }
 
-export function individualSettlementReviewStatusAccent(
-  status: string | null | undefined
-): string {
+export function individualSettlementReviewStatusAccent(status: string | null | undefined): string {
   const uiStatus = resolveIndividualSettlementReviewUiStatus(status)
   return uiStatus
     ? getInstructorSettlementStatusPresentation(uiStatus, 'text').color

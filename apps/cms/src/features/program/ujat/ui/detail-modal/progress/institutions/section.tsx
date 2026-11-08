@@ -92,6 +92,7 @@ export function UjatEducationProgressInstitutionsSection({
         excelExport={
           canWrite
             ? {
+                accessLog: { downloadKind: 'PROGRAM_PARTICIPATING_INSTITUTION_LIST_EXPORT', containedPiiTypes: ['NAME'] },
                 columns,
                 data: tableData,
               }

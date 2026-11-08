@@ -12,7 +12,10 @@ exports[`모집 탭 봉사 저장 parity (part9 전) > (a) 행 null · nested �
     "vriVolunteerInterviewEnabledLabel": "면접 있음",
   },
   "row": {
-    "clearFields": undefined,
+    "clearFields": [
+      "documentPassAnnouncementAt",
+      "finalPassAnnouncementAt",
+    ],
     "hasInterviewConfig": true,
     "interviewEnabled": true,
     "interviewEndAt": "(omitted)",
@@ -40,7 +43,10 @@ exports[`모집 탭 봉사 저장 parity (part9 전) > (a) 행 null · nested �
     "vriVolunteerInterviewEnabledLabel": "면접 있음",
   },
   "row": {
-    "clearFields": undefined,
+    "clearFields": [
+      "documentPassAnnouncementAt",
+      "finalPassAnnouncementAt",
+    ],
     "hasInterviewConfig": true,
     "interviewEnabled": true,
     "interviewEndAt": "(omitted)",
@@ -68,7 +74,10 @@ exports[`모집 탭 봉사 저장 parity (part9 전) > (a) 행 null · scheduleI
     "vriVolunteerInterviewEnabledLabel": "면접 있음",
   },
   "row": {
-    "clearFields": undefined,
+    "clearFields": [
+      "documentPassAnnouncementAt",
+      "finalPassAnnouncementAt",
+    ],
     "hasInterviewConfig": true,
     "interviewEnabled": true,
     "interviewEndAt": "2026-12-18T14:59:59.999Z",
@@ -96,7 +105,10 @@ exports[`모집 탭 봉사 저장 parity (part9 전) > (a) 행 null · volunteer
     "vriVolunteerInterviewEnabledLabel": "면접 있음",
   },
   "row": {
-    "clearFields": undefined,
+    "clearFields": [
+      "documentPassAnnouncementAt",
+      "finalPassAnnouncementAt",
+    ],
     "hasInterviewConfig": true,
     "interviewEnabled": true,
     "interviewEndAt": "(omitted)",
@@ -124,7 +136,10 @@ exports[`모집 탭 봉사 저장 parity (part9 전) > (a) 행 null · 둘 다 �
     "vriVolunteerInterviewEnabledLabel": "면접 있음",
   },
   "row": {
-    "clearFields": undefined,
+    "clearFields": [
+      "documentPassAnnouncementAt",
+      "finalPassAnnouncementAt",
+    ],
     "hasInterviewConfig": true,
     "interviewEnabled": true,
     "interviewEndAt": "2026-12-20T14:59:59.999Z",
@@ -152,11 +167,14 @@ exports[`모집 탭 봉사 저장 parity (part9 전) > (b) 면접 끄기 — 행
     "vriVolunteerInterviewEnabledLabel": "면접 없음",
   },
   "row": {
-    "clearFields": undefined,
+    "clearFields": [
+      "documentPassAnnouncementAt",
+      "finalPassAnnouncementAt",
+    ],
     "hasInterviewConfig": true,
     "interviewEnabled": false,
-    "interviewEndAt": "2026-12-20T14:59:59.999Z",
-    "interviewStartAt": "2026-12-06T15:00:00.000Z",
+    "interviewEndAt": "(omitted)",
+    "interviewStartAt": "(omitted)",
     "operationEndDate": "2027-02-28",
     "operationStartDate": "2026-12-01",
   },
@@ -180,7 +198,10 @@ exports[`모집 탭 봉사 저장 parity (part9 전) > (b) 면접 켜기 — 꺼
     "vriVolunteerInterviewEnabledLabel": "면접 있음",
   },
   "row": {
-    "clearFields": undefined,
+    "clearFields": [
+      "documentPassAnnouncementAt",
+      "finalPassAnnouncementAt",
+    ],
     "hasInterviewConfig": true,
     "interviewEnabled": true,
     "interviewEndAt": "2026-12-20T14:59:59.999Z",
@@ -204,6 +225,8 @@ exports[`모집 탭 봉사 저장 parity (part9 전) > (c) 운영일 GET null �
     "clearFields": [
       "operationStartDate",
       "operationEndDate",
+      "documentPassAnnouncementAt",
+      "finalPassAnnouncementAt",
     ],
     "hasInterviewConfig": true,
     "interviewEnabled": true,
@@ -213,7 +236,10 @@ exports[`모집 탭 봉사 저장 parity (part9 전) > (c) 운영일 GET null �
     "operationStartDate": undefined,
   },
   "withOp": {
-    "clearFields": undefined,
+    "clearFields": [
+      "documentPassAnnouncementAt",
+      "finalPassAnnouncementAt",
+    ],
     "hasInterviewConfig": true,
     "interviewEnabled": true,
     "interviewEndAt": "2026-12-20T14:59:59.999Z",

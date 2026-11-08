@@ -169,8 +169,13 @@ export type OrganizationDecisionNotifyRequest = Pick<
 /** OpenAPI `SlotRequest` — 레거시 slots 호환 입력 */
 export type OrganizationApplicationApproveSlotRequest = SlotRequest
 
-/** OpenAPI `OrganizationApplicationApproveRequest` + 희망 일정 행 id(미매핑 승인) */
+/**
+ * OpenAPI `OrganizationApplicationApproveRequest` + 희망 일정 행 id.
+ * `requestedScheduleIds`는 BE 신규 필드(GENERAL_ORGANIZATION + PERIOD). 저장소 OpenAPI 미동기화라 수동 반영.
+ */
 export type OrganizationApplicationApprovePayload = OrganizationApplicationApproveRequest & {
+  /** program_application_requested_schedule.id 목록. [] 또는 생략 = 일정 미확정 승인. */
+  requestedScheduleIds?: number[]
   requestedScheduleId?: number
   /** TRAINED_TEACHER + PERIOD에서 서버가 내려준 희망 순위. scheduleId가 아니다. */
   preferredScheduleRank?: number

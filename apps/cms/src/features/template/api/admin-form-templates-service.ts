@@ -227,17 +227,26 @@ export async function getIssuanceFormSectionsRemote(): Promise<TemplateSection[]
   return buildIssuanceFormSectionsFromApiItems(items)
 }
 
+/** 동시에 여러 템플릿 코드를 해석할 때 WRITING·ISSUANCE 전 페이지 조회를 한 번만 하도록 진행 중 요청을 공유한다. */
+let warmTemplateListCachesInflight: Promise<void> | null = null
+
 async function warmTemplateListCaches(): Promise<void> {
-  try {
-    await getWritingFormSectionsRemote()
-  } catch {
-    /* issuance-only codes may miss writing list */
-  }
-  try {
-    await getIssuanceFormSectionsRemote()
-  } catch {
-    /* ignore */
-  }
+  if (warmTemplateListCachesInflight) return warmTemplateListCachesInflight
+  warmTemplateListCachesInflight = (async () => {
+    try {
+      await getWritingFormSectionsRemote()
+    } catch {
+      /* issuance-only codes may miss writing list */
+    }
+    try {
+      await getIssuanceFormSectionsRemote()
+    } catch {
+      /* ignore */
+    }
+  })().finally(() => {
+    warmTemplateListCachesInflight = null
+  })
+  return warmTemplateListCachesInflight
 }
 
 async function resolveTemplateVersionId(templateCode: string): Promise<number | null> {

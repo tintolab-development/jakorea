@@ -286,6 +286,7 @@ export async function downloadUjatEducationProgressSummaryExcel(input: {
   const buffer = await workbook.xlsx.writeBuffer()
   await downloadExcel(
     excelJsBufferToArrayBuffer(buffer),
-    buildEducationProgressSummaryExcelFilename()
+    buildEducationProgressSummaryExcelFilename(),
+    { accessLog: { downloadKind: 'PROGRAM_PROGRESS_SUMMARY_EXPORT', containedPiiTypes: [] } }
   )
 }

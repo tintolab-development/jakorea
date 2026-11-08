@@ -105,7 +105,8 @@ describe('trained-teacher Primary recruitment adapter', () => {
     // flat config `otherMatters` → domain otherNotes (remarks와 분리)
     expect(program.otherNotes).toBe('기타 사항')
     expect(program.remarks).toBe('TCH-05 로컬 데모')
-    expect(program.studentListRequired).toBe('not_required')
+    // f13755901: top-level 컬럼만 정본. dto.studentListRequired가 없으면 nested로 채우지 않는다.
+    expect(program.studentListRequired).toBeUndefined()
     expect(program.generalProgramEducationStructure).toBe('schedule')
     expect(program.generalCommonInfo?.instructorRecruitmentInfo).toBeUndefined()
     expect(program.generalCommonInfo?.volunteerRecruitmentInfo).toBeUndefined()

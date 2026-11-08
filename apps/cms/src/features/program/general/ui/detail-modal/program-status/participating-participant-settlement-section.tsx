@@ -65,6 +65,7 @@ export function ParticipatingParticipantSettlementSection({
   const [detailApplicationId, setDetailApplicationId] = useState<number | null>(null)
 
   const { exportExcel, isExporting: isExcelExporting } = useTableExcelExport({
+    accessLog: { downloadKind: 'PROGRAM_SETTLEMENT_EXPORT', containedPiiTypes: ['NAME'] },
     columns: PARTICIPATING_PARTICIPANT_SETTLEMENT_EXCEL_COLUMNS,
     data: rows,
     filename: `정산내역_${participant.applicantName}`,

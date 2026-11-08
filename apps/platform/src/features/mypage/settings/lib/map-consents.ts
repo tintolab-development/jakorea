@@ -25,6 +25,38 @@ export const SETTINGS_CONSENT_TYPE_BY_ID: Record<SettingsConsentItemId, string> 
 
 const EXPIRED_HINT = '유효기간이 만료되어 재동의가 필요해요.'
 
+/**
+ * 만료·재동의 안내 — 기획(노션 사용자 '약관 및 동의 항목') 동의서별 문구.
+ * `null`이면 문구 없이 태그만. 목록에 없는 항목은 공통 문구(`EXPIRED_HINT`)를 쓴다.
+ */
+const EXPIRED_HINT_BY_ID: Partial<Record<SettingsConsentItemId, string | null>> = {
+  portrait: '프로그램을 신청하시려면 다시 동의해 주세요.',
+  educatorPledge: '교육진행자 활동을 위해 다시 작성해 주세요.',
+  sexOffenseCheck: '교육진행자 활동을 위해 다시 동의해 주세요.',
+  paymentStatement: '정산을 신청하시려면 다시 동의해 주세요.',
+  receiptPreConsent: '정산을 신청하시려면 다시 동의해 주세요.',
+  administrativeJoint: null,
+}
+
+/**
+ * 기간제 동의서 6종 — 기획상 「동의 만료」·만료 안내 적용 대상.
+ * 서비스 이용약관·개인정보·교사 정보·법정대리인(탈퇴 시까지)과 마케팅은 만료가 없으므로
+ * 서버가 `expired`를 보내도 만료로 처리하지 않는다.
+ */
+const FIXED_TERM_CONSENT_IDS: ReadonlySet<SettingsConsentItemId> = new Set<SettingsConsentItemId>([
+  'portrait',
+  'educatorPledge',
+  'administrativeJoint',
+  'sexOffenseCheck',
+  'paymentStatement',
+  'receiptPreConsent',
+])
+
+function resolveExpiredHint(id: SettingsConsentItemId): string | undefined {
+  if (!(id in EXPIRED_HINT_BY_ID)) return EXPIRED_HINT
+  return EXPIRED_HINT_BY_ID[id] ?? undefined
+}
+
 const CATALOG_BY_TYPE = new Map(
   SETTINGS_CONSENT_CATALOG.map(item => [SETTINGS_CONSENT_TYPE_BY_ID[item.id], item]),
 )
@@ -93,7 +125,7 @@ export function buildConsentItemsFromSummaries(summaries: PortalConsentSummary[]
     const meta = CATALOG_BY_TYPE.get(consentType)
     if (!meta) continue
 
-    const expired = summary.expired === true
+    const expired = summary.expired === true && FIXED_TERM_CONSENT_IDS.has(meta.id)
     const reconsentRequired = summary.reconsentRequired === true
     const status = summary.status?.trim().toUpperCase() ?? ''
     const withdrawn = status === 'WITHDRAWN'
@@ -112,11 +144,14 @@ export function buildConsentItemsFromSummaries(summaries: PortalConsentSummary[]
       required: summary.required ?? meta.required,
       agreed,
       agreedAt: agreed ? formatConsentAgreedAt(summary.agreedAt) : undefined,
-      hint: expired || reconsentRequired ? EXPIRED_HINT : meta.hint,
+      hint: expired || reconsentRequired ? resolveExpiredHint(meta.id) : meta.hint,
       documentId: readPortalConsentDocumentId(summary.documentId),
       withdrawable: summary.withdrawable === true,
       status: summary.status,
       consentStatus: summary.consentStatus,
+      consentType,
+      allItemsAgreed: summary.allItemsAgreed ?? null,
+      expired,
       signed: summary.signed === true,
       listed: typeof summary.listed === 'boolean' ? summary.listed : undefined,
     }

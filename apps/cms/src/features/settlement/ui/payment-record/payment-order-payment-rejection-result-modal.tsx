@@ -4,53 +4,36 @@
 
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
-import type { PaymentOrderProgramCalculationStatement } from '@/features/settlement-management/model/payment-order-admin-list'
 import './payment-order-payment-rejection-result-modal.css'
 
 export interface PaymentOrderPaymentRejectionResultModalProps {
   open: boolean
   onClose: () => void
-  data: PaymentOrderProgramCalculationStatement | null
-  reason: string
-}
-
-function getInstructorName(statement: PaymentOrderProgramCalculationStatement): string {
-  if (statement.context === 'instructor') return statement.basic.nameKo
-  return statement.basic.instructorNameKo
+  zIndex?: number
 }
 
 export function PaymentOrderPaymentRejectionResultModal({
   open,
   onClose,
-  data,
-  reason,
+  zIndex,
 }: PaymentOrderPaymentRejectionResultModalProps) {
-  const canShow = Boolean(open && data)
-  if (!data) return null
-
-  const instructorName = getInstructorName(data)
-
   return (
     <ContentModal
-      open={canShow}
+      open={open}
       onCancel={onClose}
-      title="지급 반려"
+      title="지급조서 반려 완료"
       width={600}
+      zIndex={zIndex}
       className="payment-order-payment-reject-result-modal"
       footer={
         <div className="payment-order-payment-reject-result__footer-actions">
-          <CmsButton variant="secondary" size="large" onClick={onClose}>
+          <CmsButton variant="secondary" size="h40" onClick={onClose}>
             확인
           </CmsButton>
         </div>
       }
     >
-      <p className="payment-order-payment-reject-result__line">
-        <strong className="payment-order-payment-reject-result__name">[{instructorName}]</strong>{' '}
-        님의 지급조서 신청이 반려되었습니다.
-        <br />
-        (사유 : {reason || '-'})
-      </p>
+      <p className="payment-order-payment-reject-result__line">지급조서 반려가 완료되었습니다.</p>
     </ContentModal>
   )
 }

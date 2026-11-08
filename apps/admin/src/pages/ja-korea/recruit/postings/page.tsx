@@ -440,10 +440,11 @@ export function RecruitPostingsPage() {
         render: (value: string) => value || '-',
       },
       {
-        title: '작성자명',
+        title: '작성자',
         dataIndex: 'authorName',
         key: 'authorName',
-        width: 120,
+        width: TABLE_COLUMN_WIDTHS.author,
+        ellipsis: true,
         align: 'center',
         render: (value: string) => value || '-',
       },
@@ -548,7 +549,7 @@ export function RecruitPostingsPage() {
               />
             </div>
             <div className="admin-filter-area__field admin-filter-area__field--control">
-              <p className="admin-filter-area__label">작성자명</p>
+              <p className="admin-filter-area__label">작성자</p>
               <AdminFilterTextInput
                 inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
@@ -650,7 +651,6 @@ export function RecruitPostingsPage() {
               },
               style: { cursor: 'pointer' },
             })}
-            scroll={{ x: true }}
           />
           <AdminInfiniteTableFooter
             sentinelRef={sentinelRef}

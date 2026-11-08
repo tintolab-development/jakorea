@@ -1,3 +1,4 @@
+import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useMemo } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import { ApprovalStatusText } from '@/shared/components/approval-status-text'
@@ -33,8 +34,7 @@ export function useGeneralInstructorApplicantColumns(params: {
         title: '자택 주소지',
         dataIndex: 'address',
         key: 'address',
-        // width 미지정 — fixed layout 에서 남는 폭을 주소·이메일 열이 흡수
-        minWidth: 200,
+        width: TABLE_COLUMN_WIDTHS.address,
         align: 'center',
         ellipsis: true,
         render: (text: string) => {
@@ -69,7 +69,7 @@ export function useGeneralInstructorApplicantColumns(params: {
         title: '이메일',
         dataIndex: 'email',
         key: 'email',
-        minWidth: 200,
+        width: TABLE_COLUMN_WIDTHS.email,
         align: 'center',
         ellipsis: true,
       },

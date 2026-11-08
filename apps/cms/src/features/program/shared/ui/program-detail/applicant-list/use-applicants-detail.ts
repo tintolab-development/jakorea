@@ -6,6 +6,8 @@ import {
   schoolRowNeedsScheduleHydration,
 } from '@/features/program/general/api/admin-applications-service'
 import { useSearchParams } from 'react-router-dom'
+import { useNavigateToAncestor } from '@/shared/hooks/use-history-ancestor-navigation'
+import { locationSearchParams } from '@/shared/lib/search-params-diff'
 import {
   useTablePage,
   EMPTY_TABLE_PAGE_CONTEXT,
@@ -25,6 +27,7 @@ import {
 } from '@/shared/lib/extract-api-error-message'
 import { formatApplicationEligibilityConflictMessage } from '@/features/program/shared/lib/application-eligibility-conflict'
 import { formatApplicationDecisionCancelConflictMessage } from '@/features/program/shared/lib/application-decision-cancel-conflict'
+import { formatApplicationRejectReasonErrorMessage } from '@/features/program/shared/lib/application-reject-reason'
 import { formatApplicationStatusConflictMessage } from '@/features/program/shared/lib/application-status-conflict'
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
@@ -345,6 +348,7 @@ export function useApplicantsDetail({
         title: '처리 실패',
         content:
           getNotificationTimingApiErrorMessage(error) ??
+          formatApplicationRejectReasonErrorMessage(error) ??
           formatApplicationDecisionCancelConflictMessage(error) ??
           formatOrganizationApplicationApproveErrorMessage(error) ??
           formatApplicationEligibilityConflictMessage(error) ??
@@ -369,6 +373,7 @@ export function useApplicantsDetail({
           (getApiErrorCode(error) === 'INSTRUCTOR_ASSIGNMENT_CONFLICT'
             ? '해당 일정에 이미 같은 강사가 배정되어 있거나, 일정 배정 상태가 변경되었습니다. 최신 배정 정보를 다시 조회한 후 시도해 주세요.'
             : null) ??
+          formatApplicationRejectReasonErrorMessage(error) ??
           formatApplicationEligibilityConflictMessage(error) ??
           formatInstructorOrganizationApprovalErrorMessage(error) ??
           extractApiErrorMessage(responseData, {
@@ -485,6 +490,7 @@ export function useApplicantsDetail({
               ? organizationApprovalRefreshTargets(programId, ids)
               : null
             const scheduleSelectionRequested =
+              (approvePayload?.requestedScheduleIds?.length ?? 0) > 0 ||
               (approvePayload?.slots?.length ?? 0) > 0 ||
               approvePayload?.selectedScheduleId != null ||
               (typeof approvePayload?.requestedScheduleId === 'number' &&
@@ -548,6 +554,9 @@ export function useApplicantsDetail({
         if (
           [
             'ORGANIZATION_APPROVE_REQUESTED_SCHEDULE_INVALID',
+            'ORGANIZATION_APPROVE_REQUESTED_SCHEDULE_COUNT_EXCEEDED',
+            'ORGANIZATION_APPROVE_REQUESTED_SCHEDULE_DUPLICATED',
+            'GENERAL_ORGANIZATION_HISTORICAL_ASSIGNMENT_IMMUTABLE',
             'ORGANIZATION_APPROVE_SCHEDULE_SELECTOR_CONFLICT',
             'ORGANIZATION_APPROVE_SCHEDULE_NOT_REQUESTED',
             'ORGANIZATION_APPROVE_PREFERRED_SCHEDULE_REQUIRED',
@@ -933,34 +942,45 @@ export function useApplicantsDetail({
     [menu, institutionList, individualList, instructorList]
   )
 
+  const { toSearch: navigateToListAncestor } = useNavigateToAncestor()
+
+  /**
+   * 신청자 상세 = 브레드크럼 단계.
+   * - 목록 → 상세: push (브라우저 뒤로가기로 목록 복귀)
+   * - 상세 → 다른 신청자: 같은 단계라 replace
+   * - 상세 닫기: 지나온 목록 엔트리로 뒤로, 없으면 replace
+   */
   const setSelectedItem = useCallback(
     (
       value: ApplicantListRow | null | ((prev: ApplicantListRow | null) => ApplicantListRow | null)
     ) => {
-      setSearchParams(
-        prevParams => {
-          const next = new URLSearchParams(prevParams)
-          const current = resolveApplicantFromUrlParams(prevParams)
-          const resolved = typeof value === 'function' ? value(current) : value
+      const prevParams = locationSearchParams()
+      const current = resolveApplicantFromUrlParams(prevParams)
+      const resolved = typeof value === 'function' ? value(current) : value
 
-          if (resolved) {
-            if (next.get(APPLICANT_ID_PARAM) === resolved.id) {
-              return prevParams
-            }
+      if (resolved) {
+        if (prevParams.get(APPLICANT_ID_PARAM) === resolved.id) return
+        const openingFromList = !prevParams.has(APPLICANT_ID_PARAM)
+        setSearchParams(
+          latest => {
+            const next = new URLSearchParams(latest)
             next.set(APPLICANT_ID_PARAM, resolved.id)
-          } else {
-            if (!next.has(APPLICANT_ID_PARAM)) {
-              return prevParams
-            }
-            next.delete(APPLICANT_ID_PARAM)
-            next.delete(DETAIL_TAB_PARAM)
-          }
-          return next
-        },
-        { replace: true }
-      )
+            return next
+          },
+          { replace: !openingFromList }
+        )
+        return
+      }
+
+      if (!prevParams.has(APPLICANT_ID_PARAM)) return
+      navigateToListAncestor(latest => {
+        const next = new URLSearchParams(latest)
+        next.delete(APPLICANT_ID_PARAM)
+        next.delete(DETAIL_TAB_PARAM)
+        return next
+      })
     },
-    [resolveApplicantFromUrlParams, setSearchParams]
+    [navigateToListAncestor, resolveApplicantFromUrlParams, setSearchParams]
   )
 
   useEffect(() => {

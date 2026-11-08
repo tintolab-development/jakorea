@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { emptyTrainedTeachersBasicInfo } from '../src/features/program/ui/apply-trained-teachers-basic-info/apply-trained-teachers-basic-info-answers'
+import { emptyInstitutionBasicInfo } from '../src/features/program/ui/apply-institution-basic-info/apply-institution-basic-info-answers'
 import {
   focusIncompleteApplicationField,
   resolveGeneralBasicInfoApplyIncomplete,
@@ -11,7 +11,7 @@ describe('application apply incomplete', () => {
   it('returns classCount field when 신청 학급 is missing', () => {
     const incomplete = resolveGeneralBasicInfoApplyIncomplete(
       {
-        ...emptyTrainedTeachersBasicInfo(),
+        ...emptyInstitutionBasicInfo(),
         schoolName: '테스트학교',
         regionLabel: '서울',
         applicationGrade: '3',
@@ -45,7 +45,7 @@ describe('application apply incomplete', () => {
     it('marks paragraph and focuses the target control after alert dismiss', () => {
       const incomplete = resolveGeneralBasicInfoApplyIncomplete(
         {
-          ...emptyTrainedTeachersBasicInfo(),
+          ...emptyInstitutionBasicInfo(),
           schoolName: '테스트학교',
           regionLabel: '서울',
           applicationGrade: '3',

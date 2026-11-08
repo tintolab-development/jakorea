@@ -1,6 +1,6 @@
 /**
  * 첨부 파일 행 공통 (디자인 시스템)
- * - 파일 유형별 아이콘 + 파일명(말줄임) + 삭제 X
+ * - 파일명(말줄임) + 삭제 X — 파일 추가 컴포넌트(수정 모드)에서는 파일 유형 아이콘을 두지 않는다
  * - 빈 상태 「첨부된 파일이 없습니다.」
  * - 버튼+가이드 줄은 `.file-upload-actions` / `.file-upload-guide` 클래스 공통
  * 사용처: ThumbnailUploadField, FileSelectField, ParagraphFileUpload
@@ -8,7 +8,6 @@
 
 import type { MouseEvent } from 'react'
 import { FileRemoveIcon } from '@/shared/ui/icons/FileRemoveIcon'
-import { FileTypeIcon } from '@/shared/ui/icons/FileTypeIcon'
 import './file-attachment-row.css'
 
 export const FILE_ATTACHMENT_EMPTY_TEXT = '첨부된 파일이 없습니다.'
@@ -29,7 +28,6 @@ export function FileAttachmentRow({
 }: FileAttachmentRowProps) {
   return (
     <span className={['file-attachment-row', className].filter(Boolean).join(' ')}>
-      <FileTypeIcon fileName={fileName} className="file-attachment-row__icon" />
       <span className="file-attachment-row__name" title={fileName}>
         {fileName}
       </span>

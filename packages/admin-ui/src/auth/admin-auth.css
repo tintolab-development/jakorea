@@ -38,7 +38,7 @@
   flex-shrink: 0;
   align-self: center;
   box-sizing: border-box;
-  border-radius: 16px;
+  border-radius: 20px;
   border: 2px solid #fff;
   background: var(--main-WT, #fff);
   box-shadow:

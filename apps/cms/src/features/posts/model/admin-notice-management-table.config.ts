@@ -18,8 +18,8 @@ import {
 const adminNoticeUrlDateRangeSyncRef: UrlDateRangePendingSyncRef = { hadCompleteInUrl: false }
 
 function parseVisibility(raw: string | null): AdminNoticePendingFilters['visibility'] {
-  if (raw === 'private') return 'private'
-  return 'public'
+  if (raw === 'public' || raw === 'private') return raw
+  return 'ALL'
 }
 
 function parseCategory(
@@ -60,7 +60,7 @@ const searchSyncRules: readonly TableSearchParamRule<AdminNoticePendingFilters>[
     kind: 'param',
     filterKey: 'visibility',
     paramKey: 'an_vis',
-    condition: () => true,
+    condition: f => f.visibility !== 'ALL',
     transform: v => String(v),
   },
   {
@@ -98,7 +98,7 @@ export const adminNoticeManagementTablePageConfig: TablePageConfig<
     initialPending: {
       title: '',
       author: '',
-      visibility: 'public',
+      visibility: 'ALL',
       category: 'ALL',
       dateRange: null,
     },
@@ -142,7 +142,7 @@ export const adminNoticeManagementTablePageConfig: TablePageConfig<
     hasActiveFilters: ({ context, searchParams }) => {
       if ((searchParams.get('an_q') ?? '').trim()) return true
       if ((searchParams.get('an_auth') ?? '').trim()) return true
-      if (parseVisibility(searchParams.get('an_vis')) !== 'public') return true
+      if (parseVisibility(searchParams.get('an_vis')) !== 'ALL') return true
       if (parseCategory(searchParams.get('an_cat'), context.allowedCategoryLabels) !== 'ALL')
         return true
       if (searchParams.get('an_from') || searchParams.get('an_to')) return true
@@ -153,7 +153,7 @@ export const adminNoticeManagementTablePageConfig: TablePageConfig<
 
     onFilterChange: ({ prev, key, value }) => {
       if (key === 'visibility') {
-        const v = value === 'private' ? 'private' : 'public'
+        const v = value === 'private' || value === 'public' ? value : 'ALL'
         return { ...prev, visibility: v }
       }
       if (key === 'category') {

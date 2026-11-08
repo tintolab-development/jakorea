@@ -7,6 +7,7 @@ import type { JaHistoryThrive, JaHistoryThriveCard } from '@/entities/ja-history
 import { useSaveJaHistoryThrive } from '@/features/ja-history/api/hooks'
 import { showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 import { HistoryCopy, InlineText, SectionFrame, jaHistorySaveAlert } from './chrome'
+import { TABLE_ROW_FILL_FIELDS_CLASS } from '@/shared/ui/table-row-fill-fields'
 
 export function ThriveSection({ thrive }: { thrive: JaHistoryThrive }) {
   const { showAlert } = useCmsAlert()
@@ -93,7 +94,7 @@ export function ThriveSection({ thrive }: { thrive: JaHistoryThrive }) {
   const cardsTable = (
     <div className="ja-history-thrive-cards">
       <CmsDataTable<JaHistoryThriveCard>
-        className="cms-data-table cms-data-table--skip-auto-no-col ja-history-table"
+        className={`cms-data-table cms-data-table--skip-auto-no-col ja-history-table ${TABLE_ROW_FILL_FIELDS_CLASS}`}
         columns={columns}
         dataSource={thrive.cards}
         pagination={false}

@@ -18,6 +18,7 @@ import {
 } from './applicant-institution-calendar-session'
 import { getInstructorCalendarSessionCardLabel } from './applicant-instructor-calendar-session'
 import { formatApiDistanceKmDisplay } from '@/shared/lib/format-api-distance-km'
+import { findWaitingOrganizationDistance } from '@/features/program/general/lib/assignment-waiting-distance'
 import {
   getInstructorScheduleDispatchStats,
   getInstructorScheduleDistanceKm,
@@ -110,29 +111,37 @@ export function buildGeneralIndividualCalendarListRows(
   return rows
 }
 
-function flattenInstructorCalendarCards(
-  events: ApplicantCalendarEvent[]
-): Array<{ id: string; colorKey: string | number; schoolName: string; instructor: ApplicantInstructorRow }> {
-  const cards: Array<{
-    id: string
-    colorKey: string | number
-    schoolName: string
-    instructor: ApplicantInstructorRow
-  }> = []
+type InstructorCalendarCard = {
+  id: string
+  colorKey: string | number
+  schoolName: string
+  /** 카드가 속한 기관 신청 id (기관별 거리 매칭) */
+  organizationApplicationId?: string
+  instructor: ApplicantInstructorRow
+}
+
+function flattenInstructorCalendarCards(events: ApplicantCalendarEvent[]): InstructorCalendarCard[] {
+  const cards: InstructorCalendarCard[] = []
 
   for (const event of events) {
     const originalItem = event.originalItem as unknown as Record<string, unknown> | undefined
     if (!originalItem) continue
-    const schoolName = resolveInstructorCalendarInstitutionName(
-      originalItem as unknown as ApplicantInstructorCalendarEventItem
-    )
+    const calendarItem = originalItem as unknown as ApplicantInstructorCalendarEventItem
+    const schoolName = resolveInstructorCalendarInstitutionName(calendarItem)
+    const organizationApplicationId = calendarItem.calendarInstitutionRow?.id?.trim() || undefined
     const institutionRows = originalItem.calendarInstitutionInstructors as
       | ApplicantInstructorRow[]
       | undefined
 
     if (institutionRows?.length) {
       for (const inst of institutionRows) {
-        cards.push({ id: String(inst.id), colorKey: event.id, schoolName, instructor: inst })
+        cards.push({
+          id: String(inst.id),
+          colorKey: event.id,
+          schoolName,
+          organizationApplicationId,
+          instructor: inst,
+        })
       }
       continue
     }
@@ -150,18 +159,44 @@ function flattenInstructorCalendarCards(
   return cards
 }
 
+/**
+ * 카드 거리 — 기관 카드면 강사 신청의 기관별 거리에서 그 기관 신청 id로 찾는다.
+ * 신청 단위 distanceKm는 마지막 배정 기관 거리라 다른 기관 카드에 쓰지 않는다.
+ */
+function resolveInstructorCardDistance(card: InstructorCalendarCard): {
+  distanceKm: number | null
+  longDistance: boolean
+} {
+  const { instructor, organizationApplicationId } = card
+  if (organizationApplicationId) {
+    const hit = findWaitingOrganizationDistance(instructor.organizationDistances, {
+      organizationApplicationId,
+    })
+    const km = hit?.distanceKm
+    return {
+      distanceKm: typeof km === 'number' && Number.isFinite(km) ? km : null,
+      longDistance: hit?.longDistance === true,
+    }
+  }
+  return {
+    distanceKm: getInstructorScheduleDistanceKm(
+      card.schoolName,
+      instructor.instructorName || '-',
+      instructor.address,
+      instructor.distanceKm
+    ),
+    longDistance: instructor.longDistanceYn === true,
+  }
+}
+
 export function buildGeneralInstructorCalendarListRows(
   events: ApplicantCalendarEvent[]
 ): CalendarGeneralInstructorApplicationListRow[] {
-  return flattenInstructorCalendarCards(events).map(({ id, colorKey, schoolName, instructor }) => {
+  return flattenInstructorCalendarCards(events).map(card => {
+    const { id, colorKey, schoolName, instructor } = card
     const instructorName = instructor.instructorName || '-'
     const sessionLabel = getInstructorCalendarSessionCardLabel(instructor, schoolName)
-    const distanceKm = getInstructorScheduleDistanceKm(
-      schoolName,
-      instructorName,
-      instructor.address,
-      instructor.distanceKm
-    )
+    const { distanceKm, longDistance } = resolveInstructorCardDistance(card)
     const { dispatchCount, longDistanceCount } = getInstructorScheduleDispatchStats({
       programDispatchCount: instructor.programDispatchCount,
       programLongDistanceDispatchCount: instructor.programLongDistanceDispatchCount,
@@ -177,9 +212,7 @@ export function buildGeneralInstructorCalendarListRows(
       ),
       sessionLabel,
       distanceKm,
-      distanceDisplay: formatApiDistanceKmDisplay(distanceKm, {
-        longDistance: instructor.longDistanceYn === true,
-      }),
+      distanceDisplay: formatApiDistanceKmDisplay(distanceKm, { longDistance }),
       isNearDistance: distanceKm != null ? isInstructorNearDistanceKm(distanceKm) : false,
       dispatchCount,
       longDistanceCount,

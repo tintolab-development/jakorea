@@ -47,6 +47,7 @@ export function SchoolDetailAttendanceSection({
   } = useSchoolDetailAttendance(row, program)
 
   const { exportExcel, isExporting } = useTableExcelExport({
+    accessLog: { downloadKind: 'PROGRAM_ATTENDANCE_EXPORT', containedPiiTypes: ['NAME'] },
     columns: SCHOOL_DETAIL_ATTENDANCE_EXCEL_COLUMNS,
     data: [],
     resolveData: resolveExcelExportRows,

@@ -3401,6 +3401,103 @@
         }
       }
     },
+    "/api/admin/sponsorship/talent-applications/{id}/attachments/{assetId}/download": {
+      "post": {
+        "tags": [
+          "talent-application-admin-controller"
+        ],
+        "summary": "Download a talent application attachment by asset id",
+        "description": "Streams a server-encrypted file. Body { password } is write-only and is never stored.",
+        "operationId": "attachmentDownloadByAsset",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "assetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FileDownloadPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/sponsorship/talent-applications/{id}/attachment-download": {
+      "post": {
+        "tags": [
+          "talent-application-admin-controller"
+        ],
+        "summary": "Download talent application attachment",
+        "description": "Streams a server-encrypted file. Body { password } is write-only and is never stored. containedPiiTypes is empty until classified.",
+        "operationId": "attachmentDownload",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FileDownloadPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/sponsorship/corporate/sponsors": {
       "get": {
         "tags": [
@@ -3522,6 +3619,103 @@
         "responses": {
           "204": {
             "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/admin/sponsorship/corporate-consultations/{id}/attachments/{assetId}/download": {
+      "post": {
+        "tags": [
+          "corporate-consultation-admin-controller"
+        ],
+        "summary": "Download a corporate consultation attachment by asset id",
+        "description": "Streams a server-encrypted file. Body { password } is write-only and is never stored.",
+        "operationId": "attachmentDownloadByAsset_1",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "assetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FileDownloadPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/sponsorship/corporate-consultations/{id}/attachment-download": {
+      "post": {
+        "tags": [
+          "corporate-consultation-admin-controller"
+        ],
+        "summary": "Download corporate consultation attachment",
+        "description": "Streams a server-encrypted file. Body { password } is write-only and is never stored. containedPiiTypes is empty until classified.",
+        "operationId": "attachmentDownload_1",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FileDownloadPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
+                }
+              }
+            }
           }
         }
       }
@@ -4237,8 +4431,18 @@
           "homepage-log-admin-controller"
         ],
         "summary": "Ingest admin account-processing evidence",
-        "description": "Internal ingest for collectors (JA CMS / Platform / Homepage services). Admin log list screens must not POST. Writes are append-only. Homepage does not own account APIs; JA CMS should POST after create/deactivate/profile/permission/password changes. Not used by Admin list UI.",
+        "description": "Internal ingest for collectors (JA CMS / Platform / Homepage services). Admin log list screens must not POST. Writes are append-only. Homepage does not own account APIs; JA CMS should POST after create/deactivate/profile/permission/password/identity re-verify using the same ingest bearer as member-logins. Not used by Admin list UI.",
         "operationId": "createAdminAccountAction",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -4660,6 +4864,8 @@
         "tags": [
           "ja-korea-organization-admin-controller"
         ],
+        "summary": "List history rows",
+        "description": "No reorder endpoint. totalCount is the filtered total for infinite scroll.",
         "operationId": "history",
         "parameters": [
           {
@@ -4673,6 +4879,7 @@
           {
             "name": "year",
             "in": "query",
+            "description": "Calendar history_year equality (not createdAt). Omit = all years. Range 1900–2200 else 400.",
             "required": false,
             "schema": {
               "type": "integer",
@@ -4682,6 +4889,7 @@
           {
             "name": "month",
             "in": "query",
+            "description": "Calendar history_month equality 1–12 (not createdAt). Allowed without year: that month in every year. Both set = that calendar month. Omit = all months. Out of range → 400.",
             "required": false,
             "schema": {
               "type": "integer",
@@ -4691,6 +4899,7 @@
           {
             "name": "keyword",
             "in": "query",
+            "description": "Case-insensitive contains (LIKE %term%) on content. Blank omitted. Max 500.",
             "required": false,
             "schema": {
               "type": "string"
@@ -4699,6 +4908,7 @@
           {
             "name": "createdFrom",
             "in": "query",
+            "description": "YYYY-MM-DD. Inclusive start of Asia/Seoul calendar day on createdAt.",
             "required": false,
             "schema": {
               "type": "string",
@@ -4708,6 +4918,7 @@
           {
             "name": "createdTo",
             "in": "query",
+            "description": "YYYY-MM-DD. Inclusive through end of Asia/Seoul calendar day on createdAt (next Seoul midnight exclusive). from after to → 400.",
             "required": false,
             "schema": {
               "type": "string",
@@ -4717,10 +4928,12 @@
           {
             "name": "sort",
             "in": "query",
+            "description": "Default DATE when omitted: year DESC, month DESC, id DESC. CREATED_AT: createdAt DESC, id DESC.",
             "required": false,
             "schema": {
               "type": "string",
               "default": "DATE",
+              "description": "Admin list sort. Query omitted or DATE: event calendar date descending (history year/month, award awardedDate, certification certifiedDate) then id DESC. CREATED_AT: createdAt DESC then id DESC. No additional sort values.",
               "enum": [
                 "DATE",
                 "CREATED_AT"
@@ -4818,6 +5031,8 @@
         "tags": [
           "ja-korea-organization-admin-controller"
         ],
+        "summary": "List certification rows",
+        "description": "No reorder endpoint. totalCount is the filtered total for infinite scroll.",
         "operationId": "certifications",
         "parameters": [
           {
@@ -4831,6 +5046,7 @@
           {
             "name": "content",
             "in": "query",
+            "description": "Case-insensitive contains (LIKE %term%) on content. Blank omitted. Max 500.",
             "required": false,
             "schema": {
               "type": "string"
@@ -4839,6 +5055,7 @@
           {
             "name": "institution",
             "in": "query",
+            "description": "Case-insensitive contains (LIKE %term%) on certificationInstitution. Blank omitted. Max 500.",
             "required": false,
             "schema": {
               "type": "string"
@@ -4847,6 +5064,7 @@
           {
             "name": "certifiedFrom",
             "in": "query",
+            "description": "YYYY-MM-DD inclusive on certifiedDate (calendar date column, not timezone conversion).",
             "required": false,
             "schema": {
               "type": "string",
@@ -4856,6 +5074,7 @@
           {
             "name": "certifiedTo",
             "in": "query",
+            "description": "YYYY-MM-DD inclusive on certifiedDate. from after to → 400.",
             "required": false,
             "schema": {
               "type": "string",
@@ -4865,6 +5084,7 @@
           {
             "name": "createdFrom",
             "in": "query",
+            "description": "YYYY-MM-DD. Inclusive start of Asia/Seoul calendar day on createdAt.",
             "required": false,
             "schema": {
               "type": "string",
@@ -4874,6 +5094,7 @@
           {
             "name": "createdTo",
             "in": "query",
+            "description": "YYYY-MM-DD. Inclusive through end of Asia/Seoul calendar day on createdAt (next Seoul midnight exclusive). from after to → 400.",
             "required": false,
             "schema": {
               "type": "string",
@@ -4883,10 +5104,12 @@
           {
             "name": "sort",
             "in": "query",
+            "description": "Default DATE when omitted: certifiedDate DESC, id DESC. CREATED_AT: createdAt DESC, id DESC.",
             "required": false,
             "schema": {
               "type": "string",
               "default": "DATE",
+              "description": "Admin list sort. Query omitted or DATE: event calendar date descending (history year/month, award awardedDate, certification certifiedDate) then id DESC. CREATED_AT: createdAt DESC then id DESC. No additional sort values.",
               "enum": [
                 "DATE",
                 "CREATED_AT"
@@ -4984,6 +5207,8 @@
         "tags": [
           "ja-korea-organization-admin-controller"
         ],
+        "summary": "List award rows",
+        "description": "No reorder endpoint. totalCount is the filtered total for infinite scroll.",
         "operationId": "awards",
         "parameters": [
           {
@@ -4997,6 +5222,7 @@
           {
             "name": "awardName",
             "in": "query",
+            "description": "Case-insensitive contains (LIKE %term%) on awardName. Blank omitted. Max 500.",
             "required": false,
             "schema": {
               "type": "string"
@@ -5005,6 +5231,7 @@
           {
             "name": "institution",
             "in": "query",
+            "description": "Case-insensitive contains (LIKE %term%) on awardingInstitution. Blank omitted. Max 500.",
             "required": false,
             "schema": {
               "type": "string"
@@ -5013,6 +5240,7 @@
           {
             "name": "awardedFrom",
             "in": "query",
+            "description": "YYYY-MM-DD inclusive on awardedDate (calendar date column, not timezone conversion).",
             "required": false,
             "schema": {
               "type": "string",
@@ -5022,6 +5250,7 @@
           {
             "name": "awardedTo",
             "in": "query",
+            "description": "YYYY-MM-DD inclusive on awardedDate. from after to → 400.",
             "required": false,
             "schema": {
               "type": "string",
@@ -5031,6 +5260,7 @@
           {
             "name": "createdFrom",
             "in": "query",
+            "description": "YYYY-MM-DD. Inclusive start of Asia/Seoul calendar day on createdAt.",
             "required": false,
             "schema": {
               "type": "string",
@@ -5040,6 +5270,7 @@
           {
             "name": "createdTo",
             "in": "query",
+            "description": "YYYY-MM-DD. Inclusive through end of Asia/Seoul calendar day on createdAt (next Seoul midnight exclusive). from after to → 400.",
             "required": false,
             "schema": {
               "type": "string",
@@ -5049,10 +5280,12 @@
           {
             "name": "sort",
             "in": "query",
+            "description": "Default DATE when omitted: awardedDate DESC, id DESC. CREATED_AT: createdAt DESC, id DESC.",
             "required": false,
             "schema": {
               "type": "string",
               "default": "DATE",
+              "description": "Admin list sort. Query omitted or DATE: event calendar date descending (history year/month, award awardedDate, certification certifiedDate) then id DESC. CREATED_AT: createdAt DESC then id DESC. No additional sort values.",
               "enum": [
                 "DATE",
                 "CREATED_AT"
@@ -5502,6 +5735,103 @@
         "responses": {
           "200": {
             "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/admin/careers/talent-applications/{id}/attachments/{assetId}/download": {
+      "post": {
+        "tags": [
+          "career-talent-application-admin-controller"
+        ],
+        "summary": "Download a career talent application attachment by asset id",
+        "description": "Streams a server-encrypted file. Body { password } is write-only and is never stored.",
+        "operationId": "attachmentDownloadByAsset_2",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "assetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FileDownloadPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/careers/talent-applications/{id}/attachment-download": {
+      "post": {
+        "tags": [
+          "career-talent-application-admin-controller"
+        ],
+        "summary": "Download career talent application attachment",
+        "description": "Streams a server-encrypted file. Body { password } is write-only and is never stored. containedPiiTypes is empty until classified.",
+        "operationId": "attachmentDownload_2",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FileDownloadPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
+                }
+              }
+            }
           }
         }
       }
@@ -7895,6 +8225,8 @@
         "tags": [
           "talent-application-admin-controller"
         ],
+        "summary": "Get talent application detail",
+        "description": "Always stored original PII (not masked). HOMEPAGE_VIEW is enough; HOMEPAGE_PII_VIEW is not required. Every 200 writes homepage_admin_audit_log (PII_READ / TALENT_APPLICATION) and homepage_privacy_access_log. List name is original; phone and email remain masked. revealPii is a deprecated no-op.",
         "operationId": "detail_7",
         "parameters": [
           {
@@ -7909,6 +8241,7 @@
           {
             "name": "revealPii",
             "in": "query",
+            "description": "Deprecated no-op. Omitted, false, and true all return original PII and write a privacy/audit log.",
             "required": false,
             "schema": {
               "type": "boolean",
@@ -7923,77 +8256,6 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/TalentApplicationDetailResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/admin/sponsorship/talent-applications/{id}/attachments/{assetId}/download": {
-      "get": {
-        "tags": [
-          "talent-application-admin-controller"
-        ],
-        "operationId": "attachmentDownloadByAsset",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          },
-          {
-            "name": "assetId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/TalentApplicationAttachmentDownloadResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/admin/sponsorship/talent-applications/{id}/attachment-download": {
-      "get": {
-        "tags": [
-          "talent-application-admin-controller"
-        ],
-        "operationId": "attachmentDownload",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/TalentApplicationAttachmentDownloadResponse"
                 }
               }
             }
@@ -8181,6 +8443,8 @@
         "tags": [
           "corporate-consultation-admin-controller"
         ],
+        "summary": "Get corporate consultation detail",
+        "description": "Always stored original PII (not masked). HOMEPAGE_VIEW is enough; HOMEPAGE_PII_VIEW is not required. Every 200 writes homepage_admin_audit_log (PII_READ / CORPORATE_CONSULTATION) and homepage_privacy_access_log. List contactName is original; maskedContactPhone remains masked. revealPii is a deprecated no-op.",
         "operationId": "detail_8",
         "parameters": [
           {
@@ -8195,6 +8459,7 @@
           {
             "name": "revealPii",
             "in": "query",
+            "description": "Deprecated no-op. Omitted, false, and true all return original PII and write a privacy/audit log.",
             "required": false,
             "schema": {
               "type": "boolean",
@@ -8209,77 +8474,6 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ConsultationDetailResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/admin/sponsorship/corporate-consultations/{id}/attachments/{assetId}/download": {
-      "get": {
-        "tags": [
-          "corporate-consultation-admin-controller"
-        ],
-        "operationId": "attachmentDownloadByAsset_1",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          },
-          {
-            "name": "assetId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AttachmentDownloadResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/admin/sponsorship/corporate-consultations/{id}/attachment-download": {
-      "get": {
-        "tags": [
-          "corporate-consultation-admin-controller"
-        ],
-        "operationId": "attachmentDownload_1",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AttachmentDownloadResponse"
                 }
               }
             }
@@ -8826,7 +9020,8 @@
                 "JA_HISTORY_WORLD_TIMELINE_IMAGE",
                 "JA_HISTORY_KOREA_TIMELINE_IMAGE",
                 "JA_HISTORY_PHILOSOPHY_CARD_IMAGE",
-                "JA_HISTORY_LOCKED_MEDIA"
+                "JA_HISTORY_LOCKED_MEDIA",
+                "LOG_EXPORT_XLSX"
               ]
             }
           },
@@ -8949,7 +9144,8 @@
                 "JA_HISTORY_WORLD_TIMELINE_IMAGE",
                 "JA_HISTORY_KOREA_TIMELINE_IMAGE",
                 "JA_HISTORY_PHILOSOPHY_CARD_IMAGE",
-                "JA_HISTORY_LOCKED_MEDIA"
+                "JA_HISTORY_LOCKED_MEDIA",
+                "LOG_EXPORT_XLSX"
               ]
             }
           },
@@ -9127,6 +9323,8 @@
         "tags": [
           "career-talent-application-admin-controller"
         ],
+        "summary": "List career talent applications",
+        "description": "name, phone, and email are always PrivacyMaskingSupport-masked. Original PII is returned only by the detail GET. List GET does not write privacy-access logs.",
         "operationId": "list_15",
         "parameters": [
           {
@@ -9294,6 +9492,8 @@
         "tags": [
           "career-talent-application-admin-controller"
         ],
+        "summary": "Get career talent application detail",
+        "description": "Always stored original PII (not masked). HOMEPAGE_VIEW is enough; HOMEPAGE_PII_VIEW is not required. Every 200 writes homepage_admin_audit_log (PII_READ / CAREER_TALENT_APPLICATION) and homepage_privacy_access_log with the original targetName. List remains masked (name, phone, and email). revealPii is a deprecated no-op. Admin log list screens must not POST privacy-access.",
         "operationId": "detail_9",
         "parameters": [
           {
@@ -9308,7 +9508,9 @@
           {
             "name": "revealPii",
             "in": "query",
+            "description": "Deprecated no-op. Omitted, false, and true all return the same original detail and do not affect authorization.",
             "required": false,
+            "deprecated": true,
             "schema": {
               "type": "boolean",
               "default": false
@@ -9322,77 +9524,6 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/CareerTalentApplicationDetailResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/admin/careers/talent-applications/{id}/attachments/{assetId}/download": {
-      "get": {
-        "tags": [
-          "career-talent-application-admin-controller"
-        ],
-        "operationId": "attachmentDownloadByAsset_2",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          },
-          {
-            "name": "assetId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/CareerTalentApplicationAttachmentDownloadResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/admin/careers/talent-applications/{id}/attachment-download": {
-      "get": {
-        "tags": [
-          "career-talent-application-admin-controller"
-        ],
-        "operationId": "attachmentDownload_2",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/CareerTalentApplicationAttachmentDownloadResponse"
                 }
               }
             }
@@ -9834,7 +9965,8 @@
               "JA_HISTORY_WORLD_TIMELINE_IMAGE",
               "JA_HISTORY_KOREA_TIMELINE_IMAGE",
               "JA_HISTORY_PHILOSOPHY_CARD_IMAGE",
-              "JA_HISTORY_LOCKED_MEDIA"
+              "JA_HISTORY_LOCKED_MEDIA",
+              "LOG_EXPORT_XLSX"
             ]
           },
           "status": {
@@ -14482,7 +14614,11 @@
             "minLength": 0
           },
           "educationInfo": {
-            "type": "string",
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional. Blank is stored as null. Platform UI may still require this before submit.",
             "maxLength": 2000,
             "minLength": 0
           },
@@ -14494,7 +14630,11 @@
             ]
           },
           "careerInfo": {
-            "type": "string",
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional. Blank is stored as null. Platform UI may still require this before submit.",
             "maxLength": 4000,
             "minLength": 0
           },
@@ -14567,6 +14707,18 @@
         "required": [
           "metricCode"
         ]
+      },
+      "FileDownloadPasswordRequest": {
+        "type": "object",
+        "description": "일회성 파일 암호. write-only이며 서버는 저장하지 않습니다.",
+        "properties": {
+          "password": {
+            "type": "string",
+            "description": "8자 이상, 영문+숫자+특수문자, 공백 불가",
+            "example": "Jafile1!",
+            "writeOnly": true
+          }
+        }
       },
       "SponsorCreateRequest": {
         "type": "object",
@@ -14998,6 +15150,11 @@
             "minLength": 0
           },
           "actionType": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 0
+          },
+          "clientIp": {
             "type": "string",
             "maxLength": 64,
             "minLength": 0
@@ -15613,7 +15770,8 @@
               "JA_HISTORY_WORLD_TIMELINE_IMAGE",
               "JA_HISTORY_KOREA_TIMELINE_IMAGE",
               "JA_HISTORY_PHILOSOPHY_CARD_IMAGE",
-              "JA_HISTORY_LOCKED_MEDIA"
+              "JA_HISTORY_LOCKED_MEDIA",
+              "LOG_EXPORT_XLSX"
             ]
           },
           "originalName": {
@@ -15667,7 +15825,11 @@
             ]
           },
           "name": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Stored applicant name (original). Empty is null, never \"\"."
           },
           "phone": {
             "type": "string"
@@ -15762,7 +15924,11 @@
             "type": "string"
           },
           "contactName": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Stored contact name (original). Empty is null, never \"\"."
           },
           "departmentTitle": {
             "type": "string"
@@ -15865,13 +16031,24 @@
             ]
           },
           "name": {
-            "type": "string"
+            "type": "string",
+            "description": "Applicant name. Always PrivacyMaskingSupport.maskName (first character + asterisks). Full name is never returned on the list."
           },
           "phone": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Always PrivacyMaskingSupport.maskPhone. Empty is null, never \"\". List never returns plaintext. Example keeps hyphens and masks the middle four digits.",
+            "example": "010-****-9154"
           },
           "email": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Always PrivacyMaskingSupport.maskEmail (local prefix + *** + @domain). Empty is null, never \"\". List never returns plaintext.",
+            "example": "0915***@naver.com"
           },
           "appliedAt": {
             "type": [
@@ -18160,6 +18337,7 @@
       },
       "TalentApplicationDetailResponse": {
         "type": "object",
+        "description": "Admin detail is always stored original PII. Empty strings are null. List name is original while phone and email remain masked. Not the careers talent-application revealPii contract.",
         "properties": {
           "id": {
             "type": "integer",
@@ -18173,7 +18351,8 @@
             ]
           },
           "name": {
-            "type": "string"
+            "type": "string",
+            "description": "Stored applicant name (original)."
           },
           "birthDate": {
             "type": "string",
@@ -18187,10 +18366,18 @@
             ]
           },
           "phone": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Stored phone (original). Empty is null, never \"\"."
           },
           "email": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Stored email (original). Empty is null, never \"\"."
           },
           "affiliation": {
             "type": "string"
@@ -18251,21 +18438,6 @@
             "items": {
               "$ref": "#/components/schemas/ApplicationAttachmentItem"
             }
-          }
-        }
-      },
-      "TalentApplicationAttachmentDownloadResponse": {
-        "type": "object",
-        "properties": {
-          "originalName": {
-            "type": "string"
-          },
-          "downloadUrl": {
-            "type": "string"
-          },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time"
           }
         }
       },
@@ -18392,6 +18564,7 @@
       },
       "ConsultationDetailResponse": {
         "type": "object",
+        "description": "Admin detail is always stored original PII. Empty strings are null. List contactName is original while maskedContactPhone remains masked. Not the careers talent-application revealPii contract.",
         "properties": {
           "id": {
             "type": "integer",
@@ -18426,16 +18599,25 @@
             "type": "string"
           },
           "contactName": {
-            "type": "string"
+            "type": "string",
+            "description": "Stored contact name (original)."
           },
           "departmentTitle": {
             "type": "string"
           },
           "contactPhone": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Stored contact phone (original). Empty is null, never \"\"."
           },
           "consultationContent": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Stored consultation body (original). Empty is null, never \"\"."
           },
           "linkUrl": {
             "type": "string"
@@ -18456,21 +18638,6 @@
           "version": {
             "type": "integer",
             "format": "int64"
-          }
-        }
-      },
-      "AttachmentDownloadResponse": {
-        "type": "object",
-        "properties": {
-          "originalName": {
-            "type": "string"
-          },
-          "downloadUrl": {
-            "type": "string"
-          },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time"
           }
         }
       },
@@ -18875,7 +19042,11 @@
             "type": "string"
           },
           "targetName": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Stored target name (original). Empty is null, never \"\"."
           },
           "accessPurpose": {
             "type": "string"
@@ -18996,7 +19167,8 @@
               "JA_HISTORY_WORLD_TIMELINE_IMAGE",
               "JA_HISTORY_KOREA_TIMELINE_IMAGE",
               "JA_HISTORY_PHILOSOPHY_CARD_IMAGE",
-              "JA_HISTORY_LOCKED_MEDIA"
+              "JA_HISTORY_LOCKED_MEDIA",
+              "LOG_EXPORT_XLSX"
             ]
           },
           "originalName": {
@@ -19017,6 +19189,15 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "downloadKind": {
+            "type": "string"
+          },
+          "containedPiiTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -19407,6 +19588,7 @@
       },
       "CareerTalentApplicationDetailResponse": {
         "type": "object",
+        "description": "Admin detail is always stored original PII. Empty strings are null. List items remain masked.",
         "properties": {
           "id": {
             "type": "integer",
@@ -19435,25 +19617,48 @@
             ]
           },
           "name": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Stored applicant name (original). Empty is null, never \"\"."
           },
           "phone": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Stored phone (original). Empty is null, never \"\".",
+            "example": "010-1234-5678"
           },
           "email": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Stored email (original). Empty is null, never \"\".",
+            "example": "applicant@example.com"
           },
           "addressRoad": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Stored road address (original). Empty is null, never \"\"."
           },
           "addressDetail": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "description": "Stored address detail (original). Empty is null, never \"\"."
           },
           "educationLevel": {
-            "type": "string",
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Stored education level.",
             "enum": [
               "HIGH_SCHOOL",
               "COLLEGE",
@@ -19464,16 +19669,25 @@
             ]
           },
           "schoolName": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Stored school name (original). Empty is null, never \"\"."
           },
           "major": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "description": "Stored major (original). Empty is null, never \"\"."
           },
           "educationInfo": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Stored education information (original). Empty is null, never \"\"."
           },
           "careerType": {
             "type": "string",
@@ -19483,7 +19697,11 @@
             ]
           },
           "careerInfo": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Stored career information (original). Empty is null, never \"\"."
           },
           "privacyAgreed": {
             "type": "boolean"
@@ -19509,28 +19727,15 @@
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "description": "First stored attachment original name. Empty is null, never \"\"."
           },
           "attachments": {
             "type": "array",
+            "description": "Stored attachments in display order, including originalName. Empty when no attachments exist.",
             "items": {
               "$ref": "#/components/schemas/ApplicationAttachmentItem"
             }
-          }
-        }
-      },
-      "CareerTalentApplicationAttachmentDownloadResponse": {
-        "type": "object",
-        "properties": {
-          "originalName": {
-            "type": "string"
-          },
-          "downloadUrl": {
-            "type": "string"
-          },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time"
           }
         }
       },

@@ -6,6 +6,7 @@ import type { JaHistoryOrigin } from '@/entities/ja-history/model/types'
 import { useSaveJaHistoryOrigin } from '@/features/ja-history/api/hooks'
 import { showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
+import { TABLE_ROW_FILL_FIELDS_CLASS } from '@/shared/ui/table-row-fill-fields'
 import { HistoryCopy, InlineText, MediaPreview, SectionFrame, jaHistorySaveAlert } from './chrome'
 
 type IntroRow = { key: 'intro' }
@@ -107,7 +108,7 @@ export function OriginSection({ origin }: { origin: JaHistoryOrigin }) {
       <div className="ja-history-subsection">
         <h3 className="ja-history-subsection__title">■ 소개 텍스트</h3>
         <CmsDataTable<IntroRow>
-          className="cms-data-table cms-data-table--skip-auto-no-col ja-history-table"
+          className={`cms-data-table cms-data-table--skip-auto-no-col ja-history-table ${TABLE_ROW_FILL_FIELDS_CLASS}`}
           columns={introColumns}
           dataSource={[{ key: 'intro' }]}
           pagination={false}

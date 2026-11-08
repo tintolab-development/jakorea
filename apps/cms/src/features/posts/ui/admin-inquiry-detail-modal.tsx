@@ -267,7 +267,7 @@ export function AdminInquiryDetailModal({
                   setAnswerText(e.target.value)
                   if (answerError) setAnswerError(null)
                 }}
-                placeholder="내용을 입력해 주세요."
+                placeholder="내용을 입력해 주세요"
                 disabled={isAnswerRegistered}
                 error={Boolean(answerError)}
                 message={answerError ?? undefined}

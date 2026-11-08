@@ -23,7 +23,8 @@ export function BottomTextTable({ value, mode, onChange }: BottomTextTableProps)
               layout="fixed"
               inputSize="medium"
               width="100%"
-              rows={2}
+              // 줄바꿈·텍스트 길이만큼 높이가 늘고 줄어든다(hug) — 리사이즈 핸들 없음(layout fixed)
+              autoSize={{ minRows: 1 }}
               value={value}
               onChange={e => onChange(e.target.value)}
               placeholder="하단 문구를 입력해 주세요"

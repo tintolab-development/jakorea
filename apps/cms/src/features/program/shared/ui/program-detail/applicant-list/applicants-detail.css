@@ -31,36 +31,6 @@
   background-color: #fafafa !important;
 }
 
-/*
- * 교육받은 교사·1사1교 기관 목록 — 신청 학년/학급 수/총 학생 수/교사명.
- * fluid(table-layout:auto)는 width만으로는 남는 폭을 나눠 먹으므로 max-width로 헤더 폭에 고정한다.
- */
-.applicant-details .cms-data-table .ant-table-thead > tr > th.applicant-details__th-grade,
-.applicant-details .cms-data-table .ant-table-tbody > tr > td.applicant-details__td-grade {
-  width: 128px !important;
-  min-width: 128px !important;
-  max-width: 128px !important;
-  box-sizing: border-box;
-}
-
-.applicant-details .cms-data-table .ant-table-thead > tr > th.applicant-details__th-class-count,
-.applicant-details .cms-data-table .ant-table-tbody > tr > td.applicant-details__td-class-count {
-  width: 148px !important;
-  min-width: 148px !important;
-  max-width: 148px !important;
-  box-sizing: border-box;
-}
-
-.applicant-details .cms-data-table .ant-table-thead > tr > th.applicant-details__th-student-count,
-.applicant-details .cms-data-table .ant-table-tbody > tr > td.applicant-details__td-student-count,
-.applicant-details .cms-data-table .ant-table-thead > tr > th.applicant-details__th-teacher,
-.applicant-details .cms-data-table .ant-table-tbody > tr > td.applicant-details__td-teacher {
-  width: 136px !important;
-  min-width: 136px !important;
-  max-width: 136px !important;
-  box-sizing: border-box;
-}
-
 /* 교육받은 교사·1사1교 기관 목록 — 일정 한 줄이 말줄임되지 않게 열 폭을 고정 */
 .applicant-details
   .cms-data-table
@@ -72,9 +42,6 @@
   .ant-table-tbody
   > tr
   > td.applicant-details__td-sessions--schedule {
-  width: 400px !important;
-  min-width: 400px !important;
-  max-width: none !important;
   overflow: visible;
 }
 
@@ -89,9 +56,6 @@
   .ant-table-tbody
   > tr
   > td.applicant-details__td-sessions--general-detail {
-  width: 480px !important;
-  min-width: 480px !important;
-  max-width: none !important;
   overflow: visible;
 }
 
@@ -123,14 +87,12 @@
 /* 진행 희망 교육 일정 셀 — 옆 열과 겹치지 않도록 overflow clip + 최소 너비 */
 .applicant-details .ant-table-thead > tr > th.applicant-details__th-sessions,
 .applicant-details .ant-table-tbody > tr > td.applicant-details__td-sessions {
-  min-width: 360px;
   box-sizing: border-box;
   overflow: hidden;
 }
 
 .applicant-details .ant-table-thead > tr > th.applicant-details__th-sessions--general-detail,
 .applicant-details .ant-table-tbody > tr > td.applicant-details__td-sessions--general-detail {
-  min-width: 480px;
   overflow: visible;
 }
 

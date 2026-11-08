@@ -99,7 +99,7 @@
 |----|------|---------|----------------|
 | `settlement-application-seed-title` | description | survey_title_with_period |  |
 | `settlement-application-seed-table-basic` | single_item | horizontal_table | 기본 정보 |
-| `settlement-application-seed-table-calc-info` | single_item | horizontal_table | 강의비 산출 내역 |
+| `settlement-application-seed-table-calc-info` | single_item | horizontal_table | 강사비 산출 내역 |
 | `settlement-application-seed-table-transport` | single_item | horizontal_table | 교통비 신청 |
 | `settlement-application-seed-table-accommodation` | single_item | horizontal_table | 숙박비 신청 |
 
@@ -109,8 +109,8 @@
 |----|------|---------|----------------|
 | `payment-statement-seed-title` | description | survey_title_with_period |  |
 | `payment-statement-seed-table-basic` | single_item | horizontal_table | 지급조서 |
-| `payment-statement-seed-table-calc-info` | single_item | horizontal_table | 강의비 산출 정보 |
-| `payment-statement-seed-table-calc-lines` | single_item | horizontal_table | 강의비 산출 내역 |
+| `payment-statement-seed-table-calc-info` | single_item | horizontal_table | 강사비 산출 정보 |
+| `payment-statement-seed-table-calc-lines` | single_item | horizontal_table | 강사비 산출 내역 |
 | `payment-statement-seed-table-work-log` | single_item | horizontal_table | 근무일지 |
 | `payment-statement-seed-closing-date` | description | closing |  |
 | `payment-statement-seed-closing-signature` | description | closing |  |
@@ -123,10 +123,10 @@
 |----|------|---------|----------------|
 | `payment-statement-pre-consent-seed-title` | description | survey_title_with_period |  |
 | `payment-statement-pre-consent-seed-intro` | single_item | agreement_explanation_text | 개인정보 수집‧이용 및 제공 동의서 |
-| `payment-statement-pre-consent-seed-p1-collection` | single_item | horizontal_table | 개인정보 수집·이용 |
-| `payment-statement-pre-consent-seed-p2-rrn-collection` | single_item | horizontal_table | 고유식별번호(주민등록번호) 수집·이용 |
-| `payment-statement-pre-consent-seed-p3-third-party` | single_item | horizontal_table | 개인정보 제3자 제공·이용 |
-| `payment-statement-pre-consent-seed-p4-rrn-third-party` | single_item | horizontal_table | 고유식별번호 제3자 제공·이용 |
+| `payment-statement-pre-consent-seed-p1-collection` | single_item | horizontal_table | 개인정보 수집‧이용 |
+| `payment-statement-pre-consent-seed-p2-rrn-collection` | single_item | horizontal_table | 고유식별번호(주민등록번호) 수집‧이용 (법령에 따른 수집) |
+| `payment-statement-pre-consent-seed-p3-third-party` | single_item | horizontal_table | 개인정보 제3자 제공‧이용 |
+| `payment-statement-pre-consent-seed-p4-rrn-third-party` | single_item | horizontal_table | 고유식별번호 제3자 제공·이용 (법령에 따른 제공) |
 | `payment-statement-pre-consent-seed-mid-consent-line` | single_item | agreement_explanation_text |  |
 | `payment-statement-pre-consent-seed-mid-date` | description | system | 날짜 유형 |
 | `payment-statement-pre-consent-seed-mid-signature` | description | system | 서명란 유형 |

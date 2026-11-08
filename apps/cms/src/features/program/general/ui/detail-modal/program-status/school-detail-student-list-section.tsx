@@ -1497,6 +1497,7 @@ export function SchoolDetailStudentListSection({
         description={`총 ${displayCount}건`}
         actions={studentListToolbarActions}
         excelExport={{
+          accessLog: { downloadKind: 'PROGRAM_STUDENT_LIST_EXPORT', containedPiiTypes: ['NAME'] },
           columns: studentColumnsView,
           data: excelStudentList,
           selectedRowKeys: selectedStudentKeys,

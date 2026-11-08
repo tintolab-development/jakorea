@@ -59,6 +59,7 @@ import {
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import '@/features/template/ui/form-editor/form-editor.css'
 import './volunteer-info-program.css'
+import { RecruitmentLifecycleStatusText } from '@/features/program/shared/ui/recruitment-lifecycle-status-text'
 
 function LifecycleStatusView({
   lifecycle,
@@ -69,11 +70,10 @@ function LifecycleStatusView({
 }) {
   if (!lifecycle) return <>-</>
   return (
-    <span
-      className={`program-detail-info-tab__lifecycle-status-text program-detail-info-tab__lifecycle-status-text--${lifecycle.replace(/_/g, '-')}`}
-    >
-      {getRecruitmentStatusLabelForStatus(status, 'volunteer')}
-    </span>
+    <RecruitmentLifecycleStatusText
+      status={lifecycle}
+      label={getRecruitmentStatusLabelForStatus(status, 'volunteer')}
+    />
   )
 }
 

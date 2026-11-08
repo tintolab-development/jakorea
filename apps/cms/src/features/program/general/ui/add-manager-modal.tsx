@@ -26,7 +26,7 @@ import {
 import type { AssignableManagerCandidate } from '@/features/program/general/hooks/use-program-managers'
 import './add-manager-modal.css'
 
-/** Form.Item 연동 + 좌측 돋보기(표시만, showSearch 미사용) */
+/** Form.Item 연동 + 좌측 돋보기 — 키워드는 서버 검색(onSearch), 로컬 필터 미사용 */
 const ManagerPresetSelect = forwardRef<RefSelectProps, CmsSelectProps>(
   function ManagerPresetSelect(props, ref) {
     return (
@@ -71,6 +71,8 @@ interface AddManagerModalProps {
   /** remote 후보 목록 — 미지정 시 mock 후보 사용 */
   candidates?: AssignableManagerCandidate[]
   candidatesLoading?: boolean
+  /** 담당자 키워드 입력 — GET /admin-accounts?keyword=… 서버 검색 트리거 */
+  onCandidateSearch?: (keyword: string) => void
   confirmLoading?: boolean
   afterOpenChange?: (open: boolean) => void
   /** false 반환 시 모달을 닫지 않음 (API 실패 등) */
@@ -84,6 +86,7 @@ export function AddManagerModal({
   excludeManagerNames: _excludeManagerNames = [],
   candidates,
   candidatesLoading = false,
+  onCandidateSearch,
   confirmLoading = false,
   afterOpenChange,
   onAdd,
@@ -97,15 +100,32 @@ export function AddManagerModal({
     if (!selectedRole) return pool
     return pool.filter(m => canAssignProgramRoleToCmsAdmin(m.cmsRoleCode, selectedRole))
   }, [candidates, selectedRole])
-  const managerSelectOptions = useMemo(
-    () =>
-      assignablePool.map(m => ({
-        value: m.id,
-        label: m.name,
-      })),
-    [assignablePool]
-  )
   const selectedManagerId = Form.useWatch('managerPreset', form)
+  /** 검색 키워드가 바뀌어 후보 목록이 갱신돼도 선택한 담당자를 유지한다. */
+  const [pickedCandidate, setPickedCandidate] = useState<AssignableManagerCandidate | null>(null)
+  const selectedCandidate = useMemo((): AssignableManagerCandidate | null => {
+    if (!selectedManagerId) return null
+    const fromPool = assignablePool.find(m => m.id === selectedManagerId)
+    if (fromPool) return fromPool
+    if (pickedCandidate?.id !== selectedManagerId) return null
+    if (
+      selectedRole &&
+      !canAssignProgramRoleToCmsAdmin(pickedCandidate.cmsRoleCode, selectedRole)
+    ) {
+      return null
+    }
+    return pickedCandidate
+  }, [assignablePool, pickedCandidate, selectedManagerId, selectedRole])
+  const managerSelectOptions = useMemo(() => {
+    const options = assignablePool.map(m => ({
+      value: m.id,
+      label: m.name,
+    }))
+    if (selectedCandidate && !assignablePool.some(m => m.id === selectedCandidate.id)) {
+      options.unshift({ value: selectedCandidate.id, label: selectedCandidate.name })
+    }
+    return options
+  }, [assignablePool, selectedCandidate])
 
   useEffect(() => {
     if (!open) return
@@ -120,13 +140,16 @@ export function AddManagerModal({
   }, [open])
 
   useEffect(() => {
-    if (!open || !selectedManagerId) return
-    if (assignablePool.some(m => m.id === selectedManagerId)) return
+    if (!open || !selectedManagerId || selectedCandidate) return
     form.setFieldsValue({ managerPreset: undefined })
-  }, [assignablePool, form, open, selectedManagerId])
+  }, [form, open, selectedCandidate, selectedManagerId])
+
+  const handleManagerSelect = (value: unknown) => {
+    setPickedCandidate(assignablePool.find(m => m.id === String(value)) ?? null)
+  }
 
   const handleSubmit = async (values: AddManagerModalFormValues) => {
-    const picked = assignablePool.find(m => m.id === values.managerPreset)
+    const picked = selectedCandidate?.id === values.managerPreset ? selectedCandidate : null
     if (!picked) return
 
     if (values.role === 'OWNER' && !ownerSlotAvailable) {
@@ -155,11 +178,13 @@ export function AddManagerModal({
     })
     if (result === false) return
     form.resetFields()
+    setPickedCandidate(null)
     onCancel()
   }
 
   const handleCancel = () => {
     form.resetFields()
+    setPickedCandidate(null)
     onCancel()
   }
 
@@ -172,7 +197,8 @@ export function AddManagerModal({
         variant="primary"
         size="large"
         loading={confirmLoading}
-        onClick={() => form.submit()} >
+        onClick={() => form.submit()}
+      >
         추가 등록
       </CmsButton>
     </>
@@ -232,7 +258,10 @@ export function AddManagerModal({
                 placeholder="추가 등록할 담당자를 선택해 주세요"
                 width="100%"
                 withAllOption={false}
-                optionFilterProp="label"
+                showSearch
+                filterOption={false}
+                onSearch={onCandidateSearch}
+                onSelect={handleManagerSelect}
                 loading={candidatesLoading}
                 options={managerSelectOptions}
                 notFoundContent={

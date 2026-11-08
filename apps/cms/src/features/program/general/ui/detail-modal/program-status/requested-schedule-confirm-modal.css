@@ -1,0 +1,56 @@
+.requested-schedule-confirm {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 16px;
+}
+
+.requested-schedule-confirm__message {
+  margin: 0;
+  color: #3d3d3d;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.requested-schedule-confirm__message strong {
+  font-weight: 700;
+}
+
+.requested-schedule-confirm__hint {
+  margin: 0;
+  color: #767676;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  word-break: keep-all;
+}
+
+.requested-schedule-confirm__list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.requested-schedule-confirm__label {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.requested-schedule-confirm__note {
+  color: #767676;
+  font-size: 13px;
+}
+
+.requested-schedule-confirm__footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}

@@ -11,10 +11,9 @@
 .user-detail-admin-comment-section__text {
   width: 100%;
   box-sizing: border-box;
-  min-height: 64px;
-  padding: 20px 24px;
+  padding: 16px 20px;
   margin: 0;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
   line-height: 150%;
   color: var(--default-BK, #3d3d3d);
@@ -23,5 +22,5 @@
 }
 
 .user-detail-admin-comment-section__text--empty {
-  color: var(--color-text-secondary, #8c8c8c);
+  color: rgba(61, 61, 61, 0.5);
 }

@@ -2,7 +2,8 @@ import type { AdminPostsPendingDateRange } from '@/features/posts/lib/url-date-r
 import type { PostsCategoryRow } from '@/features/posts/model/posts-category-row'
 
 /** 공지사항 관리 목록 — 필터 카드·URL 동기화용 */
-export type AdminNoticeVisibilityFilter = 'public' | 'private'
+/** 'ALL' = 공개·비공개 모두 (시안 기본값) */
+export type AdminNoticeVisibilityFilter = 'ALL' | 'public' | 'private'
 
 /** 동적 카테고리 라벨(URL `an_cat`·필터 select와 동기화) */
 export type AdminNoticeCategoryFilter = 'ALL' | string

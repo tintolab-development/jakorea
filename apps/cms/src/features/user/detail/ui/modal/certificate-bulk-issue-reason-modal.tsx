@@ -71,7 +71,7 @@ export function CertificateBulkIssueReasonModal({
       open={open}
       onCancel={onCancel}
       title={`${certificateDocumentLabel} 발급 사유`}
-      description={`${certificateDocumentLabel} 발급 사유를 선택해 주세요.\n선택한 사유는 발급 문서에 기입됩니다.`}
+      description={`${certificateDocumentLabel}의 발급 사유를 선택해 주세요.\n선택한 사유는 발급 문서에 기입됩니다.`}
       width={600}
       footer={
         <>
@@ -89,7 +89,7 @@ export function CertificateBulkIssueReasonModal({
           className="certificate-bulk-issue-reason-modal__label"
           id="certificate-issue-reason-label"
         >
-          발급 사유{' '}
+          발급 사유
           <span className="certificate-bulk-issue-reason-modal__required" aria-hidden>
             *
           </span>

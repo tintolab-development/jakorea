@@ -4,6 +4,17 @@
  * cms-data-table 행 높이·패딩을 덮을 때 filter-table-layout 체인으로 재확정한다.
  * (후원사 상세: sponsor-detail-full-page-modal.css 와 동일 의도)
  */
+
+/**
+ * 본문 하단 52px 보장 — 공통 `__content`·`__content-actions-wrapper`가 `flex: 1 1 0`(min-height 0)이면
+ * 뷰포트 높이에 묶여 긴 내용(약관 및 동의 등)이 패딩 밖으로 넘쳐 하단 여백이 0이 된다.
+ * 세로 스크롤은 `__main` 한 곳에서만(정산 캘린더도 --no-inner-scroll) — Gemini·UJAT 상세와 동일.
+ */
+.detail-fullpage-modal.user-detail-fullpage-modal .detail-fullpage-modal__content,
+.detail-fullpage-modal.user-detail-fullpage-modal .detail-fullpage-modal__content-actions-wrapper {
+  flex: 1 0 auto;
+  min-height: auto;
+}
 .detail-fullpage-modal.user-detail-fullpage-modal
   .user-detail-fullpage-modal__programs
   .filter-table-layout__table

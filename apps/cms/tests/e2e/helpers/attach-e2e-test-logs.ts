@@ -1,3 +1,4 @@
+import { metadataOnlyLogging, safeHttpMethod, attachHttpMetadata } from './metadata-only-logging'
 /**
  * Playwright — E2E 테스트 진행·API payload를 DEV Mock 스토어에 기록
  *
@@ -136,6 +137,11 @@ export function installApiCallCapture(page: Page): {
     // GET 은 지표만 — body는 mutation·에러만 저장
     const shouldCaptureBody = isMutation || status >= 400
 
+    if (metadataOnlyLogging()) {
+      calls.push({ occurredAt: new Date().toISOString(), method: safeHttpMethod(method), url: 'api', httpStatus: status, isMutation, isError: status >= 400, ...(status >= 400 ? { errorCode: `HTTP_${status}` } : {}) })
+      return
+    }
+
     const task = (async () => {
       let requestPayload: string | undefined
       let responsePreview: string | undefined
@@ -228,6 +234,7 @@ export async function recordE2eTestLogNotes(args: {
   file?: string
   notes: E2eTestLogNoteInput[]
 }): Promise<void> {
+  if (metadataOnlyLogging()) return
   const { page, title, notes } = args
   if (notes.length === 0) return
 
@@ -267,6 +274,10 @@ export async function dumpE2eTestLogs(args: {
   startedAtIso: string
 }) {
   const { testInfo, calls, startedAtIso } = args
+  if (metadataOnlyLogging()) {
+    await attachHttpMetadata(testInfo, 'calls', calls)
+    return
+  }
   const title = testInfo.titlePath.join(' › ')
   const titlePath = [...testInfo.titlePath]
   const project = testInfo.project.name

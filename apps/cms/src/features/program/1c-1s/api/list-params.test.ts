@@ -1,16 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import {
-  COMPANY_SCHOOL_SCHEDULED_PERIOD_STATUSES,
   companySchoolListParams,
   companySchoolListParamsFromOverviewStatus,
 } from './list-params'
 import { COMPANY_SCHOOL_PROGRAM_API_TYPE } from './adapters'
 
 describe('companySchoolListParamsFromOverviewStatus', () => {
-  it('maps scheduled to SCHEDULED∪RECRUITING (same set as overview card)', () => {
+  it('maps scheduled to a single SCHEDULED periodStatus (BE aliases legacy RECRUITING to the same bucket)', () => {
     expect(companySchoolListParamsFromOverviewStatus('scheduled', { title: ' ONE ' })).toEqual({
       keyword: 'ONE',
-      periodStatuses: [...COMPANY_SCHOOL_SCHEDULED_PERIOD_STATUSES],
+      periodStatus: 'SCHEDULED',
       businessYear: undefined,
     })
   })

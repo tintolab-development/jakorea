@@ -172,7 +172,7 @@
 .calendar-main-container {
   width: 100%;
   min-width: var(--calendar-main-month-min-width, calc(116px * 7 + 42px));
-  min-height: var(--calendar-main-month-min-height, calc(124px * 6 + 37px + 50px + 32px));
+  min-height: var(--calendar-main-month-min-height, calc(124px * 6 + 29px + 50px + 32px));
   box-sizing: border-box;
 }
 

@@ -87,6 +87,7 @@ export function UjatInstitutionScheduleConfirmList({
         excelExport={
           canWrite
             ? {
+                accessLog: { downloadKind: 'PROGRAM_INSTITUTION_SCHEDULE_CONFIRM_EXPORT', containedPiiTypes: ['NAME'] },
                 columns,
                 data: tableData,
               }

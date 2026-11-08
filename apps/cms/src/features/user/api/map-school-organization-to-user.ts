@@ -75,6 +75,8 @@ export function mapSchoolOrganizationToUser(
       schoolName,
       address,
       ...(addressDetail ? { addressDetail } : {}),
+      ...(item.regionSido?.trim() ? { regionSido: item.regionSido.trim() } : {}),
+      ...(item.regionSigungu?.trim() ? { regionSigungu: item.regionSigungu.trim() } : {}),
     },
     ...(item.zipcode?.trim() ? { zipCode: item.zipcode.trim() } : {}),
     ...(Object.keys(listMetrics).length > 0 ? { listMetrics } : {}),

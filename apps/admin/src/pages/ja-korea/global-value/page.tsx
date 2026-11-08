@@ -178,7 +178,8 @@ export function GlobalValuePage() {
                 inputSize="medium"
                 width="100%"
                 layout="fixed"
-                autoSize={{ minRows: 1, maxRows: 2 }}
+                // 줄바꿈만큼 늘어남(hug, 상한 없음) — 같은 행 다른 칸은 표 공통 fill로 높이 맞춤
+                autoSize={{ minRows: 1 }}
                 value={value}
                 onChange={e => handleDraftChange(record.id, 'mainText', e.target.value)}
                 placeholder="메인 텍스트를 입력해 주세요"
@@ -205,7 +206,8 @@ export function GlobalValuePage() {
                 inputSize="medium"
                 width="100%"
                 layout="fixed"
-                autoSize={{ minRows: 1, maxRows: 2 }}
+                // 줄바꿈만큼 늘어남(hug, 상한 없음) — 같은 행 다른 칸은 표 공통 fill로 높이 맞춤
+                autoSize={{ minRows: 1 }}
                 value={value}
                 onChange={e => handleDraftChange(record.id, 'subText', e.target.value)}
                 placeholder="서브 텍스트를 입력해 주세요"

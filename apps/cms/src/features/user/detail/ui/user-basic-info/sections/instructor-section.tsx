@@ -35,7 +35,7 @@ import {
   canEditInstructorFeeJaFields,
   InstructorFeeGradeSelect,
 } from './instructor-fee-ja-edit'
-import { formatDate } from '@/shared/utils'
+import { formatDateDot } from '@/shared/utils'
 import { CmsInput, CmsRadioGroup, CmsCheckbox } from '@/shared/ui'
 import { CmsDateTextInput } from '@/shared/ui/date-text-input'
 import { toApiGender } from '@/features/user/api/map-member-gender-birth'
@@ -154,7 +154,7 @@ export function InstructorMetaSection(ctx: BasicInfoSectionContext) {
         <EditableField
           label="가입일"
           readOnlyDisplay
-          view={<span>{formatDate(user.createdAt)}</span>}
+          view={<span>{formatDateDot(user.createdAt)}</span>}
         />
         <EditableField
           label="연동된 소셜 계정"
@@ -300,13 +300,24 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
       )}
 
       {isInstructorDualProfile(user) ? (
-        <>
-          <EditableRow type="double">
-            <EditableField
-              label="소속"
-              readOnlyDisplay={editing.isReadOnlyDisplay}
-              view={<InstructorAffiliationView user={user} />}
-              edit={
+        /* 교사 겸 강사 시안(4427:48874): 「소속(학교명 | 재직 현황 태그) | 강사 경력」 한 행 */
+        <EditableRow type="double">
+          <EditableField
+            label="소속"
+            readOnlyDisplay={editing.isReadOnlyDisplay}
+            view={
+              <span className="detail-info-form-inputs-wrapper-no-gap">
+                <InstructorAffiliationView user={user} />
+                <DetailInfoForm.InputsSeparator />
+                <SchoolTeacherEmploymentStatusDropdown
+                  userId={user.id}
+                  employmentStatusLabel={user.listMetrics?.employmentStatusLabel}
+                  onChange={ctx.onEmploymentStatusChange}
+                />
+              </span>
+            }
+            edit={
+              <span className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsInput
                   value={d?.affiliationInstitution ?? ''}
                   onChange={e =>
@@ -317,48 +328,33 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
                   placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.affiliationName}
                   aria-label="소속"
                 />
-              }
-            />
-            <EditableField
-              label="재직 현황"
-              readOnlyDisplay={editing.isReadOnlyDisplay}
-              view={
+                <DetailInfoForm.InputsSeparator />
                 <SchoolTeacherEmploymentStatusDropdown
                   userId={user.id}
                   employmentStatusLabel={user.listMetrics?.employmentStatusLabel}
                   onChange={ctx.onEmploymentStatusChange}
                 />
-              }
-              edit={
-                <SchoolTeacherEmploymentStatusDropdown
-                  userId={user.id}
-                  employmentStatusLabel={user.listMetrics?.employmentStatusLabel}
-                  onChange={ctx.onEmploymentStatusChange}
-                />
-              }
-            />
-          </EditableRow>
-          <EditableRow type="single">
-            <EditableField
-              label="강사 경력"
-              fullRow
-              readOnlyDisplay={editing.isReadOnlyDisplay}
-              view={<span>{instructorCareerYearsLine(user)}</span>}
-              edit={
-                <CmsInput
-                  value={d?.instructorCareerSummaryLabel ?? ''}
-                  onChange={e =>
-                    onMemberInfoDraftChange?.({ instructorCareerSummaryLabel: e.target.value })
-                  }
-                  inputSize="small"
-                  width="100%"
-                  placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.instructorCareer}
-                  aria-label="강사 경력"
-                />
-              }
-            />
-          </EditableRow>
-        </>
+              </span>
+            }
+          />
+          <EditableField
+            label="강사 경력"
+            readOnlyDisplay={editing.isReadOnlyDisplay}
+            view={<span>{instructorCareerYearsLine(user)}</span>}
+            edit={
+              <CmsInput
+                value={d?.instructorCareerSummaryLabel ?? ''}
+                onChange={e =>
+                  onMemberInfoDraftChange?.({ instructorCareerSummaryLabel: e.target.value })
+                }
+                inputSize="small"
+                width="100%"
+                placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.instructorCareer}
+                aria-label="강사 경력"
+              />
+            }
+          />
+        </EditableRow>
       ) : (
         <EditableRow type="double">
           <EditableField
@@ -440,7 +436,9 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
         <EditableRow type="single">{businessIncomeField}</EditableRow>
       ) : (
         <EditableRow type="double">
-          {!isInstructorPermissionDetail ? (
+          {/* 시안: 권한 신청 상세는 승인 완료 후 「강사비 등급 | 사업소득자 여부」 */}
+          {!isInstructorPermissionDetail ||
+          normalizePermissionApprovalStatus(user.permissionApprovalStatus) === 'APPROVED' ? (
             <EditableField
               label="강사비 등급"
               readOnlyDisplay={!canEditFeeJa}

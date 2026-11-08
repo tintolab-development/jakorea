@@ -1,54 +1,23 @@
 /* GNB 메뉴 관리 */
 
-.gnb-menu-form-card.admin-list-card {
-  flex: 1 1 auto;
+/* 대메뉴별 섹션 카드 — 카드 간격 32 (시안 36:59834) · 화면 전체 스크롤 */
+.gnb-menu-sections {
   display: flex;
   flex-direction: column;
-  min-height: 0;
-  height: 100%;
+  gap: 32px;
+  min-width: 0;
+}
+
+.gnb-menu-form-card.admin-list-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
   margin-bottom: 0;
 }
 
 .gnb-menu-form-card .admin-list-toolbar {
   flex-shrink: 0;
   align-items: center;
-}
-
-.gnb-menu-form-card__body {
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
-  flex: 1 1 auto;
-  min-width: 0;
-  min-height: 0;
-  overflow: auto;
-}
-
-.gnb-menu-form-section {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  min-width: 0;
-}
-
-.gnb-menu-form-section-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.gnb-menu-form-section-title__marker {
-  color: var(--main-BK, #3d3d3d);
-  font-size: 14px;
-  line-height: 1;
-}
-
-.gnb-menu-form-section-title__text {
-  color: var(--main-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 150%;
 }
 
 /* cms-data-table 공통 규격 + 셀 가운데 정렬 */

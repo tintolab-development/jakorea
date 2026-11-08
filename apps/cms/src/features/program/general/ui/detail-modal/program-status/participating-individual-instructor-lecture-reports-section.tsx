@@ -150,6 +150,7 @@ export function ParticipatingIndividualInstructorLectureReportsSection({
   }, [previewQuery.error, showAlert])
 
   const { exportExcel, isExporting: isExcelExporting } = useTableExcelExport({
+    accessLog: { downloadKind: 'PROGRAM_LECTURE_REPORT_EXPORT', containedPiiTypes: ['NAME'] },
     columns: excelColumns,
     data: rows,
     filename: `강의보고서_제출현황_${instructor.instructorName}`,
