@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
+import { nextSearchParamsIfChanged } from '@/shared/lib/search-params-diff'
+import { useNavigateToAncestor } from '@/shared/hooks/use-history-ancestor-navigation'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
 import { sanitizeProgramPrivacyOverlay } from '@/features/program/shared/lib/program-my-assignment'
@@ -164,7 +166,7 @@ export function GeminiApprovedTrainingDetailFullPageModal({
 
   const setActiveLnb = useCallback(
     (lnb: GeminiApprovedTrainingDetailLnbKey) => {
-      setSearchParams(
+      const nextParams = nextSearchParamsIfChanged(
         prev => {
           const next = new URLSearchParams(prev)
           if (lnb === 'info') {
@@ -174,9 +176,10 @@ export function GeminiApprovedTrainingDetailFullPageModal({
           }
           next.delete(GEMINI_APPROVED_INSTRUCTOR_APPLICATION_ID_PARAM)
           return next
-        },
-        { replace: true }
+        }
       )
+      // LNB = 브레드크럼 단계 → push (같은 메뉴 재선택은 엔트리를 만들지 않음)
+      if (nextParams) setSearchParams(nextParams, { replace: false })
     },
     [setSearchParams]
   )
@@ -190,20 +193,24 @@ export function GeminiApprovedTrainingDetailFullPageModal({
     [setActiveLnb]
   )
 
+  const { toSearch: navigateToAncestorSearch } = useNavigateToAncestor()
+
+  /** 강사 신청 상세 닫기 — 지나온 강사 목록 엔트리로 뒤로, 없으면 replace */
+  const closeInstructorApplicationDetail = useCallback(() => {
+    navigateToAncestorSearch(prev => {
+      const next = new URLSearchParams(prev)
+      next.delete(GEMINI_APPROVED_INSTRUCTOR_APPLICATION_ID_PARAM)
+      return next
+    })
+  }, [navigateToAncestorSearch])
+
   const handleHeaderClose = useCallback(() => {
     if (selectedInstructorApplicationId) {
-      setSearchParams(
-        prev => {
-          const next = new URLSearchParams(prev)
-          next.delete(GEMINI_APPROVED_INSTRUCTOR_APPLICATION_ID_PARAM)
-          return next
-        },
-        { replace: true }
-      )
+      closeInstructorApplicationDetail()
       return
     }
     onClose()
-  }, [onClose, selectedInstructorApplicationId, setSearchParams])
+  }, [closeInstructorApplicationDetail, onClose, selectedInstructorApplicationId])
 
   const handleDeleteClick = useCallback(() => {
     setDeleteModalOpen(true)
@@ -322,16 +329,7 @@ export function GeminiApprovedTrainingDetailFullPageModal({
                   { replace: false }
                 )
               }}
-              onCloseApplicationDetail={() => {
-                setSearchParams(
-                  prev => {
-                    const next = new URLSearchParams(prev)
-                    next.delete(GEMINI_APPROVED_INSTRUCTOR_APPLICATION_ID_PARAM)
-                    return next
-                  },
-                  { replace: true }
-                )
-              }}
+              onCloseApplicationDetail={closeInstructorApplicationDetail}
             />
           ) : detail.programId ? (
             <div className="program-detail-fullpage-modal__info-tab program-detail-fullpage-modal__managers-tab">

@@ -6,6 +6,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useSearchParams, type SetURLSearchParams } from 'react-router-dom'
+import { useNavigateToAncestor } from '@/shared/hooks/use-history-ancestor-navigation'
+import { nextSearchParamsIfChanged } from '@/shared/lib/search-params-diff'
+import { clearSponsorDetailQueryStack } from '@/features/sponsor/lib/sponsor-detail-query-stack'
 import { tryNavigateMemberDetailReturn } from '@/features/user/detail/lib/member-detail-program-navigation-return'
 import { Spin, Typography } from 'antd'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
@@ -938,18 +941,21 @@ export function GeneralProgramDetailFullPageModal({
 
   const isClosingRef = useRef(false)
 
-  const applyDetailSearchParams = useCallback(
-    (next: URLSearchParams, options?: { replace?: boolean }) => {
+  const { toSearch: navigateToDetailAncestor } = useNavigateToAncestor()
+
+  /**
+   * 브레드크럼 상위 이동·중첩 상세 닫기 — 지나온 history 엔트리면 뒤로, 아니면 replace.
+   * push 하지 않아 브라우저 뒤로가기와 브레드크럼 단계가 어긋나지 않는다.
+   */
+  const closeDetailLevel = useCallback(
+    (recipe: (prev: URLSearchParams) => URLSearchParams) => {
       if (isClosingRef.current) return
-      setSearchParams(
-        prev => {
-          if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
-          return next
-        },
-        { replace: options?.replace ?? true }
-      )
+      navigateToDetailAncestor(current => {
+        if (!shouldPatchGeneralProgramDetailUrl(current)) return current
+        return recipe(current)
+      })
     },
-    [setSearchParams]
+    [navigateToDetailAncestor]
   )
 
   const [isInfoEditing, setIsInfoEditing] = useState(false)
@@ -1625,15 +1631,15 @@ export function GeneralProgramDetailFullPageModal({
     }
     // 부모 onClose와 별도로 상세 쿼리를 즉시 제거 — applySearch 등 클로저 레이스로
     // programId가 남는 경우에도 모달이 닫히도록 한다.
-    setSearchParams(
-      prev => {
-        if (!prev.get('programId')) return prev
-        return clearGeneralProgramDetailQueryParams(new URLSearchParams(prev))
-      },
-      { replace: true }
-    )
+    // 목록 엔트리가 history에 있으면 그 엔트리로 되돌아가 상세 엔트리를 앞쪽에 남기지 않는다.
+    navigateToDetailAncestor(prev => {
+      if (!prev.get('programId')) return prev
+      return clearGeneralProgramDetailQueryParams(
+        clearSponsorDetailQueryStack(new URLSearchParams(prev))
+      )
+    })
     onClose()
-  }, [navigate, onClose, setSearchParams])
+  }, [navigate, navigateToDetailAncestor, onClose])
 
   const recruitmentPreviewAudienceFromUrl = useMemo(
     () => readOpenRecruitmentPreviewAudience(routerSearchParams),
@@ -1754,128 +1760,140 @@ export function GeneralProgramDetailFullPageModal({
 
   const setSchoolId = useCallback(
     (id: string | null) => {
-      setSearchParams(
-        prev => {
-          if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
-          const next = new URLSearchParams(prev)
-          if (id) {
-            next.set(SCHOOL_ID_PARAM, id)
-            next.set(SCHOOL_TAB_PARAM, 'application')
-            next.delete(INSTRUCTOR_ID_PARAM)
-            next.delete(INSTRUCTOR_TAB_PARAM)
-            next.delete(VOLUNTEER_ID_PARAM)
-            next.delete(VOLUNTEER_TAB_PARAM)
-            next.delete(PARTICIPANT_ID_PARAM)
-            next.delete(PARTICIPANT_TAB_PARAM)
-          } else {
-            next.delete(SCHOOL_ID_PARAM)
-            next.delete(SCHOOL_TAB_PARAM)
-          }
-          preserveGeneralProgramDetailProgramId(prev, next)
-          return next
-        },
-        { replace: id == null }
-      )
+      const recipe = (prev: URLSearchParams): URLSearchParams => {
+        if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
+        const next = new URLSearchParams(prev)
+        if (id) {
+          next.set(SCHOOL_ID_PARAM, id)
+          next.set(SCHOOL_TAB_PARAM, 'application')
+          next.delete(INSTRUCTOR_ID_PARAM)
+          next.delete(INSTRUCTOR_TAB_PARAM)
+          next.delete(VOLUNTEER_ID_PARAM)
+          next.delete(VOLUNTEER_TAB_PARAM)
+          next.delete(PARTICIPANT_ID_PARAM)
+          next.delete(PARTICIPANT_TAB_PARAM)
+        } else {
+          next.delete(SCHOOL_ID_PARAM)
+          next.delete(SCHOOL_TAB_PARAM)
+        }
+        preserveGeneralProgramDetailProgramId(prev, next)
+        return next
+      }
+      // 여는 단계는 push, 닫는 단계는 지나온 엔트리로 뒤로(없으면 replace)
+      if (id == null) {
+        closeDetailLevel(recipe)
+        return
+      }
+      setSearchParams(recipe, { replace: false })
     },
-    [setSearchParams]
+    [closeDetailLevel, setSearchParams]
   )
 
   const setInstructorId = useCallback(
     (id: string | null) => {
-      setSearchParams(
-        prev => {
-          if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
-          const next = new URLSearchParams(prev)
-          if (id) {
-            const prevId = prev.get(INSTRUCTOR_ID_PARAM)
-            next.set(INSTRUCTOR_ID_PARAM, id)
-            // 동일 강사 재진입 시 중첩 탭(instructorTab)을 application으로 덮어쓰지 않음
-            if (prevId !== id) {
-              next.set(INSTRUCTOR_TAB_PARAM, 'application')
-            } else if (!prev.get(INSTRUCTOR_TAB_PARAM)) {
-              next.set(INSTRUCTOR_TAB_PARAM, 'application')
-            }
-            next.delete(SCHOOL_ID_PARAM)
-            next.delete(SCHOOL_TAB_PARAM)
-            next.delete(VOLUNTEER_ID_PARAM)
-            next.delete(VOLUNTEER_TAB_PARAM)
-            next.delete(PARTICIPANT_ID_PARAM)
-            next.delete(PARTICIPANT_TAB_PARAM)
-          } else {
-            next.delete(INSTRUCTOR_ID_PARAM)
-            next.delete(INSTRUCTOR_TAB_PARAM)
+      const recipe = (prev: URLSearchParams): URLSearchParams => {
+        if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
+        const next = new URLSearchParams(prev)
+        if (id) {
+          const prevId = prev.get(INSTRUCTOR_ID_PARAM)
+          next.set(INSTRUCTOR_ID_PARAM, id)
+          // 동일 강사 재진입 시 중첩 탭(instructorTab)을 application으로 덮어쓰지 않음
+          if (prevId !== id) {
+            next.set(INSTRUCTOR_TAB_PARAM, 'application')
+          } else if (!prev.get(INSTRUCTOR_TAB_PARAM)) {
+            next.set(INSTRUCTOR_TAB_PARAM, 'application')
           }
-          preserveGeneralProgramDetailProgramId(prev, next)
-          return next
-        },
-        { replace: id == null }
-      )
+          next.delete(SCHOOL_ID_PARAM)
+          next.delete(SCHOOL_TAB_PARAM)
+          next.delete(VOLUNTEER_ID_PARAM)
+          next.delete(VOLUNTEER_TAB_PARAM)
+          next.delete(PARTICIPANT_ID_PARAM)
+          next.delete(PARTICIPANT_TAB_PARAM)
+        } else {
+          next.delete(INSTRUCTOR_ID_PARAM)
+          next.delete(INSTRUCTOR_TAB_PARAM)
+        }
+        preserveGeneralProgramDetailProgramId(prev, next)
+        return next
+      }
+      // 여는 단계는 push, 닫는 단계는 지나온 엔트리로 뒤로(없으면 replace)
+      if (id == null) {
+        closeDetailLevel(recipe)
+        return
+      }
+      setSearchParams(recipe, { replace: false })
     },
-    [setSearchParams]
+    [closeDetailLevel, setSearchParams]
   )
 
   const setVolunteerId = useCallback(
     (id: string | null) => {
-      setSearchParams(
-        prev => {
-          if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
-          const next = new URLSearchParams(prev)
-          if (id) {
-            const prevId = prev.get(VOLUNTEER_ID_PARAM)
-            next.set(LNB_PARAM, 'progress')
-            next.set(TAB_PARAM, 'progress_volunteers')
-            next.set(VOLUNTEER_ID_PARAM, id)
-            // 동일 봉사자 재진입 시 중첩 탭(volunteerTab)을 application으로 덮어쓰지 않음
-            if (prevId !== id) {
-              next.set(VOLUNTEER_TAB_PARAM, 'application')
-            } else if (!prev.get(VOLUNTEER_TAB_PARAM)) {
-              next.set(VOLUNTEER_TAB_PARAM, 'application')
-            }
-            next.delete(SCHOOL_ID_PARAM)
-            next.delete(SCHOOL_TAB_PARAM)
-            next.delete(INSTRUCTOR_ID_PARAM)
-            next.delete(INSTRUCTOR_TAB_PARAM)
-            next.delete(PARTICIPANT_ID_PARAM)
-            next.delete(PARTICIPANT_TAB_PARAM)
-          } else {
-            next.delete(VOLUNTEER_ID_PARAM)
-            next.delete(VOLUNTEER_TAB_PARAM)
+      const recipe = (prev: URLSearchParams): URLSearchParams => {
+        if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
+        const next = new URLSearchParams(prev)
+        if (id) {
+          const prevId = prev.get(VOLUNTEER_ID_PARAM)
+          next.set(LNB_PARAM, 'progress')
+          next.set(TAB_PARAM, 'progress_volunteers')
+          next.set(VOLUNTEER_ID_PARAM, id)
+          // 동일 봉사자 재진입 시 중첩 탭(volunteerTab)을 application으로 덮어쓰지 않음
+          if (prevId !== id) {
+            next.set(VOLUNTEER_TAB_PARAM, 'application')
+          } else if (!prev.get(VOLUNTEER_TAB_PARAM)) {
+            next.set(VOLUNTEER_TAB_PARAM, 'application')
           }
-          preserveGeneralProgramDetailProgramId(prev, next)
-          return next
-        },
-        { replace: id == null }
-      )
+          next.delete(SCHOOL_ID_PARAM)
+          next.delete(SCHOOL_TAB_PARAM)
+          next.delete(INSTRUCTOR_ID_PARAM)
+          next.delete(INSTRUCTOR_TAB_PARAM)
+          next.delete(PARTICIPANT_ID_PARAM)
+          next.delete(PARTICIPANT_TAB_PARAM)
+        } else {
+          next.delete(VOLUNTEER_ID_PARAM)
+          next.delete(VOLUNTEER_TAB_PARAM)
+        }
+        preserveGeneralProgramDetailProgramId(prev, next)
+        return next
+      }
+      // 여는 단계는 push, 닫는 단계는 지나온 엔트리로 뒤로(없으면 replace)
+      if (id == null) {
+        closeDetailLevel(recipe)
+        return
+      }
+      setSearchParams(recipe, { replace: false })
     },
-    [setSearchParams]
+    [closeDetailLevel, setSearchParams]
   )
 
   const setParticipantId = useCallback(
     (id: string | null) => {
-      setSearchParams(
-        prev => {
-          if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
-          const next = new URLSearchParams(prev)
-          if (id) {
-            next.set(PARTICIPANT_ID_PARAM, id)
-            next.set(PARTICIPANT_TAB_PARAM, 'application')
-            next.delete(SCHOOL_ID_PARAM)
-            next.delete(SCHOOL_TAB_PARAM)
-            next.delete(INSTRUCTOR_ID_PARAM)
-            next.delete(INSTRUCTOR_TAB_PARAM)
-            next.delete(VOLUNTEER_ID_PARAM)
-            next.delete(VOLUNTEER_TAB_PARAM)
-          } else {
-            next.delete(PARTICIPANT_ID_PARAM)
-            next.delete(PARTICIPANT_TAB_PARAM)
-          }
-          preserveGeneralProgramDetailProgramId(prev, next)
-          return next
-        },
-        { replace: id == null }
-      )
+      const recipe = (prev: URLSearchParams): URLSearchParams => {
+        if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
+        const next = new URLSearchParams(prev)
+        if (id) {
+          next.set(PARTICIPANT_ID_PARAM, id)
+          next.set(PARTICIPANT_TAB_PARAM, 'application')
+          next.delete(SCHOOL_ID_PARAM)
+          next.delete(SCHOOL_TAB_PARAM)
+          next.delete(INSTRUCTOR_ID_PARAM)
+          next.delete(INSTRUCTOR_TAB_PARAM)
+          next.delete(VOLUNTEER_ID_PARAM)
+          next.delete(VOLUNTEER_TAB_PARAM)
+        } else {
+          next.delete(PARTICIPANT_ID_PARAM)
+          next.delete(PARTICIPANT_TAB_PARAM)
+        }
+        preserveGeneralProgramDetailProgramId(prev, next)
+        return next
+      }
+      // 여는 단계는 push, 닫는 단계는 지나온 엔트리로 뒤로(없으면 replace)
+      if (id == null) {
+        closeDetailLevel(recipe)
+        return
+      }
+      setSearchParams(recipe, { replace: false })
     },
-    [setSearchParams]
+    [closeDetailLevel, setSearchParams]
   )
 
   /**
@@ -1912,18 +1930,14 @@ export function GeneralProgramDetailFullPageModal({
       return
     }
     if (applicantIdFromUrl) {
-      setSearchParams(
-        prev => {
-          if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
-          if (!prev.has(APPLICANT_ID_PARAM)) return prev
-          const next = new URLSearchParams(prev)
-          next.delete(APPLICANT_ID_PARAM)
-          next.delete(DETAIL_TAB_PARAM)
-          preserveGeneralProgramDetailProgramId(prev, next)
-          return next
-        },
-        { replace: true }
-      )
+      closeDetailLevel(prev => {
+        if (!prev.has(APPLICANT_ID_PARAM)) return prev
+        const next = new URLSearchParams(prev)
+        next.delete(APPLICANT_ID_PARAM)
+        next.delete(DETAIL_TAB_PARAM)
+        preserveGeneralProgramDetailProgramId(prev, next)
+        return next
+      })
       return
     }
     handleRequestClose()
@@ -1937,8 +1951,8 @@ export function GeneralProgramDetailFullPageModal({
     schoolIdFromUrl,
     setInstructorId,
     setParticipantId,
+    closeDetailLevel,
     setSchoolId,
-    setSearchParams,
     setVolunteerId,
     volunteerIdFromUrl,
   ])
@@ -2025,7 +2039,7 @@ export function GeneralProgramDetailFullPageModal({
         return
       }
       setOptimisticDetailRoute({ lnb, tab })
-      setSearchParams(
+      const nextParams = nextSearchParamsIfChanged(
         prev => {
           if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
           const next = new URLSearchParams(prev)
@@ -2079,9 +2093,10 @@ export function GeneralProgramDetailFullPageModal({
           }
 
           return next
-        },
-        { replace: true }
+        }
       )
+      // LNB·하위 메뉴 = 브레드크럼 단계 → push (같은 메뉴 재선택은 엔트리를 만들지 않음)
+      if (nextParams) setSearchParams(nextParams, { replace: false })
     },
     [programId, setSearchParams, showAlert, surveyItems.length]
   )
@@ -2341,7 +2356,7 @@ export function GeneralProgramDetailFullPageModal({
 
     items.push({
       label: resolveGeneralProgramDisplayTitle(displayProgram),
-      onClick: () => applyDetailSearchParams(programParams, { replace: false }),
+      onClick: () => closeDetailLevel(() => programParams),
     })
 
     const hasParticipantApplicationDetail =
@@ -2358,7 +2373,7 @@ export function GeneralProgramDetailFullPageModal({
         hasParticipantApplicationDetail || hasVolunteerApplicationDetail
           ? {
               label: lnbLabel,
-              onClick: () => applyDetailSearchParams(lnbParams, { replace: false }),
+              onClick: () => closeDetailLevel(() => lnbParams),
             }
           : { label: lnbLabel }
       )
@@ -2372,20 +2387,20 @@ export function GeneralProgramDetailFullPageModal({
         childParams && hasProgressNestedDetail
           ? {
               label: childLabel,
-              onClick: () => applyDetailSearchParams(childParams, { replace: false }),
+              onClick: () => closeDetailLevel(() => childParams),
             }
           : { label: childLabel }
       )
     } else {
       items.push({
         label: lnbLabel,
-        onClick: () => applyDetailSearchParams(lnbParams, { replace: false }),
+        onClick: () => closeDetailLevel(() => lnbParams),
       })
       items.push(
         childParams && (hasParticipantApplicationDetail || hasProgressNestedDetail)
           ? {
               label: childLabel,
-              onClick: () => applyDetailSearchParams(childParams, { replace: false }),
+              onClick: () => closeDetailLevel(() => childParams),
             }
           : { label: childLabel }
       )

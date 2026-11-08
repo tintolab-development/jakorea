@@ -6,6 +6,8 @@ import {
   schoolRowNeedsScheduleHydration,
 } from '@/features/program/general/api/admin-applications-service'
 import { useSearchParams } from 'react-router-dom'
+import { useNavigateToAncestor } from '@/shared/hooks/use-history-ancestor-navigation'
+import { locationSearchParams } from '@/shared/lib/search-params-diff'
 import {
   useTablePage,
   EMPTY_TABLE_PAGE_CONTEXT,
@@ -933,34 +935,45 @@ export function useApplicantsDetail({
     [menu, institutionList, individualList, instructorList]
   )
 
+  const { toSearch: navigateToListAncestor } = useNavigateToAncestor()
+
+  /**
+   * 신청자 상세 = 브레드크럼 단계.
+   * - 목록 → 상세: push (브라우저 뒤로가기로 목록 복귀)
+   * - 상세 → 다른 신청자: 같은 단계라 replace
+   * - 상세 닫기: 지나온 목록 엔트리로 뒤로, 없으면 replace
+   */
   const setSelectedItem = useCallback(
     (
       value: ApplicantListRow | null | ((prev: ApplicantListRow | null) => ApplicantListRow | null)
     ) => {
-      setSearchParams(
-        prevParams => {
-          const next = new URLSearchParams(prevParams)
-          const current = resolveApplicantFromUrlParams(prevParams)
-          const resolved = typeof value === 'function' ? value(current) : value
+      const prevParams = locationSearchParams()
+      const current = resolveApplicantFromUrlParams(prevParams)
+      const resolved = typeof value === 'function' ? value(current) : value
 
-          if (resolved) {
-            if (next.get(APPLICANT_ID_PARAM) === resolved.id) {
-              return prevParams
-            }
+      if (resolved) {
+        if (prevParams.get(APPLICANT_ID_PARAM) === resolved.id) return
+        const openingFromList = !prevParams.has(APPLICANT_ID_PARAM)
+        setSearchParams(
+          latest => {
+            const next = new URLSearchParams(latest)
             next.set(APPLICANT_ID_PARAM, resolved.id)
-          } else {
-            if (!next.has(APPLICANT_ID_PARAM)) {
-              return prevParams
-            }
-            next.delete(APPLICANT_ID_PARAM)
-            next.delete(DETAIL_TAB_PARAM)
-          }
-          return next
-        },
-        { replace: true }
-      )
+            return next
+          },
+          { replace: !openingFromList }
+        )
+        return
+      }
+
+      if (!prevParams.has(APPLICANT_ID_PARAM)) return
+      navigateToListAncestor(latest => {
+        const next = new URLSearchParams(latest)
+        next.delete(APPLICANT_ID_PARAM)
+        next.delete(DETAIL_TAB_PARAM)
+        return next
+      })
     },
-    [resolveApplicantFromUrlParams, setSearchParams]
+    [navigateToListAncestor, resolveApplicantFromUrlParams, setSearchParams]
   )
 
   useEffect(() => {

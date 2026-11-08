@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useNavigateToAncestor } from '@/shared/hooks/use-history-ancestor-navigation'
 import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { UJAT_APPLICANT_ID_PARAM } from '@/features/program/ujat/lib/ujat-program-detail-url'
@@ -65,6 +66,18 @@ export function useApplicantDetail({
     setSearchParams(next, { replace: true })
   }, [searchParams, setSearchParams])
 
+  const { toSearch: navigateToListAncestor } = useNavigateToAncestor()
+
+  /** 사용자가 상세를 닫을 때 — 지나온 목록 엔트리로 뒤로, 없으면 replace */
+  const closeApplicantIdToList = useCallback(() => {
+    if (!new URLSearchParams(window.location.search).has(UJAT_APPLICANT_ID_PARAM)) return
+    navigateToListAncestor(current => {
+      const next = new URLSearchParams(current)
+      next.delete(UJAT_APPLICANT_ID_PARAM)
+      return next
+    })
+  }, [navigateToListAncestor])
+
   const setApplicantIdInUrl = useCallback(
     (applicantId: string) => {
       const next = new URLSearchParams(searchParams)
@@ -84,19 +97,19 @@ export function useApplicantDetail({
   }, [programId, half, clearApplicantIdFromUrl])
 
   useEffect(() => {
-    // TODO: 모달 X는 바깥 닫기로 통일됨. 등록 핸들러가 호출되지 않으면 제거 검토.
+    // 헤더 X / ESC → 모달 handleHeaderClose가 호출 — 목록으로만 복귀
     if (!onRegisterApplicantCloseHandler) return
     const handler = () => {
       if (selectedApplicantRef.current) {
         setSelectedApplicant(null)
-        clearApplicantIdFromUrl()
+        closeApplicantIdToList()
         return true
       }
       return false
     }
     onRegisterApplicantCloseHandler(handler)
     return () => onRegisterApplicantCloseHandler(null)
-  }, [clearApplicantIdFromUrl, onRegisterApplicantCloseHandler])
+  }, [closeApplicantIdToList, onRegisterApplicantCloseHandler])
 
   const selectedApplicantName = selectedApplicant?.name
 
@@ -151,8 +164,8 @@ export function useApplicantDetail({
 
   const closeApplicantDetail = useCallback(() => {
     setSelectedApplicant(null)
-    clearApplicantIdFromUrl()
-  }, [clearApplicantIdFromUrl])
+    closeApplicantIdToList()
+  }, [closeApplicantIdToList])
 
   const handleDocumentReject = useCallback(() => {
     if (!selectedApplicant || !onRequestDocumentReject) return

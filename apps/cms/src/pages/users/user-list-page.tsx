@@ -8,6 +8,7 @@ import { useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef } fr
 import type { ColumnsType } from 'antd/es/table'
 import { useQueryClient, type InfiniteData } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
+import { useNavigateToAncestor } from '@/shared/hooks/use-history-ancestor-navigation'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { searchWithUpdatesDiffersFromLocation } from '@/shared/lib/search-params-diff'
 import { useModalState } from '@/shared/hooks/use-modal-state'
@@ -879,7 +880,13 @@ export function UserListPage() {
     [fetchUserById, openMemberDetailFetched]
   )
 
-  /** 모달·URL·복귀 스택까지 완전히 닫음 (탈퇴/삭제 플로우 등) */
+  const { toSearch: navigateToAncestorSearch, toMatchingEntry: navigateBackToMatchingEntry } =
+    useNavigateToAncestor()
+
+  /**
+   * 모달·URL·복귀 스택까지 완전히 닫음 (탈퇴/삭제 플로우 등).
+   * 목록 엔트리가 history에 있으면 뒤로, 없으면 replace — 앞쪽에 상세 엔트리를 남기지 않는다.
+   */
   const flushUserDetailModal = useCallback(() => {
     suppressDetailRestoreRef.current = true
     detailCloseIntentRef.current = true
@@ -891,32 +898,31 @@ export function UserListPage() {
     setDrawerUser(null)
     closeDrawer()
     clearSelectedUserId(null)
-    setSearchParams(
-      prev => {
-        const next = new URLSearchParams(prev)
-        next.delete('id')
-        next.delete('lnb')
-        next.delete(USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY)
-        next.delete(USER_DETAIL_AFFILIATED_SCHOOL_QUERY_KEY)
-        next.delete(USER_DETAIL_INSTRUCTOR_PROFILE_QUERY_KEY)
-        next.delete(USER_DETAIL_MEMBER_ID_QUERY_KEY)
-        next.delete(USER_DETAIL_MEMBER_ROLE_QUERY_KEY)
-        return next
-      },
-      { replace: true }
-    )
-  }, [closeDrawer, clearSelectedUserId, setSearchParams, setDrawerUser])
+    navigateToAncestorSearch(prev => {
+      const next = new URLSearchParams(prev)
+      next.delete('id')
+      next.delete('lnb')
+      next.delete(USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY)
+      next.delete(USER_DETAIL_AFFILIATED_SCHOOL_QUERY_KEY)
+      next.delete(USER_DETAIL_INSTRUCTOR_PROFILE_QUERY_KEY)
+      next.delete(USER_DETAIL_MEMBER_ID_QUERY_KEY)
+      next.delete(USER_DETAIL_MEMBER_ROLE_QUERY_KEY)
+      return next
+    })
+  }, [closeDrawer, clearSelectedUserId, navigateToAncestorSearch, setDrawerUser])
 
   /** 풀페이지 X — 학교→교사 drill-down 중이면 학교 상세로, 아니면 목록으로 */
   const handleUserDetailModalClose = useCallback(() => {
     const back = schoolDetailReturnUserRef.current
     if (back) {
       schoolDetailReturnUserRef.current = null
+      // 지나온 학교 상세 엔트리(LNB 무관)로 뒤로 — URL 복원 effect가 학교 상세를 다시 연다
+      if (navigateBackToMatchingEntry(search => search.get('id') === back.id)) return
       handleView(back, { replace: true })
       return
     }
     flushUserDetailModal()
-  }, [handleView, flushUserDetailModal])
+  }, [handleView, flushUserDetailModal, navigateBackToMatchingEntry])
 
   // 회원 추가
   const handleCreateUser = async (request: CreateUserRequest) => {

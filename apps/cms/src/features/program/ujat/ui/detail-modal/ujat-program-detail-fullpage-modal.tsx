@@ -13,6 +13,7 @@ import {
   makeBreadcrumbItem,
 } from '@/shared/lib/detail-fullpage-query-stack'
 import { tryNavigateMemberDetailReturn } from '@/features/user/detail/lib/member-detail-program-navigation-return'
+import { useNavigateToAncestor } from '@/shared/hooks/use-history-ancestor-navigation'
 import { useProgramDetail } from '@/pages/programs/use-program-detail'
 import {
   isLookupableSponsorId,
@@ -792,6 +793,29 @@ export function UjatProgramDetailFullPageModal({
     institutionListVersion,
   ])
 
+  const { toTarget: navigateToAncestorTarget } = useNavigateToAncestor()
+
+  /**
+   * 중첩 상세 닫기·모달 닫기 — 지나온 history 엔트리면 뒤로, 아니면 replace.
+   * push 하지 않아 브라우저 뒤로가기와 브레드크럼 단계가 어긋나지 않는다.
+   */
+  const navigateDetailToAncestor = useCallback(
+    (next: URLSearchParams) => {
+      const search = next.toString()
+      navigateToAncestorTarget({ pathname: location.pathname, search: search ? `?${search}` : '' })
+    },
+    [location.pathname, navigateToAncestorTarget]
+  )
+
+  /** LNB·하위 메뉴 = 브레드크럼 단계 → push. 값이 같으면 엔트리를 만들지 않는다. */
+  const pushDetailLevel = useCallback(
+    (next: URLSearchParams) => {
+      if (next.toString() === new URLSearchParams(window.location.search).toString()) return
+      setSearchParams(next, { replace: false })
+    },
+    [setSearchParams]
+  )
+
   const setInstitutionApplicationId = useCallback(
     (id: string | null) => {
       if (!programId) return
@@ -808,9 +832,10 @@ export function UjatProgramDetailFullPageModal({
         next.delete(UJAT_INST_APP_ID_PARAM)
       }
       next.delete(EDIT_PARAM)
-      setSearchParams(next, { replace: id == null })
+      if (id == null) navigateDetailToAncestor(next)
+      else setSearchParams(next, { replace: false })
     },
-    [programId, searchParams, setSearchParams, activeTab]
+    [navigateDetailToAncestor, programId, searchParams, setSearchParams, activeTab]
   )
 
   const setLnbTab = useCallback(
@@ -839,9 +864,9 @@ export function UjatProgramDetailFullPageModal({
       if (!shouldKeepUjatInstitutionApplicationViewParams(lnb, tab)) {
         clearUjatInstitutionApplicationViewParams(next)
       }
-      setSearchParams(next, { replace: true })
+      pushDetailLevel(next)
     },
-    [programId, searchParams, setSearchParams, activeTab]
+    [programId, pushDetailLevel, searchParams, activeTab]
   )
 
   const setEduInstitutionId = useCallback(
@@ -863,9 +888,10 @@ export function UjatProgramDetailFullPageModal({
       next.delete(UJAT_APPLICANT_ID_PARAM)
       next.delete(UJAT_INST_APP_ID_PARAM)
       next.delete(EDIT_PARAM)
-      setSearchParams(next, { replace: id == null })
+      if (id == null) navigateDetailToAncestor(next)
+      else setSearchParams(next, { replace: false })
     },
-    [programId, searchParams, setSearchParams]
+    [navigateDetailToAncestor, programId, searchParams, setSearchParams]
   )
 
   const setEduVolunteerId = useCallback(
@@ -888,9 +914,11 @@ export function UjatProgramDetailFullPageModal({
       next.delete(UJAT_APPLICANT_ID_PARAM)
       next.delete(UJAT_INST_APP_ID_PARAM)
       next.delete(EDIT_PARAM)
-      setSearchParams(next, { replace: true })
+      // 봉사자 상세 = 브레드크럼 단계 — 열 때 push(기존 replace라 뒤로가기 시 모달이 닫힘), 닫을 때 뒤로
+      if (id == null) navigateDetailToAncestor(next)
+      else setSearchParams(next, { replace: false })
     },
-    [programId, searchParams, setSearchParams]
+    [navigateDetailToAncestor, programId, searchParams, setSearchParams]
   )
 
   const setEduVolunteerDetailTab = useCallback(
@@ -1342,9 +1370,9 @@ export function UjatProgramDetailFullPageModal({
       next.set(TAB_PARAM, tab)
       next.delete(EDIT_PARAM)
       next.delete(UJAT_INST_APP_ID_PARAM)
-      setSearchParams(next, { replace: true })
+      pushDetailLevel(next)
     },
-    [programId, searchParams, setSearchParams]
+    [programId, pushDetailLevel, searchParams]
   )
 
   const [recruitmentPreviewTab, setRecruitmentPreviewTab] = useState<UjatRecruitTabKey | null>(null)
@@ -1492,8 +1520,10 @@ export function UjatProgramDetailFullPageModal({
   }, [activeLnb, activeTab])
 
   const handleClose = useCallback(() => {
-    onClose()
-    if (tryNavigateMemberDetailReturn(navigate)) return
+    if (tryNavigateMemberDetailReturn(navigate)) {
+      onClose()
+      return
+    }
     const next = clearSponsorDetailQueryStack(new URLSearchParams(searchParams))
     next.delete('programId')
     next.delete(LNB_PARAM)
@@ -1506,13 +1536,34 @@ export function UjatProgramDetailFullPageModal({
     next.delete(UJAT_VOL_ADD_MEMBER_ID_PARAM)
     next.delete(UJAT_EDU_VOL_ID_PARAM)
     next.delete(UJAT_EDU_VOL_TAB_PARAM)
-    navigate(
-      { pathname: location.pathname, search: next.toString() ? `?${next}` : '' },
-      {
-        replace: true,
-      }
-    )
-  }, [location.pathname, navigate, onClose, searchParams])
+    // 목록 엔트리가 history에 있으면 그 엔트리로 되돌아가 상세 엔트리를 앞쪽에 남기지 않는다.
+    navigateDetailToAncestor(next)
+    onClose()
+  }, [navigate, navigateDetailToAncestor, onClose, searchParams])
+
+  /** 헤더 X / ESC — 중첩 상세면 한 단계 위(목록)로, 아니면 모달 닫기 */
+  const handleHeaderClose = useCallback(() => {
+    if (volunteerApplicantCloseHandlerRef.current?.()) return
+    if (searchParams.get(UJAT_EDU_VOL_ID_PARAM)) {
+      setEduVolunteerId(null)
+      return
+    }
+    if (searchParams.get(UJAT_EDU_INST_ID_PARAM)) {
+      setEduInstitutionId(null)
+      return
+    }
+    if (searchParams.get(UJAT_INST_APP_ID_PARAM)) {
+      setInstitutionApplicationId(null)
+      return
+    }
+    handleClose()
+  }, [
+    handleClose,
+    searchParams,
+    setEduInstitutionId,
+    setEduVolunteerId,
+    setInstitutionApplicationId,
+  ])
   if (!open) return null
 
   const programTitle = displayProgram
@@ -1615,6 +1666,7 @@ export function UjatProgramDetailFullPageModal({
     <DetailFullPageModal
       open={open}
       onClose={handleClose}
+      onHeaderClose={handleHeaderClose}
       title={title}
       headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
       contentExtra={
