@@ -21,7 +21,7 @@ category: design
 | 컨트롤 높이 | **40px** (CmsField M) | `--filter-control-height` · `TableFilterGroup` `cms-control--medium` |
 | 필터 칸 사이 gap | 12px | `--filter-field-gap` |
 | 레이블·컨트롤 gap | 6px | `--filter-label-control-gap` |
-| 레이블 | **CmsField M** — 14px / 500 / 140% · `#525252` · 높이 22px(19.6+padding-bottom 2px) · `.cms-field__label` | `cms-control--medium` · `--filter-label-height` |
+| 레이블 | **CmsField M** — 14px / 500 / 140% · `--filter-area-label-color`(#3D3D3D, 공유 룰 색) · 높이 22px(19.6+padding-bottom 2px) · `.cms-field__label` | `cms-control--medium` · `--filter-label-height` |
 | 조회 버튼 | 높이 40px · 폭은 medium min-width + 라벨 | `table-filter-group` 조회 · `size="medium"` |
 | 분리형 `dateRange`·`selectPair` 열 | 500px | `FILTER_CONTROL_WIDE_FIELD_WIDTH_PX` (2×240+20) |
 | **`addressRegion` 열 전체** | **235.5px** | `FILTER_ADDRESS_REGION_FIELD_WIDTH_PX` |

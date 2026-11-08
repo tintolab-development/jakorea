@@ -18,7 +18,7 @@ alwaysApply: false
 | 컨트롤 높이 | **40px** (CmsField M) | `--filter-control-height` |
 | 필터 칸 사이 gap | **12px** | `--filter-field-gap` |
 | 레이블·컨트롤 gap | **6px** | `--filter-label-control-gap` |
-| 레이블 | 14px Medium · 140% · pb 2 | CmsField M |
+| 레이블 | 14px Medium · 140% · pb 2 · 색 **#3D3D3D** (Neutral black — 폼 필드 라벨 #525252와 다름) | CmsField M · `--filter-area-label-color` |
 | 조회 버튼 | **h40 (medium)** · 폭은 min-width 120 + 라벨 | — |
 | 분리형 dateRange 열 | **500px** (각 칸 240 × 2 + 구분자 `~` 20) | `FILTER_CONTROL_WIDE_FIELD_WIDTH_PX` · `--filter-control-range-segment-width` |
 
@@ -42,4 +42,4 @@ alwaysApply: false
 
 기준: Figma 📗 Design Guide › Layout / 목록 · 테이블 (14741:1307) · Field / Sorting M(40)
 
-**Last updated:** 2026-11-08
+**Last updated:** 2026-11-09
