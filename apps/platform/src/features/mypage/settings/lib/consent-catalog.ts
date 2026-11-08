@@ -155,7 +155,7 @@ export const DOCUMENT_CONSENT_ITEMS: SettingsConsentItem[] = [
     kind: 'document',
     agreed: false,
     validityLabel: '10년',
-    hint: '영수증 제출 시 최초 1회 작성 · 유효기간 10년',
+    hint: '지급조서 제출 시 최초 1회 작성 · 유효기간 10년',
   },
   {
     id: 'receiptPreConsent',
@@ -163,7 +163,7 @@ export const DOCUMENT_CONSENT_ITEMS: SettingsConsentItem[] = [
     required: false,
     kind: 'document',
     agreed: false,
-    hint: '정산·영수증 신규 제출 시 작성. 본문은 법무 확정 전 초안이며, 유효기간은 서버 정책을 따릅니다.',
+    hint: '영수증 제출 시 최초 1회 작성 · 유효기간 10년',
   },
   {
     id: 'educatorPledge',
