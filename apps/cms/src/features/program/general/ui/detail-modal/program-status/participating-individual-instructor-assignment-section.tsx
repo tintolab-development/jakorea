@@ -9,8 +9,6 @@ import type { ParticipatingInstructorRow } from '@/features/program/general/mode
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
-  INSTRUCTOR_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
-  INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
 } from '@/shared/constants/messages'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
@@ -59,12 +57,15 @@ import {
 } from '@/features/program/general/lib/general-instructor-recruitment-required'
 import { SchoolDetailUnassignCompleteModal } from './school-detail-unassign-complete-modal'
 import { SchoolDetailUnassignConfirmModal } from './school-detail-unassign-confirm-modal'
+import { InstitutionSelectAssignConfirmModal } from './institution-select-assign-confirm-modal'
+import { INSTITUTION_SELECT_ASSIGN_DEFAULT_NOTIFY_PAYLOAD } from '@/features/program/general/lib/institution-select-assign'
 import './instructor-assignment-status-text.css'
 import './participating-institutions-section.css'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { ScheduleLinesCell } from '@/features/program/shared/ui/schedule-lines-cell'
 import { buildAddAssignWaitingScheduleChipOptions } from '@/features/program/general/lib/general-add-assign-session-chips'
 import { GeneralParticipantAddAssignModal } from './general-participant-add-assign-modal'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 /** 추가 배정 — Figma CMS 9760:8214 ‘추가 배정 안내’ (D: 개인형 참여 강사) */
 const ADD_ASSIGN_MODAL_TITLE = '추가 배정 안내'
@@ -341,7 +342,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
 
   const handleUnassignClick = useCallback(() => {
     if (selectedAssignedKeys.length === 0) {
-      showAlert({ title: '안내', content: INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setUnassignConfirmOpen(true)
@@ -356,7 +357,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
       return
     }
     if (selectedWaitingKeys.length === 0) {
-      showAlert({ title: '안내', content: INSTRUCTOR_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     const movable = waitingSchedules.some(
@@ -537,7 +538,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
 
   const handleAddAssignSchedulePicked = useCallback(() => {
     if (!addAssignWaitingRowId) {
-      showAlert({ title: ADD_ASSIGN_MODAL_TITLE, content: '교육 배정일을 선택해 주세요.' })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     const waitingRow = waitingSchedules.find(w => w.id === addAssignWaitingRowId)
@@ -598,11 +599,12 @@ export function ParticipatingIndividualInstructorAssignmentSection({
     [assignedSchedules, selectedAssignedKeys]
   )
 
-  const selectAssignLabels = useMemo(
+  /** 선택 배정 안내 — 첫 일정 + 외 N개 */
+  const selectAssignTargets = useMemo(
     () =>
-      waitingSchedules
-        .filter(w => selectedWaitingKeys.includes(w.id) && w.assignmentStatus === 'waiting')
-        .map(w => w.scheduleLabel),
+      waitingSchedules.filter(
+        w => selectedWaitingKeys.includes(w.id) && w.assignmentStatus === 'waiting'
+      ),
     [waitingSchedules, selectedWaitingKeys]
   )
 
@@ -739,23 +741,28 @@ export function ParticipatingIndividualInstructorAssignmentSection({
         reason={unassignCompleteModal?.reason ?? ''}
       />
 
-      <PermissionModal
+      {/* 선택 배정 안내 — 공통 모달(알림은 기관형 선택 배정과 같은 기본값) */}
+      <InstitutionSelectAssignConfirmModal
         open={selectAssignConfirmOpen}
         onCancel={() => {
           if (assignSubmitting) return
           setSelectAssignConfirmOpen(false)
         }}
-        onConfirm={handleSelectAssignConfirm}
+        onConfirm={() => {
+          void handleSelectAssignConfirm(INSTITUTION_SELECT_ASSIGN_DEFAULT_NOTIFY_PAYLOAD)
+        }}
         confirmLoading={assignSubmitting}
-        variant="approve"
-        title="교육 일정 배정 안내"
-        width={600}
-        message={`[**${instructor.instructorName}**] 강사님을 다음 교육 일정에 배정하시겠습니까?\n${selectAssignLabels.map(label => `[**${label}**]`).join('\n')}`}
-        confirmLabel="배정"
-        confirmVariant="primary"
-        requireReason={false}
-        notifyTimingOptions="two"
-        notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.scheduledOnly}
+        targetNoun="일정"
+        institutionName={
+          selectAssignTargets[0]
+            ? formatCmsScheduleDisplayLabel(selectAssignTargets[0].scheduleLabel)
+            : ''
+        }
+        extraTargetCount={Math.max(0, selectAssignTargets.length - 1)}
+        instructorName={instructor.instructorName}
+        currentCount={null}
+        requiredCount={null}
+        countLabel={selectAssignTargets[0]?.assignedInstructorCountLabel ?? null}
       />
 
       <GeneralParticipantAddAssignModal

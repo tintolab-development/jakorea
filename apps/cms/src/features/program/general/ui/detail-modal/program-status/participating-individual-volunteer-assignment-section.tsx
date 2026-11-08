@@ -9,13 +9,10 @@ import type { Program } from '@/types/domain'
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
-  VOLUNTEER_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
-  VOLUNTEER_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
 } from '@/shared/constants/messages'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
-import { ContentModal } from '@/shared/ui/content-modal'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { ScheduleLinesCell } from '@/features/program/shared/ui/schedule-lines-cell'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
@@ -51,8 +48,10 @@ import { getApiErrorCode } from '@/shared/lib/extract-api-error-message'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import { buildAddAssignWaitingScheduleChipOptions } from '@/features/program/general/lib/general-add-assign-session-chips'
 import { GeneralParticipantAddAssignModal } from './general-participant-add-assign-modal'
+import { InstitutionSelectAssignConfirmModal } from './institution-select-assign-confirm-modal'
 import './instructor-assignment-status-text.css'
 import './participating-institutions-section.css'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 /** 추가 배정 — Figma CMS 9760:8214 ‘추가 배정 안내’ (E: 개인형 참여 봉사자, 대표 강사 필드 없음) */
 const ADD_ASSIGN_MODAL_TITLE = '추가 배정 안내'
@@ -319,7 +318,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
 
   const handleUnassignClick = useCallback(() => {
     if (selectedAssignedKeys.length === 0) {
-      showAlert({ title: '안내', content: VOLUNTEER_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setUnassignConfirmOpen(true)
@@ -327,7 +326,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
 
   const handleSelectAssignClick = useCallback(() => {
     if (selectedWaitingKeys.length === 0) {
-      showAlert({ title: '안내', content: VOLUNTEER_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     const movable = waitingSchedules.some(
@@ -457,11 +456,12 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
     [assignedSchedules, selectedAssignedKeys]
   )
 
-  const selectAssignLabels = useMemo(
+  /** 선택 배정 안내 — 첫 일정 + 외 N개 */
+  const selectAssignTargets = useMemo(
     () =>
-      waitingSchedules
-        .filter(w => selectedWaitingKeys.includes(w.id) && w.assignmentStatus === 'waiting')
-        .map(w => w.scheduleLabel),
+      waitingSchedules.filter(
+        w => selectedWaitingKeys.includes(w.id) && w.assignmentStatus === 'waiting'
+      ),
     [waitingSchedules, selectedWaitingKeys]
   )
 
@@ -579,35 +579,24 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
         reason={unassignCompleteModal?.reason ?? ''}
       />
 
-      <ContentModal
+      <InstitutionSelectAssignConfirmModal
         open={selectAssignConfirmOpen}
         onCancel={() => setSelectAssignConfirmOpen(false)}
-        title="봉사 일정 배정 안내"
-        width={600}
-        footer={
-          <>
-            <CmsButton
-              variant="secondary"
-              size="large"
-              onClick={() => setSelectAssignConfirmOpen(false)}
-            >
-              취소
-            </CmsButton>
-            <CmsButton variant="primary" size="large" onClick={handleSelectAssignConfirm}>
-              배정
-            </CmsButton>
-          </>
+        onConfirm={() => {
+          void handleSelectAssignConfirm()
+        }}
+        targetNoun="일정"
+        institutionName={
+          selectAssignTargets[0]
+            ? formatCmsScheduleDisplayLabel(selectAssignTargets[0].scheduleLabel)
+            : ''
         }
-      >
-        <p>
-          [<strong>{volunteer.volunteerName}</strong>] 봉사자님을 다음 봉사 일정에 배정하시겠습니까?{' '}
-          {selectAssignLabels.map((label, i) => (
-            <span key={`${label}-${i}`}>
-              [<strong>{label}</strong>]{i < selectAssignLabels.length - 1 ? ', ' : ''}
-            </span>
-          ))}
-        </p>
-      </ContentModal>
+        extraTargetCount={Math.max(0, selectAssignTargets.length - 1)}
+        instructorName={volunteer.volunteerName}
+        currentCount={null}
+        requiredCount={null}
+        countLabel={selectAssignTargets[0]?.assignedVolunteerCountLabel ?? null}
+      />
 
       <GeneralParticipantAddAssignModal
         open={addAssignModalOpen}

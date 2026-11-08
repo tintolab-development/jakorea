@@ -15,12 +15,9 @@ import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
-  VOLUNTEER_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
-  VOLUNTEER_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
 } from '@/shared/constants/messages'
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
-import { ContentModal } from '@/shared/ui/content-modal'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { ScheduleLinesCell } from '@/features/program/shared/ui/schedule-lines-cell'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
@@ -41,9 +38,11 @@ import { buildVolunteerInstitutionAddAssignOptions } from '@/features/program/ge
 import { GeneralParticipantAddAssignModal } from './general-participant-add-assign-modal'
 import { ParticipatingVolunteerUnassignConfirmModal } from './participating-volunteer-unassign-confirm-modal'
 import { ParticipatingVolunteerUnassignCompleteModal } from './participating-volunteer-unassign-complete-modal'
+import { InstitutionSelectAssignConfirmModal } from './institution-select-assign-confirm-modal'
 import './instructor-assignment-status-text.css'
 import './participating-institutions-section.css'
 import './participating-volunteer-assignment-section.css'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 function renderVolunteerScheduleLines(lines: string[]) {
   return (
@@ -322,7 +321,7 @@ export function ParticipatingVolunteerAssignmentSection({
   const handleUnassignClick = useCallback(() => {
     if (assignedInstitutions.length === 0) return
     if (selectedAssignedKeys.length === 0) {
-      showAlert({ title: '안내', content: VOLUNTEER_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setUnassignConfirmOpen(true)
@@ -330,7 +329,7 @@ export function ParticipatingVolunteerAssignmentSection({
 
   const handleSelectAssignClick = useCallback(() => {
     if (selectedWaitingKeys.length === 0) {
-      showAlert({ title: '안내', content: VOLUNTEER_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     const movable = waitingInstitutions.some(
@@ -480,7 +479,7 @@ export function ParticipatingVolunteerAssignmentSection({
   const handleAddAssignConfirm = useCallback(() => {
     if (addAssignInFlightRef.current) return
     if (!addAssignSchoolId) {
-      showAlert({ title: ADD_ASSIGN_MODAL_TITLE, content: '배정할 기관을 선택해 주세요.' })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     if (!addAssignWaitingRowId) {
@@ -582,11 +581,12 @@ export function ParticipatingVolunteerAssignmentSection({
     [assignedInstitutions, selectedAssignedKeys]
   )
 
-  const selectAssignLabels = useMemo(
+  /** 선택 배정 안내 — 첫 기관 + 외 N개 */
+  const selectAssignTargets = useMemo(
     () =>
-      waitingInstitutions
-        .filter(w => selectedWaitingKeys.includes(w.id) && w.assignmentStatus === 'waiting')
-        .map(w => `${w.schoolName} (${w.hopeScheduleLine})`),
+      waitingInstitutions.filter(
+        w => selectedWaitingKeys.includes(w.id) && w.assignmentStatus === 'waiting'
+      ),
     [waitingInstitutions, selectedWaitingKeys]
   )
 
@@ -720,35 +720,18 @@ export function ParticipatingVolunteerAssignmentSection({
         reason={unassignCompleteModal?.reason ?? ''}
       />
 
-      <ContentModal
+      <InstitutionSelectAssignConfirmModal
         open={selectAssignConfirmOpen}
         onCancel={() => setSelectAssignConfirmOpen(false)}
-        title="기관 배정 안내"
-        width={600}
-        footer={
-          <>
-            <CmsButton
-              variant="secondary"
-              size="large"
-              onClick={() => setSelectAssignConfirmOpen(false)}
-            >
-              취소
-            </CmsButton>
-            <CmsButton variant="primary" size="large" onClick={handleSelectAssignConfirm}>
-              배정
-            </CmsButton>
-          </>
-        }
-      >
-        <p>
-          [<strong>{volunteer.volunteerName}</strong>] 봉사자님을 다음 기관에 배정하시겠습니까?{' '}
-          {selectAssignLabels.map((label, i) => (
-            <span key={`${label}-${i}`}>
-              [<strong>{label}</strong>]{i < selectAssignLabels.length - 1 ? ', ' : ''}
-            </span>
-          ))}
-        </p>
-      </ContentModal>
+        onConfirm={handleSelectAssignConfirm}
+        targetNoun="기관"
+        institutionName={selectAssignTargets[0]?.schoolName ?? ''}
+        extraTargetCount={Math.max(0, selectAssignTargets.length - 1)}
+        instructorName={volunteer.volunteerName}
+        currentCount={null}
+        requiredCount={null}
+        countLabel={selectAssignTargets[0]?.assignedVolunteerCountLabel ?? null}
+      />
 
       <GeneralParticipantAddAssignModal
         open={addAssignModalOpen}
