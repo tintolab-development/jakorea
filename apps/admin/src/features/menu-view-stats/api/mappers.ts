@@ -229,7 +229,7 @@ function buildSectionSpecs(): Record<MenuViewTabId, SectionSpec[]> {
       {
         section: {
           id: 'entrepreneur',
-          title: '프로그램 소개_기업가 정신',
+          title: '프로그램 소개_기업가정신',
           metric: { kind: 'simple', entryViews: 0 },
         },
         codes: { entry: ['EDU_ENTREPRENEURSHIP_VIEW'] },

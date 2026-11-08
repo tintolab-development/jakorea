@@ -10,7 +10,7 @@ export const PROGRAM_INTRO_TABS: readonly {
 }[] = [
   { key: 'career', fieldCode: 'CAREER_EMPLOYMENT', label: '진로·취업' },
   { key: 'economy', fieldCode: 'ECONOMICS_FINANCE', label: '경제·금융' },
-  { key: 'entrepreneurship', fieldCode: 'ENTREPRENEURSHIP', label: '기업가 정신' },
+  { key: 'entrepreneurship', fieldCode: 'ENTREPRENEURSHIP', label: '기업가정신' },
   { key: 'digital', fieldCode: 'DIGITAL_LITERACY', label: '디지털 리터러시' },
 ]
 
