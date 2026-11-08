@@ -105,19 +105,19 @@ export function FilePasswordSetupModal({
             <br />
             {FILE_DOWNLOAD_PASSWORD_NOT_STORED_MESSAGE}
           </p>
-          <label className="file-password-setup-modal__label" htmlFor={passwordId}>
-            파일 암호{' '}
-            <span className="file-password-setup-modal__required" aria-hidden>
-              *
-            </span>
-          </label>
+          {/* 시안 Field / Input M(40): 라벨 14 Medium #525252 · 라벨↔입력 6 · 필드 사이 30 (15984:378448) */}
           <CmsInput
             id={passwordId}
+            className="file-password-setup-modal__field"
+            label="파일 암호"
+            required
+            inputSize="medium"
             type="password"
             autoComplete="new-password"
             allowClear={false}
             value={password}
-            status={passwordError ? 'error' : undefined}
+            error={passwordError != null}
+            message={passwordError ?? undefined}
             onChange={e => {
               setPassword(e.target.value)
               if (passwordError) setPasswordError(null)
@@ -125,24 +125,18 @@ export function FilePasswordSetupModal({
             width="100%"
             placeholder="사용할 암호를 입력해 주세요"
           />
-          {passwordError ? (
-            <p className="file-password-setup-modal__field-error" role="alert">
-              {passwordError}
-            </p>
-          ) : null}
-          <label className="file-password-setup-modal__label" htmlFor={confirmId}>
-            파일 암호 확인{' '}
-            <span className="file-password-setup-modal__required" aria-hidden>
-              *
-            </span>
-          </label>
           <CmsInput
             id={confirmId}
+            className="file-password-setup-modal__field"
+            label="파일 암호 확인"
+            required
+            inputSize="medium"
             type="password"
             autoComplete="new-password"
             allowClear={false}
             value={confirmPassword}
-            status={confirmError ? 'error' : undefined}
+            error={confirmError != null}
+            message={confirmError ?? undefined}
             onChange={e => {
               setConfirmPassword(e.target.value)
               if (confirmError) setConfirmError(null)
@@ -150,11 +144,6 @@ export function FilePasswordSetupModal({
             width="100%"
             placeholder="암호를 한 번 더 입력해 주세요"
           />
-          {confirmError ? (
-            <p className="file-password-setup-modal__field-error" role="alert">
-              {confirmError}
-            </p>
-          ) : null}
         </div>
       </Form>
     </ContentModal>
