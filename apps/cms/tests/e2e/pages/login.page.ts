@@ -1,8 +1,8 @@
 import { type Page, expect } from '@playwright/test'
 import { generateSync } from 'otplib'
 
-/** 로그인 페이지 「권한별 로그인」 마스터 버튼 */
-export const ADMIN_DEV_LOGIN_MASTER_BUTTON = '마스터'
+/** 로그인 페이지 「권한별 로그인」 마스터 버튼 (현재 UI 라벨 'Master', 이전 '마스터') */
+export const ADMIN_DEV_LOGIN_MASTER_BUTTON = /^(Master|마스터)$/
 
 /** @deprecated `ADMIN_DEV_LOGIN_MASTER_BUTTON` 사용 */
 export const ADMIN_AUTO_FILL_BUTTON = ADMIN_DEV_LOGIN_MASTER_BUTTON

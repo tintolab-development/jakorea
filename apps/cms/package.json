@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "test:e2e:history": "playwright test tests/e2e/flows/history-navigation --project=chromium",
     "predev": "pnpm run build:workspace-deps && pnpm run build:platform-preview",
     "prebuild": "pnpm run build:workspace-deps && pnpm run build:platform-preview",
     "build:platform-preview": "pnpm --filter platform build:preview",
