@@ -112,7 +112,7 @@ import {
   instructorProfileFormValuesToCmsSettlement,
 } from '@/features/user/api/map-instructor-cms-profile'
 import { SCHOOL_TEACHER_EMPLOYMENT_BADGE_LABEL } from '@/features/user/detail/lib/school-teacher-employment-status'
-import { buildMemberListDeleteGuideLines } from '@/features/user/shared/lib/member-withdraw-delete-guide'
+import { buildMemberListDeleteGuideLines, isMemberWithdrawListKind } from '@/features/user/shared/lib/member-withdraw-delete-guide'
 import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 type UserListRow = Omit<User, 'password'>
@@ -350,8 +350,8 @@ export function UserListPage() {
       deleteTargets.map(target => displayNameForUserDelete(resolvedMemberListKind, target)),
       resolvedMemberListKind
     )
-    // 전체 회원 목록 — 시안: 삭제 = 회원 탈퇴 처리 (문구·확인 입력만 다름, API 동일)
-    if (resolvedMemberListKind === 'all') {
+    // 전체·강사·관리자 회원 목록 — 시안: 삭제 = 회원 탈퇴 처리 (문구·확인 입력만 다름, API 동일)
+    if (isMemberWithdrawListKind(resolvedMemberListKind)) {
       return {
         title: deleteTargets.length >= 2 ? '회원 일괄 탈퇴 처리 안내' : '회원 탈퇴 처리 안내',
         lines,
@@ -1112,7 +1112,7 @@ export function UserListPage() {
       setSelectedRowKeys(prev => prev.filter(key => !toDelete.some(u => String(u.id) === String(key))))
       setSelectedRowsSnapshot(prev => prev.filter(u => !toDelete.some(d => d.id === u.id)))
       invalidateList()
-      if (resolvedMemberListKind === 'all') {
+      if (isMemberWithdrawListKind(resolvedMemberListKind)) {
         showAlert({
           title: '회원 탈퇴 완료',
           content: '회원 탈퇴가 완료되었습니다.',
@@ -1299,13 +1299,9 @@ export function UserListPage() {
               }} >
               {resolvedMemberListKind === 'institutions'
                 ? '학교 삭제'
-                : resolvedMemberListKind === 'instructors'
-                  ? '강사 삭제'
-                  : resolvedMemberListKind === 'admins'
-                    ? '관리자 삭제'
-                    : resolvedMemberListKind === 'all'
-                      ? '회원 탈퇴'
-                      : '회원 삭제'}
+                : isMemberWithdrawListKind(resolvedMemberListKind)
+                  ? '회원 탈퇴'
+                  : '회원 삭제'}
             </FilterTableToolbarButton>
             <FilterTableToolbarButton
               onClick={() => {

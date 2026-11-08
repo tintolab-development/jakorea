@@ -53,6 +53,11 @@ export function buildMemberSingleDeleteGuideLines(displayName: string): string[]
 }
 
 /** 회원 목록 > 삭제 안내 본문 (단일·일괄·학교) */
+/** 시안: 전체·강사·관리자 회원 목록의 삭제 = 회원 탈퇴 처리 (문구·확인 입력만 다름, API 동일) */
+export function isMemberWithdrawListKind(kind: MemberListKind): boolean {
+  return kind === 'all' || kind === 'instructors' || kind === 'admins'
+}
+
 export function buildMemberListDeleteGuideLines(names: string[], kind: MemberListKind): string[] {
   const normalized = names.map(name => name.trim()).filter(Boolean)
   if (normalized.length === 0) return []
@@ -63,7 +68,7 @@ export function buildMemberListDeleteGuideLines(names: string[], kind: MemberLis
       SCHOOL_DELETE_IMPACT_LINE,
     ]
   }
-  if (kind === 'all') {
+  if (isMemberWithdrawListKind(kind)) {
     if (normalized.length >= 2) {
       return [
         `**[${normalized[0]}] 님 외 ${normalized.length - 1}명**을 탈퇴 처리하시겠습니까?`,

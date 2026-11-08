@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  formatSchoolRegionLabel,
   getAllMemberListRoleTypeLabel,
   getMemberSignupTypeLabel,
   isInstructorPermissionRevoked,
@@ -205,5 +206,31 @@ describe('getMemberSignupTypeLabel', () => {
         registeredByAdmin: true,
       })
     ).toBe('관리자 등록')
+  })
+})
+
+describe('formatSchoolRegionLabel', () => {
+  it('서버 시·도·시·군·구 필드를 우선한다', () => {
+    expect(
+      formatSchoolRegionLabel({
+        address: '서울특별시 중구 세종대로 110',
+        regionSido: '서울특별시',
+        regionSigungu: '중구',
+      })
+    ).toBe('서울특별시 중구')
+  })
+
+  it('필드가 없으면 도로명 주소 앞 두 토큰을 쓴다', () => {
+    expect(formatSchoolRegionLabel({ address: '경기도 성남시 분당구 판교로 242' })).toBe(
+      '경기도 성남시'
+    )
+  })
+
+  it('둘째 토큰이 시·군·구가 아니면 시·도만, 주소가 없으면 -', () => {
+    expect(formatSchoolRegionLabel({ address: '세종특별자치시 한누리대로 2130' })).toBe(
+      '세종특별자치시'
+    )
+    expect(formatSchoolRegionLabel({ address: '' })).toBe('-')
+    expect(formatSchoolRegionLabel(undefined)).toBe('-')
   })
 })
