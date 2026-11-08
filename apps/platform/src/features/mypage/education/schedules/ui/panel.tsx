@@ -13,6 +13,7 @@ import {
 import { isTrainedTeacherOrganizationSchedule } from '../lib/trained-teacher-organization'
 import { useApplicationSchedulesQuery } from '../../applications/api/activity-hooks'
 import type { ProgramApplicationType } from '../../applications/api/types'
+import type { PortalPreferredScheduleBlock } from '@/features/program/api/application-types'
 import { filterItemsUpToLastParticipatedSession } from '../../applications/lib/display-status'
 import { useGeminiSettlementTabQuery } from '../../settlements/api/use-gemini-settlement-query'
 import { mapGeminiLectureSchedulesToEducationScheduleItems } from '../../settlements/lib/map-gemini-lecture-schedules'
@@ -35,6 +36,8 @@ type EducationSchedulePanelProps = {
   useGeminiLectureSchedules?: boolean
   /** 신청 GET nested program.programType — TT 기관 운영일 접기 해제 */
   programType?: string | null
+  /** 신청 상세 희망 블록 — TT 기관 운영일 `N차시`(scheduleId 매칭 sessionTimes 수) */
+  preferredScheduleBlocks?: readonly PortalPreferredScheduleBlock[] | null
 }
 
 /**
@@ -49,6 +52,7 @@ export function EducationSchedulePanel({
   absenceReasonEnabled = true,
   useGeminiLectureSchedules = false,
   programType,
+  preferredScheduleBlocks,
 }: EducationSchedulePanelProps) {
   const [page, setPage] = useState(1)
   const [absenceReasonScheduleId, setAbsenceReasonScheduleId] = useState<number | null>(null)
@@ -56,7 +60,7 @@ export function EducationSchedulePanel({
   const remoteSchedules = useApplicationSchedulesQuery(
     useGeminiLectureSchedules ? null : applicationType,
     useGeminiLectureSchedules ? null : applicationId,
-    { programType },
+    { programType, preferredScheduleBlocks },
   )
   const geminiSchedules = useGeminiSettlementTabQuery(
     applicationType,

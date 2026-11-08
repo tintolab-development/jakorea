@@ -86,21 +86,8 @@ export const EDUCATION_SCHEDULE_PROGRESS_LABEL: Record<
   unscheduled: '미정',
 }
 
-const TRAINED_TEACHER_SCHEDULE_PROGRESS_LABEL: Record<
-  EducationScheduleProgressStatus,
-  string
-> = {
-  completed: '완료',
-  in_progress: '진행중',
-  scheduled: '예정',
-  unscheduled: '미정',
-}
-
-export function educationScheduleProgressLabel(
-  progress: EducationScheduleProgressStatus,
-  operationalDayView = false,
-): string {
-  if (operationalDayView) return TRAINED_TEACHER_SCHEDULE_PROGRESS_LABEL[progress]
+/** 교육일정 카드 진행 태그 — TT 기관 운영일 카드도 같은 문구(Figma 13843:112603) */
+export function educationScheduleProgressLabel(progress: EducationScheduleProgressStatus): string {
   return EDUCATION_SCHEDULE_PROGRESS_LABEL[progress]
 }
 

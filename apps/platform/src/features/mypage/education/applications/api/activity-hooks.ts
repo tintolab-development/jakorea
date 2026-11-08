@@ -7,6 +7,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query'
 import { parsePortalProgramId } from '@/features/program/api/mappers'
+import type { PortalPreferredScheduleBlock } from '@/features/program/api/application-types'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { getAccessToken } from '@/shared/lib/auth-token'
 import { queryRetryDelay, shouldRetryQuery } from '@/shared/lib/query-retry'
@@ -714,10 +715,15 @@ export function useToggleApplicationNoticeReactionMutation(
 export function useApplicationSchedulesQuery(
   applicationType: ProgramApplicationType | null | undefined,
   applicationId: string | null | undefined,
-  options?: { programType?: string | null },
+  options?: {
+    programType?: string | null
+    /** TT 기관 운영일 차시 수 — 신청 상세 희망 블록 */
+    preferredScheduleBlocks?: readonly PortalPreferredScheduleBlock[] | null
+  },
 ) {
   const enabled = isActivityQueryEnabled(applicationType, applicationId)
   const programType = options?.programType
+  const preferredScheduleBlocks = options?.preferredScheduleBlocks
   const query = useQuery({
     queryKey: platformQueryKeys.mypage.programApplications.schedules(
       applicationType ?? '',
@@ -736,11 +742,13 @@ export function useApplicationSchedulesQuery(
             sessionRound: query.data?.sessionRound,
             applicationType,
             programType,
+            preferredScheduleBlocks,
           }),
         ),
       ),
     [
       applicationType,
+      preferredScheduleBlocks,
       programType,
       query.data?.educationStructure,
       query.data?.items,

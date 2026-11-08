@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { platformQueryKeys } from '@/shared/api/query-keys'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { getQueryRetryHttpStatus, queryRetryDelay, shouldRetryQuery } from '@/shared/lib/query-retry'
@@ -125,6 +125,8 @@ export function usePortalProgramsList(params: ProgramsListParams): PortalProgram
     queryKey: platformQueryKeys.program.list(listKeyParams(portalQuery)),
     queryFn: ({ signal }) => fetchPortalPrograms(portalQuery, signal),
     enabled: remote,
+    // 페이지·필터 전환 중에는 이전 목록을 유지해 스켈레톤으로 깜빡이지 않게 한다.
+    placeholderData: keepPreviousData,
     staleTime: LIST_STALE_MS,
     gcTime: LIST_GC_MS,
     refetchOnWindowFocus: false,

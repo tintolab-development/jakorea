@@ -813,6 +813,7 @@ export function MypageEducationDetailPage() {
           programType={
             application.programType ?? application.programConfig?.programType ?? program.programType
           }
+          preferredScheduleBlocks={application.preferredScheduleBlocks}
           lastParticipatedSession={
             isWithdrawnDuring ? application.lastParticipatedSession : undefined
           }

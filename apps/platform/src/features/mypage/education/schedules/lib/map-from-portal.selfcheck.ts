@@ -436,7 +436,8 @@ const ttOrgDay = mapPortalEducationSchedule(
 )
 assert.equal(ttOrgDay.rowLabel, '1지망')
 assert.equal(ttOrgDay.title, '1지망')
-assert.equal(ttOrgDay.durationLabel, '1차시')
+// 차시 근거(groupTimes·희망 블록)가 없으면 `1차시`를 지어내지 않는다.
+assert.equal(ttOrgDay.durationLabel, undefined)
 assert.equal(ttOrgDay.preferenceRank, 1)
 assert.equal(ttOrgDay.sessionNumber, 3)
 assert.equal(ttOrgDay.operationalDayView, true)
@@ -456,5 +457,60 @@ const ttOrgRankOnly = mapPortalEducationSchedule(
   { applicationType: 'ORGANIZATION', programType: 'TRAINED_TEACHER' },
 )
 assert.equal(ttOrgRankOnly.rowLabel, '2지망')
+
+const ttOrgFromPreferredBlock = mapPortalEducationSchedule(
+  {
+    scheduleId: 187701,
+    sessionNo: 1,
+    startAt: '2026-04-17T00:00:00Z',
+    endAt: '2026-04-17T03:30:00Z',
+    preferenceRank: 3,
+  },
+  0,
+  {
+    applicationType: 'ORGANIZATION',
+    programType: 'TRAINED_TEACHER',
+    preferredScheduleBlocks: [
+      { scheduleId: 187703, preferenceRank: 1, sessionTimes: [{ startTime: '15:07', endTime: '16:07' }] },
+      {
+        scheduleId: 187701,
+        preferenceRank: 3,
+        sessionCount: 1,
+        sessionTimes: [
+          { startTime: '09:00', endTime: '09:50' },
+          { startTime: '10:00', endTime: '10:50' },
+          { startTime: '11:40', endTime: '12:30' },
+        ],
+      },
+    ],
+  },
+)
+assert.equal(ttOrgFromPreferredBlock.durationLabel, '3차시')
+
+const ttOrgSessionCountOnly = mapPortalEducationSchedule(
+  { scheduleId: 187702, startAt: '2026-11-19T06:07:00Z' },
+  0,
+  {
+    applicationType: 'ORGANIZATION',
+    programType: 'TRAINED_TEACHER',
+    preferredScheduleBlocks: [{ scheduleId: 187702, sessionCount: 2 }],
+  },
+)
+assert.equal(ttOrgSessionCountOnly.durationLabel, '2차시')
+
+const ttOrgGroupTimesWin = mapPortalEducationSchedule(
+  {
+    scheduleId: 187701,
+    startAt: '2026-11-17T06:07:00Z',
+    groupTimes: [{ startTime: '15:07', endTime: '16:07' }],
+  },
+  0,
+  {
+    applicationType: 'ORGANIZATION',
+    programType: 'TRAINED_TEACHER',
+    preferredScheduleBlocks: [{ scheduleId: 187701, sessionCount: 4 }],
+  },
+)
+assert.equal(ttOrgGroupTimesWin.durationLabel, '1차시')
 
 console.log('map-from-portal.selfcheck: ok')
