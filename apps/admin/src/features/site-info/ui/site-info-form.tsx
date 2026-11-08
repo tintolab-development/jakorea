@@ -165,13 +165,7 @@ const SiteInfoTextField = memo(function SiteInfoTextField({
   )
 })
 
-function ImageView({
-  url,
-  alt,
-}: {
-  url: string
-  alt: string
-}) {
+function ImageView({ url, alt }: { url: string; alt: string }) {
   if (!url) {
     return <span className="site-info-form__text-view">-</span>
   }
@@ -347,7 +341,7 @@ export function SiteInfoFormCard({ data }: Props) {
     <div className="admin-list-card site-info-form-card">
       <div className="admin-list-toolbar">
         <div className="table-header-title--wrapper">
-          <span className="table-title">사이트 정보 관리</span>
+          <span className="table-title-20">사이트 정보 관리</span>
           <span className="table-description">{TOOLBAR_DESCRIPTION}</span>
         </div>
         <div className="table-header-actions--wrapper">
