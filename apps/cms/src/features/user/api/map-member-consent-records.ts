@@ -71,6 +71,12 @@ type AgreementOverlay = {
   agreed: boolean
   agreedAt?: string
   consentStatus?: string
+  /** 초상권 1·2·3 모두 동의 여부(표시 전용). 비초상권·판정 불가 과거 기록은 null */
+  allItemsAgreed?: boolean | null
+  /** Summary `expired` — 유효기간 경과. 기간제(동의서형) 항목에만 표시에 쓴다 */
+  expired?: boolean
+  /** Summary `expiresAt` — 만료일 표시용 */
+  expiresAt?: string
   consentRecordId?: number
   formResponseId?: number
   filledDocumentId?: number
@@ -102,6 +108,13 @@ function formatConsentedAt(iso: string | undefined): string | undefined {
   return parsed.format('YYYY.MM.DD HH:mm')
 }
 
+function formatConsentDate(iso: string | undefined): string | undefined {
+  if (!iso?.trim()) return undefined
+  const parsed = dayjs(iso)
+  if (!parsed.isValid()) return iso
+  return parsed.format('YYYY.MM.DD')
+}
+
 function agreementToFieldValue(
   agreement: AgreementOverlay,
   label: string
@@ -110,11 +123,17 @@ function agreementToFieldValue(
   const agreedAtDisplay = formatConsentedAt(agreement.agreedAt)
 
   if (DOCUMENT_LABELS.has(label)) {
+    /** 동의서형 항목은 모두 기간제 — 유효기간 경과 시 「동의 만료」 + 만료일 */
+    const expired = agreement.expired === true
     return {
       type: 'document',
       agreed,
-      agreedAtDisplay: agreed ? agreedAtDisplay : undefined,
+      agreedAtDisplay: agreed && !expired ? agreedAtDisplay : undefined,
       consentStatus: agreement.consentStatus,
+      allItemsAgreed: agreement.allItemsAgreed,
+      ...(expired
+        ? { expired: true, expiredAtDisplay: formatConsentDate(agreement.expiresAt) }
+        : {}),
       formResponseId: agreement.formResponseId,
       filledDocumentId: agreement.filledDocumentId,
       filledDocumentAvailable: agreement.filledDocumentAvailable,
@@ -129,6 +148,7 @@ function agreementToFieldValue(
     agreed,
     agreedAtDisplay,
     consentStatus: agreement.consentStatus,
+    allItemsAgreed: agreement.allItemsAgreed,
   }
 }
 
@@ -206,6 +226,7 @@ function toConsentRecordOverlay(record: MemberConsentRecordResponse): AgreementO
   return {
     agreed: false,
     consentStatus: record.consentStatus,
+    allItemsAgreed: record.allItemsAgreed,
     consentRecordId: record.consentRecordId,
     formResponseId: record.formResponseId,
     filledDocumentId: record.filledDocumentId,
@@ -266,6 +287,7 @@ function buildTermsAgreementLabelMap(
       agreed: row.agreed === true,
       agreedAt: row.agreedAt,
       consentStatus: row.consentStatus,
+      allItemsAgreed: row.allItemsAgreed,
       consentRecordId: readTermsConsentRecordId(row),
       consentType: row.termsType,
     })
@@ -288,6 +310,7 @@ function mergeRecordMetaIntoOverlay(
       meta.filledDocumentRevealEndpoint ?? overlay.filledDocumentRevealEndpoint,
     consentType: meta.consentType ?? overlay.consentType,
     consentStatus: overlay.consentStatus ?? meta.consentStatus,
+    allItemsAgreed: overlay.allItemsAgreed ?? meta.allItemsAgreed,
   }
 }
 
@@ -344,6 +367,9 @@ function buildLabelMapFromSummaries(
         agreedAt: agreed ? summary.agreedAt : undefined,
         consentType: summary.consentType,
         consentStatus: summary.consentStatus,
+        allItemsAgreed: summary.allItemsAgreed,
+        expired: summary.expired === true,
+        expiresAt: summary.expiresAt,
       }
       labelMap.set(
         field.label,

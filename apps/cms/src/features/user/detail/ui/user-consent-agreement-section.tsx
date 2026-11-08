@@ -102,12 +102,20 @@ export type ConsentFieldValueSchema =
       agreed: boolean
       agreedAtDisplay?: string
       consentStatus?: string
+      /** 초상권 1·2·3 모두 동의 여부(표시 전용) */
+      allItemsAgreed?: boolean | null
     }
   | {
       type: 'document'
       agreed: boolean
       agreedAtDisplay?: string
       consentStatus?: string
+      /** 초상권 1·2·3 모두 동의 여부(표시 전용) */
+      allItemsAgreed?: boolean | null
+      /** 기간제 동의서 유효기간 경과 — 「동의 만료」 */
+      expired?: boolean
+      /** 만료일 (예: 2027.10.31) — `expired`일 때만 */
+      expiredAtDisplay?: string
       formResponseId?: number
       consentRecordId?: number
       filledDocumentId?: number
@@ -310,20 +318,31 @@ function ConsentDocumentRow({
   agreed,
   agreedAtDisplay,
   consentStatus,
+  allItemsAgreed,
+  expired = false,
+  expiredAtDisplay,
   onOpenDocument,
 }: {
   agreed: boolean
   /** 동의한 경우에만 표시 (예: 2026.01.15 09:15:42) */
   agreedAtDisplay?: string
   consentStatus?: string
+  allItemsAgreed?: boolean | null
+  /** 유효기간 경과 — 「동의 만료」 + 만료일 */
+  expired?: boolean
+  expiredAtDisplay?: string
   onOpenDocument?: () => void
 }) {
   const open = onOpenDocument
   const statusLabel = resolveConsentStatusDisplayLabel({
     agreed,
     consentStatus,
+    allItemsAgreed,
+    expired,
     agreedLabel: '동의',
   })
+  /** 기존 일시 자리 — 만료면 만료일, 아니면 동의 일시 */
+  const datetimeDisplay = expired ? expiredAtDisplay : agreedAtDisplay
 
   return (
     <span className="user-consent-agreement-section__value-inner">
@@ -338,16 +357,23 @@ function ConsentDocumentRow({
           <CmsButton variant="secondary" size="h32" onClick={open} disabled={!open}>
             동의서 보기
           </CmsButton>
-          {agreedAtDisplay ? (
+          {datetimeDisplay ? (
             <span className="user-consent-agreement-section__value-datetime">
-              {agreedAtDisplay}
+              {datetimeDisplay}
             </span>
           ) : null}
         </>
       ) : (
-        <CmsButton variant="default" size="h32" disabled>
-          동의서 보기
-        </CmsButton>
+        <>
+          <CmsButton variant="default" size="h32" disabled>
+            동의서 보기
+          </CmsButton>
+          {expired && datetimeDisplay ? (
+            <span className="user-consent-agreement-section__value-datetime">
+              {datetimeDisplay}
+            </span>
+          ) : null}
+        </>
       )}
     </span>
   )
@@ -371,6 +397,7 @@ function resolveConsentFieldView(
       const status = resolveConsentStatusDisplayLabel({
         agreed: value.agreed,
         consentStatus: value.consentStatus,
+        allItemsAgreed: value.allItemsAgreed,
         agreedLabel: '동의',
       })
       const text = value.agreedAtDisplay ? `${status} | ${value.agreedAtDisplay}` : status
@@ -383,9 +410,12 @@ function resolveConsentFieldView(
         const status = resolveConsentStatusDisplayLabel({
           agreed: value.agreed,
           consentStatus: value.consentStatus,
+          allItemsAgreed: value.allItemsAgreed,
+          expired: value.expired,
           agreedLabel: '동의',
         })
-        const text = value.agreedAtDisplay ? `${status} | ${value.agreedAtDisplay}` : status
+        const datetime = value.expired ? value.expiredAtDisplay : value.agreedAtDisplay
+        const text = datetime ? `${status} | ${datetime}` : status
         return consentFieldContent(text)
       }
       return (
@@ -393,6 +423,9 @@ function resolveConsentFieldView(
           agreed={value.agreed}
           agreedAtDisplay={value.agreedAtDisplay}
           consentStatus={value.consentStatus}
+          allItemsAgreed={value.allItemsAgreed}
+          expired={value.expired}
+          expiredAtDisplay={value.expiredAtDisplay}
           onOpenDocument={
             value.agreed ? () => ctx.openDocumentForLabel(fieldLabel, value) : undefined
           }

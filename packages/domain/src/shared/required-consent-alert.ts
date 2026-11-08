@@ -42,16 +42,34 @@ export function isPartialConsentStatus(value: string | null | undefined): boolea
   return (value ?? '').trim().toUpperCase() === 'PARTIAL'
 }
 
-export const PARTIAL_CONSENT_DISPLAY_LABEL = '부분동의'
+/** 기획 표기 — 띄어 씀 */
+export const PARTIAL_CONSENT_DISPLAY_LABEL = '부분 동의'
 
-/** 동의 상태 표시. `PARTIAL`이면 동의/미동의보다 부분동의를 우선한다. */
+/** 기간제 동의서 유효기간 경과 표시 (약관 개정 재동의에는 쓰지 않는다) */
+export const EXPIRED_CONSENT_DISPLAY_LABEL = '동의 만료'
+
+/**
+ * 동의 상태 표시. `expired`이면 다른 상태와 관계없이 「동의 만료」를 쓴다.
+ * 기간제 동의서 여부는 호출부가 판단해 `expired`를 넘긴다.
+ * 그 외에는 `PARTIAL`이면 동의/미동의보다 부분 동의를 우선한다.
+ * 단, 초상권(`PARTIAL`)을 동의했고 서버 `allItemsAgreed === true`(1·2·3번 모두 동의)이면 동의 라벨을 쓴다.
+ * `allItemsAgreed`가 false/null이면 기존 표시를 유지한다(표시 전용 — 참여 게이트는 `programEligible`).
+ */
 export function resolveConsentStatusDisplayLabel(options: {
   agreed: boolean
   consentStatus?: string | null
+  /** 초상권 전용 응답 필드. 비초상권·원본 없는 과거 기록은 null */
+  allItemsAgreed?: boolean | null
+  /** 기간제 동의서 유효기간 경과. 기간제가 아닌 항목은 넘기지 않는다 */
+  expired?: boolean
   agreedLabel: string
   disagreedLabel?: string
 }): string {
-  if (isPartialConsentStatus(options.consentStatus)) return PARTIAL_CONSENT_DISPLAY_LABEL
+  if (options.expired === true) return EXPIRED_CONSENT_DISPLAY_LABEL
+  if (isPartialConsentStatus(options.consentStatus)) {
+    if (options.agreed && options.allItemsAgreed === true) return options.agreedLabel
+    return PARTIAL_CONSENT_DISPLAY_LABEL
+  }
   return options.agreed ? options.agreedLabel : (options.disagreedLabel ?? '미동의')
 }
 
