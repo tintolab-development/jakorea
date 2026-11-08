@@ -185,18 +185,6 @@ export function formatGeneralVolunteerEssayCellValue(
   return value?.trim() || '-'
 }
 
-/** 1차 서류 심사 — 선택 승인: 미선택 시 AlertModal */
-export const GENERAL_VOLUNTEER_DOC_SCREENING_SELECT_ONE_APPROVE_ALERT = {
-  title: '항목 선택 안내',
-  content: '승인할 항목을 선택해 주세요.',
-} as const
-
-/** 1차 서류 심사 — 선택 반려: 미선택 시 AlertModal */
-export const GENERAL_VOLUNTEER_DOC_SCREENING_SELECT_ONE_REJECT_ALERT = {
-  title: '항목 선택 안내',
-  content: '반려할 항목을 선택해 주세요.',
-} as const
-
 /** @deprecated `buildApplicationProcessedSelectionAlert('volunteer')` 사용 */
 export const GENERAL_VOLUNTEER_DOC_SCREENING_PROCESSED_SELECTION_ALERT =
   buildApplicationProcessedSelectionAlert('volunteer')

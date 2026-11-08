@@ -45,6 +45,7 @@ import '@/pages/users/user-list-page.css'
 import '@/features/program/general/ui/program-list.css'
 import './admin-faq-delete-btn.css'
 import './admin-faq-list-page.css'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 /** 고정열 합 + 제목 최소 + 체크박스 여유 (시안: 공개100·카테고리160·작성자140·일시200×2) */
 const FAQ_LIST_TABLE_SCROLL_X = 1140
@@ -141,10 +142,7 @@ function AdminFAQPage() {
   const handleBulkDelete = useCallback(() => {
     if (!canWrite) return
     if (selectedRowKeys.length === 0) {
-      showAlert({
-        title: '항목 선택 안내',
-        content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
-      })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setBulkDeleteConfirmOpen(true)

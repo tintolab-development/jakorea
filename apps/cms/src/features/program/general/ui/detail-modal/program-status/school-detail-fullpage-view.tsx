@@ -72,9 +72,7 @@ import {
   PrivacyHomeAddressDisplay,
 } from '@/features/program/shared/lib/program-pii-display'
 import {
-  INSTRUCTOR_ASSIGN_SELECT_INSTRUCTOR_ALERT_MESSAGE,
   INSTRUCTOR_ASSIGN_SELECT_UNAPPROVED_SINGLE_ONLY_ALERT_MESSAGE,
-  INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_INSTRUCTOR_ALERT_MESSAGE,
   PARTICIPATING_INSTITUTION_ALREADY_ACTIVITY_WITHDRAWN_ALERT_MESSAGE,
 } from '@/shared/constants/messages'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
@@ -234,6 +232,7 @@ import {
 import type { GeneralProgramNavigationCapabilities } from '../../../hooks/use-general-program-navigation'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import { TrainedTeachersParticipatingInstitutionDetailView } from '@/features/program/trained-teachers/ui/institution-detail/participating-institution-detail-view'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 export {
   GENERAL_PARTICIPATING_INSTITUTION_DETAIL_TAB_KEYS,
@@ -1670,10 +1669,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         sessionIds.includes(buildSchoolAddInstructorSessionSlotKey(row.id, session))
       )
       if (selectedSessions.length === 0) {
-        showAlert({
-          title: '안내',
-          content: '배정할 교육 일정을 선택해 주세요.',
-        })
+        showAlert(NO_SELECTION_ALERT)
         return
       }
       const applicationIdRaw = assignmentBoard.approvedInstructorApplications.find(
@@ -1781,10 +1777,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
 
   const handleUnassignClick = useCallback(() => {
     if (selectedAssignedKeys.length === 0) {
-      showAlert({
-        title: '안내',
-        content: INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_INSTRUCTOR_ALERT_MESSAGE,
-      })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setUnassignConfirmOpen(true)
@@ -1792,7 +1785,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
 
   const handleSelectAssignClick = useCallback(() => {
     if (selectedWaitingRows.length === 0) {
-      showAlert({ title: '안내', content: INSTRUCTOR_ASSIGN_SELECT_INSTRUCTOR_ALERT_MESSAGE })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
 
@@ -2811,10 +2804,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                       sessionIds.includes(buildSchoolAddInstructorSessionSlotKey(row.id, session))
                     )
                     if (selectedSessions.length === 0) {
-                      showAlert({
-                        title: '안내',
-                        content: '배정할 교육 일정을 선택해 주세요.',
-                      })
+                      showAlert(NO_SELECTION_ALERT)
                       return
                     }
 

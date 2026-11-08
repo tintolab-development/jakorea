@@ -39,6 +39,7 @@ import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
 import '@/features/program/general/ui/program-list.css'
 import './admin-inquiry-page.css'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 /**
  * 시안: 답변현황 120 · 카테고리 140 · 프로그램명·제목 flex:1 · 회원명·담당자 120 · 일시 200
@@ -164,10 +165,7 @@ export function AdminInquiryPage() {
   const handleBulkDelete = useCallback(() => {
     if (!canWrite) return
     if (selectedRowKeys.length === 0) {
-      showAlert({
-        title: '항목 선택 안내',
-        content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
-      })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setBulkDeleteConfirmOpen(true)

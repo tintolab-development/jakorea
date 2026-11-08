@@ -54,7 +54,7 @@ import {
   resolveProgramHardDeleteBlockedModalCopy,
 } from '@/features/program/shared/lib/program-delete-guide'
 import { DeleteBlockedGuideModal } from '@/shared/ui/delete-blocked-guide-modal'
-import { PROGRAM_LIST_NO_SELECTION_ALERT } from '@/features/program/shared/lib/program-list-no-selection-alert'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import {
   buildUjatProgressYearFieldOptions,
@@ -374,7 +374,7 @@ function UjatProgramListPageContent() {
 
   const handleBulkDeleteClick = useCallback(() => {
     if (selectedRowKeys.length === 0) {
-      showAlert(PROGRAM_LIST_NO_SELECTION_ALERT)
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setBulkDeleteModalOpen(true)

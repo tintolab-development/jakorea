@@ -18,7 +18,6 @@ import {
   PARTICIPATING_EMPLOYEE_VOLUNTEER_REGISTER_COUNTS_REQUIRED_ALERT_MESSAGE,
   PARTICIPATING_EMPLOYEE_VOLUNTEER_REGISTER_SELECT_INSTITUTION_ALERT_MESSAGE,
   PARTICIPATING_VOLUNTEER_ADD_COMPLETE_ALERT_MESSAGE,
-  PARTICIPATING_VOLUNTEER_ADD_SELECT_ALERT_MESSAGE,
 } from '@/shared/constants/messages'
 import { CMS_TABLE_NO_COL_CLASS } from '@/shared/constants/table'
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
@@ -81,6 +80,7 @@ import {
 } from '@/shared/ui/icons/ButtonIcons'
 import './participating-institutions-section.css'
 import './program-progress-tab.css'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 export interface ParticipatingVolunteersSectionProps {
   programId?: string
@@ -807,7 +807,7 @@ export function ParticipatingVolunteersSection({
         onCancel={() => setAddVolunteerModalOpen(false)}
         memberOptions={volunteerMemberOptions}
         onNoMemberSelected={() =>
-          showAlert({ title: '안내', content: PARTICIPATING_VOLUNTEER_ADD_SELECT_ALERT_MESSAGE })
+          showAlert(NO_SELECTION_ALERT)
         }
         onProceedToRegistration={handleProceedToVolunteerConsent}
       />

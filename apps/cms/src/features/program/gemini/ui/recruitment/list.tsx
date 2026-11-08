@@ -47,6 +47,7 @@ import { useGeminiRecruitmentAddUrl } from './recruitment-add-url'
 import '@/pages/programs/program-list-page.css'
 import '../page.css'
 import './list.css'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 const RECRUITMENT_STATUS_LABEL: Record<GeminiRecruitmentDisplayStatus, string> = {
   SCHEDULED: '예정',
@@ -154,10 +155,7 @@ export function GeminiRecruitmentList() {
   })
 
   const showNoSelectionAlert = useCallback(() => {
-    showAlert({
-      title: '항목 선택 안내',
-      content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
-    })
+    showAlert(NO_SELECTION_ALERT)
   }, [showAlert])
 
   const showRemoteMutationUnavailable = useCallback(() => {

@@ -52,6 +52,7 @@ import {
   sanitizeInternalReturnTo,
 } from '@/features/sponsor/lib/sponsor-detail-page-url'
 import { resolveSelectedSponsorRows } from '@/features/sponsor/lib/resolve-selected-rows'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 const ORG_LABEL: Record<NonNullable<SponsorManagementRow['organizationKind']>, string> = {
   corporate: '기업',
@@ -207,10 +208,7 @@ export default function SponsorPage() {
   const handleBulkDelete = useCallback(() => {
     if (!canWrite) return
     if (selectedRowKeys.length === 0) {
-      showAlert({
-        title: '항목 선택 안내',
-        content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
-      })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setBulkSponsorDeleteModalOpen(true)
@@ -233,10 +231,7 @@ export default function SponsorPage() {
     const ids = [...new Set(selectedSponsors.map(s => String(s.id)))]
     const n = ids.length
     if (n === 0) {
-      showAlert({
-        title: '항목 선택 안내',
-        content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
-      })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     try {

@@ -28,6 +28,7 @@ import {
   isProgramHistoryDeleteBlockedByDisplayStatus,
 } from '@/shared/constants/status'
 import { SPONSOR_PROGRAM_HISTORY_TAB_LABEL } from '@/features/sponsor/lib/sponsor-program-history-copy'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 /** 임시: 이력 삭제 UI 비노출. true로 되돌리면 버튼·삭제용 선택이 다시 보인다. */
 const SHOW_PROGRAM_HISTORY_DELETE = false
@@ -181,10 +182,7 @@ export function SponsorProgramHistoryPanel({
   const handleDeleteProgramHistory = useCallback((): void => {
     if (!canWrite || deleteDisabled) return
     if (selectedKeys.length === 0) {
-      showAlert({
-        title: '항목 선택 안내',
-        content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
-      })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setDeleteModalOpen(true)

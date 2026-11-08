@@ -111,6 +111,7 @@ import {
 } from '@/features/user/api/map-instructor-cms-profile'
 import { SCHOOL_TEACHER_EMPLOYMENT_BADGE_LABEL } from '@/features/user/detail/lib/school-teacher-employment-status'
 import { buildMemberListDeleteGuideLines } from '@/features/user/shared/lib/member-withdraw-delete-guide'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 type UserListRow = Omit<User, 'password'>
 
@@ -1254,10 +1255,7 @@ export function UserListPage() {
                   selectedRowsSnapshot
                 )
                 if (toDelete.length === 0) {
-                  showAlert({
-                    title: '항목 선택 안내',
-                    content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
-                  })
+                  showAlert(NO_SELECTION_ALERT)
                   return
                 }
                 if (resolvedMemberListKind === 'institutions') {

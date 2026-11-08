@@ -53,6 +53,7 @@ import type { UjatEducationProgressVolunteerRow } from './types'
 import { Volunteer1365PreviewModal } from './volunteer-1365-preview-modal'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './section.css'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 export function UjatEducationProgressVolunteersSection({
   program,
@@ -152,10 +153,7 @@ export function UjatEducationProgressVolunteersSection({
   )
 
   const showNoMemberSelectedAlert = useCallback(() => {
-    showAlert({
-      title: '안내',
-      content: '추가 등록할 회원을 선택해 주세요.',
-    })
+    showAlert(NO_SELECTION_ALERT)
   }, [showAlert])
 
   const handleRegisterVolunteerClick = useCallback(() => {

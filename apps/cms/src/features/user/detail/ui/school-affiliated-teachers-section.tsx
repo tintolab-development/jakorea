@@ -24,6 +24,7 @@ import { getEmploymentStatusTag } from '@/shared/lib/status-tag-specs'
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import './school-affiliated-teachers-section.css'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 export interface SchoolAffiliatedTeachersSectionProps {
   rows: SchoolAffiliatedTeacherRow[]
@@ -193,10 +194,7 @@ export function SchoolAffiliatedTeachersSection({
 
   const handleWithdraw = () => {
     if (selectedRowKeys.length === 0) {
-      showAlert({
-        title: '항목 선택 안내',
-        content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
-      })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     onWithdrawSelected?.(selectedRowKeys.map(String))

@@ -24,6 +24,7 @@ import {
 import { useCmsAlert, FilterTableToolbarButton } from '@/shared/ui'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 const contactFilterFields: FilterFieldConfig[] = [
   {
@@ -114,10 +115,7 @@ export function SponsorContactsPanel({
   const handleDeleteClick = useCallback((): void => {
     if (!canWrite || isEditing || isDeleting) return
     if (selectedKeys.length === 0) {
-      showAlert({
-        title: '항목 선택 안내',
-        content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
-      })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setDeleteModalOpen(true)

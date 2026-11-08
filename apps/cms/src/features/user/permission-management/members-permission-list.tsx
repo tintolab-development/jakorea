@@ -47,6 +47,7 @@ import '@/pages/users/user-list-page.css'
 import '@/features/program/general/ui/program-list.css'
 import './members-permission-list.css'
 import { CmsButton, ContentModal, useCmsAlert, FilterTableToolbarButton } from '@/shared/ui'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 /** 강사 권한승인 목록 — BE `학교/기관`은 UI `학교(교사)`로 표시 */
 const MEMBER_CATEGORY_LABEL: Record<MemberPermissionApplicationRow['memberCategory'], string> = {
@@ -165,10 +166,7 @@ export const MembersPermissionList = forwardRef<
   const [searchParams, setSearchParams] = useSearchParams()
 
   const showNoSelectionAlert = useCallback(() => {
-    showAlert({
-      title: '항목 선택 안내',
-      content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
-    })
+    showAlert(NO_SELECTION_ALERT)
   }, [showAlert])
 
   const instructorListParams = useMemo(

@@ -40,7 +40,7 @@ import {
   resolveProgramHardDeleteBlockedModalCopy,
   resolveProgramDeleteGuideModalCopy,
 } from '@/features/program/shared/lib/program-delete-guide'
-import { PROGRAM_LIST_NO_SELECTION_ALERT } from '@/features/program/shared/lib/program-list-no-selection-alert'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import {
@@ -390,7 +390,7 @@ function TrainedTeachersProgramPageContent() {
       selectedRowKeys.includes(program.id)
     )
     if (programsToDelete.length === 0) {
-      showAlert(PROGRAM_LIST_NO_SELECTION_ALERT)
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setProgramsPendingBulkDelete(programsToDelete)

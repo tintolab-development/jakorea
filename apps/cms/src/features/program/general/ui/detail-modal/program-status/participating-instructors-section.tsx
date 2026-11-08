@@ -18,7 +18,6 @@ import {
   ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONE_ALERT_MESSAGE,
   ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_ALERT_MESSAGE,
   PARTICIPATING_INSTRUCTOR_ADD_COMPLETE_ALERT_MESSAGE,
-  PARTICIPATING_INSTRUCTOR_ADD_SELECT_ALERT_MESSAGE,
 } from '@/shared/constants/messages'
 import {
   fetchParticipatingInstructorMemberCandidates,
@@ -78,6 +77,7 @@ import {
 } from '@/shared/ui/icons/ButtonIcons'
 import './participating-institutions-section.css'
 import './program-progress-tab.css'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 const INSTRUCTOR_ELLIPSIS_CELL_CLASS = 'participating-instructors-section__ellipsis-cell'
 
@@ -441,7 +441,7 @@ export function ParticipatingInstructorsSection({
   }, [isRemoteDataSource, registeredInstructorNames])
 
   const showInstructorAddSelectAlert = useCallback(() => {
-    showAlert({ title: '안내', content: PARTICIPATING_INSTRUCTOR_ADD_SELECT_ALERT_MESSAGE })
+    showAlert(NO_SELECTION_ALERT)
   }, [showAlert])
 
   const handleCalendarView = () => {

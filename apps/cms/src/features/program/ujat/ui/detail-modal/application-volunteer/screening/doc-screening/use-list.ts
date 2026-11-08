@@ -333,7 +333,7 @@ export function useUjatVolunteerDocScreening({
   const handleBulkReject = useCallback(() => {
     const ids = selectedRowKeys.map(String)
     if (ids.length === 0) {
-      alertUjatVolunteerDocumentSelectionRequired('reject')
+      alertUjatVolunteerDocumentSelectionRequired()
       return
     }
     setBulkRejectOpen(true)
@@ -342,7 +342,7 @@ export function useUjatVolunteerDocScreening({
   const handleBulkApprove = useCallback(() => {
     const ids = selectedRowKeys.map(String)
     if (ids.length === 0) {
-      alertUjatVolunteerDocumentSelectionRequired('approve')
+      alertUjatVolunteerDocumentSelectionRequired()
       return
     }
     setBulkApproveOpen(true)

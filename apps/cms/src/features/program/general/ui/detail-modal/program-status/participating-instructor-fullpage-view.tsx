@@ -19,8 +19,6 @@ import type {
 } from '@/features/program/general/model/participating-instructors'
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
 import {
-  INSTRUCTOR_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
-  INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
   PARTICIPATING_INSTRUCTOR_ALREADY_ACTIVITY_WITHDRAWN_ALERT_MESSAGE,
   MESSAGES,
 } from '@/shared/constants/messages'
@@ -124,6 +122,7 @@ import './participating-institutions-section.css'
 import './instructor-assignment-status-text.css'
 import './school-detail-fullpage-view.css'
 import './participating-instructor-fullpage-view.css'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 const ASSIGNMENT_STATUS_LABELS: Record<InstructorWaitingAssignmentStatus, string> = {
   waiting: '배정 대기',
@@ -772,7 +771,7 @@ export function ParticipatingInstructorFullpageView({
 
   const handleUnassignClick = useCallback(() => {
     if (selectedAssignedSchoolKeys.length === 0) {
-      showAlert({ title: '안내', content: INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setUnassignConfirmOpen(true)
@@ -780,7 +779,7 @@ export function ParticipatingInstructorFullpageView({
 
   const handleSelectAssignClick = useCallback(() => {
     if (selectedWaitingSchoolKeys.length === 0) {
-      showAlert({ title: '안내', content: INSTRUCTOR_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     const movable = waitingSchools.some(
@@ -953,10 +952,7 @@ export function ParticipatingInstructorFullpageView({
         )
 
         if (targetSessions.length === 0) {
-          showAlert({
-            title: '안내',
-            content: '교육 배정일을 선택해 주세요.',
-          })
+          showAlert(NO_SELECTION_ALERT)
           return false
         }
 

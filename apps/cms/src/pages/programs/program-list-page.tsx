@@ -65,7 +65,7 @@ import {
   resolveProgramHardDeleteBlockedModalCopy,
 } from '@/features/program/shared/lib/program-delete-guide'
 import { DeleteBlockedGuideModal } from '@/shared/ui/delete-blocked-guide-modal'
-import { PROGRAM_LIST_NO_SELECTION_ALERT } from '@/features/program/shared/lib/program-list-no-selection-alert'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 import { resolveProgramListDetailEntry } from '@/features/program/general/lib/resolve-program-list-detail-entry'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
@@ -456,7 +456,7 @@ function ProgramListPageContent() {
   const handleBulkDeleteClick = () => {
     const programsToDelete = filteredPrograms.filter(p => selectedRowKeys.includes(p.id))
     if (programsToDelete.length === 0) {
-      showAlert(PROGRAM_LIST_NO_SELECTION_ALERT)
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setProgramsPendingBulkDelete(programsToDelete)

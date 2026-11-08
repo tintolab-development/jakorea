@@ -1,6 +1,4 @@
 import {
-  GENERAL_VOLUNTEER_DOC_SCREENING_SELECT_ONE_APPROVE_ALERT,
-  GENERAL_VOLUNTEER_DOC_SCREENING_SELECT_ONE_REJECT_ALERT,
 } from '@/features/program/general/lib/volunteer-screening-constants'
 import { buildApplicationProcessedSelectionAlert } from '@/features/program/general/lib/application-processed-selection-alert'
 import {
@@ -9,6 +7,7 @@ import {
 } from '@/features/program/shared/lib/application-eligibility-conflict'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import type { BulkActionResponse } from '@/shared/api/generated/dashboard/schemas/bulkActionResponse'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 export function formatVolunteerBulkActionFailures(bulk: BulkActionResponse): {
   title: string
@@ -72,7 +71,7 @@ export function requestGeneralVolunteerApplicationBulkApprove({
   onOpenBulkApprove: () => void
 }): void {
   if (selectedIds.length === 0) {
-    cmsAlertModal.show(GENERAL_VOLUNTEER_DOC_SCREENING_SELECT_ONE_APPROVE_ALERT)
+    cmsAlertModal.show(NO_SELECTION_ALERT)
     return
   }
   if (hasProcessedApplicationSelection(selectedRows)) {
@@ -98,7 +97,7 @@ export function requestGeneralVolunteerApplicationBulkReject({
   onOpenBulkReject: () => void
 }): void {
   if (selectedIds.length === 0) {
-    cmsAlertModal.show(GENERAL_VOLUNTEER_DOC_SCREENING_SELECT_ONE_REJECT_ALERT)
+    cmsAlertModal.show(NO_SELECTION_ALERT)
     return
   }
   if (hasProcessedApplicationSelection(selectedRows)) {

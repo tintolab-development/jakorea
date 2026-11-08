@@ -38,6 +38,7 @@ import { GeminiInstitutionApprovalStatusBadge } from './gemini-institution-appro
 import { GeminiInstitutionApproveModal } from './institution-approve-modal'
 import { GeminiInstitutionPreferredLectureScheduleCell } from './gemini-institution-preferred-lecture-schedule-cell'
 import './institution-application-tab.css'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 type PendingFilters = {
   institutionName: string
@@ -225,10 +226,7 @@ export function GeminiInstitutionApplicationTab({
   }, [remoteEnabled, remoteQuery])
 
   const showNoSelectionAlert = useCallback(() => {
-    showAlert({
-      title: '항목 선택 안내',
-      content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
-    })
+    showAlert(NO_SELECTION_ALERT)
   }, [showAlert])
 
   const handleBulkReject = useCallback(() => {
