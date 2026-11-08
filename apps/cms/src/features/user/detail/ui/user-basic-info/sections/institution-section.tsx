@@ -1,11 +1,12 @@
-import { CmsInput } from '@/shared/ui'
+import { SchoolSearch, type SchoolSearchSelection } from '@/shared/ui'
 import { EditableField } from '../fields/editable-field'
 import { EditableRow } from '../fields/editable-row'
 import { addressLine, institutionTimesLabel } from '../display'
 import { useBasicInfoEditing } from '../use-basic-info-editing'
-import { FullWidthAddressEdit } from './shared'
 import type { BasicInfoSectionContext } from './types'
 import { formatDateDot } from '@/shared/utils'
+
+const INSTITUTION_NAME_SEARCH_WIDTH = 240
 
 export function InstitutionSection(ctx: BasicInfoSectionContext) {
   const { user, memberInfoEditing, memberInfoDraft, onMemberInfoDraftChange, cmsMayEditBasicProfileFields } =
@@ -18,6 +19,30 @@ export function InstitutionSection(ctx: BasicInfoSectionContext) {
   })
   const d = memberInfoDraft
 
+  /** 학교 검색 선택 시 기관명·소재지를 함께 갱신 (소재지는 시안상 수정 불가 텍스트) */
+  const handleSchoolSelect = (selection: SchoolSearchSelection) => {
+    if (selection.source === 'neis') {
+      onMemberInfoDraftChange?.({
+        schoolName: selection.item.schulNm.trim(),
+        institutionAddressSearch: selection.item.orgRdnma.trim(),
+        institutionAddressDetail: '',
+      })
+      return
+    }
+    const univ = selection.item
+    onMemberInfoDraftChange?.({
+      schoolName: univ.campusName
+        ? `${univ.schoolName.trim()} (${univ.campusName.trim()})`
+        : univ.schoolName.trim(),
+      institutionAddressSearch: univ.address.trim(),
+      institutionAddressDetail: '',
+    })
+  }
+
+  const draftAddressLine = [d?.institutionAddressSearch?.trim(), d?.institutionAddressDetail?.trim()]
+    .filter(Boolean)
+    .join(' ')
+
   return (
     <>
       <EditableRow type="double">
@@ -26,12 +51,14 @@ export function InstitutionSection(ctx: BasicInfoSectionContext) {
           readOnlyDisplay={editing.isReadOnlyDisplay}
           view={<span>{user.schoolInfo?.schoolName ?? '-'}</span>}
           edit={
-            <CmsInput
+            /* 시안(15520:103404): 기관명은 학교 검색 필드(h36 · 240) */
+            <SchoolSearch
               value={d?.schoolName ?? ''}
-              onChange={e => onMemberInfoDraftChange?.({ schoolName: e.target.value })}
+              onChange={next => onMemberInfoDraftChange?.({ schoolName: next })}
+              onSelect={handleSchoolSelect}
+              placeholder="기관명"
               inputSize="small"
-              width="100%"
-              aria-label="기관명"
+              width={INSTITUTION_NAME_SEARCH_WIDTH}
             />
           }
         />
@@ -39,15 +66,7 @@ export function InstitutionSection(ctx: BasicInfoSectionContext) {
           label="기관 소재지"
           readOnlyDisplay={editing.isReadOnlyDisplay}
           view={<span>{addressLine(user)}</span>}
-          edit={
-            <FullWidthAddressEdit
-              searchValue={d?.institutionAddressSearch ?? ''}
-              onSearchChange={next => onMemberInfoDraftChange?.({ institutionAddressSearch: next })}
-              detailValue={d?.institutionAddressDetail ?? ''}
-              onDetailChange={next => onMemberInfoDraftChange?.({ institutionAddressDetail: next })}
-              detailAriaLabel="기관 소재지 상세"
-            />
-          }
+          edit={<span>{draftAddressLine || addressLine(user)}</span>}
         />
       </EditableRow>
       <EditableRow type="double">

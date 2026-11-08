@@ -10,7 +10,7 @@ import type { ProgramRole, SchoolTeacherEmploymentStatus } from '@/types/user'
 import type { StatusTagTone } from '@/shared/components/status-tag'
 
 export const SCHOOL_TEACHER_EMPLOYMENT_BADGE_LABEL: Record<SchoolTeacherEmploymentStatus, string> = {
-  ACTIVE: '재직중',
+  ACTIVE: '재직 중',
   ON_LEAVE: '휴직',
   TRANSFERRED: '전근',
   WITHDRAWN: '탈퇴',

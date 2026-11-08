@@ -155,6 +155,11 @@ import { resolveInstructorRevokeBlockedAlert } from '@/features/user/permission-
 import { unmaskMemberForCertificateIssue } from '@/features/program/shared/lib/unmask-for-certificate-issue'
 import { revokeInstructorPermission } from '@/entities/user/api/user-service'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
+import { parseContentModalDescriptionLine } from '@/shared/ui/content-modal-description'
+import {
+  INSTRUCTOR_PERMISSION_REVOKE_COMPLETE_TITLE,
+  buildInstructorPermissionRevokeCompleteMessage,
+} from './instructor-permission-revoke-copy'
 import { guardAdminAction, resolveAdminRoleCodeFromUser } from '@/shared/lib/admin-role-policy'
 
 const PERSONAL_INFO_REVEAL_MODAL_Z_INDEX = 1100
@@ -1479,8 +1484,10 @@ export function useUserDetailController({
         onMemberBasicInfoSaved?.(revoked)
         setInstructorPermissionRevokeOpen(false)
         showAlert({
-          title: '권한 종료 완료',
-          content: '강사 권한 종료가 완료되었습니다.',
+          title: INSTRUCTOR_PERMISSION_REVOKE_COMPLETE_TITLE,
+          content: parseContentModalDescriptionLine(
+            buildInstructorPermissionRevokeCompleteMessage(displayUser.name ?? '')
+          ),
         })
       } catch (error) {
         const blockedAlert = resolveInstructorRevokeBlockedAlert(error)

@@ -99,7 +99,7 @@ describe('UserDetailFullPageHeaderActions', () => {
     renderHeader(instructorUser)
 
     expect(screen.getByRole('button', { name: '강사 권한 종료' })).toBeTruthy()
-    expect(screen.getByRole('button', { name: '회원 삭제' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: '회원 탈퇴' })).toBeTruthy()
     expect(screen.getByRole('button', { name: '정보 수정' })).toBeTruthy()
   })
 
@@ -108,7 +108,7 @@ describe('UserDetailFullPageHeaderActions', () => {
     renderHeader(instructorUser)
 
     expect(screen.queryByRole('button', { name: '강사 권한 종료' })).toBeNull()
-    expect(screen.queryByRole('button', { name: '회원 삭제' })).toBeNull()
+    expect(screen.queryByRole('button', { name: '회원 탈퇴' })).toBeNull()
     expect(screen.queryByRole('button', { name: '정보 수정' })).toBeNull()
     expect(screen.queryByRole('button', { name: '개인정보 상세보기' })).toBeNull()
     expect(screen.getByRole('button', { name: '취소' })).toBeTruthy()
@@ -119,7 +119,7 @@ describe('UserDetailFullPageHeaderActions', () => {
     mockShell.basicInfoEditing = true
     renderHeader(memberUser)
 
-    expect(screen.queryByRole('button', { name: '회원 삭제' })).toBeNull()
+    expect(screen.queryByRole('button', { name: '회원 탈퇴' })).toBeNull()
     expect(screen.getByRole('button', { name: '취소' })).toBeTruthy()
     expect(screen.getByRole('button', { name: '저장' })).toBeTruthy()
   })
@@ -157,7 +157,7 @@ describe('UserDetailFullPageHeaderActions', () => {
     )
 
     expect(screen.getByRole('button', { name: '강사 권한 종료' })).toBeTruthy()
-    expect(screen.getByRole('button', { name: '회원 삭제' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: '회원 탈퇴' })).toBeTruthy()
     expect(screen.getByRole('button', { name: '정보 수정' })).toBeTruthy()
   })
 

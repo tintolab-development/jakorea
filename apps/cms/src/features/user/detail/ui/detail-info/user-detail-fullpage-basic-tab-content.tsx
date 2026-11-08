@@ -141,13 +141,24 @@ export function UserDetailFullpageBasicTabContent({
     shouldShowAdminCommentForAdminPermissionApplicationDetail(mode, user)
 
   const consentPreset = resolveUserConsentAgreementPreset(user)
-  /** 일반 회원 약관·동의 description — 관리자 등록 회원은 서면 동의 처리 안내 (시안) */
+  /**
+   * 약관·동의 description (시안)
+   * - 일반 회원: 관리자 등록 회원은 서면 동의 처리 안내, 그 외 동의 현황 안내
+   * - 교사(4427:48695)·교사 겸 강사(4427:48874): 동의 현황 안내
+   * - 강사 권한 신청 상세: 동의 현황 안내
+   */
   const individualConsentCaption =
-    consentPreset === 'individual' && mode === 'default'
-      ? shouldShowAdminRegisteredMemberDetailCaption(user)
-        ? INDIVIDUAL_ADMIN_REGISTERED_CONSENT_CAPTION
-        : INDIVIDUAL_CONSENT_CAPTION
-      : undefined
+    mode !== 'default'
+      ? mode === 'permission' && permissionRole === 'instructor'
+        ? INDIVIDUAL_CONSENT_CAPTION
+        : undefined
+      : consentPreset === 'individual'
+        ? shouldShowAdminRegisteredMemberDetailCaption(user)
+          ? INDIVIDUAL_ADMIN_REGISTERED_CONSENT_CAPTION
+          : INDIVIDUAL_CONSENT_CAPTION
+        : consentPreset === 'school_teacher' || consentPreset === 'instructor_dual'
+          ? INDIVIDUAL_CONSENT_CAPTION
+          : undefined
   const consentViewVariant =
     mode === 'permission' && permissionRole === 'instructor' ? 'permission_instructor' : 'default'
 

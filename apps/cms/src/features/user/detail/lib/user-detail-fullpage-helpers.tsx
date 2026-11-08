@@ -168,9 +168,10 @@ export function ManagedProgramCountDisplay({
   if (!parts) return '-'
   return (
     <>
-      진행 중: {parts.inProgress}
+      {/* 시안: 「진행 중 : N건 | 전체 : N건」 (콜론 앞뒤 공백) */}
+      진행 중 : {parts.inProgress}
       <DetailInfoForm.Separator />
-      전체: {parts.total}
+      전체 : {parts.total}
     </>
   )
 }

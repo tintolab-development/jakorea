@@ -32,6 +32,8 @@ Spec for consent UI in **member detail**, **registration modals**, and related f
 | 행정정보 공동이용 | 행정정보 공동이용 사전동의서 | ✓ `agreement-notice` | No | Instructor, UJAT volunteer |
 | 성범죄 경력조회 | 성범죄 경력 조회 동의서 | ✓ `agreement-crime` | No | Instructor, UJAT volunteer |
 
+**회원 상세 화면 표시 라벨 (Figma 회원 상세 시안, 2026-11-09):** 위 "Typical CMS label"은 동의 종류(`member-basic-info-terms-patch.ts`)·동의서 양식(`member-consent-template-map.ts`) 매핑 **키**로 그대로 쓴다. 회원 상세 「약관 및 동의」 표에는 `resolveConsentFieldDisplayLabel`(`user-consent-agreement-section.tsx`)로 시안 라벨을 표시한다 — 서비스 이용약관 → **서비스 이용약관 동의**, 마케팅 제공 동의 → **마케팅 정보 수신 동의**, 초상권 수집·이용 동의 → **초상권 수집·이용 동의서**, 지급조서 사전 동의서 → **지급조서 사전동의서**. 키 라벨을 바꾸지 말고 표시 맵만 수정한다.
+
 ## Visibility by preset (detail)
 
 | Item | Individual | School teacher (non-dual) | Instructor (dual / only) | Admin |

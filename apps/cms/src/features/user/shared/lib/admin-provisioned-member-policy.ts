@@ -215,9 +215,8 @@ export function resolveUserDetailBasicTabCaption(
   const parts: string[] = []
   const base = strategyCaption?.trim()
   if (base) parts.push(base)
-  if (shouldShowAdminRegisteredSchoolDetailCaption(user)) {
-    parts.push(ADMIN_REGISTERED_SCHOOL_DETAIL_CAPTION)
-  } else if (shouldShowAdminRegisteredMemberDetailCaption(user)) {
+  // 시안(8288:256303 · 15520:103404): 관리자 등록 학교 상세(조회·수정)에는 등록 안내 문구 없음
+  if (user.role !== 'SCHOOL' && shouldShowAdminRegisteredMemberDetailCaption(user)) {
     parts.push(ADMIN_REGISTERED_MEMBER_DETAIL_CAPTION)
   }
   if (parts.length === 0) return undefined

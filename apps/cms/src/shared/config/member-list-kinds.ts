@@ -17,6 +17,15 @@ export type MemberListKind = (typeof MEMBER_LIST_KINDS)[number]
 
 export const DEFAULT_MEMBER_LIST_KIND: MemberListKind = 'all'
 
+/** 회원 목록 하위 메뉴·상세 경로 표시 라벨 (menu-config 「회원 목록」 하위와 동일) */
+export const MEMBER_LIST_KIND_LABELS: Record<MemberListKind, string> = {
+  all: '전체 회원',
+  individual: '개인 회원',
+  institutions: '학교(교사) 회원',
+  instructors: '강사 회원',
+  admins: '관리자 회원',
+}
+
 /** kind 쿼리 별칭 → 정식 값 */
 const KIND_ALIASES: Record<string, MemberListKind> = {
   school: 'institutions',

@@ -7,6 +7,7 @@ import { useCallback, useMemo, useState, type MutableRefObject } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { DetailModalSidebar } from '@/shared/ui/detail-modal-sidebar'
 import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
+import { MEMBER_LIST_KIND_LABELS, normalizeMemberListKind } from '@/shared/config/member-list-kinds'
 import { buildSearchParams, makeBreadcrumbItem } from '@/shared/lib/detail-fullpage-query-stack'
 import {
   userDetailModalLoadingTitle,
@@ -395,10 +396,54 @@ export function UserDetailFullPageModal({
         USER_DETAIL_INSTRUCTOR_PROFILE_QUERY_KEY,
       ],
     })
+    // 시안: 회원 권한 관리 › 권한 승인 › {강사|관리자} 권한 신청 › {이름}
+    if (mode === 'permission') {
+      return [
+        { label: '회원 권한 관리' },
+        makeBreadcrumbItem('권한 승인', location.pathname, listParams),
+        makeBreadcrumbItem(
+          permissionRole === 'admin' ? '관리자 권한 신청' : '강사 권한 신청',
+          location.pathname,
+          listParams
+        ),
+        { label: displayUser.name?.trim() || title },
+      ]
+    }
     const items = [makeBreadcrumbItem('회원 목록', location.pathname, listParams)]
+    // 시안: 회원 목록 › {목록 종류} › {이름}
+    const detailLabel = displayUser.name?.trim() || title
+    const kind = normalizeMemberListKind(searchParams.get('kind'))
+    items.push(makeBreadcrumbItem(MEMBER_LIST_KIND_LABELS[kind], location.pathname, listParams))
+    // 시안: 학교(교사) 회원 › {학교명} › {교사명} — 소속 학교가 있는 교사·겸직 강사 상세
+    const schoolName =
+      displayUser.affiliatedSchoolName?.trim() ||
+      searchParams.get(USER_DETAIL_AFFILIATED_SCHOOL_QUERY_KEY)?.trim() ||
+      ''
+    const schoolUserId = displayUser.affiliatedSchoolUserId
+    if (kind === 'institutions' && schoolName && schoolUserId !== displayUser.id) {
+      items.push(
+        schoolUserId
+          ? makeBreadcrumbItem(
+              schoolName,
+              location.pathname,
+              buildSearchParams(searchParams, {
+                delete: [
+                  USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY,
+                  USER_BASIC_INFO_ENTRY_QUERY_KEY,
+                  USER_DETAIL_AFFILIATED_SCHOOL_QUERY_KEY,
+                  USER_DETAIL_INSTRUCTOR_PROFILE_QUERY_KEY,
+                  'memberId',
+                  'memberRole',
+                ],
+                set: { id: schoolUserId, lnb: 'detail-info' },
+              })
+            )
+          : { label: schoolName }
+      )
+    }
 
     if (!activeSidebarItem) {
-      items.push({ label: title })
+      items.push({ label: detailLabel })
       return items
     }
 
@@ -420,7 +465,12 @@ export function UserDetailFullPageModal({
         })
       : null
 
-    items.push(makeBreadcrumbItem(title, location.pathname, detailParams))
+    const isDefaultDetailTab = state.tabState.lnb === 'detail-info' && !activeChildItem
+    if (isDefaultDetailTab) {
+      items.push({ label: detailLabel })
+      return items
+    }
+    items.push(makeBreadcrumbItem(detailLabel, location.pathname, detailParams))
 
     if (!activeChildItem) {
       items.push({ label: activeSidebarItem.label })

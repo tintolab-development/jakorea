@@ -169,13 +169,21 @@ function getMonthsBetweenCareerDates(from: string, to: string): number | null {
   return (end.year - start.year) * 12 + (end.month - start.month)
 }
 
+/** 시안: 경력 월은 `YYYY.MM` (API `YYYY-MM`) */
+function formatCareerYearMonth(raw: string): string {
+  const ym = parseCareerYearMonth(raw)
+  return ym ? `${ym.year}.${String(ym.month).padStart(2, '0')}` : raw
+}
+
 export function formatCareerPeriod(item: ApplicantInstructorCareerDetail): string {
-  const start = item.startDate
-  if (!start) return '-'
+  const rawStart = item.startDate
+  if (!rawStart) return '-'
+  const start = formatCareerYearMonth(rawStart)
   if (item.isCurrent) return `${start} ~ 재직중`
-  const end = item.endDate
-  if (!end) return start
-  const months = getMonthsBetweenCareerDates(start, end)
+  const rawEnd = item.endDate
+  if (!rawEnd) return start
+  const end = formatCareerYearMonth(rawEnd)
+  const months = getMonthsBetweenCareerDates(rawStart, rawEnd)
   if (months == null) return `${start} ~ ${end}`
   const durationLabel =
     months >= 12 ? `(${Math.floor(months / 12)}년)` : months > 0 ? `(${months}개월)` : ''
@@ -403,17 +411,17 @@ const INSTRUCTOR_FREE_WRITING_SECTIONS: ReadonlyArray<{
 }> = [
   { title: '1. 자기소개 및 지원동기', getContent: row => row.freeWriting1 },
   {
-    title: '2. 청소년 경제 교육의 중요성에 대해 본인의 생각을 구체적으로 작성해주세요.',
+    title: '2. 청소년 경제 교육의 중요성에 대해 본인의 생각을 구체적으로 작성해 주세요.',
     getContent: row => row.freeWriting2,
   },
   {
     title:
-      '3. 청소년과 소통할 때 가장 중요하다고 생각하는 점은 무엇이며, 이를 실천하기 위해 어떤 노력을 하는지 작성해주세요.',
+      '3. 청소년과 소통할 때 가장 중요하다고 생각하는 점은 무엇이며, 이를 실천하기 위해 어떤 노력을 하는지 작성해 주세요.',
     getContent: row => row.freeWriting3,
   },
   {
     title:
-      '4. 교육 중 예기치 않은 상황(예: 수업 분위기 저하, 참여도 부족 등)이 발생했을 때 대처한 사례가 있다면 공유해주세요.',
+      '4. 교육 중 예기치 않은 상황(예: 수업 분위기 저하, 참여도 부족 등)이 발생했을 때 대처한 사례가 있다면 공유해 주세요.',
     getContent: row => row.freeWriting4,
   },
 ]

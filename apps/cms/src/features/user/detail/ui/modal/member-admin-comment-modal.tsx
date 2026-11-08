@@ -45,7 +45,7 @@ export function MemberAdminCommentModal({
       open={open}
       onCancel={onCancel}
       title="코멘트 작성"
-      titleBodyGap="always"
+      titleBodyGap="section"
       width={800}
       zIndex={2600}
       footer={
@@ -74,6 +74,7 @@ export function MemberAdminCommentModal({
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="코멘트"
+            required
             fullRow
             view={value}
             edit={

@@ -40,7 +40,7 @@ export function getDefaultHeaderActions(ctx: GetDefaultHeaderActionsCtx): Action
   if (onWithdraw) {
     actions.push({
       key: 'withdraw',
-      label: '회원 삭제',
+      label: '회원 탈퇴',
       variant: 'delete',
       onClick: () => {
         onOpenWithdrawConfirm()

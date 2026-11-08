@@ -93,7 +93,26 @@ export function resolveUserConsentAgreementPreset(
 
 const SAMPLE_AGREED_AT_DISPLAY = '2026.01.15 09:15:42'
 
-const CONSENT_LABEL_WIDTH = 240 as const
+const CONSENT_LABEL_WIDTH = 180 as const
+
+/**
+ * 화면 표시용 라벨(시안). `field.label`은 동의 종류·동의서 양식 매핑 키로 쓰이므로 바꾸지 않는다
+ * (`member-basic-info-terms-patch.ts`, `member-consent-template-map.ts`).
+ */
+const CONSENT_FIELD_DISPLAY_LABELS: Record<string, string> = {
+  '서비스 이용약관': '서비스 이용약관 동의',
+  '마케팅 제공 동의': '마케팅 정보 수신 동의',
+  '초상권 수집·이용 동의': '초상권 수집·이용 동의서',
+  '지급조서 사전 동의서': '지급조서 사전동의서',
+  '2단계 인증(MFA) 설정 동의': '2단계 인증 설정 동의',
+}
+
+/** 수정 모드에서도 조회 표시만 하는 동의 (키 라벨) */
+const CONSENT_VIEW_ONLY_IN_EDIT_LABELS = new Set(['마케팅 제공 동의', '초상권 수집·이용 동의'])
+
+export function resolveConsentFieldDisplayLabel(label: string): string {
+  return CONSENT_FIELD_DISPLAY_LABELS[label] ?? label
+}
 
 /** 단일 필드 값 — 동의 상태 또는 동의서 행 */
 export type ConsentFieldValueSchema =
@@ -187,6 +206,48 @@ const MARKETING_AND_PORTRAIT_ROW: ConsentRowSchema = {
   ],
 }
 
+/** 교사·교사 겸 강사 — 「교사 및 기관 정보 동의 | 마케팅」 (TEACHER_INFO_COLLECTION) */
+const TEACHER_INFO_AND_MARKETING_ROW: ConsentRowSchema = {
+  rowType: 'double',
+  fields: [
+    {
+      label: '교사 및 기관 정보 동의',
+      labelWidth: CONSENT_LABEL_WIDTH,
+      value: {
+        type: 'remote_consent',
+        agreed: true,
+        agreedAtDisplay: SAMPLE_AGREED_AT_DISPLAY,
+      },
+    },
+    {
+      label: '마케팅 제공 동의',
+      labelWidth: CONSENT_LABEL_WIDTH,
+      value: {
+        type: 'remote_consent',
+        agreed: false,
+        agreedAtDisplay: SAMPLE_AGREED_AT_DISPLAY,
+      },
+    },
+  ],
+}
+
+/** 교사·교사 겸 강사 — 초상권 한 행 전체 */
+const PORTRAIT_FULL_ROW: ConsentRowSchema = {
+  rowType: 'single',
+  fields: [
+    {
+      label: '초상권 수집·이용 동의',
+      labelWidth: CONSENT_LABEL_WIDTH,
+      fullRow: true,
+      value: {
+        type: 'document',
+        agreed: true,
+        agreedAtDisplay: SAMPLE_AGREED_AT_DISPLAY,
+      },
+    },
+  ],
+}
+
 const PAYMENT_AND_EDUCATOR_ROW: ConsentRowSchema = {
   rowType: 'double',
   block: 'documents',
@@ -248,10 +309,16 @@ const MARKETING_AND_MFA_ROW: ConsentRowSchema = {
 /** 관리자 회원 — 약관·동의 4항목(2열×2행) */
 export const CONSENT_ROWS_ADMIN: ConsentRowSchema[] = [TERMS_AND_PRIVACY_ROW, MARKETING_AND_MFA_ROW]
 
-/** 일반·교사(비겸직) — 서비스·개인정보·마케팅·초상권 (2열×2행) */
-const CONSENT_ROWS_INDIVIDUAL_LIKE: ConsentRowSchema[] = [
+/**
+ * 교사(4427:48695)·교사 겸 강사(4427:48874) 시안
+ * — 서비스|개인정보 / 교사 및 기관 정보|마케팅 / 초상권(전체 행) + 동의서 4종
+ */
+const CONSENT_ROWS_TEACHER: ConsentRowSchema[] = [
   TERMS_AND_PRIVACY_ROW,
-  MARKETING_AND_PORTRAIT_ROW,
+  TEACHER_INFO_AND_MARKETING_ROW,
+  PORTRAIT_FULL_ROW,
+  PAYMENT_AND_EDUCATOR_ROW,
+  ADMIN_AND_CRIME_ROW,
 ]
 
 /**
@@ -268,15 +335,16 @@ const CONSENT_ROWS_INDIVIDUAL: ConsentRowSchema[] = [
 /** 강사(순수·겸직) — 개인과 동일 8항목 */
 const CONSENT_ROWS_INSTRUCTOR: ConsentRowSchema[] = CONSENT_ROWS_INDIVIDUAL
 
-const ADMIN_CONSENT_CAPTION = '* 미동의 시 서비스 가입 및 관리자 활동에 제한이 있을 수 있습니다.'
+/** 관리자 상세·관리자 권한 신청 상세 — 시안: 동의 현황 안내 */
+const ADMIN_CONSENT_CAPTION =
+  '각 항목의 동의 현황과 해당 일시를 확인할 수 있으며, 미동의 항목은 일시가 표시되지 않습니다.'
 
 /** 프리셋별 행·필드 구조 (표시 데이터와 분리) */
 export const CONSENT_PRESET_SCHEMA: ConsentPresetSchema = {
   admin: CONSENT_ROWS_ADMIN,
   individual: CONSENT_ROWS_INDIVIDUAL,
-  /** 교사(겸직 아님) — 강사 전용 동의(지급조서·서약·행정·성범죄) 미노출 */
-  school_teacher: CONSENT_ROWS_INDIVIDUAL_LIKE,
-  instructor_dual: CONSENT_ROWS_INSTRUCTOR,
+  school_teacher: CONSENT_ROWS_TEACHER,
+  instructor_dual: CONSENT_ROWS_TEACHER,
   instructor_only: CONSENT_ROWS_INSTRUCTOR,
 }
 
@@ -379,11 +447,12 @@ function ConsentDocumentRow({
       <span className="user-consent-agreement-section__value-status">
         {statusLabel}
       </span>
-      <span className="user-consent-agreement-section__value-sep" aria-hidden>
-        |
-      </span>
+      {/* 시안: 미동의는 상태 문구만 — 구분선·동의서 보기 없음 */}
       {agreed ? (
         <>
+          <span className="user-consent-agreement-section__value-sep" aria-hidden>
+            |
+          </span>
           <CmsButton variant="secondary" size="h32" onClick={open} disabled={!open}>
             동의서 보기
           </CmsButton>
@@ -393,11 +462,7 @@ function ConsentDocumentRow({
             </span>
           ) : null}
         </>
-      ) : (
-        <CmsButton variant="default" size="h32" disabled>
-          동의서 보기
-        </CmsButton>
-      )}
+      ) : null}
     </span>
   )
 }
@@ -455,9 +520,7 @@ function ConsentDocumentFieldEdit({ agreed, onWrite }: { agreed: boolean; onWrit
       <span className="user-consent-agreement-section__document-edit-status">
         {agreed ? '동의' : '미동의'}
       </span>
-      <span className="user-consent-agreement-section__value-sep" aria-hidden>
-        |
-      </span>
+      <DetailInfoForm.TdDivider />
       <CmsButton variant="secondary" size="h32" type="button" onClick={onWrite}>
         동의서 작성
       </CmsButton>
@@ -471,6 +534,8 @@ function resolveConsentFieldEdit(
 ): ReactNode | undefined {
   if (!ctx.editing) return undefined
   if (field.value.type === 'empty_half') return undefined
+  // 시안(회원 상세_수정): 마케팅·초상권은 수정 모드에서도 조회와 같은 글자 표시 — 관리자가 바꾸지 않는다
+  if (CONSENT_VIEW_ONLY_IN_EDIT_LABELS.has(field.label)) return undefined
 
   const fallbackAgreed =
     field.value.type === 'remote_consent' || field.value.type === 'document'
@@ -550,7 +615,7 @@ export function renderConsentField(
   return (
     <DetailInfoForm.Field
       key={fieldKey}
-      label={field.label}
+      label={resolveConsentFieldDisplayLabel(field.label)}
       labelWidth={field.labelWidth}
       {...(field.fullRow ? { fullRow: true } : {})}
       view={view}

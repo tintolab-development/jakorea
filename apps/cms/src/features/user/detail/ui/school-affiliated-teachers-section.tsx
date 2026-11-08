@@ -26,6 +26,8 @@ import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import './school-affiliated-teachers-section.css'
 import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
+const SCHOOL_AFFILIATED_TEACHER_EMPLOYMENT_COLUMN_WIDTH = 160
+
 export interface SchoolAffiliatedTeachersSectionProps {
   rows: SchoolAffiliatedTeacherRow[]
   /** 상단「개인정보 상세보기」로 마스킹 해제된 경우 연락처·이메일 원문 표시 */
@@ -119,14 +121,12 @@ export function SchoolAffiliatedTeachersSection({
         title: '교사명',
         dataIndex: 'name',
         key: 'name',
-        width: TABLE_COLUMN_WIDTHS.name,
         align: 'center',
       },
       {
         title: '연락처',
         dataIndex: 'phone',
         key: 'phone',
-        width: TABLE_COLUMN_WIDTHS.phone,
         align: 'center',
         render: (phone: string) =>
           personalInfoRevealed ? (phone?.trim() ? phone : '-') : MASKING_POLICY.phone(phone),
@@ -135,7 +135,7 @@ export function SchoolAffiliatedTeachersSection({
         title: '이메일',
         dataIndex: 'email',
         key: 'email',
-        width: TABLE_COLUMN_WIDTHS.email,
+        ellipsis: true,
         align: 'center',
         render: (email: string) =>
           personalInfoRevealed ? (email?.trim() ? email : '-') : MASKING_POLICY.email(email),
@@ -144,7 +144,8 @@ export function SchoolAffiliatedTeachersSection({
         title: '재직 현황',
         dataIndex: 'employmentStatus',
         key: 'employmentStatus',
-        width: 140,
+        /** 시안(4427:46312) — No 80 · 재직 현황 160 고정, 교사명·연락처·이메일·가입일은 남은 폭 균등 */
+        width: SCHOOL_AFFILIATED_TEACHER_EMPLOYMENT_COLUMN_WIDTH,
         align: 'center',
         onCell: () => ({
           className: STATUS_DROPDOWN_CELL_CLASSNAME,
@@ -170,7 +171,6 @@ export function SchoolAffiliatedTeachersSection({
         title: '가입일',
         dataIndex: 'joinedAt',
         key: 'joinedAt',
-        width: TABLE_COLUMN_WIDTHS.date,
         align: 'center',
         render: (d: Row['joinedAt']) => formatDateDot(d),
       },
@@ -245,6 +245,8 @@ export function SchoolAffiliatedTeachersSection({
               pagination={false}
               size={TABLE_CONFIG.size}
               bordered={TABLE_CONFIG.bordered}
+              /* 고정 폭 없는 열(교사명·연락처·이메일·가입일)을 내용 길이와 무관하게 균등 분배 */
+              tableLayout="fixed"
               scroll={tableScrollX != null ? { x: tableScrollX } : undefined}
               rowKey="id"
               onRow={record => {
