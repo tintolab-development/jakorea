@@ -52,6 +52,8 @@ import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import {
   DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   DELETE_GUIDE_TYPED_CONFIRM_VALUE,
+  WITHDRAW_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
+  WITHDRAW_GUIDE_TYPED_CONFIRM_VALUE,
 } from '@/shared/constants'
 import { useUserStore, selectSelectedUser } from '@/features/user/shared/model/user-store'
 import type { User, AffiliatedTeacherLinkTarget } from '@/types/user'
@@ -348,12 +350,24 @@ export function UserListPage() {
       deleteTargets.map(target => displayNameForUserDelete(resolvedMemberListKind, target)),
       resolvedMemberListKind
     )
+    // 전체 회원 목록 — 시안: 삭제 = 회원 탈퇴 처리 (문구·확인 입력만 다름, API 동일)
+    if (resolvedMemberListKind === 'all') {
+      return {
+        title: deleteTargets.length >= 2 ? '회원 일괄 탈퇴 처리 안내' : '회원 탈퇴 처리 안내',
+        lines,
+        confirmText: '회원 탈퇴',
+        requiredConfirmInput: WITHDRAW_GUIDE_TYPED_CONFIRM_VALUE,
+        confirmInputPlaceholder: WITHDRAW_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
+      }
+    }
     const title = deleteTargets.length >= 2 ? domain.bulkTitle : domain.singleTitle
     const confirmText = resolvedMemberListKind === 'instructors' ? domain.confirmText : '삭제'
     return {
       title,
       lines,
       confirmText,
+      requiredConfirmInput: DELETE_GUIDE_TYPED_CONFIRM_VALUE,
+      confirmInputPlaceholder: DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
     }
   }, [deleteTargets, resolvedMemberListKind])
 
@@ -1098,7 +1112,15 @@ export function UserListPage() {
       setSelectedRowKeys(prev => prev.filter(key => !toDelete.some(u => String(u.id) === String(key))))
       setSelectedRowsSnapshot(prev => prev.filter(u => !toDelete.some(d => d.id === u.id)))
       invalidateList()
-      showDeleteCompletedAlert()
+      if (resolvedMemberListKind === 'all') {
+        showAlert({
+          title: '회원 탈퇴 완료',
+          content: '회원 탈퇴가 완료되었습니다.',
+          confirmLabel: '확인',
+        })
+      } else {
+        showDeleteCompletedAlert()
+      }
     } catch (error) {
       handleError(error, { defaultMessage: '회원 삭제에 실패했습니다.' })
     } finally {
@@ -1281,7 +1303,9 @@ export function UserListPage() {
                   ? '강사 삭제'
                   : resolvedMemberListKind === 'admins'
                     ? '관리자 삭제'
-                    : '회원 삭제'}
+                    : resolvedMemberListKind === 'all'
+                      ? '회원 탈퇴'
+                      : '회원 삭제'}
             </FilterTableToolbarButton>
             <FilterTableToolbarButton
               onClick={() => {
@@ -1393,8 +1417,8 @@ export function UserListPage() {
           confirmText={memberDeleteGuide.confirmText}
           confirmVariant="delete"
           confirmInputMode="phrase"
-          requiredConfirmInput={DELETE_GUIDE_TYPED_CONFIRM_VALUE}
-          confirmInputPlaceholder={DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER}
+          requiredConfirmInput={memberDeleteGuide.requiredConfirmInput}
+          confirmInputPlaceholder={memberDeleteGuide.confirmInputPlaceholder}
           confirmLoading={deleteLoading}
         />
       )}
