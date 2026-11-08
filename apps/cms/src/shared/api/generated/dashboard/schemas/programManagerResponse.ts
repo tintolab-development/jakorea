@@ -19,4 +19,8 @@ export interface ProgramManagerResponse {
   assignedByAdminName?: string;
   primaryManagerYn?: boolean;
   removableYn?: boolean;
+  /** 담당 관리자 전화번호. GET /api/admin/admin-accounts 목록의 phone과 같은 마스킹 규칙(PrivacyMaskingSupport.maskPhone)을 적용합니다. 값이 없으면 null. */
+  adminPhone?: string | null;
+  /** 담당 관리자의 전역 관리자 권한 코드. GET /api/admin/admin-accounts 목록의 roleCode와 같은 값입니다. 없으면 null. */
+  adminRoleCode?: string | null;
 }

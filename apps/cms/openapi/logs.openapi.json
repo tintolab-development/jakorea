@@ -3596,6 +3596,22 @@
           "displayOrder": {
             "type": "integer",
             "format": "int32"
+          },
+          "sponsorHomepageUrl": {
+            "type": "string",
+            "description": "후원사 홈페이지 URL. 없으면 null.",
+            "nullable": true
+          },
+          "sponsorLogoFileObjectId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "후원사 대표 로고 file_object id(정렬 첫 번째, 스캔 CLEAN·업로드 완료 파일만). 없으면 null.",
+            "nullable": true
+          },
+          "sponsorLogoFileName": {
+            "type": "string",
+            "description": "대표 로고 원본 파일명. sponsorLogoFileObjectId가 null이면 null.",
+            "nullable": true
           }
         }
       },
@@ -3614,6 +3630,16 @@
           "displayOrder": {
             "type": "integer",
             "format": "int32"
+          },
+          "sponsorContactPhone": {
+            "type": "string",
+            "description": "담당자 전화번호(휴대전화 우선, 없으면 내선). GET /api/admin/sponsors/{sponsorId}/contacts의 phone과 같은 값입니다. MASTER_DATA_READ 권한이 있을 때만 원문으로 채워지고 개인정보 조회 이력이 기록됩니다. 권한이 없거나 값이 없으면 null.",
+            "nullable": true
+          },
+          "sponsorContactEmail": {
+            "type": "string",
+            "description": "담당자 이메일. sponsorContactPhone과 같은 권한·조회 이력 규칙을 따릅니다. 권한이 없거나 값이 없으면 null.",
+            "nullable": true
           }
         }
       },
@@ -4084,6 +4110,29 @@
           }
         }
       },
+      "OrganizationEnrich": {
+        "type": "object",
+        "description": "기관형 강사 배정 대기 기관별 편도 거리. 희망 기관이 아닌 대기 대상도 포함한다.",
+        "properties": {
+          "organizationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "organizationName": {
+            "type": "string"
+          },
+          "distanceKm": {
+            "type": "number"
+          },
+          "longDistance": {
+            "type": "boolean"
+          }
+        }
+      },
       "ScheduleEnrich": {
         "type": "object",
         "properties": {
@@ -4099,6 +4148,9 @@
           },
           "distanceKm": {
             "type": "number"
+          },
+          "longDistance": {
+            "type": "boolean"
           },
           "assignedVolunteerCount": {
             "type": "integer",
@@ -4136,6 +4188,12 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ScheduleEnrich"
+            }
+          },
+          "organizations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrganizationEnrich"
             }
           }
         }
@@ -9824,6 +9882,11 @@
           "programEligible": {
             "type": "boolean"
           },
+          "allItemsAgreed": {
+            "type": "boolean",
+            "description": "PORTRAIT_RIGHTS 전용. 1·2·3번 항목(본인 촬영·위임 촬영·활용) 모두 동의하면 true, 하나라도 미동의하거나 DISAGREED/철회이면 false. 비초상권 유형, 또는 원본 작성 문서가 없어 판정할 수 없는 과거 기록은 null. 제출 시점 스냅샷이며 프로그램 참여 게이트는 programEligible만 사용합니다.",
+            "nullable": true
+          },
           "signatureFields": {
             "type": "array",
             "items": {
@@ -12705,6 +12768,11 @@
             "type": "boolean",
             "description": "PORTRAIT_RIGHTS 전용 프로그램 참여 가능 여부"
           },
+          "allItemsAgreed": {
+            "type": "boolean",
+            "description": "PORTRAIT_RIGHTS 전용. 1·2·3번 항목(본인 촬영·위임 촬영·활용) 모두 동의하면 true, 하나라도 미동의하거나 DISAGREED/철회이면 false. 비초상권 유형, 또는 원본 작성 문서가 없어 판정할 수 없는 과거 기록은 null. 제출 시점 스냅샷이며 프로그램 참여 게이트는 programEligible만 사용합니다.",
+            "nullable": true
+          },
           "actorType": {
             "type": "string"
           },
@@ -15131,10 +15199,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           }
         },
@@ -18035,6 +18103,16 @@
           },
           "removableYn": {
             "type": "boolean"
+          },
+          "adminPhone": {
+            "type": "string",
+            "description": "담당 관리자 전화번호. GET /api/admin/admin-accounts 목록의 phone과 같은 마스킹 규칙(PrivacyMaskingSupport.maskPhone)을 적용합니다. 값이 없으면 null.",
+            "nullable": true
+          },
+          "adminRoleCode": {
+            "type": "string",
+            "description": "담당 관리자의 전역 관리자 권한 코드. GET /api/admin/admin-accounts 목록의 roleCode와 같은 값입니다. 없으면 null.",
+            "nullable": true
           }
         }
       },
@@ -23360,6 +23438,16 @@
             "type": "string",
             "description": "교육 진행 예정일 구간 표시 문자열. PERIOD 단일/다중 구간 선택이면 non-null. 지정일·운영일정만 선택한 경우 null.",
             "nullable": true
+          },
+          "distanceKm": {
+            "type": "number",
+            "description": "강사 자택↔일정 장소 편도 km. 산출 불가면 null.",
+            "nullable": true
+          },
+          "longDistance": {
+            "type": "boolean",
+            "description": "장거리 표기. 단가와 무관. 산출 불가면 null.",
+            "nullable": true
           }
         }
       },
@@ -23473,6 +23561,20 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AvailableScheduleSlot"
+            }
+          },
+          "scheduleDistances": {
+            "type": "array",
+            "description": "개인형 강사 배정 대기 일정별 편도 거리. GENERAL_INDIVIDUAL이 아니면 [].",
+            "items": {
+              "$ref": "#/components/schemas/InstructorScheduleDistanceResponse"
+            }
+          },
+          "organizationDistances": {
+            "type": "array",
+            "description": "기관형 강사 배정 대기 대상 기관 전체의 편도 거리. 개인형이면 [].",
+            "items": {
+              "$ref": "#/components/schemas/InstructorOrganizationDistanceResponse"
             }
           },
           "managerComment": {
@@ -23605,6 +23707,54 @@
           },
           "currentlyEmployed": {
             "type": "boolean",
+            "nullable": true
+          }
+        }
+      },
+      "InstructorOrganizationDistanceResponse": {
+        "type": "object",
+        "description": "기관형 강사 배정 대기 기관별 자택↔기관 편도 거리. 희망 기관이 아닌 대기 대상도 포함한다.",
+        "properties": {
+          "organizationId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "organization.id. 없으면 null.",
+            "nullable": true
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "program_organization_application.id"
+          },
+          "distanceKm": {
+            "type": "number",
+            "description": "편도 km(소수 1자리). 산출 불가면 null. 0으로 채우지 않음.",
+            "nullable": true
+          },
+          "longDistance": {
+            "type": "boolean",
+            "description": "장거리 표기. 단가와 무관. 산출 불가면 null.",
+            "nullable": true
+          }
+        }
+      },
+      "InstructorScheduleDistanceResponse": {
+        "type": "object",
+        "description": "개인형 강사 배정 대기 일정별 자택↔장소 편도 거리. 산출 불가면 distanceKm/longDistance는 null.",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "program_schedule id"
+          },
+          "distanceKm": {
+            "type": "number",
+            "description": "편도 km(소수 1자리). 산출 불가면 null. 0으로 채우지 않음.",
+            "nullable": true
+          },
+          "longDistance": {
+            "type": "boolean",
+            "description": "장거리 표기. 단가와 무관. 산출 불가면 null.",
             "nullable": true
           }
         }
@@ -38870,6 +39020,11 @@
           "programEligible": {
             "type": "boolean"
           },
+          "allItemsAgreed": {
+            "type": "boolean",
+            "description": "PORTRAIT_RIGHTS 전용. 1·2·3번 항목(본인 촬영·위임 촬영·활용) 모두 동의하면 true, 하나라도 미동의하거나 DISAGREED/철회이면 false. 비초상권 유형, 또는 원본 작성 문서가 없어 판정할 수 없는 과거 기록은 null. 제출 시점 스냅샷이며 프로그램 참여 게이트는 programEligible만 사용합니다.",
+            "nullable": true
+          },
           "listed": {
             "type": "boolean",
             "description": "4종 서약/동의의 마이페이지 노출 이력. 해당 4종은 항상 true/false이며, 그 외 유형에는 포함하지 않습니다.",
@@ -39682,6 +39837,11 @@
           },
           "programEligible": {
             "type": "boolean"
+          },
+          "allItemsAgreed": {
+            "type": "boolean",
+            "description": "PORTRAIT_RIGHTS 전용. 1·2·3번 항목(본인 촬영·위임 촬영·활용) 모두 동의하면 true, 하나라도 미동의하거나 DISAGREED/철회이면 false. 비초상권 유형, 또는 원본 작성 문서가 없어 판정할 수 없는 과거 기록은 null. 제출 시점 스냅샷이며 프로그램 참여 게이트는 programEligible만 사용합니다.",
+            "nullable": true
           },
           "filledDocumentAvailable": {
             "type": "boolean"
@@ -43072,6 +43232,37 @@
           }
         }
       },
+      "SurveyAnswerResponse": {
+        "type": "object",
+        "properties": {
+          "answerId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "questionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "questionKey": {
+            "type": "string"
+          },
+          "questionLabel": {
+            "type": "string"
+          },
+          "questionType": {
+            "type": "string"
+          },
+          "answerValueJson": {
+            "type": "string"
+          },
+          "answerDisplayText": {
+            "type": "string"
+          },
+          "autoFilled": {
+            "type": "boolean"
+          }
+        }
+      },
       "SurveyResponseListItemResponse": {
         "type": "object",
         "properties": {
@@ -43134,37 +43325,14 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
-          }
-        }
-      },
-      "SurveyAnswerResponse": {
-        "type": "object",
-        "properties": {
-          "answerId": {
-            "type": "integer",
-            "format": "int64"
           },
-          "questionId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "questionKey": {
-            "type": "string"
-          },
-          "questionLabel": {
-            "type": "string"
-          },
-          "questionType": {
-            "type": "string"
-          },
-          "answerValueJson": {
-            "type": "string"
-          },
-          "answerDisplayText": {
-            "type": "string"
-          },
-          "autoFilled": {
-            "type": "boolean"
+          "answers": {
+            "type": "array",
+            "description": "includeAnswers=true일 때만 포함. GET …/responses/{formResponseId}의 answers와 같은 항목·순서·마스킹입니다. 답이 없으면 []. includeAnswers를 생략하거나 false이면 이 필드는 응답에 없습니다.",
+            "items": {
+              "$ref": "#/components/schemas/SurveyAnswerResponse"
+            },
+            "nullable": true
           }
         }
       },
@@ -43953,6 +44121,13 @@
             "description": "참여자 성별 원시 코드 (스냅샷 우선, 없으면 회원 정보). 회원 없는 행은 null",
             "example": "MALE",
             "nullable": true
+          },
+          "requestedSchedules": {
+            "type": "array",
+            "description": "기관(ORGANIZATION) 행의 신청 희망 일정. GET /api/admin/organization-applications/{organizationApplicationId}/requested-schedules 응답과 같은 항목·순서·필드입니다. organizationApplicationId가 없거나 희망 일정이 없으면 []. 기관이 아닌 행은 항상 []. null은 반환하지 않는다.",
+            "items": {
+              "$ref": "#/components/schemas/RequestedScheduleResponse"
+            }
           }
         }
       },
@@ -44917,6 +45092,20 @@
               "$ref": "#/components/schemas/InstructorPreferredOrganizationResponse"
             }
           },
+          "scheduleDistances": {
+            "type": "array",
+            "description": "개인형 강사 배정 대기 일정별 편도 거리. GENERAL_INDIVIDUAL이 아니면 []. 산출 불가면 항목의 distanceKm/longDistance는 null.",
+            "items": {
+              "$ref": "#/components/schemas/InstructorScheduleDistanceResponse"
+            }
+          },
+          "organizationDistances": {
+            "type": "array",
+            "description": "기관형 강사 배정 대기 대상 기관 전체의 편도 거리. 희망 기관만 담는 preferredOrganizations와 다르다. 개인형이면 []. 산출 불가면 항목의 distanceKm/longDistance는 null.",
+            "items": {
+              "$ref": "#/components/schemas/InstructorOrganizationDistanceResponse"
+            }
+          },
           "submittedAt": {
             "type": "string",
             "format": "date-time"
@@ -44992,6 +45181,11 @@
           "distanceKm": {
             "type": "number",
             "description": "강사 자택에서 기관까지 편도 도로 이동거리(km). 계산되지 않으면 null.",
+            "nullable": true
+          },
+          "longDistance": {
+            "type": "boolean",
+            "description": "장거리 표기. 단가와 무관. 산출 불가면 null.",
             "nullable": true
           },
           "distanceStatus": {

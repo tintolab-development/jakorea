@@ -5,6 +5,7 @@
  * Filtered for CMS member management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { OrganizationEnrich } from './organizationEnrich';
 import type { ScheduleEnrich } from './scheduleEnrich';
 
 /**
@@ -17,4 +18,5 @@ export interface ScopeResponse {
   configured?: boolean;
   scheduleIds?: number[];
   schedules?: ScheduleEnrich[];
+  organizations?: OrganizationEnrich[];
 }

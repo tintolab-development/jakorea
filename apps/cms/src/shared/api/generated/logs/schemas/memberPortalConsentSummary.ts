@@ -27,6 +27,8 @@ export interface MemberPortalConsentSummary {
   policyUpdated?: boolean;
   consentStatus?: string;
   programEligible?: boolean;
+  /** PORTRAIT_RIGHTS 전용. 1·2·3번 항목(본인 촬영·위임 촬영·활용) 모두 동의하면 true, 하나라도 미동의하거나 DISAGREED/철회이면 false. 비초상권 유형, 또는 원본 작성 문서가 없어 판정할 수 없는 과거 기록은 null. 제출 시점 스냅샷이며 프로그램 참여 게이트는 programEligible만 사용합니다. */
+  allItemsAgreed?: boolean | null;
   /** 4종 서약/동의의 마이페이지 노출 이력. 해당 4종은 항상 true/false이며, 그 외 유형에는 포함하지 않습니다. */
   listed?: boolean | null;
 }
