@@ -132,6 +132,13 @@ const UNRESOLVED_PREFERRED_SCHEDULE_MESSAGE =
 
 export const ORGANIZATION_APPROVE_SCHEDULE_REQUIRED_MESSAGE = '교육 일정을 지정해주세요.'
 
+/** 기간 지정 승인 — 희망 일정을 고르지 않으면 일정 미확정 승인이 된다. */
+export const ORGANIZATION_APPROVE_PERIOD_UNASSIGNED_NOTICE =
+  '희망 일정을 선택하지 않으면 일정 미확정으로 승인됩니다. 승인 후 강사 배정 화면에서 희망 일정을 확정할 수 있습니다.'
+
+export const ORGANIZATION_APPROVE_REQUESTED_SCHEDULE_COUNT_EXCEEDED_MESSAGE =
+  '확정할 희망 일정 수가 모집 최대 일정 수를 넘었습니다.'
+
 export const ABSENT_PREFERRED_SCHEDULE_MESSAGE = `신청 희망 교육 일정이 없습니다. ${ORGANIZATION_APPROVE_SCHEDULE_REQUIRED_MESSAGE}`
 
 export const PERIOD_ORGANIZATION_APPROVE_DEFERRED_ASSIGNMENT_MESSAGE = `기간 지정 희망일은 프로그램 공통 예정 슬롯과 매칭하지 않습니다. ${ORGANIZATION_APPROVE_SCHEDULE_REQUIRED_MESSAGE}`
@@ -582,10 +589,12 @@ function uniquePositiveScheduleIds(ids: readonly number[]): number[] {
 }
 
 /**
- * 일반 기관 · 일정형 · 단일 회차 · 기간형.
- * 이 경로만 희망 일정 행 id를 승인 본문에 넣는다. 복수 회차·날짜형은 기존 selectedScheduleId/slots를 유지한다.
+ * 일반 기관 · 기간 지정 승인 — 희망 일정 행 id(requestedScheduleIds)로 확정한다.
+ * 기간형은 승인 전 program_schedule이 없고, 서버가 선택한 행마다 기관 전용 일정을 만들어 배정한다.
+ * 일정형·복수 회차는 프로그램 일정 전체 자동 배정이므로 제외한다.
+ * 교육받은 교사(preferredScheduleRank)·날짜형(selectedScheduleId/slots)은 이 경로를 쓰지 않는다.
  */
-export function isGeneralOrganizationPeriodSingleRequestedScheduleApproval(input: {
+export function isGeneralOrganizationPeriodRequestedScheduleApproval(input: {
   educationScheduleMode?: string | null
   sessionRound?: string | null
   educationStructure?: string | null
@@ -593,25 +602,69 @@ export function isGeneralOrganizationPeriodSingleRequestedScheduleApproval(input
   const mode = String(input.educationScheduleMode ?? '')
     .trim()
     .toLowerCase()
+  if (mode !== 'period') return false
   const round = String(input.sessionRound ?? 'single')
     .trim()
     .toLowerCase()
-  const structure = String(input.educationStructure ?? 'schedule')
+  const structure = String(input.educationStructure ?? '')
     .trim()
     .toLowerCase()
-  return mode === 'period' && round !== 'multi' && structure === 'schedule'
+  return !(structure === 'schedule' && round === 'multi')
 }
 
-/** 기간형 단일 회차는 원본 희망 일정 행을 정확히 1건만 승인 본문에 넣는다. */
-export function buildPeriodSingleRequestedScheduleApprovePayload(
-  selectedRequestedScheduleIds: readonly number[]
-): { requestedScheduleId: number } | null {
+/** 모집 maxScheduleCount. null·0 이하이면 상한 없음(null). */
+export function resolveRequestedScheduleSelectionLimit(
+  maxScheduleCount: number | null | undefined
+): number | null {
+  if (typeof maxScheduleCount !== 'number' || !Number.isFinite(maxScheduleCount)) return null
+  const limit = Math.floor(maxScheduleCount)
+  return limit >= 1 ? limit : null
+}
+
+export type PeriodRequestedScheduleApprovePayloadResult =
+  | { ok: true; payload: { requestedScheduleIds?: number[] } }
+  | { ok: false; reason: 'count-exceeded' }
+
+/**
+ * 기간 지정 승인·확정 본문. 선택 0개는 필드를 생략(일정 미확정 승인).
+ * 상한을 넘으면 보내지 않는다(서버 ORGANIZATION_APPROVE_REQUESTED_SCHEDULE_COUNT_EXCEEDED 방지).
+ */
+export function buildPeriodRequestedScheduleApprovePayload(
+  selectedRequestedScheduleIds: readonly number[],
+  maxScheduleCount?: number | null
+): PeriodRequestedScheduleApprovePayloadResult {
   const ids = uniquePositiveScheduleIds(selectedRequestedScheduleIds)
-  if (ids.length !== 1) return null
-  return { requestedScheduleId: ids[0] }
+  const limit = resolveRequestedScheduleSelectionLimit(maxScheduleCount)
+  if (limit != null && ids.length > limit) return { ok: false, reason: 'count-exceeded' }
+  return { ok: true, payload: ids.length > 0 ? { requestedScheduleIds: ids } : {} }
+}
+
+function readRequestedScheduleClock(raw: string | null | undefined): string | null {
+  const match = raw?.trim().match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?/)
+  if (!match) return null
+  return `${match[1]!.padStart(2, '0')}:${match[2]}:${match[3] ?? '00'}`
+}
+
+/**
+ * 희망 일정 행의 시작 시각(서울)이 이미 지났는지. 서버는 지난 일정 확정을
+ * GENERAL_ORGANIZATION_HISTORICAL_ASSIGNMENT_IMMUTABLE(409)로 거절하므로 목록에서 뺀다.
+ * 시각이 없으면 종일 일정(00:00 시작)으로 만들어지므로 당일부터 지난 것으로 본다.
+ */
+export function isRequestedScheduleStartPassed(
+  row: Pick<RequestedScheduleResponse, 'requestedDate' | 'periodStartDate' | 'sessionTimes'>,
+  now: Date = new Date()
+): boolean {
+  const date = (row.requestedDate ?? row.periodStartDate ?? '').trim().slice(0, 10)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false
+  const clock = readRequestedScheduleClock(row.sessionTimes?.[0]?.startTime) ?? '00:00:00'
+  const startMs = Date.parse(`${date}T${clock}+09:00`)
+  if (!Number.isFinite(startMs)) return false
+  return startMs <= now.getTime()
 }
 
 export type OrganizationApplicationApproveBody = {
+  /** GENERAL_ORGANIZATION + PERIOD. 희망 일정 행 id(program_application_requested_schedule.id) */
+  requestedScheduleIds?: number[]
   requestedScheduleId?: number
   selectedScheduleId?: number
   slots?: Array<{ scheduleId: number }>
@@ -620,11 +673,13 @@ export type OrganizationApplicationApproveBody = {
 }
 
 /**
- * 승인 POST 본문. requestedScheduleId가 있으면 selectedScheduleId·slots를 넣지 않는다.
+ * 승인 POST 본문. 일정 선택 필드는 하나만 보낸다(서버 ORGANIZATION_APPROVE_SCHEDULE_SELECTOR_CONFLICT).
+ * 우선순위: requestedScheduleIds → requestedScheduleId → slots → selectedScheduleId.
  */
 export function mergeOrganizationApplicationApproveBody(input: {
   timing?: string | null
   scheduledAt?: string | null
+  requestedScheduleIds?: readonly number[] | null
   requestedScheduleId?: number | null
   selectedScheduleId?: number | null
   slots?: ReadonlyArray<{ scheduleId: number }> | null
@@ -635,6 +690,10 @@ export function mergeOrganizationApplicationApproveBody(input: {
     ...(timing === 'SCHEDULED' && input.scheduledAt?.trim()
       ? { scheduledAt: input.scheduledAt.trim() }
       : {}),
+  }
+  const requestedIds = uniquePositiveScheduleIds(input.requestedScheduleIds ?? [])
+  if (requestedIds.length > 0) {
+    return { ...timingFields, requestedScheduleIds: requestedIds }
   }
   const requestedId = uniquePositiveScheduleIds(
     input.requestedScheduleId == null ? [] : [input.requestedScheduleId]
@@ -885,6 +944,9 @@ const ORGANIZATION_APPROVE_ERROR_FALLBACKS: Record<string, string> = {
   ORGANIZATION_APPROVE_REQUESTED_SCHEDULE_INVALID:
     '선택한 희망 일정을 확인할 수 없습니다. 희망 일정을 다시 불러옵니다.',
   ORGANIZATION_APPROVE_REQUESTED_DATE_OUTSIDE_PERIOD: '선택한 희망 일정이 교육 기간 밖입니다.',
+  ORGANIZATION_APPROVE_REQUESTED_SCHEDULE_COUNT_EXCEEDED:
+    '확정할 희망 일정 수가 모집 최대 일정 수를 넘었습니다.',
+  ORGANIZATION_APPROVE_REQUESTED_SCHEDULE_DUPLICATED: '같은 희망 일정을 중복으로 선택했습니다.',
   ORGANIZATION_APPROVE_REQUESTED_SCHEDULE_PERIOD_REQUIRED:
     '기간 지정 프로그램이 아니라 희망 일정 행으로 승인할 수 없습니다.',
   ORGANIZATION_APPROVE_REQUESTED_SCHEDULE_NOT_SUPPORTED:
@@ -900,7 +962,7 @@ const ORGANIZATION_APPROVE_ERROR_FALLBACKS: Record<string, string> = {
   PROGRAM_SCHEDULE_NOT_EDUCATION_SLOT:
     '교육 일정이 아닌 유형입니다. 교육 회차 일정을 선택해 주세요.',
   GENERAL_ORGANIZATION_HISTORICAL_ASSIGNMENT_IMMUTABLE:
-    '이미 시작되었거나 출석 이력이 있는 일정은 변경할 수 없습니다.',
+    '시작 시각이 지났거나 출석 이력이 있는 일정은 확정·변경할 수 없습니다. 시작 전 희망 일정만 선택해 주세요.',
   GENERAL_ORGANIZATION_APPLICATION_NOT_APPROVED:
     '승인된 기관 신청에만 교육 일정을 배정할 수 있습니다.',
   INVALID_NOTIFICATION_SCHEDULE:
@@ -927,6 +989,9 @@ const ORGANIZATION_APPROVE_ERROR_FALLBACKS: Record<string, string> = {
     '제출된 신청만 승인할 수 있습니다. 목록을 새로고침한 후 다시 시도해 주세요.',
 }
 
+/** 서버가 원인 없이 내려주는 공통 충돌 문구 — 이 경우 코드별 FE 안내를 보여준다. */
+const GENERIC_SERVER_CONFLICT_MESSAGE_PREFIX = '현재 데이터 또는 처리 상태와 충돌하여'
+
 export function formatOrganizationApplicationApproveErrorMessage(error: unknown): string | null {
   const code = getApiErrorCode(error)
   if (!code || !(code in ORGANIZATION_APPROVE_ERROR_FALLBACKS)) {
@@ -940,7 +1005,10 @@ export function formatOrganizationApplicationApproveErrorMessage(error: unknown)
     httpStatus: getApiErrorHttpStatus(error),
     fallback: ORGANIZATION_APPROVE_ERROR_FALLBACKS[code] ?? '',
   }).trim()
-  return message || ORGANIZATION_APPROVE_ERROR_FALLBACKS[code] || null
+  if (!message || message.startsWith(GENERIC_SERVER_CONFLICT_MESSAGE_PREFIX)) {
+    return ORGANIZATION_APPROVE_ERROR_FALLBACKS[code] || null
+  }
+  return message
 }
 
 export { UNRESOLVED_PREFERRED_SCHEDULE_MESSAGE }

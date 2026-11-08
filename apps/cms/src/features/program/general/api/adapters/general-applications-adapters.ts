@@ -483,6 +483,8 @@ export function mapStoredPeriodRequestedSchedulesToHopeSessions(
       scheduleLabel,
       requestedScheduleId: row.id ?? undefined,
       resolvedScheduleId,
+      // 미확정 희망 일정 — 승인/희망 일정 확정 전에는 강사 배정 후보가 아니다(map-requested-schedules와 동일).
+      ...(resolvedScheduleId == null ? { scheduleUnresolved: true } : {}),
     }
   })
 }
