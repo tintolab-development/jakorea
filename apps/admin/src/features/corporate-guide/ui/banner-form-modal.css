@@ -54,7 +54,7 @@
   height: 100%;
   max-width: none;
   max-height: none;
-  object-fit: cover;
+  object-fit: contain; /* 1:1 미리보기 칸 안에 잘림 없이 리사이징 */
   object-position: center;
   display: block;
 }
