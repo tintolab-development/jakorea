@@ -114,9 +114,12 @@ export function GeminiRecruitmentList() {
   const queryClient = useQueryClient()
   const queryFilters = useMemo(() => {
     const params = new URLSearchParams(searchParamsKey)
+    // 조회한 조건은 모두 서버 검색 쿼리로 보낸다(총 N건 = 표 행). 기간 기본값(연초~오늘)은 URL에 없으면 보내지 않는다.
     return {
       title: params.get('gvt_title') ?? undefined,
       status: params.get('gvt_status') ?? undefined,
+      from: params.get('gvt_from') ?? undefined,
+      to: params.get('gvt_to') ?? undefined,
     }
   }, [searchParamsKey])
   const {

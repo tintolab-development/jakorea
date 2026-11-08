@@ -16,6 +16,7 @@ import { getGeminiPerformancePaidBlockedResultMessage } from '@/features/program
 import { pickGeminiImportProgramId } from '@/features/program/gemini/lib/performance/pick-import-program-id'
 import { mapGeminiTrainingReportItemToRow, mapUploadAndDisplayToImportRow } from './adapters'
 import { shouldUseGeminiPerformanceRemoteApi } from './capabilities'
+import type { GeminiPerformanceListQueryFilters } from './query-keys'
 import {
   bulkDeleteGeminiTrainingReportsRemote,
   deleteGeminiTrainingReportRemote,
@@ -51,10 +52,7 @@ export type GeminiPerformanceRemoteImportPrepareResult = {
   paymentExclusionNotes?: string
 }
 
-export type GeminiPerformanceListFilters = {
-  instructorName?: string
-  trainingLocation?: string
-}
+export type GeminiPerformanceListFilters = GeminiPerformanceListQueryFilters
 
 export async function listGeminiPerformanceRowsPage(
   pageParam = 0,
@@ -66,6 +64,9 @@ export async function listGeminiPerformanceRowsPage(
     size: GEMINI_PERFORMANCE_LIST_PAGE_SIZE,
     instructorName: filters.instructorName,
     trainingLocation: filters.trainingLocation,
+    dateFrom: filters.dateFrom,
+    dateTo: filters.dateTo,
+    deliveryType: filters.deliveryType,
   })
   const baseNo = pageParam * page.size
   return {

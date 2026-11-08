@@ -10,7 +10,10 @@ import {
 import { geminiApprovedTrainingService } from '../approved-training-service'
 import { shouldUseGeminiVisitingTrainingRemoteApi } from './capabilities'
 import { geminiVisitingTrainingQueryKeys } from './query-keys'
-import { mapGeminiRecruitmentUiStatusToPeriodStatusWire } from '../../lib/recruitment/map-period-status-wire'
+import {
+  toGeminiRecruitmentRemoteFilters,
+  type GeminiRecruitmentListUiFilters,
+} from '../../lib/recruitment/list-remote-filters'
 import { updateTeacherEmploymentStatusRemote } from '@/features/user/api/members-api-client'
 import type { SchoolTeacherEmploymentStatus } from '@/types/user'
 import {
@@ -29,12 +32,7 @@ import {
   type GeminiRecruitmentsPage,
 } from './service'
 
-type GeminiRecruitmentListFilters = {
-  title?: string
-  status?: string
-  from?: string
-  to?: string
-}
+type GeminiRecruitmentListFilters = GeminiRecruitmentListUiFilters
 
 type GeminiApprovedTrainingListFilters = {
   institutionName?: string
@@ -87,13 +85,7 @@ export function useGeminiRecruitmentsQuery(
   return useInfiniteQuery({
     queryKey,
     queryFn: ({ pageParam }) =>
-      listGeminiRecruitmentsPage(
-        {
-          keyword: filters.title?.trim() || undefined,
-          periodStatus: mapGeminiRecruitmentUiStatusToPeriodStatusWire(filters.status),
-        },
-        pageParam as number
-      ),
+      listGeminiRecruitmentsPage(toGeminiRecruitmentRemoteFilters(filters), pageParam as number),
     initialPageParam: 0,
     getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
     enabled,
