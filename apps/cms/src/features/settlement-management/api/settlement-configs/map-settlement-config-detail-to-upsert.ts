@@ -211,7 +211,7 @@ function deductionItemToUpsert(
 ): NonNullable<SettlementConfigUpdateRequest['deductionItems']>[number] {
   return {
     id: item.id,
-    itemName: item.itemName ?? '',
+    itemName: meta.title,
     deductionRate: item.deductionRate,
     deductionAmount: item.deductionAmount,
     useYn: item.useYn,
