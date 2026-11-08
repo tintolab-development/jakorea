@@ -20,6 +20,7 @@ import {
   useUpdateCorporatePartner,
 } from '@/features/corporate-partner/api/hooks'
 import { LIST_PAGE_SIZE } from '@/features/corporate-partner/api/mappers'
+import { AdminCompactPagination } from '@/shared/ui/admin-compact-pagination'
 import { corporatePartnerQueryKeys } from '@/features/corporate-partner/api/query-keys'
 import { CORPORATE_PARTNERS_CHANGED_EVENT } from '@/features/corporate-partner/api/store'
 import { corporatePartnerMutationFailureAlert } from '@/features/corporate-partner/lib/mutation-failure-alert'
@@ -503,20 +504,18 @@ export function CorporatePartnersPage() {
           loading={listQuery.isLoading || reorderMutation.isPending}
           disabled={reorderMutation.isPending}
           onRowsReorder={handleRowsReorder}
-          pagination={{
-            current: listPage + 1,
-            pageSize: LIST_PAGE_SIZE,
-            total: totalCount,
-            showSizeChanger: false,
-            hideOnSinglePage: true,
-            onChange: current => {
-              setListPage(Math.max(0, (current ?? 1) - 1))
-              setSelectedRowKeys([])
-            },
-          }}
           rowSelection={{
             selectedRowKeys,
             onChange: keys => setSelectedRowKeys(keys),
+          }}
+        />
+        {/* 시안 36:47075 — 한 화면 50개 · 1페이지여도 항상 노출 */}
+        <AdminCompactPagination
+          currentPage={listPage + 1}
+          totalPages={Math.ceil(totalCount / LIST_PAGE_SIZE)}
+          onPageChange={page => {
+            setListPage(Math.max(0, page - 1))
+            setSelectedRowKeys([])
           }}
         />
       </FilterTableLayout>

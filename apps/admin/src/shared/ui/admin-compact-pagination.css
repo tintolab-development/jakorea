@@ -1,0 +1,48 @@
+/* Figma 2991:82674 — 표 하단 compact 페이지네이션 (pt 8 · gap 16 · 가운데) */
+.admin-compact-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding-top: 8px;
+}
+
+/* Button / Etc / Arrow · M — 34×34 · 보더 #E0E0E0 · R8 · 아이콘 24 */
+.admin-compact-pagination__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--Border-default, #e0e0e0);
+  border-radius: var(--Radius-8, 8px);
+  background: var(--White, #fff);
+  cursor: pointer;
+}
+
+.admin-compact-pagination__btn img {
+  display: block;
+  width: 24px;
+  height: 24px;
+}
+
+.admin-compact-pagination__btn:hover:not(:disabled) {
+  border-color: var(--Brand-500, #00a0af);
+}
+
+.admin-compact-pagination__btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.admin-compact-pagination__status {
+  color: var(--Netural-black, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.5;
+  text-align: center;
+  white-space: pre;
+}
