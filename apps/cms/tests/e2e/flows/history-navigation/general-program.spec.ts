@@ -1,7 +1,7 @@
 import { findSponsoredProgram } from '../../helpers/program-history-readonly'
 import type { Page } from '@playwright/test'
 import { test, expect } from '../../fixtures/test'
-import { historyIdx, historyLength, expectSearchParams } from '../../helpers/history-stack'
+import { historyIdx, historyLength, expectSearchParams, type ClickTargetElement, expectDeepLinkReplaced } from '../../helpers/history-stack'
 import { GeneralProgramDetailPage } from '../../pages/general-program-detail.page'
 /* ── spec 로컬 유틸 (공용 helper 수정 금지 → 통합 시 helpers 로 승격 제안) ── */
 const DATA_ROW = 'tbody.ant-table-tbody tr.ant-table-row'
@@ -21,7 +21,16 @@ async function hasDataRow(scope: ReturnType<Page['locator']>): Promise<boolean> 
   const row = scope.locator(DATA_ROW).first()
   const empty = scope.locator(EMPTY).first()
   await expect(row.or(empty)).toBeVisible({ timeout: 30_000 })
-  return row.isVisible()
+  // antd 표는 로딩 중에도 빈 상태 영역을 먼저 그린다 → 로딩이 끝난 뒤에만 판단
+  await expect(scope.locator('.ant-spin-spinning')).toHaveCount(0, { timeout: 30_000 })
+  try {
+    await row.waitFor({ state: 'visible', timeout: 3_000 })
+    return true
+  } catch {
+    // 로딩 완료 후에도 행이 없고 빈 상태가 유지될 때만 데이터 없음
+    await expect(empty).toBeVisible()
+    return false
+  }
 }
 
 function activeTop(nav: ReturnType<Page['locator']>) {
@@ -35,18 +44,13 @@ function lnbItemByLabel(nav: ReturnType<Page['locator']>, label: string) {
     has: nav.page().locator('.detail-fullpage-modal__lnb-item-label').getByText(label, { exact: true }),
   }).first()
 }
-function lnbChildByLabel(nav: ReturnType<Page['locator']>, label: string) {
-  return nav.locator('.detail-fullpage-modal__lnb-child').filter({
-    has: nav.page().locator(`.detail-fullpage-modal__lnb-child-label[data-text="${label}"]`),
-  }).first()
-}
 
 /**
  * 같은 틱 X 두 번: capture 리스너로 click 이벤트 수를 세고, 한 evaluate(동기 태스크) 안에서
  * 두 번 dispatch. 반환값이 2가 아니면 전제 실패로 FAIL.
  */
 async function doubleClickSameTick(button: ReturnType<Page['locator']>): Promise<number> {
-  return button.evaluate((el: HTMLElement) => {
+  return button.evaluate((el: ClickTargetElement) => {
     let count = 0
     const counter = () => { count += 1 }
     el.addEventListener('click', counter, { capture: true })
@@ -86,7 +90,8 @@ const crumbButtons = (page: Page) =>
 /** goto 1회 → 목록 데이터 행 확인 → listIdx. 데이터 없음(ant-empty 확인)이면 null */
 async function openListOnce(page: Page): Promise<number | null> {
   await page.goto(LIST_PATH)
-  await expect(page.getByRole('button', { name: '프로그램 신규 등록' })).toBeVisible({ timeout: 30_000 })
+  // 목록 준비 신호 — 실제 버튼 라벨 '신규 등록'(pages/programs/general/page.tsx)
+  await expect(page.getByRole('button', { name: '신규 등록', exact: true })).toBeVisible({ timeout: 30_000 })
   if (!(await hasDataRow(page.locator('body')))) return null
   return historyIdx(page)
 }
@@ -99,30 +104,82 @@ async function openFirstRow(page: Page, listIdx: number) {
 }
 
 type NestedRoute = {
-  top: string
+  /** 상위 메뉴 라벨. 같은 lnb인데 프로그램 유형에 따라 라벨이 바뀌면 모두 나열 */
+  top: string | readonly string[]
+  /** 항상 그룹인 상위 메뉴(진행 현황)의 하위 메뉴. 프로그램 구성상 생략될 수 있음 */
   childCandidates?: readonly string[]
+  /**
+   * 면접 설정이 켜지면 그룹이 되는 상위 메뉴의 목표 하위 메뉴.
+   * 앱이 그룹 기본값으로 여는 탭이며, 면접 설정이 꺼졌을 때의 전체 목록과 같은 심사 목록 컴포넌트다.
+   */
+  groupChild?: string
   lnb: string
   tab?: RegExp
   param: string
 }
+
+function topLabels(route: NestedRoute): readonly string[] {
+  return typeof route.top === 'string' ? [route.top] : route.top
+}
+/** 활성 상위 메뉴가 경로의 라벨 중 하나인지 */
+function topLabelPattern(route: NestedRoute): RegExp {
+  return new RegExp(topLabels(route).map(label => label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'))
+}
+/** 상위 메뉴가 펼치기 전용 그룹인지(화살표 유무) — detail-sidebar.tsx toggleTopBody 버튼 */
+function lnbArrow(top: ReturnType<Page['locator']>) {
+  return top.locator('.detail-fullpage-modal__lnb-item-arrow')
+}
+/** 해당 상위 메뉴의 li 안에서만 하위 메뉴를 찾는다(다른 그룹의 같은 라벨 오선택 방지) */
+function childWithinGroup(top: ReturnType<Page['locator']>, label: string) {
+  return top.locator('xpath=ancestor::li[1]').locator('.detail-fullpage-modal__lnb-child').filter({
+    has: top.page().locator(`.detail-fullpage-modal__lnb-child-label[data-text="${label}"]`),
+  }).first()
+}
+/** 그룹을 펼친다. 이미 펼쳐져 있으면 클릭하지 않는다(클릭하면 접힘) */
+async function expandGroup(top: ReturnType<Page['locator']>) {
+  const arrow = lnbArrow(top)
+  if (!/--expanded/.test((await arrow.getAttribute('class')) ?? '')) await top.click()
+  await expect(arrow).toHaveClass(/detail-fullpage-modal__lnb-item-arrow--expanded/)
+}
+
 /**
- * 중첩 상세 진입 경로: top LNB(→ child) 이동 후 첫 행 클릭.
- * child 메뉴는 프로그램 구성 데이터(진행 메뉴 생성 함수)에 따라 생략될 수 있음 → 그 경우만 data-absent.
- * 반환: 중첩 진입 직전(목록 엔트리) idx, 또는 데이터 부재 사유 문자열
+ * 중첩 상세 진입 경로: 상위 메뉴(→ 하위 메뉴) 이동 후 첫 행 클릭.
+ * - 그룹 상위 메뉴는 클릭해도 이동하지 않고 펼치기만 한다 → 목표 하위 메뉴를 명시적으로 선택.
+ * - 진행 현황 하위 메뉴는 프로그램 구성(getGeneralProgressMenuItems)에 따라 생략될 수 있음 → 그 경우만 미실행 기록.
+ * 반환: 중첩 진입 직전(목록 엔트리) idx, 또는 미실행 사유 문자열
  */
 async function enterNested(
   page: Page,
   route: NestedRoute
 ): Promise<number | string> {
   const n = nav(page)
-  const top = lnbItemByLabel(n, route.top)
-  if (route.top === '기관 신청 목록' && !await top.count() && await lnbItemByLabel(n, '참여자 신청 목록').count()) return '개인 참여형 프로그램 — 기관 신청 메뉴 대신 참여자 신청 메뉴 구성'
+  const labels = topLabels(route)
+  let top: ReturnType<Page['locator']> | null = null
+  let topLabel = labels[0]
+  for (const label of labels) {
+    const candidate = lnbItemByLabel(n, label)
+    if ((await candidate.count()) > 0) {
+      top = candidate
+      topLabel = label
+      break
+    }
+  }
+  if (!top) {
+    await expect(lnbItemByLabel(n, labels[0]), `상위 메뉴(${labels.join('/')}) 없음`).toBeVisible({ timeout: 15_000 })
+    top = lnbItemByLabel(n, labels[0])
+  }
   await expect(top).toBeVisible({ timeout: 15_000 })
-  await top.click()
+  const entryIdx = await historyIdx(page)
+  const isGroup = (await lnbArrow(top).count()) > 0
+
   if (route.childCandidates) {
+    // 진행 현황: 메뉴가 있으면 항상 그룹
+    expect(isGroup, `${topLabel}는 그룹 메뉴여야 함`).toBe(true)
+    await expandGroup(top)
+    await expectIdx(page, entryIdx) // 펼치기는 이동 아님
     let clicked = false
     for (const label of route.childCandidates) {
-      const child = lnbChildByLabel(n, label)
+      const child = childWithinGroup(top, label)
       if ((await child.count()) > 0) {
         await expect(child).toBeVisible({ timeout: 15_000 })
         await child.click()
@@ -132,13 +189,26 @@ async function enterNested(
       }
     }
     if (!clicked) return `프로그램 구성상 하위 메뉴(${route.childCandidates.join('/')}) 미생성`
+  } else if (isGroup) {
+    // 면접 설정이 켜진 신청 목록: 펼친 뒤 목표 하위 메뉴 선택
+    expect(route.groupChild, `${topLabel}가 그룹인데 목표 하위 메뉴 미지정`).toBeTruthy()
+    await expandGroup(top)
+    await expectIdx(page, entryIdx)
+    const child = childWithinGroup(top, route.groupChild!)
+    await expect(child).toBeVisible({ timeout: 15_000 })
+    await child.click()
+    await expect(activeChild(n)).toContainText(route.groupChild!)
+  } else {
+    await top.click()
   }
   await expect(page).toHaveURL(new RegExp(`[?&]lnb=${route.lnb}`), { timeout: 15_000 })
   if (route.tab) await expect.poll(() => new URL(page.url()).searchParams.get('tab') ?? '').toMatch(route.tab)
-  await expect(activeTop(n)).toContainText(route.top)
+  await expect(activeTop(n)).toContainText(topLabel)
+  // 실제 메뉴 이동은 push 1회
+  await expectIdx(page, entryIdx + 1)
   const listEntryIdx = await historyIdx(page)
   const dialog = page.getByRole('dialog').first()
-  if (!(await hasDataRow(dialog))) return `${route.top} 목록 행 없음(빈 상태 확인)`
+  if (!(await hasDataRow(dialog))) return `${topLabel} 목록 행 없음(빈 상태 확인)`
   await dialog.locator(DATA_ROW).first().click()
   await expect(page).toHaveURL(new RegExp(`[?&]${route.param}=`), { timeout: 30_000 })
   await expectIdx(page, listEntryIdx + 1)
@@ -149,9 +219,11 @@ const NESTED_ROUTES: readonly NestedRoute[] = [
   { top: '프로그램 진행 현황', childCandidates: ['참여 기관'], lnb: 'progress', tab: /^progress_participants$/, param: 'schoolId' },
   { top: '프로그램 진행 현황', childCandidates: ['참여 강사'], lnb: 'progress', tab: /^progress_instructors$/, param: 'instructorId' },
   { top: '프로그램 진행 현황', childCandidates: ['참여 봉사자'], lnb: 'progress', tab: /^progress_volunteers$/, param: 'volunteerId' },
-  { top: '봉사자 신청 목록', lnb: 'volunteer_applications', tab: /^vol_/, param: 'applicantId' },
+  // 면접 설정 꺼짐: 바로 이동(vol_all) / 켜짐: 그룹 → '1차 서류 심사 대상자'(vol_doc1)
+  { top: '봉사자 신청 목록', groupChild: '1차 서류 심사 대상자', lnb: 'volunteer_applications', tab: /^vol_(all|doc1)$/, param: 'applicantId' },
   { top: '프로그램 진행 현황', childCandidates: ['참여자'], lnb: 'progress', tab: /^progress_participants$/, param: 'participantId' },
-  { top: '기관 신청 목록', lnb: 'institution_applications', param: 'applicantId' },
+  // 단체형 '기관 신청 목록' / 개인형 '참여자 신청 목록' — 같은 lnb. 면접 설정 켜짐: 그룹 → part_doc1
+  { top: ['기관 신청 목록', '참여자 신청 목록'], groupChild: '1차 서류 심사 대상자', lnb: 'institution_applications', param: 'applicantId' },
 ]
 
 test.describe('history — 일반 프로그램 상세', () => {
@@ -213,6 +285,7 @@ test.describe('history — 일반 프로그램 상세', () => {
       programId = new URL(discovery.url()).searchParams.get('programId')
     } finally { await discovery.close() }
     expect(programId).toBeTruthy()
+    const priorUrl = page.url() // 새 탭 — 딥링크 직전 엔트리(about:blank). 목록 엔트리 아님
     await page.goto(`${LIST_PATH}?programId=${encodeURIComponent(programId!)}`)
     await expect(page).toHaveURL(/[?&]programId=/, { timeout: 30_000 })
     await new GeneralProgramDetailPage(page).expectDetailShellReady()
@@ -223,9 +296,8 @@ test.describe('history — 일반 프로그램 상세', () => {
     await expectIdx(page, deepIdx)
     expect(await historyLength(page)).toBe(len)
 
-    await page.goBack()
-    // 직전 엔트리 = (1) 스택의 목록 엔트리. 상세 쿼리·LNB 가 다시 나타나면 안 됨
-    await expectSearchParams(page, { programId: null })
+    // 뒤로 → 딥링크 직전(about:blank), 앞으로 → replace된 목록(상세 재등장 없음)
+    await expectDeepLinkReplaced(page, { priorUrl, detailKeys: ['programId'], replacedIdx: deepIdx })
     await expect(nav(page)).toBeHidden({ timeout: 15_000 })
   })
 
@@ -245,7 +317,7 @@ test.describe('history — 일반 프로그램 상세', () => {
 
   for (const route of NESTED_ROUTES) {
     // goto 1회
-    test(`${route.top}${route.childCandidates ? ` > ${route.childCandidates.join('/')}` : ''} 행 → ${route.param} push, 중첩 X는 목록 엔트리로 뒤로(idx-1, length 불변, 모달 유지)`, async ({ page }) => {
+    test(`${topLabels(route).join('|')}${route.childCandidates ? ` > ${route.childCandidates.join('/')}` : route.groupChild ? ` (그룹이면 > ${route.groupChild})` : ''} 행 → ${route.param} push, 중첩 X는 목록 엔트리로 뒤로(idx-1, length 불변, 모달 유지)`, async ({ page }) => {
       test.setTimeout(180_000)
       const listIdx = await openListOnce(page)
       if (listIdx == null) return noteDataAbsent('목록 데이터 행 없음(빈 상태 확인)')
@@ -259,7 +331,7 @@ test.describe('history — 일반 프로그램 상세', () => {
       await expectSearchParams(page, { [route.param]: null })
       await expect(page).toHaveURL(/[?&]programId=/)
       await expect(nav(page)).toBeVisible()
-      await expect(activeTop(nav(page))).toContainText(route.top)
+      await expect(activeTop(nav(page))).toContainText(topLabelPattern(route))
       expect(await historyLength(page)).toBe(len)
     })
   }
@@ -293,7 +365,9 @@ test.describe('history — 일반 프로그램 상세', () => {
     expect(await historyLength(page)).toBe(len)
   })
 
-  // goto 1회. 전제 시드: 첫 행 프로그램에 후원사 지정(미지정이면 FAIL — 데이터/회귀 판별 불가라 note 처리하지 않음)
+  // goto 1회. 시드: 목록 현재 페이지에서 후원사가 지정된 첫 프로그램(findSponsoredProgram).
+  // 없으면 helper가 'NOT EXECUTED — 다른 페이지 시드는 미탐색' note 후 종료(FAIL 아님).
+  // ⚠ 실제 링크는 /sponsor 별도 페이지로 이동한다. 프로그램 위 sponsorId 오버레이 push/back 요구의 PASS가 아니다(계약 차이).
   test('후원사 링크 → /sponsor 상세 push(sponsorId·returnTo), X는 프로그램 상세 엔트리로 뒤로(sponsorId 없음)', async ({ page }) => {
     test.setTimeout(180_000)
     const listIdx = await openListOnce(page)
@@ -307,6 +381,10 @@ test.describe('history — 일반 프로그램 상세', () => {
     await expect(page).toHaveURL(/\/sponsor\?.*sponsorId=/, { timeout: 30_000 })
     await expectSearchParams(page, { returnTo: new URL(programUrl).pathname + new URL(programUrl).search })
     await expectIdx(page, before + 1)
+    // 후원사 페이지는 지연 로딩 — 그동안 이전 화면(프로그램 상세)이 남아 있다.
+    // 프로그램 상세 메뉴가 사라지고 후원사 상세 하나만 뜬 뒤 X를 누른다.
+    await expect(nav(page)).toHaveCount(0, { timeout: 30_000 })
+    await expect(page.getByRole('dialog')).toHaveCount(1, { timeout: 30_000 })
     await page.getByRole('dialog').getByRole('button', { name: '닫기' }).first().click()
     await expect(page).toHaveURL(programUrl, { timeout: 15_000 })
     await expectIdx(page, before)

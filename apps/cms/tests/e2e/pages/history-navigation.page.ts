@@ -1,10 +1,23 @@
 import type { Page } from '@playwright/test'
 import { expect, test } from '../fixtures/test'
-import { expectSearchParams, historyIdx, historyLength } from '../helpers/history-stack'
+import {
+  expectSearchParams,
+  historyIdx,
+  historyLength,
+  type ClickTargetElement,
+} from '../helpers/history-stack'
 
 /** Read-only common selectors. Never clicks checkboxes or action buttons in a row. */
 export class HistoryNavigationPage {
-  constructor(readonly page: Page, readonly route: string, readonly keys: readonly string[]) {}
+  readonly page: Page
+  readonly route: string
+  readonly keys: readonly string[]
+  // erasableSyntaxOnly — 생성자 매개변수 프로퍼티 대신 명시적 필드
+  constructor(page: Page, route: string, keys: readonly string[]) {
+    this.page = page
+    this.route = route
+    this.keys = keys
+  }
   modal() { return this.page.locator('.ant-modal:visible').filter({ has: this.page.locator('.detail-fullpage-modal__close') }).last() }
   closeButton() { return this.modal().locator('.detail-fullpage-modal__close') }
   rows() { return this.page.locator('tr.ant-table-row:not(.ant-table-measure-row)') }
@@ -33,7 +46,7 @@ export class HistoryNavigationPage {
   }
   async closeToList(idx: number, double = false) {
     const length = await historyLength(this.page)
-    if (double) await this.closeButton().evaluate((button: HTMLElement) => { button.click(); button.click() })
+    if (double) await this.closeButton().evaluate((button: ClickTargetElement) => { button.click(); button.click() })
     else await this.closeButton().click()
     await this.expectList(idx)
     expect(await historyLength(this.page)).toBeLessThanOrEqual(length)

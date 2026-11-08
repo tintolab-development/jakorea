@@ -1,6 +1,6 @@
 import { test, expect } from '../../fixtures/test'
 import { HistoryNavigationPage } from '../../pages/history-navigation.page'
-import { historyIdx, historyLength } from '../../helpers/history-stack'
+import { historyIdx, historyLength, expectDeepLinkReplaced } from '../../helpers/history-stack'
 
 test.use({ trace: 'off', video: 'off', screenshot: 'off' })
 const route = '/admin/permission-requests'
@@ -47,13 +47,13 @@ test('딥링크 X — 목록 replace, 뒤로가도 상세가 다시 열리지 �
     detail = discovery.url()
   } finally { await discovery.close() }
   const nav = new HistoryNavigationPage(page, route, keys)
+  const priorUrl = page.url() // 새 탭 — 딥링크 직전 엔트리(about:blank)
   await page.goto(detail!)
   await expect(nav.modal()).toBeVisible()
   const idx = await historyIdx(page)
   const length = await historyLength(page)
   await nav.closeToList(idx)
   expect(await historyLength(page)).toBe(length)
-  await page.goBack()
-  await expect(page).not.toHaveURL(url => Boolean(url.searchParams.get(keys[0])))
+  await expectDeepLinkReplaced(page, { priorUrl, detailKeys: keys, replacedIdx: idx })
   await expect(nav.modal()).toHaveCount(0)
 })

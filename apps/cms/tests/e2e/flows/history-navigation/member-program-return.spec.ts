@@ -19,7 +19,16 @@ async function hasDataRow(scope: ReturnType<Page['locator']>): Promise<boolean> 
   const row = scope.locator(DATA_ROW).first()
   const empty = scope.locator(EMPTY).first()
   await expect(row.or(empty)).toBeVisible({ timeout: 30_000 })
-  return row.isVisible()
+  // antd 표는 로딩 중에도 빈 상태 영역을 먼저 그린다 → 로딩이 끝난 뒤에만 판단
+  await expect(scope.locator('.ant-spin-spinning')).toHaveCount(0, { timeout: 30_000 })
+  try {
+    await row.waitFor({ state: 'visible', timeout: 3_000 })
+    return true
+  } catch {
+    // 로딩 완료 후에도 행이 없고 빈 상태가 유지될 때만 데이터 없음
+    await expect(empty).toBeVisible()
+    return false
+  }
 }
 
 

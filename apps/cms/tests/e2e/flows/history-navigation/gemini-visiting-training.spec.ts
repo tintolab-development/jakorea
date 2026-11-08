@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test'
 import { test, expect } from '../../fixtures/test'
-import { historyIdx, historyLength, expectSearchParams } from '../../helpers/history-stack'
+import { historyIdx, historyLength, expectSearchParams, type ClickTargetElement, expectDeepLinkReplaced } from '../../helpers/history-stack'
 import { GeminiVisitingTrainingPage } from '../../pages/gemini-visiting-training.page'
 /* ── spec 로컬 유틸 (공용 helper 수정 금지 → 통합 시 helpers 로 승격 제안) ── */
 const DATA_ROW = 'tbody.ant-table-tbody tr.ant-table-row'
@@ -20,7 +20,16 @@ async function hasDataRow(scope: ReturnType<Page['locator']>): Promise<boolean> 
   const row = scope.locator(DATA_ROW).first()
   const empty = scope.locator(EMPTY).first()
   await expect(row.or(empty)).toBeVisible({ timeout: 30_000 })
-  return row.isVisible()
+  // antd 표는 로딩 중에도 빈 상태 영역을 먼저 그린다 → 로딩이 끝난 뒤에만 판단
+  await expect(scope.locator('.ant-spin-spinning')).toHaveCount(0, { timeout: 30_000 })
+  try {
+    await row.waitFor({ state: 'visible', timeout: 3_000 })
+    return true
+  } catch {
+    // 로딩 완료 후에도 행이 없고 빈 상태가 유지될 때만 데이터 없음
+    await expect(empty).toBeVisible()
+    return false
+  }
 }
 
 function activeTop(nav: ReturnType<Page['locator']>) {
@@ -37,7 +46,7 @@ function lnbItemByLabel(nav: ReturnType<Page['locator']>, label: string) {
  * 두 번 dispatch. 반환값이 2가 아니면 전제 실패로 FAIL.
  */
 async function doubleClickSameTick(button: ReturnType<Page['locator']>): Promise<number> {
-  return button.evaluate((el: HTMLElement) => {
+  return button.evaluate((el: ClickTargetElement) => {
     let count = 0
     const counter = () => { count += 1 }
     el.addEventListener('click', counter, { capture: true })
@@ -120,6 +129,7 @@ test.describe('history — 제미나이 방문연수', () => {
       id = new URL(discovery.url()).searchParams.get('recruitmentId')
     } finally { await discovery.close() }
     expect(id).toBeTruthy()
+    const priorUrl = page.url() // 새 탭 — 딥링크 직전 엔트리(about:blank)
     await page.goto(`${LIST_PATH}?recruitmentId=${encodeURIComponent(id!)}`)
     await expect(recruitNav(page)).toBeVisible({ timeout: 60_000 })
     const deepIdx = await historyIdx(page)
@@ -128,8 +138,7 @@ test.describe('history — 제미나이 방문연수', () => {
     await expect(page).not.toHaveURL(/[?&]recruitmentId=/, { timeout: 15_000 })
     await expectIdx(page, deepIdx)
     expect(await historyLength(page)).toBe(len)
-    await page.goBack()
-    await expectSearchParams(page, { recruitmentId: null })
+    await expectDeepLinkReplaced(page, { priorUrl, detailKeys: ['recruitmentId'], replacedIdx: deepIdx })
     await expect(recruitNav(page)).toBeHidden({ timeout: 15_000 })
   })
 

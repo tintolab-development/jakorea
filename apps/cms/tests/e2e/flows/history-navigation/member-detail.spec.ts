@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test'
 import { test, expect } from '../../fixtures/test'
-import { historyIdx, historyLength, expectSearchParams } from '../../helpers/history-stack'
+import { historyIdx, historyLength, expectSearchParams, type ClickTargetElement, expectDeepLinkReplaced } from '../../helpers/history-stack'
 /* ── spec 로컬 유틸 (공용 helper 수정 금지 → 통합 시 helpers 로 승격 제안) ── */
 const DATA_ROW = 'tbody.ant-table-tbody tr.ant-table-row'
 const EMPTY = '.ant-empty, .ant-table-placeholder'
@@ -19,7 +19,16 @@ async function hasDataRow(scope: ReturnType<Page['locator']>): Promise<boolean> 
   const row = scope.locator(DATA_ROW).first()
   const empty = scope.locator(EMPTY).first()
   await expect(row.or(empty)).toBeVisible({ timeout: 30_000 })
-  return row.isVisible()
+  // antd 표는 로딩 중에도 빈 상태 영역을 먼저 그린다 → 로딩이 끝난 뒤에만 판단
+  await expect(scope.locator('.ant-spin-spinning')).toHaveCount(0, { timeout: 30_000 })
+  try {
+    await row.waitFor({ state: 'visible', timeout: 3_000 })
+    return true
+  } catch {
+    // 로딩 완료 후에도 행이 없고 빈 상태가 유지될 때만 데이터 없음
+    await expect(empty).toBeVisible()
+    return false
+  }
 }
 
 function activeTop(nav: ReturnType<Page['locator']>) {
@@ -34,7 +43,7 @@ function activeChild(nav: ReturnType<Page['locator']>) {
  * 두 번 dispatch. 반환값이 2가 아니면 전제 실패로 FAIL.
  */
 async function doubleClickSameTick(button: ReturnType<Page['locator']>): Promise<number> {
-  return button.evaluate((el: HTMLElement) => {
+  return button.evaluate((el: ClickTargetElement) => {
     let count = 0
     const counter = () => { count += 1 }
     el.addEventListener('click', counter, { capture: true })
@@ -61,14 +70,20 @@ const dialog = (page: Page) => page.getByRole('dialog').first()
 const lnb = (page: Page) => dialog(page).locator('nav.detail-fullpage-modal__lnb')
 const closeButton = (page: Page) => dialog(page).getByRole('button', { name: '닫기' }).first()
 const param = (page: Page, k: string) => new URL(page.url()).searchParams.get(k)
+const SCHOOL_LIST = '/users/list?kind=institutions'
+/** 학교·교사 탐색 범위: 목록 1페이지 상위 N개 */
+const SCHOOL_SCAN_LIMIT = 10
+const schoolTeachersSection = (page: Page) => dialog(page).locator('.school-affiliated-teachers-section')
+const linkedTeacherRow = (section: ReturnType<Page['locator']>) =>
+  section.locator(`${DATA_ROW}[style*="cursor: pointer"]`).first()
 
 async function openList(page: Page, url = LIST): Promise<number | null> {
   await page.goto(url)
   if (!(await hasDataRow(page.locator('body')))) return null
   return historyIdx(page)
 }
-async function openRow(page: Page, listIdx: number) {
-  await page.locator(DATA_ROW).first().click()
+async function openRow(page: Page, listIdx: number, rowIndex = 0) {
+  await page.locator(DATA_ROW).nth(rowIndex).click()
   await expect(page).toHaveURL(/[?&]id=/, { timeout: 15_000 })
   await expect(dialog(page)).toBeVisible({ timeout: 30_000 })
   await expect(lnb(page)).toBeVisible({ timeout: 30_000 })
@@ -110,7 +125,15 @@ test.describe('history — 회원 상세', () => {
       otherLabel = label
       break
     }
-    if (!otherLabel) return noteDataAbsent('선택 회원 역할의 모든 비활성 LNB가 준비 중 안내 — push 가능한 메뉴 미구현')
+    if (!otherLabel) {
+      // 데이터 부재가 아니라 미지원 메뉴. 소스(instructorDetailLnbClickShowsPrepareMessage)는 현재 항상 false라
+      // 이 분기에 도달하면 앱 동작이 소스와 다른 것 → 계약 차이 후보로 보고
+      test.info().annotations.push({
+        type: 'unverified',
+        description: 'NOT EXECUTED — 선택 회원의 비활성 LNB가 모두 "준비 중" 안내(미지원 메뉴, 데이터 부재 아님). LNB push 검증 미실행',
+      })
+      return
+    }
     await expect.poll(() => param(page, 'lnb')).not.toBe(initialLnb)
     await expectIdx(page, listIdx + 2)
     await expect(activeTop(n)).toContainText(otherLabel)
@@ -186,6 +209,7 @@ test.describe('history — 회원 상세', () => {
       id = param(discovery, 'id')
     } finally { await discovery.close() }
     expect(id).toBeTruthy()
+    const priorUrl = page.url() // 새 탭 — 딥링크 직전 엔트리(about:blank)
     await page.goto(`${LIST}&id=${encodeURIComponent(id!)}`)
     await expect(page).toHaveURL(/[?&]id=/)
     await expect(lnb(page)).toBeVisible({ timeout: 30_000 })
@@ -195,8 +219,7 @@ test.describe('history — 회원 상세', () => {
     await expect(page).not.toHaveURL(/[?&]id=/, { timeout: 15_000 })
     await expectIdx(page, deepIdx)
     expect(await historyLength(page)).toBe(len)
-    await page.goBack()
-    await expectSearchParams(page, { id: null })
+    await expectDeepLinkReplaced(page, { priorUrl, detailKeys: ['id'], replacedIdx: deepIdx })
     await expect(page.getByRole('dialog')).toHaveCount(0)
   })
 
@@ -211,21 +234,51 @@ test.describe('history — 회원 상세', () => {
     await expectIdx(page, listIdx)
   })
 
-  // goto 1회: /users/list?kind=institutions (학교는 kind=all 미포함 — 위 주석)
+  // goto: 탐색 탭 1회 + 본 탭 1회(검증 스택 시작) — /users/list?kind=institutions (학교는 kind=all 미포함 — 위 주석)
   test('학교 상세(detail-info) → 소속 교사 행 → id 교사로 push → X는 학교 id·당시 LNB 로 뒤로 → 다시 X는 목록', async ({ page }) => {
     test.setTimeout(180_000)
-    const listIdx = await openList(page, '/users/list?kind=institutions')
+    // 탐색(별도 탭): 목록 1페이지 상위 SCHOOL_SCAN_LIMIT개 학교에서 클릭 가능한 소속 교사 행이 있는 학교를 찾는다.
+    // 클릭 가능 조건 = 재직 상태 선택 가능 + (linkedUserId | teacherMemberId) → 행 style cursor:pointer
+    // (school-affiliated-teachers-section.tsx onRow). 검증 스택은 본 탭에서 목록 goto 1회로 시작.
+    const discovery = await page.context().newPage()
+    let schoolRowIndex: number | null = null
+    let scanned = 0
+    try {
+      const scanIdx = await openList(discovery, SCHOOL_LIST)
+      if (scanIdx == null) return noteDataAbsent('학교 목록 행 없음(빈 상태 확인)')
+      const total = Math.min(SCHOOL_SCAN_LIMIT, await discovery.locator(DATA_ROW).count())
+      for (let index = 0; index < total; index++) {
+        await openRow(discovery, scanIdx, index)
+        scanned += 1
+        const scanSection = schoolTeachersSection(discovery)
+        await expect(scanSection.getByRole('heading', { name: '소속 교사 목록' })).toBeVisible({ timeout: 30_000 })
+        const found = (await hasDataRow(scanSection)) && (await linkedTeacherRow(scanSection).count()) > 0
+        await closeButton(discovery).click()
+        await expect(discovery).not.toHaveURL(/[?&]id=/, { timeout: 15_000 })
+        await expectIdx(discovery, scanIdx)
+        if (found) { schoolRowIndex = index; break }
+      }
+    } finally { await discovery.close() }
+    if (schoolRowIndex == null) {
+      test.info().annotations.push({
+        type: 'unobserved',
+        description: `NOT EXECUTED — 학교 목록 1페이지 상위 ${scanned}개 학교에서 클릭 가능한 소속 교사 행 미관측(전체 시드 없음 아님, 다른 페이지 미탐색)`,
+      })
+      return
+    }
+
+    const listIdx = await openList(page, SCHOOL_LIST)
     if (listIdx == null) return noteDataAbsent('학교 목록 행 없음(빈 상태 확인)')
-    await openRow(page, listIdx)
+    await openRow(page, listIdx, schoolRowIndex)
     await expect(lnb(page)).toHaveAttribute('aria-label', '학교 상세 메뉴')
     const schoolId = param(page, 'id')
     const schoolLnb = param(page, 'lnb')
     const schoolActive = (await activeTop(lnb(page)).innerText()).trim()
-    const section = dialog(page).locator('.school-affiliated-teachers-section')
+    const section = schoolTeachersSection(page)
     await expect(section.getByRole('heading', { name: '소속 교사 목록' })).toBeVisible({ timeout: 30_000 })
-    const linkedRow = section.locator(`${DATA_ROW}[style*="cursor: pointer"]`).first()
-    if (!(await hasDataRow(section)) || (await linkedRow.count()) === 0)
-      return noteDataAbsent('첫 학교에 CMS 회원 연결(linkedUserId) 소속 교사 없음')
+    const linkedRow = linkedTeacherRow(section)
+    // 탐색 탭과 같은 행인데 연결 교사가 없으면 목록 순서가 바뀐 것 → 전제 실패(FAIL)
+    await expect(linkedRow, '탐색한 학교 행에 클릭 가능한 소속 교사 행이 있어야 함').toHaveCount(1, { timeout: 30_000 })
     const schoolIdx = await historyIdx(page)
     await linkedRow.click()
     await expect.poll(() => param(page, 'id')).not.toBe(schoolId)
