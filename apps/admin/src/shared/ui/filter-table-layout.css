@@ -84,6 +84,16 @@
   white-space: nowrap;
 }
 
+/* Figma 3045:76233 — 1×12 세로선, 텍스트와 같은 색(설명 opacity 공유) · 좌우 10px */
+.filter-table-layout__description-divider {
+  display: inline-block;
+  width: 1px;
+  height: 12px;
+  margin: 0 10px;
+  vertical-align: middle;
+  background: currentColor;
+}
+
 .filter-table-layout__toolbar-actions {
   display: flex;
   align-items: center;

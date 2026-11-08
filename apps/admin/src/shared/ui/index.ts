@@ -78,7 +78,11 @@ export {
   CmsTableEmptyVariantProvider,
   useCmsTableEmptyVariantFromContext,
 } from './cms-table-empty-variant-context'
-export { FilterTableLayout, type FilterTableLayoutProps } from './filter-table-layout'
+export {
+  FilterTableDescriptionDivider,
+  FilterTableLayout,
+  type FilterTableLayoutProps,
+} from './filter-table-layout'
 
 export { CmsTextTabs, CmsPageTabs } from './cms-text-tabs'
 export type {

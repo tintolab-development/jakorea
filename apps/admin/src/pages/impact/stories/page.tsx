@@ -413,7 +413,8 @@ export function ImpactStoriesPage() {
         title: '작성자명',
         dataIndex: 'authorName',
         key: 'authorName',
-        width: 120,
+        width: TABLE_COLUMN_WIDTHS.author,
+        ellipsis: true,
       },
       {
         title: '게시일시',

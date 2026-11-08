@@ -415,7 +415,7 @@ export function PopupsPage() {
       {
         title: '이미지',
         key: 'image',
-        width: 160,
+        width: 140,
         align: 'center',
         render: (_value, record) => (
           <div className="popups-page__thumb-wrap">
