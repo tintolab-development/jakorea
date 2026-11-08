@@ -12,59 +12,6 @@
   overflow-x: hidden;
 }
 
-/* 프로그램 승인 현황: shared StatusDropdownCell 사용 — participating-institutions-section과 동일 스타일 */
-/* 행 높이 53px 고정 (테이블 셀 높이와 동일, vertical shifting 방지) */
-.applicant-details .ant-table-tbody > tr:has(td.status-dropdown-cell__cell-status) {
-  height: 53px;
-  min-height: 53px;
-  max-height: 53px;
-  overflow: visible;
-}
-
-/* 셀 횡 사이즈: 트리거 136px — 좌우 패딩 0 + 가운데 정렬(status-dropdown-cell 공통 스펙) */
-.applicant-details .ant-table-thead > tr > th.status-dropdown-cell__cell-status,
-.applicant-details
-  .ant-table-tbody
-  > tr:has(td.status-dropdown-cell__cell-status)
-  > td.status-dropdown-cell__cell-status {
-  width: 136px;
-  min-width: 136px;
-  max-width: 136px;
-  padding-top: 0;
-  padding-bottom: 0;
-  padding-left: 0;
-  padding-right: 0;
-  text-align: center !important;
-  vertical-align: middle !important;
-  overflow: visible;
-  box-sizing: border-box;
-}
-
-/* 선택된 태그 오버레이(트리거) 136px 고정 */
-.applicant-details .status-dropdown-cell__status-trigger--open {
-  box-sizing: border-box !important;
-  width: 136px !important;
-  min-width: 136px !important;
-  max-width: 136px !important;
-}
-
-/* 드롭다운 활성화 시에도 행/셀 높이 53px 고정 */
-.applicant-details .ant-table-tbody > tr:has(td .status-dropdown-cell__status-trigger--open) > td {
-  height: 53px !important;
-  min-height: 53px !important;
-  max-height: 53px !important;
-}
-
-.applicant-details
-  .ant-table-tbody
-  > tr:has(td.status-dropdown-cell__cell-status)
-  > td.status-dropdown-cell__cell-status {
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-}
-
 /* FilterTableLayout: 풀페이지 모달 본문 안 — 이중 카드·그림자 제거 (캘린더는 --calendar-view 공통) */
 .applicant-details .applicant-details__filter-table-layout.filter-table-layout {
   background: transparent;

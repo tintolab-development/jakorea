@@ -148,30 +148,6 @@
   overflow-y: visible;
 }
 
-.participating-instructor-fullpage-view
-  .ant-table-tbody
-  > tr:has(td.status-dropdown-cell__cell-status--tag-100)
-  > td.status-dropdown-cell__cell-status--tag-100 {
-  overflow: clip;
-}
-
-/* 역할 tag100 — 닫힘/열림 116px 고정, 열림 그림자 제거(가로 밀림 방지) */
-.participating-instructor-fullpage-view
-  .status-dropdown-cell__status-trigger--tag-100,
-.participating-instructor-fullpage-view
-  .status-dropdown-cell__status-trigger--tag-100.status-dropdown-cell__status-trigger--open {
-  width: 116px !important;
-  min-width: 116px !important;
-  max-width: 116px !important;
-  padding: 7px !important;
-  box-sizing: border-box !important;
-}
-
-.participating-instructor-fullpage-view
-  .status-dropdown-cell__status-trigger--tag-100.status-dropdown-cell__status-trigger--open {
-  box-shadow: none !important;
-}
-
 /* 배정 대기 기관 목록 — 테이블 영역 개별 스크롤, 최대 높이 365px */
 .participating-instructor-fullpage-view
   .participating-instructor-fullpage-view__waiting-table-scroll:has(.cms-data-table) {

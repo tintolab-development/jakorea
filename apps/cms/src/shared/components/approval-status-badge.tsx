@@ -1,21 +1,21 @@
 /**
- * 결재 현황 배지 — 교재 현황과 동일 배지 컴포넌트(TextbookStatusBadge) 사용, 배경/텍스트색만 다름
+ * 결재 현황 태그 — 공통 `StatusTag` (`getApprovalStatusTag`)
  */
 
+import { StatusTag } from './status-tag'
 import {
-  TextbookStatusBadge,
   APPROVAL_STATUS_LABELS,
+  getApprovalStatusTag,
   type ApprovalStatusKey,
-} from './textbook-status-badge'
+} from '@/shared/lib/status-tag-specs'
 
 export type { ApprovalStatusKey }
 export { APPROVAL_STATUS_LABELS }
 
 interface ApprovalStatusBadgeProps {
   status: ApprovalStatusKey
-  className?: string
 }
 
-export function ApprovalStatusBadge({ status, className }: ApprovalStatusBadgeProps) {
-  return <TextbookStatusBadge variant="approval" status={status} className={className} />
+export function ApprovalStatusBadge({ status }: ApprovalStatusBadgeProps) {
+  return <StatusTag {...getApprovalStatusTag(status)} />
 }

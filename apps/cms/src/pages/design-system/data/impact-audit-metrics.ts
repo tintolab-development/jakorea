@@ -129,8 +129,8 @@ export const DS_IMPACT_COVERAGE_ROWS: DsImpactCoverageRow[] = [
     area: '상태 배지',
     coverage: 'High',
     basis:
-      'StatusDropdownCell 41 · tag100 단일 스펙(116·pad7·gap8) · INLINE_TAG100 셸 10 · chrome=hug 제거',
-    verdict: '테이블·폼/상세 상태변경 UI 통일 · 밀림은 INLINE 셸',
+      'StatusDropdownCell 41 · 공통 StatusTag(h32·min-w100·hug·pad6/10·12px/600) · getTag(tone/accentColor) · 화면별 태그 CSS 제거',
+    verdict: '테이블·폼/상세 상태변경 UI 통일 · 태그 크기·색 정본 status-tag.css',
     tone: 'success',
   },
 ]
@@ -178,7 +178,7 @@ export const DS_IMPACT_ADOPTION_ROWS: DsImpactAdoptionRow[] = [
   {
     primitive: 'StatusDropdownCell',
     files: '41',
-    note: 'tag100 단일 크롬 · INLINE_TAG100 폼/상세·교재명 · Editable/Textbook 등',
+    note: '공통 StatusTag 단일 크롬 · getTag(tone/accentColor) · Editable/Textbook 등 StatusTag 래퍼',
   },
   {
     primitive: 'AlimtalkPhonePreview',
@@ -298,8 +298,8 @@ export const DS_IMPACT_TOUCHPOINT_ROWS: DsImpactTouchpointRow[] = [
   },
   {
     touchpoint: 'status-dropdown-cell.css / .tsx',
-    change: '상태변경 드롭다운 크롬(tag100·160·paymentOrderLine · INLINE 셸)',
-    blast: 'StatusDropdownCell ~41 · 폼 INLINE_TAG100 ~10',
+    change: '상태변경 드롭다운 트리거·패널 (태그는 status-tag.css)',
+    blast: 'StatusDropdownCell ~41',
     risk: 'High',
     tone: 'warning',
   },
@@ -386,7 +386,7 @@ export const DS_IMPACT_PHASE_ROWS: DsImpactPhaseRow[] = [
   {
     phase: 'StatusDropdown 크롬 통일',
     status: '완료',
-    note: 'chrome=hug 제거 · tag100 단일(116·7·8) · INLINE_TAG100 밀림 방지',
+    note: 'tag100/tag160/INLINE 셸 폐지 · 공통 StatusTag(min-w100·hug) · getTag 전환',
     tone: 'success',
   },
   {
@@ -406,7 +406,7 @@ export const DS_IMPACT_FOLLOWUPS: string[] = [
 ]
 
 export const DS_IMPACT_CONCLUSION =
-  'StatusDropdownCell tag100 크롬 통일(chrome=hug 제거). ContentModal 181 · DetailInfoForm 197 · EmptyState 38 · CmsButton 360 · StatusDropdown 41. antd Empty 0 · Descriptions 0 · raw Button 20(의도적). Teal full 10·Phase 5 룩은 동결.'
+  'StatusDropdownCell 공통 StatusTag 통일(tag100/tag160 폐지). ContentModal 181 · DetailInfoForm 197 · EmptyState 38 · CmsButton 360 · StatusDropdown 41. antd Empty 0 · Descriptions 0 · raw Button 20(의도적). Teal full 10·Phase 5 룩은 동결.'
 
 export const DS_IMPACT_NEXT =
-  '다음: Phase 5는 게이트 후 · StatusDropdown 새 도메인은 tag100/tag160+INLINE 셸 · Teal/MFA 유지.'
+  '다음: Phase 5는 게이트 후 · StatusDropdown 새 도메인은 status-tag-specs getTag(tone/accentColor) · Teal/MFA 유지.'

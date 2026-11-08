@@ -53,53 +53,6 @@
   vertical-align: middle;
 }
 
-/*
- * 상세 인라인 재직 태그 — 전역 INLINE_TAG100(116×48)은 테이블 밀림 방지용.
- * 회원 상세에서는 배지 100×32에 맞춰 셸·트리거 여백을 줄인다.
- */
-.user-basic-info-section__teacher-employment-dropdown.status-dropdown-cell__inline-tag100 {
-  width: 100px;
-  min-width: 100px;
-  max-width: 100px;
-  height: 32px;
-  min-height: 32px;
-  max-height: 32px;
-  flex: 0 0 100px;
-}
-
-.user-basic-info-section__teacher-employment-dropdown .ant-dropdown-trigger,
-.user-basic-info-section__teacher-employment-dropdown
-  .status-dropdown-cell__status-trigger--tag-100,
-.user-basic-info-section__teacher-employment-dropdown
-  .status-dropdown-cell__status-trigger--tag-100.status-dropdown-cell__status-trigger--open {
-  box-sizing: border-box !important;
-  width: 100px !important;
-  min-width: 100px !important;
-  max-width: 100px !important;
-  height: 32px !important;
-  min-height: 32px !important;
-  max-height: 32px !important;
-  padding: 0 !important;
-  margin: 0 !important;
-}
-
-/* 트리거 패딩·크롬은 StatusDropdownCell tag100 + 상세 전용 압축 셸 */
-.user-basic-info-section__teacher-employment-dropdown
-  .user-basic-info-section__teacher-employment-badge.app-status-badge,
-.user-basic-info-section__teacher-employment-dropdown
-  .status-dropdown-cell__status-trigger
-  .app-status-badge.status-dropdown-cell__badge--cell-style {
-  box-sizing: border-box;
-  width: 100px !important;
-  min-width: 100px !important;
-  max-width: 100px !important;
-  height: 32px !important;
-  min-height: 32px !important;
-  max-height: 32px !important;
-  margin: 0 !important;
-  padding: 6px 12px !important;
-}
-
 /* 강사 소속 — 복수 소속 콤마 나열 + 교사 겸직 재직 태그 인라인 */
 .user-basic-info-section__affiliation-multi {
   display: inline-flex;
@@ -292,7 +245,7 @@
   vertical-align: baseline;
 }
 
-/* 관리자 상세 — 권한 유형 인라인 (테이블 tag160·이중 패딩 없음) */
+/* 관리자 상세 — 권한 유형 인라인 */
 .user-basic-info-section__admin-permission-inline {
   display: inline-flex;
   box-sizing: border-box;
@@ -301,29 +254,6 @@
   vertical-align: middle;
   position: relative;
   overflow: visible;
-}
-
-.user-basic-info-section__admin-permission-inline .user-list-admin-perm-tag {
-  margin-inline: 0;
-}
-
-.user-basic-info-section__admin-permission-inline .ant-dropdown-trigger {
-  box-sizing: border-box;
-  margin: 0;
-  justify-content: center;
-  align-items: center;
-  max-width: 192px;
-}
-
-.user-basic-info-section__admin-permission-inline .status-dropdown-cell__status-trigger {
-  box-sizing: border-box;
-  margin: 0;
-  justify-content: center;
-  align-items: center;
-}
-
-.user-basic-info-section__admin-permission-inline .status-dropdown-cell__status-trigger--open {
-  box-shadow: none !important;
 }
 
 /* 관리자 담당 프로그램 수 — `DetailInfoForm.Separator` 포함 한 줄 정렬 */

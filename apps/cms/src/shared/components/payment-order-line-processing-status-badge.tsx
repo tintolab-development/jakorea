@@ -1,34 +1,20 @@
 /**
- * 지급 조서 처리 현황(라인) 배지 — TextbookStatusBadge `payment-order-line`
- * 색상: theme-provider.css `--color-payment-order-line-*` · TS `paymentOrderLineStatusColors`
+ * 지급 조서 처리 현황(라인) 태그 — 공통 `StatusTag` (`getPaymentOrderLineStatusTag`)
+ * 색상: `payment-order-status-list-colors` 목록 글자색을 accentColor로 사용
  */
 
-import type { CSSProperties } from 'react'
 import type { PaymentOrderAdminLineProcessingStatus } from '@/features/settlement-management/model/payment-order-admin-list'
-import { TextbookStatusBadge } from './textbook-status-badge'
+import { getPaymentOrderLineStatusTag } from '@/shared/lib/status-tag-specs'
+import { StatusTag } from './status-tag'
 
 export type { PaymentOrderAdminLineProcessingStatus }
 
 interface PaymentOrderLineProcessingStatusBadgeProps {
   status: PaymentOrderAdminLineProcessingStatus
-  className?: string
-  style?: CSSProperties
-  /** true면 `PAYMENT_ORDER_STATUS_LABELS_DETAIL`(상세), 기본은 라인용 문구 */
-  detailLabels?: boolean
 }
 
 export function PaymentOrderLineProcessingStatusBadge({
   status,
-  className,
-  style,
-  detailLabels = false,
 }: PaymentOrderLineProcessingStatusBadgeProps) {
-  return (
-    <TextbookStatusBadge
-      variant={detailLabels ? 'payment-order-line-detail' : 'payment-order-line'}
-      status={status}
-      className={className}
-      style={style}
-    />
-  )
+  return <StatusTag {...getPaymentOrderLineStatusTag(status)} />
 }

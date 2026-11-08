@@ -8,12 +8,12 @@ import type { Dayjs } from 'dayjs'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { FilterTableToolbarButton } from '@/shared/ui'
 import { CalculationDetailViewButton } from '@/features/settlement/ui/payment-record/calculation-detail-view-button'
-import { PaymentOrderLineProcessingStatusBadge } from '@/shared/components/payment-order-line-processing-status-badge'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
+import { getPaymentOrderLineStatusTag } from '@/shared/lib/status-tag-specs'
 import {
   type PaymentOrderAdminInstructorDetailProgramRow,
   type PaymentOrderAdminInstructorRow,
@@ -191,7 +191,7 @@ export function PaymentOrderInstructorSettlementTable({
             <StatusDropdownCell<PaymentOrderAdminLineProcessingStatus>
               status={row.processingStatus}
               statusOptions={LINE_STATUS_OPTIONS}
-              renderBadge={s => <PaymentOrderLineProcessingStatusBadge status={s} />}
+              getTag={getPaymentOrderLineStatusTag}
               isItemDisabled={(cur, opt) => cur === opt}
               onChange={newStatus => {
                 setProgramRowsState(prev =>

@@ -1,5 +1,5 @@
 /** 교육 진행 일정 열 고정 폭 */
-export const PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH = 360
+export const PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH = 480
 
 /** 진행 희망·담당 일정 열 — 헤더·셀 중앙 정렬 (참여 기관/강사/봉사자 목록 공통) */
 export const PARTICIPATING_SCHEDULE_TABLE_TH_CENTER_CLASS =

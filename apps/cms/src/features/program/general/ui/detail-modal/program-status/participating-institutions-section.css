@@ -141,45 +141,6 @@
 }
 
 /*
- * 교재 배송 현황(StatusDropdownCell)
- * - 배지 100×32 / 열 최소 140px: column width + `PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_DROPDOWN_STYLE` + status-dropdown-cell.css `--sdcb-*`
- * - 아래는 cms-data-table 행 패딩·드롭다운 열림 시 세로 흔들림만 막음 (공통 셀 패딩 0은 status-dropdown-cell.css)
- */
-.participating-institutions-section__table--textbook-dropdown.cms-data-table
-  .ant-table-tbody
-  > tr:has(td .status-dropdown-cell__status-trigger--open)
-  > td.status-dropdown-cell__cell-status {
-  height: 53px !important;
-  min-height: 53px !important;
-  max-height: 53px !important;
-  vertical-align: middle !important;
-  overflow: visible;
-}
-
-.participating-institutions-section__table--textbook-dropdown.cms-data-table
-  th.status-dropdown-cell__header--tag-100,
-.participating-institutions-section__table--textbook-dropdown.cms-data-table
-  td.status-dropdown-cell__cell-status--tag-100 {
-  width: 140px !important;
-  min-width: 140px !important;
-  max-width: 140px !important;
-  box-sizing: border-box !important;
-  text-align: center !important;
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-}
-
-.participating-institutions-section__table--textbook-dropdown.cms-data-table
-  td.status-dropdown-cell__cell-status--tag-100
-  .ant-dropdown-trigger {
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  margin-inline: auto;
-  width: 100%;
-}
-
-/*
  * cms-data-table 이 No. 이후 col 을 width:auto 로 풀어 연락처·이메일이 우측에서 찌그러짐.
  * th/td 로 최소·고정 폭을 강제하고, 열 합이 뷰포트보다 크면 scroll.x 로 가로 스크롤.
  */

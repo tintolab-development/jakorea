@@ -27,9 +27,6 @@ import {
   SPONSOR_STATUS_CELL_CLASSNAME,
   SponsorSponsorshipStatusCell,
 } from '@/features/sponsor/ui/sponsor-sponsorship-status-cell'
-import {
-  STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME,
-} from '@/shared/components/status-dropdown-cell'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
 import { EMPTY_TABLE_PAGE_CONTEXT } from '@/shared/components/table-system/model/use-table-page'
@@ -349,7 +346,6 @@ export default function SponsorPage() {
         key: 'sponsorshipStatus',
         width: 116,
         align: 'center',
-        onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME }),
         onCell: () => ({
           className: SPONSOR_STATUS_CELL_CLASSNAME,
         }),

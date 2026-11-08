@@ -55,7 +55,7 @@
 }
 
 /*
- * 테이블 셀 패딩 (승인 현황 th·td 좌우 16px, 진행 희망 교육 일정 th/td 16px)
+ * 테이블 셀 패딩 (진행 희망 교육 일정 th 16px)
  * ant-table-wrapper.cms-data-table + detail-fullpage-modal 체인으로 cms-data-table·applicants-detail(24px) 덮어씀
  */
 .detail-fullpage-modal.general-detail-fullpage-modal
@@ -64,30 +64,8 @@
   .ant-table-wrapper.cms-data-table
   .ant-table-thead
   > tr
-  > th.ant-table-cell.status-dropdown-cell__cell-status,
-.detail-fullpage-modal.general-detail-fullpage-modal
-  .participant-applications
-  .applicant-details
-  .ant-table-wrapper.cms-data-table
-  .ant-table-thead
-  > tr
   > th.ant-table-cell.applicant-details__th-sessions {
   padding: 12px 16px !important;
-}
-
-/* 승인 현황: 텍스트 표기 + 드롭다운 트리거 폭 조정 */
-.participant-applications .applicant-details .status-dropdown-cell__status-trigger {
-  width: auto !important;
-  min-width: 100px !important;
-  max-width: 148px !important;
-}
-
-.participant-applications
-  .applicant-details
-  .status-dropdown-cell__status-trigger--open {
-  width: auto !important;
-  min-width: 100px !important;
-  max-width: 148px !important;
 }
 
 /* 신청 기관명 · 기관 소재지 · 진행 희망 교육 일정 — cms-data-table--fluid 에서 minWidth prop만으로는 미적용 */
@@ -139,44 +117,6 @@
   min-width: 360px;
   white-space: normal;
   overflow-wrap: break-word;
-}
-
-.detail-fullpage-modal.general-detail-fullpage-modal
-  .participant-applications
-  .applicant-details
-  .ant-table-wrapper.cms-data-table
-  .ant-table-thead
-  > tr
-  > th.ant-table-cell.status-dropdown-cell__cell-status,
-.detail-fullpage-modal.general-detail-fullpage-modal
-  .participant-applications
-  .applicant-details
-  .ant-table-wrapper.cms-data-table
-  .ant-table-tbody
-  > tr:has(td.status-dropdown-cell__cell-status)
-  > td.ant-table-cell.status-dropdown-cell__cell-status {
-  width: 180px;
-  min-width: 180px;
-  max-width: 180px;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-  text-align: center !important;
-  vertical-align: middle !important;
-}
-
-.participant-applications
-  .applicant-details
-  .status-dropdown-cell__status-trigger
-  .approval-status-text,
-.participant-applications
-  .applicant-details
-  .status-dropdown-cell__dropdown-item
-  .approval-status-text {
-  width: auto;
-  min-width: 0;
-  max-width: 100%;
 }
 
 .detail-fullpage-modal.general-detail-fullpage-modal

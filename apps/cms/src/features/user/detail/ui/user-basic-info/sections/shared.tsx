@@ -30,7 +30,7 @@ export function Id1365View({
     <span className="user-basic-info-section__id1365-cell">
       <span>{label1365}</span>
       {hasValue && onOpen ? (
-        <CmsButton size="medium" onClick={onOpen}>
+        <CmsButton variant="secondary" size="h32" onClick={onOpen}>
           1365 바로가기
         </CmsButton>
       ) : null}

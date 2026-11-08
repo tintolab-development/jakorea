@@ -80,16 +80,9 @@ import {
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { getInstructorSettlementStatusLabel } from '@/shared/constants/instructor-settlement-status'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
-import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
-import {
-  EditableStatusBadge,
-  StatusDropdownCell,
-  STATUS_DROPDOWN_CELL_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME,
-  STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME,
-} from '@/shared/components'
-import { getInstructorRoleBadgeTone } from '@/shared/constants/editable-status-badge-tones'
+import { StatusDropdownCell, STATUS_DROPDOWN_CELL_CLASSNAME } from '@/shared/components'
+import { StatusTag } from '@/shared/components/status-tag'
+import { getInstructorRoleTag, getTextbookStatusTag } from '@/shared/lib/status-tag-specs'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import { shouldUseCompanySchoolProgramProgressRemoteApi } from '@/features/program/1c-1s/api/capabilities'
 import { companySchoolQueryKeys } from '@/features/program/1c-1s/api/query-keys'
@@ -2023,26 +2016,17 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         key: 'role',
         width: 116,
         align: 'center',
-        onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME }),
-        onCell: () => ({
-          className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME}`,
-        }),
+        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
         render: (role: InstructorRoleKey, record: AssignedInstructorDisplayRow) => (
           <StatusDropdownCell<InstructorRoleKey>
             status={role}
             statusOptions={['lead', 'assistant']}
-            renderBadge={r => (
-              <EditableStatusBadge
-                label={INSTRUCTOR_ROLE_LABELS[r]}
-                tone={getInstructorRoleBadgeTone(r)}
-              />
-            )}
+            getTag={getInstructorRoleTag}
             isItemDisabled={(cur, opt) => cur === opt}
             onChange={key => handleRoleChange(record.id, key as InstructorRoleKey)}
             isOpen={openRoleDropdownId === record.id}
             onOpenChange={open => setOpenRoleDropdownId(open ? record.id : null)}
             emptyPlaceholder="-"
-            tagLayout="tag100"
           />
         ),
       },
@@ -2278,20 +2262,17 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
       mergedDetail.textbookName?.trim() !== '해당 없음')
   const textbookStatusCell =
     onTextbookStatusChange != null && hasSelectedTextbook ? (
-      <span className={STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME}>
-        <StatusDropdownCell<TextbookStatusKey>
-          status={mergedDetail.textbookStatus}
-          statusOptions={TEXTBOOK_STATUS_OPTION_KEYS.filter(key => key !== 'not_applicable')}
-          renderBadge={s => <TextbookStatusBadge status={s} />}
-          isItemDisabled={(cur, opt) => cur === opt}
-          onChange={newStatus => onTextbookStatusChange(detail.id, newStatus)}
-          isOpen={textbookStatusDropdownOpen}
-          onOpenChange={setTextbookStatusDropdownOpen}
-          tagLayout="tag100"
-        />
-      </span>
+      <StatusDropdownCell<TextbookStatusKey>
+        status={mergedDetail.textbookStatus}
+        statusOptions={TEXTBOOK_STATUS_OPTION_KEYS.filter(key => key !== 'not_applicable')}
+        getTag={getTextbookStatusTag}
+        isItemDisabled={(cur, opt) => cur === opt}
+        onChange={newStatus => onTextbookStatusChange(detail.id, newStatus)}
+        isOpen={textbookStatusDropdownOpen}
+        onOpenChange={setTextbookStatusDropdownOpen}
+      />
     ) : (
-      <TextbookStatusBadge status={mergedDetail.textbookStatus} />
+      <StatusTag {...getTextbookStatusTag(mergedDetail.textbookStatus)} />
     )
 
   const textbookNameView = textbookDisplay.textbookName?.trim() || '-'

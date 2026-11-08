@@ -10,7 +10,7 @@ import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlemen
 import type { SettlementStatusKey } from '@/features/program/general/model/participating-instructors'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS } from '@/features/program/general/lib/waiting-instructor-assignment'
-import { INSTRUCTOR_ROLE_LABELS, type InstructorRoleKey } from '@/features/program/general/model/school-detail-types'
+import type { InstructorRoleKey } from '@/features/program/general/model/school-detail-types'
 import { shouldUseCompanySchoolApplicationsRemoteApi } from '@/features/program/1c-1s/api/capabilities'
 import { companySchoolQueryKeys } from '@/features/program/1c-1s/api/query-keys'
 import { fetchCompanySchoolAssignmentBoard } from '@/features/program/1c-1s/api/instructor-assignment-conflict-service'
@@ -22,7 +22,8 @@ import {
 } from '@/features/program/1c-1s/lib/build-company-school-assignment-rows'
 import { organizationRequestedSchedulesQueryOptions } from '@/features/program/general/api/organization-requested-schedules-query'
 import { mapRequestedSchedulesToSessions } from '@/features/program/1c-1s/lib/map-requested-schedules'
-import '@/features/program/general/ui/detail-modal/program-status/instructor-assignment-role-tag.css'
+import { StatusTag } from '@/shared/components/status-tag'
+import { getInstructorRoleTag } from '@/shared/lib/status-tag-specs'
 import '@/features/program/general/ui/detail-modal/program-status/instructor-assignment-status-text.css'
 import '@/features/program/general/ui/detail-modal/program-status/school-detail-fullpage-view.css'
 
@@ -100,17 +101,7 @@ export function ApplicantInstitutionInstructorAssignTab({
         key: 'role',
         width: 100,
         align: 'center',
-        render: (role: InstructorRoleKey) => (
-          <span
-            className={
-              role === 'lead'
-                ? 'school-detail-fullpage-view__role-tag school-detail-fullpage-view__role-tag--lead'
-                : 'school-detail-fullpage-view__role-tag school-detail-fullpage-view__role-tag--assistant'
-            }
-          >
-            {INSTRUCTOR_ROLE_LABELS[role]}
-          </span>
-        ),
+        render: (role: InstructorRoleKey) => <StatusTag {...getInstructorRoleTag(role)} />,
       },
       { title: '강사명', dataIndex: 'instructorName', key: 'instructorName', width: 100 },
       {

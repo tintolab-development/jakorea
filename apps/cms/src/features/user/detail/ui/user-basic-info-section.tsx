@@ -22,7 +22,6 @@ import {
 import type { UserBasicInfoExternalId1365 } from './user-basic-info/sections/types'
 import { GuardianSection } from './user-basic-info/sections/guardian-section'
 import './user-basic-info-section.css'
-import '@/features/user/shared/ui/admin-permission-tag.css'
 
 export {
   parseUserBasicInfoEntryQuery,

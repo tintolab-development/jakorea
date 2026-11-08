@@ -8,6 +8,7 @@ import {
   STATUS_DROPDOWN_CELL_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
 import { ApprovalStatusBadge, type ApprovalStatusKey } from '@/shared/components/approval-status-badge'
+import { getApprovalStatusTag } from '@/shared/lib/status-tag-specs'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import {
   ProgramDetailTdDivider,
@@ -176,7 +177,7 @@ export function FiltersTablesSection() {
           <StatusDropdownCell
             status={status}
             statusOptions={STATUS_OPTIONS}
-            renderBadge={s => <ApprovalStatusBadge status={s} />}
+            getTag={getApprovalStatusTag}
             isItemDisabled={(cur, opt) => cur === opt}
             onChange={next => {
               setRows(prev => prev.map(r => (r.id === record.id ? { ...r, status: next } : r)))

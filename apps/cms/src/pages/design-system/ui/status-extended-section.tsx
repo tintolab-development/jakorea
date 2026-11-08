@@ -13,7 +13,6 @@ import { SponsorContactTypeBadge } from '@/features/sponsor/ui/sponsor-contact-t
 import { SponsorSponsorshipStatusBadge } from '@/features/sponsor/ui/sponsor-sponsorship-status-badge'
 import { UjatInstitutionApplicationStatusBadge } from '@/features/program/ujat/ui/detail-modal/application-institution/list/status-badge'
 import { DocumentScreeningStatusText } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/shared/document-screening-status-text'
-import { ManagerEvaluationBadge } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/shared/manager-evaluation-badge'
 import { UjatInstitutionScheduleConfirmStatusBadge } from '@/features/program/ujat/ui/detail-modal/application-institution/schedule-confirm/status-badge'
 import {
   UJAT_INSTITUTION_SCHEDULE_CONFIRM_STATUS_ORDER,
@@ -31,10 +30,8 @@ import { InstructorPaymentStatusBadge } from '@/shared/components/instructor-pay
 import { PaymentOrderLineProcessingStatusBadge } from '@/shared/components/payment-order-line-processing-status-badge'
 import { ProgramEnrollmentStatusText } from '@/shared/components/program-enrollment-status-text'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
-import {
-  StatusDropdownCell,
-  STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME,
-} from '@/shared/components/status-dropdown-cell'
+import { StatusDropdownCell } from '@/shared/components/status-dropdown-cell'
+import { getManagerEvaluationTag, getTextbookStatusTag } from '@/shared/lib/status-tag-specs'
 import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
 import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
 import {
@@ -82,7 +79,7 @@ const TEXTBOOK_DROPDOWN_OPTIONS = TEXTBOOK_STATUS_OPTION_KEYS.filter(
   (s): s is Exclude<TextbookStatusKey, 'not_applicable'> => s !== 'not_applicable'
 )
 
-/** StatusDropdownCell — tag100 단일 스펙 (테이블·폼 동일) */
+/** StatusDropdownCell — 공통 StatusTag 단일 스펙 (테이블·폼 동일) */
 function StatusDropdownActiveDemo() {
   const [textbookStatus, setTextbookStatus] =
     useState<(typeof TEXTBOOK_DROPDOWN_OPTIONS)[number]>('preparing')
@@ -92,43 +89,38 @@ function StatusDropdownActiveDemo() {
 
   return (
     <>
-      <DsDemo label="StatusDropdownCell — tag100 · 테이블">
+      <DsDemo label="StatusDropdownCell — 테이블">
         <p className="ds-note" style={{ marginTop: 0 }}>
-          단일 스펙: 패널 116×padding 7·gap 8. 클릭해 상태를 바꿔 보세요.
+          단일 스펙: 태그 높이 32·최소 너비 100(텍스트 길이에 따라 늘어남) · 패널 padding 7·gap 8.
+          색은 <code>getTag</code>의 tone/accentColor로만 지정합니다. 클릭해 상태를 바꿔 보세요.
         </p>
         <div className="ds-demo__row" style={{ minHeight: 160, alignItems: 'flex-start' }}>
           <StatusDropdownCell
             status={textbookStatus}
             statusOptions={TEXTBOOK_DROPDOWN_OPTIONS}
-            renderBadge={s => <TextbookStatusBadge status={s} />}
+            getTag={getTextbookStatusTag}
             isItemDisabled={(cur, opt) => cur === opt}
             onChange={setTextbookStatus}
             isOpen={textbookOpen}
             onOpenChange={setTextbookOpen}
-            tagLayout="tag100"
           />
         </div>
       </DsDemo>
 
-      <DsDemo label="StatusDropdownCell — tag100 · 폼/상세 (INLINE 셸)">
+      <DsDemo label="StatusDropdownCell — 폼/상세">
         <p className="ds-note" style={{ marginTop: 0 }}>
-          동일 tag100 스펙. 폼·상세는{' '}
-          <code>STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME</code> 셸(116×48)로 열림 시 가로 밀림을
-          막습니다.
+          테이블과 동일 스펙. 래퍼 셸·화면별 CSS 없이 그대로 배치합니다.
         </p>
         <div className="ds-demo__row" style={{ minHeight: 200, alignItems: 'flex-start' }}>
-          <span className={STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME}>
-            <StatusDropdownCell
-              status={evalStatus}
-              statusOptions={UJAT_MANAGER_EVALUATION_ORDER}
-              renderBadge={s => <ManagerEvaluationBadge evaluation={s} />}
-              isItemDisabled={(cur, opt) => cur === opt}
-              onChange={setEvalStatus}
-              isOpen={evalOpen}
-              onOpenChange={setEvalOpen}
-              tagLayout="tag100"
-            />
-          </span>
+          <StatusDropdownCell
+            status={evalStatus}
+            statusOptions={UJAT_MANAGER_EVALUATION_ORDER}
+            getTag={getManagerEvaluationTag}
+            isItemDisabled={(cur, opt) => cur === opt}
+            onChange={setEvalStatus}
+            isOpen={evalOpen}
+            onOpenChange={setEvalOpen}
+          />
         </div>
       </DsDemo>
     </>

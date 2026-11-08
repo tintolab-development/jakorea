@@ -33,12 +33,8 @@ import {
 } from '@/entities/program/lib/program-pm-role-policy'
 import { AddManagerModal, type AddManagerFormValues } from '../../add-manager-modal'
 import { ManagerDeleteGuideModal } from '../../manager-delete-guide-modal'
-import {
-  EditableStatusBadge,
-  StatusDropdownCell,
-  STATUS_DROPDOWN_CELL_CLASSNAME,
-} from '@/shared/components'
-import { getProgramRoleBadgeTone } from '@/shared/constants/editable-status-badge-tones'
+import { StatusDropdownCell, STATUS_DROPDOWN_CELL_CLASSNAME } from '@/shared/components'
+import { getProgramRoleTag } from '@/shared/lib/status-tag-specs'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import {
   PROGRAM_MANAGER_ADD_COMPLETE_BODY,
@@ -284,16 +280,6 @@ export function ProgramManagersTab({
     [managerList]
   )
 
-  const renderRoleBadge = useCallback((r: ProgramRole) => {
-    return (
-      <EditableStatusBadge
-        label={PROGRAM_ROLE_LABELS[r]}
-        tone={getProgramRoleBadgeTone(r)}
-        className="program-managers-tab__role-badge"
-      />
-    )
-  }, [])
-
   const columns: ColumnsType<ProgramManagerRow> = useMemo(
     () => [
       { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
@@ -314,7 +300,7 @@ export function ProgramManagersTab({
           <StatusDropdownCell<ProgramRole>
             status={role}
             statusOptions={TABLE_ROLE_ORDER}
-            renderBadge={renderRoleBadge}
+            getTag={getProgramRoleTag}
             isItemDisabled={(_cur, opt) => roleItemDisabled(record, opt)}
             onChange={key => {
               void handleTableRoleChange(record.id, key)
@@ -323,7 +309,6 @@ export function ProgramManagersTab({
             isOpen={openRoleDropdownId === record.id}
             onOpenChange={open => setOpenRoleDropdownId(open ? record.id : null)}
             emptyPlaceholder="-"
-            style={{ width: 176, minWidth: 176, maxWidth: 176 }}
           />
         ),
       },
@@ -352,7 +337,7 @@ export function ProgramManagersTab({
         align: 'center',
       },
     ],
-    [handleTableRoleChange, isUpdatingRole, openRoleDropdownId, renderRoleBadge, roleItemDisabled]
+    [handleTableRoleChange, isUpdatingRole, openRoleDropdownId, roleItemDisabled]
   )
 
   const excelColumns: ColumnsType<ProgramManagerRow> = useMemo(

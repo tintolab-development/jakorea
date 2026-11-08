@@ -12,21 +12,15 @@ import { formatDateDot } from '@/shared/utils'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
-  SCHOOL_TEACHER_EMPLOYMENT_BADGE_CELL_STYLE,
   SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS,
   isSchoolAffiliatedTeacherRowSelectable,
   isSchoolTeacherEmploymentMutedStatus,
   requestSchoolTeacherEmploymentDropdownOpen,
-  SchoolTeacherEmploymentStatusBadge,
 } from '@/features/user/detail/lib/school-teacher-employment-status'
 import { guardAdminAction } from '@/shared/lib/admin-role-policy'
 import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
-import {
-  StatusDropdownCell,
-  STATUS_DROPDOWN_CELL_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME,
-} from '@/shared/components'
+import { StatusDropdownCell, STATUS_DROPDOWN_CELL_CLASSNAME } from '@/shared/components'
+import { getEmploymentStatusTag } from '@/shared/lib/status-tag-specs'
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import './school-affiliated-teachers-section.css'
@@ -151,16 +145,15 @@ export function SchoolAffiliatedTeachersSection({
         key: 'employmentStatus',
         width: 140,
         align: 'center',
-        onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME }),
         onCell: () => ({
-          className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME}`,
+          className: STATUS_DROPDOWN_CELL_CLASSNAME,
           onClick: (e: React.MouseEvent<HTMLTableCellElement>) => e.stopPropagation(),
         }),
         render: (_: unknown, record: Row) => (
           <StatusDropdownCell<SchoolTeacherEmploymentStatus>
             status={record.employmentStatus}
             statusOptions={SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS}
-            renderBadge={s => <SchoolTeacherEmploymentStatusBadge status={s} />}
+            getTag={getEmploymentStatusTag}
             isItemDisabled={(cur, opt) => cur === opt}
             onChange={next => handleEmploymentStatusChange(record.id, next)}
             isOpen={openEmploymentDropdownId === record.id}
@@ -169,8 +162,6 @@ export function SchoolAffiliatedTeachersSection({
                 setOpenEmploymentDropdownId(nextOpen ? record.id : null)
               )
             }
-            style={SCHOOL_TEACHER_EMPLOYMENT_BADGE_CELL_STYLE}
-            tagLayout="tag100"
           />
         ),
       },

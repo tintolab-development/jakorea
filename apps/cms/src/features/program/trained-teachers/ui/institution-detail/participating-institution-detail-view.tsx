@@ -20,11 +20,9 @@ import {
   resolveProgramEnrollmentDisplayStatusFromLabel,
 } from '@/shared/constants/status'
 import { ProgramEnrollmentStatusText } from '@/shared/components/program-enrollment-status-text'
-import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
-import {
-  StatusDropdownCell,
-  STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME,
-} from '@/shared/components'
+import { StatusDropdownCell } from '@/shared/components'
+import { StatusTag } from '@/shared/components/status-tag'
+import { getTextbookStatusTag } from '@/shared/lib/status-tag-specs'
 import { TEXTBOOK_STATUS_OPTION_KEYS } from '@/features/program/general/model/participating-schools'
 import type { TextbookStatusKey } from '@/features/program/general/model/participating-schools'
 import { useParticipatingInstitutionDetailEdit } from '@/features/program/general/hooks/use-participating-institution-detail-edit'
@@ -720,22 +718,19 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
   )
   const textbookStatusCell =
     textbookDeliveryStatus === 'not_applicable' ? (
-      <TextbookStatusBadge status="not_applicable" />
+      <StatusTag {...getTextbookStatusTag('not_applicable')} />
     ) : onTextbookStatusChange != null ? (
-      <span className={STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME}>
-        <StatusDropdownCell<TextbookStatusKey>
-          status={textbookDeliveryStatus}
-          statusOptions={TEXTBOOK_STATUS_OPTION_KEYS.filter(key => key !== 'not_applicable')}
-          renderBadge={s => <TextbookStatusBadge status={s} />}
-          isItemDisabled={(cur, opt) => cur === opt}
-          onChange={newStatus => onTextbookStatusChange(detail.id, newStatus)}
-          isOpen={textbookStatusDropdownOpen}
-          onOpenChange={setTextbookStatusDropdownOpen}
-          tagLayout="tag100"
-        />
-      </span>
+      <StatusDropdownCell<TextbookStatusKey>
+        status={textbookDeliveryStatus}
+        statusOptions={TEXTBOOK_STATUS_OPTION_KEYS.filter(key => key !== 'not_applicable')}
+        getTag={getTextbookStatusTag}
+        isItemDisabled={(cur, opt) => cur === opt}
+        onChange={newStatus => onTextbookStatusChange(detail.id, newStatus)}
+        isOpen={textbookStatusDropdownOpen}
+        onOpenChange={setTextbookStatusDropdownOpen}
+      />
     ) : (
-      <TextbookStatusBadge status={textbookDeliveryStatus} />
+      <StatusTag {...getTextbookStatusTag(textbookDeliveryStatus)} />
     )
   const textbookNameView = !hasSelectedTextbook
     ? '해당 없음'

@@ -4,28 +4,22 @@
 
 import { useEffect, useState } from 'react'
 import { StatusDropdownCell } from '@/shared/components/status-dropdown-cell'
+import { StatusTag } from '@/shared/components/status-tag'
+import { getAssignmentTeamRoleTag } from '@/shared/lib/status-tag-specs'
 import type { GeneralIndividualApplicantDetail } from '@/features/program/general/model/individual-applicant'
 import { updateGeneralIndividualApplicantTeamRole } from '@/features/program/general/model/individual-applicant'
-import { assignmentTeamRoleTagClassName } from '@/features/program/general/lib/assignment-team-role-tag'
 import { ASSIGNMENT_TEAM_ROLE_LABELS } from '@/features/program/general/model/school-detail-types'
-import '@/features/program/general/ui/assignment-submission-modal.css'
-import '@/features/program/general/ui/detail-modal/program-status/instructor-assignment-role-tag.css'
 
-/** 시안: 팀장 민트 태그, 팀원 일반 텍스트 (읽기 전용) */
+/** 시안: 팀장 태그(드롭다운과 동일 공통 태그), 팀원 일반 텍스트 (읽기 전용) */
 export function GeneralIndividualTeamRoleView({
   teamRole,
 }: {
   teamRole: GeneralIndividualTeamRoleKey
 }) {
-  const label = ASSIGNMENT_TEAM_ROLE_LABELS[teamRole]
   if (teamRole === 'leader') {
-    return (
-      <span className="school-detail-fullpage-view__role-tag school-detail-fullpage-view__role-tag--lead">
-        {label}
-      </span>
-    )
+    return <StatusTag {...getAssignmentTeamRoleTag(teamRole)} />
   }
-  return <span>{label}</span>
+  return <span>{ASSIGNMENT_TEAM_ROLE_LABELS[teamRole]}</span>
 }
 
 export type GeneralIndividualTeamRoleKey = NonNullable<GeneralIndividualApplicantDetail['teamRole']>
@@ -86,19 +80,13 @@ export function GeneralIndividualTeamRoleDropdown({
     <StatusDropdownCell<GeneralIndividualTeamRoleKey>
       status={role}
       statusOptions={TEAM_ROLE_OPTIONS}
-      renderBadge={r => (
-        <span className={assignmentTeamRoleTagClassName(r)}>
-          {ASSIGNMENT_TEAM_ROLE_LABELS[r]}
-        </span>
-      )}
+      getTag={getAssignmentTeamRoleTag}
       isItemDisabled={(cur, opt) => cur === opt}
       isUpdating={isSaving}
       onChange={handleChange}
       isOpen={isOpen}
       onOpenChange={setIsOpen}
       emptyPlaceholder="-"
-      tagLayout="tag160"
-      style={{ width: 132, minWidth: 132, maxWidth: 132 }}
     />
   )
 }

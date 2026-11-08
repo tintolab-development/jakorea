@@ -462,14 +462,6 @@
   padding-right: 0 !important;
 }
 
-.ujat-volunteer-doc-screening
-  .status-dropdown-cell__dropdown-overlay.status-dropdown-cell__dropdown-overlay--cell-style
-  .ant-dropdown-menu {
-  min-width: 216px !important;
-  width: 216px !important;
-  max-width: 216px !important;
-}
-
 .ujat-volunteer-doc-screening .ujat-volunteer-doc-screening__screening-status-cell {
   text-align: center;
   vertical-align: middle;

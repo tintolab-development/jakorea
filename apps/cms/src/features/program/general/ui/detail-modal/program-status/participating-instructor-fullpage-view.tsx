@@ -35,6 +35,7 @@ import { resolveSessionProgramRole } from '@/entities/program/lib/program-privac
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
+import { ScheduleLinesCell } from '@/features/program/shared/ui/schedule-lines-cell'
 import { ProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
 import { shouldUseOrganizationApplicationRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import {
@@ -68,14 +69,8 @@ import {
   INSTRUCTOR_ROLE_LABELS,
   type InstructorRoleKey,
 } from '@/features/program/general/model/school-detail-types'
-import {
-  EditableStatusBadge,
-  StatusDropdownCell,
-  STATUS_DROPDOWN_CELL_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME,
-} from '@/shared/components'
-import { getInstructorRoleBadgeTone } from '@/shared/constants/editable-status-badge-tones'
+import { StatusDropdownCell, STATUS_DROPDOWN_CELL_CLASSNAME } from '@/shared/components'
+import { getInstructorRoleTag } from '@/shared/lib/status-tag-specs'
 import {
   type InstructorAssignedSchoolRow,
   type InstructorWaitingSchoolRow,
@@ -167,25 +162,7 @@ function listAssignableSessionsForWaitingRow(
 }
 
 function renderEducationScheduleLines(lines: string[]) {
-  if (lines.length === 0) return <>-</>
-  const total = lines.length
-  const showCount = total <= 3 ? total : 2
-  const displayLines = lines.slice(0, showCount).map(line => formatCmsScheduleDisplayLabel(line))
-  const restCount = total - showCount
-  return (
-    <div className="participating-institutions-section__sessions-cell">
-      {displayLines.map((line, index) => (
-        <div key={`${line}-${index}`} className="participating-institutions-section__session-line">
-          {line}
-        </div>
-      ))}
-      {restCount > 0 ? (
-        <div className="participating-institutions-section__session-more">
-          외 {restCount}개의 교육 일정
-        </div>
-      ) : null}
-    </div>
-  )
+  return <ScheduleLinesCell lines={lines.map(line => formatCmsScheduleDisplayLabel(line))} />
 }
 
 function renderWaitingTableEmpty() {
@@ -594,26 +571,17 @@ export function ParticipatingInstructorFullpageView({
         key: 'role',
         width: 116,
         align: 'center',
-        onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME }),
-        onCell: () => ({
-          className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME}`,
-        }),
+        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
         render: (role: InstructorRoleKey, record: InstructorAssignedSchoolRow) => (
           <StatusDropdownCell<InstructorRoleKey>
             status={role}
             statusOptions={['lead', 'assistant']}
-            renderBadge={r => (
-              <EditableStatusBadge
-                label={INSTRUCTOR_ROLE_LABELS[r]}
-                tone={getInstructorRoleBadgeTone(r)}
-              />
-            )}
+            getTag={getInstructorRoleTag}
             isItemDisabled={(cur, opt) => cur === opt}
             onChange={key => handleRoleChange(record.id, key as InstructorRoleKey)}
             isOpen={openRoleDropdownId === record.id}
             onOpenChange={open => setOpenRoleDropdownId(open ? record.id : null)}
             emptyPlaceholder="-"
-            tagLayout="tag100"
           />
         ),
       },
@@ -777,7 +745,7 @@ export function ParticipatingInstructorFullpageView({
         title: '배정 현황',
         dataIndex: 'assignmentStatus',
         key: 'assignmentStatus',
-        width: 180,
+        width: 120,
         align: 'center',
         render: (_status: InstructorWaitingAssignmentStatus, record: InstructorWaitingSchoolRow) => (
           <span
@@ -795,7 +763,7 @@ export function ParticipatingInstructorFullpageView({
         title: '배정 강사 수',
         dataIndex: 'assignedInstructorCountLabel',
         key: 'assignedInstructorCountLabel',
-        width: 110,
+        width: 100,
         align: 'center',
       },
     ],

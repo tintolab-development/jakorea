@@ -2,98 +2,63 @@
 priority: high
 always_include: false
 category: coding
-globs: ["**/shared/components/status-dropdown-cell*.tsx", "**/shared/components/status-dropdown-cell*.css", "**/shared/components/program-lifecycle-status*.tsx", "**/*program-list*.tsx", "**/recruitment-status-widget*", "**/settlement-management/payment-order-*-status-detail-fullpage-modal.tsx", "**/program-managers-tab.tsx", "**/school-detail-fullpage-view.tsx", "**/participating-instructor-fullpage-view.tsx", "**/participating-institutions-section.css", "**/program-status-participating-shared.css"]
+globs: ["**/shared/components/status-tag*.tsx", "**/shared/components/status-tag*.css", "**/shared/lib/status-tag-specs.ts", "**/shared/components/status-dropdown-cell*.tsx", "**/shared/components/status-dropdown-cell*.css", "**/shared/components/program-lifecycle-status*.tsx", "**/*program-list*.tsx", "**/recruitment-status-widget*", "**/settlement-management/payment-order-*-status-detail-fullpage-modal.tsx", "**/program-managers-tab.tsx", "**/school-detail-fullpage-view.tsx", "**/participating-instructor-fullpage-view.tsx", "**/participating-institutions-section.css", "**/program-status-participating-shared.css"]
 ---
 
-# `StatusDropdownCell` (editable status in tables)
+# 상태·역할 태그 + `StatusDropdownCell`
 
-Use the shared stack for **badge + dropdown to change status** inside Ant `Table` columns.
+상태·역할·권한·평가 같은 **값 태그**는 공통 `StatusTag` 하나만 쓴다. 테이블·상세·폼 어디서든 같은 크기·폰트다.
 
-**See also:** [table-implementation.md](../tables/table-implementation.md), [component-patterns.md](./component-patterns.md).
+## 절대 규칙
 
----
+1. **값별 색은 prop으로만** — `tone`(프리셋) 또는 `accentColor`. 화면 CSS로 태그 색을 지정하지 않는다.
+2. **덮어쓰기 CSS 금지** — 화면/feature CSS에서 `.status-tag`, `.status-dropdown-cell__*`, 태그용 도메인 클래스의 크기·색·폰트·패딩을 지정하지 않는다. `!important`로 맞추는 것도 금지.
+3. **크기는 공통 고정** — 정본은 `shared/components/status-tag.css`.
+   - 높이 32px · 최소 너비 100px · 최대 너비 없음(텍스트 길이에 따라 늘어남)
+   - padding 6px 10px · gap 4px · 12px / 600 / line-height 110% · radius 6px
+4. `StatusTag`는 `className`·`style`을 받지 않는다. 새 색이 필요하면 `status-tag.css`에 tone 프리셋을 추가하거나 `accentColor`를 쓴다.
 
-## Building blocks
+## 구성
 
-| Piece | Role |
-|-------|------|
-| `StatusDropdownCell` | Generic cell: badge, dropdown, loading |
-| `ProgramLifecycleStatusCell` | Program lifecycle wrapper |
-| `AppStatusBadge` | Badge base |
-| `ProgramLifecycleStatusBadge` | Lifecycle labels/colors |
+| 파일 | 역할 |
+|---|---|
+| `shared/components/status-tag.tsx` / `.css` | 공통 태그 (`label`, `tone`, `accentColor`, `mutedLabel`) |
+| `shared/lib/status-tag-specs.ts` | 값 → `{ label, tone | accentColor }` 매핑 (`getXxxTag`) |
+| `shared/components/status-dropdown-cell.tsx` / `.css` | 태그 클릭 → 드롭다운 변경. 태그는 셀이 직접 그린다 |
+| `shared/components/editable-status-badge.tsx` | `StatusTag` 별칭(기존 호출 호환) |
 
-Keep **one** generic cell; inject options/rules via props. Add thin domain wrappers only.
+tone 프리셋: `blue` · `gray` · `green` · `greenOverlay` · `red` · `orange` · `purple` · `pink`.
 
----
-
-## Imports
+## 사용법
 
 ```tsx
-import {
-  StatusDropdownCell,
-  STATUS_DROPDOWN_CELL_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_160_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_160_HEADER_CLASSNAME,
-} from '@/shared/components'
+import { StatusDropdownCell, STATUS_DROPDOWN_CELL_CLASSNAME } from '@/shared/components/status-dropdown-cell'
+import { getInstructorRoleTag } from '@/shared/lib/status-tag-specs'
+
+<StatusDropdownCell
+  status={record.role}
+  statusOptions={ROLE_ORDER}
+  getTag={getInstructorRoleTag}
+  isItemDisabled={(cur, opt) => cur === opt}
+  onChange={next => save(record.id, next)}
+  isOpen={openId === record.id}
+  onOpenChange={open => setOpenId(open ? record.id : null)}
+/>
+
+// 읽기 전용도 같은 태그
+<StatusTag {...getInstructorRoleTag(role)} />
 ```
 
----
+- 테이블 열에는 `STATUS_DROPDOWN_CELL_CLASSNAME`만 지정한다(td 상하 패딩 0).
+- 그룹 구분 여백은 `isGroupStart`.
+- 트리거는 닫힘·열림 박스 크기가 같아(1px 테두리 + padding 7px) 열 때 레이아웃이 밀리지 않는다. 별도 셸·너비 고정 불필요.
+- 패널은 트리거 너비 이상, 옵션 태그는 패널 폭에 맞춰 정렬된다.
 
-## Key props (`StatusDropdownCell`)
+## 금지 (이전 방식)
 
-| Prop | Notes |
-|------|--------|
-| `status`, `statusOptions` | Current + ordered options |
-| `renderBadge` | `(status) => ReactNode` |
-| `isItemDisabled` | `(current, option) => boolean` |
-| `onChange` | If omitted → read-only badge |
-| `isUpdating` | Disable + spinner while saving |
-| `isOpen` / `onOpenChange` | Single open dropdown per table (`openId === rowId`) |
-| `tagLayout` | `'default'`, `'tag100'`, `'tag160'`, `'paymentOrderLine'`; 새 도메인은 기본값 우선 |
-| `chrome` | `'cell'`(기본·테이블 열) / `'hug'`(폼·상세 인라인 — 패딩 0, 열림 시 가로 밀림 방지) |
-| `style` | 도메인별 배지 폭·패널 폭이 필요할 때 generic 크기를 주입 |
+- `renderBadge`로 화면별 배지 컴포넌트 주입
+- `tagLayout`(`tag100`/`tag160`/`paymentOrderLine`), `style={{ width }}` 로 너비 지정
+- `STATUS_DROPDOWN_CELL_TAG_100/160/INLINE_TAG100/PAYMENT_ORDER_LINE_*` 클래스
+- feature CSS에서 `status-dropdown-cell__*` 선택자 사용
 
-현재 선택 옵션에는 `status-dropdown-cell__menu-item--active`(+ 민트 링)가 붙습니다. `isItemDisabled={(cur, opt) => cur === opt}`와 함께 쓰면 재선택은 막고 활성만 표시합니다.
-
----
-
-## Column wiring
-
-Use **`onCell`** for `td` classes (not only `column.className`), e.g.:
-
-```tsx
-onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
-```
-
-For **`tag100`** (재직·권한·교재배송·서류평가): add `STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME` on body cells and `STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME` via `onHeaderCell`. Column **`width: 116`** matches shared CSS (`1 + 7 + 100 + 7 + 1` border-box). Use `EditableStatusBadge` in `renderBadge`.
-
-For a 132×33 badge in a 160px column, use **`tag160`** with `STATUS_DROPDOWN_CELL_TAG_160_CLASSNAME` and `STATUS_DROPDOWN_CELL_TAG_160_HEADER_CLASSNAME`. Do not restore the removed `tag132` option or constants.
-
-**교재명 인라인 tag100**(참여 기관 상세 등):  
-`<span className={STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME}>` + `tagLayout="tag100"`(chrome 기본 `cell`).  
-- 셸이 레이아웃 폭을 **항상 116×48**로 예약 → 열림 크롬이 overview 표만 가로로 키우던 회귀 방지.  
-- `chrome="hug"`를 교재명에 쓰지 않는다.
-
-폼·상세 **밀착형 인라인**(재직·담당자 평가·후원 상태): **`chrome="hug"`**.  
-- 트리거·패널 배지 밀착. 조상은 `min-width: 0` / `overflow: clip` / `width: 100%` 유지.
-
-표·섹션 래퍼는 **`width/max-width: 100%` + `min-width: 0` + `overflow: clip`**.  
-풀페이지 모달 `__main`도 **`overflow-x: clip`**. 트리거 `onMouseDown` preventDefault.
-
-새 도메인 상태는 우선 `tagLayout="default"`와 `style`로 크기를 주입한다. `paymentOrderLine`처럼 명확한 공통 계약이 있을 때만 전용 layout을 추가한다.
-
-Do **not** rebuild raw Ant `Dropdown` for the same pattern—extend `StatusDropdownCell`.
-
----
-
-## Related CSS
-
-Shared styles live in `status-dropdown-cell.css`. Keep domain-specific badge class names on the badge root as required by design.
-
-테이블/상세 래퍼는 StatusDropdown 열림 시 가로 밀림을 막기 위해 **`overflow: clip`**(스크롤포트 없는 클리핑). `overflow: hidden`은 스크롤포트가 되어 scroll-into-view로 UI가 밀릴 수 있다.
-
----
-
-**Last updated:** 2026-07-30
+**Last updated:** 2026-11-08

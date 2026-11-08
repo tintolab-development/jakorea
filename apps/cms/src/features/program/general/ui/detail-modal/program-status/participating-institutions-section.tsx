@@ -11,17 +11,14 @@ import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   type ParticipatingSchoolRow,
   type TextbookStatusKey,
-  PARTICIPATING_INSTITUTION_TEXTBOOK_STATUS_LABELS,
   TEXTBOOK_STATUS_OPTION_KEYS,
 } from '@/features/program/general/model/participating-schools'
-import { EditableStatusBadge } from '@/shared/components/editable-status-badge'
-import { getTextbookStatusBadgeTone } from '@/shared/constants/editable-status-badge-tones'
+import type { StatusTagSpec } from '@/shared/components/status-tag'
 import {
-  StatusDropdownCell,
-  STATUS_DROPDOWN_CELL_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME,
-} from '@/shared/components'
+  getParticipatingInstitutionTextbookStatusTag,
+  getTextbookStatusTag,
+} from '@/shared/lib/status-tag-specs'
+import { StatusDropdownCell, STATUS_DROPDOWN_CELL_CLASSNAME } from '@/shared/components'
 import { useParticipatingInstitutionsParams } from '../../../hooks/use-participating-institutions-params'
 import { useProgressSchoolList } from '../../../hooks/use-progress-school-list'
 import { useProgressInstructorList } from '../../../hooks/use-progress-instructor-list'
@@ -36,7 +33,6 @@ import {
   PARTICIPATING_INSTITUTIONS_CLASS_COUNT_COLUMN_WIDTH,
   PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
   PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_COLUMN_WIDTH,
-  PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_DROPDOWN_STYLE,
   participatingScheduleTableColumnLayout,
 } from '../../../lib/participating-institutions-table'
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
@@ -50,7 +46,7 @@ import { programUsesTextbook } from '../../../lib/participating-institution-text
 import { resolveInstitutionApplicationProgramBridge } from '../../../lib/institution-application-program-bridge'
 import { useProgramTextbookCatalog } from '@/features/textbook/hooks/use-program-textbook-catalog'
 import { CMS_TABLE_NO_COL_CLASS, CMS_DATA_TABLE_ROW_DISABLED_CLASS } from '@/shared/constants/table'
-import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
+import { ScheduleLinesCell } from '@/features/program/shared/ui/schedule-lines-cell'
 import { ParticipatingInstitutionsCalendarView } from './participating-institutions-calendar-view'
 import { ParticipatingProgressEducationScheduleCell } from '../../../lib/participating-progress-education-schedule-cell'
 import {
@@ -80,14 +76,11 @@ import {
 import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import './participating-institutions-section.css'
 
-function ParticipatingInstitutionTextbookStatusBadge({ status }: { status: TextbookStatusKey }) {
-  if (status === 'not_applicable') return <>-</>
-  return (
-    <EditableStatusBadge
-      label={PARTICIPATING_INSTITUTION_TEXTBOOK_STATUS_LABELS[status]}
-      tone={getTextbookStatusBadgeTone(status)}
-    />
-  )
+/** 교재 배송 현황 드롭다운 태그 — 기관용 라벨 (서버 값이 '해당 없음'이어도 드롭다운에서 변경 가능하도록 태그로 표시) */
+function getInstitutionTextbookStatusTag(status: TextbookStatusKey): StatusTagSpec {
+  return status === 'not_applicable'
+    ? getTextbookStatusTag(status)
+    : getParticipatingInstitutionTextbookStatusTag(status)
 }
 
 export interface ParticipatingInstitutionsSectionProps {
@@ -361,27 +354,7 @@ export function ParticipatingInstitutionsSection({
           const sessionLines = buildParticipatingSchoolPreferredScheduleLines(
             resolveParticipatingInstitutionPreferredDisplaySessions(record)
           )
-          const total = sessionLines.length
-          const showCount = total <= 3 ? total : 2
-          const displaySessions = sessionLines.slice(0, showCount)
-          const restCount = total - showCount
-          return (
-            <div className="participating-institutions-section__sessions-cell">
-              {displaySessions.map((line, index) => (
-                <div
-                  key={`${record.id}-session-${index}`}
-                  className="participating-institutions-section__session-line"
-                >
-                  {renderProgramDetailPipeSeparated(line)}
-                </div>
-              ))}
-              {restCount > 0 && (
-                <div className="participating-institutions-section__session-more">
-                  외 {restCount}개의 교육 일정
-                </div>
-              )}
-            </div>
-          )
+          return <ScheduleLinesCell lines={sessionLines} />
         },
       },
       ...(showTextbookStatusColumn
@@ -393,15 +366,10 @@ export function ParticipatingInstitutionsSection({
               width: PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_COLUMN_WIDTH,
               minWidth: PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_COLUMN_WIDTH,
               align: 'center' as const,
-              onHeaderCell: () => ({
-                className: STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME,
-              }),
               onCell: (record: ParticipatingSchoolRow) =>
                 record.textbookStatus === 'not_applicable'
                   ? {}
-                  : {
-                      className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME}`,
-                    },
+                  : { className: STATUS_DROPDOWN_CELL_CLASSNAME },
               render: (status: TextbookStatusKey, record: ParticipatingSchoolRow) => {
                 const hasTextbook = isTrainedTeachersSurface
                   ? status != null && status !== 'not_applicable'
@@ -412,22 +380,19 @@ export function ParticipatingInstitutionsSection({
                         (typeof record.textbookQuantity === 'number' &&
                           record.textbookQuantity > 0)
                     )
-                if (!hasTextbook)
-                  return <ParticipatingInstitutionTextbookStatusBadge status="not_applicable" />
+                if (!hasTextbook) return '-'
                 return (
                   <StatusDropdownCell<TextbookStatusKey>
                     status={status ?? null}
                     statusOptions={TEXTBOOK_STATUS_OPTION_KEYS.filter(
                       key => key !== 'not_applicable'
                     )}
-                    renderBadge={s => <ParticipatingInstitutionTextbookStatusBadge status={s} />}
+                    getTag={getInstitutionTextbookStatusTag}
                     isItemDisabled={(cur, opt) => cur === opt}
                     onChange={key => handleTextbookStatusChange(record.id, key)}
                     isOpen={openTextbookDropdownId === record.id}
                     onOpenChange={open => setOpenTextbookDropdownId(open ? record.id : null)}
                     emptyPlaceholder="-"
-                    style={PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_DROPDOWN_STYLE}
-                    tagLayout="tag100"
                   />
                 )
               },

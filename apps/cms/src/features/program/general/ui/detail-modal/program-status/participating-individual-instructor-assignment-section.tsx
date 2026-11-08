@@ -18,14 +18,8 @@ import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { PermissionModal, type PermissionModalPayload } from '@/shared/components/permission-modal'
 import { NOTIFY_TIMING_CAPABILITY } from '@/shared/lib/notify-timing-capability'
 import { toScheduledOnlyNotifyTiming } from '@/features/program/general/lib/application-decision-notify-timing'
-import {
-  EditableStatusBadge,
-  StatusDropdownCell,
-  STATUS_DROPDOWN_CELL_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME,
-} from '@/shared/components'
-import { getInstructorRoleBadgeTone } from '@/shared/constants/editable-status-badge-tones'
+import { StatusDropdownCell, STATUS_DROPDOWN_CELL_CLASSNAME } from '@/shared/components'
+import { getInstructorRoleTag } from '@/shared/lib/status-tag-specs'
 import {
   INSTRUCTOR_ROLE_LABELS,
   type InstructorRoleKey,
@@ -68,7 +62,7 @@ import { SchoolDetailUnassignConfirmModal } from './school-detail-unassign-confi
 import './instructor-assignment-status-text.css'
 import './participating-institutions-section.css'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
-import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
+import { ScheduleLinesCell } from '@/features/program/shared/ui/schedule-lines-cell'
 import { buildAddAssignWaitingScheduleChipOptions } from '@/features/program/general/lib/general-add-assign-session-chips'
 import { GeneralParticipantAddAssignModal } from './general-participant-add-assign-modal'
 
@@ -79,13 +73,7 @@ const ASSIGNED_EMPTY_TEXT = '배정된 일정이 없습니다.'
 const WAITING_EMPTY_TEXT = '배정 대기 중인 일정이 없습니다.'
 
 function renderScheduleCell(label: string) {
-  return (
-    <div className="participating-institutions-section__sessions-cell">
-      <div className="participating-institutions-section__session-line">
-        {renderProgramDetailPipeSeparated(formatCmsScheduleDisplayLabel(label))}
-      </div>
-    </div>
-  )
+  return <ScheduleLinesCell lines={[formatCmsScheduleDisplayLabel(label)]} />
 }
 
 export interface ParticipatingIndividualInstructorAssignmentSectionProps {
@@ -207,26 +195,17 @@ export function ParticipatingIndividualInstructorAssignmentSection({
           key: 'role',
           width: 116,
           align: 'center',
-          onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME }),
-          onCell: () => ({
-            className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME}`,
-          }),
+          onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
           render: (role: InstructorRoleKey, record) => (
             <StatusDropdownCell<InstructorRoleKey>
               status={role}
               statusOptions={['lead', 'assistant']}
-              renderBadge={r => (
-                <EditableStatusBadge
-                  label={INSTRUCTOR_ROLE_LABELS[r]}
-                  tone={getInstructorRoleBadgeTone(r)}
-                />
-              )}
+              getTag={getInstructorRoleTag}
               isItemDisabled={(cur, opt) => cur === opt}
               onChange={key => handleRoleChange(record.id, key as InstructorRoleKey)}
               isOpen={openRoleDropdownId === record.id}
               onOpenChange={open => setOpenRoleDropdownId(open ? record.id : null)}
               emptyPlaceholder="-"
-              tagLayout="tag100"
             />
           ),
         },
@@ -234,7 +213,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
           title: '출강지',
           dataIndex: 'lectureLocation',
           key: 'lectureLocation',
-          width: 180,
+          width: 160,
         },
         {
           title: '자택과의 거리',
@@ -263,7 +242,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
         title: '출강지',
         dataIndex: 'lectureLocation',
         key: 'lectureLocation',
-        width: 180,
+        width: 160,
       },
       {
         title: '자택과의 거리',
@@ -285,7 +264,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
         title: '배정 현황',
         dataIndex: 'assignmentStatus',
         key: 'assignmentStatus',
-        width: 180,
+        width: 120,
         align: 'center',
         render: (
           _status: ParticipatingIndividualInstructorWaitingScheduleRow['assignmentStatus'],
@@ -306,7 +285,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
         title: '배정 강사 수',
         dataIndex: 'assignedInstructorCountLabel',
         key: 'assignedInstructorCountLabel',
-        width: 110,
+        width: 100,
         align: 'center',
       },
     ],
