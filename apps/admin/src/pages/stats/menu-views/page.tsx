@@ -120,6 +120,13 @@ export function MenuViewsStatsPage() {
       const from = sp.get('mv_from')
       const to = sp.get('mv_to')
       setPending(prev => {
+        // URL에 기간이 없으면(메뉴 재진입 등) 항상 이번 달로 채워 자동 조회되게 한다
+        if (!from && !to) {
+          periodSyncRef.hadCompleteInUrl = false
+          const periodRange = currentSeoulMonthRange()
+          if (pendingDateRangeTupleEqual(prev.periodRange, periodRange)) return prev
+          return { periodRange }
+        }
         const periodRange = resolvePendingDateRangeFromUrl({
           ref: periodSyncRef,
           from,
@@ -136,11 +143,25 @@ export function MenuViewsStatsPage() {
 
   const canSearch = isCompletePeriod(pendingFilters.periodRange)
 
+  const hasAnyPeriodParam = searchParams.has('mv_from') || searchParams.has('mv_to')
+
   useEffect(() => {
     if (appliedPeriod) return
+    if (!hasAnyPeriodParam) {
+      // 기간 쿼리 없이 진입하면 이번 달(1일~말일)을 URL에 기본 적용한다
+      setSearchParams(
+        prev => {
+          const next = new URLSearchParams(prev.toString())
+          applyDateRangeToSearchParams(next, currentSeoulMonthRange(), 'mv_from', 'mv_to')
+          return next
+        },
+        { replace: true }
+      )
+      return
+    }
     if (!isCompletePeriod(pendingFilters.periodRange)) return
     applySearch()
-  }, [appliedPeriod, applySearch, pendingFilters.periodRange])
+  }, [appliedPeriod, applySearch, hasAnyPeriodParam, pendingFilters.periodRange, setSearchParams])
 
   const handleSearch = useCallback(() => {
     if (!canSearch) {
