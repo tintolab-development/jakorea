@@ -270,3 +270,37 @@
   overflow-wrap: break-word;
   text-overflow: clip;
 }
+
+/*
+ * 표 안 수정 텍스트영역 — 같은 행에서 가장 높은 칸에 맞춰 나머지 칸의 테두리 박스를 fill (Figma 747-436)
+ * - 글자(textarea)는 autoSize 높이 그대로, 박스 안 세로 가운데 · 좌측 정렬
+ * - 대상: 읽기 전용이 아닌(수정 중) 텍스트영역만. 조회(readonly)는 텍스트 높이 그대로
+ */
+
+/* 일반 목록 표(antd): td height 1px 트릭 — 행 높이는 가장 높은 셀이 정하고, 자식 100%가 그 높이를 따른다 */
+.ant-table-tbody > tr > td:has(> .cms-textarea textarea:not([readonly])) {
+  height: 1px !important;
+}
+
+.ant-table-tbody > tr > td > .cms-textarea:has(textarea:not([readonly])) {
+  height: 100%;
+}
+
+/* 2칸 상세 폼 행: 칸(field-content)은 이미 행 높이로 늘어남 — 텍스트영역만 세로로 채운다 */
+.detail-info-form__field-content--edit > .cms-textarea:has(textarea:not([readonly])) {
+  align-self: stretch;
+  margin-block: 0 !important;
+}
+
+.ant-table-tbody > tr > td > .cms-textarea:has(textarea:not([readonly])) > .cms-textarea__control,
+.detail-info-form__field-content--edit
+  > .cms-textarea:has(textarea:not([readonly]))
+  > .cms-textarea__control {
+  flex: 1 1 auto;
+  align-items: center;
+}
+
+.ant-table-tbody > tr > td > .cms-textarea textarea.ant-input:not([readonly]),
+.detail-info-form__field-content--edit > .cms-textarea textarea.ant-input:not([readonly]) {
+  text-align: left !important;
+}

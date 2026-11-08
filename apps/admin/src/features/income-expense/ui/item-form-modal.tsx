@@ -105,7 +105,7 @@ export function ItemFormModal({
       onCancel={onCancel}
       title={title}
       description={MODAL_DESCRIPTION}
-      width={720}
+      width={600}
       className="income-expense-item-form-modal"
       footer={
         <>

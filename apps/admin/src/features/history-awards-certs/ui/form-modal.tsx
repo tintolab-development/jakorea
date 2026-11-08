@@ -193,7 +193,7 @@ function HacFormBody(props: BodyProps) {
         onCancel={onCancel}
         title={modalTitle}
         description={copy.description}
-        width={720}
+        width={800}
         className="hac-form-modal"
         footer={
           <>
