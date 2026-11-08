@@ -27,7 +27,7 @@
   overflow: visible;
   text-overflow: clip;
   white-space: normal;
-  align-items: flex-start;
+  align-items: center;
 }
 
 .detail-info-form__field-content--view > .program-detail-home-address-value {
