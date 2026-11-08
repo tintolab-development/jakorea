@@ -1,13 +1,6 @@
 /**
- * 계좌 지급 확인 캘린더 — 좌측 미니캘린더만 (프로그램 검색·체크 필터 없음)
+ * 계좌 지급 확인 캘린더 — 좌측(미니캘린더 + 프로그램 검색·체크 필터)은 공통 `calendar-sub-left` 레이아웃 그대로 사용
  */
-.account-payments-calendar-view__sub-left {
-  gap: 0;
-}
-
-.account-payments-calendar-view__sub-left .calendar-mini {
-  flex: 1 1 auto;
-}
 
 /* 프로그램 목록 캘린더와 동일 — 메인 카드 하단만 layout-content 여백 */
 .account-payments-calendar-view .calendar-main-container .calendar-main {

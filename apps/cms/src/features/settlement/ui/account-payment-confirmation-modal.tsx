@@ -224,7 +224,7 @@ export function AccountPaymentConfirmationModal({
               <>
                 <p className="account-payment-confirm-modal__line">
                   <strong className="account-payment-confirm-modal__strong">
-                    [{data.recipientName}]님 외 {data.otherRecipientCount}명
+                    [{data.recipientName}] 님 외 {data.otherRecipientCount}명
                   </strong>
                   의 계좌 지급을 완료 처리하시겠습니까?
                   <br />
@@ -237,7 +237,7 @@ export function AccountPaymentConfirmationModal({
                 <p className="account-payment-confirm-modal__line">
                   <strong className="account-payment-confirm-modal__strong">
                     [{data.recipientName}]
-                  </strong>
+                  </strong>{' '}
                   님의 계좌 지급을 완료 처리하시겠습니까?
                   <br />
                   안내된 계좌번호로 정확한 금액을 입금하신 후에 <PaymentCompleteButtonLabel />{' '}

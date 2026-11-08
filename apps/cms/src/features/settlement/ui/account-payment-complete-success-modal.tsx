@@ -8,14 +8,15 @@ import type { ModalProps } from 'antd'
 import type { AccountPaymentRow } from '@/features/settlement-management/model/account-payments-list'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './account-payment-complete-success-modal.css'
 
 /** 인라인 적용 — teal-header-modal·content-modal 전역 CSS보다 우선 */
 const ACCOUNT_PAYMENT_COMPLETE_SUCCESS_MODAL_STYLES: NonNullable<ModalProps['styles']> = {
   content: {
     minHeight: 206,
-    padding: '26px 30px 34px',
-    borderRadius: 12,
+    padding: '24px 30px 34px',
+    borderRadius: 16,
     background: '#fff',
     boxShadow: '0 0 25px 0 rgba(0, 0, 0, 0.35)',
     overflow: 'hidden',
@@ -95,15 +96,20 @@ export function AccountPaymentCompleteSuccessModal({
       footer={
         isBulk ? (
           <>
-            <CmsButton variant="secondary" size="large" onClick={onCancel}>
+            <CmsButton variant="secondary" size="h40" onClick={onCancel}>
               닫기
             </CmsButton>
-            <CmsButton variant="primary" size="large" onClick={onIssueBulkTransfer}>
+            <CmsButton
+              variant="primary"
+              size="h40"
+              icon={<ButtonDownloadIcon />}
+              onClick={onIssueBulkTransfer}
+            >
               대량이체 양식 발급
             </CmsButton>
           </>
         ) : (
-          <CmsButton variant="secondary" size="large" onClick={onCancel}>
+          <CmsButton variant="secondary" size="h40" onClick={onCancel}>
             확인
           </CmsButton>
         )
@@ -114,16 +120,16 @@ export function AccountPaymentCompleteSuccessModal({
           {context.kind === 'bulk' ? (
             <>
               <strong className="account-payment-complete-success-modal__name">
-                [{context.recipientName}]
+                [{context.recipientName}] 님 외 {context.otherRecipientCount}명
               </strong>
-              님 외 {context.otherRecipientCount}명의 강사비 계좌 지급 처리가 완료되었습니다.
+              의 계좌 지급 처리가 완료되었습니다.
             </>
           ) : (
             <>
               <strong className="account-payment-complete-success-modal__name">
                 [{context.recipientName}]
-              </strong>
-              님의 강사비 계좌 지급 처리가 완료되었습니다.
+              </strong>{' '}
+              님의 계좌 지급 처리가 완료되었습니다.
             </>
           )}
         </p>

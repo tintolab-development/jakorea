@@ -77,7 +77,7 @@ export function FilePasswordSetupModal({
         <>
           <CmsButton
             variant="secondary"
-            size="large"
+            size="h40"
             type="button"
             onClick={onCancel}
             disabled={confirmLoading}
@@ -86,7 +86,7 @@ export function FilePasswordSetupModal({
           </CmsButton>
           <CmsButton
             variant="primary"
-            size="large"
+            size="h40"
             type="button"
             loading={confirmLoading}
             onClick={() => void handleConfirm()}

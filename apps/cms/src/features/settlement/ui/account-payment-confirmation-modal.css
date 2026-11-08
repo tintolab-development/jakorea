@@ -35,12 +35,12 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  padding-top: 16px;
+  padding-top: 12px;
 }
 
 .account-payment-confirm-modal.content-modal .teal-header-modal__footer {
   flex-shrink: 0;
-  margin-top: 20px;
+  margin-top: 30px;
   padding-top: 0;
   padding-bottom: 0;
   justify-content: flex-end;
@@ -104,6 +104,7 @@
 }
 
 .account-payment-confirm-modal__amount-value {
-  color: var(--JA-mint-01, #01a1af);
-  font-weight: 700;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 14px;
+  font-weight: 500;
 }
