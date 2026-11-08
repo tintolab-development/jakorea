@@ -11,8 +11,7 @@ export interface ConsultationListItem {
   id?: number;
   status?: ConsultationListItemStatus;
   companyName?: string;
-  /** Stored contact name (original). Empty is null, never "". */
-  contactName?: string | null;
+  contactName?: string;
   departmentTitle?: string;
   maskedContactPhone?: string;
   createdAt?: string;

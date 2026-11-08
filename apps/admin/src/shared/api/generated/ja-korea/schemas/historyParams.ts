@@ -9,29 +9,11 @@ import type { HistorySort } from './historySort';
 
 export type HistoryParams = {
 published?: boolean;
-/**
- * Calendar history_year equality (not createdAt). Omit = all years. Range 1900–2200 else 400.
- */
 year?: number;
-/**
- * Calendar history_month equality 1–12 (not createdAt). Allowed without year: that month in every year. Both set = that calendar month. Omit = all months. Out of range → 400.
- */
 month?: number;
-/**
- * Case-insensitive contains (LIKE %term%) on content. Blank omitted. Max 500.
- */
 keyword?: string;
-/**
- * YYYY-MM-DD. Inclusive start of Asia/Seoul calendar day on createdAt.
- */
 createdFrom?: string;
-/**
- * YYYY-MM-DD. Inclusive through end of Asia/Seoul calendar day on createdAt (next Seoul midnight exclusive). from after to → 400.
- */
 createdTo?: string;
-/**
- * Admin list sort. Query omitted or DATE: event calendar date descending (history year/month, award awardedDate, certification certifiedDate) then id DESC. CREATED_AT: createdAt DESC then id DESC. No additional sort values.
- */
 sort?: HistorySort;
 page?: number;
 size?: number;

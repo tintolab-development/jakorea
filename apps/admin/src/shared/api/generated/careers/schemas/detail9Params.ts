@@ -7,8 +7,5 @@
  */
 
 export type Detail9Params = {
-/**
- * Deprecated no-op. Omitted, false, and true all return the same original detail and do not affect authorization.
- */
 revealPii?: boolean;
 };

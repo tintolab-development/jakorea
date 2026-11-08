@@ -1749,8 +1749,6 @@
         "tags": [
           "ja-korea-organization-admin-controller"
         ],
-        "summary": "List history rows",
-        "description": "No reorder endpoint. totalCount is the filtered total for infinite scroll.",
         "operationId": "history",
         "parameters": [
           {
@@ -1764,7 +1762,6 @@
           {
             "name": "year",
             "in": "query",
-            "description": "Calendar history_year equality (not createdAt). Omit = all years. Range 1900–2200 else 400.",
             "required": false,
             "schema": {
               "type": "integer",
@@ -1774,7 +1771,6 @@
           {
             "name": "month",
             "in": "query",
-            "description": "Calendar history_month equality 1–12 (not createdAt). Allowed without year: that month in every year. Both set = that calendar month. Omit = all months. Out of range → 400.",
             "required": false,
             "schema": {
               "type": "integer",
@@ -1784,7 +1780,6 @@
           {
             "name": "keyword",
             "in": "query",
-            "description": "Case-insensitive contains (LIKE %term%) on content. Blank omitted. Max 500.",
             "required": false,
             "schema": {
               "type": "string"
@@ -1793,7 +1788,6 @@
           {
             "name": "createdFrom",
             "in": "query",
-            "description": "YYYY-MM-DD. Inclusive start of Asia/Seoul calendar day on createdAt.",
             "required": false,
             "schema": {
               "type": "string",
@@ -1803,7 +1797,6 @@
           {
             "name": "createdTo",
             "in": "query",
-            "description": "YYYY-MM-DD. Inclusive through end of Asia/Seoul calendar day on createdAt (next Seoul midnight exclusive). from after to → 400.",
             "required": false,
             "schema": {
               "type": "string",
@@ -1813,12 +1806,10 @@
           {
             "name": "sort",
             "in": "query",
-            "description": "Default DATE when omitted: year DESC, month DESC, id DESC. CREATED_AT: createdAt DESC, id DESC.",
             "required": false,
             "schema": {
               "type": "string",
               "default": "DATE",
-              "description": "Admin list sort. Query omitted or DATE: event calendar date descending (history year/month, award awardedDate, certification certifiedDate) then id DESC. CREATED_AT: createdAt DESC then id DESC. No additional sort values.",
               "enum": [
                 "DATE",
                 "CREATED_AT"
@@ -1916,8 +1907,6 @@
         "tags": [
           "ja-korea-organization-admin-controller"
         ],
-        "summary": "List certification rows",
-        "description": "No reorder endpoint. totalCount is the filtered total for infinite scroll.",
         "operationId": "certifications",
         "parameters": [
           {
@@ -1931,7 +1920,6 @@
           {
             "name": "content",
             "in": "query",
-            "description": "Case-insensitive contains (LIKE %term%) on content. Blank omitted. Max 500.",
             "required": false,
             "schema": {
               "type": "string"
@@ -1940,7 +1928,6 @@
           {
             "name": "institution",
             "in": "query",
-            "description": "Case-insensitive contains (LIKE %term%) on certificationInstitution. Blank omitted. Max 500.",
             "required": false,
             "schema": {
               "type": "string"
@@ -1949,7 +1936,6 @@
           {
             "name": "certifiedFrom",
             "in": "query",
-            "description": "YYYY-MM-DD inclusive on certifiedDate (calendar date column, not timezone conversion).",
             "required": false,
             "schema": {
               "type": "string",
@@ -1959,7 +1945,6 @@
           {
             "name": "certifiedTo",
             "in": "query",
-            "description": "YYYY-MM-DD inclusive on certifiedDate. from after to → 400.",
             "required": false,
             "schema": {
               "type": "string",
@@ -1969,7 +1954,6 @@
           {
             "name": "createdFrom",
             "in": "query",
-            "description": "YYYY-MM-DD. Inclusive start of Asia/Seoul calendar day on createdAt.",
             "required": false,
             "schema": {
               "type": "string",
@@ -1979,7 +1963,6 @@
           {
             "name": "createdTo",
             "in": "query",
-            "description": "YYYY-MM-DD. Inclusive through end of Asia/Seoul calendar day on createdAt (next Seoul midnight exclusive). from after to → 400.",
             "required": false,
             "schema": {
               "type": "string",
@@ -1989,12 +1972,10 @@
           {
             "name": "sort",
             "in": "query",
-            "description": "Default DATE when omitted: certifiedDate DESC, id DESC. CREATED_AT: createdAt DESC, id DESC.",
             "required": false,
             "schema": {
               "type": "string",
               "default": "DATE",
-              "description": "Admin list sort. Query omitted or DATE: event calendar date descending (history year/month, award awardedDate, certification certifiedDate) then id DESC. CREATED_AT: createdAt DESC then id DESC. No additional sort values.",
               "enum": [
                 "DATE",
                 "CREATED_AT"
@@ -2092,8 +2073,6 @@
         "tags": [
           "ja-korea-organization-admin-controller"
         ],
-        "summary": "List award rows",
-        "description": "No reorder endpoint. totalCount is the filtered total for infinite scroll.",
         "operationId": "awards",
         "parameters": [
           {
@@ -2107,7 +2086,6 @@
           {
             "name": "awardName",
             "in": "query",
-            "description": "Case-insensitive contains (LIKE %term%) on awardName. Blank omitted. Max 500.",
             "required": false,
             "schema": {
               "type": "string"
@@ -2116,7 +2094,6 @@
           {
             "name": "institution",
             "in": "query",
-            "description": "Case-insensitive contains (LIKE %term%) on awardingInstitution. Blank omitted. Max 500.",
             "required": false,
             "schema": {
               "type": "string"
@@ -2125,7 +2102,6 @@
           {
             "name": "awardedFrom",
             "in": "query",
-            "description": "YYYY-MM-DD inclusive on awardedDate (calendar date column, not timezone conversion).",
             "required": false,
             "schema": {
               "type": "string",
@@ -2135,7 +2111,6 @@
           {
             "name": "awardedTo",
             "in": "query",
-            "description": "YYYY-MM-DD inclusive on awardedDate. from after to → 400.",
             "required": false,
             "schema": {
               "type": "string",
@@ -2145,7 +2120,6 @@
           {
             "name": "createdFrom",
             "in": "query",
-            "description": "YYYY-MM-DD. Inclusive start of Asia/Seoul calendar day on createdAt.",
             "required": false,
             "schema": {
               "type": "string",
@@ -2155,7 +2129,6 @@
           {
             "name": "createdTo",
             "in": "query",
-            "description": "YYYY-MM-DD. Inclusive through end of Asia/Seoul calendar day on createdAt (next Seoul midnight exclusive). from after to → 400.",
             "required": false,
             "schema": {
               "type": "string",
@@ -2165,12 +2138,10 @@
           {
             "name": "sort",
             "in": "query",
-            "description": "Default DATE when omitted: awardedDate DESC, id DESC. CREATED_AT: createdAt DESC, id DESC.",
             "required": false,
             "schema": {
               "type": "string",
               "default": "DATE",
-              "description": "Admin list sort. Query omitted or DATE: event calendar date descending (history year/month, award awardedDate, certification certifiedDate) then id DESC. CREATED_AT: createdAt DESC then id DESC. No additional sort values.",
               "enum": [
                 "DATE",
                 "CREATED_AT"
@@ -3151,8 +3122,7 @@
               "JA_HISTORY_WORLD_TIMELINE_IMAGE",
               "JA_HISTORY_KOREA_TIMELINE_IMAGE",
               "JA_HISTORY_PHILOSOPHY_CARD_IMAGE",
-              "JA_HISTORY_LOCKED_MEDIA",
-              "LOG_EXPORT_XLSX"
+              "JA_HISTORY_LOCKED_MEDIA"
             ]
           },
           "status": {
@@ -7773,10 +7743,8 @@
           },
           "educationInfo": {
             "type": "string",
-            "description": "Optional. Blank is stored as null. Platform UI may still require this before submit.",
             "maxLength": 2000,
-            "minLength": 0,
-            "nullable": true
+            "minLength": 0
           },
           "careerType": {
             "type": "string",
@@ -7787,10 +7755,8 @@
           },
           "careerInfo": {
             "type": "string",
-            "description": "Optional. Blank is stored as null. Platform UI may still require this before submit.",
             "maxLength": 4000,
-            "minLength": 0,
-            "nullable": true
+            "minLength": 0
           },
           "privacyAgreed": {
             "type": "boolean"
@@ -7861,18 +7827,6 @@
         "required": [
           "metricCode"
         ]
-      },
-      "FileDownloadPasswordRequest": {
-        "type": "object",
-        "description": "일회성 파일 암호. write-only이며 서버는 저장하지 않습니다.",
-        "properties": {
-          "password": {
-            "type": "string",
-            "description": "8자 이상, 영문+숫자+특수문자, 공백 불가",
-            "example": "Jafile1!",
-            "writeOnly": true
-          }
-        }
       },
       "SponsorCreateRequest": {
         "type": "object",
@@ -8300,11 +8254,6 @@
             "minLength": 0
           },
           "actionType": {
-            "type": "string",
-            "maxLength": 64,
-            "minLength": 0
-          },
-          "clientIp": {
             "type": "string",
             "maxLength": 64,
             "minLength": 0
@@ -8916,8 +8865,7 @@
               "JA_HISTORY_WORLD_TIMELINE_IMAGE",
               "JA_HISTORY_KOREA_TIMELINE_IMAGE",
               "JA_HISTORY_PHILOSOPHY_CARD_IMAGE",
-              "JA_HISTORY_LOCKED_MEDIA",
-              "LOG_EXPORT_XLSX"
+              "JA_HISTORY_LOCKED_MEDIA"
             ]
           },
           "originalName": {
@@ -8971,9 +8919,7 @@
             ]
           },
           "name": {
-            "type": "string",
-            "description": "Stored applicant name (original). Empty is null, never \"\".",
-            "nullable": true
+            "type": "string"
           },
           "phone": {
             "type": "string"
@@ -9068,9 +9014,7 @@
             "type": "string"
           },
           "contactName": {
-            "type": "string",
-            "description": "Stored contact name (original). Empty is null, never \"\".",
-            "nullable": true
+            "type": "string"
           },
           "departmentTitle": {
             "type": "string"
@@ -9173,20 +9117,13 @@
             ]
           },
           "name": {
-            "type": "string",
-            "description": "Applicant name. Always PrivacyMaskingSupport.maskName (first character + asterisks). Full name is never returned on the list."
+            "type": "string"
           },
           "phone": {
-            "type": "string",
-            "description": "Always PrivacyMaskingSupport.maskPhone. Empty is null, never \"\". List never returns plaintext. Example keeps hyphens and masks the middle four digits.",
-            "example": "010-****-9154",
-            "nullable": true
+            "type": "string"
           },
           "email": {
-            "type": "string",
-            "description": "Always PrivacyMaskingSupport.maskEmail (local prefix + *** + @domain). Empty is null, never \"\". List never returns plaintext.",
-            "example": "0915***@naver.com",
-            "nullable": true
+            "type": "string"
           },
           "appliedAt": {
             "type": "string",
@@ -11455,7 +11392,6 @@
       },
       "TalentApplicationDetailResponse": {
         "type": "object",
-        "description": "Admin detail is always stored original PII. Empty strings are null. List name is original while phone and email remain masked. Not the careers talent-application revealPii contract.",
         "properties": {
           "id": {
             "type": "integer",
@@ -11469,8 +11405,7 @@
             ]
           },
           "name": {
-            "type": "string",
-            "description": "Stored applicant name (original)."
+            "type": "string"
           },
           "birthDate": {
             "type": "string",
@@ -11484,14 +11419,10 @@
             ]
           },
           "phone": {
-            "type": "string",
-            "description": "Stored phone (original). Empty is null, never \"\".",
-            "nullable": true
+            "type": "string"
           },
           "email": {
-            "type": "string",
-            "description": "Stored email (original). Empty is null, never \"\".",
-            "nullable": true
+            "type": "string"
           },
           "affiliation": {
             "type": "string"
@@ -11552,6 +11483,21 @@
             "items": {
               "$ref": "#/components/schemas/ApplicationAttachmentItem"
             }
+          }
+        }
+      },
+      "TalentApplicationAttachmentDownloadResponse": {
+        "type": "object",
+        "properties": {
+          "originalName": {
+            "type": "string"
+          },
+          "downloadUrl": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -11678,7 +11624,6 @@
       },
       "ConsultationDetailResponse": {
         "type": "object",
-        "description": "Admin detail is always stored original PII. Empty strings are null. List contactName is original while maskedContactPhone remains masked. Not the careers talent-application revealPii contract.",
         "properties": {
           "id": {
             "type": "integer",
@@ -11713,21 +11658,16 @@
             "type": "string"
           },
           "contactName": {
-            "type": "string",
-            "description": "Stored contact name (original)."
+            "type": "string"
           },
           "departmentTitle": {
             "type": "string"
           },
           "contactPhone": {
-            "type": "string",
-            "description": "Stored contact phone (original). Empty is null, never \"\".",
-            "nullable": true
+            "type": "string"
           },
           "consultationContent": {
-            "type": "string",
-            "description": "Stored consultation body (original). Empty is null, never \"\".",
-            "nullable": true
+            "type": "string"
           },
           "linkUrl": {
             "type": "string"
@@ -11748,6 +11688,21 @@
           "version": {
             "type": "integer",
             "format": "int64"
+          }
+        }
+      },
+      "AttachmentDownloadResponse": {
+        "type": "object",
+        "properties": {
+          "originalName": {
+            "type": "string"
+          },
+          "downloadUrl": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -12152,9 +12107,7 @@
             "type": "string"
           },
           "targetName": {
-            "type": "string",
-            "description": "Stored target name (original). Empty is null, never \"\".",
-            "nullable": true
+            "type": "string"
           },
           "accessPurpose": {
             "type": "string"
@@ -12275,8 +12228,7 @@
               "JA_HISTORY_WORLD_TIMELINE_IMAGE",
               "JA_HISTORY_KOREA_TIMELINE_IMAGE",
               "JA_HISTORY_PHILOSOPHY_CARD_IMAGE",
-              "JA_HISTORY_LOCKED_MEDIA",
-              "LOG_EXPORT_XLSX"
+              "JA_HISTORY_LOCKED_MEDIA"
             ]
           },
           "originalName": {
@@ -12297,15 +12249,6 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
-          },
-          "downloadKind": {
-            "type": "string"
-          },
-          "containedPiiTypes": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
           }
         }
       },
@@ -12696,7 +12639,6 @@
       },
       "CareerTalentApplicationDetailResponse": {
         "type": "object",
-        "description": "Admin detail is always stored original PII. Empty strings are null. List items remain masked.",
         "properties": {
           "id": {
             "type": "integer",
@@ -12725,35 +12667,23 @@
             ]
           },
           "name": {
-            "type": "string",
-            "description": "Stored applicant name (original). Empty is null, never \"\".",
-            "nullable": true
+            "type": "string"
           },
           "phone": {
-            "type": "string",
-            "description": "Stored phone (original). Empty is null, never \"\".",
-            "example": "010-1234-5678",
-            "nullable": true
+            "type": "string"
           },
           "email": {
-            "type": "string",
-            "description": "Stored email (original). Empty is null, never \"\".",
-            "example": "applicant@example.com",
-            "nullable": true
+            "type": "string"
           },
           "addressRoad": {
-            "type": "string",
-            "description": "Stored road address (original). Empty is null, never \"\".",
-            "nullable": true
+            "type": "string"
           },
           "addressDetail": {
             "type": "string",
-            "description": "Stored address detail (original). Empty is null, never \"\".",
             "nullable": true
           },
           "educationLevel": {
             "type": "string",
-            "description": "Stored education level.",
             "enum": [
               "HIGH_SCHOOL",
               "COLLEGE",
@@ -12761,23 +12691,17 @@
               "MASTER",
               "DOCTOR",
               "OTHER"
-            ],
-            "nullable": true
+            ]
           },
           "schoolName": {
-            "type": "string",
-            "description": "Stored school name (original). Empty is null, never \"\".",
-            "nullable": true
+            "type": "string"
           },
           "major": {
             "type": "string",
-            "description": "Stored major (original). Empty is null, never \"\".",
             "nullable": true
           },
           "educationInfo": {
-            "type": "string",
-            "description": "Stored education information (original). Empty is null, never \"\".",
-            "nullable": true
+            "type": "string"
           },
           "careerType": {
             "type": "string",
@@ -12787,9 +12711,7 @@
             ]
           },
           "careerInfo": {
-            "type": "string",
-            "description": "Stored career information (original). Empty is null, never \"\".",
-            "nullable": true
+            "type": "string"
           },
           "privacyAgreed": {
             "type": "boolean"
@@ -12809,15 +12731,28 @@
           },
           "attachmentOriginalName": {
             "type": "string",
-            "description": "First stored attachment original name. Empty is null, never \"\".",
             "nullable": true
           },
           "attachments": {
             "type": "array",
-            "description": "Stored attachments in display order, including originalName. Empty when no attachments exist.",
             "items": {
               "$ref": "#/components/schemas/ApplicationAttachmentItem"
             }
+          }
+        }
+      },
+      "CareerTalentApplicationAttachmentDownloadResponse": {
+        "type": "object",
+        "properties": {
+          "originalName": {
+            "type": "string"
+          },
+          "downloadUrl": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },

@@ -8,9 +8,6 @@
 import type { ApplicationAttachmentItem } from './applicationAttachmentItem';
 import type { ConsultationDetailResponseStatus } from './consultationDetailResponseStatus';
 
-/**
- * Admin detail is always stored original PII. Empty strings are null. List contactName is original while maskedContactPhone remains masked. Not the careers talent-application revealPii contract.
- */
 export interface ConsultationDetailResponse {
   id?: number;
   status?: ConsultationDetailResponseStatus;
@@ -20,13 +17,10 @@ export interface ConsultationDetailResponse {
   privacyConsent?: boolean;
   privacyConsentAt?: string;
   companyName?: string;
-  /** Stored contact name (original). */
   contactName?: string;
   departmentTitle?: string;
-  /** Stored contact phone (original). Empty is null, never "". */
-  contactPhone?: string | null;
-  /** Stored consultation body (original). Empty is null, never "". */
-  consultationContent?: string | null;
+  contactPhone?: string;
+  consultationContent?: string;
   linkUrl?: string;
   attachmentAssetId?: number;
   attachmentOriginalName?: string;

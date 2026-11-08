@@ -48,18 +48,16 @@ export interface CareerTalentApplicationCreateRequest {
      */
   major?: string;
   /**
-     * Optional. Blank is stored as null. Platform UI may still require this before submit.
      * @minLength 0
      * @maxLength 2000
      */
-  educationInfo?: string | null;
+  educationInfo?: string;
   careerType: CareerTalentApplicationCreateRequestCareerType;
   /**
-     * Optional. Blank is stored as null. Platform UI may still require this before submit.
      * @minLength 0
      * @maxLength 4000
      */
-  careerInfo?: string | null;
+  careerInfo?: string;
   privacyAgreed: boolean;
   attachmentAssetId?: number;
   /**

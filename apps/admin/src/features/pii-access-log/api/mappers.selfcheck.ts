@@ -30,10 +30,11 @@ assert.equal(mapped.rows[0]?.targetName, '홍길동')
 assert.equal(displayLogField(mapped.rows[0]?.targetName), '홍길동')
 assert.equal(mapped.rows[0]?.accessorName, '관리자')
 
+// 스펙은 nullable이 아니지만 BE 런타임은 빈 값을 null로 보낼 수 있다 — null 입력을 그대로 검증한다.
 const emptyName = mapPrivacyAccessPageToDomain({
   items: [{ id: 2, targetName: null }],
   totalCount: 1,
-})
+} as unknown as Parameters<typeof mapPrivacyAccessPageToDomain>[0])
 assert.equal(emptyName.rows[0]?.targetName, '')
 assert.equal(displayLogField(emptyName.rows[0]?.targetName), '-')
 assert.notEqual(emptyName.rows[0]?.targetName, '홍**')
