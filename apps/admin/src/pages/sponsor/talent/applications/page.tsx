@@ -751,7 +751,6 @@ export function TalentDonationApplicationsPage() {
               },
               style: { cursor: 'pointer' },
             })}
-            scroll={{ x: true }}
           />
           <AdminInfiniteTableFooter
             sentinelRef={sentinelRef}

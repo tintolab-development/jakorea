@@ -85,3 +85,24 @@
 .talent-intro-interview__post-input .ant-input {
   cursor: pointer;
 }
+
+/*
+ * 인터뷰 섹션 조회 — 일반 텍스트 셀 기준: 투명 입력의 안쪽 패딩·보더를 없애 셀 패딩(12×16)만 남긴다.
+ * (텍스트영역 높이는 autoSize 인라인 값 — height 강제 금지)
+ */
+.talent-intro-interview__field--readonly .cms-textarea__control {
+  min-height: 0 !important;
+  padding: 0 !important;
+  border-width: 0;
+}
+
+.talent-intro-interview__field--readonly .cms-textarea__inner textarea.ant-input {
+  min-height: 0 !important;
+  padding: 0 !important;
+  line-height: 150% !important;
+}
+
+.talent-intro-interview__field--readonly .cms-input__control {
+  padding-inline: 0 !important;
+  border-width: 0;
+}

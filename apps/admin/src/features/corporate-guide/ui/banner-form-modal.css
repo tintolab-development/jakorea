@@ -29,7 +29,7 @@
 
 .corporate-guide-banner-modal__image-row {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: flex-start;
   gap: 16px;
   width: 100%;
@@ -80,7 +80,7 @@
 .corporate-guide-banner-modal .file-select-field__actions {
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 16px;
 }

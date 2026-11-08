@@ -61,8 +61,8 @@ export type UsageGuideSaveItem = {
   version: number
 }
 
+/** 버튼명은 읽기 전용(시안 2118:131874) — 연결 링크만 저장 */
 export type DonateCtaSaveInput = {
-  buttonLabel: string
   linkUrl: string
   version: number
 }
