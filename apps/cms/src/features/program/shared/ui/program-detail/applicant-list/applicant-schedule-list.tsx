@@ -14,6 +14,7 @@ import {
   getInstructorScheduleDistanceKm,
   isInstructorLongDistance,
 } from './applicant-instructor-schedule-meta'
+import { formatApiDistanceKmDisplay } from '@/shared/lib/format-api-distance-km'
 import './applicant-calendar-view.css'
 
 /** 강사 캘린더 기관 집계 이벤트(대표 행 클릭 시) — 메타 제거 후 상세로 전달 */
@@ -205,7 +206,7 @@ export function ApplicantScheduleList({
                             <span
                               className={`applicant-schedule-item-tag ${isLongDistance ? '' : 'applicant-schedule-item-tag--mint'}`.trim()}
                             >
-                              거리 : {distanceKm != null ? `${distanceKm}km` : '-'}
+                              거리 : {formatApiDistanceKmDisplay(distanceKm)}
                             </span>
                             <span className="applicant-schedule-item-tag">출강 : {dispatchCount}회</span>
                             <span className="applicant-schedule-item-tag">
@@ -333,7 +334,7 @@ export function ApplicantScheduleList({
                       <span
                         className={`applicant-schedule-item-tag ${isLongDistance ? '' : 'applicant-schedule-item-tag--mint'}`.trim()}
                       >
-                        거리 : {distanceKm != null ? `${distanceKm}km` : '-'}
+                        거리 : {formatApiDistanceKmDisplay(distanceKm)}
                       </span>
                       <span className="applicant-schedule-item-tag">출강 : {dispatchCount}회</span>
                       <span className="applicant-schedule-item-tag">

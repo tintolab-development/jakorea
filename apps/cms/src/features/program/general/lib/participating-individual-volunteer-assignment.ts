@@ -2,6 +2,7 @@
  * 참여 봉사자 상세 — 봉사 배정 현황 탭 (일반 프로그램 · 개인) mock
  */
 
+import { formatApiDistanceKmDisplay } from '@/shared/lib/format-api-distance-km'
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import {
@@ -60,20 +61,14 @@ export const VOLUNTEER_ASSIGNMENT_DISTANCE_UNAVAILABLE_TOOLTIP =
   '자택 주소 또는 일정 장소가 없거나, 거리를 산출할 수 없습니다. 회원 프로필 자택과 일정 장소를 확인하세요.'
 
 /**
- * education-scope `distanceKm`만 표시. FE 반올림·재계산 없음.
- * null/undefined → '-'. 0은 '0km'.
+ * education-scope `distanceKm`만 표시 — 공통 `formatApiDistanceKmDisplay`(소수 1자리, null → '-', 0 → '0.0km').
  * `(장거리)`는 BE `longDistance`가 true일 때만 (km 임계값 판정 금지).
  */
 export function formatVolunteerAssignmentDistanceKm(
   km: number | null | undefined,
   options?: { longDistance?: boolean | null }
 ): string {
-  if (km == null || Number.isNaN(km)) return '-'
-  const label = `${km}km`
-  if (options?.longDistance === true) {
-    return `${label} (장거리)`
-  }
-  return label
+  return formatApiDistanceKmDisplay(km, options)
 }
 
 /**

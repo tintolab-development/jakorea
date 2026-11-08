@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { InstructorAssignmentListItemEnriched } from '@/features/program/general/api/instructor-assignment-types'
 import { fetchGeneralInstructorAssignmentBoard } from '@/features/program/general/api/instructor-assignment-board-service'
 import { fetchCompanySchoolAssignmentBoard } from '@/features/program/1c-1s/api/instructor-assignment-conflict-service'
+import { fetchGeneralParticipantEducationScope } from '@/features/program/general/api/admin-program-progress-service'
 import { companySchoolQueryKeys } from '@/features/program/1c-1s/api/query-keys'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import {
@@ -96,6 +97,21 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
     retry: false,
   })
 
+  /**
+   * 배정 대기 「자택과의 거리」 — education-scope 서버값만 쓴다(개인형 schedules[] · 기관형 organizations[]).
+   * 실패해도 배정 표는 그대로 두고 거리 칸만 '-'.
+   */
+  const participantId = input.instructor.id?.trim() ?? ''
+  const distanceScopeQuery = useQuery({
+    queryKey: generalProgramProgressQueryKeys.educationScope(input.programId, participantId),
+    queryFn: () => fetchGeneralParticipantEducationScope(input.programId, participantId),
+    enabled: queryEnabled && Boolean(participantId),
+    staleTime: 15_000,
+    retry: false,
+  })
+  const scheduleDistances = distanceScopeQuery.data?.schedules
+  const organizationDistances = distanceScopeQuery.data?.organizations
+
   const queryClient = useQueryClient()
   const queryError = boardQuery.error
 
@@ -147,6 +163,7 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
           assignments: board.assignments,
           instructorMemberId,
           maxAssignableInstructors: input.maxAssignableInstructors,
+          organizationDistances,
         }),
         assignedSchedules,
         waitingSchedules: buildParticipatingInstructorWaitingScheduleRowsFromBoard({
@@ -156,6 +173,7 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
           assignments: board.assignments,
           instructorMemberId,
           maxAssignableInstructors: input.maxAssignableInstructors,
+          scheduleDistances,
         }),
       }
     }
@@ -171,6 +189,7 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
         isCompanySchool: false,
         instructorMemberId,
         maxAssignableInstructors: input.maxAssignableInstructors,
+        organizationDistances,
       }),
       assignedSchedules,
       waitingSchedules: buildParticipatingInstructorWaitingScheduleRowsFromBoard({
@@ -180,6 +199,7 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
         assignments: board.assignments,
         instructorMemberId,
         maxAssignableInstructors: input.maxAssignableInstructors,
+        scheduleDistances,
       }),
     }
   }, [
@@ -190,12 +210,21 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
     input.maxAssignableInstructors,
     input.schoolRows,
     instructorMemberId,
+    organizationDistances,
     remoteEnabled,
+    scheduleDistances,
     useCompanySchoolBoard,
   ])
 
   const invalidate = async () => {
-    await queryClient.invalidateQueries({ queryKey: assignmentQueryKey })
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: assignmentQueryKey }),
+      participantId
+        ? queryClient.invalidateQueries({
+            queryKey: generalProgramProgressQueryKeys.educationScope(input.programId, participantId),
+          })
+        : Promise.resolve(),
+    ])
   }
 
   const boardLoading = queryEnabled && boardQuery.isFetching && boardQuery.data === undefined
