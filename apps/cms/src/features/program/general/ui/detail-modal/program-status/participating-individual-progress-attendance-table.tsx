@@ -1,3 +1,4 @@
+import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useMemo } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
@@ -73,7 +74,7 @@ export function ParticipatingIndividualProgressAttendanceTable({
         title: '이메일',
         dataIndex: 'email',
         key: 'email',
-        width: 200,
+        width: TABLE_COLUMN_WIDTHS.email,
         align: 'center',
         ellipsis: true,
         render: (value: string | undefined) => maskProgressAttendanceEmail(value),

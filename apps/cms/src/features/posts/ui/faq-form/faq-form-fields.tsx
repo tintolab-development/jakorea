@@ -1,14 +1,8 @@
 import { Form } from 'antd'
-import type { Editor } from '@/shared/rich-text'
-import { RichTextEditor } from '@/shared/rich-text'
-import type { AdminFileUploadOwner } from '@/shared/lib/admin-file-upload'
-import { CmsFieldFrame, CmsInput, CmsRadioGroup, CmsSelect, useCmsFieldStatus } from '@/shared/ui'
+import { CmsInput, CmsRadioGroup, CmsSelect, CmsTextArea } from '@/shared/ui'
 
 export type FaqFormFieldsProps = {
   categoryOptions: { label: string; value: string }[]
-  editor: Editor | null
-  editorMinHeight: string
-  fileUploadOwner: AdminFileUploadOwner | null
 }
 
 function isRegisterableFaqCategory(value: unknown): value is string {
@@ -17,47 +11,11 @@ function isRegisterableFaqCategory(value: unknown): value is string {
   return v.length > 0 && v !== 'ALL' && v !== '전체'
 }
 
-function FaqAnswerEditor({
-  editor,
-  editorMinHeight,
-  fileUploadOwner,
-}: {
-  editor: Editor | null
-  editorMinHeight: string
-  fileUploadOwner: AdminFileUploadOwner | null
-}) {
-  const { isError, message, hasMessage } = useCmsFieldStatus({})
-
-  return (
-    <CmsFieldFrame
-      size="large"
-      label="내용 (답변)"
-      required
-      isError={isError}
-      message={hasMessage ? message : undefined}
-      className="faq-form-modal__section faq-form-modal__section--editor"
-    >
-      <div className="faq-form-modal__editor-host">
-        <RichTextEditor
-          editor={editor}
-          minHeight={editorMinHeight}
-          fileUploadOwner={fileUploadOwner}
-        />
-      </div>
-    </CmsFieldFrame>
-  )
-}
-
 /**
  * FAQ 등록/수정 폼 본문 — 부모 `Form` 안에서만 사용.
  * 모달·상세 등 레이아웃은 래퍼에서 담당.
  */
-export function FaqFormFields({
-  categoryOptions,
-  editor,
-  editorMinHeight,
-  fileUploadOwner,
-}: FaqFormFieldsProps) {
+export function FaqFormFields({ categoryOptions }: FaqFormFieldsProps) {
   const registerOptions = categoryOptions.filter(opt => isRegisterableFaqCategory(opt.value))
 
   return (
@@ -82,7 +40,7 @@ export function FaqFormFields({
             required
             placeholder="카테고리 선택"
             options={registerOptions}
-            width={240}
+            width={260}
             inputSize="large"
             withAllOption={false}
             allowClear={false}
@@ -131,10 +89,15 @@ export function FaqFormFields({
         name="answer"
         rules={[{ required: true, whitespace: true, message: '내용을 입력해 주세요.' }]}
       >
-        <FaqAnswerEditor
-          editor={editor}
-          editorMinHeight={editorMinHeight}
-          fileUploadOwner={fileUploadOwner}
+        {/* 시안: 서식 편집기 없이 일반 텍스트 입력 — 홈페이지 FAQ도 답변을 텍스트로 표시한다 */}
+        <CmsTextArea
+          className="faq-form-modal__section faq-form-modal__answer"
+          label="내용 (답변)"
+          required
+          inputSize="large"
+          width="100%"
+          rows={8}
+          placeholder="내용을 입력해 주세요"
         />
       </Form.Item>
     </div>

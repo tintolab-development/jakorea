@@ -37,10 +37,14 @@ const LECTURE_ATTENDANCE_TEXT_KIND: Record<
   attended: 'present',
   late: 'late',
   absent: 'absent',
+  excused: 'excused_absence',
   not_held: 'not_held',
 }
 
-type EditableAttendanceStatus = Extract<LectureAttendanceStatusKey, 'attended' | 'absent' | 'late'>
+type EditableAttendanceStatus = Extract<
+  LectureAttendanceStatusKey,
+  'attended' | 'absent' | 'late' | 'excused'
+>
 
 function SessionStatusCell({
   session,
@@ -88,6 +92,9 @@ function SessionStatusCell({
       </CmsRadio>
       <CmsRadio value="late" size="medium">
         지각
+      </CmsRadio>
+      <CmsRadio value="excused" size="medium">
+        사유 불참
       </CmsRadio>
     </CmsRadioGroup>
   )

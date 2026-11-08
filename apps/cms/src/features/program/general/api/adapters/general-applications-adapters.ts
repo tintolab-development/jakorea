@@ -84,6 +84,7 @@ import {
   readOrganizationApplicationPreferredEducationSchedules,
 } from '@/features/program/general/lib/organization-application-preferred-education-schedules'
 import { requestedSchedulesToPreferredEducationSchedules } from '@/features/program/general/lib/requested-schedules-to-preferred'
+import { collectInstructorApplicationOrganizationDistances } from '@/features/program/general/lib/assignment-waiting-distance'
 import { resolveSessionCalendarDateKey } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-calendar-session'
 import { resolveStoredAffiliation } from '@/features/program/general/lib/affiliation-organization'
 import { isK12SchoolAffiliationName } from '@/features/program/general/lib/k12-school-affiliation'
@@ -483,6 +484,8 @@ export function mapStoredPeriodRequestedSchedulesToHopeSessions(
       scheduleLabel,
       requestedScheduleId: row.id ?? undefined,
       resolvedScheduleId,
+      // 미확정 희망 일정 — 승인/희망 일정 확정 전에는 강사 배정 후보가 아니다(map-requested-schedules와 동일).
+      ...(resolvedScheduleId == null ? { scheduleUnresolved: true } : {}),
     }
   })
 }
@@ -989,6 +992,7 @@ export function mapInstructorApplicationToApplicantInstructorRow(
     rejectionReason: readRuntimeString(dto, 'rejectReason'),
     distanceKm: readRuntimeNumber(dto, 'distanceKm'),
     longDistanceYn: readRuntimeBoolean(dto, 'longDistance'),
+    organizationDistances: collectInstructorApplicationOrganizationDistances(dto),
     programDispatchCount: readRuntimeNumber(dto, 'programDispatchCount'),
     programLongDistanceDispatchCount: readRuntimeNumber(dto, 'programLongDistanceDispatchCount'),
     availableActions: dto.availableActions,
@@ -1307,13 +1311,34 @@ function preferredScheduleLabel(schedule: PreferredEducationSchedule): string {
   )
 }
 
+const PERIOD_PREFERRED_LABEL_RE = /^\d{4}-\d{2}-\d{2}$/
+
+/**
+ * 일반 기관 기간 지정(PERIOD) 희망 행 — BE는 label에 희망 날짜(`2026-11-08`)만 내려준다.
+ * 다른 유형·일정 지정(line:N) 행의 label은 날짜·시각·일정명 조합이라 여기에 해당하지 않는다.
+ */
+function isPeriodPreferredEducationSchedule(schedule: PreferredEducationSchedule): boolean {
+  return typeof schedule.label === 'string' && PERIOD_PREFERRED_LABEL_RE.test(schedule.label.trim())
+}
+
 /**
  * startAt이 있으면 시작 시각 순으로 정렬하고, 없으면 응답 순서를 유지한다.
  * line:N도 materialized program_schedule이면 startAt·scheduleId가 함께 온다.
+ * PERIOD 희망 행만으로 이뤄진 응답은 서버 지망 순서(round 오름차순)를 그대로 쓴다.
  */
 function orderPreferredEducationSchedules(
   schedules: PreferredEducationSchedule[]
 ): PreferredEducationSchedule[] {
+  if (schedules.length > 0 && schedules.every(isPeriodPreferredEducationSchedule)) {
+    return schedules
+      .map((schedule, index) => ({ schedule, index }))
+      .sort(
+        (a, b) =>
+          (a.schedule.round ?? Number.MAX_SAFE_INTEGER) -
+            (b.schedule.round ?? Number.MAX_SAFE_INTEGER) || a.index - b.index
+      )
+      .map(entry => entry.schedule)
+  }
   return schedules
     .map((schedule, index) => ({ schedule, index }))
     .sort((a, b) => {
@@ -1360,10 +1385,12 @@ export function mapPreferredEducationSchedulesToSessions(
         : `${Math.round((end.getTime() - start.getTime()) / 60_000)}분`
     const scheduleId = schedule.scheduleId
     const hasResolvedSchedule = scheduleId != null && Number.isFinite(scheduleId) && scheduleId > 0
-    const label = scheduleLabel || undefined
+    const periodRow = isPeriodPreferredEducationSchedule(schedule)
+    // PERIOD label은 날짜뿐이다. 시각이 있으면 label 대신 educationDate + startAt·endAt(서울)으로 표시한다.
+    const label = periodRow && validStart ? undefined : scheduleLabel || undefined
     const scheduleUnresolved =
       !hasResolvedSchedule &&
-      (schedule.unresolvedReason != null || schedule.scheduleId == null || Boolean(label))
+      (schedule.unresolvedReason != null || schedule.scheduleId == null || Boolean(scheduleLabel))
     const round = schedule.round ?? index + 1
     return {
       round,
@@ -1380,6 +1407,7 @@ export function mapPreferredEducationSchedulesToSessions(
       ...(schedule.startAt?.trim() ? { startAt: schedule.startAt.trim() } : {}),
       ...(schedule.endAt?.trim() ? { endAt: schedule.endAt.trim() } : {}),
       ...(scheduleUnresolved ? { scheduleUnresolved: true } : {}),
+      ...(periodRow ? { hopeScheduleConfirmed: hasResolvedSchedule } : {}),
     }
   })
 }

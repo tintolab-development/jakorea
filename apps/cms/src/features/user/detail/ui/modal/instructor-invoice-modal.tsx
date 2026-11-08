@@ -559,8 +559,6 @@ export function InstructorInvoiceModal({
       <PaymentOrderPaymentRejectionResultModal
         open={paymentRejectDoneOpen}
         onClose={() => setPaymentRejectDoneOpen(false)}
-        data={statementData}
-        reason={paymentRejectReason}
       />
       <PaymentOrderCalculationBasisDetailModal
         open={basisDetailOpen}

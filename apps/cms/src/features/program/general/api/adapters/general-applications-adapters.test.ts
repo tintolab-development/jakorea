@@ -1014,7 +1014,7 @@ describe('general-applications-adapters', () => {
     expect(individual.lectureAttendanceSessions).toEqual([
       { roundNumber: 1, scheduleId: 701, status: 'attended' },
       { roundNumber: 2, scheduleId: 702, status: 'late' },
-      { roundNumber: 3, scheduleId: 703, status: 'attended' },
+      { roundNumber: 3, scheduleId: 703, status: 'excused' },
     ])
   })
 

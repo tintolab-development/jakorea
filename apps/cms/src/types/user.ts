@@ -152,6 +152,10 @@ export interface User {
     address: string
     /** 상세 주소 — 표시 시 address 뒤에만 이어 붙임 */
     addressDetail?: string
+    /** 시·도 (학교 organization 목록 `regionSido`) */
+    regionSido?: string
+    /** 시·군·구 (학교 organization 목록 `regionSigungu`) */
+    regionSigungu?: string
     position?: string // 담당자 직책
     /** CMS mock/상세 — 소속 교사 목록 */
     affiliatedTeachers?: SchoolAffiliatedTeacherRow[]

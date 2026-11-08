@@ -10,9 +10,14 @@ import {
   buildInstitutionApproveMessage,
   resolveInstitutionApproveModalTitle,
 } from './institution-approve-modal'
+import {
+  ORGANIZATION_APPROVE_REQUESTED_SCHEDULE_COUNT_EXCEEDED_MESSAGE,
+} from '@/features/program/general/lib/organization-application-approve-slots'
+
+const showAlertMock = vi.hoisted(() => vi.fn())
 
 vi.mock('@/shared/ui/cms-alert-modal-provider', () => ({
-  useCmsAlert: () => ({ showAlert: vi.fn() }),
+  useCmsAlert: () => ({ showAlert: showAlertMock }),
 }))
 
 vi.mock('@/features/program/general/lib/program-planned-education-slots', () => ({
@@ -84,6 +89,7 @@ afterEach(() => {
   fetchSlots.mockReset()
   fetchRequested.mockReset()
   fetchRequested.mockResolvedValue([])
+  showAlertMock.mockReset()
 })
 
 describe('InstitutionApproveModal schedule sources', () => {
@@ -653,82 +659,122 @@ describe('InstitutionApproveModal schedule sources', () => {
     expect(onConfirm).not.toHaveBeenCalled()
   })
 
-  it('기간 지정 단일 회차는 희망 일정 행 id 1건만 승인하고 공통 슬롯 id는 보내지 않는다', async () => {
+  const futureRequestedRows = [
+    {
+      id: 185037,
+      preferenceOrder: 1,
+      requestedDate: '2099-11-08',
+      resolvedScheduleId: null,
+      sessionCount: 3,
+      sessionTimes: [{ sessionOrder: 1, startTime: '09:00:00', endTime: '10:00:00' }],
+    },
+    {
+      id: 185038,
+      preferenceOrder: 2,
+      requestedDate: '2099-11-09',
+      resolvedScheduleId: null,
+      sessionCount: 3,
+      sessionTimes: [{ sessionOrder: 1, startTime: '09:00:00', endTime: '10:00:00' }],
+    },
+    {
+      id: 185039,
+      preferenceOrder: 3,
+      requestedDate: '2099-11-10',
+      resolvedScheduleId: null,
+      sessionCount: 3,
+      sessionTimes: [],
+    },
+  ]
+
+  it('일정형·단일·기간은 희망 일정 행 id를 requestedScheduleIds로 승인하고 공통 슬롯 id는 보내지 않는다', async () => {
     fetchSlots.mockResolvedValue(program186266Slots)
-    fetchRequested.mockResolvedValue([
-      {
-        id: 184944,
-        preferenceOrder: 1,
-        requestedDate: '2026-11-05',
-        resolvedScheduleId: 187141,
-        sessionCount: 1,
-        sessionTimes: [],
-      },
-      {
-        id: 184945,
-        preferenceOrder: 2,
-        requestedDate: '2026-11-13',
-        resolvedScheduleId: null,
-        sessionCount: 1,
-        sessionTimes: [],
-      },
-    ] as never)
+    fetchRequested.mockResolvedValue(futureRequestedRows.slice(0, 2) as never)
     const { onConfirm } = renderModal({
       educationScheduleMode: 'period',
       educationStructure: 'schedule',
       sessionRound: 'single',
-      scheduleConfig: {
-        preferredEducationSchedules: [
-          { label: '2026-11-05', startAt: '2026-11-05', endAt: '2026-11-05' },
-        ],
-      },
+      maxScheduleCount: 1,
     })
 
     expect(screen.queryByText('공통 교육 예정 일정')).toBeNull()
-    const firstChoice = await screen.findByRole('button', { name: /2026\.11\.05/ })
-    const secondChoice = await screen.findByRole('button', { name: /2026\.11\.13/ })
-    expect((secondChoice as HTMLButtonElement).disabled).toBe(false)
-    const approve = screen.getByRole('button', { name: '승인' }) as HTMLButtonElement
-    await waitFor(() => expect(approve.disabled).toBe(true))
+    const firstChoice = await screen.findByRole('button', { name: /2099\.11\.08/ })
+    const secondChoice = await screen.findByRole('button', { name: /2099\.11\.09/ })
     fireEvent.click(firstChoice)
-    await waitFor(() => expect(approve.disabled).toBe(false))
-    fireEvent.click(approve)
+    fireEvent.click(secondChoice) // 상한 1 — 교체
+    fireEvent.click(screen.getByRole('button', { name: '승인' }))
     await waitFor(() => expect(onConfirm).toHaveBeenCalled())
-    expect(onConfirm.mock.calls[0]?.[0]).toMatchObject({ requestedScheduleId: 184944 })
+    expect(onConfirm.mock.calls[0]?.[0]).toMatchObject({ requestedScheduleIds: [185038] })
+    expect(onConfirm.mock.calls[0]?.[0]).not.toHaveProperty('requestedScheduleId')
     expect(onConfirm.mock.calls[0]?.[0]).not.toHaveProperty('selectedScheduleId')
     expect(onConfirm.mock.calls[0]?.[0]).not.toHaveProperty('slots')
   })
 
-  it('커리큘럼 기간형은 희망 일정 행 id를 승인 본문에 넣지 않는다', async () => {
+  it('커리큘럼·복수·기간은 모집 상한까지 여러 희망 일정을 확정한다', async () => {
     fetchSlots.mockResolvedValue(program186266Slots)
-    fetchRequested.mockResolvedValue([
-      {
-        id: 184944,
-        preferenceOrder: 1,
-        requestedDate: '2026-11-02',
-        resolvedScheduleId: null,
-        sessionCount: 1,
-        sessionTimes: [],
-      },
-    ] as never)
+    fetchRequested.mockResolvedValue(futureRequestedRows as never)
+    const { onConfirm } = renderModal({
+      educationScheduleMode: 'period',
+      educationStructure: 'curriculum',
+      sessionRound: 'multi',
+      maxScheduleCount: 2,
+    })
+
+    fireEvent.click(await screen.findByRole('button', { name: /2099\.11\.08/ }))
+    fireEvent.click(await screen.findByRole('button', { name: /2099\.11\.09/ }))
+    fireEvent.click(await screen.findByRole('button', { name: /2099\.11\.10/ }))
+    await waitFor(() =>
+      expect(showAlertMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: ORGANIZATION_APPROVE_REQUESTED_SCHEDULE_COUNT_EXCEEDED_MESSAGE,
+        })
+      )
+    )
+    fireEvent.click(screen.getByRole('button', { name: '승인' }))
+    await waitFor(() => expect(onConfirm).toHaveBeenCalled())
+    expect(onConfirm.mock.calls[0]?.[0]).toMatchObject({ requestedScheduleIds: [185037, 185038] })
+  })
+
+  it('커리큘럼·단일·기간에서 희망 일정을 고르지 않으면 일정 미확정으로 승인한다', async () => {
+    fetchSlots.mockResolvedValue(program186266Slots)
+    fetchRequested.mockResolvedValue(futureRequestedRows.slice(0, 2) as never)
     const { onConfirm } = renderModal({
       educationScheduleMode: 'period',
       educationStructure: 'curriculum',
       sessionRound: 'single',
-      scheduleConfig: {
-        preferredEducationSchedules: [
-          { label: '2026-11-02', startAt: '2026-11-02', endAt: '2026-11-02' },
-        ],
-      },
+      maxScheduleCount: 2,
     })
 
-    const preferredCard = await screen.findByRole('button', { name: /2026\.11\.02/ })
-    fireEvent.click(preferredCard)
-    fireEvent.click(screen.getByRole('button', { name: '승인' }))
+    await screen.findByRole('button', { name: /2099\.11\.08/ })
+    const approve = screen.getByRole('button', { name: '승인' }) as HTMLButtonElement
+    await waitFor(() => expect(approve.disabled).toBe(false))
+    fireEvent.click(approve)
     await waitFor(() => expect(onConfirm).toHaveBeenCalled())
+    expect(onConfirm.mock.calls[0]?.[0]).not.toHaveProperty('requestedScheduleIds')
     expect(onConfirm.mock.calls[0]?.[0]).not.toHaveProperty('requestedScheduleId')
-    expect(onConfirm.mock.calls[0]?.[0]).not.toHaveProperty('selectedScheduleId')
-    expect(onConfirm.mock.calls[0]?.[0]).not.toHaveProperty('slots')
+  })
+
+  it('시작 시각이 지난 희망 일정은 목록에서 뺀다', async () => {
+    fetchSlots.mockResolvedValue(program186266Slots)
+    fetchRequested.mockResolvedValue([
+      {
+        id: 185000,
+        preferenceOrder: 1,
+        requestedDate: '2020-01-06',
+        resolvedScheduleId: null,
+        sessionCount: 1,
+        sessionTimes: [{ sessionOrder: 1, startTime: '09:00:00', endTime: '10:00:00' }],
+      },
+      futureRequestedRows[0],
+    ] as never)
+    renderModal({
+      educationScheduleMode: 'period',
+      educationStructure: 'curriculum',
+      sessionRound: 'single',
+      maxScheduleCount: 2,
+    })
+
+    await screen.findByRole('button', { name: /2099\.11\.08/ })
+    expect(screen.queryByRole('button', { name: /2020\.01\.06/ })).toBeNull()
   })
 
   it('1사1교 신청 카피는 일정 배정 없이 프로그램 신청 승인 안내를 쓴다', async () => {

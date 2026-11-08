@@ -168,7 +168,8 @@ export function BugIssueLogPage() {
         title: '에러 메시지',
         dataIndex: 'errorMessage',
         key: 'errorMessage',
-        width: COL.errorMessage,
+        // 유연 열: 넓은 화면에서 남는 폭 흡수 (CmsDataTable 정확 폭 모드)
+        minWidth: COL.errorMessage,
         className: 'log-list-page__col--left log-list-page__col--error',
         ellipsis: true,
       },

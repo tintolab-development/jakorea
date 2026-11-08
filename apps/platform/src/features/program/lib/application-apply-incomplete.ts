@@ -1,5 +1,5 @@
-import type { ApplyTrainedTeachersBasicInfoValues } from '../ui/apply-trained-teachers-basic-info/apply-trained-teachers-basic-info-answers.ts'
-import { findIncompleteTrainedTeachersBasicInfoMessage } from '../ui/apply-trained-teachers-basic-info/apply-trained-teachers-basic-info-incomplete.ts'
+import type { ApplyInstitutionBasicInfoValues } from '../ui/apply-institution-basic-info/apply-institution-basic-info-answers.ts'
+import { findIncompleteInstitutionBasicInfoMessage } from '../ui/apply-institution-basic-info/apply-institution-basic-info-incomplete.ts'
 
 export type ApplicationIncompleteField = {
   message: string
@@ -7,7 +7,7 @@ export type ApplicationIncompleteField = {
   field?: string
 }
 
-export function fieldForTrainedTeachersBasicInfoIncompleteMessage(
+export function fieldForInstitutionBasicInfoIncompleteMessage(
   message: string,
 ): string | undefined {
   if (message.includes('학급')) return 'classCount'
@@ -24,15 +24,15 @@ export function fieldForTrainedTeachersBasicInfoIncompleteMessage(
 }
 
 export function resolveGeneralBasicInfoApplyIncomplete(
-  values: ApplyTrainedTeachersBasicInfoValues,
+  values: ApplyInstitutionBasicInfoValues,
   paragraphId: string,
 ): ApplicationIncompleteField | null {
-  const message = findIncompleteTrainedTeachersBasicInfoMessage(values)
+  const message = findIncompleteInstitutionBasicInfoMessage(values)
   if (!message) return null
   return {
     message,
     paragraphId,
-    field: fieldForTrainedTeachersBasicInfoIncompleteMessage(message),
+    field: fieldForInstitutionBasicInfoIncompleteMessage(message),
   }
 }
 

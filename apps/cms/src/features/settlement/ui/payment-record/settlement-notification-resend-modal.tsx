@@ -7,6 +7,7 @@ import {
   type PermissionModalPayload,
 } from '@/shared/components/permission-modal'
 import '@/features/program/shared/ui/detail-modal/components/instructor-bulk-approve-modal.css'
+import './settlement-notification-resend-modal.css'
 
 export type SettlementNotificationResendModalProps = {
   open: boolean
@@ -33,7 +34,7 @@ export function SettlementNotificationResendModal({
     <PermissionModal
       open={open}
       variant={requireReason ? 'reject' : 'approve'}
-      className="applicant-notification-resend-modal"
+      className="applicant-notification-resend-modal settlement-notification-resend-modal"
       title="알림 재발송 안내"
       message={buildSettlementNotificationResendMessage(kind)}
       confirmLabel="재발송"

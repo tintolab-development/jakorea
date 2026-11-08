@@ -15,9 +15,9 @@ export const DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER =
 /** 회원 탈퇴 안내 모달 — `requiredConfirmInput` 값 */
 export const WITHDRAW_GUIDE_TYPED_CONFIRM_VALUE = '탈퇴'
 
-/** 회원 탈퇴 안내 모달 — `confirmInputPlaceholder` 기본 문구 */
+/** 회원 탈퇴 처리 안내 모달 — `confirmInputPlaceholder` 기본 문구 (시안: 회원 탈퇴 처리 팝업) */
 export const WITHDRAW_GUIDE_TYPED_CONFIRM_PLACEHOLDER =
-  '탈퇴하시려면 해당란에 [탈퇴]를 입력해 주세요.'
+  '탈퇴 처리하시려면 해당란에 [탈퇴]를 입력해 주세요'
 
 /** 회원 삭제/탈퇴 안내 모달 — 관리자 비밀번호 확인 placeholder */
 export const DELETE_GUIDE_PASSWORD_CONFIRM_PLACEHOLDER = '비밀번호를 입력해 주세요.'

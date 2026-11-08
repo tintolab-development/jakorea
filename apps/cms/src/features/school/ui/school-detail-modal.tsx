@@ -1,3 +1,4 @@
+import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 /**
  * 학교(교사) 상세 정보 모달
  * - width 1400, body height 830, 섹션 간 갭 32px
@@ -66,7 +67,7 @@ export function SchoolDetailModal({
       align: 'center',
     },
     { title: '연락처', dataIndex: 'phone', key: 'phone', align: 'center', width: 140 },
-    { title: '이메일', dataIndex: 'email', key: 'email', align: 'center', width: 180 },
+    { title: '이메일', dataIndex: 'email', key: 'email', align: 'center', width: TABLE_COLUMN_WIDTHS.email },
     {
       title: '가입일',
       dataIndex: 'createdAt',

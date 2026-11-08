@@ -82,7 +82,8 @@
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
-  color: #7d7d7d;
+  /* Figma Tab / Line status off — Content/disabled */
+  color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
   cursor: pointer;
   transition:
     color 0.2s,

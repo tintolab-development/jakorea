@@ -1,0 +1,4 @@
+/* 회원 상세 헤더 「개인정보 상세보기」 — 시안(4427:23373) h44 버튼 폭 180 (공통 h44 min-width 140 대비) */
+.user-detail-fullpage-header-actions__personal-info.cms-button.ant-btn.cms-button--h44 {
+  min-width: 180px;
+}

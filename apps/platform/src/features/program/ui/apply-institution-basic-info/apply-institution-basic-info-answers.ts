@@ -8,7 +8,7 @@ const EDUCATION_FORMAT_VALUES = new Set<PortalEducationFormat>([
   'hybrid',
 ])
 
-export type ApplyTrainedTeachersBasicInfoValues = {
+export type ApplyInstitutionBasicInfoValues = {
   schoolName: string
   /** 기관 소재지 표시 (프로필 자동) */
   regionLabel: string
@@ -35,7 +35,7 @@ export function normalizePortalEducationFormat(raw: unknown): PortalEducationFor
     : ''
 }
 
-export function emptyTrainedTeachersBasicInfo(): ApplyTrainedTeachersBasicInfoValues {
+export function emptyInstitutionBasicInfo(): ApplyInstitutionBasicInfoValues {
   return {
     schoolName: '',
     regionLabel: '',
@@ -63,7 +63,7 @@ export type BasicInfoAnswerFromValuesOptions = {
 }
 
 export function basicInfoAnswerFromValues(
-  values: ApplyTrainedTeachersBasicInfoValues,
+  values: ApplyInstitutionBasicInfoValues,
   options?: BasicInfoAnswerFromValuesOptions,
 ): Record<string, unknown> | null {
   const schoolName = values.schoolName.trim()
@@ -150,7 +150,7 @@ function readStringField(row: Record<string, unknown>, ...keys: string[]): strin
 
 export function basicInfoValuesFromDraftAnswer(
   answer: unknown,
-): ApplyTrainedTeachersBasicInfoValues | null {
+): ApplyInstitutionBasicInfoValues | null {
   if (!answer || typeof answer !== 'object' || Array.isArray(answer)) return null
   const row = answer as Record<string, unknown>
   const schoolName = readStringField(row, 'schoolName')
@@ -182,7 +182,7 @@ export function basicInfoValuesFromDraftAnswer(
   }
 
   return {
-    ...emptyTrainedTeachersBasicInfo(),
+    ...emptyInstitutionBasicInfo(),
     schoolName,
     regionLabel,
     applicationGrade,

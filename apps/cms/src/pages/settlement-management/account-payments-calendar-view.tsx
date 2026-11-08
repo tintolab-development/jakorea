@@ -1,6 +1,7 @@
 /**
  * 정산 관리 > 계좌 지급 확인 — 캘린더 뷰
- * `calendar-set` + 좌측 미니캘린더 + 메인(월간) + 정산 우측 목록 (프로그램 검색 필터 없음)
+ * `calendar-set` + 좌측(미니캘린더 + 프로그램 검색·체크 필터) + 메인(월간) + 정산 우측 목록
+ * 좌측 필터는 공통 `CalendarSearch` — 프로그램 목록 캘린더(`CalendarSet.Main`)와 같은 규칙(키워드·선택 모두 캘린더에 반영).
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState, type Key } from 'react'
@@ -21,14 +22,90 @@ import {
 import {
   CalendarMain,
   CalendarMini,
+  CalendarSearch,
   CalendarSubRightSettlementList,
   settlementEventStatusColorPair,
   settlementRowFromCalendarItem,
   type CalendarItem,
 } from '@/shared/components/calendar'
-import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
+import {
+  buildResolvedScheduleColorMapForPrograms,
+  type ScheduleColorPair,
+} from '@/features/program/shared/ui/program-schedule-colors'
+import type { Program } from '@/types/domain'
 import '@/shared/components/calendar/styles/calendar.css'
 import './account-payments-calendar-view.css'
+
+/** 좌측 프로그램 필터 키 — programId 우선, 없으면 프로그램명 */
+function accountPaymentProgramFilterKey(row: AccountPaymentRow): string {
+  return row.programId != null ? String(row.programId) : `name:${row.programName.trim()}`
+}
+
+function useAccountPaymentProgramFilter(rows: AccountPaymentRow[]) {
+  const [keyword, setKeyword] = useState('')
+  /** null = 전체 선택 */
+  const [selection, setSelection] = useState<string[] | null>(null)
+  const normalizedKeyword = keyword.trim().toLowerCase()
+
+  const allOptions = useMemo(() => {
+    const seen = new Map<string, string>()
+    for (const row of rows) {
+      const key = accountPaymentProgramFilterKey(row)
+      if (!seen.has(key)) seen.set(key, row.programName.trim() || '이름 없음')
+    }
+    return [...seen.entries()]
+      .map(([id, title]) => ({ id, title }))
+      .sort((a, b) => a.title.localeCompare(b.title, 'ko'))
+  }, [rows])
+
+  const options = useMemo(
+    () =>
+      normalizedKeyword
+        ? allOptions.filter(opt => opt.title.toLowerCase().includes(normalizedKeyword))
+        : allOptions,
+    [allOptions, normalizedKeyword]
+  )
+
+  const allIds = useMemo(() => allOptions.map(opt => opt.id), [allOptions])
+  const effectiveSelection = selection ?? allIds
+
+  const programColorMap = useMemo(
+    () => buildResolvedScheduleColorMapForPrograms(allOptions.map(opt => ({ id: opt.id }) as Program)),
+    [allOptions]
+  )
+
+  const onOptionToggle = useCallback(
+    (id: string, checked: boolean) => {
+      setSelection(prev => {
+        const base = prev ?? allIds
+        const next = checked ? [...new Set([...base, id])] : base.filter(x => x !== id)
+        const allSelected = next.length === allIds.length && allIds.every(x => next.includes(x))
+        return allSelected ? null : next
+      })
+    },
+    [allIds]
+  )
+
+  const filteredRows = useMemo(() => {
+    const keywordFiltered = normalizedKeyword
+      ? rows.filter(row => row.programName.toLowerCase().includes(normalizedKeyword))
+      : rows
+    if (selection === null) return keywordFiltered
+    if (selection.length === 0) return []
+    const selected = new Set(selection)
+    return keywordFiltered.filter(row => selected.has(accountPaymentProgramFilterKey(row)))
+  }, [rows, normalizedKeyword, selection])
+
+  return {
+    keyword,
+    onKeywordChange: setKeyword,
+    options,
+    effectiveSelection,
+    programColorMap,
+    onOptionToggle,
+    filteredRows,
+  }
+}
 
 function pickAnchorDate(rows: AccountPaymentRow[]): Dayjs {
   if (rows.length === 0) return dayjs()
@@ -40,15 +117,23 @@ function pickAnchorDate(rows: AccountPaymentRow[]): Dayjs {
   return min
 }
 
+/**
+ * 캘린더 칩·우측 카드·hover 색은 공통 정산 상태 팔레트(`INSTRUCTOR_SETTLEMENT_STATUS_TAG_STYLE`)를 쓴다.
+ * 계좌 지급 「지급 대기」는 시안(12432:443398)·목록 Text(`ACCOUNT_PAYMENT_AGGREGATE_TEXT_COLOR`)과 같은 초록 —
+ * 정산 팔레트의 `awaiting_confirmation`(주황)이 아니라 초록 키(`payment_statement_verified`)로 매핑한다.
+ */
 function accountPaymentStatusToUiStatus(
   s: AccountPaymentRow['accountPaymentStatus']
 ): InstructorSettlementUiStatus {
-  return s
+  return s === 'awaiting_confirmation' ? 'payment_statement_verified' : s
 }
 
-function accountPaymentStatusShortLabel(status: AccountPaymentRow['accountPaymentStatus']): string {
+function accountPaymentStatusShortLabel(
+  status: AccountPaymentRow['accountPaymentStatus'] | InstructorSettlementUiStatus
+): string {
   switch (status) {
     case 'awaiting_confirmation':
+    case 'payment_statement_verified':
       return '지급 대기'
     case 'partial_confirmation':
       return '확인 중'
@@ -71,13 +156,22 @@ function renderAccountPaymentEventsTooltipContent({ events: dayEvents }: { event
           .status as AccountPaymentRow['accountPaymentStatus']
         return (
           <div key={String(ev.id)} className="instructor-settlement-preview">
+            {/* 시안 Calendar / List / Preview(14858:591061): 이름 Bold · 구분선 · 프로그램명 Medium */}
             <div className="instructor-settlement-preview__title">
-              {row.instructorName?.trim()
-                ? `${row.instructorName.trim()} | ${row.programName}`
-                : row.programName}
+              {row.instructorName?.trim() ? (
+                <>
+                  <span className="account-payments-calendar-view__preview-name">
+                    {row.instructorName.trim()}
+                  </span>
+                  <span className="settlement-preview-tooltip__sep">|</span>
+                  {row.programName}
+                </>
+              ) : (
+                row.programName
+              )}
             </div>
             <div>
-              <span style={{ color: colors.text, fontWeight: 700, fontSize: '14px' }}>
+              <span style={{ color: colors.text, fontWeight: 600, fontSize: '14px' }}>
                 {accountPaymentStatusShortLabel(accountStatus)}
               </span>
               <span className="settlement-preview-tooltip__text">
@@ -171,27 +265,37 @@ export function AccountPaymentsCalendarView({
   const [selectedDate, setSelectedDate] = useState<Dayjs>(() => anchor)
   const [currentMonth, setCurrentMonth] = useState<Dayjs>(() => anchor.startOf('month'))
   const isFirstRowsEffect = useRef(true)
+  const {
+    keyword: programKeyword,
+    onKeywordChange: onProgramKeywordChange,
+    options: programFilterOptions,
+    effectiveSelection: effectiveProgramSelection,
+    programColorMap,
+    onOptionToggle: onProgramOptionToggle,
+    filteredRows,
+  } = useAccountPaymentProgramFilter(rows)
 
+  /** 조회 결과·좌측 필터로 보이는 행이 바뀌면 숨은 행이 툴바 대상에 남지 않도록 선택 해제 */
   useEffect(() => {
     if (isFirstRowsEffect.current) {
       isFirstRowsEffect.current = false
       return
     }
     onSelectionChange([])
-  }, [rows, onSelectionChange])
+  }, [filteredRows, onSelectionChange])
 
   const programDates = useMemo(() => {
     const dates = new Set<string>()
-    for (const row of rows) {
+    for (const row of filteredRows) {
       const d = resolveAccountPaymentCalendarDate(row)
       if (d) dates.add(d)
     }
     return dates
-  }, [rows])
+  }, [filteredRows])
 
   const settlementRows = useMemo(
-    () => rows.map(accountPaymentRowToSettlementListRow),
-    [rows]
+    () => filteredRows.map(accountPaymentRowToSettlementListRow),
+    [filteredRows]
   )
 
   const calendarMainEvents = useMemo((): CalendarMainSettlementEventRow[] => {
@@ -249,13 +353,21 @@ export function AccountPaymentsCalendarView({
 
   return (
     <div className="calendar-set account-payments-calendar-view">
-      <div className="calendar-sub-left account-payments-calendar-view__sub-left">
+      <div className="calendar-sub-left">
         <CalendarMini
           currentMonth={currentMonth}
           selectedDate={selectedDate}
           onMonthChange={onMonthChange}
           onSelectDate={onSelectDate}
           programDates={programDates}
+        />
+        <CalendarSearch
+          keyword={programKeyword}
+          options={programFilterOptions}
+          selectedIds={effectiveProgramSelection}
+          programColorMap={programColorMap}
+          onKeywordChange={onProgramKeywordChange}
+          onOptionToggle={onProgramOptionToggle}
         />
       </div>
       <div className="calendar-main-container">

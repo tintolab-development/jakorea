@@ -6,8 +6,10 @@ import {
   ABSENT_PREFERRED_SCHEDULE_MESSAGE,
   allowsMultipleOrganizationEducationScheduleAssignment,
   buildOrganizationApplicationApproveSchedulePayload,
-  buildPeriodSingleRequestedScheduleApprovePayload,
-  isGeneralOrganizationPeriodSingleRequestedScheduleApproval,
+  buildPeriodRequestedScheduleApprovePayload,
+  formatOrganizationApplicationApproveErrorMessage,
+  isGeneralOrganizationPeriodRequestedScheduleApproval,
+  resolveRequestedScheduleSelectionLimit,
   mergeOrganizationApplicationApproveBody,
   organizationApproveUnconfirmableScheduleNotice,
   listOrganizationApproveScheduleOptions,
@@ -460,32 +462,80 @@ describe('period organization approval does not use date-slot mapping', () => {
     },
   ]
 
-  it('일정형·단일·기간 승인은 희망 일정 행 id 1건만 담고 공통 슬롯 id와 섞지 않는다', () => {
-    expect(
-      isGeneralOrganizationPeriodSingleRequestedScheduleApproval({
-        educationScheduleMode: 'PERIOD',
-        sessionRound: 'SINGLE',
-        educationStructure: 'schedule',
+  it('기간 지정 승인은 일정형·복수(자동 배정)를 빼고 희망 일정 행 id 여러 건을 담는다', () => {
+    const judge = (educationScheduleMode: string, sessionRound: string, educationStructure: string) =>
+      isGeneralOrganizationPeriodRequestedScheduleApproval({
+        educationScheduleMode,
+        sessionRound,
+        educationStructure,
       })
-    ).toBe(true)
-    expect(
-      isGeneralOrganizationPeriodSingleRequestedScheduleApproval({
-        educationScheduleMode: 'period',
-        sessionRound: 'multi',
-        educationStructure: 'schedule',
-      })
-    ).toBe(false)
-    expect(
-      isGeneralOrganizationPeriodSingleRequestedScheduleApproval({
-        educationScheduleMode: 'date',
-        sessionRound: 'single',
-        educationStructure: 'schedule',
-      })
-    ).toBe(false)
-    expect(buildPeriodSingleRequestedScheduleApprovePayload([184944, 184945])).toBeNull()
-    expect(buildPeriodSingleRequestedScheduleApprovePayload([184945])).toEqual({
-      requestedScheduleId: 184945,
+    expect(judge('period', 'single', 'curriculum')).toBe(true)
+    expect(judge('period', 'multi', 'curriculum')).toBe(true)
+    expect(judge('PERIOD', 'SINGLE', 'schedule')).toBe(true)
+    expect(judge('period', 'multi', 'schedule')).toBe(false)
+    expect(judge('date', 'single', 'schedule')).toBe(false)
+    expect(judge('date', 'multi', 'curriculum')).toBe(false)
+
+    expect(resolveRequestedScheduleSelectionLimit(null)).toBeNull()
+    expect(resolveRequestedScheduleSelectionLimit(0)).toBeNull()
+    expect(resolveRequestedScheduleSelectionLimit(2)).toBe(2)
+
+    expect(buildPeriodRequestedScheduleApprovePayload([185037, 185038], 2)).toEqual({
+      ok: true,
+      payload: { requestedScheduleIds: [185037, 185038] },
     })
+    expect(buildPeriodRequestedScheduleApprovePayload([185037, 185037], 1)).toEqual({
+      ok: true,
+      payload: { requestedScheduleIds: [185037] },
+    })
+    expect(buildPeriodRequestedScheduleApprovePayload([185037, 185038], 1)).toEqual({
+      ok: false,
+      reason: 'count-exceeded',
+    })
+    expect(buildPeriodRequestedScheduleApprovePayload([185037, 185038, 185039], null)).toEqual({
+      ok: true,
+      payload: { requestedScheduleIds: [185037, 185038, 185039] },
+    })
+    // 선택 0개 = 필드 생략 = 일정 미확정 승인
+    expect(buildPeriodRequestedScheduleApprovePayload([], 2)).toEqual({ ok: true, payload: {} })
+
+    expect(
+      mergeOrganizationApplicationApproveBody({
+        timing: 'IMMEDIATE',
+        requestedScheduleIds: [185037, 185038],
+        requestedScheduleId: 185037,
+        slots: [{ scheduleId: 187141 }],
+      })
+    ).toEqual({ timing: 'IMMEDIATE', requestedScheduleIds: [185037, 185038] })
+    expect(
+      mergeOrganizationApplicationApproveBody({ timing: 'IMMEDIATE', requestedScheduleIds: [] })
+    ).toEqual({ timing: 'IMMEDIATE' })
+  })
+
+  it('지난 일정 409에서 서버가 공통 충돌 문구만 주면 FE 안내를 보여준다', () => {
+    const conflict = (message: string) => ({
+      isAxiosError: true,
+      response: {
+        status: 409,
+        data: {
+          success: false,
+          data: null,
+          message,
+          error: { code: 'GENERAL_ORGANIZATION_HISTORICAL_ASSIGNMENT_IMMUTABLE', message },
+        },
+      },
+    })
+    expect(
+      formatOrganizationApplicationApproveErrorMessage(
+        conflict('현재 데이터 또는 처리 상태와 충돌하여 요청을 완료할 수 없습니다.')
+      )
+    ).toContain('시작 전 희망 일정만 선택해 주세요')
+    expect(
+      formatOrganizationApplicationApproveErrorMessage(conflict('2026-11-08 09:00 일정은 이미 시작되었습니다.'))
+    ).toBe('2026-11-08 09:00 일정은 이미 시작되었습니다.')
+  })
+
+  it('레거시 단건 requestedScheduleId 본문은 그대로 만든다', () => {
     expect(
       mergeOrganizationApplicationApproveBody({
         timing: 'IMMEDIATE',

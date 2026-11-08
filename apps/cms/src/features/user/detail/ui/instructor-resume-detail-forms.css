@@ -7,3 +7,39 @@
   line-height: inherit;
   color: inherit;
 }
+
+/*
+ * 회원 상세 강사 이력 — 시안 타이포·카드 (resume.css는 프로그램 신청 상세와 공용이라 이 화면 범위로만 덮어쓴다)
+ */
+.instructor-resume-detail-forms__form .instructor-resume-card,
+.instructor-resume-detail-forms__free-writing .instructor-resume-card {
+  padding: 16px 20px;
+  gap: 12px;
+  border-radius: 8px;
+}
+
+.instructor-resume-detail-forms__form .instructor-resume-row-left {
+  width: 180px;
+  min-width: 180px;
+  color: rgba(61, 61, 61, 0.5);
+}
+
+/* resume.css 연도형(--single-year) min-width 40 !important 보다 우선 */
+.instructor-resume-detail-forms__form .instructor-resume-row-left.instructor-resume-row-left--single-year {
+  min-width: 180px !important;
+}
+
+.instructor-resume-detail-forms__form .instructor-resume-row-right,
+.instructor-resume-detail-forms__form .instructor-resume-role {
+  color: #3d3d3d;
+}
+
+.instructor-resume-detail-forms__form .instructor-resume-empty {
+  color: #3d3d3d;
+  font-weight: 500;
+}
+
+.instructor-resume-detail-forms__free-writing .instructor-resume-free-writing-text {
+  font-size: 16px;
+  color: #3d3d3d;
+}

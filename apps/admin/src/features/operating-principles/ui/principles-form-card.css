@@ -184,10 +184,6 @@
   background: var(--color-mint-01, #01a1af) !important;
 }
 
-.principles-sortable-table .ant-table {
-  table-layout: fixed;
-}
-
 .principles-sortable-table .ant-table-tbody > tr > td {
   vertical-align: middle;
 }
@@ -211,4 +207,10 @@
 .principles-sortable-table .ant-table-tbody > tr > td .cms-input {
   display: block;
   max-width: 100%;
+}
+
+/* 수정 칸 autoSize(hug) — 한 줄이면 단일 입력과 같은 40px (본문 22 + 상하 8 + 보더 2) */
+.principles-form-card .principles-inline-field--edit.cms-textarea--medium .cms-textarea__control {
+  padding-top: 8px;
+  padding-bottom: 8px;
 }

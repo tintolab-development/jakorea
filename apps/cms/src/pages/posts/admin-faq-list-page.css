@@ -76,3 +76,54 @@
   font-weight: 500;
   line-height: 150%;
 }
+
+/*
+ * 시안 열 폭 — 공통 규칙(admin-data-table.css `selection-col + col ~ col { width: auto }`)이
+ * 선택 열이 있는 필터 목록 표의 열을 균등 분배하므로 이 화면만 시안 폭으로 되돌린다.
+ * 제목(5번째 col)은 auto로 남는 폭을 흡수한다.
+ */
+
+.admin-faq-list-page
+  .filter-table-layout
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  col.ant-table-selection-col
+  ~ col:nth-child(3) {
+  width: 100px !important;
+}
+
+.admin-faq-list-page
+  .filter-table-layout
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  col.ant-table-selection-col
+  ~ col:nth-child(4) {
+  width: 200px !important;
+}
+
+.admin-faq-list-page
+  .filter-table-layout
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  col.ant-table-selection-col
+  ~ col:nth-child(6) {
+  width: 140px !important;
+}
+
+.admin-faq-list-page
+  .filter-table-layout
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  col.ant-table-selection-col
+  ~ col:nth-child(7) {
+  width: 200px !important;
+}
+
+.admin-faq-list-page
+  .filter-table-layout
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  col.ant-table-selection-col
+  ~ col:nth-child(8) {
+  width: 200px !important;
+}

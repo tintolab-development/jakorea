@@ -12,8 +12,9 @@ export interface RequestedScheduleResponse {
   id?: number | null;
   preferenceOrder?: number;
   requestedDate?: string;
-  /** 시작 교시(1~12). 일반 기관 날짜 지정형은 교시 개념이 없어 null. */
+  /** 시작 교시(1~12). 일반 기관(날짜 지정형·기간 지정형 모두)은 교시 개념이 없어 null. */
   startPeriod?: number | null;
+  /** 희망 차시 수. 일반 기관은 신청자가 보낸 총 차시 수 그대로이며 sessionTimes 개수와 다를 수 있다(예: 3차시, sessionTimes 1구간 09:00~10:00). 시간 길이로 재계산하지 않는다. */
   sessionCount?: number;
   combinedClassYn?: boolean;
   sessionTimes?: RequestedSessionTimeResponse[];

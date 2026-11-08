@@ -1,8 +1,8 @@
 import { formatKoreanPhoneNumberPreservingMask } from '@jakorea/domain/shared/korean-phone'
-import type { ApplyTrainedTeachersBasicInfoValues } from './apply-trained-teachers-basic-info'
+import type { ApplyInstitutionBasicInfoValues } from './apply-institution-basic-info'
 
 /** 포털 프로필에서 기본정보에 미리 넣을 수 있는 값 */
-export type TrainedTeachersProfileSource = {
+export type InstitutionBasicInfoProfileSource = {
   schoolName?: string
   affiliationName?: string
   addressDetail?: string
@@ -20,8 +20,8 @@ export type TrainedTeachersProfileSource = {
   }
 }
 
-export type TrainedTeachersProfileDefaults = Pick<
-  ApplyTrainedTeachersBasicInfoValues,
+export type InstitutionBasicInfoProfileDefaults = Pick<
+  ApplyInstitutionBasicInfoValues,
   | 'schoolName'
   | 'regionLabel'
   | 'addressDetail'
@@ -37,7 +37,7 @@ const PROFILE_FILL_KEYS = [
   'teacherName',
   'teacherMobile',
   'teacherEmail',
-] as const satisfies ReadonlyArray<keyof TrainedTeachersProfileDefaults>
+] as const satisfies ReadonlyArray<keyof InstitutionBasicInfoProfileDefaults>
 
 function joinParts(parts: Array<string | undefined>): string {
   return parts
@@ -47,7 +47,7 @@ function joinParts(parts: Array<string | undefined>): string {
 }
 
 /** 기관 등록 주소. 학교 조직 주소를 우선하고, 없으면 시·도/시·군·구로 채운다. */
-export function institutionRegionLabelFromProfile(profile: TrainedTeachersProfileSource): string {
+export function institutionRegionLabelFromProfile(profile: InstitutionBasicInfoProfileSource): string {
   const org = profile.teacherOrganization
   const orgAddress = org?.address?.trim()
   if (orgAddress) return orgAddress
@@ -56,9 +56,9 @@ export function institutionRegionLabelFromProfile(profile: TrainedTeachersProfil
   return joinParts([profile.regionSido, profile.regionSigungu])
 }
 
-export function trainedTeachersProfileDefaults(
-  profile: TrainedTeachersProfileSource | null | undefined,
-): TrainedTeachersProfileDefaults {
+export function institutionBasicInfoProfileDefaults(
+  profile: InstitutionBasicInfoProfileSource | null | undefined,
+): InstitutionBasicInfoProfileDefaults {
   const source = profile ?? {}
   const org = source.teacherOrganization
   return {
@@ -76,10 +76,10 @@ export function trainedTeachersProfileDefaults(
 }
 
 /** 사용자가 비워 둔 칸만 프로필 값으로 채운다. 이미 입력한 값은 유지한다. */
-export function fillTrainedTeachersBasicInfoFromProfile(
-  current: ApplyTrainedTeachersBasicInfoValues,
-  defaults: TrainedTeachersProfileDefaults,
-): ApplyTrainedTeachersBasicInfoValues {
+export function fillInstitutionBasicInfoFromProfile(
+  current: ApplyInstitutionBasicInfoValues,
+  defaults: InstitutionBasicInfoProfileDefaults,
+): ApplyInstitutionBasicInfoValues {
   let changed = false
   const next = { ...current }
   for (const key of PROFILE_FILL_KEYS) {

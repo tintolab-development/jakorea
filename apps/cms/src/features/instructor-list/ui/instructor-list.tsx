@@ -1,3 +1,4 @@
+import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 /**
  * 강사 목록 컴포넌트
  * Phase 4.1: 강사 조회 (FR-F00)
@@ -115,7 +116,7 @@ export function InstructorList({
       title: '이메일',
       dataIndex: 'email',
       key: 'email',
-      width: 200,
+      width: TABLE_COLUMN_WIDTHS.email,
     },
     {
       title: '전화번호',

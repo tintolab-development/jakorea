@@ -76,6 +76,16 @@
   overflow: visible;
 }
 
+/*
+ * 헤더(GNB) ↔ 연도 탭 16px — 시안(12432:443040) 탭 y=80(GNB 64 + 16).
+ * 디자인 가이드(14741:2)는 일반 목록만 32(content y=96)를 정의하므로 탭이 맨 위에 오는 이 화면만
+ * layout-content 상단 패딩을 16으로 줄인다 (kakao-alimtalk·sms·mail·템플릿 목록과 같은 방식).
+ */
+.layout-content:has(.account-payments-page) {
+  --cms-layout-content-padding-top: 16px;
+  padding-top: 16px;
+}
+
 /* 요약 위젯(3카드) 상단 — 탭과 요약 사이 16px (education-record-list-page__top-nav 과 동일 역할) */
 .account-payments-page__top-nav {
   width: 100%;
@@ -87,18 +97,23 @@
   padding: 0;
 }
 
+/* 시안(12432:443040) 선택 열 60 — cms-data-table 룰: 화면 시안이 60이면 변수로 지정 */
+.account-payments-page__table.cms-data-table {
+  --table-selection-column-width: 60px;
+}
+
 /* disabled 버튼에 Tooltip 표시용 (포인터 이벤트가 자식 span으로 전달됨) */
 .account-payments-page__tooltip-trigger-wrap {
   display: inline-block;
 }
 
-/* 화면 너비에 따라 3열 동일 비율 배분 → 좁으면 1열 */
+/* 화면 너비에 따라 3열 동일 비율 배분 → 좁으면 1열. 요약 ↔ 목록 카드·캘린더 툴바 24 (Figma 12432:443040·443398) */
 .account-payments-page__summary-row {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 24px;
   width: 100%;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 }
 
 @media (max-width: 768px) {
@@ -117,7 +132,7 @@
   align-items: flex-start;
   gap: 12px;
   flex: 1 0 0;
-  border-radius: 12px;
+  border-radius: 16px;
   background: #fff;
   width: 100%;
 }
@@ -203,185 +218,4 @@
   align-items: center;
   justify-content: center;
   background: rgba(255, 255, 255, 0.65);
-}
-
-/*
- * Ant Table column.width는 cms-data-table의 `col ~ col { width: auto !important }`에 덮임.
- * 짧은 열은 고정하고 프로그램명이 남는 폭을 흡수한다.
- * nth-child: 1 체크 · 2 No. · 3 신청자 · 4 프로그램 · 5 기관 · 6 차시 · 7 현황 · 8 금액 · 9 이체일
- * filter-table-layout 공통 규칙보다 구체성을 높여 덮어쓴다.
- */
-.account-payments-page
-  .filter-table-layout
-  .filter-table-layout__table
-  .ant-table-wrapper.account-payments-page__table.cms-data-table
-  colgroup
-  > col:nth-child(3),
-.account-payments-page
-  .filter-table-layout
-  .filter-table-layout__table
-  .ant-table-wrapper.account-payments-page__table.cms-data-table
-  .ant-table-thead
-  > tr
-  > th.account-payments-page__col-instructor,
-.account-payments-page
-  .filter-table-layout
-  .filter-table-layout__table
-  .ant-table-wrapper.account-payments-page__table.cms-data-table
-  .ant-table-tbody
-  > tr
-  > td.account-payments-page__col-instructor {
-  width: 88px !important;
-  min-width: 88px !important;
-  max-width: 88px !important;
-}
-
-.account-payments-page
-  .filter-table-layout
-  .filter-table-layout__table
-  .ant-table-wrapper.account-payments-page__table.cms-data-table
-  colgroup
-  > col:nth-child(4),
-.account-payments-page
-  .filter-table-layout
-  .filter-table-layout__table
-  .ant-table-wrapper.account-payments-page__table.cms-data-table
-  .ant-table-thead
-  > tr
-  > th.account-payments-page__col-program,
-.account-payments-page
-  .filter-table-layout
-  .filter-table-layout__table
-  .ant-table-wrapper.account-payments-page__table.cms-data-table
-  .ant-table-tbody
-  > tr
-  > td.account-payments-page__col-program {
-  width: auto !important;
-  min-width: 420px !important;
-  max-width: none !important;
-}
-
-.account-payments-page
-  .filter-table-layout
-  .filter-table-layout__table
-  .ant-table-wrapper.account-payments-page__table.cms-data-table
-  colgroup
-  > col:nth-child(5),
-.account-payments-page
-  .filter-table-layout
-  .filter-table-layout__table
-  .ant-table-wrapper.account-payments-page__table.cms-data-table
-  .ant-table-thead
-  > tr
-  > th.account-payments-page__col-institution,
-.account-payments-page
-  .filter-table-layout
-  .filter-table-layout__table
-  .ant-table-wrapper.account-payments-page__table.cms-data-table
-  .ant-table-tbody
-  > tr
-  > td.account-payments-page__col-institution {
-  width: 130px !important;
-  min-width: 130px !important;
-  max-width: 130px !important;
-}
-
-.account-payments-page
-  .filter-table-layout
-  .filter-table-layout__table
-  .ant-table-wrapper.account-payments-page__table.cms-data-table
-  colgroup
-  > col:nth-child(6),
-.account-payments-page
-  .filter-table-layout
-  .filter-table-layout__table
-  .ant-table-wrapper.account-payments-page__table.cms-data-table
-  .ant-table-thead
-  > tr
-  > th.account-payments-page__col-session,
-.account-payments-page
-  .filter-table-layout
-  .filter-table-layout__table
-  .ant-table-wrapper.account-payments-page__table.cms-data-table
-  .ant-table-tbody
-  > tr
-  > td.account-payments-page__col-session {
-  width: 100px !important;
-  min-width: 100px !important;
-  max-width: 100px !important;
-}
-
-.account-payments-page
-  .filter-table-layout
-  .filter-table-layout__table
-  .ant-table-wrapper.account-payments-page__table.cms-data-table
-  colgroup
-  > col:nth-child(7),
-.account-payments-page
-  .filter-table-layout
-  .filter-table-layout__table
-  .ant-table-wrapper.account-payments-page__table.cms-data-table
-  .ant-table-thead
-  > tr
-  > th.account-payments-page__col-status,
-.account-payments-page
-  .filter-table-layout
-  .filter-table-layout__table
-  .ant-table-wrapper.account-payments-page__table.cms-data-table
-  .ant-table-tbody
-  > tr
-  > td.account-payments-page__col-status {
-  width: 130px !important;
-  min-width: 130px !important;
-  max-width: 130px !important;
-}
-
-.account-payments-page
-  .filter-table-layout
-  .filter-table-layout__table
-  .ant-table-wrapper.account-payments-page__table.cms-data-table
-  colgroup
-  > col:nth-child(8),
-.account-payments-page
-  .filter-table-layout
-  .filter-table-layout__table
-  .ant-table-wrapper.account-payments-page__table.cms-data-table
-  .ant-table-thead
-  > tr
-  > th.account-payments-page__col-amount,
-.account-payments-page
-  .filter-table-layout
-  .filter-table-layout__table
-  .ant-table-wrapper.account-payments-page__table.cms-data-table
-  .ant-table-tbody
-  > tr
-  > td.account-payments-page__col-amount {
-  width: 110px !important;
-  min-width: 110px !important;
-  max-width: 110px !important;
-}
-
-.account-payments-page
-  .filter-table-layout
-  .filter-table-layout__table
-  .ant-table-wrapper.account-payments-page__table.cms-data-table
-  colgroup
-  > col:nth-child(9),
-.account-payments-page
-  .filter-table-layout
-  .filter-table-layout__table
-  .ant-table-wrapper.account-payments-page__table.cms-data-table
-  .ant-table-thead
-  > tr
-  > th.account-payments-page__col-transfer-date,
-.account-payments-page
-  .filter-table-layout
-  .filter-table-layout__table
-  .ant-table-wrapper.account-payments-page__table.cms-data-table
-  .ant-table-tbody
-  > tr
-  > td.account-payments-page__col-transfer-date {
-  width: 140px !important;
-  min-width: 140px !important;
-  max-width: 140px !important;
 }

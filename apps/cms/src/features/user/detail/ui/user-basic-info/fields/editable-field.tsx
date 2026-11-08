@@ -7,9 +7,18 @@ export interface EditableFieldProps {
   edit?: ReactNode
   readOnlyDisplay?: boolean
   fullRow?: boolean
+  /** 수정 모드 라벨 필수 `*` (DetailInfoForm edit 모드에서만 표시) */
+  required?: boolean
 }
 
-export function EditableField({ label, view, edit, readOnlyDisplay, fullRow }: EditableFieldProps) {
+export function EditableField({
+  label,
+  view,
+  edit,
+  readOnlyDisplay,
+  fullRow,
+  required,
+}: EditableFieldProps) {
   return (
     <DetailInfoForm.Field
       label={label}
@@ -17,6 +26,7 @@ export function EditableField({ label, view, edit, readOnlyDisplay, fullRow }: E
       edit={edit}
       readOnlyDisplay={readOnlyDisplay}
       fullRow={fullRow}
+      required={required}
     />
   )
 }

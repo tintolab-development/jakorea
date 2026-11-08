@@ -22,14 +22,13 @@ import { EditableField } from '../fields/editable-field'
 import { EditableRow } from '../fields/editable-row'
 import { ContactInfoFieldsRow, FullWidthAddressEdit, Id1365View } from './shared'
 import {
-  GENDER_EDIT_OPTIONS,
-  INDIVIDUAL_AFFILIATION_FIELDS_WIDTH,
+  ALL_USERS_EDIT_FIELD_WIDTH,
+  GENDER_EDIT_RADIO_OPTIONS,
   INDIVIDUAL_SCHOOL_ENROLLMENT_OPTIONS,
   individualAffiliationGradeSelectOptions,
 } from './constants'
 import type { BasicInfoSectionContext } from './types'
-import { formatDate } from '@/shared/utils'
-import { activityChangeCountView } from '../status'
+import { formatDateDot } from '@/shared/utils'
 
 /** 개인 회원 — 가입일·소셜 (상단 분리 카드) */
 export function AllUsersMetaSection(ctx: BasicInfoSectionContext) {
@@ -37,11 +36,8 @@ export function AllUsersMetaSection(ctx: BasicInfoSectionContext) {
   return (
     <>
       <EditableRow type="double">
-        <EditableField label="가입일" readOnlyDisplay view={<span>{formatDate(user.createdAt)}</span>} />
+        <EditableField label="가입일" readOnlyDisplay view={<span>{formatDateDot(user.createdAt)}</span>} />
         <EditableField label="연동된 소셜 계정" readOnlyDisplay view={socialView(user)} />
-      </EditableRow>
-      <EditableRow type="single">
-        <EditableField label="활동 변경 횟수" readOnlyDisplay view={activityChangeCountView(user)} />
       </EditableRow>
     </>
   )
@@ -151,6 +147,7 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
       <EditableRow type="double">
         <EditableField
           label="성명"
+          required
           readOnlyDisplay={editing.isReadOnlyDisplay}
           view={nameWithBadge(user.name)}
           edit={nameWithBadge(
@@ -158,7 +155,7 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
               value={d?.name ?? ''}
               onChange={e => onMemberInfoDraftChange?.({ name: e.target.value })}
               inputSize="small"
-              width="100%"
+              width={ALL_USERS_EDIT_FIELD_WIDTH.input}
               placeholder="한글 성명"
               aria-label="성명"
             />
@@ -166,25 +163,26 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
         />
         <EditableField
           label="성별 및 생년월일"
+          required
           readOnlyDisplay={editing.isReadOnlyDisplay}
           view={genderBirthView(user)}
           edit={
-            <span className="user-basic-info-section__inline-controls">
-              <CmsSelect
+            <span className="detail-info-form-inputs-wrapper-no-gap">
+              <CmsRadioGroup
+                options={GENDER_EDIT_RADIO_OPTIONS}
+                size="medium"
                 value={d?.gender || undefined}
-                onChange={v => onMemberInfoDraftChange?.({ gender: v != null ? String(v) : '' })}
-                options={GENDER_EDIT_OPTIONS}
-                placeholder="성별"
-                inputSize="small"
-                width={120}
+                onChange={event => onMemberInfoDraftChange?.({ gender: String(event.target.value) })}
+                aria-label="성별"
               />
+              <DetailInfoForm.InputsSeparator />
               <CmsDateTextInput
                 value={(d?.birthDate ?? '').replace(/-/g, '.')}
                 onValueChange={value =>
                   onMemberInfoDraftChange?.({ birthDate: value.replace(/\./g, '-') })
                 }
                 inputSize="small"
-                width={160}
+                width={ALL_USERS_EDIT_FIELD_WIDTH.input}
                 placeholder="YYYY-MM-DD"
                 maxLength={10}
                 aria-label="생년월일"
@@ -202,11 +200,14 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
         emailValue={d?.email ?? ''}
         onPhoneChange={next => onMemberInfoDraftChange?.({ phone: next })}
         onEmailChange={next => onMemberInfoDraftChange?.({ email: next })}
+        required
+        inputWidth={ALL_USERS_EDIT_FIELD_WIDTH.input}
       />
 
       <EditableRow type="double">
         <EditableField
           label="현재 학교 재학 여부"
+          required
           readOnlyDisplay={editing.isReadOnlyDisplay}
           view={<span>{individualSchoolEnrollmentStatusView(user)}</span>}
           edit={
@@ -222,6 +223,7 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
         />
         <EditableField
           label="소속"
+          required
           readOnlyDisplay={editing.isReadOnlyDisplay}
           view={affiliationView(user)}
           edit={
@@ -246,7 +248,7 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
                   onSelect={handleSchoolSelect}
                   placeholder="학교명"
                   inputSize="small"
-                  width={INDIVIDUAL_AFFILIATION_FIELDS_WIDTH}
+                  width={ALL_USERS_EDIT_FIELD_WIDTH.schoolSearch}
                 />
                 <DetailInfoForm.InputsSeparator />
                 <CmsSelect
@@ -257,7 +259,7 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
                   }
                   options={individualAffiliationGradeSelectOptions(d?.affiliationGrade)}
                   inputSize="small"
-                  width={INDIVIDUAL_AFFILIATION_FIELDS_WIDTH}
+                  width={ALL_USERS_EDIT_FIELD_WIDTH.gradeSelect}
                   aria-label="소속 학년"
                 />
               </span>
@@ -278,6 +280,7 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
       <EditableRow type="double">
         <EditableField
           label="자택 주소지"
+          required
           readOnlyDisplay={editing.isReadOnlyDisplay}
           view={<span>{detailAddressView(user, personalInfoRevealed)}</span>}
           edit={
@@ -292,6 +295,8 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
                 onMemberInfoDraftChange?.({ zipCode: item.zipNo?.trim() ?? '' })
               }
               detailAriaLabel="자택 주소지 상세"
+              searchWidth={ALL_USERS_EDIT_FIELD_WIDTH.addressSearch}
+              detailWidth={ALL_USERS_EDIT_FIELD_WIDTH.input}
             />
           }
         />
@@ -306,11 +311,11 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
           }
           edit={
             <CmsInput
-              placeholder="1365 ID"
+              placeholder="1365 ID를 입력해 주세요"
               value={d?.id1365 ?? ''}
               onChange={e => onMemberInfoDraftChange?.({ id1365: e.target.value })}
               inputSize="small"
-              width="100%"
+              width={ALL_USERS_EDIT_FIELD_WIDTH.input}
               aria-label="1365 ID"
             />
           }

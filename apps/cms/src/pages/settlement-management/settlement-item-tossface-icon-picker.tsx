@@ -7,35 +7,28 @@ import { useState, type ReactNode } from 'react'
 import { Popover } from 'antd'
 import './settlement-item-tossface-icon-picker.css'
 
-/** Tossface에서 자주 쓰이는 범주 위주 임시 팔레트(표준 이모지 코드포인트) */
+/**
+ * 시안(0-1. 이모티콘 변경 시) 팔레트 — 한 줄 11개.
+ * 저장된 emojiOverride는 문자열 그대로 렌더하므로 이 목록에 없는(이전 팔레트) 값도 그대로 표시된다.
+ */
 const TOSSFACE_PICKER_EMOJI = [
-  '💰',
-  '💵',
-  '🪙',
-  '💼',
-  '🎓',
-  '🏫',
-  '🚌',
-  '🚗',
-  '✈️',
-  '🏨',
-  '🍔',
-  '☕',
-  '📅',
-  '📋',
-  '✏️',
-  '🎯',
-  '👤',
+  '🙂',
+  '😆',
+  '🥰',
+  '😲',
+  '😭',
+  '😡',
+  '😱',
   '❤️',
-  '⭐',
-  '🔔',
-  '✅',
-  '📌',
+  '👏',
+  '👍',
+  '☑️',
 ] as const
 
 export interface SettlementItemTossfaceIconPickerTriggerProps {
   children: ReactNode
-  onPickEmoji: (emoji: string | null) => void
+  /** 시안에 「기본 아이콘으로」 되돌리기 버튼 없음 — 팔레트 선택만 */
+  onPickEmoji: (emoji: string) => void
 }
 
 export function SettlementItemTossfaceIconPickerTrigger({
@@ -50,6 +43,8 @@ export function SettlementItemTossfaceIconPickerTrigger({
       onOpenChange={setOpen}
       trigger="click"
       placement="bottomLeft"
+      // 시안 8999:140664: 모달 기준 left 16 · top 68 → 헤더 아이콘(left 30, 하단 57) 대비 x −14 · y +11
+      align={{ offset: [-14, 11] }}
       zIndex={11000}
       overlayClassName="settlement-item-tossface-picker-popover"
       content={
@@ -70,16 +65,6 @@ export function SettlementItemTossfaceIconPickerTrigger({
               </button>
             ))}
           </div>
-          <button
-            type="button"
-            className="settlement-item-tossface-picker__reset"
-            onClick={() => {
-              onPickEmoji(null)
-              setOpen(false)
-            }}
-          >
-            기본 아이콘(SVG)으로
-          </button>
         </div>
       }
     >

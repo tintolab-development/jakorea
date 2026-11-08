@@ -4,12 +4,16 @@ import { ProgramAssignmentStatusText } from '@/features/program/shared/ui/progra
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState, type Key } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
-import { saveGeneralVolunteerAssignedOrganizations } from '@/features/program/general/api/admin-program-progress-service'
+import {
+  fetchGeneralParticipantEducationScope,
+  saveGeneralVolunteerAssignedOrganizations,
+} from '@/features/program/general/api/admin-program-progress-service'
+import { formatWaitingOrganizationDistance } from '@/features/program/general/lib/assignment-waiting-distance'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
@@ -101,6 +105,26 @@ export function ParticipatingVolunteerAssignmentSection({
   const [addAssignSubmitting, setAddAssignSubmitting] = useState(false)
   const addAssignInFlightRef = useRef(false)
 
+  /**
+   * 「자택과의 거리」 — education-scope `organizations[]`(기관별 편도 거리)를 기관 신청 id로 찾는다.
+   * 서버가 값을 주지 않으면 '-'. FE는 거리를 계산하지 않는다.
+   */
+  const educationScopeQuery = useQuery({
+    queryKey: generalProgramProgressQueryKeys.educationScope(program.id, volunteer.id),
+    queryFn: () => fetchGeneralParticipantEducationScope(program.id, volunteer.id),
+    enabled: remoteEnabled && Boolean(volunteer.id),
+    staleTime: 15_000,
+    retry: false,
+  })
+  const organizationDistances = educationScopeQuery.data?.organizations
+  const resolveDistanceLabel = useCallback(
+    (organizationApplicationId: string | undefined): string =>
+      organizationApplicationId
+        ? formatWaitingOrganizationDistance(organizationDistances, { organizationApplicationId })
+        : '-',
+    [organizationDistances]
+  )
+
   useEffect(() => {
     const assigned = buildInitialVolunteerAssignedRows(volunteer, schoolRows, program)
     setAssignedInstitutions(assigned)
@@ -149,6 +173,7 @@ export function ParticipatingVolunteerAssignmentSection({
         key: 'distanceFromHome',
         width: 120,
         align: 'center',
+        render: (_: unknown, record) => resolveDistanceLabel(record.organizationApplicationId),
       },
       {
         title: '담당 봉사 진행 일정',
@@ -158,7 +183,7 @@ export function ParticipatingVolunteerAssignmentSection({
         render: (_: unknown, record) => renderVolunteerScheduleLines(record.volunteerScheduleLines),
       },
     ],
-    []
+    [resolveDistanceLabel]
   )
 
   const waitingColumns: ColumnsType<VolunteerWaitingInstitutionRow> = useMemo(
@@ -193,6 +218,7 @@ export function ParticipatingVolunteerAssignmentSection({
         key: 'distanceFromHome',
         width: 120,
         align: 'center',
+        render: (_: unknown, record) => resolveDistanceLabel(record.organizationApplicationId),
       },
       {
         title: '봉사 진행 희망 일정',
@@ -219,7 +245,7 @@ export function ParticipatingVolunteerAssignmentSection({
         align: 'center',
       },
     ],
-    []
+    [resolveDistanceLabel]
   )
 
   const assignedExportColumns: ColumnsType<{
@@ -276,10 +302,10 @@ export function ParticipatingVolunteerAssignmentSection({
         schoolName: row.schoolName,
         educationGrade: row.educationGrade,
         region: row.region,
-        distanceFromHome: row.distanceFromHome,
+        distanceFromHome: resolveDistanceLabel(row.organizationApplicationId),
         volunteerSchedule: row.volunteerScheduleLines.join('\n'),
       })),
-    [assignedInstitutions]
+    [assignedInstitutions, resolveDistanceLabel]
   )
 
   const waitingExportRows = useMemo(
@@ -290,12 +316,12 @@ export function ParticipatingVolunteerAssignmentSection({
         schoolName: row.schoolName,
         desiredGrade: row.desiredGrade,
         region: row.region,
-        distanceFromHome: row.distanceFromHome,
+        distanceFromHome: resolveDistanceLabel(row.organizationApplicationId),
         hopeSchedule: row.hopeScheduleLine,
         assignmentStatus: WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS[row.assignmentStatus],
         assignedVolunteerCountLabel: row.assignedVolunteerCountLabel,
       })),
-    [waitingInstitutions]
+    [waitingInstitutions, resolveDistanceLabel]
   )
 
   const { exportExcel: exportAssignedExcel, isExporting: isAssignedExcelExporting } =

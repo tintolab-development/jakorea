@@ -25,7 +25,9 @@ export function InlineText({ editing, value, onChange, rows, label, placeholder 
       className={fieldClass(editing)}
       inputSize="medium"
       width="100%"
-      rows={rows}
+      // 수정 시 줄바꿈 수만큼 높이가 늘고 줄어든다(hug). 조회는 기존 rows 고정
+      rows={editing ? undefined : rows}
+      autoSize={editing ? { minRows: 1 } : undefined}
       value={value}
       readOnly={!editing}
       tabIndex={editing ? 0 : -1}

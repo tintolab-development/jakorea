@@ -16,24 +16,24 @@ import {
   PFTextarea,
   PFTextInput,
 } from '@/shared/ui'
-import styles from './apply-trained-teachers-basic-info.module.css'
-import { normalizePortalEducationFormat } from './apply-trained-teachers-basic-info-answers'
+import styles from './apply-institution-basic-info.module.css'
+import { normalizePortalEducationFormat } from './apply-institution-basic-info-answers'
 import type {
-  ApplyTrainedTeachersBasicInfoValues,
+  ApplyInstitutionBasicInfoValues,
   PortalEducationFormat,
-} from './apply-trained-teachers-basic-info-answers'
+} from './apply-institution-basic-info-answers'
 
 export {
   basicInfoAnswerFromValues,
   basicInfoValuesFromDraftAnswer,
-  emptyTrainedTeachersBasicInfo,
+  emptyInstitutionBasicInfo,
   normalizePortalEducationFormat,
-} from './apply-trained-teachers-basic-info-answers'
+} from './apply-institution-basic-info-answers'
 export type {
-  ApplyTrainedTeachersBasicInfoValues,
+  ApplyInstitutionBasicInfoValues,
   BasicInfoAnswerFromValuesOptions,
   PortalEducationFormat,
-} from './apply-trained-teachers-basic-info-answers'
+} from './apply-institution-basic-info-answers'
 
 const APPLICATION_GRADE_OPTIONS = Array.from({ length: 6 }, (_, i) => ({
   value: String(i + 1),
@@ -54,7 +54,7 @@ const EDUCATION_PLACE_OPTIONS = [
   { value: 'custom', label: '기타(직접입력)' },
 ] as const
 
-export type ApplyTrainedTeachersBasicInfoProfile = {
+export type ApplyInstitutionBasicInfoProfile = {
   schoolName?: string
   regionLabel?: string
   teacherName?: string
@@ -62,9 +62,9 @@ export type ApplyTrainedTeachersBasicInfoProfile = {
   teacherEmail?: string
 }
 
-type ApplyTrainedTeachersBasicInfoProps = {
-  value: ApplyTrainedTeachersBasicInfoValues
-  onChange: (next: ApplyTrainedTeachersBasicInfoValues) => void
+type ApplyInstitutionBasicInfoProps = {
+  value: ApplyInstitutionBasicInfoValues
+  onChange: (next: ApplyInstitutionBasicInfoValues) => void
   /** 프로필 학교명 — 있으면 신청 기관명 잠금 */
   schoolNameLocked?: boolean
   /** 일반 기관 신청 — M·E-mail 로그인 회원 정보 고정 */
@@ -76,7 +76,7 @@ type ApplyTrainedTeachersBasicInfoProps = {
   /** 교육받은 교사·1사1교만. 일반 기관 신청 폼에는 없음 */
   showEducationPlace?: boolean
   maxClassCount?: number
-  profile?: ApplyTrainedTeachersBasicInfoProfile
+  profile?: ApplyInstitutionBasicInfoProfile
   /** 자동입력(잠금·disabled) 칸 placeholder에 answers JSON 키 표시 */
   answerKeyPlaceholders?: boolean
 }
@@ -133,10 +133,11 @@ function RadioGroup({
 }
 
 /**
- * 교육받은 교사 신청 — 기본 정보.
+ * 기관 계열 신청 — 기본 정보 (교육받은 교사·일반 프로그램 참여기관·1사1교 공통).
+ * 유형별 차이(교육 장소·연락처 잠금·희망 교육 형태)는 props로 분기한다.
  * 강사 신청 페이지(`instructor-apply-form`)와 같은 `PFFormFieldTable` 표.
  */
-export function ApplyTrainedTeachersBasicInfo({
+export function ApplyInstitutionBasicInfo({
   value,
   onChange,
   schoolNameLocked = false,
@@ -147,8 +148,8 @@ export function ApplyTrainedTeachersBasicInfo({
   maxClassCount = DEFAULT_MAX_CLASS_COUNT,
   profile,
   answerKeyPlaceholders = false,
-}: ApplyTrainedTeachersBasicInfoProps) {
-  const patch = (partial: Partial<ApplyTrainedTeachersBasicInfoValues>) => {
+}: ApplyInstitutionBasicInfoProps) {
+  const patch = (partial: Partial<ApplyInstitutionBasicInfoValues>) => {
     onChange({ ...value, ...partial })
   }
 
@@ -181,7 +182,7 @@ export function ApplyTrainedTeachersBasicInfo({
           <PFSelect
             variant="formPage"
             size="large"
-            width={120}
+            width={130}
             placeholder="학년 선택"
             options={APPLICATION_GRADE_OPTIONS}
             value={value.applicationGrade || undefined}
@@ -434,4 +435,4 @@ export function ApplyTrainedTeachersBasicInfo({
   )
 }
 
-export { findIncompleteTrainedTeachersBasicInfoMessage } from './apply-trained-teachers-basic-info-incomplete'
+export { findIncompleteInstitutionBasicInfoMessage } from './apply-institution-basic-info-incomplete'

@@ -342,4 +342,19 @@ const draftNotAgreed = buildConsentItemsFromSummaries([
 assert.equal(draftNotAgreed.documentItems[0]?.agreed, false)
 assert.equal(canWithdrawConsent(draftNotAgreed.documentItems[0] ?? {}), false)
 
+// 초상권 allItemsAgreed — 라벨 함수까지 전달 (구버전 BE 생략 → null)
+const portraitAll = buildConsentItemsFromSummaries([
+  { consentType: 'PORTRAIT_RIGHTS', agreed: true, status: 'SIGNED', consentStatus: 'PARTIAL', programEligible: true, allItemsAgreed: true },
+])
+const portraitItem = [...portraitAll.basicItems, ...portraitAll.documentItems].find(item => item.id === 'portrait')
+assert.equal(portraitItem?.consentType, 'PORTRAIT_RIGHTS')
+assert.equal(portraitItem?.allItemsAgreed, true)
+const portraitLegacy = buildConsentItemsFromSummaries([
+  { consentType: 'PORTRAIT_RIGHTS', agreed: true, consentStatus: 'PARTIAL' },
+])
+assert.equal(
+  [...portraitLegacy.basicItems, ...portraitLegacy.documentItems].find(item => item.id === 'portrait')?.allItemsAgreed,
+  null,
+)
+
 console.log('map-consents.selfcheck: ok')

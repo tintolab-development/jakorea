@@ -17,6 +17,7 @@ import {
   buildParticipatingInstructorWaitingSchoolRowsFromBoard,
   buildParticipatingInstructorWaitingScheduleRowsFromBoard,
 } from '@/features/program/general/lib/build-participating-instructor-assignment-rows'
+import type { InstructorApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationListItemResponse'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
 import type {
@@ -28,6 +29,10 @@ import type {
   ParticipatingIndividualInstructorWaitingScheduleRow,
 } from '@/features/program/general/lib/participating-individual-instructor-assignment-types'
 import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
+import {
+  collectInstructorApplicationOrganizationDistances,
+  mergeWaitingOrganizationDistances,
+} from '@/features/program/general/lib/assignment-waiting-distance'
 
 /**
  * 배정 현황 SSOT = GET /api/admin/program-execution/instructor-assignments (board.assignments).
@@ -110,7 +115,26 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
     retry: false,
   })
   const scheduleDistances = distanceScopeQuery.data?.schedules
-  const organizationDistances = distanceScopeQuery.data?.organizations
+  const scopeOrganizationDistances = distanceScopeQuery.data?.organizations
+  /**
+   * 기관형 거리 — education-scope `organizations[]`를 먼저 쓰고, 비어 있는 기관은
+   * 같은 강사의 강사 신청 응답(organizationDistances·preferredOrganizations)으로 채운다.
+   */
+  const approvedInstructorApplications = useCompanySchoolBoard
+    ? undefined
+    : (boardQuery.data as { approvedInstructorApplications?: InstructorApplicationListItemResponse[] } | undefined)
+        ?.approvedInstructorApplications
+  const organizationDistances = useMemo(() => {
+    // 1사1교는 기존처럼 education-scope 값만 쓴다
+    if (!approvedInstructorApplications) return scopeOrganizationDistances
+    const ownApplication = approvedInstructorApplications?.find(
+      app => app.instructorMemberId != null && String(app.instructorMemberId) === instructorMemberId
+    )
+    return mergeWaitingOrganizationDistances(
+      scopeOrganizationDistances,
+      collectInstructorApplicationOrganizationDistances(ownApplication)
+    )
+  }, [approvedInstructorApplications, instructorMemberId, scopeOrganizationDistances])
 
   const queryClient = useQueryClient()
   const queryError = boardQuery.error

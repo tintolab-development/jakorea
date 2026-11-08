@@ -24,7 +24,9 @@ import type {
   SettlementBudgetSummaryResponse,
   SettlementBulkStatusChangeRequest,
   SettlementConfigResponse,
+  SettlementCorrectionApprovalRequest,
   SettlementCorrectionRequest,
+  SettlementCorrectionResponse,
   SettlementExportRequest,
   SettlementExportHistoryResponse,
   SettlementFrontendResponse,
@@ -170,6 +172,26 @@ export async function rejectPaymentStatementRemote(
   body: SettlementStatusChangeRequest
 ): Promise<void> {
   await settlementApi.rejectPaymentStatement(statementId, body)
+}
+
+/** 지급 정정 승인 — 새 정산(재신청)이 생기고 원 정산은 대체된다. 강사 알림은 BE가 발송. */
+export async function approveSettlementCorrectionRemote(
+  correctionRequestId: number,
+  body: SettlementCorrectionApprovalRequest
+): Promise<SettlementCorrectionResponse | null> {
+  return (
+    unwrapApiBody<SettlementCorrectionResponse | null>(
+      await settlementApi.approveCorrection(correctionRequestId, body)
+    ) ?? null
+  )
+}
+
+/** 지급 정정 요청 반려 — 강사 요청 건은 지급조서 상태가 요청 전으로 돌아간다. */
+export async function rejectSettlementCorrectionRemote(
+  correctionRequestId: number,
+  reason: string
+): Promise<void> {
+  await settlementApi.rejectCorrection(correctionRequestId, { reason })
 }
 
 export type SettlementNotificationResendRequestBody = {

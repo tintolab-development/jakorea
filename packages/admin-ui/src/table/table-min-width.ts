@@ -120,3 +120,11 @@ export function ensureAdminDataTableFlexColumn<T>(columns: readonly T[]): T[] {
   } as unknown as T
   return next
 }
+
+/** width 미지정(또는 % 폭) 유연 열이 하나라도 있는지 — 그룹 헤더는 제외 */
+export function hasAdminDataTableFlexColumn<T>(columns: readonly T[]): boolean {
+  return columns.some(column => {
+    const c = column as unknown as ColumnType<unknown>
+    return c && typeof c === 'object' && !('children' in c) && !hasFixedWidth(c)
+  })
+}

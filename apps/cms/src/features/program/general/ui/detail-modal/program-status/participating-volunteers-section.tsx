@@ -19,7 +19,7 @@ import {
   PARTICIPATING_EMPLOYEE_VOLUNTEER_REGISTER_SELECT_INSTITUTION_ALERT_MESSAGE,
   PARTICIPATING_VOLUNTEER_ADD_COMPLETE_ALERT_MESSAGE,
 } from '@/shared/constants/messages'
-import { CMS_TABLE_NO_COL_CLASS } from '@/shared/constants/table'
+import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 import { participatingVolunteersFilterFields } from '@/features/program/general/lib/participating-volunteers-filter-fields'
 import {
@@ -563,8 +563,8 @@ export function ParticipatingVolunteersSection({
         title: '이메일',
         dataIndex: 'email',
         key: 'email',
-        width: 220,
-        minWidth: 220,
+        width: TABLE_COLUMN_WIDTHS.email,
+        minWidth: TABLE_COLUMN_WIDTHS.email,
         align: 'center',
         ellipsis: { showTitle: true },
         className: 'participating-volunteers-section__col-email',

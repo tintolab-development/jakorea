@@ -1,1 +1,22 @@
 @import '@jakorea/form-template-runtime/detail-info-form.css';
+
+/*
+ * CMS 공통 섹션 머리글 — Figma 상세 시안 기준 (2026-11-09 결정)
+ * - 제목 줄: 우측 버튼(`__header-trailing`)이 있을 때만 40px, 없으면 제목 글자 높이만
+ * - 제목 → 본문 간격 10px
+ * - 제목 20px · 설명 16px 은 패키지 기본 유지
+ * Platform·Admin 이 같은 패키지를 쓰므로 패키지 원본은 두고 CMS 에서만 덮어쓴다.
+ */
+.detail-info-form > .detail-info-form__header {
+  margin-bottom: 10px;
+}
+
+.detail-info-form > .detail-info-form__header > .detail-info-form__header-lead {
+  height: auto;
+  min-height: 0;
+}
+
+.detail-info-form > .detail-info-form__header:has(> .detail-info-form__header-trailing)
+  > .detail-info-form__header-lead {
+  height: 40px;
+}

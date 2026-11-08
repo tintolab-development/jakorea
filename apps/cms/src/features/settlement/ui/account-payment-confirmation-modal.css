@@ -35,12 +35,12 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  padding-top: 16px;
+  padding-top: 12px;
 }
 
 .account-payment-confirm-modal.content-modal .teal-header-modal__footer {
   flex-shrink: 0;
-  margin-top: 20px;
+  margin-top: 30px;
   padding-top: 0;
   padding-bottom: 0;
   justify-content: flex-end;
@@ -104,6 +104,25 @@
 }
 
 .account-payment-confirm-modal__amount-value {
-  color: var(--JA-mint-01, #01a1af);
-  font-weight: 700;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/*
+ * 요약 표 — 시안(12432:443959 · 12432:442845) Table / Vertical / Cell / Small:
+ * 행 44(테두리 포함) · 셀 padding 4×12. 공통 DetailInfoForm(Medium 52·8×16/12×16)을 이 팝업에서만 Small로 맞춘다.
+ */
+.account-payment-confirm-modal .account-payment-confirm-modal__detail-form .detail-info-form__field {
+  min-height: 43px;
+}
+
+.account-payment-confirm-modal
+  .account-payment-confirm-modal__detail-form
+  .detail-info-form__field-label,
+.account-payment-confirm-modal
+  .account-payment-confirm-modal__detail-form
+  .detail-info-form__field-content {
+  min-height: 43px;
+  padding: 4px 12px;
 }

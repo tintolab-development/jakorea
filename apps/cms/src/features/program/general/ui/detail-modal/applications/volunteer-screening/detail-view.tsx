@@ -47,7 +47,6 @@ import {
   GeneralVolunteerApplicantInterviewEvaluationSection,
   type GeneralVolunteerApplicantInterviewEvaluationSectionHandle,
 } from './interview-evaluation-section'
-import { resolveGeneralEffectiveSecondInterviewStatus } from '@/features/program/general/lib/general-volunteer-interview2-display'
 import { canReassignVolunteerInterviewAssignment } from '@/features/program/shared/lib/volunteer-interview-reassign'
 import {
   guardGeneralVolunteerInterview2Evaluation,
@@ -148,8 +147,6 @@ function Interview2VolunteerApplicantDetail({
 }) {
   const evaluationSectionRef = useRef<GeneralVolunteerApplicantInterviewEvaluationSectionHandle>(null)
   const [isEvaluationEditing, setIsEvaluationEditing] = useState(false)
-  const interviewNotEnded =
-    resolveGeneralEffectiveSecondInterviewStatus(applicant) === 'waiting'
   const canCancelFinalPass = hasExplicitApplicationAction(
     applicant.availableActions,
     APPLICATION_ACTION_CANCEL_FINAL_PASS
@@ -215,7 +212,6 @@ function Interview2VolunteerApplicantDetail({
                 type="button"
                 variant="delete"
                 size="large"
-                disabled={interviewNotEnded}
                 onClick={onInterviewFail} >
                 면접 불합격
               </CmsButton>
@@ -223,7 +219,6 @@ function Interview2VolunteerApplicantDetail({
                 type="button"
                 variant="secondary"
                 size="large"
-                disabled={interviewNotEnded}
                 onClick={onInterviewPass} >
                 면접 합격
               </CmsButton>
@@ -231,7 +226,6 @@ function Interview2VolunteerApplicantDetail({
                 type="button"
                 variant="primary"
                 size="large"
-                disabled={interviewNotEnded && !isEvaluationEditing}
                 onClick={() => {
                   void handleInterviewEvaluationClick()
                 }} >

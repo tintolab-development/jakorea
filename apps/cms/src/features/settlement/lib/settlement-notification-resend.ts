@@ -55,5 +55,5 @@ export function buildSettlementNotificationResendMessage(
   if (kind === 'correction_completed') {
     return '강사비 지급 정정 완료 알림을 재발송하시겠습니까?\n확인 시 강사에게 정정 완료 알림이 재발송됩니다.'
   }
-  return '강사비 신청 확인 완료 알림을 재발송하시겠습니까?\n확인 시 강사에게 확인 완료 알림이 재발송됩니다.'
+  return '지급조서 확인 완료 알림을 재발송하시겠습니까?\n발송 예정인 알림이 있는 경우, 자동으로 취소되며 해당 건만 발송됩니다.'
 }

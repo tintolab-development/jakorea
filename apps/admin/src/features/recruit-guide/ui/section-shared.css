@@ -129,3 +129,9 @@
 .recruit-guide-section .cms-data-table .ant-table-tbody > tr {
   transition: none;
 }
+
+/* 수정 칸 autoSize(hug) — 한 줄이면 단일 입력과 같은 40px (본문 22 + 상하 8 + 보더 2) */
+.recruit-guide-section .recruit-guide-inline-field--edit.cms-textarea--medium .cms-textarea__control {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}

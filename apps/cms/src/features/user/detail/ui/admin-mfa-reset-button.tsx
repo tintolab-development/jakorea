@@ -20,13 +20,21 @@ import {
   toPositiveAdminAccountId,
 } from '@/features/user/detail/lib/can-show-admin-mfa-reset'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { CmsButton, ConfirmModal, useCmsAlert } from '@/shared/ui'
 
 const OTHER_SUCCESS_MESSAGE =
   'MFA 재발급이 완료되었습니다.\n대상 관리자는 다시 로그인한 뒤 새 QR로 등록해 주세요.'
 
 const SELF_SUCCESS_MESSAGE =
   'MFA 재발급이 완료되었습니다.\n다시 로그인한 뒤 새 QR로 등록해 주세요.'
+
+/** 시안(16127:606933) 「MFA 재발급 안내」 — 시안 「QA」는 오타 — QR로 표기 */
+function buildAdminMfaResetConfirmContent(targetName: string | undefined): string {
+  const name = targetName?.trim()
+  return name
+    ? `**[${name}]** 님의 MFA QR 코드를 재발급하시겠습니까?`
+    : 'MFA QR 코드를 재발급하시겠습니까?'
+}
 
 export function AdminMfaResetButton({ target }: { target: Omit<User, 'password'> }) {
   const sessionUser = useAuthStore(state => state.user)
@@ -35,6 +43,7 @@ export function AdminMfaResetButton({ target }: { target: Omit<User, 'password'>
   const queryClient = useQueryClient()
   const { showAlert } = useCmsAlert()
   const [submitting, setSubmitting] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
   const proofRef = useRef<string | null>(null)
   const submittingRef = useRef(false)
 
@@ -119,9 +128,23 @@ export function AdminMfaResetButton({ target }: { target: Omit<User, 'password'>
         variant="secondary"
         loading={submitting}
         disabled={submitting}
-        onClick={() => void runReset()} >
+        onClick={() => setConfirmOpen(true)} >
         MFA 재발급
       </CmsButton>
+      <ConfirmModal
+        open={confirmOpen}
+        title="MFA 재발급 안내"
+        content={buildAdminMfaResetConfirmContent(target.name)}
+        confirmText="발급"
+        cancelText="취소"
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={() => {
+          // 확인 후에만 재발급 API 호출
+          setConfirmOpen(false)
+          void runReset()
+        }}
+        zIndex={2600}
+      />
     </>
   )
 }

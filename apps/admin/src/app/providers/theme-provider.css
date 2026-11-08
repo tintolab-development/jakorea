@@ -73,7 +73,8 @@
   --color-settlement-light: #fff1f0;
   --color-settlement-dark: #cf1322;
 
-  --color-required-mark: var(--color-settlement);
+  /* Figma Status/red/main — 필수 표시(*) */
+  --color-required-mark: var(--color-red);
 
   /** Source Han Serif K — `@font-face`는 CMS 수료증 경로. 홈페이지 어드민은 폴백 스택만 유지 */
   --font-family-source-han-serif-k: 'Source Han Serif K', 'Noto Serif KR', serif;

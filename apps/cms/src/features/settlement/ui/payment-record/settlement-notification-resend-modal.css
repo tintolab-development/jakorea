@@ -1,0 +1,24 @@
+/**
+ * 정산 알림 재발송 — Figma `Popup / Select / w600 / 알림 재발송 안내` (12432:440025)
+ * 본문 ↔ 알림 발송 30 · 라벨 ↔ 라디오 그룹 4 · 라디오 그룹 h40(좌측 여백 없음)
+ * 공용 PermissionModal 기본값(24 / 10 / padding-left 3)을 이 팝업에서만 시안 값으로 맞춘다.
+ */
+.settlement-notification-resend-modal.permission-modal .permission-modal__field {
+  margin-top: 30px;
+}
+
+.settlement-notification-resend-modal.permission-modal
+  .permission-modal__field
+  > .app-radio-group.ant-radio-group {
+  margin-top: 4px;
+  padding-left: 0;
+  min-height: 40px;
+}
+
+/* 라벨: 14 Medium #525252 / 140% · pb2 · 좌측 여백 없음 (공용 기본: #3d3d3d / 150% · mb6 · 좌우 4) */
+.settlement-notification-resend-modal.permission-modal .permission-modal__label {
+  margin-bottom: 0;
+  padding: 0 0 2px;
+  line-height: 140%;
+  color: var(--Content-secondary, #525252);
+}

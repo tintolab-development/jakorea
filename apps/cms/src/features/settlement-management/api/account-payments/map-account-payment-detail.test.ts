@@ -249,7 +249,7 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
     }
 
     const mapped = mapAccountPaymentDetailFromGetApi(baseRow, detail)
-    expect(mapped.basic.genderBirthDisplay).toBe('** | 1985-**-**')
+    expect(mapped.basic.genderBirthDisplay).toBe('** | 1985.**.**')
     expect(mapped.basic.phoneDisplay).toBe('010-****-2201')
     expect(mapped.basic.emailDisplay).toBe('e2e-settle-***@local.demo')
     expect(mapped.basic.addressDisplay).toBe('서울특별시 강남구 테헤란로 ***** ***')

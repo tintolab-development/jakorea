@@ -555,6 +555,6 @@ describe('parse helpers', () => {
   it('formatDateRange keeps clock when present', () => {
     expect(
       formatDateRange('2026-04-03T09:30:00+09:00', '2026-11-20T18:00:00+09:00')
-    ).toBe('2026.04.03(금) 09:30 ~ 2026.11.20(금) 18:00')
+    ).toBe('2026.04.03 09:30 ~ 2026.11.20 18:00')
   })
 })

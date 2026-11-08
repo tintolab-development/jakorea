@@ -3,7 +3,7 @@ import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-inst
 import { institutionHasRegisteredTeachers } from '@/features/user/shared/lib/institution-delete-guard'
 
 /** 회원 상세 기본 정보 `DetailInfoForm` description에 붙는 문구 (별표 포함) */
-export const ADMIN_REGISTERED_MEMBER_DETAIL_CAPTION = '*관리자에 의해 등록된 회원입니다'
+export const ADMIN_REGISTERED_MEMBER_DETAIL_CAPTION = '관리자에 의해 등록된 회원입니다.'
 
 /** 학교(기관) 상세 기본 정보 `DetailInfoForm` description에 붙는 문구 */
 export const ADMIN_REGISTERED_SCHOOL_DETAIL_CAPTION = '관리자에 의해 등록된 학교입니다'
@@ -215,9 +215,8 @@ export function resolveUserDetailBasicTabCaption(
   const parts: string[] = []
   const base = strategyCaption?.trim()
   if (base) parts.push(base)
-  if (shouldShowAdminRegisteredSchoolDetailCaption(user)) {
-    parts.push(ADMIN_REGISTERED_SCHOOL_DETAIL_CAPTION)
-  } else if (shouldShowAdminRegisteredMemberDetailCaption(user)) {
+  // 시안(8288:256303 · 15520:103404): 관리자 등록 학교 상세(조회·수정)에는 등록 안내 문구 없음
+  if (user.role !== 'SCHOOL' && shouldShowAdminRegisteredMemberDetailCaption(user)) {
     parts.push(ADMIN_REGISTERED_MEMBER_DETAIL_CAPTION)
   }
   if (parts.length === 0) return undefined

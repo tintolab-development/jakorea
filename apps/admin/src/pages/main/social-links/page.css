@@ -8,14 +8,6 @@
   overflow: auto;
 }
 
-.social-link-table .ant-table-thead > tr > th.social-links-page__name-col,
-.social-link-table .ant-table-tbody > tr > td.social-links-page__name-col {
-  box-sizing: border-box !important;
-  width: 160px !important;
-  min-width: 160px !important;
-  max-width: 160px !important;
-}
-
 .social-links-page__name,
 .social-links-page__link {
   color: var(--main-BK, #3d3d3d);

@@ -51,7 +51,8 @@
   margin: 0;
   padding: 0;
   border: 0;
-  border-top: 1px solid #c4cdd1;
+  /* 디자인 가이드 목록 레이아웃 구분선 — Content/weak #BDC6C9 */
+  border-top: 1px solid var(--Content-weak, #bdc6c9);
 }
 
 /* 레거시: Divider 컴포넌트를 직접 넣은 화면만 호환 */
@@ -135,6 +136,32 @@
   flex: 0 0 auto;
 }
 
+/*
+ * 목록 툴바 버튼 = h40 (디자인 가이드 Layout / 목록 · 테이블 14741:1307 · Button / h40 min 120).
+ * 화면에서 size="large"(h44)를 넘겨도 툴바 슬롯 안에서는 h40 치수로 맞춘다 — 신규 코드는 FilterTableToolbarButton 사용.
+ * 값은 admin-button.css `.cms-button--h40` 과 동일.
+ */
+.filter-table-layout__toolbar-actions-slot .cms-button.ant-btn.cms-button--h44 {
+  --cms-button-icon-size: 20px;
+  min-width: 120px;
+  height: 40px !important;
+  min-height: 40px !important;
+  padding: var(--Spacing-6, 6px) calc(var(--Spacing-16, 16px) - 1px) !important;
+  gap: var(--Spacing-4, 4px);
+  border-radius: var(--Radius-8, 8px);
+  font-size: 14px;
+  line-height: 125%;
+}
+
+.filter-table-layout__toolbar-actions-slot .cms-button.ant-btn.cms-button--h44.cms-button--has-icon {
+  padding-inline: calc(var(--Spacing-12, 12px) - 1px) calc(var(--Spacing-16, 16px) - 1px) !important;
+}
+
+.filter-table-layout__toolbar-actions-slot
+  .cms-button.ant-btn.cms-button--h44.cms-button--has-icon.cms-button--icon-end {
+  padding-inline: calc(var(--Spacing-16, 16px) - 1px) calc(var(--Spacing-12, 12px) - 1px) !important;
+}
+
 .filter-table-layout__title {
   color: var(--default-BK, #3d3d3d);
   font-size: 20px;
@@ -151,6 +178,15 @@
   font-weight: 500;
   line-height: 150%; /* 24px */
   white-space: nowrap;
+}
+
+.filter-table-layout__description-divider {
+  display: inline-block;
+  width: 1px;
+  height: 12px;
+  margin: 0 8px;
+  vertical-align: middle;
+  background: var(--Border-default, #e0e0e0);
 }
 
 .filter-table-layout__table {

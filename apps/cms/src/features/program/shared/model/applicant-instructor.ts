@@ -168,6 +168,16 @@ export interface ApplicantInstructorRow {
   distanceKm?: number
   /** Admin API — 장거리 표기 전용(단가 아님). BE longDistance */
   longDistanceYn?: boolean
+  /**
+   * Admin API — 기관별 편도 거리(기관형). organizationDistances → preferredOrganizations 순으로 채운다.
+   * 기관별 표시(캘린더 기관 카드 등)는 위 distanceKm(신청 단위) 대신 이 값을 기관 신청 id로 찾는다.
+   */
+  organizationDistances?: Array<{
+    organizationId?: number | null
+    organizationApplicationId: number
+    distanceKm?: number | null
+    longDistance?: boolean | null
+  }>
   /** Admin API — 프로그램 내 출강 횟수 */
   programDispatchCount?: number
   /** Admin API — 프로그램 내 장거리 출강 횟수 (표기 기준) */

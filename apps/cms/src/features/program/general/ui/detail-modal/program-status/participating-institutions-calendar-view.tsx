@@ -273,7 +273,7 @@ function buildEventsFromSchools(
         if (!d.isValid()) continue
         const times = parseParticipatingSessionTimeRange(session.timeRange)
         const timeRangeDisplay = session.timeRange.replace(/\s*~\s*/g, ' ~ ')
-        const periodLabel = session.classNum.endsWith('교시')
+        const periodLabel = /(교시|차시|회차)$/.test(session.classNum)
           ? session.classNum
           : `${session.classNum}교시`
         const periodStr = `${periodLabel} (${timeRangeDisplay})`

@@ -1,15 +1,17 @@
 import type { Dayjs } from 'dayjs'
+import { CALENDAR_MINI_WEEKDAY_LABELS } from './calendar-weekday-labels'
 
-/** 미니 캘린더 tbody 행 수 — 일요일 시작(en locale) 기준, 4~6주 */
+/**
+ * 월 그리드 주(행) 수 — 일요일 시작 기준, 4~6주.
+ * 미니 캘린더와 월간 CalendarMain(antd Calendar 6행 중 필요한 행만 표시) 공용.
+ */
 export function countMiniCalendarWeekRows(month: Dayjs): number {
   const firstWeekday = month.startOf('month').day()
   return Math.ceil((firstWeekday + month.daysInMonth()) / 7)
 }
 
-const WEEKDAY_LABELS_EN = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'] as const
-
 export function miniCalendarWeekdayLabels(): readonly string[] {
-  return WEEKDAY_LABELS_EN
+  return CALENDAR_MINI_WEEKDAY_LABELS
 }
 
 /** 일요일 시작 그리드 — `countMiniCalendarWeekRows`와 동일한 주 수 */

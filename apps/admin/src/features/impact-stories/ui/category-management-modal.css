@@ -94,11 +94,6 @@
   overflow: hidden;
 }
 
-.is-category-modal__table.ant-table-wrapper {
-  width: 100%;
-  max-width: 100%;
-}
-
 .is-category-modal__table .ant-table,
 .is-category-modal__table .ant-table-container,
 .is-category-modal__table .ant-table-content,
@@ -265,11 +260,6 @@
   transition: none !important;
 }
 
-.is-category-modal__table .ant-table {
-  table-layout: fixed;
-  width: 100%;
-}
-
 /* Figma Button / h32 — min-width 80 (공통 H32 기본 100 덮어씀) */
 .is-category-modal__table .content-modal__table-cell-actions .cms-button.ant-btn.cms-button--h32 {
   width: 80px;
@@ -373,4 +363,27 @@
 
 .is-category-delete-blocked__copy p + p {
   margin-top: 0;
+}
+
+/*
+ * 카테고리명 헤더 필수 표시 — 별표는 텍스트 오른쪽에 absolute로 붙여
+ * 헤더 텍스트 가운데 정렬이 별표 폭만큼 밀리지 않게 한다.
+ */
+.is-category-modal__name-th {
+  position: relative;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.is-category-modal__required {
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  margin-left: 2px;
+  transform: translateY(-50%);
+  color: var(--color-red, #c32f4a);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1;
+  pointer-events: none;
 }

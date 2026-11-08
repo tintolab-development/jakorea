@@ -22,7 +22,7 @@ import { shouldUseSettlementRemote } from '@/features/settlement-management/hook
 import { useCmsAlert } from '@/shared/ui'
 import { useQuery } from '@tanstack/react-query'
 import { generalProgramDetailQueryOptions } from '@/features/program/general/hooks/use-general-program-detail'
-import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
+import { isIndividualProgramForSettlement } from '@/features/settlement/lib/settlement-program-individual'
 import { isAwaitingFirstQueryData } from '@/shared/lib/is-awaiting-first-query-data'
 import type {
   PaymentOrderAdminInstructorDetailProgramRow,
@@ -87,7 +87,7 @@ export function usePaymentOrderDetailFullPageModalState(
     enabled: calcStatementOpen && paymentOrdersRemote && /^\d+$/.test(calcProgramId),
   })
   const calcHideInstitutionColumn = calcProgramQuery.data
-    ? isGeneralIndividualProgram(calcProgramQuery.data)
+    ? isIndividualProgramForSettlement(calcProgramQuery.data)
     : false
 
   const shouldFetchTransportationSnapshot = useMemo(() => {
@@ -169,7 +169,10 @@ export function usePaymentOrderDetailFullPageModalState(
     switch (type) {
       case 'program': {
         if (!('programName' in detail)) return
-        const line = calcLineRow as PaymentOrderAdminProgramDetailInstructorRow
+        /* 확인 처리 등으로 상세 목록이 다시 조회되면 같은 정산 라인의 최신 처리 현황으로 산출 내역서를 다시 그린다 */
+        const line =
+          detail.instructorRows.find(r => r.id === calcLineRow.id) ??
+          (calcLineRow as PaymentOrderAdminProgramDetailInstructorRow)
         setCalcStatementData(
           mapSettlementDetailToInstructorPageCalculationStatement(
             line,
@@ -183,7 +186,9 @@ export function usePaymentOrderDetailFullPageModalState(
       }
       case 'instructor': {
         if (!('nameKo' in detail)) return
-        const line = calcLineRow as PaymentOrderAdminInstructorDetailProgramRow
+        const line =
+          detail.programRows.find(r => r.id === calcLineRow.id) ??
+          (calcLineRow as PaymentOrderAdminInstructorDetailProgramRow)
         setCalcStatementData(
           mapSettlementDetailToProgramCalculationStatement(
             line,

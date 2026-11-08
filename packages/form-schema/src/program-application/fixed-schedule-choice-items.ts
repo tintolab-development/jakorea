@@ -120,6 +120,8 @@ export type RuntimeFixedScheduleChoiceItem = {
   label: string
   /** runtime 원본. 없으면 token에서만 해석한다. */
   scheduleId?: number
+  /** runtime `startAt`(ISO date-time). 지난 슬롯 판정에 라벨보다 우선한다. */
+  startAt?: string
 }
 
 /**
@@ -175,10 +177,13 @@ export function readRuntimeFixedScheduleChoiceItems(
         : typeof scheduleIdRaw === 'string' && scheduleIdRaw.trim()
           ? Number(scheduleIdRaw)
           : undefined
+    const startAt =
+      typeof item.startAt === 'string' && item.startAt.trim() ? item.startAt.trim() : undefined
     items.push({
       id: normalizedId,
       label: label || normalizedId,
       ...(scheduleId != null && Number.isFinite(scheduleId) ? { scheduleId } : {}),
+      ...(startAt ? { startAt } : {}),
     })
   }
   return items

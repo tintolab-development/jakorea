@@ -54,11 +54,23 @@ export type PreferredScheduleBlocksMapOptions = {
   sessionCountRange?: { min: number; max: number }
   /**
    * 일반 기관 신청(커리큘럼·기간 지정). 일반 프로그램에는 교시 개념이 없다(교육받은교사 전용).
-   * - `sessionCount` 지정(단일 회차): 교시·차시 입력 없이 날짜·시작/종료 시간만 받고,
-   *   커리큘럼 1일 차시 수를 sessionCount로 제출한다.
-   * - 미지정(복수 회차): 희망 차시 셀렉트 값(classPeriod)을 sessionCount로 제출한다.
+   * BE는 "총 차시 수(sessionCount) + 시간 1구간(sessionTimes 1개)"을 그대로 저장한다.
+   * - `singleRound`(단일 회차): 차시 입력 없이 날짜·시작/종료 시간만 받고,
+   *   커리큘럼 1일 차시 수(`sessionCount`)를 제출한다. 차시 수를 못 읽으면 제출을 막는다
+   *   (BE는 보정하지 않으므로 1로 보내면 1차시로 저장된다).
+   * - 복수 회차: 희망 차시 셀렉트 값을 sessionCount로 제출한다.
    */
-  generalInstitution?: { sessionCount?: number }
+  generalInstitution?: { singleRound?: boolean; sessionCount?: number }
+}
+
+export const GENERAL_INSTITUTION_SESSION_COUNT_UNAVAILABLE_MESSAGE =
+  '교육 차시 정보를 불러오지 못해 신청할 수 없습니다. 잠시 후 다시 시도하거나 관리자에게 문의해 주세요.'
+
+function isGeneralInstitutionSingleRound(
+  options: PreferredScheduleBlocksMapOptions | undefined
+): boolean {
+  const general = options?.generalInstitution
+  return general != null && (general.singleRound === true || general.sessionCount != null)
 }
 
 function readGeneralInstitutionFixedSessionCount(
@@ -102,9 +114,9 @@ export function toPortalPreferredScheduleBlocks(
     }
     const startTime = normalizeScheduleTime(block.startTime)
     const endTime = normalizeScheduleTime(block.endTime)
-    const fixedSessionCount = readGeneralInstitutionFixedSessionCount(options)
-    if (fixedSessionCount != null) {
-      if (!date || !startTime || !endTime) continue
+    if (isGeneralInstitutionSingleRound(options)) {
+      const fixedSessionCount = readGeneralInstitutionFixedSessionCount(options)
+      if (fixedSessionCount == null || !date || !startTime || !endTime) continue
       out.push({
         preferenceRank: rank,
         date,
@@ -135,6 +147,12 @@ export function toPortalPreferredScheduleBlocks(
     ) {
       continue
     }
+    /**
+     * 일반 기관은 교시 개념이 없어 classPeriod를 보내지 않는다(차시 수는 sessionCount만).
+     * BE도 일반 기관의 classPeriod는 무시하고 startPeriod를 null로 저장한다.
+     * Gemini·교육받은교사는 classPeriod를 계속 보낸다.
+     */
+    const omitClassPeriod = options?.generalInstitution != null
     out.push({
       preferenceRank: rank,
       date,
@@ -145,7 +163,7 @@ export function toPortalPreferredScheduleBlocks(
       sessionTimes: [
         {
           sessionIndex: 1,
-          classPeriod,
+          ...(omitClassPeriod ? {} : { classPeriod }),
           startTime,
           endTime,
           timeRange: `${startTime}~${endTime}`,
@@ -230,7 +248,14 @@ export function findIncompletePreferredScheduleMessage(
   blocks: readonly ApplyPreferredScheduleBlock[],
   options?: PreferredScheduleBlocksMapOptions,
 ): string | null {
-  const withoutClassPeriod = readGeneralInstitutionFixedSessionCount(options) != null
+  const withoutClassPeriod = isGeneralInstitutionSingleRound(options)
+  if (
+    withoutClassPeriod &&
+    !options?.dateOnly &&
+    readGeneralInstitutionFixedSessionCount(options) == null
+  ) {
+    return GENERAL_INSTITUTION_SESSION_COUNT_UNAVAILABLE_MESSAGE
+  }
   const hasPartial = blocks.some(block => {
     const date = block.date.trim()
     const classPeriod = block.classPeriod.trim()

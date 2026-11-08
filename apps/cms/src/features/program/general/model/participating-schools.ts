@@ -37,6 +37,11 @@ export interface ParticipatingSchoolSession {
   resolvedScheduleId?: number | null
   /** resolvedScheduleId === null 일 때 true */
   scheduleUnresolved?: boolean
+  /**
+   * 일반 기관 기간 지정(PERIOD) 희망 행만 — `preferredEducationSchedules[].scheduleId` 유무로 확정/미확정(희망).
+   * 다른 유형·일정 지정 행은 undefined (표시 문구를 붙이지 않는다).
+   */
+  hopeScheduleConfirmed?: boolean
   /** OSA `assignmentId` — 동일 program scheduleId·학급별 row 구분 */
   osaAssignmentId?: number
   /** 원본 시작 시각(ISO). 합반 교육일 비교용. 표시 라벨을 파싱하지 않는다. */

@@ -5,7 +5,11 @@ import { CmsButton } from '@/shared/ui'
 
 import { checkAdminRegisterEmailAvailability } from '@/features/auth/api/admin-register-service'
 import { SOCIAL_ACCOUNT_LINK_ENABLED } from '@/features/auth/lib/social-account-link-enabled'
-import { buildJakoreaEmail, isValidJakoreaEmailLocalPart } from '@/features/auth/lib/jakorea-email'
+import {
+  buildJakoreaEmail,
+  isValidJakoreaEmailLocalPart,
+  JAKOREA_EMAIL_DOMAIN,
+} from '@/features/auth/lib/jakorea-email'
 import type { AdminRegisterStep4Data, AdminRegisterWizardData } from '@/types/admin-register'
 
 import { RegisterJakoreaEmailField } from './register-jakorea-email-field'
@@ -107,7 +111,7 @@ export function AdminRegisterStepEmail({
       }
 
       setDuplicateStatus('unavailable')
-      setDuplicateMessage('이미 가입 된 이메일입니다.')
+      setDuplicateMessage('이미 가입된 이메일입니다.')
       setVerifiedEmail('')
     } catch {
       setDuplicateStatus('idle')
@@ -135,19 +139,21 @@ export function AdminRegisterStepEmail({
           <>
             로그인에 사용할
             <br />
-            이메일을 입력해 주세요
+            이메일을 입력해 주세요.
           </>
         }
         description={
-          SOCIAL_ACCOUNT_LINK_ENABLED ? (
-            <>
-              JA Korea 이메일 주소만 사용 가능합니다.
-              <br />
-              소셜 계정은 가입을 마친 뒤 연결할 수 있습니다.
-            </>
-          ) : (
-            <>JA Korea 이메일 주소만 사용 가능합니다.</>
-          )
+          <>
+            {JAKOREA_EMAIL_DOMAIN} 이메일만 사용 가능합니다.
+            <br />
+            가입 신청 후에는 관리자 승인이 완료된 후에 이용할 수 있습니다.
+            {SOCIAL_ACCOUNT_LINK_ENABLED ? (
+              <>
+                <br />
+                소셜 계정은 가입을 마친 뒤 연결할 수 있습니다.
+              </>
+            ) : null}
+          </>
         }
       />
 

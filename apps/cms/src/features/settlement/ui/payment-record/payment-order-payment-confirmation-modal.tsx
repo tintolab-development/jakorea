@@ -5,10 +5,10 @@
 import { Fragment, useEffect, useState } from 'react'
 import type { Dayjs } from 'dayjs'
 import { formatDateDotWithWeekday, isBeforeSeoulToday } from '@/shared/utils/date'
-import { CalendarOutlined } from '@ant-design/icons'
-import { DatePicker } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
+import { CmsDatePicker } from '@/shared/ui/cms-datepicker'
+import { ProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
 import type { PaymentOrderProgramCalculationStatement } from '@/features/settlement-management/model/payment-order-admin-list'
 import { defaultLectureFeePaymentScheduledDate } from '@/features/settlement/lib/third-tuesday-of-month'
 import './payment-order-payment-confirmation-modal.css'
@@ -66,23 +66,23 @@ export function PaymentOrderPaymentConfirmationModal({
     <ContentModal
       open={canShow}
       onCancel={onCancel}
-      title="지급조서 확인"
+      title="지급조서 확인 안내"
       width={600}
       zIndex={zIndex}
       className="payment-order-payment-confirm-modal"
       footer={
         <div className="payment-order-payment-confirm__footer-actions">
-          <CmsButton variant="secondary" size="large" onClick={onCancel}>
+          <CmsButton variant="secondary" size="h40" onClick={onCancel}>
             취소
           </CmsButton>
           <CmsButton
             variant="primary"
-            size="large"
+            size="h40"
             onClick={() =>
               onConfirm({ lectureFeePaymentScheduledDateIso: expectedDate.format('YYYY-MM-DD') })
             }
           >
-            지급조서 확인 완료
+            확인 완료
           </CmsButton>
         </div>
       }
@@ -90,9 +90,8 @@ export function PaymentOrderPaymentConfirmationModal({
       {block0 ? (
         <div className="payment-order-payment-confirm">
           <p className="payment-order-payment-confirm__line">
-            아래 항목에 대한{' '}
-            <strong className="payment-order-payment-confirm__name">{instructorName}</strong>
-            님의 지급조서 신청을 확인 처리하시겠습니까?
+            <strong className="payment-order-payment-confirm__name">[{instructorName}]</strong>{' '}
+            님의 강사비 지급조서 신청을 확인 처리하시겠습니까?
           </p>
           <p className="payment-order-payment-confirm__line">
             정산된 금액은 <strong>매월 셋째 주 화요일에 계좌 지급</strong>됩니다.
@@ -103,26 +102,23 @@ export function PaymentOrderPaymentConfirmationModal({
           >
             {detailParts.map((part, index) => (
               <Fragment key={`${index}-${part}`}>
-                {index > 0 ? (
-                  <span className="payment-order-payment-confirm__sep" aria-hidden>
-                    |
-                  </span>
-                ) : null}
+                {index > 0 ? <ProgramDetailTdDivider /> : null}
                 <span>{part}</span>
               </Fragment>
             ))}
           </div>
           <div className="payment-order-payment-confirm__date-block">
-            <span className="payment-order-payment-confirm__date-label">계좌 지급 예정일</span>
-            <DatePicker
+            <CmsDatePicker
               className="payment-order-payment-confirm__date-picker"
+              label="계좌 지급 예정일"
+              required
+              inputSize="medium"
+              width="100%"
               value={expectedDate}
               onChange={d => d && setExpectedDate(d)}
               disabledDate={current => isBeforeSeoulToday(current)}
               format={formatKoreanDateWithWeekday}
-              suffixIcon={<CalendarOutlined />}
               allowClear={false}
-              inputReadOnly
               popupStyle={{ zIndex: (zIndex ?? 1000) + 200 }}
             />
           </div>

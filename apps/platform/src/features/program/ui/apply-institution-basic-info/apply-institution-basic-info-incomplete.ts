@@ -1,7 +1,7 @@
-import type { ApplyTrainedTeachersBasicInfoValues } from './apply-trained-teachers-basic-info-answers'
+import type { ApplyInstitutionBasicInfoValues } from './apply-institution-basic-info-answers'
 
-export function findIncompleteTrainedTeachersBasicInfoMessage(
-  values: ApplyTrainedTeachersBasicInfoValues,
+export function findIncompleteInstitutionBasicInfoMessage(
+  values: ApplyInstitutionBasicInfoValues,
 ): string | null {
   if (!values.schoolName.trim()) return '신청 기관명(학교명)을 확인해 주세요.'
   if (!values.regionLabel.trim()) return '기관 소재지를 확인해 주세요.'

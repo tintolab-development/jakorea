@@ -225,20 +225,23 @@ function ConsentRequirementLabel({ required }: { required: boolean }) {
 function ConsentStatusBadge({
   agreed,
   consentStatus,
+  consentType,
   allItemsAgreed,
   expired = false,
 }: {
   agreed: boolean
   consentStatus?: string
+  consentType?: string
   allItemsAgreed?: boolean | null
   expired?: boolean
 }) {
   const label = resolveConsentStatusDisplayLabel({
     agreed,
     consentStatus,
+    consentType,
     allItemsAgreed,
     expired,
-    agreedLabel: '동의',
+    agreedLabel: '동의함',
   })
   return (
     <PFStateBadge
@@ -332,6 +335,7 @@ function ConsentCard({
           <ConsentStatusBadge
             agreed={agreed}
             consentStatus={item.consentStatus}
+            consentType={item.consentType}
             allItemsAgreed={item.allItemsAgreed}
             expired={item.expired === true}
           />

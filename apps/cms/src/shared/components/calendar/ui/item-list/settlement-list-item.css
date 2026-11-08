@@ -1,30 +1,24 @@
 /**
- * 정산 캘린더 우측 일별 리스트 — `CalendarListItemContentSettlement` 전용.
+ * 정산 캘린더 우측 일별 리스트 — `CalendarListItemContentSettlement` 전용 내부 레이아웃.
+ * 행 shell(padding·radius·border·hover·selected)은 `.calendar-list-item`(calendar-sub-right.css) 공통.
+ * 이 파일에서 hover/cursor/border-width/box-shadow 재정의 금지 — calendar-sub-right-list.md
+ *
+ * Figma Calendar / List / Item (14858:590667 · 14858:591093) — 360×75 · gap 16
+ * 제목 14/700/150% (+pl 4) · 메타 pt 4 · gap 8 · 1×10 세로선(#3d3d3d 40%) · 금액 14/500/150%
  */
 
-.settlement-list-item-list .settlement-list-item {
+.settlement-list-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 12px 14px;
-  border-radius: 12px;
-  box-sizing: border-box;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.settlement-list-item-list .settlement-list-item:hover,
-.settlement-list-item-list .settlement-list-item--selected:hover {
-  border: 2px solid #00a0af !important;
-  background: var(--default-WT, #fff) !important;
-  box-shadow: none;
+  gap: 16px;
 }
 
 .settlement-list-item__open {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  gap: 2px;
   flex: 1 1 auto;
   min-width: 0;
   text-align: left;
@@ -44,11 +38,12 @@
 }
 
 .settlement-list-item__title {
+  box-sizing: border-box;
   width: 100%;
-  margin: 0 0 8px;
-  padding: 0;
-  font-size: 16px;
-  font-weight: 500;
+  margin: 0;
+  padding: 0 0 0 4px;
+  font-size: 14px;
+  font-weight: 700;
   line-height: 150%;
   color: var(--default-BK, #3d3d3d);
   white-space: nowrap;
@@ -56,29 +51,57 @@
   text-overflow: ellipsis;
 }
 
-.settlement-list-item__meta {
+/* 계좌 지급 확인: 신청자명(Bold) | 프로그램명(Medium · 50%) */
+.settlement-list-item__title--split {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
-  width: 100%;
+  gap: 8px;
   min-width: 0;
 }
 
-.settlement-list-item__meta-sep {
-  color: #d4d4d4;
-  font-size: 13px;
-  line-height: 1;
+.settlement-list-item__title-name {
   flex-shrink: 0;
-  user-select: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settlement-list-item__title-sub {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+  color: rgba(61, 61, 61, 0.5);
+}
+
+.settlement-list-item__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  padding-top: 4px;
+}
+
+/* 세그먼트 구분 — 문자 `|` 대신 1px 선 (table-td-divider 원칙) */
+.settlement-list-item__divider {
+  flex-shrink: 0;
+  width: 1px;
+  height: 10px;
+  background: var(--default-BK, #3d3d3d);
+  opacity: 0.4;
 }
 
 .settlement-list-item__amount {
+  flex: 1 1 0;
+  min-width: 0;
   overflow: hidden;
   color: var(--default-BK, #3d3d3d);
   text-overflow: ellipsis;
-  font-size: 16px;
+  white-space: nowrap;
+  font-size: 14px;
   font-weight: 500;
   line-height: 150%;
 }
-

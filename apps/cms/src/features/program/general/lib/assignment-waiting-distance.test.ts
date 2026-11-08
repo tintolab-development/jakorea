@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
+  collectInstructorApplicationOrganizationDistances,
   findWaitingOrganizationDistance,
+  mergeWaitingOrganizationDistances,
   formatWaitingOrganizationDistance,
   formatWaitingScheduleDistance,
 } from './assignment-waiting-distance'
@@ -72,5 +74,47 @@ describe('formatWaitingOrganizationDistance', () => {
     expect(formatWaitingOrganizationDistance(distances, { organizationApplicationId: 7002 })).toBe(
       '-'
     )
+  })
+})
+
+describe('collectInstructorApplicationOrganizationDistances', () => {
+  it('배정 대기 기관 거리를 먼저 쓰고 빈 기관만 희망 기관 거리로 채운다', () => {
+    const result = collectInstructorApplicationOrganizationDistances({
+      organizationDistances: [
+        { organizationId: 11, organizationApplicationId: 501, distanceKm: 12.3, longDistance: false },
+        { organizationId: 12, organizationApplicationId: 502, distanceKm: null, longDistance: null },
+      ],
+      preferredOrganizations: [
+        { organizationApplicationId: 501, distanceKm: 99 },
+        { organizationApplicationId: 502, distanceKm: 40.1 },
+        { organizationApplicationId: 503, distanceKm: 7.5 },
+        { organizationApplicationId: null, distanceKm: 1 },
+      ],
+    })
+    expect(formatWaitingOrganizationDistance(result, { organizationApplicationId: 501 })).toBe('12.3km')
+    expect(formatWaitingOrganizationDistance(result, { organizationApplicationId: '502' })).toBe('40.1km')
+    expect(formatWaitingOrganizationDistance(result, { organizationApplicationId: 503 })).toBe('7.5km')
+    expect(formatWaitingOrganizationDistance(result, { organizationApplicationId: 504 })).toBe('-')
+  })
+
+  it('응답이 없으면 빈 목록', () => {
+    expect(collectInstructorApplicationOrganizationDistances(undefined)).toEqual([])
+  })
+})
+
+describe('mergeWaitingOrganizationDistances', () => {
+  it('앞 목록 값이 있으면 유지하고 없을 때만 뒤 목록으로 채운다', () => {
+    const merged = mergeWaitingOrganizationDistances(
+      [
+        { organizationApplicationId: 501, distanceKm: 3.1, longDistance: false },
+        { organizationApplicationId: 502, distanceKm: null },
+      ],
+      [
+        { organizationApplicationId: 501, distanceKm: 50 },
+        { organizationApplicationId: 502, distanceKm: 8.8, longDistance: false },
+      ]
+    )
+    expect(formatWaitingOrganizationDistance(merged, { organizationApplicationId: 501 })).toBe('3.1km')
+    expect(formatWaitingOrganizationDistance(merged, { organizationApplicationId: 502 })).toBe('8.8km')
   })
 })

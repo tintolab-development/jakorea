@@ -829,3 +829,9 @@
   font-size: 13px;
   line-height: 150%;
 }
+
+/* 수정 칸 autoSize(hug) — 한 줄이면 단일 입력과 같은 40px (본문 22 + 상하 8 + 보더 2) */
+.ja-history-inline-field--edit.cms-textarea--medium .cms-textarea__control {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}

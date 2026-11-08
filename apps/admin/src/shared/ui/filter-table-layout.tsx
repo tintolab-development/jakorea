@@ -3,6 +3,11 @@ import { CmsTableEmptyVariantProvider } from './cms-table-empty-variant-context'
 
 import './filter-table-layout.css'
 
+/** 제목 옆 description 안 구분선(시안 1×12 세로선) — 텍스트 `|`·`·`·괄호 대신 사용 */
+export function FilterTableDescriptionDivider() {
+  return <span className="filter-table-layout__description-divider" aria-hidden />
+}
+
 export interface FilterTableLayoutProps {
   /** 필터·조회 슬롯. CMS TableFilterGroup 대신 앱이 컨트롤을 넣는다. */
   filter?: ReactNode

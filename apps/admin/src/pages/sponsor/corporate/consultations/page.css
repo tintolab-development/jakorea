@@ -25,16 +25,7 @@
 .corp-consultations-page__table.cms-data-table {
   --table-selection-column-width: 60px;
   --table-no-column-width: 80px;
-  width: 100%;
-  max-width: 100%;
   overflow-x: auto;
-}
-
-.corp-consultations-page__table.cms-data-table .ant-table,
-.corp-consultations-page__table.cms-data-table .ant-table-container,
-.corp-consultations-page__table.cms-data-table .ant-table-content {
-  width: 100% !important;
-  max-width: none !important;
 }
 
 .corp-consultations-page__status--pending {

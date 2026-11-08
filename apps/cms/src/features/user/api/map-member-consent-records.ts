@@ -19,6 +19,8 @@ export const TERMS_TYPE_TO_LABEL: Record<string, string> = {
   PRIVACY_COLLECTION: '개인정보 수집·이용 동의',
   PRIVACY: '개인정보 수집·이용 동의',
   CHILD_PRIVACY_COLLECTION: '개인정보 수집·이용 동의',
+  GUARDIAN_CONSENT: '법정대리인 동의',
+  TEACHER_INFO_COLLECTION: '교사 및 기관 정보 동의',
   MARKETING: '마케팅 제공 동의',
   MARKETING_CONSENT: '마케팅 제공 동의',
   PORTRAIT_RIGHTS: '초상권 수집·이용 동의',
@@ -52,6 +54,8 @@ export const CONSENT_LABEL_TO_CANONICAL_TERMS_TYPE: Record<string, string> = {
   '서비스 이용약관': 'SERVICE_TERMS',
   '개인정보 수집·이용 동의': 'PRIVACY_COLLECTION',
   '마케팅 제공 동의': 'MARKETING',
+  '법정대리인 동의': 'GUARDIAN_CONSENT',
+  '교사 및 기관 정보 동의': 'TEACHER_INFO_COLLECTION',
   '2단계 인증(MFA) 설정 동의': 'MFA_SETUP_CONSENT',
   ...CONSENT_LABEL_TO_EDITABLE_TERMS_TYPE,
 }
@@ -105,7 +109,7 @@ function formatConsentedAt(iso: string | undefined): string | undefined {
   if (!iso?.trim()) return undefined
   const parsed = dayjs(iso)
   if (!parsed.isValid()) return iso
-  return parsed.format('YYYY.MM.DD HH:mm')
+  return parsed.format('YYYY.MM.DD HH:mm:ss')
 }
 
 function formatConsentDate(iso: string | undefined): string | undefined {
@@ -148,6 +152,7 @@ function agreementToFieldValue(
     agreed,
     agreedAtDisplay,
     consentStatus: agreement.consentStatus,
+    consentType: agreement.consentType,
     allItemsAgreed: agreement.allItemsAgreed,
   }
 }
@@ -310,6 +315,7 @@ function mergeRecordMetaIntoOverlay(
       meta.filledDocumentRevealEndpoint ?? overlay.filledDocumentRevealEndpoint,
     consentType: meta.consentType ?? overlay.consentType,
     consentStatus: overlay.consentStatus ?? meta.consentStatus,
+    // 동의 여부와 같은 출처(Summary·termsAgreements) 우선, 없으면 consent-records 최신값
     allItemsAgreed: overlay.allItemsAgreed ?? meta.allItemsAgreed,
   }
 }

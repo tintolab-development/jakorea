@@ -24,11 +24,13 @@ export function buildAdminFaqManagementFilterFields(
   return [
     {
       key: 'visibility',
-      type: 'radio',
+      type: 'select',
       label: '공개 여부',
+      placeholder: '전체',
       width: '14%',
-      defaultValue: 'public',
+      defaultValue: 'ALL',
       options: [
+        { label: '전체', value: 'ALL' },
         { label: '공개', value: 'public' },
         { label: '비공개', value: 'private' },
       ],
@@ -51,7 +53,7 @@ export function buildAdminFaqManagementFilterFields(
     {
       key: 'author',
       type: 'search',
-      label: '작성자명',
+      label: '작성자',
       placeholder: '작성자명을 입력해 주세요',
       width: '18%',
     },

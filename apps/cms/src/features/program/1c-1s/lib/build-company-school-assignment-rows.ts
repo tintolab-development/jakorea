@@ -15,6 +15,10 @@ import type { InstructorApplicationListItemResponse } from '@/shared/api/generat
 import { extractLectureDateKey } from '@/features/program/1c-1s/lib/one-school-per-day-conflict'
 import { formatApiDistanceKmDisplay } from '@/shared/lib/format-api-distance-km'
 import {
+  collectInstructorApplicationOrganizationDistances,
+  findWaitingOrganizationDistance,
+} from '@/features/program/general/lib/assignment-waiting-distance'
+import {
   readRuntimeBoolean,
   readRuntimeNumber,
 } from '@/shared/lib/openapi-runtime-field'
@@ -78,6 +82,19 @@ function formatWaitingInstructorDistance(
   return formatDistanceKm(km)
 }
 
+/** 일반 기관형 — 이 기관 신청까지의 거리만 쓴다. 없으면 표시하지 않는다(다른 기관 거리 대체 금지). */
+function formatWaitingInstructorOrganizationDistance(
+  app: InstructorApplicationListItemResponse,
+  organizationApplicationId: string
+): string | undefined {
+  const hit = findWaitingOrganizationDistance(
+    collectInstructorApplicationOrganizationDistances(app),
+    { organizationApplicationId }
+  )
+  const label = formatApiDistanceKmDisplay(hit?.distanceKm, { longDistance: hit?.longDistance })
+  return label === '-' ? undefined : label
+}
+
 function hopeScheduleLineFromSession(session: ParticipatingSchoolSession): string {
   const hope = participatingSchoolSessionToHopeSchedule(session)
   const base = [hope.hopeDate, hope.hopeTime, hope.hopeSession].filter(Boolean).join(' ')
@@ -98,7 +115,13 @@ export function buildCompanySchoolWaitingInstructorRows(input: {
   approvedInstructors: InstructorApplicationListItemResponse[]
   assignedInstructorMemberIds: Set<string>
   occupiedLectureDatesByInstructorId?: Map<string, Set<string>> | null
+  /**
+   * 일반 기관형만 넘긴다. 있으면 「기관과의 거리」를 강사 신청의 기관별 거리에서 이 기관 신청 id로 찾는다.
+   * 없으면(1사1교) 기존처럼 신청 단위 distanceKm를 쓴다.
+   */
+  organizationApplicationId?: string | null
 }): CompanySchoolWaitingInstructorRow[] {
+  const organizationApplicationId = input.organizationApplicationId?.trim() || null
   const sessions = (input.sessions ?? []).filter(s => Boolean(extractLectureDateKey(s.date) || s.date))
   if (sessions.length === 0) return []
 
@@ -136,7 +159,9 @@ export function buildCompanySchoolWaitingInstructorRows(input: {
         no: 0,
         instructorName: app.instructorName?.trim() || '이름 없음',
         homeAddress: app.homeAddress?.trim() || undefined,
-        distanceToSchool: formatWaitingInstructorDistance(app),
+        distanceToSchool: organizationApplicationId
+          ? formatWaitingInstructorOrganizationDistance(app, organizationApplicationId)
+          : formatWaitingInstructorDistance(app),
         assignmentStatus,
         hopeDate: hope.hopeDate,
         hopeTime: hope.hopeTime,

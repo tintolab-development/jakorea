@@ -38,6 +38,7 @@ import {
 } from '@/shared/constants/table'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { isTableSelectionClick } from '@/shared/lib/is-table-selection-click'
+import { buildPinnedListRowNoMap } from '@/shared/lib/pinned-list-row-no'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
 import type { TableSearchParamRule } from '@/shared/lib/use-table-search'
@@ -257,17 +258,10 @@ export function ImpactStoriesPage() {
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [categoryOpen, setCategoryOpen] = useState(false)
 
-  const rowNoMap = useMemo(() => {
-    const map = new Map<string, number>()
-    const nonPinned = rows.filter(r => !r.isPinned)
-    const totalNonPinned = nonPinned.length
-    for (const row of rows) {
-      if (row.isPinned) continue
-      const idx = nonPinned.findIndex(r => r.id === row.id)
-      map.set(row.id, totalNonPinned - idx)
-    }
-    return map
-  }, [rows])
+  const rowNoMap = useMemo(
+    () => buildPinnedListRowNoMap(rows, listQuery.totalCount),
+    [rows, listQuery.totalCount]
+  )
 
   const handleSearch = useCallback(() => {
     applySearch()
@@ -419,7 +413,8 @@ export function ImpactStoriesPage() {
         title: '작성자명',
         dataIndex: 'authorName',
         key: 'authorName',
-        width: 120,
+        width: TABLE_COLUMN_WIDTHS.author,
+        ellipsis: true,
       },
       {
         title: '게시일시',
@@ -628,7 +623,6 @@ export function ImpactStoriesPage() {
               },
               style: { cursor: 'pointer' },
             })}
-            scroll={{ x: true }}
           />
           <AdminInfiniteTableFooter
             sentinelRef={sentinelRef}

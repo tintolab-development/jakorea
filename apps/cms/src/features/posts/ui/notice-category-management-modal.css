@@ -1,0 +1,6 @@
+
+/* 시안: 헤더 '카테고리명 *' 필수 표시 */
+.notice-category-management-modal__required {
+  margin-left: 2px;
+  color: var(--Status-red-main, #c32f4a);
+}

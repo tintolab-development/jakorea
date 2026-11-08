@@ -149,6 +149,7 @@ export function buildConsentItemsFromSummaries(summaries: PortalConsentSummary[]
       withdrawable: summary.withdrawable === true,
       status: summary.status,
       consentStatus: summary.consentStatus,
+      consentType,
       allItemsAgreed: summary.allItemsAgreed ?? null,
       expired,
       signed: summary.signed === true,

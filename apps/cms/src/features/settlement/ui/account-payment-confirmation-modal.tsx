@@ -8,9 +8,10 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
-import type {
-  AccountPaymentRow,
-  AccountPaymentStatusDetail,
+import {
+  countAccountPaymentRecipients,
+  type AccountPaymentRow,
+  type AccountPaymentStatusDetail,
 } from '@/features/settlement-management/model/account-payments-list'
 import './account-payment-confirmation-modal.css'
 
@@ -156,13 +157,14 @@ export function buildAccountPaymentConfirmationPayloadForSelection(
   }
   const programDisplay = formatAccountPaymentBulkProgramDisplay(rows.map(r => r.programName))
   const recipientName = rows[0].instructorName?.trim() || '신청자'
+  const recipientCount = countAccountPaymentRecipients(rows)
   return {
     kind: 'bulk',
     programDisplay,
-    recipientLabel: `총 ${rows.length}명`,
+    recipientLabel: `총 ${recipientCount}명`,
     settlementAmount: rows.reduce((s, r) => s + r.amount, 0),
     recipientName,
-    otherRecipientCount: rows.length - 1,
+    otherRecipientCount: recipientCount - 1,
   }
 }
 
@@ -224,7 +226,9 @@ export function AccountPaymentConfirmationModal({
               <>
                 <p className="account-payment-confirm-modal__line">
                   <strong className="account-payment-confirm-modal__strong">
-                    [{data.recipientName}]님 외 {data.otherRecipientCount}명
+                    {data.otherRecipientCount > 0
+                      ? `[${data.recipientName}] 님 외 ${data.otherRecipientCount}명`
+                      : `[${data.recipientName}] 님`}
                   </strong>
                   의 계좌 지급을 완료 처리하시겠습니까?
                   <br />
@@ -237,7 +241,7 @@ export function AccountPaymentConfirmationModal({
                 <p className="account-payment-confirm-modal__line">
                   <strong className="account-payment-confirm-modal__strong">
                     [{data.recipientName}]
-                  </strong>
+                  </strong>{' '}
                   님의 계좌 지급을 완료 처리하시겠습니까?
                   <br />
                   안내된 계좌번호로 정확한 금액을 입금하신 후에 <PaymentCompleteButtonLabel />{' '}

@@ -1469,6 +1469,7 @@ export function ApplicantList({
                   : mergeOrganizationApplicationApproveBody({
                       timing: notify?.timing,
                       scheduledAt: notify?.scheduledAt,
+                      requestedScheduleIds: payload.requestedScheduleIds,
                       requestedScheduleId: payload.requestedScheduleId,
                       selectedScheduleId: payload.selectedScheduleId,
                       slots: payload.slots,

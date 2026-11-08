@@ -8,6 +8,14 @@ export type ApplicantSessionLineInput = {
   round?: number
   /** `line:N` 선택. 있으면 날짜·시간 조합 대신 이 문자열을 쓴다. */
   scheduleLabel?: string
+  /** 일반 기관 PERIOD 희망 행만 — true 「확정」, false 「미확정(희망)」 */
+  hopeScheduleConfirmed?: boolean
+}
+
+/** PERIOD 희망 행 확정 여부 문구. `unresolvedReason` 등 내부 코드는 노출하지 않는다. */
+export function formatHopeScheduleConfirmationLabel(confirmed: boolean | undefined): string {
+  if (confirmed === undefined) return ''
+  return confirmed ? '확정' : '미확정(희망)'
 }
 
 import { appendCurriculumSingleDateFixedScheduleSessionSuffix } from '@jakorea/form-schema/program-application'
@@ -84,6 +92,20 @@ export function generalEducationScheduleShapeFromBridge(
 
 /** 일반 상세 목록 — `preferFormOptionLabel`이면 폼 선택지 문구, 아니면 진행 화면과 같은 한 줄 */
 export function formatGeneralDetailSessionLine(
+  s: ApplicantSessionLineInput,
+  bridge?: InstitutionApplicationProgramBridge | null,
+  options?: {
+    detailScheduleTimeSpan?: string | null
+    curriculumSessionLabels?: readonly string[] | null
+    preferFormOptionLabel?: boolean
+  }
+): string {
+  const line = formatGeneralDetailSessionBaseLine(s, bridge, options)
+  const confirmation = formatHopeScheduleConfirmationLabel(s.hopeScheduleConfirmed)
+  return line && confirmation ? `${line} | ${confirmation}` : line
+}
+
+function formatGeneralDetailSessionBaseLine(
   s: ApplicantSessionLineInput,
   bridge?: InstitutionApplicationProgramBridge | null,
   options?: {

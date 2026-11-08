@@ -486,10 +486,15 @@ export function mapAccountPaymentDetailFromGetApi(
         }
       )
 
-  if (!settlement && !payeeExtras && !plainBankAndNumber) return base
+  const programId =
+    settlement?.programId?.toString().trim() ||
+    (mergedRow.programId != null ? String(mergedRow.programId) : undefined)
+
+  if (!settlement && !payeeExtras && !plainBankAndNumber) return { ...base, programId }
 
   return {
     ...base,
+    programId,
     basic: {
       ...base.basic,
       ...(payeeExtras ?? {}),

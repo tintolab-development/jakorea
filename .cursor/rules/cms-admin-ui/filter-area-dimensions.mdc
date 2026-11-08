@@ -1,5 +1,5 @@
 ---
-description: CMS·Admin 공통 — 목록 필터 영역 치수 (240 · gap 12 · 조회 높이 40)
+description: CMS·Admin 공통 — 목록 필터 영역 치수 (CMS 260 · gap 12 · 높이 40 · 기간 500 · 조회 h40)
 globs:
   - apps/cms/src/**/*.{tsx,ts,css}
   - apps/admin/src/**/*.{tsx,ts,css}
@@ -14,12 +14,13 @@ alwaysApply: false
 
 | 항목 | 값 | 상수 이름 (권장) |
 |------|-----|------------------|
-| 단일 검색·셀렉트 폭 | **240px** | `FILTER_CONTROL_MAX_WIDTH_PX` |
+| 단일 검색·셀렉트 폭 | **CMS 260px** (최소 240) · Admin 240px | `FILTER_CONTROL_MAX_WIDTH_PX` |
 | 컨트롤 높이 | **40px** (CmsField M) | `--filter-control-height` |
 | 필터 칸 사이 gap | **12px** | `--filter-field-gap` |
 | 레이블·컨트롤 gap | **6px** | `--filter-label-control-gap` |
-| 조회 버튼 | **높이 40px** · 폭은 CmsButton medium min-width + 라벨 | — |
-| 분리형 dateRange · selectPair 열 | **500px** (2×240+20) | `FILTER_CONTROL_WIDE_FIELD_WIDTH_PX` |
+| 레이블 | 14px Medium · 140% · pb 2 · 색 **#3D3D3D** (Neutral black — 폼 필드 라벨 #525252와 다름) | CmsField M · `--filter-area-label-color` |
+| 조회 버튼 | **h40 (medium)** · 폭은 min-width 120 + 라벨 | — |
+| 분리형 dateRange 열 | **500px** (각 칸 240 × 2 + 구분자 `~` 20) | `FILTER_CONTROL_WIDE_FIELD_WIDTH_PX` · `--filter-control-range-segment-width` |
 
 ## 금지 (양 앱 공통)
 
@@ -39,4 +40,6 @@ alwaysApply: false
 - URL 동기화: [list-filter-url-sync.mdc](./list-filter-url-sync.mdc)
 - 목록 셸: [list-table-shell.mdc](./list-table-shell.mdc)
 
-**Last updated:** 2026-10-30
+기준: Figma 📗 Design Guide › Layout / 목록 · 테이블 (14741:1307) · Field / Sorting M(40)
+
+**Last updated:** 2026-11-09

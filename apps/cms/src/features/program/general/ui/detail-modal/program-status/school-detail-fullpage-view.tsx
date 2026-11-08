@@ -124,6 +124,13 @@ import { toScheduledOnlyNotifyTiming } from '@/features/program/general/lib/appl
 import { SchoolDetailAssignOverflowModal } from './school-detail-assign-overflow-modal'
 import { SchoolDetailAssignCompleteModal } from './school-detail-assign-complete-modal'
 import { SchoolDetailNewAssignGuideModal } from './school-detail-new-assign-guide-modal'
+import { RequestedScheduleConfirmModal } from './requested-schedule-confirm-modal'
+import {
+  buildRequestedScheduleConfirmOptions,
+  hasConfirmedRequestedSchedule,
+  shouldShowRequestedScheduleConfirmAction,
+} from '@/features/program/general/lib/organization-requested-schedule-confirm'
+import { useOrganizationRequestedScheduleConfirmMutation } from '@/features/program/general/hooks/use-organization-schedule-assignment-mutation'
 import { SchoolDetailLeadInstructorConfirmModal } from './school-detail-lead-instructor-confirm-modal'
 import { InstructorFeeApprovalModal } from '@/features/program/shared/ui/detail-modal/components/instructor-fee-approval-modal'
 import { ProgramEnrollmentStatusText } from '@/shared/components/program-enrollment-status-text'
@@ -209,6 +216,10 @@ import { fetchAdminProgramSchedulesRemote } from '@/features/program/general/api
 import { fetchOrganizationScheduleAssignmentsRemote } from '@/features/program/general/api/organization-schedule-assignments-api-client'
 import { mapStoredPeriodRequestedSchedulesToHopeSessions } from '@/features/program/general/api/adapters/general-applications-adapters'
 import { organizationRequestedSchedulesQueryOptions } from '@/features/program/general/api/organization-requested-schedules-query'
+import {
+  ORGANIZATION_INSTRUCTOR_ASSIGNMENT_SCHEDULE_UNCONFIRMED_MESSAGE,
+  resolveOrganizationInstructorAssignmentScheduleTarget,
+} from '@/features/program/general/lib/organization-instructor-assignable-schedule'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
 import {
   mapOrganizationScheduleAssignmentSlotsToAssignedSessions,
@@ -795,6 +806,27 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     })
   }, [isCompanySchool, programId, queryClient])
 
+  /** 일반 기관 · 기간 지정 — 승인 후 희망 일정 확정(PUT requestedScheduleIds). 확정 전에는 강사 배정 불가 */
+  const requestedScheduleConfirmOptions = useMemo(
+    () => buildRequestedScheduleConfirmOptions(requestedHopeSchedulesQuery.data),
+    [requestedHopeSchedulesQuery.data]
+  )
+  const showRequestedScheduleConfirmAction = shouldShowRequestedScheduleConfirmAction({
+    isGeneralOrganization: isGeneralOrgProgram,
+    isCompanySchool,
+    educationScheduleMode: program.generalCommonInfo?.educationScheduleMode,
+    options: requestedScheduleConfirmOptions,
+  })
+  const requestedScheduleAlreadyConfirmed = hasConfirmedRequestedSchedule(
+    requestedScheduleConfirmOptions
+  )
+  const [requestedScheduleConfirmOpen, setRequestedScheduleConfirmOpen] = useState(false)
+  const requestedScheduleConfirmMutation = useOrganizationRequestedScheduleConfirmMutation(
+    programId,
+    organizationApplicationIdForDetail,
+    { onSettledRefresh: invalidateAssignmentBoard }
+  )
+
   const addAssignInstructorOptions = useMemo((): SchoolAddInstructorAssignOption[] | undefined => {
     if (!assignmentBoardRemoteEnabled || !assignmentBoard) return undefined
     const assignedNames = new Set(
@@ -1329,6 +1361,8 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         approvedInstructors: assignmentBoard.approvedInstructorApplications,
         assignedInstructorMemberIds: assignedMemberIds,
         occupiedLectureDatesByInstructorId,
+        // 일반 기관형: 강사 신청의 기관별 거리에서 이 기관을 찾는다(1사1교는 기존 신청 단위 거리)
+        organizationApplicationId: isGeneralOrgProgram ? row.organizationApplicationId : null,
       })
         .filter(waitingRow => !completedWaitingRowKeys.has(waitingRow.id))
         .map(waitingRow => {
@@ -1450,23 +1484,30 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
             if (scheduleUnresolved) {
               showAlert({
                 title: '안내',
-                content: `희망일에 대응하는 program schedule이 없습니다. (일정 미생성) — ${waitingRow.instructorName}`,
+                content: isCompanySchool
+                  ? `희망일에 대응하는 program schedule이 없습니다. (일정 미생성) — ${waitingRow.instructorName}`
+                  : ORGANIZATION_INSTRUCTOR_ASSIGNMENT_SCHEDULE_UNCONFIRMED_MESSAGE,
               })
               return
             }
 
-            const scheduleId =
-              resolveInstructorAssignmentScheduleId({
+            const scheduleTarget = resolveOrganizationInstructorAssignmentScheduleTarget({
+              allowRequestedScheduleOnly: isCompanySchool,
+              boardScheduleId: resolveInstructorAssignmentScheduleId({
                 schedules: assignmentBoard.schedules,
                 resolvedScheduleId,
                 hopeDateOrLine: waitingRow.hopeDate ?? waitingRow.hopeScheduleLine,
                 timeRangeLabel: waitingRow.hopeScheduleLine,
-              }) ?? undefined
-            if (scheduleId == null && requestedScheduleId == null) {
+              }),
+              resolvedScheduleId,
+              requestedScheduleId,
+            })
+            if (scheduleTarget == null) {
               showAlert({
                 title: '안내',
-                content:
-                  '교육 일정을 program schedule과 명확히 연결할 수 없습니다. resolvedScheduleId·requestedScheduleId 또는 희망 시간 정보를 확인해 주세요.',
+                content: isCompanySchool
+                  ? '교육 일정을 program schedule과 명확히 연결할 수 없습니다. resolvedScheduleId·requestedScheduleId 또는 희망 시간 정보를 확인해 주세요.'
+                  : ORGANIZATION_INSTRUCTOR_ASSIGNMENT_SCHEDULE_UNCONFIRMED_MESSAGE,
               })
               return
             }
@@ -1478,8 +1519,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
             )
             await createInstructorAssignmentRemote(programId, {
               instructorMemberId: memberId,
-              ...(scheduleId != null ? { scheduleId } : {}),
-              ...(requestedScheduleId != null ? { requestedScheduleId } : {}),
+              ...scheduleTarget,
               organizationApplicationId: Number(orgAppId),
               instructorApplicationId: applicationIdRaw ? Number(applicationIdRaw) : undefined,
               scheduleLead: !leadAssigned,
@@ -1691,30 +1731,35 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
           if (session.scheduleUnresolved) {
             showAlert({
               title: '안내',
-              content: `희망일에 대응하는 program schedule이 없습니다. (일정 미생성)`,
+              content: isCompanySchool
+                ? `희망일에 대응하는 program schedule이 없습니다. (일정 미생성)`
+                : ORGANIZATION_INSTRUCTOR_ASSIGNMENT_SCHEDULE_UNCONFIRMED_MESSAGE,
             })
             return
           }
-          const requestedScheduleId = session.requestedScheduleId
-          const scheduleId =
-            resolveInstructorAssignmentScheduleId({
+          const scheduleTarget = resolveOrganizationInstructorAssignmentScheduleTarget({
+            allowRequestedScheduleOnly: isCompanySchool,
+            boardScheduleId: resolveInstructorAssignmentScheduleId({
               schedules: assignmentBoard.schedules,
               resolvedScheduleId: session.resolvedScheduleId,
               hopeDateOrLine: session.date,
               timeRangeLabel: session.timeRange,
-            }) ?? undefined
-          if (scheduleId == null && requestedScheduleId == null) {
+            }),
+            resolvedScheduleId: session.resolvedScheduleId,
+            requestedScheduleId: session.requestedScheduleId,
+          })
+          if (scheduleTarget == null) {
             showAlert({
               title: '안내',
-              content:
-                '교육 일정을 program schedule과 명확히 연결할 수 없습니다. resolvedScheduleId·requestedScheduleId 또는 희망 시간 정보를 확인해 주세요.',
+              content: isCompanySchool
+                ? '교육 일정을 program schedule과 명확히 연결할 수 없습니다. resolvedScheduleId·requestedScheduleId 또는 희망 시간 정보를 확인해 주세요.'
+                : ORGANIZATION_INSTRUCTOR_ASSIGNMENT_SCHEDULE_UNCONFIRMED_MESSAGE,
             })
             return
           }
           await createInstructorAssignmentRemote(programId, {
             instructorMemberId: memberId,
-            ...(scheduleId != null ? { scheduleId } : {}),
-            ...(requestedScheduleId != null ? { requestedScheduleId } : {}),
+            ...scheduleTarget,
             organizationApplicationId: Number(orgAppId),
             instructorApplicationId:
               applicationIdRaw != null ? Number(applicationIdRaw) : undefined,
@@ -2028,14 +2073,15 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         title: '강사명',
         dataIndex: 'instructorName',
         key: 'instructorName',
-        width: 100,
+        width: TABLE_COLUMN_WIDTHS.name,
         render: (v: string | undefined) => (v ? v : '-'),
       },
       {
         title: '자택 주소지',
         dataIndex: 'homeAddress',
         key: 'homeAddress',
-        width: 160,
+        width: TABLE_COLUMN_WIDTHS.address,
+        ellipsis: true,
         render: (v: string | undefined) => (
           <PrivacyHomeAddressDisplay address={v} revealed={!privacyMasked} />
         ),
@@ -2044,7 +2090,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         title: '기관과의 거리',
         dataIndex: 'distanceToSchool',
         key: 'distanceToSchool',
-        width: 100,
+        width: TABLE_COLUMN_WIDTHS.distance,
         align: 'center',
         render: (v: string | undefined) => v ?? '-',
       },
@@ -2052,7 +2098,8 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         title: '담당 교육 진행 일정',
         dataIndex: 'assignedDate',
         key: 'assignedDate',
-        width: 280,
+        // 넓은 화면 남는 폭은 공통 규칙(열 폭 비율)으로 배분 — 일정이 가장 넓어 가장 많이 늘어남
+        width: TABLE_COLUMN_WIDTHS.scheduleMin,
         align: 'center',
         render: (v: string | undefined, record: AssignedInstructorDisplayRow) => {
           if (record.assignedScheduleLine) {
@@ -2093,14 +2140,15 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         title: '강사명',
         dataIndex: 'instructorName',
         key: 'instructorName',
-        width: 100,
+        width: TABLE_COLUMN_WIDTHS.name,
         render: (v: string | undefined) => (v ? v : '-'),
       },
       {
         title: '자택 주소지',
         dataIndex: 'homeAddress',
         key: 'homeAddress',
-        width: 160,
+        width: TABLE_COLUMN_WIDTHS.address,
+        ellipsis: true,
         render: (v: string | undefined) => (
           <PrivacyHomeAddressDisplay address={v} revealed={!privacyMasked} />
         ),
@@ -2109,7 +2157,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         title: '기관과의 거리',
         dataIndex: 'distanceToSchool',
         key: 'distanceToSchool',
-        width: 100,
+        width: TABLE_COLUMN_WIDTHS.distance,
         align: 'center',
         render: (v: string | undefined) => v ?? '-',
       },
@@ -2117,7 +2165,8 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         title: '교육 진행 희망 일정',
         dataIndex: 'hopeDate',
         key: 'hopeDate',
-        width: 300,
+        // 넓은 화면 남는 폭은 공통 규칙(열 폭 비율)으로 배분 — 일정이 가장 넓어 가장 많이 늘어남
+        width: TABLE_COLUMN_WIDTHS.scheduleMin,
         align: 'center',
         render: (v: string | undefined, record: WaitingInstructorRow) => {
           if (record.hopeScheduleLine) {
@@ -2145,7 +2194,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         title: '배정 현황',
         dataIndex: 'assignmentStatus',
         key: 'assignmentStatus',
-        width: 100,
+        width: TABLE_COLUMN_WIDTHS.status,
         align: 'center',
         render: (status: WaitingInstructorRow['assignmentStatus']) => (
           <ProgramAssignmentStatusText status={status} context="school-instructor" />
@@ -2702,6 +2751,14 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                   <span className="table-description">{waitingRows.length}건</span>
                 </div>
                 <div className="info-section-buttons--wrapper">
+                  {showRequestedScheduleConfirmAction ? (
+                    <CmsButton
+                      variant="secondary"
+                      size="h40"
+                      onClick={() => setRequestedScheduleConfirmOpen(true)} >
+                      {requestedScheduleAlreadyConfirmed ? '희망 일정 변경' : '희망 일정 확정'}
+                    </CmsButton>
+                  ) : null}
                   <CmsButton
                     variant="secondary"
                     size="h40" className="school-detail-fullpage-view__btn-assign participating-institutions-section__btn-approve"
@@ -2856,6 +2913,29 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                     showApprovalAlarmSection: _meta?.isNewApproval ?? false,
                   })
                 })()
+              }}
+            />
+            <RequestedScheduleConfirmModal
+              key={requestedScheduleConfirmOpen ? 'requested-schedule-confirm-open' : 'closed'}
+              open={requestedScheduleConfirmOpen}
+              schoolName={row.schoolName}
+              options={requestedScheduleConfirmOptions}
+              maxScheduleCount={
+                program.generalCommonInfo?.participantRecruitmentInfo?.maxScheduleCount ?? null
+              }
+              confirmLoading={requestedScheduleConfirmMutation.isPending}
+              onCancel={() => setRequestedScheduleConfirmOpen(false)}
+              onNotice={message => showAlert({ title: '선택 불가', content: message })}
+              onConfirm={requestedScheduleIds => {
+                requestedScheduleConfirmMutation.mutate(
+                  { requestedScheduleIds },
+                  {
+                    onSuccess: () => {
+                      setRequestedScheduleConfirmOpen(false)
+                      showAlert({ title: '희망 일정 확정', content: '희망 일정을 확정했습니다.' })
+                    },
+                  }
+                )
               }}
             />
             <SchoolDetailSelectAssignConfirmModal

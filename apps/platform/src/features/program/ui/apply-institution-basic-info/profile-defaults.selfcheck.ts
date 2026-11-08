@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict'
 import {
-  fillTrainedTeachersBasicInfoFromProfile,
-  trainedTeachersProfileDefaults,
+  fillInstitutionBasicInfoFromProfile,
+  institutionBasicInfoProfileDefaults,
 } from './profile-defaults.ts'
-import type { ApplyTrainedTeachersBasicInfoValues } from './apply-trained-teachers-basic-info.tsx'
+import type { ApplyInstitutionBasicInfoValues } from './apply-institution-basic-info.tsx'
 
-function emptyBasicInfo(): ApplyTrainedTeachersBasicInfoValues {
+function emptyBasicInfo(): ApplyInstitutionBasicInfoValues {
   return {
     schoolName: '',
     regionLabel: '',
@@ -25,7 +25,7 @@ function emptyBasicInfo(): ApplyTrainedTeachersBasicInfoValues {
   }
 }
 
-const fromOrganization = trainedTeachersProfileDefaults({
+const fromOrganization = institutionBasicInfoProfileDefaults({
   name: '이진희',
   phone: '01057649470',
   email: 'teacher@example.com',
@@ -46,12 +46,12 @@ assert.equal(fromOrganization.teacherName, '이진희')
 assert.equal(fromOrganization.teacherMobile, '010-5764-9470')
 assert.equal(fromOrganization.teacherEmail, 'teacher@example.com')
 
-const fromMaskedPhone = trainedTeachersProfileDefaults({
+const fromMaskedPhone = institutionBasicInfoProfileDefaults({
   phone: '010-****-1080',
 })
 assert.equal(fromMaskedPhone.teacherMobile, '010-****-1080')
 
-const fromMemberAddress = trainedTeachersProfileDefaults({
+const fromMemberAddress = institutionBasicInfoProfileDefaults({
   regionSido: '경기도',
   regionSigungu: '성남시',
   addressDetail: '101호',
@@ -59,7 +59,7 @@ const fromMemberAddress = trainedTeachersProfileDefaults({
 assert.equal(fromMemberAddress.regionLabel, '경기도 성남시')
 assert.equal(fromMemberAddress.addressDetail, '101호')
 
-const filled = fillTrainedTeachersBasicInfoFromProfile(
+const filled = fillInstitutionBasicInfoFromProfile(
   {
     ...emptyBasicInfo(),
     addressDetail: '직접 입력한 상세주소',

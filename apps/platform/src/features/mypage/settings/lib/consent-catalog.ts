@@ -32,9 +32,11 @@ export type SettingsConsentItem = {
   withdrawable?: boolean
   /** 서버 `status` — WITHDRAWN이면 철회 버튼 비활성 */
   status?: string
-  /** 서버 `consentStatus` — `PARTIAL`이면 부분동의 */
+  /** 서버 `consentStatus` — 초상권은 동의 시 항상 `PARTIAL`이라 라벨 판정에 `allItemsAgreed`를 쓴다 */
   consentStatus?: string
-  /** 서버 `allItemsAgreed` — 초상권 1·2·3 모두 동의 여부(표시 전용) */
+  /** 서버 `consentType` (정규화) — 라벨 함수의 초상권 분기용 */
+  consentType?: string
+  /** 서버 `allItemsAgreed` — 초상권 동의/부분 동의 라벨 전용 */
   allItemsAgreed?: boolean | null
   /** 기간제 동의서 유효기간 경과 — 「동의 만료」 표시. 기간제가 아닌 항목은 항상 false */
   expired?: boolean

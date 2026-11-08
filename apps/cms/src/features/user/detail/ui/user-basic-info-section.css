@@ -111,14 +111,14 @@
   opacity: 0.4;
 }
 
+/* 시안: 승인 일시 14px Medium · rgba(61,61,61,0.5) */
 .user-basic-info-section__permission-approval-timestamp {
-  color: var(--default-BK, #3d3d3d);
+  color: rgba(61, 61, 61, 0.5);
   font-family: Pretendard;
-  font-size: 16px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
-  opacity: 0.6;
 }
 
 .user-basic-info-section__id1365-cell {
@@ -219,4 +219,9 @@
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
+}
+
+/* 일반 회원 수정 — 주소 검색 시안 고정 폭(242): 공통 trigger-wrap flex-grow 해제 */
+.user-basic-info-section__address--fixed > .address-search__trigger-wrap {
+  flex: 0 0 auto;
 }

@@ -45,6 +45,8 @@ export interface VolunteerWaitingInstitutionRow {
   hopeSchedule: WaitingInstructorHopeSchedule
   assignmentStatus: VolunteerWaitingAssignmentStatus
   assignedVolunteerCountLabel: string
+  /** 기관별 거리 매칭용 */
+  organizationApplicationId?: string
 }
 
 function hash(s: string): number {
@@ -182,6 +184,7 @@ function expandSchoolSessionsToWaitingRows(
       hopeSchedule,
       assignmentStatus: resolveWaitingInstructorAssignmentStatus(hopeSchedule, occupiedSlots),
       assignedVolunteerCountLabel: volunteerCountLabel(volunteerList, school.schoolName, session),
+      organizationApplicationId: school.organizationApplicationId,
     }
   })
 }

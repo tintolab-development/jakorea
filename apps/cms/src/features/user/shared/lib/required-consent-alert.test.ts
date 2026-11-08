@@ -178,4 +178,59 @@ describe('required-consent-alert', () => {
       )
     })
   })
+
+  describe('초상권 consentType 분기', () => {
+    const portrait = (over: Partial<Parameters<typeof resolveConsentStatusDisplayLabel>[0]>) =>
+      resolveConsentStatusDisplayLabel({
+        agreed: true,
+        consentStatus: 'PARTIAL',
+        consentType: 'PORTRAIT_RIGHTS',
+        agreedLabel: '동의',
+        ...over,
+      })
+
+    it('1·2·3 모두 동의(true)면 PARTIAL이어도 동의 라벨', () => {
+      expect(portrait({ allItemsAgreed: true })).toBe('동의')
+      expect(portrait({ allItemsAgreed: true, agreedLabel: '동의함' })).toBe('동의함')
+    })
+
+    it('하나 이상 미동의(false)면 부분 동의', () => {
+      expect(portrait({ allItemsAgreed: false })).toBe(PARTIAL_CONSENT_DISPLAY_LABEL)
+    })
+
+    it('판정 불가(null)·구버전 BE(생략)는 부분 동의를 유지한다', () => {
+      expect(portrait({ allItemsAgreed: null })).toBe(PARTIAL_CONSENT_DISPLAY_LABEL)
+      expect(portrait({})).toBe(PARTIAL_CONSENT_DISPLAY_LABEL)
+    })
+
+    it('철회·DISAGREED는 기존 미동의 라벨', () => {
+      expect(
+        portrait({ agreed: false, consentStatus: 'DISAGREED', allItemsAgreed: false })
+      ).toBe('미동의')
+      expect(portrait({ agreed: true, consentStatus: 'DISAGREED', allItemsAgreed: true })).toBe(
+        '미동의'
+      )
+      expect(portrait({ agreed: false, allItemsAgreed: null, disagreedLabel: '철회' })).toBe(
+        '철회'
+      )
+    })
+
+    it('비초상권은 allItemsAgreed와 무관하게 기존 라벨', () => {
+      expect(
+        resolveConsentStatusDisplayLabel({
+          agreed: true,
+          consentType: 'MARKETING',
+          agreedLabel: '동의',
+          allItemsAgreed: null,
+        })
+      ).toBe('동의')
+      expect(
+        resolveConsentStatusDisplayLabel({
+          agreed: false,
+          consentType: 'MARKETING',
+          agreedLabel: '동의',
+        })
+      ).toBe('미동의')
+    })
+  })
 })

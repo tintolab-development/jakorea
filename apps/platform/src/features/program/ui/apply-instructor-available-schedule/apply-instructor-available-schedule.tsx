@@ -8,7 +8,9 @@ import {
   parseScheduleDisplayLabel,
 } from '@/shared/lib/format-display-date'
 import {
+  isAutoMaterializedScheduleName,
   isDefaultEducationSlotName,
+  stripAutoMaterializedScheduleNameFromLabel,
   stripDefaultEducationSlotNameFromLabel,
 } from '@/shared/lib/education-schedule-name'
 import {
@@ -129,8 +131,12 @@ function buildScheduleTimeRangeLabel(
   end: { time: string; dateKey: string } | null,
   startDateKey: string,
 ): string {
+  // 1순위: 서버 `timeRange`("HH:mm ~ HH:mm", Asia/Seoul). 기관 승인 일정(APPLICATION_MATERIALIZED)에만 오고,
+  // 종일이면 키가 없다. 2순위: startAt·endAt을 서울 시각으로 계산. (label 파싱은 호출부 마지막 대체값)
+  const serverTimeRange = readScheduleMetaString(option, meta, ['timeRange'])
+  if (isTimeRangeLikeText(serverTimeRange)) return serverTimeRange.trim()
   const fromApi = readScheduleMetaString(option, meta, ['timeRange', 'timeLabel', 'time'])
-  if (fromApi) return fromApi
+  if (!end && fromApi) return fromApi
   const allDay =
     end != null &&
     start.time === '00:00' &&
@@ -225,7 +231,9 @@ function buildScheduleSlotCardDisplay(
   const labelParts = splitPipeLabel(displayLabel)
   const schoolName =
     readScheduleMetaString(option, meta, ['organizationName', 'schoolName', 'school']) ||
-    (!isScheduleDateLikeText(labelParts.head) ? labelParts.head : '') ||
+    (!isScheduleDateLikeText(labelParts.head) && !isAutoMaterializedScheduleName(labelParts.head)
+      ? labelParts.head
+      : '') ||
     ''
   const region =
     readScheduleRegion(option, meta) || readRegionFromLabelTail(labelParts.tail)
@@ -233,8 +241,10 @@ function buildScheduleSlotCardDisplay(
     sanitizeScheduleSessionLabel(readScheduleSessionLabel(option, meta)) ||
     sanitizeScheduleSessionLabel(parsedLabel.sessionLabel ?? '')
   const orgTitle = joinScheduleCardLine([schoolName, region])
-  const timeRange =
-    parsedLabel.timeRange &&
+  const serverTimeRange = readScheduleMetaString(option, meta, ['timeRange'])
+  const timeRange = isTimeRangeLikeText(serverTimeRange)
+    ? serverTimeRange.trim()
+    : parsedLabel.timeRange &&
     start &&
     start.time === '00:00' &&
     (end == null || end.time === '00:00')
@@ -255,6 +265,7 @@ function buildScheduleSlotCardDisplay(
 function isOrgScheduleChipTitle(value: string): boolean {
   const trimmed = value.trim()
   if (!trimmed) return false
+  if (isAutoMaterializedScheduleName(trimmed)) return false
   if (isScheduleDateLikeText(trimmed) || isTimeRangeLikeText(trimmed)) return false
   return true
 }
@@ -326,9 +337,12 @@ function readSchoolNameForScheduleSummary(slot: ApplyInstructorScheduleSlot): st
 }
 
 function readTimeRangeForScheduleSummary(slot: ApplyInstructorScheduleSlot): string {
-  const secondary = resolveScheduleSlotCardLines(slot).secondary ?? ''
-  for (const part of secondary.split('|').map(value => value.trim())) {
-    if (isTimeRangeLikeText(part)) return part
+  // 카드 2행(detail)은 startAt·endAt 서울 시각 기준이다. 기관명이 없으면 1행으로 올라가므로 detail을 먼저 본다.
+  const lines = resolveScheduleSlotCardLines(slot)
+  for (const source of [slot.detail ?? '', lines.secondary ?? '', lines.primary ?? '']) {
+    for (const part of source.split('|').map(value => value.trim())) {
+      if (isTimeRangeLikeText(part)) return part
+    }
   }
   const parsed = parseKoreanEducationScheduleLabel(slot.label)
   return parsed.timeRange ?? ''
@@ -338,10 +352,11 @@ function readSessionLabelForScheduleSummary(slot: ApplyInstructorScheduleSlot): 
   const secondary = resolveScheduleSlotCardLines(slot).secondary ?? ''
   for (const part of secondary.split('|').map(value => value.trim())) {
     const session = sanitizeScheduleSessionLabel(part)
-    if (session) return session
+    if (session && !isAutoMaterializedScheduleName(session)) return session
   }
   const parsed = parseKoreanEducationScheduleLabel(slot.label)
-  return sanitizeScheduleSessionLabel(parsed.sessionLabel ?? '')
+  const session = sanitizeScheduleSessionLabel(parsed.sessionLabel ?? '')
+  return isAutoMaterializedScheduleName(session) ? '' : session
 }
 
 function resolveScheduleSummaryDateKey(slot: ApplyInstructorScheduleSlot): string | undefined {
@@ -485,9 +500,11 @@ function runtimeScheduleSlotFromOption(
 ): ApplyInstructorScheduleSlot {
   const meta = optionMetadata(option)
   const rawLabel = label || String(option.label ?? option.option_label ?? '').trim()
-  // 서버 라벨 끝의 자동 기본명(`| 공통 교육 예정 N`)은 제거한다.
+  // 서버 라벨 끝의 자동 기본명(`| 공통 교육 예정 N`)·기관 승인 일정 내부명(`| 기관 확정 YYYY-MM-DD`)은 제거한다.
+  // 신청 제출 시 selectedLabels가 이 라벨을 쓰므로 저장 문구에도 남지 않는다.
   const displayLabel = rawLabel
-    ? stripDefaultEducationSlotNameFromLabel(rawLabel) || '교육 일정'
+    ? stripAutoMaterializedScheduleNameFromLabel(stripDefaultEducationSlotNameFromLabel(rawLabel)) ||
+      '교육 일정'
     : id
   const geminiPreferred = geminiPreferredScheduleSlotFromOption(option, meta, id, displayLabel)
   if (geminiPreferred) return geminiPreferred

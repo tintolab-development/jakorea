@@ -180,12 +180,14 @@ export function AdminNoticeDetailPage() {
               ) : null}
             </div>
           </div>
-          <hr className="admin-notice-detail-page__section-divider" />
+          {attachmentItems.length > 0 ? null : (
+            <hr className="admin-notice-detail-page__section-divider" />
+          )}
           {attachmentItems.length > 0 ? (
             <div className="admin-notice-detail-page__attachments">
               <div className="admin-notice-detail-page__attachments-head">
                 <PaperClipOutlined className="admin-notice-detail-page__clip" aria-hidden />
-                <span>첨부파일</span>
+                <span>첨부 파일</span>
               </div>
               <ul className="admin-notice-detail-page__attachments-list">
                 {attachmentItems.map((item, index) => (

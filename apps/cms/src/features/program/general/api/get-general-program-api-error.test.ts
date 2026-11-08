@@ -5,6 +5,10 @@ import {
   getProgramFormBindingErrorMessage,
 } from './get-general-program-api-error'
 
+/** 기관 승인·배정 공통 안내(organization-application-approve-slots)가 우선한다. */
+const PROGRAM_SCHEDULE_NOT_EDUCATION_SLOT_ASSIGN_MESSAGE =
+  '교육 일정이 아닌 유형입니다. 교육 회차 일정을 선택해 주세요.'
+
 describe('getGeneralProgramApiErrorMessage', () => {
   it('business_start_date CONFLICT를 한글 안내로 변환한다', () => {
     const error = {
@@ -390,7 +394,7 @@ describe('getGeneralProgramApiErrorMessage program schedule codes', () => {
         { response: { data: { error: { code: 'PROGRAM_SCHEDULE_NOT_EDUCATION_SLOT' } } } },
         'fallback'
       )
-    ).toContain('EDUCATION')
+    ).toBe(PROGRAM_SCHEDULE_NOT_EDUCATION_SLOT_ASSIGN_MESSAGE)
   })
 
   it('maps PROGRAM_SCHEDULE_LOCKED with BE Korean message', () => {
@@ -446,13 +450,15 @@ describe('getProgramFormBindingErrorMessage PROGRAM_SCHEDULE_NOT_EDUCATION_SLOT'
   })
 
   it('keeps assignment copy outside survey registration', () => {
-    expect(getProgramFormBindingErrorMessage(error, 'fallback')).toContain('EDUCATION')
+    expect(getProgramFormBindingErrorMessage(error, 'fallback')).toBe(
+      PROGRAM_SCHEDULE_NOT_EDUCATION_SLOT_ASSIGN_MESSAGE
+    )
     expect(
       getProgramFormBindingErrorMessage(error, 'fallback', {
         formType: 'LECTURE_EVALUATION',
         targetScope: 'SCHEDULE',
       })
-    ).toContain('EDUCATION')
+    ).toBe(PROGRAM_SCHEDULE_NOT_EDUCATION_SLOT_ASSIGN_MESSAGE)
   })
 })
 

@@ -2,12 +2,12 @@ import assert from 'node:assert/strict'
 import {
   basicInfoAnswerFromValues,
   basicInfoValuesFromDraftAnswer,
-  emptyTrainedTeachersBasicInfo,
+  emptyInstitutionBasicInfo,
   normalizePortalEducationFormat,
-} from './apply-trained-teachers-basic-info-answers.ts'
+} from './apply-institution-basic-info-answers.ts'
 
 const base = {
-  ...emptyTrainedTeachersBasicInfo(),
+  ...emptyInstitutionBasicInfo(),
   schoolName: '진월초등학교',
   regionLabel: '광주광역시 남구',
   applicationGrade: '3',
@@ -18,7 +18,7 @@ const base = {
   educationPlaceDetail: '교실',
 }
 
-assert.equal(emptyTrainedTeachersBasicInfo().educationFormat, '')
+assert.equal(emptyInstitutionBasicInfo().educationFormat, '')
 assert.equal(normalizePortalEducationFormat('online'), 'online')
 assert.equal(normalizePortalEducationFormat(' ONLINE '), 'online')
 assert.equal(normalizePortalEducationFormat('ONLINE'), 'online')
@@ -66,4 +66,4 @@ const uppercaseDraftValues = basicInfoValuesFromDraftAnswer({
 })
 assert.equal(uppercaseDraftValues?.educationFormat, 'offline')
 
-console.log('apply-trained-teachers-basic-info-answers.selfcheck: ok')
+console.log('apply-institution-basic-info-answers.selfcheck: ok')

@@ -40,10 +40,20 @@
   margin-inline: auto;
 }
 
+/* Figma 3052:78282 — `< 목록으로` 우측 안내 문구 (gap 16) */
+.notice-detail-page__back-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 16px;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
 .notice-detail-page__hint {
   margin: 0;
-  flex-shrink: 0;
-  color: var(--color-gray-02, #7d7d7d);
+  min-width: 0;
+  color: rgba(61, 61, 61, 0.5);
   font-family: Pretendard, var(--font-family-primary, sans-serif);
   font-size: 14px;
   font-weight: 500;
@@ -357,7 +367,7 @@
   }
 }
 
-/* `< 목록으로` (admin-ui post-detail) — 카드와 간격 16 */
-.notice-detail-page__inner > .admin-detail-back-link {
+/* `< 목록으로` 행 — 카드와 간격 16 */
+.notice-detail-page__inner > .notice-detail-page__back-row {
   margin-bottom: -8px;
 }

@@ -26,7 +26,7 @@ export type CmsRadioSize = 'large' | 'medium' | 'small'
 const CmsRadioSizeContext = createContext<CmsRadioSize | undefined>(undefined)
 
 export type CmsRadioProps = RadioProps & {
-  /** 기본 large: 원 20px·본문 16px/130%·원–텍스트 8px. medium: 18px / 14px·125% / 6px. small: 16px / 14px·125% / 4px */
+  /** 기본 large: 원 20px·본문 16px/130%·원–텍스트 8px. medium: 18px / 14px·125% / 8px. small: 16px / 14px·125% / 4px */
   size?: CmsRadioSize
 }
 

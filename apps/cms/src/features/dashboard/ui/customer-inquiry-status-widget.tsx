@@ -137,6 +137,8 @@ export function CustomerInquiryStatusWidget({ isHalfColumn = false }: { isHalfCo
         <DashboardWidgetQueryError />
       ) : (
         <CmsDataTable<ProgramInquiryRow>
+          /* 반폭 카드 안 표 — 공통 1080 하한 미적용, 열 합·카드 폭 기준 */
+          minTableWidthFloor={0}
           columns={columns}
           dataSource={rows}
           rowKey="key"

@@ -656,7 +656,7 @@ async function fillParagraphDateByPlaceholderOnce(
     const targetMonth = now.getFullYear() * 12 + now.getMonth()
     for (let attempt = 0; attempt < 24; attempt += 1) {
       const title = (await dialog.locator('.calendar-mini-title').innerText()).trim()
-      const match = /^(\d{4})\.(\d{1,2})$/.exec(title)
+      const match = /^(\d{4})\.\s*(\d{1,2})$/.exec(title)
       if (!match) break
       const displayedMonth = Number(match[1]) * 12 + Number(match[2]) - 1
       if (displayedMonth === targetMonth) break

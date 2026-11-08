@@ -114,6 +114,8 @@ export function ContactInfoFieldsRow({
   onEmailChange,
   phonePlaceholder,
   emailPlaceholder,
+  required,
+  inputWidth = '100%',
 }: {
   user: Omit<User, 'password'>
   personalInfoRevealed: boolean
@@ -124,11 +126,16 @@ export function ContactInfoFieldsRow({
   onEmailChange: (next: string) => void
   phonePlaceholder?: string
   emailPlaceholder?: string
+  /** 수정 모드 연락처·이메일 라벨 필수 `*` */
+  required?: boolean
+  /** 수정 입력 폭 — 기본 셀 꽉 참(`100%`), 시안 고정 폭이 있으면 px */
+  inputWidth?: number | string
 }) {
   return (
     <EditableRow type="double">
       <EditableField
         label="연락처"
+        required={required}
         readOnlyDisplay={readOnlyDisplay}
         view={<span>{detailPhoneDisplay(user, personalInfoRevealed)}</span>}
         edit={
@@ -136,13 +143,14 @@ export function ContactInfoFieldsRow({
             value={phoneValue}
             onChange={e => onPhoneChange(e.target.value)}
             inputSize="small"
-            width="100%"
+            width={inputWidth}
             placeholder={phonePlaceholder}
           />
         }
       />
       <EditableField
         label="이메일"
+        required={required}
         readOnlyDisplay={readOnlyDisplay}
         view={<span>{detailEmailDisplay(user, personalInfoRevealed)}</span>}
         edit={
@@ -150,7 +158,7 @@ export function ContactInfoFieldsRow({
             value={emailValue}
             onChange={e => onEmailChange(e.target.value)}
             inputSize="small"
-            width="100%"
+            width={inputWidth}
             placeholder={emailPlaceholder}
           />
         }
@@ -166,6 +174,8 @@ export function FullWidthAddressEdit({
   onDetailChange,
   detailAriaLabel,
   onAddressSelect,
+  searchWidth = '100%',
+  detailWidth = '100%',
 }: {
   searchValue: string
   onSearchChange: (next: string) => void
@@ -173,16 +183,24 @@ export function FullWidthAddressEdit({
   onDetailChange: (next: string) => void
   detailAriaLabel: string
   onAddressSelect?: (item: { zipNo?: string }) => void
+  /** 주소 검색 폭 — 기본 셀 꽉 참, 시안 고정 폭이 있으면 px */
+  searchWidth?: number | string
+  /** 상세 주소 폭 — 기본 셀 꽉 참, 시안 고정 폭이 있으면 px */
+  detailWidth?: number | string
 }) {
+  const fixedSearchWidth = searchWidth !== '100%'
   return (
-    <Space.Compact style={{ width: '100%' }}>
+    <Space.Compact
+      className={fixedSearchWidth ? 'user-basic-info-section__address--fixed' : undefined}
+      style={{ width: '100%' }}
+    >
       <AddressSearchDetailInputs
         searchValue={searchValue}
         onSearchChange={onSearchChange}
         detailValue={detailValue}
         onDetailChange={onDetailChange}
-        searchWidth="100%"
-        detailWidth="100%"
+        searchWidth={searchWidth}
+        detailWidth={detailWidth}
         detailAriaLabel={detailAriaLabel}
         onAddressSelect={onAddressSelect}
       />

@@ -93,13 +93,13 @@
     .table-filter-group__grid-cell--explicit-width
   ):has(.cms-datepicker--range-split) {
   width: calc(
-    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-range-segment-width, 240px) + var(--filter-control-range-split-between, 20px)
   );
   min-width: calc(
-    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-range-segment-width, 240px) + var(--filter-control-range-split-between, 20px)
   );
   max-width: calc(
-    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-range-segment-width, 240px) + var(--filter-control-range-split-between, 20px)
   );
 }
 
@@ -211,10 +211,10 @@
     .table-filter-group__col--explicit-width
   ):has(.cms-datepicker--range-split) {
   min-width: calc(
-    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-range-segment-width, 240px) + var(--filter-control-range-split-between, 20px)
   );
   max-width: calc(
-    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-range-segment-width, 240px) + var(--filter-control-range-split-between, 20px)
   );
 }
 
@@ -333,13 +333,13 @@
 .table-filter-group__grid-cell--pct-width:has(.cms-datepicker--range-split)
   .table-filter-group__field {
   min-width: calc(
-    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-range-segment-width, 240px) + var(--filter-control-range-split-between, 20px)
   );
   width: calc(
-    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-range-segment-width, 240px) + var(--filter-control-range-split-between, 20px)
   );
   max-width: calc(
-    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-range-segment-width, 240px) + var(--filter-control-range-split-between, 20px)
   );
 }
 
@@ -638,44 +638,44 @@
   box-sizing: border-box;
 }
 
-/* 기간(분리 UI): 래퍼 2×260 + 구분자, 각 세그먼트 260px 고정 (% Col 포함) */
+/* 기간(분리 UI): 래퍼 2×240 + 구분자, 각 세그먼트 240px 고정 (% Col 포함) — 디자인 가이드 */
 .table-filter-group__fields-inner .cms-datepicker.cms-datepicker--range-split,
 .table-filter-group__grid-cell .cms-datepicker.cms-datepicker--range-split {
   min-width: calc(
-    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-range-segment-width, 240px) + var(--filter-control-range-split-between, 20px)
   );
   max-width: calc(
-    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-range-segment-width, 240px) + var(--filter-control-range-split-between, 20px)
   );
   width: calc(
-    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-range-segment-width, 240px) + var(--filter-control-range-split-between, 20px)
   );
   box-sizing: border-box;
 }
 
 .table-filter-group__container .cms-datepicker--range-split .cms-datepicker__segment {
-  flex: 0 0 var(--filter-control-max-width, 260px) !important;
-  min-width: var(--filter-control-max-width, 260px) !important;
-  max-width: var(--filter-control-max-width, 260px) !important;
-  width: var(--filter-control-max-width, 260px) !important;
+  flex: 0 0 var(--filter-control-range-segment-width, 240px) !important;
+  min-width: var(--filter-control-range-segment-width, 240px) !important;
+  max-width: var(--filter-control-range-segment-width, 240px) !important;
+  width: var(--filter-control-range-segment-width, 240px) !important;
 }
 
-/* `width="100%"` 등 explicit-width 클래스가 붙어도 시작·종료 각 260px 유지 */
+/* `width="100%"` 등 explicit-width 클래스가 붙어도 시작·종료 각 240px 유지 */
 .table-filter-group__container
   .cms-datepicker--range-split.cms-datepicker--explicit-width
   .cms-datepicker__segment {
-  flex: 0 0 var(--filter-control-max-width, 260px) !important;
-  min-width: var(--filter-control-max-width, 260px) !important;
-  max-width: var(--filter-control-max-width, 260px) !important;
-  width: var(--filter-control-max-width, 260px) !important;
+  flex: 0 0 var(--filter-control-range-segment-width, 240px) !important;
+  min-width: var(--filter-control-range-segment-width, 240px) !important;
+  max-width: var(--filter-control-range-segment-width, 240px) !important;
+  width: var(--filter-control-range-segment-width, 240px) !important;
 }
 
 .table-filter-group__container .cms-datepicker--range-split.cms-datepicker--explicit-width {
   width: calc(
-    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-range-segment-width, 240px) + var(--filter-control-range-split-between, 20px)
   ) !important;
   max-width: calc(
-    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-range-segment-width, 240px) + var(--filter-control-range-split-between, 20px)
   ) !important;
 }
 
@@ -834,7 +834,7 @@
 }
 
 /*
- * 기간(분리 세그먼트): 기본 cms-datepicker 218px 상한은 필터에서 각 칸 260px까지 쓰도록
+ * 기간(분리 세그먼트): 기본 cms-datepicker 218px 상한은 필터에서 각 칸 240px(디자인 가이드)까지 쓰도록
  * table-filter-group__container .cms-datepicker__segment 규칙으로 통일(그리드·단행 공통).
  */
 
@@ -1078,13 +1078,13 @@
     .cms-datepicker--range-split
   ) {
   width: calc(
-    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-range-segment-width, 240px) + var(--filter-control-range-split-between, 20px)
   );
   max-width: calc(
-    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-range-segment-width, 240px) + var(--filter-control-range-split-between, 20px)
   );
   min-width: calc(
-    2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
+    2 * var(--filter-control-range-segment-width, 240px) + var(--filter-control-range-split-between, 20px)
   );
 }
 

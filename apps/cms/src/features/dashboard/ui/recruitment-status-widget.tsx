@@ -1,6 +1,6 @@
 /**
  * 모집 신청 현황 위젯
- * 프로그램별 모집 현황 테이블: 프로그램명, 모집 신청 현황, 참여자 모집 현황, 봉사단 모집 현황
+ * 프로그램별 모집 현황 테이블: 프로그램명, 모집 신청 현황, 참여자 모집 현황, 봉사자 모집 현황
  * td: 지원자수/전체수 nn/nn 형식 (건 단위 없음)
  * 모집 신청 현황 컬럼: dashboard recruitments.recruitmentStatus 라벨 (lifecycle 매핑 없음)
  */
@@ -11,6 +11,8 @@ import type { ColumnsType } from 'antd/es/table'
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { LoadingButton } from '@/shared/ui'
+import { StatusBadge } from '@/shared/components/status-badge'
+import { PROGRAM_RECRUITMENT_APPLICATION_TEXT_COLORS } from '@/shared/constants/status'
 import {
   formatDashboardHeaderTotalCount,
   formatRecruitmentCount,
@@ -32,6 +34,18 @@ import './dashboard-widget-table.css'
 const { Text } = Typography
 
 const WIDGET_KEY = 'recruitment-status-widget'
+
+/** 시안 톤: 모집 예정 green · 모집 중 blue · 그 외 기본 (모집 신청 현황 색 정본 재사용) */
+function recruitmentWindowAccentColor(status?: string | null): string {
+  const upper = status?.trim().toUpperCase() ?? ''
+  if (upper === 'SCHEDULED' || upper === 'PLANNED') {
+    return PROGRAM_RECRUITMENT_APPLICATION_TEXT_COLORS.scheduled
+  }
+  if (upper === 'OPEN' || upper === 'RECRUITING' || upper.startsWith('RECRUITING_')) {
+    return PROGRAM_RECRUITMENT_APPLICATION_TEXT_COLORS.recruiting
+  }
+  return PROGRAM_RECRUITMENT_APPLICATION_TEXT_COLORS.completed
+}
 const EMPTY_IDS: string[] = []
 
 export function RecruitmentStatusWidget({ isHalfColumn = false }: { isHalfColumn?: boolean }) {
@@ -67,7 +81,14 @@ export function RecruitmentStatusWidget({ isHalfColumn = false }: { isHalfColumn
         align: 'center',
         className: 'dashboard-widget-table__cell--status',
         render: (_: unknown, record: DashboardRecruitmentRow) =>
-          formatRecruitmentWindowStatus(record.recruitmentWindowStatus),
+          (
+            <StatusBadge
+              domain="custom"
+              variant="text"
+              label={formatRecruitmentWindowStatus(record.recruitmentWindowStatus)}
+              accentColor={recruitmentWindowAccentColor(record.recruitmentWindowStatus)}
+            />
+          ),
       },
       {
         title: '참여자 모집 현황',
@@ -78,7 +99,7 @@ export function RecruitmentStatusWidget({ isHalfColumn = false }: { isHalfColumn
           formatRecruitmentCount(record.participantApplied, record.participantCapacity),
       },
       {
-        title: '봉사단 모집 현황',
+        title: '봉사자 모집 현황',
         key: 'instructorRecruitment',
         width: countColumnWidth,
         align: 'center',
@@ -115,6 +136,8 @@ export function RecruitmentStatusWidget({ isHalfColumn = false }: { isHalfColumn
         <DashboardWidgetQueryError />
       ) : (
         <CmsDataTable<DashboardRecruitmentRow>
+          /* 반폭 카드 안 표 — 공통 1080 하한 미적용, 열 합·카드 폭 기준 */
+          minTableWidthFloor={0}
           columns={columns}
           dataSource={programs}
           rowKey="id"

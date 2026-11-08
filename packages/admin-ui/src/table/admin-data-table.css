@@ -651,9 +651,10 @@
   max-width: var(--table-no-column-width, 80px) !important;
 }
 
+/* 균등 분배는 정확 폭 모드(`--exact`)·좁은 화면(`--overflow`)이 아닐 때만 — 위 공통 규칙과 동일 조건 */
 .filter-table-layout
   .filter-table-layout__table
-  .ant-table-wrapper.cms-data-table
+  .ant-table-wrapper.cms-data-table:not(.cms-data-table--exact):not(.cms-data-table--overflow)
   col.ant-table-selection-col
   + col
   ~ col {
@@ -786,7 +787,8 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: rgba(255, 255, 255, 0.55);
+  /* Figma Table disabled = opacity 40% → 흰 오버레이 60% */
+  background: rgba(255, 255, 255, 0.6);
   pointer-events: none;
   z-index: 1;
 }

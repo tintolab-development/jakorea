@@ -11,7 +11,7 @@ import { ManagedProgramCountDisplay } from '@/features/user/detail/lib/user-deta
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput, CmsPhoneInput, CmsRadioGroup } from '@/shared/ui'
 import { CmsDateTextInput } from '@/shared/ui/date-text-input'
-import { formatDate } from '@/shared/utils'
+import { formatDateDot } from '@/shared/utils'
 import { detailEmailDisplay, detailPhoneDisplay, genderBirthView } from './display'
 import { AdminPermissionTypeField } from './admin-permission-type-field'
 import {
@@ -103,9 +103,9 @@ export function AdminBasicInfoSection({
 
   const metaCard = isAdminPermissionDetail ? (
     <DetailInfoForm title="기본 정보" description={caption} mode={mode}>
+      {/* 시안: 「권한 승인 현황 | 가입일」 한 행 */}
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
-          fullRow
           label="권한 승인 현황"
           view={
             <PermissionApprovalStatusWithResend
@@ -123,13 +123,10 @@ export function AdminBasicInfoSection({
           }
           readOnlyDisplay
         />
-      </DetailInfoForm.Row>
-      <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
-          fullRow
           label="가입일"
-          view={<span>{formatDate(user.createdAt)}</span>}
-          edit={<span>{formatDate(user.createdAt)}</span>}
+          view={<span>{formatDateDot(user.createdAt)}</span>}
+          edit={<span>{formatDateDot(user.createdAt)}</span>}
           readOnlyDisplay
         />
       </DetailInfoForm.Row>
@@ -140,8 +137,8 @@ export function AdminBasicInfoSection({
         <DetailInfoForm.Field
           fullRow
           label="가입일"
-          view={<span>{formatDate(user.createdAt)}</span>}
-          edit={<span>{formatDate(user.createdAt)}</span>}
+          view={<span>{formatDateDot(user.createdAt)}</span>}
+          edit={<span>{formatDateDot(user.createdAt)}</span>}
           readOnlyDisplay
         />
       </DetailInfoForm.Row>
