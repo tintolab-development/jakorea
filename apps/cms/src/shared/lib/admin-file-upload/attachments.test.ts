@@ -3,9 +3,35 @@ import { AxiosError, type InternalAxiosRequestConfig } from 'axios'
 import {
   fileObjectIdFromAdminFileUrl,
   hydrateAxiosBlobError,
+  isServerRecordedRelayDownloadUrl,
   sameOriginRawDownloadPath,
   toSameOriginApiPath,
 } from '@/shared/lib/admin-file-upload/attachments'
+
+describe('isServerRecordedRelayDownloadUrl', () => {
+  it('지출 증빙 relay 주소는 서버 기록으로 본다 (상대·절대·쿼리 포함)', () => {
+    expect(isServerRecordedRelayDownloadUrl('/api/admin/files/expense-receipts/31/relay/tok-abc')).toBe(
+      true
+    )
+    expect(
+      isServerRecordedRelayDownloadUrl(
+        'http://localhost:8080/api/admin/files/expense-receipts/31/relay/tok-abc?expires=1'
+      )
+    ).toBe(true)
+  })
+
+  it('일반 다운로드·서명 URL·S3는 client 이력 대상이다', () => {
+    expect(isServerRecordedRelayDownloadUrl('/api/admin/files/31/download')).toBe(false)
+    expect(isServerRecordedRelayDownloadUrl('/api/admin/files/31/content')).toBe(false)
+    expect(
+      isServerRecordedRelayDownloadUrl('http://localhost:8080/api/admin/files/downloads/raw/abc?signature=ff')
+    ).toBe(false)
+    expect(
+      isServerRecordedRelayDownloadUrl('https://bucket.s3.amazonaws.com/expense-receipts/31/relay/x')
+    ).toBe(false)
+    expect(isServerRecordedRelayDownloadUrl('/api/admin/files/expense-receipts/31/relay')).toBe(false)
+  })
+})
 
 describe('sameOriginRawDownloadPath', () => {
   it('로컬 서명 URL을 같은 출처 프록시 경로로 바꾼다', () => {

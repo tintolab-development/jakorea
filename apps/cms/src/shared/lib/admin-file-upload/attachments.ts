@@ -300,7 +300,24 @@ export async function loadAdminFileBlob(
   return readDownloadBlob(downloadUrl, headerRecord(resolved.requiredHeaders))
 }
 
-/** 파일 다운로드 API가 준 주소로 원본 파일을 저장한다. */
+/**
+ * 서버 relay가 받는 시점에 file-access 이력(DOWNLOAD_COMPLETED)을 남기는 주소인지.
+ * 현재는 포털 제출 지출 증빙 `/api/admin/files/expense-receipts/{id}/relay/{token}` 만 해당한다.
+ */
+export function isServerRecordedRelayDownloadUrl(downloadUrl: string): boolean {
+  try {
+    const { pathname } = new URL(downloadUrl, 'http://localhost')
+    return /^\/api\/admin\/files\/expense-receipts\/\d+\/relay\/[^/]+\/?$/.test(pathname)
+  } catch {
+    return false
+  }
+}
+
+/**
+ * 파일 다운로드 API가 준 주소로 원본 파일을 저장한다.
+ * 일반 파일은 서버가 URL 발급만 기록하므로 client 이력을 남기고,
+ * 서버 relay가 기록하는 주소(지출 증빙)는 client 이력을 생략한다.
+ */
 export async function downloadAdminFile(input: {
   fileObjectId: number
   fileName: string
@@ -321,7 +338,9 @@ export async function downloadAdminFile(input: {
     }
     throw new Error('첨부파일 다운로드에 실패했습니다.')
   }
-  await downloadBlob(blob, fileName)
+  await downloadBlob(blob, fileName, {
+    skipAccessLog: isServerRecordedRelayDownloadUrl(downloadUrl),
+  })
 }
 
 export function getFileContentPath(fileObjectId: number): string {

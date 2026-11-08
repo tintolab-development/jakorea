@@ -63,12 +63,14 @@ export async function postEncryptedAdminFile(input: {
       }
       await throwIfJsonErrorBlob(blob, response.status)
       const header = response.headers['content-disposition']
+      // 서버가 응답 전에 file-access 이력을 남긴다 — client 로그 중복 방지
       await downloadBlob(
         blob,
         fileNameFromContentDisposition(
           typeof header === 'string' ? header : undefined,
           input.fallbackFileName
-        )
+        ),
+        { skipAccessLog: true }
       )
       return
     } catch (error) {

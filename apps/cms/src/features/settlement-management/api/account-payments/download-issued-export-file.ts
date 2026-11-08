@@ -1,7 +1,7 @@
 import type { SettlementExportResponse } from './settlement-export-response'
 import { loadSensitiveAdminFileBlob } from '@/shared/lib/admin-file-upload/attachments'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
-import { downloadBlob, recordDownloadAccessLog } from '@/shared/utils/file-download'
+import { downloadBlob } from '@/shared/utils/file-download'
 import {
   getSettlementApiErrorMessage,
   isSettlementExportAlreadyDownloadedError,
@@ -24,7 +24,7 @@ export async function downloadIssuedSettlementExportFile(input: {
   }
   const filename = buildSettlementFormExcelFilename(input.kind)
   const reason = SETTLEMENT_FORM_DOWNLOAD_REASON[input.kind]
-  await recordDownloadAccessLog(filename)
+  // sensitive-downloads/stream 이 file-access 이력을 남긴다 — client 로그를 따로 남기지 않는다
   const blob = await loadSensitiveAdminFileBlob({
     fileObjectId,
     reason,

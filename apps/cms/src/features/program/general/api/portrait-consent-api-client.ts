@@ -56,5 +56,6 @@ export async function downloadOrganizationPortraitConsentFile(input: {
     fileObjectId: input.fileObjectId,
     reason: PORTRAIT_CONSENT_FILE_DOWNLOAD_REASON,
   })
-  await downloadBlob(blob, input.fileName.trim() || '초상권동의서')
+  // sensitive-downloads/stream 이 file-access 이력을 남긴다 — client 로그 중복 방지
+  await downloadBlob(blob, input.fileName.trim() || '초상권동의서', { skipAccessLog: true })
 }

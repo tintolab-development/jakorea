@@ -73,7 +73,7 @@ describe('downloadIssuedSettlementExportFile', () => {
     vi.mocked(cmsAlertModal.show).mockReset()
   })
 
-  it('접근 로그를 sensitive-downloads보다 먼저 남기고 skipAccessLog로 저장한다', async () => {
+  it('client 접근 로그 없이 sensitive-downloads로 받아 skipAccessLog로 저장한다', async () => {
     const fileBlob = new Blob(['xlsx'], {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     })
@@ -94,10 +94,8 @@ describe('downloadIssuedSettlementExportFile', () => {
     })
 
     const filename = buildSettlementFormExcelFilename('bulk-transfer')
-    expect(mockedRecordAccessLog).toHaveBeenCalledWith(filename)
-    expect(mockedRecordAccessLog.mock.invocationCallOrder[0] ?? 0).toBeLessThan(
-      mockedInstance.mock.invocationCallOrder[0] ?? Number.POSITIVE_INFINITY
-    )
+    // 서버 stream이 file-access 이력을 남긴다
+    expect(mockedRecordAccessLog).not.toHaveBeenCalled()
     expect(mockedInstance).toHaveBeenCalledTimes(2)
     expect(mockedInstance.mock.calls[0]?.[0]).toEqual(
       expect.objectContaining({
@@ -117,18 +115,21 @@ describe('downloadIssuedSettlementExportFile', () => {
     expect(mockedDownloadBlob).toHaveBeenCalledWith(fileBlob, filename, { skipAccessLog: true })
   })
 
-  it('접근 로그가 실패하면 1회용 stream을 호출하지 않는다', async () => {
-    const logError = new Error('log failed')
-    mockedRecordAccessLog.mockRejectedValueOnce(logError)
-
-    await expect(
-      downloadIssuedSettlementExportFile({
-        serverExport: { deliveryMethod: 'SERVER_FILE', fileObjectId: 91 },
-        kind: 'bulk-transfer',
+  it('stream 503 AUDIT_LOG_UNAVAILABLE이면 파일을 저장하지 않는다', async () => {
+    mockedInstance
+      .mockResolvedValueOnce({
+        relayToken: 'relay-token-1',
+        streamUrl: '/api/admin/files/91/sensitive-downloads/stream',
       })
-    ).rejects.toThrow('log failed')
+      .mockRejectedValueOnce(axiosBlobError(503, 'AUDIT_LOG_UNAVAILABLE'))
 
-    expect(mockedInstance).not.toHaveBeenCalled()
+    const error = await downloadIssuedSettlementExportFile({
+      serverExport: { deliveryMethod: 'SERVER_FILE', fileObjectId: 91 },
+      kind: 'bulk-transfer',
+    }).catch((caught: unknown) => caught)
+
+    expect(getSettlementApiErrorCode(error)).toBe('AUDIT_LOG_UNAVAILABLE')
+    expect(mockedRecordAccessLog).not.toHaveBeenCalled()
     expect(mockedDownloadBlob).not.toHaveBeenCalled()
   })
 
