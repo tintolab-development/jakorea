@@ -17,4 +17,10 @@ export interface ProgramSponsorAssignmentResponse {
   sponsorYear?: number;
   contributionAmountSnapshot?: number;
   displayOrder?: number;
+  /** 후원사 홈페이지 URL. 없으면 null. */
+  sponsorHomepageUrl?: string | null;
+  /** 후원사 대표 로고 file_object id(정렬 첫 번째, 스캔 CLEAN·업로드 완료 파일만). 없으면 null. */
+  sponsorLogoFileObjectId?: number | null;
+  /** 대표 로고 원본 파일명. sponsorLogoFileObjectId가 null이면 null. */
+  sponsorLogoFileName?: string | null;
 }

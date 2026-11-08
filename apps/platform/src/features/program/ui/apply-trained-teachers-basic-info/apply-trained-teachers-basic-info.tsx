@@ -156,8 +156,7 @@ export function ApplyTrainedTeachersBasicInfo({
   const schoolDisplay = value.schoolName || profile?.schoolName || ''
   const regionDisplay = value.regionLabel || profile?.regionLabel || ''
   const teacherNameDisplay = value.teacherName || profile?.teacherName || ''
-  const teacherMobileDisplay =
-    value.teacherMobile || profile?.teacherMobile || ''
+  const teacherMobileDisplay = value.teacherMobile || profile?.teacherMobile || ''
   const teacherEmailDisplay = value.teacherEmail || profile?.teacherEmail || ''
 
   return (
@@ -224,7 +223,7 @@ export function ApplyTrainedTeachersBasicInfo({
                   <PFSelect
                     variant="formPage"
                     size="large"
-                    width={120}
+                    width={130}
                     placeholder="신청 학급"
                     options={classCountOptions}
                     value={value.classCount || undefined}
@@ -370,9 +369,7 @@ export function ApplyTrainedTeachersBasicInfo({
                   }
                   value={formatKoreanPhoneNumberPreservingMask(teacherMobileDisplay)}
                   disabled={teacherMobileEmailLocked}
-                  onValueChange={next =>
-                    patch({ teacherMobile: formatKoreanPhoneNumber(next) })
-                  }
+                  onValueChange={next => patch({ teacherMobile: formatKoreanPhoneNumber(next) })}
                 />
               </PFFormControlCluster>
             </PFFormInlineSegment>

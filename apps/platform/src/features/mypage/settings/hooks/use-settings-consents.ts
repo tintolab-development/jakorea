@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { platformQueryKeys } from '@/shared/api/query-keys'
 import { queryRetryDelay, shouldRetryQuery } from '@/shared/lib/query-retry'
 import { useMypageMember } from '../../hooks/use-mypage-member'
+import { isInstructorMypageProfile } from '../../lib/member-profile'
 import { fetchPortalConsents } from '../api/consents'
 import {
   DOCUMENT_CONSENT_ITEMS,
@@ -24,6 +25,8 @@ export function useSettingsConsents(): {
   isError: boolean
   /** 만 14세 미만 — profile `under14` → `ageGroup` → 생년월일 (`isMinorSettingsMember`) */
   isMinor: boolean
+  /** 강사 회원(`instructor_only`·`instructor_dual`) — 지급조서 카드 노출 기준 */
+  isInstructor: boolean
   basicItems: SettingsConsentItem[]
   documentItems: SettingsConsentItem[]
 } {
@@ -47,12 +50,15 @@ export function useSettingsConsents(): {
     }),
   }
 
+  const isInstructor = isInstructorMypageProfile(member.profile)
+
   if (!member.isRemoteSession) {
     return {
       isRemoteSession: false,
       isLoading: false,
       isError: false,
       isMinor: audience.isMinor,
+      isInstructor,
       basicItems: getBasicConsentItems(audience),
       documentItems: ensurePinnedPaymentStatementConsentItem(DOCUMENT_CONSENT_ITEMS),
     }
@@ -65,6 +71,7 @@ export function useSettingsConsents(): {
     isLoading: query.isPending,
     isError: query.isError && !query.data,
     isMinor: audience.isMinor,
+    isInstructor,
     basicItems: filterBasicConsentItemsByAudience(built.basicItems, audience),
     documentItems: ensurePinnedPaymentStatementConsentItem(built.documentItems),
   }

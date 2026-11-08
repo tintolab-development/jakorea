@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { filterGeminiRecruitmentRowsBySearchParams } from './table.config'
+import { geminiRecruitmentTablePageConfig } from './table.config'
 import type { GeminiRecruitmentRow } from './types'
 
 function row(
@@ -18,43 +18,25 @@ function row(
   }
 }
 
-describe('filterGeminiRecruitmentRowsBySearchParams', () => {
-  const todayKey = '2026-10-25'
-  const futureRow = row('186387', {
-    title: '새 공고',
-    trainingRequestPeriodStart: '2026-11-01',
-    trainingRequestPeriodEnd: '2026-12-31',
+describe('geminiRecruitmentTablePageConfig.filterFn', () => {
+  const context = { todayKey: '2026-10-25' }
+  const outOfRangeRow = row('2', {
+    title: '다른 공고',
+    trainingRequestPeriodStart: '2027-03-01',
+    trainingRequestPeriodEnd: '2027-04-30',
   })
-  const currentRow = row('1', {
-    title: '진행 중 공고',
-    trainingRequestPeriodStart: '2026-01-10',
-    trainingRequestPeriodEnd: '2026-10-20',
-  })
+  const draftRow = row('1', { isDraft: true, trainingRequestPeriodStart: '', trainingRequestPeriodEnd: '' })
 
-  it('URL에 기간이 없으면 기본 연수 요청 가능기간으로 응답 행을 걸러내지 않는다', () => {
-    const filtered = filterGeminiRecruitmentRowsBySearchParams(
-      [currentRow, futureRow],
-      new URLSearchParams(),
-      todayKey
-    )
-    expect(filtered.map(item => item.id)).toEqual(['186387', '1'])
-  })
-
-  it('공고명만 검색하면 기간 기본값과 무관하게 API와 같은 행을 남긴다', () => {
-    const filtered = filterGeminiRecruitmentRowsBySearchParams(
-      [futureRow],
-      new URLSearchParams('gvt_title=새 공고'),
-      todayKey
-    )
-    expect(filtered.map(item => item.id)).toEqual(['186387'])
-  })
-
-  it('조회한 기간이 URL에 있으면 그 기간으로만 걸러낸다', () => {
-    const filtered = filterGeminiRecruitmentRowsBySearchParams(
-      [currentRow, futureRow],
-      new URLSearchParams('gvt_from=2026-01-01&gvt_to=2026-10-25'),
-      todayKey
-    )
-    expect(filtered.map(item => item.id)).toEqual(['1'])
+  it('서버 검색 결과를 화면에서 다시 거르지 않는다(총 N건 = 표 행)', () => {
+    const data = [outOfRangeRow, draftRow]
+    const result = geminiRecruitmentTablePageConfig.filterFn({
+      context,
+      data,
+      searchParams: new URLSearchParams(
+        'gvt_title=새 공고&gvt_status=IN_PROGRESS&gvt_from=2026-01-01&gvt_to=2026-10-25'
+      ),
+    })
+    expect(result.dataForTable.map(item => item.id)).toEqual(['2', '1'])
+    expect(result.filteredData).toHaveLength(2)
   })
 })

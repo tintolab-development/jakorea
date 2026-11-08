@@ -126,9 +126,11 @@ export function useGeminiRecruitmentInfoEdit(
         const detailKey = geminiVisitingTrainingQueryKeys.recruitmentDetail(recruitmentId)
         await queryClient.cancelQueries({ queryKey: detailKey })
         if (saved) {
+          // 저장 응답 직후 서비스가 상세(+첨부)를 다시 받아 왔다 — 같은 값을 한 번 더 GET하지 않는다.
           queryClient.setQueryData(detailKey, saved)
+        } else {
+          await queryClient.invalidateQueries({ queryKey: detailKey })
         }
-        await queryClient.invalidateQueries({ queryKey: detailKey })
         await queryClient.invalidateQueries({
           queryKey: geminiVisitingTrainingQueryKeys.recruitmentList(),
         })

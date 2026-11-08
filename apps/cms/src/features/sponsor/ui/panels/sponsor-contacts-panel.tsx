@@ -247,7 +247,7 @@ export function SponsorContactsPanel({
         <div ref={tableWrapRef} className="cms-data-table-fit-scroll-wrap">
           <CmsDataTable<SponsorContactRow>
             rowKey="id"
-            className="cms-data-table cms-data-table--fluid"
+            className="cms-data-table"
             columns={columns}
             dataSource={tableRows}
             loading={isLoading}

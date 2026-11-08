@@ -1,3 +1,4 @@
+import { Radio } from 'antd'
 import type { ConsentValue } from '@jakorea/domain/instructor/consent'
 import {
   portraitPersonalConsentAffiliationState,
@@ -39,6 +40,26 @@ export function PortraitVerticalTableBottom({
 }) {
   if (!paragraph.showBottomText && !paragraph.showBottomConsent) {
     return null
+  }
+
+  if (documentPreview) {
+    return (
+      <div className="form-template-vertical-table__bottom">
+        {paragraph.showBottomText && paragraph.bottomText ? (
+          <div className="form-template-vertical-table__bottom-static">{paragraph.bottomText}</div>
+        ) : null}
+        {paragraph.showBottomConsent ? (
+          <Radio.Group
+            className="form-template-table-bottom-consent app-radio-group"
+            value={paragraph.bottomConsent}
+            style={{ pointerEvents: 'none' }}
+          >
+            <Radio value="agree">동의</Radio>
+            <Radio value="disagree">동의하지 않음</Radio>
+          </Radio.Group>
+        ) : null}
+      </div>
+    )
   }
 
   return (

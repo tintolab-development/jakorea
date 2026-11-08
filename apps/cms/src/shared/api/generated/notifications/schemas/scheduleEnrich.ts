@@ -11,5 +11,6 @@ export interface ScheduleEnrich {
   locationName?: string;
   address?: string;
   distanceKm?: number;
+  longDistance?: boolean;
   assignedVolunteerCount?: number;
 }

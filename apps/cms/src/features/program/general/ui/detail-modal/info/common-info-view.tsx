@@ -32,6 +32,10 @@ import {
   renderDetailInfoPipeSeparated,
 } from '@/features/program/shared/ui/program-detail-td-divider'
 import { SponsorManagerContactsView } from '@/features/program/shared/ui/sponsor-manager-inline-view'
+import {
+  ProgramSponsorHomepageView,
+  ProgramSponsorLogoView,
+} from '@/features/program/shared/ui/program-detail/sponsor-assignment-info'
 import { EducationScheduleChangeTitleAction } from '@/features/program/shared/ui/education-schedule-change-title-action'
 import {
   isEducationScheduleSelectionDateDisabled,
@@ -480,10 +484,11 @@ function BasicInfoSection({
   const sponsorIdsForContacts =
     isFormEdit && watchedSponsorIds.length > 0 ? watchedSponsorIds : sponsorManagementIds
   // 후원사 id·이름은 이미 받은 후원사 목록에서 찾는다(후원사 상세·로고 조회 없음).
-  // 담당자 연락처(전화)는 배정 응답에 없어 contacts API만 조회한다.
+  // 조회 화면의 담당자 직책·연락처·홈페이지·로고는 배정 응답(GET /programs/{id}/sponsors)만 쓴다.
+  // contacts API는 수정 모드 담당자 선택지에만 필요하다.
   const sponsorEditContext = useGeneralProgramSponsorEditContext(
     sponsorIdsForContacts,
-    sponsorIdsForContacts.length > 0,
+    isFormEdit && sponsorIdsForContacts.length > 0,
     { sponsorRows }
   )
   const selectedSponsors = useMemo(
@@ -947,6 +952,30 @@ function BasicInfoSection({
             }
           />
         </DetailInfoForm.Row>
+        {!isFormEdit ? (
+          <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Field
+              label="후원사 홈페이지"
+              view={
+                <ProgramSponsorHomepageView
+                  sponsorIds={sponsorManagementIds}
+                  sponsorNameById={commonInfo.sponsorManagementNames}
+                  details={commonInfo.sponsorAssignmentDetails}
+                />
+              }
+            />
+            <DetailInfoForm.Field
+              label="후원사 로고"
+              view={
+                <ProgramSponsorLogoView
+                  sponsorIds={sponsorManagementIds}
+                  sponsorNameById={commonInfo.sponsorManagementNames}
+                  details={commonInfo.sponsorAssignmentDetails}
+                />
+              }
+            />
+          </DetailInfoForm.Row>
+        ) : null}
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="교육 장소"

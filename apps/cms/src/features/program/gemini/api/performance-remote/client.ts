@@ -24,23 +24,46 @@ export type GeminiTrainingReportsRemotePage = {
   hasMore: boolean
 }
 
-export async function fetchGeminiTrainingReportsRemotePage(params?: {
+export type GeminiTrainingReportDeliveryTypeWire = 'ONLINE' | 'OFFLINE'
+
+/**
+ * 실적 목록 서버 검색 조건.
+ * `dateFrom`/`dateTo`는 training_date 기준 `YYYY-MM-DD`(양끝 포함).
+ */
+export type GeminiTrainingReportsRemoteParams = {
   programId?: number
   page?: number
   size?: number
   instructorName?: string
   trainingLocation?: string
-}): Promise<GeminiTrainingReportsRemotePage> {
+  dateFrom?: string
+  dateTo?: string
+  deliveryType?: GeminiTrainingReportDeliveryTypeWire
+}
+
+export function buildGeminiTrainingReportsListQuery(
+  params: GeminiTrainingReportsRemoteParams = {}
+): URLSearchParams {
+  const query = new URLSearchParams()
+  if (params.programId != null) query.set('programId', String(params.programId))
+  const instructorName = params.instructorName?.trim()
+  if (instructorName) query.set('instructorName', instructorName)
+  const trainingLocation = params.trainingLocation?.trim()
+  if (trainingLocation) query.set('trainingLocation', trainingLocation)
+  if (params.dateFrom) query.set('dateFrom', params.dateFrom)
+  if (params.dateTo) query.set('dateTo', params.dateTo)
+  if (params.deliveryType) query.set('deliveryType', params.deliveryType)
+  query.set('page', String(params.page ?? 0))
+  query.set('size', String(params.size ?? GEMINI_PERFORMANCE_LIST_PAGE_SIZE))
+  return query
+}
+
+export async function fetchGeminiTrainingReportsRemotePage(
+  params?: GeminiTrainingReportsRemoteParams
+): Promise<GeminiTrainingReportsRemotePage> {
   const pageParam = params?.page ?? 0
   const sizeParam = params?.size ?? GEMINI_PERFORMANCE_LIST_PAGE_SIZE
-  const query = new URLSearchParams()
-  if (params?.programId != null) query.set('programId', String(params.programId))
-  const instructorName = params?.instructorName?.trim()
-  if (instructorName) query.set('instructorName', instructorName)
-  const trainingLocation = params?.trainingLocation?.trim()
-  if (trainingLocation) query.set('trainingLocation', trainingLocation)
-  query.set('page', String(pageParam))
-  query.set('size', String(sizeParam))
+  const query = buildGeminiTrainingReportsListQuery({ ...params, page: pageParam, size: sizeParam })
   const body = await unwrapApiBody<GeminiTrainingReportListResponse | GeminiTrainingReportItem[]>(
     await customInstance({
       url: `${BASE}?${query.toString()}`,

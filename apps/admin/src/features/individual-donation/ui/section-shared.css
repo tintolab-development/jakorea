@@ -81,26 +81,3 @@
   vertical-align: middle;
 }
 
-/* 배너: 이미지 컬럼 200px · 썸네일 160×155.256 (aspect 101/98) */
-.individual-donation-banner-table .ant-table-thead > tr > th.individual-donation-col--image,
-.individual-donation-banner-table .ant-table-tbody > tr > td.individual-donation-col--image {
-  width: 200px !important;
-  min-width: 200px !important;
-  max-width: 200px !important;
-}
-
-/* 사용안내: 항목명 고정 열 */
-.individual-donation-usage-table .ant-table-thead > tr > th.individual-donation-col--label,
-.individual-donation-usage-table .ant-table-tbody > tr > td.individual-donation-col--label {
-  width: 180px !important;
-  min-width: 140px !important;
-  max-width: 220px !important;
-}
-
-/* 후원하기 CTA */
-.individual-donation-cta-table .ant-table-thead > tr > th.individual-donation-col--button,
-.individual-donation-cta-table .ant-table-tbody > tr > td.individual-donation-col--button {
-  width: 320px !important;
-  min-width: 320px !important;
-  max-width: 320px !important;
-}

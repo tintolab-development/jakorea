@@ -231,7 +231,7 @@ export function SchoolAffiliatedTeachersSection({
         <DetailInfoForm.Row type="custom">
           <div ref={tableWrapRef} className="school-affiliated-teachers-section__body cms-data-table-fit-scroll-wrap">
             <CmsDataTable
-              className="cms-data-table cms-data-table--fluid cms-data-table--fit-scroll school-affiliated-teachers-section__table"
+              className="cms-data-table cms-data-table--fit-scroll school-affiliated-teachers-section__table"
               rowSelection={{
                 columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
                 selectedRowKeys,

@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState, type ChangeEvent, type Key } from 'react'
-import dayjs, { type Dayjs } from 'dayjs'
+import type { Dayjs } from 'dayjs'
 import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
@@ -43,6 +43,11 @@ import {
   GEMINI_PERFORMANCE_REGISTER_BLOCKED_TITLE,
 } from '../../lib/performance/import-popup-copy'
 import { useGeminiPerformanceRows } from '../../hooks/use-gemini-performance-rows'
+import {
+  getGeminiPerformanceDefaultDateRange,
+  toGeminiPerformanceRemoteFilters,
+  type GeminiPerformanceListUiFilters,
+} from '../../lib/performance/list-remote-filters'
 import { GEMINI_PERFORMANCE_FILTER_FIELDS } from '../../model/performance/filter-fields'
 import type {
   GeminiPerformanceRow,
@@ -56,12 +61,7 @@ import '../page.css'
 import './list.css'
 import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
-type PendingFilters = {
-  instructorName: string
-  trainingMethod: 'ALL' | GeminiPerformanceTrainingMethod
-  trainingLocation: string
-  trainingDateRange: [Dayjs | null, Dayjs | null] | null
-}
+type PendingFilters = GeminiPerformanceListUiFilters
 
 const TRAINING_METHOD_LABEL: Record<GeminiPerformanceTrainingMethod, string> = {
   OFFLINE: '오프라인',
@@ -102,12 +102,8 @@ const TABLE_SCROLL_X =
   COL.trainingMethod +
   48
 
-function getDefaultDateRange(): [Dayjs, Dayjs] {
-  return [dayjs().startOf('year'), dayjs()]
-}
-
 function createInitialFilters(): PendingFilters {
-  const [from, to] = getDefaultDateRange()
+  const [from, to] = getGeminiPerformanceDefaultDateRange()
   return {
     instructorName: '',
     trainingMethod: 'ALL',
@@ -133,24 +129,6 @@ function appendPaymentExclusionNotes(baseMessage: string, notes?: string): strin
   return normalizedNotes ? `${baseMessage}\n${normalizedNotes}` : baseMessage
 }
 
-/** 서버에서 처리하지 않는 조건만 클라이언트에서 좁힌다(방식·연수일). */
-function filterRowsClientOnly(rows: GeminiPerformanceRow[], filters: PendingFilters) {
-  return rows.filter(row => {
-    if (filters.trainingMethod !== 'ALL' && row.trainingMethod !== filters.trainingMethod) {
-      return false
-    }
-    if (filters.trainingDateRange?.[0] && filters.trainingDateRange[1]) {
-      const rowDate = dayjs(row.trainingDate)
-      const from = filters.trainingDateRange[0].startOf('day')
-      const to = filters.trainingDateRange[1].endOf('day')
-      if (rowDate.isBefore(from) || rowDate.isAfter(to)) {
-        return false
-      }
-    }
-    return true
-  })
-}
-
 export function GeminiPerformanceList() {
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
@@ -170,12 +148,11 @@ export function GeminiPerformanceList() {
     GeminiTrainingReportImportRow[] | undefined
   >(undefined)
 
+  // 강사·연수장소·연수방식·연수일 모두 서버 검색 쿼리로 보낸다(기본 연수일 포함, 첫 요청부터).
+  // 조건이 바뀌면 queryKey가 바뀌어 page=0부터 다시 받는다.
   const queryFilters = useMemo(
-    () => ({
-      instructorName: appliedFilters.instructorName.trim() || undefined,
-      trainingLocation: appliedFilters.trainingLocation.trim() || undefined,
-    }),
-    [appliedFilters.instructorName, appliedFilters.trainingLocation]
+    () => toGeminiPerformanceRemoteFilters(appliedFilters),
+    [appliedFilters]
   )
   const {
     rows: allRows,
@@ -193,11 +170,7 @@ export function GeminiPerformanceList() {
     resetKey: JSON.stringify(queryFilters),
   })
 
-  const filteredRows = useMemo(
-    () => filterRowsClientOnly(allRows, appliedFilters),
-    [allRows, appliedFilters]
-  )
-  const listCount = remoteEnabled ? totalElements : filteredRows.length
+  const listCount = remoteEnabled ? totalElements : allRows.length
 
   const showNoSelectionAlert = useCallback(() => {
     showAlert(NO_SELECTION_ALERT)
@@ -607,7 +580,7 @@ export function GeminiPerformanceList() {
         }
         excelExport={{
           columns,
-          data: filteredRows,
+          data: allRows,
           selectedRowKeys: showBulkDelete ? selectedRowKeys : undefined,
         }}
         actionsAfterExcel={
@@ -641,8 +614,8 @@ export function GeminiPerformanceList() {
           tableLayout="fixed"
           scroll={{ x: tableScrollX }}
           columns={columns}
-          dataSource={filteredRows}
-          loading={remoteEnabled && isFetching && filteredRows.length === 0}
+          dataSource={allRows}
+          loading={remoteEnabled && isFetching && allRows.length === 0}
           pagination={false}
           rowSelection={
             showBulkDelete

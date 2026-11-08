@@ -2683,7 +2683,8 @@ export function GeneralProgramDetailFullPageModal({
           <Typography.Text type="secondary">프로그램 정보를 찾을 수 없습니다.</Typography.Text>
         )}
       </DetailFullPageModal>
-      {displayProgram ? (
+      {/* 닫혀 있을 때 마운트하면 form-bindings를 탭과 무관하게 미리 조회한다 — 열 때만 마운트 */}
+      {displayProgram && applicationTemplateEditOpen ? (
         <GeneralProgramApplicationTemplateEditModal
           open={applicationTemplateEditOpen}
           program={displayProgram}

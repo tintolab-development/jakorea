@@ -31,6 +31,8 @@ export function invalidateTrainedTeacherListCaches(queryClient: QueryClient): vo
 /** UJAT — 목록 테이블 (상단 overviewStages 위젯 없음) */
 export function invalidateUjatProgramListCaches(queryClient: QueryClient): void {
   void queryClient.invalidateQueries({ queryKey: ujatProgramQueryKeys.lists() })
+  // 생성·삭제로 진행년도 선택지가 바뀔 수 있다 (staleTime 5분이라 무효화하지 않으면 새 연도가 늦게 보인다).
+  void queryClient.invalidateQueries({ queryKey: ujatProgramQueryKeys.businessYears('UJAT') })
 }
 
 /** Gemini 찾아가는 연수 모집 — 모집 목록 */

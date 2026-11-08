@@ -194,35 +194,6 @@
   line-height: 165%;
 }
 
-.account-payments-page__status-text--awaiting-confirmation,
-.account-payments-page__status-text--partial-confirmation,
-.account-payments-page__status-text--account-paid,
-.account-payments-page__status-text--payment-correction-requested {
-  display: inline-block;
-  text-align: center;
-  font-family: Pretendard, sans-serif;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-}
-
-.account-payments-page__status-text--awaiting-confirmation {
-  color: var(--Status-green-main, #1e8c29);
-}
-
-.account-payments-page__status-text--partial-confirmation {
-  color: var(--Status-purple-main, #8457ce);
-}
-
-.account-payments-page__status-text--account-paid {
-  color: var(--Status-blue-main, #017eaf);
-}
-
-.account-payments-page__status-text--payment-correction-requested {
-  color: var(--Status-pink-main, #e8007c);
-}
-
 /* 대량이체 미리보기 청크 로딩 (React.lazy) */
 .account-payments-page__bulk-preview-loading {
   position: fixed;

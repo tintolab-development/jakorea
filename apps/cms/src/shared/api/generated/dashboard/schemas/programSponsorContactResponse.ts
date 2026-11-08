@@ -11,4 +11,8 @@ export interface ProgramSponsorContactResponse {
   sponsorContactName?: string;
   sponsorContactPosition?: string;
   displayOrder?: number;
+  /** 담당자 전화번호(휴대전화 우선, 없으면 내선). GET /api/admin/sponsors/{sponsorId}/contacts의 phone과 같은 값입니다. MASTER_DATA_READ 권한이 있을 때만 원문으로 채워지고 개인정보 조회 이력이 기록됩니다. 권한이 없거나 값이 없으면 null. */
+  sponsorContactPhone?: string | null;
+  /** 담당자 이메일. sponsorContactPhone과 같은 권한·조회 이력 규칙을 따릅니다. 권한이 없거나 값이 없으면 null. */
+  sponsorContactEmail?: string | null;
 }

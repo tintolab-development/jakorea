@@ -99,7 +99,7 @@ export function ParticipatingIndividualParticipantAttendanceTable({
   return (
     <CmsDataTable<ParticipatingIndividualParticipantAttendanceRow & { no: number }>
       rowKey="id"
-      className="cms-data-table cms-data-table--fluid participating-individual-participant-attendance-table"
+      className="cms-data-table participating-individual-participant-attendance-table"
       columns={columns}
       dataSource={tableData}
       pagination={false}

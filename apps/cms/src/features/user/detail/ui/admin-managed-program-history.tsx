@@ -487,7 +487,7 @@ export function AdminManagedProgramHistory({
               rowKey="id"
               scroll={tableScrollX != null ? { x: tableScrollX } : undefined}
               pagination={false}
-              className="cms-data-table cms-data-table--fluid cms-data-table--fit-scroll"
+              className="cms-data-table cms-data-table--fit-scroll"
               size={TABLE_CONFIG.size}
               onRow={adminManagedProgramTableOnRow}
             />

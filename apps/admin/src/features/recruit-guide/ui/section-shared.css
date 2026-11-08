@@ -81,40 +81,9 @@
   width: 100% !important;
 }
 
-.recruit-guide-banner-table colgroup > col:first-child,
-.recruit-guide-banner-table .ant-table-thead > tr > th.recruit-guide-col--image,
-.recruit-guide-banner-table .ant-table-tbody > tr > td.recruit-guide-col--image {
-  width: 200px !important;
-  min-width: 200px !important;
-  max-width: 200px !important;
-}
-
 .recruit-guide-banner-table .ant-table-thead > tr > th.recruit-guide-col--copy,
 .recruit-guide-banner-table .ant-table-tbody > tr > td.recruit-guide-col--copy {
   width: calc((100% - 200px) / 3) !important;
-}
-
-.recruit-guide-culture-table .ant-table-thead > tr > th.recruit-guide-col--label,
-.recruit-guide-culture-table .ant-table-tbody > tr > td.recruit-guide-col--label {
-  width: 320px !important;
-  min-width: 320px !important;
-  max-width: 320px !important;
-}
-
-.recruit-guide-interview-table.cms-data-table col.ant-table-selection-col + col,
-.recruit-guide-interview-table.cms-data-table .ant-table-thead > tr > th.cms-table-col--no,
-.recruit-guide-interview-table.cms-data-table .ant-table-tbody > tr > td.cms-table-col--no {
-  width: 100px !important;
-  min-width: 100px !important;
-  max-width: 100px !important;
-}
-
-.recruit-guide-interview-table.cms-data-table col.ant-table-selection-col + col + col + col,
-.recruit-guide-interview-table .ant-table-thead > tr > th.recruit-guide-col--actions,
-.recruit-guide-interview-table .ant-table-tbody > tr > td.recruit-guide-col--actions {
-  width: 140px !important;
-  min-width: 140px !important;
-  max-width: 140px !important;
 }
 
 .recruit-guide-section .recruit-guide-inline-field {

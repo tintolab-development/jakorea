@@ -1,6 +1,6 @@
 /**
  * 일반 프로그램 posts + surveys hybrid hooks
- * Surveys: list / responses(+detail answers) / summary / form-bindings CRUD
+ * Surveys: list / responses(includeAnswers) / summary / form-bindings CRUD
  */
 
 import { useCallback, useMemo } from 'react'
@@ -21,7 +21,6 @@ import {
   fetchGeneralProgramPostReactions,
   fetchGeneralProgramPostReads,
   fetchGeneralProgramPosts,
-  fetchGeneralProgramSurveyResponseDetail,
   fetchGeneralProgramSurveyResponses,
   fetchGeneralProgramSurveySummary,
   fetchGeneralProgramSurveys,
@@ -33,7 +32,6 @@ import {
   mapProgramSurveyToRegisteredSurvey,
   mapSurveyResponseListItemToPollResponse,
   mapSurveySummaryToQuestionSummaries,
-  surveyResponseNeedsDetail,
   surveySummaryHasPublicTextAnswers,
   type ClassifiedFormBinding,
 } from '@/features/program/general/api/adapters/program-survey-adapters'
@@ -76,47 +74,6 @@ import type {
   SurveyResultQuestionSummary,
 } from '@/features/program/shared/lib/survey-management/survey-management-types'
 import type { SurveySummaryResponse } from '@/shared/api/generated/dashboard/schemas/surveySummaryResponse'
-import type { SurveyResponseListItemResponse } from '@/shared/api/generated/dashboard/schemas/surveyResponseListItemResponse'
-
-const DETAIL_FETCH_CONCURRENCY = 4
-
-async function mapResponsesWithDetails(
-  programId: string,
-  templateVersionId: string,
-  items: SurveyResponseListItemResponse[]
-): Promise<SurveyPollRawResponse[]> {
-  const results: SurveyPollRawResponse[] = new Array(items.length)
-  let cursor = 0
-
-  async function worker() {
-    while (cursor < items.length) {
-      const index = cursor
-      cursor += 1
-      const item = items[index]!
-      if (!surveyResponseNeedsDetail(item) || item.formResponseId == null) {
-        results[index] = mapSurveyResponseListItemToPollResponse(item)
-        continue
-      }
-      try {
-        const detail = await fetchGeneralProgramSurveyResponseDetail(
-          programId,
-          templateVersionId,
-          String(item.formResponseId)
-        )
-        results[index] = mapSurveyResponseListItemToPollResponse(item, detail)
-      } catch {
-        results[index] = mapSurveyResponseListItemToPollResponse(item)
-      }
-    }
-  }
-
-  const workers = Array.from(
-    { length: Math.min(DETAIL_FETCH_CONCURRENCY, Math.max(items.length, 1)) },
-    () => worker()
-  )
-  await Promise.all(workers)
-  return results
-}
 
 export function useGeneralProgramPosts(programId: string | undefined) {
   const remoteEnabled = useProgramsReadsRemoteEnabledForSurface(programId)
@@ -576,23 +533,23 @@ export function useGeneralProgramSurveys(
 const SURVEY_SUMMARY_STALE_MS = 30_000
 
 export type SurveyResponsesDetailPolicy =
-  /** preview로 답이 부족하면 응답별 상세 조회 (강의평가 draft 채우기 등) */
+  /** 목록 1회(`includeAnswers=true`)로 전체 답을 받는다 (강의평가 draft 채우기 등) */
   | 'when-preview-short'
-  /** 그래프는 summary `options`로 그리므로 주관식 답이 공개일 때만 상세 조회 */
+  /** 그래프는 summary `options`로 그리므로 주관식 답이 공개일 때만 `includeAnswers=true` */
   | 'public-text-only'
 
-async function loadMappedProgramSurveyResponses(input: {
+/**
+ * 응답 목록을 1회 조회해 결과 화면 행으로 매핑한다. 응답별 단건 상세 GET은 하지 않는다 —
+ * 전문이 필요하면 목록 `includeAnswers=true`의 `item.answers`(단건 상세와 동일)를 쓴다.
+ */
+export async function loadMappedProgramSurveyResponses(input: {
   programId: string
   templateVersionId: string
   bindingId: string
   detailPolicy: SurveyResponsesDetailPolicy
-  queryClient: ReturnType<typeof useQueryClient>
+  queryClient: Pick<ReturnType<typeof useQueryClient>, 'fetchQuery'>
 }): Promise<SurveyPollRawResponse[]> {
-  const items = await fetchGeneralProgramSurveyResponses(
-    input.programId,
-    input.templateVersionId,
-    input.bindingId
-  )
+  let includeAnswers = true
   if (input.detailPolicy === 'public-text-only') {
     const summary = await input.queryClient.fetchQuery({
       queryKey: generalProgramQueryKeys.surveySummary(
@@ -609,11 +566,15 @@ async function loadMappedProgramSurveyResponses(input: {
       staleTime: SURVEY_SUMMARY_STALE_MS,
       retry: false,
     })
-    if (!surveySummaryHasPublicTextAnswers(summary)) {
-      return items.map(item => mapSurveyResponseListItemToPollResponse(item))
-    }
+    includeAnswers = surveySummaryHasPublicTextAnswers(summary)
   }
-  return mapResponsesWithDetails(input.programId, input.templateVersionId, items)
+  const items = await fetchGeneralProgramSurveyResponses(
+    input.programId,
+    input.templateVersionId,
+    input.bindingId,
+    { includeAnswers }
+  )
+  return items.map(item => mapSurveyResponseListItemToPollResponse(item))
 }
 
 export function useGeneralProgramSurveyResponses(

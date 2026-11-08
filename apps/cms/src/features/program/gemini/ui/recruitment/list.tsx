@@ -13,6 +13,9 @@ import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
+import { useQueryClient } from '@tanstack/react-query'
+import { refetchInfiniteQueryFirstPage } from '@/shared/lib/refetch-infinite-first-page'
+import { geminiVisitingTrainingQueryKeys } from '../../api/visiting-training/query-keys'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
@@ -108,11 +111,15 @@ export function GeminiRecruitmentList() {
   const [draftNoticeOpen, setDraftNoticeOpen] = useState(false)
   const [draftNoticeTitle, setDraftNoticeTitle] = useState('')
   const detailOpen = Boolean(recruitmentId)
+  const queryClient = useQueryClient()
   const queryFilters = useMemo(() => {
     const params = new URLSearchParams(searchParamsKey)
+    // 조회한 조건은 모두 서버 검색 쿼리로 보낸다(총 N건 = 표 행). 기간 기본값(연초~오늘)은 URL에 없으면 보내지 않는다.
     return {
       title: params.get('gvt_title') ?? undefined,
       status: params.get('gvt_status') ?? undefined,
+      from: params.get('gvt_from') ?? undefined,
+      to: params.get('gvt_to') ?? undefined,
     }
   }, [searchParamsKey])
   const {
@@ -120,7 +127,6 @@ export function GeminiRecruitmentList() {
     remoteEnabled,
     isFetching,
     isFetchingNextPage,
-    refetch,
     fetchNextPage,
     hasNextPage,
     totalElements,
@@ -184,12 +190,18 @@ export function GeminiRecruitmentList() {
       setSelectedRowKeys([])
       setDeleteTargetNames([])
       setDeleteModalOpen(false)
-      if (remoteEnabled) void refetch()
+      // 무한 목록 전 페이지를 다시 받지 않고 첫 페이지만 다시 받는다.
+      if (remoteEnabled) {
+        void refetchInfiniteQueryFirstPage(
+          queryClient,
+          geminiVisitingTrainingQueryKeys.recruitmentList()
+        )
+      }
       showDeleteCompletedAlert()
     } catch {
       showRemoteMutationUnavailable()
     }
-  }, [refetch, remoteEnabled, selectedRowKeys, showRemoteMutationUnavailable])
+  }, [queryClient, remoteEnabled, selectedRowKeys, showRemoteMutationUnavailable])
 
   const handleCancelDelete = useCallback(() => {
     setDeleteTargetNames([])
@@ -234,7 +246,8 @@ export function GeminiRecruitmentList() {
         dataIndex: 'title',
         key: 'title',
         className: 'gemini-recruitment-list__col-title',
-        width: RECRUITMENT_COL_WIDTH.title,
+        // 유연 열: 넓은 화면에서 남는 폭 흡수 (CmsDataTable 정확 폭 모드)
+        minWidth: RECRUITMENT_COL_WIDTH.title,
         ellipsis: { showTitle: true },
       },
       {

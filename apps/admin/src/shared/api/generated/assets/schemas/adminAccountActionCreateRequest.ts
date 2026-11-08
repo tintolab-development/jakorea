@@ -22,5 +22,10 @@ export interface AdminAccountActionCreateRequest {
      * @maxLength 64
      */
   actionType: string;
+  /**
+     * @minLength 0
+     * @maxLength 64
+     */
+  clientIp?: string;
   processedAt?: string;
 }

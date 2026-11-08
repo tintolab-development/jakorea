@@ -1000,14 +1000,31 @@ export function ProgramApplyPage() {
     if (showGeminiInstitutionApply) return GEMINI_INSTITUTION_PREFERRED_SCHEDULE_BLOCK_COUNT
     return resolveApplyPreferredScheduleMaxBlocks(program, applicationFormRuntimeContext)
   }, [applicationFormRuntimeContext, program, showGeminiInstitutionApply])
+  /**
+   * 일반 기관 커리큘럼·기간 — 교시 입력 없음(교육받은교사 전용 개념).
+   * 단일 회차는 날짜·시작/종료 시간만 받고 커리큘럼 1일 차시 수를 sessionCount로 보낸다.
+   */
+  const generalInstitutionPreferredSessionCount = showGeneralPreferredSchedule
+    ? institutionPreferredSessionSelect.show
+      ? undefined
+      : (applyScheduleChoiceMeta?.curriculumChartSessionCount ?? 1)
+    : undefined
   const preferredScheduleMapOptions = useMemo(
     () =>
       institutionDateOnlyPreferred || trainedTeachersDateOnlyPreferred
         ? { dateOnly: true as const }
         : showGeminiInstitutionApply
           ? geminiInstitutionPreferredScheduleMapOptions()
-          : undefined,
-    [institutionDateOnlyPreferred, showGeminiInstitutionApply, trainedTeachersDateOnlyPreferred]
+          : showGeneralPreferredSchedule
+            ? { generalInstitution: { sessionCount: generalInstitutionPreferredSessionCount } }
+            : undefined,
+    [
+      generalInstitutionPreferredSessionCount,
+      institutionDateOnlyPreferred,
+      showGeminiInstitutionApply,
+      showGeneralPreferredSchedule,
+      trainedTeachersDateOnlyPreferred,
+    ]
   )
   const trainedTeachersEnabledDates = useMemo(() => {
     if (
@@ -1918,7 +1935,8 @@ export function ProgramApplyPage() {
             value={preferredBlocks}
             onChange={setPreferredBlocks}
             allowRemove={!showGeminiInstitutionApply}
-            showSessionUnit={!showGeminiInstitutionApply}
+            showSessionUnit={!showGeminiInstitutionApply && !useInstitutionScheduleBounds}
+            showClassPeriodInput={!useInstitutionScheduleBounds}
             datePlaceholder={
               showGeminiInstitutionApply ? '날짜를 선택해 주세요' : '희망 교육 날짜를 선택해 주세요'
             }

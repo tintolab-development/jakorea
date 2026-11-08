@@ -120,19 +120,6 @@
   min-width: 80px;
 }
 
-.writing-template-select-modal__table.cms-data-table
-  .ant-table-thead
-  > tr
-  > th.writing-template-select-modal__col-actions,
-.writing-template-select-modal__table.cms-data-table
-  .ant-table-tbody
-  > tr
-  > td.writing-template-select-modal__col-actions {
-  width: 220px !important;
-  min-width: 80px;
-  max-width: 220px !important;
-}
-
 .writing-template-select-modal__name-cell-wrap {
   display: inline-flex;
   max-width: 100%;

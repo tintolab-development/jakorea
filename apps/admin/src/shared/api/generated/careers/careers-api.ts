@@ -26,7 +26,6 @@ import type {
   CareerPostingPublicDetail,
   CareerPostingUpdateRequest,
   CareerPostingVisibilityRequest,
-  CareerTalentApplicationAttachmentDownloadResponse,
   CareerTalentApplicationConfirmRequest,
   CareerTalentApplicationCreateRequest,
   CareerTalentApplicationCreateResponse,
@@ -35,6 +34,7 @@ import type {
   ConfirmRequest,
   ConfirmResponse,
   Detail9Params,
+  FileDownloadPasswordRequest,
   List12Params,
   List15Params,
   List9Params,
@@ -157,6 +157,39 @@ const prepare2 = (
       {url: `/api/public/careers/talent-applications/attachments/upload-requests`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: prepareRequest
+    },
+      options);
+    }
+
+/**
+ * Streams a server-encrypted file. Body { password } is write-only and is never stored.
+ * @summary Download a career talent application attachment by asset id
+ */
+const attachmentDownloadByAsset2 = (
+    id: number,
+    assetId: number,
+    fileDownloadPasswordRequest: FileDownloadPasswordRequest,
+ options?: SecondParameter<typeof customInstance<string>>,) => {
+      return customInstance<string>(
+      {url: `/api/admin/careers/talent-applications/${id}/attachments/${assetId}/download`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: fileDownloadPasswordRequest
+    },
+      options);
+    }
+
+/**
+ * Streams a server-encrypted file. Body { password } is write-only and is never stored. containedPiiTypes is empty until classified.
+ * @summary Download career talent application attachment
+ */
+const attachmentDownload2 = (
+    id: number,
+    fileDownloadPasswordRequest: FileDownloadPasswordRequest,
+ options?: SecondParameter<typeof customInstance<string>>,) => {
+      return customInstance<string>(
+      {url: `/api/admin/careers/talent-applications/${id}/attachment-download`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: fileDownloadPasswordRequest
     },
       options);
     }
@@ -299,6 +332,10 @@ const guide = (
       options);
     }
 
+/**
+ * name, phone, and email are always PrivacyMaskingSupport-masked. Original PII is returned only by the detail GET. List GET does not write privacy-access logs.
+ * @summary List career talent applications
+ */
 const list15 = (
     params?: List15Params,
  options?: SecondParameter<typeof customInstance<PageResponseCareerTalentApplicationListItem>>,) => {
@@ -320,6 +357,10 @@ const delete4 = (
       options);
     }
 
+/**
+ * Always stored original PII (not masked). HOMEPAGE_VIEW is enough; HOMEPAGE_PII_VIEW is not required. Every 200 writes homepage_admin_audit_log (PII_READ / CAREER_TALENT_APPLICATION) and homepage_privacy_access_log with the original targetName. List remains masked (name, phone, and email). revealPii is a deprecated no-op. Admin log list screens must not POST privacy-access.
+ * @summary Get career talent application detail
+ */
 const detail9 = (
     id: number,
     params?: Detail9Params,
@@ -327,25 +368,6 @@ const detail9 = (
       return customInstance<CareerTalentApplicationDetailResponse>(
       {url: `/api/admin/careers/talent-applications/${id}`, method: 'GET',
         params
-    },
-      options);
-    }
-
-const attachmentDownloadByAsset2 = (
-    id: number,
-    assetId: number,
- options?: SecondParameter<typeof customInstance<CareerTalentApplicationAttachmentDownloadResponse>>,) => {
-      return customInstance<CareerTalentApplicationAttachmentDownloadResponse>(
-      {url: `/api/admin/careers/talent-applications/${id}/attachments/${assetId}/download`, method: 'GET'
-    },
-      options);
-    }
-
-const attachmentDownload2 = (
-    id: number,
- options?: SecondParameter<typeof customInstance<CareerTalentApplicationAttachmentDownloadResponse>>,) => {
-      return customInstance<CareerTalentApplicationAttachmentDownloadResponse>(
-      {url: `/api/admin/careers/talent-applications/${id}/attachment-download`, method: 'GET'
     },
       options);
     }
@@ -359,7 +381,7 @@ const guide1 = (
       options);
     }
 
-return {detail3,update14,updateCareerGuideInterview,deleteCareerGuideInterview,updateCareerGuideCultureItems,updateCareerGuideBanner,create2,confirm2,prepare2,list9,create11,delete2,confirm3,prepare3,createCareerGuideInterview,bulkDeleteCareerGuideInterviews,confirm4,changeVisibility,detail6,detailHead2,list12,guide,list15,delete4,detail9,attachmentDownloadByAsset2,attachmentDownload2,guide1}};
+return {detail3,update14,updateCareerGuideInterview,deleteCareerGuideInterview,updateCareerGuideCultureItems,updateCareerGuideBanner,create2,confirm2,prepare2,attachmentDownloadByAsset2,attachmentDownload2,list9,create11,delete2,confirm3,prepare3,createCareerGuideInterview,bulkDeleteCareerGuideInterviews,confirm4,changeVisibility,detail6,detailHead2,list12,guide,list15,delete4,detail9,guide1}};
 export type Detail3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['detail3']>>>
 export type Update14Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['update14']>>>
 export type UpdateCareerGuideInterviewResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['updateCareerGuideInterview']>>>
@@ -369,6 +391,8 @@ export type UpdateCareerGuideBannerResult = NonNullable<Awaited<ReturnType<Retur
 export type Create2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['create2']>>>
 export type Confirm2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['confirm2']>>>
 export type Prepare2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['prepare2']>>>
+export type AttachmentDownloadByAsset2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['attachmentDownloadByAsset2']>>>
+export type AttachmentDownload2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['attachmentDownload2']>>>
 export type List9Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['list9']>>>
 export type Create11Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['create11']>>>
 export type Delete2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['delete2']>>>
@@ -385,6 +409,4 @@ export type GuideResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJA
 export type List15Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['list15']>>>
 export type Delete4Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['delete4']>>>
 export type Detail9Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['detail9']>>>
-export type AttachmentDownloadByAsset2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['attachmentDownloadByAsset2']>>>
-export type AttachmentDownload2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['attachmentDownload2']>>>
 export type Guide1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['guide1']>>>

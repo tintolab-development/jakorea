@@ -96,6 +96,7 @@ type PreferenceScheduleFieldsProps = {
     session?: string
   }[]
   showSessionUnit: boolean
+  showClassPeriodInput: boolean
   datePlaceholder: string
   dateWidth: number
 }
@@ -114,12 +115,14 @@ function PreferenceScheduleFields({
   disabledOptionValues,
   fixedScheduleOptions,
   showSessionUnit,
+  showClassPeriodInput,
   datePlaceholder,
   dateWidth,
 }: PreferenceScheduleFieldsProps) {
   const startTime = normalizeHHmm(block.startTime)
   const endTime = normalizeHHmm(block.endTime)
-  const timeLabel = showSessionSelect ? '희망 교육 시간' : '1차시 희망 교육 시간'
+  const timeLabel =
+    showSessionSelect || !showClassPeriodInput ? '희망 교육 시간' : '1차시 희망 교육 시간'
 
   const dateField =
     fixedScheduleOptions.length > 0 ? (
@@ -215,7 +218,7 @@ function PreferenceScheduleFields({
                   ) : null}
                   <DetailInfoForm.InputsSeparator />
                 </>
-              ) : (
+              ) : showClassPeriodInput ? (
                 <>
                   <PFTextInput
                     variant="formPage"
@@ -232,7 +235,7 @@ function PreferenceScheduleFields({
                   </PFText>
                   <DetailInfoForm.InputsSeparator />
                 </>
-              )}
+              ) : null}
             </div>
             <div className={styles.timeRange}>
               <PFTimeInput
@@ -295,8 +298,13 @@ type ApplyPreferredScheduleProps = {
   disabled?: boolean
   /** false면 2지망 이후 삭제 버튼을 숨긴다 (고정 지망) */
   allowRemove?: boolean
-  /** 희망 차시 셀렉트 옆 「교시」 단위. Gemini 기관은 시안상 숨김 */
+  /** 희망 차시 셀렉트 옆 「교시」 단위. Gemini·일반 기관은 숨김 (교시는 교육받은교사 전용) */
   showSessionUnit?: boolean
+  /**
+   * 희망 차시 셀렉트가 없을 때 「수업 진행 교시」 입력. 교육받은교사 전용.
+   * 일반 기관(커리큘럼 단일·기간)은 CMS 미리보기처럼 수업 시작~종료만 받는다.
+   */
+  showClassPeriodInput?: boolean
   datePlaceholder?: string
   dateWidth?: number
 }
@@ -316,6 +324,7 @@ export function ApplyPreferredSchedule({
   disabled = false,
   allowRemove = true,
   showSessionUnit = true,
+  showClassPeriodInput = true,
   datePlaceholder = '희망 교육 날짜를 선택해 주세요',
   dateWidth = 220,
 }: ApplyPreferredScheduleProps) {
@@ -402,6 +411,7 @@ export function ApplyPreferredSchedule({
                   }
                   fixedScheduleOptions={fixedScheduleOptions}
                   showSessionUnit={showSessionUnit}
+                  showClassPeriodInput={showClassPeriodInput}
                   datePlaceholder={datePlaceholder}
                   dateWidth={dateWidth}
                 />

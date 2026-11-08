@@ -3,13 +3,7 @@ import {
   mapParticipantToParticipatingInstructorRow,
   mapParticipantToParticipatingSchoolRow,
   mapParticipantToParticipatingVolunteerRow,
-  mapStoredPeriodRequestedSchedulesToHopeSessions,
 } from '@/features/program/general/api/adapters/general-applications-adapters'
-import {
-  buildHopeEducationSessionsFromPreferred,
-  buildOrganizationApplicationScheduleScopeKey,
-  readPreferredEducationSchedulesForScope,
-} from '@/features/program/general/lib/organization-education-schedule-sources'
 import { shouldUseProgramProgressHttpRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
 import {
   fetchProgramAssignmentSubmissionsRemote,
@@ -37,12 +31,6 @@ import type { LectureReportPreviewContent } from '@/features/program/general/lib
 import type { ParticipatingInstructorLectureReportRow } from '@/features/program/general/api/adapters/lecture-reports-adapters'
 import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
-import {
-  fetchOrganizationApplicationRequestedSchedulesRemote,
-  fetchOrganizationApplicationsRemote,
-} from '@/features/program/general/api/applications-api-client'
-import { readOrganizationApplicationPreferredEducationSchedules } from '@/features/program/general/lib/organization-application-preferred-education-schedules'
-import type { PreferredEducationSchedule } from '@/features/program/general/api/individual-application-screening-api-types'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 
@@ -122,100 +110,6 @@ export async function fetchGeneralParticipatingInstitutions(
   return (await fetchGeneralParticipatingInstitutionsPage(programId)).rows
 }
 
-const ORG_APPLICATIONS_ENRICH_PAGE_SIZE = 20
-const ORG_APPLICATIONS_ENRICH_PAGE_LIMIT = 40
-
-async function fetchOrganizationPreferredEducationSchedulesByApplicationId(
-  programId: string
-): Promise<Map<string, PreferredEducationSchedule[]>> {
-  const normalizedProgramId = programId.trim()
-  const index = new Map<string, PreferredEducationSchedule[]>()
-  let page = 0
-  for (;;) {
-    const response = await fetchOrganizationApplicationsRemote(normalizedProgramId, {
-      page,
-      size: ORG_APPLICATIONS_ENRICH_PAGE_SIZE,
-    })
-    const items = response.items ?? []
-    for (const item of items) {
-      if (item.id == null) continue
-      const itemProgramId =
-        item.programId != null ? String(item.programId).trim() : normalizedProgramId
-      if (itemProgramId !== normalizedProgramId) continue
-      const preferred = readOrganizationApplicationPreferredEducationSchedules(item)
-      if (preferred.length > 0) {
-        index.set(
-          buildOrganizationApplicationScheduleScopeKey(normalizedProgramId, String(item.id)),
-          preferred
-        )
-      }
-    }
-    const totalPages = response.totalPages ?? 0
-    if (page + 1 >= totalPages || items.length === 0) break
-    page += 1
-    if (page > ORG_APPLICATIONS_ENRICH_PAGE_LIMIT) break
-  }
-  return index
-}
-
-function attachPreferredEducationSchedulesToParticipatingSchools(
-  programId: string,
-  rows: ParticipatingSchoolRow[],
-  preferredByScopeKey: Map<string, PreferredEducationSchedule[]>
-): ParticipatingSchoolRow[] {
-  if (preferredByScopeKey.size === 0) return rows
-  const normalizedProgramId = programId.trim()
-  return rows.map(row => {
-    const applicationId = row.organizationApplicationId?.trim()
-    if (!applicationId) return row
-    if (row.programId != null && String(row.programId).trim() !== normalizedProgramId) {
-      return row
-    }
-    const preferred = readPreferredEducationSchedulesForScope(preferredByScopeKey, {
-      programId: normalizedProgramId,
-      organizationApplicationId: applicationId,
-    })
-    if (!preferred?.length) return row
-    const hopeEducationSessions = buildHopeEducationSessionsFromPreferred(preferred)
-    return {
-      ...row,
-      preferredEducationSchedules: preferred,
-      hopeEducationSessions,
-      lectureRound:
-        hopeEducationSessions.length > 0 ? String(hopeEducationSessions.length) : row.lectureRound,
-    }
-  })
-}
-
-/** 기간형 원본 희망은 requested-schedules다. preferred 건수와 달라도 그 행을 희망 일정으로 쓴다. */
-async function overlayStoredPeriodRequestedHopeSessions(
-  programId: string,
-  rows: ParticipatingSchoolRow[]
-): Promise<ParticipatingSchoolRow[]> {
-  const normalizedProgramId = programId.trim()
-  return Promise.all(
-    rows.map(async row => {
-      const applicationId = row.organizationApplicationId?.trim()
-      if (!applicationId) return row
-      if (row.programId != null && String(row.programId).trim() !== normalizedProgramId) {
-        return row
-      }
-      try {
-        const requested = await fetchOrganizationApplicationRequestedSchedulesRemote(applicationId)
-        const hopeEducationSessions = mapStoredPeriodRequestedSchedulesToHopeSessions(requested)
-        if (hopeEducationSessions.length === 0) return row
-        return {
-          ...row,
-          hopeEducationSessions,
-          lectureRound: String(hopeEducationSessions.length),
-        }
-      } catch {
-        return row
-      }
-    })
-  )
-}
-
 export async function fetchGeneralParticipatingInstitutionsPage(
   programId: string,
   pageParam = 0
@@ -226,20 +120,12 @@ export async function fetchGeneralParticipatingInstitutionsPage(
     size: GENERAL_PROGRAM_PROGRESS_PAGE_SIZE,
     participantType: 'ORGANIZATION',
   })
-  const preferredByApplicationId =
-    await fetchOrganizationPreferredEducationSchedulesByApplicationId(programId)
-  const rows = await overlayStoredPeriodRequestedHopeSessions(
-    programId,
-    attachPreferredEducationSchedulesToParticipatingSchools(
-      programId,
-      (page.items ?? []).map((item, index) =>
-        mapParticipantToParticipatingSchoolRow(
-          item,
-          pageParam * GENERAL_PROGRAM_PROGRESS_PAGE_SIZE + index,
-          programId
-        )
-      ),
-      preferredByApplicationId
+  /** 희망 일정은 participants `requestedSchedules[]`로 함께 내려온다 — 신청 목록 순회·행별 조회 없음 */
+  const rows = (page.items ?? []).map((item, index) =>
+    mapParticipantToParticipatingSchoolRow(
+      item,
+      pageParam * GENERAL_PROGRAM_PROGRESS_PAGE_SIZE + index,
+      programId
     )
   )
   return resolveProgressListPage(rows, page, pageParam)

@@ -498,7 +498,8 @@ export function CorporateConsultationsPage() {
         title: '기업명',
         dataIndex: 'companyName',
         key: 'companyName',
-        width: COL.company,
+        // 유연 열: 넓은 화면에서 남는 폭 흡수 (CmsDataTable 정확 폭 모드)
+        minWidth: COL.company,
         align: 'center',
         ellipsis: true,
         render: (v: string) => v || '-',

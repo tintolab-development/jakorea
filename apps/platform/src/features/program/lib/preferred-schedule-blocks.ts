@@ -52,6 +52,20 @@ export type PreferredScheduleBlocksMapOptions = {
   dateFieldsOnly?: boolean
   /** Gemini 기관 — 희망 차시 2~4만 제출 */
   sessionCountRange?: { min: number; max: number }
+  /**
+   * 일반 기관 신청(커리큘럼·기간 지정). 일반 프로그램에는 교시 개념이 없다(교육받은교사 전용).
+   * - `sessionCount` 지정(단일 회차): 교시·차시 입력 없이 날짜·시작/종료 시간만 받고,
+   *   커리큘럼 1일 차시 수를 sessionCount로 제출한다.
+   * - 미지정(복수 회차): 희망 차시 셀렉트 값(classPeriod)을 sessionCount로 제출한다.
+   */
+  generalInstitution?: { sessionCount?: number }
+}
+
+function readGeneralInstitutionFixedSessionCount(
+  options: PreferredScheduleBlocksMapOptions | undefined
+): number | undefined {
+  const value = options?.generalInstitution?.sessionCount
+  return typeof value === 'number' && Number.isInteger(value) && value > 0 ? value : undefined
 }
 
 export const UJAT_PREFERRED_SCHEDULE_BLOCK_MAX = 10
@@ -88,6 +102,28 @@ export function toPortalPreferredScheduleBlocks(
     }
     const startTime = normalizeScheduleTime(block.startTime)
     const endTime = normalizeScheduleTime(block.endTime)
+    const fixedSessionCount = readGeneralInstitutionFixedSessionCount(options)
+    if (fixedSessionCount != null) {
+      if (!date || !startTime || !endTime) continue
+      out.push({
+        preferenceRank: rank,
+        date,
+        sessionCount: fixedSessionCount,
+        startTime,
+        endTime,
+        ...(block.session ? { session: block.session } : {}),
+        sessionTimes: [
+          {
+            sessionIndex: 1,
+            startTime,
+            endTime,
+            timeRange: `${startTime}~${endTime}`,
+          },
+        ],
+      })
+      rank += 1
+      continue
+    }
     const classPeriod = block.classPeriod.trim()
     /** BE: date·startTime·endTime 필수. 일반·Gemini 기관은 차시도 필수 */
     if (!date || !startTime || !endTime || !classPeriod) continue
@@ -194,6 +230,7 @@ export function findIncompletePreferredScheduleMessage(
   blocks: readonly ApplyPreferredScheduleBlock[],
   options?: PreferredScheduleBlocksMapOptions,
 ): string | null {
+  const withoutClassPeriod = readGeneralInstitutionFixedSessionCount(options) != null
   const hasPartial = blocks.some(block => {
     const date = block.date.trim()
     const classPeriod = block.classPeriod.trim()
@@ -204,13 +241,20 @@ export function findIncompletePreferredScheduleMessage(
       const complete = Boolean(date)
       return any && !complete
     }
-    const complete = Boolean(date && classPeriod && startTime && endTime)
+    const complete = Boolean(
+      date && (withoutClassPeriod || classPeriod) && startTime && endTime
+    )
     return any && !complete
   })
   if (hasPartial) {
-    return options?.dateOnly
-      ? '진행 희망 교육 일정에 희망 교육일을 입력해 주세요.'
-      : '진행 희망 교육 일정에 날짜·차시(교시)·시작/종료 시간을 모두 입력해 주세요.'
+    if (options?.dateOnly) return '진행 희망 교육 일정에 희망 교육일을 입력해 주세요.'
+    if (withoutClassPeriod) {
+      return '진행 희망 교육 일정에 날짜·시작/종료 시간을 모두 입력해 주세요.'
+    }
+    if (options?.generalInstitution) {
+      return '진행 희망 교육 일정에 날짜·희망 차시·시작/종료 시간을 모두 입력해 주세요.'
+    }
+    return '진행 희망 교육 일정에 날짜·차시(교시)·시작/종료 시간을 모두 입력해 주세요.'
   }
   const sessionCountRange = options?.sessionCountRange
   if (sessionCountRange && !options?.dateOnly) {

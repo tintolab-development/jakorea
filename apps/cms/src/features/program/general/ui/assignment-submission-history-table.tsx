@@ -231,7 +231,7 @@ export function AssignmentSubmissionHistoryTable({
     <div className="assignment-submission-modal__table-outer">
       <CmsDataTable<AssignmentSubmissionHistoryTableRow>
         rowKey="id"
-        className="cms-data-table cms-data-table--fluid"
+        className="cms-data-table"
         columns={columns}
         dataSource={rows}
         loading={loading}

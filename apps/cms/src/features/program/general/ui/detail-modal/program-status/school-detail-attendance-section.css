@@ -78,9 +78,6 @@
  */
 .school-detail-attendance-table .ant-table-thead > tr > th.school-detail-attendance-table__col-name,
 .school-detail-attendance-table .ant-table-tbody > tr > td.school-detail-attendance-table__col-name {
-  width: 88px !important;
-  min-width: 88px !important;
-  max-width: 88px !important;
   box-sizing: border-box !important;
   padding-left: 12px !important;
   padding-right: 12px !important;
@@ -88,9 +85,6 @@
 
 .school-detail-attendance-table .ant-table-thead > tr > th.school-detail-attendance-table__col-gender,
 .school-detail-attendance-table .ant-table-tbody > tr > td.school-detail-attendance-table__col-gender {
-  width: 72px !important;
-  min-width: 72px !important;
-  max-width: 72px !important;
   box-sizing: border-box !important;
   padding-left: 8px !important;
   padding-right: 8px !important;

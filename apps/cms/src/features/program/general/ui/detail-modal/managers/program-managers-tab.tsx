@@ -3,11 +3,14 @@
  * 필터(담당자명, 권한) + 조회 + 담당자 목록 테이블 + 삭제/등록
  *
  * Remote only: GET/POST/PATCH/DELETE …/managers
+ * 연락처·CMS 권한은 GET …/managers `adminPhone`·`adminRoleCode` — 탭 진입 시 /admin-accounts 미호출.
+ * 등록 후보(GET /admin-accounts?keyword=…)는 담당자 추가 모달이 열려 있을 때만 검색 조회.
  * 권한 변경 → PATCH …/managers/{assignmentId} (`ProgramManagerUpdateRequest.role`)
  * 공유 탭 — 일반·UJAT·1사1교·Gemini 상세에서 재사용 (program-type-isolation).
  */
 
 import { useMemo, useState, useEffect, useCallback } from 'react'
+import { useDebouncedValue } from '@/shared/hooks/use-debounced-value'
 import { Spin } from 'antd'
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { ActionResultModal, FilterTableToolbarButton } from '@/shared/ui'
@@ -81,6 +84,8 @@ export function ProgramManagersTab({
   const [appliedFilters, setAppliedFilters] = useState<ProgramManagersFilters>(filters)
   const [openRoleDropdownId, setOpenRoleDropdownId] = useState<string | null>(null)
   const [addModalOpen, setAddModalOpen] = useState(false)
+  const [candidateKeywordInput, setCandidateKeywordInput] = useState('')
+  const candidateKeyword = useDebouncedValue(candidateKeywordInput, 300)
   const [deleteGuideModalOpen, setDeleteGuideModalOpen] = useState(false)
   const [actionResult, setActionResult] = useState<ProgramManagerActionResult | null>(null)
 
@@ -104,7 +109,10 @@ export function ProgramManagersTab({
     deleteManagers,
     managersListAllowed,
     managersListPending,
-  } = useProgramManagers(programId, managersListFilters)
+  } = useProgramManagers(programId, managersListFilters, {
+    enabled: addModalOpen && actionResult == null,
+    keyword: candidateKeyword,
+  })
 
   useEffect(() => {
     setPendingFilters({ ...filters })
@@ -229,6 +237,7 @@ export function ProgramManagersTab({
       return false
     }
     setAddModalOpen(false)
+    setCandidateKeywordInput('')
     setActionResult({
       title: PROGRAM_MANAGER_ADD_COMPLETE_TITLE,
       body: PROGRAM_MANAGER_ADD_COMPLETE_BODY,
@@ -407,7 +416,10 @@ export function ProgramManagersTab({
             <FilterTableToolbarButton
               variant="primary"
               disabled={isMutating}
-              onClick={() => setAddModalOpen(true)}
+              onClick={() => {
+                setCandidateKeywordInput('')
+                setAddModalOpen(true)
+              }}
             >
               담당자 등록
             </FilterTableToolbarButton>
@@ -415,7 +427,7 @@ export function ProgramManagersTab({
         }
       >
         <CmsDataTable<ProgramManagerRow>
-          className="cms-data-table cms-data-table--fluid program-managers-tab__managers-table"
+          className="cms-data-table program-managers-tab__managers-table"
           rowKey="id"
           pagination={false}
           loading={loading}
@@ -435,11 +447,15 @@ export function ProgramManagersTab({
       {actionResult == null ? (
         <AddManagerModal
           open={addModalOpen}
-          onCancel={() => setAddModalOpen(false)}
+          onCancel={() => {
+            setAddModalOpen(false)
+            setCandidateKeywordInput('')
+          }}
           currentOwnerCount={managerList.filter(m => m.role === 'OWNER').length}
           excludeManagerNames={excludeManagerNames}
           candidates={assignableCandidates}
           candidatesLoading={candidatesLoading}
+          onCandidateSearch={setCandidateKeywordInput}
           confirmLoading={isMutating}
           onAdd={handleAdd}
         />

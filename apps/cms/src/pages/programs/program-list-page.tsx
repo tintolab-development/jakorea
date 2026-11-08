@@ -662,6 +662,10 @@ function ProgramListPageContent() {
             : loading
         }
         headerTitle={headerTitle}
+        // 1사1교 「총 N건」은 지금까지 불러온 행 수가 아니라 서버 totalElements (일반·교사연수와 동일)
+        headerCount={
+          isCompanySchoolPath ? companySchoolListQuery.data?.pages[0]?.totalElements : undefined
+        }
         onView={handleView}
         onSelectionChange={showBulkSelection ? setSelectedRowKeys : undefined}
         selectedRowKeys={showBulkSelection ? selectedRowKeys : undefined}

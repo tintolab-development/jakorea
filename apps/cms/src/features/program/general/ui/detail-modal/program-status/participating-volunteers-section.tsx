@@ -147,17 +147,20 @@ export function ParticipatingVolunteersSection({
     }),
     []
   )
+  const isIndividualVolunteerProgram = program != null && isGeneralIndividualProgram(program)
   const { instructorList } = useProgressInstructorList({
     appliedFilters: schoolFilters,
     programId,
     program,
+    // 개인형은 schoolRows를 쓰지 않으므로 강사 목록·배정 보드(5건)를 조회하지 않는다.
+    enabled: !isIndividualVolunteerProgram,
   })
   const { schoolList: schoolRows } = useProgressSchoolList({
     appliedFilters: schoolFilters,
     instructorList,
     programId,
     program,
-    enabled: !(program != null && isGeneralIndividualProgram(program)),
+    enabled: !isIndividualVolunteerProgram,
   })
   const excludedVolunteerMemberIds = useMemo(
     () =>

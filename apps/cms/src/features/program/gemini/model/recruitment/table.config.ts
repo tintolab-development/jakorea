@@ -3,7 +3,6 @@ import type { ColumnsType } from 'antd/es/table'
 import dayjs, { type Dayjs } from 'dayjs'
 import type { TablePageConfig } from '@/shared/components/table-system/types/table-page-config'
 import type { TableSearchParamRule } from '@/shared/hooks/use-table-search'
-import { resolveRecruitmentDisplayStatus } from '../../lib/recruitment/resolve-status'
 import type { GeminiRecruitmentDisplayStatus, GeminiRecruitmentRow } from './types'
 
 export type GeminiRecruitmentTableContext = {
@@ -39,69 +38,6 @@ function parseStatus(raw: string | null): StatusFilter {
     return raw
   }
   return 'ALL'
-}
-
-function resolveTrainingRequestPeriodBounds(
-  searchParams: URLSearchParams,
-  todayKey: string
-): { from: Dayjs | null; to: Dayjs | null; usedDefault: boolean } {
-  const fromStr = searchParams.get(`${URL_PREFIX}_from`)
-  const toStr = searchParams.get(`${URL_PREFIX}_to`)
-
-  if (fromStr || toStr) {
-    const from = fromStr ? dayjs(fromStr).startOf('day') : null
-    const to = toStr ? dayjs(toStr).endOf('day') : null
-    if ((from == null || from.isValid()) && (to == null || to.isValid())) {
-      return { from, to, usedDefault: false }
-    }
-  }
-
-  const [defaultFrom, defaultTo] = getDefaultTrainingRequestPeriodRange(todayKey)
-  return {
-    from: defaultFrom.startOf('day'),
-    to: defaultTo.endOf('day'),
-    usedDefault: true,
-  }
-}
-
-export function filterGeminiRecruitmentRowsBySearchParams(
-  data: GeminiRecruitmentRow[],
-  searchParams: URLSearchParams,
-  todayKey: string
-): GeminiRecruitmentRow[] {
-  const referenceDate = dayjs(todayKey)
-  const titleQ = (searchParams.get(`${URL_PREFIX}_title`) ?? '').trim().toLowerCase()
-  const status = parseStatus(searchParams.get(`${URL_PREFIX}_status`))
-  const { from, to, usedDefault } = resolveTrainingRequestPeriodBounds(searchParams, todayKey)
-
-  let list = [...data]
-  if (titleQ) {
-    list = list.filter(r => r.title.toLowerCase().includes(titleQ))
-  }
-  if (status === 'DRAFT') {
-    list = list.filter(r => r.isDraft)
-  } else if (status !== 'ALL') {
-    list = list.filter(
-      r =>
-        !r.isDraft &&
-        resolveRecruitmentDisplayStatus(r, referenceDate) === status
-    )
-  }
-  // URL에 기간이 없을 때의 기본값(연초~오늘)은 필터 칸 초안일 뿐, 응답 행을 다시 걸러내지 않는다.
-  // 목록 GET은 기간 쿼리를 쓰지 않으므로, 화면에서만 기본 기간을 적용하면 건수와 표가 어긋난다.
-  if (!usedDefault && (from != null || to != null)) {
-    list = list.filter(r => {
-      if (r.isDraft) return true
-      const start = dayjs(r.trainingRequestPeriodStart)
-      const end = dayjs(r.trainingRequestPeriodEnd)
-      if (!start.isValid() || !end.isValid()) return false
-      if (from && end.isBefore(from, 'day')) return false
-      if (to && start.isAfter(to, 'day')) return false
-      return true
-    })
-  }
-
-  return list.sort((a, b) => b.displayNo - a.displayNo)
 }
 
 const tanstackColumns: ColumnDef<GeminiRecruitmentRow>[] = [{ accessorKey: 'id', header: 'id' }]
@@ -213,14 +149,9 @@ export const geminiRecruitmentTablePageConfig: TablePageConfig<
     },
   },
 
-  filterFn: ({ context, data, searchParams }) => {
-    const filtered = filterGeminiRecruitmentRowsBySearchParams(
-      data,
-      searchParams,
-      context.todayKey
-    )
-    return { dataForTable: filtered, filteredData: filtered }
-  },
+  // 공고명·상태·연수요청기간은 `GET /recruitments` 쿼리로 보낸다(`list-remote-filters`).
+  // 받아 온 페이지를 화면에서 다시 거르면 총 N건과 표 행이 어긋나고 첫 페이지가 비어 보인다.
+  filterFn: ({ data }) => ({ dataForTable: data, filteredData: data }),
 
   getSearchSync: () => ({
     paramConfig: searchSyncRules,

@@ -60,36 +60,6 @@
   vertical-align: middle;
 }
 
-/* ── 공통 고정열 ── */
-.income-expense-table .ant-table-thead > tr > th.income-expense-table__col--sort,
-.income-expense-table .ant-table-tbody > tr > td.income-expense-table__col--sort {
-  width: 80px !important;
-  min-width: 80px !important;
-  max-width: 80px !important;
-}
-
-.income-expense-table .ant-table-thead > tr > th.cms-table-col--no,
-.income-expense-table .ant-table-tbody > tr > td.cms-table-col--no {
-  width: 80px !important;
-  min-width: 80px !important;
-  max-width: 80px !important;
-}
-
-/* ── 수입 · 지출그래프 항목 테이블 ──
- * 항목명 ~40%(좌) · 비율 ~15%(중앙) · 금액 ~30%(우)
- * 테이블 탭 조회는 전부 중앙 — `--table-view` / `--uniform` 이 덮음
- */
-.income-expense-table:not(.income-expense-table--expense)
-  .ant-table-thead
-  > tr
-  > th.income-expense-table__col--name,
-.income-expense-table:not(.income-expense-table--expense)
-  .ant-table-tbody
-  > tr
-  > td.income-expense-table__col--name {
-  min-width: 240px;
-}
-
 .income-expense-table:not(.income-expense-table--expense)
   .ant-table-thead
   > tr
@@ -98,23 +68,7 @@
   .ant-table-tbody
   > tr
   > td.income-expense-table__col--ratio {
-  width: 160px !important;
-  min-width: 140px !important;
-  max-width: 180px !important;
   text-align: center !important;
-}
-
-.income-expense-table:not(.income-expense-table--expense)
-  .ant-table-thead
-  > tr
-  > th.income-expense-table__col--amount,
-.income-expense-table:not(.income-expense-table--expense)
-  .ant-table-tbody
-  > tr
-  > td.income-expense-table__col--amount {
-  width: 280px !important;
-  min-width: 220px !important;
-  max-width: 320px !important;
 }
 
 .income-expense-table:not(.income-expense-table--expense)
@@ -143,30 +97,12 @@
  */
 .income-expense-table--expense .ant-table-thead > tr > th.income-expense-table__col--category,
 .income-expense-table--expense .ant-table-tbody > tr > td.income-expense-table__col--category {
-  width: 160px !important;
-  min-width: 140px !important;
-  max-width: 200px !important;
   text-align: center !important;
-}
-
-.income-expense-table--expense .ant-table-thead > tr > th.income-expense-table__col--name,
-.income-expense-table--expense .ant-table-tbody > tr > td.income-expense-table__col--name {
-  min-width: 220px;
 }
 
 .income-expense-table--expense .ant-table-thead > tr > th.income-expense-table__col--ratio,
 .income-expense-table--expense .ant-table-tbody > tr > td.income-expense-table__col--ratio {
-  width: 120px !important;
-  min-width: 100px !important;
-  max-width: 140px !important;
   text-align: center !important;
-}
-
-.income-expense-table--expense .ant-table-thead > tr > th.income-expense-table__col--amount,
-.income-expense-table--expense .ant-table-tbody > tr > td.income-expense-table__col--amount {
-  width: 220px !important;
-  min-width: 180px !important;
-  max-width: 260px !important;
 }
 
 .income-expense-table--expense .ant-table-thead > tr > th.income-expense-table__col--amount {

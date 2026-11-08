@@ -334,7 +334,7 @@ describe('curriculum multi date fixed schedule matrix', () => {
     ])
   })
 
-  it('커리큘럼 단일 날짜 — 고정 일정 안내에 1일 N차시', () => {
+  it('커리큘럼 단일 날짜 — 고정 일정 안내는 일정형과 같은 1타임 배정 문구', () => {
     const text = resolveApplicationFixedScheduleParagraphDescription({
       educationStructure: 'curriculum',
       sessionRound: 'single',
@@ -345,7 +345,7 @@ describe('curriculum multi date fixed schedule matrix', () => {
       ],
       curriculumChartSessionCount: 2,
     })
-    expect(text).toBe('진행 가능한 일정을 모두 선택해 주세요. 수업은 1일, 2차시 운영됩니다.')
+    expect(text).toBe('진행 가능한 일정을 모두 선택해 주세요. 모두 동일한 커리큘럼이며, 선택한 일정 중 1타임에 배정됩니다.')
     expect(
       resolveApplicationFixedScheduleParagraphDescription({
         educationStructure: 'schedule',

@@ -3,9 +3,10 @@ import type { ColumnsType } from 'antd/es/table'
 import { CMS_TABLE_NO_COL_CLASS } from '@/shared/constants/table'
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import { CmsButton } from '@/shared/ui'
+import { StatusBadge } from '@/shared/components/status-badge'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
-  assignmentSubmissionStatusClassName,
+  assignmentSubmissionStatusColor,
   assignmentSubmissionStatusLabel,
   formatAssignmentRemarks,
   isAssignmentLogViewEnabled,
@@ -50,11 +51,7 @@ function columnCellClass(className: string) {
   }
 }
 
-function renderPlanLogViewButton(
-  label: string,
-  enabled: boolean,
-  onView: () => void
-) {
+function renderPlanLogViewButton(label: string, enabled: boolean, onView: () => void) {
   return (
     <div className="ujat-volunteer-assignment-table__plan-log-cell-inner">
       <CmsButton
@@ -73,11 +70,14 @@ function renderPlanLogViewButton(
 function renderSubmissionStatus(row: UjatAssignmentVolunteerRow) {
   const key = resolveAssignmentSubmissionStatus(row)
   const label = assignmentSubmissionStatusLabel(key)
-  const statusClassName = assignmentSubmissionStatusClassName(key)
   return (
-    <span className={`ujat-education-progress-assignments__status ${statusClassName}`}>
-      {label}
-    </span>
+    <StatusBadge
+      domain="custom"
+      variant="text"
+      className="ujat-education-progress-assignments__status"
+      label={label}
+      accentColor={assignmentSubmissionStatusColor(key)}
+    />
   )
 }
 
@@ -169,8 +169,7 @@ export function UjatEducationProgressAssignmentTable({
         width: UJAT_ASSIGNMENT_COL_WIDTH.status,
         align: 'center',
         ...columnCellClass(COL_CLASS.status),
-        render: (_: unknown, record: UjatAssignmentVolunteerRow) =>
-          renderSubmissionStatus(record),
+        render: (_: unknown, record: UjatAssignmentVolunteerRow) => renderSubmissionStatus(record),
       },
       {
         title: '교육 계획서',
@@ -192,10 +191,8 @@ export function UjatEducationProgressAssignmentTable({
         align: 'center',
         ...columnCellClass(COL_CLASS.log),
         render: (_: unknown, record: UjatAssignmentVolunteerRow) =>
-          renderPlanLogViewButton(
-            '교육일지 보기',
-            isAssignmentLogViewEnabled(record.log),
-            () => openViewer(record, 'log', record.log)
+          renderPlanLogViewButton('교육일지 보기', isAssignmentLogViewEnabled(record.log), () =>
+            openViewer(record, 'log', record.log)
           ),
       },
       {

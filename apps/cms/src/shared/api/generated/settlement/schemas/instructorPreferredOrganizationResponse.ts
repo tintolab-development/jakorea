@@ -29,6 +29,8 @@ export interface InstructorPreferredOrganizationResponse {
   endAt?: string | null;
   /** 강사 자택에서 기관까지 편도 도로 이동거리(km). 계산되지 않으면 null. */
   distanceKm?: number | null;
+  /** 장거리 표기. 단가와 무관. 산출 불가면 null. */
+  longDistance?: boolean | null;
   /** 기관별 거리 계산 상태. */
   distanceStatus?: InstructorPreferredOrganizationResponseDistanceStatus;
   /** 거리 계산 완료 시각. 계산되지 않으면 null. */

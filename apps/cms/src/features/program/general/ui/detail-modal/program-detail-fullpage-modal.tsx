@@ -31,6 +31,10 @@ import {
 } from '@/shared/lib/detail-fullpage-query-stack'
 import { nextSearchParamsIfChanged } from '@/shared/lib/search-params-diff'
 import { useProgramDetail } from '@/pages/programs/use-program-detail'
+import {
+  isLookupableSponsorId,
+  resolveAssignedSponsorName,
+} from '@/features/program/shared/lib/merge-program-sponsor-assignments'
 import { useSponsorNameById } from '@/features/sponsor/hooks/use-sponsor-name-by-id'
 import { useProgramDetailEditForm } from '../../hooks/use-program-detail-edit-form'
 import { useProgramDetailInfoSave } from '../../hooks/use-program-detail-info-save'
@@ -345,10 +349,13 @@ export function ProgramDetailFullPageModal({
     sponsorName: legacySponsorName,
     updateProgram,
   } = useProgramDetail(onUpdateProgram ? undefined : (open ? programId : undefined))
-  const externalSponsorName = useSponsorNameById(
+  // 배정 응답에 이름이 있으면 그대로 쓴다 — 없을 때만 후원사 전체 목록에서 찾는다.
+  const assignedSponsorName = resolveAssignedSponsorName(program)
+  const lookedUpSponsorName = useSponsorNameById(
     program?.sponsorId,
-    Boolean(onUpdateProgram && program?.sponsorId)
+    Boolean(onUpdateProgram) && !assignedSponsorName && isLookupableSponsorId(program?.sponsorId)
   )
+  const externalSponsorName = assignedSponsorName ?? lookedUpSponsorName
   const loading = onUpdateProgram ? externalLoading : legacyLoading
   const sponsorName = onUpdateProgram ? externalSponsorName : legacySponsorName
   // remote 부모(onUpdateProgram): 로딩 중 목록/stub program으로 본문 채우지 않음

@@ -46,7 +46,8 @@ export function TemplateTable({ rows, onPreview }: TemplateTableProps) {
         title: '템플릿명',
         dataIndex: 'templateName',
         key: 'templateName',
-        width: TEMPLATE_LIST_COL_WIDTH.name,
+        // 유연 열: 넓은 화면에서 남는 폭 흡수 (CmsDataTable 정확 폭 모드)
+        minWidth: TEMPLATE_LIST_COL_WIDTH.name,
         align: 'center',
         ellipsis: { showTitle: true },
         className: 'template-table__col-name',

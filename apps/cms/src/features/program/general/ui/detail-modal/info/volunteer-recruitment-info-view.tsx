@@ -38,6 +38,7 @@ import { syncVolunteerInterviewRangeSealOverlay } from '@/features/template/ui/f
 import dayjs from 'dayjs'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import './volunteer-recruitment-info-view.css'
+import { RecruitmentLifecycleStatusText } from '@/features/program/shared/ui/recruitment-lifecycle-status-text'
 
 const toDayjs = (d: string | Date | undefined) => (d ? dayjs(d) : null)
 
@@ -64,11 +65,7 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
   const formMode = isEdit && form ? 'edit' : 'view'
   const lifecycle = display.recruitmentStatusLifecycle
   const statusView = lifecycle ? (
-    <span
-      className={`program-detail-info-tab__lifecycle-status-text program-detail-info-tab__lifecycle-status-text--${lifecycle.replace(/_/g, '-')}`}
-    >
-      {display.recruitmentStatusLabel}
-    </span>
+    <RecruitmentLifecycleStatusText status={lifecycle} label={display.recruitmentStatusLabel} />
   ) : (
     display.recruitmentStatusLabel
   )
