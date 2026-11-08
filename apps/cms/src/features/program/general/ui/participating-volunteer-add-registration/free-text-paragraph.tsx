@@ -17,7 +17,12 @@ export function ParticipatingVolunteerAddRegistrationFreeTextParagraph(
       {PROGRAM_VOLUNTEER_FREE_TEXT_QUESTIONS.map(q => (
         <div key={q.id} className="volunteer-free-text-items__card">
           <div className="volunteer-free-text-items__card-header">
-            <span className="volunteer-free-text-items__card-label">{q.label}</span>
+            <span className="volunteer-free-text-items__card-label">
+              {q.label}
+              <span className="detail-info-form__field-required" aria-hidden>
+                *
+              </span>
+            </span>
             {q.hint ? (
               <span className="volunteer-free-text-items__card-hint">{q.hint}</span>
             ) : null}
