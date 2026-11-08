@@ -105,10 +105,10 @@ export function ImpactStorySectionCard({ data, options }: Props) {
             edit={
               <MainContentFieldControl error={fieldErrors.title}>
                 <CmsTextArea
-                  className="cms-textarea--fixed-rows"
+                  layout="fixed"
                   inputSize="medium"
                   width="100%"
-                  rows={2}
+                  autoSize={{ minRows: 1 }}
                   maxLength={MAIN_CONTENT_LIMITS.impactTitle}
                   status={fieldErrors.title ? 'error' : undefined}
                   value={draft.title}

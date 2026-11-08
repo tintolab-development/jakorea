@@ -131,8 +131,8 @@ export function HowSectionCard({ items }: Props) {
               ].join(' ')}
               inputSize="small"
               width="100%"
-              rows={2}
-              autoSize={false}
+              rows={isEditing ? undefined : 2}
+              autoSize={isEditing ? { minRows: 1 } : false}
               value={value}
               readOnly={!isEditing}
               tabIndex={isEditing ? 0 : -1}
@@ -161,8 +161,8 @@ export function HowSectionCard({ items }: Props) {
               ].join(' ')}
               inputSize="small"
               width="100%"
-              rows={3}
-              autoSize={false}
+              rows={isEditing ? undefined : 3}
+              autoSize={isEditing ? { minRows: 1 } : false}
               value={value}
               readOnly={!isEditing}
               tabIndex={isEditing ? 0 : -1}

@@ -69,6 +69,9 @@ function cloneIntro(intro: OperatingPrinciplesIntro): OperatingPrinciplesIntro {
   }
 }
 
+/** 수정 칸 — 줄바꿈 수만큼 높이가 늘고 줄어든다(hug). 조회는 기존 rows 고정 */
+const EDIT_AUTO_SIZE = { minRows: 1 } as const
+
 function fieldClass(isEditing: boolean, ...extra: Array<string | false | undefined>) {
   return [
     'principles-inline-field',
@@ -264,7 +267,8 @@ export function PrinciplesFormCard({ data }: Props) {
               className={fieldClass(isEditing, 'principles-title-field')}
               inputSize="medium"
               width="100%"
-              rows={2}
+              rows={isEditing ? undefined : 2}
+              autoSize={isEditing ? EDIT_AUTO_SIZE : undefined}
               value={value}
               readOnly={!isEditing}
               tabIndex={isEditing ? 0 : -1}
@@ -289,7 +293,8 @@ export function PrinciplesFormCard({ data }: Props) {
               className={fieldClass(isEditing)}
               inputSize="medium"
               width="100%"
-              rows={3}
+              rows={isEditing ? undefined : 3}
+              autoSize={isEditing ? EDIT_AUTO_SIZE : undefined}
               value={value}
               readOnly={!isEditing}
               tabIndex={isEditing ? 0 : -1}
@@ -370,7 +375,8 @@ export function PrinciplesFormCard({ data }: Props) {
                     className={fieldClass(isEditing)}
                     inputSize="medium"
                     width="100%"
-                    rows={1}
+                    rows={isEditing ? undefined : 1}
+                    autoSize={isEditing ? EDIT_AUTO_SIZE : undefined}
                     value={draftIntro.topSubText}
                     readOnly={!isEditing}
                     tabIndex={isEditing ? 0 : -1}
@@ -394,7 +400,8 @@ export function PrinciplesFormCard({ data }: Props) {
                     className={fieldClass(isEditing)}
                     inputSize="medium"
                     width="100%"
-                    rows={2}
+                    rows={isEditing ? undefined : 2}
+                    autoSize={isEditing ? EDIT_AUTO_SIZE : undefined}
                     value={draftIntro.mainText}
                     readOnly={!isEditing}
                     tabIndex={isEditing ? 0 : -1}

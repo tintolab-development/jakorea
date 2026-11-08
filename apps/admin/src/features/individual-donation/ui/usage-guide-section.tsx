@@ -115,10 +115,10 @@ export function UsageGuideSectionCard({ items }: Props) {
           if (isEditing) {
             return (
               <CmsTextArea
-                className="cms-textarea--fixed-rows"
+                layout="fixed"
                 inputSize="small"
                 width="100%"
-                rows={2}
+                autoSize={{ minRows: 1 }}
                 value={value}
                 onChange={e => handleDraftChange(record.id, { mainText: e.target.value })}
                 placeholder="메인 텍스트를 입력해 주세요"
@@ -139,10 +139,10 @@ export function UsageGuideSectionCard({ items }: Props) {
           if (isEditing) {
             return (
               <CmsTextArea
-                className="cms-textarea--fixed-rows"
+                layout="fixed"
                 inputSize="small"
                 width="100%"
-                rows={2}
+                autoSize={{ minRows: 1 }}
                 value={value}
                 onChange={e => handleDraftChange(record.id, { subText: e.target.value })}
                 placeholder="서브 텍스트를 입력해 주세요"

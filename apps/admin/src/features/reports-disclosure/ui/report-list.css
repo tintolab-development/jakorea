@@ -129,16 +129,17 @@
 }
 
 /**
- * 썸네일 영역 (시안)
- * 연차: width 120 · padding 16×20
- * 감사: 이미지 140 + 좌우 20 → 180
+ * 썸네일 영역 (시안 32:9216 · 32:13103 — Table / Horizontal / Sell / Medium)
+ * 연차: 열 120 · 이미지 가로 80
+ * 감사: 열 180 · 이미지 가로 140
+ * 상하 8 · 좌우 20
  */
 .rd-list__thumb-cell {
   display: flex;
   box-sizing: border-box;
   width: 100%;
   height: 100%;
-  padding: 16px 20px;
+  padding: 8px 20px;
   justify-content: center;
   align-items: center;
   gap: 8px;
@@ -151,32 +152,31 @@
   width: 100%;
 }
 
-/* 썸네일 이미지 래퍼 — 고정 치수, hover 시 grow/shrink 금지 */
+/*
+ * 썸네일 이미지 래퍼 — 가로만 고정, 세로는 원본 비율 그대로(잘림 없음).
+ * 시안에 테두리·라운드·배경 없음.
+ */
 .rd-list__thumb-wrap {
-  position: relative;
   display: block;
   flex: 0 0 auto;
   margin-inline: auto;
-  overflow: hidden;
-  border-radius: 4px;
-  border: 1px solid var(--table-line, #e0e0e0);
-  background: var(--color-bg-secondary, #f7f7f7);
   box-sizing: border-box;
 }
 
-.rd-list__thumb-wrap--a4,
+.rd-list__thumb-wrap--a4 {
+  width: 80px;
+  flex-basis: 80px;
+}
+
 .rd-list__thumb-wrap--wide {
-  width: 86px;
-  height: 86px;
-  aspect-ratio: 1 / 1;
-  flex: 0 0 86px;
+  width: 140px;
+  flex-basis: 140px;
 }
 
 .rd-list__thumb {
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: cover;
   display: block;
+  width: 100% !important;
+  height: auto !important;
 }
 
 .rd-list__file-link {

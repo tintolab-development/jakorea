@@ -138,10 +138,10 @@ export function PerformanceSectionCard({ data }: Props) {
             edit={
               <MainContentFieldControl error={fieldErrors.bottomText}>
                 <CmsTextArea
-                  className="cms-textarea--fixed-rows"
+                  layout="fixed"
                   inputSize="medium"
                   width="100%"
-                  rows={2}
+                  autoSize={{ minRows: 1 }}
                   maxLength={MAIN_CONTENT_LIMITS.bottomText}
                   status={fieldErrors.bottomText ? 'error' : undefined}
                   value={draft.bottomText}

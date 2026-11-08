@@ -125,7 +125,8 @@ export function CultureSectionCard({ items }: Props) {
               className={fieldClass(isEditing)}
               inputSize="medium"
               width="100%"
-              rows={2}
+              rows={isEditing ? undefined : 2}
+              autoSize={isEditing ? { minRows: 1 } : undefined}
               value={value}
               readOnly={!isEditing}
               tabIndex={isEditing ? 0 : -1}
@@ -148,7 +149,8 @@ export function CultureSectionCard({ items }: Props) {
               className={fieldClass(isEditing)}
               inputSize="medium"
               width="100%"
-              rows={3}
+              rows={isEditing ? undefined : 3}
+              autoSize={isEditing ? { minRows: 1 } : undefined}
               value={value}
               readOnly={!isEditing}
               tabIndex={isEditing ? 0 : -1}
