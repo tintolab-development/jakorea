@@ -5,6 +5,7 @@
 
 import type { ReactNode } from 'react'
 import axios from 'axios'
+import { ADMIN_ACCESS_DENIED_ALERT } from '@/shared/lib/admin-access-denied'
 
 export function readApiErrorMessage(error: unknown): string | undefined {
   if (!axios.isAxiosError(error)) {
@@ -59,10 +60,7 @@ const OPTIMISTIC_LOCK_ALERT: AdminMutationAlert = {
   content: '다른 관리자가 내용을 수정했습니다.\n새로고침 후 다시 시도해 주세요.',
 }
 
-const FORBIDDEN_ALERT: AdminMutationAlert = {
-  title: '저장 실패',
-  content: '저장 권한이 없습니다. 관리자에게 문의해 주세요.',
-}
+const FORBIDDEN_ALERT: AdminMutationAlert = { ...ADMIN_ACCESS_DENIED_ALERT }
 
 /** lock 충돌 · 권한 거부 — 도메인 알림보다 먼저 매핑 */
 export function mapCommonRemoteMutationFailure(error: unknown): AdminMutationAlert | null {

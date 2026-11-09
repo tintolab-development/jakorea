@@ -64,6 +64,7 @@ import {
 } from '@/shared/ui'
 
 import './page.css'
+import { ADMIN_ACCESS_DENIED_ALERT } from '@/shared/lib/admin-access-denied'
 
 type StatusPending = '' | RecruitApplicantStatus
 type JobPending = '' | RecruitJobInterest
@@ -344,14 +345,16 @@ export function RecruitApplicantsPage() {
     if (!remoteDetail || !detailId || !detailQuery.isError) return
     const notFound = isRecruitApplicantNotFoundError(detailQuery.error)
     const forbidden = isAdminForbidden(detailQuery.error)
-    showAlert({
-      title: forbidden ? '권한 없음' : notFound ? '신청을 찾을 수 없음' : '조회 실패',
-      content: forbidden
-        ? '해당 신청을 조회할 권한이 없습니다.'
-        : notFound
-          ? '신청 정보를 찾을 수 없습니다.'
-          : '신청 상세를 불러오지 못했습니다. 다시 시도해 주세요.',
-    })
+    showAlert(
+      forbidden
+        ? { ...ADMIN_ACCESS_DENIED_ALERT }
+        : {
+            title: notFound ? '신청을 찾을 수 없음' : '조회 실패',
+            content: notFound
+              ? '신청 정보를 찾을 수 없습니다.'
+              : '신청 상세를 불러오지 못했습니다. 다시 시도해 주세요.',
+          }
+    )
     closeDetail()
   }, [closeDetail, detailId, detailQuery.error, detailQuery.isError, remoteDetail, showAlert])
 
