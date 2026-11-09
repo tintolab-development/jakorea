@@ -77,6 +77,8 @@ export interface ApplicantInstitutionDetailExtend {
   sexOffenseRecordAttachmentFileName?: string
   /** 교재 마스터 id (일반 프로그램 기관 상세 수정) */
   textbookId?: string
+  /** 상세 GET `textbookDisplayLabel`. 교재명+교육대상. 없으면 미지정 */
+  textbookDisplayLabel?: string
   /** 합반 신청 여부 (일반 프로그램 기관 상세) */
   combinedClassApplication?: '신청' | '미신청'
   /** 합반 대상 신청 id 목록 */

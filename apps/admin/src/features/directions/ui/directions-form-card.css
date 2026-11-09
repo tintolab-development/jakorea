@@ -1,30 +1,11 @@
 /* 오시는 길 관리 — 단건 문서 폼 카드
  * 흰 카드 viewport 남은 높이 fill — detail-document-form-card.mdc
  * 카카오맵 HTML 행: 시안 패딩 20px + 남은 세로 공간 stretch
- * 조회↔수정: 컨트롤 유지 + 보더/배경만 전환 (span↔input 스왑 금지)
+ * 카드 fill·조회 모양은 공통(admin-document-card · inlineReadOnly) — 여기엔 화면 고유 규칙만 둔다
  */
 
-.directions-card.admin-list-card {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  height: 100%;
-  margin-bottom: 0;
-}
-
-.directions-card .admin-list-toolbar {
-  flex-shrink: 0;
-  align-items: center;
-}
-
 .directions-card__body {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
   gap: 16px;
-  min-width: 0;
-  min-height: 0;
 }
 
 /* 상단: 주소 + 카카오맵 — 남은 높이 채움 */
@@ -100,27 +81,15 @@
   min-width: 0;
 }
 
-.directions-card .detail-info-form__field {
-  min-height: 54px;
-  --detail-info-label-w: 160px;
-  grid-template-columns: 160px minmax(0, 1fr);
-}
-
-.directions-card .detail-info-form__field-label {
-  width: 160px;
-  min-width: 160px;
-  max-width: 160px;
-  min-height: 54px;
-  padding: 12px 16px;
-  box-sizing: border-box;
+/* Figma 34:24725(조회) · 34:27257(수정) — 라벨 열 200(labelWidth) · 조회 행 52(카카오맵 행 포함) · 값 좌측 정렬 */
+.directions-card .detail-info-form__field,
+.directions-card .detail-info-form__field-label,
+.directions-card .detail-info-form__field-content {
+  min-height: 52px;
 }
 
 .directions-card .detail-info-form__field-content {
-  min-height: 54px;
-  padding: 12px 16px;
-  box-sizing: border-box;
   justify-content: flex-start;
-  align-items: center;
   text-align: left;
 }
 
@@ -128,7 +97,7 @@
   align-items: flex-start;
 }
 
-/* ----- 인라인 필드: 조회=투명 보더, 수정=일반 컨트롤 (동일 노드) ----- */
+/* ----- 인라인 필드: 조회·수정 동일 노드 (조회 모양은 inlineReadOnly="text" 공통) ----- */
 
 .directions-card .directions-inline-field {
   display: block;
@@ -143,26 +112,6 @@
   box-sizing: border-box;
   border-width: 1px;
   border-style: solid;
-}
-
-.directions-card .directions-inline-field--readonly .cms-input__control,
-.directions-card .directions-inline-field--readonly .cms-textarea__control {
-  border-color: transparent !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  cursor: default;
-}
-
-.directions-card .directions-inline-field--readonly .cms-input__control:hover,
-.directions-card .directions-inline-field--readonly .cms-textarea__control:hover {
-  border-color: transparent !important;
-}
-
-.directions-card .directions-inline-field--readonly .ant-input,
-.directions-card .directions-inline-field--readonly textarea.ant-input {
-  cursor: default;
-  color: var(--default-BK, #3d3d3d) !important;
-  font-weight: 500;
 }
 
 .directions-card .directions-inline-field .cms-textarea {
@@ -209,21 +158,23 @@
   overflow-wrap: anywhere;
 }
 
-/*
- * 조회 — 셀 내부 여백(12×16)만 남기고 텍스트를 일반 셀 위치에 둔다 (QA: 여백이 수정 시 입력 칸 기준으로 들어가 있음)
- * 같은 컨트롤을 투명 처리하므로 컨트롤·인풋의 높이·패딩·보더를 없앤다. 높이는 텍스트(14/1.5) 기준.
- */
-.directions-card .directions-inline-field--readonly .cms-input__control,
-.directions-card .directions-inline-field--readonly .cms-textarea__control {
-  height: auto !important;
-  min-height: 0 !important;
-  padding: 0 !important;
-  border-width: 0 !important;
-}
-
-.directions-card .directions-inline-field--readonly .ant-input,
-.directions-card .directions-inline-field--readonly textarea.ant-input {
-  padding: 0 !important;
+/* 조회(inlineReadOnly="text")·수정 모두 14px/500 — QA: 수정 시 테이블 자간 고정 */
+.directions-card .directions-inline-field .ant-input,
+.directions-card .directions-inline-field textarea.ant-input {
   font-size: 14px !important;
   line-height: 150% !important;
+}
+
+/* 수정 — 시안 34:27257: 값 칸 패딩 12(사방) · 입력 40 → 행 64, 텍스트 x 28(12 + 보더 1 + 입력 패딩 15) */
+.directions-card--editing .detail-info-form__field-content {
+  padding: 12px;
+}
+
+.directions-card--editing .directions-card__row--kakao .detail-info-form__field-content {
+  padding: 12px;
+}
+
+.directions-card .directions-inline-field--edit .cms-input__control,
+.directions-card .directions-inline-field--edit .cms-textarea__control {
+  padding-inline: 15px;
 }

@@ -156,7 +156,10 @@ const errorCases: Array<[string, string]> = [
   ['VERSION_CONFLICT', '다른 사용자가 먼저 수정했습니다. 최신 정보를 다시 불러와 주세요.'],
   ['INVALID_CAREER_GUIDE_INTERVIEW_TITLE', '인터뷰 제목을 확인해 주세요.'],
   ['INVALID_CAREER_GUIDE_INTERVIEW_YEAR', '게시 연도를 확인해 주세요.'],
-  ['FORBIDDEN', '저장 권한이 없습니다.'],
+  [
+    'FORBIDDEN',
+    '해당 화면은 권한이 있는 사용자만 이용할 수 있습니다.\n접근이 필요하신 경우 마스터 관리자에게 문의해 주세요.',
+  ],
 ]
 
 for (const [code, content] of errorCases) {

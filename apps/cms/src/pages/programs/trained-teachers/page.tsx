@@ -62,6 +62,7 @@ import { useTrainedTeachersProgramListFilters } from '@/features/program/trained
 
 import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import '../program-list-page.css'
+import { ensureProgramWriteAllowed } from '@/features/program/shared/lib/program-role-action-check'
 
 const TRAINED_TEACHERS_NEW_QUERY_KEY = 'new'
 const TRAINED_TEACHERS_LIST_PATH = '/programs/trained-teachers'
@@ -400,8 +401,12 @@ function TrainedTeachersProgramPageContent() {
       showAlert(NO_SELECTION_ALERT)
       return
     }
-    setProgramsPendingBulkDelete(programsToDelete)
-    setBulkDeleteModalOpen(true)
+    void (async () => {
+      // 권한 설정 V1.2: 프로그램 삭제는 담당 프로그램의 Program Owner·Program Assistant만. 확인 모달 전에 막는다.
+      if (!(await ensureProgramWriteAllowed(programsToDelete.map(program => program.id)))) return
+      setProgramsPendingBulkDelete(programsToDelete)
+      setBulkDeleteModalOpen(true)
+    })()
   }, [filteredPrograms, selectedRowKeys, showAlert])
 
   const handleBulkDeleteConfirm = useCallback(async () => {

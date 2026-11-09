@@ -17,6 +17,8 @@ import { useMyProgramPrivacyRole } from '@/features/user/detail/lib/use-my-progr
 import {
   PROGRAM_ASSIGNMENT_QUERY_ROOT,
   canListProgramManagers,
+  canManageProgramManagers,
+  canDownloadProgramFiles,
 } from '@/features/program/shared/lib/program-my-assignment'
 import {
   buildProgramManagersListQuery,
@@ -68,6 +70,10 @@ export function useProgramManagers(
   const myAssignment = useMyProgramPrivacyRole(programId)
   const managersListAllowed =
     !myAssignment.pending && canListProgramManagers(myAssignment.assignment)
+  const managersManageAllowed =
+    !myAssignment.pending && canManageProgramManagers(myAssignment.assignment)
+  const managersDownloadAllowed =
+    !myAssignment.pending && canDownloadProgramFiles(myAssignment.assignment)
 
   const managersListQuery = useMemo(() => buildProgramManagersListQuery(listFilters), [listFilters])
   const filtersKey = useMemo(
@@ -88,7 +94,7 @@ export function useProgramManagers(
   const candidatesQuery = useQuery({
     queryKey: generalProgramQueryKeys.managerCandidates(candidateKeyword),
     queryFn: () => fetchAssignableManagerCandidates(candidateKeyword),
-    enabled: remoteEnabled && managersListAllowed && candidatesSearch.enabled,
+    enabled: remoteEnabled && managersManageAllowed && candidatesSearch.enabled,
     staleTime: 30_000,
     retry: false,
   })
@@ -167,6 +173,8 @@ export function useProgramManagers(
 
   return {
     managersListAllowed,
+    managersManageAllowed,
+    managersDownloadAllowed,
     managersListPending: myAssignment.pending,
     managers,
     loading: remoteEnabled ? listQuery.isLoading || listQuery.isFetching : false,

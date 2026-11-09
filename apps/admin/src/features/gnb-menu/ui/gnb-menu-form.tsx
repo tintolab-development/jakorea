@@ -223,7 +223,17 @@ function GnbMenuGroupCard({ data, group }: { data: GnbMenuDoc; group: GnbTopMenu
         ),
       },
       {
-        title: '하위 메뉴명',
+        title: isEditing ? (
+          // 수정 모드 필수 표시 — 별표는 글자 흐름 밖(절대 배치)이라 헤더 글자 위치가 움직이지 않는다
+          <span className="gnb-menu-table__th-label">
+            하위 메뉴명
+            <span className="gnb-menu-table__required" aria-hidden>
+              *
+            </span>
+          </span>
+        ) : (
+          '하위 메뉴명'
+        ),
         key: 'name',
         className: 'gnb-menu-table__name-col',
         onCell: () => ({ className: 'gnb-menu-table__name-col' }),

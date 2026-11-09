@@ -44,7 +44,7 @@
 .talent-intro-banner-modal__preview img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain; /* 1:1 미리보기 칸 안에 잘림 없이 리사이징 */
 }
 
 .talent-intro-banner-modal__file-field {

@@ -12,7 +12,6 @@ import {
   hasImpactCategoryDraftChanges,
   IMPACT_CATEGORY_CONCURRENT_MODIFICATION_MESSAGE,
   IMPACT_CATEGORY_NAME_INVALID_CHARACTERS_MESSAGE,
-  IMPACT_CATEGORY_NAME_REQUIRED_MESSAGE,
   IMPACT_CATEGORY_SAVE_FAILURE_MESSAGE,
   validateImpactCategoryName,
 } from '@/features/impact-stories/lib/category-domain'
@@ -22,6 +21,7 @@ import {
   isImpactCategoryInUseError,
 } from '@/features/impact-stories/lib/category-errors'
 import { readApiErrorMessage } from '@/shared/lib/api-error-message'
+import { REQUIRED_FIELDS_INCOMPLETE_ALERT, useCmsAlert } from '@/shared/ui'
 
 function cloneCategories(rows: ImpactStoryCategory[]): ImpactStoryCategory[] {
   return rows.map(row => ({ ...row }))
@@ -76,6 +76,7 @@ export function useCategoryManagementModal({
   onClose,
   onSave,
 }: UseCategoryManagementModalParams): UseCategoryManagementModalResult {
+  const { showAlert } = useCmsAlert()
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editDraft, setEditDraft] = useState('')
   const [newDraft, setNewDraft] = useState('')
@@ -142,7 +143,7 @@ export function useCategoryManagementModal({
     const trimmed = editDraft.trim()
     const validation = validateImpactCategoryName(trimmed)
     if (validation === 'empty') {
-      setSaveErrorMessage(IMPACT_CATEGORY_NAME_REQUIRED_MESSAGE)
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (validation === 'invalid_characters') {
@@ -155,7 +156,7 @@ export function useCategoryManagementModal({
     }
     setDraftCategories(rows => rows.map(c => (c.id === editingId ? { ...c, name: trimmed } : c)))
     cancelEdit()
-  }, [cancelEdit, draftCategories, editDraft, editingId])
+  }, [cancelEdit, draftCategories, editDraft, editingId, showAlert])
 
   const removeCategory = useCallback(
     (id: string) => {
@@ -202,7 +203,7 @@ export function useCategoryManagementModal({
     const trimmed = newDraft.trim()
     const validation = validateImpactCategoryName(trimmed)
     if (validation === 'empty') {
-      setSaveErrorMessage(IMPACT_CATEGORY_NAME_REQUIRED_MESSAGE)
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (validation === 'invalid_characters') {
@@ -221,7 +222,7 @@ export function useCategoryManagementModal({
     setDraftCategories(rows => [...rows, row])
     setNewDraft('')
     setComposeOpen(false)
-  }, [draftCategories, newDraft])
+  }, [draftCategories, newDraft, showAlert])
 
   const openCompose = useCallback(() => {
     cancelEdit()
@@ -243,6 +244,11 @@ export function useCategoryManagementModal({
 
   const applySettings = useCallback(async () => {
     if (isSaving) return
+    // 입력 중인 행(신규 추가·수정)의 카테고리명이 비어 있으면 저장하지 않고 필수 입력 안내
+    if ((composeOpen && !newDraft.trim()) || (editingId != null && !editDraft.trim())) {
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+      return
+    }
     const normalized = draftCategories.map((row, i) => ({
       ...row,
       name: row.name.trim(),
@@ -278,7 +284,18 @@ export function useCategoryManagementModal({
     } finally {
       setIsSaving(false)
     }
-  }, [draftCategories, isSaving, onClose, onSave, resetEphemeralUi])
+  }, [
+    composeOpen,
+    draftCategories,
+    editDraft,
+    editingId,
+    isSaving,
+    newDraft,
+    onClose,
+    onSave,
+    resetEphemeralUi,
+    showAlert,
+  ])
 
   const closeSettingsComplete = useCallback(() => {
     setSettingsCompleteOpen(false)

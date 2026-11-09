@@ -216,10 +216,10 @@ describe('buildSettlementConfigUpdateRequest payment evidenceRequiredYn', () => 
     })
     expect(dj).not.toHaveProperty('withholdingTaxRateDailyWorker')
     expect(dj).not.toHaveProperty('withholdingEarnedIncomeTaxCreditRate')
-    expect(body.deductionItems?.[0]?.itemName).toBe('원천징수')
+    expect(body.deductionItems?.[0]?.itemName).toBe('일용근로자 원천징수세액')
   })
 
-  it('원천징수 PUT itemName은 화면 제목과 달라도 API 값을 그대로 보낸다', () => {
+  it('원천징수 PUT itemName은 편집한 화면 제목을 보낸다', () => {
     const config = {
       configName: 'current',
       deductionItems: [
@@ -264,7 +264,7 @@ describe('buildSettlementConfigUpdateRequest payment evidenceRequiredYn', () => 
       { title: '원천징수세액', description: item.description }
     )
 
-    expect(body.deductionItems?.[0]?.itemName).toBe('일용근로자 원천징수세액')
+    expect(body.deductionItems?.[0]?.itemName).toBe('원천징수세액')
   })
 
   it('placeholder·불릿은 PUT JSON에 넣지 않는다', () => {
@@ -501,4 +501,124 @@ describe('buildSettlementConfigUpdateRequest payment evidenceRequiredYn', () => 
     expect(dj.remarkLines).toEqual([apiRemark])
   })
 
+})
+
+describe('buildSettlementConfigUpdateRequest 항목 제목 PUT', () => {
+  const mixedConfig = {
+    configName: 'current',
+    wageItems: [
+      {
+        id: 166101,
+        wageItemType: 'TIER1',
+        name: '1급 강사비',
+        layout: 'tier1',
+        description: '임금 설명',
+        detailJson: JSON.stringify({}),
+      },
+    ],
+    paymentItems: [
+      {
+        id: 166201,
+        paymentItemType: PaymentItemResponsePaymentItemType.TRANSPORT_INSTRUCTOR,
+        itemName: '강사 교통비',
+        useYn: true,
+        description: '지급 설명',
+        detailJson: JSON.stringify({}),
+      },
+    ],
+    deductionItems: [
+      {
+        id: 166301,
+        itemName: '일용근로자 원천징수세액',
+        layout: 'withholdingDailyWorker',
+        useYn: true,
+        description: '공제 설명',
+        detailJson: JSON.stringify({}),
+      },
+    ],
+  } as SettlementConfigResponse
+
+  const wageRow: SettlementItemSettingRow = {
+    id: 'w-166101',
+    apiItemId: 166101,
+    sectionKind: 'wage',
+    wageItemType: 'TIER1',
+    title: '1급 강사비',
+    description: '임금 설명',
+    iconKey: 'wage_tier1',
+  }
+  const paymentRow: SettlementItemSettingRow = {
+    id: 'p-166201',
+    apiItemId: 166201,
+    sectionKind: 'payment',
+    paymentItemType: PaymentItemResponsePaymentItemType.TRANSPORT_INSTRUCTOR,
+    title: '강사 교통비',
+    description: '지급 설명',
+    iconKey: 'pay_transport',
+  }
+  const deductionRow: SettlementItemSettingRow = {
+    id: 'd-166301',
+    apiItemId: 166301,
+    sectionKind: 'deduction',
+    layout: 'withholdingDailyWorker',
+    title: '일용근로자 원천징수세액',
+    description: '공제 설명',
+    iconKey: 'deduct_business_33',
+  }
+
+  it('임금 항목은 GET name과 달라도 편집 제목을 PUT itemName으로 보낸다', () => {
+    const wage = mixedConfig.wageItems![0]!
+    const body = buildSettlementConfigUpdateRequest(
+      mixedConfig,
+      wageRow,
+      mapWageItemToSettingDetail(wage),
+      { title: '1급 강사료', description: '임금 설명 수정' }
+    )
+    expect(body.wageItems?.[0]?.itemName).toBe('1급 강사료')
+    expect(body.wageItems?.[0]?.description).toBe('임금 설명 수정')
+    expect(body.paymentItems?.[0]?.itemName).toBe('강사 교통비')
+    expect(body.deductionItems?.[0]?.itemName).toBe('일용근로자 원천징수세액')
+  })
+
+  it('지급 항목은 편집 제목·설명을 PUT itemName·description으로 보낸다', () => {
+    const payment = mixedConfig.paymentItems![0]!
+    const body = buildSettlementConfigUpdateRequest(
+      mixedConfig,
+      paymentRow,
+      mapPaymentItemToSettingDetail(payment),
+      { title: '강사 교통지원비', description: '지급 설명 수정' }
+    )
+    expect(body.paymentItems?.[0]?.itemName).toBe('강사 교통지원비')
+    expect(body.paymentItems?.[0]?.description).toBe('지급 설명 수정')
+    expect(body.wageItems?.[0]?.itemName).toBe('1급 강사비')
+    expect(body.deductionItems?.[0]?.itemName).toBe('일용근로자 원천징수세액')
+  })
+
+  it('공제 항목 저장 시 다른 항목 제목을 비우지 않는다', () => {
+    const body = buildSettlementConfigUpdateRequest(
+      mixedConfig,
+      deductionRow,
+      {
+        layout: 'withholdingDailyWorker',
+        basisUnit: '전체',
+        basisHours: 1,
+        compareKind: 'standard',
+        maxLimitWon: null,
+        basicFeeWon: null,
+        longDistanceFeeWon: null,
+        qualificationLines: [],
+        remarkLines: [],
+        withholdingExclusionMaxWon: 1_000,
+        withholdingTaxRateBusiness: 3.3,
+        withholdingTaxRateOther: 8.8,
+        withholdingTaxRatePrize: 4.4,
+        withholdingTaxRateInterview: 22,
+      },
+      { title: '원천징수세액', description: '공제 설명 수정' }
+    )
+    expect(body.deductionItems?.[0]?.itemName).toBe('원천징수세액')
+    expect(body.deductionItems?.[0]?.description).toBe('공제 설명 수정')
+    expect(body.wageItems?.[0]?.itemName).toBe('1급 강사비')
+    expect(body.paymentItems?.[0]?.itemName).toBe('강사 교통비')
+  })
 })

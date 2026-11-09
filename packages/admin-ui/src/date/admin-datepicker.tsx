@@ -155,6 +155,7 @@ const AdminDatePickerRender: ForwardRefRenderFunction<AdminDatePickerRef, AdminD
         }
         suffixIcon={suffixIcon ?? null}
         inputReadOnly={inputReadOnly ?? true}
+        showNow={false}
         placeholder={placeholder ?? DEFAULT_ADMIN_DATE_PLACEHOLDER}
         disabled={disabled}
         allowClear={resolveAdminPickerAllowClear(allowClear)}
@@ -351,6 +352,7 @@ const AdminDateRangePickerRender: ForwardRefRenderFunction<
           prefix={renderPrefix()}
           suffixIcon={suffixIcon ?? null}
           inputReadOnly={inputReadOnly ?? true}
+          showNow={false}
           value={start}
           onChange={handleStartChange}
           allowClear={resolvedAllowClear}
@@ -373,6 +375,7 @@ const AdminDateRangePickerRender: ForwardRefRenderFunction<
           prefix={renderPrefix()}
           suffixIcon={suffixIcon ?? null}
           inputReadOnly={inputReadOnly ?? true}
+          showNow={false}
           value={end}
           onChange={handleEndChange}
           allowClear={resolvedAllowClear}

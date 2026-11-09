@@ -12,13 +12,14 @@ import type {
 } from '@/entities/corporate-partner/model/types'
 import { formatDateTimeDot } from '@/shared/lib/format-display'
 import {
-  useCorporatePartnersList,
+  useCorporatePartnersPagedList,
   useCreateCorporatePartner,
   useRemoveCorporatePartners,
   useReorderCorporatePartners,
   useSetCorporatePartnerPublic,
   useUpdateCorporatePartner,
 } from '@/features/corporate-partner/api/hooks'
+import { LIST_PAGE_SIZE } from '@/features/corporate-partner/api/mappers'
 import { corporatePartnerQueryKeys } from '@/features/corporate-partner/api/query-keys'
 import { CORPORATE_PARTNERS_CHANGED_EVENT } from '@/features/corporate-partner/api/store'
 import { corporatePartnerMutationFailureAlert } from '@/features/corporate-partner/lib/mutation-failure-alert'
@@ -40,7 +41,6 @@ import {
   CMS_TABLE_USAGE_COL_CLASS,
   TABLE_COLUMN_WIDTHS,
 } from '@/shared/constants/table'
-import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
 import type { TableSearchParamRule } from '@/shared/lib/use-table-search'
@@ -52,8 +52,8 @@ import {
   type UrlDateRangePendingSyncRef,
   ymdFromParam,
 } from '@/shared/lib/url-date-range-pending-sync'
+import { AdminCompactPagination } from '@/shared/ui/admin-compact-pagination'
 import {
-  AdminInfiniteTableFooter,
   CmsButton,
   CmsDateRangePicker,
   AdminFilterTextInput,
@@ -193,14 +193,30 @@ export function CorporatePartnersPage() {
 
   const listFilter = appliedFilter
 
-  const listQuery = useCorporatePartnersList(listFilter)
+  /**
+   * 페이지 번호는 적용된 필터별로 둔다 — 필터가 바뀌면 자동으로 1페이지.
+   * (시안 36:47073: 한 화면 50건 + 하단 페이지 이동)
+   */
+  const filterSig = useMemo(() => JSON.stringify(listFilter), [listFilter])
+  const [pageState, setPageState] = useState<{ key: string; page: number }>({
+    key: filterSig,
+    page: 0,
+  })
+  const listPage = pageState.key === filterSig ? pageState.page : 0
+  const setListPage = useCallback(
+    (page: number) => setPageState({ key: filterSig, page: Math.max(0, page) }),
+    [filterSig]
+  )
+
+  const listQuery = useCorporatePartnersPagedList(listFilter, listPage)
   /**
    * 등록 모달용 전체 건수.
-   * 필터 없는 목록이면 listQuery.totalCount로 충분하고,
+   * 필터 없는 목록이면 listQuery의 totalCount로 충분하고,
    * 필터 중 등록 시에만 별도 전체 목록 GET (필터 GET과 혼동 방지).
    */
-  const unfilteredCountQuery = useCorporatePartnersList(
+  const unfilteredCountQuery = useCorporatePartnersPagedList(
     undefined,
+    0,
     formOpen && formMode === 'create' && hasActiveFilter
   )
   const createMutation = useCreateCorporatePartner()
@@ -210,24 +226,20 @@ export function CorporatePartnersPage() {
   const setPublicMutation = useSetCorporatePartnerPublic(listFilter)
 
   const rows = useMemo(() => {
-    return [...listQuery.rows].sort((a, b) => a.sortOrder - b.sortOrder)
-  }, [listQuery.rows])
-  const totalCount = listQuery.totalCount
-  const allCount = hasActiveFilter ? unfilteredCountQuery.totalCount : totalCount
-
-  const { sentinelRef } = useGatedInfiniteScroll({
-    hasNextPage: listQuery.hasNextPage,
-    isFetchingNextPage: listQuery.isFetchingNextPage,
-    fetchNextPage: listQuery.fetchNextPage,
-    resetKey: JSON.stringify(appliedFilter),
-  })
+    return [...(listQuery.data?.items ?? [])].sort((a, b) => a.sortOrder - b.sortOrder)
+  }, [listQuery.data])
+  const totalCount = listQuery.data?.totalCount ?? 0
+  const totalPages =
+    listQuery.data?.totalPages ?? Math.max(1, Math.ceil(totalCount / LIST_PAGE_SIZE))
+  const allCount = hasActiveFilter ? (unfilteredCountQuery.data?.totalCount ?? 0) : totalCount
 
   useInvalidateOnWindowEvent(CORPORATE_PARTNERS_CHANGED_EVENT, corporatePartnerQueryKeys.lists())
 
   const handleSearch = useCallback(() => {
     applySearch()
     setSelectedRowKeys([])
-  }, [applySearch])
+    setListPage(0)
+  }, [applySearch, setListPage])
 
   const handleRowsReorder = useCallback(
     (reorderedRows: CorporatePartner[]) => {
@@ -308,6 +320,8 @@ export function CorporatePartnersPage() {
       await removeMutation.mutateAsync(ids)
       setSelectedRowKeys([])
       setDeleteConfirmOpen(false)
+      // 현재 페이지 행을 전부 지웠으면 앞 페이지로
+      if (listPage > 0 && ids.length >= rows.length) setListPage(listPage - 1)
       showDeleteCompletedAlert()
     } catch (error) {
       const alert = corporatePartnerMutationFailureAlert(
@@ -316,7 +330,7 @@ export function CorporatePartnersPage() {
       )
       showAlert(alert)
     }
-  }, [removeMutation, selectedRowKeys, showAlert])
+  }, [listPage, removeMutation, rows.length, selectedRowKeys, setListPage, showAlert])
 
   const columns = useMemo<ColumnsType<CorporatePartner>>(
     () => [
@@ -334,7 +348,7 @@ export function CorporatePartnersPage() {
         width: TABLE_COLUMN_WIDTHS.index,
         className: CMS_TABLE_NO_COL_CLASS,
         align: 'center',
-        render: (_value, _record, index) => index + 1,
+        render: (_value, _record, index) => listPage * LIST_PAGE_SIZE + index + 1,
       },
       {
         title: '공개 여부',
@@ -399,7 +413,7 @@ export function CorporatePartnersPage() {
         ),
       },
     ],
-    [handleTogglePublic, openEdit, setPublicMutation.isPending]
+    [handleTogglePublic, listPage, openEdit, setPublicMutation.isPending]
   )
 
   const formLoading = formMode === 'edit' ? updateMutation.isPending : createMutation.isPending
@@ -410,51 +424,53 @@ export function CorporatePartnersPage() {
         hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area corporate-partners-page__filter-row">
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <span className="admin-filter-area__label">공개 여부</span>
-              <CmsSelect
-                inputSize="medium"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                withAllOption
-                value={pendingFilters.isPublic}
-                onChange={value =>
-                  setPendingFilters(prev => ({
-                    ...prev,
-                    isPublic: (value as PublicFilterValue) ?? '',
-                  }))
-                }
-                options={[
-                  { label: '공개', value: 'true' },
-                  { label: '비공개', value: 'false' },
-                ]}
-                placeholder="전체"
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <span className="admin-filter-area__label">기업명</span>
-              <AdminFilterTextInput
-                inputSize="medium"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="기업명을 입력해 주세요"
-                value={pendingFilters.name}
-                onChange={value => patchPendingFilters(prev => ({ ...prev, name: value }))}
-                onPressEnter={handleSearch}
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--date-range">
-              <span className="admin-filter-area__label">등록일</span>
-              <CmsDateRangePicker
-                inputSize="medium"
-                width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
-                value={periodAsPickerValue(pendingFilters.registeredRange)}
-                onChange={dates =>
-                  setPendingFilters(prev => ({
-                    ...prev,
-                    registeredRange: dates ?? null,
-                  }))
-                }
-                placeholder={['시작일', '종료일']}
-              />
+            <div className="admin-filter-area__fields">
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <span className="admin-filter-area__label">공개 여부</span>
+                <CmsSelect
+                  inputSize="medium"
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  withAllOption
+                  value={pendingFilters.isPublic}
+                  onChange={value =>
+                    setPendingFilters(prev => ({
+                      ...prev,
+                      isPublic: (value as PublicFilterValue) ?? '',
+                    }))
+                  }
+                  options={[
+                    { label: '공개', value: 'true' },
+                    { label: '비공개', value: 'false' },
+                  ]}
+                  placeholder="전체"
+                />
+              </div>
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <span className="admin-filter-area__label">기업명</span>
+                <AdminFilterTextInput
+                  inputSize="medium"
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  placeholder="기업명을 입력해 주세요"
+                  value={pendingFilters.name}
+                  onChange={value => patchPendingFilters(prev => ({ ...prev, name: value }))}
+                  onPressEnter={handleSearch}
+                />
+              </div>
+              <div className="admin-filter-area__field admin-filter-area__field--date-range">
+                <span className="admin-filter-area__label">등록일</span>
+                <CmsDateRangePicker
+                  inputSize="medium"
+                  width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
+                  value={periodAsPickerValue(pendingFilters.registeredRange)}
+                  onChange={dates =>
+                    setPendingFilters(prev => ({
+                      ...prev,
+                      registeredRange: dates ?? null,
+                    }))
+                  }
+                  placeholder={['시작일', '종료일']}
+                />
+              </div>
             </div>
             <div className="admin-filter-area__actions">
               <CmsButton className="admin-filter-area__search-button"
@@ -496,9 +512,14 @@ export function CorporatePartnersPage() {
             onChange: keys => setSelectedRowKeys(keys),
           }}
         />
-        <AdminInfiniteTableFooter
-          sentinelRef={sentinelRef}
-          isFetchingNextPage={listQuery.isFetchingNextPage}
+        {/* 시안 36:47073 하단 페이지 이동 — 한 화면 50건, 1페이지뿐이어도 항상 노출 */}
+        <AdminCompactPagination
+          currentPage={listPage + 1}
+          totalPages={totalPages}
+          onPageChange={page => {
+            setListPage(page - 1)
+            setSelectedRowKeys([])
+          }}
         />
       </FilterTableLayout>
 

@@ -25,4 +25,100 @@
 .layout-content-outlet {
   width: 100%;
   min-width: 0;
+  /* 본문 영역은 최소 화면 높이(헤더·패딩 제외)를 채운다 — 섹션 1개 화면의 카드 fill 기준 */
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+/*
+ * 섹션(흰 카드)이 1개인 화면 — 항목 수와 별개로 카드·표 영역이 화면 높이를 채운다.
+ * 항목이 많으면 카드가 그대로 늘어나고 화면(.layout-content) 전체가 스크롤된다(내부 스크롤 없음).
+ * 대상: 화면 루트의 직계 자식 카드(목록 FilterTableLayout · 단독 admin-list-card)가 정확히 1개.
+ * DOM은 본문 > 권한 감싸기 요소(.homepage-action-guard, display:contents) > 화면 루트 — 배치상 화면 루트가 본문의 flex 자식이다.
+ */
+.layout-content-outlet
+  > .homepage-action-guard
+  > :has(> :is(.filter-table-layout, .admin-list-card)):not(
+    :has(> :is(.filter-table-layout, .admin-list-card) ~ :is(.filter-table-layout, .admin-list-card))
+  ) {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.layout-content-outlet
+  > .homepage-action-guard
+  > :has(> :is(.filter-table-layout, .admin-list-card)):not(
+    :has(> :is(.filter-table-layout, .admin-list-card) ~ :is(.filter-table-layout, .admin-list-card))
+  )
+  > :is(.filter-table-layout, .admin-list-card) {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/*
+ * 카드 안 표 영역 fill — 카드에서 표(.cms-data-table)까지의 감싸는 요소를 세로 flex로 늘리고,
+ * 표 테두리 박스(.ant-table-container)가 남은 높이를 채운다. 표(table) 자체는 위쪽에 붙어 있다.
+ */
+.layout-content-outlet
+  > .homepage-action-guard
+  > :has(> :is(.filter-table-layout, .admin-list-card)):not(
+    :has(> :is(.filter-table-layout, .admin-list-card) ~ :is(.filter-table-layout, .admin-list-card))
+  )
+  > :is(.filter-table-layout, .admin-list-card)
+  :is(div):has(> .ant-table-wrapper.cms-data-table, > * .ant-table-wrapper.cms-data-table):not(.ant-table-wrapper *) {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.layout-content-outlet
+  > .homepage-action-guard
+  > :has(> :is(.filter-table-layout, .admin-list-card)):not(
+    :has(> :is(.filter-table-layout, .admin-list-card) ~ :is(.filter-table-layout, .admin-list-card))
+  )
+  > :is(.filter-table-layout, .admin-list-card)
+  :is(
+    .ant-table-wrapper.cms-data-table,
+    .ant-table-wrapper.cms-data-table > .ant-spin-nested-loading,
+    .ant-table-wrapper.cms-data-table > .ant-spin-nested-loading > .ant-spin-container,
+    .ant-table-wrapper.cms-data-table .ant-spin-container > .ant-table,
+    .ant-table-wrapper.cms-data-table .ant-table > .ant-table-container
+  ) {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/*
+ * fill 표의 마지막 행 아래 선 — 공통 표는 마지막 행 선을 없애고 외곽 테두리로 대신하는데,
+ * fill 시 행 아래에 빈 공간이 생기므로 마지막 행 선을 다시 그린다.
+ * 행이 표 영역을 꽉 채울 때 외곽 테두리와 겹쳐 2px가 되지 않도록 표 내용을 1px 아래로 겹친다
+ * (.ant-table-container 는 overflow:clip — 겹친 1px는 외곽 테두리 밑으로 잘려 보이지 않는다).
+ */
+.layout-content-outlet
+  > .homepage-action-guard
+  > :has(> :is(.filter-table-layout, .admin-list-card)):not(
+    :has(> :is(.filter-table-layout, .admin-list-card) ~ :is(.filter-table-layout, .admin-list-card))
+  )
+  > :is(.filter-table-layout, .admin-list-card)
+  .ant-table-wrapper.cms-data-table
+  .ant-table-tbody
+  > tr:last-child
+  > td {
+  border-bottom: 1px solid var(--table-line, #e0e0e0) !important;
+}
+
+.layout-content-outlet
+  > .homepage-action-guard
+  > :has(> :is(.filter-table-layout, .admin-list-card)):not(
+    :has(> :is(.filter-table-layout, .admin-list-card) ~ :is(.filter-table-layout, .admin-list-card))
+  )
+  > :is(.filter-table-layout, .admin-list-card)
+  .ant-table-wrapper.cms-data-table
+  .ant-table-container
+  > :is(.ant-table-content, .ant-table-body) {
+  margin-bottom: -1px;
 }

@@ -401,8 +401,9 @@ export function hydrateOrganizationApplicationRowFromForm(input: {
   const teacherEmailFromForm = hasCanonicalDetailSnapshot
     ? undefined
     : pickAnswer(map, 'teacherEmail')
-  const sexOffenseCheckRequest =
-    row.detail?.sexOffenseCheckRequest?.trim() || parseSexOffenseCheckRequest(map)
+  const sexOffenseCheckRequest = hasCanonicalDetailSnapshot
+    ? row.detail?.sexOffenseCheckRequest?.trim()
+    : row.detail?.sexOffenseCheckRequest?.trim() || parseSexOffenseCheckRequest(map)
   const desiredEducationDate = canonicalDetail
     ? undefined
     : pickAnswer(map, 'desiredEducationDate', 'requestedScheduleMemo')
@@ -479,6 +480,12 @@ export function hydrateOrganizationApplicationRowFromForm(input: {
   ])
   clearDetailFieldsWhenCanonicalValueIsEmpty(detail, canonicalDetail, 'textbookName', [
     'textbookName',
+  ])
+  clearDetailFieldsWhenCanonicalValueIsEmpty(detail, canonicalDetail, 'textbookDisplayLabel', [
+    'textbookDisplayLabel',
+  ])
+  clearDetailFieldsWhenCanonicalValueIsEmpty(detail, canonicalDetail, 'sexOffenseCheckRequest', [
+    'sexOffenseCheckRequest',
   ])
   clearDetailFieldsWhenCanonicalValueIsEmpty(detail, canonicalDetail, 'teacherPhone', [
     'teacherPhone',

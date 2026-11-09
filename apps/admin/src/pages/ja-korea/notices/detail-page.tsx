@@ -7,7 +7,7 @@
 
 import { useCallback, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
-import { EyeOutlined, PaperClipOutlined } from '@ant-design/icons'
+import { EyeOutlined } from '@ant-design/icons'
 import { AdminDetailBackLink, AdminDetailMoreMenu } from '@jakorea/admin-ui/post-detail'
 import type { Notice } from '@/entities/notices/model/types'
 import {
@@ -23,12 +23,12 @@ import {
   type NoticeFormValues,
 } from '@/features/notices/ui/notice-form-modal'
 import { NoticePinnedIcon } from '@/features/notices/ui/notice-pin-icon'
+import { getJAKoreaHomepageAdminAPIAssetsSubset } from '@/shared/api/generated/assets/assets-api'
 import { downloadFile } from '@/shared/lib/file-download'
 import { formatDateTimeDot } from '@/shared/lib/format-display'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { RichTextViewer } from '@/shared/rich-text'
 import {
-  AttachmentDownloadIcon,
   CmsButton,
   ConfirmModal,
   PageContentLoading,
@@ -36,6 +36,9 @@ import {
   showUpdateCompletedAlert,
   useCmsAlert,
 } from '@/shared/ui'
+
+import attachFileMintUrl from '@/shared/ui/icons/attach-file-mint.svg'
+import fileDownloadBlackUrl from '@/shared/ui/icons/file-download-black.svg'
 
 import './detail-page.css'
 
@@ -196,9 +199,26 @@ function NoticeDetailView({
   onDeleteConfirm,
   deleteLoading,
 }: DetailViewProps) {
-  const handleAttachmentClick = useCallback((name: string, url?: string) => {
-    downloadFile(name, url)
-  }, [])
+  const { showAlert } = useCmsAlert()
+  // 임팩트 스토리 상세와 동일: assetId가 있으면 다운로드 API로 받은 주소로 내려받는다
+  const handleAttachmentClick = useCallback(
+    async (item: Notice['attachments'][number]) => {
+      try {
+        let url = item.dataUrl
+        if (item.assetId != null && item.assetId > 0) {
+          const res = await getJAKoreaHomepageAdminAPIAssetsSubset().download1(item.assetId)
+          if (res.downloadUrl) url = res.downloadUrl
+        }
+        await downloadFile(item.name, url)
+      } catch {
+        showAlert({
+          title: '다운로드 실패',
+          content: '첨부파일 다운로드에 실패했습니다. 다시 시도해 주세요.',
+        })
+      }
+    },
+    [showAlert]
+  )
 
   const hasAttachments = notice.attachments.length > 0
 
@@ -279,8 +299,15 @@ function NoticeDetailView({
           {hasAttachments ? (
             <div className="notice-detail-page__attachments">
               <div className="notice-detail-page__attachments-head">
-                <PaperClipOutlined className="notice-detail-page__clip" aria-hidden />
-                <span>첨부파일</span>
+                <img
+                  className="notice-detail-page__clip"
+                  src={attachFileMintUrl}
+                  alt=""
+                  width={13}
+                  height={16}
+                  aria-hidden
+                />
+                <span>첨부 파일</span>
               </div>
               <ul className="notice-detail-page__attachments-list">
                 {notice.attachments.map(item => (
@@ -288,10 +315,19 @@ function NoticeDetailView({
                     <button
                       type="button"
                       className="notice-detail-page__file"
-                      onClick={() => handleAttachmentClick(item.name, item.dataUrl)}
+                      onClick={() => {
+                        void handleAttachmentClick(item)
+                      }}
                     >
+                      <img
+                        className="notice-detail-page__file-icon"
+                        src={fileDownloadBlackUrl}
+                        alt=""
+                        width={24}
+                        height={24}
+                        aria-hidden
+                      />
                       <span className="notice-detail-page__file-name">{item.name}</span>
-                      <AttachmentDownloadIcon className="notice-detail-page__file-icon" />
                     </button>
                   </li>
                 ))}

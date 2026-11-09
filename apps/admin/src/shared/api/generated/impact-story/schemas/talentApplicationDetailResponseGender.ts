@@ -6,7 +6,10 @@
  * OpenAPI spec version: v1
  */
 
-export type TalentApplicationDetailResponseGender = typeof TalentApplicationDetailResponseGender[keyof typeof TalentApplicationDetailResponseGender];
+/**
+ * Stored gender (original). null when piiMasked=true; use maskedGender.
+ */
+export type TalentApplicationDetailResponseGender = typeof TalentApplicationDetailResponseGender[keyof typeof TalentApplicationDetailResponseGender] | null;
 
 
 export const TalentApplicationDetailResponseGender = {

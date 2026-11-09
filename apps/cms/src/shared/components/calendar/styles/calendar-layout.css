@@ -133,10 +133,13 @@
 
 /*
  * 3열 카드 shell 상단 정렬 — mini · main · list padding-top 20px 통일.
+ * 하단은 `--calendar-card-padding-bottom`(17) — 5주 월 메인 카드 = 좌(미니 332 + 20 + 검색 391)·우(743)와 같은 743
+ * (Figma 계좌 지급 확인 캘린더뷰 12432:443481, calendar-tokens.css 주석 참고).
  */
 .calendar-set:has(.calendar-sub-left) > .calendar-main-container > .calendar-main,
 .calendar-set:has(.calendar-sub-left) > .calendar-main {
   padding-top: var(--calendar-mini-padding, 20px);
+  padding-bottom: var(--calendar-card-padding-bottom, 17px);
 }
 
 /*

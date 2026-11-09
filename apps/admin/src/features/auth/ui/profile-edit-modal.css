@@ -26,7 +26,7 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 30px;
+  gap: 32px;
   margin-top: 20px;
   width: 100%;
 }
@@ -58,16 +58,19 @@
   margin: 0 16px;
 }
 
-/* 본인인증 재인증 · 동의 철회하기 — Button / h32 · 폭 100 */
-.profile-edit-modal__field-action-btn.cms-button.ant-btn {
-  width: 100px;
-  min-width: 100px;
-}
-
-.profile-edit-modal__action-with-datetime {
+/* 버튼 뒤 부가 정보(마케팅 동의 일시) — 구분선 없이 16px 간격 */
+.profile-edit-modal__field-with-action {
   display: inline-flex;
   align-items: center;
   gap: 16px;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+/* 본인인증 재인증 · 동의하기 · 동의 철회 — Button / h32 · 폭 100 */
+.profile-edit-modal__field-action-btn.cms-button.ant-btn {
+  width: 100px;
+  min-width: 100px;
 }
 
 .profile-edit-modal__consent-datetime {
@@ -91,7 +94,7 @@
 
 .profile-edit-modal__basic-info-table {
   border: 1px solid var(--table-line, #e0e0e0);
-  border-radius: 6px;
+  border-radius: 8px;
   overflow: hidden;
   background: #fff;
 }
@@ -135,7 +138,7 @@
 
 .profile-edit-modal__terms-table {
   border: 1px solid var(--table-line, #e0e0e0);
-  border-radius: 6px;
+  border-radius: 8px;
   overflow: hidden;
   background: #fff;
   width: 100%;

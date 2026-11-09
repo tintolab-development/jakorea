@@ -18,14 +18,20 @@
 }
 
 /*
- * 신청 확인으로 행 데이터가 갱신되어도 테이블 열이 다시 분배되지 않도록
- * No./처리 상태/연락처/일시 열은 고정하고 기업명만 잔여 폭을 사용한다.
- * 공통 cms-data-table의 `No. 이후 열 auto` 규칙보다 이 화면의 계약을 우선한다.
+ * 열 폭 — 시안 36:50664 (표 1538): 선택 60 · No. 80 · 처리 상태 140 은 px 고정,
+ * 기업명·담당자명·부서/직함명·담당자 연락처·신청일시·확인일시 6열은 남는 폭을 균등 분할(각 210).
+ * 6열은 폭 미지정(유연) 열이라 colgroup 에 폭이 없고, 고정 레이아웃에서 아래 th/td 폭이 열 폭이 된다.
+ * 좁은 화면(최소 폭 1120 · 가로 스크롤)에서는 공용 표가 6열에 같은 폭을 배분해 비율이 유지된다.
  */
 .corp-consultations-page__table.cms-data-table {
   --table-selection-column-width: 60px;
   --table-no-column-width: 80px;
   overflow-x: auto;
+}
+
+.corp-consultations-page__table .ant-table-thead > tr > th.corp-consultations-page__col--fluid,
+.corp-consultations-page__table .ant-table-tbody > tr > td.corp-consultations-page__col--fluid {
+  width: calc((100% - 280px) / 6) !important;
 }
 
 .corp-consultations-page__status--pending {

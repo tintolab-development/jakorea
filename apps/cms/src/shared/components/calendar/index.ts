@@ -110,6 +110,7 @@ export {
   settlementRowFromCalendarItem,
   settlementEventStatusColorPair,
   renderSettlementEventsTooltipContent,
+  SettlementPreviewTooltipSep,
 } from './ui/preview-tooltip/settlement'
 export {
   ProgramPreviewTooltipBody,

@@ -15,6 +15,7 @@ import {
   useFileDownloadLogsList,
 } from '@/features/file-download-log/api/hooks'
 import { displayLogField } from '@/features/logs/shared/lib/display-log-field'
+import { logExcelExportFailureAlert } from '@/features/logs/shared/lib/log-excel-export-alert'
 import { formatLogDateTime } from '@/features/logs/shared/lib/format-datetime'
 import { LogListAccessDenied } from '@/features/logs/shared/ui/log-list-access-denied'
 import { isAdminForbidden } from '@/features/system-inbox/lib/http-status'
@@ -101,15 +102,16 @@ function rangeAsPicker(period: PendingDateRange): [Dayjs | null, Dayjs | null] {
   return [period[0] ?? null, period[1] ?? null]
 }
 
+/** Figma 237:16282 — No. 80 · 파일명 618 · 사용자/일시/IP 각 280 */
 const COL = {
   no: TABLE_COLUMN_WIDTHS.index,
-  fileName: 240,
-  downloadKind: 140,
-  containedPii: 240,
-  userName: 140,
-  downloadedAt: 180,
-  ip: 140,
+  fileName: 618,
+  userName: 280,
+  downloadedAt: 280,
+  ip: 280,
 } as const
+
+const TABLE_SCROLL_X = COL.no + COL.fileName + COL.userName + COL.downloadedAt + COL.ip
 
 export function FileDownloadLogPage() {
   const { showAlert } = useCmsAlert()
@@ -170,11 +172,9 @@ export function FileDownloadLogPage() {
   const forbidden = isAdminForbidden(listQuery.error)
 
   const handleExcel = useCallback(() => {
-    void exportMutation.mutateAsync(appliedFilter).catch(() => {
-      showAlert({
-        title: '내보내기 실패',
-        content: '엑셀 내보내기에 실패했습니다. 다시 시도해 주세요.',
-      })
+    if (exportMutation.isPending) return
+    void exportMutation.mutateAsync(appliedFilter).catch((error: unknown) => {
+      showAlert(logExcelExportFailureAlert(error))
     })
   }, [appliedFilter, exportMutation, showAlert])
 
@@ -196,23 +196,7 @@ export function FileDownloadLogPage() {
         render: (v: string) => displayLogField(v),
       },
       {
-        title: '종류',
-        dataIndex: 'downloadKind',
-        key: 'downloadKind',
-        width: COL.downloadKind,
-        ellipsis: true,
-        render: (v: string) => displayLogField(v),
-      },
-      {
-        title: '포함 개인정보',
-        dataIndex: 'containedPiiLabel',
-        key: 'containedPiiLabel',
-        width: COL.containedPii,
-        ellipsis: true,
-        render: (v: string) => displayLogField(v),
-      },
-      {
-        title: '사용자명',
+        title: '사용자',
         dataIndex: 'userName',
         key: 'userName',
         width: COL.userName,
@@ -247,42 +231,44 @@ export function FileDownloadLogPage() {
         hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area">
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <span className="admin-filter-area__label">파일명</span>
-              <AdminFilterTextInput
-                inputSize="medium"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="파일명을 입력해 주세요"
-                value={pendingFilters.fileName}
-                onChange={value => patchPendingFilters(prev => ({ ...prev, fileName: value }))}
-                onPressEnter={applySearch}
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <span className="admin-filter-area__label">사용자명</span>
-              <AdminFilterTextInput
-                inputSize="medium"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="사용자명을 입력해 주세요"
-                value={pendingFilters.userName}
-                onChange={value => patchPendingFilters(prev => ({ ...prev, userName: value }))}
-                onPressEnter={applySearch}
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--date-range">
-              <span className="admin-filter-area__label">다운로드 기간</span>
-              <CmsDateRangePicker
-                inputSize="medium"
-                width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
-                value={rangeAsPicker(pendingFilters.range)}
-                onChange={dates =>
-                  setPendingFilters(prev => ({
-                    ...prev,
-                    range: dates ?? null,
-                  }))
-                }
-                placeholder={['시작일', '종료일']}
-              />
+            <div className="admin-filter-area__fields">
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <span className="admin-filter-area__label">다운로드 파일명</span>
+                <AdminFilterTextInput
+                  inputSize="medium"
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  placeholder="파일명을 입력해 주세요"
+                  value={pendingFilters.fileName}
+                  onChange={value => patchPendingFilters(prev => ({ ...prev, fileName: value }))}
+                  onPressEnter={applySearch}
+                />
+              </div>
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <span className="admin-filter-area__label">사용자</span>
+                <AdminFilterTextInput
+                  inputSize="medium"
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  placeholder="사용자명을 입력해 주세요"
+                  value={pendingFilters.userName}
+                  onChange={value => patchPendingFilters(prev => ({ ...prev, userName: value }))}
+                  onPressEnter={applySearch}
+                />
+              </div>
+              <div className="admin-filter-area__field admin-filter-area__field--date-range">
+                <span className="admin-filter-area__label">다운로드일</span>
+                <CmsDateRangePicker
+                  inputSize="medium"
+                  width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
+                  value={rangeAsPicker(pendingFilters.range)}
+                  onChange={dates =>
+                    setPendingFilters(prev => ({
+                      ...prev,
+                      range: dates ?? null,
+                    }))
+                  }
+                  placeholder={['시작일', '종료일']}
+                />
+              </div>
             </div>
             <div className="admin-filter-area__actions">
               <CmsButton
@@ -299,7 +285,14 @@ export function FileDownloadLogPage() {
         }
         title="파일 다운로드 이력"
         description={`총 ${total.toLocaleString('ko-KR')}건`}
-        actions={<ExcelButton onClick={handleExcel} empty={total === 0} />}
+        actions={
+          <ExcelButton
+            onClick={handleExcel}
+            empty={total === 0}
+            loading={exportMutation.isPending}
+            disabled={exportMutation.isPending}
+          />
+        }
       >
         <CmsDataTable<FileDownloadLog>
           className="cms-data-table"
@@ -308,9 +301,7 @@ export function FileDownloadLogPage() {
           dataSource={rows}
           loading={listQuery.isLoading}
           pagination={false}
-          scroll={{
-            x: COL.no + COL.fileName + COL.userName + COL.downloadedAt + COL.ip,
-          }}
+          scroll={{ x: TABLE_SCROLL_X }}
         />
         <AdminInfiniteTableFooter
           sentinelRef={sentinelRef}

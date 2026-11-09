@@ -8,7 +8,6 @@
 
 /**
  * 대중교통 수단 코드. bus | subway | train | flight | other. 없으면 null.
- * @nullable
  */
 export type IndividualSettlementReviewReceiptTransitCode = typeof IndividualSettlementReviewReceiptTransitCode[keyof typeof IndividualSettlementReviewReceiptTransitCode] | null;
 

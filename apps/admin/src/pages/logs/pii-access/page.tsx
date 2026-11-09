@@ -9,6 +9,7 @@ import type { ColumnsType } from 'antd/es/table'
 import type { PiiAccessListFilter, PiiAccessLog } from '@/entities/pii-access-log/model/types'
 import { useExportPiiAccessLogs, usePiiAccessLogsList } from '@/features/pii-access-log/api/hooks'
 import { displayLogField } from '@/features/logs/shared/lib/display-log-field'
+import { logExcelExportFailureAlert } from '@/features/logs/shared/lib/log-excel-export-alert'
 import { formatLogDateTime } from '@/features/logs/shared/lib/format-datetime'
 import { LogListAccessDenied } from '@/features/logs/shared/ui/log-list-access-denied'
 import { isAdminForbidden } from '@/features/system-inbox/lib/http-status'
@@ -176,11 +177,9 @@ export function PiiAccessLogPage() {
   const forbidden = isAdminForbidden(listQuery.error)
 
   const handleExcel = useCallback(() => {
-    void exportMutation.mutateAsync(appliedFilter).catch(() => {
-      showAlert({
-        title: '내보내기 실패',
-        content: '엑셀 내보내기에 실패했습니다. 다시 시도해 주세요.',
-      })
+    if (exportMutation.isPending) return
+    void exportMutation.mutateAsync(appliedFilter).catch((error: unknown) => {
+      showAlert(logExcelExportFailureAlert(error))
     })
   }, [appliedFilter, exportMutation, showAlert])
 
@@ -245,42 +244,44 @@ export function PiiAccessLogPage() {
         hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area">
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <span className="admin-filter-area__label">조회 목적</span>
-              <AdminFilterTextInput
-                inputSize="medium"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="조회 목적을 입력해 주세요"
-                value={pendingFilters.purpose}
-                onChange={value => patchPendingFilters(prev => ({ ...prev, purpose: value }))}
-                onPressEnter={applySearch}
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <span className="admin-filter-area__label">조회자명</span>
-              <AdminFilterTextInput
-                inputSize="medium"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="조회자명을 입력해 주세요"
-                value={pendingFilters.accessorName}
-                onChange={value => patchPendingFilters(prev => ({ ...prev, accessorName: value }))}
-                onPressEnter={applySearch}
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--date-range">
-              <span className="admin-filter-area__label">조회일</span>
-              <CmsDateRangePicker
-                inputSize="medium"
-                width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
-                value={rangeAsPicker(pendingFilters.range)}
-                onChange={dates =>
-                  setPendingFilters(prev => ({
-                    ...prev,
-                    range: dates ?? null,
-                  }))
-                }
-                placeholder={['시작일', '종료일']}
-              />
+            <div className="admin-filter-area__fields">
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <span className="admin-filter-area__label">조회 목적</span>
+                <AdminFilterTextInput
+                  inputSize="medium"
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  placeholder="조회 목적을 입력해 주세요"
+                  value={pendingFilters.purpose}
+                  onChange={value => patchPendingFilters(prev => ({ ...prev, purpose: value }))}
+                  onPressEnter={applySearch}
+                />
+              </div>
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <span className="admin-filter-area__label">조회자명</span>
+                <AdminFilterTextInput
+                  inputSize="medium"
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  placeholder="조회자명을 입력해 주세요"
+                  value={pendingFilters.accessorName}
+                  onChange={value => patchPendingFilters(prev => ({ ...prev, accessorName: value }))}
+                  onPressEnter={applySearch}
+                />
+              </div>
+              <div className="admin-filter-area__field admin-filter-area__field--date-range">
+                <span className="admin-filter-area__label">조회일</span>
+                <CmsDateRangePicker
+                  inputSize="medium"
+                  width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
+                  value={rangeAsPicker(pendingFilters.range)}
+                  onChange={dates =>
+                    setPendingFilters(prev => ({
+                      ...prev,
+                      range: dates ?? null,
+                    }))
+                  }
+                  placeholder={['시작일', '종료일']}
+                />
+              </div>
             </div>
             <div className="admin-filter-area__actions">
               <CmsButton
@@ -297,7 +298,14 @@ export function PiiAccessLogPage() {
         }
         title="개인정보 조회 이력"
         description={`총 ${total.toLocaleString('ko-KR')}건`}
-        actions={<ExcelButton onClick={handleExcel} empty={total === 0} />}
+        actions={
+          <ExcelButton
+            onClick={handleExcel}
+            empty={total === 0}
+            loading={exportMutation.isPending}
+            disabled={exportMutation.isPending}
+          />
+        }
       >
         <CmsDataTable<PiiAccessLog>
           className="cms-data-table"

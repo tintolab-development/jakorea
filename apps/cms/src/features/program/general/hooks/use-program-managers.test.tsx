@@ -30,7 +30,12 @@ vi.mock('@/features/user/detail/lib/use-my-program-privacy-role', () => ({
 vi.mock('@/features/program/shared/lib/program-my-assignment', async importOriginal => {
   const actual =
     await importOriginal<typeof import('@/features/program/shared/lib/program-my-assignment')>()
-  return { ...actual, canListProgramManagers: () => true }
+  return {
+    ...actual,
+    canListProgramManagers: () => true,
+    canManageProgramManagers: () => true,
+    canDownloadProgramFiles: () => true,
+  }
 })
 
 vi.mock('@/features/program/1c-1s/lib/use-company-school-surface-remote', () => ({

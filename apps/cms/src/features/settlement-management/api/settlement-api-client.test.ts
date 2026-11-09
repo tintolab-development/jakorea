@@ -89,7 +89,7 @@ describe('requestTaxReportExportRemote', () => {
     }
     mocks.customInstance.mockResolvedValueOnce({ success: true, data: payload })
 
-    await expect(requestTaxReportPreviewRemote([10001, 10002])).resolves.toMatchObject({
+    await expect(requestTaxReportPreviewRemote({ settlementIds: [10001, 10002], accountPaymentIds: [186008] })).resolves.toMatchObject({
       workbookType: 'TAX_REPORT_FORTUNE_V1',
       rows,
     })
@@ -97,7 +97,7 @@ describe('requestTaxReportExportRemote', () => {
       url: '/api/admin/settlements/exports/tax-report/preview',
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      data: { settlementIds: [10001, 10002] },
+      data: { settlementIds: [10001, 10002], accountPaymentIds: [186008] },
     })
   })
 })

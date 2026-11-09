@@ -18,13 +18,14 @@ import { useRecruitPostingWysiwygEditor } from '@/features/recruit-posting/hooks
 import { resolveCurrentAdminAuthorName } from '@/features/recruit-posting/lib/resolve-current-admin-author-name'
 import {
   CAREER_POSTING_BUTTON_LABEL_MAX_LENGTH,
+  CAREER_POSTING_LINK_URL_FORMAT_ALERT,
+  careerPostingLinkUrlFormatAlert,
   validateCareerPostingLinkFields,
 } from '@/features/recruit-posting/lib/link-fields'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
-import { HTTP_LINK_URL_FORMAT_ALERT } from '@/shared/lib/http-link-url'
 import { getRemoteRichTextBodyError, isEmptyAdminHtml, RichTextEditor } from '@/shared/rich-text'
 import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT,
@@ -176,6 +177,12 @@ export function RecruitPostingFormModal({
     if (open) resetFromInitial()
   }, [open, resetFromInitial])
 
+  // 모집완료 행: 라디오가 발표(default)면 CLOSED 유지. 모집으로 바꾸면 RECRUITING.
+  const submitStatus: RecruitPostingFormStatus | 'closed' =
+    mode === 'edit' && initial?.status === 'closed' && status === 'result' ? 'closed' : status
+  // 발표(RESULT)는 모집기간을 저장하지 않는다 — 입력 비활성화·검증 생략. 입력값은 유형을 되돌릴 때를 위해 유지.
+  const recruitPeriodRequired = submitStatus !== 'result'
+
   const fileNames = useMemo(() => attachments.map(a => a.name), [attachments])
 
   const handleFilesChange = useCallback(
@@ -220,6 +227,12 @@ export function RecruitPostingFormModal({
   }, [])
 
   const handleSubmit = useCallback(() => {
+    const linkFormatAlert = careerPostingLinkUrlFormatAlert(linkUrl)
+    if (linkFormatAlert) {
+      showAlert(linkFormatAlert)
+      return
+    }
+
     if (!publishedAt || !publishedAt.isValid()) {
       showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
@@ -234,22 +247,28 @@ export function RecruitPostingFormModal({
     }
 
     const [recruitStart, recruitEnd] = recruitRange
-    if (!recruitStart?.isValid() || !recruitEnd?.isValid()) {
-      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
-      return
-    }
-    const startMinute = recruitStart.minute()
-    const endMinute = recruitEnd.minute()
-    if ((startMinute !== 0 && startMinute !== 30) || (endMinute !== 0 && endMinute !== 30)) {
-      showAlert({
-        title: '입력 확인',
-        content: '모집 기간 분은 00분 또는 30분만 선택할 수 있습니다.',
-      })
-      return
-    }
-    if (recruitEnd.isBefore(recruitStart)) {
-      showAlert({ title: '입력 확인', content: '모집 종료일시는 시작일시 이후여야 합니다.' })
-      return
+    let recruitStartYmd = ''
+    let recruitEndYmd = ''
+    if (recruitPeriodRequired) {
+      if (!recruitStart?.isValid() || !recruitEnd?.isValid()) {
+        showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+        return
+      }
+      const startMinute = recruitStart.minute()
+      const endMinute = recruitEnd.minute()
+      if ((startMinute !== 0 && startMinute !== 30) || (endMinute !== 0 && endMinute !== 30)) {
+        showAlert({
+          title: '입력 확인',
+          content: '모집 기간 분은 00분 또는 30분만 선택할 수 있습니다.',
+        })
+        return
+      }
+      if (recruitEnd.isBefore(recruitStart)) {
+        showAlert({ title: '입력 확인', content: '모집 종료일시는 시작일시 이후여야 합니다.' })
+        return
+      }
+      recruitStartYmd = recruitStart.format('YYYY-MM-DD')
+      recruitEndYmd = recruitEnd.format('YYYY-MM-DD')
     }
 
     const t = title.trim()
@@ -273,18 +292,14 @@ export function RecruitPostingFormModal({
     const linkError = validateCareerPostingLinkFields({ buttonLabel, linkUrl })
     if (linkError) {
       showAlert(
-        linkError === HTTP_LINK_URL_FORMAT_ALERT.content
-          ? HTTP_LINK_URL_FORMAT_ALERT
+        linkError === CAREER_POSTING_LINK_URL_FORMAT_ALERT.content
+          ? CAREER_POSTING_LINK_URL_FORMAT_ALERT
           : linkError.includes('바로가기 링크')
             ? REQUIRED_FIELDS_INCOMPLETE_ALERT
             : { title: '입력 확인', content: linkError }
       )
       return
     }
-
-    // 모집완료 행: 라디오가 발표(default)면 CLOSED 유지. 모집으로 바꾸면 RECRUITING.
-    const submitStatus: RecruitPostingFormStatus | 'closed' =
-      mode === 'edit' && initial?.status === 'closed' && status === 'result' ? 'closed' : status
 
     const author = resolveCurrentAdminAuthorName({
       mode,
@@ -314,8 +329,8 @@ export function RecruitPostingFormModal({
       isPublic,
       status: submitStatus,
       publishedAt: publishedAt.format('YYYY-MM-DD'),
-      recruitStart: recruitStart.format('YYYY-MM-DD'),
-      recruitEnd: recruitEnd.format('YYYY-MM-DD'),
+      recruitStart: recruitStartYmd,
+      recruitEnd: recruitEndYmd,
       authorName: author.authorName,
       attachments,
       buttonLabel,
@@ -329,7 +344,8 @@ export function RecruitPostingFormModal({
     linkUrl,
     getHTML,
     isPublic,
-    status,
+    submitStatus,
+    recruitPeriodRequired,
     attachments,
     onSubmit,
     showAlert,
@@ -437,28 +453,31 @@ export function RecruitPostingFormModal({
                   </CmsRadio>
                 </CmsRadioGroup>
               </div>
-              <div className="posting-form-modal__filter-field posting-form-modal__filter-field--range">
-                <FieldLabel required>모집 기간</FieldLabel>
-                <CmsDateRangePicker
-                  inputSize="large"
-                  width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
-                  showTime={{
-                    format: 'HH:mm',
-                    minuteStep: 30 as const,
-                  }}
-                  format="YYYY.MM.DD HH:mm"
-                  value={recruitRange}
-                  placeholder={['시작일시', '종료일시']}
-                  allowClear
-                  onChange={dates => {
-                    if (!dates || (!dates[0] && !dates[1])) {
-                      setRecruitRange([null, null])
-                      return
-                    }
-                    setRecruitRange([dates[0] ?? null, dates[1] ?? null])
-                  }}
-                />
-              </div>
+              {/* 발표(RESULT)는 모집기간을 저장하지 않으므로 필드를 숨긴다. 입력값은 state에 남아 모집 전환 시 복원된다. */}
+              {recruitPeriodRequired ? (
+                <div className="posting-form-modal__filter-field posting-form-modal__filter-field--range">
+                  <FieldLabel required>모집 기간</FieldLabel>
+                  <CmsDateRangePicker
+                    inputSize="large"
+                    width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
+                    showTime={{
+                      format: 'HH:mm',
+                      minuteStep: 30 as const,
+                    }}
+                    format="YYYY.MM.DD HH:mm"
+                    value={recruitRange}
+                    placeholder={['시작일시', '종료일시']}
+                    allowClear
+                    onChange={dates => {
+                      if (!dates || (!dates[0] && !dates[1])) {
+                        setRecruitRange([null, null])
+                        return
+                      }
+                      setRecruitRange([dates[0] ?? null, dates[1] ?? null])
+                    }}
+                  />
+                </div>
+              ) : null}
             </div>
           </div>
 

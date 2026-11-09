@@ -32,7 +32,7 @@ describe('member-withdraw-delete-guide', () => {
   it('buildSelfWithdrawMessageLines — 프로필 본인 탈퇴 문구', () => {
     const lines = buildSelfWithdrawMessageLines()
     expect(lines[0]).toContain('JA KOREA 서비스를 탈퇴')
-    expect(lines).toHaveLength(3)
+    expect(lines).toHaveLength(4)
   })
 
   it('buildMemberSingleDeleteGuideLines — 단건·상세 본문', () => {

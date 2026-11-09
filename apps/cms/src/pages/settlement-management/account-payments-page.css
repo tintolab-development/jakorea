@@ -4,7 +4,7 @@
  * 흰 카드(배경·그림자·패딩): 필터~테이블만 — 상단 요약 카드는 layout-content 배경 위에 둠
  *
  * 상단 연도 탭: 실적 관리 목록(education-record-list-page) 탭 UI와 동일 토큰 —
- * inactive #7D7D7D / active #01A1AF 하단 2px, 비활성 hover 시에도 회색·보더 유지
+ * inactive #7D7D7D / active #00A0AF(Figma Brand/500 → `--Brand-500`) 하단 2px, 비활성 hover 시에도 회색·보더 유지
  */
 
 .account-payments-page.payment-orders-page {
@@ -93,8 +93,16 @@
   margin-bottom: var(--spacing-16, 16px);
 }
 
+/*
+ * 시안(12432:443040 · Frame 1410118945 h44 > 1410118955 y1 h43) 탭 행: 상단 1 · 좌우 8 · 탭 간격 4
+ * → 첫 탭 (x 310, y 81, 높이 43), 요약 카드 y = 80 + 44 + 16 = 140
+ */
 .account-payments-page__tabs.cms-text-tabs .cms-text-tabs__row {
-  padding: 0;
+  padding: 1px var(--spacing-8, 8px) 0;
+}
+
+.account-payments-page__tabs.cms-text-tabs .cms-text-tabs__list {
+  column-gap: var(--spacing-4, 4px);
 }
 
 /* 시안(12432:443040) 선택 열 60 — cms-data-table 룰: 화면 시안이 60이면 변수로 지정 */

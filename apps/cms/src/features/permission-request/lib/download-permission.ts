@@ -32,7 +32,9 @@ export function canDownloadParticipants(
   if (hasTemporaryPermission) {
     return true
   }
-  return user.programRoles?.[programId] === 'OWNER'
+  // Program Owner·Program Assistant 허용(Assistant 지급조서는 주민등록번호·계좌번호 마스킹본 — BE 처리). Program Viewer 제한.
+  const programRole = user.programRoles?.[programId]
+  return programRole === 'OWNER' || programRole === 'PARTNER'
 }
 
 /**
@@ -49,7 +51,7 @@ export function canDownloadInstructors(
 
 /**
  * Phase 0.4.3: 지급조서 다운로드 권한 확인
- * FR-G03: 지급조서 엑셀 다운로드는 메인 담당자(OWNER)만 가능
+ * 권한 설정 V1.2: 지급조서 다운로드는 Program Owner(원본)·Program Assistant(마스킹본)
  */
 export function canDownloadPaymentStatement(
   user: Omit<User, 'password'> | null,
@@ -71,5 +73,7 @@ export function canDownloadPaymentStatement(
   if (hasTemporaryPermission) {
     return true
   }
-  return user.programRoles?.[programId] === 'OWNER'
+  // Program Owner·Program Assistant 허용(Assistant 지급조서는 주민등록번호·계좌번호 마스킹본 — BE 처리). Program Viewer 제한.
+  const programRole = user.programRoles?.[programId]
+  return programRole === 'OWNER' || programRole === 'PARTNER'
 }

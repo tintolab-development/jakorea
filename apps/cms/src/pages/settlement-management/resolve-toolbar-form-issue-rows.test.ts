@@ -40,11 +40,18 @@ describe('pickEligibleAccountPaymentFormIssueRows', () => {
     expect(pickEligibleAccountPaymentFormIssueRows('bulk-transfer', [waiting, paid])).toBeNull()
   })
 
-  it('세금신고는 지급 완료·settlementId 행만 허용한다', () => {
+  it('세금신고는 계좌 지급 완료 행만 허용하고, 정산서 없는 직접 계좌 지급도 포함한다', () => {
     const waiting = row({ id: 'w1' })
     const paidNoSettlement = row({
       id: 'p0',
       settlementId: undefined,
+      accountPaymentId: 186008,
+      accountPaymentStatus: 'account_paid',
+    })
+    const paidNoIds = row({
+      id: 'p2',
+      settlementId: undefined,
+      accountPaymentId: undefined,
       accountPaymentStatus: 'account_paid',
     })
     const paid = row({
@@ -55,7 +62,10 @@ describe('pickEligibleAccountPaymentFormIssueRows', () => {
 
     expect(pickEligibleAccountPaymentFormIssueRows('tax-report', [paid])).toEqual([paid])
     expect(pickEligibleAccountPaymentFormIssueRows('tax-report', [waiting])).toBeNull()
-    expect(pickEligibleAccountPaymentFormIssueRows('tax-report', [paidNoSettlement])).toBeNull()
+    expect(pickEligibleAccountPaymentFormIssueRows('tax-report', [paidNoSettlement])).toEqual([
+      paidNoSettlement,
+    ])
+    expect(pickEligibleAccountPaymentFormIssueRows('tax-report', [paidNoIds])).toBeNull()
   })
 
   it('발급 요청 본문에는 선택한 ID만 들어간다', () => {

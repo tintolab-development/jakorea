@@ -13,19 +13,22 @@ export interface AttendanceItemResponse {
   programId?: number;
   scheduleId?: number;
   participantId?: number;
-  /** 출석 코드만 PRESENT|LATE|ABSENT|EXCUSED. UJAT 배정은 기록이 없으면 참여자 행을 유지하고 status를 null로 반환한다. 미기록·비출석 값(COMPLETED·SCHEDULED 등)도 null. */
+  /** 출석 코드만 PRESENT|LATE|ABSENT|EXCUSED. UJAT 배정은 기록이 없으면 참여자 행을 유지하고 status를 null로 반환한다. UJAT 발대식(PRE_EDUCATION)은 배정이 없어도 같은 반기 봉사자 행을 attendanceId·status null로 반환한다. 미기록·비출석 값(COMPLETED·SCHEDULED 등)도 null. */
   status?: AttendanceItemResponseStatus;
   absenceReason?: string;
   checkedByAdminId?: number;
   checkedAt?: string;
   arrivalTime?: string;
   internalLate?: boolean;
-  /** 지각 분. 회차 시작 30분 전을 정시 마감으로 보고 그 시각부터 arrivalTime까지의 분. arrivalTime이 없거나 정시 이하면 null. status/internalLate만으로 분을 invent하지 않는다. */
+  /** 지각 분. 회차 시작 30분 전을 정시 마감으로 보고 그 시각부터 arrivalTime까지의 분. arrivalTime이 없거나 정시 이하면 null. status/internalLate만으로 분을 invent하지 않는다. UJAT·대경봉 봉사자 행은 1365 인정 구간 시작(종일 일정은 프로그램 late_deduct_start_time, 기본 09:00) 이후의 분. */
   lateMinutes?: number | null;
-  volunteer1365Minutes?: number;
+  /** 1365 인정 분. UJAT·대경봉 봉사자의 PRESENT/LATE 행에 저장값이 없으면(회원 셀프 체크인 등) 일정 시작·종료와 arrivalTime으로 조회 시 계산한다. ABSENT·EXCUSED는 0, 미기록·일반 프로그램은 null. */
+  volunteer1365Minutes?: number | null;
   volunteer1365DurationLabel?: string;
   checkedByMemberId?: number;
   memberCheckedInAt?: string;
   /** 출석 기록 출처. ADMIN=관리자 정정/저장, MEMBER_SELF=회원 셀프 체크인, SYSTEM=일정 시작 자동 출석. */
   checkInSource?: AttendanceItemResponseCheckInSource;
+  /** 1365 인정 시간 미달 여부. PRESENT/LATE이고 volunteer1365Minutes가 일정 길이(종료-시작)보다 작으면 true. ABSENT·EXCUSED는 false. 미기록 행·일반 프로그램·봉사자가 아닌 참여자는 null. */
+  volunteer1365Shortfall?: boolean | null;
 }

@@ -18,4 +18,6 @@ export interface AccountPaymentDetailResponse {
   settlement?: SettlementFrontendResponse;
   /** 상세 진입(본 API 성공) 시 권한이 확인된 원문 계좌정보. 개인정보 조회 이력이 accessPurpose=정산금 지급 처리를 위함 으로 자동 기록된 뒤에만 제공. 감사 로그 저장 실패 시 요청도 차단됩니다. */
   sensitiveAccount?: AccountPaymentSensitiveDetailResponse;
+  /** 지급 대상 프로그램 유형(program.program_type, 예: GENERAL_INDIVIDUAL). 개인형이면 산출 표의 참여 기관명 열을 숨긴다. Accounting Manager는 담당이 아닌 프로그램 건도 보므로 프로그램 상세 API를 따로 부르지 않게 함께 내려준다. 프로그램이 없거나 찾지 못하면 null. */
+  programType?: string | null;
 }

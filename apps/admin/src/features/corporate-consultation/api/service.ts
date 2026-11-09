@@ -1,9 +1,11 @@
 import type { CorporateConsultation, CorporateConsultationListFilter, } from '@/entities/corporate-consultation/model/types';
 import { fetchAllAdminListPages, toAdminListPage, type AdminListPage } from '@/shared/lib/admin-infinite-list';
 import { getJAKoreaHomepageAdminAPISponsorshipSubset } from '@/shared/api/generated/sponsorship/sponsorship-api';
-import { mapConsultationDetailToDomain, mapConsultationListItemToDomain, toBulkRequest, toConsultationListParams, toStatusUpdateRequest, } from './mappers';
+import { defaultXlsxFilename, downloadRemoteLogExcel } from '@/features/logs/shared/lib/download-binary';
+import { mapConsultationDetailToDomain, mapConsultationListItemToDomain, toBulkRequest, toConsultationExportParams, toConsultationListParams, toStatusUpdateRequest, } from './mappers';
 import { isAdminForbidden, isAdminNotFound } from '@/features/system-inbox/lib/http-status';
 import { downloadHomepageProtectedAttachment, homepageCorporateConsultationAttachmentUrl } from '@/shared/lib/protected-attachment-download';
+import { resolveApplicantRevealPii } from '@/features/auth/lib/applicant-reveal-pii';
 function sponsorshipApi() {
     return getJAKoreaHomepageAdminAPISponsorshipSubset();
 }
@@ -19,7 +21,8 @@ export async function listCorporateConsultationsPageService(filter: CorporateCon
     return listRemoteConsultations(filter, page);
 }
 /**
- * 상세 진입 = 개인정보 원문 조회. 버튼 없이 진입 시 바로 `revealPii=true`로 원문을 받는다.
+ * 상세 진입 = 개인정보 원문 조회. 버튼 없이 진입 시 바로 원문을 받는다.
+ * 단 HOMEPAGE_PII_VIEW가 없는 Program Viewer는 `revealPii=false`로 마스킹 상세를 받는다(권한 설정 V1.2).
  * 열람 기록은 BE가 상세 GET 200마다 남긴다(homepage_admin_audit_log PII_READ · homepage_privacy_access_log) —
  * FE에서 별도 로그 POST를 하지 않는다. 상세 쿼리는 staleTime/gcTime 0이라 진입할 때마다 GET(=로그 1건).
  */
@@ -29,7 +32,7 @@ export async function getCorporateConsultationService(id: string, actorName?: st
     if (!Number.isFinite(numericId) || numericId <= 0)
         return null;
     try {
-        const row = await sponsorshipApi().detail8(numericId, { revealPii: true });
+        const row = await sponsorshipApi().detail8(numericId, { revealPii: await resolveApplicantRevealPii() });
         return mapConsultationDetailToDomain(row);
     }
     catch (error) {
@@ -87,4 +90,15 @@ export async function confirmCorporateConsultationsService(ids: string[], actorN
         confirmedByName: actorName?.trim() ? actorName.trim() : row.confirmedByName,
         version: row.version + 1,
     }));
+}
+/**
+ * 엑셀 다운로드 — BE가 목록과 같은 필터·마스킹으로 xlsx를 만들고
+ * 감사 로그(LIST_EXPORT)·파일 다운로드 이력을 남긴다. FE는 받은 파일을 저장만 한다.
+ */
+export async function exportCorporateConsultationsService(filter: CorporateConsultationListFilter = {}): Promise<void> {
+    await downloadRemoteLogExcel({
+        url: '/api/admin/sponsorship/corporate-consultations/export',
+        params: toConsultationExportParams(filter),
+        filenameFallback: defaultXlsxFilename('기업_후원_상담_신청_목록'),
+    });
 }

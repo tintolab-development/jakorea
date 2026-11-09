@@ -17,6 +17,7 @@ import {
   notifyFileSelectTotalSizeExceeded,
   showUpdateCompletedAlert,
   useCmsAlert,
+  ThumbnailPlaceholder,
 } from '@/shared/ui'
 
 import './site-info-form.css'
@@ -27,7 +28,7 @@ const IMAGE_GUIDE_LINES = [
 ]
 
 const TOOLBAR_DESCRIPTION =
-  '설정한 사이트명은 브라우저탭명에, 사이트 소개글은 링크 공유 시 설명 텍스트에 동일하게 적용됩니다.'
+  '설정한 사이트명은 브라우저 탭 제목에, 사이트 소개글은 링크 공유 시 설명 텍스트에 동일하게 적용됩니다.'
 
 type Props = {
   data: SiteInfo
@@ -86,29 +87,6 @@ function readFileAsDataUrl(file: File): Promise<string> {
   })
 }
 
-function ImagePlaceholderIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="40"
-      height="40"
-      viewBox="0 0 48 48"
-      fill="none"
-      aria-hidden
-    >
-      <rect x="6" y="10" width="36" height="28" rx="3" stroke="#BDBDBD" strokeWidth="2" />
-      <circle cx="17" cy="20" r="3" fill="#BDBDBD" />
-      <path
-        d="M8 32L18 24L24 29L32 20L40 32"
-        stroke="#BDBDBD"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
 const SiteInfoTextField = memo(function SiteInfoTextField({
   sourceValue,
   isEditing,
@@ -165,15 +143,30 @@ const SiteInfoTextField = memo(function SiteInfoTextField({
   )
 })
 
-function ImageView({ url, alt }: { url: string; alt: string }) {
+/** 조회: Figma 230:3424 — 테두리 없이 이미지 그대로(링크 공유 이미지 높이 60 · 탭 아이콘 30×30), 파일명 없음 */
+function ImageView({
+  url,
+  alt,
+  variant = 'default',
+}: {
+  url: string
+  alt: string
+  variant?: 'default' | 'favicon'
+}) {
   if (!url) {
     return <span className="site-info-form__text-view">-</span>
   }
   return (
     <div className="site-info-form__image-view">
-      <div className="site-info-form__preview">
-        <img src={url} alt={alt} />
-      </div>
+      <img
+        className={
+          variant === 'favicon'
+            ? 'site-info-form__view-image site-info-form__view-image--favicon'
+            : 'site-info-form__view-image'
+        }
+        src={url}
+        alt={alt}
+      />
     </div>
   )
 }
@@ -231,15 +224,15 @@ function ImageEditField({
   )
 
   return (
-    <div className="site-info-form__image-row">
-      <div className="site-info-form__preview">
-        {imageUrl ? <img src={imageUrl} alt={alt} /> : <ImagePlaceholderIcon />}
+    /* Figma 2100:61384·2100:61385 Table / Common / Cell / File — 공통 파일 칸(미리보기 72 · 간격 12 · 파일 추가) */
+    <div className="file-select-image-cell">
+      <div className="file-select-image-cell__preview">
+        {imageUrl ? <img src={imageUrl} alt={alt} /> : <ThumbnailPlaceholder />}
       </div>
       <FileSelectField
-        className="site-info-form__file-field"
         multiple={false}
         accept={IMAGE_ACCEPT}
-        buttonLabel="파일 선택"
+        buttonLabel="파일 추가"
         fileNames={fileName ? [fileName] : []}
         onFilesChange={files => {
           void handleFilesChange(files)
@@ -477,7 +470,7 @@ export function SiteInfoFormCard({ data }: Props) {
                     }
                   />
                 ) : (
-                  <ImageView url={image.faviconUrl} alt="브라우저탭 아이콘" />
+                  <ImageView url={image.faviconUrl} alt="브라우저탭 아이콘" variant="favicon" />
                 )
               }
             />

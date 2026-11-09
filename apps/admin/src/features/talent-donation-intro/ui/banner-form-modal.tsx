@@ -19,6 +19,7 @@ import {
   notifyFileSelectTotalSizeExceeded,
   REQUIRED_FIELDS_INCOMPLETE_ALERT,
   useCmsAlert,
+  ThumbnailPlaceholder,
 } from '@/shared/ui'
 
 import './banner-form-modal.css'
@@ -47,28 +48,6 @@ function readFileAsDataUrl(file: File): Promise<string> {
   })
 }
 
-function ImagePlaceholderIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="48"
-      height="48"
-      viewBox="0 0 48 48"
-      fill="none"
-      aria-hidden
-    >
-      <rect x="6" y="10" width="36" height="28" rx="3" stroke="#BDBDBD" strokeWidth="2" />
-      <circle cx="17" cy="20" r="3" fill="#BDBDBD" />
-      <path
-        d="M8 32L18 24L24 29L32 20L40 32"
-        stroke="#BDBDBD"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
 
 type FormBodyProps = {
   initial: TalentDonationBanner
@@ -222,7 +201,7 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
                     {imageUrl ? (
                       <img src={imageUrl} alt="배너 미리보기" />
                     ) : (
-                      <ImagePlaceholderIcon />
+                      <ThumbnailPlaceholder />
                     )}
                   </div>
                   <FileSelectField
@@ -259,7 +238,7 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
                   className="cms-textarea--fixed-rows"
                   inputSize="large"
                   width="100%"
-                  rows={3}
+                  autoSize={{ minRows: 1 }}
                   placeholder="메인 텍스트를 입력해 주세요"
                   value={mainText}
                   onChange={e => {
@@ -289,7 +268,7 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
                   className="cms-textarea--fixed-rows"
                   inputSize="large"
                   width="100%"
-                  rows={4}
+                  autoSize={{ minRows: 1 }}
                   placeholder="서브 텍스트를 입력해 주세요"
                   value={subText}
                   onChange={e => {

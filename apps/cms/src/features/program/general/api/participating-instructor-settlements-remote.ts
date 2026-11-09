@@ -40,6 +40,8 @@ export async function fetchParticipatingInstructorSettlementsRemote(input: {
     const res = await fetchSettlementListPageRemote({
       programId,
       instructorMemberId,
+      // 프로그램 참여 강사 정산 표 — 계좌 지급 완료 건 포함(기획 확정 2026-11-09)
+      includePaid: true,
       page,
       size: PAGE_SIZE,
     })

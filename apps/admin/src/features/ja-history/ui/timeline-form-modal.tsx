@@ -17,6 +17,7 @@ import {
   notifyFileSelectTotalSizeExceeded,
   REQUIRED_FIELDS_INCOMPLETE_ALERT,
   useCmsAlert,
+  ThumbnailPlaceholder,
 } from '@/shared/ui'
 import { isAllowedJaHistoryImage, JA_HISTORY_IMAGE_ACCEPT, readJaHistoryImage } from './image-file'
 
@@ -76,13 +77,11 @@ function modalDescription(title: string): string {
 
 const DraftTextArea = memo(function DraftTextArea({
   initialValue,
-  rows,
   placeholder,
   ariaLabel,
   onValue,
 }: {
   initialValue: string
-  rows: number
   placeholder?: string
   ariaLabel: string
   onValue: (value: string) => void
@@ -93,7 +92,8 @@ const DraftTextArea = memo(function DraftTextArea({
       className="cms-textarea--fixed-rows"
       inputSize="large"
       width="100%"
-      rows={rows}
+      // 줄바꿈 수만큼 높이가 늘고 줄어든다(hug) — 1줄에서 시작, 최대 줄 수 제한 없음
+      autoSize={{ minRows: 1 }}
       value={value}
       placeholder={placeholder}
       aria-label={ariaLabel}
@@ -280,7 +280,7 @@ function TimelineFormBody({
                     {imageUrl ? (
                       <img src={imageUrl} alt="대표 이미지 미리보기" />
                     ) : (
-                      <span>없음</span>
+                      <ThumbnailPlaceholder />
                     )}
                   </div>
                   <FileSelectField
@@ -320,7 +320,6 @@ function TimelineFormBody({
               <div>
                 <DraftTextArea
                   initialValue={headingRef.current}
-                  rows={2}
                   placeholder="타이틀을 입력해 주세요"
                   ariaLabel="타이틀"
                   onValue={value => {
@@ -345,7 +344,6 @@ function TimelineFormBody({
               <div>
                 <DraftTextArea
                   initialValue={bodyRef.current}
-                  rows={4}
                   placeholder="서브 텍스트를 입력해 주세요"
                   ariaLabel="서브 텍스트"
                   onValue={value => {
@@ -394,7 +392,6 @@ function TimelineFormBody({
               edit={
                 <DraftTextArea
                   initialValue={event.text}
-                  rows={event.text.includes('\n') || event.text.length > 42 ? 2 : 1}
                   placeholder="설명 텍스트를 입력해 주세요"
                   ariaLabel={`${event.year.trim() || '연도'} 설명 텍스트`}
                   onValue={text => {

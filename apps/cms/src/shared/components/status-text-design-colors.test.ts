@@ -73,7 +73,8 @@ describe('CMS Figma status Text colors', () => {
       pending: '#F07917',
       reapplication: '#F07917',
       confirmed: '#1E8C29',
-      awaiting_payment: '#F07917',
+      // CONFIRMED×WAITING_PAYMENT — 「지급조서 확인 완료」와 같은 색(지급조서 갈래 정의, 2026-11-09)
+      awaiting_payment: '#1E8C29',
       correction: '#E8007C',
       rejected: '#017EAF',
       application_rejected: '#C32F4A',

@@ -152,5 +152,28 @@
   textarea.ant-input {
   min-height: 0 !important;
   padding: 0 !important;
+  /* 조회는 표 셀 텍스트 규격 14px (수정 입력 칸 medium 15px와 분리) */
+  font-size: 14px !important;
   line-height: 150% !important;
+}
+
+/* 수정 모드 열 제목 필수 표시 — 글자 옆 2px · Status/red/main #C32F4A (기업후원 안내 표와 동일) */
+.recruit-guide-table__th-label {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 별표는 글자 흐름 밖(절대 배치) — 시안 Table/Vertical/Cell 처럼 붙어도 헤더 글자 위치가 움직이지 않는다 */
+.recruit-guide-table__required {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  margin-left: 2px;
+  transform: translateY(-50%);
+  color: var(--color-required-mark, #c32f4a);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
 }

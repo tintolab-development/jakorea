@@ -1,3 +1,4 @@
+import { showAdminAccessDeniedAlert } from '@/shared/lib/admin-role-policy'
 import { useCallback, useMemo, useState } from 'react'
 import { Flex } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
@@ -113,7 +114,11 @@ export function SponsorContactsPanel({
   }, [canWrite, setRegisterModalOpen])
 
   const handleDeleteClick = useCallback((): void => {
-    if (!canWrite || isEditing || isDeleting) return
+    if (isEditing || isDeleting) return
+    if (!canWrite) {
+      showAdminAccessDeniedAlert()
+      return
+    }
     if (selectedKeys.length === 0) {
       showAlert(NO_SELECTION_ALERT)
       return
@@ -223,7 +228,7 @@ export function SponsorContactsPanel({
                 <FilterTableToolbarButton
                   variant="delete"
                   onClick={handleDeleteClick}
-                  disabled={!canWrite || isDeleting}
+                  disabled={isDeleting}
                   loading={isDeleting}
                   adminAction="sponsorContactWrite"
                 >

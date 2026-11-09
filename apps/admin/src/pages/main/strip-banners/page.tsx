@@ -457,51 +457,53 @@ export function StripBannersPage() {
         hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area strip-banners-page__filter">
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <p className="admin-filter-area__label">사용 여부</p>
-              <CmsSelect
-                inputSize="medium"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                value={pendingFilters.active}
-                onChange={value =>
-                  setPendingFilters(prev => ({
-                    ...prev,
-                    active: (value as ActiveFilterValue) ?? '',
-                  }))
-                }
-                options={[
-                  { label: '전체', value: '' },
-                  { label: '사용', value: 'true' },
-                  { label: '미사용', value: 'false' },
-                ]}
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <p className="admin-filter-area__label">배너 문구</p>
-              <AdminFilterTextInput
-                inputSize="medium"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="배너 문구를 입력해 주세요"
-                value={pendingFilters.text}
-                onChange={value => patchPendingFilters(prev => ({ ...prev, text: value }))}
-                onPressEnter={handleSearch}
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--date-range">
-              <p className="admin-filter-area__label">게시 기간</p>
-              <CmsDateRangePicker
-                inputSize="medium"
-                width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
-                value={periodAsPickerValue(pendingFilters.period)}
-                onChange={dates =>
-                  setPendingFilters(prev => ({
-                    ...prev,
-                    period: dates ?? null,
-                  }))
-                }
-                placeholder={['시작일', '종료일']}
-                allowClear
-              />
+            <div className="admin-filter-area__fields">
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <p className="admin-filter-area__label">사용 여부</p>
+                <CmsSelect
+                  inputSize="medium"
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  value={pendingFilters.active}
+                  onChange={value =>
+                    setPendingFilters(prev => ({
+                      ...prev,
+                      active: (value as ActiveFilterValue) ?? '',
+                    }))
+                  }
+                  options={[
+                    { label: '전체', value: '' },
+                    { label: '사용', value: 'true' },
+                    { label: '미사용', value: 'false' },
+                  ]}
+                />
+              </div>
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <p className="admin-filter-area__label">배너 문구</p>
+                <AdminFilterTextInput
+                  inputSize="medium"
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  placeholder="배너 문구를 입력해 주세요"
+                  value={pendingFilters.text}
+                  onChange={value => patchPendingFilters(prev => ({ ...prev, text: value }))}
+                  onPressEnter={handleSearch}
+                />
+              </div>
+              <div className="admin-filter-area__field admin-filter-area__field--date-range">
+                <p className="admin-filter-area__label">게시 기간</p>
+                <CmsDateRangePicker
+                  inputSize="medium"
+                  width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
+                  value={periodAsPickerValue(pendingFilters.period)}
+                  onChange={dates =>
+                    setPendingFilters(prev => ({
+                      ...prev,
+                      period: dates ?? null,
+                    }))
+                  }
+                  placeholder={['시작일', '종료일']}
+                  allowClear
+                />
+              </div>
             </div>
             <div className="admin-filter-area__actions">
               <CmsButton

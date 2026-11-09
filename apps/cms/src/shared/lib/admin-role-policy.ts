@@ -8,6 +8,7 @@ import type { AdminLevel, AdminRoleCode, User } from '@/types/user'
 import { isAdminSessionRoleSyncPending } from '@/features/auth/lib/admin-session-sync-state'
 import { isAdminFirstLoginOnboardingIncomplete } from '@/shared/utils/post-auth-redirect'
 import {
+  isCmsMemberPiiAdminRole,
   isCmsOperableProgramOwnerRole,
   isCmsViewerAdminRole,
 } from '@/shared/lib/cms-global-role-code'
@@ -37,6 +38,8 @@ export type AdminActionKind =
   | 'pii'
   | 'piiRrn'
   | 'piiAccount'
+  /** 관리자 계정 관리(관리자 등록·수정·삭제·탈퇴, 관리자·관리자 권한 신청 목록 다운로드) — Master 전용 */
+  | 'adminAccountManage'
 
 export type AdminPolicyScreen =
   | 'default'
@@ -44,6 +47,7 @@ export type AdminPolicyScreen =
   | 'admin-permission-approval'
   | 'permission-settings'
   | 'template-management'
+  | 'settlement-item-settings'
 
 export const ADMIN_ACCESS_DENIED_ALERT_TITLE = '접근 권한이 없습니다.'
 export const ADMIN_ACCESS_DENIED_ALERT_CONTENT =
@@ -174,6 +178,15 @@ export function isTemplateManagementPath(pathname: string): boolean {
   return normalized === '/templates' || normalized.startsWith('/templates/')
 }
 
+/** 정산 관리 > 정산 항목 설정 */
+export function isSettlementItemSettingsPath(pathname: string): boolean {
+  const normalized = pathname === '/' ? pathname : pathname.replace(/\/$/, '')
+  return (
+    normalized === '/settlement-management/item-settings' ||
+    normalized.startsWith('/settlement-management/item-settings/')
+  )
+}
+
 export function resolveAdminPolicyScreen(pathname: string | undefined): AdminPolicyScreen {
   if (!pathname) return 'default'
   const normalized = pathname === '/' ? pathname : pathname.replace(/\/$/, '')
@@ -186,6 +199,9 @@ export function resolveAdminPolicyScreen(pathname: string | undefined): AdminPol
   }
   if (isTemplateManagementPath(normalized)) {
     return 'template-management'
+  }
+  if (isSettlementItemSettingsPath(normalized)) {
+    return 'settlement-item-settings'
   }
   return 'default'
 }
@@ -205,18 +221,22 @@ export function canAdminAction(input: {
       screen !== 'security-logs' &&
       screen !== 'permission-settings' &&
       screen !== 'admin-permission-approval' &&
-      screen !== 'template-management'
+      screen !== 'template-management' &&
+      screen !== 'settlement-item-settings'
     )
   }
 
   switch (input.action) {
     case 'view':
       if (screen === 'security-logs') return roleCode === 'MASTER'
-      // 관리자 권한 설정·회원 권한 승인·템플릿 관리: 뷰어는 화면 조회 자체 불가
+      // 관리자 권한 설정·프로그램 담당자 권한 설정: Master 전용 (권한 설정 V1.2 '관리자 권한 승인·권한 설정 화면')
+      if (screen === 'permission-settings') return roleCode === 'MASTER'
+      // 권한 승인(강사 탭 기본)·템플릿 관리·정산 항목 설정: 뷰어는 화면 조회 자체 불가.
+      // 권한 승인 > 관리자 탭 조회는 adminAccountManage(Master 전용)로 별도 판정.
       if (
-        screen === 'permission-settings' ||
         screen === 'admin-permission-approval' ||
-        screen === 'template-management'
+        screen === 'template-management' ||
+        screen === 'settlement-item-settings'
       ) {
         return !isReadOnlyAdminRoleCode(roleCode)
       }
@@ -225,6 +245,8 @@ export function canAdminAction(input: {
     case 'delete':
     case 'send':
     case 'download':
+      // 권한 설정 화면 저장은 Master 전용
+      if (screen === 'permission-settings') return roleCode === 'MASTER'
       return !isReadOnlyAdminRoleCode(roleCode)
     case 'dashboardWrite':
       // DASHBOARD_WRITE: 본인 레이아웃·설정만. PROGRAM_WRITE와 묶지 않음.
@@ -249,14 +271,12 @@ export function canAdminAction(input: {
       }
       return !isReadOnlyAdminRoleCode(roleCode)
     case 'pii':
-      // 회원 관리 일반 개인정보. 프로그램 상세 원문은 canRevealProgramPrivacy.
-      return (
-        roleCode === 'MASTER' ||
-        roleCode === 'ACCOUNTING_MANAGER' ||
-        roleCode === 'PROGRAM_MANAGER'
-      )
+      // 회원 관리 일반 개인정보(전역 역할 기준). 프로그램 상세 원문은 canRevealProgramPrivacy.
+      // PM·PARTNER는 V1.2 이전 프로그램 역할 코드라 여기서 허용하지 않는다.
+      return isCmsMemberPiiAdminRole(roleCode)
     case 'piiRrn':
     case 'piiAccount':
+    case 'adminAccountManage':
       return roleCode === 'MASTER'
   }
 }
@@ -300,10 +320,27 @@ type DomClickEvent = {
   nativeEvent?: { stopImmediatePropagation?: () => void }
 }
 
+/** 조회 전용 라벨(캘린더 뷰로 보기·리스트로 보기·미리보기 등). 개인정보 열람은 조회가 아니라 제외한다. */
+const VIEW_ONLY_LABEL_SUFFIX = '보기'
+const VIEW_ONLY_EXCLUDED_LABELS = new Set(['개인정보 상세보기'])
+
+function isViewOnlyControl(control: Element): boolean {
+  if (control.closest('[data-admin-action="allow"], [data-program-action="allow"]')) return true
+  const label = (control.getAttribute('aria-label') || control.textContent || '')
+    .replace(/\s+/g, ' ')
+    .trim()
+  return (
+    label.endsWith(VIEW_ONLY_LABEL_SUFFIX) && !VIEW_ONLY_EXCLUDED_LABELS.has(label)
+  )
+}
+
 function isInteractiveClickTarget(target: EventTarget | null): boolean {
   if (!(target instanceof Element)) return false
   if (target.closest('.excel-button, .filter-table-layout__toolbar-excel')) return false
-  return Boolean(target.closest('button, a[href], [role="button"]'))
+  const control = target.closest('button, a[href], [role="button"]')
+  if (!control) return false
+  // 권한 설정 V1.2: 툴바·상세 헤더 일괄 가드는 쓰기 동작만 막는다. 「캘린더 뷰로 보기」 같은 조회 버튼은 통과.
+  return !isViewOnlyControl(control)
 }
 
 function stopDeniedClick(event: DomClickEvent): void {

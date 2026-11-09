@@ -53,7 +53,7 @@ import '@/pages/programs/program-list-page.css'
 import './education-regions-page.css'
 
 const INITIAL_FILTERS: UjatEducationRegionFilters = {
-  usageStatus: 'active',
+  usageStatus: 'all',
   name: '',
 }
 
@@ -124,9 +124,12 @@ export default function UjatEducationRegionsPage() {
     () => [
       {
         key: 'usageStatus',
-        type: 'radio',
+        type: 'select',
         label: '사용 여부',
+        placeholder: '전체',
+        width: FILTER_CONTROL_MAX_WIDTH_PX,
         options: [
+          { label: '전체', value: 'all' },
           { label: '사용', value: 'active' },
           { label: '미사용', value: 'inactive' },
         ],
@@ -147,9 +150,9 @@ export default function UjatEducationRegionsPage() {
       ...prev,
       [key]:
         key === 'usageStatus'
-          ? value === 'inactive'
-            ? 'inactive'
-            : 'active'
+          ? value === 'active' || value === 'inactive'
+            ? value
+            : 'all'
           : String(value ?? ''),
     }))
   }, [])

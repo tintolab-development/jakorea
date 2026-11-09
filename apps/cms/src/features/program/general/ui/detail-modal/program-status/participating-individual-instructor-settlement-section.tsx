@@ -2,6 +2,10 @@
  * 참여 강사 상세 — 정산 현황 탭 (일반 프로그램 · 개인)
  */
 
+import {
+  PROGRAM_API_UNAVAILABLE_TITLE,
+  buildProgramApiUnavailableContent,
+} from '@/features/program/shared/lib/program-api-unavailable'
 import { useCallback, useMemo, useState } from 'react'
 import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
@@ -137,7 +141,14 @@ export function ParticipatingIndividualInstructorSettlementSection({
 
   const handleBulkDownloadPaymentStatements = useCallback(async () => {
     if (bulkDownloadLoading) return
-    if (!remoteEnabled) return
+    // 버튼은 항상 활성화한다. 원격 API가 꺼진 환경·대상 없음은 누를 때 안내한다.
+    if (!remoteEnabled) {
+      showAlert({
+        title: PROGRAM_API_UNAVAILABLE_TITLE,
+        content: buildProgramApiUnavailableContent('지급조서 일괄 다운로드'),
+      })
+      return
+    }
     if (downloadableRows.length === 0) {
       showAlert({
         title: '안내',
@@ -299,7 +310,7 @@ export function ParticipatingIndividualInstructorSettlementSection({
             variant="secondary"
             size="h40"
             icon={<ButtonDownloadIcon />}
-            disabled={!remoteEnabled || bulkDownloadLoading || downloadableRows.length === 0}
+            loading={bulkDownloadLoading}
             onClick={() => void handleBulkDownloadPaymentStatements()}
           >
             지급조서 일괄 다운로드
@@ -307,7 +318,6 @@ export function ParticipatingIndividualInstructorSettlementSection({
           <ExcelButton
             onClick={exportExcel}
             loading={isExcelExporting}
-            disabled={rows.length === 0}
           />
         </div>
       </div>

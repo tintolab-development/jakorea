@@ -25,6 +25,7 @@ import {
 import {
   careerPostingLinkButtonVisible,
   careerPostingLinkHref,
+  careerPostingMutationLinkFormatAlert,
   resolveCareerPostingLinkButtonLabel,
 } from '@/features/recruit-posting/lib/link-fields'
 import linkCtaArrowUrl from '@/features/recruit-posting/ui/assets/link-cta-arrow.svg'
@@ -120,6 +121,11 @@ export function RecruitPostingDetailPage() {
         void detailQuery.refetch()
         showUpdateCompletedAlert()
       } catch (error) {
+        const linkAlert = careerPostingMutationLinkFormatAlert(error)
+        if (linkAlert) {
+          showAlert(linkAlert)
+          return
+        }
         const message =
           error instanceof Error && error.message
             ? error.message

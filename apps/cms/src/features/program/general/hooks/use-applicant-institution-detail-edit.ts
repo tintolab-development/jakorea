@@ -57,7 +57,12 @@ import {
   organizationApplicationDetailCacheKeys,
 } from '@/features/program/general/api/general-applications-query-keys'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
+import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import { trainedTeacherQueryKeys } from '@/features/program/trained-teachers/api/query-keys'
+import {
+  APPLICATION_EDIT_MODE_UNMASK_REASON,
+  EDIT_MODE_REVEAL,
+} from '@/shared/lib/privacy-unmask-purpose'
 
 /**
  * 기관 신청자 상세 편집 — 합반은 organization-merge-groups, 그 외는 PATCH organization-applications.
@@ -140,18 +145,15 @@ export function useApplicantInstitutionDetailEdit({
       label: row.educationGrade,
       educationGrade: row.educationGrade,
     }))
-  }, [
-    institution,
-    institutionList,
-    isCombinedClassProgramEligibleFlag,
-    program?.id,
-  ])
+  }, [institution, institutionList, isCombinedClassProgramEligibleFlag, program?.id])
 
   const isCombinedClassApplyRadioDisabled =
     resolveCombinedClassApplyRadioDisabled(sameSchoolGradeOptions)
 
   const showEducationFormatField = useMemo(
-    () => shouldShowInstitutionApplicationEducationFormatField(program),
+    () =>
+      isCompanySchoolProgram(program) ||
+      shouldShowInstitutionApplicationEducationFormatField(program),
     [program]
   )
 
@@ -201,22 +203,25 @@ export function useApplicantInstitutionDetailEdit({
   const canApplyCombinedClass =
     isCombinedClassProgramEligibleFlag && !isCombinedClassApplyRadioDisabled
 
-  const enterEdit = useCallback((institutionOverride?: ApplicantSchoolRow) => {
-    const source = institutionOverride ?? institution
-    if (!source) return
-    let nextDraft = rowToEditDraft(source)
-    if (!isCombinedClassProgramEligibleFlag) {
-      nextDraft = {
-        ...nextDraft,
-        combinedClassApplication: '미신청',
-        combinedClassPartnerApplicantIds: [],
+  const enterEdit = useCallback(
+    (institutionOverride?: ApplicantSchoolRow) => {
+      const source = institutionOverride ?? institution
+      if (!source) return
+      let nextDraft = rowToEditDraft(source)
+      if (!isCombinedClassProgramEligibleFlag) {
+        nextDraft = {
+          ...nextDraft,
+          combinedClassApplication: '미신청',
+          combinedClassPartnerApplicantIds: [],
+        }
       }
-    }
-    setDraft(nextDraft)
-    editBaselineRef.current = nextDraft
-    setValidationErrors({})
-    setIsEditing(true)
-  }, [institution, isCombinedClassProgramEligibleFlag])
+      setDraft(nextDraft)
+      editBaselineRef.current = nextDraft
+      setValidationErrors({})
+      setIsEditing(true)
+    },
+    [institution, isCombinedClassProgramEligibleFlag]
+  )
 
   const cancelEdit = useCallback(() => {
     resetEditState()
@@ -378,10 +383,12 @@ export function useApplicantInstitutionDetailEdit({
           teacherEmail?: string | null
         } | null = null
         try {
+          // 수정 흐름 안의 원문 재조회 — EDIT_MODE를 명시한다(사유 문자열로 추론하지 않음).
           unmaskedContact = await unmaskOrganizationApplicationPrivacyRemote(
             institution.id,
-            '신청 정보 수정',
-            Number.isFinite(programIdNumber) ? programIdNumber : undefined
+            APPLICATION_EDIT_MODE_UNMASK_REASON,
+            Number.isFinite(programIdNumber) ? programIdNumber : undefined,
+            EDIT_MODE_REVEAL
           )
         } catch {
           unmaskedContact = null
@@ -432,7 +439,8 @@ export function useApplicantInstitutionDetailEdit({
               detail: {
                 ...remotelyUpdatedInstitution.detail,
                 combinedClassApplication: row.detail?.combinedClassApplication,
-                combinedClassPartnerApplicantIds: row.detail?.combinedClassPartnerApplicantIds ?? [],
+                combinedClassPartnerApplicantIds:
+                  row.detail?.combinedClassPartnerApplicantIds ?? [],
                 combinedClassPartnerGrades: row.detail?.combinedClassPartnerGrades ?? [],
               },
             }

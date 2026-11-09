@@ -29,6 +29,14 @@ export function settlementEventStatusColorPair(
   }
 }
 
+/**
+ * 미리보기 툴팁 세그먼트 구분선 — Figma Calendar / List / Preview(14858:590633·591061) `line` 1×12.
+ * 문자 `|` 금지(`table-td-divider.mdc`). 크기·색은 `settlement-preview-tooltip.css` `__sep`.
+ */
+export function SettlementPreviewTooltipSep() {
+  return <span className="settlement-preview-tooltip__sep" aria-hidden />
+}
+
 /** `CalendarMain` 이벤트 모드 `previewTooltipContent`용 */
 export function renderSettlementEventsTooltipContent({
   events: dayEvents,
@@ -46,13 +54,13 @@ export function renderSettlementEventsTooltipContent({
             <div className="instructor-settlement-preview__title">
               {settlementCalendarPrimaryTitle(row)}
             </div>
-            <div>
+            <div className="settlement-preview-tooltip__row">
               <span style={{ color: colors.text, fontWeight: 700, fontSize: '14px' }}>
                 {INSTRUCTOR_SETTLEMENT_STATUS_LABELS_SHORT[row.status]}
               </span>
+              <SettlementPreviewTooltipSep />
               <span className="settlement-preview-tooltip__text">
-                <span className="settlement-preview-tooltip__sep">|</span> +
-                {row.scheduledAmount.toLocaleString()}원
+                +{row.scheduledAmount.toLocaleString()}원
               </span>
             </div>
           </div>

@@ -220,3 +220,8 @@
   overflow: hidden !important;
   text-align: center !important;
 }
+
+/* 시안 선택 열 60 (공통 기본 80 대신) — 제목·첨부파일명이 남는 폭을 시안과 같게 나누도록 */
+.rd-list__table.cms-data-table {
+  --table-selection-column-width: 60px;
+}

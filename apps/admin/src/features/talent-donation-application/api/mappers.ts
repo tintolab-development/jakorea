@@ -29,7 +29,7 @@ function toDomainStatus(status: string | undefined): ApplicationStatus {
   return status === 'confirmed' ? 'confirmed' : 'pending'
 }
 
-function toDomainGender(gender: string | undefined): ApplicantGender {
+function toDomainGender(gender: string | null | undefined): ApplicantGender {
   return gender === 'female' ? 'female' : 'male'
 }
 
@@ -105,6 +105,9 @@ export function mapTalentApplicationDetailToDomain(
     confirmedAt: row.confirmedAt ?? null,
     confirmedByName: row.confirmedByName?.trim() ? row.confirmedByName.trim() : null,
     version: 0,
+    piiMasked: row.piiMasked === true,
+    maskedBirthDate: row.maskedBirthDate?.trim() || null,
+    maskedGender: row.maskedGender?.trim() || null,
   }
 }
 
@@ -134,6 +137,16 @@ export function toTalentApplicationListParams(
   if (filter.appliedTo) params.appliedTo = filter.appliedTo
   if (filter.confirmedFrom) params.confirmedFrom = filter.confirmedFrom
   if (filter.confirmedTo) params.confirmedTo = filter.confirmedTo
+  return params
+}
+
+/** 엑셀 export — 목록과 같은 필터, page/size 없음 (BE `/export` 가 전체를 내려준다). */
+export function toTalentApplicationExportParams(
+  filter: TalentDonationApplicationListFilter = {},
+): Omit<List13Params, 'page' | 'size'> {
+  const params: Partial<List13Params> = { ...toTalentApplicationListParams(filter) }
+  delete params.page
+  delete params.size
   return params
 }
 

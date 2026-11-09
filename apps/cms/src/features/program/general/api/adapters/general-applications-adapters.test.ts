@@ -117,6 +117,33 @@ describe('general-applications-adapters', () => {
     expect(row.detail?.educationType).toBe('오프라인')
   })
 
+  it('maps detail GET textbook display label and sex-offense projection', () => {
+    const row = mapOrganizationApplicationDetailToApplicantSchoolRow(
+      {
+        id: 1691546,
+        textbookName: '성공하는 경제생활',
+        textbookDisplayLabel: '성공하는 경제생활 초등학교',
+        sexOffenseCheckRequest: '온라인 제출 | ID : tinto | 검증번호 : 940412',
+      },
+      {
+        id: '1691546',
+        no: 1,
+        schoolName: 'QA 제휴학교',
+        region: '서울',
+        educationGrade: '4학년',
+        classCount: 4,
+        studentCount: 120,
+        teacherName: '김교사',
+        approvalStatus: 'approved',
+        programId: '186473',
+      }
+    )
+    expect(row.textbookName).toBe('성공하는 경제생활')
+    expect(row.detail?.textbookName).toBe('성공하는 경제생활')
+    expect(row.detail?.textbookDisplayLabel).toBe('성공하는 경제생활 초등학교')
+    expect(row.detail?.sexOffenseCheckRequest).toBe('온라인 제출 | ID : tinto | 검증번호 : 940412')
+  })
+
   it('keeps detail teacherTel and teacherPhone in their separate canonical fields', () => {
     const row = mapOrganizationApplicationDetailToApplicantSchoolRow(
       {

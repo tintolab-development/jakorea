@@ -195,7 +195,7 @@ export function SectionFrame({
                 loading={saving}
                 disabled={saving}
                 onClick={onSave} >
-                수정
+                저장
               </CmsButton>
             </>
           ) : (

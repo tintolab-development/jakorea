@@ -304,6 +304,8 @@ export function ReportListPanel({ kind }: Props) {
         title: '제목',
         dataIndex: 'title',
         key: 'title',
+        // 시안 표 폭 1538에서 연차 399 · 회계감사 369 — 제목·첨부파일명은 폭을 비워 남는 폭을 반씩 나눈다
+        // (고정 폭이면 열 합 1538이 표 최소 폭이 돼 좁은 화면에서 가로 스크롤이 생긴다)
         ellipsis: true,
         render: (value: string) => value || '-',
       },
@@ -340,21 +342,21 @@ export function ReportListPanel({ kind }: Props) {
         title: '다운로드 수',
         dataIndex: 'downloadCount',
         key: 'downloadCount',
-        width: 110,
+        width: 140,
         align: 'center',
         render: (value: number) => (typeof value === 'number' ? value.toLocaleString() : '-'),
       },
       {
         title: '작성일시',
         key: 'createdAt',
-        width: 150,
+        width: 200,
         align: 'center',
         render: (_v, record) => formatCreatedAt(record.createdAt),
       },
       {
         title: '관리',
         key: 'actions',
-        width: 120,
+        width: 140,
         align: 'center',
         render: (_v, record) => (
           <CmsButton variant="secondary" size="small" type="button" onClick={() => openEdit(record)}>
@@ -372,45 +374,47 @@ export function ReportListPanel({ kind }: Props) {
         hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area">
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <p className="admin-filter-area__label">제목</p>
-              <AdminFilterTextInput
-                inputSize="medium"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                value={pendingFilters.title}
-                onChange={value => patchPendingFilters(prev => ({ ...prev, title: value }))}
-                onPressEnter={() => applySearch()}
-                placeholder="제목을 입력해 주세요"
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <p className="admin-filter-area__label">첨부파일명</p>
-              <AdminFilterTextInput
-                inputSize="medium"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                value={pendingFilters.attachmentName}
-                onChange={value =>
-                  patchPendingFilters(prev => ({ ...prev, attachmentName: value }))
-                }
-                onPressEnter={() => applySearch()}
-                placeholder="첨부파일명을 입력해 주세요"
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--date-range">
-              <p className="admin-filter-area__label">작성일</p>
-              <CmsDateRangePicker
-                inputSize="medium"
-                width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
-                value={periodAsPickerValue(pendingFilters.created)}
-                onChange={dates => {
-                  setPendingFilters(prev => ({
-                    ...prev,
-                    created: dates ? [dates[0] ?? null, dates[1] ?? null] : null,
-                  }))
-                }}
-                placeholder={['시작일', '종료일']}
-                allowClear
-              />
+            <div className="admin-filter-area__fields">
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <p className="admin-filter-area__label">제목</p>
+                <AdminFilterTextInput
+                  inputSize="medium"
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  value={pendingFilters.title}
+                  onChange={value => patchPendingFilters(prev => ({ ...prev, title: value }))}
+                  onPressEnter={() => applySearch()}
+                  placeholder="제목을 입력해 주세요"
+                />
+              </div>
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <p className="admin-filter-area__label">첨부파일명</p>
+                <AdminFilterTextInput
+                  inputSize="medium"
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  value={pendingFilters.attachmentName}
+                  onChange={value =>
+                    patchPendingFilters(prev => ({ ...prev, attachmentName: value }))
+                  }
+                  onPressEnter={() => applySearch()}
+                  placeholder="첨부파일명을 입력해 주세요"
+                />
+              </div>
+              <div className="admin-filter-area__field admin-filter-area__field--date-range">
+                <p className="admin-filter-area__label">작성일</p>
+                <CmsDateRangePicker
+                  inputSize="medium"
+                  width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
+                  value={periodAsPickerValue(pendingFilters.created)}
+                  onChange={dates => {
+                    setPendingFilters(prev => ({
+                      ...prev,
+                      created: dates ? [dates[0] ?? null, dates[1] ?? null] : null,
+                    }))
+                  }}
+                  placeholder={['시작일', '종료일']}
+                  allowClear
+                />
+              </div>
             </div>
             <div className="admin-filter-area__actions">
               <CmsButton

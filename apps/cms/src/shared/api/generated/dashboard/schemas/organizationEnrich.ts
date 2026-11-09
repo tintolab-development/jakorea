@@ -7,7 +7,7 @@
  */
 
 /**
- * 기관형 강사 배정 대기 기관별 편도 거리. 희망 기관이 아닌 대기 대상도 포함한다.
+ * 기관형 강사·봉사자 배정 대기 기관별 편도 거리. 희망 기관이 아닌 대기 대상도 포함한다.
  */
 export interface OrganizationEnrich {
   organizationId?: number;

@@ -22,7 +22,8 @@ Prefer shared **`CmsTextTabs`** (`@/shared/ui/cms-text-tabs`) for new screens. `
 
 ## Tab button padding
 
-Top **6px**, left/right **16px**, bottom **10px** on `button.program-detail-fullpage-modal__tab` (+ `box-sizing: border-box`).
+Figma Tab / Line(603:108102): 6 / 16 / 10, 높이 **43** — 하단 2px stroke는 안쪽(레이아웃 미포함).
+CSS(`packages/admin-ui/src/tabs/admin-text-tabs.css`): Top **6px**, left/right **16px**, bottom **8px** + `border-bottom` 2px(비활성 투명) = **43px** (`box-sizing: border-box`).
 
 ## Inactive tab text
 
@@ -39,7 +40,7 @@ Top **6px**, left/right **16px**, bottom **10px** on `button.program-detail-full
 ## Active underline
 
 - **2px** `border-bottom` on the tab button (`cms-text-tabs__tab--active` / `program-detail-fullpage-modal__tab--active`).  
-- Text–stroke gap from button padding **6 / 16 / 10** + `border-bottom` (not label `::after`).
+- Text–stroke gap = 하단 패딩 **8** + `border-bottom` 2 (시안 6 / 16 / 10 · inside stroke와 동일, not label `::after`).
 
 ## Files
 
@@ -52,6 +53,6 @@ Top **6px**, left/right **16px**, bottom **10px** on `button.program-detail-full
 - [ ] No divider under tab row  
 - [ ] Underline matches text width, 2px mint  
 - [ ] Active/inactive typography as above  
-- [ ] Tab padding 6 / 16 / 10 with specific selectors  
+- [ ] Tab padding 6 / 16 / 8 + 2px border = 43px with specific selectors  
 
-**Last updated:** 2026-04-21
+**Last updated:** 2026-11-09

@@ -6,6 +6,7 @@ import { ThemeProvider } from './app/providers/theme-provider'
 import { ErrorBoundary } from './app/providers/error-boundary'
 import { AuthProvider } from './app/providers/auth-provider'
 import { QueryProvider } from './app/providers/query-provider'
+import { AdminReadOnlyActionGuard } from './app/providers/admin-read-only-action-guard'
 import { CmsAlertModalProvider } from '@/shared/ui/cms-alert-modal-provider'
 import { FileUploadOverlay } from '@/shared/ui/file-upload-overlay'
 import { BlockingOverlay } from '@/shared/ui/blocking-overlay'
@@ -37,7 +38,9 @@ createRoot(document.getElementById('root')!).render(
               <BlockingOverlay />
               <AuthProvider>
                 <TemplateWritingPreviewProvider>
-                  <RouterProvider router={router} />
+                  <AdminReadOnlyActionGuard>
+                    <RouterProvider router={router} />
+                  </AdminReadOnlyActionGuard>
                 </TemplateWritingPreviewProvider>
               </AuthProvider>
             </CmsAlertModalProvider>

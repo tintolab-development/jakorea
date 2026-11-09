@@ -43,6 +43,7 @@ export type CmsAdminMarketingConsentResponse = {
   version?: string
   agreed?: boolean
   agreedAt?: string
+  withdrawnAt?: string
 }
 
 function unwrapData<T>(payload: unknown): T {

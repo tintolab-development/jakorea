@@ -313,6 +313,23 @@ export function isServerRecordedRelayDownloadUrl(downloadUrl: string): boolean {
   }
 }
 
+const DOWNLOAD_EXTENSION_BY_MIME: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/gif': 'gif',
+  'image/webp': 'webp',
+  'image/heic': 'heic',
+  'image/heif': 'heif',
+  'application/pdf': 'pdf',
+}
+
+/** 이름에 확장자가 없을 때만 파일 형식(MIME)으로 확장자를 붙인다. 모르는 형식이면 그대로 둔다. */
+export function withDownloadExtension(fileName: string, mimeType: string | undefined): string {
+  if (/\.[A-Za-z0-9]{1,5}$/.test(fileName)) return fileName
+  const extension = DOWNLOAD_EXTENSION_BY_MIME[(mimeType ?? '').split(';')[0].trim().toLowerCase()]
+  return extension ? `${fileName}.${extension}` : fileName
+}
+
 /**
  * 파일 다운로드 API가 준 주소로 원본 파일을 저장한다.
  * 일반 파일은 서버가 URL 발급만 기록하므로 client 이력을 남기고,
@@ -338,7 +355,7 @@ export async function downloadAdminFile(input: {
     }
     throw new Error('첨부파일 다운로드에 실패했습니다.')
   }
-  await downloadBlob(blob, fileName, {
+  await downloadBlob(blob, withDownloadExtension(fileName, blob.type), {
     skipAccessLog: isServerRecordedRelayDownloadUrl(downloadUrl),
   })
 }

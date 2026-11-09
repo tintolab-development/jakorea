@@ -43,6 +43,8 @@ export function IncomeExpensePage() {
           } else {
             next.set('section', key)
           }
+          // 수익총계 ↔ 지출총계 이동 시 그래프/테이블 탭은 기본(그래프)으로 고정 — 이전 섹션의 테이블 탭을 이어받지 않는다
+          next.delete('view')
           return next
         },
         { replace: true }

@@ -40,11 +40,11 @@
 
 /*
  * 월간: 해당 월에 필요한 주(4~6행)만 그리므로 격자 높이가 달라진다.
- * 900px 고정 하한 대신 우측 카드(리스트 743 + padding 20×2)를 하한으로 두어 5주 월에 좌측 카드 하단 공백이 생기지 않게 한다.
- * 6주 월은 콘텐츠 높이만큼 늘어난다.
+ * 900px 고정 하한 대신 Figma 카드 높이 743(14741:1586 — 좌·우 카드 모두 743, 우측 목록은 카드 안 703 영역에서 내부 스크롤)을
+ * 하한으로 둔다. 5주 월 좌측 = 743, 6주 월은 좌측만 콘텐츠 높이만큼 늘고 우측 카드는 743 유지.
  */
 .calendar-split-card-layout:has(.calendar-main[data-month-week-rows]) {
-  --calendar-split-card-height: calc(var(--calendar-sub-right-list-height, 743px) + 40px);
+  --calendar-split-card-height: var(--calendar-sub-right-list-height, 743px);
 }
 
 .calendar-split-card-layout:has(.calendar-week--time-grid) {
@@ -81,8 +81,8 @@
   min-width: var(--calendar-main-month-min-width, calc(116px * 7 + 42px));
   min-height: var(--calendar-split-card-height);
   height: auto;
-  /* 피그마 14741:1587 — padding 20 */
-  padding: 20px;
+  /* 피그마 14741:1587 — padding 20 (하단은 격자 외곽선·shell border 보정 `--calendar-card-padding-bottom`, calendar-tokens.css) */
+  padding: 20px 20px var(--calendar-card-padding-bottom, 17px);
   overflow: visible;
 }
 
@@ -145,12 +145,13 @@
 
 /**
  * 우측 카드가 shell이므로 `calendar-sub-right.css`의 `.calendar-list` 카드 스타일을 끈다.
+ * 743은 카드 전체 높이(Figma 14741:1654) — 목록은 카드 padding·툴바를 뺀 나머지를 채우고 내부 스크롤.
  */
 .calendar-split-card--right > .calendar-list {
-  flex: 0 0 var(--calendar-sub-right-list-height);
-  min-height: var(--calendar-sub-right-list-height);
-  max-height: var(--calendar-sub-right-list-height);
-  height: var(--calendar-sub-right-list-height);
+  flex: 1 1 0;
+  min-height: 0;
+  max-height: none;
+  height: auto;
   max-width: none;
   width: 100%;
   background: transparent;
@@ -231,10 +232,10 @@
   align-self: flex-start;
   flex-shrink: 0;
   box-sizing: border-box;
-  /* shell border + padding 20px×2 — 리스트 743px와 합쳐 카드 전체 높이 */
-  height: calc(var(--calendar-sub-right-list-height, 743px) + 40px);
-  min-height: calc(var(--calendar-sub-right-list-height, 743px) + 40px);
-  max-height: calc(var(--calendar-sub-right-list-height, 743px) + 40px);
+  /* 카드 전체(border·padding 포함) 743 — Figma 14741:1654. 목록은 남는 높이에서 내부 스크롤 */
+  height: var(--calendar-sub-right-list-height, 743px);
+  min-height: var(--calendar-sub-right-list-height, 743px);
+  max-height: var(--calendar-sub-right-list-height, 743px);
   overflow: hidden;
 }
 

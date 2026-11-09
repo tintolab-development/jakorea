@@ -83,6 +83,7 @@ import {
 import type { OverviewStatusFilter } from './use-program-list-filters'
 
 import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
+import { ensureProgramWriteAllowed } from '@/features/program/shared/lib/program-role-action-check'
 
 const PROGRAMS_COMPANY_SCHOOL_NEW_QUERY_KEY = 'new'
 
@@ -460,8 +461,12 @@ function ProgramListPageContent() {
       showAlert(NO_SELECTION_ALERT)
       return
     }
-    setProgramsPendingBulkDelete(programsToDelete)
-    setBulkDeleteModalOpen(true)
+    void (async () => {
+      // 권한 설정 V1.2: 프로그램 삭제는 담당 프로그램의 Program Owner·Program Assistant만. 확인 모달 전에 막는다.
+      if (!(await ensureProgramWriteAllowed(programsToDelete.map(p => p.id)))) return
+      setProgramsPendingBulkDelete(programsToDelete)
+      setBulkDeleteModalOpen(true)
+    })()
   }
 
   const handleCloseCompanySchoolRegistrationFullpage = useCallback(() => {

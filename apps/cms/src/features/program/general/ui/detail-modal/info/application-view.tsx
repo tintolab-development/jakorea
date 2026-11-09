@@ -12,6 +12,7 @@ import {
 } from '@/features/program/general/lib/application-tabs'
 import { ApplicationFormPreviewPanel } from './application-form-preview-panel'
 import './application-view.css'
+import { showAdminAccessDeniedAlert } from '@/shared/lib/admin-role-policy'
 
 export function GeneralProgramApplicationView({
   program,
@@ -48,15 +49,14 @@ export function GeneralProgramApplicationView({
           institutionsLabel,
         })}
         trailing={
-          canWrite ? (
-            <CmsButton
-              variant="secondary"
-              size="large"
-              onClick={onEditForm}
-              disabled={editFormLoading} >
-              양식 수정
-            </CmsButton>
-          ) : null
+          // 권한 설정 V1.2: 조회 전용도 노출, 클릭 시 접근 불가 안내
+          <CmsButton
+            variant="secondary"
+            size="large"
+            onClick={canWrite ? onEditForm : () => showAdminAccessDeniedAlert()}
+            disabled={editFormLoading} >
+            양식 수정
+          </CmsButton>
         }
       />
       <div className="application-view__body">

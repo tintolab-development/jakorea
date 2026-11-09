@@ -25,6 +25,7 @@ import {
 import {
   CalendarMain,
   CalendarSubRightSettlementList,
+  SettlementPreviewTooltipSep,
   settlementRowFromCalendarItem,
   settlementEventStatusColorPair,
   type CalendarItem,
@@ -162,13 +163,13 @@ function renderPaymentOrdersEventsTooltipContent({ events: dayEvents }: { events
             <div className="instructor-settlement-preview__title">
               {settlementCalendarPrimaryTitle(row)}
             </div>
-            <div>
+            <div className="settlement-preview-tooltip__row">
               <span style={{ color: colors.text, fontWeight: 700, fontSize: '14px' }}>
                 {paymentOrderStatusShortLabelFromUiStatus(row.status)}
               </span>
+              <SettlementPreviewTooltipSep />
               <span className="settlement-preview-tooltip__text">
-                <span className="settlement-preview-tooltip__sep">|</span> +
-                {row.scheduledAmount.toLocaleString()}원
+                +{row.scheduledAmount.toLocaleString()}원
               </span>
             </div>
           </div>

@@ -30,7 +30,7 @@ export type TErrorResponse = {
     code?: string
     message?: string
   }
-  code?: number
+  code?: number | string
 }
 
 export type RetryableRequest = InternalAxiosRequestConfig & {
@@ -39,11 +39,25 @@ export type RetryableRequest = InternalAxiosRequestConfig & {
   skipAuth?: boolean
 }
 
+function coerceJsonFromArrayBuffer(data: unknown): unknown {
+  if (!(data instanceof ArrayBuffer) || data.byteLength < 2) return data
+  try {
+    const text = new TextDecoder('utf-8').decode(data).trim()
+    if (!text.startsWith('{') && !text.startsWith('[')) return data
+    return JSON.parse(text) as unknown
+  } catch {
+    return data
+  }
+}
+
 function getErrorCode(data: unknown): string | undefined {
   if (!data || typeof data !== 'object') return undefined
-  const error = (data as TErrorResponse).error
-  if (error && typeof error === 'object' && typeof error.code === 'string') {
-    return error.code
+  const record = data as TErrorResponse
+  if (record.error && typeof record.error === 'object' && typeof record.error.code === 'string') {
+    return record.error.code
+  }
+  if (typeof record.code === 'string' && record.code.trim()) {
+    return record.code
   }
   return undefined
 }
@@ -363,6 +377,7 @@ axiosInstance.interceptors.response.use(
     const originalRequest = config as RetryableRequest
     const requestUrl = resolveRequestUrl(originalRequest)
     const status = response.status
+    response.data = coerceJsonFromArrayBuffer(response.data) as TErrorResponse
     const code = getErrorCode(response.data)
 
     // A late 401 from an access token superseded by login/Refresh in this tab

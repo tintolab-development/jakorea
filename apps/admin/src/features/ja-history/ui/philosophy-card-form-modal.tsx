@@ -4,7 +4,6 @@ import '@jakorea/form-template-runtime/detail-info-form.css'
 import type { JaHistoryPhilosophyCard } from '@/entities/ja-history/model/types'
 import {
   CmsButton,
-  CmsInput,
   CmsTextArea,
   ContentModal,
   FileSelectField,
@@ -13,6 +12,7 @@ import {
   notifyFileSelectTotalSizeExceeded,
   REQUIRED_FIELDS_INCOMPLETE_ALERT,
   useCmsAlert,
+  ThumbnailPlaceholder,
 } from '@/shared/ui'
 import { isAllowedJaHistoryImage, JA_HISTORY_IMAGE_ACCEPT, readJaHistoryImage } from './image-file'
 
@@ -23,13 +23,11 @@ const IMAGE_GUIDE_LINES = [
 
 const DraftTextArea = memo(function DraftTextArea({
   initialValue,
-  rows,
   placeholder,
   ariaLabel,
   onValue,
 }: {
   initialValue: string
-  rows: number
   placeholder?: string
   ariaLabel: string
   onValue: (value: string) => void
@@ -40,7 +38,8 @@ const DraftTextArea = memo(function DraftTextArea({
       className="cms-textarea--fixed-rows"
       inputSize="large"
       width="100%"
-      rows={rows}
+      // 줄바꿈 수만큼 높이가 늘고 줄어든다(hug) — 1줄에서 시작, 최대 줄 수 제한 없음
+      autoSize={{ minRows: 1 }}
       value={value}
       placeholder={placeholder}
       aria-label={ariaLabel}
@@ -181,18 +180,9 @@ function PhilosophyCardFormBody({
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="카드 순서"
-            required
             view={null}
-            edit={
-              <CmsInput
-                inputSize="large"
-                width="100%"
-                value={orderLabel}
-                readOnly
-                tabIndex={-1}
-                aria-label="카드 순서"
-              />
-            }
+            // 카드 순서는 고정값 — 입력 칸이 아닌 텍스트로만 노출(포커스·커서 없음)
+            edit={<span className="ja-history-form__static-value">{orderLabel}</span>}
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
@@ -207,7 +197,7 @@ function PhilosophyCardFormBody({
                     {imageUrl ? (
                       <img src={imageUrl} alt="교육 카드 미리보기" />
                     ) : (
-                      <span>없음</span>
+                      <ThumbnailPlaceholder />
                     )}
                   </div>
                   <FileSelectField
@@ -247,7 +237,6 @@ function PhilosophyCardFormBody({
               <div>
                 <DraftTextArea
                   initialValue={titleRef.current}
-                  rows={2}
                   placeholder="타이틀을 입력해 주세요"
                   ariaLabel="타이틀"
                   onValue={value => {
@@ -272,7 +261,6 @@ function PhilosophyCardFormBody({
               <div>
                 <DraftTextArea
                   initialValue={descriptionRef.current}
-                  rows={2}
                   placeholder="서브 텍스트를 입력해 주세요"
                   ariaLabel="서브 텍스트"
                   onValue={value => {

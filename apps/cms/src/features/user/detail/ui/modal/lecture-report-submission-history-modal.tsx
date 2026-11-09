@@ -9,11 +9,8 @@ import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { AssignmentSubmissionCellActionButton } from '@/features/program/general/ui/assignment-submission-history-table'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
-import {
-  downloadFormSubmissionFileRemote,
-  downloadMemberLectureReportRemote,
-  fetchMemberLectureReportsRemote,
-} from '@/features/user/api/member-program-history-api-client'
+import { fetchMemberLectureReportsRemote } from '@/features/user/api/member-program-history-api-client'
+import { downloadAdminFile } from '@/shared/lib/admin-file-upload'
 import { mapMemberLectureReportsToTableRows } from '@/features/user/api/map-member-lecture-reports'
 import type { MemberLectureReportTableRow } from '@/features/user/api/map-member-lecture-reports'
 import { resolveMemberApplicationIdFromApplication } from '@/features/user/api/member-program-history-ids'
@@ -27,31 +24,18 @@ import {
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './lecture-report-submission-history-modal.css'
+import { StatusBadge } from '@/shared/components'
+import {
+  getLectureReportProgressAccent,
+  getLectureReportSubmissionAccent,
+} from '@/features/program/shared/lib/lecture-report-status-presentation'
+import { showAdminAccessDeniedAlert } from '@/shared/lib/admin-role-policy'
 
 interface LectureReportSubmissionHistoryModalProps {
   open: boolean
   application: Application | null
   memberId?: number
   onCancel: () => void
-}
-
-type StatusTextKind = 'scheduled' | 'completed' | 'undone'
-
-function statusTextClassNames(kind: StatusTextKind): string {
-  return `lecture-report-submission-history-modal__status-text lecture-report-submission-history-modal__status-text--${kind}`
-}
-
-function lectureProgressClass(label: MemberLectureReportTableRow['lectureProgressLabel']): string {
-  if (label === '진행 예정') return statusTextClassNames('scheduled')
-  return statusTextClassNames('completed')
-}
-
-function submissionStatusClass(
-  label: MemberLectureReportTableRow['submissionStatusLabel']
-): string {
-  if (label === '미제출') return statusTextClassNames('undone')
-  if (label === '진행 예정') return statusTextClassNames('scheduled')
-  return statusTextClassNames('completed')
 }
 
 function renderReportCell(
@@ -109,7 +93,12 @@ export function LectureReportSubmissionHistoryModal({
   const canBulkDownloadFiles = hasFileDownloadPermission()
 
   const handleBulkDownload = useCallback(async () => {
-    if (memberId == null || !canBulkDownloadFiles) return
+    if (memberId == null) return
+    // 권한 설정 V1.2: 버튼은 노출하고 다운로드 권한이 없으면 접근 불가 안내
+    if (!canBulkDownloadFiles) {
+      showAdminAccessDeniedAlert()
+      return
+    }
     if (!hasZipTargets) {
       showAlert({ title: '안내', content: LECTURE_REPORT_NO_ATTACHMENT_CTA })
       return
@@ -130,24 +119,17 @@ export function LectureReportSubmissionHistoryModal({
 
   const handleViewReport = useCallback(
     async (record: MemberLectureReportTableRow) => {
-      if (memberId == null || applicationId == null || !record.canViewReport) return
+      const fileObjectIds = record.reportFileIds ?? []
+      if (!record.canViewReport || fileObjectIds.length === 0) return
       setReportDownloadingId(record.id)
       try {
-        const fileId = record.reportFileIds?.[0]
-        if (fileId != null) {
-          await downloadFormSubmissionFileRemote(
-            fileId,
-            `강의보고서_${record.reportId ?? record.id}`
-          )
-          return
-        }
-        if (record.reportId != null) {
-          await downloadMemberLectureReportRemote(
-            memberId,
-            applicationId,
-            record.reportId,
-            `강의보고서_${record.reportId}`
-          )
+        // 서버 reportFileIds = file_object id → 파일 객체 다운로드 API(`/api/admin/files/{id}/download`)
+        const prefix = `강의보고서_${record.reportId ?? record.id}`
+        for (const [index, fileObjectId] of fileObjectIds.entries()) {
+          await downloadAdminFile({
+            fileObjectId,
+            fileName: fileObjectIds.length > 1 ? `${prefix}_${index + 1}` : prefix,
+          })
         }
       } catch (error) {
         showAlert({
@@ -158,7 +140,7 @@ export function LectureReportSubmissionHistoryModal({
         setReportDownloadingId(null)
       }
     },
-    [memberId, applicationId, showAlert]
+    [showAlert]
   )
 
   const columns = useMemo(
@@ -186,7 +168,12 @@ export function LectureReportSubmissionHistoryModal({
         align: 'center',
         width: 120,
         render: (label: MemberLectureReportTableRow['lectureProgressLabel']) => (
-          <span className={lectureProgressClass(label)}>{label}</span>
+          <StatusBadge
+            domain="custom"
+            variant="text"
+            label={label}
+            accentColor={getLectureReportProgressAccent(label)}
+          />
         ),
       },
       {
@@ -196,7 +183,12 @@ export function LectureReportSubmissionHistoryModal({
         align: 'center',
         width: 120,
         render: (label: MemberLectureReportTableRow['submissionStatusLabel']) => (
-          <span className={submissionStatusClass(label)}>{label}</span>
+          <StatusBadge
+            domain="custom"
+            variant="text"
+            label={label}
+            accentColor={getLectureReportSubmissionAccent(label)}
+          />
         ),
       },
       {
@@ -227,8 +219,7 @@ export function LectureReportSubmissionHistoryModal({
           <CmsButton variant="secondary" size="medium" onClick={onCancel}>
             닫기
           </CmsButton>
-          {canBulkDownloadFiles ? (
-            <Tooltip title={!hasZipTargets ? LECTURE_REPORT_NO_ATTACHMENT_CTA : undefined}>
+          <Tooltip title={!hasZipTargets ? LECTURE_REPORT_NO_ATTACHMENT_CTA : undefined}>
               <span>
                 <CmsButton
                   variant="primary"
@@ -242,7 +233,6 @@ export function LectureReportSubmissionHistoryModal({
                 </CmsButton>
               </span>
             </Tooltip>
-          ) : null}
         </>
       }
     >

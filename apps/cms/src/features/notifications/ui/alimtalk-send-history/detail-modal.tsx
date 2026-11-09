@@ -1,3 +1,4 @@
+import { NotificationSendStatusText } from '@/features/notifications/ui/shared/send-status-text'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { AlimtalkPhonePreview, CmsButton, ContentModal } from '@/shared/ui'
 import { ALIMTALK_CHANNEL_ADD_GUIDE } from '@/features/notifications/model/alimtalk-template/types'
@@ -17,7 +18,7 @@ function sendStatusView(row: AlimtalkSendHistoryRow) {
   if (row.sendStatus === '발송 실패' && row.failedReason?.trim()) {
     return (
       <span className="alimtalk-send-history-detail-modal__status-with-reason">
-        <span>{row.sendStatus}</span>
+        <NotificationSendStatusText status={row.sendStatus} />
         <span
           className="alimtalk-send-history-detail-modal__failed-reason"
           title={row.failedReason}
@@ -30,7 +31,7 @@ function sendStatusView(row: AlimtalkSendHistoryRow) {
       </span>
     )
   }
-  return row.sendStatus
+  return <NotificationSendStatusText status={row.sendStatus} />
 }
 
 export function DetailModal({ open, row, onClose }: DetailModalProps) {

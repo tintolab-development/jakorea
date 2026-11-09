@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Spin } from 'antd'
 import { useRegionAssignment } from './use-region-assignment'
 import { FilterTableToolbarButton } from '@/shared/ui'
-import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { getDefaultUjatEducationRegionKey } from '@/features/program/ujat/lib/ujat-education-regions'
 import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
@@ -41,7 +40,6 @@ export function UjatEducationProgressRegionAssignmentSection({
   programId: string
   half: EducationProgressHalfKey
 }) {
-  const canWrite = useUjatCanWrite()
   const { regions: educationRegions } = useUjatEducationRegions()
   const [activeRegion, setActiveRegion] = useState<UjatInstitutionApplicationRegionKey>(
     getDefaultUjatEducationRegionKey
@@ -214,8 +212,7 @@ export function UjatEducationProgressRegionAssignmentSection({
         </div>
 
         <div className="table-header-actions--wrapper">
-          {canWrite ? (
-            <>
+          <>
               <FilterTableToolbarButton
                 type="button"
                 variant="secondary"
@@ -258,7 +255,6 @@ export function UjatEducationProgressRegionAssignmentSection({
                 교육일 자동 배정
               </FilterTableToolbarButton>
             </>
-          ) : null}
         </div>
       </div>
 

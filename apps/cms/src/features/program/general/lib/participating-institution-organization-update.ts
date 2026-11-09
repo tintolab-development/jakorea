@@ -120,9 +120,17 @@ export function buildParticipatingInstitutionLocalSavePatch(params: {
 }): Partial<SchoolDetailForModal> & { id: string } {
   const classCount = Number(params.draft.classCount)
   const studentCount = Number(params.draft.studentCount)
+  // 담당 교사 연락처 원문은 상위 로컬 패치(savedBasicPatches)에 올리지 않는다.
+  // 저장 직후 캐시에 넣은 마스킹 상세 GET이 표시값이다(CMS-29, 저장 후 원문 잔류 방지).
+  const {
+    teacherPhone: _teacherPhone,
+    teacherMobile: _teacherMobile,
+    teacherEmail: _teacherEmail,
+    ...nonContactPatch
+  } = params.patch
   return {
     id: params.detailId,
-    ...params.patch,
+    ...nonContactPatch,
     educationGrade: params.draft.educationGrade.trim() || undefined,
     classCount: Number.isFinite(classCount) ? classCount : params.fallbackClassCount,
     studentCount: Number.isFinite(studentCount) ? studentCount : params.fallbackStudentCount,

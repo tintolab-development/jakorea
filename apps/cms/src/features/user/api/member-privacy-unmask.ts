@@ -14,6 +14,7 @@ import type { InstructorMemberProfile, UserRole } from '@/types/user'
 import {
   PrivacyUnmaskApiError,
 } from '@/features/logs/api/privacy-unmask-fetcher'
+import { privacyUnmaskBody, type PrivacyUnmaskPurpose } from '@/shared/lib/privacy-unmask-purpose'
 
 function wrapPrivacyUnmaskError(err: unknown): never {
   if (err instanceof PrivacyUnmaskApiError) throw err
@@ -61,6 +62,8 @@ export type MemberPrivacyUnmaskOptions = {
    * (순수 교사는 강사 프로필이 없어 `INSTRUCTOR_PROFILE_NOT_FOUND`)
    */
   instructorMemberProfile?: InstructorMemberProfile | null
+  /** 회원 정보 수정 진입에서만 'EDIT_MODE'. 수동 열람은 생략(사유 문자열로 추론하지 않음). */
+  purpose?: PrivacyUnmaskPurpose
 }
 
 export async function fetchMemberRolePrivacyUnmask(
@@ -69,7 +72,8 @@ export async function fetchMemberRolePrivacyUnmask(
   role?: UserRole,
   options?: MemberPrivacyUnmaskOptions
 ): Promise<unknown> {
-  const body = { reason }
+  // purpose=EDIT_MODE는 수정 진입 호출부가 명시할 때만 — 서버가 MEMBER_WRITE 확인·고정 사유 감사
+  const body = privacyUnmaskBody(reason, { purpose: options?.purpose })
   try {
     if (role === 'INSTRUCTOR') {
       // 상세 GET …/teacher 와 같은 프로필 → POST …/teacher/privacy/unmask (TeacherMemberDetailResponse)

@@ -1,3 +1,4 @@
+import { NotificationSendStatusText } from '@/features/notifications/ui/shared/send-status-text'
 import dayjs from 'dayjs'
 import { Spin } from 'antd'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -38,7 +39,7 @@ function sendStatusView(row: SmsSendHistoryRow) {
   if (row.sendStatus === '발송 실패' && row.failedReason?.trim()) {
     return (
       <span className="sms-send-history-detail-modal__status-with-reason">
-        <span>{row.sendStatus}</span>
+        <NotificationSendStatusText status={row.sendStatus} />
         <span
           className="sms-send-history-detail-modal__failed-reason"
           title={row.failedReason}
@@ -51,7 +52,7 @@ function sendStatusView(row: SmsSendHistoryRow) {
       </span>
     )
   }
-  return row.sendStatus
+  return <NotificationSendStatusText status={row.sendStatus} />
 }
 
 export function DetailModal({ open, row, loading, onClose }: DetailModalProps) {

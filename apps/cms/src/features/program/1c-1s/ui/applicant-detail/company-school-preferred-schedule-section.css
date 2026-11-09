@@ -1,4 +1,13 @@
 /* 1사1교 기관 신청 상세 — 진행 희망 교육 일정 (Figma 4175:106433: 지망 간 16px, 소제목·표 4px) */
+.company-school-preferred-schedule .detail-info-form__header {
+  margin-bottom: 10px;
+}
+
+.company-school-preferred-schedule .detail-info-form__title {
+  font-size: 18px;
+  line-height: 140%;
+}
+
 .company-school-preferred-schedule__list {
   display: flex;
   flex-direction: column;

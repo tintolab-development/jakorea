@@ -13,6 +13,10 @@ import {
   getProgramAdminDetailInfoTabUrlForProgramType,
   tryGetProgramAdminDetailInfoTabUrlByIdPrefix,
 } from '@/features/program/general/lib/program-admin-detail-url'
+import {
+  checkProgramDetailAccess,
+  isProgramDetailAccessCheckRequired,
+} from '@/features/program/shared/lib/program-detail-access'
 import { resolveProgramAdminDetailInfoTabUrl } from '@/features/program/general/lib/resolve-program-admin-detail-url'
 import type { ProgramNavigationResponse } from '@/shared/api/generated/dashboard/schemas/programNavigationResponse'
 
@@ -37,6 +41,24 @@ export function navigateToProgramAdminDetail(
   const id = programId.trim()
   if (!id) return
 
+  // 권한 설정 V1.2 원칙 7: 미배정 프로그램은 이동하지 않고 접근 불가 팝업만 띄운다(현재 화면 유지).
+  if (isProgramDetailAccessCheckRequired()) {
+    void checkProgramDetailAccess(id, options?.queryClient).then(allowed => {
+      if (allowed) navigateAfterAccessCheck(navigate, id, options)
+    })
+    return
+  }
+  navigateAfterAccessCheck(navigate, id, options)
+}
+
+function navigateAfterAccessCheck(
+  navigate: NavigateFunction,
+  id: string,
+  options?: {
+    onBeforeNavigate?: () => void
+    queryClient?: QueryClient
+  }
+): void {
   options?.onBeforeNavigate?.()
 
   const known = tryGetProgramAdminDetailInfoTabUrlByIdPrefix(id)

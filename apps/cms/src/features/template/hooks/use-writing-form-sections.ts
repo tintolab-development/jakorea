@@ -15,8 +15,12 @@ function emptyWritingSections(): TemplateSection[] {
   }))
 }
 
-export function useWritingFormSections() {
-  const remoteEnabled = useFormsSurveysRemoteEnabled()
+/**
+ * 작성 양식(템플릿 관리) 목록. `GET /api/admin/form-templates`는 FORM_TEMPLATE_READ라 조회 전용 역할은 403이다.
+ * 목록이 필요 없는 화면(예: 프로그램 상세 설문 관리의 조회 전용)은 `enabled: false`로 호출을 막는다.
+ */
+export function useWritingFormSections(options?: { enabled?: boolean }) {
+  const remoteEnabled = useFormsSurveysRemoteEnabled() && (options?.enabled ?? true)
 
   const query = useQuery({
     queryKey: formTemplateQueryKeys.writingSections(),

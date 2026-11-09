@@ -87,7 +87,7 @@ export function BannerSectionCard({ banner }: Props) {
   )
 
   return (
-    <div className="corporate-guide-section">
+    <div className="admin-list-card corporate-guide-section">
       <div className="admin-list-toolbar">
         <div className="table-header-title--wrapper">
           <span className="table-title">■ 상단 배너</span>

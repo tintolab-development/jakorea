@@ -1,3 +1,4 @@
+import { NotificationSendStatusText } from '@/features/notifications/ui/shared/send-status-text'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import { useSearchParams } from 'react-router-dom'
@@ -140,6 +141,7 @@ export function Page() {
         key: 'sendStatus',
         width: COL_W.sendStatus,
         align: 'center',
+        render: (status: string) => <NotificationSendStatusText status={status} />,
       },
       {
         title: '수신 상태',

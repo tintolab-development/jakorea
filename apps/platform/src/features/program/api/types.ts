@@ -41,10 +41,18 @@ export type PortalProgramListItem = {
   summary?: string
   operationMethod?: string
   /**
-   * 목록 교육 형태. `online` | `offline` | `hybrid` | `participant_choice`.
-   * 없으면 `operationMethod`. 목록에는 한글 라벨이 없다.
+   * 목록 교육 형태. `online` | `offline` | `hybrid` | `participant_selection`.
+   * 구 응답 `participant_choice`도 같은 의미. 없으면 `operationMethod`. 목록에는 한글 라벨이 없다.
+   * `educationMethod` 필터는 이 값 기준으로 매칭된다.
    */
-  educationForm?: 'online' | 'offline' | 'hybrid' | 'participant_choice' | string | null
+  educationForm?:
+    | 'online'
+    | 'offline'
+    | 'hybrid'
+    | 'participant_selection'
+    | 'participant_choice'
+    | string
+    | null
   businessYear?: number
   businessStartDate?: string
   businessEndDate?: string
@@ -69,7 +77,14 @@ export type PortalProgramListItem = {
   canApply?: boolean
   thumbnailFileObjectId?: number
   educationTarget?: string
+  /** `educationTarget` 필터는 이 값 기준으로 매칭된다. 비어 있으면 필드가 생략된다. */
   educationTargets?: string[]
+  /**
+   * 이 모집 행에 지원하는 사람 기준 대상 (`elementary`…`adult`). `recruitmentTarget` 필터 기준.
+   * PARTICIPANT 행은 `educationTargets`와 같고, INSTRUCTOR·VOLUNTEER 행은 상세 `recruitmentTargets`와 같다.
+   * 항상 존재하며 없으면 `[]`.
+   */
+  recruitmentTargets?: string[]
 }
 
 export type PortalProgramListPage = {

@@ -18,8 +18,12 @@
   width: calc(100% / 7);
 }
 
+/*
+ * 행 높이는 셀(.calendar-cell min-height = 124 - 하단선)로만 정한다. tr·td에 124 하한을 두면
+ * border-collapse 표에서 하단선 절반(0.5px)이 행 밖으로 더해져 124.5가 된다 (Figma list 12432:532991 = 124).
+ */
 .calendar-split-card--left .ant-picker-content tbody tr {
-  min-height: var(--calendar-cell-min-height, 124px);
+  min-height: 0;
   height: auto;
 }
 
@@ -27,7 +31,8 @@
   width: calc(100% / 7);
   max-width: calc(100% / 7);
   min-width: var(--calendar-cell-min-width, 116px);
-  min-height: var(--calendar-cell-min-height, 124px);
+  /* 행 높이는 위 tr 규칙 주석 참고 — td 하한 없음 */
+  min-height: 0;
   border: none;
   padding: 0;
   vertical-align: top;
@@ -42,7 +47,7 @@
   width: 100%;
   min-width: 0;
   max-width: 100%;
-  min-height: var(--calendar-cell-min-height, 124px);
+  min-height: calc(var(--calendar-cell-min-height, 124px) - var(--calendar-cell-row-border-width, 0px));
   height: auto;
   max-height: none;
   padding: 6px 7px 6px 6px;

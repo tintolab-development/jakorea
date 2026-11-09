@@ -21,6 +21,7 @@ import { CmsButton } from '@/shared/ui'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { FormDraftLoading } from '@/features/template/ui/form-draft-loading'
 import '@/features/program/general/ui/detail-modal/info/application-view.css'
+import { showAdminAccessDeniedAlert } from '@/shared/lib/admin-role-policy'
 
 const TRAINED_TEACHERS_APPLICATION_VARIANT = 'trained-teachers-application-institution' as const
 
@@ -139,15 +140,14 @@ export function TrainedTeachersApplicationInfoView({
         onChange={() => {}}
         items={[{ key: 'institutions', label: '참여 기관 신청 정보' }]}
         trailing={
-          canWrite ? (
-            <CmsButton
-              variant="secondary"
-              size="large"
-              onClick={onEditForm}
-              disabled={editFormLoading} >
-              양식 수정
-            </CmsButton>
-          ) : null
+          // 권한 설정 V1.2: 조회 전용도 노출, 클릭 시 접근 불가 안내
+          <CmsButton
+            variant="secondary"
+            size="large"
+            onClick={canWrite ? onEditForm : () => showAdminAccessDeniedAlert()}
+            disabled={editFormLoading} >
+            양식 수정
+          </CmsButton>
         }
       />
       <div className="application-view__body">

@@ -336,32 +336,35 @@ export function AwardPanel() {
         title: '상명',
         dataIndex: 'title',
         key: 'title',
+        // 시안(Figma 27:39925, 표 1538): 선택 60 · No. 80 · 공개 100 · 상명 526 · 수여 기관명 272 · 수상일 160 · 작성일시 200 · 관리 140
+        // 상명은 폭 미지정 — 남는 폭(시안 기준 526)을 흡수
         ellipsis: true,
       },
       {
         title: '수여 기관명',
         dataIndex: 'organization',
         key: 'organization',
+        width: 272,
         ellipsis: true,
       },
       {
         title: '수상일',
         key: 'awardedOn',
-        width: 120,
+        width: 160,
         align: 'center',
         render: (_v, record) => formatYmdDot(record.awardedOn),
       },
       {
         title: '작성일시',
         key: 'createdAt',
-        width: 160,
+        width: 200,
         align: 'center',
         render: (_v, record) => formatCreatedDateTime(record.createdAt),
       },
       {
         title: '관리',
         key: 'actions',
-        width: 120,
+        width: 140,
         align: 'center',
         render: (_v, record) => (
           <CmsButton
@@ -387,78 +390,80 @@ export function AwardPanel() {
         hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area">
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <p className="admin-filter-area__label">공개 여부</p>
-              <CmsSelect
-                inputSize="medium"
-                withAllOption
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                value={pendingFilters.isPublic}
-                onChange={v =>
-                  setPendingFilters(prev => ({
-                    ...prev,
-                    isPublic: (v as PublicFilterValue) ?? '',
-                  }))
-                }
-                options={[
-                  { label: '공개', value: 'true' },
-                  { label: '비공개', value: 'false' },
-                ]}
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <p className="admin-filter-area__label">상명</p>
-              <AdminFilterTextInput
-                inputSize="medium"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="상명을 입력해 주세요"
-                value={pendingFilters.title}
-                onChange={value => patchPendingFilters(prev => ({ ...prev, title: value }))}
-                onPressEnter={handleSearch}
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <p className="admin-filter-area__label">수여 기관명</p>
-              <AdminFilterTextInput
-                inputSize="medium"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="수여 기관명을 입력해 주세요"
-                value={pendingFilters.organization}
-                onChange={value => patchPendingFilters(prev => ({ ...prev, organization: value }))}
-                onPressEnter={handleSearch}
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--date-range">
-              <p className="admin-filter-area__label">수상일</p>
-              <CmsDateRangePicker
-                inputSize="medium"
-                width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
-                value={periodAsPickerValue(pendingFilters.awarded)}
-                onChange={dates =>
-                  setPendingFilters(prev => ({
-                    ...prev,
-                    awarded: dates ?? null,
-                  }))
-                }
-                placeholder={['시작일', '종료일']}
-                allowClear
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--date-range">
-              <p className="admin-filter-area__label">작성일</p>
-              <CmsDateRangePicker
-                inputSize="medium"
-                width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
-                value={periodAsPickerValue(pendingFilters.created)}
-                onChange={dates =>
-                  setPendingFilters(prev => ({
-                    ...prev,
-                    created: dates ?? null,
-                  }))
-                }
-                placeholder={['시작일', '종료일']}
-                allowClear
-              />
+            <div className="admin-filter-area__fields">
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <p className="admin-filter-area__label">공개 여부</p>
+                <CmsSelect
+                  inputSize="medium"
+                  withAllOption
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  value={pendingFilters.isPublic}
+                  onChange={v =>
+                    setPendingFilters(prev => ({
+                      ...prev,
+                      isPublic: (v as PublicFilterValue) ?? '',
+                    }))
+                  }
+                  options={[
+                    { label: '공개', value: 'true' },
+                    { label: '비공개', value: 'false' },
+                  ]}
+                />
+              </div>
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <p className="admin-filter-area__label">상명</p>
+                <AdminFilterTextInput
+                  inputSize="medium"
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  placeholder="상명을 입력해 주세요"
+                  value={pendingFilters.title}
+                  onChange={value => patchPendingFilters(prev => ({ ...prev, title: value }))}
+                  onPressEnter={handleSearch}
+                />
+              </div>
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <p className="admin-filter-area__label">수여 기관명</p>
+                <AdminFilterTextInput
+                  inputSize="medium"
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  placeholder="수여 기관명을 입력해 주세요"
+                  value={pendingFilters.organization}
+                  onChange={value => patchPendingFilters(prev => ({ ...prev, organization: value }))}
+                  onPressEnter={handleSearch}
+                />
+              </div>
+              <div className="admin-filter-area__field admin-filter-area__field--date-range">
+                <p className="admin-filter-area__label">수상일</p>
+                <CmsDateRangePicker
+                  inputSize="medium"
+                  width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
+                  value={periodAsPickerValue(pendingFilters.awarded)}
+                  onChange={dates =>
+                    setPendingFilters(prev => ({
+                      ...prev,
+                      awarded: dates ?? null,
+                    }))
+                  }
+                  placeholder={['시작일', '종료일']}
+                  allowClear
+                />
+              </div>
+              <div className="admin-filter-area__field admin-filter-area__field--date-range">
+                <p className="admin-filter-area__label">작성일</p>
+                <CmsDateRangePicker
+                  inputSize="medium"
+                  width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
+                  value={periodAsPickerValue(pendingFilters.created)}
+                  onChange={dates =>
+                    setPendingFilters(prev => ({
+                      ...prev,
+                      created: dates ?? null,
+                    }))
+                  }
+                  placeholder={['시작일', '종료일']}
+                  allowClear
+                />
+              </div>
             </div>
             <div className="admin-filter-area__actions">
               <CmsButton
@@ -494,7 +499,7 @@ export function AwardPanel() {
       >
         <div className="hac-panel__table-scroll">
           <CmsDataTable<AwardItem>
-            className="cms-data-table"
+            className="cms-data-table hac-table"
             rowKey="id"
             loading={listQuery.isLoading}
             columns={columns}

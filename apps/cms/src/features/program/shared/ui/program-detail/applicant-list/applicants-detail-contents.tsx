@@ -2,6 +2,7 @@ import { useMemo, useCallback, useState, useEffect } from 'react'
 import axios from 'axios'
 import { useQueryClient } from '@tanstack/react-query'
 import { cacheProjectedProgramPrivacy } from '@/features/program/shared/lib/program-my-assignment'
+import { EDIT_MODE_REVEAL, type PrivacyRevealOptions } from '@/shared/lib/privacy-unmask-purpose'
 import { useSearchParams } from 'react-router-dom'
 import { Space, Empty } from 'antd'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
@@ -60,10 +61,8 @@ import {
   unmaskInstructorApplicationPrivacyRemote,
   unmaskOrganizationApplicationPrivacyRemote,
 } from '@/features/program/general/api/applications-api-client'
-import {
-  mapInstructorApplicationDetailToApplicantRow,
-  mapOrganizationApplicationDetailToApplicantSchoolRow,
-} from '@/features/program/general/api/adapters/general-applications-adapters'
+import { mapInstructorApplicationDetailToApplicantRow } from '@/features/program/general/api/adapters/general-applications-adapters'
+import { applyUnmaskedOrganizationApplicationPrivacyToApplicantSchoolRow } from '@/features/program/general/lib/applicant-institution-detail-edit'
 import {
   readInstructorApplicationSettlementFields,
   retainMaskedInstructorApplicationSettlement,
@@ -1294,7 +1293,7 @@ export function ApplicantsDetailContents({
   }, [applicantId])
 
   const revealInstitutionTeacherPersonalInfo = useCallback(
-    async (reason: string) => {
+    async (reason: string, options?: PrivacyRevealOptions) => {
       const applicationId = institutionData?.id
       if (!applicationId?.trim()) {
         throw new Error('기관 신청 ID가 없습니다.')
@@ -1303,7 +1302,8 @@ export function ApplicantsDetailContents({
       const detail = await unmaskOrganizationApplicationPrivacyRemote(
         applicationId,
         reason,
-        Number.isFinite(programIdNumber) ? programIdNumber : undefined
+        Number.isFinite(programIdNumber) ? programIdNumber : undefined,
+        options
       )
       const safeDetail = cacheProjectedProgramPrivacy(
         queryClient,
@@ -1457,6 +1457,7 @@ export function ApplicantsDetailContents({
     personalInfoRevealed,
     revealWithReason,
     openPersonalInfoRevealConfirm: onRevealPersonalInfo,
+    remaskPersonalInfo,
     confirmModal: personalInfoRevealModal,
     programPrivacyPending,
   } = usePersonalInfoReveal({
@@ -1512,13 +1513,34 @@ export function ApplicantsDetailContents({
     setEditUnmaskConfirmOpen(true)
   }, [individualDetailEdit.enterEdit, personalInfoRevealed])
 
+  /** CMS-29: 수정 취소 즉시 원문 교사 정보를 버리고 마스킹으로 돌아간다(원문 캐시는 훅이 초기화). */
+  const cancelInstitutionEditAndRemask = useCallback(() => {
+    institutionDetailEdit.cancelEdit()
+    setInstitutionTeacherPrivacy(null)
+    remaskPersonalInfo()
+  }, [institutionDetailEdit, remaskPersonalInfo])
+
   const requestStartInstitutionEdit = useCallback(() => {
-    if (personalInfoRevealed && institutionWithMerge) {
-      institutionDetailEdit.enterEdit(institutionWithMerge)
+    if (personalInfoRevealed && displayedInstitutionData) {
+      institutionDetailEdit.enterEdit({
+        ...displayedInstitutionData,
+        detail: applyCombinedClassMergeToApplicantDetail(
+          displayedInstitutionData.detail,
+          mergeGroupsQuery.data,
+          displayedInstitutionData,
+          institutionList
+        ),
+      })
       return
     }
     setEditUnmaskConfirmOpen(true)
-  }, [institutionDetailEdit, institutionWithMerge, personalInfoRevealed])
+  }, [
+    displayedInstitutionData,
+    institutionDetailEdit,
+    institutionList,
+    mergeGroupsQuery.data,
+    personalInfoRevealed,
+  ])
 
   const closeEditUnmaskConfirm = useCallback(() => {
     if (editUnmaskConfirmLoading) return
@@ -1528,21 +1550,17 @@ export function ApplicantsDetailContents({
   const confirmEditUnmaskAndStartEdit = useCallback(() => {
     if (editUnmaskConfirmLoading) return
     setEditUnmaskConfirmLoading(true)
-    void revealWithReason(APPLICATION_INFO_EDIT_UNMASK_REASON)
+    void revealWithReason(APPLICATION_INFO_EDIT_UNMASK_REASON, EDIT_MODE_REVEAL)
       .then(result => {
         if (!result.ok) return
         setEditUnmaskConfirmOpen(false)
         if (isInstitution && institutionWithMerge && result.payload != null) {
-          const payload = result.payload as { detail?: unknown }
-          const dto =
-            payload.detail != null && typeof payload.detail === 'object'
-              ? payload.detail
-              : result.payload
-          const seeded = mapOrganizationApplicationDetailToApplicantSchoolRow(
-            dto as Parameters<typeof mapOrganizationApplicationDetailToApplicantSchoolRow>[0],
-            institutionWithMerge
+          institutionDetailEdit.enterEdit(
+            applyUnmaskedOrganizationApplicationPrivacyToApplicantSchoolRow(
+              institutionWithMerge,
+              result.payload
+            )
           )
-          institutionDetailEdit.enterEdit(seeded)
           return
         }
         if (isIndividual) {
@@ -1588,7 +1606,7 @@ export function ApplicantsDetailContents({
       isEditingInstitutionDetail: institutionDetailEdit.isEditing,
       isSavingInstitutionDetail: institutionDetailEdit.isSaving,
       onEnterInstitutionEdit: requestStartInstitutionEdit,
-      onCancelInstitutionEdit: institutionDetailEdit.cancelEdit,
+      onCancelInstitutionEdit: cancelInstitutionEditAndRemask,
       onSaveInstitutionEdit: () => {
         void institutionDetailEdit.saveEdit().then(result => {
           if (result === COMBINED_CLASS_GRADE_REQUIRED_SAVE_RESULT) {
@@ -1652,7 +1670,7 @@ export function ApplicantsDetailContents({
     applicantId,
     isApprovedInstitution,
     requestStartInstitutionEdit,
-    institutionDetailEdit.cancelEdit,
+    cancelInstitutionEditAndRemask,
     institutionDetailEdit.isEditing,
     institutionDetailEdit.isSaving,
     institutionDetailEdit.saveEdit,

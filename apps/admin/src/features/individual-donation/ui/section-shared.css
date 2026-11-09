@@ -98,3 +98,23 @@
   transform: translate(50%, 100%);
   pointer-events: none;
 }
+
+/* 수정 모드 열 제목 필수 표시 — 별표는 절대 배치로 글자 흐름 밖 · Status/red/main #C32F4A */
+.individual-donation-table__th-label {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.individual-donation-table__required {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  margin-left: 2px;
+  transform: translateY(-50%);
+  color: var(--color-required-mark, #c32f4a);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+}

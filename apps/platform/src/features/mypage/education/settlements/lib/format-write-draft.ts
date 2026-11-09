@@ -192,6 +192,7 @@ export function formatSettlementPaymentPurpose(draft: SettlementWriteDraft): str
   }
   if (hasSettlementMealSection(draft)) names.push('식사비')
   if (hasSettlementActivitySection(draft)) names.push('활동비')
+  if (draft.companySchoolLodging?.requested) names.push('숙박비')
   if (names.length === 0) return ''
   return `${names.join(', ')} 지급`
 }

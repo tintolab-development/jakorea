@@ -14,19 +14,10 @@ export interface MemberPortalEducationScheduleAssignmentSubmission {
   /** 안정적인 제출물 항목 ID. FILE은 실제 file_object.id, URL은 실제 form_response_answer.id입니다. */
   id?: unknown;
   kind?: MemberPortalEducationScheduleAssignmentSubmissionKind;
-  /**
-     * FILE만. 원본 파일명.
-     * @nullable
-     */
+  /** FILE만. 원본 파일명. */
   fileName?: string | null;
-  /**
-     * URL만. 저장된 URL. 신규 제출은 https://만 허용한다.
-     * @nullable
-     */
+  /** URL만. 저장된 URL. 신규 제출은 https://만 허용한다. */
   url?: string | null;
-  /**
-     * FILE 항목의 file_object.id. 수정 제출 시 유지할 파일은 이 값을 fileObjectIds에 다시 보낸다. URL 항목에는 없다.
-     * @nullable
-     */
+  /** FILE 항목의 file_object.id. 수정 제출 시 유지할 파일은 이 값을 fileObjectIds에 다시 보낸다. URL 항목에는 없다. */
   fileObjectId?: number | null;
 }

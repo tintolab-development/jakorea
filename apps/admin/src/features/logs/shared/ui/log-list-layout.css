@@ -39,10 +39,6 @@
   text-align: left !important;
 }
 
-.log-list-page .admin-filter-area__actions {
-  margin-left: auto;
-}
-
 .log-list-page .cms-data-table .ant-pagination {
   margin: 16px 0 0;
 }

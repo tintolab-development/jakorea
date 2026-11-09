@@ -163,9 +163,10 @@
 }
 
 .recruit-applicant-detail-modal__attachment {
+  /* Figma 2138:62414 Table / Common / Cell / File — 아이콘 20 · 간격 4 · 14 Medium / 1.3, 세로 가운데 */
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   color: var(--default-BK, #3d3d3d);
   text-decoration: none;
   min-width: 0;
@@ -173,7 +174,10 @@
   border: 0;
   background: transparent;
   cursor: pointer;
-  font: inherit;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.3;
 }
 
 .recruit-applicant-detail-modal__attachment:hover {
@@ -181,8 +185,17 @@
 }
 
 .recruit-applicant-detail-modal__file-icon {
+  display: block;
   flex-shrink: 0;
-  color: var(--color-mint-01, #01a1af);
+  width: 20px;
+  height: 20px;
+}
+
+.recruit-applicant-detail-modal__file-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .recruit-applicant-detail-modal__status--pending {

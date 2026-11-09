@@ -27,6 +27,8 @@ import {
   useCmsAlert,
 } from '@/shared/ui'
 
+import fileDownloadBlack20Url from '@/shared/ui/icons/file-download-black-20.svg'
+
 import './detail-modal.css'
 
 dayjs.locale('ko')
@@ -59,27 +61,6 @@ function internationalAge(isoDate: string): number | null {
   return age
 }
 
-function FileIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="20"
-      height="20"
-      viewBox="0 0 20 20"
-      fill="none"
-      className={className}
-      aria-hidden
-    >
-      <path
-        d="M5.5 2.5h6.2L14.5 5.3V16.5a1 1 0 0 1-1 1h-8a1 1 0 0 1-1-1v-13a1 1 0 0 1 1-1Z"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinejoin="round"
-      />
-      <path d="M11.5 2.5V5.8H14.5" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
-    </svg>
-  )
-}
 
 export function TalentDonationApplicationDetailModal({
   open,
@@ -119,6 +100,16 @@ export function TalentDonationApplicationDetailModal({
 
   const genderDobView = (() => {
     if (!data) return <span>-</span>
+    if (data.piiMasked) {
+      // 마스킹 응답: 원문 gender·birthDate는 null — 서버 마스킹 값만 그대로 표시하고 나이는 계산하지 않는다
+      return (
+        <span className="talent-app-detail-modal__confirmed">
+          <span>{data.maskedGender || '-'}</span>
+          <DetailInfoForm.TdDivider />
+          <span>{data.maskedBirthDate || '-'}</span>
+        </span>
+      )
+    }
     const age = internationalAge(data.birthDate)
     const dob = formatDateDot(data.birthDate)
     return (
@@ -138,6 +129,8 @@ export function TalentDonationApplicationDetailModal({
       <button
         type="button"
         className="talent-app-detail-modal__attachment"
+        // 권한 설정 V1.2: 신청자 첨부는 개인정보(HOMEPAGE_PII_VIEW). Program Viewer는 클릭 시 접근 불가 안내.
+        data-homepage-action="pii"
         onClick={() => {
           if (!data?.id) return
           runProtectedDownload({
@@ -165,8 +158,15 @@ export function TalentDonationApplicationDetailModal({
           })
         }}
       >
-        <FileIcon className="talent-app-detail-modal__file-icon" />
-        <span>{data.attachmentFileName}</span>
+        <img
+          className="talent-app-detail-modal__file-icon"
+          src={fileDownloadBlack20Url}
+          alt=""
+          width={20}
+          height={20}
+          aria-hidden
+        />
+        <span className="talent-app-detail-modal__file-name">{data.attachmentFileName}</span>
       </button>
     ) : (
       <span>{data?.attachmentFileName || '-'}</span>

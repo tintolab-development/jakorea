@@ -21,6 +21,7 @@ import {
   isPermissionRequestsPath,
   isMemberPermissionSettingsPath,
   isSecurityLogPath,
+  isSettlementItemSettingsPath,
   isTemplateManagementPath,
   resolveAdminRoleCodeFromUser,
   showAdminAccessDeniedAlert,
@@ -29,6 +30,8 @@ import {
   canAccessAccountPayments,
   isAccountPaymentsPath,
 } from '@/shared/lib/account-payments-access'
+import { ProgramDetailAccessGuard } from '@/features/program/shared/ui/program-detail-access-guard'
+import { ProgramDetailReadOnlyProvider } from '@/features/program/shared/ui/program-detail-read-only-provider'
 import { Sidebar } from './sidebar'
 import { MainHeader } from './main-header'
 import './layout.css'
@@ -60,15 +63,18 @@ function LayoutContent() {
     Boolean(user) &&
     isTemplateManagementPath(location.pathname) &&
     !canAdminAction({ roleCode, action: 'view', screen: 'template-management' })
-  const accountPaymentsBlocked =
+  const settlementItemSettingsBlocked =
     Boolean(user) &&
-    isAccountPaymentsPath(location.pathname) &&
-    !canAccessAccountPayments(user)
+    isSettlementItemSettingsPath(location.pathname) &&
+    !canAdminAction({ roleCode, action: 'view', screen: 'settlement-item-settings' })
+  const accountPaymentsBlocked =
+    Boolean(user) && isAccountPaymentsPath(location.pathname) && !canAccessAccountPayments(user)
   const screenAccessBlocked =
     securityLogBlocked ||
     permissionSettingsBlocked ||
     permissionRequestsBlocked ||
     templateManagementBlocked ||
+    settlementItemSettingsBlocked ||
     accountPaymentsBlocked
   const deniedLogPathRef = useRef<string | null>(null)
 
@@ -126,7 +132,10 @@ function LayoutContent() {
 
   return (
     <Suspense fallback={<RouterLoadingFallback />}>
-      <Outlet />
+      <ProgramDetailAccessGuard />
+      <ProgramDetailReadOnlyProvider>
+        <Outlet />
+      </ProgramDetailReadOnlyProvider>
     </Suspense>
   )
 }

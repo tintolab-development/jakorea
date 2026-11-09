@@ -14,6 +14,7 @@ import type {
 import {
   useConfirmCorporateConsultations,
   useCorporateConsultationsList,
+  useExportCorporateConsultations,
   useRemoveCorporateConsultations,
 } from '@/features/corporate-consultation/api/hooks'
 import { corporateConsultationQueryKeys } from '@/features/corporate-consultation/api/query-keys'
@@ -31,6 +32,7 @@ import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
+import { logExcelExportFailureAlert } from '@/features/logs/shared/lib/log-excel-export-alert'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { isTableSelectionClick } from '@/shared/lib/is-table-selection-click'
@@ -53,6 +55,7 @@ import {
   AdminFilterTextInput,
   CmsSelect,
   ConfirmModal,
+  ExcelButton,
   NO_SELECTION_ALERT,
   showChangeCompletedAlert,
   showDeleteCompletedAlert,
@@ -61,6 +64,7 @@ import {
 } from '@/shared/ui'
 
 import './page.css'
+import { ADMIN_ACCESS_DENIED_ALERT } from '@/shared/lib/admin-access-denied'
 
 type StatusPending = '' | ConsultationStatus
 
@@ -86,33 +90,22 @@ const appliedSyncRef: UrlDateRangePendingSyncRef = { hadCompleteInUrl: false }
 const confirmedSyncRef: UrlDateRangePendingSyncRef = { hadCompleteInUrl: false }
 const DETAIL_QUERY_KEYS = ['applicationId', 'consultationId'] as const
 
+/**
+ * 열 폭 — 시안 36:50664 (표 1538): 선택 60 · No. 80 · 처리 상태 140 · 나머지 6열(기업명~확인일시) 각 210.
+ * 세 열만 px 고정이고 6열은 남는 폭을 균등 분할한다(폭 미지정 유연 열 + page.css 의 calc 비율).
+ */
 const COL = {
   checkbox: TABLE_COLUMN_WIDTHS.checkbox,
   no: TABLE_COLUMN_WIDTHS.index,
-  status: 120,
-  company: 160,
-  contact: 110,
-  department: 140,
-  phone: TABLE_COLUMN_WIDTHS.phone,
-  applied: 160,
-  confirmed: 160,
+  status: 140,
+  /** 6개 균등 열의 최소 폭 — 좁은 화면(최소 폭 1120)에서 각 140 */
+  fluidMin: 140,
 } as const
+const FLUID_COLUMN_COUNT = 6
+const FLUID_COL_CLASS = 'corp-consultations-page__col--fluid'
 
-/**
- * 상담 목록의 최소 테이블 폭.
- * 기업명 열은 이 폭을 기준으로 화면의 잔여 폭을 사용하고,
- * 나머지 열은 신청 확인 전후에도 같은 폭을 유지한다.
- */
-const TABLE_MIN_WIDTH =
-  COL.checkbox +
-  COL.no +
-  COL.status +
-  COL.company +
-  COL.contact +
-  COL.department +
-  COL.phone +
-  COL.applied +
-  COL.confirmed
+/** 상담 목록의 최소 테이블 폭 — 이보다 좁으면 가로 스크롤, 6열은 같은 폭을 유지한다. */
+const TABLE_MIN_WIDTH = COL.checkbox + COL.no + COL.status + COL.fluidMin * FLUID_COLUMN_COUNT
 
 function parseStatus(raw: string | null): StatusPending {
   if (raw === 'pending' || raw === 'confirmed') return raw
@@ -261,6 +254,13 @@ export function CorporateConsultationsPage() {
   })
 
   const listQuery = useCorporateConsultationsList(appliedFilter)
+  const exportMutation = useExportCorporateConsultations()
+  const handleExcel = useCallback(() => {
+    if (exportMutation.isPending) return
+    void exportMutation.mutateAsync(appliedFilter).catch((error: unknown) => {
+      showAlert(logExcelExportFailureAlert(error))
+    })
+  }, [appliedFilter, exportMutation, showAlert])
   const removeMutation = useRemoveCorporateConsultations(appliedFilter)
   const confirmMutation = useConfirmCorporateConsultations(appliedFilter)
 
@@ -331,10 +331,7 @@ export function CorporateConsultationsPage() {
       .catch(error => {
         if (cancelled) return
         if (isAdminForbidden(error)) {
-          showAlert({
-            title: '권한 없음',
-            content: '해당 신청을 조회할 권한이 없습니다.',
-          })
+          showAlert({ ...ADMIN_ACCESS_DENIED_ALERT })
           closeDetail()
           return
         }
@@ -498,8 +495,8 @@ export function CorporateConsultationsPage() {
         title: '기업명',
         dataIndex: 'companyName',
         key: 'companyName',
-        // 유연 열: 넓은 화면에서 남는 폭 흡수 (CmsDataTable 정확 폭 모드)
-        minWidth: COL.company,
+        minWidth: COL.fluidMin,
+        className: FLUID_COL_CLASS,
         align: 'center',
         ellipsis: true,
         render: (v: string) => v || '-',
@@ -508,7 +505,8 @@ export function CorporateConsultationsPage() {
         title: '담당자명',
         dataIndex: 'contactName',
         key: 'contactName',
-        width: COL.contact,
+        minWidth: COL.fluidMin,
+        className: FLUID_COL_CLASS,
         align: 'center',
         ellipsis: true,
         render: (v: string) => displayServerPiiAsIs(v),
@@ -517,7 +515,8 @@ export function CorporateConsultationsPage() {
         title: '부서/직함명',
         dataIndex: 'departmentTitle',
         key: 'departmentTitle',
-        width: COL.department,
+        minWidth: COL.fluidMin,
+        className: FLUID_COL_CLASS,
         align: 'center',
         ellipsis: true,
         render: (v: string) => v || '-',
@@ -526,7 +525,8 @@ export function CorporateConsultationsPage() {
         title: '담당자 연락처',
         dataIndex: 'phone',
         key: 'phone',
-        width: COL.phone,
+        minWidth: COL.fluidMin,
+        className: FLUID_COL_CLASS,
         align: 'center',
         render: (v: string) => displayServerPiiAsIs(v),
       },
@@ -534,7 +534,8 @@ export function CorporateConsultationsPage() {
         title: '신청일시',
         dataIndex: 'appliedAt',
         key: 'appliedAt',
-        width: COL.applied,
+        minWidth: COL.fluidMin,
+        className: FLUID_COL_CLASS,
         align: 'center',
         render: (v: string) => formatDateTime(v),
       },
@@ -542,7 +543,8 @@ export function CorporateConsultationsPage() {
         title: '확인일시',
         dataIndex: 'confirmedAt',
         key: 'confirmedAt',
-        width: COL.confirmed,
+        minWidth: COL.fluidMin,
+        className: FLUID_COL_CLASS,
         align: 'center',
         render: (v: string | null) => formatDateTime(v),
       },
@@ -556,64 +558,64 @@ export function CorporateConsultationsPage() {
         hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area admin-filter-area--split corp-consultations-page__filter">
-            <div className="admin-filter-area__head">
-              <div className="admin-filter-area__field admin-filter-area__field--control">
-                <p className="admin-filter-area__label">처리 상태</p>
-                <CmsSelect
-                  inputSize="medium"
-                  width={FILTER_CONTROL_MAX_WIDTH_PX}
-                  withAllOption
-                  value={pendingFilters.status}
-                  placeholder="전체"
-                  options={[
-                    { value: 'pending', label: '확인 대기' },
-                    { value: 'confirmed', label: '확인 완료' },
-                  ]}
-                  onChange={v =>
-                    setPendingFilters(prev => ({
-                      ...prev,
-                      status: (v as StatusPending) || '',
-                    }))
-                  }
-                />
+            <div className="admin-filter-area__fields">
+              <div className="admin-filter-area__head">
+                <div className="admin-filter-area__field admin-filter-area__field--control">
+                  <p className="admin-filter-area__label">처리 상태</p>
+                  <CmsSelect
+                    inputSize="medium"
+                    width={FILTER_CONTROL_MAX_WIDTH_PX}
+                    withAllOption
+                    value={pendingFilters.status}
+                    placeholder="전체"
+                    options={[
+                      { value: 'pending', label: '확인 대기' },
+                      { value: 'confirmed', label: '확인 완료' },
+                    ]}
+                    onChange={v =>
+                      setPendingFilters(prev => ({
+                        ...prev,
+                        status: (v as StatusPending) || '',
+                      }))
+                    }
+                  />
+                </div>
+                <div className="admin-filter-area__field admin-filter-area__field--control">
+                  <p className="admin-filter-area__label">기업명</p>
+                  <AdminFilterTextInput
+                    inputSize="medium"
+                    width={FILTER_CONTROL_MAX_WIDTH_PX}
+                    value={pendingFilters.companyName}
+                    placeholder="기업명을 입력해 주세요"
+                    onChange={value => patchPendingFilters(prev => ({ ...prev, companyName: value }))}
+                    onPressEnter={handleSearch}
+                  />
+                </div>
+                <div className="admin-filter-area__field admin-filter-area__field--control">
+                  <p className="admin-filter-area__label">담당자명</p>
+                  <AdminFilterTextInput
+                    inputSize="medium"
+                    width={FILTER_CONTROL_MAX_WIDTH_PX}
+                    value={pendingFilters.contactName}
+                    placeholder="담당자명을 입력해 주세요"
+                    onChange={value => patchPendingFilters(prev => ({ ...prev, contactName: value }))}
+                    onPressEnter={handleSearch}
+                  />
+                </div>
+                <div className="admin-filter-area__field admin-filter-area__field--control">
+                  <p className="admin-filter-area__label">부서/직함명</p>
+                  <AdminFilterTextInput
+                    inputSize="medium"
+                    width={FILTER_CONTROL_MAX_WIDTH_PX}
+                    value={pendingFilters.departmentTitle}
+                    placeholder="부서/직함명을 입력해 주세요"
+                    onChange={value =>
+                      patchPendingFilters(prev => ({ ...prev, departmentTitle: value }))
+                    }
+                    onPressEnter={handleSearch}
+                  />
+                </div>
               </div>
-              <div className="admin-filter-area__field admin-filter-area__field--control">
-                <p className="admin-filter-area__label">기업명</p>
-                <AdminFilterTextInput
-                  inputSize="medium"
-                  width={FILTER_CONTROL_MAX_WIDTH_PX}
-                  value={pendingFilters.companyName}
-                  placeholder="기업명을 입력해 주세요"
-                  onChange={value => patchPendingFilters(prev => ({ ...prev, companyName: value }))}
-                  onPressEnter={handleSearch}
-                />
-              </div>
-              <div className="admin-filter-area__field admin-filter-area__field--control">
-                <p className="admin-filter-area__label">담당자명</p>
-                <AdminFilterTextInput
-                  inputSize="medium"
-                  width={FILTER_CONTROL_MAX_WIDTH_PX}
-                  value={pendingFilters.contactName}
-                  placeholder="담당자명을 입력해 주세요"
-                  onChange={value => patchPendingFilters(prev => ({ ...prev, contactName: value }))}
-                  onPressEnter={handleSearch}
-                />
-              </div>
-              <div className="admin-filter-area__field admin-filter-area__field--control">
-                <p className="admin-filter-area__label">부서/직함명</p>
-                <AdminFilterTextInput
-                  inputSize="medium"
-                  width={FILTER_CONTROL_MAX_WIDTH_PX}
-                  value={pendingFilters.departmentTitle}
-                  placeholder="부서/직함명을 입력해 주세요"
-                  onChange={value =>
-                    patchPendingFilters(prev => ({ ...prev, departmentTitle: value }))
-                  }
-                  onPressEnter={handleSearch}
-                />
-              </div>
-            </div>
-            <div className="admin-filter-area__bottom">
               <div className="admin-filter-area__bottom-fields">
                 <div className="admin-filter-area__field admin-filter-area__field--date-range">
                   <p className="admin-filter-area__label">신청일</p>
@@ -656,17 +658,17 @@ export function CorporateConsultationsPage() {
                   />
                 </div>
               </div>
-              <div className="admin-filter-area__actions">
-                <CmsButton
-                  className="admin-filter-area__search-button"
-                  variant="primary"
-                  size="medium"
-                  type="button"
-                  onClick={handleSearch}
-                >
-                  조회
-                </CmsButton>
-              </div>
+            </div>
+            <div className="admin-filter-area__actions">
+              <CmsButton
+                className="admin-filter-area__search-button"
+                variant="primary"
+                size="medium"
+                type="button"
+                onClick={handleSearch}
+              >
+                조회
+              </CmsButton>
             </div>
           </div>
         }
@@ -692,6 +694,12 @@ export function CorporateConsultationsPage() {
             >
               선택 확인
             </CmsButton>
+            <ExcelButton
+              onClick={handleExcel}
+              empty={totalCount === 0}
+              loading={exportMutation.isPending}
+              disabled={exportMutation.isPending}
+            />
           </>
         }
       >

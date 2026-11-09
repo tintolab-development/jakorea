@@ -6,7 +6,9 @@ import type {
   OrganizationChartSaveInput,
 } from '@/entities/organization-chart/model/types'
 import {
-  REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsInput, ContentModal, FileSelectField, useCmsAlert } from '@/shared/ui'
+  REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsInput, ContentModal, FileSelectField, useCmsAlert,
+  ThumbnailPlaceholder,
+} from '@/shared/ui'
 
 import './org-chart-form-modal.css'
 
@@ -37,28 +39,6 @@ function readFileAsDataUrl(file: File): Promise<string> {
   })
 }
 
-function ImagePlaceholderIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="48"
-      height="48"
-      viewBox="0 0 48 48"
-      fill="none"
-      aria-hidden
-    >
-      <rect x="6" y="10" width="36" height="28" rx="3" stroke="#BDBDBD" strokeWidth="2" />
-      <circle cx="17" cy="20" r="3" fill="#BDBDBD" />
-      <path
-        d="M8 32L18 24L24 29L32 20L40 32"
-        stroke="#BDBDBD"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
 
 type FormBodyProps = {
   initial: OrganizationChartInfo
@@ -198,7 +178,7 @@ function OrgChartFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormB
                   {imageUrl ? (
                     <img src={imageUrl} alt="조직도 미리보기" />
                   ) : (
-                    <ImagePlaceholderIcon />
+                    <ThumbnailPlaceholder />
                   )}
                 </div>
                 <FileSelectField

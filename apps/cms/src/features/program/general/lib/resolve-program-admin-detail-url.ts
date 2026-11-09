@@ -3,6 +3,7 @@
  */
 
 import type { QueryClient } from '@tanstack/react-query'
+import { isProgramDetailAccessCheckRequired } from '@/features/program/shared/lib/program-detail-access'
 import { queryOptions } from '@tanstack/react-query'
 import { fetchAdminProgramNavigationRemote } from '@/features/program/general/api/programs-api-client'
 import { shouldUseProgramsHttpRemoteApi } from '@/features/program/general/api/general-programs-remote-capabilities'
@@ -16,7 +17,9 @@ import {
 export function programAdminNavigationQueryOptions(programId: string) {
   return queryOptions({
     queryKey: generalProgramQueryKeys.navigation(programId),
-    queryFn: () => fetchAdminProgramNavigationRemote(programId),
+    // 상세 URL 결정용 — 실패하면 일반 목록 URL로 대체하므로 공통 403 팝업을 띄우지 않는다.
+    // (미배정 프로그램 접근 불가 안내는 진입 전 my-assignment 확인이 맡는다.)
+    queryFn: () => fetchAdminProgramNavigationRemote(programId, { skipGlobalErrorAlert: true }),
     staleTime: 60_000,
     retry: false,
   })
@@ -28,6 +31,9 @@ export function prefetchProgramAdminNavigation(
   programIds: readonly string[]
 ): void {
   if (!shouldUseProgramsHttpRemoteApi()) return
+  // 권한 설정 V1.2: Master 외 관리자는 담당 프로그램만 상세 진입 가능. 미리 받기는 Master에게만 한다
+  // (회원 이력의 미배정 프로그램 행마다 navigation 403이 나던 문제).
+  if (isProgramDetailAccessCheckRequired()) return
   const unique = [...new Set(programIds.map(id => id.trim()).filter(Boolean))]
   for (const id of unique) {
     if (tryGetProgramAdminDetailInfoTabUrlByIdPrefix(id)) continue
@@ -55,7 +61,7 @@ export async function resolveProgramAdminDetailInfoTabUrl(
     try {
       const nav = queryClient
         ? await queryClient.ensureQueryData(programAdminNavigationQueryOptions(id))
-        : await fetchAdminProgramNavigationRemote(id)
+        : await fetchAdminProgramNavigationRemote(id, { skipGlobalErrorAlert: true })
       const programType = nav.canonicalProgramType ?? nav.rawProgramType
       if (programType?.trim()) {
         return getProgramAdminDetailInfoTabUrlForProgramType(id, programType)

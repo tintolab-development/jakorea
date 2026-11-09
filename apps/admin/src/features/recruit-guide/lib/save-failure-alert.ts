@@ -9,6 +9,7 @@ import {
   readApiErrorMessage,
 } from '@/shared/lib/api-error-message'
 import { NO_SELECTION_ALERT, REQUIRED_FIELDS_INCOMPLETE_ALERT } from '@/shared/ui'
+import { ADMIN_ACCESS_DENIED_ALERT } from '@/shared/lib/admin-access-denied'
 
 const VERSION_CONFLICT_ALERT = {
   title: '저장 실패',
@@ -177,10 +178,7 @@ function mapRecruitGuideSaveFailureAlert(
 
   const message = readApiErrorMessage(error) ?? ''
   if (code === 'FORBIDDEN' || /FORBIDDEN/i.test(code) || /Permission is denied|FORBIDDEN/i.test(message)) {
-    return {
-      title: '저장 실패',
-      content: '저장 권한이 없습니다.',
-    }
+    return { ...ADMIN_ACCESS_DENIED_ALERT }
   }
 
   return { title: '저장 실패', content: message || fallbackContent }

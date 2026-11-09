@@ -343,7 +343,7 @@ export function HistoryPanel() {
       {
         title: '연혁 연도/월',
         key: 'yearMonth',
-        width: 120,
+        width: 240,
         align: 'center',
         render: (_v, record) => formatYearMonth(record.year, record.month),
       },
@@ -351,19 +351,21 @@ export function HistoryPanel() {
         title: '내용',
         dataIndex: 'content',
         key: 'content',
+        // 시안(Figma 2094:131215, 표 1538): 선택 60 · No. 80 · 공개 100 · 연도/월 240 · 내용 718 · 작성일시 200 · 관리 140
+        // 내용은 폭 미지정 — 남는 폭(시안 기준 718)을 흡수
         ellipsis: true,
       },
       {
         title: '작성일시',
         key: 'createdAt',
-        width: 160,
+        width: 200,
         align: 'center',
         render: (_v, record) => formatCreatedDateTime(record.createdAt),
       },
       {
         title: '관리',
         key: 'actions',
-        width: 120,
+        width: 140,
         align: 'center',
         render: (_v, record) => (
           <CmsButton
@@ -389,76 +391,78 @@ export function HistoryPanel() {
         hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area">
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <p className="admin-filter-area__label">공개 여부</p>
-              <CmsSelect
-                inputSize="medium"
-                withAllOption
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                value={pendingFilters.isPublic}
-                onChange={v =>
-                  setPendingFilters(prev => ({
-                    ...prev,
-                    isPublic: (v as PublicFilterValue) ?? '',
-                  }))
-                }
-                options={[
-                  { label: '공개', value: 'true' },
-                  { label: '비공개', value: 'false' },
-                ]}
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--address-region">
-              <p className="admin-filter-area__label">연혁 연도/월</p>
-              <div
-                className="admin-filter-area__address-region-selects"
-                role="group"
-                aria-label="연혁 연도/월"
-              >
+            <div className="admin-filter-area__fields">
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <p className="admin-filter-area__label">공개 여부</p>
                 <CmsSelect
                   inputSize="medium"
                   withAllOption
-                  popupMatchSelectWidth={false}
-                  value={pendingFilters.year}
-                  onChange={v => setPendingFilters(prev => ({ ...prev, year: String(v ?? '') }))}
-                  options={YEAR_FILTER_OPTIONS}
-                />
-                <CmsSelect
-                  inputSize="medium"
-                  withAllOption
-                  popupMatchSelectWidth={false}
-                  value={pendingFilters.month}
-                  onChange={v => setPendingFilters(prev => ({ ...prev, month: String(v ?? '') }))}
-                  options={MONTH_FILTER_OPTIONS}
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  value={pendingFilters.isPublic}
+                  onChange={v =>
+                    setPendingFilters(prev => ({
+                      ...prev,
+                      isPublic: (v as PublicFilterValue) ?? '',
+                    }))
+                  }
+                  options={[
+                    { label: '공개', value: 'true' },
+                    { label: '비공개', value: 'false' },
+                  ]}
                 />
               </div>
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <p className="admin-filter-area__label">내용</p>
-              <AdminFilterTextInput
-                inputSize="medium"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="검색어를 입력해 주세요"
-                value={pendingFilters.content}
-                onChange={value => patchPendingFilters(prev => ({ ...prev, content: value }))}
-                onPressEnter={handleSearch}
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--date-range">
-              <p className="admin-filter-area__label">작성일</p>
-              <CmsDateRangePicker
-                inputSize="medium"
-                width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
-                value={periodAsPickerValue(pendingFilters.created)}
-                onChange={dates =>
-                  setPendingFilters(prev => ({
-                    ...prev,
-                    created: dates ?? null,
-                  }))
-                }
-                placeholder={['시작일', '종료일']}
-                allowClear
-              />
+              <div className="admin-filter-area__field admin-filter-area__field--select-pair">
+                <p className="admin-filter-area__label">연혁 연도/월</p>
+                <div
+                  className="admin-filter-area__select-pair"
+                  role="group"
+                  aria-label="연혁 연도/월"
+                >
+                  <CmsSelect
+                    inputSize="medium"
+                    withAllOption
+                    popupMatchSelectWidth={false}
+                    value={pendingFilters.year}
+                    onChange={v => setPendingFilters(prev => ({ ...prev, year: String(v ?? '') }))}
+                    options={YEAR_FILTER_OPTIONS}
+                  />
+                  <CmsSelect
+                    inputSize="medium"
+                    withAllOption
+                    popupMatchSelectWidth={false}
+                    value={pendingFilters.month}
+                    onChange={v => setPendingFilters(prev => ({ ...prev, month: String(v ?? '') }))}
+                    options={MONTH_FILTER_OPTIONS}
+                  />
+                </div>
+              </div>
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <p className="admin-filter-area__label">내용</p>
+                <AdminFilterTextInput
+                  inputSize="medium"
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  placeholder="검색어를 입력해 주세요"
+                  value={pendingFilters.content}
+                  onChange={value => patchPendingFilters(prev => ({ ...prev, content: value }))}
+                  onPressEnter={handleSearch}
+                />
+              </div>
+              <div className="admin-filter-area__field admin-filter-area__field--date-range">
+                <p className="admin-filter-area__label">작성일</p>
+                <CmsDateRangePicker
+                  inputSize="medium"
+                  width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
+                  value={periodAsPickerValue(pendingFilters.created)}
+                  onChange={dates =>
+                    setPendingFilters(prev => ({
+                      ...prev,
+                      created: dates ?? null,
+                    }))
+                  }
+                  placeholder={['시작일', '종료일']}
+                  allowClear
+                />
+              </div>
             </div>
             <div className="admin-filter-area__actions">
               <CmsButton
@@ -494,7 +498,7 @@ export function HistoryPanel() {
       >
         <div className="hac-panel__table-scroll">
           <CmsDataTable<HistoryItem>
-            className="cms-data-table"
+            className="cms-data-table hac-table"
             rowKey="id"
             loading={listQuery.isLoading}
             columns={columns}

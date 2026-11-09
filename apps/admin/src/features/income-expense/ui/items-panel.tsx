@@ -56,25 +56,15 @@ import {
 import './items-panel.css'
 
 /**
- * 시안 열 비율
- * 수입(·지출 그래프): 체크5 · 순서5 · No.5 · 항목명40 · 비율15 · 금액30
- * 지출 테이블: +구분(~15) · 항목명(~35) · 비율(~10) · 금액(~20)
+ * 시안 열 폭 (Figma 투명경영 수입&지출 — 그래프·테이블 탭 공통, 표 폭 1538 기준)
+ * - 구분 없음: 체크 60 · 순서 80 · No. 80 · 항목명·비율·금액 각 439
+ * - 지출 테이블(구분 있음): 체크 60 · 순서 80 · No. 80 · 구분·항목명·비율·금액 각 329.5
+ * 체크·순서·No.만 고정하고 데이터 열은 폭을 비워 남는 폭을 똑같이 나눈다 — 1538에서 시안 값과 같고,
+ * 데이터 열에 고정 폭을 주면 열 합(1538)이 표 최소 폭이 돼 좁은 화면에서 가로 스크롤이 생긴다.
  */
 const COL_WIDTH = {
   sort: TABLE_COLUMN_WIDTHS.sort,
   no: TABLE_COLUMN_WIDTHS.index,
-  /** 유연 열 최소 폭 (넓은 화면에선 남는 폭 흡수) */
-  name: 240,
-  ratio: 160,
-  amount: 280,
-  /** 지출 테이블 전용 */
-  expense: {
-    category: 160,
-    /** 유연 열 최소 폭 */
-    name: 220,
-    ratio: 120,
-    amount: 220,
-  },
 } as const
 
 function requiredColumnTitle(label: string) {
@@ -304,20 +294,6 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
   )
 
   const columns = useMemo<ColumnsType<FinanceItem>>(() => {
-    const dataCols = showCategory
-      ? {
-          category: COL_WIDTH.expense.category,
-          name: COL_WIDTH.expense.name,
-          ratio: COL_WIDTH.expense.ratio,
-          amount: COL_WIDTH.expense.amount,
-        }
-      : {
-          category: 0,
-          name: COL_WIDTH.name,
-          ratio: COL_WIDTH.ratio,
-          amount: COL_WIDTH.amount,
-        }
-
     const uniformLayout = view === 'table' || (section === 'expense' && view === 'graph')
     const nameTitle = isEditing && uniformLayout ? requiredColumnTitle('항목명') : '항목명'
     const ratioTitle = isEditing && uniformLayout ? requiredColumnTitle('비율') : '비율'
@@ -346,7 +322,6 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
       cols.push({
         title: '구분',
         key: 'category',
-        width: dataCols.category,
         align: 'center',
         className: 'income-expense-table__col--category',
         render: (_value, record) => {
@@ -380,8 +355,6 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
       {
         title: nameTitle,
         key: 'name',
-        // 유연 열: 넓은 화면에서 남는 폭 흡수 (CmsDataTable 정확 폭 모드)
-        minWidth: dataCols.name,
         align: isEditing ? 'left' : 'center',
         className: 'income-expense-table__col--name',
         render: (_value, record) => {
@@ -404,7 +377,6 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
       {
         title: ratioTitle,
         key: 'ratio',
-        width: dataCols.ratio,
         align: isEditing ? 'left' : 'center',
         className: 'income-expense-table__col--ratio',
         render: (_value, record) => {
@@ -431,7 +403,6 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
       {
         title: amountTitle,
         key: 'amount',
-        width: dataCols.amount,
         align: isEditing ? 'left' : 'center',
         className: 'income-expense-table__col--amount',
         render: (_value, record) => {

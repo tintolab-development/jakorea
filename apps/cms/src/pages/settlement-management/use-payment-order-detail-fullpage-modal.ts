@@ -283,6 +283,7 @@ export function usePaymentOrderDetailFullPageModalState(
     calcStatementError: paymentOrdersRemote ? settlementDetailQuery.error : null,
     calcStatementId: calcLineRow?.statementId ?? null,
     calcSettlementId: calcLineRow?.settlementId ?? null,
+    calcProgramId: calcLineRow?.programId ?? null,
     calcAvailableActions: settlementDetailQuery.data?.availableActions,
     calcHideInstitutionColumn,
     openCalculationStatement,

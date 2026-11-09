@@ -20,7 +20,8 @@ export type UjatEducationRegionDraft = {
 }
 
 export type UjatEducationRegionFilters = {
-  usageStatus: 'active' | 'inactive'
+  /** `all`이면 사용 여부로 거르지 않는다 */
+  usageStatus: 'all' | 'active' | 'inactive'
   name: string
 }
 

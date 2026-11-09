@@ -22,6 +22,7 @@ import {
   useExportAdminAccountLogs,
 } from '@/features/admin-account-log/api/hooks'
 import { formatLogDateTime } from '@/features/logs/shared/lib/format-datetime'
+import { logExcelExportFailureAlert } from '@/features/logs/shared/lib/log-excel-export-alert'
 import { logListRowNumber } from '@/features/logs/shared/lib/list-page'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
@@ -198,11 +199,9 @@ export function AdminAccountLogPage() {
   const forbidden = isAdminForbidden(listQuery.error)
 
   const handleExcel = useCallback(() => {
-    void exportMutation.mutateAsync(appliedFilter).catch(() => {
-      showAlert({
-        title: '내보내기 실패',
-        content: '엑셀 내보내기에 실패했습니다. 다시 시도해 주세요.',
-      })
+    if (exportMutation.isPending) return
+    void exportMutation.mutateAsync(appliedFilter).catch((error: unknown) => {
+      showAlert(logExcelExportFailureAlert(error))
     })
   }, [appliedFilter, exportMutation, showAlert])
 
@@ -266,59 +265,61 @@ export function AdminAccountLogPage() {
         hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area">
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <span className="admin-filter-area__label">관리자명</span>
-              <AdminFilterTextInput
-                inputSize="medium"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="관리자명을 입력해 주세요"
-                value={pendingFilters.name}
-                onChange={value => patchPendingFilters(prev => ({ ...prev, name: value }))}
-                onPressEnter={applySearch}
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <span className="admin-filter-area__label">아이디</span>
-              <AdminFilterTextInput
-                inputSize="medium"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="아이디를 입력해 주세요"
-                value={pendingFilters.loginId}
-                onChange={value => patchPendingFilters(prev => ({ ...prev, loginId: value }))}
-                onPressEnter={applySearch}
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <span className="admin-filter-area__label">내역</span>
-              <CmsSelect
-                inputSize="medium"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                withAllOption
-                value={pendingFilters.actionType}
-                onChange={value =>
-                  setPendingFilters(prev => ({
-                    ...prev,
-                    actionType: (value as AdminAccountActionType | '') ?? '',
-                  }))
-                }
-                options={ACTION_OPTIONS}
-                placeholder="전체"
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--date-range">
-              <span className="admin-filter-area__label">처리일</span>
-              <CmsDateRangePicker
-                inputSize="medium"
-                width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
-                value={rangeAsPicker(pendingFilters.range)}
-                onChange={dates =>
-                  setPendingFilters(prev => ({
-                    ...prev,
-                    range: dates ?? null,
-                  }))
-                }
-                placeholder={['시작일', '종료일']}
-              />
+            <div className="admin-filter-area__fields">
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <span className="admin-filter-area__label">관리자명</span>
+                <AdminFilterTextInput
+                  inputSize="medium"
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  placeholder="관리자명을 입력해 주세요"
+                  value={pendingFilters.name}
+                  onChange={value => patchPendingFilters(prev => ({ ...prev, name: value }))}
+                  onPressEnter={applySearch}
+                />
+              </div>
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <span className="admin-filter-area__label">아이디</span>
+                <AdminFilterTextInput
+                  inputSize="medium"
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  placeholder="아이디를 입력해 주세요"
+                  value={pendingFilters.loginId}
+                  onChange={value => patchPendingFilters(prev => ({ ...prev, loginId: value }))}
+                  onPressEnter={applySearch}
+                />
+              </div>
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <span className="admin-filter-area__label">내역</span>
+                <CmsSelect
+                  inputSize="medium"
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  withAllOption
+                  value={pendingFilters.actionType}
+                  onChange={value =>
+                    setPendingFilters(prev => ({
+                      ...prev,
+                      actionType: (value as AdminAccountActionType | '') ?? '',
+                    }))
+                  }
+                  options={ACTION_OPTIONS}
+                  placeholder="전체"
+                />
+              </div>
+              <div className="admin-filter-area__field admin-filter-area__field--date-range">
+                <span className="admin-filter-area__label">처리일</span>
+                <CmsDateRangePicker
+                  inputSize="medium"
+                  width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
+                  value={rangeAsPicker(pendingFilters.range)}
+                  onChange={dates =>
+                    setPendingFilters(prev => ({
+                      ...prev,
+                      range: dates ?? null,
+                    }))
+                  }
+                  placeholder={['시작일', '종료일']}
+                />
+              </div>
             </div>
             <div className="admin-filter-area__actions">
               <CmsButton
@@ -335,7 +336,14 @@ export function AdminAccountLogPage() {
         }
         title="관리자 계정 처리 이력"
         description={`총 ${total.toLocaleString('ko-KR')}건`}
-        actions={<ExcelButton onClick={handleExcel} empty={total === 0} />}
+        actions={
+          <ExcelButton
+            onClick={handleExcel}
+            empty={total === 0}
+            loading={exportMutation.isPending}
+            disabled={exportMutation.isPending}
+          />
+        }
       >
         <CmsDataTable<AdminAccountLog>
           className="cms-data-table"

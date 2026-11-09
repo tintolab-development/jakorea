@@ -57,16 +57,22 @@ export class UjatEducationRegionsPage {
     await expect(this.rowByName(name)).toHaveCount(0, { timeout: 30_000 })
   }
 
-  async setUsageFilter(status: '사용' | '미사용') {
+  /** 사용 여부 필터는 셀렉트(전체/사용/미사용, 기본 전체) */
+  async setUsageFilter(status: '전체' | '사용' | '미사용') {
     const filterCard = this.page.locator('.filter-table-layout, .table-filter-group').first()
-    const radio = filterCard.getByRole('radio', { name: status }).first()
-    if ((await radio.count()) > 0) {
-      await radio.check({ force: true }).catch(async () => {
-        await filterCard.getByText(status, { exact: true }).first().click()
-      })
+    const usageSelect = filterCard.locator('.ant-select').first()
+    await expect(usageSelect).toBeVisible({ timeout: 15_000 })
+    if ((await usageSelect.locator('.ant-select-selection-item').innerText()).trim() === status) {
       return
     }
-    await filterCard.getByText(status, { exact: true }).first().click()
+    await usageSelect.click()
+    const option = this.page
+      .locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option')
+      .filter({ hasText: new RegExp(`^${status}$`) })
+      .first()
+    await expect(option).toBeVisible({ timeout: 5_000 })
+    await option.click()
+    await expect(usageSelect.locator('.ant-select-selection-item')).toHaveText(status)
   }
 
   async setNameFilter(name: string) {

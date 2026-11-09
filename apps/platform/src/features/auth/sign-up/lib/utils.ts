@@ -70,7 +70,7 @@ export function isValidEmail(value: string) {
 }
 
 export function isValidPassword(value: string) {
-  return /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/.test(value)
+  return /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d]).{12,}$/.test(value)
 }
 
 export function getMemberTypeLabel(type: MemberType | null) {

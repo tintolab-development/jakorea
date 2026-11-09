@@ -86,6 +86,26 @@ export function SchoolDetailAttendanceSessionPanel({
   )
 
   const handleSave = useCallback(async () => {
+    if (saving || isSavingLocal) return
+    // 저장 버튼은 항상 활성화한다. 저장할 수 없으면 누를 때 사유를 안내한다.
+    if (
+      scopeBlocked ||
+      session.scheduleIdUnresolved ||
+      typeof session.scheduleId !== 'number' ||
+      session.scheduleId <= 0
+    ) {
+      showAlert({
+        title: '안내',
+        content: scopeBlocked
+          ? '학급 일정 배정 정보를 확인하는 중이거나 불러오지 못해 출석을 저장할 수 없습니다. 잠시 후 다시 시도해 주세요.'
+          : '교육 일정 ID를 확인할 수 없어 이 회차의 출석을 저장할 수 없습니다.',
+      })
+      return
+    }
+    if (changedRows.length === 0) {
+      showAlert({ title: '안내', content: '변경된 출석 정보가 없습니다.' })
+      return
+    }
     if (!canSave) return
     setIsSavingLocal(true)
     try {
@@ -96,7 +116,19 @@ export function SchoolDetailAttendanceSessionPanel({
     } finally {
       setIsSavingLocal(false)
     }
-  }, [canSave, changedRows, onSave, session.id, workingRows])
+  }, [
+    canSave,
+    changedRows,
+    isSavingLocal,
+    onSave,
+    saving,
+    scopeBlocked,
+    session.id,
+    session.scheduleId,
+    session.scheduleIdUnresolved,
+    showAlert,
+    workingRows,
+  ])
 
   const handleExport = useCallback(() => {
     if (exportDisabled) {
@@ -136,7 +168,6 @@ export function SchoolDetailAttendanceSessionPanel({
             type="button"
             variant="secondary"
             size="h40"
-            disabled={!canSave}
             loading={isSavingLocal || saving}
             onClick={() => {
               void handleSave()

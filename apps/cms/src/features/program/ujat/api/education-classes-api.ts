@@ -52,7 +52,10 @@ export async function postUjatEducationClasses(
   )
 }
 
-/** POST .../education-class-remappings — 교육 학년 및 학급 변경 저장 */
+/**
+ * POST .../education-class-remappings — 교육 학년 및 학급 변경 저장
+ * 실패는 호출부(detail-view)가 모달 인라인 문구·전용 알림으로 처리하므로 공통 오류 팝업은 끈다.
+ */
 export async function postUjatEducationClassRemappings(
   programId: string,
   applicationId: string,
@@ -62,7 +65,8 @@ export async function postUjatEducationClassRemappings(
     await dashboardApi.remapEducationClasses(
       toNumericId(programId, 'programId'),
       toNumericId(applicationId, 'applicationId'),
-      body
+      body,
+      { skipGlobalErrorAlert: true }
     )
   )
 }

@@ -7,72 +7,13 @@ import { mailBodyToDisplayHtml } from '@/features/notifications/model/shared/mai
 import { formatNotificationFailedReason } from '@/features/notifications/model/shared/format-notification-failed-reason'
 import type {
   MailBroadcastTiming,
-  MailReceiveStatus,
   MailSendHistoryAttachment,
   MailSendHistoryRow,
-  MailSendStatus,
 } from '@/features/notifications/model/mail-send-history/types'
-
-/** BE sendStatus → UI 라벨 (Figma Status / Text / 메일 발송 형태 14804:19688) */
-const SEND_STATUS_MAP: Record<string, Exclude<MailSendStatus, '전체'>> = {
-  REQUESTED: '발송 요청',
-  SCHEDULED: '예약',
-  WAITED: '발송 대기',
-  QUEUED: '발송 대기',
-  PENDING: '발송 대기',
-  IN_PROGRESS: '발송 중',
-  SENDING: '발송 중',
-  SENT: '발송 완료',
-  SUCCESS: '발송 완료',
-  DELIVERED: '발송 완료',
-  SEND_FAILED: '발송 실패',
-  FAILED: '발송 실패',
-  FAILURE: '발송 실패',
-  CANCELED: '발송 취소',
-  CANCELLED: '발송 취소',
-  UNKNOWN: '확인불가',
-}
-
-/** BE receiptStatus → UI 라벨 */
-const RECEIVE_STATUS_MAP: Record<string, Exclude<MailReceiveStatus, '전체'>> = {
-  REQUESTED: '요청됨',
-  CONFIRM_WAITED: '확인 대기중',
-  WAITING_CONFIRM: '확인 대기중',
-  WAITED: '대기중',
-  PENDING: '대기중',
-  SCHEDULED: '예약됨',
-  IN_PROGRESS: '대기중',
-  SENT: '수신 성공',
-  SUCCESS: '수신 성공',
-  DELIVERED: '수신 성공',
-  OPENED: '수신 성공',
-  SEND_FAILED: '수신 실패',
-  DELIVERY_FAILED: '수신 실패',
-  FAILED: '수신 실패',
-  FAILURE: '수신 실패',
-  CANCELED: '취소됨',
-  CANCELLED: '취소됨',
-  UNKNOWN: '확인불가',
-}
-
-function mapSendStatus(raw?: string | null): Exclude<MailSendStatus, '전체'> {
-  const key = (raw ?? '').trim().toUpperCase()
-  if (SEND_STATUS_MAP[key]) return SEND_STATUS_MAP[key]
-  if ((Object.values(SEND_STATUS_MAP) as string[]).includes(raw ?? '')) {
-    return raw as Exclude<MailSendStatus, '전체'>
-  }
-  // 미지 코드는 REQUESTED로 떨어뜨리지 않음 (알림톡과 동일)
-  return '확인불가'
-}
-
-function mapReceiveStatus(raw?: string | null): Exclude<MailReceiveStatus, '전체'> {
-  const key = (raw ?? '').trim().toUpperCase()
-  if (RECEIVE_STATUS_MAP[key]) return RECEIVE_STATUS_MAP[key]
-  if ((Object.values(RECEIVE_STATUS_MAP) as string[]).includes(raw ?? '')) {
-    return raw as Exclude<MailReceiveStatus, '전체'>
-  }
-  return '확인불가'
-}
+import {
+  mapNotificationReceiveStatus,
+  mapNotificationSendStatus,
+} from '@/features/notifications/model/shared/delivery-status'
 
 function mapBroadcastTiming(
   item: NotificationDeliveryResponse
@@ -180,7 +121,10 @@ export function mapMailDeliveryToSendHistoryRow(
       previewString(previewRecord, ['contentTemplate', 'bodyHtml', 'content', 'body'])
     )
 
-  const sendStatus = mapSendStatus(item.sendStatus)
+  const broadcastTiming = mapBroadcastTiming(item)
+  const sendStatus = mapNotificationSendStatus(item.sendStatus, {
+    scheduled: broadcastTiming === '예약',
+  })
   const failedReasonRaw = item.failedReason?.trim() || ''
   const failedReason =
     sendStatus === '발송 실패'
@@ -206,9 +150,9 @@ export function mapMailDeliveryToSendHistoryRow(
     receiverName,
     receiverEmail,
     receiverInfo: formatMailPreviewPerson(receiverName, receiverEmail),
-    broadcastTiming: mapBroadcastTiming(item),
+    broadcastTiming,
     sendStatus,
-    receiveStatus: mapReceiveStatus(item.receiptStatus),
+    receiveStatus: mapNotificationReceiveStatus(item.receiptStatus),
     // 발송/수신일시: sentAt / deliveredAt만 (requestedAt·openedAt 대체 금지)
     sentAt: item.sentAt?.trim() || '',
     receivedAt: item.deliveredAt?.trim() || '',

@@ -45,7 +45,7 @@ function cloneDirections(data: DirectionsInfo): DirectionsInfo {
 function fieldClass(isEditing: boolean, ...extra: Array<string | false | undefined>) {
   return [
     'directions-inline-field',
-    isEditing ? 'directions-inline-field--edit' : 'directions-inline-field--readonly',
+    isEditing && 'directions-inline-field--edit',
     ...extra,
   ]
     .filter(Boolean)
@@ -98,8 +98,8 @@ export function DirectionsFormCard({ data }: Props) {
     <div
       className={
         isEditing
-          ? 'admin-list-card directions-card directions-card--editing'
-          : 'admin-list-card directions-card'
+          ? 'admin-list-card admin-document-card directions-card directions-card--editing'
+          : 'admin-list-card admin-document-card directions-card'
       }
     >
       <div className="admin-list-toolbar">
@@ -141,7 +141,7 @@ export function DirectionsFormCard({ data }: Props) {
         </div>
       </div>
 
-      <div className="directions-card__body">
+      <div className="admin-document-card__body directions-card__body">
         {/*
           mode 항상 edit — view/edit 슬롯 스왑으로 인한 언마운트·행 높이 점프 방지.
           조회 시 readOnly + readonly 스타일만 적용.
@@ -157,6 +157,7 @@ export function DirectionsFormCard({ data }: Props) {
             <DetailInfoForm.Field
               label="국문 주소지"
               required={isEditing}
+              labelWidth={200}
               view={null}
               edit={
                 <CmsInput
@@ -165,7 +166,7 @@ export function DirectionsFormCard({ data }: Props) {
                   width="100%"
                   value={draft.addressKo}
                   readOnly={!isEditing}
-                  tabIndex={isEditing ? 0 : -1}
+                  inlineReadOnly="text"
                   onChange={e => {
                     if (!isEditing) return
                     updateDraft({ addressKo: e.target.value })
@@ -179,6 +180,7 @@ export function DirectionsFormCard({ data }: Props) {
             <DetailInfoForm.Field
               label="영문 주소지"
               required={isEditing}
+              labelWidth={200}
               view={null}
               edit={
                 <CmsInput
@@ -187,7 +189,7 @@ export function DirectionsFormCard({ data }: Props) {
                   width="100%"
                   value={draft.addressEn}
                   readOnly={!isEditing}
-                  tabIndex={isEditing ? 0 : -1}
+                  inlineReadOnly="text"
                   onChange={e => {
                     if (!isEditing) return
                     updateDraft({ addressEn: e.target.value })
@@ -201,6 +203,7 @@ export function DirectionsFormCard({ data }: Props) {
             <DetailInfoForm.Field
               label="카카오맵 HTML"
               required={isEditing}
+              labelWidth={200}
               view={null}
               edit={
                 <CmsTextArea
@@ -214,7 +217,7 @@ export function DirectionsFormCard({ data }: Props) {
                   rows={12}
                   value={draft.kakaoMapHtml}
                   readOnly={!isEditing}
-                  tabIndex={isEditing ? 0 : -1}
+                  inlineReadOnly="text"
                   onChange={e => {
                     if (!isEditing) return
                     updateDraft({ kakaoMapHtml: e.target.value })
@@ -231,6 +234,7 @@ export function DirectionsFormCard({ data }: Props) {
             <DetailInfoForm.Field
               label="전화번호"
               required={isEditing}
+              labelWidth={200}
               view={null}
               edit={
                 <CmsInput
@@ -242,7 +246,7 @@ export function DirectionsFormCard({ data }: Props) {
                   autoComplete="tel"
                   value={draft.phone}
                   readOnly={!isEditing}
-                  tabIndex={isEditing ? 0 : -1}
+                  inlineReadOnly="text"
                   onChange={e => {
                     if (!isEditing) return
                     const result = applyKoreanPhoneInputChange(
@@ -265,6 +269,7 @@ export function DirectionsFormCard({ data }: Props) {
             <DetailInfoForm.Field
               label="Fax 번호"
               required={isEditing}
+              labelWidth={200}
               view={null}
               edit={
                 <CmsInput
@@ -273,7 +278,7 @@ export function DirectionsFormCard({ data }: Props) {
                   width="100%"
                   value={draft.fax}
                   readOnly={!isEditing}
-                  tabIndex={isEditing ? 0 : -1}
+                  inlineReadOnly="text"
                   onChange={e => {
                     if (!isEditing) return
                     updateDraft({ fax: e.target.value })
@@ -287,6 +292,7 @@ export function DirectionsFormCard({ data }: Props) {
             <DetailInfoForm.Field
               label="이메일 주소"
               required={isEditing}
+              labelWidth={200}
               view={null}
               edit={
                 <CmsInput
@@ -295,7 +301,7 @@ export function DirectionsFormCard({ data }: Props) {
                   width="100%"
                   value={draft.email}
                   readOnly={!isEditing}
-                  tabIndex={isEditing ? 0 : -1}
+                  inlineReadOnly="text"
                   onChange={e => {
                     if (!isEditing) return
                     updateDraft({ email: e.target.value })

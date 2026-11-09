@@ -11,6 +11,7 @@ import { individualDonationSaveFailureAlert } from '@/features/individual-donati
 import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsTextArea, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 
+import { requiredColumnTitle } from './required-column-title'
 import './section-shared.css'
 
 type DraftMap = Record<string, { mainText: string; subText: string }>
@@ -106,7 +107,8 @@ export function UsageGuideSectionCard({ items }: Props) {
         render: (_value, record) => record.itemLabel,
       },
       {
-        title: '메인 텍스트',
+        // 수정 모드에서 메인·서브 텍스트 모두 필수 (저장 시 빈 값은 공통 필수 안내)
+        title: isEditing ? requiredColumnTitle('메인 텍스트') : '메인 텍스트',
         key: 'mainText',
         align: 'center',
         className: 'individual-donation-col--text',
@@ -130,7 +132,7 @@ export function UsageGuideSectionCard({ items }: Props) {
         },
       },
       {
-        title: '서브 텍스트',
+        title: isEditing ? requiredColumnTitle('서브 텍스트') : '서브 텍스트',
         key: 'subText',
         align: 'center',
         className: 'individual-donation-col--text',

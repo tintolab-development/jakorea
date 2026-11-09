@@ -93,12 +93,20 @@ describe('alimtalk-delivery-adapters (4-2)', () => {
     expect(mapDeliveryToSendHistoryRow({ deliveryId: 2, sendStatus: 'WEIRD' })?.sendStatus).toBe(
       '확인불가'
     )
+    // 세 채널 공통 라벨(메일 발송 형태 시안)
     expect(mapDeliveryToSendHistoryRow({ deliveryId: 3, sendStatus: 'WAITED' })?.sendStatus).toBe(
-      '대기'
+      '발송 대기'
     )
     expect(mapDeliveryToSendHistoryRow({ deliveryId: 4, sendStatus: 'CANCELED' })?.sendStatus).toBe(
-      '취소'
+      '발송 취소'
     )
+    expect(
+      mapDeliveryToSendHistoryRow({
+        deliveryId: 5,
+        sendStatus: 'CANCELED',
+        scheduledAt: '2026-11-10T09:00:00+09:00',
+      })?.sendStatus
+    ).toBe('예약 취소')
   })
 
   it('sentAt이 없을 때 deliveredAt/requestedAt으로 대체하지 않는다', () => {

@@ -3,6 +3,7 @@ import dayjs from 'dayjs'
 import type { User } from '@/types/user'
 import type { MemberPermissionApplicationStatus } from '@/types/member-permission-application'
 import { CmsButton } from '@/shared/ui'
+import { blockViewerWriteAction } from '@/shared/lib/guard-viewer-write-action'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { isInstructorPermissionRevoked } from '@/features/user/shared/lib/member-list-display'
 import {
@@ -106,6 +107,8 @@ export function PermissionApprovalStatusWithResend({
       variant="secondary"
       size="small"
       onClick={() => {
+        // 뷰어 권한 — 알림 재발송 불가, 접근 불가 안내
+        if (blockViewerWriteAction()) return
         if (onPermissionResendNotification && notifyPermissionRole) {
           onPermissionResendNotification({ userId: user.id, permissionRole: notifyPermissionRole })
         } else {

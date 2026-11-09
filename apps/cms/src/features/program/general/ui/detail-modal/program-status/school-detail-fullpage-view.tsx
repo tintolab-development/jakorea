@@ -11,7 +11,9 @@ import type { ReactNode } from 'react'
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import axios from 'axios'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { cacheProjectedProgramPrivacy } from '@/features/program/shared/lib/program-my-assignment'
+import {
+  cacheProjectedProgramPrivacy,
+} from '@/features/program/shared/lib/program-my-assignment'
 import type { ColumnsType } from 'antd/es/table'
 import {
   CmsButton,
@@ -186,6 +188,7 @@ import {
   unmaskOrganizationApplicationPrivacyRemote,
 } from '@/features/program/general/api/applications-api-client'
 import { fetchMemberRolePrivacyUnmask } from '@/features/user/api/member-privacy-unmask'
+import { EDIT_MODE_REVEAL, type PrivacyRevealOptions } from '@/shared/lib/privacy-unmask-purpose'
 import { saveOrganizationCombinedClassRemote } from '@/features/program/general/api/organization-merge-groups-service'
 import { resolveOrganizationMergeErrorMessage } from '@/features/program/general/lib/organization-merge-error-message'
 import { useOrganizationMergeGroups } from '@/features/program/general/hooks/use-organization-merge-groups'
@@ -293,6 +296,8 @@ interface AssignedInstructorDisplayRow extends SchoolDetailInstructorRow {
   assignmentId?: string
   instructorMemberId?: string
   scheduleId?: string
+  /** 1사1교 — 취소된 배정(「배정 취소」 표시, 선택·역할 변경·재배정 불가) */
+  assignmentCancelled?: boolean
 }
 
 type WaitingInstructorRow = WaitingInstructorRowMock
@@ -540,6 +545,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     showApprovalAlarmSection: boolean
   } | null>(null)
   const [openRoleDropdownId, setOpenRoleDropdownId] = useState<string | null>(null)
+  // 권한 설정 V1.2 프로그램 권한 '대표 강사 변경': Program Owner·Assistant만. Program Viewer는 역할 드롭다운을 열지 않는다.
   const [leadRoleChangeConfirm, setLeadRoleChangeConfirm] = useState<{
     instructorId: string
     newLeadInstructorName: string
@@ -565,6 +571,15 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
   const [adminCommentModalOpen, setAdminCommentModalOpen] = useState(false)
   const [adminCommentDraft, setAdminCommentDraft] = useState('')
   const [adminCommentError, setAdminCommentError] = useState<string | undefined>()
+  /**
+   * CMS-29: 원문(unmask) 교사 연락처는 이 화면의 일시 오버레이로만 둔다 — 부모 savedBasicPatches에 올리지 않는다.
+   * 열람 해제 경로마다 훅의 onRemask로 같은 이벤트 안에서 지운다(렌더 뒤 fallback 정리 없음).
+   */
+  const [teacherPrivacyOverlay, setTeacherPrivacyOverlay] = useState<{
+    id: string
+    patch: Partial<SchoolDetailForModal>
+  } | null>(null)
+  const clearTeacherPrivacyOverlay = useCallback(() => setTeacherPrivacyOverlay(null), [])
 
   useEffect(() => {
     setTextbookStatusDropdownOpen(false)
@@ -625,6 +640,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
       : detail),
     ...(adminCommentQuery.data ? { adminComment: remoteAdminComment } : {}),
     ...savedBasicPatches[detail.id],
+    ...(teacherPrivacyOverlay?.id === detail.id ? teacherPrivacyOverlay.patch : {}),
     ...(organizationKitFields ?? {}),
   }
   const participantSessions = row.sessions ?? []
@@ -864,12 +880,26 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     mergeGroupsAllowed && shouldUseOrganizationMergeGroupsRemoteApi()
   )
 
+  /** 열람 해제 함수(아래 usePersonalInfoReveal)를 저장 콜백에서 동기 호출하기 위한 참조 */
+  const remaskAfterSaveRef = useRef<() => void>(() => {})
+  /**
+   * 신청 정보 저장 성공 — 로컬 패치(연락처 원문 제외) 반영과 같은 동기 블록에서 원문 열람을 끝낸다.
+   * 저장 Promise 이후(.then) 정리하면 그 사이 렌더에 원문 오버레이가 보인다.
+   */
+  const handleApplicationInfoSaved = useCallback(
+    (patch: Partial<SchoolDetailForModal> & { id: string }) => {
+      onSaveBasicInfo?.(patch)
+      remaskAfterSaveRef.current()
+    },
+    [onSaveBasicInfo]
+  )
+
   const applicationInfoEdit = useParticipatingInstitutionDetailEdit({
     detail: mergedDetail,
     row,
     program,
     participatingSchoolList,
-    onSaveBasicInfo,
+    onSaveBasicInfo: handleApplicationInfoSaved,
     combinedClassReadOnly,
   })
 
@@ -979,14 +1009,15 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     [mergedDetail.schoolName, row.schoolName]
   )
   const revealInstitutionTeacherPersonalInfo = useCallback(
-    async (reason: string) => {
+    async (reason: string, options?: PrivacyRevealOptions) => {
       const orgAppId = row.organizationApplicationId?.trim()
       if (orgAppId) {
         const programIdNumber = Number(program.id)
         const dto = await unmaskOrganizationApplicationPrivacyRemote(
           orgAppId,
           reason,
-          Number.isFinite(programIdNumber) ? programIdNumber : undefined
+          Number.isFinite(programIdNumber) ? programIdNumber : undefined,
+          options
         )
         const safeDto = cacheProjectedProgramPrivacy(
           queryClient,
@@ -994,7 +1025,13 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
           program.id,
           dto
         )
-        queryClient.setQueryData(generalApplicationsQueryKeys.organizationDetail(orgAppId), safeDto)
+        // 같은 원문을 쓰는 신청 id 키도 추적 대상에 넣어 다시 가리기·이탈 시 함께 초기화한다.
+        cacheProjectedProgramPrivacy(
+          queryClient,
+          generalApplicationsQueryKeys.organizationDetail(orgAppId),
+          program.id,
+          dto
+        )
         return safeDto
       }
       if (row.teacherMemberId == null) {
@@ -1009,36 +1046,42 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
       if (payload == null || typeof payload !== 'object') return
       if (isOrganizationApplicationDetailPayload(payload)) {
         const unmasked = mergeOrganizationApplicationDetailOntoSchoolDetail(detail, payload)
-        onSaveBasicInfo?.({
+        setTeacherPrivacyOverlay({
           id: detail.id,
-          teacherName: unmasked.teacherName ?? '',
-          teacherPhone: unmasked.teacherPhone ?? '',
-          teacherMobile: unmasked.teacherMobile ?? '',
-          teacherEmail: unmasked.teacherEmail ?? '',
-          addressDetail: unmasked.addressDetail ?? '',
-          region: unmasked.region,
+          patch: {
+            teacherName: unmasked.teacherName ?? '',
+            teacherPhone: unmasked.teacherPhone ?? '',
+            teacherMobile: unmasked.teacherMobile ?? '',
+            teacherEmail: unmasked.teacherEmail ?? '',
+            addressDetail: unmasked.addressDetail ?? '',
+            region: unmasked.region,
+          },
         })
         return
       }
       const privacy = payload as { name?: unknown; phone?: unknown; email?: unknown }
-      onSaveBasicInfo?.({
+      setTeacherPrivacyOverlay({
         id: detail.id,
-        ...(typeof privacy.name === 'string' ? { teacherName: privacy.name } : {}),
-        ...(typeof privacy.phone === 'string' ? { teacherMobile: privacy.phone } : {}),
-        ...(typeof privacy.email === 'string' ? { teacherEmail: privacy.email } : {}),
+        patch: {
+          ...(typeof privacy.name === 'string' ? { teacherName: privacy.name } : {}),
+          ...(typeof privacy.phone === 'string' ? { teacherMobile: privacy.phone } : {}),
+          ...(typeof privacy.email === 'string' ? { teacherEmail: privacy.email } : {}),
+        },
       })
     },
-    [detail, onSaveBasicInfo]
+    [detail]
   )
 
   const {
     personalInfoRevealed,
+    remaskPersonalInfo,
     revealWithReason,
     onPrivacyControlClick: handlePrivacyToggleClick,
     confirmModal: personalInfoRevealModal,
   programPrivacyPending,
   } = usePersonalInfoReveal({
     privacyScope: 'program',
+    onRemask: clearTeacherPrivacyOverlay,
     programId: programId,
     resolveProgramRole: () => resolveSessionProgramRole(programId),
     resolveAccessItem: resolvePersonalInfoAccessItem,
@@ -1047,6 +1090,16 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     resetDeps: [detail.id],
     controlMode: 'toggleRemask',
   })
+
+  /** 원문 열람 종료: 훅이 원문 캐시 초기화·오버레이 정리(onRemask)·상태 해제를 한 번에 동기 수행한다. */
+  const endTeacherPrivacyReveal = remaskPersonalInfo
+  remaskAfterSaveRef.current = remaskPersonalInfo
+
+  /** CMS-29: 신청 정보 수정 취소 즉시 원문 열람을 끝낸다(원문 캐시는 훅이 초기화). */
+  const cancelApplicationInfoEditAndRemask = useCallback(() => {
+    cancelApplicationInfoEdit()
+    endTeacherPrivacyReveal()
+  }, [cancelApplicationInfoEdit, endTeacherPrivacyReveal])
 
   const privacyMasked = !personalInfoRevealed
   const [editUnmaskConfirmOpen, setEditUnmaskConfirmOpen] = useState(false)
@@ -1068,7 +1121,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
   const confirmEditUnmaskAndStartEdit = useCallback(() => {
     if (editUnmaskConfirmLoading) return
     setEditUnmaskConfirmLoading(true)
-    void revealWithReason(APPLICATION_INFO_EDIT_UNMASK_REASON)
+    void revealWithReason(APPLICATION_INFO_EDIT_UNMASK_REASON, EDIT_MODE_REVEAL)
       .then(result => {
         if (!result.ok) return
         setEditUnmaskConfirmOpen(false)
@@ -1287,7 +1340,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     return withTdDivider(parts)
   }
   /** 배정된 강사 테이블용 행 — assignment board remote 시 API */
-  const assignedRows: AssignedInstructorDisplayRow[] = useMemo(() => {
+  const assignedRowsWithCancelled: AssignedInstructorDisplayRow[] = useMemo(() => {
     if (assignmentBoardRemoteEnabled) {
       if (!assignmentBoard) return []
       const orgAppId = row.organizationApplicationId ?? ''
@@ -1297,6 +1350,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         organizationApplicationId: orgAppId,
         instructorNameByMemberId: assignmentBoard.instructorNameByMemberId,
         scheduleLabelById: assignmentBoard.scheduleLabelById,
+        includeCancelled: isCompanySchool,
       })
       return apiRows.map(r => ({
         id: r.id,
@@ -1305,7 +1359,8 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         instructorName: r.instructorName,
         contact: '',
         email: '',
-        settlementStatus: 'none' as SettlementStatusKey,
+        // 배정 1건 = 지급조서 1건 — 서버 배정 단위 settlementStatus 그대로(구 백엔드는 none)
+        settlementStatus: r.settlementStatus,
         homeAddress: r.homeAddress,
         distanceToSchool: r.distanceToSchool,
         assignedDate: r.assignedDate,
@@ -1317,6 +1372,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         assignmentId: r.assignmentId,
         instructorMemberId: r.instructorMemberId,
         scheduleId: r.scheduleId,
+        assignmentCancelled: r.assignmentCancelled,
       }))
     }
     // 일반 remote OFF — FE mock 프로그램만 로컬 시드
@@ -1338,6 +1394,24 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     assignedScheduleLinesByInstructorId,
     assignmentBoard,
   ])
+
+  /** 활성 배정 — 인원·팀장·배정 취소·역할 변경·엑셀은 취소 행을 제외한 이 목록만 본다 */
+  const assignedRows: AssignedInstructorDisplayRow[] = useMemo(
+    () =>
+      assignedRowsWithCancelled
+        .filter(r => !r.assignmentCancelled)
+        .map((r, index) => ({ ...r, no: index + 1 })),
+    [assignedRowsWithCancelled]
+  )
+
+  /** 표 — 활성 배정 뒤에 「배정 취소」 행(1사1교) */
+  const assignedTableRows: AssignedInstructorDisplayRow[] = useMemo(
+    () =>
+      [...assignedRows, ...assignedRowsWithCancelled.filter(r => r.assignmentCancelled)].map(
+        (r, index) => ({ ...r, no: index + 1 })
+      ),
+    [assignedRows, assignedRowsWithCancelled]
+  )
 
   /** 배정 대기 — remote 시 승인 강사신청 × 기관 sessions 합성 (전용 waiting API 없음) */
   const waitingRows: WaitingInstructorRow[] = useMemo(() => {
@@ -1953,7 +2027,9 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
 
   const applyRoleChange = useCallback(
     async (instructorId: string, newRole: InstructorRoleKey) => {
-      if (assignmentBoardRemoteEnabled && newRole === 'lead') {
+      if (assignmentBoardRemoteEnabled) {
+        // 대표 강사 지정·해제 모두 같은 API. 해제(일반 강사)는 scheduleLead=false.
+        const isDemote = newRole !== 'lead'
         const target = assignedRows.find(r => r.id === instructorId)
         const memberId = Number(target?.instructorMemberId)
         const orgAppId = Number(row.organizationApplicationId)
@@ -1976,14 +2052,21 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
             instructorMemberId: memberId,
             organizationApplicationId: orgAppId,
             ...(Number.isFinite(scheduleId) && scheduleId > 0 ? { scheduleId } : {}),
+            ...(isDemote ? { scheduleLead: false } : {}),
           })
           await invalidateAssignmentBoard()
           setOpenRoleDropdownId(null)
           return
-        } catch {
+        } catch (error) {
+          setOpenRoleDropdownId(null)
           showAlert({
-            title: '대표 강사 변경 실패',
-            content: '대표 강사 지정에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+            title: isDemote ? '일반 강사 변경 실패' : '대표 강사 변경 실패',
+            content: getGeneralProgramApiErrorMessage(
+              error,
+              isDemote
+                ? '일반 강사 변경에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+                : '대표 강사 지정에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+            ),
           })
           return
         }
@@ -2056,18 +2139,21 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         width: 116,
         align: 'center',
         onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
-        render: (role: InstructorRoleKey, record: AssignedInstructorDisplayRow) => (
-          <StatusDropdownCell<InstructorRoleKey>
-            status={role}
-            statusOptions={['lead', 'assistant']}
-            getTag={getInstructorRoleTag}
-            isItemDisabled={(cur, opt) => cur === opt}
-            onChange={key => handleRoleChange(record.id, key as InstructorRoleKey)}
-            isOpen={openRoleDropdownId === record.id}
-            onOpenChange={open => setOpenRoleDropdownId(open ? record.id : null)}
-            emptyPlaceholder="-"
-          />
-        ),
+        render: (role: InstructorRoleKey, record: AssignedInstructorDisplayRow) =>
+          record.assignmentCancelled ? (
+            <StatusTag label="배정 취소" tone="gray" mutedLabel />
+          ) : (
+            <StatusDropdownCell<InstructorRoleKey>
+              status={role}
+              statusOptions={['lead', 'assistant']}
+              getTag={getInstructorRoleTag}
+              isItemDisabled={(cur, opt) => cur === opt}
+              onChange={key => handleRoleChange(record.id, key as InstructorRoleKey)}
+              isOpen={openRoleDropdownId === record.id}
+              onOpenChange={open => setOpenRoleDropdownId(open ? record.id : null)}
+              emptyPlaceholder="-"
+            />
+          ),
       },
       {
         title: '강사명',
@@ -2518,7 +2604,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                 isEditing={isApplicationInfoEditing}
                 idleVariant="secondary"
                 onEdit={requestStartApplicationInfoEdit}
-                onCancel={cancelApplicationInfoEdit}
+                onCancel={cancelApplicationInfoEditAndRemask}
                 onSave={() => {
                   void saveApplicationInfoEdit().then(result => {
                     if (result === COMBINED_CLASS_GRADE_REQUIRED_SAVE_RESULT) {
@@ -2735,9 +2821,10 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                     columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
                     selectedRowKeys: selectedAssignedKeys,
                     onChange: keys => setSelectedAssignedKeys(keys),
+                    getCheckboxProps: record => ({ disabled: record.assignmentCancelled === true }),
                   }}
                   columns={assignedInstructorColumns}
-                  dataSource={assignedRows}
+                  dataSource={assignedTableRows}
                   locale={{ emptyText: renderAssignedInstructorTableEmpty() }}
                 />
               </div>

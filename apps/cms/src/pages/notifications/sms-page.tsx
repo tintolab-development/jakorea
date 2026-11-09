@@ -10,6 +10,8 @@ import { SmsSendHistoryPage } from '@/features/notifications/ui/sms-send-history
 import { SendFullpageModal } from '@/features/notifications/ui/sms-send/fullpage-modal'
 import { SmsTemplateList } from '@/features/notifications/ui/sms-template/list'
 import type { SmsTabKey } from '@/features/notifications/model/sms-send-history/types'
+import { canAdminAction } from '@/shared/lib/admin-role-policy'
+import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
 import { CmsButton } from '@/shared/ui'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import './sms-page.css'
@@ -32,7 +34,9 @@ export function SmsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const activeKey = parseTabKey(searchParams.get(TAB_PARAM))
   const sendOpen = searchParams.get(SEND_MODAL_PARAM) === SEND_MODAL_VALUE
-  useAutoSyncSmsCatalogOnEnter(shouldUseSmsTemplatesRemoteApi())
+  // 문자 템플릿 동기화는 쓰기(NOTIFICATION_WRITE). 조회 전용 역할(Program Viewer)은 자동 동기화를 보내지 않는다.
+  const canSyncCatalog = canAdminAction({ roleCode: useSessionAdminRoleCode(), action: 'write' })
+  useAutoSyncSmsCatalogOnEnter(shouldUseSmsTemplatesRemoteApi() && canSyncCatalog)
 
   const handleTabChange = useCallback(
     (key: string) => {

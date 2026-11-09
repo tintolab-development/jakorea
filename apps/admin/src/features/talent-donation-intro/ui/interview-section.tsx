@@ -271,19 +271,18 @@ export function InterviewSectionCard({ slot, siblingLinkedStoryIds = [] }: Props
                 allowClear={false}
                 value={draft.linkedStoryTitle}
                 placeholder="연결할 게시글을 선택해 주세요"
+                // 조회에서는 아이콘을 두지 않아 글자가 아이콘 폭만큼 밀리지 않는다 (시안 496:39095)
                 icon={
-                  <button
-                    type="button"
-                    className="talent-intro-interview__search-btn"
-                    aria-label="게시글 검색"
-                    tabIndex={isEditing ? 0 : -1}
-                    onClick={() => {
-                      if (!isEditing) return
-                      setPickerOpen(true)
-                    }}
-                  >
-                    <SearchIcon />
-                  </button>
+                  isEditing ? (
+                    <button
+                      type="button"
+                      className="talent-intro-interview__search-btn"
+                      aria-label="게시글 검색"
+                      onClick={() => setPickerOpen(true)}
+                    >
+                      <SearchIcon />
+                    </button>
+                  ) : undefined
                 }
                 onClick={() => {
                   if (!isEditing) return

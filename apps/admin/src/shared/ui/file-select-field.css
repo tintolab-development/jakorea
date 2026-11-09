@@ -158,7 +158,8 @@
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
-  align-items: center;
+  /* Figma 2118:134439 — 미리보기·정보 영역 위쪽 정렬 (정보 영역 pt 5로 파일명 줄을 맞춤) */
+  align-items: flex-start;
   gap: var(--Spacing-12, 12px);
   flex: 1 1 auto;
   align-self: stretch;
@@ -171,7 +172,7 @@
   display: flex !important;
   flex-direction: row !important;
   flex-wrap: nowrap !important;
-  align-items: center !important;
+  align-items: flex-start !important;
   margin-block: 0 !important;
   flex: 1 1 auto !important;
   width: 100% !important;
@@ -204,11 +205,12 @@
   height: 100% !important;
   max-width: none;
   max-height: none;
-  object-fit: cover;
+  object-fit: contain; /* 1:1 미리보기 칸 안에 잘림 없이 리사이징 */
   object-position: center;
   display: block;
 }
 
+/* 정보 영역(file infor) — pt 5 · 세로 간격 8 (Figma 2118:134439) */
 .file-select-image-cell .file-select-field {
   display: flex !important;
   flex-direction: column !important;
@@ -216,6 +218,7 @@
   flex: 1 1 0;
   min-width: 0;
   width: 100%;
+  padding-top: 5px;
   gap: var(--Spacing-8, 8px);
 }
 
@@ -223,14 +226,19 @@
   width: 100%;
 }
 
+/* 버튼 줄 — 위쪽 정렬 + 버튼 감싸개 py 2 (Figma 2118:134439 btn): 안내가 줄바꿈돼도 버튼이 아래로 밀리지 않는다 */
 .file-select-image-cell .file-select-field__actions {
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--Spacing-16, 16px);
   width: 100%;
   min-width: 0;
+}
+
+.file-select-image-cell .file-select-field__actions > .file-upload-picker {
+  padding-block: 2px;
 }
 
 .file-select-image-cell .file-select-field__guide {

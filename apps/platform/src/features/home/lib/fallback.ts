@@ -11,7 +11,7 @@ import snsLinkedinUrl from '@/shared/assets/icons/sns-linkedin.svg'
 import snsMailUrl from '@/shared/assets/icons/sns-mail.svg'
 import snsNaverBlogUrl from '@/shared/assets/icons/sns-naver-blog.svg'
 import snsYoutubeUrl from '@/shared/assets/icons/sns-youtube.svg'
-import cardMinjaeUrl from '@/features/impact-story/image/illustration/card-minjae.png'
+import defaultThumbnailUrl from '@/features/impact-story/image/illustration/card-default.png'
 import {
   HOME_ACHIEVEMENT_HIGHLIGHT,
   HOME_ACHIEVEMENT_STATS,
@@ -60,8 +60,8 @@ export const HOME_MAIN_FALLBACK: HomeMainFallback = {
     publishedAt: '2026-01-15T12:00:00Z',
     isFeatured: true,
     placeholderColor: '#c5e8eb',
-    imageUrl: cardMinjaeUrl,
-    featuredImageUrl: cardMinjaeUrl,
+    imageUrl: defaultThumbnailUrl,
+    featuredImageUrl: defaultThumbnailUrl,
   },
   performanceTitle: FALLBACK_PERFORMANCE_TITLE,
   stats: HOME_ACHIEVEMENT_STATS,

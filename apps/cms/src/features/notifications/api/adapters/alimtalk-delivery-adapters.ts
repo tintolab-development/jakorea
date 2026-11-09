@@ -12,67 +12,16 @@ import {
 import { formatNotificationFailedReason } from '@/features/notifications/model/shared/format-notification-failed-reason'
 import type {
   AlimtalkBroadcastTiming,
-  AlimtalkReceiveStatus,
   AlimtalkSendHistoryRow,
-  AlimtalkSendStatus,
 } from '@/features/notifications/model/alimtalk-send-history/types'
 import {
   ALIMTALK_ROOT_CATEGORY_ID,
   type AlimtalkTemplateItem,
 } from '@/features/notifications/model/alimtalk-template/types'
-
-/** BE sendStatus → UI 라벨 (deliveryStatus 원시값 직접 노출 금지) */
-const SEND_STATUS_MAP: Record<string, Exclude<AlimtalkSendStatus, '전체'>> = {
-  REQUESTED: '발송 요청',
-  SCHEDULED: '예약',
-  WAITED: '대기',
-  QUEUED: '대기',
-  PENDING: '대기',
-  IN_PROGRESS: '발송중',
-  SENDING: '발송중',
-  SENT: '발송 완료',
-  SUCCESS: '발송 완료',
-  DELIVERED: '발송 완료',
-  SEND_FAILED: '발송 실패',
-  FAILED: '발송 실패',
-  FAILURE: '발송 실패',
-  CANCELED: '취소',
-  CANCELLED: '취소',
-  UNKNOWN: '확인불가',
-}
-
-const RECEIVE_STATUS_MAP: Record<string, Exclude<AlimtalkReceiveStatus, '전체'>> = {
-  REQUESTED: '요청됨',
-  WAITING_CONFIRM: '확인 대기중',
-  PENDING: '대기중',
-  SCHEDULED: '예약됨',
-  SUCCESS: '수신 성공',
-  DELIVERED: '수신 성공',
-  OPENED: '수신 성공',
-  FAILED: '수신 실패',
-  FAILURE: '수신 실패',
-  CANCELLED: '취소됨',
-  CANCELED: '취소됨',
-}
-
-function mapSendStatus(raw?: string | null): Exclude<AlimtalkSendStatus, '전체'> {
-  const key = (raw ?? '').trim().toUpperCase()
-  if (SEND_STATUS_MAP[key]) return SEND_STATUS_MAP[key]
-  if ((Object.values(SEND_STATUS_MAP) as string[]).includes(raw ?? '')) {
-    return raw as Exclude<AlimtalkSendStatus, '전체'>
-  }
-  // 미지 코드는 REQUESTED로 떨어뜨리지 않음 (FAILED→REQUESTED 오표시 방지)
-  return '확인불가'
-}
-
-function mapReceiveStatus(raw?: string | null): Exclude<AlimtalkReceiveStatus, '전체'> {
-  const key = (raw ?? '').trim().toUpperCase()
-  if (RECEIVE_STATUS_MAP[key]) return RECEIVE_STATUS_MAP[key]
-  if ((Object.values(RECEIVE_STATUS_MAP) as string[]).includes(raw ?? '')) {
-    return raw as Exclude<AlimtalkReceiveStatus, '전체'>
-  }
-  return '요청됨'
-}
+import {
+  mapNotificationReceiveStatus,
+  mapNotificationSendStatus,
+} from '@/features/notifications/model/shared/delivery-status'
 
 function mapBroadcastTiming(
   item: NotificationDeliveryResponse
@@ -222,7 +171,10 @@ export function mapDeliveryToSendHistoryRow(
   const templateName = item.templateDisplayName?.trim() || '-'
   const senderInfo =
     item.senderDisplayName?.trim() || item.senderKey?.trim() || '-'
-  const sendStatus = mapSendStatus(item.sendStatus)
+  const broadcastTiming = mapBroadcastTiming(item)
+  const sendStatus = mapNotificationSendStatus(item.sendStatus, {
+    scheduled: broadcastTiming === '예약',
+  })
   const failedReasonRaw = item.failedReason?.trim() || ''
   const failedReason =
     sendStatus === '발송 실패' ? formatNotificationFailedReason(failedReasonRaw) || failedReasonRaw : ''
@@ -238,9 +190,9 @@ export function mapDeliveryToSendHistoryRow(
     receiverName,
     receiverPhone,
     receiverInfo: `${receiverName} | ${receiverPhone}`,
-    broadcastTiming: mapBroadcastTiming(item),
+    broadcastTiming,
     sendStatus,
-    receiveStatus: mapReceiveStatus(item.receiptStatus),
+    receiveStatus: mapNotificationReceiveStatus(item.receiptStatus),
     // 발송/수신일시: sentAt / deliveredAt만. requestedAt·openedAt 대체 금지
     sentAt: item.sentAt?.trim() || '',
     receivedAt: item.deliveredAt?.trim() || '',

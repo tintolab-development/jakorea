@@ -19,6 +19,8 @@ export async function fetchAllInstructorSettlementsRemote(
   while (page < totalPages) {
     const res = await fetchSettlementsPageRemote({
       instructorMemberId,
+      // 회원 상세 정산 탭 — 계좌 지급 완료 건도 보여야 한다(기획 확정 2026-11-09)
+      includePaid: true,
       page,
       size: PAGE_SIZE,
     })

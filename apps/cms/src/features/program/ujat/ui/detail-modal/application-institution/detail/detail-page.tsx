@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react'
 import { Space, Spin } from 'antd'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
-import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { useUjatInstitutionApplicationDetail } from '@/features/program/ujat/api/use-institution-application-detail'
 import { useUjatInstitutionTeacherPrivacyReveal } from '../shared/use-institution-teacher-privacy-reveal'
@@ -45,7 +44,6 @@ export function UjatInstitutionApplicationDetailPage({
   onOpenScheduleAssign?: () => void
 }) {
   const { showAlert } = useCmsAlert()
-  const canWrite = useUjatCanWrite()
   const {
     row,
     detail,
@@ -266,7 +264,6 @@ export function UjatInstitutionApplicationDetailPage({
     <div className="ujat-institution-application-detail-page">
       <div className="ujat-institution-application-detail-page__actions">
         <Space size={8} wrap>
-          {canWrite ? (
           <>
           <CmsButton
             type="button"
@@ -320,7 +317,6 @@ export function UjatInstitutionApplicationDetailPage({
             </CmsButton>
           ) : null}
           </>
-          ) : null}
           <PersonalInfoRevealButton disabled={programPrivacyPending}
             labelMode="stickyReveal"
             revealed={personalInfoRevealed}

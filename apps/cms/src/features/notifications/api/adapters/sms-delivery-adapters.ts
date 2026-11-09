@@ -11,68 +11,13 @@ import {
 import { formatNotificationFailedReason } from '@/features/notifications/model/shared/format-notification-failed-reason'
 import type {
   SmsBroadcastTiming,
-  SmsReceiveStatus,
   SmsSendHistoryAttachment,
   SmsSendHistoryRow,
-  SmsSendStatus,
 } from '@/features/notifications/model/sms-send-history/types'
-
-/** BE sendStatus → 기획 4-1 UI 라벨 */
-const SEND_STATUS_MAP: Record<string, Exclude<SmsSendStatus, '전체'>> = {
-  REQUESTED: '발송 요청',
-  SCHEDULED: '발송 예약',
-  WAITED: '발송 대기',
-  QUEUED: '발송 대기',
-  PENDING: '발송 대기',
-  IN_PROGRESS: '발송 중',
-  SENDING: '발송 중',
-  SENT: '발송 성공',
-  SUCCESS: '발송 성공',
-  DELIVERED: '발송 성공',
-  SEND_FAILED: '발송 실패',
-  FAILED: '발송 실패',
-  FAILURE: '발송 실패',
-  CANCELED: '발송 취소',
-  CANCELLED: '발송 취소',
-}
-
-const RECEIVE_STATUS_MAP: Record<string, Exclude<SmsReceiveStatus, '전체'>> = {
-  REQUESTED: '요청됨',
-  CONFIRM_WAITED: '확인 대기중',
-  WAITING_CONFIRM: '확인 대기중',
-  WAITED: '대기중',
-  PENDING: '대기중',
-  SCHEDULED: '예약됨',
-  IN_PROGRESS: '대기중',
-  SENT: '수신 성공',
-  SUCCESS: '수신 성공',
-  DELIVERED: '수신 성공',
-  OPENED: '수신 성공',
-  SEND_FAILED: '수신 실패',
-  DELIVERY_FAILED: '수신 실패',
-  FAILED: '수신 실패',
-  FAILURE: '수신 실패',
-  CANCELED: '취소됨',
-  CANCELLED: '취소됨',
-}
-
-function mapSendStatus(raw?: string | null): Exclude<SmsSendStatus, '전체'> {
-  const key = (raw ?? '').trim().toUpperCase()
-  if (SEND_STATUS_MAP[key]) return SEND_STATUS_MAP[key]
-  if ((Object.values(SEND_STATUS_MAP) as string[]).includes(raw ?? '')) {
-    return raw as Exclude<SmsSendStatus, '전체'>
-  }
-  return '발송 요청'
-}
-
-function mapReceiveStatus(raw?: string | null): Exclude<SmsReceiveStatus, '전체'> {
-  const key = (raw ?? '').trim().toUpperCase()
-  if (RECEIVE_STATUS_MAP[key]) return RECEIVE_STATUS_MAP[key]
-  if ((Object.values(RECEIVE_STATUS_MAP) as string[]).includes(raw ?? '')) {
-    return raw as Exclude<SmsReceiveStatus, '전체'>
-  }
-  return '요청됨'
-}
+import {
+  mapNotificationReceiveStatus,
+  mapNotificationSendStatus,
+} from '@/features/notifications/model/shared/delivery-status'
 
 function mapBroadcastTiming(
   item: NotificationDeliveryResponse
@@ -224,7 +169,10 @@ export function mapSmsDeliveryToSendHistoryRow(
     item.contentTemplate?.trim() ||
     ''
   const messageType = mapMessageType(item, previewRecord)
-  const sendStatus = mapSendStatus(item.sendStatus)
+  const broadcastTiming = mapBroadcastTiming(item)
+  const sendStatus = mapNotificationSendStatus(item.sendStatus, {
+    scheduled: broadcastTiming === '예약',
+  })
   const failedReasonRaw = item.failedReason?.trim() || ''
   const failedReason =
     sendStatus === '발송 실패'
@@ -250,9 +198,9 @@ export function mapSmsDeliveryToSendHistoryRow(
     senderInfo: senderDisplay || senderPhone || '-',
     receiverPhone,
     receiverInfo: receiverPhone || '-',
-    broadcastTiming: mapBroadcastTiming(item),
+    broadcastTiming,
     sendStatus,
-    receiveStatus: mapReceiveStatus(item.receiptStatus),
+    receiveStatus: mapNotificationReceiveStatus(item.receiptStatus),
     sentAt: item.sentAt?.trim() || '',
     receivedAt: item.deliveredAt?.trim() || '',
     templateName,

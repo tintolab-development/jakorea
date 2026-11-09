@@ -1,3 +1,5 @@
+import { cmsAlertModal } from '@/shared/ui'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 /**
  * 학교(교사) 상세 정보 모달
@@ -171,10 +173,13 @@ export function SchoolDetailModal({
                 variant="delete"
                 size="small"
                 onClick={() => {
+                  if (selectedTeacherKeys.length === 0) {
+                    cmsAlertModal.show(NO_SELECTION_ALERT)
+                    return
+                  }
                   onDeleteMembers(selectedTeacherKeys as string[])
                   setSelectedTeacherKeys([])
-                }}
-                disabled={selectedTeacherKeys.length === 0} >
+                }} >
                 회원 삭제
               </CmsButton>
             )}

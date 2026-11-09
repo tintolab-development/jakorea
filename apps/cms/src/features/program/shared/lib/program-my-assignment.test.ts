@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   canListProgramManagers,
+  canManageProgramManagers,
   canRevealProgramGeneralPii,
   canRevealProgramSensitivePii,
 } from './program-my-assignment'
@@ -22,7 +23,8 @@ describe('program my-assignment capabilities', () => {
     }
     expect(canRevealProgramGeneralPii(viewerCeiling)).toBe(false)
     expect(canRevealProgramSensitivePii(viewerCeiling)).toBe(false)
-    expect(canListProgramManagers(viewerCeiling)).toBe(false)
+    expect(canListProgramManagers(viewerCeiling)).toBe(true)
+    expect(canManageProgramManagers(viewerCeiling)).toBe(false)
   })
 
   it('blocks unassigned and PROGRAM_VIEWER ceiling even if assignmentRole is PM', () => {
@@ -57,12 +59,14 @@ describe('program my-assignment capabilities', () => {
     }
     expect(canRevealProgramGeneralPii(partner)).toBe(true)
     expect(canRevealProgramSensitivePii(partner)).toBe(false)
-    expect(canListProgramManagers(partner)).toBe(false)
+    expect(canListProgramManagers(partner)).toBe(true)
+    expect(canManageProgramManagers(partner)).toBe(false)
   })
 
   it('lets PM and master-bypass capabilities through without inventing missing ones', () => {
     expect(canRevealProgramSensitivePii(pm)).toBe(true)
     expect(canListProgramManagers(pm)).toBe(true)
+    expect(canManageProgramManagers(pm)).toBe(true)
     expect(
       canRevealProgramSensitivePii({
         assigned: false,

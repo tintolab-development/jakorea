@@ -27,3 +27,12 @@
   align-items: center;
   gap: var(--admin-list-toolbar-actions-gap, 8px);
 }
+
+/*
+ * 연혁·수상·인증 목록 표 — 시안 열 폭(Figma 2094:131215 · 27:39925 · 27:40157, 표 1538)
+ * 선택 열 60 (공통 기본 80 대신). 나머지 열은 코드 width = 시안 값, 가장 넓은 텍스트 열만 폭 미지정(남는 폭 흡수).
+ */
+.hac-table.cms-data-table {
+  --table-selection-column-width: 60px;
+  --table-no-column-width: 80px;
+}
