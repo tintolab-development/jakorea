@@ -129,4 +129,38 @@ describe('HomepageActionGuard', () => {
     act(() => byText('순서 변경').click())
     expect(show).toHaveBeenCalledTimes(1)
   })
+
+  it('Program Viewer는 신청 목록 엑셀 다운로드도 막고, 일반 다운로드 버튼은 그대로 둔다', () => {
+    const onExcel = vi.fn()
+    const onFile = vi.fn()
+    render(
+      <>
+        <button type="button" className="excel-button" onClick={onExcel}>
+          <img alt="" />
+          엑셀 다운로드
+        </button>
+        <button type="button" onClick={onFile}>
+          다운로드
+        </button>
+      </>
+    )
+    act(() => byText('엑셀 다운로드').click())
+    act(() => byText('다운로드').click())
+    expect(onExcel).not.toHaveBeenCalled()
+    expect(onFile).toHaveBeenCalledTimes(1)
+    expect(show).toHaveBeenCalledTimes(1)
+  })
+
+  it('HOMEPAGE_PII_VIEW가 있으면 엑셀 다운로드를 허용한다', () => {
+    profile = { roleCode: 'PROGRAM_MANAGER', permissions: ['HOMEPAGE_VIEW', 'HOMEPAGE_PII_VIEW'] }
+    const onExcel = vi.fn()
+    render(
+      <button type="button" className="excel-button" onClick={onExcel}>
+        엑셀 다운로드
+      </button>
+    )
+    act(() => byText('엑셀 다운로드').click())
+    expect(onExcel).toHaveBeenCalledTimes(1)
+    expect(show).not.toHaveBeenCalled()
+  })
 })

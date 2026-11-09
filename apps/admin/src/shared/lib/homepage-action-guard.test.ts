@@ -37,7 +37,7 @@ describe('resolveHomepageActionPermissions', () => {
         roleCode: 'PROGRAM_VIEWER',
         permissions: ['HOMEPAGE_VIEW', 'HOMEPAGE_STATS_VIEW'],
       })
-    ).toEqual({ write: false, pii: false })
+    ).toEqual({ write: false, pii: false, download: false })
   })
 
   it('Program Manager는 편집·개인정보 권한이 있으면 허용한다', () => {
@@ -47,17 +47,19 @@ describe('resolveHomepageActionPermissions', () => {
         roleCode: 'PROGRAM_MANAGER',
         permissions: ['HOMEPAGE_VIEW', 'HOMEPAGE_EDIT', 'HOMEPAGE_PUBLISH', 'HOMEPAGE_PII_VIEW'],
       })
-    ).toEqual({ write: true, pii: true })
+    ).toEqual({ write: true, pii: true, download: true })
   })
 
   it('Master와 프로필 조회 전은 막지 않는다', () => {
     expect(resolveHomepageActionPermissions({ resolved: true, roleCode: 'MASTER' })).toEqual({
       write: true,
       pii: true,
+      download: true,
     })
     expect(resolveHomepageActionPermissions({ resolved: false })).toEqual({
       write: true,
       pii: true,
+      download: true,
     })
   })
 })
