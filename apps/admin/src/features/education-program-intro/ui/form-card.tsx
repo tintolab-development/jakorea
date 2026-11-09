@@ -204,7 +204,7 @@ function ProgramSection({
                   width="100%"
                   value={display.programType}
                   readOnly={!isEditing}
-                  tabIndex={isEditing ? 0 : -1}
+                  inlineReadOnly="slot"
                   onChange={e => {
                     if (!isEditing) return
                     onChange({ programType: e.target.value })
@@ -286,7 +286,7 @@ function ProgramSection({
                   width="100%"
                   value={display.representativeProgram}
                   readOnly={!isEditing}
-                  tabIndex={isEditing ? 0 : -1}
+                  inlineReadOnly="slot"
                   onChange={e => {
                     if (!isEditing) return
                     onChange({ representativeProgram: e.target.value })
@@ -306,7 +306,7 @@ function ProgramSection({
                   width="100%"
                   value={display.sponsorName}
                   readOnly={!isEditing}
-                  tabIndex={isEditing ? 0 : -1}
+                  inlineReadOnly="slot"
                   onChange={e => {
                     if (!isEditing) return
                     onChange({ sponsorName: e.target.value })
