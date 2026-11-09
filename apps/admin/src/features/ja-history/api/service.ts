@@ -158,7 +158,10 @@ export async function saveJaHistoryThriveService(input: JaHistoryThriveSaveInput
 export async function saveJaHistoryCtaService(input: JaHistoryCtaSaveInput, cached?: JaHistoryData): Promise<JaHistoryData> {
     try {
         const { version } = await resolveVersion(cached);
-        const updated = await jaKoreaApi().updateCta(toJaHistoryCtaUpdateRequest(input, version));
+        const imageAssetId = input.imageFile
+            ? await uploadJaHistoryImageAsset(input.imageFile, 'JA_HISTORY_CTA_IMAGE')
+            : undefined;
+        const updated = await jaKoreaApi().updateCta(toJaHistoryCtaUpdateRequest(input, version, imageAssetId));
         return mapJaHistoryPageResponseToDomain(updated);
     }
     catch (error) {

@@ -4,7 +4,6 @@ import '@jakorea/form-template-runtime/detail-info-form.css'
 import type { JaHistoryCta } from '@/entities/ja-history/model/types'
 import { useSaveJaHistoryCta } from '@/features/ja-history/api/hooks'
 import {
-  FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
   FileSelectField,
   isFileSelectTotalSizeExceeded,
   notifyFileSelectTotalSizeExceeded,
@@ -15,8 +14,11 @@ import { HistoryCopy, InlineText, MediaPreview, SectionFrame, jaHistorySaveAlert
 import { CtaButtonsNestedTable } from './cta-buttons-nested-table'
 import { isAllowedJaHistoryImage, JA_HISTORY_IMAGE_ACCEPT, readJaHistoryImage } from './image-file'
 
+/** CTA 이미지(JA_HISTORY_CTA_IMAGE) 서버 업로드 한도 */
+const CTA_IMAGE_MAX_BYTES = 15 * 1024 * 1024
+
 const IMAGE_GUIDE_LINES = [
-  '- 파일은 JPG, PNG 형식만 등록 가능하며, 최대 20MB까지 첨부할 수 있습니다.',
+  '- 파일은 JPG, PNG 형식만 등록 가능하며, 최대 15MB까지 첨부할 수 있습니다.',
   '- 권장 이미지 사이즈는 680 × 400px입니다.',
 ]
 
@@ -25,12 +27,12 @@ export function CtaSection({ cta }: { cta: JaHistoryCta }) {
   const saveMutation = useSaveJaHistoryCta()
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(cta)
-  const [imageChanged, setImageChanged] = useState(false)
+  const [imageFile, setImageFile] = useState<File | null>(null)
 
   useEffect(() => {
     if (!editing) {
       setDraft(cta)
-      setImageChanged(false)
+      setImageFile(null)
     }
   }, [cta, editing])
 
@@ -52,10 +54,10 @@ export function CtaSection({ cta }: { cta: JaHistoryCta }) {
       if (
         isFileSelectTotalSizeExceeded({
           incoming: [file],
-          maxTotalBytes: FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
+          maxTotalBytes: CTA_IMAGE_MAX_BYTES,
         })
       ) {
-        notifyFileSelectTotalSizeExceeded(FILE_SELECT_IMAGE_MAX_TOTAL_BYTES)
+        notifyFileSelectTotalSizeExceeded(CTA_IMAGE_MAX_BYTES)
         return
       }
       try {
@@ -64,7 +66,7 @@ export function CtaSection({ cta }: { cta: JaHistoryCta }) {
           ...prev,
           image: { ...prev.image, url: dataUrl, fileName: file.name, assetId: undefined },
         }))
-        setImageChanged(true)
+        setImageFile(file)
       } catch {
         showAlert({
           title: '파일 읽기 실패',
@@ -84,10 +86,11 @@ export function CtaSection({ cta }: { cta: JaHistoryCta }) {
       onEdit={() => setEditing(true)}
       onCancel={() => {
         setDraft(cta)
-        setImageChanged(false)
+        setImageFile(null)
         setEditing(false)
       }}
       onSave={() => {
+        // 이미지를 바꾸지 않았으면 imageAssetId를 생략 → 서버가 현재 이미지를 유지
         void saveMutation
           .mutateAsync({
             title: draft.title,
@@ -96,8 +99,8 @@ export function CtaSection({ cta }: { cta: JaHistoryCta }) {
             primaryHref: draft.primaryHref,
             secondaryLabel: draft.secondaryLabel,
             secondaryHref: draft.secondaryHref,
-            ...(imageChanged
-              ? { imageUrl: draft.image.url, imageFileName: draft.image.fileName }
+            ...(imageFile
+              ? { imageUrl: draft.image.url, imageFileName: draft.image.fileName, imageFile }
               : {}),
           })
           .then(
@@ -165,11 +168,20 @@ export function CtaSection({ cta }: { cta: JaHistoryCta }) {
                   accept={JA_HISTORY_IMAGE_ACCEPT}
                   buttonLabel="파일 추가"
                   fileNames={draft.image.fileName ? [draft.image.fileName] : []}
-                  maxTotalBytes={FILE_SELECT_IMAGE_MAX_TOTAL_BYTES}
+                  maxTotalBytes={CTA_IMAGE_MAX_BYTES}
                   guideLines={IMAGE_GUIDE_LINES}
                   onFilesChange={files => {
                     void handleFilesChange(files)
                   }}
+                  // CTA 이미지는 삭제 기능이 없다. 새로 고른 파일만 취소해 저장된 이미지로 되돌린다.
+                  onRemoveFile={
+                    imageFile
+                      ? () => {
+                          setDraft(prev => ({ ...prev, image: cta.image }))
+                          setImageFile(null)
+                        }
+                      : undefined
+                  }
                 />
               </div>
             }
