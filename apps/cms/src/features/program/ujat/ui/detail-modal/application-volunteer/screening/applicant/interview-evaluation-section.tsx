@@ -15,12 +15,17 @@ import { formatInterviewSummary } from '../interview-assign/schedule-utils'
 import { parseUjatInterviewDateLabel } from '../shared/interview-calendar-events'
 import { computeUjatInterviewTotalScore } from '../interview2/display'
 import { CmsInput } from '@/shared/ui/cms-input'
-import { CmsNumericInput } from '@/shared/ui/numeric-input'
+import { CmsSelect } from '@/shared/ui/cms-select'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import './interview-evaluation-section.css'
 
 const MANAGER_SCORE_MAX = 5
-const SCORE_PLACEHOLDER = '점수를 입력해 주세요'
+const SCORE_PLACEHOLDER = '점수를 선택해 주세요'
+
+const MANAGER_SCORE_SELECT_OPTIONS = Array.from({ length: MANAGER_SCORE_MAX }, (_, i) => {
+  const score = String(i + 1)
+  return { label: score, value: score }
+})
 
 function formatAssignedInterviewScheduleDisplay(applicant: UjatVolunteerApplicantRow): string {
   const dateLabel = applicant.assignedInterviewDateLabel
@@ -36,6 +41,27 @@ function clampManagerScore(value: string): number | null {
   const next = Number(value)
   if (!Number.isFinite(next) || !Number.isInteger(next) || next < 1) return null
   return Math.min(MANAGER_SCORE_MAX, next)
+}
+
+type ManagerScoreSelectProps = {
+  value: number | null
+  onChange: (score: number | null) => void
+}
+
+/** 1~5 점수 선택. 미선택이면 placeholder 노출 */
+function ManagerScoreSelect({ value, onChange }: ManagerScoreSelectProps) {
+  return (
+    <CmsSelect
+      inputSize="small"
+      width="100%"
+      withAllOption={false}
+      allowClear={false}
+      placeholder={SCORE_PLACEHOLDER}
+      value={value == null ? undefined : String(value)}
+      options={MANAGER_SCORE_SELECT_OPTIONS}
+      onChange={next => onChange(clampManagerScore(next == null ? '' : String(next)))}
+    />
+  )
 }
 
 function formatScoreValue(score: number | null | undefined): string {
@@ -141,34 +167,14 @@ export const InterviewEvaluationSection = forwardRef<
           <DetailInfoForm.Field
             label="담당자 A 점수"
             edit={
-              <CmsNumericInput
-                mode="integer"
-                min={1}
-                max={MANAGER_SCORE_MAX}
-                precision={0}
-                inputSize="small"
-                width="100%"
-                value={managerAScore == null ? '' : String(managerAScore)}
-                onValueChange={value => setManagerAScore(clampManagerScore(value))}
-                placeholder={SCORE_PLACEHOLDER}
-              />
+              <ManagerScoreSelect value={managerAScore} onChange={setManagerAScore} />
             }
             view={formatScoreValue(isEditing ? managerAScore : applicant.managerAScore)}
           />
           <DetailInfoForm.Field
             label="담당자 B 점수"
             edit={
-              <CmsNumericInput
-                mode="integer"
-                min={1}
-                max={MANAGER_SCORE_MAX}
-                precision={0}
-                inputSize="small"
-                width="100%"
-                value={managerBScore == null ? '' : String(managerBScore)}
-                onValueChange={value => setManagerBScore(clampManagerScore(value))}
-                placeholder={SCORE_PLACEHOLDER}
-              />
+              <ManagerScoreSelect value={managerBScore} onChange={setManagerBScore} />
             }
             view={formatScoreValue(isEditing ? managerBScore : applicant.managerBScore)}
           />
