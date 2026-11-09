@@ -7,7 +7,7 @@ import { Alert, Card, Space, Input } from 'antd'
 import { CmsButton } from '@/shared/ui'
 import type { CertificateTextField } from '@/types/template'
 import { generateCertificatePdf } from '@/shared/utils/certificate-pdf-generator'
-import { downloadBlob } from '@/shared/utils/file-download'
+import { downloadBlob, generateFilename } from '@/shared/utils/file-download'
 import { handleError, unknownErrorText } from '@/shared/utils/error-handler'
 
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
@@ -138,7 +138,7 @@ export function CertificatePreview({
         blobType: pdfBlob.type })
 
       // 다운로드
-      const filename = `certificate_${new Date().toISOString().split('T')[0]}.pdf`
+      const filename = generateFilename('인증서', 'pdf')
       await downloadBlob(pdfBlob, filename)
       setPdfError(null)
       onDownload?.()

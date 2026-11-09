@@ -44,6 +44,7 @@ import {
   exportLectureEvalResultsPdf,
 } from '@/features/program/shared/lib/survey-management/export-lecture-eval-results-pdf'
 import type { Program } from '@/types/domain'
+import { generateFilename } from '@/shared/utils/file-download'
 import {
   GENERAL_LECTURE_EVAL_ACTION_LABELS,
   GENERAL_LECTURE_EVAL_DOWNLOAD_MODAL_COPY,
@@ -259,7 +260,7 @@ async function buildPreviewSession(args: {
 function buildSurveyPollResultsPdfFileName(programTitle: string, surveyTitle: string): string {
   const safeProgram = programTitle.trim().replace(/[\\/:*?"<>|]/g, '_') || '프로그램'
   const safeSurvey = surveyTitle.trim().replace(/[\\/:*?"<>|]/g, '_') || '설문조사'
-  return `${safeProgram}_${safeSurvey}_설문조사결과.pdf`
+  return generateFilename(`${safeProgram}_${safeSurvey}_설문조사결과`, 'pdf')
 }
 
 function pickRegisteredSurveyTemplateId(
@@ -289,7 +290,7 @@ function toRemoteSurveyVersionId(
 function buildSatisfactionResultsPdfFileName(programTitle: string, surveyTitle: string): string {
   const safeProgram = programTitle.trim().replace(/[\\/:*?"<>|]/g, '_') || '프로그램'
   const safeSurvey = surveyTitle.trim().replace(/[\\/:*?"<>|]/g, '_') || '만족도조사'
-  return `${safeProgram}_${safeSurvey}_만족도조사결과.pdf`
+  return generateFilename(`${safeProgram}_${safeSurvey}_만족도조사결과`, 'pdf')
 }
 
 export function GeneralSurveyManagementView({

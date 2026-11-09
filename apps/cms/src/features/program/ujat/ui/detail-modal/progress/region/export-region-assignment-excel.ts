@@ -31,7 +31,7 @@ const KST_YMD_FORMATTER = new Intl.DateTimeFormat('en-CA', {
 /** `배정표_{지역}_YYYYMMDD.xlsx` — 날짜는 KST 기준 (UTC 자정 전후 하루 밀림 방지) */
 export function buildRegionAssignmentExcelFilename(regionLabel: string, now: Date = new Date()): string {
   const ymd = KST_YMD_FORMATTER.format(now).replace(/-/g, '')
-  return `배정표_${regionLabel}_${ymd}.xlsx`
+  return `[JA Korea] CMS 어드민_배정표_${regionLabel.replace(/[/\\]/g, ',')}_${ymd.slice(2)}.xlsx`
 }
 
 function sanitizeSheetName(label: string): string {

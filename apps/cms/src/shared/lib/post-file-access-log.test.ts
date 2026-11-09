@@ -44,6 +44,16 @@ describe('postFileAccessLog', () => {
     expect(vi.mocked(customInstance).mock.calls[0]?.[0]).not.toHaveProperty('data.ipAddress')
   })
 
+  it('파일명의 /는 ,로 바꿔 한글 그대로 이력에 보낸다', async () => {
+    await postFileAccessLog({ fileName: '[JA Korea] CMS 어드민_버그/이슈 이력_261110.xlsx' })
+    expect(customInstance).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: { fileName: '[JA Korea] CMS 어드민_버그,이슈 이력_261110.xlsx' },
+      }),
+      { skipGlobalErrorAlert: true }
+    )
+  })
+
   it('성공 data null을 빈 객체로 정규화하지 않고 id를 만들지 않는다', async () => {
     await expect(postFileAccessLog({ fileName: '지급조서.pdf' })).resolves.toEqual({})
   })
