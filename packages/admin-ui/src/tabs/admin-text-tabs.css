@@ -69,7 +69,11 @@
   display: inline-flex;
   flex-shrink: 0;
   white-space: nowrap;
-  padding: 6px 16px 10px 16px;
+  /*
+   * Figma Tab / Line(603:108102) — 6 / 16 / 10, 높이 43. 피그마 하단 2px stroke는 안쪽(레이아웃 미포함)이라
+   * border-box에서 하단 패딩 8 + border 2 = 10 으로 맞춘다 (6 + 27 + 8 + 2 = 43, 비활성도 투명 2px로 동일).
+   */
+  padding: 6px 16px 8px 16px;
   justify-content: center;
   align-items: center;
   gap: 10px;
@@ -120,17 +124,21 @@
   opacity: 0.65;
 }
 
-/* 활성 탭 — `program-detail-fullpage-modal__tab--active` 와 동일 (버튼 하단 2px stroke) */
+/*
+ * 활성 탭 — `program-detail-fullpage-modal__tab--active` 와 동일 (버튼 하단 2px stroke)
+ * 색: Figma Tab / Line(603:108102) 활성 = 변수 Brand/500(#00A0AF) → `--Brand-500` (tokens.css).
+ * `--JA-mint-01`(= --color-brand-primary #01a1af)은 다른 값이라 쓰지 않는다.
+ */
 .cms-text-tabs button.cms-text-tabs__tab.cms-text-tabs__tab--active,
 .program-detail-fullpage-modal
   button.program-detail-fullpage-modal__tab.program-detail-fullpage-modal__tab--active {
-  color: var(--JA-mint-01, #01a1af);
+  color: var(--Brand-500, #00a0af);
   font-family: var(--font-family-primary, 'Pretendard', sans-serif);
   font-size: 18px;
   font-style: normal;
   font-weight: 700;
   line-height: 150%;
-  border-bottom: 2px solid var(--JA-mint-01, #01a1af);
+  border-bottom: 2px solid var(--Brand-500, #00a0af);
 }
 
 .cms-text-tabs button.cms-text-tabs__tab:focus,
