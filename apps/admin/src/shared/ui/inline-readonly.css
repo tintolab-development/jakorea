@@ -9,8 +9,8 @@
 
 .cms-inline-readonly .cms-input__control,
 .cms-inline-readonly .cms-textarea__control,
-.cms-inline-readonly .cms-input__control:hover,
-.cms-inline-readonly .cms-textarea__control:hover {
+.cms-inline-readonly .cms-input__control:is(:hover, :focus-within),
+.cms-inline-readonly .cms-textarea__control:is(:hover, :focus-within) {
   border-color: transparent !important;
   background: transparent !important;
   box-shadow: none !important;
