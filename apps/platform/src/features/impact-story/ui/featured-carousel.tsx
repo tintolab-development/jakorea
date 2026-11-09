@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { PFCarouselButton, PFCategoryBadge, PFText } from '@/shared/ui'
+import defaultThumbnailUrl from '../image/illustration/card-default.png'
 import { impactStoryDetailPath } from '../lib/constants'
 import type { ImpactStoryListItem } from '../model/types'
 import styles from './featured-carousel.module.css'
@@ -18,6 +19,7 @@ export function FeaturedCarousel({ stories }: FeaturedCarouselProps) {
 
   const safeIndex = index % stories.length
   const story = stories[safeIndex]!
+  const remoteImageUrl = story.featuredImageUrl || story.imageUrl
 
   const goPrev = () => {
     setIndex(current => (current - 1 + stories.length) % stories.length)
@@ -35,23 +37,16 @@ export function FeaturedCarousel({ stories }: FeaturedCarouselProps) {
         aria-label={`${story.title} 상세 보기`}
       >
         <div
-          className={styles.media}
-          style={
-            story.featuredImageUrl || story.imageUrl
-              ? undefined
-              : { backgroundColor: story.placeholderColor }
-          }
+          className={remoteImageUrl ? styles.media : `${styles.media} ${styles.mediaDefault}`}
           aria-hidden="true"
         >
-          {story.featuredImageUrl || story.imageUrl ? (
-            <img
-              className={styles.image}
-              src={story.featuredImageUrl ?? story.imageUrl}
-              alt=""
-              width={630}
-              height={355}
-            />
-          ) : null}
+          <img
+            className={styles.image}
+            src={remoteImageUrl || defaultThumbnailUrl}
+            alt=""
+            width={630}
+            height={355}
+          />
         </div>
       </Link>
 

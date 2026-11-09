@@ -42,6 +42,11 @@
   box-shadow: 0 0 140.4px 0 rgb(0 0 0 / 6%) inset;
 }
 
+/* 기본 썸네일 배경색과 맞춰 둥근 모서리 안티앨리어싱에 검정이 비치지 않게 한다. */
+.mediaDefault {
+  background: #f5f7f7;
+}
+
 .image {
   display: block;
   width: 100%;
