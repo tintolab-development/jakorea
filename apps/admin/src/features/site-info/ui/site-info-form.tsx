@@ -28,7 +28,7 @@ const IMAGE_GUIDE_LINES = [
 ]
 
 const TOOLBAR_DESCRIPTION =
-  '설정한 사이트명은 브라우저탭명에, 사이트 소개글은 링크 공유 시 설명 텍스트에 동일하게 적용됩니다.'
+  '설정한 사이트명은 브라우저 탭 제목에, 사이트 소개글은 링크 공유 시 설명 텍스트에 동일하게 적용됩니다.'
 
 type Props = {
   data: SiteInfo
@@ -86,7 +86,6 @@ function readFileAsDataUrl(file: File): Promise<string> {
     reader.readAsDataURL(file)
   })
 }
-
 
 const SiteInfoTextField = memo(function SiteInfoTextField({
   sourceValue,

@@ -34,10 +34,10 @@ function cloneDraft(data: ParticipateMenuLinks): Draft {
 function fieldClass(isEditing: boolean) {
   return [
     'participate-links-inline-field',
-    isEditing
-      ? 'participate-links-inline-field--edit'
-      : 'participate-links-inline-field--readonly',
-  ].join(' ')
+    isEditing && 'participate-links-inline-field--edit',
+  ]
+    .filter(Boolean)
+    .join(' ')
 }
 
 function LinkFieldValue({
@@ -68,7 +68,7 @@ function LinkFieldValue({
       width="100%"
       value={value}
       readOnly={!isEditing}
-      tabIndex={isEditing ? 0 : -1}
+      inlineReadOnly="text"
       placeholder={placeholder}
       onChange={e => {
         if (!isEditing) return
@@ -122,8 +122,8 @@ export function ParticipateLinksFormCard({ data }: Props) {
     <div
       className={
         isEditing
-          ? 'admin-list-card participate-links-card participate-links-card--editing'
-          : 'admin-list-card participate-links-card'
+          ? 'admin-list-card admin-document-card participate-links-card participate-links-card--editing'
+          : 'admin-list-card admin-document-card participate-links-card'
       }
     >
       <div className="admin-list-toolbar">
@@ -160,7 +160,7 @@ export function ParticipateLinksFormCard({ data }: Props) {
         </div>
       </div>
 
-      <div className="participate-links-card__body">
+      <div className="admin-document-card__body participate-links-card__body">
         <DetailInfoForm
           className="participate-links-card__info"
           title="메뉴 연결 링크"

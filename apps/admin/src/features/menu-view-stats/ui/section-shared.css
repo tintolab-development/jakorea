@@ -16,7 +16,6 @@
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: 8px;
   min-width: 0;
   width: 100%;
 }

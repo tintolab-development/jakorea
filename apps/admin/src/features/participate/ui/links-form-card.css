@@ -1,40 +1,17 @@
 /**
  * 참여하기 — 메뉴명 연결 링크 관리 카드
- * 단건 문서 카드 fill + 인라인 필드 보더 슬롯
+ * 카드 fill·조회 모양은 공통(admin-document-card · inlineReadOnly="text") — 여기엔 화면 고유 규칙만 둔다
+ * QA: 조회 = 텍스트 높이만큼(셀 패딩 12×16 → 행 52), 수정 = 셀 패딩 12 + 입력 36 → 행 60
  */
 
-.participate-links-card.admin-list-card {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  height: 100%;
-  margin-bottom: 0;
-}
-
-.participate-links-card .admin-list-toolbar {
-  flex-shrink: 0;
-  align-items: center;
-}
-
-.participate-links-card__body {
-  flex: 1 1 auto;
-  min-height: 0;
-  min-width: 0;
-}
-
-.participate-links-card .detail-info-form__field {
-  min-height: 54px;
-}
-
 .participate-links-card .detail-info-form__field-content {
-  min-height: 54px;
-  padding: 12px 16px;
-  box-sizing: border-box;
-  display: flex;
   justify-content: flex-start;
-  align-items: center;
   text-align: left;
+}
+
+.participate-links-card
+  .detail-info-form__field-content:has(.participate-links-inline-field--edit) {
+  padding: 12px;
 }
 
 /*
@@ -68,9 +45,11 @@
   height: 36px;
   min-height: 36px;
   max-height: 36px;
-  border-width: 1px;
-  border-style: solid;
-  box-sizing: border-box;
+}
+
+/* 조회(text)는 높이를 텍스트에 맞춘다 — 위 36 고정의 max-height만 풀어 준다 */
+.participate-links-inline-field.cms-inline-readonly .cms-input__control {
+  max-height: none !important;
 }
 
 .participate-links-inline-field .ant-input {
@@ -79,24 +58,15 @@
   line-height: 150%;
 }
 
-.participate-links-inline-field--readonly .cms-input__control {
-  border-color: transparent !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  cursor: default;
+.participate-links-card .participate-links-inline-field--edit .ant-input {
+  text-align: left !important;
 }
 
-.participate-links-inline-field--readonly .ant-input {
-  cursor: default;
-  color: var(--default-BK, #3d3d3d) !important;
-}
-
-/* 빈 링크 조회 문구 — 인풋과 같은 높이로 모드 전환 점프 방지 */
+/* 빈 링크 조회 문구 */
 .participate-links-empty {
   display: flex;
   align-items: center;
   width: 100%;
-  min-height: 36px;
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, var(--font-family-primary, sans-serif);
   font-size: 14px;
@@ -105,45 +75,4 @@
   opacity: 0.6;
   box-sizing: border-box;
   padding: 0;
-}
-
-/*
- * QA: 조회 = 텍스트 높이만큼(셀 패딩 12×16 → 행 52), 수정 = 셀 패딩 12 + 입력 36 → 행 60
- * 조회는 같은 CmsInput을 투명 처리하므로 컨트롤의 높이·패딩·보더를 없애 텍스트만 남긴다(셀 패딩 16부터 시작).
- */
-.participate-links-card .detail-info-form__field {
-  min-height: 52px;
-}
-
-.participate-links-card
-  .detail-info-form__field-content:has(.participate-links-inline-field--readonly),
-.participate-links-card .detail-info-form__field-content:has(> .participate-links-empty) {
-  min-height: 52px;
-  padding: 12px 16px;
-}
-
-.participate-links-card
-  .detail-info-form__field-content:has(.participate-links-inline-field--edit) {
-  min-height: 52px;
-  padding: 12px;
-}
-
-.participate-links-card .participate-links-inline-field--readonly .cms-input__control {
-  height: auto !important;
-  min-height: 0 !important;
-  max-height: none !important;
-  padding: 0 !important;
-  border-width: 0 !important;
-}
-
-.participate-links-card .participate-links-inline-field--readonly .ant-input {
-  padding: 0 !important;
-}
-
-.participate-links-card .participate-links-inline-field--edit .ant-input {
-  text-align: left !important;
-}
-
-.participate-links-card .participate-links-empty {
-  min-height: 0;
 }
