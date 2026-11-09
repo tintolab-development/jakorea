@@ -90,13 +90,19 @@
 }
 
 .talent-intro-how-table__th-label {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 2px;
 }
 
+/* 별표는 글자 흐름 밖(절대 배치) — 시안 Table/Vertical/Cell 처럼 붙어도 헤더 글자 위치가 움직이지 않는다 */
 .talent-intro-how-table__required {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  margin-left: 2px;
+  transform: translateY(-50%);
   color: var(--color-required-mark, #c32f4a);
   font-size: 14px;
   font-weight: 700;
