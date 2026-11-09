@@ -37,6 +37,8 @@ export type AdminActionKind =
   | 'pii'
   | 'piiRrn'
   | 'piiAccount'
+  /** 관리자 계정 관리(관리자 등록·수정·삭제·탈퇴, 관리자·관리자 권한 신청 목록 다운로드) — Master 전용 */
+  | 'adminAccountManage'
 
 export type AdminPolicyScreen =
   | 'default'
@@ -44,6 +46,7 @@ export type AdminPolicyScreen =
   | 'admin-permission-approval'
   | 'permission-settings'
   | 'template-management'
+  | 'settlement-item-settings'
 
 export const ADMIN_ACCESS_DENIED_ALERT_TITLE = '접근 권한이 없습니다.'
 export const ADMIN_ACCESS_DENIED_ALERT_CONTENT =
@@ -174,6 +177,15 @@ export function isTemplateManagementPath(pathname: string): boolean {
   return normalized === '/templates' || normalized.startsWith('/templates/')
 }
 
+/** 정산 관리 > 정산 항목 설정 */
+export function isSettlementItemSettingsPath(pathname: string): boolean {
+  const normalized = pathname === '/' ? pathname : pathname.replace(/\/$/, '')
+  return (
+    normalized === '/settlement-management/item-settings' ||
+    normalized.startsWith('/settlement-management/item-settings/')
+  )
+}
+
 export function resolveAdminPolicyScreen(pathname: string | undefined): AdminPolicyScreen {
   if (!pathname) return 'default'
   const normalized = pathname === '/' ? pathname : pathname.replace(/\/$/, '')
@@ -186,6 +198,9 @@ export function resolveAdminPolicyScreen(pathname: string | undefined): AdminPol
   }
   if (isTemplateManagementPath(normalized)) {
     return 'template-management'
+  }
+  if (isSettlementItemSettingsPath(normalized)) {
+    return 'settlement-item-settings'
   }
   return 'default'
 }
@@ -205,18 +220,22 @@ export function canAdminAction(input: {
       screen !== 'security-logs' &&
       screen !== 'permission-settings' &&
       screen !== 'admin-permission-approval' &&
-      screen !== 'template-management'
+      screen !== 'template-management' &&
+      screen !== 'settlement-item-settings'
     )
   }
 
   switch (input.action) {
     case 'view':
       if (screen === 'security-logs') return roleCode === 'MASTER'
-      // 관리자 권한 설정·회원 권한 승인·템플릿 관리: 뷰어는 화면 조회 자체 불가
+      // 관리자 권한 설정·프로그램 담당자 권한 설정: Master 전용 (권한 설정 V1.2 '관리자 권한 승인·권한 설정 화면')
+      if (screen === 'permission-settings') return roleCode === 'MASTER'
+      // 권한 승인(강사 탭 기본)·템플릿 관리·정산 항목 설정: 뷰어는 화면 조회 자체 불가.
+      // 권한 승인 > 관리자 탭 조회는 adminAccountManage(Master 전용)로 별도 판정.
       if (
-        screen === 'permission-settings' ||
         screen === 'admin-permission-approval' ||
-        screen === 'template-management'
+        screen === 'template-management' ||
+        screen === 'settlement-item-settings'
       ) {
         return !isReadOnlyAdminRoleCode(roleCode)
       }
@@ -225,6 +244,8 @@ export function canAdminAction(input: {
     case 'delete':
     case 'send':
     case 'download':
+      // 권한 설정 화면 저장은 Master 전용
+      if (screen === 'permission-settings') return roleCode === 'MASTER'
       return !isReadOnlyAdminRoleCode(roleCode)
     case 'dashboardWrite':
       // DASHBOARD_WRITE: 본인 레이아웃·설정만. PROGRAM_WRITE와 묶지 않음.
@@ -257,6 +278,7 @@ export function canAdminAction(input: {
       )
     case 'piiRrn':
     case 'piiAccount':
+    case 'adminAccountManage':
       return roleCode === 'MASTER'
   }
 }

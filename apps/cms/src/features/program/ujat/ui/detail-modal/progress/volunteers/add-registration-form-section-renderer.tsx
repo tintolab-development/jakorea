@@ -113,6 +113,7 @@ export function UjatVolunteerAddRegistrationFormSectionRenderer({
       return (
         <UjatEducationProgressVolunteerTermsConsentSection
           memberId={memberId}
+          programId={programId}
           consents={consents}
           onConsentsChange={onConsentsChange}
         />

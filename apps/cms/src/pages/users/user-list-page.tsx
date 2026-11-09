@@ -315,6 +315,9 @@ export function UserListPage() {
   const selectedUser = useUserStore(state => selectSelectedUser(state))
 
   const resolvedMemberListKind = useMemo(() => normalizeMemberListKind(params.kind), [params.kind])
+  /** 관리자 회원 탭: 관리자 등록·수정·삭제·탈퇴·목록 다운로드는 Master 전용(권한 설정 V1.2) */
+  const isAdminMemberList = resolvedMemberListKind === 'admins'
+  const memberListDeleteAdminAction = isAdminMemberList ? 'adminAccountManage' : 'delete'
 
   const urlDetailRestoreHint = useMemo(() => {
     const targetId = params.id?.trim()
@@ -1088,7 +1091,7 @@ export function UserListPage() {
 
   // 회원 삭제
   const handleDeleteClick = (user: Omit<User, 'password'>) => {
-    if (!guardAdminAction({ roleCode, action: 'delete' })) return
+    if (!guardAdminAction({ roleCode, action: memberListDeleteAdminAction })) return
     if (resolvedMemberListKind === 'institutions' && institutionHasRegisteredTeachers(user)) {
       setInstitutionDeleteBlockedCount(1)
       setInstitutionDeleteBlockedOpen(true)
@@ -1143,7 +1146,15 @@ export function UserListPage() {
   /** 회원 상세 > 탈퇴 확인 모달 확정 — 성공 시에만 상세 닫고 목록으로 */
   const handleWithdrawFromDetail = useCallback(
     async (u: Omit<User, 'password'>, withdrawConfirmationText?: string) => {
-      if (!guardAdminAction({ roleCode, action: 'delete' })) return
+      // 관리자 탈퇴 처리는 Master 전용(권한 설정 V1.2)
+      if (
+        !guardAdminAction({
+          roleCode,
+          action: u.role === 'ADMIN' ? 'adminAccountManage' : 'delete',
+        })
+      ) {
+        return
+      }
       setDeleteLoading(true)
       try {
         await deleteUser(u.id, {
@@ -1168,7 +1179,8 @@ export function UserListPage() {
 
   const handleAdminPermissionChange = useCallback(
     async (ctx: { userId: string; nextPermission: AdminPermissionTagVariant }) => {
-      if (!guardAdminAction({ roleCode, action: 'write' })) return
+      // 관리자 권한 유형 변경 = 관리자 수정 → Master 전용
+      if (!guardAdminAction({ roleCode, action: 'adminAccountManage' })) return
       setAdminPermissionChangingUserId(ctx.userId)
       try {
         const baseUser =
@@ -1239,6 +1251,7 @@ export function UserListPage() {
       <FilterTableLayout
         hasActiveFilters={hasActiveFilters}
         bordered={false}
+        toolbarAdminAction={isAdminMemberList ? 'adminAccountManage' : 'write'}
         fields={userListFilterFields}
         filters={
           resolvedMemberListKind === 'institutions'
@@ -1340,6 +1353,7 @@ export function UserListPage() {
         }
         excelExport={{
           accessLog: { downloadKind: 'MEMBER_LIST_EXPORT', containedPiiTypes: ['NAME'] },
+          downloadAdminAction: isAdminMemberList ? 'adminAccountManage' : 'download',
           columns: userExcelColumns,
           data: userExcelData,
           selectedRowKeys,
