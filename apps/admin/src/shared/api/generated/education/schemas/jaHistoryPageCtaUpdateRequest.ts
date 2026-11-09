@@ -37,5 +37,7 @@ export interface JaHistoryPageCtaUpdateRequest {
      * @maxLength 500
      */
   secondaryHref: string;
+  /** CTA image asset id (purpose JA_HISTORY_CTA_IMAGE, READY). Omit or send null to keep the current image. Sending the current image id also keeps it. */
+  imageAssetId?: number | null;
   version: number;
 }

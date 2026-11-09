@@ -15,8 +15,10 @@ export interface CareerPostingAdminItem {
   publishedOn?: string;
   isPublic?: boolean;
   authorName?: string;
-  recruitStart?: string;
-  recruitEnd?: string;
+  /** Always null when status is RESULT. Otherwise the stored recruit period date. */
+  recruitStart?: string | null;
+  /** Always null when status is RESULT. Otherwise the stored recruit period date. */
+  recruitEnd?: string | null;
   createdAt?: string;
   version?: number;
 }
