@@ -1,5 +1,5 @@
 /**
- * 개인후원 관리 — 상단 배너 / 후원금 사용안내 / 성장 후원하기 카드 3개
+ * 개인후원 관리 — 상단 배너 / 후원금 사용안내 / 후원하기 카드 3개
  */
 
 import { useIndividualDonation } from '@/features/individual-donation/api/hooks'
@@ -16,10 +16,7 @@ import './page.css'
 export function IndividualDonationPage() {
   const query = useIndividualDonation()
 
-  useInvalidateOnWindowEvent(
-    INDIVIDUAL_DONATION_CHANGED_EVENT,
-    individualDonationQueryKeys.all
-  )
+  useInvalidateOnWindowEvent(INDIVIDUAL_DONATION_CHANGED_EVENT, individualDonationQueryKeys.all)
 
   const data = query.data
 
