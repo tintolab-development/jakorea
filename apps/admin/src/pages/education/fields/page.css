@@ -139,15 +139,31 @@
 }
 
 /*
- * 조회: autoSize(1~2줄) + 컨트롤 세로 패딩 제거 → 셀 vertical-align 으로 세로 중앙.
+ * 조회: 텍스트 높이만큼만(운영 원칙·조직문화와 동일) — 투명 입력의 안쪽 패딩·보더·최소 높이를 없애
+ * 행 높이 = 셀 패딩 + 텍스트 줄 수. 글자는 표 셀 규격 14px / 150% (수정 입력 칸 medium 15px와 분리),
+ * 줄바꿈이 생겨도 행간이 바뀌지 않는다. (높이는 autoSize 인라인 값 그대로 — height 강제 금지)
  * 수정(fixed-rows): autoSize(minRows 1) — 줄바꿈 수만큼 높이가 늘고 줄어든다(hug).
  */
+.education-fields-table .education-fields-inline-field--readonly .cms-textarea__control {
+  min-height: 0 !important;
+  padding: 0 !important;
+  border-width: 0;
+}
+
 .education-fields-table
-  .education-fields-inline-field--readonly.cms-textarea--medium
-  .cms-textarea__control {
-  min-height: 0;
-  padding-top: 0;
-  padding-bottom: 0;
+  .education-fields-inline-field--readonly
+  .cms-textarea__inner
+  textarea.ant-input {
+  min-height: 0 !important;
+  padding: 0 !important;
+  font-size: 14px !important;
+  line-height: 150% !important;
+}
+
+/* 사업분야명(읽기 전용 입력)도 표 셀 규격 14px / 150% */
+.education-fields-table .education-fields-inline-field--readonly .cms-input__inner .ant-input {
+  font-size: 14px !important;
+  line-height: 150% !important;
 }
 
 /* 조회 = 가로 중앙 / 수정 = 좌측 */
