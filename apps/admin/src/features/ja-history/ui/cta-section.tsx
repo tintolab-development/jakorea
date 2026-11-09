@@ -180,15 +180,15 @@ export function CtaSection({ cta }: { cta: JaHistoryCta }) {
                   onFilesChange={files => {
                     void handleFilesChange(files)
                   }}
-                  // CTA 이미지는 삭제 기능이 없다. 새로 고른 파일만 취소해 저장된 이미지로 되돌린다.
-                  onRemoveFile={
-                    imageFile
-                      ? () => {
-                          setDraft(prev => ({ ...prev, image: cta.image }))
-                          setImageFile(null)
-                        }
-                      : undefined
-                  }
+                  // 공통 삭제 아이콘 노출. 백엔드가 CTA 이미지 삭제를 지원하지 않아(imageAssetId 생략 = 현재 이미지 유지)
+                  // 화면 입력값만 비우며, 새 파일을 고르지 않고 저장하면 서버의 기존 이미지가 유지된다.
+                  onRemoveFile={() => {
+                    setDraft(prev => ({
+                      ...prev,
+                      image: { ...prev.image, url: '', fileName: '', assetId: undefined },
+                    }))
+                    setImageFile(null)
+                  }}
                 />
               </div>
             }
