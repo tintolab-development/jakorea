@@ -16,8 +16,8 @@
 }
 
 .talent-intro-thumb {
-  /* 표 안 미리보기: 스트로크·라운드·배경 없이 가로 고정, 세로는 이미지 원본 비율 */
-  width: 86px;
+  /* 표 안 미리보기: 스트로크·라운드·배경 없이 가로 170 고정(시안 2360:9263 image 170×119), 세로는 이미지 원본 비율 */
+  width: 170px;
   flex-shrink: 0;
   margin: 0 auto;
   background: transparent;
@@ -35,7 +35,7 @@
 }
 
 .talent-intro-thumb--empty {
-  height: 86px;
+  height: 119px;
   color: var(--color-text-tertiary, #9e9e9e);
   font-size: 12px;
   font-weight: 500;
