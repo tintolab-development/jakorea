@@ -173,24 +173,9 @@
   text-align: center;
 }
 
-.ja-history-inline-field--readonly .cms-input__control,
-.ja-history-inline-field--readonly .cms-textarea__control {
-  border-color: transparent !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  cursor: default;
-}
-
-.ja-history-inline-field--readonly .cms-input__control:hover,
-.ja-history-inline-field--readonly .cms-textarea__control:hover {
-  border-color: transparent !important;
-}
-
-.ja-history-inline-field--readonly .ant-input,
-.ja-history-inline-field--readonly textarea.ant-input {
-  cursor: default;
-  color: var(--default-BK, #3d3d3d) !important;
-  font-weight: 500;
+/* 조회(inlineReadOnly="slot") — 보더 슬롯 투명은 공통, 줄바꿈 보존만 화면 고유 */
+.ja-history-inline-field.cms-inline-readonly .ant-input,
+.ja-history-inline-field.cms-inline-readonly textarea.ant-input {
   white-space: pre-line;
 }
 
