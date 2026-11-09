@@ -16,7 +16,11 @@ import thriveEmpowerUrl from '../image/thrive-empower.svg'
 import thriveEnablersUrl from '../image/thrive-enablers.svg'
 import thrivePartnerUrl from '../image/thrive-partner.svg'
 import year1919Url from '../image/year-1919.svg'
-import type { JaHistoryData, JaHistoryMedia, JaHistoryTimeline } from '@/entities/ja-history/model/types'
+import type {
+  JaHistoryData,
+  JaHistoryMedia,
+  JaHistoryTimeline,
+} from '@/entities/ja-history/model/types'
 
 function lines(parts: readonly string[]): string {
   return parts.join('\n')
@@ -30,7 +34,7 @@ const WORLD_TIMELINE: JaHistoryTimeline = {
   image: media(
     expansionPhotoUrl,
     'expansion-photo.png',
-    '테이블에 둘러앉아 함께 활동하는 JA 청소년들',
+    '테이블에 둘러앉아 함께 활동하는 JA 청소년들'
   ),
   title: lines(['세상이 바뀔 때마다', 'JA의 교육도 진화했습니다.']),
   body: lines([
@@ -154,7 +158,7 @@ const KOREA_TIMELINE: JaHistoryTimeline = {
     },
     {
       id: '2021-now',
-      label: '2021-NOW',
+      label: '2021-Now',
       title: '',
       events: [
         {
@@ -209,7 +213,7 @@ export function buildJaHistorySeed(): JaHistoryData {
       learningImage: media(
         learningPhotoUrl,
         'learning-photo.png',
-        '방과후 교실에서 기계를 다루며 배우는 청소년들',
+        '방과후 교실에서 기계를 다루며 배우는 청소년들'
       ),
       learningOutro: lines([
         '이 때 자리 잡은 Learning by Doing, ‘직접 해보며 배우는 교육’은 지금까지도 JA의 체험형 교육으로 이어지고 있습니다. 청소년은 팀을 이뤄 자신의 아이디어를 실제 행동으로 옮깁니다.',
@@ -220,7 +224,11 @@ export function buildJaHistorySeed(): JaHistoryData {
     eras: [
       {
         year: '1920',
-        image: media(era1920Url, 'era-1920.png', '1920년대 스프링필드 Trade Fair에 전시된 모자와 상품'),
+        image: media(
+          era1920Url,
+          'era-1920.png',
+          '1920년대 스프링필드 Trade Fair에 전시된 모자와 상품'
+        ),
         caption: lines([
           '미국 메사추세츠 스프링필드에서 열린',
           'Trade Fair에 모자를 비롯한 상품들이 전시되어 있다.',
@@ -228,7 +236,11 @@ export function buildJaHistorySeed(): JaHistoryData {
       },
       {
         year: '1950',
-        image: media(era1950Url, 'era-1950.png', '1950년대 JA Company Program Trade Fair에서 수상하는 학생들'),
+        image: media(
+          era1950Url,
+          'era-1950.png',
+          '1950년대 JA Company Program Trade Fair에서 수상하는 학생들'
+        ),
         caption: 'JA Company Program의 Trade Fair에 참여한 학생들이 수상하고 있다.',
       },
       {
@@ -256,25 +268,39 @@ export function buildJaHistorySeed(): JaHistoryData {
           id: 'practice',
           title: '직접 해보며 익힙니다',
           description: '실제 환경과 유사한 체험 활동으로 새로운 기술과 문제 해결 방법을 배웁니다.',
-          image: media(philosophyPracticeUrl, 'philosophy-practice.png', '헤드셋을 착용하고 미소 짓는 청소년'),
+          image: media(
+            philosophyPracticeUrl,
+            'philosophy-practice.png',
+            '헤드셋을 착용하고 미소 짓는 청소년'
+          ),
         },
         {
           id: 'role-model',
           title: '롤 모델을 만납니다',
-          description: '교사, 기업인, 봉사자, 멘토의 경험을 통해 자신의 미래를 구체적으로 상상합니다.',
-          image: media(philosophyRoleModelUrl, 'philosophy-role-model.png', '함께 웃고 있는 청소년들'),
+          description:
+            '교사, 기업인, 봉사자, 멘토의 경험을 통해 자신의 미래를 구체적으로 상상합니다.',
+          image: media(
+            philosophyRoleModelUrl,
+            'philosophy-role-model.png',
+            '함께 웃고 있는 청소년들'
+          ),
         },
         {
           id: 'mindset',
           title: '긍정적으로 사고합니다',
-          description: '부정적인 생각에 머무르지 않고, 다음 도전으로 이어갈 수 있는 회복력을 기릅니다.',
+          description:
+            '부정적인 생각에 머무르지 않고, 다음 도전으로 이어갈 수 있는 회복력을 기릅니다.',
           image: media(philosophyMindsetUrl, 'philosophy-mindset.png', '미소 짓는 두 명의 청소년'),
         },
         {
           id: 'support',
           title: '믿음과 지지를 경험합니다',
           description: '자신의 가능성을 믿어주는 사람들의 응원 속에서 더 큰 도전을 시작합니다.',
-          image: media(philosophySupportUrl, 'philosophy-support.png', '창가에서 앞을 바라보는 청소년'),
+          image: media(
+            philosophySupportUrl,
+            'philosophy-support.png',
+            '창가에서 앞을 바라보는 청소년'
+          ),
         },
       ],
     },

@@ -29,7 +29,8 @@ export const CTA_PHOTO_URL = ctaPhotoUrl
 export const HISTORY_ERA_PHOTOS: readonly HistoryEraPhoto[] = [
   {
     year: '1920',
-    caption: '미국 메사추세츠 스프링필드에서 열린 Trade Fair에 모자를 비롯한 상품들이 전시되어 있다.',
+    caption:
+      '미국 메사추세츠 스프링필드에서 열린 Trade Fair에 모자를 비롯한 상품들이 전시되어 있다.',
     captionLines: [
       '미국 메사추세츠 스프링필드에서 열린',
       'Trade Fair에 모자를 비롯한 상품들이 전시되어 있다.',
@@ -91,7 +92,9 @@ export const WORLD_TIMELINE_PERIODS: readonly HistoryTimelinePeriod[] = [
       { year: '1980 ~ 1990', lines: ['아프리카, 중남미, 유럽, 아시아로 JA 네트워크 확장'] },
       {
         year: '1994',
-        lines: ['급증하는 세계적 경제교육 수요를 충족시키기 위해 Junior Achievement International 창설'],
+        lines: [
+          '급증하는 세계적 경제교육 수요를 충족시키기 위해 Junior Achievement International 창설',
+        ],
       },
       {
         year: '2000',
@@ -159,16 +162,13 @@ export const KOREA_TIMELINE_PERIODS: readonly HistoryTimelinePeriod[] = [
       { year: '2019', lines: ['대한민국 경제교육대상(기획재정부)'] },
       {
         year: '2020',
-        lines: [
-          '기업가정신 확산·진흥 유공 포상(중소벤처기업부)',
-          '누적 교육 봉사자 10만 명 돌파',
-        ],
+        lines: ['기업가정신 확산·진흥 유공 포상(중소벤처기업부)', '누적 교육 봉사자 10만 명 돌파'],
       },
     ],
   },
   {
     id: '2021-now',
-    label: '2021-NOW',
+    label: '2021-Now',
     title: '',
     events: [
       {
@@ -195,8 +195,14 @@ export const HISTORY_PHILOSOPHY_CARDS: readonly HistoryPhilosophyCard[] = [
     id: 'practice',
     title: '직접 해보며 익힙니다',
     description: '실제 환경과 유사한 체험 활동으로 새로운 기술과 문제 해결 방법을 배웁니다.',
-    descriptionPcLines: ['실제 환경과 유사한 체험 활동으로', '새로운 기술과 문제 해결 방법을 배웁니다.'],
-    descriptionMobileLines: ['실제 환경과 유사한 체험 활동으로', '새로운 기술과 문제 해결 방법을 배웁니다.'],
+    descriptionPcLines: [
+      '실제 환경과 유사한 체험 활동으로',
+      '새로운 기술과 문제 해결 방법을 배웁니다.',
+    ],
+    descriptionMobileLines: [
+      '실제 환경과 유사한 체험 활동으로',
+      '새로운 기술과 문제 해결 방법을 배웁니다.',
+    ],
     imageUrl: philosophyPracticeUrl,
     alt: '헤드셋을 착용하고 미소 짓는 청소년',
   },
@@ -204,8 +210,15 @@ export const HISTORY_PHILOSOPHY_CARDS: readonly HistoryPhilosophyCard[] = [
     id: 'role-model',
     title: '롤 모델을 만납니다',
     description: '교사, 기업인, 봉사자, 멘토의 경험을 통해 자신의 미래를 구체적으로 상상합니다.',
-    descriptionPcLines: ['교사, 기업인, 봉사자,', '멘토의 경험을 통해 자신의 미래를', '구체적으로 상상합니다.'],
-    descriptionMobileLines: ['교사, 기업인, 봉사자, 멘토의 경험을 통해', '자신의 미래를 구체적으로 상상합니다.'],
+    descriptionPcLines: [
+      '교사, 기업인, 봉사자,',
+      '멘토의 경험을 통해 자신의 미래를',
+      '구체적으로 상상합니다.',
+    ],
+    descriptionMobileLines: [
+      '교사, 기업인, 봉사자, 멘토의 경험을 통해',
+      '자신의 미래를 구체적으로 상상합니다.',
+    ],
     imageUrl: philosophyRoleModelUrl,
     alt: '함께 웃고 있는 청소년들',
   },
@@ -213,8 +226,15 @@ export const HISTORY_PHILOSOPHY_CARDS: readonly HistoryPhilosophyCard[] = [
     id: 'mindset',
     title: '긍정적으로 사고합니다',
     description: '부정적인 생각에 머무르지 않고, 다음 도전으로 이어갈 수 있는 회복력을 기릅니다.',
-    descriptionPcLines: ['부정적인 생각에 머무르지 않고,', '다음 도전으로 이어갈 수 있는', '회복력을 기릅니다.'],
-    descriptionMobileLines: ['부정적인 생각에 머무르지 않고, 다음 도전으로', '이어갈 수 있는 회복력을 기릅니다.'],
+    descriptionPcLines: [
+      '부정적인 생각에 머무르지 않고,',
+      '다음 도전으로 이어갈 수 있는',
+      '회복력을 기릅니다.',
+    ],
+    descriptionMobileLines: [
+      '부정적인 생각에 머무르지 않고, 다음 도전으로',
+      '이어갈 수 있는 회복력을 기릅니다.',
+    ],
     imageUrl: philosophyMindsetUrl,
     alt: '미소 짓는 두 명의 청소년',
   },
@@ -223,7 +243,10 @@ export const HISTORY_PHILOSOPHY_CARDS: readonly HistoryPhilosophyCard[] = [
     title: '믿음과 지지를 경험합니다',
     description: '자신의 가능성을 믿어주는 사람들의 응원 속에서 더 큰 도전을 시작합니다.',
     descriptionPcLines: ['자신의 가능성을 믿어주는 사람들의 응원 속에서 더 큰 도전을 시작합니다.'],
-    descriptionMobileLines: ['자신의 가능성을 믿어주는 사람들의 응원 속에서', '더 큰 도전을 시작합니다.'],
+    descriptionMobileLines: [
+      '자신의 가능성을 믿어주는 사람들의 응원 속에서',
+      '더 큰 도전을 시작합니다.',
+    ],
     imageUrl: philosophySupportUrl,
     alt: '창가에서 앞을 바라보는 청소년',
   },
