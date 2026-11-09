@@ -225,6 +225,19 @@
   background: #16485c;
 }
 
+/*
+ * JA의 시작 · 소개 텍스트 표 — 시안 747:436: 소개 타이틀 769 / 소개 텍스트 769 (반반).
+ * 고정 레이아웃으로 조회(텍스트)·수정(입력 칸) 모두 같은 열 폭을 유지한다 (내용 길이에 따라 열이 바뀌지 않음).
+ */
+.ja-history-origin-intro-table .ant-table table {
+  table-layout: fixed !important;
+}
+
+.ja-history-origin-intro-table .ant-table-thead > tr > th.ja-history-origin-intro-table__col,
+.ja-history-origin-intro-table .ant-table-tbody > tr > td.ja-history-origin-intro-table__col {
+  width: 50% !important;
+}
+
 .ja-history-table .ant-table-tbody > tr > td.ja-history-col-text {
   text-align: center !important;
   vertical-align: middle;

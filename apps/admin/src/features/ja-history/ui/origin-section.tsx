@@ -52,6 +52,7 @@ export function OriginSection({ origin }: { origin: JaHistoryOrigin }) {
       {
         title: '소개 타이틀',
         key: 'title',
+        className: 'ja-history-origin-intro-table__col',
         align: 'center',
         ellipsis: false,
         render: () =>
@@ -71,6 +72,7 @@ export function OriginSection({ origin }: { origin: JaHistoryOrigin }) {
       {
         title: '소개 텍스트',
         key: 'body',
+        className: 'ja-history-origin-intro-table__col',
         align: 'center',
         ellipsis: false,
         render: () =>
@@ -108,7 +110,7 @@ export function OriginSection({ origin }: { origin: JaHistoryOrigin }) {
       <div className="ja-history-subsection">
         <h3 className="ja-history-subsection__title">■ 소개 텍스트</h3>
         <CmsDataTable<IntroRow>
-          className={`cms-data-table cms-data-table--skip-auto-no-col ja-history-table ${TABLE_ROW_FILL_FIELDS_CLASS}`}
+          className={`cms-data-table cms-data-table--skip-auto-no-col ja-history-table ja-history-origin-intro-table ${TABLE_ROW_FILL_FIELDS_CLASS}`}
           columns={introColumns}
           dataSource={[{ key: 'intro' }]}
           pagination={false}
