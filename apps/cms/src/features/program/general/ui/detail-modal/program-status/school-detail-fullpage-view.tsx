@@ -1046,6 +1046,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
 
   const {
     personalInfoRevealed,
+    remaskPersonalInfo,
     revealWithReason,
     onPrivacyControlClick: handlePrivacyToggleClick,
     confirmModal: personalInfoRevealModal,
@@ -1060,6 +1061,12 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     resetDeps: [detail.id],
     controlMode: 'toggleRemask',
   })
+
+  /** CMS-29: 신청 정보 수정 취소 즉시 원문 열람을 끝낸다(원문 캐시는 훅이 초기화). */
+  const cancelApplicationInfoEditAndRemask = useCallback(() => {
+    cancelApplicationInfoEdit()
+    remaskPersonalInfo()
+  }, [cancelApplicationInfoEdit, remaskPersonalInfo])
 
   const privacyMasked = !personalInfoRevealed
   const [editUnmaskConfirmOpen, setEditUnmaskConfirmOpen] = useState(false)
@@ -2564,7 +2571,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                 isEditing={isApplicationInfoEditing}
                 idleVariant="secondary"
                 onEdit={requestStartApplicationInfoEdit}
-                onCancel={cancelApplicationInfoEdit}
+                onCancel={cancelApplicationInfoEditAndRemask}
                 onSave={() => {
                   void saveApplicationInfoEdit().then(result => {
                     if (result === COMBINED_CLASS_GRADE_REQUIRED_SAVE_RESULT) {

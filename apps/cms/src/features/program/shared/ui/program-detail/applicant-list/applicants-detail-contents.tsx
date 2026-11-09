@@ -1457,6 +1457,7 @@ export function ApplicantsDetailContents({
     personalInfoRevealed,
     revealWithReason,
     openPersonalInfoRevealConfirm: onRevealPersonalInfo,
+    remaskPersonalInfo,
     confirmModal: personalInfoRevealModal,
     programPrivacyPending,
   } = usePersonalInfoReveal({
@@ -1511,6 +1512,13 @@ export function ApplicantsDetailContents({
     }
     setEditUnmaskConfirmOpen(true)
   }, [individualDetailEdit.enterEdit, personalInfoRevealed])
+
+  /** CMS-29: 수정 취소 즉시 원문 교사 정보를 버리고 마스킹으로 돌아간다(원문 캐시는 훅이 초기화). */
+  const cancelInstitutionEditAndRemask = useCallback(() => {
+    institutionDetailEdit.cancelEdit()
+    setInstitutionTeacherPrivacy(null)
+    remaskPersonalInfo()
+  }, [institutionDetailEdit, remaskPersonalInfo])
 
   const requestStartInstitutionEdit = useCallback(() => {
     if (personalInfoRevealed && displayedInstitutionData) {
@@ -1598,7 +1606,7 @@ export function ApplicantsDetailContents({
       isEditingInstitutionDetail: institutionDetailEdit.isEditing,
       isSavingInstitutionDetail: institutionDetailEdit.isSaving,
       onEnterInstitutionEdit: requestStartInstitutionEdit,
-      onCancelInstitutionEdit: institutionDetailEdit.cancelEdit,
+      onCancelInstitutionEdit: cancelInstitutionEditAndRemask,
       onSaveInstitutionEdit: () => {
         void institutionDetailEdit.saveEdit().then(result => {
           if (result === COMBINED_CLASS_GRADE_REQUIRED_SAVE_RESULT) {
@@ -1662,7 +1670,7 @@ export function ApplicantsDetailContents({
     applicantId,
     isApprovedInstitution,
     requestStartInstitutionEdit,
-    institutionDetailEdit.cancelEdit,
+    cancelInstitutionEditAndRemask,
     institutionDetailEdit.isEditing,
     institutionDetailEdit.isSaving,
     institutionDetailEdit.saveEdit,

@@ -432,6 +432,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
 
   const {
     personalInfoRevealed,
+    remaskPersonalInfo,
     revealWithReason,
     onPrivacyControlClick: handlePrivacyToggleClick,
     confirmModal: personalInfoRevealModal,
@@ -446,6 +447,12 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     resetDeps: [detail.id],
     controlMode: 'toggleRemask',
   })
+
+  /** CMS-29: 신청 정보 수정 취소 즉시 원문 열람을 끝낸다(원문 캐시는 훅이 초기화). */
+  const cancelApplicationInfoEditAndRemask = useCallback(() => {
+    cancelApplicationInfoEdit()
+    remaskPersonalInfo()
+  }, [cancelApplicationInfoEdit, remaskPersonalInfo])
 
   const handleEnterApplicationInfoEdit = useCallback(() => {
     if (!canEditApplicationInfo) {
@@ -983,7 +990,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
                       (canFetchApplicationDetail && applicationDetailQuery.isLoading)
                 }
                 onEdit={handleEnterApplicationInfoEdit}
-                onCancel={cancelApplicationInfoEdit}
+                onCancel={cancelApplicationInfoEditAndRemask}
                 onSave={() => {
                   void saveApplicationInfoEdit()
                 }}

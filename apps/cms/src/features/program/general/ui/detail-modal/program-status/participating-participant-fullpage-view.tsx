@@ -403,6 +403,7 @@ export function ParticipatingParticipantFullpageView({
 
   const {
     personalInfoRevealed,
+    remaskPersonalInfo,
     revealWithReason,
     openPersonalInfoRevealConfirm,
     confirmModal: personalInfoRevealModal,
@@ -457,6 +458,12 @@ export function ParticipatingParticipantFullpageView({
       return saveIndividualApplicationDetailRemote(mergedParticipant, payload)
     },
   })
+
+  /** CMS-29: 신청 정보 수정 취소 즉시 원문 열람을 끝낸다(원문 캐시는 훅이 초기화). */
+  const cancelApplicationInfoEditAndRemask = useCallback(() => {
+    cancelApplicationInfoEdit()
+    remaskPersonalInfo()
+  }, [cancelApplicationInfoEdit, remaskPersonalInfo])
 
   const requestStartApplicationInfoEdit = useCallback(() => {
     if (personalInfoRevealed) {
@@ -895,7 +902,7 @@ export function ParticipatingParticipantFullpageView({
                 hidden
                 isEditing={isApplicationInfoEditing}
                 onEdit={requestStartApplicationInfoEdit}
-                onCancel={cancelApplicationInfoEdit}
+                onCancel={cancelApplicationInfoEditAndRemask}
                 onSave={() => {
                   void saveApplicationInfoEdit()
                 }} />
