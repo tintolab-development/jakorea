@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildEducationClassAddRequest,
+  carryOverGradeTextbooks,
   gradeBlocksFromEducationClasses,
   isDuplicateInEducationClasses,
   pendingRowToEducationClassAddItem,
@@ -108,5 +109,35 @@ describe('resolveEducationClassCountDisplay', () => {
         currentClassCount: 2,
       })
     ).toBe(2)
+  })
+})
+
+describe('carryOverGradeTextbooks', () => {
+  it('keeps textbook fields of the same grade after rebuilding from education-classes', () => {
+    const previous = [
+      {
+        gradeLabel: '5학년',
+        classCount: 2,
+        classes: [],
+        textbookName: 'UJAT 초등 경제교육 교재 05',
+        kitCount: 2,
+        bookCount: 40,
+        textbookDeliveryStatus: 'READY',
+      },
+    ]
+    const next = gradeBlocksFromEducationClasses([
+      { classId: 24, grade: '5', className: '2반', classLabel: '5학년 2반', studentCount: 20 },
+      { classId: 23, grade: '5', className: '1반', classLabel: '5학년 1반', studentCount: 21 },
+      { classId: 30, grade: '6', className: '1반', classLabel: '6학년 1반', studentCount: 19 },
+    ])
+    const merged = carryOverGradeTextbooks(next, previous)
+    expect(merged.find(block => block.gradeLabel === '5학년')).toMatchObject({
+      classCount: 2,
+      textbookName: 'UJAT 초등 경제교육 교재 05',
+      kitCount: 2,
+      bookCount: 40,
+      textbookDeliveryStatus: 'READY',
+    })
+    expect(merged.find(block => block.gradeLabel === '6학년')?.textbookName).toBeUndefined()
   })
 })

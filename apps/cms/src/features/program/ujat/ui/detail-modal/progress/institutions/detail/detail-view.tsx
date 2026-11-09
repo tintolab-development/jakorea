@@ -62,6 +62,7 @@ import {
 } from './change-class'
 import {
   buildEducationClassAddRequest,
+  carryOverGradeTextbooks,
   gradeBlocksFromEducationClasses,
 } from './add-class'
 import type { UjatEducationProgressAddClassConfirmPayload } from './add-class-modal'
@@ -312,7 +313,9 @@ export function UjatEducationProgressInstitutionDetailView({
         const remoteClasses = response.classes ?? []
         // 응답 classes 가 SSOT. 비어 있으면 invent 금지 — invalidate 후 재조회에 맡김.
         if (remoteClasses.length > 0) {
-          setGradeBlocks(gradeBlocksFromEducationClasses(remoteClasses))
+          setGradeBlocks(prev =>
+            carryOverGradeTextbooks(gradeBlocksFromEducationClasses(remoteClasses), prev)
+          )
         }
         setAssignmentDataRevision(revision => revision + 1)
         await invalidateAfterClassRemap(programId, detail.institutionId)
@@ -375,7 +378,9 @@ export function UjatEducationProgressInstitutionDetailView({
           const remoteClasses = response.classes ?? []
           // 응답 classes 가 SSOT. 비면 invent 금지 — invalidate 재조회에 맡김.
           if (remoteClasses.length > 0) {
-            setGradeBlocks(gradeBlocksFromEducationClasses(remoteClasses))
+            setGradeBlocks(prev =>
+              carryOverGradeTextbooks(gradeBlocksFromEducationClasses(remoteClasses), prev)
+            )
           }
           setAssignmentDataRevision(revision => revision + 1)
           setChangeClassModalOpen(false)
