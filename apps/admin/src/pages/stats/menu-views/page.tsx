@@ -205,19 +205,21 @@ export function MenuViewsStatsPage() {
         hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area">
-            <div className="admin-filter-area__field admin-filter-area__field--date-range">
-              <span className="admin-filter-area__label">기간</span>
-              <CmsDateRangePicker
-                inputSize="medium"
-                width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
-                value={periodAsPickerValue(pendingFilters.periodRange)}
-                onChange={dates =>
-                  setPendingFilters({
-                    periodRange: dates ?? null,
-                  })
-                }
-                placeholder={['시작일', '종료일']}
-              />
+            <div className="admin-filter-area__fields">
+              <div className="admin-filter-area__field admin-filter-area__field--date-range">
+                <span className="admin-filter-area__label">기간</span>
+                <CmsDateRangePicker
+                  inputSize="medium"
+                  width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
+                  value={periodAsPickerValue(pendingFilters.periodRange)}
+                  onChange={dates =>
+                    setPendingFilters({
+                      periodRange: dates ?? null,
+                    })
+                  }
+                  placeholder={['시작일', '종료일']}
+                />
+              </div>
             </div>
             <div className="admin-filter-area__actions">
               <CmsButton
@@ -253,10 +255,7 @@ export function MenuViewsStatsPage() {
             ) : (
               <>
                 {summary ? (
-                  <MenuViewSummaryTable
-                    summary={summary}
-                    loading={statsQuery.isFetching}
-                  />
+                  <MenuViewSummaryTable summary={summary} loading={statsQuery.isFetching} />
                 ) : null}
 
                 <CmsTextTabs

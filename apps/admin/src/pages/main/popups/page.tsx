@@ -486,62 +486,64 @@ export function PopupsPage() {
         hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area popups-page__filter-row">
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <span className="admin-filter-area__label">사용 여부</span>
-              <CmsSelect
-                inputSize="medium"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                withAllOption
-                value={pendingFilters.isActive}
-                onChange={value =>
-                  setPendingFilters(prev => ({
-                    ...prev,
-                    isActive: (value as ActiveFilterValue) ?? '',
-                  }))
-                }
-                options={[
-                  { label: '사용', value: 'true' },
-                  { label: '미사용', value: 'false' },
-                ]}
-                placeholder="전체"
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <span className="admin-filter-area__label">팝업명</span>
-              <AdminFilterTextInput
-                inputSize="medium"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="팝업명 검색"
-                value={pendingFilters.name}
-                onChange={value => patchPendingFilters(prev => ({ ...prev, name: value }))}
-                onPressEnter={handleSearch}
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <span className="admin-filter-area__label">대체 텍스트</span>
-              <AdminFilterTextInput
-                inputSize="medium"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="대체 텍스트 검색"
-                value={pendingFilters.altText}
-                onChange={value => patchPendingFilters(prev => ({ ...prev, altText: value }))}
-                onPressEnter={handleSearch}
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--date-range">
-              <span className="admin-filter-area__label">게시 기간</span>
-              <CmsDateRangePicker
-                inputSize="medium"
-                width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
-                value={periodAsPickerValue(pendingFilters.periodRange)}
-                onChange={dates =>
-                  setPendingFilters(prev => ({
-                    ...prev,
-                    periodRange: dates ?? null,
-                  }))
-                }
-                placeholder={['시작일', '종료일']}
-              />
+            <div className="admin-filter-area__fields">
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <span className="admin-filter-area__label">사용 여부</span>
+                <CmsSelect
+                  inputSize="medium"
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  withAllOption
+                  value={pendingFilters.isActive}
+                  onChange={value =>
+                    setPendingFilters(prev => ({
+                      ...prev,
+                      isActive: (value as ActiveFilterValue) ?? '',
+                    }))
+                  }
+                  options={[
+                    { label: '사용', value: 'true' },
+                    { label: '미사용', value: 'false' },
+                  ]}
+                  placeholder="전체"
+                />
+              </div>
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <span className="admin-filter-area__label">팝업명</span>
+                <AdminFilterTextInput
+                  inputSize="medium"
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  placeholder="팝업명 검색"
+                  value={pendingFilters.name}
+                  onChange={value => patchPendingFilters(prev => ({ ...prev, name: value }))}
+                  onPressEnter={handleSearch}
+                />
+              </div>
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <span className="admin-filter-area__label">대체 텍스트</span>
+                <AdminFilterTextInput
+                  inputSize="medium"
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  placeholder="대체 텍스트 검색"
+                  value={pendingFilters.altText}
+                  onChange={value => patchPendingFilters(prev => ({ ...prev, altText: value }))}
+                  onPressEnter={handleSearch}
+                />
+              </div>
+              <div className="admin-filter-area__field admin-filter-area__field--date-range">
+                <span className="admin-filter-area__label">게시 기간</span>
+                <CmsDateRangePicker
+                  inputSize="medium"
+                  width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
+                  value={periodAsPickerValue(pendingFilters.periodRange)}
+                  onChange={dates =>
+                    setPendingFilters(prev => ({
+                      ...prev,
+                      periodRange: dates ?? null,
+                    }))
+                  }
+                  placeholder={['시작일', '종료일']}
+                />
+              </div>
             </div>
             <div className="admin-filter-area__actions">
               <CmsButton

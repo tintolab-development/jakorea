@@ -558,64 +558,64 @@ export function CorporateConsultationsPage() {
         hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area admin-filter-area--split corp-consultations-page__filter">
-            <div className="admin-filter-area__head">
-              <div className="admin-filter-area__field admin-filter-area__field--control">
-                <p className="admin-filter-area__label">처리 상태</p>
-                <CmsSelect
-                  inputSize="medium"
-                  width={FILTER_CONTROL_MAX_WIDTH_PX}
-                  withAllOption
-                  value={pendingFilters.status}
-                  placeholder="전체"
-                  options={[
-                    { value: 'pending', label: '확인 대기' },
-                    { value: 'confirmed', label: '확인 완료' },
-                  ]}
-                  onChange={v =>
-                    setPendingFilters(prev => ({
-                      ...prev,
-                      status: (v as StatusPending) || '',
-                    }))
-                  }
-                />
+            <div className="admin-filter-area__fields">
+              <div className="admin-filter-area__head">
+                <div className="admin-filter-area__field admin-filter-area__field--control">
+                  <p className="admin-filter-area__label">처리 상태</p>
+                  <CmsSelect
+                    inputSize="medium"
+                    width={FILTER_CONTROL_MAX_WIDTH_PX}
+                    withAllOption
+                    value={pendingFilters.status}
+                    placeholder="전체"
+                    options={[
+                      { value: 'pending', label: '확인 대기' },
+                      { value: 'confirmed', label: '확인 완료' },
+                    ]}
+                    onChange={v =>
+                      setPendingFilters(prev => ({
+                        ...prev,
+                        status: (v as StatusPending) || '',
+                      }))
+                    }
+                  />
+                </div>
+                <div className="admin-filter-area__field admin-filter-area__field--control">
+                  <p className="admin-filter-area__label">기업명</p>
+                  <AdminFilterTextInput
+                    inputSize="medium"
+                    width={FILTER_CONTROL_MAX_WIDTH_PX}
+                    value={pendingFilters.companyName}
+                    placeholder="기업명을 입력해 주세요"
+                    onChange={value => patchPendingFilters(prev => ({ ...prev, companyName: value }))}
+                    onPressEnter={handleSearch}
+                  />
+                </div>
+                <div className="admin-filter-area__field admin-filter-area__field--control">
+                  <p className="admin-filter-area__label">담당자명</p>
+                  <AdminFilterTextInput
+                    inputSize="medium"
+                    width={FILTER_CONTROL_MAX_WIDTH_PX}
+                    value={pendingFilters.contactName}
+                    placeholder="담당자명을 입력해 주세요"
+                    onChange={value => patchPendingFilters(prev => ({ ...prev, contactName: value }))}
+                    onPressEnter={handleSearch}
+                  />
+                </div>
+                <div className="admin-filter-area__field admin-filter-area__field--control">
+                  <p className="admin-filter-area__label">부서/직함명</p>
+                  <AdminFilterTextInput
+                    inputSize="medium"
+                    width={FILTER_CONTROL_MAX_WIDTH_PX}
+                    value={pendingFilters.departmentTitle}
+                    placeholder="부서/직함명을 입력해 주세요"
+                    onChange={value =>
+                      patchPendingFilters(prev => ({ ...prev, departmentTitle: value }))
+                    }
+                    onPressEnter={handleSearch}
+                  />
+                </div>
               </div>
-              <div className="admin-filter-area__field admin-filter-area__field--control">
-                <p className="admin-filter-area__label">기업명</p>
-                <AdminFilterTextInput
-                  inputSize="medium"
-                  width={FILTER_CONTROL_MAX_WIDTH_PX}
-                  value={pendingFilters.companyName}
-                  placeholder="기업명을 입력해 주세요"
-                  onChange={value => patchPendingFilters(prev => ({ ...prev, companyName: value }))}
-                  onPressEnter={handleSearch}
-                />
-              </div>
-              <div className="admin-filter-area__field admin-filter-area__field--control">
-                <p className="admin-filter-area__label">담당자명</p>
-                <AdminFilterTextInput
-                  inputSize="medium"
-                  width={FILTER_CONTROL_MAX_WIDTH_PX}
-                  value={pendingFilters.contactName}
-                  placeholder="담당자명을 입력해 주세요"
-                  onChange={value => patchPendingFilters(prev => ({ ...prev, contactName: value }))}
-                  onPressEnter={handleSearch}
-                />
-              </div>
-              <div className="admin-filter-area__field admin-filter-area__field--control">
-                <p className="admin-filter-area__label">부서/직함명</p>
-                <AdminFilterTextInput
-                  inputSize="medium"
-                  width={FILTER_CONTROL_MAX_WIDTH_PX}
-                  value={pendingFilters.departmentTitle}
-                  placeholder="부서/직함명을 입력해 주세요"
-                  onChange={value =>
-                    patchPendingFilters(prev => ({ ...prev, departmentTitle: value }))
-                  }
-                  onPressEnter={handleSearch}
-                />
-              </div>
-            </div>
-            <div className="admin-filter-area__bottom">
               <div className="admin-filter-area__bottom-fields">
                 <div className="admin-filter-area__field admin-filter-area__field--date-range">
                   <p className="admin-filter-area__label">신청일</p>
@@ -658,17 +658,17 @@ export function CorporateConsultationsPage() {
                   />
                 </div>
               </div>
-              <div className="admin-filter-area__actions">
-                <CmsButton
-                  className="admin-filter-area__search-button"
-                  variant="primary"
-                  size="medium"
-                  type="button"
-                  onClick={handleSearch}
-                >
-                  조회
-                </CmsButton>
-              </div>
+            </div>
+            <div className="admin-filter-area__actions">
+              <CmsButton
+                className="admin-filter-area__search-button"
+                variant="primary"
+                size="medium"
+                type="button"
+                onClick={handleSearch}
+              >
+                조회
+              </CmsButton>
             </div>
           </div>
         }

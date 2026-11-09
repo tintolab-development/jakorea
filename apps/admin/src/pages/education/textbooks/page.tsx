@@ -551,90 +551,92 @@ export function EducationTextbooksPage() {
         hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area education-textbooks-page__filter">
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <p className="admin-filter-area__label">사용 여부</p>
-              <CmsSelect
-                inputSize="medium"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                withAllOption
-                value={pendingFilters.usage}
-                placeholder="전체"
-                options={[
-                  { value: 'active', label: '사용' },
-                  { value: 'inactive', label: '미사용' },
-                ]}
-                onChange={v =>
-                  setPendingFilters(prev => ({
-                    ...prev,
-                    usage: (v === 'active' || v === 'inactive' ? v : '') as UsagePending,
-                  }))
-                }
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <p className="admin-filter-area__label">교재명</p>
-              <AdminFilterTextInput
-                inputSize="medium"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                value={pendingFilters.title}
-                placeholder="교재명을 입력해 주세요"
-                onChange={value => patchPendingFilters(prev => ({ ...prev, title: value }))}
-                onPressEnter={handleSearch}
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <p className="admin-filter-area__label">사업 분야</p>
-              <CmsSelect
-                inputSize="medium"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                withAllOption
-                value={pendingFilters.businessFieldId}
-                placeholder="전체"
-                options={fieldFilterOptions}
-                onChange={v =>
-                  setPendingFilters(prev => ({
-                    ...prev,
-                    businessFieldId: v == null ? '' : String(v),
-                  }))
-                }
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <p className="admin-filter-area__label">교육 대상</p>
-              <CmsSelect
-                inputSize="medium"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                withAllOption
-                value={pendingFilters.educationTargetId}
-                placeholder="전체"
-                options={targetFilterOptions}
-                onChange={v =>
-                  setPendingFilters(prev => ({
-                    ...prev,
-                    educationTargetId: v == null ? '' : String(v),
-                  }))
-                }
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--date-range">
-              <p className="admin-filter-area__label">등록일</p>
-              <CmsDateRangePicker
-                inputSize="medium"
-                width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
-                value={rangeAsPicker(pendingFilters.createdRange)}
-                placeholder={['시작일', '종료일']}
-                allowClear
-                onChange={dates => {
-                  if (!dates || (!dates[0] && !dates[1])) {
-                    setPendingFilters(prev => ({ ...prev, createdRange: null }))
-                    return
+            <div className="admin-filter-area__fields">
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <p className="admin-filter-area__label">사용 여부</p>
+                <CmsSelect
+                  inputSize="medium"
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  withAllOption
+                  value={pendingFilters.usage}
+                  placeholder="전체"
+                  options={[
+                    { value: 'active', label: '사용' },
+                    { value: 'inactive', label: '미사용' },
+                  ]}
+                  onChange={v =>
+                    setPendingFilters(prev => ({
+                      ...prev,
+                      usage: (v === 'active' || v === 'inactive' ? v : '') as UsagePending,
+                    }))
                   }
-                  setPendingFilters(prev => ({
-                    ...prev,
-                    createdRange: [dates[0] ?? null, dates[1] ?? null],
-                  }))
-                }}
-              />
+                />
+              </div>
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <p className="admin-filter-area__label">교재명</p>
+                <AdminFilterTextInput
+                  inputSize="medium"
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  value={pendingFilters.title}
+                  placeholder="교재명을 입력해 주세요"
+                  onChange={value => patchPendingFilters(prev => ({ ...prev, title: value }))}
+                  onPressEnter={handleSearch}
+                />
+              </div>
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <p className="admin-filter-area__label">사업 분야</p>
+                <CmsSelect
+                  inputSize="medium"
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  withAllOption
+                  value={pendingFilters.businessFieldId}
+                  placeholder="전체"
+                  options={fieldFilterOptions}
+                  onChange={v =>
+                    setPendingFilters(prev => ({
+                      ...prev,
+                      businessFieldId: v == null ? '' : String(v),
+                    }))
+                  }
+                />
+              </div>
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <p className="admin-filter-area__label">교육 대상</p>
+                <CmsSelect
+                  inputSize="medium"
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  withAllOption
+                  value={pendingFilters.educationTargetId}
+                  placeholder="전체"
+                  options={targetFilterOptions}
+                  onChange={v =>
+                    setPendingFilters(prev => ({
+                      ...prev,
+                      educationTargetId: v == null ? '' : String(v),
+                    }))
+                  }
+                />
+              </div>
+              <div className="admin-filter-area__field admin-filter-area__field--date-range">
+                <p className="admin-filter-area__label">등록일</p>
+                <CmsDateRangePicker
+                  inputSize="medium"
+                  width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
+                  value={rangeAsPicker(pendingFilters.createdRange)}
+                  placeholder={['시작일', '종료일']}
+                  allowClear
+                  onChange={dates => {
+                    if (!dates || (!dates[0] && !dates[1])) {
+                      setPendingFilters(prev => ({ ...prev, createdRange: null }))
+                      return
+                    }
+                    setPendingFilters(prev => ({
+                      ...prev,
+                      createdRange: [dates[0] ?? null, dates[1] ?? null],
+                    }))
+                  }}
+                />
+              </div>
             </div>
             <div className="admin-filter-area__actions">
               <CmsButton

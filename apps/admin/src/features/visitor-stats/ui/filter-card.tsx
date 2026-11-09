@@ -41,72 +41,74 @@ export function VisitorStatsFilterCard({
   return (
     <div className="visitor-stats-filter-card">
       <div className="admin-filter-area">
-        {unit === 'year' || unit === 'month' ? (
-          <div className="admin-filter-area__field admin-filter-area__field--control">
-            <p className="admin-filter-area__label">연도</p>
-            <CmsSelect
-              mode="multiple"
-              inputSize="medium"
-              width={FILTER_CONTROL_MAX_WIDTH_PX}
-              placeholder="전체"
-              allowClear
-              options={yearOptions}
-              value={pending.years}
-              onChange={v =>
-                onPendingChange({
-                  ...pending,
-                  years: Array.isArray(v) ? v.map(String) : [],
-                })
-              }
-            />
-          </div>
-        ) : null}
-
-        {unit === 'month' ? (
-          <div className="admin-filter-area__field admin-filter-area__field--control">
-            <p className="admin-filter-area__label">월</p>
-            <CmsSelect
-              mode="multiple"
-              inputSize="medium"
-              width={FILTER_CONTROL_MAX_WIDTH_PX}
-              placeholder="전체"
-              allowClear
-              options={monthOptions}
-              value={pending.months}
-              onChange={v =>
-                onPendingChange({
-                  ...pending,
-                  months: Array.isArray(v) ? v.map(String) : [],
-                })
-              }
-            />
-          </div>
-        ) : null}
-
-        {unit === 'day' ? (
-          <div className="admin-filter-area__field admin-filter-area__field--date-range">
-            <p className="admin-filter-area__label">기간</p>
-            <CmsDateRangePicker
-              inputSize="medium"
-              width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
-              value={rangeAsPicker(pending.from, pending.to)}
-              placeholder={['시작일', '종료일']}
-              allowClear
-              onChange={dates => {
-                if (!dates || (!dates[0] && !dates[1])) {
-                  onPendingChange({ ...pending, from: null, to: null })
-                  return
+        <div className="admin-filter-area__fields">
+          {unit === 'year' || unit === 'month' ? (
+            <div className="admin-filter-area__field admin-filter-area__field--control">
+              <p className="admin-filter-area__label">연도</p>
+              <CmsSelect
+                mode="multiple"
+                inputSize="medium"
+                width={FILTER_CONTROL_MAX_WIDTH_PX}
+                placeholder="전체"
+                allowClear
+                options={yearOptions}
+                value={pending.years}
+                onChange={v =>
+                  onPendingChange({
+                    ...pending,
+                    years: Array.isArray(v) ? v.map(String) : [],
+                  })
                 }
-                onPendingChange({
-                  ...pending,
-                  from: dates[0] ? dates[0].format('YYYY-MM-DD') : null,
-                  to: dates[1] ? dates[1].format('YYYY-MM-DD') : null,
-                })
-              }}
-            />
-          </div>
-        ) : null}
+              />
+            </div>
+          ) : null}
 
+          {unit === 'month' ? (
+            <div className="admin-filter-area__field admin-filter-area__field--control">
+              <p className="admin-filter-area__label">월</p>
+              <CmsSelect
+                mode="multiple"
+                inputSize="medium"
+                width={FILTER_CONTROL_MAX_WIDTH_PX}
+                placeholder="전체"
+                allowClear
+                options={monthOptions}
+                value={pending.months}
+                onChange={v =>
+                  onPendingChange({
+                    ...pending,
+                    months: Array.isArray(v) ? v.map(String) : [],
+                  })
+                }
+              />
+            </div>
+          ) : null}
+
+          {unit === 'day' ? (
+            <div className="admin-filter-area__field admin-filter-area__field--date-range">
+              <p className="admin-filter-area__label">기간</p>
+              <CmsDateRangePicker
+                inputSize="medium"
+                width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
+                value={rangeAsPicker(pending.from, pending.to)}
+                placeholder={['시작일', '종료일']}
+                allowClear
+                onChange={dates => {
+                  if (!dates || (!dates[0] && !dates[1])) {
+                    onPendingChange({ ...pending, from: null, to: null })
+                    return
+                  }
+                  onPendingChange({
+                    ...pending,
+                    from: dates[0] ? dates[0].format('YYYY-MM-DD') : null,
+                    to: dates[1] ? dates[1].format('YYYY-MM-DD') : null,
+                  })
+                }}
+              />
+            </div>
+          ) : null}
+
+        </div>
         <div className="admin-filter-area__actions">
           <CmsButton className="admin-filter-area__search-button"
             variant="primary"

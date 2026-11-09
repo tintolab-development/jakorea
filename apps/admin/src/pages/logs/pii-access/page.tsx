@@ -244,42 +244,44 @@ export function PiiAccessLogPage() {
         hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area">
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <span className="admin-filter-area__label">조회 목적</span>
-              <AdminFilterTextInput
-                inputSize="medium"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="조회 목적을 입력해 주세요"
-                value={pendingFilters.purpose}
-                onChange={value => patchPendingFilters(prev => ({ ...prev, purpose: value }))}
-                onPressEnter={applySearch}
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <span className="admin-filter-area__label">조회자명</span>
-              <AdminFilterTextInput
-                inputSize="medium"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="조회자명을 입력해 주세요"
-                value={pendingFilters.accessorName}
-                onChange={value => patchPendingFilters(prev => ({ ...prev, accessorName: value }))}
-                onPressEnter={applySearch}
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--date-range">
-              <span className="admin-filter-area__label">조회일</span>
-              <CmsDateRangePicker
-                inputSize="medium"
-                width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
-                value={rangeAsPicker(pendingFilters.range)}
-                onChange={dates =>
-                  setPendingFilters(prev => ({
-                    ...prev,
-                    range: dates ?? null,
-                  }))
-                }
-                placeholder={['시작일', '종료일']}
-              />
+            <div className="admin-filter-area__fields">
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <span className="admin-filter-area__label">조회 목적</span>
+                <AdminFilterTextInput
+                  inputSize="medium"
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  placeholder="조회 목적을 입력해 주세요"
+                  value={pendingFilters.purpose}
+                  onChange={value => patchPendingFilters(prev => ({ ...prev, purpose: value }))}
+                  onPressEnter={applySearch}
+                />
+              </div>
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <span className="admin-filter-area__label">조회자명</span>
+                <AdminFilterTextInput
+                  inputSize="medium"
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  placeholder="조회자명을 입력해 주세요"
+                  value={pendingFilters.accessorName}
+                  onChange={value => patchPendingFilters(prev => ({ ...prev, accessorName: value }))}
+                  onPressEnter={applySearch}
+                />
+              </div>
+              <div className="admin-filter-area__field admin-filter-area__field--date-range">
+                <span className="admin-filter-area__label">조회일</span>
+                <CmsDateRangePicker
+                  inputSize="medium"
+                  width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
+                  value={rangeAsPicker(pendingFilters.range)}
+                  onChange={dates =>
+                    setPendingFilters(prev => ({
+                      ...prev,
+                      range: dates ?? null,
+                    }))
+                  }
+                  placeholder={['시작일', '종료일']}
+                />
+              </div>
             </div>
             <div className="admin-filter-area__actions">
               <CmsButton
