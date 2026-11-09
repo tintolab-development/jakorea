@@ -8,6 +8,7 @@ import type { ColumnsType } from 'antd/es/table'
 import type { MetricItem, MetricItemId } from '@/entities/corporate-guide/model/types'
 import { useSaveMetrics } from '@/features/corporate-guide/api/hooks'
 import { corporateGuideSaveFailureAlert } from '@/features/corporate-guide/lib/save-failure-alert'
+import { requiredColumnTitle } from './required-column-title'
 import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsTextArea, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 
@@ -103,7 +104,8 @@ export function MetricsSectionCard({ items }: Props) {
         render: (_value, record) => record.itemLabel,
       },
       {
-        title: '제목',
+        // 수정 모드에서 타이틀·설명 텍스트 모두 필수 (저장 시 빈 값은 공통 필수 안내)
+        title: isEditing ? requiredColumnTitle('타이틀') : '타이틀',
         key: 'title',
         width: 240,
         align: 'center',
@@ -119,8 +121,8 @@ export function MetricsSectionCard({ items }: Props) {
                 autoSize={{ minRows: 1 }}
                 value={value}
                 onChange={e => handleDraftChange(record.id, { title: e.target.value })}
-                placeholder="제목을 입력해 주세요"
-                aria-label={`${record.itemLabel} 제목`}
+                placeholder="타이틀을 입력해 주세요"
+                aria-label={`${record.itemLabel} 타이틀`}
               />
             )
           }
@@ -128,7 +130,7 @@ export function MetricsSectionCard({ items }: Props) {
         },
       },
       {
-        title: '설명',
+        title: isEditing ? requiredColumnTitle('설명 텍스트') : '설명 텍스트',
         key: 'description',
         align: 'center',
         className: 'corporate-guide-col--desc',
@@ -143,8 +145,8 @@ export function MetricsSectionCard({ items }: Props) {
                 autoSize={{ minRows: 1 }}
                 value={value}
                 onChange={e => handleDraftChange(record.id, { description: e.target.value })}
-                placeholder="설명을 입력해 주세요"
-                aria-label={`${record.itemLabel} 설명`}
+                placeholder="설명 텍스트를 입력해 주세요"
+                aria-label={`${record.itemLabel} 설명 텍스트`}
               />
             )
           }
