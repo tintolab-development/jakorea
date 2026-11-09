@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { asOpenApiFixture } from '@/shared/test/openapi-fixture-cast'
 import type { Ujat1365SemesterRegistrationFormResponse } from '@/shared/api/generated/program-progress/schemas/ujat1365SemesterRegistrationFormResponse'
 import { resolveVolunteer1365FormErrorMessage } from './use-volunteer-1365-semester-form'
 import {
@@ -46,7 +47,7 @@ const response: Ujat1365SemesterRegistrationFormResponse = {
     },
     {
       participantId: 2,
-      memberId: null,
+      memberId: asOpenApiFixture(null),
       name: null,
       birthDate: null,
       external1365Id: null,
@@ -149,7 +150,7 @@ describe('1365 시트 모델', () => {
     const longId = 'QA-ROSTER-1365-190002'
     const model = buildVolunteer1365SheetModel({
       ...response,
-      volunteers: [{ ...response.volunteers[0]!, external1365Id: longId }],
+      volunteers: [{ ...response.volunteers![0]!, external1365Id: longId }],
     })
     const widths = getVolunteer1365ColumnWidths(model)
     expect(widths[2]).toBeGreaterThan(160)
