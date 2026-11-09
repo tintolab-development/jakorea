@@ -119,6 +119,16 @@ export function TalentDonationApplicationDetailModal({
 
   const genderDobView = (() => {
     if (!data) return <span>-</span>
+    if (data.piiMasked) {
+      // 마스킹 응답: 원문 gender·birthDate는 null — 서버 마스킹 값만 그대로 표시하고 나이는 계산하지 않는다
+      return (
+        <span className="talent-app-detail-modal__confirmed">
+          <span>{data.maskedGender || '-'}</span>
+          <DetailInfoForm.TdDivider />
+          <span>{data.maskedBirthDate || '-'}</span>
+        </span>
+      )
+    }
     const age = internationalAge(data.birthDate)
     const dob = formatDateDot(data.birthDate)
     return (

@@ -12,6 +12,7 @@ function displayServerPiiAsIs(value: string | null | undefined): string {
   return trimmed ? trimmed : '-'
 }
 import {
+  mapTalentApplicationDetailToDomain,
   mapTalentApplicationListItemToDomain,
   toTalentApplicationListParams,
 } from './mappers.ts'
@@ -47,5 +48,36 @@ assert.notEqual(emptyName.applicantName, '*')
 
 const params = toTalentApplicationListParams({ applicantName: '길동' })
 assert.equal(params.applicantName, '길동')
+
+// 상세 — HOMEPAGE_PII_VIEW 없음(Program Viewer): 원문 생년월일·성별은 null, 마스킹 값을 그대로 넘긴다
+const maskedDetail = mapTalentApplicationDetailToDomain({
+  id: 3,
+  name: '홍길동',
+  birthDate: null,
+  gender: null,
+  phone: '010-****-5678',
+  piiMasked: true,
+  maskedBirthDate: '2000.**.**',
+  maskedGender: '**',
+})
+assert.equal(maskedDetail.piiMasked, true)
+assert.equal(maskedDetail.maskedBirthDate, '2000.**.**')
+assert.equal(maskedDetail.maskedGender, '**')
+assert.equal(maskedDetail.birthDate, '')
+assert.equal(maskedDetail.phone, '010-****-5678')
+
+const originalDetail = mapTalentApplicationDetailToDomain({
+  id: 4,
+  name: '홍길동',
+  birthDate: '2000-03-15',
+  gender: 'female',
+  piiMasked: false,
+  maskedBirthDate: null,
+  maskedGender: null,
+})
+assert.equal(originalDetail.piiMasked, false)
+assert.equal(originalDetail.gender, 'female')
+assert.equal(originalDetail.birthDate, '2000-03-15')
+assert.equal(originalDetail.maskedBirthDate, null)
 
 console.log('talent-donation-application list name selfcheck: ok')
