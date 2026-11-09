@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://jakorea-homepage.ngrok.app",
+      "url": "http://localhost:8081",
       "description": "Generated server url"
     }
   ],
@@ -9020,6 +9020,7 @@
                 "JA_HISTORY_WORLD_TIMELINE_IMAGE",
                 "JA_HISTORY_KOREA_TIMELINE_IMAGE",
                 "JA_HISTORY_PHILOSOPHY_CARD_IMAGE",
+                "JA_HISTORY_CTA_IMAGE",
                 "JA_HISTORY_LOCKED_MEDIA",
                 "LOG_EXPORT_XLSX"
               ]
@@ -9144,6 +9145,7 @@
                 "JA_HISTORY_WORLD_TIMELINE_IMAGE",
                 "JA_HISTORY_KOREA_TIMELINE_IMAGE",
                 "JA_HISTORY_PHILOSOPHY_CARD_IMAGE",
+                "JA_HISTORY_CTA_IMAGE",
                 "JA_HISTORY_LOCKED_MEDIA",
                 "LOG_EXPORT_XLSX"
               ]
@@ -9324,7 +9326,7 @@
           "career-talent-application-admin-controller"
         ],
         "summary": "List career talent applications",
-        "description": "name, phone, and email are always PrivacyMaskingSupport-masked. Original PII is returned only by the detail GET. List GET does not write privacy-access logs.",
+        "description": "name is the stored original. phone and email are always PrivacyMaskingSupport-masked. Original phone/email is returned only by the detail GET. List GET does not write privacy-access logs.",
         "operationId": "list_15",
         "parameters": [
           {
@@ -9493,7 +9495,7 @@
           "career-talent-application-admin-controller"
         ],
         "summary": "Get career talent application detail",
-        "description": "Always stored original PII (not masked). HOMEPAGE_VIEW is enough; HOMEPAGE_PII_VIEW is not required. Every 200 writes homepage_admin_audit_log (PII_READ / CAREER_TALENT_APPLICATION) and homepage_privacy_access_log with the original targetName. List remains masked (name, phone, and email). revealPii is a deprecated no-op. Admin log list screens must not POST privacy-access.",
+        "description": "Always stored original PII (not masked). HOMEPAGE_VIEW is enough; HOMEPAGE_PII_VIEW is not required. Every 200 writes homepage_admin_audit_log (PII_READ / CAREER_TALENT_APPLICATION) and homepage_privacy_access_log with the original targetName. List returns the original name; phone and email remain masked. revealPii is a deprecated no-op. Admin log list screens must not POST privacy-access.",
         "operationId": "detail_9",
         "parameters": [
           {
@@ -9965,6 +9967,7 @@
               "JA_HISTORY_WORLD_TIMELINE_IMAGE",
               "JA_HISTORY_KOREA_TIMELINE_IMAGE",
               "JA_HISTORY_PHILOSOPHY_CARD_IMAGE",
+              "JA_HISTORY_CTA_IMAGE",
               "JA_HISTORY_LOCKED_MEDIA",
               "LOG_EXPORT_XLSX"
             ]
@@ -12535,6 +12538,14 @@
             "maxLength": 500,
             "minLength": 0
           },
+          "imageAssetId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "CTA image asset id (purpose JA_HISTORY_CTA_IMAGE, READY). Omit or send null to keep the current image. Sending the current image id also keeps it."
+          },
           "version": {
             "type": "integer",
             "format": "int64"
@@ -13830,12 +13841,20 @@
             "format": "date"
           },
           "recruitStart": {
-            "type": "string",
-            "format": "date"
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "Recruit period start. Required when status is RECRUITING or CLOSED. Optional when status is RESULT: omit or send null; RESULT postings always store null."
           },
           "recruitEnd": {
-            "type": "string",
-            "format": "date"
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "Recruit period end (must be on or after recruitStart). Required when status is RECRUITING or CLOSED. Optional when status is RESULT: omit or send null; RESULT postings always store null."
           },
           "authorName": {
             "type": "string",
@@ -13880,8 +13899,6 @@
           "body",
           "isPublic",
           "publishedOn",
-          "recruitEnd",
-          "recruitStart",
           "status",
           "title",
           "version"
@@ -13919,12 +13936,20 @@
             "type": "string"
           },
           "recruitStart": {
-            "type": "string",
-            "format": "date"
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "Always null when status is RESULT. Otherwise the stored recruit period date."
           },
           "recruitEnd": {
-            "type": "string",
-            "format": "date"
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "Always null when status is RESULT. Otherwise the stored recruit period date."
           },
           "createdAt": {
             "type": "string",
@@ -15575,12 +15600,20 @@
             "format": "date"
           },
           "recruitStart": {
-            "type": "string",
-            "format": "date"
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "Recruit period start. Required when status is RECRUITING or CLOSED. Optional when status is RESULT: omit or send null; RESULT postings always store null."
           },
           "recruitEnd": {
-            "type": "string",
-            "format": "date"
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "Recruit period end (must be on or after recruitStart). Required when status is RECRUITING or CLOSED. Optional when status is RESULT: omit or send null; RESULT postings always store null."
           },
           "authorName": {
             "type": "string",
@@ -15621,8 +15654,6 @@
           "body",
           "isPublic",
           "publishedOn",
-          "recruitEnd",
-          "recruitStart",
           "status",
           "title"
         ]
@@ -15770,6 +15801,7 @@
               "JA_HISTORY_WORLD_TIMELINE_IMAGE",
               "JA_HISTORY_KOREA_TIMELINE_IMAGE",
               "JA_HISTORY_PHILOSOPHY_CARD_IMAGE",
+              "JA_HISTORY_CTA_IMAGE",
               "JA_HISTORY_LOCKED_MEDIA",
               "LOG_EXPORT_XLSX"
             ]
@@ -15996,6 +16028,7 @@
       },
       "CareerTalentApplicationListItem": {
         "type": "object",
+        "description": "name is the stored original (not masked). phone and email are PrivacyMaskingSupport-masked. List GET does not write privacy-access logs.",
         "properties": {
           "id": {
             "type": "integer",
@@ -16031,15 +16064,18 @@
             ]
           },
           "name": {
-            "type": "string",
-            "description": "Applicant name. Always PrivacyMaskingSupport.maskName (first character + asterisks). Full name is never returned on the list."
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Stored applicant name (original, not masked). Empty is null, never \"\"."
           },
           "phone": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Always PrivacyMaskingSupport.maskPhone. Empty is null, never \"\". List never returns plaintext. Example keeps hyphens and masks the middle four digits.",
+            "description": "Always PrivacyMaskingSupport.maskPhone (same format as JA CMS: area prefix + \"-\" + one * per middle digit + \"-\" + last 4 digits, e.g. 010-****-5124, 02-***-1234; non-Korean formats become ****). Empty is null, never \"\". List never returns plaintext.",
             "example": "010-****-9154"
           },
           "email": {
@@ -16111,12 +16147,20 @@
             "type": "string"
           },
           "recruitStart": {
-            "type": "string",
-            "format": "date"
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "Always null when status is RESULT. Otherwise the stored recruit period date."
           },
           "recruitEnd": {
-            "type": "string",
-            "format": "date"
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "Always null when status is RESULT. Otherwise the stored recruit period date."
           },
           "createdAt": {
             "type": "string",
@@ -17857,12 +17901,20 @@
             "format": "date-time"
           },
           "recruitStart": {
-            "type": "string",
-            "format": "date"
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "Always null when status is RESULT. Otherwise the stored recruit period date."
           },
           "recruitEnd": {
-            "type": "string",
-            "format": "date"
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "Always null when status is RESULT. Otherwise the stored recruit period date."
           },
           "body": {
             "type": "string",
@@ -19167,6 +19219,7 @@
               "JA_HISTORY_WORLD_TIMELINE_IMAGE",
               "JA_HISTORY_KOREA_TIMELINE_IMAGE",
               "JA_HISTORY_PHILOSOPHY_CARD_IMAGE",
+              "JA_HISTORY_CTA_IMAGE",
               "JA_HISTORY_LOCKED_MEDIA",
               "LOG_EXPORT_XLSX"
             ]
@@ -19588,7 +19641,7 @@
       },
       "CareerTalentApplicationDetailResponse": {
         "type": "object",
-        "description": "Admin detail is always stored original PII. Empty strings are null. List items remain masked.",
+        "description": "Admin detail is always stored original PII. Empty strings are null. List items remain masked (phone and email only; name is original).",
         "properties": {
           "id": {
             "type": "integer",

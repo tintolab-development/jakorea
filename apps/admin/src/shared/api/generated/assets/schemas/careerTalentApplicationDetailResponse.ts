@@ -12,7 +12,7 @@ import type { CareerTalentApplicationDetailResponseJobInterest } from './careerT
 import type { CareerTalentApplicationDetailResponseStatus } from './careerTalentApplicationDetailResponseStatus';
 
 /**
- * Admin detail is always stored original PII. Empty strings are null. List items remain masked.
+ * Admin detail is always stored original PII. Empty strings are null. List items remain masked (phone and email only; name is original).
  */
 export interface CareerTalentApplicationDetailResponse {
   id?: number;

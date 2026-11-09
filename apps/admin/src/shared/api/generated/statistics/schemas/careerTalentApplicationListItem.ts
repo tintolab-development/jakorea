@@ -9,15 +9,18 @@ import type { CareerTalentApplicationListItemCareerType } from './careerTalentAp
 import type { CareerTalentApplicationListItemJobInterest } from './careerTalentApplicationListItemJobInterest';
 import type { CareerTalentApplicationListItemStatus } from './careerTalentApplicationListItemStatus';
 
+/**
+ * name is the stored original (not masked). phone and email are PrivacyMaskingSupport-masked. List GET does not write privacy-access logs.
+ */
 export interface CareerTalentApplicationListItem {
   id?: number;
   status?: CareerTalentApplicationListItemStatus;
   confirmedAt?: string;
   jobInterest?: CareerTalentApplicationListItemJobInterest;
   careerType?: CareerTalentApplicationListItemCareerType;
-  /** Applicant name. Always PrivacyMaskingSupport.maskName (first character + asterisks). Full name is never returned on the list. */
-  name?: string;
-  /** Always PrivacyMaskingSupport.maskPhone. Empty is null, never "". List never returns plaintext. Example keeps hyphens and masks the middle four digits. */
+  /** Stored applicant name (original, not masked). Empty is null, never "". */
+  name?: string | null;
+  /** Always PrivacyMaskingSupport.maskPhone (same format as JA CMS: area prefix + "-" + one * per middle digit + "-" + last 4 digits, e.g. 010-****-5124, 02-***-1234; non-Korean formats become ****). Empty is null, never "". List never returns plaintext. */
   phone?: string | null;
   /** Always PrivacyMaskingSupport.maskEmail (local prefix + *** + @domain). Empty is null, never "". List never returns plaintext. */
   email?: string | null;
