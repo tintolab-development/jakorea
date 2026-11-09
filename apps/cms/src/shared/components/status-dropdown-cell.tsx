@@ -18,11 +18,14 @@
  * />
  */
 
+import { useAuthStore } from '@/features/auth/model/auth-store'
+import { isReadOnlyAdminRoleCode, resolveAdminRoleCodeFromUser } from '@/shared/lib/admin-role-policy'
 import { Dropdown } from 'antd'
 import type { MenuProps } from 'antd'
-import { useEffect, useId, useState } from 'react'
+import { useContext, useEffect, useId, useState } from 'react'
 import { CMS_CALENDAR_PREVIEW_TOOLTIP_Z_INDEX } from '@/shared/constants/modal-z-index'
 import { StatusTag, type StatusTagSpec } from './status-tag'
+import { StatusDropdownReadOnlyContext } from './status-dropdown-read-only-context'
 import './status-dropdown-cell.css'
 
 /** 테이블 컬럼(td)에 지정 — 상하 패딩 0·overflow visible */
@@ -79,6 +82,11 @@ export function StatusDropdownCell<T extends string = string>({
   emptyPlaceholder = DEFAULT_EMPTY,
 }: StatusDropdownCellProps<T>) {
   const dropdownCellId = useId()
+  const contextReadOnly = useContext(StatusDropdownReadOnlyContext)
+  /** 조회 전용 역할 — 어느 화면이든 상태·역할 변경 드롭다운을 열지 않는다(누르면 앱 가드가 접근 불가 안내) */
+  const roleReadOnly = useAuthStore(state =>
+    isReadOnlyAdminRoleCode(resolveAdminRoleCodeFromUser(state.user))
+  )
   const [activeDropdownVersion, setActiveDropdownVersion] = useState(0)
   const isActiveDropdown = activeStatusDropdownCellId === dropdownCellId
   const controlledOpen = isOpen && isActiveDropdown
@@ -145,7 +153,20 @@ export function StatusDropdownCell<T extends string = string>({
 
   const triggerClassName = 'status-dropdown-cell__status-trigger'
 
-  if (onChange == null) {
+  if (roleReadOnly && onChange != null) {
+    return (
+      <span
+        role="button"
+        tabIndex={-1}
+        data-program-action="write"
+        className={`${triggerClassName} status-dropdown-cell__status-trigger--readonly`}
+      >
+        {renderTag(status)}
+      </span>
+    )
+  }
+
+  if (onChange == null || contextReadOnly) {
     return (
       <span className={`${triggerClassName} status-dropdown-cell__status-trigger--readonly`}>
         {renderTag(status)}

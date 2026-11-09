@@ -9,12 +9,6 @@ import {
   canAccessAccountPayments,
   isAccountPaymentsPath,
 } from '@/shared/lib/account-payments-access'
-import {
-  isReadOnlyAdminRoleCode,
-  isSettlementItemSettingsPath,
-  isTemplateManagementPath,
-  resolveAdminRoleCodeFromUser,
-} from '@/shared/lib/admin-role-policy'
 import type { MenuProps } from 'antd'
 import { FolderOutlined, FileTextOutlined, CalendarOutlined, TeamOutlined } from '@ant-design/icons'
 import React from 'react'
@@ -814,18 +808,8 @@ export function filterMenuByRole(
       if (isMenuPathBlockedForAdminLevel(item, userRole, user?.adminLevel)) {
         return false
       }
-      if (item.key && isAccountPaymentsPath(item.key) && !canAccessAccountPayments(user)) {
-        return false
-      }
-      // 권한 설정 V1.2: 템플릿 관리·정산 항목 설정은 Program Viewer에게 화면 비노출. URL 진입은 레이아웃 가드가 막는다.
-      if (
-        item.key &&
-        (isTemplateManagementPath(item.key) || isSettlementItemSettingsPath(item.key)) &&
-        user?.role === 'ADMIN' &&
-        isReadOnlyAdminRoleCode(resolveAdminRoleCodeFromUser(user))
-      ) {
-        return false
-      }
+      // 권한 설정 V1.2: 계좌 지급 확인(Master·Accounting Manager 전용)과 템플릿 관리·정산 항목 설정(Program Viewer 제한)은
+      // 메뉴를 숨기지 않는다. 사이드바 클릭 시 접근 불가 안내를 띄우고, URL 직접 진입은 레이아웃 가드가 막는다.
       // allowedRoles가 없으면 모든 권한 허용
       if (!item.allowedRoles || item.allowedRoles.length === 0) {
         return true

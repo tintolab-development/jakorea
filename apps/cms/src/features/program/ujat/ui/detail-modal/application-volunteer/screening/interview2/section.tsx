@@ -4,7 +4,6 @@ import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import {
   FilterTableToolbarButton,
 } from '@/shared/ui'
-import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import type {
@@ -47,7 +46,6 @@ export function Interview2Section({
   onRegisterApplicantCloseHandler,
   onVolunteerApplicantDetailMetaChange,
 }: Interview2SectionProps) {
-  const canWrite = useUjatCanWrite()
   const {
     list,
     pendingFilters,
@@ -276,8 +274,7 @@ export function Interview2Section({
         description={`${count.toLocaleString()}건`}
         actions={
           <div className="ujat-volunteer-interview2__actions">
-            {canWrite ? (
-              <>
+            <>
             <FilterTableToolbarButton
               type="button"
               variant="delete"
@@ -291,12 +288,10 @@ export function Interview2Section({
               선택 합격
             </FilterTableToolbarButton>
               </>
-            ) : null}
             {viewMode === 'list' ? (
               <FilterTableToolbarButton
                 type="button"
                 variant="secondary"
-                style={{ minWidth: 180 }}
                 icon={<ButtonCalendarIcon />}
                 onClick={handleViewCalendar} >
                 캘린더뷰 보기
@@ -305,7 +300,6 @@ export function Interview2Section({
               <FilterTableToolbarButton
                 type="button"
                 variant="secondary"
-                style={{ minWidth: 180 }}
                 icon={<ButtonListIcon />}
                 onClick={handleViewList} >
                 리스트로 보기
@@ -314,14 +308,12 @@ export function Interview2Section({
           </div>
         }
         excelExport={
-          canWrite
-            ? {
+          {
                 accessLog: { downloadKind: 'PROGRAM_SCREENING_INTERVIEW_EXPORT', containedPiiTypes: ['NAME'] },
                 columns,
                 data: tableData,
                 selectedRowKeys,
               }
-            : undefined
         }
       >
         {viewMode === 'list' ? (

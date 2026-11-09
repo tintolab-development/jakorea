@@ -460,10 +460,16 @@ export async function fetchMemberProgramHistoryRemote(
 export async function fetchApplicationEnrollmentSummaryRemote(
   memberId: number,
   applicationId: number,
-  params?: GetApplicationEnrollmentSummaryParams
+  params?: GetApplicationEnrollmentSummaryParams,
+  options?: { skipGlobalErrorAlert?: boolean }
 ): Promise<MemberEnrollmentSummaryResponse> {
   return unwrapApiBody(
-    await membersApi.getApplicationEnrollmentSummary(memberId, applicationId, params)
+    await membersApi.getApplicationEnrollmentSummary(
+      memberId,
+      applicationId,
+      params,
+      options?.skipGlobalErrorAlert ? { skipGlobalErrorAlert: true } : undefined
+    )
   )
 }
 

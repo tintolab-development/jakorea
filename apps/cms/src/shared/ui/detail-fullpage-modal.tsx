@@ -10,6 +10,7 @@ import {
   type AdminActionKind,
 } from '@/shared/lib/admin-role-policy'
 import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
+import { useAdminActionGuardDelegated } from '@/shared/lib/admin-action-guard-delegation'
 import './detail-fullpage-modal.css'
 
 export interface DetailFullPageModalProps {
@@ -84,6 +85,7 @@ export function DetailFullPageModal({
   zIndex,
 }: DetailFullPageModalProps) {
   const roleCode = useSessionAdminRoleCode()
+  const guardDelegated = useAdminActionGuardDelegated()
   const handleClose = onHeaderClose ?? onClose
   const body = (
     <DetailFullPageModalBody loading={loading} error={error}>
@@ -129,7 +131,9 @@ export function DetailFullPageModal({
               </button>
             </div>
             {headerExtra ? (
-              <div onClickCapture={event => onAdminWriteClickCapture(event, roleCode)}>
+              <div onClickCapture={event => {
+                    if (!guardDelegated) onAdminWriteClickCapture(event, roleCode)
+                  }}>
                 {headerExtra}
               </div>
             ) : null}
@@ -139,9 +143,9 @@ export function DetailFullPageModal({
               <div className="detail-fullpage-modal__content-actions-wrapper">
                 <div
                   className="detail-fullpage-modal__content-actions"
-                  onClickCapture={event =>
-                    onAdminWriteClickCapture(event, roleCode, contentExtraAdminAction)
-                  }
+                  onClickCapture={event => {
+                    if (!guardDelegated) onAdminWriteClickCapture(event, roleCode, contentExtraAdminAction)
+                  }}
                 >
                   {contentExtra}
                 </div>

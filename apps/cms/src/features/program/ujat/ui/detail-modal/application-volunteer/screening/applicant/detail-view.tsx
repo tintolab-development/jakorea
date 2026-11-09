@@ -1,3 +1,4 @@
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type {
   UjatVolunteerApplicantRow,
@@ -5,7 +6,6 @@ import type {
 } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import type { UjatManagerEvaluation } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { CmsButton } from '@/shared/ui'
-import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
 import { sanitizeProgramPrivacyOverlay } from '@/features/program/shared/lib/program-my-assignment'
@@ -25,7 +25,10 @@ import {
   type InterviewEvaluationSectionHandle,
 } from './interview-evaluation-section'
 import { resolveUjatEffectiveSecondInterviewStatus } from '../interview2/display'
-import { canReassignVolunteerInterviewAssignment } from '@/features/program/shared/lib/volunteer-interview-reassign'
+import {
+  canReassignVolunteerInterviewAssignment,
+  VOLUNTEER_INTERVIEW_REASSIGN_BLOCKED_ALERT,
+} from '@/features/program/shared/lib/volunteer-interview-reassign'
 import { guardUjatVolunteerInterview2Evaluation } from './guard-actions'
 import '@/shared/components/detail-info-form/detail-info-form.css'
 import './detail.css'
@@ -94,7 +97,6 @@ function Interview2ApplicantDetail({
   onInterviewPass?: () => void
   onSaveInterviewEvaluation?: (payload: UjatVolunteerInterviewEvaluationPayload) => Promise<boolean>
 }) {
-  const canWrite = useUjatCanWrite()
   const evaluationSectionRef = useRef<InterviewEvaluationSectionHandle>(null)
   const [isEvaluationEditing, setIsEvaluationEditing] = useState(false)
   const interviewNotEnded = resolveUjatEffectiveSecondInterviewStatus(applicant) === 'waiting'
@@ -117,8 +119,7 @@ function Interview2ApplicantDetail({
     <div className="applicant-detail">
       <div className="applicant-detail__header">
         <div className="program-detail-fullpage-modal__header-actions">
-          {canWrite ? (
-            <>
+          <>
           <CmsButton
             type="button"
             variant="delete"
@@ -153,7 +154,6 @@ function Interview2ApplicantDetail({
             면접 평가
           </CmsButton>
             </>
-          ) : null}
           <PersonalInfoRevealButton
             disabled={programPrivacyPending}
             labelMode="stickyReveal"
@@ -186,7 +186,6 @@ function Interview2ApplicantDetail({
 }
 
 export function ApplicantDetailView(props: ApplicantDetailViewProps) {
-  const canWrite = useUjatCanWrite()
   const applicantEnriched = useUjatVolunteerApplicationDetailEnrichment(props.applicant)
   const [unmaskedOverlay, setUnmaskedOverlay] = useState<UjatVolunteerApplicantRow | null>(null)
 
@@ -243,12 +242,19 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
     return '면접일 배정'
   }, [applicant.interviewAssignmentStatus])
 
-  const assignInterviewDisabled = useMemo(() => {
-    if (applicant.interviewAssignmentStatus === 'withdrawn') return true
-    if (applicant.interviewAssignmentStatus === 'assigned') {
-      return !canReassignVolunteerInterviewAssignment(applicant)
+  /** 버튼은 항상 활성 — 배정·재배정이 안 되는 상태면 누를 때 이유를 안내한다(서버 VOLUNTEER_INTERVIEW_CONFLICT와 같은 기준) */
+  const { showAlert } = useCmsAlert()
+  const assignInterviewBlockedAlert = useMemo(() => {
+    if (applicant.interviewAssignmentStatus === 'withdrawn') {
+      return { title: '면접일 배정 안내', content: '활동 포기한 신청은 면접일을 배정할 수 없습니다.' }
     }
-    return false
+    if (
+      applicant.interviewAssignmentStatus === 'assigned' &&
+      !canReassignVolunteerInterviewAssignment(applicant)
+    ) {
+      return VOLUNTEER_INTERVIEW_REASSIGN_BLOCKED_ALERT
+    }
+    return null
   }, [applicant])
 
   if (isInterview2Props(props)) {
@@ -274,8 +280,7 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
       <div className="applicant-detail">
         <div className="applicant-detail__header">
           <div className="program-detail-fullpage-modal__header-actions">
-            {canWrite ? (
-              <>
+            <>
             <CmsButton
               type="button"
               variant="delete"
@@ -287,13 +292,17 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
               type="button"
               variant="secondary"
               size="large"
-              disabled={assignInterviewDisabled}
-              onClick={onAssignInterview}
+              onClick={() => {
+                if (assignInterviewBlockedAlert) {
+                  showAlert({ ...assignInterviewBlockedAlert })
+                  return
+                }
+                onAssignInterview?.()
+              }}
             >
               {assignInterviewLabel}
             </CmsButton>
               </>
-            ) : null}
             <PersonalInfoRevealButton
               disabled={programPrivacyPending}
               labelMode="stickyReveal"
@@ -333,8 +342,7 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
     <div className="applicant-detail">
       <div className="applicant-detail__header">
         <div className="program-detail-fullpage-modal__header-actions">
-          {canWrite ? (
-            <>
+          <>
           <CmsButton
             type="button"
             variant="delete"
@@ -352,7 +360,6 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
             서류 승인
           </CmsButton>
             </>
-          ) : null}
           <PersonalInfoRevealButton
             disabled={programPrivacyPending}
             labelMode="stickyReveal"

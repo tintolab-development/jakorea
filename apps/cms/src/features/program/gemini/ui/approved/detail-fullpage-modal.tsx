@@ -12,8 +12,6 @@ import {
 } from '../../api/visiting-training/service'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import { DeleteGuideModal, showDeleteCompletedAlert, useCmsAlert } from '@/shared/ui'
-import { useAuthStore } from '@/features/auth/model/auth-store'
-import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { ProgramDetailLnbDeleteButton } from '@/features/program/shared/ui/program-detail/lnb-delete-button'
 import { useDeleteGeminiApprovedTrainingsMutation } from '../../api/visiting-training/hooks'
 import {
@@ -47,6 +45,7 @@ import { GeminiApprovedTrainingDetailProgramInfoTab } from './detail-program-inf
 import { useGeminiInstructorApplicationDetail } from '../../hooks/use-gemini-instructor-application-detail'
 import '@/features/program/general/ui/detail-modal/program-detail-fullpage-modal.css'
 import '../detail/fullpage-modal.css'
+import { ProgramDetailActionGuard } from '@/features/program/shared/ui/program-detail-action-guard'
 
 const SIDEBAR_ITEMS: DetailModalSidebarNavItem[] = [
   { key: 'info', label: '프로그램 정보', icon: <LnbIconProjectInfo /> },
@@ -54,7 +53,7 @@ const SIDEBAR_ITEMS: DetailModalSidebarNavItem[] = [
   { key: 'managers', label: '담당자 정보', icon: <LnbIconManagers /> },
 ]
 
-export function GeminiApprovedTrainingDetailFullPageModal({
+function GeminiApprovedTrainingDetailFullPageModalContent({
   approvedTrainingId,
   onClose,
 }: {
@@ -75,8 +74,6 @@ export function GeminiApprovedTrainingDetailFullPageModal({
     approvedTrainingId,
     selectedInstructorApplicationId
   )
-  const { user } = useAuthStore()
-  const canWrite = canPerformWriteAction(user)
   const { showAlert } = useCmsAlert()
   const [unmasked, setUnmasked] = useState<GeminiApprovedTrainingPrivacyUnmasked | null>(null)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
@@ -285,7 +282,7 @@ export function GeminiApprovedTrainingDetailFullPageModal({
           onSelectTop={handleSidebarSelectTop}
           onSelectChild={() => undefined}
           footer={
-            canWrite && detail ? <ProgramDetailLnbDeleteButton onClick={handleDeleteClick} /> : null
+            detail ? <ProgramDetailLnbDeleteButton onClick={handleDeleteClick} /> : null
           }
         />
       }
@@ -364,3 +361,12 @@ export function GeminiApprovedTrainingDetailFullPageModal({
 }
 
 export { useGeminiApprovedTrainingDetailUrl } from './approved-training-detail-url'
+
+/** 권한 설정 V1.2 — 상세 안의 쓰기·다운로드·개인정보 버튼은 노출하고, 권한이 없으면 클릭 시 접근 불가 안내. */
+export function GeminiApprovedTrainingDetailFullPageModal(props: Parameters<typeof GeminiApprovedTrainingDetailFullPageModalContent>[0]) {
+  return (
+    <ProgramDetailActionGuard>
+      <GeminiApprovedTrainingDetailFullPageModalContent {...props} />
+    </ProgramDetailActionGuard>
+  )
+}

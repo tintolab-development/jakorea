@@ -192,6 +192,7 @@ import { UjatSurveyManagementView } from './survey-management/ui/ujat-survey-man
 import { useQueryClient } from '@tanstack/react-query'
 import '@/features/program/general/ui/detail-modal/program-detail-fullpage-modal.css'
 import './ujat-program-detail-fullpage-modal.css'
+import { ProgramDetailActionGuard } from '@/features/program/shared/ui/program-detail-action-guard'
 
 const TAB_PARAM = 'tab'
 const LNB_PARAM = 'lnb'
@@ -550,7 +551,7 @@ function UjatPlaceholderSection({ title, description }: { title: string; descrip
   )
 }
 
-export function UjatProgramDetailFullPageModal({
+function UjatProgramDetailFullPageModalContent({
   open,
   onClose,
   program,
@@ -944,10 +945,11 @@ export function UjatProgramDetailFullPageModal({
   )
 
   const editTab = searchParams.get(EDIT_PARAM)
-  const canEditInfo = useMemo(
-    () => canWrite && canUjatProgramInfoEdit(displayProgram),
-    [canWrite, displayProgram],
+  const infoEditPeriodOpen = useMemo(
+    () => canUjatProgramInfoEdit(displayProgram),
+    [displayProgram],
   )
+  const canEditInfo = canWrite && infoEditPeriodOpen
   const isEditModeInfo =
     open &&
     activeLnb === 'info' &&
@@ -1687,7 +1689,7 @@ export function UjatProgramDetailFullPageModal({
             surveyItems={surveyItems}
             onSelectChildTab={setLnbTab}
             footer={
-              canWrite && onRequestDelete && displayProgram ? (
+              onRequestDelete && displayProgram ? (
                 <ProgramDetailLnbDeleteButton onClick={() => onRequestDelete(displayProgram)} />
               ) : null
             }
@@ -1711,14 +1713,14 @@ export function UjatProgramDetailFullPageModal({
                 <div className="program-detail-fullpage-modal__header-actions">
                   <BusinessPeriodExtendToolbar
                     program={displayProgram}
-                    editDisabled={!canEditInfo && !isEditModeInfo}
+                    editDisabled={!infoEditPeriodOpen && !isEditModeInfo}
                     hideExtend={isEditModeInfo}
                   >
                     <ProgramEditInfoActions
                       canWrite={canWrite}
                       isEditing={isEditModeInfo}
                       idleVariant="secondary"
-                      disabled={!canEditInfo && !isEditModeInfo}
+                      disabled={!infoEditPeriodOpen && !isEditModeInfo}
                       onEdit={handleInfoEdit}
                       onCancel={handleInfoCancel}
                       onSave={() => {
@@ -1957,5 +1959,14 @@ export function UjatProgramDetailFullPageModal({
     ) : null}
     </>
     </RegistrationWizardValidationHighlightProvider>
+  )
+}
+
+/** 권한 설정 V1.2 — 상세 안의 쓰기·다운로드·개인정보 버튼은 노출하고, 권한이 없으면 클릭 시 접근 불가 안내. */
+export function UjatProgramDetailFullPageModal(props: UjatProgramDetailFullPageModalProps) {
+  return (
+    <ProgramDetailActionGuard programId={props.program?.id ?? props.programIdHint}>
+      <UjatProgramDetailFullPageModalContent {...props} />
+    </ProgramDetailActionGuard>
   )
 }

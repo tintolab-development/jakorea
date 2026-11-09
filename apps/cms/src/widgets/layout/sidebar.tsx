@@ -26,6 +26,7 @@ import { MenuDropdownChevronIcon } from '@/shared/ui/icons'
 import './sidebar.css'
 import { Header } from './header'
 import { collectMenuRouteKeys, resolveSidebarSelectedKey } from './sidebar-selected-key'
+import { canAccessAccountPayments, isAccountPaymentsPath } from '@/shared/lib/account-payments-access'
 
 const { Sider } = Layout
 
@@ -264,6 +265,11 @@ export function Sidebar() {
               isSettlementItemSettingsPath(key) &&
               !canAdminAction({ roleCode, action: 'view', screen: 'settlement-item-settings' })
             ) {
+              showAdminAccessDeniedAlert()
+              return
+            }
+            // 계좌 지급 확인: Master·Accounting Manager만. 메뉴는 노출하고 클릭 시 안내.
+            if (isAccountPaymentsPath(key) && !canAccessAccountPayments(user)) {
               showAdminAccessDeniedAlert()
               return
             }

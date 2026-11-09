@@ -137,6 +137,12 @@ export function canDownloadProgramFiles(
   return capabilitySet(assignment).has('FILE_DOWNLOAD')
 }
 
+/** 강사 배정·대표 강사 변경 등 배정 관리 — Program Owner·Assistant(ASSIGNMENT_MANAGE). Program Viewer는 조회만. */
+export function canManageProgramAssignments(assignment: ProgramMyAssignment | null | undefined): boolean {
+  if (!assignment || isUnknownAssignmentRole(assignment)) return false
+  return capabilitySet(assignment).has('ASSIGNMENT_MANAGE')
+}
+
 /** 담당자 등록·역할 변경·삭제 — Program Owner(PROGRAM_ADMIN_MANAGE)만. */
 export function canManageProgramManagers(
   assignment: ProgramMyAssignment | null | undefined

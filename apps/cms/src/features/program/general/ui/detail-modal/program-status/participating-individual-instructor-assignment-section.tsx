@@ -631,7 +631,6 @@ export function ParticipatingIndividualInstructorAssignmentSection({
             <CmsButton
               variant="secondary"
               size="h40"
-              disabled={!canAssignInstructor || addAssignOptions.length === 0}
               onClick={() => {
                 if (!canAssignInstructor) {
                   showAlert({
@@ -640,7 +639,10 @@ export function ParticipatingIndividualInstructorAssignmentSection({
                   })
                   return
                 }
-                if (addAssignOptions.length === 0) return
+                if (addAssignOptions.length === 0) {
+                  showAlert({ title: '추가 배정 안내', content: '배정 대기 일정이 없습니다.' })
+                  return
+                }
                 setAddAssignWaitingRowId(addAssignOptions[0]?.value ?? null)
                 // 기존 자동 규칙(대표 없으면 대표)을 기본값으로 — 기관형 추가 배정과 동일
                 setAddAssignRole(

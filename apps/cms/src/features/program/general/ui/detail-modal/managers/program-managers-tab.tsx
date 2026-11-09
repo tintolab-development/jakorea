@@ -36,7 +36,8 @@ import {
 } from '@/entities/program/lib/program-pm-role-policy'
 import { AddManagerModal, type AddManagerFormValues } from '../../add-manager-modal'
 import { ManagerDeleteGuideModal } from '../../manager-delete-guide-modal'
-import { StatusDropdownCell, StatusTag, STATUS_DROPDOWN_CELL_CLASSNAME } from '@/shared/components'
+import { showAdminAccessDeniedAlert } from '@/shared/lib/admin-role-policy'
+import { StatusDropdownCell, STATUS_DROPDOWN_CELL_CLASSNAME } from '@/shared/components'
 import { getProgramRoleTag } from '@/shared/lib/status-tag-specs'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import {
@@ -109,7 +110,6 @@ export function ProgramManagersTab({
     deleteManagers,
     managersListAllowed,
     managersManageAllowed,
-    managersDownloadAllowed,
     managersListPending,
   } = useProgramManagers(programId, managersListFilters, {
     enabled: addModalOpen && actionResult == null,
@@ -308,14 +308,8 @@ export function ProgramManagersTab({
         align: 'center',
         onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
         // 권한 설정 V1.2: 담당자 정보는 Owner·Assistant·Viewer 모두 조회, 역할 변경은 Program Owner만.
-        render: (role: ProgramRole, record: ProgramManagerRow) =>
-          !managersManageAllowed ? (
-            role ? (
-              <StatusTag {...getProgramRoleTag(role)} />
-            ) : (
-              '-'
-            )
-          ) : (
+        // 드롭다운은 모두에게 노출하고, Owner가 아니면 열 때 접근 불가 안내를 띄운다.
+        render: (role: ProgramRole, record: ProgramManagerRow) => (
             <StatusDropdownCell<ProgramRole>
               status={role}
               statusOptions={TABLE_ROLE_ORDER}
@@ -326,7 +320,13 @@ export function ProgramManagersTab({
               }}
               isUpdating={isUpdatingRole}
               isOpen={openRoleDropdownId === record.id}
-              onOpenChange={open => setOpenRoleDropdownId(open ? record.id : null)}
+              onOpenChange={open => {
+                if (open && !managersManageAllowed) {
+                  showAdminAccessDeniedAlert()
+                  return
+                }
+                setOpenRoleDropdownId(open ? record.id : null)
+              }}
               emptyPlaceholder="-"
             />
           ),
@@ -421,29 +421,37 @@ export function ProgramManagersTab({
           data: filteredManagers,
           selectedRowKeys,
         }}
-        hideExcelDownload={!managersDownloadAllowed}
         actions={
-          !managersManageAllowed ? undefined : (
-            <>
-              <FilterTableToolbarButton
-                variant="delete"
-                loading={isMutating && deleteGuideModalOpen}
-                onClick={handleDeleteClick}
-              >
-                담당자 삭제
-              </FilterTableToolbarButton>
-              <FilterTableToolbarButton
-                variant="primary"
-                disabled={isMutating}
-                onClick={() => {
-                  setCandidateKeywordInput('')
-                  setAddModalOpen(true)
-                }}
-              >
-                담당자 등록
-              </FilterTableToolbarButton>
-            </>
-          )
+          // 권한 설정 V1.2: 담당자 등록·삭제는 Program Owner만. 버튼은 노출하고 클릭 시 접근 불가 안내.
+          <>
+            <FilterTableToolbarButton
+              variant="delete"
+              loading={isMutating && deleteGuideModalOpen}
+              onClick={() => {
+                if (!managersManageAllowed) {
+                  showAdminAccessDeniedAlert()
+                  return
+                }
+                handleDeleteClick()
+              }}
+            >
+              담당자 삭제
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton
+              variant="primary"
+              disabled={isMutating}
+              onClick={() => {
+                if (!managersManageAllowed) {
+                  showAdminAccessDeniedAlert()
+                  return
+                }
+                setCandidateKeywordInput('')
+                setAddModalOpen(true)
+              }}
+            >
+              담당자 등록
+            </FilterTableToolbarButton>
+          </>
         }
       >
         <CmsDataTable<ProgramManagerRow>
@@ -451,18 +459,14 @@ export function ProgramManagersTab({
           rowKey="id"
           pagination={false}
           loading={loading}
-          rowSelection={
-            !managersManageAllowed
-              ? undefined
-              : {
-                  columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-                  selectedRowKeys,
-                  onChange: keys => setSelectedRowKeys(keys as string[]),
-                  getCheckboxProps: record => ({
-                    disabled: record.removableYn === false,
-                  }),
-                }
-          }
+          rowSelection={{
+            columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+            selectedRowKeys,
+            onChange: keys => setSelectedRowKeys(keys as string[]),
+            getCheckboxProps: record => ({
+              disabled: record.removableYn === false,
+            }),
+          }}
           columns={columns}
           dataSource={filteredManagers}
         />

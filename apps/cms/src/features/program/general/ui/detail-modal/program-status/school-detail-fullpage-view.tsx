@@ -11,7 +11,11 @@ import type { ReactNode } from 'react'
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import axios from 'axios'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { cacheProjectedProgramPrivacy } from '@/features/program/shared/lib/program-my-assignment'
+import {
+  cacheProjectedProgramPrivacy,
+  canManageProgramAssignments,
+} from '@/features/program/shared/lib/program-my-assignment'
+import { useMyProgramPrivacyRole } from '@/features/user/detail/lib/use-my-program-privacy-role'
 import type { ColumnsType } from 'antd/es/table'
 import {
   CmsButton,
@@ -542,6 +546,9 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     showApprovalAlarmSection: boolean
   } | null>(null)
   const [openRoleDropdownId, setOpenRoleDropdownId] = useState<string | null>(null)
+  // 권한 설정 V1.2 프로그램 권한 '대표 강사 변경': Program Owner·Assistant만. Program Viewer는 역할 드롭다운을 열지 않는다.
+  const { assignment: myProgramAssignment } = useMyProgramPrivacyRole(program.id)
+  const canChangeInstructorRole = canManageProgramAssignments(myProgramAssignment)
   const [leadRoleChangeConfirm, setLeadRoleChangeConfirm] = useState<{
     instructorId: string
     newLeadInstructorName: string
@@ -1308,7 +1315,8 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         instructorName: r.instructorName,
         contact: '',
         email: '',
-        settlementStatus: 'none' as SettlementStatusKey,
+        // 배정 1건 = 지급조서 1건 — 서버 배정 단위 settlementStatus 그대로(구 백엔드는 none)
+        settlementStatus: r.settlementStatus,
         homeAddress: r.homeAddress,
         distanceToSchool: r.distanceToSchool,
         assignedDate: r.assignedDate,
@@ -1975,7 +1983,9 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
 
   const applyRoleChange = useCallback(
     async (instructorId: string, newRole: InstructorRoleKey) => {
-      if (assignmentBoardRemoteEnabled && newRole === 'lead') {
+      if (assignmentBoardRemoteEnabled) {
+        // 대표 강사 지정·해제 모두 같은 API. 해제(일반 강사)는 scheduleLead=false.
+        const isDemote = newRole !== 'lead'
         const target = assignedRows.find(r => r.id === instructorId)
         const memberId = Number(target?.instructorMemberId)
         const orgAppId = Number(row.organizationApplicationId)
@@ -1998,14 +2008,21 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
             instructorMemberId: memberId,
             organizationApplicationId: orgAppId,
             ...(Number.isFinite(scheduleId) && scheduleId > 0 ? { scheduleId } : {}),
+            ...(isDemote ? { scheduleLead: false } : {}),
           })
           await invalidateAssignmentBoard()
           setOpenRoleDropdownId(null)
           return
-        } catch {
+        } catch (error) {
+          setOpenRoleDropdownId(null)
           showAlert({
-            title: '대표 강사 변경 실패',
-            content: '대표 강사 지정에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+            title: isDemote ? '일반 강사 변경 실패' : '대표 강사 변경 실패',
+            content: getGeneralProgramApiErrorMessage(
+              error,
+              isDemote
+                ? '일반 강사 변경에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+                : '대표 강사 지정에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+            ),
           })
           return
         }
@@ -2081,6 +2098,8 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         render: (role: InstructorRoleKey, record: AssignedInstructorDisplayRow) =>
           record.assignmentCancelled ? (
             <StatusTag label="배정 취소" tone="gray" mutedLabel />
+          ) : !canChangeInstructorRole ? (
+            role ? <StatusTag {...getInstructorRoleTag(role)} /> : '-'
           ) : (
             <StatusDropdownCell<InstructorRoleKey>
               status={role}
@@ -2155,7 +2174,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         ),
       },
     ],
-    [openRoleDropdownId, handleRoleChange, privacyMasked]
+    [openRoleDropdownId, handleRoleChange, privacyMasked, canChangeInstructorRole]
   )
 
   const waitingInstructorColumns: ColumnsType<WaitingInstructorRow> = useMemo(

@@ -641,9 +641,11 @@ export function ParticipatingVolunteerAssignmentSection({
             <CmsButton
               variant="secondary"
               size="h40"
-              disabled={addAssignOptions.length === 0}
               onClick={() => {
-                if (addAssignOptions.length === 0) return
+                if (addAssignOptions.length === 0) {
+                  showAlert({ title: '추가 배정 안내', content: '배정 대기 기관이 없습니다.' })
+                  return
+                }
                 const firstRowId = addAssignOptions[0]?.value ?? null
                 setAddAssignWaitingRowId(firstRowId)
                 setAddAssignSchoolId(

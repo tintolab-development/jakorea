@@ -531,7 +531,7 @@ export function UjatEducationProgressInstitutionDetailView({
 
         {activeTab === 'application' ? (
           <div className="program-detail-fullpage-modal__header-actions">
-            {!isApplicationInfoEditing && canWrite ? (
+            {!isApplicationInfoEditing && (
               <CmsButton
                 type="button"
                 variant="delete"
@@ -540,7 +540,8 @@ export function UjatEducationProgressInstitutionDetailView({
                 onClick={handleRequestWithdraw} >
                 활동 포기
               </CmsButton>
-            ) : null}
+            
+)}
             <ProgramEditInfoActions
               canWrite={canWrite}
               size="h40"
@@ -550,15 +551,13 @@ export function UjatEducationProgressInstitutionDetailView({
               onSave={handleApplicationInfoButtonClick} />
             {!isApplicationInfoEditing ? (
               <>
-                {canWrite ? (
-                  <CmsButton
+                <CmsButton
                     type="button"
                     variant="primary"
                     size="h40"
                     onClick={handleAdminCommentEditEnter} >
                     코멘트 작성
                   </CmsButton>
-                ) : null}
                 <PersonalInfoRevealButton disabled={programPrivacyPending}
                   labelMode="stickyReveal"
                   revealed={personalInfoRevealed}
@@ -584,7 +583,6 @@ export function UjatEducationProgressInstitutionDetailView({
 
         {activeTab === 'posts' ? (
           <div className="program-detail-fullpage-modal__header-actions">
-            {canWrite ? (
             <CmsButton
               type="button"
               variant="primary"
@@ -592,7 +590,6 @@ export function UjatEducationProgressInstitutionDetailView({
               onClick={() => setPostWriteModalOpen(true)} >
               게시글 등록
             </CmsButton>
-            ) : null}
           </div>
         ) : null}
       </div>

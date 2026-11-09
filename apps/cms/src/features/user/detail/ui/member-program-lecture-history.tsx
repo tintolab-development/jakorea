@@ -2,6 +2,7 @@
  * 회원 상세 — 프로그램 수강 이력 / 봉사 프로그램 참여 이력
  */
 
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   useCallback,
@@ -262,6 +263,14 @@ export function MemberProgramLectureHistory({
     'completion'
   )
   const { showAlert } = useCmsAlert()
+  /** 선택 행이 필요한 버튼 — 비활성 대신 누를 때 공통 안내 */
+  const withSelection = (action: () => void) => {
+    if (selectedRowKeys.length === 0) {
+      showAlert(NO_SELECTION_ALERT)
+      return
+    }
+    action()
+  }
   const [allLectureReportsDownloading, setAllLectureReportsDownloading] = useState(false)
   const [lectureReportHistoryModalOpen, setLectureReportHistoryModalOpen] = useState(false)
   const [lectureReportHistoryTarget, setLectureReportHistoryTarget] = useState<Application | null>(
@@ -505,8 +514,11 @@ export function MemberProgramLectureHistory({
               <CmsButton
                 variant="secondary"
                 size="small"
-                disabled={!record.hasAssignmentSubmission}
                 onClick={() => {
+                  if (!record.hasAssignmentSubmission) {
+                    showAlert({ title: '안내', content: '제출된 과제가 없습니다.' })
+                    return
+                  }
                   if (onOpenAssignment) onOpenAssignment(record)
                 }}
               >
@@ -561,8 +573,16 @@ export function MemberProgramLectureHistory({
               <CmsButton
                 variant="secondary"
                 size="small"
-                disabled={!canView}
                 onClick={() => {
+                  if (!canView) {
+                    showAlert({
+                      title: '안내',
+                      content: ended
+                        ? '제출된 강의보고서가 없습니다.'
+                        : '프로그램이 종료된 후 강의보고서 제출 내역을 확인할 수 있습니다.',
+                    })
+                    return
+                  }
                   if (onViewLectureReport) onViewLectureReport(record)
                   setLectureReportHistoryTarget(record)
                   setLectureReportHistoryModalOpen(true)
@@ -584,6 +604,7 @@ export function MemberProgramLectureHistory({
     onOpenAssignment,
     onDownloadCertificate,
     onVolunteerCertificateDownload,
+    showAlert,
   ])
 
   const { tableWrapRef, tableScrollX } = useContainerFitTableScrollX(
@@ -643,8 +664,7 @@ export function MemberProgramLectureHistory({
               {SHOW_PROGRAM_HISTORY_DELETE ? (
                 <FilterTableToolbarButton
                   variant="delete"
-                  disabled={selectedRowKeys.length === 0}
-                  onClick={handleOpenHistoryDeleteModal}
+                  onClick={() => withSelection(handleOpenHistoryDeleteModal)}
                 >
                   이력 삭제
                 </FilterTableToolbarButton>
@@ -654,9 +674,10 @@ export function MemberProgramLectureHistory({
                   <FilterTableToolbarButton
                     variant="secondary"
                     icon={<ButtonDownloadIcon />}
-                    disabled={selectedRowKeys.length === 0}
                     onClick={() =>
-                      openCertificateIssueModal(selectedRowKeys.map(String), 'completion')
+                      withSelection(() =>
+                        openCertificateIssueModal(selectedRowKeys.map(String), 'completion')
+                      )
                     }
                   >
                     수료증/참가인증서 발급
@@ -666,10 +687,11 @@ export function MemberProgramLectureHistory({
                 <>
                   <FilterTableToolbarButton
                     variant="secondary"
-                    disabled={selectedRowKeys.length === 0}
                     icon={<ButtonDownloadIcon />}
                     onClick={() =>
-                      openCertificateIssueModal(selectedRowKeys.map(String), 'activity')
+                      withSelection(() =>
+                        openCertificateIssueModal(selectedRowKeys.map(String), 'activity')
+                      )
                     }
                   >
                     활동인증서 발급
@@ -677,9 +699,10 @@ export function MemberProgramLectureHistory({
                   <FilterTableToolbarButton
                     variant="secondary"
                     icon={<ButtonDownloadIcon />}
-                    disabled={selectedRowKeys.length === 0}
                     onClick={() =>
-                      openCertificateIssueModal(selectedRowKeys.map(String), 'completion')
+                      withSelection(() =>
+                        openCertificateIssueModal(selectedRowKeys.map(String), 'completion')
+                      )
                     }
                   >
                     수료증/참가인증서 발급
@@ -689,9 +712,12 @@ export function MemberProgramLectureHistory({
               {mode === 'instructorLecture' && showCertificateBulkIssue && (
                 <FilterTableToolbarButton
                   variant="secondary"
-                  disabled={selectedRowKeys.length === 0}
                   icon={<ButtonDownloadIcon />}
-                  onClick={() => openCertificateIssueModal(selectedRowKeys.map(String), 'activity')}
+                  onClick={() =>
+                    withSelection(() =>
+                      openCertificateIssueModal(selectedRowKeys.map(String), 'activity')
+                    )
+                  }
                 >
                   활동인증서 발급
                 </FilterTableToolbarButton>

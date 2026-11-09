@@ -186,8 +186,6 @@ export function GeneralProgramRecruitmentView({
     }
   }
 
-  const showHeaderActions = canWrite || isEditMode || Boolean(onOpenRecruitmentPreview)
-
   return (
     <>
       <div className="recruitment-view program-detail-fullpage-modal__info-tab">
@@ -203,28 +201,26 @@ export function GeneralProgramRecruitmentView({
                 ? '참여자 모집 정보'
                 : '참여 기관 모집 정보',
           })}
+          // 권한 설정 V1.2: 조회 전용도 「정보 수정」 노출, 클릭 시 접근 불가 안내
           trailing={
-            showHeaderActions ? (
-              <div className="recruitment-view__header-actions">
-                {canWrite || isEditMode ? (
-                  <ProgramEditInfoActions
-                    isEditing={isEditMode}
-                    idleVariant="secondary"
-                    onEdit={onEdit}
-                    onCancel={onCancel}
-                    onSave={onSave} />
-                ) : null}
-                {onOpenRecruitmentPreview && !isEditMode ? (
-                  <CmsButton
-                    type="button"
-                    variant="primary"
-                    size="large" className="recruitment-view__preview-btn"
-                    onClick={handleOpenPreview} >
-                    미리보기
-                  </CmsButton>
-                ) : null}
-              </div>
-            ) : null
+            <div className="recruitment-view__header-actions">
+              <ProgramEditInfoActions
+                isEditing={isEditMode}
+                idleVariant="secondary"
+                canWrite={canWrite}
+                onEdit={onEdit}
+                onCancel={onCancel}
+                onSave={onSave} />
+              {onOpenRecruitmentPreview && !isEditMode ? (
+                <CmsButton
+                  type="button"
+                  variant="primary"
+                  size="large" className="recruitment-view__preview-btn"
+                  onClick={handleOpenPreview} >
+                  미리보기
+                </CmsButton>
+              ) : null}
+            </div>
           }
         />
         <div className="recruitment-view__body">

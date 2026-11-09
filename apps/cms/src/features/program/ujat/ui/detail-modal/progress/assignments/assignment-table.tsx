@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import { CMS_TABLE_NO_COL_CLASS } from '@/shared/constants/table'
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, useCmsAlert } from '@/shared/ui'
 import { StatusBadge } from '@/shared/components/status-badge'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
@@ -51,16 +51,16 @@ function columnCellClass(className: string) {
   }
 }
 
-function renderPlanLogViewButton(label: string, enabled: boolean, onView: () => void) {
+/** 미제출이어도 버튼은 활성 — 누르면 제출 전 안내(onBlocked)를 띄운다 */
+function renderPlanLogViewButton(
+  label: string,
+  enabled: boolean,
+  onView: () => void,
+  onBlocked: () => void
+) {
   return (
     <div className="ujat-volunteer-assignment-table__plan-log-cell-inner">
-      <CmsButton
-        type="button"
-        variant="default"
-        size="h32"
-        disabled={!enabled}
-        onClick={enabled ? onView : undefined}
-      >
+      <CmsButton type="button" variant="default" size="h32" onClick={enabled ? onView : onBlocked}>
         {label}
       </CmsButton>
     </div>
@@ -96,6 +96,7 @@ export function UjatEducationProgressAssignmentTable({
   rows: UjatAssignmentVolunteerRow[]
   regionLabel: string
 }) {
+  const { showAlert } = useCmsAlert()
   const [viewerTarget, setViewerTarget] = useState<UjatDocumentViewerTarget | null>(null)
 
   const openViewer = useCallback(
@@ -181,7 +182,8 @@ export function UjatEducationProgressAssignmentTable({
           renderPlanLogViewButton(
             '교육 계획서 보기',
             isAssignmentPlanViewEnabled(record.plan),
-            () => openViewer(record, 'plan', record.plan)
+            () => openViewer(record, 'plan', record.plan),
+            () => showAlert({ title: '안내', content: '아직 제출된 교육 계획서가 없습니다.' })
           ),
       },
       {
@@ -191,8 +193,11 @@ export function UjatEducationProgressAssignmentTable({
         align: 'center',
         ...columnCellClass(COL_CLASS.log),
         render: (_: unknown, record: UjatAssignmentVolunteerRow) =>
-          renderPlanLogViewButton('교육일지 보기', isAssignmentLogViewEnabled(record.log), () =>
-            openViewer(record, 'log', record.log)
+          renderPlanLogViewButton(
+            '교육일지 보기',
+            isAssignmentLogViewEnabled(record.log),
+            () => openViewer(record, 'log', record.log),
+            () => showAlert({ title: '안내', content: '아직 제출된 교육일지가 없습니다.' })
           ),
       },
       {
@@ -204,7 +209,7 @@ export function UjatEducationProgressAssignmentTable({
         render: (_: unknown, record: UjatAssignmentVolunteerRow) => renderRemarks(record),
       },
     ],
-    [openViewer]
+    [openViewer, showAlert]
   )
 
   const { tableWrapRef, tableScrollX } = useContainerFitTableScrollX(

@@ -39,6 +39,7 @@ import { GeminiInstitutionApprovalStatusBadge } from './gemini-institution-appro
 import { GeminiInstitutionApproveModal } from './institution-approve-modal'
 import { GeminiInstitutionPreferredLectureScheduleCell } from './gemini-institution-preferred-lecture-schedule-cell'
 import './institution-application-tab.css'
+import { showAdminAccessDeniedAlert } from '@/shared/lib/admin-role-policy'
 import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 type PendingFilters = {
@@ -230,25 +231,44 @@ export function GeminiInstitutionApplicationTab({
     showAlert(NO_SELECTION_ALERT)
   }, [showAlert])
 
+  /** 버튼은 항상 활성 — 처리할 수 없는 선택이면 누를 때 안내한다 */
   const handleBulkReject = useCallback(() => {
-    if (!canWrite) return
+    if (!canWrite) {
+      showAdminAccessDeniedAlert()
+      return
+    }
     if (selectedRowKeys.length === 0) {
       showNoSelectionAlert()
       return
     }
-    if (rejectDisabled) return
+    if (rejectDisabled) {
+      showAlert({
+        title: '안내',
+        content: '이미 신청 반려된 기관이 포함되어 있습니다.\n반려할 기관만 선택 후 다시 시도해 주세요.',
+      })
+      return
+    }
     setBulkRejectOpen(true)
-  }, [canWrite, rejectDisabled, selectedRowKeys.length, showNoSelectionAlert])
+  }, [canWrite, rejectDisabled, selectedRowKeys.length, showAlert, showNoSelectionAlert])
 
   const handleBulkApprove = useCallback(() => {
-    if (!canWrite) return
+    if (!canWrite) {
+      showAdminAccessDeniedAlert()
+      return
+    }
     if (selectedRowKeys.length === 0) {
       showNoSelectionAlert()
       return
     }
-    if (approveDisabled) return
+    if (approveDisabled) {
+      showAlert({
+        title: '안내',
+        content: '이미 승인된 기관이 포함되어 있습니다.\n승인할 기관만 선택 후 다시 시도해 주세요.',
+      })
+      return
+    }
     setBulkApproveOpen(true)
-  }, [approveDisabled, canWrite, selectedRowKeys.length, showNoSelectionAlert])
+  }, [approveDisabled, canWrite, selectedRowKeys.length, showAlert, showNoSelectionAlert])
 
   const confirmBulkReject = useCallback(
     async (payload: PermissionModalPayload) => {
@@ -459,22 +479,21 @@ export function GeminiInstitutionApplicationTab({
           getRowKey: row => row.id,
         }}
         actions={
-          canWrite ? (
+          (
             <div className="program-application-list-toolbar">
               <FilterTableToolbarButton
                 variant="delete"
-                disabled={rejectDisabled}
                 onClick={handleBulkReject} >
                 선택 반려
               </FilterTableToolbarButton>
               <FilterTableToolbarButton
                 variant="secondary"
-                disabled={approveDisabled}
                 onClick={handleBulkApprove} >
                 선택 승인
               </FilterTableToolbarButton>
             </div>
-          ) : null
+          
+)
         }
       >
         <CmsDataTable<GeminiInstitutionApplicationRow>
@@ -486,14 +505,12 @@ export function GeminiInstitutionApplicationTab({
           dataSource={filteredRows}
           pagination={false}
           rowSelection={
-            canWrite
-              ? {
+            {
                   columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
                   selectedRowKeys,
                   onChange: keys => setSelectedRowKeys(keys),
                   preserveSelectedRowKeys: false,
                 }
-              : undefined
           }
         />
         {remoteQuery.isFetchingNextPage ? (

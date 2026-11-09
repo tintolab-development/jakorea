@@ -175,6 +175,7 @@ import { GeneralLnbSurveyManagementIcon } from './detail-lnb-icons'
 import { ProgramDetailLnbDeleteButton } from '@/features/program/shared/ui/program-detail/lnb-delete-button'
 import './applications/participant-applications.css'
 import './program-detail-fullpage-modal.css'
+import { ProgramDetailActionGuard } from '@/features/program/shared/ui/program-detail-action-guard'
 
 export interface ProgramDetailFullPageModalProps {
   open: boolean
@@ -309,7 +310,7 @@ function parseLnbFromSearch(searchParams: URLSearchParams): LnbKey | null {
   return null
 }
 
-export function ProgramDetailFullPageModal({
+function ProgramDetailFullPageModalContent({
   open,
   onClose,
   program,
@@ -2487,5 +2488,14 @@ export function ProgramDetailFullPageModal({
       ) : null}
     </>
     </RegistrationWizardValidationHighlightProvider>
+  )
+}
+
+/** 권한 설정 V1.2 — 상세 안의 쓰기·다운로드·개인정보 버튼은 노출하고, 권한이 없으면 클릭 시 접근 불가 안내. */
+export function ProgramDetailFullPageModal(props: ProgramDetailFullPageModalProps) {
+  return (
+    <ProgramDetailActionGuard programId={props.program?.id}>
+      <ProgramDetailFullPageModalContent {...props} />
+    </ProgramDetailActionGuard>
   )
 }

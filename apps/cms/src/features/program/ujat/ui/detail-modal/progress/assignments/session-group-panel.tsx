@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { ExcelButton } from '@/shared/ui'
-import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { UjatInlineDividedSegments } from '@/features/program/ujat/ui/detail-modal/shared/ujat-inline-divided-segments'
 import { UjatEducationProgressAssignmentTable } from './assignment-table'
 import {
@@ -62,18 +61,15 @@ export function UjatAssignmentSessionGroupPanel({
   regionLabel: string
   showHeader?: boolean
 }) {
-  const canWrite = useUjatCanWrite()
 
   return (
     <section className="ujat-education-progress-assignments__session-group">
       {showHeader ? (
         <div className="table-header-actions ujat-education-progress-assignments__session-header">
           <UjatAssignmentSessionGroupHeader session={session} />
-          {canWrite ? (
-            <div className="info-section-buttons--wrapper">
+          <div className="info-section-buttons--wrapper">
               <UjatAssignmentSessionExcelButton session={session} regionLabel={regionLabel} />
             </div>
-          ) : null}
         </div>
       ) : null}
       <UjatEducationProgressAssignmentTable rows={session.volunteers} regionLabel={regionLabel} />

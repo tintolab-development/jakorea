@@ -2,7 +2,6 @@ import { useCallback, useMemo, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { nextSearchParamsIfChanged } from '@/shared/lib/search-params-diff'
 import { useQueryClient } from '@tanstack/react-query'
-import { useAuthStore } from '@/features/auth/model/auth-store'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
 import {
@@ -20,7 +19,6 @@ import {
 } from '@/shared/ui'
 import { ProgramDetailLnbDeleteButton } from '@/features/program/shared/ui/program-detail/lnb-delete-button'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
-import { canPerformWriteAction } from '@/shared/utils/permissions'
 import {
   LnbIconManagers,
   LnbIconProjectInfo,
@@ -64,6 +62,7 @@ import { GeminiRecruitmentInfoTab } from './recruitment-info-tab'
 import { GeminiInstitutionApplicationTab } from './institution-application-tab'
 import '@/features/program/general/ui/detail-modal/program-detail-fullpage-modal.css'
 import './fullpage-modal.css'
+import { ProgramDetailActionGuard } from '@/features/program/shared/ui/program-detail-action-guard'
 
 const SIDEBAR_ITEMS: DetailModalSidebarNavItem[] = [
   { key: 'info', label: '프로그램 모집 정보', icon: <LnbIconProjectInfo /> },
@@ -87,7 +86,7 @@ const RECRUITMENT_DETAIL_QUERY_SWEEP = [
   VISITING_TRAINING_TAB_PARAM,
 ] as const
 
-export function GeminiRecruitmentDetailFullPageModal({
+function GeminiRecruitmentDetailFullPageModalContent({
   recruitmentId,
   onClose,
 }: {
@@ -95,8 +94,6 @@ export function GeminiRecruitmentDetailFullPageModal({
   onClose: () => void
 }) {
   const location = useLocation()
-  const { user } = useAuthStore()
-  const canWrite = canPerformWriteAction(user)
   const { showAlert } = useCmsAlert()
   const [searchParams, setSearchParams] = useSearchParams()
   const todayKey = useToday()
@@ -308,7 +305,7 @@ export function GeminiRecruitmentDetailFullPageModal({
             onSelectTop={handleSidebarSelectTop}
             onSelectChild={() => undefined}
             footer={
-              canWrite && detail ? (
+              detail ? (
                 <ProgramDetailLnbDeleteButton onClick={handleDeleteClick} />
               ) : null
             }
@@ -320,14 +317,12 @@ export function GeminiRecruitmentDetailFullPageModal({
             {activeLnb === 'info' ? (
               <>
                 <div className="gemini-recruitment-detail__header-actions program-detail-fullpage-modal__header-actions">
-                  {canWrite ? (
-                    <ProgramEditInfoActions
+                  <ProgramEditInfoActions
                       isEditing={isEditModeInfo}
                       idleVariant="secondary"
                       onEdit={handleInfoEditClick}
                       onCancel={handleInfoCancel}
                       onSave={handleInfoSaveClick} />
-                  ) : null}
                   {!isEditModeInfo ? (
                     <CmsButton
                       type="button"
@@ -385,3 +380,12 @@ export function GeminiRecruitmentDetailFullPageModal({
 }
 
 export { useGeminiRecruitmentDetailUrl } from './recruitment-detail-url'
+
+/** 권한 설정 V1.2 — 상세 안의 쓰기·다운로드·개인정보 버튼은 노출하고, 권한이 없으면 클릭 시 접근 불가 안내. */
+export function GeminiRecruitmentDetailFullPageModal(props: Parameters<typeof GeminiRecruitmentDetailFullPageModalContent>[0]) {
+  return (
+    <ProgramDetailActionGuard>
+      <GeminiRecruitmentDetailFullPageModalContent {...props} />
+    </ProgramDetailActionGuard>
+  )
+}

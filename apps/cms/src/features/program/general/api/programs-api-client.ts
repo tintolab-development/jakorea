@@ -260,15 +260,19 @@ export async function bulkDeleteAdminProgramsRemote(programIds: string[]): Promi
 }
 
 export async function fetchAdminProgramNavigationRemote(
-  programId: string
+  programId: string,
+  options?: { skipGlobalErrorAlert?: boolean }
 ): Promise<
   import('@/shared/api/generated/dashboard/schemas/programNavigationResponse').ProgramNavigationResponse
 > {
   return unwrapApiBody(
-    await customInstance({
-      url: `/api/admin/programs/${encodeURIComponent(programId)}/navigation`,
-      method: 'GET',
-    })
+    await customInstance(
+      {
+        url: `/api/admin/programs/${encodeURIComponent(programId)}/navigation`,
+        method: 'GET',
+      },
+      options?.skipGlobalErrorAlert ? { skipGlobalErrorAlert: true } : undefined
+    )
   )
 }
 

@@ -1,3 +1,4 @@
+import { cmsAlertModal } from '@/shared/ui'
 import type { MenuProps } from 'antd'
 import { Dropdown } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
@@ -104,8 +105,13 @@ export function createProgramHistoryColumns({
           <CmsButton
             variant="secondary"
             size="small"
-            disabled={!record.hasAssignmentSubmission}
-            onClick={() => onOpenAssignmentSubmission(record)}
+            onClick={() => {
+              if (!record.hasAssignmentSubmission) {
+                cmsAlertModal.show({ title: '안내', content: '제출된 과제가 없습니다.' })
+                return
+              }
+              onOpenAssignmentSubmission(record)
+            }}
           >
             내역 보기
           </CmsButton>

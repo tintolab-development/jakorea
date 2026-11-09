@@ -28,6 +28,8 @@ import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './survey-management.css'
 
 export type LectureEvalSurveyViewProps = {
+  /** 결과 문항 구성을 바인딩 version으로 조회(템플릿 목록 미조회 — 뷰어 403 방지) */
+  resultsTemplateVersionId?: number
   survey: RegisteredSurvey | null
   submitted: boolean
   formDraft: WritingFormDraft | null
@@ -51,6 +53,7 @@ export type LectureEvalSurveyViewProps = {
 }
 
 export function LectureEvalSurveyView({
+  resultsTemplateVersionId,
   survey,
   submitted,
   formDraft,
@@ -148,6 +151,7 @@ export function LectureEvalSurveyView({
         <div ref={resultsExportRef} className="ujat-lecture-eval-survey__results">
           <SurveyPollResultsView
             templateId={survey!.templateId}
+            templateVersionId={resultsTemplateVersionId}
             responseCount={survey!.responseCount}
             participantTotal={survey!.participantTotal}
             responses={pollResponses.length > 0 ? pollResponses : undefined}

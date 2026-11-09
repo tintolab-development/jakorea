@@ -4,7 +4,6 @@ import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/uj
 import { canReassignVolunteerInterviewAssignment } from '@/features/program/shared/lib/volunteer-interview-reassign'
 import { CMS_DATA_TABLE_CELL_H40_ACTION_CLASS } from '@/shared/constants/table'
 import { CmsButton } from '@/shared/ui'
-import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { InterviewAssignmentStatusText } from '../shared/interview-assignment-status-text'
 
 const CENTER_CELL_CLASS = 'ujat-volunteer-doc-passed__center-cell'
@@ -17,7 +16,6 @@ export function useUjatVolunteerDocPassedColumns({
 }: {
   onAssignInterview: (row: UjatVolunteerApplicantRow) => void
 }) {
-  const canWrite = useUjatCanWrite()
   return useMemo((): ColumnsType<UjatVolunteerApplicantRow> => {
     const columns: ColumnsType<UjatVolunteerApplicantRow> = [
       {
@@ -127,6 +125,6 @@ export function useUjatVolunteerDocPassedColumns({
         },
       },
     ]
-    return columns.filter(column => canWrite || column.key !== 'interviewAssignmentAction')
-  }, [canWrite, onAssignInterview])
+    return columns
+  }, [onAssignInterview])
 }

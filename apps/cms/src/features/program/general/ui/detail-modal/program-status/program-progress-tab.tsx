@@ -3,6 +3,8 @@
  * 탭(참여 학교 정보 | 강사 정보)과 필터가 같은 레벨 한 줄 배치, 쿼리 파라미터 연동
  */
 
+import { cmsAlertModal } from '@/shared/ui'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 import { useMemo, useState, useEffect } from 'react'
 import { Card, Row, Col, Select } from 'antd'
 import {
@@ -593,8 +595,13 @@ export function ProgramProgressTab({ programId }: ProgramProgressTabProps) {
                 <div className="program-progress-tab__table-actions program-application-list-toolbar">
                   <FilterTableToolbarButton
                     variant="delete"
-                    disabled={selectedSchoolRowKeys.length === 0}
-                    onClick={handleSchoolDeleteClick} >
+                    onClick={() => {
+                      if (selectedSchoolRowKeys.length === 0) {
+                        cmsAlertModal.show(NO_SELECTION_ALERT)
+                        return
+                      }
+                      handleSchoolDeleteClick()
+                    }} >
                     학교 삭제
                   </FilterTableToolbarButton>
                 </div>
@@ -651,8 +658,13 @@ export function ProgramProgressTab({ programId }: ProgramProgressTabProps) {
                   </FilterTableToolbarButton>
                   <FilterTableToolbarButton
                     variant="delete"
-                    disabled={selectedInstructorRowKeys.length === 0}
-                    onClick={handleInstructorDeleteClick} >
+                    onClick={() => {
+                      if (selectedInstructorRowKeys.length === 0) {
+                        cmsAlertModal.show(NO_SELECTION_ALERT)
+                        return
+                      }
+                      handleInstructorDeleteClick()
+                    }} >
                     강사 삭제
                   </FilterTableToolbarButton>
                   <FilterTableToolbarButton
