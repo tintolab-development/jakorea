@@ -10,15 +10,16 @@ import { useFooterOrgInfo, useSaveFooterOrgInfo } from '@/features/footer/api/ho
 import { footerOrgSaveFailureAlert } from '@/features/footer/lib/mutation-failure-alert'
 import { readApiErrorField } from '@/shared/lib/api-error-message'
 import {
-  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   CmsButton,
   CmsInput,
-  FileSelectField,
   FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
+  FileSelectField,
   isFileSelectTotalSizeExceeded,
   notifyFileSelectTotalSizeExceeded,
   PageContentLoading,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   showSaveCompletedAlert,
+  ThumbnailPlaceholder,
   useCmsAlert,
 } from '@/shared/ui'
 
@@ -143,28 +144,6 @@ function readFileAsDataUrl(file: File): Promise<string> {
   })
 }
 
-function ImagePlaceholderIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="40"
-      height="40"
-      viewBox="0 0 48 48"
-      fill="none"
-      aria-hidden
-    >
-      <rect x="6" y="10" width="36" height="28" rx="3" stroke="#BDBDBD" strokeWidth="2" />
-      <circle cx="17" cy="20" r="3" fill="#BDBDBD" />
-      <path
-        d="M8 32L18 24L24 29L32 20L40 32"
-        stroke="#BDBDBD"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
 
 export function FooterOrgInfoSection() {
   const { showAlert } = useCmsAlert()
@@ -403,6 +382,7 @@ export function FooterOrgInfoSection() {
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="기관명"
+              required={isEditing}
               view={null}
               edit={
                 <OrgInlineField
@@ -415,6 +395,7 @@ export function FooterOrgInfoSection() {
             />
             <DetailInfoForm.Field
               label="기관 소재지"
+              required={isEditing}
               view={null}
               edit={
                 <OrgInlineField
@@ -429,6 +410,7 @@ export function FooterOrgInfoSection() {
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="우편번호"
+              required={isEditing}
               view={null}
               edit={
                 <OrgInlineField
@@ -441,6 +423,7 @@ export function FooterOrgInfoSection() {
             />
             <DetailInfoForm.Field
               label="대표"
+              required={isEditing}
               view={null}
               edit={
                 <OrgInlineField
@@ -455,6 +438,7 @@ export function FooterOrgInfoSection() {
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="사업자번호"
+              required={isEditing}
               view={null}
               edit={
                 <OrgInlineField
@@ -467,6 +451,7 @@ export function FooterOrgInfoSection() {
             />
             <DetailInfoForm.Field
               label="대표전화"
+              required={isEditing}
               view={null}
               edit={
                 <OrgInlineField
@@ -481,6 +466,7 @@ export function FooterOrgInfoSection() {
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="팩스"
+              required={isEditing}
               view={null}
               edit={
                 <OrgInlineField
@@ -493,6 +479,7 @@ export function FooterOrgInfoSection() {
             />
             <DetailInfoForm.Field
               label="이메일"
+              required={isEditing}
               view={null}
               edit={
                 <OrgInlineField
@@ -508,6 +495,7 @@ export function FooterOrgInfoSection() {
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="로고 이미지"
+              required={isEditing}
               view={null}
               edit={
                 isEditing ? (
@@ -516,7 +504,7 @@ export function FooterOrgInfoSection() {
                       {draft.logoUrl ? (
                         <img src={draft.logoUrl} alt="로고 미리보기" />
                       ) : (
-                        <ImagePlaceholderIcon />
+                        <ThumbnailPlaceholder />
                       )}
                     </div>
                     <FileSelectField
