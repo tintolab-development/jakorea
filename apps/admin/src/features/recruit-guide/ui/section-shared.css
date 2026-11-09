@@ -152,5 +152,7 @@
   textarea.ant-input {
   min-height: 0 !important;
   padding: 0 !important;
+  /* 조회는 표 셀 텍스트 규격 14px (수정 입력 칸 medium 15px와 분리) */
+  font-size: 14px !important;
   line-height: 150% !important;
 }
