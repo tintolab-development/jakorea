@@ -36,7 +36,7 @@ import {
 } from '@/entities/program/lib/program-pm-role-policy'
 import { AddManagerModal, type AddManagerFormValues } from '../../add-manager-modal'
 import { ManagerDeleteGuideModal } from '../../manager-delete-guide-modal'
-import { StatusDropdownCell, STATUS_DROPDOWN_CELL_CLASSNAME } from '@/shared/components'
+import { StatusDropdownCell, StatusTag, STATUS_DROPDOWN_CELL_CLASSNAME } from '@/shared/components'
 import { getProgramRoleTag } from '@/shared/lib/status-tag-specs'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import {
@@ -108,6 +108,8 @@ export function ProgramManagersTab({
     updateManagerRole,
     deleteManagers,
     managersListAllowed,
+    managersManageAllowed,
+    managersDownloadAllowed,
     managersListPending,
   } = useProgramManagers(programId, managersListFilters, {
     enabled: addModalOpen && actionResult == null,
@@ -305,21 +307,29 @@ export function ProgramManagersTab({
         width: 208,
         align: 'center',
         onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
-        render: (role: ProgramRole, record: ProgramManagerRow) => (
-          <StatusDropdownCell<ProgramRole>
-            status={role}
-            statusOptions={TABLE_ROLE_ORDER}
-            getTag={getProgramRoleTag}
-            isItemDisabled={(_cur, opt) => roleItemDisabled(record, opt)}
-            onChange={key => {
-              void handleTableRoleChange(record.id, key)
-            }}
-            isUpdating={isUpdatingRole}
-            isOpen={openRoleDropdownId === record.id}
-            onOpenChange={open => setOpenRoleDropdownId(open ? record.id : null)}
-            emptyPlaceholder="-"
-          />
-        ),
+        // 권한 설정 V1.2: 담당자 정보는 Owner·Assistant·Viewer 모두 조회, 역할 변경은 Program Owner만.
+        render: (role: ProgramRole, record: ProgramManagerRow) =>
+          !managersManageAllowed ? (
+            role ? (
+              <StatusTag {...getProgramRoleTag(role)} />
+            ) : (
+              '-'
+            )
+          ) : (
+            <StatusDropdownCell<ProgramRole>
+              status={role}
+              statusOptions={TABLE_ROLE_ORDER}
+              getTag={getProgramRoleTag}
+              isItemDisabled={(_cur, opt) => roleItemDisabled(record, opt)}
+              onChange={key => {
+                void handleTableRoleChange(record.id, key)
+              }}
+              isUpdating={isUpdatingRole}
+              isOpen={openRoleDropdownId === record.id}
+              onOpenChange={open => setOpenRoleDropdownId(open ? record.id : null)}
+              emptyPlaceholder="-"
+            />
+          ),
       },
       {
         title: '연락처',
@@ -346,7 +356,13 @@ export function ProgramManagersTab({
         align: 'center',
       },
     ],
-    [handleTableRoleChange, isUpdatingRole, openRoleDropdownId, roleItemDisabled]
+    [
+      handleTableRoleChange,
+      isUpdatingRole,
+      managersManageAllowed,
+      openRoleDropdownId,
+      roleItemDisabled,
+    ]
   )
 
   const excelColumns: ColumnsType<ProgramManagerRow> = useMemo(
@@ -405,26 +421,29 @@ export function ProgramManagersTab({
           data: filteredManagers,
           selectedRowKeys,
         }}
+        hideExcelDownload={!managersDownloadAllowed}
         actions={
-          <>
-            <FilterTableToolbarButton
-              variant="delete"
-              loading={isMutating && deleteGuideModalOpen}
-              onClick={handleDeleteClick}
-            >
-              담당자 삭제
-            </FilterTableToolbarButton>
-            <FilterTableToolbarButton
-              variant="primary"
-              disabled={isMutating}
-              onClick={() => {
-                setCandidateKeywordInput('')
-                setAddModalOpen(true)
-              }}
-            >
-              담당자 등록
-            </FilterTableToolbarButton>
-          </>
+          !managersManageAllowed ? undefined : (
+            <>
+              <FilterTableToolbarButton
+                variant="delete"
+                loading={isMutating && deleteGuideModalOpen}
+                onClick={handleDeleteClick}
+              >
+                담당자 삭제
+              </FilterTableToolbarButton>
+              <FilterTableToolbarButton
+                variant="primary"
+                disabled={isMutating}
+                onClick={() => {
+                  setCandidateKeywordInput('')
+                  setAddModalOpen(true)
+                }}
+              >
+                담당자 등록
+              </FilterTableToolbarButton>
+            </>
+          )
         }
       >
         <CmsDataTable<ProgramManagerRow>
@@ -432,14 +451,18 @@ export function ProgramManagersTab({
           rowKey="id"
           pagination={false}
           loading={loading}
-          rowSelection={{
-            columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-            selectedRowKeys,
-            onChange: keys => setSelectedRowKeys(keys as string[]),
-            getCheckboxProps: record => ({
-              disabled: record.removableYn === false,
-            }),
-          }}
+          rowSelection={
+            !managersManageAllowed
+              ? undefined
+              : {
+                  columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+                  selectedRowKeys,
+                  onChange: keys => setSelectedRowKeys(keys as string[]),
+                  getCheckboxProps: record => ({
+                    disabled: record.removableYn === false,
+                  }),
+                }
+          }
           columns={columns}
           dataSource={filteredManagers}
         />

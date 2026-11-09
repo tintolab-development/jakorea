@@ -5,7 +5,16 @@
  */
 
 import type { AdminLevel, UserRole } from '@/types/user'
-import { canAccessAccountPayments, isAccountPaymentsPath } from '@/shared/lib/account-payments-access'
+import {
+  canAccessAccountPayments,
+  isAccountPaymentsPath,
+} from '@/shared/lib/account-payments-access'
+import {
+  isReadOnlyAdminRoleCode,
+  isSettlementItemSettingsPath,
+  isTemplateManagementPath,
+  resolveAdminRoleCodeFromUser,
+} from '@/shared/lib/admin-role-policy'
 import type { MenuProps } from 'antd'
 import { FolderOutlined, FileTextOutlined, CalendarOutlined, TeamOutlined } from '@ant-design/icons'
 import React from 'react'
@@ -806,6 +815,15 @@ export function filterMenuByRole(
         return false
       }
       if (item.key && isAccountPaymentsPath(item.key) && !canAccessAccountPayments(user)) {
+        return false
+      }
+      // 권한 설정 V1.2: 템플릿 관리·정산 항목 설정은 Program Viewer에게 화면 비노출. URL 진입은 레이아웃 가드가 막는다.
+      if (
+        item.key &&
+        (isTemplateManagementPath(item.key) || isSettlementItemSettingsPath(item.key)) &&
+        user?.role === 'ADMIN' &&
+        isReadOnlyAdminRoleCode(resolveAdminRoleCodeFromUser(user))
+      ) {
         return false
       }
       // allowedRoles가 없으면 모든 권한 허용
