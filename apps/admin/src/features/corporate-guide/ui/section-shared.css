@@ -80,13 +80,14 @@
 }
 
 /*
- * cms-data-table overflow-x:auto 와 Table scroll.x 는 overflow-y:auto 로 계산되어
- * 흰 카드 안에서 세로 휠을 가로챈다. 세로 스크롤은 layout-content 만 담당.
+ * 표 래퍼(.cms-data-table)·.ant-table 은 스크롤 컨테이너로 만들지 않는다 — overflow-x:auto 는
+ * overflow-y:auto 로 계산되어 흰 카드 안에서 세로 휠을 가로챈다. 세로 스크롤은 layout-content 만 담당.
+ * 좁은 폭(최소 폭 1080 미만)의 가로 스크롤은 antd 가 .ant-table-content 에 주는 `overflow: auto hidden`
+ * 을 그대로 쓴다 — 세로는 hidden 이라 휠을 가로채지 않고, 둥근 테두리(container clip) 안에서 표만 가로로 밀린다.
+ * (.ant-table-content 까지 visible 로 덮으면 1080 폭 표가 clip 에 잘린 채 스크롤이 전혀 되지 않는다)
  */
 .corporate-guide-section .cms-data-table,
-.corporate-guide-section .cms-data-table .ant-table,
-.corporate-guide-section .cms-data-table .ant-table-content,
-.corporate-guide-section .cms-data-table .ant-table-body {
+.corporate-guide-section .cms-data-table .ant-table {
   overflow: visible !important;
 }
 
