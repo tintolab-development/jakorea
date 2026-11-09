@@ -11,6 +11,7 @@ import {
   isHomepageLogPath,
 } from '@/shared/lib/homepage-log-access'
 import { cmsAlertModal } from '@/shared/ui'
+import { HomepageActionGuard } from './homepage-action-guard'
 import { Sidebar } from './sidebar'
 import { MainHeader } from './main-header'
 import './layout.css'
@@ -23,8 +24,10 @@ export function Layout() {
   const contentRef = useRef<HTMLElement>(null)
   const logAccess = useHomepageLogAccess()
   // 권한 설정 V1.2: 로그 관리 URL 직접 진입도 화면을 그리기 전에 막는다(Master 전용).
-  const logScreenBlocked =
-    isHomepageLogPath(location.pathname) && logAccess.resolved && !logAccess.allowed
+  const onLogPath = isHomepageLogPath(location.pathname)
+  const logScreenBlocked = onLogPath && logAccess.status === 'denied'
+  // 본인 정보 확인 전에는 로그 화면을 그리지 않는다(로그 API 403 화면이 먼저 보이지 않게).
+  const logScreenPending = onLogPath && logAccess.status === 'pending'
   const deniedPathRef = useRef<string | null>(null)
 
   useEffect(() => {
@@ -54,7 +57,13 @@ export function Layout() {
       <AntLayout>
         <MainHeader />
         <Content ref={contentRef} className="layout-content">
-          <div className="layout-content-outlet">{logScreenBlocked ? null : <Outlet />}</div>
+          <div className="layout-content-outlet">
+            {logScreenBlocked || logScreenPending ? null : (
+              <HomepageActionGuard>
+                <Outlet />
+              </HomepageActionGuard>
+            )}
+          </div>
         </Content>
       </AntLayout>
     </AntLayout>

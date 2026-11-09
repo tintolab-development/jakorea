@@ -118,6 +118,8 @@ export function CorporateConsultationDetailModal({
       <button
         type="button"
         className="corp-consult-detail-modal__attachment"
+        // 권한 설정 V1.2: 신청자 첨부는 개인정보(HOMEPAGE_PII_VIEW). Program Viewer는 클릭 시 접근 불가 안내.
+        data-homepage-action="pii"
         onClick={() => {
           if (!data?.id) return
           runProtectedDownload({

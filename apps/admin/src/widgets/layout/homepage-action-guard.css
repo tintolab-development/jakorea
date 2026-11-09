@@ -1,0 +1,4 @@
+/* 클릭 가로채기 전용 래퍼 — 레이아웃에 끼어들지 않는다. */
+.homepage-action-guard {
+  display: contents;
+}
