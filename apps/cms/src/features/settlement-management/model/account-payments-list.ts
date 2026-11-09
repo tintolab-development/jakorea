@@ -117,6 +117,11 @@ export interface AccountPaymentStatusDetail {
   plainAccountForPaymentConfirm: AccountPaymentPlainAccountForConfirm
   /** 상세 GET settlement.programId — 개인형 판정(참여 기관명 열 숨김)용. 목록 행에 없을 수 있다. */
   programId?: string
+  /**
+   * 상세 GET `programType`(program.program_type, 예: GENERAL_INDIVIDUAL).
+   * 개인형이면 참여 기관명 열을 숨긴다. 이 값을 주지 않는 이전 BE에서는 undefined.
+   */
+  programType?: string
 }
 
 /**

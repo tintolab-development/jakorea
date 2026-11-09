@@ -165,7 +165,7 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
     vi.useRealTimers()
   })
 
-  it('표시 계좌는 maskedAccountNo, sensitiveAccount는 지급 확인 원문만', () => {
+  it('상세 표시 계좌는 sensitiveAccount 원문(권한 설정 V1.1 상세 계좌번호 기본 노출)', () => {
     const detail: AccountPaymentDetailResponse = {
       payment: {
         accountPaymentId: 185956,
@@ -203,9 +203,8 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
     const mapped = mapAccountPaymentDetailFromGetApi(baseRow, detail)
 
     expect(mapped.basic.nameKo).toBe('이건희')
-    expect(mapped.basic.settlementAccountBankNumberPart).toBe('국민은행 **********')
-    expect(mapped.basic.settlementAccountBankNumberPart).not.toContain('1234567890')
-    expect(mapped.basic.settlementAccountHolderPart).toBe('이*희')
+    expect(mapped.basic.settlementAccountBankNumberPart).toBe('국민은행 1234567890')
+    expect(mapped.basic.settlementAccountHolderPart).toBe('이건희')
     expect(mapped.plainAccountForPaymentConfirm?.bankAndNumber).toContain('1234567890')
     expect(mapped.plainAccountForPaymentConfirm?.holder).toBe('이건희')
     expect(mapped.blocks[0]?.institutionName).toBe('서울 성동고등학교')
@@ -253,9 +252,9 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
     expect(mapped.basic.phoneDisplay).toBe('010-****-2201')
     expect(mapped.basic.emailDisplay).toBe('e2e-settle-***@local.demo')
     expect(mapped.basic.addressDisplay).toBe('서울특별시 강남구 테헤란로 ***** ***')
-    expect(mapped.basic.settlementAccountBankNumberPart).toBe('국민 **************')
-    // sensitive 원문 `[E2E-SETTLE] 김정산` → 접두어 제거 후 `김*산`
-    expect(mapped.basic.settlementAccountHolderPart).toBe('김*산')
+    expect(mapped.basic.settlementAccountBankNumberPart).toBe('국민 11048200123456')
+    // sensitive 원문 `[E2E-SETTLE] 김정산` → 접두어만 제거
+    expect(mapped.basic.settlementAccountHolderPart).toBe('김정산')
     expect(mapped.plainAccountForPaymentConfirm?.holder).toBe('[E2E-SETTLE] 김정산')
   })
 
@@ -359,7 +358,8 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
     expect(mapped.basic.phoneDisplay).toBe('-')
     expect(mapped.basic.emailDisplay).toBe('-')
     expect(mapped.basic.addressDisplay).toBe('-')
-    expect(mapped.basic.settlementAccountHolderPart).toBe('이*희')
+    // sensitiveAccount 예금주 원문은 Master·Accounting Manager에게만 내려온다 → 상세에 원문 표시
+    expect(mapped.basic.settlementAccountHolderPart).toBe('이건희')
   })
 
   it('sensitiveAccount.accountNo가 없으면 강사 계좌 원문으로 보완하지 않는다', () => {
@@ -380,6 +380,27 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
     const mapped = mapAccountPaymentDetailFromGetApi(baseRow, detail)
 
     expect(mapped.basic.settlementAccountBankNumberPart).toBe('국민은행')
-    expect(mapped.basic.settlementAccountHolderPart).toBe('이*희')
+    // sensitiveAccount 예금주 원문은 Master·Accounting Manager에게만 내려온다 → 상세에 원문 표시
+    expect(mapped.basic.settlementAccountHolderPart).toBe('이건희')
+  })
+
+  it('상세 응답 programType을 모델에 싣는다(개인형 참여 기관명 열 판정용)', () => {
+    const detail = {
+      payment: { accountPaymentId: 185956, instructorName: '이건희', programId: 186564 },
+      settlement: { id: '185956', programId: 186564, items: [], totalAmount: 0 },
+      programType: 'GENERAL_INDIVIDUAL',
+      // programType은 명세 미반영 필드라 생성 타입에 없다 — 서버 응답 그대로 검증한다.
+    } as unknown as AccountPaymentDetailResponse
+
+    const mapped = mapAccountPaymentDetailFromGetApi(baseRow, detail)
+    expect(mapped.programType).toBe('GENERAL_INDIVIDUAL')
+    expect(mapped.programId).toBe('186564')
+  })
+
+  it('programType을 주지 않는 이전 응답은 undefined', () => {
+    const detail: AccountPaymentDetailResponse = {
+      payment: { accountPaymentId: 185956, instructorName: '이건희' },
+    }
+    expect(mapAccountPaymentDetailFromGetApi(baseRow, detail).programType).toBeUndefined()
   })
 })
