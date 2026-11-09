@@ -25,6 +25,10 @@ export interface ProgramEditInfoActionsProps {
    * 프로그램 상세 안에서는 `ProgramDetailActionGuard`가 먼저 가로채며, 이 값은 그 밖의 진입 보호용이다.
    */
   canWrite?: boolean
+  /** 조회 상태 버튼 문구. 미지정 시 「정보 수정」 */
+  editLabel?: string
+  /** 수정 상태 저장 버튼 문구. 미지정 시 「저장」 */
+  saveLabel?: string
   /** 화면 정책상 정보 수정을 제공하지 않을 때만 true(권한과 무관). */
   hidden?: boolean
 }
@@ -41,6 +45,8 @@ export function ProgramEditInfoActions({
   useToolbarButton = false,
   size,
   canWrite = true,
+  editLabel = PROGRAM_EDIT_INFO_BUTTON_LABEL,
+  saveLabel = PROGRAM_EDIT_INFO_SAVE_LABEL,
   hidden = false,
 }: ProgramEditInfoActionsProps) {
   const resolvedSize = size ?? PROGRAM_EDIT_INFO_BUTTON_PROPS.size
@@ -60,8 +66,8 @@ export function ProgramEditInfoActions({
           variant={idleVariant}
           disabled={disabled}
           onClick={handleEdit}
-          aria-label={PROGRAM_EDIT_INFO_BUTTON_LABEL} >
-          {PROGRAM_EDIT_INFO_BUTTON_LABEL}
+          aria-label={editLabel} >
+          {editLabel}
         </FilterTableToolbarButton>
       )
     }
@@ -72,8 +78,8 @@ export function ProgramEditInfoActions({
         variant={idleVariant}
         disabled={disabled}
         onClick={handleEdit}
-        aria-label={PROGRAM_EDIT_INFO_BUTTON_LABEL} >
-        {PROGRAM_EDIT_INFO_BUTTON_LABEL}
+        aria-label={editLabel} >
+        {editLabel}
       </CmsButton>
     )
   }
@@ -93,8 +99,8 @@ export function ProgramEditInfoActions({
           disabled={disabled}
           loading={saving}
           onClick={onSave}
-          aria-label={PROGRAM_EDIT_INFO_SAVE_LABEL} >
-          {PROGRAM_EDIT_INFO_SAVE_LABEL}
+          aria-label={saveLabel} >
+          {saveLabel}
         </FilterTableToolbarButton>
       </span>
     )
@@ -116,8 +122,8 @@ export function ProgramEditInfoActions({
         disabled={disabled}
         loading={saving}
         onClick={onSave}
-        aria-label={PROGRAM_EDIT_INFO_SAVE_LABEL} >
-        {PROGRAM_EDIT_INFO_SAVE_LABEL}
+        aria-label={saveLabel} >
+        {saveLabel}
       </CmsButton>
     </span>
   )

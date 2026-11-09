@@ -310,7 +310,9 @@ describe('change-class target guards', () => {
         [{ existingGrade: '1학년', existingClassNo: '1반', newGrade: '2', newClassNo: '1' }],
         catalogKeys
       )
-    ).toBe('1번째 행의 변경 학급은 이미 진행 중인 학급입니다.')
+    ).toBe(
+      '1번째 행의 변경 학급은 이미 진행 중인 학급입니다. 해당 학급도 함께 변경하면 저장할 수 있습니다.'
+    )
   })
 
   it('rejects duplicate targets across rows', () => {
@@ -337,15 +339,33 @@ describe('change-class target guards', () => {
     ).toBeNull()
   })
 
-  it('blocks other-row targets and remaining catalog classes for a row', () => {
+  it('allows swapping two catalog classes in one request', () => {
+    const rows = [
+      { existingGrade: '1학년', existingClassNo: '1반', newGrade: '1', newClassNo: '2' },
+      { existingGrade: '1', existingClassNo: '2반', newGrade: '1', newClassNo: '1' },
+    ]
+    expect(validateChangeClassRows(rows, catalogKeys)).toBeNull()
+    expect(collectBlockedTargetClassKeys(rows, 0).has('1:2')).toBe(false)
+    expect(collectBlockedTargetClassKeys(rows, 1).has('1:1')).toBe(false)
+  })
+
+  it('allows rotating three catalog classes in one request', () => {
+    const rows = [
+      { existingGrade: '1학년', existingClassNo: '1반', newGrade: '1', newClassNo: '2' },
+      { existingGrade: '1', existingClassNo: '2반', newGrade: '2', newClassNo: '1' },
+      { existingGrade: '2', existingClassNo: '1반', newGrade: '1', newClassNo: '1' },
+    ]
+    expect(validateChangeClassRows(rows, catalogKeys)).toBeNull()
+  })
+
+  it('blocks only other-row targets so catalog classes stay selectable for swaps', () => {
     const blocked = collectBlockedTargetClassKeys(
       [
         { existingGrade: '1학년', existingClassNo: '1반', newGrade: undefined, newClassNo: '' },
         { existingGrade: '1', existingClassNo: '2반', newGrade: '4', newClassNo: '5' },
       ],
-      0,
-      catalogKeys
+      0
     )
-    expect([...blocked].sort()).toEqual(['1:1', '2:1', '4:5'])
+    expect([...blocked]).toEqual(['4:5'])
   })
 })

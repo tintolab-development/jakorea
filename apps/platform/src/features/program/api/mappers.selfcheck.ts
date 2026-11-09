@@ -917,6 +917,22 @@ assert.equal(
   '참여자 선택'
 )
 
+// CMS 저장값 participant_selection 이 오프라인으로 떨어지지 않아야 한다.
+// 선언 타입 밖의 실제 응답값이라 캐스팅한다.
+const participantSelectionCodes = ['participant_selection', 'PARTICIPANT_SELECTION'] as unknown as 'participant_choice'[]
+for (const code of participantSelectionCodes) {
+  const participantSelection = mapPortalProgramDetail({
+    programId: 186022,
+    programType: 'GENERAL_INDIVIDUAL',
+    title: '참여자 선택',
+    operationMethod: 'OFFLINE',
+    educationForm: code,
+    educationFormScheduleDetail: 'common',
+  })
+  assert.ok(participantSelection)
+  assert.equal(participantSelection.educationForm, 'participant_choice')
+}
+
 const operationMethodFallback = mapPortalProgramDetail({
   programId: 186023,
   title: '컬럼만',

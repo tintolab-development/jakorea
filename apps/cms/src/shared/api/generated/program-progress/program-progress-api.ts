@@ -15,6 +15,8 @@ import type {
   ParticipantRegisterCandidatesParams,
   Ujat1365RegistrationFormParams,
   Ujat1365RegistrationFormResponse,
+  Ujat1365SemesterRegistrationFormRequest,
+  Ujat1365SemesterRegistrationFormResponse,
   VolunteerParticipantRegisterRequest,
   VolunteerParticipantRegisterResponse
 } from './schemas';
@@ -352,10 +354,27 @@ const participantRegisterCandidates = (
       options);
     }
 
-return {getEmployeeVolunteerCounts,replaceEmployeeVolunteerCounts,registerVolunteerParticipant,ujat1365RegistrationForm,getMyGeneratedFileJob,participantRegisterCandidates}};
+/**
+ * 반기 봉사자 전원의 이름·생년월일·1365 ID 원문·지역과 발대식/교육일별 1365 인정 분을 한 번에 반환한다. 페이지네이션 없음, 활동 포기자 포함(givenUp). 감사 사유는 '1365 봉사시간 등록을 하기 위함'이며 요청 1회당 개인정보 접근 로그 1건과 파일 접근 로그 1건(PREVIEW=VIEW, DOWNLOAD=DOWNLOAD)을 남긴다. SENSITIVE_PII_READ 필요. 감사 저장 실패 시 원문을 반환하지 않는다. Cache-Control: no-store. 셀 status: 일정 종료 후 PRESENT/LATE=COMPLETED, ABSENT/EXCUSED=ABSENT(0분), 그 외 NOT_COMPLETED. 종일 일정의 인정 분은 프로그램 late_deduct_start_time·default_1365_hours 기준. 400 UJAT_1365_SEMESTER_TYPE_INVALID / UJAT_1365_MODE_INVALID, 404 UJAT_1365_PROGRAM_NOT_FOUND.
+ * @summary UJAT 1365 봉사시간 등록 양식 원문(반기 일괄)
+ */
+const ujat1365SemesterRegistrationForm = (
+    programId: number,
+    ujat1365SemesterRegistrationFormRequest: Ujat1365SemesterRegistrationFormRequest,
+ options?: SecondParameter<typeof customInstance<Ujat1365SemesterRegistrationFormResponse>>,) => {
+      return customInstance<Ujat1365SemesterRegistrationFormResponse>(
+      {url: `/api/admin/programs/${programId}/ujat/1365-registration-form`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: ujat1365SemesterRegistrationFormRequest
+    },
+      options);
+    }
+
+return {getEmployeeVolunteerCounts,replaceEmployeeVolunteerCounts,registerVolunteerParticipant,ujat1365RegistrationForm,getMyGeneratedFileJob,participantRegisterCandidates,ujat1365SemesterRegistrationForm}};
 export type GetEmployeeVolunteerCountsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIProgramProgressSubset>['getEmployeeVolunteerCounts']>>>
 export type ReplaceEmployeeVolunteerCountsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIProgramProgressSubset>['replaceEmployeeVolunteerCounts']>>>
 export type RegisterVolunteerParticipantResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIProgramProgressSubset>['registerVolunteerParticipant']>>>
 export type Ujat1365RegistrationFormResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIProgramProgressSubset>['ujat1365RegistrationForm']>>>
 export type GetMyGeneratedFileJobResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIProgramProgressSubset>['getMyGeneratedFileJob']>>>
 export type ParticipantRegisterCandidatesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIProgramProgressSubset>['participantRegisterCandidates']>>>
+export type Ujat1365SemesterRegistrationFormResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIProgramProgressSubset>['ujat1365SemesterRegistrationForm']>>>

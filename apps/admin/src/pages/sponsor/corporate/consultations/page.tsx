@@ -14,6 +14,7 @@ import type {
 import {
   useConfirmCorporateConsultations,
   useCorporateConsultationsList,
+  useExportCorporateConsultations,
   useRemoveCorporateConsultations,
 } from '@/features/corporate-consultation/api/hooks'
 import { corporateConsultationQueryKeys } from '@/features/corporate-consultation/api/query-keys'
@@ -31,6 +32,7 @@ import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
+import { logExcelExportFailureAlert } from '@/features/logs/shared/lib/log-excel-export-alert'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { isTableSelectionClick } from '@/shared/lib/is-table-selection-click'
@@ -53,6 +55,7 @@ import {
   AdminFilterTextInput,
   CmsSelect,
   ConfirmModal,
+  ExcelButton,
   NO_SELECTION_ALERT,
   showChangeCompletedAlert,
   showDeleteCompletedAlert,
@@ -262,6 +265,13 @@ export function CorporateConsultationsPage() {
   })
 
   const listQuery = useCorporateConsultationsList(appliedFilter)
+  const exportMutation = useExportCorporateConsultations()
+  const handleExcel = useCallback(() => {
+    if (exportMutation.isPending) return
+    void exportMutation.mutateAsync(appliedFilter).catch((error: unknown) => {
+      showAlert(logExcelExportFailureAlert(error))
+    })
+  }, [appliedFilter, exportMutation, showAlert])
   const removeMutation = useRemoveCorporateConsultations(appliedFilter)
   const confirmMutation = useConfirmCorporateConsultations(appliedFilter)
 
@@ -690,6 +700,12 @@ export function CorporateConsultationsPage() {
             >
               선택 확인
             </CmsButton>
+            <ExcelButton
+              onClick={handleExcel}
+              empty={totalCount === 0}
+              loading={exportMutation.isPending}
+              disabled={exportMutation.isPending}
+            />
           </>
         }
       >

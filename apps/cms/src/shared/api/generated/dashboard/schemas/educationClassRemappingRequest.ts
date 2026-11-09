@@ -10,10 +10,10 @@ import type { EducationClassRemappingMapping } from './educationClassRemappingMa
 export interface EducationClassRemappingRequest {
   /** @minimum 0 */
   expectedRevision: number;
-  applyFromScheduleId?: number;
-  applyFromDate?: string;
+  applyFromScheduleId?: number | null;
+  applyFromDate?: string | null;
   /**
-     * @minItems 0
+     * @minItems 1
      * @maxItems 100
      */
   mappings: EducationClassRemappingMapping[];

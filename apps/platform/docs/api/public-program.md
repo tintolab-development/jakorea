@@ -31,8 +31,11 @@
 | Gemini 찾아가는 연수 | Portal `programType` SSOT = **`GEMINI_TRAINING`** (`GEMINI` alias 없음). 기관 모집만이면 `portalCategories=["ORGANIZATION"]` — 강사 탭 미노출이 정상 |
 | 검색 | `keyword` |
 | 모집 예정/중/완료 | `recruitmentStatus=UPCOMING\|OPEN\|CLOSED` |
-| 모집대상·교육대상 | API `educationTargets` (`elementary`…`adult`). URL은 `recruitmentTarget` / `educationTarget` |
-| 교육형태 | `educationMethod=ONLINE\|OFFLINE\|HYBRID\|PARTICIPANT_CHOICE` |
+| 모집대상 | `recruitmentTarget=elementary…adult` ⇔ 행 `recruitmentTargets`에 포함 (모집 행에 **지원하는 사람** 기준. PARTICIPANT 행 = `educationTargets`, INSTRUCTOR·VOLUNTEER 행 = 상세 `recruitmentTargets`, 없으면 `[]`). 정의는 기획 확정 대기 |
+| 교육대상 | `educationTarget=elementary…adult` ⇔ 행 `educationTargets`에 포함 |
+| 교육형태 | `educationMethod=ONLINE\|OFFLINE\|HYBRID\|PARTICIPANT_SELECTION` ⇔ 행 `educationForm`(소문자, `operationMethod`와 별개). 응답 `participant_selection`, 구 값 `participant_choice`도 매퍼가 허용. FE 내부·URL 값은 `participant_choice` 유지 |
+
+같은 필터 파라미터 반복은 OR, 서로 다른 필터는 AND. 알 수 없는 값은 400. 필터 계약 검증: `pnpm check:program-filters [baseUrl]` (2026-11-09 23/23 PASS).
 | 운영기간 | `operatingFrom` `operatingTo` |
 | 최신/이름/마감임박 | `sort=LATEST\|NAME\|CLOSING_SOON` |
 | 페이지 | `page` 0-base, 목록 `size=10` |

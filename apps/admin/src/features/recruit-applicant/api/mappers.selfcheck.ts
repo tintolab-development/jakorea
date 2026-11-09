@@ -15,6 +15,7 @@ import { CareerTalentApplicationListItemStatus } from '../../../shared/api/gener
 import {
   mapCareerTalentApplicationDetail,
   mapCareerTalentApplicationListItem,
+  toTalentApplicationExportParams,
 } from './mappers.ts'
 
 const listed = mapCareerTalentApplicationListItem({
@@ -129,5 +130,19 @@ const attachmentNameOnlyFromListFallback = mapCareerTalentApplicationDetail({
 })
 assert.ok(attachmentNameOnlyFromListFallback)
 assert.equal(attachmentNameOnlyFromListFallback.attachmentFileName, null)
+
+const exportParams = toTalentApplicationExportParams({
+  status: 'pending',
+  applicantName: ' 홍길동 ',
+  appliedFrom: '2025-09-15',
+  appliedTo: '2026-01-30',
+})
+assert.equal('page' in exportParams, false)
+assert.equal('size' in exportParams, false)
+assert.equal(exportParams.status, 'PENDING')
+assert.equal(exportParams.name, '홍길동')
+assert.equal(exportParams.appliedFrom, '2025-09-15')
+assert.equal(exportParams.appliedTo, '2026-01-30')
+assert.deepEqual(toTalentApplicationExportParams(undefined), {})
 
 console.log('recruit-applicant detail original PII selfcheck: ok')

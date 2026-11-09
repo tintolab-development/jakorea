@@ -469,14 +469,6 @@ export function UjatEducationProgressVolunteersSection({
         onCancel={() => setVolunteer1365PreviewOpen(false)}
         half={half}
         programId={program.id}
-        volunteers={tableData.map(row => ({
-          id: row.id,
-          memberId: row.memberId,
-          name: row.volunteerName,
-          birthDate: row.birthDate,
-          id1365: row.id1365,
-          region: row.regionLabel,
-        }))}
       />
     </div>
   )

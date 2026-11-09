@@ -6,7 +6,8 @@
 .paragraph-card {
   position: relative;
   display: flex;
-  padding: 20px 28px;
+  /* Figma: Table / Short contents 안쪽 여백 20px (투명 보더 1px 포함) */
+  padding: 19px;
   flex-direction: column;
   align-items: stretch;
   align-self: stretch;
@@ -27,6 +28,19 @@
   width: 100%;
 }
 
+/* Figma: 제목(20px/140%)과 설명 사이 간격 4px — 공용 paragraph-input 은 건드리지 않고 카드 안에서만 덮어쓴다 */
+.paragraph-card .paragraph-card__header {
+  gap: 4px;
+}
+
+.paragraph-card__title-block .paragraph-input--title .paragraph-input__view-text,
+.paragraph-card__title-block .paragraph-input--title .paragraph-input__placeholder,
+.paragraph-card__title-block .paragraph-input--title .paragraph-input__required,
+.paragraph-card__title-main .paragraph-input--title .paragraph-input__view-text,
+.paragraph-card__title-main .paragraph-input--title .paragraph-input__placeholder,
+.paragraph-card__title-main .paragraph-input--title .paragraph-input__required {
+  line-height: 140%;
+}
 /* 드래그 핸들(타이틀 바로 왼쪽) + 타이틀 — 한 덩어리로 시작 정렬 */
 .paragraph-card__header-title-row {
   display: flex;

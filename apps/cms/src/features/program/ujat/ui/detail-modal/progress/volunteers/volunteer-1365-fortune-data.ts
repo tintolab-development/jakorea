@@ -1,41 +1,36 @@
 /**
  * UJAT 참여 봉사자 — 1365 봉사시간 등록 양식 Fortune Sheet / 엑셀 공통 데이터
+ * 피그마: Popup / View / w1400 / 엑셀 양식 미리보기 (10014:40205)
+ * 원천: 반기 일괄 API 응답(`Ujat1365SemesterRegistrationFormResponse`)만 사용한다.
  */
 
 import type { Cell, CellWithRowAndCol, Sheet } from '@fortune-sheet/core'
 import dayjs from 'dayjs'
-export type Volunteer1365VolunteerSource = {
-  id: string
-  /** 출석(participantId)과 잇는 키 — allocation-matrix의 memberId */
-  memberId?: string
-  name: string
-  birthDate?: string
-  id1365?: string
-  region?: string
-}
-import type { UjatInstitutionScheduleAssignDateEntry } from '@/features/program/ujat/ui/detail-modal/application-institution/education-schedule'
-import { filterScheduleDatesByHalf } from '@/features/program/ujat/ui/detail-modal/application-institution/education-schedule'
-import type { EducationProgressHalfKey } from '../tabs'
-
-/** key: `volunteer1365AttendanceKey(memberId, isoDate)` */
-export type Volunteer1365AttendanceLookup = ReadonlyMap<string, Volunteer1365SheetCellValue>
-
-export function volunteer1365AttendanceKey(memberId: string, isoDate: string): string {
-  return `${memberId}|${isoDate}`
-}
+import type { Ujat1365SemesterRegistrationFormCell } from '@/shared/api/generated/program-progress/schemas/ujat1365SemesterRegistrationFormCell'
+import type { Ujat1365SemesterRegistrationFormColumn } from '@/shared/api/generated/program-progress/schemas/ujat1365SemesterRegistrationFormColumn'
+import type { Ujat1365SemesterRegistrationFormResponse } from '@/shared/api/generated/program-progress/schemas/ujat1365SemesterRegistrationFormResponse'
 
 const FIXED_HEADER_LABELS = ['이름', '생년월일', '1365 ID', '지역', '발대식'] as const
-const MINT_BG = '#01A1AF'
-const HEADER_FG = '#FFFFFF'
-const WARN_FG = '#E03131'
+/** 피그마 열 폭 — A 이름 140 · B 생년월일 140 · C 1365 ID 160 · D 지역 120 · E 발대식 120 · 교육일 120 */
+const FIXED_COLUMN_WIDTHS = [140, 140, 160, 120, 120] as const
+const SESSION_COLUMN_WIDTH = 120
+/** 피그마 Table/Row 31 · 열 머리(A,B,C…) 34 · 행 번호 열 30 */
+export const VOLUNTEER_1365_ROW_HEIGHT = 31
+export const VOLUNTEER_1365_COLUMN_HEADER_HEIGHT = 34
+export const VOLUNTEER_1365_ROW_HEADER_WIDTH = 30
+/** 14px ≈ 10.5pt (Fortune Sheet `fs`는 pt 단위) */
+const FONT_SIZE_PT = 10.5
+const FONT_FAMILY = 'Pretendard'
+
+export const VOLUNTEER_1365_HEADER_BG = '#00A0AF'
+export const VOLUNTEER_1365_HEADER_FG = '#FFFFFF'
+export const VOLUNTEER_1365_TEXT_FG = '#3D3D3D'
+export const VOLUNTEER_1365_WARN_FG = '#C32F4A'
 const DASH = '-'
-export type Volunteer1365ScheduleColumn = {
-  isoDate: string
-  title: string
-}
 
 export type Volunteer1365SheetCellValue = {
   text: string
+  /** `cell.shortfall` — 인정 시간 미달(지각·조퇴), 빨간 굵은 글씨 */
   warn?: boolean
 }
 
@@ -44,81 +39,116 @@ export type Volunteer1365SheetRow = {
   birthDate: string
   id1365: string
   region: string
-  openingCeremony: string
+  openingCeremony: Volunteer1365SheetCellValue
   sessions: Volunteer1365SheetCellValue[]
 }
 
-export function getVolunteer1365ScheduleColumns(
-  half: EducationProgressHalfKey,
-  scheduleDates: readonly UjatInstitutionScheduleAssignDateEntry[] = []
-): Volunteer1365ScheduleColumn[] {
-  return filterScheduleDatesByHalf(scheduleDates, half).map(entry => ({
-    isoDate: entry.isoDate,
-    title: entry.title,
-  }))
+/** 미리보기·다운로드에 쓰는 시트 모델 */
+export type Volunteer1365SheetModel = {
+  headerLabels: string[]
+  rows: Volunteer1365SheetRow[]
 }
 
-export function getVolunteer1365HeaderLabels(
-  half: EducationProgressHalfKey,
-  scheduleDates: readonly UjatInstitutionScheduleAssignDateEntry[] = []
-): string[] {
-  return [
-    ...FIXED_HEADER_LABELS,
-    ...getVolunteer1365ScheduleColumns(half, scheduleDates).map(column => column.title),
-  ]
+/** 응답이 없을 때(조회 전·실패) 헤더만 있는 빈 양식 */
+export const EMPTY_VOLUNTEER_1365_SHEET_MODEL: Volunteer1365SheetModel = {
+  headerLabels: [...FIXED_HEADER_LABELS],
+  rows: [],
 }
 
-export const buildVolunteer1365SheetColumnCount = (
-  half: EducationProgressHalfKey,
-  scheduleDates: readonly UjatInstitutionScheduleAssignDateEntry[] = []
-): number => getVolunteer1365HeaderLabels(half, scheduleDates).length
+/** `2026-11-06` → `11월 6일` (피그마 헤더) */
+export function formatVolunteer1365ColumnTitle(date?: string | null): string {
+  const trimmed = date?.trim()
+  if (!trimmed) return DASH
+  const parsed = dayjs(trimmed)
+  return parsed.isValid() ? parsed.format('M월 D일') : trimmed
+}
 
-function formatBirthDateFor1365(birthDate: string): string {
-  const normalized = birthDate.replace(/\s/g, '').replace(/\./g, '-')
+/** 피그마 `1999.01.11` */
+export function formatBirthDateFor1365(birthDate: string): string {
+  const normalized = birthDate.replace(/\s/g, '').replace(/\.+$/, '').replace(/[./]/g, '-')
   const parsed = dayjs(normalized)
   if (!parsed.isValid()) return birthDate
-  return `${parsed.format('YYYY')}. ${parsed.format('MM')}. ${parsed.format('DD')}.`
+  return parsed.format('YYYY.MM.DD')
 }
 
-function resolveSessionCell(
-  memberId: string | undefined,
-  isoDate: string,
-  attendance?: Volunteer1365AttendanceLookup
+/** 인정 분 → `5시간` · `3시간 32분` · `0시간` */
+export function formatVolunteer1365Minutes(minutes: number): string {
+  const safe = Math.max(0, Math.round(minutes))
+  const hours = Math.floor(safe / 60)
+  const rest = safe % 60
+  return rest > 0 ? `${hours}시간 ${rest}분` : `${hours}시간`
+}
+
+/**
+ * 셀 규칙 (BE 계약)
+ * - COMPLETED: 인정 분 표기, `shortfall`이면 빨간 굵은 글씨
+ * - ABSENT: `0시간` (빨간색 아님)
+ * - NOT_COMPLETED·셀 없음: `-`
+ */
+export function toVolunteer1365CellValue(
+  cell?: Ujat1365SemesterRegistrationFormCell | null
 ): Volunteer1365SheetCellValue {
-  if (!memberId || !attendance) return { text: DASH }
-  return attendance.get(volunteer1365AttendanceKey(memberId, isoDate)) ?? { text: DASH }
+  if (!cell) return { text: DASH }
+  if (cell.status === 'COMPLETED') {
+    return { text: formatVolunteer1365Minutes(cell.minutes ?? 0), warn: cell.shortfall === true }
+  }
+  if (cell.status === 'ABSENT') return { text: formatVolunteer1365Minutes(0) }
+  return { text: DASH }
 }
 
-export function buildVolunteer1365SheetRows(
-  half: EducationProgressHalfKey,
-  volunteers: readonly Volunteer1365VolunteerSource[],
-  scheduleDates: readonly UjatInstitutionScheduleAssignDateEntry[] = [],
-  attendance?: Volunteer1365AttendanceLookup
-): Volunteer1365SheetRow[] {
-  const scheduleColumns = getVolunteer1365ScheduleColumns(half, scheduleDates)
+function pickCell(
+  cells: readonly Ujat1365SemesterRegistrationFormCell[],
+  column: Ujat1365SemesterRegistrationFormColumn,
+  index: number
+): Ujat1365SemesterRegistrationFormCell | undefined {
+  // 계약상 같은 순서·개수지만, scheduleId로 먼저 맞춰 순서 어긋남에도 안전하게 한다.
+  return cells.find(cell => cell.scheduleId === column.scheduleId) ?? cells[index]
+}
 
-  return [...volunteers]
-    .sort((a, b) => a.name.localeCompare(b.name, 'ko'))
-    .map(volunteer => ({
-      name: volunteer.name,
-      birthDate: volunteer.birthDate?.trim()
-        ? formatBirthDateFor1365(volunteer.birthDate.trim())
-        : DASH,
-      id1365: volunteer.id1365?.trim() || DASH,
-      region: volunteer.region?.trim() || DASH,
-      openingCeremony: DASH,
-      sessions: scheduleColumns.map(column =>
-        resolveSessionCell(volunteer.memberId, column.isoDate, attendance)
-      ),
-    }))
+function textOrDash(value?: string | null): string {
+  return value?.trim() || DASH
+}
+
+export function buildVolunteer1365SheetModel(
+  response?: Ujat1365SemesterRegistrationFormResponse | null
+): Volunteer1365SheetModel {
+  if (!response) return EMPTY_VOLUNTEER_1365_SHEET_MODEL
+  const sessionColumns = response.columns?.sessions ?? []
+  const hasOpeningCeremony = response.columns?.openingCeremony != null
+
+  return {
+    headerLabels: [
+      ...FIXED_HEADER_LABELS,
+      ...sessionColumns.map(column => formatVolunteer1365ColumnTitle(column.date)),
+    ],
+    // BE 정렬(이름 → participantId) 그대로 쓴다.
+    rows: (response.volunteers ?? []).map(volunteer => {
+      const birthDate = volunteer.birthDate?.trim()
+      return {
+        name: textOrDash(volunteer.name),
+        birthDate: birthDate ? formatBirthDateFor1365(birthDate) : DASH,
+        id1365: textOrDash(volunteer.external1365Id),
+        region: textOrDash(volunteer.educationRegionName),
+        openingCeremony: hasOpeningCeremony
+          ? toVolunteer1365CellValue(volunteer.openingCeremony)
+          : { text: DASH },
+        sessions: sessionColumns.map((column, index) =>
+          toVolunteer1365CellValue(pickCell(volunteer.sessions ?? [], column, index))
+        ),
+      }
+    }),
+  }
 }
 
 function headerCell(text: string): Cell {
   return {
     v: text,
     m: text,
-    bg: MINT_BG,
-    fc: HEADER_FG,
+    bg: VOLUNTEER_1365_HEADER_BG,
+    fc: VOLUNTEER_1365_HEADER_FG,
+    bl: 1,
+    fs: FONT_SIZE_PT,
+    ff: FONT_FAMILY,
     ht: 0,
     vt: 0,
   }
@@ -126,11 +156,17 @@ function headerCell(text: string): Cell {
 
 function dataCell(value: Volunteer1365SheetCellValue | string): Cell {
   const text = typeof value === 'string' ? value : value.text
-  const cell: Cell = { v: text, m: text, ht: 0, vt: 0 }
-  if (typeof value !== 'string' && value.warn) {
-    cell.fc = WARN_FG
+  const warn = typeof value !== 'string' && value.warn === true
+  return {
+    v: text,
+    m: text,
+    fc: warn ? VOLUNTEER_1365_WARN_FG : VOLUNTEER_1365_TEXT_FG,
+    bl: warn ? 1 : 0,
+    fs: FONT_SIZE_PT,
+    ff: FONT_FAMILY,
+    ht: 0,
+    vt: 0,
   }
-  return cell
 }
 
 function lineToCells(line: Volunteer1365SheetRow): Cell[] {
@@ -144,49 +180,49 @@ function lineToCells(line: Volunteer1365SheetRow): Cell[] {
   ]
 }
 
-function buildColumnWidths(columnCount: number): Record<string, number> {
-  const fixedWidths = [96, 132, 120, 72, 88]
-  const remaining = Math.max(columnCount - fixedWidths.length, 0)
-  const sessionWidth = remaining > 0 ? Math.max(84, Math.floor(980 / remaining)) : 88
-  const columnlen: Record<string, number> = {}
-  fixedWidths.forEach((width, index) => {
-    columnlen[String(index)] = width
-  })
-  for (let index = fixedWidths.length; index < columnCount; index += 1) {
-    columnlen[String(index)] = sessionWidth
+/** 14px Pretendard 기준 대략 글자 폭 — 한글·전각 14, 그 외 8 */
+function estimateTextWidthPx(text: string): number {
+  let width = 0
+  for (const char of text) {
+    width += (char.codePointAt(0) ?? 0) >= 0x2e80 ? 14 : 8
   }
-  return columnlen
+  return width
 }
 
-export function buildVolunteer1365FortuneSheet(
-  half: EducationProgressHalfKey,
-  volunteers: readonly Volunteer1365VolunteerSource[],
-  scheduleDates: readonly UjatInstitutionScheduleAssignDateEntry[] = [],
-  attendance?: Volunteer1365AttendanceLookup
-): Sheet {
-  const headerLabels = getVolunteer1365HeaderLabels(half, scheduleDates)
-  const columnCount = headerLabels.length
-  const lines = buildVolunteer1365SheetRows(half, volunteers, scheduleDates, attendance)
-  const dataRowCount = lines.length
-  const totalRows = Math.max(36, 1 + dataRowCount + 8)
+/** 셀 좌우 여백(12+12) */
+const CELL_HORIZONTAL_PADDING_PX = 24
+
+/**
+ * 열 폭 — 피그마 폭을 최소로 두고, 긴 값(예: 긴 1365 ID)이 잘리면 그 열만 넓힌다.
+ */
+export function getVolunteer1365ColumnWidths(model: Volunteer1365SheetModel): number[] {
+  return model.headerLabels.map((label, index) => {
+    const base =
+      index < FIXED_COLUMN_WIDTHS.length ? FIXED_COLUMN_WIDTHS[index]! : SESSION_COLUMN_WIDTH
+    const texts = [label, ...model.rows.map(row => lineToCells(row)[index]?.m ?? '')]
+    const longest = Math.max(...texts.map(text => estimateTextWidthPx(String(text))))
+    return Math.max(base, Math.ceil(longest + CELL_HORIZONTAL_PADDING_PX))
+  })
+}
+
+export function buildVolunteer1365FortuneSheet(model: Volunteer1365SheetModel): Sheet {
+  const columnCount = model.headerLabels.length
+  const totalRows = Math.max(36, 1 + model.rows.length + 8)
 
   const celldata: CellWithRowAndCol[] = []
-  for (let columnIndex = 0; columnIndex < columnCount; columnIndex += 1) {
-    celldata.push({
-      r: 0,
-      c: columnIndex,
-      v: headerCell(headerLabels[columnIndex]!),
+  model.headerLabels.forEach((label, columnIndex) => {
+    celldata.push({ r: 0, c: columnIndex, v: headerCell(label) })
+  })
+  model.rows.forEach((line, lineIndex) => {
+    lineToCells(line).forEach((cell, columnIndex) => {
+      celldata.push({ r: lineIndex + 1, c: columnIndex, v: cell })
     })
-  }
+  })
 
-  let rowIndex = 1
-  for (const line of lines) {
-    const cells = lineToCells(line)
-    for (let columnIndex = 0; columnIndex < columnCount; columnIndex += 1) {
-      celldata.push({ r: rowIndex, c: columnIndex, v: cells[columnIndex]! })
-    }
-    rowIndex += 1
-  }
+  const columnlen: Record<string, number> = {}
+  getVolunteer1365ColumnWidths(model).forEach((width, index) => {
+    columnlen[String(index)] = width
+  })
 
   return {
     name: 'Sheet1',
@@ -194,11 +230,11 @@ export function buildVolunteer1365FortuneSheet(
     order: 0,
     row: totalRows,
     column: columnCount,
-    defaultRowHeight: 22,
-    defaultColWidth: 88,
+    defaultRowHeight: VOLUNTEER_1365_ROW_HEIGHT,
+    defaultColWidth: SESSION_COLUMN_WIDTH,
     celldata,
     config: {
-      columnlen: buildColumnWidths(columnCount),
+      columnlen,
       authority: {},
     },
     frozen: {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
+import { formatRecruitmentHeadcount } from '@/features/program/shared/lib/format-recruitment-headcount'
 import type { ProgramResponse } from '@/shared/api/generated/logs/schemas/programResponse'
 import {
   COMPANY_SCHOOL_PROGRAM_API_TYPE,
@@ -832,6 +833,31 @@ describe('company-school adapters', () => {
     })
     expect(mapped.participantApprovedCount).toBe(3)
     expect(mapped.participantCapacity).toBeUndefined()
+  })
+
+  it('목록 참여자 모집 인원 분모는 서버 participantCapacity를 그대로 표시한다', () => {
+    const mapped = mapCompanySchoolListItemToProgram({
+      id: 186545,
+      title: '1사1교',
+      participantApprovedCount: 0,
+      participantCapacity: 36,
+    })
+    expect(formatRecruitmentHeadcount(mapped.participantApprovedCount, mapped.participantCapacity)).toBe(
+      '0 / 36'
+    )
+  })
+
+  it('목록 participantCapacity가 null이면 분모는 -로 표시한다', () => {
+    const mapped = mapCompanySchoolListItemToProgram({
+      id: 186317,
+      title: '1사1교',
+      participantApprovedCount: 5,
+      participantCapacity: null,
+      participantRecruitmentCount: null,
+    })
+    expect(formatRecruitmentHeadcount(mapped.participantApprovedCount, mapped.participantCapacity)).toBe(
+      '5 / -'
+    )
   })
 
   it('모집 패치의 applicationMethod·remarks만 컬럼으로 보내고 otherNotes와 섞지 않는다', () => {

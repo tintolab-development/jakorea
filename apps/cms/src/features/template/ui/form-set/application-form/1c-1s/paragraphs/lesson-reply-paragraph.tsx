@@ -5,7 +5,7 @@ import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import '@/features/template/ui/form-editor/form-editor.css'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
-import '@/features/template/ui/paragraph/single-item/multiple-choice.css'
+import './economy-application-choice.css'
 
 const ECONOMY_REGISTRATION_SPONSOR_ALL_VALUE = '__all__'
 const PARTNER_RADIO_FALLBACK_LABEL = '결연 금융회사명'
@@ -51,42 +51,32 @@ export function EconomyProgramApplicationLessonReplyParagraph({
 
   return (
     <div className="program-registration-paragraph">
-      <div className="multiple-choice-body">
-        <CmsRadioGroup
-          className="multiple-choice-radio-group"
-          size="medium"
-          value={companyType}
-          onChange={event => setCompanyType(event.target.value)}
-        >
-          <div className="multiple-choice-row">
-            <CmsRadio value="partner" />
-            <span
-              className={
-                !isTemplateAuthoringMode && !linkedSponsorName
-                  ? 'form-editor-template-field-hint-text'
-                  : 'multiple-choice-row__label'
-              }
-            >
-              {partnerRadioLabel}
-            </span>
-          </div>
-          <div className="multiple-choice-row">
-            <CmsRadio value="none" />
-            <span className="multiple-choice-row__label">미결연</span>
-          </div>
-          <div className="multiple-choice-row" style={{ alignItems: 'center' }}>
-            <CmsRadio value="custom" />
-            <CmsInput
-              inputSize="large"
-              width={200}
-              placeholder="기타"
-              disabled={!isCustomCompanyType}
-              value={customCompanyName}
-              onChange={e => setCustomCompanyName(e.target.value)}
-            />
-          </div>
-        </CmsRadioGroup>
-      </div>
+      <CmsRadioGroup
+        className="economy-application-choice"
+        size="medium"
+        value={companyType}
+        onChange={event => setCompanyType(event.target.value)}
+      >
+        <CmsRadio value="partner">
+          {!isTemplateAuthoringMode && !linkedSponsorName ? (
+            <span className="form-editor-template-field-hint-text">{partnerRadioLabel}</span>
+          ) : (
+            partnerRadioLabel
+          )}
+        </CmsRadio>
+        <CmsRadio value="none">미결연</CmsRadio>
+        <div className="economy-application-choice__other">
+          <CmsRadio value="custom" aria-label="기타" />
+          <CmsInput
+            className="economy-application-choice__other-input"
+            inputSize="small"
+            placeholder="기타"
+            disabled={!isCustomCompanyType}
+            value={customCompanyName}
+            onChange={e => setCustomCompanyName(e.target.value)}
+          />
+        </div>
+      </CmsRadioGroup>
     </div>
   )
 }

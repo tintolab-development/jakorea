@@ -278,6 +278,9 @@ function mapEducationForm(value: string | undefined): EducationForm {
     case 'BLENDED':
     case 'ONLINE_OFFLINE':
       return 'hybrid'
+    // 응답 현행 값은 participant_selection(2026-11 BE 변경), 구 응답 participant_choice도 같은 의미다.
+    // FE 내부 값·URL 필터 값은 participant_choice 그대로 둔다.
+    case 'PARTICIPANT_SELECTION':
     case 'PARTICIPANT_CHOICE':
       return 'participant_choice'
     default:

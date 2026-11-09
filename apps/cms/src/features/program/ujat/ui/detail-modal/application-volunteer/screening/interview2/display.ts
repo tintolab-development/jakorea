@@ -104,6 +104,36 @@ export type UjatVolunteerInterview2ResultSelectRow = Pick<
   | 'managerBScore'
 >
 
+const MIN_STATUS_TRANSITION_DELAY_MS = 1_000
+
+/**
+ * 다음 대기→완료 전환(면접 종료)까지 남은 ms. 상태 tick 훅의 타이머 간격.
+ * 전환 예정 행이 없으면 `UJAT_INTERVIEW2_STATUS_POLL_MS`.
+ */
+export function getUjatInterview2NextStatusTransitionDelayMs(
+  rows: UjatVolunteerInterview2ResultSelectRow[],
+  now: Dayjs = dayjs()
+): number {
+  const nowMs = now.valueOf()
+  let minDelay: number | null = null
+
+  for (const row of rows) {
+    if (row.interviewAssignmentStatus === 'withdrawn') continue
+    const stored = row.secondInterviewScreeningStatus
+    if (stored && MANUAL_SECOND_INTERVIEW_STATUSES.has(stored)) continue
+
+    const slotEnd = parseUjatInterviewSlotEndFromRow(row)
+    if (!slotEnd) continue
+
+    const delay = slotEnd.valueOf() - nowMs
+    if (delay <= 0) continue
+    if (minDelay == null || delay < minDelay) minDelay = delay
+  }
+
+  if (minDelay == null) return UJAT_INTERVIEW2_STATUS_POLL_MS
+  return Math.max(MIN_STATUS_TRANSITION_DELAY_MS, Math.min(minDelay, UJAT_INTERVIEW2_STATUS_POLL_MS))
+}
+
 export function resolveUjatEffectiveSecondInterviewStatus(
   row: UjatVolunteerInterview2ResultSelectRow,
   now: Dayjs = dayjs()
