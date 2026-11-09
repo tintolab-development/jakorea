@@ -32,6 +32,7 @@ import {
   getApiErrorHttpStatus,
 } from '@/shared/lib/extract-api-error-message'
 import { fetchMemberRolePrivacyUnmask } from '@/features/user/api/member-privacy-unmask'
+import { EDIT_MODE_REVEAL, type PrivacyRevealOptions } from '@/shared/lib/privacy-unmask-purpose'
 import {
   fetchGeneralParticipantEducationScope,
   giveUpGeneralParticipatingInstitution,
@@ -334,9 +335,13 @@ export function ParticipatingParticipantFullpageView({
   )
 
   const revealParticipatingParticipantPersonalInfo = useCallback(
-    async (reason: string) => {
+    async (reason: string, options?: PrivacyRevealOptions) => {
       if (hasIndividualApplicationId) {
-        const dto = await unmaskIndividualApplicationPrivacyRemote(individualApplicationId, reason)
+        const dto = await unmaskIndividualApplicationPrivacyRemote(
+          individualApplicationId,
+          reason,
+          options
+        )
         const safeDto = cacheProjectedProgramPrivacy(
           queryClient,
           generalApplicationsQueryKeys.individualDetail(individualApplicationId),
@@ -469,7 +474,7 @@ export function ParticipatingParticipantFullpageView({
   const confirmEditUnmaskAndStartEdit = useCallback(() => {
     if (editUnmaskConfirmLoading) return
     setEditUnmaskConfirmLoading(true)
-    void revealWithReason(APPLICATION_INFO_EDIT_UNMASK_REASON)
+    void revealWithReason(APPLICATION_INFO_EDIT_UNMASK_REASON, EDIT_MODE_REVEAL)
       .then(result => {
         if (!result.ok) return
         setEditUnmaskConfirmOpen(false)

@@ -1,6 +1,6 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import customInstance from '@/shared/api/orval-mutator'
-import { privacyUnmaskBody } from '@/shared/lib/privacy-unmask-purpose'
+import { privacyUnmaskBody, type PrivacyRevealOptions } from '@/shared/lib/privacy-unmask-purpose'
 import { getJAKoreaCMSBackendAPIDashboardSubset } from '@/shared/api/generated/dashboard/dashboard-api'
 import type { ApplicationDecisionResponse } from '@/shared/api/generated/dashboard/schemas/applicationDecisionResponse'
 import type { ApplicationRejectRequest } from '@/shared/api/generated/dashboard/schemas/applicationRejectRequest'
@@ -326,14 +326,15 @@ export async function updateOrganizationApplicationRemote(
 export async function unmaskOrganizationApplicationPrivacyRemote(
   applicationId: string,
   reason: string,
-  programId?: number
+  programId?: number,
+  options?: PrivacyRevealOptions
 ): Promise<OrganizationApplicationDetailResponse> {
   return unwrapApiBody<OrganizationApplicationDetailResponse>(
     await customInstance({
       url: `/api/admin/organization-applications/${encodeURIComponent(applicationId)}/privacy/unmask`,
       method: 'POST',
-      // 수정 진입 고정 사유('신청 정보 수정')이면 purpose=EDIT_MODE — 서버가 APPLICATION_WRITE 확인·고정 사유 감사
-      data: privacyUnmaskBody(reason, programId),
+      // purpose=EDIT_MODE는 수정 진입 호출부가 명시할 때만 — 서버가 APPLICATION_WRITE 확인·고정 사유 감사
+      data: privacyUnmaskBody(reason, { programId, purpose: options?.purpose }),
       headers: { 'Cache-Control': 'no-store' },
     })
   )
@@ -343,14 +344,15 @@ export async function unmaskOrganizationApplicationPrivacyRemote(
 export async function unmaskInstructorApplicationPrivacyRemote(
   applicationId: string,
   reason: string,
-  programId?: number
+  programId?: number,
+  options?: PrivacyRevealOptions
 ): Promise<InstructorApplicationDetailResponse> {
   return unwrapApiBody<InstructorApplicationDetailResponse>(
     await customInstance({
       url: `/api/admin/instructor-applications/${encodeURIComponent(applicationId)}/privacy/unmask`,
       method: 'POST',
-      // 수정 진입 고정 사유('신청 정보 수정')이면 purpose=EDIT_MODE — 서버가 APPLICATION_WRITE 확인·고정 사유 감사
-      data: privacyUnmaskBody(reason, programId),
+      // purpose=EDIT_MODE는 수정 진입 호출부가 명시할 때만 — 서버가 APPLICATION_WRITE 확인·고정 사유 감사
+      data: privacyUnmaskBody(reason, { programId, purpose: options?.purpose }),
       headers: { 'Cache-Control': 'no-store' },
     })
   )
@@ -413,13 +415,14 @@ export async function fetchIndividualApplicationDetailRemote(
 
 export async function unmaskIndividualApplicationPrivacyRemote(
   applicationId: string,
-  reason: string
+  reason: string,
+  options?: PrivacyRevealOptions
 ): Promise<IndividualApplicationDetailResponse> {
   return unwrapApiBody<IndividualApplicationDetailResponse>(
     await customInstance({
       url: `/api/admin/individual-applications/${encodeURIComponent(applicationId)}/privacy/unmask`,
       method: 'POST',
-      data: privacyUnmaskBody(reason),
+      data: privacyUnmaskBody(reason, { purpose: options?.purpose }),
       headers: { 'Cache-Control': 'no-store' },
     })
   )
@@ -500,14 +503,15 @@ export async function patchVolunteerApplicationActivityRegionRemote(
 export async function unmaskVolunteerApplicationPrivacyRemote(
   applicationId: string,
   reason: string,
-  programId?: number
+  programId?: number,
+  options?: PrivacyRevealOptions
 ): Promise<VolunteerApplicationDetailResponse> {
   return unwrapApiBody<VolunteerApplicationDetailResponse>(
     await customInstance({
       url: `/api/admin/volunteer-applications/${encodeURIComponent(applicationId)}/privacy/unmask`,
       method: 'POST',
-      // 수정 진입 고정 사유('신청 정보 수정')이면 purpose=EDIT_MODE — 서버가 APPLICATION_WRITE 확인·고정 사유 감사
-      data: privacyUnmaskBody(reason, programId),
+      // purpose=EDIT_MODE는 수정 진입 호출부가 명시할 때만 — 서버가 APPLICATION_WRITE 확인·고정 사유 감사
+      data: privacyUnmaskBody(reason, { programId, purpose: options?.purpose }),
       headers: { 'Cache-Control': 'no-store' },
     })
   )

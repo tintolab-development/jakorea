@@ -46,6 +46,7 @@ import {
 import { useMyProgramPrivacyRole } from '@/features/user/detail/lib/use-my-program-privacy-role'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { ProgramRole } from '@/types/user'
+import type { PrivacyRevealOptions } from '@/shared/lib/privacy-unmask-purpose'
 
 export type PersonalInfoRevealControlMode =
   | 'toggleRemask'
@@ -67,7 +68,8 @@ export interface UsePersonalInfoRevealOptions {
   /** 강사 권한 신청 상세 unmask — `instructor-role-requests/{requestId}/privacy/unmask` */
   resolveInstructorRoleRequestId?: () => number | undefined
   /** 회원 API가 아닌 화면 전용 개인정보 원문 조회 API */
-  revealPersonalInfo?: (reason: string) => Promise<unknown>
+  /** options.purpose는 수정 진입 흐름에서만 'EDIT_MODE'다(사유 문자열로 추론하지 않음). */
+  revealPersonalInfo?: (reason: string, options?: PrivacyRevealOptions) => Promise<unknown>
   /**
    * 역할별 unmask API가 원문 상세 DTO를 반환하면 호출.
    * 회원 상세 화면에서 주소·계좌 등 표시 갱신에 사용.
@@ -106,8 +108,11 @@ export interface UsePersonalInfoRevealResult {
    * 성공 시 onPrivacyUnmasked + personalInfoRevealed=true.
    */
   revealWithReason: (
-    reason: string
+    reason: string,
+    options?: PrivacyRevealOptions
   ) => Promise<{ ok: true; payload?: unknown } | { ok: false }>
+  /** 수정 취소·저장 등 원문 열람을 끝낼 때 마스킹 상태로 되돌린다(원문 재조회 없음). */
+  remaskPersonalInfo: () => void
   confirmModal: ReactNode
 }
 
@@ -122,7 +127,8 @@ async function revealPersonalInfoWithAudit(
   resolveMemberRole?: () => UserRole | undefined,
   resolveAdminAccountId?: () => number | undefined,
   resolveInstructorRoleRequestId?: () => number | undefined,
-  resolveInstructorMemberProfile?: () => InstructorMemberProfile | null | undefined
+  resolveInstructorMemberProfile?: () => InstructorMemberProfile | null | undefined,
+  options?: PrivacyRevealOptions
 ): Promise<{ ok: true; payload?: unknown; role?: UserRole } | { ok: false }> {
   const memberIdRaw = resolveMemberId?.()?.trim()
   const memberIdNum = memberIdRaw != null ? Number(memberIdRaw) : NaN
@@ -168,6 +174,7 @@ async function revealPersonalInfoWithAudit(
     try {
       const payload = await fetchMemberRolePrivacyUnmask(memberIdNum, reason, role, {
         instructorMemberProfile: resolveInstructorMemberProfile?.() ?? undefined,
+        purpose: options?.purpose,
       })
       void queryClient.invalidateQueries({ queryKey: logsQueryKeys.privacyAccessAll() })
       return { ok: true, payload, role }
@@ -299,12 +306,13 @@ export function usePersonalInfoReveal({
 
   const revealWithReason = useCallback(
     async (
-      reason: string
+      reason: string,
+      options?: PrivacyRevealOptions
     ): Promise<{ ok: true; payload?: unknown } | { ok: false }> => {
       if (!(await guardPiiReveal())) return { ok: false }
       if (revealPersonalInfo) {
         try {
-          const payload = await revealPersonalInfo(reason)
+          const payload = await revealPersonalInfo(reason, options)
           onPrivacyUnmasked?.(payload, resolveMemberRole?.())
           setPersonalInfoRevealed(true)
           setConfirmOpen(false)
@@ -336,7 +344,8 @@ export function usePersonalInfoReveal({
         resolveMemberRole,
         resolveAdminAccountId,
         resolveInstructorRoleRequestId,
-        resolveInstructorMemberProfile
+        resolveInstructorMemberProfile,
+        options
       )
       if (!result.ok) return { ok: false }
       if (result.payload !== undefined) {
@@ -362,6 +371,7 @@ export function usePersonalInfoReveal({
 
   const submitPersonalInfoReveal = useCallback(
     (reason: string) => {
+      // 수동 열람: 사유가 '회원 정보 수정'이어도 purpose를 붙이지 않는다.
       void revealWithReason(reason)
     },
     [revealWithReason]
@@ -398,6 +408,11 @@ export function usePersonalInfoReveal({
     })
   }, [controlMode, personalInfoRevealed, guardPiiReveal])
 
+  const remaskPersonalInfo = useCallback(() => {
+    setPersonalInfoRevealed(false)
+    setConfirmOpen(false)
+  }, [])
+
   const confirmModal = useMemo(
     () =>
       confirmOpen
@@ -421,6 +436,7 @@ export function usePersonalInfoReveal({
     closePersonalInfoRevealConfirm,
     submitPersonalInfoReveal,
     revealWithReason,
+    remaskPersonalInfo,
     confirmModal,
   }
 }

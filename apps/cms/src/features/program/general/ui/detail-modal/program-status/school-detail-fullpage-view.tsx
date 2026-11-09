@@ -190,6 +190,7 @@ import {
   unmaskOrganizationApplicationPrivacyRemote,
 } from '@/features/program/general/api/applications-api-client'
 import { fetchMemberRolePrivacyUnmask } from '@/features/user/api/member-privacy-unmask'
+import { EDIT_MODE_REVEAL, type PrivacyRevealOptions } from '@/shared/lib/privacy-unmask-purpose'
 import { saveOrganizationCombinedClassRemote } from '@/features/program/general/api/organization-merge-groups-service'
 import { resolveOrganizationMergeErrorMessage } from '@/features/program/general/lib/organization-merge-error-message'
 import { useOrganizationMergeGroups } from '@/features/program/general/hooks/use-organization-merge-groups'
@@ -988,14 +989,15 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     [mergedDetail.schoolName, row.schoolName]
   )
   const revealInstitutionTeacherPersonalInfo = useCallback(
-    async (reason: string) => {
+    async (reason: string, options?: PrivacyRevealOptions) => {
       const orgAppId = row.organizationApplicationId?.trim()
       if (orgAppId) {
         const programIdNumber = Number(program.id)
         const dto = await unmaskOrganizationApplicationPrivacyRemote(
           orgAppId,
           reason,
-          Number.isFinite(programIdNumber) ? programIdNumber : undefined
+          Number.isFinite(programIdNumber) ? programIdNumber : undefined,
+          options
         )
         const safeDto = cacheProjectedProgramPrivacy(
           queryClient,
@@ -1003,7 +1005,13 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
           program.id,
           dto
         )
-        queryClient.setQueryData(generalApplicationsQueryKeys.organizationDetail(orgAppId), safeDto)
+        // 같은 원문을 쓰는 신청 id 키도 추적 대상에 넣어 다시 가리기·이탈 시 함께 초기화한다.
+        cacheProjectedProgramPrivacy(
+          queryClient,
+          generalApplicationsQueryKeys.organizationDetail(orgAppId),
+          program.id,
+          dto
+        )
         return safeDto
       }
       if (row.teacherMemberId == null) {
@@ -1077,7 +1085,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
   const confirmEditUnmaskAndStartEdit = useCallback(() => {
     if (editUnmaskConfirmLoading) return
     setEditUnmaskConfirmLoading(true)
-    void revealWithReason(APPLICATION_INFO_EDIT_UNMASK_REASON)
+    void revealWithReason(APPLICATION_INFO_EDIT_UNMASK_REASON, EDIT_MODE_REVEAL)
       .then(result => {
         if (!result.ok) return
         setEditUnmaskConfirmOpen(false)
