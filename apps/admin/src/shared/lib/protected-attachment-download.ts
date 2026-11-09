@@ -1,6 +1,7 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios'
 import { axiosInstance } from '@/shared/instance/axios-instance'
 import { readApiErrorMessage } from '@/shared/lib/api-error-message'
+import { sanitizeDownloadFileName } from '@/shared/lib/sanitize-download-file-name'
 
 function resolveAttachmentUrl(assetId: number | null | undefined, byAsset: string, fallback: string) {
   return assetId != null && assetId > 0 ? byAsset : fallback
@@ -117,7 +118,7 @@ function saveBlob(blob: Blob, fileName: string): void {
   const objectUrl = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = objectUrl
-  a.download = fileName
+  a.download = sanitizeDownloadFileName(fileName)
   a.rel = 'noopener noreferrer'
   document.body.appendChild(a)
   a.click()

@@ -99,6 +99,6 @@ export async function exportCorporateConsultationsService(filter: CorporateConsu
     await downloadRemoteLogExcel({
         url: '/api/admin/sponsorship/corporate-consultations/export',
         params: toConsultationExportParams(filter),
-        filenameFallback: defaultXlsxFilename('기업_후원_상담_신청_목록'),
+        filenameFallback: defaultXlsxFilename('기업 후원 상담 신청 목록'),
     });
 }
