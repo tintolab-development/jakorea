@@ -64,6 +64,8 @@ import {
   parseAlimtalkDndId,
   ALIMTALK_DND_CATEGORY_MOVE_PREFIX,
 } from '@/features/notifications/ui/alimtalk-template/category-tree'
+import { canAdminAction } from '@/shared/lib/admin-role-policy'
+import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
 import { DetailPanel } from './detail-panel'
 import { FormModal } from './form-modal'
 import { PreviewModal } from './preview-modal'
@@ -149,6 +151,8 @@ export function MailTemplateList() {
   const didInitExpandRef = useRef(!remote)
   const syncInFlightRef = useRef(false)
   const autoSyncStartedRef = useRef(false)
+  // 메일 템플릿 동기화는 쓰기(NOTIFICATION_WRITE). 조회 전용 역할(Program Viewer)은 자동 동기화를 보내지 않는다.
+  const canSyncCatalog = canAdminAction({ roleCode: useSessionAdminRoleCode(), action: 'write' })
   const syncCatalogMutateAsync = mutations.syncCatalog.mutateAsync
 
   const categories = remote ? (treeQuery.data?.categories ?? []) : localCategories
@@ -203,10 +207,10 @@ export function MailTemplateList() {
   }, [remote, showAlert, syncCatalogMutateAsync])
 
   useEffect(() => {
-    if (!remote || autoSyncStartedRef.current) return
+    if (!remote || !canSyncCatalog || autoSyncStartedRef.current) return
     autoSyncStartedRef.current = true
     void runMailSync('auto')
-  }, [remote, runMailSync])
+  }, [remote, canSyncCatalog, runMailSync])
 
   const offerSyncOnError = useCallback(
     (title: string, error: unknown, fallback: string) => {

@@ -40,8 +40,9 @@ export function buildSchoolDeleteMessageLines(params: { displayName: string } | 
 export function buildSelfWithdrawMessageLines(): string[] {
   return [
     'JA KOREA 서비스를 탈퇴하시겠습니까?',
-    '탈퇴 시 개인정보는 관련 법령 및 당사의 개인정보처리방침에 따라 삭제∙처리됩니다.',
-    '삭제된 정보는 복구할 수 없습니다. 탈퇴하시려면 로그인 비밀번호를 입력해 주세요.',
+    '탈퇴 시 개인정보는 관련 법령 및 개인정보처리방침에 따라 삭제·처리되며,',
+    '수료증 재발급 등 로그인이 필요한 서비스를 이용할 수 없습니다.',
+    '삭제된 정보는 복구할 수 없습니다. 탈퇴하시려면 계정 비밀번호를 입력해 주세요.',
   ]
 }
 

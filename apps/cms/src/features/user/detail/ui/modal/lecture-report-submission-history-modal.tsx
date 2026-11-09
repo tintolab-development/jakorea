@@ -27,31 +27,17 @@ import {
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './lecture-report-submission-history-modal.css'
+import { StatusBadge } from '@/shared/components'
+import {
+  getLectureReportProgressAccent,
+  getLectureReportSubmissionAccent,
+} from '@/features/program/shared/lib/lecture-report-status-presentation'
 
 interface LectureReportSubmissionHistoryModalProps {
   open: boolean
   application: Application | null
   memberId?: number
   onCancel: () => void
-}
-
-type StatusTextKind = 'scheduled' | 'completed' | 'undone'
-
-function statusTextClassNames(kind: StatusTextKind): string {
-  return `lecture-report-submission-history-modal__status-text lecture-report-submission-history-modal__status-text--${kind}`
-}
-
-function lectureProgressClass(label: MemberLectureReportTableRow['lectureProgressLabel']): string {
-  if (label === '진행 예정') return statusTextClassNames('scheduled')
-  return statusTextClassNames('completed')
-}
-
-function submissionStatusClass(
-  label: MemberLectureReportTableRow['submissionStatusLabel']
-): string {
-  if (label === '미제출') return statusTextClassNames('undone')
-  if (label === '진행 예정') return statusTextClassNames('scheduled')
-  return statusTextClassNames('completed')
 }
 
 function renderReportCell(
@@ -186,7 +172,12 @@ export function LectureReportSubmissionHistoryModal({
         align: 'center',
         width: 120,
         render: (label: MemberLectureReportTableRow['lectureProgressLabel']) => (
-          <span className={lectureProgressClass(label)}>{label}</span>
+          <StatusBadge
+            domain="custom"
+            variant="text"
+            label={label}
+            accentColor={getLectureReportProgressAccent(label)}
+          />
         ),
       },
       {
@@ -196,7 +187,12 @@ export function LectureReportSubmissionHistoryModal({
         align: 'center',
         width: 120,
         render: (label: MemberLectureReportTableRow['submissionStatusLabel']) => (
-          <span className={submissionStatusClass(label)}>{label}</span>
+          <StatusBadge
+            domain="custom"
+            variant="text"
+            label={label}
+            accentColor={getLectureReportSubmissionAccent(label)}
+          />
         ),
       },
       {

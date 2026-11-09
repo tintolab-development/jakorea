@@ -26,11 +26,16 @@ describe('instructor settlement presentation consumers share one registry', () =
     const tag = getInstructorSettlementStatusPresentation(status, 'tag')
     expect(text.label).toBe(INSTRUCTOR_SETTLEMENT_STATUS_LABELS[status])
     expect(short.label).toBe(INSTRUCTOR_SETTLEMENT_STATUS_LABELS_SHORT[status])
-    expect(tag.label).toBe(INSTRUCTOR_SETTLEMENT_STATUS_LABELS[status])
+    // Tag는 Figma Status / Tag / 정산 현황(14804:19759) — Short 라벨
+    expect(tag.label).toBe(INSTRUCTOR_SETTLEMENT_STATUS_LABELS_SHORT[status])
     expect(getInstructorSettlementInvoiceStatusPresentation(status)).toEqual(
       getInstructorSettlementStatusPresentation(status, 'invoice')
     )
-    expect(getInstructorSettlementStatusTag(status)).toEqual({ label: tag.label, accentColor: tag.color })
+    expect(getInstructorSettlementStatusTag(status)).toEqual({
+      label: tag.label,
+      accentColor: tag.color,
+      shape: 'outline',
+    })
     // Calendar colors remain raw fallbacks from the same palette, not a second semantic mapping.
     expect(tag.color).toContain(INSTRUCTOR_SETTLEMENT_STATUS_TAG_STYLE[status].color)
     const standalone = renderToStaticMarkup(createElement(InstructorSettlementStatusText, { status }))

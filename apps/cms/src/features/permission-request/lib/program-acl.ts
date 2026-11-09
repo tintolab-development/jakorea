@@ -29,14 +29,9 @@ export function canAccessProgram(
       if (hasTemporaryPermission) {
         return true
       }
+      // 권한 설정 V1.2 원칙 3: 담당자로 지정된 프로그램이면 역할(Owner·Assistant·Viewer)과 무관하게 상세 조회 가능
       const programRole = user.programRoles?.[programId]
-      if (programRole === 'OWNER') {
-        return true
-      }
-      if (programRole === 'PARTNER' && action === 'VIEW') {
-        return true
-      }
-      return false
+      return programRole === 'OWNER' || programRole === 'PARTNER' || programRole === 'ASSISTANT'
     }
     if (['INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'].includes(user.role)) {
       return true
@@ -61,10 +56,11 @@ export function canAccessProgram(
   if (programRole === 'OWNER') {
     return true
   }
+  // Program Assistant: 프로그램 정보 수정 등 운영 권한은 Owner와 같고, 파일 다운로드도 허용(지급조서는 마스킹본 — BE 처리)
   if (programRole === 'PARTNER') {
-    return false
+    return action === 'EDIT' || action === 'DOWNLOAD'
   }
-
+  // Program Viewer(프로그램 상세): 수정·다운로드 제한
   return false
 }
 

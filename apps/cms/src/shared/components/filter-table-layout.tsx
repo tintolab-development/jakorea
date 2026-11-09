@@ -193,6 +193,7 @@ export function FilterTableLayout({
     filename: excelFilename,
     exporter: excelExport?.exporter,
     accessLog: excelExport?.accessLog,
+    downloadAdminAction: excelExport?.downloadAdminAction,
     alertOnEmpty: excelExport?.alertOnEmpty,
     emptyAlertTitle: excelExport?.emptyAlertTitle,
     emptyAlertContent: excelExport?.emptyAlertContent,

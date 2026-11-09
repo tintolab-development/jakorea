@@ -1,5 +1,6 @@
 /**
- * UTF-8 BOM CSV — Excel 호환 다운로드
+ * UTF-8 BOM CSV — Windows Excel이 한글을 CP949로 오인하지 않도록 BOM을 붙인다.
+ * 줄바꿈은 Windows Excel용 CRLF.
  */
 
 function sanitizeFilenameBase(name: string): string {
@@ -24,7 +25,7 @@ export function downloadCsv(options: {
     ...options.rows.map(row => row.map(escapeCsvCell).join(',')),
   ]
   const bom = '\uFEFF'
-  const blob = new Blob([bom + lines.join('\n')], {
+  const blob = new Blob([bom + lines.join('\r\n')], {
     type: 'text/csv;charset=utf-8;',
   })
   const stamp = new Date()

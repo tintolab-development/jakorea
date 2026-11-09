@@ -25,7 +25,7 @@ export function ContentNestedTable({ data, mode, ariaLabel, onChange }: ContentN
               inputSize="medium"
               width="100%"
               layout="fixed"
-              autoSize={{ minRows: 1, maxRows: 2 }}
+              autoSize={{ minRows: 1 }}
               value={data.title}
               onChange={e => onChange({ title: e.target.value })}
               placeholder="타이틀을 입력해 주세요"
@@ -44,7 +44,7 @@ export function ContentNestedTable({ data, mode, ariaLabel, onChange }: ContentN
               inputSize="medium"
               width="100%"
               layout="fixed"
-              autoSize={{ minRows: 1, maxRows: 2 }}
+              autoSize={{ minRows: 1 }}
               value={data.description}
               onChange={e => onChange({ description: e.target.value })}
               placeholder="설명글을 입력해 주세요"

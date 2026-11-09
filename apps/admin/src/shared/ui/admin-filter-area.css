@@ -103,6 +103,43 @@
   min-height: var(--filter-control-height, 40px) !important;
 }
 
+/*
+ * 셀렉트 2개 한 필드(예: 연혁 연도/월) — Figma 2094:131207 Field / Sorting / M(40) select2
+ * 필드 폭 260(필터 칸 최소 240 · 최대 260 중 최대) · 셀렉트 간격 8 · 각 칸 반씩 → 126
+ * '연도 전체' 같은 4~5자 문구가 말줄임 없이 들어가는 폭. (주소 지역 쌍 235.5와 별도)
+ */
+.admin-filter-area__field--select-pair {
+  width: var(--filter-control-select-pair-width, 260px);
+  min-width: var(--filter-control-select-pair-width, 260px);
+  max-width: var(--filter-control-select-pair-width, 260px);
+}
+
+.admin-filter-area__select-pair {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.admin-filter-area__select-pair > .cms-select {
+  flex: 1 1 0 !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: var(--filter-control-height, 40px) !important;
+  box-sizing: border-box;
+}
+
+.admin-filter-area__select-pair > .cms-select > .ant-select {
+  width: 100% !important;
+  max-width: 100% !important;
+  height: var(--filter-control-height, 40px) !important;
+  min-height: var(--filter-control-height, 40px) !important;
+}
+
 /* 분리형 기간 칸 500px = 2×240 + 20 */
 .admin-filter-area__field--date-range {
   width: calc(
@@ -218,6 +255,7 @@
 @media (max-width: 768px) {
   .admin-filter-area__field--control,
   .admin-filter-area__field--address-region,
+  .admin-filter-area__field--select-pair,
   .admin-filter-area__field--date-range {
     width: 100%;
     min-width: 0;

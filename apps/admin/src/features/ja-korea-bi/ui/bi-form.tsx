@@ -143,7 +143,7 @@ export function BiFormCard({ data }: Props) {
                 <CmsTextArea
                   inputSize="medium"
                   width="100%"
-                  autoSize={{ minRows: 1, maxRows: 2 }}
+                  autoSize={{ minRows: 1 }}
                   value={draft.mainText}
                   onChange={e => updateDraft({ mainText: e.target.value })}
                   placeholder="메인 텍스트 입력"
@@ -161,7 +161,7 @@ export function BiFormCard({ data }: Props) {
                 <CmsTextArea
                   inputSize="medium"
                   width="100%"
-                  autoSize={{ minRows: 1, maxRows: 2 }}
+                  autoSize={{ minRows: 1 }}
                   value={draft.subText}
                   onChange={e => updateDraft({ subText: e.target.value })}
                   placeholder="서브 텍스트 입력"

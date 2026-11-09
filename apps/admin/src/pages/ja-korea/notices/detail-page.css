@@ -1,43 +1,45 @@
 /**
- * 공지사항 상세 — 시안 1200×804 기준 + 해상도 적응형 확장
- * 작은 화면: max(시안 비율, 가용 폭)
- * 큰 화면: 본문 영역 가로 100% · 세로 남은 뷰포트 채움
+ * 공지사항 상세 (임팩트 스토리 상세와 동일 레이아웃)
+ * 상·하단 패딩 고정(66 / 70). 가운데(카드)는 남은 높이 안에서만 스크롤.
+ * 목록·삭제·수정은 항상 뷰포트 하단에 노출.
  */
 
 .notice-detail-page {
-  --notice-detail-design-w: 1200;
-  --notice-detail-design-h: 804;
-  /* 시안 비율 804/1200 */
-  --notice-detail-aspect: 0.67;
-  /* 레이아웃: header + content padding 32×2 + 페이지·액션 여유 */
-  --notice-detail-chrome-v: calc(
-    var(--header-height, 64px) + 64px + clamp(48px, 6vh, 70px) + 40px + 24px + 52px
-  );
+  --notice-detail-pad-top: 66px;
+  --notice-detail-pad-bottom: 70px;
+  --notice-detail-layout-pad: var(--admin-layout-content-padding-y, 32px);
 
   box-sizing: border-box;
-  width: 100%;
-  min-height: calc(100dvh - var(--header-height, 64px) - 64px);
-  min-height: calc(100vh - var(--header-height, 64px) - 64px);
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: clamp(32px, 5vh, 70px);
-  padding-bottom: 40px;
+  width: calc(100% + var(--notice-detail-layout-pad) * 2);
+  max-width: none;
+  margin: calc(var(--notice-detail-layout-pad) * -1);
+  height: calc(100dvh - var(--header-height, 64px));
+  height: calc(100vh - var(--header-height, 64px));
+  max-height: calc(100dvh - var(--header-height, 64px));
+  max-height: calc(100vh - var(--header-height, 64px));
+  padding: var(--notice-detail-pad-top) var(--notice-detail-layout-pad)
+    var(--notice-detail-pad-bottom);
+  overflow: hidden;
 }
 
-/* 좌우 각 ~10% 여백 → 카드·액션 폭 80% (시안 min 1200 이상 확장) */
+/* 흰 본문(카드)·힌트·액션 폭 1200 고정. 뷰포트가 더 좁을 때만 축소 */
 .notice-detail-page__inner {
-  width: 80%;
-  max-width: 80%;
+  width: 1200px;
+  max-width: 100%;
   min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   flex: 1 1 auto;
-  min-height: auto;
+  min-height: 0;
+  max-height: 100%;
   gap: 24px;
   box-sizing: border-box;
   margin-inline: auto;
+  overflow: hidden;
 }
 
 /* Figma 3052:78282 — `< 목록으로` 우측 안내 문구 (gap 16) */
@@ -60,12 +62,7 @@
   line-height: 150%;
 }
 
-/*
- * 카드:
- * - 가로: 본문 영역 100% (큰 모니터 여백 축소)
- * - 세로: min 804 · 큰 화면에서는 뷰포트 잔여 높이 이상
- * - 본문 더 길면 카드 자동 성장
- */
+/* 카드: 힌트·액션 사이 남은 높이를 채우고, 길면 카드 내부 스크롤 */
 .notice-detail-page__card {
   display: flex;
   flex-direction: column;
@@ -75,12 +72,9 @@
   width: 100%;
   max-width: 100%;
   flex: 1 1 auto;
-  min-height: max(
-    calc(var(--notice-detail-design-h) * 1px),
-    calc(100dvh - var(--notice-detail-chrome-v)),
-    calc(100vh - var(--notice-detail-chrome-v))
-  );
-  height: auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
   padding: 24px;
   border-radius: 12px;
   background: #fff;
@@ -226,15 +220,18 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--color-mint-01, #01a1af);
+  color: var(--Netural-black, #3d3d3d);
   font-family: Pretendard, var(--font-family-primary, sans-serif);
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
   line-height: 150%;
 }
 
 .notice-detail-page__clip {
-  font-size: 16px;
+  display: block;
+  width: 13px;
+  height: 16px;
+  flex-shrink: 0;
 }
 
 .notice-detail-page__attachments-list {
@@ -299,13 +296,14 @@
   margin-top: 24px;
 }
 
-/* 본문: 짧은 글은 카드 잔여 높이 채움 · 긴 글·이미지는 카드와 함께 성장 */
+/* 본문: 카드 스크롤에 맡김 */
 .notice-detail-page__body {
+  position: relative;
   margin-top: 24px;
   width: 100%;
   min-width: 0;
   flex: 1 1 auto;
-  min-height: auto;
+  min-height: 0;
   overflow: visible;
 }
 
@@ -347,24 +345,6 @@
   margin: 0;
   color: var(--main-BK, #3d3d3d);
   font-size: 16px;
-}
-
-/* 본문 영역이 매우 좁을 때(시안 1200 미달 폭): 여백 축소해 가용 폭 사용 */
-@media (max-width: 1280px) {
-  .notice-detail-page__inner {
-    width: 100%;
-    max-width: 100%;
-  }
-}
-
-@media (max-width: 900px) {
-  .notice-detail-page {
-    padding-top: 24px;
-  }
-
-  .notice-detail-page__card {
-    min-height: 0;
-  }
 }
 
 /* `< 목록으로` 행 — 카드와 간격 16 */

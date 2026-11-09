@@ -21,6 +21,7 @@ import {
   isPermissionRequestsPath,
   isMemberPermissionSettingsPath,
   isSecurityLogPath,
+  isSettlementItemSettingsPath,
   isTemplateManagementPath,
   resolveAdminRoleCodeFromUser,
   showAdminAccessDeniedAlert,
@@ -60,6 +61,10 @@ function LayoutContent() {
     Boolean(user) &&
     isTemplateManagementPath(location.pathname) &&
     !canAdminAction({ roleCode, action: 'view', screen: 'template-management' })
+  const settlementItemSettingsBlocked =
+    Boolean(user) &&
+    isSettlementItemSettingsPath(location.pathname) &&
+    !canAdminAction({ roleCode, action: 'view', screen: 'settlement-item-settings' })
   const accountPaymentsBlocked =
     Boolean(user) &&
     isAccountPaymentsPath(location.pathname) &&
@@ -69,6 +74,7 @@ function LayoutContent() {
     permissionSettingsBlocked ||
     permissionRequestsBlocked ||
     templateManagementBlocked ||
+    settlementItemSettingsBlocked ||
     accountPaymentsBlocked
   const deniedLogPathRef = useRef<string | null>(null)
 

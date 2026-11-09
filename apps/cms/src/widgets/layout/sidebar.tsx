@@ -17,6 +17,7 @@ import {
   isPermissionRequestsPath,
   isMemberPermissionSettingsPath,
   isSecurityLogPath,
+  isSettlementItemSettingsPath,
   isTemplateManagementPath,
   showAdminAccessDeniedAlert,
 } from '@/shared/lib/admin-role-policy'
@@ -255,6 +256,13 @@ export function Sidebar() {
             if (
               isTemplateManagementPath(key) &&
               !canAdminAction({ roleCode, action: 'view', screen: 'template-management' })
+            ) {
+              showAdminAccessDeniedAlert()
+              return
+            }
+            if (
+              isSettlementItemSettingsPath(key) &&
+              !canAdminAction({ roleCode, action: 'view', screen: 'settlement-item-settings' })
             ) {
               showAdminAccessDeniedAlert()
               return

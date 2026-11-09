@@ -30,6 +30,6 @@ export interface MemberPortalGeminiLectureScheduleItem {
   accountPaymentStatus?: string | null;
   /** 화면 표시용 정산 상태 라벨. 예: 계좌 지급 완료, 확인 대기 중. 지급 건이 없으면 null */
   settlementStatusLabel?: string | null;
-  /** 정산 예정 금액(원 단위 정수). 연결된 지급 건이 없거나 산정 전이면 null */
+  /** 정산 예정 금액(원 단위 정수). 계좌 지급 건이 있으면 실지급액(없으면 산정 금액). 지급 건이 없어도 강사비 0원(ZERO_CALCULATED_FEE)이면 0. 단가 미설정·지급 건 미생성·산정 전이면 null */
   expectedAmount?: number | null;
 }

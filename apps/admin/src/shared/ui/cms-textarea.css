@@ -283,11 +283,16 @@
 }
 
 .ant-table-tbody > tr > td > .cms-textarea:has(textarea:not([readonly])) {
+  /* 화면 CSS가 display:block 등으로 바꿔도 세로 flex를 유지해야 안쪽 박스가 셀 높이를 채운다 */
+  display: flex !important;
+  flex-direction: column;
   height: 100%;
 }
 
 /* 2칸 상세 폼 행: 칸(field-content)은 이미 행 높이로 늘어남 — 텍스트영역만 세로로 채운다 */
 .detail-info-form__field-content--edit > .cms-textarea:has(textarea:not([readonly])) {
+  display: flex !important;
+  flex-direction: column;
   align-self: stretch;
   margin-block: 0 !important;
 }

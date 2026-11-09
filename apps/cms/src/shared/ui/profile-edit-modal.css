@@ -251,21 +251,21 @@
   white-space: nowrap;
 }
 
-.profile-edit-modal__marketing-consent .app-radio-group.ant-radio-group {
-  display: inline-flex;
-  flex-wrap: nowrap;
-  flex-shrink: 0;
-  gap: 12px;
-}
-
 .profile-edit-modal__marketing-consent .detail-info-form-inputs-separator {
   margin: 0 0 0 16px;
 }
 
+/* 동의 일시 — 동의 철회 버튼 뒤 구분선 없이 16px (Figma 8193:140673) */
 .profile-edit-modal__marketing-consent .user-consent-agreement-section__value-datetime {
   flex-shrink: 0;
   white-space: nowrap;
-  margin-left: 12px;
+  margin-left: 16px;
+}
+
+/* 동의하기 · 동의 철회 — Button / h32 · 폭 100 */
+.profile-edit-modal__marketing-consent .profile-edit-modal__field-action-btn.cms-button.ant-btn {
+  width: 100px;
+  min-width: 100px;
 }
 
 .profile-edit-modal .content-modal__footer-actions {

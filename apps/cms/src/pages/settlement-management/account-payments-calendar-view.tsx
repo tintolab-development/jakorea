@@ -24,6 +24,7 @@ import {
   CalendarMini,
   CalendarSearch,
   CalendarSubRightSettlementList,
+  SettlementPreviewTooltipSep,
   settlementEventStatusColorPair,
   settlementRowFromCalendarItem,
   type CalendarItem,
@@ -157,26 +158,24 @@ function renderAccountPaymentEventsTooltipContent({ events: dayEvents }: { event
         return (
           <div key={String(ev.id)} className="instructor-settlement-preview">
             {/* 시안 Calendar / List / Preview(14858:591061): 이름 Bold · 구분선 · 프로그램명 Medium */}
-            <div className="instructor-settlement-preview__title">
-              {row.instructorName?.trim() ? (
-                <>
-                  <span className="account-payments-calendar-view__preview-name">
-                    {row.instructorName.trim()}
-                  </span>
-                  <span className="settlement-preview-tooltip__sep">|</span>
-                  {row.programName}
-                </>
-              ) : (
-                row.programName
-              )}
-            </div>
-            <div>
+            {row.instructorName?.trim() ? (
+              <div className="instructor-settlement-preview__title settlement-preview-tooltip__row">
+                <span className="account-payments-calendar-view__preview-name">
+                  {row.instructorName.trim()}
+                </span>
+                <SettlementPreviewTooltipSep />
+                <span className="settlement-preview-tooltip__ellipsis">{row.programName}</span>
+              </div>
+            ) : (
+              <div className="instructor-settlement-preview__title">{row.programName}</div>
+            )}
+            <div className="settlement-preview-tooltip__row">
               <span style={{ color: colors.text, fontWeight: 600, fontSize: '14px' }}>
                 {accountPaymentStatusShortLabel(accountStatus)}
               </span>
+              <SettlementPreviewTooltipSep />
               <span className="settlement-preview-tooltip__text">
-                <span className="settlement-preview-tooltip__sep">|</span> +
-                {row.scheduledAmount.toLocaleString()}원
+                +{row.scheduledAmount.toLocaleString()}원
               </span>
             </div>
           </div>

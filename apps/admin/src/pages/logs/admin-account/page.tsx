@@ -22,6 +22,7 @@ import {
   useExportAdminAccountLogs,
 } from '@/features/admin-account-log/api/hooks'
 import { formatLogDateTime } from '@/features/logs/shared/lib/format-datetime'
+import { logExcelExportFailureAlert } from '@/features/logs/shared/lib/log-excel-export-alert'
 import { logListRowNumber } from '@/features/logs/shared/lib/list-page'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
@@ -198,11 +199,9 @@ export function AdminAccountLogPage() {
   const forbidden = isAdminForbidden(listQuery.error)
 
   const handleExcel = useCallback(() => {
-    void exportMutation.mutateAsync(appliedFilter).catch(() => {
-      showAlert({
-        title: '내보내기 실패',
-        content: '엑셀 내보내기에 실패했습니다. 다시 시도해 주세요.',
-      })
+    if (exportMutation.isPending) return
+    void exportMutation.mutateAsync(appliedFilter).catch((error: unknown) => {
+      showAlert(logExcelExportFailureAlert(error))
     })
   }, [appliedFilter, exportMutation, showAlert])
 
@@ -335,7 +334,14 @@ export function AdminAccountLogPage() {
         }
         title="관리자 계정 처리 이력"
         description={`총 ${total.toLocaleString('ko-KR')}건`}
-        actions={<ExcelButton onClick={handleExcel} empty={total === 0} />}
+        actions={
+          <ExcelButton
+            onClick={handleExcel}
+            empty={total === 0}
+            loading={exportMutation.isPending}
+            disabled={exportMutation.isPending}
+          />
+        }
       >
         <CmsDataTable<AdminAccountLog>
           className="cms-data-table"

@@ -63,6 +63,14 @@ export function footerRelatedLogoSaveFailureAlert(error: unknown): AdminMutation
   const code = readApiErrorCode(error) ?? (error instanceof Error ? error.message : '')
   const field = readApiErrorField(error)
   if (code === 'VERSION_CONFLICT') return VERSION_CONFLICT_ALERT
+  if (
+    code === 'LOGO_REQUIRED' ||
+    field === 'logoAssetId' ||
+    field === 'organizationName' ||
+    /기관명과 로고/.test(code)
+  ) {
+    return REQUIRED_FIELDS_INCOMPLETE_ALERT
+  }
   if (field === 'externalUrl' || /externalUrl/i.test(code)) {
     return HTTP_LINK_URL_FORMAT_ALERT
   }

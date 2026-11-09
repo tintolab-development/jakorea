@@ -30,24 +30,10 @@ import {
 } from '@/features/program/general/lib/build-lecture-report-issuance-preview'
 import { LectureReportIssuancePreviewModal } from '@/features/program/general/ui/detail-modal/program-status/lecture-report-issuance-preview-modal'
 import { useLectureReportBulkPdfExport } from '@/features/program/general/ui/detail-modal/program-status/lecture-report-bulk-pdf-export'
-
-const STATUS_ACCENT_DEFAULT = 'var(--default-BK, #3d3d3d)'
-const STATUS_ACCENT_SCHEDULED = 'var(--color-green, #1e8c29)'
-const STATUS_ACCENT_UNDONE = 'var(--color-red, #c32f4a)'
-
-function lectureProgressAccent(
-  label: ParticipatingInstructorLectureReportRow['lectureProgressLabel']
-): string {
-  return label === '진행 완료' ? STATUS_ACCENT_DEFAULT : STATUS_ACCENT_SCHEDULED
-}
-
-function submissionStatusAccent(
-  label: ParticipatingInstructorLectureReportRow['submissionStatusLabel']
-): string {
-  if (label === '미제출') return STATUS_ACCENT_UNDONE
-  if (label === '진행 예정') return STATUS_ACCENT_SCHEDULED
-  return STATUS_ACCENT_DEFAULT
-}
+import {
+  getLectureReportProgressAccent,
+  getLectureReportSubmissionAccent,
+} from '@/features/program/shared/lib/lecture-report-status-presentation'
 
 const lectureReportExportColumns: ColumnsType<ParticipatingInstructorLectureReportRow> = [
   { title: 'No.', dataIndex: 'no', key: 'no' },
@@ -238,7 +224,7 @@ export function ParticipatingInstructorLectureReportsSection({
           <StatusBadge
             domain="custom"
             label={label}
-            accentColor={lectureProgressAccent(label)}
+            accentColor={getLectureReportProgressAccent(label)}
             variant="text"
           />
         ),
@@ -253,7 +239,7 @@ export function ParticipatingInstructorLectureReportsSection({
           <StatusBadge
             domain="custom"
             label={label}
-            accentColor={submissionStatusAccent(label)}
+            accentColor={getLectureReportSubmissionAccent(label)}
             variant="text"
           />
         ),

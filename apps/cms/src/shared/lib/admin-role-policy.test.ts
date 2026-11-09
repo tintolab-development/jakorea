@@ -240,21 +240,33 @@ describe('canAdminAction 표 규칙', () => {
     expect(allowed('VIEWER', 'view', 'admin-permission-approval')).toBe(false)
   })
 
-  it('권한 설정 조회·저장은 뷰어만 차단, 승인·반려는 마스터만', () => {
-    expect(allowed('MASTER', 'view', 'permission-settings')).toBe(true)
-    expect(allowed('PM', 'view', 'permission-settings')).toBe(true)
-    expect(allowed('PARTNER', 'view', 'permission-settings')).toBe(true)
-    expect(allowed('VIEWER', 'view', 'permission-settings')).toBe(false)
+  it('관리자 권한 설정·프로그램 담당자 권한 설정 조회·저장·승인은 마스터만', () => {
+    for (const action of ['view', 'write', 'approve'] as const) {
+      expect(allowed('MASTER', action, 'permission-settings')).toBe(true)
+      expect(allowed('ACCOUNTING_MANAGER', action, 'permission-settings')).toBe(false)
+      expect(allowed('PROGRAM_MANAGER', action, 'permission-settings')).toBe(false)
+      expect(allowed('PM', action, 'permission-settings')).toBe(false)
+      expect(allowed('PARTNER', action, 'permission-settings')).toBe(false)
+      expect(allowed('VIEWER', action, 'permission-settings')).toBe(false)
+    }
+  })
 
-    expect(allowed('MASTER', 'write', 'permission-settings')).toBe(true)
-    expect(allowed('PM', 'write', 'permission-settings')).toBe(true)
-    expect(allowed('PARTNER', 'write', 'permission-settings')).toBe(true)
-    expect(allowed('VIEWER', 'write', 'permission-settings')).toBe(false)
+  it('관리자 계정 관리(adminAccountManage)는 마스터만', () => {
+    expect(allowed('MASTER', 'adminAccountManage')).toBe(true)
+    expect(allowed('ACCOUNTING_MANAGER', 'adminAccountManage')).toBe(false)
+    expect(allowed('PROGRAM_MANAGER', 'adminAccountManage')).toBe(false)
+    expect(allowed('PROGRAM_VIEWER', 'adminAccountManage')).toBe(false)
+  })
 
-    expect(allowed('MASTER', 'approve', 'permission-settings')).toBe(true)
-    expect(allowed('PM', 'approve', 'permission-settings')).toBe(false)
-    expect(allowed('PARTNER', 'approve', 'permission-settings')).toBe(false)
-    expect(allowed('VIEWER', 'approve', 'permission-settings')).toBe(false)
+  it('정산 항목 설정 조회는 뷰어만 차단', () => {
+    expect(resolveAdminPolicyScreen('/settlement-management/item-settings')).toBe(
+      'settlement-item-settings'
+    )
+    expect(allowed('MASTER', 'view', 'settlement-item-settings')).toBe(true)
+    expect(allowed('ACCOUNTING_MANAGER', 'view', 'settlement-item-settings')).toBe(true)
+    expect(allowed('PROGRAM_MANAGER', 'view', 'settlement-item-settings')).toBe(true)
+    expect(allowed('PROGRAM_VIEWER', 'view', 'settlement-item-settings')).toBe(false)
+    expect(allowed('VIEWER', 'view', 'settlement-item-settings')).toBe(false)
   })
 
   it('isPermissionSettingsPath는 권한 설정 경로만 인식한다', () => {

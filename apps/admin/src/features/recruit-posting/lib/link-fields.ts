@@ -5,7 +5,16 @@
  * 목록 item 스키마에는 CTA가 없다.
  */
 
-import { HTTP_LINK_URL_FORMAT_ALERT, isValidHttpLinkUrl } from '../../../shared/lib/http-link-url.ts'
+import axios from 'axios'
+import { readApiErrorField, readApiErrorMessage } from '../../../shared/lib/api-error-message.ts'
+import { isCompleteHttpLinkUrl } from '../../../shared/lib/http-link-url.ts'
+
+/** 채용 공고 바로가기 링크가 http(s)가 아닐 때 — 공통 AlertModal */
+export const CAREER_POSTING_LINK_URL_FORMAT_ALERT = {
+  title: '등록 불가 안내',
+  content:
+    '채용 공고 바로가기 링크 형식이 올바르지 않습니다.\nhttp:// 또는 https://로 시작하는 전체 주소를 입력해 주세요.',
+} as const
 
 export const CAREER_POSTING_BUTTON_LABEL_MAX_LENGTH = 15
 
@@ -66,8 +75,39 @@ export function validateCareerPostingLinkFields(input: CareerPostingLinkFields):
   if (buttonLabel && !linkUrl) {
     return '채용 공고 바로가기 링크를 입력해 주세요.'
   }
-  if (linkUrl && !isValidHttpLinkUrl(linkUrl)) {
-    return HTTP_LINK_URL_FORMAT_ALERT.content
+  if (linkUrl && !isCompleteHttpLinkUrl(linkUrl)) {
+    return CAREER_POSTING_LINK_URL_FORMAT_ALERT.content
+  }
+  return null
+}
+
+/** 값이 있는데 전체 http(s) 주소가 아니면 등록 불가 안내. 빈 값은 미입력으로 통과. */
+export function careerPostingLinkUrlFormatAlert(
+  linkUrl: string,
+): typeof CAREER_POSTING_LINK_URL_FORMAT_ALERT | null {
+  const trimmed = linkUrl.trim()
+  if (!trimmed) return null
+  if (isCompleteHttpLinkUrl(trimmed)) return null
+  return CAREER_POSTING_LINK_URL_FORMAT_ALERT
+}
+
+export function careerPostingMutationLinkFormatAlert(
+  error: unknown,
+): typeof CAREER_POSTING_LINK_URL_FORMAT_ALERT | null {
+  const field = readApiErrorField(error) ?? ''
+  const apiMessage = readApiErrorMessage(error) ?? ''
+  const fallbackMessage = error instanceof Error ? error.message : ''
+  const message = `${field} ${apiMessage} ${fallbackMessage}`
+  if (/linkUrl|바로가기 링크/i.test(message) && /invalid|형식|url|올바르/i.test(message)) {
+    return CAREER_POSTING_LINK_URL_FORMAT_ALERT
+  }
+  if (/^linkUrl$/i.test(field.trim())) return CAREER_POSTING_LINK_URL_FORMAT_ALERT
+  if (
+    axios.isAxiosError(error) &&
+    error.response?.status === 400 &&
+    /linkUrl|바로가기|https?:\/\//i.test(JSON.stringify(error.response.data ?? ''))
+  ) {
+    return CAREER_POSTING_LINK_URL_FORMAT_ALERT
   }
   return null
 }

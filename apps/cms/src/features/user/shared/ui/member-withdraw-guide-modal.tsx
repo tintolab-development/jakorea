@@ -1,7 +1,7 @@
 import {
-  DELETE_GUIDE_PASSWORD_CONFIRM_PLACEHOLDER,
   DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   DELETE_GUIDE_TYPED_CONFIRM_VALUE,
+  SELF_WITHDRAW_PASSWORD_CONFIRM_PLACEHOLDER,
   WITHDRAW_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   WITHDRAW_GUIDE_TYPED_CONFIRM_VALUE,
 } from '@/shared/constants'
@@ -40,6 +40,7 @@ function resolveGuide(props: MemberWithdrawGuideModalProps): {
   requiredConfirmInput?: string
   confirmInputPlaceholder: string
   confirmInputMode: DeleteGuideConfirmInputMode
+  hideConfirmInputLabel?: boolean
 } {
   const { variant, displayName = '', confirmText: confirmTextOverride } = props
 
@@ -60,8 +61,9 @@ function resolveGuide(props: MemberWithdrawGuideModalProps): {
       title: '회원 탈퇴 안내',
       lines: buildSelfWithdrawMessageLines(),
       confirmText: confirmTextOverride ?? '회원 탈퇴',
-      confirmInputPlaceholder: DELETE_GUIDE_PASSWORD_CONFIRM_PLACEHOLDER,
+      confirmInputPlaceholder: SELF_WITHDRAW_PASSWORD_CONFIRM_PLACEHOLDER,
       confirmInputMode: 'password',
+      hideConfirmInputLabel: true,
     }
   }
 
@@ -93,6 +95,7 @@ export function MemberWithdrawGuideModal(props: MemberWithdrawGuideModalProps) {
       requiredConfirmInput={guide.requiredConfirmInput}
       confirmInputPlaceholder={guide.confirmInputPlaceholder}
       confirmInputMode={guide.confirmInputMode}
+      hideConfirmInputLabel={guide.hideConfirmInputLabel}
       confirmLoading={confirmLoading}
       zIndex={zIndex}
     />

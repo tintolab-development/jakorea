@@ -14,6 +14,7 @@ import {
   ContentModal,
   REQUIRED_FIELDS_INCOMPLETE_ALERT,
   FileSelectField,
+  ThumbnailPlaceholder,
   FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
   isFileSelectTotalSizeExceeded,
   notifyFileSelectTotalSizeExceeded,
@@ -26,11 +27,18 @@ import './related-logo-form-modal.css'
 const IMAGE_ACCEPT = '.jpg,.jpeg,.png,image/jpeg,image/png'
 const IMAGE_GUIDE_LINES = [
   '- 파일은 JPG, PNG 형식만 등록 가능하며, 최대 20MB까지 첨부할 수 있습니다.',
-  '- 권장 로고 사이즈는 100 × 60px입니다.',
+  '- 권장 배너 사이즈는 100 × 60px입니다.',
 ]
 
-const MODAL_DESCRIPTION =
-  '유관기관의 로고 이미지와 문구를 설정해 주세요. 기관명은 홈페이지에서 별도 노출되지 않습니다.'
+const MODAL_DESCRIPTION = [
+  '유관기관의 로고 이미지와 텍스트를 설정해 주세요.',
+  '기관명은 홈페이지에서 별도 노출되지 않습니다.',
+].join('\n')
+
+/** PUT FooterPartnerUpdateRequest.organizationName */
+const ORGANIZATION_NAME_MAX_LENGTH = 200
+/** PUT FooterPartnerUpdateRequest.externalUrl */
+const EXTERNAL_URL_MAX_LENGTH = 2048
 
 function coerceRadioBoolean(raw: unknown): boolean {
   if (raw === true || raw === 1) return true
@@ -59,28 +67,6 @@ function readFileAsDataUrl(file: File): Promise<string> {
   })
 }
 
-function ImagePlaceholderIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="48"
-      height="48"
-      viewBox="0 0 48 48"
-      fill="none"
-      aria-hidden
-    >
-      <rect x="6" y="10" width="36" height="28" rx="3" stroke="#BDBDBD" strokeWidth="2" />
-      <circle cx="17" cy="20" r="3" fill="#BDBDBD" />
-      <path
-        d="M8 32L18 24L24 29L32 20L40 32"
-        stroke="#BDBDBD"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
 
 export type RelatedLogoFormValues = {
   isActive: boolean
@@ -164,7 +150,10 @@ export function RelatedLogoFormModal({
   )
 
   const handleSubmit = useCallback(() => {
-    if (isActive && (!name.trim() || (!logoUrl.trim() && !logoFile && logoAssetId == null))) {
+    const trimmedName = name.trim()
+    const hasLogo = Boolean(logoUrl.trim() || logoFile || logoAssetId != null)
+    // API: enabled+version 필수. enabled=true면 기관명·로고 필요. 연결 링크는 선택.
+    if (isActive && (!trimmedName || !hasLogo)) {
       showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
@@ -175,7 +164,7 @@ export function RelatedLogoFormModal({
     }
     onSubmit({
       isActive,
-      name: name.trim(),
+      name: trimmedName,
       linkUrl: trimmedLink,
       logoUrl: logoUrl.trim(),
       logoFileName: logoFileName || undefined,
@@ -225,6 +214,7 @@ export function RelatedLogoFormModal({
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="사용 여부"
+            required
             view={null}
             edit={
               <CmsRadioGroup
@@ -244,45 +234,16 @@ export function RelatedLogoFormModal({
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
-            label="기관명"
-            view={null}
-            edit={
-              <CmsInput
-                inputSize="small"
-                width="100%"
-                value={name}
-                placeholder="기관명을 입력해 주세요"
-                onChange={e => setName(e.target.value)}
-              />
-            }
-          />
-        </DetailInfoForm.Row>
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
-            label="연결 링크"
-            view={null}
-            edit={
-              <CmsInput
-                inputSize="small"
-                width="100%"
-                value={linkUrl}
-                placeholder="연결 링크를 입력해 주세요"
-                onChange={e => setLinkUrl(e.target.value)}
-              />
-            }
-          />
-        </DetailInfoForm.Row>
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
             label="로고 이미지"
+            required
             view={null}
             edit={
-              <div className="footer-related-logo-form-modal__image-row">
-                <div className="footer-related-logo-form-modal__preview">
-                  {logoUrl ? <img src={logoUrl} alt="로고 미리보기" /> : <ImagePlaceholderIcon />}
+              /* Figma 36:65433 Table / Common / Cell / File — 미리보기 72·모서리 8·흰 배경·간격 12 (공통 파일 칸) */
+              <div className="file-select-image-cell">
+                <div className="file-select-image-cell__preview">
+                  {logoUrl ? <img src={logoUrl} alt="로고 미리보기" /> : <ThumbnailPlaceholder />}
                 </div>
                 <FileSelectField
-                  className="footer-related-logo-form-modal__file-field"
                   multiple={false}
                   accept={IMAGE_ACCEPT}
                   buttonLabel="파일 추가"
@@ -300,6 +261,39 @@ export function RelatedLogoFormModal({
                   }}
                 />
               </div>
+            }
+          />
+        </DetailInfoForm.Row>
+        <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Field
+            label="기관명"
+            required
+            view={null}
+            edit={
+              <CmsInput
+                inputSize="small"
+                width="100%"
+                value={name}
+                maxLength={ORGANIZATION_NAME_MAX_LENGTH}
+                placeholder="기관명을 입력해 주세요"
+                onChange={e => setName(e.target.value)}
+              />
+            }
+          />
+        </DetailInfoForm.Row>
+        <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Field
+            label="연결 링크"
+            view={null}
+            edit={
+              <CmsInput
+                inputSize="small"
+                width="100%"
+                value={linkUrl}
+                maxLength={EXTERNAL_URL_MAX_LENGTH}
+                placeholder="연결할 주소를 입력해 주세요"
+                onChange={e => setLinkUrl(e.target.value)}
+              />
             }
           />
         </DetailInfoForm.Row>

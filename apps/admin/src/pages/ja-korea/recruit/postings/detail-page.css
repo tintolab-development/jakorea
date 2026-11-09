@@ -358,9 +358,10 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  align-self: flex-start;
+  align-self: center;
   width: 100%;
   max-width: 400px;
+  margin-inline: auto;
   height: 80px;
   min-height: 80px;
   margin-top: 24px; /* 본문 ↔ 버튼 24 (시안) */

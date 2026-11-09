@@ -34,7 +34,7 @@
   width: 100%;
   min-width: 0;
   max-width: 100%;
-  min-height: var(--calendar-cell-min-height, 124px);
+  min-height: calc(var(--calendar-cell-min-height, 124px) - var(--calendar-cell-row-border-width, 0px));
   height: auto;
   max-height: none;
   box-sizing: border-box;
@@ -93,8 +93,13 @@
   width: calc(100% / 7);
 }
 
+/*
+ * 행 높이(하단선 포함 124, Figma list 12432:532991)는 셀(.calendar-cell / .ant-picker-cell-inner의
+ * min-height = 124 - `--calendar-cell-row-border-width`)로만 정한다. tr에 124 하한을 두면
+ * border-collapse 표(7:3 split-card)에서 하단선 절반(0.5px)이 행 밖으로 더해져 124.5가 된다.
+ */
 .calendar-main .ant-picker-content tbody tr {
-  min-height: var(--calendar-cell-min-height, 124px);
+  min-height: 0;
   height: auto;
 }
 
@@ -119,6 +124,12 @@
   .ant-picker-content
   thead
   th {
+  /*
+   * 행 높이 29 = 라벨 21(Figma 텍스트 박스) + 그리드까지 8. 16px·130% line-height는 20.8이라
+   * 높이를 토큰으로 고정하지 않으면 28.8로 렌더된다 — 아래 날짜 행(124)은 영향 없음.
+   */
+  box-sizing: border-box;
+  height: var(--calendar-main-weekday-header-min-height, 29px);
   padding: 0 0 8px 0;
   color: var(--gray-85969-d, #85969d);
   text-align: center;
@@ -159,6 +170,7 @@
   tbody
   tr:nth-child(5)
   td {
+  --calendar-cell-row-border-width: 0px;
   border-bottom: none;
 }
 

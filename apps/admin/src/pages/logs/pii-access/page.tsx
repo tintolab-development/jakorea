@@ -9,6 +9,7 @@ import type { ColumnsType } from 'antd/es/table'
 import type { PiiAccessListFilter, PiiAccessLog } from '@/entities/pii-access-log/model/types'
 import { useExportPiiAccessLogs, usePiiAccessLogsList } from '@/features/pii-access-log/api/hooks'
 import { displayLogField } from '@/features/logs/shared/lib/display-log-field'
+import { logExcelExportFailureAlert } from '@/features/logs/shared/lib/log-excel-export-alert'
 import { formatLogDateTime } from '@/features/logs/shared/lib/format-datetime'
 import { LogListAccessDenied } from '@/features/logs/shared/ui/log-list-access-denied'
 import { isAdminForbidden } from '@/features/system-inbox/lib/http-status'
@@ -176,11 +177,9 @@ export function PiiAccessLogPage() {
   const forbidden = isAdminForbidden(listQuery.error)
 
   const handleExcel = useCallback(() => {
-    void exportMutation.mutateAsync(appliedFilter).catch(() => {
-      showAlert({
-        title: '내보내기 실패',
-        content: '엑셀 내보내기에 실패했습니다. 다시 시도해 주세요.',
-      })
+    if (exportMutation.isPending) return
+    void exportMutation.mutateAsync(appliedFilter).catch((error: unknown) => {
+      showAlert(logExcelExportFailureAlert(error))
     })
   }, [appliedFilter, exportMutation, showAlert])
 
@@ -297,7 +296,14 @@ export function PiiAccessLogPage() {
         }
         title="개인정보 조회 이력"
         description={`총 ${total.toLocaleString('ko-KR')}건`}
-        actions={<ExcelButton onClick={handleExcel} empty={total === 0} />}
+        actions={
+          <ExcelButton
+            onClick={handleExcel}
+            empty={total === 0}
+            loading={exportMutation.isPending}
+            disabled={exportMutation.isPending}
+          />
+        }
       >
         <CmsDataTable<PiiAccessLog>
           className="cms-data-table"

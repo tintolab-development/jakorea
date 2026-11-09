@@ -9,6 +9,7 @@ import {
   notifyFileSelectTotalSizeExceeded,
   showSaveCompletedAlert,
   useCmsAlert,
+  ThumbnailPlaceholder,
 } from '@/shared/ui'
 import { HistoryCopy, InlineText, MediaPreview, SectionFrame, jaHistorySaveAlert } from './chrome'
 import { CtaButtonsNestedTable } from './cta-buttons-nested-table'
@@ -159,10 +160,16 @@ export function CtaSection({ cta }: { cta: JaHistoryCta }) {
             label="이미지"
             view={<MediaPreview media={cta.image} size="cta" />}
             edit={
-              <div className="ja-history-cta-image">
-                <MediaPreview media={draft.image} size="cta" />
+              /* Figma 2118:134439 Table / Common / Cell / File — 미리보기 72×72 · 파일명 옆 삭제 X · 파일 추가+안내 */
+              <div className="file-select-image-cell">
+                <div className="file-select-image-cell__preview">
+                  {draft.image.url ? (
+                    <img src={draft.image.url} alt={draft.image.alt || 'JA 살펴보기 이미지 미리보기'} />
+                  ) : (
+                    <ThumbnailPlaceholder />
+                  )}
+                </div>
                 <FileSelectField
-                  className="ja-history-cta-image__field"
                   disabled={!editing}
                   multiple={false}
                   accept={JA_HISTORY_IMAGE_ACCEPT}

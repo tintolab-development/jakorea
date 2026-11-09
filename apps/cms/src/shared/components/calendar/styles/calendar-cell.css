@@ -8,7 +8,8 @@
   gap: var(--spacing-8, 8px);
   width: 100%;
   min-width: var(--calendar-cell-min-width, 116px);
-  min-height: var(--calendar-cell-min-height, 124px);
+  /* 행 하단 구분선(td border-bottom 1px)을 행 높이 124 안에 포함 — 아래 td 규칙 참고 */
+  min-height: calc(var(--calendar-cell-min-height, 124px) - var(--calendar-cell-row-border-width, 0px));
   height: auto;
   max-height: none;
   /* 피그마 Calendar/Cell — padding 6 7 6 6 */
@@ -27,11 +28,15 @@
  * Ant Calendar 월간 그리드: td에 right+bottom 1px — nested .calendar-cell min-width가
  * td를 넘치면 금~토 등 구분선이 가려지므로 선은 td에만 둔다.
  * (대시보드 위젯 등은 program-schedule-widget.css에서 별도 처리)
+ *
+ * 행 높이: Figma list(12432:532991) = 124 (하단 stroke 포함). 선을 셀 높이 밖에 더하면 125가 되므로
+ * `--calendar-cell-row-border-width`만큼 셀 min-height를 줄인다. 선이 없는 마지막 표시 행은 0.
  */
 .calendar-main .ant-picker-calendar-mini .ant-picker-content tbody td {
+  --calendar-cell-row-border-width: 1px;
   border: none;
   border-right: 1px solid var(--table-line, #e0e0e0);
-  border-bottom: 1px solid var(--table-line, #e0e0e0);
+  border-bottom: var(--calendar-cell-row-border-width) solid var(--table-line, #e0e0e0);
   padding: 0;
   vertical-align: top;
   box-sizing: border-box;
@@ -44,6 +49,7 @@
 }
 
 .calendar-main .ant-picker-calendar-mini .ant-picker-content tbody tr:last-child td {
+  --calendar-cell-row-border-width: 0px;
   border-bottom: none;
 }
 
@@ -214,13 +220,14 @@
   white-space: nowrap;
 }
 
+/* Figma Calendar / Tag / 1 Line(「외 N개의 항목」) — h17 · px4 · 13 / Medium / 130% */
 .calendar-event-more {
   flex: 0 0 auto;
   flex-shrink: 0;
   align-self: stretch;
   margin-top: auto;
-  overflow: visible;
-  padding: 0 4px 1px;
+  overflow: hidden;
+  padding: 0 4px;
   color: var(--Content-disabled, rgba(61, 61, 61, 0.5));
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -228,7 +235,8 @@
   font-size: 13px;
   font-style: normal;
   font-weight: 500;
-  line-height: 1.35;
-  min-height: calc(13px * 1.35);
+  line-height: 17px;
+  height: 17px;
+  min-height: 17px;
   text-align: left;
 }

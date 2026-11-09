@@ -15,3 +15,18 @@ export function isValidHttpLinkUrl(value: string): boolean {
   if (!trimmed) return false
   return HTTP_URL_PATTERN.test(trimmed)
 }
+
+/** http(s) 스킴 + 호스트가 있는 전체 주소. `http://`만 있는 값은 실패. */
+export function isCompleteHttpLinkUrl(value: string): boolean {
+  const trimmed = value.trim()
+  if (!HTTP_URL_PATTERN.test(trimmed)) return false
+  try {
+    const parsed = new URL(trimmed)
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false
+    const host = parsed.hostname.trim()
+    if (!host) return false
+    return /[a-z0-9]/i.test(host)
+  } catch {
+    return false
+  }
+}

@@ -44,29 +44,6 @@
   opacity: 0.5;
 }
 
-.lecture-report-submission-history-modal__status-text {
-  display: block;
-  width: 100%;
-  text-align: center;
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-}
-
-.lecture-report-submission-history-modal__status-text--scheduled {
-  color: var(--color-green, #1e8c29);
-}
-
-.lecture-report-submission-history-modal__status-text--completed {
-  color: var(--default-BK, #3d3d3d);
-}
-
-.lecture-report-submission-history-modal__status-text--undone {
-  color: var(--color-red, #c32f4a);
-}
-
 /* 푸터 — ContentModal 기본 140×44 덮어쓰기 (h40 · 닫기 120 · 일괄 200) */
 .lecture-report-submission-history-modal
   .content-modal__footer-actions

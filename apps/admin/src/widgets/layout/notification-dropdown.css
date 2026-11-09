@@ -5,84 +5,86 @@
 
 .notification-dropdown-panel {
   box-sizing: border-box;
+  /* 카테고리·목록 내용에 따라 너비가 줄었다 늘었다 하지 않도록 고정 (오버레이 레이아웃 시프트 방지) */
   width: min(406px, calc(100vw - 24px));
   min-width: 0;
   max-width: min(406px, calc(100vw - 24px));
   height: 500px;
-  padding: 4px 0 16px 0;
-  border-radius: 6px;
-  border: 1px solid #d4d4d4;
-  background: #fafafa;
-  box-shadow: 0 4px 12px 0 rgba(32, 32, 33, 0.1);
+  /* Figma 1142:74713 — radius 16 · border #e0e0e0 · shadow 0 4 24 · 배경 rgba(231,235,239,.6) on white */
+  padding: 0 0 16px 0;
+  border-radius: 16px;
+  border: 1px solid #e0e0e0;
+  background:
+    linear-gradient(rgba(231, 235, 239, 0.6), rgba(231, 235, 239, 0.6)),
+    #fff;
+  box-shadow: 0 4px 24px 0 rgba(32, 32, 33, 0.16);
   display: flex;
   flex-direction: column;
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
 .notification-dropdown-header {
   box-sizing: border-box;
-  height: 63px;
-  min-height: 63px;
+  flex-shrink: 0;
   min-width: 0;
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
-  align-items: center;
+  align-items: flex-start;
   justify-content: flex-start;
-  gap: 4px;
+  gap: 0;
   overflow-x: auto;
   overflow-y: hidden;
+  scrollbar-width: none;
+  /* 선택 탭 scrollIntoView 시 좌우 16px 여백 유지 */
+  scroll-padding-inline: 16px;
   background: #fff;
-  border-bottom: 1px solid rgba(212, 212, 212, 0.5);
-  padding: 0 16px;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 12px 16px 16px;
 }
 
-.notification-dropdown-category-btn.ant-btn {
+.notification-dropdown-header::-webkit-scrollbar {
+  display: none;
+}
+
+/* Tab / Line — 18px · 비활성 Medium rgba(61,61,61,.5) · 활성 Bold #00a0af + 하단 2px */
+.notification-dropdown-tab {
   box-sizing: border-box;
   flex: 0 0 auto;
-  width: auto !important;
-  min-width: unset !important;
-  height: 31px !important;
-  min-height: 31px !important;
-  padding-block: 0;
-  padding-inline: 10px;
-  border-radius: 4px;
-  border: 1px solid #d4d4d4;
-
-  color: var(--default-BK, #3d3d3d);
-  text-align: center;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 600;
-  line-height: 1;
-
   display: inline-flex;
-  justify-content: center;
   align-items: center;
-  gap: 10px;
-}
-
-.notification-dropdown-category-btn.ant-btn > span {
-  display: inline-block;
-  width: auto;
-  max-width: none;
+  justify-content: center;
+  margin: 0;
+  padding: 6px 16px 10px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: rgba(61, 61, 61, 0.5);
+  font-family: Pretendard, sans-serif;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.5;
   white-space: nowrap;
-  text-align: center;
+  cursor: pointer;
+  transition:
+    color 0.2s,
+    border-color 0.2s;
 }
 
-.notification-dropdown-category-btn--active.ant-btn-primary {
-  background: var(--JA-mint-01, #01a1af);
-  border: none !important;
-  box-shadow: none !important;
-  outline: none;
-  border-radius: 4px;
-  color: #fff;
+.notification-dropdown-tab:hover {
+  color: #3d3d3d;
 }
 
-.notification-dropdown-category-btn:not(.notification-dropdown-category-btn--active) {
-  background: #fff;
-  border: 1px solid #d4d4d4;
-  color: var(--default-BK, #3d3d3d);
+.notification-dropdown-tab:focus-visible {
+  outline: 2px solid rgba(0, 160, 175, 0.4);
+  outline-offset: -2px;
+}
+
+.notification-dropdown-tab--active,
+.notification-dropdown-tab--active:hover {
+  color: #00a0af;
+  font-weight: 700;
+  border-bottom-color: #00a0af;
 }
 
 .notification-dropdown-body {
@@ -90,10 +92,11 @@
   margin-top: 16px;
   overflow-y: auto;
   overflow-x: hidden;
+  /* 스크롤바 표시 여부에 따라 가로 폭이 바뀌는 현상 방지 */
   scrollbar-gutter: stable;
   min-height: 0;
-  background: #fafafa;
-  padding: 6px 16px 0 16px;
+  background: transparent;
+  padding: 0 16px;
 }
 
 .notification-dropdown-empty {
@@ -124,39 +127,53 @@
   box-sizing: border-box;
   width: 100%;
   max-width: 100%;
-  height: 90px;
-  padding: 12px 16px;
-  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 12px 12px 16px;
+  border-radius: 8px;
   background: #fff;
-  border: 1px solid #f0f0f0;
+  border: 1px solid transparent;
   cursor: pointer;
   transition:
     background-color 0.2s,
     opacity 0.2s;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
   opacity: 1;
 }
 
+/* 읽은 카드 — 그림자 대신 alpha-10 보더 · 투명도 50% */
 .notification-dropdown-item--read {
-  opacity: 0.3;
+  border-color: rgba(61, 61, 61, 0.1);
+  box-shadow: none;
+  opacity: 0.5;
 }
 
 .notification-dropdown-item:hover {
   background: #f5f5f5;
 }
 
+.notification-dropdown-item-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+}
+
 .notification-dropdown-item-title-row {
   display: flex;
   align-items: center;
   gap: 4px;
-  margin-bottom: 2px;
+  width: 100%;
   min-width: 0;
 }
 
 .notification-dropdown-item-tag {
   flex-shrink: 0;
-  color: var(--JA-mint-01, #01a1af);
-  font-size: 14px;
+  color: #00a0af;
+  font-size: 16px;
   font-style: normal;
   font-weight: 700;
   line-height: 150%;
@@ -168,7 +185,7 @@
   min-width: 0;
   color: var(--default-BK, #3d3d3d);
   text-align: left;
-  font-size: 14px;
+  font-size: 16px;
   font-style: normal;
   font-weight: 700;
   line-height: 150%;
@@ -178,26 +195,48 @@
   display: block;
 }
 
+/* 읽음 상태 배지 — pill · 12 SemiBold · py 3/2 · px 10 */
+.notification-dropdown-item-badge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 3px 10px 2px;
+  border-radius: 50px;
+  background: rgba(1, 161, 175, 0.1);
+  color: #00a0af;
+  font-family: Pretendard, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.notification-dropdown-item-badge--read {
+  min-width: 54px;
+  background: rgba(61, 61, 61, 0.1);
+  color: #3d3d3d;
+}
+
 .notification-dropdown-item-sub {
   display: block;
+  width: 100%;
+  padding-right: 4px;
   color: var(--default-BK, #3d3d3d);
   text-align: left;
-  font-size: 14px;
+  font-size: 16px;
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
   opacity: 0.6;
-  margin-bottom: 2px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
 }
 
 .notification-dropdown-item-date {
   display: block;
   color: var(--default-BK, #3d3d3d);
   text-align: left;
-  font-size: 12px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 500;
   line-height: 150%;

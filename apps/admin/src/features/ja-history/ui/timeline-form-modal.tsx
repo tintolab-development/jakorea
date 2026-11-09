@@ -17,6 +17,7 @@ import {
   notifyFileSelectTotalSizeExceeded,
   REQUIRED_FIELDS_INCOMPLETE_ALERT,
   useCmsAlert,
+  ThumbnailPlaceholder,
 } from '@/shared/ui'
 import { isAllowedJaHistoryImage, JA_HISTORY_IMAGE_ACCEPT, readJaHistoryImage } from './image-file'
 
@@ -280,7 +281,7 @@ function TimelineFormBody({
                     {imageUrl ? (
                       <img src={imageUrl} alt="대표 이미지 미리보기" />
                     ) : (
-                      <span>없음</span>
+                      <ThumbnailPlaceholder />
                     )}
                   </div>
                   <FileSelectField

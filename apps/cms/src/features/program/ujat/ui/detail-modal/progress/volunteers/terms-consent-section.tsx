@@ -7,6 +7,7 @@ import { useMemberConsentRecordsQuery } from '@/features/user/api/hooks/use-memb
 import { resolveTermsTypeToConsentLabel } from '@/features/user/api/map-member-consent-records'
 import { resolveMemberConsentTemplateByLabel } from '@/features/user/shared/lib/member-consent-template-map'
 import { MemberConsentDocumentViewModal } from '@/features/user/shared/ui/member-consent-document-view-modal'
+import { useMyProgramPrivacyRole } from '@/features/user/detail/lib/use-my-program-privacy-role'
 import type { MemberConsentRecordResponse } from '@/shared/api/generated/members/schemas/memberConsentRecordResponse'
 
 export type ConsentValue = 'agree' | 'disagree'
@@ -230,14 +231,18 @@ function ConsentBlockForm({
 /** 관리자 대리 작성 — 약관 및 동의(상·하 2블록 분리, 시안·기관 상세 form-stack 패턴) */
 export function UjatEducationProgressVolunteerTermsConsentSection({
   memberId,
+  programId,
   consents,
   onConsentsChange,
 }: {
   memberId: string
+  /** 담당 프로그램 Program Owner일 때만 주민등록번호 포함 동의서 파일 열람·다운로드 */
+  programId?: string | number | null
   consents: UjatVolunteerAddRegistrationConsentState
   onConsentsChange: (next: UjatVolunteerAddRegistrationConsentState) => void
 }) {
   const numericMemberId = Number(memberId)
+  const { canRevealSensitive: isProgramOwner } = useMyProgramPrivacyRole(programId)
   const membersRemote = isMembersRemoteEnabled() && Number.isFinite(numericMemberId) && numericMemberId > 0
   const consentRecordsQuery = useMemberConsentRecordsQuery(
     numericMemberId,
@@ -318,6 +323,7 @@ export function UjatEducationProgressVolunteerTermsConsentSection({
           filledDocumentId={activeView.filledDocumentId}
           filledDocumentRevealEndpoint={activeView.filledDocumentRevealEndpoint}
           documentAgreed={activeView.documentAgreed}
+          isProgramOwner={isProgramOwner}
           onClose={() => setActiveView(null)}
         />
       ) : null}
