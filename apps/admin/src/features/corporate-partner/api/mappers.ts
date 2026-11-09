@@ -16,10 +16,12 @@ import type { SponsorListItem } from '@/shared/api/generated/sponsorship/schemas
 import type { SponsorResponse } from '@/shared/api/generated/sponsorship/schemas/sponsorResponse'
 import type { SponsorUpdateRequest } from '@/shared/api/generated/sponsorship/schemas/sponsorUpdateRequest'
 import { resolveCorporatePartnerLogoFileName } from '@/features/corporate-partner/lib/logo-display-name'
-import { ADMIN_LIST_PAGE_SIZE } from '@/shared/lib/admin-infinite-list'
 
-/** 후원사 목록 — 무한 스크롤 한 번에 20건 (list-page-size.mdc) */
-export const LIST_PAGE_SIZE = ADMIN_LIST_PAGE_SIZE
+/**
+ * 후원사 목록 — 페이지당 50건 (Figma 36:47073: 한 화면 50개 + 페이지 이동 UI).
+ * list-page-size.mdc 기본 20의 예외: 서버 페이징 UI(AdminCompactPagination)가 붙어 있고 상한 50 고정.
+ */
+export const LIST_PAGE_SIZE = 50
 
 export function mapSponsorListItemToDomain(row: SponsorListItem): CorporatePartner {
   const id = row.id != null ? String(row.id) : ''
