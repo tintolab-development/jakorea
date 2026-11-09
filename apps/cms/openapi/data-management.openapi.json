@@ -6190,7 +6190,7 @@
       },
       "OrganizationEnrich": {
         "type": "object",
-        "description": "기관형 강사 배정 대기 기관별 편도 거리. 희망 기관이 아닌 대기 대상도 포함한다.",
+        "description": "기관형 강사·봉사자 배정 대기 기관별 편도 거리. 희망 기관이 아닌 대기 대상도 포함한다.",
         "properties": {
           "organizationId": {
             "type": "integer",
@@ -9039,6 +9039,22 @@
             "type": "string",
             "maxLength": 255,
             "minLength": 0
+          },
+          "downloadKind": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 0,
+            "pattern": "^[A-Z][A-Z0-9_]*$"
+          },
+          "containedPiiTypes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^(NAME|RESIDENT_REGISTRATION_NUMBER|ACCOUNT_NUMBER)$"
+            },
+            "maxItems": 3,
+            "minItems": 0
           }
         },
         "required": [
@@ -23101,12 +23117,12 @@
       },
       "PreferredEducationScheduleResponse": {
         "type": "object",
-        "description": "신청자가 해당 신청 건에서 선택한 교육 일정. 공통정보 line:N은 그 줄의 PROGRAM_DEFINED 교육 슬롯(education_slot_key=general-common-line:N+1)에 직접 연결한다. 날짜만 있는 희망 일정은 그날 교육 슬롯 전부, 시각이 있는 희망 일정은 시작·종료가 같은 교육 슬롯 전부를 scheduleIds로 반환한다. 신청 파생 일정이나 OSA id는 반환하지 않으며, 연결할 슬롯이 없으면 scheduleId=null, scheduleIds=[]와 unresolvedReason을 반환한다.",
+        "description": "신청자가 해당 신청 건에서 선택한 교육 일정. 공통정보 line:N은 그 줄의 PROGRAM_DEFINED 교육 슬롯(education_slot_key=general-common-line:N+1)에 직접 연결한다. 날짜만 있는 희망 일정은 그날 교육 슬롯 전부, 시각이 있는 희망 일정은 시작·종료가 같은 교육 슬롯 전부를 scheduleIds로 반환한다. 신청 파생 일정이나 OSA id는 반환하지 않으며, 연결할 슬롯이 없으면 scheduleId=null, scheduleIds=[]와 unresolvedReason을 반환한다. 예외: 일반 기관(GENERAL_ORGANIZATION) 기간 지정(PERIOD)은 승인 여부와 관계없이 기관이 저장한 희망 행을 지망 순서대로 반환하고, requestedScheduleIds로 확정된 행은 requested-schedules의 resolvedScheduleId(이 신청의 APPLICATION_MATERIALIZED 일정)를 scheduleId로 반환한다.",
         "properties": {
           "scheduleId": {
             "type": "integer",
             "format": "int64",
-            "description": "연결된 첫 PROGRAM_DEFINED program_schedule id(GET .../education-slots의 scheduleId). scheduleIds[0]과 같다. 여러 날 기간 창·신청 파생·UNKNOWN 일정이거나 연결할 슬롯이 없으면 null이며, 이때 startAt/endAt/label만 신청일로 표시한다.",
+            "description": "연결된 첫 PROGRAM_DEFINED program_schedule id(GET .../education-slots의 scheduleId). scheduleIds[0]과 같다. 여러 날 기간 창·신청 파생·UNKNOWN 일정이거나 연결할 슬롯이 없으면 null이며, 이때 startAt/endAt/label만 신청일로 표시한다. 기간 지정(PERIOD) 일반 기관은 확정 행의 resolvedScheduleId(이 신청의 APPLICATION_MATERIALIZED 일정)이며 미확정 행은 null이다.",
             "nullable": true
           },
           "round": {
@@ -23138,7 +23154,7 @@
           },
           "scheduleIds": {
             "type": "array",
-            "description": "이 희망 일정이 가리키는 PROGRAM_DEFINED program_schedule id 전체(시작 시각, id 순). 같은 날 슬롯이 여러 개면 모두 포함한다. 연결이 없으면 []이며 null은 반환하지 않는다.",
+            "description": "이 희망 일정이 가리키는 PROGRAM_DEFINED program_schedule id 전체(시작 시각, id 순). 같은 날 슬롯이 여러 개면 모두 포함한다. 연결이 없으면 []이며 null은 반환하지 않는다. 기간 지정(PERIOD) 일반 기관은 requested-schedules의 resolvedScheduleIds와 같다.",
             "items": {
               "type": "integer",
               "format": "int64"
@@ -26484,7 +26500,9 @@
           },
           "calculatedAmount": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "지급 예정 강사비(원). 계좌 지급 대상이면 차시 단가 금액. 지급 제외(ZERO_CALCULATED_FEE·GEMINI_INSTRUCTOR_IDENTITY_BLANK·GEMINI_INSTRUCTOR_EXTERNAL_PAYEE)는 0. 단가 미설정(GEMINI_WAGE_RATE_NOT_CONFIGURED)은 0원이 아니므로 null.",
+            "nullable": true
           },
           "matchedInstructorMemberId": {
             "type": "integer",
@@ -39405,7 +39423,7 @@
           "expectedAmount": {
             "type": "integer",
             "format": "int64",
-            "description": "정산 예정 금액(원 단위 정수). 연결된 지급 건이 없거나 산정 전이면 null",
+            "description": "정산 예정 금액(원 단위 정수). 계좌 지급 건이 있으면 실지급액(없으면 산정 금액). 지급 건이 없어도 강사비 0원(ZERO_CALCULATED_FEE)이면 0. 단가 미설정·지급 건 미생성·산정 전이면 null",
             "nullable": true
           }
         }
@@ -44199,6 +44217,18 @@
             "type": "string",
             "format": "date",
             "description": "교육 진행 일자(표시용). 캘린더 배치는 scheduledPaymentDate(이체 예정일)입니다.",
+            "nullable": true
+          },
+          "taxIncomeType": {
+            "type": "string",
+            "description": "세금 소득유형 코드(지급 시점 tax snapshot, 정규화). 예: BUSINESS_INCOME | OTHER_INCOME | DAILY_EMPLOYMENT_INCOME(레거시, 세금신고 양식 대상 아님) | AWARD | EVENT_PRIZE | INTERVIEW_SUPPORT_REWARD. snapshot이 없으면 null.",
+            "example": "BUSINESS_INCOME",
+            "nullable": true
+          },
+          "taxIncomeTypeDisplay": {
+            "type": "string",
+            "description": "taxIncomeType 표시명. 사업소득 | 기타소득 | 일용근로소득. 그 외 코드나 snapshot 없음은 null.",
+            "example": "사업소득",
             "nullable": true
           },
           "availableActions": {
@@ -52539,7 +52569,9 @@
           },
           "calculatedAmount": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "지급 예정 강사비(원). 계좌 지급 대상이면 차시 단가 금액. 지급 제외(ZERO_CALCULATED_FEE·GEMINI_INSTRUCTOR_IDENTITY_BLANK·GEMINI_INSTRUCTOR_EXTERNAL_PAYEE)는 0. 단가 미설정(GEMINI_WAGE_RATE_NOT_CONFIGURED)은 0원이 아니므로 null. 단가 미설정 판정은 저장된 paymentExclusionReason 기준.",
+            "nullable": true
           },
           "accountPaymentId": {
             "type": "integer",

@@ -44,5 +44,9 @@ export interface AccountPaymentListItemResponse {
   sessionLabel?: string | null;
   /** 교육 진행 일자(표시용). 캘린더 배치는 scheduledPaymentDate(이체 예정일)입니다. */
   lectureDate?: string | null;
+  /** 세금 소득유형 코드(지급 시점 tax snapshot, 정규화). 예: BUSINESS_INCOME | OTHER_INCOME | DAILY_EMPLOYMENT_INCOME(레거시, 세금신고 양식 대상 아님) | AWARD | EVENT_PRIZE | INTERVIEW_SUPPORT_REWARD. snapshot이 없으면 null. */
+  taxIncomeType?: string | null;
+  /** taxIncomeType 표시명. 사업소득 | 기타소득 | 일용근로소득. 그 외 코드나 snapshot 없음은 null. */
+  taxIncomeTypeDisplay?: string | null;
   availableActions?: string[];
 }
