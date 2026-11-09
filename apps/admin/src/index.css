@@ -7,6 +7,7 @@
 @import './shared/ui/table-th.css';
 @import './shared/ui/page-content-loading.css';
 @import './shared/ui/detail-info-form-modal.css';
+@import './shared/ui/inline-readonly.css';
 
 /*
  * 읽기 전용(조회 모드) CmsInput·CmsTextArea — 셀을 클릭해도 커서(caret)가 보이지 않는다.

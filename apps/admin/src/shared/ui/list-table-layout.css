@@ -32,6 +32,33 @@
   margin-bottom: 0;
 }
 
+/*
+ * 단건 문서 폼 카드 — 흰 카드가 콘텐츠 영역 남은 세로를 채운다 (detail-document-form-card.mdc §1)
+ * 페이지 래퍼에 `min-height/height: calc(100vh - header - 64px)` + `display:flex; column`이 있어야 한다.
+ * 본문 사이 간격(gap)·스크롤 정책만 피처에서 덧붙인다.
+ */
+.admin-list-card.admin-document-card {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  margin-bottom: 0;
+}
+
+.admin-document-card > .admin-list-toolbar {
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.admin-document-card__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
 .admin-list-toolbar {
   display: flex;
   flex-wrap: wrap;

@@ -23,9 +23,12 @@ const BASE_STYLE: CSSProperties = {
   border: 'none',
   background: 'transparent',
   padding: 0,
-  margin: 0,
+  // 블록 flex + 가로 auto 여백 — inline-flex는 셀의 글자 기준선에 앉아 행 중앙보다 3px 위로 뜬다(52 행: 13/19).
+  // 블록이면 td vertical-align:middle 로 정확히 가운데(16/16)
+  margin: '0 auto',
+  width: 'fit-content',
   lineHeight: 1,
-  display: 'inline-flex',
+  display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
   color: 'var(--main-BK, #3d3d3d)',

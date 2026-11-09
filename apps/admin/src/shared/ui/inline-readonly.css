@@ -1,0 +1,43 @@
+/**
+ * 조회↔수정 같은 컨트롤 유지 — 조회(readOnly) 모양 공통 (detail-document-form-card.mdc §3)
+ * `CmsInput`·`CmsTextArea`의 `inlineReadOnly` prop이 붙이는 클래스. 피처 CSS에서 다시 선언하지 않는다.
+ *
+ * - slot: 보더 1px 슬롯은 남기고 색·배경·그림자만 투명 → 수정 전환 시 글자 위치가 움직이지 않는다.
+ * - text: slot + 컨트롤·입력의 패딩·보더·최소 높이를 없애 셀 텍스트처럼 보인다(셀 패딩 12×16만 남음).
+ *   글자 크기는 화면마다 달라 여기서 정하지 않는다.
+ */
+
+.cms-inline-readonly .cms-input__control,
+.cms-inline-readonly .cms-textarea__control,
+.cms-inline-readonly .cms-input__control:hover,
+.cms-inline-readonly .cms-textarea__control:hover {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  cursor: default;
+}
+
+.cms-inline-readonly .ant-input,
+.cms-inline-readonly textarea.ant-input {
+  cursor: default;
+  color: var(--default-BK, #3d3d3d) !important;
+}
+
+.cms-inline-readonly--text .cms-input__control,
+.cms-inline-readonly--text .cms-textarea__control {
+  min-height: 0 !important;
+  padding: 0 !important;
+  border-width: 0 !important;
+}
+
+.cms-inline-readonly--text .cms-input__control,
+.cms-inline-readonly--text .cms-textarea__control {
+  height: auto !important;
+}
+
+.cms-inline-readonly--text .ant-input,
+.cms-inline-readonly--text textarea.ant-input {
+  min-height: 0 !important;
+  padding: 0 !important;
+  line-height: 150% !important;
+}
