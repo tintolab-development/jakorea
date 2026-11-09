@@ -41,16 +41,13 @@
   font-weight: 500;
 }
 
+/* 섹션 = 흰 카드(admin-list-card) 하나 — 배경·여백·모서리는 공통 카드 규격을 그대로 쓴다 */
 .corporate-guide-section {
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   min-width: 0;
   width: 100%;
-  margin: 0;
-  padding: 0;
-  background: transparent;
-  box-shadow: none;
 }
 
 .corporate-guide-section .admin-list-toolbar {

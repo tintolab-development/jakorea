@@ -1,5 +1,5 @@
 /**
- * 기업후원 안내 관리 — 단일 흰 카드 안에 3개 항목 테이블
+ * 기업후원 안내 관리 — 섹션별 흰 카드 3개, 간격 32 (Figma 36:46024 · 푸터 관리와 동일 구조)
  */
 
 import { useCorporateGuide } from '@/features/corporate-guide/api/hooks'
@@ -40,11 +40,9 @@ export function CorporateGuidePage() {
 
   return (
     <div className="corporate-guide-page">
-      <div className="admin-list-card corporate-guide-card">
-        <BannerSectionCard banner={data.banner} />
-        <MetricsSectionCard items={data.metrics} />
-        <PartnershipSectionCard items={data.partnershipSteps} />
-      </div>
+      <BannerSectionCard banner={data.banner} />
+      <MetricsSectionCard items={data.metrics} />
+      <PartnershipSectionCard items={data.partnershipSteps} />
     </div>
   )
 }

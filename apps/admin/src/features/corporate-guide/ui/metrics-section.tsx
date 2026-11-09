@@ -156,7 +156,7 @@ export function MetricsSectionCard({ items }: Props) {
   )
 
   return (
-    <div className="corporate-guide-section">
+    <div className="admin-list-card corporate-guide-section">
       <div className="admin-list-toolbar">
         <div className="table-header-title--wrapper">
           <span className="table-title">■ 핵심 지표</span>

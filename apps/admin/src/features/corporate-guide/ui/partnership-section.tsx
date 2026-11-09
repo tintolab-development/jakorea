@@ -159,7 +159,7 @@ export function PartnershipSectionCard({ items }: Props) {
   )
 
   return (
-    <div className="corporate-guide-section">
+    <div className="admin-list-card corporate-guide-section">
       <div className="admin-list-toolbar">
         <div className="table-header-title--wrapper">
           <span className="table-title">■ 파트너십 절차</span>
