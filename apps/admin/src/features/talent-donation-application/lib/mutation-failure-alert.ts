@@ -6,6 +6,7 @@ import {
   isOptimisticLockConflictError,
   readApiErrorMessage,
 } from '@/shared/lib/api-error-message'
+import { ADMIN_ACCESS_DENIED_ALERT } from '@/shared/lib/admin-access-denied'
 
 export function talentDonationApplicationMutationFailureAlert(
   error: unknown,
@@ -26,10 +27,7 @@ export function talentDonationApplicationMutationFailureAlert(
     }
   }
   if (/Permission is denied|FORBIDDEN|PII/i.test(message)) {
-    return {
-      title: '처리 실패',
-      content: '조회·처리 권한이 없습니다. 관리자에게 문의해 주세요.',
-    }
+    return { ...ADMIN_ACCESS_DENIED_ALERT }
   }
 
   return { title: '처리 실패', content: fallbackContent }

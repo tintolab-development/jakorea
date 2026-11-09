@@ -12,6 +12,7 @@ import {
 } from '@/shared/lib/api-error-message'
 import { REQUIRED_FIELDS_INCOMPLETE_ALERT } from '@/shared/ui'
 import { hasIncompleteRequiredDirectionsFields } from './required-fields'
+import { ADMIN_ACCESS_DENIED_ALERT } from '@/shared/lib/admin-access-denied'
 
 export type DirectionsAlert = {
   title: string
@@ -186,10 +187,7 @@ export function directionsSaveFailureAlert(error: unknown): DirectionsAlert {
     }
   }
   if (/Permission is denied|FORBIDDEN/i.test(message)) {
-    return {
-      title: '저장 실패',
-      content: '오시는 길 저장 권한이 없습니다. 관리자에게 문의해 주세요.',
-    }
+    return { ...ADMIN_ACCESS_DENIED_ALERT }
   }
 
   return {

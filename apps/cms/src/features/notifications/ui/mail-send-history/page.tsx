@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import dayjs from 'dayjs'
-import { MailSendStatusText } from './send-status-text'
+import { NotificationSendStatusText } from '@/features/notifications/ui/shared/send-status-text'
 import type { ColumnsType } from 'antd/es/table'
 import { useSearchParams } from 'react-router-dom'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
@@ -154,7 +154,7 @@ export function MailSendHistoryPage() {
         key: 'sendStatus',
         width: COL_W.sendStatus,
         align: 'center',
-        render: (status: string) => <MailSendStatusText status={status} />,
+        render: (status: string) => <NotificationSendStatusText status={status} />,
       },
       {
         title: '수신 상태',

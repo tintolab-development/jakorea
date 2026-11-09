@@ -92,13 +92,38 @@ export function keepFirstInfiniteQueryPage<T>(
   }
 }
 
+/** 페이지 단위 캐시(`useQuery` 한 장) 판별 — 무한 캐시(`pages`)와 구분 */
+export function isSingleAdminListPage<T>(
+  data: InfiniteData<AdminListPage<T>> | AdminListPage<T> | T[],
+): data is AdminListPage<T> {
+  return !Array.isArray(data) && 'items' in data && !('pages' in data)
+}
+
 export function flattenAdminListCache<T extends { id: string }>(data: unknown): T[] {
   if (!data) return []
   if (Array.isArray(data)) return data as T[]
   if (typeof data === 'object' && data !== null && 'pages' in data) {
     return flattenAdminListPages(data as InfiniteData<AdminListPage<T>>)
   }
+  if (typeof data === 'object' && data !== null && 'items' in data) {
+    const items = (data as AdminListPage<T>).items
+    return Array.isArray(items) ? items : []
+  }
   return []
+}
+
+/** 캐시(무한 또는 페이지 한 장)가 알고 있는 서버 전체 건수 */
+export function readAdminListCacheTotalCount(data: unknown): number | undefined {
+  if (!data || typeof data !== 'object') return undefined
+  if ('pages' in data) {
+    const first = (data as InfiniteData<AdminListPage<unknown>>).pages[0]
+    return typeof first?.totalCount === 'number' ? first.totalCount : undefined
+  }
+  if ('totalCount' in data) {
+    const total = (data as AdminListPage<unknown>).totalCount
+    return typeof total === 'number' ? total : undefined
+  }
+  return undefined
 }
 
 export function collectInfiniteCachedRows<T extends { id: string }>(
@@ -117,7 +142,9 @@ export function patchInfiniteListRow<T extends { id: string }>(
   listsKey: readonly unknown[],
   row: T,
 ) {
-  qc.setQueriesData<InfiniteData<AdminListPage<T>> | T[]>({ queryKey: listsKey }, old => {
+  qc.setQueriesData<InfiniteData<AdminListPage<T>> | AdminListPage<T> | T[]>(
+    { queryKey: listsKey },
+    old => {
     if (!old) return old
     if (Array.isArray(old)) {
       const idx = old.findIndex(item => item.id === row.id)
@@ -126,6 +153,9 @@ export function patchInfiniteListRow<T extends { id: string }>(
       next[idx] = row
       return next
     }
+    if (isSingleAdminListPage(old)) {
+      return { ...old, items: old.items.map(item => (item.id === row.id ? row : item)) }
+    }
     return {
       ...old,
       pages: old.pages.map(page => ({
@@ -133,7 +163,8 @@ export function patchInfiniteListRow<T extends { id: string }>(
         items: page.items.map(item => (item.id === row.id ? row : item)),
       })),
     }
-  })
+    },
+  )
 }
 
 export function removeInfiniteListRows(
@@ -142,11 +173,20 @@ export function removeInfiniteListRows(
   ids: string[],
 ) {
   const idSet = new Set(ids)
-  qc.setQueriesData<InfiniteData<AdminListPage<{ id: string }>> | { id: string }[]>(
+  qc.setQueriesData<
+    InfiniteData<AdminListPage<{ id: string }>> | AdminListPage<{ id: string }> | { id: string }[]
+  >(
     { queryKey: listsKey },
     old => {
       if (!old) return old
       if (Array.isArray(old)) return old.filter(row => !idSet.has(row.id))
+      if (isSingleAdminListPage(old)) {
+        return {
+          ...old,
+          items: old.items.filter(row => !idSet.has(row.id)),
+          totalCount: Math.max(0, old.totalCount - ids.length),
+        }
+      }
       return {
         ...old,
         pages: old.pages.map(page => ({

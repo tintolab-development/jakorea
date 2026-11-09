@@ -58,7 +58,7 @@ export function mapStatementStatusToLineStatus(
 
 /**
  * statementStatus + paymentStatus 축으로 라인 라벨 매핑.
- * `CONFIRMED` + `WAITING_PAYMENT` → 지급 대기 (`awaiting_payment`).
+ * `CONFIRMED` + `WAITING_PAYMENT` → `awaiting_payment`(라벨 「지급조서 확인 완료」 — 지급조서 갈래 정의).
  * `frontendStatus`/`payment_pending` 문자열로 「확인 대기 중」을 추론하지 않는다.
  */
 export function mapSettlementAxesToLineStatus(

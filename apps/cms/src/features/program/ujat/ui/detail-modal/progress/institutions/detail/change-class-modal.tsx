@@ -23,6 +23,7 @@ import {
   emptyExistingClassSelectOptions,
   existingClassKey,
   getChangeClassAddRowBlockReason,
+  isChangeClassRowComplete,
   normalizedClassKey,
   resolveExistingClassWire,
   validateChangeClassRows,
@@ -32,8 +33,8 @@ import './change-class-modal.css'
 
 const MODAL_Z_INDEX = 1100
 
-/** 학년/학급 셀렉트 고정 폭 — `2학년`·`미배정`·`20반`이 잘리지 않도록 */
-const GRADE_CLASS_SELECT_WIDTH = 112
+/** 학년/학급 셀렉트는 피그마 규격대로 셀 폭을 나눠 채운다(flex 1). */
+const GRADE_CLASS_SELECT_WIDTH = '100%'
 
 const NEW_GRADE_OPTIONS = [
   ...Array.from({ length: 6 }, (_, index) => ({
@@ -204,6 +205,12 @@ export function UjatEducationProgressChangeClassModal({
     scheduleOptions,
   ])
 
+  /** 모든 행을 채웠는데 저장할 수 없는 이유 — 버튼만 꺼지지 않도록 바로 보여 준다 */
+  const liveValidationError = useMemo(() => {
+    if (!rows.every(isChangeClassRowComplete)) return null
+    return validateChangeClassRows(rows, catalogClassKeys)
+  }, [catalogClassKeys, rows])
+
   const handleCancel = useCallback(() => {
     if (confirming) return
     setRows([createEmptyRow()])
@@ -361,7 +368,7 @@ export function UjatEducationProgressChangeClassModal({
       open={open}
       onCancel={handleCancel}
       title="교육 학년 및 학급 변경"
-      width={640}
+      width={600}
       zIndex={MODAL_Z_INDEX}
       className="ujat-education-progress-change-class-modal"
       wrapClassName="ujat-education-progress-change-class-modal-wrap"
@@ -430,9 +437,27 @@ export function UjatEducationProgressChangeClassModal({
                 aria-label="전체 선택"
               />
             </div>
-            <div className="ujat-education-progress-change-class-modal__header-cell">기존 학급</div>
             <div className="ujat-education-progress-change-class-modal__header-cell">
-              변경할 학급
+              <span className="ujat-education-progress-change-class-modal__header-label">
+                기존 학급
+                <span
+                  className="ujat-education-progress-change-class-modal__header-required"
+                  aria-hidden
+                >
+                  *
+                </span>
+              </span>
+            </div>
+            <div className="ujat-education-progress-change-class-modal__header-cell">
+              <span className="ujat-education-progress-change-class-modal__header-label">
+                변경할 학급
+                <span
+                  className="ujat-education-progress-change-class-modal__header-required"
+                  aria-hidden
+                >
+                  *
+                </span>
+              </span>
             </div>
           </div>
 
@@ -456,11 +481,7 @@ export function UjatEducationProgressChangeClassModal({
                 ? availableClassOptionsFor(row.existingGrade)
                 : []
               const isNewClassDisabled = row.newGrade === UNASSIGNED_GRADE_VALUE
-              const blockedTargetKeys = collectBlockedTargetClassKeys(
-                rows,
-                rowIndex,
-                catalogClassKeys
-              )
+              const blockedTargetKeys = collectBlockedTargetClassKeys(rows, rowIndex)
               const newClassOptions = row.newGrade
                 ? NEW_CLASS_OPTIONS.map(option => {
                     const key = normalizedClassKey(row.newGrade, option.value)
@@ -615,12 +636,12 @@ export function UjatEducationProgressChangeClassModal({
           </div>
         </div>
 
-        {formError ? (
+        {formError || liveValidationError ? (
           <p
             className="form-editor-template-field-hint-text ujat-education-progress-change-class-modal__form-error"
             role="alert"
           >
-            {formError}
+            {formError ?? liveValidationError}
           </p>
         ) : null}
 

@@ -125,12 +125,19 @@ export async function fetchAdminProgramsRemote(
   )
 }
 
-export async function fetchAdminProgramByIdRemote(programId: string): Promise<AdminProgramResponseDto> {
+export async function fetchAdminProgramByIdRemote(
+  programId: string,
+  /** 보조 조회(예: 계좌 지급 상세의 프로그램 유형 판정)는 실패해도 공통 오류 팝업을 띄우지 않는다. */
+  options?: { skipGlobalErrorAlert?: boolean }
+): Promise<AdminProgramResponseDto> {
   return unwrapApiBody<AdminProgramResponseDto>(
-    await customInstance({
-      url: `/api/admin/programs/${encodeURIComponent(programId)}`,
-      method: 'GET',
-    })
+    await customInstance(
+      {
+        url: `/api/admin/programs/${encodeURIComponent(programId)}`,
+        method: 'GET',
+      },
+      options?.skipGlobalErrorAlert ? { skipGlobalErrorAlert: true } : undefined
+    )
   )
 }
 
@@ -260,15 +267,19 @@ export async function bulkDeleteAdminProgramsRemote(programIds: string[]): Promi
 }
 
 export async function fetchAdminProgramNavigationRemote(
-  programId: string
+  programId: string,
+  options?: { skipGlobalErrorAlert?: boolean }
 ): Promise<
   import('@/shared/api/generated/dashboard/schemas/programNavigationResponse').ProgramNavigationResponse
 > {
   return unwrapApiBody(
-    await customInstance({
-      url: `/api/admin/programs/${encodeURIComponent(programId)}/navigation`,
-      method: 'GET',
-    })
+    await customInstance(
+      {
+        url: `/api/admin/programs/${encodeURIComponent(programId)}/navigation`,
+        method: 'GET',
+      },
+      options?.skipGlobalErrorAlert ? { skipGlobalErrorAlert: true } : undefined
+    )
   )
 }
 

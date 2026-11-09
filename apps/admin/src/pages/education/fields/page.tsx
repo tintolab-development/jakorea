@@ -212,9 +212,9 @@ export function EducationFieldsPage() {
               }
               inputSize="medium"
               width="100%"
-              layout={isEditing ? 'fixed' : 'default'}
-              rows={isEditing ? undefined : 1}
-              autoSize={isEditing ? { minRows: 1 } : { minRows: 1, maxRows: 2 }}
+              layout="fixed"
+              // 조회·수정 모두 내용 줄 수만큼(hug) — 조회는 rows=1 단일행 규격(행간 40px)을 타지 않아 줄바꿈과 무관하게 행간 동일
+              autoSize={{ minRows: 1 }}
               value={value}
               readOnly={!isEditing}
               tabIndex={isEditing ? 0 : -1}
@@ -243,9 +243,9 @@ export function EducationFieldsPage() {
               }
               inputSize="medium"
               width="100%"
-              layout={isEditing ? 'fixed' : 'default'}
-              rows={isEditing ? undefined : 1}
-              autoSize={isEditing ? { minRows: 1 } : { minRows: 1, maxRows: 2 }}
+              layout="fixed"
+              // 조회·수정 모두 내용 줄 수만큼(hug) — 조회는 rows=1 단일행 규격(행간 40px)을 타지 않아 줄바꿈과 무관하게 행간 동일
+              autoSize={{ minRows: 1 }}
               value={value}
               placeholder={GUIDE_PLACEHOLDER}
               readOnly={!isEditing}

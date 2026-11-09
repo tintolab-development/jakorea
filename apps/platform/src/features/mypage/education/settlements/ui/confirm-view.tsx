@@ -1,3 +1,7 @@
+import {
+  COMPANY_SCHOOL_LODGING_DEFAULT_FIXED_WON,
+  formatCompanySchoolLodgingFixedAmountNotice,
+} from '../lib/company-school-lodging'
 import type { ReactNode } from 'react'
 import type { SettlementTripLegDraft, SettlementWriteDraft } from '../model/write-draft'
 import type { EducationSettlementItem } from '../model/types'
@@ -313,6 +317,26 @@ export function EducationSettlementConfirmView({
           <ConfirmAmountSummary
             label="식사비"
             amount={formatSettlementAmountDisplay(draft.meal.amount)}
+          />
+        </ConfirmSection>
+      ) : null}
+
+      {!isReceiptWriteDraft(draft) && draft.companySchoolLodging?.requested ? (
+        <ConfirmSection title="숙박비 신청" footer={formatCompanySchoolLodgingFixedAmountNotice()}>
+          <PFInfoReview
+            accentFirstRow={false}
+            rows={[
+              {
+                label: '영수증 제출',
+                value: formatSettlementFileNames(
+                  readSettlementNamedExpenseFileNames(draft.companySchoolLodging)
+                ),
+              },
+            ]}
+          />
+          <ConfirmAmountSummary
+            label="숙박비"
+            amount={formatSettlementAmountDisplay(String(COMPANY_SCHOOL_LODGING_DEFAULT_FIXED_WON))}
           />
         </ConfirmSection>
       ) : null}

@@ -113,3 +113,42 @@ describe('mapLectureReportDtoToInstructorRow', () => {
     expect(row?.curriculumSessionCount).toBe(1)
   })
 })
+
+describe('mapLectureReportDtoToInstructorRow — 서버 reportStatus 해석 (R01)', () => {
+  const base = { reportId: 21, lectureProgressStatus: 'COMPLETED' }
+
+  it('NOT_SUBMITTED는 SUBMIT 문자열을 포함해도 제출 완료로 읽지 않는다', () => {
+    const row = mapLectureReportDtoToInstructorRow({ ...base, reportStatus: 'NOT_SUBMITTED' }, 0)
+    expect(row?.submissionStatusLabel).toBe('미제출')
+    expect(row?.canViewReport).toBe(false)
+  })
+
+  it('제출일이 있어도 reportStatus를 우선한다', () => {
+    const row = mapLectureReportDtoToInstructorRow(
+      { ...base, reportStatus: 'DRAFT', submittedAt: '2026-11-07T14:00:00Z' },
+      0
+    )
+    expect(row?.submissionStatusLabel).toBe('미제출')
+    expect(row?.canViewReport).toBe(false)
+  })
+
+  it('APPROVED·COMPLETED는 제출일이 없어도 제출 완료, EXCEPTION_ACCEPTED는 예외 승인(보기 불가)', () => {
+    const labels = ['APPROVED', 'COMPLETED', 'EXCEPTION_ACCEPTED'].map(reportStatus => {
+      const row = mapLectureReportDtoToInstructorRow({ ...base, reportStatus }, 0)
+      return [row?.submissionStatusLabel, row?.canViewReport]
+    })
+    expect(labels).toEqual([
+      ['제출 완료', true],
+      ['제출 완료', true],
+      ['예외 승인', false],
+    ])
+  })
+
+  it('강의 진행 여부는 서버 lectureProgressStatus를 따른다', () => {
+    const upcoming = mapLectureReportDtoToInstructorRow(
+      { ...base, reportStatus: 'SUBMITTED', lectureProgressStatus: 'UPCOMING' },
+      0
+    )
+    expect(upcoming?.lectureProgressLabel).toBe('진행 예정')
+  })
+})

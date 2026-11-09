@@ -351,17 +351,19 @@
   margin-bottom: -8px;
 }
 
-/* 공고문 하단 연결 버튼 — Figma 2118:128846 (400×80 · 민트 · R12 · 16×20 · 18 SemiBold / 14 Regular · 화살표 16) */
+/*
+ * 공고문 하단 연결 버튼 — Figma 2118:128846 (400×80 · 민트 · R12 · 16×20 · 18 SemiBold / 14 Regular · 화살표 16)
+ * 어드민 상세(2118:128787)는 카드 좌측 정렬 — 사용자 홈페이지(가운데)와 다르다.
+ */
 .recruit-posting-detail-page__link-cta {
   box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  align-self: center;
+  align-self: flex-start;
   width: 100%;
   max-width: 400px;
-  margin-inline: auto;
   height: 80px;
   min-height: 80px;
   margin-top: 24px; /* 본문 ↔ 버튼 24 (시안) */

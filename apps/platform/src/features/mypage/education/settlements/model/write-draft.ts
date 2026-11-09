@@ -71,6 +71,15 @@ export type SettlementWriteDraft = {
     fileNames: string[]
     attachments: SettlementReceiptAttachment[]
   }
+  /**
+   * 1사1교 숙박비(LODGING_1C1S) — 신청 1건당 고정액 1건, 금액·박 수 입력 없음, 영수증 필수(BE 2026-11-09).
+   * 1사1교가 아니면 항상 미신청. 이전 세션 저장본에는 없을 수 있다.
+   */
+  companySchoolLodging?: {
+    requested: boolean
+    fileNames: string[]
+    attachments: SettlementReceiptAttachment[]
+  }
 }
 
 export type SettlementWriteDraftLocationState = {

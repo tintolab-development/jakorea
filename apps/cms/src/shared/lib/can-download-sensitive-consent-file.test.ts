@@ -12,35 +12,27 @@ describe('canDownloadSensitiveConsentFile', () => {
     ).toBe(true)
   })
 
-  it('blocks Accounting Manager and viewers', () => {
-    expect(canDownloadSensitiveConsentFile({ roleCode: 'ACCOUNTING_MANAGER' })).toBe(false)
-    expect(
-      canDownloadSensitiveConsentFile({
-        roleCode: 'ACCOUNTING_MANAGER',
-        isProgramOwner: true,
-      })
-    ).toBe(false)
+  it('blocks viewers regardless of program owner flag', () => {
     expect(canDownloadSensitiveConsentFile({ roleCode: 'PROGRAM_VIEWER' })).toBe(false)
     expect(canDownloadSensitiveConsentFile({ roleCode: 'VIEWER' })).toBe(false)
-  })
-
-  it('allows Program Manager unless isProgramOwner is false', () => {
-    expect(canDownloadSensitiveConsentFile({ roleCode: 'PROGRAM_MANAGER' })).toBe(true)
-    expect(canDownloadSensitiveConsentFile({ roleCode: 'MIDDLE' })).toBe(true)
-    expect(canDownloadSensitiveConsentFile({ roleCode: 'PM' })).toBe(true)
     expect(
-      canDownloadSensitiveConsentFile({ roleCode: 'PROGRAM_MANAGER', isProgramOwner: true })
-    ).toBe(true)
-    expect(
-      canDownloadSensitiveConsentFile({ roleCode: 'PROGRAM_MANAGER', isProgramOwner: false })
+      canDownloadSensitiveConsentFile({ roleCode: 'PROGRAM_VIEWER', isProgramOwner: true })
     ).toBe(false)
   })
 
-  it('allows Partner only when they are the program owner', () => {
+  it('blocks non-Master admins on CMS default screens (no program context)', () => {
+    expect(canDownloadSensitiveConsentFile({ roleCode: 'ACCOUNTING_MANAGER' })).toBe(false)
+    expect(canDownloadSensitiveConsentFile({ roleCode: 'PROGRAM_MANAGER' })).toBe(false)
+    expect(canDownloadSensitiveConsentFile({ roleCode: 'MIDDLE' })).toBe(false)
+    expect(canDownloadSensitiveConsentFile({ roleCode: 'PM' })).toBe(false)
     expect(canDownloadSensitiveConsentFile({ roleCode: 'PARTNER' })).toBe(false)
-    expect(canDownloadSensitiveConsentFile({ roleCode: 'PARTNER', isProgramOwner: true })).toBe(
-      true
-    )
+  })
+
+  it('allows Accounting Manager and Program Manager only as the program owner', () => {
+    for (const roleCode of ['ACCOUNTING_MANAGER', 'PROGRAM_MANAGER', 'MIDDLE', 'PM', 'PARTNER']) {
+      expect(canDownloadSensitiveConsentFile({ roleCode, isProgramOwner: true })).toBe(true)
+      expect(canDownloadSensitiveConsentFile({ roleCode, isProgramOwner: false })).toBe(false)
+    }
   })
 
   it('treats assignment role PM as program owner', () => {

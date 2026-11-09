@@ -25,7 +25,8 @@ export function UjatWageInfoFields({
   viewDisplay?: UjatWageInfoDisplay
   form?: UseFormReturn<ProgramDetailEditFormValues>
 }) {
-  const paymentCatalog = useProgramWagePaymentItemOptionsState()
+  // 지급 항목 목록(정산 설정)은 수정 모드 선택지에만 쓴다. 보기 모드는 viewDisplay 문구를 쓰므로 부르지 않는다.
+  const paymentCatalog = useProgramWagePaymentItemOptionsState(mode === 'edit')
   const paymentItemOptions = useMemo(
     () => remapUjatWagePaymentItemOptions(paymentCatalog.options),
     [paymentCatalog.options]

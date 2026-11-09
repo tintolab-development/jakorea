@@ -145,9 +145,12 @@ export async function fetchGeneralProgramOverviewStages(): Promise<GeneralProgra
 }
 
 /** 핵심 프로그램 상세만 조회한다. 첫 상세 화면의 critical path에서 사용한다. */
-export async function fetchGeneralProgramCoreRemoteById(programId: string): Promise<Program> {
+export async function fetchGeneralProgramCoreRemoteById(
+  programId: string,
+  options?: { skipGlobalErrorAlert?: boolean }
+): Promise<Program> {
   assertGeneralProgramsRemoteReady()
-  const dto = await fetchAdminProgramByIdRemote(programId)
+  const dto = await fetchAdminProgramByIdRemote(programId, options)
   return mapAdminProgramDetailToProgram(dto)
 }
 

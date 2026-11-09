@@ -404,71 +404,71 @@ export function NoticesPage() {
         hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area admin-filter-area--split notices-page__filter">
-            <div className="admin-filter-area__head">
-              <div className="admin-filter-area__field admin-filter-area__field--control">
-                <p className="admin-filter-area__label">공개 여부</p>
-                <CmsSelect
-                  inputSize="medium"
-                  width={FILTER_CONTROL_MAX_WIDTH_PX}
-                  withAllOption
-                  value={pendingFilters.visibility}
-                  placeholder="전체"
-                  options={[
-                    { value: 'public', label: '공개' },
-                    { value: 'private', label: '비공개' },
-                  ]}
-                  onChange={v =>
-                    setPendingFilters(prev => ({
-                      ...prev,
-                      visibility: (v as VisibilityPending) || '',
-                    }))
-                  }
-                />
-              </div>
-              <div className="admin-filter-area__field admin-filter-area__field--control">
-                <p className="admin-filter-area__label">제목</p>
-                <AdminFilterTextInput
-                  inputSize="medium"
-                  width={FILTER_CONTROL_MAX_WIDTH_PX}
-                  value={pendingFilters.title}
-                  placeholder="제목을 입력해 주세요"
-                  onChange={value => patchPendingFilters(prev => ({ ...prev, title: value }))}
-                  onPressEnter={handleSearch}
-                />
-              </div>
-              <div className="admin-filter-area__field admin-filter-area__field--control">
-                <p className="admin-filter-area__label">작성자명</p>
-                <AdminFilterTextInput
-                  inputSize="medium"
-                  width={FILTER_CONTROL_MAX_WIDTH_PX}
-                  value={pendingFilters.authorName}
-                  placeholder="작성자명을 입력해 주세요"
-                  onChange={value => patchPendingFilters(prev => ({ ...prev, authorName: value }))}
-                  onPressEnter={handleSearch}
-                />
-              </div>
-              <div className="admin-filter-area__field admin-filter-area__field--date-range">
-                <p className="admin-filter-area__label">게시일</p>
-                <CmsDateRangePicker
-                  inputSize="medium"
-                  width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
-                  value={rangeAsPicker(pendingFilters.publishedRange)}
-                  placeholder={['시작일', '종료일']}
-                  allowClear
-                  onChange={dates => {
-                    if (!dates || (!dates[0] && !dates[1])) {
-                      setPendingFilters(prev => ({ ...prev, publishedRange: null }))
-                      return
+            <div className="admin-filter-area__fields">
+              <div className="admin-filter-area__head">
+                <div className="admin-filter-area__field admin-filter-area__field--control">
+                  <p className="admin-filter-area__label">공개 여부</p>
+                  <CmsSelect
+                    inputSize="medium"
+                    width={FILTER_CONTROL_MAX_WIDTH_PX}
+                    withAllOption
+                    value={pendingFilters.visibility}
+                    placeholder="전체"
+                    options={[
+                      { value: 'public', label: '공개' },
+                      { value: 'private', label: '비공개' },
+                    ]}
+                    onChange={v =>
+                      setPendingFilters(prev => ({
+                        ...prev,
+                        visibility: (v as VisibilityPending) || '',
+                      }))
                     }
-                    setPendingFilters(prev => ({
-                      ...prev,
-                      publishedRange: [dates[0] ?? null, dates[1] ?? null],
-                    }))
-                  }}
-                />
+                  />
+                </div>
+                <div className="admin-filter-area__field admin-filter-area__field--control">
+                  <p className="admin-filter-area__label">제목</p>
+                  <AdminFilterTextInput
+                    inputSize="medium"
+                    width={FILTER_CONTROL_MAX_WIDTH_PX}
+                    value={pendingFilters.title}
+                    placeholder="제목을 입력해 주세요"
+                    onChange={value => patchPendingFilters(prev => ({ ...prev, title: value }))}
+                    onPressEnter={handleSearch}
+                  />
+                </div>
+                <div className="admin-filter-area__field admin-filter-area__field--control">
+                  <p className="admin-filter-area__label">작성자명</p>
+                  <AdminFilterTextInput
+                    inputSize="medium"
+                    width={FILTER_CONTROL_MAX_WIDTH_PX}
+                    value={pendingFilters.authorName}
+                    placeholder="작성자명을 입력해 주세요"
+                    onChange={value => patchPendingFilters(prev => ({ ...prev, authorName: value }))}
+                    onPressEnter={handleSearch}
+                  />
+                </div>
+                <div className="admin-filter-area__field admin-filter-area__field--date-range">
+                  <p className="admin-filter-area__label">게시일</p>
+                  <CmsDateRangePicker
+                    inputSize="medium"
+                    width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
+                    value={rangeAsPicker(pendingFilters.publishedRange)}
+                    placeholder={['시작일', '종료일']}
+                    allowClear
+                    onChange={dates => {
+                      if (!dates || (!dates[0] && !dates[1])) {
+                        setPendingFilters(prev => ({ ...prev, publishedRange: null }))
+                        return
+                      }
+                      setPendingFilters(prev => ({
+                        ...prev,
+                        publishedRange: [dates[0] ?? null, dates[1] ?? null],
+                      }))
+                    }}
+                  />
+                </div>
               </div>
-            </div>
-            <div className="admin-filter-area__bottom">
               <div className="admin-filter-area__bottom-fields">
                 <div className="admin-filter-area__field admin-filter-area__field--date-range">
                   <p className="admin-filter-area__label">작성일</p>
@@ -491,17 +491,17 @@ export function NoticesPage() {
                   />
                 </div>
               </div>
-              <div className="admin-filter-area__actions">
-                <CmsButton
-                  className="admin-filter-area__search-button"
-                  variant="primary"
-                  size="medium"
-                  type="button"
-                  onClick={handleSearch}
-                >
-                  조회
-                </CmsButton>
-              </div>
+            </div>
+            <div className="admin-filter-area__actions">
+              <CmsButton
+                className="admin-filter-area__search-button"
+                variant="primary"
+                size="medium"
+                type="button"
+                onClick={handleSearch}
+              >
+                조회
+              </CmsButton>
             </div>
           </div>
         }

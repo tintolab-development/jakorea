@@ -26,11 +26,16 @@ describe('instructor settlement presentation consumers share one registry', () =
     const tag = getInstructorSettlementStatusPresentation(status, 'tag')
     expect(text.label).toBe(INSTRUCTOR_SETTLEMENT_STATUS_LABELS[status])
     expect(short.label).toBe(INSTRUCTOR_SETTLEMENT_STATUS_LABELS_SHORT[status])
-    expect(tag.label).toBe(INSTRUCTOR_SETTLEMENT_STATUS_LABELS[status])
+    // Tag는 Figma Status / Tag / 정산 현황(14804:19759) — Short 라벨
+    expect(tag.label).toBe(INSTRUCTOR_SETTLEMENT_STATUS_LABELS_SHORT[status])
     expect(getInstructorSettlementInvoiceStatusPresentation(status)).toEqual(
       getInstructorSettlementStatusPresentation(status, 'invoice')
     )
-    expect(getInstructorSettlementStatusTag(status)).toEqual({ label: tag.label, accentColor: tag.color })
+    expect(getInstructorSettlementStatusTag(status)).toEqual({
+      label: tag.label,
+      accentColor: tag.color,
+      shape: 'outline',
+    })
     // Calendar colors remain raw fallbacks from the same palette, not a second semantic mapping.
     expect(tag.color).toContain(INSTRUCTOR_SETTLEMENT_STATUS_TAG_STYLE[status].color)
     const standalone = renderToStaticMarkup(createElement(InstructorSettlementStatusText, { status }))
@@ -48,16 +53,17 @@ describe('instructor settlement presentation consumers share one registry', () =
     expect(getInstructorSettlementStatusPresentation('awaiting_confirmation', 'short').label).toBe('확인 대기')
     expect(getInstructorSettlementStatusPresentation('partial_confirmation', 'short').label).toBe('확인 중')
     expect(getInstructorSettlementStatusPresentation('account_paid', 'short').label).toBe('지급 완료')
-    expect(getInstructorSettlementStatusPresentation('partial_confirmation', 'invoice').label).toBe('확인 진행 중')
+    // invoice(회원 산출내역)도 Figma Short Text 라벨(S13, 2026-11-09)
+    expect(getInstructorSettlementStatusPresentation('partial_confirmation', 'invoice').label).toBe('확인 중')
   })
 
-  it('preserves API aliases and unknown/null interpretation without changing the business axis', () => {
-    const label = '계좌 지급 대기 중'
+  it('resolves only canonical list labels and keeps unknown/null as null', () => {
+    const label = '지급조서 확인 완료'
     const status = resolveInstructorSettlementUiStatusFromListLabel(label)
-    expect(status).toBe('awaiting_confirmation')
+    expect(status).toBe('payment_statement_verified')
     const rendered = renderToStaticMarkup(createElement(InstructorSettlementStatusText, { status: status!, label }))
     expect(rendered).toContain(label)
-    expect(rendered).not.toContain('>확인 대기 중<')
+    expect(resolveInstructorSettlementUiStatusFromListLabel('계좌 지급 대기 중')).toBeNull()
     expect(resolveInstructorSettlementUiStatusFromListLabel('UNKNOWN')).toBeNull()
     expect(resolveInstructorSettlementUiStatusFromListLabel(null)).toBeNull()
     expect(resolveInstructorSettlementUiStatusFromListLabel('-')).toBeNull()

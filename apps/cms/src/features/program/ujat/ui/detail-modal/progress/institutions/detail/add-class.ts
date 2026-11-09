@@ -112,6 +112,31 @@ export function gradeBlocksFromEducationClasses(
 }
 
 /**
+ * education-classes 응답으로 만든 학년 블록에는 교재 정보가 없다.
+ * 같은 학년의 이전 블록에서 교재 필드를 이어받아, 저장 직후 교재 칸이 '-'로 비지 않게 한다.
+ */
+export function carryOverGradeTextbooks(
+  next: ReadonlyArray<UjatInstitutionApplicationGradeBlockDetail>,
+  previous: ReadonlyArray<UjatInstitutionApplicationGradeBlockDetail>
+): UjatInstitutionApplicationGradeBlockDetail[] {
+  const gradeKey = (label: string) =>
+    normalizeGradeNumberFromLabel(label) ?? label.replace(/학년$/, '').trim()
+  const previousByGrade = new Map(previous.map(block => [gradeKey(block.gradeLabel), block]))
+  return next.map(block => {
+    const prev = previousByGrade.get(gradeKey(block.gradeLabel))
+    if (!prev) return block
+    return {
+      ...block,
+      textbookName: block.textbookName ?? prev.textbookName,
+      textbookNameEn: block.textbookNameEn ?? prev.textbookNameEn,
+      kitCount: block.kitCount ?? prev.kitCount,
+      bookCount: block.bookCount ?? prev.bookCount,
+      textbookDeliveryStatus: block.textbookDeliveryStatus ?? prev.textbookDeliveryStatus,
+    }
+  })
+}
+
+/**
  * 화면 집계 표시.
  * BE 불변식: classes.length === currentClassCount.
  * classes[] 가 있으면 length 만 사용 (빈 배열=0). count 로 행 invent 금지.

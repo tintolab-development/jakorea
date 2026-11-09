@@ -276,42 +276,44 @@ export function MemberLoginLogPage() {
         hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area">
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <span className="admin-filter-area__label">{nameLabel}</span>
-              <AdminFilterTextInput
-                inputSize="medium"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder={namePlaceholder}
-                value={pendingFilters.name}
-                onChange={value => patchPendingFilters(prev => ({ ...prev, name: value }))}
-                onPressEnter={applySearch}
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <span className="admin-filter-area__label">아이디</span>
-              <AdminFilterTextInput
-                inputSize="medium"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="아이디를 입력해 주세요"
-                value={pendingFilters.loginId}
-                onChange={value => patchPendingFilters(prev => ({ ...prev, loginId: value }))}
-                onPressEnter={applySearch}
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--date-range">
-              <span className="admin-filter-area__label">로그인 일시</span>
-              <CmsDateRangePicker
-                inputSize="medium"
-                width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
-                value={rangeAsPicker(pendingFilters.range)}
-                onChange={dates =>
-                  setPendingFilters(prev => ({
-                    ...prev,
-                    range: dates ?? null,
-                  }))
-                }
-                placeholder={['시작일', '종료일']}
-              />
+            <div className="admin-filter-area__fields">
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <span className="admin-filter-area__label">{nameLabel}</span>
+                <AdminFilterTextInput
+                  inputSize="medium"
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  placeholder={namePlaceholder}
+                  value={pendingFilters.name}
+                  onChange={value => patchPendingFilters(prev => ({ ...prev, name: value }))}
+                  onPressEnter={applySearch}
+                />
+              </div>
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <span className="admin-filter-area__label">아이디</span>
+                <AdminFilterTextInput
+                  inputSize="medium"
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  placeholder="아이디를 입력해 주세요"
+                  value={pendingFilters.loginId}
+                  onChange={value => patchPendingFilters(prev => ({ ...prev, loginId: value }))}
+                  onPressEnter={applySearch}
+                />
+              </div>
+              <div className="admin-filter-area__field admin-filter-area__field--date-range">
+                <span className="admin-filter-area__label">로그인 일시</span>
+                <CmsDateRangePicker
+                  inputSize="medium"
+                  width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
+                  value={rangeAsPicker(pendingFilters.range)}
+                  onChange={dates =>
+                    setPendingFilters(prev => ({
+                      ...prev,
+                      range: dates ?? null,
+                    }))
+                  }
+                  placeholder={['시작일', '종료일']}
+                />
+              </div>
             </div>
             <div className="admin-filter-area__actions">
               <CmsButton

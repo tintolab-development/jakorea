@@ -50,6 +50,8 @@ import {
   useAlimtalkTemplateTreeMutations,
 } from '@/features/notifications/hooks/use-alimtalk-template-tree-query'
 import { notificationsQueryKeys } from '@/features/notifications/api/notifications-query-keys'
+import { canAdminAction } from '@/shared/lib/admin-role-policy'
+import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
 import { CategoryNameModal } from './category-name-modal'
 import {
   CategoryTree,
@@ -149,6 +151,8 @@ export function AlimtalkTemplateList({
   const [localTemplates, setLocalTemplates] = useState<AlimtalkTemplateItem[]>([])
   const [syncBanner, setSyncBanner] = useState<SyncBannerKind>(null)
   const autoSyncStartedRef = useRef(false)
+  // NHN 동기화는 쓰기(NOTIFICATION_WRITE). 조회 전용 역할(Program Viewer)은 자동 동기화를 보내지 않는다.
+  const canSyncCatalog = canAdminAction({ roleCode: useSessionAdminRoleCode(), action: 'write' })
 
   const categories = remote ? (treeQuery.data?.categories ?? []) : localCategories
   const templates = remote ? (treeQuery.data?.templates ?? []) : localTemplates
@@ -235,10 +239,10 @@ export function AlimtalkTemplateList({
   runNhnSyncRef.current = runNhnSync
 
   useEffect(() => {
-    if (!remote || autoSyncStartedRef.current) return
+    if (!remote || !canSyncCatalog || autoSyncStartedRef.current) return
     autoSyncStartedRef.current = true
     void runNhnSyncRef.current('auto')
-  }, [remote])
+  }, [remote, canSyncCatalog])
 
   useEffect(() => {
     if (!remote || !treeSettled) return

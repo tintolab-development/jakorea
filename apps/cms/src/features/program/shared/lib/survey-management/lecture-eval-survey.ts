@@ -55,6 +55,11 @@ const LECTURE_EVAL_MOCK_PERIOD = {
 export type ResolveLectureEvalWritingDraftOptions = {
   clearAnswers?: boolean
   templateName?: string
+  /**
+   * 설문에 바인딩된 게시 version. 있으면 그 version 본문을 단건 조회한다(템플릿 목록 조회 없음).
+   * 템플릿 목록은 FORM_TEMPLATE_READ라 Program Viewer(프로그램 상세)는 403 — 등록된 강의평가는 version으로 연다.
+   */
+  templateVersionId?: number
 }
 
 function clearAnswerDefaults(paragraph: WritingFormParagraph): WritingFormParagraph {
@@ -128,6 +133,7 @@ export async function resolveLectureEvalWritingDraft(
 ): Promise<WritingFormDraft> {
   const base = await resolveSurveyWritingDraft(templateId, {
     templateName: options?.templateName,
+    templateVersionId: options?.templateVersionId,
   })
   return applyLectureEvalDraftTransforms(base, templateId, options)
 }
@@ -143,8 +149,18 @@ export function resolveLectureEvalWritingDraftSync(
   return applyLectureEvalDraftTransforms(base, templateId, options)
 }
 
-export async function buildLectureEvalFormDraft(templateId: string): Promise<WritingFormDraft> {
-  return resolveLectureEvalWritingDraft(templateId, { clearAnswers: true })
+export async function buildLectureEvalFormDraft(
+  templateId: string,
+  templateVersionId?: number
+): Promise<WritingFormDraft> {
+  const versionId =
+    templateVersionId != null && Number.isFinite(templateVersionId) && templateVersionId > 0
+      ? Math.trunc(templateVersionId)
+      : undefined
+  return resolveLectureEvalWritingDraft(templateId, {
+    clearAnswers: true,
+    templateVersionId: versionId,
+  })
 }
 
 export function buildLectureEvalFormDraftSync(templateId: string): WritingFormDraft {

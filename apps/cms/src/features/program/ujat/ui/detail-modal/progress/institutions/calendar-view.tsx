@@ -57,30 +57,27 @@ function renderEducationProgressInstitutionPreviewTooltipContent({
       {events.map(ev => {
         const institution = extractInstitutionFromCalendarItem(ev)
         const title = institution?.institutionName ?? String(ev.title ?? '-')
-        const totalClassSummary = institution?.calendarTotalClassSummary
-        const scheduleDetail = institution?.calendarScheduleDetail
+        const regionLabel = institution?.calendarRegionLabel ?? ''
+        const gradeClassDetail = institution?.calendarGradeClassDetail ?? ''
 
         return (
           <div key={String(ev.id)} className="calendar-preview-popover__entry">
             <span className="calendar-preview-popover__title">{title}</span>
-            {totalClassSummary ? (
+            {regionLabel || gradeClassDetail ? (
               <div className="calendar-preview-popover__meta">
-                <span className="calendar-preview-popover__meta-part">
-                  {totalClassSummary}
-                </span>
-                {scheduleDetail ? (
-                  <>
-                    <span
-                      className="calendar-preview-popover__meta-sep"
-                      aria-hidden
-                    />
-                    <span
-                      className="calendar-preview-popover__meta-part calendar-preview-popover__meta-part--session"
-                      title={scheduleDetail}
-                    >
-                      {scheduleDetail}
-                    </span>
-                  </>
+                {regionLabel ? (
+                  <span className="calendar-preview-popover__meta-part">{regionLabel}</span>
+                ) : null}
+                {regionLabel && gradeClassDetail ? (
+                  <span className="calendar-preview-popover__meta-sep" aria-hidden />
+                ) : null}
+                {gradeClassDetail ? (
+                  <span
+                    className="calendar-preview-popover__meta-part calendar-preview-popover__meta-part--session"
+                    title={gradeClassDetail}
+                  >
+                    {gradeClassDetail}
+                  </span>
                 ) : null}
               </div>
             ) : null}
@@ -215,8 +212,6 @@ export function UjatEducationProgressInstitutionsCalendarView({
           mode="institutionApplication"
           selectedDate={selectedDate}
           rows={listRows}
-          selectedRowKeys={[]}
-          onSelectionChange={() => {}}
           resolveRowColors={resolveRowColors}
         />
       </div>

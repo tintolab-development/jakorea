@@ -19,7 +19,8 @@ export interface GeminiTrainingReportImportResult {
   accountPaymentId?: number | null;
   trainingMinutes?: number;
   classCount?: number;
-  calculatedAmount?: number;
+  /** 지급 예정 강사비(원). 계좌 지급 대상이면 차시 단가 금액. 지급 제외(ZERO_CALCULATED_FEE·GEMINI_INSTRUCTOR_IDENTITY_BLANK·GEMINI_INSTRUCTOR_EXTERNAL_PAYEE)는 0. 단가 미설정(GEMINI_WAGE_RATE_NOT_CONFIGURED)은 0원이 아니므로 null. */
+  calculatedAmount?: number | null;
   /** 서버가 이름·연락처 재검증으로 확정한 회원만. 미확정은 null. */
   matchedInstructorMemberId?: number | null;
   assistantInstructorCount?: number;

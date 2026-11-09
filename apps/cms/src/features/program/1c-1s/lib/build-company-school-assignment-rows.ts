@@ -2,6 +2,10 @@
  * 1사1교 강사 배정 대기/배정행 — API 전용 (mock 희망일·해시 충돌 없음)
  */
 
+import {
+  INSTRUCTOR_SETTLEMENT_STATUS_ORDER,
+  type InstructorSettlementUiStatus,
+} from '@/shared/constants/instructor-settlement-status'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import {
@@ -63,6 +67,20 @@ export type CompanySchoolAssignedInstructorRow = {
   instructorMemberId?: string
   scheduleId?: string
   organizationApplicationId?: string
+  /** 서버 assignmentStatus CANCELLED — 「배정 취소」로만 표시(재배정 불가, 2026-11-09 확정) */
+  assignmentCancelled: boolean
+  /** 배정 단위 정산 상태(서버 settlementStatus 8종 키). 없거나 모르는 값은 none(해당 없음) */
+  settlementStatus: InstructorSettlementUiStatus
+}
+
+/** 서버 배정 settlementStatus → 8종 키. FE에서 다른 정산 API로 다시 계산하지 않는다 */
+export function resolveAssignmentSettlementStatus(
+  raw: string | null | undefined
+): InstructorSettlementUiStatus {
+  const key = (raw ?? '').trim().toLowerCase()
+  return (INSTRUCTOR_SETTLEMENT_STATUS_ORDER as readonly string[]).includes(key)
+    ? (key as InstructorSettlementUiStatus)
+    : 'none'
 }
 
 function formatDistanceKm(km: number | undefined): string | undefined {
@@ -186,13 +204,16 @@ export function buildCompanySchoolAssignedInstructorRows(input: {
   organizationApplicationId: string
   instructorNameByMemberId: Map<string, string>
   scheduleLabelById: Map<string, { date?: string; time?: string; session?: string }>
+  /** 1사1교 학교 상세 — 취소된 배정도 「배정 취소」 행으로 포함 */
+  includeCancelled?: boolean
 }): CompanySchoolAssignedInstructorRow[] {
   const orgId = input.organizationApplicationId
+  const isCancelled = (a: InstructorAssignmentListItemEnriched) =>
+    (a.assignmentStatus ?? '').toUpperCase() === 'CANCELLED'
   const filtered = input.assignments.filter(a => {
     if (a.organizationApplicationId == null) return false
     if (String(a.organizationApplicationId) !== orgId) return false
-    const status = (a.assignmentStatus ?? '').toUpperCase()
-    return status !== 'CANCELLED' && status !== 'CANCELED'
+    return input.includeCancelled === true || !isCancelled(a)
   })
 
   return filtered.map((a, index) => {
@@ -225,6 +246,8 @@ export function buildCompanySchoolAssignedInstructorRows(input: {
       instructorMemberId: memberId || undefined,
       scheduleId: scheduleId || undefined,
       organizationApplicationId: orgId,
+      assignmentCancelled: isCancelled(a),
+      settlementStatus: resolveAssignmentSettlementStatus(a.settlementStatus),
     }
   })
 }

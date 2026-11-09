@@ -28,10 +28,7 @@ export const PROGRAM_CAPABILITY = {
 
 const ASSIGNMENT_ROLES = new Set(['PM', 'PARTNER', 'VIEWER'])
 
-export function programMyAssignmentQueryKey(
-  programId: string,
-  adminAccountId: number | null
-) {
+export function programMyAssignmentQueryKey(programId: string, adminAccountId: number | null) {
   return [...PROGRAM_ASSIGNMENT_QUERY_ROOT, programId, adminAccountId ?? 'none'] as const
 }
 
@@ -48,8 +45,50 @@ const PROGRAM_UNMASK_DETAIL_KEY_PARTS = [
   'participant-detail',
 ]
 
+/**
+ * 원문 조회 결과를 쓴 상세 캐시 키(프로그램별). `organizationDetail(appId)`처럼 programId가 없는 키도
+ * 다시 가리기·화면 이탈·권한 회수 때 정확히 비우기 위해 기록한다.
+ */
+const rawUnmaskCacheKeysByProgram = new Map<
+  string,
+  Map<string, { client: QueryClient; queryKey: readonly unknown[] }>
+>()
+
+function trackProgramUnmaskCacheKey(
+  client: QueryClient,
+  programId: string | number,
+  queryKey: readonly unknown[]
+): void {
+  const id = String(programId ?? '').trim()
+  if (!id) return
+  const keys = rawUnmaskCacheKeysByProgram.get(id) ?? new Map()
+  keys.set(JSON.stringify(queryKey), { client, queryKey })
+  rawUnmaskCacheKeysByProgram.set(id, keys)
+}
+
+function takeTrackedProgramUnmaskCacheKeys(programId?: string | number | null) {
+  const id = programId == null ? '' : String(programId).trim()
+  const ids = id ? [id] : [...rawUnmaskCacheKeysByProgram.keys()]
+  const entries = ids.flatMap(key => [...(rawUnmaskCacheKeysByProgram.get(key)?.values() ?? [])])
+  ids.forEach(key => rawUnmaskCacheKeysByProgram.delete(key))
+  return entries
+}
+
+/**
+ * CMS-29 등: 다시 가리기·화면 이탈 시 원문을 쓴 상세 캐시를 초기 상태로 되돌린다.
+ * 열려 있는 화면은 마스킹 GET으로 다시 조회한다.
+ */
+export function resetTrackedProgramUnmaskCaches(programId?: string | number | null): void {
+  takeTrackedProgramUnmaskCacheKeys(programId).forEach(({ client, queryKey }) => {
+    void client.resetQueries({ queryKey, exact: true })
+  })
+}
+
 /** 역할 회수·프로그램 전환 시 신청/참여 원문 DTO 캐시를 제거한다. */
 export function evictProgramUnmaskDetailCaches(programId?: string | number | null): void {
+  takeTrackedProgramUnmaskCacheKeys(programId).forEach(({ client, queryKey }) => {
+    client.removeQueries({ queryKey, exact: true })
+  })
   const id = programId == null ? '' : String(programId).trim()
   queryClient.removeQueries({
     predicate: query => {
@@ -63,9 +102,7 @@ export function evictProgramUnmaskDetailCaches(programId?: string | number | nul
   })
 }
 
-export async function fetchProgramMyAssignment(
-  programId: string
-): Promise<ProgramMyAssignment> {
+export async function fetchProgramMyAssignment(programId: string): Promise<ProgramMyAssignment> {
   return unwrapApiBody(
     await customInstance({
       url: `/api/admin/programs/${encodeURIComponent(programId)}/my-assignment`,
@@ -74,7 +111,9 @@ export async function fetchProgramMyAssignment(
   )
 }
 
-export function normalizeAssignmentRole(role: string | null | undefined): 'PM' | 'PARTNER' | 'VIEWER' | null {
+export function normalizeAssignmentRole(
+  role: string | null | undefined
+): 'PM' | 'PARTNER' | 'VIEWER' | null {
   const normalized = role?.trim().toUpperCase() ?? ''
   if (!normalized) return null
   return ASSIGNMENT_ROLES.has(normalized) ? (normalized as 'PM' | 'PARTNER' | 'VIEWER') : null
@@ -86,7 +125,9 @@ function capabilitySet(assignment: ProgramMyAssignment | null | undefined): Set<
   )
 }
 
-export function isUnknownAssignmentRole(assignment: ProgramMyAssignment | null | undefined): boolean {
+export function isUnknownAssignmentRole(
+  assignment: ProgramMyAssignment | null | undefined
+): boolean {
   const raw = assignment?.assignmentRole
   if (raw == null || String(raw).trim() === '') return false
   return normalizeAssignmentRole(raw) == null
@@ -98,7 +139,9 @@ export function isUnknownAssignmentRole(assignment: ProgramMyAssignment | null |
  * PROGRAM_EDIT는 원문 capability가 아니다. 전역 PROGRAM_VIEWER 천장(PM 배정이어도 PROGRAM_VIEW만)을
  * 역할 이름으로 승격하지 않기 위한 fail-closed 구분이다.
  */
-export function canRevealProgramGeneralPii(assignment: ProgramMyAssignment | null | undefined): boolean {
+export function canRevealProgramGeneralPii(
+  assignment: ProgramMyAssignment | null | undefined
+): boolean {
   if (!assignment || isUnknownAssignmentRole(assignment)) return false
   const caps = capabilitySet(assignment)
   if (caps.size === 0) return false
@@ -113,12 +156,39 @@ export function canRevealProgramGeneralPii(assignment: ProgramMyAssignment | nul
 }
 
 /** 주민번호·계좌. SENSITIVE_PII_READ가 있을 때만. */
-export function canRevealProgramSensitivePii(assignment: ProgramMyAssignment | null | undefined): boolean {
+export function canRevealProgramSensitivePii(
+  assignment: ProgramMyAssignment | null | undefined
+): boolean {
   if (!assignment || isUnknownAssignmentRole(assignment)) return false
   return capabilitySet(assignment).has(PROGRAM_CAPABILITY.sensitivePii)
 }
 
-export function canListProgramManagers(assignment: ProgramMyAssignment | null | undefined): boolean {
+/** 담당자 정보 조회 — 권한 설정 V1.2 프로그램 권한: Owner·Assistant·Viewer 모두(PROGRAM_VIEW). BE GET …/managers와 동일 기준. */
+export function canListProgramManagers(
+  assignment: ProgramMyAssignment | null | undefined
+): boolean {
+  if (!assignment || isUnknownAssignmentRole(assignment)) return false
+  return capabilitySet(assignment).has(PROGRAM_CAPABILITY.view)
+}
+
+/** 프로그램 내 파일·목록 다운로드 — Program Owner·Assistant(FILE_DOWNLOAD). Program Viewer(프로그램 상세)는 제한. */
+export function canDownloadProgramFiles(
+  assignment: ProgramMyAssignment | null | undefined
+): boolean {
+  if (!assignment || isUnknownAssignmentRole(assignment)) return false
+  return capabilitySet(assignment).has('FILE_DOWNLOAD')
+}
+
+/** 강사 배정·대표 강사 변경 등 배정 관리 — Program Owner·Assistant(ASSIGNMENT_MANAGE). Program Viewer는 조회만. */
+export function canManageProgramAssignments(assignment: ProgramMyAssignment | null | undefined): boolean {
+  if (!assignment || isUnknownAssignmentRole(assignment)) return false
+  return capabilitySet(assignment).has('ASSIGNMENT_MANAGE')
+}
+
+/** 담당자 등록·역할 변경·삭제 — Program Owner(PROGRAM_ADMIN_MANAGE)만. */
+export function canManageProgramManagers(
+  assignment: ProgramMyAssignment | null | undefined
+): boolean {
   if (!assignment || isUnknownAssignmentRole(assignment)) return false
   return capabilitySet(assignment).has(PROGRAM_CAPABILITY.adminManage)
 }
@@ -138,6 +208,7 @@ export function cacheProjectedProgramPrivacy<T>(
   const projected = projectProgramPrivacyValue(dto, cachedProgramAllowsSensitivePii(programId))
   reportProgramPrivacyLeak(projected.leakedFields)
   client.setQueryData(queryKey, projected.value)
+  trackProgramUnmaskCacheKey(client, programId, queryKey)
   return projected.value
 }
 

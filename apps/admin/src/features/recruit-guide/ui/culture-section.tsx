@@ -11,6 +11,7 @@ import { recruitGuideSaveFailureAlert } from '@/features/recruit-guide/lib/save-
 import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsTextArea, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 
+import { requiredColumnTitle } from './required-column-title'
 import './section-shared.css'
 
 type DraftMap = Record<string, { title: string; description: string }>
@@ -114,7 +115,8 @@ export function CultureSectionCard({ items }: Props) {
         render: (_value, record) => record.itemLabel,
       },
       {
-        title: '타이틀',
+        // 수정 모드에서 타이틀·설명 텍스트 모두 필수 (저장 시 빈 값은 공통 필수 안내)
+        title: isEditing ? requiredColumnTitle('타이틀') : '타이틀',
         key: 'title',
         align: 'center',
         className: 'recruit-guide-col--text',
@@ -138,7 +140,7 @@ export function CultureSectionCard({ items }: Props) {
         },
       },
       {
-        title: '설명 텍스트',
+        title: isEditing ? requiredColumnTitle('설명 텍스트') : '설명 텍스트',
         key: 'description',
         align: 'center',
         className: 'recruit-guide-col--text',

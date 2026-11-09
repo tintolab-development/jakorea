@@ -3,6 +3,8 @@
  */
 
 import { useEffect, useMemo } from 'react'
+import { isReadOnlyAdminRoleCode } from '@/shared/lib/admin-role-policy'
+import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
 import { Controller, type UseFormReturn } from 'react-hook-form'
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info-form'
@@ -284,12 +286,17 @@ export function ProgramWageInfoSection({
     forceCompanySchoolLayout ||
     (program != null && isCompanySchoolProgram(program)) ||
     isCompanySchoolProgramId(programId)
-  const paymentCatalog = usePaymentItemCatalogState()
+  const isFormEdit = isEditMode && form
+  const roleCode = useSessionAdminRoleCode()
+  // 지급 항목 목록(정산 설정)은 수정 모드와 1사1교 보기 모드 라벨에만 쓴다.
+  // Program Viewer는 정산 설정 조회가 403이라 보기 모드에서는 부르지 않고 대체 라벨을 쓴다.
+  const paymentCatalog = usePaymentItemCatalogState(
+    Boolean(isFormEdit) || (isCompanySchool && !isReadOnlyAdminRoleCode(roleCode))
+  )
   const companySchoolPaymentItemOptions = useMemo(
     () => remapCompanySchoolPaymentItemOptions(paymentCatalog.options),
     [paymentCatalog.options]
   )
-  const isFormEdit = isEditMode && form
   const parsedPricing = useMemo(
     () => parsePricingDisplay(data.pricingDisplay),
     [data.pricingDisplay]
@@ -337,9 +344,8 @@ export function ProgramWageInfoSection({
     const matchedIds = (savedTokens ?? [])
       .map(
         token =>
-          companySchoolPaymentItemOptions.find(
-            opt => opt.value === token || opt.label === token
-          )?.value
+          companySchoolPaymentItemOptions.find(opt => opt.value === token || opt.label === token)
+            ?.value
       )
       .filter((id): id is string => Boolean(id))
     if (matchedIds.length > 0) {
@@ -369,12 +375,20 @@ export function ProgramWageInfoSection({
             <DetailInfoForm.Field
               label={row.regularLabel}
               view={companySchoolWageView(row.regularValue, row.maxText)}
-              edit={isFormEdit && form ? companySchoolWageEdit(form, row.regularField, row.maxAmount, row.maxText) : undefined}
+              edit={
+                isFormEdit && form
+                  ? companySchoolWageEdit(form, row.regularField, row.maxAmount, row.maxText)
+                  : undefined
+              }
             />
             <DetailInfoForm.Field
               label={row.longDistanceLabel}
               view={companySchoolWageView(row.longDistanceValue, row.maxText)}
-              edit={isFormEdit && form ? companySchoolWageEdit(form, row.longDistanceField, row.maxAmount, row.maxText) : undefined}
+              edit={
+                isFormEdit && form
+                  ? companySchoolWageEdit(form, row.longDistanceField, row.maxAmount, row.maxText)
+                  : undefined
+              }
             />
           </DetailInfoForm.Row>
         ))}
@@ -389,7 +403,8 @@ export function ProgramWageInfoSection({
                     name="wagePaymentItemIds"
                     control={form.control}
                     render={({ field }) => (
-                      <CmsSelect inputSize="small"
+                      <CmsSelect
+                        inputSize="small"
                         mode="multiple"
                         withAllOption={false}
                         value={field.value ?? []}
@@ -435,7 +450,8 @@ export function ProgramWageInfoSection({
                       ? [...PROGRAM_WAGE_TYPE_OPTIONS, { value: current, label: current }]
                       : PROGRAM_WAGE_TYPE_OPTIONS
                   return (
-                    <CmsSelect inputSize="small"
+                    <CmsSelect
+                      inputSize="small"
                       value={current || undefined}
                       options={options}
                       placeholder="강사비 유형 선택"
@@ -461,7 +477,8 @@ export function ProgramWageInfoSection({
                     name="wagePricingMeasureLabel"
                     control={form.control}
                     render={({ field }) => (
-                      <CmsSelect inputSize="small"
+                      <CmsSelect
+                        inputSize="small"
                         width={96}
                         style={{ flexShrink: 0 }}
                         withAllOption={false}
@@ -479,7 +496,8 @@ export function ProgramWageInfoSection({
                     name="wagePricingQuantity"
                     control={form.control}
                     render={({ field }) => (
-                      <CmsNumericInput inputSize="small"
+                      <CmsNumericInput
+                        inputSize="small"
                         mode="integer"
                         width={112}
                         style={{ flexShrink: 0 }}
@@ -501,7 +519,8 @@ export function ProgramWageInfoSection({
                       name="wagePricingCompareMode"
                       control={form.control}
                       render={({ field }) => (
-                        <CmsRadio.Group size="medium"
+                        <CmsRadio.Group
+                          size="medium"
                           value={field.value ?? 'per'}
                           options={WAGE_COMPARE_RADIO_OPTIONS}
                           onChange={e => {
@@ -531,7 +550,8 @@ export function ProgramWageInfoSection({
                   name="wagePricingBase"
                   control={form.control}
                   render={({ field }) => (
-                    <CmsNumericInput inputSize="small"
+                    <CmsNumericInput
+                      inputSize="small"
                       mode="currency"
                       value={field.value ?? ''}
                       onBlur={field.onBlur}
@@ -554,7 +574,8 @@ export function ProgramWageInfoSection({
                   name="wagePricingLongDistance"
                   control={form.control}
                   render={({ field }) => (
-                    <CmsNumericInput inputSize="small"
+                    <CmsNumericInput
+                      inputSize="small"
                       mode="currency"
                       value={field.value ?? ''}
                       onBlur={field.onBlur}

@@ -226,7 +226,6 @@ export function ParticipatingParticipantSettlementSection({
           <ExcelButton
             onClick={exportExcel}
             loading={isExcelExporting}
-            disabled={rows.length === 0 || isError}
           />
         </div>
       </div>

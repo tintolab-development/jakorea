@@ -147,4 +147,32 @@ const instructorMealUploaded = buildSettlementWriteDraft({
 })
 assert.equal(validateSettlementWriteDraft(instructorMealUploaded), null)
 
+// 1사1교 숙박비 — 신청하면 영수증 필수
+const instructorLodgingBase = {
+  ...base,
+  isInstructor: true,
+  documentKind: 'payment_statement' as const,
+  companySchoolLodgingRequested: true,
+}
+assert.equal(
+  validateSettlementWriteDraft(buildSettlementWriteDraft(instructorLodgingBase)),
+  'receipt_required'
+)
+assert.equal(
+  validateSettlementWriteDraft(
+    buildSettlementWriteDraft({ ...instructorLodgingBase, companySchoolLodgingFiles: ['hotel.jpg'] })
+  ),
+  'upload_incomplete'
+)
+assert.equal(
+  validateSettlementWriteDraft(
+    buildSettlementWriteDraft({
+      ...instructorLodgingBase,
+      companySchoolLodgingFiles: ['hotel.jpg'],
+      companySchoolLodgingAttachments: [{ fileObjectId: 7001, fileName: 'hotel.jpg' }],
+    })
+  ),
+  null
+)
+
 console.log('validate-write-draft.selfcheck: ok')

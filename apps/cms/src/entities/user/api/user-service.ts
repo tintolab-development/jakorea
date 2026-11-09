@@ -1713,7 +1713,7 @@ const DEFAULT_DELETE_REASON = 'CMS 관리자 회원 삭제'
 
 /**
  * 목록 탭별 일괄·단건 삭제 (remote). mock에서는 단건 `deleteUser` 루프.
- * 회원 삭제는 확인 문구 `삭제`로 진행한다.
+ * 회원 삭제는 확인 문구 `삭제`, 전체·강사 목록 탈퇴 처리 모달은 `탈퇴`로 진행한다.
  */
 export async function deleteUsersByListKind(
   users: Omit<User, 'password'>[],
@@ -1724,6 +1724,16 @@ export async function deleteUsersByListKind(
   if (users.length === 0) return
 
   const typedConfirm = confirmInput?.trim() ?? ''
+  const isWithdrawConfirm = matchesDeleteGuideTypedConfirm(
+    typedConfirm,
+    WITHDRAW_GUIDE_TYPED_CONFIRM_VALUE
+  )
+  const isMemberConfirmValid =
+    isWithdrawConfirm || matchesDeleteGuideTypedConfirm(typedConfirm, DELETE_GUIDE_TYPED_CONFIRM_VALUE)
+  /** 회원(member) 삭제 API 확인 문구 — `탈퇴`는 탈퇴 필드, `삭제`는 삭제 필드로 전달 */
+  const memberConfirmOptions = isWithdrawConfirm
+    ? { withdrawConfirmationText: typedConfirm }
+    : { typedDeleteConfirm: typedConfirm }
 
   if (!isMembersRemoteEnabled()) {
     for (const u of users) {
@@ -1741,8 +1751,8 @@ export async function deleteUsersByListKind(
 
   try {
     if (listKind === 'all') {
-      if (!matchesDeleteGuideTypedConfirm(typedConfirm, DELETE_GUIDE_TYPED_CONFIRM_VALUE)) {
-        throw new Error('삭제 확인 문구를 입력해 주세요.')
+      if (!isMemberConfirmValid) {
+        throw new Error('확인 문구를 입력해 주세요.')
       }
       for (const u of users) {
         await deleteUser(u.id, reason, {
@@ -1751,7 +1761,7 @@ export async function deleteUsersByListKind(
           adminAccountId: u.adminAccountId,
           organizationId: u.organizationId ?? parseOrganizationIdFromUserId(u.id),
           email: u.email,
-          typedDeleteConfirm: typedConfirm,
+          ...memberConfirmOptions,
         })
       }
       return
@@ -1788,8 +1798,8 @@ export async function deleteUsersByListKind(
       return
     }
 
-    if (!matchesDeleteGuideTypedConfirm(typedConfirm, DELETE_GUIDE_TYPED_CONFIRM_VALUE)) {
-      throw new Error('삭제 확인 문구를 입력해 주세요.')
+    if (!isMemberConfirmValid) {
+      throw new Error('확인 문구를 입력해 주세요.')
     }
 
     for (const u of users) {
@@ -1797,7 +1807,7 @@ export async function deleteUsersByListKind(
         role: u.role,
         memberId: u.memberId,
         email: u.email,
-        typedDeleteConfirm: typedConfirm,
+        ...memberConfirmOptions,
       })
     }
   } catch (error) {

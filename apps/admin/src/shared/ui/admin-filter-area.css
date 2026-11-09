@@ -5,9 +5,16 @@
  * @see apps/cms/.cursor/rules/design/filter-area-layout.mdc
  */
 
+/*
+ * 필터 영역 = [필드 묶음(__fields) | 조회 열(__actions)] 한 줄 (QA 2026-11-10)
+ * - 필드는 __fields 안에서만 flex-wrap 으로 줄바꿈한다. 조회 열은 전체 높이에 걸쳐 우측에 따로 있어
+ *   화면이 좁아져도 필드가 조회 버튼 위로 올라가지 않는다.
+ * - 두 열 모두 아래 정렬(align-items: flex-end) → 필드 마지막 줄과 조회 버튼이 같은 줄에 놓인다.
+ * - 조회 열 폭은 버튼 고유 폭(min-width 120 + 라벨) 그대로. px 고정·margin-left:auto 없음.
+ */
 .admin-filter-area {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: flex-end;
   gap: var(--filter-field-gap, 12px);
   width: 100%;
@@ -15,32 +22,24 @@
   box-sizing: border-box;
 }
 
-/*
- * 2행 마크업(head / bottom) — CMS merged-auto-fill + `mergedAutoFillInlineSearch` 미러
- * 화면 너비에 따라 한 줄에 들어가는 필터 수가 달라져야 하므로(QA) head·bottom을 별도 줄로 나누지 않는다.
- * 래퍼는 `display: contents`로 풀어 모든 필드 + 조회가 하나의 flex-wrap 흐름에 들어간다.
- * - 넓으면 하단(trailing) 필드도 윗줄 빈 자리로 올라오고, 좁으면 윗줄 필드와 함께 아래로 내려간다
- * - 조회는 마지막 줄 우측(`margin-left: auto`)
- */
-.admin-filter-area--split {
+.admin-filter-area__fields {
   display: flex;
-  flex-direction: row;
   flex-wrap: wrap;
   align-items: flex-end;
-  justify-content: flex-start;
   gap: var(--filter-field-gap, 12px);
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
+/*
+ * 2행 마크업(head / bottom-fields) — CMS merged-auto-fill + `mergedAutoFillInlineSearch` 미러
+ * 화면 너비에 따라 한 줄에 들어가는 필터 수가 달라져야 하므로(QA 2026-11-09) head·bottom-fields 를 별도 줄로
+ * 나누지 않는다. 두 래퍼는 `display: contents` 로 풀어 모든 필드가 __fields 의 한 flex-wrap 흐름에 들어간다.
+ * (넓으면 하단 필드도 윗줄 빈 자리로 올라오고, 좁으면 윗줄 필드와 함께 아래로 내려간다)
+ */
 .admin-filter-area__head,
-.admin-filter-area__bottom,
 .admin-filter-area__bottom-fields {
   display: contents;
-}
-
-.admin-filter-area--split .admin-filter-area__actions {
-  flex: 0 0 auto;
-  margin-left: auto;
-  align-self: flex-end;
 }
 
 /* 레이블 + 컨트롤 세로 스택 · 사이 6px */
@@ -164,15 +163,15 @@
   white-space: nowrap;
 }
 
-/* 조회 — 우측 정렬, 높이 40 (폭은 라벨 + size min-width) */
+/* 조회 열 — 필드 묶음 우측, 아래 정렬, 높이 40 (폭은 라벨 + size min-width) */
 .admin-filter-area__actions {
   display: flex;
   align-items: flex-end;
+  align-self: flex-end;
   flex: 0 0 auto;
   width: max-content;
   min-width: 0;
   max-width: 100%;
-  margin-left: auto;
   box-sizing: border-box;
 }
 
@@ -276,18 +275,20 @@
     width: auto;
   }
 
+  /* 모바일: 조회가 필드 묶음 아래 한 줄 전체 */
+  .admin-filter-area {
+    flex-wrap: wrap;
+  }
+
+  .admin-filter-area__fields {
+    flex-basis: 100%;
+  }
+
   .admin-filter-area__actions {
-    margin-left: 0;
     width: 100%;
     min-width: 0;
     max-width: none;
     flex: 1 1 auto;
-  }
-
-  .admin-filter-area--split .admin-filter-area__actions {
-    margin-left: 0;
-    width: 100%;
-    max-width: none;
   }
 
   .admin-filter-area__search-button.cms-button {

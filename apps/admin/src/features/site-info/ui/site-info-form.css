@@ -46,21 +46,6 @@
   grid-template-columns: 160px minmax(0, 1fr);
 }
 
-.site-info-form .detail-info-form__field-label,
-.site-info-form .detail-info-form__field-content,
-.site-info-form .detail-info-form__field-content--view,
-.site-info-form .detail-info-form__field-content--edit {
-  padding: 12px 16px;
-  box-sizing: border-box;
-}
-
-.site-info-form .detail-info-form__field-label {
-  width: 160px;
-  min-width: 160px;
-  max-width: 160px;
-  min-height: 54px;
-}
-
 .site-info-form .detail-info-form__field-content {
   min-height: 54px;
   justify-content: flex-start;
@@ -189,14 +174,6 @@
   min-height: 52px;
   --detail-info-label-w: 200px;
   grid-template-columns: 200px minmax(0, 1fr);
-}
-
-.site-info-form .detail-info-form__field-label {
-  width: 200px;
-  min-width: 200px;
-  max-width: 200px;
-  min-height: 52px;
-  padding: 8px 16px;
 }
 
 .site-info-form .detail-info-form__field-content {

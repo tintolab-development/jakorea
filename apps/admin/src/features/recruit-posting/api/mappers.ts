@@ -122,6 +122,19 @@ export function mapCareerPostingAdminDetail(row: CareerPostingAdminDetail): Recr
   }
 }
 
+/**
+ * 모집기간 요청 값. RESULT는 서버가 기간을 저장하지 않으므로 항상 null.
+ * 그 외 상태도 빈 값은 "" 대신 null로 보낸다.
+ */
+function toRecruitPeriodWire(
+  wireStatus: CareerPostingCreateRequestStatus | CareerPostingUpdateRequestStatus,
+  start: string,
+  end: string,
+): { recruitStart: string | null; recruitEnd: string | null } {
+  if (wireStatus === 'RESULT') return { recruitStart: null, recruitEnd: null }
+  return { recruitStart: toYmd(start) || null, recruitEnd: toYmd(end) || null }
+}
+
 export function toCreateWireStatus(
   status: RecruitPostingFormStatus | 'closed',
 ): CareerPostingCreateRequestStatus {
@@ -146,14 +159,14 @@ export function toCareerPostingCreateRequest(
     buttonLabel: input.buttonLabel,
     linkUrl: input.linkUrl,
   })
+  const status = toCreateWireStatus(input.status)
   return {
     title: input.title.trim(),
     body: input.contentMarkdown,
     isPublic: input.isPublic,
-    status: toCreateWireStatus(input.status),
+    status,
     publishedOn: toYmd(input.publishedAt),
-    recruitStart: toYmd(input.recruitStart),
-    recruitEnd: toYmd(input.recruitEnd),
+    ...toRecruitPeriodWire(status, input.recruitStart, input.recruitEnd),
     authorName: input.authorName.trim(),
     attachmentAssetIds: attachmentAssetIds.slice(0, RECRUIT_POSTING_ATTACHMENT_MAX_COUNT),
     buttonLabel: link.buttonLabel,
@@ -170,14 +183,14 @@ export function toCareerPostingUpdateRequest(
     buttonLabel: input.buttonLabel,
     linkUrl: input.linkUrl,
   })
+  const status = toUpdateWireStatus(input.status)
   return {
     title: input.title.trim(),
     body: input.contentMarkdown,
     isPublic: input.isPublic,
-    status: toUpdateWireStatus(input.status),
+    status,
     publishedOn: toYmd(input.publishedAt),
-    recruitStart: toYmd(input.recruitStart),
-    recruitEnd: toYmd(input.recruitEnd),
+    ...toRecruitPeriodWire(status, input.recruitStart, input.recruitEnd),
     authorName: input.authorName.trim(),
     version,
     attachmentAssetIds: attachmentAssetIds.slice(0, RECRUIT_POSTING_ATTACHMENT_MAX_COUNT),

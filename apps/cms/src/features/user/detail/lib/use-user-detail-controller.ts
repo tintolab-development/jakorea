@@ -54,10 +54,12 @@ import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { navigateToProgramAdminDetail } from '@/features/program/general/lib/navigate-to-program-admin-detail'
 import { stashMemberDetailReturnForProgramNavigation } from '@/features/user/detail/lib/member-detail-program-navigation-return'
-import type {
-  PatchUserBasicInfoInput,
-  PatchUserBasicInfoOptions,
+import {
+  getUserById,
+  type PatchUserBasicInfoInput,
+  type PatchUserBasicInfoOptions,
 } from '@/entities/user/api/user-service'
+import { resolveMemberDisplayAfterSave } from '@/features/user/detail/lib/member-save-display'
 import {
   canAccessAdminCommentInAdminDetail,
   canEditAdminMemberInfo,
@@ -103,6 +105,8 @@ import { handleError } from '@/shared/utils/error-handler'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useQueryClient } from '@tanstack/react-query'
 import { memberQueryKeys } from '@/features/user/api/member-query-keys'
+import { EDIT_MODE_REVEAL } from '@/shared/lib/privacy-unmask-purpose'
+import { useRevealedMemberOverlay } from '@/features/user/detail/lib/use-revealed-member-overlay'
 import { MEMBER_DETAIL_SCREEN_CODE } from '@/features/user/api/map-member-comments'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import {
@@ -223,6 +227,16 @@ export function useUserDetailController({
   const displayUserIdentityRef = useRef<string | null>(null)
   displayUserIdentityRef.current =
     displayUser != null ? `${displayUser.id}:${displayUser.memberId ?? ''}` : null
+  /**
+   * 원문(unmask) 응답은 이 상세 화면 안의 일시 상태로만 둔다.
+   * 상위(drawer·목록) 상태와 공용 회원 목록·상세 캐시에는 쓰지 않는다(정책 4-2 재마스킹, P1 목록 잔류).
+   * 다시 가리기·수정 취소·저장·다른 회원 이동·닫기 시 버리면 화면은 이미 받은 마스킹 GET 값으로 돌아간다.
+   */
+  const {
+    revealedUser: overlayRevealedUser,
+    holdRevealedUser,
+    clearRevealedUser,
+  } = useRevealedMemberOverlay(displayUser)
 
   const [tabState, setTabState] = useState<TabState>({ lnb: 'detail-info' })
   /** 권한 승인 상세는 신청 정보(기본/약관/이력서)만 — 프로그램 신청·참여 이력 API 생략 */
@@ -523,15 +537,9 @@ export function useUserDetailController({
         )
       }
 
-      const applyMergedUser = (merged: Omit<User, 'password'>) => {
-        if (displayUser.memberId != null) {
-          queryClient.setQueryData(memberQueryKeys.detail(displayUser.memberId), merged)
-        }
-        queryClient.setQueryData(
-          [...memberQueryKeys.detailByUuid(displayUser.id), displayUser.role],
-          merged
-        )
-        onMemberBasicInfoSaved?.(merged, { skipListInvalidate: true })
+      // 원문은 이 상세의 일시 상태로만 — 상위 drawer·목록 상태와 공용 회원 캐시에 쓰지 않는다.
+      const applyMergedUser = (merged: Omit<User, 'password'>, onlyIfCurrent = false) => {
+        holdRevealedUser(displayUser, merged, onlyIfCurrent)
       }
 
       const merged = stripRestrictedPiiForSessionUser(
@@ -547,11 +555,12 @@ export function useUserDetailController({
         if (enriched.affiliatedSchoolName === merged.affiliatedSchoolName) return
         if (displayUserIdentityRef.current !== enrichForIdentity) return
         applyMergedUser(
-          stripRestrictedPiiForSessionUser(enriched, displayUser, useAuthStore.getState().user)
+          stripRestrictedPiiForSessionUser(enriched, displayUser, useAuthStore.getState().user),
+          true
         )
       })
     },
-    [displayUser, onMemberBasicInfoSaved, queryClient]
+    [displayUser, holdRevealedUser, queryClient]
   )
 
   const {
@@ -561,6 +570,7 @@ export function useUserDetailController({
     closePersonalInfoRevealConfirm,
     submitPersonalInfoReveal,
     revealWithReason,
+    remaskPersonalInfo,
     confirmModal: personalInfoRevealModal,
   } = usePersonalInfoReveal({
     resolveAccessItem: resolvePersonalInfoAccessItem,
@@ -578,6 +588,7 @@ export function useUserDetailController({
     },
     resolveInstructorRoleRequestId: () => displayUser?.instructorRoleRequestId,
     onPrivacyUnmasked: handlePrivacyUnmasked,
+    onRemask: clearRevealedUser,
     resetDeps: [
       open,
       displayUser?.id,
@@ -591,6 +602,12 @@ export function useUserDetailController({
     controlMode: 'hideWhenRevealed',
     modalZIndex: PERSONAL_INFO_REVEAL_MODAL_Z_INDEX,
   })
+
+  /** 현재 회원·열람 상태와 일치할 때만 원문을 쓴다. 그 밖에는 null(마스킹 GET 값 표시). */
+  const revealedUser = personalInfoRevealed ? overlayRevealedUser : null
+
+  /** 원문 열람 종료: 훅이 일시 원문 폐기(onRemask)와 마스킹 상태 복귀를 한 번에 동기 수행한다. */
+  const endPersonalInfoReveal = remaskPersonalInfo
 
   const [editUnmaskConfirmOpen, setEditUnmaskConfirmOpen] = useState(false)
   const [editUnmaskConfirmLoading, setEditUnmaskConfirmLoading] = useState(false)
@@ -998,11 +1015,12 @@ export function useUserDetailController({
       resolveInstructorMemberProfile(displayUser) !== 'school_teacher' &&
       !shouldShowCmsMemberInfoEditButton(displayUser)
     if (instructorFeeOnlyEdit || displayUser.role === 'SCHOOL' || personalInfoRevealed) {
-      startBasicInfoEdit()
+      // 이미 열람 중이면 일시 원문으로 수정 폼을 채운다(상위 displayUser는 마스킹 값).
+      startBasicInfoEdit(personalInfoRevealed ? revealedUser : undefined)
       return
     }
     setEditUnmaskConfirmOpen(true)
-  }, [displayUser, personalInfoRevealed, startBasicInfoEdit])
+  }, [displayUser, personalInfoRevealed, revealedUser, startBasicInfoEdit])
 
   const closeEditUnmaskConfirm = useCallback(() => {
     if (editUnmaskConfirmLoading) return
@@ -1012,7 +1030,7 @@ export function useUserDetailController({
   const confirmEditUnmaskAndStartEdit = useCallback(() => {
     if (editUnmaskConfirmLoading || !displayUser) return
     setEditUnmaskConfirmLoading(true)
-    void revealWithReason(BASIC_INFO_EDIT_UNMASK_REASON)
+    void revealWithReason(BASIC_INFO_EDIT_UNMASK_REASON, EDIT_MODE_REVEAL)
       .then(result => {
         if (!result.ok) return
         const unmaskedUser =
@@ -1116,7 +1134,9 @@ export function useUserDetailController({
     setBasicInfoEditing(false)
     setBasicInfoEditScope('none')
     setBasicInfoDraft(null)
-  }, [])
+    // 수정 취소 즉시 원문 폐기·재마스킹. 원문은 캐시에 쓰지 않았으므로 화면은 마스킹 GET 값으로 돌아간다.
+    endPersonalInfoReveal()
+  }, [endPersonalInfoReveal])
 
   const saveBasicInfoEdit = useCallback(async () => {
     if (!displayUser || !basicInfoDraft || !patchMemberBasicInfo) return
@@ -1190,6 +1210,7 @@ export function useUserDetailController({
         setBasicInfoEditing(false)
         setBasicInfoEditScope('none')
         setBasicInfoDraft(null)
+        endPersonalInfoReveal()
         onMemberBasicInfoSaved?.(merged, { skipListInvalidate: true })
         return
       }
@@ -1212,8 +1233,9 @@ export function useUserDetailController({
           draft.schoolEnrollmentStatus === 'enrolled' &&
           !shouldSkipIndividualEnrolledSchoolReselectionGuard({
             draftInstitution: draft.affiliationInstitution,
-            originalInstitution: splitUserAffiliationForDraft(displayUser.affiliation)
-              .affiliationInstitution,
+            originalInstitution: splitUserAffiliationForDraft(
+              (revealedUser ?? displayUser).affiliation
+            ).affiliationInstitution,
             schoolOrganizationId: draft.schoolOrganizationId,
             schoolProvider: draft.schoolProvider,
             schoolExternalCode: draft.schoolExternalCode,
@@ -1263,7 +1285,7 @@ export function useUserDetailController({
       )
 
       const draftId1365 = (draft.id1365 ?? '').trim()
-      const currentId1365 = (displayUser.id1365 ?? '').trim()
+      const currentId1365 = ((revealedUser ?? displayUser).id1365 ?? '').trim()
       if (
         displayUser.role === 'INDIVIDUAL' &&
         membersRemote &&
@@ -1304,6 +1326,29 @@ export function useUserDetailController({
           )
         }
       }
+      // 저장 후 표시·공용 캐시·목록은 마스킹 상세 GET 결과만 쓴다(입력 원문을 넘기지 않음).
+      const display = await resolveMemberDisplayAfterSave({
+        saved: merged,
+        before: displayUser,
+        scope: basicInfoEditScope,
+        membersRemote,
+        fetchMaskedDetail: async before => {
+          const masked = await getUserById(before.id, {
+            memberId: before.memberId ?? undefined,
+            role: before.role,
+            organizationId: before.organizationId ?? undefined,
+            adminAccountId: before.adminAccountId ?? undefined,
+            instructorMemberProfile: before.instructorMemberProfile,
+            roles: before.roles,
+          })
+          if (!masked) throw new Error('masked member detail not found')
+          return masked
+        },
+      })
+      merged = display.user
+      if (display.refetchNeeded) {
+        void queryClient.invalidateQueries({ queryKey: memberQueryKeys.listAll() })
+      }
       if (displayUser.memberId != null) {
         queryClient.setQueryData(memberQueryKeys.detail(displayUser.memberId), merged)
         if (basicInfoEditScope === 'profile' || basicInfoEditScope === 'instructor_fee_ja') {
@@ -1327,6 +1372,8 @@ export function useUserDetailController({
       setBasicInfoEditing(false)
       setBasicInfoEditScope('none')
       setBasicInfoDraft(null)
+      // 저장 완료로 수정 세션 종료 — 수정 진입 원문을 더 들고 있지 않는다.
+      endPersonalInfoReveal()
       const skipListInvalidate =
         membersRemote &&
         (basicInfoEditScope === 'profile' || basicInfoEditScope === 'instructor_fee_ja')
@@ -1343,6 +1390,7 @@ export function useUserDetailController({
     }
   }, [
     displayUser,
+    revealedUser,
     basicInfoDraft,
     basicInfoEditScope,
     patchMemberBasicInfo,
@@ -1350,6 +1398,7 @@ export function useUserDetailController({
     currentUser,
     membersRemote,
     queryClient,
+    endPersonalInfoReveal,
   ])
 
   const updateBasicInfoDraft = useCallback(
@@ -1718,7 +1767,9 @@ export function useUserDetailController({
     // 권한 승인(강사): getDetail → instructorCmsProfile 이 있으면 이력서 카드에 반영
     if (mode === 'permission') {
       if (!displayUser.instructorCmsProfile) return null
-      const src = personalInfoRevealed ? displayUser : maskedUserForInstructorDetail(displayUser)
+      const src = personalInfoRevealed
+        ? (revealedUser ?? displayUser)
+        : maskedUserForInstructorDetail(displayUser)
       return userToApplicantInstructorRow(src)
     }
 
@@ -1728,9 +1779,11 @@ export function useUserDetailController({
     if (profile !== 'instructor_dual' && profile !== 'instructor_only') {
       return null
     }
-    const src = personalInfoRevealed ? displayUser : maskedUserForInstructorDetail(displayUser)
+    const src = personalInfoRevealed
+      ? (revealedUser ?? displayUser)
+      : maskedUserForInstructorDetail(displayUser)
     return userToApplicantInstructorRow(src)
-  }, [displayUser, personalInfoRevealed, mode])
+  }, [displayUser, revealedUser, personalInfoRevealed, mode])
 
   return {
     state: {
@@ -1744,6 +1797,8 @@ export function useUserDetailController({
       withdrawConfirmLoading,
       institutionDeleteBlockedOpen,
       personalInfoRevealed,
+      /** 열람 중인 원문 회원(일시 상태). 화면 표시는 `revealedUser ?? 상위 user`. */
+      revealedUser,
       personalInfoRevealConfirmOpen,
       basicInfoEditing,
       basicInfoEditScope,

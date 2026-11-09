@@ -29,8 +29,8 @@ import {
   type TimedItemGroupLayout,
 } from '../lib/week-time-grid-layout'
 import { formatCalendarEventTimeLabel } from '../lib/format-calendar-event-time-label'
+import { CALENDAR_MONTH_WEEKDAY_LABELS } from '../lib/calendar-weekday-labels'
 
-const WEEK_HEADER_WEEKDAY_EN = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'] as const
 
 const WEEK_TIME_GRID_HOUR_LABELS: readonly string[] = Array.from(
   { length: WEEK_TIME_GRID_HOURS + 1 },
@@ -313,7 +313,7 @@ export function WeekView({
           const isSelected = date.isSame(selectedDate, 'day')
           const dateKey = date.format('YYYY-MM-DD')
           const dayLabel = formatWeekHeaderDayLabel(date, weekDates)
-          const weekday = WEEK_HEADER_WEEKDAY_EN[date.day()]
+          const weekday = CALENDAR_MONTH_WEEKDAY_LABELS[date.day()]
           return (
             <button
               key={dateKey}

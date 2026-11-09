@@ -60,6 +60,7 @@ import {
 import { computePaymentOrderCalculationSubtotalBeforeWithholding } from './payment-order-calculation-basis-detail'
 import { PaymentOrderCalculationStatementInstructorBasicSection } from './payment-order-calculation-statement-instructor-basic-section'
 import { PaymentOrderCalculationStatementProgramBasicSection } from './payment-order-calculation-statement-program-basic-section'
+import { ProgramDetailActionGuard } from '@/features/program/shared/ui/program-detail-action-guard'
 
 const CALC_STATEMENT_CONTENT_MIN_WIDTH = PAYMENT_ORDER_CALC_STATEMENT_MIN_WIDTH
 
@@ -84,6 +85,11 @@ export interface PaymentOrderCalculationStatementModalImplProps {
   paymentOrdersRemote?: boolean
   statementId?: number | null
   settlementId?: number | null
+  /**
+   * 정산 항목의 프로그램. 지정 시 권한 설정 V1.2 '지급조서 확인·반려·정정'(역할 연동)을 프로그램 역할로 판정해,
+   * Program Viewer(프로그램 상세)는 버튼 클릭 시 접근 불가 안내만 본다. 프로그램 상세 안에서는 상위 가드가 판정한다.
+   */
+  programId?: number | string | null
   availableActions?: readonly string[] | null
   detailContextQuery?: PaymentOrdersDetailContextQueryResult
   /**
@@ -127,6 +133,7 @@ export interface PaymentOrderCalculationStatementModalImplProps {
 }
 
 export function PaymentOrderCalculationStatementModalImpl({
+  programId,
   open,
   onCancel,
   data,
@@ -483,7 +490,7 @@ export function PaymentOrderCalculationStatementModalImpl({
       />
     )
 
-  return (
+  const content = (
     <>
       <ContentModal
         open={open}
@@ -731,5 +738,10 @@ export function PaymentOrderCalculationStatementModalImpl({
         />
       ) : null}
     </>
+  )
+  return programId != null && String(programId).trim() !== '' ? (
+    <ProgramDetailActionGuard programId={programId}>{content}</ProgramDetailActionGuard>
+  ) : (
+    content
   )
 }

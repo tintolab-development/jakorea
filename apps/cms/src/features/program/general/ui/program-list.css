@@ -222,6 +222,61 @@
   width: 13% !important;
 }
 
+/* 교육 받은 교사 목록 — 탭별 피그마 열 폭. 선택 60 · No. 80, 프로그램명이 남는 폭을 채운다. */
+.program-list-card--trained-teachers {
+  --table-selection-column-width: 60px;
+}
+
+.program-list-card--trained-teachers .program-list-table__col-title {
+  width: auto !important;
+}
+
+/* 전체: 진행 현황 180 · 모집 인원 200 · 교육 대상 200 */
+.program-list-card--trained-teachers.program-list-card--program-list-all-programs
+  .program-list-table__col-progress {
+  width: 180px !important;
+}
+
+.program-list-card--trained-teachers.program-list-card--program-list-all-programs
+  .program-list-table__col-recruitment,
+.program-list-card--trained-teachers.program-list-card--program-list-all-programs
+  .program-list-table__col-target {
+  width: 200px !important;
+}
+
+/* 예정: 모집 인원 160 · 교육 대상 160 · 사업 운영 기간 320 */
+.program-list-card--trained-teachers.program-list-card--program-list-period-columns
+  .program-list-table__col-recruitment,
+.program-list-card--trained-teachers.program-list-card--program-list-period-columns
+  .program-list-table__col-target {
+  width: 160px !important;
+}
+
+.program-list-card--trained-teachers.program-list-card--program-list-period-columns
+  .program-list-table__col-period {
+  width: 320px !important;
+}
+
+/* 진행 중·완료: 모집 인원 · 참여 학교 수 · 참여 학생 수 · 교육 대상 각 180 */
+.program-list-card--trained-teachers:is(
+    .program-list-card--program-list-in-progress,
+    .program-list-card--program-list-completed
+  )
+  :is(
+    .program-list-table__col-recruitment,
+    .program-list-table__col-school-count,
+    .program-list-table__col-student-count,
+    .program-list-table__col-target
+  ) {
+  width: 180px !important;
+}
+
+/* 제목 txt 프레임 — 좌우 8 · 제목↔총 n건 8 */
+.program-list-card--trained-teachers .filter-table-layout__toolbar-main {
+  gap: var(--spacing-8, 8px);
+  padding: 0 var(--spacing-8, 8px);
+}
+
 .program-filter-wrapper {
   width: 100%;
   margin-bottom: var(--spacing-16);

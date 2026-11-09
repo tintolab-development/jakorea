@@ -30,6 +30,7 @@ describe('fetchParticipatingInstructorSettlementsRemote', () => {
     expect(fetchSettlementListPageRemote).toHaveBeenCalledWith({
       programId: 186550,
       instructorMemberId: 190115,
+      includePaid: true,
       page: 0,
       size: 20,
     })

@@ -13,12 +13,12 @@ describe('AccountPaymentCompleteSuccessModal', () => {
     cleanup()
   })
 
-  it('일괄 완료 안내와 대량이체 발급 버튼을 보여 준다', () => {
+  it('일괄 완료 안내와 세금신고 발급 버튼을 보여 준다', () => {
     render(
       <AccountPaymentCompleteSuccessModal
         open
         onCancel={() => undefined}
-        onIssueBulkTransfer={() => undefined}
+        onIssueTaxReport={() => undefined}
         context={{
           kind: 'bulk',
           recipientName: '김제이',
@@ -33,6 +33,7 @@ describe('AccountPaymentCompleteSuccessModal', () => {
     expect(screen.getByText(/의 계좌 지급 처리가 완료되었습니다/)).toBeTruthy()
     expect(screen.queryByText(/강사비/)).toBeNull()
     expect(screen.getByText('닫기')).toBeTruthy()
-    expect(screen.getByText('대량이체 양식 발급')).toBeTruthy()
+    expect(screen.getByText('세금신고 양식 발급')).toBeTruthy()
+    expect(screen.queryByText('대량이체 양식 발급')).toBeNull()
   })
 })

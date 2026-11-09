@@ -189,3 +189,9 @@
   font-weight: 500;
   line-height: 150%;
 }
+
+/* 로고 미첨부 — 공통 미리보기(ThumbnailPlaceholder)가 자체 테두리를 그리므로 칸 테두리는 숨긴다 */
+.footer-org-section__preview:not(:has(img)) {
+  border: none;
+  background: transparent;
+}

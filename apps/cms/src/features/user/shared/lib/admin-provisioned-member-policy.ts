@@ -172,7 +172,8 @@ export function canEditAdminMemberInfo(
 
 /**
  * 관리자 회원(`role === 'ADMIN'`) 상세 — [정보 수정] 진입.
- * 관리자 등록 회원이면 CMS 관리자 전원 노출(마스터는 전체 기본정보, 그 외는 코멘트·권한 유형만).
+ * 권한 설정 V1.2: 관리자 등록·수정·삭제(권한 유형 변경 포함)는 Master 전용.
+ * 관리자 코멘트 작성은 `canAccessAdminCommentInAdminDetail`로 별도 판정한다.
  */
 export function canStartAdminMemberProfileEdit(
   currentUser: CurrentUserLike | null | undefined,
@@ -180,7 +181,7 @@ export function canStartAdminMemberProfileEdit(
 ): boolean {
   if (targetUser.role !== 'ADMIN') return false
   if (!shouldShowCmsMemberInfoEditButton(targetUser)) return false
-  return canAccessAdminCommentInAdminDetail(currentUser)
+  return isMasterAdminUser(currentUser)
 }
 
 /** 소속 교사 중 CMS 회원과 연동된 행이 하나라도 있으면 true (해당 학교명으로 가입·연동된 교사) */

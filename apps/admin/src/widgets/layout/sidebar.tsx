@@ -4,6 +4,12 @@ import { Layout, Menu } from 'antd'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useState, useMemo, useEffect, useCallback, type CSSProperties } from 'react'
 import { getSidebarMenuItems, getOpenKeysForPath } from '@/shared/config/menu-config'
+import { useHomepageLogAccess } from '@/features/auth/hooks/use-homepage-log-access'
+import {
+  HOMEPAGE_LOG_ACCESS_DENIED_ALERT,
+  isHomepageLogPath,
+} from '@/shared/lib/homepage-log-access'
+import { cmsAlertModal } from '@/shared/ui'
 import { MenuDropdownChevronIcon } from '@/shared/ui/icons'
 import './sidebar.css'
 import { Header } from './header'
@@ -44,10 +50,7 @@ export function Sidebar() {
   const navigate = useNavigate()
   const location = useLocation()
 
-  const pathOpenKeys = useMemo(
-    () => getOpenKeysForPath(location.pathname),
-    [location.pathname]
-  )
+  const pathOpenKeys = useMemo(() => getOpenKeysForPath(location.pathname), [location.pathname])
 
   const [controlledOpenKeys, setControlledOpenKeys] = useState<string[]>(pathOpenKeys)
 
@@ -69,12 +72,18 @@ export function Sidebar() {
     setControlledOpenKeys(prev => (sameOpenKeys(prev, keys) ? prev : keys))
   }, [])
 
+  const logAccess = useHomepageLogAccess()
   const handleMenuClick = useCallback(
     ({ key }: { key: string }) => {
       if (typeof key !== 'string' || !key.startsWith('/')) return
+      // 권한 설정 V1.2: 로그 관리는 Master 전용 — 누르는 즉시 안내하고 이동하지 않는다.
+      if (isHomepageLogPath(key) && logAccess.status === 'denied') {
+        cmsAlertModal.show(HOMEPAGE_LOG_ACCESS_DENIED_ALERT)
+        return
+      }
       navigate(key)
     },
-    [navigate]
+    [logAccess.status, navigate]
   )
 
   return (

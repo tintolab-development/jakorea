@@ -1,3 +1,4 @@
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type {
   UjatVolunteerApplicantRow,
@@ -5,6 +6,7 @@ import type {
 } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import type { UjatManagerEvaluation } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { CmsButton } from '@/shared/ui'
+import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
@@ -24,8 +26,15 @@ import {
   InterviewEvaluationSection,
   type InterviewEvaluationSectionHandle,
 } from './interview-evaluation-section'
-import { resolveUjatEffectiveSecondInterviewStatus } from '../interview2/display'
-import { canReassignVolunteerInterviewAssignment } from '@/features/program/shared/lib/volunteer-interview-reassign'
+import {
+  getUjatInterview2NextStatusTransitionDelayMs,
+  resolveUjatEffectiveSecondInterviewStatus,
+} from '../interview2/display'
+import { useInterview2EffectiveStatusTick } from '@/features/program/shared/hooks/use-interview2-effective-status-tick'
+import {
+  canReassignVolunteerInterviewAssignment,
+  VOLUNTEER_INTERVIEW_REASSIGN_BLOCKED_ALERT,
+} from '@/features/program/shared/lib/volunteer-interview-reassign'
 import { guardUjatVolunteerInterview2Evaluation } from './guard-actions'
 import '@/shared/components/detail-info-form/detail-info-form.css'
 import './detail.css'
@@ -97,28 +106,66 @@ function Interview2ApplicantDetail({
   const canWrite = useUjatCanWrite()
   const evaluationSectionRef = useRef<InterviewEvaluationSectionHandle>(null)
   const [isEvaluationEditing, setIsEvaluationEditing] = useState(false)
+  const [isEvaluationSaving, setIsEvaluationSaving] = useState(false)
+  const evaluationSavingRef = useRef(false)
+  // 상세를 연 채 면접 종료 시각이 지나면 상태·버튼이 바로 바뀌도록 재렌더
+  const statusTickRows = useMemo(() => [applicant], [applicant])
+  useInterview2EffectiveStatusTick(statusTickRows, getUjatInterview2NextStatusTransitionDelayMs)
   const interviewNotEnded = resolveUjatEffectiveSecondInterviewStatus(applicant) === 'waiting'
 
   useEffect(() => {
     setIsEvaluationEditing(false)
   }, [applicant.id])
 
-  const handleInterviewEvaluationClick = useCallback(async () => {
-    if (!isEvaluationEditing) {
-      if (!guardUjatVolunteerInterview2Evaluation(applicant)) return
-      setIsEvaluationEditing(true)
-      return
-    }
-    const saved = await evaluationSectionRef.current?.submit()
-    if (saved) setIsEvaluationEditing(false)
-  }, [applicant, isEvaluationEditing])
+  const handleInterviewEvaluationEnter = useCallback(() => {
+    if (!guardUjatVolunteerInterview2Evaluation(applicant)) return
+    setIsEvaluationEditing(true)
+  }, [applicant])
 
-  return (
-    <div className="applicant-detail">
-      <div className="applicant-detail__header">
-        <div className="program-detail-fullpage-modal__header-actions">
-          {canWrite ? (
-            <>
+  /** 입력값은 InterviewEvaluationSection이 isEditing 변경 시 저장값으로 되돌린다 */
+  const handleInterviewEvaluationCancel = useCallback(() => {
+    if (evaluationSavingRef.current) return
+    setIsEvaluationEditing(false)
+  }, [])
+
+  const handleInterviewEvaluationComplete = useCallback(async () => {
+    if (evaluationSavingRef.current) return
+    evaluationSavingRef.current = true
+    setIsEvaluationSaving(true)
+    try {
+      const saved = await evaluationSectionRef.current?.submit()
+      if (saved) setIsEvaluationEditing(false)
+    } finally {
+      evaluationSavingRef.current = false
+      setIsEvaluationSaving(false)
+    }
+  }, [])
+
+  const isEvaluationMode = canWrite && isEvaluationEditing
+
+  const evaluationActions = (
+    <ProgramEditInfoActions
+      canWrite={canWrite}
+      idleVariant="primary"
+      editLabel="면접 평가"
+      saveLabel="평가 완료"
+      isEditing={isEvaluationMode}
+      saving={isEvaluationSaving}
+      disabled={!isEvaluationMode && interviewNotEnded}
+      onEdit={handleInterviewEvaluationEnter}
+      onCancel={handleInterviewEvaluationCancel}
+      onSave={() => {
+        void handleInterviewEvaluationComplete()
+      }}
+    />
+  )
+
+  // 평가 중: 「취소」「평가 완료」만 노출 (정보 수정 취소/저장 공통 UI)
+  const headerActions = isEvaluationMode ? (
+    evaluationActions
+  ) : (
+    <>
+      <>
           <CmsButton
             type="button"
             variant="delete"
@@ -142,25 +189,23 @@ function Interview2ApplicantDetail({
             onClick={onInterviewPass} >
             면접 합격
           </CmsButton>
-          <CmsButton
-            type="button"
-            variant="primary"
-            size="large"
-            disabled={interviewNotEnded && !isEvaluationEditing}
-            onClick={() => {
-              void handleInterviewEvaluationClick()
-            }} >
-            면접 평가
-          </CmsButton>
-            </>
-          ) : null}
-          <PersonalInfoRevealButton
-            disabled={programPrivacyPending}
-            labelMode="stickyReveal"
-            revealed={personalInfoRevealed}
-            cmsVariant="primary"
-            cmsSize="large"
-            onClick={openPersonalInfoRevealConfirm} />
+        </>
+      {evaluationActions}
+      <PersonalInfoRevealButton
+        disabled={programPrivacyPending}
+        labelMode="stickyReveal"
+        revealed={personalInfoRevealed}
+        cmsVariant="primary"
+        cmsSize="large"
+        onClick={openPersonalInfoRevealConfirm} />
+    </>
+  )
+
+  return (
+    <div className="applicant-detail">
+      <div className="applicant-detail__header">
+        <div className="program-detail-fullpage-modal__header-actions">
+          {headerActions}
         </div>
       </div>
 
@@ -173,7 +218,7 @@ function Interview2ApplicantDetail({
         <InterviewEvaluationSection
           ref={evaluationSectionRef}
           applicant={applicant}
-          isEditing={isEvaluationEditing}
+          isEditing={isEvaluationMode}
           onSave={async payload => (await onSaveInterviewEvaluation?.(payload)) ?? false}
         />
         <PreviousTermSection applicant={applicant} />
@@ -186,7 +231,6 @@ function Interview2ApplicantDetail({
 }
 
 export function ApplicantDetailView(props: ApplicantDetailViewProps) {
-  const canWrite = useUjatCanWrite()
   const applicantEnriched = useUjatVolunteerApplicationDetailEnrichment(props.applicant)
   const [unmaskedOverlay, setUnmaskedOverlay] = useState<UjatVolunteerApplicantRow | null>(null)
 
@@ -243,12 +287,19 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
     return '면접일 배정'
   }, [applicant.interviewAssignmentStatus])
 
-  const assignInterviewDisabled = useMemo(() => {
-    if (applicant.interviewAssignmentStatus === 'withdrawn') return true
-    if (applicant.interviewAssignmentStatus === 'assigned') {
-      return !canReassignVolunteerInterviewAssignment(applicant)
+  /** 버튼은 항상 활성 — 배정·재배정이 안 되는 상태면 누를 때 이유를 안내한다(서버 VOLUNTEER_INTERVIEW_CONFLICT와 같은 기준) */
+  const { showAlert } = useCmsAlert()
+  const assignInterviewBlockedAlert = useMemo(() => {
+    if (applicant.interviewAssignmentStatus === 'withdrawn') {
+      return { title: '면접일 배정 안내', content: '활동 포기한 신청은 면접일을 배정할 수 없습니다.' }
     }
-    return false
+    if (
+      applicant.interviewAssignmentStatus === 'assigned' &&
+      !canReassignVolunteerInterviewAssignment(applicant)
+    ) {
+      return VOLUNTEER_INTERVIEW_REASSIGN_BLOCKED_ALERT
+    }
+    return null
   }, [applicant])
 
   if (isInterview2Props(props)) {
@@ -274,8 +325,7 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
       <div className="applicant-detail">
         <div className="applicant-detail__header">
           <div className="program-detail-fullpage-modal__header-actions">
-            {canWrite ? (
-              <>
+            <>
             <CmsButton
               type="button"
               variant="delete"
@@ -287,13 +337,17 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
               type="button"
               variant="secondary"
               size="large"
-              disabled={assignInterviewDisabled}
-              onClick={onAssignInterview}
+              onClick={() => {
+                if (assignInterviewBlockedAlert) {
+                  showAlert({ ...assignInterviewBlockedAlert })
+                  return
+                }
+                onAssignInterview?.()
+              }}
             >
               {assignInterviewLabel}
             </CmsButton>
               </>
-            ) : null}
             <PersonalInfoRevealButton
               disabled={programPrivacyPending}
               labelMode="stickyReveal"
@@ -333,8 +387,7 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
     <div className="applicant-detail">
       <div className="applicant-detail__header">
         <div className="program-detail-fullpage-modal__header-actions">
-          {canWrite ? (
-            <>
+          <>
           <CmsButton
             type="button"
             variant="delete"
@@ -352,7 +405,6 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
             서류 승인
           </CmsButton>
             </>
-          ) : null}
           <PersonalInfoRevealButton
             disabled={programPrivacyPending}
             labelMode="stickyReveal"

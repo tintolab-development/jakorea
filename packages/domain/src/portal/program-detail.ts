@@ -223,7 +223,8 @@ export type PortalProgramDetail = {
    * 공통정보 교육 형태 코드. 없으면 `operationMethod`로 보정한다.
    * perSchedule이면 루트 라벨은 null이고 행 `educationFormLabel`을 쓴다.
    */
-  educationForm?: 'online' | 'offline' | 'hybrid' | 'participant_choice' | null
+  /** `participant_selection`이 현행 값, `participant_choice`는 구 응답 호환. */
+  educationForm?: 'online' | 'offline' | 'hybrid' | 'participant_selection' | 'participant_choice' | null
   /** perSchedule이면 null */
   educationFormLabel?: string | null
   /** CMS 공통정보 참여 방식. `team`이면 개인 신청 팀 정보 노출. 미전달은 null */

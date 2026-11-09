@@ -4,6 +4,7 @@
  */
 
 import type { CSSProperties, ReactNode } from 'react'
+import { StatusOutlineTag } from './status-outline-tag'
 import './status-tag.css'
 
 export type StatusTagTone =
@@ -25,6 +26,11 @@ export interface StatusTagSpec {
   accentColor?: string
   /** 라벨만 opacity 0.4 (배경·테두리 유지) */
   mutedLabel?: boolean
+  /**
+   * `outline`: Figma Status / Tag(64×24·흰 배경·상태색 테두리) — 정산 현황 전용 예외(사용자 확정 2026-11-09).
+   * `accentColor` 필수. 그 외 값 태그는 공통 크기(32·최소 100)를 쓴다.
+   */
+  shape?: 'value' | 'outline'
 }
 
 const TONE_CLASS: Record<StatusTagTone, string> = {
@@ -38,7 +44,16 @@ const TONE_CLASS: Record<StatusTagTone, string> = {
   pink: 'status-tag--pink',
 }
 
-export function StatusTag({ label, tone = 'gray', accentColor, mutedLabel = false }: StatusTagSpec) {
+export function StatusTag({
+  label,
+  tone = 'gray',
+  accentColor,
+  mutedLabel = false,
+  shape = 'value',
+}: StatusTagSpec) {
+  if (shape === 'outline' && accentColor) {
+    return <StatusOutlineTag label={label} accentColor={accentColor} />
+  }
   const toneClass = accentColor ? 'status-tag--accent' : TONE_CLASS[tone]
   const style = accentColor
     ? ({ ['--status-tag-accent' as string]: accentColor } as CSSProperties)

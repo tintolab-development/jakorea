@@ -86,8 +86,9 @@ const INSTRUCTOR_SETTLEMENT_COLOR_TOKENS: Record<
 export type InstructorSettlementPresentationKind = 'text' | 'short' | 'tag' | 'invoice'
 
 /**
- * 동일 업무축의 표현 SSOT. Text 해당 없음은 검정, Short/Tag는 80% 검정.
- * invoice는 현행 전체 라벨을 보존한다(S13). Short 라벨은 Figma Short Text 정산 현황을 따른다.
+ * 동일 업무축의 표현 SSOT. Text 해당 없음은 검정, Short/Tag/invoice는 80% 검정.
+ * Short·Tag·invoice 라벨은 Figma Short Text·Tag 정산 현황(14804:19841·19759)을 따른다.
+ * invoice(회원 상세 산출내역)는 Short Text 표기 — 전체 라벨 → 짧은 라벨로 통일(사용자 확정 2026-11-09, S13).
  * raw API 상태·권한·전이의 정규화는 이 presentation 계층에서 하지 않는다.
  */
 export function getInstructorSettlementStatusPresentation(
@@ -100,9 +101,9 @@ export function getInstructorSettlementStatusPresentation(
       : INSTRUCTOR_SETTLEMENT_STATUS_COLORS.none
     : `var(${INSTRUCTOR_SETTLEMENT_COLOR_TOKENS[status]}, ${INSTRUCTOR_SETTLEMENT_STATUS_COLORS[status]})`
   return {
-    label: kind === 'short'
-      ? INSTRUCTOR_SETTLEMENT_STATUS_LABELS_SHORT[status]
-      : INSTRUCTOR_SETTLEMENT_STATUS_LABELS[status],
+    label: kind === 'text'
+      ? INSTRUCTOR_SETTLEMENT_STATUS_LABELS[status]
+      : INSTRUCTOR_SETTLEMENT_STATUS_LABELS_SHORT[status],
     color,
   }
 }
@@ -226,17 +227,9 @@ export const INSTRUCTOR_SETTLEMENT_FILTER_STATUS_OPTIONS = [
 ] as const
 
 /**
- * 강사 회원 목록 API `listMetrics.settlementStatusLabel` — canonical 8종 라벨과 다른 BE 표기
- * (필터·색상 매핑용. 화면 문구는 API 라벨 그대로 노출할 수 있음)
+ * 회원 목록·기본정보 — `settlementStatusLabel` → UI status.
+ * 서버(InstructorSettlementUiStatus.resolve)는 8종 정식 라벨 또는 빈 값만 보낸다 — 별칭·구 표기를 해석하지 않는다(S07, 2026-11-09).
  */
-export const INSTRUCTOR_SETTLEMENT_MEMBER_LIST_LABEL_ALIASES: Partial<
-  Record<string, InstructorSettlementUiStatus>
-> = {
-  '계좌 지급 대기 중': 'awaiting_confirmation',
-  '재신청 검토 중': 'payment_statement_reapplication',
-}
-
-/** 회원 목록·필터 — `settlementStatusLabel` → UI status (exact canonical + BE alias) */
 export function resolveInstructorSettlementUiStatusFromListLabel(
   statusLabel?: string | null
 ): InstructorSettlementUiStatus | null {
@@ -246,12 +239,6 @@ export function resolveInstructorSettlementUiStatusFromListLabel(
   for (const status of INSTRUCTOR_SETTLEMENT_STATUS_ORDER) {
     if (INSTRUCTOR_SETTLEMENT_STATUS_LABELS[status] === normalized) return status
   }
-
-  const aliased = INSTRUCTOR_SETTLEMENT_MEMBER_LIST_LABEL_ALIASES[normalized]
-  if (aliased) return aliased
-
-  // 구 mock·표기 호환
-  if (normalized === '확인 진행중') return 'partial_confirmation'
 
   return null
 }

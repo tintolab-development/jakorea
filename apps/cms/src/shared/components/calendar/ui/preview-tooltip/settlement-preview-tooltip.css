@@ -31,16 +31,39 @@
   line-height: 140%;
 }
 
+/* 상태 · 구분선 · 금액(또는 이름 · 구분선 · 프로그램명) 한 줄 — Figma `02`/`3` 행: gap 8, 세로 가운데 */
+.settlement-preview-tooltip__row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8, 8px);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.settlement-preview-tooltip__row > * {
+  flex-shrink: 0;
+}
+
+.settlement-preview-tooltip__row > .settlement-preview-tooltip__text,
+.settlement-preview-tooltip__row > .settlement-preview-tooltip__ellipsis {
+  flex: 0 1 auto;
+}
+
+.settlement-preview-tooltip__ellipsis {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 구분선 — Figma `line` 1×12 · Neutral black(#3d3d3d) 40% (문자 `|` 금지) */
 .settlement-preview-tooltip__sep {
-  display: inline-flex;
-  width: 21px;
-  justify-content: center;
-  color: #d4d4d4;
-  font-size: 12px;
-  font-weight: 300;
-  line-height: 1;
-  user-select: none;
-  padding: 0;
+  display: block;
+  flex: 0 0 auto;
+  width: 1px;
+  height: 12px;
+  background: var(--default-BK, #3d3d3d);
+  opacity: 0.4;
 }
 
 .instructor-settlement-preview {

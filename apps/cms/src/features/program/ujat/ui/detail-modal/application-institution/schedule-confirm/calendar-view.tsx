@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type Key, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
@@ -106,7 +106,6 @@ export function UjatInstitutionScheduleConfirmCalendarView({
   const [selectedDate, setSelectedDate] = useState<Dayjs>(() => initialDate)
   const [currentMonth, setCurrentMonth] = useState<Dayjs>(() => initialDate.startOf('month'))
   const [selectedSchools, setSelectedSchools] = useState<string[]>([])
-  const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
 
   useEffect(() => {
     setSelectedDate(initialDate)
@@ -226,7 +225,7 @@ export function UjatInstitutionScheduleConfirmCalendarView({
           onSelectDate={handleDateSelect}
           onMonthChange={handleMonthChange}
           onTodayClick={handleTodayClick}
-          selectedRowKeys={selectedRowKeys}
+          selectedRowKeys={[]}
           eventsTooltipScope="full-day"
           eventsTooltipTrigger="cell"
           formatEventsOverflowText={n => `외 ${n}개의 항목`}
@@ -240,8 +239,6 @@ export function UjatInstitutionScheduleConfirmCalendarView({
           mode="institutionApplication"
           selectedDate={selectedDate}
           rows={listRows}
-          selectedRowKeys={selectedRowKeys}
-          onSelectionChange={setSelectedRowKeys}
           onRowClick={onOpenDetail ? handleListRowClick : undefined}
           resolveRowColors={resolveRowColors}
         />

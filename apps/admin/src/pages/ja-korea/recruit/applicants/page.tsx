@@ -17,6 +17,7 @@ import type {
 } from '@/entities/recruit-applicant/model/types'
 import {
   useConfirmRecruitApplicants,
+  useExportRecruitApplicants,
   useRecruitApplicantDetail,
   useRecruitApplicantsList,
   useRemoveRecruitApplicants,
@@ -32,6 +33,7 @@ import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
+import { logExcelExportFailureAlert } from '@/features/logs/shared/lib/log-excel-export-alert'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { formatDateTimeDot, formatNumberDisplay } from '@/shared/lib/format-display'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
@@ -56,6 +58,7 @@ import {
   CmsInput,
   CmsSelect,
   ConfirmModal,
+  ExcelButton,
   NO_SELECTION_ALERT,
   showChangeCompletedAlert,
   showDeleteCompletedAlert,
@@ -64,6 +67,7 @@ import {
 } from '@/shared/ui'
 
 import './page.css'
+import { ADMIN_ACCESS_DENIED_ALERT } from '@/shared/lib/admin-access-denied'
 
 type StatusPending = '' | RecruitApplicantStatus
 type JobPending = '' | RecruitJobInterest
@@ -277,6 +281,13 @@ export function RecruitApplicantsPage() {
   })
 
   const listQuery = useRecruitApplicantsList(appliedFilter)
+  const exportMutation = useExportRecruitApplicants()
+  const handleExcel = useCallback(() => {
+    if (exportMutation.isPending) return
+    void exportMutation.mutateAsync(appliedFilter).catch((error: unknown) => {
+      showAlert(logExcelExportFailureAlert(error))
+    })
+  }, [appliedFilter, exportMutation, showAlert])
   const confirmMutation = useConfirmRecruitApplicants()
   const removeMutation = useRemoveRecruitApplicants()
 
@@ -344,14 +355,16 @@ export function RecruitApplicantsPage() {
     if (!remoteDetail || !detailId || !detailQuery.isError) return
     const notFound = isRecruitApplicantNotFoundError(detailQuery.error)
     const forbidden = isAdminForbidden(detailQuery.error)
-    showAlert({
-      title: forbidden ? '권한 없음' : notFound ? '신청을 찾을 수 없음' : '조회 실패',
-      content: forbidden
-        ? '해당 신청을 조회할 권한이 없습니다.'
-        : notFound
-          ? '신청 정보를 찾을 수 없습니다.'
-          : '신청 상세를 불러오지 못했습니다. 다시 시도해 주세요.',
-    })
+    showAlert(
+      forbidden
+        ? { ...ADMIN_ACCESS_DENIED_ALERT }
+        : {
+            title: notFound ? '신청을 찾을 수 없음' : '조회 실패',
+            content: notFound
+              ? '신청 정보를 찾을 수 없습니다.'
+              : '신청 상세를 불러오지 못했습니다. 다시 시도해 주세요.',
+          }
+    )
     closeDetail()
   }, [closeDetail, detailId, detailQuery.error, detailQuery.isError, remoteDetail, showAlert])
 
@@ -495,95 +508,95 @@ export function RecruitApplicantsPage() {
         hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area admin-filter-area--split recruit-applicants-page__filter">
-            <div className="admin-filter-area__head">
-              <div className="admin-filter-area__field admin-filter-area__field--control">
-                <p className="admin-filter-area__label">처리 상태</p>
-                <CmsSelect
-                  inputSize="medium"
-                  width={FILTER_CONTROL_MAX_WIDTH_PX}
-                  withAllOption
-                  value={pendingFilters.status}
-                  placeholder="전체"
-                  options={[
-                    { value: 'pending', label: '확인 대기' },
-                    { value: 'confirmed', label: '확인 완료' },
-                  ]}
-                  onChange={value =>
-                    setPendingFilters(prev => ({
-                      ...prev,
-                      status: (value as StatusPending) || '',
-                    }))
-                  }
-                />
+            <div className="admin-filter-area__fields">
+              <div className="admin-filter-area__head">
+                <div className="admin-filter-area__field admin-filter-area__field--control">
+                  <p className="admin-filter-area__label">처리 상태</p>
+                  <CmsSelect
+                    inputSize="medium"
+                    width={FILTER_CONTROL_MAX_WIDTH_PX}
+                    withAllOption
+                    value={pendingFilters.status}
+                    placeholder="전체"
+                    options={[
+                      { value: 'pending', label: '확인 대기' },
+                      { value: 'confirmed', label: '확인 완료' },
+                    ]}
+                    onChange={value =>
+                      setPendingFilters(prev => ({
+                        ...prev,
+                        status: (value as StatusPending) || '',
+                      }))
+                    }
+                  />
+                </div>
+                <div className="admin-filter-area__field admin-filter-area__field--control">
+                  <p className="admin-filter-area__label">관심 직무</p>
+                  <CmsSelect
+                    inputSize="medium"
+                    width={FILTER_CONTROL_MAX_WIDTH_PX}
+                    withAllOption
+                    value={pendingFilters.jobInterest}
+                    placeholder="전체"
+                    options={JOB_OPTIONS}
+                    onChange={value =>
+                      setPendingFilters(prev => ({
+                        ...prev,
+                        jobInterest: (value as JobPending) || '',
+                      }))
+                    }
+                  />
+                </div>
+                <div className="admin-filter-area__field admin-filter-area__field--control">
+                  <p className="admin-filter-area__label">지원자</p>
+                  <AdminFilterTextInput
+                    inputSize="medium"
+                    width={FILTER_CONTROL_MAX_WIDTH_PX}
+                    value={pendingFilters.applicantName}
+                    placeholder="지원자명을 입력해 주세요"
+                    onChange={value =>
+                      patchPendingFilters(prev => ({ ...prev, applicantName: value }))
+                    }
+                    onPressEnter={handleSearch}
+                  />
+                </div>
+                <div className="admin-filter-area__field admin-filter-area__field--control">
+                  <p className="admin-filter-area__label">연락처</p>
+                  <CmsInput
+                    inputSize="medium"
+                    width={FILTER_CONTROL_MAX_WIDTH_PX}
+                    type="tel"
+                    inputMode="numeric"
+                    autoComplete="tel"
+                    value={pendingFilters.phone}
+                    placeholder="연락처를 입력해 주세요"
+                    onChange={event => {
+                      const result = applyKoreanPhoneInputChange(
+                        pendingFilters.phone,
+                        event.target.value,
+                        event.target.selectionStart
+                      )
+                      event.target.value = result.formatted
+                      setPendingFilters(prev => ({ ...prev, phone: result.formatted }))
+                      requestAnimationFrame(() => {
+                        event.target.setSelectionRange(result.caret, result.caret)
+                      })
+                    }}
+                    onPressEnter={handleSearch}
+                  />
+                </div>
+                <div className="admin-filter-area__field admin-filter-area__field--control">
+                  <p className="admin-filter-area__label">이메일</p>
+                  <AdminFilterTextInput
+                    inputSize="medium"
+                    width={FILTER_CONTROL_MAX_WIDTH_PX}
+                    value={pendingFilters.email}
+                    placeholder="이메일을 입력해 주세요"
+                    onChange={value => patchPendingFilters(prev => ({ ...prev, email: value }))}
+                    onPressEnter={handleSearch}
+                  />
+                </div>
               </div>
-              <div className="admin-filter-area__field admin-filter-area__field--control">
-                <p className="admin-filter-area__label">관심 직무</p>
-                <CmsSelect
-                  inputSize="medium"
-                  width={FILTER_CONTROL_MAX_WIDTH_PX}
-                  withAllOption
-                  value={pendingFilters.jobInterest}
-                  placeholder="전체"
-                  options={JOB_OPTIONS}
-                  onChange={value =>
-                    setPendingFilters(prev => ({
-                      ...prev,
-                      jobInterest: (value as JobPending) || '',
-                    }))
-                  }
-                />
-              </div>
-              <div className="admin-filter-area__field admin-filter-area__field--control">
-                <p className="admin-filter-area__label">지원자</p>
-                <AdminFilterTextInput
-                  inputSize="medium"
-                  width={FILTER_CONTROL_MAX_WIDTH_PX}
-                  value={pendingFilters.applicantName}
-                  placeholder="지원자명을 입력해 주세요"
-                  onChange={value =>
-                    patchPendingFilters(prev => ({ ...prev, applicantName: value }))
-                  }
-                  onPressEnter={handleSearch}
-                />
-              </div>
-              <div className="admin-filter-area__field admin-filter-area__field--control">
-                <p className="admin-filter-area__label">연락처</p>
-                <CmsInput
-                  inputSize="medium"
-                  width={FILTER_CONTROL_MAX_WIDTH_PX}
-                  type="tel"
-                  inputMode="numeric"
-                  autoComplete="tel"
-                  value={pendingFilters.phone}
-                  placeholder="연락처를 입력해 주세요"
-                  onChange={event => {
-                    const result = applyKoreanPhoneInputChange(
-                      pendingFilters.phone,
-                      event.target.value,
-                      event.target.selectionStart
-                    )
-                    event.target.value = result.formatted
-                    setPendingFilters(prev => ({ ...prev, phone: result.formatted }))
-                    requestAnimationFrame(() => {
-                      event.target.setSelectionRange(result.caret, result.caret)
-                    })
-                  }}
-                  onPressEnter={handleSearch}
-                />
-              </div>
-              <div className="admin-filter-area__field admin-filter-area__field--control">
-                <p className="admin-filter-area__label">이메일</p>
-                <AdminFilterTextInput
-                  inputSize="medium"
-                  width={FILTER_CONTROL_MAX_WIDTH_PX}
-                  value={pendingFilters.email}
-                  placeholder="이메일을 입력해 주세요"
-                  onChange={value => patchPendingFilters(prev => ({ ...prev, email: value }))}
-                  onPressEnter={handleSearch}
-                />
-              </div>
-            </div>
-            <div className="admin-filter-area__bottom">
               <div className="admin-filter-area__bottom-fields">
                 <div className="admin-filter-area__field admin-filter-area__field--control">
                   <p className="admin-filter-area__label">경력</p>
@@ -643,17 +656,17 @@ export function RecruitApplicantsPage() {
                   />
                 </div>
               </div>
-              <div className="admin-filter-area__actions">
-                <CmsButton
-                  className="admin-filter-area__search-button"
-                  variant="primary"
-                  size="medium"
-                  type="button"
-                  onClick={handleSearch}
-                >
-                  조회
-                </CmsButton>
-              </div>
+            </div>
+            <div className="admin-filter-area__actions">
+              <CmsButton
+                className="admin-filter-area__search-button"
+                variant="primary"
+                size="medium"
+                type="button"
+                onClick={handleSearch}
+              >
+                조회
+              </CmsButton>
             </div>
           </div>
         }
@@ -683,6 +696,12 @@ export function RecruitApplicantsPage() {
             >
               선택 확인
             </CmsButton>
+            <ExcelButton
+              onClick={handleExcel}
+              empty={totalCount === 0}
+              loading={exportMutation.isPending}
+              disabled={exportMutation.isPending}
+            />
           </>
         }
       >

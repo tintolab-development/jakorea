@@ -47,8 +47,15 @@
   cursor: default;
 }
 
-.talent-intro-interview__field--readonly .talent-intro-interview__search-btn {
-  visibility: hidden;
+/* 조회(읽기 전용) — 시안 496:39095 Table/Vertical/Cell 값은 가운데 정렬. 검색 아이콘은 수정 모드에만 렌더한다 */
+.talent-intro-interview__field--readonly .ant-input,
+.talent-intro-interview__field--readonly textarea.ant-input {
+  text-align: center !important;
+}
+
+/* 수정 — 시안 496:39381 값 칸 안쪽 여백 상하좌우 12 (조회는 공통 12×16) */
+.talent-intro-interview .detail-info-form__field-content:has(.talent-intro-interview__field--edit) {
+  padding: 12px;
 }
 
 .talent-intro-interview .detail-info-form__field-content--edit .ant-input,

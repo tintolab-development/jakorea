@@ -35,6 +35,15 @@ export type TalentDonationApplication = {
   confirmedAt: string | null
   confirmedByName: string | null
   version: number
+  /**
+   * 상세 GET이 마스킹 응답인지(HOMEPAGE_PII_VIEW 없음 — Program Viewer).
+   * true면 gender·birthDate는 원문이 아니므로 표시에 쓰지 않고 masked* 값을 그대로 보여준다.
+   */
+  piiMasked?: boolean
+  /** 서버 마스킹 생년월일(예: 2000.**.**). piiMasked=false면 null */
+  maskedBirthDate?: string | null
+  /** 서버 마스킹 성별(예: **). piiMasked=false면 null */
+  maskedGender?: string | null
 }
 
 export type JaProgramHistoryFilter = 'yes' | 'no'

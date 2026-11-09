@@ -2,24 +2,45 @@
   border-bottom: none;
 }
 
-/* 수정 모드: 본문(border)과 CmsInput(border) 사이 여백 — 이중선처럼 보이는 현상 완화 */
-.applicant-admin-comment-section--editing.detail-info-form .detail-info-form__row--custom {
-  padding: 16px;
-  box-sizing: border-box;
+.applicant-admin-comment-section .detail-info-form__header {
+  margin-bottom: 10px;
+}
+
+.applicant-admin-comment-section .detail-info-form__title {
+  font-size: 18px;
+  line-height: 140%;
+}
+
+.applicant-admin-comment-section .detail-info-form__description {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+  color: rgba(61, 61, 61, 0.5);
+  opacity: 1;
+}
+
+.applicant-admin-comment-section__header-note {
+  white-space: normal;
 }
 
 .applicant-admin-comment-section__text {
   width: 100%;
   box-sizing: border-box;
-  min-height: 64px;
-  padding: 20px 24px;
+  min-height: 0;
+  padding: 16px 20px;
   margin: 0;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
   line-height: 150%;
   color: var(--default-BK, #3d3d3d);
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+/* 수정 모드: 본문(border)과 CmsInput(border) 사이 여백 — 이중선처럼 보이는 현상 완화 */
+.applicant-admin-comment-section--editing.detail-info-form .detail-info-form__row--custom {
+  padding: 16px;
+  box-sizing: border-box;
 }
 
 .applicant-admin-comment-section__text--empty {
@@ -34,7 +55,9 @@
   align-self: stretch;
 }
 
-.applicant-admin-comment-section__input.cms-input--medium .cms-input__inner .ant-input::placeholder {
+.applicant-admin-comment-section__input.cms-input--medium
+  .cms-input__inner
+  .ant-input::placeholder {
   overflow: hidden;
   color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
   text-overflow: ellipsis;

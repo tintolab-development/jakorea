@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import type { CSSProperties } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
@@ -16,6 +17,24 @@ export function OriginSection({ origin }: { origin: JaHistoryOrigin }) {
   const saveMutation = useSaveJaHistoryOrigin()
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(origin)
+  /**
+   * 소개 텍스트 표 열 비율 잠금 — 조회는 내용 길이에 따라 열이 잡히므로, 수정 진입 시점의 첫 열 비율(%)을
+   * 재서 수정 모드 동안 그대로 쓴다 (입력 칸이 들어와도 열 폭이 조회 때와 같다).
+   */
+  const introTableRef = useRef<HTMLDivElement>(null)
+  const [introTitleColRatio, setIntroTitleColRatio] = useState<number | null>(null)
+
+  const startEditing = () => {
+    const ths = introTableRef.current?.querySelectorAll<HTMLElement>('.ant-table-thead th')
+    if (ths && ths.length === 2) {
+      const w1 = ths[0]!.getBoundingClientRect().width
+      const w2 = ths[1]!.getBoundingClientRect().width
+      setIntroTitleColRatio(w1 + w2 > 0 ? (w1 / (w1 + w2)) * 100 : null)
+    } else {
+      setIntroTitleColRatio(null)
+    }
+    setEditing(true)
+  }
 
   useEffect(() => {
     if (!editing) setDraft(origin)
@@ -52,6 +71,7 @@ export function OriginSection({ origin }: { origin: JaHistoryOrigin }) {
       {
         title: '소개 타이틀',
         key: 'title',
+        className: 'ja-history-origin-intro-table__col--title',
         align: 'center',
         ellipsis: false,
         render: () =>
@@ -71,6 +91,7 @@ export function OriginSection({ origin }: { origin: JaHistoryOrigin }) {
       {
         title: '소개 텍스트',
         key: 'body',
+        className: 'ja-history-origin-intro-table__col--body',
         align: 'center',
         ellipsis: false,
         render: () =>
@@ -101,19 +122,35 @@ export function OriginSection({ origin }: { origin: JaHistoryOrigin }) {
       note="연도 및 이미지는 수정이 불가합니다."
       editing={editing}
       saving={saveMutation.isPending}
-      onEdit={() => setEditing(true)}
+      onEdit={startEditing}
       onCancel={() => setEditing(false)}
       onSave={handleSave}
     >
       <div className="ja-history-subsection">
         <h3 className="ja-history-subsection__title">■ 소개 텍스트</h3>
-        <CmsDataTable<IntroRow>
-          className={`cms-data-table cms-data-table--skip-auto-no-col ja-history-table ${TABLE_ROW_FILL_FIELDS_CLASS}`}
-          columns={introColumns}
-          dataSource={[{ key: 'intro' }]}
-          pagination={false}
-          rowKey="key"
-        />
+        <div
+          ref={introTableRef}
+          className="ja-history-origin-intro-table-wrap"
+          style={
+            editing && introTitleColRatio != null
+              ? ({ '--ja-history-origin-intro-title-col': `${introTitleColRatio}%` } as CSSProperties)
+              : undefined
+          }
+        >
+          <CmsDataTable<IntroRow>
+            className={[
+              'cms-data-table cms-data-table--skip-auto-no-col ja-history-table ja-history-origin-intro-table',
+              TABLE_ROW_FILL_FIELDS_CLASS,
+              editing && introTitleColRatio != null ? 'ja-history-origin-intro-table--locked' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+            columns={introColumns}
+            dataSource={[{ key: 'intro' }]}
+            pagination={false}
+            rowKey="key"
+          />
+        </div>
       </div>
       <div className="ja-history-subsection">
         <h3 className="ja-history-subsection__title">■ {learningTitle}</h3>

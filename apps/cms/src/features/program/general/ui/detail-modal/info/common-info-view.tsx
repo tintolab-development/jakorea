@@ -1404,7 +1404,9 @@ function WageSection({
   const paymentItemIds = resolveWagePaymentItemIds(commonInfo.paymentItems)
   const isFormEdit = isEditMode && !!form
   const formMode = isFormEdit ? 'edit' : 'view'
-  const paymentCatalog = useProgramWagePaymentItemOptionsState()
+  // 지급 항목 목록(정산 설정)은 수정 모드의 선택지·값 정리에만 쓴다. 보기 모드 라벨은 고정 매핑이라 호출하지 않는다.
+  // (Program Viewer는 정산 설정 조회가 403이라 진입만으로 접근 불가 팝업이 떴다.)
+  const paymentCatalog = useProgramWagePaymentItemOptionsState(isFormEdit)
   // R14: 일반 상세에서 1사1교 전용 지급 항목 제외(저장된 선택값은 유지)
   const paymentItemOptions = useMemo(
     () => excludeCompanySchoolOnlyPaymentItemOptions(paymentCatalog.options, paymentItemIds),
@@ -5231,24 +5233,24 @@ export function GeneralProgramDetailCommonInfoView({
 
   return (
     <div className="detail-common-info-view program-detail-fullpage-modal__info-tab">
-      {(canWrite || isEditMode) && (
-        <div className="detail-common-info-view__header">
-          <BusinessPeriodExtendToolbar
-            program={program}
-            editDisabled={editDisabled}
-            hideExtend={isEditMode}
-          >
-            <ProgramEditInfoActions
-              isEditing={isEditMode}
-              idleVariant="secondary"
-              disabled={editDisabled}
-              onEdit={onEdit ?? (() => {})}
-              onCancel={onCancel ?? (() => {})}
-              onSave={onSave ?? (() => {})}
-            />
-          </BusinessPeriodExtendToolbar>
-        </div>
-      )}
+      {/* 권한 설정 V1.2: 조회 전용도 「정보 수정」 노출, 클릭 시 접근 불가 안내 */}
+      <div className="detail-common-info-view__header">
+        <BusinessPeriodExtendToolbar
+          program={program}
+          editDisabled={editDisabled}
+          hideExtend={isEditMode}
+        >
+          <ProgramEditInfoActions
+            isEditing={isEditMode}
+            idleVariant="secondary"
+            disabled={editDisabled}
+            canWrite={canWrite}
+            onEdit={onEdit ?? (() => {})}
+            onCancel={onCancel ?? (() => {})}
+            onSave={onSave ?? (() => {})}
+          />
+        </BusinessPeriodExtendToolbar>
+      </div>
 
       <BasicInfoSection
         program={program}

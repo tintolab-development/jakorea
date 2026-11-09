@@ -1,3 +1,4 @@
+import { ADMIN_ACCESS_DENIED_ALERT } from '@/shared/lib/admin-access-denied'
 /** Homepage Admin BE permission for unmasked PII on detail GET (`revealPii=true`). */
 export const HOMEPAGE_PII_VIEW_PERMISSION = 'HOMEPAGE_PII_VIEW'
 
@@ -9,8 +10,8 @@ export const HOMEPAGE_PII_REVEAL_COPY = {
     '연락처·이메일·주소·학력·경력·첨부 등 개인정보 원문을 조회합니다. 조회 기록은 감사 로그에 남습니다.',
   confirmText: '조회',
   cancelText: '취소',
-  forbiddenTitle: '권한 없음',
-  forbiddenContent: '개인정보 원문을 조회할 권한이 없습니다.',
+  forbiddenTitle: ADMIN_ACCESS_DENIED_ALERT.title,
+  forbiddenContent: ADMIN_ACCESS_DENIED_ALERT.content,
 } as const
 
 export function hasHomepagePiiView(permissions: readonly string[] | undefined): boolean {

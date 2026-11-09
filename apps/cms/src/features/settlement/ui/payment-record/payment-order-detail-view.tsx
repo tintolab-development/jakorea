@@ -61,6 +61,8 @@ type PaymentOrderDetailViewShared = {
   calcStatementError?: unknown
   calcStatementId?: number | null
   calcSettlementId?: number | null
+  /** 산출 내역서 행의 프로그램 — 확인·반려·정정 버튼을 프로그램 역할로 판정 */
+  calcProgramId?: number | null
   calcAvailableActions?: readonly string[] | null
   /** 개인형 프로그램 — 산출 내역 「참여 기관명」열 미노출 */
   calcHideInstitutionColumn?: boolean
@@ -115,6 +117,7 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
     calcStatementError,
     calcStatementId,
     calcSettlementId,
+    calcProgramId,
     calcAvailableActions,
     calcHideInstitutionColumn,
     openCalculationStatement,
@@ -254,6 +257,7 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
         paymentOrdersRemote={paymentOrdersRemote}
         statementId={calcStatementId}
         settlementId={calcSettlementId}
+        programId={calcProgramId}
         availableActions={calcAvailableActions}
         hideInstitutionColumn={calcHideInstitutionColumn}
         detailContextQuery={detailContextQuery}

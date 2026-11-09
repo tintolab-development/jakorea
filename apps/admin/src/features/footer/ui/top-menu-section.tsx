@@ -27,6 +27,7 @@ import {
   useCmsAlert,
 } from '@/shared/ui'
 
+import { requiredColumnTitle } from './required-column-title'
 import './section-shared.css'
 
 const INTERNAL_LINK_LABEL = '사이트 내부 연결'
@@ -185,7 +186,8 @@ export function FooterTopMenuSection() {
         render: (_v, record) => <span>{record.name}</span>,
       },
       {
-        title: '연결 링크',
+        // 수정 모드에서 연결 링크 필수 (저장 시 빈 값은 공통 필수 안내)
+        title: isEditing ? requiredColumnTitle('연결 링크') : '연결 링크',
         key: 'linkUrl',
         minWidth: 280,
         align: 'center',

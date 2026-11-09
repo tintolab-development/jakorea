@@ -24,6 +24,7 @@ import { hasFileDownloadPermission } from '@/shared/lib/lecture-report-bulk-down
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import type { Program } from '@/types/domain'
 import { LectureReportBulkPdfExportHost } from './lecture-report-bulk-pdf-export-host'
+import { showAdminAccessDeniedAlert } from '@/shared/lib/admin-role-policy'
 
 async function fetchAllLectureReportRows(
   programId: string,
@@ -182,7 +183,11 @@ export function useLectureReportBulkPdfExport(options: {
       notifyProgramApiUnavailable(options.unavailableContext, '일반 프로그램 · 강의보고서 일괄 다운로드')
       return
     }
-    if (!canBulkDownloadFiles) return
+    // 권한 설정 V1.2: 버튼은 노출하고 다운로드 권한이 없으면 접근 불가 안내
+    if (!canBulkDownloadFiles) {
+      showAdminAccessDeniedAlert()
+      return
+    }
 
     setBulkDownloading(true)
     try {

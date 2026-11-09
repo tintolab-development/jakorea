@@ -9,6 +9,11 @@ import type { CSSProperties, ReactNode } from 'react'
 import { Input } from 'antd'
 import type { TextAreaProps, TextAreaRef } from 'antd/es/input/TextArea'
 import type { CmsControlSize } from './cms-control-size'
+import {
+  inlineReadOnlyClassName,
+  inlineReadOnlyTabIndex,
+  type InlineReadOnlyLook,
+} from './inline-readonly'
 import './cms-textarea.css'
 
 export type CmsTextAreaSize = CmsControlSize
@@ -34,6 +39,11 @@ export interface CmsTextAreaProps extends Omit<TextAreaProps, 'variant' | 'size'
   expandableFromSingleRow?: boolean
   /** 박스 크기 동작. 기본 `default` */
   layout?: CmsTextAreaLayout
+  /**
+   * 조회↔수정 같은 컨트롤 유지 화면에서 `readOnly`일 때의 모양 (`inline-readonly.css`).
+   * 지정하면 조회 시 탭 이동에서도 빠진다.
+   */
+  inlineReadOnly?: InlineReadOnlyLook
 }
 
 export const CmsTextArea = forwardRef<TextAreaRef, CmsTextAreaProps>(
@@ -48,6 +58,8 @@ export const CmsTextArea = forwardRef<TextAreaRef, CmsTextAreaProps>(
       rootClassName,
       expandableFromSingleRow: expandableFromSingleRowProp = true,
       layout = 'default',
+      inlineReadOnly,
+      tabIndex,
       ...rest
     },
     ref
@@ -73,6 +85,7 @@ export const CmsTextArea = forwardRef<TextAreaRef, CmsTextAreaProps>(
       rows1SingleLine && 'cms-textarea--rows-1-single-line',
       expandableFromSingleRow && isRows1 && 'cms-textarea--expandable-single-row',
       className,
+      inlineReadOnlyClassName(rest.readOnly, inlineReadOnly),
     ]
       .filter(Boolean)
       .join(' ')
@@ -105,6 +118,7 @@ export const CmsTextArea = forwardRef<TextAreaRef, CmsTextAreaProps>(
               variant="borderless"
               rows={rows}
               autoSize={isFixed ? (autoSize ?? false) : autoSize}
+              tabIndex={inlineReadOnlyTabIndex(rest.readOnly, inlineReadOnly, tabIndex)}
               {...textareaRest}
             />
           </span>

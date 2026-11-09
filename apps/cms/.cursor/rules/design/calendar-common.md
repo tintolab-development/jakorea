@@ -62,18 +62,18 @@ border-radius: 16px;
 | 토큰 | 값 | 용도 |
 |------|-----|------|
 | `--calendar-cell-min-width` | **116px** | 월간 날짜 칸·주간 요일 열 **최소 너비** |
-| `--calendar-cell-min-height` | **124px** | 월간 날짜 칸 **최소 높이** (기본 행 높이) |
+| `--calendar-cell-min-height` | **124px** | 월간 **행 높이 하한 — 행 하단선 1px 포함** (Figma list 12432:532991 = 124). td가 `--calendar-cell-row-border-width`(1px, 선 없는 마지막 표시 행 0)를 두고 셀 min-height = 124 − 그 값 |
 | `--calendar-week-hour-px` | **56px** | 주간 시간 격자 **1시간당 높이** |
 | `--calendar-week-total-px` | `24 × 65px` = **1560px** | 주간 격자 전체 높이 |
 
 | 규칙 | 동작 |
 |------|------|
 | **월간 셀** | `min-width: 116px` · `min-height: 124px` · `height: auto`. 테이블 `width: 100%`, 열 `calc(100% / 7)`. **3열 `calendar-set`:** 우측이 400px 미만이면 메인은 min 너비·셀 116px 유지; **우측 400px 도달 후** 메인이 늘어나며 열 확장 |
-| **월간 행 높이** | `tbody tr { height: auto }` — 일정·strip 등 **콘텐츠에 따라 행·셀 높이 증가** (124px은 바닥선) |
+| **월간 행 높이** | `tbody tr { min-height: 0; height: auto }` — 하한은 셀(`.calendar-cell`·`.ant-picker-cell-inner`)에만. 기본 **124px(하단선 포함)**, 일정·strip 등 **콘텐츠에 따라 증가**. tr·td에 124 하한 금지(border-collapse 표에서 124.5) |
 | **주간 시간 격자** | `week-time-grid-layout.ts` · `week-view.tsx` · `calendar-time-grid.css` — **65px/시간** 격자(총 1560px). 카드 높이는 1분=1px + 칸/+인접 보정. 요일 열 `minmax(116px, 1fr)` |
-| **`.calendar-main` · `.calendar-main-container`** | 월간 `min-width` = 7×116px + 좌우 padding(40px) · `min-height` = 6×124px + 요일 헤더(37px) + 상단 nav(50px) + 세로 padding(32px). 주간 `:has(.calendar-week--time-grid)` 시 gutter(112+20px) + 7열 + padding / 1560px + 헤더 — **`--calendar-main-month-*` · `--calendar-main-week-*` 토큰** |
+| **`.calendar-main` · `.calendar-main-container`** | 월간 `min-width` = 7×116px + 좌우 padding(40px) · `min-height` = 6×124px + 요일 헤더(29px — 라벨 21 + 그리드까지 8, th `height: var(--calendar-main-weekday-header-min-height)`로 고정해 28.8 렌더 방지) + 상단 nav(50px) + 세로 padding(32px). **3열(`calendar-sub-left` 있음) 메인 padding** = 상 20 · 하 `--calendar-card-padding-bottom`(17) → 5주 월 카드 **743**(좌·우 열과 동일, Figma 12432:443481). 주간 `:has(.calendar-week--time-grid)` 시 gutter(112+20px) + 7열 + padding / 1560px + 헤더 — **`--calendar-main-month-*` · `--calendar-main-week-*` 토큰** |
 | **3열 가로 분배** | `calendar-layout.css` — **grid** 3열(2열: `:not(:has(.calendar-sub-left))`). 주간 `:has(.calendar-week--time-grid)` 시 메인 `minmax`만 week 토큰으로 교체 |
-| **7:3 split 좌측** | `calendar-split-card-layout.css` — **grid** `minmax(메인 min, 1fr) \| minmax(280px, 400px)`. `min-height: 900px` · `overflow: visible` |
+| **7:3 split 좌측** | `calendar-split-card-layout.css` — **grid** `minmax(메인 min, 1fr) \| minmax(280px, 400px)`. 월간 `min-height` = **743px**(`--calendar-sub-right-list-height`, Figma 14741:1586) · padding 20 / 20 / 하 `--calendar-card-padding-bottom`(17) → 5주 월 **743**, 6주 월은 콘텐츠 높이(867) · `overflow: visible`. 주간·로딩은 900px 하한 |
 | **강사 정산 탭** | `InstructorSettlementCalendarView` = `calendar-set` + `calendar-main-container` + `calendar-sub-right-list` — **공통 min 치수 그대로**. `instructor-payment-tab__calendar-view-container--no-inner-scroll`는 **내부 스크롤만** 끔(`overflow: visible`) — `min-height: 0`으로 공통 치수 **덮어쓰지 않음** |
 
 - **금지:** 페이지·도메인 CSS에서 `.calendar-cell` / `.ant-picker-cell` **고정 width·height(px)** 재정의 (`participating-institutions-calendar-view.css`는 tooltip/popover만)
@@ -117,10 +117,10 @@ border-radius: 16px;
 
 | 규칙 | 동작 |
 |------|------|
-| **높이** | `.calendar-sub-right-list`(3열) 또는 `.calendar-split-card--right > .calendar-list` 스크롤 영역 = **743px** 고정. 목록 많을 때 **내부 `overflow-y: auto`** (`.calendar-list`) |
+| **높이** | 3열 `.calendar-sub-right-list` = **743px** 고정 · 7:3 `.calendar-split-card--right` **카드 전체**(border·padding 포함) = **743px** 고정 (Figma 14741:1654 — 카드 743, 목록 영역 703). 목록 많을 때 **내부 `overflow-y: auto`** (`.calendar-list`) |
 | **너비** | `calendar-set` **CSS Grid**: `300px \| minmax(메인 min, 1fr) \| minmax(280px, 400px)`. 우측 트랙이 **400px까지 먼저** 확보된 뒤, 남는 가로만 `1fr` 메인(셀 `calc(100%/7)`). `flex`·`28vw`로 3열 분배 금지 |
 | **3열 래퍼** | `.calendar-sub-right-list` — sticky + 위 높이·너비. 자식 `.calendar-list`는 `height: 100%` |
-| **7:3 split** | `.calendar-split-card--right` — 동일 너비 clamp. `.calendar-list` 본문만 743px (툴바 `calendar-split-card-right__toolbar`는 별도) |
+| **7:3 split** | `.calendar-split-card--right` — 동일 너비 clamp. 카드 743 안에서 `.calendar-list`는 padding 20×2·border·툴바(`calendar-split-card-right__toolbar`)를 뺀 **남는 높이**(툴바 없으면 701)를 채우고 내부 스크롤 |
 
 - **금지:** 페이지·도메인 CSS에서 `.calendar-sub-right-list` / `.calendar-list` **높이·너비 재정의** (sticky·모달 `--page-scroll` 예외만)
 - **금지:** 우측을 `width: 400px` 고정만 두고 `min-width: 280px`·clamp 생략
@@ -165,7 +165,7 @@ border-radius: 16px;
 - [ ] [오늘] 클릭 시 선택일·주/월 앵커 모두 오늘
 - [ ] 3열 + `CalendarMini`이면 미니·메인 **날짜 state 분리** + 미니 **300×332px** (4·6주월 동일 높이)
 - [ ] 3열 + `CalendarSearch`이면 `.calendar-search` **`--calendar-search-height`(391px)** + 필터 목록 내부 스크롤
-- [ ] 우측 `.calendar-sub-right-list` / `.calendar-list`: **743px** 높이 · **280~400px** clamp 너비 (DevTools)
+- [ ] 우측 3열 `.calendar-sub-right-list` · 7:3 `.calendar-split-card--right`: **743px** 높이 · **280~400px** clamp 너비 (DevTools)
 - [ ] DevTools 3열 우측: `.calendar-sub-right-list`에 **border·box-shadow 없음** · `.calendar-list`에 **border만**(shadow 없음) — 모서리 이중 선 없음
 - [ ] DevTools: `.calendar-split-card`에 `box-shadow` 있고 `border` 없음
 - [ ] DevTools: 선택 셀에 **셀 전체 border 2px** 없음, 날짜 mint 원만
@@ -297,7 +297,8 @@ const {
 **공통 (모든 events 모드):**
 
 - `.calendar-event` strip shell — 인라인은 **`backgroundColor`만** (`SCHEDULE_COLORS[].bg`). 테두리·타이포는 `calendar-cell.css` SSOT: `border-radius` 4px, `padding` 4×6px, `gap` 6px, `border` `--Border-alpha-06`, 제목 13px `--Netural-black`, `-webkit-line-clamp: 1`
-- `.calendar-cell-events` 칩 간 `gap: 5px`. overflow `외 N개` — `.calendar-event-more` 13px `--Content-disabled`, `padding: 0 4px`
+- `.calendar-cell-events` 칩 간 `gap: 5px`. overflow `외 N개` — `.calendar-event-more` 13px `--Content-disabled`, `padding: 0 4px`, **높이 17px**(Figma Calendar / Tag / 1 Line) — 칩 2개 + 「외 N개」 셀이 123(+하단선 1 = 124)에 들어간다
+- 주간 시간 격자 헤더 `28 (수요일)` — 요일은 `lib/calendar-weekday-labels.ts` `CALENDAR_MONTH_WEEKDAY_LABELS`(월간 헤더와 동일 소스, Figma 1141:230335)
 - `SCHEDULE_COLORS` — **5 Tag색** (green / pink·`Tag-red` / sky / purple / yellow), `hash % 5`·`buildResolvedScheduleColorMapForPrograms` 유지. `text`·`border`는 전역 통일(검정 텍스트·alpha-06 테두리); 구분은 **배경만**
 - `resolveEventColors` / `colorMap` — 동일 팔레트. 선택 상태 `.calendar-event--selected` 텍스트 강조는 split-card 등 기존 CSS 유지
 - 7:3 split-card — 칩 shell **오버라이드 금지** (`calendar-split-card-main.css`는 gap·divider flex만). 월간 셀 상호작용은 `calendar-cell.css` 단일 소스
@@ -326,4 +327,4 @@ const {
 - [calendar-week-time-grid.md](./calendar-week-time-grid.md) — 주간 격자
 - [schedule-calendar-ux.md](./schedule-calendar-ux.md) — 클릭 UX
 
-**Last updated:** 2026-05-29 (FilterTableLayout 캘린더 sticky·scrollport)
+**Last updated:** 2026-11-09 (월간 행 124 하단선 포함 · 「외 N개」 17px · 주간 헤더 한글 요일)

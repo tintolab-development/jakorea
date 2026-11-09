@@ -23,13 +23,11 @@ const IMAGE_GUIDE_LINES = [
 
 const DraftTextArea = memo(function DraftTextArea({
   initialValue,
-  rows,
   placeholder,
   ariaLabel,
   onValue,
 }: {
   initialValue: string
-  rows: number
   placeholder?: string
   ariaLabel: string
   onValue: (value: string) => void
@@ -40,7 +38,8 @@ const DraftTextArea = memo(function DraftTextArea({
       className="cms-textarea--fixed-rows"
       inputSize="large"
       width="100%"
-      rows={rows}
+      // 줄바꿈 수만큼 높이가 늘고 줄어든다(hug) — 1줄에서 시작, 최대 줄 수 제한 없음
+      autoSize={{ minRows: 1 }}
       value={value}
       placeholder={placeholder}
       aria-label={ariaLabel}
@@ -238,7 +237,6 @@ function PhilosophyCardFormBody({
               <div>
                 <DraftTextArea
                   initialValue={titleRef.current}
-                  rows={2}
                   placeholder="타이틀을 입력해 주세요"
                   ariaLabel="타이틀"
                   onValue={value => {
@@ -263,7 +261,6 @@ function PhilosophyCardFormBody({
               <div>
                 <DraftTextArea
                   initialValue={descriptionRef.current}
-                  rows={2}
                   placeholder="서브 텍스트를 입력해 주세요"
                   ariaLabel="서브 텍스트"
                   onValue={value => {

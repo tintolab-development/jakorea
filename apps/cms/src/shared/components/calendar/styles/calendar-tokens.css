@@ -29,6 +29,12 @@
   --calendar-main-weekday-header-min-height: 29px;
   --calendar-main-header-min-height: 50px;
   --calendar-main-header-body-gap: 10px;
+  /*
+   * 카드 하단 padding — Figma 3열 메인(12432:443481)·7:3 좌측(14741:1587) 카드 높이 743 기준.
+   * Figma 격자(620)는 외곽선이 안쪽이지만 개발 tbody는 상·하 외곽선 2px가 더해져 622이고
+   * stroke shell은 border 1px×2도 더해진다 → 상단 20은 유지하고 하단만 17로 줄여 5주 월 카드 = 743.
+   */
+  --calendar-card-padding-bottom: 17px;
   --calendar-main-horizontal-padding: 40px;
   --calendar-main-vertical-padding: 32px;
   --calendar-week-time-grid-header-min-height: 21px;

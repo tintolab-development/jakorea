@@ -12,16 +12,11 @@ import type { MemberPortalEducationScheduleItemBlockKind } from './memberPortalE
 import type { MemberPortalEducationScheduleItemTeamRole } from './memberPortalEducationScheduleItemTeamRole';
 
 export interface MemberPortalEducationScheduleItem {
-  /**
-     * 운영 program_schedule.id. 교육 진행 정의만 있고 운영 행이 없으면 null.
-     * @nullable
-     */
+  /** 운영 program_schedule.id. 교육 진행 정의만 있고 운영 행이 없으면 null. */
   scheduleId?: number | null;
   sessionNo?: number;
   title?: string;
-  /** @nullable */
   startAt?: string | null;
-  /** @nullable */
   endAt?: string | null;
   allDay?: boolean;
   locationName?: string;
@@ -29,72 +24,36 @@ export interface MemberPortalEducationScheduleItem {
   addressDetail?: string;
   /** 교육 진행 뱃지. COMPLETED | IN_PROGRESS | SCHEDULED | UNSCHEDULED. MATCHED는 지망 배정 코드이며 이 필드에 넣지 않는다. */
   scheduleStatus?: string;
-  /**
-     * PRESENT | LATE | ABSENT | EXCUSED. 예정·미기록이면 null.
-     * @nullable
-     */
+  /** PRESENT | LATE | ABSENT | EXCUSED. 예정·미기록이면 null. */
   attendanceStatus?: string | null;
   absenceReasonStatus?: string;
-  /**
-     * 저장된 결석 사유 본문
-     * @nullable
-     */
+  /** 저장된 결석 사유 본문 */
   absenceReason?: string | null;
   assignmentCount?: number;
   surveyCount?: number;
   satisfactionCount?: number;
   availableActions?: string[];
-  /**
-     * 커리큘럼 행 라벨 원문(예: 1차시) 또는 TRAINED_TEACHER 기관 운영 일정의 지망 라벨(예: 1지망). MATCHED 지망을 커리큘럼 차시로 치환하지 않는다. 없으면 null.
-     * @nullable
-     */
+  /** 커리큘럼 행 라벨 원문(예: 1차시) 또는 TRAINED_TEACHER 기관 운영 일정의 지망 라벨(예: 1지망). MATCHED 지망을 커리큘럼 차시로 치환하지 않는다. 없으면 null. */
   sessionLabel?: string | null;
-  /** @nullable */
   unitName?: string | null;
-  /** @nullable */
   content?: string | null;
-  /** @nullable */
   scheduleLabel?: string | null;
-  /**
-     * 일정형 일정명. CMS 공통정보 scheduleDetails[].name 원문. 예: 오리엔테이션 / 개회식. 저장값이 없거나 정의와 매칭되지 않으면 null이며 scheduleLabel·운영 슬롯 제목으로 채우지 않는다.
-     * @nullable
-     */
+  /** 일정형 일정명. CMS 공통정보 scheduleDetails[].name 원문. 예: 오리엔테이션 / 개회식. 저장값이 없거나 정의와 매칭되지 않으면 null이며 scheduleLabel·운영 슬롯 제목으로 채우지 않는다. */
   scheduleName?: string | null;
-  /** @nullable */
   blockKind?: MemberPortalEducationScheduleItemBlockKind;
-  /** @nullable */
   progressTimeLabel?: string | null;
-  /** @nullable */
   groupTimes?: MemberPortalEducationScheduleGroupTime[] | null;
   assignment?: MemberPortalEducationScheduleAssignment | null;
-  /**
-     * 해당 회차 기준 본인 팀 역할. CMS scheduleDetails[].participationMethodLabel이 개인이면 INDIVIDUAL. 팀이면 회차 응답 스냅샷을 우선하고 없으면 현재 참여자 또는 신청 팀 정보를 사용합니다. 일정별 참여 라벨이 있는 프로그램에서 라벨 없는 회차(예: 사전교육)는 null이며 다른 회차 팀 정보로 합성하지 않습니다. 프로그램 단위 팀(공통/커리큘럼·행 라벨 없음)은 기존과 같이 팀 정보를 사용합니다. 비팀 프로그램·미확인 팀은 null.
-     * @nullable
-     */
+  /** 해당 회차 기준 본인 팀 역할. CMS scheduleDetails[].participationMethodLabel이 개인이면 INDIVIDUAL. 팀이면 회차 응답 스냅샷을 우선하고 없으면 현재 참여자 또는 신청 팀 정보를 사용합니다. 일정별 참여 라벨이 있는 프로그램에서 라벨 없는 회차(예: 사전교육)는 null이며 다른 회차 팀 정보로 합성하지 않습니다. 프로그램 단위 팀(공통/커리큘럼·행 라벨 없음)은 기존과 같이 팀 정보를 사용합니다. 비팀 프로그램·미확인 팀은 null. */
   teamRole?: MemberPortalEducationScheduleItemTeamRole;
-  /**
-     * 해당 회차 기준 본인 팀명. INDIVIDUAL·비팀 프로그램·미확인 팀·일정별 참여 라벨 없는 회차(예: 사전교육)이면 null이며 다른 회차 값으로 합성하지 않습니다.
-     * @nullable
-     */
+  /** 해당 회차 기준 본인 팀명. INDIVIDUAL·비팀 프로그램·미확인 팀·일정별 참여 라벨 없는 회차(예: 사전교육)이면 null이며 다른 회차 값으로 합성하지 않습니다. */
   teamName?: string | null;
-  /**
-     * UJAT 봉사자 일정 배정 상태. CMS allocation-matrix 셀과 같은 스냅샷. ASSIGNED | UNASSIGNED | REASSIGNMENT_REQUIRED. 비UJAT 또는 미배정이면 null
-     * @nullable
-     */
+  /** UJAT 봉사자 일정 배정 상태. CMS allocation-matrix 셀과 같은 스냅샷. ASSIGNED | UNASSIGNED | REASSIGNMENT_REQUIRED. 비UJAT 또는 미배정이면 null */
   assignmentStatus?: MemberPortalEducationScheduleItemAssignmentStatus;
-  /**
-     * UJAT 봉사자 학급 라벨. allocation-matrix cell.classLabel과 동일 SSOT. UNASSIGNED는 null. 빈 문자열 금지. 비UJAT이면 null
-     * @nullable
-     */
+  /** UJAT 봉사자 학급 라벨. allocation-matrix cell.classLabel과 동일 SSOT. UNASSIGNED는 null. 빈 문자열 금지. 비UJAT이면 null */
   classLabel?: string | null;
-  /**
-     * UJAT 배정 기관명. 없으면 null. 빈 문자열 금지. locationName과 별개
-     * @nullable
-     */
+  /** UJAT 배정 기관명. 없으면 null. 빈 문자열 금지. locationName과 별개 */
   organizationName?: string | null;
-  /**
-     * TRAINED_TEACHER 기관 신청 MATCHED 지망 순위(양수). 배열 index·session_no로 채우지 않는다. 없거나 해당 없으면 null.
-     * @nullable
-     */
+  /** TRAINED_TEACHER 기관 신청 MATCHED 지망 순위(양수). 배열 index·session_no로 채우지 않는다. 없거나 해당 없으면 null. */
   preferenceRank?: number | null;
 }

@@ -7,7 +7,7 @@
  */
 
 /**
- * 공통정보 교육 형태. operationMethod와 별개. online|offline|hybrid|participant_choice. educationFormScheduleDetail=perSchedule이면 hybrid(온/오프라인). 목록에 scheduleDetail 필드는 두지 않는다.
+ * 공통정보 교육 형태. operationMethod와 별개. online|offline|hybrid|participant_selection. educationFormScheduleDetail=perSchedule이면 hybrid(온/오프라인). 목록에 scheduleDetail 필드는 두지 않는다.
  */
 export type ProgramListItemResponseEducationForm = typeof ProgramListItemResponseEducationForm[keyof typeof ProgramListItemResponseEducationForm] | null;
 
@@ -16,5 +16,5 @@ export const ProgramListItemResponseEducationForm = {
   online: 'online',
   offline: 'offline',
   hybrid: 'hybrid',
-  participant_choice: 'participant_choice',
+  participant_selection: 'participant_selection',
 } as const;

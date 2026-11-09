@@ -5,6 +5,7 @@ import type {
   DateRangeFilterValue,
   SmsSendHistoryPendingFilters,
 } from '@/features/notifications/model/sms-send-history/types'
+import { applyNotificationStatusFilterParams } from '@/features/notifications/model/shared/delivery-status'
 
 const DATE_PARAM_FORMAT = 'YYYY-MM-DD'
 
@@ -19,25 +20,6 @@ function rangeToParams(
   if (range[1]?.isValid()) params[toKey] = range[1].format(DATE_PARAM_FORMAT)
 }
 
-const SEND_STATUS_TO_API: Record<string, string> = {
-  '발송 요청': 'REQUESTED',
-  '발송 예약': 'SCHEDULED',
-  '발송 대기': 'WAITED',
-  '발송 중': 'IN_PROGRESS',
-  '발송 실패': 'SEND_FAILED',
-  '발송 성공': 'SENT',
-  '발송 취소': 'CANCELED',
-}
-
-const RECEIVE_STATUS_TO_API: Record<string, string> = {
-  요청됨: 'REQUESTED',
-  '확인 대기중': 'CONFIRM_WAITED',
-  대기중: 'WAITED',
-  예약됨: 'SCHEDULED',
-  '수신 성공': 'DELIVERED',
-  '수신 실패': 'DELIVERY_FAILED',
-  취소됨: 'CANCELED',
-}
 
 export function smsSendHistoryParamsFromFilters(
   filters: SmsSendHistoryPendingFilters
@@ -65,15 +47,7 @@ export function smsSendHistoryParamsFromFilters(
     params.recipient = filters.receiverInfo.trim()
     params.recipientInfo = filters.receiverInfo.trim()
   }
-  if (filters.sendStatus !== '전체') {
-    params.sendStatus = SEND_STATUS_TO_API[filters.sendStatus] ?? filters.sendStatus
-  }
-  if (filters.receiveStatus !== '전체') {
-    params.receiptStatus =
-      RECEIVE_STATUS_TO_API[filters.receiveStatus] ?? filters.receiveStatus
-  }
-  if (filters.broadcastTiming === '즉시') params.sendTiming = 'IMMEDIATE'
-  if (filters.broadcastTiming === '예약') params.sendTiming = 'SCHEDULED'
+  applyNotificationStatusFilterParams(params, filters)
 
   if (!params.requestedFrom || !params.requestedTo) {
     const start = dayjs().startOf('day')

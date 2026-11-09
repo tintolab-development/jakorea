@@ -19,6 +19,8 @@ import {
 } from '@/features/user/api/member-basic-info-terms-patch'
 import { MemberConsentDocumentViewModal } from '@/features/user/shared/ui/member-consent-document-view-modal'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { isCmsViewerAdminRole } from '@/shared/lib/cms-global-role-code'
+import { showAdminAccessDeniedAlert } from '@/shared/lib/admin-role-policy'
 import { canDownloadSensitiveConsentFile } from '@/shared/lib/can-download-sensitive-consent-file'
 import { MemberConsentAgreementModal } from '@/features/user/shared/ui/member-consent-agreement-modal'
 import { MemberConsentCrimeModal } from '@/features/user/shared/ui/member-consent-crime-modal'
@@ -509,14 +511,10 @@ function resolveConsentFieldView(
       return consentFieldContent(text)
     }
     case 'document': {
-      const sensitiveRestricted =
-        isSensitiveConsentDocumentLabel(fieldLabel) && !ctx.canOpenSensitiveConsentDocument
-      if (sensitiveRestricted) {
-        const status = resolveConsentFieldStatusLabel(value, fieldLabel)
-        const datetime = value.expired ? value.expiredAtDisplay : value.agreedAtDisplay
-        const text = datetime ? `${status} | ${datetime}` : status
-        return consentFieldContent(text)
-      }
+      /**
+       * 권한 설정 V1.2 — 열람 권한이 없어도 「동의서 보기」는 숨기지 않고, 누르면 접근 불가 안내.
+       * 민감 동의서(성범죄·행정정보, 원칙 9)는 열람 가능 역할이 아니면 같은 안내(ctx.openDocumentForLabel에서 판정).
+       */
       return (
         <ConsentDocumentRow
           agreed={value.agreed}
@@ -702,11 +700,20 @@ export function UserConsentAgreementSection({
   const canOpenSensitiveConsentDocument = canDownloadSensitiveConsentFile({
     roleCode: sessionUser?.roleCode,
   })
+  /** Program Viewer는 「약관 및 동의서 확인」(PII_CONSENT_DOCUMENT·PRIVACY_RAW_READ) 권한이 없다 */
+  const isConsentDocumentViewDenied = isCmsViewerAdminRole(sessionUser?.roleCode)
 
   const effectiveCaption = caption ?? (preset === 'admin' ? ADMIN_CONSENT_CAPTION : DEFAULT_CAPTION)
 
   const openDocumentForLabel = useCallback(
     (label: string, document: Extract<ConsentFieldValueSchema, { type: 'document' }>) => {
+      if (
+        isConsentDocumentViewDenied ||
+        (isSensitiveConsentDocumentLabel(label) && !canOpenSensitiveConsentDocument)
+      ) {
+        showAdminAccessDeniedAlert()
+        return
+      }
       if (onOpenAgreementDocument) {
         onOpenAgreementDocument()
         return
@@ -726,7 +733,7 @@ export function UserConsentAgreementSection({
         })
       }
     },
-    [onOpenAgreementDocument]
+    [canOpenSensitiveConsentDocument, isConsentDocumentViewDenied, onOpenAgreementDocument]
   )
 
   const openWriteForLabel = useCallback((label: string) => {

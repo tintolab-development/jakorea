@@ -11,14 +11,16 @@ import type { TalentApplicationDetailResponseJaParticipation } from './talentApp
 import type { TalentApplicationDetailResponseStatus } from './talentApplicationDetailResponseStatus';
 
 /**
- * Admin detail is always stored original PII. Empty strings are null. List name is original while phone and email remain masked. Not the careers talent-application revealPii contract.
+ * Admin detail. With HOMEPAGE_PII_VIEW: stored original PII after a committed privacy access log. Without it (Program Viewer): masked detail (piiMasked=true) and no privacy access log. Name is never masked. Empty strings are null. List name is original while phone and email remain masked.
  */
 export interface TalentApplicationDetailResponse {
   id?: number;
   status?: TalentApplicationDetailResponseStatus;
   /** Stored applicant name (original). */
   name?: string;
-  birthDate?: string;
+  /** Stored birth date (original). null when piiMasked=true; use maskedBirthDate. */
+  birthDate?: string | null;
+  /** Stored gender (original). null when piiMasked=true; use maskedGender. */
   gender?: TalentApplicationDetailResponseGender;
   /** Stored phone (original). Empty is null, never "". */
   phone?: string | null;
@@ -40,4 +42,10 @@ export interface TalentApplicationDetailResponse {
   attachmentAssetId?: number;
   attachmentOriginalName?: string;
   attachments?: ApplicationAttachmentItem[];
+  /** true when the caller lacks HOMEPAGE_PII_VIEW (Program Viewer): birthDate/gender are null, phone/email/affiliation are masked, and bio/talentIntro/motivation have embedded phone/email/RRN/account patterns masked. No privacy access log is written. false means stored original PII. */
+  piiMasked?: boolean;
+  /** Masked birth date shown to Program Viewer (year only, e.g. 2000.**.**). null when piiMasked=false. */
+  maskedBirthDate?: string | null;
+  /** Masked gender shown to Program Viewer ("**"). null when piiMasked=false. */
+  maskedGender?: string | null;
 }

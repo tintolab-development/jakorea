@@ -34,6 +34,7 @@ import {
   type AdminActionKind,
 } from '@/shared/lib/admin-role-policy'
 import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
+import { useAdminActionGuardDelegated } from '@/shared/lib/admin-action-guard-delegation'
 
 export type { FilterFieldConfig, TableFilterGroupProps }
 
@@ -130,6 +131,7 @@ export function FilterTableLayout({
   ...tableFilterGroupRest
 }: FilterTableLayoutProps) {
   const roleCode = useSessionAdminRoleCode()
+  const guardDelegated = useAdminActionGuardDelegated()
 
   const tableBody =
     contentLoading ? (
@@ -193,6 +195,7 @@ export function FilterTableLayout({
     filename: excelFilename,
     exporter: excelExport?.exporter,
     accessLog: excelExport?.accessLog,
+    downloadAdminAction: excelExport?.downloadAdminAction,
     alertOnEmpty: excelExport?.alertOnEmpty,
     emptyAlertTitle: excelExport?.emptyAlertTitle,
     emptyAlertContent: excelExport?.emptyAlertContent,
@@ -253,9 +256,9 @@ export function FilterTableLayout({
               {actions != null ? (
                 <div
                   className="filter-table-layout__toolbar-actions-slot"
-                  onClickCapture={event =>
-                    onAdminWriteClickCapture(event, roleCode, toolbarAdminAction)
-                  }
+                  onClickCapture={event => {
+                    if (!guardDelegated) onAdminWriteClickCapture(event, roleCode, toolbarAdminAction)
+                  }}
                 >
                   {actions}
                 </div>
@@ -271,9 +274,9 @@ export function FilterTableLayout({
               {actionsAfterExcel != null ? (
                 <div
                   className="filter-table-layout__toolbar-actions-slot"
-                  onClickCapture={event =>
-                    onAdminWriteClickCapture(event, roleCode, toolbarAdminAction)
-                  }
+                  onClickCapture={event => {
+                    if (!guardDelegated) onAdminWriteClickCapture(event, roleCode, toolbarAdminAction)
+                  }}
                 >
                   {actionsAfterExcel}
                 </div>

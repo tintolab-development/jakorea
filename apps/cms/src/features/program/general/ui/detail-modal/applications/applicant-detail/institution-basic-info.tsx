@@ -57,10 +57,11 @@ import type { Program } from '@/types/domain'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import { resolveAffiliatedFinancialCompanyDisplay } from '@/features/program/1c-1s/lib/affiliated-financial-company-display'
 import { SponsorNameById } from '@/features/sponsor/ui/sponsor-name-by-id'
+import { TEXTBOOK_NOT_USED_OPTION_VALUE } from '@/features/program/general/lib/individual-applicant-textbook'
+import { CmsSelect } from '@/shared/ui/cms-select'
 import {
   alignCompanySchoolScheduleDates,
   buildCompanySchoolPreferredScheduleBlocks,
-  parseCompanySchoolRequestedScheduleMemo,
 } from '@/features/program/1c-1s/lib/company-school-preferred-schedule-blocks'
 import { formatCompanySchoolSexOffenseParts } from '@/features/program/1c-1s/lib/company-school-sex-offense-display'
 import { CompanySchoolPreferredScheduleSection } from '@/features/program/1c-1s/ui/applicant-detail/company-school-preferred-schedule-section'
@@ -83,6 +84,28 @@ function shouldShowCompanySchoolEconomyFields(
   return Boolean(
     detail?.previousYearParticipation?.trim() || detail?.affiliatedFinancialCompany?.trim()
   )
+}
+
+function resolveInstitutionTextbookSelectValue(
+  draft: ApplicantInstitutionEditDraft,
+  textbookOptions: TextbookSelectOption[]
+): string | undefined {
+  const textbookId = draft.textbookId.trim()
+  if (
+    textbookId &&
+    textbookId !== TEXTBOOK_NOT_USED_OPTION_VALUE &&
+    textbookOptions.some(option => option.value === textbookId)
+  ) {
+    return textbookId
+  }
+  const textbookName = draft.textbookName.trim()
+  if (textbookName && textbookName !== '해당 없음') {
+    const matched = textbookOptions.find(
+      option => option.textbookName.trim() === textbookName || option.label === textbookName
+    )
+    return matched?.value
+  }
+  return TEXTBOOK_NOT_USED_OPTION_VALUE
 }
 
 export interface ApplicantGeneralInstitutionBasicInfoProps {
@@ -211,9 +234,7 @@ function buildTeacherInfoCell(
     if (parts.length === 0) return '-'
     if (parts.length === 1) return parts[0]
     return (
-      <ProgramDetailTdSegmentWrap>
-        {withProgramDetailTdDivider(parts)}
-      </ProgramDetailTdSegmentWrap>
+      <ProgramDetailTdSegmentWrap>{withProgramDetailTdDivider(parts)}</ProgramDetailTdSegmentWrap>
     )
   }
   if (segments.length === 1) return segments[0]
@@ -229,12 +250,13 @@ function buildCombinedClassViewValue(
   if (!programEligible) return '해당 없음'
   const display = formatCombinedClassDisplay(detail)
   if (display === '미신청') return display
-  const parts = display.split(' | ').map(part => part.trim()).filter(Boolean)
+  const parts = display
+    .split(' | ')
+    .map(part => part.trim())
+    .filter(Boolean)
   if (parts.length <= 1) return parts[0] ?? display
   return (
-    <ProgramDetailTdSegmentWrap>
-      {withProgramDetailTdDivider(parts)}
-    </ProgramDetailTdSegmentWrap>
+    <ProgramDetailTdSegmentWrap>{withProgramDetailTdDivider(parts)}</ProgramDetailTdSegmentWrap>
   )
 }
 
@@ -254,9 +276,9 @@ export function ApplicantGeneralInstitutionBasicInfo({
   isCombinedClassApplyRadioDisabled = true,
   combinedClassReadOnly = false,
   hideCombinedClass = false,
-  textbookOptions: _textbookOptions = [],
-  textbookDisplayLabel: _textbookDisplayLabel,
-  isTextbookCatalogLoading: _isTextbookCatalogLoading = false,
+  textbookOptions = [],
+  textbookDisplayLabel,
+  isTextbookCatalogLoading = false,
   validationErrors,
   onResendNotificationClick,
   program = null,
@@ -266,6 +288,7 @@ export function ApplicantGeneralInstitutionBasicInfo({
   adminCommentError,
 }: ApplicantGeneralInstitutionBasicInfoProps) {
   const isEditMode = mode === 'edit' && draft != null && onDraftChange != null
+  const isCompanySchool = isCompanySchoolProgram(program)
   const institutionApplicationBridge = program
     ? resolveInstitutionApplicationProgramBridge(program)
     : null
@@ -276,7 +299,10 @@ export function ApplicantGeneralInstitutionBasicInfo({
     [program]
   )
   const curriculumSessionLabels = useMemo(() => readCurriculumSessionLabels(program), [program])
-  const educationScheduleLines = useMemo(() => readProgramEducationScheduleLines(program), [program])
+  const educationScheduleLines = useMemo(
+    () => readProgramEducationScheduleLines(program),
+    [program]
+  )
   const showGuidanceSection =
     institutionApplicationBridge == null ||
     shouldShowInstitutionApplicationGuidanceParagraph(institutionApplicationBridge)
@@ -288,6 +314,7 @@ export function ApplicantGeneralInstitutionBasicInfo({
         classCount={draft.classCount}
         studentCount={draft.studentCount}
         classCountOptions={classCountOptions}
+        numericClassCount={isCompanySchool}
         onChange={patch => onDraftChange(patch)}
         errors={{
           classCount: validationErrors?.classCount,
@@ -324,7 +351,6 @@ export function ApplicantGeneralInstitutionBasicInfo({
     ) : (
       buildTeacherInfoCell(institution, detail)
     )
-  const isCompanySchool = isCompanySchoolProgram(program)
   const sexOffenseRequestDisplay = buildSexOffenseRequestCell(detail, isCompanySchool)
   /** 1사1교도 requested-schedules 를 조회한다. 로딩 중 data는 undefined이며 빈 배열로 덮지 않는다. */
   const requestedHopeSchedulesQuery = useQuery({
@@ -336,23 +362,16 @@ export function ApplicantGeneralInstitutionBasicInfo({
       isCompanySchool
         ? buildCompanySchoolPreferredScheduleBlocks(
             /**
-             * 교시·시간: requested-schedules, 비면 `requestedScheduleMemo`(참고용) 해석.
-             * 날짜: `preferredEducationSchedules[].educationDate`(SSOT)로 맞춘다.
+             * 교시·시간: requested-schedules GET. 빈 배열은 일정 없음(메모로 채우지 않음).
+             * 날짜: `preferredEducationSchedules[].educationDate`(상세 GET)로 맞춘다.
              */
             alignCompanySchoolScheduleDates(
-              requestedHopeSchedulesQuery.data && requestedHopeSchedulesQuery.data.length > 0
-                ? requestedHopeSchedulesQuery.data
-                : parseCompanySchoolRequestedScheduleMemo(institution.desiredEducationPeriod),
+              requestedHopeSchedulesQuery.data ?? [],
               institution.preferredEducationSchedules
             )
           )
         : [],
-    [
-      isCompanySchool,
-      requestedHopeSchedulesQuery.data,
-      institution.desiredEducationPeriod,
-      institution.preferredEducationSchedules,
-    ]
+    [isCompanySchool, requestedHopeSchedulesQuery.data, institution.preferredEducationSchedules]
   )
   const sessions = useMemo(() => {
     const preferred = institution.preferredEducationSchedules ?? []
@@ -407,18 +426,18 @@ export function ApplicantGeneralInstitutionBasicInfo({
         error={validationErrors?.addressDetail}
       />
     ) : (
-      detail?.addressDetail ?? '-'
+      (detail?.addressDetail ?? '-')
     )
 
   const educationTypeValue =
-    showEducationFormatField && isEditMode && draft && onDraftChange ? (
+    (showEducationFormatField || isCompanySchool) && isEditMode && draft && onDraftChange ? (
       <InstitutionEducationFormatRadios
         value={draft.educationFormat}
         onChange={value => onDraftChange({ educationFormat: value })}
         error={validationErrors?.educationFormat}
       />
-    ) : showEducationFormatField ? (
-      detail?.educationType ?? '-'
+    ) : showEducationFormatField || isCompanySchool ? (
+      (detail?.educationType ?? '-')
     ) : (
       '-'
     )
@@ -430,7 +449,7 @@ export function ApplicantGeneralInstitutionBasicInfo({
     isEditMode && draft ? (
       <InstitutionReadonlyInput width={240} value={institution.schoolName ?? ''} />
     ) : (
-      institution.schoolName ?? '-'
+      (institution.schoolName ?? '-')
     )
 
   const educationGradeValue =
@@ -448,17 +467,54 @@ export function ApplicantGeneralInstitutionBasicInfo({
     isEditMode && draft ? (
       <InstitutionReadonlyInput value={institution.region ?? ''} />
     ) : (
-      institution.region ?? '-'
+      (institution.region ?? '-')
     )
 
   const computerValue = detail?.computerInSpace ?? '-'
   const waitingPlaceValue = detail?.waitingPlaceGuide ?? detail?.waitingRoom ?? '-'
   const mealValue = detail?.mealInfo ?? '-'
-  const otherNotesValue = detail?.otherSpecialNotes ?? detail?.parkingInfo ?? '-'
+  const otherNotesValue = detail?.parkingInfo ?? detail?.otherSpecialNotes ?? '-'
   const showCompanySchoolEconomyFields = shouldShowCompanySchoolEconomyFields(program, detail)
   /** 1사1교 시안 — 결연 금융 회사·전년도 진행 여부를 학급 수 행 아래로, 일부 라벨만 시안 표기 */
   const isCompanySchoolLayout = showCompanySchoolEconomyFields && isCompanySchoolProgram(program)
   const affiliatedFinancialCompanyValue = buildAffiliatedFinancialCompanyCell(detail, program)
+
+  const textbookViewValue =
+    (detail?.textbookDisplayLabel?.trim() &&
+    detail.textbookDisplayLabel.trim() !== '해당 없음'
+      ? detail.textbookDisplayLabel.trim()
+      : textbookDisplayLabel?.trim() && textbookDisplayLabel.trim() !== '해당 없음'
+        ? textbookDisplayLabel.trim()
+        : (detail?.textbookName ?? institution.textbookName)?.trim()) || '해당 없음'
+
+  const textbookEditValue =
+    isEditMode && draft && onDraftChange ? (
+      <div className="institution-basic-info__field-stack">
+        <CmsSelect
+          className="institution-basic-info__full-width-control"
+          inputSize="small"
+          width="100%"
+          placeholder="교재명 선택"
+          withAllOption={false}
+          loading={isTextbookCatalogLoading}
+          value={resolveInstitutionTextbookSelectValue(draft, textbookOptions ?? [])}
+          options={textbookOptions.map(option => ({
+            label: option.label,
+            value: option.value,
+          }))}
+          onChange={value => {
+            const selected = textbookOptions.find(option => option.value === value)
+            const isNotUsed = value === TEXTBOOK_NOT_USED_OPTION_VALUE
+            onDraftChange({
+              textbookId: isNotUsed ? TEXTBOOK_NOT_USED_OPTION_VALUE : String(value ?? ''),
+              textbookName: isNotUsed ? '해당 없음' : (selected?.textbookName ?? ''),
+            })
+          }}
+          error={Boolean(validationErrors?.textbookId || validationErrors?.textbookName)}
+          message={validationErrors?.textbookId ?? validationErrors?.textbookName}
+        />
+      </div>
+    ) : null
 
   const combinedClassEditValue =
     isEditMode && draft && onDraftChange ? (
@@ -512,10 +568,10 @@ export function ApplicantGeneralInstitutionBasicInfo({
       ) : null}
       <section className="applicant-institution-basic-info__section applicant-instructor-basic-info">
         <DetailInfoForm title="기본 정보" mode={basicInfoFormMode}>
-          <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Row type={isCompanySchool ? 'double' : 'single'}>
             <DetailInfoForm.Field
               label="프로그램 승인 현황"
-              fullRow
+              fullRow={!isCompanySchool}
               readOnlyDisplay
               view={
                 <ProgramApprovalStatusValue
@@ -524,6 +580,14 @@ export function ApplicantGeneralInstitutionBasicInfo({
                 />
               }
             />
+            {isCompanySchool ? (
+              <DetailInfoForm.Field
+                label="교재명"
+                readOnlyDisplay={!isEditMode}
+                view={textbookViewValue}
+                edit={textbookEditValue}
+              />
+            ) : null}
           </DetailInfoForm.Row>
           {showCombinedClass ? (
             <DetailInfoForm.Row type="single">
@@ -548,7 +612,9 @@ export function ApplicantGeneralInstitutionBasicInfo({
             <DetailInfoForm.Field
               label="신청 학년"
               readOnlyDisplay={!isEditMode}
-              view={formatInstitutionApplicationGradeDisplay(institution.educationGrade ?? '') || '-'}
+              view={
+                formatInstitutionApplicationGradeDisplay(institution.educationGrade ?? '') || '-'
+              }
               edit={educationGradeValue}
             />
           </DetailInfoForm.Row>
@@ -566,7 +632,7 @@ export function ApplicantGeneralInstitutionBasicInfo({
               edit={addressDetailValue}
             />
           </DetailInfoForm.Row>
-          {showEducationFormatField ? (
+          {showEducationFormatField || isCompanySchool ? (
             <DetailInfoForm.Row type="double">
               <DetailInfoForm.Field
                 label="신청 학급 수 및 총 인원"
@@ -662,7 +728,12 @@ export function ApplicantGeneralInstitutionBasicInfo({
             />
           </DetailInfoForm.Row>
           <DetailInfoForm.Row type="single">
-            <DetailInfoForm.Field label="대기 장소 안내" fullRow readOnlyDisplay view={waitingPlaceValue} />
+            <DetailInfoForm.Field
+              label="대기 장소 안내"
+              fullRow
+              readOnlyDisplay
+              view={waitingPlaceValue}
+            />
           </DetailInfoForm.Row>
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
@@ -693,8 +764,10 @@ export function ApplicantGeneralInstitutionBasicInfo({
         </DetailInfoForm>
       ) : null}
 
-      {companySchoolScheduleBlocks.length > 0 ? (
-        <CompanySchoolPreferredScheduleSection blocks={companySchoolScheduleBlocks} />
+      {isCompanySchool ? (
+        companySchoolScheduleBlocks.length > 0 ? (
+          <CompanySchoolPreferredScheduleSection blocks={companySchoolScheduleBlocks} />
+        ) : null
       ) : showScheduleSection ? (
         <ApplicantPreferredScheduleDetailSection
           sessions={sessions}

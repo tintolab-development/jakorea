@@ -13,6 +13,7 @@ import {
 import { DocumentScreeningStatusText } from '@/features/program/shared/ui/volunteer-screening/document-screening-status-text'
 import { InterviewAssignmentStatusText } from '../shared/interview-assignment-status-text'
 import { SecondInterviewScreeningStatusText } from '@/features/program/shared/ui/volunteer-screening/second-interview-screening-status-text'
+import { resolveUjatEffectiveSecondInterviewStatus } from '../interview2/display'
 import {
   withProgramDetailTdDivider,
   ProgramDetailTdSegmentWrap,
@@ -34,13 +35,16 @@ function resolveStatusField(
   statusRow: ApplicantBasicInfoStatusRow
 ): { label: string; value: ReactNode } {
   if (statusRow === 'second_interview') {
+    // 목록과 동일하게 면접 종료 시각을 반영한 실효 상태로 표시
+    const effectiveStatus = resolveUjatEffectiveSecondInterviewStatus(applicant)
     return {
       label: '2차 면접 심사 현황',
-      value: applicant.secondInterviewScreeningStatus ? (
-        <SecondInterviewScreeningStatusText status={applicant.secondInterviewScreeningStatus} />
-      ) : (
-        '—'
-      ),
+      value:
+        effectiveStatus === 'withdrawn' ? (
+          <InterviewAssignmentStatusText status="withdrawn" />
+        ) : (
+          <SecondInterviewScreeningStatusText status={effectiveStatus} />
+        ),
     }
   }
 

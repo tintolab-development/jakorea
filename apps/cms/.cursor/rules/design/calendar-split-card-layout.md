@@ -34,7 +34,8 @@ split-card 안에 `CalendarMain` / `CalendarSubRight*`를 넣으면 **CSS가 카
 3. `CalendarMain`에는 `className="calendar-split-card-main"`만 추가한다.
 4. split-card 안에서는 **`calendar-main`에 별도 카드 스타일을 주지 않는다** — shell은 `calendar-split-card-layout.css`.
 5. **그리드·요일 헤더·일정 칩**만 `calendar-split-card-main.css`(shared). **셀 min 116×124px·주간 56px/h**는 `calendar-main.css` / `calendar-cell.css` / `calendar-antd-override.css` 토큰 — **도메인 CSS에서 `.calendar-cell--*`·고정 px 재정의 금지.** `participating-institutions-calendar-view.css` 등은 tooltip/popover만.
-6. 주간 시간 격자(`.calendar-week--time-grid`)에서는 좌측 카드 고정 높이(900px)를 쓰지 않는다. `calendar-split-card-layout.css`의 `:has(.calendar-week--time-grid)` 분기로 `height:auto` + `overflow:visible`이 적용되어야 한다.
+6. 월간 카드 높이: 좌·우 카드 **743px**(Figma 14741:1586). 좌측은 `min-height: 743` + padding 20/20/17(`--calendar-card-padding-bottom`)로 5주 월 = 743, 6주 월은 콘텐츠만큼 늘어난다. 우측 카드는 **전체 743 고정**, 목록은 카드 안에서 내부 스크롤(목록만 743으로 두고 카드에 padding을 더해 783이 되던 회귀 금지).
+7. 주간 시간 격자(`.calendar-week--time-grid`)에서는 좌측 카드 고정 높이(900px)를 쓰지 않는다. `calendar-split-card-layout.css`의 `:has(.calendar-week--time-grid)` 분기로 `height:auto` + `overflow:visible`이 적용되어야 한다.
 
 ### 셀 상호작용 (공통 `CalendarMain`과 동일)
 

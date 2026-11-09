@@ -40,7 +40,7 @@
   align-self: stretch;
 }
 
-/* 셀 min-height 124px — 일정·「외 N개」에 따라 높이 증가 (날짜 원은 flex-shrink:0) */
+/* 셀 min-height 124px(행 하단선 포함, calendar-cell.css) — 일정·「외 N개」에 따라 높이 증가 (날짜 원은 flex-shrink:0) */
 .calendar-cell-tooltip-trigger--full-cell {
   height: auto;
   min-height: 100%;
@@ -48,7 +48,7 @@
 
 .calendar-cell-tooltip-trigger--full-cell > .calendar-cell {
   flex: 1 1 auto;
-  min-height: var(--calendar-cell-min-height, 124px);
+  min-height: calc(var(--calendar-cell-min-height, 124px) - var(--calendar-cell-row-border-width, 0px));
   height: auto;
   max-height: none;
 }

@@ -763,9 +763,11 @@ export function readOrganizationApplicationDetailExtendFields(
     | 'parkingInfo'
     | 'textbookId'
     | 'textbookName'
+    | 'textbookDisplayLabel'
     | 'teacherTel'
     | 'teacherPhone'
     | 'teacherEmail'
+    | 'sexOffenseCheckRequest'
   >
 ): NonNullable<ApplicantSchoolRow['detail']> {
   const addressDetail = dto.organizationAddressDetail?.trim() || undefined
@@ -781,6 +783,8 @@ export function readOrganizationApplicationDetailExtendFields(
   const parkingInfo = dto.parkingInfo?.trim() || undefined
   const textbookId = toId(dto.textbookId) || undefined
   const textbookName = dto.textbookName?.trim() || undefined
+  const textbookDisplayLabel = dto.textbookDisplayLabel?.trim() || undefined
+  const sexOffenseCheckRequest = dto.sexOffenseCheckRequest?.trim() || undefined
   const teacherTel = Object.prototype.hasOwnProperty.call(dto, 'teacherTel')
     ? (dto.teacherTel?.trim() ?? '')
     : undefined
@@ -798,6 +802,8 @@ export function readOrganizationApplicationDetailExtendFields(
     ...(parkingInfo ? { parkingInfo, otherSpecialNotes: parkingInfo } : {}),
     ...(textbookId ? { textbookId } : {}),
     ...(textbookName ? { textbookName } : {}),
+    ...(textbookDisplayLabel ? { textbookDisplayLabel } : {}),
+    ...(sexOffenseCheckRequest ? { sexOffenseCheckRequest } : {}),
     // 상세 DTO가 teacherTel을 생략해도 상세 응답이 정본임을 표시한다.
     // 그래야 teacherPhone(휴대폰)을 Tel로 잘못 재사용하지 않는다.
     teacherTel,
@@ -867,6 +873,7 @@ export function mapOrganizationApplicationDetailToApplicantSchoolRow(
     preferredEducationDates:
       preferredEducationDates.length > 0 ? preferredEducationDates : undefined,
     desiredEducationPeriod: requestedScheduleMemo,
+    textbookName: dto.textbookName?.trim() || undefined,
     detail: {
       ...detailFields,
       ...readOrganizationApplicationEconomyDisplayFields(dto),

@@ -60,6 +60,7 @@ import {
 
 import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import './general-program-list-page.css'
+import { ensureProgramWriteAllowed } from '@/features/program/shared/lib/program-role-action-check'
 
 /** `/programs/general?new` — 일반 프로그램 등록 폼 풀페이지 */
 const PROGRAMS_GENERAL_NEW_QUERY_KEY = 'new'
@@ -324,8 +325,12 @@ export function GeneralProgramListPageContent() {
       showAlert(NO_SELECTION_ALERT)
       return
     }
-    setProgramsPendingBulkDelete(programsToDelete)
-    setBulkDeleteModalOpen(true)
+    void (async () => {
+      // 권한 설정 V1.2: 프로그램 삭제는 담당 프로그램의 Program Owner·Program Assistant만. 확인 모달 전에 막는다.
+      if (!(await ensureProgramWriteAllowed(programsToDelete.map(p => p.id)))) return
+      setProgramsPendingBulkDelete(programsToDelete)
+      setBulkDeleteModalOpen(true)
+    })()
   }
 
   const handleProgramCreateClick = useCallback(() => {

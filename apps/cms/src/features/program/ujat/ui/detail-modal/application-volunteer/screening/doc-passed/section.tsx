@@ -2,7 +2,6 @@ import { useCallback, useMemo, type MouseEvent } from 'react'
 import { Spin } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { FilterTableToolbarButton } from '@/shared/ui'
-import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import { buildUjatVolunteerDocPassedFilterRows } from './filter-fields'
@@ -38,7 +37,6 @@ export function DocPassedSection({
   onRegisterApplicantCloseHandler,
   onVolunteerApplicantDetailMetaChange,
 }: DocPassedSectionProps) {
-  const canWrite = useUjatCanWrite()
   const { regions: educationRegions } = useUjatEducationRegions()
   const filterFields = useMemo(
     () => buildUjatVolunteerDocPassedFilterRows(educationRegions)[0] ?? [],
@@ -213,13 +211,11 @@ export function DocPassedSection({
           )
         }
         excelExport={
-          canWrite
-            ? {
+          {
                 accessLog: { downloadKind: 'PROGRAM_SCREENING_DOC_PASSED_EXPORT', containedPiiTypes: ['NAME'] },
                 columns,
                 data: tableData,
               }
-            : undefined
         }
       >
         {viewMode === 'list' ? (

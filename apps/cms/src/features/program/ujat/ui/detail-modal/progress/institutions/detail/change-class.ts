@@ -625,23 +625,21 @@ export function collectCatalogClassKeys(options: ExistingClassSelectOptions): Se
  * - 카탈로그에 남아 있는 학급 (다른 행에서 다른 곳으로 옮기거나 미배정하는 학급은 제외)
  * 자기 행의 기존 학급은 남아 있으므로 동일 학급 선택도 막힌다.
  */
+/**
+ * 변경 학급 셀렉트에서 막을 대상 — 다른 행이 이미 고른 변경 학급만.
+ * 진행 중인 학급(카탈로그)은 스왑·순환을 위해 고를 수 있게 두고,
+ * 같은 요청에서 옮기지 않으면 `validateChangeClassRows`가 저장 전에 막는다.
+ */
 export function collectBlockedTargetClassKeys(
   rows: ReadonlyArray<ChangeClassRowFields>,
-  excludeIndex: number,
-  catalogKeys: ReadonlySet<string>
+  excludeIndex: number
 ): Set<string> {
-  const movedAwayKeys = new Set<string>()
   const blocked = new Set<string>()
   rows.forEach((row, index) => {
     if (index === excludeIndex) return
-    const existingKey = normalizedClassKey(row.existingGrade, row.existingClassNo)
-    if (existingKey) movedAwayKeys.add(existingKey)
     const targetKey = normalizedClassKey(row.newGrade, row.newClassNo)
     if (targetKey) blocked.add(targetKey)
   })
-  for (const key of catalogKeys) {
-    if (!movedAwayKeys.has(key)) blocked.add(key)
-  }
   return blocked
 }
 
@@ -754,7 +752,7 @@ export function validateChangeClassRows(
     }
     targetKeys.add(targetKey)
     if (catalogKeys.has(targetKey) && !existingKeys.has(targetKey)) {
-      return `${index + 1}번째 행의 변경 학급은 이미 진행 중인 학급입니다.`
+      return `${index + 1}번째 행의 변경 학급은 이미 진행 중인 학급입니다. 해당 학급도 함께 변경하면 저장할 수 있습니다.`
     }
   }
 

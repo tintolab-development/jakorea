@@ -15,6 +15,7 @@ import type {
 } from '@/entities/talent-donation-application/model/types'
 import {
   useConfirmTalentDonationApplications,
+  useExportTalentDonationApplications,
   useRemoveTalentDonationApplications,
   useTalentDonationApplicationsList,
 } from '@/features/talent-donation-application/api/hooks'
@@ -32,6 +33,7 @@ import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
+import { logExcelExportFailureAlert } from '@/features/logs/shared/lib/log-excel-export-alert'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { formatDateTimeDot, formatNumberDisplay } from '@/shared/lib/format-display'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
@@ -56,6 +58,7 @@ import {
   CmsInput,
   CmsSelect,
   ConfirmModal,
+  ExcelButton,
   NO_SELECTION_ALERT,
   showChangeCompletedAlert,
   showDeleteCompletedAlert,
@@ -64,6 +67,7 @@ import {
 } from '@/shared/ui'
 
 import './page.css'
+import { ADMIN_ACCESS_DENIED_ALERT } from '@/shared/lib/admin-access-denied'
 
 type StatusPending = '' | ApplicationStatus
 type HistoryPending = '' | JaProgramHistoryFilter
@@ -265,6 +269,13 @@ export function TalentDonationApplicationsPage() {
   })
 
   const listQuery = useTalentDonationApplicationsList(appliedFilter)
+  const exportMutation = useExportTalentDonationApplications()
+  const handleExcel = useCallback(() => {
+    if (exportMutation.isPending) return
+    void exportMutation.mutateAsync(appliedFilter).catch((error: unknown) => {
+      showAlert(logExcelExportFailureAlert(error))
+    })
+  }, [appliedFilter, exportMutation, showAlert])
   const removeMutation = useRemoveTalentDonationApplications(appliedFilter)
   const confirmMutation = useConfirmTalentDonationApplications(appliedFilter)
 
@@ -335,10 +346,7 @@ export function TalentDonationApplicationsPage() {
       .catch(error => {
         if (cancelled) return
         if (isAdminForbidden(error)) {
-          showAlert({
-            title: '권한 없음',
-            content: '해당 신청을 조회할 권한이 없습니다.',
-          })
+          showAlert({ ...ADMIN_ACCESS_DENIED_ALERT })
           closeDetail()
           return
         }
@@ -558,98 +566,98 @@ export function TalentDonationApplicationsPage() {
         hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area admin-filter-area--split talent-apps-page__filter">
-            <div className="admin-filter-area__head">
-              <div className="admin-filter-area__field admin-filter-area__field--control">
-                <p className="admin-filter-area__label">처리 상태</p>
-                <CmsSelect
-                  inputSize="medium"
-                  width={FILTER_CONTROL_MAX_WIDTH_PX}
-                  withAllOption
-                  value={pendingFilters.status}
-                  placeholder="전체"
-                  options={[
-                    { value: 'pending', label: '확인 대기' },
-                    { value: 'confirmed', label: '확인 완료' },
-                  ]}
-                  onChange={v =>
-                    setPendingFilters(prev => ({
-                      ...prev,
-                      status: (v as StatusPending) || '',
-                    }))
-                  }
-                />
+            <div className="admin-filter-area__fields">
+              <div className="admin-filter-area__head">
+                <div className="admin-filter-area__field admin-filter-area__field--control">
+                  <p className="admin-filter-area__label">처리 상태</p>
+                  <CmsSelect
+                    inputSize="medium"
+                    width={FILTER_CONTROL_MAX_WIDTH_PX}
+                    withAllOption
+                    value={pendingFilters.status}
+                    placeholder="전체"
+                    options={[
+                      { value: 'pending', label: '확인 대기' },
+                      { value: 'confirmed', label: '확인 완료' },
+                    ]}
+                    onChange={v =>
+                      setPendingFilters(prev => ({
+                        ...prev,
+                        status: (v as StatusPending) || '',
+                      }))
+                    }
+                  />
+                </div>
+                <div className="admin-filter-area__field admin-filter-area__field--control">
+                  <p className="admin-filter-area__label">신청자명</p>
+                  <AdminFilterTextInput
+                    inputSize="medium"
+                    width={FILTER_CONTROL_MAX_WIDTH_PX}
+                    value={pendingFilters.applicantName}
+                    placeholder="신청자명을 입력해 주세요."
+                    onChange={value =>
+                      patchPendingFilters(prev => ({ ...prev, applicantName: value }))
+                    }
+                    onPressEnter={handleSearch}
+                  />
+                </div>
+                <div className="admin-filter-area__field admin-filter-area__field--control">
+                  <p className="admin-filter-area__label">연락처</p>
+                  <CmsInput
+                    inputSize="medium"
+                    width={FILTER_CONTROL_MAX_WIDTH_PX}
+                    type="tel"
+                    inputMode="numeric"
+                    autoComplete="tel"
+                    value={pendingFilters.phone}
+                    placeholder="연락처를 입력해 주세요."
+                    onChange={e => {
+                      const result = applyKoreanPhoneInputChange(
+                        pendingFilters.phone,
+                        e.target.value,
+                        e.target.selectionStart
+                      )
+                      e.target.value = result.formatted
+                      setPendingFilters(prev => ({ ...prev, phone: result.formatted }))
+                      requestAnimationFrame(() => {
+                        e.target.setSelectionRange(result.caret, result.caret)
+                      })
+                    }}
+                    onPressEnter={handleSearch}
+                  />
+                </div>
+                <div className="admin-filter-area__field admin-filter-area__field--control">
+                  <p className="admin-filter-area__label">이메일</p>
+                  <AdminFilterTextInput
+                    inputSize="medium"
+                    width={FILTER_CONTROL_MAX_WIDTH_PX}
+                    value={pendingFilters.email}
+                    placeholder="이메일을 입력해 주세요."
+                    onChange={value => patchPendingFilters(prev => ({ ...prev, email: value }))}
+                    onPressEnter={handleSearch}
+                  />
+                </div>
+                <div className="admin-filter-area__field admin-filter-area__field--control">
+                  <p className="admin-filter-area__label">JA 프로그램 참여 이력</p>
+                  <CmsSelect
+                    inputSize="medium"
+                    width={FILTER_CONTROL_MAX_WIDTH_PX}
+                    withAllOption
+                    value={pendingFilters.jaProgramHistory}
+                    placeholder="전체"
+                    options={[
+                      { value: 'yes', label: '있음' },
+                      { value: 'no', label: '없음' },
+                    ]}
+                    onChange={v =>
+                      setPendingFilters(prev => ({
+                        ...prev,
+                        jaProgramHistory: (v as HistoryPending) || '',
+                      }))
+                    }
+                  />
+                </div>
               </div>
-              <div className="admin-filter-area__field admin-filter-area__field--control">
-                <p className="admin-filter-area__label">신청자명</p>
-                <AdminFilterTextInput
-                  inputSize="medium"
-                  width={FILTER_CONTROL_MAX_WIDTH_PX}
-                  value={pendingFilters.applicantName}
-                  placeholder="신청자명을 입력해 주세요."
-                  onChange={value =>
-                    patchPendingFilters(prev => ({ ...prev, applicantName: value }))
-                  }
-                  onPressEnter={handleSearch}
-                />
-              </div>
-              <div className="admin-filter-area__field admin-filter-area__field--control">
-                <p className="admin-filter-area__label">연락처</p>
-                <CmsInput
-                  inputSize="medium"
-                  width={FILTER_CONTROL_MAX_WIDTH_PX}
-                  type="tel"
-                  inputMode="numeric"
-                  autoComplete="tel"
-                  value={pendingFilters.phone}
-                  placeholder="연락처를 입력해 주세요."
-                  onChange={e => {
-                    const result = applyKoreanPhoneInputChange(
-                      pendingFilters.phone,
-                      e.target.value,
-                      e.target.selectionStart
-                    )
-                    e.target.value = result.formatted
-                    setPendingFilters(prev => ({ ...prev, phone: result.formatted }))
-                    requestAnimationFrame(() => {
-                      e.target.setSelectionRange(result.caret, result.caret)
-                    })
-                  }}
-                  onPressEnter={handleSearch}
-                />
-              </div>
-              <div className="admin-filter-area__field admin-filter-area__field--control">
-                <p className="admin-filter-area__label">이메일</p>
-                <AdminFilterTextInput
-                  inputSize="medium"
-                  width={FILTER_CONTROL_MAX_WIDTH_PX}
-                  value={pendingFilters.email}
-                  placeholder="이메일을 입력해 주세요."
-                  onChange={value => patchPendingFilters(prev => ({ ...prev, email: value }))}
-                  onPressEnter={handleSearch}
-                />
-              </div>
-              <div className="admin-filter-area__field admin-filter-area__field--control">
-                <p className="admin-filter-area__label">JA 프로그램 참여 이력</p>
-                <CmsSelect
-                  inputSize="medium"
-                  width={FILTER_CONTROL_MAX_WIDTH_PX}
-                  withAllOption
-                  value={pendingFilters.jaProgramHistory}
-                  placeholder="전체"
-                  options={[
-                    { value: 'yes', label: '있음' },
-                    { value: 'no', label: '없음' },
-                  ]}
-                  onChange={v =>
-                    setPendingFilters(prev => ({
-                      ...prev,
-                      jaProgramHistory: (v as HistoryPending) || '',
-                    }))
-                  }
-                />
-              </div>
-            </div>
-            <div className="admin-filter-area__bottom">
               <div className="admin-filter-area__bottom-fields">
                 <div className="admin-filter-area__field admin-filter-area__field--date-range">
                   <p className="admin-filter-area__label">신청일</p>
@@ -692,17 +700,17 @@ export function TalentDonationApplicationsPage() {
                   />
                 </div>
               </div>
-              <div className="admin-filter-area__actions">
-                <CmsButton
-                  className="admin-filter-area__search-button"
-                  variant="primary"
-                  size="medium"
-                  type="button"
-                  onClick={handleSearch}
-                >
-                  조회
-                </CmsButton>
-              </div>
+            </div>
+            <div className="admin-filter-area__actions">
+              <CmsButton
+                className="admin-filter-area__search-button"
+                variant="primary"
+                size="medium"
+                type="button"
+                onClick={handleSearch}
+              >
+                조회
+              </CmsButton>
             </div>
           </div>
         }
@@ -728,6 +736,12 @@ export function TalentDonationApplicationsPage() {
             >
               선택 확인
             </CmsButton>
+            <ExcelButton
+              onClick={handleExcel}
+              empty={totalCount === 0}
+              loading={exportMutation.isPending}
+              disabled={exportMutation.isPending}
+            />
           </>
         }
       >

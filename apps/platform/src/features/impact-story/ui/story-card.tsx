@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { PFCategoryBadge, PFText } from '@/shared/ui'
+import defaultThumbnailUrl from '../image/illustration/card-default.png'
 import { impactStoryDetailPath } from '../lib/constants'
 import type { ImpactStoryListItem } from '../model/types'
 import styles from './story-card.module.css'
@@ -12,20 +13,14 @@ export function StoryCard({ story }: StoryCardProps) {
   return (
     <Link to={impactStoryDetailPath(story.id)} className={styles.cardLink}>
       <article className={styles.card}>
-        <div
-          className={styles.thumbnail}
-          style={story.imageUrl ? undefined : { backgroundColor: story.placeholderColor }}
-          aria-hidden="true"
-        >
-          {story.imageUrl ? (
-            <img
-              className={styles.image}
-              src={story.imageUrl}
-              alt=""
-              width={461}
-              height={256}
-            />
-          ) : null}
+        <div className={styles.thumbnail} aria-hidden="true">
+          <img
+            className={styles.image}
+            src={story.imageUrl || defaultThumbnailUrl}
+            alt=""
+            width={461}
+            height={256}
+          />
           <div className={styles.badge}>
             <PFCategoryBadge
               className={styles.categoryBadge}

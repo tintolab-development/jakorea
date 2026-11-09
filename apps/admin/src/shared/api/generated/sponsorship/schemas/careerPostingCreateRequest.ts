@@ -22,8 +22,10 @@ export interface CareerPostingCreateRequest {
   isPublic: boolean;
   status: CareerPostingCreateRequestStatus;
   publishedOn: string;
-  recruitStart: string;
-  recruitEnd: string;
+  /** Recruit period start. Required when status is RECRUITING or CLOSED. Optional when status is RESULT: omit or send null; RESULT postings always store null. */
+  recruitStart?: string | null;
+  /** Recruit period end (must be on or after recruitStart). Required when status is RECRUITING or CLOSED. Optional when status is RESULT: omit or send null; RESULT postings always store null. */
+  recruitEnd?: string | null;
   /**
      * @minLength 0
      * @maxLength 200

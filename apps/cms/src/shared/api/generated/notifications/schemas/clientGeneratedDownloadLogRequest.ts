@@ -22,4 +22,17 @@ export interface ClientGeneratedDownloadLogRequest {
      * @maxLength 255
      */
   ipAddress?: string;
+  /**
+     * @minLength 0
+     * @maxLength 80
+     * @pattern ^[A-Z][A-Z0-9_]*$
+     */
+  downloadKind?: string;
+  /**
+     * @minItems 0
+     * @maxItems 3
+     * @items.minLength 1
+     * @items.pattern ^(NAME|RESIDENT_REGISTRATION_NUMBER|ACCOUNT_NUMBER)$
+     */
+  containedPiiTypes?: string[];
 }

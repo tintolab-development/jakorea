@@ -68,7 +68,7 @@ import { useInstructorRoleRequestMutations } from '@/features/user/api/hooks/use
 import { useAdminApprovalRequestMutations } from '@/features/user/api/hooks/use-admin-approval-request-mutations'
 import { handleError } from '@/shared/utils/error-handler'
 import { showNotificationResendRequestCompletedAlert, useCmsAlert } from '@/shared/ui'
-import { guardAdminAction } from '@/shared/lib/admin-role-policy'
+import { canAdminAction, guardAdminAction } from '@/shared/lib/admin-role-policy'
 import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
 import './permission-request-page.css'
 
@@ -274,10 +274,14 @@ export function PermissionRequestListPage() {
     getResendNotificationError: getAdminResendNotificationError,
   } = useAdminApprovalRequestMutations()
 
+  /** 권한 승인 > 관리자 탭(목록·상세)은 Master 전용(권한 설정 V1.2 '관리자 권한 승인·권한 설정 화면') */
+  const canViewAdminPermissionRequests = canAdminAction({ roleCode, action: 'adminAccountManage' })
+
   const urlPermissionRole = useMemo((): UserDetailPermissionRole | null => {
     const r = searchParams.get(PR_DETAIL_ROLE)
-    return r === 'instructor' || r === 'admin' ? r : null
-  }, [searchParams])
+    if (r === 'admin') return canViewAdminPermissionRequests ? r : null
+    return r === 'instructor' ? r : null
+  }, [searchParams, canViewAdminPermissionRequests])
 
   const detailUserId = useMemo(() => {
     const id = searchParams.get(PR_DETAIL_USER)?.trim()
@@ -1290,13 +1294,23 @@ export function PermissionRequestListPage() {
   )
 
   const detailPermissionRole = permissionRole ?? undefined
+  const visibleListTab: PermissionListTabKey =
+    activeListTab === 'admin' && !canViewAdminPermissionRequests ? 'instructor' : activeListTab
 
   return (
     <div>
       <CmsTextTabs
         className="permission-request-list-page__tabs"
-        activeKey={activeListTab}
-        onChange={setActiveListTab}
+        activeKey={visibleListTab}
+        onChange={key => {
+          if (
+            key === 'admin' &&
+            !guardAdminAction({ roleCode, action: 'adminAccountManage' })
+          ) {
+            return
+          }
+          setActiveListTab(key)
+        }}
         ariaLabel="권한 승인 회원 유형"
         items={[
           { key: 'instructor', label: '강사' },
@@ -1304,7 +1318,7 @@ export function PermissionRequestListPage() {
         ]}
       />
 
-      {activeListTab === 'instructor' ? (
+      {visibleListTab === 'instructor' ? (
         <MembersPermissionList
           ref={instructorListRef}
           memberType="instructor"

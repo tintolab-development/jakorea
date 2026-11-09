@@ -455,68 +455,70 @@ export function ImpactStoriesPage() {
         hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area admin-filter-area--split impact-stories-page__filter">
-            <div className="admin-filter-area__head">
-              <div className="admin-filter-area__field admin-filter-area__field--control">
-                <p className="admin-filter-area__label">공개 여부</p>
-                <CmsSelect
-                  inputSize="medium"
-                  width={FILTER_CONTROL_MAX_WIDTH_PX}
-                  withAllOption
-                  value={pendingFilters.visibility}
-                  placeholder="전체"
-                  options={[
-                    { value: 'public', label: '공개' },
-                    { value: 'private', label: '비공개' },
-                  ]}
-                  onChange={v =>
-                    setPendingFilters(prev => ({
-                      ...prev,
-                      visibility: (v as VisibilityPending) || '',
-                    }))
-                  }
-                />
+            <div className="admin-filter-area__fields">
+              <div className="admin-filter-area__head">
+                <div className="admin-filter-area__field admin-filter-area__field--control">
+                  <p className="admin-filter-area__label">공개 여부</p>
+                  <CmsSelect
+                    inputSize="medium"
+                    width={FILTER_CONTROL_MAX_WIDTH_PX}
+                    withAllOption
+                    value={pendingFilters.visibility}
+                    placeholder="전체"
+                    options={[
+                      { value: 'public', label: '공개' },
+                      { value: 'private', label: '비공개' },
+                    ]}
+                    onChange={v =>
+                      setPendingFilters(prev => ({
+                        ...prev,
+                        visibility: (v as VisibilityPending) || '',
+                      }))
+                    }
+                  />
+                </div>
+                <div className="admin-filter-area__field admin-filter-area__field--control">
+                  <p className="admin-filter-area__label">카테고리</p>
+                  <CmsSelect
+                    inputSize="medium"
+                    width={FILTER_CONTROL_MAX_WIDTH_PX}
+                    withAllOption
+                    value={pendingFilters.categoryId}
+                    placeholder="전체"
+                    options={categoryFilterOptions}
+                    onChange={v =>
+                      setPendingFilters(prev => ({
+                        ...prev,
+                        categoryId: String(v ?? ''),
+                      }))
+                    }
+                  />
+                </div>
+                <div className="admin-filter-area__field admin-filter-area__field--control">
+                  <p className="admin-filter-area__label">제목</p>
+                  <AdminFilterTextInput
+                    inputSize="medium"
+                    width={FILTER_CONTROL_MAX_WIDTH_PX}
+                    value={pendingFilters.title}
+                    placeholder="제목을 입력해 주세요"
+                    onChange={value => patchPendingFilters(prev => ({ ...prev, title: value }))}
+                    onPressEnter={handleSearch}
+                  />
+                </div>
+                <div className="admin-filter-area__field admin-filter-area__field--control">
+                  <p className="admin-filter-area__label">작성자명</p>
+                  <AdminFilterTextInput
+                    inputSize="medium"
+                    width={FILTER_CONTROL_MAX_WIDTH_PX}
+                    value={pendingFilters.authorName}
+                    placeholder="작성자명을 입력해 주세요"
+                    onChange={value =>
+                      patchPendingFilters(prev => ({ ...prev, authorName: value }))
+                    }
+                    onPressEnter={handleSearch}
+                  />
+                </div>
               </div>
-              <div className="admin-filter-area__field admin-filter-area__field--control">
-                <p className="admin-filter-area__label">카테고리</p>
-                <CmsSelect
-                  inputSize="medium"
-                  width={FILTER_CONTROL_MAX_WIDTH_PX}
-                  withAllOption
-                  value={pendingFilters.categoryId}
-                  placeholder="전체"
-                  options={categoryFilterOptions}
-                  onChange={v =>
-                    setPendingFilters(prev => ({
-                      ...prev,
-                      categoryId: String(v ?? ''),
-                    }))
-                  }
-                />
-              </div>
-              <div className="admin-filter-area__field admin-filter-area__field--control">
-                <p className="admin-filter-area__label">제목</p>
-                <AdminFilterTextInput
-                  inputSize="medium"
-                  width={FILTER_CONTROL_MAX_WIDTH_PX}
-                  value={pendingFilters.title}
-                  placeholder="제목을 입력해 주세요"
-                  onChange={value => patchPendingFilters(prev => ({ ...prev, title: value }))}
-                  onPressEnter={handleSearch}
-                />
-              </div>
-              <div className="admin-filter-area__field admin-filter-area__field--control">
-                <p className="admin-filter-area__label">작성자명</p>
-                <AdminFilterTextInput
-                  inputSize="medium"
-                  width={FILTER_CONTROL_MAX_WIDTH_PX}
-                  value={pendingFilters.authorName}
-                  placeholder="작성자명을 입력해 주세요"
-                  onChange={value => patchPendingFilters(prev => ({ ...prev, authorName: value }))}
-                  onPressEnter={handleSearch}
-                />
-              </div>
-            </div>
-            <div className="admin-filter-area__bottom">
               <div className="admin-filter-area__bottom-fields">
                 <div className="admin-filter-area__field admin-filter-area__field--date-range">
                   <p className="admin-filter-area__label">게시일</p>
@@ -559,17 +561,17 @@ export function ImpactStoriesPage() {
                   />
                 </div>
               </div>
-              <div className="admin-filter-area__actions">
-                <CmsButton
-                  className="admin-filter-area__search-button"
-                  variant="primary"
-                  size="medium"
-                  type="button"
-                  onClick={handleSearch}
-                >
-                  조회
-                </CmsButton>
-              </div>
+            </div>
+            <div className="admin-filter-area__actions">
+              <CmsButton
+                className="admin-filter-area__search-button"
+                variant="primary"
+                size="medium"
+                type="button"
+                onClick={handleSearch}
+              >
+                조회
+              </CmsButton>
             </div>
           </div>
         }

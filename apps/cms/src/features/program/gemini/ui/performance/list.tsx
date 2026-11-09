@@ -6,6 +6,7 @@ import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { showAdminAccessDeniedAlert } from '@/shared/lib/admin-role-policy'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { formatDateDot } from '@/shared/utils'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
@@ -274,7 +275,12 @@ export function GeminiPerformanceList() {
   }, [deleting, selectedRowKeys, showAlert])
 
   const handleAddReportClick = useCallback(() => {
-    if (!canWrite || importing) return
+    if (importing) return
+    // 권한이 없으면 버튼을 막지 않고 눌렀을 때 접근 불가 안내를 띄운다
+    if (!canWrite) {
+      showAdminAccessDeniedAlert()
+      return
+    }
     openFilePicker(fileInputRef.current)
   }, [canWrite, importing])
 
@@ -564,7 +570,7 @@ export function GeminiPerformanceList() {
               <FilterTableToolbarButton
                 variant="primary"
                 tabIndex={canWrite ? -1 : undefined}
-                disabled={!canWrite || importing}
+                disabled={importing}
                 onClick={handleAddReportClick}
               >
                 연수 보고서 등록

@@ -8,7 +8,7 @@
 
 export type Detail9Params = {
 /**
- * Deprecated no-op. Omitted, false, and true all return the same original detail and do not affect authorization.
+ * Deprecated no-op. Omitted, false, and true return the same result; masking depends only on HOMEPAGE_PII_VIEW.
  */
 revealPii?: boolean;
 };

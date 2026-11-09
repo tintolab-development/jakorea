@@ -2,6 +2,8 @@
  * 관리자 회원 상세 — 담당 프로그램 이력 (필터 + 테이블)
  */
 
+import { cmsAlertModal } from '@/shared/ui'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 import { useCallback, useEffect, useMemo, useState, type Key, type MouseEvent } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { Spin } from 'antd'
@@ -457,8 +459,13 @@ export function AdminManagedProgramHistory({
           SHOW_PROGRAM_HISTORY_DELETE ? (
             <FilterTableToolbarButton
               variant="delete"
-              disabled={selectedRowKeys.length === 0}
-              onClick={handleOpenDeleteModal}
+              onClick={() => {
+                if (selectedRowKeys.length === 0) {
+                  cmsAlertModal.show(NO_SELECTION_ALERT)
+                  return
+                }
+                handleOpenDeleteModal()
+              }}
             >
               이력 삭제
             </FilterTableToolbarButton>

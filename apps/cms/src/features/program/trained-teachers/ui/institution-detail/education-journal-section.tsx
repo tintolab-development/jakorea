@@ -125,6 +125,17 @@ export function TrainedTeachersEducationJournalSection({
       .finally(() => setBulkJobId(null))
   }, [bulkJobId, institutionId, showAlert, zipJobQuery.data])
 
+  /** 작업 상태 조회 실패(서버 오류·네트워크) — 폴링이 멈추므로 안내 후 버튼을 다시 누를 수 있게 푼다 */
+  const zipJobQueryFailed = zipJobQuery.isError
+  useEffect(() => {
+    if (!zipJobQueryFailed || bulkJobId == null) return
+    showAlert({
+      title: '일괄 다운로드 실패',
+      content: '교육일지 ZIP 생성 상태를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+    })
+    setBulkJobId(null)
+  }, [bulkJobId, showAlert, zipJobQueryFailed])
+
   const entries = useMemo(() => journalsQuery.data ?? [], [journalsQuery.data])
   const isLoading = journalsQuery.isFetching
 

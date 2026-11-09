@@ -12,6 +12,7 @@ import React, {
   useEffect,
   useMemo,
   useRef,
+  useState,
   type CSSProperties,
   type ReactNode,
 } from 'react'
@@ -35,6 +36,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { useIsMutating, useQueryClient } from '@tanstack/react-query'
 
 export type AdminSortableRowId = { id: string }
 
@@ -159,12 +161,35 @@ export function useAdminTableDndReorder<T extends AdminSortableRowId>({
 }) {
   const rowsRef = useRef(rows)
   const lastOverIdRef = useRef<string | null>(null)
+  /**
+   * 드롭 직후 낙관적 순서 — 저장 응답 전까지 이전 순서로 되돌아갔다가 새 순서로 다시 점프하던 문제 방지.
+   * `base`(드롭 시점 부모 rows)가 바뀌면(저장 성공 반영·재조회·로컬 초안 갱신) 부모 rows를 따른다.
+   * 드롭 뒤 시작된 저장이 실패로 끝나면(진행 중 없음) 서버 순서로 되돌린다.
+   */
+  const [pendingOrder, setPendingOrder] = useState<{ base: T[]; rows: T[]; at: number } | null>(null)
+  const queryClient = useQueryClient()
+  // 저장 상태가 바뀔 때마다 다시 그려 낙관적 순서 유효성을 재평가
+  useIsMutating()
+
+  const displayedRowsRef = useRef(rows)
 
   useEffect(() => {
     rowsRef.current = rows
   }, [rows])
 
-  const rowIds = useMemo(() => rows.map(row => row.id), [rows])
+  const pendingValid = (() => {
+    if (!pendingOrder || pendingOrder.base !== rows) return false
+    const started = queryClient
+      .getMutationCache()
+      .getAll()
+      .filter(mutation => mutation.state.submittedAt >= pendingOrder.at)
+    const failed = started.some(mutation => mutation.state.status === 'error')
+    const inFlight = started.some(mutation => mutation.state.status === 'pending')
+    return !(failed && !inFlight)
+  })()
+  const items = pendingValid && pendingOrder ? pendingOrder.rows : rows
+
+  const rowIds = useMemo(() => items.map(row => row.id), [items])
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -189,12 +214,15 @@ export function useAdminTableDndReorder<T extends AdminSortableRowId>({
 
       if (disabled || !overId || activeId === overId) return
 
-      const currentRows = rowsRef.current
+      const baseRows = rowsRef.current
+      const currentRows = displayedRowsRef.current
       const activeIndex = currentRows.findIndex(row => row.id === activeId)
       const overIndex = currentRows.findIndex(row => row.id === overId)
       if (activeIndex < 0 || overIndex < 0 || activeIndex === overIndex) return
 
-      onRowsReorder(arrayMove(currentRows, activeIndex, overIndex))
+      const next = arrayMove(currentRows, activeIndex, overIndex)
+      setPendingOrder({ base: baseRows, rows: next, at: Date.now() })
+      onRowsReorder(next)
     },
     [disabled, onRowsReorder]
   )
@@ -222,8 +250,12 @@ export function useAdminTableDndReorder<T extends AdminSortableRowId>({
     ]
   )
 
+  useEffect(() => {
+    displayedRowsRef.current = items
+  }, [items])
+
   return {
-    items: rows,
+    items,
     rowIds,
     dndContextProps,
   }

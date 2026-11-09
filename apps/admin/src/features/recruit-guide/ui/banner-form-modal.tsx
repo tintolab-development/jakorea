@@ -247,7 +247,7 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
                   className="cms-textarea--fixed-rows"
                   inputSize="large"
                   width="100%"
-                  rows={3}
+                  autoSize={{ minRows: 1 }}
                   maxLength={MAIN_TEXT_MAX_LENGTH}
                   placeholder="메인 텍스트를 입력해 주세요"
                   value={mainText}
@@ -278,7 +278,7 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
                   className="cms-textarea--fixed-rows"
                   inputSize="large"
                   width="100%"
-                  rows={2}
+                  autoSize={{ minRows: 1 }}
                   maxLength={SUB_TEXT_MAX_LENGTH}
                   placeholder="서브 텍스트를 입력해 주세요"
                   value={subText01}
@@ -309,7 +309,7 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
                   className="cms-textarea--fixed-rows"
                   inputSize="large"
                   width="100%"
-                  rows={3}
+                  autoSize={{ minRows: 1 }}
                   maxLength={SUB_TEXT_MAX_LENGTH}
                   placeholder="서브 텍스트를 입력해 주세요"
                   value={subText02}

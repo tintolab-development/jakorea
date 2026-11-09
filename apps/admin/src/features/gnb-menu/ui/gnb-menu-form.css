@@ -83,3 +83,23 @@
 .gnb-menu-form-card .ant-switch-checked {
   background: var(--color-mint-01, #01a1af) !important;
 }
+
+/* 하위 메뉴명 열 제목 필수 표시 (수정 모드) — 기업후원 안내 표와 같은 패턴 */
+.gnb-menu-table__th-label {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gnb-menu-table__required {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  margin-left: 2px;
+  transform: translateY(-50%);
+  color: var(--color-required-mark, #c32f4a);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+}

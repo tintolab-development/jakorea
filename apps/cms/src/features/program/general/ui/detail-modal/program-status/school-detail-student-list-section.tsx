@@ -77,6 +77,8 @@ import {
 import { useOrganizationStudentRosterRemote } from '../../../hooks/use-organization-student-roster-remote'
 import { fetchOrganizationStudentRosterPrivacyDetail } from '../../../api/student-roster-api-client'
 import { useMyProgramPrivacyRole } from '@/features/user/detail/lib/use-my-program-privacy-role'
+import { canDownloadProgramFiles } from '@/features/program/shared/lib/program-my-assignment'
+import { showAdminAccessDeniedAlert } from '@/shared/lib/admin-role-policy'
 import { mapStudentRosterResponseToRows } from '../../../api/adapters/student-roster-adapters'
 import { getGeneralProgramApiErrorMessage } from '../../../api/get-general-program-api-error'
 import {
@@ -269,7 +271,11 @@ export function SchoolDetailStudentListSection({
   /** 학생 추가 모달 세션 */
   const rosterAddSessionRef = useRef<StudentRosterCommitSession | null>(null)
   const { showAlert } = useCmsAlert()
-  const { canRevealSensitive, pending: privacyRolePending } = useMyProgramPrivacyRole(programId)
+  const {
+    canRevealSensitive,
+    pending: privacyRolePending,
+    assignment: myProgramAssignment,
+  } = useMyProgramPrivacyRole(programId)
 
   const rosterHttpStatus = (error: unknown): number | undefined => {
     if (error == null || typeof error !== 'object' || !('response' in error)) return undefined
@@ -518,6 +524,11 @@ export function SchoolDetailStudentListSection({
       return
     }
     if (portraitConsentDownloading) return
+    // 권한 설정 V1.2 원칙 5: 개별 첨부·증빙 파일 다운로드는 Program Owner·Assistant만. Program Viewer는 누르는 즉시 안내.
+    if (programId && (privacyRolePending || !canDownloadProgramFiles(myProgramAssignment))) {
+      if (!privacyRolePending) showAdminAccessDeniedAlert()
+      return
+    }
     if (!organizationApplicationKey) {
       notifyProgramApiUnavailable('student-list-portrait-consent', '초상권 동의서 확인')
       return
@@ -550,8 +561,11 @@ export function SchoolDetailStudentListSection({
     })()
   }, [
     isStudentListEditMode,
+    myProgramAssignment,
     organizationApplicationKey,
     portraitConsentDownloading,
+    privacyRolePending,
+    programId,
     showAlert,
     showStudentListEditModeBlockedAlert,
   ])
@@ -1005,10 +1019,8 @@ export function SchoolDetailStudentListSection({
       }
     } else if (rosterRemote.remoteEnabled && unmaskedRosterRows == null) {
       if (privacyRolePending || !canRevealSensitive) {
-        showAlert({
-          title: '열람 불가',
-          content: '학생 명단 원문 조회 권한이 없습니다. 마스킹 목록을 유지합니다.',
-        })
+        // 권한 설정 V1.2: 다른 화면과 같은 접근 불가 안내(역할 확인 중에는 조용히 대기)
+        if (!privacyRolePending) showAdminAccessDeniedAlert()
         return
       }
       const entryCheck = validateStudentRosterEditEntry({
@@ -1054,10 +1066,8 @@ export function SchoolDetailStudentListSection({
   const confirmEditUnmaskAndStartEdit = useCallback(() => {
     if (editUnmaskConfirmLoading || !organizationApplicationKey) return
     if (privacyRolePending || !canRevealSensitive) {
-      showAlert({
-        title: '열람 불가',
-        content: '학생 명단 원문 조회 권한이 없습니다. 마스킹 목록을 유지합니다.',
-      })
+      // 권한 설정 V1.2: 다른 화면과 같은 접근 불가 안내(역할 확인 중에는 조용히 대기)
+      if (!privacyRolePending) showAdminAccessDeniedAlert()
       return
     }
     setEditUnmaskConfirmLoading(true)

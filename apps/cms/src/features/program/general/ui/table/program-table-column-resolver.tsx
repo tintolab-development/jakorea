@@ -19,6 +19,7 @@ import {
 import type { Program, ProgramCategory } from '@/types/domain'
 import type { ProgramListProgramMode } from '../../model/program-list-program-mode'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import { formatDateRangeDotWithWeekday } from '@/shared/utils/date'
 
 /** ProgramStatusWidget 4탭 기준 목록 뷰 */
 export type ProgramListView = 'ALL' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED'
@@ -44,6 +45,19 @@ const TRAINED_TEACHERS_OMITTED_COLUMN_KEYS = new Set([
 
 function omitTrainedTeachersColumns(columns: ColumnsType<Program>): ColumnsType<Program> {
   return columns.filter(column => !TRAINED_TEACHERS_OMITTED_COLUMN_KEYS.has(String(column.key)))
+}
+
+/** 교육 받은 교사 목록 사업 운영 기간 — `2026.12.08(월) ~ 2026.12.30(수)` (피그마) */
+function withTrainedTeachersPeriodWeekday(columns: ColumnsType<Program>): ColumnsType<Program> {
+  return columns.map(column =>
+    column.key === 'operationPeriod'
+      ? {
+          ...column,
+          render: (_: unknown, record: Program) =>
+            formatDateRangeDotWithWeekday(record.startDate, record.endDate),
+        }
+      : column
+  )
 }
 
 const WIDTH_NO = TABLE_COLUMN_WIDTHS.index
@@ -459,7 +473,7 @@ export function resolveEducationColumns(params: ResolveEducationColumnsParams) {
 
     const columns = resolveColumns() as ColumnsType<Program>
     if (columnPreset === 'trainedTeachers') {
-      return omitTrainedTeachersColumns(columns)
+      return withTrainedTeachersPeriodWeekday(omitTrainedTeachersColumns(columns))
     }
     return columns
   }

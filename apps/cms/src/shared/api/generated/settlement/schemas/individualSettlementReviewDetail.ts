@@ -21,9 +21,7 @@ export interface IndividualSettlementReviewDetail {
   memberName?: string;
   programScheduleId?: number;
   scheduleName?: string;
-  /** @nullable */
   scheduleStartAt?: string | null;
-  /** @nullable */
   scheduleEndAt?: string | null;
   status?: string;
   latestRevisionNo?: number;

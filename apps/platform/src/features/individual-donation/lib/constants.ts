@@ -11,8 +11,7 @@ export const HERO_DESCRIPTION_LINES = [
 
 export const WHY_SECTION_TITLE = '왜 JA 일까요?'
 
-export const WHY_SECTION_ACTION_DESCRIPTION =
-  '후원금 사용 내역과 운영 현황을 확인해 보세요.'
+export const WHY_SECTION_ACTION_DESCRIPTION = '후원금 사용 내역과 운영 현황을 확인해 보세요.'
 
 export const WHY_SECTION_ACTION_BUTTON_LABEL = '투명경영 바로가기'
 
@@ -35,28 +34,20 @@ export const WHY_CARDS: readonly WhyCardContent[] = [
   {
     id: 'education_access',
     badge: '교육 접근성',
-    titleLines: [
-      '봉사자의 손길이 닿지 않는 지방 및',
-      '도서·산간 지역 청소년을 위한 교육 지원',
-    ],
+    titleLines: ['봉사자의 손길이 닿지 않는 지방 및', '도서·산간 지역 청소년을 위한 교육 지원'],
     description: 'JA Worldwide 기준에 따른 투명한 조직 운영 체계',
   },
 ]
 
 export const CTA_SECTION_EYEBROW = 'Grow together'
 
-export const CTA_SECTION_TITLE_LINES = [
-  '청소년을 위한 작은 실천',
-  '지금 시작해 보세요',
-] as const
+export const CTA_SECTION_TITLE_LINES = ['청소년을 위한 작은 실천', '지금 시작해 보세요'] as const
 
-export const CTA_SECTION_BUTTON_LABEL = '성장 후원하기'
+export const CTA_SECTION_BUTTON_LABEL = '후원하기'
 
-/** 개인후원 「성장 후원하기」 외부 결제 링크 (새 탭). API donationUrl이 없을 때 폴백. */
+/** 개인후원 「후원하기」 외부 결제 링크 (새 탭). API donationUrl이 없을 때 폴백. */
 export const CTA_SECTION_DONATION_URL = 'https://online.mrm.or.kr/WJEP4tK'
 
 export const IMPACT_SECTION_TITLE = '후원이 만드는 변화를 확인해 보세요'
 
 export const IMPACT_SLIDER_VISIBLE_COUNT = 3
-
-

@@ -10,7 +10,12 @@ import type { DonateCta } from '@/entities/individual-donation/model/types'
 import { useSaveDonateCta } from '@/features/individual-donation/api/hooks'
 import { individualDonationSaveFailureAlert } from '@/features/individual-donation/lib/save-failure-alert'
 import {
-  REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsInput, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
+  CmsButton,
+  CmsInput,
+  showSaveCompletedAlert,
+  useCmsAlert,
+} from '@/shared/ui'
 
 import './section-shared.css'
 
@@ -98,7 +103,7 @@ export function DonateCtaSectionCard({ donateCta }: Props) {
                 value={draftLink}
                 onChange={e => setDraftLink(e.target.value)}
                 placeholder="연결 링크를 입력해 주세요"
-                aria-label="성장 후원하기 연결 링크"
+                aria-label="후원하기 연결 링크"
               />
             )
           }

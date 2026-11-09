@@ -4,10 +4,9 @@ import '@jakorea/form-template-runtime/detail-info-form.css'
 import type { ColumnsType } from 'antd/es/table'
 import type { JaHistoryPhilosophy, JaHistoryPhilosophyCard } from '@/entities/ja-history/model/types'
 import { useSaveJaHistoryPhilosophy } from '@/features/ja-history/api/hooks'
-import { CmsButton, CmsDataTable, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
-import { MediaPreview, SectionFrame, jaHistorySaveAlert } from './chrome'
+import { CmsButton, CmsDataTable, REQUIRED_FIELDS_INCOMPLETE_ALERT, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
+import { InlineText, MediaPreview, SectionFrame, jaHistorySaveAlert } from './chrome'
 import { PhilosophyCardFormModal, type PhilosophyCardFormValues } from './philosophy-card-form-modal'
-import { PhilosophyIntroFormModal } from './philosophy-intro-form-modal'
 import { TABLE_ROW_FILL_FIELDS_CLASS } from '@/shared/ui/table-row-fill-fields'
 
 function cardOrderLabel(index: number): string {
@@ -48,13 +47,37 @@ function philosophySavePayload(
 export function PhilosophySection({ philosophy }: { philosophy: JaHistoryPhilosophy }) {
   const { showAlert } = useCmsAlert()
   const saveMutation = useSaveJaHistoryPhilosophy()
-  const [introOpen, setIntroOpen] = useState(false)
+  // 소개(타이틀·서브 텍스트)는 팝업이 아니라 섹션 안에서 바로 수정한다 (Figma 747:580 — 취소·저장은 섹션 타이틀 우측)
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState({ title: philosophy.title, lead: philosophy.lead })
   const [editingCard, setEditingCard] = useState<{
     card: JaHistoryPhilosophyCard
     index: number
   } | null>(null)
 
   const cards = philosophy.cards
+
+  const handleIntroSave = () => {
+    if (!draft.title.trim() || !draft.lead.trim()) {
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+      return
+    }
+    void saveMutation
+      .mutateAsync(
+        philosophySavePayload({ ...philosophy, title: draft.title, lead: draft.lead }, cards)
+      )
+      .then(
+        () => {
+          setEditing(false)
+          showSaveCompletedAlert()
+        },
+        error => {
+          showAlert(
+            jaHistorySaveAlert(error, '믿음을 키우는 교육 저장에 실패했습니다. 다시 시도해 주세요.')
+          )
+        }
+      )
+  }
   const rows = useMemo<PhilosophyCardRow[]>(
     () =>
       cards.map((card, index) => ({
@@ -117,26 +140,58 @@ export function PhilosophySection({ philosophy }: { philosophy: JaHistoryPhiloso
 
   return (
     <>
-      <SectionFrame title="믿음을 키우는 교육" marker={false} onEdit={() => setIntroOpen(true)}>
+      <SectionFrame
+        title="믿음을 키우는 교육"
+        marker={false}
+        editing={editing}
+        saving={saveMutation.isPending && editingCard == null}
+        onEdit={() => {
+          // 수정 시작 시점의 저장값으로 초안을 다시 채운다 (취소 후 재진입·원격 갱신 반영)
+          setDraft({ title: philosophy.title, lead: philosophy.lead })
+          setEditing(true)
+        }}
+        onCancel={() => setEditing(false)}
+        onSave={handleIntroSave}
+      >
         <div className="ja-history-philosophy">
           <DetailInfoForm
             title="믿음을 키우는 교육"
             hideHeader
-            mode="view"
+            mode={editing ? 'edit' : 'view'}
             className="ja-history-form ja-history-philosophy-intro"
           >
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="타이틀"
+                required={editing}
                 view={<p className="ja-history-philosophy-intro__text">{philosophy.title || '-'}</p>}
-                edit={null}
+                edit={
+                  <InlineText
+                    editing={editing}
+                    value={draft.title}
+                    onChange={title => setDraft(prev => ({ ...prev, title }))}
+                    rows={2}
+                    label="타이틀"
+                    placeholder="타이틀을 입력해 주세요"
+                  />
+                }
               />
             </DetailInfoForm.Row>
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="서브 텍스트"
+                required={editing}
                 view={<p className="ja-history-philosophy-intro__text">{philosophy.lead || '-'}</p>}
-                edit={null}
+                edit={
+                  <InlineText
+                    editing={editing}
+                    value={draft.lead}
+                    onChange={lead => setDraft(prev => ({ ...prev, lead }))}
+                    rows={3}
+                    label="서브 텍스트"
+                    placeholder="서브 텍스트를 입력해 주세요"
+                  />
+                }
               />
             </DetailInfoForm.Row>
           </DetailInfoForm>
@@ -150,35 +205,6 @@ export function PhilosophySection({ philosophy }: { philosophy: JaHistoryPhiloso
           />
         </div>
       </SectionFrame>
-      <PhilosophyIntroFormModal
-        open={introOpen}
-        initial={philosophy}
-        confirmLoading={saveMutation.isPending && editingCard == null}
-        onCancel={() => setIntroOpen(false)}
-        onSubmit={values => {
-          void saveMutation
-            .mutateAsync(
-              philosophySavePayload(
-                { ...philosophy, title: values.title, lead: values.lead },
-                cards
-              )
-            )
-            .then(
-              () => {
-                setIntroOpen(false)
-                showSaveCompletedAlert()
-              },
-              error => {
-                showAlert(
-                  jaHistorySaveAlert(
-                    error,
-                    '믿음을 키우는 교육 저장에 실패했습니다. 다시 시도해 주세요.'
-                  )
-                )
-              }
-            )
-        }}
-      />
       {editingCard ? (
         <PhilosophyCardFormModal
           open

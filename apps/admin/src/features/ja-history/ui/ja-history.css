@@ -58,10 +58,15 @@
   line-height: 150%;
 }
 
-.ja-history-philosophy-intro .detail-info-form__field-content {
+.ja-history-philosophy-intro .detail-info-form__field-content--view {
   justify-content: flex-start;
   text-align: left;
   padding: 12px 16px;
+}
+
+/* 소개 수정(인라인) — 시안 747:580: 입력 안 글자 좌측 정렬, 줄 수만큼 hug */
+.ja-history-philosophy-intro .ja-history-inline-field textarea.ant-input {
+  text-align: left;
 }
 
 .ja-history-philosophy-intro__text,
@@ -218,6 +223,42 @@
 
 .ja-history-preview--mark {
   background: #16485c;
+}
+
+/*
+ * JA의 시작 · 소개 텍스트 표 — 조회는 내용 길이에 따라 열이 잡힌다(자동 레이아웃).
+ * 수정 진입 시 그 순간의 첫 열 비율(--ja-history-origin-intro-title-col)을 잠가 고정 레이아웃으로 쓰므로
+ * 입력 칸이 들어와도 열 폭이 조회 때와 같다 (QA 2026-11-10: 수정 열 너비 = 조회 때 너비).
+ */
+.ja-history-origin-intro-table-wrap {
+  width: 100%;
+  min-width: 0;
+}
+
+.ja-history-origin-intro-table--locked .ant-table table {
+  table-layout: fixed !important;
+}
+
+.ja-history-origin-intro-table--locked
+  .ant-table-thead
+  > tr
+  > th.ja-history-origin-intro-table__col--title,
+.ja-history-origin-intro-table--locked
+  .ant-table-tbody
+  > tr
+  > td.ja-history-origin-intro-table__col--title {
+  width: var(--ja-history-origin-intro-title-col, 50%) !important;
+}
+
+.ja-history-origin-intro-table--locked
+  .ant-table-thead
+  > tr
+  > th.ja-history-origin-intro-table__col--body,
+.ja-history-origin-intro-table--locked
+  .ant-table-tbody
+  > tr
+  > td.ja-history-origin-intro-table__col--body {
+  width: calc(100% - var(--ja-history-origin-intro-title-col, 50%)) !important;
 }
 
 .ja-history-table .ant-table-tbody > tr > td.ja-history-col-text {

@@ -7,22 +7,13 @@
  */
 
 export interface OrganizationApplicationSessionResponse {
-  /** @nullable */
   scheduleId?: number | null;
-  /** @nullable */
   requestedScheduleId?: number | null;
-  /** @nullable */
   resolvedScheduleId?: number | null;
-  /** @nullable */
   scheduleUnresolved?: boolean | null;
-  /** @nullable */
   sessionNo?: number | null;
-  /** @nullable */
   scheduleName?: string | null;
-  /** @nullable */
   startAt?: string | null;
-  /** @nullable */
   endAt?: string | null;
-  /** @nullable */
   assignmentStatus?: string | null;
 }

@@ -62,6 +62,7 @@ import {
 } from './change-class'
 import {
   buildEducationClassAddRequest,
+  carryOverGradeTextbooks,
   gradeBlocksFromEducationClasses,
 } from './add-class'
 import type { UjatEducationProgressAddClassConfirmPayload } from './add-class-modal'
@@ -312,7 +313,9 @@ export function UjatEducationProgressInstitutionDetailView({
         const remoteClasses = response.classes ?? []
         // 응답 classes 가 SSOT. 비어 있으면 invent 금지 — invalidate 후 재조회에 맡김.
         if (remoteClasses.length > 0) {
-          setGradeBlocks(gradeBlocksFromEducationClasses(remoteClasses))
+          setGradeBlocks(prev =>
+            carryOverGradeTextbooks(gradeBlocksFromEducationClasses(remoteClasses), prev)
+          )
         }
         setAssignmentDataRevision(revision => revision + 1)
         await invalidateAfterClassRemap(programId, detail.institutionId)
@@ -375,7 +378,9 @@ export function UjatEducationProgressInstitutionDetailView({
           const remoteClasses = response.classes ?? []
           // 응답 classes 가 SSOT. 비면 invent 금지 — invalidate 재조회에 맡김.
           if (remoteClasses.length > 0) {
-            setGradeBlocks(gradeBlocksFromEducationClasses(remoteClasses))
+            setGradeBlocks(prev =>
+              carryOverGradeTextbooks(gradeBlocksFromEducationClasses(remoteClasses), prev)
+            )
           }
           setAssignmentDataRevision(revision => revision + 1)
           setChangeClassModalOpen(false)
@@ -531,7 +536,7 @@ export function UjatEducationProgressInstitutionDetailView({
 
         {activeTab === 'application' ? (
           <div className="program-detail-fullpage-modal__header-actions">
-            {!isApplicationInfoEditing && canWrite ? (
+            {!isApplicationInfoEditing && (
               <CmsButton
                 type="button"
                 variant="delete"
@@ -540,7 +545,8 @@ export function UjatEducationProgressInstitutionDetailView({
                 onClick={handleRequestWithdraw} >
                 활동 포기
               </CmsButton>
-            ) : null}
+            
+)}
             <ProgramEditInfoActions
               canWrite={canWrite}
               size="h40"
@@ -550,15 +556,13 @@ export function UjatEducationProgressInstitutionDetailView({
               onSave={handleApplicationInfoButtonClick} />
             {!isApplicationInfoEditing ? (
               <>
-                {canWrite ? (
-                  <CmsButton
+                <CmsButton
                     type="button"
                     variant="primary"
                     size="h40"
                     onClick={handleAdminCommentEditEnter} >
                     코멘트 작성
                   </CmsButton>
-                ) : null}
                 <PersonalInfoRevealButton disabled={programPrivacyPending}
                   labelMode="stickyReveal"
                   revealed={personalInfoRevealed}
@@ -584,7 +588,6 @@ export function UjatEducationProgressInstitutionDetailView({
 
         {activeTab === 'posts' ? (
           <div className="program-detail-fullpage-modal__header-actions">
-            {canWrite ? (
             <CmsButton
               type="button"
               variant="primary"
@@ -592,7 +595,6 @@ export function UjatEducationProgressInstitutionDetailView({
               onClick={() => setPostWriteModalOpen(true)} >
               게시글 등록
             </CmsButton>
-            ) : null}
           </div>
         ) : null}
       </div>
