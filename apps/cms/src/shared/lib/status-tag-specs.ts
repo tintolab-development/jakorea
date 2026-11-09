@@ -125,9 +125,13 @@ export function getPaymentOrderLineStatusTag(
 }
 
 /** 강사 정산 현황 8종 */
+/**
+ * 정산 현황 Tag — Figma Status / Tag / 정산 현황(14804:19759): 64×24 테두리 태그 + Short 라벨.
+ * 정산만 공통 값 태그 크기의 예외(사용자 확정 2026-11-09).
+ */
 export function getInstructorSettlementStatusTag(status: InstructorSettlementUiStatus): StatusTagSpec {
   const presentation = getInstructorSettlementStatusPresentation(status, 'tag')
-  return { label: presentation.label, accentColor: presentation.color }
+  return { label: presentation.label, accentColor: presentation.color, shape: 'outline' }
 }
 
 /* ----- 역할·권한 ----- */

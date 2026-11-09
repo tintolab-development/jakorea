@@ -87,7 +87,7 @@ export type InstructorSettlementPresentationKind = 'text' | 'short' | 'tag' | 'i
 
 /**
  * 동일 업무축의 표현 SSOT. Text 해당 없음은 검정, Short/Tag는 80% 검정.
- * invoice는 현행 전체 라벨을 보존한다(S13). Short 라벨은 Figma Short Text 정산 현황을 따른다.
+ * invoice는 현행 전체 라벨을 보존한다(S13). Short·Tag 라벨은 Figma Short Text·Tag 정산 현황(14804:19841·19759)을 따른다.
  * raw API 상태·권한·전이의 정규화는 이 presentation 계층에서 하지 않는다.
  */
 export function getInstructorSettlementStatusPresentation(
@@ -100,7 +100,7 @@ export function getInstructorSettlementStatusPresentation(
       : INSTRUCTOR_SETTLEMENT_STATUS_COLORS.none
     : `var(${INSTRUCTOR_SETTLEMENT_COLOR_TOKENS[status]}, ${INSTRUCTOR_SETTLEMENT_STATUS_COLORS[status]})`
   return {
-    label: kind === 'short'
+    label: kind === 'short' || kind === 'tag'
       ? INSTRUCTOR_SETTLEMENT_STATUS_LABELS_SHORT[status]
       : INSTRUCTOR_SETTLEMENT_STATUS_LABELS[status],
     color,
