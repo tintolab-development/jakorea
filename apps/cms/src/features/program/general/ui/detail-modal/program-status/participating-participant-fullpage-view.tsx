@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { cacheProjectedProgramPrivacy } from '@/features/program/shared/lib/program-my-assignment'
+import { buildParticipantSavedPatch } from '@/features/program/general/lib/participant-save-patch'
 import type { Program } from '@/types/domain'
 import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
@@ -32,6 +33,7 @@ import {
   getApiErrorHttpStatus,
 } from '@/shared/lib/extract-api-error-message'
 import { fetchMemberRolePrivacyUnmask } from '@/features/user/api/member-privacy-unmask'
+import { EDIT_MODE_REVEAL, type PrivacyRevealOptions } from '@/shared/lib/privacy-unmask-purpose'
 import {
   fetchGeneralParticipantEducationScope,
   giveUpGeneralParticipatingInstitution,
@@ -162,6 +164,14 @@ export function ParticipatingParticipantFullpageView({
   const [participantPatches, setParticipantPatches] = useState<
     Partial<ParticipatingIndividualParticipantRow>
   >({})
+  /**
+   * CMS-29: 원문(unmask) 결과는 이 오버레이에만 둔다(participantPatches와 분리).
+   * 열람 해제 경로마다 훅의 onRemask로 같은 이벤트 안에서 지운다(렌더 뒤 fallback 정리 없음).
+   */
+  const [revealedParticipantPatch, setRevealedParticipantPatch] = useState<
+    Partial<ParticipatingIndividualParticipantRow> | null
+  >(null)
+  const clearRevealedParticipantPatch = useCallback(() => setRevealedParticipantPatch(null), [])
   const [savedAdminComment, setSavedAdminComment] = useState('')
   const [adminCommentModalOpen, setAdminCommentModalOpen] = useState(false)
   const [adminCommentDraft, setAdminCommentDraft] = useState('')
@@ -183,8 +193,8 @@ export function ParticipatingParticipantFullpageView({
   const baseParticipant = enrichedParticipant ?? initialParticipant
 
   const mergedParticipant = useMemo(
-    () => ({ ...baseParticipant, ...participantPatches }),
-    [baseParticipant, participantPatches]
+    () => ({ ...baseParticipant, ...participantPatches, ...(revealedParticipantPatch ?? {}) }),
+    [baseParticipant, participantPatches, revealedParticipantPatch]
   )
 
   const individualApplicationId = mergedParticipant.individualApplicationId?.trim() || ''
@@ -334,9 +344,13 @@ export function ParticipatingParticipantFullpageView({
   )
 
   const revealParticipatingParticipantPersonalInfo = useCallback(
-    async (reason: string) => {
+    async (reason: string, options?: PrivacyRevealOptions) => {
       if (hasIndividualApplicationId) {
-        const dto = await unmaskIndividualApplicationPrivacyRemote(individualApplicationId, reason)
+        const dto = await unmaskIndividualApplicationPrivacyRemote(
+          individualApplicationId,
+          reason,
+          options
+        )
         const safeDto = cacheProjectedProgramPrivacy(
           queryClient,
           generalApplicationsQueryKeys.individualDetail(individualApplicationId),
@@ -344,7 +358,7 @@ export function ParticipatingParticipantFullpageView({
           dto
         )
         const mapped = mapIndividualApplicationDetailToParticipatingRow(safeDto, mergedParticipant)
-        setParticipantPatches(prev => ({
+        setRevealedParticipantPatch(prev => ({
           ...prev,
           applicantName: mapped.applicantName,
           homeAddress: mapped.homeAddress,
@@ -380,13 +394,13 @@ export function ParticipatingParticipantFullpageView({
         email?: unknown
         address?: unknown
       }
-      setParticipantPatches(prev => ({
+      setRevealedParticipantPatch(prev => ({
         ...prev,
         ...(typeof privacy.name === 'string' ? { applicantName: privacy.name } : {}),
         ...(typeof privacy.address === 'string' ? { homeAddress: privacy.address } : {}),
         detail: {
           ...mergedParticipant.detail,
-          ...prev.detail,
+          ...prev?.detail,
           ...(typeof privacy.phone === 'string' ? { contact: privacy.phone } : {}),
           ...(typeof privacy.email === 'string' ? { email: privacy.email } : {}),
           ...(typeof privacy.address === 'string' ? { homeAddressFull: privacy.address } : {}),
@@ -398,12 +412,14 @@ export function ParticipatingParticipantFullpageView({
 
   const {
     personalInfoRevealed,
+    remaskPersonalInfo,
     revealWithReason,
     openPersonalInfoRevealConfirm,
     confirmModal: personalInfoRevealModal,
   programPrivacyPending,
   } = usePersonalInfoReveal({
     privacyScope: 'program',
+    onRemask: clearRevealedParticipantPatch,
     programId: program.id,
     resolveProgramRole: () => resolveSessionProgramRole(program.id),
     resolveAccessItem: resolvePersonalInfoAccessItem,
@@ -417,21 +433,18 @@ export function ParticipatingParticipantFullpageView({
   const [editUnmaskConfirmOpen, setEditUnmaskConfirmOpen] = useState(false)
   const [editUnmaskConfirmLoading, setEditUnmaskConfirmLoading] = useState(false)
 
-  const handleParticipantSaved = useCallback((updatedRow: GeneralIndividualApplicantRow) => {
-    setParticipantPatches(prev => ({
-      ...prev,
-      adminComment: updatedRow.adminComment,
-      textbookId: updatedRow.textbookId,
-      textbookName: updatedRow.textbookName,
-      textbookKits: updatedRow.textbookKits,
-      textbookQuantity: updatedRow.textbookQuantity,
-      textbookStatus: updatedRow.textbookStatus,
-      detail: updatedRow.detail,
-    }))
-    if (updatedRow.adminComment != null) {
-      setSavedAdminComment(updatedRow.adminComment)
-    }
-  }, [])
+  const handleParticipantSaved = useCallback(
+    (updatedRow: GeneralIndividualApplicantRow) => {
+      // 저장 응답의 개인정보(원문 오버레이 기준 병합)는 남기지 않고 기존 마스킹 값을 유지한다.
+      setParticipantPatches(prev => buildParticipantSavedPatch(prev, updatedRow))
+      if (updatedRow.adminComment != null) {
+        setSavedAdminComment(updatedRow.adminComment)
+      }
+      // 저장 완료로 수정 세션 종료 — 수정 폼 초기화와 같은 동기 블록에서 원문 오버레이·캐시를 정리한다.
+      remaskPersonalInfo()
+    },
+    [remaskPersonalInfo]
+  )
 
   const {
     isEditing: isApplicationInfoEditing,
@@ -453,6 +466,12 @@ export function ParticipatingParticipantFullpageView({
     },
   })
 
+  /** CMS-29: 신청 정보 수정 취소 즉시 원문 열람을 끝낸다(원문 캐시는 훅이 초기화). */
+  const cancelApplicationInfoEditAndRemask = useCallback(() => {
+    cancelApplicationInfoEdit()
+    remaskPersonalInfo()
+  }, [cancelApplicationInfoEdit, remaskPersonalInfo])
+
   const requestStartApplicationInfoEdit = useCallback(() => {
     if (personalInfoRevealed) {
       enterApplicationInfoEdit()
@@ -469,7 +488,7 @@ export function ParticipatingParticipantFullpageView({
   const confirmEditUnmaskAndStartEdit = useCallback(() => {
     if (editUnmaskConfirmLoading) return
     setEditUnmaskConfirmLoading(true)
-    void revealWithReason(APPLICATION_INFO_EDIT_UNMASK_REASON)
+    void revealWithReason(APPLICATION_INFO_EDIT_UNMASK_REASON, EDIT_MODE_REVEAL)
       .then(result => {
         if (!result.ok) return
         setEditUnmaskConfirmOpen(false)
@@ -890,7 +909,7 @@ export function ParticipatingParticipantFullpageView({
                 hidden
                 isEditing={isApplicationInfoEditing}
                 onEdit={requestStartApplicationInfoEdit}
-                onCancel={cancelApplicationInfoEdit}
+                onCancel={cancelApplicationInfoEditAndRemask}
                 onSave={() => {
                   void saveApplicationInfoEdit()
                 }} />

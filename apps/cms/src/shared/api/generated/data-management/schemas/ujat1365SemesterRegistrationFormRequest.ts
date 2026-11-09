@@ -10,7 +10,7 @@ import type { Ujat1365SemesterRegistrationFormRequestSemesterType } from './ujat
 
 export interface Ujat1365SemesterRegistrationFormRequest {
   /** 반기 */
-  semesterType?: Ujat1365SemesterRegistrationFormRequestSemesterType;
+  semesterType: Ujat1365SemesterRegistrationFormRequestSemesterType;
   /** PREVIEW 또는 DOWNLOAD. 생략하면 PREVIEW. */
   mode?: Ujat1365SemesterRegistrationFormRequestMode;
 }

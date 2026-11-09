@@ -93,6 +93,55 @@ export const applicantInstitutionEditSchema = createApplicantInstitutionEditSche
 
 export type ApplicantInstitutionEditFormValues = z.infer<typeof applicantInstitutionEditSchema>
 
+function readUnmaskString(source: Record<string, unknown>, key: string): string | undefined {
+  const value = source[key]
+  return typeof value === 'string' ? value.trim() : undefined
+}
+
+/**
+ * 수정 진입 unmask 응답은 연락처 원문만 올 수 있다.
+ * 상세 GET 행을 덮지 않고 교사명·Tel·휴대폰·이메일만 입힌다.
+ */
+export function applyUnmaskedOrganizationApplicationPrivacyToApplicantSchoolRow(
+  base: ApplicantSchoolRow,
+  payload: unknown
+): ApplicantSchoolRow {
+  if (payload == null || typeof payload !== 'object') return base
+  const root = payload as Record<string, unknown>
+  const nested =
+    root.detail != null && typeof root.detail === 'object'
+      ? (root.detail as Record<string, unknown>)
+      : root
+
+  const teacherName =
+    readUnmaskString(nested, 'teacherName') ||
+    readUnmaskString(root, 'teacherName') ||
+    readUnmaskString(root, 'name')
+  const teacherTel =
+    readUnmaskString(nested, 'teacherTel') ?? readUnmaskString(root, 'teacherTel')
+  const teacherPhone =
+    readUnmaskString(nested, 'teacherPhone') ||
+    readUnmaskString(root, 'teacherPhone') ||
+    readUnmaskString(root, 'phone')
+  const teacherEmail =
+    readUnmaskString(nested, 'teacherEmail') ||
+    readUnmaskString(root, 'teacherEmail') ||
+    readUnmaskString(root, 'email')
+
+  return {
+    ...base,
+    ...(teacherName ? { teacherName } : {}),
+    ...(teacherPhone ? { contact: teacherPhone } : {}),
+    detail: {
+      ...base.detail,
+      teacherInfo: undefined,
+      ...(teacherTel != null ? { teacherTel } : {}),
+      ...(teacherPhone ? { teacherPhone } : {}),
+      ...(teacherEmail ? { teacherEmail } : {}),
+    },
+  }
+}
+
 export function rowToEditDraft(row: ApplicantSchoolRow): ApplicantInstitutionEditDraft {
   const detail = row.detail
   const combinedStatus: CombinedClassApplicationStatus =

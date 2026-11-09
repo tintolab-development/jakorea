@@ -199,3 +199,25 @@ describe('buildParticipatingInstitutionLocalSavePatch', () => {
     })
   })
 })
+
+describe('buildParticipatingInstitutionLocalSavePatch — 연락처 원문 제외 (CMS-29)', () => {
+  it('저장 패치에 담당 교사 전화·휴대폰·이메일 원문을 싣지 않는다', () => {
+    const local = buildParticipatingInstitutionLocalSavePatch({
+      detailId: 'd1',
+      draft: baseDraft,
+      patch: {
+        addressDetail: '본관 3층',
+        teacherName: '김교사',
+        teacherPhone: '02-000-0000',
+        teacherMobile: '010-0000-0000',
+        teacherEmail: 't@school.kr',
+      },
+      fallbackClassCount: 1,
+      fallbackStudentCount: 10,
+    })
+    expect(local).toMatchObject({ id: 'd1', addressDetail: '본관 3층', teacherName: '김교사' })
+    expect(local).not.toHaveProperty('teacherPhone')
+    expect(local).not.toHaveProperty('teacherMobile')
+    expect(local).not.toHaveProperty('teacherEmail')
+  })
+})

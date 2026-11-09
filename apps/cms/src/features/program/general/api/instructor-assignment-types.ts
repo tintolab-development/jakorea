@@ -17,7 +17,10 @@ export type InstructorAssignmentCreateBody = Omit<
 }
 
 /** list enrich (P0) */
-export type InstructorAssignmentListItemEnriched = InstructorAssignmentListItemResponse & {
+export type InstructorAssignmentListItemEnriched = Omit<
+  InstructorAssignmentListItemResponse,
+  'settlementStatus'
+> & {
   /** OpenAPI는 number|undefined지만 BE는 개인 출강지일 때 null */
   organizationId?: number | null
   lectureDate?: string
@@ -29,8 +32,8 @@ export type InstructorAssignmentListItemEnriched = InstructorAssignmentListItemR
   lectureLocationName?: string | null
   lecturePlaceAddress?: string | null
   /**
-   * 배정 단위 정산 상태(8종 키, BE 2026-11-09 — OpenAPI 미반영). 구 백엔드는 없음 → 「해당 없음」.
-   * 판정: 최신 settlement revision → 없으면 최신 미확정 신청서 → 없으면 none. partial_confirmation은 배정 단위로 나오지 않는다.
+   * 배정 단위 정산 상태(OpenAPI 8종 소문자 키). 구 대문자·알 수 없는 값은 resolve 시 none.
+   * 판정은 서버 필드만 쓴다. FE에서 다른 정산 API로 다시 계산하지 않는다.
    */
   settlementStatus?: string | null
   /** 일정 진행 상태 UNSCHEDULED | SCHEDULED | IN_PROGRESS | COMPLETED */

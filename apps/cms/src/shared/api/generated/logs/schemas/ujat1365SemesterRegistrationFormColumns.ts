@@ -11,5 +11,5 @@ export interface Ujat1365SemesterRegistrationFormColumns {
   /** 해당 반기 PRE_EDUCATION(발대식) 일정. 없으면 null. */
   openingCeremony?: Ujat1365SemesterRegistrationFormColumn | null;
   /** 해당 반기의 하루 단위 교육일(schedule_kind EDUCATION/SESSION). 날짜 오름차순. 기간형 일정과 해단식(CLOSING)은 제외. */
-  sessions?: Ujat1365SemesterRegistrationFormColumn[];
+  sessions: Ujat1365SemesterRegistrationFormColumn[];
 }

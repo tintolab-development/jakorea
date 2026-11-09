@@ -36,7 +36,12 @@ export function resolveApplicantInstitutionTextbookDisplayLabel(params: {
   const { program, institution, catalog } = params
   const detail = institution.detail
   const textbookId = detail?.textbookId?.trim()
-  const textbookName = detail?.textbookName?.trim()
+  const textbookName = (detail?.textbookName ?? institution.textbookName)?.trim()
+  const textbookDisplayLabel = detail?.textbookDisplayLabel?.trim()
+
+  if (textbookDisplayLabel && textbookDisplayLabel !== APPLICANT_INSTITUTION_TEXTBOOK_UNDECIDED_LABEL) {
+    return textbookDisplayLabel
+  }
 
   if (
     (!textbookId && !textbookName) ||

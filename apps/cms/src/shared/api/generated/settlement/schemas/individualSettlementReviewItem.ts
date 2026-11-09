@@ -13,10 +13,9 @@ export interface IndividualSettlementReviewItem {
   itemName: string;
   amount: number;
   evidenceRequired: boolean;
-  /**
-     * 관리자 조회 시 현재 정산 항목 설정에서 매칭된 지급/임금/공제 항목 description. 신청자 입력 요약이 아님. 매칭 실패 또는 설정 문구 공백이면 null.
-     * @nullable
-     */
+  /** 산출 항목 설명. 백엔드가 정산 제출 시점에 생성·저장한 값이며 이후 설정 변경에도 바뀌지 않는다. FE는 그대로 표시하고 조립·재생성하지 않는다. 없으면 null. */
   description?: string | null;
   receipts: IndividualSettlementReviewReceipt[];
+  /** 제출 시점 편도 km 스냅샷. 기존 건은 null. 심사 화면은 이 값만 사용하고 거리를 다시 계산하지 않는다. */
+  oneWayDistanceKm?: number | null;
 }

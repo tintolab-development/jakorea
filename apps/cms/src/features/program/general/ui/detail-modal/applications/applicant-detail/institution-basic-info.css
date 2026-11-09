@@ -7,12 +7,26 @@
   margin-top: 0;
 }
 
+/* Figma 4175:109534 — detail section title is 18px with a 10px title/table gap. */
+.institution-basic-info .detail-info-form__header {
+  margin-bottom: 10px;
+}
+
+.institution-basic-info .detail-info-form__header-lead {
+  height: auto;
+  min-height: 0;
+}
+
+.institution-basic-info .detail-info-form__title {
+  font-size: 18px;
+  line-height: 140%;
+}
+
 .institution-basic-info .applicant-institution-basic-info__section {
   margin-top: 0;
 }
 
-.institution-basic-info
-  .applicant-institution-basic-info__cell--value--multiline {
+.institution-basic-info .applicant-institution-basic-info__cell--value--multiline {
   white-space: pre-wrap;
   line-height: 150%;
 }
@@ -24,8 +38,10 @@
 .institution-basic-info__field-stack {
   display: flex;
   flex-direction: column;
+  align-items: stretch;
   gap: 6px;
   width: 100%;
+  min-width: 0;
 }
 
 /* 수정 슬롯 직계 자식이 콘텐츠 폭만 차지해 셀렉트가 우측으로 밀리지 않도록 */
@@ -80,28 +96,120 @@
 }
 
 .institution-basic-info .cms-select:not(.cms-select--explicit-width),
+.institution-basic-info .cms-select,
+.institution-basic-info .cms-input,
+.institution-basic-info .cms-input-number,
 .institution-basic-info .ant-input,
 .institution-basic-info .ant-input-number {
   max-width: 100%;
 }
 
+/*
+ * 수정 모드의 고정 폭 컨트롤은 Figma의 기본 폭을 유지하되,
+ * 좁은 상세 화면에서는 셀 밖으로 밀려나지 않도록 셀 폭을 상한으로 둔다.
+ */
+.institution-basic-info .detail-info-form__field-content--edit {
+  min-width: 0;
+}
+
+/*
+ * 공통 `.detail-info-form__field-content--edit > * { display:flex; align-items:center }` 가
+ * FieldStack(컬럼)을 한 줄로 눌러 에러 문구·입력 폭을 깨뜨리지 않게 한다.
+ */
+.institution-basic-info
+  .detail-info-form__field-content--edit
+  > .institution-basic-info__field-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+}
+
 /* 신청 양식 수정 슬롯: 테이블 td 안에서 detail-info-form 한 줄 래퍼가 폭을 채우도록 */
-.institution-basic-info .applicant-institution-basic-info__cell--value
+.institution-basic-info
+  .applicant-institution-basic-info__cell--value
   > .institution-basic-info__field-stack
   > .detail-info-form-inputs-wrapper-no-gap {
   flex: 1 1 0;
   min-width: 0;
 }
 
-/* 담당 교사 정보: 신청 양식과 같은 입력 폭. flex shrink로 placeholder가 잘리지 않게 한다. */
+/*
+ * 학급 수·총 인원: Figma 120px 입력. 전역 no-gap `min-width:0` 때문에 숫자 칸이 35px로
+ * 찌그러지지 않게 고정하고, 더블 행(~337px)에서는 구분자 뒤에서만 줄바꿈한다.
+ */
+.institution-basic-info__class-count-edit.detail-info-form-inputs-wrapper-no-gap {
+  flex-wrap: wrap;
+  row-gap: 8px;
+  column-gap: 8px;
+  min-width: 0;
+}
+
+.institution-basic-info__class-count-edit.detail-info-form-inputs-wrapper-no-gap > .cms-select,
+.institution-basic-info__class-count-edit.detail-info-form-inputs-wrapper-no-gap > .cms-input {
+  flex: 0 0 120px;
+  width: 120px !important;
+  min-width: 120px;
+  max-width: 120px;
+}
+
+.institution-basic-info__class-count-edit .cms-input__control,
+.institution-basic-info__class-count-edit .ant-select {
+  width: 100%;
+  min-width: 0;
+}
+
+/* 담당 교사: 1920 시안은 한 줄(120+200×3). 좁으면 200칸만 줄이고, 그래도 모자라면 줄바꿈. */
 .institution-basic-info__teacher-edit.detail-info-form-inputs-wrapper-no-gap {
   flex-wrap: wrap;
   row-gap: 8px;
   min-width: 0;
 }
 
-.institution-basic-info__teacher-edit > .cms-select,
-.institution-basic-info__teacher-edit > .cms-input {
-  flex-shrink: 0;
-  min-width: unset;
+/* 신청 양식과 동일 — 라벨(담당 교사/Tel/M/E-mail)과 입력 사이 6px */
+.institution-basic-info__teacher-edit > span.mr-6 {
+  margin-right: 6px;
+}
+
+.institution-basic-info__teacher-edit.detail-info-form-inputs-wrapper-no-gap > .cms-select {
+  flex: 0 0 120px;
+  width: 120px !important;
+  min-width: 120px;
+  max-width: 120px;
+}
+
+.institution-basic-info__teacher-edit.detail-info-form-inputs-wrapper-no-gap > .cms-input {
+  flex: 1 1 160px;
+  width: auto !important;
+  min-width: 140px;
+  max-width: 200px;
+}
+
+.institution-basic-info__teacher-edit .cms-input__control,
+.institution-basic-info__teacher-edit .ant-select {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Figma 4175:109534 — 승인 현황 한 줄, 발송 일시 14px / 50% */
+.institution-basic-info .applicant-institution-basic-info__approval-status-row {
+  flex-wrap: nowrap;
+  gap: 16px;
+  min-width: 0;
+}
+
+.institution-basic-info .applicant-institution-basic-info__approval-notification-sent-at {
+  font-size: 14px;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+  opacity: 0.5;
+  white-space: nowrap;
+}
+
+.institution-basic-info .detail-info-form__field-content--edit .app-radio-group {
+  flex-wrap: wrap;
+  row-gap: 8px;
+  column-gap: 16px;
 }

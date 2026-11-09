@@ -141,9 +141,11 @@ export function UserDetailFullPageModal({
     onMemberBasicInfoSaved,
     detailCloseIntentRef,
   })
+  /** 원문 열람 중에만 컨트롤러의 일시 원문을 표시한다. 상위 user(목록·drawer)는 항상 마스킹 값이다. */
+  const visibleUser = state.revealedUser ?? user
 
   const fullpageDerived = useUserDetailFullpageDerived({
-    displayUser: user,
+    displayUser: visibleUser,
     tabState: state.tabState,
     applications: state.applications,
     enrollmentApplications: state.enrollmentApplications,
@@ -256,11 +258,11 @@ export function UserDetailFullPageModal({
   )
 
   const shell = useMemo((): UserDetailFullpageShellValue | null => {
-    if (!open || !user || !fullpageDerived) return null
+    if (!open || !visibleUser || !fullpageDerived) return null
     return {
       mode,
       permissionRole,
-      displayUser: user,
+      displayUser: visibleUser,
       tabState: state.tabState,
       derived: fullpageDerived,
       applications: state.applications,
@@ -298,7 +300,7 @@ export function UserDetailFullPageModal({
       onOpenJaGradeEvaluation: actions.openJaGradeEvaluation,
       onCloseJaGradeEvaluation: actions.closeJaGradeEvaluation,
       onCompleteJaGradeEvaluation: actions.completeJaGradeEvaluation,
-      scheduleChangeCount: user.scheduleChangeCancelCount,
+      scheduleChangeCount: visibleUser.scheduleChangeCancelCount,
       onStartBasicInfoEdit: actions.startBasicInfoEdit,
       onStartAdminCommentEdit: actions.startAdminCommentEdit,
       onCancelBasicInfoEdit: actions.cancelBasicInfoEdit,
@@ -317,7 +319,7 @@ export function UserDetailFullPageModal({
     }
   }, [
     open,
-    user,
+    visibleUser,
     fullpageDerived,
     mode,
     permissionRole,
