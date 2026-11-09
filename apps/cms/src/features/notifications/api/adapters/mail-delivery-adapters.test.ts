@@ -17,8 +17,8 @@ describe('mapMailDeliveryToSendHistoryRow', () => {
       recipientName: '이가원',
       recipientContactMasked: 'iga@***.com',
       templateDisplayName: '워크숍 안내',
-      sendStatus: 'SUCCESS',
-      receiptStatus: 'SUCCESS',
+      sendStatus: 'SENT',
+      receiptStatus: 'DELIVERED',
       sendTiming: 'IMMEDIATE',
     })
 
@@ -36,7 +36,7 @@ describe('mapMailDeliveryToSendHistoryRow', () => {
     const row = mapMailDeliveryToSendHistoryRow({
       deliveryId: 1,
       templateDisplayName: '템플릿코드명',
-      sendStatus: 'SUCCESS',
+      sendStatus: 'SENT',
       receiptStatus: 'SUCCESS',
     })
     expect(row?.subject).toBe('-')
@@ -67,7 +67,7 @@ describe('mapMailDeliveryToSendHistoryRow', () => {
       {
         deliveryId: 7,
         templateDisplayName: 'fallback',
-        sendStatus: 'SUCCESS',
+        sendStatus: 'SENT',
         receiptStatus: 'SUCCESS',
       },
       {
@@ -159,7 +159,7 @@ describe('mapMailDeliveryToSendHistoryRow', () => {
       sentAt: '2026-09-07T10:00:00+09:00',
       deliveredAt: '2026-09-07T10:01:00+09:00',
       openedAt: '2026-09-07T10:05:00+09:00',
-      sendStatus: 'SUCCESS',
+      sendStatus: 'SENT',
       receiptStatus: 'SUCCESS',
     })
 
