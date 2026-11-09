@@ -293,7 +293,7 @@ const updateRolePermissions = (
  *
  * ### 권한/보안
  * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: ADMIN_READ 권한 필요
+ * - 필요 권한: MEMBER_READ 권한 필요
  * - 접근 범위: 관리자 CMS 권한 범위
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
@@ -3127,7 +3127,7 @@ const bulkDeleteProgramRoles = (
  *
  * ### 권한/보안
  * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: PRIVACY_RAW_READ 권한 필요
+ * - 필요 권한: MEMBER_READ 권한 필요
  * - 접근 범위: ADMIN_ACCOUNT_SCOPE 범위 정책
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
