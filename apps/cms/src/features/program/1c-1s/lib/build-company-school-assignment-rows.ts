@@ -63,6 +63,8 @@ export type CompanySchoolAssignedInstructorRow = {
   instructorMemberId?: string
   scheduleId?: string
   organizationApplicationId?: string
+  /** 서버 assignmentStatus CANCELLED — 「배정 취소」로만 표시(재배정 불가, 2026-11-09 확정) */
+  assignmentCancelled: boolean
 }
 
 function formatDistanceKm(km: number | undefined): string | undefined {
@@ -186,13 +188,16 @@ export function buildCompanySchoolAssignedInstructorRows(input: {
   organizationApplicationId: string
   instructorNameByMemberId: Map<string, string>
   scheduleLabelById: Map<string, { date?: string; time?: string; session?: string }>
+  /** 1사1교 학교 상세 — 취소된 배정도 「배정 취소」 행으로 포함 */
+  includeCancelled?: boolean
 }): CompanySchoolAssignedInstructorRow[] {
   const orgId = input.organizationApplicationId
+  const isCancelled = (a: InstructorAssignmentListItemEnriched) =>
+    (a.assignmentStatus ?? '').toUpperCase() === 'CANCELLED'
   const filtered = input.assignments.filter(a => {
     if (a.organizationApplicationId == null) return false
     if (String(a.organizationApplicationId) !== orgId) return false
-    const status = (a.assignmentStatus ?? '').toUpperCase()
-    return status !== 'CANCELLED' && status !== 'CANCELED'
+    return input.includeCancelled === true || !isCancelled(a)
   })
 
   return filtered.map((a, index) => {
@@ -225,6 +230,7 @@ export function buildCompanySchoolAssignedInstructorRows(input: {
       instructorMemberId: memberId || undefined,
       scheduleId: scheduleId || undefined,
       organizationApplicationId: orgId,
+      assignmentCancelled: isCancelled(a),
     }
   })
 }

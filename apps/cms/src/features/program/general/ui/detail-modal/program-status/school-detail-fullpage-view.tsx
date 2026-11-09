@@ -293,6 +293,8 @@ interface AssignedInstructorDisplayRow extends SchoolDetailInstructorRow {
   assignmentId?: string
   instructorMemberId?: string
   scheduleId?: string
+  /** 1사1교 — 취소된 배정(「배정 취소」 표시, 선택·역할 변경·재배정 불가) */
+  assignmentCancelled?: boolean
 }
 
 type WaitingInstructorRow = WaitingInstructorRowMock
@@ -1287,7 +1289,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     return withTdDivider(parts)
   }
   /** 배정된 강사 테이블용 행 — assignment board remote 시 API */
-  const assignedRows: AssignedInstructorDisplayRow[] = useMemo(() => {
+  const assignedRowsWithCancelled: AssignedInstructorDisplayRow[] = useMemo(() => {
     if (assignmentBoardRemoteEnabled) {
       if (!assignmentBoard) return []
       const orgAppId = row.organizationApplicationId ?? ''
@@ -1297,6 +1299,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         organizationApplicationId: orgAppId,
         instructorNameByMemberId: assignmentBoard.instructorNameByMemberId,
         scheduleLabelById: assignmentBoard.scheduleLabelById,
+        includeCancelled: isCompanySchool,
       })
       return apiRows.map(r => ({
         id: r.id,
@@ -1317,6 +1320,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         assignmentId: r.assignmentId,
         instructorMemberId: r.instructorMemberId,
         scheduleId: r.scheduleId,
+        assignmentCancelled: r.assignmentCancelled,
       }))
     }
     // 일반 remote OFF — FE mock 프로그램만 로컬 시드
@@ -1338,6 +1342,24 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     assignedScheduleLinesByInstructorId,
     assignmentBoard,
   ])
+
+  /** 활성 배정 — 인원·팀장·배정 취소·역할 변경·엑셀은 취소 행을 제외한 이 목록만 본다 */
+  const assignedRows: AssignedInstructorDisplayRow[] = useMemo(
+    () =>
+      assignedRowsWithCancelled
+        .filter(r => !r.assignmentCancelled)
+        .map((r, index) => ({ ...r, no: index + 1 })),
+    [assignedRowsWithCancelled]
+  )
+
+  /** 표 — 활성 배정 뒤에 「배정 취소」 행(1사1교) */
+  const assignedTableRows: AssignedInstructorDisplayRow[] = useMemo(
+    () =>
+      [...assignedRows, ...assignedRowsWithCancelled.filter(r => r.assignmentCancelled)].map(
+        (r, index) => ({ ...r, no: index + 1 })
+      ),
+    [assignedRows, assignedRowsWithCancelled]
+  )
 
   /** 배정 대기 — remote 시 승인 강사신청 × 기관 sessions 합성 (전용 waiting API 없음) */
   const waitingRows: WaitingInstructorRow[] = useMemo(() => {
@@ -2056,18 +2078,21 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         width: 116,
         align: 'center',
         onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
-        render: (role: InstructorRoleKey, record: AssignedInstructorDisplayRow) => (
-          <StatusDropdownCell<InstructorRoleKey>
-            status={role}
-            statusOptions={['lead', 'assistant']}
-            getTag={getInstructorRoleTag}
-            isItemDisabled={(cur, opt) => cur === opt}
-            onChange={key => handleRoleChange(record.id, key as InstructorRoleKey)}
-            isOpen={openRoleDropdownId === record.id}
-            onOpenChange={open => setOpenRoleDropdownId(open ? record.id : null)}
-            emptyPlaceholder="-"
-          />
-        ),
+        render: (role: InstructorRoleKey, record: AssignedInstructorDisplayRow) =>
+          record.assignmentCancelled ? (
+            <StatusTag label="배정 취소" tone="gray" mutedLabel />
+          ) : (
+            <StatusDropdownCell<InstructorRoleKey>
+              status={role}
+              statusOptions={['lead', 'assistant']}
+              getTag={getInstructorRoleTag}
+              isItemDisabled={(cur, opt) => cur === opt}
+              onChange={key => handleRoleChange(record.id, key as InstructorRoleKey)}
+              isOpen={openRoleDropdownId === record.id}
+              onOpenChange={open => setOpenRoleDropdownId(open ? record.id : null)}
+              emptyPlaceholder="-"
+            />
+          ),
       },
       {
         title: '강사명',
@@ -2735,9 +2760,10 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                     columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
                     selectedRowKeys: selectedAssignedKeys,
                     onChange: keys => setSelectedAssignedKeys(keys),
+                    getCheckboxProps: record => ({ disabled: record.assignmentCancelled === true }),
                   }}
                   columns={assignedInstructorColumns}
-                  dataSource={assignedRows}
+                  dataSource={assignedTableRows}
                   locale={{ emptyText: renderAssignedInstructorTableEmpty() }}
                 />
               </div>

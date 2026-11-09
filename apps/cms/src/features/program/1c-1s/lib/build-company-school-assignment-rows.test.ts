@@ -224,3 +224,29 @@ describe('buildCompanySchoolAssignedInstructorRows', () => {
     expect(rows[1]?.organizationId).toBeNull()
   })
 })
+
+describe('buildCompanySchoolAssignedInstructorRows — 배정 취소(CS02)', () => {
+  const assignments = [
+    { assignmentId: 1, organizationApplicationId: 9001, instructorMemberId: 1, assignmentStatus: 'ASSIGNED' },
+    { assignmentId: 2, organizationApplicationId: 9001, instructorMemberId: 2, assignmentStatus: 'CANCELLED' },
+  ]
+  const base = {
+    organizationApplicationId: '9001',
+    instructorNameByMemberId: new Map<string, string>(),
+    scheduleLabelById: new Map(),
+    assignments,
+  }
+
+  it('기본은 취소된 배정을 제외한다', () => {
+    const rows = buildCompanySchoolAssignedInstructorRows(base)
+    expect(rows.map(r => [r.assignmentId, r.assignmentCancelled])).toEqual([['1', false]])
+  })
+
+  it('includeCancelled면 취소 배정을 「배정 취소」 행으로 포함한다', () => {
+    const rows = buildCompanySchoolAssignedInstructorRows({ ...base, includeCancelled: true })
+    expect(rows.map(r => [r.assignmentId, r.assignmentCancelled])).toEqual([
+      ['1', false],
+      ['2', true],
+    ])
+  })
+})
