@@ -156,3 +156,18 @@
   font-size: 14px !important;
   line-height: 150% !important;
 }
+
+/* 수정 모드 열 제목 필수 표시 — 글자 옆 2px · Status/red/main #C32F4A (기업후원 안내 표와 동일) */
+.recruit-guide-table__th-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.recruit-guide-table__required {
+  color: var(--color-required-mark, #c32f4a);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+}
