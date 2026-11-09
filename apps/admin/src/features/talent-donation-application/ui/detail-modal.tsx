@@ -27,6 +27,8 @@ import {
   useCmsAlert,
 } from '@/shared/ui'
 
+import fileDownloadBlack20Url from '@/shared/ui/icons/file-download-black-20.svg'
+
 import './detail-modal.css'
 
 dayjs.locale('ko')
@@ -59,27 +61,6 @@ function internationalAge(isoDate: string): number | null {
   return age
 }
 
-function FileIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="20"
-      height="20"
-      viewBox="0 0 20 20"
-      fill="none"
-      className={className}
-      aria-hidden
-    >
-      <path
-        d="M5.5 2.5h6.2L14.5 5.3V16.5a1 1 0 0 1-1 1h-8a1 1 0 0 1-1-1v-13a1 1 0 0 1 1-1Z"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinejoin="round"
-      />
-      <path d="M11.5 2.5V5.8H14.5" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
-    </svg>
-  )
-}
 
 export function TalentDonationApplicationDetailModal({
   open,
@@ -177,8 +158,15 @@ export function TalentDonationApplicationDetailModal({
           })
         }}
       >
-        <FileIcon className="talent-app-detail-modal__file-icon" />
-        <span>{data.attachmentFileName}</span>
+        <img
+          className="talent-app-detail-modal__file-icon"
+          src={fileDownloadBlack20Url}
+          alt=""
+          width={20}
+          height={20}
+          aria-hidden
+        />
+        <span className="talent-app-detail-modal__file-name">{data.attachmentFileName}</span>
       </button>
     ) : (
       <span>{data?.attachmentFileName || '-'}</span>
