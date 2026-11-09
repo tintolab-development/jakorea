@@ -20,8 +20,9 @@ describe('formatRecruitmentHeadcount', () => {
     expect(formatRecruitmentHeadcount(undefined, null)).toBe('0 / -')
   })
 
-  it('정원 0은 미설정이 아니다', () => {
-    expect(formatRecruitmentHeadcount(0, 0)).toBe('0 / 0')
+  it('정원 0은 미설정과 같이 분모를 - 로 표시한다', () => {
+    expect(formatRecruitmentHeadcount(0, 0)).toBe('0 / -')
+    expect(formatRecruitmentHeadcount(3, 0)).toBe('3 / -')
   })
 })
 
