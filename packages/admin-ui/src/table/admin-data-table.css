@@ -156,7 +156,7 @@
   > th:first-child:not(.ant-table-cell-scrollbar),
 .cms-data-table:not(.cms-data-table--skip-auto-no-col):not(:has(col.ant-table-selection-col))
   .ant-table-tbody
-  > tr:not(.ant-table-measure-row)
+  > tr:not(.ant-table-measure-row):not(.ant-table-placeholder)
   > td:first-child {
   box-sizing: border-box !important;
   width: var(--table-no-column-width, 80px) !important;
@@ -491,7 +491,7 @@
 .detail-fullpage-modal
   .cms-data-table:not(.cms-data-table--skip-auto-no-col):not(:has(col.ant-table-selection-col))
   .ant-table-tbody
-  > tr:not(.ant-table-measure-row)
+  > tr:not(.ant-table-measure-row):not(.ant-table-placeholder)
   > td:first-child {
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
@@ -579,7 +579,7 @@
     :has(col.ant-table-selection-col)
   )
   .ant-table-tbody
-  > tr:not(.ant-table-measure-row)
+  > tr:not(.ant-table-measure-row):not(.ant-table-placeholder)
   > td:first-child {
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
@@ -722,7 +722,7 @@
     :has(col.ant-table-selection-col)
   )
   .ant-table-tbody
-  > tr:not(.ant-table-measure-row)
+  > tr:not(.ant-table-measure-row):not(.ant-table-placeholder)
   > td:first-child {
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
