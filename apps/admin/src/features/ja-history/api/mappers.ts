@@ -234,6 +234,7 @@ export function toJaHistoryThriveUpdateRequest(
 export function toJaHistoryCtaUpdateRequest(
   input: JaHistoryCtaSaveInput,
   version: number,
+  imageAssetId?: number,
 ): JaHistoryPageCtaUpdateRequest {
   return {
     title: input.title.trimEnd(),
@@ -242,6 +243,7 @@ export function toJaHistoryCtaUpdateRequest(
     primaryHref: input.primaryHref.trim(),
     secondaryLabel: input.secondaryLabel.trimEnd(),
     secondaryHref: input.secondaryHref.trim(),
+    ...(imageAssetId != null ? { imageAssetId } : {}),
     version,
   }
 }

@@ -32,6 +32,8 @@ import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
 import { getProgramTablePageConfig, type ProgramTableContext } from './program-table.config'
 
+const TRAINED_TEACHERS_SELECTION_COL_WIDTH = 60
+
 export type ProgramListTableVariant = 'general' | 'overview'
 
 export type { ProgramListProgramMode } from '../model/program-list-program-mode'
@@ -174,6 +176,8 @@ export function ProgramList({
           : listView === 'COMPLETED'
             ? 'program-list-table-wrapper--program-list-completed program-list-card--program-list-completed'
             : ''
+  /** 교육 받은 교사 목록 — 탭별 피그마 고정 열 폭은 `program-list.css`의 `--trained-teachers` 규칙 */
+  const isTrainedTeachersOverview = isOverviewTable && columnPreset === 'trainedTeachers'
   const overviewSelectionClass =
     isOverviewTable && showRowSelection
       ? 'program-list-table-wrapper--program-list-overview-selection'
@@ -182,6 +186,7 @@ export function ProgramList({
     isOverviewTable && 'program-list-card--program-list-overview',
     isOverviewTable && 'program-list-table-wrapper--program-list-overview',
     isOverviewTable && overviewViewClass,
+    isTrainedTeachersOverview && 'program-list-card--trained-teachers',
     overviewSelectionClass,
   ]
     .filter(Boolean)
@@ -284,7 +289,9 @@ export function ProgramList({
               rowSelection={
                 overviewRowSelectionActive
                   ? {
-                      columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+                      columnWidth: isTrainedTeachersOverview
+                        ? TRAINED_TEACHERS_SELECTION_COL_WIDTH
+                        : TABLE_COLUMN_WIDTHS.checkbox,
                       selectedRowKeys: effectiveSelectedRowKeys,
                       onChange: handleSelectionChange,
                       getCheckboxProps: (record: Program) => ({

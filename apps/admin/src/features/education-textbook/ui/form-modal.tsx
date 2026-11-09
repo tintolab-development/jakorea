@@ -46,6 +46,8 @@ dayjs.locale('ko')
 
 const IMAGE_ACCEPT = '.jpg,.jpeg,.png,image/jpeg,image/png'
 const MAX_BYTES = 20 * 1024 * 1024
+/** 단원 소개 에디터 최소 높이 — Figma 880 모달 안에 스크롤 없이 들어가는 높이 (리사이즈 하한 겸용) */
+const RT_EDIT_MIN_HEIGHT_PX = 158
 const IMAGE_GUIDE_LINES = [
   '- 파일은 JPG, PNG 형식만 등록 가능하며, 최대 20MB까지 첨부할 수 있습니다.',
   '- 권장 배너 사이즈는 233 × 320px입니다.',
@@ -137,6 +139,67 @@ function ThumbnailFileIcon({ className }: { className?: string }) {
   )
 }
 
+const RESIZE_HANDLE_SELECTOR = [
+  '.education-textbook-form-modal__desc-input textarea',
+  '.education-textbook-form-modal .rich-text-editor__resize-handle',
+].join(', ')
+
+/**
+ * 모달은 평소 뷰포트 정중앙. 리사이즈 핸들(교재 설명 · 단원 소개)을 끄는 동안에는
+ * 가운데 정렬 때문에 모달이 위아래로 반씩 늘어나며 흔들리므로 위쪽을 현재 위치에 잠근다.
+ * 손을 떼면 잠금을 풀고 가운데로 부드럽게 돌아간다.
+ */
+function useResizeAnchoredModal(open: boolean) {
+  useEffect(() => {
+    if (!open) return
+
+    let lockedWrap: HTMLElement | null = null
+
+    const unlock = () => {
+      const wrap = lockedWrap
+      if (!wrap) return
+      lockedWrap = null
+      const content = wrap.querySelector<HTMLElement>('.ant-modal-content')
+      const lockedTop = content?.getBoundingClientRect().top ?? 0
+      wrap.removeAttribute('data-textbook-resize-lock')
+      wrap.style.removeProperty('--textbook-modal-top')
+      if (!content) return
+
+      const delta = lockedTop - content.getBoundingClientRect().top
+      if (Math.abs(delta) < 1) return
+      content.style.transition = 'none'
+      content.style.transform = `translateY(${delta}px)`
+      void content.offsetHeight
+      content.style.transition = 'transform 200ms ease'
+      content.style.transform = ''
+      window.setTimeout(() => {
+        content.style.transition = ''
+      }, 250)
+    }
+
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target
+      if (!(target instanceof Element) || !target.closest(RESIZE_HANDLE_SELECTOR)) return
+      const content = target.closest('.ant-modal-content')
+      const wrap = target.closest<HTMLElement>('.ant-modal-wrap')
+      if (!content || !wrap) return
+      wrap.style.setProperty('--textbook-modal-top', `${content.getBoundingClientRect().top}px`)
+      wrap.setAttribute('data-textbook-resize-lock', 'true')
+      lockedWrap = wrap
+    }
+
+    document.addEventListener('pointerdown', onPointerDown, true)
+    window.addEventListener('pointerup', unlock)
+    window.addEventListener('pointercancel', unlock)
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown, true)
+      window.removeEventListener('pointerup', unlock)
+      window.removeEventListener('pointercancel', unlock)
+      unlock()
+    }
+  }, [open])
+}
+
 function TextbookFormBody({
   open,
   mode,
@@ -151,6 +214,7 @@ function TextbookFormBody({
   onDelete,
 }: Props) {
   const { showAlert } = useCmsAlert()
+  useResizeAnchoredModal(open)
   const isView = mode === 'view'
   const isCreate = mode === 'create'
   const canEdit = mode === 'create' || mode === 'edit'
@@ -431,7 +495,7 @@ function TextbookFormBody({
           disabled={confirmLoading || deleteLoading}
           onClick={handleSubmit}
         >
-          {isCreate ? '교재 등록' : '저장'}
+          {isCreate ? '등록' : '저장'}
         </CmsButton>
       )}
     </>
@@ -629,7 +693,6 @@ function TextbookFormBody({
                       inputSize="small"
                       width="100%"
                       layout="fixed"
-                      autoSize={{ minRows: 1, maxRows: 3 }}
                       placeholder="교재 설명을 입력해 주세요"
                       value={description}
                       onChange={e => setDescription(e.target.value)}
@@ -747,6 +810,7 @@ function TextbookFormBody({
                     <div className="education-textbook-form-modal__rt-edit">
                       <RichTextEditor
                         editor={editor}
+                        minHeight={RT_EDIT_MIN_HEIGHT_PX}
                         allowInlineMedia
                         allowRawHtmlBlock
                         resolveImageSrc={resolveImageSrc}

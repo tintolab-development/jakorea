@@ -166,9 +166,10 @@ export type JaHistoryCtaSaveInput = {
   primaryHref: string
   secondaryLabel: string
   secondaryHref: string
-  /** 로컬 저장용. 원격 CTA PUT에는 이미지 필드가 없다. */
   imageUrl?: string
   imageFileName?: string
+  /** 새로 선택한 이미지. 없으면 imageAssetId를 생략해 기존 이미지를 유지한다. */
+  imageFile?: File | null
 }
 
 export type JaHistorySaveErrorCode =
