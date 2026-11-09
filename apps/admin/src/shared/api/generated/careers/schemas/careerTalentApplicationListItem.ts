@@ -22,7 +22,7 @@ export interface CareerTalentApplicationListItem {
   name?: string | null;
   /** Always PrivacyMaskingSupport.maskPhone (same format as JA CMS: area prefix + "-" + one * per middle digit + "-" + last 4 digits, e.g. 010-****-5124, 02-***-1234; non-Korean formats become ****). Empty is null, never "". List never returns plaintext. */
   phone?: string | null;
-  /** Always PrivacyMaskingSupport.maskEmail (local prefix + *** + @domain). Empty is null, never "". List never returns plaintext. */
+  /** Always PrivacyMaskingSupport.maskEmail (same format as JA CMS: last 3 characters of the local part become *; 3 or fewer are fully masked). Empty is null, never "". List never returns plaintext. */
   email?: string | null;
   appliedAt?: string | null;
   version?: number;

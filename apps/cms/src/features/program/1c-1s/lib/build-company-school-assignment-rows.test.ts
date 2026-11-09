@@ -259,9 +259,9 @@ describe('buildCompanySchoolAssignedInstructorRows — 배정 단위 정산 상�
       scheduleLabelById: new Map(),
       assignments: [
         { assignmentId: 1, organizationApplicationId: 9001, settlementStatus: 'payment_statement_reapplication' },
-        { assignmentId: 2, organizationApplicationId: 9001, settlementStatus: 'ACCOUNT_PAID' },
+        { assignmentId: 2, organizationApplicationId: 9001, settlementStatus: asOpenApiFixture('ACCOUNT_PAID') },
         { assignmentId: 3, organizationApplicationId: 9001 },
-        { assignmentId: 4, organizationApplicationId: 9001, settlementStatus: 'WEIRD' },
+        { assignmentId: 4, organizationApplicationId: 9001, settlementStatus: asOpenApiFixture('WEIRD') },
       ],
     })
     expect(rows.map(r => r.settlementStatus)).toEqual([

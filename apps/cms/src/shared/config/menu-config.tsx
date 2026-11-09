@@ -808,8 +808,9 @@ export function filterMenuByRole(
       if (isMenuPathBlockedForAdminLevel(item, userRole, user?.adminLevel)) {
         return false
       }
-      // 권한 설정 V1.2: 계좌 지급 확인(Master·Accounting Manager 전용)과 템플릿 관리·정산 항목 설정(Program Viewer 제한)은
-      // 메뉴를 숨기지 않는다. 사이드바 클릭 시 접근 불가 안내를 띄우고, URL 직접 진입은 레이아웃 가드가 막는다.
+      // 권한 설정 V1.2 역할별 공통: 접근할 수 없는 메뉴도 숨기지 않는다.
+      // 계좌 지급 확인(Master·Accounting Manager 전용)·템플릿 관리·정산 항목 설정(Program Viewer 제한) 등은
+      // 메뉴를 노출하고 사이드바 클릭 시 접근 불가 안내를 띄우며, URL 직접 진입은 레이아웃 가드가 안내 후 되돌린다.
       // allowedRoles가 없으면 모든 권한 허용
       if (!item.allowedRoles || item.allowedRoles.length === 0) {
         return true

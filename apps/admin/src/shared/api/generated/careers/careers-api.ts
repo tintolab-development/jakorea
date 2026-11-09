@@ -34,6 +34,7 @@ import type {
   ConfirmRequest,
   ConfirmResponse,
   Detail9Params,
+  Export2Params,
   FileDownloadPasswordRequest,
   List12Params,
   List15Params,
@@ -358,7 +359,7 @@ const delete4 = (
     }
 
 /**
- * Always stored original PII (not masked). HOMEPAGE_VIEW is enough; HOMEPAGE_PII_VIEW is not required. Every 200 writes homepage_admin_audit_log (PII_READ / CAREER_TALENT_APPLICATION) and homepage_privacy_access_log with the original targetName. List returns the original name; phone and email remain masked. revealPii is a deprecated no-op. Admin log list screens must not POST privacy-access.
+ * HOMEPAGE_VIEW opens the detail. With HOMEPAGE_PII_VIEW (Master, Accounting Manager, Program Manager) the stored original PII is returned and every 200 writes homepage_admin_audit_log (PII_READ / CAREER_TALENT_APPLICATION) and homepage_privacy_access_log with the original targetName before responding; if logging fails no original is returned. Without HOMEPAGE_PII_VIEW (Program Viewer) a masked detail (piiMasked=true) is returned and no privacy access log is written. List returns the original name; phone and email remain masked. revealPii is a deprecated no-op. Admin log list screens must not POST privacy-access.
  * @summary Get career talent application detail
  */
 const detail9 = (
@@ -367,6 +368,20 @@ const detail9 = (
  options?: SecondParameter<typeof customInstance<CareerTalentApplicationDetailResponse>>,) => {
       return customInstance<CareerTalentApplicationDetailResponse>(
       {url: `/api/admin/careers/talent-applications/${id}`, method: 'GET',
+        params
+    },
+      options);
+    }
+
+/**
+ * Same filters, sort and masking as the list GET (name original, phone/email masked). No page/size: up to 50,000 rows, otherwise 400 VALIDATION_ERROR. Writes homepage_admin_audit_log (LIST_EXPORT) and homepage_file_download_log (download_kind LIST_EXPORT).
+ * @summary Export career talent applications as XLSX
+ */
+const export2 = (
+    params?: Export2Params,
+ options?: SecondParameter<typeof customInstance<string>>,) => {
+      return customInstance<string>(
+      {url: `/api/admin/careers/talent-applications/export`, method: 'GET',
         params
     },
       options);
@@ -381,7 +396,7 @@ const guide1 = (
       options);
     }
 
-return {detail3,update14,updateCareerGuideInterview,deleteCareerGuideInterview,updateCareerGuideCultureItems,updateCareerGuideBanner,create2,confirm2,prepare2,attachmentDownloadByAsset2,attachmentDownload2,list9,create11,delete2,confirm3,prepare3,createCareerGuideInterview,bulkDeleteCareerGuideInterviews,confirm4,changeVisibility,detail6,detailHead2,list12,guide,list15,delete4,detail9,guide1}};
+return {detail3,update14,updateCareerGuideInterview,deleteCareerGuideInterview,updateCareerGuideCultureItems,updateCareerGuideBanner,create2,confirm2,prepare2,attachmentDownloadByAsset2,attachmentDownload2,list9,create11,delete2,confirm3,prepare3,createCareerGuideInterview,bulkDeleteCareerGuideInterviews,confirm4,changeVisibility,detail6,detailHead2,list12,guide,list15,delete4,detail9,export2,guide1}};
 export type Detail3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['detail3']>>>
 export type Update14Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['update14']>>>
 export type UpdateCareerGuideInterviewResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['updateCareerGuideInterview']>>>
@@ -409,4 +424,5 @@ export type GuideResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJA
 export type List15Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['list15']>>>
 export type Delete4Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['delete4']>>>
 export type Detail9Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['detail9']>>>
+export type Export2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['export2']>>>
 export type Guide1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['guide1']>>>

@@ -89,7 +89,6 @@ export function ParticipatingInstructorLectureReportsSection({
   const previewQuery = useLectureReportPreview(program?.id, previewRow)
   const {
     bulkDownloading,
-    canBulkDownloadFiles,
     hasPdfTargets,
     handleBulkDownload,
     exportHost,
@@ -293,8 +292,7 @@ export function ParticipatingInstructorLectureReportsSection({
           <span className="table-description">{rows.length}건</span>
         </div>
         <div className="info-section-buttons--wrapper">
-          {canBulkDownloadFiles ? (
-            <Tooltip title={!hasPdfTargets ? LECTURE_REPORT_NO_SUBMITTED_PDF_CTA : undefined}>
+          <Tooltip title={!hasPdfTargets ? LECTURE_REPORT_NO_SUBMITTED_PDF_CTA : undefined}>
               <span>
                 <CmsButton
                   variant="secondary"
@@ -310,7 +308,6 @@ export function ParticipatingInstructorLectureReportsSection({
                 </CmsButton>
               </span>
             </Tooltip>
-          ) : null}
           <ExcelButton onClick={exportExcel} loading={isExcelExporting} />
         </div>
       </div>

@@ -29,7 +29,7 @@ function toDomainStatus(status: string | undefined): ApplicationStatus {
   return status === 'confirmed' ? 'confirmed' : 'pending'
 }
 
-function toDomainGender(gender: string | undefined): ApplicantGender {
+function toDomainGender(gender: string | null | undefined): ApplicantGender {
   return gender === 'female' ? 'female' : 'male'
 }
 
@@ -105,6 +105,9 @@ export function mapTalentApplicationDetailToDomain(
     confirmedAt: row.confirmedAt ?? null,
     confirmedByName: row.confirmedByName?.trim() ? row.confirmedByName.trim() : null,
     version: 0,
+    piiMasked: row.piiMasked === true,
+    maskedBirthDate: row.maskedBirthDate?.trim() || null,
+    maskedGender: row.maskedGender?.trim() || null,
   }
 }
 

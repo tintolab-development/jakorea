@@ -1,12 +1,13 @@
 import type { AdminLevel, User, UserRole } from '@/types/user'
 import { resolveAdminRoleCodeFromUser } from '@/shared/lib/admin-role-policy'
+import {
+  isCmsAccountPaymentsAdminRole,
+  resolveCmsGlobalAdminRole,
+} from '@/shared/lib/cms-global-role-code'
 
-/** 기존 권한설정 슬러그·대문자 코드. OpenAPI AdminRoleCode 4역할에는 아직 없음. */
+/** 전역 역할 Accounting Manager 여부(레거시 슬러그·별칭 포함). 판정은 `resolveCmsGlobalAdminRole` 기준. */
 export function isAccountingManagerRoleCode(value?: string | null): boolean {
-  const raw = (value ?? '').trim()
-  if (!raw) return false
-  const compact = raw.toUpperCase().replace(/[\s-]/g, '_')
-  return compact === 'ACCOUNTING_MANAGER'
+  return resolveCmsGlobalAdminRole(value) === 'ACCOUNTING_MANAGER'
 }
 
 export function isAccountPaymentsPath(pathname: string): boolean {
@@ -30,13 +31,13 @@ export type AccountPaymentsAccessUser = {
  */
 export function canAccessAccountPayments(user: AccountPaymentsAccessUser): boolean {
   if (!user || user.role !== 'ADMIN') return false
-  if (isAccountingManagerRoleCode(user.roleCode)) return true
-  return (
+  // 전역 역할 공통 판정(roleCode → listMetrics → adminLevel 순)과 같은 기준으로 본다.
+  return isCmsAccountPaymentsAdminRole(
     resolveAdminRoleCodeFromUser({
       role: user.role,
       roleCode: user.roleCode as User['roleCode'],
       adminLevel: user.adminLevel,
       listMetrics: user.listMetrics,
-    }) === 'MASTER'
+    })
   )
 }

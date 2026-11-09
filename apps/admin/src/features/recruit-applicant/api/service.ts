@@ -5,6 +5,7 @@ import { getJAKoreaHomepageAdminAPICareersSubset } from '@/shared/api/generated/
 import { defaultXlsxFilename, downloadRemoteLogExcel } from '@/features/logs/shared/lib/download-binary';
 import { mapCareerTalentApplicationDetail, mapCareerTalentApplicationListItem, toNumericId, toTalentApplicationExportParams, toTalentApplicationListParams, } from './mappers';
 import { downloadHomepageProtectedAttachment, homepageRecruitAttachmentUrl } from '@/shared/lib/protected-attachment-download';
+import { resolveApplicantRevealPii } from '@/features/auth/lib/applicant-reveal-pii';
 export type RecruitApplicantConfirmInput = {
     id: string;
     version: number;
@@ -31,12 +32,13 @@ export function isRecruitApplicantNotFoundError(error: unknown): boolean {
     }).code === 'CAREER_RESOURCE_NOT_FOUND';
 }
 /**
- * 상세 진입 = 개인정보 원문 조회. 버튼 없이 진입 시 바로 `revealPii=true`로 원문을 받는다.
+ * 상세 진입 = 개인정보 원문 조회. 버튼 없이 진입 시 바로 원문을 받는다.
+ * 단 HOMEPAGE_PII_VIEW가 없는 Program Viewer는 `revealPii=false`로 마스킹 상세를 받는다(권한 설정 V1.2).
  * 열람 기록은 BE가 상세 GET 200마다 남긴다(homepage_admin_audit_log PII_READ · homepage_privacy_access_log) —
  * FE에서 별도 로그 POST를 하지 않는다. 상세 쿼리는 staleTime/gcTime 0이라 진입할 때마다 GET(=로그 1건).
  */
 export async function getRecruitApplicantService(id: string): Promise<RecruitApplicantDetail | null> {
-    const row = await careersApi().detail9(toNumericId(id), { revealPii: true });
+    const row = await careersApi().detail9(toNumericId(id), { revealPii: await resolveApplicantRevealPii() });
     const mapped = mapCareerTalentApplicationDetail(row);
     if (!mapped) {
         throw new Error('신청 상세를 불러오지 못했습니다.');

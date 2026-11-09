@@ -68,6 +68,7 @@ import {
 } from '@/shared/components/table-filter-group-field-width'
 import { PaymentOrderLectureDateSessionCell } from './payment-order-lecture-date-session-cell'
 import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
+import { ensureProgramWriteAllowed } from '@/features/program/shared/lib/program-role-action-check'
 
 export type PaymentOrderDetailLineRow =
   | PaymentOrderAdminProgramDetailInstructorRow
@@ -524,6 +525,14 @@ export function usePaymentOrderDetailLinesController(
    * 일괄 확인 — 버튼은 항상 활성. 선택 없음·확인 불가 항목 포함 시 안내 모달.
    * (체크박스도 전부 선택 가능 — 확인 완료 건은 지급조서 발급 대상)
    */
+  /** 선택 행의 프로그램 id. 프로그램별 상세는 행에 없으면 상세 대상 프로그램으로 본다. */
+  const fallbackProgramId = mode === 'program' ? args.programRow.programId : undefined
+  const lineProgramIds = useCallback(
+    (lines: readonly PaymentOrderDetailLineRow[]) =>
+      lines.map(line => line.programId ?? fallbackProgramId),
+    [fallbackProgramId]
+  )
+
   const handleBatchConfirmClick = useCallback(() => {
     if (selectedConfirmableRows.length === 0) {
       showAlert(NO_SELECTION_ALERT)
@@ -545,8 +554,12 @@ export function usePaymentOrderDetailLinesController(
       })
       return
     }
-    setBatchConfirmOpen(true)
-  }, [canBatchConfirm, selectedConfirmableRows.length, showAlert])
+    void (async () => {
+      // 권한 설정 V1.2: 지급조서 확인은 역할 연동(Program Owner·Program Assistant). 선택한 건의 프로그램 역할을 먼저 본다.
+      if (!(await ensureProgramWriteAllowed(lineProgramIds(selectedConfirmableRows)))) return
+      setBatchConfirmOpen(true)
+    })()
+  }, [canBatchConfirm, lineProgramIds, selectedConfirmableRows, showAlert])
 
   const filteredRows = useMemo(
     () => filterDetailRows(rowsState, mode, applied, remoteServerFiltered && paymentOrdersRemote),
@@ -664,6 +677,8 @@ export function usePaymentOrderDetailLinesController(
     }
 
     void (async () => {
+      // 권한 설정 V1.2: 지급조서 발급·다운로드는 역할 연동(Program Owner·Program Assistant).
+      if (!(await ensureProgramWriteAllowed(lineProgramIds(selected)))) return
       try {
         const payloads = await Promise.all(selected.map(line => buildIssuancePayloadForLine(line)))
         setIssuanceQueue(payloads)
@@ -678,7 +693,7 @@ export function usePaymentOrderDetailLinesController(
         })
       }
     })()
-  }, [buildIssuancePayloadForLine, rowsState, selectedRowKeys, showAlert])
+  }, [buildIssuancePayloadForLine, lineProgramIds, rowsState, selectedRowKeys, showAlert])
 
   const keywordFieldKey = mode === 'program' ? 'instructorName' : 'programName'
 

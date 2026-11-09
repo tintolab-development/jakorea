@@ -33,15 +33,18 @@ describe('권한 설정 V1.2 — 접근 불가 메뉴도 노출(클릭 시 안�
       typeof getMenuItemsByRole
     >[1]
 
-  it('Program Viewer에게도 템플릿 관리·정산 항목 설정·계좌 지급 확인 메뉴가 보인다', () => {
+  it('Program Viewer에게 템플릿 관리·정산 항목 설정 메뉴는 보인다(클릭 시 안내)', () => {
     const keys = collectMenuKeys(getMenuItemsByRole('ADMIN', user('PROGRAM_VIEWER')))
     expect(keys.some(key => key.startsWith('/templates'))).toBe(true)
     expect(keys).toContain('/settlement-management/item-settings')
-    expect(keys).toContain('/settlement-management/account-payments')
   })
 
-  it('Program Manager에게도 계좌 지급 확인 메뉴가 보인다', () => {
-    const keys = collectMenuKeys(getMenuItemsByRole('ADMIN', user('PROGRAM_MANAGER')))
-    expect(keys).toContain('/settlement-management/account-payments')
+  it('역할별 공통: 접근할 수 없어도 LNB 메뉴는 빼지 않는다(계좌 지급 확인 포함)', () => {
+    const master = collectMenuKeys(getMenuItemsByRole('ADMIN', user('MASTER')))
+    for (const roleCode of ['ACCOUNTING_MANAGER', 'PROGRAM_MANAGER', 'PROGRAM_VIEWER']) {
+      const keys = collectMenuKeys(getMenuItemsByRole('ADMIN', user(roleCode)))
+      expect(master.filter(key => !keys.includes(key))).toEqual([])
+    }
+    expect(master).toContain('/settlement-management/account-payments')
   })
 })

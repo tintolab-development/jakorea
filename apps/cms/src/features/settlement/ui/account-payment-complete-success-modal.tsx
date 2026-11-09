@@ -1,7 +1,8 @@
 /**
  * 정산 관리 > 계좌 지급 확인 —「계좌 지급 완료」처리 후 완료 안내 모달
  * - 단건: 확인만
- * - 다건: 닫기
+ * - 다건: 닫기 · 세금신고 양식 발급
+ *   (대량이체는 지급 대기 건만, 세금신고는 계좌 지급 완료 건만 발급된다 — 방금 완료한 건은 세금신고 대상)
  */
 
 import type { ModalProps } from 'antd'
@@ -66,14 +67,14 @@ export interface AccountPaymentCompleteSuccessModalProps {
   open: boolean
   context: AccountPaymentCompleteSuccessContext | null
   onCancel: () => void
-  onIssueBulkTransfer: () => void
+  onIssueTaxReport: () => void
 }
 
 export function AccountPaymentCompleteSuccessModal({
   open,
   context,
   onCancel,
-  onIssueBulkTransfer,
+  onIssueTaxReport,
 }: AccountPaymentCompleteSuccessModalProps) {
   const canShow = open && context !== null
   const isBulk = context?.kind === 'bulk'
@@ -107,9 +108,9 @@ export function AccountPaymentCompleteSuccessModal({
               variant="primary"
               size="h40"
               icon={<ButtonDownloadIcon />}
-              onClick={onIssueBulkTransfer}
+              onClick={onIssueTaxReport}
             >
-              대량이체 양식 발급
+              세금신고 양식 발급
             </CmsButton>
           </>
         ) : (

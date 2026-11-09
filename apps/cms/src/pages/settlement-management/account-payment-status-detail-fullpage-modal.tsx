@@ -4,7 +4,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { generalProgramDetailQueryOptions } from '@/features/program/general/hooks/use-general-program-detail'
+import { fetchGeneralProgramCoreRemoteById } from '@/features/program/general/api/admin-general-programs-service'
+import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
 import { isIndividualProgramForSettlement } from '@/features/settlement/lib/settlement-program-individual'
 import { ACCOUNT_PAYMENT_DETAIL_FORBIDDEN_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
@@ -74,16 +75,32 @@ export function AccountPaymentStatusDetailFullPageModal({
   /**
    * 개인형 프로그램이면 산출 표 「참여 기관명」열 미노출 — 산출 내역서(use-payment-order-detail-fullpage-modal)와 같은 판정.
    * 정산 응답에 프로그램 유형이 없어 프로그램 정본을 읽는다. 조회 실패 시 열을 그대로 둔다.
+   * 계좌 지급 확인은 Accounting Manager가 담당이 아닌 프로그램 건도 보므로 프로그램 상세가 403일 수 있다.
+   * 그래서 상세 응답의 programType을 먼저 쓰고, 프로그램 상세 조회는 이전 서버용 보조 조회로만 둔다
+   * (공통 '접근 권한 없음' 팝업 없이, 상세 모달과 캐시를 나눠 실패가 섞이지 않게 한다).
    */
   const detailProgramId =
     detail?.programId ?? (row?.programId != null ? String(row.programId) : '')
+  // 서버가 상세 응답에 programType을 주면 그 값으로 판정한다. 주지 않는 이전 서버에서만 프로그램 상세를 조회한다.
+  const detailProgramType = detail?.programType?.trim().toUpperCase()
   const detailProgramQuery = useQuery({
-    ...generalProgramDetailQueryOptions(detailProgramId),
-    enabled: open && accountPaymentsRemote && /^\d+$/.test(detailProgramId),
+    queryKey: [...generalProgramQueryKeys.detail(detailProgramId), 'account-payment-type-probe'],
+    queryFn: () =>
+      fetchGeneralProgramCoreRemoteById(detailProgramId, { skipGlobalErrorAlert: true }),
+    staleTime: 30_000,
+    retry: false,
+    enabled:
+      open &&
+      accountPaymentsRemote &&
+      detail != null &&
+      !detailProgramType &&
+      /^\d+$/.test(detailProgramId),
   })
-  const hideInstitutionColumn = detailProgramQuery.data
-    ? isIndividualProgramForSettlement(detailProgramQuery.data)
-    : false
+  const hideInstitutionColumn = detailProgramType
+    ? detailProgramType === 'GENERAL_INDIVIDUAL'
+    : detailProgramQuery.data
+      ? isIndividualProgramForSettlement(detailProgramQuery.data)
+      : false
   const detailLoading = accountPaymentsRemote && open && isAwaitingFirstQueryData(detailQuery)
   const detailError = accountPaymentsRemote
     ? detailQuery.error

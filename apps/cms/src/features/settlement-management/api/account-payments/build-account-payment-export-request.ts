@@ -56,9 +56,10 @@ export function buildAccountPaymentExportRequest(
   if (
     input.kind === 'tax-report' &&
     input.selection.kind === 'selected' &&
-    selectedIds?.settlementIds.length === 0
+    selectedIds?.settlementIds.length === 0 &&
+    selectedIds.accountPaymentIds.length === 0
   ) {
-    throw new Error('세금신고 선택 대상 정산 ID가 없습니다.')
+    throw new Error('세금신고 선택 대상 정산·계좌 지급 ID가 없습니다.')
   }
 
   const hasDateRange = Boolean(input.fromDate && input.toDate)
@@ -80,9 +81,7 @@ export function buildAccountPaymentExportRequest(
         : TAX_REPORT_EXPORT_BUSINESS_PURPOSE,
     rawPrivacyIncluded: false,
     settlementIds: selectedIds?.settlementIds ?? [],
-    ...(input.kind === 'bulk-transfer'
-      ? { accountPaymentIds: selectedIds?.accountPaymentIds ?? [] }
-      : {}),
+    accountPaymentIds: selectedIds?.accountPaymentIds ?? [],
     ...(shouldIncludeDateRange
       ? {
           fromDate: input.fromDate,

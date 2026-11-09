@@ -53,7 +53,7 @@ describe('buildAccountPaymentExportRequest', () => {
     expect(body.accountPaymentIds).toEqual([])
   })
 
-  it('세금신고에는 accountPaymentIds를 포함하지 않는다', () => {
+  it('세금신고는 정산서 없는 직접 계좌 지급을 accountPaymentIds로 보낸다', () => {
     const body = buildAccountPaymentExportRequest({
       kind: 'tax-report',
       selection: {
@@ -63,10 +63,10 @@ describe('buildAccountPaymentExportRequest', () => {
     })
     expect(body.status).toBe(ACCOUNT_PAYMENT_EXPORT_STATUS_PAID)
     expect(body.settlementIds).toEqual([102])
+    expect(body.accountPaymentIds).toEqual([2001])
     expect(body.reason).toBe('세금신고 양식 발급')
     expect(body.businessPurpose).toBe('정산 관리 세금신고 양식')
     expect(body.rawPrivacyIncluded).toBe(false)
-    expect('accountPaymentIds' in body).toBe(false)
     expect('dateRangeValid' in body).toBe(false)
     expect('rawPrivacyApprovalValid' in body).toBe(false)
   })
@@ -99,13 +99,13 @@ describe('buildAccountPaymentExportRequest', () => {
     expect(body.businessPurpose).toBe('정산 관리 세금신고 양식')
   })
 
-  it('선택 세금신고에 settlement ID가 없으면 전체 발급으로 변환하지 않는다', () => {
+  it('선택 세금신고에 정산·계좌 지급 ID가 모두 없으면 전체 발급으로 변환하지 않는다', () => {
     expect(() =>
       buildAccountPaymentExportRequest({
         kind: 'tax-report',
-        selection: { kind: 'selected', rows: [{ settlementId: undefined, accountPaymentId: 2001 }] },
+        selection: { kind: 'selected', rows: [{ settlementId: undefined, accountPaymentId: undefined }] },
       })
-    ).toThrow(/세금신고 선택 대상 정산 ID/)
+    ).toThrow(/세금신고 선택 대상 정산·계좌 지급 ID/)
   })
 
   it('마스킹 발급은 원본 승인을 넣지 않는다', () => {

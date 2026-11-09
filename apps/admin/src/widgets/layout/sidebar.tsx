@@ -77,13 +77,13 @@ export function Sidebar() {
     ({ key }: { key: string }) => {
       if (typeof key !== 'string' || !key.startsWith('/')) return
       // 권한 설정 V1.2: 로그 관리는 Master 전용 — 누르는 즉시 안내하고 이동하지 않는다.
-      if (isHomepageLogPath(key) && logAccess.resolved && !logAccess.allowed) {
+      if (isHomepageLogPath(key) && logAccess.status === 'denied') {
         cmsAlertModal.show(HOMEPAGE_LOG_ACCESS_DENIED_ALERT)
         return
       }
       navigate(key)
     },
-    [logAccess.allowed, logAccess.resolved, navigate]
+    [logAccess.status, navigate]
   )
 
   return (

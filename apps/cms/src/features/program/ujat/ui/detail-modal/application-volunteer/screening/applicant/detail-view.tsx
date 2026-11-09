@@ -165,8 +165,7 @@ function Interview2ApplicantDetail({
     evaluationActions
   ) : (
     <>
-      {canWrite ? (
-        <>
+      <>
           <CmsButton
             type="button"
             variant="delete"
@@ -191,7 +190,6 @@ function Interview2ApplicantDetail({
             면접 합격
           </CmsButton>
         </>
-      ) : null}
       {evaluationActions}
       <PersonalInfoRevealButton
         disabled={programPrivacyPending}

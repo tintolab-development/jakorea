@@ -1,5 +1,6 @@
 import type { MouseEvent, ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { isAxiosError } from 'axios'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { shouldUseProgramsHttpRemoteApi } from '@/features/program/general/api/general-programs-remote-capabilities'
 import {
@@ -21,9 +22,22 @@ import './program-detail-action-guard.css'
 /** 상세 진입 확인(`checkProgramDetailAccess`)과 같은 캐시를 쓴다. */
 const ASSIGNMENT_STALE_TIME_MS = 30_000
 
+/**
+ * 상세 진입 판정. `unchecked`는 확인이 필요 없는 경우(Master·원격 미사용·programId 없음).
+ * 조회 중(`pending`)과 미배정 403(`denied`)일 때는 상세를 그리지 않는다.
+ */
+export type ProgramDetailAccessState = 'unchecked' | 'pending' | 'allowed' | 'denied'
+
 export function useProgramDetailActionPermissions(
   programId: string | number | null | undefined
 ): ProgramDetailActionPermissions {
+  return useProgramDetailAccess(programId).permissions
+}
+
+export function useProgramDetailAccess(programId: string | number | null | undefined): {
+  permissions: ProgramDetailActionPermissions
+  access: ProgramDetailAccessState
+} {
   const user = useAuthStore(state => state.user)
   const roleCode = resolveAdminRoleCodeFromUser(user)
   const adminAccountId = user?.adminAccountId ?? null
@@ -40,10 +54,24 @@ export function useProgramDetailActionPermissions(
     retry: false,
     staleTime: ASSIGNMENT_STALE_TIME_MS,
   })
-  return resolveProgramDetailActionPermissions({
+  const permissions = resolveProgramDetailActionPermissions({
     roleCode,
     assignment: enabled && query.isSuccess ? query.data : null,
   })
+  let access: ProgramDetailAccessState = 'unchecked'
+  if (enabled) {
+    if (query.isSuccess) {
+      access =
+        query.data?.masterBypass === true || query.data?.assigned === true ? 'allowed' : 'denied'
+    } else if (query.isError) {
+      // 미배정은 403. 그 밖의 실패(네트워크 등)는 상세 화면의 기존 오류 처리에 맡긴다.
+      access =
+        isAxiosError(query.error) && query.error.response?.status === 403 ? 'denied' : 'allowed'
+    } else {
+      access = 'pending'
+    }
+  }
+  return { permissions, access }
 }
 
 export interface ProgramDetailActionGuardProps {
@@ -58,7 +86,7 @@ export interface ProgramDetailActionGuardProps {
  * React 합성 이벤트는 포털(모달)도 컴포넌트 트리를 따라 전파되므로 루트 한 곳에서 가로챈다.
  */
 export function ProgramDetailActionGuard({ programId, children }: ProgramDetailActionGuardProps) {
-  const permissions = useProgramDetailActionPermissions(programId)
+  const { permissions, access } = useProgramDetailAccess(programId)
 
   const handleClickCapture = (event: MouseEvent<HTMLDivElement>) => {
     const kind = resolveProgramDetailActionKind(event.target)
@@ -68,6 +96,11 @@ export function ProgramDetailActionGuard({ programId, children }: ProgramDetailA
     event.nativeEvent.stopImmediatePropagation?.()
     showAdminAccessDeniedAlert()
   }
+
+  // 권한 설정 V1.2 원칙 3·7: 담당 배정이 확인되기 전에는 상세를 그리지 않는다.
+  // 목록 행 클릭처럼 URL에 programId를 바로 넣는 진입에서 상세가 열렸다가 403으로 닫히는 깜빡임을 막는다.
+  // 미배정 안내 팝업과 URL 정리는 레이아웃의 ProgramDetailAccessGuard가 맡는다.
+  if (access === 'pending' || access === 'denied') return null
 
   return (
     <div className="program-detail-action-guard" onClickCapture={handleClickCapture}>

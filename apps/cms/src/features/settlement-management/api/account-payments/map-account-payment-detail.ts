@@ -399,9 +399,16 @@ export function mapAccountPaymentDetailRemote(
   })
 }
 
+/** `[E2E-SETTLE] 김정산`처럼 대괄호 접두어가 있으면 벗긴 원문 예금주 */
+function stripAccountHolderPrefix(value: string): string {
+  const raw = value.trim()
+  return raw.replace(/^\[[^\]]*]\s*/, '').trim() || raw
+}
+
 /**
  * `GET /api/admin/account-payments/{id}`만 사용한다.
- * 표시 계좌번호 = payment.maskedAccountNo (원문 sensitiveAccount는 지급 확인용).
+ * 권한 설정 V1.1 [고객사 확인]: 계좌 지급 현황 상세는 계좌번호를 기본 노출한다(목록은 미포함, 상세 진입 시 조회 이력 자동 기록).
+ * 표시 계좌 = 원문 sensitiveAccount(Master·Accounting Manager에게만 내려옴). 원문 계좌번호가 없으면 payment.maskedAccountNo.
  * 성별·연락처 등 = settlement.payee(MASKED)가 있으면 매핑, 없으면 `-`.
  */
 export function mapAccountPaymentDetailFromGetApi(
@@ -425,6 +432,8 @@ export function mapAccountPaymentDetailFromGetApi(
     ? [sensitiveAccount.bankName, sensitiveAccount.accountNo].filter(Boolean).join(' ') || undefined
     : undefined
   const plainHolder = sensitiveAccount?.accountHolder?.trim() || undefined
+  /** 상세 표시용 원문 — 계좌번호가 있을 때만(은행명만 있으면 마스킹 표시를 유지) */
+  const displayPlainBankAndNumber = sensitiveAccount?.accountNo?.trim() ? plainBankAndNumber : undefined
 
   // 표시 예금주: 원문(sensitive)이 있으면 접두어 제거 후 재마스킹. 없으면 목록 마스킹값.
   const displayHolder =
@@ -489,19 +498,27 @@ export function mapAccountPaymentDetailFromGetApi(
   const programId =
     settlement?.programId?.toString().trim() ||
     (mergedRow.programId != null ? String(mergedRow.programId) : undefined)
+  // BE 응답 필드(OpenAPI AccountPaymentDetailResponse.programType). 생성 타입 갱신 전이라 좁혀 읽는다.
+  const programType =
+    (detail as AccountPaymentDetailResponse & { programType?: string | null }).programType?.trim() ||
+    undefined
 
-  if (!settlement && !payeeExtras && !plainBankAndNumber) return { ...base, programId }
+  if (!settlement && !payeeExtras && !plainBankAndNumber) return { ...base, programId, programType }
 
   return {
     ...base,
     programId,
+    programType,
     basic: {
       ...base.basic,
       ...(payeeExtras ?? {}),
       settlementAccountBankNumberPart:
+        displayPlainBankAndNumber ||
         [mergedRow.bankName, mergedRow.maskedAccountNo].filter(Boolean).join(' ') ||
         base.basic.settlementAccountBankNumberPart,
-      settlementAccountHolderPart: maskAccountHolderForDisplay(mergedRow.accountHolder),
+      settlementAccountHolderPart: plainHolder
+        ? stripAccountHolderPrefix(plainHolder)
+        : maskAccountHolderForDisplay(mergedRow.accountHolder),
     },
     plainAccountForPaymentConfirm: {
       bankAndNumber:

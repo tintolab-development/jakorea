@@ -33,6 +33,8 @@ import {
   STATUS_DROPDOWN_CELL_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
 import { getAdminPermissionTag } from '@/shared/lib/status-tag-specs'
+import { guardAdminAction } from '@/shared/lib/admin-role-policy'
+import { getSessionAdminRoleCode } from '@/shared/lib/session-admin-role'
 
 type Row = Omit<User, 'password'>
 
@@ -328,9 +330,12 @@ function columnsForKind(
               onChange={options?.onAdminPermissionChange}
               loading={options?.adminPermissionChangeLoadingUserId === r.id}
               isOpen={options?.openAdminPermissionDropdownUserId === r.id}
-              onOpenChange={open =>
+              onOpenChange={open => {
+                // 권한 설정 V1.2: 관리자 권한 유형 변경(관리자 수정)은 Master 전용.
+                // 드롭다운은 노출하되 Master가 아니면 열지 않고 접근 불가 안내를 띄운다.
+                if (open && !guardAdminAction({ roleCode: getSessionAdminRoleCode(), action: 'adminAccountManage' })) return
                 options?.setOpenAdminPermissionDropdownUserId?.(open ? r.id : null)
-              }
+              }}
             />
           )
         },

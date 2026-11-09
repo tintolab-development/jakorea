@@ -128,6 +128,8 @@ export function countsTowardPaymentOrderEstimatedAmount(
 }
 
 export interface PaymentOrderAdminProgramDetailInstructorRow {
+  /** 정산 항목의 프로그램 — 역할 연동 처리(확인·반려·정정·발급) 권한 판정용 */
+  programId?: number
   id: string
   no: number
   settlementId?: number
@@ -167,6 +169,8 @@ export interface PaymentOrderAdminProgramDetail {
 
 /** 강사 기준 지급 현황 상세 — 프로그램별 정산 행 */
 export interface PaymentOrderAdminInstructorDetailProgramRow {
+  /** 정산 항목의 프로그램 — 역할 연동 처리(확인·반려·정정·발급) 권한 판정용 */
+  programId?: number
   id: string
   no: number
   settlementId?: number

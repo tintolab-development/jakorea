@@ -13,9 +13,7 @@ import axios from 'axios'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   cacheProjectedProgramPrivacy,
-  canManageProgramAssignments,
 } from '@/features/program/shared/lib/program-my-assignment'
-import { useMyProgramPrivacyRole } from '@/features/user/detail/lib/use-my-program-privacy-role'
 import type { ColumnsType } from 'antd/es/table'
 import {
   CmsButton,
@@ -548,8 +546,6 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
   } | null>(null)
   const [openRoleDropdownId, setOpenRoleDropdownId] = useState<string | null>(null)
   // 권한 설정 V1.2 프로그램 권한 '대표 강사 변경': Program Owner·Assistant만. Program Viewer는 역할 드롭다운을 열지 않는다.
-  const { assignment: myProgramAssignment } = useMyProgramPrivacyRole(program.id)
-  const canChangeInstructorRole = canManageProgramAssignments(myProgramAssignment)
   const [leadRoleChangeConfirm, setLeadRoleChangeConfirm] = useState<{
     instructorId: string
     newLeadInstructorName: string
@@ -2106,8 +2102,6 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         render: (role: InstructorRoleKey, record: AssignedInstructorDisplayRow) =>
           record.assignmentCancelled ? (
             <StatusTag label="배정 취소" tone="gray" mutedLabel />
-          ) : !canChangeInstructorRole ? (
-            role ? <StatusTag {...getInstructorRoleTag(role)} /> : '-'
           ) : (
             <StatusDropdownCell<InstructorRoleKey>
               status={role}
@@ -2182,7 +2176,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         ),
       },
     ],
-    [openRoleDropdownId, handleRoleChange, privacyMasked, canChangeInstructorRole]
+    [openRoleDropdownId, handleRoleChange, privacyMasked]
   )
 
   const waitingInstructorColumns: ColumnsType<WaitingInstructorRow> = useMemo(
