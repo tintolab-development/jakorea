@@ -2,8 +2,9 @@
  * 교육받은 교사 — 프로그램 진행 현황 참여 기관 상세 (신청 정보 | 학생 명단 | 출석 관리 | 교육 일지)
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import type { SchoolDetailForModal } from '@/features/program/general/model/school-detail-types'
 import { CmsButton, showNotificationResendRequestCompletedAlert } from '@/shared/ui'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
@@ -176,6 +177,15 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
   const [adminCommentModalOpen, setAdminCommentModalOpen] = useState(false)
   const [adminCommentDraft, setAdminCommentDraft] = useState('')
   const [adminCommentError, setAdminCommentError] = useState<string | undefined>()
+  /**
+   * CMS-29: 원문(unmask) 교사 연락처는 이 화면의 일시 오버레이로만 둔다 — 부모 savedBasicPatches에 올리지 않는다.
+   * 열람 해제 경로마다 훅의 onRemask로 같은 이벤트 안에서 지운다(렌더 뒤 fallback 정리 없음).
+   */
+  const [teacherPrivacyOverlay, setTeacherPrivacyOverlay] = useState<{
+    id: string
+    patch: Partial<SchoolDetailForModal>
+  } | null>(null)
+  const clearTeacherPrivacyOverlay = useCallback(() => setTeacherPrivacyOverlay(null), [])
 
   const programId = String(program?.id ?? row.programId ?? '')
   const ttRemoteEnabled = shouldUseTrainedTeacherProgramsRemoteApi() && programId !== ''
@@ -281,6 +291,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     ...detail,
     ...(applicationBasicInfo ?? {}),
     ...savedBasicPatch,
+    ...(teacherPrivacyOverlay?.id === detail.id ? teacherPrivacyOverlay.patch : {}),
   }
   const sessions = applicationDetailQuery.data?.educationScheduleSessions ?? []
   const attendanceRow = useMemo(() => {
@@ -307,12 +318,26 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     [programSchedulesQuery.data]
   )
 
+  /** 열람 해제 함수(아래 usePersonalInfoReveal)를 저장 콜백에서 동기 호출하기 위한 참조 */
+  const remaskAfterSaveRef = useRef<() => void>(() => {})
+  /**
+   * 신청 정보 저장 성공 — 로컬 패치(연락처 원문 제외) 반영과 같은 동기 블록에서 원문 열람을 끝낸다.
+   * 저장 Promise 이후(.then) 정리하면 그 사이 렌더에 원문 오버레이가 보인다.
+   */
+  const handleApplicationInfoSaved = useCallback(
+    (patch: Partial<SchoolDetailForModal> & { id: string }) => {
+      onSaveBasicInfo?.(patch)
+      remaskAfterSaveRef.current()
+    },
+    [onSaveBasicInfo]
+  )
+
   const applicationInfoEdit = useParticipatingInstitutionDetailEdit({
     detail: mergedDetail,
     row,
     program,
     participatingSchoolList,
-    onSaveBasicInfo,
+    onSaveBasicInfo: handleApplicationInfoSaved,
   })
 
   const {
@@ -410,24 +435,28 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
           detail,
           payload as OrganizationApplicationDetailResponse
         )
-        onSaveBasicInfo?.({
+        setTeacherPrivacyOverlay({
           id: detail.id,
-          teacherName: unmasked.teacherName ?? '',
-          teacherPhone: unmasked.teacherPhone ?? '',
-          teacherMobile: unmasked.teacherMobile ?? '',
-          teacherEmail: unmasked.teacherEmail ?? '',
+          patch: {
+            teacherName: unmasked.teacherName ?? '',
+            teacherPhone: unmasked.teacherPhone ?? '',
+            teacherMobile: unmasked.teacherMobile ?? '',
+            teacherEmail: unmasked.teacherEmail ?? '',
+          },
         })
         return
       }
       const privacy = payload as { name?: unknown; phone?: unknown; email?: unknown }
-      onSaveBasicInfo?.({
+      setTeacherPrivacyOverlay({
         id: detail.id,
-        ...(typeof privacy.name === 'string' ? { teacherName: privacy.name } : {}),
-        ...(typeof privacy.phone === 'string' ? { teacherMobile: privacy.phone } : {}),
-        ...(typeof privacy.email === 'string' ? { teacherEmail: privacy.email } : {}),
+        patch: {
+          ...(typeof privacy.name === 'string' ? { teacherName: privacy.name } : {}),
+          ...(typeof privacy.phone === 'string' ? { teacherMobile: privacy.phone } : {}),
+          ...(typeof privacy.email === 'string' ? { teacherEmail: privacy.email } : {}),
+        },
       })
     },
-    [detail, onSaveBasicInfo]
+    [detail]
   )
 
   const {
@@ -439,6 +468,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     programPrivacyPending,
   } = usePersonalInfoReveal({
     privacyScope: 'program',
+    onRemask: clearTeacherPrivacyOverlay,
     programId: programId,
     resolveProgramRole: () => resolveSessionProgramRole(programId),
     resolveAccessItem: resolvePersonalInfoAccessItem,
@@ -448,11 +478,15 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     controlMode: 'toggleRemask',
   })
 
+  /** 원문 열람 종료: 훅이 원문 캐시 초기화·오버레이 정리(onRemask)·상태 해제를 한 번에 동기 수행한다. */
+  const endTeacherPrivacyReveal = remaskPersonalInfo
+  remaskAfterSaveRef.current = remaskPersonalInfo
+
   /** CMS-29: 신청 정보 수정 취소 즉시 원문 열람을 끝낸다(원문 캐시는 훅이 초기화). */
   const cancelApplicationInfoEditAndRemask = useCallback(() => {
     cancelApplicationInfoEdit()
-    remaskPersonalInfo()
-  }, [cancelApplicationInfoEdit, remaskPersonalInfo])
+    endTeacherPrivacyReveal()
+  }, [cancelApplicationInfoEdit, endTeacherPrivacyReveal])
 
   const handleEnterApplicationInfoEdit = useCallback(() => {
     if (!canEditApplicationInfo) {
