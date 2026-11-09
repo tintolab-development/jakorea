@@ -8,6 +8,15 @@
 @import './shared/ui/page-content-loading.css';
 @import './shared/ui/detail-info-form-modal.css';
 
+/*
+ * 읽기 전용(조회 모드) CmsInput·CmsTextArea — 셀을 클릭해도 커서(caret)가 보이지 않는다.
+ * 값 선택·복사는 그대로 된다. (조회 모드는 border·배경을 투명으로 두고 입력 컴포넌트를 재사용하므로 표 어디서나 공통)
+ */
+.cms-input__inner .ant-input[readonly],
+.cms-textarea__inner textarea.ant-input[readonly] {
+  caret-color: transparent;
+}
+
 /* 토큰 정의는 theme-provider.css에서 로드됨 (ThemeProvider import) */
 :root {
   font-family: var(--font-family-primary, system-ui), Avenir, Helvetica, Arial, sans-serif;
