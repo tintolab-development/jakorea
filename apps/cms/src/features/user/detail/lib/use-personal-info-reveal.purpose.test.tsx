@@ -22,7 +22,12 @@ vi.mock('@/features/user/detail/lib/use-my-program-privacy-role', () => ({
     pending: false,
     canRevealGeneral: true,
     canRevealSensitive: true,
-    refetch: vi.fn(),
+    refetch: () =>
+      Promise.resolve({
+        assigned: true,
+        assignmentRole: 'PM',
+        capabilities: ['PROGRAM_VIEW', 'SENSITIVE_PII_READ'],
+      }),
   }),
 }))
 vi.mock('@/features/user/detail/ui/modal/user-personal-info-reveal-confirm-modal', () => ({
@@ -30,7 +35,10 @@ vi.mock('@/features/user/detail/ui/modal/user-personal-info-reveal-confirm-modal
 }))
 vi.mock('@/shared/ui/cms-alert-modal-api', () => ({ cmsAlertModal: { show: vi.fn() } }))
 
+import { QueryClient } from '@tanstack/react-query'
 import { EDIT_MODE_REVEAL } from '@/shared/lib/privacy-unmask-purpose'
+import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { cacheProjectedProgramPrivacy } from '@/features/program/shared/lib/program-my-assignment'
 import { usePersonalInfoReveal } from './use-personal-info-reveal'
 
 function renderMemberReveal(revealPersonalInfo?: (reason: string, options?: unknown) => Promise<unknown>) {
@@ -96,5 +104,38 @@ describe('usePersonalInfoReveal — 수동 열람과 수정 진입 목적 분리
     act(() => result.current.remaskPersonalInfo())
     expect(result.current.personalInfoRevealed).toBe(false)
     expect(fetchMemberRolePrivacyUnmask).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('usePersonalInfoReveal — 신청 수정 취소 재마스킹 (CMS-29)', () => {
+  it('프로그램 범위에서 remask하면 원문을 쓴 신청 상세 캐시를 즉시 비운다', async () => {
+    const client = new QueryClient()
+    const key = generalApplicationsQueryKeys.organizationDetail('1691636')
+    const revealPersonalInfo = vi.fn(async () =>
+      cacheProjectedProgramPrivacy(client, key, 186565, { teacherPhone: '010-1234-5678' })
+    )
+    const { result } = renderHook(() =>
+      usePersonalInfoReveal({
+        privacyScope: 'program',
+        programId: '186565',
+        resolveAccessItem: () => '기관 신청 상세',
+        revealPersonalInfo,
+        resetDeps: [],
+        controlMode: 'hideWhenRevealed',
+      })
+    )
+    await act(async () => {
+      await result.current.revealWithReason('신청 정보 수정', EDIT_MODE_REVEAL)
+    })
+    expect(result.current.personalInfoRevealed).toBe(true)
+    expect(client.getQueryData(key)).toMatchObject({ teacherPhone: '010-1234-5678' })
+
+    await act(async () => {
+      result.current.remaskPersonalInfo()
+      await Promise.resolve()
+    })
+    expect(result.current.personalInfoRevealed).toBe(false)
+    expect(client.getQueryData(key)).toBeUndefined()
+    expect(revealPersonalInfo).toHaveBeenCalledTimes(1)
   })
 })
