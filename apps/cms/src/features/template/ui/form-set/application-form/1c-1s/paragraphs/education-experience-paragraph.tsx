@@ -1,7 +1,7 @@
 import { useGeneralApplicationOverlayKv } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
-import '@/features/template/ui/paragraph/single-item/multiple-choice.css'
+import './economy-application-choice.css'
 
 const EDUCATION_EXPERIENCE_OPTIONS = [
   { value: 'yes', label: '네, 진행했었습니다.' },
@@ -17,21 +17,18 @@ export function EconomyProgramApplicationEducationExperienceParagraph() {
 
   return (
     <div className="program-registration-paragraph">
-      <div className="multiple-choice-body">
-        <CmsRadioGroup
-          className="multiple-choice-radio-group"
-          size="medium"
-          value={value === '' ? undefined : value}
-          onChange={event => setValue(event.target.value)}
-        >
-          {EDUCATION_EXPERIENCE_OPTIONS.map(option => (
-            <div key={option.value} className="multiple-choice-row">
-              <CmsRadio value={option.value} />
-              <span className="multiple-choice-row__label">{option.label}</span>
-            </div>
-          ))}
-        </CmsRadioGroup>
-      </div>
+      <CmsRadioGroup
+        className="economy-application-choice"
+        size="medium"
+        value={value === '' ? undefined : value}
+        onChange={event => setValue(event.target.value)}
+      >
+        {EDUCATION_EXPERIENCE_OPTIONS.map(option => (
+          <CmsRadio key={option.value} value={option.value}>
+            {option.label}
+          </CmsRadio>
+        ))}
+      </CmsRadioGroup>
     </div>
   )
 }

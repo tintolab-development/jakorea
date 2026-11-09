@@ -1,0 +1,54 @@
+/**
+ * 1사1교 참여 기관 신청 폼 — 객관식 단락(결연 금융 회사명 · 전년도 진행 여부)
+ * Figma: Table / Short contents — 라디오 컨테이너 p4 · 행 간격 16 · 원–라벨 8 · 기타 입력 h36
+ * 공용 multiple-choice.css 는 다른 폼도 쓰므로 여기서 덮어쓰지 않고 전용 클래스로 분리한다.
+ */
+
+.economy-application-choice.app-radio-group.ant-radio-group {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  gap: 16px;
+  width: 100%;
+  padding: 4px;
+  box-sizing: border-box;
+}
+
+/* 라벨은 라디오 자식으로 두어 원 바로 옆에 붙인다(공용 규칙의 flex: 1 로 라벨이 끝으로 밀리는 현상 방지) */
+.economy-application-choice .ant-radio-wrapper {
+  flex: 0 0 auto;
+  min-width: 0;
+  max-width: 100%;
+  margin-inline-end: 0;
+}
+
+.economy-application-choice__other {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.economy-application-choice__other .ant-radio-wrapper {
+  flex: 0 0 auto;
+}
+
+/* Figma: min 120 · max 260, 안쪽 텍스트 14px #85969d */
+.economy-application-choice__other-input {
+  width: 240px;
+  min-width: 120px;
+  max-width: 260px;
+}
+
+.economy-application-choice__other-input input.ant-input,
+.economy-application-choice__other-input input.ant-input::placeholder {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.economy-application-choice__other-input input.ant-input::placeholder {
+  color: var(--gray-85969-d, #85969d);
+}
