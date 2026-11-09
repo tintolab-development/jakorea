@@ -3,10 +3,12 @@ import { parseSettlementAmount } from './format-write-draft.ts'
 import { isInstructorTransportBelowMinimum } from './instructor-transport-preview.ts'
 import { isReceiptWageItemType, normalizePaymentItemType } from './payment-items.ts'
 import { LECTURE_FEE_TYPE_CODES } from './lecture-fee-preview.ts'
+import { COMPANY_SCHOOL_LODGING_ITEM_TYPE } from './company-school-lodging.ts'
 
 export type InstructorSettlementRequestedItem = {
   itemType: string
-  requestedAmount: number
+  /** LODGING_1C1S는 null — 서버가 고정액으로 산정 */
+  requestedAmount: number | null
   evidenceSubmitted?: boolean
 }
 
@@ -129,6 +131,26 @@ export function buildInstructorSettlementPayloadParts(draft: SettlementWriteDraf
     fileObjectIds: (draft.activity.attachments ?? []).map(file => file.fileObjectId),
     evidenceRequired: true,
   })
+
+  // 1사1교 숙박비 — 금액 없이 신청 1건, 영수증 필수(BE 2026-11-09)
+  const lodging = draft.companySchoolLodging
+  if (lodging?.requested) {
+    const fileObjectIds = [
+      ...new Set(
+        (lodging.attachments ?? [])
+          .map(file => file.fileObjectId)
+          .filter(id => Number.isSafeInteger(id) && id > 0),
+      ),
+    ]
+    requestedItems.push({
+      itemType: COMPANY_SCHOOL_LODGING_ITEM_TYPE,
+      requestedAmount: null,
+      evidenceSubmitted: fileObjectIds.length > 0,
+    })
+    if (fileObjectIds.length > 0) {
+      evidenceAttachments.push({ itemType: COMPANY_SCHOOL_LODGING_ITEM_TYPE, fileObjectIds })
+    }
+  }
 
   return { requestedItems, evidenceAttachments }
 }

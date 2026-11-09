@@ -69,6 +69,11 @@ export function loadSettlementWriteDraft(
         fileNames: parsed.activity?.fileNames ?? [],
         attachments: parsed.activity?.attachments ?? [],
       },
+      companySchoolLodging: {
+        requested: parsed.companySchoolLodging?.requested === true,
+        fileNames: parsed.companySchoolLodging?.fileNames ?? [],
+        attachments: parsed.companySchoolLodging?.attachments ?? [],
+      },
     }
   } catch {
     return null

@@ -86,6 +86,15 @@ export function validateSettlementWriteDraft(
     if (isNamedExpenseUploadIncomplete(meal) || isNamedExpenseUploadIncomplete(activity)) {
       return 'upload_incomplete'
     }
+    const lodging = draft.companySchoolLodging
+    if (lodging?.requested) {
+      const uploaded = (lodging.attachments ?? []).filter(
+        file => Number.isSafeInteger(file.fileObjectId) && file.fileObjectId > 0
+      )
+      if (uploaded.length === 0) {
+        return (lodging.fileNames?.length ?? 0) > 0 ? 'upload_incomplete' : 'receipt_required'
+      }
+    }
     return null
   }
 

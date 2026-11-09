@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { buildSettlementWriteDraft } from './build-write-draft.ts'
 import {
   buildInstructorSettlementCreateRequest,
+  buildInstructorSettlementPayloadParts,
   buildInstructorSettlementResubmitRequest,
 } from './build-instructor-settlement-submit.ts'
 
@@ -156,5 +157,31 @@ assert.equal(
   mealNamesOnly.evidenceAttachments.some(item => item.itemType === 'MEAL'),
   false
 )
+
+// 1사1교 숙박비 — 금액 없이 LODGING_1C1S 1건 + 영수증(BE 2026-11-09)
+const lodgingParts = buildInstructorSettlementPayloadParts(
+  buildSettlementWriteDraft({
+    ...base,
+    extraItems: [],
+    mealAmount: '',
+    mealFiles: [],
+    activityAmount: '',
+    activityFiles: [],
+    companySchoolLodgingRequested: true,
+    companySchoolLodgingAttachments: [{ fileObjectId: 7001, fileName: 'hotel.jpg' }],
+  })
+)
+assert.deepEqual(
+  lodgingParts.requestedItems.find(item => item.itemType === 'LODGING_1C1S'),
+  { itemType: 'LODGING_1C1S', requestedAmount: null, evidenceSubmitted: true }
+)
+assert.deepEqual(
+  lodgingParts.evidenceAttachments.find(item => item.itemType === 'LODGING_1C1S'),
+  { itemType: 'LODGING_1C1S', fileObjectIds: [7001] }
+)
+const lodgingNotRequested = buildInstructorSettlementPayloadParts(
+  buildSettlementWriteDraft({ ...base, extraItems: [], mealAmount: '', mealFiles: [], activityAmount: '', activityFiles: [] })
+)
+assert.equal(lodgingNotRequested.requestedItems.some(item => item.itemType === 'LODGING_1C1S'), false)
 
 console.log('build-instructor-settlement-submit.selfcheck: ok')
