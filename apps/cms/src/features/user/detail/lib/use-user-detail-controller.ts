@@ -223,6 +223,8 @@ export function useUserDetailController({
   const displayUserIdentityRef = useRef<string | null>(null)
   displayUserIdentityRef.current =
     displayUser != null ? `${displayUser.id}:${displayUser.memberId ?? ''}` : null
+  /** 원문(unmask) 응답을 상세 캐시에 넣은 회원 — 수정 취소·화면 이탈 시 원문 캐시를 남기지 않기 위해 추적 */
+  const rawCachedMemberRef = useRef<{ memberId?: number; uuid: string; role: User['role'] } | null>(null)
 
   const [tabState, setTabState] = useState<TabState>({ lnb: 'detail-info' })
   /** 권한 승인 상세는 신청 정보(기본/약관/이력서)만 — 프로그램 신청·참여 이력 API 생략 */
@@ -524,6 +526,11 @@ export function useUserDetailController({
       }
 
       const applyMergedUser = (merged: Omit<User, 'password'>) => {
+        rawCachedMemberRef.current = {
+          memberId: displayUser.memberId ?? undefined,
+          uuid: displayUser.id,
+          role: displayUser.role,
+        }
         if (displayUser.memberId != null) {
           queryClient.setQueryData(memberQueryKeys.detail(displayUser.memberId), merged)
         }
@@ -1116,7 +1123,35 @@ export function useUserDetailController({
     setBasicInfoEditing(false)
     setBasicInfoEditScope('none')
     setBasicInfoDraft(null)
-  }, [])
+    // 수정 진입(EDIT_MODE)으로 받은 원문을 캐시에 남기지 않는다: 마스킹 상세를 서버에서 다시 받는다.
+    const cached = rawCachedMemberRef.current
+    if (cached) {
+      rawCachedMemberRef.current = null
+      if (cached.memberId != null) {
+        void queryClient.resetQueries({ queryKey: memberQueryKeys.detail(cached.memberId), exact: true })
+      }
+      void queryClient.resetQueries({
+        queryKey: [...memberQueryKeys.detailByUuid(cached.uuid), cached.role],
+        exact: true,
+      })
+    }
+  }, [queryClient])
+
+  // 다른 회원으로 이동하거나 상세를 닫으면 원문 캐시를 지운다(재진입 시 원문 재사용 방지, 정책 4-2 재마스킹).
+  useEffect(() => {
+    return () => {
+      const cached = rawCachedMemberRef.current
+      if (!cached) return
+      rawCachedMemberRef.current = null
+      if (cached.memberId != null) {
+        queryClient.removeQueries({ queryKey: memberQueryKeys.detail(cached.memberId), exact: true })
+      }
+      queryClient.removeQueries({
+        queryKey: [...memberQueryKeys.detailByUuid(cached.uuid), cached.role],
+        exact: true,
+      })
+    }
+  }, [displayUser?.id, queryClient])
 
   const saveBasicInfoEdit = useCallback(async () => {
     if (!displayUser || !basicInfoDraft || !patchMemberBasicInfo) return

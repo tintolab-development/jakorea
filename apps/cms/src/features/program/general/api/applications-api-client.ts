@@ -1,5 +1,6 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import customInstance from '@/shared/api/orval-mutator'
+import { privacyUnmaskBody } from '@/shared/lib/privacy-unmask-purpose'
 import { getJAKoreaCMSBackendAPIDashboardSubset } from '@/shared/api/generated/dashboard/dashboard-api'
 import type { ApplicationDecisionResponse } from '@/shared/api/generated/dashboard/schemas/applicationDecisionResponse'
 import type { ApplicationRejectRequest } from '@/shared/api/generated/dashboard/schemas/applicationRejectRequest'
@@ -331,10 +332,8 @@ export async function unmaskOrganizationApplicationPrivacyRemote(
     await customInstance({
       url: `/api/admin/organization-applications/${encodeURIComponent(applicationId)}/privacy/unmask`,
       method: 'POST',
-      data: {
-        reason,
-        ...(programId != null ? { programId } : {}),
-      },
+      // 수정 진입 고정 사유('신청 정보 수정')이면 purpose=EDIT_MODE — 서버가 APPLICATION_WRITE 확인·고정 사유 감사
+      data: privacyUnmaskBody(reason, programId),
       headers: { 'Cache-Control': 'no-store' },
     })
   )
@@ -350,10 +349,8 @@ export async function unmaskInstructorApplicationPrivacyRemote(
     await customInstance({
       url: `/api/admin/instructor-applications/${encodeURIComponent(applicationId)}/privacy/unmask`,
       method: 'POST',
-      data: {
-        reason,
-        ...(programId != null ? { programId } : {}),
-      },
+      // 수정 진입 고정 사유('신청 정보 수정')이면 purpose=EDIT_MODE — 서버가 APPLICATION_WRITE 확인·고정 사유 감사
+      data: privacyUnmaskBody(reason, programId),
       headers: { 'Cache-Control': 'no-store' },
     })
   )
@@ -422,7 +419,7 @@ export async function unmaskIndividualApplicationPrivacyRemote(
     await customInstance({
       url: `/api/admin/individual-applications/${encodeURIComponent(applicationId)}/privacy/unmask`,
       method: 'POST',
-      data: { reason },
+      data: privacyUnmaskBody(reason),
       headers: { 'Cache-Control': 'no-store' },
     })
   )
@@ -509,10 +506,8 @@ export async function unmaskVolunteerApplicationPrivacyRemote(
     await customInstance({
       url: `/api/admin/volunteer-applications/${encodeURIComponent(applicationId)}/privacy/unmask`,
       method: 'POST',
-      data: {
-        reason,
-        ...(programId != null ? { programId } : {}),
-      },
+      // 수정 진입 고정 사유('신청 정보 수정')이면 purpose=EDIT_MODE — 서버가 APPLICATION_WRITE 확인·고정 사유 감사
+      data: privacyUnmaskBody(reason, programId),
       headers: { 'Cache-Control': 'no-store' },
     })
   )
