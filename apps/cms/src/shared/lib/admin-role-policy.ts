@@ -8,6 +8,7 @@ import type { AdminLevel, AdminRoleCode, User } from '@/types/user'
 import { isAdminSessionRoleSyncPending } from '@/features/auth/lib/admin-session-sync-state'
 import { isAdminFirstLoginOnboardingIncomplete } from '@/shared/utils/post-auth-redirect'
 import {
+  isCmsMemberPiiAdminRole,
   isCmsOperableProgramOwnerRole,
   isCmsViewerAdminRole,
 } from '@/shared/lib/cms-global-role-code'
@@ -270,12 +271,9 @@ export function canAdminAction(input: {
       }
       return !isReadOnlyAdminRoleCode(roleCode)
     case 'pii':
-      // 회원 관리 일반 개인정보. 프로그램 상세 원문은 canRevealProgramPrivacy.
-      return (
-        roleCode === 'MASTER' ||
-        roleCode === 'ACCOUNTING_MANAGER' ||
-        roleCode === 'PROGRAM_MANAGER'
-      )
+      // 회원 관리 일반 개인정보(전역 역할 기준). 프로그램 상세 원문은 canRevealProgramPrivacy.
+      // PM·PARTNER는 V1.2 이전 프로그램 역할 코드라 여기서 허용하지 않는다.
+      return isCmsMemberPiiAdminRole(roleCode)
     case 'piiRrn':
     case 'piiAccount':
     case 'adminAccountManage':

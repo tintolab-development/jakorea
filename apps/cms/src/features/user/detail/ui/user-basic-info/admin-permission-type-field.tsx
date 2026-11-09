@@ -14,6 +14,8 @@ import {
 } from '@/shared/components/status-dropdown-cell'
 import { AdminMfaResetButton } from '@/features/user/detail/ui/admin-mfa-reset-button'
 import { getAdminPermissionTag } from '@/shared/lib/status-tag-specs'
+import { guardAdminAction } from '@/shared/lib/admin-role-policy'
+import { getSessionAdminRoleCode } from '@/shared/lib/session-admin-role'
 
 export type AdminPermissionTypeFieldProps = {
   mode: 'view' | 'edit'
@@ -67,7 +69,11 @@ export function AdminPermissionTypeField({
           }}
           isUpdating={permDropdownInView && adminPermissionVariantPatching}
           isOpen={adminPermissionOpen}
-          onOpenChange={setAdminPermissionOpen}
+          onOpenChange={open => {
+            // 권한 설정 V1.2: 관리자 권한 유형 변경은 Master 전용. Master가 아니면 열지 않고 안내.
+            if (open && !guardAdminAction({ roleCode: getSessionAdminRoleCode(), action: 'adminAccountManage' })) return
+            setAdminPermissionOpen(open)
+          }}
           emptyPlaceholder="-"
         />
         {mfaReset}
