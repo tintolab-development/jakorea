@@ -3,6 +3,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type DependencyList,
   type Dispatch,
@@ -39,6 +40,7 @@ import {
   canRevealProgramGeneralPii,
   canRevealProgramSensitivePii,
   evictProgramUnmaskDetailCaches,
+  resetTrackedProgramUnmaskCaches,
   isUnknownAssignmentRole,
 } from '@/features/program/shared/lib/program-my-assignment'
 import { useMyProgramPrivacyRole } from '@/features/user/detail/lib/use-my-program-privacy-role'
@@ -238,6 +240,21 @@ export function usePersonalInfoReveal({
   const programCanReveal = programUnmaskRequiresSensitive
     ? programAssignment.canRevealSensitive
     : programAssignment.canRevealGeneral
+
+  // 다시 가리기(원문→마스킹)·행 전환·화면 이탈 시 원문을 쓴 상세 캐시를 남기지 않는다.
+  const revealedRef = useRef(false)
+  useEffect(() => {
+    if (privacyScope !== 'program') return
+    if (revealedRef.current && !personalInfoRevealed) resetTrackedProgramUnmaskCaches(programId)
+    revealedRef.current = personalInfoRevealed
+  }, [privacyScope, programId, personalInfoRevealed])
+  useEffect(() => {
+    if (privacyScope !== 'program') return
+    return () => {
+      if (revealedRef.current) resetTrackedProgramUnmaskCaches(programId)
+      revealedRef.current = false
+    }
+  }, [privacyScope, programId])
 
   useEffect(() => {
     if (privacyScope !== 'program') return
