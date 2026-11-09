@@ -99,6 +99,38 @@
   overflow: clip !important;
 }
 
+/*
+ * 열 비율 — 시안 36:45954 (표 1538): 상단 배너 200 + 669 + 669 / 핵심 지표 512 + 512 + 514 / 파트너십 절차 100 + 719 + 719
+ * 고정 열(배너 이미지 200 · 단계 100)만 px, 나머지 열은 남는 폭을 균등 분할해 카드 폭을 꽉 채운다.
+ * table-layout:fixed 로 내용 길이에 따라 열이 치우치지 않게 한다. 폭은 antd 기본(100%) / 좁은 폭에서는 scroll.x 인라인 값 유지.
+ */
+.corporate-guide-banner-table .ant-table table,
+.corporate-guide-metrics-table .ant-table table,
+.corporate-guide-partnership-table .ant-table table {
+  table-layout: fixed !important;
+}
+
+.corporate-guide-banner-table .ant-table-thead > tr > th.corporate-guide-col--text,
+.corporate-guide-banner-table .ant-table-tbody > tr > td.corporate-guide-col--text {
+  width: calc((100% - 200px) / 2) !important;
+}
+
+.corporate-guide-metrics-table .ant-table-thead > tr > th.corporate-guide-col--label,
+.corporate-guide-metrics-table .ant-table-tbody > tr > td.corporate-guide-col--label,
+.corporate-guide-metrics-table .ant-table-thead > tr > th.corporate-guide-col--title,
+.corporate-guide-metrics-table .ant-table-tbody > tr > td.corporate-guide-col--title,
+.corporate-guide-metrics-table .ant-table-thead > tr > th.corporate-guide-col--desc,
+.corporate-guide-metrics-table .ant-table-tbody > tr > td.corporate-guide-col--desc {
+  width: calc(100% / 3) !important;
+}
+
+.corporate-guide-partnership-table .ant-table-thead > tr > th.corporate-guide-col--title,
+.corporate-guide-partnership-table .ant-table-tbody > tr > td.corporate-guide-col--title,
+.corporate-guide-partnership-table .ant-table-thead > tr > th.corporate-guide-col--desc,
+.corporate-guide-partnership-table .ant-table-tbody > tr > td.corporate-guide-col--desc {
+  width: calc((100% - 100px) / 2) !important;
+}
+
 /* 수정 모드 열 제목 필수 표시 — 글자 옆 2px · Status/red/main #C32F4A (talent-intro how-table와 동일) */
 .corporate-guide-table__th-label {
   display: inline-flex;

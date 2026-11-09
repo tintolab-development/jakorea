@@ -98,7 +98,6 @@ export function MetricsSectionCard({ items }: Props) {
       {
         title: '항목명',
         key: 'itemLabel',
-        width: 200,
         align: 'center',
         className: 'corporate-guide-col--label',
         render: (_value, record) => record.itemLabel,
@@ -107,7 +106,6 @@ export function MetricsSectionCard({ items }: Props) {
         // 수정 모드에서 타이틀·설명 텍스트 모두 필수 (저장 시 빈 값은 공통 필수 안내)
         title: isEditing ? requiredColumnTitle('타이틀') : '타이틀',
         key: 'title',
-        width: 240,
         align: 'center',
         className: 'corporate-guide-col--title',
         render: (_value, record) => {
