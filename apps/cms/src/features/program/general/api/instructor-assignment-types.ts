@@ -28,6 +28,15 @@ export type InstructorAssignmentListItemEnriched = InstructorAssignmentListItemR
   homeAddress?: string
   lectureLocationName?: string | null
   lecturePlaceAddress?: string | null
+  /**
+   * 배정 단위 정산 상태(8종 키, BE 2026-11-09 — OpenAPI 미반영). 구 백엔드는 없음 → 「해당 없음」.
+   * 판정: 최신 settlement revision → 없으면 최신 미확정 신청서 → 없으면 none. partial_confirmation은 배정 단위로 나오지 않는다.
+   */
+  settlementStatus?: string | null
+  /** 일정 진행 상태 UNSCHEDULED | SCHEDULED | IN_PROGRESS | COMPLETED */
+  scheduleProgressStatus?: string | null
+  settlementId?: number | null
+  settlementApplicationId?: number | null
 }
 
 /** requested-schedules — resolvedScheduleId null = 일정 미생성 */
