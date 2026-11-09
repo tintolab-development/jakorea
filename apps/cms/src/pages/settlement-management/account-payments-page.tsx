@@ -29,7 +29,6 @@ import {
 } from '@/features/settlement-management/api/settlement-api-client'
 import type { SettlementExportResponse } from '@/features/settlement-management/api/account-payments/settlement-export-response'
 import type { TaxReportPreviewWorkbook } from '@/features/settlement-management/api/account-payments/tax-report-preview'
-import type { SettlementExportRequest } from '@/shared/api/generated/settlement/schemas'
 import { pickEligibleAccountPaymentFormIssueRows } from './resolve-toolbar-form-issue-rows'
 import { useAccountPaymentsListQuery } from '@/features/settlement-management/hooks/use-account-payments-list-query'
 import {
@@ -44,11 +43,7 @@ import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import { showIssueCompletedAlert } from '@/shared/ui/show-issue-completed-alert'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canAccessAccountPayments } from '@/shared/lib/account-payments-access'
-import {
-  resolveAdminRoleCodeFromUser,
-  showAdminAccessDeniedAlert,
-} from '@/shared/lib/admin-role-policy'
-import { RawSettlementExportApprovalModal } from './raw-settlement-export-approval-modal'
+import { showAdminAccessDeniedAlert } from '@/shared/lib/admin-role-policy'
 import { ACCOUNT_PAYMENT_LIST_FILTER_STATUSES } from '@/shared/constants/payment-order-aggregate-status'
 import {
   FilterTableLayout,
@@ -194,11 +189,6 @@ function useCalendarYear(): number {
 export default function AccountPaymentsPage() {
   const { user } = useAuthStore()
   const canManageAccountPayments = canAccessAccountPayments(user)
-  const sessionRoleCode = resolveAdminRoleCodeFromUser(user)
-  const [rawExport, setRawExport] = useState<{
-    mode: 'request' | 'approve'
-    kind: 'bulk-transfer' | 'tax-report'
-  } | null>(null)
   const [searchParams, setSearchParams] = useSearchParams()
   const calendarYear = useCalendarYear()
   const tabYears = useMemo(
@@ -283,7 +273,6 @@ export default function AccountPaymentsPage() {
   )
 
   const accountPaymentsRemote = shouldUseSettlementRemote('accountPayments')
-  const canRequestRawExport = accountPaymentsRemote && sessionRoleCode === 'ACCOUNTING_MANAGER'
   const markPaidMutation = useMarkAccountPaymentPaidMutation()
   const bulkTransferExportMutation = useBulkTransferExportMutation()
   const taxReportExportMutation = useTaxReportExportMutation()
@@ -578,11 +567,6 @@ export default function AccountPaymentsPage() {
     []
   )
 
-  const rawExportSelectedRows = useMemo(() => {
-    const keySet = new Set(selectedRowKeys.map(String))
-    return filteredRows.filter(row => keySet.has(String(row.id)))
-  }, [filteredRows, selectedRowKeys])
-
   /** 화면에는 `총 n건만` 표기. 기획상 집계 구간은 전년 12월 ~ 당해 12월이며 연도가 바뀌면 갱신(API·데이터 연동 시 반영). */
   const total = filteredRows.length
 
@@ -683,28 +667,6 @@ export default function AccountPaymentsPage() {
     [accountPaymentsRemote, requestExportForKind]
   )
 
-  const submitPreparedExport = useCallback(
-    async (
-      kind: 'bulk-transfer' | 'tax-report',
-      body: SettlementExportRequest
-    ): Promise<SettlementExportResponse> => {
-      if (kind === 'bulk-transfer') return bulkTransferExportMutation.mutateAsync(body)
-      return taxReportExportMutation.mutateAsync(body)
-    },
-    [bulkTransferExportMutation, taxReportExportMutation]
-  )
-
-  const openRawExportRequest = useCallback(
-    (kind: 'bulk-transfer' | 'tax-report') => {
-      if (!canRequestRawExport) {
-        showAdminAccessDeniedAlert()
-        return
-      }
-      setRawExport({ mode: 'request', kind })
-    },
-    [canRequestRawExport]
-  )
-
   const openBulkTransferPreview = useCallback(() => {
     const rows = resolveToolbarFormIssueRows('bulk-transfer')
     if (rows === null) return
@@ -729,40 +691,45 @@ export default function AccountPaymentsPage() {
     setIssuedFormExport(null)
   }, [])
 
+  /** 세금신고 미리보기 — 툴바(선택 행)·계좌 지급 일괄 완료 모달(방금 완료한 행) 공용 */
+  const openTaxFilingPreviewForRows = useCallback(
+    (rows: AccountPaymentRow[]) => {
+      const requestSequence = ++taxReportPreviewRequestSequence.current
+      void (async () => {
+        try {
+          const exportBody = buildAccountPaymentExportRequest({
+            kind: 'tax-report',
+            selection: { kind: 'selected', rows },
+            fromDate: listQueryFilters.fromDate,
+            toDate: listQueryFilters.toDate,
+          })
+          const previewPromise = accountPaymentsRemote
+            ? requestTaxReportPreviewRemote({
+                settlementIds: exportBody.settlementIds ?? [],
+                accountPaymentIds: exportBody.accountPaymentIds ?? [],
+              })
+            : Promise.resolve(null)
+          const previewWorkbook = await previewPromise
+          if (requestSequence !== taxReportPreviewRequestSequence.current) return
+          setIssuedTaxReportPreview(previewWorkbook)
+          setIssuedFormPreviewRows(rows)
+          setIssuedFormExport(null)
+          setTaxFilingPreviewOpen(true)
+        } catch (error) {
+          if (requestSequence !== taxReportPreviewRequestSequence.current) return
+          notifyExportError(error, '세금신고 미리보기 또는 파일 생성에 실패했습니다.')
+          return
+        }
+      })()
+    },
+    [accountPaymentsRemote, listQueryFilters.fromDate, listQueryFilters.toDate, notifyExportError]
+  )
+
   const openTaxFilingPreview = useCallback(() => {
     const rows = resolveToolbarFormIssueRows('tax-report')
     if (rows === null) return
-    const requestSequence = ++taxReportPreviewRequestSequence.current
-    void (async () => {
-      try {
-        const exportBody = buildAccountPaymentExportRequest({
-          kind: 'tax-report',
-          selection: { kind: 'selected', rows },
-          fromDate: listQueryFilters.fromDate,
-          toDate: listQueryFilters.toDate,
-        })
-        const previewPromise = accountPaymentsRemote
-          ? requestTaxReportPreviewRemote(exportBody.settlementIds ?? [])
-          : Promise.resolve(null)
-        const previewWorkbook = await previewPromise
-        if (requestSequence !== taxReportPreviewRequestSequence.current) return
-        setIssuedTaxReportPreview(previewWorkbook)
-        setIssuedFormPreviewRows(rows)
-        setIssuedFormExport(null)
-        setTaxFilingPreviewOpen(true)
-      } catch (error) {
-        if (requestSequence !== taxReportPreviewRequestSequence.current) return
-        notifyExportError(error, '세금신고 미리보기 또는 파일 생성에 실패했습니다.')
-        return
-      }
-    })()
-  }, [
-    accountPaymentsRemote,
-    listQueryFilters.fromDate,
-    listQueryFilters.toDate,
-    notifyExportError,
-    resolveToolbarFormIssueRows,
-  ])
+    openTaxFilingPreviewForRows(rows)
+  }, [openTaxFilingPreviewForRows, resolveToolbarFormIssueRows])
 
   const reissueIssuedFormExport = useCallback(
     async (kind: 'bulk-transfer' | 'tax-report') => {
@@ -937,32 +904,12 @@ export default function AccountPaymentsPage() {
         >
           세금신고 양식 발급
         </FilterTableToolbarButton>
-        {canRequestRawExport ? (
-          <>
-            <FilterTableToolbarButton
-              variant="secondary"
-              type="button"
-              onClick={() => openRawExportRequest('bulk-transfer')}
-            >
-              대량이체 전체 원본 요청
-            </FilterTableToolbarButton>
-            <FilterTableToolbarButton
-              variant="secondary"
-              type="button"
-              onClick={() => openRawExportRequest('tax-report')}
-            >
-              세금신고 전체 원본 요청
-            </FilterTableToolbarButton>
-          </>
-        ) : null}
       </>
     ),
     [
       viewMode,
       openBulkTransferPreview,
       openTaxFilingPreview,
-      canRequestRawExport,
-      openRawExportRequest,
     ]
   )
 
@@ -1041,29 +988,24 @@ export default function AccountPaymentsPage() {
     setAccountPaymentCompleteSuccessContext(null)
   }, [])
 
-  const handleIssueBulkTransferFromSuccessModal = useCallback(() => {
+  /**
+   * 일괄 완료 모달「세금신고 양식 발급」— 방금 계좌 지급 완료한 행은 세금신고 대상이다.
+   * (대량이체는 지급 대기 건만 서버가 허용하므로 완료 직후에는 발급할 수 없다.)
+   */
+  const handleIssueTaxReportFromSuccessModal = useCallback(() => {
     const ctx = accountPaymentCompleteSuccessContext
     if (ctx?.kind !== 'bulk') return
-    const rowsForPreview = ctx.completedRows
+    const completedRows = ctx.completedRows.map(row => ({
+      ...row,
+      accountPaymentStatus: 'account_paid' as const,
+    }))
     setAccountPaymentCompleteSuccessContext(null)
-    if (rowsForPreview.length === 0) {
-      console.debug('accountPaymentsPage no rows from bulk payment success for bulk transfer')
+    if (completedRows.length === 0) {
+      console.debug('accountPaymentsPage no rows from bulk payment success for tax report')
       return
     }
-    void (async () => {
-      let readyExport: SettlementExportResponse | null = null
-      try {
-        readyExport = await waitReadyFormExport('bulk-transfer', rowsForPreview)
-      } catch (error) {
-        notifyExportError(error, '대량이체 파일 생성에 실패했습니다.')
-        return
-      }
-      setIssuedFormPreviewRows(rowsForPreview)
-      setIssuedFormExport(readyExport)
-      setBulkTransferPreviewOpen(true)
-      showIssueCompletedAlert()
-    })()
-  }, [accountPaymentCompleteSuccessContext, notifyExportError, waitReadyFormExport])
+    openTaxFilingPreviewForRows(completedRows)
+  }, [accountPaymentCompleteSuccessContext, openTaxFilingPreviewForRows])
 
   const filterLayoutClassName = 'account-payments-page__filter-table'
 
@@ -1246,17 +1188,7 @@ export default function AccountPaymentsPage() {
         open={accountPaymentCompleteSuccessContext !== null}
         context={accountPaymentCompleteSuccessContext}
         onCancel={closeAccountPaymentCompleteSuccess}
-        onIssueBulkTransfer={handleIssueBulkTransferFromSuccessModal}
-      />
-
-      <RawSettlementExportApprovalModal
-        open={rawExport != null}
-        mode={rawExport?.mode ?? 'request'}
-        kind={rawExport?.kind ?? 'bulk-transfer'}
-        sessionAdminAccountId={user?.adminAccountId ?? null}
-        selectedRows={rawExportSelectedRows}
-        onRequestExport={submitPreparedExport}
-        onClose={() => setRawExport(null)}
+        onIssueTaxReport={handleIssueTaxReportFromSuccessModal}
       />
 
       <InstructorPaymentStatementBlockedModal
