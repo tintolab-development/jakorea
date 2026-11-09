@@ -3,6 +3,7 @@ import type {
   TalentDonationApplication,
   TalentDonationApplicationListFilter,
 } from '@/entities/talent-donation-application/model/types'
+import { fileDownloadLogQueryKeys } from '@/features/file-download-log/api/query-keys'
 import { useAdminInfiniteList } from '@/shared/hooks/use-admin-infinite-list'
 import {
   collectInfiniteCachedRows,
@@ -12,6 +13,7 @@ import { shouldUseTalentDonationApplicationRemoteApi } from './capabilities'
 import { talentDonationApplicationQueryKeys } from './query-keys'
 import {
   confirmTalentDonationApplicationsService,
+  exportTalentDonationApplicationsService,
   getTalentDonationApplicationService,
   listTalentDonationApplicationsPageService,
   removeTalentDonationApplicationsService,
@@ -124,6 +126,18 @@ export function useConfirmTalentDonationApplications(
           queryKey: talentDonationApplicationQueryKeys.lists(),
         })
       }
+    },
+  })
+}
+
+/** 엑셀 다운로드 — 성공 시 BE가 남긴 파일 다운로드 이력 목록을 갱신한다. */
+export function useExportTalentDonationApplications() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (filter: TalentDonationApplicationListFilter) => exportTalentDonationApplicationsService(filter),
+    retry: false,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: fileDownloadLogQueryKeys.all })
     },
   })
 }

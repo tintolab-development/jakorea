@@ -2,7 +2,8 @@ import axios from 'axios';
 import type { RecruitApplicant, RecruitApplicantDetail, RecruitApplicantListFilter, } from '@/entities/recruit-applicant/model/types';
 import { toAdminListPage, type AdminListPage } from '@/shared/lib/admin-infinite-list';
 import { getJAKoreaHomepageAdminAPICareersSubset } from '@/shared/api/generated/careers/careers-api';
-import { mapCareerTalentApplicationDetail, mapCareerTalentApplicationListItem, toNumericId, toTalentApplicationListParams, } from './mappers';
+import { defaultXlsxFilename, downloadRemoteLogExcel } from '@/features/logs/shared/lib/download-binary';
+import { mapCareerTalentApplicationDetail, mapCareerTalentApplicationListItem, toNumericId, toTalentApplicationExportParams, toTalentApplicationListParams, } from './mappers';
 import { downloadHomepageProtectedAttachment, homepageRecruitAttachmentUrl } from '@/shared/lib/protected-attachment-download';
 export type RecruitApplicantConfirmInput = {
     id: string;
@@ -63,4 +64,15 @@ export async function confirmRecruitApplicantsService(items: RecruitApplicantCon
 export async function removeRecruitApplicantsService(ids: string[]): Promise<void> {
     await careersApi().delete4(ids.map(toNumericId));
     return;
+}
+/**
+ * 엑셀 다운로드 — BE가 목록과 같은 필터·마스킹으로 xlsx를 만들고
+ * 감사 로그(LIST_EXPORT)·파일 다운로드 이력을 남긴다. FE는 받은 파일을 저장만 한다.
+ */
+export async function exportRecruitApplicantsService(filter: RecruitApplicantListFilter | undefined): Promise<void> {
+    await downloadRemoteLogExcel({
+        url: '/api/admin/careers/talent-applications/export',
+        params: toTalentApplicationExportParams(filter),
+        filenameFallback: defaultXlsxFilename('인재채용_신청_목록'),
+    });
 }

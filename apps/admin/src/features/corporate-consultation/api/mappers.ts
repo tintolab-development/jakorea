@@ -120,6 +120,16 @@ export function toConsultationListParams(
   return params
 }
 
+/** 엑셀 export — 목록과 같은 필터, page/size 없음 (BE `/export` 가 전체를 내려준다). */
+export function toConsultationExportParams(
+  filter: CorporateConsultationListFilter = {},
+): Omit<List14Params, 'page' | 'size'> {
+  const params: Partial<List14Params> = { ...toConsultationListParams(filter) }
+  delete params.page
+  delete params.size
+  return params
+}
+
 export function toBulkRequest(rows: CorporateConsultation[]): BulkRequest {
   return {
     items: rows.map(row => ({

@@ -1,7 +1,8 @@
 import type { CorporateConsultation, CorporateConsultationListFilter, } from '@/entities/corporate-consultation/model/types';
 import { fetchAllAdminListPages, toAdminListPage, type AdminListPage } from '@/shared/lib/admin-infinite-list';
 import { getJAKoreaHomepageAdminAPISponsorshipSubset } from '@/shared/api/generated/sponsorship/sponsorship-api';
-import { mapConsultationDetailToDomain, mapConsultationListItemToDomain, toBulkRequest, toConsultationListParams, toStatusUpdateRequest, } from './mappers';
+import { defaultXlsxFilename, downloadRemoteLogExcel } from '@/features/logs/shared/lib/download-binary';
+import { mapConsultationDetailToDomain, mapConsultationListItemToDomain, toBulkRequest, toConsultationExportParams, toConsultationListParams, toStatusUpdateRequest, } from './mappers';
 import { isAdminForbidden, isAdminNotFound } from '@/features/system-inbox/lib/http-status';
 import { downloadHomepageProtectedAttachment, homepageCorporateConsultationAttachmentUrl } from '@/shared/lib/protected-attachment-download';
 function sponsorshipApi() {
@@ -87,4 +88,15 @@ export async function confirmCorporateConsultationsService(ids: string[], actorN
         confirmedByName: actorName?.trim() ? actorName.trim() : row.confirmedByName,
         version: row.version + 1,
     }));
+}
+/**
+ * 엑셀 다운로드 — BE가 목록과 같은 필터·마스킹으로 xlsx를 만들고
+ * 감사 로그(LIST_EXPORT)·파일 다운로드 이력을 남긴다. FE는 받은 파일을 저장만 한다.
+ */
+export async function exportCorporateConsultationsService(filter: CorporateConsultationListFilter = {}): Promise<void> {
+    await downloadRemoteLogExcel({
+        url: '/api/admin/sponsorship/corporate-consultations/export',
+        params: toConsultationExportParams(filter),
+        filenameFallback: defaultXlsxFilename('기업_후원_상담_신청_목록'),
+    });
 }

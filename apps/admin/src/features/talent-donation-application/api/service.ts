@@ -1,7 +1,8 @@
 import type { TalentDonationApplication, TalentDonationApplicationListFilter, } from '@/entities/talent-donation-application/model/types';
 import { toAdminListPage, type AdminListPage } from '@/shared/lib/admin-infinite-list';
 import { getJAKoreaHomepageAdminAPISponsorshipSubset } from '@/shared/api/generated/sponsorship/sponsorship-api';
-import { mapTalentApplicationDetailToDomain, mapTalentApplicationListItemToDomain, toTalentApplicationListParams, toTalentApplicationStatusUpdateRequest, } from './mappers';
+import { defaultXlsxFilename, downloadRemoteLogExcel } from '@/features/logs/shared/lib/download-binary';
+import { mapTalentApplicationDetailToDomain, mapTalentApplicationListItemToDomain, toTalentApplicationExportParams, toTalentApplicationListParams, toTalentApplicationStatusUpdateRequest, } from './mappers';
 import { isAdminForbidden, isAdminNotFound } from '@/features/system-inbox/lib/http-status';
 import { downloadHomepageProtectedAttachment, homepageTalentDonationAttachmentUrl } from '@/shared/lib/protected-attachment-download';
 function sponsorshipApi() {
@@ -70,4 +71,15 @@ export async function confirmTalentDonationApplicationsService(ids: string[], ac
         results.push(mapped);
     }
     return results;
+}
+/**
+ * 엑셀 다운로드 — BE가 목록과 같은 필터·마스킹으로 xlsx를 만들고
+ * 감사 로그(LIST_EXPORT)·파일 다운로드 이력을 남긴다. FE는 받은 파일을 저장만 한다.
+ */
+export async function exportTalentDonationApplicationsService(filter: TalentDonationApplicationListFilter = {}): Promise<void> {
+    await downloadRemoteLogExcel({
+        url: '/api/admin/sponsorship/talent-applications/export',
+        params: toTalentApplicationExportParams(filter),
+        filenameFallback: defaultXlsxFilename('재능기부_신청_목록'),
+    });
 }

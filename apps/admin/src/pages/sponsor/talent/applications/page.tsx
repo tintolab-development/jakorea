@@ -15,6 +15,7 @@ import type {
 } from '@/entities/talent-donation-application/model/types'
 import {
   useConfirmTalentDonationApplications,
+  useExportTalentDonationApplications,
   useRemoveTalentDonationApplications,
   useTalentDonationApplicationsList,
 } from '@/features/talent-donation-application/api/hooks'
@@ -32,6 +33,7 @@ import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
+import { logExcelExportFailureAlert } from '@/features/logs/shared/lib/log-excel-export-alert'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { formatDateTimeDot, formatNumberDisplay } from '@/shared/lib/format-display'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
@@ -56,6 +58,7 @@ import {
   CmsInput,
   CmsSelect,
   ConfirmModal,
+  ExcelButton,
   NO_SELECTION_ALERT,
   showChangeCompletedAlert,
   showDeleteCompletedAlert,
@@ -265,6 +268,13 @@ export function TalentDonationApplicationsPage() {
   })
 
   const listQuery = useTalentDonationApplicationsList(appliedFilter)
+  const exportMutation = useExportTalentDonationApplications()
+  const handleExcel = useCallback(() => {
+    if (exportMutation.isPending) return
+    void exportMutation.mutateAsync(appliedFilter).catch((error: unknown) => {
+      showAlert(logExcelExportFailureAlert(error))
+    })
+  }, [appliedFilter, exportMutation, showAlert])
   const removeMutation = useRemoveTalentDonationApplications(appliedFilter)
   const confirmMutation = useConfirmTalentDonationApplications(appliedFilter)
 
@@ -728,6 +738,12 @@ export function TalentDonationApplicationsPage() {
             >
               선택 확인
             </CmsButton>
+            <ExcelButton
+              onClick={handleExcel}
+              empty={totalCount === 0}
+              loading={exportMutation.isPending}
+              disabled={exportMutation.isPending}
+            />
           </>
         }
       >

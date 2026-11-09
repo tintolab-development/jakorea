@@ -137,6 +137,16 @@ export function toTalentApplicationListParams(
   return params
 }
 
+/** 엑셀 export — 목록과 같은 필터, page/size 없음 (BE `/export` 가 전체를 내려준다). */
+export function toTalentApplicationExportParams(
+  filter: TalentDonationApplicationListFilter = {},
+): Omit<List13Params, 'page' | 'size'> {
+  const params: Partial<List13Params> = { ...toTalentApplicationListParams(filter) }
+  delete params.page
+  delete params.size
+  return params
+}
+
 export function toTalentApplicationStatusUpdateRequest(
   status: ApplicationStatus,
 ): TalentApplicationStatusUpdateRequest {

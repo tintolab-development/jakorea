@@ -115,6 +115,16 @@ export function toTalentApplicationListParams(
   return params
 }
 
+/** 엑셀 export — 목록과 같은 필터, page/size 없음 (BE `/export` 가 전체를 내려준다). */
+export function toTalentApplicationExportParams(
+  filter?: RecruitApplicantListFilter,
+): Omit<List15Params, 'page' | 'size'> {
+  const params: Partial<List15Params> = { ...toTalentApplicationListParams(filter) }
+  delete params.page
+  delete params.size
+  return params
+}
+
 const EDUCATION_LEVEL: Record<
   Exclude<CareerTalentApplicationDetailResponseEducationLevel, null>,
   RecruitEducationLevel

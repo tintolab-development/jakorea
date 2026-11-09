@@ -3,6 +3,7 @@ import type {
   CorporateConsultation,
   CorporateConsultationListFilter,
 } from '@/entities/corporate-consultation/model/types'
+import { fileDownloadLogQueryKeys } from '@/features/file-download-log/api/query-keys'
 import { useAdminInfiniteList } from '@/shared/hooks/use-admin-infinite-list'
 import {
   collectInfiniteCachedRows,
@@ -12,6 +13,7 @@ import { shouldUseCorporateConsultationRemoteApi } from './capabilities'
 import { corporateConsultationQueryKeys } from './query-keys'
 import {
   confirmCorporateConsultationsService,
+  exportCorporateConsultationsService,
   getCorporateConsultationService,
   listCorporateConsultationsPageService,
   removeCorporateConsultationsService,
@@ -116,6 +118,18 @@ export function useConfirmCorporateConsultations(_filter: CorporateConsultationL
       if (updatedRows.length === 0) {
         void queryClient.invalidateQueries({ queryKey: corporateConsultationQueryKeys.lists() })
       }
+    },
+  })
+}
+
+/** 엑셀 다운로드 — 성공 시 BE가 남긴 파일 다운로드 이력 목록을 갱신한다. */
+export function useExportCorporateConsultations() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (filter: CorporateConsultationListFilter) => exportCorporateConsultationsService(filter),
+    retry: false,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: fileDownloadLogQueryKeys.all })
     },
   })
 }
