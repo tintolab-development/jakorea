@@ -26,11 +26,12 @@ import { UjatSurveySubmittedState } from './ujat-survey-submitted-state'
 import { UjatLectureEvalFormView } from './ujat-lecture-eval-form-view'
 import { UjatSurveyPollResultsView } from './ujat-survey-poll-results-view'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
-import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import './ujat-lecture-eval.css'
 
 export type UjatLectureEvalSurveyViewProps = {
   survey: UjatRegisteredSurvey | null
+  /** 결과 문항 구성을 바인딩 version으로 조회(템플릿 목록 미조회 — 뷰어 403 방지) */
+  resultsTemplateVersionId?: number
   submitted: boolean
   formDraft: WritingFormDraft | null
   pollResponses: UjatSurveyPollRawResponse[]
@@ -48,6 +49,7 @@ export type UjatLectureEvalSurveyViewProps = {
 
 export function UjatLectureEvalSurveyView({
   survey,
+  resultsTemplateVersionId,
   submitted,
   formDraft,
   pollResponses,
@@ -62,7 +64,6 @@ export function UjatLectureEvalSurveyView({
   onEditResponseClick,
   onDownloadResultsClick,
 }: UjatLectureEvalSurveyViewProps) {
-  const canWrite = useUjatCanWrite()
   const showForm =
     survey != null && isLectureEvalFormPhase(survey, submitted) && formDraft != null
   const showSubmitted = survey != null && submitted
@@ -71,7 +72,7 @@ export function UjatLectureEvalSurveyView({
   const downloadEnabled = survey != null && canDownloadSurveyResults(survey)
 
   const trailingActions =
-    canWrite && activeTab === 'eval' && showForm && !submitted ? (
+    activeTab === 'eval' && showForm && !submitted ? (
       <CmsButton className="ujat-lecture-eval-survey__submit-trailing"
         onClick={onSubmitClick} >
         {UJAT_LECTURE_EVAL_ACTION_LABELS.submit}
@@ -93,7 +94,7 @@ export function UjatLectureEvalSurveyView({
         title={UJAT_LECTURE_EVAL_EMPTY_COPY.title}
         description={UJAT_LECTURE_EVAL_EMPTY_COPY.description}
         registerButtonLabel={UJAT_LECTURE_EVAL_EMPTY_COPY.registerButton}
-        showRegisterButton={canWrite}
+        showRegisterButton
         embedded
         onRegisterClick={onRegisterClick}
       />
@@ -111,15 +112,15 @@ export function UjatLectureEvalSurveyView({
         title={UJAT_LECTURE_EVAL_SUBMITTED_COPY.title}
         description={UJAT_LECTURE_EVAL_SUBMITTED_COPY.description}
         editButtonLabel={UJAT_LECTURE_EVAL_SUBMITTED_COPY.editButton}
-        canEdit={canWrite && canEditLectureEvalResponse(survey, formDraft)}
-        showEditButton={canWrite}
+        canEdit={canEditLectureEvalResponse(survey, formDraft)}
+        showEditButton
         onEditClick={onEditResponseClick}
       />
     ) : showForm && formDraft != null ? (
       <UjatLectureEvalFormView
         draft={formDraft}
         submitButtonLabel={UJAT_LECTURE_EVAL_ACTION_LABELS.submit}
-        showSubmitButton={canWrite}
+        showSubmitButton
         onDraftChange={onFormDraftChange}
         onSubmitClick={onSubmitClick}
       />
@@ -140,6 +141,7 @@ export function UjatLectureEvalSurveyView({
         <div ref={resultsExportRef} className="ujat-lecture-eval-survey__results">
           <UjatSurveyPollResultsView
             templateId={survey!.templateId}
+            templateVersionId={resultsTemplateVersionId}
             responseCount={survey!.responseCount}
             participantTotal={survey!.participantTotal}
             responses={pollResponses.length > 0 ? pollResponses : undefined}

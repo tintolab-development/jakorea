@@ -16,6 +16,13 @@ export const UJAT_REVISION_REQUEST_PENDING_REASON =
 export const UJAT_REVISION_REQUEST_CHECKING_BLOCKED_REASON =
   '기관 확인이 완료되기 전에는 수정 요청을 보낼 수 없습니다.'
 
+export const UJAT_APPROVE_INSTITUTION_CHECKING_REASON =
+  '기관 확인이 완료된 후 신청 승인할 수 있습니다.'
+
+export const UJAT_APPROVE_TEMP_REJECTED_REASON = '임시 배정이 반려된 신청은 승인할 수 없습니다.'
+
+export const UJAT_SCHEDULE_LOCKED_REASON = '일정이 잠겨 있어 재배정할 수 없습니다.'
+
 export const UJAT_REVISION_REQUEST_DUPLICATE_MESSAGE =
   '이미 수정 요청된 기관입니다. 교사 재제출 후 다시 시도해 주세요.'
 
@@ -34,6 +41,8 @@ export type UjatInstitutionWorkflowView = {
   primaryLabel: string
   primaryAction: UjatInstitutionWorkflowPrimaryAction
   primaryDisabled: boolean
+  /** 주 버튼이 막힌 이유 — 버튼을 누르면 안내로 보여 준다 */
+  primaryDisabledReason?: string
   canFinalApprove: boolean
   scheduleEditDisabled: boolean
   revisionRequestDisabled: boolean
@@ -151,6 +160,7 @@ export function resolveUjatInstitutionWorkflow(
         primaryLabel: '임시 배정 반려',
         primaryAction: 'none',
         primaryDisabled: true,
+        primaryDisabledReason: UJAT_APPROVE_TEMP_REJECTED_REASON,
         canFinalApprove: false,
         scheduleEditDisabled,
         revisionRequestDisabled: revisionRequestGate.disabled,
@@ -181,6 +191,7 @@ export function resolveUjatInstitutionWorkflow(
           primaryLabel: scheduleEditDisabled ? '일정 잠금' : '일정 재배정',
           primaryAction: scheduleEditDisabled ? 'none' : 'open_schedule_assign',
           primaryDisabled: scheduleEditDisabled,
+          primaryDisabledReason: scheduleEditDisabled ? UJAT_SCHEDULE_LOCKED_REASON : undefined,
           canFinalApprove: false,
           scheduleEditDisabled,
           revisionRequestDisabled: revisionRequestGate.disabled,
@@ -194,6 +205,7 @@ export function resolveUjatInstitutionWorkflow(
         primaryLabel: '기관 확인 대기',
         primaryAction: 'none',
         primaryDisabled: true,
+        primaryDisabledReason: UJAT_APPROVE_INSTITUTION_CHECKING_REASON,
         canFinalApprove: false,
         scheduleEditDisabled,
         revisionRequestDisabled: revisionRequestGate.disabled,

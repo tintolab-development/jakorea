@@ -17,7 +17,12 @@ export function memberEnrollmentSummaryQueryOptions(
   return queryOptions({
     queryKey: memberQueryKeys.enrollmentSummary(memberId, applicationId),
     staleTime: ENROLLMENT_SUMMARY_STALE_MS,
-    queryFn: () => fetchApplicationEnrollmentSummaryRemote(memberId, applicationId),
+    // 권한 설정 V1.2 '회원 상세 프로그램 활동 내역': 담당 프로그램만 조회. 미배정 행은 서버 403 →
+    // 요약 없이 원래 행을 쓰므로(enrichSingleApplication catch) 공통 접근 불가 팝업을 띄우지 않는다.
+    queryFn: () =>
+      fetchApplicationEnrollmentSummaryRemote(memberId, applicationId, undefined, {
+        skipGlobalErrorAlert: true,
+      }),
   })
 }
 

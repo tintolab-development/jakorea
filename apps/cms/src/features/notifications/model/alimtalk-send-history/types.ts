@@ -1,28 +1,15 @@
 import type { Dayjs } from 'dayjs'
 import type { AlimtalkTemplateItem } from '@/features/notifications/model/alimtalk-template/types'
+import {
+  NOTIFICATION_RECEIVE_STATUS_OPTIONS,
+  NOTIFICATION_SEND_STATUS_OPTIONS,
+} from '@/features/notifications/model/shared/delivery-status'
 
-export const ALIMTALK_SEND_STATUS_OPTIONS = [
-  '전체',
-  '발송 요청',
-  '예약',
-  '대기',
-  '발송중',
-  '발송 완료',
-  '발송 실패',
-  '취소',
-  '확인불가',
-] as const
+/** 세 채널 공통 정본 — `model/shared/delivery-status.ts` */
+export const ALIMTALK_SEND_STATUS_OPTIONS = NOTIFICATION_SEND_STATUS_OPTIONS
 
-export const ALIMTALK_RECEIVE_STATUS_OPTIONS = [
-  '전체',
-  '요청됨',
-  '확인 대기중',
-  '대기중',
-  '예약됨',
-  '수신 성공',
-  '수신 실패',
-  '취소됨',
-] as const
+/** 세 채널 공통 정본 — `model/shared/delivery-status.ts` */
+export const ALIMTALK_RECEIVE_STATUS_OPTIONS = NOTIFICATION_RECEIVE_STATUS_OPTIONS
 
 export const ALIMTALK_BROADCAST_TIMING_OPTIONS = ['전체', '즉시', '예약'] as const
 

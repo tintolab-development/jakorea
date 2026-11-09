@@ -8,7 +8,6 @@ import {
   FilterTableToolbarButton,
   useCmsAlert,
 } from '@/shared/ui'
-import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { PermissionModal, type PermissionModalPayload } from '@/shared/components/permission-modal'
 import { NOTIFY_TIMING_CAPABILITY } from '@/shared/lib/notify-timing-capability'
@@ -167,7 +166,6 @@ export function UjatEducationProgressVolunteerAssignmentProgressTab({
   const bundle = progress.bundle
   const rows = useMemo(() => sortVolunteerAssignmentRows(bundle.rows), [bundle.rows])
   const absenceReasons = bundle.absenceReasons
-  const canWrite = useUjatCanWrite()
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [assignModalOpen, setAssignModalOpen] = useState(false)
   const [assignTargetRowId, setAssignTargetRowId] = useState<string | null>(null)
@@ -585,8 +583,7 @@ export function UjatEducationProgressVolunteerAssignmentProgressTab({
             <span className="table-description">총 {rows.length}건</span>
           </div>
           <div className="table-header-actions--wrapper">
-            {canWrite ? (
-              <>
+            <>
                 <FilterTableToolbarButton
                   type="button"
                   variant="delete"
@@ -625,7 +622,6 @@ export function UjatEducationProgressVolunteerAssignmentProgressTab({
                 </FilterTableToolbarButton>
                 <ExcelButton onClick={exportExcel} loading={isExporting} />
               </>
-            ) : null}
           </div>
         </div>
         <UjatEducationProgressVolunteerAssignmentTable

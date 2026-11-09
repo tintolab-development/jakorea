@@ -36,6 +36,7 @@ import {
 } from '@/entities/program/lib/program-pm-role-policy'
 import { AddManagerModal, type AddManagerFormValues } from '../../add-manager-modal'
 import { ManagerDeleteGuideModal } from '../../manager-delete-guide-modal'
+import { showAdminAccessDeniedAlert } from '@/shared/lib/admin-role-policy'
 import { StatusDropdownCell, STATUS_DROPDOWN_CELL_CLASSNAME } from '@/shared/components'
 import { getProgramRoleTag } from '@/shared/lib/status-tag-specs'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
@@ -108,6 +109,7 @@ export function ProgramManagersTab({
     updateManagerRole,
     deleteManagers,
     managersListAllowed,
+    managersManageAllowed,
     managersListPending,
   } = useProgramManagers(programId, managersListFilters, {
     enabled: addModalOpen && actionResult == null,
@@ -305,21 +307,29 @@ export function ProgramManagersTab({
         width: 208,
         align: 'center',
         onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
+        // 권한 설정 V1.2: 담당자 정보는 Owner·Assistant·Viewer 모두 조회, 역할 변경은 Program Owner만.
+        // 드롭다운은 모두에게 노출하고, Owner가 아니면 열 때 접근 불가 안내를 띄운다.
         render: (role: ProgramRole, record: ProgramManagerRow) => (
-          <StatusDropdownCell<ProgramRole>
-            status={role}
-            statusOptions={TABLE_ROLE_ORDER}
-            getTag={getProgramRoleTag}
-            isItemDisabled={(_cur, opt) => roleItemDisabled(record, opt)}
-            onChange={key => {
-              void handleTableRoleChange(record.id, key)
-            }}
-            isUpdating={isUpdatingRole}
-            isOpen={openRoleDropdownId === record.id}
-            onOpenChange={open => setOpenRoleDropdownId(open ? record.id : null)}
-            emptyPlaceholder="-"
-          />
-        ),
+            <StatusDropdownCell<ProgramRole>
+              status={role}
+              statusOptions={TABLE_ROLE_ORDER}
+              getTag={getProgramRoleTag}
+              isItemDisabled={(_cur, opt) => roleItemDisabled(record, opt)}
+              onChange={key => {
+                void handleTableRoleChange(record.id, key)
+              }}
+              isUpdating={isUpdatingRole}
+              isOpen={openRoleDropdownId === record.id}
+              onOpenChange={open => {
+                if (open && !managersManageAllowed) {
+                  showAdminAccessDeniedAlert()
+                  return
+                }
+                setOpenRoleDropdownId(open ? record.id : null)
+              }}
+              emptyPlaceholder="-"
+            />
+          ),
       },
       {
         title: '연락처',
@@ -346,7 +356,13 @@ export function ProgramManagersTab({
         align: 'center',
       },
     ],
-    [handleTableRoleChange, isUpdatingRole, openRoleDropdownId, roleItemDisabled]
+    [
+      handleTableRoleChange,
+      isUpdatingRole,
+      managersManageAllowed,
+      openRoleDropdownId,
+      roleItemDisabled,
+    ]
   )
 
   const excelColumns: ColumnsType<ProgramManagerRow> = useMemo(
@@ -406,11 +422,18 @@ export function ProgramManagersTab({
           selectedRowKeys,
         }}
         actions={
+          // 권한 설정 V1.2: 담당자 등록·삭제는 Program Owner만. 버튼은 노출하고 클릭 시 접근 불가 안내.
           <>
             <FilterTableToolbarButton
               variant="delete"
               loading={isMutating && deleteGuideModalOpen}
-              onClick={handleDeleteClick}
+              onClick={() => {
+                if (!managersManageAllowed) {
+                  showAdminAccessDeniedAlert()
+                  return
+                }
+                handleDeleteClick()
+              }}
             >
               담당자 삭제
             </FilterTableToolbarButton>
@@ -418,6 +441,10 @@ export function ProgramManagersTab({
               variant="primary"
               disabled={isMutating}
               onClick={() => {
+                if (!managersManageAllowed) {
+                  showAdminAccessDeniedAlert()
+                  return
+                }
                 setCandidateKeywordInput('')
                 setAddModalOpen(true)
               }}

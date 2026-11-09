@@ -24,7 +24,7 @@ import { useGeneralProgramSponsorEditContext } from '@/features/program/general/
 import { useDetailedProgramOptionsQuery } from '@/features/detailed-program/hooks/use-detailed-program-options-query'
 import { useSponsorOptionsQuery } from '@/features/sponsor/hooks/use-sponsor-options-query'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
-import { useProgramWagePaymentItemOptions } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
+import { useProgramWagePaymentItemOptionsState } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import { showUpdateCompletedAlert } from '@/shared/ui'
 import type { GeneralProgramUpdateSerializeOptions } from '@/features/program/general/api/adapters/general-program-adapters'
 import { createGeneralProgramCommonInfoIndependentSave } from '@/features/program/general/lib/overlay-phase1/common-info-independent-save'
@@ -89,7 +89,8 @@ export function useGeneralProgramCommonInfoSave({
   // 조회만 한다. 수정 모드 진입 시 handleInfoEdit·edit form 이 같은 키로 받아 둔 캐시를 쓴다.
   const detailedProgramsQuery = useDetailedProgramOptionsQuery(false)
   const detailedProgramCatalog = detailedProgramsQuery.data
-  const paymentItemOptions = useProgramWagePaymentItemOptions()
+  // 조회만 한다. 수정 모드의 강사비 영역이 같은 키로 받아 둔 캐시를 쓴다(상세 진입만으로 정산 설정을 부르지 않는다).
+  const paymentItemOptions = useProgramWagePaymentItemOptionsState(false).options
   // dirtyFields 는 render 구독이 있어야 저장 시점에도 최신이다. callback 안에서만 읽으면 항상 {} 가 된다.
   const dirtyFields = form.formState.dirtyFields
 
@@ -177,20 +178,23 @@ export function useGeneralProgramCommonInfoSave({
   ])
 
   /** `catalogOverride`: 수정 진입 직전에 받아 둔 세부 프로그램 목록 (hook 상태가 아직 갱신 전일 때) */
-  const resetToProgram = useCallback((catalogOverride?: typeof detailedProgramCatalog) => {
-    if (program) {
-      form.reset(
-        programToGeneralCommonInfoEditValues(
-          program,
-          sponsorContext,
-          catalogOverride ?? detailedProgramCatalog
-        ),
-        {
-          keepDefaultValues: false,
-        }
-      )
-    }
-  }, [form, program, sponsorContext, detailedProgramCatalog])
+  const resetToProgram = useCallback(
+    (catalogOverride?: typeof detailedProgramCatalog) => {
+      if (program) {
+        form.reset(
+          programToGeneralCommonInfoEditValues(
+            program,
+            sponsorContext,
+            catalogOverride ?? detailedProgramCatalog
+          ),
+          {
+            keepDefaultValues: false,
+          }
+        )
+      }
+    },
+    [form, program, sponsorContext, detailedProgramCatalog]
+  )
 
   return { triggerSave, resetToProgram }
 }

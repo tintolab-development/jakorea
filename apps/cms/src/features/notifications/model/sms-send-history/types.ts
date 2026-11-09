@@ -3,30 +3,16 @@ import type {
   SmsMessageType,
   SmsSenderNumberType,
 } from '@/features/notifications/api/adapters/sms-channel'
+import {
+  NOTIFICATION_RECEIVE_STATUS_OPTIONS,
+  NOTIFICATION_SEND_STATUS_OPTIONS,
+} from '@/features/notifications/model/shared/delivery-status'
 
-/** 기획 4-1 발송 상태 */
-export const SMS_SEND_STATUS_OPTIONS = [
-  '전체',
-  '발송 요청',
-  '발송 취소',
-  '발송 예약',
-  '발송 대기',
-  '발송 중',
-  '발송 실패',
-  '발송 성공',
-] as const
+/** 세 채널 공통 정본 — `model/shared/delivery-status.ts` */
+export const SMS_SEND_STATUS_OPTIONS = NOTIFICATION_SEND_STATUS_OPTIONS
 
-/** 기획 4-1 수신 상태 */
-export const SMS_RECEIVE_STATUS_OPTIONS = [
-  '전체',
-  '요청됨',
-  '확인 대기중',
-  '대기중',
-  '예약됨',
-  '수신 성공',
-  '수신 실패',
-  '취소됨',
-] as const
+/** 세 채널 공통 정본 — `model/shared/delivery-status.ts` */
+export const SMS_RECEIVE_STATUS_OPTIONS = NOTIFICATION_RECEIVE_STATUS_OPTIONS
 
 export const SMS_BROADCAST_TIMING_OPTIONS = ['전체', '즉시', '예약'] as const
 

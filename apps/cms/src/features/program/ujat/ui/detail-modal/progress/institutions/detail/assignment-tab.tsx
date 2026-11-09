@@ -2,7 +2,6 @@ import { useMemo } from 'react'
 import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsButton, ExcelButton } from '@/shared/ui'
-import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import type { UjatEducationProgressInstitutionDetail } from './types'
 import type { AssignmentScheduleSection } from './assignment-data'
@@ -174,16 +173,13 @@ export function UjatEducationProgressInstitutionAssignmentHeaderActions({
   onExcelDownload: () => void
   isExcelExporting?: boolean
 }) {
-  const canWrite = useUjatCanWrite()
 
   return (
     <>
       <ExcelButton loading={isExcelExporting} onClick={onExcelDownload} />
-      {canWrite ? (
-        <CmsButton type="button" variant="primary" size="h40" onClick={onChangeClass}>
+      <CmsButton type="button" variant="primary" size="h40" onClick={onChangeClass}>
           교육 학년 및 학급 변경
         </CmsButton>
-      ) : null}
     </>
   )
 }

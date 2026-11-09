@@ -254,6 +254,7 @@ import {
 } from '@/features/program/general/lib/participating-individual-detail-tabs'
 import '@/features/program/general/ui/detail-modal/program-detail-fullpage-modal.css'
 import './detail-fullpage-modal.css'
+import { ProgramDetailActionGuard } from '@/features/program/shared/ui/program-detail-action-guard'
 
 const TAB_PARAM = 'tab'
 const LNB_PARAM = 'lnb'
@@ -565,7 +566,7 @@ function generalLnbBreadcrumbTargetTab(
   )
 }
 
-export function GeneralProgramDetailFullPageModal({
+function GeneralProgramDetailFullPageModalContent({
   open,
   onClose,
   program,
@@ -2751,5 +2752,20 @@ export function GeneralProgramDetailFullPageModal({
       />
     </>
     </RegistrationWizardValidationHighlightProvider>
+  )
+}
+
+/** 권한 설정 V1.2 — 상세 안의 쓰기·다운로드·개인정보 버튼은 노출하고, 권한이 없으면 클릭 시 접근 불가 안내. */
+export function GeneralProgramDetailFullPageModal(props: GeneralProgramDetailFullPageModalProps) {
+  const [routerSearchParams] = useSearchParams()
+  const programId =
+    props.program?.id ??
+    props.programIdHint ??
+    (props.searchParams ?? routerSearchParams).get('programId') ??
+    null
+  return (
+    <ProgramDetailActionGuard programId={programId}>
+      <GeneralProgramDetailFullPageModalContent {...props} />
+    </ProgramDetailActionGuard>
   )
 }

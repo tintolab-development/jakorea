@@ -371,7 +371,7 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
           content:
             target.approvalStatus === 'APPROVED'
               ? '현재 승인된 강사입니다. 변경할 다른 강사를 선택해 주세요.'
-              : '신청 반려된 강사는 선택 승인할 수 없습니다.\\n승인 대기 상태의 강사를 선택해 주세요.',
+              : '신청 반려된 강사는 선택 승인할 수 없습니다.\n승인 대기 상태의 강사를 선택해 주세요.',
         })
         return
       }
@@ -548,7 +548,7 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
           onApprove={handleDetailApprove}
           onReject={() => undefined}
           onResendNotification={
-            canWrite && canResendNotification(selectedApplicationDetail.availableActions)
+            canResendNotification(selectedApplicationDetail.availableActions)
               ? () => void handleResendNotification()
               : undefined
           }
@@ -613,7 +613,7 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
         title="교육 신청 강사 목록"
         description={`총 ${totalElements.toLocaleString()}건`}
         actions={
-          canWrite && (selectedRowKeys.length === 0 || selectedRowCanApprove) ? (
+          selectedRowKeys.length === 0 || selectedRowCanApprove ? (
             <FilterTableToolbarButton variant="secondary" onClick={handleBulkApprove}>
               {approveButtonLabel}
             </FilterTableToolbarButton>
@@ -650,8 +650,7 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
             style: { cursor: onOpenApplicationDetail ? 'pointer' : undefined },
           })}
           rowSelection={
-            canWrite
-              ? {
+            {
                   columnTitle: '선택',
                   type: 'radio',
                   columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
@@ -659,7 +658,6 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
                   onChange: keys => setSelectedRowKeys(keys.slice(0, 1).map(k => String(k))),
                   preserveSelectedRowKeys: false,
                 }
-              : undefined
           }
         />
       </FilterTableLayout>

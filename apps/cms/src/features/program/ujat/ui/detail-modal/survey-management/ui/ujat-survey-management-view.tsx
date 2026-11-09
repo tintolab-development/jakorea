@@ -12,7 +12,6 @@ import { CmsButton, useCmsAlert } from '@/shared/ui'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { handleError } from '@/shared/utils/error-handler'
 import type { Program } from '@/types/domain'
-import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import {
   findWritingTemplateRowByDefinitionId,
 } from '@/features/template/lib/writing-template-create-helpers'
@@ -138,6 +137,7 @@ import { generalProgramQueryKeys } from '@/features/program/general/api/general-
 import { loadFormTemplateVersionDraftByVersionId } from '@/features/template/api/admin-form-templates-service'
 import type { ProgramFormBindingRequest } from '@/shared/api/generated/forms-surveys/schemas/programFormBindingRequest'
 import { resolveUjatProgramDisplayTitle } from '@/features/program/ujat/lib/ujat-program-list-display'
+import { toSurveyTemplateVersionId } from '@/features/program/shared/lib/survey-management/survey-template-version-id'
 
 
 function resolveBindingIds(templateCode: string): {
@@ -186,7 +186,6 @@ export function UjatSurveyManagementView({
   const programId = program.id
   const displayProgram = program
   const queryClient = useQueryClient()
-  const canWrite = useUjatCanWrite()
   const {
     registeredSurveys: remoteRegisteredSurveys,
     classifiedBindings,
@@ -1138,10 +1137,11 @@ export function UjatSurveyManagementView({
         )
         if (record?.draft != null) return record.draft
       }
-      return buildLectureEvalFormDraft(templateId)
+      // 등록된 강의평가는 바인딩 version으로 연다(템플릿 목록 미조회 — 뷰어 403 방지).
+      return buildLectureEvalFormDraft(templateId, versionId)
     }
     void loadDraft()
-      .catch(() => buildLectureEvalFormDraft(templateId))
+      .catch(() => buildLectureEvalFormDraft(templateId, versionId))
       .then(draft => {
         lectureEvalDraftRef.current = lectureEvalDraftRef.current ?? draft
         setLectureEvalFormDraft(prev => prev ?? draft)
@@ -1529,7 +1529,7 @@ export function UjatSurveyManagementView({
                   title={UJAT_SURVEY_POLL_EMPTY_COPY.title}
                   description={UJAT_SURVEY_POLL_EMPTY_COPY.description}
                   registerButtonLabel={UJAT_SURVEY_POLL_EMPTY_COPY.registerButton}
-                  showRegisterButton={canWrite}
+                  showRegisterButton
                   onRegisterClick={handleOpenSurveyCreateModal}
                 />
               ) : (
@@ -1545,7 +1545,7 @@ export function UjatSurveyManagementView({
                         <UjatSurveyRegisteredActions
                           survey={activeRegisteredSurvey}
                           labels={UJAT_SURVEY_POLL_ACTION_LABELS}
-                          showAddButton={canWrite}
+                          showAddButton
                           onShareClick={handleShareRegisteredSurvey}
                           onAddClick={handleOpenSurveyCreateModal}
                           onOpenTemplatePreview={handleOpenRegisteredSurveyTemplatePreview}
@@ -1567,8 +1567,8 @@ export function UjatSurveyManagementView({
                       description={UJAT_SURVEY_POLL_NO_RESPONSE_COPY.description}
                       deleteButtonLabel={UJAT_SURVEY_POLL_NO_RESPONSE_COPY.deleteButton}
                       previewButtonLabel={UJAT_SURVEY_POLL_NO_RESPONSE_COPY.previewButton}
-                      canDelete={canWrite && activeRegisteredSurvey.status === 'before_start'}
-                      showDeleteButton={canWrite}
+                      canDelete={activeRegisteredSurvey.status === 'before_start'}
+                      showDeleteButton
                       embedded
                       onDeleteClick={handleOpenSurveyDeleteModal}
                       onOpenTemplatePreview={handleOpenRegisteredSurveyTemplatePreview}
@@ -1577,6 +1577,10 @@ export function UjatSurveyManagementView({
                     <div ref={pollResultsExportRef}>
                       <UjatSurveyPollResultsView
                         templateId={activeRegisteredSurvey.templateId}
+                        templateVersionId={toSurveyTemplateVersionId(
+                          activeRegisteredSurvey,
+                          surveysRemote
+                        )}
                         responseCount={activeRegisteredSurvey.responseCount}
                         participantTotal={activeRegisteredSurvey.participantTotal}
                         responses={pollResponses}
@@ -1594,6 +1598,10 @@ export function UjatSurveyManagementView({
               ) : (
               <UjatSatisfactionSurveyView
                 surveysByAudience={satisfactionSurveysByAudience}
+                resultsTemplateVersionId={toSurveyTemplateVersionId(
+                  activeSatisfactionSurvey,
+                  surveysRemote
+                )}
                 activeAudience={activeSatisfactionAudience}
                 onAudienceChange={setActiveSatisfactionAudience}
                 onRegisterClick={handleOpenSatisfactionCreateModal}
@@ -1614,6 +1622,7 @@ export function UjatSurveyManagementView({
               ) : (
               <UjatLectureEvalSurveyView
                 survey={lectureEvalSurvey}
+                resultsTemplateVersionId={toSurveyTemplateVersionId(lectureEvalSurvey, surveysRemote)}
                 submitted={lectureEvalSubmitted}
                 formDraft={lectureEvalFormDraft}
                 pollResponses={lectureEvalResponses}

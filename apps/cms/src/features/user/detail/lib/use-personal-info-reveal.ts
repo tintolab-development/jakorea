@@ -395,8 +395,9 @@ export function usePersonalInfoReveal({
 
   return {
     personalInfoRevealed,
-    programPrivacyPending:
-      privacyScope === 'program' && (programAssignment.pending || !programCanReveal),
+    // 권한 설정 V1.2: 권한이 없어도 「개인정보 상세보기」는 활성 상태로 두고, 클릭 시 guardPiiReveal이 접근 불가 안내를 띄운다.
+    // 배정 응답을 확인하는 동안만 비활성화한다.
+    programPrivacyPending: privacyScope === 'program' && programAssignment.pending,
     personalInfoRevealConfirmOpen: confirmOpen,
     onPrivacyControlClick,
     openPersonalInfoRevealConfirm,

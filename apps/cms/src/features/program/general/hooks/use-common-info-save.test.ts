@@ -29,6 +29,13 @@ vi.mock('@/features/program/shared/lib/program-wage-payment-item-helpers', async
   return {
     ...actual,
     useProgramWagePaymentItemOptions: () => [],
+    useProgramWagePaymentItemOptionsState: () => ({
+      options: [],
+      sections: [],
+      ready: true,
+      isLoading: false,
+      isError: false,
+    }),
   }
 })
 vi.mock('@/shared/ui', () => ({
@@ -43,7 +50,9 @@ vi.mock('@/features/program/general/lib/registration-required-fields', () => ({
 }))
 vi.mock('@/features/program/general/lib/registration-overlay-sync', async importOriginal => {
   const actual =
-    await importOriginal<typeof import('@/features/program/general/lib/registration-overlay-sync')>()
+    await importOriginal<
+      typeof import('@/features/program/general/lib/registration-overlay-sync')
+    >()
   return {
     ...actual,
     writeGeneralRegistrationOverlayFromCommonInfoFormValues: vi.fn(),
@@ -98,7 +107,13 @@ function baseProgram(): Program {
         { grade: '3급 강사비', pricing: '1시간 당 | 기본 : 100,000원' },
       ],
       paymentItems: '교통비',
-      kpi: { finalParticipants: 10, instructorCount: 1, volunteerCount: 0, finalSchools: 1, finalClasses: 1 },
+      kpi: {
+        finalParticipants: 10,
+        instructorCount: 1,
+        volunteerCount: 0,
+        finalSchools: 1,
+        finalClasses: 1,
+      },
     },
     rounds: [],
     createdAt: now,
@@ -126,9 +141,8 @@ function completeValues(
     educationForm: values.educationForm || 'offline',
     ipsCategory: values.ipsCategory || 'prepare',
     ipsDetail: values.ipsDetail || 'none',
-    educationScheduleLines:
-      values.educationScheduleLines.some(line => line.trim()) ?
-        values.educationScheduleLines
+    educationScheduleLines: values.educationScheduleLines.some(line => line.trim())
+      ? values.educationScheduleLines
       : ['26년 4월 1일(수) 10:00 ~ 12:00'],
     ...patch,
   }
@@ -323,10 +337,7 @@ describe('useGeneralProgramCommonInfoSave', () => {
       patch.generalCommonInfo?.curriculumSessions?.map(
         (row: { sessionLabel?: string }) => row.sessionLabel
       )
-    ).toEqual([
-      '사전 교육',
-      '1차시',
-    ])
+    ).toEqual(['사전 교육', '1차시'])
   })
 
   it('기관 커리큘럼 복수 회차 2회차 내용 공란은 PATCH를 보내지 않는다', async () => {
@@ -486,10 +497,7 @@ describe('useGeneralProgramCommonInfoSave', () => {
     const program = baseProgram()
     const incomplete = completeValues(program, { mainTitle: '' })
     const complete = completeValues(program, { mainTitle: '보완된 대표명' })
-    const getValues = vi
-      .fn()
-      .mockReturnValueOnce(incomplete)
-      .mockReturnValue(complete)
+    const getValues = vi.fn().mockReturnValueOnce(incomplete).mockReturnValue(complete)
     const form = {
       watch: vi.fn(() => []),
       getValues,
@@ -519,10 +527,7 @@ describe('useGeneralProgramCommonInfoSave', () => {
     const values = completeValues(program, {
       sessionRound: 'multi',
       educationScheduleMode: 'date',
-      educationScheduleLines: [
-        '26년 4월 1일(수) 10:00 ~ 12:00',
-        '26년 4월 2일(목) 10:00 ~ 12:00',
-      ],
+      educationScheduleLines: ['26년 4월 1일(수) 10:00 ~ 12:00', '26년 4월 2일(목) 10:00 ~ 12:00'],
       curriculumSessions: [
         {
           sessionLabel: '1회차',

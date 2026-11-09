@@ -39,15 +39,21 @@ import type { SettlementApplicationDocumentResponse } from '@/shared/api/generat
 
 const settlementApi = getJAKoreaCMSBackendAPISettlementSubset()
 
+/**
+ * `GET /api/admin/settlements` 조회 조건. `includePaid`(BE 2026-11-09, OpenAPI 미반영):
+ * true면 계좌 지급 완료(PAID) 건 포함 — instructorMemberId 필수(없으면 400). 지급조서 관리 화면은 보내지 않는다.
+ */
+export type SettlementListQueryParams = ListSettlementsParams & { includePaid?: boolean }
+
 export async function fetchSettlementsPageRemote(
-  params: ListSettlementsParams
+  params: SettlementListQueryParams
 ): Promise<PageResponseSettlementListItemResponse> {
   return unwrapApiBody(await settlementApi.listSettlements(params))
 }
 
 /** `GET /api/admin/settlements` 원 응답 (instructorSessionSummary 포함). 기존 페이지 호출은 fetchSettlementsPageRemote 유지 */
 export async function fetchSettlementListPageRemote(
-  params: ListSettlementsParams
+  params: SettlementListQueryParams
 ): Promise<SettlementListResponse> {
   return unwrapApiBody(await settlementApi.listSettlements(params))
 }

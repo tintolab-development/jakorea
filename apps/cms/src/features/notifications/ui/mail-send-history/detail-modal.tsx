@@ -1,5 +1,5 @@
 import dayjs from 'dayjs'
-import { MailSendStatusText } from './send-status-text'
+import { NotificationSendStatusText } from '@/features/notifications/ui/shared/send-status-text'
 import { Spin } from 'antd'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsButton, ContentModal, useCmsAlert } from '@/shared/ui'
@@ -28,7 +28,7 @@ function sendStatusView(row: MailSendHistoryRow) {
   if (row.sendStatus === '발송 실패' && row.failedReason?.trim()) {
     return (
       <span className="mail-send-history-detail-modal__status-with-reason">
-        <MailSendStatusText status={row.sendStatus} />
+        <NotificationSendStatusText status={row.sendStatus} />
         <span
           className="mail-send-history-detail-modal__failed-reason"
           title={row.failedReason}
@@ -41,7 +41,7 @@ function sendStatusView(row: MailSendHistoryRow) {
       </span>
     )
   }
-  return <MailSendStatusText status={row.sendStatus} />
+  return <NotificationSendStatusText status={row.sendStatus} />
 }
 
 export function DetailModal({ open, row, loading, onClose }: DetailModalProps) {

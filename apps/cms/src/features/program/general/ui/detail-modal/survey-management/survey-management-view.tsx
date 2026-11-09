@@ -185,6 +185,8 @@ import { useQueryClient } from '@tanstack/react-query'
 import type { ProgramFormBindingRequest } from '@/shared/api/generated/forms-surveys/schemas/programFormBindingRequest'
 import '@/features/program/shared/ui/survey-management/survey-management.css'
 import './survey-management.css'
+import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
+import { isReadOnlyAdminRoleCode } from '@/shared/lib/admin-role-policy'
 
 type CreateModalKind = 'survey' | 'satisfaction' | 'lecture'
 type DeleteModalKind = 'survey' | 'satisfaction'
@@ -308,7 +310,12 @@ export function GeneralSurveyManagementView({
     invalidateSurveyCaches,
     isMutating: bindingMutating,
   } = useGeneralProgramSurveyFormBindingMutations(program.id)
-  const { sections: writingFormSections, isRemote: writingFormsRemote } = useWritingFormSections()
+  // 템플릿 목록은 신규 등록 모달의 양식 선택에만 쓴다. 조회 전용(Program Viewer)은 등록 불가이고
+  // 목록 API(FORM_TEMPLATE_READ)가 403이라, 진입 시 접근 불가 팝업이 뜨지 않도록 부르지 않는다.
+  const sessionRoleCode = useSessionAdminRoleCode()
+  const { sections: writingFormSections, isRemote: writingFormsRemote } = useWritingFormSections({
+    enabled: !isReadOnlyAdminRoleCode(sessionRoleCode),
+  })
   const remoteSurveyRows = useMemo(
     () =>
       writingFormsRemote ? getWritingTemplateRowsByCategory('survey', writingFormSections) : [],
@@ -709,10 +716,11 @@ export function GeneralSurveyManagementView({
           )
           if (record?.draft != null) return record.draft
         }
-        return buildLectureEvalFormDraft(lectureEvalSurvey.templateId)
+        // 등록된 강의평가는 바인딩 version으로 연다(템플릿 목록 미조회 — 뷰어 403 방지).
+        return buildLectureEvalFormDraft(lectureEvalSurvey.templateId, versionId)
       }
       void loadDraft()
-        .catch(() => buildLectureEvalFormDraft(lectureEvalSurvey.templateId))
+        .catch(() => buildLectureEvalFormDraft(lectureEvalSurvey.templateId, versionId))
         .then(draft => {
           if (!cancelled) {
             lectureEvalDraftRef.current = lectureEvalDraftRef.current ?? draft
@@ -1865,6 +1873,7 @@ export function GeneralSurveyManagementView({
         ) : (
           <LectureEvalSurveyView
             survey={lectureEvalSurveyForView}
+            resultsTemplateVersionId={toRemoteSurveyVersionId(lectureEvalSurveyForView, surveysRemote)}
             submitted={lectureEvalSubmitted}
             formDraft={lectureEvalFormDraft}
             pollResponses={lectureEvalResponses}

@@ -1,3 +1,8 @@
+import { PFCheckbox } from '@/shared/ui'
+import {
+  formatCompanySchoolLodgingFixedAmountNotice,
+  isCompanySchoolSettlementProgram,
+} from '../lib/company-school-lodging'
 import { useEffect, useId, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import type { EducationSettlementItem } from '../model/types'
@@ -486,6 +491,8 @@ export function EducationSettlementWriteForm({
   const existingDetail = useIndividualSettlementDetailQuery(session?.settlementApplicationId)
   const isInstructor = isInstructorMypageProfile(profile)
   const isReceipt = documentKind === 'receipt'
+  /** 1사1교 강사 지급조서에서만 숙박비(LODGING_1C1S) 신청 */
+  const showCompanySchoolLodging = !isReceipt && isCompanySchoolSettlementProgram(programType)
   const consentSidecarQuery = useSettlementConsentSidecar(documentKind)
   const individualSchedules = useIndividualSettlementSchedulesQuery(
     shouldUseIndividualSettlementSchedulesApi(applicationType, programType) ? applicationId : null,
@@ -583,6 +590,15 @@ export function EducationSettlementWriteForm({
   const [activityFiles, setActivityFiles] = useState<string[]>(hydrated?.activityFiles ?? [])
   const [activityAttachments, setActivityAttachments] = useState<SettlementReceiptAttachment[]>(
     hydrated?.activityAttachments ?? []
+  )
+  const [lodgingRequested, setLodgingRequested] = useState(
+    hydrated?.companySchoolLodgingRequested ?? false
+  )
+  const [lodgingFiles, setLodgingFiles] = useState<string[]>(
+    hydrated?.companySchoolLodgingFiles ?? []
+  )
+  const [lodgingAttachments, setLodgingAttachments] = useState<SettlementReceiptAttachment[]>(
+    hydrated?.companySchoolLodgingAttachments ?? []
   )
   const [alertOpen, setAlertOpen] = useState(false)
   const [alertTitle, setAlertTitle] = useState(SETTLEMENT_WRITE_ALERT_TITLE)
@@ -776,6 +792,13 @@ export function EducationSettlementWriteForm({
           ? activityAttachments.map(file => file.fileName)
           : activityFiles,
       activityAttachments,
+      companySchoolLodgingRequested: showCompanySchoolLodging && lodgingRequested,
+      companySchoolLodgingFiles: showCompanySchoolLodging
+        ? lodgingAttachments.length > 0
+          ? lodgingAttachments.map(file => file.fileName)
+          : lodgingFiles
+        : [],
+      companySchoolLodgingAttachments: showCompanySchoolLodging ? lodgingAttachments : [],
     })
 
     const validationError = validateSettlementWriteDraft(draft)
@@ -807,6 +830,7 @@ export function EducationSettlementWriteForm({
   const restSectionNos = restExtras.map(() => sectionNo++)
   const mealSectionNo = !isReceipt ? sectionNo++ : null
   const activitySectionNo = !isReceipt ? sectionNo++ : null
+  const lodgingSectionNo = showCompanySchoolLodging ? sectionNo++ : null
 
   return (
     <>
@@ -1138,6 +1162,44 @@ export function EducationSettlementWriteForm({
                 </PFFormFieldRow>
               </PFFormFieldTable>
             </PFFormSection>
+
+            {showCompanySchoolLodging ? (
+              <PFFormSection
+                id="settlement-company-school-lodging"
+                title={`${lodgingSectionNo}. 숙박비 신청`}
+                footer={formatCompanySchoolLodgingFixedAmountNotice()}
+              >
+                <PFFormFieldTable>
+                  <PFFormFieldRow type="single">
+                    <PFFormField label="숙박비">
+                      <PFCheckbox
+                        checked={lodgingRequested}
+                        onCheckedChange={setLodgingRequested}
+                        label="숙박비 신청"
+                      />
+                    </PFFormField>
+                  </PFFormFieldRow>
+                  {lodgingRequested ? (
+                    <PFFormFieldRow type="single">
+                      <PFFormField label="영수증 제출">
+                        <ReceiptUpload
+                          fileNames={lodgingFiles}
+                          onFileNamesChange={setLodgingFiles}
+                          attachments={lodgingAttachments}
+                          onAttachmentsChange={next => {
+                            setLodgingAttachments(next)
+                            setLodgingFiles(next.map(file => file.fileName))
+                          }}
+                          uploadEnabled
+                          ariaLabel="숙박비 영수증 제출"
+                          onError={showAlert}
+                        />
+                      </PFFormField>
+                    </PFFormFieldRow>
+                  ) : null}
+                </PFFormFieldTable>
+              </PFFormSection>
+            ) : null}
           </>
         ) : null}
 

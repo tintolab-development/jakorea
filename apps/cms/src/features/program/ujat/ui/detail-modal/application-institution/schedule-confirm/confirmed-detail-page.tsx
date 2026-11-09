@@ -1,7 +1,10 @@
 import { useCallback, useMemo, useState } from 'react'
-import { Space, Spin, Tooltip } from 'antd'
+import { Space, Spin } from 'antd'
+import {
+  UJAT_INSTITUTION_APPROVAL_BLOCKED_MESSAGE,
+  UJAT_REVISION_REQUEST_CHECKING_BLOCKED_REASON,
+} from '@/features/program/ujat/lib/ujat-institution-approval-workflow'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
-import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { useUjatInstitutionApplicationDetail } from '@/features/program/ujat/api/use-institution-application-detail'
 import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
 import { postUjatScheduleChangeRequest } from '@/features/program/ujat/api/temporary-schedule-api'
@@ -55,7 +58,6 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
   onOpenScheduleAssign?: () => void
 }) {
   const { showAlert } = useCmsAlert()
-  const canWrite = useUjatCanWrite()
   const [pendingReject, setPendingReject] = useState(false)
   const [pendingApprove, setPendingApprove] = useState(false)
   const [pendingRevisionRequest, setPendingRevisionRequest] = useState(false)
@@ -240,14 +242,13 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
 
   const approveOrReassignLabel =
     workflow.primaryAction === 'open_schedule_assign' ? '일정 재배정' : '신청 승인'
-  const approveOrReassignDisabled =
-    !workflowReady || workflow.primaryDisabled || isTerminal
+  /** 로딩·종결(승인/반려) 상태만 비활성. 순서상 아직 안 되는 경우는 누르면 이유를 안내한다(서버도 같은 규칙으로 막음) */
+  const approveOrReassignDisabled = !workflowReady || isTerminal
 
   return (
     <div className="ujat-institution-application-detail-page">
       <div className="ujat-institution-application-detail-page__actions">
         <Space size={8} wrap>
-          {canWrite ? (
           <>
           <CmsButton
             type="button"
@@ -267,6 +268,13 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
             disabled={approveOrReassignDisabled}
             onClick={() => {
               if (approveOrReassignDisabled) return
+              if (workflow.primaryDisabled) {
+                showAlert({
+                  title: '안내',
+                  content: workflow.primaryDisabledReason ?? UJAT_INSTITUTION_APPROVAL_BLOCKED_MESSAGE,
+                })
+                return
+              }
               if (workflow.primaryAction === 'open_schedule_assign') {
                 onOpenScheduleAssign?.()
                 return
@@ -276,31 +284,31 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
             {approveOrReassignLabel}
           </CmsButton>
           {(() => {
-            const revisionDisabled = isTerminal || workflow.revisionRequestDisabled
-            const revisionButton = (
+            // 종결 상태만 비활성. 순서상 아직 안 되는 경우(기관 확인 중·이미 수정 요청됨)는 누르면 이유를 안내한다
+            return (
               <CmsButton
                 type="button"
                 variant="primary"
                 size="large"
-                disabled={revisionDisabled}
+                disabled={isTerminal}
                 onClick={() => {
-                  if (revisionDisabled) return
+                  if (isTerminal) return
+                  if (workflow.revisionRequestDisabled) {
+                    showAlert({
+                      title: '안내',
+                      content:
+                        workflow.revisionRequestDisabledReason ??
+                        UJAT_REVISION_REQUEST_CHECKING_BLOCKED_REASON,
+                    })
+                    return
+                  }
                   setPendingRevisionRequest(true)
                 }} >
                 수정 요청
               </CmsButton>
             )
-            if (!workflow.revisionRequestDisabledReason) return revisionButton
-            return (
-              <Tooltip title={workflow.revisionRequestDisabledReason}>
-                <span className="ujat-institution-application-detail-page__revision-request-wrap">
-                  {revisionButton}
-                </span>
-              </Tooltip>
-            )
           })()}
           </>
-          ) : null}
           <PersonalInfoRevealButton disabled={programPrivacyPending}
             labelMode="stickyReveal"
             revealed={personalInfoRevealed}

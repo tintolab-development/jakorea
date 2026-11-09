@@ -35,7 +35,15 @@ vi.mock('@/shared/ui', async () => {
   }
 })
 
-afterEach(cleanup)
+const showAdminAccessDeniedAlert = vi.fn(() => true)
+vi.mock('@/shared/lib/admin-role-policy', () => ({
+  showAdminAccessDeniedAlert: () => showAdminAccessDeniedAlert(),
+}))
+
+afterEach(() => {
+  cleanup()
+  showAdminAccessDeniedAlert.mockClear()
+})
 
 const renderActions = (props: Partial<Parameters<typeof ProgramEditInfoActions>[0]> = {}) =>
   render(
@@ -148,8 +156,20 @@ describe('ProgramEditInfoActions', () => {
     expect(onSave).toHaveBeenCalledOnce()
   })
 
-  it('쓰기 권한이 없으면 정보 수정 버튼을 렌더하지 않는다', () => {
-    renderActions({ canWrite: false })
+  it('쓰기 권한이 없어도 정보 수정 버튼을 노출하고, 클릭하면 안내만 띄운다', () => {
+    const onEdit = vi.fn()
+    renderActions({ canWrite: false, onEdit })
+
+    const button = screen.getByRole('button', { name: '정보 수정' }) as HTMLButtonElement
+    expect(button.disabled).toBe(false)
+    fireEvent.click(button)
+
+    expect(onEdit).not.toHaveBeenCalled()
+    expect(showAdminAccessDeniedAlert).toHaveBeenCalledOnce()
+  })
+
+  it('화면 정책상 숨김(hidden)일 때만 렌더하지 않는다', () => {
+    renderActions({ hidden: true })
 
     expect(screen.queryByRole('button', { name: '정보 수정' })).toBeNull()
   })

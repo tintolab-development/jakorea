@@ -1,3 +1,5 @@
+import { cmsAlertModal } from '@/shared/ui'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 import { useState, type Key } from 'react'
 import { Flex, Space } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
@@ -421,8 +423,13 @@ export function SponsorContactsSection({
           <CmsButton
             variant="delete"
             size="medium"
-            onClick={onDeleteClick}
-            disabled={selectedContactKeys.length === 0}
+            onClick={() => {
+              if (selectedContactKeys.length === 0) {
+                cmsAlertModal.show(NO_SELECTION_ALERT)
+                return
+              }
+              onDeleteClick()
+            }}
           >
             담당자 삭제
           </CmsButton>

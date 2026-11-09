@@ -30,6 +30,8 @@ import {
   canAccessAccountPayments,
   isAccountPaymentsPath,
 } from '@/shared/lib/account-payments-access'
+import { ProgramDetailAccessGuard } from '@/features/program/shared/ui/program-detail-access-guard'
+import { ProgramDetailReadOnlyProvider } from '@/features/program/shared/ui/program-detail-read-only-provider'
 import { Sidebar } from './sidebar'
 import { MainHeader } from './main-header'
 import './layout.css'
@@ -66,9 +68,7 @@ function LayoutContent() {
     isSettlementItemSettingsPath(location.pathname) &&
     !canAdminAction({ roleCode, action: 'view', screen: 'settlement-item-settings' })
   const accountPaymentsBlocked =
-    Boolean(user) &&
-    isAccountPaymentsPath(location.pathname) &&
-    !canAccessAccountPayments(user)
+    Boolean(user) && isAccountPaymentsPath(location.pathname) && !canAccessAccountPayments(user)
   const screenAccessBlocked =
     securityLogBlocked ||
     permissionSettingsBlocked ||
@@ -132,7 +132,10 @@ function LayoutContent() {
 
   return (
     <Suspense fallback={<RouterLoadingFallback />}>
-      <Outlet />
+      <ProgramDetailAccessGuard />
+      <ProgramDetailReadOnlyProvider>
+        <Outlet />
+      </ProgramDetailReadOnlyProvider>
     </Suspense>
   )
 }

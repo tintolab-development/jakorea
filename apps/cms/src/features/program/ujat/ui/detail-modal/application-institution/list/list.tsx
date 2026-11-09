@@ -2,7 +2,6 @@ import { useEffect } from 'react'
 import { Spin } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { FilterTableToolbarButton } from '@/shared/ui'
-import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { UJAT_INSTITUTION_APPLICATION_FILTER_FIELDS } from './filter-fields'
 import { UjatInstitutionApplicationRegionTabs } from './region-tabs'
 import { useUjatInstitutionEducationRegion } from '../use-institution-education-region'
@@ -26,7 +25,6 @@ export function UjatInstitutionApplicationList({
   onOpenScheduleAssign?: () => void
   programId?: string | null
 }) {
-  const canWrite = useUjatCanWrite()
   const { activeRegion, setActiveRegion } = useUjatInstitutionEducationRegion()
   const {
     pendingFilters,
@@ -100,8 +98,7 @@ export function UjatInstitutionApplicationList({
         description={`${totalElements}건`}
         actions={
           <div className="ujat-institution-application-list__actions">
-            {canWrite ? (
-              <>
+            <>
             <FilterTableToolbarButton
               type="button"
               variant="delete"
@@ -124,7 +121,6 @@ export function UjatInstitutionApplicationList({
               선택 임시 배정
             </FilterTableToolbarButton>
               </>
-            ) : null}
             {viewMode === 'table' ? (
               <FilterTableToolbarButton
                 type="button"
@@ -145,14 +141,12 @@ export function UjatInstitutionApplicationList({
           </div>
         }
         excelExport={
-          canWrite
-            ? {
+          {
                 accessLog: { downloadKind: 'PROGRAM_INSTITUTION_APPLICATION_EXPORT', containedPiiTypes: ['NAME'] },
                 columns,
                 data: tableData,
                 selectedRowKeys,
               }
-            : undefined
         }
       >
         {viewMode === 'table' ? (

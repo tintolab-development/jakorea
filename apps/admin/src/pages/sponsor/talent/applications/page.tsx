@@ -67,6 +67,7 @@ import {
 } from '@/shared/ui'
 
 import './page.css'
+import { ADMIN_ACCESS_DENIED_ALERT } from '@/shared/lib/admin-access-denied'
 
 type StatusPending = '' | ApplicationStatus
 type HistoryPending = '' | JaProgramHistoryFilter
@@ -345,10 +346,7 @@ export function TalentDonationApplicationsPage() {
       .catch(error => {
         if (cancelled) return
         if (isAdminForbidden(error)) {
-          showAlert({
-            title: '권한 없음',
-            content: '해당 신청을 조회할 권한이 없습니다.',
-          })
+          showAlert({ ...ADMIN_ACCESS_DENIED_ALERT })
           closeDetail()
           return
         }

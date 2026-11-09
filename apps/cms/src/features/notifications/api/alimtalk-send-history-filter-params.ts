@@ -3,6 +3,7 @@ import { ALIMTALK_API_CHANNEL_TYPE } from '@/features/notifications/api/adapters
 import { readSendHistoryFiltersFromParams } from '@/features/notifications/model/alimtalk-send-history/filter-url'
 import type { AlimtalkSendHistoryPendingFilters } from '@/features/notifications/model/alimtalk-send-history/types'
 import type { DateRangeFilterValue } from '@/features/notifications/model/alimtalk-send-history/types'
+import { applyNotificationStatusFilterParams } from '@/features/notifications/model/shared/delivery-status'
 
 const DATE_PARAM_FORMAT = 'YYYY-MM-DD'
 
@@ -17,28 +18,6 @@ function rangeToParams(
   if (range[1]?.isValid()) params[toKey] = range[1].format(DATE_PARAM_FORMAT)
 }
 
-const SEND_STATUS_TO_API: Record<string, string> = {
-  '발송 요청': 'REQUESTED',
-  예약: 'SCHEDULED',
-  대기: 'WAITED',
-  발송중: 'IN_PROGRESS',
-  '발송 실패': 'SEND_FAILED',
-  '발송 완료': 'SENT',
-  취소: 'CANCELED',
-  확인불가: 'UNKNOWN',
-  // 이전 라벨로 저장된 URL 호환
-  '발송 성공': 'SENT',
-}
-
-const RECEIVE_STATUS_TO_API: Record<string, string> = {
-  요청됨: 'REQUESTED',
-  '확인 대기중': 'WAITING_CONFIRM',
-  대기중: 'PENDING',
-  예약됨: 'SCHEDULED',
-  '수신 성공': 'SUCCESS',
-  '수신 실패': 'FAILED',
-  취소됨: 'CANCELLED',
-}
 
 export function alimtalkSendHistoryParamsFromSearchParams(
   searchParams: URLSearchParams
@@ -68,15 +47,7 @@ export function alimtalkSendHistoryParamsFromFilters(
     params.recipient = filters.receiverInfo.trim()
     params.recipientInfo = filters.receiverInfo.trim()
   }
-  if (filters.sendStatus !== '전체') {
-    params.sendStatus = SEND_STATUS_TO_API[filters.sendStatus] ?? filters.sendStatus
-  }
-  if (filters.receiveStatus !== '전체') {
-    params.receiptStatus =
-      RECEIVE_STATUS_TO_API[filters.receiveStatus] ?? filters.receiveStatus
-  }
-  if (filters.broadcastTiming === '즉시') params.sendTiming = 'IMMEDIATE'
-  if (filters.broadcastTiming === '예약') params.sendTiming = 'SCHEDULED'
+  applyNotificationStatusFilterParams(params, filters)
 
   // Ensure default request window always present when empty (defensive)
   if (!params.requestedFrom || !params.requestedTo) {

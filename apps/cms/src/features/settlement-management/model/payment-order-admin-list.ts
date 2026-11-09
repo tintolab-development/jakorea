@@ -113,7 +113,8 @@ export const PAYMENT_ORDER_ADMIN_LINE_STATUS_LABELS: Record<
   pending: '확인 대기 중',
   reapplication: '지급조서 재신청',
   confirmed: '지급조서 확인 완료',
-  awaiting_payment: '지급 대기',
+  /** CONFIRMED×WAITING_PAYMENT — 지급조서 갈래 정의상 '지급조서 확인 완료'(계좌 지급 대기는 계좌 지급 화면 표기) */
+  awaiting_payment: '지급조서 확인 완료',
   correction: '지급 정정 요청',
   rejected: '계좌 지급 완료',
   application_rejected: '신청 반려',

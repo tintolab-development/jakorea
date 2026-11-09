@@ -51,6 +51,9 @@ type BuildSettlementWriteDraftInput = {
   activityAmount: string
   activityFiles: string[]
   activityAttachments?: SettlementReceiptAttachment[]
+  companySchoolLodgingRequested?: boolean
+  companySchoolLodgingFiles?: string[]
+  companySchoolLodgingAttachments?: SettlementReceiptAttachment[]
 }
 
 export function buildSettlementWriteDraft(
@@ -114,6 +117,11 @@ export function buildSettlementWriteDraft(
       fileNames: input.activityFiles,
       attachments: input.activityAttachments ?? [],
     },
+    companySchoolLodging: {
+      requested: input.companySchoolLodgingRequested === true,
+      fileNames: input.companySchoolLodgingFiles ?? [],
+      attachments: input.companySchoolLodgingAttachments ?? [],
+    },
   }
 }
 
@@ -164,6 +172,9 @@ export function hydrateSettlementWriteFormState(draft: SettlementWriteDraft) {
     activityAmount: draft.activity.amount,
     activityFiles: draft.activity.fileNames,
     activityAttachments: draft.activity.attachments ?? [],
+    companySchoolLodgingRequested: draft.companySchoolLodging?.requested === true,
+    companySchoolLodgingFiles: draft.companySchoolLodging?.fileNames ?? [],
+    companySchoolLodgingAttachments: draft.companySchoolLodging?.attachments ?? [],
     idempotencyKey: draft.meta.idempotencyKey,
   }
 }

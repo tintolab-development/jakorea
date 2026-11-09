@@ -402,7 +402,7 @@ const saveProgramRoles = (
  *
  * ### 권한/보안
  * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: PRIVACY_RAW_READ 권한 필요
+ * - 필요 권한: MEMBER_READ 권한 필요
  * - 접근 범위: 관리자 CMS 권한 범위
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
@@ -1468,7 +1468,7 @@ const bulkDeleteSchools = (
  *
  * ### 권한/보안
  * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: ADMIN_READ 권한 필요
+ * - 필요 권한: MEMBER_WRITE 권한 필요
  * - 접근 범위: 관리자 CMS 권한 범위
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
@@ -1489,7 +1489,7 @@ const bulkDeleteSchools = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: entry gate ADMIN_READ; service requires CRUD_MEMBER_DELETE for MEMBER targets and ADMIN_WRITE for ADMIN_ACCOUNT targets; typed ids preserve canonical namespaces
+ * - 검토 메모: entry gate MEMBER_WRITE (권한 설정 V1.2); service requires CRUD_MEMBER_DELETE for MEMBER targets and ADMIN_WRITE (Master) for ADMIN_ACCOUNT targets; typed ids preserve canonical namespaces
  * @summary 전체 회원·관리자 혼합 일괄 삭제
  */
 const bulkDelete1 = (
@@ -2135,7 +2135,7 @@ const reject2 = (
  *
  * ### 권한/보안
  * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: PRIVACY_RAW_READ 권한 필요
+ * - 필요 권한: INSTRUCTOR_REQUEST_READ 권한 필요
  * - 접근 범위: 관리자 CMS 권한 범위
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
@@ -2907,7 +2907,7 @@ const bulkApproveAdminApprovalRequests = (
  *
  * ### 권한/보안
  * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: ADMIN_READ 권한 필요
+ * - 필요 권한: MEMBER_READ 권한 필요
  * - 접근 범위: 관리자 CMS 권한 범위
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
@@ -5470,7 +5470,7 @@ const listProgramEnrollmentHistory = (
  *
  * ### 권한/보안
  * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: ADMIN_READ+MEMBER_READ 권한 필요
+ * - 필요 권한: MEMBER_READ 권한 필요
  * - 접근 범위: 관리자 CMS 권한 범위
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
@@ -6057,7 +6057,7 @@ const getAdminApprovalRequest = (
  *
  * ### 권한/보안
  * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: ADMIN_READ 권한 필요
+ * - 필요 권한: MEMBER_READ 권한 필요
  * - 접근 범위: 마스터 관리자만 가능
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
@@ -6215,7 +6215,7 @@ const listActiveProgramRoles = (
  *
  * ### 권한/보안
  * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: ADMIN_READ 권한 필요
+ * - 필요 권한: MEMBER_READ 권한 필요
  * - 접근 범위: ADMIN_ACCOUNT_SCOPE 범위 정책
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
@@ -6269,7 +6269,7 @@ const availableActions1 = (
  *
  * ### 권한/보안
  * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: ADMIN_READ 권한 필요
+ * - 필요 권한: MEMBER_READ 권한 필요
  * - 접근 범위: ADMIN_ACCOUNT_SCOPE 범위 정책
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *

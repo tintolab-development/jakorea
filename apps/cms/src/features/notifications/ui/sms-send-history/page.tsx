@@ -1,3 +1,4 @@
+import { NotificationSendStatusText } from '@/features/notifications/ui/shared/send-status-text'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import dayjs from 'dayjs'
 import type { ColumnsType } from 'antd/es/table'
@@ -155,6 +156,7 @@ export function SmsSendHistoryPage() {
         key: 'sendStatus',
         width: COL_W.sendStatus,
         align: 'center',
+        render: (status: string) => <NotificationSendStatusText status={status} />,
       },
       {
         title: '수신 상태',

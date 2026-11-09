@@ -462,8 +462,7 @@ export function UjatEducationProgressVolunteerDetailView({
     <>
       {!isEditing ? (
         <>
-          {canWrite ? (
-            <FilterTableToolbarButton
+          <FilterTableToolbarButton
               type="button"
               variant="delete"
               disabled={givingUp || activityWithdrawScheduleOptions.length === 0}
@@ -471,7 +470,6 @@ export function UjatEducationProgressVolunteerDetailView({
             >
               활동 포기
             </FilterTableToolbarButton>
-          ) : null}
           <FilterTableToolbarButton
             type="button"
             variant="secondary"
@@ -509,15 +507,13 @@ export function UjatEducationProgressVolunteerDetailView({
       />
       {!isEditing ? (
         <>
-          {canWrite ? (
-            <FilterTableToolbarButton
+          <FilterTableToolbarButton
               type="button"
               variant="primary"
               onClick={handleAdminCommentEditEnter}
             >
               코멘트 작성
             </FilterTableToolbarButton>
-          ) : null}
           <PersonalInfoRevealButton
             disabled={programPrivacyPending}
             labelMode="stickyReveal"

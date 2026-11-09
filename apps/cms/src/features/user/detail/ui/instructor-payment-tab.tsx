@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom'
 import { TableFilterGroup, type FilterFieldConfig } from '@/shared/components/table-filter-group'
 import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
-import { CmsButton } from '@/shared/ui/cms-button'
+import { FilterTableToolbarButton } from '@/shared/components/filter-table-toolbar-button'
 import { CalculationDetailViewButton } from '@/features/settlement/ui/payment-record/calculation-detail-view-button'
 import { ExcelButton } from '@/shared/ui/excel-button'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
@@ -298,9 +298,16 @@ export function InstructorPaymentTab({
 
   const columns: ColumnsType<InstructorSettlementListRow> = useMemo(
     () => [
-      { title: 'No.', dataIndex: 'no', key: 'no', align: 'center' },
-      { title: '프로그램명', dataIndex: 'programName', key: 'programName' },
-      { title: '참여 기관명', dataIndex: 'institutionName', key: 'institutionName' },
+      // 열 폭 합으로 가로 스크롤 여부를 정한다(useContainerFitTableScrollX) — 폭이 없으면 120으로 계산돼 긴 내용이 잘린다
+      {
+        title: 'No.',
+        dataIndex: 'no',
+        key: 'no',
+        align: 'center',
+        width: TABLE_COLUMN_WIDTHS.index,
+      },
+      { title: '프로그램명', dataIndex: 'programName', key: 'programName', minWidth: 260 },
+      { title: '참여 기관명', dataIndex: 'institutionName', key: 'institutionName', minWidth: 360 },
       {
         title: '교육 진행 일자',
         dataIndex: 'lectureDateDisplay',
@@ -324,12 +331,14 @@ export function InstructorPaymentTab({
         dataIndex: 'scheduledAmount',
         key: 'scheduledAmount',
         align: 'center',
+        minWidth: 160,
         render: (v: number) => `${v.toLocaleString()}원`,
       },
       {
         title: '산출 내역',
         key: 'detail',
         align: 'center',
+        minWidth: 160,
         render: (_: unknown, record) => (
           <div className="instructor-payment-tab__detail-action-cell">
             <CalculationDetailViewButton onClick={() => openInvoice(record)} />
@@ -443,9 +452,8 @@ export function InstructorPaymentTab({
           </div>
           <div className="instructor-payment-tab__toolbar-actions">
             {viewMode === 'list' ? (
-              <CmsButton
+              <FilterTableToolbarButton
                 variant="secondary"
-                size="large"
                 icon={<ButtonCalendarIcon />}
                 onClick={() => {
                   const today = dayjs()
@@ -455,26 +463,24 @@ export function InstructorPaymentTab({
                 }}
               >
                 캘린더 뷰로 보기
-              </CmsButton>
+              </FilterTableToolbarButton>
             ) : (
-              <CmsButton
+              <FilterTableToolbarButton
                 variant="secondary"
-                size="large"
                 icon={<ButtonListIcon />}
                 onClick={() => setViewMode('list')}
               >
                 리스트 뷰로 보기
-              </CmsButton>
+              </FilterTableToolbarButton>
             )}
-            <CmsButton
+            <FilterTableToolbarButton
               variant="primary"
-              size="large"
               icon={<ButtonDownloadIcon />}
               loading={bulkDownloadLoading}
               onClick={() => void handleBulkDownload()}
             >
               지급조서 발급
-            </CmsButton>
+            </FilterTableToolbarButton>
             <ExcelButton
               loading={excelExporting}
               disabled={settlementsLoading || settlementsQueryLoading}

@@ -4,7 +4,6 @@ import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import {
   FilterTableToolbarButton,
 } from '@/shared/ui'
-import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { UJAT_ESSAY_COLUMN_DEFAULT_WIDTHS } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
@@ -35,7 +34,6 @@ export function DocScreeningSection({
   onRegisterApplicantCloseHandler,
   onVolunteerApplicantDetailMetaChange,
 }: DocScreeningSectionProps) {
-  const canWrite = useUjatCanWrite()
   const tableWrapRef = useRef<HTMLDivElement>(null)
   const { regions: educationRegions } = useUjatEducationRegions()
   const filterFields = useMemo(
@@ -185,8 +183,7 @@ export function DocScreeningSection({
           title={`봉사자 신청 목록 (${count.toLocaleString()})`}
           actions={
             <div className="ujat-volunteer-doc-screening__actions program-application-list-toolbar">
-              {canWrite ? (
-                <>
+              <>
               <FilterTableToolbarButton
                 type="button"
                 variant="delete"
@@ -200,10 +197,9 @@ export function DocScreeningSection({
                 선택 승인
               </FilterTableToolbarButton>
                 </>
-              ) : null}
             </div>
           }
-          excelExport={canWrite ? excelExport : undefined}
+          excelExport={excelExport}
         >
           <div ref={tableWrapRef} className="ujat-volunteer-doc-screening__table-wrap">
             <CmsDataTable<UjatVolunteerApplicantRow>

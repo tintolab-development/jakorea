@@ -11,7 +11,11 @@ import type { ReactNode } from 'react'
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import axios from 'axios'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { cacheProjectedProgramPrivacy } from '@/features/program/shared/lib/program-my-assignment'
+import {
+  cacheProjectedProgramPrivacy,
+  canManageProgramAssignments,
+} from '@/features/program/shared/lib/program-my-assignment'
+import { useMyProgramPrivacyRole } from '@/features/user/detail/lib/use-my-program-privacy-role'
 import type { ColumnsType } from 'antd/es/table'
 import {
   CmsButton,
@@ -293,6 +297,8 @@ interface AssignedInstructorDisplayRow extends SchoolDetailInstructorRow {
   assignmentId?: string
   instructorMemberId?: string
   scheduleId?: string
+  /** 1사1교 — 취소된 배정(「배정 취소」 표시, 선택·역할 변경·재배정 불가) */
+  assignmentCancelled?: boolean
 }
 
 type WaitingInstructorRow = WaitingInstructorRowMock
@@ -540,6 +546,9 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     showApprovalAlarmSection: boolean
   } | null>(null)
   const [openRoleDropdownId, setOpenRoleDropdownId] = useState<string | null>(null)
+  // 권한 설정 V1.2 프로그램 권한 '대표 강사 변경': Program Owner·Assistant만. Program Viewer는 역할 드롭다운을 열지 않는다.
+  const { assignment: myProgramAssignment } = useMyProgramPrivacyRole(program.id)
+  const canChangeInstructorRole = canManageProgramAssignments(myProgramAssignment)
   const [leadRoleChangeConfirm, setLeadRoleChangeConfirm] = useState<{
     instructorId: string
     newLeadInstructorName: string
@@ -1287,7 +1296,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     return withTdDivider(parts)
   }
   /** 배정된 강사 테이블용 행 — assignment board remote 시 API */
-  const assignedRows: AssignedInstructorDisplayRow[] = useMemo(() => {
+  const assignedRowsWithCancelled: AssignedInstructorDisplayRow[] = useMemo(() => {
     if (assignmentBoardRemoteEnabled) {
       if (!assignmentBoard) return []
       const orgAppId = row.organizationApplicationId ?? ''
@@ -1297,6 +1306,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         organizationApplicationId: orgAppId,
         instructorNameByMemberId: assignmentBoard.instructorNameByMemberId,
         scheduleLabelById: assignmentBoard.scheduleLabelById,
+        includeCancelled: isCompanySchool,
       })
       return apiRows.map(r => ({
         id: r.id,
@@ -1305,7 +1315,8 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         instructorName: r.instructorName,
         contact: '',
         email: '',
-        settlementStatus: 'none' as SettlementStatusKey,
+        // 배정 1건 = 지급조서 1건 — 서버 배정 단위 settlementStatus 그대로(구 백엔드는 none)
+        settlementStatus: r.settlementStatus,
         homeAddress: r.homeAddress,
         distanceToSchool: r.distanceToSchool,
         assignedDate: r.assignedDate,
@@ -1317,6 +1328,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         assignmentId: r.assignmentId,
         instructorMemberId: r.instructorMemberId,
         scheduleId: r.scheduleId,
+        assignmentCancelled: r.assignmentCancelled,
       }))
     }
     // 일반 remote OFF — FE mock 프로그램만 로컬 시드
@@ -1338,6 +1350,24 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     assignedScheduleLinesByInstructorId,
     assignmentBoard,
   ])
+
+  /** 활성 배정 — 인원·팀장·배정 취소·역할 변경·엑셀은 취소 행을 제외한 이 목록만 본다 */
+  const assignedRows: AssignedInstructorDisplayRow[] = useMemo(
+    () =>
+      assignedRowsWithCancelled
+        .filter(r => !r.assignmentCancelled)
+        .map((r, index) => ({ ...r, no: index + 1 })),
+    [assignedRowsWithCancelled]
+  )
+
+  /** 표 — 활성 배정 뒤에 「배정 취소」 행(1사1교) */
+  const assignedTableRows: AssignedInstructorDisplayRow[] = useMemo(
+    () =>
+      [...assignedRows, ...assignedRowsWithCancelled.filter(r => r.assignmentCancelled)].map(
+        (r, index) => ({ ...r, no: index + 1 })
+      ),
+    [assignedRows, assignedRowsWithCancelled]
+  )
 
   /** 배정 대기 — remote 시 승인 강사신청 × 기관 sessions 합성 (전용 waiting API 없음) */
   const waitingRows: WaitingInstructorRow[] = useMemo(() => {
@@ -1953,7 +1983,9 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
 
   const applyRoleChange = useCallback(
     async (instructorId: string, newRole: InstructorRoleKey) => {
-      if (assignmentBoardRemoteEnabled && newRole === 'lead') {
+      if (assignmentBoardRemoteEnabled) {
+        // 대표 강사 지정·해제 모두 같은 API. 해제(일반 강사)는 scheduleLead=false.
+        const isDemote = newRole !== 'lead'
         const target = assignedRows.find(r => r.id === instructorId)
         const memberId = Number(target?.instructorMemberId)
         const orgAppId = Number(row.organizationApplicationId)
@@ -1976,14 +2008,21 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
             instructorMemberId: memberId,
             organizationApplicationId: orgAppId,
             ...(Number.isFinite(scheduleId) && scheduleId > 0 ? { scheduleId } : {}),
+            ...(isDemote ? { scheduleLead: false } : {}),
           })
           await invalidateAssignmentBoard()
           setOpenRoleDropdownId(null)
           return
-        } catch {
+        } catch (error) {
+          setOpenRoleDropdownId(null)
           showAlert({
-            title: '대표 강사 변경 실패',
-            content: '대표 강사 지정에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+            title: isDemote ? '일반 강사 변경 실패' : '대표 강사 변경 실패',
+            content: getGeneralProgramApiErrorMessage(
+              error,
+              isDemote
+                ? '일반 강사 변경에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+                : '대표 강사 지정에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+            ),
           })
           return
         }
@@ -2056,18 +2095,23 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         width: 116,
         align: 'center',
         onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
-        render: (role: InstructorRoleKey, record: AssignedInstructorDisplayRow) => (
-          <StatusDropdownCell<InstructorRoleKey>
-            status={role}
-            statusOptions={['lead', 'assistant']}
-            getTag={getInstructorRoleTag}
-            isItemDisabled={(cur, opt) => cur === opt}
-            onChange={key => handleRoleChange(record.id, key as InstructorRoleKey)}
-            isOpen={openRoleDropdownId === record.id}
-            onOpenChange={open => setOpenRoleDropdownId(open ? record.id : null)}
-            emptyPlaceholder="-"
-          />
-        ),
+        render: (role: InstructorRoleKey, record: AssignedInstructorDisplayRow) =>
+          record.assignmentCancelled ? (
+            <StatusTag label="배정 취소" tone="gray" mutedLabel />
+          ) : !canChangeInstructorRole ? (
+            role ? <StatusTag {...getInstructorRoleTag(role)} /> : '-'
+          ) : (
+            <StatusDropdownCell<InstructorRoleKey>
+              status={role}
+              statusOptions={['lead', 'assistant']}
+              getTag={getInstructorRoleTag}
+              isItemDisabled={(cur, opt) => cur === opt}
+              onChange={key => handleRoleChange(record.id, key as InstructorRoleKey)}
+              isOpen={openRoleDropdownId === record.id}
+              onOpenChange={open => setOpenRoleDropdownId(open ? record.id : null)}
+              emptyPlaceholder="-"
+            />
+          ),
       },
       {
         title: '강사명',
@@ -2130,7 +2174,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         ),
       },
     ],
-    [openRoleDropdownId, handleRoleChange, privacyMasked]
+    [openRoleDropdownId, handleRoleChange, privacyMasked, canChangeInstructorRole]
   )
 
   const waitingInstructorColumns: ColumnsType<WaitingInstructorRow> = useMemo(
@@ -2735,9 +2779,10 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                     columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
                     selectedRowKeys: selectedAssignedKeys,
                     onChange: keys => setSelectedAssignedKeys(keys),
+                    getCheckboxProps: record => ({ disabled: record.assignmentCancelled === true }),
                   }}
                   columns={assignedInstructorColumns}
-                  dataSource={assignedRows}
+                  dataSource={assignedTableRows}
                   locale={{ emptyText: renderAssignedInstructorTableEmpty() }}
                 />
               </div>

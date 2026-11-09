@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { getDefaultUjatEducationRegionKey } from '@/features/program/ujat/lib/ujat-education-regions'
 import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
 import type { UjatInstitutionApplicationRegionKey } from '../../application-institution/list/regions'
@@ -21,7 +20,6 @@ export function UjatEducationProgressAssignmentsSection({
   programId: string
   half: EducationProgressHalfKey
 }) {
-  const canWrite = useUjatCanWrite()
   const { regions } = useUjatEducationRegions()
   const [activeRegion, setActiveRegion] = useState<UjatInstitutionApplicationRegionKey>(
     getDefaultUjatEducationRegionKey
@@ -78,9 +76,10 @@ export function UjatEducationProgressAssignmentsSection({
         title={firstSession ? <UjatAssignmentSessionGroupHeader session={firstSession} /> : null}
         hideExcelDownload
         actions={
-          firstSession && canWrite ? (
+          firstSession && (
             <UjatAssignmentSessionExcelButton session={firstSession} regionLabel={regionLabel} />
-          ) : null
+          
+)
         }
         contentLoading={isLoading}
       >

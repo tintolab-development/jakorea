@@ -887,6 +887,15 @@ export default function AccountPaymentsPage() {
     if (picked.length === 0) {
       return
     }
+    // 서버는 지급 완료 건이 하나라도 섞이면 요청 전체를 409로 거부한다 — 보내기 전에 막는다.
+    // 체크박스는 세금신고 양식 발급(지급 완료 대상) 때문에 막지 않는다.
+    if (picked.some(r => r.accountPaymentStatus === 'account_paid')) {
+      cmsAlertModal.show({
+        title: '지급 처리 안내',
+        content: '지급 완료된 건이 포함되어 있습니다.\n계좌 지급 대기 중인 건만 선택 후 다시 시도해 주세요.',
+      })
+      return
+    }
     setAccountPayConfirmSelection(picked)
   }, [canManageAccountPayments, filteredRows, selectedRowKeys])
 

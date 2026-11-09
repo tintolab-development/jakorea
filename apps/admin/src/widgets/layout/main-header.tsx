@@ -21,6 +21,7 @@ import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { useCmsAlert } from '@/shared/ui'
 import { NotificationDropdown, type HeaderNotification } from './notification-dropdown'
 import './main-header.css'
+import { ADMIN_ACCESS_DENIED_ALERT } from '@/shared/lib/admin-access-denied'
 
 const { Header: AntHeader } = Layout
 const { Text } = Typography
@@ -89,10 +90,7 @@ export function MainHeader() {
       })
       .catch(error => {
         if (isSystemInboxForbidden(error)) {
-          showAlert({
-            title: '권한 없음',
-            content: '시스템 알림은 최고관리자만 확인할 수 있습니다.',
-          })
+          showAlert({ ...ADMIN_ACCESS_DENIED_ALERT })
           return
         }
         if (isAdminNotFound(error)) {
