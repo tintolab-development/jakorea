@@ -51,6 +51,45 @@ assert.equal(cleared.linkUrl, '')
 assert.equal(cleared.status, 'RECRUITING')
 assert.deepEqual(cleared.attachmentAssetIds, [301, 302])
 
+assert.equal(created.recruitStart, '2026-04-03')
+assert.equal(created.recruitEnd, '2026-11-20')
+
+// RESULT — 모집기간은 값이 있어도 null로 보낸다
+const resultCreated = toCareerPostingCreateRequest({ ...baseInput, status: 'result' }, [])
+assert.equal(resultCreated.status, 'RESULT')
+assert.equal(resultCreated.recruitStart, null)
+assert.equal(resultCreated.recruitEnd, null)
+const resultUpdated = toCareerPostingUpdateRequest(
+  { ...baseInput, id: '12', status: 'result', recruitStart: '', recruitEnd: '' },
+  4,
+)
+assert.equal(resultUpdated.recruitStart, null)
+assert.equal(resultUpdated.recruitEnd, null)
+
+// CLOSED — 기간 유지, 빈 값은 "" 대신 null
+const closedUpdated = toCareerPostingUpdateRequest({ ...baseInput, id: '12', status: 'closed' }, 4)
+assert.equal(closedUpdated.status, 'CLOSED')
+assert.equal(closedUpdated.recruitStart, '2026-04-03')
+assert.equal(closedUpdated.recruitEnd, '2026-11-20')
+const emptyRecruiting = toCareerPostingCreateRequest({ ...baseInput, recruitStart: '', recruitEnd: '' })
+assert.equal(emptyRecruiting.recruitStart, null)
+assert.equal(emptyRecruiting.recruitEnd, null)
+
+// RESULT 응답 기간 null → 도메인 빈 문자열
+const resultListItem = mapCareerPostingAdminItem({
+  id: 21,
+  status: 'RESULT',
+  title: '결과 발표',
+  isPublic: true,
+  authorName: '인사팀',
+  publishedOn: '2026-05-08',
+  recruitStart: null,
+  recruitEnd: null,
+  version: 1,
+})
+assert.equal(resultListItem?.recruitStart, '')
+assert.equal(resultListItem?.recruitEnd, '')
+
 const detail = mapCareerPostingAdminDetail({
   id: 12,
   status: 'RECRUITING',

@@ -22,16 +22,31 @@ const listed = mapCareerTalentApplicationListItem({
   status: CareerTalentApplicationListItemStatus.PENDING,
   jobInterest: CareerTalentApplicationListItemJobInterest.ACCOUNTING,
   careerType: CareerTalentApplicationListItemCareerType.EXPERIENCED,
-  name: '홍**',
+  name: '홍길동',
   phone: '010-****-5678',
   email: 'hong***@example.com',
   appliedAt: '2026-11-07T10:00:00Z',
   version: 1,
 })
 assert.ok(listed)
-assert.equal(listed.applicantName, '홍**')
+// 목록: 이름은 원문, 전화·이메일은 서버 마스킹 값을 가공 없이 그대로
+assert.equal(listed.applicantName, '홍길동')
 assert.equal(listed.phone, '010-****-5678')
 assert.equal(listed.email, 'hong***@example.com')
+
+for (const serverPhone of ['02-***-1234', '****']) {
+  const row = mapCareerTalentApplicationListItem({
+    id: 124,
+    status: CareerTalentApplicationListItemStatus.PENDING,
+    jobInterest: CareerTalentApplicationListItemJobInterest.ACCOUNTING,
+    careerType: CareerTalentApplicationListItemCareerType.EXPERIENCED,
+    name: '김철수',
+    phone: serverPhone,
+    appliedAt: '2026-11-07T10:00:00Z',
+    version: 1,
+  })
+  assert.equal(row?.phone, serverPhone)
+}
 
 const detail = mapCareerTalentApplicationDetail({
   id: 123,
