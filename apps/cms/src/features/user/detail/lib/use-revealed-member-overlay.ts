@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import type { User } from '@/types/user'
 
 type MemberUser = Omit<User, 'password'>
@@ -15,16 +15,14 @@ export function memberRevealIdentity(
  *
  * - 상위(drawer·목록) 상태, 공용 회원 목록·상세 React Query 캐시에는 쓰지 않는다.
  * - 현재 표시 회원과 소유자가 다르면 원문을 돌려주지 않는다(교차 노출 방지).
+ * - 비우기는 호출부가 열람 해제 이벤트(usePersonalInfoReveal onRemask) 안에서 동기 호출한다 —
+ *   렌더 뒤 effect로 지우는 fallback을 두지 않는다.
  * - 비우면 화면은 이미 받은 마스킹 GET 값으로 즉시 돌아간다. 마스킹 재조회가 늦거나 실패해도
  *   원문이 다시 나올 경로가 없다.
  */
 export function useRevealedMemberOverlay(displayUser: MemberUser | null | undefined) {
   const identity = memberRevealIdentity(displayUser)
   const [overlay, setOverlay] = useState<{ identity: string; user: MemberUser } | null>(null)
-
-  useEffect(() => {
-    setOverlay(prev => (prev && prev.identity !== identity ? null : prev))
-  }, [identity])
 
   /**
    * owner: 원문을 요청한 시점의 회원. onlyIfCurrent=true(비동기 보강 등)는 이미 비워졌거나

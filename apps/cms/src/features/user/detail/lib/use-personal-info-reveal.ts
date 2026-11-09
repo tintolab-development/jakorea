@@ -75,6 +75,11 @@ export interface UsePersonalInfoRevealOptions {
    * 회원 상세 화면에서 주소·계좌 등 표시 갱신에 사용.
    */
   onPrivacyUnmasked?: (payload: unknown, role: UserRole | undefined) => void
+  /**
+   * 열람 상태가 해제되는 모든 경로(다시 가리기·토글·행 전환·권한 회수·조회 실패)에서
+   * 같은 이벤트·effect 안에서 동기 호출한다. 화면의 원문 오버레이 정리용(렌더 뒤 fallback 정리 금지).
+   */
+  onRemask?: () => void
   resetDeps: DependencyList
   controlMode: PersonalInfoRevealControlMode
   modalZIndex?: number
@@ -225,6 +230,7 @@ export function usePersonalInfoReveal({
   resolveInstructorRoleRequestId,
   revealPersonalInfo,
   onPrivacyUnmasked,
+  onRemask,
   resetDeps,
   controlMode,
   modalZIndex,
@@ -236,10 +242,30 @@ export function usePersonalInfoReveal({
   const programAssignment = useMyProgramPrivacyRole(privacyScope === 'program' ? programId : undefined)
   const [personalInfoRevealed, setPersonalInfoRevealed] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
+  /** 원문을 실제로 받은 상태인지(캐시 초기화 대상 여부). 렌더와 무관하게 이벤트 시점 값을 쓴다. */
+  const revealedRef = useRef(false)
+  const onRemaskRef = useRef(onRemask)
+  onRemaskRef.current = onRemask
 
-  useEffect(() => {
+  /**
+   * 원문 열람 해제 — 프로그램 원문 캐시 초기화·화면 오버레이 정리·상태 해제를 한 번에 동기 수행한다.
+   * 렌더 뒤 effect로 지우는 fallback을 두지 않는다(CMS-29: 한 프레임도 원문 재표시 금지).
+   */
+  const releaseReveal = (evict = false) => {
+    if (privacyScope === 'program' && revealedRef.current) {
+      if (evict) evictProgramUnmaskDetailCaches(programId)
+      else resetTrackedProgramUnmaskCaches(programId)
+    }
+    revealedRef.current = false
+    onRemaskRef.current?.()
     setPersonalInfoRevealed(false)
     setConfirmOpen(false)
+  }
+  const releaseRevealRef = useRef(releaseReveal)
+  releaseRevealRef.current = releaseReveal
+
+  useEffect(() => {
+    releaseRevealRef.current()
     // resetDeps: 호출 화면의 기존 reset effect와 동일한 의존성 배열
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, resetDeps)
@@ -248,13 +274,7 @@ export function usePersonalInfoReveal({
     ? programAssignment.canRevealSensitive
     : programAssignment.canRevealGeneral
 
-  // 다시 가리기(원문→마스킹)·행 전환·화면 이탈 시 원문을 쓴 상세 캐시를 남기지 않는다.
-  const revealedRef = useRef(false)
-  useEffect(() => {
-    if (privacyScope !== 'program') return
-    if (revealedRef.current && !personalInfoRevealed) resetTrackedProgramUnmaskCaches(programId)
-    revealedRef.current = personalInfoRevealed
-  }, [privacyScope, programId, personalInfoRevealed])
+  // 화면 이탈(unmount) 시 원문을 쓴 상세 캐시를 남기지 않는다.
   useEffect(() => {
     if (privacyScope !== 'program') return
     return () => {
@@ -266,9 +286,7 @@ export function usePersonalInfoReveal({
   useEffect(() => {
     if (privacyScope !== 'program') return
     if (programAssignment.pending || !programCanReveal) {
-      if (personalInfoRevealed) evictProgramUnmaskDetailCaches(programId)
-      setPersonalInfoRevealed(false)
-      setConfirmOpen(false)
+      releaseRevealRef.current(true)
     }
   }, [
     privacyScope,
@@ -314,6 +332,7 @@ export function usePersonalInfoReveal({
         try {
           const payload = await revealPersonalInfo(reason, options)
           onPrivacyUnmasked?.(payload, resolveMemberRole?.())
+          revealedRef.current = true
           setPersonalInfoRevealed(true)
           setConfirmOpen(false)
           return { ok: true, payload }
@@ -322,8 +341,8 @@ export function usePersonalInfoReveal({
             error != null && typeof error === 'object' && 'response' in error
               ? (error as { response?: { status?: number } }).response?.status
               : undefined
-          setPersonalInfoRevealed(false)
-          evictProgramUnmaskDetailCaches(programId)
+          revealedRef.current = true
+          releaseRevealRef.current(true)
           const message =
             status === 403
               ? '이 프로그램에서 원문을 열람할 권한이 없습니다.'
@@ -351,6 +370,7 @@ export function usePersonalInfoReveal({
       if (result.payload !== undefined) {
         onPrivacyUnmasked?.(result.payload, result.role)
       }
+      revealedRef.current = true
       setPersonalInfoRevealed(true)
       setConfirmOpen(false)
       return { ok: true, payload: result.payload }
@@ -384,10 +404,18 @@ export function usePersonalInfoReveal({
     })
   }, [personalInfoRevealed, guardPiiReveal])
 
+  /**
+   * 원문 열람 종료. 프로그램 범위는 상태를 바꾸기 전에 원문을 쓴 상세 캐시를 동기적으로 초기화한다 —
+   * 다음 렌더가 원문 캐시를 한 번이라도 읽으면 취소 직후 원문이 잠깐 다시 보인다(CMS-29).
+   */
+  const remaskPersonalInfo = useCallback(() => {
+    releaseRevealRef.current()
+  }, [])
+
   const onPrivacyControlClick = useCallback(() => {
     if (controlMode === 'toggleRemask') {
       if (personalInfoRevealed) {
-        setPersonalInfoRevealed(false)
+        remaskPersonalInfo()
         return
       }
       void guardPiiReveal().then(allowed => {
@@ -406,12 +434,7 @@ export function usePersonalInfoReveal({
     void guardPiiReveal().then(allowed => {
       if (allowed) setConfirmOpen(true)
     })
-  }, [controlMode, personalInfoRevealed, guardPiiReveal])
-
-  const remaskPersonalInfo = useCallback(() => {
-    setPersonalInfoRevealed(false)
-    setConfirmOpen(false)
-  }, [])
+  }, [controlMode, personalInfoRevealed, guardPiiReveal, remaskPersonalInfo])
 
   const confirmModal = useMemo(
     () =>

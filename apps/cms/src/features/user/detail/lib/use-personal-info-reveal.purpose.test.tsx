@@ -130,12 +130,84 @@ describe('usePersonalInfoReveal — 신청 수정 취소 재마스킹 (CMS-29)',
     expect(result.current.personalInfoRevealed).toBe(true)
     expect(client.getQueryData(key)).toMatchObject({ teacherPhone: '010-1234-5678' })
 
-    await act(async () => {
+    act(() => {
       result.current.remaskPersonalInfo()
-      await Promise.resolve()
+      // React 렌더·effect 전에 이미 비어 있어야 다음 렌더가 원문을 읽지 않는다(취소 직후 깜빡임 방지).
+      expect(client.getQueryData(key)).toBeUndefined()
     })
     expect(result.current.personalInfoRevealed).toBe(false)
     expect(client.getQueryData(key)).toBeUndefined()
     expect(revealPersonalInfo).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('usePersonalInfoReveal — 열람 해제 경로의 동기 정리(onRemask, fallback 없음)', () => {
+  function renderProgramReveal(
+    client: QueryClient,
+    opts: { onRemask: () => void; controlMode?: 'toggleRemask' | 'hideWhenRevealed'; programId?: string },
+    initialDep = 'row-1'
+  ) {
+    const programId = opts.programId ?? '186565'
+    const key = generalApplicationsQueryKeys.organizationDetailInProgram(programId, '1691636')
+    const revealPersonalInfo = vi.fn(async () =>
+      cacheProjectedProgramPrivacy(client, key, programId, { teacherPhone: '010-1234-5678' })
+    )
+    const hook = renderHook(
+      ({ dep }) =>
+        usePersonalInfoReveal({
+          privacyScope: 'program',
+          programId,
+          resolveAccessItem: () => '학교 상세',
+          revealPersonalInfo,
+          onRemask: opts.onRemask,
+          resetDeps: [dep],
+          controlMode: opts.controlMode ?? 'toggleRemask',
+        }),
+      { initialProps: { dep: initialDep } }
+    )
+    return { ...hook, key, revealPersonalInfo }
+  }
+
+  it('토글 다시 가리기: 같은 이벤트 안에서 오버레이 정리와 캐시 초기화가 끝난다', async () => {
+    const client = new QueryClient()
+    const onRemask = vi.fn()
+    const { result, key } = renderProgramReveal(client, { onRemask })
+    await act(async () => {
+      await result.current.revealWithReason('신청 정보 수정', EDIT_MODE_REVEAL)
+    })
+    onRemask.mockClear()
+    act(() => {
+      result.current.onPrivacyControlClick()
+      expect(onRemask).toHaveBeenCalledTimes(1)
+      expect(client.getQueryData(key)).toBeUndefined()
+    })
+    expect(result.current.personalInfoRevealed).toBe(false)
+  })
+
+  it('행 전환(resetDeps): 오버레이 정리와 캐시 초기화를 함께 수행한다', async () => {
+    const client = new QueryClient()
+    const onRemask = vi.fn()
+    const { result, rerender, key } = renderProgramReveal(client, { onRemask })
+    await act(async () => {
+      await result.current.revealWithReason('신청 정보 수정', EDIT_MODE_REVEAL)
+    })
+    onRemask.mockClear()
+    rerender({ dep: 'row-2' })
+    expect(onRemask).toHaveBeenCalled()
+    expect(client.getQueryData(key)).toBeUndefined()
+    expect(result.current.personalInfoRevealed).toBe(false)
+  })
+
+  it('프로그램 간 격리: 다른 프로그램 화면의 원문 캐시는 지우지 않는다', async () => {
+    const client = new QueryClient()
+    const otherKey = generalApplicationsQueryKeys.individualDetail('9001')
+    cacheProjectedProgramPrivacy(client, otherKey, '777777', { contact: '010-9999-0000' })
+    const { result, key } = renderProgramReveal(client, { onRemask: vi.fn() })
+    await act(async () => {
+      await result.current.revealWithReason('신청 정보 수정', EDIT_MODE_REVEAL)
+    })
+    act(() => result.current.remaskPersonalInfo())
+    expect(client.getQueryData(key)).toBeUndefined()
+    expect(client.getQueryData(otherKey)).toMatchObject({ contact: '010-9999-0000' })
   })
 })

@@ -26,13 +26,23 @@ describe('회원 상세 원문 일시 상태 (P1 수정 취소·목록 잔류)',
     expect(result.current.revealedUser).toBeNull()
   })
 
-  it('다른 회원으로 바뀌면 이전 원문을 노출하지 않고, 되돌아와도 재사용하지 않는다', () => {
+  it('다른 회원으로 바뀌면 같은 렌더에서 이전 원문을 노출하지 않는다', () => {
     const { result, rerender } = renderHook(({ user }) => useRevealedMemberOverlay(user), {
       initialProps: { user: maskedA },
     })
     act(() => result.current.holdRevealedUser(maskedA, rawA))
     rerender({ user: maskedB })
     expect(result.current.revealedUser).toBeNull()
+  })
+
+  it('회원 전환 시 열람 해제(onRemask)로 비우면 되돌아와도 재사용하지 않는다', () => {
+    const { result, rerender } = renderHook(({ user }) => useRevealedMemberOverlay(user), {
+      initialProps: { user: maskedA },
+    })
+    act(() => result.current.holdRevealedUser(maskedA, rawA))
+    rerender({ user: maskedB })
+    // usePersonalInfoReveal resetDeps → onRemask(clearRevealedUser) 동기 호출과 같다
+    act(() => result.current.clearRevealedUser())
     rerender({ user: maskedA })
     expect(result.current.revealedUser).toBeNull()
   })
