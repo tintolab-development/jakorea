@@ -371,7 +371,7 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
           content:
             target.approvalStatus === 'APPROVED'
               ? '현재 승인된 강사입니다. 변경할 다른 강사를 선택해 주세요.'
-              : '신청 반려된 강사는 선택 승인할 수 없습니다.\\n승인 대기 상태의 강사를 선택해 주세요.',
+              : '신청 반려된 강사는 선택 승인할 수 없습니다.\n승인 대기 상태의 강사를 선택해 주세요.',
         })
         return
       }
