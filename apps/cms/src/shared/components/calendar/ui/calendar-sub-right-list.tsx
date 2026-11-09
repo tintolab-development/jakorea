@@ -60,6 +60,8 @@ import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
 
+const EMPTY_ROW_KEYS: Key[] = []
+
 function toggleGeneralApplicationCalendarListSelection({
   key,
   checked,
@@ -108,8 +110,9 @@ export type CalendarSubRightListInstitutionApplicationProps = {
   mode: 'institutionApplication'
   selectedDate: Dayjs
   rows: CalendarInstitutionApplicationListRow[]
-  selectedRowKeys: Key[]
-  onSelectionChange: (keys: Key[]) => void
+  /** `onSelectionChange`가 없으면 체크박스 없는 조회 전용 목록 */
+  selectedRowKeys?: Key[]
+  onSelectionChange?: (keys: Key[]) => void
   onRowClick?: (row: CalendarInstitutionApplicationListRow) => void
   resolveRowColors?: (row: CalendarInstitutionApplicationListRow) => ScheduleColorPair | undefined
 }
@@ -194,14 +197,14 @@ function CalendarSubRightProgramList({
 
 function CalendarSubRightInstitutionApplicationList({
   rows,
-  selectedRowKeys,
+  selectedRowKeys = EMPTY_ROW_KEYS,
   onSelectionChange,
   onRowClick,
   resolveRowColors,
 }: {
   rows: CalendarInstitutionApplicationListRow[]
-  selectedRowKeys: Key[]
-  onSelectionChange: (keys: Key[]) => void
+  selectedRowKeys?: Key[]
+  onSelectionChange?: (keys: Key[]) => void
   onRowClick?: (row: CalendarInstitutionApplicationListRow) => void
   resolveRowColors?: (row: CalendarInstitutionApplicationListRow) => ScheduleColorPair | undefined
 }) {
@@ -209,6 +212,7 @@ function CalendarSubRightInstitutionApplicationList({
 
   const handleToggle = useCallback(
     (key: string, checked: boolean) => {
+      if (!onSelectionChange) return
       if (checked) {
         if (selectedSet.has(key)) return
         onSelectionChange([...selectedRowKeys, key])
@@ -218,6 +222,7 @@ function CalendarSubRightInstitutionApplicationList({
     },
     [onSelectionChange, selectedRowKeys, selectedSet]
   )
+  const selectable = Boolean(onSelectionChange)
 
   return (
     <div
@@ -235,7 +240,7 @@ function CalendarSubRightInstitutionApplicationList({
               key={row.id}
               className={[
                 'calendar-list-item',
-                selectedSet.has(row.id) ? 'calendar-list-item--selected' : '',
+                selectable && selectedSet.has(row.id) ? 'calendar-list-item--selected' : '',
               ]
                 .filter(Boolean)
                 .join(' ')}
@@ -250,7 +255,7 @@ function CalendarSubRightInstitutionApplicationList({
                 <CalendarListItemContentInstitutionApplication
                   row={row}
                   checked={selectedSet.has(row.id)}
-                  onToggle={handleToggle}
+                  onToggle={selectable ? handleToggle : undefined}
                 />
               </div>
             </div>

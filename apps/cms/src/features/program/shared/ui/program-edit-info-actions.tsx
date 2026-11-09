@@ -21,6 +21,10 @@ export interface ProgramEditInfoActionsProps {
   size?: CmsButtonSize
   /** false면 정보 수정 버튼을 숨긴다. 조회 전용(GENERAL) 관리자 */
   canWrite?: boolean
+  /** 조회 상태 버튼 문구. 미지정 시 「정보 수정」 */
+  editLabel?: string
+  /** 수정 상태 저장 버튼 문구. 미지정 시 「저장」 */
+  saveLabel?: string
 }
 
 /** 조회: 「정보 수정」 / 수정: 「취소」「저장」만 조건부 렌더 */
@@ -35,6 +39,8 @@ export function ProgramEditInfoActions({
   useToolbarButton = false,
   size,
   canWrite = true,
+  editLabel = PROGRAM_EDIT_INFO_BUTTON_LABEL,
+  saveLabel = PROGRAM_EDIT_INFO_SAVE_LABEL,
 }: ProgramEditInfoActionsProps) {
   const resolvedSize = size ?? PROGRAM_EDIT_INFO_BUTTON_PROPS.size
   if (!canWrite) return null
@@ -46,8 +52,8 @@ export function ProgramEditInfoActions({
           variant={idleVariant}
           disabled={disabled}
           onClick={onEdit}
-          aria-label={PROGRAM_EDIT_INFO_BUTTON_LABEL} >
-          {PROGRAM_EDIT_INFO_BUTTON_LABEL}
+          aria-label={editLabel} >
+          {editLabel}
         </FilterTableToolbarButton>
       )
     }
@@ -58,8 +64,8 @@ export function ProgramEditInfoActions({
         variant={idleVariant}
         disabled={disabled}
         onClick={onEdit}
-        aria-label={PROGRAM_EDIT_INFO_BUTTON_LABEL} >
-        {PROGRAM_EDIT_INFO_BUTTON_LABEL}
+        aria-label={editLabel} >
+        {editLabel}
       </CmsButton>
     )
   }
@@ -79,8 +85,8 @@ export function ProgramEditInfoActions({
           disabled={disabled}
           loading={saving}
           onClick={onSave}
-          aria-label={PROGRAM_EDIT_INFO_SAVE_LABEL} >
-          {PROGRAM_EDIT_INFO_SAVE_LABEL}
+          aria-label={saveLabel} >
+          {saveLabel}
         </FilterTableToolbarButton>
       </span>
     )
@@ -102,8 +108,8 @@ export function ProgramEditInfoActions({
         disabled={disabled}
         loading={saving}
         onClick={onSave}
-        aria-label={PROGRAM_EDIT_INFO_SAVE_LABEL} >
-        {PROGRAM_EDIT_INFO_SAVE_LABEL}
+        aria-label={saveLabel} >
+        {saveLabel}
       </CmsButton>
     </span>
   )

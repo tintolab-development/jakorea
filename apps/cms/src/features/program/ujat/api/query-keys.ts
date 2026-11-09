@@ -142,4 +142,7 @@ export const queryKeys = {
       half,
       scheduleIdsKey,
     ] as const,
+  /** 1365 봉사시간 등록 양식 반기 일괄(PREVIEW) — 출석 변경 무효화(`volunteer1365AttendanceAll`) 하위 */
+  volunteer1365SemesterForm: (programId: string, half: string) =>
+    [...queryKeys.volunteer1365AttendanceAll(programId), 'semester-form', half] as const,
 }

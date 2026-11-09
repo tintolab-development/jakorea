@@ -1132,6 +1132,11 @@ export function UserListPage() {
       }
     } catch (error) {
       handleError(error, { defaultMessage: '회원 삭제에 실패했습니다.' })
+      showAlert({
+        title: '안내',
+        content: error instanceof Error && error.message ? error.message : '회원 삭제에 실패했습니다.',
+        confirmLabel: '확인',
+      })
     } finally {
       setDeleteLoading(false)
     }
@@ -1160,21 +1165,35 @@ export function UserListPage() {
         await deleteUser(u.id, {
           ...resolveDeleteUserOptions(u),
           reason: 'CMS 관리자 회원 삭제',
-          typedDeleteConfirm: withdrawConfirmationText,
+          // 상세 탈퇴 모달 확인 문구는 `탈퇴` — 삭제용(`typedDeleteConfirm`=`삭제`)이 아닌 탈퇴 필드로 전달
+          withdrawConfirmationText,
         })
         setSelectedRowKeys(prev => prev.filter(key => String(key) !== String(u.id)))
         setSelectedRowsSnapshot(prev => prev.filter(row => row.id !== u.id))
         invalidateList()
         flushUserDetailModal()
-        showDeleteCompletedAlert()
+        if (u.role === 'SCHOOL') {
+          showDeleteCompletedAlert()
+        } else {
+          showAlert({
+            title: '회원 탈퇴 완료',
+            content: '회원 탈퇴가 완료되었습니다.',
+            confirmLabel: '확인',
+          })
+        }
       } catch (error) {
         handleError(error, { defaultMessage: '회원 삭제에 실패했습니다.' })
+        showAlert({
+          title: '안내',
+          content: error instanceof Error && error.message ? error.message : '회원 탈퇴 처리에 실패했습니다.',
+          confirmLabel: '확인',
+        })
         throw error
       } finally {
         setDeleteLoading(false)
       }
     },
-    [flushUserDetailModal, deleteUser, invalidateList, roleCode]
+    [flushUserDetailModal, deleteUser, invalidateList, roleCode, showAlert]
   )
 
   const handleAdminPermissionChange = useCallback(

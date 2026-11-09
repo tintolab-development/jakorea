@@ -106,7 +106,7 @@ export async function listUjatEducationRegionsFilteredService(
     (
       await fetchAdminUjatEducationRegionsRemote({
         includeInactive: filters.usageStatus !== 'active',
-        activeYn: filters.usageStatus === 'active',
+        activeYn: filters.usageStatus === 'all' ? undefined : filters.usageStatus === 'active',
         keyword: keyword || undefined,
       })
     ).map(mapEducationRegionResponse)
