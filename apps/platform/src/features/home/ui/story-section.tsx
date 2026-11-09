@@ -6,7 +6,7 @@ import {
   type ImpactStoryListItem,
   useHomeImpactSubStories,
 } from '@/features/impact-story'
-import cardMinjaeUrl from '@/features/impact-story/image/illustration/card-minjae.png'
+import defaultThumbnailUrl from '@/features/impact-story/image/illustration/card-default.png'
 import { PFCategoryBadge, PFText } from '@/shared/ui'
 import { useHomeMain } from '../api/use-home-main'
 import { FALLBACK_IMPACT_TITLE } from '../lib/view'
@@ -30,7 +30,7 @@ function TitleLines({ title }: { title: string }) {
 }
 
 function FeaturedStory({ story }: { story: ImpactStoryListItem }) {
-  const remoteSrc = story.featuredImageUrl || story.imageUrl || cardMinjaeUrl
+  const remoteSrc = story.featuredImageUrl || story.imageUrl || defaultThumbnailUrl
   const [src, setSrc] = useState(remoteSrc)
 
   useEffect(() => {
@@ -49,7 +49,7 @@ function FeaturedStory({ story }: { story: ImpactStoryListItem }) {
           src={src}
           alt=""
           onError={() => {
-            if (src !== cardMinjaeUrl) setSrc(cardMinjaeUrl)
+            if (src !== defaultThumbnailUrl) setSrc(defaultThumbnailUrl)
           }}
         />
       </div>
@@ -86,13 +86,12 @@ function SubStoryCard({ story }: { story: ImpactStoryListItem }) {
       to={impactStoryDetailPath(story.id)}
       aria-label={`${story.title} 상세 보기`}
     >
-      <div
-        className={styles.subCardMedia}
-        style={story.imageUrl ? undefined : { backgroundColor: story.placeholderColor }}
-      >
-        {story.imageUrl ? (
-          <img className={styles.subCardImage} src={story.imageUrl} alt="" />
-        ) : null}
+      <div className={styles.subCardMedia}>
+        <img
+          className={styles.subCardImage}
+          src={story.imageUrl || defaultThumbnailUrl}
+          alt=""
+        />
         <PFCategoryBadge size="small" variant="primary" className={styles.subCardBadge}>
           {story.categoryLabel}
         </PFCategoryBadge>
