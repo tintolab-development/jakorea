@@ -65,5 +65,6 @@ describe('formatInstitutionApplicationGradeDisplay', () => {
     expect(formatInstitutionApplicationGradeDisplay('2')).toBe('2학년')
     expect(formatInstitutionApplicationGradeDisplay('초등학교 3학년')).toBe('3학년')
     expect(formatInstitutionApplicationGradeDisplay('JA초등학교 4학년')).toBe('4학년')
+    expect(formatInstitutionApplicationGradeDisplay('-')).toBe('')
   })
 })

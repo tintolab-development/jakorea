@@ -64,6 +64,11 @@ import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-i
 import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { fetchMemberRolePrivacyUnmask } from '@/features/user/api/member-privacy-unmask'
+import {
+  APPLICATION_EDIT_MODE_UNMASK_REASON,
+  EDIT_MODE_REVEAL,
+  type PrivacyRevealOptions,
+} from '@/shared/lib/privacy-unmask-purpose'
 import { unmaskOrganizationApplicationPrivacyRemote } from '@/features/program/general/api/applications-api-client'
 import { cacheProjectedProgramPrivacy } from '@/features/program/shared/lib/program-my-assignment'
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
@@ -367,14 +372,15 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
   )
 
   const revealInstitutionTeacherPersonalInfo = useCallback(
-    async (reason: string) => {
+    async (reason: string, options?: PrivacyRevealOptions) => {
       const orgAppId = (row.organizationApplicationId ?? row.id)?.trim()
       if (orgAppId) {
         const programIdNumber = Number(programId)
         const dto = await unmaskOrganizationApplicationPrivacyRemote(
           orgAppId,
           reason,
-          Number.isFinite(programIdNumber) ? programIdNumber : undefined
+          Number.isFinite(programIdNumber) ? programIdNumber : undefined,
+          options
         )
         return cacheProjectedProgramPrivacy(
           queryClient,
@@ -474,7 +480,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
   const confirmEditUnmaskAndStartEdit = useCallback(() => {
     if (editUnmaskConfirmLoading) return
     setEditUnmaskConfirmLoading(true)
-    void revealWithReason('신청 정보 수정')
+    void revealWithReason(APPLICATION_EDIT_MODE_UNMASK_REASON, EDIT_MODE_REVEAL)
       .then(result => {
         if (!result.ok) return
         setEditUnmaskConfirmOpen(false)

@@ -342,6 +342,30 @@ describe('hydrateOrganizationApplicationRowFromForm', () => {
     expect(hydrated.detail?.teacherMobile).toBeUndefined()
     expect(hydrated.detail?.computerInSpace).toBeUndefined()
   })
+
+  it('keeps detail GET sex-offense text and ignores form answers', () => {
+    const hydrated = hydrateOrganizationApplicationRowFromForm({
+      row: {
+        ...baseRow,
+        detail: {
+          sexOffenseCheckRequest: '온라인 제출 | ID : tinto | 검증번호 : 940412',
+        },
+      },
+      formResponse: formWithAnswers([
+        {
+          questionKeySnapshot:
+            'program-application-economy-seed-sex-offense-consent-submission',
+          answerValueJson: JSON.stringify({ submissionRequest: 'no_submit' }),
+        },
+      ]),
+      canonicalDetail: {
+        sexOffenseCheckRequest: '온라인 제출 | ID : tinto | 검증번호 : 940412',
+      },
+    })
+    expect(hydrated.detail?.sexOffenseCheckRequest).toBe(
+      '온라인 제출 | ID : tinto | 검증번호 : 940412'
+    )
+  })
 })
 
 describe('parseAnswerValue', () => {

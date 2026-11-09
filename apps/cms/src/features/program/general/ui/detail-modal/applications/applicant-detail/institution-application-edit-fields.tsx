@@ -16,6 +16,7 @@ import {
   CmsTextArea,
 } from '@/shared/ui'
 import { CmsSelect } from '@/shared/ui/cms-select'
+import { formatRequestedEducationFormat } from '@/features/program/general/api/adapters/general-applications-adapters'
 import './institution-basic-info.css'
 
 export const INSTITUTION_EDUCATION_FORMAT_OPTIONS = [
@@ -107,9 +108,13 @@ export function buildInstitutionApplicationEditFieldsFromApplicantDetail(
 ): InstitutionApplicationDetailEditFields {
   const waitingText = detail?.waitingPlaceGuide?.trim() || detail?.waitingRoom?.trim() || ''
   const teacherFields = parseInstitutionTeacherInfoFromApplicantDetail(detail, institution)
+  const educationFormat =
+    formatRequestedEducationFormat(detail?.educationType) || detail?.educationType?.trim() || ''
 
   return {
-    educationGrade: normalizeInstitutionApplicationGradeForApplicantEdit(institution?.educationGrade),
+    educationGrade: normalizeInstitutionApplicationGradeForApplicantEdit(
+      blankPlaceholder(institution?.educationGrade)
+    ),
     classCount:
       institution?.classCount != null && institution.classCount > 0
         ? String(institution.classCount)
@@ -119,7 +124,7 @@ export function buildInstitutionApplicationEditFieldsFromApplicantDetail(
         ? String(institution.studentCount)
         : '',
     addressDetail: detail?.addressDetail ?? '',
-    educationFormat: detail?.educationType ?? '',
+    educationFormat,
     applicationReason: detail?.applicationReason ?? '',
     otherRequests: detail?.otherRequests ?? '',
     computerInRoom: detail?.computerInSpace ?? '',
@@ -134,6 +139,11 @@ export function buildInstitutionApplicationEditFieldsFromApplicantDetail(
     parkingInfo: detail?.otherSpecialNotes?.trim() || detail?.parkingInfo?.trim() || '',
     ...teacherFields,
   }
+}
+
+function blankPlaceholder(value?: string): string {
+  const trimmed = value?.trim() ?? ''
+  return !trimmed || trimmed === '-' ? '' : trimmed
 }
 
 function normalizeInstitutionApplicationGradeForApplicantEdit(grade?: string): string {
@@ -192,7 +202,7 @@ function parseInstitutionTeacherInfoFromApplicantDetail(
     }
 
     return {
-      teacherName: parsed.name ?? institution?.teacherName ?? '',
+      teacherName: blankPlaceholder(parsed.name ?? institution?.teacherName),
       teacherPhone:
         detail?.teacherTel ??
         parsed.tel ??
@@ -205,7 +215,7 @@ function parseInstitutionTeacherInfoFromApplicantDetail(
   }
 
   return {
-    teacherName: institution?.teacherName ?? '',
+    teacherName: blankPlaceholder(institution?.teacherName),
     teacherPhone:
       detail?.teacherTel ?? (hasStructuredTeacherFields ? '' : institution?.contact) ?? '',
     teacherMobile: detail?.teacherPhone ?? detail?.teacherMobile ?? '',
@@ -315,31 +325,46 @@ export function InstitutionClassAndStudentCountEdit({
   classCountOptions,
   onChange,
   errors,
+  numericClassCount = false,
 }: {
   classCount: string
   studentCount: string
   classCountOptions: Array<{ value: string; label: string }>
   onChange: (patch: { classCount?: string; studentCount?: string }) => void
   errors?: Partial<Record<'classCount' | 'studentCount', string>>
+  /** 1사1교 Figma 4175:109534 — 학급 수는 Select가 아니라 숫자 입력 */
+  numericClassCount?: boolean
 }) {
   const firstError = errors?.classCount ?? errors?.studentCount
 
   return (
     <FieldStack error={firstError}>
       <div
-        className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap"
+        className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap institution-basic-info__class-count-edit"
         style={inlineRowStyle}
       >
-        <CmsSelect
-          inputSize="small"
-          withAllOption={false}
-          disabled={classCountOptions.length === 0}
-          placeholder="신청 학급 수"
-          width={120}
-          value={classCount || undefined}
-          options={classCountOptions}
-          onChange={value => onChange({ classCount: String(value ?? '') })}
-        />
+        {numericClassCount ? (
+          <CmsNumericInput
+            inputSize="small"
+            mode="integer"
+            min={1}
+            placeholder="신청 학급 수"
+            width={120}
+            value={classCount}
+            onValueChange={raw => onChange({ classCount: raw })}
+          />
+        ) : (
+          <CmsSelect
+            inputSize="small"
+            withAllOption={false}
+            disabled={classCountOptions.length === 0}
+            placeholder="신청 학급 수"
+            width={120}
+            value={classCount || undefined}
+            options={classCountOptions}
+            onChange={value => onChange({ classCount: String(value ?? '') })}
+          />
+        )}
         <span style={nowrapSpanStyle}>개 학급</span>
         <DetailInfoForm.InputsSeparator />
         <span style={nowrapSpanStyle}>총</span>
@@ -389,9 +414,10 @@ export function InstitutionEducationFormatRadios({
   onChange: (value: string) => void
   error?: string
 }) {
+  const normalized = formatRequestedEducationFormat(value) || value
   const resolved =
-    INSTITUTION_EDUCATION_FORMAT_OPTIONS.find(o => o.value === value)?.value ??
-    (value || undefined)
+    INSTITUTION_EDUCATION_FORMAT_OPTIONS.find(o => o.value === normalized)?.value ??
+    (normalized || undefined)
 
   return (
     <FieldStack error={error}>
@@ -575,12 +601,14 @@ export function InstitutionTeacherEdit({
 
   const resolvedTeacherValue =
     teacherOptions?.find(option => option.label === name)?.value ??
-    (name ? `legacy:${name}` : undefined)
+    (name && name !== '-' ? `legacy:${name}` : undefined)
 
   return (
     <FieldStack error={firstError}>
       <div className="detail-info-form-inputs-wrapper-no-gap institution-basic-info__teacher-edit">
-        <span style={nowrapSpanStyle}>담당 교사</span>
+        <span className="mr-6" style={nowrapSpanStyle}>
+          담당 교사
+        </span>
         {teacherOptions ? (
           <CmsSelect
             inputSize="small"
@@ -613,7 +641,9 @@ export function InstitutionTeacherEdit({
           />
         )}
         <DetailInfoForm.InputsSeparator />
-        <span style={nowrapSpanStyle}>Tel</span>
+        <span className="mr-6" style={nowrapSpanStyle}>
+          Tel
+        </span>
         <CmsPhoneInput
           inputSize="small"
           width={200}
@@ -622,7 +652,9 @@ export function InstitutionTeacherEdit({
           onChange={e => onChange({ teacherPhone: e.target.value })}
         />
         <DetailInfoForm.InputsSeparator />
-        <span style={nowrapSpanStyle}>M</span>
+        <span className="mr-6" style={nowrapSpanStyle}>
+          M
+        </span>
         <CmsPhoneInput
           inputSize="small"
           width={200}
@@ -631,7 +663,9 @@ export function InstitutionTeacherEdit({
           onChange={e => onChange({ teacherMobile: e.target.value })}
         />
         <DetailInfoForm.InputsSeparator />
-        <span style={nowrapSpanStyle}>E-mail</span>
+        <span className="mr-6" style={nowrapSpanStyle}>
+          E-mail
+        </span>
         <CmsInput
           inputSize="small"
           width={200}

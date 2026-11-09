@@ -29,6 +29,11 @@ export function ApplicantAdminCommentSection({
     return (
       <DetailInfoForm
         title="관리자 코멘트"
+        description={
+          <span className="applicant-admin-comment-section__header-note">
+            주민등록번호, 건강정보 등 민감한 개인정보는 입력하지 않도록 주의해 주세요.
+          </span>
+        }
         mode="edit"
         className="applicant-admin-comment-section applicant-admin-comment-section--editing"
       >
@@ -51,7 +56,16 @@ export function ApplicantAdminCommentSection({
   }
 
   return (
-    <DetailInfoForm title="관리자 코멘트" mode="view" className="applicant-admin-comment-section">
+    <DetailInfoForm
+      title="관리자 코멘트"
+      description={
+        <span className="applicant-admin-comment-section__header-note">
+          주민등록번호, 건강정보 등 민감한 개인정보는 입력하지 않도록 주의해 주세요.
+        </span>
+      }
+      mode="view"
+      className="applicant-admin-comment-section"
+    >
       <DetailInfoForm.Row type="custom">
         <div
           className={
