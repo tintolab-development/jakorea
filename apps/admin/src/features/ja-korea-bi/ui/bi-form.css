@@ -1,49 +1,22 @@
 /* BI 소개 관리 — 시안 상세 폼 카드
- * 목록 카드·툴바: list-table-layout.css / table-header-label.css
- * 흰 카드가 콘텐츠 영역 남은 높이를 채움
+ * 카드 fill은 공통(admin-document-card) — 여기엔 화면 고유 규칙만 둔다
  * view: 행 min-height 54px (기존 기본 사이즈)
  * edit: textarea 높이는 최소화해 view 대비 점프만 축소
  */
 
-.ja-korea-bi-card.admin-list-card {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  height: 100%;
-  margin-bottom: 0;
-}
-
-.ja-korea-bi-card .admin-list-toolbar {
-  flex-shrink: 0;
-  align-items: center;
-}
-
-.ja-korea-bi-card__body {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-width: 0;
-  min-height: 0;
-}
-
 /* 라벨 폭은 DetailInfoForm.Field `labelWidth` prop(--detail-info-label-w)으로만 지정 */
-.ja-korea-bi-card .detail-info-form__field {
+.ja-korea-bi-card .detail-info-form__field,
+.ja-korea-bi-card .detail-info-form__field-label,
+.ja-korea-bi-card .detail-info-form__field-content {
   min-height: 54px;
 }
 
 .ja-korea-bi-card .detail-info-form__field-label {
-  min-height: 54px;
   padding: 12px 16px;
-  box-sizing: border-box;
 }
 
 .ja-korea-bi-card .detail-info-form__field-content {
-  min-height: 54px;
-  padding: 12px 16px;
-  box-sizing: border-box;
   justify-content: flex-start;
-  align-items: center;
   text-align: left;
 }
 
