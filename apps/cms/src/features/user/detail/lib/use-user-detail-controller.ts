@@ -54,10 +54,12 @@ import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { navigateToProgramAdminDetail } from '@/features/program/general/lib/navigate-to-program-admin-detail'
 import { stashMemberDetailReturnForProgramNavigation } from '@/features/user/detail/lib/member-detail-program-navigation-return'
-import type {
-  PatchUserBasicInfoInput,
-  PatchUserBasicInfoOptions,
+import {
+  getUserById,
+  type PatchUserBasicInfoInput,
+  type PatchUserBasicInfoOptions,
 } from '@/entities/user/api/user-service'
+import { resolveMemberDisplayAfterSave } from '@/features/user/detail/lib/member-save-display'
 import {
   canAccessAdminCommentInAdminDetail,
   canEditAdminMemberInfo,
@@ -586,6 +588,7 @@ export function useUserDetailController({
     },
     resolveInstructorRoleRequestId: () => displayUser?.instructorRoleRequestId,
     onPrivacyUnmasked: handlePrivacyUnmasked,
+    onRemask: clearRevealedUser,
     resetDeps: [
       open,
       displayUser?.id,
@@ -603,15 +606,8 @@ export function useUserDetailController({
   /** 현재 회원·열람 상태와 일치할 때만 원문을 쓴다. 그 밖에는 null(마스킹 GET 값 표시). */
   const revealedUser = personalInfoRevealed ? overlayRevealedUser : null
 
-  useEffect(() => {
-    if (!personalInfoRevealed) clearRevealedUser()
-  }, [personalInfoRevealed, clearRevealedUser])
-
-  /** 원문 열람 종료: 일시 원문 폐기 + 마스킹 상태 복귀(원문 재조회 없음). */
-  const endPersonalInfoReveal = useCallback(() => {
-    clearRevealedUser()
-    remaskPersonalInfo()
-  }, [clearRevealedUser, remaskPersonalInfo])
+  /** 원문 열람 종료: 훅이 일시 원문 폐기(onRemask)와 마스킹 상태 복귀를 한 번에 동기 수행한다. */
+  const endPersonalInfoReveal = remaskPersonalInfo
 
   const [editUnmaskConfirmOpen, setEditUnmaskConfirmOpen] = useState(false)
   const [editUnmaskConfirmLoading, setEditUnmaskConfirmLoading] = useState(false)
@@ -1329,6 +1325,29 @@ export function useUserDetailController({
             })
           )
         }
+      }
+      // 저장 후 표시·공용 캐시·목록은 마스킹 상세 GET 결과만 쓴다(입력 원문을 넘기지 않음).
+      const display = await resolveMemberDisplayAfterSave({
+        saved: merged,
+        before: displayUser,
+        scope: basicInfoEditScope,
+        membersRemote,
+        fetchMaskedDetail: async before => {
+          const masked = await getUserById(before.id, {
+            memberId: before.memberId ?? undefined,
+            role: before.role,
+            organizationId: before.organizationId ?? undefined,
+            adminAccountId: before.adminAccountId ?? undefined,
+            instructorMemberProfile: before.instructorMemberProfile,
+            roles: before.roles,
+          })
+          if (!masked) throw new Error('masked member detail not found')
+          return masked
+        },
+      })
+      merged = display.user
+      if (display.refetchNeeded) {
+        void queryClient.invalidateQueries({ queryKey: memberQueryKeys.listAll() })
       }
       if (displayUser.memberId != null) {
         queryClient.setQueryData(memberQueryKeys.detail(displayUser.memberId), merged)
