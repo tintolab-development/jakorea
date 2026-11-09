@@ -16,5 +16,5 @@ export const ProgramDetailResponseEducationForm = {
   online: 'online',
   offline: 'offline',
   hybrid: 'hybrid',
-  participant_choice: 'participant_choice',
+  participant_selection: 'participant_selection',
 } as const;

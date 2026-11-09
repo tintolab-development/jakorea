@@ -8,27 +8,24 @@
 
 export interface EducationClassRemappingMapping {
   /**
-     * 기존 학년(필수, 공백 불가). 2≡2학년. 누락·공백이면 400 UJAT_CLASS_REMAP_INVALID_MAPPING.
-     * @minLength 1
+     * @minLength 0
      * @maxLength 80
      */
-  fromGrade: string;
+  fromGrade?: string;
   /**
-     * 기존 학급(필수, 공백 불가). 1≡1반. 누락·공백이면 400 UJAT_CLASS_REMAP_INVALID_MAPPING.
-     * @minLength 1
+     * @minLength 0
      * @maxLength 120
      */
-  fromClassName: string;
+  fromClassName?: string;
   /**
-     * 변경할 학년. unassign=false(또는 생략)일 때 필수(공백 불가), 1~6학년. unassign=true이면 보내지 않는다(값이 오면 400). 위반 시 400 UJAT_CLASS_REMAP_INVALID_MAPPING.
+     * @minLength 0
      * @maxLength 80
      */
-  toGrade?: string | null;
+  toGrade?: string;
   /**
-     * 변경할 학급. unassign=false(또는 생략)일 때 필수(공백 불가), 1~20반. unassign=true이면 보내지 않는다(값이 오면 400). 위반 시 400 UJAT_CLASS_REMAP_INVALID_MAPPING.
+     * @minLength 0
      * @maxLength 120
      */
-  toClassName?: string | null;
-  /** true일 때만 미배정(교육 취소) 처리. toGrade/toClassName을 비워 보내도 unassign=true가 아니면 400 UJAT_CLASS_REMAP_INVALID_MAPPING. */
-  unassign?: boolean | null;
+  toClassName?: string;
+  unassign?: boolean;
 }

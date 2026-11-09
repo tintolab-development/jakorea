@@ -9,6 +9,7 @@ import type { ProgramListItemResponseApplicationType } from './programListItemRe
 import type { ProgramListItemResponseEducationForm } from './programListItemResponseEducationForm';
 import type { ProgramListItemResponseEducationTarget } from './programListItemResponseEducationTarget';
 import type { ProgramListItemResponseRecruitmentStatus } from './programListItemResponseRecruitmentStatus';
+import type { ProgramListItemResponseRecruitmentTargetsItem } from './programListItemResponseRecruitmentTargetsItem';
 import type { ProgramListItemResponseRecruitmentType } from './programListItemResponseRecruitmentType';
 import type { ProgramListItemResponseRecruitTerm } from './programListItemResponseRecruitTerm';
 
@@ -47,7 +48,7 @@ export interface ProgramListItemResponse {
   educationTargets?: string[];
   targetGradeFrom?: string;
   targetGradeTo?: string;
-  /** 공통정보 교육 형태. operationMethod와 별개. online|offline|hybrid|participant_choice. educationFormScheduleDetail=perSchedule이면 hybrid(온/오프라인). 목록에 scheduleDetail 필드는 두지 않는다. */
+  /** 공통정보 교육 형태. operationMethod와 별개. online|offline|hybrid|participant_selection. educationFormScheduleDetail=perSchedule이면 hybrid(온/오프라인). 목록에 scheduleDetail 필드는 두지 않는다. */
   educationForm?: ProgramListItemResponseEducationForm;
   /** 이 목록 행의 모집 id. 모집 없는 NONE 행이면 null. programId·recruitmentId·applicationType 복합키로 행을 식별한다. */
   recruitmentId?: number | null;
@@ -59,4 +60,6 @@ export interface ProgramListItemResponse {
   applicationType?: ProgramListItemResponseApplicationType;
   /** UJAT 봉사자 모집 상·하반기. 그 외 목록 행은 null. */
   recruitTerm?: ProgramListItemResponseRecruitTerm;
+  /** 이 모집 행에 지원하는 사람의 연령 코드 배열. 목록 필터 recruitmentTarget은 이 배열의 포함 여부로 매칭한다. 참여자·기관(PARTICIPANT) 행은 educationTargets와 같고, 강사·봉사자(INSTRUCTOR/VOLUNTEER) 행은 상세 API의 recruitmentTargets와 같다. 값이 없으면 빈 배열이다. */
+  recruitmentTargets?: ProgramListItemResponseRecruitmentTargetsItem[];
 }

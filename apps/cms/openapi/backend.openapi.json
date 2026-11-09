@@ -19516,6 +19516,65 @@
         }
       }
     },
+    "/api/admin/programs/{programId}/ujat/1365-registration-form": {
+      "post": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "UJAT 1365 봉사시간 등록 양식 원문(반기 일괄)",
+        "description": "### 이 API가 하는 일\n- UJAT 1365 봉사시간 등록 양식 원문(반기 일괄)\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/programs/{programId}/ujat/1365-registration-form`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: PRIVACY_RAW_READ 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: SENSITIVE_MEMBER_DATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- UJAT 상태는 파트너 배정, 출결, 1365 시간, 수료증 조건과 연결됩니다. `ASSIGNED`, `CANCELLED`, `GIVE_UP`, `PRESENT`, `ABSENT`, `LATE`를 화면 배지와 후속 버튼 조건에 함께 사용합니다.\n- `/ujat-dgbong` legacy URL은 사용하지 않고 `/ujat` canonical URL만 호출합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 자동 사유 1365 봉사시간 등록을 하기 위함. 반기 봉사자 전원·발대식/교육일 인정 분. 요청당 감사 1건",
+        "operationId": "ujat1365SemesterRegistrationForm",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Ujat1365SemesterRegistrationFormRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ujat1365SemesterRegistrationFormResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
     "/api/admin/programs/{programId}/trained-teacher/organization-applications/{applicationId}/remove-from-progress": {
       "post": {
         "tags": [
@@ -46404,7 +46463,13 @@
             "schema": {
               "type": "array",
               "items": {
-                "type": "string"
+                "type": "string",
+                "enum": [
+                  "ALL",
+                  "YOUTH_YOUNG",
+                  "ORGANIZATION",
+                  "INSTRUCTOR"
+                ]
               }
             }
           },
@@ -46428,7 +46493,15 @@
             "schema": {
               "type": "array",
               "items": {
-                "type": "string"
+                "type": "string",
+                "enum": [
+                  "UPCOMING",
+                  "OPEN",
+                  "CLOSED",
+                  "NONE",
+                  "SCHEDULED",
+                  "RECRUITING"
+                ]
               }
             }
           },
@@ -46452,7 +46525,14 @@
             "schema": {
               "type": "array",
               "items": {
-                "type": "string"
+                "type": "string",
+                "enum": [
+                  "elementary",
+                  "middle",
+                  "high",
+                  "university",
+                  "adult"
+                ]
               }
             }
           },
@@ -46484,7 +46564,14 @@
             "schema": {
               "type": "array",
               "items": {
-                "type": "string"
+                "type": "string",
+                "enum": [
+                  "elementary",
+                  "middle",
+                  "high",
+                  "university",
+                  "adult"
+                ]
               }
             }
           },
@@ -46496,7 +46583,13 @@
             "schema": {
               "type": "array",
               "items": {
-                "type": "string"
+                "type": "string",
+                "enum": [
+                  "ONLINE",
+                  "OFFLINE",
+                  "HYBRID",
+                  "PARTICIPANT_SELECTION"
+                ]
               }
             }
           },
@@ -52500,6 +52593,16 @@
             }
           },
           {
+            "name": "includePaid",
+            "in": "query",
+            "description": "true면 계좌 지급 완료(PAID) 건을 포함합니다. instructorMemberId가 필요하며 없으면 400입니다. 기본 false(지급조서 확인 목록 현행 유지).",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
             "name": "page",
             "in": "query",
             "description": "페이지 번호입니다. 목록 화면의 페이지 상태와 함께 유지합니다.",
@@ -58372,7 +58475,36 @@
           {
             "name": "status",
             "in": "query",
-            "description": "상태 필터입니다. 응답 enum 값과 화면 배지 라벨을 매핑해서 사용합니다.",
+            "description": "영수증 상태. DRAFT | SUBMITTED | APPROVED | REJECTED",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "memberId",
+            "in": "query",
+            "description": "제출 회원 ID(program_expense_receipt.member_id)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "participantId",
+            "in": "query",
+            "description": "프로그램 참여자 ID(program_participant.id)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "applicationType",
+            "in": "query",
+            "description": "신청 유형. INDIVIDUAL | ORGANIZATION | INSTRUCTOR | VOLUNTEER. 그 밖의 값은 400",
             "required": false,
             "schema": {
               "type": "string"
@@ -68911,50 +69043,6 @@
           }
         }
       }
-    },
-    "/api/admin/programs/{programId}/ujat/1365-registration-form": {
-      "post": {
-        "tags": [
-          "UJAT 1365 봉사시간 등록"
-        ],
-        "summary": "UJAT 1365 봉사시간 등록 양식 원문(반기 일괄)",
-        "description": "반기 봉사자 전원의 이름·생년월일·1365 ID 원문·지역과 발대식/교육일별 1365 인정 분을 한 번에 반환한다. 페이지네이션 없음, 활동 포기자 포함(givenUp). 감사 사유는 '1365 봉사시간 등록을 하기 위함'이며 요청 1회당 개인정보 접근 로그 1건과 파일 접근 로그 1건(PREVIEW=VIEW, DOWNLOAD=DOWNLOAD)을 남긴다. SENSITIVE_PII_READ 필요. 감사 저장 실패 시 원문을 반환하지 않는다. Cache-Control: no-store. 셀 status: 일정 종료 후 PRESENT/LATE=COMPLETED, ABSENT/EXCUSED=ABSENT(0분), 그 외 NOT_COMPLETED. 종일 일정의 인정 분은 프로그램 late_deduct_start_time·default_1365_hours 기준. 400 UJAT_1365_SEMESTER_TYPE_INVALID / UJAT_1365_MODE_INVALID, 404 UJAT_1365_PROGRAM_NOT_FOUND.",
-        "operationId": "ujat1365SemesterRegistrationForm",
-        "parameters": [
-          {
-            "name": "programId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64",
-              "minimum": 1
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Ujat1365SemesterRegistrationFormRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Ujat1365SemesterRegistrationFormResponse"
-                }
-              }
-            }
-          }
-        }
-      }
     }
   },
   "components": {
@@ -72753,7 +72841,7 @@
               "string",
               "null"
             ],
-            "description": "출석 코드만 PRESENT|LATE|ABSENT|EXCUSED. UJAT 배정은 기록이 없으면 참여자 행을 유지하고 status를 null로 반환한다. 미기록·비출석 값(COMPLETED·SCHEDULED 등)도 null.",
+            "description": "출석 코드만 PRESENT|LATE|ABSENT|EXCUSED. UJAT 배정은 기록이 없으면 참여자 행을 유지하고 status를 null로 반환한다. UJAT 발대식(PRE_EDUCATION)은 배정이 없어도 같은 반기 봉사자 행을 attendanceId·status null로 반환한다. 미기록·비출석 값(COMPLETED·SCHEDULED 등)도 null.",
             "enum": [
               "PRESENT",
               "LATE",
@@ -72784,11 +72872,15 @@
               "null"
             ],
             "format": "int32",
-            "description": "지각 분. 회차 시작 30분 전을 정시 마감으로 보고 그 시각부터 arrivalTime까지의 분. arrivalTime이 없거나 정시 이하면 null. status/internalLate만으로 분을 invent하지 않는다."
+            "description": "지각 분. 회차 시작 30분 전을 정시 마감으로 보고 그 시각부터 arrivalTime까지의 분. arrivalTime이 없거나 정시 이하면 null. status/internalLate만으로 분을 invent하지 않는다. UJAT·대경봉 봉사자 행은 1365 인정 구간 시작(종일 일정은 프로그램 late_deduct_start_time, 기본 09:00) 이후의 분."
           },
           "volunteer1365Minutes": {
-            "type": "integer",
-            "format": "int32"
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "1365 인정 분. UJAT·대경봉 봉사자의 PRESENT/LATE 행에 저장값이 없으면(회원 셀프 체크인 등) 일정 시작·종료와 arrivalTime으로 조회 시 계산한다. ABSENT·EXCUSED는 0, 미기록·일반 프로그램은 null."
           },
           "volunteer1365DurationLabel": {
             "type": "string"
@@ -72812,6 +72904,13 @@
               "MEMBER_SELF",
               "SYSTEM"
             ]
+          },
+          "volunteer1365Shortfall": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "1365 인정 시간 미달 여부. PRESENT/LATE이고 volunteer1365Minutes가 일정 길이(종료-시작)보다 작으면 true. ABSENT·EXCUSED는 false. 미기록 행·일반 프로그램·봉사자가 아닌 참여자는 null."
           }
         }
       },
@@ -79555,7 +79654,7 @@
         "properties": {
           "reason": {
             "type": "string",
-            "description": "원문 조회 사유. 1자 이상 500자 이하로 입력하며 감사 로그에 저장됩니다.",
+            "description": "원문 조회 사유. 1자 이상 500자 이하로 입력하며 감사 로그에 저장됩니다. purpose=EDIT_MODE이면 서버가 정책 고정 사유로 바꿔 저장합니다.",
             "example": "회원 요청 확인",
             "maxLength": 500,
             "minLength": 1
@@ -79565,6 +79664,17 @@
             "format": "int64",
             "description": "프로그램 상세 문맥에서 조회하는 경우 프로그램 ID. 지정 시 CMS 전역 역할 대신 프로그램 PM 권한과 대상 회원의 프로그램 연관성을 검증합니다.",
             "example": 1001
+          },
+          "purpose": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "수정 화면 진입 원문 조회(정책 CMS-06·CMS-29). EDIT_MODE이면 해당 저장 API와 같은 쓰기 권한(회원·강사 MEMBER_WRITE, 신청 APPLICATION_WRITE)을 추가로 요구하고, 감사 사유를 '회원 정보 수정' 또는 '신청 정보 수정' 고정값으로 기록합니다. 생략하면 기존 사유 입력 열람입니다.",
+            "enum": [
+              "EDIT_MODE"
+            ],
+            "example": "EDIT_MODE"
           }
         },
         "required": [
@@ -84972,48 +85082,34 @@
       },
       "EducationClassRemappingMapping": {
         "type": "object",
-        "required": [
-          "fromGrade",
-          "fromClassName"
-        ],
         "properties": {
           "fromGrade": {
             "type": "string",
-            "minLength": 1,
             "maxLength": 80,
-            "description": "기존 학년(필수, 공백 불가). 2≡2학년. 누락·공백이면 400 UJAT_CLASS_REMAP_INVALID_MAPPING."
+            "minLength": 0
           },
           "fromClassName": {
             "type": "string",
-            "minLength": 1,
             "maxLength": 120,
-            "description": "기존 학급(필수, 공백 불가). 1≡1반. 누락·공백이면 400 UJAT_CLASS_REMAP_INVALID_MAPPING."
+            "minLength": 0
           },
           "toGrade": {
             "type": "string",
-            "nullable": true,
             "maxLength": 80,
-            "description": "변경할 학년. unassign=false(또는 생략)일 때 필수(공백 불가), 1~6학년. unassign=true이면 보내지 않는다(값이 오면 400). 위반 시 400 UJAT_CLASS_REMAP_INVALID_MAPPING."
+            "minLength": 0
           },
           "toClassName": {
             "type": "string",
-            "nullable": true,
             "maxLength": 120,
-            "description": "변경할 학급. unassign=false(또는 생략)일 때 필수(공백 불가), 1~20반. unassign=true이면 보내지 않는다(값이 오면 400). 위반 시 400 UJAT_CLASS_REMAP_INVALID_MAPPING."
+            "minLength": 0
           },
           "unassign": {
-            "type": "boolean",
-            "nullable": true,
-            "description": "true일 때만 미배정(교육 취소) 처리. toGrade/toClassName을 비워 보내도 unassign=true가 아니면 400 UJAT_CLASS_REMAP_INVALID_MAPPING."
+            "type": "boolean"
           }
         }
       },
       "EducationClassRemappingRequest": {
         "type": "object",
-        "required": [
-          "expectedRevision",
-          "mappings"
-        ],
         "properties": {
           "expectedRevision": {
             "type": "integer",
@@ -85022,23 +85118,25 @@
           },
           "applyFromScheduleId": {
             "type": "integer",
-            "format": "int64",
-            "nullable": true
+            "format": "int64"
           },
           "applyFromDate": {
             "type": "string",
-            "format": "date",
-            "nullable": true
+            "format": "date"
           },
           "mappings": {
             "type": "array",
-            "minItems": 1,
-            "maxItems": 100,
             "items": {
               "$ref": "#/components/schemas/EducationClassRemappingMapping"
-            }
+            },
+            "maxItems": 100,
+            "minItems": 0
           }
-        }
+        },
+        "required": [
+          "expectedRevision",
+          "mappings"
+        ]
       },
       "EducationClassRemappingResponse": {
         "type": "object",
@@ -85118,6 +85216,207 @@
         "required": [
           "applicationIds"
         ]
+      },
+      "Ujat1365SemesterRegistrationFormRequest": {
+        "type": "object",
+        "properties": {
+          "semesterType": {
+            "type": "string",
+            "description": "반기",
+            "enum": [
+              "FIRST_HALF",
+              "SECOND_HALF"
+            ],
+            "example": "SECOND_HALF"
+          },
+          "mode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "PREVIEW 또는 DOWNLOAD. 생략하면 PREVIEW.",
+            "enum": [
+              "PREVIEW",
+              "DOWNLOAD"
+            ],
+            "example": "PREVIEW"
+          }
+        }
+      },
+      "Ujat1365SemesterRegistrationFormCell": {
+        "type": "object",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "minutes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "1365 인정 분. COMPLETED는 인정 분, ABSENT는 0, NOT_COMPLETED는 null."
+          },
+          "status": {
+            "type": "string",
+            "description": "COMPLETED=종료+출석(PRESENT/LATE), ABSENT=종료+결석/공결(ABSENT/EXCUSED), NOT_COMPLETED=종료 전이거나 출결 미기록(FE는 -)",
+            "enum": [
+              "COMPLETED",
+              "ABSENT",
+              "NOT_COMPLETED"
+            ]
+          },
+          "shortfall": {
+            "type": "boolean",
+            "description": "COMPLETED이고 인정 분이 1365 인정 구간 길이보다 짧으면 true(지각·조퇴)."
+          }
+        }
+      },
+      "Ujat1365SemesterRegistrationFormColumn": {
+        "type": "object",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "date": {
+            "type": "string",
+            "description": "일정 시작일(Asia/Seoul)",
+            "example": "2026-11-06"
+          },
+          "completed": {
+            "type": "boolean",
+            "description": "일정 종료 시각이 지났으면 true"
+          }
+        }
+      },
+      "Ujat1365SemesterRegistrationFormColumns": {
+        "type": "object",
+        "properties": {
+          "openingCeremony": {
+            "description": "해당 반기 PRE_EDUCATION(발대식) 일정. 없으면 null.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Ujat1365SemesterRegistrationFormColumn"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sessions": {
+            "type": "array",
+            "description": "해당 반기의 하루 단위 교육일(schedule_kind EDUCATION/SESSION). 날짜 오름차순. 기간형 일정과 해단식(CLOSING)은 제외.",
+            "items": {
+              "$ref": "#/components/schemas/Ujat1365SemesterRegistrationFormColumn"
+            }
+          }
+        }
+      },
+      "Ujat1365SemesterRegistrationFormResponse": {
+        "type": "object",
+        "description": "UJAT 1365 봉사시간 등록 양식(반기 전체). 연락처·주소·계좌·주민번호는 포함하지 않습니다.",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "semesterType": {
+            "type": "string",
+            "enum": [
+              "FIRST_HALF",
+              "SECOND_HALF"
+            ]
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "PREVIEW",
+              "DOWNLOAD"
+            ]
+          },
+          "columns": {
+            "$ref": "#/components/schemas/Ujat1365SemesterRegistrationFormColumns"
+          },
+          "volunteers": {
+            "type": "array",
+            "description": "반기 봉사자 전원. 페이지네이션 없음. 이름, participantId 오름차순.",
+            "items": {
+              "$ref": "#/components/schemas/Ujat1365SemesterRegistrationFormVolunteer"
+            }
+          }
+        }
+      },
+      "Ujat1365SemesterRegistrationFormVolunteer": {
+        "type": "object",
+        "properties": {
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "birthDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "생년월일 원문",
+            "example": "1999-01-11"
+          },
+          "external1365Id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "1365 ID 원문. 없으면 null."
+          },
+          "educationRegionCode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "SEOUL"
+          },
+          "educationRegionName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "서울"
+          },
+          "givenUp": {
+            "type": "boolean",
+            "description": "활동 포기 여부. 포기 이후 교육일은 출결이 없으므로 NOT_COMPLETED입니다."
+          },
+          "openingCeremony": {
+            "description": "columns.openingCeremony가 null이면 null.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Ujat1365SemesterRegistrationFormCell"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sessions": {
+            "type": "array",
+            "description": "columns.sessions와 같은 순서·개수",
+            "items": {
+              "$ref": "#/components/schemas/Ujat1365SemesterRegistrationFormCell"
+            }
+          }
+        }
       },
       "OrganizationProgressRemovalRequest": {
         "type": "object",
@@ -86440,7 +86739,11 @@
             "type": "string"
           },
           "adminEmail": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "담당 관리자 이메일. 프로그램 APPLICATION_REVIEW 보유자(MASTER·Program Owner·Program Assistant)의 목록 GET은 CMS-31 조회 이력 커밋 후 원문, Program Viewer와 담당자 추가·수정 응답은 PrivacyMaskingSupport.maskEmail(@ 앞 3자리) 값. 값이 없으면 null."
           },
           "adminStatus": {
             "type": "string"
@@ -86470,7 +86773,7 @@
               "string",
               "null"
             ],
-            "description": "담당 관리자 전화번호. GET /api/admin/admin-accounts 목록의 phone과 같은 마스킹 규칙(PrivacyMaskingSupport.maskPhone)을 적용합니다. 값이 없으면 null."
+            "description": "담당 관리자 전화번호. 프로그램 APPLICATION_REVIEW 보유자(MASTER·Program Owner·Program Assistant)의 목록 GET은 CMS-31 조회 이력 커밋 후 원문, Program Viewer와 담당자 추가·수정 응답은 PrivacyMaskingSupport.maskPhone(010-****-5678) 값. 값이 없으면 null."
           },
           "adminRoleCode": {
             "type": [
@@ -102069,12 +102372,12 @@
               "string",
               "null"
             ],
-            "description": "공통정보 교육 형태. operationMethod와 별개. online|offline|hybrid|participant_choice. educationFormScheduleDetail=perSchedule이면 hybrid(온/오프라인). 목록에 scheduleDetail 필드는 두지 않는다.",
+            "description": "공통정보 교육 형태. operationMethod와 별개. online|offline|hybrid|participant_selection. educationFormScheduleDetail=perSchedule이면 hybrid(온/오프라인). 목록에 scheduleDetail 필드는 두지 않는다.",
             "enum": [
               "online",
               "offline",
               "hybrid",
-              "participant_choice"
+              "participant_selection"
             ]
           },
           "recruitmentId": {
@@ -102127,6 +102430,20 @@
               "FIRST_HALF",
               "SECOND_HALF"
             ]
+          },
+          "recruitmentTargets": {
+            "type": "array",
+            "description": "이 모집 행에 지원하는 사람의 연령 코드 배열. 목록 필터 recruitmentTarget은 이 배열의 포함 여부로 매칭한다. 참여자·기관(PARTICIPANT) 행은 educationTargets와 같고, 강사·봉사자(INSTRUCTOR/VOLUNTEER) 행은 상세 API의 recruitmentTargets와 같다. 값이 없으면 빈 배열이다.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "elementary",
+                "middle",
+                "high",
+                "university",
+                "adult"
+              ]
+            }
           }
         }
       },
@@ -102572,7 +102889,7 @@
               "online",
               "offline",
               "hybrid",
-              "participant_choice"
+              "participant_selection"
             ]
           },
           "educationFormLabel": {
@@ -116731,11 +117048,13 @@
             "format": "int64"
           },
           "lodgingApprovedYn": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "레거시. 배정 단계 숙박 승인 여부. 2026-11-09부터 1사1교 숙박비 계산에서 읽지 않습니다(강사가 지급조서 신청 때 LODGING_1C1S를 영수증과 함께 신청)."
           },
           "lodgingAmountSnapshot": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "레거시. 배정 시점 1사1교 숙박비 스냅샷. 2026-11-09부터 1사1교 숙박비 계산에서 읽지 않습니다."
           },
           "evaluationId": {
             "type": "integer",
@@ -116823,6 +117142,40 @@
           "homeAddress": {
             "type": "string",
             "description": "자택 주소. 동(읍/면/리)까지 + ' *****' (FE blur). 기관/조직 주소(organizationName)와 무관."
+          },
+          "settlementStatus": {
+            "type": "string",
+            "description": "배정 단위 정산 상태(8종 키, null 아님). 이 배정(settlement.instructor_assignment_id)의 최신 정산 revision을 우선하고, 없으면 settlement_application.instructor_assignment_id의 최신 미확정·미취소 신청서로 정합니다(SUBMITTED revision 1 → awaiting_confirmation, SUBMITTED revision 2+ → payment_statement_reapplication, CORRECTION_REQUESTED → payment_correction_requested, REJECTED → application_rejected). 지급 완료(PAID)는 account_paid. 미신청은 none.",
+            "enum": [
+              "payment_statement_reapplication",
+              "awaiting_confirmation",
+              "partial_confirmation",
+              "payment_statement_verified",
+              "account_paid",
+              "payment_correction_requested",
+              "application_rejected",
+              "none"
+            ]
+          },
+          "scheduleProgressStatus": {
+            "type": "string",
+            "description": "배정 일정 진행 상태(program_schedule 시각 기준). UNSCHEDULED | SCHEDULED | IN_PROGRESS | COMPLETED. COMPLETED=종료 시각 경과(진행 완료), SCHEDULED=예정."
+          },
+          "settlementId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "settlementStatus 근거가 된 최신 정산(settlement) ID. 정산 행이 없으면 null."
+          },
+          "settlementApplicationId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "settlementStatus 근거가 된 정산 신청서 ID. 정산 행이 있으면 그 행의 신청서 ID, 없으면 최신 미확정 신청서 ID. 미신청이면 null."
           }
         }
       },
@@ -123396,218 +123749,6 @@
             "description": "파일 암호. 8자 이상, 영문+숫자+특수문자, 공백 불가. 쿼리/로그/분석에 넣지 않는다."
           }
         }
-      },
-      "Ujat1365SemesterRegistrationFormRequest": {
-        "type": "object",
-        "properties": {
-          "semesterType": {
-            "type": "string",
-            "enum": [
-              "FIRST_HALF",
-              "SECOND_HALF"
-            ],
-            "example": "SECOND_HALF",
-            "description": "반기"
-          },
-          "mode": {
-            "type": "string",
-            "nullable": true,
-            "enum": [
-              "PREVIEW",
-              "DOWNLOAD"
-            ],
-            "default": "PREVIEW",
-            "description": "PREVIEW 또는 DOWNLOAD. 생략하면 PREVIEW."
-          }
-        },
-        "required": [
-          "semesterType"
-        ]
-      },
-      "Ujat1365SemesterRegistrationFormResponse": {
-        "type": "object",
-        "description": "UJAT 1365 봉사시간 등록 양식(반기 전체). 연락처·주소·계좌·주민번호는 포함하지 않습니다.",
-        "properties": {
-          "programId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "semesterType": {
-            "type": "string",
-            "enum": [
-              "FIRST_HALF",
-              "SECOND_HALF"
-            ]
-          },
-          "mode": {
-            "type": "string",
-            "enum": [
-              "PREVIEW",
-              "DOWNLOAD"
-            ]
-          },
-          "columns": {
-            "$ref": "#/components/schemas/Ujat1365SemesterRegistrationFormColumns"
-          },
-          "volunteers": {
-            "type": "array",
-            "description": "반기 봉사자 전원. 페이지네이션 없음. 이름, participantId 오름차순.",
-            "items": {
-              "$ref": "#/components/schemas/Ujat1365SemesterRegistrationFormVolunteer"
-            }
-          }
-        },
-        "required": [
-          "programId",
-          "semesterType",
-          "mode",
-          "columns",
-          "volunteers"
-        ]
-      },
-      "Ujat1365SemesterRegistrationFormColumns": {
-        "type": "object",
-        "properties": {
-          "openingCeremony": {
-            "nullable": true,
-            "description": "해당 반기 PRE_EDUCATION(발대식) 일정. 없으면 null.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/Ujat1365SemesterRegistrationFormColumn"
-              }
-            ]
-          },
-          "sessions": {
-            "type": "array",
-            "description": "해당 반기의 하루 단위 교육일(schedule_kind EDUCATION/SESSION). 날짜 오름차순. 기간형 일정과 해단식(CLOSING)은 제외.",
-            "items": {
-              "$ref": "#/components/schemas/Ujat1365SemesterRegistrationFormColumn"
-            }
-          }
-        },
-        "required": [
-          "sessions"
-        ]
-      },
-      "Ujat1365SemesterRegistrationFormColumn": {
-        "type": "object",
-        "properties": {
-          "scheduleId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "date": {
-            "type": "string",
-            "nullable": true,
-            "example": "2026-11-06",
-            "description": "일정 시작일(Asia/Seoul)"
-          },
-          "completed": {
-            "type": "boolean",
-            "description": "일정 종료 시각이 지났으면 true"
-          }
-        },
-        "required": [
-          "scheduleId",
-          "completed"
-        ]
-      },
-      "Ujat1365SemesterRegistrationFormVolunteer": {
-        "type": "object",
-        "properties": {
-          "participantId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "memberId": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          },
-          "name": {
-            "type": "string",
-            "nullable": true
-          },
-          "birthDate": {
-            "type": "string",
-            "nullable": true,
-            "example": "1999-01-11",
-            "description": "생년월일 원문"
-          },
-          "external1365Id": {
-            "type": "string",
-            "nullable": true,
-            "description": "1365 ID 원문. 없으면 null."
-          },
-          "educationRegionCode": {
-            "type": "string",
-            "nullable": true,
-            "example": "SEOUL"
-          },
-          "educationRegionName": {
-            "type": "string",
-            "nullable": true,
-            "example": "서울"
-          },
-          "givenUp": {
-            "type": "boolean",
-            "description": "활동 포기 여부. 포기 이후 교육일은 출결이 없으므로 NOT_COMPLETED."
-          },
-          "openingCeremony": {
-            "nullable": true,
-            "description": "columns.openingCeremony가 null이면 null.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/Ujat1365SemesterRegistrationFormCell"
-              }
-            ]
-          },
-          "sessions": {
-            "type": "array",
-            "description": "columns.sessions와 같은 순서·개수",
-            "items": {
-              "$ref": "#/components/schemas/Ujat1365SemesterRegistrationFormCell"
-            }
-          }
-        },
-        "required": [
-          "participantId",
-          "givenUp",
-          "sessions"
-        ]
-      },
-      "Ujat1365SemesterRegistrationFormCell": {
-        "type": "object",
-        "properties": {
-          "scheduleId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "minutes": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true,
-            "description": "1365 인정 분. COMPLETED는 인정 분, ABSENT는 0, NOT_COMPLETED는 null."
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "COMPLETED",
-              "ABSENT",
-              "NOT_COMPLETED"
-            ],
-            "description": "COMPLETED=종료+출석(PRESENT/LATE), ABSENT=종료+결석/공결(ABSENT/EXCUSED), NOT_COMPLETED=종료 전이거나 출결 미기록(FE는 -)"
-          },
-          "shortfall": {
-            "type": "boolean",
-            "description": "COMPLETED이고 인정 분이 1365 인정 구간 길이보다 짧으면 true(지각·조퇴)."
-          }
-        },
-        "required": [
-          "scheduleId",
-          "status",
-          "shortfall"
-        ]
       }
     },
     "responses": {

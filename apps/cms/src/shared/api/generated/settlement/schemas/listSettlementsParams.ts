@@ -40,6 +40,10 @@ toDate?: string;
  */
 pendingItemBucket?: string;
 /**
+ * true면 계좌 지급 완료(PAID) 건을 포함합니다. instructorMemberId가 필요하며 없으면 400입니다. 기본 false(지급조서 확인 목록 현행 유지).
+ */
+includePaid?: boolean;
+/**
  * 페이지 번호입니다. 목록 화면의 페이지 상태와 함께 유지합니다.
  */
 page?: number;
