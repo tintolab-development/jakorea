@@ -11,12 +11,12 @@ export interface EducationClassRemappingMapping {
      * @minLength 0
      * @maxLength 80
      */
-  fromGrade: string;
+  fromGrade?: string;
   /**
      * @minLength 0
      * @maxLength 120
      */
-  fromClassName: string;
+  fromClassName?: string;
   /**
      * @minLength 0
      * @maxLength 80

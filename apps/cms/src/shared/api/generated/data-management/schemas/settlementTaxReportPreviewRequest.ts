@@ -11,10 +11,17 @@
  */
 export interface SettlementTaxReportPreviewRequest {
   /**
-     * 미리볼 정산 ID 목록. 빈 배열이면 선택된 건이 없는 24행 placeholder를 반환합니다.
+     * 미리볼 정산 ID 목록. settlementIds·accountPaymentIds가 모두 비면 선택된 건이 없는 24행 placeholder를 반환합니다.
      * @minItems 0
      * @maxItems 5000
      * @items.minimum 1
      */
   settlementIds?: number[];
+  /**
+     * 정산서 없는 직접 계좌 지급(GEMINI_TRAINING_REPORT) ID 목록. 세금신고 발급(TAX_REPORT)과 같은 선택 기준입니다.
+     * @minItems 0
+     * @maxItems 5000
+     * @items.minimum 1
+     */
+  accountPaymentIds?: number[];
 }

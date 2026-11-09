@@ -10,10 +10,7 @@ import type { ApiErrorDetailDetails } from './apiErrorDetailDetails';
 export interface ApiErrorDetail {
   code?: string;
   message?: string;
-  /** @nullable */
   field?: string | null;
-  /** @nullable */
   traceId?: string | null;
-  /** @nullable */
   details?: ApiErrorDetailDetails;
 }

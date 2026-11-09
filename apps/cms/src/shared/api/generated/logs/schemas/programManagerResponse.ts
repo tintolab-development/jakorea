@@ -11,7 +11,8 @@ export interface ProgramManagerResponse {
   programId?: number;
   adminId?: number;
   adminName?: string;
-  adminEmail?: string;
+  /** 담당 관리자 이메일. 프로그램 APPLICATION_REVIEW 보유자(MASTER·Program Owner·Program Assistant)의 목록 GET은 CMS-31 조회 이력 커밋 후 원문, Program Viewer와 담당자 추가·수정 응답은 PrivacyMaskingSupport.maskEmail(@ 앞 3자리) 값. 값이 없으면 null. */
+  adminEmail?: string | null;
   adminStatus?: string;
   role?: string;
   assignedAt?: string;
@@ -19,7 +20,7 @@ export interface ProgramManagerResponse {
   assignedByAdminName?: string;
   primaryManagerYn?: boolean;
   removableYn?: boolean;
-  /** 담당 관리자 전화번호. GET /api/admin/admin-accounts 목록의 phone과 같은 마스킹 규칙(PrivacyMaskingSupport.maskPhone)을 적용합니다. 값이 없으면 null. */
+  /** 담당 관리자 전화번호. 프로그램 APPLICATION_REVIEW 보유자(MASTER·Program Owner·Program Assistant)의 목록 GET은 CMS-31 조회 이력 커밋 후 원문, Program Viewer와 담당자 추가·수정 응답은 PrivacyMaskingSupport.maskPhone(010-****-5678) 값. 값이 없으면 null. */
   adminPhone?: string | null;
   /** 담당 관리자의 전역 관리자 권한 코드. GET /api/admin/admin-accounts 목록의 roleCode와 같은 값입니다. 없으면 null. */
   adminRoleCode?: string | null;

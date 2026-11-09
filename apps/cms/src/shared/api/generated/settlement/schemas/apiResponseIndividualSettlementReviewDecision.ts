@@ -11,7 +11,6 @@ import type { StructuredErrorResponse } from './structuredErrorResponse';
 export interface ApiResponseIndividualSettlementReviewDecision {
   success?: boolean;
   data?: IndividualSettlementReviewDecision;
-  /** @nullable */
   message?: string | null;
   error?: StructuredErrorResponse;
 }

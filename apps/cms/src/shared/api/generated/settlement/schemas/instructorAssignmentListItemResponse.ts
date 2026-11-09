@@ -5,6 +5,7 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { InstructorAssignmentListItemResponseSettlementStatus } from './instructorAssignmentListItemResponseSettlementStatus';
 
 export interface InstructorAssignmentListItemResponse {
   assignmentId?: number;
@@ -24,7 +25,9 @@ export interface InstructorAssignmentListItemResponse {
   cancelReason?: string;
   feePolicyId?: number;
   lectureFeeAmountSnapshot?: number;
+  /** 레거시. 배정 단계 숙박 승인 여부. 2026-11-09부터 1사1교 숙박비 계산에서 읽지 않습니다(강사가 지급조서 신청 때 LODGING_1C1S를 영수증과 함께 신청). */
   lodgingApprovedYn?: boolean;
+  /** 레거시. 배정 시점 1사1교 숙박비 스냅샷. 2026-11-09부터 1사1교 숙박비 계산에서 읽지 않습니다. */
   lodgingAmountSnapshot?: number;
   evaluationId?: number;
   evaluationStatus?: string;
@@ -55,4 +58,12 @@ export interface InstructorAssignmentListItemResponse {
   longDistance?: boolean;
   /** 자택 주소. 동(읍/면/리)까지 + ' *****' (FE blur). 기관/조직 주소(organizationName)와 무관. */
   homeAddress?: string;
+  /** 배정 단위 정산 상태(8종 키, null 아님). 이 배정(settlement.instructor_assignment_id)의 최신 정산 revision을 우선하고, 없으면 settlement_application.instructor_assignment_id의 최신 미확정·미취소 신청서로 정합니다(SUBMITTED revision 1 → awaiting_confirmation, SUBMITTED revision 2+ → payment_statement_reapplication, CORRECTION_REQUESTED → payment_correction_requested, REJECTED → application_rejected). 지급 완료(PAID)는 account_paid. 미신청은 none. */
+  settlementStatus?: InstructorAssignmentListItemResponseSettlementStatus;
+  /** 배정 일정 진행 상태(program_schedule 시각 기준). UNSCHEDULED | SCHEDULED | IN_PROGRESS | COMPLETED. COMPLETED=종료 시각 경과(진행 완료), SCHEDULED=예정. */
+  scheduleProgressStatus?: string;
+  /** settlementStatus 근거가 된 최신 정산(settlement) ID. 정산 행이 없으면 null. */
+  settlementId?: number | null;
+  /** settlementStatus 근거가 된 정산 신청서 ID. 정산 행이 있으면 그 행의 신청서 ID, 없으면 최신 미확정 신청서 ID. 미신청이면 null. */
+  settlementApplicationId?: number | null;
 }
