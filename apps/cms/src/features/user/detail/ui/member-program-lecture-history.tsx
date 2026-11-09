@@ -67,6 +67,7 @@ import { LectureReportSubmissionHistoryModal } from './modal/lecture-report-subm
 
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import { ensureProgramWriteAllowed } from '@/features/program/shared/lib/program-role-action-check'
+import { showAdminAccessDeniedAlert } from '@/shared/lib/admin-role-policy'
 
 function shouldIgnoreTableRowClick(target: HTMLElement): boolean {
   return (
@@ -307,7 +308,11 @@ export function MemberProgramLectureHistory({
 
   const handleDownloadAllLectureReports = useCallback(async () => {
     if (memberId == null || allLectureReportsDownloading) return
-    if (!canBulkDownloadFiles) return
+    // 권한 설정 V1.2: 버튼은 노출하고 다운로드 권한이 없으면 접근 불가 안내
+    if (!canBulkDownloadFiles) {
+      showAdminAccessDeniedAlert()
+      return
+    }
     setAllLectureReportsDownloading(true)
     try {
       const job = await downloadAllMemberLectureReportsRemote(memberId)
@@ -734,8 +739,7 @@ export function MemberProgramLectureHistory({
               )}
               {mode === 'instructorLecture' &&
                 memberId != null &&
-                isMembersRemoteEnabled() &&
-                canBulkDownloadFiles && (
+                isMembersRemoteEnabled() && (
                 <FilterTableToolbarButton
                   variant="secondary"
                   icon={<ButtonDownloadIcon />}

@@ -320,10 +320,27 @@ type DomClickEvent = {
   nativeEvent?: { stopImmediatePropagation?: () => void }
 }
 
+/** 조회 전용 라벨(캘린더 뷰로 보기·리스트로 보기·미리보기 등). 개인정보 열람은 조회가 아니라 제외한다. */
+const VIEW_ONLY_LABEL_SUFFIX = '보기'
+const VIEW_ONLY_EXCLUDED_LABELS = new Set(['개인정보 상세보기'])
+
+function isViewOnlyControl(control: Element): boolean {
+  if (control.closest('[data-admin-action="allow"], [data-program-action="allow"]')) return true
+  const label = (control.getAttribute('aria-label') || control.textContent || '')
+    .replace(/\s+/g, ' ')
+    .trim()
+  return (
+    label.endsWith(VIEW_ONLY_LABEL_SUFFIX) && !VIEW_ONLY_EXCLUDED_LABELS.has(label)
+  )
+}
+
 function isInteractiveClickTarget(target: EventTarget | null): boolean {
   if (!(target instanceof Element)) return false
   if (target.closest('.excel-button, .filter-table-layout__toolbar-excel')) return false
-  return Boolean(target.closest('button, a[href], [role="button"]'))
+  const control = target.closest('button, a[href], [role="button"]')
+  if (!control) return false
+  // 권한 설정 V1.2: 툴바·상세 헤더 일괄 가드는 쓰기 동작만 막는다. 「캘린더 뷰로 보기」 같은 조회 버튼은 통과.
+  return !isViewOnlyControl(control)
 }
 
 function stopDeniedClick(event: DomClickEvent): void {

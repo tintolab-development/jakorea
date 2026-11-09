@@ -29,6 +29,7 @@ import {
   getLectureReportProgressAccent,
   getLectureReportSubmissionAccent,
 } from '@/features/program/shared/lib/lecture-report-status-presentation'
+import { showAdminAccessDeniedAlert } from '@/shared/lib/admin-role-policy'
 
 interface LectureReportSubmissionHistoryModalProps {
   open: boolean
@@ -92,7 +93,12 @@ export function LectureReportSubmissionHistoryModal({
   const canBulkDownloadFiles = hasFileDownloadPermission()
 
   const handleBulkDownload = useCallback(async () => {
-    if (memberId == null || !canBulkDownloadFiles) return
+    if (memberId == null) return
+    // 권한 설정 V1.2: 버튼은 노출하고 다운로드 권한이 없으면 접근 불가 안내
+    if (!canBulkDownloadFiles) {
+      showAdminAccessDeniedAlert()
+      return
+    }
     if (!hasZipTargets) {
       showAlert({ title: '안내', content: LECTURE_REPORT_NO_ATTACHMENT_CTA })
       return
@@ -213,8 +219,7 @@ export function LectureReportSubmissionHistoryModal({
           <CmsButton variant="secondary" size="medium" onClick={onCancel}>
             닫기
           </CmsButton>
-          {canBulkDownloadFiles ? (
-            <Tooltip title={!hasZipTargets ? LECTURE_REPORT_NO_ATTACHMENT_CTA : undefined}>
+          <Tooltip title={!hasZipTargets ? LECTURE_REPORT_NO_ATTACHMENT_CTA : undefined}>
               <span>
                 <CmsButton
                   variant="primary"
@@ -228,7 +233,6 @@ export function LectureReportSubmissionHistoryModal({
                 </CmsButton>
               </span>
             </Tooltip>
-          ) : null}
         </>
       }
     >

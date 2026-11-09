@@ -39,16 +39,12 @@ describe('권한 설정 V1.2 — 접근 불가 메뉴도 노출(클릭 시 안�
     expect(keys).toContain('/settlement-management/item-settings')
   })
 
-  it('계좌 지급 확인 메뉴는 Master·Accounting Manager에게만 보인다(28행 메뉴 비노출)', () => {
-    const visible = (roleCode: string) =>
-      collectMenuKeys(getMenuItemsByRole('ADMIN', user(roleCode))).includes(
-        '/settlement-management/account-payments'
-      )
-    expect(visible('MASTER')).toBe(true)
-    expect(visible('ACCOUNTING_MANAGER')).toBe(true)
-    expect(visible('PROGRAM_MANAGER')).toBe(false)
-    expect(visible('PROGRAM_VIEWER')).toBe(false)
-    // V1.2 이전 프로그램 역할 코드는 전역 역할로 인정하지 않는다.
-    expect(visible('PM')).toBe(false)
+  it('역할별 공통: 접근할 수 없어도 LNB 메뉴는 빼지 않는다(계좌 지급 확인 포함)', () => {
+    const master = collectMenuKeys(getMenuItemsByRole('ADMIN', user('MASTER')))
+    for (const roleCode of ['ACCOUNTING_MANAGER', 'PROGRAM_MANAGER', 'PROGRAM_VIEWER']) {
+      const keys = collectMenuKeys(getMenuItemsByRole('ADMIN', user(roleCode)))
+      expect(master.filter(key => !keys.includes(key))).toEqual([])
+    }
+    expect(master).toContain('/settlement-management/account-payments')
   })
 })

@@ -1019,10 +1019,8 @@ export function SchoolDetailStudentListSection({
       }
     } else if (rosterRemote.remoteEnabled && unmaskedRosterRows == null) {
       if (privacyRolePending || !canRevealSensitive) {
-        showAlert({
-          title: '열람 불가',
-          content: '학생 명단 원문 조회 권한이 없습니다. 마스킹 목록을 유지합니다.',
-        })
+        // 권한 설정 V1.2: 다른 화면과 같은 접근 불가 안내(역할 확인 중에는 조용히 대기)
+        if (!privacyRolePending) showAdminAccessDeniedAlert()
         return
       }
       const entryCheck = validateStudentRosterEditEntry({
@@ -1068,10 +1066,8 @@ export function SchoolDetailStudentListSection({
   const confirmEditUnmaskAndStartEdit = useCallback(() => {
     if (editUnmaskConfirmLoading || !organizationApplicationKey) return
     if (privacyRolePending || !canRevealSensitive) {
-      showAlert({
-        title: '열람 불가',
-        content: '학생 명단 원문 조회 권한이 없습니다. 마스킹 목록을 유지합니다.',
-      })
+      // 권한 설정 V1.2: 다른 화면과 같은 접근 불가 안내(역할 확인 중에는 조용히 대기)
+      if (!privacyRolePending) showAdminAccessDeniedAlert()
       return
     }
     setEditUnmaskConfirmLoading(true)
