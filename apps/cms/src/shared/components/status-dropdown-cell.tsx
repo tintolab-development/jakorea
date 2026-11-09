@@ -153,7 +153,9 @@ export function StatusDropdownCell<T extends string = string>({
 
   const triggerClassName = 'status-dropdown-cell__status-trigger'
 
-  if (roleReadOnly && onChange != null) {
+  // 조회 전용(전역 Program Viewer 또는 프로그램 상세의 Program Viewer 역할): 드롭다운은 열지 않고 태그를 노출하되,
+  // 누르면 상위 가드(앱 루트·프로그램 상세)가 쓰기 동작으로 보고 접근 불가 안내를 띄운다.
+  if ((roleReadOnly || contextReadOnly) && onChange != null) {
     return (
       <span
         role="button"
@@ -166,7 +168,7 @@ export function StatusDropdownCell<T extends string = string>({
     )
   }
 
-  if (onChange == null || contextReadOnly) {
+  if (onChange == null) {
     return (
       <span className={`${triggerClassName} status-dropdown-cell__status-trigger--readonly`}>
         {renderTag(status)}

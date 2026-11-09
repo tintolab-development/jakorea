@@ -66,6 +66,7 @@ import type { CertificateIssueReasonValue } from './modal/certificate-bulk-issue
 import { LectureReportSubmissionHistoryModal } from './modal/lecture-report-submission-history-modal'
 
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
+import { ensureProgramWriteAllowed } from '@/features/program/shared/lib/program-role-action-check'
 
 function shouldIgnoreTableRowClick(target: HTMLElement): boolean {
   return (
@@ -286,11 +287,20 @@ export function MemberProgramLectureHistory({
   const openCertificateIssueModal = useCallback(
     (ids: string[], kind: 'activity' | 'completion') => {
       if (ids.length === 0) return
-      setCertificateIssueTargetIds(ids)
-      setCertificateIssueKind(kind)
-      setCertificateIssueModalOpen(true)
+      const idSet = new Set(ids)
+      const programIds = tableData
+        .filter(row => idSet.has(String(row.id)))
+        .map(row => row.programId)
+      void (async () => {
+        // 권한 설정 V1.2: 수료증·참가인증서·활동인증서 발급은 역할 연동(Program Owner·Program Assistant).
+        // 선택 이력의 프로그램 역할을 사유 입력 전에 확인한다.
+        if (!(await ensureProgramWriteAllowed(programIds))) return
+        setCertificateIssueTargetIds(ids)
+        setCertificateIssueKind(kind)
+        setCertificateIssueModalOpen(true)
+      })()
     },
-    []
+    [tableData]
   )
 
   const canBulkDownloadFiles = hasFileDownloadPermission()

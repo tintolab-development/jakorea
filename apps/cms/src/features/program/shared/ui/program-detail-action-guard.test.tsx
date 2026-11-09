@@ -178,4 +178,43 @@ describe('ProgramDetailActionGuard', () => {
     expect(onSave).not.toHaveBeenCalled()
     expect(showAdminAccessDeniedAlert).toHaveBeenCalledTimes(1)
   })
+
+  it('담당 배정 확인 전에는 상세를 그리지 않고, 미배정(403)이면 끝까지 그리지 않는다', async () => {
+    let rejectAssignment: (error: unknown) => void = () => {}
+    fetchProgramMyAssignment.mockReturnValue(
+      new Promise((_, reject) => {
+        rejectAssignment = reject
+      })
+    )
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(
+      <QueryClientProvider client={client}>
+        <ProgramDetailActionGuard programId="12">
+          <div>상세 본문</div>
+        </ProgramDetailActionGuard>
+      </QueryClientProvider>
+    )
+    await waitFor(() => expect(fetchProgramMyAssignment).toHaveBeenCalledWith('12'))
+    expect(screen.queryByText('상세 본문')).toBeNull()
+
+    const forbidden = Object.assign(new Error('forbidden'), {
+      isAxiosError: true,
+      response: { status: 403 },
+    })
+    await act(async () => {
+      rejectAssignment(forbidden)
+    })
+    await waitFor(() => expect(client.getQueryState(['program-my-assignment', '12', 7])?.status).toBe('error'))
+    expect(screen.queryByText('상세 본문')).toBeNull()
+  })
+
+  it('담당 배정이 확인되면 상세를 그린다', async () => {
+    fetchProgramMyAssignment.mockResolvedValue({
+      assigned: true,
+      assignmentRole: 'VIEWER',
+      capabilities: ['PROGRAM_VIEW'],
+    })
+    await renderGuard(<div>상세 본문</div>)
+    expect(screen.getByText('상세 본문')).toBeTruthy()
+  })
 })

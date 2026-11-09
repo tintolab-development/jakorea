@@ -96,6 +96,7 @@ import {
 
 import '@/pages/programs/program-list-page.css'
 import './ujat-program-list-page.css'
+import { ensureProgramWriteAllowed } from '@/features/program/shared/lib/program-role-action-check'
 
 /** `/programs/ujat?new` — 5단계 UJAT 등록 플로우 풀페이지. `userPreview`는 상단「미리보기」시 `TemplatePreviewModal` 동기화용. */
 const PROGRAMS_UJAT_NEW_QUERY_KEY = 'new'
@@ -377,8 +378,12 @@ function UjatProgramListPageContent() {
       showAlert(NO_SELECTION_ALERT)
       return
     }
-    setBulkDeleteModalOpen(true)
-  }, [selectedRowKeys.length, showAlert])
+    void (async () => {
+      // 권한 설정 V1.2: 프로그램 삭제는 담당 프로그램의 Program Owner·Program Assistant만. 확인 모달 전에 막는다.
+      if (!(await ensureProgramWriteAllowed(selectedRowKeys.map(key => String(key))))) return
+      setBulkDeleteModalOpen(true)
+    })()
+  }, [selectedRowKeys, showAlert])
 
   const handleConfirmBulkDelete = useCallback(async () => {
     const idsToDelete = selectedRowKeys.map(key => String(key))
