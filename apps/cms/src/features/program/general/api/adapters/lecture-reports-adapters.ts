@@ -6,6 +6,12 @@ import {
   isEducationSchedulePreEducation,
   positiveEducationNumber,
 } from '@/shared/lib/education-schedule-name'
+import {
+  resolveLectureReportProgressLabel,
+  resolveLectureReportSubmissionStatus,
+  type LectureReportProgressLabel,
+  type LectureReportSubmissionLabel,
+} from '@/features/program/shared/lib/lecture-report-status'
 
 /**
  * GET …/programs/{id}/lecture-reports 응답 → 강사 강의보고서 테이블 row.
@@ -29,35 +35,13 @@ export type ParticipatingInstructorLectureReportRow = {
   educationSlotKey?: string
   timeLabel?: string
   submissionPeriodLabel: string
-  lectureProgressLabel: '진행 완료' | '진행 예정'
-  submissionStatusLabel: '제출 완료' | '미제출' | '진행 예정'
+  /** 서버 `lectureProgressStatus` 그대로 (`lecture-report-status.ts`) */
+  lectureProgressLabel: LectureReportProgressLabel
+  /** 서버 `reportStatus` 그대로 — 제출일 유무로 추정하지 않는다 */
+  submissionStatusLabel: LectureReportSubmissionLabel
   canViewReport: boolean
   fileCount: number
   fileObjectIds: number[]
-}
-
-function mapSubmissionLabel(
-  status: string | undefined,
-  submittedAt: string | undefined
-): ParticipatingInstructorLectureReportRow['submissionStatusLabel'] {
-  const s = (status ?? '').toUpperCase()
-  if (submittedAt || s.includes('SUBMIT') || s === 'SUBMITTED' || s === 'DONE') {
-    return '제출 완료'
-  }
-  if (s.includes('SCHEDULE') || s.includes('PENDING_START') || s === 'UPCOMING') {
-    return '진행 예정'
-  }
-  return '미제출'
-}
-
-function mapProgressLabel(
-  progressStatus: string | undefined,
-  submissionStatusLabel: ParticipatingInstructorLectureReportRow['submissionStatusLabel']
-): ParticipatingInstructorLectureReportRow['lectureProgressLabel'] {
-  const p = (progressStatus ?? '').toUpperCase()
-  if (p === 'UPCOMING') return '진행 예정'
-  if (p === 'COMPLETED') return '진행 완료'
-  return submissionStatusLabel === '진행 예정' ? '진행 예정' : '진행 완료'
 }
 
 function readLooseString(raw: Record<string, unknown>, keys: readonly string[]): string | undefined {
@@ -204,8 +188,8 @@ export function mapLectureReportDtoToInstructorRow(
   const id = String(reportId ?? row.id ?? index + 1)
   const due = row.submitDueAt ? dayjs(row.submitDueAt) : null
   const submissionPeriodLabel = due?.isValid() === true ? `${formatDateDot(due)}까지` : '-'
-  const submissionStatusLabel = mapSubmissionLabel(row.reportStatus, row.submittedAt ?? undefined)
-  const lectureProgressLabel = mapProgressLabel(row.lectureProgressStatus, submissionStatusLabel)
+  const submission = resolveLectureReportSubmissionStatus(row.reportStatus)
+  const lectureProgressLabel = resolveLectureReportProgressLabel(row.lectureProgressStatus)
   const fileObjectIds = (row.fileObjectIds ?? []).filter(
     (id): id is number => typeof id === 'number' && Number.isFinite(id)
   )
@@ -236,8 +220,8 @@ export function mapLectureReportDtoToInstructorRow(
     timeLabel: scheduleFields.timeLabel,
     submissionPeriodLabel,
     lectureProgressLabel,
-    submissionStatusLabel,
-    canViewReport: submissionStatusLabel === '제출 완료',
+    submissionStatusLabel: submission.label,
+    canViewReport: submission.hasSubmittedReport,
     fileCount:
       typeof row.fileCount === 'number' && Number.isFinite(row.fileCount)
         ? row.fileCount

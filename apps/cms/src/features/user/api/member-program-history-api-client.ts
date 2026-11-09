@@ -184,23 +184,3 @@ export async function downloadFormSubmissionFileRemote(
   }
   throw new Error('다운로드 URL이 없습니다.')
 }
-
-/** PH-015 — GET .../lecture-reports/{reportId}/download (BE 미구현 시 404) */
-export async function downloadMemberLectureReportRemote(
-  memberId: number,
-  applicationId: number,
-  reportId: number,
-  filenamePrefix: string
-): Promise<void> {
-  const data = await unwrapApiBody<{ downloadEndpoint?: string }>(
-    await customInstance<{ downloadEndpoint?: string }>({
-      url: `${memberApplicationUrl(memberId, applicationId)}/lecture-reports/${reportId}/download`,
-      method: 'GET',
-    })
-  )
-  if (data.downloadEndpoint) {
-    await downloadFromBulkEndpoint(data.downloadEndpoint, filenamePrefix, 'pdf')
-    return
-  }
-  throw new Error('다운로드 URL이 없습니다.')
-}

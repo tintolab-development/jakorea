@@ -9,11 +9,8 @@ import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { AssignmentSubmissionCellActionButton } from '@/features/program/general/ui/assignment-submission-history-table'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
-import {
-  downloadFormSubmissionFileRemote,
-  downloadMemberLectureReportRemote,
-  fetchMemberLectureReportsRemote,
-} from '@/features/user/api/member-program-history-api-client'
+import { fetchMemberLectureReportsRemote } from '@/features/user/api/member-program-history-api-client'
+import { downloadAdminFile } from '@/shared/lib/admin-file-upload'
 import { mapMemberLectureReportsToTableRows } from '@/features/user/api/map-member-lecture-reports'
 import type { MemberLectureReportTableRow } from '@/features/user/api/map-member-lecture-reports'
 import { resolveMemberApplicationIdFromApplication } from '@/features/user/api/member-program-history-ids'
@@ -116,24 +113,17 @@ export function LectureReportSubmissionHistoryModal({
 
   const handleViewReport = useCallback(
     async (record: MemberLectureReportTableRow) => {
-      if (memberId == null || applicationId == null || !record.canViewReport) return
+      const fileObjectIds = record.reportFileIds ?? []
+      if (!record.canViewReport || fileObjectIds.length === 0) return
       setReportDownloadingId(record.id)
       try {
-        const fileId = record.reportFileIds?.[0]
-        if (fileId != null) {
-          await downloadFormSubmissionFileRemote(
-            fileId,
-            `강의보고서_${record.reportId ?? record.id}`
-          )
-          return
-        }
-        if (record.reportId != null) {
-          await downloadMemberLectureReportRemote(
-            memberId,
-            applicationId,
-            record.reportId,
-            `강의보고서_${record.reportId}`
-          )
+        // 서버 reportFileIds = file_object id → 파일 객체 다운로드 API(`/api/admin/files/{id}/download`)
+        const prefix = `강의보고서_${record.reportId ?? record.id}`
+        for (const [index, fileObjectId] of fileObjectIds.entries()) {
+          await downloadAdminFile({
+            fileObjectId,
+            fileName: fileObjectIds.length > 1 ? `${prefix}_${index + 1}` : prefix,
+          })
         }
       } catch (error) {
         showAlert({
@@ -144,7 +134,7 @@ export function LectureReportSubmissionHistoryModal({
         setReportDownloadingId(null)
       }
     },
-    [memberId, applicationId, showAlert]
+    [showAlert]
   )
 
   const columns = useMemo(
