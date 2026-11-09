@@ -129,7 +129,8 @@ describe('buildUjatScheduleConfirmConfirmedDetail', () => {
       textbookQuantity: 216,
       computerInRoom: '6학년 개별 태블릿 사용 가능',
       waitingRoomLocation: '후관2층 1-4 열 강사대기실',
-      mealNotice: '후관1층 세면대 옆',
+      leftoverTextbookDisposal: '후관1층 세면대 옆',
+      mealNotice: '급식 가능',
       parkingInfo: '본교 주차장 이용',
       snackAvailability: 'possible',
       sexOffenseCheckRequest: '온라인 제출 | ID : tinto | 검증번호 : 940412',
@@ -194,7 +195,7 @@ describe('buildUjatScheduleConfirmConfirmedDetail', () => {
     expect(detail?.guidanceNotes.sexOffenderCheck).toBe('-')
   })
 
-  it('leftoverTextbookDisposal을 mealNotice보다 우선하고 snack과 혼용하지 않는다', () => {
+  it('leftoverTextbookDisposal만 쓰고 mealNotice·snack과 혼용하지 않는다', () => {
     const notes = mapUjatOrganizationGuidanceNotes({
       snackAvailability: 'possible',
       leftoverTextbookDisposal: '123',
@@ -211,7 +212,7 @@ describe('buildUjatScheduleConfirmConfirmedDetail', () => {
       snackAvailability: null,
       sexOffenseCheckRequest: null,
     })
-    expect(mealOnly.textbookDisposalLocation).toBe('meal-only')
+    expect(mealOnly.textbookDisposalLocation).toBe('-')
     expect(mealOnly.snackAvailability).toBe('-')
     expect(mealOnly.sexOffenderCheck).toBe('-')
   })

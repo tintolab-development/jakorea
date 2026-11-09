@@ -244,9 +244,7 @@ export function mapUjatOrganizationGuidanceNotes(
     searchDeviceGrade6: displayOrDash(dto?.computerInRoom),
     waitingArea: displayOrDash(dto?.waitingRoomLocation),
     textbookDisposalLocation: displayOrDash(
-      dto?.leftoverTextbookDisposal ??
-        ownString(dto, 'leftoverTextbookDisposal') ??
-        dto?.mealNotice
+      dto?.leftoverTextbookDisposal ?? ownString(dto, 'leftoverTextbookDisposal')
     ),
     otherSpecialNotes: displayOrDash(dto?.parkingInfo),
     snackAvailability: mapSnackAvailability(dto),
