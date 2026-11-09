@@ -8,7 +8,7 @@
 
 export type Detail8Params = {
 /**
- * Deprecated no-op. Omitted, false, and true all return original PII and write a privacy/audit log.
+ * Deprecated no-op. Omitted, false, and true return the same result; masking depends only on HOMEPAGE_PII_VIEW.
  */
 revealPii?: boolean;
 };

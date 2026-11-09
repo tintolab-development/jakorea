@@ -9,7 +9,7 @@ import type { ApplicationAttachmentItem } from './applicationAttachmentItem';
 import type { ConsultationDetailResponseStatus } from './consultationDetailResponseStatus';
 
 /**
- * Admin detail is always stored original PII. Empty strings are null. List contactName is original while maskedContactPhone remains masked. Not the careers talent-application revealPii contract.
+ * Admin detail. With HOMEPAGE_PII_VIEW: stored original PII after a committed privacy access log. Without it (Program Viewer): masked detail (piiMasked=true) and no privacy access log. Name is never masked. Empty strings are null. List contactName is original while maskedContactPhone remains masked.
  */
 export interface ConsultationDetailResponse {
   id?: number;
@@ -32,4 +32,6 @@ export interface ConsultationDetailResponse {
   attachmentOriginalName?: string;
   attachments?: ApplicationAttachmentItem[];
   version?: number;
+  /** true when the caller lacks HOMEPAGE_PII_VIEW (Program Viewer): contactPhone is masked and consultationContent has embedded phone/email/RRN/account patterns masked. No privacy access log is written. false means stored original PII. */
+  piiMasked?: boolean;
 }

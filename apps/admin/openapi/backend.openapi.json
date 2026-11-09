@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:8081",
+      "url": "http://jakorea-homepage.ngrok.app",
       "description": "Generated server url"
     }
   ],
@@ -8226,7 +8226,7 @@
           "talent-application-admin-controller"
         ],
         "summary": "Get talent application detail",
-        "description": "Always stored original PII (not masked). HOMEPAGE_VIEW is enough; HOMEPAGE_PII_VIEW is not required. Every 200 writes homepage_admin_audit_log (PII_READ / TALENT_APPLICATION) and homepage_privacy_access_log. List name is original; phone and email remain masked. revealPii is a deprecated no-op.",
+        "description": "HOMEPAGE_VIEW opens the detail. With HOMEPAGE_PII_VIEW (Master, Accounting Manager, Program Manager) the stored original PII is returned and every 200 writes homepage_admin_audit_log (PII_READ / TALENT_APPLICATION) and homepage_privacy_access_log before responding; if logging fails no original is returned. Without HOMEPAGE_PII_VIEW (Program Viewer) a masked detail (piiMasked=true, maskedBirthDate, maskedGender) is returned and no privacy access log is written. List name is original; phone and email remain masked. revealPii is a deprecated no-op.",
         "operationId": "detail_7",
         "parameters": [
           {
@@ -8241,7 +8241,7 @@
           {
             "name": "revealPii",
             "in": "query",
-            "description": "Deprecated no-op. Omitted, false, and true all return original PII and write a privacy/audit log.",
+            "description": "Deprecated no-op. Omitted, false, and true return the same result; masking depends only on HOMEPAGE_PII_VIEW.",
             "required": false,
             "schema": {
               "type": "boolean",
@@ -8256,6 +8256,115 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/TalentApplicationDetailResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/sponsorship/talent-applications/export": {
+      "get": {
+        "tags": [
+          "talent-application-admin-controller"
+        ],
+        "summary": "Export talent applications as XLSX",
+        "description": "Same filters, sort and masking as the list GET (name original, phone/email masked). No page/size: up to 50,000 rows, otherwise 400 VALIDATION_ERROR. Writes homepage_admin_audit_log (LIST_EXPORT) and homepage_file_download_log (download_kind LIST_EXPORT).",
+        "operationId": "export",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "confirmed"
+              ]
+            }
+          },
+          {
+            "name": "applicantName",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "phone",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "email",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "jaParticipation",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "yes",
+                "no"
+              ]
+            }
+          },
+          {
+            "name": "appliedFrom",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "appliedTo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "confirmedFrom",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "confirmedTo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
                 }
               }
             }
@@ -8444,7 +8553,7 @@
           "corporate-consultation-admin-controller"
         ],
         "summary": "Get corporate consultation detail",
-        "description": "Always stored original PII (not masked). HOMEPAGE_VIEW is enough; HOMEPAGE_PII_VIEW is not required. Every 200 writes homepage_admin_audit_log (PII_READ / CORPORATE_CONSULTATION) and homepage_privacy_access_log. List contactName is original; maskedContactPhone remains masked. revealPii is a deprecated no-op.",
+        "description": "HOMEPAGE_VIEW opens the detail. With HOMEPAGE_PII_VIEW (Master, Accounting Manager, Program Manager) the stored original PII is returned and every 200 writes homepage_admin_audit_log (PII_READ / CORPORATE_CONSULTATION) and homepage_privacy_access_log before responding; if logging fails no original is returned. Without HOMEPAGE_PII_VIEW (Program Viewer) a masked detail (piiMasked=true) is returned and no privacy access log is written. List contactName is original; maskedContactPhone remains masked. revealPii is a deprecated no-op.",
         "operationId": "detail_8",
         "parameters": [
           {
@@ -8459,7 +8568,7 @@
           {
             "name": "revealPii",
             "in": "query",
-            "description": "Deprecated no-op. Omitted, false, and true all return original PII and write a privacy/audit log.",
+            "description": "Deprecated no-op. Omitted, false, and true return the same result; masking depends only on HOMEPAGE_PII_VIEW.",
             "required": false,
             "schema": {
               "type": "boolean",
@@ -8474,6 +8583,103 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ConsultationDetailResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/sponsorship/corporate-consultations/export": {
+      "get": {
+        "tags": [
+          "corporate-consultation-admin-controller"
+        ],
+        "summary": "Export corporate consultations as XLSX",
+        "description": "Same filters, sort and masking as the list GET (contactName original, phone masked). No page/size: up to 50,000 rows, otherwise 400 VALIDATION_ERROR. Writes homepage_admin_audit_log (LIST_EXPORT) and homepage_file_download_log (download_kind LIST_EXPORT).",
+        "operationId": "export_1",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PENDING",
+                "CONFIRMED"
+              ]
+            }
+          },
+          {
+            "name": "companyName",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "contactName",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "departmentTitle",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "createdFrom",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "createdTo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "confirmedFrom",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "confirmedTo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
                 }
               }
             }
@@ -9495,7 +9701,7 @@
           "career-talent-application-admin-controller"
         ],
         "summary": "Get career talent application detail",
-        "description": "Always stored original PII (not masked). HOMEPAGE_VIEW is enough; HOMEPAGE_PII_VIEW is not required. Every 200 writes homepage_admin_audit_log (PII_READ / CAREER_TALENT_APPLICATION) and homepage_privacy_access_log with the original targetName. List returns the original name; phone and email remain masked. revealPii is a deprecated no-op. Admin log list screens must not POST privacy-access.",
+        "description": "HOMEPAGE_VIEW opens the detail. With HOMEPAGE_PII_VIEW (Master, Accounting Manager, Program Manager) the stored original PII is returned and every 200 writes homepage_admin_audit_log (PII_READ / CAREER_TALENT_APPLICATION) and homepage_privacy_access_log with the original targetName before responding; if logging fails no original is returned. Without HOMEPAGE_PII_VIEW (Program Viewer) a masked detail (piiMasked=true) is returned and no privacy access log is written. List returns the original name; phone and email remain masked. revealPii is a deprecated no-op. Admin log list screens must not POST privacy-access.",
         "operationId": "detail_9",
         "parameters": [
           {
@@ -9510,7 +9716,7 @@
           {
             "name": "revealPii",
             "in": "query",
-            "description": "Deprecated no-op. Omitted, false, and true all return the same original detail and do not affect authorization.",
+            "description": "Deprecated no-op. Omitted, false, and true return the same result; masking depends only on HOMEPAGE_PII_VIEW.",
             "required": false,
             "deprecated": true,
             "schema": {
@@ -9526,6 +9732,131 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/CareerTalentApplicationDetailResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/careers/talent-applications/export": {
+      "get": {
+        "tags": [
+          "career-talent-application-admin-controller"
+        ],
+        "summary": "Export career talent applications as XLSX",
+        "description": "Same filters, sort and masking as the list GET (name original, phone/email masked). No page/size: up to 50,000 rows, otherwise 400 VALIDATION_ERROR. Writes homepage_admin_audit_log (LIST_EXPORT) and homepage_file_download_log (download_kind LIST_EXPORT).",
+        "operationId": "export_2",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PENDING",
+                "CONFIRMED"
+              ]
+            }
+          },
+          {
+            "name": "jobInterest",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "MANAGEMENT_PLANNING",
+                "PR_DESIGN",
+                "ACCOUNTING",
+                "HR_ADMIN",
+                "EDUCATION_OPS",
+                "OTHER"
+              ]
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "phone",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "email",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "careerType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "NEWBIE",
+                "EXPERIENCED"
+              ]
+            }
+          },
+          {
+            "name": "appliedFrom",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "appliedTo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "confirmedFrom",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "confirmedTo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
                 }
               }
             }
@@ -16083,7 +16414,7 @@
               "string",
               "null"
             ],
-            "description": "Always PrivacyMaskingSupport.maskEmail (local prefix + *** + @domain). Empty is null, never \"\". List never returns plaintext.",
+            "description": "Always PrivacyMaskingSupport.maskEmail (same format as JA CMS: last 3 characters of the local part become *; 3 or fewer are fully masked). Empty is null, never \"\". List never returns plaintext.",
             "example": "0915***@naver.com"
           },
           "appliedAt": {
@@ -18389,7 +18720,7 @@
       },
       "TalentApplicationDetailResponse": {
         "type": "object",
-        "description": "Admin detail is always stored original PII. Empty strings are null. List name is original while phone and email remain masked. Not the careers talent-application revealPii contract.",
+        "description": "Admin detail. With HOMEPAGE_PII_VIEW: stored original PII after a committed privacy access log. Without it (Program Viewer): masked detail (piiMasked=true) and no privacy access log. Name is never masked. Empty strings are null. List name is original while phone and email remain masked.",
         "properties": {
           "id": {
             "type": "integer",
@@ -18407,11 +18738,19 @@
             "description": "Stored applicant name (original)."
           },
           "birthDate": {
-            "type": "string",
-            "format": "date"
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "Stored birth date (original). null when piiMasked=true; use maskedBirthDate."
           },
           "gender": {
-            "type": "string",
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Stored gender (original). null when piiMasked=true; use maskedGender.",
             "enum": [
               "male",
               "female"
@@ -18490,6 +18829,26 @@
             "items": {
               "$ref": "#/components/schemas/ApplicationAttachmentItem"
             }
+          },
+          "piiMasked": {
+            "type": "boolean",
+            "description": "true when the caller lacks HOMEPAGE_PII_VIEW (Program Viewer): birthDate/gender are null, phone/email/affiliation are masked, and bio/talentIntro/motivation have embedded phone/email/RRN/account patterns masked. No privacy access log is written. false means stored original PII."
+          },
+          "maskedBirthDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Masked birth date shown to Program Viewer (year only, e.g. 2000.**.**). null when piiMasked=false.",
+            "example": "2000.**.**"
+          },
+          "maskedGender": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Masked gender shown to Program Viewer (\"**\"). null when piiMasked=false.",
+            "example": "**"
           }
         }
       },
@@ -18616,7 +18975,7 @@
       },
       "ConsultationDetailResponse": {
         "type": "object",
-        "description": "Admin detail is always stored original PII. Empty strings are null. List contactName is original while maskedContactPhone remains masked. Not the careers talent-application revealPii contract.",
+        "description": "Admin detail. With HOMEPAGE_PII_VIEW: stored original PII after a committed privacy access log. Without it (Program Viewer): masked detail (piiMasked=true) and no privacy access log. Name is never masked. Empty strings are null. List contactName is original while maskedContactPhone remains masked.",
         "properties": {
           "id": {
             "type": "integer",
@@ -18690,6 +19049,10 @@
           "version": {
             "type": "integer",
             "format": "int64"
+          },
+          "piiMasked": {
+            "type": "boolean",
+            "description": "true when the caller lacks HOMEPAGE_PII_VIEW (Program Viewer): contactPhone is masked and consultationContent has embedded phone/email/RRN/account patterns masked. No privacy access log is written. false means stored original PII."
           }
         }
       },
@@ -19641,7 +20004,7 @@
       },
       "CareerTalentApplicationDetailResponse": {
         "type": "object",
-        "description": "Admin detail is always stored original PII. Empty strings are null. List items remain masked (phone and email only; name is original).",
+        "description": "Admin detail. With HOMEPAGE_PII_VIEW: stored original PII after a committed privacy access log. Without it (Program Viewer): masked detail (piiMasked=true) and no privacy access log. Name is never masked. Empty strings are null. List items remain masked (phone and email only; name is original).",
         "properties": {
           "id": {
             "type": "integer",
@@ -19789,6 +20152,10 @@
             "items": {
               "$ref": "#/components/schemas/ApplicationAttachmentItem"
             }
+          },
+          "piiMasked": {
+            "type": "boolean",
+            "description": "true when the caller lacks HOMEPAGE_PII_VIEW (Program Viewer): phone, email, addressRoad, addressDetail and schoolName are masked, and educationInfo/careerInfo have embedded phone/email/RRN/account patterns masked. No privacy access log is written. false means stored original PII."
           }
         }
       },

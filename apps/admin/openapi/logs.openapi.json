@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:8081",
+      "url": "http://jakorea-homepage.ngrok.app",
       "description": "Generated server url"
     }
   ],
@@ -7339,7 +7339,7 @@
           },
           "email": {
             "type": "string",
-            "description": "Always PrivacyMaskingSupport.maskEmail (local prefix + *** + @domain). Empty is null, never \"\". List never returns plaintext.",
+            "description": "Always PrivacyMaskingSupport.maskEmail (same format as JA CMS: last 3 characters of the local part become *; 3 or fewer are fully masked). Empty is null, never \"\". List never returns plaintext.",
             "example": "0915***@naver.com",
             "nullable": true
           },
@@ -9618,7 +9618,7 @@
       },
       "TalentApplicationDetailResponse": {
         "type": "object",
-        "description": "Admin detail is always stored original PII. Empty strings are null. List name is original while phone and email remain masked. Not the careers talent-application revealPii contract.",
+        "description": "Admin detail. With HOMEPAGE_PII_VIEW: stored original PII after a committed privacy access log. Without it (Program Viewer): masked detail (piiMasked=true) and no privacy access log. Name is never masked. Empty strings are null. List name is original while phone and email remain masked.",
         "properties": {
           "id": {
             "type": "integer",
@@ -9637,14 +9637,18 @@
           },
           "birthDate": {
             "type": "string",
-            "format": "date"
+            "format": "date",
+            "description": "Stored birth date (original). null when piiMasked=true; use maskedBirthDate.",
+            "nullable": true
           },
           "gender": {
             "type": "string",
+            "description": "Stored gender (original). null when piiMasked=true; use maskedGender.",
             "enum": [
               "male",
               "female"
-            ]
+            ],
+            "nullable": true
           },
           "phone": {
             "type": "string",
@@ -9715,6 +9719,22 @@
             "items": {
               "$ref": "#/components/schemas/ApplicationAttachmentItem"
             }
+          },
+          "piiMasked": {
+            "type": "boolean",
+            "description": "true when the caller lacks HOMEPAGE_PII_VIEW (Program Viewer): birthDate/gender are null, phone/email/affiliation are masked, and bio/talentIntro/motivation have embedded phone/email/RRN/account patterns masked. No privacy access log is written. false means stored original PII."
+          },
+          "maskedBirthDate": {
+            "type": "string",
+            "description": "Masked birth date shown to Program Viewer (year only, e.g. 2000.**.**). null when piiMasked=false.",
+            "example": "2000.**.**",
+            "nullable": true
+          },
+          "maskedGender": {
+            "type": "string",
+            "description": "Masked gender shown to Program Viewer (\"**\"). null when piiMasked=false.",
+            "example": "**",
+            "nullable": true
           }
         }
       },
@@ -9841,7 +9861,7 @@
       },
       "ConsultationDetailResponse": {
         "type": "object",
-        "description": "Admin detail is always stored original PII. Empty strings are null. List contactName is original while maskedContactPhone remains masked. Not the careers talent-application revealPii contract.",
+        "description": "Admin detail. With HOMEPAGE_PII_VIEW: stored original PII after a committed privacy access log. Without it (Program Viewer): masked detail (piiMasked=true) and no privacy access log. Name is never masked. Empty strings are null. List contactName is original while maskedContactPhone remains masked.",
         "properties": {
           "id": {
             "type": "integer",
@@ -9911,6 +9931,10 @@
           "version": {
             "type": "integer",
             "format": "int64"
+          },
+          "piiMasked": {
+            "type": "boolean",
+            "description": "true when the caller lacks HOMEPAGE_PII_VIEW (Program Viewer): contactPhone is masked and consultationContent has embedded phone/email/RRN/account patterns masked. No privacy access log is written. false means stored original PII."
           }
         }
       },
@@ -10860,7 +10884,7 @@
       },
       "CareerTalentApplicationDetailResponse": {
         "type": "object",
-        "description": "Admin detail is always stored original PII. Empty strings are null. List items remain masked (phone and email only; name is original).",
+        "description": "Admin detail. With HOMEPAGE_PII_VIEW: stored original PII after a committed privacy access log. Without it (Program Viewer): masked detail (piiMasked=true) and no privacy access log. Name is never masked. Empty strings are null. List items remain masked (phone and email only; name is original).",
         "properties": {
           "id": {
             "type": "integer",
@@ -10982,6 +11006,10 @@
             "items": {
               "$ref": "#/components/schemas/ApplicationAttachmentItem"
             }
+          },
+          "piiMasked": {
+            "type": "boolean",
+            "description": "true when the caller lacks HOMEPAGE_PII_VIEW (Program Viewer): phone, email, addressRoad, addressDetail and schoolName are masked, and educationInfo/careerInfo have embedded phone/email/RRN/account patterns masked. No privacy access log is written. false means stored original PII."
           }
         }
       },

@@ -12,7 +12,7 @@ import type { CareerTalentApplicationDetailResponseJobInterest } from './careerT
 import type { CareerTalentApplicationDetailResponseStatus } from './careerTalentApplicationDetailResponseStatus';
 
 /**
- * Admin detail is always stored original PII. Empty strings are null. List items remain masked (phone and email only; name is original).
+ * Admin detail. With HOMEPAGE_PII_VIEW: stored original PII after a committed privacy access log. Without it (Program Viewer): masked detail (piiMasked=true) and no privacy access log. Name is never masked. Empty strings are null. List items remain masked (phone and email only; name is original).
  */
 export interface CareerTalentApplicationDetailResponse {
   id?: number;
@@ -48,4 +48,6 @@ export interface CareerTalentApplicationDetailResponse {
   attachmentOriginalName?: string | null;
   /** Stored attachments in display order, including originalName. Empty when no attachments exist. */
   attachments?: ApplicationAttachmentItem[];
+  /** true when the caller lacks HOMEPAGE_PII_VIEW (Program Viewer): phone, email, addressRoad, addressDetail and schoolName are masked, and educationInfo/careerInfo have embedded phone/email/RRN/account patterns masked. No privacy access log is written. false means stored original PII. */
+  piiMasked?: boolean;
 }

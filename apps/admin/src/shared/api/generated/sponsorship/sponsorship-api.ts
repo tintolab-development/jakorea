@@ -21,6 +21,7 @@ import type {
   Detail8Params,
   DonationButtonResponse,
   DonationUrlUpdateRequest,
+  Export1Params,
   FileDownloadPasswordRequest,
   FixedTextUpdateRequest,
   List13Params,
@@ -55,7 +56,8 @@ import type {
   TalentSponsorshipHowItemsUpdateRequest,
   TalentSponsorshipInterviewResponse,
   TalentSponsorshipInterviewUpdateRequest,
-  TalentSponsorshipPublicResponse
+  TalentSponsorshipPublicResponse,
+  _ExportParams
 } from './schemas';
 
 import { customInstance } from '../../orval-mutator';
@@ -474,7 +476,7 @@ const delete3 = (
     }
 
 /**
- * Always stored original PII (not masked). HOMEPAGE_VIEW is enough; HOMEPAGE_PII_VIEW is not required. Every 200 writes homepage_admin_audit_log (PII_READ / TALENT_APPLICATION) and homepage_privacy_access_log. List name is original; phone and email remain masked. revealPii is a deprecated no-op.
+ * HOMEPAGE_VIEW opens the detail. With HOMEPAGE_PII_VIEW (Master, Accounting Manager, Program Manager) the stored original PII is returned and every 200 writes homepage_admin_audit_log (PII_READ / TALENT_APPLICATION) and homepage_privacy_access_log before responding; if logging fails no original is returned. Without HOMEPAGE_PII_VIEW (Program Viewer) a masked detail (piiMasked=true, maskedBirthDate, maskedGender) is returned and no privacy access log is written. List name is original; phone and email remain masked. revealPii is a deprecated no-op.
  * @summary Get talent application detail
  */
 const detail7 = (
@@ -483,6 +485,20 @@ const detail7 = (
  options?: SecondParameter<typeof customInstance<TalentApplicationDetailResponse>>,) => {
       return customInstance<TalentApplicationDetailResponse>(
       {url: `/api/admin/sponsorship/talent-applications/${id}`, method: 'GET',
+        params
+    },
+      options);
+    }
+
+/**
+ * Same filters, sort and masking as the list GET (name original, phone/email masked). No page/size: up to 50,000 rows, otherwise 400 VALIDATION_ERROR. Writes homepage_admin_audit_log (LIST_EXPORT) and homepage_file_download_log (download_kind LIST_EXPORT).
+ * @summary Export talent applications as XLSX
+ */
+const _export = (
+    params?: _ExportParams,
+ options?: SecondParameter<typeof customInstance<string>>,) => {
+      return customInstance<string>(
+      {url: `/api/admin/sponsorship/talent-applications/export`, method: 'GET',
         params
     },
       options);
@@ -528,7 +544,7 @@ const bulkDelete6 = (
     }
 
 /**
- * Always stored original PII (not masked). HOMEPAGE_VIEW is enough; HOMEPAGE_PII_VIEW is not required. Every 200 writes homepage_admin_audit_log (PII_READ / CORPORATE_CONSULTATION) and homepage_privacy_access_log. List contactName is original; maskedContactPhone remains masked. revealPii is a deprecated no-op.
+ * HOMEPAGE_VIEW opens the detail. With HOMEPAGE_PII_VIEW (Master, Accounting Manager, Program Manager) the stored original PII is returned and every 200 writes homepage_admin_audit_log (PII_READ / CORPORATE_CONSULTATION) and homepage_privacy_access_log before responding; if logging fails no original is returned. Without HOMEPAGE_PII_VIEW (Program Viewer) a masked detail (piiMasked=true) is returned and no privacy access log is written. List contactName is original; maskedContactPhone remains masked. revealPii is a deprecated no-op.
  * @summary Get corporate consultation detail
  */
 const detail8 = (
@@ -542,7 +558,21 @@ const detail8 = (
       options);
     }
 
-return {updateInterview,updateHowItems,updateBanner,updatePersonalUsage,updateDonationUrl,updatePersonalBanner,updateCorporateSteps,get,update,updateCorporateMetrics,updateCorporateBanner,create,confirm,prepare,create1,confirm1,prepare1,attachmentDownloadByAsset,attachmentDownload,list2,create3,delete1,attachmentDownloadByAsset1,attachmentDownload1,bulkConfirm,updateStatus,toggle,updateStatus1,get5,personal,corporate,list10,get11,list13,delete3,detail7,personal1,corporate1,list14,bulkDelete6,detail8}};
+/**
+ * Same filters, sort and masking as the list GET (contactName original, phone masked). No page/size: up to 50,000 rows, otherwise 400 VALIDATION_ERROR. Writes homepage_admin_audit_log (LIST_EXPORT) and homepage_file_download_log (download_kind LIST_EXPORT).
+ * @summary Export corporate consultations as XLSX
+ */
+const export1 = (
+    params?: Export1Params,
+ options?: SecondParameter<typeof customInstance<string>>,) => {
+      return customInstance<string>(
+      {url: `/api/admin/sponsorship/corporate-consultations/export`, method: 'GET',
+        params
+    },
+      options);
+    }
+
+return {updateInterview,updateHowItems,updateBanner,updatePersonalUsage,updateDonationUrl,updatePersonalBanner,updateCorporateSteps,get,update,updateCorporateMetrics,updateCorporateBanner,create,confirm,prepare,create1,confirm1,prepare1,attachmentDownloadByAsset,attachmentDownload,list2,create3,delete1,attachmentDownloadByAsset1,attachmentDownload1,bulkConfirm,updateStatus,toggle,updateStatus1,get5,personal,corporate,list10,get11,list13,delete3,detail7,_export,personal1,corporate1,list14,bulkDelete6,detail8,export1}};
 export type UpdateInterviewResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['updateInterview']>>>
 export type UpdateHowItemsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['updateHowItems']>>>
 export type UpdateBannerResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['updateBanner']>>>
@@ -579,8 +609,10 @@ export type Get11Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJA
 export type List13Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['list13']>>>
 export type Delete3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['delete3']>>>
 export type Detail7Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['detail7']>>>
+export type _ExportResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['_export']>>>
 export type Personal1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['personal1']>>>
 export type Corporate1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['corporate1']>>>
 export type List14Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['list14']>>>
 export type BulkDelete6Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['bulkDelete6']>>>
 export type Detail8Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['detail8']>>>
+export type Export1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['export1']>>>
