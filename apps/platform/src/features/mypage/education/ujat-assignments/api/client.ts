@@ -1,5 +1,6 @@
 import { axiosClient } from '@/shared/api/axios-instance'
 import type { ProgramApplicationType } from '../../applications/api/types'
+import { toRuleDownloadFileName } from '@/shared/lib/download-file-name'
 
 const APPLICATIONS_PATH = '/api/portal/me/program-applications'
 
@@ -72,7 +73,7 @@ function saveBlob(fileName: string, blob: Blob) {
   const objectUrl = URL.createObjectURL(blob)
   const anchor = document.createElement('a')
   anchor.href = objectUrl
-  anchor.download = fileName
+  anchor.download = toRuleDownloadFileName(fileName)
   document.body.appendChild(anchor)
   anchor.click()
   anchor.remove()

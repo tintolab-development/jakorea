@@ -15,6 +15,7 @@ import {
   fetchInstructorAssignmentsRemote,
 } from '@/features/program/general/api/instructor-assignments-api-client'
 import { fetchInstructorApplicationsRemote } from '@/features/program/general/api/applications-api-client'
+import { mapApiApplicationStatusToApprovalStatus } from '@/features/program/general/api/adapters/general-applications-adapters'
 import { fetchAdminProgramSchedulesRemote } from '@/features/program/general/api/program-schedules-api-client'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { shouldUseGeneralProgramProgressRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
@@ -33,6 +34,11 @@ import { fetchAllApiPages } from '@/shared/lib/fetch-all-api-pages'
 export type InstructorAssignmentBoardData = {
   assignments: InstructorAssignmentListItemEnriched[]
   approvedInstructorApplications: InstructorApplicationListItemResponse[]
+  /**
+   * 승인 전(대기) 강사 신청 — 일반 기관형 참여 기관 상세 배정 대기 목록의 「승인 및 배정」용.
+   * 반려·취소 상태는 포함하지 않는다. 1사1교 화면은 읽지 않는다.
+   */
+  pendingInstructorApplications?: InstructorApplicationListItemResponse[]
   schedules: ProgramScheduleResponse[]
   occupiedLectureDatesByInstructorId: Map<string, Set<string>>
   scheduleLabelById: Map<string, { date?: string; time?: string; session?: string }>
@@ -147,6 +153,10 @@ export async function fetchInstructorAssignmentBoardData(
     return ['APPROVED', 'WAITING_ASSIGNMENT', 'ASSIGNED'].includes(status)
   })
 
+  const pendingInstructorApplications = instructorApplications.filter(
+    app => mapApiApplicationStatusToApprovalStatus(app.applicationStatus) === 'pending'
+  )
+
   const scheduleDateById = buildScheduleLectureDateById(
     schedules.map(s => ({
       scheduleId: s.id,
@@ -175,6 +185,7 @@ export async function fetchInstructorAssignmentBoardData(
   return {
     assignments,
     approvedInstructorApplications,
+    pendingInstructorApplications,
     schedules,
     occupiedLectureDatesByInstructorId,
     scheduleLabelById: enrichScheduleLabelFromAssignments(

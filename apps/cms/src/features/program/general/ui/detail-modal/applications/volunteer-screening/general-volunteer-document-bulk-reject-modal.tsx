@@ -6,18 +6,27 @@ import '@/features/program/shared/ui/detail-modal/components/instructor-bulk-app
 
 export type GeneralVolunteerDocumentBulkRejectModalProps = {
   open: boolean
+  /** 첫 번째 선택자 이름 — `[이름] 님 외 N명` */
+  subjectName?: string
   selectionCount: number
   onCancel: () => void
   onConfirm: (payload: PermissionModalPayload) => void
   zIndex?: number
 }
 
-export function buildGeneralVolunteerDocumentBulkRejectMessage(selectionCount: number): string {
-  return `선택한 **${selectionCount}명**의 모든 봉사자의 1차 서류 합격을 일괄 반려하시겠습니까?\n반려 시 입력하신 반려 사유가 각 봉사자에게 개별로 전달되며, 알림이 발송됩니다.`
+/** 시안 03-1(9756:67380). 반려 사유는 API(FAIL) 필수라 입력란은 유지한다. */
+export function buildGeneralVolunteerDocumentBulkRejectMessage(
+  selectionCount: number,
+  subjectName = ''
+): string {
+  const name = subjectName.trim() || '회원'
+  const rest = Math.max(0, selectionCount - 1)
+  return `**[${name}] 님 외 ${rest}명**의 1차 서류를 반려하시겠습니까?\n반려 시 회원에게 반려 알림이 발송됩니다.`
 }
 
 export function GeneralVolunteerDocumentBulkRejectModal({
   open,
+  subjectName = '',
   selectionCount,
   onCancel,
   onConfirm,
@@ -28,8 +37,8 @@ export function GeneralVolunteerDocumentBulkRejectModal({
       open={open}
       variant="reject"
       className="general-volunteer-document-bulk-reject-modal instructor-bulk-reject-modal"
-      title="봉사자 일괄 반려 안내"
-      message={buildGeneralVolunteerDocumentBulkRejectMessage(selectionCount)}
+      title="1차 서류 일괄 반려 안내"
+      message={buildGeneralVolunteerDocumentBulkRejectMessage(selectionCount, subjectName)}
       confirmLabel="반려"
       confirmVariant="delete"
       requireReason

@@ -29,15 +29,26 @@ export function paintIssuedSerialOnCertificatePreview(
 export type AllocatedCertificateSerialForPdf = {
   serialNumber: string
   issueId: number
+  /** 서버 발급 일시. 없거나 형식이 잘못되면 null(호출부는 오늘 날짜 사용). */
+  issuedAt: Date | null
+}
+
+/** 서버 `issuedAt`(ISO date-time) → Date. null·빈 값·파싱 불가면 null. */
+export function parseCertificateIssuedAt(raw: unknown): Date | null {
+  if (typeof raw !== 'string' || raw.trim() === '') return null
+  const date = new Date(raw)
+  return Number.isNaN(date.getTime()) ? null : date
 }
 
 /**
  * 다운로드 직전마다 서버에서 새 고유번호를 받아 PDF 캡처 DOM에 반영한다.
+ * 발급일(`issuedAt`, 없으면 지금)도 캡처 전에 반영해 PDF 본문 발급일과 파일명 날짜를 맞춘다.
  * 미리보기 화면에는 넣지 않는다.
  */
 export async function applyAllocatedSerialForPdfCapture(args: {
   subject: CertificateSerialSubject
   applySerial: (serialNumber: string) => void
+  applyIssuedAt?: (issuedAt: Date) => void
   exportRoot: HTMLElement | null
   getExportRoot?: () => HTMLElement | null
 }): Promise<AllocatedCertificateSerialForPdf> {
@@ -47,13 +58,15 @@ export async function applyAllocatedSerialForPdfCapture(args: {
   if (!isIssuedCertificateSerial(serialNumber) || issueId == null) {
     throw new CertificateSerialAllocateError('고유번호 응답이 올바르지 않습니다.')
   }
+  const issuedAt = parseCertificateIssuedAt(allocated.issuedAt)
   flushSync(() => {
     args.applySerial(serialNumber)
+    args.applyIssuedAt?.(issuedAt ?? new Date())
   })
   const exportRoot = args.getExportRoot?.() ?? args.exportRoot
   paintIssuedSerialOnCertificatePreview(exportRoot, serialNumber)
   await waitForCertificatePreviewCaptureReady(exportRoot)
-  return { serialNumber, issueId }
+  return { serialNumber, issueId, issuedAt }
 }
 
 /**
@@ -63,6 +76,7 @@ export async function applyAllocatedSerialForPdfCapture(args: {
 export async function downloadIssuedCertificatePdf(args: {
   subject: CertificateSerialSubject
   applySerial: (serialNumber: string) => void
+  applyIssuedAt?: (issuedAt: Date) => void
   exportRoot: HTMLElement | null
   getExportRoot?: () => HTMLElement | null
   downloadPdf: (

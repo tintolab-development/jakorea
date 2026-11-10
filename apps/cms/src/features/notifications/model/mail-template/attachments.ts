@@ -16,10 +16,11 @@ export const MAIL_ATTACHMENT_BLOCKED_EXTENSIONS = [
   'dll',
 ]
 
+/** 시안 문구 그대로 — 실제 차단 확장자(MAIL_ATTACHMENT_BLOCKED_EXTENSIONS)는 msi·sh·dll 포함 상위집합 */
 export const MAIL_ATTACHMENT_GUIDE_LINES = [
-  '- 파일은 최대 10개, 총 30MB까지 업로드할 수 있습니다.',
-  '- js, exe, bat 등 실행 파일은 첨부할 수 없습니다.',
-  '- 파일명은 최대 45자까지 가능합니다.',
+  '- 첨부 가능 파일 수는 최대 10개이며, 파일 용량은 합산 30MB 이하까지만 가능합니다.',
+  '- .js, .exe, .bat, .cmd, .com, .cpl, .scr, .vbs, .wsr 파일 형식은 지원하지 않습니다.',
+  '- 파일명의 최대 글자 수는 45자입니다.',
 ]
 
 export type MailAttachmentRejectReason =

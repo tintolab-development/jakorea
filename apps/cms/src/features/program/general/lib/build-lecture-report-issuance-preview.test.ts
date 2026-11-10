@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildLectureReportFilledDraft,
+  buildLectureReportPreviewFileName,
   type LectureReportPreviewContext,
 } from './build-lecture-report-issuance-preview'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
@@ -158,5 +159,23 @@ describe('buildLectureReportFilledDraft', () => {
       studentCount: '30',
       institutionName: '',
     })
+  })
+})
+
+describe('buildLectureReportPreviewFileName', () => {
+  it('제출일(submittedAt)을 Asia/Seoul 날짜로 쓴다', () => {
+    expect(
+      buildLectureReportPreviewFileName(createContext({ submittedAt: '2026-11-09T16:30:00Z' }))
+    ).toBe('[JA Korea] 강의보고서_김제이_261110')
+  })
+
+  it('제출일이 없거나 잘못되면 대체 날짜(기본 오늘)를 쓴다', () => {
+    const fallback = new Date('2026-06-05T12:00:00+09:00')
+    expect(buildLectureReportPreviewFileName(createContext({ submittedAt: null }), fallback)).toBe(
+      '[JA Korea] 강의보고서_김제이_260605'
+    )
+    expect(buildLectureReportPreviewFileName(createContext({ submittedAt: 'x' }), fallback)).toBe(
+      '[JA Korea] 강의보고서_김제이_260605'
+    )
   })
 })

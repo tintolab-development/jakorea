@@ -45,6 +45,8 @@ interface TemplateFullpageModalProps {
   showCloseButton?: boolean
   /** 저장 버튼 라벨 (`registrationUserMode` 기본: 임시저장) */
   saveLabel?: string
+  /** writing 헤더 왼쪽 닫기 버튼 라벨 (기본: 닫기) */
+  closeLabel?: string
   /** 우측 하단 CTA — 미전달 시 숨김 (단일, `footerActions`와 병용 시 배열 우선) */
   footerAction?: TemplateFullpageModalFooterAction
   /** 우측 하단 CTA 복수 — 등록 단계별 이전/다음 버튼 */
@@ -117,6 +119,7 @@ export function TemplateFullpageModal({
   registrationUserMode = false,
   showCloseButton = !registrationUserMode,
   saveLabel,
+  closeLabel = '닫기',
   footerAction,
   footerActions,
   subHeader,
@@ -168,7 +171,7 @@ export function TemplateFullpageModal({
           </CmsButton>
         ) : (
           <CmsButton variant="secondary" onClick={onClose}>
-            닫기
+            {closeLabel}
           </CmsButton>
         )}
         {showPreview ? (

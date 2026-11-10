@@ -42,8 +42,16 @@ import { participatingScheduleTableColumnLayout } from '@/features/program/gener
 import { buildVolunteerInstitutionAddAssignOptions } from '@/features/program/general/lib/general-add-assign-session-chips'
 import { GeneralParticipantAddAssignModal } from './general-participant-add-assign-modal'
 import { ParticipatingVolunteerUnassignConfirmModal } from './participating-volunteer-unassign-confirm-modal'
+import { InstitutionUnassignConfirmModal } from './institution-unassign-confirm-modal'
+import {
+  ASSIGNED_INSTITUTIONS_EMPTY_COPY,
+  AssignmentListEmpty,
+  WAITING_INSTITUTIONS_EMPTY_COPY,
+} from './assignment-list-empty'
 import { ParticipatingVolunteerUnassignCompleteModal } from './participating-volunteer-unassign-complete-modal'
 import { InstitutionSelectAssignConfirmModal } from './institution-select-assign-confirm-modal'
+import { InstitutionAssignCompleteModal } from './institution-assign-complete-modal'
+import { useIsInstitutionProgramSurface } from '@/features/program/general/hooks/use-institution-program-surface'
 import './participating-institutions-section.css'
 import './participating-volunteer-assignment-section.css'
 import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
@@ -60,6 +68,27 @@ function renderVolunteerScheduleLines(lines: string[]) {
 function renderHopeScheduleLine(line: string) {
   return <ScheduleLinesCell lines={[formatCmsScheduleDisplayLabel(line)]} />
 }
+
+/**
+ * 배정 완료 인원 줄 — 배정 직전 「배정 봉사자 수」 라벨(`3/4명`·`3명`)에 이번 배정 1명을 더한다.
+ * 라벨을 해석할 수 없으면 줄을 숨긴다.
+ */
+export function buildVolunteerAssignCompleteCountLine(
+  countLabelBeforeAssign: string | null | undefined
+): string | null {
+  const raw = countLabelBeforeAssign?.trim() ?? ''
+  const ratio = /^(\d+)\s*\/\s*(\d+)\s*명$/.exec(raw)
+  if (ratio) return `(현재 배정 인원 : ${Number(ratio[1]) + 1}/${ratio[2]}명)`
+  const single = /^(\d+)\s*명$/.exec(raw)
+  if (single) return `(현재 배정 인원 : ${Number(single[1]) + 1}명)`
+  return null
+}
+
+/**
+ * 기관형 봉사 배정 취소 — 배정 응답에 알림 발송 여부가 없어 판단 불가(undefined)
+ * → 발송 후 시안(07-2/06-2: 사유·알림)으로 연다.
+ */
+const VOLUNTEER_UNASSIGN_NOTIFICATION_SENT: boolean | undefined = undefined
 
 /** 추가 배정 — Figma CMS 9760:8214 ‘기관 추가 배정 안내’ (C: 기관형 참여 봉사자) */
 const ADD_ASSIGN_MODAL_TITLE = '기관 추가 배정 안내'
@@ -104,6 +133,13 @@ export function ParticipatingVolunteerAssignmentSection({
   const [addAssignSchoolId, setAddAssignSchoolId] = useState<string | null>(null)
   const [addAssignSubmitting, setAddAssignSubmitting] = useState(false)
   const addAssignInFlightRef = useRef(false)
+  /** 기관형 — Figma 07-2/04-2·05-2 「배정 완료」 (1사1교 등 다른 표면은 기존처럼 완료 팝업 없음) */
+  const isInstitutionSurface = useIsInstitutionProgramSurface(program)
+  const [assignCompleteModal, setAssignCompleteModal] = useState<{
+    institutionName: string
+    extraTargetCount: number
+    countLine: string | null
+  } | null>(null)
 
   /**
    * 「자택과의 거리」 — education-scope `organizations[]`(기관별 편도 거리)를 기관 신청 id로 찾는다.
@@ -444,6 +480,11 @@ export function ParticipatingVolunteerAssignmentSection({
         )
         setUnassignConfirmOpen(false)
         setSelectedAssignedKeys([])
+        if (isInstitutionSurface) {
+          // Figma 07-2/06-3 「취소 완료」
+          showAlert({ title: '취소 완료', content: '취소되었습니다.' })
+          return
+        }
         setUnassignCompleteModal({
           volunteerNames: [volunteer.volunteerName],
           targetNames: removedSchoolNames,
@@ -452,6 +493,8 @@ export function ParticipatingVolunteerAssignmentSection({
       })()
     },
     [
+      isInstitutionSurface,
+      showAlert,
       assignedInstitutions,
       persistAssignedOrganizations,
       selectedAssignedKeys,
@@ -482,6 +525,15 @@ export function ParticipatingVolunteerAssignmentSection({
       return renumberVolunteerAssignedRows(next)
     })()
 
+    const first = selectedRows[0]
+    const completeInfo = first
+      ? {
+          institutionName: first.schoolName,
+          extraTargetCount: Math.max(0, selectedRows.length - 1),
+          countLine: buildVolunteerAssignCompleteCountLine(first.assignedVolunteerCountLabel),
+        }
+      : null
+
     void (async () => {
       const saved = await persistAssignedOrganizations(nextAssigned, '봉사 배정')
       if (!saved) return
@@ -489,8 +541,10 @@ export function ParticipatingVolunteerAssignmentSection({
       setAssignedInstitutions(nextAssigned)
       setSelectAssignConfirmOpen(false)
       setSelectedWaitingKeys([])
+      if (isInstitutionSurface && completeInfo) setAssignCompleteModal(completeInfo)
     })()
   }, [
+    isInstitutionSurface,
     assignedInstitutions,
     persistAssignedOrganizations,
     program,
@@ -558,6 +612,13 @@ export function ParticipatingVolunteerAssignmentSection({
         setAddAssignModalOpen(false)
         setAddAssignSchoolId(null)
         setAddAssignWaitingRowId(null)
+        if (isInstitutionSurface) {
+          setAssignCompleteModal({
+            institutionName: waitingRow.schoolName,
+            extraTargetCount: 0,
+            countLine: buildVolunteerAssignCompleteCountLine(waitingRow.assignedVolunteerCountLabel),
+          })
+        }
       } finally {
         addAssignInFlightRef.current = false
         setAddAssignSubmitting(false)
@@ -567,6 +628,7 @@ export function ParticipatingVolunteerAssignmentSection({
     addAssignSchoolId,
     addAssignWaitingRowId,
     assignedInstitutions,
+    isInstitutionSurface,
     persistAssignedOrganizations,
     program,
     schoolRows,
@@ -627,7 +689,10 @@ export function ParticipatingVolunteerAssignmentSection({
         <div className="table-header-actions">
           <div className="table-header-title--wrapper">
             <span className="table-title">배정된 기관 목록</span>
-            <span className="table-description">{assignedInstitutions.length}건</span>
+            <span className="table-description">
+              {isInstitutionSurface ? '총 ' : ''}
+              {assignedInstitutions.length}건
+            </span>
           </div>
           <div className="info-section-buttons--wrapper">
             <CmsButton
@@ -660,7 +725,9 @@ export function ParticipatingVolunteerAssignmentSection({
           </div>
         </div>
         <div className="participating-institutions-section__table-wrap school-detail-fullpage-view__assignment-table-scroll">
-          {assignedInstitutions.length === 0 ? (
+          {assignedInstitutions.length === 0 && isInstitutionSurface ? (
+            <AssignmentListEmpty {...ASSIGNED_INSTITUTIONS_EMPTY_COPY} />
+          ) : assignedInstitutions.length === 0 ? (
             <div
               className="school-detail-fullpage-view__instructor-list-empty"
               role="status"
@@ -692,17 +759,27 @@ export function ParticipatingVolunteerAssignmentSection({
         <div className="table-header-actions">
           <div className="table-header-title--wrapper">
             <span className="table-title">배정 대기 기관 목록</span>
-            <span className="table-description">{waitingInstitutions.length}건</span>
+            <span className="table-description">
+              {isInstitutionSurface ? '총 ' : ''}
+              {waitingInstitutions.length}건
+            </span>
           </div>
           <div className="info-section-buttons--wrapper">
-            <CmsButton variant="secondary" size="h40" onClick={handleSelectAssignClick}>
+            <CmsButton
+              variant="secondary"
+              size="h40"
+              disabled={isInstitutionSurface && waitingInstitutions.length === 0}
+              onClick={handleSelectAssignClick}
+            >
               선택 배정
             </CmsButton>
             <ExcelButton onClick={exportWaitingExcel} loading={isWaitingExcelExporting} />
           </div>
         </div>
         <div className="participating-institutions-section__table-wrap school-detail-fullpage-view__waiting-table-scroll">
-          {waitingInstitutions.length === 0 ? (
+          {waitingInstitutions.length === 0 && isInstitutionSurface ? (
+            <AssignmentListEmpty {...WAITING_INSTITUTIONS_EMPTY_COPY} />
+          ) : waitingInstitutions.length === 0 ? (
             <div
               className="school-detail-fullpage-view__instructor-list-empty"
               role="status"
@@ -738,13 +815,24 @@ export function ParticipatingVolunteerAssignmentSection({
         </div>
       </div>
 
-      <ParticipatingVolunteerUnassignConfirmModal
-        open={unassignConfirmOpen}
-        onCancel={() => setUnassignConfirmOpen(false)}
-        volunteerNames={[volunteer.volunteerName]}
-        targetNames={unassignSchoolNames}
-        onConfirm={handleUnassignConfirm}
-      />
+      {isInstitutionSurface ? (
+        <InstitutionUnassignConfirmModal
+          open={unassignConfirmOpen}
+          onCancel={() => setUnassignConfirmOpen(false)}
+          targetNames={unassignSchoolNames}
+          audience="volunteer"
+          notificationSent={VOLUNTEER_UNASSIGN_NOTIFICATION_SENT}
+          onConfirm={handleUnassignConfirm}
+        />
+      ) : (
+        <ParticipatingVolunteerUnassignConfirmModal
+          open={unassignConfirmOpen}
+          onCancel={() => setUnassignConfirmOpen(false)}
+          volunteerNames={[volunteer.volunteerName]}
+          targetNames={unassignSchoolNames}
+          onConfirm={handleUnassignConfirm}
+        />
+      )}
       <ParticipatingVolunteerUnassignCompleteModal
         open={unassignCompleteModal != null}
         onClose={() => setUnassignCompleteModal(null)}
@@ -766,6 +854,16 @@ export function ParticipatingVolunteerAssignmentSection({
         countLabel={selectAssignTargets[0]?.assignedVolunteerCountLabel ?? null}
       />
 
+      <InstitutionAssignCompleteModal
+        open={assignCompleteModal != null}
+        onClose={() => setAssignCompleteModal(null)}
+        variant="result"
+        institutionName={assignCompleteModal?.institutionName ?? ''}
+        instructorName={volunteer.volunteerName}
+        extraTargetCount={assignCompleteModal?.extraTargetCount ?? 0}
+        countLine={assignCompleteModal?.countLine ?? null}
+      />
+
       <GeneralParticipantAddAssignModal
         open={addAssignModalOpen}
         onCancel={closeAddAssignModal}
@@ -781,7 +879,7 @@ export function ParticipatingVolunteerAssignmentSection({
           onChange: setAddAssignSchoolId,
         }}
         sessions={{
-          label: '봉사 배정일 선택',
+          label: isInstitutionSurface ? '교육 배정일 선택' : '봉사 배정일 선택',
           options: addAssignSessionOptions,
           value: addAssignSelectedSessionIds,
           onChange: handleAddAssignSessionIdsChange,

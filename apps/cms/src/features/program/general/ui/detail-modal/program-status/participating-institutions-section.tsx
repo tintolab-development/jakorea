@@ -76,6 +76,8 @@ import {
 import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import './participating-institutions-section.css'
 
+const GENERAL_INSTITUTION_NAME_FILTER_PLACEHOLDER = '기관명을 입력해 주세요'
+
 /** 교재 배송 현황 드롭다운 태그 — 기관용 라벨 (서버 값이 '해당 없음'이어도 드롭다운에서 변경 가능하도록 태그로 표시) */
 function getInstitutionTextbookStatusTag(status: TextbookStatusKey): StatusTagSpec {
   return status === 'not_applicable'
@@ -295,13 +297,18 @@ export function ParticipatingInstitutionsSection({
     : true
   const showTextbookStatusColumn = isCompanySchool || showTextbookFeatures
 
-  const filterFields = useMemo(
-    () =>
-      showTextbookStatusColumn
-        ? participatingInstitutionsFilterFields
-        : participatingInstitutionsFilterFields.filter(field => field.key !== 'textbookStatus'),
-    [showTextbookStatusColumn]
-  )
+  const filterFields = useMemo(() => {
+    const base = showTextbookStatusColumn
+      ? participatingInstitutionsFilterFields
+      : participatingInstitutionsFilterFields.filter(field => field.key !== 'textbookStatus')
+    // 일반 기관형 시안 — 참여 기관명 placeholder 「기관명을 입력해 주세요」 (1사1교 기존 문구 유지)
+    if (isCompanySchool) return base
+    return base.map(field =>
+      field.key === 'schoolName'
+        ? { ...field, placeholder: GENERAL_INSTITUTION_NAME_FILTER_PLACEHOLDER }
+        : field
+    )
+  }, [isCompanySchool, showTextbookStatusColumn])
 
   const showAssignedEducationSchedule = !isCompanySchool && !isTrainedTeachersSurface
   const educationScheduleColumnTitle = showAssignedEducationSchedule
@@ -565,7 +572,7 @@ export function ParticipatingInstitutionsSection({
         onFilterChange={handleFilterChange}
         onSearch={handleFilterSearch}
         title="교육 참여 기관 목록"
-        description={`${filteredSchools.length}건`}
+        description={isCompanySchool ? `${filteredSchools.length}건` : `총 ${filteredSchools.length}건`}
         actions={
           <div className="program-application-list-toolbar">
             {viewMode === 'list' ? (
@@ -573,14 +580,14 @@ export function ParticipatingInstitutionsSection({
                 variant="secondary"
                 icon={<ButtonCalendarIcon />}
                 onClick={handleCalendarView} >
-                캘린더 뷰로 보기
+                {isCompanySchool ? '캘린더 뷰로 보기' : '캘린더 뷰 보기'}
               </FilterTableToolbarButton>
             ) : (
               <FilterTableToolbarButton
                 variant="secondary"
                 icon={<ButtonListIcon />}
                 onClick={handleListView} >
-                리스트 뷰로 보기
+                {isCompanySchool ? '리스트 뷰로 보기' : '리스트 뷰 보기'}
               </FilterTableToolbarButton>
             )}
           </div>
@@ -641,6 +648,7 @@ export function ParticipatingInstitutionsSection({
               calendarGranularity={progressCalendarGranularity}
               onCalendarGranularityChange={setProgressCalendarGranularity}
               usePreferredScheduleFormat={isCompanySchool}
+              dayListVariant={isCompanySchool ? 'default' : 'general-institution'}
             />
           </div>
         )}

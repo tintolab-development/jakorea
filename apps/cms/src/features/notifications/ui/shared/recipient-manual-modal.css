@@ -7,14 +7,24 @@
   box-sizing: border-box;
   width: 600px;
   max-height: 880px;
-  padding: 26px 30px 34px 30px;
+  padding: 24px 30px 34px 30px;
   flex-direction: column;
   align-items: center;
   gap: 30px;
   flex-shrink: 0;
-  border-radius: 12px;
+  border-radius: 16px;
   background: #fff;
   box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35);
+}
+
+/* 직접 입력 변수 열(280)이 붙으면 600폭에 수신자 정보·관리 열이 들어가지 않아 w800 팝업으로 넓힌다 */
+.send-recipient-manual-modal--with-variables.content-modal.teal-header-modal.ant-modal {
+  width: 800px !important;
+}
+
+.send-recipient-manual-modal--with-variables.content-modal.teal-header-modal.ant-modal
+  .ant-modal-content {
+  width: 800px;
 }
 
 .send-recipient-manual-modal.content-modal.teal-header-modal.ant-modal .ant-modal-body {

@@ -111,3 +111,25 @@
   color: var(--color-mint-01, #01a1af);
   opacity: 1;
 }
+
+/* 일반 프로그램 등록 — 「템플릿 선택」 제목 + 안내문 한 행 (시안) */
+.step-template-banner__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  min-width: 0;
+  /* 배너 column gap(10px)과 합쳐 제목 행 ↔ 템플릿 표 24px */
+  margin-bottom: 14px;
+}
+
+.step-template-banner__title {
+  margin: 0;
+  flex-shrink: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+}

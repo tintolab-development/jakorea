@@ -149,6 +149,11 @@
   padding: 12px 16px !important;
 }
 
+/* 일반 프로그램(기관형) 기관 신청 목록 — 시안 1141:234529 선택 열 60px (cms-data-table 룰: 화면 시안이 60이면 변수로 지정) */
+.applicant-details__table-wrap--general-organization-institutions {
+  --table-selection-column-width: 60px;
+}
+
 /* 체크박스 열: 너비 80px(좌 패딩 8px 포함), 행 높이는 시안 49px 유지 */
 .applicant-details__table col.ant-table-selection-col {
   width: var(--table-selection-column-width, 80px) !important;

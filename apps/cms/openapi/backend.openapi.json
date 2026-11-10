@@ -21229,6 +21229,15 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Ujat1365RegistrationFormRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -85212,30 +85221,40 @@
       },
       "Ujat1365SemesterRegistrationFormRequest": {
         "type": "object",
+        "required": [
+          "semesterType"
+        ],
         "properties": {
           "semesterType": {
             "type": "string",
+            "description": "반기",
             "enum": [
               "FIRST_HALF",
               "SECOND_HALF"
             ],
-            "example": "SECOND_HALF",
-            "description": "반기"
+            "example": "SECOND_HALF"
           },
           "mode": {
-            "type": "string",
-            "nullable": true,
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "PREVIEW 또는 DOWNLOAD. 생략하면 PREVIEW.",
             "enum": [
               "PREVIEW",
               "DOWNLOAD"
             ],
-            "default": "PREVIEW",
-            "description": "PREVIEW 또는 DOWNLOAD. 생략하면 PREVIEW."
+            "example": "PREVIEW"
+          },
+          "fileName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "mode=DOWNLOAD일 때 브라우저가 저장하는 파일명. 파일 다운로드 이력 파일명으로 기록합니다. 생략하면 서버 규칙 이름을 기록합니다.",
+            "example": "[JA Korea] CMS 어드민_1365 봉사시간 등록 양식_261110.xlsx"
           }
-        },
-        "required": [
-          "semesterType"
-        ]
+        }
       },
       "Ujat1365SemesterRegistrationFormCell": {
         "type": "object",
@@ -96532,6 +96551,15 @@
             "type": "boolean",
             "description": "호환 필드. 발급마다 새 번호를 쓰므로 정상 응답은 false",
             "example": false
+          },
+          "issuedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "certificate_issue 발급 일시. 기존 발급 건을 다시 받으면 최초 발급 일시입니다. PDF 발급일과 다운로드 파일명 날짜(YYMMDD, Asia/Seoul)에 사용합니다.",
+            "example": "2026-11-10T01:00:00Z"
           }
         }
       },
@@ -124653,6 +124681,20 @@
             "writeOnly": true,
             "minLength": 8,
             "description": "파일 암호. 8자 이상, 영문+숫자+특수문자, 공백 불가. 쿼리/로그/분석에 넣지 않는다."
+          }
+        }
+      },
+      "Ujat1365RegistrationFormRequest": {
+        "type": "object",
+        "description": "UJAT 1365 등록 양식 요청 본문(선택)",
+        "properties": {
+          "fileName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "mode=DOWNLOAD일 때 브라우저가 저장하는 파일명. 파일 다운로드 이력 파일명으로 기록합니다. 생략하면 서버 규칙 이름을 기록합니다.",
+            "example": "[JA Korea] CMS 어드민_1365 봉사시간 등록 양식_261110.xlsx"
           }
         }
       }

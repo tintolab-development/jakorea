@@ -154,3 +154,23 @@ describe('resolveEducationColumns trainedTeachers preset', () => {
     }
   })
 })
+
+describe('resolveEducationColumns general preset', () => {
+  const record = { startDate: '2026-12-08', endDate: '2026-12-30' } as unknown as Program
+
+  it('예정 탭 사업 운영 기간을 요일과 함께 표시한다 (일반 프로그램 시안)', () => {
+    const columns = resolveEducationColumns({
+      isOverviewListPage: true,
+      listView: 'SCHEDULED',
+      columnPreset: 'general',
+    })
+    const column = columns.find(item => item.key === 'operationPeriod')
+    expect(column?.render?.(undefined, record, 0)).toBe('2026.12.08(화) ~ 2026.12.30(수)')
+  })
+
+  it('default preset 예정 탭 기간은 기존처럼 요일 없이 표시한다', () => {
+    const columns = resolveEducationColumns({ isOverviewListPage: true, listView: 'SCHEDULED' })
+    const column = columns.find(item => item.key === 'operationPeriod')
+    expect(column?.render?.(undefined, record, 0)).toBe('2026.12.08 ~ 2026.12.30')
+  })
+})

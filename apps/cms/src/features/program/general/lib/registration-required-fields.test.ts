@@ -4,6 +4,7 @@ import {
   describeIncompleteGeneralProgramRegistrationRequiredFields,
   hasCurriculumMultiDateScheduleCountMismatch,
   hasIncompleteGeneralProgramRegistrationRequiredFields,
+  listIncompleteGeneralProgramRegistrationRequiredFields,
   type GeneralProgramRegistrationRequiredFieldContext,
 } from './registration-required-fields'
 
@@ -69,6 +70,28 @@ describe('hasIncompleteGeneralProgramRegistrationRequiredFields', () => {
   })
 
   it('공통 정보 필수값을 채우면 완료이다', () => {
+    expect(hasIncompleteGeneralProgramRegistrationRequiredFields(filledOverlay(), ctx())).toBe(false)
+  })
+
+  it('등록 위저드는 교육 장소·Partner Involvement 미선택이면 미완료이다 (시안: 기본 미선택)', () => {
+    const wizardCtx = ctx({ requireBasicInfoRadioSelection: true })
+    expect(
+      listIncompleteGeneralProgramRegistrationRequiredFields(filledOverlay(), wizardCtx)
+    ).toEqual(
+      expect.arrayContaining(['basicInfo.educationVenueKind', 'basicInfo.partnerInvolvement'])
+    )
+    expect(
+      hasIncompleteGeneralProgramRegistrationRequiredFields(
+        filledOverlay({
+          'generalRegistration.basicInfo.educationVenueKind': 'outside',
+          'generalRegistration.basicInfo.partnerInvolvement': 'no',
+        }),
+        wizardCtx
+      )
+    ).toBe(false)
+  })
+
+  it('상세 수정(플래그 없음)은 교육 장소·Partner Involvement 키가 없어도 기존처럼 완료이다', () => {
     expect(hasIncompleteGeneralProgramRegistrationRequiredFields(filledOverlay(), ctx())).toBe(false)
   })
 

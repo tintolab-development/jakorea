@@ -12,6 +12,11 @@ export type SurveyResultsDownloadModalProps = {
   open: boolean
   downloading?: boolean
   copy?: SurveyResultsDownloadModalCopy
+  /**
+   * `general` — 일반 프로그램 시안(4197:78883): 「파일 형식 *」, 기본 미선택(선택 전 다운로드 비활성), 다운로드 버튼 아이콘 없음.
+   * 생략(`default`) 시 기존 동작(엑셀 기본 선택·아이콘) — UJAT.
+   */
+  variant?: 'default' | 'general'
   onCancel: () => void
   onDownload: (format: SurveyResultsDownloadFormat) => void | Promise<void>
 }
@@ -20,15 +25,18 @@ export function SurveyResultsDownloadModal({
   open,
   downloading = false,
   copy = GENERAL_SURVEY_POLL_DOWNLOAD_MODAL_COPY,
+  variant = 'default',
   onCancel,
   onDownload,
 }: SurveyResultsDownloadModalProps) {
-  const [format, setFormat] = useState<SurveyResultsDownloadFormat>('excel')
+  const generalVariant = variant === 'general'
+  const initialFormat: SurveyResultsDownloadFormat | null = generalVariant ? null : 'excel'
+  const [format, setFormat] = useState<SurveyResultsDownloadFormat | null>(initialFormat)
 
   useEffect(() => {
     if (!open) return
-    setFormat('excel')
-  }, [open])
+    setFormat(initialFormat)
+  }, [initialFormat, open])
 
   const handleCancel = useCallback(() => {
     if (downloading) return
@@ -36,7 +44,7 @@ export function SurveyResultsDownloadModal({
   }, [downloading, onCancel])
 
   const handleDownload = useCallback(() => {
-    if (downloading) return
+    if (downloading || format == null) return
     void onDownload(format)
   }, [downloading, format, onDownload])
 
@@ -62,9 +70,10 @@ export function SurveyResultsDownloadModal({
             variant="primary"
             size="medium"
             type="button"
-            icon={<ButtonDownloadIcon />}
+            {...(generalVariant ? {} : { icon: <ButtonDownloadIcon /> })}
             adminAction="download"
             loading={downloading}
+            disabled={format == null}
             onClick={handleDownload} >
             {copy.downloadButton}
           </CmsButton>
@@ -73,9 +82,12 @@ export function SurveyResultsDownloadModal({
     >
       <div className="survey-results-download-modal__form">
         <div className="survey-results-download-modal__field">
-          <span className="survey-results-download-modal__label">파일 형식</span>
+          {generalVariant ? null : (
+            <span className="survey-results-download-modal__label">파일 형식</span>
+          )}
           <CmsRadioGroup
-            value={format}
+            {...(generalVariant ? { label: '파일 형식', required: true, size: 'medium' as const } : {})}
+            value={format ?? undefined}
             onChange={event => setFormat(event.target.value as SurveyResultsDownloadFormat)}
           >
             <CmsRadio value="excel">{copy.excelLabel}</CmsRadio>

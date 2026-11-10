@@ -1,24 +1,31 @@
 @import './body-tables.css';
 
+/* 시안: 입력(flex) + 우측 글자 수(80px, 16px) — 입력 밖 배치 */
 .mail-template-compose__subject {
-  position: relative;
+  display: flex !important;
+  align-items: center;
+  gap: 16px;
   width: 100%;
 }
 
-.mail-template-compose__subject .cms-input__control {
-  padding-right: 72px;
+.mail-template-compose__subject > :first-child {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .mail-template-compose__subject-count {
-  position: absolute;
-  top: 50%;
-  right: 16px;
-  transform: translateY(-50%);
+  display: flex;
+  flex: 0 0 80px;
+  align-items: center;
+  justify-content: flex-end;
+  width: 80px;
   color: rgba(61, 61, 61, 0.5);
   font-family: Pretendard, var(--font-family-primary), sans-serif;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   line-height: 150%;
+  text-align: right;
+  white-space: nowrap;
   pointer-events: none;
 }
 
@@ -123,4 +130,9 @@
 
 .mail-template-compose__file-field .file-select-field__actions {
   flex-wrap: wrap;
+}
+
+/* 시안: 제목 행 높이 53 (값 셀 8px 12px + 입력 36) */
+.detail-info-form__field-content--edit:has(> .mail-template-compose__subject) {
+  padding: 8px 12px;
 }

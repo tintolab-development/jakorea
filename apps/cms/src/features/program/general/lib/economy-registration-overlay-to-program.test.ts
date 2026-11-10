@@ -29,7 +29,7 @@ function baseProgram(): Program {
         { grade: '3급 강사비', pricing: '1시간 당 | 기본 : 300,000원 | 장거리 : 300,000원' },
       ],
       paymentItems: '교통비(일사일교), 숙박비(일사일교)',
-      deductionItems: '일용근로자 원천징수세액',
+      deductionItems: '원천징수세액',
     },
   } as Program
 }
@@ -68,9 +68,7 @@ describe('applyEconomyRegistrationOverlayToProgram', () => {
     )
     expect(result.generalCommonInfo?.curriculumSessions?.[1].title).toBe('실제 입력한 2차시 제목')
 
-    expect(result.generalCommonInfo?.educationScheduleLines).toEqual([
-      '2026.05.01 ~ 2026.11.30',
-    ])
+    expect(result.generalCommonInfo?.educationScheduleLines).toEqual(['2026.05.01 ~ 2026.11.30'])
     expect(result.generalCommonInfo?.educationScheduleMode).toBe('period')
 
     expect(result.generalCommonInfo?.wageGradeRows?.[0].pricing).toContain('111,111원')
@@ -159,7 +157,20 @@ describe('applyEconomyRegistrationOverlayToProgram', () => {
       'economyRegistration.kpi.dispatchedClass': 14,
     }
     const result = applyEconomyRegistrationOverlayToProgram(
-      { ...baseProgram(), rounds: [{ id: 'r1', programId: 'p', roundNumber: 1, startDate: '', endDate: '', capacity: 30, status: 'active' }] },
+      {
+        ...baseProgram(),
+        rounds: [
+          {
+            id: 'r1',
+            programId: 'p',
+            roundNumber: 1,
+            startDate: '',
+            endDate: '',
+            capacity: 30,
+            status: 'active',
+          },
+        ],
+      },
       overlay
     )
     expect(result.title).toBe('디지털 리터러시 교실')

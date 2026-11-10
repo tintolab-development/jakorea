@@ -13,6 +13,8 @@ import { ContentModal } from '@/shared/ui/content-modal'
 import '@jakorea/admin-ui/modal/confirm.css'
 
 const MODAL_WIDTH = 600
+/** 시안 「발송 이력 조회」 버튼 140폭 (h40 기본 min-width 120) */
+const VIEW_HISTORY_BUTTON_STYLE = { minWidth: 140 } as const
 
 type SendRequestCompletedModalProps = {
   open: boolean
@@ -56,6 +58,7 @@ export function SendRequestCompletedModal({
             variant="primary"
             size="medium"
             type="button"
+            style={VIEW_HISTORY_BUTTON_STYLE}
             onClick={handleViewHistory} >
             발송 이력 조회
           </CmsButton>

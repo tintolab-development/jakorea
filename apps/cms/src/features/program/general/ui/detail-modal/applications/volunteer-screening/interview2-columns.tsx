@@ -93,7 +93,7 @@ export function useGeneralVolunteerInterview2Columns({
         render: (_value, record) => record.assignedInterviewTime ?? '-',
       },
       {
-        title: '점수 종합',
+        title: subjectKind === 'volunteer' ? '점수 총합' : '점수 종합',
         key: 'totalScore',
         width: totalScoreWidth,
         align: 'center',
@@ -122,6 +122,6 @@ export function useGeneralVolunteerInterview2Columns({
         },
       },
     ],
-    [applicantNameTitle, applicantNameWidth, totalScoreWidth]
+    [applicantNameTitle, applicantNameWidth, subjectKind, totalScoreWidth]
   )
 }

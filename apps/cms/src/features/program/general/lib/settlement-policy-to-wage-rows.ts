@@ -20,14 +20,13 @@ import {
   toInstructorFeeGradeCode,
 } from '@/shared/constants/instructor-fee-grade'
 
+/** settlementPolicy.paymentItems[].itemType(저장 canonical 6종) → 화면 라벨 */
 const PAYMENT_ITEM_LABEL: Record<string, string> = {
   TRANSPORTATION: '교통비',
-  TRANSPORT_INSTRUCTOR: '교통비',
   STUDENT_TRANSPORTATION: '학생 교통비',
-  TRANSPORT_STUDENT: '학생 교통비',
   LONG_DISTANCE_TRANSPORTATION: '장거리 교통비',
   LODGING: '숙박비',
-  ACTIVITY: '참여자 활동비',
+  ACTIVITY: '활동비',
   MEAL: '식비',
 }
 
@@ -101,23 +100,15 @@ export function mapSettlementWagePoliciesToGradeRows(
 }
 
 export function mapSettlementPaymentItemsToLabel(
-  paymentItems: readonly unknown[] | undefined
+  paymentItems: readonly ProgramSettlementPaymentItemResponse[] | undefined
 ): string | undefined {
   if (!paymentItems?.length) return undefined
   const labels = paymentItems
     .map(item => {
-      if (typeof item === 'string') {
-        const token = item.trim()
-        if (!token) return undefined
-        return PAYMENT_ITEM_LABEL[token.toUpperCase().replace(/[\s-]+/g, '_')] ?? token
-      }
-      if (!item || typeof item !== 'object') return undefined
-      const record = item as ProgramSettlementPaymentItemResponse
-      if (record.useYn === false) return undefined
-      if (typeof record.itemType !== 'string') return undefined
-      const type = record.itemType.trim().toUpperCase()
+      if (item.useYn === false || typeof item.itemType !== 'string') return undefined
+      const type = item.itemType.trim().toUpperCase()
       if (!type) return undefined
-      return PAYMENT_ITEM_LABEL[type] ?? record.itemType.trim()
+      return PAYMENT_ITEM_LABEL[type] ?? item.itemType.trim()
     })
     .filter((label): label is string => Boolean(label))
   if (labels.length === 0) return undefined
@@ -127,7 +118,11 @@ export function mapSettlementPaymentItemsToLabel(
 function withStringPaymentItems(
   commonInfo: Program['generalCommonInfo'] | undefined
 ): Program['generalCommonInfo'] | undefined {
-  if (!commonInfo || commonInfo.paymentItems == null || typeof commonInfo.paymentItems === 'string') {
+  if (
+    !commonInfo ||
+    commonInfo.paymentItems == null ||
+    typeof commonInfo.paymentItems === 'string'
+  ) {
     return commonInfo
   }
   const paymentItems = coerceProgramPaymentItemsText(commonInfo.paymentItems).trim()

@@ -4,6 +4,7 @@ import {
   normalizePortalEducationJournalList,
   type PortalEducationJournal,
 } from './education-journals-normalize'
+import { toRuleDownloadFileName } from '@/shared/lib/download-file-name'
 
 export { normalizePortalEducationJournalList }
 export type { PortalEducationJournal }
@@ -77,7 +78,7 @@ function saveBlobFile(fileName: string, blob: Blob): void {
   const objectUrl = URL.createObjectURL(blob)
   const anchor = document.createElement('a')
   anchor.href = objectUrl
-  anchor.download = fileName
+  anchor.download = toRuleDownloadFileName(fileName)
   document.body.appendChild(anchor)
   anchor.click()
   anchor.remove()

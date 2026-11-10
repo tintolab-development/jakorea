@@ -691,19 +691,18 @@ export function AlimtalkTemplateList({
       <CmsModal
         open={deleteDialog === 'blocked'}
         onClose={() => setDeleteDialog(null)}
-        title="카테고리 삭제 불가"
-        content="카테고리 하위에 카테고리 또는 템플릿이 있으면 삭제할 수 없습니다."
-        buttons={[
-          { label: '닫기', onClick: () => setDeleteDialog(null), variant: 'secondary' },
-          { label: '확인', onClick: () => setDeleteDialog(null), variant: 'primary' },
-        ]}
+        title="카테고리 삭제 불가 안내"
+        content="하위 카테고리 또는 템플릿이 있는 카테고리는 삭제할 수 없습니다."
+        buttons={[{ label: '확인', onClick: () => setDeleteDialog(null), variant: 'secondary' }]}
       />
       <CmsModal
         open={deleteDialog === 'category'}
         onClose={() => setDeleteDialog(null)}
         title="카테고리 삭제 안내"
         content={
-          '해당 카테고리를 삭제하시겠습니까?\n삭제시 NHN 서비스에 함께 반영되며, 삭제된 정보는 되돌릴 수 없습니다.'
+          selection?.kind === 'category'
+            ? `**[${categoryNameById(categories, selection.id)}]** 카테고리를 삭제하시겠습니까?\n삭제시 NHN 서비스에 함께 반영되며, 삭제된 정보는 되돌릴 수 없습니다.`
+            : ''
         }
         buttons={[
           { label: '취소', onClick: () => setDeleteDialog(null), variant: 'secondary' },
@@ -725,10 +724,10 @@ export function AlimtalkTemplateList({
       <CmsModal
         open={pendingMove?.kind === 'category'}
         onClose={() => setPendingMove(null)}
-        title="카테고리 이동"
+        title="카테고리 이동 안내"
         content={
           pendingMove?.kind === 'category'
-            ? `[${categoryNameById(categories, pendingMove.categoryId)}] 카테고리의 위치를 이동하시겠습니까?\n카테고리 이동 시 하위의 카테고리/템플릿도 같이 이동되며, NHN 서비스에서도 함께 반영됩니다.`
+            ? `**[${categoryNameById(categories, pendingMove.categoryId)}]** 카테고리의 위치를 이동하시겠습니까?\n이동 시 하위의 카테고리/템플릿도 같이 이동되며, NHN 서비스에 함께 반영됩니다.`
             : ''
         }
         buttons={[
@@ -739,10 +738,10 @@ export function AlimtalkTemplateList({
       <CmsModal
         open={pendingMove?.kind === 'template'}
         onClose={() => setPendingMove(null)}
-        title="템플릿 이동"
+        title="템플릿 이동 안내"
         content={
           pendingMove?.kind === 'template'
-            ? `해당 템플릿을 [${categoryNameById(categories, pendingMove.targetCategoryId)}] 카테고리로 이동하시겠습니까?\n템플릿 이동 시 NHN 서비스에서도 함께 반영됩니다.`
+            ? `해당 템플릿의 위치를 **[${categoryNameById(categories, pendingMove.targetCategoryId)}]** 카테고리로 이동하시겠습니까?\n이동 시 NHN 서비스에 함께 반영됩니다.`
             : ''
         }
         buttons={[

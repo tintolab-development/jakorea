@@ -1,5 +1,5 @@
 /**
- * 임시저장 이력 안내 모달 — 이어서 작성 / 신규 등록 선택
+ * 임시 저장 이력 안내 모달 — 이어서 작성 / 신규 등록 선택
  */
 
 import { useEffect, useState } from 'react'
@@ -34,8 +34,8 @@ export function RegistrationDraftNoticeModal({
   return (
     <ContentModal
       open={open}
-      title="임시저장 이력 안내"
-      description="임시저장된 등록 건이 있습니다. 이어서 작성하시겠습니까?"
+      title="임시 저장 이력 안내"
+      description="임시 저장된 작성본이 있습니다. 이어서 작성하시겠습니까?"
       width={600}
       onCancel={onCancel}
       className="registration-draft-notice-modal"

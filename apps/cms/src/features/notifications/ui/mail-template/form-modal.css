@@ -20,6 +20,13 @@
   gap: 12px;
 }
 
+.mail-template-form-modal__section-title-group {
+  display: flex;
+  min-width: 0;
+  align-items: flex-end;
+  gap: 8px;
+}
+
 .mail-template-form-modal__section-title {
   margin: 0;
   color: var(--main-BK, #3d3d3d);
@@ -32,16 +39,13 @@
 
 .mail-template-form-modal__section-hint {
   display: block;
-  flex: 0 0 100%;
-  width: 100%;
-  max-width: 100%;
+  min-width: 0;
   margin: 0;
-  color: var(--main-BK, #3d3d3d);
+  color: rgba(61, 61, 61, 0.5);
   font-family: Pretendard, var(--font-family-primary), sans-serif;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   line-height: 150%;
-  opacity: 0.6;
 }
 
 .mail-template-form-modal a.mail-template-form-modal__section-hint-link {
@@ -66,4 +70,14 @@
   width: 100%;
   min-width: 0;
   align-items: stretch;
+}
+
+/* 시안: 템플릿 작성 에디터 전체 368px (툴바 49 + 테두리 2 + 본문 317) */
+.mail-template-form-modal .mail-template-compose__editor-host .cms-rich-text-editor {
+  --rt-body-min-height: 317px;
+}
+
+/* 시안 GNB/Fullpage: 템플릿명 미입력 시 흐린 안내 문구 */
+.mail-template-form-modal .notification-fullpage-modal__title-text.mail-template-form-modal__title-placeholder {
+  color: rgba(61, 61, 61, 0.5);
 }

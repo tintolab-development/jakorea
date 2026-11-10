@@ -69,3 +69,12 @@
   min-width: 0;
   margin-bottom: var(--admin-list-toolbar-to-table-gap);
 }
+
+/*
+ * 표 안 버튼(Button / h32 — 수정·내역 보기 등) 100×32 (시안 Table Cell type=button).
+ * 공통 패키지(@jakorea/admin-ui) 기본 min-width 80은 CMS와 공유하므로 Admin 표 안에서만 덮는다.
+ * 라벨이 길면 폭이 늘어난다(min-width).
+ */
+table .cms-button.ant-btn.cms-button--h32 {
+  min-width: 100px;
+}

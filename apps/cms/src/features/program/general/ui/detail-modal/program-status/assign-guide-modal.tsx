@@ -10,10 +10,14 @@ import type { InstructorRoleKey } from '@/features/program/general/model/school-
 import type { InstructorAssignSessionOption } from '@/features/program/general/lib/instructor-assign-session-options'
 import {
   INSTITUTION_SELECT_ASSIGN_DEFAULT_NOTIFY_PAYLOAD,
+  formatAssignedInstructorCountLine,
   type AssignmentModalStep,
 } from '@/features/program/general/lib/institution-select-assign'
 import { InstitutionSelectAssignConfirmModal } from './institution-select-assign-confirm-modal'
-import { InstitutionAssignCompleteModal } from './institution-assign-complete-modal'
+import {
+  InstitutionAssignCompleteModal,
+  type InstitutionAssignCompleteVariant,
+} from './institution-assign-complete-modal'
 import { GeneralParticipantAddAssignModal } from './general-participant-add-assign-modal'
 import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
@@ -39,6 +43,8 @@ export interface AssignGuideModalProps {
   onConfirm: (payload: PermissionModalPayload) => boolean | Promise<boolean>
   onComplete: () => void
   confirmLoading?: boolean
+  /** 배정 완료 모달 문구 — 생략 시 기존(`default`). 일반 기관형은 `result`(Figma 04-2) */
+  completeVariant?: InstitutionAssignCompleteVariant
 }
 
 export function AssignGuideModal({
@@ -58,15 +64,19 @@ export function AssignGuideModal({
   onConfirm,
   onComplete,
   confirmLoading = false,
+  completeVariant = 'default',
 }: AssignGuideModalProps) {
   const { showAlert } = useCmsAlert()
   const [step, setStep] = useState<AssignmentModalStep>('select')
   const [confirmedInstitutionName, setConfirmedInstitutionName] = useState('')
+  /** 배정 직후 인원 줄 — 확인 시점 인원 + 1 (배정 완료 `result` 문구용) */
+  const [completeCountLine, setCompleteCountLine] = useState<string | null>(null)
 
   useEffect(() => {
     if (!open) {
       setStep('select')
       setConfirmedInstitutionName('')
+      setCompleteCountLine(null)
     }
   }, [open])
 
@@ -99,6 +109,14 @@ export function AssignGuideModal({
     setStep('submitting')
     try {
       const ok = await onConfirm(INSTITUTION_SELECT_ASSIGN_DEFAULT_NOTIFY_PAYLOAD)
+      if (ok) {
+        setCompleteCountLine(
+          formatAssignedInstructorCountLine(
+            currentCount != null ? currentCount + 1 : null,
+            requiredCount
+          )
+        )
+      }
       setStep(ok ? 'complete' : 'confirm')
     } catch {
       setStep('confirm')
@@ -148,6 +166,8 @@ export function AssignGuideModal({
         onClose={onComplete}
         institutionName={selectedInstitutionName}
         instructorName={instructorName}
+        variant={completeVariant}
+        countLine={completeCountLine}
       />
     </>
   )

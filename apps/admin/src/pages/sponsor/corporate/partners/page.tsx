@@ -397,7 +397,8 @@ export function CorporatePartnersPage() {
       {
         title: '관리',
         key: 'actions',
-        width: 120,
+        // 표 안 버튼 100×32 + 셀 패딩 12×2 (시안 관리 칸 140)
+        width: 140,
         align: 'center',
         render: (_value, record) => (
           <CmsButton

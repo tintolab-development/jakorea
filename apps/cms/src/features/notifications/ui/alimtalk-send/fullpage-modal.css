@@ -146,6 +146,11 @@
   font-weight: 400;
 }
 
+/* 3. 템플릿 정보 — 템플릿 미선택 시 값 칸 안내 (시안 Content/disabled) */
+.alimtalk-send-fullpage__empty-hint {
+  color: var(--Content-disabled, rgba(61, 61, 61, 0.5));
+}
+
 .alimtalk-send-fullpage__empty--fill {
   height: auto;
   min-height: 0;

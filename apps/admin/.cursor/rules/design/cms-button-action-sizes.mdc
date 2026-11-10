@@ -19,10 +19,17 @@ alwaysApply: false
 | 모달 푸터 (폭 min 140 · 높이 40, SSOT 참고) | `packages/admin-ui/src/modal/content-modal.css` → `.content-modal__footer-actions` · `.teal-header-modal__footer` (`--h44` 높이 40) |
 | 목록 툴바 강제 h40 (140×40, 엑셀 180×40) | `shared/ui/table-header-label.css` → `.table-header-actions--wrapper` |
 | FileSelect medium | `shared/ui/file-select-field.tsx` |
+| **표 안 버튼 h32 → 100×32** (Admin만, 공통 패키지 min 80은 CMS 공유라 유지) | `shared/ui/list-table-layout.css` → `table .cms-button--h32 { min-width: 100px }` |
+
+## 표 안 버튼 (Admin)
+
+- 표(`table`) 안 `size="small"`(h32) 버튼은 **100×32** — 시안 Table Cell type=button(후원사 목록 36:47073 등).
+- 관리 열 폭은 **버튼 100 + 셀 패딩 12×2 = 124 이상** → 단일 버튼 관리 열은 **140**(시안). 120 이하 금지.
+- 버튼 두 개를 나란히 두는 칸은 100×2 + 간격 8 + 패딩 24 (예: 임팩트 스토리 카테고리 관리 232).
 
 ## 관련
 
 - [file-select-detail-form](../../../../.cursor/rules/cms-admin-ui/file-select-detail-form.mdc)
 - [list-table-spacing](./list-table-spacing.mdc)
 
-**Last updated:** 2026-08-06
+**Last updated:** 2026-11-10

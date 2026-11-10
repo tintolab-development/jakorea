@@ -14,6 +14,8 @@ import {
   DEFAULT_REGISTRATION_PARTICIPATION,
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-form-options'
 import {
+  isEducationVenueKindSelected,
+  isPartnerInvolvementSelected,
   listIncompleteGeneralProgramRegistrationRequiredFields,
   type GeneralProgramRegistrationRequiredFieldContext,
 } from '@/features/program/general/lib/registration-required-fields'
@@ -185,12 +187,22 @@ export function listIncompleteRegistrationWizardRequiredFields(
   }
   pushReason(
     reasons,
+    !isEducationVenueKindSelected(values.educationVenueKind),
+    'basicInfo.educationVenueKind'
+  )
+  pushReason(
+    reasons,
     values.educationVenueKind === 'other' && isEmptyText(values.educationVenueDetail),
     'basicInfo.educationVenueDetail'
   )
   pushReason(reasons, isEmptyText(values.educationCourse), 'basicInfo.educationCourse')
   pushReason(reasons, isEmptyText(values.ipOwned), 'basicInfo.ipOwned')
   pushReason(reasons, isEmptyText(values.courseDeliveredBy), 'basicInfo.courseDeliveredBy')
+  pushReason(
+    reasons,
+    !isPartnerInvolvementSelected(values.partnerInvolvement),
+    'basicInfo.partnerInvolvement'
+  )
 
   if (!resolved.omitKpiAndWage) {
     pushReason(reasons, isEmptyNumber(values.kpiParticipantCount), 'kpi.participantCount')
@@ -473,7 +485,8 @@ export function compareWizardRequiredFieldsWithOverlayInspector(
     rhf: listIncompleteRegistrationWizardRequiredFields(values, ctx),
     overlay: listIncompleteGeneralProgramRegistrationRequiredFields(
       projectWizardUiValuesToOverlayForTest(values),
-      ctx
+      // 위저드와 같은 규칙으로 비교 — 교육 장소·Partner Involvement 필수 선택 포함
+      { ...ctx, requireBasicInfoRadioSelection: true }
     ),
   }
 }

@@ -173,24 +173,9 @@
   text-align: center;
 }
 
-.ja-history-inline-field--readonly .cms-input__control,
-.ja-history-inline-field--readonly .cms-textarea__control {
-  border-color: transparent !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  cursor: default;
-}
-
-.ja-history-inline-field--readonly .cms-input__control:hover,
-.ja-history-inline-field--readonly .cms-textarea__control:hover {
-  border-color: transparent !important;
-}
-
-.ja-history-inline-field--readonly .ant-input,
-.ja-history-inline-field--readonly textarea.ant-input {
-  cursor: default;
-  color: var(--default-BK, #3d3d3d) !important;
-  font-weight: 500;
+/* 조회(inlineReadOnly="slot") — 보더 슬롯 투명은 공통, 줄바꿈 보존만 화면 고유 */
+.ja-history-inline-field.cms-inline-readonly .ant-input,
+.ja-history-inline-field.cms-inline-readonly textarea.ant-input {
   white-space: pre-line;
 }
 
@@ -226,39 +211,27 @@
 }
 
 /*
- * JA의 시작 · 소개 텍스트 표 — 조회는 내용 길이에 따라 열이 잡힌다(자동 레이아웃).
- * 수정 진입 시 그 순간의 첫 열 비율(--ja-history-origin-intro-title-col)을 잠가 고정 레이아웃으로 쓰므로
- * 입력 칸이 들어와도 열 폭이 조회 때와 같다 (QA 2026-11-10: 수정 열 너비 = 조회 때 너비).
+ * JA의 시작 · 소개 텍스트 표 — 소개 타이틀 : 소개 텍스트 = 1:1 고정 (조회·수정 동일, QA 2026-11-10)
+ * 고정 레이아웃이라 내용 길이·입력 칸 유무와 상관없이 열 폭이 움직이지 않는다.
  */
 .ja-history-origin-intro-table-wrap {
   width: 100%;
   min-width: 0;
 }
 
-.ja-history-origin-intro-table--locked .ant-table table {
+.ja-history-origin-intro-table .ant-table table {
   table-layout: fixed !important;
 }
 
-.ja-history-origin-intro-table--locked
+.ja-history-origin-intro-table
   .ant-table-thead
   > tr
-  > th.ja-history-origin-intro-table__col--title,
-.ja-history-origin-intro-table--locked
+  > th:is(.ja-history-origin-intro-table__col--title, .ja-history-origin-intro-table__col--body),
+.ja-history-origin-intro-table
   .ant-table-tbody
   > tr
-  > td.ja-history-origin-intro-table__col--title {
-  width: var(--ja-history-origin-intro-title-col, 50%) !important;
-}
-
-.ja-history-origin-intro-table--locked
-  .ant-table-thead
-  > tr
-  > th.ja-history-origin-intro-table__col--body,
-.ja-history-origin-intro-table--locked
-  .ant-table-tbody
-  > tr
-  > td.ja-history-origin-intro-table__col--body {
-  width: calc(100% - var(--ja-history-origin-intro-title-col, 50%)) !important;
+  > td:is(.ja-history-origin-intro-table__col--title, .ja-history-origin-intro-table__col--body) {
+  width: 50% !important;
 }
 
 .ja-history-table .ant-table-tbody > tr > td.ja-history-col-text {
@@ -415,7 +388,11 @@
   min-height: 54px;
   padding: 12px 16px;
   border-bottom: 1px solid var(--table-line, #e0e0e0);
-  background: var(--BG-header, linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%), #fff);
+  background: var(
+    --BG-header,
+    linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%),
+    #fff
+  );
   color: var(--default-BK, #3d3d3d);
   font-size: 16px;
   font-weight: 700;
@@ -585,16 +562,35 @@
   align-self: stretch;
 }
 
+/* Figma Table / Vertical / Cell / Small — 라벨 열 220(상위 .ja-history-form의 200 덮어쓰기) */
 .ja-history-cta-nested-form .detail-info-form__field {
   min-height: 44px;
+  --detail-info-label-w: 220px;
+  grid-template-columns: 220px minmax(0, 1fr);
 }
 
 .ja-history-cta-nested-form .detail-info-form__field-label {
+  width: 220px;
+  min-width: 220px;
   min-height: 44px;
   font-size: 14px;
   font-weight: 700;
   line-height: 150%;
   word-break: keep-all;
+}
+
+/* Figma Cell / Small 필수 표시 — 16px / right -11px / top 1px (Cell / Medium 은 14px) */
+.ja-history-cta-nested-form .detail-info-form__field-required {
+  left: auto;
+  right: -11px;
+  top: 1px;
+  bottom: auto;
+  width: 9px;
+  height: 21px;
+  margin-left: 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 120%;
 }
 
 .ja-history-cta-nested-form .detail-info-form__field-content {
@@ -678,7 +674,11 @@
   min-height: 54px;
   padding: 12px 16px;
   border-bottom: 1px solid var(--table-line, #e0e0e0);
-  background: var(--BG-header, linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%), #fff);
+  background: var(
+    --BG-header,
+    linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%),
+    #fff
+  );
   color: var(--default-BK, #3d3d3d);
   font-size: 16px;
   font-weight: 700;
@@ -811,9 +811,7 @@
   white-space: nowrap;
 }
 
-.ja-history-modal
-  .detail-info-form__field-content--edit
-  > .app-radio-group.ant-radio-group {
+.ja-history-modal .detail-info-form__field-content--edit > .app-radio-group.ant-radio-group {
   display: flex !important;
   flex-direction: row;
   flex-wrap: wrap;
@@ -832,8 +830,7 @@
 }
 
 .ja-history-modal.content-modal .teal-header-modal__body:has(> .content-modal__description),
-.ja-history-modal.content-modal.content-modal--title-body-gap-always
-  .teal-header-modal__body {
+.ja-history-modal.content-modal.content-modal--title-body-gap-always .teal-header-modal__body {
   gap: 30px;
 }
 

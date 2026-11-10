@@ -71,3 +71,13 @@ describe('instructor-cancel-reject-complete-modal', () => {
     )
   })
 })
+
+describe('buildInstructorCancelRejectionMessage — 일반(기관형) 시안 04-2', () => {
+  it('알림 발송 후 본문은 「해당 회원은」', () => {
+    expect(
+      buildInstructorCancelRejectionMessage('김제이', 'alreadySent', 'general-organization')
+    ).toBe(
+      '**[김제이]** 님의 프로그램 신청 반려를 취소하시겠습니까?\n취소 시 입력하신 사유가 회원에게 취소 사유로 안내되며, 알림이 발송됩니다.\n또한, 해당 회원은 자동으로 **승인 대기 처리**됩니다.'
+    )
+  })
+})

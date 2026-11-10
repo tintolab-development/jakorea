@@ -39,6 +39,11 @@ import { volunteerToPaymentStatementInstructorShape } from '@/features/program/g
 import { useParticipatingInstructorPaymentStatementView } from '@/features/program/general/ui/detail-modal/program-status/participating-instructor-payment-statement-view-container'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import { useProtectedFileDownload } from '@/shared/lib/use-protected-file-download'
+import { useIsInstitutionProgramSurface } from '@/features/program/general/hooks/use-institution-program-surface'
+import {
+  PAYMENT_STATEMENT_ISSUE_BLOCKED_ALERT,
+  PAYMENT_STATEMENT_NOT_APPLICABLE_LABEL,
+} from './participating-instructor-settlement-section'
 import './participating-volunteer-settlement-section.css'
 
 function formatSettlementAmount(amount: number | null): string {
@@ -46,13 +51,19 @@ function formatSettlementAmount(amount: number | null): string {
   return `${formatNumberDisplay(amount)}원`
 }
 
-function renderPaymentStatementProcessingStatus(row: ParticipatingVolunteerSettlementApiRow) {
-  if (shouldShowVolunteerSettlementDash(row)) return '-'
+function renderPaymentStatementProcessingStatus(
+  row: ParticipatingVolunteerSettlementApiRow,
+  notApplicableLabel = '-'
+) {
+  if (shouldShowVolunteerSettlementDash(row)) return notApplicableLabel
   return <InstructorSettlementStatusText status={row.paymentStatementStatus} />
 }
 
-function resolvePaymentStatementExportLabel(row: ParticipatingVolunteerSettlementApiRow): string {
-  if (shouldShowVolunteerSettlementDash(row)) return '-'
+function resolvePaymentStatementExportLabel(
+  row: ParticipatingVolunteerSettlementApiRow,
+  notApplicableLabel = '-'
+): string {
+  if (shouldShowVolunteerSettlementDash(row)) return notApplicableLabel
   return getInstructorSettlementStatusLabel(row.paymentStatementStatus)
 }
 
@@ -78,7 +89,8 @@ const settlementExportColumns: ColumnsType<ParticipatingVolunteerSettlementApiRo
   {
     title: '지급조서 처리 현황',
     key: 'paymentStatementStatus',
-    render: (_: unknown, record) => resolvePaymentStatementExportLabel(record),
+    render: (_: unknown, record) =>
+      resolvePaymentStatementExportLabel(record, PAYMENT_STATEMENT_NOT_APPLICABLE_LABEL),
   },
   {
     title: '정산 예정 금액',
@@ -100,6 +112,24 @@ export function ParticipatingVolunteerSettlementSection({
   const { runProtectedDownload, filePasswordModal } = useProtectedFileDownload()
   const programId = program?.id != null ? String(program.id) : ''
   const isIndividual = isGeneralIndividualProgram(program)
+  /** 일반 기관형 — Figma 07-2/08 (「총 N건」, 「해당 없음」, 해당 없음 행 [지급조서 보기] 비활성) */
+  const isInstitutionSurface = useIsInstitutionProgramSurface(program)
+  const notApplicableLabel = isInstitutionSurface ? PAYMENT_STATEMENT_NOT_APPLICABLE_LABEL : '-'
+  const exportColumns = useMemo(
+    () =>
+      isInstitutionSurface
+        ? settlementExportColumns
+        : settlementExportColumns.map(column =>
+            column.key === 'paymentStatementStatus'
+              ? {
+                  ...column,
+                  render: (_: unknown, record: ParticipatingVolunteerSettlementApiRow) =>
+                    resolvePaymentStatementExportLabel(record),
+                }
+              : column
+          ),
+    [isInstitutionSurface]
+  )
   const institutionNameOverride = isIndividual
     ? program.mainTitle?.trim() || program.title?.trim() || undefined
     : undefined
@@ -160,7 +190,7 @@ export function ParticipatingVolunteerSettlementSection({
 
   const { exportExcel, isExporting: isExcelExporting } = useTableExcelExport({
     accessLog: { downloadKind: 'PROGRAM_SETTLEMENT_EXPORT', containedPiiTypes: [] },
-    columns: settlementExportColumns,
+    columns: exportColumns,
     data: displayRows,
     filename: '정산 내역',
   })
@@ -176,11 +206,15 @@ export function ParticipatingVolunteerSettlementSection({
       return
     }
     if (downloadableRows.length === 0) {
-      showAlert({
-        title: '안내',
-        content:
-          '다운로드할 지급조서가 없습니다. 지급조서 확인 완료 또는 계좌 지급 완료 상태인 건만 다운로드됩니다.',
-      })
+      showAlert(
+        isInstitutionSurface
+          ? PAYMENT_STATEMENT_ISSUE_BLOCKED_ALERT
+          : {
+              title: '안내',
+              content:
+                '다운로드할 지급조서가 없습니다. 지급조서 확인 완료 또는 계좌 지급 완료 상태인 건만 다운로드됩니다.',
+            }
+      )
       return
     }
 
@@ -210,7 +244,14 @@ export function ParticipatingVolunteerSettlementSection({
         }
       },
     })
-  }, [bulkDownloadLoading, downloadableRows, remoteEnabled, runProtectedDownload, showAlert])
+  }, [
+    bulkDownloadLoading,
+    downloadableRows,
+    isInstitutionSurface,
+    remoteEnabled,
+    runProtectedDownload,
+    showAlert,
+  ])
 
   const columns = useMemo(
     (): ColumnsType<ParticipatingVolunteerSettlementApiRow> => [
@@ -258,7 +299,8 @@ export function ParticipatingVolunteerSettlementSection({
         key: 'paymentStatementStatus',
         align: 'center',
         width: 160,
-        render: (_: unknown, record) => renderPaymentStatementProcessingStatus(record),
+        render: (_: unknown, record) =>
+          renderPaymentStatementProcessingStatus(record, notApplicableLabel),
       },
       {
         title: '정산 예정 금액',
@@ -282,7 +324,10 @@ export function ParticipatingVolunteerSettlementSection({
               variant="default"
               style={{ width: '100%' }}
               size="h32"
-              disabled={!remoteEnabled}
+              disabled={
+                !remoteEnabled ||
+                (isInstitutionSurface && shouldShowVolunteerSettlementDash(record))
+              }
               onClick={() => handleOpenPaymentStatement(record)}
             >
               지급조서 보기
@@ -291,7 +336,7 @@ export function ParticipatingVolunteerSettlementSection({
         ),
       },
     ],
-    [handleOpenPaymentStatement, remoteEnabled]
+    [handleOpenPaymentStatement, isInstitutionSurface, notApplicableLabel, remoteEnabled]
   )
 
   return (
@@ -316,7 +361,10 @@ export function ParticipatingVolunteerSettlementSection({
       <div className="table-header-actions">
         <div className="table-header-title--wrapper">
           <span className="table-title">정산 내역</span>
-          <span className="table-description">{displayRows.length}건</span>
+          <span className="table-description">
+            {isInstitutionSurface ? '총 ' : ''}
+            {displayRows.length}건
+          </span>
         </div>
         <div className="info-section-buttons--wrapper">
           <CmsButton

@@ -1,22 +1,22 @@
 /**
- * MMS 이미지 첨부 제약 (BE MMS 첨부 계약, NHN SMS MMS 기준). 최종 검증은 BE.
- * - jpg/jpeg + image/jpeg, 최대 2개, 파일당 300KiB, 합계 600KiB
- * - 파일명 40자 이하·공백 불가, 가로 1500px·세로 1440px 이하
+ * MMS 이미지 첨부 제약 (BE MmsAttachmentPolicy = NHN Notification Hub 공식 값, 2026-11-10 정정). 최종 검증은 BE.
+ * - jpg/jpeg + image/jpeg, 최대 3개, 파일당 300KiB, 합계 800KiB
+ * - 파일명 45자 이하(시안 값, NHN 문서 근거 없음)·공백 불가, 가로·세로 1000px 이하
  */
-export const SMS_MMS_ATTACHMENT_MAX_COUNT = 2
+export const SMS_MMS_ATTACHMENT_MAX_COUNT = 3
 export const SMS_MMS_ATTACHMENT_MAX_FILE_BYTES = 300 * 1024
-export const SMS_MMS_ATTACHMENT_MAX_TOTAL_BYTES = 600 * 1024
-export const SMS_MMS_ATTACHMENT_MAX_NAME_LENGTH = 40
-export const SMS_MMS_ATTACHMENT_MAX_WIDTH_PX = 1500
-export const SMS_MMS_ATTACHMENT_MAX_HEIGHT_PX = 1440
+export const SMS_MMS_ATTACHMENT_MAX_TOTAL_BYTES = 800 * 1024
+export const SMS_MMS_ATTACHMENT_MAX_NAME_LENGTH = 45
+export const SMS_MMS_ATTACHMENT_MAX_WIDTH_PX = 1000
+export const SMS_MMS_ATTACHMENT_MAX_HEIGHT_PX = 1000
 export const SMS_MMS_ATTACHMENT_ALLOWED_EXTENSIONS = ['jpg', 'jpeg'] as const
 export const SMS_MMS_ATTACHMENT_CONTENT_TYPE = 'image/jpeg'
 
 export const SMS_MMS_ATTACHMENT_GUIDE_LINES = [
-  '- 첨부 가능 파일 수는 최대 2개이며, .jpg, .jpeg 파일 형식만 지원합니다.',
-  '- 파일 용량은 1개당 300KB 이하, 1개 이상인 경우 합산 600KB 이하까지만 가능합니다.',
-  '- 해상도는 가로 1500px, 세로 1440px 이하까지 지원합니다.',
-  '- 파일명의 최대 글자 수는 40자이며, 공백은 사용할 수 없습니다.',
+  '- 첨부 가능 파일 수는 최대 3개이며, .jpg, .jpeg 파일 형식만 지원합니다.',
+  '- 파일 용량은 1개당 300KB 이하, 1개 이상인 경우 합산 800KB 이하까지만 가능합니다.',
+  '- 해상도는 가로 1000px, 세로 1000px 이하까지 지원합니다.',
+  '- 파일명의 최대 글자 수는 45자이며, 공백은 사용할 수 없습니다.',
 ] as const
 
 export type SmsMmsAttachmentRejectReason =
@@ -134,11 +134,15 @@ export async function rejectSmsMmsAttachments(params: {
 }
 
 export function smsMmsAttachmentRejectMessage(reason: SmsMmsAttachmentRejectReason): string {
-  if (reason === 'count') return '파일은 최대 2개까지 첨부할 수 있습니다.'
-  if (reason === 'file-size') return '파일 크기는 개당 최대 300KB까지 가능합니다.'
-  if (reason === 'total-size') return '첨부 파일 합계는 최대 600KB까지 가능합니다.'
+  if (reason === 'count')
+    return `파일은 최대 ${SMS_MMS_ATTACHMENT_MAX_COUNT}개까지 첨부할 수 있습니다.`
+  if (reason === 'file-size')
+    return `파일 크기는 개당 최대 ${SMS_MMS_ATTACHMENT_MAX_FILE_BYTES / 1024}KB까지 가능합니다.`
+  if (reason === 'total-size')
+    return `첨부 파일 합계는 최대 ${SMS_MMS_ATTACHMENT_MAX_TOTAL_BYTES / 1024}KB까지 가능합니다.`
   if (reason === 'extension') return '.jpg, .jpeg 파일만 첨부할 수 있습니다.'
-  if (reason === 'resolution') return '해상도는 가로 1500px, 세로 1440px 이하여야 합니다.'
+  if (reason === 'resolution')
+    return `해상도는 가로 ${SMS_MMS_ATTACHMENT_MAX_WIDTH_PX}px, 세로 ${SMS_MMS_ATTACHMENT_MAX_HEIGHT_PX}px 이하여야 합니다.`
   if (reason === 'name-space') return '파일명에는 공백을 사용할 수 없습니다.'
-  return '파일명은 최대 40자까지 가능합니다.'
+  return `파일명은 최대 ${SMS_MMS_ATTACHMENT_MAX_NAME_LENGTH}자까지 가능합니다.`
 }

@@ -7,6 +7,7 @@ import {
   FileSelectField,
   isFileSelectTotalSizeExceeded,
   notifyFileSelectTotalSizeExceeded,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   showSaveCompletedAlert,
   useCmsAlert,
   ThumbnailPlaceholder,
@@ -91,6 +92,11 @@ export function CtaSection({ cta }: { cta: JaHistoryCta }) {
         setEditing(false)
       }}
       onSave={() => {
+        // 이미지는 필수 — X로 비운 뒤 새 파일 없이 저장하면 필수 입력 안내 (서버에는 이미지 비우기가 없다)
+        if (!draft.image.url) {
+          showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+          return
+        }
         // 이미지를 바꾸지 않았으면 imageAssetId를 생략 → 서버가 현재 이미지를 유지
         void saveMutation
           .mutateAsync({
@@ -126,6 +132,7 @@ export function CtaSection({ cta }: { cta: JaHistoryCta }) {
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="타이틀"
+            required={editing}
             view={<HistoryCopy value={cta.title} />}
             edit={
               <InlineText
@@ -142,6 +149,7 @@ export function CtaSection({ cta }: { cta: JaHistoryCta }) {
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="서브 텍스트"
+            required={editing}
             view={<HistoryCopy value={cta.body} />}
             edit={
               <InlineText
@@ -158,6 +166,7 @@ export function CtaSection({ cta }: { cta: JaHistoryCta }) {
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="이미지"
+            required={editing}
             view={<MediaPreview media={cta.image} size="cta" />}
             edit={
               /* Figma 2118:134439 Table / Common / Cell / File — 미리보기 72×72 · 파일명 옆 삭제 X · 파일 추가+안내 */
@@ -180,15 +189,15 @@ export function CtaSection({ cta }: { cta: JaHistoryCta }) {
                   onFilesChange={files => {
                     void handleFilesChange(files)
                   }}
-                  // CTA 이미지는 삭제 기능이 없다. 새로 고른 파일만 취소해 저장된 이미지로 되돌린다.
-                  onRemoveFile={
-                    imageFile
-                      ? () => {
-                          setDraft(prev => ({ ...prev, image: cta.image }))
-                          setImageFile(null)
-                        }
-                      : undefined
-                  }
+                  // 시안: 파일명 옆 삭제 X 항상 노출(수정 모드). 비우면 새 파일을 올려야 저장된다(저장 시 필수 검사).
+                  // [취소]하면 저장된 이미지로 되돌아간다.
+                  onRemoveFile={() => {
+                    setDraft(prev => ({
+                      ...prev,
+                      image: { ...prev.image, url: '', fileName: '', assetId: undefined },
+                    }))
+                    setImageFile(null)
+                  }}
                 />
               </div>
             }

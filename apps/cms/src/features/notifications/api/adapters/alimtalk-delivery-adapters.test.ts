@@ -41,7 +41,7 @@ describe('alimtalk-delivery-adapters (4-2)', () => {
 
     expect(row?.sentAt).toBe('2026-09-08T01:00:05Z')
     expect(row?.receivedAt).toBe('2026-09-08T01:00:10Z')
-    expect(row?.sendStatus).toBe('발송 완료')
+    expect(row?.sendStatus).toBe('발송 성공')
     expect(row?.senderInfo).toBe('@jakorea')
     expect(row?.receiverInfo).toBe('홍*동 | ***-****-5678')
     expect(row?.phoneTemplate.content).toBe('치환된 본문 홍길동님')

@@ -59,8 +59,7 @@ describe('volunteer-interview2-cancel-pass', () => {
     expect(buildVolunteerInterview2CancelPassMessage('김제이', 'alreadySent')).toContain(
       '**반려 처리**'
     )
-    expect(resolveVolunteerInterview2CancelPassReasonLabel('pendingNotification')).toBe(
-      '취소 사유(반려 사유)'
-    )
+    expect(resolveVolunteerInterview2CancelPassReasonLabel('pendingNotification')).toBe('취소 사유')
+    expect(resolveVolunteerInterview2CancelPassReasonLabel('alreadySent')).toBe('취소 사유')
   })
 })

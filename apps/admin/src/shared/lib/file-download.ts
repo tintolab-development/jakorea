@@ -3,10 +3,12 @@
  * 실 URL은 새 탭/미리보기로 열지 않고 blob으로 받아 파일명으로 저장한다.
  */
 
+import { toRuleDownloadFileName } from '@/shared/lib/sanitize-download-file-name'
+
 function saveObjectUrl(href: string, fileName: string): void {
   const a = document.createElement('a')
   a.href = href
-  a.download = fileName
+  a.download = toRuleDownloadFileName(fileName)
   a.rel = 'noopener noreferrer'
   document.body.appendChild(a)
   a.click()

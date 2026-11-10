@@ -19,6 +19,7 @@ import {
   resolveScheduleDetailScheduleDateLabelForView,
   buildScheduleProgressTimeSummary,
   formatScheduleProgressTimeSummaryForView,
+  formatSponsorManagerSelectLabel,
   type GeneralProgramSponsorEditContext,
 } from './common-info-edit-schema'
 
@@ -944,6 +945,48 @@ describe('진행 시간 요약 표기', () => {
     expect(formatScheduleProgressTimeSummaryForView('그룹 A : 15:43 ~ 16:43')).toBe(
       '15:43 ~ 16:43'
     )
+  })
+})
+
+describe('formatSponsorManagerSelectLabel', () => {
+  it('단일 후원사는 이름 직책만 보여 준다', () => {
+    expect(
+      formatSponsorManagerSelectLabel({
+        sponsorName: '한국씨티은행',
+        contactName: '김제이',
+        position: '책임',
+        phone: '010-0000-0000',
+        multiSponsor: false,
+      })
+    ).toBe('김제이 책임')
+  })
+
+  it('복수 후원사는 이름 직책(후원사명)이다', () => {
+    expect(
+      formatSponsorManagerSelectLabel({
+        sponsorName: '한국씨티은행',
+        contactName: '김제이',
+        position: '책임',
+        multiSponsor: true,
+      })
+    ).toBe('김제이 책임(한국씨티은행)')
+  })
+
+  it('직책이 없으면 이름만, 복수 후원사면 이름(후원사명)이다', () => {
+    expect(
+      formatSponsorManagerSelectLabel({
+        sponsorName: '스타벅스',
+        contactName: '홍길동',
+        multiSponsor: false,
+      })
+    ).toBe('홍길동')
+    expect(
+      formatSponsorManagerSelectLabel({
+        sponsorName: '스타벅스',
+        contactName: '홍길동',
+        multiSponsor: true,
+      })
+    ).toBe('홍길동(스타벅스)')
   })
 })
 

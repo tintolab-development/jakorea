@@ -112,10 +112,7 @@ import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-i
 import {
   applyPrivacyUnmaskResponseToUser,
   enrichSchoolTeacherAffiliationFromOrganization,
-  mergeAdminApprovalDetailWithPrivacyUnmask,
 } from '@/features/user/api/apply-privacy-unmask-to-user'
-import type { AdminAccountApprovalDetailResponse } from '@/shared/api/generated/members/schemas/adminAccountApprovalDetailResponse'
-import type { AdminAccountPrivacyResponse } from '@/shared/api/generated/members/schemas/adminAccountPrivacyResponse'
 import {
   extract1365IdFromMemberPrivacyPayload,
   preferUnmasked1365Id,
@@ -502,41 +499,9 @@ export function useUserDetailController({
     (payload: unknown, role: User['role'] | undefined) => {
       if (!displayUser) return
 
-      // 권한 승인 상세는 detailUser가 GET 캐시에서만 파생된다.
-      // unmask 응답으로 해당 캐시를 덮어쓰지 않으면 화면이 MASKED GET을 계속 본다.
-      const requestId = displayUser.instructorRoleRequestId
-      if (
-        requestId != null &&
-        payload != null &&
-        typeof payload === 'object' &&
-        ('requestId' in payload || 'phone' in payload || 'email' in payload)
-      ) {
-        queryClient.setQueryData(
-          memberQueryKeys.instructorRoleRequests.detail(requestId),
-          payload
-        )
-      }
-
-      const adminAccountId =
-        displayUser.adminAccountId ??
-        (displayUser.id ? parseAdminAccountIdFromUserId(displayUser.id) : undefined)
-      if (
-        adminAccountId != null &&
-        (role === 'ADMIN' || displayUser.role === 'ADMIN') &&
-        payload != null &&
-        typeof payload === 'object'
-      ) {
-        queryClient.setQueryData(
-          memberQueryKeys.adminApprovalRequests.detail(adminAccountId),
-          (prev: unknown) =>
-            mergeAdminApprovalDetailWithPrivacyUnmask(
-              prev as AdminAccountApprovalDetailResponse | undefined,
-              payload as AdminAccountPrivacyResponse,
-              adminAccountId
-            )
-        )
-      }
-
+      // 권한 승인(강사 권한 신청·관리자 승인) 상세도 원문은 오버레이(revealedUser)로만 표시한다.
+      // instructorRoleRequests·adminApprovalRequests 상세 Query 캐시에 원문 응답을 쓰지 않는다
+      // (공용 캐시 원문 잔류 원인, Step 5 P1).
       // 원문은 이 상세의 일시 상태로만 — 상위 drawer·목록 상태와 공용 회원 캐시에 쓰지 않는다.
       const applyMergedUser = (merged: Omit<User, 'password'>, onlyIfCurrent = false) => {
         holdRevealedUser(displayUser, merged, onlyIfCurrent)
@@ -1060,7 +1025,10 @@ export function useUserDetailController({
 
   const editUnmaskConfirmModal = useMemo(
     () =>
-      createElement(ConfirmModal, {
+      // 열려 있을 때만 마운트 — 닫힘 애니메이션 중 모달 레이어가 [취소]·헤더 클릭을 가로채지 않게 한다.
+      !editUnmaskConfirmOpen
+        ? null
+        : createElement(ConfirmModal, {
         open: editUnmaskConfirmOpen,
         title: '정보 수정 안내',
         content: BASIC_INFO_EDIT_UNMASK_CONFIRM_CONTENT,

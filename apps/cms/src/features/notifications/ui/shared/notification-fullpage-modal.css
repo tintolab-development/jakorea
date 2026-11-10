@@ -271,3 +271,21 @@
     100dvh - var(--notification-fullpage-title-row-height, 64px) - 32px - 44px - 16px
   );
 }
+
+/*
+ * 발송 화면 헤더 (알림톡 9411:51792 · 메일 6289:94828 · 문자 6289:95932 — GNB / Fullpage)
+ * 청록 배경 + 흰 제목·닫기. 템플릿 등록·수정 풀페이지는 흰 헤더 유지 → 발송 화면만 이 modifier를 붙인다.
+ */
+.notification-fullpage-modal--send .notification-fullpage-modal__title-row {
+  background: var(--Brand-500, #00a0af);
+}
+
+.notification-fullpage-modal--send .notification-fullpage-modal__title-text,
+.notification-fullpage-modal--send .notification-fullpage-modal__title-close {
+  color: var(--White, #fff);
+}
+
+/* ModalCloseIcon(img)을 tone 없이 써도 흰색으로 보이게 한다 */
+.notification-fullpage-modal--send .notification-fullpage-modal__title-close img {
+  filter: brightness(0) invert(1);
+}

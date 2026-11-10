@@ -35,7 +35,17 @@ type EducationScheduleChangeTitleActionProps = {
   /** 수정 폼의 기간과 별개로, API가 현재 저장된 기간을 검증할 때 사용할 기간 */
   persistedOperationStart?: DateValue | null
   persistedOperationEnd?: DateValue | null
+  /**
+   * `general`: 일반 프로그램 상세 시안 — 팝업 확인 버튼 「선택 완료」, 적용 후 「변경 완료」 안내.
+   * 생략(`default`) 시 기존 동작(1사1교 등) 유지.
+   */
+  variant?: EducationScheduleChangeVariant
 }
+
+type EducationScheduleChangeVariant = 'default' | 'general'
+
+const EDUCATION_SCHEDULE_CHANGE_COMPLETED_TITLE = '변경 완료'
+const EDUCATION_SCHEDULE_CHANGE_COMPLETED_BODY = '변경되었습니다.'
 
 function EducationScheduleChangeOverlayTitleAction({
   programId,
@@ -50,6 +60,7 @@ function EducationScheduleChangeOverlayTitleAction({
   operationEnd,
   persistedOperationStart,
   persistedOperationEnd,
+  variant,
 }: {
   programId?: string | null
   overlayKeyPrefix: string
@@ -63,6 +74,7 @@ function EducationScheduleChangeOverlayTitleAction({
   operationEnd?: DateValue | null
   persistedOperationStart?: DateValue | null
   persistedOperationEnd?: DateValue | null
+  variant?: EducationScheduleChangeVariant
 }) {
   const [lines, setLines] = useProgramRegistrationOverlayKv<string[]>(
     `${overlayKeyPrefix}.scheduleLines`,
@@ -87,6 +99,7 @@ function EducationScheduleChangeOverlayTitleAction({
       operationEnd={operationRangeSeal?.end ?? operationEnd}
       persistedOperationStart={persistedOperationStart}
       persistedOperationEnd={persistedOperationEnd}
+      variant={variant}
     />
   )
 }
@@ -115,8 +128,10 @@ function EducationScheduleChangeTitleActionView({
   operationEnd,
   persistedOperationStart,
   persistedOperationEnd,
+  variant = 'default',
 }: Omit<EducationScheduleChangeTitleActionProps, 'overlayKeyPrefix'>) {
   const [open, setOpen] = useState(false)
+  const isGeneralVariant = variant === 'general'
   const [submitting, setSubmitting] = useState(false)
 
   return (
@@ -140,6 +155,7 @@ function EducationScheduleChangeTitleActionView({
         operationStart={operationStart}
         operationEnd={operationEnd}
         submitting={submitting}
+        confirmLabel={isGeneralVariant ? '선택 완료' : undefined}
         onCancel={() => {
           if (submitting) return
           setOpen(false)
@@ -183,6 +199,12 @@ function EducationScheduleChangeTitleActionView({
           }
           onApply?.(nextLines)
           setOpen(false)
+          if (isGeneralVariant) {
+            cmsAlertModal.show({
+              title: EDUCATION_SCHEDULE_CHANGE_COMPLETED_TITLE,
+              content: EDUCATION_SCHEDULE_CHANGE_COMPLETED_BODY,
+            })
+          }
         }}
       />
     </div>
@@ -206,6 +228,7 @@ export function EducationScheduleChangeTitleAction({
   operationEnd,
   persistedOperationStart,
   persistedOperationEnd,
+  variant,
 }: EducationScheduleChangeTitleActionProps) {
   if (overlayKeyPrefix) {
     return (
@@ -222,6 +245,7 @@ export function EducationScheduleChangeTitleAction({
         operationEnd={operationEnd}
         persistedOperationStart={persistedOperationStart}
         persistedOperationEnd={persistedOperationEnd}
+        variant={variant}
       />
     )
   }
@@ -241,6 +265,7 @@ export function EducationScheduleChangeTitleAction({
       operationEnd={operationEnd}
       persistedOperationStart={persistedOperationStart}
       persistedOperationEnd={persistedOperationEnd}
+      variant={variant}
     />
   )
 }

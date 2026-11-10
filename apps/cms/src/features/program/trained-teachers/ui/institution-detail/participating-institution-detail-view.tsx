@@ -1177,19 +1177,22 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
       <div className="school-detail-fullpage-view__page-bottom-spacer" aria-hidden />
 
       {personalInfoRevealModal}
-      <ConfirmModal
-        open={editUnmaskConfirmOpen}
-        title="정보 수정 안내"
-        content={
-          "정보 수정 시 개인정보 마스킹이 해제되며,\n개인정보 열람 사유는 '정보 수정'으로 로그 이력에 기록됩니다.\n해당 기관의 개인정보 열람 및 정보를 수정하시겠습니까?"
-        }
-        confirmText="정보 수정"
-        cancelText="취소"
-        onConfirm={confirmEditUnmaskAndStartEdit}
-        onCancel={closeEditUnmaskConfirm}
-        confirmLoading={editUnmaskConfirmLoading}
-        zIndex={1100}
-      />
+      {/* 열려 있을 때만 마운트 — 닫힘 애니메이션 중 모달 레이어가 헤더 [취소]를 가려 첫 클릭이 유실되던 문제(CMS-29) */}
+      {editUnmaskConfirmOpen ? (
+        <ConfirmModal
+          open={editUnmaskConfirmOpen}
+          title="정보 수정 안내"
+          content={
+            "정보 수정 시 개인정보 마스킹이 해제되며,\n개인정보 열람 사유는 '정보 수정'으로 로그 이력에 기록됩니다.\n해당 기관의 개인정보 열람 및 정보를 수정하시겠습니까?"
+          }
+          confirmText="정보 수정"
+          cancelText="취소"
+          onConfirm={confirmEditUnmaskAndStartEdit}
+          onCancel={closeEditUnmaskConfirm}
+          confirmLoading={editUnmaskConfirmLoading}
+          zIndex={1100}
+        />
+      ) : null}
 
       <ActivityWithdrawScheduleModal
         open={activityWithdrawModalOpen}

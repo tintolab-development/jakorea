@@ -809,6 +809,15 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Ujat1365RegistrationFormRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -1356,6 +1365,18 @@
           }
         }
       },
+      "Ujat1365RegistrationFormRequest": {
+        "type": "object",
+        "description": "UJAT 1365 등록 양식 요청 본문(선택)",
+        "properties": {
+          "fileName": {
+            "type": "string",
+            "description": "mode=DOWNLOAD일 때 브라우저가 저장하는 파일명. 파일 다운로드 이력 파일명으로 기록합니다. 생략하면 서버 규칙 이름을 기록합니다.",
+            "example": "[JA Korea] CMS 어드민_1365 봉사시간 등록 양식_261110.xlsx",
+            "nullable": true
+          }
+        }
+      },
       "Ujat1365RegistrationFormResponse": {
         "type": "object",
         "description": "UJAT 1365 봉사시간 등록 양식에 필요한 최소 원문. 연락처·주소·계좌·주민번호는 포함하지 않습니다.",
@@ -1482,30 +1503,36 @@
       },
       "Ujat1365SemesterRegistrationFormRequest": {
         "type": "object",
+        "required": [
+          "semesterType"
+        ],
         "properties": {
           "semesterType": {
             "type": "string",
+            "description": "반기",
             "enum": [
               "FIRST_HALF",
               "SECOND_HALF"
             ],
-            "example": "SECOND_HALF",
-            "description": "반기"
+            "example": "SECOND_HALF"
           },
           "mode": {
             "type": "string",
-            "nullable": true,
+            "description": "PREVIEW 또는 DOWNLOAD. 생략하면 PREVIEW.",
             "enum": [
               "PREVIEW",
               "DOWNLOAD"
             ],
-            "default": "PREVIEW",
-            "description": "PREVIEW 또는 DOWNLOAD. 생략하면 PREVIEW."
+            "example": "PREVIEW",
+            "nullable": true
+          },
+          "fileName": {
+            "type": "string",
+            "description": "mode=DOWNLOAD일 때 브라우저가 저장하는 파일명. 파일 다운로드 이력 파일명으로 기록합니다. 생략하면 서버 규칙 이름을 기록합니다.",
+            "example": "[JA Korea] CMS 어드민_1365 봉사시간 등록 양식_261110.xlsx",
+            "nullable": true
           }
-        },
-        "required": [
-          "semesterType"
-        ]
+        }
       },
       "Ujat1365SemesterRegistrationFormResponse": {
         "type": "object",

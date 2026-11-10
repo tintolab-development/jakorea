@@ -1,7 +1,7 @@
 .sms-template-split {
   display: flex;
   align-items: stretch;
-  gap: 24px;
+  gap: 20px;
   min-height: 480px;
 }
 

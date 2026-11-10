@@ -62,10 +62,12 @@ import {
   fetchExpenseReceipts,
   fetchIndividualSettlementDetail,
   fetchIndividualSettlementSchedules,
+  fetchVolunteerSettlementSchedules,
   fetchPortalSurveyFormBinding,
   fetchSettlementApplications,
   resubmitIndividualSettlement,
   submitIndividualSettlement,
+  submitVolunteerSettlement,
   submitPortalSurveyResponse,
   type PortalNoticeAttachmentListItem,
   type PortalNoticeComment,
@@ -85,7 +87,8 @@ import {
   INDIVIDUAL_SETTLEMENT_DISABLED_CODE,
   INDIVIDUAL_SETTLEMENT_NOT_FOUND_CODE,
   readIndividualSettlementErrorCode,
-  shouldUseIndividualSettlementSchedulesApi,
+  resolveScheduleSettlementAudience,
+  type ScheduleSettlementAudience,
 } from '../../settlements/lib/individual-settlement-contract'
 
 const STALE_MS = 30_000
@@ -1011,9 +1014,23 @@ export function useAvailableProgramFormsQuery(
   }
 }
 
+function scheduleSettlementSchedulesQueryKey(
+  audience: ScheduleSettlementAudience,
+  applicationId: string
+) {
+  return audience === 'volunteer'
+    ? platformQueryKeys.mypage.volunteerSettlementSchedules(applicationId)
+    : platformQueryKeys.mypage.individualSettlementSchedules(applicationId)
+}
+
+/**
+ * 일정별 영수증 정산 회차 목록. `audience`가 volunteer면 봉사자 경로(program_volunteer_application.id),
+ * 아니면 개인 경로(program_individual_application.id). 응답 스키마는 같다.
+ */
 export function useIndividualSettlementSchedulesQuery(
   applicationId: string | null | undefined,
-  extraEnabled = true
+  extraEnabled = true,
+  audience: ScheduleSettlementAudience = 'individual'
 ) {
   const enabled =
     isRemoteApiConfigured() &&
@@ -1021,8 +1038,11 @@ export function useIndividualSettlementSchedulesQuery(
     Boolean(applicationId) &&
     extraEnabled
   const query = useQuery({
-    queryKey: platformQueryKeys.mypage.individualSettlementSchedules(applicationId ?? ''),
-    queryFn: ({ signal }) => fetchIndividualSettlementSchedules(applicationId!, signal),
+    queryKey: scheduleSettlementSchedulesQueryKey(audience, applicationId ?? ''),
+    queryFn: ({ signal }) =>
+      audience === 'volunteer'
+        ? fetchVolunteerSettlementSchedules(applicationId!, signal)
+        : fetchIndividualSettlementSchedules(applicationId!, signal),
     enabled,
     ...queryOptions(),
   })
@@ -1031,6 +1051,7 @@ export function useIndividualSettlementSchedulesQuery(
     import.meta.env.DEV &&
     query.isError &&
     errorCode === INDIVIDUAL_SETTLEMENT_NOT_FOUND_CODE &&
+    audience === 'individual' &&
     applicationId
   ) {
     console.warn(
@@ -1060,10 +1081,12 @@ export function useApplicationSettlementsQuery(
     programType: options?.programType,
   })
   const enabled = schedules.enabled && options?.enabled !== false
-  const individualAudience = shouldUseIndividualSettlementSchedulesApi(
+  /** 개인(INDIVIDUAL)·봉사자(VOLUNTEER) 일정별 영수증 정산 — 같은 응답 스키마라 join 경로를 공유한다 */
+  const scheduleSettlementAudience = resolveScheduleSettlementAudience(
     applicationType,
     options?.programType,
   )
+  const individualAudience = scheduleSettlementAudience != null
   const instructorAudience = applicationType === 'INSTRUCTOR'
   const receipts = useQuery({
     queryKey: platformQueryKeys.mypage.programApplications.expenseReceipts(
@@ -1083,6 +1106,7 @@ export function useApplicationSettlementsQuery(
   const individual = useIndividualSettlementSchedulesQuery(
     applicationId,
     enabled && individualAudience,
+    scheduleSettlementAudience ?? 'individual',
   )
   const lectureReports = useQuery({
     queryKey: platformQueryKeys.mypage.lectureReportAssignments(programId ?? ''),
@@ -1197,7 +1221,14 @@ export function useIndividualSettlementDetailQuery(settlementApplicationId: numb
   }
 }
 
-export function useSubmitIndividualSettlementMutation(applicationId: string | null | undefined) {
+/**
+ * 일정별 영수증 정산 제출·재제출. 최초 제출만 audience별 경로(개인·봉사자)로 나뉘고,
+ * 재제출·상세는 individual-settlements/{settlementApplicationId}를 같이 쓴다.
+ */
+export function useSubmitIndividualSettlementMutation(
+  applicationId: string | null | undefined,
+  audience: ScheduleSettlementAudience = 'individual'
+) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (input: {
@@ -1210,14 +1241,16 @@ export function useSubmitIndividualSettlementMutation(applicationId: string | nu
         return resubmitIndividualSettlement(input.settlementApplicationId, input.resubmit)
       }
       if (input.submit) {
-        return submitIndividualSettlement(applicationId, input.submit)
+        return audience === 'volunteer'
+          ? submitVolunteerSettlement(applicationId, input.submit)
+          : submitIndividualSettlement(applicationId, input.submit)
       }
       throw new Error('SETTLEMENT_SUBMIT_BODY_REQUIRED')
     },
     onSuccess: detail => {
       if (!applicationId) return
       void queryClient.invalidateQueries({
-        queryKey: platformQueryKeys.mypage.individualSettlementSchedules(applicationId),
+        queryKey: scheduleSettlementSchedulesQueryKey(audience, applicationId),
       })
       void queryClient.invalidateQueries({
         queryKey: platformQueryKeys.mypage.settlementApplications(),

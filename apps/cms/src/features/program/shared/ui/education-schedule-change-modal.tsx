@@ -30,6 +30,9 @@ export function EducationScheduleChangeModal({
   operationStart,
   operationEnd,
   submitting = false,
+  confirmLabel = '일정 변경',
+  description = EDUCATION_SCHEDULE_CHANGE_MODAL_DESCRIPTION,
+  operationPeriodLabel,
   onCancel,
   onConfirm,
 }: {
@@ -48,6 +51,12 @@ export function EducationScheduleChangeModal({
   operationStart?: DateValue | null
   operationEnd?: DateValue | null
   submitting?: boolean
+  /** 확인 버튼 라벨. 기본 「일정 변경」(1사1교 등), 일반 프로그램 상세는 「선택 완료」(시안) */
+  confirmLabel?: string
+  /** 기본 「같은 날짜 모든 기관 일정 변경」 안내. 참여 기관 단건 변경은 호출부에서 바꾼다. */
+  description?: string
+  /** 있으면 일정 표 위에 「교육 진행 기간」 행을 보여 준다(일반 참여 기관 상세 시안 02-1). */
+  operationPeriodLabel?: string
   onCancel: () => void
   onConfirm: (nextLines: string[]) => void | Promise<void>
 }) {
@@ -97,7 +106,7 @@ export function EducationScheduleChangeModal({
       open={open}
       onCancel={busy ? () => undefined : onCancel}
       title={EDUCATION_SCHEDULE_CHANGE_MODAL_TITLE}
-      description={EDUCATION_SCHEDULE_CHANGE_MODAL_DESCRIPTION}
+      description={description}
       size="medium"
       className="education-schedule-change-modal"
       footer={
@@ -126,11 +135,28 @@ export function EducationScheduleChangeModal({
                 setConfirming(false)
               })
             }} >
-            일정 변경
+            {confirmLabel}
           </CmsButton>
         </div>
       }
     >
+      {operationPeriodLabel ? (
+        <DetailInfoForm
+          title="교육 진행 기간"
+          hideHeader
+          mode="view"
+          className="education-schedule-change-modal__operation-period"
+        >
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="교육 진행 기간"
+              fullRow
+              readOnlyDisplay
+              view={operationPeriodLabel}
+            />
+          </DetailInfoForm.Row>
+        </DetailInfoForm>
+      ) : null}
       <DetailInfoForm title={EDUCATION_SCHEDULE_CHANGE_MODAL_TITLE} hideHeader mode="edit">
         {editableRows.length === 0 ? (
           <p className="education-schedule-change-modal__empty">

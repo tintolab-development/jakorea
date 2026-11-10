@@ -10,6 +10,7 @@
 import type { InternalAxiosRequestConfig } from 'axios'
 import { axiosClient } from '@/shared/api/axios-instance'
 import { getApiBaseUrl } from '@/shared/lib/api-remote-env'
+import { toRuleDownloadFileName } from '@/shared/lib/download-file-name'
 
 type SkipAuthConfig = InternalAxiosRequestConfig & {
   skipAuth?: boolean
@@ -82,7 +83,7 @@ function saveBlob(fileName: string, blob: Blob) {
   const objectUrl = URL.createObjectURL(blob)
   const anchor = document.createElement('a')
   anchor.href = objectUrl
-  anchor.download = fileName
+  anchor.download = toRuleDownloadFileName(fileName)
   document.body.appendChild(anchor)
   anchor.click()
   anchor.remove()

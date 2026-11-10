@@ -4,6 +4,7 @@
 
 import { axiosInstance } from '@/shared/instance/axios-instance'
 import { resolveLogExcelBytes } from './parse-arraybuffer-json'
+import { sanitizeDownloadFileName, toRuleDownloadFileName } from '@/shared/lib/sanitize-download-file-name'
 
 /** 로그 엑셀 내보내기 — 인스턴스 기본 Accept: application/json 이면 Spring이 xlsx를 406으로 거절한다 */
 export const LOG_EXPORT_ACCEPT =
@@ -13,7 +14,7 @@ export const LOG_EXPORT_XLSX_TYPE =
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
 function sanitizeFilenameBase(name: string): string {
-  return name.replace(/[\\/:*?"<>|]+/g, '_').replace(/\s+/g, '_').slice(0, 80)
+  return sanitizeDownloadFileName(name).replace(/[:*?"<>|]+/g, '_').replace(/\s+/g, ' ').trim().slice(0, 80)
 }
 
 function parseFilenameFromContentDisposition(header: string | undefined): string | null {
@@ -30,27 +31,12 @@ function parseFilenameFromContentDisposition(header: string | undefined): string
   return plain?.[1]?.trim() ?? null
 }
 
-export function defaultXlsxFilename(base: string): string {
-  const stamp = new Date()
-  const y = stamp.getFullYear()
-  const m = String(stamp.getMonth() + 1).padStart(2, '0')
-  const d = String(stamp.getDate()).padStart(2, '0')
-  const h = String(stamp.getHours()).padStart(2, '0')
-  const min = String(stamp.getMinutes()).padStart(2, '0')
-  const s = String(stamp.getSeconds()).padStart(2, '0')
-  return `${sanitizeFilenameBase(base)}_${y}${m}${d}_${h}${min}${s}.xlsx`
-}
-
-function headerValue(headers: unknown, name: string): string | undefined {
-  if (headers == null || typeof headers !== 'object') return undefined
-  const record = headers as Record<string, unknown> & { get?: (key: string) => unknown }
-  const raw =
-    (typeof record.get === 'function' ? record.get(name) : undefined) ??
-    record[name] ??
-    record[name.toLowerCase()]
-  if (typeof raw === 'string' && raw.trim()) return raw
-  if (Array.isArray(raw) && typeof raw[0] === 'string' && raw[0].trim()) return raw[0]
-  return undefined
+/** 공통 규칙: `[JA Korea] 홈페이지 어드민_{파일 이름}_YYMMDD.xlsx` (YYMMDD = 내려받은 날짜) */
+export function defaultXlsxFilename(base: string, now: Date = new Date()): string {
+  const yy = String(now.getFullYear()).slice(-2)
+  const mm = String(now.getMonth() + 1).padStart(2, '0')
+  const dd = String(now.getDate()).padStart(2, '0')
+  return `[JA Korea] 홈페이지 어드민_${sanitizeFilenameBase(base)}_${yy}${mm}${dd}.xlsx`
 }
 
 export async function downloadRemoteLogExcel(options: {
@@ -77,7 +63,7 @@ export async function downloadRemoteLogExcel(options: {
   downloadBinaryFile({
     data: bytes,
     contentType: LOG_EXPORT_XLSX_TYPE,
-    contentDisposition: headerValue(response.headers, 'content-disposition'),
+    // 서버 헤더(영문) 대신 한글 파일명을 항상 사용한다.
     filenameFallback: options.filenameFallback,
   })
 }
@@ -88,9 +74,10 @@ export function downloadBinaryFile(options: {
   filenameFallback: string
   contentDisposition?: string
 }): void {
-  const filename =
+  const filename = toRuleDownloadFileName(
     parseFilenameFromContentDisposition(options.contentDisposition) ||
-    options.filenameFallback
+      options.filenameFallback
+  )
   const blob =
     options.data instanceof Blob
       ? options.data

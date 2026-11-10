@@ -17,9 +17,12 @@ import './school-detail-attendance-section.css'
 export function SchoolDetailAttendanceSection({
   row,
   program,
+  disableSaveWhenUnchanged = false,
 }: {
   row: ParticipatingSchoolRow
   program: Program
+  /** 일반 기관형 시안 16 — 회차 「저장」 버튼을 변경 없을 때 비활성 */
+  disableSaveWhenUnchanged?: boolean
 }) {
   const {
     pendingFilters,
@@ -155,6 +158,7 @@ export function SchoolDetailAttendanceSection({
                   onExportAll={exportExcel}
                   exporting={isExporting}
                   exportDisabled={!canExportAll}
+                  disableSaveWhenUnchanged={disableSaveWhenUnchanged}
                 />
               )
             })}

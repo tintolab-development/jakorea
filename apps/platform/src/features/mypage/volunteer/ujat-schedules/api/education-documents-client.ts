@@ -6,6 +6,7 @@ import {
   type UjatEducationDocumentFile,
   type UjatEducationDocumentsResponse,
 } from '../lib/documents'
+import { toRuleDownloadFileName } from '@/shared/lib/download-file-name'
 
 export type {
   UjatEducationDayDocuments,
@@ -251,7 +252,7 @@ function saveDownloadedBlob(fileName: string, blob: Blob): void {
   const objectUrl = URL.createObjectURL(blob)
   const anchor = document.createElement('a')
   anchor.href = objectUrl
-  anchor.download = fileName || '첨부파일'
+  anchor.download = toRuleDownloadFileName(fileName || '첨부파일')
   anchor.click()
   URL.revokeObjectURL(objectUrl)
 }

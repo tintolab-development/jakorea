@@ -11,7 +11,7 @@ describe('notification delivery status (세 채널 공통)', () => {
     ['SCHEDULED', '예약'],
     ['WAITED', '발송 대기'],
     ['IN_PROGRESS', '발송 중'],
-    ['SENT', '발송 완료'],
+    ['SENT', '발송 성공'],
     ['SEND_FAILED', '발송 실패'],
     ['CANCELED', '발송 취소'],
     ['UNKNOWN', '확인불가'],
@@ -24,7 +24,7 @@ describe('notification delivery status (세 채널 공통)', () => {
 
   it('예약 발송의 CANCELED만 예약 취소', () => {
     expect(mapNotificationSendStatus('CANCELED', { scheduled: true })).toBe('예약 취소')
-    expect(mapNotificationSendStatus('SENT', { scheduled: true })).toBe('발송 완료')
+    expect(mapNotificationSendStatus('SENT', { scheduled: true })).toBe('발송 성공')
   })
 
   it('수신 상태 모르는 값은 확인불가', () => {

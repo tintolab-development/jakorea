@@ -152,6 +152,7 @@ export function mapDownloadLogResponse(dto: DownloadLogFrontendResponse | object
         : typeof idValue === 'number' && Number.isFinite(idValue)
           ? String(idValue)
           : `log-${Date.now()}`,
+    // 서버가 [JA Korea] 규칙 이름으로 변환해 내려준다(GET /api/admin/logs/file-access).
     fileName: readExtraString(dto, ['fileName']),
     userId: readExtraString(dto, ['userId']),
     userName: readExtraString(dto, ['userName']),

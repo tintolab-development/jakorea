@@ -51,7 +51,13 @@ import {
   useProgramRegistrationOverlayKv,
   updateProgramRegistrationOverlayKey,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import { useIsGeneralRegistrationWizard } from '@/features/template/context/general-registration-wizard-context'
 import './program-registration-paragraph.css'
+
+/** 교육 내용 입력 플레이스홀더 — 일반 프로그램 등록 위저드는 시안 문구, 그 외(교육받은 교사·상세 수정)는 기존 문구 */
+function useCurriculumContentPlaceholder(): string {
+  return useIsGeneralRegistrationWizard() ? '교육 내용을 작성해 주세요' : '교육 내용을 작성하세요'
+}
 
 const EMPTY_STRING_BY_INDEX: Record<number, string> = {}
 const CURRICULUM_UNIT_NAME_KEY = 'generalRegistration.educationCurriculum.unitNameBySession'
@@ -183,6 +189,7 @@ export function getProgramRegistrationCurriculumMultiSessionRowPlan(
 }
 
 function ProgramRegistrationCurriculumUnitContentInputs({ chartIndex }: { chartIndex: number }) {
+  const contentPlaceholder = useCurriculumContentPlaceholder()
   return (
     <div className="detail-info-form-inputs-wrapper">
       <CurriculumOverlayTextInput
@@ -195,7 +202,7 @@ function ProgramRegistrationCurriculumUnitContentInputs({ chartIndex }: { chartI
       <CurriculumOverlayTextInput
         recordKey={CURRICULUM_UNIT_CONTENT_KEY}
         index={chartIndex}
-        placeholder="교육 내용을 작성하세요"
+        placeholder={contentPlaceholder}
         style={{ minWidth: 0, flex: '1 1 160px' }}
       />
     </div>
@@ -226,6 +233,7 @@ function ProgramRegistrationMultiRoundClassRow({
   progressSession: string
   onProgressSessionChange: (value: string) => void
 }) {
+  const contentPlaceholder = useCurriculumContentPlaceholder()
   return (
     <DetailInfoForm.Row type="single">
       <DetailInfoForm.Field
@@ -250,7 +258,7 @@ function ProgramRegistrationMultiRoundClassRow({
             <CurriculumOverlayTextInput
               recordKey={CURRICULUM_ROUND_CONTENT_KEY}
               index={roundIndex}
-              placeholder="교육 내용을 작성하세요"
+              placeholder={contentPlaceholder}
               style={{ minWidth: 0, flex: '1 1 0' }}
             />
           </div>

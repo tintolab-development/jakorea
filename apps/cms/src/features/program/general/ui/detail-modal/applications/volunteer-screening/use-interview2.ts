@@ -32,7 +32,10 @@ import {
   notifyProgramApiUnavailable,
   useNotifyProgramApiUnavailableOnce,
 } from '@/features/program/shared/lib/program-api-unavailable'
-import type { GeneralSecondInterviewScreeningStatus } from '@/features/program/general/lib/volunteer-screening-constants'
+import type {
+  GeneralInterview2BulkPassType,
+  GeneralSecondInterviewScreeningStatus,
+} from '@/features/program/general/lib/volunteer-screening-constants'
 import { useGeneralVolunteerInterview2Columns } from './interview2-columns'
 import type {
   PermissionModalNotifyTiming,
@@ -61,6 +64,11 @@ import {
   guardGeneralVolunteerWithdrawActivity,
 } from './general-volunteer-applicant-guard-actions'
 import type { GeneralVolunteerScreeningActivityWithdrawModalPayload } from './general-volunteer-screening-activity-withdraw-modal'
+
+/** 합격 확정 payload — `passType` 미지정이면 기존 동작(합격) */
+export type Interview2PassConfirmPayload = PermissionModalPayload & {
+  passType?: GeneralInterview2BulkPassType
+}
 
 export type GeneralVolunteerInterview2ViewMode = 'list' | 'calendar'
 
@@ -295,12 +303,12 @@ export function useGeneralVolunteerInterview2({
   }, [])
 
   const handlePassModalConfirm = useCallback(
-    async (payload: PermissionModalPayload) => {
+    async (payload: Interview2PassConfirmPayload) => {
       if (!passModalVolunteer) return
       const { id, name: volunteerName } = passModalVolunteer
       const ok = await applySecondInterviewStatus(
         [id],
-        'pass',
+        payload.passType ?? 'pass',
         undefined,
         toScreeningNotifyFields(payload.notifyTiming, payload.manualNotifyAt)
       )
@@ -393,11 +401,11 @@ export function useGeneralVolunteerInterview2({
   }, [])
 
   const confirmBulkPass = useCallback(
-    async (payload: PermissionModalPayload) => {
+    async (payload: Interview2PassConfirmPayload) => {
       const ids = selectedRowKeys.map(String)
       const ok = await applySecondInterviewStatus(
         ids,
-        'pass',
+        payload.passType ?? 'pass',
         undefined,
         toScreeningNotifyFields(payload.notifyTiming, payload.manualNotifyAt)
       )
@@ -411,13 +419,18 @@ export function useGeneralVolunteerInterview2({
             : payload.manualNotifyAt
               ? formatYmdHmWithKoreanWeekday(payload.manualNotifyAt)
               : '직접 설정'
-      showAlert({
-        title: '일괄 합격',
-        content: `선택한 ${ids.length}건이 합격 처리되었습니다. (알림: ${notifyLabel})`,
-      })
+      showAlert(
+        subjectKind === 'volunteer'
+          ? // 시안 12-2(9781:52820)
+            { title: '합격 처리 완료', content: '면접 결과가 합격 처리되었습니다.' }
+          : {
+              title: '일괄 합격',
+              content: `선택한 ${ids.length}건이 합격 처리되었습니다. (알림: ${notifyLabel})`,
+            }
+      )
       setSelectedRowKeys([])
     },
-    [applySecondInterviewStatus, selectedRowKeys, showAlert]
+    [applySecondInterviewStatus, selectedRowKeys, showAlert, subjectKind]
   )
 
   const requestWithdrawActivity = useCallback(

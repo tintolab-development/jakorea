@@ -101,9 +101,7 @@ describe('mapWageItemToSettingDetail', () => {
     expect(detail.maxLimitWon).toBeNull()
     expect(detail.basicFeeWon).toBeNull()
     expect(detail.longDistanceFeeWon).toBeNull()
-    expect(detail.qualificationLines).toEqual([
-      '국내외 해당 분야 최고 권위자로 총장이 인정하는 자',
-    ])
+    expect(detail.qualificationLines).toEqual(['국내외 해당 분야 최고 권위자로 총장이 인정하는 자'])
     expect(detail.remarkLines).toEqual([
       '유급의 내부직원에게는 지급 불가',
       '강의에 필요한 교재의 원고료, 강사 교통비(실비)는 필요사유에 따라 별도 지급 가능',
@@ -226,7 +224,6 @@ describe('mapWageItemToSettingDetail', () => {
     expect(detail.maxLimitWon).toBe(500_000)
   })
 
-
   it('API session1Won 0은 유효값이라 카탈로그로 덮어쓰지 않는다', () => {
     const detail = mapWageItemToSettingDetail({
       wageItemType: WageItemResponseWageItemType.GEMINI,
@@ -266,7 +263,6 @@ describe('mapWageItemToSettingDetail', () => {
   })
 })
 
-
 describe('mapPaymentItemToSettingDetail', () => {
   it('GET에 없으면 강사 교통비 카탈로그(30km·자차·불필요·disabled용 기본)를 채운다', () => {
     const detail = mapPaymentItemToSettingDetail({
@@ -290,7 +286,7 @@ describe('mapPaymentItemToSettingDetail', () => {
     ])
   })
 
-    it('GET에 없으면 학생 교통비 카탈로그(30km·대중교통·필요·disabled용 기본)를 채운다', () => {
+  it('GET에 없으면 학생 교통비 카탈로그(30km·대중교통·필요·disabled용 기본)를 채운다', () => {
     const detail = mapPaymentItemToSettingDetail({
       id: 8,
       paymentItemType: PaymentItemResponsePaymentItemType.TRANSPORT_STUDENT,
@@ -311,7 +307,7 @@ describe('mapPaymentItemToSettingDetail', () => {
     expect(detail.remarkLines).toEqual(['실비 영수증 필수 제출'])
   })
 
-    it('GET에 없으면 숙박비(LODGING_GENERAL) 카탈로그(1박·150,000·필요·비고 blank)를 채운다', () => {
+  it('GET에 없으면 숙박비(LODGING_GENERAL) 카탈로그(1박·150,000·필요·비고 blank)를 채운다', () => {
     const detail = mapPaymentItemToSettingDetail({
       id: 9,
       paymentItemType: PaymentItemResponsePaymentItemType.LODGING_GENERAL,
@@ -410,23 +406,26 @@ describe('mapPaymentItemToSettingDetail', () => {
   it.each([
     [PaymentItemResponsePaymentItemType.LODGING_GENERAL, 150_000, true],
     [PaymentItemResponsePaymentItemType.LODGING_1C1S, 80_000, false],
-  ])('숙박비 %s는 API 유형별 한도·증빙과 박 기준을 매핑한다', (paymentItemType, maxAmount, evidence) => {
-    const detail = mapPaymentItemToSettingDetail({
-      paymentItemType,
-      itemName: paymentItemType === 'LODGING_1C1S' ? '숙박비 (1사1교)' : '숙박비',
-      layout: 'lodging',
-      maxAmount,
-      evidenceRequiredYn: evidence,
-      taxableYn: paymentItemType === 'LODGING_1C1S',
-      detailJson: JSON.stringify({ basisUnit: '일', basisHours: 2 }),
-    })
+  ])(
+    '숙박비 %s는 API 유형별 한도·증빙과 박 기준을 매핑한다',
+    (paymentItemType, maxAmount, evidence) => {
+      const detail = mapPaymentItemToSettingDetail({
+        paymentItemType,
+        itemName: paymentItemType === 'LODGING_1C1S' ? '숙박비 (1사1교)' : '숙박비',
+        layout: 'lodging',
+        maxAmount,
+        evidenceRequiredYn: evidence,
+        taxableYn: paymentItemType === 'LODGING_1C1S',
+        detailJson: JSON.stringify({ basisUnit: '일', basisHours: 2 }),
+      })
 
-    expect(detail.layout).toBe('lodging')
-    expect(detail.basisUnit).toBe('박')
-    expect(detail.basisHours).toBe(2)
-    expect(detail.maxLimitWon).toBe(maxAmount)
-    expect(detail.evidenceSubmission).toBe(evidence ? 'required' : 'not_required')
-  })
+      expect(detail.layout).toBe('lodging')
+      expect(detail.basisUnit).toBe('박')
+      expect(detail.basisHours).toBe(2)
+      expect(detail.maxLimitWon).toBe(maxAmount)
+      expect(detail.evidenceSubmission).toBe(evidence ? 'required' : 'not_required')
+    }
+  )
 
   it('활동비 layout은 activity로 유지한다', () => {
     const activity = mapPaymentItemToSettingDetail({
@@ -470,7 +469,6 @@ describe('mapPaymentItemToSettingDetail', () => {
     expect(detail.qualificationLines).toEqual(['참여자에게 지급되는 지원비'])
     expect(detail.remarkLines).toEqual([])
   })
-
 
   it('지급 항목은 top-level 지급요건·비고를 무시하고 detailJson만 읽는다', () => {
     const detail = mapPaymentItemToSettingDetail({
@@ -529,7 +527,6 @@ describe('mapPaymentItemToSettingDetail', () => {
   })
 })
 
-
 describe('mapDeductionItemToSettingDetail', () => {
   it('원천징수 서버 값이 없으면 기획 기본값을 표시한다', () => {
     const detail = mapDeductionItemToSettingDetail({
@@ -553,7 +550,7 @@ describe('mapDeductionItemToSettingDetail', () => {
   it('원천징수 서버 값이 있으면 기본값보다 우선한다 (DEPRECATED 일용·세액공제율은 무시)', () => {
     const detail = mapDeductionItemToSettingDetail({
       id: 166301,
-      itemName: '일용근로자 원천징수세액',
+      itemName: '원천징수세액',
       layout: 'withholdingDailyWorker',
       detailJson: JSON.stringify({
         qualificationLines: ['서버 요건'],
@@ -598,7 +595,7 @@ describe('mapDeductionItemToSettingDetail', () => {
   it('DEPRECATED 일용·세액공제율 키는 매핑하지 않는다', () => {
     const detail = mapDeductionItemToSettingDetail({
       id: 166301,
-      itemName: '일용근로자 원천징수세액',
+      itemName: '원천징수세액',
       layout: 'withholdingDailyWorker',
       detailJson: JSON.stringify({
         withholdingTaxRateDailyWorker: null,
@@ -611,10 +608,9 @@ describe('mapDeductionItemToSettingDetail', () => {
     expect(detail.withholdingTaxRateBusiness).toBe(3.3)
   })
 
-
   it('공제 항목은 top-level 지급요건·비고를 무시하고 detailJson만 읽는다', () => {
     const detail = mapDeductionItemToSettingDetail({
-      itemName: '일용근로자 원천징수세액',
+      itemName: '원천징수세액',
       layout: 'withholdingDailyWorker',
       qualificationLines: ['top-level 무시'],
       detailJson: JSON.stringify({
@@ -627,4 +623,3 @@ describe('mapDeductionItemToSettingDetail', () => {
     expect(detail.remarkLines).toEqual([])
   })
 })
-

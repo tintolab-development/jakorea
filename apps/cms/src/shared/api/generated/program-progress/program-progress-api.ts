@@ -14,6 +14,7 @@ import type {
   PageResponseProgramParticipantRegisterCandidateResponse,
   ParticipantRegisterCandidatesParams,
   Ujat1365RegistrationFormParams,
+  Ujat1365RegistrationFormRequest,
   Ujat1365RegistrationFormResponse,
   Ujat1365SemesterRegistrationFormRequest,
   Ujat1365SemesterRegistrationFormResponse,
@@ -255,10 +256,13 @@ const ujat1365SemesterRegistrationForm = (
 const ujat1365RegistrationForm = (
     programId: number,
     participantId: number,
+    ujat1365RegistrationFormRequest?: Ujat1365RegistrationFormRequest,
     params?: Ujat1365RegistrationFormParams,
  options?: SecondParameter<typeof customInstance<Ujat1365RegistrationFormResponse>>,) => {
       return customInstance<Ujat1365RegistrationFormResponse>(
       {url: `/api/admin/programs/${programId}/participants/${participantId}/1365-registration-form`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: ujat1365RegistrationFormRequest,
         params
     },
       options);

@@ -22,3 +22,9 @@
   font-weight: 500;
   line-height: 150%;
 }
+
+/* 템플릿 본문·부가 정보의 줄바꿈을 시안대로 유지 */
+.alimtalk-send-content-panel__text {
+  white-space: pre-wrap;
+  word-break: break-word;
+}

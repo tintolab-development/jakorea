@@ -101,17 +101,7 @@
   border-style: solid;
 }
 
-.recruit-guide-section .recruit-guide-inline-field--readonly .cms-input__control,
-.recruit-guide-section .recruit-guide-inline-field--readonly .cms-textarea__control {
-  border-color: transparent !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  cursor: default;
-}
-
-.recruit-guide-section .recruit-guide-inline-field--readonly .ant-input,
-.recruit-guide-section .recruit-guide-inline-field--readonly textarea.ant-input,
-.recruit-guide-section .recruit-guide-inline-field--edit textarea.ant-input {
+.recruit-guide-section .recruit-guide-inline-field textarea.ant-input {
   color: var(--default-BK, #3d3d3d) !important;
   font-weight: 500;
   text-align: center;
@@ -120,9 +110,7 @@
   overflow-wrap: break-word;
 }
 
-.recruit-guide-section .recruit-guide-inline-field--readonly .ant-input,
-.recruit-guide-section .recruit-guide-inline-field--readonly textarea.ant-input {
-  cursor: default;
+.recruit-guide-section .cms-inline-readonly textarea.ant-input {
   overflow: hidden !important;
 }
 
@@ -137,24 +125,11 @@
 }
 
 /*
- * 조직문화 표 조회 — 텍스트 높이만큼만 차지(운영 원칙과 동일): 투명 입력의 안쪽 패딩·보더·최소 높이를 없애
- * 행 높이 = 셀 패딩 + 텍스트 줄 수. (높이는 autoSize 인라인 값을 그대로 쓴다 — height 강제 금지)
+ * 조직문화 표 조회(inlineReadOnly="text") — 행 높이 = 셀 패딩 + 텍스트 줄 수 (높이는 autoSize 인라인 값 그대로)
+ * 조회는 표 셀 텍스트 규격 14px (수정 입력 칸 medium 15px와 분리)
  */
-.recruit-guide-culture-table .recruit-guide-inline-field--readonly .cms-textarea__control {
-  min-height: 0 !important;
-  padding: 0 !important;
-  border-width: 0;
-}
-
-.recruit-guide-culture-table
-  .recruit-guide-inline-field--readonly
-  .cms-textarea__inner
-  textarea.ant-input {
-  min-height: 0 !important;
-  padding: 0 !important;
-  /* 조회는 표 셀 텍스트 규격 14px (수정 입력 칸 medium 15px와 분리) */
+.recruit-guide-culture-table .cms-inline-readonly textarea.ant-input {
   font-size: 14px !important;
-  line-height: 150% !important;
 }
 
 /* 수정 모드 열 제목 필수 표시 — 글자 옆 2px · Status/red/main #C32F4A (기업후원 안내 표와 동일) */

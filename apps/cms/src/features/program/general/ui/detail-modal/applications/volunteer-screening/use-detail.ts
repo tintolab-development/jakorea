@@ -5,6 +5,8 @@ import { APPLICANT_ID_PARAM } from '@/features/program/shared/ui/program-detail/
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import {
   resolveGeneralVolunteerDocScreeningDetailMeta,
+  SCREENING_VOLUNTEER_DOC_PASSED_DETAIL_BREADCRUMB,
+  SCREENING_VOLUNTEER_INTERVIEW2_DETAIL_BREADCRUMB,
   screeningDocPassedDetailTitle,
   screeningInterview2DetailTitle,
   type ScreeningSubjectKind,
@@ -28,10 +30,18 @@ function getDetailMeta(
   subjectKind: ScreeningSubjectKind = 'volunteer'
 ): { title: string; breadcrumbLabel: string } {
   if (variant === 'doc_passed') {
-    return { title: screeningDocPassedDetailTitle(subjectKind, name), breadcrumbLabel: name }
+    return {
+      title: screeningDocPassedDetailTitle(subjectKind, name),
+      breadcrumbLabel:
+        subjectKind === 'volunteer' ? SCREENING_VOLUNTEER_DOC_PASSED_DETAIL_BREADCRUMB : name,
+    }
   }
   if (variant === 'interview2') {
-    return { title: screeningInterview2DetailTitle(subjectKind, name), breadcrumbLabel: name }
+    return {
+      title: screeningInterview2DetailTitle(subjectKind, name),
+      breadcrumbLabel:
+        subjectKind === 'volunteer' ? SCREENING_VOLUNTEER_INTERVIEW2_DETAIL_BREADCRUMB : name,
+    }
   }
   return resolveGeneralVolunteerDocScreeningDetailMeta(name, interviewEnabled)
 }

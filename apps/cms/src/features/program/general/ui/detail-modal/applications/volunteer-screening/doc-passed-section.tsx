@@ -1,4 +1,4 @@
-import { useCallback, useMemo, type MouseEvent } from 'react'
+import { useCallback, useMemo, useState, type Key, type MouseEvent } from 'react'
 import { Spin } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { FilterTableToolbarButton } from '@/shared/ui'
@@ -12,6 +12,8 @@ import {
   type ScreeningSubjectKind,
 } from '@/features/program/general/lib/screening-subject-kind'
 import { ApplicationGiveUpReasonModal } from '@/features/program/shared/ui/application-give-up-reason-modal'
+import { GeneralVolunteerScreeningActivityWithdrawModal } from './general-volunteer-screening-activity-withdraw-modal'
+import { GeneralVolunteerScreeningActivityWithdrawCompleteModal } from './general-volunteer-screening-activity-withdraw-complete-modal'
 import {
   useGeneralVolunteerApplicantDetail,
   type GeneralVolunteerApplicantDetailMetaChangeHandler,
@@ -48,6 +50,10 @@ export function GeneralVolunteerDocPassedSection({
     [subjectKind]
   )
   const listTitle = screeningDocPassedListTitle(subjectKind)
+  /** 봉사자 시안(07-1·07-2) 카피 — 개인형 참여자는 기존 문구 유지 */
+  const volunteerCopy = subjectKind === 'volunteer'
+  /** 봉사자 캘린더 우측 카드 체크 — 선택 시 엑셀은 선택 행만, 없으면 전체 */
+  const [calendarSelectedKeys, setCalendarSelectedKeys] = useState<Key[]>([])
   const {
     list,
     pendingFilters,
@@ -68,6 +74,11 @@ export function GeneralVolunteerDocPassedSection({
     requestWithdrawActivity,
     cancelWithdrawActivity,
     confirmWithdrawActivity,
+    confirmScheduleWithdrawActivity,
+    withdrawSubmitting,
+    activityWithdrawScheduleOptions,
+    withdrawCompleteVolunteerName,
+    closeWithdrawCompleteModal,
     withdrawTarget,
     cancelApprovalVolunteer,
     cancelRejectVolunteer,
@@ -82,7 +93,7 @@ export function GeneralVolunteerDocPassedSection({
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
-  } = useGeneralVolunteerDocPassed({ programId, subjectKind })
+  } = useGeneralVolunteerDocPassed({ programId, program, subjectKind })
   const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
     hasNextPage,
     isFetchingNextPage,
@@ -134,7 +145,24 @@ export function GeneralVolunteerDocPassedSection({
     [openApplicantDetail]
   )
 
-  const withdrawConfirmModal = (
+  /** 봉사자: 시안 18-1·18-2 — 2차 면접 대상자와 같은 활동 포기 팝업. 참여자는 기존 사유 입력 팝업 */
+  const withdrawConfirmModal = volunteerCopy ? (
+    <>
+      <GeneralVolunteerScreeningActivityWithdrawModal
+        open={withdrawTarget != null}
+        volunteerName={withdrawTarget?.name ?? ''}
+        scheduleOptions={activityWithdrawScheduleOptions}
+        confirming={withdrawSubmitting}
+        onCancel={cancelWithdrawActivity}
+        onConfirm={confirmScheduleWithdrawActivity}
+      />
+      <GeneralVolunteerScreeningActivityWithdrawCompleteModal
+        open={withdrawCompleteVolunteerName != null}
+        volunteerName={withdrawCompleteVolunteerName ?? ''}
+        onClose={closeWithdrawCompleteModal}
+      />
+    </>
+  ) : (
     <ApplicationGiveUpReasonModal
       open={withdrawTarget != null}
       onCancel={cancelWithdrawActivity}
@@ -152,6 +180,7 @@ export function GeneralVolunteerDocPassedSection({
       />
       <GeneralVolunteerDocumentCancelRejectModal
         open={cancelRejectVolunteer != null}
+        copyPreset={subjectKind === 'volunteer' ? 'document' : 'application'}
         volunteer={cancelRejectVolunteer}
         onCancel={closeCancelRejectModal}
         onConfirm={handleCancelRejectConfirm}
@@ -179,7 +208,7 @@ export function GeneralVolunteerDocPassedSection({
         variant="secondary"
         icon={<ButtonCalendarIcon />}
         onClick={handleViewCalendar} >
-        캘린더 뷰로 보기
+        {volunteerCopy ? '캘린더 뷰 보기' : '캘린더 뷰로 보기'}
       </FilterTableToolbarButton>
     ) : (
       <FilterTableToolbarButton
@@ -187,7 +216,7 @@ export function GeneralVolunteerDocPassedSection({
         variant="secondary"
         icon={<ButtonListIcon />}
         onClick={handleViewList} >
-        리스트 뷰로 보기
+        {volunteerCopy ? '리스트 뷰 보기' : '리스트 뷰로 보기'}
       </FilterTableToolbarButton>
     )
 
@@ -255,12 +284,17 @@ export function GeneralVolunteerDocPassedSection({
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
         title={listTitle}
-        description={`${count.toLocaleString()}건`}
+        description={
+          volunteerCopy ? `총 ${count.toLocaleString()}건` : `${count.toLocaleString()}건`
+        }
         actions={viewToggleButton}
         excelExport={{
           accessLog: { downloadKind: 'PROGRAM_SCREENING_DOC_PASSED_EXPORT', containedPiiTypes: ['NAME'] },
           columns,
           data: tableData,
+          ...(volunteerCopy && viewMode === 'calendar' && calendarSelectedKeys.length > 0
+            ? { selectedRowKeys: calendarSelectedKeys }
+            : {}),
         }}
       >
         {viewMode === 'list' ? (
@@ -290,6 +324,9 @@ export function GeneralVolunteerDocPassedSection({
           <div className="general-volunteer-doc-passed__calendar-container">
             <GeneralVolunteerDocPassedCalendarView
               events={calendarEvents}
+              cardPreset={volunteerCopy ? 'volunteer' : 'default'}
+              selectedRowKeys={calendarSelectedKeys}
+              onSelectionChange={setCalendarSelectedKeys}
               onItemClick={openApplicantDetail}
             />
           </div>

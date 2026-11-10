@@ -15,6 +15,7 @@ import {
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 import type { Program } from '@/types/domain'
 import { formatEducationScheduleLabelTokens } from '@/shared/lib/education-schedule-name'
+import { formatAsiaSeoulYymmdd } from '@/features/settlement-management/api/account-payments/settlement-form-download'
 
 export const LECTURE_REPORT_DOCUMENT_TITLE = '강의보고서'
 
@@ -48,6 +49,8 @@ export interface LectureReportPreviewContent {
   form?: Record<string, unknown>
   answers?: Record<string, unknown>
   files?: LectureReportPreviewFile[]
+  /** 제출 일시(ISO). 파일명 날짜에 쓴다. */
+  submittedAt?: string | null
 }
 
 export interface LectureReportPreviewContext {
@@ -383,13 +386,21 @@ export function buildLectureReportFilledDraft(ctx: LectureReportPreviewContext):
   }
 }
 
-/** 파일명: 강의보고서_기관명_강사명_260605 */
+/** ISO 일시 → Date. 비었거나 파싱 불가면 null. */
+function parseSubmittedAt(raw: string | null | undefined): Date | null {
+  if (typeof raw !== 'string' || raw.trim() === '') return null
+  const date = new Date(raw)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+/**
+ * 파일명: [JA Korea] 강의보고서_강사명_260605 (빗금은 쉼표로 치환)
+ * 날짜 = 제출일(`content.submittedAt`, Asia/Seoul). 없으면 `fallbackDate`(기본 오늘).
+ */
 export function buildLectureReportPreviewFileName(
   ctx: LectureReportPreviewContext,
-  date = new Date()
+  fallbackDate = new Date()
 ): string {
-  const y = String(date.getFullYear()).slice(2)
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  return `${LECTURE_REPORT_DOCUMENT_TITLE}_${ctx.row.schoolName}_${ctx.instructor.instructorName}_${y}${m}${d}`
+  const date = parseSubmittedAt(ctx.content?.submittedAt) ?? fallbackDate
+  return `[JA Korea] ${LECTURE_REPORT_DOCUMENT_TITLE}_${ctx.instructor.instructorName.replace(/[/\\]/g, ',')}_${formatAsiaSeoulYymmdd(date)}`
 }

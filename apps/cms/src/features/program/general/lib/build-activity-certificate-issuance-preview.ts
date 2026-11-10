@@ -1,6 +1,7 @@
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import { DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES } from '@/features/template/ui/template-management/template-custom-fields-form'
 import type { Program } from '@/types/domain'
+import { formatAsiaSeoulYymmdd } from '@/features/settlement-management/api/account-payments/settlement-form-download'
 
 export const ACTIVITY_CERTIFICATE_DOCUMENT_TITLE = '활동인증서'
 
@@ -28,9 +29,14 @@ function resolveProgramName(program?: Program | null): string {
   return program?.mainTitle?.trim() || program?.title?.trim() || 'JA Korea 경제교육 프로그램'
 }
 
+/** 참여자 정보 마지막 줄(발급 목적) 기본값 — 발급 사유를 고르지 않는 기존 흐름 */
+export const ACTIVITY_CERTIFICATE_DEFAULT_ISSUANCE_PURPOSE = '기관 및 학교 제출용'
+
 export function buildActivityCertificateParticipantInfo(
   instructor: ParticipatingInstructorRow,
-  program?: Program | null
+  program?: Program | null,
+  /** 발급 사유 모달에서 고른 사유 라벨 — 발급 문서 「발급목적」 줄에 기입 */
+  issuanceReasonLabel?: string
 ): string {
   return [
     instructor.instructorName,
@@ -38,28 +44,36 @@ export function buildActivityCertificateParticipantInfo(
     instructor.schoolName,
     resolveProgramName(program),
     formatProgramPeriod(program),
-    '기관 및 학교 제출용',
+    issuanceReasonLabel?.trim() || ACTIVITY_CERTIFICATE_DEFAULT_ISSUANCE_PURPOSE,
   ].join('\n')
 }
 
 export function buildActivityCertificateInitialStringValues(
   instructor: ParticipatingInstructorRow,
-  program?: Program | null
+  program?: Program | null,
+  issuanceReasonLabel?: string
 ): Record<string, string> {
   return {
     ...DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES,
     titleName: ACTIVITY_CERTIFICATE_DOCUMENT_TITLE,
     bodyContent: ACTIVITY_CERTIFICATE_BODY_CONTENT,
-    participantInfo: buildActivityCertificateParticipantInfo(instructor, program),
+    participantInfo: buildActivityCertificateParticipantInfo(
+      instructor,
+      program,
+      issuanceReasonLabel
+    ),
   }
 }
 
-/** 파일명 포맷: 활동인증서_김서연_260605 */
-export function buildActivityCertificateFileName(participantName: string, date = new Date()): string {
-  const y = String(date.getFullYear()).slice(2)
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  return `${ACTIVITY_CERTIFICATE_DOCUMENT_TITLE}_${participantName}_${y}${m}${d}`
+/**
+ * 파일명 포맷: [JA Korea] 활동인증서_김서연_260605 (빗금은 쉼표로 치환)
+ * 날짜 = 발급일(서버 issuedAt, Asia/Seoul). 없으면 오늘.
+ */
+export function buildActivityCertificateFileName(
+  participantName: string,
+  date: Date | null = new Date()
+): string {
+  return `[JA Korea] ${ACTIVITY_CERTIFICATE_DOCUMENT_TITLE}_${participantName.replace(/[/\\]/g, ',')}_${formatAsiaSeoulYymmdd(date ?? new Date())}`
 }
 
 export function buildActivityCertificateParticipantInfoForVolunteer(
@@ -76,7 +90,7 @@ export function buildActivityCertificateParticipantInfoForVolunteer(
     options?.institutionName ?? '-',
     resolveProgramName(options?.program),
     formatProgramPeriod(options?.program),
-    '기관 및 학교 제출용',
+    ACTIVITY_CERTIFICATE_DEFAULT_ISSUANCE_PURPOSE,
   ].join('\n')
 }
 

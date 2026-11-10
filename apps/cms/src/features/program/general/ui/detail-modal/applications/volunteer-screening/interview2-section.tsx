@@ -29,6 +29,8 @@ import { GeneralVolunteerInterview2FailCompleteModal } from './general-volunteer
 import { GeneralVolunteerInterview2FailModal } from './general-volunteer-interview2-fail-modal'
 import { GeneralVolunteerInterview2PassCompleteModal } from './general-volunteer-interview2-pass-complete-modal'
 import { GeneralVolunteerInterview2PassModal } from './general-volunteer-interview2-pass-modal'
+import { GeneralVolunteerInterview2PassTypeModal } from './interview2-pass-type-modal'
+import { GeneralVolunteerInterview2ResultCompleteModal } from './interview2-result-complete-modal'
 import { GeneralVolunteerInterview2CancelPassModal } from './general-volunteer-interview2-cancel-pass-modal'
 import { GeneralVolunteerInterview2CancelFailModal } from './general-volunteer-interview2-cancel-fail-modal'
 import { GeneralVolunteerInterview2CalendarView } from './general-volunteer-interview2-calendar-view'
@@ -60,6 +62,8 @@ export function GeneralVolunteerInterview2Section({
   onVolunteerApplicantDetailMetaChange?: GeneralVolunteerApplicantDetailMetaChangeHandler
 }) {
   const listTitle = screeningInterview2ListTitle(subjectKind)
+  /** 봉사자 시안(10-1·10-2) 카피 — 개인형 참여자는 기존 문구 유지 */
+  const volunteerCopy = subjectKind === 'volunteer'
 
   const {
     list,
@@ -217,7 +221,19 @@ export function GeneralVolunteerInterview2Section({
     </>
   )
 
-  const bulkPassModal = (
+  /** 봉사자: 시안 12-1(9781:52425) 합격 유형 필수. 참여자(개인형)는 기존 일괄 승인 팝업 유지 */
+  const withPassType = volunteerCopy
+
+  const bulkPassModal = withPassType ? (
+    <GeneralVolunteerInterview2PassTypeModal
+      open={bulkPassModalOpen}
+      mode="bulk"
+      subjectName={bulkPassSubjectName}
+      selectionCount={bulkPassCount}
+      onCancel={closeBulkPassModal}
+      onConfirm={confirmBulkPass}
+    />
+  ) : (
     <GeneralVolunteerApplicationBulkApproveModal
       open={bulkPassModalOpen}
       subjectName={bulkPassSubjectName}
@@ -230,6 +246,8 @@ export function GeneralVolunteerInterview2Section({
   const bulkFailModal = (
     <GeneralVolunteerInterview2BulkFailModal
       open={bulkFailModalOpen}
+      copyPreset={volunteerCopy ? 'general-volunteer' : 'default'}
+      subjectName={bulkPassSubjectName}
       selectionCount={bulkFailCount}
       onCancel={closeBulkFailModal}
       onConfirm={confirmBulkFail}
@@ -238,14 +256,25 @@ export function GeneralVolunteerInterview2Section({
 
   const passFailModals = (
     <>
-      <GeneralVolunteerInterview2PassModal
-        open={passModalVolunteer != null}
-        volunteerName={passModalVolunteer?.name ?? ''}
-        onCancel={closePassModal}
-        onConfirm={handlePassModalConfirm}
-      />
+      {withPassType ? (
+        <GeneralVolunteerInterview2PassTypeModal
+          open={passModalVolunteer != null}
+          mode="single"
+          subjectName={passModalVolunteer?.name ?? ''}
+          onCancel={closePassModal}
+          onConfirm={handlePassModalConfirm}
+        />
+      ) : (
+        <GeneralVolunteerInterview2PassModal
+          open={passModalVolunteer != null}
+          volunteerName={passModalVolunteer?.name ?? ''}
+          onCancel={closePassModal}
+          onConfirm={handlePassModalConfirm}
+        />
+      )}
       <GeneralVolunteerInterview2FailModal
         open={failModalVolunteer != null}
+        copyPreset={volunteerCopy ? 'general-volunteer' : 'default'}
         volunteerName={failModalVolunteer?.name ?? ''}
         onCancel={closeFailModal}
         onConfirm={handleFailModalConfirm}
@@ -273,7 +302,26 @@ export function GeneralVolunteerInterview2Section({
     />
   )
 
-  const completeModals = (
+  /** 봉사자: 시안 11-2·12-2·14-2·16-3 「합격/불합격 처리 완료」 — 참여자는 기존 완료 팝업 */
+  const completeModals = volunteerCopy ? (
+    <>
+      <GeneralVolunteerInterview2ResultCompleteModal
+        open={passCompleteVolunteerName != null}
+        result="pass"
+        onClose={closePassCompleteModal}
+      />
+      <GeneralVolunteerInterview2ResultCompleteModal
+        open={failCompleteVolunteer != null}
+        result="fail"
+        onClose={closeFailCompleteModal}
+      />
+      <GeneralVolunteerInterview2ResultCompleteModal
+        open={bulkFailCompleteCount != null}
+        result="fail"
+        onClose={closeBulkFailCompleteModal}
+      />
+    </>
+  ) : (
     <>
       <GeneralVolunteerInterview2PassCompleteModal
         open={passCompleteVolunteerName != null}
@@ -379,7 +427,9 @@ export function GeneralVolunteerInterview2Section({
         title={
           <div className="general-volunteer-interview2__toolbar-main">
             <span className="general-volunteer-interview2__toolbar-title">{listTitle}</span>
-            <span className="general-volunteer-interview2__toolbar-count">{count}건</span>
+            <span className="general-volunteer-interview2__toolbar-count">
+              {volunteerCopy ? `총 ${count}건` : `${count}건`}
+            </span>
           </div>
         }
         actions={
@@ -402,7 +452,7 @@ export function GeneralVolunteerInterview2Section({
                 variant="secondary"
                 icon={<ButtonCalendarIcon />}
                 onClick={handleViewCalendar} >
-                캘린더 뷰로 보기
+                {volunteerCopy ? '캘린더 뷰 보기' : '캘린더 뷰로 보기'}
               </FilterTableToolbarButton>
             ) : (
               <FilterTableToolbarButton
@@ -410,7 +460,7 @@ export function GeneralVolunteerInterview2Section({
                 variant="secondary"
                 icon={<ButtonListIcon />}
                 onClick={handleViewList} >
-                리스트 뷰로 보기
+                {volunteerCopy ? '리스트 뷰 보기' : '리스트 뷰로 보기'}
               </FilterTableToolbarButton>
             )}
           </div>
@@ -457,6 +507,7 @@ export function GeneralVolunteerInterview2Section({
           <div className="general-volunteer-interview2__calendar-container">
             <GeneralVolunteerInterview2CalendarView
               events={calendarEvents}
+              cardPreset={volunteerCopy ? 'volunteer' : 'default'}
               selectedRowKeys={selectedRowKeys}
               onSelectionChange={setSelectedRowKeys}
               onItemClick={openApplicantDetail}

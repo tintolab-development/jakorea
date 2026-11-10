@@ -26,7 +26,10 @@ import {
   formatNotificationMissingVariablesMessage,
   parseNotificationMissingVariableKeys,
 } from '@/features/notifications/model/shared/format-notification-failed-reason'
-import { NOTIFICATION_REQUIRED_VARIABLE_MISSING_HINT } from '@/features/notifications/model/shared/send-ux-copy'
+import {
+  NOTIFICATION_DIRECT_MEMBER_VARIABLE_HINT,
+  NOTIFICATION_REQUIRED_VARIABLE_MISSING_HINT,
+} from '@/features/notifications/model/shared/send-ux-copy'
 
 const ERROR_CODE_MESSAGES: Record<string, string> = {
   CATEGORY_HAS_CHILDREN: '하위 카테고리 또는 템플릿이 있어 삭제할 수 없습니다.',
@@ -82,12 +85,12 @@ const ERROR_CODE_MESSAGES: Record<string, string> = {
   // MMS 첨부 (BE error.message 우선, 없을 때만 아래 문구)
   NOTIFICATION_ATTACHMENT_ONLY_MMS: '첨부 파일은 MMS 발송에서만 사용할 수 있습니다.',
   NOTIFICATION_MMS_ATTACHMENT_FORMAT_INVALID:
-    'MMS 첨부는 JPG/JPEG 이미지이며 파일명은 40자 이내, 공백 없이 입력해 주세요.',
+    'MMS 첨부는 JPG/JPEG 이미지이며 파일명은 45자 이내, 공백 없이 입력해 주세요.',
   NOTIFICATION_MMS_ATTACHMENT_SIZE_INVALID:
-    'MMS 첨부 이미지는 파일당 300KiB 이하이며 합계 600KiB 이하여야 합니다.',
-  NOTIFICATION_MMS_ATTACHMENT_COUNT_INVALID: 'MMS 첨부는 최대 2개까지 등록할 수 있습니다.',
+    'MMS 첨부 이미지는 파일당 300KiB 이하이며 합계 800KiB 이하여야 합니다.',
+  NOTIFICATION_MMS_ATTACHMENT_COUNT_INVALID: 'MMS 첨부는 최대 3개까지 등록할 수 있습니다.',
   NOTIFICATION_MMS_ATTACHMENT_RESOLUTION_INVALID:
-    'MMS 첨부 이미지는 가로 1500px, 세로 1440px 이하만 등록할 수 있습니다.',
+    'MMS 첨부 이미지는 가로 1000px, 세로 1000px 이하만 등록할 수 있습니다.',
   NOTIFICATION_MMS_ATTACHMENT_NOT_FOUND: 'MMS 첨부 파일을 찾을 수 없습니다.',
   NOTIFICATION_MMS_ATTACHMENT_NOT_AVAILABLE:
     'MMS 첨부 파일이 아직 준비되지 않았거나 만료·삭제되었습니다. 파일을 다시 등록해 주세요.',
@@ -212,6 +215,9 @@ function looksLikeSenderPhoneRequired(message: string, field?: string): boolean 
 const PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES =
   'NOTIFICATION_PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES'
 const TEMPLATE_VARIABLE_SCOPE_DISABLED = 'NOTIFICATION_TEMPLATE_VARIABLE_SCOPE_DISABLED'
+/** 알림톡: 직접 입력 수신자를 섞으면 참여 유형·회원 유형 한정 변수 배치 전체 400 (BE 2026-11-10) */
+const TEMPLATE_VARIABLE_SCOPE_DISABLED_DIRECT_HINT =
+  '직접 입력 수신자를 함께 보낼 때는 참여 유형·회원 유형 한정 변수를 사용할 수 없습니다.'
 
 function parseCodeSuffixKeys(raw: string | undefined, prefix: string): string[] {
   const text = raw?.trim() ?? ''
@@ -261,8 +267,8 @@ function formatTemplateVariableScopeDisabledMessage(
 ): string {
   const base = ERROR_CODE_MESSAGES[TEMPLATE_VARIABLE_SCOPE_DISABLED]
   const names = parseScopeDisabledVariableNames(code, serverMessage)
-  if (names.length === 0) return base
-  return `${base}\n사용할 수 없는 변수: ${names.join(', ')}`
+  const head = names.length === 0 ? base : `${base}\n사용할 수 없는 변수: ${names.join(', ')}`
+  return `${head}\n${TEMPLATE_VARIABLE_SCOPE_DISABLED_DIRECT_HINT}`
 }
 
 /** 400 `NOTIFICATION_PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES:{키}` — 프로그램 필요 변수 키 안내 */
@@ -415,7 +421,7 @@ export function getNotificationsApiErrorMessage(error: unknown, fallback: string
     const main = formatNotificationMissingVariablesMessage(
       keys.length > 0 ? keys : parseNotificationMissingVariableKeys(serverMessage)
     )
-    return `${main}\n${NOTIFICATION_REQUIRED_VARIABLE_MISSING_HINT}`
+    return `${main}\n${NOTIFICATION_REQUIRED_VARIABLE_MISSING_HINT}\n${NOTIFICATION_DIRECT_MEMBER_VARIABLE_HINT}`
   }
   if (code === 'NOTIFICATION_SERVER_RESERVED_VARIABLE') {
     const formatted = formatNotificationFailedReason(serverMessage || code)

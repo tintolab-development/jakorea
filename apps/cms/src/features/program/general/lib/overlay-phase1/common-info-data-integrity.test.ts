@@ -84,7 +84,7 @@ function organizationProgram186307(): Program {
       scheduleDetails: [],
       wageGradeRows: [...GET_WAGE_ROWS],
       paymentItems: '교통비, 식사비',
-      deductionItems: '일용근로자 원천징수세액',
+      deductionItems: '원천징수세액',
       kpi: {
         finalParticipants: 80,
         instructorCount: 2,
@@ -249,11 +249,7 @@ describe('GENERAL_DETAIL_DATA_INTEGRITY', () => {
       existing,
       {
         ...values,
-        sponsorManagerContactIds: [
-          '1627251::1627253',
-          '163301::163322',
-          '163301::163323',
-        ],
+        sponsorManagerContactIds: ['1627251::1627253', '163301::163322', '163301::163323'],
         sponsorManagerContactId: '1627251::1627253',
       },
       new Set(['sponsorManagerContactIds', 'sponsorManagerContactId'])
@@ -398,9 +394,9 @@ describe('GENERAL_DETAIL_DATA_INTEGRITY', () => {
       },
       new Set(['curriculumSessions'])
     )
-    const nos = (
-      parsed.generalCommonInfo?.curriculumSessions as Array<{ sessionNo?: number }>
-    ).map(row => row.sessionNo)
+    const nos = (parsed.generalCommonInfo?.curriculumSessions as Array<{ sessionNo?: number }>).map(
+      row => row.sessionNo
+    )
     expect(nos).toEqual([1, 3])
   })
 

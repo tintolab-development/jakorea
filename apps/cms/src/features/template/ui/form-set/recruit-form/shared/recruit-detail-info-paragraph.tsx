@@ -6,6 +6,7 @@ import { ParagraphFileUpload } from '@/features/template/ui/shared/paragraph-fil
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsTextArea } from '@/shared/ui/cms-textarea'
+import { useIsGeneralRegistrationWizard } from '@/features/template/context/general-registration-wizard-context'
 import {
   getRecruitDetailInfoRecord,
   getRecruitDetailInfoScope,
@@ -66,6 +67,13 @@ const DETAIL_INFO_WYSIWYG_OPTIONS = {
   contentFormat: 'html' as const,
   height: '100px',
 }
+/** 일반 프로그램 등록 위저드 시안 — 「…을 작성하세요」 → 「…을 작성해 주세요」 */
+const GENERAL_WIZARD_ADDITIONAL_CONTENT_PLACEHOLDER = '내용을 작성해 주세요'
+
+function toGeneralWizardPlaceholder(placeholder: string): string {
+  return placeholder.replace(/작성하세요$/, '작성해 주세요')
+}
+
 const RICH_TEXT_FIELD_LABELS = new Set(['모집 안내', '지원 방법', '학습 지원 내용', '기타사항'])
 
 type RecruitDetailInfoTextField = {
@@ -297,14 +305,17 @@ const RecruitDetailRichTextEditor = memo(function RecruitDetailRichTextEditor({
 const RecruitDetailAdditionalContentEditor = memo(function RecruitDetailAdditionalContentEditor({
   wysiwygResetKey,
   additionalContentKey,
+  placeholder,
 }: {
   wysiwygResetKey: string
   additionalContentKey: string
+  placeholder?: string
 }) {
   return (
     <RecruitDetailRichTextEditor
       wysiwygResetKey={wysiwygResetKey}
       overlayKey={additionalContentKey}
+      placeholder={placeholder}
     />
   )
 })
@@ -318,6 +329,18 @@ export function RecruitDetailInfoParagraph({
   attachmentGuideLines = RECRUIT_DETAIL_ATTACHMENT_GUIDE_LINES,
   textFieldControl = 'input',
 }: RecruitDetailInfoParagraphProps) {
+  // 일반 프로그램 등록 위저드만 시안 플레이스홀더 — 1사1교·Gemini·UJAT·교육받은 교사·템플릿 관리는 기존 문구
+  const isGeneralWizard = useIsGeneralRegistrationWizard()
+  const resolvedTextFields = isGeneralWizard
+    ? textFields.map(field => ({ ...field, placeholder: toGeneralWizardPlaceholder(field.placeholder) }))
+    : textFields
+  const resolvedAfterEditorFields =
+    isGeneralWizard && afterEditorFields != null
+      ? afterEditorFields.map(field => ({
+          ...field,
+          placeholder: toGeneralWizardPlaceholder(field.placeholder),
+        }))
+      : afterEditorFields
   const contentResetGeneration = useRecruitDetailContentResetGeneration()
   const overlayScope = getRecruitDetailInfoScope()
   const editorResetKey = `${wysiwygResetKey}::scope-${overlayScope}::reset-${contentResetGeneration}`
@@ -596,7 +619,7 @@ export function RecruitDetailInfoParagraph({
         </DetailInfoForm.Row>
 
         <RecruitDetailInfoTextFieldRows
-          fields={textFields}
+          fields={resolvedTextFields}
           overlayKeyPrefix={overlayKeyPrefix}
           wysiwygResetKey={editorResetKey}
           textFieldControl={textFieldControl}
@@ -614,15 +637,18 @@ export function RecruitDetailInfoParagraph({
                 key={`${additionalContentKey}-${contentResetGeneration}`}
                 wysiwygResetKey={editorResetKey}
                 additionalContentKey={additionalContentKey}
+                placeholder={
+                  isGeneralWizard ? GENERAL_WIZARD_ADDITIONAL_CONTENT_PLACEHOLDER : undefined
+                }
               />
             }
             view="-"
           />
         </DetailInfoForm.Row>
 
-        {afterEditorFields != null && afterEditorFields.length > 0 ? (
+        {resolvedAfterEditorFields != null && resolvedAfterEditorFields.length > 0 ? (
           <RecruitDetailInfoTextFieldRows
-            fields={afterEditorFields}
+            fields={resolvedAfterEditorFields}
             overlayKeyPrefix={overlayKeyPrefix}
             wysiwygResetKey={editorResetKey}
             textFieldControl={textFieldControl}

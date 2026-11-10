@@ -15,6 +15,8 @@ import type { Program } from '@/types/domain'
 import type { ProgramRegistrationFormVariant } from '@/features/template/model/program-registration-draft'
 import {
   GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY,
+  GENERAL_PROGRAM_REGISTRATION_PROGRAM_PHASE_HINT_GENERAL,
+  generalRegistrationRecruitmentPreviewTitle,
   normalizeGeneralProgramRegistrationStepKey,
   recruitmentPreviewAudienceFromRegistrationStep,
 } from '@/features/program/general/model/registration-flow'
@@ -22,11 +24,22 @@ import {
   ParticipantRecruitmentPreviewModal,
   type RecruitmentUserPreviewAudience,
 } from '@/features/program/general/ui/detail-modal/info/participant-recruitment-preview-modal'
+import { PlatformPreviewModal } from '@/features/program/shared/ui/platform-preview/platform-preview-modal'
+import {
+  buildApplicationPlatformPreviewMessage,
+  resolveApplicationStepPreviewSpec,
+} from '@/features/program/general/lib/application-platform-preview'
+import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
+import type { GeneralProgramRegistrationStepKey } from '@/features/program/general/model/registration-flow'
 import { useGeneralProgramRegistrationFlow } from '@/features/program/general/hooks/use-registration-flow'
 import { useRegistrationWizardHistoryLeaveGuard } from '@/features/program/general/hooks/use-registration-wizard-history-leave-guard'
 import { GeneralProgramRegistrationBodyHeader } from '@/features/program/general/ui/registration/registration-body-header'
 import { RegistrationStepTemplateChrome } from '@/features/program/shared/ui/registration/step-template-banner'
-import { HideParagraphSelectionChromeContext } from '@/features/template/context/paragraph-selection-chrome-context'
+import {
+  HideParagraphSelectionChromeContext,
+  ShowParagraphActiveOutlineContext,
+} from '@/features/template/context/paragraph-selection-chrome-context'
+import { GeneralRegistrationWizardContext } from '@/features/template/context/general-registration-wizard-context'
 import {
   REGISTRATION_DRAFT_MODE_QUERY_KEY,
   clearRegistrationDraftForFreshStart,
@@ -167,6 +180,13 @@ function GeneralProgramRegistrationFullpageModalInner({
     useState<TrainedTeachersRegistrationDevAutofillCaseId>(1)
   const [recruitmentPreviewAudience, setRecruitmentPreviewAudience] =
     useState<RecruitmentUserPreviewAudience>('institutions')
+  const [recruitmentPreviewTitle, setRecruitmentPreviewTitle] = useState<string | undefined>()
+  /** 신청 정보 단계 미리보기 — Platform 「프로그램 신청하기」 화면 (일반 프로그램 등록만) */
+  const [applicationPreview, setApplicationPreview] = useState<{
+    program: Program
+    step: GeneralProgramRegistrationStepKey
+    draft: WritingFormDraft
+  } | null>(null)
   const pendingCreatedProgramRef = useRef<Program | undefined>(undefined)
 
   // 안내 팝업에서 「이어서 작성」을 명시한 경우만 복원한다.
@@ -250,6 +270,7 @@ function GeneralProgramRegistrationFullpageModalInner({
     setCompleteSuccessOpen(false)
     setRecruitmentPreviewOpen(false)
     setRecruitmentPreviewProgram(null)
+    setApplicationPreview(null)
     setTemplatePickerOpen(false)
     pendingCreatedProgramRef.current = undefined
   }, [open])
@@ -265,6 +286,17 @@ function GeneralProgramRegistrationFullpageModalInner({
   )
 
   const recruitmentPreviewSponsorName = useSponsorNameById(recruitmentPreviewProgram?.sponsorId)
+  const applicationPreviewSponsorName = useSponsorNameById(applicationPreview?.program.sponsorId)
+  const applicationPreviewMessage = useMemo(
+    () =>
+      applicationPreview
+        ? buildApplicationPlatformPreviewMessage({
+            ...applicationPreview,
+            sponsorName: applicationPreviewSponsorName,
+          })
+        : null,
+    [applicationPreview, applicationPreviewSponsorName]
+  )
 
   const flow = useGeneralProgramRegistrationFlow(open, {
     initialStep,
@@ -320,14 +352,31 @@ function GeneralProgramRegistrationFullpageModalInner({
     if (flow.phase === 'recruitment') {
       setRecruitmentPreviewProgram(flow.registrationVm.buildCurrentProgramSnapshot())
       setRecruitmentPreviewAudience(recruitmentPreviewAudienceFromRegistrationStep(flow.activeStep))
+      setRecruitmentPreviewTitle(
+        registrationFormVariant === 'general'
+          ? generalRegistrationRecruitmentPreviewTitle(flow.activeStep)
+          : undefined
+      )
       setRecruitmentPreviewOpen(true)
+      return
+    }
+    if (
+      flow.phase === 'application' &&
+      registrationFormVariant === 'general' &&
+      resolveApplicationStepPreviewSpec(flow.activeStep)
+    ) {
+      setApplicationPreview({
+        program: flow.registrationVm.buildCurrentProgramSnapshot(),
+        step: flow.activeStep,
+        draft: flow.participantVm.draft,
+      })
       return
     }
     const next = new URLSearchParams(searchParams)
     next.set('userPreview', TEMPLATE_USER_PREVIEW_ACTIVE)
     setSearchParams(next, { replace: false })
     flow.handlePreview()
-  }, [flow, searchParams, setSearchParams])
+  }, [flow, registrationFormVariant, searchParams, setSearchParams])
 
   const runDraftSave = useCallback(async () => {
     try {
@@ -469,10 +518,14 @@ function GeneralProgramRegistrationFullpageModalInner({
     return undefined
   }, [flow])
 
+  /** 일반 프로그램 등록만 시안 분기(상단 행 고정·단락 테두리·배너 제목·모집/신청 폼 문구). 1사1교·교육받은 교사는 기존 유지 */
+  const isGeneralVariant = registrationFormVariant === 'general'
+
   return (
     <>
       <TemplateFullpageModal
         open={open}
+        className={isGeneralVariant ? 'full-page-modal--sticky-body-header' : undefined}
         bodyLoading={flow.isDraftLoading}
         scrollResetKey={flow.activeStep}
         onClose={requestLeave}
@@ -495,6 +548,9 @@ function GeneralProgramRegistrationFullpageModalInner({
             activeStep={flow.activeStep}
             visibleRecruitTabKeys={flow.visibleRecruitTabKeys}
             visibleApplicationTabKeys={flow.visibleApplicationTabKeys}
+            programPhaseHint={
+              isGeneralVariant ? GENERAL_PROGRAM_REGISTRATION_PROGRAM_PHASE_HINT_GENERAL : undefined
+            }
             onSelectStep={key => {
               setTemplatePickerOpen(false)
               flow.selectStep(key)
@@ -508,6 +564,7 @@ function GeneralProgramRegistrationFullpageModalInner({
               isDefault={flow.isDefaultStepTemplate}
               category={flow.phase === 'application' ? 'application_form' : 'application'}
               allowedFamilyBaseTemplateCode={flow.currentStepDef.templateId}
+              showTitle={isGeneralVariant}
               pickerOpen={templatePickerOpen}
               onOpenPicker={() => setTemplatePickerOpen(true)}
               onClosePicker={() => setTemplatePickerOpen(false)}
@@ -538,12 +595,16 @@ function GeneralProgramRegistrationFullpageModalInner({
         }
         footerActions={footerActions}
         leftContent={
-          <HideParagraphSelectionChromeContext.Provider
-            key={`${flow.selectedTemplateCode}::${flow.wizardDraftRevision}`}
-            value={flow.phase !== 'application'}
-          >
-            {flow.panels.leftContent}
-          </HideParagraphSelectionChromeContext.Provider>
+          <GeneralRegistrationWizardContext.Provider value={isGeneralVariant}>
+            <HideParagraphSelectionChromeContext.Provider
+              key={`${flow.selectedTemplateCode}::${flow.wizardDraftRevision}`}
+              value={flow.phase !== 'application'}
+            >
+              <ShowParagraphActiveOutlineContext.Provider value={isGeneralVariant}>
+                {flow.panels.leftContent}
+              </ShowParagraphActiveOutlineContext.Provider>
+            </HideParagraphSelectionChromeContext.Provider>
+          </GeneralRegistrationWizardContext.Provider>
         }
         rightNavigation={hideCustomFieldNav ? null : flow.panels.rightNavigation}
       />
@@ -580,6 +641,15 @@ function GeneralProgramRegistrationFullpageModalInner({
           program={recruitmentPreviewProgram}
           sponsorName={recruitmentPreviewSponsorName}
           audience={recruitmentPreviewAudience}
+          title={recruitmentPreviewTitle}
+        />
+      ) : null}
+      {applicationPreview ? (
+        <PlatformPreviewModal
+          open
+          onClose={() => setApplicationPreview(null)}
+          title={resolveApplicationStepPreviewSpec(applicationPreview.step)?.title ?? '신청 정보 미리보기'}
+          message={applicationPreviewMessage}
         />
       ) : null}
     </>

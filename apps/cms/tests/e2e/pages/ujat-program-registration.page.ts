@@ -93,7 +93,7 @@ export class UjatProgramRegistrationPage {
   async openNewRegistration() {
     await this.page.getByRole('button', { name: /신규 등록/ }).click()
 
-    const draftDialog = this.page.getByRole('dialog').filter({ hasText: '임시저장 이력 안내' })
+    const draftDialog = this.page.getByRole('dialog').filter({ hasText: '임시 저장 이력 안내' })
     if (await draftDialog.isVisible().catch(() => false)) {
       await draftDialog.getByRole('radio', { name: '신규 등록' }).check()
       await draftDialog.getByRole('button', { name: '프로그램 등록' }).click()

@@ -8,8 +8,13 @@ import { formatJaEvaluationGradeCellDisplay } from '@/features/program/general/l
 
 export function useGeneralInstructorApplicantColumns(params: {
   setSelectedItem: (record: ApplicantInstructorRow) => void
+  /**
+   * 일반(기관형) 시안 1141:241761 — 신청 강사명은 일반 텍스트, 상세는 행 클릭으로 연다.
+   * 기본 false(1사1교·일반 개인형 링크 유지).
+   */
+  plainInstructorName?: boolean
 }): ColumnsType<ApplicantInstructorRow> {
-  const { setSelectedItem } = params
+  const { setSelectedItem, plainInstructorName = false } = params
 
   return useMemo(
     () => [
@@ -21,14 +26,17 @@ export function useGeneralInstructorApplicantColumns(params: {
         width: 120,
         align: 'center',
         ellipsis: true,
-        render: (text: string, record) => (
-          <a
-            onClick={() => setSelectedItem(record)}
-            style={{ color: 'var(--color-primary)', fontWeight: 500 }}
-          >
-            {text}
-          </a>
-        ),
+        render: (text: string, record) =>
+          plainInstructorName ? (
+            text
+          ) : (
+            <a
+              onClick={() => setSelectedItem(record)}
+              style={{ color: 'var(--color-primary)', fontWeight: 500 }}
+            >
+              {text}
+            </a>
+          ),
       },
       {
         title: '자택 주소지',
@@ -83,6 +91,6 @@ export function useGeneralInstructorApplicantColumns(params: {
           status ? <ApprovalStatusText status={status} /> : '-',
       },
     ],
-    [setSelectedItem]
+    [setSelectedItem, plainInstructorName]
   )
 }

@@ -11,6 +11,8 @@ export type ParticipatingVolunteerCalendarEventItem = {
   row: ParticipatingSchoolRow
   volunteerId: string
   volunteerName: string
+  /** 활동 포기 처리된 봉사자 — 캘린더 우측 카드 「활동 포기」 뱃지 */
+  activityWithdrawn?: boolean
   sessionsOnDate: ParticipatingSchoolSession[]
   educationGrade: string
   desiredEducationPeriod: string
@@ -79,6 +81,7 @@ export function buildParticipatingVolunteerCalendarEvents(
           row: school,
           volunteerId: volunteer.id,
           volunteerName: volunteer.volunteerName,
+          activityWithdrawn: volunteer.activityWithdrawn === true,
           sessionsOnDate: [session],
           educationGrade: school.educationGrade,
           desiredEducationPeriod: periodStr,

@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import type { Program } from '@/types/domain'
+import { fetchAdminProgramSchedulesRemote } from '@/features/program/general/api/program-schedules-api-client'
+import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
+import {
+  getGeneralVolunteerActivityWithdrawScheduleOptions,
+  resolveGeneralVolunteerActivityWithdrawStopScheduleId,
+} from '@/features/program/general/lib/general-volunteer-activity-withdraw'
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { buildGeneralVolunteerDocPassedListQuery } from '@/features/program/general/api/volunteer-list-query'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
@@ -38,6 +45,7 @@ import {
   guardGeneralVolunteerWithdrawActivity,
 } from './general-volunteer-applicant-guard-actions'
 import type { ApplicationGiveUpReasonModalPayload } from '@/features/program/shared/ui/application-give-up-reason-modal'
+import type { GeneralVolunteerScreeningActivityWithdrawModalPayload } from './general-volunteer-screening-activity-withdraw-modal'
 import type { GeneralInterviewAssignConfirmPayload } from './general-volunteer-interview-assign-modal'
 import { useGeneralVolunteerDocPassedColumns } from './doc-passed-columns'
 import {
@@ -69,9 +77,12 @@ export type GeneralInterviewAssignFlow =
 
 export function useGeneralVolunteerDocPassed({
   programId,
+  program,
   subjectKind = 'volunteer',
 }: {
   programId: string
+  /** 봉사자 활동 포기(교육 일정·귀책) 팝업용 — 시안 18-1(9756:66480) */
+  program?: Program
   subjectKind?: ScreeningSubjectKind
 }) {
   const { showAlert } = useCmsAlert()
@@ -269,9 +280,75 @@ export function useGeneralVolunteerDocPassed({
     setAssignFlow(null)
   }, [])
 
-  const requestWithdrawActivity = useCallback((row: GeneralVolunteerApplicantRow) => {
-    if (!guardGeneralVolunteerWithdrawActivity(row)) return
-    setWithdrawTargetId(row.id)
+  /** 봉사자: 2차 면접 대상자와 같은 활동 포기(교육 일정·귀책) 팝업. 참여자는 기존 사유 입력 팝업 */
+  const scheduleWithdrawEnabled = subjectKind === 'volunteer'
+  const [withdrawSubmitting, setWithdrawSubmitting] = useState(false)
+  const [withdrawCompleteVolunteerName, setWithdrawCompleteVolunteerName] = useState<string | null>(
+    null
+  )
+  const activityWithdrawScheduleOptions = useMemo(
+    () => (scheduleWithdrawEnabled && program ? getGeneralVolunteerActivityWithdrawScheduleOptions(program) : []),
+    [program, scheduleWithdrawEnabled]
+  )
+  const programSchedulesQuery = useQuery({
+    queryKey: generalProgramQueryKeys.schedules(programId),
+    queryFn: () => fetchAdminProgramSchedulesRemote(programId),
+    enabled: remoteEnabled && scheduleWithdrawEnabled && Boolean(programId),
+    staleTime: 60_000,
+  })
+
+  const requestWithdrawActivity = useCallback(
+    (row: GeneralVolunteerApplicantRow) => {
+      if (!guardGeneralVolunteerWithdrawActivity(row)) return
+      if (scheduleWithdrawEnabled && activityWithdrawScheduleOptions.length === 0) {
+        showAlert({
+          title: '안내',
+          content: '활동 포기 처리할 수 있는 교육 일정이 없습니다.',
+        })
+        return
+      }
+      setWithdrawTargetId(row.id)
+    },
+    [activityWithdrawScheduleOptions.length, showAlert, scheduleWithdrawEnabled]
+  )
+
+  const confirmScheduleWithdrawActivity = useCallback(
+    async (payload: GeneralVolunteerScreeningActivityWithdrawModalPayload) => {
+      if (!withdrawTargetId || withdrawSubmitting || !program) return
+      const row = list.find(item => item.id === withdrawTargetId)
+      if (!row) {
+        setWithdrawTargetId(null)
+        return
+      }
+      if (!volunteerRemote.remoteEnabled) {
+        notifyProgramApiUnavailable('general-volunteer-give-up', '봉사자 활동 포기')
+        setWithdrawTargetId(null)
+        return
+      }
+      const stopScheduleId = resolveGeneralVolunteerActivityWithdrawStopScheduleId(
+        program,
+        programSchedulesQuery.data ?? [],
+        payload.stopSessionKey
+      )
+      setWithdrawSubmitting(true)
+      try {
+        const handled = await volunteerRemote.applyRemoteGiveUp?.(withdrawTargetId, {
+          reason: `활동 포기 (${payload.stopScheduleLabel})`,
+          ...(stopScheduleId != null ? { stopScheduleId } : {}),
+          faultParty: payload.faultParty,
+        })
+        if (!handled) return
+        setWithdrawTargetId(null)
+        setWithdrawCompleteVolunteerName(row.name)
+      } finally {
+        setWithdrawSubmitting(false)
+      }
+    },
+    [list, program, programSchedulesQuery.data, volunteerRemote, withdrawSubmitting, withdrawTargetId]
+  )
+
+  const closeWithdrawCompleteModal = useCallback(() => {
+    setWithdrawCompleteVolunteerName(null)
   }, [])
 
   const cancelWithdrawActivity = useCallback(() => {
@@ -404,8 +481,10 @@ export function useGeneralVolunteerDocPassed({
       )
       if (!ok) return
       setCancelRejectTargetId(null)
+      // 시안 04-2(9781:55044) 반려 취소 완료
+      showAlert({ title: '취소 완료', content: MESSAGES.success.cancelled })
     },
-    [applyDocumentScreeningCancelRejection, cancelRejectVolunteer]
+    [applyDocumentScreeningCancelRejection, cancelRejectVolunteer, showAlert]
   )
 
   const columns = useGeneralVolunteerDocPassedColumns({
@@ -440,6 +519,11 @@ export function useGeneralVolunteerDocPassed({
     requestWithdrawActivity,
     cancelWithdrawActivity,
     confirmWithdrawActivity,
+    confirmScheduleWithdrawActivity,
+    withdrawSubmitting,
+    activityWithdrawScheduleOptions,
+    withdrawCompleteVolunteerName,
+    closeWithdrawCompleteModal,
     withdrawTarget,
     cancelApprovalVolunteer,
     cancelRejectVolunteer,

@@ -21,8 +21,8 @@ export async function exportMemberLoginLogsService(filter: MemberLoginListFilter
         data: response.data,
         contentType: (response.headers['content-type'] as string | undefined) ||
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        contentDisposition: response.headers['content-disposition'] as string | undefined,
-        filenameFallback: defaultXlsxFilename('회원_로그인_이력'),
+        // 서버 헤더(영문) 대신 한글 파일명을 항상 사용한다.
+        filenameFallback: defaultXlsxFilename('회원 로그인 이력'),
     });
     return 'remote-downloaded';
 }

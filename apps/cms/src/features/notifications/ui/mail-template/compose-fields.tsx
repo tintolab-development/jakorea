@@ -83,7 +83,7 @@ export const ComposeFields = memo(function ComposeFields({
                   width="100%"
                   allowClear={false}
                   maxLength={subjectMaxLength}
-                  placeholder="제목을 작성하세요"
+                  placeholder="제목을 작성해 주세요"
                   value={localSubject}
                   readOnly={readOnly}
                   onChange={event => {
@@ -130,7 +130,7 @@ export const ComposeFields = memo(function ComposeFields({
       </DetailInfoForm.Row>
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
-          label="첨부파일"
+          label="첨부 파일"
           fullRow
           view=""
           edit={

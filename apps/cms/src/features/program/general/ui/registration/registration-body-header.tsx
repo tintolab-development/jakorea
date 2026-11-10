@@ -17,19 +17,20 @@ export function GeneralProgramRegistrationBodyHeader({
   visibleRecruitTabKeys,
   visibleApplicationTabKeys,
   onSelectStep,
+  programPhaseHint = GENERAL_PROGRAM_REGISTRATION_PHASE_HINT.program,
 }: {
   activeStep: GeneralProgramRegistrationStepKey
   visibleRecruitTabKeys: readonly GeneralProgramRecruitTabKey[]
   visibleApplicationTabKeys: readonly GeneralProgramRegistrationApplicationTabKey[]
   onSelectStep: (key: GeneralProgramRegistrationStepKey) => void
+  /** 공통 정보 단계 안내 — 생략 시 기존 기본 문구(1사1교·교육받은 교사) */
+  programPhaseHint?: string
 }) {
   const phase = getGeneralProgramRegistrationPhase(activeStep)
 
   if (phase === 'program') {
     return (
-      <p className="registration-body-header__hint">
-        {GENERAL_PROGRAM_REGISTRATION_PHASE_HINT.program}
-      </p>
+      <p className="registration-body-header__hint">{programPhaseHint}</p>
     )
   }
 

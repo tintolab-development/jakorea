@@ -32,6 +32,17 @@ export const LECTURE_FEE_MEASURE_OPTIONS: { value: string; label: string }[] = [
 
 export const DEFAULT_LECTURE_FEE_MEASURE = LECTURE_FEE_MEASURE_OPTIONS[0]!.value
 
+/**
+ * 일반(기관형) 강사 신청 시안 07(1141:246730) 지급 기준 셀렉트 라벨.
+ * 값(`출강 1회당`·`1시간 당`)은 API 매핑에 쓰이므로 그대로 두고 라벨만 바꾼다.
+ * 시안에 보이는 라벨은 「1회 기준」뿐이라 시간 단위는 같은 규칙으로 「1시간 기준」.
+ */
+export const GENERAL_ORGANIZATION_LECTURE_FEE_MEASURE_OPTIONS: { value: string; label: string }[] =
+  LECTURE_FEE_MEASURE_OPTIONS.map(option => ({
+    value: option.value,
+    label: option.value === DEFAULT_LECTURE_FEE_MEASURE ? '1회 기준' : '1시간 기준',
+  }))
+
 /** 프로그램 기준 선택 시 지급 기준 셀렉트 고정 표시 */
 export const LECTURE_FEE_MEASURE_NOT_APPLICABLE = '해당 없음'
 
@@ -343,6 +354,44 @@ export function buildLectureFeeBasisViewSegments(row: ApplicantInstructorRow): s
     measureLabel,
     formatLectureFeeAmountWon(fee.amount),
   ].filter(Boolean)
+}
+
+/** 일반(기관형) 시안 06-1·06-2 지급 기준 조회 라벨 — `출강 1회당`→「1회당」, `1시간 당`→「1시간당」 */
+const GENERAL_ORGANIZATION_LECTURE_FEE_MEASURE_VIEW_LABEL: Record<string, string> = {
+  [DEFAULT_LECTURE_FEE_MEASURE]: '1회당',
+  '1시간 당': '1시간당',
+}
+
+/**
+ * 일반(기관형) 강사 신청 상세 — 승인 상태 「강사비 책정 기준」 조회 세그먼트.
+ * - 프로그램 기준(시안 06-1, 1141:244079): `프로그램 기준 | 3급 강사비 : 1시간당 240,000원`
+ * - 특강 강사비(시안 06-2, 1141:243841): `특강 강사비 | 1회당 150,000원`
+ * - 기타 인건비: 시안 없음 — 특강과 같은 규칙 `기타 인건비 | 1회당 N원`
+ * 값이 빠지면 있는 값만 이어 붙인다. 값이 하나도 없으면 [].
+ */
+export function buildGeneralOrganizationLectureFeeBasisViewSegments(
+  row: ApplicantInstructorRow
+): string[] {
+  const hasExplicitBasis =
+    Boolean(row.lectureFeeBasisType) ||
+    Boolean(row.lectureFeeBasisDisplay?.trim()) ||
+    Boolean(parseLectureFeeAmountDigits(row.lectureFeeAmount))
+  if (!hasExplicitBasis) return []
+
+  const fee = resolveLectureFeeBasisFromRow(row)
+  const measure = lectureFeeMeasureViewLabel(row.lectureFeeMeasure || fee.measure)
+  const measureLabel = measure
+    ? (GENERAL_ORGANIZATION_LECTURE_FEE_MEASURE_VIEW_LABEL[measure] ?? measure)
+    : ''
+  const amountLabel = formatLectureFeeAmountWon(fee.amount)
+  const priceLabel = [measureLabel, amountLabel].filter(Boolean).join(' ')
+
+  if (fee.type === 'program') {
+    const grade = row.instructorFeeGradeLabel?.trim() ?? ''
+    const detail = grade && priceLabel ? `${grade} : ${priceLabel}` : grade || priceLabel
+    return [lectureFeeBasisTypeLabel(fee.type), detail].filter(Boolean)
+  }
+  return [lectureFeeBasisTypeLabel(fee.type), priceLabel].filter(Boolean)
 }
 
 export function buildLectureFeeBasisDisplay(

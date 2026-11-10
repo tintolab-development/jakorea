@@ -30,6 +30,9 @@ export const GENERAL_PROGRAM_REGISTRATION_PHASE_HINT: Record<
   application: '',
 }
 
+/** 일반 프로그램 등록(`registrationFormVariant === 'general'`) 공통 정보 안내 — 시안 문구. 1사1교·교육받은 교사는 위 기본값 유지 */
+export const GENERAL_PROGRAM_REGISTRATION_PROGRAM_PHASE_HINT_GENERAL = '※ 프로그램 공통 정보를 작성해 주세요.'
+
 export const GENERAL_PROGRAM_RECRUIT_TAB_KEYS = [
   'recruit-participant-school',
   'recruit-participant-individual',
@@ -298,6 +301,14 @@ export function recruitmentPreviewAudienceFromRegistrationStep(
   if (step === 'recruit-volunteer') return 'volunteers'
   if (step === 'recruit-participant-individual') return 'individuals'
   return 'institutions'
+}
+
+/** 일반 프로그램 등록 모집 정보 미리보기 제목 — 「{탭 라벨} 미리보기」 (예: 참여 기관 모집 정보 미리보기) */
+export function generalRegistrationRecruitmentPreviewTitle(
+  step: GeneralProgramRegistrationStepKey
+): string | undefined {
+  const tab = recruitTabKeyFromRegistrationStep(step)
+  return tab == null ? undefined : `${GENERAL_PROGRAM_RECRUIT_TAB_LABELS[tab]} 미리보기`
 }
 
 /** @deprecated 플래그 기반 `getDefaultGeneralProgramRecruitStep` 사용 */

@@ -126,7 +126,25 @@ function createParticipatingVolunteerThirdPartyTable(): HorizontalTableParagraph
   })
 }
 
-function createJaVolunteerExperienceMultipleChoiceParagraph(): MultipleChoiceParagraph {
+/**
+ * - `default` — 기존 선택지 라벨 유지(UJAT 추가 등록 등 기존 호출부).
+ * - `generalInstitution` — 일반 프로그램(기관형) Figma 03-2/03-4: 「있음 / 없음」.
+ * 선택지 id·전송값(REQUESTED / NOT_REQUESTED)은 동일하고 라벨만 다르다.
+ */
+export type ParticipatingVolunteerAddRegistrationDraftPreset = 'default' | 'generalInstitution'
+
+const JA_VOLUNTEER_EXPERIENCE_OPTION_LABELS: Record<
+  ParticipatingVolunteerAddRegistrationDraftPreset,
+  { yes: string; no: string }
+> = {
+  default: { yes: '동의서 제출 요청', no: '동의서 미제출' },
+  generalInstitution: { yes: '있음', no: '없음' },
+}
+
+function createJaVolunteerExperienceMultipleChoiceParagraph(
+  preset: ParticipatingVolunteerAddRegistrationDraftPreset = 'default'
+): MultipleChoiceParagraph {
+  const labels = JA_VOLUNTEER_EXPERIENCE_OPTION_LABELS[preset]
   return {
     id: PARTICIPATING_VOLUNTEER_ADD_REGISTRATION_IDS.jaVolunteerExperience,
     kind: 'single_item',
@@ -138,8 +156,8 @@ function createJaVolunteerExperienceMultipleChoiceParagraph(): MultipleChoicePar
     answerRequired: true,
     allowMultiple: false,
     items: [
-      { id: JA_VOLUNTEER_EXPERIENCE_OPTION_IDS.yes, label: '동의서 제출 요청' },
-      { id: JA_VOLUNTEER_EXPERIENCE_OPTION_IDS.no, label: '동의서 미제출' },
+      { id: JA_VOLUNTEER_EXPERIENCE_OPTION_IDS.yes, label: labels.yes },
+      { id: JA_VOLUNTEER_EXPERIENCE_OPTION_IDS.no, label: labels.no },
     ],
     selectedPreviewSingleId: null,
     selectedPreviewMultipleIds: [],
@@ -190,7 +208,9 @@ export function resolveParticipatingVolunteerBasicInfoDescription(): string {
   return `학년은 ${year}년 ${semester}학기 기준으로 기재해 주세요.`
 }
 
-export function createParticipatingVolunteerAddRegistrationDraft(): WritingFormDraft {
+export function createParticipatingVolunteerAddRegistrationDraft(
+  preset: ParticipatingVolunteerAddRegistrationDraftPreset = 'default'
+): WritingFormDraft {
   const paragraphs: WritingFormParagraph[] = [
     createParticipatingVolunteerPersonalInfoTable(),
     createParticipatingVolunteerThirdPartyTable(),
@@ -199,7 +219,7 @@ export function createParticipatingVolunteerAddRegistrationDraft(): WritingFormD
       '기본 정보',
       resolveParticipatingVolunteerBasicInfoDescription()
     ),
-    createJaVolunteerExperienceMultipleChoiceParagraph(),
+    createJaVolunteerExperienceMultipleChoiceParagraph(preset),
     createSeedHorizontalTable(
       PARTICIPATING_VOLUNTEER_ADD_REGISTRATION_IDS.previousJaProgram,
       '이전 참여 JA 봉사 프로그램',

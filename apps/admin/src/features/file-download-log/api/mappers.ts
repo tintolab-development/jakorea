@@ -13,6 +13,7 @@ import type { FileDownloadLogItem } from '@/shared/api/generated/logs/schemas/fi
 import type { FileDownloadsParams } from '@/shared/api/generated/logs/schemas/fileDownloadsParams'
 import { formatContainedPiiLead, parseContainedPiiTypes } from '@jakorea/domain/shared/file-download-password'
 import type { PageResponseFileDownloadLogItem } from '@/shared/api/generated/logs/schemas/pageResponseFileDownloadLogItem'
+import { localizeServerExportFileName } from './export-file-name'
 
 export const LIST_PAGE_SIZE = LOG_LIST_PAGE_SIZE
 
@@ -51,7 +52,7 @@ function mapItem(row: FileDownloadLogItem): FileDownloadLog {
   }
   return {
     id: String(row.id ?? ''),
-    fileName: row.originalName ?? '',
+    fileName: localizeServerExportFileName(row.originalName ?? ''),
     userName: row.adminName ?? '',
     downloadedAt: row.createdAt ?? '',
     ip: row.clientIp ?? '',

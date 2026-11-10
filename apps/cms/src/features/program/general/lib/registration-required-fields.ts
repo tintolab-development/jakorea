@@ -63,6 +63,11 @@ export type GeneralProgramRegistrationRequiredFieldContext = {
    * prepend=일반 사전 교육(index 0), replaceFirst=교육받은 교사 교육 연수(첫 차시/회차·세부 일정)
    */
   preEducationDisplayMode?: 'prepend' | 'replaceFirst'
+  /**
+   * 일반 등록 위저드 — 교육 장소·Partner Involvement 라디오(시안: 기본 미선택) 필수 선택.
+   * 상세 수정은 저장값이 항상 있으므로 생략(기본 false = 기존 검사 유지).
+   */
+  requireBasicInfoRadioSelection?: boolean
 }
 
 function isEmptyText(value: unknown): boolean {
@@ -140,6 +145,16 @@ function pushReason(reasons: string[], incomplete: boolean, reason: string) {
   if (incomplete) reasons.push(reason)
 }
 
+/** 교육 장소 라디오(기관 안·기관 밖·기타) 선택 여부 — 등록 위저드 RHF 검사와 공유 */
+export function isEducationVenueKindSelected(value: unknown): boolean {
+  return value === 'inside' || value === 'outside' || value === 'other'
+}
+
+/** Partner Involvement(Yes/No) 선택 여부 — 등록 위저드 RHF 검사와 공유 */
+export function isPartnerInvolvementSelected(value: unknown): boolean {
+  return value === 'yes' || value === 'no'
+}
+
 /** 비어 있는 기본 정보 필수 항목 */
 function findIncompleteBasicInfoReasons(
   overlay: Record<string, unknown>,
@@ -188,8 +203,14 @@ function findIncompleteBasicInfoReasons(
     // 담당자 「미선택」 sentinel은 명시 선택이다. 빈 값만 미입력으로 본다.
     pushReason(reasons, isEmptyText(ctx.sponsorContactId), 'basicInfo.sponsorContactId')
   }
-  // 교육 장소 상세 텍스트 — 「기타(직접입력)」선택 시에만 필수
+  // 교육 장소 — 시안: 기본 미선택, 기관 안·기관 밖·기타 중 필수 선택
   const venueKind = readOverlay(overlay, 'generalRegistration.basicInfo.educationVenueKind')
+  pushReason(
+    reasons,
+    ctx.requireBasicInfoRadioSelection === true && !isEducationVenueKindSelected(venueKind),
+    'basicInfo.educationVenueKind'
+  )
+  // 교육 장소 상세 텍스트 — 「기타(직접입력)」선택 시에만 필수
   pushReason(
     reasons,
     venueKind === 'other' &&
@@ -211,6 +232,15 @@ function findIncompleteBasicInfoReasons(
     reasons,
     isEmptyText(readOverlay(overlay, 'generalRegistration.basicInfo.courseDeliveredBy')),
     'basicInfo.courseDeliveredBy'
+  )
+  // Partner Involvement — 시안: 기본 미선택, Yes/No 필수 선택
+  pushReason(
+    reasons,
+    ctx.requireBasicInfoRadioSelection === true &&
+      !isPartnerInvolvementSelected(
+        readOverlay(overlay, 'generalRegistration.basicInfo.partnerInvolvement')
+      ),
+    'basicInfo.partnerInvolvement'
   )
   return reasons
 }
@@ -582,10 +612,12 @@ const REQUIRED_FIELD_LABELS: Record<string, string> = {
   'basicInfo.businessField': '사업 분야',
   'basicInfo.sponsorId': '후원사',
   'basicInfo.sponsorContactId': '후원사 담당자',
+  'basicInfo.educationVenueKind': '교육 장소',
   'basicInfo.educationVenueDetail': '교육 장소',
   'basicInfo.educationCourse': '교육 과정',
   'basicInfo.ipOwned': 'IP Owned',
   'basicInfo.courseDeliveredBy': 'Course Delivered By',
+  'basicInfo.partnerInvolvement': 'Partner Involvement',
   'kpi.participantCount': '참여 인원',
   'kpi.instructor': '강사 수',
   'kpi.volunteer': '봉사자 수',

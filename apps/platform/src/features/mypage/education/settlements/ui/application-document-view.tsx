@@ -23,6 +23,7 @@ import {
 } from '../lib/format-application-document'
 import { fetchPortalSignedDownloadBlob } from '@/shared/lib/portal-signed-download-fetch'
 import styles from './application-document-view.module.css'
+import { toRuleDownloadFileName } from '@/shared/lib/download-file-name'
 
 export type SettlementApplicationDocumentPage = 'summary' | 'attachments'
 
@@ -43,7 +44,7 @@ function saveAttachmentBlob(fileName: string, blob: Blob): void {
   const objectUrl = URL.createObjectURL(blob)
   const anchor = document.createElement('a')
   anchor.href = objectUrl
-  anchor.download = fileName || '첨부파일'
+  anchor.download = toRuleDownloadFileName(fileName || '첨부파일')
   document.body.appendChild(anchor)
   anchor.click()
   anchor.remove()

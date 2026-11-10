@@ -112,19 +112,17 @@ const SiteInfoTextField = memo(function SiteInfoTextField({
   }, [isEditing, sourceValue])
 
   return (
-    <div>
+    <div className="site-info-form__text-field">
       <CmsInput
         className={
-          isEditing
-            ? 'site-info-inline-field site-info-inline-field--edit'
-            : 'site-info-inline-field site-info-inline-field--readonly'
+          isEditing ? 'site-info-inline-field site-info-inline-field--edit' : 'site-info-inline-field'
         }
         inputSize="small"
         width="100%"
         placeholder={placeholder}
         value={localValue}
         readOnly={!isEditing}
-        tabIndex={isEditing ? 0 : -1}
+        inlineReadOnly="text"
         aria-label={ariaLabel}
         onChange={e => {
           if (!isEditing) return
@@ -331,7 +329,7 @@ export function SiteInfoFormCard({ data }: Props) {
   const image = isEditing ? draft : data
 
   return (
-    <div className="admin-list-card site-info-form-card">
+    <div className="admin-list-card admin-document-card site-info-form-card">
       <div className="admin-list-toolbar">
         <div className="table-header-title--wrapper">
           <span className="table-title-20">사이트 정보 관리</span>
@@ -370,11 +368,12 @@ export function SiteInfoFormCard({ data }: Props) {
         </div>
       </div>
 
-      <div className="site-info-form-card__body">
+      <div className="admin-document-card__body site-info-form-card__body">
         <DetailInfoForm title="사이트 정보" hideHeader mode="edit" className="site-info-form">
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="사이트명"
+              labelWidth={200}
               required={isEditing}
               view={null}
               edit={
@@ -393,6 +392,7 @@ export function SiteInfoFormCard({ data }: Props) {
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="사이트 소개글"
+              labelWidth={200}
               required={isEditing}
               view={null}
               edit={
@@ -409,6 +409,7 @@ export function SiteInfoFormCard({ data }: Props) {
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="링크 공유용 이미지"
+              labelWidth={200}
               required={isEditing}
               view={null}
               edit={
@@ -443,6 +444,7 @@ export function SiteInfoFormCard({ data }: Props) {
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="브라우저탭 아이콘"
+              labelWidth={200}
               required={isEditing}
               view={null}
               edit={

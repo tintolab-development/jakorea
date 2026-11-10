@@ -2,7 +2,40 @@ import { describe, expect, it } from 'vitest'
 import {
   mapMailDeliveryDetailResponse,
   mapMailDeliveryToSendHistoryRow,
+  resolveMailDeliverySender,
 } from './mail-delivery-adapters'
+
+describe('resolveMailDeliverySender', () => {
+  it('「이름 <메일>」을 이름·메일로 나눈다', () => {
+    expect(resolveMailDeliverySender('', 'JA코리아 <jakorea@jakorea.org>', undefined)).toEqual({
+      senderName: 'JA코리아',
+      senderEmail: 'jakorea@jakorea.org',
+    })
+  })
+
+  it('형식에 맞지 않으면 값 전체를 메일로 보고 이름은 비운다', () => {
+    expect(resolveMailDeliverySender('', 'jakorea@jakorea.org', undefined)).toEqual({
+      senderName: '',
+      senderEmail: 'jakorea@jakorea.org',
+    })
+  })
+
+  it('이름 자리에 메일이 와도 메일을 겹쳐 쓰지 않는다', () => {
+    expect(
+      resolveMailDeliverySender('', 'jakorea@jakorea.org <jakorea@jakorea.org>', undefined)
+    ).toEqual({ senderName: '', senderEmail: 'jakorea@jakorea.org' })
+  })
+
+  it('상세 preview 표시 문자열을 먼저 쓴다', () => {
+    expect(
+      resolveMailDeliverySender(
+        'JA코리아 <jakorea@jakorea.org>',
+        'jakorea@jakorea.org',
+        'jakorea@jakorea.org'
+      )
+    ).toEqual({ senderName: 'JA코리아', senderEmail: 'jakorea@jakorea.org' })
+  })
+})
 
 describe('mapMailDeliveryToSendHistoryRow', () => {
   it('maps delivery fields into mail history row', () => {
@@ -27,9 +60,21 @@ describe('mapMailDeliveryToSendHistoryRow', () => {
     expect(row?.templateName).toBe('워크숍 안내')
     expect(row?.senderInfo).toBe('홍길동 <gildong@jakorea.org>')
     expect(row?.broadcastTiming).toBe('즉시')
-    expect(row?.sendStatus).toBe('발송 완료')
+    expect(row?.sendStatus).toBe('발송 성공')
     expect(row?.receiveStatus).toBe('수신 성공')
     expect(row?.readStatus).toBe('읽음')
+  })
+
+  it('「이름 <메일>」 발송자를 메일 중복 없이 목록 표시로 만든다', () => {
+    const row = mapMailDeliveryToSendHistoryRow({
+      deliveryId: 2191,
+      senderDisplayName: 'JA코리아 <jakorea@jakorea.org>',
+      senderKey: 'jakorea@jakorea.org',
+      sendStatus: 'SENT',
+    })
+    expect(row?.senderName).toBe('JA코리아')
+    expect(row?.senderEmail).toBe('jakorea@jakorea.org')
+    expect(row?.senderInfo).toBe('JA코리아 <jakorea@jakorea.org>')
   })
 
   it('does not fake list subject from templateDisplayName', () => {
@@ -74,7 +119,11 @@ describe('mapMailDeliveryToSendHistoryRow', () => {
         titleTemplate: '미리보기 제목',
         senderDisplay: '관리자 <admin@jakorea.org>',
         attachments: [
-          { fileName: 'guide.pdf', fileObjectId: 101, downloadHint: '/api/admin/files/101/download' },
+          {
+            fileName: 'guide.pdf',
+            fileObjectId: 101,
+            downloadHint: '/api/admin/files/101/download',
+          },
           { fileName: 'agenda.docx' },
         ],
       }
@@ -109,21 +158,21 @@ describe('mapMailDeliveryToSendHistoryRow', () => {
   })
 
   it('maps sendStatus/receiptStatus to the Figma mail send labels', () => {
-    expect(mapMailDeliveryToSendHistoryRow({ deliveryId: 1, sendStatus: 'SCHEDULED' })?.sendStatus).toBe(
-      '예약'
-    )
-    expect(mapMailDeliveryToSendHistoryRow({ deliveryId: 2, sendStatus: 'WAITED' })?.sendStatus).toBe(
-      '발송 대기'
-    )
+    expect(
+      mapMailDeliveryToSendHistoryRow({ deliveryId: 1, sendStatus: 'SCHEDULED' })?.sendStatus
+    ).toBe('예약')
+    expect(
+      mapMailDeliveryToSendHistoryRow({ deliveryId: 2, sendStatus: 'WAITED' })?.sendStatus
+    ).toBe('발송 대기')
     expect(
       mapMailDeliveryToSendHistoryRow({ deliveryId: 3, sendStatus: 'IN_PROGRESS' })?.sendStatus
     ).toBe('발송 중')
-    expect(mapMailDeliveryToSendHistoryRow({ deliveryId: 4, sendStatus: 'CANCELED' })?.sendStatus).toBe(
-      '발송 취소'
-    )
-    expect(mapMailDeliveryToSendHistoryRow({ deliveryId: 5, sendStatus: 'WEIRD' })?.sendStatus).toBe(
-      '확인불가'
-    )
+    expect(
+      mapMailDeliveryToSendHistoryRow({ deliveryId: 4, sendStatus: 'CANCELED' })?.sendStatus
+    ).toBe('발송 취소')
+    expect(
+      mapMailDeliveryToSendHistoryRow({ deliveryId: 5, sendStatus: 'WEIRD' })?.sendStatus
+    ).toBe('확인불가')
     expect(
       mapMailDeliveryToSendHistoryRow({ deliveryId: 6, receiptStatus: 'CONFIRM_WAITED' })
         ?.receiveStatus
@@ -182,7 +231,9 @@ describe('mapMailDeliveryToSendHistoryRow', () => {
       }
     )
     expect(failed?.sendStatus).toBe('발송 실패')
-    expect(failed?.failedReason).toBe('자동입력 변수값이 없어 발송되지 않았습니다: 동의 항목, 만료일시')
+    expect(failed?.failedReason).toBe(
+      '자동입력 변수값이 없어 발송되지 않았습니다: 동의 항목, 만료일시'
+    )
     // preview에 #{…} 잔존 = 치환 전 실패(정상)
     expect(failed?.bodyHtml).toContain('#{동의 항목}')
   })

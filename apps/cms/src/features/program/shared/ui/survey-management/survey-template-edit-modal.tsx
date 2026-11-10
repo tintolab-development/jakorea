@@ -46,6 +46,7 @@ import {
   resolveProgramSurveyHeaderTitle,
   seedProgramSurveyTitle,
 } from '../../lib/survey-management/program-survey-title-sync'
+import { GENERAL_SURVEY_FORM_HEADER_TITLE } from '../../lib/survey-management/survey-copy'
 
 /** 프로그램에 바인딩된 설문 version 수정 — 양식 관리 원본 대신 프로그램 전용 복제본에 저장 */
 export type ProgramSurveyFormEdit = {
@@ -65,6 +66,11 @@ export type SurveyTemplateEditModalProps = {
   programEdit?: ProgramSurveyFormEdit
   /** 서버 바인딩 상태가 바뀌어 저장이 거절됐을 때 — 목록 재조회 */
   onBindingsStale?: () => void
+  /**
+   * `general` — 일반 프로그램 시안(9767:119438): 청록 헤더 「설문 폼」(제목 편집 없음)·「취소 / 미리보기 / 저장」.
+   * 생략(`default`) 시 기존 동작(설문명 헤더·연필 편집·닫기) — UJAT.
+   */
+  variant?: 'default' | 'general'
 }
 
 export function SurveyTemplateEditModal(props: SurveyTemplateEditModalProps) {
@@ -82,7 +88,9 @@ function SurveyTemplateEditModalInner({
   onSaved,
   programEdit,
   onBindingsStale,
+  variant = 'default',
 }: SurveyTemplateEditModalProps) {
+  const generalVariant = variant === 'general'
   const { showSaveSuccess, showSaveFailure } = useFormTemplateSaveFeedback()
   const { handleDraftValidationFailure } = useSurveyWritingSaveValidationFeedback()
   const templateRow = useMemo(
@@ -142,7 +150,11 @@ function SurveyTemplateEditModalInner({
     open: open && canEdit,
     getInitialDraft,
     getDefaultActiveParagraphId,
-    previewHeaderTitle: programEdit != null ? programPreviewHeaderTitle : catalogHeaderTitle,
+    previewHeaderTitle: generalVariant
+      ? GENERAL_SURVEY_FORM_HEADER_TITLE
+      : programEdit != null
+        ? programPreviewHeaderTitle
+        : catalogHeaderTitle,
     editorKind: 'survey',
     previewZIndex: 1300,
     ...(programEdit == null ? { templateCode: templateId } : {}),
@@ -152,7 +164,11 @@ function SurveyTemplateEditModalInner({
   draftRef.current = editor.draft
 
   const programHeaderTitle = resolveProgramSurveyHeaderTitle(editor.draft)
-  const headerTitle = programEdit != null ? programHeaderTitle : catalogHeaderTitle
+  const headerTitle = generalVariant
+    ? GENERAL_SURVEY_FORM_HEADER_TITLE
+    : programEdit != null
+      ? programHeaderTitle
+      : catalogHeaderTitle
   useEffect(() => {
     if (programEdit != null) setProgramPreviewHeaderTitle(programHeaderTitle)
   }, [programHeaderTitle, programEdit])
@@ -228,8 +244,22 @@ function SurveyTemplateEditModalInner({
       open={open}
       onClose={onClose}
       title={headerTitle}
-      {...(programEdit != null ? { onTitleCommit: handleProgramTitleCommit } : {})}
+      {...(programEdit != null && !generalVariant
+        ? { onTitleCommit: handleProgramTitleCommit }
+        : {})}
       description={TEMPLATE_FORM_MODAL_DESCRIPTION}
+      {...(generalVariant
+        ? {
+            titleReadOnly: true,
+            registrationUserMode: true,
+            showCloseButton: true,
+            saveLabel: '저장',
+            closeLabel: '취소',
+            bodyHeaderLeading: (
+              <p className="full-page-modal__description">{TEMPLATE_FORM_MODAL_DESCRIPTION}</p>
+            ),
+          }
+        : {})}
       templateTabType="writing"
       className="ujat-survey-template-edit-modal"
       zIndex={1200}

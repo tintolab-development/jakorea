@@ -21,8 +21,8 @@ export async function exportAdminAccountLogsService(filter: AdminAccountListFilt
         data: response.data,
         contentType: (response.headers['content-type'] as string | undefined) ||
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        contentDisposition: response.headers['content-disposition'] as string | undefined,
-        filenameFallback: defaultXlsxFilename('관리자_계정_처리_이력'),
+        // 서버 헤더(영문) 대신 한글 파일명을 항상 사용한다.
+        filenameFallback: defaultXlsxFilename('관리자 계정 처리 이력'),
     });
     return 'remote-downloaded';
 }

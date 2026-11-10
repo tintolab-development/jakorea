@@ -2,7 +2,7 @@
 export const NOTIFICATION_SEND_REQUEST_COMPLETED_TITLE = '발송 요청 완료'
 
 export const NOTIFICATION_SEND_REQUEST_COMPLETED_MESSAGE =
-  '발송 요청이 접수되었습니다.\n실제 발송 결과(성공/실패)는 발송 이력에서 확인해 주세요.'
+  '발송 요청이 정상적으로 접수되었습니다.\n실제 발송 결과(성공/실패)는 발송 이력에서 확인해 주세요.'
 
 export type NotificationSendHistoryChannel = 'alimtalk' | 'mail' | 'sms'
 

@@ -1,51 +1,20 @@
 /* 국세청 공시 단건 카드 — Figma 조회 32:14201(행 52) / 수정 32:14732(행 64)
- * 수정: 라벨 200 · 행 64 · 인풋 40. 조회: 행 52 · 값 칸 패딩 12×16 · 텍스트 14/1.5 (파일 하단 override)
+ * 수정: 라벨 200(labelWidth) · 행 64 · 인풋 40. 조회: 행 52 · 값 칸 패딩 12×16 · 텍스트 14/1.5 (파일 하단 override)
  * (QA: 조회 화면이 수정 필드 높이 64로 노출되던 것을 시안 52로)
+ * 카드 fill·조회 모양은 공통(admin-document-card · inlineReadOnly="slot")
  */
-
-.rd-nts-card.admin-list-card {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  height: 100%;
-  margin-bottom: 0;
-}
-
-.rd-nts-card .admin-list-toolbar {
-  flex-shrink: 0;
-  align-items: center;
-}
-
-.rd-nts-card__body {
-  flex: 1 1 auto;
-  min-height: 0;
-  min-width: 0;
-}
 
 /* Table / Vertical / Cell / Medium — 수정 프레임 64px 고정 */
 .rd-nts-card .detail-info-form__field {
-  --detail-info-label-w: 200px;
-  display: grid;
-  grid-template-columns: 200px minmax(0, 1fr);
-  align-items: stretch;
   height: 64px;
   min-height: 64px;
   max-height: 64px;
 }
 
 .rd-nts-card .detail-info-form__field-label {
-  width: 200px;
-  min-width: 200px;
-  max-width: 200px;
   height: 64px;
   min-height: 64px;
   max-height: 64px;
-  padding: 8px 16px;
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   gap: 2px;
 }
 
@@ -55,10 +24,7 @@
   min-height: 64px;
   max-height: 64px;
   padding: 12px;
-  box-sizing: border-box;
-  display: flex;
   justify-content: flex-start;
-  align-items: center;
   overflow: hidden;
 }
 
@@ -86,10 +52,7 @@
   min-height: 40px !important;
   max-height: 40px !important;
   padding: 9px 16px;
-  border-width: 1px;
-  border-style: solid;
   border-radius: var(--radius-8, 8px);
-  box-sizing: border-box;
   transition: none !important;
 }
 
@@ -101,23 +64,7 @@
   transition: none !important;
 }
 
-/* 조회: 보더만 투명 — 패딩·높이 유지로 텍스트 위치/행 높이 고정 */
-.rd-nts-card .rd-nts-inline-field--readonly .cms-input__control {
-  border-color: transparent !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  cursor: default;
-}
-
-.rd-nts-card .rd-nts-inline-field--readonly .cms-input__control:hover,
-.rd-nts-card .rd-nts-inline-field--readonly .cms-input__control:focus-within {
-  border-color: transparent !important;
-  box-shadow: none !important;
-}
-
-.rd-nts-card .rd-nts-inline-field--readonly .ant-input {
-  cursor: default;
-  color: var(--default-BK, #3d3d3d) !important;
+.rd-nts-card .rd-nts-inline-field.cms-inline-readonly .ant-input {
   font-size: 14px !important;
   line-height: 150% !important;
 }
@@ -137,24 +84,18 @@
  * 같은 인풋을 쓰므로 인풋 40을 칸 세로 패딩 6으로 감싸 52를 맞추고,
  * 텍스트 x(16)는 인풋 좌측 테두리 1 + 패딩 15로 맞춘다.
  */
-.rd-nts-card .detail-info-form__field:has(.rd-nts-inline-field--readonly),
-.rd-nts-card
-  .detail-info-form__field:has(.rd-nts-inline-field--readonly)
-  .detail-info-form__field-label,
-.rd-nts-card
-  .detail-info-form__field:has(.rd-nts-inline-field--readonly)
-  .detail-info-form__field-content {
+.rd-nts-card .detail-info-form__field:has(.cms-inline-readonly),
+.rd-nts-card .detail-info-form__field:has(.cms-inline-readonly) .detail-info-form__field-label,
+.rd-nts-card .detail-info-form__field:has(.cms-inline-readonly) .detail-info-form__field-content {
   height: 52px;
   min-height: 52px;
   max-height: 52px;
 }
 
-.rd-nts-card
-  .detail-info-form__field:has(.rd-nts-inline-field--readonly)
-  .detail-info-form__field-content {
+.rd-nts-card .detail-info-form__field:has(.cms-inline-readonly) .detail-info-form__field-content {
   padding: 6px 0;
 }
 
-.rd-nts-card .rd-nts-inline-field--readonly .cms-input__control {
+.rd-nts-card .rd-nts-inline-field.cms-inline-readonly .cms-input__control {
   padding-inline: 15px;
 }

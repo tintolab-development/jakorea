@@ -21,7 +21,26 @@ export type RichTextEditorApi = {
   blur: () => void
 }
 
+/**
+ * 에디터에서 끌 수 있는 서식 기능. 끄면 확장 자체가 빠져서
+ * 툴바뿐 아니라 단축키·입력 규칙(`# `, `---`)·붙여넣기로도 들어오지 않는다.
+ */
+export type RichTextDisabledFeature =
+  | 'textColor'
+  | 'fontFamily'
+  | 'fontSize'
+  | 'lineHeight'
+  | 'highlight'
+  | 'textAlign'
+  | 'superscript'
+  | 'horizontalRule'
+  | 'table'
+  /** 제목 1 (제목 2·3은 유지) */
+  | 'heading1'
+
 export type CreateRichTextExtensionsOptions = {
+  /** 끌 서식 기능. 기본은 전부 켜짐(빈 배열). 공통 CMS/Platform 에디터는 지정하지 않는다. */
+  disabledFeatures?: readonly RichTextDisabledFeature[]
   placeholder?: string
   /** 읽기 전용 뷰어에서 링크 클릭 허용 */
   openLinksOnClick?: boolean

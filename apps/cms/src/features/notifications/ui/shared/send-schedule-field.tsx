@@ -15,7 +15,8 @@ import {
 import './send-schedule-field.css'
 
 type SendScheduleFieldProps = {
-  sendTiming: NotificationSendTiming
+  /** null = 미선택(시안 기본). 발송 검증에서 「발송 시점을 선택해 주세요.」로 막는다. */
+  sendTiming: NotificationSendTiming | null
   scheduledAt: Dayjs | null
   onSendTimingChange: (value: NotificationSendTiming) => void
   onScheduledAtChange: (value: Dayjs | null) => void
@@ -74,7 +75,7 @@ export function SendScheduleField({
       >
         <CmsRadio.Group
           size="medium"
-          value={sendTiming}
+          value={sendTiming ?? null}
           onChange={event => {
             const next = event.target.value
             if (next === 'immediate' || next === 'scheduled') handleTimingChange(next)

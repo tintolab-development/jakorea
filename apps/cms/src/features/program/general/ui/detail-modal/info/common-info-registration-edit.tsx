@@ -405,6 +405,7 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
           highlightParagraphId={PROGRAM_REGISTRATION_IDS.educationScheduleSettings}
           titleTrailing={
             <EducationScheduleChangeTitleAction
+              variant="general"
               programId={program.id}
               overlayKeyPrefix="generalRegistration.educationScheduleSettings"
               educationScheduleMode={extras.educationScheduleMode ?? 'date'}

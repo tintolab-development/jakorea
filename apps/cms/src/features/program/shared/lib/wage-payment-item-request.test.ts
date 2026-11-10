@@ -226,7 +226,7 @@ describe('assignProgramPaymentItemsToWriteRequest', () => {
 describe('settlementPolicy hydrate', () => {
   it('프로그램 유형으로 지급 항목을 숨기지 않는다', () => {
     expect(mapSettlementPaymentItemsToLabel([...ALL_POLICY_ITEMS])).toBe(
-      '교통비, 장거리 교통비, 숙박비, 참여자 활동비, 식비'
+      '교통비, 장거리 교통비, 숙박비, 활동비, 식비'
     )
   })
 

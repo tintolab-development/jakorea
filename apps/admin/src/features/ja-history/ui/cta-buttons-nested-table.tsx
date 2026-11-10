@@ -32,6 +32,7 @@ export function CtaButtonsNestedTable({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="버튼명 01"
+          required={editing}
           labelWidth={220}
           view={<span className="ja-history-cta-nested-form__text">{primary.label || '-'}</span>}
           edit={
@@ -47,6 +48,7 @@ export function CtaButtonsNestedTable({
         />
         <DetailInfoForm.Field
           label="연결 링크 01"
+          required={editing}
           labelWidth={220}
           view={
             <span className="ja-history-cta-nested-form__text ja-history-cta-nested-form__text--url">
@@ -68,6 +70,7 @@ export function CtaButtonsNestedTable({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="버튼명 02"
+          required={editing}
           labelWidth={220}
           view={<span className="ja-history-cta-nested-form__text">{secondary.label || '-'}</span>}
           edit={
@@ -83,6 +86,7 @@ export function CtaButtonsNestedTable({
         />
         <DetailInfoForm.Field
           label="연결 링크 02"
+          required={editing}
           labelWidth={220}
           view={
             <span className="ja-history-cta-nested-form__text ja-history-cta-nested-form__text--url">

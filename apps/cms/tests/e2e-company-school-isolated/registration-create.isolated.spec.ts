@@ -131,7 +131,7 @@ test.describe('CS-B01/B03/B06/B07 신규 등록 격리 E2E', () => {
     const createButton = page.getByRole('button', { name: '신규 등록' }).first()
     await expect(createButton).toBeVisible({ timeout: 45_000 })
     await createButton.click()
-    const draftDialog = page.getByRole('dialog').filter({ hasText: '임시저장 이력 안내' })
+    const draftDialog = page.getByRole('dialog').filter({ hasText: '임시 저장 이력 안내' })
     await expect(draftDialog).toBeVisible({ timeout: 20_000 })
     await draftDialog.getByRole('radio', { name: '이어서 작성' }).check()
     await draftDialog.getByRole('button', { name: '이어서 작성' }).click()

@@ -258,7 +258,7 @@ describe('company-school adapters', () => {
               { grade: '1급 강사비', pricing: '1시간 당 | 기본 : 120,000원 | 장거리 : 60,000원' },
             ],
             paymentItems: 'p-166201, p-166202',
-            deductionItems: '일용근로자 원천징수세액',
+            deductionItems: '원천징수세액',
           },
         },
       }),
@@ -286,7 +286,7 @@ describe('company-school adapters', () => {
             { grade: '3급 강사비', pricing: '1시간 당 | 기본 : 130,000원 | 장거리 : 10,000원' },
           ],
           paymentItems: '교통비(일사일교), 숙박비(일사일교)',
-          deductionItems: '일용근로자 원천징수세액',
+          deductionItems: '원천징수세액',
         },
       },
       generalCommonInfo: {
@@ -331,7 +331,7 @@ describe('company-school adapters', () => {
             { grade: '1급 강사비', pricing: '1시간 당 | 기본 : 170,000원 | 장거리 : 30,000원' },
           ],
           paymentItems: '교통비(일사일교), 숙박비(일사일교)',
-          deductionItems: '일용근로자 원천징수세액',
+          deductionItems: '원천징수세액',
         },
       },
       generalCommonInfo: {
@@ -403,16 +403,11 @@ describe('company-school adapters', () => {
     const raw = serializeCompanySchoolServiceDetailJson(program)
     const parsed = parseCompanySchoolServiceDetailJson(raw)
 
-    expect(parsed.generalParticipantTypes).toEqual([
-      'school_institution',
-      'teacher_instructor',
-    ])
+    expect(parsed.generalParticipantTypes).toEqual(['school_institution', 'teacher_instructor'])
     expect(parsed.generalCommonInfo?.wageGradeRows).toEqual(
       program.generalCommonInfo?.wageGradeRows
     )
-    expect(parsed.generalCommonInfo?.paymentItems).toBe(
-      program.generalCommonInfo?.paymentItems
-    )
+    expect(parsed.generalCommonInfo?.paymentItems).toBe(program.generalCommonInfo?.paymentItems)
     expect(parsed.volunteerApplicationStartDate).toBeUndefined()
     expect(parsed.generalVolunteers).toBe(0)
   })
@@ -429,13 +424,8 @@ describe('company-school adapters', () => {
       serviceDetailJson: updateRequest.serviceDetailJson ?? undefined,
     })
 
-    expect(detail.generalParticipantTypes).toEqual([
-      'school_institution',
-      'teacher_instructor',
-    ])
-    expect(detail.generalCommonInfo?.paymentItems).toBe(
-      program.generalCommonInfo?.paymentItems
-    )
+    expect(detail.generalParticipantTypes).toEqual(['school_institution', 'teacher_instructor'])
+    expect(detail.generalCommonInfo?.paymentItems).toBe(program.generalCommonInfo?.paymentItems)
     expect(detail.generalVolunteers).toBe(0)
   })
 
@@ -715,9 +705,7 @@ describe('company-school adapters', () => {
     })
 
     expect(request.sponsorId).toBe('163388')
-    expect(request.sponsors).toEqual([
-      { sponsorId: '163388', sponsorContactId: '1627253' },
-    ])
+    expect(request.sponsors).toEqual([{ sponsorId: '163388', sponsorContactId: '1627253' }])
   })
 
   it('common-info style patch does not dump rounds or masked manager fields', () => {
@@ -842,9 +830,9 @@ describe('company-school adapters', () => {
       participantApprovedCount: 0,
       participantCapacity: 36,
     })
-    expect(formatRecruitmentHeadcount(mapped.participantApprovedCount, mapped.participantCapacity)).toBe(
-      '0 / 36'
-    )
+    expect(
+      formatRecruitmentHeadcount(mapped.participantApprovedCount, mapped.participantCapacity)
+    ).toBe('0 / 36')
   })
 
   it('목록 participantCapacity가 null이면 분모는 -로 표시한다', () => {
@@ -855,9 +843,9 @@ describe('company-school adapters', () => {
       participantCapacity: null,
       participantRecruitmentCount: null,
     })
-    expect(formatRecruitmentHeadcount(mapped.participantApprovedCount, mapped.participantCapacity)).toBe(
-      '5 / -'
-    )
+    expect(
+      formatRecruitmentHeadcount(mapped.participantApprovedCount, mapped.participantCapacity)
+    ).toBe('5 / -')
   })
 
   it('모집 패치의 applicationMethod·remarks만 컬럼으로 보내고 otherNotes와 섞지 않는다', () => {
@@ -1012,6 +1000,8 @@ describe('1사1교 serviceDetailJson nested overlay 정본', () => {
         },
       })
     )
-    expect(parsed.registrationOverlay?.['economyRegistration.wageInfo.paymentItemValues']).toEqual([])
+    expect(parsed.registrationOverlay?.['economyRegistration.wageInfo.paymentItemValues']).toEqual(
+      []
+    )
   })
 })

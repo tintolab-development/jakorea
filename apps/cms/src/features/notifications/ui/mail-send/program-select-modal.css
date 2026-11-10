@@ -15,22 +15,6 @@
   border-color: var(--color-mint-01, #01a1af);
 }
 
-.mail-send-program-select-field__trigger .cms-select .ant-select-arrow {
-  background-image: none !important;
-  width: 16px !important;
-  height: 16px !important;
-  min-height: 16px !important;
-  color: var(--gray-85969-d, #85969d);
-}
-
-.mail-send-program-select-field__trigger .cms-select .ant-select-arrow > * {
-  display: inline-flex !important;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--font-size-16, 16px);
-  color: inherit;
-}
-
 .mail-send-program-select-modal.content-modal.teal-header-modal.ant-modal .ant-modal-content {
   width: 800px;
   max-height: none;
@@ -46,7 +30,7 @@
 .mail-send-program-select-modal__search {
   display: flex;
   align-items: center;
-  gap: var(--spacing-12, 12px);
+  gap: var(--spacing-8, 8px);
   width: 100%;
 }
 
@@ -68,12 +52,26 @@
 
 .mail-send-program-select-modal__count {
   margin: 0;
-  color: var(--main-BK, #3d3d3d);
+  padding-left: 4px;
+  color: var(--Content-disabled, rgba(61, 61, 61, 0.5));
   font-family: Pretendard, var(--font-family-primary), sans-serif;
   font-size: 16px;
   font-weight: 500;
   line-height: 150%;
-  opacity: 0.6;
+}
+
+/* 시안 Table / Horizontal / Column / Small — 헤더·행 44 (공통 52 !important 를 이기도록 :not 선택자 유지) */
+.mail-send-program-select-modal__table.cms-data-table
+  .ant-table-thead
+  .ant-table-cell:not(.ant-table-cell-scrollbar):not(.ant-table-selection-column),
+.mail-send-program-select-modal__table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td {
+  height: 44px !important;
+  min-height: 44px !important;
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
 }
 
 .mail-send-program-select-modal__table.cms-data-table .ant-table-tbody > tr {
@@ -116,15 +114,41 @@
   font-family: Pretendard, var(--font-family-primary), sans-serif;
   font-style: normal;
   line-height: 150%;
-  opacity: 0.6;
+  opacity: 0.5;
 }
 
 .mail-send-program-select-modal__empty-title {
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .mail-send-program-select-modal__empty-description {
   font-size: 14px;
   font-weight: 400;
+}
+
+/* 프로그램 선택 시 안내 (14673:86259) */
+.mail-send-program-select-modal__current {
+  margin: 0;
+  color: var(--Neutral-black, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.mail-send-program-select-modal__current-name {
+  font-weight: 700;
+}
+
+/* 「프로그램 선택 해제」 — 시안 Button / h44 · w160 (푸터 기본 h40 대신) */
+.mail-send-program-select-modal
+  .teal-header-modal__footer
+  .cms-button.ant-btn.mail-send-program-select-modal__deselect {
+  width: 160px;
+  min-width: 160px;
+  height: 44px !important;
+  min-height: 44px !important;
+  padding: var(--Spacing-8, 8px) calc(var(--Spacing-20, 20px) - 1px) !important;
+  font-size: 16px;
 }

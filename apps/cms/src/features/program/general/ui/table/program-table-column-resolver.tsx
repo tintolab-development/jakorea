@@ -26,7 +26,12 @@ export type ProgramListView = 'ALL' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED'
 
 /** 위젯 미선택 등 비정상 상태 */
 export type ProgramListTableView = ProgramListView | 'FALLBACK'
-export type ProgramListColumnPreset = 'default' | 'trainedTeachers'
+/**
+ * - `default`: 1사1교 등 기존 overview 목록
+ * - `general`: 일반 프로그램 목록 — 예정 탭 사업 운영 기간에 요일 표기(시안)
+ * - `trainedTeachers`: 교육 받은 교사 목록
+ */
+export type ProgramListColumnPreset = 'default' | 'general' | 'trainedTeachers'
 
 export interface ResolveEducationColumnsParams {
   studentRecruitmentTable?: boolean
@@ -47,8 +52,8 @@ function omitTrainedTeachersColumns(columns: ColumnsType<Program>): ColumnsType<
   return columns.filter(column => !TRAINED_TEACHERS_OMITTED_COLUMN_KEYS.has(String(column.key)))
 }
 
-/** 교육 받은 교사 목록 사업 운영 기간 — `2026.12.08(월) ~ 2026.12.30(수)` (피그마) */
-function withTrainedTeachersPeriodWeekday(columns: ColumnsType<Program>): ColumnsType<Program> {
+/** 사업 운영 기간 요일 표기 — `2026.12.08(월) ~ 2026.12.30(수)` (교육 받은 교사·일반 프로그램 피그마) */
+function withOperationPeriodWeekday(columns: ColumnsType<Program>): ColumnsType<Program> {
   return columns.map(column =>
     column.key === 'operationPeriod'
       ? {
@@ -473,7 +478,11 @@ export function resolveEducationColumns(params: ResolveEducationColumnsParams) {
 
     const columns = resolveColumns() as ColumnsType<Program>
     if (columnPreset === 'trainedTeachers') {
-      return withTrainedTeachersPeriodWeekday(omitTrainedTeachersColumns(columns))
+      return withOperationPeriodWeekday(omitTrainedTeachersColumns(columns))
+    }
+    if (columnPreset === 'general') {
+      // 일반 프로그램 예정 탭 사업 운영 기간 — `2026.12.08(월) ~ 2026.12.30(수)` (시안)
+      return withOperationPeriodWeekday(columns)
     }
     return columns
   }

@@ -7,6 +7,7 @@ import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll
 import { SEND_HISTORY_FILTER_FIELDS } from '@/features/notifications/model/alimtalk-send-history/filter-fields'
 import { formatDeliveryDateTimeSeoul } from '@/features/notifications/model/alimtalk-send-history/format-datetime'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
+import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import {
   applySendHistoryFiltersToSearchParams,
   readSendHistoryFiltersFromParams,
@@ -21,22 +22,36 @@ import { DetailModal } from './detail-modal'
 import '@/pages/programs/program-list-page.css'
 import './page.css'
 
-/** 시안 기준 고정 폭 — 일시 컬럼은 YYYY.MM.DD HH:mm:ss 표시 폭 확보 */
+/**
+ * 시안(6289:93622) 열 폭 — 템플릿명만 가변(최소 436, 남는 폭 흡수).
+ * 열 합이 표 래퍼보다 넓으면 공통 `useContainerFitTableScrollX`가 가로 스크롤을 켠다.
+ */
 const COL_W = {
   no: 80,
-  requestAt: 180,
-  templateName: 280,
-  senderInfo: 120,
-  receiverInfo: 160,
-  broadcastTiming: 100,
-  sendStatus: 120,
-  receiveStatus: 120,
-  sendAt: 180,
-  receiveAt: 180,
-  reservedAt: 180,
+  requestAt: 200,
+  templateNameMin: 436,
+  senderInfo: 200,
+  receiverInfo: 200,
+  broadcastTiming: 140,
+  sendStatus: 140,
+  receiveStatus: 140,
+  sendAt: 200,
+  receiveAt: 200,
+  reservedAt: 200,
 } as const
 
-const TABLE_SCROLL_X = Object.values(COL_W).reduce((sum, width) => sum + width, 0)
+const TABLE_MIN_SCROLL_X =
+  COL_W.no +
+  COL_W.requestAt +
+  COL_W.templateNameMin +
+  COL_W.senderInfo +
+  COL_W.receiverInfo +
+  COL_W.broadcastTiming +
+  COL_W.sendStatus +
+  COL_W.receiveStatus +
+  COL_W.sendAt +
+  COL_W.receiveAt +
+  COL_W.reservedAt
 
 function formatReservedAt(value: string | null | undefined, timing: string): string {
   if (timing === '즉시' || !value) return '-'
@@ -93,7 +108,7 @@ export function Page() {
           displayTotal === 0 ? '-' : displayTotal - index,
       },
       {
-        title: '요청일시',
+        title: '요청 일시',
         dataIndex: 'requestAt',
         key: 'requestAt',
         width: COL_W.requestAt,
@@ -106,7 +121,7 @@ export function Page() {
         title: '템플릿명',
         dataIndex: 'templateName',
         key: 'templateName',
-        width: COL_W.templateName,
+        minWidth: COL_W.templateNameMin,
         align: 'center',
         ellipsis: { showTitle: true },
         className: 'alimtalk-send-history-page__col-template-name',
@@ -151,7 +166,7 @@ export function Page() {
         align: 'center',
       },
       {
-        title: '발송일시',
+        title: '발송 일시',
         dataIndex: 'sentAt',
         key: 'sentAt',
         width: COL_W.sendAt,
@@ -161,7 +176,7 @@ export function Page() {
         render: (value: string) => formatDeliveryDateTimeSeoul(value),
       },
       {
-        title: '수신일시',
+        title: '수신 일시',
         dataIndex: 'receivedAt',
         key: 'receivedAt',
         width: COL_W.receiveAt,
@@ -171,7 +186,7 @@ export function Page() {
         render: (value: string) => formatDeliveryDateTimeSeoul(value),
       },
       {
-        title: '예약일시',
+        title: '예약 일시',
         dataIndex: 'reservedAt',
         key: 'reservedAt',
         width: COL_W.reservedAt,
@@ -182,6 +197,11 @@ export function Page() {
       },
     ],
     [displayTotal]
+  )
+
+  const { tableWrapRef, tableScrollX } = useContainerFitTableScrollX(
+    columns as ColumnsType<unknown>,
+    { includeSelection: false, initialScrollX: TABLE_MIN_SCROLL_X }
   )
 
   return (
@@ -200,19 +220,21 @@ export function Page() {
         description={`총 ${displayTotal.toLocaleString()}건`}
         contentLoading={isLoading}
       >
-        <CmsDataTable<AlimtalkSendHistoryRow>
-          rowKey="id"
-          className="cms-data-table cms-data-table--hoverable alimtalk-send-history-page__table"
-          tableLayout="fixed"
-          scroll={{ x: TABLE_SCROLL_X }}
-          columns={columns}
-          dataSource={rows}
-          pagination={false}
-          onRow={record => ({
-            className: 'alimtalk-send-history-page__row',
-            onClick: () => setSelectedRowId(record.id),
-          })}
-        />
+        <div ref={tableWrapRef} className="alimtalk-send-history-page__table-wrap">
+          <CmsDataTable<AlimtalkSendHistoryRow>
+            rowKey="id"
+            className="cms-data-table cms-data-table--hoverable alimtalk-send-history-page__table"
+            tableLayout="fixed"
+            scroll={tableScrollX != null ? { x: tableScrollX } : undefined}
+            columns={columns}
+            dataSource={rows}
+            pagination={false}
+            onRow={record => ({
+              className: 'alimtalk-send-history-page__row',
+              onClick: () => setSelectedRowId(record.id),
+            })}
+          />
+        </div>
         <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
       </FilterTableLayout>
       <DetailModal

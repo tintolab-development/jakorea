@@ -5,6 +5,7 @@ import {
   readCrimeConsentErrorCodeFromBody,
   resolveCrimeConsentApiErrorMessage,
 } from '../../instructor-apply/consent/crime-consent-original'
+import { toRuleDownloadFileName } from '@/shared/lib/download-file-name'
 
 const FALLBACK_FILE_NAME = '성범죄 경력 조회 동의서.pdf'
 
@@ -25,7 +26,7 @@ function saveBlobFile(fileName: string, blob: Blob): void {
   const objectUrl = URL.createObjectURL(blob)
   const anchor = document.createElement('a')
   anchor.href = objectUrl
-  anchor.download = fileName
+  anchor.download = toRuleDownloadFileName(fileName)
   anchor.rel = 'noopener'
   document.body.appendChild(anchor)
   anchor.click()

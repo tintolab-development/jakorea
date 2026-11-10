@@ -1003,7 +1003,7 @@ export function MypageEducationDetailPage() {
               : undefined
           }
         />
-      ) : showBanner ? (
+      ) : showBanner && appliedSection === 'application' ? (
         <DocumentPassBanner interviewAtLabel={application.interviewAtLabel} />
       ) : null}
 

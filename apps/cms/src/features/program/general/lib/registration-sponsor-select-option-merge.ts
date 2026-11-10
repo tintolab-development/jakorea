@@ -88,7 +88,7 @@ export function buildGeneralProgramSponsorManagerSelectOptions(args: {
           contactName: contact.name ?? '',
           position: contact.position,
           phone: contact.phone,
-          multiSponsor: true,
+          multiSponsor: args.selectedSponsorIds.length > 1,
         }),
       })
     }

@@ -67,6 +67,45 @@ describe('프로그램 상세 후원사 — 배정 응답 표시', () => {
     expect(container.textContent).toContain('mobile@example.test')
   })
 
+  it('nameTitle 조회는 이름 직책만 쉼표로 이어 붙이고 연락처는 숨긴다', () => {
+    const { container } = render(
+      <SponsorManagerContactsView
+        program={
+          {
+            id: '99300',
+            sponsorId: '99301',
+            managerName: '모바일담당',
+            generalCommonInfo: {
+              sponsorManagementIds: ['99301', '99302'],
+              sponsorManagerContactIds: ['99301::99311', '99302::99321'],
+              sponsorManagerContactNames: {
+                '99301::99311': '김제이',
+                '99302::99321': '홍길동',
+              },
+              sponsorManagementNames: {
+                '99301': '한국씨티은행',
+                '99302': '스타벅스',
+              },
+              sponsorManagerContactDetails: {
+                '99301::99311': {
+                  position: '책임',
+                  phone: '010-1111-2222',
+                  email: 'a@example.test',
+                },
+                '99302::99321': { position: null, phone: '010-0000-0000', email: null },
+              },
+            },
+          } as unknown as Program
+        }
+        sponsorRows={[]}
+        sponsorNameById={{ '99301': '한국씨티은행', '99302': '스타벅스' }}
+        contactsBySponsorId={{}}
+        variant="nameTitle"
+      />
+    )
+    expect(container.textContent).toBe('김제이 책임(한국씨티은행), 홍길동(스타벅스)')
+  })
+
   it('권한 없음(전화·이메일 null)이면 - 를 보여 주고 contacts 캐시로 채우지 않는다', () => {
     const { container } = render(
       <SponsorManagerContactsView

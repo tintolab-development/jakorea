@@ -7,6 +7,26 @@ import { recordFileDownload } from '@/entities/download-log/api/download-log-ser
 import { guardAdminDownload } from '@/shared/lib/session-admin-role'
 import type { DownloadAccessLogMeta } from '@/shared/lib/download-access-log-meta'
 
+/** 파일명의 `/`(경로 구분자)를 `,`로 바꾼다. 예) `버그/이슈 관리` → `버그,이슈 관리` */
+export function sanitizeDownloadFileName(filename: string): string {
+  return filename.replace(/[/\\]/g, ',')
+}
+
+/**
+ * 모든 다운로드 파일명 규칙. 이미 `[JA Korea]`로 시작하면 그대로 둔다(생성 파일).
+ * 그 외(업로드 원본 등)는 `[JA Korea] {원본 이름}_YYMMDD.확장자` (YYMMDD = 내려받은 날짜, Asia/Seoul).
+ * 예) `IMG_2235.PNG` → `[JA Korea] IMG_2235_261110.PNG`
+ */
+export function toRuleDownloadFileName(filename: string, date: Date = new Date()): string {
+  const name = sanitizeDownloadFileName(filename.trim())
+  if (name === '' || name.startsWith('[JA Korea]')) return name
+  const dot = name.lastIndexOf('.')
+  const hasExt = dot > 0 && /^[A-Za-z0-9]{1,10}$/.test(name.slice(dot + 1))
+  const base = hasExt ? name.slice(0, dot) : name
+  const ext = hasExt ? name.slice(dot) : ''
+  return `[JA Korea] ${base}_${formatSeoulYymmdd(date)}${ext}`
+}
+
 type RuntimeAuthUser = {
   id?: string
   name?: string
@@ -37,7 +57,7 @@ export async function recordDownloadAccessLog(
   const user = readRuntimeAuthUser()
   // ipAddress 생략 — 서버가 요청 IP를 기록 (가짜 IP 전송 시 검증 실패 가능)
   await recordFileDownload({
-    fileName: filename,
+    fileName: sanitizeDownloadFileName(filename),
     userId: user?.id ?? 'unknown-user',
     userName: user?.name ?? '알 수 없음',
     ...(accessLog ? { accessLog } : {}),
@@ -53,6 +73,8 @@ export async function downloadBlob(
   options?: DownloadBlobOptions
 ): Promise<void> {
   if (!guardAdminDownload()) return
+  // 저장 파일명과 이력 파일명을 같은 규칙 이름으로 맞춘다.
+  filename = toRuleDownloadFileName(filename)
   if (!options?.skipAccessLog) {
     if (options?.accessLog) {
       await recordDownloadAccessLog(filename, options.accessLog)
@@ -99,6 +121,25 @@ export function fileNameFromContentDisposition(
   header: string | null | undefined,
   fallback: string
 ): string {
+  return sanitizeDownloadFileName(parseContentDispositionFileName(header, fallback))
+}
+
+/**
+ * 서버 헤더 파일명이 `[JA Korea]` 규칙 이름일 때만 쓰고, 아니면(영문 등) `fallback`을 쓴다.
+ * 서버가 규칙을 반영하기 전·후 모두 저장 파일명이 규칙을 따르게 한다.
+ */
+export function ruleFileNameFromContentDisposition(
+  header: string | null | undefined,
+  fallback: string
+): string {
+  const fromHeader = fileNameFromContentDisposition(header, '')
+  return fromHeader.startsWith('[JA Korea]') ? fromHeader : sanitizeDownloadFileName(fallback)
+}
+
+function parseContentDispositionFileName(
+  header: string | null | undefined,
+  fallback: string
+): string {
   if (!header) return fallback
   const star = /filename\*\s*=\s*UTF-8''([^;]+)/i.exec(header)?.[1]?.trim().replace(/^"|"$/g, '')
   if (star) {
@@ -115,11 +156,28 @@ export function fileNameFromContentDisposition(
   return plain || fallback
 }
 
+/** Asia/Seoul 달력일 YYMMDD */
+function formatSeoulYymmdd(date: Date): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Seoul',
+    year: '2-digit',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date)
+  const v = Object.fromEntries(parts.map(part => [part.type, part.value]))
+  return `${v.year}${v.month}${v.day}`
+}
+
 /**
- * 파일명 생성 헬퍼
+ * 공통 파일명 규칙: `[JA Korea] 도메인명_파일 이름_YYMMDD.ext`
+ * - xlsx: `[JA Korea] CMS 어드민_{prefix}_YYMMDD.xlsx`
+ * - 그 외(pdf·zip 등): `[JA Korea] {prefix}_YYMMDD.ext`
+ * - prefix에 이미 `[JA Korea]`가 있으면 접두어를 다시 붙이지 않는다. 빗금은 쉼표로 바꾼다.
  */
 export function generateFilename(prefix: string, extension: string, date?: Date): string {
-  const now = date || new Date()
-  const dateStr = now.toISOString().split('T')[0].replace(/-/g, '')
-  return `${prefix}_${dateStr}.${extension}`
+  const stamp = formatSeoulYymmdd(date || new Date())
+  const name = sanitizeDownloadFileName(prefix.trim())
+  if (name.startsWith('[JA Korea]')) return `${name}_${stamp}.${extension}`
+  const domain = extension.toLowerCase() === 'xlsx' ? 'CMS 어드민_' : ''
+  return `[JA Korea] ${domain}${name}_${stamp}.${extension}`
 }

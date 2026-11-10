@@ -6,6 +6,7 @@ import {
   sanitizeMailSenderDisplayNameInput,
   validateMailSendDraft,
 } from './payload'
+import { MAIL_SEND_TIMING_REQUIRED_MESSAGE } from './validate-send'
 import { MAIL_SEND_ALL_PROGRAM_ID, MAIL_SEND_PURPOSE, type MailSendDraft } from './types'
 
 function draft(overrides: Partial<MailSendDraft> = {}): MailSendDraft {
@@ -73,6 +74,17 @@ describe('validateMailSendDraft', () => {
     expect(validateMailSendDraft(draft({ programId: 'prog-coy-2026' }))).toBe(
       '대상 프로그램을 선택해 주세요.'
     )
+  })
+
+  it('blocks send when 발송 시점 is not selected (시안 기본 미선택)', () => {
+    expect(validateMailSendDraft(draft(), { sendTimingSelected: false })).toBe(
+      MAIL_SEND_TIMING_REQUIRED_MESSAGE
+    )
+    expect(MAIL_SEND_TIMING_REQUIRED_MESSAGE).toBe('발송 시점을 선택해 주세요.')
+    expect(validateMailSendDraft(draft({ templateId: '' }), { sendTimingSelected: false })).toBe(
+      '템플릿을 선택해 주세요.'
+    )
+    expect(validateMailSendDraft(draft(), { sendTimingSelected: true })).toBeNull()
   })
 
   it('requires a schedule datetime when scheduled', () => {
