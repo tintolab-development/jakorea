@@ -86,6 +86,7 @@
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
+  letter-spacing: 0;
   /* Figma Tab / Line status off — Content/disabled */
   color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
   cursor: pointer;
@@ -118,6 +119,26 @@
   white-space: nowrap;
 }
 
+/*
+ * 활성(700) / 비활성(500) 전환 시 글리프 폭이 바뀌지 않게 Bold 폭을 미리 확보한다.
+ * JA Korea 처럼 라틴+공백 라벨에서 자간이 흔들리는 것처럼 보이는 증상을 막는다.
+ */
+.cms-text-tabs__tab-label[data-label] {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.cms-text-tabs__tab-label[data-label]::after {
+  content: attr(data-label);
+  height: 0;
+  overflow: hidden;
+  font-weight: 700;
+  visibility: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+
 .cms-text-tabs__count {
   font-weight: 500;
   color: inherit;
@@ -138,6 +159,7 @@
   font-style: normal;
   font-weight: 700;
   line-height: 150%;
+  letter-spacing: 0;
   border-bottom: 2px solid var(--Brand-500, #00a0af);
 }
 

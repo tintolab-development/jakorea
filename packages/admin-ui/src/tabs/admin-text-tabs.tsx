@@ -76,7 +76,12 @@ export function AdminTextTabs<Key extends string = string>({
                   onChange(item.key)
                 }}
               >
-                <span className="cms-text-tabs__tab-label">{item.label}</span>
+                <span
+                  className="cms-text-tabs__tab-label"
+                  {...(typeof item.label === 'string' ? { 'data-label': item.label } : {})}
+                >
+                  {item.label}
+                </span>
                 {item.count != null ? (
                   <span className="cms-text-tabs__count">{item.count}</span>
                 ) : null}
