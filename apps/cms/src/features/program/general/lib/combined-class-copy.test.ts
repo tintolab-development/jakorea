@@ -15,7 +15,7 @@ describe('combined class process copy', () => {
         leadGrade: '1학년',
         partnerGrade: '2학년',
       })
-    ).toContain('[JA초등학교] 1학년과 2학년을 합반하시겠습니까?')
+    ).toContain('**[JA초등학교] 1학년과 2학년**을 합반하시겠습니까?')
   })
 
   it('합반 반영 완료 안내는 파트너 학년이 리드 학년 신청 정보를 따른다고 알린다', () => {

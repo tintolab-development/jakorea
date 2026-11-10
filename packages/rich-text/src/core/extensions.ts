@@ -23,13 +23,15 @@ import {
   RichTextHighlight,
   RichTextImageResize,
   RichTextParagraph,
+  RichTextStyledBlockHtml,
+  RichTextStyledInlineHtml,
   RichTextTextStyle,
   RichTextYoutube,
 } from './markdown-serializers'
 import { createVisualImageResize } from './visual-image-resize'
 import { RawHtmlBlock } from './raw-html-block'
 import { RichTextSuperscript } from './superscript-extension'
-import type { CreateRichTextExtensionsOptions } from './types'
+import type { CreateRichTextExtensionsOptions, RichTextDisabledFeature } from './types'
 
 export function createRichTextExtensions(
   options: CreateRichTextExtensionsOptions = {}
@@ -41,8 +43,10 @@ export function createRichTextExtensions(
     extraExtensions,
     getResolveImageSrc,
     visualImagePosition = false,
+    disabledFeatures = [],
   } = options
   const isFull = preset === 'full'
+  const off = (feature: RichTextDisabledFeature) => disabledFeatures.includes(feature)
 
   const extensions: Extensions = [
     StarterKit.configure({
@@ -51,23 +55,30 @@ export function createRichTextExtensions(
       dropcursor: false,
       link: false,
       underline: false,
+      ...(off('horizontalRule') ? { horizontalRule: false as const } : {}),
     }),
     Dropcursor.configure({
       color: 'var(--rt-dropcursor, #01A1AF)',
       width: 2,
     }),
     RichTextParagraph,
-    RichTextHeading.configure({ levels: [1, 2, 3] }),
+    RichTextHeading.configure({ levels: off('heading1') ? [2, 3] : [1, 2, 3] }),
     RichTextTextStyle,
-    FontFamily,
-    FontSize,
-    LineHeight,
-    Color.configure({ types: ['textStyle'] }),
-    RichTextHighlight,
-    TextAlign.configure({
-      types: ['heading', 'paragraph'],
-      alignments: ['left', 'center', 'right', 'justify'],
-    }),
+    RichTextStyledInlineHtml,
+    RichTextStyledBlockHtml,
+    ...(off('fontFamily') ? [] : [FontFamily]),
+    ...(off('fontSize') ? [] : [FontSize]),
+    ...(off('lineHeight') ? [] : [LineHeight]),
+    ...(off('textColor') ? [] : [Color.configure({ types: ['textStyle'] })]),
+    ...(off('highlight') ? [] : [RichTextHighlight]),
+    ...(off('textAlign')
+      ? []
+      : [
+          TextAlign.configure({
+            types: ['heading', 'paragraph'],
+            alignments: ['left', 'center', 'right', 'justify'],
+          }),
+        ]),
     Underline,
     Link.configure({
       openOnClick: openLinksOnClick,
@@ -78,18 +89,22 @@ export function createRichTextExtensions(
     RichTextYoutube,
     // 모든 뷰어가 렌더하도록 항상 등록. 삽입 메뉴는 앱 툴바에서 선택적으로 노출
     RawHtmlBlock,
-    Table.configure({
-      resizable: false,
-    }),
-    TableRow,
-    TableHeader,
-    TableCell,
+    ...(off('table')
+      ? []
+      : [
+          Table.configure({
+            resizable: false,
+          }),
+          TableRow,
+          TableHeader,
+          TableCell,
+        ]),
     Markdown,
   ]
 
   if (isFull) {
     extensions.push(
-      RichTextSuperscript,
+      ...(off('superscript') ? [] : [RichTextSuperscript]),
       RichTextEmoji,
       createRichTextFileHandler(getResolveImageSrc, {
         requireImageFilesOnDrop: visualImagePosition,

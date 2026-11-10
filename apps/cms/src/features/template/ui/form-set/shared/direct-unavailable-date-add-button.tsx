@@ -7,6 +7,7 @@ import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-butt
 import type { UnavailableDatesExclusionState } from '@/features/template/ui/form-set/shared/unavailable-dates-exclusion'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
+import { useIsGeneralRegistrationWizard } from '@/features/template/context/general-registration-wizard-context'
 import './direct-unavailable-date-add-button.css'
 
 const WEEKDAYS_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
@@ -55,11 +56,27 @@ function exclusionStateFromModalSelectedDates(
   }
 }
 
-function formatModalSelectedLabel(value: string): string {
+/**
+ * 날짜 라벨 형식 — `korean`: 「26년 3월 26일」(기존), `dotted`: 「2026.03.26(목)」(일반 프로그램 등록 시안)
+ */
+type UnavailableDateLabelFormat = 'korean' | 'dotted'
+
+function formatDottedDateWithWeekday(date: Dayjs): string {
+  return `${date.format('YYYY.MM.DD')}(${WEEKDAYS_KO[date.day()]})`
+}
+
+function formatModalSelectedLabel(
+  value: string,
+  labelFormat: UnavailableDateLabelFormat = 'korean'
+): string {
   if (value === RECURRING_SATURDAY) return '토요일 제외'
   if (value === RECURRING_SUNDAY) return '일요일 제외'
   if (value === RECURRING_HOLIDAY) return RECURRING_HOLIDAY
-  if (ISO_DATE_PATTERN.test(value)) return dayjs(value).format('YY년 M월 D일')
+  if (ISO_DATE_PATTERN.test(value)) {
+    return labelFormat === 'dotted'
+      ? formatDottedDateWithWeekday(dayjs(value))
+      : dayjs(value).format('YY년 M월 D일')
+  }
   return value
 }
 
@@ -109,12 +126,16 @@ function filterEnabledDateValues(
   })
 }
 
-function formatUnavailableDateLabel(value: string): string {
+function formatUnavailableDateLabel(
+  value: string,
+  labelFormat: UnavailableDateLabelFormat = 'korean'
+): string {
   if (!ISO_DATE_PATTERN.test(value)) return value
 
   const date = dayjs(value)
   if (!date.isValid()) return value
 
+  if (labelFormat === 'dotted') return formatDottedDateWithWeekday(date)
   return `${date.format('YY년 M월 D일')}(${WEEKDAYS_KO[date.day()]})`
 }
 
@@ -195,6 +216,10 @@ export function DirectUnavailableDateAddButton({
   onExclusionChange?: (state: UnavailableDatesExclusionState) => void
   freezeCalendarInteraction?: boolean
 }) {
+  // 일반 프로그램 등록 위저드만 시안 날짜 형식·팝업 제목 — 그 외(UJAT·템플릿 관리·상세)는 기존 유지
+  const isGeneralWizard = useIsGeneralRegistrationWizard()
+  const dateLabelFormat: UnavailableDateLabelFormat = isGeneralWizard ? 'dotted' : 'korean'
+  const modalTitle = isGeneralWizard ? '진행 불가일 선택' : '진행 불가일 직접 선택'
   const isControlled = appliedDatesProp !== undefined
   const [open, setOpen] = useState(false)
   const [currentMonth, setCurrentMonth] = useState(() => dayjs().startOf('month'))
@@ -219,13 +244,17 @@ export function DirectUnavailableDateAddButton({
   )
 
   const appliedDateText = useMemo(
-    () => appliedDates.map(formatUnavailableDateLabel).join(', '),
-    [appliedDates]
+    () => appliedDates.map(value => formatUnavailableDateLabel(value, dateLabelFormat)).join(', '),
+    [appliedDates, dateLabelFormat]
   )
 
   const appliedDateItems = useMemo(
-    () => appliedDates.map(value => ({ value, label: formatUnavailableDateLabel(value) })),
-    [appliedDates]
+    () =>
+      appliedDates.map(value => ({
+        value,
+        label: formatUnavailableDateLabel(value, dateLabelFormat),
+      })),
+    [appliedDates, dateLabelFormat]
   )
 
   const closeModal = () => setOpen(false)
@@ -259,7 +288,7 @@ export function DirectUnavailableDateAddButton({
     setCurrentMonth(month)
   }
 
-  const displayTags = selectedDates.map(formatModalSelectedLabel)
+  const displayTags = selectedDates.map(value => formatModalSelectedLabel(value, dateLabelFormat))
 
   return (
     <>
@@ -320,7 +349,7 @@ export function DirectUnavailableDateAddButton({
       <ContentModal
         open={open}
         onCancel={closeModal}
-        title="진행 불가일 직접 선택"
+        title={modalTitle}
         width={600}
         description={`${modalUnavailableDescriptionLead}\n${modalUnavailableDescriptionSecond}`}
         className="direct-unavailable-date-modal"

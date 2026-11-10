@@ -19,6 +19,8 @@ import './sms-page.css'
 const TAB_PARAM = 'tab'
 const SEND_MODAL_PARAM = 'send'
 const SEND_MODAL_VALUE = '1'
+/** 템플릿 미리보기 「템플릿 사용」으로 발송 화면을 열 때 미리 고를 템플릿 */
+const SEND_TEMPLATE_PARAM = 'templateId'
 
 const TAB_ITEMS: { key: SmsTabKey; label: string }[] = [
   { key: 'template', label: '문자 템플릿' },
@@ -34,6 +36,7 @@ export function SmsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const activeKey = parseTabKey(searchParams.get(TAB_PARAM))
   const sendOpen = searchParams.get(SEND_MODAL_PARAM) === SEND_MODAL_VALUE
+  const sendTemplateId = searchParams.get(SEND_TEMPLATE_PARAM) ?? undefined
   // 문자 템플릿 동기화는 쓰기(NOTIFICATION_WRITE). 조회 전용 역할(Program Viewer)은 자동 동기화를 보내지 않는다.
   const canSyncCatalog = canAdminAction({ roleCode: useSessionAdminRoleCode(), action: 'write' })
   useAutoSyncSmsCatalogOnEnter(shouldUseSmsTemplatesRemoteApi() && canSyncCatalog)
@@ -62,17 +65,34 @@ export function SmsPage() {
       prev => {
         const next = new URLSearchParams(prev)
         next.set(SEND_MODAL_PARAM, SEND_MODAL_VALUE)
+        next.delete(SEND_TEMPLATE_PARAM)
         return next
       },
       { replace: false }
     )
   }, [setSearchParams])
 
+  const handleUseTemplate = useCallback(
+    (templateId: string) => {
+      setSearchParams(
+        prev => {
+          const next = new URLSearchParams(prev)
+          next.set(SEND_MODAL_PARAM, SEND_MODAL_VALUE)
+          next.set(SEND_TEMPLATE_PARAM, templateId)
+          return next
+        },
+        { replace: false }
+      )
+    },
+    [setSearchParams]
+  )
+
   const handleCloseSend = useCallback(() => {
     setSearchParams(
       prev => {
         const next = new URLSearchParams(prev)
         next.delete(SEND_MODAL_PARAM)
+        next.delete(SEND_TEMPLATE_PARAM)
         return next
       },
       { replace: true }
@@ -94,11 +114,15 @@ export function SmsPage() {
         }
       />
       {activeKey === 'template' ? (
-        <SmsTemplateList />
+        <SmsTemplateList onUseTemplate={handleUseTemplate} />
       ) : (
         <SmsSendHistoryPage />
       )}
-      <SendFullpageModal open={sendOpen} onClose={handleCloseSend} />
+      <SendFullpageModal
+        open={sendOpen}
+        onClose={handleCloseSend}
+        initialTemplateId={sendTemplateId}
+      />
     </div>
   )
 }

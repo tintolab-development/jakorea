@@ -34,6 +34,12 @@ export const LECTURE_EVAL_TABS = [
   { key: 'results' as const, label: '결과' },
 ]
 
+/** 일반 프로그램 강의평가 탭 — 시안 1141:267867 「강의평가」 붙여 쓰기 (UJAT는 `LECTURE_EVAL_TABS` 유지) */
+export const GENERAL_LECTURE_EVAL_TABS = [
+  { key: 'eval' as const, label: '강의평가' },
+  { key: 'results' as const, label: '결과' },
+]
+
 /** 제출 시 mock 설문 종료·결과 탭 접근 (API 연동 전) */
 export const LECTURE_EVAL_DEV_AUTO_FINISH_ON_SUBMIT = false
 

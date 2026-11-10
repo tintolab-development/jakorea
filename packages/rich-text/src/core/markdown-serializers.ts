@@ -1,4 +1,4 @@
-import { mergeAttributes, type JSONContent, type MarkdownRendererHelpers, type MarkdownToken } from '@tiptap/core'
+import { Extension, mergeAttributes, type JSONContent, type MarkdownRendererHelpers, type MarkdownToken } from '@tiptap/core'
 import Heading from '@tiptap/extension-heading'
 import Highlight from '@tiptap/extension-highlight'
 import Paragraph from '@tiptap/extension-paragraph'
@@ -97,8 +97,47 @@ type MarkdownRenderCtx = {
   previousNode?: JSONContent | null
 }
 
+/**
+ * 문단 토큰이 `<p style="…">…</p>` 로 완전히 감싸진 경우(= [html 여는 태그, …인라인 토큰, html 닫는 태그])
+ * 양 끝 html 토큰을 떼고 정렬·줄간격과 내부 토큰을 돌려준다.
+ *
+ * @tiptap/extension-list 의 orderedList 토크나이저는 항목 첫 줄을 inlineTokens 로만 렉싱하므로
+ * 번호 목록 항목 안의 `<p style>` 는 블록 토크나이저를 거치지 않고 이 형태로 들어온다.
+ */
+function unwrapStyledParagraphTokens(
+  token: MarkdownToken
+): { inner: MarkdownToken[]; textAlign: string | null; lineHeight: string | null } | null {
+  const tokens = (token as { tokens?: MarkdownToken[] }).tokens
+  if (!tokens || tokens.length < 2) return null
+  const htmlOf = (t: MarkdownToken): string | null =>
+    t.type === 'html' ? String((t as { raw?: string }).raw ?? (t as { text?: string }).text ?? '').trim() : null
+  const first = htmlOf(tokens[0])
+  const last = htmlOf(tokens[tokens.length - 1])
+  if (!first || !last || !/^<p(\s[^>]*)?>$/i.test(first) || !/^<\/p\s*>$/i.test(last)) return null
+  const inner = tokens.slice(1, -1)
+  // 안쪽에 다른 <p> 여닫는 태그가 끼어 있으면 짝이 맞지 않으므로 건드리지 않는다
+  if (inner.some(t => /^<\/?p[\s>]/i.test(htmlOf(t) ?? ''))) return null
+  const style = parseInlineStyleAttr(first)
+  const textAlign = style?.['text-align'] ?? null
+  const lineHeight = style?.['line-height'] ?? null
+  if (!textAlign && !lineHeight) return null
+  return { inner, textAlign, lineHeight }
+}
+
 /** 문단 정렬·줄간격 — Markdown에 HTML 블록으로 보존. 블록 간격은 doc의 `\n\n` join이 담당. */
 export const RichTextParagraph = Paragraph.extend({
+  parseMarkdown: (token, helpers) => {
+    const styled = unwrapStyledParagraphTokens(token)
+    if (styled) {
+      return helpers.createNode(
+        'paragraph',
+        { textAlign: styled.textAlign, lineHeight: styled.lineHeight },
+        helpers.parseInline(styled.inner)
+      )
+    }
+    // 기본 동작(빈 문단 `&nbsp;`, 이미지 단독 문단 등)은 그대로 위임
+    return Paragraph.config.parseMarkdown!(token, helpers)
+  },
   renderMarkdown: (
     node: JSONContent,
     helpers: MarkdownRendererHelpers,
@@ -136,6 +175,163 @@ export const RichTextHeading = Heading.extend({
       return `${hashes} ${content}`
     }
     return renderAlignedBlock(`h${level}`, align, lineHeight, content)
+  },
+})
+
+function unescapeHtml(value: string): string {
+  return value
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+}
+
+/** `style="…"` 속성값을 { 속성: 값 } 으로 파싱한다. 시작 태그에 style 이 없으면 null. */
+function parseInlineStyleAttr(openTag: string): Record<string, string> | null {
+  const match = /\sstyle="([^"]*)"/i.exec(openTag)
+  if (!match) return null
+  const result: Record<string, string> = {}
+  for (const declaration of unescapeHtml(match[1]).split(';')) {
+    const idx = declaration.indexOf(':')
+    if (idx === -1) continue
+    const key = declaration.slice(0, idx).trim().toLowerCase()
+    const value = declaration.slice(idx + 1).trim()
+    if (key && value) result[key] = value
+  }
+  return result
+}
+
+/**
+ * `src` 맨 앞의 `<tag …>` 에 대응하는 `</tag>` 까지(같은 태그 중첩 고려)를 찾아
+ * { open, inner, raw } 를 돌려준다. 닫는 태그가 없으면 null.
+ */
+function matchWrappedHtml(
+  src: string,
+  tags: readonly string[]
+): { tag: string; open: string; inner: string; raw: string } | null {
+  const openMatch = new RegExp(`^<(${tags.join('|')})(\\s[^>]*)?>`, 'i').exec(src)
+  if (!openMatch) return null
+  const tag = openMatch[1].toLowerCase()
+  const tagRegex = new RegExp(`<(/?)${tag}(?=[\\s>/])[^>]*>`, 'gi')
+  tagRegex.lastIndex = openMatch[0].length
+  let depth = 1
+  let m: RegExpExecArray | null
+  while ((m = tagRegex.exec(src)) !== null) {
+    depth += m[1] ? -1 : 1
+    if (depth === 0) {
+      const end = m.index + m[0].length
+      return {
+        tag,
+        open: openMatch[0],
+        inner: src.slice(openMatch[0].length, m.index),
+        raw: src.slice(0, end),
+      }
+    }
+  }
+  return null
+}
+
+/**
+ * 인라인 HTML 래퍼 안의 Markdown 해석.
+ *
+ * `renderMarkdown` 은 `<span style>`·`<mark style>` 안에 `**굵게**` 같은 Markdown 을 그대로 넣어 저장한다.
+ * 그러나 @tiptap/markdown 은 래퍼를 HTML 로만 파싱해서 내부 Markdown 이 글자 그대로 남는다.
+ * 래퍼 내부를 인라인 Markdown 으로 다시 토큰화해 마크(textStyle·highlight)로 적용한다.
+ */
+export const RichTextStyledInlineHtml = Extension.create({
+  name: 'richTextStyledInlineHtml',
+  markdownTokenizer: {
+    name: 'richTextStyledInlineHtml',
+    level: 'inline',
+    start: (src: string) => src.search(/<(span|mark)[\s>]/i),
+    tokenize: (src, _tokens, lexer) => {
+      const wrapped = matchWrappedHtml(src, ['span', 'mark'])
+      if (!wrapped) return undefined
+      const style = parseInlineStyleAttr(wrapped.open)
+      if (!style) return undefined
+      const mark: { type: string; attrs: Record<string, string> } | null = (() => {
+        if (wrapped.tag === 'mark') {
+          const color = style['background-color']
+          return color ? { type: 'highlight', attrs: { color } } : null
+        }
+        const attrs: Record<string, string> = {}
+        if (style.color) attrs.color = style.color
+        if (style['font-family']) attrs.fontFamily = style['font-family']
+        if (style['font-size']) attrs.fontSize = style['font-size']
+        return Object.keys(attrs).length ? { type: 'textStyle', attrs } : null
+      })()
+      if (!mark) return undefined
+      return {
+        type: 'richTextStyledInlineHtml',
+        raw: wrapped.raw,
+        markType: mark.type,
+        markAttrs: mark.attrs,
+        tokens: lexer.inlineTokens(wrapped.inner),
+      }
+    },
+  },
+  parseMarkdown: (token, helpers) => {
+    const t = token as { tokens?: MarkdownToken[]; markType?: string; markAttrs?: Record<string, string> }
+    const content = helpers.parseInline(t.tokens ?? [])
+    return helpers.applyMark(t.markType ?? 'textStyle', content, t.markAttrs)
+  },
+})
+
+/**
+ * 정렬·줄간격이 있는 문단/제목(`<p style>`, `<h1~3 style>`) 안의 Markdown 해석.
+ * 목록 항목 안에서는 인라인 html 로 렉싱되어 문단 속성이 버려지던 문제도 함께 막는다.
+ */
+export const RichTextStyledBlockHtml = Extension.create({
+  name: 'richTextStyledBlockHtml',
+  markdownTokenizer: {
+    name: 'richTextStyledBlockHtml',
+    level: 'block',
+    start: (src: string) => src.search(/<(p|h[1-3])[\s>]/i),
+    tokenize: (src, _tokens, lexer) => {
+      const wrapped = matchWrappedHtml(src, ['p', 'h1', 'h2', 'h3'])
+      if (!wrapped) return undefined
+      const style = parseInlineStyleAttr(wrapped.open)
+      if (!style) return undefined
+      const textAlign = style['text-align']
+      const lineHeight = style['line-height']
+      if (!textAlign && !lineHeight) return undefined
+      // 닫는 태그 뒤에는 줄 끝만 허용 (같은 줄에 다른 내용이 이어지면 일반 HTML 처리에 맡긴다)
+      const rest = /^[ \t]*(\r?\n|$)/.exec(src.slice(wrapped.raw.length))
+      if (!rest) return undefined
+      // 빈 줄을 포함하는 내용은 Markdown 블록 경계와 충돌하므로 건드리지 않는다
+      if (/\n[ \t]*\n/.test(wrapped.inner)) return undefined
+      return {
+        type: 'richTextStyledBlockHtml',
+        raw: wrapped.raw + rest[0],
+        tag: wrapped.tag,
+        textAlign: textAlign ?? null,
+        lineHeight: lineHeight ?? null,
+        tokens: lexer.inlineTokens(wrapped.inner),
+      }
+    },
+  },
+  parseMarkdown: (token, helpers) => {
+    const t = token as {
+      tokens?: MarkdownToken[]
+      tag?: string
+      textAlign?: string | null
+      lineHeight?: string | null
+    }
+    const content = helpers.parseInline(t.tokens ?? [])
+    const levelMatch = /^h([1-3])$/.exec(t.tag ?? '')
+    if (levelMatch) {
+      return helpers.createNode(
+        'heading',
+        { level: Number(levelMatch[1]), textAlign: t.textAlign ?? null, lineHeight: t.lineHeight ?? null },
+        content
+      )
+    }
+    return helpers.createNode(
+      'paragraph',
+      { textAlign: t.textAlign ?? null, lineHeight: t.lineHeight ?? null },
+      content
+    )
   },
 })
 

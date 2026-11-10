@@ -25,7 +25,7 @@ function buildDrafts(items: CultureItem[]): DraftMap {
 function fieldClass(isEditing: boolean, ...extra: Array<string | false | undefined>) {
   return [
     'recruit-guide-inline-field',
-    isEditing ? 'recruit-guide-inline-field--edit' : 'recruit-guide-inline-field--readonly',
+    isEditing && 'recruit-guide-inline-field--edit',
     'cms-textarea--fixed-rows',
     ...extra,
   ]
@@ -131,7 +131,7 @@ export function CultureSectionCard({ items }: Props) {
               autoSize={{ minRows: 1 }}
               value={value}
               readOnly={!isEditing}
-              tabIndex={isEditing ? 0 : -1}
+              inlineReadOnly="text"
               placeholder="타이틀을 입력해 주세요"
               aria-label={`${record.itemLabel} 타이틀`}
               onChange={e => handleDraftChange(record.id, { title: e.target.value })}
@@ -155,7 +155,7 @@ export function CultureSectionCard({ items }: Props) {
               autoSize={{ minRows: 1 }}
               value={value}
               readOnly={!isEditing}
-              tabIndex={isEditing ? 0 : -1}
+              inlineReadOnly="text"
               placeholder="설명 텍스트를 입력해 주세요"
               aria-label={`${record.itemLabel} 설명 텍스트`}
               onChange={e => handleDraftChange(record.id, { description: e.target.value })}

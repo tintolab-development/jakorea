@@ -2,8 +2,10 @@
  * 참여 기관 캘린더 우측 — 선택일 기관 목록 (학교명 + 지역 | 학년 | 회차·시간)
  */
 
+import { useState } from 'react'
 import { calendarListItemBackground } from '@/shared/components/calendar/lib/calendar-list-item-background'
-import { EmptyState } from '@/shared/ui'
+import { CmsCheckbox, EmptyState } from '@/shared/ui'
+import { StatusTag } from '@/shared/components/status-tag'
 import type {
   ParticipatingSchoolRow,
   ParticipatingSchoolSession,
@@ -107,17 +109,35 @@ export function getPrimaryParticipatingSessionLine(sessions: ParticipatingSchool
   return formatParticipatingSessionLine(sorted[0]!)
 }
 
+export type ParticipatingInstitutionsCalendarDayListVariant = 'default' | 'general-institution'
+
 export function ParticipatingInstitutionsCalendarDayList({
   events,
   getColorForEvent,
   onSchoolClick,
   usePreferredScheduleFormat = false,
+  variant = 'default',
 }: {
   events: ParticipatingInstitutionsCalendarDayListEvent[]
   getColorForEvent: (event: ParticipatingInstitutionsCalendarDayListEvent) => ScheduleColorPair
   onSchoolClick: (row: ParticipatingSchoolRow) => void
   usePreferredScheduleFormat?: boolean
+  /**
+   * `general-institution` — 일반 기관형 시안(01-2): 카드 우측 체크박스, 기관명 옆 「활동 포기」 뱃지.
+   * 체크박스는 화면 내 선택 표시만 한다(선택 대상 일괄 액션은 시안에 정의되지 않음).
+   */
+  variant?: ParticipatingInstitutionsCalendarDayListVariant
 }) {
+  const isGeneralInstitution = variant === 'general-institution'
+  const [checkedEventIds, setCheckedEventIds] = useState<ReadonlySet<string>>(() => new Set())
+  const toggleChecked = (id: string, checked: boolean) => {
+    setCheckedEventIds(prev => {
+      const next = new Set(prev)
+      if (checked) next.add(id)
+      else next.delete(id)
+      return next
+    })
+  }
   const sortedEvents = [...events].sort((a, b) =>
     (a.originalItem.row.schoolName || '').localeCompare(b.originalItem.row.schoolName || '', 'ko')
   )
@@ -142,12 +162,20 @@ export function ParticipatingInstitutionsCalendarDayList({
             ? formatParticipatingSessionsPeriodForCalendarDisplay(sessionsOnDate)
             : getPrimaryParticipatingSessionLine(sessionsOnDate)
 
+          const itemKey = `${ev.id}-${ev.originalItem.row.id}`
+          const checked = isGeneralInstitution && checkedEventIds.has(itemKey)
           return (
             <div
-              key={`${ev.id}-${ev.originalItem.row.id}`}
+              key={itemKey}
               role="button"
               tabIndex={0}
-              className="calendar-list-item participating-institutions-calendar-day-list__item"
+              className={[
+                'calendar-list-item participating-institutions-calendar-day-list__item',
+                isGeneralInstitution ? 'participating-institutions-calendar-day-list__item--selectable' : '',
+                checked ? 'participating-institutions-calendar-day-list__item--checked' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
               data-has-color="true"
               style={{
                 backgroundColor: calendarListItemBackground(color.bg),
@@ -161,8 +189,31 @@ export function ParticipatingInstitutionsCalendarDayList({
                 }
               }}
             >
+              {isGeneralInstitution ? (
+                <span
+                  className="participating-institutions-calendar-day-list__check"
+                  onClick={e => e.stopPropagation()}
+                  onKeyDown={e => e.stopPropagation()}
+                  role="presentation"
+                >
+                  <CmsCheckbox
+                    checked={checked}
+                    aria-label={`${row.schoolName?.trim() || '기관'} 선택`}
+                    onChange={e => toggleChecked(itemKey, e.target.checked)}
+                  />
+                </span>
+              ) : null}
               <div className="participating-institutions-calendar-day-list__title">
                 {row.schoolName?.trim() || '-'}
+                {isGeneralInstitution && row.activityWithdrawn ? (
+                  <>
+                    <span
+                      className="participating-institutions-calendar-day-list__meta-sep"
+                      aria-hidden
+                    />
+                    <StatusTag label="활동 포기" tone="red" />
+                  </>
+                ) : null}
               </div>
               <div className="participating-institutions-calendar-day-list__meta">
                 <span className="participating-institutions-calendar-day-list__meta-part">

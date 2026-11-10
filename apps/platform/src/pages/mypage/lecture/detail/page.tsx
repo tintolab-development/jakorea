@@ -608,7 +608,7 @@ export function MypageLectureDetailPage() {
         </div>
       ) : null}
 
-      {showBanner ? (
+      {showBanner && appliedSection === 'application' ? (
         <DocumentPassBanner interviewAtLabel={application.interviewAtLabel} />
       ) : null}
 

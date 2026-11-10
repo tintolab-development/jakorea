@@ -5,7 +5,10 @@ import type { ColumnsType } from 'antd/es/table'
 import { useSearchParams } from 'react-router-dom'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
-import { SMS_SEND_HISTORY_FILTER_FIELDS } from '@/features/notifications/model/sms-send-history/filter-fields'
+import {
+  isSmsSendHistoryReserveDateEnabled,
+  smsSendHistoryFilterFields,
+} from '@/features/notifications/model/sms-send-history/filter-fields'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   applySmsSendHistoryFiltersToSearchParams,
@@ -25,18 +28,19 @@ import '@/pages/programs/program-list-page.css'
 import '@/features/notifications/ui/alimtalk-send-history/page.css'
 import './page.css'
 
+/** 시안 6289:94968 — 합계 2168(스크롤 X) */
 const COL_W = {
   no: 80,
-  requestAt: 180,
-  content: 280,
-  senderInfo: 160,
-  receiverInfo: 160,
-  broadcastTiming: 100,
-  sendStatus: 120,
-  receiveStatus: 120,
-  sendAt: 180,
-  receiveAt: 180,
-  reservedAt: 180,
+  requestAt: 200,
+  content: 468,
+  senderInfo: 200,
+  receiverInfo: 200,
+  broadcastTiming: 140,
+  sendStatus: 140,
+  receiveStatus: 140,
+  sendAt: 200,
+  receiveAt: 200,
+  reservedAt: 200,
 } as const
 
 const TABLE_SCROLL_X = Object.values(COL_W).reduce((sum, width) => sum + width, 0)
@@ -88,8 +92,20 @@ export function SmsSendHistoryPage() {
   }, [appliedFilters])
 
   const handleFilterChange = useCallback((key: string, value: unknown) => {
-    setPendingFilters(prev => ({ ...prev, [key]: value }))
+    setPendingFilters(prev => {
+      const next = { ...prev, [key]: value } as SmsSendHistoryPendingFilters
+      // 발송 시점이 「예약」이 아니면 예약일은 비활성 — 남은 값을 비워 조회에 섞이지 않게 한다
+      if (key === 'broadcastTiming' && !isSmsSendHistoryReserveDateEnabled(next.broadcastTiming)) {
+        next.reserveDateRange = null
+      }
+      return next
+    })
   }, [])
+
+  const filterFields = useMemo(
+    () => smsSendHistoryFilterFields(pendingFilters.broadcastTiming),
+    [pendingFilters.broadcastTiming]
+  )
 
   const handleSearch = useCallback(() => {
     setSearchParams(
@@ -109,7 +125,7 @@ export function SmsSendHistoryPage() {
           displayTotal === 0 ? '-' : displayTotal - index,
       },
       {
-        title: '요청일시',
+        title: '요청 일시',
         dataIndex: 'requestAt',
         key: 'requestAt',
         width: COL_W.requestAt,
@@ -166,7 +182,7 @@ export function SmsSendHistoryPage() {
         align: 'center',
       },
       {
-        title: '발송일시',
+        title: '발송 일시',
         dataIndex: 'sentAt',
         key: 'sentAt',
         width: COL_W.sendAt,
@@ -174,7 +190,7 @@ export function SmsSendHistoryPage() {
         render: (value: string) => formatDateTime(value),
       },
       {
-        title: '수신일시',
+        title: '수신 일시',
         dataIndex: 'receivedAt',
         key: 'receivedAt',
         width: COL_W.receiveAt,
@@ -182,7 +198,7 @@ export function SmsSendHistoryPage() {
         render: (value: string) => formatDateTime(value),
       },
       {
-        title: '예약일시',
+        title: '예약 일시',
         dataIndex: 'reservedAt',
         key: 'reservedAt',
         width: COL_W.reservedAt,
@@ -201,7 +217,7 @@ export function SmsSendHistoryPage() {
         filterResponsiveWrap
         mergedAutoFillInlineSearch
         hideExcelDownload
-        fields={SMS_SEND_HISTORY_FILTER_FIELDS}
+        fields={filterFields}
         filters={pendingFilters}
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}

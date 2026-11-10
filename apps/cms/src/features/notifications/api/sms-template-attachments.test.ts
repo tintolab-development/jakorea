@@ -86,15 +86,15 @@ describe('MMS 첨부 업로드 계약', () => {
     expect(bindEmailAttachmentRemote).toHaveBeenCalledWith(1001, { fileObjectId: 30002 })
   })
 
-  it('템플릿 첨부: 남은 첨부 포함 3개 이상이면 업로드하지 않는다', async () => {
+  it('템플릿 첨부: 남은 첨부 포함 4개 이상이면 업로드하지 않는다', async () => {
     await expect(
       syncSmsTemplateAttachments({
         templateId: 1001,
-        newFiles: [jpeg('c.jpg')],
+        newFiles: [jpeg('d.jpg')],
         removedAttachmentIds: [],
-        remaining: { count: 2, totalBytes: 100 },
+        remaining: { count: 3, totalBytes: 100 },
       })
-    ).rejects.toThrow('최대 2개')
+    ).rejects.toThrow('최대 3개')
     expect(uploadAdminFile).not.toHaveBeenCalled()
   })
 

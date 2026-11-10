@@ -102,19 +102,28 @@ export function FormTemplateFullpageModal({
   const [certificatePreviewOpen, setCertificatePreviewOpen] = useState(false)
   const [pdfSerialNumber, setPdfSerialNumber] = useState<string | undefined>()
   const [isAllocatingSerial, setIsAllocatingSerial] = useState(false)
+  // 서버 발급일 — PDF 본문 발급일(state)과 파일명 날짜(ref, 캡처 직후 읽음)에 같은 값을 쓴다.
+  const [pdfIssueDate, setPdfIssueDate] = useState<Date | undefined>()
+  const pdfIssueDateRef = useRef<Date | null>(null)
+  const applyIssuedAt = useCallback((issuedAt: Date) => {
+    pdfIssueDateRef.current = issuedAt
+    setPdfIssueDate(issuedAt)
+  }, [])
 
   const { interactive: certificatePreviewProps, pdfExport: certificatePdfExportProps } =
-    useFormCertificatePreviewProps(modalState, issueDate, pdfSerialNumber)
+    useFormCertificatePreviewProps(modalState, pdfIssueDate ?? issueDate, pdfSerialNumber)
 
   useEffect(() => {
     if (!open) {
       setCertificatePreviewOpen(false)
       setPdfSerialNumber(undefined)
+      setPdfIssueDate(undefined)
+      pdfIssueDateRef.current = null
     }
   }, [open])
 
   const buildPdfFilename = useCallback(
-    () => generateFilename(buildFilenameTitle ?? title, 'pdf'),
+    () => generateFilename(buildFilenameTitle ?? title, 'pdf', pdfIssueDateRef.current ?? undefined),
     [buildFilenameTitle, title]
   )
 
@@ -143,6 +152,7 @@ export function FormTemplateFullpageModal({
                   issuanceSource: CERTIFICATE_SERIAL_ISSUANCE_FORM_TEMPLATE,
                 },
           applySerial: setPdfSerialNumber,
+          applyIssuedAt,
           exportRoot: pdfExportCanvasRef.current,
           getExportRoot: () => pdfExportCanvasRef.current,
           downloadPdf,
@@ -159,6 +169,7 @@ export function FormTemplateFullpageModal({
       setIsAllocatingSerial(false)
     }
   }, [
+    applyIssuedAt,
     downloadPdf,
     isAllocatingSerial,
     isPdfDownloading,

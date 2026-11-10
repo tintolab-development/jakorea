@@ -4,6 +4,8 @@
 
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
+import { AlertModal } from '@/shared/ui/alert-modal'
+import { MESSAGES } from '@/shared/constants/messages'
 import { formatModalBoldPhrase, formatModalBracketedSubjectName } from '@/features/program/general/lib/modal-message-subject'
 import './instructor-cancel-reject-modal.css'
 
@@ -15,6 +17,8 @@ export type InstructorCancelRejectCompleteModalProps = {
   instructorName: string
   onClose: () => void
   zIndex?: number
+  /** `general-organization`: 일반(기관형) 시안 04-3(1141:246266) 공통 완료 「취소 완료 / 취소되었습니다.」 */
+  copyVariant?: 'default' | 'general-organization'
 }
 
 export function buildInstructorCancelRejectCompleteDescription(
@@ -29,7 +33,19 @@ export function InstructorCancelRejectCompleteModal({
   instructorName,
   onClose,
   zIndex = INSTRUCTOR_CANCEL_REJECT_COMPLETE_MODAL_Z,
+  copyVariant = 'default',
 }: InstructorCancelRejectCompleteModalProps) {
+  if (copyVariant === 'general-organization') {
+    return (
+      <AlertModal
+        open={open}
+        onClose={onClose}
+        title="취소 완료"
+        content={MESSAGES.success.cancelled}
+        zIndex={zIndex}
+      />
+    )
+  }
   return (
     <ContentModal
       open={open}

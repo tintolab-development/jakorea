@@ -127,15 +127,17 @@ export function HowSectionCard({ items }: Props) {
             <CmsTextArea
               className={[
                 'cms-textarea--fixed-rows',
-                isEditing ? 'talent-intro-how-field--edit' : 'talent-intro-how-field--readonly',
-              ].join(' ')}
+                isEditing && 'talent-intro-how-field--edit',
+              ]
+                .filter(Boolean)
+                .join(' ')}
               inputSize="small"
               width="100%"
               // 조회·수정 모두 내용 줄 수만큼(hug) — 행 높이가 텍스트 높이를 따른다. 리사이즈 핸들 없음(fixed-rows)
               autoSize={{ minRows: 1 }}
               value={value}
               readOnly={!isEditing}
-              tabIndex={isEditing ? 0 : -1}
+              inlineReadOnly="text"
               onChange={e => {
                 if (!isEditing) return
                 handleDraftChange(record.id, { title: e.target.value })
@@ -157,15 +159,17 @@ export function HowSectionCard({ items }: Props) {
             <CmsTextArea
               className={[
                 'cms-textarea--fixed-rows',
-                isEditing ? 'talent-intro-how-field--edit' : 'talent-intro-how-field--readonly',
-              ].join(' ')}
+                isEditing && 'talent-intro-how-field--edit',
+              ]
+                .filter(Boolean)
+                .join(' ')}
               inputSize="small"
               width="100%"
               // 조회·수정 모두 내용 줄 수만큼(hug) — 행 높이가 텍스트 높이를 따른다. 리사이즈 핸들 없음(fixed-rows)
               autoSize={{ minRows: 1 }}
               value={value}
               readOnly={!isEditing}
-              tabIndex={isEditing ? 0 : -1}
+              inlineReadOnly="text"
               onChange={e => {
                 if (!isEditing) return
                 handleDraftChange(record.id, { description: e.target.value })

@@ -305,7 +305,7 @@ export class GeneralProgramRegistrationPage {
   async openNewRegistration() {
     await this.page.getByRole('button', { name: /^(프로그램 )?신규 등록$/ }).click()
 
-    const draftDialog = this.page.getByRole('dialog').filter({ hasText: '임시저장 이력 안내' })
+    const draftDialog = this.page.getByRole('dialog').filter({ hasText: '임시 저장 이력 안내' })
     // 임시저장 안내 모달은 클릭 직후 비동기로 뜰 수 있다 — 위저드 URL 또는 모달 중 먼저 오는 쪽을 기다린다.
     await Promise.race([
       draftDialog.waitFor({ state: 'visible', timeout: 10_000 }),

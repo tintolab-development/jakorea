@@ -19,24 +19,13 @@
   border-color: var(--color-mint-01, #01a1af);
 }
 
-.send-template-select-field__trigger .cms-select .ant-select-arrow {
-  background-image: none !important;
-  width: 16px !important;
-  height: 16px !important;
-  min-height: 16px !important;
-  color: var(--gray-85969-d, #85969d);
-}
-
-.send-template-select-field__trigger .cms-select .ant-select-arrow > * {
-  display: inline-flex !important;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--font-size-16, 16px);
-  color: inherit;
-}
-
 .send-template-select-modal.content-modal.teal-header-modal.ant-modal .ant-modal-content {
   width: 800px;
+}
+
+/* 시안: 페이지 이동–「닫기」 간격 16 */
+.send-template-select-modal .teal-header-modal__footer {
+  margin-top: 16px;
 }
 
 .send-template-select-modal__body {
@@ -49,7 +38,7 @@
 .send-template-select-modal__search {
   display: flex;
   align-items: center;
-  gap: var(--spacing-12, 12px);
+  gap: var(--spacing-8, 8px);
   width: 100%;
 }
 
@@ -67,30 +56,35 @@
 
 .send-template-select-modal__count {
   margin: 0;
-  color: var(--main-BK, #3d3d3d);
+  padding-left: 4px;
+  color: var(--Content-disabled, rgba(61, 61, 61, 0.5));
   font-family: Pretendard, var(--font-family-primary), sans-serif;
   font-size: 16px;
   font-weight: 500;
   line-height: 150%;
-  opacity: 0.6;
 }
 
-.send-template-select-modal__table.cms-data-table .ant-table-thead > tr > th,
-.send-template-select-modal__table.cms-data-table .ant-table-tbody > tr > td {
-  box-sizing: border-box;
-  min-height: 52px;
-  height: 52px;
-  padding: 8px 12px !important;
+/* 시안 Table / Horizontal / Small — 셀 min 44 · 패딩 4/12, 관리 셀 패딩 10(버튼 h32 → 행 52) */
+.send-template-select-modal__table.cms-data-table
+  .ant-table-thead
+  .ant-table-cell:not(.ant-table-cell-scrollbar):not(.ant-table-selection-column),
+.send-template-select-modal__table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td {
+  min-height: 44px !important;
+  height: 44px !important;
+  padding: 4px 12px !important;
   vertical-align: middle !important;
   text-align: center !important;
 }
 
 .send-template-select-modal__table.cms-data-table
   .ant-table-tbody
-  > tr
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
   > td.send-template-select-modal__col-actions {
   height: auto !important;
-  min-height: 52px;
+  padding: 10px !important;
 }
 
 .send-template-select-modal__row-actions {

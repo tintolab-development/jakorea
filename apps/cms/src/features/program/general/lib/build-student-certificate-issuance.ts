@@ -2,6 +2,7 @@ import { DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES } from '@/features/template
 import type { SchoolDetailStudentRow } from '../model/school-detail-types'
 import { resolveStudentCertificateTemplateName } from './student-certificate-template'
 import type { StudentCertificateKind } from './resolve-student-certificate-kind'
+import { formatAsiaSeoulYymmdd } from '@/features/settlement-management/api/account-payments/settlement-form-download'
 
 export function certificateKindFromEligibilityApiType(
   apiType: 'COMPLETION' | 'PARTICIPATION'
@@ -133,14 +134,14 @@ export function buildStudentCertificateInitialStringValues(
   }
 }
 
-export function buildStudentCertificateFileName(ctx: StudentCertificateDownloadContext): string {
+/** 날짜 = 발급일(서버 issuedAt, Asia/Seoul). 없으면 오늘. */
+export function buildStudentCertificateFileName(
+  ctx: StudentCertificateDownloadContext,
+  issuedAt: Date | null = null
+): string {
   const documentTitle = resolveDocumentTitle(ctx.certificateKind)
   const safeName = ctx.student.name.replace(/[/\\?%*:|"<>]/g, '_').trim() || '학생'
-  const now = new Date()
-  const y = String(now.getFullYear()).slice(2)
-  const m = String(now.getMonth() + 1).padStart(2, '0')
-  const d = String(now.getDate()).padStart(2, '0')
-  return `[JA Korea] ${documentTitle}_${safeName}_${y}${m}${d}`
+  return `[JA Korea] ${documentTitle}_${safeName}_${formatAsiaSeoulYymmdd(issuedAt ?? new Date())}`
 }
 
 export function buildStudentCertificateDownloadContext(input: {

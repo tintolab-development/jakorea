@@ -14,9 +14,11 @@ type TextProps = {
 export function fieldClass(editing: boolean): string {
   return [
     'ja-history-inline-field',
-    editing ? 'ja-history-inline-field--edit' : 'ja-history-inline-field--readonly',
+    editing && 'ja-history-inline-field--edit',
     'cms-textarea--fixed-rows',
-  ].join(' ')
+  ]
+    .filter(Boolean)
+    .join(' ')
 }
 
 export function InlineText({ editing, value, onChange, rows, label, placeholder }: TextProps) {
@@ -30,7 +32,7 @@ export function InlineText({ editing, value, onChange, rows, label, placeholder 
       autoSize={editing ? { minRows: 1 } : undefined}
       value={value}
       readOnly={!editing}
-      tabIndex={editing ? 0 : -1}
+      inlineReadOnly="slot"
       placeholder={placeholder}
       aria-label={label}
       onChange={event => {
@@ -55,7 +57,7 @@ export function InlineInput({
       width="100%"
       value={value}
       readOnly={!editing}
-      tabIndex={editing ? 0 : -1}
+      inlineReadOnly="slot"
       placeholder={placeholder}
       aria-label={label}
       onChange={event => {

@@ -67,6 +67,11 @@ type OverlayPrefixProps = {
   trainedTeachersDefaults: boolean
 }
 
+/** 일반 프로그램 셀렉트(교육 과정·IP Owned·Course Delivered By) 플레이스홀더 — 시안 「전체」. 교육받은 교사는 기존 문구 */
+function basicInfoSelectPlaceholder(trainedTeachersDefaults: boolean): string {
+  return trainedTeachersDefaults ? '선택해 주세요' : '전체'
+}
+
 export const ProgramRegistrationBasicInfoOperationRangeField = memo(
   function ProgramRegistrationBasicInfoOperationRangeField({
     overlayPrefix,
@@ -159,6 +164,9 @@ export const ProgramRegistrationBasicInfoParticipantTypesField = memo(
                 individual={participant.individual}
                 organization={participant.organization}
                 disabled={lockParticipantTypes}
+                // 시안: 개인·학교/기관은 상호 배타 — 한쪽 선택 시 다른 쪽 비활성(해제 후 전환)
+                individualDisabled={lockParticipantTypes || participant.organization}
+                organizationDisabled={lockParticipantTypes || participant.individual}
                 onIndividualChange={onIndividualChange}
                 onOrganizationChange={onOrganizationChange}
               />
@@ -210,14 +218,15 @@ export const ProgramRegistrationBasicInfoEducationVenueFields = memo(
     overlayPrefix,
   }: Pick<OverlayPrefixProps, 'overlayPrefix'>) {
     const educationVenueDetailKey = `${overlayPrefix}.educationVenueDetail`
+    // 시안: 기본 미선택 — 등록 시 필수 선택(`basicInfo.educationVenueKind`)
     const [educationVenueKind, setEducationVenueKind] = useProgramRegistrationOverlayKv<
-      'inside' | 'outside' | 'other'
-    >(`${overlayPrefix}.educationVenueKind`, 'inside')
+      'inside' | 'outside' | 'other' | ''
+    >(`${overlayPrefix}.educationVenueKind`, '')
 
     return (
       <DetailInfoForm.Field
         label="교육 장소"
-        validationKey="basicInfo.educationVenueDetail"
+        validationKey={['basicInfo.educationVenueKind', 'basicInfo.educationVenueDetail']}
         fullRow
         edit={
           <div className="detail-info-form-inputs-wrapper">
@@ -313,7 +322,7 @@ export const ProgramRegistrationBasicInfoEducationCourseField = memo(
           <div className="detail-info-form-inputs-wrapper-no-gap">
             <CmsSelect
               inputSize="small"
-              placeholder="선택해 주세요"
+              placeholder={basicInfoSelectPlaceholder(trainedTeachersDefaults)}
               withAllOption={false}
               width={240}
               options={[...PROGRAM_REGISTRATION_EDUCATION_COURSE_OPTIONS]}
@@ -329,13 +338,16 @@ export const ProgramRegistrationBasicInfoEducationCourseField = memo(
 )
 
 export const ProgramRegistrationBasicInfoIpOwnedField = memo(
-  function ProgramRegistrationBasicInfoIpOwnedField({ overlayPrefix }: OverlayPrefixProps) {
+  function ProgramRegistrationBasicInfoIpOwnedField({
+    overlayPrefix,
+    trainedTeachersDefaults,
+  }: OverlayPrefixProps) {
     return (
       <ProgramRegistrationOverlaySelectField
         label="IP Owned"
         validationKey="basicInfo.ipOwned"
         overlayKey={`${overlayPrefix}.ipOwned`}
-        placeholder="선택해 주세요"
+        placeholder={basicInfoSelectPlaceholder(trainedTeachersDefaults)}
         options={[...PROGRAM_REGISTRATION_IP_OWNED_OPTIONS]}
         defaultValue=""
       />
@@ -346,13 +358,14 @@ export const ProgramRegistrationBasicInfoIpOwnedField = memo(
 export const ProgramRegistrationBasicInfoCourseDeliveredByField = memo(
   function ProgramRegistrationBasicInfoCourseDeliveredByField({
     overlayPrefix,
+    trainedTeachersDefaults,
   }: OverlayPrefixProps) {
     return (
       <ProgramRegistrationOverlaySelectField
         label="Course Delivered By"
         validationKey="basicInfo.courseDeliveredBy"
         overlayKey={`${overlayPrefix}.courseDeliveredBy`}
-        placeholder="선택해 주세요"
+        placeholder={basicInfoSelectPlaceholder(trainedTeachersDefaults)}
         options={[...PROGRAM_REGISTRATION_COURSE_DELIVERED_BY_OPTIONS]}
         defaultValue=""
       />
@@ -363,20 +376,31 @@ export const ProgramRegistrationBasicInfoCourseDeliveredByField = memo(
 export const ProgramRegistrationBasicInfoPartnerInvolvementField = memo(
   function ProgramRegistrationBasicInfoPartnerInvolvementField({
     overlayPrefix,
+    trainedTeachersDefaults,
   }: OverlayPrefixProps) {
     const [partnerInvolvement, setPartnerInvolvement] = useProgramRegistrationOverlayKv<
       'yes' | 'no' | ''
     >(`${overlayPrefix}.partnerInvolvement`, '')
 
+    // 일반: 시안대로 미선택('')은 미선택 표시 — 등록 시 필수 선택(`basicInfo.partnerInvolvement`).
+    // 교육받은 교사: 미선택('')·키 없음은 저장 빌더와 동일하게 Yes(true)로 표시 — 'no'만 No
+    const radioValue = trainedTeachersDefaults
+      ? partnerInvolvement === 'no'
+        ? 'no'
+        : 'yes'
+      : partnerInvolvement === 'yes' || partnerInvolvement === 'no'
+        ? partnerInvolvement
+        : ''
+
     return (
       <DetailInfoForm.Field
         label="Partner Involvement"
+        validationKey={trainedTeachersDefaults ? undefined : 'basicInfo.partnerInvolvement'}
         edit={
           <div className="detail-info-form-inputs-wrapper">
             <CmsRadioGroup
               size="medium"
-              // 미선택('')·키 없음은 저장 빌더와 동일하게 Yes(true)로 표시 — 'no'만 No
-              value={partnerInvolvement === 'no' ? 'no' : 'yes'}
+              value={radioValue}
               onChange={e => setPartnerInvolvement(e.target.value as 'yes' | 'no')}
             >
               <CmsRadio size="medium" value="yes">

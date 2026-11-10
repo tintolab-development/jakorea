@@ -49,7 +49,7 @@ export async function waitWizard(page: Page) {
 
 export async function openFreshWizard(page: Page) {
   await page.goto('/programs/company-school?new=1&registrationDraft=fresh')
-  const draftDialog = page.getByRole('dialog').filter({ hasText: '임시저장 이력 안내' })
+  const draftDialog = page.getByRole('dialog').filter({ hasText: '임시 저장 이력 안내' })
   if (await draftDialog.isVisible().catch(() => false)) {
     await draftDialog.getByRole('radio', { name: '신규 등록' }).check()
     await draftDialog.getByRole('button', { name: '프로그램 등록' }).click()

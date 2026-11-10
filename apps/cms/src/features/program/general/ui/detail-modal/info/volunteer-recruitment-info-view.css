@@ -12,3 +12,15 @@
 .volunteer-recruitment-info-view__forms .detail-info-form {
   margin: 0;
 }
+
+/* 해당 없음 + 비고 — 참여 기관 모집과 동일하게 남은 폭만 CmsInput small */
+.volunteer-recruitment-info-view__notes-field > .cms-input {
+  flex: 1 1 0;
+  min-width: 0;
+  width: 100%;
+}
+
+.volunteer-recruitment-info-view__notes-field > .cms-input .cms-input__control {
+  width: 100%;
+  min-width: 0;
+}

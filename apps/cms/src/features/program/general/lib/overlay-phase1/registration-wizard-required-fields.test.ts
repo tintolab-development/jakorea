@@ -42,6 +42,18 @@ describe('registration-wizard-required-fields', () => {
     expect(registrationWizardCommonInfoZodSchema.safeParse(values).success).toBe(false)
   })
 
+  it('교육 장소·Partner Involvement 미선택은 필수 오류이고 선택하면 해소된다 (시안: 기본 미선택)', () => {
+    const values = createDefaultRegistrationWizardUiValues({ participant: orgCtx.participant })
+    expect(listIncompleteRegistrationWizardRequiredFields(values, orgCtx)).toEqual(
+      expect.arrayContaining(['basicInfo.educationVenueKind', 'basicInfo.partnerInvolvement'])
+    )
+    values.educationVenueKind = 'inside'
+    values.partnerInvolvement = 'yes'
+    const keys = listIncompleteRegistrationWizardRequiredFields(values, orgCtx)
+    expect(keys).not.toContain('basicInfo.educationVenueKind')
+    expect(keys).not.toContain('basicInfo.partnerInvolvement')
+  })
+
   it('빈 공고용 프로그램명은 기존값으로 채우지 않고 필수 오류로 남긴다', () => {
     const values = createDefaultRegistrationWizardUiValues({
       participant: orgCtx.participant,

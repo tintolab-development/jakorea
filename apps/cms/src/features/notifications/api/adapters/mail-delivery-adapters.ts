@@ -2,7 +2,11 @@ import type {
   NotificationDeliveryDetailResponse,
   NotificationDeliveryResponse,
 } from '@/shared/api/generated/notifications/schemas'
-import { formatMailPreviewPerson } from '@/features/notifications/model/mail-template/preview'
+import {
+  formatMailPreviewPerson,
+  splitMailSenderNameEmail,
+} from '@/features/notifications/model/mail-template/preview'
+import { parseMailSenderDisplay } from '@/features/notifications/api/adapters/mail-template-adapters'
 import { mailBodyToDisplayHtml } from '@/features/notifications/model/shared/mail-body-display-html'
 import { formatNotificationFailedReason } from '@/features/notifications/model/shared/format-notification-failed-reason'
 import type {
@@ -21,6 +25,25 @@ function mapBroadcastTiming(
   const timing = (item.sendTiming ?? '').trim().toUpperCase()
   if (timing === 'SCHEDULED' || timing === '예약' || item.scheduledAt) return '예약'
   return '즉시'
+}
+
+/**
+ * 발송자 이름·메일 분리 (BE 2026-11-10).
+ * `senderDisplayName`·preview `senderDisplay`는 「이름 <메일>」, 이름이 없으면 「메일」만 온다.
+ * `/^(.*?)\s*<([^>]+)>$/`에 맞지 않으면 값 전체를 메일로 보고, 이름 자리에 메일이 와도 「메일 | 메일」로 겹치지 않게 한다.
+ */
+export function resolveMailDeliverySender(
+  previewDisplay: string,
+  itemDisplayName: string | null | undefined,
+  senderKey: string | null | undefined
+): { senderName: string; senderEmail: string } {
+  const fromPreview = parseMailSenderDisplay(previewDisplay)
+  const fromItem = parseMailSenderDisplay(itemDisplayName)
+  const key = senderKey?.trim() ?? ''
+  const email = fromPreview.senderEmail || fromItem.senderEmail || (key.includes('@') ? key : '')
+  const name = fromPreview.senderName || fromItem.senderName
+  const parts = splitMailSenderNameEmail(name, email)
+  return { senderName: parts.name, senderEmail: parts.email }
 }
 
 function asPreviewRecord(
@@ -49,8 +72,7 @@ function previewAttachmentItems(
       .map(item => {
         if (!item || typeof item !== 'object') return null
         const record = item as Record<string, unknown>
-        const fileName =
-          typeof record.fileName === 'string' ? record.fileName.trim() : ''
+        const fileName = typeof record.fileName === 'string' ? record.fileName.trim() : ''
         if (!fileName) return null
         const fileObjectId =
           typeof record.fileObjectId === 'number' && Number.isFinite(record.fileObjectId)
@@ -87,30 +109,16 @@ export function mapMailDeliveryToSendHistoryRow(
   const previewRecord = asPreviewRecord(preview)
   const receiverName = item.recipientName?.trim() || ''
   const receiverEmail = item.recipientContactMasked?.trim() || ''
-  const senderDisplay =
-    previewString(previewRecord, ['senderDisplay', 'senderProfileDisplayName']) ||
-    formatMailPreviewPerson(item.senderDisplayName, item.senderKey)
-  const senderName =
-    item.senderDisplayName?.trim() ||
-    (senderDisplay.includes('<')
-      ? senderDisplay.slice(0, senderDisplay.indexOf('<')).trim()
-      : senderDisplay) ||
-    ''
-  const senderEmail =
-    item.senderKey?.trim() ||
-    (senderDisplay.includes('<')
-      ? senderDisplay.slice(senderDisplay.indexOf('<') + 1, senderDisplay.indexOf('>')).trim()
-      : '') ||
-    ''
+  const { senderName, senderEmail } = resolveMailDeliverySender(
+    previewString(previewRecord, ['senderDisplay', 'senderProfileDisplayName']),
+    item.senderDisplayName,
+    item.senderKey
+  )
   const templateName = item.templateDisplayName?.trim() || ''
   // 목록 SSOT: renderedTitle || titleTemplate (templateDisplayName 위장 금지)
   // 상세: preview 동일 키 우선
-  const subjectFromItem =
-    item.renderedTitle?.trim() || item.titleTemplate?.trim() || ''
-  const subjectFromPreview = previewString(previewRecord, [
-    'renderedTitle',
-    'titleTemplate',
-  ])
+  const subjectFromItem = item.renderedTitle?.trim() || item.titleTemplate?.trim() || ''
+  const subjectFromPreview = previewString(previewRecord, ['renderedTitle', 'titleTemplate'])
   const subject = subjectFromPreview || subjectFromItem || '-'
   // 본문: renderedContent(BE가 이미 HTML 변환·이스케이프한 발송 스냅샷, 그대로 사용) → contentTemplate.
   // contentTemplate(등록 원문)이 평문이면 줄바꿈이 보이도록 이스케이프 + <br> (failedReason 금지)
@@ -146,7 +154,7 @@ export function mapMailDeliveryToSendHistoryRow(
     subject,
     senderName,
     senderEmail,
-    senderInfo: senderDisplay || formatMailPreviewPerson(senderName, senderEmail) || '-',
+    senderInfo: formatMailPreviewPerson(senderName, senderEmail),
     receiverName,
     receiverEmail,
     receiverInfo: formatMailPreviewPerson(receiverName, receiverEmail),

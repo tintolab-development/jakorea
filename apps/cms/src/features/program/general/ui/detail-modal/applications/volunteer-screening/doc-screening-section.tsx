@@ -176,6 +176,7 @@ export function GeneralVolunteerDocScreeningSection({
       />
       <GeneralVolunteerDocumentCancelRejectModal
         open={cancelRejectVolunteer != null}
+        copyPreset={interviewEnabled ? 'document' : 'application'}
         volunteer={cancelRejectVolunteer}
         onCancel={closeCancelRejectModal}
         onConfirm={handleCancelRejectConfirm}
@@ -194,12 +195,14 @@ export function GeneralVolunteerDocScreeningSection({
     <>
       <GeneralVolunteerDocumentBulkApproveModal
         open={bulkApproveOpen}
+        subjectName={bulkApproveSubjectName}
         selectionCount={selectedRowKeys.length}
         onCancel={closeBulkApproveModal}
         onConfirm={handleBulkApproveConfirm}
       />
       <GeneralVolunteerDocumentBulkRejectModal
         open={bulkRejectOpen}
+        subjectName={bulkRejectSubjectName}
         selectionCount={selectedRowKeys.length}
         onCancel={closeBulkRejectModal}
         onConfirm={handleBulkRejectConfirm}
@@ -269,14 +272,8 @@ export function GeneralVolunteerDocScreeningSection({
           filters={pendingFilters}
           onFilterChange={handleFilterChange}
           onSearch={handleSearch}
-          title={
-            interviewEnabled
-              ? `봉사자 신청 목록 (${count.toLocaleString()})`
-              : '봉사자 신청 목록'
-          }
-          description={
-            interviewEnabled ? undefined : `총 ${count.toLocaleString()}건`
-          }
+          title={interviewEnabled ? '봉사자 1차 서류 심사 대상자 목록' : '봉사자 신청 목록'}
+          description={`총 ${count.toLocaleString()}건`}
           actions={
             <div className="general-volunteer-screening__actions program-application-list-toolbar">
               <FilterTableToolbarButton

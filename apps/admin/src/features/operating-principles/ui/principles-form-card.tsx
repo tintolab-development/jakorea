@@ -76,7 +76,7 @@ function fieldClass(isEditing: boolean, ...extra: Array<string | false | undefin
   return [
     'principles-inline-field',
     'cms-textarea--fixed-rows',
-    isEditing ? 'principles-inline-field--edit' : 'principles-inline-field--readonly',
+    isEditing && 'principles-inline-field--edit',
     ...extra,
   ]
     .filter(Boolean)
@@ -271,7 +271,7 @@ export function PrinciplesFormCard({ data }: Props) {
               autoSize={EDIT_AUTO_SIZE}
               value={value}
               readOnly={!isEditing}
-              tabIndex={isEditing ? 0 : -1}
+              inlineReadOnly="text"
               onChange={e => {
                 if (!isEditing) return
                 handleDraftTextChange(record.id, 'title', e.target.value)
@@ -297,7 +297,7 @@ export function PrinciplesFormCard({ data }: Props) {
               autoSize={EDIT_AUTO_SIZE}
               value={value}
               readOnly={!isEditing}
-              tabIndex={isEditing ? 0 : -1}
+              inlineReadOnly="text"
               onChange={e => {
                 if (!isEditing) return
                 handleDraftTextChange(record.id, 'subText', e.target.value)
@@ -316,8 +316,8 @@ export function PrinciplesFormCard({ data }: Props) {
     <div
       className={
         isEditing
-          ? 'admin-list-card principles-form-card principles-form-card--editing'
-          : 'admin-list-card principles-form-card'
+          ? 'admin-list-card admin-document-card principles-form-card principles-form-card--editing'
+          : 'admin-list-card admin-document-card principles-form-card'
       }
     >
       <div className="admin-list-toolbar">
@@ -356,7 +356,7 @@ export function PrinciplesFormCard({ data }: Props) {
         </div>
       </div>
 
-      <div className="principles-form-card__body">
+      <div className="admin-document-card__body principles-form-card__body">
         <section className="principles-form-section">
           <SectionTitle>소개글</SectionTitle>
           {/*
@@ -379,7 +379,7 @@ export function PrinciplesFormCard({ data }: Props) {
                     autoSize={isEditing ? EDIT_AUTO_SIZE : undefined}
                     value={draftIntro.topSubText}
                     readOnly={!isEditing}
-                    tabIndex={isEditing ? 0 : -1}
+                    inlineReadOnly="text"
                     onChange={e => {
                       if (!isEditing) return
                       setDraftIntro(prev => ({ ...prev, topSubText: e.target.value }))
@@ -404,7 +404,7 @@ export function PrinciplesFormCard({ data }: Props) {
                     autoSize={isEditing ? EDIT_AUTO_SIZE : undefined}
                     value={draftIntro.mainText}
                     readOnly={!isEditing}
-                    tabIndex={isEditing ? 0 : -1}
+                    inlineReadOnly="text"
                     onChange={e => {
                       if (!isEditing) return
                       setDraftIntro(prev => ({ ...prev, mainText: e.target.value }))

@@ -17,8 +17,16 @@ import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONE_ALERT_MESSAGE,
   ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_ALERT_MESSAGE,
+  GENERAL_INSTITUTION_PARTICIPANT_ADD_COMPLETE_ALERT_MESSAGE,
+  GENERAL_INSTITUTION_PARTICIPANT_ADD_COMPLETE_ALERT_TITLE,
   PARTICIPATING_INSTRUCTOR_ADD_COMPLETE_ALERT_MESSAGE,
 } from '@/shared/constants/messages'
+import {
+  CertificateBulkIssueReasonModal,
+  type CertificateIssueReasonValue,
+} from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
+import { ACTIVITY_CERTIFICATE_DOCUMENT_TITLE } from '@/features/program/general/lib/build-activity-certificate-issuance-preview'
+import { useIsInstitutionProgramSurface } from '@/features/program/general/hooks/use-institution-program-surface'
 import {
   fetchParticipatingInstructorMemberCandidates,
   type ParticipatingInstructorMemberCandidate,
@@ -49,7 +57,10 @@ import { useProgressInstructorList } from '../../../hooks/use-progress-instructo
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { useProgressSchoolList } from '../../../hooks/use-progress-school-list'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
-import { AddParticipatingInstructorModal } from '../../add-participating-instructor-modal'
+import {
+  AddParticipatingInstructorModal,
+  GENERAL_INSTITUTION_ADD_INSTRUCTOR_DESCRIPTION,
+} from '../../add-participating-instructor-modal'
 import { ParticipatingInstructorAddConsentModal } from '../../participating-instructor-add-consent-modal'
 import {
   ParticipatingInstructorFullpageView,
@@ -209,6 +220,10 @@ export function ParticipatingInstructorsSection({
   const [activityCertPreviewOpen, setActivityCertPreviewOpen] = useState(false)
   const [activityCertPreviewInstructor, setActivityCertPreviewInstructor] =
     useState<ParticipatingInstructorRow | null>(null)
+  /** 기관형 — 발급 사유 모달(Figma 06-1/02) → 선택 사유를 발급 문서 「발급목적」에 기입 */
+  const isInstitutionSurface = useIsInstitutionProgramSurface(program)
+  const [activityCertReasonOpen, setActivityCertReasonOpen] = useState(false)
+  const [activityCertReasonLabel, setActivityCertReasonLabel] = useState<string | undefined>()
   const [instructorMemberOptions, setInstructorMemberOptions] = useState<
     ParticipatingInstructorMemberCandidate[]
   >([])
@@ -284,7 +299,14 @@ export function ParticipatingInstructorsSection({
     try {
       const success = await handleAddInstructorByMemberId(memberId)
       if (success) {
-        showAlert({ title: '안내', content: PARTICIPATING_INSTRUCTOR_ADD_COMPLETE_ALERT_MESSAGE })
+        showAlert(
+          isInstitutionSurface
+            ? {
+                title: GENERAL_INSTITUTION_PARTICIPANT_ADD_COMPLETE_ALERT_TITLE,
+                content: GENERAL_INSTITUTION_PARTICIPANT_ADD_COMPLETE_ALERT_MESSAGE,
+              }
+            : { title: '안내', content: PARTICIPATING_INSTRUCTOR_ADD_COMPLETE_ALERT_MESSAGE }
+        )
       }
     } catch (error) {
       showAlert({
@@ -295,7 +317,7 @@ export function ParticipatingInstructorsSection({
         ),
       })
     }
-  }, [handleAddInstructorByMemberId, pendingInstructorMemberId, showAlert])
+  }, [handleAddInstructorByMemberId, isInstitutionSurface, pendingInstructorMemberId, showAlert])
 
   const filteredInstructors = useMemo(() => {
     return baseFiltered.filter(row => {
@@ -348,8 +370,21 @@ export function ParticipatingInstructorsSection({
     }
 
     setActivityCertPreviewInstructor(selectedRow)
+    if (isInstitutionSurface) {
+      setActivityCertReasonLabel(undefined)
+      setActivityCertReasonOpen(true)
+      return
+    }
     setActivityCertPreviewOpen(true)
-  }, [filteredInstructors, selectedInstructorRowKeys, showAlert])
+  }, [filteredInstructors, isInstitutionSurface, selectedInstructorRowKeys, showAlert])
+
+  const handleActivityCertReasonIssue = useCallback(
+    (_reason: CertificateIssueReasonValue, reasonLabel: string) => {
+      setActivityCertReasonLabel(reasonLabel)
+      setActivityCertPreviewOpen(true)
+    },
+    []
+  )
 
   const selectedInstructorFromUrl = useMemo(() => {
     if (!instructorIdFromUrl) return null
@@ -663,11 +698,18 @@ export function ParticipatingInstructorsSection({
           memberOptions={instructorMemberOptions}
           onNoMemberSelected={showInstructorAddSelectAlert}
           onProceedToConsent={handleProceedToInstructorConsent}
+          {...(isInstitutionSurface
+            ? {
+                description: GENERAL_INSTITUTION_ADD_INSTRUCTOR_DESCRIPTION,
+                fieldVariant: 'search' as const,
+              }
+            : {})}
         />
         <ParticipatingInstructorAddConsentModal
           open={instructorConsentModalOpen}
           onClose={handleInstructorConsentClose}
           onConfirm={handleInstructorConsentConfirm}
+          preset={isInstitutionSurface ? 'generalInstitution' : 'default'}
         />
       </div>
     )
@@ -894,11 +936,18 @@ export function ParticipatingInstructorsSection({
         memberOptions={instructorMemberOptions}
         onNoMemberSelected={showInstructorAddSelectAlert}
         onProceedToConsent={handleProceedToInstructorConsent}
+        {...(isInstitutionSurface
+          ? {
+              description: GENERAL_INSTITUTION_ADD_INSTRUCTOR_DESCRIPTION,
+              fieldVariant: 'search' as const,
+            }
+          : {})}
       />
       <ParticipatingInstructorAddConsentModal
         open={instructorConsentModalOpen}
         onClose={handleInstructorConsentClose}
         onConfirm={handleInstructorConsentConfirm}
+        preset={isInstitutionSurface ? 'generalInstitution' : 'default'}
       />
 
       {activityCertPreviewInstructor ? (
@@ -907,6 +956,16 @@ export function ParticipatingInstructorsSection({
           onClose={() => setActivityCertPreviewOpen(false)}
           instructor={activityCertPreviewInstructor}
           program={program}
+          issuanceReasonLabel={isInstitutionSurface ? activityCertReasonLabel : undefined}
+        />
+      ) : null}
+      {isInstitutionSurface ? (
+        <CertificateBulkIssueReasonModal
+          open={activityCertReasonOpen}
+          onCancel={() => setActivityCertReasonOpen(false)}
+          applicationIds={activityCertPreviewInstructor ? [activityCertPreviewInstructor.id] : []}
+          certificateDocumentLabel={ACTIVITY_CERTIFICATE_DOCUMENT_TITLE}
+          onIssue={handleActivityCertReasonIssue}
         />
       ) : null}
     </div>

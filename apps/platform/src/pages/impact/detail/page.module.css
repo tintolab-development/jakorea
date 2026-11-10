@@ -8,6 +8,9 @@
 }
 
 .main {
+  /* 시안: 상세 콘텐츠 영역(이전으로·헤더·본문·하단 내비) 폭 800 */
+  --detail-content-max-width: 800px;
+
   display: flex;
   width: 100%;
   min-width: 0;
@@ -19,12 +22,16 @@
 
 .back {
   width: 100%;
+  max-width: var(--detail-content-max-width);
+  margin-inline: auto;
 }
 
 .status {
   display: flex;
   width: 100%;
+  max-width: var(--detail-content-max-width);
   min-width: 0;
+  margin-inline: auto;
   flex-direction: column;
   align-items: flex-start;
   gap: var(--spacing-16);
@@ -54,7 +61,9 @@
 .layout {
   display: flex;
   width: 100%;
+  max-width: var(--detail-content-max-width);
   min-width: 0;
+  margin-inline: auto;
   flex-direction: column;
   gap: var(--spacing-32);
 }
@@ -180,6 +189,12 @@
 
   .layout {
     gap: var(--spacing-40);
+  }
+
+  .title {
+    font-size: 44px;
+    line-height: 140%;
+    letter-spacing: -0.44px;
   }
 
   .attachmentDropdown {

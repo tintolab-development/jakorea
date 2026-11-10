@@ -1,0 +1,9 @@
+/* Figma Table / Common / Cell / File — 14 Medium / download icon + filename */
+.general-volunteer-previous-ja-program-section .general-volunteer-evidence-files__file {
+  gap: 4px;
+}
+
+.general-volunteer-previous-ja-program-section .general-volunteer-evidence-files__file-name {
+  font-size: 14px;
+  line-height: 1.3;
+}

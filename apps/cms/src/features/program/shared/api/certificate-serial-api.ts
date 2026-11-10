@@ -258,6 +258,8 @@ export async function allocateCertificateSerial(
     serialNumber,
     issueId,
     reused: typeof body?.reused === 'boolean' ? body.reused : false,
+    // 발급 일시(재요청이면 최초 발급 일시). PDF 발급일·파일명 날짜에 쓴다. 없으면 호출부가 오늘 날짜를 쓴다.
+    issuedAt: typeof body?.issuedAt === 'string' ? body.issuedAt : null,
   }
 }
 

@@ -644,6 +644,17 @@ export const platformQueryKeys = {
     individualSettlementSchedules: (applicationId: string) =>
       [...platformQueryKeys.mypage.all(), 'individual-settlements', 'schedules', applicationId] as const,
     /**
+     * 봉사자 일정 정산 — GET /api/portal/me/volunteer-settlements/applications/{id}/schedules (Class C)
+     * id는 program_volunteer_application.id라 개인 신청 id와 키를 나눈다.
+     */
+    volunteerSettlementSchedules: (volunteerApplicationId: string) =>
+      [
+        ...platformQueryKeys.mypage.all(),
+        'volunteer-settlements',
+        'schedules',
+        volunteerApplicationId,
+      ] as const,
+    /**
      * 일반회원 일정 정산 상세 — GET /api/portal/me/individual-settlements/{id} (Class D)
      */
     individualSettlementDetail: (settlementApplicationId: number) =>

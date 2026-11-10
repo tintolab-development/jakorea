@@ -1295,7 +1295,7 @@ describe('general-program-adapters', () => {
       },
     } as ProgramResponse)
     expect(program.generalCommonInfo?.paymentItems).toBe(
-      '교통비, 장거리 교통비, 숙박비, 참여자 활동비, 식비'
+      '교통비, 장거리 교통비, 숙박비, 활동비, 식비'
     )
   })
 

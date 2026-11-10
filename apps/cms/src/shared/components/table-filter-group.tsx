@@ -115,7 +115,7 @@ export interface FilterFieldConfig {
   disabledDate?: (date: Dayjs) => boolean
   /** `select`: 첫 옵션 `전체` 자동 삽입 비활성화 */
   withAllOption?: boolean
-  /** `select`: 비활성화 */
+  /** `select`·`dateRange`: 비활성화 (기본 false — 미지정 화면은 동작 변화 없음) */
   disabled?: boolean
   /** `search`: 숫자만 입력 가능 */
   searchNumericOnly?: boolean
@@ -525,6 +525,7 @@ export function TableFilterGroup({
             allowClear={field.allowClear !== false}
             oneMonthFromStart={field.dateRangeOneMonthFromStart === true}
             disabledDate={field.disabledDate}
+            disabled={field.disabled === true}
           />
         </div>
       )

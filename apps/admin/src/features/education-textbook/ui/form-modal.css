@@ -74,6 +74,10 @@
 .content-modal.education-textbook-form-modal.teal-header-modal.ant-modal:has(
     .rich-text-editor[data-resized='true']
   )
+  .ant-modal-content,
+.content-modal.education-textbook-form-modal.teal-header-modal.ant-modal:has(
+    .education-textbook-form-modal__desc-input textarea[style*='height']
+  )
   .ant-modal-content {
   height: auto !important;
   max-height: calc(100vh - var(--textbook-modal-top) - 16px) !important;

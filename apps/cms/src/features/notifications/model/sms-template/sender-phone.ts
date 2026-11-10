@@ -1,3 +1,5 @@
+import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
+
 /**
  * 문자 발신번호 — BE Hub SMS 발신 SSOT (2026-09-11)
  * - upsert: `providerSenderPhoneNumber` = harvest Select만 (NHN 모드 필수)
@@ -51,9 +53,16 @@ export function validateSmsSenderPhone(
 
 export type SmsSenderPhoneOption = { label: string; value: string }
 
+/** 화면 표시용 발신번호 — 숫자·하이픈만 있는 값은 `02-783-2367`처럼 하이픈을 붙인다. value는 바꾸지 않는다. */
+export function formatSmsSenderPhoneLabel(raw: string): string {
+  const trimmed = raw.trim()
+  if (!trimmed || !/^[\d\s-]+$/.test(trimmed)) return trimmed
+  return formatKoreanPhoneNumber(trimmed) || trimmed
+}
+
 /**
  * NHN 등록 발신번호(sender-profiles SMS) → 셀렉 옵션.
- * - value = senderKey 그대로 (하이픈 정규화 금지)
+ * - value = senderKey 그대로 (하이픈 정규화 금지), label만 하이픈 표시
  * - orphanValue: 목록에 없어도 표시용으로 앞에 유지할 값 (템플릿 수정 화면 전용)
  */
 export function buildSmsSenderPhoneOptions(
@@ -62,11 +71,11 @@ export function buildSmsSenderPhoneOptions(
 ): SmsSenderPhoneOption[] {
   const fromApi = (profiles ?? []).map(profile => {
     const phone = profile.senderKey.trim()
-    const label = profile.displayName.trim() || phone
+    const label = formatSmsSenderPhoneLabel(profile.displayName.trim() || phone)
     return { label, value: phone }
   })
   if (orphanValue && !fromApi.some(option => option.value === orphanValue)) {
-    return [{ label: orphanValue, value: orphanValue }, ...fromApi]
+    return [{ label: formatSmsSenderPhoneLabel(orphanValue), value: orphanValue }, ...fromApi]
   }
   return fromApi
 }

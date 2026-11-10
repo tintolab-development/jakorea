@@ -9,6 +9,9 @@ import type { SmsSendRecipient } from './types'
 
 export const SMS_SEND_CONFIRM_MESSAGE = '해당 내용으로 문자를 발송하시겠습니까?'
 
+/** 시안: 발송 시점 기본 미선택 — 즉시/예약을 고르지 않으면 발송을 막는다. */
+export const SMS_SEND_TIMING_REQUIRED_MESSAGE = '발송 시점을 선택해 주세요.'
+
 export const SMS_VARIABLE_EXCLUSION_GUIDE =
   '메시지에 사용한 변수값을 확인할 수 없는 수신자는 이번 발송에서 제외됩니다. 입력값, 회원 정보, 프로그램 정보를 확인하세요.'
 

@@ -312,18 +312,27 @@ export function patchApplicantInstructorForApprovalStatus(
   }
 }
 
-/** 승인 취소 — 신청 반려 + 배정 해제. 승인 대기 복원은 반려 취소만. */
+/**
+ * 승인 취소 — 신청 반려 + 배정 해제. 승인 대기 복원은 반려 취소만.
+ * BE `AvailableActions`: INSTRUCTOR·APPROVAL_CANCELLED → `CANCEL_REJECTION`
+ * (`ApplicationDecisionTransitionPolicy.isGeneralApprovalCancelRestoreType`). 재조회 전에도 같은 CTA를 보인다.
+ */
 export function patchApplicantInstructorForCancelApproval(
   row: ApplicantInstructorRow,
   notifyOptions: ApplicantInstructorApprovalNotifyOptions
 ): ApplicantInstructorRow {
   const rejected = patchApplicantInstructorForApprovalStatus(row, 'rejected', notifyOptions)
+  const remainingActions = (row.availableActions ?? []).filter(
+    action =>
+      action !== 'APPROVE' &&
+      action !== 'REJECT' &&
+      action !== 'CANCEL_APPROVAL' &&
+      action !== 'CANCEL_REJECTION'
+  )
   return {
     ...rejected,
     applicationStatus: 'APPROVAL_CANCELLED',
-    availableActions: (row.availableActions ?? []).filter(
-      action => action !== 'APPROVE' && action !== 'REJECT' && action !== 'CANCEL_APPROVAL'
-    ),
+    availableActions: [...remainingActions, 'CANCEL_REJECTION'],
     assignedLectures: undefined,
     assignedSchoolId: undefined,
     assignedSchoolName: undefined,

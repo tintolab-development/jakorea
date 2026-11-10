@@ -3,7 +3,7 @@
  */
 
 import { Spin } from 'antd'
-import { Suspense, lazy, useState, useEffect, useCallback, useMemo } from 'react'
+import { Suspense, lazy, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import type { TableSearchSetSearchParams } from '@/shared/hooks/use-table-search'
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
@@ -27,6 +27,7 @@ import type {
 } from './table/program-table-column-resolver'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/ui'
+import { FilterTableDescriptionDivider } from '@/shared/components/filter-table-layout'
 import { ExcelButton } from '@/shared/ui/excel-button'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
@@ -57,6 +58,13 @@ export type ProgramListConfig = {
    * GENERAL | COMPANY_SCHOOL | TRAINED_TEACHER | …
    */
   calendarProgramType?: string
+  /**
+   * No. 열 번호 순서. `desc`면 총 건수부터 1까지 내려간다(일반 프로그램 시안).
+   * 생략 시 기존처럼 1부터 올라간다(1사1교·교육 받은 교사).
+   */
+  rowNumberOrder?: 'asc' | 'desc'
+  /** 헤더 `총 N건` 뒤 구분선과 함께 붙는 안내 문구(리스트·캘린더 공통). 생략 시 미표시 */
+  headerNotice?: ReactNode
 }
 
 export interface ProgramListProps {
@@ -67,6 +75,12 @@ export interface ProgramListProps {
   onBulkDelete?: (programs: Program[]) => void
   onSelectionChange?: (selectedKeys: React.Key[]) => void
   selectedRowKeys?: React.Key[]
+  /**
+   * 캘린더 우측 목록 선택(프로그램 id). 지정 시 상위가 소유한다(일반 프로그램 선택 삭제 연동).
+   * 생략 시 내부 상태로 관리한다(엑셀 다운로드에만 사용).
+   */
+  calendarSelectedProgramIds?: React.Key[]
+  onCalendarSelectionChange?: (programIds: React.Key[]) => void
   showRowSelection?: boolean
   showCalendarView?: boolean
   viewMode?: 'list' | 'calendar'
@@ -95,6 +109,8 @@ export function ProgramList({
   onBulkDelete,
   onSelectionChange,
   selectedRowKeys: externalSelectedRowKeys,
+  calendarSelectedProgramIds: externalCalendarSelectedProgramIds,
+  onCalendarSelectionChange,
   showRowSelection = false,
   showCalendarView = false,
   viewMode: externalViewMode,
@@ -161,8 +177,12 @@ export function ProgramList({
   }, [displayedCount, hasActiveFilters, onDisplayCountChange])
 
   const [internalSelectedRowKeys, setInternalSelectedRowKeys] = useState<React.Key[]>([])
-  // 캘린더 우측 목록의 선택 표시용 상태. 목록 행 일괄 삭제 선택과 분리한다.
-  const [calendarSelectedProgramIds, setCalendarSelectedProgramIds] = useState<React.Key[]>([])
+  // 캘린더 우측 목록 선택 상태. 목록 행 선택과 분리하며, 상위가 넘기면 상위 상태를 쓴다.
+  const [internalCalendarSelectedProgramIds, setInternalCalendarSelectedProgramIds] = useState<
+    React.Key[]
+  >([])
+  const calendarSelectedProgramIds =
+    externalCalendarSelectedProgramIds ?? internalCalendarSelectedProgramIds
   const [internalViewMode] = useState<'list' | 'calendar'>('list')
   const viewMode = externalViewMode ?? internalViewMode
   const isOverviewTable = tableContext.mode === 'overview'
@@ -214,9 +234,12 @@ export function ProgramList({
   )
   const handleCalendarProgramSelectionChange = useCallback(
     (programIds: React.Key[]) => {
-      setCalendarSelectedProgramIds(programIds)
+      if (externalCalendarSelectedProgramIds === undefined) {
+        setInternalCalendarSelectedProgramIds(programIds)
+      }
+      onCalendarSelectionChange?.(programIds)
     },
-    []
+    [externalCalendarSelectedProgramIds, onCalendarSelectionChange]
   )
   const filterFieldsOverride = config?.filterFields
   const filterFieldsForLayout = useMemo(() => {
@@ -239,6 +262,31 @@ export function ProgramList({
   const filteredRows = tableData
 
   const countForHeader = headerCount ?? displayedCount
+  const headerNotice = config?.headerNotice
+  const headerDescription =
+    headerNotice != null ? (
+      <>
+        {`총 ${countForHeader.toLocaleString()}건`}
+        <FilterTableDescriptionDivider />
+        {headerNotice}
+      </>
+    ) : (
+      `총 ${countForHeader.toLocaleString()}건`
+    )
+
+  const rowNumberOrder = config?.rowNumberOrder ?? 'asc'
+  /** `desc`: No. 열을 총 건수(서버 totalElements)부터 내려가게 바꾼다 — 표·엑셀 공통 */
+  const displayColumns = useMemo(() => {
+    if (rowNumberOrder !== 'desc') return antdColumns
+    return antdColumns.map(column =>
+      column.key === 'no'
+        ? {
+            ...column,
+            render: (_: unknown, __: Program, index: number) => countForHeader - index,
+          }
+        : column
+    )
+  }, [antdColumns, countForHeader, rowNumberOrder])
 
   const overviewRowSelectionActive =
     showRowSelection && (onBulkDelete != null || onSelectionChange != null)
@@ -251,7 +299,7 @@ export function ProgramList({
 
   const { exportExcel, isExporting: isExcelExporting } = useTableExcelExport({
     accessLog: { downloadKind: 'PROGRAM_LIST_EXPORT', containedPiiTypes: [] },
-    columns: antdColumns,
+    columns: displayColumns,
     data: filteredRows,
     filename: headerTitle ?? '프로그램 목록',
     selectedRowKeys: excelSelectedRowKeys,
@@ -272,13 +320,13 @@ export function ProgramList({
           onSearch={handleSearch}
           bordered={false}
           title={headerTitle}
-          description={`총 ${countForHeader.toLocaleString()}건`}
+          description={headerDescription}
           actions={children}
           actionsAfterExcel={toolbarActionsAfterExcel}
           className={filterTableLayoutClassName}
           excelExport={{
             accessLog: { downloadKind: 'PROGRAM_LIST_EXPORT', containedPiiTypes: [] },
-            columns: antdColumns,
+            columns: displayColumns,
             data: filteredRows,
             selectedRowKeys: excelSelectedRowKeys,
           }}
@@ -301,7 +349,7 @@ export function ProgramList({
                   : undefined
               }
               dataSource={filteredRows}
-              columns={antdColumns}
+              columns={displayColumns}
               rowKey="id"
               loading={loading}
               tableLayout={isOverviewTable ? 'fixed' : undefined}
@@ -335,7 +383,9 @@ export function ProgramList({
                 <div className="table-header-actions">
                   <div className="table-header-title--wrapper">
                     <span className="table-title">{headerTitle}</span>
-                    <span className="table-description">{`총 ${countForHeader.toLocaleString()}건`}</span>
+                    <span className="table-description">
+                      {headerDescription}
+                    </span>
                   </div>
                   <div className="table-header-actions--wrapper">
                     {children}

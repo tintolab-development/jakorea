@@ -1,7 +1,7 @@
 .sms-template-preview-modal.content-modal.teal-header-modal.ant-modal .ant-modal-content {
-  width: min(960px, calc(100vw - 48px));
-  padding: 26px 30px 34px;
-  border-radius: 12px;
+  width: min(1000px, calc(100vw - 48px));
+  padding: 24px 30px 34px;
+  border-radius: 16px;
   background: #fff;
   box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35);
 }
@@ -11,13 +11,7 @@
   align-items: center;
   justify-content: flex-end;
   width: 100%;
-  gap: 12px;
-}
-
-.sms-template-preview-modal__footer-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .sms-template-preview {

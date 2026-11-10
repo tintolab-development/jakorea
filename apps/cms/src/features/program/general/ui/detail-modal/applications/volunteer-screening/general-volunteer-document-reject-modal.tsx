@@ -14,8 +14,9 @@ export type GeneralVolunteerDocumentRejectModalProps = {
 }
 
 export function buildGeneralVolunteerDocumentRejectMessage(volunteerName: string): string {
-  const subject = formatModalBracketedSubjectName(volunteerName, '봉사자')
-  return `${subject} 봉사자의 1차 서류 합격을 반려하시겠습니까?\n반려 시 입력하신 반려 사유가 봉사자에게 전달되며, 알림이 발송됩니다.`
+  const subject = formatModalBracketedSubjectName(volunteerName, '회원')
+  // 시안 03-1(9756:67058). 반려 사유는 API(FAIL) 필수라 입력란은 유지한다.
+  return `${subject} 님의 1차 서류를 반려하시겠습니까?\n반려 시 회원에게 반려 알림이 발송됩니다.`
 }
 
 export function GeneralVolunteerDocumentRejectModal({
@@ -30,7 +31,7 @@ export function GeneralVolunteerDocumentRejectModal({
       open={open}
       variant="reject"
       className="general-volunteer-document-reject-modal"
-      title="봉사자 1차 반려 안내"
+      title="1차 서류 반려 안내"
       message={buildGeneralVolunteerDocumentRejectMessage(volunteerName)}
       confirmLabel="반려"
       confirmVariant="delete"

@@ -4,6 +4,7 @@ import { DetailInfoForm, DetailInfoFormTdDivider } from '@/shared/components/det
 import { splitPipeSeparatedText } from '@/features/program/shared/ui/program-detail-td-divider'
 import {
   decodeSponsorManagerContactRef,
+  formatSponsorManagerNameTitleLabel,
   formatSponsorManagerPersonLabel,
 } from '@/features/program/general/model/common-info-edit-schema'
 import type {
@@ -115,14 +116,22 @@ export function SponsorManagerContactsView({
   sponsorRows,
   sponsorNameById,
   contactsBySponsorId,
+  variant = 'contactDetails',
 }: {
   program: Program
   sponsorRows: readonly SponsorManagementRow[]
   /** 후원사 행이 없을 때(조회 화면) 배정 응답의 후원사명 — sponsorManagementId → 이름 */
   sponsorNameById?: Readonly<Record<string, string>>
   contactsBySponsorId: Record<string, readonly SponsorContactRow[] | undefined>
+  /** nameTitle: 일반 프로그램 공통정보 — `이름 직책`, 복수 후원사만 `(후원사명)`, 복수 담당자는 쉼표 */
+  variant?: 'contactDetails' | 'nameTitle'
 }): ReactNode {
-  const sponsorCount = Math.max(sponsorRows.length, Object.keys(sponsorNameById ?? {}).length)
+  const assignedSponsorIds = program.generalCommonInfo?.sponsorManagementIds ?? []
+  const sponsorCount = Math.max(
+    assignedSponsorIds.length,
+    sponsorRows.length,
+    Object.keys(sponsorNameById ?? {}).length
+  )
   if (
     isProgramSponsorManagerUnselected({
       sponsorManagerContactIds: program.generalCommonInfo?.sponsorManagerContactIds,
@@ -135,7 +144,38 @@ export function SponsorManagerContactsView({
   }
 
   const refs = program.generalCommonInfo?.sponsorManagerContactIds ?? []
-  const multi = refs.length > 1 || sponsorCount > 1
+  const includeSponsorName = sponsorCount > 1
+
+  if (variant === 'nameTitle') {
+    const labels: string[] = []
+    for (const ref of refs) {
+      const decoded = decodeSponsorManagerContactRef(ref)
+      if (!decoded) continue
+      const sponsor = sponsorRows.find(row => row.id === decoded.sponsorManagementId)
+      const contact = contactsBySponsorId[decoded.sponsorManagementId]?.find(
+        row => row.id === decoded.contactId
+      )
+      const storedName = program.generalCommonInfo?.sponsorManagerContactNames?.[ref]?.trim()
+      const contactName = contact?.name?.trim() || storedName
+      if (!contactName) continue
+      const assignedDetail = program.generalCommonInfo?.sponsorManagerContactDetails?.[ref]
+      labels.push(
+        formatSponsorManagerNameTitleLabel({
+          contactName,
+          position: assignedDetail ? assignedDetail.position : contact?.position,
+          sponsorName: sponsor?.name?.trim() || sponsorNameById?.[decoded.sponsorManagementId],
+          includeSponsorName,
+        })
+      )
+    }
+    if (labels.length > 0) return <>{labels.join(', ')}</>
+    const managerName = program.managerName?.trim()
+    if (!managerName || isSponsorContactUnselectedLabel(managerName)) {
+      return <>{sponsorCount > 0 ? SPONSOR_CONTACT_UNSELECTED_LABEL : '-'}</>
+    }
+    return <>{managerName}</>
+  }
+
   const lines: string[][] = []
   for (const ref of refs) {
     const decoded = decodeSponsorManagerContactRef(ref)
@@ -154,7 +194,7 @@ export function SponsorManagerContactsView({
       position: assignedDetail ? assignedDetail.position : contact?.position,
     })
     const head = [
-      multi
+      includeSponsorName
         ? sponsor?.name?.trim() || sponsorNameById?.[decoded.sponsorManagementId]?.trim()
         : '',
       personLabel,

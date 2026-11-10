@@ -8,6 +8,13 @@ export type InstitutionColumnPreset = 'legacy' | 'general-detail' | 'company-sch
 
 export type InstructorColumnPreset = 'legacy' | 'general-detail'
 
+/**
+ * 강사 신청 목록(`instructorColumnPreset="general-detail"`) 캘린더 뷰 필터 구성.
+ * - `calendar-only`(기본): 신청 기관명·자택 소재지·승인 현황·신청 학년·신청 강사명 — 1사1교·일반 개인형 유지
+ * - `list-parity`: 리스트뷰와 같은 필터(신청 강사명·자택 주소지·JA 강의 경력·JA 평가 등급·승인 현황) — 일반 기관형
+ */
+export type InstructorCalendarFilterPreset = 'calendar-only' | 'list-parity'
+
 export type SessionLinePreset = 'legacy' | 'general-detail'
 
 /** 신청자 목록 엑셀 client 이력 — 메뉴마다 담기는 데이터가 다르다. 그 밖의 메뉴는 종류를 보내지 않는다. */

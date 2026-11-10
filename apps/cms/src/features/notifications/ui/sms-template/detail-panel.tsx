@@ -3,7 +3,7 @@ import { Spin } from 'antd'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsButton } from '@/shared/ui'
 import type { SmsTemplateItem } from '@/features/notifications/model/sms-template/types'
-import { formatSmsMessageTypeLabel } from '@/features/notifications/api/adapters/sms-channel'
+import { formatSmsMessageTypeCode } from '@/features/notifications/model/sms-template/message-type'
 
 type DetailPanelProps = {
   template: SmsTemplateItem | null
@@ -61,12 +61,12 @@ export function DetailPanel({ template, categoryName, onPreview, loading }: Deta
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
-            label="보낸사람(전화번호)"
+            label="발신 번호"
             view={template.senderPhone.trim() || '-'}
           />
           <DetailInfoForm.Field
             label="발송 유형"
-            view={formatSmsMessageTypeLabel(template.messageType)}
+            view={formatSmsMessageTypeCode(template.messageType)}
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">
@@ -75,7 +75,7 @@ export function DetailPanel({ template, categoryName, onPreview, loading }: Deta
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
-            label="미리보기"
+            label="템플릿 상세"
             fullRow
             view={
               <CmsButton variant="secondary" size="h32" type="button" onClick={onPreview}>

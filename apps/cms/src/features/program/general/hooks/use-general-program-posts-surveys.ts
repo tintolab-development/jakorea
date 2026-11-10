@@ -665,59 +665,88 @@ export function useGeneralProgramSurveySummary(
   }
 }
 
-/** 일정 바인딩 여러 개의 summary·응답을 같은 query key로 조회한 뒤 합친다. binding 생략 GET은 쓰지 않는다. */
+/** useQueries `combine` — 결과가 구조적으로 공유돼 data 배열 참조가 안정된다 */
+function combineSurveyBindingQueries<TData>(
+  results: ReadonlyArray<{
+    data: TData | undefined
+    isError: boolean
+    isFetching: boolean
+    isLoading: boolean
+  }>
+) {
+  return {
+    data: results.map(result => result.data),
+    isError: results.some(result => result.isError),
+    isPending: results.some(result => result.data === undefined),
+    isFetching: results.some(result => result.isFetching || result.isLoading),
+  }
+}
+
+/** 일정 바인딩 하나 — 결과 합산 대상 (binding마다 게시 version이 다를 수 있다) */
+export type GeneralProgramSurveyResultsBindingTarget = {
+  templateVersionId: string
+  bindingId: string
+}
+
+/**
+ * 일정 바인딩 여러 개의 summary·응답을 바인딩별 query key(단건 조회와 동일)로 조회한 뒤 합친다.
+ * 만족도조사 「전체 일정 (결과 합산)」 — 선택형 문항은 옵션 count 합, 주관식은 응답 행을 이어 붙인다.
+ * binding 생략 GET은 쓰지 않는다.
+ */
 export function useGeneralProgramSurveyResultsForBindings(
   programId: string | undefined,
-  templateVersionId: string | undefined,
-  bindingIds: readonly string[],
-  options?: { detailPolicy?: SurveyResponsesDetailPolicy }
+  targets: readonly GeneralProgramSurveyResultsBindingTarget[],
+  options?: { detailPolicy?: SurveyResponsesDetailPolicy; enabled?: boolean }
 ) {
   const surfaceRemote = useProgramsReadsRemoteEnabledForSurface(programId)
   const queryClient = useQueryClient()
   const detailPolicy = options?.detailPolicy ?? 'when-preview-short'
-  const scopedBindingIds = useMemo(() => {
+  const scopedTargets = useMemo(() => {
     const seen = new Set<string>()
-    const next: string[] = []
-    for (const raw of bindingIds) {
-      const bindingId = raw.trim()
-      if (!bindingId || seen.has(bindingId)) continue
+    const next: GeneralProgramSurveyResultsBindingTarget[] = []
+    for (const raw of targets) {
+      const bindingId = raw.bindingId.trim()
+      const templateVersionId = raw.templateVersionId.trim()
+      if (!bindingId || !templateVersionId || seen.has(bindingId)) continue
       seen.add(bindingId)
-      next.push(bindingId)
+      next.push({ bindingId, templateVersionId })
     }
     return next
-  }, [bindingIds])
+  }, [targets])
   const remoteEnabled =
-    surfaceRemote && Boolean(templateVersionId) && scopedBindingIds.length > 0
+    surfaceRemote && options?.enabled !== false && scopedTargets.length > 0
 
-  const summaryQueries = useQueries({
-    queries: scopedBindingIds.map(bindingId => ({
+  const summaryState = useQueries({
+    combine: combineSurveyBindingQueries<SurveySummaryResponse[]>,
+    queries: scopedTargets.map(target => ({
       queryKey: generalProgramQueryKeys.surveySummary(
         programId ?? '',
-        templateVersionId ?? '',
-        bindingId
+        target.templateVersionId,
+        target.bindingId
       ),
       queryFn: () =>
-        fetchGeneralProgramSurveySummary(programId!, templateVersionId!, bindingId),
+        fetchGeneralProgramSurveySummary(programId!, target.templateVersionId, target.bindingId),
       enabled: remoteEnabled,
       staleTime: SURVEY_SUMMARY_STALE_MS,
       retry: false,
     })),
   })
-  const responseQueries = useQueries({
-    queries: scopedBindingIds.map(bindingId => ({
+  const responseState = useQueries({
+    combine: combineSurveyBindingQueries<SurveyPollRawResponse[]>,
+    queries: scopedTargets.map(target => ({
       queryKey: [
         ...generalProgramQueryKeys.surveyResponses(
           programId ?? '',
-          templateVersionId ?? '',
-          bindingId
+          target.templateVersionId,
+          target.bindingId
         ),
         detailPolicy,
       ],
       queryFn: () =>
         loadMappedProgramSurveyResponses({
           programId: programId!,
-          templateVersionId: templateVersionId!,
-          bindingId,
+          templateVersionId: target.templateVersionId,
+          bindingId: target.bindingId,
           detailPolicy,
           queryClient,
         }),
@@ -727,32 +756,33 @@ export function useGeneralProgramSurveyResultsForBindings(
     })),
   })
 
-  const summaryError = summaryQueries.some(query => query.isError)
-  const responsesError = responseQueries.some(query => query.isError)
-  const summariesPending = summaryQueries.some(query => query.data === undefined)
-  const responsesPending = responseQueries.some(query => query.data === undefined)
+  const summaryError = summaryState.isError
+  const responsesError = responseState.isError
+  const summariesPending = summaryState.isPending
+  const responsesPending = responseState.isPending
+  const summaryData = summaryState.data
+  const responseData = responseState.data
 
   const questionSummaries = useMemo<SurveyResultQuestionSummary[] | null | undefined>(() => {
     if (!remoteEnabled || summaryError) return undefined
     if (summariesPending) return null
     return mergeSatisfactionQuestionSummaries(
-      summaryQueries.map(query => mapSurveySummaryToQuestionSummaries(query.data ?? []))
+      summaryData.map(rows => mapSurveySummaryToQuestionSummaries(rows ?? []))
     )
-  }, [remoteEnabled, summariesPending, summaryError, summaryQueries])
+  }, [remoteEnabled, summariesPending, summaryError, summaryData])
 
   const pollResponses = useMemo<SurveyPollRawResponse[] | null>(() => {
     if (!remoteEnabled || responsesError) return null
     if (responsesPending) return null
-    return responseQueries.flatMap(query => query.data ?? [])
-  }, [remoteEnabled, responsesError, responsesPending, responseQueries])
+    return responseData.flatMap(rows => rows ?? [])
+  }, [remoteEnabled, responsesError, responsesPending, responseData])
 
   return {
     pollResponses,
     questionSummaries,
-    loading: remoteEnabled
-      ? summaryQueries.some(query => query.isFetching || query.isLoading) ||
-        responseQueries.some(query => query.isFetching || query.isLoading)
-      : false,
+    loading: remoteEnabled ? summaryState.isFetching || responseState.isFetching : false,
+    /** 최초 로드만 — 백그라운드 재조회 중에는 false */
+    initialLoading: remoteEnabled && (summariesPending || responsesPending) && !summaryError,
     isRemoteDataSource: remoteEnabled && !summaryError && !responsesError,
   }
 }

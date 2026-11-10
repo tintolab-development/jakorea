@@ -41,6 +41,7 @@ import { setOperationalOverlayScope } from '@/features/template/ui/form-set/shar
 import { seedOperationalOverlayFromProgramCatalog } from '@/features/program/general/lib/detail-operational-save-merge'
 import { invalidateProgramFormBindingsCache } from '@/features/program/general/lib/sync-registration-form-bindings'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
+import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 
 export function GeneralProgramApplicationTemplateEditModal({
   open,
@@ -49,6 +50,9 @@ export function GeneralProgramApplicationTemplateEditModal({
   variantOverride,
   onClose,
   onSaved,
+  tabItems,
+  onApplicationTabChange,
+  closeLabel,
 }: {
   open: boolean
   program: Program
@@ -57,6 +61,14 @@ export function GeneralProgramApplicationTemplateEditModal({
   variantOverride?: ProgramParticipantApplicationEditorVariant
   onClose: () => void
   onSaved?: () => void
+  /**
+   * 있으면 본문 상단 좌측에 신청 정보 탭(참여 기관·강사·봉사자)을 노출한다(일반 프로그램 시안 01-2).
+   * 생략 시 기존처럼 양식 안내 문구만 노출 — 1사1교·교육받은 교사 호출부.
+   */
+  tabItems?: { key: GeneralApplicationTabKey; label: string }[]
+  onApplicationTabChange?: (tab: GeneralApplicationTabKey) => void
+  /** 상단 좌측 닫기 버튼 라벨. 생략 시 템플릿 모달 기본(「닫기」) */
+  closeLabel?: string
 }) {
   const variant = useMemo(
     () => variantOverride ?? resolveGeneralApplicationEditorVariant(program, applicationTab),
@@ -206,6 +218,17 @@ export function GeneralProgramApplicationTemplateEditModal({
       onClose={onClose}
       title={headerTitle}
       description={TEMPLATE_FORM_MODAL_DESCRIPTION}
+      bodyHeaderLeading={
+        tabItems != null && tabItems.length > 0 ? (
+          <CmsTextTabs
+            className="application-view__tabs"
+            activeKey={applicationTab}
+            onChange={key => onApplicationTabChange?.(key as GeneralApplicationTabKey)}
+            items={tabItems}
+          />
+        ) : undefined
+      }
+      closeLabel={closeLabel}
       templateTabType="writing"
       className="general-program-application-template-edit-modal"
       zIndex={1200}

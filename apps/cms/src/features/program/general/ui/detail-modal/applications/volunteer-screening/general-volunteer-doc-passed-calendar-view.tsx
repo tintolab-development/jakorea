@@ -3,7 +3,7 @@
  */
 
 import { calendarListItemBackground } from '@/shared/components/calendar/lib/calendar-list-item-background'
-import { useMemo, useCallback, type ReactNode } from 'react'
+import { useMemo, useCallback, type Key, type ReactNode } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
@@ -12,6 +12,7 @@ import { EmptyState } from '@/shared/ui'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import type { GeneralVolunteerInterviewCalendarEvent } from '@/features/program/general/lib/general-volunteer-interview-calendar-events'
 import {
+  GENERAL_VOLUNTEER_DOC_PASSED_CALENDAR_TAG_LABELS,
   buildGeneralVolunteerDocPassedCalendarListRows,
   type GeneralVolunteerDocPassedCalendarListRow,
 } from '@/features/program/general/lib/general-volunteer-doc-passed-calendar-list-rows'
@@ -58,11 +59,33 @@ function GeneralVolunteerDocPassedCalendarRightList({
   rows,
   onRowClick,
   resolveRowColors,
+  selectedRowKeys,
+  onSelectionChange,
 }: {
   rows: GeneralVolunteerDocPassedCalendarListRow[]
   onRowClick: (row: GeneralVolunteerDocPassedCalendarListRow) => void
   resolveRowColors?: (row: GeneralVolunteerDocPassedCalendarListRow) => ScheduleColorPair | undefined
+  selectedRowKeys?: Key[]
+  onSelectionChange?: (keys: Key[]) => void
 }) {
+  const selectedSet = useMemo(
+    () => new Set((selectedRowKeys ?? []).map(String)),
+    [selectedRowKeys]
+  )
+  const handleToggle = useCallback(
+    (applicantId: string, checked: boolean) => {
+      if (!onSelectionChange) return
+      const current = (selectedRowKeys ?? []).map(String)
+      if (checked) {
+        if (current.includes(applicantId)) return
+        onSelectionChange([...current, applicantId])
+        return
+      }
+      onSelectionChange(current.filter(key => key !== applicantId))
+    },
+    [onSelectionChange, selectedRowKeys]
+  )
+
   return (
     <div className={rows.length === 0 ? 'calendar-list calendar-list--empty' : 'calendar-list'}>
       {rows.length === 0 ? (
@@ -73,7 +96,12 @@ function GeneralVolunteerDocPassedCalendarRightList({
           return (
             <div
               key={row.id}
-              className="calendar-list-item"
+              className={[
+                'calendar-list-item',
+                selectedSet.has(row.applicantId) ? 'calendar-list-item--selected' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
               data-has-color="true"
               style={{
                 backgroundColor: calendarListItemBackground(colors.bg),
@@ -82,7 +110,11 @@ function GeneralVolunteerDocPassedCalendarRightList({
               onClick={() => onRowClick(row)}
             >
               <div className="calendar-list-item__column">
-                <GeneralVolunteerDocPassedCalendarListItem row={row} />
+                <GeneralVolunteerDocPassedCalendarListItem
+                  row={row}
+                  checked={selectedSet.has(row.applicantId)}
+                  onToggle={onSelectionChange ? handleToggle : undefined}
+                />
               </div>
             </div>
           )
@@ -94,12 +126,19 @@ function GeneralVolunteerDocPassedCalendarRightList({
 
 export interface GeneralVolunteerDocPassedCalendarViewProps {
   events: GeneralVolunteerInterviewCalendarEvent[]
+  /** volunteer: 봉사자 시안 07-2 — 우측 카드 체크박스·「배정 전」 태그. 기본(participant)은 기존 */
+  cardPreset?: 'default' | 'volunteer'
+  selectedRowKeys?: Key[]
+  onSelectionChange?: (keys: Key[]) => void
   loading?: boolean
   onItemClick: (item: GeneralVolunteerApplicantRow) => void
 }
 
 export function GeneralVolunteerDocPassedCalendarView({
   events,
+  cardPreset = 'default',
+  selectedRowKeys,
+  onSelectionChange,
   loading,
   onItemClick,
 }: GeneralVolunteerDocPassedCalendarViewProps) {
@@ -128,8 +167,14 @@ export function GeneralVolunteerDocPassedCalendarView({
   const dayEvents = useMemo(() => getEventsForDate(selectedDate), [getEventsForDate, selectedDate])
 
   const dayListRows = useMemo(
-    () => buildGeneralVolunteerDocPassedCalendarListRows(dayEvents),
-    [dayEvents]
+    () =>
+      cardPreset === 'volunteer'
+        ? buildGeneralVolunteerDocPassedCalendarListRows(
+            dayEvents,
+            GENERAL_VOLUNTEER_DOC_PASSED_CALENDAR_TAG_LABELS
+          )
+        : buildGeneralVolunteerDocPassedCalendarListRows(dayEvents),
+    [cardPreset, dayEvents]
   )
 
   const { buildResolvedColorMap } = useApplicantCalendarColorMaps(events)
@@ -181,6 +226,8 @@ export function GeneralVolunteerDocPassedCalendarView({
           rows={dayListRows}
           onRowClick={handleListRowClick}
           resolveRowColors={resolveRowColors}
+          selectedRowKeys={selectedRowKeys}
+          onSelectionChange={cardPreset === 'volunteer' ? onSelectionChange : undefined}
         />
       }
     />

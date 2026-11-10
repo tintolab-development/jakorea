@@ -1,6 +1,7 @@
 import { downloadAttachment } from '@/shared/lib/download-attachment'
 import { resolveApplicationNoticeAttachmentUrl } from '../../applications/api/activity-client'
 import type { EducationInProgressFile } from '../model/types'
+import { toRuleDownloadFileName } from '@/shared/lib/download-file-name'
 
 /** Mock 첨부 다운로드. API 연동 시 실제 파일 URL로 교체 */
 export function downloadEducationNoticeFile(file: EducationInProgressFile) {
@@ -9,7 +10,7 @@ export function downloadEducationNoticeFile(file: EducationInProgressFile) {
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
-  link.download = fileName.includes('.') ? fileName : `${fileName}.txt`
+  link.download = toRuleDownloadFileName(fileName.includes('.') ? fileName : `${fileName}.txt`)
   link.click()
   URL.revokeObjectURL(url)
 }

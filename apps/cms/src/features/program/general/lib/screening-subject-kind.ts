@@ -60,6 +60,11 @@ export function screeningVolunteerApplicationDetailTitle(name: string): string {
 /** 봉사자 면접 없음 — 상세 마지막 브레드크럼 (이름 없음) */
 export const SCREENING_VOLUNTEER_APPLICATION_DETAIL_BREADCRUMB = '봉사자 신청 상세'
 
+/** 봉사자 면접 심사 상세 — 마지막 브레드크럼 (시안 02·08·13, 이름 없음) */
+export const SCREENING_VOLUNTEER_DOC1_DETAIL_BREADCRUMB = '봉사자 1차 서류 심사 대상자 상세'
+export const SCREENING_VOLUNTEER_DOC_PASSED_DETAIL_BREADCRUMB = '봉사자 1차 서류 합격자 상세'
+export const SCREENING_VOLUNTEER_INTERVIEW2_DETAIL_BREADCRUMB = '봉사자 2차 면접 대상자 상세'
+
 /** 1차 서류 심사 화면: 면접 ON이면 심사 대상자 상세, OFF이면 신청 상세 */
 export function resolveGeneralVolunteerDocScreeningDetailMeta(
   name: string,
@@ -73,7 +78,7 @@ export function resolveGeneralVolunteerDocScreeningDetailMeta(
   }
   return {
     title: screeningDoc1DetailTitle('volunteer', name),
-    breadcrumbLabel: name,
+    breadcrumbLabel: SCREENING_VOLUNTEER_DOC1_DETAIL_BREADCRUMB,
   }
 }
 

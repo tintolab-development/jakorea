@@ -17,8 +17,10 @@ import './nts-disclosure-card.css'
 function fieldClass(isEditing: boolean) {
   return [
     'rd-nts-inline-field',
-    isEditing ? 'rd-nts-inline-field--edit' : 'rd-nts-inline-field--readonly',
-  ].join(' ')
+    isEditing && 'rd-nts-inline-field--edit',
+  ]
+    .filter(Boolean)
+    .join(' ')
 }
 
 export function NtsDisclosureCard() {
@@ -67,7 +69,7 @@ export function NtsDisclosureCard() {
 
   if (query.isLoading) {
     return (
-      <div className="admin-list-card rd-nts-card">
+      <div className="admin-list-card admin-document-card rd-nts-card">
         <PageContentLoading variant="default" />
       </div>
     )
@@ -75,7 +77,7 @@ export function NtsDisclosureCard() {
 
   if (!data) {
     return (
-      <div className="admin-list-card rd-nts-card page-content-error" role="alert">
+      <div className="admin-list-card admin-document-card rd-nts-card page-content-error" role="alert">
         콘텐츠를 불러오지 못했습니다.
       </div>
     )
@@ -85,8 +87,8 @@ export function NtsDisclosureCard() {
     <div
       className={
         isEditing
-          ? 'admin-list-card rd-nts-card rd-nts-card--editing'
-          : 'admin-list-card rd-nts-card'
+          ? 'admin-list-card admin-document-card rd-nts-card rd-nts-card--editing'
+          : 'admin-list-card admin-document-card rd-nts-card'
       }
     >
       <div className="admin-list-toolbar">
@@ -123,7 +125,7 @@ export function NtsDisclosureCard() {
         </div>
       </div>
 
-      <div className="rd-nts-card__body">
+      <div className="admin-document-card__body rd-nts-card__body">
         <DetailInfoForm title="국세청 공시" hideHeader mode="edit">
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
@@ -138,7 +140,7 @@ export function NtsDisclosureCard() {
                   width="100%"
                   value={draftUrl}
                   readOnly={!isEditing}
-                  tabIndex={isEditing ? 0 : -1}
+                  inlineReadOnly="slot"
                   onChange={e => {
                     if (!isEditing) return
                     setDraftUrl(e.target.value)

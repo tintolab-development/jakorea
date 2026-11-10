@@ -7,12 +7,23 @@ import {
 import { StatusOutlineTag } from '@/shared/components/status-outline-tag'
 import './general-volunteer-interview2-calendar-list-item.css'
 
+/** 봉사자 시안 10-2 — 점수는 숫자만(「9」). 진행 대기는 `-` */
+function formatVolunteerCardScore(
+  row: GeneralVolunteerInterview2CalendarListRow
+): string {
+  if (row.effectiveStatus === 'waiting' || row.totalScore == null) return '-'
+  return String(row.totalScore)
+}
+
 export function GeneralVolunteerInterview2CalendarListItem({
   row,
   checked,
   onToggle,
+  scoreFormat = 'default',
 }: {
   row: GeneralVolunteerInterview2CalendarListRow
+  /** volunteer: 점수 숫자만 / default: 기존 `N점` */
+  scoreFormat?: 'default' | 'volunteer'
   checked: boolean
   onToggle: (key: string, checked: boolean) => void
 }) {
@@ -38,7 +49,9 @@ export function GeneralVolunteerInterview2CalendarListItem({
             |
           </span>
           <span className="general-volunteer-interview2-calendar-list-item__score">
-            {formatSecondInterviewListScoreLabel(row.effectiveStatus, row.totalScore)}
+            {scoreFormat === 'volunteer'
+              ? formatVolunteerCardScore(row)
+              : formatSecondInterviewListScoreLabel(row.effectiveStatus, row.totalScore)}
           </span>
         </div>
       </div>

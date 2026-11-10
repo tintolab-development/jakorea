@@ -105,8 +105,10 @@ function buildDraftMap(rows: BoardMember[]): DraftMap {
 function inlineFieldClass(isEditing: boolean) {
   return [
     'board-panel-inline-field',
-    isEditing ? 'board-panel-inline-field--edit' : 'board-panel-inline-field--readonly',
-  ].join(' ')
+    isEditing && 'board-panel-inline-field--edit',
+  ]
+    .filter(Boolean)
+    .join(' ')
 }
 
 const BoardInlineTextField = memo(function BoardInlineTextField({
@@ -137,7 +139,7 @@ const BoardInlineTextField = memo(function BoardInlineTextField({
       width="100%"
       value={isEditing ? localValue : sourceValue}
       readOnly={!isEditing}
-      tabIndex={isEditing ? 0 : -1}
+      inlineReadOnly="text"
       onChange={e => {
         if (!isEditing) return
         const next = e.target.value

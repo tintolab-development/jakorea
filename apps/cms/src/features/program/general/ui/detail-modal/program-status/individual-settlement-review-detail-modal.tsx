@@ -20,6 +20,7 @@ import {
   INDIVIDUAL_SETTLEMENT_REVIEW_STATEMENT_MODAL_Z_INDEX,
 } from '@/features/program/general/lib/general-program-modal-z-index'
 import { mapIndividualSettlementReviewToCalculationStatement } from '@/features/program/general/lib/map-individual-settlement-review-to-calculation-statement'
+import { individualSettlementReviewApplicationTypeLabel } from '@/features/program/general/api/individual-settlement-review-types'
 import { PaymentOrderCalculationStatementProcessingStatusView } from '@/features/settlement/ui/payment-record/payment-order-calculation-statement-processing-status-view'
 import type {
   PaymentOrderCalculationStatementProgramBasicInfo,
@@ -41,12 +42,18 @@ import './individual-settlement-review-detail-modal.css'
 
 function IndividualSettlementReviewBasicInfo({
   basic,
+  applicationTypeLabel,
 }: {
   basic: PaymentOrderCalculationStatementProgramBasicInfo
+  /** 구분 — 참여자 / 봉사자 */
+  applicationTypeLabel: string
 }) {
   return (
     <div className="applicant-instructor-basic-info">
       <DetailInfoForm title="기본 정보" mode="view">
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field label="구분" fullRow view={applicationTypeLabel} readOnlyDisplay />
+        </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field label="프로그램명" fullRow view={basic.programName} readOnlyDisplay />
         </DetailInfoForm.Row>
@@ -257,7 +264,12 @@ export function IndividualSettlementReviewDetailModal({
           </div>
         ) : (
           <>
-            <IndividualSettlementReviewBasicInfo basic={statementView.basic} />
+            <IndividualSettlementReviewBasicInfo
+              basic={statementView.basic}
+              applicationTypeLabel={individualSettlementReviewApplicationTypeLabel(
+                detail.applicationType
+              )}
+            />
             <PaymentOrderCalculationBreakdownTable
               blocks={statementView.blocks}
               formulaLabel={statementView.formulaLabel}

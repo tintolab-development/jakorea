@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildVolunteerDocumentCancelRejectionMessage,
+  buildVolunteerDocumentScreeningCancelRejectionMessage,
   resolveVolunteerDocumentCancelRejectionNotifyVariant,
   toVolunteerDocumentCancelRejectionNotifyOptions,
 } from '@/features/program/general/lib/volunteer-document-cancel-rejection'
@@ -55,5 +56,14 @@ describe('volunteer-document-cancel-rejection', () => {
       manualNotifyAt: undefined,
       rejectionReason: '사유',
     })
+  })
+
+  it('1차 서류 반려 취소(시안 04-1) — 두 변형 모두 심사 대기 처리 문구', () => {
+    expect(buildVolunteerDocumentScreeningCancelRejectionMessage('김제이', 'pendingNotification')).toBe(
+      '**[김제이]** 님의 1차 서류 반려를 취소하시겠습니까?\n취소 시 발송 예정인 반려 알림은 자동으로 취소되며, **심사 대기 처리**됩니다.'
+    )
+    expect(buildVolunteerDocumentScreeningCancelRejectionMessage('김제이', 'alreadySent')).toBe(
+      '**[김제이]** 님의 1차 서류 반려를 취소하시겠습니까?\n취소 시 입력하신 사유가 회원에게 취소 사유로 안내되며, 알림이 발송됩니다.\n또한, 해당 회원은 자동으로 **심사 대기 처리**됩니다.'
+    )
   })
 })

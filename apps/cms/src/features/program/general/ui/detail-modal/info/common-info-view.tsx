@@ -32,10 +32,6 @@ import {
   renderDetailInfoPipeSeparated,
 } from '@/features/program/shared/ui/program-detail-td-divider'
 import { SponsorManagerContactsView } from '@/features/program/shared/ui/sponsor-manager-inline-view'
-import {
-  ProgramSponsorHomepageView,
-  ProgramSponsorLogoView,
-} from '@/features/program/shared/ui/program-detail/sponsor-assignment-info'
 import { EducationScheduleChangeTitleAction } from '@/features/program/shared/ui/education-schedule-change-title-action'
 import {
   isEducationScheduleSelectionDateDisabled,
@@ -98,7 +94,11 @@ import {
 } from '@/features/program/general/lib/participant-audience-selection'
 import { isProgramStructureEditPeriodOpen } from '@/features/program/shared/lib/program-edit-window'
 import { GeneralParticipantAudienceCheckboxGroup } from '@/features/program/general/ui/participant-audience-checkbox-group'
-import { isGeneralIndividualParticipantTarget } from '@/features/program/general/lib/survey-audience'
+import {
+  isGeneralIndividualParticipantSelection,
+  isGeneralIndividualParticipantTarget,
+  isGeneralIndividualProgram,
+} from '@/features/program/general/lib/survey-audience'
 import {
   normalizeProgramPaymentItemSelection,
   resolveProgramWageDeductionLabel,
@@ -233,6 +233,20 @@ import { ButtonAddIcon, ButtonClockIcon } from '@/shared/ui/icons/ButtonIcons'
 import './common-info-view.css'
 
 const PROGRAM_PROGRESS_STATIC_HINT = '일정에 따라 진행 현황이 자동으로 반영됩니다.'
+
+/**
+ * 상세 공통 정보 수정 모드 섹션 설명 (시안 01-2·04-2).
+ * 등록 위저드와 공유하는 `PROGRAM_REGISTRATION_GENERAL_SECTION_META` 문구는 그대로 두고 상세에서만 덮어쓴다.
+ */
+const DETAIL_EDIT_SECTION_DESCRIPTIONS = {
+  basicInfo: '참여자 유형은 프로그램 등록 이후 항목 수정이 불가합니다.',
+  curriculum: '차시 별 정보를 입력해 주세요.',
+  curriculumMultiRound: '회차 별 정보를 입력해 주세요.',
+  schedule: '세부 일정 별 정보를 입력해 주세요.',
+  scheduleMultiRound: '회차 별 정보를 입력해 주세요.',
+  scheduleMultiRoundEvent: '행사 일정 별 정보를 입력해 주세요.',
+  scheduleSettings: '교육이 실행되는 일정을 설정해 주세요.',
+} as const
 
 const PARTICIPATION_METHOD_LABELS = {
   individual: '개인',
@@ -483,8 +497,8 @@ function BasicInfoSection({
   )
   const sponsorIdsForContacts =
     isFormEdit && watchedSponsorIds.length > 0 ? watchedSponsorIds : sponsorManagementIds
-  // 후원사 id·이름은 이미 받은 후원사 목록에서 찾는다(후원사 상세·로고 조회 없음).
-  // 조회 화면의 담당자 직책·연락처·홈페이지·로고는 배정 응답(GET /programs/{id}/sponsors)만 쓴다.
+  // 후원사 id·이름은 이미 받은 후원사 목록에서 찾는다(후원사 상세 조회 없음).
+  // 조회 화면의 담당자 직책은 배정 응답(GET /programs/{id}/sponsors)만 쓴다.
   // contacts API는 수정 모드 담당자 선택지에만 필요하다.
   const sponsorEditContext = useGeneralProgramSponsorEditContext(
     sponsorIdsForContacts,
@@ -596,7 +610,7 @@ function BasicInfoSection({
       title="기본 정보"
       bodyClassName="detail-common-info-view__section-body--basic-info"
       isFormEdit={isFormEdit}
-      editDescription={PROGRAM_REGISTRATION_GENERAL_SECTION_META.basicInfo.editDescription}
+      editDescription={DETAIL_EDIT_SECTION_DESCRIPTIONS.basicInfo}
       highlightParagraphId={PROGRAM_REGISTRATION_IDS.basicInfo}
       required
     >
@@ -910,6 +924,7 @@ function BasicInfoSection({
                 sponsorRows={selectedSponsors}
                 sponsorNameById={commonInfo.sponsorManagementNames}
                 contactsBySponsorId={sponsorEditContext.contactsBySponsorId}
+                variant="nameTitle"
               />
             }
             edit={
@@ -952,30 +967,6 @@ function BasicInfoSection({
             }
           />
         </DetailInfoForm.Row>
-        {!isFormEdit ? (
-          <DetailInfoForm.Row type="double">
-            <DetailInfoForm.Field
-              label="후원사 홈페이지"
-              view={
-                <ProgramSponsorHomepageView
-                  sponsorIds={sponsorManagementIds}
-                  sponsorNameById={commonInfo.sponsorManagementNames}
-                  details={commonInfo.sponsorAssignmentDetails}
-                />
-              }
-            />
-            <DetailInfoForm.Field
-              label="후원사 로고"
-              view={
-                <ProgramSponsorLogoView
-                  sponsorIds={sponsorManagementIds}
-                  sponsorNameById={commonInfo.sponsorManagementNames}
-                  details={commonInfo.sponsorAssignmentDetails}
-                />
-              }
-            />
-          </DetailInfoForm.Row>
-        ) : null}
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="교육 장소"
@@ -1220,11 +1211,18 @@ function KpiSection({
   const hasVolunteer = isFormEdit
     ? editForm.watch('participantVolunteer')
     : getGeneralParticipantTypes(program).includes('volunteer')
+  /** 참여자 유형 [개인]만이면 학교·학급 KPI는 「해당 없음」 고정. 기관(학교·기관)은 조회·수정 모두 값 노출. */
+  const isIndividualTarget = isFormEdit
+    ? isGeneralIndividualParticipantSelection(
+        Boolean(editForm.watch('participantIndividual')),
+        Boolean(editForm.watch('participantOrganization'))
+      )
+    : isGeneralIndividualProgram(program)
   useEffect(() => {
-    if (!isFormEdit) return
+    if (!isFormEdit || !isIndividualTarget) return
     editForm.setValue('kpiFinalSchools', 0)
     editForm.setValue('kpiFinalClasses', 0)
-  }, [editForm, isFormEdit])
+  }, [editForm, isFormEdit, isIndividualTarget])
 
   useEffect(() => {
     if (!isFormEdit || hasInstructor) return
@@ -1238,7 +1236,30 @@ function KpiSection({
 
   if (!kpi && !isEditMode) return null
 
-  const dispatchedSchoolClassView = <span className="detail-info-form--text">해당 없음</span>
+  const notApplicableView = <span className="detail-info-form--text">해당 없음</span>
+  const renderDispatchCountInput = (name: 'kpiFinalSchools' | 'kpiFinalClasses') =>
+    isIndividualTarget ? (
+      <KpiNotApplicableInput />
+    ) : (
+      <Controller
+        name={name}
+        control={editForm.control}
+        render={({ field }) => (
+          <CmsNumericInput
+            mode="integer"
+            min={0}
+            name={field.name}
+            ref={field.ref}
+            onBlur={field.onBlur}
+            value={field.value == null ? '' : String(field.value)}
+            onValueChange={raw => field.onChange(parseOptionalNonNegativeInt(raw))}
+            inputSize="small"
+            placeholder="목표값 입력"
+            width={120}
+          />
+        )}
+      />
+    )
 
   const formMode = isFormEdit ? 'edit' : 'view'
 
@@ -1358,14 +1379,26 @@ function KpiSection({
           <DetailInfoForm.Field
             label="최종 파견 학교 수"
             validationKey="kpi.finalSchools"
-            view={dispatchedSchoolClassView}
-            edit={<KpiNotApplicableInput />}
+            view={
+              isIndividualTarget ? (
+                notApplicableView
+              ) : (
+                <KpiBoldNumber value={kpi?.finalSchools ?? 0} />
+              )
+            }
+            edit={renderDispatchCountInput('kpiFinalSchools')}
           />
           <DetailInfoForm.Field
             label="최종 파견 학급 수"
             validationKey="kpi.finalClasses"
-            view={dispatchedSchoolClassView}
-            edit={<KpiNotApplicableInput />}
+            view={
+              isIndividualTarget ? (
+                notApplicableView
+              ) : (
+                <KpiBoldNumber value={kpi?.finalClasses ?? 0} />
+              )
+            }
+            edit={renderDispatchCountInput('kpiFinalClasses')}
           />
         </DetailInfoForm.Row>
       </DetailInfoForm>
@@ -1373,20 +1406,15 @@ function KpiSection({
   )
 }
 
-function WageGradeAmountView({
-  pricing,
-  maxHint,
-}: {
-  pricing: string | undefined
-  maxHint: string
-}) {
+/** 조회: `1시간당 | 기본 : 450,000원` (시안 01-1) */
+function WageGradeAmountView({ pricing }: { pricing: string | undefined }) {
   const amount = parseWageGradeAmount(pricing)
   if (amount == null) return '-'
   return (
     <ProgramDetailTdSegmentWrap>
-      1시간 당
+      1시간당
       <DetailInfoForm.InputsSeparator />
-      {formatNumberDisplay(amount)}원 (최대 {maxHint}원)
+      기본 : {formatNumberDisplay(amount)}원
     </ProgramDetailTdSegmentWrap>
   )
 }
@@ -1480,10 +1508,10 @@ function WageSection({
               label={label}
               validationKey={validationKey}
               fullRow
-              view={<WageGradeAmountView pricing={pricingByGrade[label]} maxHint={maxHint} />}
+              view={<WageGradeAmountView pricing={pricingByGrade[label]} />}
               edit={
                 <div className="detail-info-form-inputs-wrapper">
-                  <span className="detail-info-form--text">1시간 당</span>
+                  <span className="detail-info-form--text">1시간당</span>
                   <Controller
                     name={name}
                     control={editForm.control}
@@ -3234,8 +3262,8 @@ function CurriculumSection({
       highlightParagraphId={PROGRAM_REGISTRATION_IDS.educationCurriculum}
       editDescription={
         isMultiRoundCurriculum
-          ? PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationCurriculum.editDescriptionMultiRound
-          : curriculumMeta.editDescription
+          ? DETAIL_EDIT_SECTION_DESCRIPTIONS.curriculumMultiRound
+          : DETAIL_EDIT_SECTION_DESCRIPTIONS.curriculum
       }
       titleTrailing={
         isFormEdit ? (
@@ -4530,10 +4558,10 @@ function ScheduleProgressEditSection({
   )
 
   const editDescription = multiAllPer
-    ? scheduleMeta.editDescriptionMultiRoundEvent
+    ? DETAIL_EDIT_SECTION_DESCRIPTIONS.scheduleMultiRoundEvent
     : isMultiRound
-      ? scheduleMeta.editDescriptionMultiRound
-      : scheduleMeta.editDescription
+      ? DETAIL_EDIT_SECTION_DESCRIPTIONS.scheduleMultiRound
+      : DETAIL_EDIT_SECTION_DESCRIPTIONS.schedule
 
   return (
     <ProgramRegistrationDetailSection
@@ -5144,12 +5172,13 @@ function ScheduleSettingsSection({
     <ProgramRegistrationDetailSection
       title={scheduleMeta.title}
       isFormEdit={isFormEdit}
-      editDescription={scheduleMeta.editDescription}
+      editDescription={DETAIL_EDIT_SECTION_DESCRIPTIONS.scheduleSettings}
       highlightParagraphId={PROGRAM_REGISTRATION_IDS.educationScheduleSettings}
       required
       titleTrailing={
         isFormEdit ? (
           <EducationScheduleChangeTitleAction
+            variant="general"
             programId={program.id}
             scheduleLines={lines}
             educationScheduleMode={
@@ -5214,6 +5243,11 @@ export interface GeneralProgramDetailCommonInfoViewProps {
   onEdit?: () => void
   onCancel?: () => void
   onSave?: () => void
+  /**
+   * 「프로그램 상세 미리보기」 — 기관형은 참여 기관 모집, 개인형은 참여자 모집 정보 미리보기와 같은 화면.
+   * 생략 시 버튼 미노출.
+   */
+  onOpenProgramDetailPreview?: () => void
 }
 
 export function GeneralProgramDetailCommonInfoView({
@@ -5226,6 +5260,7 @@ export function GeneralProgramDetailCommonInfoView({
   onEdit,
   onCancel,
   onSave,
+  onOpenProgramDetailPreview,
 }: GeneralProgramDetailCommonInfoViewProps) {
   const v = programToDetailEditValues(program)
   const operationRange = formatDateRange(program.startDate, program.endDate)
@@ -5250,6 +5285,17 @@ export function GeneralProgramDetailCommonInfoView({
             onSave={onSave ?? (() => {})}
           />
         </BusinessPeriodExtendToolbar>
+        {onOpenProgramDetailPreview && !isEditMode ? (
+          <CmsButton
+            type="button"
+            variant="primary"
+            size="large"
+            className="detail-common-info-view__preview-btn"
+            onClick={onOpenProgramDetailPreview}
+          >
+            프로그램 상세 미리보기
+          </CmsButton>
+        ) : null}
       </div>
 
       <BasicInfoSection

@@ -221,3 +221,25 @@ describe('buildParticipatingInstitutionLocalSavePatch — 연락처 원문 제�
     expect(local).not.toHaveProperty('teacherEmail')
   })
 })
+
+describe('buildParticipatingInstitutionLocalSavePatch — 허용 필드만 (Step 5 P2)', () => {
+  it('허용 목록 밖 필드와 연락처 원문은 올리지 않고, 정책상 허용(이름·기관 주소)은 유지한다', () => {
+    const local = buildParticipatingInstitutionLocalSavePatch({
+      detailId: 'd1',
+      draft: baseDraft,
+      patch: {
+        teacherName: '김교사',
+        addressDetail: '본관 3층',
+        teacherPhone: '02-000-0000',
+        teacherMobile: '010-0000-0000',
+        teacherEmail: 't@school.kr',
+        // 허용 목록에 없는 임의 필드
+        ...({ teacherBirthDate: '1980-01-01' } as object),
+      },
+      fallbackClassCount: 1,
+      fallbackStudentCount: 10,
+    })
+    expect(local).toMatchObject({ teacherName: '김교사', addressDetail: '본관 3층' })
+    expect(JSON.stringify(local)).not.toMatch(/010-0000-0000|02-000-0000|t@school\.kr|1980-01-01/)
+  })
+})

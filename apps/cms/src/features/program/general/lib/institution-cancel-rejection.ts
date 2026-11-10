@@ -37,14 +37,40 @@ export function resolveInstitutionCancelRejectionNotifyVariant(
   return 'pendingNotification'
 }
 
+/**
+ * 반려 취소 팝업 문구 분기.
+ * - `default`: 1사1교 등 기존 문구
+ * - `general-organization`: 일반 프로그램(기관형) 시안 04-1(1141:239123)·04-2(1141:239867)
+ */
+export type InstitutionCancelRejectionCopyVariant = 'default' | 'general-organization'
+
+export const INSTITUTION_CANCEL_REJECTION_MODAL_TITLE = '기관 반려 취소 안내'
+export const GENERAL_ORGANIZATION_CANCEL_REJECTION_MODAL_TITLE = '프로그램 반려 취소 안내'
+
+export function resolveInstitutionCancelRejectionModalTitle(
+  copyVariant: InstitutionCancelRejectionCopyVariant = 'default'
+): string {
+  return copyVariant === 'general-organization'
+    ? GENERAL_ORGANIZATION_CANCEL_REJECTION_MODAL_TITLE
+    : INSTITUTION_CANCEL_REJECTION_MODAL_TITLE
+}
+
 export function buildInstitutionCancelRejectionMessage(
   schoolName: string,
-  variant: InstitutionCancelRejectionNotifyVariant
+  variant: InstitutionCancelRejectionNotifyVariant,
+  copyVariant: InstitutionCancelRejectionCopyVariant = 'default'
 ): string {
   const trimmedName = schoolName.trim() || '기관'
   const subject = formatModalBracketedSubjectName(trimmedName)
   const pendingApproval = formatModalBoldPhrase('승인 대기 처리')
   const notifyCancel = formatModalBoldPhrase('발송 취소')
+
+  if (copyVariant === 'general-organization') {
+    if (variant === 'alreadySent') {
+      return `${subject}의 프로그램 신청 반려를 취소하시겠습니까?\n취소 시 입력하신 사유가 담당 교사에게 취소 사유로 안내되며, 알림이 발송됩니다.\n또한, 해당 기관은 자동으로 ${pendingApproval}됩니다.`
+    }
+    return `${subject}의 프로그램 신청 반려를 취소하시겠습니까?\n취소 시 발송 예정인 반려 알림은 자동으로 취소되며, ${pendingApproval}됩니다.`
+  }
 
   if (variant === 'alreadySent') {
     return `${subject}의 프로그램 참여 반려를 취소하시겠습니까?\n취소 시 담당 교사에게 반려 취소 알림이 새롭게 발송됩니다.\n또한, 해당 기관은 자동으로 ${pendingApproval}됩니다.`

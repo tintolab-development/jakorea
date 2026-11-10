@@ -80,10 +80,10 @@ describe('satisfaction-binding-contract', () => {
 
   it('builds the register-modal example from the selected window days', () => {
     expect(formatSatisfactionWindowExampleLine(3)).toBe(
-      '예) 1회차 11.12(목) 12:00 종료 → 11.15(일) 23:59 마감'
+      '(ex. 1회차 11.12(목) 12:00 종료 → 11.15(일) 23:59 마감)'
     )
     expect(formatSatisfactionWindowExampleLine(7)).toBe(
-      '예) 1회차 11.12(목) 12:00 종료 → 11.19(목) 23:59 마감'
+      '(ex. 1회차 11.12(목) 12:00 종료 → 11.19(목) 23:59 마감)'
     )
   })
 

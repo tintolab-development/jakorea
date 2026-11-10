@@ -30,7 +30,7 @@ import { GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT } from '@/features/program
 import { syncInstitutionApplicationPreferredEducationFormFromOverlay } from '@/features/program/general/lib/institution-application-program-bridge'
 import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import {
-  resolveProgramRegistrationCurriculumEditDescription,
+  resolveProgramRegistrationCurriculumRegistrationDescription,
   resolveProgramRegistrationScheduleCurriculumEditDescription,
 } from '@/features/template/lib/program-registration-curriculum-description'
 import { buildProgramRegistrationParagraphBodyOptions } from '@/features/template/ui/form-set/registration-form/general/paragraph-config'
@@ -220,8 +220,20 @@ function getDefaultEducationScheduleMode(
   return variant === 'economy' ? 'period' : 'date'
 }
 
+/** 이전 FE 기본값(상세 수정 안내와 동일) — 임시저장본·템플릿에 남아 있으면 등록 시안 문구로 바꾼다 */
 const GENERAL_BASIC_INFO_LOCK_NOTICE =
   PROGRAM_REGISTRATION_GENERAL_SECTION_META.basicInfo.editDescription
+
+const GENERAL_BASIC_INFO_REGISTRATION_DESCRIPTION =
+  PROGRAM_REGISTRATION_GENERAL_SECTION_META.basicInfo.registrationDescription
+
+/** 커리큘럼형 카드 설명 — 이전 기본값(마침표 없음) → 등록 시안 문구 */
+const GENERAL_CURRICULUM_REGISTRATION_DESCRIPTION_BY_LEGACY: Readonly<Record<string, string>> = {
+  [PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationCurriculum.editDescription]:
+    PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationCurriculum.registrationDescription,
+  [PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationCurriculum.editDescriptionMultiRound]:
+    PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationCurriculum.registrationDescriptionMultiRound,
+}
 
 const GENERAL_EDUCATION_SCHEDULE_REGISTRATION_DESCRIPTION =
   PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationScheduleSettings.registrationDescription
@@ -231,18 +243,30 @@ const GENERAL_EDUCATION_SCHEDULE_DETAIL_EDIT_NOTICE =
 
 function withRegistrationBasicInfoDescriptionForVariant(
   draft: WritingFormDraft,
-  variant: ProgramRegistrationFormVariant
+  variant: ProgramRegistrationFormVariant,
+  registrationWizard: boolean
 ): WritingFormDraft {
   let changed = false
   const paragraphs = draft.paragraphs.map(paragraph => {
     if (paragraph.id !== PROGRAM_REGISTRATION_IDS.basicInfo) return paragraph
     const current = paragraph.paragraphDescription.trim()
     if (variant === 'general') {
+      // 등록 위저드: 시안 문구(빈 값·이전 기본값 치환). 그 외(상세 수정 등): 기존 기본값 유지
+      if (registrationWizard) {
+        if (current !== '' && current !== GENERAL_BASIC_INFO_LOCK_NOTICE) return paragraph
+        changed = true
+        return { ...paragraph, paragraphDescription: GENERAL_BASIC_INFO_REGISTRATION_DESCRIPTION }
+      }
       if (current !== '') return paragraph
       changed = true
       return { ...paragraph, paragraphDescription: GENERAL_BASIC_INFO_LOCK_NOTICE }
     }
-    if (current !== GENERAL_BASIC_INFO_LOCK_NOTICE) return paragraph
+    if (
+      current !== GENERAL_BASIC_INFO_LOCK_NOTICE &&
+      current !== GENERAL_BASIC_INFO_REGISTRATION_DESCRIPTION
+    ) {
+      return paragraph
+    }
     changed = true
     return { ...paragraph, paragraphDescription: '' }
   })
@@ -271,9 +295,30 @@ function withRegistrationEducationScheduleSettingsDescriptionForVariant(
   return changed ? { ...draft, paragraphs } : draft
 }
 
+function withRegistrationCurriculumDescriptionForVariant(
+  draft: WritingFormDraft,
+  variant: ProgramRegistrationFormVariant,
+  registrationWizard: boolean
+): WritingFormDraft {
+  if (variant !== 'general' || !registrationWizard) return draft
+  let changed = false
+  const paragraphs = draft.paragraphs.map(paragraph => {
+    if (paragraph.id !== PROGRAM_REGISTRATION_IDS.educationCurriculum) return paragraph
+    const next = GENERAL_CURRICULUM_REGISTRATION_DESCRIPTION_BY_LEGACY[
+      paragraph.paragraphDescription.trim()
+    ]
+    if (next == null) return paragraph
+    changed = true
+    return { ...paragraph, paragraphDescription: next }
+  })
+  return changed ? { ...draft, paragraphs } : draft
+}
+
 function filterProgramRegistrationDraftForVariant(
   draft: WritingFormDraft,
-  variant: ProgramRegistrationFormVariant
+  variant: ProgramRegistrationFormVariant,
+  /** 프로그램 등록 위저드(`registrationWizardProgramType`) — 일반 등록 시안 카드 설명 적용 */
+  registrationWizard = false
 ): WritingFormDraft {
   const filtered =
     variant !== 'trainedTeachers'
@@ -284,8 +329,16 @@ function filterProgramRegistrationDraftForVariant(
             paragraph => paragraph.id !== PROGRAM_REGISTRATION_IDS.businessKpi
           ),
         }
-  const withBasicInfo = withRegistrationBasicInfoDescriptionForVariant(filtered, variant)
-  return withRegistrationEducationScheduleSettingsDescriptionForVariant(withBasicInfo, variant)
+  const withBasicInfo = withRegistrationBasicInfoDescriptionForVariant(
+    filtered,
+    variant,
+    registrationWizard
+  )
+  const withSchedule = withRegistrationEducationScheduleSettingsDescriptionForVariant(
+    withBasicInfo,
+    variant
+  )
+  return withRegistrationCurriculumDescriptionForVariant(withSchedule, variant, registrationWizard)
 }
 
 /** 시드 단락 타이틀 필수(*) — 필드 라벨이 아니라 단락 제목 (`answerRequired`) */
@@ -764,7 +817,8 @@ export function useProgramRegistrationEditor(
     resetProgramRegistrationOverlay()
     const seeded = filterProgramRegistrationDraftForVariant(
       normalizeWritingFormDraft(createProgramRegistrationDraft(programRegistrationFormVariant)),
-      programRegistrationFormVariant
+      programRegistrationFormVariant,
+      usesRegistrationWizardDraft
     )
     const next =
       programRegistrationFormVariant === 'economy'
@@ -794,7 +848,12 @@ export function useProgramRegistrationEditor(
         )
       }
     })
-  }, [applyEditorStateSnapshot, programRegistrationFormVariant, seedParagraphIds])
+  }, [
+    applyEditorStateSnapshot,
+    programRegistrationFormVariant,
+    seedParagraphIds,
+    usesRegistrationWizardDraft,
+  ])
 
   // hydrate는 active·복원 옵션·유형이 바뀔 때만. 콜백/Set identity 변경으로
   // overlay를 통째로 reset 하면 다른 단락 입력이 사라진다.
@@ -846,7 +905,8 @@ export function useProgramRegistrationEditor(
             replaceProgramRegistrationOverlay(saved.overlay ?? {})
             const normalizedBase = filterProgramRegistrationDraftForVariant(
               normalizeWritingFormDraft(saved.draft),
-              variant
+              variant,
+              usesRegistrationWizardDraft
             )
             const normalized =
               variant === 'economy'
@@ -1317,7 +1377,7 @@ export function useProgramRegistrationEditor(
                   participationScheduleDetail,
                   ipsScheduleDetail,
                 })
-              : resolveProgramRegistrationCurriculumEditDescription(value),
+              : resolveProgramRegistrationCurriculumRegistrationDescription(value),
         })
       )
     },
@@ -1451,7 +1511,7 @@ export function useProgramRegistrationEditor(
                   ipsScheduleDetail,
                 })
               : programRegistrationFormVariant === 'general'
-                ? resolveProgramRegistrationCurriculumEditDescription(sessionRoundType)
+                ? resolveProgramRegistrationCurriculumRegistrationDescription(sessionRoundType)
                 : '차시 별 정보를 입력해 주세요',
         })
       )
@@ -2019,7 +2079,7 @@ export function useProgramRegistrationEditor(
                   ipsScheduleDetail: typeSettings.ipsScheduleDetail,
                 })
               : programRegistrationFormVariant === 'general'
-                ? resolveProgramRegistrationCurriculumEditDescription(typeSettings.sessionRoundType)
+                ? resolveProgramRegistrationCurriculumRegistrationDescription(typeSettings.sessionRoundType)
                 : '차시 별 정보를 입력해 주세요',
         })
       )
@@ -2659,7 +2719,10 @@ export function useProgramRegistrationEditor(
     if (rhf != null) {
       return listIncompleteRegistrationWizardRequiredFields(rhf.getValues(), ctx)
     }
-    return listIncompleteGeneralProgramRegistrationRequiredFields(overlay, ctx)
+    return listIncompleteGeneralProgramRegistrationRequiredFields(overlay, {
+      ...ctx,
+      requireBasicInfoRadioSelection: usesRegistrationWizardDraft,
+    })
   }, [
     curriculumChartSessionCount,
     curriculumSessionCount,
@@ -2679,6 +2742,7 @@ export function useProgramRegistrationEditor(
     sponsorContactId,
     sponsorId,
     trainedTeachersTeacherTrainingEnabled,
+    usesRegistrationWizardDraft,
   ])
 
   const hasCurriculumMultiDateScheduleCountMismatchOnDraft = useCallback(() => {

@@ -14,8 +14,9 @@ export type GeneralVolunteerDocumentApproveModalProps = {
 }
 
 export function buildGeneralVolunteerDocumentApproveMessage(volunteerName: string): string {
-  const subject = formatModalBracketedSubjectName(volunteerName, '봉사자')
-  return `${subject} 봉사자의 1차 서류 합격을 승인하시겠습니까?\n승인 시 봉사자에게 합격 알림이 발송됩니다.`
+  const subject = formatModalBracketedSubjectName(volunteerName, '회원')
+  // 시안 05-1(9756:69442)
+  return `${subject} 님의 1차 서류를 승인하시겠습니까?\n승인 시 회원에게 승인 알림이 발송됩니다.`
 }
 
 export function GeneralVolunteerDocumentApproveModal({
@@ -30,7 +31,7 @@ export function GeneralVolunteerDocumentApproveModal({
       open={open}
       variant="approve"
       className="general-volunteer-document-approve-modal"
-      title="봉사자 1차 승인 안내"
+      title="1차 서류 승인 안내"
       message={buildGeneralVolunteerDocumentApproveMessage(volunteerName)}
       confirmLabel="승인"
       onCancel={onCancel}

@@ -118,7 +118,7 @@ export function PreviewModal({
               </DetailInfoForm.Row>
               <DetailInfoForm.Row type="single">
                 <DetailInfoForm.Field
-                  label="메세지 유형"
+                  label="메시지 유형"
                   view={ALIMTALK_MESSAGE_TYPE_LABEL[resolved.messageType]}
                 />
               </DetailInfoForm.Row>
@@ -130,7 +130,7 @@ export function PreviewModal({
               </DetailInfoForm.Row>
             </DetailInfoForm>
             <p className="alimtalk-template-preview__hint">
-              템플릿의 수정은{' '}
+              템플릿의 수정 및 삭제는{' '}
               <a
                 className="alimtalk-template-preview__link"
                 href={resolveNhnConsoleUrl(resolved)}
@@ -144,18 +144,18 @@ export function PreviewModal({
               알림톡 수정 시에는 카카오톡 재심사가 필요합니다.
             </p>
             <div className="alimtalk-template-preview__actions-wrap">
-              <div className="content-modal__footer-actions alimtalk-template-preview__actions">
-                <CmsButton variant="secondary" size="large" type="button" onClick={onClose}>
+              <div className="alimtalk-template-preview__actions">
+                <CmsButton variant="default" size="medium" type="button" onClick={onClose}>
                   닫기
                 </CmsButton>
                 <CmsButton
                   variant="primary"
-                  size="large"
+                  size="medium"
                   type="button"
                   onClick={handleUse}
                   disabled={Boolean(onUse) && !canApply}
                   aria-describedby={unusableReasonId} >
-                  템플릿 사용
+                  사용하기
                 </CmsButton>
               </div>
               {unusableReason ? (
@@ -169,32 +169,36 @@ export function PreviewModal({
               ) : null}
             </div>
           </div>
-          <AlimtalkPhonePreview
-            senderName={
-              resolved.senderProfile && resolved.senderProfile !== '-'
-                ? resolved.senderProfile
-                : 'JA KOREA'
-            }
-            content={resolved.content ?? ''}
-            extraContent={resolved.extraInfo}
-            channelGuide={ALIMTALK_CHANNEL_ADD_GUIDE}
-            messageType={resolved.messageType}
-            emphasisType={resolved.emphasisType}
-            emphasisTitle={resolved.emphasisTitle}
-            emphasisSubtitle={resolved.emphasisSubtitle}
-            imageUrl={resolved.imageUrl}
-            templateHeader={resolved.templateHeader}
-            itemTitle={resolved.itemTitle}
-            itemDescription={resolved.itemDescription}
-            itemImageUrl={resolved.itemImageUrl}
-            itemList={resolved.itemList}
-            itemSummary={resolved.itemSummary}
-            buttons={resolved.buttons.slice(0, 5).map(button => ({
-              variant: button.variant,
-              label: button.name === 'test sample' ? '버튼명' : button.name,
-            }))}
-            quickLinks={resolved.quickLinks.map(link => link.name)}
-          />
+          <div className="alimtalk-template-preview__phone">
+            <div className="alimtalk-template-preview__phone-fit">
+              <AlimtalkPhonePreview
+                senderName={
+                  resolved.senderProfile && resolved.senderProfile !== '-'
+                    ? resolved.senderProfile
+                    : 'JA KOREA'
+                }
+                content={resolved.content ?? ''}
+                extraContent={resolved.extraInfo}
+                channelGuide={ALIMTALK_CHANNEL_ADD_GUIDE}
+                messageType={resolved.messageType}
+                emphasisType={resolved.emphasisType}
+                emphasisTitle={resolved.emphasisTitle}
+                emphasisSubtitle={resolved.emphasisSubtitle}
+                imageUrl={resolved.imageUrl}
+                templateHeader={resolved.templateHeader}
+                itemTitle={resolved.itemTitle}
+                itemDescription={resolved.itemDescription}
+                itemImageUrl={resolved.itemImageUrl}
+                itemList={resolved.itemList}
+                itemSummary={resolved.itemSummary}
+                buttons={resolved.buttons.slice(0, 5).map(button => ({
+                  variant: button.variant,
+                  label: button.name === 'test sample' ? '버튼명' : button.name,
+                }))}
+                quickLinks={resolved.quickLinks.map(link => link.name)}
+              />
+            </div>
+          </div>
         </div>
       ) : null}
     </ContentModal>

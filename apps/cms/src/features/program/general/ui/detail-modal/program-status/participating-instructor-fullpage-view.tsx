@@ -84,7 +84,10 @@ import {
   createInstructorAssignmentRemote,
   putRepresentativeInstructorRemote,
 } from '@/features/program/general/api/instructor-assignments-api-client'
-import { toInstructorAssignmentCancelRequest } from '@/features/program/general/lib/instructor-cancel-fault-party'
+import {
+  toInstitutionDetailAssignmentCancelRequest,
+  toInstructorAssignmentCancelRequest,
+} from '@/features/program/general/lib/instructor-cancel-fault-party'
 import { formatInstructorOrganizationScheduleScopeMessage } from '@/features/program/shared/lib/instructor-organization-schedule-scope'
 import { mapParticipatingSessionsToInstructorAssignOptions } from '@/features/program/general/lib/instructor-assign-session-options'
 import {
@@ -98,13 +101,28 @@ import {
 } from '@/features/program/general/lib/participating-institutions-table'
 import { SchoolDetailUnassignCompleteModal } from './school-detail-unassign-complete-modal'
 import { SchoolDetailUnassignConfirmModal } from './school-detail-unassign-confirm-modal'
+import { InstitutionUnassignConfirmModal } from './institution-unassign-confirm-modal'
+import {
+  ASSIGNED_INSTITUTIONS_EMPTY_COPY,
+  AssignmentListEmpty,
+  WAITING_INSTITUTIONS_EMPTY_COPY,
+} from './assignment-list-empty'
 import { AssignGuideModal } from './assign-guide-modal'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import { toScheduledOnlyNotifyTiming } from '@/features/program/general/lib/application-decision-notify-timing'
 import {
+  INSTITUTION_SELECT_ASSIGN_DEFAULT_NOTIFY_PAYLOAD,
   countAssignedInstructorsForOrganization,
+  formatAssignedInstructorCountLine,
   resolveRequiredAssignableInstructorCount,
 } from '@/features/program/general/lib/institution-select-assign'
+import { InstitutionSelectAssignConfirmModal } from './institution-select-assign-confirm-modal'
+import { InstitutionAssignCompleteModal } from './institution-assign-complete-modal'
+import {
+  CertificateBulkIssueReasonModal,
+  type CertificateIssueReasonValue,
+} from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
+import { ACTIVITY_CERTIFICATE_DOCUMENT_TITLE } from '@/features/program/general/lib/build-activity-certificate-issuance-preview'
 import { ParticipatingInstructorApplicationInfo } from './participating-instructor-application-info'
 import { useParticipatingInstructorDetailEdit } from '@/features/program/general/hooks/use-participating-instructor-detail-edit'
 import { getParticipatingInstructorActivityWithdrawScheduleOptions } from '@/features/program/general/lib/participating-instructor-activity-withdraw'
@@ -124,6 +142,12 @@ import './participating-institutions-section.css'
 import './school-detail-fullpage-view.css'
 import './participating-instructor-fullpage-view.css'
 import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
+
+/**
+ * 기관형 배정 취소 — 선택 배정의 알림 발송 여부. 배정 목록 응답에 발송 여부가 없어 판단 불가(undefined)
+ * → 발송 후 시안(06-2: 사유·알림)으로 연다. 응답에 필드가 생기면 행 단위로 채운다.
+ */
+const INSTRUCTOR_UNASSIGN_NOTIFICATION_SENT: boolean | undefined = undefined
 
 function sessionOptionId(session: ParticipatingSchoolSession): string {
   return `session-${session.round}-${session.date}-${session.timeRange}`
@@ -293,6 +317,20 @@ export function ParticipatingInstructorFullpageView({
   const [assignGuideSubmitting, setAssignGuideSubmitting] = useState(false)
   const assignGuideInFlightRef = useRef(false)
   const [activityCertPreviewOpen, setActivityCertPreviewOpen] = useState(false)
+  /** 기관형 — 활동인증서 발급 사유(Figma 06-1/02) */
+  const [activityCertReasonOpen, setActivityCertReasonOpen] = useState(false)
+  const [activityCertReasonLabel, setActivityCertReasonLabel] = useState<string | undefined>()
+  /**
+   * 기관형 [선택 배정] — Figma 04-1/05-1 확인 → 선택 기관 전부 배정 → 04-2/05-2 완료.
+   * 1사1교는 기존 `AssignGuideModal(select)` 흐름 유지.
+   */
+  const [bulkSelectAssign, setBulkSelectAssign] = useState<{
+    step: 'confirm' | 'submitting' | 'complete'
+    institutionName: string
+    extraTargetCount: number
+    currentCount: number | null
+    waitingRowIds: string[]
+  } | null>(null)
   const [savedAdminComment, setSavedAdminComment] = useState('')
   const [adminCommentModalOpen, setAdminCommentModalOpen] = useState(false)
   const [adminCommentDraft, setAdminCommentDraft] = useState('')
@@ -320,6 +358,8 @@ export function ParticipatingInstructorFullpageView({
 
   const isIndividualProgram = isGeneralIndividualProgram(program)
   const isCompanySchool = isCompanySchoolSurface || isCompanySchoolProgram(program)
+  /** 일반 프로그램 기관형(개인형·1사1교 제외) — Figma 기관형 전용 흐름 분기 */
+  const isInstitutionProgram = !isIndividualProgram && !isCompanySchool
 
   const isActivityWithdrawn = mergedInstructor.activityWithdrawn === true
 
@@ -769,6 +809,27 @@ export function ParticipatingInstructorFullpageView({
     if (!movable) {
       return
     }
+    if (isInstitutionProgram) {
+      const targetRows = waitingSchools.filter(
+        w => selectedWaitingSchoolKeys.includes(w.id) && w.assignmentStatus === 'waiting'
+      )
+      const targetSchools = mergeInstitutionWaitingRowsBySchool(targetRows)
+      const first = targetSchools[0]
+      if (!first) return
+      setBulkSelectAssign({
+        step: 'confirm',
+        institutionName: first.schoolName,
+        extraTargetCount: Math.max(0, targetSchools.length - 1),
+        currentCount: countAssignedInstructorsForOrganization({
+          assignments: institutionAssignment.assignments,
+          boardLoaded: institutionAssignment.boardLoaded,
+          organizationApplicationId: first.organizationApplicationId,
+          organizationName: first.schoolName,
+        }),
+        waitingRowIds: targetRows.map(row => row.id),
+      })
+      return
+    }
     const firstSelected = waitingSchools.find(
       w => selectedWaitingSchoolKeys.includes(w.id) && w.assignmentStatus === 'waiting'
     )
@@ -776,20 +837,37 @@ export function ParticipatingInstructorFullpageView({
     setAssignGuideSchoolId(firstSelected?.schoolId ?? firstSelected?.id ?? null)
     setAssignGuideRole(assignedSchools.some(row => row.role === 'lead') ? 'assistant' : 'lead')
     setAssignGuideSessionIds([])
-  }, [selectedWaitingSchoolKeys, waitingSchools, assignedSchools, showAlert])
+  }, [
+    selectedWaitingSchoolKeys,
+    waitingSchools,
+    assignedSchools,
+    showAlert,
+    isInstitutionProgram,
+    institutionAssignment.assignments,
+    institutionAssignment.boardLoaded,
+  ])
 
   const handleUnassignConfirm = useCallback(
     async (payload: PermissionModalPayload) => {
       if (selectedAssignedSchoolKeys.length === 0) return
-      if (payload.faultParty !== 'USER' && payload.faultParty !== 'ADMIN') return
+      // 기관형(Figma 06-1·06-2)은 취소 귀책을 받지 않는다(API 선택값 — 생략 시 서버 ADMIN)
+      if (
+        !isInstitutionProgram &&
+        payload.faultParty !== 'USER' &&
+        payload.faultParty !== 'ADMIN'
+      ) {
+        return
+      }
       const selectedRows = assignedSchools.filter(r => selectedAssignedSchoolKeys.includes(r.id))
       const removedSchoolNames = selectedRows.map(r => r.schoolName)
-      const cancelBody = toInstructorAssignmentCancelRequest({
-        reason: payload.reason,
-        notifyTiming: payload.notifyTiming,
-        manualNotifyAt: payload.manualNotifyAt,
-        faultParty: payload.faultParty,
-      })
+      const cancelBody = isInstitutionProgram
+        ? toInstitutionDetailAssignmentCancelRequest(payload, INSTRUCTOR_UNASSIGN_NOTIFICATION_SENT)
+        : toInstructorAssignmentCancelRequest({
+            reason: payload.reason,
+            notifyTiming: payload.notifyTiming,
+            manualNotifyAt: payload.manualNotifyAt,
+            faultParty: payload.faultParty as 'USER' | 'ADMIN',
+          })
 
       if (institutionAssignment.remoteEnabled) {
         try {
@@ -807,11 +885,15 @@ export function ParticipatingInstructorFullpageView({
           await institutionAssignment.invalidate()
           setUnassignConfirmOpen(false)
           setSelectedAssignedSchoolKeys([])
-          setUnassignCompleteModal({
-            instructorNames: [mergedInstructor.instructorName],
-            targetNames: removedSchoolNames,
-            reason: payload.reason,
-          })
+          if (isInstitutionProgram) {
+            showAlert({ title: '취소 완료', content: '취소되었습니다.' })
+          } else {
+            setUnassignCompleteModal({
+              instructorNames: [mergedInstructor.instructorName],
+              targetNames: removedSchoolNames,
+              reason: payload.reason,
+            })
+          }
         } catch (error) {
           const message =
             error instanceof Error && error.message.trim()
@@ -831,6 +913,7 @@ export function ParticipatingInstructorFullpageView({
       assignedSchools,
       institutionAssignment,
       instructorList,
+      isInstitutionProgram,
       mergedInstructor,
       mergedInstructor.instructorName,
       schoolRows,
@@ -839,6 +922,150 @@ export function ParticipatingInstructorFullpageView({
       waitingSchools,
     ]
   )
+
+  /** 기관형 [선택 배정] 확인 — 선택한 배정 대기 기관(일정 행) 전부를 기관 단위로 배정 */
+  const handleBulkSelectAssignConfirm = useCallback(async () => {
+    const current = bulkSelectAssign
+    if (!current || current.step !== 'confirm') return
+    if (assignGuideInFlightRef.current) return
+
+    if (!programHasActiveInstructorRecruitment(program)) {
+      showAlert({
+        title: '배정 실패',
+        content: GENERAL_INSTRUCTOR_ASSIGNMENT_REQUIRES_RECRUITMENT_MESSAGE,
+      })
+      return
+    }
+
+    const memberId = Number(mergedInstructor.memberId)
+    if (!Number.isFinite(memberId) || memberId <= 0) {
+      showAlert({ title: '안내', content: '강사 memberId가 없어 배정할 수 없습니다.' })
+      return
+    }
+
+    if (!institutionAssignment.remoteEnabled) {
+      notifyProgramApiUnavailable(
+        'general-participating-instructor-assign',
+        '일반 프로그램 · 참여 강사 기관 배정'
+      )
+      return
+    }
+
+    const rowsToProcess = mergeInstitutionWaitingRowsBySchool(
+      waitingSchools.filter(
+        w => current.waitingRowIds.includes(w.id) && w.assignmentStatus === 'waiting'
+      )
+    )
+    if (rowsToProcess.length === 0) {
+      setBulkSelectAssign(null)
+      return
+    }
+
+    const noScheduleMessage = (schoolName: string) =>
+      `${schoolName} — 배정 가능한 교육 일정이 없습니다. 기관의 교육 일정 확정 후 다시 시도해 주세요.`
+
+    assignGuideInFlightRef.current = true
+    setBulkSelectAssign({ ...current, step: 'submitting' })
+    try {
+      const assignmentNotify = toScheduledOnlyNotifyTiming(
+        INSTITUTION_SELECT_ASSIGN_DEFAULT_NOTIFY_PAYLOAD.notifyTiming,
+        INSTITUTION_SELECT_ASSIGN_DEFAULT_NOTIFY_PAYLOAD.manualNotifyAt
+      )
+      let leadAssigned = assignedSchools.some(row => row.role === 'lead')
+
+      for (const waitingRow of rowsToProcess) {
+        const orgAppId = Number(waitingRow.organizationApplicationId)
+        if (!Number.isFinite(orgAppId) || orgAppId <= 0) {
+          showAlert({
+            title: '안내',
+            content: `${waitingRow.schoolName} 기관의 organizationApplicationId가 없어 배정할 수 없습니다.`,
+          })
+          setBulkSelectAssign({ ...current, step: 'confirm' })
+          return
+        }
+        if (!hasAssignableOrganizationInstructorSchedule(waitingRow.sessions)) {
+          showAlert({ title: '안내', content: noScheduleMessage(waitingRow.schoolName) })
+          setBulkSelectAssign({ ...current, step: 'confirm' })
+          return
+        }
+        // 선택한 일정 행의 회차 전부 — 기관 단위로 합친 행의 모든 회차를 배정한다.
+        const allSessionKeys = new Set((waitingRow.sessions ?? []).map(sessionOptionId))
+        const targetSessions = listAssignableSessionsForWaitingRow(waitingRow, allSessionKeys)
+        if (targetSessions.length === 0) {
+          showAlert({ title: '안내', content: noScheduleMessage(waitingRow.schoolName) })
+          setBulkSelectAssign({ ...current, step: 'confirm' })
+          return
+        }
+
+        for (const session of targetSessions) {
+          const schedulePayload = resolveAssignableSchedulePayloadFromSession(session)
+          if (!schedulePayload) {
+            showAlert({ title: '안내', content: noScheduleMessage(waitingRow.schoolName) })
+            setBulkSelectAssign({ ...current, step: 'confirm' })
+            return
+          }
+          await createInstructorAssignmentRemote(program.id, {
+            instructorMemberId: memberId,
+            ...schedulePayload,
+            organizationApplicationId: orgAppId,
+            instructorApplicationId: waitingRow.instructorApplicationId
+              ? Number(waitingRow.instructorApplicationId)
+              : mergedInstructor.instructorApplicationId
+                ? Number(mergedInstructor.instructorApplicationId)
+                : undefined,
+            // 기존 선택 배정과 동일: 대표 강사가 없으면 첫 회차만 대표로 지정
+            scheduleLead: !leadAssigned,
+            ...assignmentNotify,
+          })
+          leadAssigned = true
+        }
+      }
+
+      await institutionAssignment.invalidate()
+      await queryClient.invalidateQueries({
+        queryKey: generalProgramProgressQueryKeys.instructors(program.id),
+      })
+      await queryClient.invalidateQueries({
+        queryKey: generalApplicationsQueryKeys.instructorList(program.id),
+      })
+      if (hasInstructorApplicationId && instructorApplicationId) {
+        await queryClient.invalidateQueries({
+          queryKey: generalApplicationsQueryKeys.instructorDetail(instructorApplicationId),
+        })
+      }
+      setSelectedWaitingSchoolKeys([])
+      setBulkSelectAssign({ ...current, step: 'complete' })
+    } catch (error) {
+      const scopeMessage = formatInstructorOrganizationScheduleScopeMessage(error)
+      if (scopeMessage) {
+        await institutionAssignment.invalidate()
+        showAlert({ title: '배정 실패', content: scopeMessage })
+      } else {
+        showAlert({
+          title: '배정 실패',
+          content: getGeneralProgramApiErrorMessage(
+            error,
+            '배정에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+          ),
+        })
+      }
+      setBulkSelectAssign({ ...current, step: 'confirm' })
+    } finally {
+      assignGuideInFlightRef.current = false
+    }
+  }, [
+    assignedSchools,
+    bulkSelectAssign,
+    hasInstructorApplicationId,
+    institutionAssignment,
+    instructorApplicationId,
+    mergedInstructor.instructorApplicationId,
+    mergedInstructor.memberId,
+    program,
+    queryClient,
+    showAlert,
+    waitingSchools,
+  ])
 
   const closeAssignGuideModal = useCallback(() => {
     setAssignGuideMode(null)
@@ -1118,8 +1345,21 @@ export function ParticipatingInstructorFullpageView({
   const qualificationCount = mergedInstructor.qualifications?.length ?? 0
 
   const handleActivityCertificateIssueClick = useCallback(() => {
+    if (isInstitutionProgram) {
+      setActivityCertReasonLabel(undefined)
+      setActivityCertReasonOpen(true)
+      return
+    }
     setActivityCertPreviewOpen(true)
-  }, [])
+  }, [isInstitutionProgram])
+
+  const handleActivityCertReasonIssue = useCallback(
+    (_reason: CertificateIssueReasonValue, reasonLabel: string) => {
+      setActivityCertReasonLabel(reasonLabel)
+      setActivityCertPreviewOpen(true)
+    },
+    []
+  )
 
   const handleRequestActivityWithdraw = useCallback(() => {
     if (isActivityWithdrawn) {
@@ -1494,10 +1734,18 @@ export function ParticipatingInstructorFullpageView({
                 <div className="table-header-actions">
                   <div className="table-header-title--wrapper">
                     <span className="table-title">배정된 기관 목록</span>
-                    <span className="table-description">{assignedSchools.length}건</span>
+                    <span className="table-description">
+                      {isInstitutionProgram ? '총 ' : ''}
+                      {assignedSchools.length}건
+                    </span>
                   </div>
                   <div className="info-section-buttons--wrapper">
-                    <CmsButton variant="delete" size="h40" onClick={handleUnassignClick}>
+                    <CmsButton
+                      variant="delete"
+                      size="h40"
+                      disabled={isInstitutionProgram && assignedSchools.length === 0}
+                      onClick={handleUnassignClick}
+                    >
                       배정 취소
                     </CmsButton>
                     <CmsButton
@@ -1526,7 +1774,9 @@ export function ParticipatingInstructorFullpageView({
                   </div>
                 </div>
                 <div className="participating-institutions-section__table-wrap school-detail-fullpage-view__assignment-table-scroll">
-                  {assignedSchools.length === 0 ? (
+                  {assignedSchools.length === 0 && isInstitutionProgram ? (
+                    <AssignmentListEmpty {...ASSIGNED_INSTITUTIONS_EMPTY_COPY} />
+                  ) : assignedSchools.length === 0 ? (
                     <div
                       className="school-detail-fullpage-view__instructor-list-empty"
                       role="status"
@@ -1557,10 +1807,18 @@ export function ParticipatingInstructorFullpageView({
                 <div className="table-header-actions">
                   <div className="table-header-title--wrapper">
                     <span className="table-title">배정 대기 기관 목록</span>
-                    <span className="table-description">{waitingSchools.length}건</span>
+                    <span className="table-description">
+                      {isInstitutionProgram ? '총 ' : ''}
+                      {waitingSchools.length}건
+                    </span>
                   </div>
                   <div className="info-section-buttons--wrapper">
-                    <CmsButton variant="secondary" size="h40" onClick={handleSelectAssignClick}>
+                    <CmsButton
+                      variant="secondary"
+                      size="h40"
+                      disabled={isInstitutionProgram && waitingSchools.length === 0}
+                      onClick={handleSelectAssignClick}
+                    >
                       선택 배정
                     </CmsButton>
                     <ExcelButton
@@ -1569,6 +1827,9 @@ export function ParticipatingInstructorFullpageView({
                   </div>
                 </div>
                 <div className="participating-institutions-section__table-wrap participating-instructor-fullpage-view__waiting-table-scroll">
+                  {waitingSchools.length === 0 && isInstitutionProgram ? (
+                    <AssignmentListEmpty {...WAITING_INSTITUTIONS_EMPTY_COPY} />
+                  ) : (
                   <CmsDataTable<InstructorWaitingSchoolRow>
                     className="participating-institutions-section__table cms-data-table"
                     rowKey="id"
@@ -1596,16 +1857,28 @@ export function ParticipatingInstructorFullpageView({
                         : ''
                     }
                   />
+                  )}
                 </div>
               </div>
 
-              <SchoolDetailUnassignConfirmModal
-                open={unassignConfirmOpen}
-                onCancel={() => setUnassignConfirmOpen(false)}
-                instructorNames={[d.instructorName]}
-                targetNames={unassignSchoolNames}
-                onConfirm={handleUnassignConfirm}
-              />
+              {isInstitutionProgram ? (
+                <InstitutionUnassignConfirmModal
+                  open={unassignConfirmOpen}
+                  onCancel={() => setUnassignConfirmOpen(false)}
+                  targetNames={unassignSchoolNames}
+                  audience="instructor"
+                  notificationSent={INSTRUCTOR_UNASSIGN_NOTIFICATION_SENT}
+                  onConfirm={handleUnassignConfirm}
+                />
+              ) : (
+                <SchoolDetailUnassignConfirmModal
+                  open={unassignConfirmOpen}
+                  onCancel={() => setUnassignConfirmOpen(false)}
+                  instructorNames={[d.instructorName]}
+                  targetNames={unassignSchoolNames}
+                  onConfirm={handleUnassignConfirm}
+                />
+              )}
               <SchoolDetailUnassignCompleteModal
                 open={unassignCompleteModal != null}
                 onClose={() => setUnassignCompleteModal(null)}
@@ -1631,7 +1904,46 @@ export function ParticipatingInstructorFullpageView({
                 onConfirm={handleAssignGuideConfirm}
                 onComplete={closeAssignGuideModal}
                 confirmLoading={assignGuideSubmitting}
+                completeVariant={isInstitutionProgram ? 'result' : 'default'}
               />
+              {isInstitutionProgram ? (
+                <>
+                  <InstitutionSelectAssignConfirmModal
+                    open={
+                      bulkSelectAssign != null &&
+                      (bulkSelectAssign.step === 'confirm' || bulkSelectAssign.step === 'submitting')
+                    }
+                    onCancel={() => {
+                      if (bulkSelectAssign?.step === 'submitting') return
+                      setBulkSelectAssign(null)
+                    }}
+                    onConfirm={() => {
+                      void handleBulkSelectAssignConfirm()
+                    }}
+                    targetNoun="기관"
+                    institutionName={bulkSelectAssign?.institutionName ?? ''}
+                    extraTargetCount={bulkSelectAssign?.extraTargetCount ?? 0}
+                    instructorName={d.instructorName}
+                    currentCount={bulkSelectAssign?.currentCount ?? null}
+                    requiredCount={assignGuideRequiredCount}
+                    confirmLoading={bulkSelectAssign?.step === 'submitting'}
+                  />
+                  <InstitutionAssignCompleteModal
+                    open={bulkSelectAssign?.step === 'complete'}
+                    onClose={() => setBulkSelectAssign(null)}
+                    variant="result"
+                    institutionName={bulkSelectAssign?.institutionName ?? ''}
+                    instructorName={d.instructorName}
+                    extraTargetCount={bulkSelectAssign?.extraTargetCount ?? 0}
+                    countLine={formatAssignedInstructorCountLine(
+                      bulkSelectAssign?.currentCount != null
+                        ? bulkSelectAssign.currentCount + 1
+                        : null,
+                      assignGuideRequiredCount
+                    )}
+                  />
+                </>
+              ) : null}
             </div>
           ))}
         {effectiveTab === 'lectureReports' && (
@@ -1674,7 +1986,17 @@ export function ParticipatingInstructorFullpageView({
         onClose={() => setActivityCertPreviewOpen(false)}
         instructor={mergedInstructor}
         program={program}
+        issuanceReasonLabel={isInstitutionProgram ? activityCertReasonLabel : undefined}
       />
+      {isInstitutionProgram ? (
+        <CertificateBulkIssueReasonModal
+          open={activityCertReasonOpen}
+          onCancel={() => setActivityCertReasonOpen(false)}
+          applicationIds={[mergedInstructor.id]}
+          certificateDocumentLabel={ACTIVITY_CERTIFICATE_DOCUMENT_TITLE}
+          onIssue={handleActivityCertReasonIssue}
+        />
+      ) : null}
       <ParticipatingInstructorActivityWithdrawModal
         open={activityWithdrawModalOpen}
         instructorName={mergedInstructor.instructorName}

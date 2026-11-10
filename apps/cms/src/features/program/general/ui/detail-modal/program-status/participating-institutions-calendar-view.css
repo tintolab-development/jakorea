@@ -55,3 +55,28 @@
   line-height: 0;
   overflow: hidden;
 }
+
+/* 일반 기관형 시안 01-2 — 우측 카드 체크박스·활동 포기 뱃지 */
+.participating-institutions-calendar-day-list__item--selectable {
+  position: relative;
+  padding-right: 56px;
+}
+
+.participating-institutions-calendar-day-list__item--checked {
+  border-color: var(--Primary-main, #00a0b0) !important;
+  box-shadow: 0 0 0 1px var(--Primary-main, #00a0b0);
+}
+
+.participating-institutions-calendar-day-list__check {
+  position: absolute;
+  top: 50%;
+  right: 20px;
+  display: inline-flex;
+  transform: translateY(-50%);
+}
+
+.participating-institutions-calendar-day-list__item--selectable
+  .participating-institutions-calendar-day-list__title {
+  display: flex;
+  align-items: center;
+}

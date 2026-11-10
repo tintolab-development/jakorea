@@ -147,7 +147,12 @@ function ProgramRegistrationBasicInfoTitleFieldsInner({
               <CmsSelect
                 withAllOption={false}
                 inputSize="small"
-                placeholder="세부 프로그램명을 선택해 주세요"
+                // 일반: 시안 문구. 교육받은 교사는 기존 문구 유지
+                placeholder={
+                  trainedTeachersDefaults
+                    ? '세부 프로그램명을 선택해 주세요'
+                    : '상세 프로그램명을 선택해 주세요'
+                }
                 width="100%"
                 options={detailedProgramOptions}
                 value={detailedProgramSelectValue}

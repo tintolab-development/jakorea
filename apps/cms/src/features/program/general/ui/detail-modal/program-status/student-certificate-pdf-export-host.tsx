@@ -35,6 +35,13 @@ export function StudentCertificatePdfExportHost({
   const completedRef = useRef(false)
   const [captureMounted, setCaptureMounted] = useState(false)
   const [pdfSerialNumber, setPdfSerialNumber] = useState<string | undefined>()
+  // 서버 발급일 — PDF 본문 발급일(state)과 파일명 날짜(ref, 캡처 직후 읽음)에 같은 값을 쓴다.
+  const [pdfIssueDate, setPdfIssueDate] = useState<Date | undefined>()
+  const pdfIssueDateRef = useRef<Date | null>(null)
+  const applyIssuedAt = useCallback((issuedAt: Date) => {
+    pdfIssueDateRef.current = issuedAt
+    setPdfIssueDate(issuedAt)
+  }, [])
 
   const runtimeStringValues = useMemo(
     () => buildStudentCertificateInitialStringValues(context),
@@ -50,12 +57,12 @@ export function StudentCertificatePdfExportHost({
   const certificateType = resolveStudentCertificateTemplateKey(context.certificateKind)
   const { pdfExport: certificatePdfExportProps } = useFormCertificatePreviewProps(
     modalState,
-    undefined,
+    pdfIssueDate,
     pdfSerialNumber
   )
 
   const buildPdfFilename = useCallback(
-    () => `${buildStudentCertificateFileName(context)}.pdf`,
+    () => `${buildStudentCertificateFileName(context, pdfIssueDateRef.current)}.pdf`,
     [context]
   )
 
@@ -72,6 +79,8 @@ export function StudentCertificatePdfExportHost({
   useEffect(() => {
     completedRef.current = false
     setPdfSerialNumber(undefined)
+    setPdfIssueDate(undefined)
+    pdfIssueDateRef.current = null
   }, [context.student.id, context.certificateKind, context.issuanceReasonLabel])
 
   useEffect(() => {
@@ -103,6 +112,7 @@ export function StudentCertificatePdfExportHost({
             ...(context.rosterId != null ? { rosterId: context.rosterId } : {}),
           },
           applySerial: setPdfSerialNumber,
+          applyIssuedAt,
           exportRoot: pdfExportCanvasRef.current,
           getExportRoot: () => pdfExportCanvasRef.current,
           downloadPdf,
@@ -124,6 +134,7 @@ export function StudentCertificatePdfExportHost({
       cancelled = true
     }
   }, [
+    applyIssuedAt,
     captureMounted,
     certificateType,
     context.certificateKind,

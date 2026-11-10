@@ -268,7 +268,7 @@ async function continueDraftFromList(page: Page) {
   const createButton = page.getByRole('button', { name: '신규 등록' }).first()
   await expect(createButton).toBeVisible({ timeout: 45_000 })
   await createButton.click()
-  const draftDialog = page.getByRole('dialog').filter({ hasText: '임시저장 이력 안내' })
+  const draftDialog = page.getByRole('dialog').filter({ hasText: '임시 저장 이력 안내' })
   await expect(draftDialog).toBeVisible({ timeout: 20_000 })
   await draftDialog.getByRole('radio', { name: '이어서 작성' }).check()
   await draftDialog.getByRole('button', { name: '이어서 작성' }).click()
@@ -620,7 +620,7 @@ test.describe('CS 추가 검증 — 탭 값 보존·미리보기·임시저장·
     await page.reload()
     const draftDialogAfterReload = page
       .getByRole('dialog')
-      .filter({ hasText: '임시저장 이력 안내' })
+      .filter({ hasText: '임시 저장 이력 안내' })
     if (await draftDialogAfterReload.isVisible({ timeout: 5_000 }).catch(() => false)) {
       await draftDialogAfterReload.getByRole('radio', { name: '이어서 작성' }).check()
       await draftDialogAfterReload.getByRole('button', { name: '이어서 작성' }).click()

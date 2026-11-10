@@ -1,4 +1,4 @@
-import type { IndividualSettlementReviewListItem } from '@/shared/api/generated/dashboard/schemas/individualSettlementReviewListItem'
+import type { IndividualSettlementReviewListItemView } from '@/features/program/general/api/individual-settlement-review-types'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import {
@@ -53,13 +53,13 @@ function sessionScheduleLabel(session: ParticipatingSchoolSession): string {
   return formatCmsScheduleDisplayLabel(raw)
 }
 
-function applicationScheduleLabel(item: IndividualSettlementReviewListItem): string {
+function applicationScheduleLabel(item: IndividualSettlementReviewListItemView): string {
   const name = item.scheduleName?.trim()
   if (name) return formatCmsScheduleDisplayLabel(name) || '-'
   return '-'
 }
 
-function mapApplicationFields(item: IndividualSettlementReviewListItem | undefined): Pick<
+function mapApplicationFields(item: IndividualSettlementReviewListItemView | undefined): Pick<
   IndividualSettlementReviewListRow,
   | 'status'
   | 'statusLabel'
@@ -119,7 +119,7 @@ export function resolveIndividualSettlementReviewRowsForQueryState(input: {
   listReady: boolean
   isError: boolean
   assignedSessions: ReadonlyArray<ParticipatingSchoolSession>
-  applications: ReadonlyArray<IndividualSettlementReviewListItem>
+  applications: ReadonlyArray<IndividualSettlementReviewListItemView>
 }): IndividualSettlementReviewListRow[] {
   if (!input.listReady || input.isError) return []
   return mapIndividualSettlementReviewListRows({
@@ -130,9 +130,9 @@ export function resolveIndividualSettlementReviewRowsForQueryState(input: {
 
 export function mapIndividualSettlementReviewListRows(input: {
   assignedSessions: ReadonlyArray<ParticipatingSchoolSession>
-  applications: ReadonlyArray<IndividualSettlementReviewListItem>
+  applications: ReadonlyArray<IndividualSettlementReviewListItemView>
 }): IndividualSettlementReviewListRow[] {
-  const applicationsByScheduleId = new Map<number, IndividualSettlementReviewListItem>()
+  const applicationsByScheduleId = new Map<number, IndividualSettlementReviewListItemView>()
   for (const item of input.applications) {
     const scheduleId = positiveId(item.programScheduleId)
     if (scheduleId == null) continue

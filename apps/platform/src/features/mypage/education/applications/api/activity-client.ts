@@ -1091,8 +1091,13 @@ export type PortalIndividualScheduleSettlement = {
   transportPreview?: PortalIndividualTransportPreview | null
 }
 
+/** 일정별 정산 신청 유형. 봉사자 경로는 항상 VOLUNTEER */
+export type PortalScheduleSettlementApplicationType = 'INDIVIDUAL' | 'VOLUNTEER'
+
 export type PortalIndividualScheduleList = {
+  /** INDIVIDUAL: program_individual_application.id · VOLUNTEER: program_volunteer_application.id */
   applicationId?: number
+  applicationType?: PortalScheduleSettlementApplicationType
   schedules?: PortalIndividualScheduleSettlement[]
 }
 
@@ -1138,6 +1143,7 @@ export type PortalIndividualSettlementRevision = {
 export type PortalIndividualSettlementDetail = {
   settlementApplicationId?: number
   applicationId?: number
+  applicationType?: PortalScheduleSettlementApplicationType
   scheduleId?: number
   scheduleName?: string
   scheduleStartAt?: string
@@ -1181,14 +1187,7 @@ export type PortalIndividualSettlementResubmitRequest = {
   items: PortalIndividualSettlementItemInput[]
 }
 
-export async function fetchIndividualSettlementSchedules(
-  applicationId: string,
-  signal?: AbortSignal
-): Promise<PortalIndividualScheduleSettlement[]> {
-  const { data } = await axiosClient.get<unknown>(
-    `/api/portal/me/individual-settlements/applications/${applicationId}/schedules`,
-    { signal }
-  )
+function readScheduleSettlementRows(data: unknown): PortalIndividualScheduleSettlement[] {
   const unwrapped = unwrapEnvelope<unknown>(data)
   if (Array.isArray(unwrapped)) return unwrapped as PortalIndividualScheduleSettlement[]
   if (!unwrapped || typeof unwrapped !== 'object') return []
@@ -1198,6 +1197,32 @@ export async function fetchIndividualSettlementSchedules(
     if (Array.isArray(value)) return value as PortalIndividualScheduleSettlement[]
   }
   return []
+}
+
+export async function fetchIndividualSettlementSchedules(
+  applicationId: string,
+  signal?: AbortSignal
+): Promise<PortalIndividualScheduleSettlement[]> {
+  const { data } = await axiosClient.get<unknown>(
+    `/api/portal/me/individual-settlements/applications/${applicationId}/schedules`,
+    { signal }
+  )
+  return readScheduleSettlementRows(data)
+}
+
+/**
+ * GET /api/portal/me/volunteer-settlements/applications/{volunteerApplicationId}/schedules
+ * `volunteerApplicationId` = program_volunteer_application.id. 응답은 개인 정산 일정 조회와 같은 스키마.
+ */
+export async function fetchVolunteerSettlementSchedules(
+  volunteerApplicationId: string,
+  signal?: AbortSignal
+): Promise<PortalIndividualScheduleSettlement[]> {
+  const { data } = await axiosClient.get<unknown>(
+    `/api/portal/me/volunteer-settlements/applications/${volunteerApplicationId}/schedules`,
+    { signal }
+  )
+  return readScheduleSettlementRows(data)
 }
 
 export async function fetchIndividualSettlementDetail(
@@ -1217,6 +1242,18 @@ export async function submitIndividualSettlement(
 ): Promise<PortalIndividualSettlementDetail> {
   const { data } = await axiosClient.post<unknown>(
     `/api/portal/me/individual-settlements/applications/${applicationId}`,
+    body
+  )
+  return unwrapEnvelope<PortalIndividualSettlementDetail>(data)
+}
+
+/** POST /api/portal/me/volunteer-settlements/applications/{volunteerApplicationId} — 봉사자 최초 제출(요청은 개인 정산과 동일) */
+export async function submitVolunteerSettlement(
+  volunteerApplicationId: string,
+  body: PortalIndividualSettlementSubmitRequest
+): Promise<PortalIndividualSettlementDetail> {
+  const { data } = await axiosClient.post<unknown>(
+    `/api/portal/me/volunteer-settlements/applications/${volunteerApplicationId}`,
     body
   )
   return unwrapEnvelope<PortalIndividualSettlementDetail>(data)

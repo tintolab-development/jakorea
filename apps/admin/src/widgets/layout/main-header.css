@@ -1,12 +1,14 @@
 /**
- * 메인 헤더 스타일 — CMS MainHeader 미러
+ * 메인 헤더 스타일 — CMS MainHeader(apps/cms/src/widgets/layout/main-header.css)와 동일하게 유지
  */
 
 .main-header {
   background: var(--main-WT, #fff);
   border-bottom: 1px solid var(--table-line, #e0e0e0);
-  /* 시안 GNB(924:2888): pl 40 / pr 32 */
-  padding: 0 32px 0 40px;
+  /* 시안 GNB(13192:232240): py 7 / pl 40 / pr 32 — CMS와 동일 */
+  padding: 7px 32px 7px 40px;
+  /* CMS 헤더는 content-box — 높이 64 + 상하 7 + 하단 보더 1 = 79 (CMS와 같은 높이·글자 위치) */
+  box-sizing: content-box;
   height: var(--header-height);
   line-height: var(--header-height);
   display: flex;
@@ -19,6 +21,9 @@
   z-index: 99;
   /* 시안: drop-shadow 0 4px 6px rgba(0,0,0,0.04) */
   box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.04);
+  /* CMS 본문 기본값(14px · Pretendard, system-ui)을 그대로 물려받도록 — 알림 배지 줄높이 등 상속값이 CMS와 같아진다 */
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 14px;
 }
 
 .main-header-content {
@@ -96,7 +101,7 @@
 .main-header-user-info {
   display: flex;
   align-items: center;
-  /* 시안 user(924:2897): gap 12 */
+  /* 시안 user: gap 12 */
   gap: var(--spacing-12, 12px);
   height: var(--spacing-32, 32px);
 }
@@ -112,7 +117,7 @@
 
 .main-header-user-divider {
   width: 1px;
-  /* 시안(924:2899): 1×13, #3d3d3d opacity 0.5 */
+  /* 시안: 1×13, #3d3d3d opacity 0.5 */
   height: 13px;
   background: rgba(61, 61, 61, 0.5);
 }
@@ -125,35 +130,15 @@
   margin: 0;
 }
 
-.main-header-avatar {
-  flex-shrink: 0;
-  transition: all 0.2s;
-  width: 32px;
-  height: 32px;
-  aspect-ratio: 1 / 1;
-}
-
-.main-header-avatar-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: 4px;
-  margin-right: 16px;
-}
-
 .main-header-account-trigger svg {
   width: 28px;
   height: 28px;
   aspect-ratio: 1 / 1;
 }
 
-.main-header-avatar:hover {
-  opacity: 1;
-}
-
 .main-header-account-dropdown {
   display: inline-flex;
-  width: 108px;
+  width: 100px;
   height: auto;
   padding: 4px;
   flex-direction: column;
@@ -212,7 +197,7 @@
   align-items: center;
   justify-content: center;
   vertical-align: middle;
-  /* 시안 notice(924:2894): pl10 pr12 py6 · gap 3 · radius 50 · border rgba(1,161,175,0.06) */
+  /* 시안 notice: pl10 pr12 py6 · gap 3 · radius 50 · border rgba(1,161,175,0.06) */
   gap: 3px;
   box-sizing: border-box;
   height: auto;

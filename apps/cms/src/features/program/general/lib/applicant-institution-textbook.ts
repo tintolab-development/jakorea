@@ -11,9 +11,23 @@ import {
 import type { TextbookRow } from '@/features/textbook/model/textbook.types'
 import type { Program } from '@/types/domain'
 import type { TextbookSelectOption } from '@/features/program/general/hooks/use-applicant-institution-detail-edit'
+import { isGeneralOrganizationProgram } from '@/features/program/general/lib/organization-merge-program-type'
+import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 
 /** 미지정(textbook null) 표시 — 개인 신청자와 동일 */
 export const APPLICANT_INSTITUTION_TEXTBOOK_UNDECIDED_LABEL = '해당 없음'
+
+/**
+ * 일반 프로그램(기관형) 기관 신청 상세 — 승인 완료 시 「교재명 | 합반 신청 여부」 행에 교재명 노출.
+ * 시안 06-1(1141:238110)·06-2(1141:240605). 1사1교는 승인 현황 옆 기존 배치를 유지하므로 제외한다.
+ */
+export function shouldShowGeneralOrganizationApplicantTextbookField(
+  program: Pick<Program, 'id' | 'backendProgramType'> | null | undefined,
+  approvalStatus: string | null | undefined
+): boolean {
+  if (isCompanySchoolProgram(program)) return false
+  return isGeneralOrganizationProgram(program) && approvalStatus === 'approved'
+}
 
 /**
  * 기관 신청·참여 기관 교재 셀렉.

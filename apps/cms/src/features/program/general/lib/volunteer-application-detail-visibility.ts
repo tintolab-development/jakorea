@@ -57,13 +57,13 @@ export function volunteerProgramApprovalStatusLabel(row: {
   return APPROVAL_STATUS_LABELS[mapVolunteerProgramApprovalStatus(row)]
 }
 
-/** 신청 상세 헤더 CTA — 면접 없음은 참여 승인/반려, 면접 있음은 1차 서류 */
-export function volunteerApplicationDecisionButtonLabels(interviewEnabled: boolean): {
+/**
+ * 신청 상세 헤더 CTA — 시안(면접 없음 9896:147375 · 면접 있음 3491:112371) 모두 서류 반려/승인.
+ * 면접 없음의 팝업 문구는 강사 신청 목록 프로세스(프로그램 신청 승인 안내)를 그대로 쓴다.
+ */
+export function volunteerApplicationDecisionButtonLabels(_interviewEnabled: boolean): {
   reject: string
   approve: string
 } {
-  if (!interviewEnabled) {
-    return { reject: '참여 반려', approve: '참여 승인' }
-  }
   return { reject: '서류 반려', approve: '서류 승인' }
 }

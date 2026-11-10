@@ -48,7 +48,7 @@ export interface SettlementItemSettingRow {
    * 미설정이면 `iconKey` SVG 아이콘 사용.
    */
   emojiOverride?: string | null
-  /** BE eligiblePayeeTypes — 미설정 시 paymentItemType으로 추론 */
+  /** BE eligiblePayeeTypes — 서버 값만 쓴다. 미설정이면 지급 대상으로 거르지 않는다 */
   eligiblePayeeTypes?: SettlementEligiblePayeeType[]
 }
 

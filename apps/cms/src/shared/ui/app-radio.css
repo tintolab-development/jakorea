@@ -55,25 +55,7 @@
   height: 20px !important;
   box-sizing: border-box;
   border-radius: 50%;
-}
-
-/* antd ::after 는 기본 16px·음수 margin. 커스텀 원 크기와 어긋나면 미선택 테두리가 비뚤어 보임 */
-.app-radio-group--large .ant-radio-wrapper .ant-radio-inner::after,
-.app-radio--large.ant-radio-wrapper .ant-radio-inner::after {
-  width: 10px !important;
-  height: 10px !important;
-  margin-block-start: 0 !important;
-  margin-inline-start: 0 !important;
-  inset-block-start: 50% !important;
-  inset-inline-start: 50% !important;
-  transform: translate(-50%, -50%) scale(0) !important;
-  opacity: 0 !important;
-}
-
-.app-radio-group--large .ant-radio-wrapper .ant-radio-checked .ant-radio-inner::after,
-.app-radio--large.ant-radio-wrapper .ant-radio-checked .ant-radio-inner::after {
-  transform: translate(-50%, -50%) scale(1) !important;
-  opacity: 1 !important;
+  --app-radio-dot-inset: 4px;
 }
 
 /* ----- medium: 원 18px, 본문 14px/125%, 원–텍스트 8px (Figma Radio size=18) ----- */
@@ -105,25 +87,8 @@
   height: 18px !important;
   box-sizing: border-box;
   border-radius: 50%;
-}
-
-.app-radio-group--medium .ant-radio-wrapper .ant-radio-inner::after,
-.app-radio--medium.ant-radio-wrapper .ant-radio-inner::after {
-  /* Figma: 18 − 테두리 2 − 패딩 4×2 = 8 */
-  width: 8px !important;
-  height: 8px !important;
-  margin-block-start: 0 !important;
-  margin-inline-start: 0 !important;
-  inset-block-start: 50% !important;
-  inset-inline-start: 50% !important;
-  transform: translate(-50%, -50%) scale(0) !important;
-  opacity: 0 !important;
-}
-
-.app-radio-group--medium .ant-radio-wrapper .ant-radio-checked .ant-radio-inner::after,
-.app-radio--medium.ant-radio-wrapper .ant-radio-checked .ant-radio-inner::after {
-  transform: translate(-50%, -50%) scale(1) !important;
-  opacity: 1 !important;
+  /* 18 − 테두리 2 − 점 8 = 양옆 4 */
+  --app-radio-dot-inset: 4px;
 }
 
 /* Ant baseline spacer 제거 — flex row에서 항목별 세로 위치 틀어짐 방지 */
@@ -143,6 +108,24 @@
   align-self: center;
   aspect-ratio: 1 / 1;
   top: 0 !important;
+}
+
+/*
+ * 민트 점: antd ::after(음수 margin + scale)는 커스텀 원 크기와 겹치면
+ * 점이 왼쪽으로 빠진다. ::after는 숨기고, 원 배경 + inset box-shadow로 점을 그린다.
+ */
+.app-radio-group .ant-radio-inner::after,
+.app-radio.ant-radio-wrapper .ant-radio-inner::after {
+  content: none !important;
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  transform: none !important;
+  background: none !important;
+  box-shadow: none !important;
 }
 
 /* 미선택 원 — hover 시에도 동일 (호버 효과 없음) */
@@ -170,14 +153,8 @@
 .app-radio--medium.ant-radio-wrapper:not(.ant-radio-wrapper-disabled):hover .ant-radio-checked .ant-radio-inner {
   border-radius: var(--Radius-50, 50px);
   border: 1px solid var(--Brand-500, #00a0af);
-  background: var(--White, #fff);
-}
-
-.app-radio-group--large .ant-radio-wrapper:not(.ant-radio-wrapper-disabled) .ant-radio-checked .ant-radio-inner::after,
-.app-radio-group--medium .ant-radio-wrapper:not(.ant-radio-wrapper-disabled) .ant-radio-checked .ant-radio-inner::after,
-.app-radio--large.ant-radio-wrapper:not(.ant-radio-wrapper-disabled) .ant-radio-checked .ant-radio-inner::after,
-.app-radio--medium.ant-radio-wrapper:not(.ant-radio-wrapper-disabled) .ant-radio-checked .ant-radio-inner::after {
-  background-color: var(--Brand-500, #00a0af);
+  background-color: var(--Brand-500, #00a0af) !important;
+  box-shadow: inset 0 0 0 var(--app-radio-dot-inset, 4px) var(--White, #fff) !important;
 }
 
 /* antd hover·focus 링 제거 */
@@ -192,18 +169,16 @@
 .app-radio-group--medium .ant-radio-wrapper-checked,
 .app-radio--large.ant-radio-wrapper-checked,
 .app-radio--medium.ant-radio-wrapper-checked {
-  overflow: hidden;
+  overflow: visible;
   color: var(--Brand-500, #00a0af) !important;
-  text-overflow: ellipsis;
 }
 
 .app-radio-group--large .ant-radio-wrapper-checked:hover,
 .app-radio-group--medium .ant-radio-wrapper-checked:hover,
 .app-radio--large.ant-radio-wrapper-checked:hover,
 .app-radio--medium.ant-radio-wrapper-checked:hover {
-  overflow: hidden;
+  overflow: visible;
   color: var(--Brand-500, #00a0af) !important;
-  text-overflow: ellipsis;
 }
 /* ----- disabled ----- */
 .app-radio-group--large .ant-radio-wrapper-disabled,
@@ -246,24 +221,8 @@
 .app-radio--large.ant-radio-wrapper-disabled .ant-radio-checked .ant-radio-inner,
 .app-radio--medium.ant-radio-wrapper-disabled .ant-radio-checked .ant-radio-inner {
   border: 1px solid var(--disabled-select-stroke, rgba(34, 64, 75, 0.2));
-  background: var(
-    --disabled-select-bg,
-    linear-gradient(0deg, rgba(34, 64, 75, 0.2) 0%, rgba(34, 64, 75, 0.2) 100%),
-    #fff
-  );
-}
-
-.app-radio-group--large
-  .ant-radio-wrapper-disabled
-  .ant-radio-checked
-  .ant-radio-inner::after,
-.app-radio-group--medium
-  .ant-radio-wrapper-disabled
-  .ant-radio-checked
-  .ant-radio-inner::after,
-.app-radio--large.ant-radio-wrapper-disabled .ant-radio-checked .ant-radio-inner::after,
-.app-radio--medium.ant-radio-wrapper-disabled .ant-radio-checked .ant-radio-inner::after {
-  background-color: var(--disabled-select-stroke, rgba(34, 64, 75, 0.2));
+  background-color: var(--disabled-select-stroke, rgba(34, 64, 75, 0.2)) !important;
+  box-shadow: inset 0 0 0 var(--app-radio-dot-inset, 4px) var(--White, #fff) !important;
 }
 
 /* Ant 기본 span.ant-radio + * { padding-inline: 8px } 제거 — 원·텍스트 간격은 wrapper gap만 사용 */
@@ -319,25 +278,7 @@
   height: 16px !important;
   box-sizing: border-box;
   border-radius: 50%;
-}
-
-.app-radio-group--small .ant-radio-wrapper .ant-radio-inner::after,
-.app-radio--small.ant-radio-wrapper .ant-radio-inner::after {
-  width: 8px !important;
-  height: 8px !important;
-  margin-block-start: 0 !important;
-  margin-inline-start: 0 !important;
-  inset-block-start: 50% !important;
-  inset-inline-start: 50% !important;
-  transform: translate(-50%, -50%) scale(0) !important;
-  opacity: 0 !important;
-}
-
-.app-radio-group--small .ant-radio-wrapper .ant-radio-checked .ant-radio-inner::after,
-.app-radio--small.ant-radio-wrapper .ant-radio-checked .ant-radio-inner::after {
-  transform: translate(-50%, -50%) scale(1) !important;
-  opacity: 1 !important;
-  background-color: var(--Brand-500, #00a0af);
+  --app-radio-dot-inset: 3px;
 }
 
 .app-radio-group--small .ant-radio-wrapper:not(.ant-radio-wrapper-disabled) .ant-radio-inner,
@@ -355,7 +296,8 @@
 .app-radio--small.ant-radio-wrapper:not(.ant-radio-wrapper-disabled):hover .ant-radio-checked .ant-radio-inner {
   border-radius: var(--Radius-50, 50px);
   border: 1px solid var(--Brand-500, #00a0af);
-  background: var(--White, #fff);
+  background-color: var(--Brand-500, #00a0af) !important;
+  box-shadow: inset 0 0 0 var(--app-radio-dot-inset, 3px) var(--White, #fff) !important;
 }
 
 .app-radio-group--small .ant-radio-wrapper .ant-radio::after,
@@ -367,9 +309,8 @@
 .app-radio--small.ant-radio-wrapper-checked,
 .app-radio-group--small .ant-radio-wrapper-checked:hover,
 .app-radio--small.ant-radio-wrapper-checked:hover {
-  overflow: hidden;
+  overflow: visible;
   color: var(--Brand-500, #00a0af) !important;
-  text-overflow: ellipsis;
 }
 
 .app-radio-group--small .ant-radio-wrapper-disabled,
@@ -394,16 +335,8 @@
 .app-radio-group--small .ant-radio-wrapper-disabled .ant-radio-checked .ant-radio-inner,
 .app-radio--small.ant-radio-wrapper-disabled .ant-radio-checked .ant-radio-inner {
   border: 1px solid var(--disabled-select-stroke, rgba(34, 64, 75, 0.2));
-  background: var(
-    --disabled-select-bg,
-    linear-gradient(0deg, rgba(34, 64, 75, 0.2) 0%, rgba(34, 64, 75, 0.2) 100%),
-    #fff
-  );
-}
-
-.app-radio-group--small .ant-radio-wrapper-disabled .ant-radio-checked .ant-radio-inner::after,
-.app-radio--small.ant-radio-wrapper-disabled .ant-radio-checked .ant-radio-inner::after {
-  background-color: var(--disabled-select-stroke, rgba(34, 64, 75, 0.2));
+  background-color: var(--disabled-select-stroke, rgba(34, 64, 75, 0.2)) !important;
+  box-shadow: inset 0 0 0 var(--app-radio-dot-inset, 3px) var(--White, #fff) !important;
 }
 
 .app-radio-group--small .ant-radio-wrapper span.ant-radio + *,

@@ -1,7 +1,7 @@
 .sms-send-history-detail-modal__content {
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 24px;
 }
 
 .sms-send-history-detail-modal__loading {
@@ -15,6 +15,12 @@
   color: rgba(61, 61, 61, 0.7);
   font-size: 14px;
   text-align: center;
+}
+
+.sms-send-history-detail-modal__sender {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 .sms-send-history-detail-modal__status-with-reason {
@@ -44,24 +50,6 @@
   white-space: normal;
 }
 
-.sms-send-history-detail-modal__message {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 24px;
-  border: 1px solid var(--table-line, #e0e0e0);
-  border-radius: 8px;
-}
-
-.sms-send-history-detail-modal__subject {
-  margin: 0;
-  color: var(--main-BK, #3d3d3d);
-  font-size: 18px;
-  font-weight: 700;
-  line-height: 140%;
-  word-break: break-word;
-}
-
 .sms-send-history-detail-modal__body {
   margin: 0;
   color: var(--main-BK, #3d3d3d);
@@ -71,24 +59,6 @@
   line-height: 150%;
   white-space: pre-wrap;
   word-break: break-word;
-}
-
-.sms-send-history-detail-modal__body-empty {
-  margin: 0;
-  color: rgba(61, 61, 61, 0.55);
-  font-size: 14px;
-}
-
-.sms-send-history-detail-modal__attachments {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.sms-send-history-detail-modal__attachments-label {
-  color: var(--main-BK, #3d3d3d);
-  font-size: 14px;
-  font-weight: 600;
 }
 
 .sms-send-history-detail-modal__attachment-list {

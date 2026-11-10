@@ -127,6 +127,7 @@ import { resolveGeneralProgramDisplayTitle } from '@/features/program/general/li
 import { TrainedTeachersApplicationInfoView } from '@/features/program/trained-teachers/ui/application-info/application-info-view'
 import {
   GENERAL_SURVEY_MENU_EMPTY_ALERT_MESSAGE,
+  GENERAL_SURVEY_MENU_EMPTY_ALERT_TITLE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
 } from '@/shared/constants/messages'
@@ -1143,7 +1144,7 @@ function ProgramDetailFullPageModalContent({
     } else if (k === 'survey') {
       if (surveyMenuItems.length === 0) {
         void showAlert({
-          title: '안내',
+          title: GENERAL_SURVEY_MENU_EMPTY_ALERT_TITLE,
           content: GENERAL_SURVEY_MENU_EMPTY_ALERT_MESSAGE,
         })
         return
@@ -1164,7 +1165,7 @@ function ProgramDetailFullPageModalContent({
     else if (groupKey === 'survey') {
       if (surveyMenuItems.length === 0) {
         void showAlert({
-          title: '안내',
+          title: GENERAL_SURVEY_MENU_EMPTY_ALERT_TITLE,
           content: GENERAL_SURVEY_MENU_EMPTY_ALERT_MESSAGE,
         })
         return

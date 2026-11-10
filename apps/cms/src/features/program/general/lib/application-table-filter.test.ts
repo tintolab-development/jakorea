@@ -274,4 +274,17 @@ describe('mergeGeneralInstructorFiltersOnViewModeChange', () => {
       instructorName: '김',
     })
   })
+
+  it('list-parity(일반 기관형)는 캘린더로 전환해도 리스트 필터를 그대로 유지한다', () => {
+    const filters = {
+      approvalStatus: 'pending',
+      homeSido: '서울특별시',
+      instructorName: '김',
+      experienceYears: '3',
+      evaluationGrade: 'A',
+    }
+    expect(
+      mergeGeneralInstructorFiltersOnViewModeChange(filters, 'calendar', 'list-parity')
+    ).toEqual(filters)
+  })
 })

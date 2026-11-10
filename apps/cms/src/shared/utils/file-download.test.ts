@@ -65,10 +65,57 @@ describe('generateFilename', () => {
     )
   })
 
+  it('참여학생명단 샘플 양식 — 오전 9시 전에도 서울 날짜(예전 UTC 날짜 버그 방지)', async () => {
+    const { generateFilename } = await import('./file-download')
+    expect(generateFilename('참여학생명단 샘플', 'xlsx', new Date('2026-11-09T23:30:00Z'))).toBe(
+      '[JA Korea] CMS 어드민_참여학생명단 샘플_261110.xlsx'
+    )
+  })
+
   it('pdf·zip은 도메인 없이 [JA Korea] 파일 이름_YYMMDD', async () => {
     const { generateFilename } = await import('./file-download')
     expect(generateFilename('강의보고서_일괄', 'zip', new Date('2026-11-10T03:00:00Z'))).toBe(
       '[JA Korea] 강의보고서_일괄_261110.zip'
+    )
+  })
+})
+
+describe('ruleFileNameFromContentDisposition', () => {
+  it('서버 이름이 [JA Korea] 규칙이면 그대로 쓴다', async () => {
+    const { ruleFileNameFromContentDisposition } = await import('./file-download')
+    expect(
+      ruleFileNameFromContentDisposition(
+        "attachment; filename*=UTF-8''%5BJA%20Korea%5D%20CMS%20%EC%96%B4%EB%93%9C%EB%AF%BC_%EC%8B%A4%EC%A0%81_261110.xlsx",
+        'fallback.xlsx'
+      )
+    ).toBe('[JA Korea] CMS 어드민_실적_261110.xlsx')
+  })
+
+  it('영문 이름이거나 헤더가 없으면 규칙 이름(fallback)을 쓴다', async () => {
+    const { ruleFileNameFromContentDisposition } = await import('./file-download')
+    const fallback = '[JA Korea] CMS 어드민_실적데이터_261110.xlsx'
+    expect(
+      ruleFileNameFromContentDisposition('attachment; filename="performance_all_pall_v3.xlsx"', fallback)
+    ).toBe(fallback)
+    expect(ruleFileNameFromContentDisposition(undefined, fallback)).toBe(fallback)
+  })
+})
+
+describe('toRuleDownloadFileName', () => {
+  it('업로드 원본은 [JA Korea] {원본}_YYMMDD.확장자 (서울 날짜)', async () => {
+    const { toRuleDownloadFileName } = await import('./file-download')
+    const d = new Date('2026-11-09T23:30:00Z')
+    expect(toRuleDownloadFileName('IMG_2235.PNG', d)).toBe('[JA Korea] IMG_2235_261110.PNG')
+    expect(toRuleDownloadFileName('과제/보고서.txt', d)).toBe('[JA Korea] 과제,보고서_261110.txt')
+    expect(toRuleDownloadFileName('확장자없음', d)).toBe('[JA Korea] 확장자없음_261110')
+  })
+
+  it('이미 규칙 이름이면 그대로 둔다(중복 적용 안전)', async () => {
+    const { toRuleDownloadFileName } = await import('./file-download')
+    const once = toRuleDownloadFileName('IMG_2235.PNG')
+    expect(toRuleDownloadFileName(once)).toBe(once)
+    expect(toRuleDownloadFileName('[JA Korea] CMS 어드민_교재 목록_261110.xlsx')).toBe(
+      '[JA Korea] CMS 어드민_교재 목록_261110.xlsx'
     )
   })
 })

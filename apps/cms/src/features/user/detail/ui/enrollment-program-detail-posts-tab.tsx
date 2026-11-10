@@ -42,6 +42,7 @@ import { isOwnProgramPost } from '@/features/user/detail/lib/is-own-program-post
 import { deleteGeneralProgramPost } from '@/features/program/general/api/admin-general-programs-service'
 import { shouldUseGeneralProgramsRemoteApi } from '@/features/program/general/api/general-programs-remote-capabilities'
 import { PostReadStatusPopoverContent } from './post-read-status-popover'
+import { buildPostDeleteGuideLines } from '@/features/user/detail/lib/post-delete-guide'
 import { downloadFile } from '@/shared/lib/file-download'
 import dayjs from 'dayjs'
 import { formatDateTimeDot } from '@/shared/utils/date'
@@ -52,6 +53,8 @@ export interface EnrollmentProgramDetailPostsTabProps {
   schoolId?: string
   /** 게시글 영역 상단 "게시글 등록" 버튼 표시 여부. 기본 true. 학교 상세 풀페이지에서는 탭 행 trailing만 쓰므로 false */
   showWriteButtonInSection?: boolean
+  /** 일반 기관형 참여 기관 상세 시안 19 — 삭제 안내 첫 줄에 대상 글 앞부분 표시. 기본 false */
+  deleteGuideWithPostPreview?: boolean
   /** PostWriteModal open을 부모에서 제어할 때 사용 */
   writeModalOpen?: boolean
   onWriteModalOpenChange?: (open: boolean) => void
@@ -207,10 +210,12 @@ const POST_DELETE_GUIDE_LINES = [
   '삭제된 정보는 되돌릴 수 없습니다.',
 ]
 
+
 export function EnrollmentProgramDetailPostsTab({
   program,
   schoolId,
   showWriteButtonInSection = true,
+  deleteGuideWithPostPreview = false,
   writeModalOpen: writeModalOpenProp,
   onWriteModalOpenChange,
   writeAuthorName = DEFAULT_WRITE_AUTHOR_NAME,
@@ -664,7 +669,11 @@ export function EnrollmentProgramDetailPostsTab({
       <DeleteGuideModal
         open={deleteTargetPost != null}
         title="게시글 삭제 안내"
-        lines={POST_DELETE_GUIDE_LINES}
+        lines={
+          deleteGuideWithPostPreview
+            ? buildPostDeleteGuideLines(deleteTargetPost, POST_DELETE_GUIDE_LINES)
+            : POST_DELETE_GUIDE_LINES
+        }
         confirmLoading={deleteSubmitting}
         onConfirm={() => void handleConfirmDeletePost()}
         onCancel={() => {

@@ -67,7 +67,19 @@ export interface ParticipatingInstitutionApplicationInfoProps {
   /** 배정 일정 없음·로딩 등 — 기본: 등록된 교육 일정이 없습니다. */
   scheduleSessionsEmptyMessage?: string
   useCompanySchoolScheduleFormat?: boolean
+  /** 「교육 진행 일정」 제목 우측 액션 — 일반 기관형 수정 모드 「일정 변경」(시안 01-2) */
+  scheduleTitleTrailing?: ReactNode
+  /**
+   * `general-institution` — 일반 기관형 시안(01-1·01-2) 문구·구성.
+   * - 조회: 「프로그램 진행 현황」만, 수정: 「프로그램 승인 현황」만
+   * - 수정 라벨 신청 기관명 / 신청 학년 / 희망 교육 형태, 「안내사항」 + 수정 시 보조 설명
+   * 기본 `default`(1사1교 등) 기존 그대로.
+   */
+  copyVariant?: 'default' | 'general-institution'
 }
+
+const GENERAL_INSTITUTION_GUIDANCE_EDIT_DESCRIPTION =
+  '강사님들에게 제공 또는 요청할 사전 정보를 작성해 주세요.'
 
 function padScheduleTimePart(part: string): string {
   const trimmed = part.trim()
@@ -188,7 +200,15 @@ export function ParticipatingInstitutionApplicationInfo({
   sessions,
   scheduleSessionsEmptyMessage = '등록된 교육 일정이 없습니다.',
   useCompanySchoolScheduleFormat = false,
+  scheduleTitleTrailing,
+  copyVariant = 'default',
 }: ParticipatingInstitutionApplicationInfoProps) {
+  const isGeneralInstitutionCopy = copyVariant === 'general-institution'
+  const showProgramProgressRow = !isGeneralInstitutionCopy || !isBasicInfoEditing
+  const showProgramApprovalRow =
+    programApprovalStatusCell != null && (!isGeneralInstitutionCopy || isBasicInfoEditing)
+  const editLabel = (generalEditLabel: string, defaultLabel: string) =>
+    isGeneralInstitutionCopy && isBasicInfoEditing ? generalEditLabel : defaultLabel
   const institutionApplicationBridge = resolveInstitutionApplicationProgramBridge(program)
   const scheduleShape = withParticipatingProgressCurriculumShape(
     generalEducationScheduleShapeFromBridge(institutionApplicationBridge),
@@ -218,16 +238,18 @@ export function ParticipatingInstitutionApplicationInfo({
           mode={basicInfoFormMode}
           className="participating-institution-application-info__table-wrap--overview"
         >
-          <DetailInfoForm.Row type="single">
-            <DetailInfoForm.Field
-              label="프로그램 진행 현황"
-              fullRow
-              readOnlyDisplay={!isBasicInfoEditing}
-              view={programProgressCell}
-              edit={programProgressCell}
-            />
-          </DetailInfoForm.Row>
-          {programApprovalStatusCell ? (
+          {showProgramProgressRow ? (
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="프로그램 진행 현황"
+                fullRow
+                readOnlyDisplay={!isBasicInfoEditing}
+                view={programProgressCell}
+                edit={programProgressCell}
+              />
+            </DetailInfoForm.Row>
+          ) : null}
+          {showProgramApprovalRow ? (
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="프로그램 승인 현황"
@@ -267,13 +289,13 @@ export function ParticipatingInstitutionApplicationInfo({
         <DetailInfoForm title="기본 정보" hideHeader mode={basicInfoFormMode}>
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
-              label="참여 기관명"
+              label={editLabel('신청 기관명', '참여 기관명')}
               readOnlyDisplay={!isBasicInfoEditing}
               view={schoolName}
               edit={schoolName}
             />
             <DetailInfoForm.Field
-              label="교육 학년"
+              label={editLabel('신청 학년', '교육 학년')}
               readOnlyDisplay={!isBasicInfoEditing}
               view={educationGrade}
               edit={educationGrade}
@@ -302,7 +324,7 @@ export function ParticipatingInstitutionApplicationInfo({
                 edit={classAndCount}
               />
               <DetailInfoForm.Field
-                label="교육 형태"
+                label={editLabel('희망 교육 형태', '교육 형태')}
                 readOnlyDisplay={!isBasicInfoEditing}
                 view={educationFormat}
                 edit={educationFormat}
@@ -348,7 +370,16 @@ export function ParticipatingInstitutionApplicationInfo({
       </section>
 
       {showGuidanceSection ? (
-        <DetailInfoForm title="안내 사항" mode="view">
+        <DetailInfoForm
+          title={isGeneralInstitutionCopy ? '안내사항' : '안내 사항'}
+          mode="view"
+          {...(isGeneralInstitutionCopy && isBasicInfoEditing
+            ? {
+                description: GENERAL_INSTITUTION_GUIDANCE_EDIT_DESCRIPTION,
+                descriptionPlacement: 'below' as const,
+              }
+            : {})}
+        >
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="강의 공간 내 컴퓨터 여부"
@@ -394,7 +425,7 @@ export function ParticipatingInstitutionApplicationInfo({
         </DetailInfoForm>
       ) : null}
 
-      <DetailInfoForm title="교육 진행 일정" mode="view">
+      <DetailInfoForm title="교육 진행 일정" mode="view" titleTrailing={scheduleTitleTrailing}>
         {displaySessions.length === 0 ? (
           <DetailInfoForm.Row type="custom">
             <p className="participating-institution-application-info__schedule-empty">

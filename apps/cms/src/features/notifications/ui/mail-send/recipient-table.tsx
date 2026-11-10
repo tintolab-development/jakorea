@@ -11,6 +11,7 @@ import { CmsInput } from '@/shared/ui'
 const TABLE_MAX_HEIGHT = 400
 const TABLE_HEADER_HEIGHT = 54
 const TABLE_ROW_HEIGHT = 54
+const MAIL_SEND_RECIPIENT_CHECKBOX_WIDTH = 60
 
 type RecipientTableProps = {
   recipients: MailSendRecipient[]
@@ -53,8 +54,8 @@ export const RecipientTable = memo(function RecipientTable({
     {
       title: typeColumnTitle,
       key: 'type',
-      width: 140,
       align: 'center',
+      ellipsis: true,
       render: (_value, record) => mailSendRecipientTypeLabel(record) || '-',
     },
     {
@@ -122,7 +123,8 @@ export const RecipientTable = memo(function RecipientTable({
       rowSelection={{
         selectedRowKeys: selectedIds,
         onChange: keys => onSelectedIdsChange(keys.map(String)),
-        columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+        // 시안: 체크 60 / No. 80 / 유형·수신자명·이메일 균등 (이 표만 override)
+        columnWidth: MAIL_SEND_RECIPIENT_CHECKBOX_WIDTH,
       }}
     />
   )

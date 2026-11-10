@@ -12,7 +12,6 @@ import {
   encodeSponsorManagerContactRef,
   decodeSponsorManagerContactRef,
   formatSponsorManagerSelectLabel,
-  formatSponsorManagerDisplayLine,
   normalizeSponsorManagerContactIds,
 } from '@/features/program/general/model/common-info-edit-schema'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
@@ -335,7 +334,7 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
     setManagerContactIds,
   ])
 
-  // contact ref[] → 표시용 `이름 | 연락처` (복수 시 `, ` 구분)
+  // contact ref[] → 표시용 `이름 직책` (복수 후원사 `(후원사명)`, 복수 담당자 `, `)
   useEffect(() => {
     if (managerContactIds.length === 0) {
       patchProgramRegistrationOverlay({ [managerLineKey]: '' })
@@ -354,21 +353,24 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
       return
     }
 
+    const includeSponsorName = allowMultipleSponsors && selectedSponsors.length > 1
     const lines: string[] = []
     for (const ref of managerContactIds) {
       if (isSponsorContactUnselected(ref)) continue
       if (allowMultipleSponsors) {
         const decoded = decodeSponsorManagerContactRef(ref)
         if (!decoded) continue
+        const sponsor = selectedSponsors.find(row => String(row.id) === decoded.sponsorManagementId)
         const contact = multiSponsorContext.contactsBySponsorId[decoded.sponsorManagementId]?.find(
           c => c.id === decoded.contactId
         )
         if (!contact) continue
         lines.push(
-          formatSponsorManagerDisplayLine({
+          formatSponsorManagerSelectLabel({
+            sponsorName: sponsor?.name ?? '',
             contactName: contact.name,
             position: contact.position,
-            phone: contact.phone,
+            multiSponsor: includeSponsorName,
           })
         )
         continue
@@ -376,10 +378,11 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
       const contact = (singleContactsQuery.data ?? []).find(c => c.id === ref)
       if (!contact) continue
       lines.push(
-        formatSponsorManagerDisplayLine({
+        formatSponsorManagerSelectLabel({
+          sponsorName: '',
           contactName: contact.name,
           position: contact.position,
-          phone: contact.phone,
+          multiSponsor: false,
         })
       )
     }
@@ -391,6 +394,7 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
     managerContactIds,
     managerLineKey,
     multiSponsorContext.contactsBySponsorId,
+    selectedSponsors,
     singleContactsQuery.data,
     trainedTeachersDefaults,
   ])

@@ -50,6 +50,13 @@ export const BULK_APPLICATION_APPROVE_UNAVAILABLE_ALERT = {
     '프로그램 신청 승인은 한 건씩 가능합니다.\n건별로 승인하여 교육 일정을 배정해 주세요.',
 } as const
 
+/** 일반 프로그램(기관형) 기관 신청 목록 — 시안 03-2(1141:235321) 일괄 승인 불가 안내 */
+export const GENERAL_ORGANIZATION_INSTITUTION_BULK_APPROVE_UNAVAILABLE_ALERT = {
+  title: '일괄 승인 불가 안내',
+  content:
+    '승인 시 일정 배정이 필요한 프로그램은 일괄 승인이 불가합니다.\n신청 건별로 승인해 주세요.',
+} as const
+
 /** 승인/반려 목록 — 이미 처리된 행 포함 시 AlertModal */
 export function buildApplicationProcessedSelectionAlert(noun: ApplicationBulkSubjectNoun): {
   title: string

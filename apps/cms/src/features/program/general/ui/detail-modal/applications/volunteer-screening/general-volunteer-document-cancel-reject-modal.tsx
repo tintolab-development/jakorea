@@ -1,6 +1,7 @@
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import {
   buildVolunteerDocumentCancelRejectionMessage,
+  buildVolunteerDocumentScreeningCancelRejectionMessage,
   resolveVolunteerDocumentCancelRejectionNotifyVariant,
   type VolunteerDocumentCancelRejectionConfirmPayload,
   type VolunteerDocumentCancelRejectionNotifyVariant,
@@ -19,8 +20,15 @@ const MODAL_Z_INDEX = 2500
 
 export type { VolunteerDocumentCancelRejectionConfirmPayload }
 
+/**
+ * application: 면접 없음 — 프로그램 참여 반려 취소(강사 신청 프로세스) · 기본값
+ * document: 면접 있음 — 1차 서류 반려 취소 시안 04-1(9781:54768)
+ */
+export type GeneralVolunteerDocumentCancelRejectCopyPreset = 'application' | 'document'
+
 export type GeneralVolunteerDocumentCancelRejectModalProps = {
   open: boolean
+  copyPreset?: GeneralVolunteerDocumentCancelRejectCopyPreset
   volunteer: GeneralVolunteerApplicantRow | null
   onCancel: () => void
   onConfirm: (payload: VolunteerDocumentCancelRejectionConfirmPayload) => void
@@ -36,12 +44,14 @@ export function resolveVolunteerDocumentCancelRejectionNotifyVariantFromRow(
 
 function VolunteerDocumentCancelRejectPendingNotificationModal({
   open,
+  copyPreset,
   volunteerName,
   onCancel,
   onConfirm,
   zIndex = MODAL_Z_INDEX,
 }: {
   open: boolean
+  copyPreset: GeneralVolunteerDocumentCancelRejectCopyPreset
   volunteerName: string
   onCancel: () => void
   onConfirm: () => void
@@ -51,14 +61,18 @@ function VolunteerDocumentCancelRejectPendingNotificationModal({
     <ContentModal
       open={open}
       onCancel={onCancel}
-      title="봉사자 1차 서류 반려 취소 안내"
+      title={resolveCancelRejectTitle(copyPreset)}
       width={MODAL_WIDTH}
       zIndex={zIndex}
       className="general-volunteer-document-cancel-reject-modal instructor-cancel-reject-modal"
-      description={buildVolunteerDocumentCancelRejectionMessage(
-        volunteerName,
-        'pendingNotification'
-      )}
+      description={
+        copyPreset === 'document'
+          ? buildVolunteerDocumentScreeningCancelRejectionMessage(
+              volunteerName,
+              'pendingNotification'
+            )
+          : buildVolunteerDocumentCancelRejectionMessage(volunteerName, 'pendingNotification')
+      }
       footer={
         <>
           <CmsButton
@@ -85,12 +99,14 @@ function VolunteerDocumentCancelRejectPendingNotificationModal({
 
 function VolunteerDocumentCancelRejectAlreadySentModal({
   open,
+  copyPreset,
   volunteerName,
   onCancel,
   onConfirm,
   zIndex = MODAL_Z_INDEX,
 }: {
   open: boolean
+  copyPreset: GeneralVolunteerDocumentCancelRejectCopyPreset
   volunteerName: string
   onCancel: () => void
   onConfirm: (payload: PermissionModalPayload) => void
@@ -101,16 +117,20 @@ function VolunteerDocumentCancelRejectAlreadySentModal({
       open={open}
       variant="reject"
       className="general-volunteer-document-cancel-reject-modal instructor-cancel-reject-modal"
-      title="봉사자 1차 서류 반려 취소 안내"
-      message={buildVolunteerDocumentCancelRejectionMessage(volunteerName, 'alreadySent')}
+      title={resolveCancelRejectTitle(copyPreset)}
+      message={
+        copyPreset === 'document'
+          ? buildVolunteerDocumentScreeningCancelRejectionMessage(volunteerName, 'alreadySent')
+          : buildVolunteerDocumentCancelRejectionMessage(volunteerName, 'alreadySent')
+      }
       confirmLabel="반려 취소"
       confirmVariant="delete"
       requireReason
       reasonLabel="취소 사유"
       reasonPlaceholder="취소 사유를 입력해 주세요."
       reasonRequiredMessage="취소 사유를 입력해 주세요."
-      notifyTimingOptions="two"
-      notifyBeforeReason
+      notifyTimingOptions={copyPreset === 'document' ? 'three' : 'two'}
+      notifyBeforeReason={copyPreset !== 'document'}
       onCancel={onCancel}
       onConfirm={onConfirm}
       zIndex={zIndex}
@@ -118,8 +138,13 @@ function VolunteerDocumentCancelRejectAlreadySentModal({
   )
 }
 
+function resolveCancelRejectTitle(copyPreset: GeneralVolunteerDocumentCancelRejectCopyPreset): string {
+  return copyPreset === 'document' ? '1차 서류 반려 취소 안내' : '봉사자 1차 서류 반려 취소 안내'
+}
+
 export function GeneralVolunteerDocumentCancelRejectModal({
   open,
+  copyPreset = 'application',
   volunteer,
   onCancel,
   onConfirm,
@@ -132,6 +157,7 @@ export function GeneralVolunteerDocumentCancelRejectModal({
     return (
       <VolunteerDocumentCancelRejectPendingNotificationModal
         open={open}
+        copyPreset={copyPreset}
         volunteerName={volunteerName}
         onCancel={onCancel}
         onConfirm={() => onConfirm({ variant: 'pendingNotification' })}
@@ -143,6 +169,7 @@ export function GeneralVolunteerDocumentCancelRejectModal({
   return (
     <VolunteerDocumentCancelRejectAlreadySentModal
       open={open}
+      copyPreset={copyPreset}
       volunteerName={volunteerName}
       onCancel={onCancel}
       onConfirm={payload => {

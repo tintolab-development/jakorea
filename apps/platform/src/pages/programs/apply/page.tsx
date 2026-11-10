@@ -103,6 +103,7 @@ import {
   shouldLockTeacherMobileEmailOnBasicInfo,
   shouldShowEducationPlaceOnBasicInfo,
 } from '@/features/program/lib/apply-form-paragraph-ids'
+import { useProgramApplyPreview } from './preview-context'
 import { ApplyEconomyPreferredSchedule } from '@/features/program/ui/apply-economy-preferred-schedule/apply-economy-preferred-schedule'
 import {
   buildEconomyOrganizationSchedulePayload,
@@ -469,12 +470,15 @@ export function ProgramApplyPage() {
   const focus = readPortalRecruitmentFocus(search)
   const fromPath = new URLSearchParams(search).get('from') ?? undefined
   const [isReady, setIsReady] = useState(false)
-  const programId = getProgramIdFromPath()
+  /** CMS 신청 정보 미리보기 — 있으면 API·로그인·신청 조건·제출을 쓰지 않는다. */
+  const preview = useProgramApplyPreview()
+  const isPreview = preview != null
+  const programId = preview?.programId ?? getProgramIdFromPath()
   const {
     program: remoteProgram,
     isLoading,
     status,
-  } = useProgramDetail(programId, {
+  } = useProgramDetail(isPreview ? null : programId, {
     fresh: true,
     focus,
   })
@@ -485,7 +489,7 @@ export function ProgramApplyPage() {
     const fixture = getCmsRegistrationFixtureById(String(numericProgramId))
     return fixture ? mapCmsProgramToPlatformDetail(fixture) : undefined
   }, [devMockApplyEnabled, numericProgramId])
-  const program = remoteProgram ?? devMockProgram ?? undefined
+  const program = preview?.program ?? remoteProgram ?? devMockProgram ?? undefined
   const detailStatusForGate: ProgramApplyDetailStatus = devMockApplyEnabled
     ? program
       ? 'ready'
@@ -502,13 +506,18 @@ export function ProgramApplyPage() {
   if (devMockApplyEnabled && applyGate === 'config-error') {
     applyGate = program ? 'ready' : 'not-found'
   }
+  if (isPreview) {
+    applyGate = 'ready'
+  }
+  /** 미리보기는 주입 양식을 원격 양식과 같은 경로로 렌더한다(카탈로그 시드 폴백 금지). */
   const remoteApplyEnabled =
-    isRemoteApiConfigured() &&
-    numericProgramId != null &&
-    Boolean(getAccessToken()) &&
-    status === 'ready'
-  const applicationFormQuery = useProgramApplicationForm(
-    remoteApplyEnabled && !program?.recruitmentSelectionAmbiguous ? programId : null,
+    isPreview ||
+    (isRemoteApiConfigured() &&
+      numericProgramId != null &&
+      Boolean(getAccessToken()) &&
+      status === 'ready')
+  const queriedApplicationForm = useProgramApplicationForm(
+    !isPreview && remoteApplyEnabled && !program?.recruitmentSelectionAmbiguous ? programId : null,
     {
       recruitmentId: focus?.recruitmentIds?.[0],
       recruitmentIds: focus?.recruitmentIds,
@@ -516,8 +525,9 @@ export function ProgramApplyPage() {
       programType: program?.programType,
     }
   )
+  const applicationFormQuery = preview?.formQuery ?? queriedApplicationForm
   const submitMutation = useSubmitProgramApplication(numericProgramId)
-  const profileQuery = usePortalProfileQuery({ enabled: remoteApplyEnabled })
+  const profileQuery = usePortalProfileQuery({ enabled: remoteApplyEnabled && !isPreview })
   const applicationSelection = {
     recruitmentId: focus?.recruitmentIds?.[0],
     recruitmentIds: focus?.recruitmentIds,
@@ -574,6 +584,7 @@ export function ProgramApplyPage() {
 
   useEffect(() => {
     if (
+      isPreview ||
       applyGatePromptedRef.current ||
       submittedSuccessfullyProgramIdRef.current === programId ||
       !remoteApplyEnabled
@@ -598,6 +609,7 @@ export function ProgramApplyPage() {
     applicationFormQuery.blockedReason,
     applicationFormQuery.bundle?.option.canApply,
     applicationFormQuery.status,
+    isPreview,
     readGateModalForOptions,
     remoteApplyEnabled,
     setGateModal,
@@ -607,6 +619,7 @@ export function ProgramApplyPage() {
   // 직접 URL 진입 보호 — 신청서가 열리면 필수 동의(초상권, UJAT 는 4종)를 한 번 확인한다. 조회 실패는 막지 않는다.
   useEffect(() => {
     if (
+      isPreview ||
       consentGatePromptedRef.current ||
       submittedSuccessfullyProgramIdRef.current === programId ||
       !isReady ||
@@ -625,6 +638,7 @@ export function ProgramApplyPage() {
     applicationFormQuery.bundle?.option.canApply,
     applicationFormQuery.status,
     findMissingRequiredConsents,
+    isPreview,
     isReady,
     openRequiredConsentModal,
     program,
@@ -2542,6 +2556,7 @@ export function ProgramApplyPage() {
   }
 
   const handleBack = () => {
+    if (isPreview) return
     navigate(programDetailPath(program.id, fromPath, focus))
   }
 
@@ -2555,6 +2570,7 @@ export function ProgramApplyPage() {
   }
 
   const handleSubmit = async () => {
+    if (isPreview) return
     pendingApplyIncompleteRef.current = null
     setSubmitAlert(null)
     setSubmitErrorField(null)

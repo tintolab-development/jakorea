@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   BULK_APPLICATION_APPROVE_UNAVAILABLE_ALERT,
+  GENERAL_ORGANIZATION_INSTITUTION_BULK_APPROVE_UNAVAILABLE_ALERT,
   applicationBulkSubjectLabel,
   buildApplicationProcessedSelectionAlert,
   buildInterview2ProcessedSelectionAlert,
@@ -47,5 +48,18 @@ describe('application-processed-selection-alert', () => {
     expect(isDocumentScreeningPendingForBulkSelect('pending')).toBe(true)
     expect(isDocumentScreeningPendingForBulkSelect('pass')).toBe(false)
     expect(isDocumentScreeningPendingForBulkSelect('fail')).toBe(false)
+  })
+})
+
+describe('GENERAL_ORGANIZATION_INSTITUTION_BULK_APPROVE_UNAVAILABLE_ALERT', () => {
+  it('일반(기관형) 기관 신청은 시안 03-2 문구, 기존 공통 문구는 유지', () => {
+    expect(GENERAL_ORGANIZATION_INSTITUTION_BULK_APPROVE_UNAVAILABLE_ALERT).toEqual({
+      title: '일괄 승인 불가 안내',
+      content:
+        '승인 시 일정 배정이 필요한 프로그램은 일괄 승인이 불가합니다.\n신청 건별로 승인해 주세요.',
+    })
+    expect(BULK_APPLICATION_APPROVE_UNAVAILABLE_ALERT.content).toContain(
+      '프로그램 신청 승인은 한 건씩 가능합니다.'
+    )
   })
 })

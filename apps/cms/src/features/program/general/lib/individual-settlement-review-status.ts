@@ -1,6 +1,6 @@
 import { formatNumberDisplay } from '@/shared/utils'
 import { formatDateDot, formatDateTimeDot } from '@/shared/utils/date'
-import type { IndividualSettlementReviewDetail } from '@/shared/api/generated/dashboard/schemas/individualSettlementReviewDetail'
+import type { IndividualSettlementReviewDetailView } from '@/features/program/general/api/individual-settlement-review-types'
 import type { IndividualSettlementReviewReceipt } from '@/shared/api/generated/dashboard/schemas/individualSettlementReviewReceipt'
 import type { IndividualSettlementReviewRevision } from '@/shared/api/generated/dashboard/schemas/individualSettlementReviewRevision'
 import {
@@ -82,7 +82,7 @@ export function formatIndividualSettlementDate(value: string | null | undefined)
 }
 
 export function latestIndividualSettlementReviewRevision(
-  detail: IndividualSettlementReviewDetail | null | undefined
+  detail: IndividualSettlementReviewDetailView | null | undefined
 ): IndividualSettlementReviewRevision | null {
   const revisions = detail?.revisions ?? []
   if (revisions.length === 0) return null
@@ -95,7 +95,7 @@ export function latestIndividualSettlementReviewRevision(
 }
 
 export function flattenIndividualSettlementReviewReceipts(
-  detail: IndividualSettlementReviewDetail | null | undefined
+  detail: IndividualSettlementReviewDetailView | null | undefined
 ): IndividualSettlementReviewReceipt[] {
   const latest = latestIndividualSettlementReviewRevision(detail)
   if (latest == null) return []
@@ -103,7 +103,7 @@ export function flattenIndividualSettlementReviewReceipts(
 }
 
 export function canReviewIndividualSettlement(
-  detail: IndividualSettlementReviewDetail | null | undefined
+  detail: IndividualSettlementReviewDetailView | null | undefined
 ): boolean {
   const latest = latestIndividualSettlementReviewRevision(detail)
   if (latest == null) return false
@@ -114,7 +114,7 @@ export function canReviewIndividualSettlement(
 }
 
 export function canApproveIndividualSettlement(
-  detail: IndividualSettlementReviewDetail | null | undefined
+  detail: IndividualSettlementReviewDetailView | null | undefined
 ): boolean {
   if (!canReviewIndividualSettlement(detail)) return false
   const actions = (detail?.availableActions ?? []).map(action => action.trim().toUpperCase())
@@ -122,7 +122,7 @@ export function canApproveIndividualSettlement(
 }
 
 export function canRejectIndividualSettlement(
-  detail: IndividualSettlementReviewDetail | null | undefined
+  detail: IndividualSettlementReviewDetailView | null | undefined
 ): boolean {
   if (!canReviewIndividualSettlement(detail)) return false
   const actions = (detail?.availableActions ?? []).map(action => action.trim().toUpperCase())

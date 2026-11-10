@@ -20,6 +20,7 @@ import {
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
@@ -55,10 +56,13 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
   program,
   form,
   isEdit,
+  variant = 'default',
 }: {
   program: Program
   form?: UseFormReturn<ProgramDetailEditFormValues>
   isEdit: boolean
+  /** `general`: 일반 프로그램 상세 시안 문구·구성. 생략 시 기존(1사1교·교육받은 교사 등) 유지 */
+  variant?: 'default' | 'general'
 }) {
   const display = resolveGeneralProgramVolunteerRecruitmentDisplay(program)
 
@@ -565,20 +569,65 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
               view={display.notes}
               edit={
                 isEdit && form ? (
-                  <Controller
-                    name="oneLineIntroduction"
-                    control={form.control}
-                    render={({ field }) => (
-                      <CmsInput
-                        {...field}
-                        value={field.value ?? ''}
-                        placeholder="비고란을 작성하세요 (없으면 -로 입력)"
-                        inputSize="small"
-                        width="100%"
-                        className="program-detail-info-tab__notes-input"
+                  variant === 'general' ? (
+                    // 시안 03-2: 「해당 없음」 체크 + 비고 입력 (참여 기관 모집과 같은 구성)
+                    <div className="detail-info-form-inputs-wrapper-no-gap volunteer-recruitment-info-view__notes-field">
+                      <Controller
+                        name="volunteerRecruitmentNotesNotApplicable"
+                        control={form.control}
+                        render={({ field }) => (
+                          <CmsCheckbox
+                            checkboxSize="medium"
+                            checked={field.value === 'not_applicable'}
+                            onChange={e => {
+                              const checked = e.target.checked
+                              field.onChange(checked ? 'not_applicable' : 'applicable')
+                              if (checked) {
+                                form.setValue('oneLineIntroduction', '', { shouldDirty: true })
+                              }
+                            }}
+                          >
+                            해당 없음
+                          </CmsCheckbox>
+                        )}
                       />
-                    )}
-                  />
+                      <DetailInfoForm.InputsSeparator />
+                      <Controller
+                        name="oneLineIntroduction"
+                        control={form.control}
+                        render={({ field }) => (
+                          <CmsInput
+                            {...field}
+                            value={field.value ?? ''}
+                            disabled={
+                              form.watch('volunteerRecruitmentNotesNotApplicable') ===
+                              'not_applicable'
+                            }
+                            placeholder="비고를 입력해 주세요"
+                            inputSize="small"
+                            width="100%"
+                            style={{ flex: '1 1 0', minWidth: 0, width: '100%' }}
+                            className="program-detail-info-tab__notes-input"
+                          />
+                        )}
+                      />
+                    </div>
+                  ) : (
+                    <Controller
+                      name="oneLineIntroduction"
+                      control={form.control}
+                      render={({ field }) => (
+                        <CmsInput
+                          {...field}
+                          value={field.value ?? ''}
+                          placeholder="비고란을 작성하세요 (없으면 -로 입력)"
+                          inputSize="small"
+                          width="100%"
+                          className="program-detail-info-tab__notes-input"
+                        />
+                      )}
+                    />
+                  )
                 ) : undefined
               }
             />

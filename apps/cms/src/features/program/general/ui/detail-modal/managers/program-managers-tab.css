@@ -20,6 +20,11 @@
   --table-selection-column-width: 68px;
 }
 
+/* 일반 프로그램 시안: 선택 60 · No. 80 · 권한 180 · 나머지 균등 */
+.program-managers-tab .program-managers-tab__managers-table--general {
+  --table-selection-column-width: 60px;
+}
+
 /*
  * 담당자 목록: 행·셀 52px
  * cms-data-table 기본 세로 padding(12×2) + tableAction(40px) ≈ 64px → 행이 밀림

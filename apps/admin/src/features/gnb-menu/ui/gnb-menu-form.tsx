@@ -87,14 +87,14 @@ const GnbInlineNameField = memo(function GnbInlineNameField({
       className={
         isEditing
           ? 'gnb-menu-form__name-input gnb-menu-form__name-input--edit'
-          : 'gnb-menu-form__name-input gnb-menu-form__name-input--readonly'
+          : 'gnb-menu-form__name-input'
       }
       inputSize="medium"
       width="100%"
       value={localValue}
       maxLength={GNB_MENU_NAME_MAX_LENGTH}
       readOnly={!isEditing}
-      tabIndex={isEditing ? 0 : -1}
+      inlineReadOnly="text"
       onChange={e => {
         if (!isEditing) return
         const next = e.target.value

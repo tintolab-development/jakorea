@@ -44,6 +44,16 @@ describe('individual settlement review remote', () => {
     expect(params && 'memberId' in params).toBe(false)
   })
 
+  it('applicationType이 있으면 list params에 넣고, 없으면 생략한다(참여자·봉사자 모두)', () => {
+    expect(
+      buildIndividualSettlementReviewListParams({ programId: 1, applicationType: 'VOLUNTEER' })
+        .applicationType
+    ).toBe('VOLUNTEER')
+    expect(
+      'applicationType' in buildIndividualSettlementReviewListParams({ programId: 1 })
+    ).toBe(false)
+  })
+
   it('GETs list URL without instructorMemberId', async () => {
     vi.mocked(customInstance).mockResolvedValue({
       items: [

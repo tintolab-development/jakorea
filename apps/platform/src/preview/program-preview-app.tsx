@@ -1,15 +1,64 @@
 import { useEffect, useState } from 'react'
 import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import {
+  PLATFORM_PROGRAM_APPLICATION_PREVIEW_MESSAGE_TYPE,
   PLATFORM_PROGRAM_PREVIEW_MESSAGE_TYPE,
   PLATFORM_PROGRAM_PREVIEW_READY_MESSAGE_TYPE,
+  type PlatformProgramApplicationPreviewMessage,
   type PlatformProgramPreviewMessage,
   type PlatformProgramPreviewReadyMessage,
 } from '@jakorea/domain/portal/program-detail'
-import type { ProgramDetail } from '@/features/program'
+import type { ProgramApplicationFormQuery, ProgramDetail } from '@/features/program'
 import { mapPortalProgramDetail } from '@/features/program/api/mappers'
 import { ProgramDetailView } from '@/pages/programs/detail/detail-view'
+import { ProgramApplyPage } from '@/pages/programs/apply/page'
+import {
+  ProgramApplyPreviewProvider,
+  type ProgramApplyPreview,
+} from '@/pages/programs/apply/preview-context'
 import { AppLayout } from '@/widgets/layout'
+
+/** 신청 화면 미리보기 — 등록 전 프로그램이라 실제 id 대신 고정 키를 쓴다. */
+const APPLICATION_PREVIEW_PROGRAM_ID = 'preview'
+
+function isApplicationPreviewMessage(
+  data: unknown
+): data is PlatformProgramApplicationPreviewMessage {
+  if (data == null || typeof data !== 'object') return false
+  const record = data as Record<string, unknown>
+  return (
+    record.type === PLATFORM_PROGRAM_APPLICATION_PREVIEW_MESSAGE_TYPE &&
+    record.version === 1 &&
+    record.detail != null &&
+    typeof record.detail === 'object' &&
+    record.form != null &&
+    typeof record.form === 'object' &&
+    typeof record.applicationType === 'string'
+  )
+}
+
+function toApplicationPreview(
+  message: PlatformProgramApplicationPreviewMessage
+): ProgramApplyPreview | null {
+  const program = mapPortalProgramDetail(message.detail)
+  if (!program) return null
+  const formQuery: ProgramApplicationFormQuery = {
+    status: 'ready',
+    isRemoteEnabled: true,
+    bundle: {
+      option: { applicationType: message.applicationType, canApply: true },
+      form: { applicationType: message.applicationType, form: message.form, draftAnswers: {} },
+    },
+    blockedReason: null,
+    blockedMessage: null,
+    refetch: noop,
+  }
+  return {
+    programId: APPLICATION_PREVIEW_PROGRAM_ID,
+    program: { ...program, applicationType: message.applicationType },
+    formQuery,
+  }
+}
 
 function isPreviewMessage(data: unknown): data is PlatformProgramPreviewMessage {
   if (data == null || typeof data !== 'object') return false
@@ -58,12 +107,19 @@ function useBlockLinkNavigation() {
 
 function PreviewPage() {
   const [program, setProgram] = useState<ProgramDetail | null>(null)
+  const [applyPreview, setApplyPreview] = useState<ProgramApplyPreview | null>(null)
   useBlockLinkNavigation()
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.origin !== window.location.origin) return
+      if (isApplicationPreviewMessage(event.data)) {
+        setProgram(null)
+        setApplyPreview(toApplicationPreview(event.data))
+        return
+      }
       if (!isPreviewMessage(event.data)) return
+      setApplyPreview(null)
       setProgram(toPreviewProgram(event.data))
     }
     window.addEventListener('message', handleMessage)
@@ -76,7 +132,11 @@ function PreviewPage() {
 
   return (
     <AppLayout layout="full">
-      {program ? (
+      {applyPreview ? (
+        <ProgramApplyPreviewProvider value={applyPreview}>
+          <ProgramApplyPage />
+        </ProgramApplyPreviewProvider>
+      ) : program ? (
         <ProgramDetailView program={program} onBackToList={noop} onApply={noop} />
       ) : null}
     </AppLayout>

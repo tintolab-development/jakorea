@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { collectTemplatePlaceholderKeys } from '@/features/notifications/api/adapters/alimtalk-send-batch-adapters'
 import type { AlimtalkSendRecipient } from './types'
-import { validateAlimtalkSendRequest, type AlimtalkSendValidationInput } from './validate-send'
+import {
+  ALIMTALK_SEND_TIMING_REQUIRED_MESSAGE,
+  validateAlimtalkSendRequest,
+  type AlimtalkSendValidationInput,
+} from './validate-send'
 
-function recipient(
-  id: string,
-  variables?: Record<string, string>
-): AlimtalkSendRecipient {
+function recipient(id: string, variables?: Record<string, string>): AlimtalkSendRecipient {
   return {
     id,
     participationType: '',
@@ -51,7 +52,9 @@ describe('validateAlimtalkSendRequest', () => {
     expect(result.validRecipients.map(item => item.id)).toEqual(
       Array.from({ length: 8 }, (_, index) => String(index + 1))
     )
-    expect(result.confirmMessage).toContain('변수 조건이 맞지 않는 수신자 2명은 이번 발송에서 제외됩니다.')
+    expect(result.confirmMessage).toContain(
+      '변수 조건이 맞지 않는 수신자 2명은 이번 발송에서 제외됩니다.'
+    )
     expect(result.confirmMessage).toContain('조건을 충족한 수신자 8명만 발송합니다.')
     expect(result.confirmMessage).toContain('방문 안내')
     expect(result.confirmMessage).toContain('제외하고 발송할까요?')
@@ -86,30 +89,18 @@ describe('validateAlimtalkSendRequest', () => {
     const profileChanged = validateAlimtalkSendRequest(input({ senderProfileId: 99 }))
     const excludedRemoved = validateAlimtalkSendRequest(
       input({
-        recipients: [
-          recipient('1', { '방문 안내': '오전' }),
-          recipient('2'),
-        ],
+        recipients: [recipient('1', { '방문 안내': '오전' }), recipient('2')],
       })
     )
     const excludedKept = validateAlimtalkSendRequest(
       input({
-        recipients: [
-          recipient('1', { '방문 안내': '오전' }),
-          recipient('2'),
-        ],
+        recipients: [recipient('1', { '방문 안내': '오전' }), recipient('2')],
       })
     )
-    expect(first.ok && changed.ok && profileChanged.ok && excludedRemoved.ok && excludedKept.ok).toBe(
-      true
-    )
-    if (
-      !first.ok ||
-      !changed.ok ||
-      !profileChanged.ok ||
-      !excludedRemoved.ok ||
-      !excludedKept.ok
-    ) {
+    expect(
+      first.ok && changed.ok && profileChanged.ok && excludedRemoved.ok && excludedKept.ok
+    ).toBe(true)
+    if (!first.ok || !changed.ok || !profileChanged.ok || !excludedRemoved.ok || !excludedKept.ok) {
       return
     }
     expect(first.fingerprint).not.toBe(changed.fingerprint)
@@ -136,6 +127,14 @@ describe('validateAlimtalkSendRequest', () => {
     expect(result.ok).toBe(false)
     if (result.ok) return
     expect(result.alert).toContain('변수 목록을 불러오지 못했습니다. 다시 시도해 주세요.')
+  })
+
+  it('발송 시점을 고르지 않으면 발송하지 않는다', () => {
+    expect(validateAlimtalkSendRequest(input({ sendTiming: null }))).toEqual({
+      ok: false,
+      title: '필수 입력 안내',
+      alert: ALIMTALK_SEND_TIMING_REQUIRED_MESSAGE,
+    })
   })
 
   it('수신자가 없으면 발송하지 않는다', () => {
@@ -205,7 +204,12 @@ describe('validateAlimtalkSendRequest', () => {
     ]
     const placeholderKeys = collectTemplatePlaceholderKeys({
       content: '본문에는 변수 없음',
-      quickLinks: [{ name: '바로가기', destinations: { pc: '/#{알림 링크 경로}', mobile: '/#{알림 링크 경로}' } }],
+      quickLinks: [
+        {
+          name: '바로가기',
+          destinations: { pc: '/#{알림 링크 경로}', mobile: '/#{알림 링크 경로}' },
+        },
+      ],
     })
     expect([...placeholderKeys]).toEqual(['알림 링크 경로'])
     const ok = validateAlimtalkSendRequest(
@@ -234,10 +238,7 @@ describe('validateAlimtalkSendRequest', () => {
   })
 
   it('제외 대상의 입력값이 바뀌면 이전 확인 지문으로 발송할 수 없다', () => {
-    const withGap = [
-      recipient('1', { '방문 안내': '오전' }),
-      recipient('2', { '방문 안내': '' }),
-    ]
+    const withGap = [recipient('1', { '방문 안내': '오전' }), recipient('2', { '방문 안내': '' })]
     const first = validateAlimtalkSendRequest(input({ recipients: withGap }))
     const filled = validateAlimtalkSendRequest(
       input({

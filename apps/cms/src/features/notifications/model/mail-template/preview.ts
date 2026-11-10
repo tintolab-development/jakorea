@@ -104,3 +104,24 @@ function escapeHtml(value: string): string {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
 }
+
+/** 시안: 템플릿 미리보기(목록·등록/수정·발송 피커) vs 발송 화면 최종 메일 미리보기(9433:48985) */
+export const MAIL_TEMPLATE_PREVIEW_TITLE = '템플릿 미리보기'
+export const MAIL_SEND_PREVIEW_TITLE = '메일 미리보기'
+
+/**
+ * 시안「이름 | 이메일」표시용. 이름이 비었거나 이메일과 같으면(BE가 표시명 없이 주소만 줄 때) 이름은 생략.
+ */
+export function splitMailSenderNameEmail(
+  name: string | null | undefined,
+  email: string | null | undefined
+): { name: string; email: string } {
+  const trimmedEmail = email?.trim() ?? ''
+  // BE 표시명이 「이름 <메일>」·「메일 <메일>」 형태로 올 때 꺾쇠 부분은 이메일 칸과 중복이므로 제거
+  const trimmedName = (name?.trim() ?? '').replace(/\s*<[^<>]*>\s*$/, '').trim()
+  if (!trimmedName || trimmedName.toLowerCase() === trimmedEmail.toLowerCase()) {
+    return { name: '', email: trimmedEmail }
+  }
+  return { name: trimmedName, email: trimmedEmail }
+}
+

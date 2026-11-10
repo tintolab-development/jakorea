@@ -4,18 +4,26 @@ export function labelToGraphemes(label: string): string[] {
   return Array.from(label)
 }
 
-/** 발급일자 — 오늘 기준 년·월·일 (한국어) */
+/** Asia/Seoul 달력일(년·월·일). 서버 발급 일시(UTC)와 파일명 날짜를 같은 기준으로 맞춘다. */
+function seoulDateParts(date: Date): { y: string; m: string; d: string } {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date)
+  const v = Object.fromEntries(parts.map(part => [part.type, part.value]))
+  return { y: v.year ?? '', m: v.month ?? '', d: v.day ?? '' }
+}
+
+/** 발급일자 — 년·월·일 (한국어, Asia/Seoul) */
 export function formatCertificateIssueDate(date: Date = new Date()): string {
-  const y = date.getFullYear()
-  const m = date.getMonth() + 1
-  const d = date.getDate()
-  return `${y}년 ${m}월 ${d}일`
+  const { y, m, d } = seoulDateParts(date)
+  return `${y}년 ${Number(m)}월 ${Number(d)}일`
 }
 
 export function certificateIssueDateIso(date: Date = new Date()): string {
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
+  const { y, m, d } = seoulDateParts(date)
   return `${y}-${m}-${d}`
 }
 

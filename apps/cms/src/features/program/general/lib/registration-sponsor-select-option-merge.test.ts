@@ -73,9 +73,33 @@ describe('buildGeneralProgramSponsorManagerSelectOptions', () => {
       },
     })
     expect(options.map(option => option.label)).toEqual([
-      '스타벅스 | 김담당 책임 | 010-1234-5678',
+      '김담당 책임(스타벅스)',
       '미선택',
     ])
+  })
+
+  it('후원사 1곳이면 담당자 라벨에 후원사명을 붙이지 않는다', () => {
+    const options = buildGeneralProgramSponsorManagerSelectOptions({
+      isFormEdit: true,
+      selectedSponsorIds: ['1627251'],
+      sponsors: [{ id: '1627251', name: '스타벅스' }],
+      contactsBySponsorId: {
+        '1627251': [{ id: 'c1', name: '김담당', position: '책임', phone: '010-1234-5678' }],
+      },
+    })
+    expect(options.map(option => option.label)).toEqual(['김담당 책임', '미선택'])
+  })
+
+  it('직책이 없으면 이름만 노출한다', () => {
+    const options = buildGeneralProgramSponsorManagerSelectOptions({
+      isFormEdit: false,
+      selectedSponsorIds: ['1627251'],
+      sponsors: [{ id: '1627251', name: '스타벅스' }],
+      contactsBySponsorId: {
+        '1627251': [{ id: 'c1', name: '홍길동' }],
+      },
+    })
+    expect(options.map(option => option.label)).toEqual(['홍길동'])
   })
 
   it('후원사를 고르지 않으면 미선택을 붙이지 않는다', () => {

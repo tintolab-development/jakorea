@@ -81,3 +81,29 @@
 .add-participating-instructor-modal__field .cms-select {
   width: 100%;
 }
+
+/* fieldVariant="search" — Figma 03-1 Popup/Search/w600: 좌측 돋보기 prefix · 화살표 없음 */
+.add-participating-instructor-modal__member-select,
+.add-participating-instructor-modal__member-select.cms-select--clearable {
+  --cms-select-suffix-w: var(--cms-icon-size, 22px);
+}
+
+.add-participating-instructor-modal__member-select .cms-select__chevron {
+  display: none;
+}
+
+.add-participating-instructor-modal__member-select .ant-select-prefix {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-inline-end: var(--cms-control-gap, 8px);
+}
+
+.add-participating-instructor-modal__member-select .ant-select-prefix .cms-field__icon {
+  color: var(--Content-tertiary, #85969d);
+}
+
+.add-participating-instructor-modal__required {
+  margin-left: var(--spacing-4);
+  color: var(--color-required-mark, #ff4d4f);
+}

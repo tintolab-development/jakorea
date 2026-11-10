@@ -31,6 +31,12 @@ export interface LectureReportIssuancePreviewModalProps {
   open: boolean
   onClose: () => void
   context: LectureReportPreviewContext | null
+  /**
+   * 상단 영역 문구 — 생략(`default`) 시 기존(파일명 · 「제출된 강의보고서 미리보기 화면입니다.」 · [닫기]).
+   * `institution` — 일반 기관형 Figma 06-2/09: 「강의보고서」 · 「현재 화면은 미리보기 화면입니다.」 · [미리보기 닫기].
+   * 다운로드 파일명은 두 경우 모두 기존 규칙 그대로.
+   */
+  headerVariant?: 'default' | 'institution'
 }
 
 function PreviewPagePrevIcon() {
@@ -99,7 +105,9 @@ export function LectureReportIssuancePreviewModal({
   open,
   onClose,
   context,
+  headerVariant = 'default',
 }: LectureReportIssuancePreviewModalProps) {
+  const isInstitutionHeader = headerVariant === 'institution'
   const { showAlert } = useCmsAlert()
   const [currentPageIndex, setCurrentPageIndex] = useState(0)
   const [pdfLoading, setPdfLoading] = useState(false)
@@ -194,7 +202,7 @@ export function LectureReportIssuancePreviewModal({
   const actionButtons = (
     <div className="full-page-modal__actions lecture-report-issuance-preview-modal__actions">
       <CmsButton variant="secondary" size="medium" onClick={handleClose}>
-        닫기
+        {isInstitutionHeader ? '미리보기 닫기' : '닫기'}
       </CmsButton>
       <CmsButton
         variant="primary"
@@ -223,7 +231,7 @@ export function LectureReportIssuancePreviewModal({
           <header className="full-page-modal__topbar">
             <div className="full-page-modal__title lecture-report-issuance-preview-modal__title-wrap">
               <span className="full-page-modal__title-text lecture-report-issuance-preview-modal__file-name">
-                {fileName}
+                {isInstitutionHeader ? LECTURE_REPORT_DOCUMENT_TITLE : fileName}
               </span>
               <span className="lecture-report-issuance-preview-modal__badge">미리보기</span>
             </div>
@@ -240,7 +248,9 @@ export function LectureReportIssuancePreviewModal({
           <div className="full-page-modal__body">
             <div className="full-page-modal__body-header">
               <p className="full-page-modal__description lecture-report-issuance-preview-modal__description">
-                제출된 {LECTURE_REPORT_DOCUMENT_TITLE} 미리보기 화면입니다.
+                {isInstitutionHeader
+                  ? '현재 화면은 미리보기 화면입니다.'
+                  : `제출된 ${LECTURE_REPORT_DOCUMENT_TITLE} 미리보기 화면입니다.`}
               </p>
               {actionButtons}
             </div>

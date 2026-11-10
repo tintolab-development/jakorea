@@ -46,9 +46,32 @@ describe('exportPerformanceRecordsRemote', () => {
     await exportPerformanceRecordsRemote({})
 
     expect(loadSensitiveAdminFileBlob).not.toHaveBeenCalled()
-    expect(downloadBlob).toHaveBeenCalledWith(blob, 'performance_all_pall_v1.xlsx', {
-      skipAccessLog: true,
+    // 서버 영문 이름 대신 규칙 이름으로 저장한다.
+    expect(downloadBlob).toHaveBeenCalledWith(
+      blob,
+      expect.stringMatching(/^\[JA Korea\] CMS 어드민_실적데이터_\d{6}\.xlsx$/),
+      { skipAccessLog: true }
+    )
+  })
+
+  it('서버 이름이 이미 [JA Korea] 규칙이면 그 이름으로 저장한다', async () => {
+    const blob = new Blob(['xlsx'])
+    vi.mocked(axiosClient.request).mockResolvedValue({
+      status: 200,
+      data: blob,
+      headers: {
+        'content-disposition':
+          "attachment; filename*=UTF-8''%5BJA%20Korea%5D%20CMS%20%EC%96%B4%EB%93%9C%EB%AF%BC_%EC%8B%A4%EC%A0%81%EB%8D%B0%EC%9D%B4%ED%84%B0_261101.xlsx",
+      },
     })
+
+    await exportPerformanceRecordsRemote({})
+
+    expect(downloadBlob).toHaveBeenCalledWith(
+      blob,
+      '[JA Korea] CMS 어드민_실적데이터_261101.xlsx',
+      { skipAccessLog: true }
+    )
   })
 
   it('202 job 결과 파일은 sensitive-downloads(claim→stream)로 받고 client 이력은 생략한다', async () => {
