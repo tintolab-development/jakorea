@@ -1,3 +1,4 @@
+import { generateFilename } from '@/shared/utils/file-download'
 import {
   collectFormDocumentPdfPageElements,
   downloadFormDocumentPdfFromPageElements,
@@ -27,5 +28,5 @@ export async function exportLectureEvalResultsPdf(
 
 export function buildLectureEvalResultsPdfFileName(programTitle: string): string {
   const safeTitle = programTitle.trim().replace(/[\\/:*?"<>|]/g, '_') || '프로그램'
-  return `${safeTitle}_강의평가결과.pdf`
+  return generateFilename(`${safeTitle}_강의평가결과`, 'pdf')
 }

@@ -7,6 +7,7 @@ import {
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import type { SchoolDetailStudentRow } from '../model/school-detail-types'
+import { formatAsiaSeoulYymmdd } from '@/features/settlement-management/api/account-payments/settlement-form-download'
 import { PORTRAIT_CONSENT_DOCUMENT_TITLE } from './student-portrait-consent'
 
 export interface PortraitConsentDownloadContext {
@@ -54,10 +55,13 @@ export function buildPortraitConsentFilledDraft(
   }
 }
 
-export function buildPortraitConsentDownloadFileName(ctx: PortraitConsentDownloadContext): string {
-  const safeName = ctx.student.name.replace(/[/\\?%*:|"<>]/g, '_').trim() || '학생'
-  const safeSchool = ctx.schoolName.replace(/[/\\?%*:|"<>]/g, '_').trim() || '기관'
-  return `${PORTRAIT_CONSENT_DOCUMENT_TITLE}_${safeSchool}_${safeName}`
+/** 파일명: [JA Korea] 초상권 동의서_학생명_YYMMDD (빗금은 쉼표로 치환) */
+export function buildPortraitConsentDownloadFileName(
+  ctx: PortraitConsentDownloadContext,
+  now: Date = new Date()
+): string {
+  const safeName = ctx.student.name.replace(/[/\\]/g, ',').replace(/[?%*:|"<>]/g, '_').trim() || '학생'
+  return `[JA Korea] ${PORTRAIT_CONSENT_DOCUMENT_TITLE}_${safeName}_${formatAsiaSeoulYymmdd(now)}`
 }
 
 export function buildPortraitConsentDownloadContext(

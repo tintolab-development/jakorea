@@ -83,7 +83,7 @@ export function CertificateIssueCta({
   const isBusy = issueMutation.isPending || downloadMutation.isPending
   const documentLabel = portalCertificateDocumentLabel('COMPLETION')
 
-  const handleDownload = async (issueId: number) => {
+  const handleDownload = async (issueId: number, issuedAt?: string | null) => {
     if (isBusy || pendingRef.current) return
     pendingRef.current = true
     try {
@@ -92,6 +92,7 @@ export function CertificateIssueCta({
         fileName: buildCertificateDownloadFileName({
           documentLabel,
           memberName: displayName,
+          issuedAt,
         }),
       })
     } catch (error) {
@@ -222,7 +223,7 @@ export function CertificateIssueCta({
         confirmDisabled={downloadMutation.isPending}
         onConfirm={() => {
           if (completeIssueId == null) return
-          void handleDownload(completeIssueId)
+          void handleDownload(completeIssueId, completeIssuedAt)
         }}
         onDismiss={() => {
           if (downloadMutation.isPending) return

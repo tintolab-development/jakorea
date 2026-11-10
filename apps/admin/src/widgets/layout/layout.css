@@ -122,3 +122,48 @@
   > :is(.ant-table-content, .ant-table-body) {
   margin-bottom: -1px;
 }
+
+/*
+ * 0건(빈 상태 행) — 표 박스가 fill로 늘어나도 안내 행이 박스 전체를 채워 안내가 본문 세로·가로 중앙에 온다.
+ * 안내 행 아래에는 구분선·빈 칸을 두지 않는다(표 본문은 한 덩어리). 데이터가 있을 때의 규칙은 위 블록 그대로.
+ */
+.layout-content-outlet
+  > .homepage-action-guard
+  > :has(> :is(.filter-table-layout, .admin-list-card)):not(
+    :has(> :is(.filter-table-layout, .admin-list-card) ~ :is(.filter-table-layout, .admin-list-card))
+  )
+  > :is(.filter-table-layout, .admin-list-card)
+  .ant-table-wrapper.cms-data-table:has(.ant-table-placeholder)
+  .ant-table-container
+  > :is(.ant-table-content, .ant-table-body) {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0;
+}
+
+.layout-content-outlet
+  > .homepage-action-guard
+  > :has(> :is(.filter-table-layout, .admin-list-card)):not(
+    :has(> :is(.filter-table-layout, .admin-list-card) ~ :is(.filter-table-layout, .admin-list-card))
+  )
+  > :is(.filter-table-layout, .admin-list-card)
+  .ant-table-wrapper.cms-data-table:has(.ant-table-placeholder)
+  .ant-table-container
+  :is(.ant-table-content, .ant-table-body)
+  > table {
+  flex: 1 0 auto;
+}
+
+.layout-content-outlet
+  > .homepage-action-guard
+  > :has(> :is(.filter-table-layout, .admin-list-card)):not(
+    :has(> :is(.filter-table-layout, .admin-list-card) ~ :is(.filter-table-layout, .admin-list-card))
+  )
+  > :is(.filter-table-layout, .admin-list-card)
+  .ant-table-wrapper.cms-data-table
+  .ant-table-tbody
+  > tr.ant-table-placeholder
+  > td {
+  border-bottom: none !important;
+}

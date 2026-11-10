@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { fileNameFromContentDisposition } from './file-download'
+import { fileNameFromContentDisposition, sanitizeDownloadFileName } from './file-download'
 
 vi.mock('@/entities/download-log/api/download-log-service', () => ({
   recordFileDownload: vi.fn(),
@@ -39,5 +39,36 @@ describe('fileNameFromContentDisposition', () => {
     expect(fileNameFromContentDisposition(null, fallback)).toBe(fallback)
     expect(fileNameFromContentDisposition(undefined, fallback)).toBe(fallback)
     expect(fileNameFromContentDisposition('attachment', fallback)).toBe(fallback)
+  })
+})
+
+describe('sanitizeDownloadFileName', () => {
+  it('/를 ,로 바꾸고 한글은 유지한다', () => {
+    expect(sanitizeDownloadFileName('버그/이슈 관리')).toBe('버그,이슈 관리')
+    expect(sanitizeDownloadFileName('[JA Korea] CMS 어드민_버그/이슈 이력_261110.xlsx')).toBe(
+      '[JA Korea] CMS 어드민_버그,이슈 이력_261110.xlsx'
+    )
+  })
+
+  it('Content-Disposition 파일명에도 적용한다', () => {
+    const header = `attachment; filename*=UTF-8''${encodeURIComponent('버그/이슈 이력.xlsx')}`
+    expect(fileNameFromContentDisposition(header, 'x.xlsx')).toBe('버그,이슈 이력.xlsx')
+  })
+})
+
+describe('generateFilename', () => {
+  it('xlsx는 [JA Korea] CMS 어드민_파일 이름_YYMMDD (서울 기준)', async () => {
+    const { generateFilename } = await import('./file-download')
+    // 2026-11-10 08:00 KST = 2026-11-09 23:00 UTC
+    expect(generateFilename('교재 목록', 'xlsx', new Date('2026-11-09T23:00:00Z'))).toBe(
+      '[JA Korea] CMS 어드민_교재 목록_261110.xlsx'
+    )
+  })
+
+  it('pdf·zip은 도메인 없이 [JA Korea] 파일 이름_YYMMDD', async () => {
+    const { generateFilename } = await import('./file-download')
+    expect(generateFilename('강의보고서_일괄', 'zip', new Date('2026-11-10T03:00:00Z'))).toBe(
+      '[JA Korea] 강의보고서_일괄_261110.zip'
+    )
   })
 })

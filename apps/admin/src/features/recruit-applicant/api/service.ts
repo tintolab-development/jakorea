@@ -75,6 +75,6 @@ export async function exportRecruitApplicantsService(filter: RecruitApplicantLis
     await downloadRemoteLogExcel({
         url: '/api/admin/careers/talent-applications/export',
         params: toTalentApplicationExportParams(filter),
-        filenameFallback: defaultXlsxFilename('인재채용_신청_목록'),
+        filenameFallback: defaultXlsxFilename('인재채용 신청 목록'),
     });
 }

@@ -40,7 +40,7 @@ const TONE_FILL: Record<UjatEducationProgressSummaryTone, string> = {
 
 export function buildEducationProgressSummaryExcelFilename(now: Date = new Date()): string {
   const ymd = KST_YMD_FORMATTER.format(now).replace(/-/g, '')
-  return `교육진행요약_${ymd}.xlsx`
+  return `[JA Korea] CMS 어드민_교육진행요약_${ymd.slice(2)}.xlsx`
 }
 
 function excelJsBufferToArrayBuffer(buffer: ExcelJS.Buffer): ArrayBuffer {

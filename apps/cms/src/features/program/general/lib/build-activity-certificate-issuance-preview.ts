@@ -54,12 +54,12 @@ export function buildActivityCertificateInitialStringValues(
   }
 }
 
-/** 파일명 포맷: 활동인증서_김서연_260605 */
+/** 파일명 포맷: [JA Korea] 활동인증서_김서연_260605 (빗금은 쉼표로 치환) */
 export function buildActivityCertificateFileName(participantName: string, date = new Date()): string {
   const y = String(date.getFullYear()).slice(2)
   const m = String(date.getMonth() + 1).padStart(2, '0')
   const d = String(date.getDate()).padStart(2, '0')
-  return `${ACTIVITY_CERTIFICATE_DOCUMENT_TITLE}_${participantName}_${y}${m}${d}`
+  return `[JA Korea] ${ACTIVITY_CERTIFICATE_DOCUMENT_TITLE}_${participantName.replace(/[/\\]/g, ',')}_${y}${m}${d}`
 }
 
 export function buildActivityCertificateParticipantInfoForVolunteer(

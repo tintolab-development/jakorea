@@ -23,7 +23,8 @@ export function toUjatDocumentFileDateToken(dateLabel: string | undefined): stri
 export function buildUjatDocumentFileName(target: UjatDocumentViewerTarget): string {
   const typeLabel = target.docType === 'plan' ? '교육계획서' : '교육일지'
   const dateToken = toUjatDocumentFileDateToken(target.submittedDateLabel)
-  return [`UJAT ${typeLabel}`, target.regionLabel, target.volunteerName, dateToken]
+  const name = [`UJAT ${typeLabel}`, target.regionLabel, target.volunteerName, dateToken]
     .filter((part): part is string => Boolean(part?.trim()))
     .join('_')
+  return `[JA Korea] ${name.replace(/[/\\]/g, ',')}`
 }

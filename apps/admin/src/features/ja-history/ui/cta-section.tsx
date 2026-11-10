@@ -126,6 +126,7 @@ export function CtaSection({ cta }: { cta: JaHistoryCta }) {
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="타이틀"
+            required={editing}
             view={<HistoryCopy value={cta.title} />}
             edit={
               <InlineText
@@ -142,6 +143,7 @@ export function CtaSection({ cta }: { cta: JaHistoryCta }) {
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="서브 텍스트"
+            required={editing}
             view={<HistoryCopy value={cta.body} />}
             edit={
               <InlineText
@@ -158,6 +160,7 @@ export function CtaSection({ cta }: { cta: JaHistoryCta }) {
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="이미지"
+            required={editing}
             view={<MediaPreview media={cta.image} size="cta" />}
             edit={
               /* Figma 2118:134439 Table / Common / Cell / File — 미리보기 72×72 · 파일명 옆 삭제 X · 파일 추가+안내 */
@@ -180,15 +183,15 @@ export function CtaSection({ cta }: { cta: JaHistoryCta }) {
                   onFilesChange={files => {
                     void handleFilesChange(files)
                   }}
-                  // CTA 이미지는 삭제 기능이 없다. 새로 고른 파일만 취소해 저장된 이미지로 되돌린다.
-                  onRemoveFile={
-                    imageFile
-                      ? () => {
-                          setDraft(prev => ({ ...prev, image: cta.image }))
-                          setImageFile(null)
-                        }
-                      : undefined
-                  }
+                  // 공통 삭제 아이콘 노출. 백엔드가 CTA 이미지 삭제를 지원하지 않아(imageAssetId 생략 = 현재 이미지 유지)
+                  // 화면 입력값만 비우며, 새 파일을 고르지 않고 저장하면 서버의 기존 이미지가 유지된다.
+                  onRemoveFile={() => {
+                    setDraft(prev => ({
+                      ...prev,
+                      image: { ...prev.image, url: '', fileName: '', assetId: undefined },
+                    }))
+                    setImageFile(null)
+                  }}
                 />
               </div>
             }

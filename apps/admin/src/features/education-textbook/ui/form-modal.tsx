@@ -2,7 +2,8 @@
  * 교재 등록 · 상세 · 수정 모달
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import type { TextAreaRef } from 'antd/es/input/TextArea'
 import dayjs from 'dayjs'
 import 'dayjs/locale/ko'
 import { DetailInfoForm } from '@jakorea/form-template-runtime'
@@ -216,6 +217,7 @@ function TextbookFormBody({
   const { showAlert } = useCmsAlert()
   useResizeAnchoredModal(open)
   const isView = mode === 'view'
+  const descriptionRef = useRef<TextAreaRef>(null)
   const isCreate = mode === 'create'
   const canEdit = mode === 'create' || mode === 'edit'
 
@@ -225,6 +227,16 @@ function TextbookFormBody({
   const [educationEffect, setEducationEffect] = useState('')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
+
+  // 교재 설명: 입력된 줄바꿈·길이에 맞춰 수정 화면 높이를 맞춘다 (CSS 변수 → textarea height)
+  useLayoutEffect(() => {
+    const textarea = descriptionRef.current?.resizableTextArea?.textArea
+    const root = textarea?.closest<HTMLElement>('.cms-textarea')
+    if (!textarea || !root || textarea.style.height) return // 사용자가 직접 리사이즈한 경우 유지
+    root.style.setProperty('--textbook-desc-fit', '20px')
+    const fit = Math.min(Math.max(textarea.scrollHeight, 20), 240)
+    root.style.setProperty('--textbook-desc-fit', `${fit}px`)
+  }, [description, isView, open])
   const [thumbnailUrl, setThumbnailUrl] = useState('')
   const [thumbnailFileName, setThumbnailFileName] = useState('')
   const [thumbnailFile, setThumbnailFile] = useState<File | undefined>()
@@ -689,6 +701,7 @@ function TextbookFormBody({
                   }
                   edit={
                     <CmsTextArea
+                      ref={descriptionRef}
                       className="education-textbook-form-modal__desc-input"
                       inputSize="small"
                       width="100%"
