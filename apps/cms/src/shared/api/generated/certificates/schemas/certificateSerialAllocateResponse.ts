@@ -16,4 +16,6 @@ export interface CertificateSerialAllocateResponse {
   issueId?: number;
   /** 호환 필드. 발급마다 새 번호를 쓰므로 정상 응답은 false */
   reused?: boolean;
+  /** certificate_issue 발급 일시. 기존 발급 건을 다시 받으면 최초 발급 일시입니다. PDF 발급일과 다운로드 파일명 날짜(YYMMDD, Asia/Seoul)에 사용합니다. */
+  issuedAt?: string | null;
 }

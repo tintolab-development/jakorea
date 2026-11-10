@@ -23,6 +23,7 @@ export * from './participantRegisterCandidatesParams';
 export * from './previousJaProgramRequest';
 export * from './programParticipantRegisterCandidateResponse';
 export * from './ujat1365RegistrationFormParams';
+export * from './ujat1365RegistrationFormRequest';
 export * from './ujat1365RegistrationFormResponse';
 export * from './ujat1365SemesterRegistrationFormCell';
 export * from './ujat1365SemesterRegistrationFormCellStatus';
