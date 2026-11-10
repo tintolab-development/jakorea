@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { alimtalkSendRecipientTypeLabel } from '@/features/notifications/model/alimtalk-send/recipients'
@@ -9,6 +10,8 @@ import { CmsInput } from '@/shared/ui'
 const TABLE_MAX_HEIGHT = 400
 const TABLE_HEADER_HEIGHT = 54
 const TABLE_ROW_HEIGHT = 54
+/** 시안(알림톡 발송 2. 수신자 설정) 체크박스 열 60 — 이 표 전용 */
+const CHECKBOX_COLUMN_WIDTH = 60
 
 type RecipientTableProps = {
   recipients: AlimtalkSendRecipient[]
@@ -33,11 +36,22 @@ export function RecipientTable({
 }: RecipientTableProps) {
   const needScroll = recipients.length * TABLE_ROW_HEIGHT + TABLE_HEADER_HEIGHT > TABLE_MAX_HEIGHT
 
-  const showVariableColumn = recipients.some(recipient => {
-    const manualCount = manualKeysByRecipientId?.[recipient.id]?.length ?? 0
-    const blockedCount = blockedKeysByRecipientId?.[recipient.id]?.length ?? 0
-    return manualCount > 0 || blockedCount > 0
-  })
+  /** 수신자별 직접 입력·서버 전용 변수 키 합집합 — 시안대로 변수마다 열 하나 (첫 등장 순서) */
+  const variableKeys = useMemo(() => {
+    const keys: string[] = []
+    const seen = new Set<string>()
+    for (const recipient of recipients) {
+      for (const key of [
+        ...(manualKeysByRecipientId?.[recipient.id] ?? []),
+        ...(blockedKeysByRecipientId?.[recipient.id] ?? []),
+      ]) {
+        if (seen.has(key)) continue
+        seen.add(key)
+        keys.push(key)
+      }
+    }
+    return keys
+  }, [blockedKeysByRecipientId, manualKeysByRecipientId, recipients])
 
   const columns: ColumnsType<AlimtalkSendRecipient> = [
     {
@@ -52,7 +66,6 @@ export function RecipientTable({
     {
       title: typeColumnTitle,
       key: 'type',
-      width: 140,
       align: 'center',
       render: (_value, record) => alimtalkSendRecipientTypeLabel(record) || '-',
     },
@@ -73,38 +86,29 @@ export function RecipientTable({
     },
   ]
 
-  if (showVariableColumn) {
+  for (const variableKey of variableKeys) {
     columns.push({
-      title: '변수값',
-      key: 'variables',
-      width: 280,
+      title: variableKey,
+      key: `variable:${variableKey}`,
+      align: 'center',
+      className: 'alimtalk-send-recipient-table__variable-cell',
       render: (_value, record) => {
-        const manualKeys = manualKeysByRecipientId?.[record.id] ?? []
-        const blockedKeys = blockedKeysByRecipientId?.[record.id] ?? []
-        if (manualKeys.length === 0 && blockedKeys.length === 0) {
+        if (blockedKeysByRecipientId?.[record.id]?.includes(variableKey)) {
+          return <span className="alimtalk-send-recipient-table__variable-blocked">서버 전용</span>
+        }
+        if (!manualKeysByRecipientId?.[record.id]?.includes(variableKey)) {
           return '자동 입력'
         }
         return (
-          <div className="alimtalk-send-recipient-table__variables">
-            {blockedKeys.map(key => (
-              <p key={key} className="alimtalk-send-recipient-table__variable-blocked">
-                {key}: 서버 전용
-              </p>
-            ))}
-            {manualKeys.map(key => (
-              <label key={key} className="alimtalk-send-recipient-table__variable">
-                <span className="alimtalk-send-recipient-table__variable-label">{key}</span>
-                <CmsInput
-                  inputSize="small"
-                  width="100%"
-                  allowClear={false}
-                  value={record.variables?.[key] ?? ''}
-                  placeholder="변수값을 입력해 주세요"
-                  onChange={event => onVariableChange?.(record.id, key, event.target.value)}
-                />
-              </label>
-            ))}
-          </div>
+          <CmsInput
+            inputSize="small"
+            width="100%"
+            allowClear={false}
+            aria-label={variableKey}
+            value={record.variables?.[variableKey] ?? ''}
+            placeholder="변수값을 입력해 주세요"
+            onChange={event => onVariableChange?.(record.id, variableKey, event.target.value)}
+          />
         )
       },
     })
@@ -117,11 +121,13 @@ export function RecipientTable({
       dataSource={recipients}
       rowKey="id"
       pagination={false}
+      // 시안에 수신자 0명 빈 상태 그림이 없다 — 헤더만 보인다
+      emptyText={null}
       scroll={needScroll ? { y: TABLE_MAX_HEIGHT - TABLE_HEADER_HEIGHT } : undefined}
       rowSelection={{
         selectedRowKeys: selectedIds,
         onChange: keys => onSelectedIdsChange(keys.map(String)),
-        columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+        columnWidth: CHECKBOX_COLUMN_WIDTH,
       }}
     />
   )

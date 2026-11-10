@@ -1,7 +1,8 @@
+/* 시안 Popup / Table / w1000 / 알림톡 상세 — 1000×808 · padding 24 30 34 · radius 16 · 타이틀↔본문 24 · 좌우 갭 26 */
 .alimtalk-template-preview-modal.content-modal.teal-header-modal.ant-modal .ant-modal-content {
   width: 1000px;
-  padding: 26px 30px 34px;
-  border-radius: 12px;
+  padding: 24px 30px 34px;
+  border-radius: 16px;
   background: #fff;
   box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35);
   max-height: none;
@@ -13,13 +14,13 @@
 
 .alimtalk-template-preview-modal.content-modal.content-modal--title-body-gap-always
   .teal-header-modal__body {
-  padding-top: 30px;
+  padding-top: 24px;
 }
 
 .alimtalk-template-preview {
   display: flex;
   align-items: stretch;
-  gap: 20px;
+  gap: 26px;
   width: 100%;
 }
 
@@ -28,19 +29,43 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 26px;
 }
 
+/* 시안 Table / Vertical / Cell / Small — 라벨 140 · 행 min-height 44 · 셀 padding 4×12 */
+.alimtalk-template-preview__info .detail-info-form__field {
+  grid-template-columns: 140px minmax(0, 1fr);
+  min-height: 44px;
+}
+
+.alimtalk-template-preview__info .detail-info-form__field-label {
+  width: 140px;
+  min-width: 140px;
+  max-width: 140px;
+  min-height: 44px;
+  padding: 4px 12px;
+}
+
+.alimtalk-template-preview__info .detail-info-form__field-content {
+  min-height: 44px;
+  padding: 4px 12px;
+}
+
+/* 시안: 좌측 열 하단 왼쪽 정렬 [닫기][사용하기] 가로 배치 · 버튼 간격 8 */
 .alimtalk-template-preview__actions-wrap {
   margin-top: auto;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 8px;
 }
 
 .alimtalk-template-preview__actions {
-  justify-content: flex-end;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
 }
 
 .alimtalk-template-preview__unusable-reason {
@@ -51,7 +76,7 @@
   font-size: 13px;
   font-weight: 500;
   line-height: 150%;
-  text-align: right;
+  text-align: left;
   opacity: 0.72;
 }
 
@@ -59,16 +84,16 @@
   margin: 0;
   color: rgba(61, 61, 61, 0.6);
   font-family: Pretendard, var(--font-family-primary), sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
 }
 
 .alimtalk-template-preview__link {
-  color: var(--color-link, #0070e7);
+  color: var(--Content-link, #0070e7);
   font-family: Pretendard, var(--font-family-primary), sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
@@ -80,3 +105,35 @@
   text-underline-position: from-font;
 }
 
+.alimtalk-template-preview__link:hover {
+  color: var(--Content-link, #0070e7);
+}
+
+/* 시안 폰 목업 332×690 (padding 좌우 14) — 공용 프리뷰(369×777)를 690/777 로 축소 */
+.alimtalk-template-preview__phone {
+  display: flex;
+  flex: 0 0 360px;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+  width: 360px;
+  padding: 0 14px;
+}
+
+.alimtalk-template-preview__phone-fit {
+  position: relative;
+  width: 332px;
+  height: 690px;
+  overflow: hidden;
+}
+
+.alimtalk-template-preview__phone-fit .alimtalk-phone-preview {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  flex: none;
+  width: 369px;
+  height: 777px;
+  transform: translate(-50%, -50%) scale(calc(690 / 777));
+  transform-origin: center center;
+}

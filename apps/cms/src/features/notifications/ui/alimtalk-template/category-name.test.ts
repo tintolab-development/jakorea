@@ -7,8 +7,8 @@ describe('sanitizeCategoryNameInput', () => {
     expect(sanitizeCategoryNameInput('Abcxyz')).toBe('Abcxyz')
   })
 
-  it('공백·특수문자는 제거한다', () => {
-    expect(sanitizeCategoryNameInput('안내 공지!')).toBe('안내공지')
+  it('공백은 유지하고 특수문자는 제거한다', () => {
+    expect(sanitizeCategoryNameInput('안내 공지!')).toBe('안내 공지')
     expect(sanitizeCategoryNameInput('foo@bar.com')).toBe('foobarcom')
   })
 })
@@ -17,6 +17,7 @@ describe('isValidCategoryName', () => {
   it('허용 문자만 있으면 true', () => {
     expect(isValidCategoryName('서비스이용')).toBe(true)
     expect(isValidCategoryName('Notice_01-A')).toBe(true)
+    expect(isValidCategoryName('전체 공지')).toBe(true)
   })
 
   it('빈 값·공백만이면 false', () => {

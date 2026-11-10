@@ -14,6 +14,8 @@ import { validateNotificationScheduledAt } from '@/features/notifications/model/
 
 export const ALIMTALK_SEND_CONFIRM_MESSAGE = '해당 내용으로 알림톡을 발송하시겠습니까?'
 
+export const ALIMTALK_SEND_TIMING_REQUIRED_MESSAGE = '발송 시점을 선택해 주세요.'
+
 export const ALIMTALK_SEND_STATE_CHANGED_MESSAGE =
   '수신자 또는 변수값이 변경되었습니다. 발송 내용을 다시 확인해 주세요.'
 
@@ -24,7 +26,8 @@ export type AlimtalkSendValidationInput = {
   templateId?: string
   templateName?: string
   approvalStatus?: string | null
-  sendTiming: 'immediate' | 'scheduled'
+  /** null = 발송 시점 미선택 */
+  sendTiming: 'immediate' | 'scheduled' | null
   scheduledAt: string | null
   programId?: string
   recipients: AlimtalkSendRecipient[]
@@ -95,6 +98,9 @@ export function validateAlimtalkSendRequest(
       title: '안내',
       alert: '카카오 승인이 완료되지 않은 템플릿은 발송할 수 없습니다.',
     }
+  }
+  if (!input.sendTiming) {
+    return { ok: false, title: '필수 입력 안내', alert: ALIMTALK_SEND_TIMING_REQUIRED_MESSAGE }
   }
   const scheduleError = validateNotificationScheduledAt({
     sendTiming: input.sendTiming,

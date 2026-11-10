@@ -15,7 +15,6 @@ import type {
   AlimtalkSendRecipientSearchParams,
 } from '@/features/notifications/model/alimtalk-send/types'
 import {
-  ALIMTALK_PROGRAM_SELECTED_DIRECT_GUIDANCE,
   ALIMTALK_SEND_MEMBER_TYPE_OPTIONS,
   ALIMTALK_SEND_PARTICIPATION_TYPE_OPTIONS,
   alimtalkSendRecipientTypeColumnTitle,
@@ -97,16 +96,21 @@ import { ContentPanel } from './content-panel'
 import { SendRequestCompletedModal } from '@/features/notifications/ui/shared/send-request-completed-modal'
 import { showNotificationSendErrorAlert } from '@/features/notifications/ui/shared/show-notification-send-request-failed-alert'
 import { RecipientManualModal } from '@/features/notifications/ui/shared/recipient-manual-modal'
-import { RecipientSelectModal } from '@/features/notifications/ui/shared/recipient-select-modal'
+import {
+  RecipientSelectModal,
+  SEND_RECIPIENT_PICKER_EMPTY_MEMBERS,
+  SEND_RECIPIENT_PICKER_EMPTY_PROGRAM,
+} from '@/features/notifications/ui/shared/recipient-select-modal'
 import { TemplateSelectField } from '@/features/notifications/ui/shared/template-select-field'
 import { RecipientTable } from './recipient-table'
 import '@/features/notifications/ui/shared/notification-fullpage-modal.css'
 import './fullpage-modal.css'
 import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
-const EMPTY_HINT = '발신 프로필/템플릿을 먼저 선택해 주세요.'
+const EMPTY_HINT = '발신 프로필/템플릿을 먼저 선택해 주세요'
+const EMPTY_HINT_VIEW = <span className="alimtalk-send-fullpage__empty-hint">{EMPTY_HINT}</span>
 const RECIPIENT_PROFILE_HINT = '발신 프로필을 먼저 선택해 주세요.'
-const EMPTY_SECTION_TITLE = '발신 프로필을 먼저 선택해 주세요.'
+const EMPTY_SECTION_TITLE = '발신 프로필/템플릿을 먼저 선택해 주세요.'
 const EMPTY_SECTION_DESCRIPTION = '항목이 선택되면 이곳에 목록이 표시됩니다.'
 const UNSELECTED_CONTENT =
   '알림톡은 미리 승인 받은 템플릿만 사용 가능합니다. 템플릿 제목을 선택하면 내용이 표시됩니다.'
@@ -172,7 +176,8 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
   const [programId, setProgramId] = useState<string | undefined>(undefined)
   const [templateId, setTemplateId] = useState<string | undefined>()
   const [senderProfileKey, setSenderProfileKey] = useState<string | undefined>()
-  const [sendTiming, setSendTiming] = useState<'immediate' | 'scheduled'>('immediate')
+  /** 시안: 발송 시점 기본 미선택 */
+  const [sendTiming, setSendTiming] = useState<'immediate' | 'scheduled' | null>(null)
   const [scheduledAt, setScheduledAt] = useState<Dayjs | null>(null)
   const [recipients, setRecipients] = useState<AlimtalkSendRecipient[]>([])
   const [selectedRecipientIds, setSelectedRecipientIds] = useState<string[]>([])
@@ -382,7 +387,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     idempotencyKeyRef.current = createIdempotencyKey()
     setProgramId(undefined)
     setTemplateId(initialTemplateId)
-    setSendTiming('immediate')
+    setSendTiming(null)
     setScheduledAt(null)
     setRecipients([])
     setSelectedRecipientIds([])
@@ -548,6 +553,9 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
   }
 
   const canConfigureRecipients = Boolean(selectedSender) && canLoadProgramScoped
+  /** 시안(6289:96144): 발신 프로필·템플릿을 고르기 전에는 안내 블록, 고른 뒤에는 수신자 표 */
+  const showRecipientTable =
+    canConfigureRecipients && (Boolean(selectedTemplate) || recipients.length > 0)
 
   const handleSelectTemplate = (template: AlimtalkTemplateItem) => {
     setTemplateId(template.id)
@@ -629,7 +637,8 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
         templateId: draft.templateId,
         programId: draft.programId,
         scheduledAt: resolveScheduledAtForCreateRequest({
-          sendTiming: draft.sendTiming,
+          // validateAlimtalkSendRequest 통과 시 sendTiming은 항상 선택된 상태
+          sendTiming: draft.sendTiming ?? 'immediate',
           scheduledAt: draft.scheduledAt,
         }),
         senderKey: draft.senderKey,
@@ -668,7 +677,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
         title="알림톡 발송"
         size="full"
         hideHeader
-        className="notification-fullpage-modal alimtalk-send-fullpage-modal teal-header-modal--full"
+        className="notification-fullpage-modal notification-fullpage-modal--send alimtalk-send-fullpage-modal teal-header-modal--full"
       >
         <div className="notification-fullpage-modal__shell">
           <header className="notification-fullpage-modal__title-row">
@@ -679,7 +688,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
               onClick={onClose}
               aria-label="닫기"
             >
-              <ModalCloseIcon />
+              <ModalCloseIcon tone="white" />
             </button>
           </header>
 
@@ -754,7 +763,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                               setSenderProfileKey(typeof value === 'string' ? value : undefined)
                             }
                             options={senderOptions.map(({ label, value }) => ({ label, value }))}
-                            style={{ width: '100%' }}
+                            style={{ width: 200 }}
                           />
                         }
                       />
@@ -774,7 +783,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                             getTemplateUnusableReason={getTemplateUnusableReason}
                             showUnusableReasonInline
                             isUseEnabled={isAlimtalkTemplateApproved}
-                            useButtonLabel="템플릿 사용"
+                            useButtonLabel="사용하기"
                             onBeforeUse={template => {
                               if (!isAlimtalkTemplateApproved(template)) {
                                 showAlert({
@@ -806,7 +815,13 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                       <DetailInfoForm.Field
                         label="발송 시점"
                         required
-                        view={sendTiming === 'immediate' ? '즉시 발송' : '예약 발송'}
+                        view={
+                          sendTiming === 'immediate'
+                            ? '즉시 발송'
+                            : sendTiming === 'scheduled'
+                              ? '예약 발송'
+                              : '-'
+                        }
                         edit={
                           <SendScheduleField
                             className="alimtalk-send-fullpage__timing"
@@ -855,24 +870,13 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                       </CmsButton>
                     </div>
                   </div>
-                  {!isWithoutProgram ? (
-                    <p className="alimtalk-send-fullpage__variable-hint">
-                      {ALIMTALK_PROGRAM_SELECTED_DIRECT_GUIDANCE}
-                    </p>
-                  ) : null}
                   {candidateNotice ? (
                     <p className="alimtalk-send-fullpage__variable-hint" role="alert">
                       {candidateNotice}
                     </p>
                   ) : null}
-                  {canConfigureRecipients ? (
+                  {showRecipientTable ? (
                     <>
-                      {directManualKeys.length > 0 ? (
-                        <p className="alimtalk-send-fullpage__variable-hint">
-                          직접 입력 변수는 수신자마다 값을 넣어야 합니다. 값이 없으면 해당 수신자는
-                          발송할 수 없습니다.
-                        </p>
-                      ) : null}
                       <RecipientTable
                         recipients={recipients}
                         selectedIds={selectedRecipientIds}
@@ -908,7 +912,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                         view={
                           selectedTemplate
                             ? ALIMTALK_MESSAGE_TYPE_LABEL[selectedTemplate.messageType]
-                            : EMPTY_HINT
+                            : EMPTY_HINT_VIEW
                         }
                       />
                       <DetailInfoForm.Field
@@ -916,7 +920,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                         view={
                           selectedTemplate
                             ? ALIMTALK_EMPHASIS_TYPE_LABEL[selectedTemplate.emphasisType]
-                            : EMPTY_HINT
+                            : EMPTY_HINT_VIEW
                         }
                       />
                     </DetailInfoForm.Row>
@@ -928,7 +932,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                             ? selectedTemplate.isSecurityTemplate
                               ? '예'
                               : '설정 안 함'
-                            : EMPTY_HINT
+                            : EMPTY_HINT_VIEW
                         }
                       />
                       <DetailInfoForm.Field
@@ -938,7 +942,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                             ? withProgramDetailTdDivider(
                                 categoryPathNames(categories, selectedTemplate.categoryId)
                               )
-                            : EMPTY_HINT
+                            : EMPTY_HINT_VIEW
                         }
                       />
                     </DetailInfoForm.Row>
@@ -994,6 +998,11 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
         candidates={candidateItems}
         initialSelected={recipientPrivacy.failure ? [] : recipients}
         resetKey={`${recipientTypeMode}:${recipientPrivacy.failure ?? ''}`}
+        emptyCopy={
+          isWithoutProgram
+            ? SEND_RECIPIENT_PICKER_EMPTY_MEMBERS
+            : SEND_RECIPIENT_PICKER_EMPTY_PROGRAM
+        }
         statusMessage={candidateNotice}
         selectionBlocked={recipientPrivacy.blockSelection || candidatesQuery.isError}
         loading={candidatesQuery.isFetching && !candidatesQuery.isError}
@@ -1093,7 +1102,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       />
       <ConfirmModal
         open={sendConfirmOpen}
-        title="알림톡 발송"
+        title="알림톡 발송 안내"
         content={sendConfirmMessage}
         confirmText="발송"
         cancelText="취소"

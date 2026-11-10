@@ -5,3 +5,18 @@
 .category-name-modal .content-modal__footer-actions {
   gap: 8px;
 }
+
+/* 시안 Table / Vertical / Cell / Small — 라벨 180 · 행 min-height 44 · 값 셀 padding 10 (입력 36) */
+.category-name-modal__content .detail-info-form__field {
+  min-height: 44px;
+}
+
+.category-name-modal__content .detail-info-form__field-label {
+  min-height: 44px;
+  padding: 4px 12px;
+}
+
+.category-name-modal__content .detail-info-form__field-content {
+  min-height: 44px;
+  padding: 10px;
+}

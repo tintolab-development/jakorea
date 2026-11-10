@@ -1,3 +1,8 @@
+/* 시안 체크박스 열 60 — 이 표 전용 (공통 선택 열 80) */
+.alimtalk-send-recipient-table.cms-data-table {
+  --table-selection-column-width: 60px;
+}
+
 .alimtalk-send-recipient-table.cms-data-table .ant-table-container {
   max-height: 400px;
   overflow-x: hidden;
@@ -8,27 +13,18 @@
   overflow-x: hidden;
 }
 
-.alimtalk-send-recipient-table__variables {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  text-align: left;
+/* 시안: 변수 열 셀 안 입력(h36) · 패딩 12 → 행 60 */
+.alimtalk-send-recipient-table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.alimtalk-send-recipient-table__variable-cell {
+  height: 60px !important;
+  padding: 12px !important;
 }
 
-.alimtalk-send-recipient-table__variable {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.alimtalk-send-recipient-table__variable-label,
 .alimtalk-send-recipient-table__variable-blocked {
   margin: 0;
   font-size: var(--font-size-12, 12px);
   line-height: 1.4;
-  color: var(--color-text-body);
-}
-
-.alimtalk-send-recipient-table__variable-blocked {
   color: var(--color-text-secondary, #667085);
 }
