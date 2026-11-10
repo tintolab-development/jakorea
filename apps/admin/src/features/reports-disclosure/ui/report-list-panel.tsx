@@ -51,6 +51,8 @@ import {
   FilterTableLayout,
 } from '@/shared/ui'
 
+import { downloadFile } from '@/shared/lib/file-download'
+import { toRuleDownloadFileName } from '@/shared/lib/sanitize-download-file-name'
 import './report-list.css'
 
 type PendingFilters = {
@@ -318,18 +320,26 @@ export function ReportListPanel({ kind }: Props) {
             <a
               className="rd-list__file-link"
               href={record.attachmentUrl || '#'}
-              download={record.attachmentFileName}
+              download={toRuleDownloadFileName(record.attachmentFileName)}
               onClick={e => {
+                e.preventDefault()
                 if (
                   !record.attachmentUrl ||
                   record.attachmentUrl === 'data:application/pdf;base64,'
                 ) {
-                  e.preventDefault()
                   showAlert({
                     title: '미리보기',
                     content: '샘플 첨부파일입니다. 등록·수정 시 PDF를 업로드하면 다운로드됩니다.',
                   })
+                  return
                 }
+                // 다른 출처 URL은 download 속성이 무시되므로 받아서 규칙 이름으로 저장한다(공지 첨부와 동일).
+                void downloadFile(record.attachmentFileName!, record.attachmentUrl).catch(() => {
+                  showAlert({
+                    title: '다운로드 실패',
+                    content: '첨부파일 다운로드에 실패했습니다. 다시 시도해 주세요.',
+                  })
+                })
               }}
             >
               {record.attachmentFileName}

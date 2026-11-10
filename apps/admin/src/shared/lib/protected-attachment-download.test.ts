@@ -121,7 +121,8 @@ describe('downloadHomepageProtectedAttachment', () => {
       })
     )
     expect(request.mock.calls[0]?.[0]?.method).not.toBe('GET')
-    expect(anchor.download).toBe('자기소개.pdf')
+    // 업로드 원본도 규칙 이름: [JA Korea] {원본}_YYMMDD.확장자
+    expect(anchor.download).toMatch(/^\[JA Korea\] 자기소개_\d{6}\.pdf$/)
     expect(click).toHaveBeenCalled()
     expect(request.mock.calls[0]?.[0]).not.toEqual(
       expect.objectContaining({ params: expect.anything() })

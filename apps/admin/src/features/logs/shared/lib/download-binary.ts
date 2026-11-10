@@ -4,7 +4,7 @@
 
 import { axiosInstance } from '@/shared/instance/axios-instance'
 import { resolveLogExcelBytes } from './parse-arraybuffer-json'
-import { sanitizeDownloadFileName } from '@/shared/lib/sanitize-download-file-name'
+import { sanitizeDownloadFileName, toRuleDownloadFileName } from '@/shared/lib/sanitize-download-file-name'
 
 /** 로그 엑셀 내보내기 — 인스턴스 기본 Accept: application/json 이면 Spring이 xlsx를 406으로 거절한다 */
 export const LOG_EXPORT_ACCEPT =
@@ -74,7 +74,7 @@ export function downloadBinaryFile(options: {
   filenameFallback: string
   contentDisposition?: string
 }): void {
-  const filename = sanitizeDownloadFileName(
+  const filename = toRuleDownloadFileName(
     parseFilenameFromContentDisposition(options.contentDisposition) ||
       options.filenameFallback
   )
