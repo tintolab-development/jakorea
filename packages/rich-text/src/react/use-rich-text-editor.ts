@@ -5,6 +5,7 @@ import { createRichTextEditorApi } from '../core/editor-api'
 import { isRichTextEditorReady } from '../core/editor-ready'
 import { getInitialEditorContent } from '../core/content'
 import { stripPastedDataUriImages } from '../core/strip-pasted-data-uri-images'
+import type { RichTextDisabledFeature } from '../core/types'
 import type { RichTextEditorApi, UseRichTextEditorOptions } from './types'
 
 const EMPTY_CONTENT = ''
@@ -23,6 +24,7 @@ export function useRichTextEditor({
   preset = 'full',
   extraExtensions,
   visualImagePosition = false,
+  disabledFeatures,
   onReady,
   shouldRerenderOnTransaction = false,
   resolveImageSrc,
@@ -31,6 +33,8 @@ export function useRichTextEditor({
   onReadyRef.current = onReady
   const resolveImageSrcRef = useRef(resolveImageSrc)
   resolveImageSrcRef.current = resolveImageSrc
+  // 인라인 배열 리터럴이 매 렌더 새 참조여도 에디터를 다시 만들지 않도록 내용 기준 키로 비교
+  const disabledFeaturesKey = disabledFeatures?.length ? [...disabledFeatures].sort().join(',') : ''
 
   const extensions = useMemo(
     () =>
@@ -39,9 +43,12 @@ export function useRichTextEditor({
         preset,
         extraExtensions,
         visualImagePosition,
+        disabledFeatures: disabledFeaturesKey
+          ? (disabledFeaturesKey.split(',') as RichTextDisabledFeature[])
+          : undefined,
         getResolveImageSrc: () => resolveImageSrcRef.current,
       }),
-    [placeholder, preset, extraExtensions, visualImagePosition]
+    [placeholder, preset, extraExtensions, visualImagePosition, disabledFeaturesKey]
   )
 
   const { content, contentType } = useMemo(
@@ -70,7 +77,7 @@ export function useRichTextEditor({
         onReadyRef.current?.(createRichTextEditorApi(instance))
       },
     },
-    [resetKey, placeholder, extraExtensions, visualImagePosition]
+    [resetKey, placeholder, extraExtensions, visualImagePosition, disabledFeaturesKey]
   )
 
   useEffect(() => {

@@ -3,11 +3,12 @@ import type { Editor } from '@tiptap/react'
 import type { Extensions } from '@tiptap/core'
 import type {
   RichTextContentFormat,
+  RichTextDisabledFeature,
   RichTextEditorApi,
 } from '../core/types'
 
 export type { RichTextContentFormat, RichTextEditorApi, RichTextEditorContentType } from '../core/types'
-export type { CreateRichTextExtensionsOptions } from '../core/types'
+export type { CreateRichTextExtensionsOptions, RichTextDisabledFeature } from '../core/types'
 
 export type UseRichTextEditorOptions = {
   /** false면 에디터 인스턴스 비활성(모달 닫힘 등) */
@@ -26,6 +27,11 @@ export type UseRichTextEditorOptions = {
    * CMS/Platform 공통 에디터에서는 쓰지 않는다.
    */
   visualImagePosition?: boolean
+  /**
+   * 끌 서식 기능(기본 없음). 확장 자체를 빼므로 단축키·입력 규칙·붙여넣기로도 들어오지 않는다.
+   * 배열은 내용이 같으면 같은 값으로 취급한다(리마운트 없음).
+   */
+  disabledFeatures?: readonly RichTextDisabledFeature[]
   onReady?: (api: RichTextEditorApi) => void
   /**
    * 드롭·붙여넣기 이미지 src. 없으면 data URL.
