@@ -2005,17 +2005,20 @@ export function ApplicantsDetailContents({
         />
         {adminCommentModals}
         {combinedClassProcess.modals}
-        <ConfirmModal
-          open={editUnmaskConfirmOpen}
-          title="정보 수정 안내"
-          content={APPLICATION_INFO_EDIT_UNMASK_CONFIRM_CONTENT}
-          confirmText="정보 수정"
-          cancelText="취소"
-          onConfirm={confirmEditUnmaskAndStartEdit}
-          onCancel={closeEditUnmaskConfirm}
-          confirmLoading={editUnmaskConfirmLoading}
-          zIndex={APPLICATION_INFO_EDIT_UNMASK_MODAL_Z_INDEX}
-        />
+        {/* 열려 있을 때만 마운트 — 닫힘 애니메이션 중 모달 레이어가 헤더 [취소]를 가려 첫 클릭이 유실되던 문제(CMS-29) */}
+        {editUnmaskConfirmOpen ? (
+          <ConfirmModal
+            open={editUnmaskConfirmOpen}
+            title="정보 수정 안내"
+            content={APPLICATION_INFO_EDIT_UNMASK_CONFIRM_CONTENT}
+            confirmText="정보 수정"
+            cancelText="취소"
+            onConfirm={confirmEditUnmaskAndStartEdit}
+            onCancel={closeEditUnmaskConfirm}
+            confirmLoading={editUnmaskConfirmLoading}
+            zIndex={APPLICATION_INFO_EDIT_UNMASK_MODAL_Z_INDEX}
+          />
+        ) : null}
       </>
     )
   }
@@ -2032,18 +2035,19 @@ export function ApplicantsDetailContents({
           <div className="applicant-contents__page-bottom-spacer" aria-hidden />
         ) : null}
         {personalInfoRevealModal}
-        {isIndividual || isInstitution ? (
-          <ConfirmModal
-            open={editUnmaskConfirmOpen}
-            title="정보 수정 안내"
-            content={APPLICATION_INFO_EDIT_UNMASK_CONFIRM_CONTENT}
-            confirmText="정보 수정"
-            cancelText="취소"
-            onConfirm={confirmEditUnmaskAndStartEdit}
-            onCancel={closeEditUnmaskConfirm}
-            confirmLoading={editUnmaskConfirmLoading}
-            zIndex={APPLICATION_INFO_EDIT_UNMASK_MODAL_Z_INDEX}
-          />
+        {/* 열려 있을 때만 마운트 — 닫힘 애니메이션 중 모달 레이어가 헤더 [취소]를 가려 첫 클릭이 유실되던 문제(CMS-29) */}
+        {(isIndividual || isInstitution) && editUnmaskConfirmOpen ? (
+            <ConfirmModal
+              open={editUnmaskConfirmOpen}
+              title="정보 수정 안내"
+              content={APPLICATION_INFO_EDIT_UNMASK_CONFIRM_CONTENT}
+              confirmText="정보 수정"
+              cancelText="취소"
+              onConfirm={confirmEditUnmaskAndStartEdit}
+              onCancel={closeEditUnmaskConfirm}
+              confirmLoading={editUnmaskConfirmLoading}
+              zIndex={APPLICATION_INFO_EDIT_UNMASK_MODAL_Z_INDEX}
+            />
         ) : null}
         {adminCommentModals}
         {combinedClassProcess.modals}

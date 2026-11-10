@@ -25,6 +25,7 @@ import {
 } from '@/entities/user/api/user-service'
 import { queryClient } from '@/shared/lib/query-client'
 import { fetchMemberDetailQuery, memberDetailQueryKey } from '@/features/user/api/hooks/use-member-detail-query'
+import { isPiiFreeBasicInfoPatch } from '@/features/user/shared/model/basic-info-patch-pii'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import { matchesUserInstitutionLocation } from '@/entities/user/lib/matches-institution-location'
 import {
@@ -415,6 +416,9 @@ export const useUserStore = create<UserStore>((set, get) => ({
     try {
       const updatedUser = await patchUserBasicInfo(userId, patch, options)
       const state = get()
+      // 개인정보가 포함된 저장 결과(입력 원문이 덧씌워짐)는 공용 상세 캐시·스토어에 쓰지 않는다.
+      // 상세 캐시는 stale로만 표시해 다음 진입 때 마스킹 GET을 받는다(Step 5 P1).
+      const piiFree = isPiiFreeBasicInfoPatch(patch)
       if (isMembersRemoteEnabled()) {
         const hint = {
           role: updatedUser.role,
@@ -424,17 +428,21 @@ export const useUserStore = create<UserStore>((set, get) => ({
           instructorMemberProfile: updatedUser.instructorMemberProfile,
           roles: updatedUser.roles,
         }
-        queryClient.setQueryData(memberDetailQueryKey(updatedUser.id, hint), updatedUser)
-        if (userId !== updatedUser.id) {
-          queryClient.setQueryData(memberDetailQueryKey(userId, hint), updatedUser)
+        const detailKeys = [memberDetailQueryKey(updatedUser.id, hint)]
+        if (userId !== updatedUser.id) detailKeys.push(memberDetailQueryKey(userId, hint))
+        for (const queryKey of detailKeys) {
+          if (piiFree) queryClient.setQueryData(queryKey, updatedUser)
+          else void queryClient.invalidateQueries({ queryKey, exact: true, refetchType: 'none' })
         }
       }
       set({
-        usersById: {
-          ...state.usersById,
-          [userId]: updatedUser,
-          ...(updatedUser.id !== userId ? { [updatedUser.id]: updatedUser } : {}),
-        },
+        usersById: piiFree
+          ? {
+              ...state.usersById,
+              [userId]: updatedUser,
+              ...(updatedUser.id !== userId ? { [updatedUser.id]: updatedUser } : {}),
+            }
+          : state.usersById,
         loading: false,
       })
       return updatedUser

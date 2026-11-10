@@ -246,6 +246,8 @@ export function usePersonalInfoReveal({
   const revealedRef = useRef(false)
   const onRemaskRef = useRef(onRemask)
   onRemaskRef.current = onRemask
+  /** 열람 해제마다 증가. 해제 전에 출발한 원문 응답이 늦게 도착하면 버린다(비동기 재유입 차단). */
+  const revealGenRef = useRef(0)
 
   /**
    * 원문 열람 해제 — 프로그램 원문 캐시 초기화·화면 오버레이 정리·상태 해제를 한 번에 동기 수행한다.
@@ -257,6 +259,7 @@ export function usePersonalInfoReveal({
       else resetTrackedProgramUnmaskCaches(programId)
     }
     revealedRef.current = false
+    revealGenRef.current += 1
     onRemaskRef.current?.()
     setPersonalInfoRevealed(false)
     setConfirmOpen(false)
@@ -278,6 +281,7 @@ export function usePersonalInfoReveal({
   useEffect(() => {
     if (privacyScope !== 'program') return
     return () => {
+      revealGenRef.current += 1
       if (revealedRef.current) resetTrackedProgramUnmaskCaches(programId)
       revealedRef.current = false
     }
@@ -327,10 +331,19 @@ export function usePersonalInfoReveal({
       reason: string,
       options?: PrivacyRevealOptions
     ): Promise<{ ok: true; payload?: unknown } | { ok: false }> => {
+      const gen = revealGenRef.current
+      /** 응답 도착 전에 다시 가리기·닫기·대상 전환이 있었으면 원문을 버리고 이미 쓴 원문 캐시도 지운다. */
+      const isStale = () => {
+        if (gen === revealGenRef.current) return false
+        if (privacyScope === 'program') resetTrackedProgramUnmaskCaches(programId)
+        return true
+      }
       if (!(await guardPiiReveal())) return { ok: false }
+      if (isStale()) return { ok: false }
       if (revealPersonalInfo) {
         try {
           const payload = await revealPersonalInfo(reason, options)
+          if (isStale()) return { ok: false }
           onPrivacyUnmasked?.(payload, resolveMemberRole?.())
           revealedRef.current = true
           setPersonalInfoRevealed(true)
@@ -366,6 +379,7 @@ export function usePersonalInfoReveal({
         resolveInstructorMemberProfile,
         options
       )
+      if (isStale()) return { ok: false }
       if (!result.ok) return { ok: false }
       if (result.payload !== undefined) {
         onPrivacyUnmasked?.(result.payload, result.role)

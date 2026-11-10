@@ -120,14 +120,9 @@ export function buildParticipatingInstitutionLocalSavePatch(params: {
 }): Partial<SchoolDetailForModal> & { id: string } {
   const classCount = Number(params.draft.classCount)
   const studentCount = Number(params.draft.studentCount)
-  // 담당 교사 연락처 원문은 상위 로컬 패치(savedBasicPatches)에 올리지 않는다.
-  // 저장 직후 캐시에 넣은 마스킹 상세 GET이 표시값이다(CMS-29, 저장 후 원문 잔류 방지).
-  const {
-    teacherPhone: _teacherPhone,
-    teacherMobile: _teacherMobile,
-    teacherEmail: _teacherEmail,
-    ...nonContactPatch
-  } = params.patch
+  // 상위 로컬 패치(savedBasicPatches)에는 허용 필드만 올린다(CMS-29, 저장 후 원문 잔류 방지).
+  // 담당 교사 전화·휴대폰·이메일 원문과 목록에 없는 필드는 제외한다. 표시값은 저장 직후 캐시에 넣은 마스킹 GET이다.
+  const nonContactPatch = pickParticipatingInstitutionLocalPatchFields(params.patch)
   return {
     id: params.detailId,
     ...nonContactPatch,
@@ -135,4 +130,41 @@ export function buildParticipatingInstitutionLocalSavePatch(params: {
     classCount: Number.isFinite(classCount) ? classCount : params.fallbackClassCount,
     studentCount: Number.isFinite(studentCount) ? studentCount : params.fallbackStudentCount,
   }
+}
+
+/**
+ * 저장 후 로컬 패치 허용 필드(2026-11-06 개인정보 정책 §4-1 대조).
+ * - teacherName: 이름은 마스킹 대상이 아니다.
+ * - addressDetail: 소속 기관 주소는 마스킹 예외다(자택 주소 아님).
+ * - 담당 교사 전화·휴대폰·이메일은 마스킹 대상이므로 넣지 않는다.
+ */
+export const PARTICIPATING_INSTITUTION_LOCAL_PATCH_FIELDS = [
+  'adminComment',
+  'textbookId',
+  'textbookName',
+  'textbookGrade',
+  'addressDetail',
+  'educationFormat',
+  'applicationReason',
+  'otherRequests',
+  'computerInRoom',
+  'waitingRoomAvailable',
+  'waitingRoomLocation',
+  'mealProvided',
+  'mealNotice',
+  'parkingInfo',
+  'teacherName',
+  'combinedClassApplication',
+  'combinedClassPartnerSchoolIds',
+  'combinedClassPartnerGrades',
+] as const satisfies readonly (keyof SchoolDetailForModal)[]
+
+export function pickParticipatingInstitutionLocalPatchFields(
+  patch: Partial<SchoolDetailForModal>
+): Partial<SchoolDetailForModal> {
+  const picked: Partial<SchoolDetailForModal> = {}
+  for (const key of PARTICIPATING_INSTITUTION_LOCAL_PATCH_FIELDS) {
+    if (key in patch) (picked as Record<string, unknown>)[key] = patch[key]
+  }
+  return picked
 }

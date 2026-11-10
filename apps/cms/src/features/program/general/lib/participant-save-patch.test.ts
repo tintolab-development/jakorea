@@ -3,7 +3,12 @@ import { describe, expect, it } from 'vitest'
 import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
 import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
-import { buildParticipantSavedPatch, PARTICIPANT_DETAIL_PII_KEYS } from './participant-save-patch'
+import {
+  buildParticipantSavedPatch,
+  buildParticipantTeamRolePatch,
+  mergeParticipantView,
+  PARTICIPANT_DETAIL_PII_KEYS,
+} from './participant-save-patch'
 
 const maskedBase = {
   id: 'p-1',
@@ -85,5 +90,30 @@ describe('참여자 상세 저장 후 로컬 상태 (Step 5 잔여 위험)', () 
     const after = client.getQueryData<ParticipatingIndividualParticipantRow[]>(listKey)
     expect(after).toBe(listRows)
     expect(JSON.stringify(after)).not.toContain('010-1234-5678')
+  })
+})
+
+describe('참여자 화면 행 병합·팀 역할 저장 (Step 5 P2)', () => {
+  const rawOverlay = {
+    detail: { contact: '010-1234-5678', email: 'ind.unmask@example.test', homeAddressFull: '서울 종로구 사직로 1' },
+  } as Partial<ParticipatingIndividualParticipantRow>
+
+  it('저장 패치 후에도 목록의 마스킹 연락처가 화면 행에 남는다(빈 값으로 사라지지 않음)', () => {
+    const patch = buildParticipantSavedPatch({}, savedWithRaw)
+    const row = mergeParticipantView(maskedBase, patch, null)
+    expect(row.detail?.contact).toBe('010-****-5678')
+    expect(row.detail?.email).toBe('ind***@example.test')
+    expect(row.detail?.teamName).toBe('새팀')
+  })
+
+  it('원문 오버레이가 있을 때 저장한 팀 역할 패치에도 원문이 들어가지 않는다', () => {
+    const prev: Partial<ParticipatingIndividualParticipantRow> = {}
+    const patch = buildParticipantTeamRolePatch(prev, { teamRole: 'leader', teamName: '새팀', teamMemberCount: 3 })
+    expect(Object.keys(patch.detail ?? {}).sort()).toEqual(['teamMemberCount', 'teamName', 'teamRole'])
+    expect(JSON.stringify(patch)).not.toContain('010-1234-5678')
+    // 열람 중 화면은 오버레이 원문, 오버레이 해제 후에는 마스킹 값
+    expect(mergeParticipantView(maskedBase, patch, rawOverlay).detail?.contact).toBe('010-1234-5678')
+    expect(mergeParticipantView(maskedBase, patch, null).detail?.contact).toBe('010-****-5678')
+    expect(mergeParticipantView(maskedBase, patch, null).detail?.teamRole).toBe('leader')
   })
 })
