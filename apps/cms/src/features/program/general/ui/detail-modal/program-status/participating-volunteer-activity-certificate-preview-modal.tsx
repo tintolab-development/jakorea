@@ -53,6 +53,13 @@ export function ParticipatingVolunteerActivityCertificatePreviewModal({
   const pdfExportCanvasRef = useRef<HTMLDivElement>(null)
   const [isAllocatingSerial, setIsAllocatingSerial] = useState(false)
   const [pdfSerialNumber, setPdfSerialNumber] = useState<string | undefined>()
+  // 서버 발급일 — PDF 본문 발급일(state)과 파일명 날짜(ref, 캡처 직후 읽음)에 같은 값을 쓴다.
+  const [pdfIssueDate, setPdfIssueDate] = useState<Date | undefined>()
+  const pdfIssueDateRef = useRef<Date | null>(null)
+  const applyIssuedAt = useCallback((issuedAt: Date) => {
+    pdfIssueDateRef.current = issuedAt
+    setPdfIssueDate(issuedAt)
+  }, [])
   const [unmaskedVolunteer, setUnmaskedVolunteer] = useState(volunteer)
   const [isUnmasking, setIsUnmasking] = useState(false)
 
@@ -116,14 +123,18 @@ export function ParticipatingVolunteerActivityCertificatePreviewModal({
     runtimeStringOverrideKeys: CERTIFICATE_PARTICIPANT_INFO_OVERRIDE_KEYS,
   })
   const { interactive: certificateInteractiveProps, pdfExport: certificatePdfExportProps } =
-    useFormCertificatePreviewProps(modalState, undefined, pdfSerialNumber)
+    useFormCertificatePreviewProps(modalState, pdfIssueDate, pdfSerialNumber)
 
   const fileName = useMemo(
     () => buildActivityCertificateFileName(unmaskedVolunteer.volunteerName),
     [unmaskedVolunteer.volunteerName]
   )
 
-  const buildPdfFilename = useCallback(() => `${fileName}.pdf`, [fileName])
+  const buildPdfFilename = useCallback(
+    () =>
+      `${buildActivityCertificateFileName(unmaskedVolunteer.volunteerName, pdfIssueDateRef.current)}.pdf`,
+    [unmaskedVolunteer.volunteerName]
+  )
 
   const { downloadPdf, isDownloading: isPdfDownloading } = useFormCertificatePdfDownload({
     exportRootRef: pdfExportCanvasRef,
@@ -145,6 +156,7 @@ export function ParticipatingVolunteerActivityCertificatePreviewModal({
           certificateType: VOLUNTEER_ACTIVITY_CERTIFICATE_TEMPLATE_CODE,
         },
         applySerial: setPdfSerialNumber,
+        applyIssuedAt,
         exportRoot: pdfExportCanvasRef.current,
         getExportRoot: () => pdfExportCanvasRef.current,
         downloadPdf,
@@ -158,6 +170,7 @@ export function ParticipatingVolunteerActivityCertificatePreviewModal({
       setIsAllocatingSerial(false)
     }
   }, [
+    applyIssuedAt,
     downloadPdf,
     isAllocatingSerial,
     isPdfDownloading,
