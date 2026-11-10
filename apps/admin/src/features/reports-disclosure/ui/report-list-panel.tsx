@@ -54,6 +54,7 @@ import {
 
 import { downloadFile } from '@/shared/lib/file-download'
 import { toRuleDownloadFileName } from '@/shared/lib/sanitize-download-file-name'
+import noThumbnailLogoUrl from '@/assets/images/no-thumbnail/ja-logo-gray-compact.svg'
 import './report-list.css'
 
 type PendingFilters = {
@@ -302,7 +303,7 @@ export function ReportListPanel({ kind }: Props) {
                 : 'rd-list__thumb-cell rd-list__thumb-cell--wide'
             }
           >
-            {/* 썸네일은 선택 항목 — 없으면 깨진 이미지 대신 표 빈 값 「-」 */}
+            {/* 썸네일은 선택 항목 — 없으면 사용자 홈페이지와 같은 기본 썸네일(회색 배경 + 테두리 + 로고) */}
             {record.thumbnailUrl ? (
               <div className={`rd-list__thumb-wrap ${thumbMod}`}>
                 <img
@@ -312,7 +313,9 @@ export function ReportListPanel({ kind }: Props) {
                 />
               </div>
             ) : (
-              '-'
+              <div className={`rd-list__thumb-wrap ${thumbMod} rd-list__thumb-default`}>
+                <img className="rd-list__thumb-default-logo" src={noThumbnailLogoUrl} alt="썸네일 없음" />
+              </div>
             )}
           </div>
         ),
