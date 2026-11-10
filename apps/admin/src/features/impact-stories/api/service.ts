@@ -2,7 +2,9 @@ import type { ImpactStory, ImpactStoryAttachment, ImpactStoryCategory, ImpactSto
 import { getJAKoreaHomepageAdminAPIImpactStorySubset } from '@/shared/api/generated/impact-story/impact-story-api';
 import { PinLimitError } from '@/features/impact-stories/lib/pin-limits';
 import { normalizeCategoryListPayload, normalizeCategoryPayload, } from './category-payload';
-import { isPersistedCategoryId, mapCategoryResponseToDomain, mapStoryListItemToDomain, mapStoryResponseToDomain, requireThumbnailAssetId, toBulkDeleteRequest, toCategoryCreateRequest, toCategoryUpdateRequest, toPublishedToggleRequest, LIST_PAGE_SIZE, toStoryCreateRequest, toStoryListParams, toStoryUpdateRequest, } from './mappers';
+import { isPersistedCategoryId, mapCategoryResponseToDomain, mapStoryListItemToDomain, mapStoryResponseToDomain, toBulkDeleteRequest, toCategoryCreateRequest, toCategoryUpdateRequest, toPublishedToggleRequest, LIST_PAGE_SIZE, toStoryCreateRequest, toStoryListParams, toStoryUpdateRequest, } from './mappers';
+import type { StoryCreateRequest } from '@/shared/api/generated/impact-story/schemas/storyCreateRequest';
+import type { StoryUpdateRequest } from '@/shared/api/generated/impact-story/schemas/storyUpdateRequest';
 import { resolveOrderedAttachmentAssetIds } from '@/shared/lib/resolve-attachment-asset-ids';
 import { uploadImpactStoryAttachmentAsset, uploadImpactStoryThumbnailAsset, } from './upload-story-attachment';
 function impactStoryApi() {
@@ -48,14 +50,21 @@ async function listRemoteStories(filter?: ImpactStoryListFilter): Promise<Impact
 async function resolveAttachmentAssetIds(attachments: ImpactStoryAttachment[]): Promise<number[]> {
     return resolveOrderedAttachmentAssetIds(attachments, uploadImpactStoryAttachmentAsset);
 }
-async function resolveThumbnailAssetId(thumbnail: ImpactStoryAttachment | null | undefined, fallbackAssetId?: number): Promise<number | undefined> {
-    if (thumbnail?.file instanceof File) {
+/**
+ * 대표 썸네일은 선택 항목 — 지웠으면(`null`) 썸네일 없음으로 보내고 기존 썸네일로 되돌리지 않는다.
+ * 남아 있는 썸네일에 자산 id가 없을 때만 기존 자산(fallback)을 쓴다.
+ */
+async function resolveThumbnailAssetId(thumbnail: ImpactStoryAttachment | null | undefined, fallbackAssetId?: number): Promise<number | null> {
+    if (!thumbnail) {
+        return null;
+    }
+    if (thumbnail.file instanceof File) {
         return uploadImpactStoryThumbnailAsset(thumbnail.file);
     }
-    if (thumbnail?.assetId != null && thumbnail.assetId > 0) {
+    if (thumbnail.assetId != null && thumbnail.assetId > 0) {
         return thumbnail.assetId;
     }
-    return fallbackAssetId;
+    return fallbackAssetId ?? null;
 }
 function isPinLimitApiError(error: unknown): boolean {
     if (!error || typeof error !== 'object')
@@ -120,7 +129,8 @@ export async function createStoryService(input: ImpactStoryCreateInput): Promise
             resolveAttachmentAssetIds(input.attachments),
             resolveThumbnailAssetId(input.thumbnail),
         ]);
-        const created = await impactStoryApi().create8(toStoryCreateRequest(input, attachmentAssetIds, requireThumbnailAssetId(thumbnailAssetId)));
+        // 썸네일 선택 항목 — 서버 명세 갱신 전까지 생성 타입(필수 number)과 이 지점에서만 어긋난다
+        const created = await impactStoryApi().create8(toStoryCreateRequest(input, attachmentAssetIds, thumbnailAssetId) as StoryCreateRequest);
         return mapStoryResponseToDomain(created);
     }
     catch (error) {
@@ -139,7 +149,7 @@ export async function updateStoryService(input: ImpactStoryUpdateInput, cached?:
             resolveAttachmentAssetIds(input.attachments),
             resolveThumbnailAssetId(input.thumbnail, current.thumbnail?.assetId),
         ]);
-        const updated = await impactStoryApi().update10(Number(input.id), toStoryUpdateRequest(input, current.version ?? 0, attachmentAssetIds, requireThumbnailAssetId(thumbnailAssetId)));
+        const updated = await impactStoryApi().update10(Number(input.id), toStoryUpdateRequest(input, current.version ?? 0, attachmentAssetIds, thumbnailAssetId) as StoryUpdateRequest);
         return mapStoryResponseToDomain(updated);
     }
     catch (error) {

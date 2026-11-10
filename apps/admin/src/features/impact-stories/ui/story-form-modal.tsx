@@ -287,10 +287,6 @@ export function StoryFormModal({
       showAlert({ title: '입력 확인', content: bodyError })
       return
     }
-    if (!thumbnail) {
-      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
-      return
-    }
     if (isPinned && pinnedCountExcludingSelf >= IMPACT_STORY_PIN_MAX) {
       showAlert({
         title: '상단 고정 제한',
@@ -474,7 +470,6 @@ export function StoryFormModal({
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="대표 썸네일"
-                required
                 view={null}
                 edit={
                   <FileSelectField

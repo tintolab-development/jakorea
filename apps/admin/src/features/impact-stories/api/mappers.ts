@@ -78,13 +78,6 @@ export function isPersistedCategoryId(id: string): boolean {
 
 export const STORY_ATTACHMENT_MAX_COUNT = 10
 
-export function requireThumbnailAssetId(id?: number): number {
-  if (id == null || id <= 0) {
-    throw new Error('썸네일 이미지를 등록해 주세요.')
-  }
-  return id
-}
-
 export function assertThumbnailNotInAttachments(
   thumbnailAssetId: number,
   attachmentAssetIds: readonly number[]
@@ -195,14 +188,20 @@ export function toStoryListParams(filter?: ImpactStoryListFilter): List6Params {
   return params
 }
 
+/**
+ * 대표 썸네일은 선택 항목(QA 2026-11-10) — `thumbnailAssetId: null`이면 썸네일 없음.
+ * 서버 명세(StoryCreateRequest·StoryUpdateRequest)는 아직 thumbnailAssetId 필수라,
+ * 명세가 nullable로 바뀌어 재생성되기 전까지 요청 타입을 여기서만 넓힌다.
+ */
+type WithOptionalThumbnail<T> = Omit<T, 'thumbnailAssetId'> & { thumbnailAssetId: number | null }
+
 export function toStoryCreateRequest(
   input: ImpactStoryCreateInput,
   attachmentAssetIds: number[],
-  thumbnailAssetId: number
-): StoryCreateRequest {
-  const requiredThumbnailAssetId = requireThumbnailAssetId(thumbnailAssetId)
+  thumbnailAssetId: number | null
+): WithOptionalThumbnail<StoryCreateRequest> {
   const ids = attachmentAssetIds.slice(0, STORY_ATTACHMENT_MAX_COUNT)
-  assertThumbnailNotInAttachments(requiredThumbnailAssetId, ids)
+  if (thumbnailAssetId != null) assertThumbnailNotInAttachments(thumbnailAssetId, ids)
   return {
     published: input.isPublic,
     pinned: input.isPinned,
@@ -210,7 +209,7 @@ export function toStoryCreateRequest(
     categoryId: Number(input.categoryId),
     title: input.title.trim(),
     body: toApiStoryBody(input.contentMarkdown),
-    thumbnailAssetId: requiredThumbnailAssetId,
+    thumbnailAssetId,
     attachmentAssetIds: ids,
     thumbnailDistinctFromAttachments: ids.length > 0,
   }
@@ -220,11 +219,10 @@ export function toStoryUpdateRequest(
   input: ImpactStoryUpdateInput,
   version: number,
   attachmentAssetIds: number[],
-  thumbnailAssetId: number
-): StoryUpdateRequest {
-  const requiredThumbnailAssetId = requireThumbnailAssetId(thumbnailAssetId)
+  thumbnailAssetId: number | null
+): WithOptionalThumbnail<StoryUpdateRequest> {
   const ids = attachmentAssetIds.slice(0, STORY_ATTACHMENT_MAX_COUNT)
-  assertThumbnailNotInAttachments(requiredThumbnailAssetId, ids)
+  if (thumbnailAssetId != null) assertThumbnailNotInAttachments(thumbnailAssetId, ids)
   return {
     published: input.isPublic,
     pinned: input.isPinned,
@@ -232,7 +230,7 @@ export function toStoryUpdateRequest(
     categoryId: Number(input.categoryId),
     title: input.title.trim(),
     body: toApiStoryBody(input.contentMarkdown),
-    thumbnailAssetId: requiredThumbnailAssetId,
+    thumbnailAssetId,
     attachmentAssetIds: ids,
     thumbnailDistinctFromAttachments: ids.length > 0,
     version,
