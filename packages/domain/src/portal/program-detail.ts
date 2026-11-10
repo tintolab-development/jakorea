@@ -289,6 +289,22 @@ export type PlatformProgramPreviewMessage = {
   assets?: PlatformProgramPreviewAssets
 }
 
+export const PLATFORM_PROGRAM_APPLICATION_PREVIEW_MESSAGE_TYPE =
+  'jakorea:program-application-preview' as const
+
+/**
+ * CMS → Platform 미리보기 iframe — 신청 화면(「프로그램 신청하기」).
+ * `form`은 Portal form-binding GET `form`과 같은 런타임 작성 문서(`paragraphs` + `runtimeContext`).
+ */
+export type PlatformProgramApplicationPreviewMessage = {
+  type: typeof PLATFORM_PROGRAM_APPLICATION_PREVIEW_MESSAGE_TYPE
+  version: 1
+  detail: PortalProgramDetail
+  /** Portal applicationType — ORGANIZATION | INDIVIDUAL | INSTRUCTOR | VOLUNTEER */
+  applicationType: string
+  form: Record<string, unknown>
+}
+
 /** Platform 미리보기 iframe → CMS */
 export type PlatformProgramPreviewReadyMessage = {
   type: typeof PLATFORM_PROGRAM_PREVIEW_READY_MESSAGE_TYPE

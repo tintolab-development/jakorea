@@ -570,7 +570,7 @@ export function MypageVolunteerDetailPage() {
         educationFormLabel={program.educationFormLabel}
       />
 
-      {showBanner ? (
+      {showBanner && appliedSection === 'application' ? (
         <DocumentPassBanner interviewAtLabel={application.interviewAtLabel} />
       ) : null}
 
