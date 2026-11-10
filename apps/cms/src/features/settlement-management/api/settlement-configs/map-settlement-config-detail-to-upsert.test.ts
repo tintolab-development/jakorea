@@ -201,7 +201,7 @@ describe('buildSettlementConfigUpdateRequest payment evidenceRequiredYn', () => 
         withholdingTaxRatePrize: 4.4,
         withholdingTaxRateInterview: 22,
       },
-      { title: '일용근로자 원천징수세액', description: '' }
+      { title: '원천징수세액', description: '' }
     )
 
     expect(body.earnedIncomeDeduction).toBe(100_000)
@@ -216,7 +216,7 @@ describe('buildSettlementConfigUpdateRequest payment evidenceRequiredYn', () => 
     })
     expect(dj).not.toHaveProperty('withholdingTaxRateDailyWorker')
     expect(dj).not.toHaveProperty('withholdingEarnedIncomeTaxCreditRate')
-    expect(body.deductionItems?.[0]?.itemName).toBe('일용근로자 원천징수세액')
+    expect(body.deductionItems?.[0]?.itemName).toBe('원천징수세액')
   })
 
   it('원천징수 PUT itemName은 편집한 화면 제목을 보낸다', () => {
@@ -225,7 +225,7 @@ describe('buildSettlementConfigUpdateRequest payment evidenceRequiredYn', () => 
       deductionItems: [
         {
           id: 166301,
-          itemName: '일용근로자 원천징수세액',
+          itemName: '원천징수세액',
           layout: 'withholdingDailyWorker',
           useYn: true,
           detailJson: JSON.stringify({}),
@@ -397,8 +397,6 @@ describe('buildSettlementConfigUpdateRequest payment evidenceRequiredYn', () => 
     })
   })
 
-
-
   it('Gemini 대학생 null 키는 PUT detailJson에서 생략하고 0은 유지한다', () => {
     const config = {
       configName: 'current',
@@ -500,7 +498,6 @@ describe('buildSettlementConfigUpdateRequest payment evidenceRequiredYn', () => 
     expect(dj.qualificationLines).toEqual([apiQualification])
     expect(dj.remarkLines).toEqual([apiRemark])
   })
-
 })
 
 describe('buildSettlementConfigUpdateRequest 항목 제목 PUT', () => {
@@ -529,7 +526,7 @@ describe('buildSettlementConfigUpdateRequest 항목 제목 PUT', () => {
     deductionItems: [
       {
         id: 166301,
-        itemName: '일용근로자 원천징수세액',
+        itemName: '원천징수세액',
         layout: 'withholdingDailyWorker',
         useYn: true,
         description: '공제 설명',
@@ -561,7 +558,7 @@ describe('buildSettlementConfigUpdateRequest 항목 제목 PUT', () => {
     apiItemId: 166301,
     sectionKind: 'deduction',
     layout: 'withholdingDailyWorker',
-    title: '일용근로자 원천징수세액',
+    title: '원천징수세액',
     description: '공제 설명',
     iconKey: 'deduct_business_33',
   }
@@ -577,7 +574,7 @@ describe('buildSettlementConfigUpdateRequest 항목 제목 PUT', () => {
     expect(body.wageItems?.[0]?.itemName).toBe('1급 강사료')
     expect(body.wageItems?.[0]?.description).toBe('임금 설명 수정')
     expect(body.paymentItems?.[0]?.itemName).toBe('강사 교통비')
-    expect(body.deductionItems?.[0]?.itemName).toBe('일용근로자 원천징수세액')
+    expect(body.deductionItems?.[0]?.itemName).toBe('원천징수세액')
   })
 
   it('지급 항목은 편집 제목·설명을 PUT itemName·description으로 보낸다', () => {
@@ -591,7 +588,7 @@ describe('buildSettlementConfigUpdateRequest 항목 제목 PUT', () => {
     expect(body.paymentItems?.[0]?.itemName).toBe('강사 교통지원비')
     expect(body.paymentItems?.[0]?.description).toBe('지급 설명 수정')
     expect(body.wageItems?.[0]?.itemName).toBe('1급 강사비')
-    expect(body.deductionItems?.[0]?.itemName).toBe('일용근로자 원천징수세액')
+    expect(body.deductionItems?.[0]?.itemName).toBe('원천징수세액')
   })
 
   it('공제 항목 저장 시 다른 항목 제목을 비우지 않는다', () => {
