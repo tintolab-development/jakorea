@@ -7,6 +7,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import {
   PLATFORM_PROGRAM_PREVIEW_PATH,
   PLATFORM_PROGRAM_PREVIEW_READY_MESSAGE_TYPE,
+  type PlatformProgramApplicationPreviewMessage,
   type PlatformProgramPreviewMessage,
 } from '@jakorea/domain/portal/program-detail'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
@@ -28,7 +29,8 @@ export type PlatformPreviewModalProps = {
   onClose: () => void
   title: string
   /** null이면 준비 중(포스터 로드 등) — iframe은 띄우되 전송을 미룬다 */
-  message: PlatformProgramPreviewMessage | null
+  /** 상세(모집) 또는 신청 화면 메시지 */
+  message: PlatformProgramPreviewMessage | PlatformProgramApplicationPreviewMessage | null
   zIndex?: number
 }
 
@@ -111,7 +113,6 @@ export function PlatformPreviewModal({
         <header className="template-preview-modal__title-row">
           <div className="template-preview-modal__title-left">
             <span className="template-preview-modal__title-text">{title}</span>
-            <span className="template-preview-modal__badge">미리보기</span>
           </div>
           <button
             type="button"

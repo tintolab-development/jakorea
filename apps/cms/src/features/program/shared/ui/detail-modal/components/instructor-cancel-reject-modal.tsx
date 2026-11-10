@@ -28,6 +28,11 @@ export type InstructorCancelRejectModalProps = {
   onCancel: () => void
   onConfirm: (payload: InstructorCancelRejectionConfirmPayload) => void
   zIndex?: number
+  /**
+   * 기본 `default`(1사1교·일반 개인형).
+   * `general-organization`: 시안 04-2(1141:245791) — 「해당 회원은」, 사유→알림 순서, 알림 3옵션.
+   */
+  copyVariant?: 'default' | 'general-organization'
 }
 
 export function resolveInstructorCancelRejectionNotifyVariantFromRow(
@@ -89,28 +94,33 @@ function InstructorCancelRejectAlreadySentModal({
   onCancel,
   onConfirm,
   zIndex = MODAL_Z_INDEX,
+  copyVariant = 'default',
 }: {
   open: boolean
   instructorName: string
   onCancel: () => void
   onConfirm: (payload: PermissionModalPayload) => void
   zIndex?: number
+  copyVariant?: 'default' | 'general-organization'
 }) {
+  const isGeneralOrganization = copyVariant === 'general-organization'
   return (
     <PermissionModal
       open={open}
       variant="reject"
       className="instructor-cancel-reject-modal"
       title="프로그램 반려 취소 안내"
-      message={buildInstructorCancelRejectionMessage(instructorName, 'alreadySent')}
+      message={buildInstructorCancelRejectionMessage(instructorName, 'alreadySent', copyVariant)}
       confirmLabel="반려 취소"
       confirmVariant="delete"
       requireReason
       reasonLabel="취소 사유"
-      reasonPlaceholder="취소 사유를 입력해 주세요."
+      reasonPlaceholder={
+        isGeneralOrganization ? '취소 사유를 입력해 주세요' : '취소 사유를 입력해 주세요.'
+      }
       reasonRequiredMessage="취소 사유를 입력해 주세요."
-      notifyTimingOptions="two"
-      notifyBeforeReason
+      notifyTimingOptions={isGeneralOrganization ? 'three' : 'two'}
+      notifyBeforeReason={!isGeneralOrganization}
       onCancel={onCancel}
       onConfirm={onConfirm}
       zIndex={zIndex}
@@ -124,6 +134,7 @@ export function InstructorCancelRejectModal({
   onCancel,
   onConfirm,
   zIndex = MODAL_Z_INDEX,
+  copyVariant = 'default',
 }: InstructorCancelRejectModalProps) {
   const variant = resolveInstructorCancelRejectionNotifyVariantFromRow(instructor)
   const instructorName = instructor?.instructorName ?? ''
@@ -144,6 +155,7 @@ export function InstructorCancelRejectModal({
     <InstructorCancelRejectAlreadySentModal
       open={open}
       instructorName={instructorName}
+      copyVariant={copyVariant}
       onCancel={onCancel}
       onConfirm={payload => {
         onConfirm({

@@ -18,23 +18,34 @@ export type RegistrationStepTemplateChromeProps = {
   onOpenPicker: () => void
   onClosePicker: () => void
   onUseTemplate: (row: TemplateRow) => void
+  /** 배너 좌측 「템플릿 선택」 제목 노출 (일반 프로그램 등록 시안). 기본 false — 기존 유형 유지 */
+  showTitle?: boolean
 }
+
+const STEP_TEMPLATE_BANNER_HINT =
+  '탭별로 기본 템플릿이 자동으로 적용됩니다. 템플릿 변경 시 해당 탭에 작성된 내용이 초기화됩니다.'
 
 export function RegistrationStepTemplateBanner({
   templateName,
   isDefault,
   onChangeTemplate,
+  showTitle = false,
 }: {
   templateName: string
   isDefault: boolean
   onChangeTemplate: () => void
+  showTitle?: boolean
 }) {
   return (
     <div className="step-template-banner">
-      <p className="step-template-banner__hint">
-        탭별로 기본 템플릿이 자동으로 적용됩니다. 템플릿 변경 시 해당 탭에 작성된 내용이
-        초기화됩니다.
-      </p>
+      {showTitle ? (
+        <div className="step-template-banner__head">
+          <h3 className="step-template-banner__title">템플릿 선택</h3>
+          <p className="step-template-banner__hint">{STEP_TEMPLATE_BANNER_HINT}</p>
+        </div>
+      ) : (
+        <p className="step-template-banner__hint">{STEP_TEMPLATE_BANNER_HINT}</p>
+      )}
       <DetailInfoForm title="템플릿" hideHeader mode="view">
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
@@ -82,6 +93,7 @@ export function RegistrationStepTemplateChrome({
   onOpenPicker,
   onClosePicker,
   onUseTemplate,
+  showTitle = false,
 }: RegistrationStepTemplateChromeProps) {
   return (
     <>
@@ -90,6 +102,7 @@ export function RegistrationStepTemplateChrome({
           templateName={templateName}
           isDefault={isDefault}
           onChangeTemplate={onOpenPicker}
+          showTitle={showTitle}
         />
       </div>
       <RegistrationStepTemplateFollowHint />

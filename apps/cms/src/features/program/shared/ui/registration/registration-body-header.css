@@ -28,3 +28,24 @@
   .cms-text-tabs__tab:first-child {
   padding-left: 0;
 }
+
+/*
+ * 일반 프로그램 등록(시안 02-2) — 본문 스크롤 시 안내·탭 + 닫기/미리보기/임시 저장 행 상단 고정.
+ * `full-page-modal--sticky-body-header` 는 일반 등록 위저드만 붙인다(1사1교·교육받은 교사·UJAT·Gemini 미적용).
+ * 스크롤 컨테이너 상단 padding 대신 헤더가 같은 높이의 padding을 가져, 고정 시 위쪽으로 본문이 비치지 않게 한다.
+ */
+.full-page-modal--sticky-body-header .full-page-modal__body {
+  padding-top: 0;
+}
+
+.full-page-modal--sticky-body-header .full-page-modal__body-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  flex-shrink: 0;
+  /* body gap(16px)만큼 아래 여백을 배경으로 덮고 음수 margin으로 원래 간격 유지 */
+  margin-bottom: -16px;
+  padding-top: var(--full-page-modal-padding-top);
+  padding-bottom: 16px;
+  background: #f4f6f6;
+}

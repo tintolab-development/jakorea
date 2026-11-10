@@ -8,7 +8,7 @@ import {
   canEditLectureEvalResponse,
   isLectureEvalFormPhase,
   isLectureEvalResultsTabAccessible,
-  LECTURE_EVAL_TABS,
+  GENERAL_LECTURE_EVAL_TABS,
   type LectureEvalTabKey,
 } from '../../lib/survey-management/lecture-eval-survey'
 import type {
@@ -130,7 +130,7 @@ export function LectureEvalSurveyView({
       <LectureEvalFormView
         draft={formDraft}
         submitButtonLabel={actionLabels.submit}
-        showSubmitButton
+        showSubmitButton={false}
         onDraftChange={onFormDraftChange}
         onSubmitClick={onSubmitClick}
       />
@@ -143,7 +143,7 @@ export function LectureEvalSurveyView({
         variant="list"
         activeKey={activeTab}
         onChange={key => onTabChange(key as LectureEvalTabKey)}
-        items={LECTURE_EVAL_TABS.map(tab => ({ key: tab.key, label: tab.label }))}
+        items={GENERAL_LECTURE_EVAL_TABS.map(tab => ({ key: tab.key, label: tab.label }))}
         trailing={trailingActions}
       />
       {activeTab === 'eval' ? evalTabBody : null}
@@ -155,6 +155,7 @@ export function LectureEvalSurveyView({
             responseCount={survey!.responseCount}
             participantTotal={survey!.participantTotal}
             responses={pollResponses.length > 0 ? pollResponses : undefined}
+            statusBadge={survey!.status}
             pdfTitle="강의평가 결과"
           />
         </div>
@@ -165,7 +166,7 @@ export function LectureEvalSurveyView({
             <Spin size="large" />
             <p className="ujat-lecture-eval-survey__pdf-loading-title">PDF 생성 중입니다.</p>
             <p className="ujat-lecture-eval-survey__pdf-loading-description">
-              강의 평가 결과 파일을 준비하고 있어요.
+              강의평가 결과 파일을 준비하고 있어요.
             </p>
           </div>
         </div>

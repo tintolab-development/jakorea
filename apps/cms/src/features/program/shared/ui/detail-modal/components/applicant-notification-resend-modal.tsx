@@ -8,6 +8,7 @@ import {
   buildApplicantNotificationResendMessage,
   shouldShowApplicantNotificationResendReason,
   type ApplicantNotificationResendApprovalStatus,
+  type ApplicantNotificationResendCopyVariant,
   type ApplicantNotificationResendSubjectKind,
 } from '@/features/program/general/lib/applicant-notification-resend'
 import {
@@ -26,6 +27,8 @@ export type ApplicantNotificationResendModalProps = {
   onConfirm: (payload: PermissionModalPayload) => void
   confirmLoading?: boolean
   zIndex?: number
+  /** 기본 `default`. `general-organization`: 일반(기관형) 기관 신청 시안 본문 */
+  copyVariant?: ApplicantNotificationResendCopyVariant
 }
 
 export function ApplicantNotificationResendModal({
@@ -38,6 +41,7 @@ export function ApplicantNotificationResendModal({
   onConfirm,
   confirmLoading,
   zIndex,
+  copyVariant = 'default',
 }: ApplicantNotificationResendModalProps) {
   const requireReason = shouldShowApplicantNotificationResendReason(
     subjectKind,
@@ -51,7 +55,12 @@ export function ApplicantNotificationResendModal({
       variant={requireReason ? 'reject' : 'approve'}
       className="applicant-notification-resend-modal"
       title="알림 재발송 안내"
-      message={buildApplicantNotificationResendMessage(subjectKind, subjectName, approvalStatus)}
+      message={buildApplicantNotificationResendMessage(
+        subjectKind,
+        subjectName,
+        approvalStatus,
+        copyVariant
+      )}
       confirmLabel="재발송"
       confirmVariant="primary"
       confirmLoading={confirmLoading}

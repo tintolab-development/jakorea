@@ -271,14 +271,18 @@ export function useInstitutionApplicantColumns(params: {
             }
           : {}),
         align: 'center',
-        render: (text: string, record) => (
-          <a
-            onClick={() => setSelectedItem(record)}
-            style={{ color: 'var(--color-primary)', fontWeight: 500 }}
-          >
-            {text}
-          </a>
-        ),
+        render: (text: string, record) =>
+          isGeneralDetail ? (
+            // 일반(기관형) 시안 1141:234529 — 기관명은 일반 텍스트(#3d3d3d), 상세는 행 클릭으로 연다.
+            text
+          ) : (
+            <a
+              onClick={() => setSelectedItem(record)}
+              style={{ color: 'var(--color-primary)', fontWeight: 500 }}
+            >
+              {text}
+            </a>
+          ),
       },
       {
         title: isGeneralDetail ? '기관 소재지' : '기관 지역',

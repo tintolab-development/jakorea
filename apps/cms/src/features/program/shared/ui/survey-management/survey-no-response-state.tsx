@@ -10,6 +10,8 @@ export type SurveyNoResponseStateProps = {
   canDelete: boolean
   /** false면 삭제 버튼을 숨긴다. 기본 true(권한 없을 때와 상태상 비활성을 구분) */
   showDeleteButton?: boolean
+  /** false면 「설문 양식 보기」 버튼을 숨긴다(상단에 같은 버튼이 있을 때). 기본 true */
+  showPreviewButton?: boolean
   embedded?: boolean
   onDeleteClick: () => void
   onOpenTemplatePreview: () => void
@@ -22,6 +24,7 @@ export function SurveyNoResponseState({
   previewButtonLabel,
   canDelete,
   showDeleteButton = true,
+  showPreviewButton = true,
   embedded = false,
   onDeleteClick,
   onOpenTemplatePreview,
@@ -49,10 +52,12 @@ export function SurveyNoResponseState({
               {deleteButtonLabel}
             </CmsButton>
           ) : null}
-          <CmsButton className="survey-management-status-state__preview-button"
-            onClick={onOpenTemplatePreview} >
-            {previewButtonLabel}
-          </CmsButton>
+          {showPreviewButton ? (
+            <CmsButton className="survey-management-status-state__preview-button"
+              onClick={onOpenTemplatePreview} >
+              {previewButtonLabel}
+            </CmsButton>
+          ) : null}
         </div>
       </div>
     </div>

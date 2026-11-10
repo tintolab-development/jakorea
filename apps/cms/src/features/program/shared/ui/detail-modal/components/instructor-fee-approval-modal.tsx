@@ -30,6 +30,7 @@ import {
   NOTIFY_TIMING_CAPABILITY,
   UNSUPPORTED_NOTIFY_TIMING_ALERT_TITLE,
   getUnsupportedNotifyTimingMessage,
+  type NotifyTimingCapability,
 } from '@/shared/lib/notify-timing-capability'
 import './instructor-fee-approval-modal.css'
 
@@ -70,6 +71,26 @@ export type InstructorFeeApprovalModalProps = {
   submitting?: boolean
   /** 기관형에서 배정 가능한 기관 일정이 없어 배정 모달을 건너뛴 경우 */
   showNoAssignableInstitutionScheduleNotice?: boolean
+  /** 기본 「강사비 책정 및 승인 안내」. 일반 기관형 참여 기관 상세 배정 흐름은 「강사비 책정 및 배정 안내」 */
+  title?: string
+  /** 기본 「승인」. 일반 기관형 참여 기관 상세 배정 흐름은 「배정」 */
+  confirmLabel?: string
+  /** 지정 시 본문 대체(일괄 대상 등). 생략 시 `instructorName` 기준 기본 문구 */
+  description?: string
+  /**
+   * 알림 발송 API capability. 기본 `scheduledOnly`(즉시·직접 설정).
+   * `onAnnouncement`가 true면 「발표일에 맞춰서」 라디오를 함께 노출한다(일반 기관형 시안 05-2).
+   */
+  notifyTimingCapability?: NotifyTimingCapability
+  /** 지급 기준 셀렉트 옵션. 기본 `LECTURE_FEE_PAYMENT_CRITERIA_OPTIONS` */
+  lectureFeeMeasureOptions?: { value: string; label: string }[]
+}
+
+/** 일반(기관형) 시안 05-2(1141:247368) — 「[이름] 님의 … 선택해 주세요」(띄어쓰기, 첫 줄 마침표 없음) */
+export function buildGeneralOrganizationInstructorFeeApprovalDescription(
+  instructorName: string
+): string {
+  return `**[${instructorName}]** 님의 강사비 책정 방식을 선택해 주세요\n선택한 방식으로 강사비가 책정되며, 회원에게 승인 알림이 발송됩니다.`
 }
 
 function buildDescription(instructorName: string): string {
@@ -86,6 +107,11 @@ export function InstructorFeeApprovalModal({
   onConfirm,
   submitting = false,
   showNoAssignableInstitutionScheduleNotice = false,
+  title = '강사비 책정 및 승인 안내',
+  confirmLabel = '승인',
+  description,
+  notifyTimingCapability = NOTIFY_TIMING_CAPABILITY.scheduledOnly,
+  lectureFeeMeasureOptions = LECTURE_FEE_PAYMENT_CRITERIA_OPTIONS,
 }: InstructorFeeApprovalModalProps) {
   const { showAlert } = useCmsAlert()
   const {
@@ -121,7 +147,7 @@ export function InstructorFeeApprovalModal({
   const handleConfirm = () => {
     const unsupportedNotify = getUnsupportedNotifyTimingMessage(
       notifyTiming,
-      NOTIFY_TIMING_CAPABILITY.scheduledOnly
+      notifyTimingCapability
     )
     if (unsupportedNotify) {
       showAlert({
@@ -142,7 +168,7 @@ export function InstructorFeeApprovalModal({
       <ContentModal
         open={open}
         onCancel={onCancel}
-        title="강사비 책정 및 승인 안내"
+        title={title}
         width={MODAL_WIDTH}
         zIndex={MODAL_Z_INDEX}
         className={
@@ -150,7 +176,7 @@ export function InstructorFeeApprovalModal({
             ? 'instructor-fee-approval-modal instructor-fee-approval-modal--with-schedule-notice'
             : 'instructor-fee-approval-modal'
         }
-        description={buildDescription(instructorName)}
+        description={description ?? buildDescription(instructorName)}
         footer={
           <div className="content-modal__footer-actions">
             <CmsButton variant="secondary" size="large" type="button" onClick={onCancel}>
@@ -162,7 +188,7 @@ export function InstructorFeeApprovalModal({
               type="button"
               disabled={!canConfirm || submitting}
               onClick={handleConfirm} >
-              {submitting ? '승인 중...' : '승인'}
+              {submitting ? `${confirmLabel} 중...` : confirmLabel}
             </CmsButton>
           </div>
         }
@@ -213,7 +239,7 @@ export function InstructorFeeApprovalModal({
                     withAllOption={false}
                     placeholder="지급 기준"
                     value={lectureFeeMeasure || undefined}
-                    options={LECTURE_FEE_PAYMENT_CRITERIA_OPTIONS}
+                    options={lectureFeeMeasureOptions}
                     onChange={v => setLectureFeeMeasure(v != null ? String(v) : '')}
                     getPopupContainer={() => document.body}
                   />
@@ -245,6 +271,9 @@ export function InstructorFeeApprovalModal({
               onChange={e => handleNotifyTimingChange(e.target.value)}
             >
               <CmsRadio value="immediate">즉시</CmsRadio>
+              {notifyTimingCapability.onAnnouncement ? (
+                <CmsRadio value="on_announcement">발표일에 맞춰서</CmsRadio>
+              ) : null}
               <span
                 ref={manualRadioAnchorRef}
                 className="instructor-fee-approval-modal__manual-anchor"

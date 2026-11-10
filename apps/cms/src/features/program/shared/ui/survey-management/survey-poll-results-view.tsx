@@ -10,6 +10,7 @@ import { paginateSurveyPollPdfSections } from '../../lib/survey-management/pagin
 import { resolveSurveyWritingDraft } from '../../lib/survey-management/survey-writing-draft'
 import type {
   SurveyPollRawResponse,
+  SurveyProgressStatus,
   SurveyResultQuestionSummary,
 } from '../../lib/survey-management/survey-management-types'
 import { SurveyScaleResultChart } from './survey-scale-result-chart'
@@ -29,6 +30,16 @@ export type SurveyPollResultsViewProps = {
    */
   questionSummaries?: SurveyResultQuestionSummary[] | null
   pdfTitle?: string
+  /**
+   * 요약 줄 앞 진행 상태 뱃지(「진행 중 / 진행 완료」). 일반 프로그램 시안 전용 — 생략 시 뱃지 없음(UJAT 기존 동작).
+   * `before_start`는 뱃지를 그리지 않는다.
+   */
+  statusBadge?: SurveyProgressStatus
+}
+
+const SURVEY_RESULTS_STATUS_BADGE_LABELS: Partial<Record<SurveyProgressStatus, string>> = {
+  in_progress: '진행 중',
+  finished: '진행 완료',
 }
 
 export function SurveyPollResultsView({
@@ -39,6 +50,7 @@ export function SurveyPollResultsView({
   responses,
   questionSummaries,
   pdfTitle = '강의 평가 결과',
+  statusBadge,
 }: SurveyPollResultsViewProps) {
   const [templateSaveRevision, setTemplateSaveRevision] = useState(0)
   const [draft, setDraft] = useState<WritingFormDraft | null>(null)
@@ -112,9 +124,21 @@ export function SurveyPollResultsView({
     </>
   )
 
+  const statusBadgeLabel =
+    statusBadge != null ? SURVEY_RESULTS_STATUS_BADGE_LABELS[statusBadge] : undefined
+
   return (
     <div className="ujat-survey-poll-results">
-      <div className="ujat-survey-poll-results__summary">{summary}</div>
+      <div className="ujat-survey-poll-results__summary">
+        {statusBadgeLabel != null ? (
+          <span
+            className={`survey-results-status-badge survey-results-status-badge--${statusBadge}`}
+          >
+            {statusBadgeLabel}
+          </span>
+        ) : null}
+        {summary}
+      </div>
 
       <div className="ujat-survey-poll-results__sections">
         {sections.map(section => (

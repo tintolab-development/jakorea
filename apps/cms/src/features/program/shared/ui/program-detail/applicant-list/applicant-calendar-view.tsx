@@ -32,7 +32,10 @@ import {
   buildGeneralInstitutionCalendarMonthCellRows,
   renderGeneralInstitutionCalendarMonthEventContent,
 } from './applicant-institution-calendar-month-cells'
-import { renderGeneralInstitutionCalendarPreviewTooltipContent } from './applicant-general-institution-calendar-popover'
+import {
+  renderGeneralInstitutionCalendarPreviewTooltipContent,
+  renderGeneralInstitutionCalendarPreviewTooltipContentWithoutBadge,
+} from './applicant-general-institution-calendar-popover'
 import { renderGeneralIndividualCalendarPreviewTooltipContent } from './applicant-general-individual-calendar-popover'
 import { renderGeneralInstructorCalendarPreviewTooltipContent } from './applicant-general-instructor-calendar-popover'
 import { renderProgramCalendarEventsDefaultTooltipContent } from '@/shared/components/calendar/ui/preview-tooltip/program'
@@ -70,6 +73,8 @@ interface ApplicantCalendarViewProps {
   useSplitCardPageScroll?: boolean
   /** 캘린더 이벤트 0건이지만 신청 목록은 있을 때(기관 일정 미투영) 우측 빈 상태 문구 */
   scheduleListEmptyDescription?: string
+  /** 일반(기관형) 기관 신청 — 시안 1141:236526 날짜 hover 팝오버에 승인 상태 뱃지 없음. 기본 false(1사1교 유지) */
+  hideInstitutionPreviewApprovalBadge?: boolean
 }
 
 function findInstitutionForRow(
@@ -136,6 +141,7 @@ export function ApplicantCalendarView({
   showEntityFilter = true,
   useSplitCardPageScroll = false,
   scheduleListEmptyDescription,
+  hideInstitutionPreviewApprovalBadge = false,
 }: ApplicantCalendarViewProps) {
   const isGeneralInstructor = calendarVariant === 'general-instructor'
   const isGeneralInstitution = calendarVariant === 'general-institution'
@@ -369,7 +375,9 @@ export function ApplicantCalendarView({
       formatEventsOverflowText={n => `외 ${n}개의 항목`}
       previewTooltipContent={
         isGeneralInstitution
-          ? renderGeneralInstitutionCalendarPreviewTooltipContent
+          ? hideInstitutionPreviewApprovalBadge
+            ? renderGeneralInstitutionCalendarPreviewTooltipContentWithoutBadge
+            : renderGeneralInstitutionCalendarPreviewTooltipContent
           : isGeneralIndividual
             ? renderGeneralIndividualCalendarPreviewTooltipContent
             : isGeneralInstructor

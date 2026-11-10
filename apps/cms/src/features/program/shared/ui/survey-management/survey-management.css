@@ -267,3 +267,45 @@
   line-height: 150%; /* 18px */
   padding-left: 3px;
 }
+
+/* 결과 요약 진행 상태 뱃지 — 일반 프로그램 시안 13148:251940 · 16057:321200 */
+.survey-results-status-badge {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  padding: 5px 16px;
+  border: 2px solid transparent;
+  border-radius: 50px;
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 150%;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.survey-results-status-badge--in_progress {
+  border-color: rgba(1, 161, 175, 0.1);
+  background: rgba(1, 161, 175, 0.1);
+  color: var(--color-mint-01, #00a0af);
+}
+
+.survey-results-status-badge--finished {
+  border-color: rgba(61, 61, 61, 0.04);
+  background: linear-gradient(rgba(61, 61, 61, 0.1), rgba(61, 61, 61, 0.1)), #fff;
+  color: rgba(61, 61, 61, 0.5);
+}
+
+/* 만족도조사 일정 선택 — 결과 요약 줄 왼쪽 (시안 1141:267627) */
+.survey-management-satisfaction__body {
+  position: relative;
+}
+
+.survey-management-satisfaction__body
+  > .survey-management-satisfaction__schedule-select.survey-management-satisfaction__schedule-select--inline {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  margin: 0;
+}
