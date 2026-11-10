@@ -53,10 +53,8 @@ function Interview2CancelFailPendingNotificationModal({
       message={buildVolunteerInterview2CancelFailMessage(volunteerName, 'pendingNotification')}
       confirmLabel="불합격 취소"
       confirmVariant="delete"
-      requireReason
-      reasonLabel="취소 사유"
-      reasonPlaceholder="취소 사유를 입력해 주세요"
-      reasonRequiredMessage="취소 사유를 입력해 주세요."
+      // 시안 15-1(9781:56436) 발송 전 변형 — 사유 입력 없음. 빈 사유는 훅에서 「불합격 취소」로 보낸다.
+      requireReason={false}
       showNotifyTiming={false}
       onCancel={onCancel}
       onConfirm={onConfirm}

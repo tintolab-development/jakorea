@@ -5,3 +5,8 @@
 .mail-send-recipient-table.cms-data-table .ant-table-body {
   max-height: 346px;
 }
+
+/* 시안: 선택 열 60 (cms-data-table 룰: 화면별 --table-selection-column-width) */
+.mail-send-recipient-table.cms-data-table {
+  --table-selection-column-width: 60px;
+}

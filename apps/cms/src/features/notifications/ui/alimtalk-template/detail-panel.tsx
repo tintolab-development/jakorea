@@ -48,7 +48,13 @@ export function DetailPanel({ template, categoryName, onPreview }: DetailPanelPr
             label="템플릿 상세"
             fullRow
             view={
-              <CmsButton variant="secondary" size="medium" type="button" onClick={onPreview}>
+              <CmsButton
+                variant="secondary"
+                size="small"
+                type="button"
+                className="alimtalk-template-detail__preview-btn"
+                onClick={onPreview}
+              >
                 미리보기
               </CmsButton>
             }

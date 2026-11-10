@@ -20,6 +20,8 @@ export interface SchoolDetailLeadInstructorConfirmModalProps {
   /** 변경 대상 강사명 */
   newLeadInstructorName: string
   zIndex?: number
+  /** `general-institution` — 일반 기관형 시안 08-2(대표 강사 변경 안내 · 전환). 기본은 기존 문구 */
+  copyVariant?: 'default' | 'general-institution'
 }
 
 export function SchoolDetailLeadInstructorConfirmModal({
@@ -29,12 +31,14 @@ export function SchoolDetailLeadInstructorConfirmModal({
   currentLeadInstructorName,
   newLeadInstructorName,
   zIndex = DEFAULT_LEAD_CONFIRM_Z_INDEX,
+  copyVariant = 'default',
 }: SchoolDetailLeadInstructorConfirmModalProps) {
+  const isGeneralInstitution = copyVariant === 'general-institution'
   return (
     <ContentModal
       open={open}
       onCancel={onCancel}
-      title="대표 강사 지정 안내"
+      title={isGeneralInstitution ? '대표 강사 변경 안내' : '대표 강사 지정 안내'}
       width={LEAD_CONFIRM_MODAL_WIDTH}
       zIndex={zIndex}
       className="school-detail-lead-instructor-confirm-modal"
@@ -44,11 +48,22 @@ export function SchoolDetailLeadInstructorConfirmModal({
             취소
           </CmsButton>
           <CmsButton variant="primary" size="medium" onClick={onConfirm}>
-            변경
+            {isGeneralInstitution ? '전환' : '변경'}
           </CmsButton>
         </div>
       }
     >
+      {isGeneralInstitution ? (
+        <div className="school-detail-lead-instructor-confirm-modal__body">
+          <p>
+            [<strong>{newLeadInstructorName}</strong>] 님을 대표 강사로 지정하시겠습니까?
+          </p>
+          <p>
+            기존 대표 강사인 [<strong>{currentLeadInstructorName}</strong>] 님은 일반 강사로
+            전환됩니다.
+          </p>
+        </div>
+      ) : (
       <div className="school-detail-lead-instructor-confirm-modal__body">
         <p>
           현재 [<strong>{currentLeadInstructorName}</strong>] 강사가 대표 강사로 지정되어 있습니다.
@@ -57,6 +72,7 @@ export function SchoolDetailLeadInstructorConfirmModal({
           [<strong>{newLeadInstructorName}</strong>] 강사로 대표 강사를 변경하시겠습니까?
         </p>
       </div>
+      )}
     </ContentModal>
   )
 }

@@ -1,6 +1,5 @@
 import { useState, type ReactNode } from 'react'
 import { CmsSelect } from '@/shared/ui'
-import { FieldSearchIcon } from '@/shared/ui/icons'
 import {
   TemplateSelectModal,
   type SendTemplatePickerItem,
@@ -100,11 +99,6 @@ export function TemplateSelectField<T extends SendTemplatePickerItem>({
           allowClear={false}
           showSearch={false}
           disabled={disabled}
-          suffixIcon={
-            <span className="cms-field__icon">
-              <FieldSearchIcon />
-            </span>
-          }
           tabIndex={-1}
           style={{ width: '100%' }}
         />

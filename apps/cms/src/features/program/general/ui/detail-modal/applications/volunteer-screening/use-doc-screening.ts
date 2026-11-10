@@ -517,8 +517,10 @@ export function useGeneralVolunteerDocScreening({
       )
       if (!ok) return
       setCancelRejectTargetId(null)
+      // 시안 04-2(9781:55044) 반려 취소 완료
+      showAlert({ title: '취소 완료', content: MESSAGES.success.cancelled })
     },
-    [applyDocumentScreeningCancelRejection, cancelRejectVolunteer]
+    [applyDocumentScreeningCancelRejection, cancelRejectVolunteer, showAlert]
   )
 
   const handleBulkReject = useCallback(() => {

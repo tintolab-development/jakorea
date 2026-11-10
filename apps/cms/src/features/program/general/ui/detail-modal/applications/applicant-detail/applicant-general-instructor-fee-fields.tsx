@@ -14,6 +14,7 @@ import {
   LECTURE_FEE_MEASURE_NOT_APPLICABLE_OPTION,
   LECTURE_FEE_MEASURE_OPTIONS,
   DEFAULT_LECTURE_FEE_MEASURE,
+  buildGeneralOrganizationLectureFeeBasisViewSegments,
   buildLectureFeeBasisViewSegments,
   type ApplicantInstructorBusinessIncomeStatus,
   type ApplicantInstructorLectureFeeBasisType,
@@ -25,8 +26,21 @@ function FieldError({ message }: { message?: string }) {
   return <span className="applicant-general-instructor-basic-info__field-error">{message}</span>
 }
 
-export function LectureFeeBasisView({ instructor }: { instructor: ApplicantInstructorRow }) {
-  const segments = buildLectureFeeBasisViewSegments(instructor)
+export function LectureFeeBasisView({
+  instructor,
+  copyVariant = 'default',
+}: {
+  instructor: ApplicantInstructorRow
+  /**
+   * 기본 `default`: 「유형 | 지급 기준 | 금액」(1사1교·일반 개인형·참여 강사 상세).
+   * `general-organization`: 일반(기관형) 강사 신청 시안 06-1·06-2 표기.
+   */
+  copyVariant?: 'default' | 'general-organization'
+}) {
+  const segments =
+    copyVariant === 'general-organization'
+      ? buildGeneralOrganizationLectureFeeBasisViewSegments(instructor)
+      : buildLectureFeeBasisViewSegments(instructor)
   if (segments.length === 0) return <span>-</span>
   if (segments.length === 1) return <span>{segments[0]}</span>
 
@@ -39,10 +53,13 @@ export function LectureFeeBasisEditField({
   draft,
   onDraftChange,
   validationError,
+  measureOptions = LECTURE_FEE_MEASURE_OPTIONS,
 }: {
   draft: ApplicantInstructorEditDraft
   onDraftChange: (partial: Partial<ApplicantInstructorEditDraft>) => void
   validationError?: string
+  /** 지급 기준 셀렉트 옵션. 기본 `LECTURE_FEE_MEASURE_OPTIONS` */
+  measureOptions?: { value: string; label: string }[]
 }) {
   const isProgramBasis = draft.lectureFeeBasisType === 'program'
 
@@ -94,11 +111,7 @@ export function LectureFeeBasisEditField({
               ? LECTURE_FEE_MEASURE_NOT_APPLICABLE
               : draft.lectureFeeMeasure || undefined
           }
-          options={
-            isProgramBasis
-              ? [LECTURE_FEE_MEASURE_NOT_APPLICABLE_OPTION]
-              : LECTURE_FEE_MEASURE_OPTIONS
-          }
+          options={isProgramBasis ? [LECTURE_FEE_MEASURE_NOT_APPLICABLE_OPTION] : measureOptions}
           onChange={v => onDraftChange({ lectureFeeMeasure: v != null ? String(v) : '' })}
           getPopupContainer={() => document.body}
         />

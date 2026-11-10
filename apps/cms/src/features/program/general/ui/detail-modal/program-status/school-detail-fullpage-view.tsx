@@ -23,7 +23,19 @@ import {
 } from '@/shared/ui'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
-import { giveUpGeneralParticipatingInstitution } from '@/features/program/general/api/admin-program-progress-service'
+import {
+  changeGeneralParticipatingInstitutionSchedules,
+  giveUpGeneralParticipatingInstitution,
+} from '@/features/program/general/api/admin-program-progress-service'
+import { EducationScheduleChangeModal } from '@/features/program/shared/ui/education-schedule-change-modal'
+import {
+  buildParticipatingInstitutionScheduleChangeLine,
+  buildParticipatingInstitutionScheduleChangeRequests,
+  formatParticipatingInstitutionScheduleChangePeriod,
+  PARTICIPATING_INSTITUTION_SCHEDULE_CHANGE_DESCRIPTION,
+  PARTICIPATING_INSTITUTION_SCHEDULE_SELECTED_CONTENT,
+  PARTICIPATING_INSTITUTION_SCHEDULE_SELECTED_TITLE,
+} from '@/features/program/general/lib/participating-institution-schedule-change'
 import { resendGeneralOrganizationApplicationNotification } from '@/features/program/general/api/admin-applications-service'
 import { ProgramApprovalStatusDetailValue } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/program-approval-status-detail-value'
 import { ApplicantNotificationResendModal } from '@/features/program/shared/ui/detail-modal/components/applicant-notification-resend-modal'
@@ -109,7 +121,10 @@ import {
   createInstructorAssignmentRemote,
   putRepresentativeInstructorRemote,
 } from '@/features/program/general/api/instructor-assignments-api-client'
-import { toInstructorAssignmentCancelRequest } from '@/features/program/general/lib/instructor-cancel-fault-party'
+import {
+  toInstitutionDetailAssignmentCancelRequest,
+  toInstructorAssignmentCancelRequest,
+} from '@/features/program/general/lib/instructor-cancel-fault-party'
 import type { SchoolAddInstructorAssignOption } from '../../../lib/school-add-instructor-assign'
 import {
   isOneSchoolPerDayConflictErrorCode,
@@ -135,6 +150,21 @@ import {
 import { useOrganizationRequestedScheduleConfirmMutation } from '@/features/program/general/hooks/use-organization-schedule-assignment-mutation'
 import { SchoolDetailLeadInstructorConfirmModal } from './school-detail-lead-instructor-confirm-modal'
 import { InstructorFeeApprovalModal } from '@/features/program/shared/ui/detail-modal/components/instructor-fee-approval-modal'
+import type { InstructorFeeApprovalConfirmDetail } from '@/features/program/general/lib/use-instructor-fee-approval-modal'
+import {
+  INSTRUCTOR_FEE_POLICY_INVALID_MESSAGE,
+  isInstructorApplicationFeePolicyRequestValid,
+  toInstructorApplicationFeePolicy,
+} from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
+import { toInstructorApplicationNotificationRequest } from '@/features/program/general/lib/instructor-application-notification'
+import { NOTIFY_TIMING_CAPABILITY } from '@/shared/lib/notify-timing-capability'
+import { approveGeneralInstructorApplication } from '@/features/program/general/api/admin-applications-service'
+import type { InstructorApplicationFeePolicyRequest } from '@/features/program/general/api/applications-api-client'
+import {
+  buildInstitutionApproveAssignPlan,
+  formatInstitutionApproveAssignFeeSubject,
+  summarizeInstitutionApproveAssignSelection,
+} from '@/features/program/general/lib/institution-approve-assign-plan'
 import { ProgramEnrollmentStatusText } from '@/shared/components/program-enrollment-status-text'
 import {
   getProgramProgressDisplayStatus,
@@ -214,7 +244,10 @@ import {
   resolveParticipatingInstitutionActivityWithdrawPatch,
   resolveParticipatingInstitutionActivityWithdrawStopScheduleId,
 } from '@/features/program/general/lib/participating-institution-activity-withdraw'
-import { buildParticipatingSchoolPreferredScheduleLines } from '@/features/program/general/lib/participating-school-session-display'
+import {
+  buildParticipatingSchoolPreferredScheduleLines,
+  resolveParticipatingInstitutionScheduleRowLabel,
+} from '@/features/program/general/lib/participating-school-session-display'
 import { fetchAdminProgramSchedulesRemote } from '@/features/program/general/api/program-schedules-api-client'
 import { fetchOrganizationScheduleAssignmentsRemote } from '@/features/program/general/api/organization-schedule-assignments-api-client'
 import { mapStoredPeriodRequestedSchedulesToHopeSessions } from '@/features/program/general/api/adapters/general-applications-adapters'
@@ -300,7 +333,12 @@ interface AssignedInstructorDisplayRow extends SchoolDetailInstructorRow {
   assignmentCancelled?: boolean
 }
 
-type WaitingInstructorRow = WaitingInstructorRowMock
+type WaitingInstructorRow = WaitingInstructorRowMock & {
+  /** 일반 기관형 — 프로그램 신청 승인 전 강사(배정 시 「승인 및 배정」) */
+  programApprovalPending?: boolean
+  /** 승인 전 강사 신청의 강사비 등급 스냅샷 — 강사비 책정(프로그램 기준) 자동 선택용 */
+  instructorFeeGradeLabel?: string
+}
 
 /** 필요 배정 인원(분모) — program detail participantRecruitmentInfo.maxAssignableInstructors SSOT */
 function resolveRequiredInstructorCount(program: Program): number {
@@ -313,10 +351,19 @@ function getWaitingInstructorRowInstructorId(row: WaitingInstructorRow): string 
   return row.instructorId ?? row.id
 }
 
-function renderWaitingInstructorTableEmpty() {
+function renderWaitingInstructorTableEmpty(withDescription = false) {
   return (
     <div className="school-detail-fullpage-view__waiting-table-empty" role="status">
-      배정 대기 중인 강사가 없습니다.
+      {withDescription ? (
+        <div className="school-detail-fullpage-view__table-empty-stack">
+          <span>배정 대기 중인 강사가 없습니다.</span>
+          <span className="school-detail-fullpage-view__table-empty-desc">
+            강사가 해당 기관에 신청하면 이곳에 목록이 표시됩니다.
+          </span>
+        </div>
+      ) : (
+        '배정 대기 중인 강사가 없습니다.'
+      )}
     </div>
   )
 }
@@ -379,10 +426,19 @@ function buildAssignedScheduleLineFromSessionIds(
   return buildParticipatingSchoolPreferredScheduleLines(selectedSessions)[0]
 }
 
-function renderAssignedInstructorTableEmpty() {
+function renderAssignedInstructorTableEmpty(withDescription = false) {
   return (
     <div className="school-detail-fullpage-view__waiting-table-empty" role="status">
-      배정된 강사가 없습니다.
+      {withDescription ? (
+        <div className="school-detail-fullpage-view__table-empty-stack">
+          <span>배정된 강사가 없습니다.</span>
+          <span className="school-detail-fullpage-view__table-empty-desc">
+            강사가 배정되면 이곳에 목록이 표시됩니다.
+          </span>
+        </div>
+      ) : (
+        '배정된 강사가 없습니다.'
+      )}
     </div>
   )
 }
@@ -397,6 +453,15 @@ function formatWaitingInstructorHopeScheduleExport(row: WaitingInstructorRow): s
   if (!session) return dateTime
   return `${dateTime} | ${session}`
 }
+
+/** 시안 05-1 — 일반 기관형 학생 추가 등록 팝업 설명 */
+const GENERAL_INSTITUTION_ADD_STUDENT_DESCRIPTION =
+  '프로그램에 추가로 참여할 학생의 정보를 입력해 주세요.\n해당 학생의 초상권 동의서는 담당 교사에게 별도 요청이 필요합니다.'
+
+/** 시안 15 — 대표 강사 → 일반 강사 직접 전환 차단 안내 (일반 기관형) */
+const LEAD_INSTRUCTOR_TYPE_CHANGE_BLOCKED_TITLE = '강사 유형 변경 불가 안내'
+const LEAD_INSTRUCTOR_TYPE_CHANGE_BLOCKED_CONTENT =
+  '대표 강사는 반드시 1명이 지정되어야 합니다.\n변경하시려면 다른 구성원을 대표 강사로 지정해 주세요.\n기존의 대표 강사는 자동으로 일반 강사로 전환됩니다.'
 
 const APPLICATION_INFO_EDIT_UNMASK_REASON = '신청 정보 수정'
 
@@ -454,7 +519,11 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
   if (isTrainedTeachersDetailProgram(props.program)) {
     return <TrainedTeachersParticipatingInstitutionDetailView {...props} />
   }
+  return <InstitutionDetailViewBody {...props} />
+}
 
+/** 일반·1사1교 참여 기관 상세 본문 — 훅은 유형 분기(early return) 뒤가 아니라 이 컴포넌트에서만 호출한다 */
+function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
   const {
     program,
     detail,
@@ -525,12 +594,19 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     meta?: { isNewApproval?: boolean; sessionIds?: string[] }
   } | null>(null)
   const [unassignConfirmOpen, setUnassignConfirmOpen] = useState(false)
+  const [unassignSubmitting, setUnassignSubmitting] = useState(false)
   const [unassignCompleteModal, setUnassignCompleteModal] = useState<{
     instructorNames: string[]
     targetNames: string[]
     reason: string
   } | null>(null)
   const [selectAssignOverflowOpen, setSelectAssignOverflowOpen] = useState(false)
+  /** 일반 기관형 「승인 및 배정」 — guide(09-2·11-2) → fee(11-3) → (인원 초과 시) overflow */
+  const [approveAssignStep, setApproveAssignStep] = useState<'guide' | 'fee' | 'overflow' | null>(
+    null
+  )
+  const [approveAssignFeePolicyError, setApproveAssignFeePolicyError] = useState<string | null>(null)
+  const pendingApproveAssignDetailRef = useRef<InstructorFeeApprovalConfirmDetail | null>(null)
   const [selectAssignNewGuideOpen, setSelectAssignNewGuideOpen] = useState(false)
   const [selectAssignFeeApprovalOpen, setSelectAssignFeeApprovalOpen] = useState(false)
   const [selectAssignPendingInstructor, setSelectAssignPendingInstructor] = useState<{
@@ -997,6 +1073,103 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     },
   })
 
+  /**
+   * 일반 기관형 — 신청 정보 수정 모드 「교육 진행 일정 변경」(시안 01-2·02-1·02-2).
+   * 팝업 「선택 완료」는 변경 일정만 보관하고, [저장]에서 participants/{id}/schedules PATCH 후 신청 정보를 저장한다.
+   * 1사1교는 기존 화면 그대로(버튼 없음).
+   */
+  const canChangeEducationSchedule =
+    isGeneralOrgProgram && !isCompanySchool && progressRemoteEnabled
+  const [scheduleChangeModalOpen, setScheduleChangeModalOpen] = useState(false)
+  const [pendingScheduleChangeLines, setPendingScheduleChangeLines] = useState<string[] | null>(
+    null
+  )
+  const [scheduleChangeSaving, setScheduleChangeSaving] = useState(false)
+  const scheduleChangeLines = useMemo(
+    () => applicationTabScheduleSessions.map(buildParticipatingInstitutionScheduleChangeLine),
+    [applicationTabScheduleSessions]
+  )
+  const scheduleChangeRowLabels = useMemo(
+    () =>
+      applicationTabScheduleSessions.map(session =>
+        resolveParticipatingInstitutionScheduleRowLabel(program, session)
+      ),
+    [applicationTabScheduleSessions, program]
+  )
+  const scheduleChangePeriodLabel = useMemo(
+    () => formatParticipatingInstitutionScheduleChangePeriod(program.startDate, program.endDate),
+    [program.endDate, program.startDate]
+  )
+  useEffect(() => {
+    if (isApplicationInfoEditing) return
+    setPendingScheduleChangeLines(null)
+    setScheduleChangeModalOpen(false)
+  }, [isApplicationInfoEditing, detail.id])
+
+  const handleApplicationInfoSave = useCallback(async () => {
+    if (scheduleChangeSaving) return
+    const pendingLines = pendingScheduleChangeLines
+    const scheduleRequests = pendingLines
+      ? buildParticipatingInstitutionScheduleChangeRequests(scheduleChangeLines, pendingLines)
+      : []
+    if (scheduleRequests.length > 0) {
+      setScheduleChangeSaving(true)
+      let changedCount = 0
+      try {
+        for (const request of scheduleRequests) {
+          await changeGeneralParticipatingInstitutionSchedules(programId, detail.id, request)
+          changedCount += 1
+        }
+      } catch (error) {
+        showAlert({
+          title: '일정 변경 실패',
+          content:
+            (changedCount > 0
+              ? `교육 진행 일정 ${scheduleRequests.length}건 중 ${changedCount}건만 변경되었습니다.\n`
+              : '') +
+            getGeneralProgramApiErrorMessage(
+              error,
+              '교육 진행 일정을 변경하지 못했습니다. 잠시 후 다시 시도해 주세요.'
+            ),
+        })
+        if (changedCount === 0) {
+          setScheduleChangeSaving(false)
+          return
+        }
+      }
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: organizationScheduleAssignmentsQueryKey(
+            programId,
+            organizationApplicationIdForDetail || '__none__'
+          ),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: generalProgramProgressQueryKeys.institutions(programId),
+        }),
+        queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.schedules(programId) }),
+      ])
+      setScheduleChangeSaving(false)
+      if (changedCount < scheduleRequests.length) return
+      setPendingScheduleChangeLines(null)
+    }
+    const result = await saveApplicationInfoEdit()
+    if (result === COMBINED_CLASS_GRADE_REQUIRED_SAVE_RESULT) {
+      combinedClassProcess.openGradeRequiredAlert()
+    }
+  }, [
+    combinedClassProcess,
+    detail.id,
+    organizationApplicationIdForDetail,
+    pendingScheduleChangeLines,
+    programId,
+    queryClient,
+    saveApplicationInfoEdit,
+    scheduleChangeLines,
+    scheduleChangeSaving,
+    showAlert,
+  ])
+
   const programProgressStatus =
     mergedDetail.programProgressStatus ??
     resolveProgramEnrollmentDisplayStatusFromLabel(mergedDetail.programProgressLabel) ??
@@ -1429,25 +1602,48 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         isGeneralOrgProgram && hopeEducationSessions.length > 0
           ? hopeEducationSessions
           : (row.sessions ?? [])
+      // 일반 기관형(1사1교 제외): 승인 전 강사 신청도 배정 대기에 보여 「승인 및 배정」(시안 09-2·11-2) 대상으로 쓴다
+      const includePending = isGeneralOrgProgram && !isCompanySchool
+      const pendingApplications = includePending
+        ? (assignmentBoard.pendingInstructorApplications ?? [])
+        : []
+      const pendingApplicationById = new Map(
+        pendingApplications
+          .filter(app => app.id != null)
+          .map(app => [String(app.id), app] as const)
+      )
       return buildCompanySchoolWaitingInstructorRows({
         schoolName: row.schoolName,
         sessions: waitingHopeSessions,
-        approvedInstructors: assignmentBoard.approvedInstructorApplications,
+        approvedInstructors: includePending
+          ? [...assignmentBoard.approvedInstructorApplications, ...pendingApplications]
+          : assignmentBoard.approvedInstructorApplications,
         assignedInstructorMemberIds: assignedMemberIds,
         occupiedLectureDatesByInstructorId,
         // 일반 기관형: 강사 신청의 기관별 거리에서 이 기관을 찾는다(1사1교는 기존 신청 단위 거리)
         organizationApplicationId: isGeneralOrgProgram ? row.organizationApplicationId : null,
+        ...(includePending ? { candidateApplicationStatuses: 'any' as const } : {}),
       })
         .filter(waitingRow => !completedWaitingRowKeys.has(waitingRow.id))
-        .map(waitingRow => {
-          const instructorId = getWaitingInstructorRowInstructorId(waitingRow)
+        .map((waitingRow): WaitingInstructorRow => {
+          const pendingApp = waitingRow.instructorApplicationId
+            ? pendingApplicationById.get(waitingRow.instructorApplicationId)
+            : undefined
+          const withApproval: WaitingInstructorRow = pendingApp
+            ? {
+                ...waitingRow,
+                programApprovalPending: true,
+                instructorFeeGradeLabel: pendingApp.instructorFeeGradeSnapshot?.trim() || undefined,
+              }
+            : waitingRow
+          const instructorId = getWaitingInstructorRowInstructorId(withApproval)
           if (
             disabledWaitingInstructorIds.has(instructorId) &&
-            waitingRow.assignmentStatus === 'waiting'
+            withApproval.assignmentStatus === 'waiting'
           ) {
-            return { ...waitingRow, assignmentStatus: 'unavailable' as const }
+            return { ...withApproval, assignmentStatus: 'unavailable' as const }
           }
-          return waitingRow
+          return withApproval
         })
     }
 
@@ -1750,6 +1946,249 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     finalizeSelectAssign(selectedWaitingRows, false)
   }, [finalizeSelectAssign, selectedWaitingRows])
 
+  const approveAssignSelection = useMemo(
+    () =>
+      summarizeInstitutionApproveAssignSelection(
+        selectedWaitingRows.map(w => ({
+          instructorId: getWaitingInstructorRowInstructorId(w),
+          instructorName: w.instructorName,
+          programApprovalPending: w.programApprovalPending,
+        }))
+      ),
+    [selectedWaitingRows]
+  )
+  const approveAssignUnapprovedNames = useMemo(() => {
+    const names = new Map<string, string>()
+    for (const w of selectedWaitingRows) {
+      if (w.programApprovalPending) names.set(getWaitingInstructorRowInstructorId(w), w.instructorName)
+    }
+    return Array.from(names.values())
+  }, [selectedWaitingRows])
+  const approveAssignFeeGradeLabel = useMemo(
+    () => selectedWaitingRows.find(w => w.programApprovalPending)?.instructorFeeGradeLabel,
+    [selectedWaitingRows]
+  )
+
+  const closeApproveAssignFlow = useCallback(() => {
+    pendingApproveAssignDetailRef.current = null
+    setApproveAssignFeePolicyError(null)
+    setApproveAssignStep(null)
+  }, [])
+
+  /**
+   * 일반 기관형 「승인 및 배정」 실행.
+   * 일괄 승인+배정 API가 없어 강사별로 순차 호출한다.
+   * - 승인 전 강사: approve(assignments·feePolicy·notification) 1회
+   * - 승인된 강사: 행마다 instructor-assignments create
+   * 중간 실패 시 그 지점에서 멈추고, 이미 처리한 강사명을 알려 준 뒤 목록을 다시 불러온다.
+   */
+  const executeApproveAndAssign = useCallback(
+    async (detail: InstructorFeeApprovalConfirmDetail) => {
+      const rows = selectedWaitingRows
+      if (rows.length === 0) return
+      if (!programHasActiveInstructorRecruitment(program)) {
+        showAlert({ title: '배정 실패', content: GENERAL_INSTRUCTOR_ASSIGNMENT_REQUIRES_RECRUITMENT_MESSAGE })
+        return
+      }
+      if (!assignmentBoardRemoteEnabled) {
+        void showAlert({
+          title: PROGRAM_API_UNAVAILABLE_TITLE,
+          content: buildProgramApiUnavailableSaveContent('강사 승인 및 배정'),
+        })
+        return
+      }
+      const orgAppId = Number(row.organizationApplicationId)
+      if (!Number.isFinite(orgAppId) || orgAppId <= 0) {
+        showAlert({
+          title: '안내',
+          content:
+            '기관 신청 ID가 없어 배정할 수 없습니다. 참여 기관 API에 organizationApplicationId(sourceApplicationId) 매핑이 필요합니다.',
+        })
+        return
+      }
+      if (!assignmentBoard) {
+        showAlert({ title: '안내', content: '배정 데이터를 불러오는 중입니다. 잠시 후 다시 시도해 주세요.' })
+        return
+      }
+      const plan = buildInstitutionApproveAssignPlan({
+        rows: rows.map(w => ({
+          instructorId: getWaitingInstructorRowInstructorId(w),
+          instructorName: w.instructorName,
+          instructorMemberId: (w as { instructorMemberId?: string }).instructorMemberId,
+          instructorApplicationId: (w as { instructorApplicationId?: string }).instructorApplicationId,
+          programApprovalPending: w.programApprovalPending,
+          instructorFeeGradeLabel: w.instructorFeeGradeLabel,
+          hopeDate: w.hopeDate,
+          hopeScheduleLine: w.hopeScheduleLine,
+          requestedScheduleId: (w as { requestedScheduleId?: number }).requestedScheduleId,
+          resolvedScheduleId: (w as { resolvedScheduleId?: number | null }).resolvedScheduleId,
+          scheduleUnresolved: (w as { scheduleUnresolved?: boolean }).scheduleUnresolved,
+        })),
+        schedules: assignmentBoard.schedules,
+      })
+      if (!plan.ok) {
+        showAlert({ title: '안내', content: plan.message })
+        return
+      }
+
+      const feeContext = { programWageGradeRows: program.generalCommonInfo?.wageGradeRows }
+      const feePolicyByMemberId = new Map<number, InstructorApplicationFeePolicyRequest>()
+      for (const instructor of plan.instructors) {
+        if (!instructor.unapproved) continue
+        const feePolicy = toInstructorApplicationFeePolicy(
+          {
+            basisType: detail.lectureFeeBasisType,
+            measure: detail.lectureFeeMeasure,
+            amount: detail.lectureFeeAmount,
+            // 프로그램 기준은 강사별 등급, 그 외는 모달 선택값
+            instructorFeeGrade:
+              (detail.lectureFeeBasisType === 'program'
+                ? instructor.instructorFeeGradeLabel?.trim()
+                : undefined) ||
+              detail.instructorFeeGrade?.trim() ||
+              detail.instructorFeeGradeLabel?.trim() ||
+              instructor.instructorFeeGradeLabel?.trim() ||
+              '',
+          },
+          feeContext
+        )
+        if (!isInstructorApplicationFeePolicyRequestValid(feePolicy, instructor.targets.length)) {
+          setApproveAssignFeePolicyError(INSTRUCTOR_FEE_POLICY_INVALID_MESSAGE)
+          setApproveAssignStep('fee')
+          return
+        }
+        feePolicyByMemberId.set(instructor.instructorMemberId, feePolicy!)
+      }
+
+      if (assignInFlightRef.current) return
+      assignInFlightRef.current = true
+      setAssignSubmitting(true)
+      /**
+       * 승인 API(`Notification`)는 발표일(ON_ANNOUNCEMENT)을 받지만, 이미 승인된 강사의
+       * 배정 create는 즉시·예약만 받는다. 모두 미승인일 때만 발표일을 허용한다.
+       */
+      const allUnapproved = plan.instructors.every(instructor => instructor.unapproved)
+      const notification = toInstructorApplicationNotificationRequest(
+        detail.notifyTiming,
+        detail.manualNotifyAt,
+        allUnapproved ? NOTIFY_TIMING_CAPABILITY.full : NOTIFY_TIMING_CAPABILITY.scheduledOnly
+      )
+      const assignmentNotify = allUnapproved
+        ? undefined
+        : toScheduledOnlyNotifyTiming(detail.notifyTiming, detail.manualNotifyAt)
+      const completedNames: string[] = []
+      let leadAssigned = currentAssignedCount > 0 && assignedRows.some(i => i.role === 'lead')
+      try {
+        for (const instructor of plan.instructors) {
+          if (instructor.unapproved) {
+            await approveGeneralInstructorApplication(String(instructor.instructorApplicationId), {
+              assignments: instructor.targets.map(target => {
+                const assignment = {
+                  scheduleId: target.scheduleId,
+                  organizationApplicationId: orgAppId,
+                  scheduleLead: !leadAssigned,
+                }
+                leadAssigned = true
+                return assignment
+              }),
+              feePolicy: feePolicyByMemberId.get(instructor.instructorMemberId),
+              notification,
+            })
+          } else {
+            for (const target of instructor.targets) {
+              await createInstructorAssignmentRemote(programId, {
+                instructorMemberId: instructor.instructorMemberId,
+                ...target,
+                organizationApplicationId: orgAppId,
+                instructorApplicationId: instructor.instructorApplicationId,
+                scheduleLead: !leadAssigned,
+                ...assignmentNotify,
+              })
+              leadAssigned = true
+            }
+          }
+          completedNames.push(instructor.instructorName)
+        }
+        await Promise.all([
+          invalidateAssignmentBoard(),
+          queryClient.invalidateQueries({
+            queryKey: generalApplicationsQueryKeys.instructorList(programId),
+          }),
+        ])
+        closeApproveAssignFlow()
+        setSelectedWaitingKeys([])
+        setAssignCompleteModal({
+          instructorName: completedNames.join(', '),
+          schoolName: row.schoolName,
+          currentCount: (assignmentBoard.assignments.length ?? 0) + rows.length,
+          showApprovalAlarmSection: true,
+        })
+      } catch (error) {
+        const failedName = plan.instructors[completedNames.length]?.instructorName ?? ''
+        if (completedNames.length > 0) {
+          await Promise.all([
+            invalidateAssignmentBoard(),
+            queryClient.invalidateQueries({
+              queryKey: generalApplicationsQueryKeys.instructorList(programId),
+            }),
+          ])
+          closeApproveAssignFlow()
+          setSelectedWaitingKeys([])
+        }
+        const reason =
+          formatInstructorOrganizationScheduleScopeMessage(error) ??
+          getParticipationConsentRequiredMessage(error) ??
+          getGeneralProgramApiErrorMessage(
+            error,
+            '강사 승인 및 배정에 실패했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.'
+          )
+        showAlert({
+          title: '배정 실패',
+          content:
+            completedNames.length > 0
+              ? `${completedNames.join(', ')} 강사님은 승인 및 배정이 완료되었습니다.\n[${failedName}] 강사님부터 처리하지 못했습니다.\n${reason}`
+              : reason,
+        })
+      } finally {
+        assignInFlightRef.current = false
+        setAssignSubmitting(false)
+      }
+    },
+    [
+      assignedRows,
+      assignmentBoard,
+      assignmentBoardRemoteEnabled,
+      closeApproveAssignFlow,
+      currentAssignedCount,
+      invalidateAssignmentBoard,
+      program,
+      programId,
+      queryClient,
+      row.organizationApplicationId,
+      row.schoolName,
+      selectedWaitingRows,
+      showAlert,
+    ]
+  )
+
+  const handleApproveAssignFeeConfirm = useCallback(
+    (detail: InstructorFeeApprovalConfirmDetail) => {
+      setApproveAssignFeePolicyError(null)
+      if (currentAssignedCount + approveAssignSelection.selectedInstructorCount > requiredInstructorCount) {
+        pendingApproveAssignDetailRef.current = detail
+        setApproveAssignStep('overflow')
+        return
+      }
+      void executeApproveAndAssign(detail)
+    },
+    [
+      approveAssignSelection.selectedInstructorCount,
+      currentAssignedCount,
+      executeApproveAndAssign,
+      requiredInstructorCount,
+    ]
+  )
+
   const executeRemoteAddAssign = useCallback(
     async (payload: PermissionModalPayload) => {
       const pending = pendingAddAssignRef.current
@@ -1895,6 +2334,12 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     ]
   )
 
+  /**
+   * 배정 알림 발송 여부 — 강사 배정 목록 응답(InstructorAssignmentListItemResponse)에 발송 여부/시각 필드가 없어
+   * 판단할 수 없다. 미지정이면 발송 후 시안(12-2: 사유 + 알림)으로 연다. BE 필드가 생기면 여기서 매핑한다.
+   */
+  const unassignNotificationSent: boolean | undefined = undefined
+
   const handleUnassignClick = useCallback(() => {
     if (selectedAssignedKeys.length === 0) {
       showAlert(NO_SELECTION_ALERT)
@@ -1906,6 +2351,13 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
   const handleSelectAssignClick = useCallback(() => {
     if (selectedWaitingRows.length === 0) {
       showAlert(NO_SELECTION_ALERT)
+      return
+    }
+
+    // 일반 기관형: 승인 전 강사가 섞여 있으면 「승인 및 배정」(시안 09-2·11-2) → 강사비 책정(11-3)
+    if (!isCompanySchool && selectedWaitingRows.some(w => w.programApprovalPending === true)) {
+      setApproveAssignFeePolicyError(null)
+      setApproveAssignStep('guide')
       return
     }
 
@@ -1946,36 +2398,56 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     }
 
     setSelectAssignConfirmOpen(true)
-  }, [instructorApplications.rows, selectedWaitingRows, instructorList, showAlert])
+  }, [instructorApplications.rows, selectedWaitingRows, instructorList, showAlert, isCompanySchool])
 
   /** 배정 취소 확인 모달에서 "배정 취소" 클릭 시 */
   const handleUnassignConfirm = useCallback(
     async (payload: PermissionModalPayload) => {
       if (selectedAssignedKeys.length === 0) return
-      if (payload.faultParty !== 'USER' && payload.faultParty !== 'ADMIN') return
+      // 1사1교: 기존대로 취소 귀책 필수. 일반 기관형: 시안대로 귀책 미입력(API 선택값 — 생략 시 서버 ADMIN)
+      if (isCompanySchool && payload.faultParty !== 'USER' && payload.faultParty !== 'ADMIN') return
       const removedRows = assignedRows.filter(r => selectedAssignedKeys.includes(r.id))
       const removedInstructorNames = removedRows.map(r => r.instructorName)
-      const cancelBody = toInstructorAssignmentCancelRequest({
-        reason: payload.reason,
-        notifyTiming: payload.notifyTiming,
-        manualNotifyAt: payload.manualNotifyAt,
-        faultParty: payload.faultParty,
-      })
+      const cancelBody = isCompanySchool
+        ? toInstructorAssignmentCancelRequest({
+            reason: payload.reason,
+            notifyTiming: payload.notifyTiming,
+            manualNotifyAt: payload.manualNotifyAt,
+            faultParty: payload.faultParty as 'USER' | 'ADMIN',
+          })
+        : toInstitutionDetailAssignmentCancelRequest(payload, unassignNotificationSent)
 
       if (assignmentBoardRemoteEnabled) {
+        if (unassignSubmitting) return
+        setUnassignSubmitting(true)
+        const cancelledNames: string[] = []
         try {
           for (const removed of removedRows) {
             const assignmentId = removed.assignmentId ?? removed.id
             if (!assignmentId) continue
             await cancelInstructorAssignmentRemote(String(assignmentId), cancelBody)
+            cancelledNames.push(removed.instructorName)
           }
           await invalidateAssignmentBoard()
-        } catch {
+        } catch (error) {
+          if (cancelledNames.length > 0) await invalidateAssignmentBoard()
           showAlert({
             title: '배정 취소 실패',
-            content: '강사 배정 취소에 실패했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.',
+            content:
+              cancelledNames.length > 0
+                ? `${cancelledNames.join(', ')} 강사님의 배정은 취소되었으나, 나머지 강사님의 배정 취소에 실패했습니다.\n목록을 확인한 뒤 다시 시도해 주세요.`
+                : getGeneralProgramApiErrorMessage(
+                    error,
+                    '강사 배정 취소에 실패했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.'
+                  ),
           })
+          if (cancelledNames.length > 0) {
+            setUnassignConfirmOpen(false)
+            setSelectedAssignedKeys([])
+          }
           return
+        } finally {
+          setUnassignSubmitting(false)
         }
       } else if (!isCompanySchool) {
         void showAlert({
@@ -2005,6 +2477,11 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
       })
       setUnassignConfirmOpen(false)
       setSelectedAssignedKeys([])
+      if (!isCompanySchool) {
+        // 시안 13 — 일반 기관형 취소 완료
+        showAlert({ title: '취소 완료', content: '취소되었습니다.' })
+        return
+      }
       setUnassignCompleteModal({
         instructorNames: removedInstructorNames,
         targetNames: [row.schoolName],
@@ -2012,6 +2489,8 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
       })
     },
     [
+      unassignNotificationSent,
+      unassignSubmitting,
       selectedAssignedKeys,
       assignedRows,
       instructors,
@@ -2112,6 +2591,19 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
   const handleRoleChange = useCallback(
     (instructorId: string, newRole: InstructorRoleKey) => {
       const roleSource = assignmentBoardRemoteEnabled ? assignedRows : instructors
+      // 일반 기관형: 대표 강사는 반드시 1명 — 대표 → 일반 직접 전환은 막고 안내만 띄운다 (1사1교 기존 동작 유지)
+      if (
+        !isCompanySchool &&
+        newRole !== 'lead' &&
+        roleSource.find(inv => inv.id === instructorId)?.role === 'lead'
+      ) {
+        setOpenRoleDropdownId(null)
+        showAlert({
+          title: LEAD_INSTRUCTOR_TYPE_CHANGE_BLOCKED_TITLE,
+          content: LEAD_INSTRUCTOR_TYPE_CHANGE_BLOCKED_CONTENT,
+        })
+        return
+      }
       if (newRole === 'lead') {
         const currentLead = roleSource.find(inv => inv.role === 'lead')
         const target = roleSource.find(inv => inv.id === instructorId)
@@ -2126,7 +2618,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
       }
       void applyRoleChange(instructorId, newRole)
     },
-    [instructors, assignedRows, assignmentBoardRemoteEnabled, applyRoleChange]
+    [instructors, assignedRows, assignmentBoardRemoteEnabled, applyRoleChange, isCompanySchool, showAlert]
   )
 
   const assignedInstructorColumns: ColumnsType<AssignedInstructorDisplayRow> = useMemo(
@@ -2605,12 +3097,9 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                 idleVariant="secondary"
                 onEdit={requestStartApplicationInfoEdit}
                 onCancel={cancelApplicationInfoEditAndRemask}
+                saving={scheduleChangeSaving}
                 onSave={() => {
-                  void saveApplicationInfoEdit().then(result => {
-                    if (result === COMBINED_CLASS_GRADE_REQUIRED_SAVE_RESULT) {
-                      combinedClassProcess.openGradeRequiredAlert()
-                    }
-                  })
+                  void handleApplicationInfoSave()
                 }} />
               {!isApplicationInfoEditing ? (
                 <>
@@ -2645,6 +3134,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         {activeTab === 'application' && (
           <div className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__application-tab">
             <ParticipatingInstitutionApplicationInfo
+              copyVariant={isCompanySchool ? 'default' : 'general-institution'}
               isBasicInfoEditing={isApplicationInfoEditing}
               showAdminComment={showAdminCommentSection}
               adminComment={mergedDetail.adminComment}
@@ -2748,6 +3238,17 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
               sessions={applicationTabScheduleSessions}
               scheduleSessionsEmptyMessage={applicationTabScheduleEmptyMessage}
               useCompanySchoolScheduleFormat={isCompanySchool}
+              scheduleTitleTrailing={
+                isApplicationInfoEditing && canChangeEducationSchedule ? (
+                  <CmsButton
+                    variant="secondary"
+                    size="h40"
+                    disabled={scheduleChangeLines.length === 0 || scheduleChangeSaving}
+                    onClick={() => setScheduleChangeModalOpen(true)} >
+                    일정 변경
+                  </CmsButton>
+                ) : null
+              }
             />
           </div>
         )}
@@ -2772,6 +3273,17 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                 program.generalSurveyMenuKeys ?? []
               ).includes('satisfaction')}
               readOnly={false}
+              showAddStudentCompletedAlert={!isCompanySchool}
+              hideExcelInEditMode={!isCompanySchool}
+              addStudentModalDescription={
+                isCompanySchool ? undefined : GENERAL_INSTITUTION_ADD_STUDENT_DESCRIPTION
+              }
+              onAddStudent={() => {
+                // 참여 기관 목록 「총 학생 수」 등 기관 단위 집계 갱신
+                void queryClient.invalidateQueries({
+                  queryKey: generalProgramProgressQueryKeys.institutions(programId),
+                })
+              }}
               onViewDetail={() => {}}
               onSaveEdit={() => {}}
             />
@@ -2786,7 +3298,9 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                 <div className="table-header-title--wrapper">
                   <span className="table-title">배정된 강사 목록</span>
                   <span className="table-description">
-                    {currentAssignedCount} / {requiredInstructorCount}명
+                    {isCompanySchool
+                      ? `${currentAssignedCount} / ${requiredInstructorCount}명`
+                      : `총 ${assignedTableRows.length}건`}
                   </span>
                 </div>
                 <div className="info-section-buttons--wrapper">
@@ -2825,7 +3339,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                   }}
                   columns={assignedInstructorColumns}
                   dataSource={assignedTableRows}
-                  locale={{ emptyText: renderAssignedInstructorTableEmpty() }}
+                  locale={{ emptyText: renderAssignedInstructorTableEmpty(!isCompanySchool) }}
                 />
               </div>
             </div>
@@ -2835,7 +3349,9 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
               <div className="table-header-actions">
                 <div className="table-header-title--wrapper">
                   <span className="table-title">배정 대기 강사 목록</span>
-                  <span className="table-description">{waitingRows.length}건</span>
+                  <span className="table-description">
+                    {isCompanySchool ? `${waitingRows.length}건` : `총 ${waitingRows.length}건`}
+                  </span>
                 </div>
                 <div className="info-section-buttons--wrapper">
                   {showRequestedScheduleConfirmAction ? (
@@ -2874,7 +3390,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                   }}
                   columns={waitingInstructorColumns}
                   dataSource={waitingRows}
-                  locale={{ emptyText: renderWaitingInstructorTableEmpty() }}
+                  locale={{ emptyText: renderWaitingInstructorTableEmpty(!isCompanySchool) }}
                   rowClassName={record => getProgramAssignmentRowClass(record.assignmentStatus, "school-instructor")}
                 />
               </div>
@@ -2892,6 +3408,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
               }}
             />
             <SchoolDetailAddInstructorAssignModal
+              copyVariant={isCompanySchool ? 'default' : 'general-institution'}
               open={addAssignModalOpen}
               onCancel={() => {
                 setAddAssignModalOpen(false)
@@ -2948,6 +3465,11 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                     }
 
                     pendingAddAssignRef.current = { role, option, meta: _meta }
+                    if (!isCompanySchool) {
+                      // 일반 기관형 시안 08-1 → 10: 별도 알림 발송 선택 없이 바로 배정(즉시 발송)
+                      void executeRemoteAddAssign({ reason: '', notifyTiming: 'immediate' })
+                      return
+                    }
                     setAddAssignNotifyInstructorName(option.label)
                     setAddAssignModalOpen(false)
                     setAddAssignNotifyOpen(true)
@@ -3027,6 +3549,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
             />
             <SchoolDetailSelectAssignConfirmModal
               open={selectAssignConfirmOpen}
+              copyVariant={isCompanySchool ? 'default' : 'general-institution'}
               onCancel={() => {
                 pendingAssignNotifyRef.current = null
                 setSelectAssignConfirmOpen(false)
@@ -3103,6 +3626,55 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                 finalizeSelectAssign([rowToAssign], true)
               }}
             />
+            <SchoolDetailNewAssignGuideModal
+              open={approveAssignStep === 'guide'}
+              variant="approve-and-assign"
+              onCancel={closeApproveAssignFlow}
+              instructorName={approveAssignSelection.firstUnapprovedInstructorName}
+              schoolName={row.schoolName}
+              currentCount={currentAssignedCount}
+              requiredCount={requiredInstructorCount}
+              selectedInstructorCount={approveAssignSelection.selectedInstructorCount}
+              unapprovedInstructorCount={approveAssignSelection.unapprovedInstructorCount}
+              onConfirm={() => setApproveAssignStep('fee')}
+            />
+            <InstructorFeeApprovalModal
+              open={approveAssignStep === 'fee'}
+              title="강사비 책정 및 배정 안내"
+              confirmLabel="배정"
+              notifyTimingCapability={
+                approveAssignSelection.unapprovedInstructorCount ===
+                approveAssignSelection.selectedInstructorCount
+                  ? NOTIFY_TIMING_CAPABILITY.full
+                  : NOTIFY_TIMING_CAPABILITY.scheduledOnly
+              }
+              instructorName={approveAssignUnapprovedNames[0] ?? ''}
+              description={`${formatInstitutionApproveAssignFeeSubject(approveAssignUnapprovedNames)}의 강사비 책정 방식을 선택해 주세요\n선택한 방식으로 강사비가 책정되며, 회원에게 승인 알림이 발송됩니다.`}
+              instructorFeeGradeLabel={approveAssignFeeGradeLabel}
+              feePolicyContext={{ programWageGradeRows: program.generalCommonInfo?.wageGradeRows }}
+              feePolicyError={approveAssignFeePolicyError}
+              submitting={assignSubmitting}
+              onCancel={() => {
+                if (assignSubmitting) return
+                closeApproveAssignFlow()
+              }}
+              onConfirm={handleApproveAssignFeeConfirm}
+            />
+            <SchoolDetailAssignOverflowModal
+              open={approveAssignStep === 'overflow'}
+              onCancel={() => {
+                if (assignSubmitting) return
+                pendingApproveAssignDetailRef.current = null
+                setApproveAssignStep('fee')
+              }}
+              requiredCount={requiredInstructorCount}
+              variant="select"
+              onConfirm={() => {
+                const detail = pendingApproveAssignDetailRef.current
+                if (!detail) return
+                void executeApproveAndAssign(detail)
+              }}
+            />
             <SchoolDetailAssignOverflowModal
               open={selectAssignOverflowOpen}
               onCancel={() => setSelectAssignOverflowOpen(false)}
@@ -3130,15 +3702,25 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
               currentCount={assignCompleteModal?.currentCount ?? 0}
               requiredCount={requiredInstructorCount}
               showApprovalAlarmSection={assignCompleteModal?.showApprovalAlarmSection ?? false}
+              copyVariant={isCompanySchool ? 'default' : 'general-institution'}
+              instructorNames={assignCompleteModal?.instructorName.split(', ')}
             />
             <SchoolDetailUnassignConfirmModal
               open={unassignConfirmOpen}
-              onCancel={() => setUnassignConfirmOpen(false)}
+              onCancel={() => {
+                if (unassignSubmitting) return
+                setUnassignConfirmOpen(false)
+              }}
               instructorNames={assignedRows
                 .filter(r => selectedAssignedKeys.includes(r.id))
                 .map(r => r.instructorName)}
               targetNames={[row.schoolName]}
-              onConfirm={handleUnassignConfirm}
+              variant={isCompanySchool ? 'default' : 'institution-detail'}
+              notificationSent={unassignNotificationSent}
+              confirmLoading={unassignSubmitting}
+              onConfirm={payload => {
+                void handleUnassignConfirm(payload)
+              }}
             />
             <SchoolDetailUnassignCompleteModal
               open={unassignCompleteModal != null}
@@ -3148,6 +3730,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
               reason={unassignCompleteModal?.reason ?? ''}
             />
             <SchoolDetailLeadInstructorConfirmModal
+              copyVariant={isCompanySchool ? 'default' : 'general-institution'}
               open={leadRoleChangeConfirm != null}
               onCancel={() => setLeadRoleChangeConfirm(null)}
               onConfirm={() => {
@@ -3164,13 +3747,18 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
 
         {activeTab === 'attendance' && (
           <div className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__attendance-tab">
-            <SchoolDetailAttendanceSection row={row} program={program} />
+            <SchoolDetailAttendanceSection
+              row={row}
+              program={program}
+              disableSaveWhenUnchanged={!isCompanySchool}
+            />
           </div>
         )}
 
         {activeTab === 'posts' && (
           <div className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__posts-tab-wrap">
             <EnrollmentProgramDetailPostsTab
+              deleteGuideWithPostPreview={!isCompanySchool}
               program={program}
               schoolId={
                 row.organizationApplicationId?.trim() || detail.id
@@ -3194,6 +3782,27 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
       <div className="school-detail-fullpage-view__page-bottom-spacer" aria-hidden />
 
       {personalInfoRevealModal}
+      {canChangeEducationSchedule ? (
+        <EducationScheduleChangeModal
+          open={scheduleChangeModalOpen}
+          scheduleLines={scheduleChangeLines}
+          scheduleRowLabels={scheduleChangeRowLabels}
+          operationStart={program.startDate}
+          operationEnd={program.endDate}
+          description={PARTICIPATING_INSTITUTION_SCHEDULE_CHANGE_DESCRIPTION}
+          operationPeriodLabel={scheduleChangePeriodLabel}
+          confirmLabel="선택 완료"
+          onCancel={() => setScheduleChangeModalOpen(false)}
+          onConfirm={nextLines => {
+            setPendingScheduleChangeLines(nextLines)
+            setScheduleChangeModalOpen(false)
+            showAlert({
+              title: PARTICIPATING_INSTITUTION_SCHEDULE_SELECTED_TITLE,
+              content: PARTICIPATING_INSTITUTION_SCHEDULE_SELECTED_CONTENT,
+            })
+          }}
+        />
+      ) : null}
       {/* 열려 있을 때만 마운트 — 닫힘 애니메이션 중 모달 레이어가 헤더 [취소]를 가려 첫 클릭이 유실되던 문제(CMS-29) */}
       {editUnmaskConfirmOpen ? (
         <ConfirmModal

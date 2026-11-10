@@ -30,9 +30,17 @@ export type ParticipatingVolunteersCalendarRightProps = {
   getColorForSchool: (schoolName: string) => ScheduleColorPair
   selectedVolunteerIds: string[]
   onVolunteerSelectionChange: (ids: string[]) => void
+  /**
+   * `institution` — 일반 기관형 Figma 07-1/01-2: 상단 기관 선택 셀렉트 없음(해당 날짜 전체), 「활동 포기」 뱃지.
+   * 생략(`default`)은 기존(기관 멀티셀렉트, 뱃지 없음).
+   */
+  variant?: 'default' | 'institution'
 }
 
-function toListRow(event: ParticipatingVolunteerCalendarEvent): ParticipatingVolunteerCalendarListRow {
+function toListRow(
+  event: ParticipatingVolunteerCalendarEvent,
+  showActivityWithdrawn: boolean
+): ParticipatingVolunteerCalendarListRow {
   const { row, volunteerId, volunteerName, sessionsOnDate } = event.originalItem
   const session = sessionsOnDate[0]
   return {
@@ -42,6 +50,7 @@ function toListRow(event: ParticipatingVolunteerCalendarEvent): ParticipatingVol
     volunteerName,
     regionLabel: formatInstitutionRegionForCalendarListDisplay(row.region),
     sessionLabel: session ? formatParticipatingSessionPeriodForCalendarDisplay(session) : '-',
+    activityWithdrawn: showActivityWithdrawn && event.originalItem.activityWithdrawn === true,
   }
 }
 
@@ -53,14 +62,18 @@ export function ParticipatingVolunteersCalendarRight({
   getColorForSchool,
   selectedVolunteerIds,
   onVolunteerSelectionChange,
+  variant = 'default',
 }: ParticipatingVolunteersCalendarRightProps) {
+  const isInstitution = variant === 'institution'
   const selectedSet = useMemo(() => new Set(selectedVolunteerIds), [selectedVolunteerIds])
 
   const filteredEvents = useMemo(() => {
+    // 기관형은 셀렉트가 없으므로 해당 날짜 일정 전체
+    if (isInstitution) return [...events]
     if (effectiveSelectedSchools.length === 0) return []
     const selected = new Set(effectiveSelectedSchools)
     return events.filter(event => selected.has(event.originalItem.row.schoolName))
-  }, [effectiveSelectedSchools, events])
+  }, [effectiveSelectedSchools, events, isInstitution])
 
   const selectSchoolFilterOptions = useMemo(
     () =>
@@ -86,8 +99,8 @@ export function ParticipatingVolunteersCalendarRight({
           'ko'
         )
       })
-      .map(toListRow)
-  }, [filteredEvents])
+      .map(event => toListRow(event, isInstitution))
+  }, [filteredEvents, isInstitution])
 
   const handleToggle = useCallback(
     (volunteerId: string, checked: boolean) => {
@@ -104,18 +117,24 @@ export function ParticipatingVolunteersCalendarRight({
   const isEmpty = listRows.length === 0
 
   return (
-    <div className="calendar-list calendar-list--with-toolbar">
-      <div className="calendar-list__toolbar">
-        <CmsSelect
-          mode="multiple"
-          withAllOption={false}
-          width="100%"
-          value={effectiveSelectedSchools}
-          onChange={next => onSelectedSchoolsChange(next as string[])}
-          options={selectSchoolFilterOptions}
-          placeholder="기관 선택"
-        />
-      </div>
+    <div
+      className={['calendar-list', isInstitution ? '' : 'calendar-list--with-toolbar']
+        .filter(Boolean)
+        .join(' ')}
+    >
+      {isInstitution ? null : (
+        <div className="calendar-list__toolbar">
+          <CmsSelect
+            mode="multiple"
+            withAllOption={false}
+            width="100%"
+            value={effectiveSelectedSchools}
+            onChange={next => onSelectedSchoolsChange(next as string[])}
+            options={selectSchoolFilterOptions}
+            placeholder="기관 선택"
+          />
+        </div>
+      )}
       <div
         className={['calendar-list__items', isEmpty ? 'calendar-list__items--empty' : '']
           .filter(Boolean)

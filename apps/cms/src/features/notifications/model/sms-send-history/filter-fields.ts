@@ -7,6 +7,7 @@ import {
   SMS_BROADCAST_TIMING_OPTIONS,
   SMS_RECEIVE_STATUS_OPTIONS,
   SMS_SEND_STATUS_OPTIONS,
+  type SmsBroadcastTiming,
 } from './types'
 
 const SELECT_ALL = '전체'
@@ -87,3 +88,18 @@ export const SMS_SEND_HISTORY_FILTER_FIELDS: FilterFieldConfig[] = [
     defaultValue: null,
   },
 ]
+
+/** 시안 6289:94968: 예약일은 발송 시점이 「예약」일 때만 입력 가능 */
+export function isSmsSendHistoryReserveDateEnabled(broadcastTiming: SmsBroadcastTiming): boolean {
+  return broadcastTiming === '예약'
+}
+
+/** 발송 시점에 따라 예약일 필드 비활성 여부를 반영한 필터 설정 */
+export function smsSendHistoryFilterFields(
+  broadcastTiming: SmsBroadcastTiming
+): FilterFieldConfig[] {
+  const reserveDisabled = !isSmsSendHistoryReserveDateEnabled(broadcastTiming)
+  return SMS_SEND_HISTORY_FILTER_FIELDS.map(field =>
+    field.key === 'reserveDateRange' ? { ...field, disabled: reserveDisabled } : field
+  )
+}

@@ -135,7 +135,7 @@ describe('buildGeneralRegistrationOverlayFromProgram → apply', () => {
           { grade: '1급 강사비', pricing: '1시간 당 | 기본 : 240,000원' },
         ],
         paymentItems: '교통비, 숙박비',
-        deductionItems: '일용근로자 원천징수세액',
+        deductionItems: '원천징수세액',
       },
       registrationOverlay: {
         'generalRegistration.wageInfo.paymentItemValues': [],
@@ -291,9 +291,7 @@ describe('buildGeneralRegistrationOverlayFromProgram → apply', () => {
       generalProgramSessionRound: 'multi',
       generalCommonInfo: {
         ...baseProgram().generalCommonInfo,
-        curriculumSessions: [
-          { sessionLabel: '1회차', title: '1차시', description: '옛 본문' },
-        ],
+        curriculumSessions: [{ sessionLabel: '1회차', title: '1차시', description: '옛 본문' }],
       },
       registrationOverlay: {
         'generalRegistration.educationCurriculum.unitNameBySession': {
@@ -388,9 +386,7 @@ describe('buildGeneralRegistrationOverlayFromProgram → apply', () => {
       generalProgramEducationStructure: 'curriculum' as const,
       generalCommonInfo: {
         ...baseProgram().generalCommonInfo,
-        curriculumSessions: [
-          { sessionLabel: '1차시', title: '단원', description: '본문' },
-        ],
+        curriculumSessions: [{ sessionLabel: '1차시', title: '단원', description: '본문' }],
       },
       registrationOverlay: {
         'generalRegistration.educationScheduleCurriculum.eventNameByDetail': {
@@ -404,9 +400,9 @@ describe('buildGeneralRegistrationOverlayFromProgram → apply', () => {
     seedGeneralRegistrationOverlayFromProgram(program)
     const saved = readGeneralRegistrationOverlayForSave()
     expect(saved['generalRegistration.educationScheduleCurriculum.eventNameByDetail']).toEqual({})
-    expect(
-      saved['generalRegistration.educationScheduleCurriculum.educationFormByDetail']
-    ).toEqual({})
+    expect(saved['generalRegistration.educationScheduleCurriculum.educationFormByDetail']).toEqual(
+      {}
+    )
   })
 
   it('seed는 조회 커리큘럼·일정 줄을 우선하고 오래된 overlay 회차를 버린다', () => {
@@ -416,7 +412,10 @@ describe('buildGeneralRegistrationOverlayFromProgram → apply', () => {
       generalCommonInfo: {
         ...baseProgram().generalCommonInfo,
         scheduleCurriculumPreEducation: true,
-        educationScheduleLines: ['26년 4월 20일(월) 09:30 ~ 12:20', '26년 4월 20일(월) 13:00 ~ 15:50'],
+        educationScheduleLines: [
+          '26년 4월 20일(월) 09:30 ~ 12:20',
+          '26년 4월 20일(월) 13:00 ~ 15:50',
+        ],
         curriculumSessions: [
           { sessionLabel: '사전 교육', title: '사전 교육', description: '' },
           { sessionLabel: '1회차', title: '1차시', description: '첫 회차' },
@@ -466,7 +465,12 @@ describe('buildGeneralRegistrationOverlayFromProgram → apply', () => {
         ...baseProgram().generalCommonInfo,
         educationFormScheduleDetail: 'perSchedule' as const,
         curriculumSessions: [
-          { sessionLabel: '1회차', title: '1회차', description: '', educationFormLabel: '오프라인' },
+          {
+            sessionLabel: '1회차',
+            title: '1회차',
+            description: '',
+            educationFormLabel: '오프라인',
+          },
           { sessionLabel: '2회차', title: '2회차', description: '', educationFormLabel: '온라인' },
         ],
       },
@@ -486,7 +490,12 @@ describe('buildGeneralRegistrationOverlayFromProgram → apply', () => {
         ...baseProgram().generalCommonInfo,
         educationFormScheduleDetail: 'perSchedule' as const,
         curriculumSessions: [
-          { sessionLabel: '1회차', title: '1회차', description: '', educationFormLabel: '오프라인' },
+          {
+            sessionLabel: '1회차',
+            title: '1회차',
+            description: '',
+            educationFormLabel: '오프라인',
+          },
         ],
       },
       registrationOverlay: {
@@ -707,7 +716,9 @@ describe('mergeRegistrationOverlayNestedSsot', () => {
     expect(merged['generalRegistration.basicInfo.educationVenueDetail']).toBe('서울시 강남구')
     expect(merged['generalRegistration.basicInfo.localManagerContactId']).toBe('contact-1')
     expect(merged['generalRegistration.basicInfo.localManagerContactIds']).toEqual(['contact-1'])
-    expect(merged['generalRegistration.educationScheduleSettings.scheduleLines']).toEqual(['기존 일정'])
+    expect(merged['generalRegistration.educationScheduleSettings.scheduleLines']).toEqual([
+      '기존 일정',
+    ])
     expect(merged['generalRegistration.kpi.participantCount']).toBe(20)
     expect(merged['generalRegistration.typeSettings.educationForm']).toBe('offline')
     expect(merged['generalRegistration.typeSettings.singleEducationForm']).toBe('offline')

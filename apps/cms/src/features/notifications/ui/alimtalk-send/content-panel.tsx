@@ -95,11 +95,21 @@ export function ContentPanel({ template }: ContentPanelProps) {
   const contentTable = (
     <DetailInfoForm title="템플릿 내용" hideHeader mode="view">
       <DetailInfoForm.Row type="single">
-        <DetailInfoForm.Field label="내용" fullRow view={template.content} />
+        <DetailInfoForm.Field
+          label="내용"
+          fullRow
+          view={<span className="alimtalk-send-content-panel__text">{template.content}</span>}
+        />
       </DetailInfoForm.Row>
       {showExtraInfo ? (
         <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field label="부가 정보" fullRow view={template.extraInfo || '-'} />
+          <DetailInfoForm.Field
+            label="부가 정보"
+            fullRow
+            view={
+              <span className="alimtalk-send-content-panel__text">{template.extraInfo || '-'}</span>
+            }
+          />
         </DetailInfoForm.Row>
       ) : null}
       <DetailInfoForm.Row type="single">

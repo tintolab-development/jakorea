@@ -75,7 +75,7 @@ export function BiFormCard({ data }: Props) {
   const current = isEditing ? draft : data
 
   return (
-    <div className="admin-list-card ja-korea-bi-card">
+    <div className="admin-list-card admin-document-card ja-korea-bi-card">
       <div className="admin-list-toolbar">
         <div className="table-header-title--wrapper">
           <span className="table-title">BI 소개 관리</span>
@@ -112,7 +112,7 @@ export function BiFormCard({ data }: Props) {
         </div>
       </div>
 
-      <div className="ja-korea-bi-card__body">
+      <div className="admin-document-card__body ja-korea-bi-card__body">
         <DetailInfoForm title="BI 소개" hideHeader mode={mode}>
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field

@@ -107,7 +107,7 @@ function getProgram186307(): Program {
       scheduleDetails: [],
       wageGradeRows: [...GET_WAGE_ROWS],
       paymentItems: '교통비, 식사비',
-      deductionItems: '일용근로자 원천징수세액',
+      deductionItems: '원천징수세액',
       kpi: {
         finalParticipants: 80,
         instructorCount: 2,
@@ -539,7 +539,7 @@ describe('GENERAL_DETAIL_RHF 브라우저 입력 Mock 저장', () => {
       </QueryClientProvider>
     )
 
-    expect(screen.getByText('모집 등록 후 참여자 유형은 변경할 수 없습니다.')).toBeTruthy()
+    expect(screen.getByText('참여자 유형은 프로그램 등록 이후 항목 수정이 불가합니다.')).toBeTruthy()
     const field = screen
       .getByText('참여자 유형', { selector: '.detail-info-form__field-label-text' })
       .closest('.detail-info-form__field')
@@ -728,5 +728,34 @@ describe('GENERAL_DETAIL_RHF 브라우저 입력 Mock 저장', () => {
     expect(await screen.findAllByText('미선택')).not.toHaveLength(0)
     expect(document.querySelector('.cms-select-multi__label-pill')?.textContent).toBe('미선택')
     expect(screen.queryByText('검색 결과가 없습니다.')).toBeNull()
+  })
+
+  it('조회 화면에서 후원사 홈페이지·로고를 노출하지 않는다', () => {
+    const program = getProgram186307()
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
+
+    function ViewHarness() {
+      const form = useForm<GeneralProgramCommonInfoEditFormValues>({
+        defaultValues: programToGeneralCommonInfoEditValues(program),
+      })
+      return (
+        <GeneralProgramDetailCommonInfoView
+          program={program}
+          isEditMode={false}
+          form={form}
+          canWrite
+        />
+      )
+    }
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ViewHarness />
+      </QueryClientProvider>
+    )
+    expect(screen.queryByText('후원사 홈페이지')).toBeNull()
+    expect(screen.queryByText('후원사 로고')).toBeNull()
   })
 })

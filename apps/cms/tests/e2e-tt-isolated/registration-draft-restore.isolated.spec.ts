@@ -169,7 +169,7 @@ test.describe('TT 등록 임시저장 복원', () => {
     await expectCaseTitles(page, CASE_05)
 
     await page.reload()
-    const notice = page.getByRole('dialog').filter({ hasText: '임시저장 이력 안내' })
+    const notice = page.getByRole('dialog').filter({ hasText: '임시 저장 이력 안내' })
     if (await notice.isVisible().catch(() => false)) {
       await notice.getByRole('radio', { name: '이어서 작성' }).check()
       await notice.getByRole('button', { name: '이어서 작성' }).click()

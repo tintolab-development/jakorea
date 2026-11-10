@@ -326,6 +326,7 @@ export function InstitutionClassAndStudentCountEdit({
   onChange,
   errors,
   numericClassCount = false,
+  numericClassCountMax,
 }: {
   classCount: string
   studentCount: string
@@ -334,6 +335,8 @@ export function InstitutionClassAndStudentCountEdit({
   errors?: Partial<Record<'classCount' | 'studentCount', string>>
   /** 1사1교 Figma 4175:109534 — 학급 수는 Select가 아니라 숫자 입력 */
   numericClassCount?: boolean
+  /** 숫자 입력 학급 수 상한. 미지정 시 상한 없음(1사1교 기존) */
+  numericClassCountMax?: number
 }) {
   const firstError = errors?.classCount ?? errors?.studentCount
 
@@ -348,6 +351,7 @@ export function InstitutionClassAndStudentCountEdit({
             inputSize="small"
             mode="integer"
             min={1}
+            max={numericClassCountMax}
             placeholder="신청 학급 수"
             width={120}
             value={classCount}

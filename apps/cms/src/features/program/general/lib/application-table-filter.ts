@@ -2,6 +2,7 @@ import type { ApplicantInstructorRow } from '@/features/program/shared/model/app
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
 import { matchesInstructorJaExperienceYears } from '@/features/program/general/lib/instructor-application-filter-options'
+import type { InstructorCalendarFilterPreset } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-list-menu'
 
 function matchesAddressRegion(
   address: string,
@@ -150,14 +151,20 @@ export function filterGeneralInstructorCalendarApplications(
 const GENERAL_INSTRUCTOR_LIST_ONLY_FILTER_KEYS = ['experienceYears', 'evaluationGrade'] as const
 const GENERAL_INSTRUCTOR_CALENDAR_ONLY_FILTER_KEYS = ['organizationName', 'grade'] as const
 
-/** 강사 신청 리스트↔캘린더 전환 시 뷰에 없는 필터 키만 제거 (승인·주소·강사명 등 공통 키 유지) */
+/**
+ * 강사 신청 리스트↔캘린더 전환 시 뷰에 없는 필터 키만 제거 (승인·주소·강사명 등 공통 키 유지).
+ * `list-parity`(일반 기관형)는 두 뷰 필터가 같아 리스트 키를 캘린더로 그대로 넘긴다.
+ */
 export function mergeGeneralInstructorFiltersOnViewModeChange(
   filters: Record<string, unknown>,
-  targetViewMode: 'table' | 'calendar'
+  targetViewMode: 'table' | 'calendar',
+  calendarFilterPreset: InstructorCalendarFilterPreset = 'calendar-only'
 ): Record<string, unknown> {
   const dropKeys =
     targetViewMode === 'calendar'
-      ? GENERAL_INSTRUCTOR_LIST_ONLY_FILTER_KEYS
+      ? calendarFilterPreset === 'list-parity'
+        ? []
+        : GENERAL_INSTRUCTOR_LIST_ONLY_FILTER_KEYS
       : GENERAL_INSTRUCTOR_CALENDAR_ONLY_FILTER_KEYS
   const next = { ...filters }
   for (const key of dropKeys) {

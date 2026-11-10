@@ -95,8 +95,7 @@ export function mapSettlementConfigToSections(
     WAGE_ITEM_TYPE_ORDER
   ).map(item => {
     const wageItemType = normalizeWageType(item.wageItemType)
-    const iconKey =
-      asIconKey(item.iconKey) ?? WAGE_TYPE_ICON[wageItemType] ?? 'wage_tier3'
+    const iconKey = asIconKey(item.iconKey) ?? WAGE_TYPE_ICON[wageItemType] ?? 'wage_tier3'
     return {
       id: item.id != null ? `w-${item.id}` : `w-${wageItemType}`,
       apiItemId: item.id ?? undefined,
@@ -119,8 +118,7 @@ export function mapSettlementConfigToSections(
     PAYMENT_ITEM_TYPE_ORDER
   ).map(item => {
     const paymentItemType = normalizePaymentType(item.paymentItemType)
-    const iconKey =
-      asIconKey(item.iconKey) ?? PAYMENT_TYPE_ICON[paymentItemType] ?? 'pay_transport'
+    const iconKey = asIconKey(item.iconKey) ?? PAYMENT_TYPE_ICON[paymentItemType] ?? 'pay_transport'
     return {
       id: item.id != null ? `p-${item.id}` : `p-${paymentItemType}`,
       apiItemId: item.id ?? undefined,
@@ -132,7 +130,7 @@ export function mapSettlementConfigToSections(
           ? 'activity'
           : item.layout === 'volunteerActivity'
             ? 'activity'
-            : item.layout ?? undefined,
+            : (item.layout ?? undefined),
       title: item.itemName ?? '지급 항목',
       description: formatPaymentDescription({ ...item, paymentItemType }),
       iconKey,
@@ -148,7 +146,7 @@ export function mapSettlementConfigToSections(
       const description = item.description?.trim()
       const isWithholding =
         item.layout === 'withholdingDailyWorker' ||
-        name === '일용근로자 원천징수세액' ||
+        name === '원천징수세액' ||
         name === '원천징수세액' ||
         name === '원천징수'
       return {
@@ -158,8 +156,7 @@ export function mapSettlementConfigToSections(
         layout: item.layout ?? (isWithholding ? 'withholdingDailyWorker' : undefined),
         title: name,
         description:
-          description ||
-          (isWithholding ? getCatalogSettlementItemDescriptionForWithholding() : ''),
+          description || (isWithholding ? getCatalogSettlementItemDescriptionForWithholding() : ''),
         iconKey: asIconKey(item.iconKey) ?? 'deduct_business_33',
         emojiOverride: item.emojiOverride ?? null,
       }

@@ -8,6 +8,8 @@ import { normalizeTimeRangeKey } from '@/features/program/ujat/ui/detail-modal/a
 export type GeneralVolunteerDocPassedCalendarListRow = {
   /** 색상·클릭용 대표 이벤트 id */
   id: string
+  /** 신청 행 id — 캘린더 카드 체크박스 선택 키 */
+  applicantId: string
   volunteerName: string
   assignmentStatus: GeneralInterviewAssignmentStatus
   assignmentStatusLabel: string
@@ -36,13 +38,27 @@ function formatDaySlotSummary(slots: string[]): string {
   return extraCount > 0 ? `${primarySlot} 외 ${extraCount}개` : primarySlot
 }
 
+/** 봉사자 시안 07-2(3491:100118) 우측 카드 태그 — 배정 대기는 「배정 전」 */
+export const GENERAL_VOLUNTEER_DOC_PASSED_CALENDAR_TAG_LABELS: Record<
+  GeneralInterviewAssignmentStatus,
+  string
+> = {
+  ...GENERAL_INTERVIEW_ASSIGNMENT_STATUS_CALENDAR_LIST_TAG_LABELS,
+  waiting: '배정 전',
+}
+
 export function buildGeneralVolunteerDocPassedCalendarListRows(
-  dayEvents: GeneralVolunteerInterviewCalendarEvent[]
+  dayEvents: GeneralVolunteerInterviewCalendarEvent[],
+  tagLabels: Record<
+    GeneralInterviewAssignmentStatus,
+    string
+  > = GENERAL_INTERVIEW_ASSIGNMENT_STATUS_CALENDAR_LIST_TAG_LABELS
 ): GeneralVolunteerDocPassedCalendarListRow[] {
   const grouped = new Map<
     string,
     {
       representativeId: string
+      applicantId: string
       volunteerName: string
       assignmentStatus: GeneralInterviewAssignmentStatus
       interviewSlotCount: number
@@ -59,6 +75,7 @@ export function buildGeneralVolunteerDocPassedCalendarListRows(
     if (!group) {
       group = {
         representativeId: String(event.id),
+        applicantId: String(event.originalItem.id),
         volunteerName: key,
         assignmentStatus: event.originalItem.interviewAssignmentStatus,
         interviewSlotCount: event.originalItem.interviewSlotCount,
@@ -77,10 +94,10 @@ export function buildGeneralVolunteerDocPassedCalendarListRows(
 
   return Array.from(grouped.values()).map(group => ({
     id: group.representativeId,
+    applicantId: group.applicantId,
     volunteerName: group.volunteerName,
     assignmentStatus: group.assignmentStatus,
-    assignmentStatusLabel:
-      GENERAL_INTERVIEW_ASSIGNMENT_STATUS_CALENDAR_LIST_TAG_LABELS[group.assignmentStatus],
+    assignmentStatusLabel: tagLabels[group.assignmentStatus],
     daySlotSummary: formatDaySlotSummary(group.slots),
     interviewSlotCount: group.interviewSlotCount,
   }))

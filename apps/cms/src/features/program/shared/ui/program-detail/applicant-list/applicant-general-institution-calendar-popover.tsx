@@ -42,12 +42,28 @@ function approvalStatusModifier(status: ApprovalStatusKey | undefined): Approval
   return 'pending'
 }
 
-export function renderGeneralInstitutionCalendarPreviewTooltipContent({
-  events,
-}: {
+type InstitutionCalendarPreviewTooltipParams = {
   events: CalendarItem[]
   colorMap: Map<string | number, ScheduleColorPair>
-}): ReactNode {
+}
+
+export function renderGeneralInstitutionCalendarPreviewTooltipContent(
+  params: InstitutionCalendarPreviewTooltipParams
+): ReactNode {
+  return renderInstitutionCalendarPreviewTooltipContent(params, true)
+}
+
+/** 일반(기관형) 기관 신청 — 시안 1141:236526: 기관명 + 메타 한 줄, 승인 상태 뱃지 없음 */
+export function renderGeneralInstitutionCalendarPreviewTooltipContentWithoutBadge(
+  params: InstitutionCalendarPreviewTooltipParams
+): ReactNode {
+  return renderInstitutionCalendarPreviewTooltipContent(params, false)
+}
+
+function renderInstitutionCalendarPreviewTooltipContent(
+  { events }: InstitutionCalendarPreviewTooltipParams,
+  showApprovalStatusBadge: boolean
+): ReactNode {
   const seenInstitutionIds = new Set<string>()
 
   return (
@@ -80,7 +96,9 @@ export function renderGeneralInstitutionCalendarPreviewTooltipContent({
               <span className="calendar-preview-popover__title">
                 {institution.schoolName.trim() || '-'}
               </span>
-              <CalendarApprovalStatusBadge status={approvalStatus} />
+              {showApprovalStatusBadge ? (
+                <CalendarApprovalStatusBadge status={approvalStatus} />
+              ) : null}
             </div>
             <div className="calendar-preview-popover__meta">
               <span className="calendar-preview-popover__meta-part calendar-preview-popover__meta-part--session">

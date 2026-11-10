@@ -51,6 +51,7 @@ import {
 import {
   generalInstructorApplicationFilterFields,
   generalInstructorCalendarFilterFields,
+  generalOrganizationInstructorFilterFields,
 } from '@/features/program/general/lib/application-filter-fields'
 import {
   filterGeneralOrganizationApplications,
@@ -107,12 +108,14 @@ import { createApplicantsFilterTablePageConfig } from './applicants-filter-table
 import type {
   ApplicantListMenu,
   InstitutionColumnPreset,
+  InstructorCalendarFilterPreset,
   InstructorColumnPreset,
   SessionLinePreset,
 } from './applicant-list-menu'
 import type { InstructorLectureAssignItem } from '@/features/program/general/lib/instructor-lecture-assign-schedule'
 import type { Program } from '@/types/domain'
 import { resolveInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
+import { isGeneralOrganizationProgram } from '@/features/program/general/lib/organization-merge-program-type'
 import {
   readCurriculumSessionLabels,
   readProgramEducationScheduleLines,
@@ -221,6 +224,7 @@ export function useApplicantsDetail({
   filterFields: filterFieldsOverride,
   institutionColumnPreset = 'legacy',
   instructorColumnPreset = 'legacy',
+  instructorCalendarFilterPreset = 'calendar-only',
   sessionLinePreset,
   programId,
   detailVariant = 'legacy',
@@ -237,6 +241,8 @@ export function useApplicantsDetail({
   filterFields?: FilterFieldConfig[]
   institutionColumnPreset?: InstitutionColumnPreset
   instructorColumnPreset?: InstructorColumnPreset
+  /** 강사 신청(general-detail) 캘린더 뷰 필터 구성 — 기본 `calendar-only` */
+  instructorCalendarFilterPreset?: InstructorCalendarFilterPreset
   sessionLinePreset?: SessionLinePreset
   programId?: string
   detailVariant?: 'legacy' | 'general'
@@ -1163,13 +1169,32 @@ export function useApplicantsDetail({
     prevViewModeRef.current = viewMode
 
     if (menu === 'instructors' && instructorColumnPreset === 'general-detail') {
-      setAppliedFilters(prev => mergeGeneralInstructorFiltersOnViewModeChange(prev, viewMode))
-      setPendingFilters(prev => mergeGeneralInstructorFiltersOnViewModeChange(prev, viewMode))
+      setAppliedFilters(prev =>
+        mergeGeneralInstructorFiltersOnViewModeChange(
+          prev,
+          viewMode,
+          instructorCalendarFilterPreset
+        )
+      )
+      setPendingFilters(prev =>
+        mergeGeneralInstructorFiltersOnViewModeChange(
+          prev,
+          viewMode,
+          instructorCalendarFilterPreset
+        )
+      )
     } else {
       setPendingFilters({ ...appliedFiltersRef.current })
     }
     setSelectedRowKeys([])
-  }, [viewMode, menu, instructorColumnPreset, detailVariant, setPendingFilters])
+  }, [
+    viewMode,
+    menu,
+    instructorColumnPreset,
+    instructorCalendarFilterPreset,
+    detailVariant,
+    setPendingFilters,
+  ])
 
   useEffect(() => {
     institutionScheduleHydrationAttemptedRef.current.clear()
@@ -1274,9 +1299,12 @@ export function useApplicantsDetail({
       instructorColumnPreset === 'general-detail' &&
       !filterFieldsOverride?.length
     ) {
-      return viewMode === 'calendar'
-        ? generalInstructorCalendarFilterFields
-        : generalInstructorApplicationFilterFields
+      // 일반 기관형(list-parity): 리스트·캘린더 모두 시안 필터(「자택 주소지」) 사용
+      if (instructorCalendarFilterPreset === 'list-parity') {
+        return generalOrganizationInstructorFilterFields
+      }
+      if (viewMode !== 'calendar') return generalInstructorApplicationFilterFields
+      return generalInstructorCalendarFilterFields
     }
     if (filterFieldsOverride?.length) return filterFieldsOverride
     switch (menu) {
@@ -1303,7 +1331,14 @@ export function useApplicantsDetail({
       default:
         return []
     }
-  }, [menu, instructorList, filterFieldsOverride, instructorColumnPreset, viewMode])
+  }, [
+    menu,
+    instructorList,
+    filterFieldsOverride,
+    instructorColumnPreset,
+    instructorCalendarFilterPreset,
+    viewMode,
+  ])
 
   const approvalStatusKeys = useMemo<ApprovalStatusKey[]>(
     () => ['pending', 'rejected', 'approved'] as ApprovalStatusKey[],
@@ -1382,6 +1417,7 @@ export function useApplicantsDetail({
 
   const instructorColumnsGeneral = useGeneralInstructorApplicantColumns({
     setSelectedItem: record => setSelectedItem(record as ApplicantInstructorRow),
+    plainInstructorName: detailVariant === 'general' && isGeneralOrganizationProgram(program),
   })
 
   const instructorColumns =
@@ -2046,7 +2082,8 @@ export function useApplicantsDetail({
       return filterGeneralOrganizationApplications(institutionList, appliedFilters)
     }
     if (menu === 'instructors' && instructorColumnPreset === 'general-detail') {
-      return viewMode === 'calendar'
+      // list-parity: 캘린더 필터가 리스트와 같으므로 같은 클라 필터 → 캘린더 이벤트·우측 목록에 반영
+      return viewMode === 'calendar' && instructorCalendarFilterPreset !== 'list-parity'
         ? filterGeneralInstructorCalendarApplications(instructorList, appliedFilters)
         : filterGeneralInstructorApplications(instructorList, appliedFilters)
     }
@@ -2067,6 +2104,7 @@ export function useApplicantsDetail({
     appliedFilters,
     institutionColumnPreset,
     instructorColumnPreset,
+    instructorCalendarFilterPreset,
     viewMode,
     individualScreeningStage,
   ])

@@ -39,14 +39,17 @@ export function resolveInstructorCancelRejectionNotifyVariant(
 
 export function buildInstructorCancelRejectionMessage(
   instructorName: string,
-  variant: InstructorCancelRejectionNotifyVariant
+  variant: InstructorCancelRejectionNotifyVariant,
+  copyVariant: 'default' | 'general-organization' = 'default'
 ): string {
   const trimmedName = instructorName.trim() || '강사'
   const subject = formatModalBracketedSubjectName(trimmedName)
   const pendingApproval = formatModalBoldPhrase('승인 대기 처리')
 
   if (variant === 'alreadySent') {
-    return `${subject} 님의 프로그램 신청 반려를 취소하시겠습니까?\n취소 시 입력하신 사유가 회원에게 취소 사유로 안내되며, 알림이 발송됩니다.\n또한, 해당 강사님은 자동으로 ${pendingApproval}됩니다.`
+    // 일반(기관형) 시안 04-2(1141:245791): 「해당 회원은」
+    const target = copyVariant === 'general-organization' ? '회원' : '강사님'
+    return `${subject} 님의 프로그램 신청 반려를 취소하시겠습니까?\n취소 시 입력하신 사유가 회원에게 취소 사유로 안내되며, 알림이 발송됩니다.\n또한, 해당 ${target}은 자동으로 ${pendingApproval}됩니다.`
   }
 
   return `${subject} 님의 프로그램 신청 반려를 취소하시겠습니까?\n취소 시 발송 예정인 반려 알림은 자동으로 취소되며, ${pendingApproval}됩니다.`

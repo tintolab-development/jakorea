@@ -66,6 +66,21 @@ export const generalOrganizationApplicationFilterFields: FilterFieldConfig[] = [
   },
 ]
 
+/**
+ * 일반 프로그램(기관형) 상세 — 기관 신청 목록 필터. 시안 1141:234529 placeholder.
+ * `generalOrganizationApplicationFilterFields`는 1사1교 기관 신청 목록이 그대로 쓴다.
+ */
+const GENERAL_ORGANIZATION_INSTITUTION_FILTER_PLACEHOLDERS: Partial<Record<string, string>> = {
+  organizationName: '기관명을 입력해 주세요',
+  teacherName: '교사명을 입력해 주세요',
+}
+
+export const generalOrganizationInstitutionApplicationFilterFields: FilterFieldConfig[] =
+  generalOrganizationApplicationFilterFields.map(field => {
+    const placeholder = GENERAL_ORGANIZATION_INSTITUTION_FILTER_PLACEHOLDERS[field.key]
+    return placeholder ? { ...field, placeholder } : field
+  })
+
 /** 일반 프로그램 상세 — 개인(참여자) 신청 목록 필터 */
 export const generalIndividualApplicationFilterFields: FilterFieldConfig[] = [
   {
@@ -146,7 +161,17 @@ export const generalInstructorApplicationFilterFields: FilterFieldConfig[] = [
   },
 ]
 
-/** 일반 프로그램 상세 — 강사 신청 목록 캘린더 뷰 필터 */
+/**
+ * 일반 프로그램(기관형) 상세 — 강사 신청 목록 리스트·캘린더 뷰 공통 필터.
+ * 시안 1141:241761·1141:241422: 주소 라벨은 「자택 주소지」.
+ * `generalInstructorApplicationFilterFields`(「자택 소재지」)는 1사1교·일반 개인형 리스트용으로 유지.
+ */
+export const generalOrganizationInstructorFilterFields: FilterFieldConfig[] =
+  generalInstructorApplicationFilterFields.map(field =>
+    field.type === 'addressRegion' ? createHomeAddressRegionFilterField() : field
+  )
+
+/** 일반 프로그램 상세 — 강사 신청 목록 캘린더 뷰 필터 (1사1교·일반 개인형 기본) */
 export const generalInstructorCalendarFilterFields: FilterFieldConfig[] = [
   {
     key: 'organizationName',

@@ -31,7 +31,8 @@ export function buildCombinedClassProcessDescription(params: {
   const schoolName = params.schoolName.trim() || '기관'
   const leadGrade = params.leadGrade.trim() || '학년'
   const partnerGrade = params.partnerGrade.trim() || '학년'
-  return `[${schoolName}] ${leadGrade}과 ${partnerGrade}을 합반하시겠습니까?\n${COMBINED_CLASS_PROCESS_MODAL_NOTICE}`
+  // 시안 07(4945:77600) — 「[기관] A학년과 B학년」 구간 볼드
+  return `**[${schoolName}] ${leadGrade}과 ${partnerGrade}**을 합반하시겠습니까?\n${COMBINED_CLASS_PROCESS_MODAL_NOTICE}`
 }
 
 export function buildCombinedClassCancelDescription(params: {
@@ -58,7 +59,8 @@ export function buildCombinedClassCancelCompleteDescription(params: {
   return `정보 수정이 완료되었습니다.\n[${schoolName}] ${leadGrade}과 ${partnerGrade} 합반이 취소되었습니다.`
 }
 
-export const COMBINED_CLASS_COMPLETE_MODAL_TITLE = '정보 수정'
+/** 시안 08-1(4968:102096) 「수정 완료」 */
+export const COMBINED_CLASS_COMPLETE_MODAL_TITLE = '수정 완료'
 
 export function buildCombinedClassCompleteDescription(params: {
   leadGrade: string

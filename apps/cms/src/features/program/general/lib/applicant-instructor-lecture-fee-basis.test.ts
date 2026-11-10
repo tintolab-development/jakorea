@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
+  buildGeneralOrganizationLectureFeeBasisViewSegments,
   buildLectureFeeBasisViewSegments,
   parseLectureFeeBasisTypeFromApi,
   toInstructorApplicationFeePolicy,
+  GENERAL_ORGANIZATION_LECTURE_FEE_MEASURE_OPTIONS,
+  LECTURE_FEE_MEASURE_OPTIONS,
 } from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 
@@ -129,18 +132,71 @@ describe('parseLectureFeeBasisTypeFromApi', () => {
 
 describe('businessIncomeEarnerStatusPatchField', () => {
   it('표시값과 같으면 필드를 생략해 기존 신청값(또는 프로필 fallback)을 유지한다', async () => {
-    const { businessIncomeEarnerStatusPatchField } = await import('./applicant-instructor-lecture-fee-basis')
+    const { businessIncomeEarnerStatusPatchField } =
+      await import('./applicant-instructor-lecture-fee-basis')
     expect(businessIncomeEarnerStatusPatchField('해당', '해당')).toEqual({})
     expect(businessIncomeEarnerStatusPatchField('해당', undefined)).toEqual({})
   })
 
   it('바뀌면 신청 override로 보낸다', async () => {
-    const { businessIncomeEarnerStatusPatchField } = await import('./applicant-instructor-lecture-fee-basis')
+    const { businessIncomeEarnerStatusPatchField } =
+      await import('./applicant-instructor-lecture-fee-basis')
     expect(businessIncomeEarnerStatusPatchField('해당', '해당 없음')).toEqual({
       businessIncomeEarnerStatus: '해당 없음',
     })
     expect(businessIncomeEarnerStatusPatchField(null, '해당')).toEqual({
       businessIncomeEarnerStatus: '해당',
     })
+  })
+})
+
+describe('GENERAL_ORGANIZATION_LECTURE_FEE_MEASURE_OPTIONS', () => {
+  it('값은 기존 지급 기준과 같고 라벨만 시안(「1회 기준」)으로 바꾼다', () => {
+    expect(GENERAL_ORGANIZATION_LECTURE_FEE_MEASURE_OPTIONS.map(o => o.value)).toEqual(
+      LECTURE_FEE_MEASURE_OPTIONS.map(o => o.value)
+    )
+    expect(GENERAL_ORGANIZATION_LECTURE_FEE_MEASURE_OPTIONS.map(o => o.label)).toEqual([
+      '1회 기준',
+      '1시간 기준',
+    ])
+  })
+})
+
+describe('buildGeneralOrganizationLectureFeeBasisViewSegments — 일반(기관형) 시안 06-1·06-2', () => {
+  it('값이 없으면 빈 배열이다', () => {
+    expect(
+      buildGeneralOrganizationLectureFeeBasisViewSegments({} as ApplicantInstructorRow)
+    ).toEqual([])
+  })
+
+  it('프로그램 기준: 「프로그램 기준 | 3급 강사비 : 1시간당 240,000원」', () => {
+    expect(
+      buildGeneralOrganizationLectureFeeBasisViewSegments({
+        lectureFeeBasisType: 'program',
+        lectureFeeMeasure: '1시간 당',
+        lectureFeeAmount: '240000',
+        instructorFeeGradeLabel: '3급 강사비',
+      } as ApplicantInstructorRow)
+    ).toEqual(['프로그램 기준', '3급 강사비 : 1시간당 240,000원'])
+  })
+
+  it('특강 강사비: 「특강 강사비 | 1회당 150,000원」', () => {
+    expect(
+      buildGeneralOrganizationLectureFeeBasisViewSegments({
+        lectureFeeBasisType: 'special_lecture',
+        lectureFeeMeasure: '출강 1회당',
+        lectureFeeAmount: '150000',
+      } as ApplicantInstructorRow)
+    ).toEqual(['특강 강사비', '1회당 150,000원'])
+  })
+
+  it('기타 인건비는 특강과 같은 규칙이다', () => {
+    expect(
+      buildGeneralOrganizationLectureFeeBasisViewSegments({
+        lectureFeeBasisType: 'other_labor',
+        lectureFeeMeasure: '1시간 당',
+        lectureFeeAmount: '50000',
+      } as ApplicantInstructorRow)
+    ).toEqual(['기타 인건비', '1시간당 50,000원'])
   })
 })

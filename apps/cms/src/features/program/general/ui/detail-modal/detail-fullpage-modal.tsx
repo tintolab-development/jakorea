@@ -114,6 +114,7 @@ import {
 } from '@/features/program/general/lib/registration-required-fields'
 import {
   GENERAL_SURVEY_MENU_EMPTY_ALERT_MESSAGE,
+  GENERAL_SURVEY_MENU_EMPTY_ALERT_TITLE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
 } from '@/shared/constants/messages'
@@ -196,6 +197,8 @@ import {
   type RecruitmentEditPreviewDraft,
 } from '@/features/program/general/lib/recruitment-edit-preview-draft'
 import {
+  generalApplicationTabItems,
+  getGeneralApplicationInstitutionsTabLabel,
   normalizeGeneralApplicationTab,
   resolveGeneralApplicationEditorVariant,
   type GeneralApplicationTabKey,
@@ -1313,30 +1316,44 @@ function GeneralProgramDetailFullPageModalContent({
     [programId, setSearchParams]
   )
 
-  const handleApplicationEditForm = useCallback(() => {
-    if (displayProgram == null || applicationTemplateEditPreflightLoading) return
-    const variant = resolveGeneralApplicationEditorVariant(displayProgram, applicationSubTab)
-    const templateCode = getTemplateIdForParticipantApplicationVariant(variant)
-    const scopedProgram = programForApplicationFormEditor(displayProgram, variant)
-    setApplicationTemplateEditPreflightLoading(true)
-    void assertProgramApplicationFormWritable(scopedProgram, templateCode)
-      .then(() => setApplicationTemplateEditOpen(true))
-      .catch(error => {
-        void showAlert({
-          title: PROGRAM_APPLICATION_FORM_EDIT_BLOCKED_ALERT_TITLE,
-          content:
-            error instanceof Error && error.message.trim() !== ''
-              ? error.message
-              : '신청서 현황을 확인하지 못해 양식을 수정할 수 없습니다. 다시 시도해 주세요.',
+  /** 탭별 신청 양식 수정 가능 여부를 확인한 뒤 수정 팝업을 연다(팝업 안 탭 전환에도 같은 확인을 거친다). */
+  const openApplicationTemplateEdit = useCallback(
+    (tab: GeneralApplicationTabKey) => {
+      if (displayProgram == null || applicationTemplateEditPreflightLoading) return
+      const variant = resolveGeneralApplicationEditorVariant(displayProgram, tab)
+      const templateCode = getTemplateIdForParticipantApplicationVariant(variant)
+      const scopedProgram = programForApplicationFormEditor(displayProgram, variant)
+      setApplicationTemplateEditPreflightLoading(true)
+      void assertProgramApplicationFormWritable(scopedProgram, templateCode)
+        .then(() => setApplicationTemplateEditOpen(true))
+        .catch(error => {
+          setApplicationTemplateEditOpen(false)
+          void showAlert({
+            title: PROGRAM_APPLICATION_FORM_EDIT_BLOCKED_ALERT_TITLE,
+            content:
+              error instanceof Error && error.message.trim() !== ''
+                ? error.message
+                : '신청서 현황을 확인하지 못해 양식을 수정할 수 없습니다. 다시 시도해 주세요.',
+          })
         })
-      })
-      .finally(() => setApplicationTemplateEditPreflightLoading(false))
-  }, [
-    applicationSubTab,
-    applicationTemplateEditPreflightLoading,
-    displayProgram,
-    showAlert,
-  ])
+        .finally(() => setApplicationTemplateEditPreflightLoading(false))
+    },
+    [applicationTemplateEditPreflightLoading, displayProgram, showAlert]
+  )
+
+  const handleApplicationEditForm = useCallback(() => {
+    openApplicationTemplateEdit(applicationSubTab)
+  }, [applicationSubTab, openApplicationTemplateEdit])
+
+  /** 신청 정보 수정 팝업 안 탭 전환(시안 01-2) — URL 하위 탭을 바꾸고 새 탭 양식 수정 가능 여부를 다시 확인한다. */
+  const handleApplicationTemplateEditTabChange = useCallback(
+    (tab: GeneralApplicationTabKey) => {
+      if (tab === applicationSubTab) return
+      handleApplicationSubTabChange(tab)
+      openApplicationTemplateEdit(tab)
+    },
+    [applicationSubTab, handleApplicationSubTabChange, openApplicationTemplateEdit]
+  )
 
   const handleApplicationTemplateEditClose = useCallback(() => {
     setApplicationTemplateEditOpen(false)
@@ -1666,11 +1683,14 @@ function GeneralProgramDetailFullPageModalContent({
     useState<GeneralRecruitTabKey | null>(null)
   const [recruitmentPreviewDraft, setRecruitmentPreviewDraft] =
     useState<RecruitmentEditPreviewDraft | null>(null)
+  /** 공통 정보 「프로그램 상세 미리보기」로 연 경우 — 상단 제목만 다르다 */
+  const [programDetailPreviewActive, setProgramDetailPreviewActive] = useState(false)
 
   useEffect(() => {
     if (!open) {
       setRecruitmentPreviewAudienceOptimistic(null)
       setRecruitmentPreviewDraft(null)
+      setProgramDetailPreviewActive(false)
     }
   }, [open])
 
@@ -1678,6 +1698,7 @@ function GeneralProgramDetailFullPageModalContent({
     if (!recruitmentPreviewAudienceFromUrl) {
       setRecruitmentPreviewAudienceOptimistic(null)
       setRecruitmentPreviewDraft(null)
+      setProgramDetailPreviewActive(false)
     }
   }, [recruitmentPreviewAudienceFromUrl])
 
@@ -1691,6 +1712,7 @@ function GeneralProgramDetailFullPageModalContent({
   const handleOpenRecruitmentPreview = useCallback(
     (audience: GeneralRecruitTabKey) => {
       if (!programId) return
+      setProgramDetailPreviewActive(false)
       const recruitAudience = recruitmentAudienceFromDetailTab(audience)
       const editing =
         recruitAudience === 'participant'
@@ -1761,9 +1783,16 @@ function GeneralProgramDetailFullPageModalContent({
     ]
   )
 
+  /** 공통 정보 「프로그램 상세 미리보기」 — 참여 기관(개인형은 참여자) 모집 정보 미리보기와 같은 화면 */
+  const handleOpenProgramDetailPreview = useCallback(() => {
+    handleOpenRecruitmentPreview('institutions')
+    setProgramDetailPreviewActive(true)
+  }, [handleOpenRecruitmentPreview])
+
   const handleCloseRecruitmentPreview = useCallback(() => {
     setRecruitmentPreviewAudienceOptimistic(null)
     setRecruitmentPreviewDraft(null)
+    setProgramDetailPreviewActive(false)
     setSearchParams(
       prev => {
         const next = new URLSearchParams(prev)
@@ -2049,7 +2078,7 @@ function GeneralProgramDetailFullPageModalContent({
       if (!programId || isClosingRef.current) return
       if (lnb === 'survey' && surveyItems.length === 0) {
         void showAlert({
-          title: '안내',
+          title: GENERAL_SURVEY_MENU_EMPTY_ALERT_TITLE,
           content: GENERAL_SURVEY_MENU_EMPTY_ALERT_MESSAGE,
         })
         return
@@ -2121,7 +2150,7 @@ function GeneralProgramDetailFullPageModalContent({
     (tab: 'survey' | typeof GENERAL_SATISFACTION_NAV_TAB) => {
       if (!surveyKeys.includes(tab)) {
         void showAlert({
-          title: '안내',
+          title: GENERAL_SURVEY_MENU_EMPTY_ALERT_TITLE,
           content: GENERAL_SURVEY_MENU_EMPTY_ALERT_MESSAGE,
         })
         return
@@ -2375,6 +2404,12 @@ function GeneralProgramDetailFullPageModalContent({
       onClick: () => closeDetailLevel(() => programParams),
     })
 
+    // 시안: 프로그램 정보(공통·모집·신청) 화면은 `프로그램 목록 > 프로그램명 > 프로그램 정보` 3단계
+    if (activeLnb === 'info') {
+      items.push({ label: lnbLabel })
+      return items
+    }
+
     const hasParticipantApplicationDetail =
       applicantDetailMeta != null &&
       (activeLnb === 'institution_applications' || activeLnb === 'instructor_applications')
@@ -2406,6 +2441,17 @@ function GeneralProgramDetailFullPageModalContent({
               onClick: () => closeDetailLevel(() => childParams),
             }
           : { label: childLabel }
+      )
+    } else if (activeLnb === 'volunteer_applications') {
+      // 시안(04-1·04-2): `… > 봉사자 1차 서류 심사 대상자 목록` 한 항목 (LNB·탭 2단계로 나누지 않음)
+      const volunteerListLabel = `봉사자 ${childLabel} 목록`
+      items.push(
+        childParams && hasVolunteerApplicationDetail
+          ? {
+              label: volunteerListLabel,
+              onClick: () => closeDetailLevel(() => childParams),
+            }
+          : { label: volunteerListLabel }
       )
     } else {
       items.push({
@@ -2524,9 +2570,11 @@ function GeneralProgramDetailFullPageModalContent({
                 onEdit={handleInfoEdit}
                 onCancel={handleInfoCancel}
                 onSave={handleInfoSave}
+                onOpenProgramDetailPreview={handleOpenProgramDetailPreview}
               />
             ) : activeLnb === 'info' && activeTab === 'recruitment' ? (
               <GeneralProgramRecruitmentView
+                variant="general"
                 program={recruitmentEditProgram ?? displayProgram}
                 remoteStrict={strictRemoteRecruitment}
                 activeRecruitTab={recruitSubTab}
@@ -2577,7 +2625,11 @@ function GeneralProgramDetailFullPageModalContent({
               <GeneralSurveyManagementView program={displayProgram} activeTab={activeTab} />
             ) : activeLnb === 'managers' && displayProgram.id ? (
               <div className="program-detail-fullpage-modal__info-tab program-detail-fullpage-modal__managers-tab">
-                <ProgramManagersTab programId={displayProgram.id} />
+                <ProgramManagersTab
+                  programId={displayProgram.id}
+                  blockLastManagerDelete
+                  variant="general"
+                />
               </div>
             ) : activeLnb === 'institution_applications' ? (
               <div className="program-detail-fullpage-modal__info-tab">
@@ -2722,6 +2774,13 @@ function GeneralProgramDetailFullPageModalContent({
           applicationTab={applicationSubTab}
           onClose={handleApplicationTemplateEditClose}
           onSaved={handleApplicationTemplateSaved}
+          tabItems={generalApplicationTabItems({
+            showInstructor: showInstructorApplications,
+            showVolunteer: showVolunteerApplications,
+            institutionsLabel: getGeneralApplicationInstitutionsTabLabel(displayProgram),
+          })}
+          onApplicationTabChange={handleApplicationTemplateEditTabChange}
+          closeLabel="취소"
         />
       ) : null}
       {displayProgram ? (
@@ -2731,6 +2790,7 @@ function GeneralProgramDetailFullPageModalContent({
           program={recruitmentPreviewDraft?.program ?? displayProgram}
           extraOverlay={recruitmentPreviewDraft?.extraOverlay}
           sponsorName={sponsorName}
+          title={programDetailPreviewActive ? '프로그램 상세 미리보기' : undefined}
           audience={
             recruitmentPreviewAudience
               ? previewAudienceFromGeneralRecruitTab(recruitmentPreviewAudience, displayProgram)

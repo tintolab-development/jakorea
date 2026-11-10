@@ -133,7 +133,12 @@ function buildLocalAttachments(
     .filter((item): item is NonNullable<typeof item> => item != null)
 }
 
-export function SmsTemplateList() {
+export function SmsTemplateList({
+  onUseTemplate,
+}: {
+  /** 미리보기 「템플릿 사용」 — 문자 발송 화면을 이 템플릿으로 연다 */
+  onUseTemplate?: (templateId: string) => void
+} = {}) {
   const { showAlert } = useCmsAlert()
   const remote = shouldUseSmsTemplatesRemoteApi()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -588,6 +593,12 @@ export function SmsTemplateList() {
     handleOpenEdit(selectedTemplate.id)
   }, [handleOpenEdit, selectedTemplate])
 
+  const handlePreviewUseTemplate = useCallback(() => {
+    if (!selectedTemplate) return
+    setPreviewOpen(false)
+    onUseTemplate?.(selectedTemplate.id)
+  }, [onUseTemplate, selectedTemplate])
+
   const handlePreviewDelete = useCallback(() => {
     if (!selectedTemplate) return
     setPreviewOpen(false)
@@ -931,6 +942,7 @@ export function SmsTemplateList() {
         onClose={() => setPreviewOpen(false)}
         onEdit={handlePreviewEdit}
         onDelete={handlePreviewDelete}
+        onUseTemplate={onUseTemplate ? handlePreviewUseTemplate : undefined}
       />
     </div>
   )

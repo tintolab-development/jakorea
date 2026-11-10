@@ -48,11 +48,26 @@ import {
 } from '../../lib/post-write-audience'
 import './post-write-modal.css'
 
-const ALLOWED_EXTENSIONS: string[] = ['.jpg', '.jpeg', '.png']
-
-function getAllowedExtensionsDescription(): string {
-  return 'JPG, PNG'
-}
+/** 시안: JPG, PNG, HWP, Excel, PDF, Word — 최대 10개(파일당 20MB, 총 100MB) */
+const ALLOWED_EXTENSIONS: string[] = [
+  '.jpg',
+  '.jpeg',
+  '.png',
+  '.hwp',
+  '.hwpx',
+  '.xls',
+  '.xlsx',
+  '.pdf',
+  '.doc',
+  '.docx',
+]
+const ATTACHMENT_ACCEPT = ALLOWED_EXTENSIONS.join(',')
+const MAX_ATTACHMENT_COUNT = 10
+const MAX_ATTACHMENT_TOTAL_BYTES = 100 * 1024 * 1024
+const ATTACHMENT_GUIDE_LINES = [
+  '- 파일은 JPG, PNG, HWP, Excel, PDF, Word 형식만 등록 가능하며, 최대 10개(파일당 20MB, 총 100MB)까지 첨부할 수 있습니다.',
+  '- 첨부 파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
+]
 
 export interface PostWriteModalProps {
   open: boolean
@@ -98,6 +113,9 @@ export function PostWriteModal({
   const loadedAttachmentIdsRef = useRef<number[] | null>(null)
 
   const fileNames = [...existingAttachments.map(item => item.name), ...files.map(f => f.name)]
+  const attachedTotalBytes =
+    existingAttachments.reduce((sum, item) => sum + (item.fileSize || 0), 0) +
+    files.reduce((sum, file) => sum + file.size, 0)
   const audienceOptions = useMemo(() => buildPostWriteAudienceOptions(program), [program])
 
   const editorResetKey = useMemo(
@@ -117,7 +135,7 @@ export function PostWriteModal({
     editorResetKey,
     {
       height: '280px',
-      placeholder: '게시글 내용을 작성하세요',
+      placeholder: '내용을 입력해 주세요',
       fileUploadOwner: inlineImageOwner,
     }
   )
@@ -177,12 +195,28 @@ export function PostWriteModal({
 
   const handleFilesChange = (newFiles: File[]) => {
     const valid: File[] = []
+    let hasUnsupported = false
     for (const file of newFiles) {
       const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase()
       if (!ALLOWED_EXTENSIONS.includes(ext)) {
+        hasUnsupported = true
         continue
       }
       valid.push(file)
+    }
+    if (hasUnsupported) {
+      showAlert({
+        title: '안내',
+        content: 'JPG, PNG, HWP, Excel, PDF, Word 형식의 파일만 등록할 수 있습니다.',
+      })
+    }
+    if (valid.length === 0) return
+    if (existingAttachments.length + files.length + valid.length > MAX_ATTACHMENT_COUNT) {
+      showAlert({
+        title: '안내',
+        content: `첨부 파일은 최대 ${MAX_ATTACHMENT_COUNT}개까지 등록할 수 있습니다.`,
+      })
+      return
     }
     setFiles(prev => [...prev, ...valid])
   }
@@ -401,17 +435,20 @@ export function PostWriteModal({
               edit={
                 <>
                   <FileSelectField
-                    accept=".jpg,.jpeg,.png"
+                    accept={ATTACHMENT_ACCEPT}
                     fileNames={fileNames}
                     maxFileBytes={FILE_SELECT_MAX_FILE_BYTES}
-                    maxTotalBytes={0}
+                    maxTotalBytes={MAX_ATTACHMENT_TOTAL_BYTES}
+                    currentTotalBytes={attachedTotalBytes}
+                    sizeExceededMessage={file =>
+                      file
+                        ? '파일당 최대 20MB까지 업로드 가능합니다.'
+                        : '파일은 총 최대 100MB까지 업로드 가능합니다.'
+                    }
                     onFilesChange={handleFilesChange}
                     onRemoveFile={handleRemoveFile}
                     uploading={loading}
-                    guideLines={[
-                      `- 파일당 최대 20MB까지 ${getAllowedExtensionsDescription()} 형식만 등록 가능합니다.`,
-                      '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
-                    ]}
+                    guideLines={ATTACHMENT_GUIDE_LINES}
                     className="post-write-modal__file-field file-select-field--edit"
                   />
                   {fieldError?.field === 'attachments' ? (

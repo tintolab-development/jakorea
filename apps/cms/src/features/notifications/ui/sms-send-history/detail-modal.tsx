@@ -1,4 +1,5 @@
 import { NotificationSendStatusText } from '@/features/notifications/ui/shared/send-status-text'
+import { Fragment } from 'react'
 import dayjs from 'dayjs'
 import { Spin } from 'antd'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -9,7 +10,8 @@ import type {
   SmsSendHistoryRow,
 } from '@/features/notifications/model/sms-send-history/types'
 import { NOTIFICATION_SEND_FAILURE_SNAPSHOT_HINT } from '@/features/notifications/model/shared/send-ux-copy'
-import { formatSmsMessageTypeLabel } from '@/features/notifications/api/adapters/sms-channel'
+import { formatSmsMessageTypeCode } from '@/features/notifications/model/sms-template/message-type'
+import { formatSmsSenderPhoneLabel } from '@/features/notifications/model/sms-template/sender-phone'
 import './detail-modal.css'
 
 type DetailModalProps = {
@@ -27,12 +29,36 @@ function formatDateTime(value: string | null | undefined): string {
   return parsed.isValid() ? parsed.format(DATETIME_FORMAT) : '-'
 }
 
-function formatSender(row: SmsSendHistoryRow): string {
+/** 발송자 값 세그먼트 — 시안 「유형 │ 번호」. `|`가 박힌 원문은 나눠서 디바이더로 다시 잇는다. */
+function senderSegments(row: SmsSendHistoryRow): string[] {
   const type = row.senderNumberType?.trim()
   const phone = row.senderPhone?.trim() || row.senderInfo?.trim()
-  if (type && phone && !phone.includes('|')) return `${type} | ${phone}`
-  if (row.senderInfo?.trim()) return row.senderInfo.trim()
-  return phone || type || '-'
+  if (type && phone && !phone.includes('|')) return [type, formatSmsSenderPhoneLabel(phone)]
+  const info = row.senderInfo?.trim()
+  if (info) {
+    return info
+      .split('|')
+      .map(segment => segment.trim())
+      .filter(Boolean)
+      .map(formatSmsSenderPhoneLabel)
+  }
+  const fallback = phone || type
+  return fallback ? [formatSmsSenderPhoneLabel(fallback)] : []
+}
+
+function SenderView({ row }: { row: SmsSendHistoryRow }) {
+  const segments = senderSegments(row)
+  if (segments.length === 0) return <>-</>
+  return (
+    <span className="sms-send-history-detail-modal__sender">
+      {segments.map((segment, index) => (
+        <Fragment key={`${segment}-${index}`}>
+          {index > 0 ? <DetailInfoForm.TdDivider /> : null}
+          <span>{segment}</span>
+        </Fragment>
+      ))}
+    </span>
+  )
 }
 
 function sendStatusView(row: SmsSendHistoryRow) {
@@ -57,7 +83,6 @@ function sendStatusView(row: SmsSendHistoryRow) {
 
 export function DetailModal({ open, row, loading, onClose }: DetailModalProps) {
   const { showAlert } = useCmsAlert()
-  const sender = row ? formatSender(row) : '-'
   const receiver = row?.receiverInfo?.trim() || row?.receiverPhone?.trim() || '-'
   const templateName = row?.templateName.trim() ? row.templateName : '미사용'
   const showSubject = row != null && row.messageType !== 'SMS'
@@ -91,7 +116,7 @@ export function DetailModal({ open, row, loading, onClose }: DetailModalProps) {
       className="sms-send-history-detail-modal"
       size="wide"
       footer={
-        <CmsButton variant="secondary" size="large" type="button" onClick={onClose}>
+        <CmsButton variant="cancel" size="large" type="button" onClick={onClose}>
           닫기
         </CmsButton>
       }
@@ -113,14 +138,14 @@ export function DetailModal({ open, row, loading, onClose }: DetailModalProps) {
               <DetailInfoForm.Field label="수신일시" view={formatDateTime(row.receivedAt)} />
             </DetailInfoForm.Row>
             <DetailInfoForm.Row type="double">
-              <DetailInfoForm.Field label="발송자" view={sender} />
+              <DetailInfoForm.Field label="발송자" view={<SenderView row={row} />} />
               <DetailInfoForm.Field label="수신자" view={receiver} />
             </DetailInfoForm.Row>
             <DetailInfoForm.Row type="double">
               <DetailInfoForm.Field label="발송 상태" view={sendStatusView(row)} />
               <DetailInfoForm.Field
                 label="발송 유형"
-                view={formatSmsMessageTypeLabel(row.messageType)}
+                view={formatSmsMessageTypeCode(row.messageType)}
               />
             </DetailInfoForm.Row>
             <DetailInfoForm.Row type="single">
@@ -128,42 +153,57 @@ export function DetailModal({ open, row, loading, onClose }: DetailModalProps) {
             </DetailInfoForm.Row>
           </DetailInfoForm>
 
-          <div className="sms-send-history-detail-modal__message">
+          <DetailInfoForm title="문자 내용" hideHeader mode="view">
             {showSubject ? (
-              <h3 className="sms-send-history-detail-modal__subject">{row.subject || '-'}</h3>
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field label="제목" fullRow view={row.subject?.trim() || '-'} />
+              </DetailInfoForm.Row>
             ) : null}
-            {bodyText ? (
-              <pre className="sms-send-history-detail-modal__body">{bodyText}</pre>
-            ) : (
-              <p className="sms-send-history-detail-modal__body-empty">-</p>
-            )}
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="내용"
+                fullRow
+                view={
+                  bodyText ? (
+                    <pre className="sms-send-history-detail-modal__body">{bodyText}</pre>
+                  ) : (
+                    '-'
+                  )
+                }
+              />
+            </DetailInfoForm.Row>
             {showAttachments ? (
-              <div className="sms-send-history-detail-modal__attachments">
-                <span className="sms-send-history-detail-modal__attachments-label">첨부파일</span>
-                {attachments.length > 0 ? (
-                  <ul className="sms-send-history-detail-modal__attachment-list">
-                    {attachments.map((item, index) => (
-                      <li key={`${item.fileName}-${index}`}>
-                        <button
-                          type="button"
-                          className="sms-send-history-detail-modal__attachment-link"
-                          onClick={() => {
-                            void handleDownload(item.fileName)
-                          }}
-                        >
-                          {item.fileName}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <span className="sms-send-history-detail-modal__attachment-empty">
-                    첨부된 파일이 없습니다.
-                  </span>
-                )}
-              </div>
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field
+                  label="첨부파일"
+                  fullRow
+                  view={
+                    attachments.length > 0 ? (
+                      <ul className="sms-send-history-detail-modal__attachment-list">
+                        {attachments.map((item, index) => (
+                          <li key={`${item.fileName}-${index}`}>
+                            <button
+                              type="button"
+                              className="sms-send-history-detail-modal__attachment-link"
+                              onClick={() => {
+                                void handleDownload(item.fileName)
+                              }}
+                            >
+                              {item.fileName}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <span className="sms-send-history-detail-modal__attachment-empty">
+                        첨부된 파일이 없습니다.
+                      </span>
+                    )
+                  }
+                />
+              </DetailInfoForm.Row>
             ) : null}
-          </div>
+          </DetailInfoForm>
         </div>
       ) : null}
     </ContentModal>

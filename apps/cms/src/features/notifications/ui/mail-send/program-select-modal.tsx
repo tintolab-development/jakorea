@@ -9,15 +9,22 @@ import {
   programYearLabel,
   uniqueProgramYears,
 } from '@/features/notifications/model/mail-send/programs'
-import { MAIL_SEND_PICKER_PAGE_SIZE, type MailSendProgram } from '@/features/notifications/model/mail-send/types'
+import {
+  MAIL_SEND_PICKER_PAGE_SIZE,
+  type MailSendProgram,
+} from '@/features/notifications/model/mail-send/types'
 import './program-select-modal.css'
 
 type ProgramSelectModalProps = {
   open: boolean
   programs: MailSendProgram[]
   selectedId?: string
+  /** 현재 선택된 프로그램명. 있으면 안내 문구와 「프로그램 선택 해제」를 보인다. */
+  selectedName?: string
   onClose: () => void
   onSelect: (program: MailSendProgram) => void
+  /** 「프로그램 선택 해제」 — 지정 해제(미선택)로 되돌린다. */
+  onDeselect?: () => void
   zIndex?: number
 }
 
@@ -25,10 +32,13 @@ export function ProgramSelectModal({
   open,
   programs,
   selectedId,
+  selectedName,
   onClose,
   onSelect,
+  onDeselect,
   zIndex,
 }: ProgramSelectModalProps) {
+  const canDeselect = Boolean(selectedName && onDeselect)
   const [year, setYear] = useState<number | '' | undefined>(undefined)
   const [keyword, setKeyword] = useState('')
   const [appliedYear, setAppliedYear] = useState<number | ''>('')
@@ -100,11 +110,33 @@ export function ProgramSelectModal({
       className="mail-send-program-select-modal"
       titleBodyGap="always"
       zIndex={zIndex}
+      footer={
+        canDeselect ? (
+          <CmsButton
+            type="button"
+            variant="secondary"
+            size="large"
+            className="mail-send-program-select-modal__deselect"
+            onClick={onDeselect}
+          >
+            프로그램 선택 해제
+          </CmsButton>
+        ) : null
+      }
     >
       <div className="mail-send-program-select-modal__body">
+        {canDeselect ? (
+          <p className="mail-send-program-select-modal__current">
+            현재 선택된 프로그램은{' '}
+            <strong className="mail-send-program-select-modal__current-name">
+              [{selectedName}]
+            </strong>{' '}
+            입니다.
+          </p>
+        ) : null}
         <div className="mail-send-program-select-modal__search">
           <CmsSelect
-            inputSize="large"
+            inputSize="medium"
             placeholder="년도"
             value={year}
             onChange={handleYearChange}
@@ -118,12 +150,12 @@ export function ProgramSelectModal({
               onChange={event => setKeyword(event.target.value)}
               onPressEnter={handleSearch}
               placeholder="프로그램명을 입력해 주세요"
-              inputSize="large"
+              inputSize="medium"
               width="100%"
               allowClear
             />
           </span>
-          <CmsButton type="button" variant="primary" size="large" onClick={handleSearch}>
+          <CmsButton type="button" variant="primary" size="h40" onClick={handleSearch}>
             검색
           </CmsButton>
         </div>

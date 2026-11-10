@@ -342,9 +342,7 @@
         "basisHours": 1,
         "compareKind": "standard",
         "evidenceSubmission": "required",
-        "qualificationLines": [
-          "자원봉사자에게 지급되는 교통비, 식사비 등의 활동비(1일 기준)"
-        ],
+        "qualificationLines": ["자원봉사자에게 지급되는 교통비, 식사비 등의 활동비(1일 기준)"],
         "remarkLines": []
       },
       "notionNote": "기획 rename: '자원봉사자 활동비' → '활동비'. itemName 최종 합의 필요."
@@ -354,7 +352,7 @@
     {
       "caseId": "CASE-15",
       "feMockId": "d-1",
-      "itemName": "일용근로자 원천징수세액",
+      "itemName": "원천징수세액",
       "description": "일용직 급여에서 원천징수하는 소득세액입니다.",
       "useYn": true,
       "layout": "withholdingDailyWorker",

@@ -4,6 +4,7 @@ import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import {
+  DEFAULT_SATISFACTION_WINDOW_DAYS,
   SATISFACTION_RUN_MODE_ONCE_AT_END,
   SATISFACTION_RUN_MODE_PER_SCHEDULE,
   SATISFACTION_WINDOW_DAYS,
@@ -26,7 +27,8 @@ export type SatisfactionRegisterModalProps = {
   audienceError?: string | null
   runMode: SatisfactionRunMode
   onRunModeChange: (value: SatisfactionRunMode) => void
-  windowDays: SatisfactionWindowDays
+  /** `null` = 설문 진행 기간 미선택 (일정별 진행에서 선택 전 등록 불가) */
+  windowDays: SatisfactionWindowDays | null
   onWindowDaysChange: (value: SatisfactionWindowDays) => void
   schedulesLoading?: boolean
   hasSessionSchedules: boolean
@@ -57,7 +59,8 @@ export function SatisfactionRegisterModal({
   onSubmit,
 }: SatisfactionRegisterModalProps) {
   const perSchedule = runMode === SATISFACTION_RUN_MODE_PER_SCHEDULE
-  const scheduleReady = !perSchedule || (!schedulesLoading && hasSessionSchedules)
+  const scheduleReady =
+    !perSchedule || (!schedulesLoading && hasSessionSchedules && windowDays != null)
   const canSubmit =
     templateValue != null &&
     templateValue !== '' &&
@@ -130,12 +133,12 @@ export function SatisfactionRegisterModal({
             value={runMode}
             onChange={event => onRunModeChange(event.target.value as SatisfactionRunMode)}
           >
-            <CmsRadio value={SATISFACTION_RUN_MODE_PER_SCHEDULE}>일정별</CmsRadio>
-            <CmsRadio value={SATISFACTION_RUN_MODE_ONCE_AT_END}>종료 시 1회</CmsRadio>
+            <CmsRadio value={SATISFACTION_RUN_MODE_PER_SCHEDULE}>일정별 진행</CmsRadio>
+            <CmsRadio value={SATISFACTION_RUN_MODE_ONCE_AT_END}>종료 시 1회 진행</CmsRadio>
           </CmsRadioGroup>
           <p className="survey-management-create-modal__hint">
             {perSchedule
-              ? '확정된 모든 교육 일정에 동일한 만족도조사가 적용되며, 각 일정이 끝나면 자동으로 시작됩니다.'
+              ? '배정된 교육 일정마다 교육이 끝나면 자동으로 시작됩니다.'
               : '배정된 마지막 교육 일정이 끝난 뒤 한 번만 진행됩니다.'}
           </p>
         </div>
@@ -147,11 +150,12 @@ export function SatisfactionRegisterModal({
               allowClear={false}
               label="설문 진행 기간"
               required
+              placeholder="설문을 진행할 기간을 선택해 주세요"
               options={SATISFACTION_WINDOW_DAYS.map(days => ({
                 label: `일정 종료 후 ${days}일`,
                 value: String(days),
               }))}
-              value={String(windowDays)}
+              value={windowDays != null ? String(windowDays) : undefined}
               onChange={value => {
                 const next = Number(value)
                 if (SATISFACTION_WINDOW_DAYS.includes(next as SatisfactionWindowDays)) {
@@ -161,7 +165,7 @@ export function SatisfactionRegisterModal({
             />
             <p className="survey-management-satisfaction__schedule-select-hint">
               일정마다 참여 기간이 자동으로 적용됩니다.{' '}
-              {formatSatisfactionWindowExampleLine(windowDays)}
+              {formatSatisfactionWindowExampleLine(windowDays ?? DEFAULT_SATISFACTION_WINDOW_DAYS)}
             </p>
           </div>
         ) : null}

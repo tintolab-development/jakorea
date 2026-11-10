@@ -15,16 +15,21 @@ function sync(incoming: File[], currentCount = 0, currentTotalBytes = 0) {
 }
 
 describe('rejectSmsMmsAttachmentsSync (MMS 첨부 계약)', () => {
-  it('uses 300KiB per file and 600KiB total', () => {
+  it('uses 300KiB per file and 800KiB total', () => {
     expect(SMS_MMS_ATTACHMENT_MAX_FILE_BYTES).toBe(307_200)
-    expect(SMS_MMS_ATTACHMENT_MAX_TOTAL_BYTES).toBe(614_400)
+    expect(SMS_MMS_ATTACHMENT_MAX_TOTAL_BYTES).toBe(819_200)
   })
 
-  it('rejects 3 or more attachments (max 2)', () => {
-    expect(sync([jpegFile('c.jpg', 10)], 2).reason).toBe('count')
-    const result = sync([jpegFile('a.jpg', 10), jpegFile('b.jpg', 10), jpegFile('c.jpg', 10)])
+  it('rejects 4 or more attachments (max 3)', () => {
+    expect(sync([jpegFile('d.jpg', 10)], 3).reason).toBe('count')
+    const result = sync([
+      jpegFile('a.jpg', 10),
+      jpegFile('b.jpg', 10),
+      jpegFile('c.jpg', 10),
+      jpegFile('d.jpg', 10),
+    ])
     expect(result.reason).toBe('count')
-    expect(result.accepted).toHaveLength(2)
+    expect(result.accepted).toHaveLength(3)
   })
 
   it('rejects non-jpg/jpeg extension', () => {
@@ -48,7 +53,7 @@ describe('rejectSmsMmsAttachmentsSync (MMS 첨부 계약)', () => {
     expect(sync([jpegFile('a.jpg', SMS_MMS_ATTACHMENT_MAX_FILE_BYTES)]).reason).toBeNull()
   })
 
-  it('rejects total over 600KiB', () => {
+  it('rejects total over 800KiB', () => {
     const result = sync(
       [jpegFile('b.jpg', SMS_MMS_ATTACHMENT_MAX_FILE_BYTES)],
       1,
@@ -57,9 +62,9 @@ describe('rejectSmsMmsAttachmentsSync (MMS 첨부 계약)', () => {
     expect(result.reason).toBe('total-size')
   })
 
-  it('rejects file name over 40 chars', () => {
-    expect(sync([jpegFile(`${'a'.repeat(37)}.jpg`, 10)]).reason).toBe('name-length')
-    expect(sync([jpegFile(`${'a'.repeat(36)}.jpg`, 10)]).reason).toBeNull()
+  it('rejects file name over 45 chars', () => {
+    expect(sync([jpegFile(`${'a'.repeat(42)}.jpg`, 10)]).reason).toBe('name-length')
+    expect(sync([jpegFile(`${'a'.repeat(41)}.jpg`, 10)]).reason).toBeNull()
   })
 
   it('rejects file name with spaces', () => {
@@ -79,8 +84,8 @@ describe('rejectSmsMmsAttachments (resolution)', () => {
     )
   }
 
-  it('rejects width over 1500px', async () => {
-    stubSize(1501, 100)
+  it('rejects width over 1000px', async () => {
+    stubSize(1001, 100)
     const result = await rejectSmsMmsAttachments({
       incoming: [jpegFile('wide.jpg', 10)],
       currentCount: 0,
@@ -90,8 +95,8 @@ describe('rejectSmsMmsAttachments (resolution)', () => {
     expect(result.accepted).toEqual([])
   })
 
-  it('rejects height over 1440px', async () => {
-    stubSize(100, 1441)
+  it('rejects height over 1000px', async () => {
+    stubSize(100, 1001)
     const result = await rejectSmsMmsAttachments({
       incoming: [jpegFile('tall.jpg', 10)],
       currentCount: 0,
@@ -100,8 +105,8 @@ describe('rejectSmsMmsAttachments (resolution)', () => {
     expect(result.reason).toBe('resolution')
   })
 
-  it('accepts 1500x1440 jpeg', async () => {
-    stubSize(1500, 1440)
+  it('accepts 1000x1000 jpeg', async () => {
+    stubSize(1000, 1000)
     const result = await rejectSmsMmsAttachments({
       incoming: [jpegFile('ok.jpg', 10)],
       currentCount: 0,

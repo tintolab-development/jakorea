@@ -3,6 +3,7 @@ import { Spin } from 'antd'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsButton } from '@/shared/ui'
 import { formatMailPreviewPerson } from '@/features/notifications/model/mail-template/preview'
+import { SenderNameEmail } from './sender-name-email'
 import type { MailTemplateItem } from '@/features/notifications/model/mail-template/types'
 
 type DetailPanelProps = {
@@ -29,7 +30,7 @@ export function DetailPanel({ template, categoryName, onPreview, loading }: Deta
     return <div className="mail-template-detail mail-template-detail--empty" />
   }
 
-  const senderView =
+  const senderFallback =
     template.senderDisplay?.trim() ||
     formatMailPreviewPerson(template.senderName, template.senderEmail) ||
     '-'
@@ -58,7 +59,16 @@ export function DetailPanel({ template, categoryName, onPreview, loading }: Deta
           <DetailInfoForm.Field label="템플릿명" view={template.templateName} />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field label="보낸사람" view={senderView} />
+          <DetailInfoForm.Field
+            label="발신 메일"
+            view={
+              <SenderNameEmail
+                name={template.senderName}
+                email={template.senderEmail}
+                fallback={senderFallback}
+              />
+            }
+          />
           <DetailInfoForm.Field label="첨부 파일" view={attachmentView} />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
@@ -66,7 +76,13 @@ export function DetailPanel({ template, categoryName, onPreview, loading }: Deta
             label="템플릿 상세"
             fullRow
             view={
-              <CmsButton variant="secondary" size="medium" type="button" onClick={onPreview}>
+              <CmsButton
+                variant="secondary"
+                size="small"
+                type="button"
+                className="mail-template-detail__preview-btn"
+                onClick={onPreview}
+              >
                 미리보기
               </CmsButton>
             }

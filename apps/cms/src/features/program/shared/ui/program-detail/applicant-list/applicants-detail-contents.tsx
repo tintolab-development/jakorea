@@ -124,6 +124,10 @@ const APPLICATION_INFO_EDIT_UNMASK_REASON = '신청 정보 수정'
 const APPLICATION_INFO_EDIT_UNMASK_CONFIRM_CONTENT =
   "정보 수정 시 개인정보 마스킹이 해제되며,\n개인정보 열람 사유는 '정보 수정'으로 로그 이력에 기록됩니다.\n해당 참여자의 개인정보 열람 및 정보를 수정하시겠습니까?"
 
+/** 일반 프로그램(기관형) 기관 신청 상세 — 대상이 기관이므로 「해당 기관의」 */
+const GENERAL_ORGANIZATION_INSTITUTION_EDIT_UNMASK_CONFIRM_CONTENT =
+  "정보 수정 시 개인정보 마스킹이 해제되며,\n개인정보 열람 사유는 '정보 수정'으로 로그 이력에 기록됩니다.\n해당 기관의 개인정보 열람 및 정보를 수정하시겠습니까?"
+
 const APPLICATION_INFO_EDIT_UNMASK_MODAL_Z_INDEX = 1100
 
 const DETAIL_TAB_PARAM = 'detailTab'
@@ -286,11 +290,15 @@ function headerBtnEditInfoDisabled(): ApplicantHeaderActionItem {
   }
 }
 
-function headerBtnWriteComment(onClick: () => void, disabled = false): ApplicantHeaderActionItem {
+function headerBtnWriteComment(
+  onClick: () => void,
+  disabled = false,
+  label = '코멘트 작성'
+): ApplicantHeaderActionItem {
   return {
     key: 'write-comment',
     variant: 'primary',
-    label: '코멘트 작성',
+    label,
     disabled,
     onClick: disabled ? undefined : onClick,
   }
@@ -574,7 +582,14 @@ function resolveApplicantHeaderItems(params: {
     }
 
     if (isAdminCommentWriteEnabled && onEnterAdminCommentEdit) {
-      items.push(headerBtnWriteComment(onEnterAdminCommentEdit, isEditingInstructorDetail))
+      items.push(
+        headerBtnWriteComment(
+          onEnterAdminCommentEdit,
+          isEditingInstructorDetail,
+          // 일반(기관형) 시안 06-1·06-2(1141:244079·1141:243841) — 「코멘트 수정」
+          isGeneralOrganizationProgram(program) ? '코멘트 수정' : '코멘트 작성'
+        )
+      )
     }
 
     items.push(headerBtnPrivacy(onRevealPersonalInfo))
@@ -761,6 +776,9 @@ export function ApplicantsDetailContents({
   const isVolunteer = type === 'volunteers'
   const isIndividual = type === 'individual-applications'
   const isGeneralDetail = detailVariant === 'general'
+  /** 일반 프로그램(기관형) 강사 신청 상세 — 1사1교 강사 신청(같은 general 상세)은 기본 유지 */
+  const isGeneralOrganizationInstructorDetail =
+    isInstructor && isGeneralDetail && isGeneralOrganizationProgram(program)
 
   const activeTab = useMemo(
     () => parseDetailTabFromSearch(searchParams, type, detailVariant),
@@ -1845,8 +1863,13 @@ export function ApplicantsDetailContents({
                 affiliationEmploymentStatus: status,
               })
             }}
+            copyVariant={isGeneralOrganizationInstructorDetail ? 'general-organization' : 'default'}
           />
-          <ApplicantInstructorResume instructor={d} />
+          <ApplicantInstructorResume
+            instructor={d}
+            // 일반(기관형) 시안 01(1141:243619)에는 「JA Korea 활동 경험」 섹션이 없다
+            hideJaKoreaSection={isGeneralOrganizationInstructorDetail}
+          />
         </div>
       )
     }
@@ -1876,6 +1899,7 @@ export function ApplicantsDetailContents({
     onInstructorDetailSaved,
     instructorApplicationInfo,
     instructorResumeLayout,
+    isGeneralOrganizationInstructorDetail,
   ])
 
   const tabPanel = useMemo(() => {
@@ -2037,17 +2061,21 @@ export function ApplicantsDetailContents({
         {personalInfoRevealModal}
         {/* 열려 있을 때만 마운트 — 닫힘 애니메이션 중 모달 레이어가 헤더 [취소]를 가려 첫 클릭이 유실되던 문제(CMS-29) */}
         {(isIndividual || isInstitution) && editUnmaskConfirmOpen ? (
-            <ConfirmModal
-              open={editUnmaskConfirmOpen}
-              title="정보 수정 안내"
-              content={APPLICATION_INFO_EDIT_UNMASK_CONFIRM_CONTENT}
-              confirmText="정보 수정"
-              cancelText="취소"
-              onConfirm={confirmEditUnmaskAndStartEdit}
-              onCancel={closeEditUnmaskConfirm}
-              confirmLoading={editUnmaskConfirmLoading}
-              zIndex={APPLICATION_INFO_EDIT_UNMASK_MODAL_Z_INDEX}
-            />
+          <ConfirmModal
+            open={editUnmaskConfirmOpen}
+            title="정보 수정 안내"
+            content={
+              isInstitution && isGeneralOrganizationProgram(program)
+                ? GENERAL_ORGANIZATION_INSTITUTION_EDIT_UNMASK_CONFIRM_CONTENT
+                : APPLICATION_INFO_EDIT_UNMASK_CONFIRM_CONTENT
+            }
+            confirmText="정보 수정"
+            cancelText="취소"
+            onConfirm={confirmEditUnmaskAndStartEdit}
+            onCancel={closeEditUnmaskConfirm}
+            confirmLoading={editUnmaskConfirmLoading}
+            zIndex={APPLICATION_INFO_EDIT_UNMASK_MODAL_Z_INDEX}
+          />
         ) : null}
         {adminCommentModals}
         {combinedClassProcess.modals}

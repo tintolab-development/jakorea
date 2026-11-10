@@ -36,6 +36,8 @@ export interface ActivityCertificateIssuancePreviewModalProps {
   onClose: () => void
   instructor: ParticipatingInstructorRow
   program?: Program | null
+  /** 발급 사유 모달에서 고른 사유 라벨 — 참여자 정보 「발급목적」 줄 (생략 시 기존 기본 문구) */
+  issuanceReasonLabel?: string
 }
 
 export function ActivityCertificateIssuancePreviewModal({
@@ -43,6 +45,7 @@ export function ActivityCertificateIssuancePreviewModal({
   onClose,
   instructor,
   program,
+  issuanceReasonLabel,
 }: ActivityCertificateIssuancePreviewModalProps) {
   const { showAlert } = useCmsAlert()
   const pdfExportCanvasRef = useRef<HTMLDivElement>(null)
@@ -93,8 +96,9 @@ export function ActivityCertificateIssuancePreviewModal({
   ])
 
   const runtimeStringValues = useMemo(
-    () => buildActivityCertificateInitialStringValues(unmaskedInstructor, program),
-    [program, unmaskedInstructor]
+    () =>
+      buildActivityCertificateInitialStringValues(unmaskedInstructor, program, issuanceReasonLabel),
+    [issuanceReasonLabel, program, unmaskedInstructor]
   )
 
   const modalState = useCertificateTemplateModalState({

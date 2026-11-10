@@ -3,7 +3,6 @@ import {
   buildVolunteerInterview2CancelPassMessage,
   resolveVolunteerInterview2CancelPassNotifyVariant,
   resolveVolunteerInterview2CancelPassReasonLabel,
-  resolveVolunteerInterview2CancelPassButtonLabel,
   type VolunteerInterview2CancelPassNotifyVariant,
 } from '@/features/program/general/lib/volunteer-interview2-cancel-pass'
 import {
@@ -45,9 +44,8 @@ export function GeneralVolunteerInterview2CancelPassModal({
       className="general-volunteer-interview2-cancel-pass-modal"
       title="면접 합격 취소 안내"
       message={buildVolunteerInterview2CancelPassMessage(volunteerName, variant)}
-      confirmLabel={resolveVolunteerInterview2CancelPassButtonLabel(
-        volunteer?.secondInterviewScreeningStatus
-      )}
+      // 시안 17(9781:74988) 확인 버튼 「승인 취소」. 상세 헤더 버튼 라벨(합격 취소)은 그대로 둔다.
+      confirmLabel="승인 취소"
       confirmVariant="delete"
       requireReason
       reasonLabel={resolveVolunteerInterview2CancelPassReasonLabel(variant)}

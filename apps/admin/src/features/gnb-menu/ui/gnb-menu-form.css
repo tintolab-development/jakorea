@@ -27,29 +27,18 @@
   vertical-align: middle;
 }
 
-.gnb-menu-form__name-input--readonly .cms-input__control {
-  border-width: 1px;
-  border-style: solid;
-  border-color: transparent !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  cursor: default;
+/*
+ * 하위 메뉴명 조회(inlineReadOnly="text") — 입력 칸 테두리·안쪽 여백 없이 셀 여백 8×12만 남기고 가운데 정렬.
+ * 글자는 다른 표 셀과 같은 14px/150%. 수정 중에는 입력 칸(40) 그대로 좌측 정렬.
+ */
+.gnb-menu-table .ant-table-tbody > tr > td.gnb-menu-table__name-col:has(.cms-inline-readonly) {
+  padding: 8px 12px !important;
+  text-align: center;
 }
 
-.gnb-menu-form__name-input--readonly .cms-input__control:hover {
-  border-color: transparent !important;
-}
-
-.gnb-menu-form__name-input--readonly .ant-input {
-  cursor: default;
-  color: var(--main-BK, #3d3d3d) !important;
-  font-weight: 500;
-  text-align: left;
-}
-
-.gnb-menu-form__name-input--edit .cms-input__control {
-  border-width: 1px;
-  border-style: solid;
+.gnb-menu-form__name-input.cms-inline-readonly .ant-input {
+  font-size: 14px !important;
+  text-align: center !important;
 }
 
 /* 하위 메뉴명 열 — 셀 공통 패딩(12×20) 안쪽 가로 fill, 이중 패딩 없음 */

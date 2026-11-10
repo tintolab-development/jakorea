@@ -79,7 +79,11 @@ import {
 import { SendRequestCompletedModal } from '@/features/notifications/ui/shared/send-request-completed-modal'
 import { showNotificationSendErrorAlert } from '@/features/notifications/ui/shared/show-notification-send-request-failed-alert'
 import { RecipientManualModal } from '@/features/notifications/ui/shared/recipient-manual-modal'
-import { RecipientSelectModal } from '@/features/notifications/ui/shared/recipient-select-modal'
+import {
+  RecipientSelectModal,
+  SEND_RECIPIENT_PICKER_EMPTY_MEMBERS,
+  SEND_RECIPIENT_PICKER_EMPTY_PROGRAM,
+} from '@/features/notifications/ui/shared/recipient-select-modal'
 import { TemplateSelectField } from '@/features/notifications/ui/shared/template-select-field'
 import { RecipientTable } from './recipient-table'
 import { useSmsSendForm } from './use-form'
@@ -96,6 +100,9 @@ function createIdempotencyKey(): string {
 }
 
 /** BE 발송 검증 오류(error.code) → 포커스할 입력 */
+/** 시안: 발신 번호 select는 내용 폭(약 200px) */
+const SMS_SEND_SENDER_SELECT_WIDTH = 200
+
 const SMS_SEND_ERROR_FOCUS_SELECTORS = {
   template: '.sms-send-fullpage__message-type input:not(:disabled)',
   messageType: '.sms-send-fullpage__message-type input:not(:disabled)',
@@ -124,11 +131,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     isNotificationSendWithoutProgram(form.programId) ||
     parseNotificationSendProgramId(form.programId) != null
   const templatesQuery = useSmsSendTemplatePickerQuery(open && remote && canLoadProgramScoped)
-  const templates = templatesQuery.data ?? []
-  const [previewOpen, setPreviewOpen] = useState(false)
-  const [previewSubject, setPreviewSubject] = useState('')
-  const [previewBodyText, setPreviewBodyText] = useState('')
-  const [previewAt, setPreviewAt] = useState<string | undefined>()
+  const templates = useMemo(() => templatesQuery.data ?? [], [templatesQuery.data])
   const [recipientSelectOpen, setRecipientSelectOpen] = useState(false)
   const [recipientManualOpen, setRecipientManualOpen] = useState(false)
   const [usedVariableKeys, setUsedVariableKeys] = useState<string[]>([])
@@ -359,6 +362,41 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     [programNumericId, variablesCatalog]
   )
 
+  /** 템플릿 미리보기 「템플릿 사용」으로 열렸을 때 open당 1회만 적용 (선택 팝업 「사용하기」와 같은 가드) */
+  const didApplyInitialTemplateRef = useRef(false)
+  const { applyTemplate } = form
+  useEffect(() => {
+    if (!open) {
+      didApplyInitialTemplateRef.current = false
+      return
+    }
+    if (!initialTemplateId || didApplyInitialTemplateRef.current) return
+    const template = templates.find(item => item.id === initialTemplateId)
+    if (!template) return
+    if (variablesCatalog == null && !variablesQuery.isError) return
+    didApplyInitialTemplateRef.current = true
+    if (!isTemplateUsable(template)) {
+      showAlert({
+        title: '안내',
+        content:
+          getTemplateUnusableMessage(template) ||
+          '현재 프로그램에서는 사용할 수 없는 변수가 포함된 템플릿입니다.',
+      })
+      return
+    }
+    applyTemplate(template)
+  }, [
+    applyTemplate,
+    getTemplateUnusableMessage,
+    initialTemplateId,
+    isTemplateUsable,
+    open,
+    showAlert,
+    templates,
+    variablesCatalog,
+    variablesQuery.isError,
+  ])
+
   // 선택 완료된 템플릿은 수신자 추가·유형 문맥 변경으로 자동 clear 하지 않음.
 
   useEffect(() => {
@@ -380,7 +418,6 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
   }
 
   function handleClose() {
-    setPreviewOpen(false)
     setRecipientSelectOpen(false)
     setRecipientManualOpen(false)
     setSelectedRecipientIds([])
@@ -405,18 +442,6 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
   function handleOpenRecipientManual() {
     if (!isWithoutProgram) return
     setRecipientManualOpen(true)
-  }
-
-  function handlePreview() {
-    const snapshot = form.readComposeSnapshot()
-    setPreviewSubject(snapshot.subject)
-    setPreviewBodyText(snapshot.bodyText)
-    setPreviewAt(
-      form.sendTiming === 'scheduled' && form.scheduledAt
-        ? form.scheduledAt.toISOString()
-        : new Date().toISOString()
-    )
-    setPreviewOpen(true)
   }
 
   function handleSend() {
@@ -504,7 +529,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
         title="문자 발송"
         size="full"
         hideHeader
-        className="notification-fullpage-modal mail-send-fullpage-modal teal-header-modal--full"
+        className="notification-fullpage-modal notification-fullpage-modal--send mail-send-fullpage-modal teal-header-modal--full"
       >
         <div className="notification-fullpage-modal__shell">
           <header className="notification-fullpage-modal__title-row">
@@ -515,7 +540,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
               onClick={handleClose}
               aria-label="닫기"
             >
-              <ModalCloseIcon />
+              <ModalCloseIcon tone="white" />
             </button>
           </header>
 
@@ -524,9 +549,6 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
               <div className="notification-fullpage-modal__notice-actions">
                 <CmsButton variant="cancel" size="large" type="button" onClick={handleClose}>
                   취소
-                </CmsButton>
-                <CmsButton variant="secondary" size="large" type="button" onClick={handlePreview}>
-                  미리보기
                 </CmsButton>
                 <CmsButton
                   variant="primary"
@@ -575,6 +597,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                     <DetailInfoForm.Row type="double">
                       <DetailInfoForm.Field
                         label="템플릿"
+                        required
                         view=""
                         edit={
                           <TemplateSelectField
@@ -584,16 +607,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                             isTemplateUsable={isTemplateUsable}
                             getTemplateUnusableMessage={getTemplateUnusableMessage}
                             onSelect={form.applyTemplate}
-                            extraColumns={[
-                              {
-                                title: '발송 유형',
-                                dataIndex: 'messageType',
-                                key: 'messageType',
-                                width: 140,
-                                align: 'center',
-                              },
-                            ]}
-                            renderPreview={({ template, open, onClose, zIndex }) => (
+                            renderPreview={({ template, open, onClose, onUse, zIndex }) => (
                               <PreviewModal
                                 open={open}
                                 zIndex={zIndex}
@@ -612,6 +626,22 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                                 }
                                 previewAt={new Date().toISOString()}
                                 onClose={onClose}
+                                onUseTemplate={
+                                  template
+                                    ? () => {
+                                        if (!isTemplateUsable(template)) {
+                                          showAlert({
+                                            title: '안내',
+                                            content:
+                                              getTemplateUnusableMessage(template) ||
+                                              '현재 프로그램에서는 사용할 수 없는 변수가 포함된 템플릿입니다.',
+                                          })
+                                          return
+                                        }
+                                        onUse(template)
+                                      }
+                                    : undefined
+                                }
                               />
                             )}
                           />
@@ -620,7 +650,13 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                       <DetailInfoForm.Field
                         label="발송 시점"
                         required
-                        view={form.sendTiming === 'immediate' ? '즉시 발송' : '예약 발송'}
+                        view={
+                          form.sendTiming === 'immediate'
+                            ? '즉시 발송'
+                            : form.sendTiming === 'scheduled'
+                              ? '예약 발송'
+                              : '-'
+                        }
                         edit={
                           <SendScheduleField
                             className="mail-send-fullpage__timing"
@@ -641,7 +677,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                           <CmsSelect
                             className="sms-send-fullpage__sender-select"
                             inputSize="small"
-                            width="100%"
+                            width={SMS_SEND_SENDER_SELECT_WIDTH}
                             withAllOption={false}
                             loading={senderProfilesQuery.isLoading}
                             placeholder="발신 번호를 선택해 주세요"
@@ -660,7 +696,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                             className="sms-send-fullpage__message-type"
                             size="medium"
                             disabled={Boolean(form.templateId?.trim())}
-                            value={form.messageType}
+                            value={form.messageTypeChosen ? form.messageType : undefined}
                             onChange={event =>
                               form.applyMessageType(
                                 event.target.value === 'MMS' || event.target.value === 'LMS'
@@ -785,33 +821,17 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
         </div>
       </TealHeaderModal>
 
-      {previewOpen ? (
-        <PreviewModal
-          open={open && previewOpen}
-          zIndex={1100}
-          templateName={selectedTemplate?.templateName ?? ''}
-          senderPhone={form.senderPhone}
-          messageType={form.messageType}
-          subject={previewSubject}
-          bodyText={previewBodyText}
-          attachments={
-            form.attachmentSource === 'template' && selectedTemplate?.attachments?.length
-              ? selectedTemplate.attachments.map(item => ({
-                  name: item.fileName,
-                  sizeBytes: item.byteSize,
-                }))
-              : form.attachmentFileNames.map(name => ({ name }))
-          }
-          previewAt={previewAt}
-          onClose={() => setPreviewOpen(false)}
-        />
-      ) : null}
       <RecipientSelectModal
         key={recipientSelectOpen ? 'recipient-select-open' : 'recipient-select-closed'}
         open={open && recipientSelectOpen}
         candidates={candidateItems}
         initialSelected={recipientPrivacy.failure ? [] : form.recipients}
         resetKey={`${recipientTypeMode}:${recipientPrivacy.failure ?? ''}`}
+        emptyCopy={
+          isWithoutProgram
+            ? SEND_RECIPIENT_PICKER_EMPTY_MEMBERS
+            : SEND_RECIPIENT_PICKER_EMPTY_PROGRAM
+        }
         statusMessage={candidateNotice}
         selectionBlocked={recipientPrivacy.blockSelection || candidatesQuery.isError}
         loading={candidatesQuery.isFetching && !candidatesQuery.isError}
@@ -908,7 +928,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       />
       <ConfirmModal
         open={sendConfirmOpen}
-        title="문자 발송 확인"
+        title="문자 발송 안내"
         content={variableCheck.ok ? variableCheck.confirmMessage : SMS_SEND_CONFIRM_MESSAGE}
         confirmText="발송"
         cancelText="취소"

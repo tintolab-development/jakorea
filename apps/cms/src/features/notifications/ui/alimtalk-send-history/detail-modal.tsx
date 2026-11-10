@@ -8,6 +8,9 @@ import { NOTIFICATION_SEND_FAILURE_SNAPSHOT_HINT } from '@/features/notification
 import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
 import './detail-modal.css'
 
+/** 시안 Popup / Table / w1000 / 알림톡 상세 */
+const MODAL_WIDTH = 1000
+
 type DetailModalProps = {
   open: boolean
   row: AlimtalkSendHistoryRow | null
@@ -48,12 +51,7 @@ export function DetailModal({ open, row, onClose }: DetailModalProps) {
       onCancel={onClose}
       title="알림톡 발송 조회 상세"
       className="alimtalk-send-history-detail-modal"
-      size="wide"
-      footer={
-        <CmsButton variant="secondary" size="large" type="button" onClick={onClose}>
-          닫기
-        </CmsButton>
-      }
+      width={MODAL_WIDTH}
     >
       {row ? (
         <div className="alimtalk-send-history-detail-modal__content">
@@ -94,6 +92,11 @@ export function DetailModal({ open, row, onClose }: DetailModalProps) {
                 />
               </DetailInfoForm.Row>
             </DetailInfoForm>
+            <div className="alimtalk-send-history-detail-modal__actions">
+              <CmsButton variant="default" size="medium" type="button" onClick={onClose}>
+                닫기
+              </CmsButton>
+            </div>
           </div>
           <div className="alimtalk-send-history-detail-modal__phone">
             <div className="alimtalk-send-history-detail-modal__phone-fit">

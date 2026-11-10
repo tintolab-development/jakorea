@@ -5,6 +5,7 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { RECRUIT_FORM_MAX_SUFFIX_CLASS } from '@/features/template/ui/form-set/recruit-form/shared/recruit-form-field-rows'
+import { useIsGeneralRegistrationWizard } from '@/features/template/context/general-registration-wizard-context'
 
 export type RecruitInterviewPeriodState = {
   recruitAnchor: Dayjs | null
@@ -39,6 +40,10 @@ export function RecruitInterviewConditionalRows({
   state: RecruitInterviewPeriodState
   validationKeyPrefix: string
 }) {
+  // 일반 프로그램 등록 위저드만 시안 플레이스홀더 — 그 외 화면은 기존 문구 (early return 전에 호출)
+  const isGeneralWizard = useIsGeneralRegistrationWizard()
+  const docAnnouncePlaceholder = isGeneralWizard ? '합격자 발표일을 선택해 주세요' : '발표일'
+  const finalAnnouncePlaceholder = isGeneralWizard ? '합격자 발표일을 선택해 주세요' : '합격자 발표일'
   if (interviewEnabled) {
     return (
       <>
@@ -83,7 +88,7 @@ export function RecruitInterviewConditionalRows({
                   mode="single"
                   presetMode="date"
                   value={state.docDeadlineDate}
-                  placeholder="발표일"
+                  placeholder={docAnnouncePlaceholder}
                   suppressAutoTodayWhenEmpty
                   onChange={next => state.setDocDeadlineDate(next)}
                 />
@@ -155,7 +160,7 @@ export function RecruitInterviewConditionalRows({
                   mode="single"
                   presetMode="date"
                   value={state.finalAnnounceDate}
-                  placeholder="합격자 발표일"
+                  placeholder={finalAnnouncePlaceholder}
                   suppressAutoTodayWhenEmpty
                   onChange={next => state.setFinalAnnounceDate(next)}
                 />
@@ -219,7 +224,7 @@ export function RecruitInterviewConditionalRows({
               mode="single"
               presetMode="date"
               value={state.finalAnnounceDate}
-              placeholder="합격자 발표일"
+              placeholder={finalAnnouncePlaceholder}
               suppressAutoTodayWhenEmpty
               onChange={next => state.setFinalAnnounceDate(next)}
             />

@@ -13,8 +13,9 @@ import { useMemo, useState, useEffect, useCallback } from 'react'
 import { useDebouncedValue } from '@/shared/hooks/use-debounced-value'
 import { Spin } from 'antd'
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
-import { ActionResultModal, FilterTableToolbarButton } from '@/shared/ui'
+import { ActionResultModal, DeleteBlockedGuideModal, FilterTableToolbarButton } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import type { ColumnsType } from 'antd/es/table'
 import type { ProgramRole } from '@/types/user'
@@ -48,6 +49,11 @@ import {
   PROGRAM_MANAGER_ROLE_CHANGE_COMPLETE_BODY,
   PROGRAM_MANAGER_ROLE_CHANGE_COMPLETE_TITLE,
 } from '@/features/program/general/lib/program-manager-action-result-messages'
+import {
+  isProgramManagerDeleteBlocked,
+  PROGRAM_MANAGER_DELETE_BLOCKED_DESCRIPTION,
+  PROGRAM_MANAGER_DELETE_BLOCKED_TITLE,
+} from '@/features/program/general/lib/program-manager-delete-blocked'
 import './program-managers-tab.css'
 
 type ProgramManagerActionResult = {
@@ -70,12 +76,29 @@ const TABLE_ROLE_ORDER: ProgramRole[] = ['OWNER', 'PARTNER', 'ASSISTANT']
 interface ProgramManagersTabProps {
   programId: string
   maskSensitive?: boolean
+  /**
+   * 삭제 후 담당자가 남지 않으면 「프로그램 담당자 삭제 불가 안내」를 띄운다(일반 프로그램 시안).
+   * 생략 시 기존 동작(서버 `removableYn`·삭제 실패 알림)만 유지한다 — UJAT·Gemini 호출부.
+   */
+  blockLastManagerDelete?: boolean
+  /**
+   * `general`: 일반 프로그램 시안 — 「선택 삭제」 라벨, 권한 열 180·나머지 균등 폭,
+   * 선택 없이 삭제 시 「항목 선택 안내」, 담당자 추가 팝업 권한 기본 미선택.
+   * 생략(`default`) 시 기존 동작 유지 — UJAT·1사1교·Gemini 호출부.
+   */
+  variant?: 'default' | 'general'
 }
+
+/** 일반 프로그램 담당자 목록 선택 열 — 시안 60px */
+const GENERAL_SELECTION_COLUMN_WIDTH = 60
 
 export function ProgramManagersTab({
   programId,
   maskSensitive: _maskSensitive = false,
+  blockLastManagerDelete = false,
+  variant = 'default',
 }: ProgramManagersTabProps) {
+  const isGeneralVariant = variant === 'general'
   const { showAlert } = useCmsAlert()
   const { filters, setFilters } = useProgramManagersParams()
   const [pendingFilters, setPendingFilters] = useState<ProgramManagersFilters>(() => ({
@@ -88,6 +111,7 @@ export function ProgramManagersTab({
   const [candidateKeywordInput, setCandidateKeywordInput] = useState('')
   const candidateKeyword = useDebouncedValue(candidateKeywordInput, 300)
   const [deleteGuideModalOpen, setDeleteGuideModalOpen] = useState(false)
+  const [deleteBlockedModalOpen, setDeleteBlockedModalOpen] = useState(false)
   const [actionResult, setActionResult] = useState<ProgramManagerActionResult | null>(null)
 
   const managersListFilters = useMemo(
@@ -195,7 +219,20 @@ export function ProgramManagersTab({
   )
 
   const handleDeleteClick = () => {
+    if (
+      blockLastManagerDelete &&
+      isProgramManagerDeleteBlocked({
+        totalManagerCount: managerList.length,
+        selectedCount: selectedRowKeys.length,
+        filtersActive:
+          (appliedFilters.managerName || '').trim() !== '' || appliedFilters.role !== 'all',
+      })
+    ) {
+      setDeleteBlockedModalOpen(true)
+      return
+    }
     if (selectedRowKeys.length === 0) {
+      if (isGeneralVariant) void showAlert(NO_SELECTION_ALERT)
       return
     }
     setDeleteGuideModalOpen(true)
@@ -304,7 +341,7 @@ export function ProgramManagersTab({
         title: '권한',
         dataIndex: 'role',
         key: 'role',
-        width: 208,
+        width: isGeneralVariant ? 180 : 208,
         align: 'center',
         onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
         // 권한 설정 V1.2: 담당자 정보는 Owner·Assistant·Viewer 모두 조회, 역할 변경은 Program Owner만.
@@ -335,7 +372,8 @@ export function ProgramManagersTab({
         title: '연락처',
         dataIndex: 'phone',
         key: 'phone',
-        width: 246,
+        // 일반 시안: 담당자명·연락처·이메일·등록일시가 남은 폭을 균등 분배
+        width: isGeneralVariant ? undefined : 246,
         align: 'center',
         render: (phone: string) => displayServerPiiAsIs(phone),
       },
@@ -343,7 +381,7 @@ export function ProgramManagersTab({
         title: '이메일',
         dataIndex: 'email',
         key: 'email',
-        width: 246,
+        width: isGeneralVariant ? undefined : 246,
         align: 'center',
         ellipsis: true,
         render: (email: string) => displayServerPiiAsIs(email),
@@ -352,12 +390,13 @@ export function ProgramManagersTab({
         title: '등록일시',
         dataIndex: 'registeredAt',
         key: 'registeredAt',
-        width: 246,
+        width: isGeneralVariant ? undefined : 246,
         align: 'center',
       },
     ],
     [
       handleTableRoleChange,
+      isGeneralVariant,
       isUpdatingRole,
       managersManageAllowed,
       openRoleDropdownId,
@@ -435,7 +474,7 @@ export function ProgramManagersTab({
                 handleDeleteClick()
               }}
             >
-              담당자 삭제
+              {isGeneralVariant ? '선택 삭제' : '담당자 삭제'}
             </FilterTableToolbarButton>
             <FilterTableToolbarButton
               variant="primary"
@@ -455,12 +494,20 @@ export function ProgramManagersTab({
         }
       >
         <CmsDataTable<ProgramManagerRow>
-          className="cms-data-table program-managers-tab__managers-table"
+          className={[
+            'cms-data-table',
+            'program-managers-tab__managers-table',
+            isGeneralVariant && 'program-managers-tab__managers-table--general',
+          ]
+            .filter(Boolean)
+            .join(' ')}
           rowKey="id"
           pagination={false}
           loading={loading}
           rowSelection={{
-            columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+            columnWidth: isGeneralVariant
+              ? GENERAL_SELECTION_COLUMN_WIDTH
+              : TABLE_COLUMN_WIDTHS.checkbox,
             selectedRowKeys,
             onChange: keys => setSelectedRowKeys(keys as string[]),
             getCheckboxProps: record => ({
@@ -486,6 +533,7 @@ export function ProgramManagersTab({
           onCandidateSearch={setCandidateKeywordInput}
           confirmLoading={isMutating}
           onAdd={handleAdd}
+          defaultRole={isGeneralVariant ? null : undefined}
         />
       ) : null}
 
@@ -500,6 +548,14 @@ export function ProgramManagersTab({
           }}
         />
       ) : null}
+
+      <DeleteBlockedGuideModal
+        open={deleteBlockedModalOpen}
+        onClose={() => setDeleteBlockedModalOpen(false)}
+        title={PROGRAM_MANAGER_DELETE_BLOCKED_TITLE}
+        description={PROGRAM_MANAGER_DELETE_BLOCKED_DESCRIPTION}
+        zIndex={PROGRAM_MANAGER_ACTION_RESULT_Z_INDEX}
+      />
 
       <ActionResultModal
         open={actionResult != null}

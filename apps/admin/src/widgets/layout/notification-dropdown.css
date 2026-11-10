@@ -14,9 +14,7 @@
   padding: 0 0 16px 0;
   border-radius: 16px;
   border: 1px solid #e0e0e0;
-  background:
-    linear-gradient(rgba(231, 235, 239, 0.6), rgba(231, 235, 239, 0.6)),
-    #fff;
+  background: linear-gradient(rgba(231, 235, 239, 0.6), rgba(231, 235, 239, 0.6)), #fff;
   box-shadow: 0 4px 24px 0 rgba(32, 32, 33, 0.16);
   display: flex;
   flex-direction: column;
@@ -121,6 +119,22 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+/* 안 읽은 알림 / 「읽음」 구역 — CMS notification-dropdown.css와 동일 */
+.notification-dropdown-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.notification-dropdown-section-label {
+  display: block;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 150%;
+  opacity: 0.7;
 }
 
 .notification-dropdown-item {

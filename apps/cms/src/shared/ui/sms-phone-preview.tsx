@@ -12,6 +12,10 @@ export type SmsPhonePreviewProps = {
   /** default=시안 실측(383×785), compact=미리보기 모달용 */
   size?: 'default' | 'compact'
   className?: string
+  /** 작성 화면용: 제목이 비었을 때 말풍선에 보일 안내 문구 (시안: 제목을 작성해 주세요) */
+  subjectPlaceholder?: string
+  /** 작성 화면용: 본문이 비었을 때 말풍선에 보일 안내 문구 (시안: 내용을 작성해 주세요) */
+  bodyPlaceholder?: string
 }
 
 const DEFAULT_BRAND = 'JA KOREA'
@@ -24,11 +28,15 @@ export function SmsPhonePreview({
   showSubject = true,
   size = 'default',
   className,
+  subjectPlaceholder,
+  bodyPlaceholder,
 }: SmsPhonePreviewProps) {
   const phoneLabel = senderPhone.trim() || '발신번호'
   const subjectText = subject.trim()
   const body = bodyText.trim()
   const hasSubject = showSubject && Boolean(subjectText)
+  const showSubjectPlaceholder = showSubject && !subjectText && Boolean(subjectPlaceholder)
+  const showBodyPlaceholder = !body && Boolean(bodyPlaceholder)
 
   return (
     <div
@@ -54,9 +62,20 @@ export function SmsPhonePreview({
                   {renderNotificationVariableText(subjectText)}
                 </p>
               ) : null}
-              <p className="sms-phone-preview__body">
-                {body ? renderNotificationVariableText(body) : ''}
-              </p>
+              {showSubjectPlaceholder ? (
+                <p className="sms-phone-preview__subject sms-phone-preview__placeholder">
+                  {subjectPlaceholder}
+                </p>
+              ) : null}
+              {showBodyPlaceholder ? (
+                <p className="sms-phone-preview__body sms-phone-preview__placeholder">
+                  {bodyPlaceholder}
+                </p>
+              ) : (
+                <p className="sms-phone-preview__body">
+                  {body ? renderNotificationVariableText(body) : ''}
+                </p>
+              )}
             </div>
           </div>
         </div>

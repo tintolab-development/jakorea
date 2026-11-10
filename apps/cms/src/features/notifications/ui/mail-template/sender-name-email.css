@@ -1,0 +1,14 @@
+.mail-sender-name-email {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.mail-sender-name-email__divider {
+  flex: 0 0 auto;
+  width: 1px;
+  height: 13px;
+  background: var(--main-BK, #3d3d3d);
+  opacity: 0.5;
+}

@@ -25,9 +25,7 @@ const GET_OVERLAY_186307 = {
   'generalRegistration.basicInfo.educationVenueDetail': '서울시 강남구',
   'generalRegistration.basicInfo.localManagerContactId': 'contact-1',
   'generalRegistration.basicInfo.localManagerContactIds': ['contact-1'],
-  'generalRegistration.educationScheduleSettings.scheduleLines': [
-    '26년 4월 1일(수) 10:00 ~ 12:00',
-  ],
+  'generalRegistration.educationScheduleSettings.scheduleLines': ['26년 4월 1일(수) 10:00 ~ 12:00'],
   'generalRegistration.kpi.participantCount': 80,
   'generalRegistration.typeSettings.educationForm': 'offline',
   'generalRegistration.typeSettings.singleEducationForm': 'offline',
@@ -78,7 +76,7 @@ function getProgram186307(): Program {
       scheduleDetails: [],
       wageGradeRows: [...GET_WAGE_ROWS],
       paymentItems: '교통비, 식사비',
-      deductionItems: '일용근로자 원천징수세액',
+      deductionItems: '원천징수세액',
       kpi: {
         finalParticipants: 80,
         instructorCount: 2,
@@ -193,7 +191,12 @@ describe('미변경 공통정보 PATCH 보존 — GET 186307 형상', () => {
         wageGrade3Amount: '100,000',
       },
       program: existing,
-      changedFormKeys: new Set(['announcementTitle', 'wageGrade1Amount', 'wageGrade2Amount', 'wageGrade3Amount']),
+      changedFormKeys: new Set([
+        'announcementTitle',
+        'wageGrade1Amount',
+        'wageGrade2Amount',
+        'wageGrade3Amount',
+      ]),
     })
     expect(save.patch.generalCommonInfo).not.toHaveProperty('wageGradeRows')
     const parsed = parseJson(
@@ -377,9 +380,7 @@ describe('미변경 공통정보 PATCH 보존 — GET 186307 형상', () => {
     expect(overlay?.['generalRegistration.kpi.participantCount']).toBe(80)
     expect(overlay?.['generalRegistration.typeSettings.educationForm']).toBe('offline')
     expect(overlay?.['generalRegistration.typeSettings.singleEducationForm']).toBe('offline')
-    expect(overlay).not.toHaveProperty(
-      'generalRegistration.typeSettings.multiCommonEducationForm'
-    )
+    expect(overlay).not.toHaveProperty('generalRegistration.typeSettings.multiCommonEducationForm')
   })
 
   it('실제 수정한 대표명·영문명·KPI·강사비·교육과정·IP는 PATCH에 남긴다', () => {
@@ -421,7 +422,9 @@ describe('미변경 공통정보 PATCH 보존 — GET 186307 형상', () => {
     expect(save.patch.educationProcess).toBe('Digital (Computer)')
     expect(save.patch.ipOwned).toBe('Partner')
     expect(save.patch.generalCommonInfo?.kpi?.finalParticipants).toBe(510)
-    expect(wageAmountsFromRows(save.patch.generalCommonInfo?.wageGradeRows)).toEqual([123, 456, 789])
+    expect(wageAmountsFromRows(save.patch.generalCommonInfo?.wageGradeRows)).toEqual([
+      123, 456, 789,
+    ])
     expect(save.patch.generalCommonInfo?.curriculumSessions?.[0]).toMatchObject({
       title: '수정 단원',
       description: '수정 본문',
@@ -440,12 +443,13 @@ describe('미변경 공통정보 PATCH 보존 — GET 186307 형상', () => {
     expect(body.totalParticipants).toBe(510)
     const parsed = parseJson(body.serviceDetailJson)
     expect(parsed.generalCommonInfo?.announcementTitle).toBe('프로그램 수정 테스트456')
-    expect((parsed.generalCommonInfo?.kpi as { finalParticipants?: number } | undefined)?.finalParticipants).toBe(
-      510
-    )
-    expect(wageAmountsFromRows(parsed.generalCommonInfo?.wageGradeRows as Array<{ pricing?: string }>)).toEqual([
-      123, 456, 789,
-    ])
+    expect(
+      (parsed.generalCommonInfo?.kpi as { finalParticipants?: number } | undefined)
+        ?.finalParticipants
+    ).toBe(510)
+    expect(
+      wageAmountsFromRows(parsed.generalCommonInfo?.wageGradeRows as Array<{ pricing?: string }>)
+    ).toEqual([123, 456, 789])
     const sessions = parsed.generalCommonInfo?.curriculumSessions as
       | Array<{ title?: string; description?: string }>
       | undefined

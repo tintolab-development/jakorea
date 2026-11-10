@@ -27,7 +27,7 @@ describe('mapMailDeliveryToSendHistoryRow', () => {
     expect(row?.templateName).toBe('워크숍 안내')
     expect(row?.senderInfo).toBe('홍길동 <gildong@jakorea.org>')
     expect(row?.broadcastTiming).toBe('즉시')
-    expect(row?.sendStatus).toBe('발송 완료')
+    expect(row?.sendStatus).toBe('발송 성공')
     expect(row?.receiveStatus).toBe('수신 성공')
     expect(row?.readStatus).toBe('읽음')
   })

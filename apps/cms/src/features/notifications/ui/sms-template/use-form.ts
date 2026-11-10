@@ -22,6 +22,10 @@ import {
   type ValidateSmsSenderPhoneOptions,
 } from '@/features/notifications/model/sms-template/sender-phone'
 import {
+  SMS_MESSAGE_TYPE_REQUIRED_MESSAGE,
+  type SmsComposeMessageType,
+} from '@/features/notifications/model/sms-template/message-type'
+import {
   SMS_ROOT_CATEGORY_ID,
   type SmsTemplateAttachment,
   type SmsTemplateFormMode,
@@ -154,8 +158,9 @@ export function useSmsTemplateForm(
   const [categoryId, setCategoryId] = useState(initialDraft.categoryId)
   const [templateName, setTemplateNameState] = useState(initialDraft.templateName)
   const [senderPhone, setSenderPhone] = useState(initialDraft.senderPhone)
-  const [messageType, setMessageType] = useState<SmsTemplateFormDraft['messageType']>(
-    initialDraft.messageType
+  // 시안(템플릿 등록): 발송 유형은 처음에 미선택. 수정은 저장된 유형.
+  const [messageType, setMessageType] = useState<SmsComposeMessageType>(
+    mode === 'edit' && template ? initialDraft.messageType : ''
   )
   const [subject, setSubjectState] = useState(initialDraft.subject)
   const [bodyText, setBodyText] = useState(initialDraft.bodyText)
@@ -179,7 +184,9 @@ export function useSmsTemplateForm(
   attachmentFileNamesRef.current = attachmentFileNames
 
   const showSubject = messageType !== 'SMS' || subject.trim().length > 0
-  const showAttachments = messageType === 'MMS' || attachmentFileNames.length > 0
+  // 시안(템플릿 등록): 미선택 상태에서도 제목·첨부 행을 보인다. SMS는 NHN에 제목·첨부가 없어 숨김.
+  const showAttachments =
+    messageType === 'MMS' || messageType === '' || attachmentFileNames.length > 0
   const attachmentsEnabled = messageType === 'MMS'
   const bodyByteLength = useMemo(() => estimateSmsBodyBytes(bodyText), [bodyText])
   const bodyByteLimit = messageType === 'SMS' ? SMS_BODY_BYTE_LIMIT : LMS_MMS_BODY_BYTE_LIMIT
@@ -205,7 +212,7 @@ export function useSmsTemplateForm(
     setCategoryId(next.categoryId)
     setTemplateNameState(next.templateName)
     setSenderPhone(next.senderPhone)
-    setMessageType(next.messageType)
+    setMessageType(mode === 'edit' && template ? next.messageType : '')
     setSubjectState(next.subject)
     setBodyText(next.bodyText)
     setAttachmentFileNames(next.attachmentFileNames)
@@ -315,16 +322,18 @@ export function useSmsTemplateForm(
   )
 
   const getDraft = useCallback((): SmsTemplateFormDraft => {
+    // 미선택('')은 validateRequired가 먼저 막는다. draft 타입만 맞추기 위한 기본값.
+    const draftMessageType = messageType || 'SMS'
     const { kept, removedAttachmentIds } = splitSmsTemplateExistingAttachments({
       existing: existingAttachmentsRef.current,
       attachmentFileNames,
-      messageType,
+      messageType: draftMessageType,
     })
     return {
       categoryId: normalizeCategoryId(categoryId),
       templateName: templateName.trim(),
       senderPhone: senderPhone.trim(),
-      messageType,
+      messageType: draftMessageType,
       subject,
       bodyText,
       attachmentFileNames,
@@ -354,6 +363,7 @@ export function useSmsTemplateForm(
       if (nameError) return nameError
       const senderError = validateSmsSenderPhone(draft.senderPhone, senderOptions)
       if (senderError) return senderError
+      if (!messageType) return SMS_MESSAGE_TYPE_REQUIRED_MESSAGE
       const issues = collectSmsComposeFieldIssues({
         messageType: draft.messageType,
         subject: draft.subject,
@@ -364,7 +374,7 @@ export function useSmsTemplateForm(
       if (draft.messageType !== 'SMS' && issues.subjectError) return issues.subjectError
       return null
     },
-    [getDraft]
+    [getDraft, messageType]
   )
 
   return {

@@ -7,6 +7,7 @@ import {
   FileSelectField,
   isFileSelectTotalSizeExceeded,
   notifyFileSelectTotalSizeExceeded,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   showSaveCompletedAlert,
   useCmsAlert,
   ThumbnailPlaceholder,
@@ -91,6 +92,11 @@ export function CtaSection({ cta }: { cta: JaHistoryCta }) {
         setEditing(false)
       }}
       onSave={() => {
+        // 이미지는 필수 — X로 비운 뒤 새 파일 없이 저장하면 필수 입력 안내 (서버에는 이미지 비우기가 없다)
+        if (!draft.image.url) {
+          showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+          return
+        }
         // 이미지를 바꾸지 않았으면 imageAssetId를 생략 → 서버가 현재 이미지를 유지
         void saveMutation
           .mutateAsync({
@@ -183,8 +189,8 @@ export function CtaSection({ cta }: { cta: JaHistoryCta }) {
                   onFilesChange={files => {
                     void handleFilesChange(files)
                   }}
-                  // 공통 삭제 아이콘 노출. 백엔드가 CTA 이미지 삭제를 지원하지 않아(imageAssetId 생략 = 현재 이미지 유지)
-                  // 화면 입력값만 비우며, 새 파일을 고르지 않고 저장하면 서버의 기존 이미지가 유지된다.
+                  // 시안: 파일명 옆 삭제 X 항상 노출(수정 모드). 비우면 새 파일을 올려야 저장된다(저장 시 필수 검사).
+                  // [취소]하면 저장된 이미지로 되돌아간다.
                   onRemoveFile={() => {
                     setDraft(prev => ({
                       ...prev,

@@ -172,7 +172,7 @@ export function buildGeneralVolunteerDoc1FilterRows(options?: {
             buildGeneralFilterField({
               key: 'jaVolunteerExperience',
               type: 'select',
-              label: 'JA 봉사 프로그램 진행 경험',
+              label: 'JA 봉사 진행 경험',
               placeholder: '전체',
               options: jaVolunteerExperienceOptions,
             }),
@@ -315,7 +315,8 @@ export function buildGeneralVolunteerInterview2FilterRows(
       buildGeneralFilterField({
         key: 'totalScore',
         type: 'select',
-        label: '점수 종합',
+        // 봉사자 시안 10-1(13050:741188)은 「점수 총합」 — 개인형 참여자는 기존 라벨 유지
+        label: subjectKind === 'volunteer' ? '점수 총합' : '점수 종합',
         placeholder: '전체',
         options: interview2ScoreOptions,
       }),

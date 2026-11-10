@@ -12,7 +12,7 @@ describe('notification send status Text (Figma 14804:19688, 메일·알림톡·�
     ['발송 실패', 'color:var(--Status-red-main, #c32f4a)'],
     ['발송 대기', 'color:var(--Status-green-main, #1e8c29)'],
     ['발송 중', 'color:var(--Status-blue-main, #017eaf)'],
-    ['발송 완료', 'color:var(--Netural-black, #3d3d3d)'],
+    ['발송 성공', 'color:var(--Netural-black, #3d3d3d)'],
     ['발송 취소', 'color:var(--Netural-black, #3d3d3d);opacity:0.5'],
     ['예약 취소', 'color:var(--Netural-black, #3d3d3d);opacity:0.5'],
   ])('colors %s without changing the label', (status, style) => {

@@ -127,6 +127,12 @@ function hopeScheduleLineFromSession(session: ParticipatingSchoolSession): strin
  * 희망일 없으면 행을 만들지 않음(가짜 일정 금지).
  * scheduleUnresolved면 unavailable.
  */
+const WAITING_CANDIDATE_APPROVED_STATUSES: readonly string[] = [
+  'APPROVED',
+  'WAITING_ASSIGNMENT',
+  'ASSIGNED',
+]
+
 export function buildCompanySchoolWaitingInstructorRows(input: {
   schoolName: string
   sessions: ParticipatingSchoolSession[] | undefined
@@ -138,8 +144,14 @@ export function buildCompanySchoolWaitingInstructorRows(input: {
    * 없으면(1사1교) 기존처럼 신청 단위 distanceKm를 쓴다.
    */
   organizationApplicationId?: string | null
+  /**
+   * 후보로 쓸 강사 신청 상태(대문자). 생략 시 승인 상태(APPROVED·WAITING_ASSIGNMENT·ASSIGNED)만 — 1사1교 기본.
+   * 일반 기관형 참여 기관 상세에서 승인 전 신청을 「승인 및 배정」 대상으로 보여줄 때만 넘긴다.
+   */
+  candidateApplicationStatuses?: readonly string[] | 'any'
 }): CompanySchoolWaitingInstructorRow[] {
   const organizationApplicationId = input.organizationApplicationId?.trim() || null
+  const candidateStatuses = input.candidateApplicationStatuses ?? WAITING_CANDIDATE_APPROVED_STATUSES
   const sessions = (input.sessions ?? []).filter(s => Boolean(extractLectureDateKey(s.date) || s.date))
   if (sessions.length === 0) return []
 
@@ -147,8 +159,9 @@ export function buildCompanySchoolWaitingInstructorRows(input: {
     const memberId = app.instructorMemberId != null ? String(app.instructorMemberId) : ''
     if (!memberId) return false
     if (input.assignedInstructorMemberIds.has(memberId)) return false
+    if (candidateStatuses === 'any') return true
     const status = (app.applicationStatus ?? '').toUpperCase()
-    return status === 'APPROVED' || status === 'WAITING_ASSIGNMENT' || status === 'ASSIGNED'
+    return candidateStatuses.includes(status)
   })
 
   const rows: CompanySchoolWaitingInstructorRow[] = []

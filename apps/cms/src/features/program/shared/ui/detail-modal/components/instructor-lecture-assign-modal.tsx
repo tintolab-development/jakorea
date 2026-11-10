@@ -38,6 +38,8 @@ export type InstructorLectureAssignModalProps = {
   allInstructors: ApplicantInstructorRow[]
   onCancel: () => void
   onConfirm: (payload: InstructorLectureAssignConfirmPayload) => void
+  /** `general-organization`: 일반(기관형) 시안 05-1 — 「일정은 **하루에 1개의 기관에만 배정 가능**합니다.」 */
+  copyVariant?: 'default' | 'general-organization'
 }
 
 const ASSIGNED_SCHEDULE_REMOVE_ICON = (
@@ -155,6 +157,7 @@ export function InstructorLectureAssignModal({
   allInstructors,
   onCancel,
   onConfirm,
+  copyVariant = 'default',
 }: InstructorLectureAssignModalProps) {
   const {
     isIndividual,
@@ -211,7 +214,9 @@ export function InstructorLectureAssignModal({
 
   const description = isIndividual
     ? `**[${instructor.instructorName}]** 강사님의 프로그램 참여를 승인하시려면 강의를 배정할 일정을 선택해 주세요.`
-    : `**[${instructor.instructorName}]** 님을 배정할 기관 및 일정을 선택해 주세요.\n일정은 하루 1개의 기관에만 배정 가능합니다.`
+    : copyVariant === 'general-organization'
+      ? `**[${instructor.instructorName}]** 님을 배정할 기관 및 일정을 선택해 주세요.\n일정은 **하루에 1개의 기관에만 배정 가능**합니다.`
+      : `**[${instructor.instructorName}]** 님을 배정할 기관 및 일정을 선택해 주세요.\n일정은 하루 1개의 기관에만 배정 가능합니다.`
 
   const summaryLabel = '배정된 일정'
 

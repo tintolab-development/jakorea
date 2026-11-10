@@ -1,4 +1,4 @@
-import { memo, useMemo, useState } from 'react'
+import { memo, useCallback, useMemo, useState } from 'react'
 import { Collapse } from 'antd'
 import { SearchOutlined } from '@ant-design/icons'
 import { CmsInput } from '@/shared/ui'
@@ -40,8 +40,28 @@ export const VariablesPanel = memo(function VariablesPanel({
 }: VariablesPanelProps) {
   const [query, setQuery] = useState('')
   const sourceGroups = groupsProp?.length ? groupsProp : MAIL_TEMPLATE_VARIABLE_GROUPS
-  const defaultActiveKey = useMemo(() => sourceGroups.map(group => group.id), [sourceGroups])
   const groups = useMemo(() => filterMailVariableGroups(sourceGroups, query), [query, sourceGroups])
+  // 시안: 기본 전부 펼침. remote catalog가 늦게 와도 펼친 상태가 되도록
+  // defaultActiveKey(마운트 1회) 대신 「사용자가 접은 그룹」만 기억해 activeKey를 제어한다.
+  const [collapsedGroupIds, setCollapsedGroupIds] = useState<ReadonlySet<string>>(() => new Set())
+  const activeKey = useMemo(
+    () => groups.map(group => group.id).filter(id => !collapsedGroupIds.has(id)),
+    [collapsedGroupIds, groups]
+  )
+  const handleCollapseChange = useCallback(
+    (keys: string | string[]) => {
+      const opened = new Set(Array.isArray(keys) ? keys : [keys])
+      setCollapsedGroupIds(prev => {
+        const next = new Set(prev)
+        for (const group of groups) {
+          if (opened.has(group.id)) next.delete(group.id)
+          else next.add(group.id)
+        }
+        return next
+      })
+    },
+    [groups]
+  )
   const collapseItems = useMemo(
     () =>
       groups.map(group => ({
@@ -128,7 +148,8 @@ export const VariablesPanel = memo(function VariablesPanel({
           ghost
           bordered={false}
           expandIconPosition="start"
-          defaultActiveKey={defaultActiveKey}
+          activeKey={activeKey}
+          onChange={handleCollapseChange}
           items={collapseItems}
         />
       </div>

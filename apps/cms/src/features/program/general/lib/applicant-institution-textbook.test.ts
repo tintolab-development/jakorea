@@ -4,6 +4,7 @@ import {
   APPLICANT_INSTITUTION_TEXTBOOK_UNDECIDED_LABEL,
   buildApplicantInstitutionTextbookOptions,
   resolveApplicantInstitutionTextbookDisplayLabel,
+  shouldShowGeneralOrganizationApplicantTextbookField,
 } from './applicant-institution-textbook'
 import { TEXTBOOK_NOT_USED_OPTION_VALUE } from './individual-applicant-textbook'
 import type { Program } from '@/types/domain'
@@ -87,5 +88,40 @@ describe('resolveApplicantInstitutionTextbookDisplayLabel', () => {
         catalog,
       })
     ).toBe(APPLICANT_INSTITUTION_TEXTBOOK_UNDECIDED_LABEL)
+  })
+})
+
+describe('shouldShowGeneralOrganizationApplicantTextbookField', () => {
+  const generalOrganization = { id: '9001', backendProgramType: 'GENERAL_ORGANIZATION' }
+
+  it('일반(기관형) 승인 완료면 교재명 행을 노출한다', () => {
+    expect(shouldShowGeneralOrganizationApplicantTextbookField(generalOrganization, 'approved')).toBe(
+      true
+    )
+  })
+
+  it('승인 대기·반려는 노출하지 않는다', () => {
+    expect(shouldShowGeneralOrganizationApplicantTextbookField(generalOrganization, 'pending')).toBe(
+      false
+    )
+    expect(shouldShowGeneralOrganizationApplicantTextbookField(generalOrganization, 'rejected')).toBe(
+      false
+    )
+  })
+
+  it('1사1교·개인형은 이 행을 쓰지 않는다 (1사1교는 기존 승인 현황 옆 배치)', () => {
+    expect(
+      shouldShowGeneralOrganizationApplicantTextbookField(
+        { id: '170001', backendProgramType: 'COMPANY_SCHOOL' },
+        'approved'
+      )
+    ).toBe(false)
+    expect(
+      shouldShowGeneralOrganizationApplicantTextbookField(
+        { id: '9002', backendProgramType: 'GENERAL_INDIVIDUAL' },
+        'approved'
+      )
+    ).toBe(false)
+    expect(shouldShowGeneralOrganizationApplicantTextbookField(null, 'approved')).toBe(false)
   })
 })

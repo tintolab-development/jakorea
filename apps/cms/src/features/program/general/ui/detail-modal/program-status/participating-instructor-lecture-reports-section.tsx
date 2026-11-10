@@ -30,6 +30,7 @@ import {
 } from '@/features/program/general/lib/build-lecture-report-issuance-preview'
 import { LectureReportIssuancePreviewModal } from '@/features/program/general/ui/detail-modal/program-status/lecture-report-issuance-preview-modal'
 import { useLectureReportBulkPdfExport } from '@/features/program/general/ui/detail-modal/program-status/lecture-report-bulk-pdf-export'
+import { useIsInstitutionProgramSurface } from '@/features/program/general/hooks/use-institution-program-surface'
 import {
   getLectureReportProgressAccent,
   getLectureReportSubmissionAccent,
@@ -65,6 +66,8 @@ export function ParticipatingInstructorLectureReportsSection({
   program,
 }: ParticipatingInstructorLectureReportsSectionProps) {
   const { showAlert } = useCmsAlert()
+  /** 일반 기관형 — Figma 06-2/08·09 (행 버튼 h32, 미리보기 상단 문구) */
+  const isInstitutionSurface = useIsInstitutionProgramSurface(program)
   const remoteEnabled = useProgramProgressRemoteEnabledForSurface(program?.id)
   const instructorMemberId = resolveInstructorMemberId(instructor)
   const lectureReports = useProgramLectureReports(program?.id, {
@@ -252,7 +255,7 @@ export function ParticipatingInstructorLectureReportsSection({
           <div className="participating-instructor-lecture-reports-section__report-cell-inner">
             <CmsButton
               variant="default"
-              size="h40"
+              size={isInstitutionSurface ? 'h32' : 'h40'}
               disabled={
                 !record.canViewReport ||
                 viewDownloadingId === record.id ||
@@ -271,7 +274,13 @@ export function ParticipatingInstructorLectureReportsSection({
         ),
       },
     ],
-    [handleViewReport, previewQuery.isFetching, previewRow?.id, viewDownloadingId]
+    [
+      handleViewReport,
+      isInstitutionSurface,
+      previewQuery.isFetching,
+      previewRow?.id,
+      viewDownloadingId,
+    ]
   )
 
   if (lectureReports.loading) {
@@ -327,6 +336,7 @@ export function ParticipatingInstructorLectureReportsSection({
         open={previewContext != null}
         context={previewContext}
         onClose={() => setPreviewRow(null)}
+        headerVariant={isInstitutionSurface ? 'institution' : 'default'}
       />
       {exportHost}
     </div>

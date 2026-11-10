@@ -1,4 +1,5 @@
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
+import { StatusOutlineTag } from '@/shared/components/status-outline-tag'
 import '@/shared/components/calendar/ui/item-list/general-institution-application-list-item.css'
 
 export type ParticipatingVolunteerCalendarListRow = {
@@ -8,7 +9,11 @@ export type ParticipatingVolunteerCalendarListRow = {
   volunteerName: string
   regionLabel: string
   sessionLabel: string
+  /** 기관형 — 「활동 포기」 뱃지 노출 */
+  activityWithdrawn?: boolean
 }
+
+const ACTIVITY_WITHDRAWN_ACCENT = 'var(--Status-red-main, #c32f4a)'
 
 type ParticipatingVolunteerCalendarListItemProps = {
   row: ParticipatingVolunteerCalendarListRow
@@ -30,6 +35,9 @@ export function ParticipatingVolunteerCalendarListItem({
           <span className="general-institution-application-list-item__title general-institution-application-list-item__title--secondary">
             {row.volunteerName}
           </span>
+          {row.activityWithdrawn ? (
+            <StatusOutlineTag label="활동 포기" accentColor={ACTIVITY_WITHDRAWN_ACCENT} />
+          ) : null}
         </div>
         <div className="general-institution-application-list-item__meta">
           <span className="general-institution-application-list-item__meta-item">

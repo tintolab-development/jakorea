@@ -1,5 +1,5 @@
 /**
- * 콘텐츠 상단 GNB — CMS MainHeader 이식
+ * 콘텐츠 상단 GNB — CMS MainHeader 이식 (모양은 CMS와 동일하게 유지, 알림은 Admin Inbox API)
  * 시스템 알림은 Homepage Admin Inbox API만 사용한다.
  */
 
@@ -56,19 +56,20 @@ export function MainHeader() {
         read: item.read,
         link: item.link,
       })),
-    [listQuery.data],
+    [listQuery.data]
   )
 
   const listForbidden = isSystemInboxForbidden(listQuery.error)
   const unreadForbidden = isSystemInboxForbidden(unreadQuery.error)
   const unreadCount = unreadForbidden ? 0 : (unreadQuery.data ?? 0)
-  const dropdownStatus = listForbidden || unreadForbidden
-    ? 'forbidden'
-    : listQuery.isLoading
-      ? 'loading'
-      : listQuery.isError
-        ? 'error'
-        : 'ready'
+  const dropdownStatus =
+    listForbidden || unreadForbidden
+      ? 'forbidden'
+      : listQuery.isLoading
+        ? 'loading'
+        : listQuery.isError
+          ? 'error'
+          : 'ready'
 
   const roleLabel = useAdminGnbRoleLabel()
   const displayName = user?.name?.trim() || user?.email || '관리자'
@@ -174,29 +175,6 @@ export function MainHeader() {
               <Text className="main-header-user-name" strong>
                 {displayName}
               </Text>
-              <div className="main-header-avatar-button" aria-hidden="true">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="32"
-                  height="32"
-                  viewBox="0 0 32 32"
-                  fill="none"
-                  className="main-header-avatar"
-                  aria-hidden="true"
-                  focusable="false"
-                >
-                  <g clipPath="url(#admin-main-header-avatar-clip)">
-                    <rect width="32" height="32" rx="16" fill="var(--color-mint-02, #296075)" />
-                    <circle opacity="0.7" cx="16" cy="13" r="6" fill="white" />
-                    <circle opacity="0.7" cx="16" cy="32" r="12" fill="white" />
-                  </g>
-                  <defs>
-                    <clipPath id="admin-main-header-avatar-clip">
-                      <rect width="32" height="32" rx="16" fill="white" />
-                    </clipPath>
-                  </defs>
-                </svg>
-              </div>
               <Dropdown
                 open={accountDropdownOpen}
                 onOpenChange={setAccountDropdownOpen}
@@ -237,6 +215,7 @@ export function MainHeader() {
                   >
                     <mask
                       id="admin-main-header-account-gear-mask"
+                      mask-type="alpha"
                       maskUnits="userSpaceOnUse"
                       x="0"
                       y="0"

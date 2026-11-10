@@ -68,6 +68,42 @@ const THUMBNAIL_GUIDE_LINES = [
 
 const ATTACHMENT_GUIDE_LINES = RECRUIT_DETAIL_ATTACHMENT_GUIDE_LINES
 
+/**
+ * 상세 정보 파일·문구 스펙.
+ * - `default`: 기존 동작(1사1교·UJAT·교육받은 교사 등)
+ * - `general`: 일반 프로그램 모집 정보 수정 시안(02-1·02-2·03-2) — HWP 허용, 최대 10개·총 100MB, 안내 문구
+ */
+export type DetailInfoSectionVariant = 'default' | 'general'
+
+const GENERAL_DETAIL_SECTION_DESCRIPTION = '공란인 경우, 홈페이지 모집 상세에서 항목 미노출됩니다.'
+const GENERAL_THUMBNAIL_GUIDE_LINES = [
+  '- 파일은 JPG, PNG 형식만 등록 가능하며, 최대 20MB까지 첨부할 수 있습니다.',
+  RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES[1],
+]
+const GENERAL_ATTACHMENT_GUIDE_LINES = [
+  '- 파일은 JPG, PNG, HWP, Excel, PDF, Word 형식만 등록 가능하며, 최대 10개(파일당 20MB, 총 100MB)까지 첨부할 수 있습니다.',
+  RECRUIT_DETAIL_ATTACHMENT_GUIDE_LINES[1],
+]
+const GENERAL_ATTACHMENT_ACCEPT = `${RECRUIT_DETAIL_ATTACHMENT_ACCEPT},.hwp,.hwpx`
+const GENERAL_ATTACHMENT_MAX_COUNT = 10
+const GENERAL_ATTACHMENT_MAX_TOTAL_BYTES = 100 * 1024 * 1024
+const GENERAL_ATTACHMENT_COUNT_EXCEEDED_MESSAGE = '첨부 파일은 최대 10개까지 등록할 수 있습니다.'
+const GENERAL_ATTACHMENT_TOTAL_EXCEEDED_MESSAGE = '첨부 파일은 총 100MB까지 업로드 가능합니다.'
+const GENERAL_APPLICATION_METHOD_PLACEHOLDER = '지원 방법을 작성해 주세요'
+
+function resolveDetailInfoVariantCopy(variant: DetailInfoSectionVariant) {
+  const isGeneral = variant === 'general'
+  return {
+    thumbnailGuideLines: isGeneral ? GENERAL_THUMBNAIL_GUIDE_LINES : THUMBNAIL_GUIDE_LINES,
+    attachmentGuideLines: isGeneral ? GENERAL_ATTACHMENT_GUIDE_LINES : ATTACHMENT_GUIDE_LINES,
+    attachmentAccept: isGeneral ? GENERAL_ATTACHMENT_ACCEPT : RECRUIT_DETAIL_ATTACHMENT_ACCEPT,
+    attachmentMaxCount: isGeneral ? GENERAL_ATTACHMENT_MAX_COUNT : undefined,
+    attachmentMaxTotalBytes: isGeneral ? GENERAL_ATTACHMENT_MAX_TOTAL_BYTES : 0,
+    applicationMethodPlaceholder: isGeneral ? GENERAL_APPLICATION_METHOD_PLACEHOLDER : undefined,
+    sectionDescription: isGeneral ? GENERAL_DETAIL_SECTION_DESCRIPTION : undefined,
+  }
+}
+
 export type DetailInfoEmptyReadDisplay = 'mock-default' | 'dash'
 
 function axiosErrorData(error: unknown): unknown {
@@ -769,6 +805,9 @@ function AttachmentDetailField({
   onNamesChange,
   currentTotalBytes = 0,
   onTotalBytesChange,
+  accept = RECRUIT_DETAIL_ATTACHMENT_ACCEPT,
+  maxFileCount,
+  maxTotalBytes = 0,
 }: {
   program: Program
   isEditMode: boolean
@@ -780,6 +819,12 @@ function AttachmentDetailField({
   onNamesChange?: (names: string[]) => void
   currentTotalBytes?: number
   onTotalBytesChange?: (bytes: number) => void
+  /** 허용 확장자. 생략 시 기존 모집 상세 기본값 */
+  accept?: string
+  /** 첨부 개수 상한. 생략 시 개수 검사 생략(기존) */
+  maxFileCount?: number
+  /** 첨부 합계 상한(byte). `0`(기본)이면 합계 검사 생략(기존) */
+  maxTotalBytes?: number
 }) {
   const [attachmentError, setAttachmentError] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -789,7 +834,7 @@ function AttachmentDetailField({
   const attachmentField = (
     <>
       <FileSelectField
-        accept={RECRUIT_DETAIL_ATTACHMENT_ACCEPT}
+        accept={accept}
         multiple
         disabled={!isEditMode || uploading}
         uploading={uploading}
@@ -797,12 +842,23 @@ function AttachmentDetailField({
         fileNames={displayFileNames}
         guideLines={guideLines}
         currentTotalBytes={currentTotalBytes}
-        maxTotalBytes={0}
+        maxTotalBytes={maxTotalBytes}
         maxFileBytes={RECRUIT_DETAIL_FILE_MAX_BYTES}
-        sizeExceededMessage={RECRUIT_DETAIL_FILE_SIZE_EXCEEDED_MESSAGE}
+        sizeExceededMessage={file =>
+          file != null || maxTotalBytes <= 0
+            ? RECRUIT_DETAIL_FILE_SIZE_EXCEEDED_MESSAGE
+            : GENERAL_ATTACHMENT_TOTAL_EXCEEDED_MESSAGE
+        }
         onFilesChange={
           isFormEdit
             ? async files => {
+                    if (
+                      maxFileCount != null &&
+                      displayFileNames.length + files.length > maxFileCount
+                    ) {
+                      setAttachmentError(GENERAL_ATTACHMENT_COUNT_EXCEEDED_MESSAGE)
+                      return
+                    }
                     const owner = resolveProgramMediaAttachmentUploadOwner(program)
                     setUploading(true)
                     try {
@@ -952,6 +1008,8 @@ export interface DetailInfoSectionProps {
   textFieldControl?: 'textarea' | 'input'
   /** 상위 단락 타이틀이 있을 때 DetailInfoForm `h2` 헤더 숨김 */
   hideFormHeader?: boolean
+  /** `general`: 일반 프로그램 모집 정보 시안(파일 형식·개수·안내 문구). 생략 시 기존 동작 */
+  variant?: DetailInfoSectionVariant
 }
 
 export function DetailInfoSection({
@@ -968,7 +1026,9 @@ export function DetailInfoSection({
   emptyReadDisplay = 'mock-default',
   textFieldControl = 'input',
   hideFormHeader = false,
+  variant = 'default',
 }: DetailInfoSectionProps) {
+  const variantCopy = resolveDetailInfoVariantCopy(variant)
   const {
     uploadingThumbnail,
     setUploadingThumbnail,
@@ -994,6 +1054,7 @@ export function DetailInfoSection({
     : sectionTitleOnly && !sectionDescription
       ? undefined
       : (sectionDescription ??
+        variantCopy.sectionDescription ??
         '필수 정보가 아닌 항목이 공란인 경우, 상세 페이지에서 항목 미노출 됩니다.')
 
   return (
@@ -1018,7 +1079,7 @@ export function DetailInfoSection({
             setLinkedThumbnail={setLinkedThumbnail}
             displayThumbnailUrl={displayThumbnailUrl}
             thumbnailFilename={thumbnailFilename}
-            guideLines={THUMBNAIL_GUIDE_LINES}
+            guideLines={variantCopy.thumbnailGuideLines}
             showRequiredStar={false}
           />
         ) : null}
@@ -1058,7 +1119,7 @@ export function DetailInfoSection({
             form={f}
             program={program}
             name="applicationMethod"
-            placeholder={recruitmentMethodLabel}
+            placeholder={variantCopy.applicationMethodPlaceholder ?? recruitmentMethodLabel}
             readContent={program.applicationMethod ?? '-'}
           />
         ) : null}
@@ -1092,11 +1153,14 @@ export function DetailInfoSection({
           isFormEdit={isFormEdit}
           form={f}
           displayFileNames={displayFileNames}
-          guideLines={ATTACHMENT_GUIDE_LINES}
+          guideLines={variantCopy.attachmentGuideLines}
           emptyReadDisplay={emptyReadDisplay}
           onNamesChange={setLinkedAttachmentNames}
           currentTotalBytes={linkedAttachmentTotalBytes}
           onTotalBytesChange={setLinkedAttachmentTotalBytes}
+          accept={variantCopy.attachmentAccept}
+          maxFileCount={variantCopy.attachmentMaxCount}
+          maxTotalBytes={variantCopy.attachmentMaxTotalBytes}
         />
       </DetailInfoForm>
     </>
@@ -1109,6 +1173,8 @@ export interface InstructorDetailInfoSectionProps {
   form?: UseFormReturn<ProgramDetailEditFormValues>
   onRegisterGetAdditionalContentHtml?: (getter: () => string) => void
   emptyReadDisplay?: DetailInfoEmptyReadDisplay
+  /** `general`: 일반 프로그램 모집 정보 시안(파일 형식·개수·안내 문구). 생략 시 기존 동작 */
+  variant?: DetailInfoSectionVariant
 }
 
 export function InstructorDetailInfoSection({
@@ -1117,7 +1183,9 @@ export function InstructorDetailInfoSection({
   form,
   onRegisterGetAdditionalContentHtml,
   emptyReadDisplay = 'mock-default',
+  variant = 'default',
 }: InstructorDetailInfoSectionProps) {
+  const variantCopy = resolveDetailInfoVariantCopy(variant)
   const {
     uploadingThumbnail,
     setUploadingThumbnail,
@@ -1145,7 +1213,7 @@ export function InstructorDetailInfoSection({
   )
   const otherNotes = resolveTextReadContent(program.otherNotes, emptyReadDisplay, '-')
   const headerDescription = isFormEdit
-    ? '공란인 경우, 상세 페이지에서 항목 미노출 됩니다.'
+    ? (variantCopy.sectionDescription ?? '공란인 경우, 상세 페이지에서 항목 미노출 됩니다.')
     : undefined
 
   return (
@@ -1168,7 +1236,7 @@ export function InstructorDetailInfoSection({
           setLinkedThumbnail={setLinkedThumbnail}
           displayThumbnailUrl={displayThumbnailUrl}
           thumbnailFilename={thumbnailFilename}
-          guideLines={THUMBNAIL_GUIDE_LINES}
+          guideLines={variantCopy.thumbnailGuideLines}
           showRequiredStar={false}
         />
         <ProgramDetailTextAreaField
@@ -1205,7 +1273,7 @@ export function InstructorDetailInfoSection({
           form={f}
           program={program}
           name="applicationMethod"
-          placeholder="지원 방법"
+          placeholder={variantCopy.applicationMethodPlaceholder ?? '지원 방법'}
           readContent={applicationMethod}
         />
         <RichTextDetailField
@@ -1234,11 +1302,14 @@ export function InstructorDetailInfoSection({
           isFormEdit={isFormEdit}
           form={f}
           displayFileNames={displayFileNames}
-          guideLines={ATTACHMENT_GUIDE_LINES}
+          guideLines={variantCopy.attachmentGuideLines}
           emptyReadDisplay={emptyReadDisplay}
           onNamesChange={setLinkedAttachmentNames}
           currentTotalBytes={linkedAttachmentTotalBytes}
           onTotalBytesChange={setLinkedAttachmentTotalBytes}
+          accept={variantCopy.attachmentAccept}
+          maxFileCount={variantCopy.attachmentMaxCount}
+          maxTotalBytes={variantCopy.attachmentMaxTotalBytes}
         />
       </DetailInfoForm>
     </>
@@ -1255,6 +1326,8 @@ export interface VolunteerDetailInfoSectionProps {
   sectionTitleOnly?: boolean
   emptyReadDisplay?: DetailInfoEmptyReadDisplay
   hideFormHeader?: boolean
+  /** `general`: 일반 프로그램 모집 정보 시안(파일 형식·개수·안내 문구). 생략 시 기존 동작 */
+  variant?: DetailInfoSectionVariant
 }
 
 export function VolunteerDetailInfoSection({
@@ -1267,7 +1340,9 @@ export function VolunteerDetailInfoSection({
   sectionTitleOnly = false,
   emptyReadDisplay = 'mock-default',
   hideFormHeader = false,
+  variant = 'default',
 }: VolunteerDetailInfoSectionProps) {
+  const variantCopy = resolveDetailInfoVariantCopy(variant)
   const {
     uploadingThumbnail,
     setUploadingThumbnail,
@@ -1298,7 +1373,9 @@ export function VolunteerDetailInfoSection({
     ? undefined
     : sectionTitleOnly
       ? undefined
-      : (sectionDescription ?? '공란인 경우, 상세 페이지에서 항목 미노출 됩니다.')
+      : (sectionDescription ??
+        variantCopy.sectionDescription ??
+        '공란인 경우, 상세 페이지에서 항목 미노출 됩니다.')
 
   return (
     <>
@@ -1321,7 +1398,7 @@ export function VolunteerDetailInfoSection({
           setLinkedThumbnail={setLinkedThumbnail}
           displayThumbnailUrl={displayThumbnailUrl}
           thumbnailFilename={thumbnailFilename}
-          guideLines={THUMBNAIL_GUIDE_LINES}
+          guideLines={variantCopy.thumbnailGuideLines}
           showRequiredStar={false}
         />
         <ProgramDetailTextAreaField
@@ -1358,7 +1435,7 @@ export function VolunteerDetailInfoSection({
           form={f}
           program={program}
           name="applicationMethod"
-          placeholder="지원 방법"
+          placeholder={variantCopy.applicationMethodPlaceholder ?? '지원 방법'}
           readContent={applicationMethod}
         />
         <RichTextDetailField
@@ -1387,11 +1464,14 @@ export function VolunteerDetailInfoSection({
           isFormEdit={isFormEdit}
           form={f}
           displayFileNames={displayFileNames}
-          guideLines={ATTACHMENT_GUIDE_LINES}
+          guideLines={variantCopy.attachmentGuideLines}
           emptyReadDisplay={emptyReadDisplay}
           onNamesChange={setLinkedAttachmentNames}
           currentTotalBytes={linkedAttachmentTotalBytes}
           onTotalBytesChange={setLinkedAttachmentTotalBytes}
+          accept={variantCopy.attachmentAccept}
+          maxFileCount={variantCopy.attachmentMaxCount}
+          maxTotalBytes={variantCopy.attachmentMaxTotalBytes}
         />
       </DetailInfoForm>
     </>

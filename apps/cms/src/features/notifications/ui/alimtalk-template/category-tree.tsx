@@ -177,7 +177,9 @@ function CategoryRow<T extends NotificationTreeTemplate>({
         <span className="alimtalk-category-tree__icon">
           {expanded && hasChildren ? <IconFolderOpen /> : <IconFolderClosed />}
         </span>
-        <span className="alimtalk-category-tree__label">{category.name}</span>
+        <span className="alimtalk-category-tree__label" title={category.name}>
+          {category.name}
+        </span>
       </div>
       {expanded && hasChildren ? <CategoryChildren parentId={category.id} {...props} /> : null}
     </li>
@@ -213,7 +215,9 @@ function TemplateRow<T extends NotificationTreeTemplate>({
         <span className="alimtalk-category-tree__icon">
           <IconTemplateDoc />
         </span>
-        <span className="alimtalk-category-tree__label">{template.name}</span>
+        <span className="alimtalk-category-tree__label" title={template.name}>
+          {template.name}
+        </span>
       </div>
     </li>
   )

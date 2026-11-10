@@ -18,7 +18,6 @@ import { usePushUserPreviewHistoryWhenOpen } from '@/features/template/hooks/use
 import {
   isSurveyRegistryEntry,
   lookupTemplateRegistry,
-  resolvePreviewHeaderTitle,
 } from '@/features/template/model/template-registry/template-registry'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import { getSurveyWritingTemplateSelectOptions } from '@/features/program/shared/lib/survey-management/survey-template-options'
@@ -52,11 +51,15 @@ import {
   GENERAL_LECTURE_EVAL_INCOMPLETE_MODAL_COPY,
   GENERAL_LECTURE_EVAL_PRE_START_COPY,
   GENERAL_LECTURE_EVAL_REGISTER_MODAL_COPY,
+  GENERAL_LECTURE_EVAL_SUBMIT_COMPLETE_COPY,
   GENERAL_LECTURE_EVAL_SUBMITTED_COPY,
   GENERAL_SATISFACTION_DOWNLOAD_MODAL_COPY,
   GENERAL_SATISFACTION_NO_RESPONSE_COPY,
+  GENERAL_SATISFACTION_SHARE_ALL_SCHEDULES_COPY,
+  GENERAL_SATISFACTION_SHARE_EMPTY_COPY,
   GENERAL_SATISFACTION_SHARE_TOAST_COPY,
   GENERAL_SURVEY_POLL_ACTION_LABELS,
+  GENERAL_SURVEY_FORM_HEADER_TITLE,
   GENERAL_SURVEY_MENU_EMPTY_COPY,
   GENERAL_SURVEY_POLL_EMPTY_COPY,
   GENERAL_SURVEY_POLL_NO_RESPONSE_COPY,
@@ -129,7 +132,6 @@ import {
   buildProgramSurveyFormEditTarget,
   canEditRegisteredSurveyForm,
 } from '@/features/program/shared/lib/survey-management/save-program-survey-form-edit'
-import { SurveyShareCopyToast } from '@/features/program/shared/ui/survey-management/survey-share-copy-toast'
 import {
   SurveyResultsDownloadModal,
   type SurveyResultsDownloadFormat,
@@ -156,6 +158,7 @@ import { buildGeneralSurveyEmptyState } from './survey-empty-state'
 import {
   useGeneralProgramSurveyFormBindingMutations,
   useGeneralProgramSurveyResponses,
+  useGeneralProgramSurveyResultsForBindings,
   useGeneralProgramSurveys,
   useGeneralProgramSurveySummary,
 } from '@/features/program/general/hooks/use-general-program-posts-surveys'
@@ -224,7 +227,7 @@ async function buildPreviewSession(args: {
         args.displayPeriod
       ),
       updateParagraph: () => {},
-      headerTitle: args.title?.trim() || resolvePreviewHeaderTitle(entry, row.templateName),
+      headerTitle: GENERAL_SURVEY_FORM_HEADER_TITLE,
       editorKind: 'survey',
       ...(args.paragraphBodyOptions != null
         ? { paragraphBodyOptions: args.paragraphBodyOptions }
@@ -248,7 +251,7 @@ async function buildPreviewSession(args: {
       args.displayPeriod
     ),
     updateParagraph: () => {},
-    headerTitle: args.title?.trim() || '설문조사',
+    headerTitle: GENERAL_SURVEY_FORM_HEADER_TITLE,
     editorKind: 'survey',
     ...(args.paragraphBodyOptions != null
       ? { paragraphBodyOptions: args.paragraphBodyOptions }
@@ -285,6 +288,43 @@ function toRemoteSurveyVersionId(
   if (!remote || survey == null) return undefined
   const value = Number(survey.id)
   return Number.isFinite(value) && value > 0 ? Math.trunc(value) : undefined
+}
+
+/** 만족도조사 일정 선택 — 「전체 일정 (결과 합산)」 (시안 1141:267627 · 16057:317204) */
+const SATISFACTION_ALL_SCHEDULES_TAB_KEY = '__all_schedules__'
+const SATISFACTION_ALL_SCHEDULES_TAB_LABEL = '전체 일정 (결과 합산)'
+
+/**
+ * 일정별 바인딩을 합산한 표시용 설문. 응답 수는 일정별 합, 상태는 하나라도 진행 중이면 진행 중.
+ * `bindingId`를 비워 공유·삭제 등 단건 바인딩 작업에 쓰이지 않게 한다.
+ */
+function buildSatisfactionAllSchedulesSurvey(
+  bindings: readonly RegisteredSurvey[]
+): RegisteredSurvey | null {
+  const first = bindings[0]
+  if (first == null) return null
+  const statuses = bindings.map(survey => survey.status)
+  const status = statuses.every(value => value === 'before_start')
+    ? 'before_start'
+    : statuses.every(value => value === 'finished')
+      ? 'finished'
+      : 'in_progress'
+  const expectedCounts = bindings.map(survey => survey.expectedRespondentCount)
+  const expectedRespondentCount = expectedCounts.every(
+    (value): value is number => typeof value === 'number'
+  )
+    ? expectedCounts.reduce((sum, value) => sum + value, 0)
+    : null
+  return {
+    ...first,
+    bindingId: undefined,
+    status,
+    responseCount: bindings.reduce((sum, survey) => sum + survey.responseCount, 0),
+    participantTotal: bindings.reduce((sum, survey) => sum + survey.participantTotal, 0),
+    expectedRespondentCount,
+    targetScopeId: null,
+    targetScopeLabel: null,
+  }
 }
 
 function buildSatisfactionResultsPdfFileName(programTitle: string, surveyTitle: string): string {
@@ -338,9 +378,11 @@ export function GeneralSurveyManagementView({
   const [satisfactionRunMode, setSatisfactionRunMode] = useState<SatisfactionRunMode>(
     SATISFACTION_RUN_MODE_PER_SCHEDULE
   )
-  const [satisfactionWindowDays, setSatisfactionWindowDays] = useState<SatisfactionWindowDays>(
-    DEFAULT_SATISFACTION_WINDOW_DAYS
-  )
+  /** 설문 진행 기간 — 시안 13609:155708: 기본 미선택. 종료 시 1회 진행은 기간 선택이 없어 기본 일수로 마감을 잡는다 */
+  const [satisfactionWindowDays, setSatisfactionWindowDays] =
+    useState<SatisfactionWindowDays | null>(null)
+  const effectiveSatisfactionWindowDays =
+    satisfactionWindowDays ?? DEFAULT_SATISFACTION_WINDOW_DAYS
   const [activeSatisfactionAudience, setActiveSatisfactionAudience] = useState(() =>
     getDefaultGeneralSatisfactionAudience(program)
   )
@@ -376,11 +418,6 @@ export function GeneralSurveyManagementView({
   const [downloadingLectureEvalResults, setDownloadingLectureEvalResults] = useState(false)
   const [templateEditId, setTemplateEditId] = useState<string | null>(null)
   const [programFormEdit, setProgramFormEdit] = useState<ProgramSurveyFormEdit | null>(null)
-  const [shareToastOpen, setShareToastOpen] = useState(false)
-  const [shareToastLines, setShareToastLines] = useState<{ line1: string; line2: string }>({
-    line1: GENERAL_SURVEY_POLL_SHARE_TOAST_COPY.line1,
-    line2: GENERAL_SURVEY_POLL_SHARE_TOAST_COPY.line2,
-  })
   const [lectureEvalDownloadModalOpen, setLectureEvalDownloadModalOpen] = useState(false)
   const [pollDownloadModalOpen, setPollDownloadModalOpen] = useState(false)
   const [satisfactionDownloadModalOpen, setSatisfactionDownloadModalOpen] = useState(false)
@@ -389,7 +426,6 @@ export function GeneralSurveyManagementView({
   const lectureEvalResultsExportRef = useRef<HTMLDivElement>(null)
   const pollResultsExportRef = useRef<HTMLDivElement>(null)
   const satisfactionResultsExportRef = useRef<HTMLDivElement>(null)
-  const shareToastTimerRef = useRef<number | null>(null)
   const { openWritingUserPreview, closeWritingUserPreview, isWritingUserPreviewOpen } =
     useTemplateWritingPreview()
   const requestPreviewHistoryPush = usePushUserPreviewHistoryWhenOpen(isWritingUserPreviewOpen)
@@ -438,11 +474,20 @@ export function GeneralSurveyManagementView({
     surveyScheduleOptionsQuery.options,
   ])
 
-  const audienceSatisfactionBindingsForQuery =
-    satisfactionBindingsByAudience[activeSatisfactionAudience] ??
-    (satisfactionSurveysByAudience[activeSatisfactionAudience]
-      ? [satisfactionSurveysByAudience[activeSatisfactionAudience]!]
-      : [])
+  const audienceSatisfactionBindingsForQuery = useMemo(
+    (): RegisteredSurvey[] =>
+      satisfactionBindingsByAudience[activeSatisfactionAudience] ??
+      (satisfactionSurveysByAudience[activeSatisfactionAudience]
+        ? [satisfactionSurveysByAudience[activeSatisfactionAudience]!]
+        : []),
+    [activeSatisfactionAudience, satisfactionBindingsByAudience, satisfactionSurveysByAudience]
+  )
+  /** 일정별 진행 — 일정 선택에 「전체 일정 (결과 합산)」을 두고 기본값으로 쓴다 (시안 1141:267627) */
+  const satisfactionPerScheduleMode = audienceSatisfactionBindingsForQuery.some(
+    survey =>
+      survey.satisfactionRunMode === SATISFACTION_RUN_MODE_PER_SCHEDULE ||
+      survey.targetScope === 'SCHEDULE'
+  )
   const satisfactionScheduleTabsForQuery = (() => {
     const items = sortSatisfactionScheduleDisplayItemsAsc(
       audienceSatisfactionBindingsForQuery.map(survey => {
@@ -461,20 +506,50 @@ export function GeneralSurveyManagementView({
         }
       })
     ).map(({ key, label }) => ({ key, label }))
-    return items
+    return satisfactionPerScheduleMode
+      ? [
+          {
+            key: SATISFACTION_ALL_SCHEDULES_TAB_KEY,
+            label: SATISFACTION_ALL_SCHEDULES_TAB_LABEL,
+          },
+          ...items,
+        ]
+      : items
   })()
   const resolvedSatisfactionScheduleTabForQuery =
     satisfactionScheduleTab != null &&
     satisfactionScheduleTabsForQuery.some(tab => tab.key === satisfactionScheduleTab)
       ? satisfactionScheduleTab
       : (satisfactionScheduleTabsForQuery[0]?.key ?? null)
-  const selectedSatisfactionBindingForQuery =
-    audienceSatisfactionBindingsForQuery.find(
-      survey => (survey.bindingId ?? survey.id) === resolvedSatisfactionScheduleTabForQuery
-    ) ??
-    audienceSatisfactionBindingsForQuery[0] ??
-    null
-  const activeSatisfactionSurveyId = selectedSatisfactionBindingForQuery?.id
+  const satisfactionAllSchedulesSelected =
+    satisfactionPerScheduleMode &&
+    resolvedSatisfactionScheduleTabForQuery === SATISFACTION_ALL_SCHEDULES_TAB_KEY
+  const selectedSatisfactionBindingForQuery = satisfactionAllSchedulesSelected
+    ? buildSatisfactionAllSchedulesSurvey(audienceSatisfactionBindingsForQuery)
+    : (audienceSatisfactionBindingsForQuery.find(
+        survey => (survey.bindingId ?? survey.id) === resolvedSatisfactionScheduleTabForQuery
+      ) ??
+      audienceSatisfactionBindingsForQuery[0] ??
+      null)
+  const selectedSatisfactionScheduleLabel = satisfactionAllSchedulesSelected
+    ? null
+    : (satisfactionScheduleTabsForQuery.find(
+        tab => tab.key === resolvedSatisfactionScheduleTabForQuery
+      )?.label ?? null)
+  const satisfactionAllSchedulesTargets = useMemo(
+    () =>
+      satisfactionAllSchedulesSelected
+        ? audienceSatisfactionBindingsForQuery.flatMap(survey =>
+            survey.bindingId != null && survey.bindingId !== ''
+              ? [{ templateVersionId: survey.id, bindingId: survey.bindingId }]
+              : []
+          )
+        : [],
+    [audienceSatisfactionBindingsForQuery, satisfactionAllSchedulesSelected]
+  )
+  const activeSatisfactionSurveyId = satisfactionAllSchedulesSelected
+    ? undefined
+    : selectedSatisfactionBindingForQuery?.id
   const pollResponseVersionId =
     activeTab === 'survey' ? (activeRegisteredSurveyId ?? undefined) : undefined
   const satisfactionResponseVersionId = isGeneralSatisfactionSurveyNavTab(activeTab)
@@ -486,9 +561,10 @@ export function GeneralSurveyManagementView({
     activeTab === 'survey'
       ? registeredSurveys.find(item => item.id === activeRegisteredSurveyId)?.bindingId
       : undefined
-  const satisfactionBindingId = isGeneralSatisfactionSurveyNavTab(activeTab)
-    ? selectedSatisfactionBindingForQuery?.bindingId
-    : undefined
+  const satisfactionBindingId =
+    isGeneralSatisfactionSurveyNavTab(activeTab) && !satisfactionAllSchedulesSelected
+      ? selectedSatisfactionBindingForQuery?.bindingId
+      : undefined
   const lectureBindingId =
     activeTab === 'lecture_evaluation' ? lectureEvalSurvey?.bindingId : undefined
 
@@ -517,11 +593,19 @@ export function GeneralSurveyManagementView({
     totalResponseCount: remotePollSummaryCount,
     questionSummaries: pollQuestionSummaries,
   } = useGeneralProgramSurveySummary(program.id, pollResponseVersionId, pollBindingId)
-  const { questionSummaries: satisfactionQuestionSummaries } = useGeneralProgramSurveySummary(
-    program.id,
-    satisfactionResponseVersionId,
-    satisfactionBindingId
-  )
+  const { questionSummaries: satisfactionSingleQuestionSummaries } =
+    useGeneralProgramSurveySummary(program.id, satisfactionResponseVersionId, satisfactionBindingId)
+  const {
+    pollResponses: remoteSatisfactionAllResponses,
+    questionSummaries: satisfactionAllQuestionSummaries,
+    isRemoteDataSource: satisfactionAllResponsesRemote,
+  } = useGeneralProgramSurveyResultsForBindings(program.id, satisfactionAllSchedulesTargets, {
+    detailPolicy: 'public-text-only',
+    enabled: isGeneralSatisfactionSurveyNavTab(activeTab),
+  })
+  const satisfactionQuestionSummaries = satisfactionAllSchedulesSelected
+    ? satisfactionAllQuestionSummaries
+    : satisfactionSingleQuestionSummaries
 
   useEffect(() => {
     // remote ON이면 mock으로 덮어쓰지 않음 — remote 목록 effect가 채움
@@ -580,14 +664,6 @@ export function GeneralSurveyManagementView({
     )
   }, [activeTab, program])
 
-  useEffect(() => {
-    return () => {
-      if (shareToastTimerRef.current != null) {
-        window.clearTimeout(shareToastTimerRef.current)
-      }
-    }
-  }, [])
-
   const surveyTemplateOptions = useMemo(() => {
     if (remoteSurveyRows.length > 0) {
       return remoteSurveyRows
@@ -632,14 +708,25 @@ export function GeneralSurveyManagementView({
     for (const [key, survey] of Object.entries(satisfactionSurveysByAudience) as Array<
       [GeneralSatisfactionAudienceKey, RegisteredSurvey | undefined]
     >) {
-      if (survey == null) continue
+      // 활성 대상은 선택한 일정(또는 전체 일정 합산) 설문으로 상태·응답 수를 보여준다
+      const viewSurvey =
+        key === activeSatisfactionAudience && activeSatisfactionSurvey != null
+          ? activeSatisfactionSurvey
+          : survey
+      if (viewSurvey == null) continue
       next[key] = {
-        ...survey,
-        participantTotal: resolveSurveyResultsParticipantTotal(survey, programTotal),
+        ...viewSurvey,
+        participantTotal: resolveSurveyResultsParticipantTotal(viewSurvey, programTotal),
       }
     }
     return next
-  }, [isTrainedTeacherSatisfaction, program.totalParticipants, satisfactionSurveysByAudience])
+  }, [
+    activeSatisfactionAudience,
+    activeSatisfactionSurvey,
+    isTrainedTeacherSatisfaction,
+    program.totalParticipants,
+    satisfactionSurveysByAudience,
+  ])
   const lectureEvalSurveyForView =
     lectureEvalSurvey == null
       ? null
@@ -657,9 +744,18 @@ export function GeneralSurveyManagementView({
   }, [pollResponsesRemote, program, remotePollResponses])
 
   const satisfactionResponses = useMemo((): SurveyPollRawResponse[] => {
+    if (satisfactionAllSchedulesSelected) {
+      return satisfactionAllResponsesRemote ? (remoteSatisfactionAllResponses ?? []) : []
+    }
     if (satisfactionResponsesRemote) return remoteSatisfactionResponses ?? []
     return []
-  }, [remoteSatisfactionResponses, satisfactionResponsesRemote])
+  }, [
+    remoteSatisfactionAllResponses,
+    remoteSatisfactionResponses,
+    satisfactionAllResponsesRemote,
+    satisfactionAllSchedulesSelected,
+    satisfactionResponsesRemote,
+  ])
 
   useEffect(() => {
     if (!pollResponsesRemote || !activeRegisteredSurveyId) return
@@ -878,19 +974,14 @@ export function GeneralSurveyManagementView({
     ]
   )
 
-  const showShareCopyToast = useCallback(
-    (lines: { line1: string; line2: string } = GENERAL_SURVEY_POLL_SHARE_TOAST_COPY) => {
-      setShareToastLines(lines)
-      setShareToastOpen(true)
-      if (shareToastTimerRef.current != null) {
-        window.clearTimeout(shareToastTimerRef.current)
-      }
-      shareToastTimerRef.current = window.setTimeout(() => {
-        setShareToastOpen(false)
-        shareToastTimerRef.current = null
-      }, 4000)
+  /** 공유 링크 복사 완료 — 「설문조사 공유」·「만족도조사 공유」 안내 팝업 (시안 9767:119096 · 16057:321961) */
+  const showShareCopiedAlert = useCallback(
+    (
+      copy: { title: string; line1: string; line2: string } = GENERAL_SURVEY_POLL_SHARE_TOAST_COPY
+    ) => {
+      void showAlert({ title: copy.title, content: `${copy.line1}\n${copy.line2}` })
     },
-    []
+    [showAlert]
   )
 
   const openCreateModal = useCallback(
@@ -900,7 +991,7 @@ export function GeneralSurveyManagementView({
       if (kind === 'satisfaction' && satisfactionAudience != null) {
         setPendingSatisfactionAudience(satisfactionAudience)
         setSatisfactionRunMode(SATISFACTION_RUN_MODE_PER_SCHEDULE)
-        setSatisfactionWindowDays(DEFAULT_SATISFACTION_WINDOW_DAYS)
+        setSatisfactionWindowDays(null)
         setSelectedTemplateId(
           pickRegisteredSurveyTemplateId(
             GENERAL_SATISFACTION_TEMPLATE_BY_AUDIENCE[satisfactionAudience],
@@ -966,7 +1057,7 @@ export function GeneralSurveyManagementView({
       createModalKind === 'satisfaction' &&
       satisfactionRunMode === SATISFACTION_RUN_MODE_PER_SCHEDULE
     ) {
-      if (satisfactionScheduleOptionsQuery.isLoading) {
+      if (satisfactionScheduleOptionsQuery.isLoading || satisfactionWindowDays == null) {
         return
       }
       if (satisfactionUnboundScheduleValues.length === 0) {
@@ -1063,7 +1154,7 @@ export function GeneralSurveyManagementView({
         if (createModalKind === 'satisfaction') {
           const writeFields = buildSatisfactionBindingWriteFields({
             runMode: satisfactionRunMode,
-            windowDays: satisfactionWindowDays,
+            windowDays: effectiveSatisfactionWindowDays,
             startImmediately: false,
             startAtLocked: false,
           })
@@ -1076,7 +1167,7 @@ export function GeneralSurveyManagementView({
             )
             const period = resolveSatisfactionCreateSubmissionPeriod(
               lastSlot,
-              satisfactionWindowDays
+              effectiveSatisfactionWindowDays
             )
             if (period != null) Object.assign(payload, period)
             satisfactionPayloads.push(payload)
@@ -1090,7 +1181,7 @@ export function GeneralSurveyManagementView({
                 )
                 const period = resolveSatisfactionCreateSubmissionPeriod(
                   schedule,
-                  satisfactionWindowDays
+                  effectiveSatisfactionWindowDays
                 )
                 if (period == null) {
                   void showAlert({
@@ -1157,7 +1248,7 @@ export function GeneralSurveyManagementView({
                   ? satisfactionScheduleOptionsQuery.schedules
                   : surveyScheduleOptionsQuery.schedules,
               windowDays:
-                createModalKind === 'satisfaction' ? satisfactionWindowDays : undefined,
+                createModalKind === 'satisfaction' ? effectiveSatisfactionWindowDays : undefined,
               targetScope:
                 result.binding.targetScope ?? lastSatisfactionPayload?.targetScope,
               targetScopeId:
@@ -1217,6 +1308,7 @@ export function GeneralSurveyManagementView({
     surveyScheduleOptionsQuery.schedules,
     satisfactionUnboundScheduleValues,
     satisfactionWindowDays,
+    effectiveSatisfactionWindowDays,
     showAlert,
     showSurveyPollScheduleSelectField,
     surveyScheduleOptionsQuery.hasSessionSchedules,
@@ -1320,7 +1412,7 @@ export function GeneralSurveyManagementView({
           queryKey: generalProgramQueryKeys.surveys(program.id),
           exact: true,
         })
-        showShareCopyToast()
+        showShareCopiedAlert()
       } catch (error) {
         handleError(error, { context: 'generalSurveyShareLink' })
         showAlert({
@@ -1332,7 +1424,7 @@ export function GeneralSurveyManagementView({
         })
       }
     },
-    [copyText, program.id, queryClient, showAlert, showShareCopyToast]
+    [copyText, program.id, queryClient, showAlert, showShareCopiedAlert]
   )
 
   const shareSatisfactionSurveyUrl = useCallback(
@@ -1341,7 +1433,15 @@ export function GeneralSurveyManagementView({
         audience === activeSatisfactionAudience
           ? activeSatisfactionSurvey
           : satisfactionSurveysByAudience[audience]
-      const bindingId = survey?.bindingId?.trim()
+      if (survey == null) {
+        void showAlert(GENERAL_SATISFACTION_SHARE_EMPTY_COPY)
+        return
+      }
+      if (audience === activeSatisfactionAudience && satisfactionAllSchedulesSelected) {
+        void showAlert(GENERAL_SATISFACTION_SHARE_ALL_SCHEDULES_COPY)
+        return
+      }
+      const bindingId = survey.bindingId?.trim()
       if (!bindingId) {
         notifyProgramApiUnavailable(
           'general-satisfaction-share-link',
@@ -1365,7 +1465,7 @@ export function GeneralSurveyManagementView({
           queryKey: generalProgramQueryKeys.surveys(program.id),
           exact: true,
         })
-        showShareCopyToast(GENERAL_SATISFACTION_SHARE_TOAST_COPY)
+        showShareCopiedAlert(GENERAL_SATISFACTION_SHARE_TOAST_COPY)
       } catch (error) {
         handleError(error, { context: 'generalSatisfactionShareLink' })
         showAlert({
@@ -1383,9 +1483,10 @@ export function GeneralSurveyManagementView({
       copyText,
       program.id,
       queryClient,
+      satisfactionAllSchedulesSelected,
       satisfactionSurveysByAudience,
       showAlert,
-      showShareCopyToast,
+      showShareCopiedAlert,
     ]
   )
 
@@ -1575,6 +1676,7 @@ export function GeneralSurveyManagementView({
     }
 
     setLectureEvalSubmitted(true)
+    void showAlert(GENERAL_LECTURE_EVAL_SUBMIT_COMPLETE_COPY)
     setLectureEvalResponses(prev => {
       const existingId = parseLectureEvalFormResponseId(prev)
       return [
@@ -1759,6 +1861,7 @@ export function GeneralSurveyManagementView({
               responses={pollResponses}
               questionSummaries={pollQuestionSummaries}
               pdfTitle="설문조사 결과"
+              statusBadge={activeRegisteredSurvey.status}
             />
           </div>
         ) : null}
@@ -1766,17 +1869,15 @@ export function GeneralSurveyManagementView({
     )
   }
 
+  /** 설문 진행 항목 없음 — 안내 팝업과 같은 문구 (시안 9767:118918) */
   const renderEmptyMain = () => (
-    <div className="program-detail-fullpage-modal__info-tab survey-management__empty-main">
-      <div className="survey-management__empty-main-card">
-        <p className="survey-management__empty-main-title">
-          {GENERAL_SURVEY_MENU_EMPTY_COPY.title}
-        </p>
-        <p className="survey-management__empty-main-description">
-          {GENERAL_SURVEY_MENU_EMPTY_COPY.description}
-        </p>
-      </div>
-    </div>
+    <SurveyEmptyState
+      title={GENERAL_SURVEY_MENU_EMPTY_COPY.title}
+      description={GENERAL_SURVEY_MENU_EMPTY_COPY.description}
+      registerButtonLabel=""
+      showRegisterButton={false}
+      onRegisterClick={() => {}}
+    />
   )
 
   const createTitle =
@@ -1826,7 +1927,8 @@ export function GeneralSurveyManagementView({
           const survey = activeSatisfactionSurvey
           if (survey != null) {
             openTemplatePreview(survey, {
-              allowEdit: canEditRegisteredSurveyForm(survey),
+              // 전체 일정(합산)은 바인딩이 여럿이라 양식 수정 대상이 하나로 정해지지 않는다
+              allowEdit: !satisfactionAllSchedulesSelected && canEditRegisteredSurveyForm(survey),
               displayTitle: resolveSatisfactionSurveyDisplayTitle(
                 survey,
                 satisfactionScheduleOptionsQuery.schedules
@@ -1853,6 +1955,20 @@ export function GeneralSurveyManagementView({
         resultsResponses={satisfactionResponses}
         resultsTemplateVersionId={toRemoteSurveyVersionId(activeSatisfactionSurvey, surveysRemote)}
         resultsQuestionSummaries={satisfactionQuestionSummaries}
+        showShareButtonWhenEmpty
+        showResultsStatusBadge
+        {...(satisfactionPerScheduleMode
+          ? {
+              // 일정별 진행: 상단에 다운로드·양식 보기·공유를 항상 두고, 진행 전 본문은 삭제만 (시안 16057:315805)
+              headerActionsStatus: 'in_progress' as const,
+              showNoResponsePreviewButton: false,
+              showNoResponseDeleteButton: !satisfactionAllSchedulesSelected,
+              noResponseTitle:
+                selectedSatisfactionScheduleLabel != null
+                  ? `${selectedSatisfactionScheduleLabel}의 만족도조사는 아직 진행 전입니다.`
+                  : '전체 일정의 만족도조사는 아직 진행 전입니다.',
+            }
+          : {})}
       />
     )
   }
@@ -2027,13 +2143,10 @@ export function GeneralSurveyManagementView({
         className="survey-management-delete-modal"
         description={`**[${
           deleteModalKind === 'satisfaction' && activeSatisfactionAudience != null
-            ? `${getGeneralSatisfactionAudienceLabel(activeSatisfactionAudience)} 만족도조사`
+            ? (selectedSatisfactionScheduleLabel ??
+              `${getGeneralSatisfactionAudienceLabel(activeSatisfactionAudience)} 만족도조사`)
             : (activeRegisteredSurvey?.title ?? '설문조사')
-        }]** ${
-          deleteModalKind === 'satisfaction' && activeSatisfactionAudience != null
-            ? `${getGeneralSatisfactionAudienceLabel(activeSatisfactionAudience)} 만족도조사`
-            : '설문조사'
-        }를 삭제하시겠습니까?\n삭제 시 해당 양식의 내용은 모두 삭제됩니다.\n삭제된 항목 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?`}
+        }]** 설문을 삭제하시겠습니까?\n삭제 시 설문 결과를 포함한 모든 정보가 삭제되며, 삭제된 정보는 되돌릴 수 없습니다.`}
         footer={
           <>
             <CmsButton
@@ -2065,7 +2178,7 @@ export function GeneralSurveyManagementView({
         <div className="survey-management-delete-modal__field">
           <CmsInput
             width="100%"
-            placeholder="삭제하시려면 해당란에 [삭제]를 입력해 주세요."
+            placeholder="삭제하시려면 해당란에 [삭제]를 입력해 주세요"
             value={deleteConfirmWord}
             onChange={e => setDeleteConfirmWord(e.target.value)}
           />
@@ -2096,6 +2209,7 @@ export function GeneralSurveyManagementView({
       {templateEditId != null ? (
         <SurveyTemplateEditModal
           open={templateEditId != null}
+          variant="general"
           templateId={templateEditId}
           onClose={() => setTemplateEditId(null)}
         />
@@ -2104,6 +2218,7 @@ export function GeneralSurveyManagementView({
       {programFormEdit != null ? (
         <SurveyTemplateEditModal
           open
+          variant="general"
           templateId={String(programFormEdit.target.sourceVersionId)}
           programEdit={programFormEdit}
           onBindingsStale={() => void invalidateSurveyCaches()}
@@ -2118,6 +2233,7 @@ export function GeneralSurveyManagementView({
       ) : null}
 
       <SurveyResultsDownloadModal
+        variant="general"
         open={pollDownloadModalOpen}
         downloading={downloadingPollResults}
         onCancel={() => setPollDownloadModalOpen(false)}
@@ -2125,6 +2241,7 @@ export function GeneralSurveyManagementView({
       />
 
       <SurveyResultsDownloadModal
+        variant="general"
         open={satisfactionDownloadModalOpen}
         downloading={downloadingSatisfactionResults}
         copy={GENERAL_SATISFACTION_DOWNLOAD_MODAL_COPY}
@@ -2133,17 +2250,12 @@ export function GeneralSurveyManagementView({
       />
 
       <SurveyResultsDownloadModal
+        variant="general"
         open={lectureEvalDownloadModalOpen}
         downloading={downloadingLectureEvalResults}
         copy={GENERAL_LECTURE_EVAL_DOWNLOAD_MODAL_COPY}
         onCancel={() => setLectureEvalDownloadModalOpen(false)}
         onDownload={handleDownloadLectureEvalResults}
-      />
-
-      <SurveyShareCopyToast
-        open={shareToastOpen}
-        line1={shareToastLines.line1}
-        line2={shareToastLines.line2}
       />
     </>
   )

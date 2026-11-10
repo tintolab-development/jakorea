@@ -77,6 +77,10 @@ export const ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_ALERT_MESSAGE =
 export const PARTICIPATING_INSTRUCTOR_ADD_COMPLETE_ALERT_MESSAGE =
   '강사 추가 등록이 완료되었습니다.'
 
+/** 일반 프로그램(기관형) 참여 강사·봉사자 추가 등록 완료 — Figma 03-4 / 03-3 「등록 완료」 */
+export const GENERAL_INSTITUTION_PARTICIPANT_ADD_COMPLETE_ALERT_TITLE = '등록 완료'
+export const GENERAL_INSTITUTION_PARTICIPANT_ADD_COMPLETE_ALERT_MESSAGE = '등록되었습니다.'
+
 /** 참여 봉사자 목록 — 활동확인서 발급: 미선택 시 AlertModal 본문 */
 export const ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONE_VOLUNTEER_ALERT_MESSAGE =
   '발급할 봉사자를 1명 선택해 주세요.'
@@ -128,8 +132,12 @@ export const INSTRUCTOR_ASSIGN_SELECT_UNAPPROVED_SINGLE_ONLY_ALERT_MESSAGE =
 
 
 
+/** 일반 프로그램 상세 — 설문 관리 LNB: 등록된 설문 항목 없을 때 AlertModal 제목 (시안 9767:118918) */
+export const GENERAL_SURVEY_MENU_EMPTY_ALERT_TITLE = '설문 항목 미등록 안내'
+
 /** 일반 프로그램 상세 — 설문 관리 LNB: 등록된 설문 항목 없을 때 AlertModal 본문 */
-export const GENERAL_SURVEY_MENU_EMPTY_ALERT_MESSAGE = '등록된 설문 항목이 없습니다.'
+export const GENERAL_SURVEY_MENU_EMPTY_ALERT_MESSAGE =
+  '등록된 설문 항목이 없습니다.\n설문을 진행하려면 프로그램의 공통 정보에서 설문 항목을 추가해 주세요.'
 
 export const MESSAGES = {
   success: {

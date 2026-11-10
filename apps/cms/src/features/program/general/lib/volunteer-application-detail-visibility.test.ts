@@ -12,10 +12,10 @@ import {
 import { buildGeneralVolunteerDoc1FilterFields } from './volunteer-doc-screening-filter-fields'
 
 describe('volunteer application detail visibility (interview off)', () => {
-  it('면접 없음 상세 CTA는 참여 승인/반려, 면접 있음은 서류 승인/반려', () => {
+  it('상세 CTA는 면접 유무와 무관하게 시안대로 서류 승인/반려', () => {
     expect(volunteerApplicationDecisionButtonLabels(false)).toEqual({
-      reject: '참여 반려',
-      approve: '참여 승인',
+      reject: '서류 반려',
+      approve: '서류 승인',
     })
     expect(volunteerApplicationDecisionButtonLabels(true)).toEqual({
       reject: '서류 반려',

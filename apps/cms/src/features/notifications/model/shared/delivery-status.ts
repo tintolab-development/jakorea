@@ -1,6 +1,7 @@
 /**
  * 알림 발송 이력(메일·알림톡·문자) 발송·수신 상태 — 세 채널 공통 정본.
  * 라벨: Figma Status / Text / 메일 발송 형태(14804:19688). 준비중·인증 대기는 서버 대응 값이 없어 쓰지 않는다(2026-11-09 확정).
+ * 발송 완료(SENT) 라벨은 발송 조회 화면 시안(6289:93622 등)에 맞춰 「발송 성공」으로 쓴다(2026-11-10 결정).
  *
  * 서버 계약(NotificationService.sendStatus/receiptStatus, 채널 공통):
  * - sendStatus: REQUESTED | SCHEDULED | WAITED | IN_PROGRESS | SENT | SEND_FAILED | CANCELED | UNKNOWN
@@ -13,7 +14,7 @@ export const NOTIFICATION_SEND_STATUS_LABELS = [
   '예약',
   '발송 대기',
   '발송 중',
-  '발송 완료',
+  '발송 성공',
   '발송 실패',
   '발송 취소',
   '예약 취소',
@@ -44,7 +45,7 @@ const SEND_STATUS_BY_CODE: Record<string, NotificationSendStatusLabel> = {
   SCHEDULED: '예약',
   WAITED: '발송 대기',
   IN_PROGRESS: '발송 중',
-  SENT: '발송 완료',
+  SENT: '발송 성공',
   SEND_FAILED: '발송 실패',
   CANCELED: '발송 취소',
   UNKNOWN: '확인불가',
@@ -117,7 +118,7 @@ const SEND_FILTER_BY_LABEL: Record<string, { sendStatus: string; sendTiming?: 'I
   예약: { sendStatus: 'SCHEDULED' },
   '발송 대기': { sendStatus: 'WAITED' },
   '발송 중': { sendStatus: 'IN_PROGRESS' },
-  '발송 완료': { sendStatus: 'SENT' },
+  '발송 성공': { sendStatus: 'SENT' },
   '발송 실패': { sendStatus: 'SEND_FAILED' },
   '발송 취소': { sendStatus: 'CANCELED', sendTiming: 'IMMEDIATE' },
   '예약 취소': { sendStatus: 'CANCELED', sendTiming: 'SCHEDULED' },
@@ -125,7 +126,7 @@ const SEND_FILTER_BY_LABEL: Record<string, { sendStatus: string; sendTiming?: 'I
   // 이전 채널별 라벨로 저장된 URL 호환
   대기: { sendStatus: 'WAITED' },
   발송중: { sendStatus: 'IN_PROGRESS' },
-  '발송 성공': { sendStatus: 'SENT' },
+  '발송 완료': { sendStatus: 'SENT' },
   '발송 예약': { sendStatus: 'SCHEDULED' },
   취소: { sendStatus: 'CANCELED' },
 }

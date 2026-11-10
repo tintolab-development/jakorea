@@ -36,6 +36,9 @@ const FORM_CLASS = 'program-registration-paragraph'
 
 const INTERVIEW_SCHEDULE_EDIT_DESCRIPTION =
   '서류 합격 시 면접이 진행됩니다. 면접이 진행 가능한 일정 모두 선택해 주세요. 신청자 면접 선택지는 2차 면접 심사 기간 안에서 열리며, 기간을 비우면 봉사자 모집 기간이 쓰입니다.'
+/** 일반 프로그램 상세 봉사자 모집 수정 시안(03-2) 설명 */
+const GENERAL_INTERVIEW_SCHEDULE_EDIT_DESCRIPTION =
+  '서류 합격 시 면접이 진행됩니다. 면접이 진행 가능한 일정 모두 선택해 주세요.'
 
 function UnavailableDatesReadRow({
   recurring,
@@ -228,9 +231,11 @@ function GeneralProgramVolunteerInterviewScheduleReadSection({ program }: { prog
 function GeneralProgramVolunteerInterviewScheduleEditSection({
   program,
   form,
+  variant,
 }: {
   program: Program
   form: UseFormReturn<ProgramDetailEditFormValues>
+  variant: 'default' | 'general'
 }) {
   const display = resolveGeneralProgramVolunteerInterviewScheduleDisplay(program)
   const editSeed = resolveGeneralProgramVolunteerInterviewScheduleEditSeed(program)
@@ -280,7 +285,11 @@ function GeneralProgramVolunteerInterviewScheduleEditSection({
         titleAligned
         required
         highlightParagraphId={RECRUIT_FORM_VOLUNTEER_IDS.interviewSchedule}
-        description={INTERVIEW_SCHEDULE_EDIT_DESCRIPTION}
+        description={
+          variant === 'general'
+            ? GENERAL_INTERVIEW_SCHEDULE_EDIT_DESCRIPTION
+            : INTERVIEW_SCHEDULE_EDIT_DESCRIPTION
+        }
         titleTrailing={
           <div className="volunteer-interview-available-schedule__card-title-actions">
             <CmsButton
@@ -314,13 +323,22 @@ export function GeneralProgramVolunteerInterviewScheduleSection({
   program,
   form,
   isEdit,
+  variant = 'default',
 }: {
   program: Program
   form?: UseFormReturn<ProgramDetailEditFormValues>
   isEdit: boolean
+  /** `general`: 일반 프로그램 상세 시안 설명 문구. 생략 시 기존 문구 */
+  variant?: 'default' | 'general'
 }) {
   if (isEdit && form) {
-    return <GeneralProgramVolunteerInterviewScheduleEditSection program={program} form={form} />
+    return (
+      <GeneralProgramVolunteerInterviewScheduleEditSection
+        program={program}
+        form={form}
+        variant={variant}
+      />
+    )
   }
 
   const recruitmentDisplay = resolveGeneralProgramVolunteerRecruitmentDisplay(program)

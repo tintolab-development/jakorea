@@ -224,8 +224,7 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
   const isTrainedTeachers = args.variant === 'trainedTeachers'
   const programLabel = isCompanySchool ? '1사1교' : isTrainedTeachers ? '교육받은 교사' : '일반'
   const title =
-    args.title?.trim() ||
-    `신규 ${programLabel} 프로그램 (${dayjs().format('YYYY-MM-DD HH:mm:ss')})`
+    args.title?.trim() || `신규 ${programLabel} 프로그램 (${dayjs().format('YYYY-MM-DD HH:mm:ss')})`
   const mainTitle = title
   const participantTypes: GeneralProgramParticipantType[] = isCompanySchool
     ? ['school_institution', 'teacher_instructor']
@@ -239,7 +238,9 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
       ? readRegistrationOverlaySponsorId('economy')
       : readRegistrationOverlaySponsorId('general')
   const sponsorId =
-    args.sponsorId?.trim() || overlaySponsorId || (isTrainedTeachers ? '' : resolveDefaultSponsorId())
+    args.sponsorId?.trim() ||
+    overlaySponsorId ||
+    (isTrainedTeachers ? '' : resolveDefaultSponsorId())
 
   const rounds: ProgramRound[] = [
     {
@@ -281,13 +282,18 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
     ? resolveScheduleTypeDetailedProgramNameFromDetails(scheduleDetails)
     : undefined
   const sponsorManagementIds = isCompanySchool
-    ? (sponsorId ? [sponsorId] : undefined)
+    ? sponsorId
+      ? [sponsorId]
+      : undefined
     : (() => {
         if (isTrainedTeachers) {
           const overlay = getProgramRegistrationOverlayRecord()
           const raw = overlay['trainedTeachersRegistration.basicInfo.sponsorIds']
           if (Array.isArray(raw)) {
-            const ids = raw.map(String).map(id => id.trim()).filter(Boolean)
+            const ids = raw
+              .map(String)
+              .map(id => id.trim())
+              .filter(Boolean)
             if (ids.length > 0) return ids
           }
           return sponsorId ? [sponsorId] : []
@@ -338,9 +344,7 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
     generalProgramAudience,
     // 교육받은 교사 — 일반과 동일하게 등록 UI의 교육 진행 구조·회차 유형 반영 (1사1교만 curriculum 고정)
     generalProgramEducationStructure: isCompanySchool ? 'curriculum' : args.programType,
-    generalProgramSessionRound: isCompanySchool
-      ? undefined
-      : (args.sessionRoundType ?? 'single'),
+    generalProgramSessionRound: isCompanySchool ? undefined : (args.sessionRoundType ?? 'single'),
     generalCommonInfo: isCompanySchool
       ? {
           educationScheduleMode: 'period',
@@ -357,9 +361,7 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
                 '올바른 면접 태도에 대해 알아보고, 직접 면접 체험을 해보는 시간을 갖습니다.',
             },
           ],
-          educationScheduleLines: [
-            formatDateRangeDot(`${y}-03-01`, `${y}-12-31`),
-          ],
+          educationScheduleLines: [formatDateRangeDot(`${y}-03-01`, `${y}-12-31`)],
           wageGradeRows: [
             {
               grade: '1급 강사비',
@@ -375,7 +377,7 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
             },
           ],
           paymentItems: '교통비(일사일교), 숙박비(일사일교)',
-          deductionItems: '일용근로자 원천징수세액',
+          deductionItems: '원천징수세액',
           participantRecruitmentInfo: {
             preEducationNoticeRequired: true,
             maxAssignableInstructors: 2,
@@ -463,11 +465,9 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
         },
         { wizardKv: peekGeneralRegistrationWizardRhf() != null }
       )
-  const withRecruit = applyGeneralRecruitOverlayToProgram(
-    withRegistration,
-    recruitOverlay,
-    { preferOverlay: true }
-  )
+  const withRecruit = applyGeneralRecruitOverlayToProgram(withRegistration, recruitOverlay, {
+    preferOverlay: true,
+  })
 
   if (!isTrainedTeachers) {
     return withPersistedTargetLevels({
@@ -665,9 +665,8 @@ async function bindCreatedProgramMediaOrRollback(
     await bind()
     return created
   } catch (error) {
-    const { deleteAdminProgramRemote } = await import(
-      '@/features/program/general/api/programs-api-client'
-    )
+    const { deleteAdminProgramRemote } =
+      await import('@/features/program/general/api/programs-api-client')
     await deleteAdminProgramRemote(created.id).catch(rollbackError => {
       console.error('[registration] rollback created program failed', created.id, rollbackError)
     })
@@ -690,7 +689,9 @@ export async function persistGeneralProgramRegistration(args: {
     GeneralRegistrationEditorExtras,
     'programType' | 'sessionRoundType' | 'educationScheduleMode' | 'scheduleCurriculumDetailCount'
   >
-  preparedFormBindings?: import('@/features/program/general/lib/build-registration-create-form-bindings').RegistrationCreateFormBindingsPayload | null
+  preparedFormBindings?:
+    | import('@/features/program/general/lib/build-registration-create-form-bindings').RegistrationCreateFormBindingsPayload
+    | null
   /** 일반 위저드 RHF Independent 스냅샷. 있으면 overlay apply snapshot을 쓰지 않는다. */
   programOverride?: Program
 }): Promise<Program> {
@@ -746,9 +747,7 @@ export async function persistGeneralProgramRegistration(args: {
   }
 
   if (variant === 'economy' && shouldUseCompanySchoolRemoteApi()) {
-    const { createCompanySchoolProgram } = await import(
-      '@/features/program/1c-1s/api/service'
-    )
+    const { createCompanySchoolProgram } = await import('@/features/program/1c-1s/api/service')
     const created = await createCompanySchoolProgram(programForCreate, args.preparedFormBindings)
     return bindCreatedProgramMediaOrRollback(created, () =>
       bindRecruitDetailMediaAfterProgramCreate(created.id, recruitMediaOverlay)
@@ -756,9 +755,8 @@ export async function persistGeneralProgramRegistration(args: {
   }
 
   if (variant === 'trainedTeachers' && shouldUseTrainedTeacherProgramsRemoteApi()) {
-    const { createTrainedTeacherProgram } = await import(
-      '@/features/program/trained-teachers/api/service'
-    )
+    const { createTrainedTeacherProgram } =
+      await import('@/features/program/trained-teachers/api/service')
     const created = await createTrainedTeacherProgram(programForCreate, args.preparedFormBindings)
     return bindCreatedProgramMediaOrRollback(created, () =>
       bindRecruitDetailMediaAfterProgramCreate(created.id, recruitMediaOverlay)

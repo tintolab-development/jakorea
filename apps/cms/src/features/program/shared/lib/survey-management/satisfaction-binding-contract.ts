@@ -60,7 +60,7 @@ export function formatSatisfactionWindowExampleLine(windowDays: number): string 
     deadline.getMonth() + 1,
     deadline.getDate()
   )
-  return `예) 1회차 ${sessionEnd} 12:00 종료 → ${deadlineLabel} 23:59 마감`
+  return `(ex. 1회차 ${sessionEnd} 12:00 종료 → ${deadlineLabel} 23:59 마감)`
 }
 
 export const SATISFACTION_ONCE_AT_END_PROGRAM_CLOSE_HINT =

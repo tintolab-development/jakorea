@@ -26,6 +26,24 @@ export interface SchoolDetailSelectAssignConfirmModalProps {
   /** "강사 배정" 클릭 시 호출 */
   onConfirm: (payload: PermissionModalPayload) => void
   confirmLoading?: boolean
+  /**
+   * `general-institution` — 일반 기관형 시안 09-1·11-1(강사 (일괄) 선택 배정 안내 · 배정).
+   * 시안에 알림 발송 선택이 없어 즉시 발송으로 확정한다. 기본은 기존 문구·알림 선택.
+   */
+  copyVariant?: 'default' | 'general-institution'
+}
+
+/** 시안 09-1(단건)·11-1(일괄) 본문 */
+export function buildGeneralInstitutionSelectAssignDescription(
+  instructorNames: string[],
+  schoolName: string,
+  currentCount: number,
+  requiredCount: number
+): string {
+  const unique = Array.from(new Set(instructorNames.map(name => name.trim()).filter(Boolean)))
+  const first = unique[0] ?? '강사'
+  const subject = unique.length > 1 ? `[**${first}**] 님 외 ${unique.length - 1}명` : `[**${first}**] 님`
+  return `${subject}을 [**${schoolName}**]에 배정하시겠습니까?\n(현재 배정 인원 : ${currentCount}/${requiredCount}명)`
 }
 
 function formatBracketedBoldNames(names: string[]): string {
@@ -55,7 +73,33 @@ export function SchoolDetailSelectAssignConfirmModal({
   requiredCount,
   onConfirm,
   confirmLoading = false,
+  copyVariant = 'default',
 }: SchoolDetailSelectAssignConfirmModalProps) {
+  if (copyVariant === 'general-institution') {
+    const uniqueCount = new Set(instructorNames.map(name => name.trim()).filter(Boolean)).size
+    return (
+      <PermissionModal
+        open={open}
+        onCancel={onCancel}
+        onConfirm={onConfirm}
+        confirmLoading={confirmLoading}
+        variant="approve"
+        title={uniqueCount > 1 ? '강사 일괄 선택 배정 안내' : '강사 선택 배정 안내'}
+        width={SELECT_ASSIGN_CONFIRM_MODAL_WIDTH}
+        message={buildGeneralInstitutionSelectAssignDescription(
+          instructorNames,
+          schoolName,
+          currentCount,
+          requiredCount
+        )}
+        confirmLabel="배정"
+        confirmVariant="primary"
+        requireReason={false}
+        showNotifyTiming={false}
+      />
+    )
+  }
+
   return (
     <PermissionModal
       open={open}

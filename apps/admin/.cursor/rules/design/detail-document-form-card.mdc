@@ -55,33 +55,30 @@ alwaysApply: true
 }
 ```
 
-### 카드
+### 카드 — 공통 클래스 사용 (피처 CSS에 복사 금지)
+
+`shared/ui/list-table-layout.css`의 **`admin-document-card`** · **`admin-document-card__body`** 를 붙인다.
+카드 fill(`flex:1` · `height:100%` · `margin-bottom:0`) · 툴바 `flex-shrink:0; align-items:center` · 본문 세로 flex는 공통이 맡는다.
+
+```tsx
+<div className="admin-list-card admin-document-card feature-card">
+  <div className="admin-list-toolbar">…</div>
+  <div className="admin-document-card__body feature-card__body">…</div>
+</div>
+```
 
 ```css
-.feature-card.admin-list-card {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  height: 100%;
-  margin-bottom: 0;
-}
-
-.feature-card .admin-list-toolbar {
-  flex-shrink: 0;
-  align-items: center;
-}
-
+/* 피처에는 고유 값만 — 예: 본문 섹션 간격 */
 .feature-card__body {
-  flex: 1 1 auto;
-  min-height: 0;
-  /* 본문은 상단 정렬 — 아래 빈 여백은 카드 흰 배경 */
+  gap: 24px;
 }
 ```
 
+- 내용만큼 늘어나는 **페이지 스크롤형** 카드(`height: auto`)는 공통 클래스를 쓰지 않는다 (예: 이사회 관리).
+
 - 빈 여백은 **테이블 셀을 늘려 채우지 않는다** (카드 배경이 흰 면).
 - 참고: `pages/ja-korea/bi/page.css`, `worldwide/page.css`, **`principles/page.css`**  
-  · 카드: `features/ja-korea-bi/ui/bi-form.css`, `operating-principles/ui/principles-form-card.css`
+  · 카드: `features/ja-korea-bi/ui/bi-form.*`, `operating-principles/ui/principles-form-card.*`, `reports-disclosure/ui/nts-disclosure-card.*`
 
 ### 금지
 
@@ -122,27 +119,23 @@ alwaysApply: true
 | | ✅ | ❌ |
 |--|----|----|
 | 셀/필드 | 동일 `CmsInput` / `CmsTextArea` 유지 | view는 `<span>`, edit만 Input 마운트 |
-| 읽기 | `readOnly={!isEditing}` · `tabIndex={isEditing ? 0 : -1}` | mode 전환 시 언마운트·리마운트 |
-| 스타일 | `…-field--readonly` / `…-field--edit` (보더 슬롯 1px 유지, 색만 변경) | readonly일 때 `border: none`으로 1px 점프 |
+| 읽기 | `readOnly={!isEditing}` + **`inlineReadOnly="slot" \| "text"`** (조회 시 탭 이동 제외 포함) | mode 전환 시 언마운트·리마운트 · 피처마다 `tabIndex` 반복 |
+| 스타일 | 조회 모양은 공통 `shared/ui/inline-readonly.css` · 피처는 `…-field--edit` 등 고유 규칙만 | 피처 CSS에 투명 보더·hover·cursor 블록 재선언 |
 | DetailInfoForm | 슬롯 스왑이 점프면 **`mode` 고정 + 한쪽 슬롯만** + `readOnly` | 매 전환마다 `view`/`edit` 서로 다른 트리 |
 | textarea | **고정 `rows`** + `cms-textarea--fixed-rows` + `resize: none` | 모드 전환과 함께 **`autoSize`** (측정 점프) |
 | 표 레이아웃 | `table-layout: fixed` · 행 `transition: none` | dnd 행에 상시 `transition` |
 | dnd-kit | `transition`은 **isDragging \|\| transform 일 때만** | 레이아웃 리플로우마다 위치 transition |
 
 ```tsx
-// ✅ GOOD — 조회/수정 동일 노드
+// ✅ GOOD — 조회/수정 동일 노드, 조회 모양은 prop 하나
 <CmsTextArea
-  className={
-    isEditing
-      ? 'principles-inline-field principles-inline-field--edit cms-textarea--fixed-rows'
-      : 'principles-inline-field principles-inline-field--readonly cms-textarea--fixed-rows'
-  }
+  className={isEditing ? 'principles-inline-field principles-inline-field--edit' : 'principles-inline-field'}
   inputSize="medium"
   width="100%"
   rows={2} // 1 | 2 | 3 — 스펙 최소
   value={draftValue}
   readOnly={!isEditing}
-  tabIndex={isEditing ? 0 : -1}
+  inlineReadOnly="text" // 셀 텍스트처럼 (보더 슬롯만 남기려면 "slot")
   onChange={e => {
     if (!isEditing) return
     …
@@ -153,18 +146,16 @@ alwaysApply: true
 {isEditing ? <CmsTextArea autoSize … /> : <span className="preline">{text}</span>}
 ```
 
-### 보더 슬롯 (1px jump 방지)
+### 조회 모양 — `inlineReadOnly` (공통 `shared/ui/inline-readonly.css`)
 
-```css
-/* 조회·수정 모두 border-width: 1px 유지 — 색만 transparent ↔ line */
-.feature-card .inline-field--readonly .cms-input__control,
-.feature-card .inline-field--readonly .cms-textarea__control {
-  border-color: transparent !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  cursor: default;
-}
-```
+| 값 | 조회 시 | 쓰는 곳 |
+|----|---------|---------|
+| `slot` | 보더 1px 슬롯 유지 · 색·배경·그림자 투명 · hover/focus 무변화 · 커서 기본 | 조회·수정 글자 위치를 입력 칸 기준으로 맞출 때 (국세청 공시, JA의 역사) |
+| `text` | `slot` + 컨트롤·입력 패딩·보더·최소 높이 제거 → 셀 패딩 12×16만 남음 · 줄높이 150% | 표·DetailInfoForm 조회를 일반 셀 텍스트처럼 (오시는 길, 운영원칙, 조직문화) |
+
+- 글자 크기·정렬은 화면마다 달라 공통에 없다 → 피처에서 `.feature .cms-inline-readonly textarea.ant-input { … }`로만 덧붙인다.
+- 조회 상태를 CSS에서 가리킬 때는 `.cms-inline-readonly`를 쓴다 (`:has(.cms-inline-readonly)` 등). 피처 `--readonly` 클래스를 새로 만들지 않는다.
+- 텍스트영역 높이는 공통이 강제하지 않는다 (`autoSize` 인라인 높이 유지). 한 줄 고정 높이를 풀어야 하면 피처에서만 `height: auto`.
 
 ### rows 가이드 (fixed, autoSize로 모드 전환하지 말 것)
 
@@ -205,6 +196,10 @@ transition: isDragging || transform ? transition : undefined,
 | 라벨 폭 | 시안 기준 보통 **160px** |
 | 줄바꿈 | 인라인 유지 시 textarea `white-space` / 레거시 span `pre-line` |
 | 행 높이 | 콘텐츠·고정 rows에 맞게 — **불필요한 별도 tall height 금지** |
+
+- 라벨 폭이 **180 · 200 · 220 · 240**이면 `DetailInfoForm.Field`의 **`labelWidth` prop**만 쓴다. Field가 폭 변수를 인라인으로 넣으므로 CSS로 `--detail-info-label-w`·`grid-template-columns`·라벨 `width/min/max`를 다시 쓰지 않는다.
+- 패키지 기본값(라벨 패딩 8×16 · 값 패딩 12×16 · 행 52 · 세로 중앙)과 같은 값은 재선언하지 않는다.
+- 160 등 prop에 없는 폭만 CSS로 덮는다:
 
 ```css
 .feature-card .detail-info-form__field {
@@ -254,7 +249,8 @@ transition: isDragging || transform ? transition : undefined,
 - [ ] 페이지 viewport fill (`calc(100vh - header - 64px)`)
 - [ ] 카드 `flex:1` · 흰 면으로 하단 여백
 - [ ] 툴바 `table-title` + 액션 동일 행
-- [ ] 조회↔수정: **동일 컨트롤** · `readOnly` · 보더 슬롯 유지 (span↔input 스왑 없음)
+- [ ] 조회↔수정: **동일 컨트롤** · `readOnly` + `inlineReadOnly` (span↔input 스왑 없음 · 피처 CSS에 조회 투명 블록 없음)
+- [ ] 카드 fill은 `admin-document-card` / `admin-document-card__body` (피처 CSS에 fill 블록 없음)
 - [ ] textarea `rows` 고정 · `fixed-rows` · **모드 전환용 autoSize 없음**
 - [ ] dnd 행 transition 억제 (드래그 외)
 - [ ] mutation 실패 시 invalidate/refetch
@@ -270,4 +266,4 @@ transition: isDragging || transform ? transition : undefined,
 | Worldwide fill | `features/ja-korea-worldwide/ui/worldwide-form.css` |
 | Global Value 테이블 edit | `pages/ja-korea/global-value/page.tsx` (dnd + 즉시 toggle) |
 
-**Last updated:** 2026-08-06
+**Last updated:** 2026-11-10

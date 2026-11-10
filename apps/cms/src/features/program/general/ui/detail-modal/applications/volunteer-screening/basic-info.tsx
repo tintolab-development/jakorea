@@ -82,11 +82,20 @@ function resolveStatusField(
     }
   }
 
+  // 시안 03-3(9781:50571) — 서류 불합격이면 `사유 : …`
+  const rejectionReason =
+    applicant.documentScreeningStatus === 'fail' ? applicant.documentRejectionReason?.trim() : ''
   return {
     label: '1차 서류 심사 현황',
     value: (
       <div className="applicant-institution-basic-info__approval-status-row">
         <GeneralDocumentScreeningStatusText status={applicant.documentScreeningStatus} />
+        {rejectionReason ? (
+          <>
+            <span className="applicant-institution-basic-info__approval-status-vbar" aria-hidden />
+            <span>사유 : {rejectionReason}</span>
+          </>
+        ) : null}
         {onResendDocumentNotificationClick ? (
           <>
             <span className="applicant-institution-basic-info__approval-status-vbar" aria-hidden />

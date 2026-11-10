@@ -370,7 +370,7 @@ test.describe('UJAT 신규 등록 Typed RHF 격리 Mock E2E', () => {
     await expect(page.getByRole('button', { name: /신규 등록/ })).toBeVisible({ timeout: 20_000 })
 
     await page.getByRole('button', { name: /신규 등록/ }).click()
-    const notice = page.getByRole('dialog').filter({ hasText: '임시저장 이력 안내' })
+    const notice = page.getByRole('dialog').filter({ hasText: '임시 저장 이력 안내' })
     await expect(notice).toBeVisible({ timeout: 20_000 })
     await notice.getByRole('radio', { name: '이어서 작성' }).check()
     await notice.getByRole('button', { name: '이어서 작성' }).click()
@@ -414,7 +414,7 @@ test.describe('UJAT 신규 등록 Typed RHF 격리 Mock E2E', () => {
     }
 
     await page.getByRole('button', { name: /신규 등록/ }).click()
-    const notice = page.getByRole('dialog').filter({ hasText: '임시저장 이력 안내' })
+    const notice = page.getByRole('dialog').filter({ hasText: '임시 저장 이력 안내' })
     await expect(notice).toBeVisible({ timeout: 20_000 })
     await notice.getByRole('radio', { name: '이어서 작성' }).check()
     await notice.getByRole('button', { name: '이어서 작성' }).click()
@@ -500,7 +500,7 @@ test.describe('UJAT 신규 등록 Typed RHF 격리 Mock E2E', () => {
     )
 
     await page.getByRole('button', { name: /신규 등록/ }).click()
-    const notice = page.getByRole('dialog').filter({ hasText: '임시저장 이력 안내' })
+    const notice = page.getByRole('dialog').filter({ hasText: '임시 저장 이력 안내' })
     await expect(notice).toBeVisible({ timeout: 20_000 })
     await notice.getByRole('radio', { name: '이어서 작성' }).check()
     await notice.getByRole('button', { name: '이어서 작성' }).click()

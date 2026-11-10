@@ -43,6 +43,7 @@ export function ParticipantRecruitmentPreviewModal({
   audience = 'institutions',
   programKind = 'general',
   extraOverlay,
+  title,
 }: {
   open: boolean
   onClose: () => void
@@ -53,6 +54,8 @@ export function ParticipantRecruitmentPreviewModal({
   programKind?: 'general' | 'ujat'
   /** 상세 수정 미리보기 — 폼 overlay. 저장본·peek보다 나중에 덮는다. */
   extraOverlay?: Record<string, unknown>
+  /** 상단 제목 — 생략 시 대상별 「… 모집 폼 미리보기」 */
+  title?: string
 }) {
   const posterUrl = usePreviewPosterUrl(program, open, audience, extraOverlay)
 
@@ -83,7 +86,7 @@ export function ParticipantRecruitmentPreviewModal({
     <PlatformPreviewModal
       open={open}
       onClose={onClose}
-      title={recruitmentUserPreviewHeaderTitle(audience)}
+      title={title ?? recruitmentUserPreviewHeaderTitle(audience)}
       message={message}
       zIndex={PARTICIPANT_RECRUITMENT_PREVIEW_MODAL_Z_INDEX}
     />

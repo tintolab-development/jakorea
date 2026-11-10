@@ -9,3 +9,14 @@ export const HideParagraphSelectionChromeContext = createContext(false)
 export function useHideParagraphSelectionChrome(): boolean {
   return useContext(HideParagraphSelectionChromeContext)
 }
+
+/**
+ * true면 `HideParagraphSelectionChromeContext`로 선택 chrome을 숨겨도 선택된 단락 카드의
+ * 청록 테두리(`paragraph-card--active`)만은 보여 준다. (일반 프로그램 등록 위저드 공통·모집 — 시안)
+ * 기본 false — 다른 위저드·미리보기는 기존 동작 유지.
+ */
+export const ShowParagraphActiveOutlineContext = createContext(false)
+
+export function useShowParagraphActiveOutline(): boolean {
+  return useContext(ShowParagraphActiveOutlineContext)
+}

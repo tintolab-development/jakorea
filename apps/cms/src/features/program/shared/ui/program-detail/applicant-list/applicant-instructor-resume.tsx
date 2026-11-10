@@ -29,6 +29,8 @@ export interface ApplicantInstructorResumeProps {
   layout?: ApplicantInstructorResumeLayout
   /** @deprecated layout="application"이면 무시. full일 때만 적용 */
   showFreeWritingSections?: boolean
+  /** full 레이아웃에서 「JA Korea 활동 경험」만 숨김 — 일반(기관형) 강사 신청 상세 시안. 기본 false */
+  hideJaKoreaSection?: boolean
 }
 
 function ResumeSectionTitle({ title, summary }: { title: string; summary: string }) {
@@ -45,6 +47,7 @@ export function ApplicantInstructorResume({
   instructor: d,
   layout = 'full',
   showFreeWritingSections = true,
+  hideJaKoreaSection = false,
 }: ApplicantInstructorResumeProps) {
   const isApplicationLayout = layout === 'application'
   const educationSummary = instructorEducationSectionDescription(d)
@@ -65,7 +68,7 @@ export function ApplicantInstructorResume({
         <InstructorResumeCareerCardBody d={d} />
       </section>
 
-      {isApplicationLayout ? null : (
+      {isApplicationLayout || hideJaKoreaSection ? null : (
         <section className="instructor-resume-section">
           <ResumeSectionTitle title="JA Korea 활동 경험" summary={jaKoreaSummary} />
           <InstructorResumeJaKoreaCardBody d={d} />

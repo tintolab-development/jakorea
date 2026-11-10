@@ -9,8 +9,8 @@
 
 .cms-inline-readonly .cms-input__control,
 .cms-inline-readonly .cms-textarea__control,
-.cms-inline-readonly .cms-input__control:hover,
-.cms-inline-readonly .cms-textarea__control:hover {
+.cms-inline-readonly .cms-input__control:is(:hover, :focus-within),
+.cms-inline-readonly .cms-textarea__control:is(:hover, :focus-within) {
   border-color: transparent !important;
   background: transparent !important;
   box-shadow: none !important;
@@ -35,8 +35,9 @@
   height: auto !important;
 }
 
+/* 한 줄 텍스트영역(`cms-textarea--rows-1`)의 좌우 패딩·40px 줄높이보다 앞서도록 특이도를 올린다 */
 .cms-inline-readonly--text .ant-input,
-.cms-inline-readonly--text textarea.ant-input {
+.cms-textarea.cms-inline-readonly.cms-inline-readonly--text .cms-textarea__inner textarea.ant-input {
   min-height: 0 !important;
   padding: 0 !important;
   line-height: 150% !important;

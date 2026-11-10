@@ -1,6 +1,7 @@
 /**
  * 일반 프로그램 — 기관 유형 참여자 신청 상세 (신청 정보 탭)
  * 스크린샷 시안: 기본 정보 / 안내 사항 / 진행 희망 교육 일정
+ * 승인 완료(일반 기관형): 교재명 | 합반 신청 여부 반반 행 — 시안 06-1·06-2
  */
 
 import { useMemo, type ReactNode } from 'react'
@@ -58,6 +59,8 @@ import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-
 import { resolveAffiliatedFinancialCompanyDisplay } from '@/features/program/1c-1s/lib/affiliated-financial-company-display'
 import { SponsorNameById } from '@/features/sponsor/ui/sponsor-name-by-id'
 import { TEXTBOOK_NOT_USED_OPTION_VALUE } from '@/features/program/general/lib/individual-applicant-textbook'
+import { shouldShowGeneralOrganizationApplicantTextbookField } from '@/features/program/general/lib/applicant-institution-textbook'
+import { isGeneralOrganizationProgram } from '@/features/program/general/lib/organization-merge-program-type'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import {
   alignCompanySchoolScheduleDates,
@@ -140,9 +143,11 @@ export interface ApplicantGeneralInstitutionBasicInfoProps {
 function ProgramApprovalStatusValue({
   institution,
   onResendNotificationClick,
+  rejectionReasonFormat,
 }: {
   institution: ApplicantSchoolRow
   onResendNotificationClick?: () => void
+  rejectionReasonFormat?: 'parenthesized' | 'plain'
 }) {
   return (
     <ProgramApprovalStatusDetailValue
@@ -150,6 +155,7 @@ function ProgramApprovalStatusValue({
       participationRejectionReason={institution.participationRejectionReason}
       approvalNotificationSentAt={institution.approvalNotificationSentAt}
       onResendNotificationClick={onResendNotificationClick}
+      rejectionReasonFormat={rejectionReasonFormat}
     />
   )
 }
@@ -308,13 +314,26 @@ export function ApplicantGeneralInstitutionBasicInfo({
     shouldShowInstitutionApplicationGuidanceParagraph(institutionApplicationBridge)
   /** 합반 신청 — 승인 완료 시 노출 (교재명은 참여 기관 상세에서만 노출) */
   const showCombinedClass = institution.approvalStatus === 'approved' && !hideCombinedClass
+  /** 일반(기관형) 승인 완료 — 시안 06-1·06-2: 교재명 | 합반 신청 여부 반반 행 (1사1교는 승인 현황 옆 기존 배치) */
+  const showGeneralOrganizationTextbook = shouldShowGeneralOrganizationApplicantTextbookField(
+    program,
+    institution.approvalStatus
+  )
+  /** 일반 프로그램(기관형) 기관 신청 상세 시안 02-2 — 1사1교는 기존 동작 유지 */
+  const isGeneralOrganization = !isCompanySchool && isGeneralOrganizationProgram(program)
   const classAndCount: ReactNode =
     isEditMode && draft && onDraftChange ? (
       <InstitutionClassAndStudentCountEdit
         classCount={draft.classCount}
         studentCount={draft.studentCount}
         classCountOptions={classCountOptions}
-        numericClassCount={isCompanySchool}
+        // 시안 06-2(1141:240605) — 일반(기관형)도 학급 수는 숫자 입력. 상한은 모집 설정 학급 수(셀렉 옵션 수).
+        numericClassCount={isCompanySchool || isGeneralOrganization}
+        numericClassCountMax={
+          isGeneralOrganization && classCountOptions.length > 0
+            ? classCountOptions.length
+            : undefined
+        }
         onChange={patch => onDraftChange(patch)}
         errors={{
           classCount: validationErrors?.classCount,
@@ -577,6 +596,7 @@ export function ApplicantGeneralInstitutionBasicInfo({
                 <ProgramApprovalStatusValue
                   institution={institution}
                   onResendNotificationClick={onResendNotificationClick}
+                  rejectionReasonFormat={isGeneralOrganization ? 'plain' : 'parenthesized'}
                 />
               }
             />
@@ -589,15 +609,28 @@ export function ApplicantGeneralInstitutionBasicInfo({
               />
             ) : null}
           </DetailInfoForm.Row>
-          {showCombinedClass ? (
-            <DetailInfoForm.Row type="single">
-              <DetailInfoForm.Field
-                label="합반 신청 여부"
-                fullRow
-                readOnlyDisplay={!isEditMode || combinedClassReadOnly}
-                view={combinedClassViewValue}
-                edit={combinedClassEditValue}
-              />
+          {showCombinedClass || showGeneralOrganizationTextbook ? (
+            <DetailInfoForm.Row
+              type={showCombinedClass && showGeneralOrganizationTextbook ? 'double' : 'single'}
+            >
+              {showGeneralOrganizationTextbook ? (
+                <DetailInfoForm.Field
+                  label="교재명"
+                  fullRow={!showCombinedClass}
+                  readOnlyDisplay={!isEditMode}
+                  view={textbookViewValue}
+                  edit={textbookEditValue}
+                />
+              ) : null}
+              {showCombinedClass ? (
+                <DetailInfoForm.Field
+                  label="합반 신청 여부"
+                  fullRow={!showGeneralOrganizationTextbook}
+                  readOnlyDisplay={!isEditMode || combinedClassReadOnly}
+                  view={combinedClassViewValue}
+                  edit={combinedClassEditValue}
+                />
+              ) : null}
             </DetailInfoForm.Row>
           ) : null}
         </DetailInfoForm>
@@ -716,7 +749,7 @@ export function ApplicantGeneralInstitutionBasicInfo({
 
       {showGuidanceSection ? (
         <DetailInfoForm
-          title={isCompanySchoolLayout ? '안내사항' : '안내 사항'}
+          title={isCompanySchoolLayout || isGeneralOrganization ? '안내사항' : '안내 사항'}
           mode={basicInfoFormMode}
         >
           <DetailInfoForm.Row type="single">

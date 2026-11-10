@@ -25,6 +25,7 @@ import {
   CmsSelect,
   FilterTableLayout,
   FilterTableToolbarButton,
+  showRegisterCompletedAlert,
   showUpdateCompletedAlert,
   useCmsAlert,
 } from '@/shared/ui'
@@ -198,6 +199,15 @@ export interface SchoolDetailStudentListSectionProps {
   studentListInfoEditComingSoonAlert?: boolean
   /** 명단 저장 후 함께 무효화할 유형별 기관 신청 상세 키 — 미지정 시 일반 기관 상세만 */
   rosterDependentQueryKeys?: readonly QueryKey[]
+  /**
+   * 일반 기관형 참여 기관 상세 — 학생 추가 API 저장 성공 시 「등록 완료」 안내(시안 05-2).
+   * 기본 false(교육받은 교사·1사1교 모달 등 기존 동작 유지).
+   */
+  showAddStudentCompletedAlert?: boolean
+  /** 학생 추가 등록 팝업 설명 문구 대체(시안 05-1). 미지정 시 기본 문구 */
+  addStudentModalDescription?: string
+  /** 일반 기관형 시안 03-2 — 정보 수정 모드에서 엑셀 다운로드 숨김. 기본 false */
+  hideExcelInEditMode?: boolean
   onIssueCertificates?: () => void
   onEditInfo?: () => void
   onAddStudent?: () => void
@@ -223,6 +233,9 @@ export function SchoolDetailStudentListSection({
   readOnly = false,
   studentListInfoEditComingSoonAlert = false,
   rosterDependentQueryKeys,
+  showAddStudentCompletedAlert = false,
+  addStudentModalDescription,
+  hideExcelInEditMode = false,
   onIssueCertificates: _onIssueCertificates,
   onEditInfo,
   onAddStudent,
@@ -870,6 +883,7 @@ export function SchoolDetailStudentListSection({
           setSelectedStudentKeys([])
           setAddStudentModalOpen(false)
           onAddStudent?.()
+          if (showAddStudentCompletedAlert) showRegisterCompletedAlert()
         } catch (error) {
           const conflictAlert = resolveStudentRosterCommitErrorAlert(error)
           if (conflictAlert) {
@@ -894,6 +908,7 @@ export function SchoolDetailStudentListSection({
       onAddStudent,
       organizationApplicationKey,
       rosterRemote,
+      showAddStudentCompletedAlert,
       showAlert,
       studentList,
     ]
@@ -1506,6 +1521,7 @@ export function SchoolDetailStudentListSection({
         title="참여 학생 목록"
         description={`총 ${displayCount}건`}
         actions={studentListToolbarActions}
+        hideExcelDownload={hideExcelInEditMode && isStudentListEditMode}
         excelExport={{
           accessLog: { downloadKind: 'PROGRAM_STUDENT_LIST_EXPORT', containedPiiTypes: ['NAME'] },
           columns: studentColumnsView,
@@ -1576,6 +1592,7 @@ export function SchoolDetailStudentListSection({
         onCancel={() => setAddStudentModalOpen(false)}
         onAdd={handleAddStudent}
         gradeClassOptions={addStudentGradeClassOptions}
+        description={addStudentModalDescription}
       />
       <ConfirmModal
         open={editUnmaskConfirmOpen}
