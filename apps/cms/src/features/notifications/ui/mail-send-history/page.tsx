@@ -25,18 +25,19 @@ import '@/pages/programs/program-list-page.css'
 import '@/features/notifications/ui/alimtalk-send-history/page.css'
 import './page.css'
 
+/** 시안 6289:93443 — 합계 2168(스크롤 X) */
 const COL_W = {
   no: 80,
-  requestAt: 180,
-  sendAt: 180,
-  receiveAt: 180,
-  reservedAt: 180,
-  subject: 280,
+  requestAt: 200,
+  sendAt: 200,
+  receiveAt: 200,
+  reservedAt: 200,
+  subject: 468,
   senderInfo: 200,
   receiverInfo: 200,
-  broadcastTiming: 100,
-  sendStatus: 120,
-  receiveStatus: 120,
+  broadcastTiming: 140,
+  sendStatus: 140,
+  receiveStatus: 140,
 } as const
 
 const TABLE_SCROLL_X = Object.values(COL_W).reduce((sum, width) => sum + width, 0)
@@ -109,7 +110,7 @@ export function MailSendHistoryPage() {
           displayTotal === 0 ? '-' : displayTotal - index,
       },
       {
-        title: '요청일시',
+        title: '요청 일시',
         dataIndex: 'requestAt',
         key: 'requestAt',
         width: COL_W.requestAt,
@@ -164,7 +165,7 @@ export function MailSendHistoryPage() {
         align: 'center',
       },
       {
-        title: '발송일시',
+        title: '발송 일시',
         dataIndex: 'sentAt',
         key: 'sentAt',
         width: COL_W.sendAt,
@@ -172,7 +173,7 @@ export function MailSendHistoryPage() {
         render: (value: string) => formatDateTime(value),
       },
       {
-        title: '수신일시',
+        title: '수신 일시',
         dataIndex: 'receivedAt',
         key: 'receivedAt',
         width: COL_W.receiveAt,
@@ -180,7 +181,7 @@ export function MailSendHistoryPage() {
         render: (value: string) => formatDateTime(value),
       },
       {
-        title: '예약일시',
+        title: '예약 일시',
         dataIndex: 'reservedAt',
         key: 'reservedAt',
         width: COL_W.reservedAt,

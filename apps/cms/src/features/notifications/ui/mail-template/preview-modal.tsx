@@ -9,6 +9,7 @@ import {
   formatMailPreviewDateTime,
   formatMailPreviewPerson,
   formatMailPreviewRecipient,
+  MAIL_SEND_PREVIEW_TITLE,
   type MailPreviewAttachment,
   type MailPreviewRecipient,
 } from '@/features/notifications/model/mail-template/preview'
@@ -16,6 +17,8 @@ import './preview-modal.css'
 
 type PreviewModalProps = {
   open: boolean
+  /** 기본 「메일 미리보기」 — 템플릿 미리보기 화면은 MAIL_TEMPLATE_PREVIEW_TITLE */
+  title?: string
   subject: string
   bodyHtml: string
   senderName?: string
@@ -28,11 +31,16 @@ type PreviewModalProps = {
   onEdit?: () => void
   /** 템플릿 목록 미리보기에서만 — 삭제 확인 */
   onDelete?: () => void
+  /** 시안 「템플릿 사용」(주색) — 목록: 발송 화면으로 이동 / 발송 피커: 템플릿 선택 */
+  onUseTemplate?: () => void
+  /** 현재 조건에서 사용 불가 템플릿 — 버튼 비활성 + 사유 title */
+  useTemplateDisabledReason?: string | null
   zIndex?: number
 }
 
 export function PreviewModal({
   open,
+  title = MAIL_SEND_PREVIEW_TITLE,
   subject,
   bodyHtml,
   senderName,
@@ -43,6 +51,8 @@ export function PreviewModal({
   onClose,
   onEdit,
   onDelete,
+  onUseTemplate,
+  useTemplateDisabledReason,
   zIndex,
 }: PreviewModalProps) {
   const previewSubject = useMemo(() => applyMailPreviewTokens(subject), [subject])
@@ -50,13 +60,14 @@ export function PreviewModal({
   const sender = formatMailPreviewPerson(senderName, senderEmail)
   const attachmentLines = attachments.map(formatMailPreviewAttachment).filter(Boolean)
   const hasRecipient = recipient != null
-  const showListActions = onEdit != null || onDelete != null
+  const showListActions = onEdit != null || onDelete != null || onUseTemplate != null
+  const useTemplateDisabled = Boolean(useTemplateDisabledReason)
 
   return (
     <ContentModal
       open={open}
       onCancel={onClose}
-      title="메일 미리보기"
+      title={title}
       size="medium"
       zIndex={zIndex}
       className="mail-template-preview-modal"
@@ -73,8 +84,20 @@ export function PreviewModal({
                 </CmsButton>
               ) : null}
               {onEdit ? (
-                <CmsButton variant="primary" size="large" type="button" onClick={onEdit}>
+                <CmsButton variant="secondary" size="large" type="button" onClick={onEdit}>
                   수정
+                </CmsButton>
+              ) : null}
+              {onUseTemplate ? (
+                <CmsButton
+                  variant="primary"
+                  size="large"
+                  type="button"
+                  disabled={useTemplateDisabled}
+                  title={useTemplateDisabledReason ?? undefined}
+                  onClick={onUseTemplate}
+                >
+                  템플릿 사용
                 </CmsButton>
               ) : null}
             </div>
@@ -98,7 +121,7 @@ export function PreviewModal({
               </div>
             ) : null}
             <div className="mail-template-preview__meta-row">
-              <dt>첨부파일</dt>
+              <dt>첨부 파일</dt>
               <dd>
                 {attachmentLines.length > 0 ? (
                   attachmentLines.map(line => (

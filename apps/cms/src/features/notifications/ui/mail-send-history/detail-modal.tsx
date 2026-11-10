@@ -3,10 +3,12 @@ import { NotificationSendStatusText } from '@/features/notifications/ui/shared/s
 import { Spin } from 'antd'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsButton, ContentModal, useCmsAlert } from '@/shared/ui'
+import { AttachmentDownloadIcon } from '@/shared/ui/icons'
 import { RichTextViewer } from '@/shared/rich-text'
 import { downloadMailSendHistoryAttachment } from '@/features/notifications/model/mail-send-history/download-attachment'
 import type { MailSendHistoryRow } from '@/features/notifications/model/mail-send-history/types'
 import { NOTIFICATION_SEND_FAILURE_SNAPSHOT_HINT } from '@/features/notifications/model/shared/send-ux-copy'
+import { SenderNameEmail } from '@/features/notifications/ui/mail-template/sender-name-email'
 import './detail-modal.css'
 
 type DetailModalProps = {
@@ -78,7 +80,7 @@ export function DetailModal({ open, row, loading, onClose }: DetailModalProps) {
       className="mail-send-history-detail-modal"
       size="wide"
       footer={
-        <CmsButton variant="secondary" size="large" type="button" onClick={onClose}>
+        <CmsButton variant="cancel" size="medium" type="button" onClick={onClose}>
           닫기
         </CmsButton>
       }
@@ -100,7 +102,16 @@ export function DetailModal({ open, row, loading, onClose }: DetailModalProps) {
               <DetailInfoForm.Field label="수신일시" view={formatDateTime(row.receivedAt)} />
             </DetailInfoForm.Row>
             <DetailInfoForm.Row type="double">
-              <DetailInfoForm.Field label="발송자" view={sender} />
+              <DetailInfoForm.Field
+                label="발송자"
+                view={
+                  <SenderNameEmail
+                    name={row.senderName}
+                    email={row.senderEmail}
+                    fallback={sender}
+                  />
+                }
+              />
               <DetailInfoForm.Field label="수신자" view={receiver} />
             </DetailInfoForm.Row>
             <DetailInfoForm.Row type="double">
@@ -112,43 +123,69 @@ export function DetailModal({ open, row, loading, onClose }: DetailModalProps) {
             </DetailInfoForm.Row>
           </DetailInfoForm>
 
-          <div className="mail-send-history-detail-modal__mail">
-            <h3 className="mail-send-history-detail-modal__subject">{row.subject || '-'}</h3>
-            {bodyHtml ? (
-              <RichTextViewer
-                className="mail-send-history-detail-modal__body"
-                content={bodyHtml}
-                contentFormat="html"
-                maxHeight="none"
+          <DetailInfoForm
+            title="메일 내용"
+            hideHeader
+            mode="view"
+            className="mail-send-history-detail-modal__mail"
+          >
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field label="제목" fullRow view={row.subject?.trim() || '-'} />
+            </DetailInfoForm.Row>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="내용"
+                fullRow
+                view={
+                  bodyHtml ? (
+                    <RichTextViewer
+                      className="mail-send-history-detail-modal__body"
+                      content={bodyHtml}
+                      contentFormat="html"
+                      maxHeight="none"
+                    />
+                  ) : (
+                    '-'
+                  )
+                }
               />
-            ) : (
-              <p className="mail-send-history-detail-modal__body-empty">-</p>
-            )}
-            <div className="mail-send-history-detail-modal__attachments">
-              <span className="mail-send-history-detail-modal__attachments-label">첨부파일</span>
-              {attachments.length > 0 ? (
-                <ul className="mail-send-history-detail-modal__attachment-list">
-                  {attachments.map(item => (
-                    <li key={item.fileName}>
-                      <button
-                        type="button"
-                        className="mail-send-history-detail-modal__attachment-link"
-                        onClick={() => {
-                          void handleDownload(item.fileName)
-                        }}
-                      >
-                        {item.fileName}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <span className="mail-send-history-detail-modal__attachment-empty">
-                  첨부된 파일이 없습니다.
-                </span>
-              )}
-            </div>
-          </div>
+            </DetailInfoForm.Row>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="첨부 파일"
+                fullRow
+                view={
+                  attachments.length > 0 ? (
+                    <ul className="mail-send-history-detail-modal__attachment-list">
+                      {attachments.map(item => (
+                        <li key={item.fileName}>
+                          <button
+                            type="button"
+                            className="mail-send-history-detail-modal__attachment-link"
+                            onClick={() => {
+                              void handleDownload(item.fileName)
+                            }}
+                          >
+                            <AttachmentDownloadIcon
+                              size={20}
+                              className="mail-send-history-detail-modal__attachment-icon"
+                            />
+                            <span className="mail-send-history-detail-modal__attachment-name">
+                              {item.fileName}
+                            </span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <span className="mail-send-history-detail-modal__attachment-empty">
+                      첨부된 파일이 없습니다.
+                    </span>
+                  )
+                }
+              />
+            </DetailInfoForm.Row>
+          </DetailInfoForm>
         </div>
       ) : null}
     </ContentModal>

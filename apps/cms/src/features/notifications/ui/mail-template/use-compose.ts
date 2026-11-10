@@ -94,7 +94,7 @@ export function useMailCompose(
     initialContent: initialEditorHtml,
     contentFormat: 'html',
     resetKey,
-    placeholder: '내용을 작성하세요',
+    placeholder: '내용을 작성해 주세요',
     autofocus: false,
     extraExtensions: mailVariableExtensions,
     shouldRerenderOnTransaction: false,

@@ -34,7 +34,8 @@ export function useMailSendForm(open: boolean) {
   const [senderNameSeed, setSenderNameSeed] = useState<string>(MAIL_SEND_DEFAULT_SENDER.name)
   const [senderNameEpoch, setSenderNameEpoch] = useState(0)
   const [senderEmail, setSenderEmail] = useState<string>(MAIL_SEND_DEFAULT_SENDER.email)
-  const [sendTiming, setSendTiming] = useState<MailSendTiming>('immediate')
+  // 시안: 발송 시점 기본 미선택 (null) — 발송 시 「발송 시점을 선택해 주세요.」
+  const [sendTiming, setSendTiming] = useState<MailSendTiming | null>(null)
   const [scheduledAt, setScheduledAt] = useState<Dayjs | null>(null)
   const [composeInitial, setComposeInitial] = useState<MailComposeInitial>(EMPTY_MAIL_COMPOSE)
   const [composeNonce, setComposeNonce] = useState(0)
@@ -92,7 +93,7 @@ export function useMailSendForm(open: boolean) {
     setTemplateId(undefined)
     replaceSenderName(MAIL_SEND_DEFAULT_SENDER.name)
     setSenderEmail(MAIL_SEND_DEFAULT_SENDER.email)
-    setSendTiming('immediate')
+    setSendTiming(null)
     setScheduledAt(null)
     setComposeInitial(EMPTY_MAIL_COMPOSE)
     setComposeNonce(key => key + 1)
@@ -173,7 +174,8 @@ export function useMailSendForm(open: boolean) {
       useTemplate: mailSendUseTemplate(templateId),
       senderName: senderNameRef.current,
       senderEmail,
-      sendTiming,
+      // 미선택은 validateRequired에서 차단 — payload 타입은 선택값만 허용
+      sendTiming: sendTiming ?? 'immediate',
       scheduledAt: scheduledAt ? scheduledAt.toISOString() : null,
       subject: compose.getSubject(),
       bodyHtml: compose.getBodyHtml(),
@@ -182,7 +184,10 @@ export function useMailSendForm(open: boolean) {
     })
   }, [compose, programId, recipients, scheduledAt, sendTiming, senderEmail, templateId])
 
-  const validateRequired = useCallback(() => validateMailSendDraft(getDraft()), [getDraft])
+  const validateRequired = useCallback(
+    () => validateMailSendDraft(getDraft(), { sendTimingSelected: sendTiming != null }),
+    [getDraft, sendTiming]
+  )
 
   const getPreviewRecipient = useCallback((): MailPreviewRecipient | undefined => {
     if (recipients.length === 0) return { name: '', email: '', extraCount: 0 }

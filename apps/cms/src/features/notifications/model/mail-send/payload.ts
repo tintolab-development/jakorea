@@ -6,6 +6,7 @@ import {
 } from '@/features/notifications/model/send-program-id'
 import { validateMailSenderEmail } from '@/features/notifications/model/mail-template/sender-email'
 import { validateNotificationScheduledAt } from '@/features/notifications/model/send-scheduled-at'
+import { MAIL_SEND_TIMING_REQUIRED_MESSAGE } from './validate-send'
 
 const MAIL_VARIABLE_TOKEN_RE = /#\{[^{}]+\}/
 const MAIL_VARIABLE_ATTR_RE = /data-mail-variable\s*=/
@@ -47,8 +48,17 @@ export function buildMailSendPayload(draft: MailSendDraft): MailSendPayload {
   }
 }
 
-export function validateMailSendDraft(draft: MailSendDraft): string | null {
+export type ValidateMailSendDraftOptions = {
+  /** 시안: 발송 시점 기본 미선택 — false면 발송 차단 */
+  sendTimingSelected?: boolean
+}
+
+export function validateMailSendDraft(
+  draft: MailSendDraft,
+  options: ValidateMailSendDraftOptions = {}
+): string | null {
   if (!draft.templateId?.trim()) return '템플릿을 선택해 주세요.'
+  if (options.sendTimingSelected === false) return MAIL_SEND_TIMING_REQUIRED_MESSAGE
   const senderError = validateMailSenderEmail(draft.senderEmail)
   if (senderError) return senderError
   const scheduleError = validateNotificationScheduledAt({

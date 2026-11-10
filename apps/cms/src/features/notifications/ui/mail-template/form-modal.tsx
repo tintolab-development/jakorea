@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
-import { CmsButton, CmsInput, CmsInputIconClick, ConfirmModal, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CmsInput, ConfirmModal, useCmsAlert } from '@/shared/ui'
 import { MAIL_API_CHANNEL_TYPE } from '@/features/notifications/api/adapters/mail-channel'
 import { getNotificationsApiErrorMessage } from '@/features/notifications/api/get-notifications-api-error'
 import { shouldUseMailTemplatesRemoteApi } from '@/features/notifications/api/mail-template-service'
@@ -23,6 +23,7 @@ import type { MailTemplateItem } from '@/features/notifications/model/mail-templ
 import type { MailPreviewAttachment } from '@/features/notifications/model/mail-template/preview'
 import { ComposeFields } from './compose-fields'
 import { PreviewModal } from './preview-modal'
+import { MAIL_TEMPLATE_PREVIEW_TITLE } from '@/features/notifications/model/mail-template/preview'
 import {
   useMailTemplateForm,
   type MailTemplateFormDraft,
@@ -43,6 +44,9 @@ type BasicSettingsFieldsProps = {
   onSenderNameChange: (value: string) => void
   onSenderEmailChange: (value: string) => void
 }
+
+/** 시안: 발신자명·발신 메일 입력 고정 폭 */
+const MAIL_TEMPLATE_SENDER_FIELD_WIDTH = 240
 
 const BasicSettingsFields = memo(function BasicSettingsFields({
   templateName,
@@ -103,7 +107,7 @@ const BasicSettingsFields = memo(function BasicSettingsFields({
           edit={
             <CmsInput
               inputSize="small"
-              width="100%"
+              width={MAIL_TEMPLATE_SENDER_FIELD_WIDTH}
               allowClear={false}
               readOnly={senderNameReadOnly}
               placeholder={
@@ -128,7 +132,7 @@ const BasicSettingsFields = memo(function BasicSettingsFields({
           edit={
             <CmsInput
               inputSize="small"
-              width="100%"
+              width={MAIL_TEMPLATE_SENDER_FIELD_WIDTH}
               allowClear={false}
               placeholder="발신 메일을 입력해 주세요"
               value={senderEmail}
@@ -268,13 +272,6 @@ export function FormModal({
 
   const isEdit = mode === 'edit'
   const headerTitle = form.templateName.trim() || MAIL_TEMPLATE_NAME_PLACEHOLDER
-  const [titleEditing, setTitleEditing] = useState(false)
-
-  useEffect(() => {
-    if (!open) return
-    setTitleEditing(mode === 'create')
-  }, [open, mode])
-
   const handlePreview = () => {
     const draft = form.getDraft()
     setPreviewDraft({
@@ -330,20 +327,16 @@ export function FormModal({
         <div className="notification-fullpage-modal__shell">
           <header className="notification-fullpage-modal__title-row">
             <div className="notification-fullpage-modal__title-edit">
-              <CmsInputIconClick
-                value={form.templateName}
-                editing={titleEditing}
-                placeholder={MAIL_TEMPLATE_NAME_PLACEHOLDER}
-                onChange={form.setTemplateName}
-                onRequestEdit={() => setTitleEditing(true)}
-                onCommitEdit={() => setTitleEditing(false)}
-                inputAriaLabel={MAIL_TEMPLATE_NAME_PLACEHOLDER}
-                editButtonAriaLabel="템플릿명 수정"
-                containerClassName="notification-fullpage-modal__title-edit-row"
-                inputClassName="notification-fullpage-modal__title-input notification-fullpage-modal__title-input--editing"
-                textClassName="notification-fullpage-modal__title-text"
-                editButtonClassName="notification-fullpage-modal__title-edit-btn"
-              />
+              {/* 시안: 헤더는 템플릿명 표시만(연필·밑줄 없음) — 편집은 기본 설정 「템플릿명」 입력 */}
+              <span
+                className={
+                  form.templateName.trim()
+                    ? 'notification-fullpage-modal__title-text'
+                    : 'notification-fullpage-modal__title-text mail-template-form-modal__title-placeholder'
+                }
+              >
+                {headerTitle}
+              </span>
             </div>
             <button
               type="button"
@@ -361,7 +354,7 @@ export function FormModal({
                 {isEdit ? (
                   <>
                     <CmsButton variant="cancel" size="large" type="button" onClick={onClose}>
-                      닫기
+                      취소
                     </CmsButton>
                     <CmsButton
                       variant="delete"
@@ -388,7 +381,7 @@ export function FormModal({
                       disabled={submitting}
                       onClick={handleSubmit}
                     >
-                      수정
+                      저장
                     </CmsButton>
                   </>
                 ) : (
@@ -424,7 +417,12 @@ export function FormModal({
                 <section className="notification-fullpage-modal__widget">
                   <div className="mail-template-form-modal__section-head">
                     <div className="mail-template-form-modal__section-title-row">
-                      <h3 className="mail-template-form-modal__section-title">기본 설정</h3>
+                      <div className="mail-template-form-modal__section-title-group">
+                        <h3 className="mail-template-form-modal__section-title">기본 설정</h3>
+                        <p className="mail-template-form-modal__section-hint">
+                          {MAIL_SENDER_NAME_EMPTY_HINT}
+                        </p>
+                      </div>
                       {remote && senderListEmpty ? (
                         <CmsButton
                           variant="secondary"
@@ -441,9 +439,6 @@ export function FormModal({
                         </CmsButton>
                       ) : null}
                     </div>
-                    <p className="mail-template-form-modal__section-hint">
-                      {MAIL_SENDER_NAME_EMPTY_HINT}
-                    </p>
                   </div>
                   <BasicSettingsFields
                     templateName={form.templateName}
@@ -493,6 +488,7 @@ export function FormModal({
       </TealHeaderModal>
 
       <PreviewModal
+        title={MAIL_TEMPLATE_PREVIEW_TITLE}
         open={previewOpen}
         zIndex={1100}
         subject={previewDraft?.subject ?? ''}

@@ -8,6 +8,9 @@ import { parseNotificationSendProgramId } from '@/features/notifications/model/s
 import { dedupeMailSendRecipients } from './recipients'
 import type { MailSendRecipient } from './types'
 
+/** 시안: 발송 시점 기본 미선택 — 알림톡 ALIMTALK_SEND_TIMING_REQUIRED_MESSAGE 와 동일 문구 */
+export const MAIL_SEND_TIMING_REQUIRED_MESSAGE = '발송 시점을 선택해 주세요.'
+
 export const MAIL_SEND_CONFIRM_MESSAGE = '해당 내용으로 메일을 발송하시겠습니까?'
 
 export const MAIL_VARIABLE_EXCLUSION_GUIDE =

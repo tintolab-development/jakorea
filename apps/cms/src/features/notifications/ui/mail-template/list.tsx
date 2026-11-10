@@ -68,7 +68,9 @@ import { canAdminAction } from '@/shared/lib/admin-role-policy'
 import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
 import { DetailPanel } from './detail-panel'
 import { FormModal } from './form-modal'
+import { openMailSendWithTemplateSearchParams } from '@/features/notifications/model/mail-send/send-url'
 import { PreviewModal } from './preview-modal'
+import { MAIL_TEMPLATE_PREVIEW_TITLE } from '@/features/notifications/model/mail-template/preview'
 import { resolveMailTemplateBodyHtml } from '@/features/notifications/model/mail-template/resolve-body'
 import type { MailTemplateFormDraft } from './use-form'
 import '@/pages/programs/program-list-page.css'
@@ -579,6 +581,15 @@ export function MailTemplateList() {
     handleOpenEdit(selectedTemplate.id)
   }, [handleOpenEdit, selectedTemplate])
 
+  /** 시안 「템플릿 사용」 — 발송 풀페이지(?modal=send)를 해당 템플릿 지정 상태로 연다 */
+  const handlePreviewUseTemplate = useCallback(() => {
+    if (!selectedTemplate) return
+    setPreviewOpen(false)
+    setSearchParams(prev => openMailSendWithTemplateSearchParams(prev, selectedTemplate.id), {
+      replace: false,
+    })
+  }, [selectedTemplate, setSearchParams])
+
   const handlePreviewDelete = useCallback(() => {
     if (!selectedTemplate) return
     setPreviewOpen(false)
@@ -912,6 +923,7 @@ export function MailTemplateList() {
         bodyError={formBodyError}
       />
       <PreviewModal
+        title={MAIL_TEMPLATE_PREVIEW_TITLE}
         open={previewOpen && previewTemplate != null}
         subject={previewTemplate?.subject ?? ''}
         bodyHtml={resolveMailTemplateBodyHtml(
@@ -928,6 +940,7 @@ export function MailTemplateList() {
         onClose={() => setPreviewOpen(false)}
         onEdit={handlePreviewEdit}
         onDelete={handlePreviewDelete}
+        onUseTemplate={handlePreviewUseTemplate}
       />
     </div>
   )

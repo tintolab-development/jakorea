@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { ModalCloseIcon } from '@/shared/ui/icons'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
@@ -14,10 +15,15 @@ import {
 } from '@/features/notifications/model/mail-send/payload'
 import { ComposeFields } from '@/features/notifications/ui/mail-template/compose-fields'
 import { PreviewModal } from '@/features/notifications/ui/mail-template/preview-modal'
+import { MAIL_TEMPLATE_PREVIEW_TITLE } from '@/features/notifications/model/mail-template/preview'
 import type {
   MailPreviewAttachment,
   MailPreviewRecipient,
 } from '@/features/notifications/model/mail-template/preview'
+import {
+  clearMailSendTemplateIdSearchParams,
+  readMailSendTemplateIdFromSearchParams,
+} from '@/features/notifications/model/mail-send/send-url'
 import { resolveMailTemplateBodyHtml } from '@/features/notifications/model/mail-template/resolve-body'
 import { VariablesPanel } from '@/features/notifications/ui/mail-template/variables-panel'
 import { groupMailTemplateVariablesFromCatalog } from '@/features/notifications/model/mail-template/variables'
@@ -97,7 +103,11 @@ import { RecipientTable } from './recipient-table'
 import { SendRequestCompletedModal } from '@/features/notifications/ui/shared/send-request-completed-modal'
 import { showNotificationSendErrorAlert } from '@/features/notifications/ui/shared/show-notification-send-request-failed-alert'
 import { RecipientManualModal } from '@/features/notifications/ui/shared/recipient-manual-modal'
-import { RecipientSelectModal } from '@/features/notifications/ui/shared/recipient-select-modal'
+import {
+  RecipientSelectModal,
+  SEND_RECIPIENT_PICKER_EMPTY_MEMBERS,
+  SEND_RECIPIENT_PICKER_EMPTY_PROGRAM,
+} from '@/features/notifications/ui/shared/recipient-select-modal'
 import { TemplateSelectField } from '@/features/notifications/ui/shared/template-select-field'
 import '@/features/notifications/ui/shared/notification-fullpage-modal.css'
 import './fullpage-modal.css'
@@ -109,6 +119,9 @@ type SenderNameFieldProps = {
   onChange: (value: string) => void
 }
 
+/** 시안: 발신자명·발신 메일 입력 고정 폭 */
+const MAIL_SEND_SENDER_FIELD_WIDTH = 200
+
 /** 이번 발송에만 쓰는 발신자명(senderProfileDisplayName). 기본값은 발신 프로필 표시명. */
 function SenderNameField({ seed, epoch, onChange }: SenderNameFieldProps) {
   const [value, setValue] = useState(seed)
@@ -118,7 +131,7 @@ function SenderNameField({ seed, epoch, onChange }: SenderNameFieldProps) {
   return (
     <CmsInput
       inputSize="small"
-      width="100%"
+      width={MAIL_SEND_SENDER_FIELD_WIDTH}
       allowClear={false}
       className="mail-send-fullpage__sender-name"
       maxLength={MAIL_SENDER_DISPLAY_NAME_MAX_LENGTH}
@@ -454,6 +467,75 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
     [programNumericId, variablesCatalog]
   )
 
+  const applyFormTemplate = form.applyTemplate
+  const replaceFormSenderName = form.replaceSenderName
+  const handleSelectTemplate = useCallback(
+    (template: (typeof templates)[number]) => {
+      applyFormTemplate(template)
+      // 템플릿 senderName이 비면 harvest displayName으로 보강 (빈 문자열로 덮지 않음)
+      if (template.senderName.trim()) return
+      const email = template.senderEmail.trim()
+      const displayName = resolveHarvestDisplayName(email)
+      if (displayName) replaceFormSenderName(displayName)
+    },
+    [applyFormTemplate, replaceFormSenderName, resolveHarvestDisplayName]
+  )
+
+  // 템플릿 목록 미리보기 「템플릿 사용」: `?send_tpl=` 을 open당 1회 소비해 피커와 같은 가드로 적용
+  const [searchParams, setSearchParams] = useSearchParams()
+  const urlPresetTemplateId = open ? readMailSendTemplateIdFromSearchParams(searchParams) : null
+  const [presetTemplateId, setPresetTemplateId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!open) {
+      setPresetTemplateId(null)
+      return
+    }
+    if (!urlPresetTemplateId) return
+    setPresetTemplateId(urlPresetTemplateId)
+    setSearchParams(prev => clearMailSendTemplateIdSearchParams(prev), { replace: true })
+  }, [open, setSearchParams, urlPresetTemplateId])
+
+  useEffect(() => {
+    if (!open || !presetTemplateId) return
+    if (!templatesQuery.isFetched || templatesQuery.isFetching) return
+    const template = templates.find(item => item.id === presetTemplateId)
+    if (!template) {
+      setPresetTemplateId(null)
+      showAlert({ title: '안내', content: '선택한 템플릿을 발송 화면에서 찾을 수 없습니다.' })
+      return
+    }
+    if (variablesQuery.isError) {
+      setPresetTemplateId(null)
+      return
+    }
+    if (variablesCatalog == null) return
+    setPresetTemplateId(null)
+    if (!canSelectNotificationSendTemplate(form.programId) || !isTemplateUsable(template)) {
+      showAlert({
+        title: '안내',
+        content:
+          getTemplateUnusableMessage(template) ||
+          '현재 대상 프로그램에서는 사용할 수 없는 템플릿입니다.',
+      })
+      return
+    }
+    handleSelectTemplate(template)
+  }, [
+    form.programId,
+    getTemplateUnusableMessage,
+    handleSelectTemplate,
+    isTemplateUsable,
+    open,
+    presetTemplateId,
+    showAlert,
+    templates,
+    templatesQuery.isFetched,
+    templatesQuery.isFetching,
+    variablesCatalog,
+    variablesQuery.isError,
+  ])
+
   // 선택 완료된 템플릿은 수신자 추가·유형 문맥 변경으로 자동 clear 하지 않음.
   // (피커「사용하기」비활성 + 발송 시점 fail-closed로 처리)
 
@@ -594,7 +676,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
         title="메일 발송"
         size="full"
         hideHeader
-        className="notification-fullpage-modal mail-send-fullpage-modal teal-header-modal--full"
+        className="notification-fullpage-modal notification-fullpage-modal--send mail-send-fullpage-modal teal-header-modal--full"
       >
         <div className="notification-fullpage-modal__shell">
           <header className="notification-fullpage-modal__title-row">
@@ -605,7 +687,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
               onClick={handleClose}
               aria-label="닫기"
             >
-              <ModalCloseIcon />
+              <ModalCloseIcon tone="white" />
             </button>
           </header>
 
@@ -662,6 +744,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                     <DetailInfoForm.Row type="double">
                       <DetailInfoForm.Field
                         label="템플릿"
+                        required
                         view=""
                         edit={
                           <TemplateSelectField
@@ -670,16 +753,10 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                             disabled={!canPickTemplate}
                             isTemplateUsable={isTemplateUsable}
                             getTemplateUnusableMessage={getTemplateUnusableMessage}
-                            onSelect={template => {
-                              form.applyTemplate(template)
-                              // 템플릿 senderName이 비면 harvest displayName으로 보강 (빈 문자열로 덮지 않음)
-                              if (template.senderName.trim()) return
-                              const email = template.senderEmail.trim()
-                              const displayName = resolveHarvestDisplayName(email)
-                              if (displayName) form.replaceSenderName(displayName)
-                            }}
-                            renderPreview={({ template, open, onClose, zIndex }) => (
+                            onSelect={handleSelectTemplate}
+                            renderPreview={({ template, open, onClose, onUse, zIndex }) => (
                               <PreviewModal
+                                title={MAIL_TEMPLATE_PREVIEW_TITLE}
                                 open={open}
                                 zIndex={zIndex}
                                 subject={template?.subject ?? ''}
@@ -695,6 +772,13 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                                 }))}
                                 previewAt={new Date().toISOString()}
                                 onClose={onClose}
+                                onUseTemplate={template ? () => onUse(template) : undefined}
+                                useTemplateDisabledReason={
+                                  template && !isTemplateUsable(template)
+                                    ? getTemplateUnusableMessage(template) ||
+                                      '현재 대상 프로그램에서는 사용할 수 없는 템플릿입니다.'
+                                    : null
+                                }
                               />
                             )}
                           />
@@ -703,7 +787,13 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                       <DetailInfoForm.Field
                         label="발송 시점"
                         required
-                        view={form.sendTiming === 'immediate' ? '즉시 발송' : '예약 발송'}
+                        view={
+                          form.sendTiming == null
+                            ? '-'
+                            : form.sendTiming === 'immediate'
+                              ? '즉시 발송'
+                              : '예약 발송'
+                        }
                         edit={
                           <SendScheduleField
                             className="mail-send-fullpage__timing"
@@ -734,7 +824,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                         edit={
                           <CmsInput
                             inputSize="small"
-                            width="100%"
+                            width={MAIL_SEND_SENDER_FIELD_WIDTH}
                             allowClear={false}
                             placeholder="발신 메일을 입력해 주세요"
                             value={form.senderEmail}
@@ -895,6 +985,11 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
         candidates={candidateItems}
         initialSelected={recipientPrivacy.failure ? [] : form.recipients}
         resetKey={`${recipientTypeMode}:${recipientPrivacy.failure ?? ''}`}
+        emptyCopy={
+          recipientTypeMode === 'member'
+            ? SEND_RECIPIENT_PICKER_EMPTY_MEMBERS
+            : SEND_RECIPIENT_PICKER_EMPTY_PROGRAM
+        }
         statusMessage={candidateNotice}
         selectionBlocked={recipientPrivacy.blockSelection || candidatesQuery.isError}
         loading={candidatesQuery.isFetching && !candidatesQuery.isError}
@@ -979,7 +1074,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
       />
       <ConfirmModal
         open={sendConfirmOpen}
-        title="메일 발송"
+        title="메일 발송 안내"
         content={variableCheck.ok ? variableCheck.confirmMessage : MAIL_SEND_CONFIRM_MESSAGE}
         confirmText="발송"
         cancelText="취소"
