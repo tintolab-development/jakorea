@@ -4,7 +4,8 @@
  */
 
 import ExcelJS from '@zurmokeeper/exceljs'
-import { downloadExcel, generateFilename } from '@/shared/utils/file-download'
+import { formatAsiaSeoulYymmdd } from '@/features/settlement-management/api/account-payments/settlement-form-download'
+import { downloadExcel } from '@/shared/utils/file-download'
 import type { EducationProgressHalfKey } from '../tabs'
 import { fetchUjat1365SemesterRegistrationForm } from './use-volunteer-1365-semester-form'
 import {
@@ -73,7 +74,7 @@ export async function exportVolunteer1365Excel(input: {
   }))
 
   const buffer = await workbook.xlsx.writeBuffer()
-  await downloadExcel(buffer, generateFilename('1365_봉사시간_등록_양식', 'xlsx'), {
+  await downloadExcel(buffer, `[JA Korea] CMS 어드민_1365 봉사시간 등록 양식_${formatAsiaSeoulYymmdd()}.xlsx`, {
     accessLog: { downloadKind: 'VOLUNTEER_1365_HOURS_EXPORT', containedPiiTypes: ['NAME'] },
   })
 }

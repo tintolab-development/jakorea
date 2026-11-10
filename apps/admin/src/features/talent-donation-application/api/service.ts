@@ -82,6 +82,6 @@ export async function exportTalentDonationApplicationsService(filter: TalentDona
     await downloadRemoteLogExcel({
         url: '/api/admin/sponsorship/talent-applications/export',
         params: toTalentApplicationExportParams(filter),
-        filenameFallback: defaultXlsxFilename('재능기부_신청_목록'),
+        filenameFallback: defaultXlsxFilename('재능기부 신청 목록'),
     });
 }

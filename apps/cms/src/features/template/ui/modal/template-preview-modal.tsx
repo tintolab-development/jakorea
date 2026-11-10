@@ -1,4 +1,5 @@
 import { ModalCloseIcon } from '@/shared/ui/icons'
+import { generateFilename } from '@/shared/utils/file-download'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import type {
@@ -45,14 +46,10 @@ import './template-preview-modal.css'
 
 const PREVIEW_PAGE_QUERY_PARAM = 'previewPage'
 
+/** `[JA Korea] {양식명}_YYMMDD.pdf` — 공통 파일명 규칙 */
 function safePdfFileName(title: string): string {
-  const base =
-    title
-      .trim()
-      .replace(/[^\w가-힣-]+/gu, '_')
-      .replace(/_+/g, '_')
-      .slice(0, 80) || 'form'
-  return `${base}.pdf`
+  const base = title.trim().replace(/[\\:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').slice(0, 80) || '양식'
+  return generateFilename(base, 'pdf')
 }
 
 function readPreviewPage(searchParams: URLSearchParams): number {

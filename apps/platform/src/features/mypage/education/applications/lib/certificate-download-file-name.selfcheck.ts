@@ -7,7 +7,7 @@ assert.equal(
     memberName: '강하은',
     downloadedAt: seoulAfternoon,
   }),
-  '수료증_강하은_261103.pdf',
+  '[JA Korea] 수료증_강하은_261103.pdf',
 )
 
 assert.equal(
@@ -16,7 +16,7 @@ assert.equal(
     downloadedAt: seoulAfternoon,
     extension: 'zip',
   }),
-  '수료증_강하은_261103.zip',
+  '[JA Korea] 수료증_강하은_261103.zip',
 )
 
 assert.equal(
@@ -24,7 +24,7 @@ assert.equal(
     memberName: '  a/b:c  ',
     downloadedAt: seoulAfternoon,
   }),
-  '수료증_a b c_261103.pdf',
+  '[JA Korea] 수료증_a b c_261103.pdf',
 )
 
 assert.equal(
@@ -32,7 +32,7 @@ assert.equal(
     memberName: '',
     downloadedAt: seoulAfternoon,
   }),
-  '수료증_회원_261103.pdf',
+  '[JA Korea] 수료증_회원_261103.pdf',
 )
 
 console.log('certificate-download-file-name.selfcheck ok')

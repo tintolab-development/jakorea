@@ -11,7 +11,7 @@ import {
 } from '@/shared/lib/admin-file-upload/attachments'
 import { getApiBaseUrl } from '@/shared/lib/api-remote-env'
 import { customInstance } from '@/shared/api/orval-mutator'
-import { downloadBlob } from '@/shared/utils/file-download'
+import { downloadBlob, sanitizeDownloadFileName } from '@/shared/utils/file-download'
 import { guardAdminDownload } from '@/shared/lib/session-admin-role'
 
 type RuntimeAuthUser = {
@@ -45,8 +45,9 @@ async function trackDownload(fileName: string): Promise<void> {
  * @param fileName 저장할 파일명
  * @param fileUrl 다운로드 URL (없거나 mock이면 placeholder 내용으로 저장)
  */
-export async function downloadFile(fileName: string, fileUrl?: string): Promise<void> {
+export async function downloadFile(rawFileName: string, fileUrl?: string): Promise<void> {
   if (!guardAdminDownload()) return
+  const fileName = sanitizeDownloadFileName(rawFileName)
 
   const storedFileId = fileUrl ? fileObjectIdFromAdminFileUrl(fileUrl) : null
   if (storedFileId != null) {

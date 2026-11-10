@@ -8,6 +8,7 @@ import type { PaymentStatementCalculationLinesViewModel } from '@/features/templ
 import { PAYMENT_STATEMENT_PRE_CONSENT_BASIC_INFO_AUTHORING_VALUES } from '@/features/template/model/payment-statement-basic-info-sample'
 import type { LectureFeeCalculationAutofillValues } from '@/features/template/ui/form-set/detail-forms/lecture-fee-calculation-detail-form'
 import type { PaymentStatementBasicInfoAutofillValues } from '@/features/template/ui/form-set/detail-forms/payment-statement-basic-info-detail-form'
+import { formatAsiaSeoulYymmdd } from '@/features/settlement-management/api/account-payments/settlement-form-download'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 
 export const PAYMENT_STATEMENT_ISSUANCE_DOCUMENT_TITLE = '지급조서'
@@ -41,17 +42,13 @@ function sanitizeFileNamePart(value: string): string {
   return value.replace(/[\\/:*?"<>|]/g, '_').trim()
 }
 
+/** 파일명: [JA Korea] 지급조서_강사명_YYMMDD (빗금은 쉼표로 치환) */
 export function buildPaymentStatementIssuancePreviewFileName(
-  context: PaymentStatementIssuancePreviewContext
+  context: PaymentStatementIssuancePreviewContext,
+  now: Date = new Date()
 ): string {
-  const sessionMatch = context.settlementRow.educationScheduleLabel.match(/\|\s*(\d+)회차/)
-  const sessionPart = sessionMatch ? `${sessionMatch[1]}회차` : '정산'
-  return [
-    PAYMENT_STATEMENT_ISSUANCE_DOCUMENT_TITLE,
-    sanitizeFileNamePart(context.settlementRow.schoolName),
-    sanitizeFileNamePart(context.instructor.instructorName),
-    sanitizeFileNamePart(sessionPart),
-  ].join('_')
+  const instructorName = sanitizeFileNamePart(context.instructor.instructorName.replace(/[/\\]/g, ','))
+  return `[JA Korea] ${PAYMENT_STATEMENT_ISSUANCE_DOCUMENT_TITLE}_${instructorName}_${formatAsiaSeoulYymmdd(now)}`
 }
 
 /** 지급조서 일괄 다운로드 대상 — 지급조서 확인 완료·계좌 지급 완료 */

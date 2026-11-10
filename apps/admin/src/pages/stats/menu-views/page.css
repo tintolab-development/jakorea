@@ -32,6 +32,21 @@
   margin-bottom: 24px;
 }
 
+/*
+ * 요약 표는 항상 헤더 1줄 + 합계 1줄 — 단일 카드 fill(widgets/layout/layout.css)을 받지 않고
+ * 내용 높이만큼만 표시한다(탭을 바꿔도 높이 불변). 이 표에만 적용되는 예외.
+ */
+.menu-views-stats-page .menu-view-stats-summary,
+.menu-views-stats-page .menu-view-stats-summary .ant-table-wrapper.cms-data-table,
+.menu-views-stats-page .menu-view-stats-summary .ant-table-wrapper.cms-data-table > .ant-spin-nested-loading,
+.menu-views-stats-page .menu-view-stats-summary .ant-spin-container,
+.menu-views-stats-page .menu-view-stats-summary .ant-spin-container > .ant-table,
+.menu-views-stats-page .menu-view-stats-summary .ant-table > .ant-table-container {
+  flex: 0 0 auto !important;
+  height: auto !important;
+  min-height: 0 !important;
+}
+
 .menu-views-stats-page .menu-view-stats-summary .cms-data-table .ant-table-container {
   border-radius: 8px;
 }

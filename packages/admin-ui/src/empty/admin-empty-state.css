@@ -6,7 +6,6 @@
   gap: 20px;
   box-sizing: border-box;
   padding: 48px 24px;
-  min-height: 200px;
   width: 100%;
 }
 
@@ -77,6 +76,17 @@
   cursor: default !important;
 }
 
-.cms-data-table .ant-table-tbody > tr.ant-table-placeholder > td .cms-table-empty-state {
-  min-height: 280px;
+/*
+ * 가로 스크롤 표에서 antd가 빈 상태 행에 고정 래퍼(.ant-table-expanded-row-fixed)를 렌더하지 않는 경우가 있다.
+ * 그때 안내가 스크롤 전체 폭 기준으로 가운데에 놓이지 않도록, 보이는 표 폭(컨테이너 폭)에 맞춰 왼쪽에 고정한다.
+ * 0건 표에서만 컨테이너 쿼리를 켠다(데이터가 있는 표에는 영향 없음).
+ */
+.cms-data-table:has(.ant-table-placeholder > td > .cms-table-empty-state) .ant-table-container {
+  container-type: inline-size;
+}
+
+.cms-data-table .ant-table-tbody > tr.ant-table-placeholder > td > .cms-table-empty-state {
+  position: sticky;
+  left: 0;
+  width: 100cqw;
 }

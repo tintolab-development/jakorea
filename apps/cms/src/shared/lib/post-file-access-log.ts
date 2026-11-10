@@ -7,6 +7,7 @@
  */
 
 import { customInstance } from '@/shared/api/orval-mutator'
+import { sanitizeDownloadFileName } from '@/shared/utils/file-download'
 import {
   buildFileAccessLogMetaBody,
   type DownloadAccessLogMeta,
@@ -43,7 +44,7 @@ function clipLogField(value: string): string {
 export async function postFileAccessLog(
   body: PostFileAccessLogBody
 ): Promise<PostFileAccessLogResult> {
-  const fileName = clipLogField(body.fileName.trim())
+  const fileName = clipLogField(sanitizeDownloadFileName(body.fileName.trim()))
   if (!fileName) {
     throw new Error('다운로드 파일명이 없습니다.')
   }

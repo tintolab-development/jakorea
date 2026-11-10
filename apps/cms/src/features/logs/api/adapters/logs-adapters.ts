@@ -12,6 +12,7 @@ import {
   formatContainedPiiLead,
 } from '@jakorea/domain/shared/file-download-password'
 import type { DownloadLog } from '@/types/download-log'
+import { normalizeDownloadLogFileName } from '@/features/logs/lib/download-log-file-name'
 import type { MemberLoginLog } from '@/types/member-login-log'
 import type { PersonalInfoAccessLog } from '@/types/personal-info-access-log'
 
@@ -152,7 +153,10 @@ export function mapDownloadLogResponse(dto: DownloadLogFrontendResponse | object
         : typeof idValue === 'number' && Number.isFinite(idValue)
           ? String(idValue)
           : `log-${Date.now()}`,
-    fileName: readExtraString(dto, ['fileName']),
+    fileName: normalizeDownloadLogFileName(
+      readExtraString(dto, ['fileName']),
+      readExtraString(dto, ['kind', 'eventType', 'fileType'])
+    ),
     userId: readExtraString(dto, ['userId']),
     userName: readExtraString(dto, ['userName']),
     ipAddress: readExtraString(dto, ['ipAddress', 'requestIp']),

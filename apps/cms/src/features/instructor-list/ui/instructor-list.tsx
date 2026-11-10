@@ -20,7 +20,7 @@ import { handleError } from '@/shared/utils/error-handler'
 import { DownloadOptionsModal } from '@/features/download/ui/download-options-modal'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import type { DownloadOptions } from '@/types/download'
-import { downloadExcel } from '@/shared/utils/file-download'
+import { downloadExcel, generateFilename } from '@/shared/utils/file-download'
 import ExcelJS from '@zurmokeeper/exceljs'
 
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
@@ -96,7 +96,7 @@ export function InstructorList({
       })
 
       const buffer = await workbook.xlsx.writeBuffer()
-      const fileName = `강사_목록_${new Date().toISOString().split('T')[0]}${maskingEnabled ? '_마스킹' : ''}.xlsx`
+      const fileName = generateFilename(`강사 목록${maskingEnabled ? '(마스킹)' : ''}`, 'xlsx')
       await downloadExcel(buffer, fileName, {
         accessLog: { downloadKind: 'INSTRUCTOR_LIST_EXPORT', containedPiiTypes: ['NAME'] },
       })

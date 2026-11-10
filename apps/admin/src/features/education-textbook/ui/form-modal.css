@@ -384,7 +384,7 @@
   .cms-textarea__inner
   textarea.ant-input {
   box-sizing: border-box;
-  height: 20px;
+  height: var(--textbook-desc-fit, 20px);
   min-height: 20px;
   font-size: 14px;
   line-height: 1.4;

@@ -1,7 +1,8 @@
 import crimeConsentFormDocumentAssetUrl from '@/shared/assets/documents/crime_consent_form.pdf'
-import { downloadBlob } from '@/shared/utils/file-download'
+import { downloadBlob, generateFilename } from '@/shared/utils/file-download'
 
-export const CRIME_CONSENT_FORM_DOWNLOAD_FILENAME = '성범죄 경력 조회 동의서_양식.pdf'
+/** 공통 파일명 규칙의 파일 이름 부분. 저장명은 `[JA Korea] 성범죄 경력 조회 동의서 양식_YYMMDD.pdf` */
+export const CRIME_CONSENT_FORM_DOWNLOAD_FILENAME = '성범죄 경력 조회 동의서 양식'
 
 export const crimeConsentFormDocumentUrl = crimeConsentFormDocumentAssetUrl
 
@@ -10,5 +11,5 @@ export async function downloadCrimeConsentFormDocument(): Promise<void> {
   const res = await fetch(crimeConsentFormDocumentUrl)
   if (!res.ok) throw new Error('fetch failed')
   const blob = await res.blob()
-  await downloadBlob(blob, CRIME_CONSENT_FORM_DOWNLOAD_FILENAME)
+  await downloadBlob(blob, generateFilename(CRIME_CONSENT_FORM_DOWNLOAD_FILENAME, 'pdf'))
 }

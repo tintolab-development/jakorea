@@ -383,7 +383,7 @@ export function buildLectureReportFilledDraft(ctx: LectureReportPreviewContext):
   }
 }
 
-/** 파일명: 강의보고서_기관명_강사명_260605 */
+/** 파일명: [JA Korea] 강의보고서_강사명_260605 (빗금은 쉼표로 치환) */
 export function buildLectureReportPreviewFileName(
   ctx: LectureReportPreviewContext,
   date = new Date()
@@ -391,5 +391,5 @@ export function buildLectureReportPreviewFileName(
   const y = String(date.getFullYear()).slice(2)
   const m = String(date.getMonth() + 1).padStart(2, '0')
   const d = String(date.getDate()).padStart(2, '0')
-  return `${LECTURE_REPORT_DOCUMENT_TITLE}_${ctx.row.schoolName}_${ctx.instructor.instructorName}_${y}${m}${d}`
+  return `[JA Korea] ${LECTURE_REPORT_DOCUMENT_TITLE}_${ctx.instructor.instructorName.replace(/[/\\]/g, ',')}_${y}${m}${d}`
 }
