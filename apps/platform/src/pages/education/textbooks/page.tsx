@@ -209,7 +209,7 @@ export function TextbooksPage() {
       <DetailModal
         open={selectedId != null}
         content={selectedContent}
-        loading={Boolean(selectedId) && isDetailPending && selectedContent == null}
+        loading={Boolean(selectedId) && isDetailPending}
         onClose={closeDetail}
       />
     </section>
