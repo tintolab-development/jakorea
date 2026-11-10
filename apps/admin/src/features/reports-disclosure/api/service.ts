@@ -7,6 +7,8 @@ import type {
   TransparencyReport,
 } from '@/entities/reports-disclosure/model/types'
 import { getJAKoreaHomepageAdminAPIJAKoreaSubset } from '@/shared/api/generated/ja-korea/ja-korea-api'
+import type { ReportCreateRequest } from '@/shared/api/generated/ja-korea/schemas/reportCreateRequest'
+import type { ReportUpdateRequest } from '@/shared/api/generated/ja-korea/schemas/reportUpdateRequest'
 import {
   mapDisclosureResponseToDomain,
   mapReportResponseToDomain,
@@ -44,14 +46,12 @@ async function listRemoteReportsPage(
   )
 }
 
-async function resolveThumbnailAssetId(input: ReportCreateInput): Promise<number> {
+/** 썸네일은 선택 항목 — 새 파일은 업로드, 기존 자산은 그대로, 없으면 `null`(썸네일 없음) */
+async function resolveThumbnailAssetId(input: ReportCreateInput): Promise<number | null> {
   if (input.thumbnailFile) {
     return uploadReportThumbnailAsset(input.thumbnailFile)
   }
-  if (input.thumbnailAssetId != null) {
-    return input.thumbnailAssetId
-  }
-  throw new Error('썸네일 이미지를 등록해 주세요.')
+  return input.thumbnailAssetId ?? null
 }
 
 async function resolveAttachmentAssetId(input: ReportCreateInput): Promise<number> {
@@ -80,7 +80,8 @@ export async function createReportService(
   const attachmentAssetId = await resolveAttachmentAssetId(input)
   const created = await jaKoreaApi().createReport(
     toApiReportType(kind),
-    toReportCreateRequest(input, thumbnailAssetId, attachmentAssetId),
+    // 썸네일 선택 항목 — 서버 명세 갱신 전까지 생성 타입(필수 number)과 이 지점에서만 어긋난다
+    toReportCreateRequest(input, thumbnailAssetId, attachmentAssetId) as ReportCreateRequest,
   )
   return mapReportResponseToDomain(created)
 }
@@ -98,9 +99,11 @@ export async function updateReportService(
   if (!current) {
     throw new Error(`Report not found: ${input.id}`)
   }
+  // 수정 화면에서 썸네일을 지우면 `null`이 넘어온다 — 기존 썸네일로 되돌리지 않는다
   const thumbnailAssetId = await resolveThumbnailAssetId({
     ...input,
-    thumbnailAssetId: input.thumbnailAssetId ?? current.thumbnailAssetId,
+    thumbnailAssetId:
+      input.thumbnailAssetId === null ? null : (input.thumbnailAssetId ?? current.thumbnailAssetId),
   })
   const attachmentAssetId = await resolveAttachmentAssetId({
     ...input,
@@ -109,7 +112,7 @@ export async function updateReportService(
   const updated = await jaKoreaApi().updateReport(
     toApiReportType(kind),
     Number(input.id),
-    toReportUpdateRequest(input, current, thumbnailAssetId, attachmentAssetId),
+    toReportUpdateRequest(input, current, thumbnailAssetId, attachmentAssetId) as ReportUpdateRequest,
   )
   return mapReportResponseToDomain(updated)
 }

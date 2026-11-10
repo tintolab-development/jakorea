@@ -56,11 +56,18 @@ export function toReportsListParams(
   }
 }
 
+/**
+ * 썸네일은 선택 항목(QA 2026-11-10) — `thumbnailAssetId: null`이면 썸네일 없음.
+ * 서버 명세(ReportCreateRequest·ReportUpdateRequest)는 아직 thumbnailAssetId 필수라,
+ * 명세가 nullable로 바뀌어 재생성되기 전까지 요청 타입을 여기서만 넓힌다.
+ */
+type WithOptionalThumbnail<T> = Omit<T, 'thumbnailAssetId'> & { thumbnailAssetId: number | null }
+
 export function toReportCreateRequest(
   input: ReportCreateInput,
-  thumbnailAssetId: number,
+  thumbnailAssetId: number | null,
   attachmentAssetId: number,
-): ReportCreateRequest {
+): WithOptionalThumbnail<ReportCreateRequest> {
   return {
     title: input.title.trim(),
     thumbnailAssetId,
@@ -71,9 +78,9 @@ export function toReportCreateRequest(
 export function toReportUpdateRequest(
   input: ReportUpdateInput,
   current: TransparencyReport,
-  thumbnailAssetId: number,
+  thumbnailAssetId: number | null,
   attachmentAssetId: number,
-): ReportUpdateRequest {
+): WithOptionalThumbnail<ReportUpdateRequest> {
   return {
     title: input.title.trim(),
     thumbnailAssetId,

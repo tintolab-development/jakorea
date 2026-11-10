@@ -292,13 +292,18 @@ export function ReportListPanel({ kind }: Props) {
                 : 'rd-list__thumb-cell rd-list__thumb-cell--wide'
             }
           >
-            <div className={`rd-list__thumb-wrap ${thumbMod}`}>
-              <img
-                className="rd-list__thumb"
-                src={record.thumbnailUrl}
-                alt={record.thumbnailFileName || '썸네일'}
-              />
-            </div>
+            {/* 썸네일은 선택 항목 — 없으면 깨진 이미지 대신 표 빈 값 「-」 */}
+            {record.thumbnailUrl ? (
+              <div className={`rd-list__thumb-wrap ${thumbMod}`}>
+                <img
+                  className="rd-list__thumb"
+                  src={record.thumbnailUrl}
+                  alt={record.thumbnailFileName || '썸네일'}
+                />
+              </div>
+            ) : (
+              '-'
+            )}
           </div>
         ),
       },
