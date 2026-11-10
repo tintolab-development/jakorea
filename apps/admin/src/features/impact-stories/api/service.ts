@@ -3,7 +3,7 @@ import { getJAKoreaHomepageAdminAPIImpactStorySubset } from '@/shared/api/genera
 import { PinLimitError } from '@/features/impact-stories/lib/pin-limits';
 import { normalizeCategoryListPayload, normalizeCategoryPayload, } from './category-payload';
 import { isPersistedCategoryId, mapCategoryResponseToDomain, mapStoryListItemToDomain, mapStoryResponseToDomain, toBulkDeleteRequest, toCategoryCreateRequest, toCategoryUpdateRequest, toPublishedToggleRequest, LIST_PAGE_SIZE, toStoryCreateRequest, toStoryListParams, toStoryUpdateRequest, } from './mappers';
-import { createImpactStoryNoThumbnailFile } from '@/shared/lib/no-thumbnail-placeholder';
+import { createNoThumbnailFile } from '@/shared/lib/no-thumbnail-placeholder';
 import { resolveOrderedAttachmentAssetIds } from '@/shared/lib/resolve-attachment-asset-ids';
 import { uploadImpactStoryAttachmentAsset, uploadImpactStoryThumbnailAsset, } from './upload-story-attachment';
 function impactStoryApi() {
@@ -59,7 +59,7 @@ async function resolveThumbnailAssetId(thumbnail: ImpactStoryAttachment | null |
         if (placeholderAssetId != null && placeholderAssetId > 0) {
             return placeholderAssetId;
         }
-        return uploadImpactStoryThumbnailAsset(await createImpactStoryNoThumbnailFile());
+        return uploadImpactStoryThumbnailAsset(createNoThumbnailFile());
     }
     if (thumbnail.file instanceof File) {
         return uploadImpactStoryThumbnailAsset(thumbnail.file);
@@ -70,7 +70,7 @@ async function resolveThumbnailAssetId(thumbnail: ImpactStoryAttachment | null |
     if (fallbackAssetId != null && fallbackAssetId > 0) {
         return fallbackAssetId;
     }
-    return uploadImpactStoryThumbnailAsset(await createImpactStoryNoThumbnailFile());
+    return uploadImpactStoryThumbnailAsset(createNoThumbnailFile());
 }
 function isPinLimitApiError(error: unknown): boolean {
     if (!error || typeof error !== 'object')

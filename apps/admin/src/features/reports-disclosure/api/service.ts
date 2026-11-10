@@ -7,7 +7,7 @@ import type {
   TransparencyReport,
 } from '@/entities/reports-disclosure/model/types'
 import { getJAKoreaHomepageAdminAPIJAKoreaSubset } from '@/shared/api/generated/ja-korea/ja-korea-api'
-import { createReportNoThumbnailFile } from '@/shared/lib/no-thumbnail-placeholder'
+import { createNoThumbnailFile } from '@/shared/lib/no-thumbnail-placeholder'
 import {
   mapDisclosureResponseToDomain,
   mapReportResponseToDomain,
@@ -63,7 +63,7 @@ async function resolveThumbnailAssetId(
   if (placeholderAssetId != null) {
     return placeholderAssetId
   }
-  return uploadReportThumbnailAsset(createReportNoThumbnailFile())
+  return uploadReportThumbnailAsset(createNoThumbnailFile())
 }
 
 async function resolveAttachmentAssetId(input: ReportCreateInput): Promise<number> {
