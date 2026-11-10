@@ -212,7 +212,14 @@ export function RecipientManualModal({
 
   const columns: ColumnsType<DraftRow> = [
     {
-      title: '수신자 정보',
+      title: (
+        <>
+          수신자 정보{' '}
+          <span className="cms-field__required" aria-hidden>
+            *
+          </span>
+        </>
+      ),
       key: 'contact',
       align: 'center',
       render: (_, record) =>
@@ -245,7 +252,7 @@ export function RecipientManualModal({
     {
       title: '관리',
       key: 'actions',
-      width: 220,
+      width: 200,
       align: 'center',
       render: (_, record) =>
         record.mode === 'input' ? (
@@ -321,13 +328,17 @@ export function RecipientManualModal({
       onCancel={onClose}
       title="수신자 직접 입력"
       size={hasVariableColumns ? 'default' : 'compact'}
-      className="send-recipient-manual-modal"
+      className={
+        hasVariableColumns
+          ? 'send-recipient-manual-modal send-recipient-manual-modal--with-variables'
+          : 'send-recipient-manual-modal'
+      }
       titleBodyGap="none"
       zIndex={zIndex}
       footer={
         <>
           <CmsButton variant="cancel" size="h40" type="button" onClick={onClose}>
-            닫기
+            취소
           </CmsButton>
           <CmsButton variant="secondary" size="h40" type="button" onClick={handleAdd}>
             수신자 추가

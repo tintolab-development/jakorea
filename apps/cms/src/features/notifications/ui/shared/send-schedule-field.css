@@ -16,13 +16,15 @@
 .notification-send-schedule-field__divider {
   flex: 0 0 1px;
   width: 1px;
-  height: 16px;
+  height: 13px;
   background: var(--default-BK, #3d3d3d);
-  opacity: 0.2;
+  opacity: 0.5;
 }
 
+/* 시안 Field / Table / Calendar — 아이콘 18 + 문구 192 + 패딩 기준 약 240 */
 .notification-send-schedule-field__trigger {
-  flex: 1 1 0;
+  flex: 0 1 240px;
+  width: 240px;
   min-width: 120px;
   cursor: pointer;
 }

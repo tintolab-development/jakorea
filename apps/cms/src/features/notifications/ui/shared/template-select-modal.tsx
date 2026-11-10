@@ -110,21 +110,18 @@ export function TemplateSelectModal<T extends SendTemplatePickerItem>({
     {
       title: '관리',
       key: 'actions',
-      width: 220,
+      width: 200,
       align: 'center',
       className: 'send-template-select-modal__col-actions',
       onHeaderCell: () => ({ className: 'send-template-select-modal__col-actions' }),
       render: (_, record) => {
-        const canUse =
-          (isUseEnabled?.(record) ?? true) && isTemplateUsable?.(record) !== false
+        const canUse = (isUseEnabled?.(record) ?? true) && isTemplateUsable?.(record) !== false
         const fallbackMessage =
           showUnusableReasonInline && !canUse ? getTemplateUnusableMessage?.(record) : null
         const reason =
           showUnusableReasonInline && !canUse
             ? (getTemplateUnusableReason?.(record) ??
-              (fallbackMessage
-                ? { summary: fallbackMessage, detail: fallbackMessage }
-                : null))
+              (fallbackMessage ? { summary: fallbackMessage, detail: fallbackMessage } : null))
             : null
         const reasonId = reason ? `send-template-unusable-${record.id}` : undefined
         return (
@@ -136,23 +133,27 @@ export function TemplateSelectModal<T extends SendTemplatePickerItem>({
               <CmsButton
                 type="button"
                 variant="default"
-                size="small" className="send-template-select-modal__action-btn send-template-select-modal__action-btn--preview"
+                size="small"
+                className="send-template-select-modal__action-btn send-template-select-modal__action-btn--preview"
                 onClick={event => {
                   event.stopPropagation()
                   onPreview(record)
-                }} >
+                }}
+              >
                 미리보기
               </CmsButton>
               <CmsButton
                 type="button"
                 variant="secondary"
-                size="small" className="send-template-select-modal__action-btn send-template-select-modal__action-btn--use"
+                size="small"
+                className="send-template-select-modal__action-btn send-template-select-modal__action-btn--use"
                 disabled={!canUse}
                 aria-describedby={reasonId}
                 onClick={event => {
                   event.stopPropagation()
                   handleUse(record)
-                }} >
+                }}
+              >
                 {useButtonLabel}
               </CmsButton>
             </div>
@@ -180,7 +181,11 @@ export function TemplateSelectModal<T extends SendTemplatePickerItem>({
       className="send-template-select-modal"
       titleBodyGap="always"
       zIndex={zIndex}
-      footer={null}
+      footer={
+        <CmsButton variant="cancel" size="h40" type="button" onClick={onClose}>
+          닫기
+        </CmsButton>
+      }
     >
       <div className="send-template-select-modal__body">
         <div className="send-template-select-modal__search">
@@ -191,12 +196,12 @@ export function TemplateSelectModal<T extends SendTemplatePickerItem>({
               onChange={event => setKeyword(event.target.value)}
               onPressEnter={handleSearch}
               placeholder="템플릿명을 입력해 주세요"
-              inputSize="large"
+              inputSize="medium"
               width="100%"
               allowClear
             />
           </span>
-          <CmsButton type="button" variant="primary" size="large" onClick={handleSearch}>
+          <CmsButton type="button" variant="primary" size="h40" onClick={handleSearch}>
             검색
           </CmsButton>
         </div>

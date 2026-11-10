@@ -3,14 +3,29 @@ import { SearchOutlined } from '@ant-design/icons'
 import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { ContentModal, CmsButton, CmsCompactPagination, CmsInput, CmsSelect } from '@/shared/ui'
-import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import { CMS_TABLE_EMPTY_COPY } from '@/shared/ui/cms-table-empty-copy'
 import './recipient-select-modal.css'
 
 const PICKER_Z_INDEX = 1100
 const TYPE_COL_WIDTH = 140
+/** 시안(Popup / Search / w800 / 수신자 설정) 체크박스 열 48 */
+const CHECKBOX_COL_WIDTH = 48
 export const SEND_RECIPIENT_PICKER_PAGE_SIZE = 5
+
+export type SendRecipientPickerEmptyCopy = { title: string; description: string }
+
+/** 후보 0명(검색 조건 없음) — 대상 프로그램 선택 시 (16113:602298) */
+export const SEND_RECIPIENT_PICKER_EMPTY_PROGRAM: SendRecipientPickerEmptyCopy = {
+  title: '프로그램에 승인된 참여자가 없습니다.',
+  description: '대상 프로그램을 변경하거나 발송 화면에서 수신자를 직접 입력해 주세요.',
+}
+
+/** 후보 0명(검색 조건 없음) — 대상 프로그램 미선택 시 (16113:602298) */
+export const SEND_RECIPIENT_PICKER_EMPTY_MEMBERS: SendRecipientPickerEmptyCopy = {
+  title: '등록된 회원이 없습니다.',
+  description: '발송 화면에서 수신자를 직접 입력해 주세요.',
+}
 
 export type SendRecipientPickerSearchParams = {
   typeValue: string
@@ -46,6 +61,8 @@ export type RecipientSelectModalProps<T extends SendRecipientPickerRow> = {
   pageSize?: number
   /** 유형 모드 전환 시 선택·검색 초기화 */
   resetKey?: string
+  /** 검색 조건 없이 후보가 0명일 때 문구. 없으면 공통 「검색 결과가 없습니다」. */
+  emptyCopy?: SendRecipientPickerEmptyCopy
   zIndex?: number
 }
 
@@ -70,6 +87,7 @@ export function RecipientSelectModal<T extends SendRecipientPickerRow>({
   loading = false,
   pageSize = SEND_RECIPIENT_PICKER_PAGE_SIZE,
   resetKey,
+  emptyCopy,
   zIndex = PICKER_Z_INDEX,
 }: RecipientSelectModalProps<T>) {
   const [typeValue, setTypeValue] = useState('')
@@ -123,6 +141,9 @@ export function RecipientSelectModal<T extends SendRecipientPickerRow>({
     ? filtered
     : filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize)
   const hasResults = filtered.length > 0
+  const hasAppliedFilter = Boolean(appliedType || appliedKeyword)
+  const noResultsCopy =
+    !hasAppliedFilter && emptyCopy ? emptyCopy : CMS_TABLE_EMPTY_COPY['no-search']
   const checkedIds = useMemo(() => Object.keys(selectedById), [selectedById])
   const selectedCount = checkedIds.length
   const displayedTotal = useServerPaging ? (totalCount ?? filtered.length) : filtered.length
@@ -220,7 +241,8 @@ export function RecipientSelectModal<T extends SendRecipientPickerRow>({
             type="button"
             loading={selectingAll}
             disabled={selectingAll || selectionBlocked || Boolean(statusMessage) || !hasResults}
-            onClick={() => void handleSelectAll()} >
+            onClick={() => void handleSelectAll()}
+          >
             전체 선택
           </CmsButton>
           <CmsButton
@@ -238,13 +260,13 @@ export function RecipientSelectModal<T extends SendRecipientPickerRow>({
       <div className="send-recipient-select-modal__body">
         <div className="send-recipient-select-modal__search">
           <CmsSelect
-            inputSize="large"
+            inputSize="medium"
             placeholder={typeColumnTitle}
             value={typeValue || undefined}
             onChange={value => setTypeValue(typeof value === 'string' ? value : '')}
             options={typeOptions}
             allowClear
-            style={{ width: 180 }}
+            style={{ width: 140 }}
           />
           <span className="send-recipient-select-modal__search-input">
             <CmsInput
@@ -252,13 +274,13 @@ export function RecipientSelectModal<T extends SendRecipientPickerRow>({
               value={keyword}
               onChange={event => setKeyword(event.target.value)}
               onPressEnter={handleSearch}
-              placeholder="수신자명을 검색하세요"
-              inputSize="large"
+              placeholder="수신자 정보를 입력해 주세요"
+              inputSize="medium"
               width="100%"
               allowClear
             />
           </span>
-          <CmsButton type="button" variant="primary" size="large" onClick={handleSearch}>
+          <CmsButton type="button" variant="primary" size="h40" onClick={handleSearch}>
             검색
           </CmsButton>
         </div>
@@ -273,7 +295,11 @@ export function RecipientSelectModal<T extends SendRecipientPickerRow>({
             <p className="send-recipient-select-modal__empty-description">{statusMessage}</p>
           </div>
         ) : loading ? (
-          <div className="send-recipient-select-modal__empty" role="status" aria-label="수신자 불러오는 중">
+          <div
+            className="send-recipient-select-modal__empty"
+            role="status"
+            aria-label="수신자 불러오는 중"
+          >
             <Spin size="large" />
           </div>
         ) : hasResults ? (
@@ -288,7 +314,7 @@ export function RecipientSelectModal<T extends SendRecipientPickerRow>({
                 tableLayout="fixed"
                 rowSelection={{
                   selectedRowKeys: checkedIds,
-                  columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+                  columnWidth: CHECKBOX_COL_WIDTH,
                   onChange: (_keys, selectedRows) => {
                     const pageIds = new Set(paged.map(item => item.id))
                     setSelectedById(prev => {
@@ -313,11 +339,9 @@ export function RecipientSelectModal<T extends SendRecipientPickerRow>({
           </>
         ) : (
           <div className="send-recipient-select-modal__empty" role="status">
-            <p className="send-recipient-select-modal__empty-title">
-              {CMS_TABLE_EMPTY_COPY['no-search'].title}
-            </p>
+            <p className="send-recipient-select-modal__empty-title">{noResultsCopy.title}</p>
             <p className="send-recipient-select-modal__empty-description">
-              {CMS_TABLE_EMPTY_COPY['no-search'].description}
+              {noResultsCopy.description}
             </p>
           </div>
         )}
