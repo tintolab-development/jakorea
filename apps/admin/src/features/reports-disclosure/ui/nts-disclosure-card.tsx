@@ -10,7 +10,9 @@ import {
   useSaveNtsDisclosure,
 } from '@/features/reports-disclosure/api/hooks'
 import {
-  REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsInput, PageContentLoading, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
+  REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsInput, PageContentLoading, showSaveCompletedAlert, useCmsAlert,
+  mapAdminMutationAlert,
+} from '@/shared/ui'
 
 import './nts-disclosure-card.css'
 
@@ -58,11 +60,14 @@ export function NtsDisclosureCard() {
       await saveMutation.mutateAsync(url)
       setIsEditing(false)
       showSaveCompletedAlert()
-    } catch {
-      showAlert({
-        title: '저장 실패',
-        content: '국세청 공시 링크 저장에 실패했습니다. 다시 시도해 주세요.',
-      })
+    } catch (error) {
+      // 잠금 충돌(다른 관리자 수정)·권한 거부·필수 미입력은 공통 문구, 그 외는 일반 실패 안내
+      showAlert(
+        mapAdminMutationAlert(error) ?? {
+          title: '저장 실패',
+          content: '국세청 공시 링크 저장에 실패했습니다. 다시 시도해 주세요.',
+        },
+      )
       void query.refetch()
     }
   }, [draftUrl, saveMutation, showAlert, query])

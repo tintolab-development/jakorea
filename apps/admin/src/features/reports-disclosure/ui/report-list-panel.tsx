@@ -49,6 +49,7 @@ import {
   showUpdateCompletedAlert,
   useCmsAlert,
   FilterTableLayout,
+  mapAdminMutationAlert,
 } from '@/shared/ui'
 
 import { downloadFile } from '@/shared/lib/file-download'
@@ -209,11 +210,14 @@ export function ReportListPanel({ kind }: Props) {
       setSelectedRowKeys([])
       setBulkDeleteOpen(false)
       showDeleteCompletedAlert()
-    } catch {
-      showAlert({
-        title: '삭제 실패',
-        content: '보고서 삭제에 실패했습니다. 다시 시도해 주세요.',
-      })
+    } catch (error) {
+      // 잠금 충돌(다른 관리자 수정)·권한 거부는 공통 문구, 그 외는 일반 실패 안내
+      showAlert(
+        mapAdminMutationAlert(error) ?? {
+          title: '삭제 실패',
+          content: '보고서 삭제에 실패했습니다. 다시 시도해 주세요.',
+        },
+      )
     }
   }
 
@@ -245,11 +249,14 @@ export function ReportListPanel({ kind }: Props) {
         closeModal()
         showUpdateCompletedAlert()
       }
-    } catch {
-      showAlert({
-        title: '저장 실패',
-        content: '보고서 저장에 실패했습니다. 다시 시도해 주세요.',
-      })
+    } catch (error) {
+      // 잠금 충돌(다른 관리자 수정)·권한 거부·필수 미입력은 공통 문구, 그 외는 일반 실패 안내
+      showAlert(
+        mapAdminMutationAlert(error) ?? {
+          title: '저장 실패',
+          content: '보고서 저장에 실패했습니다. 다시 시도해 주세요.',
+        },
+      )
     }
   }
 
@@ -260,11 +267,14 @@ export function ReportListPanel({ kind }: Props) {
       setSelectedRowKeys(keys => keys.filter(k => k !== editing.id))
       closeModal()
       showDeleteCompletedAlert()
-    } catch {
-      showAlert({
-        title: '삭제 실패',
-        content: '보고서 삭제에 실패했습니다. 다시 시도해 주세요.',
-      })
+    } catch (error) {
+      // 잠금 충돌(다른 관리자 수정)·권한 거부는 공통 문구, 그 외는 일반 실패 안내
+      showAlert(
+        mapAdminMutationAlert(error) ?? {
+          title: '삭제 실패',
+          content: '보고서 삭제에 실패했습니다. 다시 시도해 주세요.',
+        },
+      )
     }
   }
 
