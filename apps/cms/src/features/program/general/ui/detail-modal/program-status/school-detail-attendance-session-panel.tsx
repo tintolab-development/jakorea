@@ -26,6 +26,7 @@ export function SchoolDetailAttendanceSessionPanel({
   onExportAll,
   exporting = false,
   exportDisabled = false,
+  disableSaveWhenUnchanged = false,
 }: {
   session: SchoolDetailAttendanceSessionGroup
   appliedFilters: SchoolDetailAttendanceFilters
@@ -36,6 +37,8 @@ export function SchoolDetailAttendanceSessionPanel({
   onExportAll: () => void
   exporting?: boolean
   exportDisabled?: boolean
+  /** 일반 기관형 시안 16 — 변경 사항이 없으면 「저장」 비활성. 기본 false(안내 알럿) */
+  disableSaveWhenUnchanged?: boolean
 }) {
   const { showAlert } = useCmsAlert()
   const [savedRows, setSavedRows] = useState<SchoolDetailAttendanceStudentRow[]>(() =>
@@ -168,6 +171,7 @@ export function SchoolDetailAttendanceSessionPanel({
             type="button"
             variant="secondary"
             size="h40"
+            disabled={disableSaveWhenUnchanged && changedRows.length === 0}
             loading={isSavingLocal || saving}
             onClick={() => {
               void handleSave()

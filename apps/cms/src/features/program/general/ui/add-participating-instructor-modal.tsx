@@ -7,6 +7,7 @@ import { useEffect } from 'react'
 import { Form } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton, CmsSelect } from '@/shared/ui'
+import { FieldSearchIcon } from '@/shared/ui/icons'
 import type { ParticipatingInstructorMemberCandidate } from '@/features/program/general/lib/participating-instructor-member-candidates'
 import './add-participating-instructor-modal.css'
 
@@ -26,7 +27,16 @@ export interface AddParticipatingInstructorModalProps {
   fieldLabel?: string
   placeholder?: string
   emptyContent?: string
+  /**
+   * `search` — 일반 프로그램(기관형) Figma 03-1: 필수 표시(*) + 돋보기 검색형 셀렉트.
+   * 생략(`default`) 시 기존 셀렉트 그대로 (1사1교·개인형 등 다른 호출부 기본 동작 유지).
+   */
+  fieldVariant?: 'default' | 'search'
 }
+
+/** 일반 프로그램(기관형) Figma 03-1 「강사 추가 등록」 안내 문구 */
+export const GENERAL_INSTITUTION_ADD_INSTRUCTOR_DESCRIPTION =
+  '프로그램에 추가할 강사를 선택해 주세요.\n등록된 회원 정보가 없는 경우, **[강사 회원]**에서 회원 정보를 먼저 등록해 주세요.'
 
 export function AddParticipatingInstructorModal({
   open,
@@ -39,7 +49,9 @@ export function AddParticipatingInstructorModal({
   fieldLabel = '강사 추가',
   placeholder = '추가 등록할 강사를 선택해 주세요',
   emptyContent = '추가 등록 가능한 강사가 없습니다',
+  fieldVariant = 'default',
 }: AddParticipatingInstructorModalProps) {
+  const isSearchField = fieldVariant === 'search'
   const [form] = Form.useForm<AddParticipatingInstructorModalFormValues>()
 
   useEffect(() => {
@@ -93,7 +105,18 @@ export function AddParticipatingInstructorModal({
         >
           <Form.Item
             name="memberId"
-            label={fieldLabel}
+            label={
+              isSearchField ? (
+                <span>
+                  {fieldLabel}
+                  <span className="add-participating-instructor-modal__required" aria-hidden>
+                    *
+                  </span>
+                </span>
+              ) : (
+                fieldLabel
+              )
+            }
             className="add-participating-instructor-modal__field"
           >
             <CmsSelect
@@ -101,6 +124,18 @@ export function AddParticipatingInstructorModal({
               width="100%"
               withAllOption={false}
               placeholder={placeholder}
+              {...(isSearchField
+                ? {
+                    showSearch: true,
+                    optionFilterProp: 'label',
+                    className: 'add-participating-instructor-modal__member-select',
+                    prefix: (
+                      <span className="cms-field__icon" aria-hidden>
+                        <FieldSearchIcon />
+                      </span>
+                    ),
+                  }
+                : {})}
               options={memberOptions.map(member => ({
                 value: member.memberId,
                 label: member.instructorName,

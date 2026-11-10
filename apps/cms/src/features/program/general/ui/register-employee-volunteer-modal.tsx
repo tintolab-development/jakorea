@@ -59,9 +59,12 @@ export interface RegisterEmployeeVolunteerModalProps {
   onInstitutionChange?: (institutionId: string) => void
   /** 개인 프로그램 — 모달 오픈 시 프로그램 단위 저장값 프리필 */
   onProgramLevelOpen?: () => void
+  /** 인원 입력 placeholder — 생략 시 기존 「자원봉사자 수 입력」. 일반 기관형 Figma 07-1/02는 「자원봉사자 수」 */
+  countPlaceholder?: string
 }
 
 const MODAL_WIDTH = 880
+const DEFAULT_COUNT_PLACEHOLDER = '자원봉사자 수 입력'
 
 const INSTITUTION_DESCRIPTION =
   '각 배정 기관의 진행 일정별로 신규 참여 및 재참여 임직원 자원봉사자 수를 입력해 주세요.\n배정된 자원봉사자가 없는 경우 0으로 입력해 주세요.'
@@ -72,9 +75,11 @@ const INDIVIDUAL_PROGRAM_DESCRIPTION =
 function SessionVolunteerCountPair({
   sessionRow,
   field,
+  placeholder,
 }: {
   sessionRow: EmployeeVolunteerSessionRow
   field: 'newCount' | 'returningCount'
+  placeholder: string
 }) {
   const label = field === 'newCount' ? '신규' : '재참여'
 
@@ -93,7 +98,7 @@ function SessionVolunteerCountPair({
           inputSize="small"
           pattern="[0-9]*"
           width="100%"
-          placeholder="자원봉사자 수 입력"
+          placeholder={placeholder}
           aria-label={`${sessionRow.label} ${label} 자원봉사자 수`}
         />
       </Form.Item>
@@ -115,6 +120,7 @@ export function RegisterEmployeeVolunteerModal({
   onRegister,
   onInstitutionChange,
   onProgramLevelOpen,
+  countPlaceholder = DEFAULT_COUNT_PLACEHOLDER,
 }: RegisterEmployeeVolunteerModalProps) {
   const [form] = Form.useForm<RegisterEmployeeVolunteerFormValues>()
   const [submitting, setSubmitting] = useState(false)
@@ -361,9 +367,17 @@ export function RegisterEmployeeVolunteerModal({
                     view="-"
                     edit={
                       <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap register-employee-volunteer-modal__counts">
-                        <SessionVolunteerCountPair sessionRow={sessionRow} field="newCount" />
+                        <SessionVolunteerCountPair
+                          sessionRow={sessionRow}
+                          field="newCount"
+                          placeholder={countPlaceholder}
+                        />
                         <DetailInfoForm.InputsSeparator />
-                        <SessionVolunteerCountPair sessionRow={sessionRow} field="returningCount" />
+                        <SessionVolunteerCountPair
+                          sessionRow={sessionRow}
+                          field="returningCount"
+                          placeholder={countPlaceholder}
+                        />
                       </div>
                     }
                   />

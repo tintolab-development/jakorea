@@ -34,13 +34,18 @@ export interface AddStudentModalProps {
   onAdd: (values: AddStudentFormValues) => void
   /** 미전달 시 옵션 없음 — 상위에서 필터와 동일 학급 옵션 전달 */
   gradeClassOptions?: Array<{ label: string; value: string }>
+  /** 기본 설명 문구 대체 — 일반 기관형 참여 기관 상세는 시안(05-1) 문구 */
+  description?: string
 }
+
+export const ADD_STUDENT_MODAL_DEFAULT_DESCRIPTION = '프로그램에 참여하는 학생 정보를 추가 등록합니다.'
 
 export function AddStudentModal({
   open,
   onCancel,
   onAdd,
   gradeClassOptions = [],
+  description = ADD_STUDENT_MODAL_DEFAULT_DESCRIPTION,
 }: AddStudentModalProps) {
   const {
     control,
@@ -91,7 +96,7 @@ export function AddStudentModal({
       width={600}
       footer={footer}
       className="add-student-modal"
-      description="프로그램에 참여하는 학생 정보를 추가 등록합니다."
+      description={description}
     >
       <div className="add-student-modal__body">
         <form

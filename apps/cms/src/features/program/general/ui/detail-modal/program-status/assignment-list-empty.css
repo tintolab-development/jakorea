@@ -1,0 +1,17 @@
+/* 배정 목록 빈 상태 — 제목(20px) + 보조문구(14px) 세로 배치 */
+.school-detail-fullpage-view__instructor-list-empty.assignment-list-empty {
+  flex-direction: column;
+  gap: var(--spacing-6, 6px);
+}
+
+.assignment-list-empty__title {
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.assignment-list-empty__description {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 150%;
+}

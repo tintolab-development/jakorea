@@ -29,6 +29,7 @@ import {
   formatParticipatingSessionPeriodForCalendarDisplay,
   getPrimaryParticipatingSessionLine,
   parseParticipatingSessionTimeRange,
+  type ParticipatingInstitutionsCalendarDayListVariant,
 } from './participating-institutions-calendar-day-list'
 import {
   CalendarMain,
@@ -358,6 +359,8 @@ export interface ParticipatingInstitutionsCalendarViewProps {
   renderMonthEventContent?: RenderCalendarMonthEventContent
   /** 1사1교: 기관+날짜별 신청 차시를 묶어 `N차시 (시작 ~ 종료)`로 표시 */
   usePreferredScheduleFormat?: boolean
+  /** 기본 우측 기관 목록 표시 변형 — 일반 기관형 시안은 `general-institution` */
+  dayListVariant?: ParticipatingInstitutionsCalendarDayListVariant
 }
 
 export function ParticipatingInstitutionsCalendarView({
@@ -373,6 +376,7 @@ export function ParticipatingInstitutionsCalendarView({
   customEvents,
   renderMonthEventContent,
   usePreferredScheduleFormat = false,
+  dayListVariant = 'default',
 }: ParticipatingInstitutionsCalendarViewProps) {
   const [fallbackCalendarMode, setFallbackCalendarMode] = useState<'month' | 'week'>('month')
   const calendarControlled =
@@ -502,6 +506,7 @@ export function ParticipatingInstitutionsCalendarView({
             getColorForEvent={e => getColorForEvent(e as CalendarEvent)}
             onSchoolClick={onSchoolClick}
             usePreferredScheduleFormat={usePreferredScheduleFormat}
+            variant={dayListVariant}
           />
         )
       }

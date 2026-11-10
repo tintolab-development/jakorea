@@ -82,6 +82,8 @@ export interface SchoolDetailAddInstructorAssignModalProps {
     option: AddInstructorAssignOption,
     meta?: { isNewApproval?: boolean; sessionIds?: string[] }
   ) => void
+  /** 하위 안내 모달 문구 — 일반 기관형 시안은 `general-institution` (기본 기존 문구) */
+  copyVariant?: 'default' | 'general-institution'
 }
 
 const DEFAULT_ROLE: InstructorRoleKey = 'assistant'
@@ -104,6 +106,7 @@ export function SchoolDetailAddInstructorAssignModal({
   requiredInstructorCount = 4,
   overflowAlreadyConfirmed = false,
   onAdd,
+  copyVariant = 'default',
 }: SchoolDetailAddInstructorAssignModalProps) {
   const [form] = Form.useForm<AddInstructorAssignFormValues>()
   const selectedInstructorId = Form.useWatch('instructorId', form)
@@ -340,6 +343,7 @@ export function SchoolDetailAddInstructorAssignModal({
         onConfirm={handleLeadConfirmOk}
         currentLeadInstructorName={currentLeadInstructorName ?? ''}
         newLeadInstructorName={leadConfirmPayload?.option.label ?? ''}
+        copyVariant={copyVariant}
       />
 
       {/* 강사 배정 인원 초과 안내: 최대 인원 찼을 때 인원 외 추가 배정 확인 */}

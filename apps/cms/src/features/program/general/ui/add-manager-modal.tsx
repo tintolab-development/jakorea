@@ -77,6 +77,11 @@ interface AddManagerModalProps {
   afterOpenChange?: (open: boolean) => void
   /** false 반환 시 모달을 닫지 않음 (API 실패 등) */
   onAdd: (values: AddManagerFormValues) => boolean | void | Promise<boolean | void>
+  /**
+   * 열릴 때 기본 선택 권한. 생략 시 기존처럼 Program Owner(UJAT·1사1교·Gemini),
+   * `null`이면 미선택으로 연다(일반 프로그램 시안).
+   */
+  defaultRole?: ProgramRole | null
 }
 
 export function AddManagerModal({
@@ -90,6 +95,7 @@ export function AddManagerModal({
   confirmLoading = false,
   afterOpenChange,
   onAdd,
+  defaultRole = 'OWNER',
 }: AddManagerModalProps) {
   const [form] = Form.useForm<AddManagerModalFormValues>()
   const [blockMessage, setBlockMessage] = useState<string | null>(null)
@@ -130,10 +136,10 @@ export function AddManagerModal({
   useEffect(() => {
     if (!open) return
     form.resetFields()
-    if (!ownerSlotAvailable) {
+    if (defaultRole !== null && !ownerSlotAvailable) {
       form.setFieldsValue({ role: 'PARTNER' })
     }
-  }, [open, form, ownerSlotAvailable])
+  }, [open, form, ownerSlotAvailable, defaultRole])
 
   useEffect(() => {
     if (!open) setBlockMessage(null)
@@ -226,7 +232,7 @@ export function AddManagerModal({
             onFinish={values => {
               void handleSubmit(values)
             }}
-            initialValues={{ managerPreset: undefined, role: 'OWNER' }}
+            initialValues={{ managerPreset: undefined, role: defaultRole ?? undefined }}
           >
             <Form.Item
               name="role"

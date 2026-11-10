@@ -18,7 +18,10 @@ import {
   PARTICIPATING_EMPLOYEE_VOLUNTEER_REGISTER_COUNTS_REQUIRED_ALERT_MESSAGE,
   PARTICIPATING_EMPLOYEE_VOLUNTEER_REGISTER_SELECT_INSTITUTION_ALERT_MESSAGE,
   PARTICIPATING_VOLUNTEER_ADD_COMPLETE_ALERT_MESSAGE,
+  GENERAL_INSTITUTION_PARTICIPANT_ADD_COMPLETE_ALERT_MESSAGE,
+  GENERAL_INSTITUTION_PARTICIPANT_ADD_COMPLETE_ALERT_TITLE,
 } from '@/shared/constants/messages'
+import { useIsInstitutionProgramSurface } from '@/features/program/general/hooks/use-institution-program-surface'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 import { participatingVolunteersFilterFields } from '@/features/program/general/lib/participating-volunteers-filter-fields'
@@ -277,6 +280,8 @@ export function ParticipatingVolunteersSection({
   )
 
   const [addVolunteerModalOpen, setAddVolunteerModalOpen] = useState(false)
+  /** 기관형 — 봉사자 추가 등록 Figma 03-2·03-3 (동의 미선택 시작·「있음/없음」·「등록 완료」) */
+  const isInstitutionSurface = useIsInstitutionProgramSurface(program)
   const [volunteerConsentOpen, setVolunteerConsentOpen] = useState(false)
   const [pendingVolunteerMemberId, setPendingVolunteerMemberId] = useState<string | null>(null)
   const [volunteerMemberOptions, setVolunteerMemberOptions] = useState<
@@ -386,10 +391,14 @@ export function ParticipatingVolunteersSection({
         if (success) {
           setVolunteerConsentOpen(false)
           setPendingVolunteerMemberId(null)
-          showAlert({
-            title: '안내',
-            content: PARTICIPATING_VOLUNTEER_ADD_COMPLETE_ALERT_MESSAGE,
-          })
+          showAlert(
+            isInstitutionSurface
+              ? {
+                  title: GENERAL_INSTITUTION_PARTICIPANT_ADD_COMPLETE_ALERT_TITLE,
+                  content: GENERAL_INSTITUTION_PARTICIPANT_ADD_COMPLETE_ALERT_MESSAGE,
+                }
+              : { title: '안내', content: PARTICIPATING_VOLUNTEER_ADD_COMPLETE_ALERT_MESSAGE }
+          )
         }
       } catch (error) {
         showAlert({
@@ -402,7 +411,7 @@ export function ParticipatingVolunteersSection({
         throw error
       }
     },
-    [registerVolunteerParticipant, showAlert]
+    [isInstitutionSurface, registerVolunteerParticipant, showAlert]
   )
 
   const pendingVolunteerHasId1365 =
@@ -471,7 +480,10 @@ export function ParticipatingVolunteersSection({
   }
   const handleListView = () => setViewMode('list')
 
-  const institutionColumnTitle = participatingVolunteerInstitutionColumnTitle(program)
+  // 기관형 Figma 07-1/01-1 — 「배정 기관명」
+  const institutionColumnTitle = isInstitutionSurface
+    ? '배정 기관명'
+    : participatingVolunteerInstitutionColumnTitle(program)
 
   const columns = useMemo((): ColumnsType<ParticipatingVolunteerRow> => {
     return [
@@ -519,7 +531,13 @@ export function ParticipatingVolunteersSection({
           const lines = (record.sessions ?? []).map((s: ParticipatingSchoolSession) =>
             formatParticipatingSchoolSessionLine(s)
           )
-          return <ScheduleLinesCell lines={lines} moreUnit="봉사 일정" emptyText="일정 미배정" />
+          return (
+            <ScheduleLinesCell
+              lines={lines}
+              moreUnit={isInstitutionSurface ? '교육 일정' : '봉사 일정'}
+              emptyText="일정 미배정"
+            />
+          )
         },
       },
       {
@@ -549,7 +567,7 @@ export function ParticipatingVolunteersSection({
         render: (v: string | undefined) => displayServerPiiAsIs(v),
       },
     ]
-  }, [institutionColumnTitle, program])
+  }, [institutionColumnTitle, isInstitutionSurface, program])
 
   const { tableWrapRef, tableScrollX } = useContainerFitTableScrollX(
     columns as ColumnsType<unknown>,
@@ -601,7 +619,7 @@ export function ParticipatingVolunteersSection({
         onFilterChange={handleFilterChange}
         onSearch={handleFilterSearch}
         title="참여 봉사자 목록"
-        description={`${filteredVolunteers.length}건`}
+        description={`${isInstitutionSurface ? '총 ' : ''}${filteredVolunteers.length}건`}
         actions={
           <div className="program-application-list-toolbar">
             <FilterTableToolbarButton
@@ -609,7 +627,7 @@ export function ParticipatingVolunteersSection({
               icon={<ButtonDownloadIcon />}
               onClick={handleActivityCertificateIssueClick}
             >
-              활동확인서 발급
+              {isInstitutionSurface ? '활동인증서 발급' : '활동확인서 발급'}
             </FilterTableToolbarButton>
             {viewMode === 'list' ? (
               <FilterTableToolbarButton
@@ -710,6 +728,7 @@ export function ParticipatingVolunteersSection({
                 renderMonthEventContent={renderParticipatingVolunteerCalendarMonthEventContent}
                 rightContent={
                   <ParticipatingVolunteersCalendarRight
+                    variant={isInstitutionSurface ? 'institution' : 'default'}
                     events={volunteerEventsForCalendarDate}
                     schoolFilterOptions={calendarSchoolFilterOptions}
                     effectiveSelectedSchools={effectiveCalendarSelectedSchools}
@@ -738,6 +757,7 @@ export function ParticipatingVolunteersSection({
         institutionOptions={approvedInstitutionOptions}
         savedRegistrations={employeeVolunteerRegistrations}
         hideInstitutionSelect={isEmployeeVolunteerIndividualProgram}
+        {...(isInstitutionSurface ? { countPlaceholder: '자원봉사자 수' } : {})}
         programLevelRegistrationScopeId={individualProgramRegistrationScopeId}
         onNoInstitutionSelected={() =>
           showAlert({
@@ -793,6 +813,7 @@ export function ParticipatingVolunteersSection({
         memberId={pendingVolunteerMemberId}
         programId={program?.id}
         hideBasicInfoSection={pendingVolunteerHasId1365}
+        preset={isInstitutionSurface ? 'generalInstitution' : 'default'}
         onClose={handleVolunteerConsentClose}
         onConfirm={handleVolunteerRegisterSubmit}
       />

@@ -8,6 +8,10 @@ import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import {
+  REQUIRED_CONSENT_DISAGREE_ALERT_TITLE,
+  buildRequiredConsentDisagreeAlertMessage,
+} from '@jakorea/domain/shared/required-consent-alert'
+import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
 } from '@/shared/constants/messages'
@@ -16,6 +20,7 @@ import {
   createParticipatingVolunteerAddRegistrationDraft,
   PARTICIPATING_VOLUNTEER_ADD_REGISTRATION_IDS,
   resolveJaVolunteerExperienceFromParagraph,
+  type ParticipatingVolunteerAddRegistrationDraftPreset,
 } from '@/features/program/general/lib/participating-volunteer-add-registration-draft'
 import { ParticipatingVolunteerAddRegistrationPluginProvider, useParticipatingVolunteerAddRegistrationPluginState } from '@/features/program/general/lib/participating-volunteer-add-registration-plugin-state'
 import { buildVolunteerParticipantRegisterRequest } from '@/features/program/general/lib/participating-volunteer-participant-register-request'
@@ -32,6 +37,11 @@ export interface ParticipatingVolunteerAddRegistrationModalProps {
   /** true — 선택한 회원에 1365 ID가 이미 등록됨(기본 정보 단락 숨김) */
   hideBasicInfoSection?: boolean
   zIndex?: number
+  /**
+   * 생략(`default`) — 기존 동작(동의 기본 선택, 경험 여부 기존 라벨). UJAT 추가 등록 기본값.
+   * `generalInstitution` — 일반 프로그램(기관형) Figma: 동의 미선택 시작, 경험 여부 「있음 / 없음」, 미동의 시 필수 동의 안내.
+   */
+  preset?: ParticipatingVolunteerAddRegistrationDraftPreset
   onClose: () => void
   onConfirm: (payload: VolunteerParticipantRegisterRequest) => void | Promise<void>
 }
@@ -47,13 +57,18 @@ function ParticipatingVolunteerAddRegistrationModalBody({
   programId,
   hideBasicInfoSection,
   zIndex = 1100,
+  preset = 'default',
   onClose,
   onConfirm,
 }: ParticipatingVolunteerAddRegistrationModalProps) {
+  const isGeneralInstitution = preset === 'generalInstitution'
   const { showAlert } = useCmsAlert()
   const { values: pluginValues, reset: resetPluginValues } =
     useParticipatingVolunteerAddRegistrationPluginState()
-  const initialDraft = useMemo(() => createParticipatingVolunteerAddRegistrationDraft(), [])
+  const initialDraft = useMemo(
+    () => createParticipatingVolunteerAddRegistrationDraft(preset),
+    [preset]
+  )
   const [paragraphs, setParagraphs] = useState(initialDraft.paragraphs)
   const [submitting, setSubmitting] = useState(false)
 
@@ -63,7 +78,11 @@ function ParticipatingVolunteerAddRegistrationModalBody({
     setParagraphs(
       initialDraft.paragraphs.map(paragraph => {
         if (paragraph.variant === 'horizontal_table' && CONSENT_PARAGRAPH_IDS.has(paragraph.id)) {
-          return { ...paragraph, bottomConsent: 'agree' as const }
+          // generalInstitution: 동의/미동의 미선택으로 시작 (약관·동의 정책)
+          return {
+            ...paragraph,
+            bottomConsent: isGeneralInstitution ? undefined : ('agree' as const),
+          }
         }
         if (
           paragraph.variant === 'multiple_choice' &&
@@ -74,7 +93,7 @@ function ParticipatingVolunteerAddRegistrationModalBody({
         return paragraph
       })
     )
-  }, [open, initialDraft.paragraphs, resetPluginValues])
+  }, [open, initialDraft.paragraphs, isGeneralInstitution, resetPluginValues])
 
   const updateParagraph = (id: string, next: WritingFormParagraph) => {
     setParagraphs(prev => prev.map(paragraph => (paragraph.id === id ? next : paragraph)))
@@ -92,6 +111,24 @@ function ParticipatingVolunteerAddRegistrationModalBody({
     if (!memberId || !Number.isFinite(numericMemberId) || numericMemberId <= 0) {
       showAlert({ title: '안내', content: '등록할 봉사자를 다시 선택해 주세요.' })
       return
+    }
+
+    if (isGeneralInstitution) {
+      const disagreedLabels = paragraphs
+        .filter(
+          paragraph =>
+            paragraph.variant === 'horizontal_table' &&
+            CONSENT_PARAGRAPH_IDS.has(paragraph.id) &&
+            paragraph.bottomConsent === 'disagree'
+        )
+        .map(paragraph => paragraph.paragraphTitle)
+      if (disagreedLabels.length > 0) {
+        showAlert({
+          title: REQUIRED_CONSENT_DISAGREE_ALERT_TITLE,
+          content: buildRequiredConsentDisagreeAlertMessage(disagreedLabels),
+        })
+        return
+      }
     }
 
     const built = buildVolunteerParticipantRegisterRequest({
