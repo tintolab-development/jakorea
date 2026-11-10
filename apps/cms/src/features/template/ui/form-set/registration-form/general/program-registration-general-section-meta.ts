@@ -6,6 +6,8 @@ export const PROGRAM_REGISTRATION_GENERAL_SECTION_META = {
   basicInfo: {
     title: '기본 정보',
     editDescription: '모집 등록 후 참여자 유형은 변경할 수 없습니다.',
+    /** 일반 프로그램 등록 위저드 카드 설명 — 시안 (`@jakorea/form-schema` registration-meta와 동일 문구) */
+    registrationDescription: '참여자 유형은 프로그램 등록 이후 항목 수정이 불가합니다.',
   },
   typeSettings: {
     title: '프로그램 유형 설정',
@@ -22,6 +24,10 @@ export const PROGRAM_REGISTRATION_GENERAL_SECTION_META = {
     editDescription: '차시 별 정보를 입력해 주세요',
     /** 복수 회차 */
     editDescriptionMultiRound: '회차 별 정보를 입력해 주세요',
+    /** 일반 프로그램 등록 위저드 카드 설명 — 시안(마침표 포함). 단일 회차 */
+    registrationDescription: '차시 별 정보를 입력해 주세요.',
+    /** 일반 프로그램 등록 위저드 카드 설명 — 복수 회차 */
+    registrationDescriptionMultiRound: '회차 별 정보를 입력해 주세요.',
   },
   educationScheduleCurriculum: {
     title: '교육 진행 (일정형)',

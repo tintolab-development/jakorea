@@ -25,6 +25,12 @@ import {
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-form-field-rows'
 import { parsePositiveIntInput } from '@/features/template/lib/participant-recruitment-institution-limits'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
+import { useIsGeneralRegistrationWizard } from '@/features/template/context/general-registration-wizard-context'
+
+/** 일반 프로그램 등록 위저드만 시안 플레이스홀더 — 1사1교·교육받은 교사·템플릿 관리·상세 수정은 기존 문구 */
+function useGeneralWizardPlaceholder(generalText: string, fallback: string): string {
+  return useIsGeneralRegistrationWizard() ? generalText : fallback
+}
 
 type RangeSeal = { start: string; end: string } | null
 
@@ -213,13 +219,14 @@ export const ApplicantRecruitMaxInstructorsField = memo(
       number | undefined
     >(APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.maxAssignableInstructors, defaultValue)
     const maxInstructorsInput = maxInstructors != null ? String(maxInstructors) : ''
+    const maxPlaceholder = useGeneralWizardPlaceholder('최대 강사', '최대값 입력')
     return (
       <DetailInfoForm.Field
         label="배정 가능 최대 강사 수"
         validationKey="recruit.institution.maxAssignableInstructors"
         edit={
           <NumberWithSuffixRow
-            placeholder="최대값 입력"
+            placeholder={maxPlaceholder}
             suffix="명"
             value={maxInstructorsInput}
             onChange={setMaxInstructors}
@@ -242,6 +249,7 @@ export const ApplicantRecruitMaxClassCountField = memo(function ApplicantRecruit
     number | undefined
   >(APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.maxClassCount, defaultValue)
   const maxClassInput = maxClassCount != null ? String(maxClassCount) : ''
+  const maxPlaceholder = useGeneralWizardPlaceholder('최대 학급', '최대값 입력')
   return (
     <DetailInfoForm.Field
       label="신청 가능 최대 학급 수"
@@ -249,7 +257,7 @@ export const ApplicantRecruitMaxClassCountField = memo(function ApplicantRecruit
       fullRow={fullRow}
       edit={
         <NumberWithSuffixRow
-          placeholder="최대값 입력"
+          placeholder={maxPlaceholder}
           suffix="개"
           value={maxClassInput}
           onChange={setMaxClassCount}
@@ -272,6 +280,7 @@ export const ApplicantRecruitMaxScheduleCountField = memo(
       number | undefined
     >(APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.maxScheduleCount, defaultValue)
     const maxScheduleInput = maxScheduleCount != null ? String(maxScheduleCount) : ''
+    const maxPlaceholder = useGeneralWizardPlaceholder('최대 일정', '최대값 입력')
     return (
       <DetailInfoForm.Field
         label="신청 가능 최대 일정 수"
@@ -279,7 +288,7 @@ export const ApplicantRecruitMaxScheduleCountField = memo(
         fullRow={fullRow}
         edit={
           <NumberWithSuffixRow
-            placeholder="최대값 입력"
+            placeholder={maxPlaceholder}
             suffix="개"
             value={maxScheduleInput}
             onChange={setMaxScheduleCount}
@@ -307,6 +316,7 @@ export const ApplicantRecruitMaxSessionsPerDayField = memo(
       number | undefined
     >(APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.maxSessionsPerDay, defaultValue)
     const maxSessionsInput = maxSessionsPerDay != null ? String(maxSessionsPerDay) : ''
+    const maxPlaceholder = useGeneralWizardPlaceholder('최대 차시', '최대값 입력')
     return (
       <DetailInfoForm.Field
         label={label}
@@ -314,7 +324,7 @@ export const ApplicantRecruitMaxSessionsPerDayField = memo(
         fullRow={fullRow}
         edit={
           <NumberWithSuffixRow
-            placeholder="최대값 입력"
+            placeholder={maxPlaceholder}
             suffix={suffix}
             value={maxSessionsInput}
             onChange={setMaxSessionsPerDay}
@@ -337,6 +347,10 @@ export const ApplicantRecruitProgramPeriodField = memo(
         null
       )
     const programAnchor = programAnchorIso ? dayjs(programAnchorIso) : null
+    const programPeriodPlaceholder = useGeneralWizardPlaceholder(
+      '프로그램 운영 기간을 선택해 주세요',
+      '운영 기간을 선택해 주세요'
+    )
     const setProgramAnchor = (next: Dayjs | null) => {
       setProgramAnchorIso(next == null ? null : next.toISOString())
     }
@@ -363,7 +377,7 @@ export const ApplicantRecruitProgramPeriodField = memo(
               presetMode="period"
               value={programAnchor}
               width="100%"
-              placeholder="운영 기간을 선택해 주세요"
+              placeholder={programPeriodPlaceholder}
               preferPeriodModeInPopover
               suppressAutoTodayWhenEmpty
               showTimeToggle={false}
@@ -452,6 +466,10 @@ export const ApplicantRecruitFinalAnnounceField = memo(
         ''
       )
     const finalAnnounceDate = finalAnnounceIso ? dayjs(finalAnnounceIso) : null
+    const finalAnnouncePlaceholder = useGeneralWizardPlaceholder(
+      '합격자 발표일을 선택해 주세요',
+      '합격자 발표일'
+    )
     const setFinalAnnounceDate = (next: Dayjs | null) => {
       setFinalAnnounceIso(next == null ? null : next.toISOString())
     }
@@ -470,7 +488,7 @@ export const ApplicantRecruitFinalAnnounceField = memo(
               mode="single"
               presetMode="date"
               value={finalAnnounceDate}
-              placeholder="합격자 발표일"
+              placeholder={finalAnnouncePlaceholder}
               suppressAutoTodayWhenEmpty
               onChange={next => setFinalAnnounceDate(next)}
             />

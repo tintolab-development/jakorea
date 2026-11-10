@@ -24,6 +24,7 @@ import {
 } from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
 import { useGeneralRecruitOverlayKv } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { useCmsAlert } from '@/shared/ui'
+import { useIsGeneralRegistrationWizard } from '@/features/template/context/general-registration-wizard-context'
 import {
   isOutsideInclusiveLocalDayRange,
   normalizeRangeSealToLocalDayBounds,
@@ -287,6 +288,8 @@ function VolunteerInterviewScheduleBlock({
     timeUnit,
     typedTemplateAuthoring,
   ])
+  // 일반 프로그램 등록 위저드만 시안 문구(진행 불가일 선택 팝업) — UJAT·신청 폼·템플릿 관리는 기존 유지
+  const isGeneralWizard = useIsGeneralRegistrationWizard()
   const interviewTimeSlots = useMemo(
     () => buildInterviewTimeSlots(normalizedInterviewTimeRange, timeUnit),
     [normalizedInterviewTimeRange, timeUnit]
@@ -371,11 +374,17 @@ function VolunteerInterviewScheduleBlock({
               fullRow
               edit={
                 <UnavailableDatesBulkExclusionsRow
-                  modalUnavailableDescriptionLead="면접 진행 불가한 날짜를 모두 선택해 주세요."
+                  modalUnavailableDescriptionLead={
+                    isGeneralWizard
+                      ? '면접 진행이 불가한 날짜를 모두 선택해 주세요'
+                      : '면접 진행 불가한 날짜를 모두 선택해 주세요.'
+                  }
                   modalUnavailableDescriptionSecond={
-                    applyInterviewPeriodConstraint
-                      ? '2차 면접 기간(봉사자 모집 정보) 안의 날짜만 선택할 수 있습니다. 선택된 날짜는 면접 일정으로 신청할 수 없습니다. 오른쪽 칩(토·일·공휴일 제외)은 요일·공휴일 전체 제외이며, 달력에서 해당 날짜는 클릭할 수 없습니다.'
-                      : '선택된 날짜는 면접 일정으로 신청할 수 없습니다.'
+                    isGeneralWizard
+                      ? '선택된 날짜는 사용자가 신청 불가합니다.'
+                      : applyInterviewPeriodConstraint
+                        ? '2차 면접 기간(봉사자 모집 정보) 안의 날짜만 선택할 수 있습니다. 선택된 날짜는 면접 일정으로 신청할 수 없습니다. 오른쪽 칩(토·일·공휴일 제외)은 요일·공휴일 전체 제외이며, 달력에서 해당 날짜는 클릭할 수 없습니다.'
+                        : '선택된 날짜는 면접 일정으로 신청할 수 없습니다.'
                   }
                   appliedDates={appliedUnavailableDates}
                   onApplyDatesChange={setAppliedUnavailableDates}

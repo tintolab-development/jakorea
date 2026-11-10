@@ -15,6 +15,7 @@ import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
+import { useIsGeneralRegistrationWizard } from '@/features/template/context/general-registration-wizard-context'
 import '@/features/template/ui/form-editor/form-editor.css'
 import './recruit-form-instructor-info-paragraph.css'
 
@@ -153,6 +154,9 @@ export function RecruitFormInstructorInfoParagraph() {
   )
   const [notes, setNotes] = useInstructorRecruitField<string>('recruit.instructor.notes', '')
 
+  // 일반 프로그램 등록 위저드만 시안 플레이스홀더 — 1사1교 강사 모집·템플릿 관리·상세 수정은 기존 문구
+  const isGeneralWizard = useIsGeneralRegistrationWizard()
+
   return (
     <div className="recruit-form-instructor-info-paragraph__forms">
       <DetailInfoForm title="강사 모집 정보" hideHeader mode="edit">
@@ -285,7 +289,7 @@ export function RecruitFormInstructorInfoParagraph() {
                   mode="single"
                   presetMode="date"
                   value={finalAnnounceDate}
-                  placeholder="합격자 발표일"
+                  placeholder={isGeneralWizard ? '합격자 발표일을 선택해 주세요' : '합격자 발표일'}
                   suppressAutoTodayWhenEmpty
                   onChange={next => setFinalAnnounceDate(next)}
                 />
@@ -365,7 +369,7 @@ export function RecruitFormInstructorInfoParagraph() {
                   inputSize="small"
                   width="100%"
                   style={{ flex: '1 1 0', minWidth: 0 }}
-                  placeholder="비고란을 작성하세요"
+                  placeholder={isGeneralWizard ? '비고를 입력해 주세요' : '비고란을 작성하세요'}
                   value={notes}
                   disabled={notesNotApplicable}
                   onChange={e => setNotes(e.target.value)}

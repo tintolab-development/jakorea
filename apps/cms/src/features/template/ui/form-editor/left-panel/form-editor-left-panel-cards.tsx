@@ -37,7 +37,10 @@ import {
   modalCardFooterToggles,
 } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel-card-footer'
 import { useRegistrationWizardValidationHighlight } from '@/features/program/shared/ui/registration/registration-wizard-validation-highlight'
-import { useHideParagraphSelectionChrome } from '@/features/template/context/paragraph-selection-chrome-context'
+import {
+  useHideParagraphSelectionChrome,
+  useShowParagraphActiveOutline,
+} from '@/features/template/context/paragraph-selection-chrome-context'
 
 function isAgreementAdminProxyConfirmCard(
   paragraph: WritingFormParagraph,
@@ -200,7 +203,9 @@ function PinnedFormCardInner({
     registrationWizardHighlight.attemptId > 0 &&
     registrationWizardHighlight.isParagraphIncomplete(paragraph.id)
   const hideSelectionChrome = useHideParagraphSelectionChrome()
+  const forceActiveOutline = useShowParagraphActiveOutline()
   const showSelectionChrome = showEditorChrome && !hideSelectionChrome
+  const showActiveOutline = showSelectionChrome || (showEditorChrome && forceActiveOutline)
 
   return (
     <ParagraphCard
@@ -209,7 +214,7 @@ function PinnedFormCardInner({
         'form-editor-card',
         paragraphRequiredIncomplete ? 'paragraph-card--required-incomplete' : '',
         showSelectionChrome ? 'paragraph-card--selectable' : '',
-        showSelectionChrome && selectedCardId === paragraph.id ? 'paragraph-card--active' : '',
+        showActiveOutline && selectedCardId === paragraph.id ? 'paragraph-card--active' : '',
         isTitleWithPeriodParagraph(paragraph) ? 'paragraph-card--survey-title-with-period' : '',
         paragraph.kind === 'single_item' && paragraph.variant === 'scale_type'
           ? 'paragraph-card--scale-type'
@@ -403,7 +408,9 @@ function SortableMiddleFormCardInner({
     registrationWizardHighlight.attemptId > 0 &&
     registrationWizardHighlight.isParagraphIncomplete(paragraph.id)
   const hideSelectionChrome = useHideParagraphSelectionChrome()
+  const forceActiveOutline = useShowParagraphActiveOutline()
   const showSelectionChrome = showEditorChrome && !hideSelectionChrome
+  const showActiveOutline = showSelectionChrome || (showEditorChrome && forceActiveOutline)
 
   return (
     <div
@@ -429,7 +436,7 @@ function SortableMiddleFormCardInner({
           'form-editor-card',
           paragraphRequiredIncomplete ? 'paragraph-card--required-incomplete' : '',
           showSelectionChrome ? 'paragraph-card--selectable' : '',
-          showSelectionChrome && selectedCardId === paragraph.id ? 'paragraph-card--active' : '',
+          showActiveOutline && selectedCardId === paragraph.id ? 'paragraph-card--active' : '',
           isTitleWithPeriodParagraph(paragraph) ? 'paragraph-card--survey-title-with-period' : '',
           paragraph.kind === 'single_item' && paragraph.variant === 'scale_type'
             ? 'paragraph-card--scale-type'
