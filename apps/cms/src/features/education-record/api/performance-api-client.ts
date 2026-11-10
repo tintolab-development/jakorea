@@ -13,7 +13,7 @@ import customInstance from '@/shared/api/orval-mutator'
 import { axiosClient } from '@/shared/instance/axios-instance'
 import {
   downloadBlob,
-  fileNameFromContentDisposition,
+  ruleFileNameFromContentDisposition,
   generateFilename,
 } from '@/shared/utils/file-download'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -220,7 +220,8 @@ export async function exportPerformanceRecordsRemote(
     skipGlobalErrorAlert: true,
   } as AxiosRequestConfig & { skipGlobalErrorAlert: boolean })
 
-  const filename = fileNameFromContentDisposition(
+  // 서버가 영문 이름(performance_…xlsx)을 보내면 규칙 이름([JA Korea] CMS 어드민_실적데이터_YYMMDD.xlsx)으로 저장한다.
+  const filename = ruleFileNameFromContentDisposition(
     readHeader(response.headers, 'content-disposition'),
     fallbackFilename
   )

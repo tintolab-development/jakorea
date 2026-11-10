@@ -18,7 +18,7 @@ import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import { handleError } from '@/shared/utils/error-handler'
 import {
   downloadBlob,
-  fileNameFromContentDisposition,
+  ruleFileNameFromContentDisposition,
   generateFilename,
 } from '@/shared/utils/file-download'
 import {
@@ -376,7 +376,8 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
         applicationId,
         applicationType: 'INDIVIDUAL',
       })
-      const fileName = fileNameFromContentDisposition(
+      // 서버 이름이 규칙([JA Korea])이 아니면 규칙 이름으로 저장한다.
+      const fileName = ruleFileNameFromContentDisposition(
         contentDisposition,
         generateFilename(`참여자_과제_${participant.applicantName}`, 'zip')
       )

@@ -2,6 +2,7 @@ import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import { getJAKoreaCMSBackendAPISettlementSubset } from '@/shared/api/generated/settlement/settlement-api'
 import customInstance from '@/shared/api/orval-mutator'
 import { postEncryptedAdminFile } from '@/shared/lib/post-encrypted-admin-file'
+import { formatAsiaSeoulYymmdd } from '@/features/settlement-management/api/account-payments/settlement-form-download'
 import type { SettlementExportResponse } from '@/features/settlement-management/api/account-payments/settlement-export-response'
 import {
   parseTaxReportPreviewWorkbook,
@@ -163,7 +164,8 @@ export async function downloadPaymentStatementRemote(
   await postEncryptedAdminFile({
     url: `/api/admin/settlements/${settlementId}/payment-statement/download`,
     password: options.password,
-    fallbackFileName: `지급조서_${settlementId}.pdf`,
+    // 서버 Content-Disposition(`[JA Korea] 지급조서_{수취인}_{발급일}.pdf`)을 우선 쓴다. 헤더를 못 읽을 때만 사용.
+    fallbackFileName: `[JA Korea] 지급조서_${settlementId}_${formatAsiaSeoulYymmdd()}.pdf`,
     alternateUrls: [`/api/admin/settlements/${settlementId}/payment-statement/download-requests`],
   })
 }
@@ -253,7 +255,8 @@ export async function bulkDownloadPaymentStatementsRemote(body: {
     url: '/api/admin/settlements/payment-statements/bulk-download/jobs',
     password: body.password,
     extraBody: { settlementIds: body.settlementIds },
-    fallbackFileName: '지급조서_일괄.zip',
+    // 서버 Content-Disposition(`[JA Korea] 지급조서_일괄_{다운로드일}.zip`)을 우선 쓴다. 헤더를 못 읽을 때만 사용.
+    fallbackFileName: `[JA Korea] 지급조서_일괄_${formatAsiaSeoulYymmdd()}.zip`,
   })
 }
 
