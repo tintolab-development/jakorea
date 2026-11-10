@@ -260,11 +260,11 @@
   transition: none !important;
 }
 
-/* Figma Button / h32 — min-width 80 (공통 H32 기본 100 덮어씀) */
+/* 표 안 버튼 Button / h32 — 100×32 고정 (Admin 표 공통 규격, 버튼 두 개 나란히) */
 .is-category-modal__table .content-modal__table-cell-actions .cms-button.ant-btn.cms-button--h32 {
-  width: 80px;
-  min-width: 80px;
-  max-width: 80px;
+  width: 100px;
+  min-width: 100px;
+  max-width: 100px;
 }
 
 .is-category-modal__name-text {

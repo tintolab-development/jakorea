@@ -18,9 +18,9 @@ import {
 
 import './category-management-modal.css'
 
-/** 모달 가로 패딩 30×2 제외 (600 − 60). 관리 열 200px · 행 버튼 H32 폭 80 */
+/** 모달 가로 패딩 30×2 제외 (600 − 60). 관리 열 = 행 버튼 H32 100×2 + 간격 8 + 셀 패딩 12×2 = 232 */
 const TABLE_INNER_WIDTH = 540
-const ACTIONS_COL_WIDTH = 200
+const ACTIONS_COL_WIDTH = 232
 const NAME_COL_WIDTH = TABLE_INNER_WIDTH - ACTIONS_COL_WIDTH
 /** 최대 6행은 잘리지 않게 전부 노출. 7행부터 tbody만 세로 스크롤 */
 const VISIBLE_CATEGORY_ROWS = 6
