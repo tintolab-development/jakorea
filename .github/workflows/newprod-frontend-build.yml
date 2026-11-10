@@ -1,14 +1,5 @@
 name: NEW PROD Frontend Parallel Build and Deploy
 on:
-  push:
-    branches:
-      - deploy/newprod
-    paths:
-      - 'apps/cms/**'
-      - 'packages/**'
-      - 'pnpm-lock.yaml'
-      - 'package.json'
-      - '.github/workflows/newprod-frontend-build.yml'
   workflow_dispatch:
     inputs:
       app:
@@ -42,7 +33,7 @@ jobs:
     name: Build and deploy ${{ matrix.app }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.app == 'all' || inputs.app == matrix.app }}
+    if: ${{ inputs.app == 'all' || inputs.app == matrix.app }}
     concurrency:
       group: newprod-frontend-deploy-${{ matrix.app }}
       cancel-in-progress: false
