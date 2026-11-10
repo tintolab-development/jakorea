@@ -1,4 +1,4 @@
-import type { IndividualSettlementReviewDetail } from '@/shared/api/generated/dashboard/schemas/individualSettlementReviewDetail'
+import type { IndividualSettlementReviewDetailView } from '@/features/program/general/api/individual-settlement-review-types'
 import type { IndividualSettlementReviewItem } from '@/shared/api/generated/dashboard/schemas/individualSettlementReviewItem'
 import type { IndividualSettlementReviewReceipt } from '@/shared/api/generated/dashboard/schemas/individualSettlementReviewReceipt'
 import type {
@@ -81,7 +81,7 @@ export type IndividualSettlementReviewBasicExtras = {
 }
 
 export function mapIndividualSettlementReviewToCalculationStatement(
-  detail: IndividualSettlementReviewDetail,
+  detail: IndividualSettlementReviewDetailView,
   extras?: IndividualSettlementReviewBasicExtras
 ): IndividualSettlementCalculationStatementView {
   const latest = latestIndividualSettlementReviewRevision(detail)

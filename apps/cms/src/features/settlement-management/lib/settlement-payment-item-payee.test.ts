@@ -3,6 +3,7 @@ import type { SettlementItemSettingSection } from '@/features/settlement-managem
 import {
   filterProgramWagePaymentItemOptionsForPayees,
   GENERAL_PROGRAM_PARTICIPANT_PAYEE_TYPES,
+  readPaymentItemEligiblePayeeTypes,
 } from '@/features/settlement-management/lib/settlement-payment-item-payee'
 
 const testSections: SettlementItemSettingSection[] = [
@@ -84,6 +85,62 @@ describe('filterProgramWagePaymentItemOptionsForPayees — 지급 실행 자격 
     expect(labels).toContain('강사 교통비')
     expect(labels).toContain('숙박비')
     expect(labels).not.toContain('학생 교통비')
-    expect(labels).not.toContain('학생 교통비(정책)')
+  })
+
+  it('eligiblePayeeTypes가 없는 행은 항목 유형으로 추론하지 않고 거르지 않는다', () => {
+    const forInstructor = filterProgramWagePaymentItemOptionsForPayees(options, testSections, [
+      'INSTRUCTOR',
+    ]).map(o => o.label)
+    const forParticipant = filterProgramWagePaymentItemOptionsForPayees(
+      options,
+      testSections,
+      GENERAL_PROGRAM_PARTICIPANT_PAYEE_TYPES
+    ).map(o => o.label)
+    expect(forInstructor).toContain('학생 교통비(정책)')
+    expect(forParticipant).toContain('학생 교통비(정책)')
+  })
+
+  it('VOLUNTEER payee는 서버가 VOLUNTEER를 준 항목만 남긴다', () => {
+    const sections: SettlementItemSettingSection[] = [
+      {
+        kind: 'payment',
+        sectionTitle: '지급',
+        items: [
+          {
+            id: 'pay-activity',
+            title: '활동비',
+            description: '',
+            iconKey: 'pay_activity',
+            paymentItemType: 'ACTIVITY',
+            eligiblePayeeTypes: ['INSTRUCTOR', 'PARTICIPANT_INDIVIDUAL', 'VOLUNTEER'],
+          },
+          {
+            id: 'pay-lodging',
+            title: '숙박비',
+            description: '',
+            iconKey: 'pay_lodging',
+            paymentItemType: 'LODGING_GENERAL',
+            eligiblePayeeTypes: ['INSTRUCTOR'],
+          },
+        ],
+      },
+    ]
+    const labels = filterProgramWagePaymentItemOptionsForPayees(
+      [
+        { value: 'pay-activity', label: '활동비' },
+        { value: 'pay-lodging', label: '숙박비' },
+      ],
+      sections,
+      ['VOLUNTEER']
+    ).map(o => o.label)
+    expect(labels).toEqual(['활동비'])
+  })
+})
+
+describe('readPaymentItemEligiblePayeeTypes', () => {
+  it('VOLUNTEER를 읽고 모르는 값은 버린다', () => {
+    expect(
+      readPaymentItemEligiblePayeeTypes({ eligiblePayeeTypes: ['volunteer', 'INSTRUCTOR', 'UNKNOWN'] })
+    ).toEqual(['VOLUNTEER', 'INSTRUCTOR'])
   })
 })

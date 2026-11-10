@@ -8,6 +8,15 @@ export type SettlementEligiblePayeeType =
   | 'PARTICIPANT_INDIVIDUAL'
   | 'PARTICIPANT_ORGANIZATION'
   | 'INSTRUCTOR'
+  | 'VOLUNTEER'
+
+const SETTLEMENT_ELIGIBLE_PAYEE_TYPES: ReadonlySet<string> = new Set<SettlementEligiblePayeeType>([
+  'STUDENT',
+  'PARTICIPANT_INDIVIDUAL',
+  'PARTICIPANT_ORGANIZATION',
+  'INSTRUCTOR',
+  'VOLUNTEER',
+])
 
 export const GENERAL_PROGRAM_PARTICIPANT_PAYEE_TYPES: readonly SettlementEligiblePayeeType[] = [
   'STUDENT',
@@ -15,49 +24,26 @@ export const GENERAL_PROGRAM_PARTICIPANT_PAYEE_TYPES: readonly SettlementEligibl
   'PARTICIPANT_ORGANIZATION',
 ]
 
-const INSTRUCTOR_ONLY_PAYMENT_TYPES = new Set([
-  'TRANSPORT_INSTRUCTOR',
-  'LODGING_GENERAL',
-  'LODGING_1C1S',
-])
-
-const PARTICIPANT_PAYMENT_TYPES = new Set([
-  'TRANSPORT_STUDENT',
-  'STUDENT_TRANSPORTATION',
-  'ACTIVITY',
-  'MEAL',
-])
-
 export function readPaymentItemEligiblePayeeTypes(item: unknown): SettlementEligiblePayeeType[] {
   if (!item || typeof item !== 'object') return []
   const raw = (item as { eligiblePayeeTypes?: unknown }).eligiblePayeeTypes
   if (!Array.isArray(raw)) return []
   return raw
     .map(v => (typeof v === 'string' ? v.trim().toUpperCase() : ''))
-    .filter((v): v is SettlementEligiblePayeeType =>
-      v === 'STUDENT' ||
-      v === 'PARTICIPANT_INDIVIDUAL' ||
-      v === 'PARTICIPANT_ORGANIZATION' ||
-      v === 'INSTRUCTOR'
-    )
+    .filter((v): v is SettlementEligiblePayeeType => SETTLEMENT_ELIGIBLE_PAYEE_TYPES.has(v))
 }
 
+/**
+ * 지급 대상은 서버 `eligiblePayeeTypes`만 따른다(항목 유형으로 추론하지 않는다).
+ * 값이 없는 행(로컬 mock 등)은 거르지 않는다.
+ */
 function rowMatchesPayee(
   row: SettlementItemSettingRow,
   payeeTypes: ReadonlySet<SettlementEligiblePayeeType>
 ): boolean {
   const explicit = row.eligiblePayeeTypes
-  if (explicit?.length) {
-    return explicit.some(t => payeeTypes.has(t))
-  }
-  const paymentType = (row.paymentItemType ?? '').trim().toUpperCase()
-  if (INSTRUCTOR_ONLY_PAYMENT_TYPES.has(paymentType)) {
-    return payeeTypes.has('INSTRUCTOR')
-  }
-  if (PARTICIPANT_PAYMENT_TYPES.has(paymentType)) {
-    return GENERAL_PROGRAM_PARTICIPANT_PAYEE_TYPES.some(t => payeeTypes.has(t))
-  }
-  return true
+  if (!explicit?.length) return true
+  return explicit.some(t => payeeTypes.has(t))
 }
 
 function paymentRowsFromSections(
