@@ -11,6 +11,16 @@ on:
       - '.github/workflows/newprod-frontend-build.yml'
   workflow_dispatch:
     inputs:
+      app:
+        description: Frontend app to deploy
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - admin
+          - cms
+          - platform
       homepage_api_base_url:
         description: "NEW PROD JAHOMEADMINBACK HTTPS CloudFront URL"
         required: false
@@ -19,9 +29,6 @@ on:
 permissions:
   contents: read
   id-token: write
-concurrency:
-  group: newprod-frontend-deploy
-  cancel-in-progress: false
 env:
   AWS_REGION: ap-northeast-2
   AWS_ACCOUNT_ID: "264015108093"
@@ -35,6 +42,10 @@ jobs:
     name: Build and deploy ${{ matrix.app }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.app == 'all' || inputs.app == matrix.app }}
+    concurrency:
+      group: newprod-frontend-deploy-${{ matrix.app }}
+      cancel-in-progress: false
     strategy:
       fail-fast: false
       matrix:
