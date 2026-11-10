@@ -32,7 +32,7 @@ import {
   individualIneligibleMessage,
   individualTransportIneligibleNotice,
   isEvidencePolicyUnconfigured,
-  shouldUseIndividualSettlementSchedulesApi,
+  resolveScheduleSettlementAudience,
 } from '../lib/individual-settlement-contract'
 import {
   isReceiptEvidenceRequired,
@@ -494,8 +494,11 @@ export function EducationSettlementWriteForm({
   /** 1사1교 강사 지급조서에서만 숙박비(LODGING_1C1S) 신청 */
   const showCompanySchoolLodging = !isReceipt && isCompanySchoolSettlementProgram(programType)
   const consentSidecarQuery = useSettlementConsentSidecar(documentKind)
+  const scheduleSettlementAudience = resolveScheduleSettlementAudience(applicationType, programType)
   const individualSchedules = useIndividualSettlementSchedulesQuery(
-    shouldUseIndividualSettlementSchedulesApi(applicationType, programType) ? applicationId : null,
+    scheduleSettlementAudience ? applicationId : null,
+    true,
+    scheduleSettlementAudience ?? 'individual',
   )
   const matchedIndividual = useMemo(
     () =>
@@ -989,6 +992,11 @@ export function EducationSettlementWriteForm({
               isReceipt
                 ? '편도 30km 이상 이동 시 지원되는 비용입니다. 가는 편과 오는 편을 구분해 실제 사용한 교통비를 신청해 주세요.'
                 : '편도 30km 이상 이동 시 지원되는 비용입니다.'
+            }
+            footer={
+              isReceipt && transportMaxWon != null
+                ? `최대 ${transportMaxWon.toLocaleString('ko-KR')}원까지 지급됩니다.`
+                : undefined
             }
           >
             {isReceipt ? (

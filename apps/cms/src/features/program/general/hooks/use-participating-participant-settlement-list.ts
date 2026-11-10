@@ -47,6 +47,8 @@ export function useParticipatingParticipantSettlementList(input: {
     ...individualSettlementReviewListQueryOptions({
       programId: input.programId,
       participantId,
+      // 개인 참여자 상세 — 같은 회원의 봉사자 정산 건이 섞이지 않게 참여자 건만 조회한다.
+      applicationType: 'INDIVIDUAL',
     }),
     enabled: queryEnabled,
     retry: false,

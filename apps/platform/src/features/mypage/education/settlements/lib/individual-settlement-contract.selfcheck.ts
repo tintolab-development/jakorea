@@ -16,7 +16,9 @@ import {
   isReceiptPreConsentRequiredError,
   normalizeIndividualIneligibleReason,
   readIndividualSettlementErrorCode,
+  resolveScheduleSettlementAudience,
   shouldUseIndividualSettlementSchedulesApi,
+  shouldUseVolunteerSettlementSchedulesApi,
 } from './individual-settlement-contract.ts'
 
 assert.equal(isIndividualScheduleSettlementAudience('INDIVIDUAL'), true)
@@ -31,6 +33,26 @@ assert.equal(shouldUseIndividualSettlementSchedulesApi('INDIVIDUAL', 'GENERAL_IN
 assert.equal(shouldUseIndividualSettlementSchedulesApi('INSTRUCTOR', 'GENERAL_ORGANIZATION'), false)
 assert.equal(shouldUseIndividualSettlementSchedulesApi('INSTRUCTOR', 'GENERAL_INDIVIDUAL'), false)
 assert.equal(shouldUseIndividualSettlementSchedulesApi('INDIVIDUAL', 'GENERAL_ORGANIZATION'), false)
+
+// 봉사자 일정별 영수증 정산 — 일반(개인·기관)·UJAT만. 1사1교·Gemini·유형 미확인은 호출하지 않는다.
+assert.equal(shouldUseVolunteerSettlementSchedulesApi('VOLUNTEER', 'GENERAL_INDIVIDUAL'), true)
+assert.equal(shouldUseVolunteerSettlementSchedulesApi('VOLUNTEER', 'GENERAL_ORGANIZATION'), true)
+assert.equal(shouldUseVolunteerSettlementSchedulesApi('volunteer', 'ujat'), true)
+assert.equal(shouldUseVolunteerSettlementSchedulesApi('VOLUNTEER', 'COMPANY_SCHOOL'), false)
+assert.equal(shouldUseVolunteerSettlementSchedulesApi('VOLUNTEER', 'GEMINI'), false)
+assert.equal(shouldUseVolunteerSettlementSchedulesApi('VOLUNTEER', null), false)
+assert.equal(shouldUseVolunteerSettlementSchedulesApi('INDIVIDUAL', 'GENERAL_INDIVIDUAL'), false)
+assert.equal(shouldUseVolunteerSettlementSchedulesApi('INSTRUCTOR', 'UJAT'), false)
+// 봉사자 게이트가 개인 경로를 바꾸지 않는다
+assert.equal(shouldUseIndividualSettlementSchedulesApi('VOLUNTEER', 'GENERAL_INDIVIDUAL'), false)
+
+assert.equal(resolveScheduleSettlementAudience('INDIVIDUAL', 'GENERAL_INDIVIDUAL'), 'individual')
+assert.equal(resolveScheduleSettlementAudience('INDIVIDUAL', null), 'individual')
+assert.equal(resolveScheduleSettlementAudience('VOLUNTEER', 'UJAT'), 'volunteer')
+assert.equal(resolveScheduleSettlementAudience('VOLUNTEER', 'GENERAL_ORGANIZATION'), 'volunteer')
+assert.equal(resolveScheduleSettlementAudience('VOLUNTEER', 'COMPANY_SCHOOL'), null)
+assert.equal(resolveScheduleSettlementAudience('INSTRUCTOR', 'GENERAL_INDIVIDUAL'), null)
+assert.equal(resolveScheduleSettlementAudience('ORGANIZATION', 'GENERAL_ORGANIZATION'), null)
 
 assert.equal(
   individualIneligibleMessage('EVIDENCE_POLICY_UNCONFIGURED'),

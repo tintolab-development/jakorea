@@ -9,10 +9,14 @@ import type { ApiResponseIndividualSettlementReviewDecision } from '@/shared/api
 import type { ApiResponseIndividualSettlementReviewDetail } from '@/shared/api/generated/dashboard/schemas/apiResponseIndividualSettlementReviewDetail'
 import type { IndividualSettlementReviewDecision } from '@/shared/api/generated/dashboard/schemas/individualSettlementReviewDecision'
 import type { IndividualSettlementReviewDetail } from '@/shared/api/generated/dashboard/schemas/individualSettlementReviewDetail'
-import type { IndividualSettlementReviewListItem } from '@/shared/api/generated/dashboard/schemas/individualSettlementReviewListItem'
 import type { IndividualSettlementReviewRequest } from '@/shared/api/generated/dashboard/schemas/individualSettlementReviewRequest'
 import type { SettlementStatusChangeRequestNotificationType } from '@/shared/api/generated/settlement/schemas/settlementStatusChangeRequestNotificationType'
 import type { PageResponseIndividualSettlementReviewListItem } from '@/shared/api/generated/dashboard/schemas/pageResponseIndividualSettlementReviewListItem'
+import type {
+  IndividualSettlementReviewApplicationType,
+  IndividualSettlementReviewDetailView,
+  IndividualSettlementReviewListItemView,
+} from '@/features/program/general/api/individual-settlement-review-types'
 
 export const INDIVIDUAL_SETTLEMENT_REVIEW_LIST_URL =
   '/api/admin/individual-settlement-applications'
@@ -43,12 +47,15 @@ export function buildIndividualSettlementReviewListParams(input: {
   page?: number
   size?: number
   status?: string
+  /** 생략하면 참여자·봉사자 모두 */
+  applicationType?: IndividualSettlementReviewApplicationType
 }): {
   page: number
   size: number
   programId?: number
   participantId?: number
   status?: string
+  applicationType?: IndividualSettlementReviewApplicationType
 } {
   const params: {
     page: number
@@ -56,6 +63,7 @@ export function buildIndividualSettlementReviewListParams(input: {
     programId?: number
     participantId?: number
     status?: string
+    applicationType?: IndividualSettlementReviewApplicationType
   } = {
     page: input.page ?? 0,
     size: input.size ?? 100,
@@ -66,6 +74,7 @@ export function buildIndividualSettlementReviewListParams(input: {
   if (participantId != null) params.participantId = participantId
   const status = input.status?.trim()
   if (status) params.status = status
+  if (input.applicationType) params.applicationType = input.applicationType
   return params
 }
 
@@ -127,7 +136,8 @@ export async function fetchIndividualSettlementReviewListRemote(input: {
   page?: number
   size?: number
   status?: string
-} = {}): Promise<IndividualSettlementReviewListItem[]> {
+  applicationType?: IndividualSettlementReviewApplicationType
+} = {}): Promise<IndividualSettlementReviewListItemView[]> {
   const params = buildIndividualSettlementReviewListParams(input)
   const response = await customInstance<unknown>({
     url: INDIVIDUAL_SETTLEMENT_REVIEW_LIST_URL,
@@ -140,7 +150,7 @@ export async function fetchIndividualSettlementReviewListRemote(input: {
 
 export async function fetchIndividualSettlementReviewDetailRemote(
   settlementApplicationId: number
-): Promise<IndividualSettlementReviewDetail> {
+): Promise<IndividualSettlementReviewDetailView> {
   const response = await customInstance<unknown>({
     url: individualSettlementReviewDetailUrl(settlementApplicationId),
     method: 'GET',
@@ -206,17 +216,22 @@ export async function rejectIndividualSettlementReviewRemote(input: {
 export function individualSettlementReviewListQueryOptions(input: {
   programId: string
   participantId: string
+  applicationType?: IndividualSettlementReviewApplicationType
 }) {
   return queryOptions({
-    queryKey: generalProgramProgressQueryKeys.individualSettlementReviews(
-      input.programId,
-      input.participantId
-    ),
+    queryKey: [
+      ...generalProgramProgressQueryKeys.individualSettlementReviews(
+        input.programId,
+        input.participantId
+      ),
+      input.applicationType ?? 'ALL',
+    ] as const,
     staleTime: 30_000,
     queryFn: () =>
       fetchIndividualSettlementReviewListRemote({
         programId: input.programId,
         participantId: input.participantId,
+        applicationType: input.applicationType,
       }),
   })
 }
