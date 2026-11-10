@@ -12,6 +12,7 @@ import type { DisclosureUpdateRequest } from '@/shared/api/generated/ja-korea/sc
 import type { ReportCreateRequest } from '@/shared/api/generated/ja-korea/schemas/reportCreateRequest'
 import type { ReportResponse } from '@/shared/api/generated/ja-korea/schemas/reportResponse'
 import type { ReportUpdateRequest } from '@/shared/api/generated/ja-korea/schemas/reportUpdateRequest'
+import { isNoThumbnailPlaceholder } from '@/shared/lib/no-thumbnail-placeholder'
 import type { ReportsParams } from '@/shared/api/generated/ja-korea/schemas/reportsParams'
 
 export function toApiReportType(kind: ReportKind): 'ANNUAL' | 'AUDIT' {
@@ -24,15 +25,18 @@ export function toFeReportKind(type: string | undefined): ReportKind {
 
 export function mapReportResponseToDomain(row: ReportResponse): TransparencyReport {
   const kind = toFeReportKind(row.reportType)
+  // 서버 필수 우회로 올린 「썸네일 없음」 표식은 화면에서 썸네일 없음으로 보인다
+  const placeholderThumb = isNoThumbnailPlaceholder(row.thumbnail?.originalName)
   return {
     id: row.id != null ? String(row.id) : '',
     kind,
     title: row.title ?? '',
-    thumbnailUrl: row.thumbnail?.publicUrl ?? '',
-    thumbnailFileName: row.thumbnail?.originalName ?? '',
+    thumbnailUrl: placeholderThumb ? '' : (row.thumbnail?.publicUrl ?? ''),
+    thumbnailFileName: placeholderThumb ? '' : (row.thumbnail?.originalName ?? ''),
     attachmentFileName: row.attachmentFileName ?? row.attachment?.originalName ?? '',
     attachmentUrl: row.attachment?.publicUrl ?? '',
-    thumbnailAssetId: row.thumbnail?.assetId,
+    thumbnailAssetId: placeholderThumb ? undefined : row.thumbnail?.assetId,
+    placeholderThumbnailAssetId: placeholderThumb ? row.thumbnail?.assetId : undefined,
     attachmentAssetId: row.attachment?.assetId,
     version: row.version ?? 0,
     downloadCount: row.downloadCount ?? 0,
@@ -56,18 +60,11 @@ export function toReportsListParams(
   }
 }
 
-/**
- * 썸네일은 선택 항목(QA 2026-11-10) — `thumbnailAssetId: null`이면 썸네일 없음.
- * 서버 명세(ReportCreateRequest·ReportUpdateRequest)는 아직 thumbnailAssetId 필수라,
- * 명세가 nullable로 바뀌어 재생성되기 전까지 요청 타입을 여기서만 넓힌다.
- */
-type WithOptionalThumbnail<T> = Omit<T, 'thumbnailAssetId'> & { thumbnailAssetId: number | null }
-
 export function toReportCreateRequest(
   input: ReportCreateInput,
-  thumbnailAssetId: number | null,
+  thumbnailAssetId: number,
   attachmentAssetId: number,
-): WithOptionalThumbnail<ReportCreateRequest> {
+): ReportCreateRequest {
   return {
     title: input.title.trim(),
     thumbnailAssetId,
@@ -78,9 +75,9 @@ export function toReportCreateRequest(
 export function toReportUpdateRequest(
   input: ReportUpdateInput,
   current: TransparencyReport,
-  thumbnailAssetId: number | null,
+  thumbnailAssetId: number,
   attachmentAssetId: number,
-): WithOptionalThumbnail<ReportUpdateRequest> {
+): ReportUpdateRequest {
   return {
     title: input.title.trim(),
     thumbnailAssetId,

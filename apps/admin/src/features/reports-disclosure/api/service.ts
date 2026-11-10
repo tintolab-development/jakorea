@@ -7,8 +7,7 @@ import type {
   TransparencyReport,
 } from '@/entities/reports-disclosure/model/types'
 import { getJAKoreaHomepageAdminAPIJAKoreaSubset } from '@/shared/api/generated/ja-korea/ja-korea-api'
-import type { ReportCreateRequest } from '@/shared/api/generated/ja-korea/schemas/reportCreateRequest'
-import type { ReportUpdateRequest } from '@/shared/api/generated/ja-korea/schemas/reportUpdateRequest'
+import { createReportNoThumbnailFile } from '@/shared/lib/no-thumbnail-placeholder'
 import {
   mapDisclosureResponseToDomain,
   mapReportResponseToDomain,
@@ -46,12 +45,25 @@ async function listRemoteReportsPage(
   )
 }
 
-/** 썸네일은 선택 항목 — 새 파일은 업로드, 기존 자산은 그대로, 없으면 `null`(썸네일 없음) */
-async function resolveThumbnailAssetId(input: ReportCreateInput): Promise<number | null> {
+/**
+ * 썸네일은 선택 항목 — 새 파일은 업로드, 기존 자산은 그대로.
+ * 썸네일이 없으면 서버가 아직 필수라 「썸네일 없음」 표식을 대신 보낸다
+ * (같은 보고서가 쓰던 표식이 있으면 재사용 — 보고서끼리는 썸네일 자산을 공유할 수 없다).
+ */
+async function resolveThumbnailAssetId(
+  input: ReportCreateInput,
+  placeholderAssetId?: number,
+): Promise<number> {
   if (input.thumbnailFile) {
     return uploadReportThumbnailAsset(input.thumbnailFile)
   }
-  return input.thumbnailAssetId ?? null
+  if (input.thumbnailAssetId != null) {
+    return input.thumbnailAssetId
+  }
+  if (placeholderAssetId != null) {
+    return placeholderAssetId
+  }
+  return uploadReportThumbnailAsset(createReportNoThumbnailFile())
 }
 
 async function resolveAttachmentAssetId(input: ReportCreateInput): Promise<number> {
@@ -80,8 +92,7 @@ export async function createReportService(
   const attachmentAssetId = await resolveAttachmentAssetId(input)
   const created = await jaKoreaApi().createReport(
     toApiReportType(kind),
-    // 썸네일 선택 항목 — 서버 명세 갱신 전까지 생성 타입(필수 number)과 이 지점에서만 어긋난다
-    toReportCreateRequest(input, thumbnailAssetId, attachmentAssetId) as ReportCreateRequest,
+    toReportCreateRequest(input, thumbnailAssetId, attachmentAssetId),
   )
   return mapReportResponseToDomain(created)
 }
@@ -100,11 +111,14 @@ export async function updateReportService(
     throw new Error(`Report not found: ${input.id}`)
   }
   // 수정 화면에서 썸네일을 지우면 `null`이 넘어온다 — 기존 썸네일로 되돌리지 않는다
-  const thumbnailAssetId = await resolveThumbnailAssetId({
-    ...input,
-    thumbnailAssetId:
-      input.thumbnailAssetId === null ? null : (input.thumbnailAssetId ?? current.thumbnailAssetId),
-  })
+  const thumbnailAssetId = await resolveThumbnailAssetId(
+    {
+      ...input,
+      thumbnailAssetId:
+        input.thumbnailAssetId === null ? null : (input.thumbnailAssetId ?? current.thumbnailAssetId),
+    },
+    current.placeholderThumbnailAssetId,
+  )
   const attachmentAssetId = await resolveAttachmentAssetId({
     ...input,
     attachmentAssetId: input.attachmentAssetId ?? current.attachmentAssetId,
@@ -112,7 +126,7 @@ export async function updateReportService(
   const updated = await jaKoreaApi().updateReport(
     toApiReportType(kind),
     Number(input.id),
-    toReportUpdateRequest(input, current, thumbnailAssetId, attachmentAssetId) as ReportUpdateRequest,
+    toReportUpdateRequest(input, current, thumbnailAssetId, attachmentAssetId),
   )
   return mapReportResponseToDomain(updated)
 }
