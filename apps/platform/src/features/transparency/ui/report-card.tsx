@@ -45,8 +45,15 @@ function DownloadButton({
 }
 
 export function ReportCard({ report, variant }: ReportCardProps) {
+  /*
+   * 표지 이미지 아래에 기본 배경을 한 겹 깔아 둔다.
+   * 어드민은 서버가 썸네일 필수인 동안 「썸네일 없음」을 1×1 투명 PNG로 올리므로,
+   * 그 경우 기본 배경(연차: CSS 청록 단색 · 회계감사: 그라디언트)이 그대로 보인다.
+   */
   const coverStyle = report.coverUrl
-    ? { backgroundImage: `url(${report.coverUrl})` }
+    ? variant === 'annual'
+      ? { backgroundImage: `url(${report.coverUrl})` }
+      : { backgroundImage: `url(${report.coverUrl}), ${report.coverGradient}` }
     : variant === 'annual'
       ? undefined
       : { background: report.coverGradient }
