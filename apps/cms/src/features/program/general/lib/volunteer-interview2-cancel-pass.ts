@@ -51,9 +51,10 @@ export function buildVolunteerInterview2CancelPassMessage(
 }
 
 export function resolveVolunteerInterview2CancelPassReasonLabel(
-  variant: VolunteerInterview2CancelPassNotifyVariant
+  _variant: VolunteerInterview2CancelPassNotifyVariant
 ): string {
-  return variant === 'pendingNotification' ? '취소 사유(반려 사유)' : '취소 사유'
+  // 시안 17(9781:74988) — 두 변형 모두 「취소 사유」
+  return '취소 사유'
 }
 
 /** BE `finalResultStatus=RESERVE*` → `reserve1`…`reserve4` 매핑값 기준 헤더 버튼 라벨 */

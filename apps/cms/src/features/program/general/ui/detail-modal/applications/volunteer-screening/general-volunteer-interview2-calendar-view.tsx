@@ -23,7 +23,10 @@ import {
   type ScheduleColorPair,
 } from '@/features/program/shared/ui/program-schedule-colors'
 import { useApplicantCalendarColorMaps } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-calendar-schedule-helpers'
-import { renderGeneralVolunteerInterview2PreviewTooltipContent } from './general-volunteer-interview2-preview-tooltip'
+import {
+  renderGeneralVolunteerInterview2PreviewTooltipContent,
+  renderGeneralVolunteerInterview2ShortLabelPreviewTooltipContent,
+} from './general-volunteer-interview2-preview-tooltip'
 import { GeneralVolunteerInterview2CalendarListItem } from './general-volunteer-interview2-calendar-list-item'
 import {
   buildUjatVolunteerInterviewMonthCellRows,
@@ -35,6 +38,8 @@ dayjs.extend(isSameOrBefore)
 
 export interface GeneralVolunteerInterview2CalendarViewProps {
   events: GeneralVolunteerInterviewCalendarEvent[]
+  /** volunteer: 봉사자 시안 10-2 — 팝오버 짧은 상태 라벨·카드 점수 숫자만. 기본(participant)은 기존 */
+  cardPreset?: 'default' | 'volunteer'
   loading?: boolean
   selectedRowKeys: Key[]
   onSelectionChange: (keys: Key[]) => void
@@ -43,12 +48,14 @@ export interface GeneralVolunteerInterview2CalendarViewProps {
 
 function GeneralVolunteerInterview2CalendarRightList({
   rows,
+  cardPreset,
   selectedRowKeys,
   onSelectionChange,
   onRowClick,
   resolveRowColors,
 }: {
   rows: GeneralVolunteerInterview2CalendarListRow[]
+  cardPreset: 'default' | 'volunteer'
   selectedRowKeys: Key[]
   onSelectionChange: (keys: Key[]) => void
   onRowClick: (row: GeneralVolunteerInterview2CalendarListRow) => void
@@ -100,6 +107,7 @@ function GeneralVolunteerInterview2CalendarRightList({
               <div className="calendar-list-item__column">
                 <GeneralVolunteerInterview2CalendarListItem
                   row={row}
+                  scoreFormat={cardPreset}
                   checked={selectedSet.has(row.id)}
                   onToggle={handleToggle}
                 />
@@ -114,6 +122,7 @@ function GeneralVolunteerInterview2CalendarRightList({
 
 export function GeneralVolunteerInterview2CalendarView({
   events,
+  cardPreset = 'default',
   loading,
   selectedRowKeys,
   onSelectionChange,
@@ -200,7 +209,11 @@ export function GeneralVolunteerInterview2CalendarView({
           eventsTooltipScope="full-day"
           eventsTooltipTrigger="cell"
           formatEventsOverflowText={n => `외 ${n}개의 항목`}
-          previewTooltipContent={renderGeneralVolunteerInterview2PreviewTooltipContent}
+          previewTooltipContent={
+            cardPreset === 'volunteer'
+              ? renderGeneralVolunteerInterview2ShortLabelPreviewTooltipContent
+              : renderGeneralVolunteerInterview2PreviewTooltipContent
+          }
           buildMonthCellRows={buildUjatVolunteerInterviewMonthCellRows}
           renderMonthEventContent={renderUjatVolunteerInterviewMonthEventContent}
         />
@@ -208,6 +221,7 @@ export function GeneralVolunteerInterview2CalendarView({
       right={
         <GeneralVolunteerInterview2CalendarRightList
           rows={dayListRows}
+          cardPreset={cardPreset}
           selectedRowKeys={selectedRowKeys}
           onSelectionChange={onSelectionChange}
           onRowClick={handleListRowClick}

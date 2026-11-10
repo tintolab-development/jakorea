@@ -43,6 +43,7 @@ import { GeneralVolunteerApplicantBasicInfo } from './basic-info'
 import { GeneralVolunteerApplicantManagerEvaluationSection } from './manager-evaluation-section'
 import { GeneralVolunteerApplicantInterviewAvailability } from './interview-availability'
 import { GeneralVolunteerApplicantEssaySections } from './essay-sections'
+import { GeneralVolunteerPreviousJaProgramSection } from './previous-ja-program-section'
 import {
   GeneralVolunteerApplicantInterviewEvaluationSection,
   type GeneralVolunteerApplicantInterviewEvaluationSectionHandle,
@@ -256,6 +257,7 @@ function Interview2VolunteerApplicantDetail({
           currentAdminId={currentAdminId}
           onSave={onSaveInterviewEvaluation}
         />
+        <GeneralVolunteerPreviousJaProgramSection applicant={applicant} />
         <GeneralVolunteerApplicantEssaySections applicant={applicant} />
       </div>
 
@@ -474,6 +476,7 @@ export function GeneralVolunteerApplicantDetailView(
             }
           />
           <GeneralVolunteerApplicantInterviewAvailability applicant={applicant} />
+          <GeneralVolunteerPreviousJaProgramSection applicant={applicant} />
           <GeneralVolunteerApplicantEssaySections applicant={applicant} />
         </div>
 
@@ -649,6 +652,7 @@ export function GeneralVolunteerApplicantDetailView(
         {showInterviewAvailability ? (
           <GeneralVolunteerApplicantInterviewAvailability applicant={applicant} />
         ) : null}
+        <GeneralVolunteerPreviousJaProgramSection applicant={applicant} />
         <GeneralVolunteerApplicantEssaySections applicant={applicant} />
       </div>
 

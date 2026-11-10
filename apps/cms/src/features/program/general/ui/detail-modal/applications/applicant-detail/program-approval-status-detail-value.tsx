@@ -12,6 +12,16 @@ export interface ProgramApprovalStatusDetailValueProps {
   participationRejectionReason?: string
   approvalNotificationSentAt?: string
   onResendNotificationClick?: () => void
+  /**
+   * 반려 사유 표기. 기본 `parenthesized` → 「사유 : (인원초과)」.
+   * `plain`: 일반(기관형) 기관 신청 시안 03(1141:240363) 「사유 : 인원초과」.
+   */
+  rejectionReasonFormat?: 'parenthesized' | 'plain'
+  /**
+   * 알림 재발송 버튼과 발송 일시 사이 세로 구분선. 기본 true.
+   * false: 일반(기관형) 강사 신청 시안 03·06-1 「[알림 재발송] 2026.01.15 09:15:42」(버튼 뒤 구분선 없음).
+   */
+  sentAtDivider?: boolean
 }
 
 export function ProgramApprovalStatusDetailValue({
@@ -19,7 +29,11 @@ export function ProgramApprovalStatusDetailValue({
   participationRejectionReason,
   approvalNotificationSentAt,
   onResendNotificationClick,
+  rejectionReasonFormat = 'parenthesized',
+  sentAtDivider = true,
 }: ProgramApprovalStatusDetailValueProps) {
+  /** 재발송 버튼이 없으면 상태·사유와 일시를 구분선으로 나눈다 */
+  const showSentAtDivider = sentAtDivider || !onResendNotificationClick
   if (status === 'pending') {
     return <ApprovalStatusText status="pending" />
   }
@@ -36,7 +50,12 @@ export function ProgramApprovalStatusDetailValue({
         ) : null}
         {approvalNotificationSentAt ? (
           <>
-            <span className="applicant-institution-basic-info__approval-status-vbar" aria-hidden />
+            {showSentAtDivider ? (
+              <span
+                className="applicant-institution-basic-info__approval-status-vbar"
+                aria-hidden
+              />
+            ) : null}
             <span className="applicant-institution-basic-info__approval-notification-sent-at">
               {approvalNotificationSentAt}
             </span>
@@ -52,7 +71,9 @@ export function ProgramApprovalStatusDetailValue({
       <div className="applicant-institution-basic-info__approval-status-row">
         <ApprovalStatusText status="rejected" />
         <span className="applicant-institution-basic-info__approval-status-vbar" aria-hidden />
-        <span>사유 : ({reason})</span>
+        <span>
+          {rejectionReasonFormat === 'plain' ? `사유 : ${reason}` : `사유 : (${reason})`}
+        </span>
         {onResendNotificationClick ? (
           <>
             <span className="applicant-institution-basic-info__approval-status-vbar" aria-hidden />
@@ -61,7 +82,12 @@ export function ProgramApprovalStatusDetailValue({
         ) : null}
         {approvalNotificationSentAt ? (
           <>
-            <span className="applicant-institution-basic-info__approval-status-vbar" aria-hidden />
+            {showSentAtDivider ? (
+              <span
+                className="applicant-institution-basic-info__approval-status-vbar"
+                aria-hidden
+              />
+            ) : null}
             <span className="applicant-institution-basic-info__approval-notification-sent-at">
               {approvalNotificationSentAt}
             </span>

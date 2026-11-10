@@ -34,6 +34,7 @@ import {
 } from './instructor-basic-info-detail-form'
 import './applicant-general-instructor-basic-info.css'
 import { InstructorJaGradeField } from '../../instructor-ja-grade-field'
+import { GENERAL_ORGANIZATION_LECTURE_FEE_MEASURE_OPTIONS } from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
 
 export interface ApplicantGeneralInstructorBasicInfoProps {
   instructor: ApplicantInstructorRow
@@ -45,14 +46,22 @@ export interface ApplicantGeneralInstructorBasicInfoProps {
   onResendNotificationClick?: () => void
   persistAffiliationEmploymentRemote?: boolean
   onAffiliationEmploymentStatusSaved?: (status: SchoolTeacherEmploymentStatus) => void
+  /**
+   * 기본 `default`(1사1교·일반 개인형). `general-organization`: 일반(기관형) 시안 03·06·07
+   * — 사유 괄호 없음, 재발송 버튼 뒤 구분선 없음, 정보 수정 중에도 관리자 코멘트는 조회 표시(코멘트는
+   * 「코멘트 수정」으로만 편집), JA 평가 등급 「등급 평가」 버튼 미노출.
+   */
+  copyVariant?: 'default' | 'general-organization'
 }
 
 function ProgramApprovalStatusValue({
   instructor,
   onResendNotificationClick,
+  isGeneralOrganization,
 }: {
   instructor: ApplicantInstructorRow
   onResendNotificationClick?: () => void
+  isGeneralOrganization: boolean
 }) {
   if (instructor.approvalStatus === 'unknown') return <span>-</span>
   return (
@@ -61,6 +70,8 @@ function ProgramApprovalStatusValue({
       participationRejectionReason={instructor.rejectionReason}
       approvalNotificationSentAt={instructor.approvalNotificationSentAt}
       onResendNotificationClick={onResendNotificationClick}
+      rejectionReasonFormat={isGeneralOrganization ? 'plain' : 'parenthesized'}
+      sentAtDivider={!isGeneralOrganization}
     />
   )
 }
@@ -75,8 +86,12 @@ export function ApplicantGeneralInstructorBasicInfo({
   onResendNotificationClick,
   persistAffiliationEmploymentRemote = false,
   onAffiliationEmploymentStatusSaved,
+  copyVariant = 'default',
 }: ApplicantGeneralInstructorBasicInfoProps) {
+  const isGeneralOrganization = copyVariant === 'general-organization'
   const isEditMode = mode === 'edit' && draft != null && onDraftChange != null
+  /** 기관형은 관리자 코멘트를 「코멘트 수정」 모달로만 편집한다 */
+  const isAdminCommentEditMode = isEditMode && !isGeneralOrganization
   const showAdminComment = instructor.approvalStatus === 'approved'
   const showPostApprovalFields = instructor.approvalStatus === 'approved'
 
@@ -130,13 +145,16 @@ export function ApplicantGeneralInstructorBasicInfo({
 
   const emailDisplay = displayServerPiiAsIs(instructor.email)
 
-  const lectureFeeView = <LectureFeeBasisView instructor={instructor} />
+  const lectureFeeView = <LectureFeeBasisView instructor={instructor} copyVariant={copyVariant} />
   const lectureFeeEdit =
     isEditMode && draft && onDraftChange ? (
       <LectureFeeBasisEditField
         draft={draft}
         onDraftChange={onDraftChange}
         validationError={validationErrors?.lectureFeeAmount}
+        measureOptions={
+          isGeneralOrganization ? GENERAL_ORGANIZATION_LECTURE_FEE_MEASURE_OPTIONS : undefined
+        }
       />
     ) : undefined
 
@@ -150,6 +168,7 @@ export function ApplicantGeneralInstructorBasicInfo({
             <ProgramApprovalStatusValue
               instructor={instructor}
               onResendNotificationClick={onResendNotificationClick}
+              isGeneralOrganization={isGeneralOrganization}
             />
           }
         />
@@ -160,7 +179,7 @@ export function ApplicantGeneralInstructorBasicInfo({
             <InstructorJaGradeField
               grade={instructor.evaluationGrade}
               memberId={instructor.instructorMemberId}
-              editable={isEditMode}
+              editable={isEditMode && !isGeneralOrganization}
             />
           }
         />
@@ -182,11 +201,13 @@ export function ApplicantGeneralInstructorBasicInfo({
     <div className="applicant-general-instructor-basic-info">
       {showAdminComment ? (
         <ApplicantAdminCommentSection
-          adminComment={isEditMode && draft ? draft.adminComment : instructor.managerComment}
-          mode={isEditMode ? 'edit' : 'view'}
+          adminComment={
+            isAdminCommentEditMode && draft ? draft.adminComment : instructor.managerComment
+          }
+          mode={isAdminCommentEditMode ? 'edit' : 'view'}
           draftValue={draft?.adminComment ?? ''}
           onDraftChange={
-            isEditMode && onDraftChange
+            isAdminCommentEditMode && onDraftChange
               ? value => onDraftChange({ adminComment: value })
               : undefined
           }

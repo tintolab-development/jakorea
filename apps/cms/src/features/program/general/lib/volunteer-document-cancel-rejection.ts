@@ -38,6 +38,19 @@ export function resolveVolunteerDocumentCancelRejectionNotifyVariant(
   return 'pendingNotification'
 }
 
+/** 1차 서류 반려 취소 — 시안 04-1(9781:54768) 두 변형 (면접 있는 봉사자 심사) */
+export function buildVolunteerDocumentScreeningCancelRejectionMessage(
+  volunteerName: string,
+  variant: VolunteerDocumentCancelRejectionNotifyVariant
+): string {
+  const intro = `${formatModalBracketedSubjectName(volunteerName, '회원')} 님의 1차 서류 반려를 취소하시겠습니까?`
+  const waitingProcess = formatModalBoldPhrase('심사 대기 처리')
+  if (variant === 'alreadySent') {
+    return `${intro}\n취소 시 입력하신 사유가 회원에게 취소 사유로 안내되며, 알림이 발송됩니다.\n또한, 해당 회원은 자동으로 ${waitingProcess}됩니다.`
+  }
+  return `${intro}\n취소 시 발송 예정인 반려 알림은 자동으로 취소되며, ${waitingProcess}됩니다.`
+}
+
 export function buildVolunteerDocumentCancelRejectionMessage(
   volunteerName: string,
   variant: VolunteerDocumentCancelRejectionNotifyVariant

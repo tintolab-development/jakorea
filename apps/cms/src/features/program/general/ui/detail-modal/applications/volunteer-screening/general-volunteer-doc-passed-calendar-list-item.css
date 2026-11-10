@@ -118,3 +118,17 @@
   line-height: 150%;
   white-space: nowrap;
 }
+
+/* 봉사자 시안 07-2 — 우측 체크박스 */
+.general-volunteer-doc-passed-calendar-list-item__selectable {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+.general-volunteer-doc-passed-calendar-list-item__selectable
+  > .general-volunteer-doc-passed-calendar-list-item {
+  flex: 1;
+}

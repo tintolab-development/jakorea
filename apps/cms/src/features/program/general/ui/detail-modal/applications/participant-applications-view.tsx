@@ -2,7 +2,7 @@ import type { Program } from '@/types/domain'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import {
   generalIndividualApplicationFilterFields,
-  generalOrganizationApplicationFilterFields,
+  generalOrganizationInstitutionApplicationFilterFields,
 } from '@/features/program/general/lib/application-filter-fields'
 import { ApplicantList } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-list'
 import type { ApplicantDetailMeta } from '@/features/program/shared/ui/program-detail/applicant-list/use-applicants-detail'
@@ -47,7 +47,7 @@ export function GeneralParticipantApplicationsView({
         program={program}
         programId={program.id}
         listTitle={listTitle}
-        filterFields={generalOrganizationApplicationFilterFields}
+        filterFields={generalOrganizationInstitutionApplicationFilterFields}
         institutionColumnPreset="general-detail"
         sessionLinePreset="general-detail"
         detailVariant="general"
