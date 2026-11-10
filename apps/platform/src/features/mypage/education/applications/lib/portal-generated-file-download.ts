@@ -16,6 +16,7 @@ import {
   type GeneratedFileJobResponse,
   type PortraitConsentTemplateDownloadProgress,
 } from './student-documents-template-download.ts'
+import { toRuleDownloadFileName } from '@/shared/lib/download-file-name'
 
 /** GET /api/portal/me/generated-files/jobs/{jobId} — operationId getMyGeneratedFileJob. */
 const GENERATED_FILE_JOB_POLLING_PATH = (jobId: number) =>
@@ -36,7 +37,7 @@ export function savePortalBlobFile(fileName: string, blob: Blob) {
   const objectUrl = URL.createObjectURL(blob)
   const anchor = document.createElement('a')
   anchor.href = objectUrl
-  anchor.download = fileName
+  anchor.download = toRuleDownloadFileName(fileName)
   document.body.appendChild(anchor)
   anchor.click()
   anchor.remove()
