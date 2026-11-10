@@ -332,6 +332,7 @@ export async function fetchGeneralProgramLectureReportPreviewContent(
         fileObjectId: file.fileObjectId!,
         originalFileName: file.originalFileName,
       })),
+    submittedAt: typeof detail.submittedAt === 'string' ? detail.submittedAt : null,
   }
 }
 
