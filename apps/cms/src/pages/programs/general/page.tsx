@@ -21,13 +21,14 @@ import {
   isGeneralProgramId,
   resolveGeneralProgramForDetail,
 } from '@/features/program/general/lib/detail-meta'
+import { resolveGeneralProgramListTitle } from '@/features/program/general/lib/detail-common-info-display'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
 import { resolveProgramListDetailEntry } from '@/features/program/general/lib/resolve-program-list-detail-entry'
 import type { Program } from '@/types/domain'
 import { DeleteGuideModal, showDeleteCompletedAlert, FilterTableToolbarButton } from '@/shared/ui'
 import {
   isProgramHardDeleteBlockedError,
-  resolveProgramDeleteGuideModalCopy,
+  resolveProgramDeleteGuideModalCopyWithNames,
   resolveProgramHardDeleteBlockedModalCopy,
 } from '@/features/program/shared/lib/program-delete-guide'
 import { DeleteBlockedGuideModal } from '@/shared/ui/delete-blocked-guide-modal'
@@ -215,12 +216,28 @@ export function GeneralProgramListPageContent() {
   )
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
+  /** 캘린더 우측 목록에서 체크한 프로그램 id — 캘린더 뷰의 선택 삭제 대상 */
+  const [calendarSelectedProgramIds, setCalendarSelectedProgramIds] = useState<React.Key[]>([])
   const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false)
-  const [programsPendingBulkDelete, setProgramsPendingBulkDelete] = useState<Program[]>([])
+  /**
+   * 삭제 대기 프로그램 id. 캘린더 선택은 목록에 아직 로드되지 않은 프로그램일 수 있어
+   * Program 행이 아니라 id로 들고 있는다.
+   */
+  const [programIdsPendingBulkDelete, setProgramIdsPendingBulkDelete] = useState<string[]>([])
+  /** 삭제 안내 문구용 프로그램명(시안: 단건 `[이름]` / 일괄 `[첫 이름] 외 N개`) */
+  const [programNamesPendingBulkDelete, setProgramNamesPendingBulkDelete] = useState<string[]>([])
   const programBulkDeleteGuide = useMemo(
-    () => resolveProgramDeleteGuideModalCopy(programsPendingBulkDelete.length),
-    [programsPendingBulkDelete.length]
+    () =>
+      resolveProgramDeleteGuideModalCopyWithNames(
+        programIdsPendingBulkDelete.length,
+        programNamesPendingBulkDelete
+      ),
+    [programIdsPendingBulkDelete.length, programNamesPendingBulkDelete]
   )
+  const clearProgramSelections = useCallback(() => {
+    setSelectedRowKeys([])
+    setCalendarSelectedProgramIds([])
+  }, [])
   const [programDeleteBlockedOpen, setProgramDeleteBlockedOpen] = useState(false)
   const [programDeleteBlockedCopy, setProgramDeleteBlockedCopy] = useState({
     title: '',
@@ -235,8 +252,8 @@ export function GeneralProgramListPageContent() {
   }, [])
 
   useEffect(() => {
-    setSelectedRowKeys([])
-  }, [statusFilter])
+    clearProgramSelections()
+  }, [statusFilter, clearProgramSelections])
 
   const programIdFromUrl = searchParams.get('programId')
 
@@ -320,15 +337,25 @@ export function GeneralProgramListPageContent() {
   const { showAlert } = useCmsAlert()
 
   const handleBulkDeleteClick = () => {
-    const programsToDelete = filteredPrograms.filter(p => selectedRowKeys.includes(p.id))
-    if (programsToDelete.length === 0) {
+    // 캘린더 뷰는 우측 목록 체크, 리스트 뷰는 테이블 행 선택을 삭제 대상으로 쓴다.
+    const idsToDelete =
+      viewMode === 'calendar'
+        ? [...new Set(calendarSelectedProgramIds.map(String))]
+        : filteredPrograms.filter(p => selectedRowKeys.includes(p.id)).map(p => p.id)
+    if (idsToDelete.length === 0) {
       showAlert(NO_SELECTION_ALERT)
       return
     }
     void (async () => {
       // 권한 설정 V1.2: 프로그램 삭제는 담당 프로그램의 Program Owner·Program Assistant만. 확인 모달 전에 막는다.
-      if (!(await ensureProgramWriteAllowed(programsToDelete.map(p => p.id)))) return
-      setProgramsPendingBulkDelete(programsToDelete)
+      if (!(await ensureProgramWriteAllowed(idsToDelete))) return
+      setProgramIdsPendingBulkDelete(idsToDelete)
+      setProgramNamesPendingBulkDelete(
+        idsToDelete.flatMap(id => {
+          const program = filteredPrograms.find(p => p.id === id)
+          return program ? [resolveGeneralProgramListTitle(program)] : []
+        })
+      )
       setBulkDeleteModalOpen(true)
     })()
   }
@@ -456,6 +483,8 @@ export function GeneralProgramListPageContent() {
         disableUrlSync={generalDetailModalOpen}
         onSelectionChange={showBulkSelection ? setSelectedRowKeys : undefined}
         selectedRowKeys={showBulkSelection ? selectedRowKeys : undefined}
+        calendarSelectedProgramIds={showBulkSelection ? calendarSelectedProgramIds : undefined}
+        onCalendarSelectionChange={showBulkSelection ? setCalendarSelectedProgramIds : undefined}
         showRowSelection={showBulkSelection}
         showCalendarView={showCalendarView}
         viewMode={viewMode}
@@ -484,7 +513,8 @@ export function GeneralProgramListPageContent() {
           setSearchParams={setSearchParams}
           onClose={handleCloseFullPageModal}
           onRequestDelete={program => {
-            setProgramsPendingBulkDelete([program])
+            setProgramIdsPendingBulkDelete([program.id])
+            setProgramNamesPendingBulkDelete([resolveGeneralProgramListTitle(program)])
             setBulkDeleteModalOpen(true)
           }}
         />
@@ -513,7 +543,7 @@ export function GeneralProgramListPageContent() {
         onConfirm={() => {
           void (async () => {
             try {
-              const idsToDelete = programsPendingBulkDelete.map(program => program.id)
+              const idsToDelete = programIdsPendingBulkDelete
               // 상세가 열려 있으면 먼저 닫아 detail observer를 끈 뒤 삭제한다.
               if (programIdFromUrl && idsToDelete.includes(programIdFromUrl)) {
                 handleCloseFullPageModal()
@@ -521,22 +551,23 @@ export function GeneralProgramListPageContent() {
               if (isRemoteDataSource) {
                 await deleteGeneralProgramsMutation.mutateAsync(idsToDelete)
                 refetchPrograms()
-                setSelectedRowKeys([])
+                clearProgramSelections()
                 setBulkDeleteModalOpen(false)
-                setProgramsPendingBulkDelete([])
+                setProgramIdsPendingBulkDelete([])
                 showDeleteCompletedAlert()
               } else {
-                await handleBulkDelete(programsPendingBulkDelete, () => setSelectedRowKeys([]))
-                setSelectedRowKeys([])
+                const programsToDelete = filteredPrograms.filter(p => idsToDelete.includes(p.id))
+                await handleBulkDelete(programsToDelete, clearProgramSelections)
+                clearProgramSelections()
                 setBulkDeleteModalOpen(false)
-                setProgramsPendingBulkDelete([])
+                setProgramIdsPendingBulkDelete([])
               }
             } catch (error) {
               if (isProgramHardDeleteBlockedError(error)) {
-                const count = programsPendingBulkDelete.length
+                const count = programIdsPendingBulkDelete.length
                 setProgramDeleteBlockedCopy(resolveProgramHardDeleteBlockedModalCopy(count))
                 setBulkDeleteModalOpen(false)
-                setProgramsPendingBulkDelete([])
+                setProgramIdsPendingBulkDelete([])
                 setProgramDeleteBlockedOpen(true)
                 return
               }
@@ -549,7 +580,7 @@ export function GeneralProgramListPageContent() {
         }}
         onCancel={() => {
           setBulkDeleteModalOpen(false)
-          setProgramsPendingBulkDelete([])
+          setProgramIdsPendingBulkDelete([])
         }}
       />
       <DeleteBlockedGuideModal

@@ -29,6 +29,9 @@ export interface GeneralProgramListQueryParams extends Record<string, string | u
   status?: GeneralProgramOverviewStatusFilter | 'economy_scheduled' | 'economy_in_progress' | 'economy_completed'
 }
 
+/** 목록 헤더 `총 N건 | …` 안내 (시안 01. 목록_리스트뷰·캘린더뷰) */
+const GENERAL_PROGRAM_LIST_HEADER_NOTICE = '진행 중이거나 완료된 프로그램은 삭제할 수 없습니다.'
+
 /** 목록 재진입 시 캐시된 2페이지 이상을 refetch하지 않도록 첫 페이지만 남긴다. */
 function keepFirstInfiniteQueryPage<T>(
   data: InfiniteData<T> | undefined
@@ -129,6 +132,10 @@ export function useGeneralProgramListFilters() {
       lifecycleStatus: undefined,
       calendarProgramType: 'GENERAL',
       serverSideOverviewFilters: remoteEnabled,
+      // 일반 프로그램 시안: 예정 탭 기간 요일 표기 · No. 내림차순 · 헤더 삭제 불가 안내
+      columnPreset: 'general',
+      rowNumberOrder: 'desc',
+      headerNotice: GENERAL_PROGRAM_LIST_HEADER_NOTICE,
     }
   }, [remoteEnabled, statusFilter])
 
