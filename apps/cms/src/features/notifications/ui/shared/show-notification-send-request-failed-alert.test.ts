@@ -63,7 +63,7 @@ describe('showNotificationSendErrorAlert', () => {
     expect(showAlert).toHaveBeenCalledWith({
       title: '안내',
       content:
-        '선택한 템플릿에 현재 프로그램 또는 수신자 유형에서 사용할 수 없는 변수가 포함되어 있습니다. 템플릿과 수신자 설정을 다시 확인해 주세요.\n사용할 수 없는 변수: 참여자 모집 문의처명',
+        '선택한 템플릿에 현재 프로그램 또는 수신자 유형에서 사용할 수 없는 변수가 포함되어 있습니다. 템플릿과 수신자 설정을 다시 확인해 주세요.\n사용할 수 없는 변수: 참여자 모집 문의처명\n직접 입력 수신자를 함께 보낼 때는 참여 유형·회원 유형 한정 변수를 사용할 수 없습니다.',
     })
     window.dispatchEvent(new Event(CMS_ALERT_MODAL_CLOSED_EVENT))
     vi.runAllTimers()

@@ -29,7 +29,7 @@ export function parseMailSenderDisplay(display?: string | null): {
 } {
   const trimmed = (display ?? '').trim()
   if (!trimmed) return { senderName: '', senderEmail: '' }
-  const match = /^(.+?)\s*<([^>]+)>$/.exec(trimmed)
+  const match = /^(.*?)\s*<([^>]+)>$/.exec(trimmed)
   if (match) {
     return { senderName: match[1]!.trim(), senderEmail: match[2]!.trim() }
   }

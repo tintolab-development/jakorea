@@ -586,7 +586,6 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
   }
 
   const handleOpenRecipientManual = () => {
-    if (!isWithoutProgram) return
     setRecipientManualOpen(true)
   }
 
@@ -856,16 +855,14 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                       >
                         선택 삭제
                       </CmsButton>
-                      {isWithoutProgram ? (
-                        <CmsButton
-                          variant="secondary"
-                          size="h40"
-                          type="button"
-                          onClick={handleOpenRecipientManual}
-                        >
-                          수신자 직접 입력
-                        </CmsButton>
-                      ) : null}
+                      <CmsButton
+                        variant="secondary"
+                        size="h40"
+                        type="button"
+                        onClick={handleOpenRecipientManual}
+                      >
+                        수신자 직접 입력
+                      </CmsButton>
                       <CmsButton
                         variant="secondary"
                         size="h40"
@@ -1049,7 +1046,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
       />
       <RecipientManualModal
         key={recipientManualOpen ? 'recipient-manual-open' : 'recipient-manual-closed'}
-        open={open && recipientManualOpen && isWithoutProgram}
+        open={open && recipientManualOpen}
         contact="email"
         values={form.recipients
           .filter(item => item.source === 'manual')
