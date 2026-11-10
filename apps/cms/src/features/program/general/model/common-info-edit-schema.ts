@@ -1136,7 +1136,7 @@ export function buildProgramSponsorAssignmentsReplaceWire(
 }
 
 /**
- * 후원사 담당자 이름(+직함) — `이름 직함`, 직함 없으면 `이름`
+ * 후원사 담당자 이름(+직책) — `이름 직책`, 직책 없으면 `이름`
  */
 export function formatSponsorManagerPersonLabel(input: {
   contactName: string
@@ -1149,10 +1149,26 @@ export function formatSponsorManagerPersonLabel(input: {
 }
 
 /**
- * 후원사 담당자 셀렉트 라벨
- * - multiSponsor(시안 기본): `소속 | 이름 직함` (직함 없으면 생략) — 예: `스타벅스 | 이가원 책임`
- * - 단일 표시만 필요할 때: `이름 직함` / `이름`
- * - 연락처가 있으면 이름 뒤에 ` | 연락처`를 붙인다.
+ * 후원사 담당자 표시 — `이름 직책`. 후원사가 복수일 때만 `이름 직책(후원사명)`.
+ * 직책이 없으면 이름만, 복수 후원사면 `이름(후원사명)`.
+ */
+export function formatSponsorManagerNameTitleLabel(input: {
+  contactName: string
+  position?: string | null
+  sponsorName?: string | null
+  includeSponsorName: boolean
+}): string {
+  const person = formatSponsorManagerPersonLabel(input)
+  const sponsorName = input.sponsorName?.trim() ?? ''
+  if (input.includeSponsorName && sponsorName && person && person !== '-') {
+    return `${person}(${sponsorName})`
+  }
+  return person
+}
+
+/**
+ * 후원사 담당자 셀렉트 라벨 — 조회와 동일 (`이름 직책` / 복수 후원사 `이름 직책(후원사명)`).
+ * `phone`은 호환용이며 라벨에 넣지 않는다.
  */
 export function formatSponsorManagerSelectLabel(input: {
   sponsorName: string
@@ -1161,29 +1177,36 @@ export function formatSponsorManagerSelectLabel(input: {
   phone?: string | null
   multiSponsor: boolean
 }): string {
-  const nameWithPosition = formatSponsorManagerPersonLabel({
+  void input.phone
+  return formatSponsorManagerNameTitleLabel({
     contactName: input.contactName,
     position: input.position,
+    sponsorName: input.sponsorName,
+    includeSponsorName: input.multiSponsor,
   })
-  const sponsorName = input.multiSponsor ? input.sponsorName.trim() : ''
-  const head = sponsorName ? `${sponsorName} | ${nameWithPosition}` : nameWithPosition
-  const phone = input.phone?.trim()
-  return phone ? `${head} | ${phone}` : head
 }
 
 /**
- * view/저장용 담당자 한 줄 — `이름 직함 | 연락처` (직함·연락처 없으면 생략)
+ * view/저장용 담당자 한 줄 — 셀렉트·조회와 동일. `phone`은 호환용이며 넣지 않는다.
  */
 export function formatSponsorManagerDisplayLine(input: {
   contactName: string
   position?: string | null
   phone?: string | null
+  sponsorName?: string | null
+  includeSponsorName?: boolean
 }): string {
-  return [formatSponsorManagerPersonLabel(input), input.phone?.trim()].filter(Boolean).join(' | ')
+  void input.phone
+  return formatSponsorManagerNameTitleLabel({
+    contactName: input.contactName,
+    position: input.position,
+    sponsorName: input.sponsorName,
+    includeSponsorName: input.includeSponsorName ?? false,
+  })
 }
 
 /**
- * view 모드 — 저장된 문구에서 담당자명을 매칭해 `이름 직함`(복수 시 `소속 | …`)으로 재구성.
+ * view 모드 — 저장된 문구에서 담당자명을 매칭해 `이름 직책`(복수 후원사 시 `(후원사명)`)으로 재구성.
  * 매칭 실패 시 stored 원문 반환.
  */
 function splitLegacyJoinedSponsorManagerLines(stored: string): string[] {
@@ -1206,7 +1229,7 @@ export function resolveSponsorManagerViewLines(input: {
 }): string[] {
   const refs = (input.contactRefs ?? []).filter(ref => !isSponsorContactUnselected(ref))
   if (refs.length > 0) {
-    const multiSponsor = input.sponsors.length > 1 || refs.length > 1
+    const multiSponsor = input.sponsors.length > 1
     const labels = refs
       .map(ref => {
         const decoded = decodeSponsorManagerContactRef(ref)
@@ -2209,15 +2232,35 @@ export function generalCommonInfoEditValuesToProgramPatch(
   const existingEducationScheduleMode =
     existingCommon.educationScheduleMode === 'period' ? 'period' : 'date'
 
+  const includeSponsorName = values.sponsorManagementIds.length > 1
+  const managerLineFromContacts = selectedContactIds
+    .filter(ref => !isSponsorContactUnselected(ref))
+    .map(ref => {
+      const decoded = decodeSponsorManagerContactRef(ref)
+      if (!decoded) return ''
+      const sponsor = context.sponsors.find(row => row.id === decoded.sponsorManagementId)
+      const contact = context.contactsBySponsorId[decoded.sponsorManagementId]?.find(
+        row => row.id === decoded.contactId
+      )
+      if (!contact) return ''
+      return formatSponsorManagerSelectLabel({
+        sponsorName: sponsor?.name ?? '',
+        contactName: contact.name,
+        position: contact.position,
+        multiSponsor: includeSponsorName,
+      })
+    })
+    .filter(Boolean)
   const managerLine = sponsorContactUnselectedOnly
     ? SPONSOR_CONTACT_UNSELECTED_LABEL
-    : manager
-      ? formatSponsorManagerDisplayLine({
-          contactName: manager.name,
-          position: manager.position,
-          phone: manager.phone,
-        })
-      : existingCommon.sponsorManagerLine
+    : managerLineFromContacts.length > 0
+      ? managerLineFromContacts.join(', ')
+      : manager
+        ? formatSponsorManagerDisplayLine({
+            contactName: manager.name,
+            position: manager.position,
+          })
+        : existingCommon.sponsorManagerLine
 
   const ipsCategory = values.ipsCategory as ProgramRegistrationIpsCategory | ''
   const ipsCapitalized =

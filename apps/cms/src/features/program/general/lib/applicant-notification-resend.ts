@@ -65,11 +65,29 @@ function resolveConfirmNotifyLine(
   return `확인 시 ${kindLabel} 알림이 재발송됩니다.`
 }
 
+/**
+ * 재발송 팝업 문구 분기.
+ * - `default`: 기존 문구(1사1교 기관·강사·개인 등)
+ * - `general-organization`: 일반 프로그램(기관형) 기관 신청 시안 11(9756:62347)·16253:559008
+ */
+export type ApplicantNotificationResendCopyVariant = 'default' | 'general-organization'
+
+const GENERAL_ORGANIZATION_RESEND_PENDING_NOTICE =
+  '발송 예정인 알림이 있는 경우, 자동으로 취소되며 해당 건만 발송됩니다.'
+
 export function buildApplicantNotificationResendMessage(
   subjectKind: ApplicantNotificationResendSubjectKind,
   subjectName: string,
-  approvalStatus: ApplicantNotificationResendApprovalStatus
+  approvalStatus: ApplicantNotificationResendApprovalStatus,
+  copyVariant: ApplicantNotificationResendCopyVariant = 'default'
 ): string {
+  if (copyVariant === 'general-organization' && subjectKind === 'institution') {
+    const question =
+      approvalStatus === 'rejected'
+        ? '프로그램 반려 알림을 재발송하시겠습니까?'
+        : '프로그램 승인 알림을 재발송하시겠습니까?'
+    return `${question}\n${GENERAL_ORGANIZATION_RESEND_PENDING_NOTICE}`
+  }
   const trimmedName = subjectName.trim() || '신청자'
   return `${resolveSubjectQuestionLine(subjectKind, trimmedName, approvalStatus)}\n${resolveConfirmNotifyLine(subjectKind, approvalStatus)}`
 }

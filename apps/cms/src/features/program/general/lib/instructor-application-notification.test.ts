@@ -1,6 +1,9 @@
 import dayjs from 'dayjs'
 import { describe, expect, it } from 'vitest'
-import { UnsupportedNotifyTimingError } from '@/shared/lib/notify-timing-capability'
+import {
+  NOTIFY_TIMING_CAPABILITY,
+  UnsupportedNotifyTimingError,
+} from '@/shared/lib/notify-timing-capability'
 import { toInstructorApplicationNotificationRequest } from './instructor-application-notification'
 
 const scheduled = dayjs('2026-11-01T10:00:00+09:00')
@@ -24,5 +27,15 @@ describe('toInstructorApplicationNotificationRequest', () => {
     expect(() => toInstructorApplicationNotificationRequest('on_announcement', scheduled)).toThrow(
       UnsupportedNotifyTimingError
     )
+  })
+
+  it('full capability(일반 기관형)면 발표일을 ON_ANNOUNCEMENT로 보낸다', () => {
+    expect(
+      toInstructorApplicationNotificationRequest(
+        'on_announcement',
+        scheduled,
+        NOTIFY_TIMING_CAPABILITY.full
+      )
+    ).toEqual({ timing: 'ON_ANNOUNCEMENT', scheduledAt: null })
   })
 })

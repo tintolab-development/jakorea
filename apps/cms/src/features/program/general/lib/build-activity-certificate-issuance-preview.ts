@@ -28,9 +28,14 @@ function resolveProgramName(program?: Program | null): string {
   return program?.mainTitle?.trim() || program?.title?.trim() || 'JA Korea 경제교육 프로그램'
 }
 
+/** 참여자 정보 마지막 줄(발급 목적) 기본값 — 발급 사유를 고르지 않는 기존 흐름 */
+export const ACTIVITY_CERTIFICATE_DEFAULT_ISSUANCE_PURPOSE = '기관 및 학교 제출용'
+
 export function buildActivityCertificateParticipantInfo(
   instructor: ParticipatingInstructorRow,
-  program?: Program | null
+  program?: Program | null,
+  /** 발급 사유 모달에서 고른 사유 라벨 — 발급 문서 「발급목적」 줄에 기입 */
+  issuanceReasonLabel?: string
 ): string {
   return [
     instructor.instructorName,
@@ -38,19 +43,24 @@ export function buildActivityCertificateParticipantInfo(
     instructor.schoolName,
     resolveProgramName(program),
     formatProgramPeriod(program),
-    '기관 및 학교 제출용',
+    issuanceReasonLabel?.trim() || ACTIVITY_CERTIFICATE_DEFAULT_ISSUANCE_PURPOSE,
   ].join('\n')
 }
 
 export function buildActivityCertificateInitialStringValues(
   instructor: ParticipatingInstructorRow,
-  program?: Program | null
+  program?: Program | null,
+  issuanceReasonLabel?: string
 ): Record<string, string> {
   return {
     ...DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES,
     titleName: ACTIVITY_CERTIFICATE_DOCUMENT_TITLE,
     bodyContent: ACTIVITY_CERTIFICATE_BODY_CONTENT,
-    participantInfo: buildActivityCertificateParticipantInfo(instructor, program),
+    participantInfo: buildActivityCertificateParticipantInfo(
+      instructor,
+      program,
+      issuanceReasonLabel
+    ),
   }
 }
 
@@ -76,7 +86,7 @@ export function buildActivityCertificateParticipantInfoForVolunteer(
     options?.institutionName ?? '-',
     resolveProgramName(options?.program),
     formatProgramPeriod(options?.program),
-    '기관 및 학교 제출용',
+    ACTIVITY_CERTIFICATE_DEFAULT_ISSUANCE_PURPOSE,
   ].join('\n')
 }
 

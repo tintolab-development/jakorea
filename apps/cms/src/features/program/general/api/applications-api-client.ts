@@ -113,7 +113,7 @@ export type IndividualApplicationNotificationResendRequest = {
 
 /** OpenAPI `Notification` — 강사 신청 승인/반려/취소/재발송 공통 */
 export type InstructorApplicationNotificationRequest = {
-  timing: 'IMMEDIATE' | 'SCHEDULED' | string
+  timing: 'IMMEDIATE' | 'SCHEDULED' | 'ON_ANNOUNCEMENT' | string
   scheduledAt?: string | null
 }
 

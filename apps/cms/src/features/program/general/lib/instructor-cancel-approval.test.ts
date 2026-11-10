@@ -73,6 +73,9 @@ describe('instructor-cancel-approval', () => {
     )
     expect(next.approvalStatus).toBe('rejected')
     expect(next.applicationStatus).toBe('APPROVAL_CANCELLED')
+    // BE AvailableActions: INSTRUCTOR·APPROVAL_CANCELLED → CANCEL_REJECTION (시안 08-4 「반려 취소」)
+    expect(next.availableActions).toContain('CANCEL_REJECTION')
+    expect(next.availableActions).not.toContain('CANCEL_APPROVAL')
     expect(next.rejectionReason).toBe('인원 초과')
     expect(next.assignedSchoolId).toBeUndefined()
     expect(next.assignedLectures).toBeUndefined()
@@ -83,6 +86,24 @@ describe('instructor-cancel-approval-complete-modal', () => {
   it('완료 메시지는 Figma 공통 완료 문구다', () => {
     expect(buildInstructorCancelApprovalCompleteDescription('박틴토', '인원 초과')).toBe(
       '취소되었습니다.'
+    )
+  })
+})
+
+describe('buildInstructorCancelApprovalMessage — 일반(기관형) 시안 08-1·08-2', () => {
+  it('알림 발송 전(08-1)', () => {
+    expect(
+      buildInstructorCancelApprovalMessage('김제이', 'pendingNotification', 'general-organization')
+    ).toBe(
+      '**[김제이]** 님의 프로그램 승인을 취소하시겠습니까?\n취소 시 입력하신 사유가 회원에게 반려 사유로 안내되며, 알림이 발송됩니다.\n발송 예정인 승인 알림이 있는 경우, 자동으로 취소되며 해당 건만 발송됩니다.'
+    )
+  })
+
+  it('알림 발송 후(08-2)', () => {
+    expect(
+      buildInstructorCancelApprovalMessage('김제이', 'alreadySent', 'general-organization')
+    ).toBe(
+      '**[김제이]** 님의 프로그램 승인을 취소하시겠습니까?\n취소 시 입력하신 사유가 회원에게 취소 사유로 안내되며, 알림이 발송됩니다.\n또한, 해당 회원은 자동으로 **반려 처리**됩니다.'
     )
   })
 })

@@ -134,10 +134,13 @@ export function GeneralProgramParticipantRecruitmentInfoView({
   program,
   form,
   isEdit,
+  variant = 'default',
 }: {
   program: Program
   form?: UseFormReturn<ProgramDetailEditFormValues>
   isEdit: boolean
+  /** `general`: 일반 프로그램 상세 시안 문구·구성. 생략 시 기존(1사1교·교육받은 교사 등) 유지 */
+  variant?: 'default' | 'general'
 }) {
   useInstitutionApplicationProgramBridge()
   const display = resolveGeneralProgramParticipantRecruitmentDisplay(
@@ -901,7 +904,9 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                               form.watch('participantRecruitmentNotesNotApplicable') ===
                               'not_applicable'
                             }
-                            placeholder="비고란을 작성하세요"
+                            placeholder={
+                              variant === 'general' ? '비고를 입력해 주세요' : '비고란을 작성하세요'
+                            }
                             inputSize="small"
                             width="100%"
                             style={{ flex: '1 1 0', minWidth: 0, width: '100%' }}

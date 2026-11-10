@@ -53,6 +53,7 @@ export function GeneralProgramRecruitmentView({
   onOpenRecruitmentPreview,
   remoteUnavailableReason,
   remoteStrict = false,
+  variant = 'default',
 }: {
   program: Program
   activeRecruitTab: GeneralRecruitTabKey
@@ -79,6 +80,11 @@ export function GeneralProgramRecruitmentView({
   remoteUnavailableReason?: string
   /** 교육받은 교사 원격 모드 — persisted/browser overlay를 모집 표시에서 제외 */
   remoteStrict?: boolean
+  /**
+   * `general`: 일반 프로그램 상세 시안(비고 「해당 없음」·placeholder·첨부 형식/개수·안내 문구).
+   * 생략 시 기존 동작 — 1사1교·교육받은 교사 상세(`program-detail-fullpage-modal`).
+   */
+  variant?: 'default' | 'general'
 }) {
   const handleOpenPreview = useCallback(() => {
     onOpenRecruitmentPreview?.(activeRecruitTab)
@@ -114,6 +120,7 @@ export function GeneralProgramRecruitmentView({
           program={program}
           isEdit={isEditModeInstitutions && recruitmentEditable}
           form={isEditModeInstitutions && recruitmentEditable ? institutionsForm : undefined}
+          variant={variant}
         />
       )
       detail = (
@@ -128,6 +135,7 @@ export function GeneralProgramRecruitmentView({
           showRecruitmentMethod={showParticipantRecruitmentMethod}
           recruitmentMethodLabel="지원 방법"
           emptyReadDisplay="dash"
+          variant={variant}
         />
       )
       break
@@ -137,6 +145,7 @@ export function GeneralProgramRecruitmentView({
           program={program}
           isEdit={isEditModeInstructors && recruitmentEditable}
           form={isEditModeInstructors && recruitmentEditable ? instructorsForm : undefined}
+          variant={variant}
         />
       )
       detail = (
@@ -148,6 +157,7 @@ export function GeneralProgramRecruitmentView({
           form={isEditModeInstructors && recruitmentEditable ? instructorsForm : undefined}
           onRegisterGetAdditionalContentHtml={registerInstructorsAdditionalHtml}
           emptyReadDisplay="dash"
+          variant={variant}
         />
       )
       break
@@ -157,6 +167,7 @@ export function GeneralProgramRecruitmentView({
           program={program}
           isEdit={isEditModeVolunteers}
           form={isEditModeVolunteers ? volunteersForm : undefined}
+          variant={variant}
         />
       )
       detail = (
@@ -169,9 +180,11 @@ export function GeneralProgramRecruitmentView({
             form={isEditModeVolunteers && recruitmentEditable ? volunteersForm : undefined}
             onRegisterGetAdditionalContentHtml={registerVolunteersAdditionalHtml}
             emptyReadDisplay="dash"
+            variant={variant}
           />
           <div className="detail-info-form--gap">
             <GeneralProgramVolunteerInterviewScheduleSection
+              variant={variant}
               program={program}
               isEdit={isEditModeVolunteers && recruitmentEditable}
               form={isEditModeVolunteers && recruitmentEditable ? volunteersForm : undefined}

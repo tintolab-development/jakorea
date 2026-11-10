@@ -30,6 +30,22 @@ describe('applicant-notification-resend', () => {
     )
   })
 
+  it('일반(기관형) 기관은 시안 11·16253:559008 문구를 사용한다', () => {
+    expect(
+      buildApplicantNotificationResendMessage('institution', '진월초', 'approved', 'general-organization')
+    ).toBe(
+      '프로그램 승인 알림을 재발송하시겠습니까?\n발송 예정인 알림이 있는 경우, 자동으로 취소되며 해당 건만 발송됩니다.'
+    )
+    expect(
+      buildApplicantNotificationResendMessage('institution', '진월초', 'rejected', 'general-organization')
+    ).toBe(
+      '프로그램 반려 알림을 재발송하시겠습니까?\n발송 예정인 알림이 있는 경우, 자동으로 취소되며 해당 건만 발송됩니다.'
+    )
+    expect(shouldShowApplicantNotificationResendReason('institution', 'rejected', '인원초과')).toBe(
+      false
+    )
+  })
+
   it('개인 승인은 스크린샷 카피를 사용하고 사유 입력을 숨긴다', () => {
     expect(buildApplicantNotificationResendMessage('individual', '김범수', 'approved')).toBe(
       '프로그램 승인 알림을 재발송하시겠습니까?\n확인 시 신청자에게 승인 알림이 재발송됩니다.'
