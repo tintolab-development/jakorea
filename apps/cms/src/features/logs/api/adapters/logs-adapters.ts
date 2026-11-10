@@ -12,7 +12,6 @@ import {
   formatContainedPiiLead,
 } from '@jakorea/domain/shared/file-download-password'
 import type { DownloadLog } from '@/types/download-log'
-import { normalizeDownloadLogFileName } from '@/features/logs/lib/download-log-file-name'
 import type { MemberLoginLog } from '@/types/member-login-log'
 import type { PersonalInfoAccessLog } from '@/types/personal-info-access-log'
 
@@ -153,10 +152,8 @@ export function mapDownloadLogResponse(dto: DownloadLogFrontendResponse | object
         : typeof idValue === 'number' && Number.isFinite(idValue)
           ? String(idValue)
           : `log-${Date.now()}`,
-    fileName: normalizeDownloadLogFileName(
-      readExtraString(dto, ['fileName']),
-      readExtraString(dto, ['kind', 'eventType', 'fileType'])
-    ),
+    // 서버가 [JA Korea] 규칙 이름으로 변환해 내려준다(GET /api/admin/logs/file-access).
+    fileName: readExtraString(dto, ['fileName']),
     userId: readExtraString(dto, ['userId']),
     userName: readExtraString(dto, ['userName']),
     ipAddress: readExtraString(dto, ['ipAddress', 'requestIp']),
