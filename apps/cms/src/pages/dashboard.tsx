@@ -12,8 +12,6 @@ import { DndContext, DragOverlay, MeasuringStrategy, closestCenter } from '@dnd-
 import { SortableContext, rectSwappingStrategy, type SortingStrategy } from '@dnd-kit/sortable'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getDashboardWidgetsForUser, isWidgetResizable } from '@/shared/config/dashboard-config'
-import { getRoleLabel } from '@/shared/ui'
-import { getAdminPermissionDisplayLabel } from '@/features/user/shared/lib/admin-permission-display'
 import { canAdminAction } from '@/shared/lib/admin-role-policy'
 import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
 import {
@@ -78,9 +76,7 @@ const DashboardWidgetGrid = memo(function DashboardWidgetGrid({
             colSpan={effectiveColSpan}
             hasBuiltInHandle={meta.hasBuiltInHandle}
             height={slotHeight}
-            onResizeWidth={
-              userRole && isWidgetResizable(id) ? onResizeWidth : undefined
-            }
+            onResizeWidth={userRole && isWidgetResizable(id) ? onResizeWidth : undefined}
             widgetRendererProps={widgetRendererProps}
           />
         )
@@ -151,14 +147,6 @@ export function Dashboard() {
   const activeProgramsCount = isAdmin
     ? (dashboardHome?.programCount ?? null)
     : mockActiveProgramCount
-
-  const userRoleLabel = useMemo(() => {
-    if (!user) return ''
-    if (user.role === 'ADMIN') {
-      return getAdminPermissionDisplayLabel(user)
-    }
-    return getRoleLabel(user.role, user.adminLevel)
-  }, [user])
 
   const isInstructorOrIndividual =
     (user?.role === 'INSTRUCTOR' || user?.role === 'INDIVIDUAL') && !!user?.instructorId
@@ -251,7 +239,6 @@ export function Dashboard() {
     >
       <DashboardToolbar
         userName={user?.name}
-        roleLabel={userRoleLabel}
         activeProgramsCount={activeProgramsCount}
         onOpenSettings={() => setSettingsModalOpen(true)}
       />
