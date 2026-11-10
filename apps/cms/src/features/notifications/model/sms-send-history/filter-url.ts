@@ -1,5 +1,6 @@
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
+import { isSmsSendHistoryReserveDateEnabled } from './filter-fields'
 import type { DateRangeFilterValue, SmsSendHistoryPendingFilters } from './types'
 
 const DATE_PARAM_FORMAT = 'YYYY-MM-DD'
@@ -68,6 +69,9 @@ export function readSmsSendHistoryFiltersFromParams(
     searchParams.has(SMS_SEND_HISTORY_FILTER_URL.requestFrom) ||
     searchParams.has(SMS_SEND_HISTORY_FILTER_URL.requestTo)
 
+  const broadcastTiming = (searchParams.get(SMS_SEND_HISTORY_FILTER_URL.broadcastTiming) ??
+    '전체') as SmsSendHistoryPendingFilters['broadcastTiming']
+
   return {
     requestDateRange: parseRange(
       searchParams.get(SMS_SEND_HISTORY_FILTER_URL.requestFrom),
@@ -79,8 +83,7 @@ export function readSmsSendHistoryFiltersFromParams(
     receiverInfo: searchParams.get(SMS_SEND_HISTORY_FILTER_URL.receiverInfo) ?? '',
     sendStatus: (searchParams.get(SMS_SEND_HISTORY_FILTER_URL.sendStatus) ??
       '전체') as SmsSendHistoryPendingFilters['sendStatus'],
-    broadcastTiming: (searchParams.get(SMS_SEND_HISTORY_FILTER_URL.broadcastTiming) ??
-      '전체') as SmsSendHistoryPendingFilters['broadcastTiming'],
+    broadcastTiming,
     receiveStatus: (searchParams.get(SMS_SEND_HISTORY_FILTER_URL.receiveStatus) ??
       '전체') as SmsSendHistoryPendingFilters['receiveStatus'],
     sendDateRange: parseRange(
@@ -93,11 +96,14 @@ export function readSmsSendHistoryFiltersFromParams(
       searchParams.get(SMS_SEND_HISTORY_FILTER_URL.receiveTo),
       false
     ),
-    reserveDateRange: parseRange(
-      searchParams.get(SMS_SEND_HISTORY_FILTER_URL.reserveFrom),
-      searchParams.get(SMS_SEND_HISTORY_FILTER_URL.reserveTo),
-      false
-    ),
+    // 예약일은 발송 시점이 「예약」일 때만 유효 — 그 외에는 URL에 남아 있어도 무시한다.
+    reserveDateRange: isSmsSendHistoryReserveDateEnabled(broadcastTiming)
+      ? parseRange(
+          searchParams.get(SMS_SEND_HISTORY_FILTER_URL.reserveFrom),
+          searchParams.get(SMS_SEND_HISTORY_FILTER_URL.reserveTo),
+          false
+        )
+      : null,
   }
 }
 
@@ -159,7 +165,8 @@ export function applySmsSendHistoryFiltersToSearchParams(
     next,
     SMS_SEND_HISTORY_FILTER_URL.reserveFrom,
     SMS_SEND_HISTORY_FILTER_URL.reserveTo,
-    filters.reserveDateRange
+    // 비활성(발송 시점 ≠ 예약)이면 값이 있어도 보내지 않는다
+    isSmsSendHistoryReserveDateEnabled(filters.broadcastTiming) ? filters.reserveDateRange : null
   )
 
   return next

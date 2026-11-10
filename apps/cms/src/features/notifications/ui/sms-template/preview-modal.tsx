@@ -4,10 +4,8 @@ import {
   formatMailPreviewDateTime,
   type MailPreviewAttachment,
 } from '@/features/notifications/model/mail-template/preview'
-import {
-  formatSmsMessageTypeLabel,
-  type SmsMessageType,
-} from '@/features/notifications/api/adapters/sms-channel'
+import type { SmsMessageType } from '@/features/notifications/api/adapters/sms-channel'
+import { formatSmsMessageTypeCode } from '@/features/notifications/model/sms-template/message-type'
 import './preview-modal.css'
 
 type PreviewModalProps = {
@@ -22,6 +20,8 @@ type PreviewModalProps = {
   onClose: () => void
   onEdit?: () => void
   onDelete?: () => void
+  /** 시안 「템플릿 사용」 — 목록: 발송 화면을 이 템플릿으로 연다 / 발송 템플릿 선택: 이 템플릿을 고른다 */
+  onUseTemplate?: () => void
   zIndex?: number
 }
 
@@ -37,18 +37,18 @@ export function PreviewModal({
   onClose,
   onEdit,
   onDelete,
+  onUseTemplate,
   zIndex,
 }: PreviewModalProps) {
   const attachmentLines = attachments.map(formatMailPreviewAttachment).filter(Boolean)
   const showSubject = messageType !== 'SMS'
   const showAttachments = messageType === 'MMS'
-  const showListActions = onEdit != null || onDelete != null
 
   return (
     <ContentModal
       open={open}
       onCancel={onClose}
-      title="문자 미리보기"
+      title="템플릿 미리보기"
       size="medium"
       zIndex={zIndex}
       className="sms-template-preview-modal"
@@ -57,19 +57,20 @@ export function PreviewModal({
           <CmsButton variant="cancel" size="large" type="button" onClick={onClose}>
             닫기
           </CmsButton>
-          {showListActions ? (
-            <div className="sms-template-preview-modal__footer-actions">
-              {onDelete ? (
-                <CmsButton variant="delete" size="large" type="button" onClick={onDelete}>
-                  삭제
-                </CmsButton>
-              ) : null}
-              {onEdit ? (
-                <CmsButton variant="primary" size="large" type="button" onClick={onEdit}>
-                  수정
-                </CmsButton>
-              ) : null}
-            </div>
+          {onDelete ? (
+            <CmsButton variant="delete" size="large" type="button" onClick={onDelete}>
+              삭제
+            </CmsButton>
+          ) : null}
+          {onEdit ? (
+            <CmsButton variant="secondary" size="large" type="button" onClick={onEdit}>
+              수정
+            </CmsButton>
+          ) : null}
+          {onUseTemplate ? (
+            <CmsButton variant="primary" size="large" type="button" onClick={onUseTemplate}>
+              템플릿 사용
+            </CmsButton>
           ) : null}
         </div>
       }
@@ -87,7 +88,7 @@ export function PreviewModal({
             </div>
             <div className="sms-template-preview__meta-row">
               <dt>발송 유형</dt>
-              <dd>{formatSmsMessageTypeLabel(messageType)}</dd>
+              <dd>{formatSmsMessageTypeCode(messageType)}</dd>
             </div>
             <div className="sms-template-preview__meta-row">
               <dt>미리보기 시각</dt>

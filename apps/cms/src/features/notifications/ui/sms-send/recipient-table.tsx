@@ -16,6 +16,8 @@ import { CmsInput } from '@/shared/ui'
 const TABLE_MAX_HEIGHT = 400
 const TABLE_HEADER_HEIGHT = 54
 const TABLE_ROW_HEIGHT = 54
+/** 시안(문자 발송 > 수신자 설정): 체크 60 · No. 80 · 나머지 균등 */
+const SMS_RECIPIENT_CHECKBOX_COL_WIDTH = 60
 
 type RecipientTableProps = {
   recipients: SmsSendRecipient[]
@@ -60,7 +62,6 @@ export const RecipientTable = memo(function RecipientTable({
     {
       title: typeColumnTitle,
       key: 'type',
-      width: 140,
       align: 'center',
       render: (_value, record) => smsSendRecipientTypeLabel(record, typeMode) || '-',
     },
@@ -130,7 +131,7 @@ export const RecipientTable = memo(function RecipientTable({
       rowSelection={{
         selectedRowKeys: selectedIds,
         onChange: keys => onSelectedIdsChange(keys.map(String)),
-        columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+        columnWidth: SMS_RECIPIENT_CHECKBOX_COL_WIDTH,
       }}
     />
   )

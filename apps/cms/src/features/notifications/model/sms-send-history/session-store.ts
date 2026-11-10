@@ -38,7 +38,7 @@ export function createSmsSendHistoryRowsFromDraft(
     receiverPhone: recipient.phone,
     receiverInfo: recipient.phone,
     broadcastTiming: isScheduled ? '예약' : '즉시',
-    sendStatus: isScheduled ? '예약' : '발송 완료',
+    sendStatus: isScheduled ? '예약' : '발송 성공',
     receiveStatus: isScheduled ? '예약됨' : '수신 성공',
     sentAt: isScheduled ? '' : now,
     receivedAt: isScheduled ? '' : now,

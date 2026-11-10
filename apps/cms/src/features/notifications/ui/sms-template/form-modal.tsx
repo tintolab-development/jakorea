@@ -40,6 +40,12 @@ import { SmsVariableTextField } from './variable-text-field'
 import '@/features/notifications/ui/shared/notification-fullpage-modal.css'
 import './form-modal.css'
 
+/** 시안: 발신 번호 select는 셀 전체가 아닌 내용 폭(약 200px) */
+const SMS_SENDER_SELECT_WIDTH = 200
+const SMS_SUBJECT_PLACEHOLDER = '제목을 작성해 주세요'
+const SMS_BODY_PLACEHOLDER = '내용을 입력해 주세요'
+const SMS_PREVIEW_BODY_PLACEHOLDER = '내용을 작성해 주세요'
+
 type BasicSettingsFieldsProps = {
   templateName: string
   senderPhone: string
@@ -64,7 +70,6 @@ const BasicSettingsFields = memo(function BasicSettingsFields({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="템플릿명"
-          required
           view={templateName}
           edit={
             <CmsInput
@@ -94,12 +99,11 @@ const BasicSettingsFields = memo(function BasicSettingsFields({
         />
         <DetailInfoForm.Field
           label="발신 번호"
-          required
           view={senderPhone}
           edit={
             <CmsSelect
               inputSize="small"
-              width="100%"
+              width={SMS_SENDER_SELECT_WIDTH}
               withAllOption={false}
               loading={senderLoading}
               placeholder="발신 번호를 선택해 주세요"
@@ -196,13 +200,18 @@ export function FormModal({
     }
   }
 
+  // 미선택이면 시안처럼 LMS/MMS 기준(제목 행·2000byte)으로 인라인 상태를 본다.
   const composeIssues = collectSmsComposeFieldIssues({
-    messageType: form.messageType,
+    messageType: form.messageType || 'LMS',
     subject: form.subject,
     bodyText: form.bodyText,
     attachmentCount: form.attachmentFileNames.length,
   })
   const subjectByteLength = estimateSmsTextBytes(form.subject)
+  /** 시안(16127:606947): 제목·본문 byte 초과(빨간 카운터)면 저장/등록 비활성 */
+  const byteLimitExceeded =
+    (form.showSubject && subjectByteLength > SMS_SUBJECT_BYTE_LIMIT) ||
+    form.bodyByteLength > form.bodyByteLimit
 
   return (
     <>
@@ -252,7 +261,7 @@ export function FormModal({
                       size="large"
                       type="button"
                       onClick={onClose} >
-                      닫기
+                      취소
                     </CmsButton>
                     <CmsButton
                       variant="delete"
@@ -266,9 +275,9 @@ export function FormModal({
                       variant="primary"
                       size="large"
                       type="button"
-                      disabled={submitting}
+                      disabled={submitting || byteLimitExceeded}
                       onClick={handleSubmit} >
-                      수정
+                      저장
                     </CmsButton>
                   </>
                 ) : (
@@ -284,7 +293,7 @@ export function FormModal({
                       variant="primary"
                       size="large"
                       type="button"
-                      disabled={submitting}
+                      disabled={submitting || byteLimitExceeded}
                       onClick={handleSubmit} >
                       등록
                     </CmsButton>
@@ -349,7 +358,7 @@ export function FormModal({
                           edit={
                             <CmsRadio.Group
                               size="medium"
-                              value={form.messageType}
+                              value={form.messageType || undefined}
                               onChange={event =>
                                 form.handleMessageTypeChange(String(event.target.value))
                               }
@@ -385,6 +394,7 @@ export function FormModal({
                                     inputSize="small"
                                     width="100%"
                                     allowClear={false}
+                                    placeholder={SMS_SUBJECT_PLACEHOLDER}
                                     error={Boolean(
                                       smsComposeInlineMessage(composeIssues.subjectError)
                                     )}
@@ -405,7 +415,7 @@ export function FormModal({
                                     }
                                   />
                                 </SmsVariableTextField>
-                                <div className="sms-template-form-modal__byte-row">
+                                <div className="sms-template-form-modal__byte-row sms-template-form-modal__byte-row--subject">
                                   <span
                                     className={
                                       subjectByteLength > SMS_SUBJECT_BYTE_LIMIT
@@ -442,6 +452,7 @@ export function FormModal({
                                   inputSize="small"
                                   width="100%"
                                   rows={8}
+                                  placeholder={SMS_BODY_PLACEHOLDER}
                                   error={Boolean(smsComposeInlineMessage(composeIssues.bodyError))}
                                   value={form.bodyText}
                                   onChange={event => form.setBodyText(event.target.value)}
@@ -518,6 +529,8 @@ export function FormModal({
                       subject={form.subject}
                       bodyText={form.bodyText}
                       showSubject={form.showSubject}
+                      subjectPlaceholder={SMS_SUBJECT_PLACEHOLDER}
+                      bodyPlaceholder={SMS_PREVIEW_BODY_PLACEHOLDER}
                     />
                   </div>
                 </section>

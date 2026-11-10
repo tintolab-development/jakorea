@@ -140,6 +140,16 @@
   font-size: 16px;
 }
 
+/* 시안: 제목 카운터는 숫자까지 회색 한 톤("0 / 40byte"), 초과 시에만 red */
+.sms-template-form-modal__byte-row--subject {
+  gap: 4px;
+}
+
+.sms-template-form-modal__byte-row--subject
+  .sms-template-form-modal__byte-count:not(.sms-template-form-modal__byte-count--danger) {
+  color: var(--Content-disabled, rgba(61, 61, 61, 0.5));
+}
+
 .sms-template-form-modal__subject-count {
   display: -webkit-box;
   flex: 0 0 46px;

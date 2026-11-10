@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Dayjs } from 'dayjs'
 import type { SmsMessageType } from '@/features/notifications/api/adapters/sms-channel'
+import { SMS_MESSAGE_TYPE_REQUIRED_MESSAGE } from '@/features/notifications/model/sms-template/message-type'
+import { SMS_SEND_TIMING_REQUIRED_MESSAGE } from '@/features/notifications/model/sms-send/validate-send'
 import {
   buildSmsSendPayload,
   validateSmsSendDraft,
@@ -45,16 +47,27 @@ function templateAttachmentNames(template: SmsTemplateItem): string[] {
     : [...template.attachmentFileNames]
 }
 
+/**
+ * 발송 유형 미선택일 때 작성 영역 기준 — 시안(템플릿 등록과 같음)처럼 제목 행·2000byte로 보인다.
+ * 실제 발송은 `messageTypeChosen`이 true여야 통과한다(validateRequired).
+ */
+const SMS_SEND_UNSELECTED_MESSAGE_TYPE: SmsMessageType = 'LMS'
+
 export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
   const [programId, setProgramId] = useState(SMS_SEND_DEFAULT_PROGRAM_ID)
   const [templateId, setTemplateId] = useState<string | undefined>(initialTemplateId)
   const [senderPhone, setSenderPhone] = useState('')
-  const [messageType, setMessageType] = useState<SmsTemplateItem['messageType']>('SMS')
+  const [messageType, setMessageType] = useState<SmsTemplateItem['messageType']>(
+    SMS_SEND_UNSELECTED_MESSAGE_TYPE
+  )
+  /** 시안: 발송 유형은 처음에 미선택. 라디오 선택·템플릿 적용 시 true */
+  const [messageTypeChosen, setMessageTypeChosen] = useState(false)
   /** 발송 요청 첨부(MMS_BATCH 업로드). 템플릿 첨부보다 우선, 병합하지 않음 */
   const [requestAttachments, setRequestAttachments] = useState<SmsSendRequestAttachment[]>([])
   /** 선택한 템플릿에 등록된 첨부 파일명 (요청 첨부가 없을 때 발송됨) */
   const [templateAttachmentFileNames, setTemplateAttachmentFileNames] = useState<string[]>([])
-  const [sendTiming, setSendTiming] = useState<SmsSendTiming>('immediate')
+  /** 시안: 발송 시점은 처음에 미선택(null). 발송 시 「발송 시점을 선택해 주세요.」로 막는다. */
+  const [sendTiming, setSendTiming] = useState<SmsSendTiming | null>(null)
   const [scheduledAt, setScheduledAt] = useState<Dayjs | null>(null)
   const [recipients, setRecipients] = useState<SmsSendRecipient[]>([])
   /** 템플릿 적용·모달 오픈 리셋 시에만 증가 (타이핑과 무관) */
@@ -64,7 +77,7 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
 
   const subjectRef = useRef('')
   const bodyTextRef = useRef('')
-  const messageTypeRef = useRef<SmsMessageType>('SMS')
+  const messageTypeRef = useRef<SmsMessageType>(SMS_SEND_UNSELECTED_MESSAGE_TYPE)
   const requestAttachmentsRef = useRef<SmsSendRequestAttachment[]>([])
 
   const attachmentView = useMemo(
@@ -111,12 +124,13 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
     setProgramId(SMS_SEND_DEFAULT_PROGRAM_ID)
     setTemplateId(initialTemplateId)
     setSenderPhone('')
-    setMessageType('SMS')
-    messageTypeRef.current = 'SMS'
+    setMessageType(SMS_SEND_UNSELECTED_MESSAGE_TYPE)
+    messageTypeRef.current = SMS_SEND_UNSELECTED_MESSAGE_TYPE
+    setMessageTypeChosen(false)
     requestAttachmentsRef.current = []
     setRequestAttachments([])
     setTemplateAttachmentFileNames([])
-    setSendTiming('immediate')
+    setSendTiming(null)
     setScheduledAt(null)
     setRecipients([])
     subjectRef.current = ''
@@ -131,6 +145,7 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
 
   const applyMessageType = useCallback(
     (next: SmsMessageType) => {
+      setMessageTypeChosen(true)
       if (next === messageTypeRef.current) return
       setMessageType(next)
       messageTypeRef.current = next
@@ -152,6 +167,7 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
     setSenderPhone(template.senderPhone)
     setMessageType(template.messageType)
     messageTypeRef.current = template.messageType
+    setMessageTypeChosen(true)
     replaceRequestAttachments(() => [])
     setTemplateAttachmentFileNames(
       template.messageType === 'MMS' ? templateAttachmentNames(template) : []
@@ -172,8 +188,9 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
 
   const clearTemplate = useCallback(() => {
     setTemplateId(undefined)
-    setMessageType('SMS')
-    messageTypeRef.current = 'SMS'
+    setMessageType(SMS_SEND_UNSELECTED_MESSAGE_TYPE)
+    messageTypeRef.current = SMS_SEND_UNSELECTED_MESSAGE_TYPE
+    setMessageTypeChosen(false)
     replaceRequestAttachments(() => [])
     setTemplateAttachmentFileNames([])
     subjectRef.current = ''
@@ -294,7 +311,8 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
       attachmentFileNames,
       attachmentFileIds: attachmentView.attachmentFileIds,
       attachmentUploadPending: attachmentView.uploadPending,
-      sendTiming,
+      // 미선택(null)은 validateRequired가 먼저 막는다. draft 타입만 맞추기 위한 기본값.
+      sendTiming: sendTiming ?? 'immediate',
       scheduledAt: scheduledAt ? scheduledAt.toISOString() : null,
       recipients,
     })
@@ -311,7 +329,13 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
     templateId,
   ])
 
-  const validateRequired = useCallback(() => validateSmsSendDraft(getDraft()), [getDraft])
+  const validateRequired = useCallback(() => {
+    if (!sendTiming) return SMS_SEND_TIMING_REQUIRED_MESSAGE
+    const error = validateSmsSendDraft(getDraft())
+    if (error) return error
+    if (!messageTypeChosen) return SMS_MESSAGE_TYPE_REQUIRED_MESSAGE
+    return null
+  }, [getDraft, messageTypeChosen, sendTiming])
 
   const bodyByteLimit = smsBodyByteLimit(messageType)
   const showSubject = messageType !== 'SMS' || subjectRef.current.trim().length > 0
@@ -374,6 +398,7 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
     templateId,
     senderPhone,
     messageType,
+    messageTypeChosen,
     attachmentFileNames,
     attachmentSource: attachmentView.source,
     attachmentUploadPending: attachmentView.uploadPending,

@@ -188,3 +188,8 @@
 .sms-phone-preview--compact .sms-phone-preview__scroll {
   padding: 20px 10px 16px;
 }
+
+/* 작성 화면 빈 상태 안내 문구 (시안: 제목/내용을 작성해 주세요, opacity 0.5) */
+.sms-phone-preview__placeholder {
+  opacity: 0.5;
+}
