@@ -1,12 +1,14 @@
 import { axiosClient } from '@/shared/api/axios-instance'
 import {
   fetchIndividualSettlementSchedules,
+  fetchVolunteerSettlementSchedules,
   fetchSettlementApplications,
   type PortalIndividualScheduleSettlement,
   type PortalSettlementApplication,
 } from '@/features/mypage/education/applications/api/activity-client'
 import { fetchMyProgramApplications } from '@/features/mypage/education/applications/api/client'
 import type { PortalProgramApplicationListItem } from '@/features/mypage/education/applications/api/types'
+import { shouldUseVolunteerSettlementSchedulesApi } from '@/features/mypage/education/settlements/lib/individual-settlement-contract'
 import { EMPTY_SETTLEMENT_OVERVIEW } from '../lib/empty-overview'
 import type {
   SettlementOverviewItem,
@@ -213,7 +215,8 @@ async function fetchAllMyProgramApplications(
  * 정산현황 overview 데이터.
  * - 강사: GET /api/portal/me/settlement-applications
  * - 개인: 내 INDIVIDUAL 신청별 GET .../individual-settlements/applications/{id}/schedules
- *   (settlementApplicationId가 있는 일정만)
+ * - 봉사자: 일반·UJAT VOLUNTEER 신청별 GET .../volunteer-settlements/applications/{id}/schedules
+ *   (둘 다 settlementApplicationId가 있는 일정만)
  */
 export async function fetchSettlementOverviewPageData(input?: {
   month?: string
@@ -263,6 +266,28 @@ export async function fetchSettlementOverviewPageData(input?: {
         )
         const programTitle =
           programTitleByApplicationId.get(String(applicationId)) ?? '-'
+        for (const schedule of schedules) {
+          const mapped = mapIndividualScheduleItem({ schedule, programTitle })
+          if (mapped) items.push(mapped)
+        }
+      } catch {
+        // 개별 신청 일정 조회 실패는 다른 건을 막지 않는다.
+      }
+    }),
+  )
+
+  const volunteerApps = applications.filter(app =>
+    shouldUseVolunteerSettlementSchedulesApi(app.applicationType, app.programType),
+  )
+
+  await Promise.all(
+    volunteerApps.map(async app => {
+      const applicationId = readOptionalNumber(app.applicationId)
+      if (applicationId == null) return
+      try {
+        const schedules = await fetchVolunteerSettlementSchedules(String(applicationId), signal)
+        // 봉사·개인 신청 id는 테이블이 달라 겹칠 수 있다 — 제목은 해당 신청 행에서 바로 읽는다.
+        const programTitle = readOptionalText(app.programTitle) ?? '-'
         for (const schedule of schedules) {
           const mapped = mapIndividualScheduleItem({ schedule, programTitle })
           if (mapped) items.push(mapped)

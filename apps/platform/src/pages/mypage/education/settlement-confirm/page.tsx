@@ -63,7 +63,7 @@ import {
   RECEIPT_PRE_CONSENT_REQUIRED_MESSAGE,
   individualSettlementApiErrorMessage,
   isReceiptPreConsentRequiredError,
-  shouldUseIndividualSettlementSchedulesApi,
+  resolveScheduleSettlementAudience,
 } from '@/features/mypage/education/settlements/lib/individual-settlement-contract'
 import { getProgramApplicationApiErrorMessage } from '@/features/program/lib/application-api-error'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
@@ -101,17 +101,19 @@ export function MypageEducationSettlementConfirmPage() {
   )
   const application = remoteQuery.application
   const programType = application?.programConfig?.programType ?? null
-  const useIndividualSettlementApi = shouldUseIndividualSettlementSchedulesApi(
-    applicationType,
-    programType
-  )
+  /** 개인(INDIVIDUAL)·봉사자(VOLUNTEER) 일정별 영수증 정산. 대상이 아니면 null */
+  const scheduleSettlementAudience = resolveScheduleSettlementAudience(applicationType, programType)
+  const useIndividualSettlementApi = scheduleSettlementAudience != null
   const remoteSettlements = useApplicationSettlementsQuery(
     applicationType,
     applicationId,
     application?.programId ?? '',
     { programType }
   )
-  const submitMutation = useSubmitIndividualSettlementMutation(applicationId)
+  const submitMutation = useSubmitIndividualSettlementMutation(
+    applicationId,
+    scheduleSettlementAudience ?? 'individual'
+  )
   const instructorSubmitMutation = useSubmitInstructorSettlementMutation()
   const isInstructorSubmit = isInstructorPaymentStatementSubmit({
     applicationType,
@@ -395,7 +397,8 @@ export function MypageEducationSettlementConfirmPage() {
           setAlertMessage(
             individualSettlementApiErrorMessage(
               error,
-              getProgramApplicationApiErrorMessage(error, submitFailedMessage)
+              getProgramApplicationApiErrorMessage(error, submitFailedMessage),
+              scheduleSettlementAudience ?? 'individual'
             )
           )
           setAlertOpen(true)

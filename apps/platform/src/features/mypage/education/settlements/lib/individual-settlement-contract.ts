@@ -34,6 +34,41 @@ export function shouldUseIndividualSettlementSchedulesApi(
   return isGeneralIndividualProgramType(normalizedProgramType)
 }
 
+/** 봉사자 일정별 영수증 정산 대상 프로그램 유형 — 일반(개인·기관)·UJAT. 1사1교·Gemini 봉사자는 대상 아님 */
+const VOLUNTEER_SCHEDULE_SETTLEMENT_PROGRAM_TYPES = new Set([
+  'GENERAL_INDIVIDUAL',
+  'GENERAL_ORGANIZATION',
+  'UJAT',
+])
+
+/**
+ * GET volunteer-settlements/applications/{id}/schedules 호출 여부.
+ * `id`는 `program_volunteer_application.id`(봉사현황 VOLUNTEER 신청)만 허용.
+ * 프로그램 유형을 모르면 호출하지 않는다(대상 외 유형은 서버 404).
+ */
+export function shouldUseVolunteerSettlementSchedulesApi(
+  applicationType: string | null | undefined,
+  programType?: string | null,
+): boolean {
+  if (applicationType?.trim().toUpperCase() !== 'VOLUNTEER') return false
+  const normalizedProgramType = programType?.trim().toUpperCase()
+  return Boolean(
+    normalizedProgramType && VOLUNTEER_SCHEDULE_SETTLEMENT_PROGRAM_TYPES.has(normalizedProgramType),
+  )
+}
+
+/** 일정별 영수증 정산 API 경로 — 개인(INDIVIDUAL) · 봉사자(VOLUNTEER). 대상이 아니면 null */
+export type ScheduleSettlementAudience = 'individual' | 'volunteer'
+
+export function resolveScheduleSettlementAudience(
+  applicationType: string | null | undefined,
+  programType?: string | null,
+): ScheduleSettlementAudience | null {
+  if (shouldUseIndividualSettlementSchedulesApi(applicationType, programType)) return 'individual'
+  if (shouldUseVolunteerSettlementSchedulesApi(applicationType, programType)) return 'volunteer'
+  return null
+}
+
 export const INDIVIDUAL_SETTLEMENT_DISABLED_CODE = 'INDIVIDUAL_SETTLEMENT_DISABLED'
 export const INDIVIDUAL_SETTLEMENT_NOT_FOUND_CODE = 'SETTLEMENT_NOT_FOUND'
 
@@ -168,11 +203,19 @@ export function readIndividualSettlementErrorCode(error: unknown): string | null
   return extractApiErrorCode(error.response?.data) ?? readConflictReason(error.response?.data)
 }
 
+/** 봉사자 경로 404 — 본인 봉사 신청이 아니거나, 대상 프로그램(1사1교 등 제외)이 아니거나, 승인 전이다. */
+export const VOLUNTEER_SETTLEMENT_NOT_FOUND_MESSAGE =
+  '영수증을 제출할 수 있는 봉사 신청을 찾을 수 없습니다. 봉사 신청 승인 여부를 확인해 주세요.'
+
 export function individualSettlementApiErrorMessage(
   error: unknown,
   fallback = '영수증 제출에 실패했습니다. 입력 내용을 확인한 뒤 다시 시도해 주세요.',
+  audience: 'individual' | 'volunteer' = 'individual',
 ): string {
   const code = readIndividualSettlementErrorCode(error)
+  if (audience === 'volunteer' && code === INDIVIDUAL_SETTLEMENT_NOT_FOUND_CODE) {
+    return VOLUNTEER_SETTLEMENT_NOT_FOUND_MESSAGE
+  }
   if (code === TRANSPORTATION_DISTANCE_NOT_ELIGIBLE_CODE) {
     return readApiErrorMessage(error) ?? TRANSPORTATION_UNDER_MIN_DISTANCE_MESSAGE
   }
