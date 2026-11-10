@@ -36,6 +36,7 @@
  */
 .full-page-modal--sticky-body-header .full-page-modal__body {
   padding-top: 0;
+  overflow-x: hidden;
 }
 
 .full-page-modal--sticky-body-header .full-page-modal__body-header {
@@ -48,4 +49,22 @@
   padding-top: var(--full-page-modal-padding-top);
   padding-bottom: 16px;
   background: #f4f6f6;
+  isolation: isolate;
+}
+
+/*
+ * 헤더는 max-width로 폼과 맞춰 두므로, 넓은 화면에서 좌우 여백·단락 카드 그림자가
+ * sticky 아래로 비친다. 불투명 배경판을 뷰포트 전폭으로 깐다.
+ */
+.full-page-modal--sticky-body-header .full-page-modal__body-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 100vw;
+  transform: translateX(-50%);
+  background: #f4f6f6;
+  z-index: -1;
+  pointer-events: none;
 }
