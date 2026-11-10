@@ -3,8 +3,7 @@ import { getJAKoreaHomepageAdminAPIImpactStorySubset } from '@/shared/api/genera
 import { PinLimitError } from '@/features/impact-stories/lib/pin-limits';
 import { normalizeCategoryListPayload, normalizeCategoryPayload, } from './category-payload';
 import { isPersistedCategoryId, mapCategoryResponseToDomain, mapStoryListItemToDomain, mapStoryResponseToDomain, toBulkDeleteRequest, toCategoryCreateRequest, toCategoryUpdateRequest, toPublishedToggleRequest, LIST_PAGE_SIZE, toStoryCreateRequest, toStoryListParams, toStoryUpdateRequest, } from './mappers';
-import type { StoryCreateRequest } from '@/shared/api/generated/impact-story/schemas/storyCreateRequest';
-import type { StoryUpdateRequest } from '@/shared/api/generated/impact-story/schemas/storyUpdateRequest';
+import { createImpactStoryNoThumbnailFile } from '@/shared/lib/no-thumbnail-placeholder';
 import { resolveOrderedAttachmentAssetIds } from '@/shared/lib/resolve-attachment-asset-ids';
 import { uploadImpactStoryAttachmentAsset, uploadImpactStoryThumbnailAsset, } from './upload-story-attachment';
 function impactStoryApi() {
@@ -51,12 +50,16 @@ async function resolveAttachmentAssetIds(attachments: ImpactStoryAttachment[]): 
     return resolveOrderedAttachmentAssetIds(attachments, uploadImpactStoryAttachmentAsset);
 }
 /**
- * 대표 썸네일은 선택 항목 — 지웠으면(`null`) 썸네일 없음으로 보내고 기존 썸네일로 되돌리지 않는다.
+ * 대표 썸네일은 선택 항목 — 지웠으면 기존 썸네일로 되돌리지 않는다.
+ * 썸네일이 없으면 서버가 아직 필수라 「썸네일 없음」 표식을 대신 보낸다(같은 글이 쓰던 표식이 있으면 재사용).
  * 남아 있는 썸네일에 자산 id가 없을 때만 기존 자산(fallback)을 쓴다.
  */
-async function resolveThumbnailAssetId(thumbnail: ImpactStoryAttachment | null | undefined, fallbackAssetId?: number): Promise<number | null> {
+async function resolveThumbnailAssetId(thumbnail: ImpactStoryAttachment | null | undefined, fallbackAssetId?: number, placeholderAssetId?: number): Promise<number> {
     if (!thumbnail) {
-        return null;
+        if (placeholderAssetId != null && placeholderAssetId > 0) {
+            return placeholderAssetId;
+        }
+        return uploadImpactStoryThumbnailAsset(await createImpactStoryNoThumbnailFile());
     }
     if (thumbnail.file instanceof File) {
         return uploadImpactStoryThumbnailAsset(thumbnail.file);
@@ -64,7 +67,10 @@ async function resolveThumbnailAssetId(thumbnail: ImpactStoryAttachment | null |
     if (thumbnail.assetId != null && thumbnail.assetId > 0) {
         return thumbnail.assetId;
     }
-    return fallbackAssetId ?? null;
+    if (fallbackAssetId != null && fallbackAssetId > 0) {
+        return fallbackAssetId;
+    }
+    return uploadImpactStoryThumbnailAsset(await createImpactStoryNoThumbnailFile());
 }
 function isPinLimitApiError(error: unknown): boolean {
     if (!error || typeof error !== 'object')
@@ -129,8 +135,7 @@ export async function createStoryService(input: ImpactStoryCreateInput): Promise
             resolveAttachmentAssetIds(input.attachments),
             resolveThumbnailAssetId(input.thumbnail),
         ]);
-        // 썸네일 선택 항목 — 서버 명세 갱신 전까지 생성 타입(필수 number)과 이 지점에서만 어긋난다
-        const created = await impactStoryApi().create8(toStoryCreateRequest(input, attachmentAssetIds, thumbnailAssetId) as StoryCreateRequest);
+        const created = await impactStoryApi().create8(toStoryCreateRequest(input, attachmentAssetIds, thumbnailAssetId));
         return mapStoryResponseToDomain(created);
     }
     catch (error) {
@@ -147,9 +152,9 @@ export async function updateStoryService(input: ImpactStoryUpdateInput, cached?:
     try {
         const [attachmentAssetIds, thumbnailAssetId] = await Promise.all([
             resolveAttachmentAssetIds(input.attachments),
-            resolveThumbnailAssetId(input.thumbnail, current.thumbnail?.assetId),
+            resolveThumbnailAssetId(input.thumbnail, current.thumbnail?.assetId, current.placeholderThumbnailAssetId),
         ]);
-        const updated = await impactStoryApi().update10(Number(input.id), toStoryUpdateRequest(input, current.version ?? 0, attachmentAssetIds, thumbnailAssetId) as StoryUpdateRequest);
+        const updated = await impactStoryApi().update10(Number(input.id), toStoryUpdateRequest(input, current.version ?? 0, attachmentAssetIds, thumbnailAssetId));
         return mapStoryResponseToDomain(updated);
     }
     catch (error) {

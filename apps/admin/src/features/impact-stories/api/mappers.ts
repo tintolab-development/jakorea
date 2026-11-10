@@ -24,6 +24,7 @@ import type { StoryCreateRequest } from '@/shared/api/generated/impact-story/sch
 import type { StoryListItem } from '@/shared/api/generated/impact-story/schemas/storyListItem'
 import type { StoryResponse } from '@/shared/api/generated/impact-story/schemas/storyResponse'
 import type { StoryUpdateRequest } from '@/shared/api/generated/impact-story/schemas/storyUpdateRequest'
+import { isNoThumbnailPlaceholder } from '@/shared/lib/no-thumbnail-placeholder'
 import { generalAttachmentMimeFromContentType } from '@/shared/lib/attachment-policy'
 
 /** BE default / list-page-size.mdc */
@@ -111,7 +112,13 @@ function mapAttachmentFromResponse(row: StoryResponse): ImpactStoryAttachment[] 
     .slice(0, STORY_ATTACHMENT_MAX_COUNT)
 }
 
+function isPlaceholderThumbnail(row: StoryResponse): boolean {
+  return isNoThumbnailPlaceholder(row.thumbnailOriginalName ?? row.thumbnail?.originalName)
+}
+
+/** 서버 필수 우회로 올린 「썸네일 없음」 표식은 화면에서 썸네일 없음으로 보인다 */
 function mapThumbnailFromResponse(row: StoryResponse): ImpactStoryAttachment | null {
+  if (isPlaceholderThumbnail(row)) return null
   return mapAssetAttachment(row.thumbnail, row.thumbnailOriginalName)
 }
 
@@ -150,6 +157,9 @@ export function mapStoryResponseToDomain(row: StoryResponse): ImpactStory {
     updatedAt: row.updatedAt ?? '',
     viewCount: row.viewCount ?? 0,
     thumbnail: mapThumbnailFromResponse(row),
+    placeholderThumbnailAssetId: isPlaceholderThumbnail(row)
+      ? (row.thumbnail?.assetId ?? undefined)
+      : undefined,
     attachments: mapAttachmentFromResponse(row),
     version: row.version ?? 0,
   }
@@ -188,20 +198,13 @@ export function toStoryListParams(filter?: ImpactStoryListFilter): List6Params {
   return params
 }
 
-/**
- * 대표 썸네일은 선택 항목(QA 2026-11-10) — `thumbnailAssetId: null`이면 썸네일 없음.
- * 서버 명세(StoryCreateRequest·StoryUpdateRequest)는 아직 thumbnailAssetId 필수라,
- * 명세가 nullable로 바뀌어 재생성되기 전까지 요청 타입을 여기서만 넓힌다.
- */
-type WithOptionalThumbnail<T> = Omit<T, 'thumbnailAssetId'> & { thumbnailAssetId: number | null }
-
 export function toStoryCreateRequest(
   input: ImpactStoryCreateInput,
   attachmentAssetIds: number[],
-  thumbnailAssetId: number | null
-): WithOptionalThumbnail<StoryCreateRequest> {
+  thumbnailAssetId: number
+): StoryCreateRequest {
   const ids = attachmentAssetIds.slice(0, STORY_ATTACHMENT_MAX_COUNT)
-  if (thumbnailAssetId != null) assertThumbnailNotInAttachments(thumbnailAssetId, ids)
+  assertThumbnailNotInAttachments(thumbnailAssetId, ids)
   return {
     published: input.isPublic,
     pinned: input.isPinned,
@@ -219,10 +222,10 @@ export function toStoryUpdateRequest(
   input: ImpactStoryUpdateInput,
   version: number,
   attachmentAssetIds: number[],
-  thumbnailAssetId: number | null
-): WithOptionalThumbnail<StoryUpdateRequest> {
+  thumbnailAssetId: number
+): StoryUpdateRequest {
   const ids = attachmentAssetIds.slice(0, STORY_ATTACHMENT_MAX_COUNT)
-  if (thumbnailAssetId != null) assertThumbnailNotInAttachments(thumbnailAssetId, ids)
+  assertThumbnailNotInAttachments(thumbnailAssetId, ids)
   return {
     published: input.isPublic,
     pinned: input.isPinned,
