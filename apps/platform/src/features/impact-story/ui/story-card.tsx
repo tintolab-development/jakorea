@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useRemoteThumbnailUrl } from '@/shared/hooks'
 import { PFCategoryBadge, PFText } from '@/shared/ui'
 import defaultThumbnailUrl from '../image/illustration/card-default.png'
 import { impactStoryDetailPath } from '../lib/constants'
@@ -10,17 +11,25 @@ export type StoryCardProps = {
 }
 
 export function StoryCard({ story }: StoryCardProps) {
+  // 썸네일 없음(어드민 표식 포함) → Figma 13983:89479 기본 썸네일(회색 배경 + 로고 + 1px 테두리)
+  const imageUrl = useRemoteThumbnailUrl(story.imageUrl)
   return (
     <Link to={impactStoryDetailPath(story.id)} className={styles.cardLink}>
       <article className={styles.card}>
-        <div className={styles.thumbnail} aria-hidden="true">
-          <img
-            className={styles.image}
-            src={story.imageUrl || defaultThumbnailUrl}
-            alt=""
-            width={461}
-            height={256}
-          />
+        <div
+          className={imageUrl ? styles.thumbnail : `${styles.thumbnail} ${styles.thumbnailDefault}`}
+          aria-hidden="true"
+        >
+          <img className={styles.image} src={defaultThumbnailUrl} alt="" width={461} height={256} />
+          {imageUrl ? (
+            <img
+              className={`${styles.image} ${styles.imageRemote}`}
+              src={imageUrl}
+              alt=""
+              width={461}
+              height={256}
+            />
+          ) : null}
           <div className={styles.badge}>
             <PFCategoryBadge
               className={styles.categoryBadge}
