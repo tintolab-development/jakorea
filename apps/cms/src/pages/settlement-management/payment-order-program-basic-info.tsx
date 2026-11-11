@@ -3,6 +3,7 @@
  * 라벨 폭·행 높이는 강사 기본 정보(`payment-order-instructor-basic-info`)와 같은 detail-form 클래스를 쓴다.
  */
 
+import { formatProgramSessionProgressDisplay } from '@/features/settlement-management/api/shared/map-frontend-fields'
 import type { PaymentOrderAdminProgramDetail } from '@/features/settlement-management/model/payment-order-admin-list'
 import type { PaymentOrderDetailAggregateStatus } from '@/shared/constants/payment-order-aggregate-status'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -19,7 +20,7 @@ export function PaymentOrderProgramBasicInfo({
   aggregateStatus,
 }: PaymentOrderProgramBasicInfoProps) {
   const businessPeriodLabel = `${formatKoreanDateWithWeekday(detail.businessPeriodStart)} ~ ${formatKoreanDateWithWeekday(detail.businessPeriodEnd)}`
-  const sessionLabel = `${detail.sessionCompleted} / ${detail.sessionTotal}`
+  const sessionLabel = formatProgramSessionProgressDisplay(detail)
 
   return (
     <div className="payment-order-program-status-detail__basic-block program-detail-fullpage-modal__info-tab-block">
