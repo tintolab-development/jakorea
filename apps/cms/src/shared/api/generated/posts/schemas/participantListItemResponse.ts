@@ -69,4 +69,10 @@ export interface ParticipantListItemResponse {
   gender?: string | null;
   /** 기관(ORGANIZATION) 행의 신청 희망 일정. GET /api/admin/organization-applications/{organizationApplicationId}/requested-schedules 응답과 같은 항목·순서·필드입니다. organizationApplicationId가 없거나 희망 일정이 없으면 []. 기관이 아닌 행은 항상 []. null은 반환하지 않는다. */
   requestedSchedules?: RequestedScheduleResponse[];
+  /** 봉사자 행 거리(km). 강사 신청 목록 distanceKm과 같은 이름이나, 봉사자 거리는 아직 산출·저장하지 않아 항상 null. */
+  distanceKm?: number | null;
+  /** 봉사자 행 이 프로그램 출강(배정) 횟수. 강사 신청 목록 programDispatchCount와 같은 정의로 취소되지 않은 배정 건수(일반 기관형 program_volunteer_assignment ASSIGNED 일정 수). GENERAL_ORGANIZATION 봉사자 행이 아니면 null, 배정이 없으면 0. */
+  programDispatchCount?: number | null;
+  /** 봉사자 행 장거리 출강 횟수. 봉사자 거리를 산출하지 않아 항상 null. */
+  programLongDistanceDispatchCount?: number | null;
 }
