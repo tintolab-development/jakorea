@@ -92,6 +92,9 @@ function parseDayjs(value: string | undefined | null): Dayjs | null {
   return d.isValid() ? d : null
 }
 
+/** 시안 2432:39720 내용 에디터 높이 */
+const EDITOR_MIN_HEIGHT_PX = 200
+
 export function RecruitPostingFormModal({
   open,
   mode,
@@ -401,6 +404,9 @@ export function RecruitPostingFormModal({
         }
       >
         <div className="posting-form-modal__form">
+          <div className="posting-form-modal__group-title">
+            <span className="posting-form-modal__group-title-text">공고 정보</span>
+          </div>
           <div className="posting-form-modal__filter-wrap">
             <div className="posting-form-modal__filter-inner">
               <div className="posting-form-modal__filter-field posting-form-modal__filter-field--radio">
@@ -501,6 +507,7 @@ export function RecruitPostingFormModal({
             <div className="posting-form-modal__editor-host">
               <RichTextEditor
                 editor={editor}
+                minHeight={EDITOR_MIN_HEIGHT_PX}
                 allowInlineMedia
                 resolveImageSrc={resolveImageSrc}
                 allowRawHtmlBlock
@@ -533,9 +540,9 @@ export function RecruitPostingFormModal({
           </div>
 
           <div className="posting-form-modal__section posting-form-modal__section--link">
-            <div className="posting-form-modal__link-heading">
-              <span className="posting-form-modal__link-heading-title">연결 버튼</span>
-              <span className="posting-form-modal__link-heading-note">
+            <div className="posting-form-modal__group-title">
+              <span className="posting-form-modal__group-title-text">연결 버튼</span>
+              <span className="posting-form-modal__group-title-note">
                 링크 입력 시 공고 상세에 버튼이 노출됩니다.
               </span>
             </div>
