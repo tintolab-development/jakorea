@@ -47,6 +47,11 @@ export interface UserProgramsSectionProps {
     reason: CertificateIssueReasonValue,
     reasonLabel: string
   ) => void | Promise<void>
+  onInstructorCertificateBulkIssue: (
+    rowIds: readonly string[],
+    reason: CertificateIssueReasonValue,
+    reasonLabel: string
+  ) => void | Promise<void>
   progressStatusReadOnly?: boolean
 }
 

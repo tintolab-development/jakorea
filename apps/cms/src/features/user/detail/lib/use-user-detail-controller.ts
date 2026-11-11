@@ -845,6 +845,13 @@ export function useUserDetailController({
     [handleCertificateBulkIssue]
   )
 
+  const handleInstructorCertificateBulkIssue = useCallback(
+    (rowIds: readonly string[], reason: CertificateIssueReasonValue, reasonLabel: string) => {
+      void handleCertificateBulkIssue(rowIds, reason, reasonLabel, 'INSTRUCTOR_ACTIVITY')
+    },
+    [handleCertificateBulkIssue]
+  )
+
   const prepareLeaveMemberDetailForProgramNavigation = useCallback(() => {
     stashMemberDetailReturnForProgramNavigation()
     if (detailCloseIntentRef) detailCloseIntentRef.current = true
@@ -1817,6 +1824,7 @@ export function useUserDetailController({
       handleBulkDeleteHistory,
       handleStudentCertificateBulkIssue,
       handleVolunteerCertificateBulkIssue,
+      handleInstructorCertificateBulkIssue,
       openWithdrawConfirm,
       closeWithdrawConfirm,
       closeInstitutionDeleteBlocked,
