@@ -64,7 +64,8 @@ describe('formatMailPreviewPerson', () => {
 
 describe('formatMailPreviewRecipient', () => {
   it('includes the sample extra recipient count', () => {
-    expect(formatMailPreviewRecipient()).toBe('홍길동 <gildong@jakorea.org> 외 914명')
+    // 샘플 수신자 이름은 05c06850c(더미 실명 정리)에서 「수신자」로 바뀌었다.
+    expect(formatMailPreviewRecipient()).toBe('수신자 <gildong@jakorea.org> 외 914명')
   })
 
   it('omits the extra count when there is a single recipient', () => {
