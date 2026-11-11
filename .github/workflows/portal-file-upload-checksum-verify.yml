@@ -53,6 +53,8 @@ jobs:
         env:
           HUSKY: '0'
         run: pnpm install --frozen-lockfile
+      - name: Build platform workspace dependencies
+        run: pnpm --filter platform run build:workspace-deps
       - name: SHA-256 deterministic selfcheck
         run: node --experimental-strip-types --experimental-transform-types apps/platform/src/shared/lib/create-sha256.selfcheck.ts
       - name: Platform typecheck
