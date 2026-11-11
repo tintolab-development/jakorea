@@ -51,10 +51,10 @@ export interface SettlementListItemResponse {
   supersededBySettlementId?: number;
   taxIncomeType?: string;
   availableActions?: string[];
+  /** Gemini 실적 지급조서만: 매핑된 강사의 유효한 지급조서 사전 동의서 여부. COMPLETE=확인 가능, MISSING=지급조서 사전 동의 미완료(확인 불가, CONFIRM_PAYMENT_STATEMENT 없음). Gemini가 아닌 행은 null. */
+  paymentStatementPreConsentStatus?: SettlementListItemResponsePaymentStatementPreConsentStatus;
   /** 프로그램 참여 강사 정산 현황(programId+instructorMemberId)에서만 채운다. SETTLEMENT=지급조서(정산) 행, SETTLEMENT_APPLICATION=확정 전 정산 신청서 행, NOT_APPLIED=정산 신청 전인 배정 교육 일정 행(금액·상태·지급조서 없음, availableActions 빈 배열). 다른 정산 목록에서는 null. */
   rowType?: SettlementListItemResponseRowType;
   /** 프로그램 참여 강사 정산 현황에서만 채우는 강의 진행 여부. SCHEDULED=진행 예정(일정 종료 전), COMPLETED=진행 완료(일정 종료), GAVE_UP=활동 포기 시점에 걸친 회차. 일정이 없는 행(Gemini 등)과 다른 정산 목록에서는 null. */
   lectureProgressStatus?: SettlementListItemResponseLectureProgressStatus;
-  /** Gemini 실적 지급조서만: 매핑된 강사의 유효한 지급조서 사전 동의서 여부. COMPLETE=확인 가능, MISSING=지급조서 사전 동의 미완료(확인 불가, CONFIRM_PAYMENT_STATEMENT 없음). Gemini가 아닌 행은 null. */
-  paymentStatementPreConsentStatus?: SettlementListItemResponsePaymentStatementPreConsentStatus;
 }

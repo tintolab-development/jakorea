@@ -17,6 +17,6 @@ export interface StudentRosterResponse {
   totalCount?: number;
   committedAt?: string;
   rows?: StudentRosterItemResponse[];
-  /** 개인정보 노출 모드. AUTO_RAW_ACCESS(CMS 학생 명단·출석, 진입 시 자동 조회 기록 후 phone·email·birthDate 원문), MASKED(SENSITIVE_PII_READ가 없는 CMS 조회: phone·email·birthDate 생략, masked* 필드만), RAW_POLICY_EXCEPTION(포털 교사 본인 업로드 명단: 원문, 조회 기록 대상 아님). */
+  /** 개인정보 노출 모드. AUTO_RAW_ACCESS(CMS 학생 명단·출석, 진입 시 자동 조회 기록 후 phone·email·birthDate 원문), MASKED(Program Owner·Assistant가 아닌 CMS 조회(Program Viewer 등): phone·email·birthDate 생략, masked* 필드만), RAW_POLICY_EXCEPTION(포털 교사 본인 업로드 명단: 원문, 조회 기록 대상 아님). */
   privacyAccessMode?: string;
 }

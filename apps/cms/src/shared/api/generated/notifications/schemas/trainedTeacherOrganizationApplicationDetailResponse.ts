@@ -82,4 +82,8 @@ export interface TrainedTeacherOrganizationApplicationDetailResponse {
   educationSchedules?: TrainedTeacherOrganizationEducationSchedule[];
   /** CMS 학생 명단 학급 Select SSOT. 공통 기관 신청 상세 gradeBlocks와 같은 형식이며 활성 학생 명단의 grade/className으로 묶습니다. 명단이 없으면 신청 학년(requested_grade)과 requestedClassCount만 담은 블록 1개(classes=[])이고, 둘 다 없으면 null. classes가 []이면 classCount로 반 목록을 만들지 않습니다. */
   gradeBlocks?: GradeBlock[] | null;
+  /** 신청 기본 정보 답변의 교육 장소(educationPlace) 원문. 신청 폼이 보낸 코드값을 그대로 반환하며 서버가 라벨로 바꾸거나 프로그램 설정으로 채우지 않습니다. 최신 제출 답변에 없으면 null. */
+  educationPlace?: string | null;
+  /** 신청 기본 정보 답변의 교육 장소 상세(educationPlaceDetail, 기타 직접 입력·상세) 원문. 없으면 null. */
+  educationPlaceDetail?: string | null;
 }

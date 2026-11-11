@@ -11,4 +11,6 @@ export interface IndividualSettlementReviewRequest {
   expectedRevisionNo: number;
   /** Optional decision reason used to explain rejection of a settlement revision. */
   reason?: string;
+  /** 승인(확인) 시 필수. 계좌 지급 예정일, KST 기준 오늘 또는 이후. 강사 지급조서 확인과 같은 규칙이며 누락 시 400 SCHEDULED_PAYMENT_DATE_REQUIRED, 오늘 이전이면 400 SCHEDULED_PAYMENT_DATE_MUST_BE_TODAY_OR_LATER. 승인하면 이 날짜로 계좌 지급 건(sourceType=INDIVIDUAL_SETTLEMENT, WAITING_PAYMENT)이 만들어진다. 반려에는 쓰지 않는다. */
+  scheduledPaymentDate?: string | null;
 }

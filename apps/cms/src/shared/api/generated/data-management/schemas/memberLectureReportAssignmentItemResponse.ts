@@ -41,4 +41,6 @@ export interface MemberLectureReportAssignmentItemResponse {
   lectureFeePreview?: MemberLectureFeePreview | null;
   /** 지급조서 제출 전 강사 교통비 미리보기. 객체는 항상 존재. oneWayDistanceKm는 distanceFromHome과 동일. 편도 30 미만 또는 지급 항목 없으면 금액 null. 제출 CalcInfo·CMS 교통비 스냅샷과 산식 동일. */
   transportPreview?: MemberInstructorTransportPreview | null;
+  /** 지급조서 제출 마감 시각. 강의일(회차 시작, Asia/Seoul) 기준 다음 달 5일 23:59:59(KST). 지나도 사업 운영 종료일까지는 제출할 수 있다(감점 없음). 강의보고서 마감 submitDueAt과 다르다. 제미나이(강사가 지급조서를 제출하지 않음)이거나 회차 시작 시각이 없으면 null. */
+  settlementSubmitDeadlineAt?: string | null;
 }

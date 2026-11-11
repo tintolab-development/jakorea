@@ -5,6 +5,7 @@
  * Filtered for CMS data management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { SettlementApplicationListItemResponseSupersededReason } from './settlementApplicationListItemResponseSupersededReason';
 
 /**
  * 회원 포탈 내 정산 신청 목록 항목
@@ -42,10 +43,22 @@ export interface SettlementApplicationListItemResponse {
   paymentStatus?: string | null;
   /** 지급조서 재신청 가능 여부. 최신 revision이 지급 정정 승인으로 만들어졌고 지급조서가 DRAFT이며 재신청 기한(statementReapplyDeadlineDate) 안이면 true (POST /api/portal/me/settlements/{settlementId}/payment-statement/reapply 대상). 기한이 지났거나 그 외에는 false. */
   statementReapplyAvailable?: boolean;
-  /** 지급조서 재신청 마감일(Asia/Seoul, 그날 포함). 정정 처리일로부터 14일과 사업 운영 종료일 중 빠른 날. 정정 승인 후 재신청을 기다리는 건(최신 revision이 정정으로 생성된 DRAFT)에만 값이 있고, 기한이 지나도 그대로 내려준다. Gemini 프로그램·그 외 상태는 null. */
+  /** 재신청 마감일(Asia/Seoul, 그날 포함). 기준일로부터 14일과 사업 운영 종료일 중 빠른 날. (1) 정정 승인 후 재신청을 기다리는 건(최신 revision이 정정으로 생성된 DRAFT): 기준일=정정 처리일. (2) 반려 건(최신 지급조서 REJECTED 또는 정산 신청 REJECTED): 기준일=반려일(rejectedAt). 기한이 지나도 그대로 내려준다. 재신청으로 대체된 이전 이력(superseded=true), Gemini 프로그램, 반려일을 알 수 없는 건, 그 외 상태는 null. statementReapplyAvailable은 (1)에만 해당하고 반려 건(2)은 false로 둔다. 반려 건도 기한이 지나면 서버가 재신청을 409 SETTLEMENT_REAPPLICATION_DEADLINE_EXPIRED로 거절한다. */
   statementReapplyDeadlineDate?: string | null;
   /** 정산 대상 회차(programScheduleId) 시작 시각. 회차가 없거나 찾지 못하면 null. 관리자 직접 배정(강사 신청서 없음) 건에도 채워진다. */
   scheduleStartAt?: string | null;
   /** 정산 대상 회차 종료 시각. 회차가 없거나 찾지 못하면 null. */
   scheduleEndAt?: string | null;
+  /** 다시 제출되어 다음 revision으로 대체된 이전 신청이면 true(status=RESUBMITTED). 목록에서 이전 이력 행으로 표시하고 합계에서 뺀다. */
+  superseded?: boolean;
+  /** 대체된 이전 신청의 원래 결과. REJECTED=신청 반려, CORRECTION_REQUESTED=지급 정정 요청. superseded=false이면 null. */
+  supersededReason?: SettlementApplicationListItemResponseSupersededReason;
+  /** 최신 정산 revision의 지급 총액(원). 정정 승인 후에는 정정된 금액. 정산이 아직 없으면 null. grossAmount는 정산 신청 제출 당시 금액으로 바뀌지 않는다. */
+  latestGrossAmount?: number | null;
+  /** 최신 정산 revision의 실지급액(원). 정정 승인 후에는 정정된 금액. 정산이 아직 없으면 null. netPaymentAmount는 정산 신청 제출 당시 금액으로 바뀌지 않는다. */
+  latestNetPaymentAmount?: number | null;
+  /** 반려 사유. 최신 지급조서가 REJECTED이면 지급조서 반려 사유, 정산 신청이 반려됐거나 반려로 대체된 이전 신청이면 정산 신청 반려 사유. 반려가 아니면 null. */
+  rejectedReason?: string | null;
+  /** 반려 시각. rejectedReason과 같은 기준. 반려가 아니면 null. */
+  rejectedAt?: string | null;
 }

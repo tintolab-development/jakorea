@@ -5,6 +5,7 @@
  * Filtered for CMS posts management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { IndividualSettlementReviewDetailApplicationType } from './individualSettlementReviewDetailApplicationType';
 import type { IndividualSettlementReviewRevision } from './individualSettlementReviewRevision';
 
 /**
@@ -27,4 +28,8 @@ export interface IndividualSettlementReviewDetail {
   latestRevisionNo?: number;
   revisions?: IndividualSettlementReviewRevision[];
   availableActions?: string[];
+  /** 참여자(INDIVIDUAL) 또는 봉사자(VOLUNTEER) 영수증 정산 */
+  applicationType?: IndividualSettlementReviewDetailApplicationType;
+  /** VOLUNTEER 신청의 program_volunteer_application.id. INDIVIDUAL 신청은 null. */
+  volunteerApplicationId?: number | null;
 }

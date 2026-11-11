@@ -333,6 +333,10 @@
       "description": "로그인 전 공개 화면에서 조회하는 콘텐츠 API입니다."
     },
     {
+      "name": "신청/프로그램 워크플로우",
+      "description": "참여 강사 강사비 책정 기준"
+    },
+    {
       "name": "파일 관리",
       "description": "파일 메타데이터, 스캔 상태, 다운로드 claim, 삭제/파기 API"
     },
@@ -4470,16 +4474,15 @@
     "/api/admin/program-execution/programs/{programId}/ujat/schedules/{scheduleId}/attendance-manager": {
       "put": {
         "tags": [
-          "기타 API"
+          "UJAT 지역별 교육 배정"
         ],
-        "summary": "UJAT 교육일 출결 담당자 변경",
-        "description": "### 이 API가 하는 일\n- UJAT 교육일 출결 담당자 변경\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: UJAT/대경봉 배정 관리 (`null`)\n- 프론트 담당 영역: 프로그램_execution (`program_execution`)\n- 호출 방식: `PUT /api/admin/program-execution/programs/{programId}/ujat/schedules/{scheduleId}/attendance-manager`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: selected program, organization application, education schedule/class slot, region/volunteer action payload\n- 응답 사용 위치: canonical institution schedule, regional assignment, unavailable-date and attendance-manager state\n- 프론트 조회 키: `put_api_admin_program_execution_programs_programId_ujat_schedules_scheduleId_attendance_manager`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: UJAT_DGBONG_ASSIGNMENT_SMOKE\n- 목데이터 대체: No localStorage persistence; use canonical UJAT schedule/assignment API response and invalidate assignment queries after mutation.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: ASSIGNMENT_WRITE 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: PERSONAL_DATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- UJAT 상태는 파트너 배정, 출결, 1365 시간, 수료증 조건과 연결됩니다. `ASSIGNED`, `CANCELLED`, `GIVE_UP`, `PRESENT`, `ABSENT`, `LATE`를 화면 배지와 후속 버튼 조건에 함께 사용합니다.\n- `/ujat-dgbong` legacy URL은 사용하지 않고 `/ujat` canonical URL만 호출합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: CMS Figma + CMS/portal functional-definition cross-check; canonical UJAT workflow closure",
-        "operationId": "changeAttendanceManager",
+        "summary": "UJAT 기관 열 출결 담당자 변경",
+        "description": "출결 담당자는 교육일(scheduleId)+기관(organizationApplicationId) 열당 1명이다. 같은 날짜에 학교가 여러 개면 열마다 PUT이 독립이고 다른 기관 담당자를 덮지 않는다. participantId=number 이면 해당 열에 ASSIGNED인 봉사자만 지정(아니면 UJAT_ATTENDANCE_MANAGER_NOT_ASSIGNED(400), 활동 포기 포함). participantId=null 이면 그 열만 해제한다(자동 재지정 없음). 이미 그 사람인 재PUT은 200. GET allocation-matrix 셀 attendanceManager가 SSOT이다. 출결 담당자의 조가 취소되면 같은 열의 남은 ASSIGNED 봉사자 중 담당 횟수가 가장 적은 사람에게 넘어간다.",
+        "operationId": "updateUjatAttendanceManager",
         "parameters": [
           {
             "name": "programId",
             "in": "path",
-            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
             "required": true,
             "schema": {
               "type": "integer",
@@ -4489,7 +4492,6 @@
           {
             "name": "scheduleId",
             "in": "path",
-            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
             "required": true,
             "schema": {
               "type": "integer",
@@ -4498,33 +4500,18 @@
           }
         ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/AttendanceManagerUpdateRequest"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
             "description": "OK"
-          },
-          "400": {
-            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
-          },
-          "401": {
-            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
-          },
-          "403": {
-            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
-          },
-          "409": {
-            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
-          },
-          "500": {
-            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
           }
         }
       }
@@ -19648,58 +19635,43 @@
     "/api/admin/programs/{programId}/ujat/1365-registration-form": {
       "post": {
         "tags": [
-          "기타 API"
+          "UJAT 1365 봉사시간 등록"
         ],
         "summary": "UJAT 1365 봉사시간 등록 양식 원문(반기 일괄)",
-        "description": "### 이 API가 하는 일\n- UJAT 1365 봉사시간 등록 양식 원문(반기 일괄)\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/programs/{programId}/ujat/1365-registration-form`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: PRIVACY_RAW_READ 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: SENSITIVE_MEMBER_DATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- UJAT 상태는 파트너 배정, 출결, 1365 시간, 수료증 조건과 연결됩니다. `ASSIGNED`, `CANCELLED`, `GIVE_UP`, `PRESENT`, `ABSENT`, `LATE`를 화면 배지와 후속 버튼 조건에 함께 사용합니다.\n- `/ujat-dgbong` legacy URL은 사용하지 않고 `/ujat` canonical URL만 호출합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 자동 사유 1365 봉사시간 등록을 하기 위함. 반기 봉사자 전원·발대식/교육일 인정 분. 요청당 감사 1건",
+        "description": "반기 봉사자 전원의 이름·생년월일·1365 ID 원문·지역과 발대식/교육일별 1365 인정 분을 한 번에 반환한다. 페이지네이션 없음, 활동 포기자 포함(givenUp). 감사 사유는 '1365 봉사시간 등록을 하기 위함'이며 요청 1회당 개인정보 접근 로그 1건과 파일 접근 로그 1건(PREVIEW=VIEW, DOWNLOAD=DOWNLOAD)을 남긴다. SENSITIVE_PII_READ 필요. 감사 저장 실패 시 원문을 반환하지 않는다. Cache-Control: no-store. 셀 status: 일정 종료 후 PRESENT/LATE=COMPLETED, ABSENT/EXCUSED=ABSENT(0분), 그 외 NOT_COMPLETED. 종일 일정의 인정 분은 프로그램 late_deduct_start_time·default_1365_hours 기준. 400 UJAT_1365_SEMESTER_TYPE_INVALID / UJAT_1365_MODE_INVALID, 404 UJAT_1365_PROGRAM_NOT_FOUND.",
         "operationId": "ujat1365SemesterRegistrationForm",
         "parameters": [
           {
             "name": "programId",
             "in": "path",
-            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
             "required": true,
             "schema": {
               "type": "integer",
-              "format": "int64"
+              "format": "int64",
+              "minimum": 1
             }
           }
         ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/Ujat1365SemesterRegistrationFormRequest"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
             "description": "OK",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Ujat1365SemesterRegistrationFormResponse"
                 }
               }
             }
-          },
-          "400": {
-            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
-          },
-          "401": {
-            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
-          },
-          "403": {
-            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
-          },
-          "409": {
-            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
-          },
-          "500": {
-            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
           }
         }
       }
@@ -37675,16 +37647,15 @@
     "/api/admin/volunteer-applications/{applicationId}/activity-region": {
       "patch": {
         "tags": [
-          "신청/프로그램 워크플로우"
+          "신청 및 프로그램 진행"
         ],
-        "summary": "봉사자 신청 희망 교육 활동 지역 수정",
-        "description": "### 이 API가 하는 일\n- 봉사자 신청 희망 교육 활동 지역 수정\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 봉사자/UJAT/면접 (`null`)\n- 프론트 담당 영역: volunteer-interviews (`volunteer-interviews`)\n- 호출 방식: `PATCH /api/admin/volunteer-applications/{applicationId}/activity-region`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: educationRegionCode region master code\n- 응답 사용 위치: preferredRegion and preferredRegionCode then invalidate volunteer application queries\n- 프론트 조회 키: `patch_api_admin_volunteer-applications_applicationId_activity-region`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: No localStorage persistence; use canonical volunteer application region API and invalidate list/detail after mutation.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: APPLICATION_WRITE 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 없음\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: UJAT volunteer detail preferred-region write; form_response + answer + participant region",
         "operationId": "updateVolunteerApplicationActivityRegion",
+        "summary": "봉사자 신청 희망 교육 활동 지역 수정",
+        "description": "UJAT 봉사자 신청 preferred-region을 지역 마스터 code로 저장한다. 요청 seoul은 SEOUL로 정규화한다. 한글 라벨은 400. form_response.raw_answers_jsonb와 form_response_answer를 함께 갱신한다. 연결된 참여자가 있고 오늘 이후(또는 시작일 미정) 활성 배정이 있으면 UJAT_VOLUNTEER_REGION_CHANGE_HAS_ACTIVE_ASSIGNMENTS(409). 지난 배정만 있으면 허용. 같은 지역이면 변경 없이 200. 성공 본문의 preferredRegion/preferredRegionCode는 GET 목록·상세 ujat.preferredActivityRegion과 같다.",
         "parameters": [
           {
             "name": "applicationId",
             "in": "path",
-            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
             "required": true,
             "schema": {
               "type": "integer",
@@ -37693,20 +37664,20 @@
           }
         ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/VolunteerActivityRegionUpdateRequest"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "preferredRegion=마스터 라벨, preferredRegionCode=마스터 code",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/VolunteerActivityRegionUpdateResponse"
                 }
@@ -37714,19 +37685,16 @@
             }
           },
           "400": {
-            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
-          },
-          "401": {
-            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+            "description": "UJAT_EDUCATION_REGION_NOT_FOUND | UJAT_EDUCATION_REGION_CODE_REQUIRED | VOLUNTEER_ACTIVITY_REGION_PROGRAM_TYPE_UNSUPPORTED"
           },
           "403": {
-            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+            "description": "APPLICATION_WRITE 권한 없음"
+          },
+          "404": {
+            "description": "VOLUNTEER_APPLICATION_NOT_FOUND"
           },
           "409": {
-            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
-          },
-          "500": {
-            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+            "description": "UJAT_VOLUNTEER_REGION_CHANGE_HAS_ACTIVE_ASSIGNMENTS — 예정된 교육일 배정이 있어 지역 변경 거부. details.upcomingAssignmentCount, details.participantId, details.currentEducationRegionCode. VOLUNTEER_APPLICATION_FORM_RESPONSE_NOT_FOUND — 제출 신청서 없음."
           }
         }
       }
@@ -40986,6 +40954,129 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ChangeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/admin/programs/{programId}/participants/{participantId}/instructor-fee-policy": {
+      "get": {
+        "tags": [
+          "신청/프로그램 워크플로우"
+        ],
+        "summary": "참여 강사 강사비 책정 기준 조회",
+        "description": "### 이 API가 하는 일\n- 참여 강사 강사비 책정 기준 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/admin/programs/{programId}/participants/{participantId}/instructor-fee-policy`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: APPLICATION_READ 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수 아님\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Participant instructor fee policy (application snapshot or participant row)",
+        "operationId": "getParticipantInstructorFeePolicy",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "participantId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "500": {
+            "description": "서버 내부 오류입니다. requestId와 서버 로그를 확인합니다."
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "신청/프로그램 워크플로우"
+        ],
+        "summary": "참여 강사 강사비 책정 기준 수정",
+        "description": "### 이 API가 하는 일\n- 참여 강사 강사비 책정 기준 수정\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `PATCH /api/admin/programs/{programId}/participants/{participantId}/instructor-fee-policy`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: APPLICATION_WRITE 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Participant instructor fee policy (application snapshot or participant row)",
+        "operationId": "updateParticipantInstructorFeePolicy",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "participantId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
                 }
               }
             }
@@ -49914,48 +50005,35 @@
     },
     "/api/portal/me/generated-files/jobs/{jobId}": {
       "get": {
-        "tags": [
-          "기타 API"
-        ],
-        "summary": "내 생성 파일 작업 조회",
-        "description": "### 이 API가 하는 일\n- 내 생성 파일 작업 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/portal/me/generated-files/jobs/{jobId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: SELF_OWNED 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 처리 기준 없음\n- 감사로그 저장: 필수 아님\n\n### 상태값/화면 배지 기준\n- 개인정보/파일 API는 마스킹 응답과 원문 접근을 구분합니다. 원문 조회, export, 민감파일 다운로드는 감사로그가 저장되어야 성공으로 취급합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Owner-only generated file job poll. Other members and missing jobs are 404. Admin payload is not returned.",
         "operationId": "getMyGeneratedFileJob",
-        "parameters": [
-          {
-            "name": "jobId",
-            "in": "path",
-            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
+        "summary": "내 생성 파일 작업 조회",
+        "description": "로그인 회원이 requested_by_member_id인 작업만 반환합니다. 다른 회원의 jobId와 없는 jobId는 404 GENERATED_FILE_JOB_NOT_FOUND입니다. 응답 필드는 관리자 작업 조회와 같고 requestPayloadJson·resultSnapshotJson은 null입니다. jobStatus는 REQUESTED, PROCESSING, RENDERING, COMPLETED, FAILED입니다. CERTIFICATE_RENDER 완료 후 PDF는 GET /api/portal/me/certificates/{certificateIssueId}/download 의 downloadUrl(감사 포함)로 받습니다. fileObjectId만으로 /api/portal/me/files/{fileObjectId}/download-requests 를 호출할 수 있지만 시스템 생성 수료증은 certificate download URL을 우선 사용하세요. 관리자 API는 포털 토큰으로 열리지 않습니다.",
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "본인 생성 파일 작업",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GeneratedFileJobResponse"
                 }
               }
             }
           },
-          "400": {
-            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
-          },
-          "401": {
-            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
-          },
-          "403": {
-            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
-          },
-          "500": {
-            "description": "서버 내부 오류입니다. requestId와 서버 로그를 확인합니다."
+          "404": {
+            "description": "GENERATED_FILE_JOB_NOT_FOUND"
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ]
       }
     },
     "/api/portal/me/form-responses/{formResponseId}": {
@@ -56422,6 +56500,55 @@
         }
       }
     },
+    "/api/admin/programs/{programId}/volunteer-assignments/candidates": {
+      "get": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "기관형 봉사자 배정 후보(기관×회차) 조회",
+        "description": "### 이 API가 하는 일\n- 기관형 봉사자 배정 후보(기관×회차) 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/admin/programs/{programId}/volunteer-assignments/candidates`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: ASSIGNMENT_READ 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수 아님\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Volunteer final-pass assignment popup candidates",
+        "operationId": "listVolunteerAssignmentCandidates",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VolunteerAssignmentCandidateResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "500": {
+            "description": "서버 내부 오류입니다. requestId와 서버 로그를 확인합니다."
+          }
+        }
+      }
+    },
     "/api/admin/programs/{programId}/volunteer-applications": {
       "get": {
         "tags": [
@@ -59240,16 +59367,15 @@
     "/api/admin/program-execution/programs/{programId}/ujat/education-slots/{educationSlotId}/direct-assignment-candidates": {
       "get": {
         "tags": [
-          "기타 API"
+          "UJAT 지역별 교육 배정"
         ],
         "summary": "UJAT 교육일 직접배정 후보 조회",
-        "description": "### 이 API가 하는 일\n- UJAT 교육일 직접배정 후보 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: UJAT/대경봉 배정 관리 (`null`)\n- 프론트 담당 영역: 프로그램_execution (`program_execution`)\n- 호출 방식: `GET /api/admin/program-execution/programs/{programId}/ujat/education-slots/{educationSlotId}/direct-assignment-candidates`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: selected program and educationSlotId; POST includes selected participantId\n- 응답 사용 위치: 직접배정 후보/결과 반영; 미배정 봉사자 우선, 후보 소진 시 기존 2인조 분할 후 두 학급 1인 진행\n- 프론트 조회 키: `get_api_admin_program_execution_programs_programId_ujat_education_slots_educationSlotId_direct_assignment_candidates`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: UJAT_DGBONG_ASSIGNMENT_SMOKE\n- 목데이터 대체: 직접배정 후보와 결과는 서버 canonical assignment state를 사용합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: ASSIGNMENT_READ 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: PERSONAL_DATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- UJAT 상태는 파트너 배정, 출결, 1365 시간, 수료증 조건과 연결됩니다. `ASSIGNED`, `CANCELLED`, `GIVE_UP`, `PRESENT`, `ABSENT`, `LATE`를 화면 배지와 후속 버튼 조건에 함께 사용합니다.\n- `/ujat-dgbong` legacy URL은 사용하지 않고 `/ujat` canonical URL만 호출합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: CMS Figma direct-assignment popup: prefer unassigned volunteer; when none exist, move one member of an existing pair and leave both classes as single-volunteer assignments",
-        "operationId": "directAssignmentCandidates",
+        "description": "빈 슬롯: 미배정 후보, 없으면 reallocationRequired=true와 같은 교육일 2인조 이동 후보. 1인 슬롯: existingPrimaryParticipantId와 같은 교육일 미배정 후보(2인조 분리 없음). assignedVolunteerCount는 이 educationSlotId의 assignmentStatus=ASSIGNED distinct 인원만(0/1/2). 같은 schedule의 다른 학급, REASSIGNMENT_REQUIRED, giveUp, 취소는 넣지 않는다. 1인이면 existingPrimaryParticipantId=그 참여자. 0 또는 2이면 null. 2인 슬롯은 200, assignedVolunteerCount=2, candidates=[], existingPrimaryParticipantId=null. GET은 2인이어도 409를 내지 않는다. POST만 UJAT_EDUCATION_SLOT_ALREADY_ASSIGNED(409). 미배정 후보: 같은 프로그램·같은 반기·면접/최종 PASS(또는 지원서 없는 레거시 참여자)·giveUp 아님. 같은 educationRegionCode이거나 해당 반기 totalAssignedDays=0인 봉사자를 포함한다. 해당 교육일(서울 날짜)에 이미 ASSIGNED이거나 불가 일정이면 제외. canonical ujat_organization_class_schedule_assignment.id가 아니면 UJAT_EDUCATION_SLOT_NOT_FOUND(404). 후보가 정말 없으면 candidates=[] 이고 서버 로그 reasonCode=UJAT_DIRECT_ASSIGNMENT_CANDIDATES_EMPTY. 같은 교육일 판정은 program_schedule.start_at의 서울 날짜 기준이다.",
+        "operationId": "listUjatDirectAssignmentCandidates",
         "parameters": [
           {
             "name": "programId",
             "in": "path",
-            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
             "required": true,
             "schema": {
               "type": "integer",
@@ -59259,7 +59385,6 @@
           {
             "name": "educationSlotId",
             "in": "path",
-            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
             "required": true,
             "schema": {
               "type": "integer",
@@ -59271,24 +59396,12 @@
           "200": {
             "description": "OK",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/DirectAssignmentCandidatesResponse"
                 }
               }
             }
-          },
-          "400": {
-            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
-          },
-          "401": {
-            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
-          },
-          "403": {
-            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
-          },
-          "500": {
-            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
           }
         }
       }
@@ -62236,86 +62349,7 @@
     },
     "/api/admin/notification-send-batches/template-variables": {
       "get": {
-        "tags": [
-          "기타 API"
-        ],
-        "summary": "알림 발송 자동입력 변수 카탈로그",
-        "description": "### 이 API가 하는 일\n- 알림 발송 자동입력 변수 카탈로그\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/admin/notification-send-batches/template-variables`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: NOTIFICATION_READ 권한 필요\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수 아님\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: V78 AlimTalk CMS catalog / Notion alignment",
-        "operationId": "listNotificationTemplateVariables",
-        "parameters": [
-          {
-            "name": "category",
-            "in": "query",
-            "description": "카탈로그 카테고리 코드.",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "NAME",
-                "EMAIL",
-                "PHONE",
-                "STATUS",
-                "TYPE",
-                "DATE",
-                "TIME",
-                "PLACE",
-                "TARGET",
-                "QUANTITY",
-                "AMOUNT",
-                "SYSTEM"
-              ]
-            }
-          },
-          {
-            "name": "keyword",
-            "in": "query",
-            "description": "key/description 부분 검색.",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "programId",
-            "in": "query",
-            "description": "대상 프로그램 id. 미지정(전체)이면 requiresProgram 항목은 enabled=false.",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          },
-          {
-            "name": "participantType",
-            "in": "query",
-            "description": "프로그램 선택 시 참여 유형 필터. PARTICIPANT|INSTRUCTOR|VOLUNTEER.",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "PARTICIPANT",
-                "INSTRUCTOR",
-                "VOLUNTEER"
-              ]
-            }
-          },
-          {
-            "name": "memberType",
-            "in": "query",
-            "description": "프로그램 미선택(전체) 시 회원 유형 필터.",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "GENERAL",
-                "SCHOOL_TEACHER",
-                "INSTRUCTOR",
-                "TEACHER_AND_INSTRUCTOR",
-                "ADMIN"
-              ]
-            }
-          }
-        ],
+        "summary": "자동입력 변수 카탈로그 조회",
         "responses": {
           "200": {
             "description": "카탈로그. CatalogVariableItem.enabled 가 삽입·알림톡 피커(프로그램 지정 시) 사용 허용 SSOT.",
@@ -62326,7 +62360,7 @@
                 },
                 "examples": {
                   "participantContext": {
-                    "description": "participantContext",
+                    "summary": "programId+PARTICIPANT — 강사 전용 키 enabled=false",
                     "value": {
                       "totalCount": 2,
                       "categories": [
@@ -62369,18 +62403,107 @@
             }
           },
           "400": {
-            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
-          },
-          "401": {
-            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
-          },
-          "403": {
-            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
-          },
-          "500": {
-            "description": "서버 내부 오류입니다. requestId와 서버 로그를 확인합니다."
+            "description": "participantType/memberType enum 위반 등",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "requiredVariableMissing": {
+                    "summary": "발송 파이프라인 실패 코드(배치/delivery). GET catalog 자체는 아님",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "error": {
+                        "code": "NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING",
+                        "message": "NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING:교육 진행 수업 시간"
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         },
+        "operationId": "listNotificationTemplateVariables",
+        "description": "메일·문자 템플릿 편집/발송 화면 우측 자동입력(변수값) 리스트 + 알림톡 발송 피커 변수 SSOT. Notion 사용 가능 항목과 CMS 수동 발송 불가(시스템 이벤트 전용) 키를 카테고리별로 반환(enabled=false 항목도 목록 유지). enabled=삽입·알림톡 피커(프로그램 지정 시) 사용 허용 SSOT(값 존재와 무관). FE는 enabled를 재계산하지 않는다. 축 분리: 카카오 승인(approved) ≠ CMS 변수 가능(catalog membership + enabled). 알림톡 발송 피커 Option A(프로그램 지정 시): 본문 #{키} ⊆ catalog && 모든 키 enabled=true. 예: 로그인 실패 횟수/마지막 로그인 실패일시 → catalog 등재 + enabled=false. requiresProgram=true 이고 programId 미전달이면 enabled=false. programId/participantType/memberType을 넘기면 enabled가 프로그램·모집·참여·회원 유형에 맞게 계산된다. participantType·memberType 둘 다 없으면 유형 특화 변수는 enabled=false. 실발송(EMAIL/SMS/ALIMTALK) 시 본문 또는 알림톡 메타데이터(버튼 등)의 #{키} 값이 비면 provider 전 NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING:{키}[,{키2}…] fail-closed(프로바이더 원문「변수처리실패」에 의존하지 않음).",
+        "tags": [
+          "알림 발송 배치"
+        ],
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "description": "카탈로그 카테고리 코드.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "NAME",
+                "EMAIL",
+                "PHONE",
+                "STATUS",
+                "TYPE",
+                "DATE",
+                "TIME",
+                "PLACE",
+                "TARGET",
+                "QUANTITY",
+                "AMOUNT",
+                "SYSTEM"
+              ]
+            }
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": false,
+            "description": "key/description 부분 검색.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "programId",
+            "in": "query",
+            "required": false,
+            "description": "대상 프로그램 id. 미지정(전체)이면 requiresProgram 항목은 enabled=false.",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 164003
+          },
+          {
+            "name": "participantType",
+            "in": "query",
+            "required": false,
+            "description": "프로그램 선택 시 참여 유형 필터. PARTICIPANT|INSTRUCTOR|VOLUNTEER.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PARTICIPANT",
+                "INSTRUCTOR",
+                "VOLUNTEER"
+              ]
+            },
+            "example": "PARTICIPANT"
+          },
+          {
+            "name": "memberType",
+            "in": "query",
+            "required": false,
+            "description": "프로그램 미선택(전체) 시 회원 유형 필터.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "GENERAL",
+                "SCHOOL_TEACHER",
+                "INSTRUCTOR",
+                "TEACHER_AND_INSTRUCTOR",
+                "ADMIN"
+              ]
+            }
+          }
+        ],
         "x-jakorea-fe-notes": "enabled=삽입 허용 SSOT(값 존재와 무관). 누락 시 NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING:{키}[,{키2}]. QA programId=164003 actorId=1799401."
       }
     },
@@ -69226,6 +69349,66 @@
           }
         }
       }
+    },
+    "/api/admin/files/downloads/raw/{encodedObjectName}": {
+      "get": {
+        "summary": "로컬 서명 관리자 다운로드 바이트 전송",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "parameters": [
+          {
+            "name": "encodedObjectName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/portal/files/downloads/raw/{encodedObjectName}": {
+      "get": {
+        "parameters": [
+          {
+            "name": "encodedObjectName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "summary": "로컬 서명 회원포탈 다운로드 바이트 전송",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/portal/public/files/downloads/raw/{encodedObjectName}": {
+      "get": {
+        "summary": "로컬 서명 공개 다운로드 바이트 전송",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "parameters": [
+          {
+            "name": "encodedObjectName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -70064,7 +70247,7 @@
           },
           "privacyAccessMode": {
             "type": "string",
-            "description": "개인정보 노출 모드. AUTO_RAW_ACCESS(CMS 학생 명단·출석, 진입 시 자동 조회 기록 후 phone·email·birthDate 원문), MASKED(SENSITIVE_PII_READ가 없는 CMS 조회: phone·email·birthDate 생략, masked* 필드만), RAW_POLICY_EXCEPTION(포털 교사 본인 업로드 명단: 원문, 조회 기록 대상 아님)."
+            "description": "개인정보 노출 모드. AUTO_RAW_ACCESS(CMS 학생 명단·출석, 진입 시 자동 조회 기록 후 phone·email·birthDate 원문), MASKED(Program Owner·Assistant가 아닌 CMS 조회(Program Viewer 등): phone·email·birthDate 생략, masked* 필드만), RAW_POLICY_EXCEPTION(포털 교사 본인 업로드 명단: 원문, 조회 기록 대상 아님)."
           }
         }
       },
@@ -73228,7 +73411,10 @@
       },
       "AttendanceManagerUpdateRequest": {
         "type": "object",
-        "description": "UJAT 기관 열(organizationApplicationId) 출결 담당자 지정/해제 요청. 같은 교육일(scheduleId)에 기관이 여러 개면 열마다 담당자가 다르다. CMS 지역 배정 모달의 기관별 선택은 서로 덮어쓰지 않는다.",
+        "required": [
+          "organizationApplicationId",
+          "participantId"
+        ],
         "properties": {
           "organizationApplicationId": {
             "type": "integer",
@@ -73236,17 +73422,13 @@
             "description": "배정 매트릭스 열 SSOT. AllocationColumn.organizationApplicationId. 생략·null·0 치환 금지."
           },
           "participantId": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": "integer",
             "format": "int64",
+            "nullable": true,
             "description": "출결 담당자로 지정할 program_participant.id. 이 organizationApplicationId 열에 ASSIGNED인 봉사자만 허용. null이면 해당 열(scheduleId+organizationApplicationId)의 출결 담당을 해제한다. 0이나 다른 id로 치환하지 않는다. JSON null로 보낸다."
           }
         },
-        "required": [
-          "organizationApplicationId"
-        ]
+        "description": "UJAT 기관 열(organizationApplicationId) 출결 담당자 지정/해제 요청. 같은 교육일(scheduleId)에 기관이 여러 개면 열마다 담당자가 다르다. CMS 지역 배정 모달의 기관별 선택은 서로 덮어쓰지 않는다."
       },
       "CapacityLimitRequest": {
         "type": "object",
@@ -77481,6 +77663,24 @@
           }
         }
       },
+      "InstructorPayableItem": {
+        "type": "object",
+        "properties": {
+          "itemType": {
+            "type": "string"
+          },
+          "itemName": {
+            "type": "string"
+          },
+          "maxLimitWon": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "evidenceRequired": {
+            "type": "boolean"
+          }
+        }
+      },
       "SettlementApplicationPreviewResponse": {
         "type": "object",
         "properties": {
@@ -77566,6 +77766,13 @@
               "ROUTE",
               "UNKNOWN"
             ]
+          },
+          "payableItems": {
+            "type": "array",
+            "description": "강사가 신청할 수 있는 실비 항목(프로그램에서 켠 항목만). 숙박비(LODGING, 1사1교 제외)·활동비(ACTIVITY)·식사비(MEAL). maxLimitWon은 CMS 정산 항목 설정의 신청 1건 기준 최대 한도(없으면 null), evidenceRequired는 영수증 필요 여부(미설정이면 null). 넘으면 400 PAYMENT_ITEM_LIMIT_EXCEEDED. 교통비·1사1교 숙박비는 별도 필드로 다룬다.",
+            "items": {
+              "$ref": "#/components/schemas/InstructorPayableItem"
+            }
           }
         }
       },
@@ -80686,6 +80893,30 @@
           }
         }
       },
+      "FinalPassAssignment": {
+        "type": "object",
+        "description": "합격 처리와 함께 배정할 기관·회차",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "실제 프로그램 일정 ID",
+            "example": 11001,
+            "minimum": 1
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "기관 신청 ID",
+            "example": 22001,
+            "minimum": 1
+          }
+        },
+        "required": [
+          "organizationApplicationId",
+          "scheduleId"
+        ]
+      },
       "VolunteerFinalResultRequest": {
         "type": "object",
         "description": "최종 결과 처리 요청(봉사자/개인 공통)",
@@ -80724,6 +80955,18 @@
             "type": "string",
             "format": "date-time",
             "description": "notifyTiming=MANUAL 또는 SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601"
+          },
+          "assignments": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "description": "봉사자 최종 결과 API 전용. 기관형(GENERAL_ORGANIZATION) 봉사자를 합격 처리하면서 기관·회차를 함께 배정한다.\n생략·null·[] 이면 기존과 같이 합격만 처리한다. result=PASS일 때만 허용하고 RESERVE·FAIL에 값이 오면 400\nVOLUNTEER_FINAL_RESULT_ASSIGNMENTS_PASS_ONLY. 같은 scheduleId가 두 번 오면 400\nVOLUNTEER_FINAL_RESULT_ASSIGNMENT_SCHEDULE_DUPLICATED. 개인 신청 최종 결과 API에 값이 오면 400\nVOLUNTEER_FINAL_RESULT_ASSIGNMENTS_NOT_SUPPORTED.\n합격과 배정은 한 트랜잭션이며 배정 하나라도 실패하면 합격도 롤백된다.\n배정 검증·에러 코드·저장 데이터·배정 알림은 POST /api/admin/programs/{programId}/volunteer-assignments 와 같다.\n배정 알림 발송 시각은 합격 알림 발송 시각(notifyTiming/scheduledAt)에 맞춘다.\n",
+            "items": {
+              "$ref": "#/components/schemas/FinalPassAssignment"
+            },
+            "maxItems": 100,
+            "minItems": 0
           }
         },
         "required": [
@@ -83733,10 +83976,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -85024,13 +85267,11 @@
             "minLength": 1
           },
           "thirdPartyRecipient": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "제3자 동의 「제공받는 곳(기관명)」. trim 후 1~200자. CMS_PROGRESS_ADD(일반 GENERAL* 및 UJAT 교육 진행 추가 등록)에서 thirdPartyConsent=AGREE이면 필수이며 누락·공백·'-'는 422 VOLUNTEER_THIRD_PARTY_RECIPIENT_REQUIRED. wire에 빈 문자열·'-'를 보내지 말고 미입력은 null/생략. 저장 위치: form_response.raw_answers_jsonb 및 form_response_answer의 program-volunteer-application-seed-third-party(UJAT는 ujat-…-seed-third-party) 객체(dataRows[0][0]·fieldDataRows[0][0].value·thirdPartyRecipient).",
+            "type": "string",
+            "nullable": true,
+            "minLength": 1,
             "maxLength": 200,
-            "minLength": 0
+            "description": "제3자 동의 「제공받는 곳(기관명)」. trim 후 1~200자. CMS_PROGRESS_ADD(일반 GENERAL* 및 UJAT 교육 진행 추가 등록)에서 thirdPartyConsent=AGREE이면 필수이며 누락·공백·'-'는 422 VOLUNTEER_THIRD_PARTY_RECIPIENT_REQUIRED. wire에 빈 문자열·'-'를 보내지 말고 미입력은 null/생략. 저장 위치: form_response.raw_answers_jsonb 및 form_response_answer의 program-volunteer-application-seed-third-party(UJAT는 ujat-…-seed-third-party) 객체(dataRows[0][0]·fieldDataRows[0][0].value·thirdPartyRecipient)."
           },
           "id1365": {
             "type": [
@@ -85052,22 +85293,12 @@
             "$ref": "#/components/schemas/PreviousJaProgramRequest"
           },
           "previousUjatTerm": {
-            "description": "사용자 홈 UJAT 봉사 신청서의 이전 활동 기수. CMS_PROGRESS_ADD에서는 생략 가능하며 없으면 기수를 invent하지 않습니다. certificateFileIds가 있으면 ADMIN이 업로드한 VOLUNTEER_APPLICATION_EVIDENCE(CLEAN·AVAILABLE)만 받으며 form_submission_file에 연결됩니다.",
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/PreviousUjatTermRequest"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "$ref": "#/components/schemas/VolunteerPreviousUjatTermRequest"
           },
           "educationRegionCode": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "사용자 홈 UJAT 봉사 신청서의 희망 교육 활동 지역. CMS_PROGRESS_ADD에서는 생략 가능. GET /api/admin/ujat/education-regions 의 code. 대소문자 무시. 없거나 매핑 실패 시 서울로 채우지 않습니다. 생략하면 preferred region은 null입니다."
+            "type": "string",
+            "nullable": true,
+            "description": "사용자 홈 UJAT 봉사 신청서의 희망 교육 활동 지역. CMS_PROGRESS_ADD에서는 생략 가능. UJAT 교육지역 code. 불일치 시 400 UJAT_EDUCATION_REGION_CODE_UNKNOWN. 서울 치환 없음. 생략 시 지역 null."
           },
           "recruitHalf": {
             "type": [
@@ -85085,17 +85316,15 @@
             ]
           },
           "applicationType": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "사용자 홈 UJAT 봉사 신청서 유형. CMS_PROGRESS_ADD에서는 생략 가능(없으면 NEW/기수를 invent하지 않음). UJAT_GRADUATE여도 freeTextItems 4문항(intro, educationExperience, necessity, jaExperience)은 필수입니다.",
+            "type": "string",
+            "nullable": true,
             "enum": [
               "NEW",
               "UJAT_GRADUATE",
               "new",
               "ujat-graduate"
-            ]
+            ],
+            "description": "사용자 홈 UJAT 봉사 신청서 유형. CMS_PROGRESS_ADD에서는 생략 가능(없으면 NEW/기수를 invent하지 않음). UJAT_GRADUATE여도 freeTextItems 4문항(intro, educationExperience, necessity, jaExperience)은 필수입니다."
           },
           "freeTextItems": {
             "$ref": "#/components/schemas/FreeTextItemsRequest"
@@ -85539,32 +85768,28 @@
         "properties": {
           "semesterType": {
             "type": "string",
-            "description": "반기",
             "enum": [
               "FIRST_HALF",
               "SECOND_HALF"
             ],
-            "example": "SECOND_HALF"
+            "example": "SECOND_HALF",
+            "description": "반기"
           },
           "mode": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "PREVIEW 또는 DOWNLOAD. 생략하면 PREVIEW.",
+            "type": "string",
+            "nullable": true,
             "enum": [
               "PREVIEW",
               "DOWNLOAD"
             ],
-            "example": "PREVIEW"
+            "default": "PREVIEW",
+            "description": "PREVIEW 또는 DOWNLOAD. 생략하면 PREVIEW."
           },
           "fileName": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "mode=DOWNLOAD일 때 브라우저가 저장하는 파일명. 파일 다운로드 이력 파일명으로 기록합니다. 생략하면 서버 규칙 이름을 기록합니다.",
-            "example": "[JA Korea] CMS 어드민_1365 봉사시간 등록 양식_261110.xlsx"
+            "type": "string",
+            "nullable": true,
+            "example": "[JA Korea] CMS 어드민_1365 봉사시간 등록 양식_261110.xlsx",
+            "description": "mode=DOWNLOAD일 때 브라우저가 저장하는 파일명. 파일 다운로드 이력 파일명으로 기록합니다. 생략하면 서버 규칙 이름을 기록합니다. '/', '\\'는 ','로 저장합니다."
           }
         },
         "required": [
@@ -85579,27 +85804,30 @@
             "format": "int64"
           },
           "minutes": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": "integer",
             "format": "int32",
+            "nullable": true,
             "description": "1365 인정 분. COMPLETED는 인정 분, ABSENT는 0, NOT_COMPLETED는 null."
           },
           "status": {
             "type": "string",
-            "description": "COMPLETED=종료+출석(PRESENT/LATE), ABSENT=종료+결석/공결(ABSENT/EXCUSED), NOT_COMPLETED=종료 전이거나 출결 미기록(FE는 -)",
             "enum": [
               "COMPLETED",
               "ABSENT",
               "NOT_COMPLETED"
-            ]
+            ],
+            "description": "COMPLETED=종료+출석(PRESENT/LATE), ABSENT=종료+결석/공결(ABSENT/EXCUSED), NOT_COMPLETED=종료 전이거나 출결 미기록(FE는 -)"
           },
           "shortfall": {
             "type": "boolean",
             "description": "COMPLETED이고 인정 분이 1365 인정 구간 길이보다 짧으면 true(지각·조퇴)."
           }
-        }
+        },
+        "required": [
+          "scheduleId",
+          "status",
+          "shortfall"
+        ]
       },
       "Ujat1365SemesterRegistrationFormColumn": {
         "type": "object",
@@ -85610,26 +85838,29 @@
           },
           "date": {
             "type": "string",
-            "description": "일정 시작일(Asia/Seoul)",
-            "example": "2026-11-06"
+            "nullable": true,
+            "example": "2026-11-06",
+            "description": "일정 시작일(Asia/Seoul)"
           },
           "completed": {
             "type": "boolean",
             "description": "일정 종료 시각이 지났으면 true"
           }
-        }
+        },
+        "required": [
+          "scheduleId",
+          "completed"
+        ]
       },
       "Ujat1365SemesterRegistrationFormColumns": {
         "type": "object",
         "properties": {
           "openingCeremony": {
+            "nullable": true,
             "description": "해당 반기 PRE_EDUCATION(발대식) 일정. 없으면 null.",
-            "oneOf": [
+            "allOf": [
               {
                 "$ref": "#/components/schemas/Ujat1365SemesterRegistrationFormColumn"
-              },
-              {
-                "type": "null"
               }
             ]
           },
@@ -85640,7 +85871,10 @@
               "$ref": "#/components/schemas/Ujat1365SemesterRegistrationFormColumn"
             }
           }
-        }
+        },
+        "required": [
+          "sessions"
+        ]
       },
       "Ujat1365SemesterRegistrationFormResponse": {
         "type": "object",
@@ -85674,7 +85908,14 @@
               "$ref": "#/components/schemas/Ujat1365SemesterRegistrationFormVolunteer"
             }
           }
-        }
+        },
+        "required": [
+          "programId",
+          "semesterType",
+          "mode",
+          "columns",
+          "volunteers"
+        ]
       },
       "Ujat1365SemesterRegistrationFormVolunteer": {
         "type": "object",
@@ -85685,55 +85926,44 @@
           },
           "memberId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "nullable": true
           },
           "name": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string",
+            "nullable": true
           },
           "birthDate": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "생년월일 원문",
-            "example": "1999-01-11"
+            "type": "string",
+            "nullable": true,
+            "example": "1999-01-11",
+            "description": "생년월일 원문"
           },
           "external1365Id": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
+            "nullable": true,
             "description": "1365 ID 원문. 없으면 null."
           },
           "educationRegionCode": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
+            "nullable": true,
             "example": "SEOUL"
           },
           "educationRegionName": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
+            "nullable": true,
             "example": "서울"
           },
           "givenUp": {
             "type": "boolean",
-            "description": "활동 포기 여부. 포기 이후 교육일은 출결이 없으므로 NOT_COMPLETED입니다."
+            "description": "활동 포기 여부. 포기 이후 교육일은 출결이 없으므로 NOT_COMPLETED."
           },
           "openingCeremony": {
+            "nullable": true,
             "description": "columns.openingCeremony가 null이면 null.",
-            "oneOf": [
+            "allOf": [
               {
                 "$ref": "#/components/schemas/Ujat1365SemesterRegistrationFormCell"
-              },
-              {
-                "type": "null"
               }
             ]
           },
@@ -85744,7 +85974,12 @@
               "$ref": "#/components/schemas/Ujat1365SemesterRegistrationFormCell"
             }
           }
-        }
+        },
+        "required": [
+          "participantId",
+          "givenUp",
+          "sessions"
+        ]
       },
       "OrganizationProgressRemovalRequest": {
         "type": "object",
@@ -89692,39 +89927,27 @@
             }
           },
           "textbookName": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "학년 블록에 저장된 교재명. 없으면 null. 프로그램 공통 교재명으로 채우지 않습니다."
+            "type": "string",
+            "nullable": true,
+            "description": "학년 블록에 저장된 교재명. 없으면 null."
           },
           "textbookNameEn": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string",
+            "nullable": true
           },
           "kitCount": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": "integer",
             "format": "int32",
-            "description": "학년 블록에 저장된 키트 수. 없으면 null."
+            "nullable": true
           },
           "bookCount": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": "integer",
             "format": "int32",
-            "description": "학년 블록에 저장된 권수. 없으면 null."
+            "nullable": true
           },
           "textbookDeliveryStatus": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
+            "nullable": true,
             "enum": [
               "PREPARING",
               "SHIPPING",
@@ -89922,11 +90145,9 @@
             "description": "식사 가능 여부 및 안내 스냅샷. Portal guidance(meal 등)에서 프로젝션. 없으면 null. UJAT에서는 guidance meal이 잔여교재 배출 장소로도 쓰이므로 leftoverTextbookDisposal을 우선한다."
           },
           "parkingInfo": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "기타 특이사항(주차·전달사항) 스냅샷. Portal guidance(other-notes 등)에서 프로젝션. 없으면 null."
+            "type": "string",
+            "nullable": true,
+            "description": "기타 특이사항(주차·전달사항) 스냅샷. Portal guidance(other-notes 등)에서 프로젝션. 없으면 null. 성범죄 조회서 요청은 detail 전용 컬럼 없음(form sex-offense 단락)."
           },
           "snackAvailability": {
             "type": [
@@ -90104,39 +90325,31 @@
             "description": "UJAT 운영 학생 수. 활성 학생 명단 행 기준이며 없으면 null."
           },
           "textbookNameEn": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "신청에 연결된 교재 영문명. 교재가 없으면 null. 프로그램 공통 교재명으로 채우지 않습니다."
+            "type": "string",
+            "nullable": true,
+            "description": "신청에 연결된 교재 영문명. 없으면 null."
           },
           "textbookDeliveryStatus": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "저장된 교재 배송 상태. 없으면 null. PREPARING으로 기본 채움하지 않습니다.",
+            "type": "string",
+            "nullable": true,
             "enum": [
               "PREPARING",
               "SHIPPING",
               "DELIVERED",
               "NOT_APPLICABLE"
-            ]
+            ],
+            "description": "저장된 교재 배송 상태. 없으면 null. PREPARING으로 기본 채움하지 않습니다."
           },
           "kitCount": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": "integer",
             "format": "int32",
+            "nullable": true,
             "description": "저장된 키트 수. UJAT는 저장값이 없으면 null이며 학생 수/24로 계산하지 않습니다. textbookKits와 같은 값입니다."
           },
           "bookCount": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": "integer",
             "format": "int32",
+            "nullable": true,
             "description": "저장된 교재 권수. 없으면 null. textbookQuantity와 같은 값입니다."
           }
         }
@@ -92705,10 +92918,12 @@
         "properties": {
           "basisType": {
             "type": "string",
+            "description": "강사비 책정 방식. PROGRAM(프로그램 기준 적용) | SPECIAL_LECTURE(특강 강사비) | OTHER_LABOR(기타 인건비). 특강·기타 인건비는 이 신청의 모든 배정에 지급 기준·지급금액이 복사된다. 옛 값 RECRUITMENT는 특강·기타를 구분할 수 없어 프로그램 기준으로 계산한다.",
             "minLength": 1
           },
           "measure": {
             "type": "string",
+            "description": "지급 기준. 출강 1회당 | 차시당 | 해당 없음, 또는 코드 PER_LECTURE(출강 1회당) | PER_CLASS(차시당) | FIXED. 1시간 당·PER_HOUR는 차시당과 같은 기준으로 읽는다. PER_SESSION은 신규 입력 불가(422 INVALID_FEE_POLICY), 기존 저장값은 출강 1회당으로 읽는다.",
             "minLength": 1
           },
           "amount": {
@@ -93658,7 +93873,7 @@
               "null"
             ],
             "format": "int64",
-            "description": "지급 완료(PAID)이거나 import가 account_payment를 생성한 경우에만. 지급 제외(IDENTITY_BLANK/EXTERNAL_PAYEE 등)와 preview 미생성 건은 null."
+            "description": "지급조서 확인완료·지급완료로 보호된 기존 중복 행(preview FAILED)의 계좌 지급 ID. import는 지급조서(확인 대기 중)만 만들고 계좌 지급은 지급조서 확인 때 생기므로 그 외에는 null."
           },
           "trainingMinutes": {
             "type": "integer",
@@ -98619,38 +98834,33 @@
       },
       "VolunteerActivityRegionUpdateRequest": {
         "type": "object",
-        "description": "봉사자 신청 희망 교육 활동 지역 수정. educationRegionCode는 지역 마스터 code(예: seoul, SEOUL, gyeonggi_south). 한글 라벨 금지.",
+        "required": [
+          "educationRegionCode"
+        ],
         "properties": {
           "educationRegionCode": {
             "type": "string",
-            "description": "ujat_education_region.code. 대소문자·하이픈/언더스코어는 마스터 code로 정규화한다.",
-            "example": "seoul",
             "maxLength": 100,
-            "minLength": 0
+            "description": "ujat_education_region.code. 예: seoul, SEOUL, gyeonggi_south. 한글 라벨 금지. 저장·응답은 마스터 code."
           }
-        },
-        "required": [
-          "educationRegionCode"
-        ]
+        }
       },
       "VolunteerActivityRegionUpdateResponse": {
         "type": "object",
-        "description": "봉사자 신청 희망 교육 활동 지역 수정 결과. GET 목록 preferredRegion/preferredRegionCode 및 상세 ujat.preferredActivityRegion과 같다.",
         "properties": {
           "applicationId": {
             "type": "integer",
-            "format": "int64",
-            "description": "봉사자 신청 id"
+            "format": "int64"
           },
           "preferredRegion": {
             "type": "string",
-            "description": "지역 마스터 라벨. 목록 preferredRegion·상세 ujat.preferredActivityRegion과 동일",
-            "example": "서울"
+            "description": "마스터 라벨. GET 목록 preferredRegion 및 상세 ujat.preferredActivityRegion과 동일",
+            "nullable": true
           },
           "preferredRegionCode": {
             "type": "string",
-            "description": "저장된 지역 마스터 code. 요청 seoul은 SEOUL로 정규화. 목록 preferredRegionCode와 동일",
-            "example": "SEOUL"
+            "description": "마스터 code. GET 목록 preferredRegionCode와 동일",
+            "nullable": true
           }
         }
       },
@@ -99900,6 +100110,18 @@
           "configJson": {
             "type": "string",
             "description": "TT detail 전용 opaque JSON. programs serviceDetailJson 통짜 복사가 아님."
+          },
+          "teacherTrainingEducationFormat": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "교사 연수 교육 형태. 생략(null)이면 기존 값 유지, 빈 문자열이면 삭제. ONLINE|OFFLINE|HYBRID(대소문자 무관, online/offline/hybrid·온라인/오프라인/온오프라인 허용)만 받으며 그 외 값은 400 INVALID_REQUESTED_EDUCATION_FORMAT. teacherTrainingEnabled=false로 저장하면 함께 삭제됩니다.",
+            "enum": [
+              "ONLINE",
+              "OFFLINE",
+              "HYBRID"
+            ]
           }
         }
       },
@@ -99968,6 +100190,62 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "teacherTrainingEducationFormat": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "교사 연수 교육 형태. ONLINE|OFFLINE|HYBRID 또는 null. teacherTrainingEnabled=false이거나 저장된 값이 없으면 null. 커리큘럼 차시의 교육 형태로 채우지 않습니다. IPS 유형은 Prepare 고정이라 저장·반환하지 않습니다.",
+            "enum": [
+              "ONLINE",
+              "OFFLINE",
+              "HYBRID"
+            ]
+          },
+          "teacherTrainingSchedule": {
+            "description": "교사 연수 일정(program_schedule) 읽기 전용 투영. teacherTrainingEnabled=true이고 일정명이 teacherTrainingScheduleName과 같은(대소문자·앞뒤 공백 무시) 활성 일정 중 시작 시각이 가장 빠른 1건. 연수 일정은 configJson.generalCommonInfo.scheduleDetails의 같은 이름 행으로 저장합니다. 없으면 null.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/TrainedTeacherTrainingSchedule"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "TrainedTeacherTrainingSchedule": {
+        "type": "object",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "program_schedule.id"
+          },
+          "scheduleName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "일정명. teacherTrainingScheduleName과 같은 이름."
+          },
+          "startAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "연수 시작 시각. 없으면 null."
+          },
+          "endAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "연수 종료 시각. 없으면 null."
           }
         }
       },
@@ -101250,6 +101528,15 @@
           },
           "reason": {
             "type": "string"
+          },
+          "scheduledPaymentDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "승인(확인) 시 필수. 계좌 지급 예정일, KST 기준 오늘 또는 이후. 강사 지급조서 확인과 같은 규칙이며 누락 시 400 SCHEDULED_PAYMENT_DATE_REQUIRED, 오늘 이전이면 400 SCHEDULED_PAYMENT_DATE_MUST_BE_TODAY_OR_LATER. 승인하면 이 날짜로 계좌 지급 건(sourceType=INDIVIDUAL_SETTLEMENT, WAITING_PAYMENT)이 만들어진다. 반려에는 쓰지 않는다.",
+            "example": "2026-11-20"
           }
         },
         "required": [
@@ -104657,7 +104944,7 @@
               "null"
             ],
             "format": "date",
-            "description": "지급조서 재신청 마감일(Asia/Seoul, 그날 포함). 정정 처리일로부터 14일과 사업 운영 종료일 중 빠른 날. 정정 승인 후 재신청을 기다리는 건(최신 revision이 정정으로 생성된 DRAFT)에만 값이 있고, 기한이 지나도 그대로 내려준다. Gemini 프로그램·그 외 상태는 null.",
+            "description": "재신청 마감일(Asia/Seoul, 그날 포함). 기준일로부터 14일과 사업 운영 종료일 중 빠른 날. (1) 정정 승인 후 재신청을 기다리는 건(최신 revision이 정정으로 생성된 DRAFT): 기준일=정정 처리일. (2) 반려 건(최신 지급조서 REJECTED 또는 정산 신청 REJECTED): 기준일=반려일(rejectedAt). 기한이 지나도 그대로 내려준다. 재신청으로 대체된 이전 이력(superseded=true), Gemini 프로그램, 반려일을 알 수 없는 건, 그 외 상태는 null. statementReapplyAvailable은 (1)에만 해당하고 반려 건(2)은 false로 둔다. 반려 건도 기한이 지나면 서버가 재신청을 409 SETTLEMENT_REAPPLICATION_DEADLINE_EXPIRED로 거절한다.",
             "example": "2026-11-25"
           },
           "scheduleStartAt": {
@@ -104677,6 +104964,58 @@
             "format": "date-time",
             "description": "정산 대상 회차 종료 시각. 회차가 없거나 찾지 못하면 null.",
             "example": "2026-11-06T06:10:00Z"
+          },
+          "superseded": {
+            "type": "boolean",
+            "description": "다시 제출되어 다음 revision으로 대체된 이전 신청이면 true(status=RESUBMITTED). 목록에서 이전 이력 행으로 표시하고 합계에서 뺀다.",
+            "example": false
+          },
+          "supersededReason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "대체된 이전 신청의 원래 결과. REJECTED=신청 반려, CORRECTION_REQUESTED=지급 정정 요청. superseded=false이면 null.",
+            "enum": [
+              "REJECTED",
+              "CORRECTION_REQUESTED"
+            ],
+            "example": "REJECTED"
+          },
+          "latestGrossAmount": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "최신 정산 revision의 지급 총액(원). 정정 승인 후에는 정정된 금액. 정산이 아직 없으면 null. grossAmount는 정산 신청 제출 당시 금액으로 바뀌지 않는다.",
+            "example": 403000
+          },
+          "latestNetPaymentAmount": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "최신 정산 revision의 실지급액(원). 정정 승인 후에는 정정된 금액. 정산이 아직 없으면 null. netPaymentAmount는 정산 신청 제출 당시 금액으로 바뀌지 않는다.",
+            "example": 391450
+          },
+          "rejectedReason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "반려 사유. 최신 지급조서가 REJECTED이면 지급조서 반려 사유, 정산 신청이 반려됐거나 반려로 대체된 이전 신청이면 정산 신청 반려 사유. 반려가 아니면 null.",
+            "example": "증빙 확인 필요로 반려"
+          },
+          "rejectedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "반려 시각. rejectedReason과 같은 기준. 반려가 아니면 null.",
+            "example": "2026-11-11T13:50:16Z"
           }
         }
       },
@@ -104913,6 +105252,14 @@
             "format": "int64",
             "description": "총 산정 교통비(원, 정수)=유류비+톨비. 제출 전 transportPreview.calculatedTransportAmount와 동일. 편도 30 미만 미지급은 null. 원천징수·과세 합산에 넣지 않음.",
             "example": 209810
+          },
+          "longDistance": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "1사1교 장거리 강사비 단가가 적용됐으면 true, 아니면 false. 제출 당시 스냅샷 기준이며 제출 전 lectureFeePreview.longDistance와 같다. 제미나이, 영수증 경로, 이 값을 저장하기 전에 제출된 스냅샷은 null.",
+            "example": false
           }
         }
       },
@@ -105136,6 +105483,35 @@
             ],
             "description": "확정 강사비를 신청할 수 없을 때 코드. SETTLEMENT_ASSIGNED_SCHEDULE_TIME_REQUIRED(기관·개인), SETTLEMENT_ACTUAL_TRAINING_TIME_REQUIRED(제미나이), SETTLEMENT_WAGE_RATE_NOT_CONFIGURED. 확정 가능하면 null.",
             "example": "SETTLEMENT_ASSIGNED_SCHEDULE_TIME_REQUIRED"
+          },
+          "feePricingMode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "배정에 저장된 강사비 책정 방식. PROGRAM_STANDARD=프로그램 기준 적용(등급 단가), SPECIAL_LECTURE=특강 강사비, OTHER_LABOR=기타 인건비. 특강·기타는 instructorFeeAmount(승인 금액)와 instructorFeeCalculationUnit(PER_LECTURE=출강 1회당, PER_CLASS=차시당)으로 계산한다. 제미나이는 null.",
+            "enum": [
+              "PROGRAM_STANDARD",
+              "SPECIAL_LECTURE",
+              "OTHER_LABOR"
+            ],
+            "example": "SPECIAL_LECTURE"
+          },
+          "wageTitle": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "화면 표시용 강사비 이름. 예: 1급 강사비, 특강 강사비, 기타 인건비. 지급조서 강사비 항목 이름과 같다. 없으면 null.",
+            "example": "특강 강사비"
+          },
+          "longDistance": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "1사1교 장거리 강사비 단가가 적용되면 true. 그 외 false. 제미나이는 null.",
+            "example": false
           }
         }
       },
@@ -105265,6 +105641,15 @@
                 "type": "null"
               }
             ]
+          },
+          "settlementSubmitDeadlineAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "지급조서 제출 마감 시각. 강의일(회차 시작, Asia/Seoul) 기준 다음 달 5일 23:59:59(KST). 지나도 사업 운영 종료일까지는 제출할 수 있다(감점 없음). 강의보고서 마감 submitDueAt과 다르다. 제미나이(강사가 지급조서를 제출하지 않음)이거나 회차 시작 시각이 없으면 null.",
+            "example": "2026-12-05T14:59:59Z"
           }
         }
       },
@@ -111248,30 +111633,6 @@
               "type": "string"
             }
           },
-          "rowType": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "enum": [
-              "SETTLEMENT",
-              "SETTLEMENT_APPLICATION",
-              "NOT_APPLIED"
-            ],
-            "description": "프로그램 참여 강사 정산 현황(programId+instructorMemberId)에서만 채운다. SETTLEMENT=지급조서(정산) 행, SETTLEMENT_APPLICATION=확정 전 정산 신청서 행, NOT_APPLIED=정산 신청 전인 배정 교육 일정 행(금액·상태·지급조서 없음, availableActions 빈 배열). 다른 정산 목록에서는 null."
-          },
-          "lectureProgressStatus": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "enum": [
-              "SCHEDULED",
-              "COMPLETED",
-              "GAVE_UP"
-            ],
-            "description": "프로그램 참여 강사 정산 현황에서만 채우는 강의 진행 여부. SCHEDULED=진행 예정(일정 종료 전), COMPLETED=진행 완료(일정 종료), GAVE_UP=활동 포기 시점에 걸친 회차. 일정이 없는 행(Gemini 등)과 다른 정산 목록에서는 null."
-          },
           "paymentStatementPreConsentStatus": {
             "type": [
               "string",
@@ -111281,6 +111642,30 @@
             "enum": [
               "COMPLETE",
               "MISSING"
+            ]
+          },
+          "rowType": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "프로그램 참여 강사 정산 현황(programId+instructorMemberId)에서만 채운다. SETTLEMENT=지급조서(정산) 행, SETTLEMENT_APPLICATION=확정 전 정산 신청서 행, NOT_APPLIED=정산 신청 전인 배정 교육 일정 행(금액·상태·지급조서 없음, availableActions 빈 배열). 다른 정산 목록에서는 null.",
+            "enum": [
+              "SETTLEMENT",
+              "SETTLEMENT_APPLICATION",
+              "NOT_APPLIED"
+            ]
+          },
+          "lectureProgressStatus": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "프로그램 참여 강사 정산 현황에서만 채우는 강의 진행 여부. SCHEDULED=진행 예정(일정 종료 전), COMPLETED=진행 완료(일정 종료), GAVE_UP=활동 포기 시점에 걸친 회차. 일정이 없는 행(Gemini 등)과 다른 정산 목록에서는 null.",
+            "enum": [
+              "SCHEDULED",
+              "COMPLETED",
+              "GAVE_UP"
             ]
           }
         }
@@ -112494,7 +112879,7 @@
           "expectedSettlementAmount": {
             "type": "integer",
             "format": "int64",
-            "description": "미지급/예정 정산 금액(세후 net). expected_transfer_date 범위."
+            "description": "미지급/예정 정산 금액(세후 net). expected_transfer_date 범위. 영수증 계좌 지급(원천징수 0원)도 포함."
           },
           "completedPaymentAmount": {
             "type": "integer",
@@ -112519,7 +112904,7 @@
           "settlementCount": {
             "type": "integer",
             "format": "int32",
-            "description": "정산 건수(해당 연도 최신 정산 행 전체). paidCount와 분리."
+            "description": "정산 건수(해당 연도 최신 정산 행 전체 + 그해 영수증 지급 건). 연도 기준은 강사와 같이 이체 예정일 → 교육일 → 생성일. paidCount와 분리."
           },
           "paidCount": {
             "type": "integer",
@@ -112694,7 +113079,11 @@
             "format": "date-time"
           },
           "sourceType": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "계좌 지급 출처. SETTLEMENT(강사 지급조서) | GEMINI_TRAINING_REPORT(옛 Gemini 직접 지급) | INDIVIDUAL_SETTLEMENT(참여자·봉사자 영수증)."
           },
           "sourceId": {
             "type": "integer",
@@ -112774,6 +113163,16 @@
             "items": {
               "type": "string"
             }
+          },
+          "payeeType": {
+            "type": "string",
+            "description": "지급 대상 유형. INSTRUCTOR(강사 지급조서·Gemini) | PARTICIPANT(참여자 영수증) | VOLUNTEER(봉사자 영수증). 영수증은 sourceType=INDIVIDUAL_SETTLEMENT, sourceId=영수증 정산 신청 id, settlementId=null이며 원천징수 0원입니다.",
+            "enum": [
+              "INSTRUCTOR",
+              "PARTICIPANT",
+              "VOLUNTEER"
+            ],
+            "example": "INSTRUCTOR"
           }
         }
       },
@@ -113119,6 +113518,97 @@
             "items": {
               "$ref": "#/components/schemas/ProviderDeliveryAttemptCountResponse"
             }
+          }
+        }
+      },
+      "VolunteerAssignmentCandidateResponse": {
+        "type": "object",
+        "description": "기관형 봉사자 배정 후보(기관 신청 × 회차). POST volunteer-assignments 와 final-result assignments[] 가 받는 조합만 내려준다.",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "실제 프로그램 일정 ID. assignments[].scheduleId 로 보낸다.",
+            "example": 11001
+          },
+          "scheduleName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "일정명",
+            "example": "2회차"
+          },
+          "sessionNo": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "회차 번호(program_schedule.session_no). 없으면 null",
+            "example": 2
+          },
+          "scheduleStartAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "일정 시작 시각(ISO-8601). 날짜·시간 표시는 이 값을 KST로 변환한다."
+          },
+          "scheduleEndAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "일정 종료 시각(ISO-8601)"
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "기관 신청 ID. assignments[].organizationApplicationId 로 보낸다.",
+            "example": 22001
+          },
+          "organizationId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "기관 ID"
+          },
+          "organizationName": {
+            "type": "string",
+            "description": "기관명"
+          },
+          "regionSido": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "기관 소재지 시/도"
+          },
+          "regionSigungu": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "기관 소재지 시/군/구"
+          },
+          "assignedVolunteerCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "현재 이 기관·회차에 ASSIGNED 상태로 배정된 봉사자 수",
+            "example": 1
+          },
+          "requiredVolunteerCount": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "필요 봉사자 수. 기관형 기관 신청에는 아직 저장 데이터가 없어 항상 null(기획 확정 후 채움)"
           }
         }
       },
@@ -113755,6 +114245,20 @@
             "items": {
               "$ref": "#/components/schemas/GradeBlock"
             }
+          },
+          "educationPlace": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "신청 기본 정보 답변의 교육 장소(educationPlace) 원문. 신청 폼이 보낸 코드값을 그대로 반환하며 서버가 라벨로 바꾸거나 프로그램 설정으로 채우지 않습니다. 최신 제출 답변에 없으면 null."
+          },
+          "educationPlaceDetail": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "신청 기본 정보 답변의 교육 장소 상세(educationPlaceDetail, 기타 직접 입력·상세) 원문. 없으면 null."
           }
         }
       },
@@ -114959,6 +115463,28 @@
             ],
             "format": "int64",
             "description": "봉사자 행 장거리 출강 횟수. 봉사자 거리를 산출하지 않아 항상 null."
+          },
+          "instructorFeePolicy": {
+            "description": "강사(INSTRUCTOR) 행의 현재 강사비 책정 기준(강사 승인 Approval.feePolicy와 같은 형태). 강사 신청이 있으면 신청서 값, 직접 추가한 강사면 참여 강사 값. 정하지 않았거나 강사가 아닌 행은 null. 수정: PATCH /api/admin/programs/{programId}/participants/{participantId}/instructor-fee-policy",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/FeePolicy"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "instructorFeePolicySource": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "instructorFeePolicy 정본 위치. INSTRUCTOR_APPLICATION | PARTICIPANT. 강사가 아닌 행은 null.",
+            "enum": [
+              "INSTRUCTOR_APPLICATION",
+              "PARTICIPANT"
+            ]
           }
         }
       },
@@ -116969,10 +117495,12 @@
           },
           "scheduleId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "nullable": true
           },
           "educationRegionCode": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "reallocationRequired": {
             "type": "boolean"
@@ -116984,21 +117512,20 @@
             }
           },
           "existingPrimaryParticipantId": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": "integer",
             "format": "int64",
+            "nullable": true,
             "description": "1인 배정 슬롯이면 기존 배정 봉사자 participantId. 선택한 후보는 두 번째 봉사자(SECONDARY)로 추가된다. 빈 슬롯·2인 슬롯이면 null. 2인 슬롯에서 이 값으로 추가 배정을 시도하지 않는다."
           },
           "assignedVolunteerCount": {
             "type": "integer",
-            "format": "int32",
             "description": "이 educationSlotId의 assignmentStatus=ASSIGNED distinct 인원. 0=빈 슬롯, 1=1인(SECONDARY 추가 가능), 2=가득 참. 같은 일정의 다른 학급·REASSIGNMENT_REQUIRED·giveUp·취소는 세지 않는다. omit/null 금지. GET candidates는 2인이어도 409가 아니라 200과 candidates=[] 을 반환한다. POST direct-assignment만 2인일 때 409."
           }
         },
         "required": [
-          "assignedVolunteerCount"
+          "assignedVolunteerCount",
+          "candidates",
+          "reallocationRequired"
         ]
       },
       "EducationProgressSummaryResponse": {
@@ -117236,17 +117763,17 @@
           },
           "educationSlotId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "nullable": true
           },
           "assignmentGroupId": {
             "type": "string",
-            "format": "uuid"
+            "format": "uuid",
+            "nullable": true
           },
           "classLabel": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
+            "nullable": true,
             "description": "학급 라벨. ASSIGNED/REASSIGNMENT_REQUIRED는 class_label_snapshot, 없으면 교육 슬롯 class_label. UNASSIGNED는 null. 빈 문자열 금지"
           },
           "attendanceManager": {
@@ -117264,26 +117791,22 @@
           },
           "assignmentStatus": {
             "type": "string",
-            "description": "대문자. ASSIGNED | UNASSIGNED | REASSIGNMENT_REQUIRED",
             "enum": [
               "ASSIGNED",
               "UNASSIGNED",
               "REASSIGNMENT_REQUIRED"
-            ]
+            ],
+            "description": "대문자. ASSIGNED | UNASSIGNED | REASSIGNMENT_REQUIRED. 라벨만 있고 상태 없는 셀 금지"
           },
           "replacementParticipantId": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": "integer",
             "format": "int64",
+            "nullable": true,
             "description": "대체 봉사자 program_participant.id. unavailable=false이면 null"
           },
           "replacementVolunteerName": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
+            "nullable": true,
             "description": "대체 봉사자 회원명 원문. 없으면 null. 빈 문자열 금지. unavailable=false이면 null"
           }
         }
@@ -117301,6 +117824,7 @@
           "educationStartAt": {
             "type": "string",
             "format": "date-time",
+            "nullable": true,
             "description": "교육 시작 시각(offset date-time). 달력일은 Asia/Seoul. UTC date slice(0,10) 금지"
           },
           "organizationApplicationId": {
@@ -117308,26 +117832,22 @@
             "format": "int64"
           },
           "organizationName": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
+            "nullable": true,
             "description": "기관명. 없으면 null. 빈 문자열 금지"
           },
           "organizationRegion": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "기관 시군구 또는 시/도. 없으면 null(빈 문자열 금지)"
+            "type": "string",
+            "nullable": true,
+            "description": "기관 시군구 또는 시/도. 없으면 null. 빈 문자열 금지"
           },
           "educationRegionCode": {
             "type": "string",
+            "nullable": true,
             "description": "확정 슬롯 ujat_organization_class_schedule_assignment.education_region_code. 기관 신청/임시배정/확정 일정에 저장된 코드. 기본값 SEOUL invent 금지"
           },
           "classCount": {
             "type": "integer",
-            "format": "int32",
             "description": "확정 학급 슬롯 수 참고값. 학급 행 SSOT가 아니며 classCount로 N반을 invent하지 않는다"
           },
           "educationSlots": {
@@ -117348,24 +117868,18 @@
             "description": "ujat_organization_class_schedule_assignment.id"
           },
           "classLabel": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
+            "nullable": true,
             "description": "슬롯 class_label 원문. 없으면 null. grade+className으로 합성하지 않음"
           },
           "grade": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
+            "nullable": true,
             "description": "학년 원문. 없으면 null"
           },
           "className": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
+            "nullable": true,
             "description": "반 이름 원문. 없으면 null"
           }
         }
@@ -117406,39 +117920,37 @@
           },
           "memberId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "nullable": true
           },
           "volunteerName": {
             "type": "string",
             "description": "봉사자 표시명. 배정 매칭용 SSOT. null/빈 문자열 금지(회원명 원문)"
           },
           "contact": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "목록용 마스킹 연락처(member.phone). PrivacyMaskingSupport.maskPhone. 원문이 없으면 null. 빈 문자열 금지. 봉사 합격 목록 VolunteerApplicationListItemResponse.contact와 동일 정책"
+            "type": "string",
+            "nullable": true,
+            "description": "목록용 마스킹 연락처(member.phone). PrivacyMaskingSupport.maskPhone. 원문이 없으면 null. 빈 문자열 금지. VolunteerApplicationListItemResponse.contact와 동일 정책"
           },
           "email": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
+            "nullable": true,
             "description": "목록용 마스킹 이메일(member.email). PrivacyMaskingSupport.maskEmail. 원문이 없으면 null. 빈 문자열 금지. VolunteerApplicationListItemResponse.email과 동일 정책"
           },
           "educationRegionCode": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "participantStatus": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "giveUp": {
             "type": "boolean"
           },
           "totalAssignedDays": {
             "type": "integer",
-            "format": "int32",
-            "description": "UJAT 교육 진행 배정일수. 이 응답 columns의 ASSIGNED 셀 distinct scheduleId 수. educationRegionCode가 있으면 그 지역 확정 일정과, 그 지역 봉사자가 ASSIGNED인 다른 지역 일정을 포함한다. semesterType/recruitHalf가 있으면 그 반기만 센다(미지정이면 전 반기). cells=[]이면 0. 봉사 합격 목록 VolunteerApplicationListItemResponse.totalAssignedDays는 전 반기·전 지역이며 이 지역 필터 값으로 덮지 않는다"
+            "description": "UJAT 교육 진행 배정일수. 이 응답 columns의 ASSIGNED 셀 distinct scheduleId 수. educationRegionCode가 있으면 그 지역 확정 일정과 그 지역 봉사자가 ASSIGNED인 다른 지역 일정을 포함한다. semesterType/recruitHalf가 있으면 그 반기만 센다(미지정이면 전 반기). cells=[]이면 0. 봉사 합격 목록 VolunteerApplicationListItemResponse.totalAssignedDays는 전 반기·전 지역이며 이 지역 필터 값으로 덮지 않는다"
           },
           "cells": {
             "type": "array",
@@ -119919,6 +120431,11 @@
       },
       "NotificationCatalogCategory": {
         "type": "object",
+        "required": [
+          "categoryCode",
+          "categoryLabel",
+          "variables"
+        ],
         "properties": {
           "categoryCode": {
             "type": "string",
@@ -119939,6 +120456,16 @@
       "NotificationCatalogVariableItem": {
         "type": "object",
         "description": "카탈로그 변수 1건. enabled=삽입/발송-피커 사용 허용 SSOT(값 존재와 무관). 알림톡 발송 피커(프로그램 지정 시): 본문 키 ⊆ catalog && enabled=true.",
+        "required": [
+          "key",
+          "token",
+          "requiresProgram",
+          "enabled",
+          "programGroups",
+          "recruitmentTypes",
+          "participantTypes",
+          "memberTypes"
+        ],
         "properties": {
           "key": {
             "type": "string",
@@ -119951,10 +120478,8 @@
             "example": "#{교육 진행 수업 시간}"
           },
           "description": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
+            "nullable": true,
             "description": "보조 설명. 시스템 전용 키는 「CMS Admin 수동 발송 불가」 안내. 없으면 null"
           },
           "requiresProgram": {
@@ -119967,37 +120492,47 @@
           },
           "programGroups": {
             "type": "array",
-            "description": "허용 프로그램 유형 그룹. 비면 제한 없음",
             "items": {
               "type": "string"
-            }
+            },
+            "description": "허용 프로그램 유형 그룹. 비면 제한 없음"
           },
           "recruitmentTypes": {
             "type": "array",
-            "description": "필요 모집 유형 PARTICIPANT|INSTRUCTOR|VOLUNTEER. 비면 제한 없음",
             "items": {
               "type": "string"
-            }
+            },
+            "description": "필요 모집 유형 PARTICIPANT|INSTRUCTOR|VOLUNTEER. 비면 제한 없음"
           },
           "participantTypes": {
             "type": "array",
-            "description": "허용 참여 유형. 비면 제한 없음. PARTICIPANT|INSTRUCTOR|VOLUNTEER.",
             "items": {
-              "type": "string"
-            }
+              "type": "string",
+              "enum": [
+                "PARTICIPANT",
+                "INSTRUCTOR",
+                "VOLUNTEER"
+              ]
+            },
+            "description": "허용 참여 유형. 비면 제한 없음. PARTICIPANT|INSTRUCTOR|VOLUNTEER."
           },
           "memberTypes": {
             "type": "array",
-            "description": "허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN.",
             "items": {
-              "type": "string"
-            }
+              "type": "string",
+              "enum": [
+                "GENERAL",
+                "SCHOOL_TEACHER",
+                "INSTRUCTOR",
+                "TEACHER_AND_INSTRUCTOR",
+                "ADMIN"
+              ]
+            },
+            "description": "허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN."
           },
           "sourceMode": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
+            "nullable": true,
             "description": "값 소스. SERVER_RESOLVED=서버 정본(요청 덮어쓰기 불가), MANUAL_ALLOWED=CMS 수동 발송 입력 허용, EVENT_ONLY=자동 이벤트 전용. enabled와 독립.",
             "enum": [
               "SERVER_RESOLVED",
@@ -120009,6 +120544,11 @@
       },
       "NotificationTemplateVariableCatalogResponse": {
         "type": "object",
+        "required": [
+          "totalCount",
+          "categories",
+          "systemManualSendQaEnabled"
+        ],
         "properties": {
           "totalCount": {
             "type": "integer",
@@ -124606,6 +125146,948 @@
           },
           "status": {
             "type": "string"
+          }
+        }
+      },
+      "OrganizationApplicationSession": {
+        "type": "object",
+        "description": "확정된 기관 교육 일정. GENERAL_ORGANIZATION 응답에서는 grade/className/classLabel을 반환하지 않으며, UJAT 등 기존 유형은 해당 정책에 따라 사용할 수 있습니다.",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "scheduleName": {
+            "type": "string",
+            "nullable": true
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "임시 배정 또는 승인 후 확정 진행일. UJAT 교육 진행 참여 기관 「교육 진행 일정」열"
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "grade": {
+            "type": "string",
+            "nullable": true,
+            "description": "GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다."
+          },
+          "className": {
+            "type": "string",
+            "nullable": true,
+            "description": "GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다."
+          },
+          "classLabel": {
+            "type": "string",
+            "nullable": true,
+            "description": "GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다."
+          },
+          "assignmentStatus": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "OrganizationApplicationSessionResponse": {
+        "type": "object",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "requestedScheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "resolvedScheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "scheduleUnresolved": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "scheduleName": {
+            "type": "string",
+            "nullable": true
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "assignmentStatus": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "VolunteerPreviousUjatTermRequest": {
+        "type": "object",
+        "required": [
+          "term",
+          "year"
+        ],
+        "properties": {
+          "term": {
+            "type": "string"
+          },
+          "year": {
+            "type": "string"
+          },
+          "certificateFileIds": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            },
+            "description": "이전 기수 수료증 fileObjectId 문자열 목록. 숫자만 허용. 본인(ADMIN) 업로드·VOLUNTEER_APPLICATION_EVIDENCE·대상 PROGRAM owner·CLEAN·AVAILABLE/CONFIRMED. 연결 키는 ujat-program-application-volunteer-seed-previous-term. 없는 id/타 프로그램 owner/CERTIFICATE_TEMPLATE·CERTIFICATE_ASSET purpose → 400 VOLUNTEER_PREVIOUS_UJAT_FILE_INVALID. PENDING_SCAN·미확정 업로드 → 409 VOLUNTEER_PREVIOUS_UJAT_FILE_PENDING_SCAN."
+          }
+        }
+      },
+      "MemberPortalEducationScheduleItem": {
+        "type": "object",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "description": "운영 program_schedule.id. 교육 진행 정의만 있고 운영 행이 없으면 null."
+          },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "title": {
+            "type": "string"
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "allDay": {
+            "type": "boolean"
+          },
+          "locationName": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "addressDetail": {
+            "type": "string"
+          },
+          "scheduleStatus": {
+            "type": "string",
+            "description": "교육 진행 뱃지. COMPLETED | IN_PROGRESS | SCHEDULED | UNSCHEDULED. MATCHED는 지망 배정 코드이며 이 필드에 넣지 않는다."
+          },
+          "attendanceStatus": {
+            "type": "string",
+            "nullable": true,
+            "description": "PRESENT | LATE | ABSENT | EXCUSED. 예정·미기록이면 null."
+          },
+          "absenceReasonStatus": {
+            "type": "string"
+          },
+          "absenceReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "저장된 결석 사유 본문"
+          },
+          "assignmentCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "surveyCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "satisfactionCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "availableActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "sessionLabel": {
+            "type": "string",
+            "nullable": true,
+            "description": "커리큘럼 행 라벨 원문(예: 1차시) 또는 TRAINED_TEACHER 기관 운영 일정의 지망 라벨(예: 1지망). MATCHED 지망을 커리큘럼 차시로 치환하지 않는다. 없으면 null."
+          },
+          "unitName": {
+            "type": "string",
+            "nullable": true
+          },
+          "content": {
+            "type": "string",
+            "nullable": true
+          },
+          "scheduleLabel": {
+            "type": "string",
+            "nullable": true
+          },
+          "scheduleName": {
+            "type": "string",
+            "nullable": true,
+            "description": "일정형 일정명. CMS 공통정보 scheduleDetails[].name 원문. 예: 오리엔테이션 / 개회식. 저장값이 없거나 정의와 매칭되지 않으면 null이며 scheduleLabel·운영 슬롯 제목으로 채우지 않는다."
+          },
+          "blockKind": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "PRE_EDUCATION",
+              "SUB",
+              "EVENT"
+            ]
+          },
+          "progressTimeLabel": {
+            "type": "string",
+            "nullable": true
+          },
+          "groupTimes": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/MemberPortalEducationScheduleGroupTime"
+            }
+          },
+          "assignment": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MemberPortalEducationScheduleAssignment"
+              }
+            ]
+          },
+          "teamRole": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "LEADER",
+              "MEMBER",
+              "INDIVIDUAL"
+            ],
+            "description": "해당 회차 기준 본인 팀 역할. CMS scheduleDetails[].participationMethodLabel이 개인이면 INDIVIDUAL. 팀이면 회차 응답 스냅샷을 우선하고 없으면 현재 참여자 또는 신청 팀 정보를 사용합니다. 일정별 참여 라벨이 있는 프로그램에서 라벨 없는 회차(예: 사전교육)는 null이며 다른 회차 팀 정보로 합성하지 않습니다. 프로그램 단위 팀(공통/커리큘럼·행 라벨 없음)은 기존과 같이 팀 정보를 사용합니다. 비팀 프로그램·미확인 팀은 null."
+          },
+          "teamName": {
+            "type": "string",
+            "nullable": true,
+            "description": "해당 회차 기준 본인 팀명. INDIVIDUAL·비팀 프로그램·미확인 팀·일정별 참여 라벨 없는 회차(예: 사전교육)이면 null이며 다른 회차 값으로 합성하지 않습니다."
+          },
+          "assignmentStatus": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "ASSIGNED",
+              "UNASSIGNED",
+              "REASSIGNMENT_REQUIRED"
+            ],
+            "description": "UJAT 봉사자 일정 배정 상태. CMS allocation-matrix 셀과 같은 스냅샷. ASSIGNED | UNASSIGNED | REASSIGNMENT_REQUIRED. 비UJAT 또는 미배정이면 null"
+          },
+          "classLabel": {
+            "type": "string",
+            "nullable": true,
+            "description": "UJAT 봉사자 학급 라벨. allocation-matrix cell.classLabel과 동일 SSOT. UNASSIGNED는 null. 빈 문자열 금지. 비UJAT이면 null"
+          },
+          "organizationName": {
+            "type": "string",
+            "nullable": true,
+            "description": "UJAT 배정 기관명. 없으면 null. 빈 문자열 금지. locationName과 별개"
+          },
+          "preferenceRank": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "description": "TRAINED_TEACHER 기관 신청 MATCHED 지망 순위(양수). 배열 index·session_no로 채우지 않는다. 없거나 해당 없으면 null."
+          }
+        }
+      },
+      "MemberPortalEducationScheduleGroupTime": {
+        "type": "object",
+        "properties": {
+          "startTime": {
+            "type": "string"
+          },
+          "endTime": {
+            "type": "string"
+          }
+        }
+      },
+      "MemberPortalEducationScheduleAssignment": {
+        "type": "object",
+        "description": "교육일정 회차 과제 블록. CMS 공통정보 회차별 과제 설정(assignmentEnabled·과제 제출 기간)이 ON인 회차에만 내려간다. INDIVIDUAL·ORGANIZATION 신청만 대상이며 INSTRUCTOR·VOLUNTEER는 항상 null. 과제 양식(form-binding)과 무관하다. 객체가 없으면 FE는 과제 UI를 숨긴다.",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "submitStartAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "submitEndAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "periodLabel": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "NOT_SUBMITTED",
+              "SUBMITTED",
+              "FEEDBACK",
+              "REVISION_SUBMITTED"
+            ]
+          },
+          "formResponseId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "description": "과제 제출 ID(form_response.id). 피드백이 있으면 피드백이 달린 제출본 ID이며 GET /api/portal/me/form-responses/{formResponseId}/feedback 키로 쓴다. 미제출이면 null(생략)."
+          },
+          "submissions": {
+            "type": "array",
+            "nullable": true,
+            "description": "최신 제출본의 파일·링크만 반환하며 이전 revision 이력은 포함하지 않는다. 미제출이면 null(생략).",
+            "items": {
+              "$ref": "#/components/schemas/MemberPortalEducationScheduleAssignmentSubmission"
+            }
+          },
+          "canSubmit": {
+            "type": "boolean",
+            "description": "최초 제출 가능. 과제 설정 ON, 제출 기간 내, 본인 참여 회차(scheduleId 존재), 미제출일 때 true. 현재 정책상 submitEndAt 이후 미제출 최초 제출은 허용하지 않습니다."
+          },
+          "canResubmit": {
+            "type": "boolean",
+            "description": "수정 제출 가능. 제출 이력 있음, 마감 전, 본인 제출, form_response.response_status가 SUBMITTED 또는 REJECTED일 때 true. APPROVED/COMPLETED면 false. GET /api/portal/me/form-responses/{formResponseId}/feedback 의 canResubmit과 동일 규칙."
+          },
+          "responseStatus": {
+            "type": "string",
+            "nullable": true,
+            "description": "제출본 form_response.response_status. 미제출이면 null(생략). APPROVED/REJECTED/SUBMITTED/COMPLETED 등. status(FEEDBACK 등)와 별도로 승인 여부를 구분한다.",
+            "enum": [
+              "SUBMITTED",
+              "APPROVED",
+              "REJECTED",
+              "COMPLETED"
+            ]
+          }
+        }
+      },
+      "MemberPortalEducationScheduleAssignmentSubmission": {
+        "type": "object",
+        "description": "최신 제출본의 파일·URL 항목만 반환한다. 이력 전체는 포함하지 않는다. kind=FILE이면 실제 file_object.id인 id·fileObjectId와 원본 fileName, kind=URL이면 실제 form_response_answer.id인 id와 저장된 url을 반환한다. 미해당 필드는 null/생략(NON_NULL).",
+        "properties": {
+          "id": {
+            "description": "안정적인 제출물 항목 ID. FILE은 실제 file_object.id, URL은 실제 form_response_answer.id입니다."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "FILE",
+              "URL"
+            ]
+          },
+          "fileName": {
+            "type": "string",
+            "nullable": true,
+            "description": "FILE만. 원본 파일명."
+          },
+          "url": {
+            "type": "string",
+            "nullable": true,
+            "description": "URL만. 저장된 URL. 신규 제출은 https://만 허용한다."
+          },
+          "fileObjectId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "description": "FILE 항목의 file_object.id. 수정 제출 시 유지할 파일은 이 값을 fileObjectIds에 다시 보낸다. URL 항목에는 없다."
+          }
+        }
+      },
+      "MemberPortalAssignmentSubmissionRequest": {
+        "type": "object",
+        "description": "회차 과제 제출. POST는 최초 제출, PUT은 전달된 fileObjectIds와 urls를 최종 제출 집합으로 저장한다(이전 revision과 물리 파일은 보존). fileObjectIds와 urls 중 하나 이상 필수이며 파일 최대 10개·파일당 최대 20MB·전체 파일 용량 최대 100MB, URL 최대 20개, 파일·URL 합계 최대 20개다. 예: 파일만 {\"fileObjectIds\":[1001]}, URL만 {\"urls\":[\"https://drive.google.com/...\"]}, 혼합 {\"fileObjectIds\":[1001],\"urls\":[\"https://youtu.be/...\"]}.",
+        "properties": {
+          "fileObjectIds": {
+            "type": "array",
+            "maxItems": 10,
+            "description": "선택. 본인이 filePurpose=ASSIGNMENT_ATTACHMENT로 업로드·confirm하고 scanStatus=CLEAN, uploadStatus=AVAILABLE(레거시 CONFIRMED)인 파일. 파일당 최대 20MB, 전체 파일 용량 최대 100MB. 10개 초과는 422 ASSIGNMENT_FILE_COUNT_EXCEEDED. 빈 배열·생략 가능(urls가 있을 때).",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "urls": {
+            "type": "array",
+            "maxItems": 20,
+            "description": "선택. https:// 만 허용. trim 후 검증, 최대 4096자, userinfo(user:pass@) 거부, 중복은 첫 등장만 유지. 빈 배열·생략 가능(fileObjectIds가 있을 때).",
+            "items": {
+              "type": "string",
+              "maxLength": 4096,
+              "example": "https://drive.google.com/file/d/..."
+            }
+          }
+        }
+      },
+      "ApiResponseIndividualSettlementReviewDecision": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "data": {
+            "$ref": "#/components/schemas/IndividualSettlementReviewDecision"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "error": {
+            "$ref": "#/components/schemas/StructuredErrorResponse"
+          }
+        }
+      },
+      "StructuredErrorResponse": {
+        "type": "object",
+        "description": "공통 오류 응답입니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "성공 여부",
+            "example": false
+          },
+          "data": {
+            "nullable": true,
+            "description": "오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": "string",
+            "nullable": true,
+            "description": "사용자에게 표시할 안전한 오류 메시지"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiErrorDetail",
+            "nullable": true,
+            "description": "MASKED에서는 null이며 UNMASKED에서만 원문"
+          },
+          "birthYear": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "description": "기본 응답에서 표시 가능한 출생 연도"
+          }
+        }
+      },
+      "ApiErrorDetail": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "field": {
+            "type": "string",
+            "nullable": true
+          },
+          "traceId": {
+            "type": "string",
+            "nullable": true
+          },
+          "details": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "IndividualSettlementReviewDecision": {
+        "type": "object",
+        "properties": {
+          "settlementApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "revisionNo": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "APPROVED",
+              "REJECTED"
+            ]
+          },
+          "reviewedByAdminId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "reviewedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "ApiResponseIndividualSettlementReviewDetail": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "data": {
+            "$ref": "#/components/schemas/IndividualSettlementReviewDetail"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "error": {
+            "$ref": "#/components/schemas/StructuredErrorResponse"
+          }
+        }
+      },
+      "IndividualSettlementReviewDetail": {
+        "type": "object",
+        "description": "Settlement application detail including current status, immutable revision history, receipts, and available actions.",
+        "properties": {
+          "settlementApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programName": {
+            "type": "string"
+          },
+          "individualApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationStatus": {
+            "type": "string"
+          },
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberName": {
+            "type": "string"
+          },
+          "programScheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scheduleName": {
+            "type": "string"
+          },
+          "scheduleStartAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "scheduleEndAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "status": {
+            "type": "string"
+          },
+          "latestRevisionNo": {
+            "type": "integer"
+          },
+          "revisions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IndividualSettlementReviewRevision"
+            }
+          },
+          "availableActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "applicationType": {
+            "type": "string",
+            "enum": [
+              "INDIVIDUAL",
+              "VOLUNTEER"
+            ],
+            "description": "참여자(INDIVIDUAL) 또는 봉사자(VOLUNTEER) 영수증 정산"
+          },
+          "volunteerApplicationId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "description": "VOLUNTEER 신청의 program_volunteer_application.id. INDIVIDUAL 신청은 null."
+          }
+        }
+      },
+      "IndividualSettlementReviewRevision": {
+        "type": "object",
+        "properties": {
+          "revisionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "revisionNo": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string"
+          },
+          "rejectionReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reviewedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "reviewedByAdminId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IndividualSettlementReviewItem"
+            }
+          }
+        },
+        "required": [
+          "revisionId",
+          "revisionNo",
+          "status",
+          "submittedAt",
+          "items"
+        ]
+      },
+      "IndividualSettlementReviewItem": {
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "itemType": {
+            "type": "string"
+          },
+          "itemName": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "evidenceRequired": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "산출 항목 설명. 백엔드가 정산 제출 시점에 생성·저장한 값이며 이후 설정 변경에도 바뀌지 않는다. FE는 그대로 표시하고 조립·재생성하지 않는다. 없으면 null."
+          },
+          "receipts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IndividualSettlementReviewReceipt"
+            }
+          },
+          "oneWayDistanceKm": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "제출 시점 편도 km 스냅샷. 기존 건은 null. 심사 화면은 이 값만 사용하고 거리를 다시 계산하지 않는다."
+          }
+        },
+        "required": [
+          "itemId",
+          "itemType",
+          "itemName",
+          "amount",
+          "evidenceRequired",
+          "receipts"
+        ]
+      },
+      "IndividualSettlementReviewReceipt": {
+        "type": "object",
+        "properties": {
+          "receiptId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "originalReceiptId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "revisionNo": {
+            "type": "integer"
+          },
+          "expenseType": {
+            "type": "string"
+          },
+          "expenseDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "amount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "receiptStatus": {
+            "type": "string"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IndividualSettlementReviewFileRef"
+            }
+          },
+          "transitLabel": {
+            "type": "string",
+            "nullable": true,
+            "description": "대중교통 수단 한글 라벨. 버스(시내·시외·고속 등) | 지하철 | 기차(KTX·SRT·무궁화호 등) | 항공기 | 기타. 없으면 null."
+          },
+          "transitCode": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "bus",
+              "subway",
+              "train",
+              "flight",
+              "other"
+            ],
+            "description": "대중교통 수단 코드. bus | subway | train | flight | other. 없으면 null."
+          }
+        },
+        "required": [
+          "receiptId",
+          "revisionNo",
+          "expenseType",
+          "expenseDate",
+          "amount",
+          "receiptStatus",
+          "files"
+        ]
+      },
+      "IndividualSettlementReviewFileRef": {
+        "type": "object",
+        "properties": {
+          "fileObjectId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "fileSize": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          }
+        },
+        "required": [
+          "fileObjectId",
+          "fileName",
+          "contentType"
+        ]
+      },
+      "PageResponseIndividualSettlementReviewListItem": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IndividualSettlementReviewListItem"
+            }
+          },
+          "page": {
+            "type": "integer"
+          },
+          "size": {
+            "type": "integer"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer"
+          }
+        }
+      },
+      "IndividualSettlementReviewListItem": {
+        "type": "object",
+        "properties": {
+          "settlementApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "individualApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberName": {
+            "type": "string"
+          },
+          "programScheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scheduleName": {
+            "type": "string"
+          },
+          "scheduleStartAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "scheduleEndAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "latestRevisionNo": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string"
+          },
+          "totalAmount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "reviewedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "rejected": {
+            "type": "boolean"
+          },
+          "rejectionReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "applicationType": {
+            "type": "string",
+            "enum": [
+              "INDIVIDUAL",
+              "VOLUNTEER"
+            ],
+            "description": "참여자(INDIVIDUAL) 또는 봉사자(VOLUNTEER) 영수증 정산"
+          },
+          "volunteerApplicationId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "description": "VOLUNTEER 신청의 program_volunteer_application.id. INDIVIDUAL 신청은 null."
+          }
+        }
+      },
+      "IndividualSettlementReviewRequest": {
+        "type": "object",
+        "required": [
+          "expectedRevisionNo"
+        ],
+        "properties": {
+          "expectedRevisionNo": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "reason": {
+            "type": "string",
+            "description": "Optional decision reason used to explain rejection of a settlement revision."
+          },
+          "scheduledPaymentDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "example": "2026-11-20",
+            "description": "승인(확인) 시 필수. 계좌 지급 예정일, KST 기준 오늘 또는 이후. 강사 지급조서 확인과 같은 규칙이며 누락 시 400 SCHEDULED_PAYMENT_DATE_REQUIRED, 오늘 이전이면 400 SCHEDULED_PAYMENT_DATE_MUST_BE_TODAY_OR_LATER. 승인하면 이 날짜로 계좌 지급 건(sourceType=INDIVIDUAL_SETTLEMENT, WAITING_PAYMENT)이 만들어진다. 반려에는 쓰지 않는다."
           }
         }
       },

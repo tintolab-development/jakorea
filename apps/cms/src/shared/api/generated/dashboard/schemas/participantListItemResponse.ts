@@ -6,7 +6,9 @@
  * OpenAPI spec version: v9
  */
 import type { AssignmentInstructor } from './assignmentInstructor';
+import type { FeePolicy } from './feePolicy';
 import type { FormResponseRef } from './formResponseRef';
+import type { ParticipantListItemResponseInstructorFeePolicySource } from './participantListItemResponseInstructorFeePolicySource';
 import type { RequestedScheduleResponse } from './requestedScheduleResponse';
 import type { SessionProgress } from './sessionProgress';
 
@@ -75,4 +77,8 @@ export interface ParticipantListItemResponse {
   programDispatchCount?: number | null;
   /** 봉사자 행 장거리 출강 횟수. 봉사자 거리를 산출하지 않아 항상 null. */
   programLongDistanceDispatchCount?: number | null;
+  /** 강사(INSTRUCTOR) 행의 현재 강사비 책정 기준(강사 승인 Approval.feePolicy와 같은 형태). 강사 신청이 있으면 신청서 값, 직접 추가한 강사면 참여 강사 값. 정하지 않았거나 강사가 아닌 행은 null. 수정: PATCH /api/admin/programs/{programId}/participants/{participantId}/instructor-fee-policy */
+  instructorFeePolicy?: FeePolicy | null;
+  /** instructorFeePolicy 정본 위치. INSTRUCTOR_APPLICATION | PARTICIPANT. 강사가 아닌 행은 null. */
+  instructorFeePolicySource?: ParticipantListItemResponseInstructorFeePolicySource;
 }
