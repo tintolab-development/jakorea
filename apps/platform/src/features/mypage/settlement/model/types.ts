@@ -30,6 +30,11 @@ export type SettlementOverviewItem = {
   status: SettlementOverviewStatus
   /** 정산 신청 금액. 0과 없음(null)을 구분한다. */
   appliedAmount: number | null
+  /**
+   * 다음 revision으로 대체된 이전 재신청 이력. 금액 취소선, 합계 제외.
+   * 원래 결과(반려·정정 요청)를 구분할 서버 필드가 없어 상태 라벨은 표시하지 않는다.
+   */
+  superseded?: boolean
 }
 
 export type SettlementOverviewSummary = {

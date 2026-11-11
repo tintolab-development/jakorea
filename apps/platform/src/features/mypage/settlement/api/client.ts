@@ -1,6 +1,5 @@
 import { axiosClient } from '@/shared/api/axios-instance'
 import {
-  fetchApplicationSchedules,
   fetchIndividualSettlementSchedules,
   fetchVolunteerSettlementSchedules,
   fetchSettlementApplications,
@@ -121,21 +120,20 @@ function readTimeMs(value: unknown): number {
   return Number.isFinite(ms) ? ms : Number.NEGATIVE_INFINITY
 }
 
+/** 이전 재신청 이력 행 노출 여부 — 시안 확정 전까지 false(최신 신청만 보인다) */
+const SHOW_SUPERSEDED_INSTRUCTOR_HISTORY = false
+
 /**
- * 강사 정산은 "배정 1건 = 정산 1건"이다. 같은 assignmentId의 예전 신청(RESUBMITTED 등)은 빼고
- * 가장 늦게 만든 신청(같으면 applicationId가 큰 쪽) 한 행만 남긴다. assignmentId가 없으면 그대로 둔다.
+ * 재신청 이력은 한 줄씩 보여 준다. 같은 assignmentId에서 가장 늦게 만든 신청(같으면 applicationId가 큰 쪽)만
+ * 현재 건이고, 나머지는 다음 revision으로 대체된 이전 신청이다. 이전 신청의 applicationId 집합을 돌려준다.
  */
-export function pickLatestInstructorSettlementRows(
+export function findSupersededInstructorApplicationIds(
   rows: readonly PortalSettlementApplication[],
-): PortalSettlementApplication[] {
+): Set<number> {
   const latestByAssignment = new Map<number, PortalSettlementApplication>()
-  const result: PortalSettlementApplication[] = []
   for (const row of rows) {
     const assignmentId = readOptionalNumber(row.assignmentId)
-    if (assignmentId == null) {
-      result.push(row)
-      continue
-    }
+    if (assignmentId == null) continue
     const current = latestByAssignment.get(assignmentId)
     if (!current) {
       latestByAssignment.set(assignmentId, row)
@@ -148,22 +146,26 @@ export function pickLatestInstructorSettlementRows(
       latestByAssignment.set(assignmentId, row)
     }
   }
-  return [...result, ...latestByAssignment.values()]
+  const superseded = new Set<number>()
+  for (const row of rows) {
+    const assignmentId = readOptionalNumber(row.assignmentId)
+    const applicationId = readOptionalNumber(row.applicationId)
+    if (assignmentId == null || applicationId == null) continue
+    if (latestByAssignment.get(assignmentId) !== row) superseded.add(applicationId)
+  }
+  return superseded
 }
 
-export type ScheduleTime = { startAt: string; endAt: string }
-
 /**
- * 강사 정산 행의 교육 진행 일시. programScheduleId로 찾은 강의 회차 일시를 쓰고,
- * 회차를 찾지 못할 때만 제출(없으면 생성) 시각으로 대체한다.
+ * 강사 정산 행의 교육 진행 일시. 목록 응답의 회차 일시(scheduleStartAt·scheduleEndAt)를 쓰고,
+ * 둘 다 없을 때만 제출(없으면 생성) 시각으로 대체한다.
  */
 export function resolveInstructorSettlementPeriod(
   row: PortalSettlementApplication,
-  scheduleTimeById: ReadonlyMap<number, ScheduleTime>,
 ): { startsAt: string; endsAt: string } {
-  const scheduleId = readOptionalNumber(row.programScheduleId)
-  const schedule = scheduleId != null ? scheduleTimeById.get(scheduleId) : undefined
-  if (schedule) return { startsAt: schedule.startAt, endsAt: schedule.endAt }
+  const start = readOptionalText(row.scheduleStartAt)
+  const end = readOptionalText(row.scheduleEndAt)
+  if (start || end) return { startsAt: start ?? end ?? '', endsAt: end ?? start ?? '' }
   const fallback = readOptionalText(row.submittedAt) ?? readOptionalText(row.createdAt) ?? ''
   return { startsAt: fallback, endsAt: fallback }
 }
@@ -171,7 +173,7 @@ export function resolveInstructorSettlementPeriod(
 function mapInstructorSettlementItem(
   row: PortalSettlementApplication,
   programTitleByProgramId: Map<string, string>,
-  scheduleTimeById: ReadonlyMap<number, ScheduleTime>,
+  superseded: boolean,
 ): SettlementOverviewItem | null {
   const id = readOptionalNumber(row.applicationId)
   if (id == null) return null
@@ -185,7 +187,7 @@ function mapInstructorSettlementItem(
   const programId = readOptionalNumber(row.programId)
   const programName =
     (programId != null ? programTitleByProgramId.get(String(programId)) : null) ?? '-'
-  const { startsAt, endsAt } = resolveInstructorSettlementPeriod(row, scheduleTimeById)
+  const { startsAt, endsAt } = resolveInstructorSettlementPeriod(row)
   return {
     id: String(id),
     programName,
@@ -196,6 +198,7 @@ function mapInstructorSettlementItem(
     status,
     appliedAmount:
       readOptionalNumber(row.netPaymentAmount) ?? readOptionalNumber(row.grossAmount),
+    ...(superseded ? { superseded: true } : {}),
   }
 }
 
@@ -232,7 +235,8 @@ function buildSummary(
 
   for (const item of items) {
     const amount = item.appliedAmount
-    if (amount == null) continue
+    // 대체된 이전 신청은 합계에서 뺀다
+    if (amount == null || item.superseded) continue
     const inMonth =
       item.startsAt.slice(0, 7) === monthKey || item.endsAt.slice(0, 7) === monthKey
 
@@ -273,54 +277,6 @@ async function fetchAllMyProgramApplications(
 }
 
 /**
- * 강사 정산 행이 있는 프로그램의 강사 신청 일정만 조회해 scheduleId → 회차 일시를 모은다.
- * 조회 실패는 무시하고(해당 행은 제출 시각으로 대체) 다른 건을 막지 않는다.
- */
-async function fetchInstructorScheduleTimes(
-  applications: readonly PortalProgramApplicationListItem[],
-  rows: readonly PortalSettlementApplication[],
-  signal?: AbortSignal,
-): Promise<Map<number, ScheduleTime>> {
-  const scheduleTimeById = new Map<number, ScheduleTime>()
-  const programIds = new Set(
-    rows
-      .filter(row => readOptionalNumber(row.programScheduleId) != null)
-      .map(row => readOptionalNumber(row.programId))
-      .filter((id): id is number => id != null),
-  )
-  if (programIds.size === 0) return scheduleTimeById
-  const instructorApps = applications.filter(app => {
-    const programId = readOptionalNumber(app.programId)
-    return (
-      String(app.applicationType ?? '').toUpperCase() === 'INSTRUCTOR' &&
-      programId != null &&
-      programIds.has(programId)
-    )
-  })
-  await Promise.all(
-    instructorApps.map(async app => {
-      const applicationId = readOptionalNumber(app.applicationId)
-      if (applicationId == null) return
-      try {
-        const result = await fetchApplicationSchedules('INSTRUCTOR', String(applicationId), signal)
-        for (const schedule of result.items) {
-          const scheduleId = readOptionalNumber(schedule.scheduleId)
-          const startAt = readOptionalText(schedule.startAt)
-          if (scheduleId == null || !startAt) continue
-          scheduleTimeById.set(scheduleId, {
-            startAt,
-            endAt: readOptionalText(schedule.endAt) ?? startAt,
-          })
-        }
-      } catch {
-        // 일정 조회 실패는 다른 건을 막지 않는다.
-      }
-    }),
-  )
-  return scheduleTimeById
-}
-
-/**
  * 정산현황 overview 데이터.
  * - 강사: GET /api/portal/me/settlement-applications
  * - 개인: 내 INDIVIDUAL 신청별 GET .../individual-settlements/applications/{id}/schedules
@@ -355,14 +311,13 @@ export async function fetchSettlementOverviewPageData(input?: {
 
   const items: SettlementOverviewItem[] = []
 
-  const latestInstructorRows = pickLatestInstructorSettlementRows(instructorRows)
-  const scheduleTimeById = await fetchInstructorScheduleTimes(
-    applications,
-    latestInstructorRows,
-    signal,
-  )
-  for (const row of latestInstructorRows) {
-    const mapped = mapInstructorSettlementItem(row, programTitleByProgramId, scheduleTimeById)
+  const supersededIds = findSupersededInstructorApplicationIds(instructorRows)
+  for (const row of instructorRows) {
+    const applicationId = readOptionalNumber(row.applicationId)
+    const superseded = applicationId != null && supersededIds.has(applicationId)
+    // 이전 재신청 이력 행(상태 '-'·금액 취소선)은 시안 확정 전까지 비노출
+    if (superseded && !SHOW_SUPERSEDED_INSTRUCTOR_HISTORY) continue
+    const mapped = mapInstructorSettlementItem(row, programTitleByProgramId, superseded)
     if (mapped) items.push(mapped)
   }
 
