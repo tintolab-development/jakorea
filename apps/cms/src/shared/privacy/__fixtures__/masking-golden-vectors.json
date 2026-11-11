@@ -1,0 +1,87 @@
+{
+  "fixtureId": "ja-korea-privacy-masking-golden",
+  "version": "2026-11-10.v1",
+  "policy": "[JA Korea] 개인정보·법률 관련 운영 정책 및 처리 기준_261106 §4-1",
+  "note": "가상 데이터만 사용한다. JABACK·JAHOMEADMINBACK에 같은 내용으로 두고 SHA-256으로 동일성을 검증한다. 빈 문자열의 응답 형식(CMS는 입력 유지, 홈페이지는 null)은 저장소별 계약이라 여기서 다루지 않는다.",
+  "cases": [
+    {"id": "NAME-001", "type": "NAME", "input": "홍길동", "expected": "홍길동", "policy": "이름은 마스킹하지 않음", "kind": "normal"},
+    {"id": "NAME-002", "type": "NAME", "input": "남궁민수", "expected": "남궁민수", "policy": "이름은 마스킹하지 않음(복성)", "kind": "normal"},
+    {"id": "NAME-003", "type": "NAME", "input": "John Smith", "expected": "John Smith", "policy": "이름은 마스킹하지 않음(영문)", "kind": "normal"},
+
+    {"id": "PHONE-001", "type": "PHONE", "input": "010-1234-5678", "expected": "010-****-5678", "policy": "가운데 자리 마스킹", "kind": "normal"},
+    {"id": "PHONE-002", "type": "PHONE", "input": "01012345678", "expected": "010-****-5678", "policy": "하이픈 없는 휴대전화", "kind": "format"},
+    {"id": "PHONE-003", "type": "PHONE", "input": "010 1234 5678", "expected": "010-****-5678", "policy": "공백 구분 휴대전화", "kind": "format"},
+    {"id": "PHONE-004", "type": "PHONE", "input": "02-123-4567", "expected": "02-***-4567", "policy": "서울 일반전화 가운데 3자리", "kind": "format"},
+    {"id": "PHONE-005", "type": "PHONE", "input": "0212345678", "expected": "02-****-5678", "policy": "서울 일반전화 가운데 4자리", "kind": "format"},
+    {"id": "PHONE-006", "type": "PHONE", "input": "031-123-4567", "expected": "031-***-4567", "policy": "지역 일반전화", "kind": "format"},
+    {"id": "PHONE-007", "type": "PHONE", "input": "070-1234-5678", "expected": "070-****-5678", "policy": "인터넷전화", "kind": "format"},
+    {"id": "PHONE-008", "type": "PHONE", "input": "010-****-5678", "expected": "010-****-5678", "policy": "이미 마스킹된 값 유지", "kind": "already-masked"},
+    {"id": "PHONE-009", "type": "PHONE", "input": "12345", "expected": "****", "policy": "형식 오류는 원문 대신 고정 마스킹", "kind": "invalid"},
+    {"id": "PHONE-010", "type": "PHONE", "input": "+82 10-1234-5678", "expected": "****", "policy": "국외 형식은 원문 차단", "kind": "invalid"},
+
+    {"id": "EMAIL-001", "type": "EMAIL", "input": "abcdefg@example.com", "expected": "abcd***@example.com", "policy": "@ 앞 3자리 마스킹", "kind": "normal"},
+    {"id": "EMAIL-002", "type": "EMAIL", "input": "abc@example.com", "expected": "***@example.com", "policy": "로컬파트 3자", "kind": "edge"},
+    {"id": "EMAIL-003", "type": "EMAIL", "input": "ab@example.com", "expected": "**@example.com", "policy": "로컬파트 3자 미만은 전부", "kind": "edge"},
+    {"id": "EMAIL-004", "type": "EMAIL", "input": "가나다라마@example.com", "expected": "가나***@example.com", "policy": "Unicode 로컬파트", "kind": "unicode"},
+    {"id": "EMAIL-005", "type": "EMAIL", "input": "  abcdefg@example.com  ", "expected": "abcd***@example.com", "policy": "앞뒤 공백 제거", "kind": "format"},
+    {"id": "EMAIL-006", "type": "EMAIL", "input": "abcd***@example.com", "expected": "abcd***@example.com", "policy": "이미 마스킹된 값 유지", "kind": "already-masked"},
+    {"id": "EMAIL-007", "type": "EMAIL", "input": "invalid-email", "expected": "***", "policy": "@ 없음은 원문 차단", "kind": "invalid"},
+    {"id": "EMAIL-008", "type": "EMAIL", "input": "@example.com", "expected": "***", "policy": "로컬파트 없음은 원문 차단", "kind": "invalid"},
+
+    {"id": "GENDER-001", "type": "GENDER", "input": "MALE", "expected": "**", "policy": "성별 기본 비노출", "kind": "normal"},
+    {"id": "GENDER-002", "type": "GENDER", "input": "FEMALE", "expected": "**", "policy": "성별 기본 비노출", "kind": "normal"},
+    {"id": "GENDER-003", "type": "GENDER", "input": "여", "expected": "**", "policy": "한글 값도 비노출", "kind": "unicode"},
+
+    {"id": "BIRTH-001", "type": "BIRTH_DATE_DISPLAY", "input": "2000-01-15", "expected": "2000.**.**", "policy": "연도만 표시", "kind": "normal"},
+    {"id": "BIRTH-002", "type": "BIRTH_DATE_DISPLAY", "input": "1999-12-31", "expected": "1999.**.**", "policy": "연도만 표시", "kind": "normal"},
+    {"id": "BIRTH-003", "type": "BIRTH_DATE_DISPLAY", "input": "2008-02-29", "expected": "2008.**.**", "policy": "윤년 날짜", "kind": "edge"},
+
+    {"id": "ADDR-001", "type": "HOME_ADDRESS", "input": "서울특별시 강서구 화곡동 123-45 101호", "expected": "서울특별시 강서구 화곡동 *****", "policy": "자택 주소 동까지", "kind": "normal"},
+    {"id": "ADDR-002", "type": "HOME_ADDRESS", "input": "서울특별시 강서구 마곡중앙로 123", "expected": "서울특별시 강서구 마곡중앙로 *****", "policy": "자택 주소 도로명까지", "kind": "normal"},
+    {"id": "ADDR-003", "type": "HOME_ADDRESS", "input": "경기도 수원시 영통구 광교로 1", "expected": "경기도 수원시 영통구 광교로 *****", "policy": "3단계 행정구역 + 도로명", "kind": "format"},
+    {"id": "ADDR-004", "type": "HOME_ADDRESS", "input": "서울 강남구 개포4동 12", "expected": "서울 강남구 개포4동 *****", "policy": "숫자 붙은 행정동", "kind": "edge"},
+    {"id": "ADDR-005", "type": "HOME_ADDRESS", "input": "서울 강남구 래미안101동 1001호", "expected": "서울 강남구 *****", "policy": "건물명 동은 경계 아님(구까지)", "kind": "edge"},
+    {"id": "ADDR-006", "type": "HOME_ADDRESS", "input": "경기도 양평군 양평읍 1", "expected": "경기도 양평군 양평읍 *****", "policy": "읍 경계", "kind": "format"},
+    {"id": "ADDR-007", "type": "HOME_ADDRESS", "input": "서울특별시", "expected": "서울특별시 *****", "policy": "시·도만 있는 값", "kind": "edge"},
+    {"id": "ADDR-008", "type": "HOME_ADDRESS", "input": "abc", "expected": "비공개", "policy": "판단 불가 주소는 원문 차단", "kind": "invalid"},
+
+    {"id": "ADDRD-001", "type": "ADDRESS_DETAIL", "input": "101동 1001호", "expected": "***동 ***호", "policy": "상세주소 마스킹", "kind": "normal"},
+    {"id": "ADDRD-002", "type": "ADDRESS_DETAIL", "input": "201호", "expected": "***호", "policy": "상세주소 마스킹", "kind": "normal"},
+    {"id": "ADDRD-003", "type": "ADDRESS_DETAIL", "input": "현관 앞", "expected": "***", "policy": "그 밖의 상세주소", "kind": "format"},
+    {"id": "ADDRD-004", "type": "ADDRESS_DETAIL", "input": "***동 ***호", "expected": "***동 ***호", "policy": "이미 마스킹된 값 유지", "kind": "already-masked"},
+
+    {"id": "SCHOOL-001", "type": "SCHOOL_NAME", "input": "한국대학교", "expected": "**대학교", "policy": "학교명 유형만 표시", "kind": "normal"},
+    {"id": "SCHOOL-002", "type": "SCHOOL_NAME", "input": "서울고등학교", "expected": "**고등학교", "policy": "긴 접미사 우선", "kind": "normal"},
+    {"id": "SCHOOL-003", "type": "SCHOOL_NAME", "input": "가상교육회사", "expected": "**회사", "policy": "회사명 유형만 표시", "kind": "normal"},
+    {"id": "SCHOOL-004", "type": "SCHOOL_NAME", "input": "한국대학교(서울캠퍼스)", "expected": "**대학교", "policy": "괄호(캠퍼스) 제거", "kind": "format"},
+    {"id": "SCHOOL-005", "type": "SCHOOL_NAME", "input": "카이스트", "expected": "**", "policy": "유형 접미사 없음은 전부 마스킹", "kind": "edge"},
+    {"id": "SCHOOL-006", "type": "SCHOOL_NAME", "input": "**대학교", "expected": "**대학교", "policy": "이미 마스킹된 값 유지", "kind": "already-masked"},
+
+    {"id": "RRN-001", "type": "RRN", "input": "000101-1234567", "expected": "000101-1******", "policy": "앞 6자리+뒷자리 첫 숫자", "kind": "normal"},
+    {"id": "RRN-002", "type": "RRN", "input": "0001011234567", "expected": "000101-1******", "policy": "하이픈 없는 주민등록번호", "kind": "format"},
+    {"id": "RRN-003", "type": "RRN", "input": "000101-1******", "expected": "000101-1******", "policy": "이미 마스킹된 값 유지(재마스킹으로 깨지지 않음)", "kind": "already-masked"},
+    {"id": "RRN-004", "type": "RRN", "input": "12345", "expected": "******-*******", "policy": "형식 오류는 원문 차단", "kind": "invalid"},
+
+    {"id": "ACCT-001", "type": "ACCOUNT_NO", "input": "123-456-789012", "expected": "***-***-******", "policy": "계좌번호 숫자 전부 마스킹", "kind": "normal"},
+    {"id": "ACCT-002", "type": "ACCOUNT_NO", "input": "110123456789", "expected": "************", "policy": "자릿수 차이", "kind": "format"},
+    {"id": "ACCT-003", "type": "ACCOUNT_NO", "input": "***-***-******", "expected": "***-***-******", "policy": "이미 마스킹된 값 유지", "kind": "already-masked"},
+
+    {"id": "HOLDER-001", "type": "ACCOUNT_HOLDER", "input": "김철수", "expected": "김*수", "policy": "성·끝 글자 제외 마스킹", "kind": "normal"},
+    {"id": "HOLDER-002", "type": "ACCOUNT_HOLDER", "input": "김수", "expected": "김*", "policy": "2글자 예외", "kind": "edge"},
+    {"id": "HOLDER-003", "type": "ACCOUNT_HOLDER", "input": "홍", "expected": "*", "policy": "1글자는 전부 마스킹", "kind": "edge"},
+    {"id": "HOLDER-004", "type": "ACCOUNT_HOLDER", "input": "김수한무", "expected": "김**무", "policy": "4글자", "kind": "normal"},
+    {"id": "HOLDER-005", "type": "ACCOUNT_HOLDER", "input": "남궁민수", "expected": "남궁*수", "policy": "복성은 성 2글자 유지", "kind": "edge"},
+    {"id": "HOLDER-006", "type": "ACCOUNT_HOLDER", "input": "김수한무거", "expected": "김**거", "policy": "5글자 이상: 현행 고정 2개(정책 결정 대기 D4)", "kind": "policy-pending"},
+    {"id": "HOLDER-007", "type": "ACCOUNT_HOLDER", "input": "김*수", "expected": "김*수", "policy": "이미 마스킹된 값 유지", "kind": "already-masked"},
+
+    {"id": "ID1365-001", "type": "ID_1365", "input": "volunteer99", "expected": "volunteer**", "policy": "뒤 2자리 마스킹", "kind": "normal"},
+    {"id": "ID1365-002", "type": "ID_1365", "input": "ab", "expected": "**", "policy": "2자리", "kind": "edge"},
+    {"id": "ID1365-003", "type": "ID_1365", "input": "volunteer**", "expected": "volunteer**", "policy": "이미 마스킹된 값 유지", "kind": "already-masked"},
+
+    {"id": "FREE-001", "type": "FREE_TEXT", "input": "연락처 010-1234-5678, 메일 abcdefg@example.com", "expected": "연락처 010-****-5678, 메일 abcd***@example.com", "policy": "자유 입력 내 연락처·이메일", "kind": "normal"},
+    {"id": "FREE-002", "type": "FREE_TEXT", "input": "주민번호 000101-1234567 입니다", "expected": "주민번호 000101-1****** 입니다", "policy": "자유 입력 내 주민등록번호", "kind": "normal"},
+    {"id": "FREE-003", "type": "FREE_TEXT", "input": "계좌 123-456-789012 로 입금", "expected": "계좌 ***-***-****** 로 입금", "policy": "자유 입력 내 계좌번호", "kind": "normal"},
+    {"id": "FREE-004", "type": "FREE_TEXT", "input": "2019-2021 근무", "expected": "2019-2021 근무", "policy": "학력·경력 기간은 계좌번호 아님", "kind": "edge"},
+    {"id": "FREE-005", "type": "FREE_TEXT", "input": "특이사항 없음", "expected": "특이사항 없음", "policy": "개인정보 없는 문장은 그대로", "kind": "normal"}
+  ]
+}
