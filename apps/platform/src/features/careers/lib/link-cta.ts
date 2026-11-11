@@ -1,18 +1,11 @@
 /**
  * 공개 채용공고 상세 하단 연결 버튼.
  * CareerPostingPublicDetail.buttonLabel·linkUrl (GET null → '').
- * 링크(linkUrl)가 있을 때만 노출한다. 라벨만 있으면 버튼 없음. 라벨 비고 링크만 있으면 기본 문구.
+ * 버튼명(buttonLabel)을 입력한 공고에만 노출한다(어드민 등록 창 안내와 동일). 이동할 링크가 없으면 버튼을 만들지 않는다.
  */
 
-export const CAREER_POSTING_DEFAULT_BUTTON_LABEL = '채용 공고 바로가기'
-
-export function careerPostingLinkCtaVisible(linkUrl: string): boolean {
-  return careerPostingLinkHref(linkUrl).length > 0
-}
-
-export function resolveCareerPostingLinkCtaLabel(buttonLabel: string): string {
-  const trimmed = buttonLabel.trim()
-  return trimmed || CAREER_POSTING_DEFAULT_BUTTON_LABEL
+export function careerPostingLinkCtaVisible(link: { buttonLabel: string; linkUrl: string }): boolean {
+  return link.buttonLabel.trim().length > 0 && careerPostingLinkHref(link.linkUrl).length > 0
 }
 
 export function careerPostingLinkHref(linkUrl: string): string {
