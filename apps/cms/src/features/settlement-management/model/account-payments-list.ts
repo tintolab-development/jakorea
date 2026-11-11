@@ -46,9 +46,36 @@ export interface AccountPaymentRow {
   /** 정산 상세 payee 마스킹 주민등록번호. 원문 금지 */
   residentRegistrationNumberMasked?: string
   paymentOrderStatus: Extract<PaymentOrderAdminProcessingStatus, 'confirmed'>
+  /**
+   * 지급 대상 유형(A2): INSTRUCTOR(강사 지급조서·Gemini) | PARTICIPANT(참여자 영수증) | VOLUNTEER(봉사자 영수증).
+   * TODO(시안 확인 대기): 계좌 지급 목록 시안(12432:443040)에 유형 열이 없어 화면에는 아직 표시하지 않는다.
+   */
+  payeeType?: AccountPaymentPayeeType
+  /** 계좌 지급 출처. INDIVIDUAL_SETTLEMENT = 참여자·봉사자 영수증 */
+  sourceType?: string
 }
 
 /** FE mock 제거 후 remote 목록 연동 전 빈 목록 */
+export type AccountPaymentPayeeType = 'INSTRUCTOR' | 'PARTICIPANT' | 'VOLUNTEER'
+
+/** 지급 대상 유형 라벨 (A2) */
+export const ACCOUNT_PAYMENT_PAYEE_TYPE_LABELS: Record<AccountPaymentPayeeType, string> = {
+  INSTRUCTOR: '강사',
+  PARTICIPANT: '참여자',
+  VOLUNTEER: '봉사자',
+}
+
+/** 영수증(참여자·봉사자) 계좌 지급 건 — 원천징수 0원, 지급 실패 처리 없음(A3) */
+export function isReceiptAccountPayment(
+  row: Pick<AccountPaymentRow, 'payeeType' | 'sourceType'>
+): boolean {
+  return (
+    row.payeeType === 'PARTICIPANT' ||
+    row.payeeType === 'VOLUNTEER' ||
+    row.sourceType?.trim().toUpperCase() === 'INDIVIDUAL_SETTLEMENT'
+  )
+}
+
 export const mockAccountPaymentRows: AccountPaymentRow[] = []
 
 export function resolveAccountPaymentAttendanceDate(row: AccountPaymentRow): string {
@@ -127,6 +154,23 @@ export interface AccountPaymentStatusDetail {
    * 개인형이면 참여 기관명 열을 숨긴다. 이 값을 주지 않는 이전 BE에서는 undefined.
    */
   programType?: string
+  /** 영수증(참여자·봉사자) 지급 건이면 true — 강사비·원천징수 행 없음 */
+  isReceiptPayment?: boolean
+  /**
+   * 영수증 첨부(E3). fileObjectId로 기존 다운로드 경로를 쓴다.
+   * TODO(시안 확인 대기): 계좌 지급 상세에 첨부 보기 영역이 없어 화면에는 아직 연결하지 않았다.
+   */
+  receiptAttachments?: AccountPaymentReceiptAttachment[]
+}
+
+export interface AccountPaymentReceiptAttachment {
+  fileObjectId: number
+  fileName: string
+  contentType?: string
+  fileSize?: number
+  /** TRANSPORTATION 등 원값 */
+  itemType?: string
+  applicationItemId?: number
 }
 
 /**

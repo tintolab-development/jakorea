@@ -36,6 +36,8 @@ export function mapAccountPaymentListItemToRow(
     instructorMemberId: item.memberId ?? undefined,
     // 목록 API는 지급조서 CONFIRMED 건만 반환
     paymentOrderStatus: 'confirmed',
+    ...(item.payeeType ? { payeeType: item.payeeType } : {}),
+    ...(item.sourceType?.trim() ? { sourceType: item.sourceType.trim() } : {}),
   }
 }
 

@@ -2,7 +2,10 @@ import type {
   AccountPaymentRow,
   AccountPaymentStatusDetail,
 } from '@/features/settlement-management/model/account-payments-list'
-import { ACCOUNT_PAYMENT_STATUS_LABELS } from '@/features/settlement-management/model/account-payments-list'
+import {
+  ACCOUNT_PAYMENT_STATUS_LABELS,
+  isReceiptAccountPayment,
+} from '@/features/settlement-management/model/account-payments-list'
 import type {
   PaymentOrderCalculationStatementLine,
   PaymentOrderCalculationStatementSessionBlock,
@@ -132,7 +135,8 @@ function buildBlocksFromFrontendSettlement(
   const items = prepareSettlementFrontendItemsForStatement(settlement.items)
   const lines = items.map(mapFrontendItemToCalcLine)
 
-  if (lines.length === 0) {
+  // 영수증 건은 서버가 보낸 실비 항목만 그린다(강사비·원천징수 행을 빈 값으로 만들지 않는다, E3)
+  if (lines.length === 0 && !isReceiptAccountPayment(row)) {
     lines.push({
       id: 'calc-line-api-fallback',
       itemLabel: '정산 예정',
@@ -383,7 +387,9 @@ export function mapAccountPaymentDetailRemote(
   const itemsTotal = sumFrontendItemsAmount(settlement.items)
   const totalAmount = settlement.totalAmount ?? (itemsTotal !== 0 ? itemsTotal : row.amount)
 
-  return buildAccountPaymentStatusDetail(row, blocks, totalAmount, {
+  // 영수증 건: 강사 전용 값(강사비 기준·사업소득자)은 '-' (E3)
+  const receipt = isReceiptAccountPayment(row)
+  const detail = buildAccountPaymentStatusDetail(row, blocks, totalAmount, {
     programName: settlement.programNameKo ?? row.programName,
     businessPeriodDisplay: formatBusinessPeriodDisplay({
       period: settlement.period,
@@ -392,14 +398,33 @@ export function mapAccountPaymentDetailRemote(
       formatDate: formatTransferDateDisplay,
     }),
     programSessionProgressDisplay: formatProgramSessionProgressDisplay(settlement),
-    lectureFeeStandardTitle: formatLectureFeeStandardTitle(settlement.lectureFeeStandardTitle),
-    lectureFeeStandardAmount: formatWonAmountDisplay(settlement.lectureFeeStandardAmount),
-    businessIncomeEarnerLabel: formatBusinessIncomeEarnerLabel(
-      settlement.businessIncomeEarnerLabel
-    ),
+    lectureFeeStandardTitle: receipt
+      ? '-'
+      : formatLectureFeeStandardTitle(settlement.lectureFeeStandardTitle),
+    lectureFeeStandardAmount: receipt
+      ? '-'
+      : formatWonAmountDisplay(settlement.lectureFeeStandardAmount),
+    businessIncomeEarnerLabel: receipt
+      ? '-'
+      : formatBusinessIncomeEarnerLabel(settlement.businessIncomeEarnerLabel),
     recognizedSessionCount: readSettlementRecognizedSessionCount(settlement),
     paidAt: settlement.paidAt ?? row.paidAt,
   })
+  if (!receipt) return detail
+  return {
+    ...detail,
+    isReceiptPayment: true,
+    receiptAttachments: (settlement.attachments ?? [])
+      .filter(file => typeof file.fileObjectId === 'number' && file.fileObjectId > 0)
+      .map(file => ({
+        fileObjectId: file.fileObjectId as number,
+        fileName: file.fileName?.trim() || '-',
+        ...(file.contentType ? { contentType: file.contentType } : {}),
+        ...(file.fileSize != null ? { fileSize: file.fileSize } : {}),
+        ...(file.itemType ? { itemType: file.itemType } : {}),
+        ...(file.applicationItemId != null ? { applicationItemId: file.applicationItemId } : {}),
+      })),
+  }
 }
 
 /** `[E2E-SETTLE] 김정산`처럼 대괄호 접두어가 있으면 벗긴 원문 예금주 */
@@ -469,6 +494,8 @@ export function mapAccountPaymentDetailFromGetApi(
     accountPaymentStatus: mapPaymentStatusToAccountPaymentStatus(payment?.paymentStatus),
     instructorMemberId:
       resolveAccountPaymentMemberId(detail, row) ?? row.instructorMemberId,
+    ...(payment?.payeeType ? { payeeType: payment.payeeType } : {}),
+    ...(payment?.sourceType?.trim() ? { sourceType: payment.sourceType.trim() } : {}),
   }
 
   const payeeExtras = payeeFields

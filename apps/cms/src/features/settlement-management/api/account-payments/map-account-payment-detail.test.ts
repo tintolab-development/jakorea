@@ -523,4 +523,54 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
     }
     expect(mapAccountPaymentDetailFromGetApi(baseRow, detail).programType).toBeUndefined()
   })
+
+  it('영수증 지급 건: 실비 항목만 순서대로, 강사비·원천징수 행 없음, 강사 전용 값은 -, 첨부 담기 (E3)', () => {
+    const detail = {
+      payment: {
+        accountPaymentId: 601,
+        instructorName: '김봉사',
+        netPaymentAmount: 45000,
+        paymentStatus: 'WAITING_PAYMENT',
+        sourceType: 'INDIVIDUAL_SETTLEMENT',
+        payeeType: 'VOLUNTEER',
+      },
+      settlement: {
+        instructorName: '김봉사',
+        totalAmount: 45000,
+        lectureFeeStandardTitle: null,
+        lectureFeeStandardAmount: null,
+        businessIncomeEarnerLabel: '해당 없음',
+        lectureSessionDisplay: '09:00 ~ 12:00',
+        items: [
+          { type: 'meal', amount: 10000 },
+          { type: 'transportation', amount: 20000 },
+          { type: 'activity', amount: 15000 },
+        ],
+        attachments: [
+          { fileObjectId: 77, fileName: 'meal.jpg', itemType: 'MEAL', applicationItemId: 3 },
+          { fileName: 'no-id.jpg' },
+        ],
+      },
+    } as unknown as Parameters<typeof mapAccountPaymentDetailFromGetApi>[1]
+    const mapped = mapAccountPaymentDetailFromGetApi(baseRow, detail)
+    const kinds = mapped.blocks[0]?.lines.map(line => line.kind)
+    expect(kinds).toEqual(['travel', 'activity', 'meal'])
+    expect(mapped.totalAmount).toBe(45000)
+    expect(mapped.basic.lectureFeeStandardTitle).toBe('-')
+    expect(mapped.basic.lectureFeeStandardAmount).toBe('-')
+    expect(mapped.basic.businessIncomeEarnerLabel).toBe('-')
+    expect(mapped.isReceiptPayment).toBe(true)
+    expect(mapped.receiptAttachments).toEqual([
+      { fileObjectId: 77, fileName: 'meal.jpg', itemType: 'MEAL', applicationItemId: 3 },
+    ])
+  })
+
+  it('영수증 건은 실비 항목이 없어도 강사비 대체 행을 만들지 않는다', () => {
+    const detail = {
+      payment: { accountPaymentId: 602, sourceType: 'INDIVIDUAL_SETTLEMENT', payeeType: 'PARTICIPANT' },
+      settlement: { totalAmount: 0, items: [] },
+    } as unknown as Parameters<typeof mapAccountPaymentDetailFromGetApi>[1]
+    const mapped = mapAccountPaymentDetailFromGetApi(baseRow, detail)
+    expect(mapped.blocks[0]?.lines).toEqual([])
+  })
 })
