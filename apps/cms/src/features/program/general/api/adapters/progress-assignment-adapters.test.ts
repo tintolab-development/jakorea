@@ -382,4 +382,55 @@ describe('buildProgressAssignmentSessionsFromRemote', () => {
     const rows = sessions[0]?.participants ?? []
     expect(rows.map(row => row.assignmentFormResponseId)).toEqual([5001, 5002, undefined])
   })
+
+  it('BE N7 formResponseId·hasFeedback — 키가 있으면 필드 제공 표시, 구버전 응답은 표시 안 함', () => {
+    const sessions = buildProgressAssignmentSessionsFromRemote({
+      items: [
+        {
+          scheduleId: 702,
+          sessionNo: 1,
+          startAt: '2026-10-20T01:00:00Z',
+          endAt: '2026-10-20T03:00:00Z',
+          participants: [
+            {
+              participantId: 1,
+              memberName: 'A',
+              submissionStatus: 'SUBMITTED',
+              formResponseId: 93071,
+              hasFeedback: true,
+            },
+            {
+              participantId: 2,
+              memberName: 'B',
+              submissionStatus: 'SUBMITTED',
+              formResponseId: 93072,
+              hasFeedback: false,
+            },
+            {
+              participantId: 3,
+              memberName: 'C',
+              submissionStatus: 'NOT_SUBMITTED',
+              formResponseId: null,
+              hasFeedback: false,
+            },
+            { participantId: 4, memberName: 'D', submissionStatus: 'SUBMITTED' },
+          ],
+        },
+      ],
+    })
+    const rows = sessions[0]?.participants ?? []
+    expect(
+      rows.map(row => [
+        row.assignmentFormResponseId,
+        row.assignmentFeedbackFieldsProvided,
+        row.assignmentHasFeedback,
+      ])
+    ).toEqual([
+      [93071, true, true],
+      [93072, true, false],
+      [undefined, true, false],
+      // 구버전 응답 — 기존 동작(비활성 버튼)
+      [undefined, undefined, undefined],
+    ])
+  })
 })

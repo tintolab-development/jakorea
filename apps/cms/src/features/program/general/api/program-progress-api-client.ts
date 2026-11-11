@@ -674,11 +674,16 @@ export type GeneralAssignmentSubmissionParticipantDto = {
   satisfactionResponse?: { templateVersionId?: number; formResponseId?: number } | null
   /**
    * 과제 응답(form_response) id — 피드백 작성·조회 키(POST/GET /api/admin/form-responses/{id}/feedback).
-   * OpenAPI `GeneralIndividualAssignmentParticipant`에는 아직 없다(BE 추가 요청). 회원 과제 API처럼
-   * `submissionId`로 내려올 수도 있어 둘 다 읽는다. 없으면 피드백 버튼을 비활성으로 둔다.
+   * 생성 타입 `GeneralIndividualAssignmentParticipant.formResponseId`와 같다(행 루트, 미제출이면 null).
+   * 구버전 응답(키 없음)은 회원 과제 API처럼 `submissionId`로 올 수도 있어 함께 읽는다.
    */
   formResponseId?: number | null
   submissionId?: number | null
+  /**
+   * 삭제되지 않은 피드백이 있으면 true, 미제출이면 false
+   * (생성 타입 `GeneralIndividualAssignmentParticipant.hasFeedback`). 구버전 응답엔 없다.
+   */
+  hasFeedback?: boolean | null
   giveUpAt?: string | null
   participantStatus?: string | null
 }
