@@ -198,8 +198,7 @@ export const ProgramRegistrationBasicInfoParticipantTypesField = memo(
 export const ProgramRegistrationBasicInfoBusinessFieldField = memo(
   function ProgramRegistrationBasicInfoBusinessFieldField({
     overlayPrefix,
-    trainedTeachersDefaults,
-  }: OverlayPrefixProps) {
+  }: Pick<OverlayPrefixProps, 'overlayPrefix'> & Partial<OverlayPrefixProps>) {
     return (
       <ProgramRegistrationOverlaySelectField
         label="사업 분야"
@@ -207,7 +206,8 @@ export const ProgramRegistrationBasicInfoBusinessFieldField = memo(
         overlayKey={`${overlayPrefix}.businessField`}
         placeholder="사업 분야를 선택해 주세요"
         options={[...TEMPLATE_FORM_BUSINESS_AREA_OPTIONS]}
-        defaultValue={trainedTeachersDefaults ? 'economy_finance' : ''}
+        // 교육받은 교사 시안(9899:221372): 사업 분야 미선택(placeholder)
+        defaultValue=""
       />
     )
   }
@@ -383,11 +383,11 @@ export const ProgramRegistrationBasicInfoPartnerInvolvementField = memo(
     >(`${overlayPrefix}.partnerInvolvement`, '')
 
     // 일반: 시안대로 미선택('')은 미선택 표시 — 등록 시 필수 선택(`basicInfo.partnerInvolvement`).
-    // 교육받은 교사: 미선택('')·키 없음은 저장 빌더와 동일하게 Yes(true)로 표시 — 'no'만 No
+    // 교육받은 교사: 미선택('')·키 없음은 저장 빌더(`partnerInvolvementFromOverlay`)와 동일하게 No — 'yes'만 Yes
     const radioValue = trainedTeachersDefaults
-      ? partnerInvolvement === 'no'
-        ? 'no'
-        : 'yes'
+      ? partnerInvolvement === 'yes'
+        ? 'yes'
+        : 'no'
       : partnerInvolvement === 'yes' || partnerInvolvement === 'no'
         ? partnerInvolvement
         : ''

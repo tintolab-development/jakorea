@@ -9,7 +9,7 @@ import {
 import {
   applyTrainedTeachersRhfOverlayRecord,
   cloneTrainedTeachersRegistrationRhfValues,
-  createDefaultTrainedTeachersRegistrationRhfValues,
+  createNewTrainedTeachersRegistrationRhfValues,
   type TrainedTeachersRegistrationRhfValues,
 } from '@/features/program/trained-teachers/lib/registration-rhf-values'
 import { getNestedValue } from '@/features/program/general/lib/overlay-phase1/registration-wizard-overlay-path-map'
@@ -21,7 +21,8 @@ type TrainedTeachersRegistrationWizardFormProviderProps = {
 export function TrainedTeachersRegistrationWizardFormProvider({
   children,
 }: TrainedTeachersRegistrationWizardFormProviderProps) {
-  const defaultValues = useMemo(() => createDefaultTrainedTeachersRegistrationRhfValues(), [])
+  // 신규 등록 위저드 — 시안 기본 선택값으로 시작. 임시저장 복원은 위저드가 reset으로 덮는다.
+  const defaultValues = useMemo(() => createNewTrainedTeachersRegistrationRhfValues(), [])
   const form = useForm<TrainedTeachersRegistrationRhfValues>({
     defaultValues,
     shouldUnregister: false,
