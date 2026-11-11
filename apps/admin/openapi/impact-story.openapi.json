@@ -2155,7 +2155,9 @@
           },
           "thumbnailAssetId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "Optional report thumbnail. Null or omitted means no thumbnail; on update, null removes the current thumbnail.",
+            "nullable": true
           },
           "attachmentAssetId": {
             "type": "integer",
@@ -2168,7 +2170,6 @@
         },
         "required": [
           "attachmentAssetId",
-          "thumbnailAssetId",
           "title",
           "version"
         ]
@@ -2191,7 +2192,8 @@
             "type": "string"
           },
           "thumbnail": {
-            "$ref": "#/components/schemas/AssetResponse"
+            "$ref": "#/components/schemas/AssetResponse",
+            "nullable": true
           },
           "attachment": {
             "$ref": "#/components/schemas/AssetResponse"
@@ -4064,7 +4066,9 @@
           },
           "thumbnailAssetId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "Optional card thumbnail. Null or omitted means no thumbnail; on update, null removes the current thumbnail.",
+            "nullable": true
           },
           "attachmentAssetIds": {
             "type": "array",
@@ -4090,7 +4094,6 @@
           "pinned",
           "publishAt",
           "published",
-          "thumbnailAssetId",
           "title",
           "version"
         ]
@@ -6097,7 +6100,9 @@
           },
           "thumbnailAssetId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "Optional report thumbnail. Null or omitted means no thumbnail; on update, null removes the current thumbnail.",
+            "nullable": true
           },
           "attachmentAssetId": {
             "type": "integer",
@@ -6106,7 +6111,6 @@
         },
         "required": [
           "attachmentAssetId",
-          "thumbnailAssetId",
           "title"
         ]
       },
@@ -6342,7 +6346,9 @@
           },
           "thumbnailAssetId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "Optional card thumbnail. Null or omitted means no thumbnail; on update, null removes the current thumbnail.",
+            "nullable": true
           },
           "attachmentAssetIds": {
             "type": "array",
@@ -6364,7 +6370,6 @@
           "pinned",
           "publishAt",
           "published",
-          "thumbnailAssetId",
           "title"
         ]
       },
@@ -7915,7 +7920,8 @@
             "type": "string"
           },
           "thumbnailUrl": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "attachmentFileName": {
             "type": "string"

@@ -634,6 +634,40 @@ describe('mapTrainedTeacherOrganizationApplicationToRow', () => {
   })
 })
 
+describe('mapPreferredScheduleBlocks — TT 차시 수 = 시간 줄 수', () => {
+  it('sessionCount에 교시 번호가 들어온 기존 데이터도 시간 줄 수를 차시 수로 쓴다', () => {
+    const [block] = mapPreferredScheduleBlocks([
+      {
+        preferenceRank: 1,
+        date: '2026-04-20',
+        dayOfWeek: '월',
+        sessionCount: 3,
+        sessionTimes: [{ sessionIndex: 1, classPeriod: '3교시', startTime: '10:40', endTime: '11:20' }],
+      },
+    ])
+    expect(block?.sessionCount).toBe(1)
+    const sessions = mapPreferredScheduleBlocksToSessions(block ? [block] : [])
+    expect(sessions?.[0]?.duration).toBe('1차시')
+    expect(sessions?.[0]?.classNum).toBe('3교시')
+  })
+
+  it('2차시 신청은 줄 2개 → 2차시', () => {
+    const [block] = mapPreferredScheduleBlocks([
+      {
+        preferenceRank: 2,
+        date: '2026-04-27',
+        dayOfWeek: '월',
+        sessionCount: 2,
+        sessionTimes: [
+          { sessionIndex: 1, classPeriod: '1교시', startTime: '09:00', endTime: '09:40' },
+          { sessionIndex: 2, classPeriod: '2교시', startTime: '09:50', endTime: '10:30' },
+        ],
+      },
+    ])
+    expect(block?.sessionCount).toBe(2)
+  })
+})
+
 describe('mapProgramSchedulesToPreferredScheduleBlocks', () => {
   it('uses program detail ACTIVE schedules even when application preferences are empty', () => {
     const blocks = mapProgramSchedulesToPreferredScheduleBlocks([
@@ -667,6 +701,8 @@ describe('mapProgramSchedulesToPreferredScheduleBlocks', () => {
       sessionCount: 2,
     })
     expect(blocks[0]?.sessionTimes.map(session => session.sessionIndex)).toEqual([1, 2])
+    // 교시 자리에 session_no(회차)·차시를 넣지 않는다 — 프로그램 일정에는 교시 정보가 없다
+    expect(blocks[0]?.sessionTimes.map(session => session.classPeriod)).toEqual(['', ''])
   })
 })
 

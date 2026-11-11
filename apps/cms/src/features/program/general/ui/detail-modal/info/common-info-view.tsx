@@ -166,7 +166,6 @@ import {
 import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { CmsButton } from '@/shared/ui'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
-import { BusinessPeriodExtendToolbar } from '@/features/program/shared/ui/business-period-extend-toolbar'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsToggle } from '@/shared/ui'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -5270,21 +5269,15 @@ export function GeneralProgramDetailCommonInfoView({
     <div className="detail-common-info-view program-detail-fullpage-modal__info-tab">
       {/* 권한 설정 V1.2: 조회 전용도 「정보 수정」 노출, 클릭 시 접근 불가 안내 */}
       <div className="detail-common-info-view__header">
-        <BusinessPeriodExtendToolbar
-          program={program}
-          editDisabled={editDisabled}
-          hideExtend={isEditMode}
-        >
-          <ProgramEditInfoActions
-            isEditing={isEditMode}
-            idleVariant="secondary"
-            disabled={editDisabled}
-            canWrite={canWrite}
-            onEdit={onEdit ?? (() => {})}
-            onCancel={onCancel ?? (() => {})}
-            onSave={onSave ?? (() => {})}
-          />
-        </BusinessPeriodExtendToolbar>
+        <ProgramEditInfoActions
+          isEditing={isEditMode}
+          idleVariant="secondary"
+          disabled={editDisabled}
+          canWrite={canWrite}
+          onEdit={onEdit ?? (() => {})}
+          onCancel={onCancel ?? (() => {})}
+          onSave={onSave ?? (() => {})}
+        />
         {onOpenProgramDetailPreview && !isEditMode ? (
           <CmsButton
             type="button"

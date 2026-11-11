@@ -2,6 +2,8 @@
  * 일반 프로그램 — 개인 유형 참여자 신청 상세
  */
 
+import { formatBirthWithOptionalAge } from '@/features/user/api/format-gender-birth-display'
+import { mask1365IdForDisplay } from '@/features/user/api/map-external-identifiers'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsButton, CmsInput, CmsNumericInput, CmsSelect } from '@/shared/ui'
 import type {
@@ -58,6 +60,14 @@ import {
   GeneralIndividualTeamRoleView,
 } from './individual-team-role-dropdown'
 import { openPortal1365Main } from '@/shared/constants/external-urls'
+import { useIndividualApplicantTextbookOptions } from '@/features/textbook/hooks/use-individual-applicant-textbook-options'
+import {
+  INDIVIDUAL_APPLICANT_TEXTBOOK_UNDECIDED_LABEL,
+  resolveIndividualApplicantTextbookDisplay,
+  shouldShowGeneralIndividualApplicantTextbookField,
+  TEXTBOOK_NOT_USED_OPTION_VALUE,
+} from '@/features/program/general/lib/individual-applicant-textbook'
+import type { TextbookSelectOption } from '@/features/program/general/hooks/use-applicant-institution-detail-edit'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-basic-info.css'
 import '@/features/user/detail/ui/instructor-resume/resume.css'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-basic-info.css'
@@ -89,12 +99,7 @@ export interface ApplicantGeneralIndividualBasicInfoProps {
 }
 
 function formatBirthDateAndAge(birthDate?: string, age?: number): string {
-  if (!birthDate && age == null) return '-'
-  const formatted = birthDate ? birthDate.replace(/\./g, '. ') : ''
-  if (formatted && age != null) return `${formatted} (만 ${age}세)`
-  if (formatted) return formatted
-  if (age != null) return `만 ${age}세`
-  return '-'
+  return formatBirthWithOptionalAge(birthDate, age)
 }
 
 function IndividualApplicantScreeningBasicInfo({
@@ -274,9 +279,10 @@ function IndividualApplicantScreeningTeamSection({
   )
 }
 
+/** 1365 ID: 정책 §4-1 뒤 2자리 마스킹(공통 mask1365IdForDisplay). 이미 마스킹된 값은 그대로. */
 function maskId1365(id: string): string {
-  if (id.length <= 4) return '*'.repeat(id.length)
-  return `${id.slice(0, 4)}***`
+  if (!id || id === '—' || id === '-') return id || '-'
+  return mask1365IdForDisplay(id)
 }
 
 function formatTeamMemberCountDisplay(
@@ -367,6 +373,28 @@ function ProgramApprovalStatusValue({
   )
 }
 
+function resolveIndividualTextbookSelectValue(
+  draft: ApplicantIndividualEditDraft,
+  textbookOptions: TextbookSelectOption[]
+): string {
+  const textbookId = draft.textbookId.trim()
+  if (
+    textbookId &&
+    textbookId !== TEXTBOOK_NOT_USED_OPTION_VALUE &&
+    textbookOptions.some(option => option.value === textbookId)
+  ) {
+    return textbookId
+  }
+  const textbookName = draft.textbookName.trim()
+  if (textbookName && textbookName !== INDIVIDUAL_APPLICANT_TEXTBOOK_UNDECIDED_LABEL) {
+    const matched = textbookOptions.find(
+      option => option.textbookName.trim() === textbookName || option.label === textbookName
+    )
+    if (matched) return matched.value
+  }
+  return TEXTBOOK_NOT_USED_OPTION_VALUE
+}
+
 export function ApplicantGeneralIndividualBasicInfo({
   applicant,
   program = null,
@@ -375,6 +403,7 @@ export function ApplicantGeneralIndividualBasicInfo({
   detailContext = 'application',
   draft,
   onDraftChange,
+  validationErrors,
   onResendNotificationClick,
   screeningStage = 'main',
   openManagerDropdown = null,
@@ -408,6 +437,18 @@ export function ApplicantGeneralIndividualBasicInfo({
     screeningStage === 'main' &&
     shouldShowIndividualApplicantPreferredScheduleSection(program)
   const showProgressScheduleSection = isProgressContext && program != null
+  /** 시안 06-1·06-2 — 신청 상세(심사 단계 제외) 승인 완료일 때만 「교재명」 반반 */
+  const showTextbookField =
+    !isProgressContext &&
+    screeningStage === 'main' &&
+    shouldShowGeneralIndividualApplicantTextbookField(program, applicant.approvalStatus)
+  const textbookGrade = (applicant.educationGrade ?? detail?.affiliationGrade ?? '').trim()
+  // 수정 훅(useApplicantIndividualDetailEdit)과 같은 matches 캐시 키 — 옵션·표시 라벨 SSOT
+  const {
+    options: textbookOptions,
+    catalog: textbookCatalog,
+    isLoading: isTextbookCatalogLoading,
+  } = useIndividualApplicantTextbookOptions(showTextbookField ? program : null, textbookGrade)
   const institutionApplicationBridge = program
     ? resolveInstitutionApplicationProgramBridge(program)
     : null
@@ -653,6 +694,36 @@ export function ApplicantGeneralIndividualBasicInfo({
 
   const basicInfoFormMode = isEditMode ? 'edit' : 'view'
 
+  const textbookViewValue = showTextbookField
+    ? resolveIndividualApplicantTextbookDisplay(program, applicant, textbookCatalog).name ||
+      INDIVIDUAL_APPLICANT_TEXTBOOK_UNDECIDED_LABEL
+    : null
+
+  const textbookEditValue =
+    showTextbookField && isEditMode && draft && onDraftChange ? (
+      <CmsSelect
+        inputSize="small"
+        width="100%"
+        placeholder="교재명 선택"
+        withAllOption={false}
+        loading={isTextbookCatalogLoading}
+        value={resolveIndividualTextbookSelectValue(draft, textbookOptions)}
+        options={textbookOptions.map(option => ({ label: option.label, value: option.value }))}
+        onChange={value => {
+          const isNotUsed = value === TEXTBOOK_NOT_USED_OPTION_VALUE
+          const selected = textbookOptions.find(option => option.value === value)
+          onDraftChange({
+            textbookId: isNotUsed ? TEXTBOOK_NOT_USED_OPTION_VALUE : String(value ?? ''),
+            textbookName: isNotUsed
+              ? INDIVIDUAL_APPLICANT_TEXTBOOK_UNDECIDED_LABEL
+              : (selected?.textbookName ?? ''),
+          })
+        }}
+        error={Boolean(validationErrors?.textbookId || validationErrors?.textbookName)}
+        message={validationErrors?.textbookId ?? validationErrors?.textbookName}
+      />
+    ) : undefined
+
   return (
     <div className="general-volunteer-applicant-detail__body">
       {showAdminComment ? (
@@ -661,10 +732,10 @@ export function ApplicantGeneralIndividualBasicInfo({
 
       <section className="general-volunteer-applicant-basic-info">
         <DetailInfoForm title="기본 정보" mode={basicInfoFormMode}>
-          <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Row type={showTextbookField ? 'double' : 'single'}>
             <DetailInfoForm.Field
               label={isProgressContext ? '프로그램 진행 현황' : '프로그램 승인 현황'}
-              fullRow
+              fullRow={!showTextbookField}
               readOnlyDisplay
               view={
                 isProgressContext ? (
@@ -677,6 +748,14 @@ export function ApplicantGeneralIndividualBasicInfo({
                 )
               }
             />
+            {showTextbookField ? (
+              <DetailInfoForm.Field
+                label="교재명"
+                readOnlyDisplay={textbookEditValue == null}
+                view={textbookViewValue}
+                edit={textbookEditValue}
+              />
+            ) : null}
           </DetailInfoForm.Row>
         </DetailInfoForm>
         <DetailInfoForm title="기본 정보" hideHeader mode={basicInfoFormMode}>

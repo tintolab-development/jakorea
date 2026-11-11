@@ -3,6 +3,7 @@
  * 강사 신청 상세·참여 강사 신청 정보 탭 공통 프로필 블록
  */
 
+import { formatBirthWithOptionalAge } from '@/features/user/api/format-gender-birth-display'
 import type { ReactNode } from 'react'
 import { useCallback, useEffect, useState } from 'react'
 import { extractApiErrorMessage } from '@/shared/lib/extract-api-error-message'
@@ -26,12 +27,7 @@ import '@/features/program/shared/ui/program-detail/applicant-list/applicant-ins
 export { HomeAddressDisplay }
 
 export function formatBirthDateAndAge(birthDate?: string, age?: number): string {
-  if (!birthDate && age == null) return '-'
-  const formatted = birthDate ? birthDate.split('.').join('. ') : ''
-  if (formatted && age != null) return `${formatted} (만 ${age}세)`
-  if (formatted) return formatted
-  if (age != null) return `만 ${age}세`
-  return '-'
+  return formatBirthWithOptionalAge(birthDate, age)
 }
 
 export type AccountDisplayFields = {

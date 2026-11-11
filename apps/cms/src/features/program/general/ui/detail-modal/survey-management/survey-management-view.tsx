@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Spin } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
+import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
@@ -28,11 +29,13 @@ import {
 import {
   applyLectureEvalAnswersToDraft,
   buildLectureEvalFormDraft,
+  canDownloadLectureEvalResults,
   canEditLectureEvalResponse,
   draftToLectureEvalPollResponse,
+  findOwnLectureEvalResponse,
   isLectureEvalResultsTabAccessible,
   LECTURE_EVAL_DEV_AUTO_FINISH_ON_SUBMIT,
-  parseLectureEvalFormResponseId,
+  parseOwnLectureEvalFormResponseId,
   LECTURE_EVAL_SURVEY_PARAGRAPH_BODY_OPTIONS,
   LECTURE_EVAL_TEMPLATE_ID,
   validateLectureEvalFormDraft,
@@ -42,15 +45,19 @@ import {
   buildLectureEvalResultsPdfFileName,
   exportLectureEvalResultsPdf,
 } from '@/features/program/shared/lib/survey-management/export-lecture-eval-results-pdf'
+import { isLectureEvalStaleStateError } from '@/features/program/shared/lib/survey-management/lecture-eval-api-error'
+import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { Program } from '@/types/domain'
 import { generateFilename } from '@/shared/utils/file-download'
 import {
   GENERAL_LECTURE_EVAL_ACTION_LABELS,
+  GENERAL_LECTURE_EVAL_CLOSED_COPY,
   GENERAL_LECTURE_EVAL_DOWNLOAD_MODAL_COPY,
   GENERAL_LECTURE_EVAL_EMPTY_COPY,
   GENERAL_LECTURE_EVAL_INCOMPLETE_MODAL_COPY,
   GENERAL_LECTURE_EVAL_PRE_START_COPY,
   GENERAL_LECTURE_EVAL_REGISTER_MODAL_COPY,
+  GENERAL_LECTURE_EVAL_RESPONSE_DELETE_COPY,
   GENERAL_LECTURE_EVAL_SUBMIT_COMPLETE_COPY,
   GENERAL_LECTURE_EVAL_SUBMITTED_COPY,
   GENERAL_SATISFACTION_DOWNLOAD_MODAL_COPY,
@@ -97,7 +104,7 @@ import {
   resolveSurveyPollBindingTargetWhenScheduleFieldHidden,
   shouldShowSurveyPollScheduleSelectField,
 } from '@/features/program/shared/lib/survey-management/should-show-survey-poll-schedule-field'
-import { loadProgramSurveyFormEditAfterBinding } from '@/features/program/shared/lib/survey-management/load-program-survey-form-edit'
+import { loadProgramSurveyFormEditForCreate } from '@/features/program/shared/lib/survey-management/load-program-survey-form-edit'
 import {
   findSatisfactionScheduleById,
   resolveSatisfactionCreateSubmissionPeriod,
@@ -166,6 +173,7 @@ import {
   createGeneralProgramSurveyShareLink,
   submitGeneralProgramFormResponse,
   updateGeneralProgramFormResponse,
+  deleteGeneralProgramFormResponse,
 } from '@/features/program/general/api/admin-general-programs-service'
 import {
   groupSatisfactionSurveysByAudience,
@@ -193,7 +201,7 @@ import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-cod
 import { isReadOnlyAdminRoleCode } from '@/shared/lib/admin-role-policy'
 
 type CreateModalKind = 'survey' | 'satisfaction' | 'lecture'
-type DeleteModalKind = 'survey' | 'satisfaction'
+type DeleteModalKind = 'survey' | 'satisfaction' | 'lecture'
 
 export type GeneralSurveyManagementViewProps = {
   program: Program
@@ -338,6 +346,8 @@ export function GeneralSurveyManagementView({
   activeTab,
 }: GeneralSurveyManagementViewProps) {
   const initialMock = useMemo(() => buildGeneralSurveyEmptyState(program), [program])
+  /** 강의평가 「내 응답」 판정 — 응답 `submittedByAdminId`와 비교 */
+  const adminAccountId = useAuthStore(state => state.user?.adminAccountId ?? null)
   const {
     registeredSurveys: remoteRegisteredSurveys,
     classifiedBindings,
@@ -415,6 +425,10 @@ export function GeneralSurveyManagementView({
     message: string
   } | null>(null)
   const [lectureEvalIncompleteModalOpen, setLectureEvalIncompleteModalOpen] = useState(false)
+  const [lectureEvalResponseDeleteOpen, setLectureEvalResponseDeleteOpen] = useState(false)
+  const [deletingLectureEvalResponse, setDeletingLectureEvalResponse] = useState(false)
+  /** 답변 삭제 후 빈 양식을 다시 만들기 위한 키 */
+  const [lectureEvalDraftReloadKey, setLectureEvalDraftReloadKey] = useState(0)
   const [downloadingLectureEvalResults, setDownloadingLectureEvalResults] = useState(false)
   const [templateEditId, setTemplateEditId] = useState<string | null>(null)
   const [programFormEdit, setProgramFormEdit] = useState<ProgramSurveyFormEdit | null>(null)
@@ -767,24 +781,30 @@ export function GeneralSurveyManagementView({
     )
   }, [activeRegisteredSurveyId, pollResponsesRemote, remotePollResponses, remotePollSummaryCount])
 
+  // 종료 전 목록은 서버가 본인 응답만 준다. 종료 후에는 전체라서 submittedByAdminId로 내 응답을 고른다.
   useEffect(() => {
-    if (!lectureResponsesRemote) return
-    if (remoteLectureResponses && remoteLectureResponses.length > 0) {
-      setLectureEvalResponses(remoteLectureResponses)
-      setLectureEvalSubmitted(true)
-    }
-  }, [lectureResponsesRemote, remoteLectureResponses])
+    if (!lectureResponsesRemote || remoteLectureResponses == null) return
+    setLectureEvalResponses(remoteLectureResponses)
+    setLectureEvalSubmitted(findOwnLectureEvalResponse(remoteLectureResponses, adminAccountId) != null)
+  }, [adminAccountId, lectureResponsesRemote, remoteLectureResponses])
 
+  const ownLectureEvalResponse = useMemo(
+    () => findOwnLectureEvalResponse(lectureEvalResponses, adminAccountId),
+    [adminAccountId, lectureEvalResponses]
+  )
+
+  // 양식이 응답보다 늦게 로드돼도 내 답변을 다시 채운다.
+  const lectureEvalDraftReady = lectureEvalFormDraft != null
   useEffect(() => {
     if (!lectureEvalSubmitted) return
-    const answers = lectureEvalResponses[0]?.answers
+    const answers = ownLectureEvalResponse?.answers
     if (answers == null || Object.keys(answers).length === 0) return
     const current = lectureEvalDraftRef.current
     if (current == null) return
     const next = applyLectureEvalAnswersToDraft(current, answers)
     lectureEvalDraftRef.current = next
     setLectureEvalFormDraft(next)
-  }, [lectureEvalResponses, lectureEvalSubmitted])
+  }, [lectureEvalDraftReady, lectureEvalSubmitted, ownLectureEvalResponse])
 
   useEffect(() => {
     if (lectureEvalSurvey == null) {
@@ -828,7 +848,7 @@ export function GeneralSurveyManagementView({
         cancelled = true
       }
     }
-  }, [lectureEvalSurvey, lectureResponsesRemote])
+  }, [lectureEvalDraftReloadKey, lectureEvalSurvey, lectureResponsesRemote])
 
   function resolveBindingIds(templateCode: string): {
     templateId?: number
@@ -1207,64 +1227,36 @@ export function GeneralSurveyManagementView({
             }
           }
         }
-        let result: Awaited<ReturnType<typeof createBinding>> | null = null
-        if (createModalKind === 'satisfaction') {
-          for (const item of satisfactionPayloads) {
-            result = await createBinding(item as ProgramFormBindingRequest)
-            if (!result.ok) break
+        // 등록 버튼에서는 바인딩을 만들지 않는다. 에디터 「저장」 때 양식 게시 후 바인딩을 만든다.
+        const createPayloads: ProgramFormBindingRequest[] =
+          createModalKind === 'satisfaction'
+            ? (satisfactionPayloads as ProgramFormBindingRequest[])
+            : [payload as ProgramFormBindingRequest]
+        const lastCreatePayload = createPayloads.at(-1)
+        const editLoad = await loadProgramSurveyFormEditForCreate(
+          String(program.id),
+          createPayloads,
+          selectedTemplateId,
+          createBinding,
+          {
+            title: surveyTemplateOptions.find(option => option.value === selectedTemplateId)?.label,
+            schedules:
+              createModalKind === 'satisfaction'
+                ? satisfactionScheduleOptionsQuery.schedules
+                : surveyScheduleOptionsQuery.schedules,
+            windowDays:
+              createModalKind === 'satisfaction' ? effectiveSatisfactionWindowDays : undefined,
+            targetScope: lastCreatePayload?.targetScope ?? undefined,
+            targetScopeId: lastCreatePayload?.targetScopeId ?? undefined,
           }
-        } else {
-          result = await createBinding(payload)
-        }
-        if (!result?.ok) {
-          await invalidateSurveyCaches()
-          if (result?.field === 'targetRole') {
-            setCreateFieldError({ field: result.field, message: result.message })
-            return
-          }
-          void showAlert({ title: '등록 실패', content: result?.message ?? '등록에 실패했습니다.' })
-          return
-        }
-        if (
-          (createModalKind === 'survey' || createModalKind === 'satisfaction') &&
-          result.binding != null
-        ) {
-          const lastSatisfactionPayload =
-            createModalKind === 'satisfaction' ? satisfactionPayloads.at(-1) : undefined
-          const editLoad = await loadProgramSurveyFormEditAfterBinding(
-            String(program.id),
-            {
-              ...result.binding,
-              formType: result.binding.formType ?? payload.formType,
-              targetScope:
-                result.binding.targetScope ?? lastSatisfactionPayload?.targetScope,
-              targetScopeId:
-                result.binding.targetScopeId ?? lastSatisfactionPayload?.targetScopeId,
-            },
-            selectedTemplateId,
-            {
-              schedules:
-                createModalKind === 'satisfaction'
-                  ? satisfactionScheduleOptionsQuery.schedules
-                  : surveyScheduleOptionsQuery.schedules,
-              windowDays:
-                createModalKind === 'satisfaction' ? effectiveSatisfactionWindowDays : undefined,
-              targetScope:
-                result.binding.targetScope ?? lastSatisfactionPayload?.targetScope,
-              targetScopeId:
-                result.binding.targetScopeId ?? lastSatisfactionPayload?.targetScopeId,
-            }
-          )
-          setCreateModalKind(null)
-          setSelectedSurveyScheduleValue(null)
-          if (editLoad.ok) {
-            setProgramFormEdit(editLoad.edit)
-          } else {
-            void showAlert({ title: '양식 편집', content: editLoad.message })
-          }
+        )
+        if (!editLoad.ok) {
+          void showAlert({ title: '양식 편집', content: editLoad.message })
           return
         }
         setCreateModalKind(null)
+        setSelectedSurveyScheduleValue(null)
+        setProgramFormEdit(editLoad.edit)
         return
       }
 
@@ -1376,6 +1368,28 @@ export function GeneralSurveyManagementView({
         return next
       })
     }
+    if (deleteModalKind === 'lecture' && lectureEvalSurvey != null) {
+      if (lectureEvalSurvey.status !== 'before_start') return
+      if (surveysRemote) {
+        const bindingId = lectureEvalSurvey.bindingId
+        if (!bindingId) {
+          void showAlert({
+            title: '삭제 실패',
+            content: '삭제할 강의평가 바인딩 ID를 찾지 못했습니다.',
+          })
+          return
+        }
+        const result = await deleteBinding(bindingId)
+        if (!result.ok) {
+          void showAlert({ title: '삭제 실패', content: result.message })
+          return
+        }
+        setDeleteModalKind(null)
+        setDeleteConfirmWord('')
+        return
+      }
+      setLectureEvalSurvey(null)
+    }
     setDeleteModalKind(null)
     setDeleteConfirmWord('')
   }, [
@@ -1383,6 +1397,7 @@ export function GeneralSurveyManagementView({
     activeSatisfactionAudience,
     activeSatisfactionSurvey,
     deleteBinding,
+    lectureEvalSurvey,
     deleteConfirmWord,
     deleteModalKind,
     showAlert,
@@ -1620,7 +1635,10 @@ export function GeneralSurveyManagementView({
         })
         return
       }
-      const existingResponseId = parseLectureEvalFormResponseId(lectureEvalResponses)
+      const existingResponseId = parseOwnLectureEvalFormResponseId(
+        lectureEvalResponses,
+        adminAccountId
+      )
       const lectureBinding = classifiedBindings?.find(
         item => item.kind === 'lecture_evaluation'
       )?.binding
@@ -1657,11 +1675,14 @@ export function GeneralSurveyManagementView({
         await queryClient.invalidateQueries({
           queryKey: generalProgramQueryKeys.surveyResponses(
             String(program.id),
-            String(templateVersionId)
+            String(templateVersionId),
+            lectureEvalSurvey.bindingId ?? ''
           ),
         })
       } catch (error) {
         handleError(error, { context: 'generalLectureEvalSubmit' })
+        // 소유권·작성 기간 거절 — 진행 상태·내 응답을 서버 기준으로 다시 맞춘다.
+        if (isLectureEvalStaleStateError(error)) void invalidateSurveyCaches()
         void showAlert({
           title: existingResponseId != null ? '수정 실패' : '제출 실패',
           content: getGeneralProgramApiErrorMessage(
@@ -1678,11 +1699,14 @@ export function GeneralSurveyManagementView({
     setLectureEvalSubmitted(true)
     void showAlert(GENERAL_LECTURE_EVAL_SUBMIT_COMPLETE_COPY)
     setLectureEvalResponses(prev => {
-      const existingId = parseLectureEvalFormResponseId(prev)
+      const own = findOwnLectureEvalResponse(prev, adminAccountId)
+      const existingId = parseOwnLectureEvalFormResponseId(prev, adminAccountId)
       return [
+        ...prev.filter(row => row !== own),
         {
           ...pollResponse,
           respondentId: existingId != null ? String(existingId) : pollResponse.respondentId,
+          ...(adminAccountId != null ? { submittedByAdminId: adminAccountId } : {}),
         },
       ]
     })
@@ -1700,7 +1724,9 @@ export function GeneralSurveyManagementView({
       }
     })
   }, [
+    adminAccountId,
     classifiedBindings,
+    invalidateSurveyCaches,
     lectureEvalResponses,
     lectureEvalSurvey,
     program.id,
@@ -1711,20 +1737,73 @@ export function GeneralSurveyManagementView({
     surveysRemote,
   ])
 
+  const handleConfirmLectureEvalResponseDelete = useCallback(async () => {
+    if (lectureEvalSurvey == null || !canEditLectureEvalResponse(lectureEvalSurvey)) return
+    const responseId = parseOwnLectureEvalFormResponseId(lectureEvalResponses, adminAccountId)
+    if (surveysRemote && responseId == null) {
+      setLectureEvalResponseDeleteOpen(false)
+      void showAlert({
+        title: '삭제 실패',
+        content: '삭제할 강의평가 답변을 찾지 못했습니다. 화면을 다시 불러온 뒤 확인해 주세요.',
+      })
+      return
+    }
+    setDeletingLectureEvalResponse(true)
+    try {
+      if (surveysRemote && responseId != null) {
+        await deleteGeneralProgramFormResponse(responseId)
+      }
+    } catch (error) {
+      handleError(error, { context: 'generalLectureEvalResponseDelete' })
+      if (isLectureEvalStaleStateError(error)) void invalidateSurveyCaches()
+      setLectureEvalResponseDeleteOpen(false)
+      void showAlert({
+        title: '삭제 실패',
+        content: getGeneralProgramApiErrorMessage(
+          error,
+          '강의평가 답변 삭제 중 오류가 발생했습니다. 다시 시도해 주세요.'
+        ),
+      })
+      return
+    } finally {
+      setDeletingLectureEvalResponse(false)
+    }
+    // 삭제된 응답(CANCELLED)은 목록·제출 수에서 빠진다 — 미제출로 돌리고 빈 양식을 다시 연다.
+    setLectureEvalResponses(prev => {
+      const own = findOwnLectureEvalResponse(prev, adminAccountId)
+      return prev.filter(row => row !== own)
+    })
+    setLectureEvalSubmitted(false)
+    lectureEvalDraftRef.current = null
+    setLectureEvalFormDraft(null)
+    setLectureEvalDraftReloadKey(key => key + 1)
+    setLectureEvalResponseDeleteOpen(false)
+    if (surveysRemote) void invalidateSurveyCaches()
+    void showAlert({
+      title: GENERAL_LECTURE_EVAL_RESPONSE_DELETE_COPY.completeTitle,
+      content: GENERAL_LECTURE_EVAL_RESPONSE_DELETE_COPY.completeContent,
+    })
+  }, [
+    adminAccountId,
+    invalidateSurveyCaches,
+    lectureEvalResponses,
+    lectureEvalSurvey,
+    showAlert,
+    surveysRemote,
+  ])
+
   const handleLectureEvalTabChange = useCallback(
     (tab: LectureEvalTabKey) => {
+      // 결과는 강의평가 종료(FINISHED) 후에만 — 제출 여부와 무관
       const resultsReady =
-        lectureEvalSurvey != null &&
-        (isLectureEvalResultsTabAccessible(lectureEvalSurvey) ||
-          lectureEvalSubmitted ||
-          lectureEvalResponses.length > 0)
+        lectureEvalSurvey != null && isLectureEvalResultsTabAccessible(lectureEvalSurvey)
       if (tab === 'results' && !resultsReady) {
         setLectureEvalIncompleteModalOpen(true)
         return
       }
       setActiveLectureEvalTab(tab)
     },
-    [lectureEvalResponses.length, lectureEvalSubmitted, lectureEvalSurvey]
+    [lectureEvalSurvey]
   )
 
   const handleLectureEvalPreview = useCallback(() => {
@@ -1738,7 +1817,7 @@ export function GeneralSurveyManagementView({
 
   const handleDownloadLectureEvalResults = useCallback(
     async (format: SurveyResultsDownloadFormat) => {
-      if (lectureEvalSurvey == null) return
+      if (lectureEvalSurvey == null || !canDownloadLectureEvalResults(lectureEvalSurvey)) return
       setDownloadingLectureEvalResults(true)
       try {
         if (format === 'pdf') {
@@ -1999,31 +2078,45 @@ export function GeneralSurveyManagementView({
             resultsExportRef={lectureEvalResultsExportRef}
             emptyCopy={GENERAL_LECTURE_EVAL_EMPTY_COPY}
             preStartCopy={GENERAL_LECTURE_EVAL_PRE_START_COPY}
+            closedCopy={GENERAL_LECTURE_EVAL_CLOSED_COPY}
             submittedCopy={GENERAL_LECTURE_EVAL_SUBMITTED_COPY}
             actionLabels={GENERAL_LECTURE_EVAL_ACTION_LABELS}
             onTabChange={handleLectureEvalTabChange}
             onRegisterClick={() => openCreateModal('lecture')}
+            onDeleteClick={() => {
+              if (lectureEvalSurvey?.status !== 'before_start') return
+              setDeleteConfirmWord('')
+              setDeleteModalKind('lecture')
+            }}
             onOpenTemplatePreview={handleLectureEvalPreview}
             onFormDraftChange={handleLectureEvalDraftChange}
             onSubmitClick={handleLectureEvalSubmit}
             onEditResponseClick={() => {
-              if (
-                lectureEvalSurvey != null &&
-                canEditLectureEvalResponse(lectureEvalSurvey, lectureEvalFormDraft)
-              ) {
+              if (lectureEvalSurvey != null && canEditLectureEvalResponse(lectureEvalSurvey)) {
                 setLectureEvalSubmitted(false)
               }
             }}
+            onDeleteResponseClick={() => setLectureEvalResponseDeleteOpen(true)}
             onDownloadResultsClick={() => setLectureEvalDownloadModalOpen(true)}
-            resultsAccessible={
-              lectureEvalSurvey != null &&
-              (isLectureEvalResultsTabAccessible(lectureEvalSurvey) ||
-                lectureEvalSubmitted ||
-                lectureEvalResponses.length > 0)
-            }
           />
         )
       ) : null}
+
+      <ConfirmModal
+        open={lectureEvalResponseDeleteOpen}
+        title={GENERAL_LECTURE_EVAL_RESPONSE_DELETE_COPY.title}
+        content={GENERAL_LECTURE_EVAL_RESPONSE_DELETE_COPY.content}
+        confirmText={GENERAL_LECTURE_EVAL_RESPONSE_DELETE_COPY.confirmButton}
+        cancelText={GENERAL_LECTURE_EVAL_RESPONSE_DELETE_COPY.cancelButton}
+        danger
+        confirmLoading={deletingLectureEvalResponse}
+        onCancel={() => {
+          if (!deletingLectureEvalResponse) setLectureEvalResponseDeleteOpen(false)
+        }}
+        onConfirm={() => {
+          void handleConfirmLectureEvalResponseDelete()
+        }}
+      />
 
       <SurveyPollRegisterModal
         open={surveyPollCreateModalOpen}
@@ -2136,7 +2229,9 @@ export function GeneralSurveyManagementView({
         title={
           deleteModalKind === 'satisfaction' && activeSatisfactionAudience != null
             ? getGeneralSatisfactionDeleteModalTitle(activeSatisfactionAudience)
-            : '설문조사 삭제 안내'
+            : deleteModalKind === 'lecture'
+              ? '강의평가 삭제 안내'
+              : '설문조사 삭제 안내'
         }
         width={600}
         modalStyles={{ content: { minHeight: 310 } }}
@@ -2145,7 +2240,9 @@ export function GeneralSurveyManagementView({
           deleteModalKind === 'satisfaction' && activeSatisfactionAudience != null
             ? (selectedSatisfactionScheduleLabel ??
               `${getGeneralSatisfactionAudienceLabel(activeSatisfactionAudience)} 만족도조사`)
-            : (activeRegisteredSurvey?.title ?? '설문조사')
+            : deleteModalKind === 'lecture'
+              ? (lectureEvalSurvey?.title ?? '강의평가')
+              : (activeRegisteredSurvey?.title ?? '설문조사')
         }]** 설문을 삭제하시겠습니까?\n삭제 시 설문 결과를 포함한 모든 정보가 삭제되며, 삭제된 정보는 되돌릴 수 없습니다.`}
         footer={
           <>

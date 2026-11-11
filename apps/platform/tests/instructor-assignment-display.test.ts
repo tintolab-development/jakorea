@@ -30,6 +30,17 @@ describe('instructor assignment display', () => {
     expect(formatAssignmentScheduleLine(sources[0]!)).toContain('2차시')
   })
 
+  it('does not label sessionNo (회차) as 차시 when recognizedClassCount is missing', () => {
+    const line = formatAssignmentScheduleLine({
+      assignmentId: 2,
+      startAt: '2026-11-10T01:00:00.000Z',
+      endAt: '2026-11-10T03:00:00.000Z',
+      sessionNo: 3,
+    })
+    expect(line).toContain('| 3회차')
+    expect(line).not.toContain('3차시')
+  })
+
   it('prefers trainingTimeText over ISO clocks', () => {
     expect(
       formatAssignmentScheduleLine({

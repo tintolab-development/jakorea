@@ -156,7 +156,7 @@ export function PaymentOrderPaymentRejectionModal({
 
             <div
               className="payment-order-payment-reject__detail-line"
-              aria-label="대상·진행 일자·회차"
+              aria-label="대상·진행 일자·회차 또는 차시"
             >
               <span>{contextLine.first}</span>
               <span className="payment-order-payment-reject__sep" aria-hidden />

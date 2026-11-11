@@ -167,14 +167,18 @@ export function receiptPayableDisplayRank(
   itemName?: string | null,
 ): number {
   const type = normalizePaymentItemType(itemType)
+  // itemType이 알려진 값이면 이름과 상관없이 type으로 정한다. itemName은 정산 항목 설정 이름이라 바뀔 수 있다.
+  if (WAGE_ITEM_TYPES.has(type)) return 0
+  if (isTransportPaymentItemType(type) || type.includes('TRANSPORT')) return 1
+  if (type.includes('LODGING')) return 2
+  if (type === 'ACTIVITY') return 3
+  if (type === 'MEAL') return 4
+  // type으로 정할 수 없을 때(OTHER·미정 값 등)만 이름으로 추정한다.
   const name = (itemName ?? '').replace(/\s+/g, '')
-  if (WAGE_ITEM_TYPES.has(type) || name.includes('강사비')) return 0
-  if (isTransportPaymentItemType(type) || type.includes('TRANSPORT')) {
-    return 1
-  }
-  if (type.includes('LODGING') || name.includes('숙박')) return 2
-  if (type === 'ACTIVITY' || name.includes('활동비') || name.includes('활동')) return 3
-  if (type === 'MEAL' || name.includes('식사') || name === '식비') return 4
+  if (name.includes('강사비')) return 0
+  if (name.includes('숙박')) return 2
+  if (name.includes('활동')) return 3
+  if (name.includes('식사') || name === '식비') return 4
   return 5
 }
 

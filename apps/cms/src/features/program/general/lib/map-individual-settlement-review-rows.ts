@@ -10,6 +10,7 @@ import {
 import { resolveParticipatingIndividualProgressScheduleSessionsFallback } from '@/features/program/general/lib/participating-individual-progress-schedule-sessions'
 import { mapDashboardScheduleDeliveryToEducationProgress } from '@/features/program/general/lib/dashboard-schedule-delivery-status'
 import type { ParticipatingIndividualInstructorLectureProgress } from '@/features/program/general/lib/participating-individual-instructor-lecture-report-types'
+import { getInstructorSettlementStatusLabel } from '@/shared/constants/instructor-settlement-status'
 
 export type IndividualSettlementReviewListRow = {
   id: string
@@ -195,4 +196,18 @@ export function summarizeIndividualSettlementReviewRows(
     else if (row.status === 'NONE') none += 1
   }
   return { submitted, approved, rejected, none, total: rows.length }
+}
+
+/** 정산 현황 요약 「지급조서 처리 현황」 — 참여자 정산 현황 탭과 같은 판정 */
+export function resolveIndividualSettlementReviewSummaryLabel(
+  summary: { submitted: number; approved: number; rejected: number; total: number },
+  isError: boolean
+): string {
+  if (isError) return '조회 실패'
+  if (summary.submitted > 0 && (summary.approved > 0 || summary.rejected > 0)) return '확인 진행 중'
+  if (summary.submitted > 0) return '확인 대기 중'
+  if (summary.approved > 0) return getInstructorSettlementStatusLabel('payment_statement_verified')
+  if (summary.rejected > 0) return '신청 반려'
+  if (summary.total > 0) return '해당 없음'
+  return '-'
 }

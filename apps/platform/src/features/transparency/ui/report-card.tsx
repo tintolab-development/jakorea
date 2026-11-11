@@ -1,4 +1,6 @@
+import type { ReactNode } from 'react'
 import { ANALYTICS_CLICK_METRICS, recordMetric } from '@/features/analytics'
+import jaLogoGrayCompactUrl from '@/shared/assets/brand/ja-logo-gray-compact.svg'
 import { downloadAttachment } from '@/shared/lib/download-attachment'
 import { PFText } from '@/shared/ui'
 import downloadPrimary20Url from '../image/icon/download-primary-20.svg'
@@ -44,22 +46,45 @@ function DownloadButton({
   )
 }
 
-export function ReportCard({ report, variant }: ReportCardProps) {
-  const coverStyle = report.coverUrl
-    ? { backgroundImage: `url(${report.coverUrl})` }
-    : variant === 'annual'
-      ? undefined
-      : { background: report.coverGradient }
+/**
+ * 표지 — Figma 11001:159541(연차) · 11001:159624(회계감사) 기본 썸네일:
+ * 표지가 없을 때(서버 thumbnailUrl null)만 회색 배경 + 1px 테두리 + 가운데 JA Korea 로고를 그린다.
+ * 표지가 있으면 이미지만 그려, 투명 배경 PNG 표지 뒤로 기본 썸네일이 비치지 않게 한다.
+ */
+function ReportCover({
+  coverUrl,
+  className,
+  children,
+}: {
+  coverUrl?: string
+  className: string
+  children: ReactNode
+}) {
+  // 썸네일 없음(서버 null) → 기본 썸네일
+  const imageUrl = coverUrl || undefined
+  return (
+    <div className={[className, imageUrl ? '' : styles.coverDefault].filter(Boolean).join(' ')}>
+      {/* 기본 썸네일 로고는 표지가 없을 때만 — 투명 배경 PNG 표지 뒤로 비치지 않게 한다 */}
+      {imageUrl ? null : (
+        <img className={styles.coverLogo} src={jaLogoGrayCompactUrl} alt="" aria-hidden="true" />
+      )}
+      {imageUrl ? (
+        <div
+          className={styles.coverImage}
+          style={{ backgroundImage: `url(${imageUrl})` }}
+          aria-hidden="true"
+        />
+      ) : null}
+      {children}
+    </div>
+  )
+}
 
+export function ReportCard({ report, variant }: ReportCardProps) {
   if (variant === 'audit') {
     return (
       <article className={[styles.card, styles.audit].join(' ')}>
-        <div className={styles.panel} style={coverStyle}>
-          <div className={styles.auditText}>
-            <PFText as="p" typo="hd-sm" color="white" className={styles.coverLabel}>
-              {report.coverLabel}
-            </PFText>
-          </div>
+        <ReportCover coverUrl={report.coverUrl} className={styles.panel}>
           <div className={styles.auditDownload}>
             <DownloadButton
               title={report.title}
@@ -68,7 +93,7 @@ export function ReportCard({ report, variant }: ReportCardProps) {
               metricCode={ANALYTICS_CLICK_METRICS.auditReportDownload}
             />
           </div>
-        </div>
+        </ReportCover>
 
         <div className={styles.meta}>
           <PFText as="h3" typo="hl-lg" color="black" className={styles.title}>
@@ -86,14 +111,14 @@ export function ReportCard({ report, variant }: ReportCardProps) {
 
   return (
     <article className={[styles.card, styles.annual].join(' ')}>
-      <div className={styles.cover} style={coverStyle}>
+      <ReportCover coverUrl={report.coverUrl} className={styles.cover}>
         <DownloadButton
           title={report.title}
           fileName={report.fileName}
           downloadUrl={report.downloadUrl}
           metricCode={ANALYTICS_CLICK_METRICS.annualReportDownload}
         />
-      </div>
+      </ReportCover>
 
       <div className={styles.meta}>
         <PFText as="h3" typo="hl-lg" color="black" className={styles.title}>

@@ -7,6 +7,7 @@ import {
   filterMailVariableGroups,
   formatMailVariableToken,
   getMailVariableLabel,
+  getMailVariablePanelNote,
   type MailVariableGroup,
 } from '@/features/notifications/model/mail-template/variables'
 import './variables-panel.css'
@@ -14,13 +15,11 @@ import './variables-panel.css'
 type VariablesPanelProps = {
   onInsert: (label: string) => void
   disabled?: boolean
-  disabledReason?: string
   onDisabledInsert?: () => void
   /** remote catalog; 없으면 정적 MAIL_TEMPLATE_VARIABLE_GROUPS */
   groups?: MailVariableGroup[]
   /** 항목별 비활성 (발송 화면 requiresProgram 가드 등) */
   isItemDisabled?: (label: string) => boolean
-  itemDisabledReason?: string
   /**
    * false면 catalog `enabled` 를 무시하고 전부 삽입 가능.
    * 템플릿 **등록/수정** = false, 발송 = true(기본).
@@ -31,11 +30,9 @@ type VariablesPanelProps = {
 export const VariablesPanel = memo(function VariablesPanel({
   onInsert,
   disabled,
-  disabledReason,
   onDisabledInsert,
   groups: groupsProp,
   isItemDisabled,
-  itemDisabledReason,
   respectCatalogEnabled = true,
 }: VariablesPanelProps) {
   const [query, setQuery] = useState('')
@@ -77,14 +74,8 @@ export const VariablesPanel = memo(function VariablesPanel({
                 variable.enabled !== true
               const itemDisabled = catalogLocked || Boolean(isItemDisabled?.(label))
               const locked = disabled || itemDisabled
-              const reason = disabled
-                ? disabledReason
-                : itemDisabled
-                  ? itemDisabledReason ||
-                    (catalogLocked
-                      ? '현재 프로그램/참여 유형에서는 사용할 수 없는 변수입니다.'
-                      : variable.hint)
-                  : undefined
+              // 회차·차시 변수만 짧은 안내를 보인다(문구 최소). 전체 설명은 title
+              const note = getMailVariablePanelNote(label)
               return (
                 <li key={label}>
                   <button
@@ -99,11 +90,14 @@ export const VariablesPanel = memo(function VariablesPanel({
                       onInsert(label)
                     }}
                     aria-disabled={locked || undefined}
-                    title={reason}
+                    title={note ? variable.hint : undefined}
                   >
                     <span className="mail-template-variables__item-label">
                       {formatMailVariableToken(label)}
                     </span>
+                    {note ? (
+                      <span className="mail-template-variables__item-hint">&nbsp;{note}</span>
+                    ) : null}
                   </button>
                 </li>
               )
@@ -113,10 +107,8 @@ export const VariablesPanel = memo(function VariablesPanel({
       })),
     [
       disabled,
-      disabledReason,
       groups,
       isItemDisabled,
-      itemDisabledReason,
       onDisabledInsert,
       onInsert,
       respectCatalogEnabled,

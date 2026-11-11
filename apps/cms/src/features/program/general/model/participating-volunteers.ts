@@ -44,6 +44,12 @@ export interface ParticipatingVolunteerRow {
   applicationType?: GeneralVolunteerApplicationType
   adminComment?: string
   activityWithdrawn?: boolean
+  /** participants `distanceKm` — 봉사자는 서버가 산출하지 않아 항상 null(→ '-') */
+  distanceKm?: number | null
+  /** participants `programDispatchCount` — 일반 기관형 봉사자: 취소되지 않은 배정 회차 수. 그 외 null */
+  programDispatchCount?: number | null
+  /** participants `programLongDistanceDispatchCount` — 봉사자는 항상 null(→ '-') */
+  programLongDistanceDispatchCount?: number | null
   activityWithdrawStopSessionKey?: string
   performanceExcludedSessionKeys?: string[]
   essayIntro?: string

@@ -141,10 +141,12 @@ import { resolveAdminCommentResource } from '@/features/user/api/resolve-admin-c
 import {
   bulkIssueCertificatesRemote,
   bulkDownloadCertificatesRemote,
+  issuedParticipantIdsFromBulkResult,
+  type CertificateBulkType,
 } from '@/features/user/api/certificates-api-client'
-import { downloadFromBulkEndpoint } from '@/features/user/api/download-bulk-endpoint'
+import { downloadBlob, fileNameFromContentDisposition, generateFilename } from '@/shared/utils/file-download'
 import {
-  collectParticipantIdsFromHistoryRowIds,
+  collectParticipantIdsFromHistoryRows,
   parseMemberProgramHistoryRowId,
 } from '@/features/user/api/member-program-history-ids'
 import type { CertificateIssueReasonValue } from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
@@ -753,10 +755,14 @@ export function useUserDetailController({
       rowIds: readonly string[],
       _reason: CertificateIssueReasonValue,
       reasonLabel: string,
-      certificateType: 'COMPLETION' | 'ACTIVITY'
+      certificateType: CertificateBulkType
     ) => {
       if (!membersRemote) return
-      const participantIds = collectParticipantIdsFromHistoryRowIds(rowIds)
+      // 신청 이력 행은 응답의 participantId로, 참여 이력 행은 행 ID로 대상을 정한다(추가 호출 없음).
+      const participantIds = collectParticipantIdsFromHistoryRows(rowIds, [
+        ...applications,
+        ...enrollmentApplications,
+      ])
       if (participantIds.length === 0) {
         showAlert({
           title: '안내',
@@ -775,19 +781,30 @@ export function useUserDetailController({
           issueReason: reasonLabel,
         }
         const result = await bulkIssueCertificatesRemote(issueBody)
-        const successCount = result.successCount ?? participantIds.length
+        // 건별 실패는 200 안의 failures로 온다. 발급된 건만 집계하고 ZIP에 넣는다.
+        const issuedParticipantIds = issuedParticipantIdsFromBulkResult(participantIds, result)
+        const successCount = issuedParticipantIds.length
+        if (successCount === 0) {
+          showAlert({ title: '안내', content: '증명서 발급에 실패했습니다.' })
+          return
+        }
         try {
-          const download = await bulkDownloadCertificatesRemote(issueBody)
-          if (download.downloadEndpoint) {
-            await downloadFromBulkEndpoint(download.downloadEndpoint, '증명서_일괄')
-          }
+          // 서버가 ZIP을 바로 내려준다. 파일명은 서버 헤더([JA Korea] 증명서_일괄_YYMMDD.zip) 우선.
+          // 이 ZIP은 서버 파일 다운로드 이력에 남지 않으므로 클라이언트 이력을 같은 이름으로 남긴다.
+          const { zip, contentDisposition } = await bulkDownloadCertificatesRemote({
+            participantIds: issuedParticipantIds,
+            certificateType,
+          })
+          await downloadBlob(
+            zip,
+            fileNameFromContentDisposition(contentDisposition, generateFilename('증명서_일괄', 'zip'))
+          )
         } catch (downloadError) {
+          // 발급은 이미 성공했다. 서버 ZIP 오류 문구("…발급에 실패했습니다")는 사실과 달라 쓰지 않는다.
+          handleError(downloadError, { context: 'userDetail.certificateBulkZipDownload' })
           showAlert({
             title: '안내',
-            content: getMemberApiErrorMessage(
-              downloadError,
-              `${successCount}건 발급은 완료되었으나 ZIP 다운로드에 실패했습니다.`
-            ),
+            content: `${successCount}건 발급은 완료되었으나 ZIP 다운로드에 실패했습니다.`,
           })
           await refetchApplications()
           return
@@ -804,7 +821,14 @@ export function useUserDetailController({
         })
       }
     },
-    [displayUser, membersRemote, refetchApplications, showAlert]
+    [
+      applications,
+      displayUser,
+      enrollmentApplications,
+      membersRemote,
+      refetchApplications,
+      showAlert,
+    ]
   )
 
   const handleStudentCertificateBulkIssue = useCallback(
@@ -816,7 +840,14 @@ export function useUserDetailController({
 
   const handleVolunteerCertificateBulkIssue = useCallback(
     (rowIds: readonly string[], reason: CertificateIssueReasonValue, reasonLabel: string) => {
-      void handleCertificateBulkIssue(rowIds, reason, reasonLabel, 'ACTIVITY')
+      void handleCertificateBulkIssue(rowIds, reason, reasonLabel, 'VOLUNTEER_ACTIVITY')
+    },
+    [handleCertificateBulkIssue]
+  )
+
+  const handleInstructorCertificateBulkIssue = useCallback(
+    (rowIds: readonly string[], reason: CertificateIssueReasonValue, reasonLabel: string) => {
+      void handleCertificateBulkIssue(rowIds, reason, reasonLabel, 'INSTRUCTOR_ACTIVITY')
     },
     [handleCertificateBulkIssue]
   )
@@ -1793,6 +1824,7 @@ export function useUserDetailController({
       handleBulkDeleteHistory,
       handleStudentCertificateBulkIssue,
       handleVolunteerCertificateBulkIssue,
+      handleInstructorCertificateBulkIssue,
       openWithdrawConfirm,
       closeWithdrawConfirm,
       closeInstitutionDeleteBlocked,

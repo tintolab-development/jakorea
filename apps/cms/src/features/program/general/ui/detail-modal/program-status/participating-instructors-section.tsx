@@ -75,8 +75,20 @@ import {
 import { StatusOutlineTag } from '@/shared/components/status-outline-tag'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
-import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
+import type {
+  ParticipatingSchoolRow,
+  ParticipatingSchoolSession,
+} from '@/features/program/general/model/participating-schools'
 import { ParticipatingInstitutionsCalendarView } from './participating-institutions-calendar-view'
+import {
+  IndividualPersonCalendarView,
+  type IndividualPersonCalendarAccessors,
+  type IndividualPersonCalendarListItemRenderer,
+} from './individual-person-calendar-view'
+import {
+  buildAssignedPersonCalendarSessionsByMemberId,
+  formatPersonCalendarSessionLabel,
+} from '@/features/program/general/lib/person-calendar-schedule-sessions'
 import {
   getScheduleColorPair,
   SCHEDULE_COLORS,
@@ -174,6 +186,7 @@ export function ParticipatingInstructorsSection({
     setAddInstructorModalOpen,
     handleAddInstructorByMemberId,
     assignedOrganizationNamesByMemberId,
+    assignmentBoard,
     applicationsLoading: instructorsLoading,
     isRemoteDataSource,
     hasNextPage,
@@ -191,12 +204,14 @@ export function ParticipatingInstructorsSection({
     resetKey: `${programId ?? ''}:${viewMode}:${JSON.stringify(progressFilters)}`,
   })
 
+  /** 일반 개인형 — 기관 없이 일정 단위 배정(시안 06-1 개인) */
+  const isIndividualProgram = program != null && isGeneralIndividualProgram(program)
   const { schoolList: schoolRows } = useProgressSchoolList({
     appliedFilters: progressFilters,
     instructorList,
     programId,
     program,
-    enabled: !(program != null && isGeneralIndividualProgram(program)),
+    enabled: !isIndividualProgram,
   })
 
   /** 좌측 캘린더 학교 일정 태그와 동일: 참여 학교명 가나다순 → SCHEDULE_COLORS 순환 */
@@ -457,6 +472,85 @@ export function ParticipatingInstructorsSection({
     [filteredInstructors, schoolRows]
   )
 
+  /**
+   * 개인형 캘린더(시안 14931:741369) — 강사 × 배정 일정. 배정 목록 scheduleId × 프로그램 일정(같은 보드 응답).
+   * 기관형·1사1교는 아래 기관 일정 캘린더를 그대로 쓴다.
+   */
+  const individualAssignedSessionsByMemberId = useMemo(
+    () =>
+      isIndividualProgram
+        ? buildAssignedPersonCalendarSessionsByMemberId(
+            assignmentBoard?.assignments ?? [],
+            assignmentBoard?.schedules ?? []
+          )
+        : new Map<string, ParticipatingSchoolSession[]>(),
+    [assignmentBoard?.assignments, assignmentBoard?.schedules, isIndividualProgram]
+  )
+
+  const individualInstructorCalendarAccessors = useMemo(
+    (): IndividualPersonCalendarAccessors<ParticipatingInstructorRow> => ({
+      getId: row => row.id,
+      getName: row => row.instructorName?.trim() || '강사',
+      getSessions: row =>
+        row.memberId ? individualAssignedSessionsByMemberId.get(row.memberId.trim()) : undefined,
+      getMetaLabels: () => [],
+      getCellRightLabel: event =>
+        formatPersonCalendarSessionLabel(event.originalItem.session, program),
+      getPopoverMetaLabels: event => {
+        const sessionLabel = formatPersonCalendarSessionLabel(event.originalItem.session, program)
+        const reportLabel = `강의보고서 : ${event.originalItem.person.lectureReportSubmitted ? '제출' : '미제출'}`
+        return sessionLabel ? [sessionLabel, reportLabel] : [reportLabel]
+      },
+    }),
+    [individualAssignedSessionsByMemberId, program]
+  )
+
+  const renderIndividualInstructorCalendarCard: IndividualPersonCalendarListItemRenderer<ParticipatingInstructorRow> =
+    useCallback(({ event, checked, onToggle }) => {
+      const { person, personId, personName, session } = event.originalItem
+      const sessionLabel = formatPersonCalendarSessionLabel(session, program)
+      const settlement = getInstructorSettlementStatusPresentation(person.settlementStatus, 'short')
+      return (
+        <div className="participating-instructors-section__calendar-card-main">
+          <div className="participating-instructors-section__calendar-card-body">
+            <div className="participating-instructors-section__calendar-card-header">
+              <span className="participating-instructors-section__calendar-card-school">
+                {personName}
+              </span>
+              {sessionLabel ? (
+                <>
+                  <span
+                    className="participating-instructors-section__calendar-card-divider"
+                    aria-hidden
+                  />
+                  <span className="participating-instructors-section__calendar-card-name">
+                    {sessionLabel}
+                  </span>
+                </>
+              ) : null}
+            </div>
+            <div className="participating-instructors-section__calendar-card-tags">
+              <StatusOutlineTag label={settlement.label} accentColor={settlement.color} />
+              <span className="participating-instructors-section__calendar-card-tag participating-instructors-section__calendar-card-tag--report">
+                강의보고서 : {person.lectureReportSubmitted ? '제출' : '미제출'}
+              </span>
+            </div>
+          </div>
+          <div
+            className="participating-instructors-section__calendar-card-checkbox-wrap"
+            onClick={e => e.stopPropagation()}
+            onKeyDown={e => e.stopPropagation()}
+          >
+            <CmsCheckbox
+              checked={checked}
+              onChange={e => onToggle(personId, e.target.checked)}
+              className="participating-instructors-section__calendar-card-checkbox"
+            />
+          </div>
+        </div>
+      )
+    }, [program])
+
   const registeredInstructorNames = useMemo(
     () => instructorList.map(row => row.instructorName),
     [instructorList]
@@ -535,11 +629,14 @@ export function ParticipatingInstructorsSection({
         { title: '연락처', dataIndex: 'contact', key: 'contact' },
         { title: '이메일', dataIndex: 'email', key: 'email' },
         { title: '정산 현황', dataIndex: 'settlementStatus', key: 'settlementStatus' },
-      ],
-      []
+      ].filter(
+        // 개인형 시안 14931:741329 — 「배정 기관명」 열 없음(엑셀도 동일)
+        column => !isIndividualProgram || column.key !== 'assignedInstitutions'
+      ),
+      [isIndividualProgram]
     )
 
-  const columns: ColumnsType<ParticipatingInstructorRow> = useMemo(
+  const allInstructorColumns: ColumnsType<ParticipatingInstructorRow> = useMemo(
     () => [
       {
         title: 'No.',
@@ -662,6 +759,15 @@ export function ParticipatingInstructorsSection({
       },
     ],
     [assignedSchoolNameOptions, instructorList, schoolRows]
+  )
+
+  /** 개인형 시안 14931:741329 — 「배정 기관명」 열 없음 */
+  const columns = useMemo(
+    () =>
+      isIndividualProgram
+        ? allInstructorColumns.filter(column => column.key !== 'assignedInstitutions')
+        : allInstructorColumns,
+    [allInstructorColumns, isIndividualProgram]
   )
 
   const { tableWrapRef, tableScrollX } = useContainerFitTableScrollX(
@@ -821,6 +927,19 @@ export function ParticipatingInstructorsSection({
           </div>
         ) : (
           <div className="participating-institutions-section__calendar-wrap">
+            {isIndividualProgram ? (
+              <IndividualPersonCalendarView<ParticipatingInstructorRow>
+                people={filteredInstructors}
+                accessors={individualInstructorCalendarAccessors}
+                selectedRowKeys={selectedInstructorRowKeys.map(String)}
+                onSelectionChange={keys => setSelectedInstructorRowKeys(keys)}
+                onPersonClick={row => onInstructorRowClick?.(row)}
+                calendarGranularity={progressCalendarGranularity}
+                onCalendarGranularityChange={setProgressCalendarGranularity}
+                renderListItem={renderIndividualInstructorCalendarCard}
+                emptyDescription="배정된 교육 일정이 없습니다."
+              />
+            ) : (
             <ParticipatingInstitutionsCalendarView
               schools={schoolRows}
               customEvents={instructorCalendarEvents}
@@ -923,6 +1042,7 @@ export function ParticipatingInstructorsSection({
                 </div>
               }
             />
+            )}
           </div>
         )}
         <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />

@@ -89,6 +89,7 @@ function BasisDetailReceiptFileLink({
       <a
         href={url}
         className="payment-order-calculation-basis-detail-modal__file-link"
+        title={fileName}
         target="_blank"
         rel="noreferrer"
       >
@@ -103,6 +104,7 @@ function BasisDetailReceiptFileLink({
     <button
       type="button"
       className="payment-order-calculation-basis-detail-modal__file-link"
+      title={fileName}
       onClick={() => {
         if (!downloadable) return
         void (async () => {

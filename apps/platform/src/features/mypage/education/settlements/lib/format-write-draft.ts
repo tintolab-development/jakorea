@@ -94,13 +94,14 @@ export function formatSettlementSessionBannerTitle(
   return programName
 }
 
+/** `N회차, HH:mm ~ HH:mm`. sessionNumber는 회차 번호이며 차시로 표기하지 않는다. */
 export function formatSettlementEducationSessionProgress(
   session: { sessionNumber?: number; sessionMeta?: string } | undefined,
 ): string {
   if (!session) return ''
   const sessionLabel =
     typeof session.sessionNumber === 'number' && session.sessionNumber > 0
-      ? `${session.sessionNumber}차시`
+      ? `${session.sessionNumber}회차`
       : ''
   const timeMatch = session.sessionMeta?.trim().match(/(\d{2}:\d{2})\s*[~\-–]\s*(\d{2}:\d{2})/)
   const time = timeMatch ? `${timeMatch[1]} ~ ${timeMatch[2]}` : ''

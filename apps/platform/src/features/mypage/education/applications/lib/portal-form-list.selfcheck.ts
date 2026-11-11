@@ -106,7 +106,21 @@ assert.equal(
     scheduleStartAt: '2026-11-12T03:00:00.000Z',
     status: 'NOT_SUBMITTED',
   })?.title,
-  '1회차 · 2026.11.12(목) 만족도조사 (학생용)',
+  // sessionNo가 없으면 자동 기본명 번호(입력 순서)로 「1회차」를 만들지 않는다
+  '2026.11.12(목) 만족도조사 (학생용)',
+)
+assert.equal(
+  mapPortalFormListItemToSurveyEntry({
+    bindingId: 202,
+    formType: 'SATISFACTION',
+    templateName: '만족도조사 (학생용)',
+    targetScope: 'SCHEDULE',
+    targetScopeLabel: '공통 교육 예정 1',
+    sessionNo: 3,
+    scheduleStartAt: '2026-11-12T03:00:00.000Z',
+    status: 'NOT_SUBMITTED',
+  })?.title,
+  '3회차 · 2026.11.12(목) 만족도조사 (학생용)',
 )
 
 const scheduleBinding = mapPortalFormListItemToSurveyEntry({

@@ -7,6 +7,7 @@ import {
   resolvePreferredScheduleLabelsFromAnswers,
   type PreferredScheduleProgramLookup,
 } from './application-content-from-answers.ts'
+import { formatDisplayClockLabel, formatDisplayDate } from '@/shared/lib/format-display-date'
 
 export function programDetailToPreferredScheduleLookup(
   program:
@@ -65,11 +66,72 @@ function scheduleStatusLabel(status: string | null | undefined): string | undefi
   }
 }
 
+function readText(value: unknown): string {
+  if (typeof value === 'string') return value.trim()
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value)
+  return ''
+}
+
+function readPositiveInt(value: unknown): number | null {
+  const parsed = typeof value === 'string' && value.trim() ? Number(value) : value
+  return typeof parsed === 'number' && Number.isInteger(parsed) && parsed > 0 ? parsed : null
+}
+
+/** 교시 원문(`1` / `1교시`) → `1교시`. 숫자가 아니면 원문 그대로. */
+function formatClassPeriodLabel(raw: string): string {
+  const digits = raw.replace(/교시\s*$/u, '').trim()
+  return /^\d+$/.test(digits) ? `${digits}교시` : raw
+}
+
+/**
+ * 교육받은교사 희망 일정 블록 — 시안 「날짜 ㅣ N차시」 + 차시별 「K차시: M교시 ㅣ 시작 ~ 종료」.
+ * 차시 = 그날 수업 개수(sessionCount, 없으면 sessionTimes 줄 수), 교시 = 각 차시의 classPeriod.
+ */
+function formatTrainedTeacherPreferredBlock(
+  block: Record<string, unknown>,
+): { value: string; sessionLines: string[] } | undefined {
+  const dateRaw = readText(block.date) || readText(block.dateText)
+  const dateLabel = dateRaw ? formatDisplayDate(dateRaw) || dateRaw : ''
+  if (!dateLabel) return undefined
+  const sessions = (
+    Array.isArray(block.sessionTimes) ? block.sessionTimes : Array.isArray(block.times) ? block.times : []
+  ).filter((row): row is Record<string, unknown> => Boolean(row) && typeof row === 'object')
+  const sessionCount = readPositiveInt(block.sessionCount) ?? (sessions.length > 0 ? sessions.length : null)
+  const rank = readPositiveInt(block.preferenceRank)
+  const value = [
+    rank != null ? `${rank}지망` : '',
+    dateLabel,
+    sessionCount != null ? `${sessionCount}차시` : '',
+  ]
+    .filter(Boolean)
+    .join(' | ')
+  const sessionLines = sessions.flatMap((row, index) => {
+    const sessionIndex = readPositiveInt(row.sessionIndex) ?? index + 1
+    const classPeriod = readText(row.classPeriod)
+    const start = readText(row.startTime) || readText(row.start)
+    const end = readText(row.endTime) || readText(row.end)
+    const timeRange =
+      start && end
+        ? `${formatDisplayClockLabel(start)} ~ ${formatDisplayClockLabel(end)}`
+        : readText(row.timeRange)
+    const head = [`${sessionIndex}차시:`, classPeriod ? formatClassPeriodLabel(classPeriod) : '']
+      .filter(Boolean)
+      .join(' ')
+    if (!classPeriod && !timeRange) return []
+    return [[head, timeRange].filter(Boolean).join(' | ')]
+  })
+  return { value, sessionLines }
+}
+
 function toPreferredScheduleCardsFromBlocks(
   blocks: readonly unknown[],
+  trainedTeacherSessionDetail = false,
 ): EducationTeacherPreferredSchedule[] {
   return blocks.map((rawBlock, index) => {
     const block = rawBlock as Record<string, unknown>
+    const trainedTeacher = trainedTeacherSessionDetail
+      ? formatTrainedTeacherPreferredBlock(block)
+      : undefined
     const scheduleStatus =
       typeof block.scheduleStatus === 'string' ? block.scheduleStatus : undefined
     const scheduleId =
@@ -77,6 +139,7 @@ function toPreferredScheduleCardsFromBlocks(
         ? block.scheduleId
         : null
     const value =
+      trainedTeacher?.value ||
       resolvePreferredEducationScheduleLabelFromAnswers({
         preferredScheduleBlocks: [rawBlock],
       } as Record<string, unknown>)?.trim() ||
@@ -87,6 +150,9 @@ function toPreferredScheduleCardsFromBlocks(
       id: scheduleId != null ? `preferred-schedule-${scheduleId}` : `preferred-schedule-${index + 1}`,
       label: `진행 희망 교육 일정 ${index + 1}`,
       value,
+      ...(trainedTeacher && trainedTeacher.sessionLines.length > 0
+        ? { sessionLines: trainedTeacher.sessionLines }
+        : {}),
       scheduleId,
       startAt: typeof block.startAt === 'string' ? block.startAt : null,
       endAt: typeof block.endAt === 'string' ? block.endAt : null,
@@ -121,10 +187,15 @@ export function resolveTeacherPreferredSchedules(input: {
   preferredScheduleBlocks?: readonly unknown[] | null
   /** TRAINED_TEACHER에서는 line:N을 실제 일정으로 추정하지 않는다. */
   preserveLegacyLineTokens?: boolean
+  /** TRAINED_TEACHER — 블록 카드를 「날짜 | N차시」 + 차시별 「K차시: M교시 | 시간」으로 표시 */
+  trainedTeacherSessionDetail?: boolean
   program?: Pick<ProgramDetail, 'educationScheduleLines' | 'eventSchedules'>
 }): EducationTeacherPreferredSchedule[] {
   if (input.preferredScheduleBlocks?.length) {
-    return toPreferredScheduleCardsFromBlocks(input.preferredScheduleBlocks)
+    return toPreferredScheduleCardsFromBlocks(
+      input.preferredScheduleBlocks,
+      input.trainedTeacherSessionDetail === true,
+    )
   }
 
   const optionValues = input.preferredScheduleOptionValues ?? []

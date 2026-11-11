@@ -170,7 +170,10 @@ function buildScheduleGroups(assignmentSessions: ParticipatingSchoolSession[]) {
     if (prev) prev.push(session)
     else groups.set(scheduleKey, [session])
   }
-  const preferredLines = buildParticipatingSchoolPreferredScheduleLines(assignmentSessions)
+  // 1사1교 전용 경로 — 일정 건수를 차시 수로 쓰지 않는다
+  const preferredLines = buildParticipatingSchoolPreferredScheduleLines(assignmentSessions, {
+    sessionCountSource: 'known-only',
+  })
   return Array.from(groups.entries()).map(([scheduleKey, sessions], index) => ({
     scheduleKey,
     sessions,

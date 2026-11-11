@@ -1,5 +1,6 @@
-import { useEffect, useId, useRef, type ReactNode } from 'react'
+import { useId, useLayoutEffect, useRef, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { lockBodyScroll } from '@/shared/lib/lock-body-scroll'
 import { PFButton } from '../pf-button'
 import { PFText } from '../pf-text'
 import styles from './pf-alert-modal.module.css'
@@ -55,14 +56,13 @@ export function PFAlertModal({
   onConfirmRef.current = onConfirm
   onDismissRef.current = onDismiss
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!open) {
       wasOpenRef.current = false
       return
     }
 
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+    const unlock = lockBodyScroll()
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && !confirmLoading) {
@@ -81,7 +81,7 @@ export function PFAlertModal({
     }
 
     return () => {
-      document.body.style.overflow = previousOverflow
+      unlock()
       window.removeEventListener('keydown', handleKeyDown)
     }
   }, [open, confirmLoading, children])

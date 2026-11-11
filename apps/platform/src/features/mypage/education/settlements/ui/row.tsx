@@ -9,6 +9,7 @@ import {
   isSettlementDeadlinePassed,
   isSettlementWriteCtaDisabled,
   PAYMENT_STATEMENT_OPERATION_ENDED_MESSAGE,
+  PAYMENT_STATEMENT_OVERDUE_MESSAGE,
   resolveSettlementStatusUi,
   type SettlementDocumentKind,
   type SettlementStatusAction,
@@ -31,7 +32,12 @@ import clockGrayUrl from '@/shared/assets/icons/clock-gray.svg'
 import alertRedUrl from '@/shared/assets/icons/alert-red.svg'
 import alertBlack24Url from '@/shared/assets/icons/alert-black-24.svg'
 import villaIconUrl from '@/shared/assets/icons/villa.svg'
-import { PFButton, PFMetaBadge, PFModal, PFStateBadge, PFText } from '@/shared/ui'
+import { PFAlertModal, PFButton, PFMetaBadge, PFModal, PFStateBadge, PFText } from '@/shared/ui'
+import { useReapplyPaymentStatementMutation } from '../api/use-reapply-payment-statement-mutation'
+import {
+  PAYMENT_STATEMENT_REAPPLY_FAILED_MESSAGE,
+  instructorSettlementApiErrorMessage,
+} from '../lib/instructor-settlement-contract'
 import styles from './row.module.css'
 
 type EducationSettlementRowProps = {
@@ -76,7 +82,22 @@ export function EducationSettlementRow({
 }: EducationSettlementRowProps) {
   const navigate = useNavigate()
   const [rejectOpen, setRejectOpen] = useState(initialRejectOpen)
+  const [reapplyErrorMessage, setReapplyErrorMessage] = useState<string | null>(null)
+  const reapplyMutation = useReapplyPaymentStatementMutation()
   const config = resolveSettlementStatusUi(item.status, documentKind)
+  /** 정정 승인 후 강사 재신청 대기 — [지급조서 재신청]이 재신청 API를 부른다 */
+  const isCorrectionReapply =
+    documentKind === 'payment_statement' && item.status === 'correction_completed'
+  const isPaymentStatement = documentKind === 'payment_statement'
+  /** 사업 운영 종료 후: 작성·재신청 숨김, 확인·반려사유·정정 내역 확인은 유지 */
+  const operationEnded = isPaymentStatement && item.operationEnded === true
+  /** 정정 승인 후 재신청 기한이 지난 건: 상태는 '지급 정정 요청' 유지, 재신청만 숨김 */
+  const correctionReapplyExpired = isCorrectionReapply && item.reapplyAvailable !== true
+  /** 강의보고서 미작성인데 제출 마감이 지났거나 운영이 종료된 행: 작성 버튼 숨김 */
+  const reportPendingClosed =
+    isPaymentStatement && item.status === 'report_pending' && item.deadlineNotice != null
+  const hideWrite = operationEnded || reportPendingClosed
+  const hideReapply = operationEnded || correctionReapplyExpired
   const sessionId = item.id
   const writePath = buildSettlementWritePath({
     applicationId,
@@ -123,11 +144,15 @@ export function EducationSettlementRow({
     documentKind === 'payment_statement' &&
     ((item.status === 'correction_completed' && item.previousAmount != null) ||
       showStruckOnly)
+  const operationEndedNotice = isPaymentStatement && item.deadlineNotice === 'operation_ended'
+  // 재신청 기한 지남 안내(PAYMENT_STATEMENT_REAPPLY_EXPIRED_MESSAGE)는 기획 문구 확정 전까지 비노출
   const guideMessage =
     item.submitBlockedReason ??
-    (documentKind === 'payment_statement' && item.deadlineNotice === 'operation_ended'
+    (operationEndedNotice
       ? PAYMENT_STATEMENT_OPERATION_ENDED_MESSAGE
-      : config.message)
+      : reportPendingClosed
+        ? PAYMENT_STATEMENT_OVERDUE_MESSAGE
+        : config.message)
   const geminiUnsubmitted =
     hideInstructorWrite &&
     documentKind === 'payment_statement' &&
@@ -141,7 +166,11 @@ export function EducationSettlementRow({
   const relatedDate = formatDisplayDate(relatedDateIso)
   const description = relatedDate ? `${relatedDatePrefix} : ${relatedDate}` : item.deadlineLabel
   const actions = config.actions ?? []
-  const actionHint = item.submitBlockedReason ? undefined : config.actionHint
+  // 운영 종료 행은 "강의보고서 작성 이후…" 안내를 붙이지 않는다(작성 자체가 불가)
+  const actionHint =
+    item.submitBlockedReason || (operationEndedNotice && item.status === 'report_pending')
+      ? undefined
+      : config.actionHint
   const hideReceiptWrite =
     documentKind === 'receipt' &&
     item.hasPayableItems === false &&
@@ -206,6 +235,7 @@ export function EducationSettlementRow({
   const renderAction = (action: SettlementStatusAction) => {
     if (action === 'write') {
       if (hideReceiptWrite) return null
+      if (hideWrite) return null
       if (hideInstructorWrite && documentKind === 'payment_statement') return null
       return (
         <PFButton
@@ -268,6 +298,7 @@ export function EducationSettlementRow({
       )
     }
     if (action === 'view-correction') {
+      // 정정 내역 팝업(correction-detail-modal)은 시안 확정 전까지 비노출 — 기존처럼 지급조서 확인 화면으로 이동
       return (
         <PFButton
           key={action}
@@ -285,6 +316,33 @@ export function EducationSettlementRow({
       )
     }
     if (hideInstructorWrite && documentKind === 'payment_statement') return null
+    if (isPaymentStatement && hideReapply) return null
+    if (isCorrectionReapply) {
+      // 정정 승인된 지급조서: 작성 화면이 아니라 재신청 API(DRAFT → REAPPLICATION). 서버가 기한을 보지 않아 기한으로 막지 않는다.
+      const settlementId = item.settlementId
+      const disabled = settlementId == null || reapplyMutation.isPending
+      return (
+        <PFButton
+          key={action}
+          type="button"
+          variant="primary"
+          size="large"
+          disabled={disabled}
+          onClick={() => {
+            if (disabled || settlementId == null) return
+            reapplyMutation.mutate(settlementId, {
+              onError: error => {
+                setReapplyErrorMessage(
+                  instructorSettlementApiErrorMessage(error, PAYMENT_STATEMENT_REAPPLY_FAILED_MESSAGE),
+                )
+              },
+            })
+          }}
+        >
+          {config.writeLabel ?? '지급조서 재신청'}
+        </PFButton>
+      )
+    }
     const reapplyPath = documentKind === 'receipt' ? receiptSubmitPath : writePath
     const reapplyUnavailable = receiptReapplyUnavailable
     return (
@@ -435,7 +493,7 @@ export function EducationSettlementRow({
             >
               닫기
             </PFButton>
-            {documentKind === 'payment_statement' && !hideInstructorWrite ? (
+            {documentKind === 'payment_statement' && !hideInstructorWrite && !operationEnded ? (
               <PFButton
                 type="button"
                 variant="primary"
@@ -478,6 +536,12 @@ export function EducationSettlementRow({
           </div>
         </div>
       </PFModal>
+      <PFAlertModal
+        open={reapplyErrorMessage != null}
+        title="지급조서 재신청"
+        description={reapplyErrorMessage ?? ''}
+        onConfirm={() => setReapplyErrorMessage(null)}
+      />
     </>
   )
 }

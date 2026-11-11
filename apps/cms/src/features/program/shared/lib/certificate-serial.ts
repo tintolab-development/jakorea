@@ -60,6 +60,54 @@ export const CERTIFICATE_SERIAL_ISSUANCE_FORM_TEMPLATE =
 
 export type CertificateSerialIssuanceSource = CertificateSerialAllocateRequestIssuanceSource
 
+/**
+ * 인증서 발급 사유 코드 — `POST …/issues/serial` `issueReason`, 발급 이력 `issueReason`.
+ * 포털 CertificateIssueRequest.issueReason과 같은 코드 체계. 허용 외 값은 400 CERTIFICATE_ISSUE_REASON_INVALID.
+ */
+export const CERTIFICATE_ISSUE_REASON_CODES = [
+  'INSTITUTION_SUBMISSION',
+  'EDUCATION_COMPLETION_PROOF',
+  'PERSONAL_ARCHIVE',
+] as const
+
+export type CertificateIssueReasonCode = (typeof CERTIFICATE_ISSUE_REASON_CODES)[number]
+
+/** 코드 → 화면 라벨 (발급 사유 모달 선택지와 같은 문구) */
+export const CERTIFICATE_ISSUE_REASON_LABELS: Record<CertificateIssueReasonCode, string> = {
+  INSTITUTION_SUBMISSION: '기관 제출용',
+  EDUCATION_COMPLETION_PROOF: '교육 이수 증빙용',
+  PERSONAL_ARCHIVE: '개인 보관용',
+}
+
+/** 코드값(대소문자 무관)만 허용. 그 외·빈 값은 null(사유 생략) */
+export function normalizeCertificateIssueReasonCode(
+  value: string | null | undefined
+): CertificateIssueReasonCode | null {
+  const normalized = value?.trim().toUpperCase() ?? ''
+  return (CERTIFICATE_ISSUE_REASON_CODES as readonly string[]).includes(normalized)
+    ? (normalized as CertificateIssueReasonCode)
+    : null
+}
+
+/** 발급 사유 모달에서 고른 라벨 → 코드. 모르는 라벨이면 null */
+export function certificateIssueReasonCodeFromLabel(
+  label: string | null | undefined
+): CertificateIssueReasonCode | null {
+  const trimmed = label?.trim() ?? ''
+  if (!trimmed) return null
+  const entry = (
+    Object.entries(CERTIFICATE_ISSUE_REASON_LABELS) as Array<[CertificateIssueReasonCode, string]>
+  ).find(([, text]) => text === trimmed)
+  return entry?.[0] ?? null
+}
+
+/** 발급 이력 `issueReason` 표시 — 코드면 한글 라벨, 모르는 값은 원문, 없으면 '-' */
+export function formatCertificateIssueReasonLabel(value: string | null | undefined): string {
+  const code = normalizeCertificateIssueReasonCode(value)
+  if (code) return CERTIFICATE_ISSUE_REASON_LABELS[code]
+  return value?.trim() || '-'
+}
+
 export type CertificateSerialSubject = {
   programId?: string | number | null
   subjectId?: string | number | null
@@ -69,6 +117,11 @@ export type CertificateSerialSubject = {
   certificateType: string
   /** 양식 관리 샘플 다운로드. 프로그램/참가자 ID 없이 시퀀스만 발급 */
   issuanceSource?: CertificateSerialIssuanceSource
+  /**
+   * 발급 사유 코드 — 프로그램 참가자 발급(`POST …/issues/serial`)에만 싣는다. 생략 시 사유 없이 발급.
+   * 재사용 발급(`reused=true`)이면 BE가 기존 사유를 유지한다.
+   */
+  issueReason?: CertificateIssueReasonCode | null
 }
 
 export function isFormTemplateCertificateSerialSubject(

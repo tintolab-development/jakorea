@@ -45,6 +45,9 @@ import {
   receiptPaymentItemLabel,
   sortReceiptPayableItems,
 } from '../lib/payment-items'
+import { paymentItemLimitError } from '../lib/payment-item-limit'
+import { instructorTransportExclusionNotice } from '../lib/instructor-transport-exclusion'
+import { useInstructorSettlementPreviewQuery } from '../api/use-instructor-settlement-preview-query'
 import {
   RECEIPT_UPLOAD_ACCEPT,
   RECEIPT_UPLOAD_HINTS,
@@ -161,6 +164,8 @@ function AmountWithWon({
   placeholder = '직접 입력',
   ariaLabel,
   maxWon,
+  error = false,
+  errorMessage,
 }: {
   width?: number
   value: string
@@ -168,7 +173,10 @@ function AmountWithWon({
   disabled?: boolean
   placeholder?: string
   ariaLabel?: string
+  /** 입력값을 이 금액으로 자른다(강사 식사비 등). 영수증 항목 한도는 자르지 않고 errorMessage로 알린다. */
   maxWon?: number | null
+  error?: boolean
+  errorMessage?: string | null
 }) {
   return (
     <div className={styles.amountRow}>
@@ -183,6 +191,10 @@ function AmountWithWon({
         disabled={disabled}
         value={value}
         aria-label={ariaLabel}
+        aria-invalid={error || Boolean(errorMessage) || undefined}
+        error={error || Boolean(errorMessage)}
+        message={errorMessage ?? undefined}
+        messageStatus={errorMessage ? 'error' : 'neutral'}
         onValueChange={next => onChange(formatSettlementAmountInput(next, maxWon))}
       />
       <PFText as="span" typo="bd-md-rg" color="black">
@@ -333,7 +345,7 @@ function TripLegBlock({
   attachments,
   uploadEnabled,
   showReceiptUpload = true,
-  amountMaxWon,
+  amountError = false,
   onTransitChange,
   onAmountChange,
   onFileNamesChange,
@@ -348,7 +360,8 @@ function TripLegBlock({
   attachments?: SettlementReceiptAttachment[]
   uploadEnabled: boolean
   showReceiptUpload?: boolean
-  amountMaxWon?: number | null
+  /** 교통비 합계가 한도를 넘으면 가는 편·오는 편 입력란을 오류 상태로 표시 */
+  amountError?: boolean
   onTransitChange: (next: string) => void
   onAmountChange: (next: string) => void
   onFileNamesChange: (next: string[]) => void
@@ -380,7 +393,7 @@ function TripLegBlock({
               value={amount}
               onChange={onAmountChange}
               ariaLabel={`${prefix} 지출 금액`}
-              maxWon={amountMaxWon}
+              error={amountError}
             />
           </PFFormField>
         </PFFormFieldRow>
@@ -451,7 +464,7 @@ function AmountReceiptSection({
               value={item.amount}
               onChange={amount => onChange({ ...item, amount })}
               ariaLabel={amountLabel}
-              maxWon={maxWon}
+              errorMessage={paymentItemLimitError(parseSettlementAmount(item.amount), maxWon)}
             />
           </PFFormField>
         </PFFormFieldRow>
@@ -550,10 +563,11 @@ export function EducationSettlementWriteForm({
   )
 
   const [tripType, setTripType] = useState<TripType>(hydrated?.tripType ?? 'round_trip')
+  /** 교통비 섹션 하단 안내용(기존 화면 유지). 교통비는 한도가 없어 입력 오류·제출 차단에는 쓰지 않는다 */
   const transportMaxWon = readPayableMaxLimitWon(transportItem)
   const [departTransit, setDepartTransit] = useState(hydrated?.departTransit ?? '')
   const [departAmount, setDepartAmount] = useState(
-    formatSettlementAmountInput(hydrated?.departAmount ?? '', transportMaxWon),
+    formatSettlementAmountInput(hydrated?.departAmount ?? ''),
   )
   const [departFiles, setDepartFiles] = useState<string[]>(hydrated?.departFiles ?? [])
   const [departAttachments, setDepartAttachments] = useState<SettlementReceiptAttachment[]>(
@@ -561,7 +575,7 @@ export function EducationSettlementWriteForm({
   )
   const [returnTransit, setReturnTransit] = useState(hydrated?.returnTransit ?? '')
   const [returnAmount, setReturnAmount] = useState(
-    formatSettlementAmountInput(hydrated?.returnAmount ?? '', transportMaxWon),
+    formatSettlementAmountInput(hydrated?.returnAmount ?? ''),
   )
   const [returnFiles, setReturnFiles] = useState<string[]>(hydrated?.returnFiles ?? [])
   const [returnAttachments, setReturnAttachments] = useState<SettlementReceiptAttachment[]>(
@@ -576,7 +590,8 @@ export function EducationSettlementWriteForm({
           ...base,
           itemName: item.itemName,
           evidenceRequired: isReceiptEvidenceRequired(item.evidenceRequired),
-          amount: formatSettlementAmountInput(base.amount, item.maxLimitWon),
+          maxLimitWon: item.maxLimitWon,
+          amount: formatSettlementAmountInput(base.amount),
         }
       })
     }
@@ -633,10 +648,10 @@ export function EducationSettlementWriteForm({
         prefilledFromDetail.current = true
         setTripType(mapped.transport.tripType)
         setDepartTransit(mapped.transport.depart.transit)
-        setDepartAmount(formatSettlementAmountInput(mapped.transport.depart.amount, transportMaxWon))
+        setDepartAmount(formatSettlementAmountInput(mapped.transport.depart.amount))
         setDepartAttachments(mapped.transport.depart.attachments)
         setReturnTransit(mapped.transport.return.transit)
-        setReturnAmount(formatSettlementAmountInput(mapped.transport.return.amount, transportMaxWon))
+        setReturnAmount(formatSettlementAmountInput(mapped.transport.return.amount))
         setReturnAttachments(mapped.transport.return.attachments)
         setExtraItems(
           amountItems.map(item => {
@@ -646,7 +661,8 @@ export function EducationSettlementWriteForm({
               ...base,
               itemName: item.itemName,
               evidenceRequired: isReceiptEvidenceRequired(item.evidenceRequired),
-              amount: formatSettlementAmountInput(base.amount, item.maxLimitWon),
+              maxLimitWon: item.maxLimitWon,
+              amount: formatSettlementAmountInput(base.amount),
             }
           })
         )
@@ -664,7 +680,6 @@ export function EducationSettlementWriteForm({
     homeAddressDetail,
     name,
     payableItems,
-    transportMaxWon,
   ])
 
   const transportTotal = useMemo(() => {
@@ -680,12 +695,31 @@ export function EducationSettlementWriteForm({
   }
 
   const extraItemsForUi = overlayPayableEvidenceRequired(extraItems, payableItems)
+  /** 영수증 금액 항목 한도 초과(서버 PAYMENT_ITEM_LIMIT_EXCEEDED와 같은 기준) — 입력란 오류 + 제출 차단. 교통비는 한도 없음 */
+  const firstExtraLimitError = isReceipt
+    ? (extraItemsForUi
+        .map(item =>
+          paymentItemLimitError(
+            parseSettlementAmount(item.amount),
+            readPayableMaxLimitWon(payableItems.find(payable => payable.itemType === item.itemType)),
+          ),
+        )
+        .find((message): message is string => Boolean(message)) ?? null)
+    : null
+  const receiptLimitError = firstExtraLimitError
   const orderedExtras = sortReceiptPayableItems(extraItemsForUi)
   const wageExtras = orderedExtras.filter(item => isReceiptWageItemType(item.itemType, item.itemName))
   const restExtras = orderedExtras.filter(item => !isReceiptWageItemType(item.itemType, item.itemName))
   const instructorTransportPreview = session?.instructorTransportPreview ?? null
   const showInstructorTransportSection =
     isInstructorTransportSectionVisible(instructorTransportPreview)
+  /** 일반 프로그램: 지도에서 주소·경로를 못 찾으면 교통비 없이 신청 가능 — 미리보기 사유로 안내만 한다 */
+  const instructorSettlementPreview = useInstructorSettlementPreviewQuery(
+    isReceipt ? null : session?.assignmentId,
+  )
+  const transportExclusionNotice = isReceipt
+    ? null
+    : instructorTransportExclusionNotice(instructorSettlementPreview.transportExclusion)
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -715,13 +749,20 @@ export function EducationSettlementWriteForm({
     if (isReceipt && (session?.eligible === false || matchedIndividual?.eligible === false)) {
       showAlert(
         session?.submitBlockedReason ??
-          individualIneligibleMessage(matchedIndividual?.ineligibleReason) ??
+          individualIneligibleMessage(
+            matchedIndividual?.ineligibleReason,
+            scheduleSettlementAudience ?? 'individual',
+          ) ??
           '지금은 영수증을 제출할 수 없습니다.',
       )
       return
     }
     if (lectureFeeBlocked) {
       showAlert(lectureFeeBlockerMessage ?? '지금은 정산을 신청할 수 없습니다.')
+      return
+    }
+    if (receiptLimitError) {
+      showAlert(receiptLimitError)
       return
     }
 
@@ -767,22 +808,20 @@ export function EducationSettlementWriteForm({
       transportAutoPreview: isReceipt ? null : (session?.instructorTransportPreview ?? null),
       tripType,
       departTransit,
-      departAmount: formatSettlementAmountInput(departAmount, transportMaxWon),
+      departAmount: formatSettlementAmountInput(departAmount),
       departFiles,
       departAttachments,
       returnTransit,
-      returnAmount: formatSettlementAmountInput(returnAmount, transportMaxWon),
+      returnAmount: formatSettlementAmountInput(returnAmount),
       returnFiles,
       returnAttachments,
       extraItems: isReceipt
         ? extraItemsForUi.map(item => ({
             ...item,
-            amount: formatSettlementAmountInput(
-              item.amount,
-              readPayableMaxLimitWon(
-                payableItems.find(payable => payable.itemType === item.itemType),
-              ),
+            maxLimitWon: readPayableMaxLimitWon(
+              payableItems.find(payable => payable.itemType === item.itemType),
             ),
+            amount: formatSettlementAmountInput(item.amount),
           }))
         : [],
       mealAmount: formatSettlementAmountInput(mealAmount, INSTRUCTOR_MEAL_MAX_WON),
@@ -827,7 +866,7 @@ export function EducationSettlementWriteForm({
   const basicSectionNo = sectionNo++
   const showTransportSection = isReceipt
     ? Boolean(transportItem)
-    : showInstructorTransportSection
+    : showInstructorTransportSection || Boolean(transportExclusionNotice)
   const wageSectionNos = wageExtras.map(() => sectionNo++)
   const transportSectionNo = showTransportSection ? sectionNo++ : null
   const restSectionNos = restExtras.map(() => sectionNo++)
@@ -1023,7 +1062,6 @@ export function EducationSettlementWriteForm({
                   attachments={departAttachments}
                   uploadEnabled={isReceiptEvidenceRequired(transportItem?.evidenceRequired)}
                   showReceiptUpload={isReceiptEvidenceRequired(transportItem?.evidenceRequired)}
-                  amountMaxWon={transportMaxWon}
                   onTransitChange={setDepartTransit}
                   onAmountChange={setDepartAmount}
                   onFileNamesChange={setDepartFiles}
@@ -1041,7 +1079,6 @@ export function EducationSettlementWriteForm({
                     attachments={returnAttachments}
                     uploadEnabled={isReceiptEvidenceRequired(transportItem?.evidenceRequired)}
                     showReceiptUpload={isReceiptEvidenceRequired(transportItem?.evidenceRequired)}
-                    amountMaxWon={transportMaxWon}
                     onTransitChange={setReturnTransit}
                     onAmountChange={setReturnAmount}
                     onFileNamesChange={setReturnFiles}
@@ -1064,6 +1101,14 @@ export function EducationSettlementWriteForm({
                   </PFFormFieldRow>
                 </PFFormFieldTable>
               </>
+            ) : transportExclusionNotice ? (
+              <div role="note" aria-label="교통비 제외 안내" className={styles.noteLines}>
+                {transportExclusionNotice.map(line => (
+                  <PFText key={line} as="p" typo="bd-md-rg" color="error">
+                    {line}
+                  </PFText>
+                ))}
+              </div>
             ) : (
               <InstructorTransportFeeBlock preview={instructorTransportPreview} />
             )}
@@ -1221,7 +1266,7 @@ export function EducationSettlementWriteForm({
             type="submit"
             size="xlarge"
             width={240}
-            disabled={receiptSubmitBlocked || lectureFeeBlocked}
+            disabled={receiptSubmitBlocked || lectureFeeBlocked || Boolean(receiptLimitError)}
           >
             신청하기
           </PFButton>

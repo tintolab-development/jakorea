@@ -408,14 +408,15 @@ export default function AccountPaymentsPage() {
     ? budgetSummaryQuery.data?.annualBudgetAmount
     : undefined
 
+  /** 금년도 정산 완료 총액 = 실지급액(세후) 합계. 세전 `completedPaymentAmount`는 예산 집행액이라 쓰지 않는다. */
   const completedTotalDisplay = useMemo(() => {
     if (accountPaymentsRemote) {
-      return budgetSummaryQuery.data?.completedPaymentAmount ?? null
+      return budgetSummaryQuery.data?.completedNetTotal ?? null
     }
     return completedTotalForSelectedYear
   }, [
     accountPaymentsRemote,
-    budgetSummaryQuery.data?.completedPaymentAmount,
+    budgetSummaryQuery.data?.completedNetTotal,
     completedTotalForSelectedYear,
   ])
 

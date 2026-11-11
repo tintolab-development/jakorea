@@ -6,6 +6,7 @@ import {
   TEXTBOOK_NOT_USED_OPTION_VALUE,
   buildIndividualApplicantTextbookOptions,
   resolveIndividualApplicantTextbookDisplay,
+  shouldShowGeneralIndividualApplicantTextbookField,
 } from './individual-applicant-textbook'
 
 const program = {
@@ -104,5 +105,21 @@ describe('resolveIndividualApplicantTextbookDisplay', () => {
     expect(resolveIndividualApplicantTextbookDisplay(program, row, catalog).kitsLabel).toBe(
       '2키트 (48권)'
     )
+  })
+})
+
+describe('shouldShowGeneralIndividualApplicantTextbookField (개인 시안 06-1·06-2)', () => {
+  const individual = { generalProgramAudience: 'individual' } as Program
+  const organization = { generalProgramAudience: 'organization' } as unknown as Program
+
+  it('개인형 승인 완료면 교재명 행을 노출한다', () => {
+    expect(shouldShowGeneralIndividualApplicantTextbookField(individual, 'approved')).toBe(true)
+  })
+
+  it('승인 대기·반려·프로그램 없음·기관형은 노출하지 않는다', () => {
+    expect(shouldShowGeneralIndividualApplicantTextbookField(individual, 'pending')).toBe(false)
+    expect(shouldShowGeneralIndividualApplicantTextbookField(individual, 'rejected')).toBe(false)
+    expect(shouldShowGeneralIndividualApplicantTextbookField(null, 'approved')).toBe(false)
+    expect(shouldShowGeneralIndividualApplicantTextbookField(organization, 'approved')).toBe(false)
   })
 })

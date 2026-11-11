@@ -137,7 +137,9 @@ function listInstructor(values: ProgramDetailEditFormValues): string[] {
   push(keys, blankText(values.instructorRecruitmentContactOrganizationName), `${prefix}.inquiryContact`)
   push(keys, blankText(values.instructorContactPhone), `${prefix}.inquiryTel`)
   push(keys, blankText(values.instructorContactEmail), `${prefix}.inquiryEmail`)
-  push(keys, blankText(values.instructorRecruitmentRemarks), `${prefix}.notes`)
+  if (values.instructorRecruitmentNotesNotApplicable !== 'not_applicable') {
+    push(keys, blankText(values.instructorRecruitmentRemarks), `${prefix}.notes`)
+  }
   return keys
 }
 

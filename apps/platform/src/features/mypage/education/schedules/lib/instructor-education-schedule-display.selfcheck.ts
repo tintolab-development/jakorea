@@ -4,6 +4,7 @@ import {
   formatInstructorEducationScheduleLine,
   formatInstructorEducationUnitLabel,
   formatLectureReportCardTimeSubtitle,
+  formatLectureReportProgressSessionLabel,
   isCanonicalPreEducationSchedule,
   readInstructorEducationScheduleFields,
 } from './instructor-education-schedule-display.ts'
@@ -197,6 +198,21 @@ assert.equal(
     curriculumSessions: [{}, {}],
   }).curriculumSessionCount,
   2,
+)
+
+// 강의보고서 「진행 차시」 — 연결 커리큘럼 차시 수만. 회차(sessionNo)·사전교육 라벨을 넣지 않는다.
+assert.equal(formatLectureReportProgressSessionLabel({ curriculumSessionCount: 2 }), '2차시')
+assert.equal(formatLectureReportProgressSessionLabel({ curriculumSessionCount: null }), '')
+assert.equal(
+  formatLectureReportProgressSessionLabel({ sessionNo: 3, curriculumSessionCount: null } as never),
+  '',
+)
+
+// Gemini 정산 인정 차시 — curriculumSessionCount가 아닌 별도 필드로 받아 `K차시`
+assert.equal(formatInstructorEducationUnitLabel({ recognizedClassCount: 3 }), '3차시')
+assert.equal(
+  formatInstructorEducationUnitLabel({ sessionNo: 2, curriculumSessionCount: null, recognizedClassCount: 3 }),
+  '2회차',
 )
 
 console.log('instructor-education-schedule-display.selfcheck ok')

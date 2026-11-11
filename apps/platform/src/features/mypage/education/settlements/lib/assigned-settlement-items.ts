@@ -15,6 +15,7 @@ import {
   canSubmitFromAvailableActions,
   compareAssignedSettlementSchedules,
   isAssignedEducationScheduleForSettlement,
+  isPaymentStatementOperationEnded,
   resolveEducationSettlementStatusResult,
   resolveSettlementEducationProgress,
   type SettlementDeadlinePolicy,
@@ -23,6 +24,7 @@ import {
   individualIneligibleMessage,
   individualTransportIneligibleNotice,
   isEvidencePolicyUnconfigured,
+  type ScheduleSettlementAudience,
 } from './individual-settlement-contract.ts'
 import { normalizePayableItems } from './payment-items.ts'
 import { seoulBusinessEndDeadlineAt } from './seoul-deadline.ts'
@@ -42,7 +44,11 @@ import {
   readSettlementDeadlineAt,
   readSettlementScheduleJoinId,
 } from './settlement-join.ts'
-import { toDisplayEducationScheduleName } from '../../../../../shared/lib/education-schedule-name.ts'
+import {
+  formatEducationRoundSessionLabel,
+  isAutoMaterializedScheduleName,
+  toDisplayEducationScheduleName,
+} from '../../../../../shared/lib/education-schedule-name.ts'
 import { isScheduleDateLikeText } from '../../../../../shared/lib/format-display-date.ts'
 
 export type SettlementLectureReportJoin = {
@@ -54,7 +60,10 @@ export type SettlementLectureReportJoin = {
   grade?: string | null
   startAt?: string | null
   endAt?: string | null
+  /** 본교육 회차 번호(program_schedule.session_no). 차시가 아니다. */
   sessionNo?: number | null
+  /** 이 일정에 연결된 커리큘럼 차시 수. 없으면 null — sessionNo로 대신하지 않는다. */
+  curriculumSessionCount?: number | null
   lectureFeePreview?: LectureFeePreview | null
   instructorTransportPreview?: InstructorTransportPreview | null
 }
@@ -111,10 +120,14 @@ export type BuildAssignedSettlementItemsInput = {
   programId?: string | null
   now?: Date
   operationEndAt?: string | null
+  /** 강사 지급조서 사업 운영 종료일(YYYY-MM-DD 또는 ISO) */
+  businessEndAt?: string | null
   deadlinePolicy?: SettlementDeadlinePolicy
   /** true이면 일정별 정산 API `schedules`가 카드 목록 SSOT */
   preferIndividualSchedules?: boolean
   lectureReports?: readonly SettlementLectureReportJoin[]
+  /** 일정별 영수증 정산 대상 — 봉사자면 사유 문구를 봉사 기준으로 바꾼다 */
+  scheduleSettlementAudience?: ScheduleSettlementAudience | null
 }
 
 function mapIndividualAttendance(
@@ -134,8 +147,20 @@ function mapIndividualAttendance(
   }
 }
 
+/** 강의보고서 일정의 회차 라벨. sessionNo는 「N회차」, 연결 차시 수가 있으면 `N회차 (K차시)`. */
+function lectureRoundSessionLabel(
+  sessionNo: number | null | undefined,
+  curriculumSessionCount: number | null | undefined,
+): string {
+  return formatEducationRoundSessionLabel({
+    roundNumber: sessionNo,
+    curriculumSessionCount: sessionNo != null && sessionNo > 0 ? curriculumSessionCount : null,
+  })
+}
+
 function educationItemFromLecture(row: SettlementLectureReportJoin): EducationScheduleItem {
   const sessionNumber = row.sessionNo != null && row.sessionNo > 0 ? row.sessionNo : 0
+  const sessionLabel = lectureRoundSessionLabel(row.sessionNo, row.curriculumSessionCount)
   return {
     id: String(row.scheduleId),
     scheduleId: row.scheduleId,
@@ -143,7 +168,7 @@ function educationItemFromLecture(row: SettlementLectureReportJoin): EducationSc
     heldAt: row.startAt ?? row.endAt ?? '',
     title: '-',
     attendanceStatus: null,
-    sessionLabel: sessionNumber > 0 ? `${sessionNumber}차시` : undefined,
+    sessionLabel: sessionLabel || undefined,
     progressTimeLabel: formatLectureTimeRange(row.startAt, row.endAt) || undefined,
     locationName: row.institutionName?.trim() || undefined,
   }
@@ -153,14 +178,19 @@ function educationItemFromIndividual(
   row: PortalIndividualScheduleSettlement,
 ): EducationScheduleItem {
   const scheduleId = readScheduleJoinId(row) ?? null
+  // 일반 기관형 승인 시 서버가 만든 내부 일정명(`기관 확정 YYYY-MM-DD`)은 회차 라벨로 노출하지 않는다
+  const scheduleName = isAutoMaterializedScheduleName(row.scheduleName)
+    ? undefined
+    : toDisplayEducationScheduleName(row.scheduleName)
   return {
     id: scheduleId != null ? String(scheduleId) : String(row.scheduleName ?? 'schedule'),
     scheduleId,
     sessionNumber: 0,
     heldAt: row.startAt ?? row.endAt ?? '',
-    title: toDisplayEducationScheduleName(row.scheduleName) || '-',
+    ...(row.endAt ? { endAt: row.endAt } : {}),
+    title: scheduleName || '-',
     attendanceStatus: mapIndividualAttendance(row.attendanceStatus),
-    sessionLabel: toDisplayEducationScheduleName(row.scheduleName),
+    sessionLabel: scheduleName,
   }
 }
 
@@ -201,9 +231,11 @@ function formatSettlementSessionMeta(
   const time =
     (progressTimeLabel && !isScheduleDateLikeText(progressTimeLabel) ? progressTimeLabel : '') ||
     formatLectureTimeRange(lecture?.startAt ?? item.heldAt, lecture?.endAt ?? item.endAt)
+  // sessionNo·sessionNumber는 회차 번호다. 차시로 표기하지 않는다.
   const sessionNumber = lecture?.sessionNo && lecture.sessionNo > 0 ? lecture.sessionNo : item.sessionNumber
   const session =
-    item.sessionLabel?.trim() || (sessionNumber > 0 ? `${sessionNumber}차시` : '')
+    item.sessionLabel?.trim() ||
+    lectureRoundSessionLabel(sessionNumber, lecture?.curriculumSessionCount)
   return [time, session].filter(Boolean).join(' ')
 }
 
@@ -250,6 +282,7 @@ function resolveProgressWithLecture(
   return resolveSettlementEducationProgress(
     {
       heldAt: schedule.heldAt || lecture?.startAt || '',
+      endAt: schedule.endAt || lecture?.endAt || undefined,
       scheduleStatus: schedule.scheduleStatus,
       attendanceStatus: schedule.attendanceStatus,
     },
@@ -351,6 +384,12 @@ export function buildAssignedSettlementItems(
     individualByScheduleId.set(joinedId, row)
   }
   const lectureByScheduleId = lectureByScheduleIdEarly
+  const businessEndAt =
+    input.deadlinePolicy === 'payment_statement'
+      ? (seoulBusinessEndDeadlineAt(input.businessEndAt) ?? input.businessEndAt ?? undefined)
+      : undefined
+  const operationEnded =
+    input.deadlinePolicy === 'payment_statement' && isPaymentStatementOperationEnded(businessEndAt, now)
 
   return assigned.map(schedule => {
     const scheduleId = readAssignedScheduleJoinId(schedule)
@@ -386,8 +425,10 @@ export function buildAssignedSettlementItems(
       statementStatus,
       paymentStatus,
       correctionStatus: settlement?.correctionStatus,
+      statementReapplyAvailable: settlement?.statementReapplyAvailable === true,
       receiptDeadlineAt: deadlineAt,
       operationEndAt: seoulBusinessEndDeadlineAt(input.operationEndAt) ?? input.operationEndAt,
+      businessEndAt: businessEndAt ?? null,
       canSubmit: submitAllowed,
       deadlinePolicy: input.deadlinePolicy,
       isResubmitted: isResubmittedSettlement(settlement) || isResubmittedReceipt(receipt),
@@ -418,7 +459,10 @@ export function buildAssignedSettlementItems(
     const submittedAt = settlement?.submittedAt ?? receipt?.submittedAt
     /** 교통비만 지급 항목이었고 거리 미달·주소 없음으로 빠진 회차 — 빈 payableItems를 설정 오류로 보지 않는다 */
     const ineligibleMessage =
-      individualIneligibleMessage(individual?.ineligibleReason) ??
+      individualIneligibleMessage(
+        individual?.ineligibleReason,
+        input.scheduleSettlementAudience ?? 'individual',
+      ) ??
       (individual && payableItems.length === 0
         ? (individualTransportIneligibleNotice(individual.transportPreview) ?? undefined)
         : undefined)
@@ -463,6 +507,9 @@ export function buildAssignedSettlementItems(
         : settlement?.applicationId != null
           ? { settlementApplicationId: settlement.applicationId }
           : {}),
+      ...(!individual && settlement?.settlementId != null
+        ? { settlementId: settlement.settlementId }
+        : {}),
       ...(individual?.currentRevisionNo != null
         ? { currentRevisionNo: individual.currentRevisionNo }
         : settlement?.revisionNo != null
@@ -476,6 +523,11 @@ export function buildAssignedSettlementItems(
       ...(individual ? { canResubmitReceipt: individual.canResubmit === true } : {}),
       ...(resolved.deadlineNotice ? { deadlineNotice: resolved.deadlineNotice } : {}),
       ...(previousAmount != null ? { previousAmount } : {}),
+      ...(settlement?.statementReapplyAvailable === true ? { reapplyAvailable: true } : {}),
+      ...(settlement?.statementReapplyDeadlineDate
+        ? { reapplyDeadlineDate: settlement.statementReapplyDeadlineDate }
+        : {}),
+      ...(operationEnded ? { operationEnded: true } : {}),
     }
   })
 }

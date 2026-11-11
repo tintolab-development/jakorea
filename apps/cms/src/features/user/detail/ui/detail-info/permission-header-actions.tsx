@@ -117,11 +117,6 @@ export function PermissionHeaderActions({
         <CmsButton
           variant="delete"
           disabled={approvalCancelBlocked}
-          title={
-            approvalCancelBlocked
-              ? '프로그램 담당 이력이 있어 승인을 취소할 수 없습니다.'
-              : undefined
-          }
           onClick={() => {
             if (approvalCancelBlocked) return
             onPermissionResetToPending?.({

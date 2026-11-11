@@ -828,8 +828,8 @@ const signedConsentSignatureImage = (
     fieldKey: string,
     adminPrivacyUnmaskRequest: AdminPrivacyUnmaskRequest,
     params?: SignedConsentSignatureImageParams,
- options?: SecondParameter<typeof customInstance<Blob>>,) => {
-      return customInstance<Blob>(
+ options?: SecondParameter<typeof customInstance<Blob | string>>,) => {
+      return customInstance<Blob | string>(
       {url: `/api/admin/users/${memberId}/consent-records/${consentType}/signed-document/signature-fields/${fieldKey}/content`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: adminPrivacyUnmaskRequest,

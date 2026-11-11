@@ -60,6 +60,13 @@ const PAYMENT_STATEMENT_COPY: SettlementCopy = {
 export const PAYMENT_STATEMENT_OPERATION_ENDED_MESSAGE =
   '프로그램 운영이 종료되어 지급조서를 제출할 수 없어요'
 
+/** 강사 지급조서 제출 기한이 지났을 때 (강의보고서 미작성 행에도 함께 쓴다) */
+export const PAYMENT_STATEMENT_OVERDUE_MESSAGE = PAYMENT_STATEMENT_COPY.overdueMessage
+
+/** 정정 승인 후 재신청 기한이 지났을 때 — 임시 문구(기획 확정 문구 없음, 기획 확인 필요) */
+export const PAYMENT_STATEMENT_REAPPLY_EXPIRED_MESSAGE =
+  '재신청 기한이 지나 지급조서를 재신청할 수 없어요'
+
 export function resolveSettlementDocumentKind(
   applicationType: string | null | undefined,
 ): SettlementDocumentKind {
@@ -99,7 +106,7 @@ export function resolveSettlementStatusUi(
     },
     waiting_confirm: {
       message: copy.waitingMessage,
-      markLabel: '확인 대기',
+      markLabel: kind === 'payment_statement' ? '확인 대기 중' : '확인 대기',
       markTone: 'neutral',
       statusLabel: '제출 완료',
       statusTone: 'submitted',
@@ -121,7 +128,7 @@ export function resolveSettlementStatusUi(
     },
     confirmed: {
       message: '담당자 확인이 완료되어 계좌 지급 예정이에요',
-      markLabel: '확인 완료',
+      markLabel: kind === 'payment_statement' ? '지급조서 확인 완료' : '확인 완료',
       markTone: 'success',
       amountKind: 'expected',
       viewLabel: copy.viewLabel,
@@ -154,7 +161,7 @@ export function resolveSettlementStatusUi(
       statusLabel: kind === 'payment_statement' ? '정정 완료' : undefined,
       amountKind: 'expected',
       writeLabel: kind === 'payment_statement' ? '지급조서 재신청' : copy.writeLabel,
-      viewLabel: '정정 내역 확인',
+      viewLabel: '정정 내역 확인하기',
       actions: kind === 'payment_statement' ? ['view-correction', 'reapply'] : [],
     },
     rejected: {

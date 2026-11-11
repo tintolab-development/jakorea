@@ -346,8 +346,9 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
         texts: [template.subject, template.bodyText],
         catalog: variablesCatalog,
         programNumericId,
+        recipientTypeScope: templateVariablesQuery,
       }),
-    [programNumericId, variablesCatalog]
+    [programNumericId, templateVariablesQuery, variablesCatalog]
   )
 
   const getTemplateUnusableMessage = useCallback(
@@ -357,9 +358,10 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
           texts: [template.subject, template.bodyText],
           catalog: variablesCatalog,
           programNumericId,
+          recipientTypeScope: templateVariablesQuery,
         })
       ),
-    [programNumericId, variablesCatalog]
+    [programNumericId, templateVariablesQuery, variablesCatalog]
   )
 
   /** 템플릿 미리보기 「템플릿 사용」으로 열렸을 때 open당 1회만 적용 (선택 팝업 「사용하기」와 같은 가드) */
@@ -811,7 +813,6 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                 groups={variableGroups.length > 0 ? variableGroups : undefined}
                 onDisabledInsert={handleDisabledVariableInsert}
                 isItemDisabled={isCatalogItemDisabled}
-                itemDisabledReason="현재 프로그램/참여 유형에서는 사용할 수 없는 변수입니다."
               />
             </div>
           </div>

@@ -15,7 +15,22 @@ import {
   clampEducationScheduleApplyConstraint,
   isIsoDateBeforeSeoulToday,
 } from '../../lib/apply-form-schedule'
+import {
+  patchTrainedTeachersSessionTime,
+  readTrainedTeachersSessionCount,
+  resizeTrainedTeachersSessionTimes,
+} from '../../lib/trained-teachers-preferred-schedule'
 import styles from './apply-preferred-schedule.module.css'
+
+/** 교육받은교사 희망 일정 — 차시 1줄(교시 + 시작~종료) */
+export type ApplyPreferredScheduleSessionTime = {
+  /** 이 차시가 들어가는 학교 시간표 교시 번호(숫자 문자열) */
+  classPeriod: string
+  /** `HH:mm` */
+  startTime: string
+  /** `HH:mm` */
+  endTime: string
+}
 
 export type ApplyPreferredScheduleBlock = {
   date: string
@@ -26,6 +41,13 @@ export type ApplyPreferredScheduleBlock = {
   startTime: string
   /** `HH:mm` */
   endTime: string
+  /**
+   * 교육받은교사 — 희망 차시(그날 수업 개수) 셀렉 값. 교시 번호가 아니다.
+   * 다른 유형은 쓰지 않는다.
+   */
+  sessionCount?: string
+  /** 교육받은교사 — 차시별 교시·시간 줄. 길이 = sessionCount */
+  sessionTimes?: ApplyPreferredScheduleSessionTime[]
 }
 
 function createEmptyBlock(): ApplyPreferredScheduleBlock {
@@ -267,6 +289,147 @@ function PreferenceScheduleFields({
   )
 }
 
+type TrainedTeachersScheduleFieldsProps = {
+  block: ApplyPreferredScheduleBlock
+  onPatch: (patch: Partial<ApplyPreferredScheduleBlock>) => void
+  minDate: string | null
+  maxDate: string | null
+  enabledDates: ReadonlySet<string> | null
+  sessionOptions: PFSelectOption[]
+  disabled: boolean
+  datePlaceholder: string
+  dateWidth: number
+}
+
+/**
+ * 교육받은교사 기간형 — 「희망 교육일 및 차시」(날짜 + 희망 차시) + 차시별 「N차시 희망 교육 시간」(교시 + 시작~종료).
+ * 1사1교 `ApplyEconomyPreferredSchedule`와 같은 구조. 다음 차시 교시는 앞 차시 + 1로 자동 입력하되 고칠 수 있다.
+ */
+function TrainedTeachersScheduleFields({
+  block,
+  onPatch,
+  minDate,
+  maxDate,
+  enabledDates,
+  sessionOptions,
+  disabled,
+  datePlaceholder,
+  dateWidth,
+}: TrainedTeachersScheduleFieldsProps) {
+  const sessionCount = readTrainedTeachersSessionCount(block)
+  const rows = resizeTrainedTeachersSessionTimes(block.sessionTimes, sessionCount)
+  const patchRow = (index: number, patch: Partial<ApplyPreferredScheduleSessionTime>) => {
+    onPatch({ sessionTimes: patchTrainedTeachersSessionTime(rows, index, patch) })
+  }
+
+  return (
+    <>
+      <DetailInfoForm.Row type="single">
+        <DetailInfoForm.Field
+          label="희망 교육일 및 차시"
+          fullRow
+          view="-"
+          edit={
+            <div className={`detail-info-form-inputs-wrapper-no-gap ${styles.timeInputs}`}>
+              <div className={styles.sessionRow}>
+                <PFDateInput
+                  variant="formPage"
+                  size="large"
+                  picker="date"
+                  width={dateWidth}
+                  className={styles.datePicker}
+                  placeholder={datePlaceholder}
+                  value={block.date}
+                  disabled={disabled}
+                  minDate={minDate}
+                  maxDate={maxDate}
+                  enabledDates={enabledDates}
+                  onValueChange={next => onPatch({ date: next })}
+                />
+                <DetailInfoForm.InputsSeparator />
+                <PFSelect
+                  variant="formPage"
+                  size="large"
+                  width={140}
+                  className={styles.sessionSelect}
+                  placeholder="희망 차시"
+                  aria-label="희망 차시"
+                  options={sessionOptions}
+                  value={block.sessionCount || undefined}
+                  disabled={disabled}
+                  onValueChange={next => {
+                    const count = readTrainedTeachersSessionCount({ sessionCount: next ?? '' })
+                    onPatch({
+                      sessionCount: count > 0 ? String(count) : '',
+                      sessionTimes: resizeTrainedTeachersSessionTimes(block.sessionTimes, count),
+                    })
+                  }}
+                />
+              </div>
+            </div>
+          }
+        />
+      </DetailInfoForm.Row>
+      {rows.map((row, index) => {
+        const label = `${index + 1}차시 희망 교육 시간`
+        return (
+          <DetailInfoForm.Row key={index} type="single">
+            <DetailInfoForm.Field
+              label={label}
+              fullRow
+              view="-"
+              edit={
+                <div className={`detail-info-form-inputs-wrapper-no-gap ${styles.timeInputs}`}>
+                  <div className={styles.sessionRow}>
+                    <PFTextInput
+                      variant="formPage"
+                      size="large"
+                      width={120}
+                      inputMode="numeric"
+                      placeholder="수업 진행 교시"
+                      aria-label={`${label} 교시`}
+                      value={row.classPeriod}
+                      disabled={disabled}
+                      onValueChange={next => patchRow(index, { classPeriod: next.replace(/[^\d]/g, '') })}
+                    />
+                    <PFText as="span" typo="bd-md-md" color="black" className={styles.timeUnit}>
+                      교시
+                    </PFText>
+                    <DetailInfoForm.InputsSeparator />
+                  </div>
+                  <div className={styles.timeRange}>
+                    <PFTimeInput
+                      placeholder="수업 시작"
+                      value={normalizeHHmm(row.startTime)}
+                      onValueChange={next => patchRow(index, { startTime: next })}
+                      aria-label={`${label} 시작`}
+                      disabled={disabled}
+                      width={168}
+                      className={styles.timePicker}
+                    />
+                    <PFText as="span" typo="bd-md-md" color="neutral-cool-500" className={styles.tilde}>
+                      ~
+                    </PFText>
+                    <PFTimeInput
+                      placeholder="수업 종료"
+                      value={normalizeHHmm(row.endTime)}
+                      onValueChange={next => patchRow(index, { endTime: next })}
+                      aria-label={`${label} 종료`}
+                      disabled={disabled}
+                      width={168}
+                      className={styles.timePicker}
+                    />
+                  </div>
+                </div>
+              }
+            />
+          </DetailInfoForm.Row>
+        )
+      })}
+    </>
+  )
+}
+
 type ApplyPreferredScheduleProps = {
   maxBlocks: number
   value?: ApplyPreferredScheduleBlock[]
@@ -307,6 +470,11 @@ type ApplyPreferredScheduleProps = {
   showClassPeriodInput?: boolean
   datePlaceholder?: string
   dateWidth?: number
+  /**
+   * 교육받은교사 기간형 — 지망마다 희망 차시(그날 수업 개수) 셀렉 + 차시별 교시·시간 줄.
+   * 지정하지 않으면 기존 입력(희망 차시 셀렉 또는 수업 진행 교시 1줄)을 그대로 쓴다.
+   */
+  trainedTeachersSessionRows?: { sessionOptions: PFSelectOption[] }
 }
 
 export function ApplyPreferredSchedule({
@@ -327,6 +495,7 @@ export function ApplyPreferredSchedule({
   showClassPeriodInput = true,
   datePlaceholder = '희망 교육 날짜를 선택해 주세요',
   dateWidth = 220,
+  trainedTeachersSessionRows,
 }: ApplyPreferredScheduleProps) {
   const cap = Math.max(1, Math.min(maxBlocks, 10))
   const [uncontrolled, setUncontrolled] = useState<ApplyPreferredScheduleBlock[]>(() => [
@@ -390,6 +559,19 @@ export function ApplyPreferredSchedule({
                 mode="edit"
                 className={styles.scheduleForm}
               >
+                {trainedTeachersSessionRows && !dateOnlyPreferred && fixedScheduleOptions.length === 0 ? (
+                  <TrainedTeachersScheduleFields
+                    block={block}
+                    onPatch={patch => patchBlock(index, patch)}
+                    minDate={selectable.minDate}
+                    maxDate={selectable.maxDate}
+                    enabledDates={selectable.enabledDates}
+                    sessionOptions={trainedTeachersSessionRows.sessionOptions}
+                    disabled={disabled}
+                    datePlaceholder={datePlaceholder}
+                    dateWidth={dateWidth}
+                  />
+                ) : (
                 <PreferenceScheduleFields
                   block={block}
                   onPatch={patch => patchBlock(index, patch)}
@@ -415,6 +597,7 @@ export function ApplyPreferredSchedule({
                   datePlaceholder={datePlaceholder}
                   dateWidth={dateWidth}
                 />
+                )}
               </DetailInfoForm>
             </div>
             {allowRemove && index > 0 ? (

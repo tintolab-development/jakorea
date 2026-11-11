@@ -1,4 +1,5 @@
 import type { ParticipatingVolunteerDetailRow } from '@/features/program/general/lib/participating-volunteer-detail'
+import { toCertificateStudentGender } from '@/features/program/general/lib/participating-individual-participant-certificate'
 import {
   buildStudentCertificateDownloadContext,
   type StudentCertificateDownloadContext,
@@ -132,7 +133,7 @@ function buildStudentRowFromUjatDetail(
     id: detail.volunteerId,
     no: row.no,
     name: applicant.name,
-    gender: applicant.gender === '남성' || applicant.gender === '남' ? 'male' : 'female',
+    gender: toCertificateStudentGender(applicant.gender),
     birthDate: applicant.birthDate,
     gradeClass: applicant.grade,
     contact: applicant.contact,

@@ -89,8 +89,14 @@
   gap: var(--spacing-16);
 }
 
+/* 공지사항 상세 타이틀과 동일 (모바일 24 · PC 40) */
 .title {
   margin: 0;
+  font-size: 24px;
+  line-height: 135%;
+  letter-spacing: -0.48px;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 .meta {
@@ -192,9 +198,9 @@
   }
 
   .title {
-    font-size: 44px;
+    font-size: 40px;
     line-height: 140%;
-    letter-spacing: -0.44px;
+    letter-spacing: -0.4px;
   }
 
   .attachmentDropdown {

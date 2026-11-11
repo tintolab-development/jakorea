@@ -36,6 +36,7 @@ import {
   useNotifyProgramApiUnavailableOnce,
 } from '@/features/program/shared/lib/program-api-unavailable'
 import { useGeneralVolunteerDocScreeningColumns } from './doc-screening-columns'
+import { useGeneralVolunteerEducationAssignApproval } from './use-education-assign-approval'
 import {
   requestGeneralVolunteerDocumentBulkApprove,
   requestGeneralVolunteerDocumentBulkReject,
@@ -141,9 +142,15 @@ function toExportRow(
 export function useGeneralVolunteerDocScreening({
   programId,
   interviewEnabled = true,
+  educationAssignOnApprove = false,
 }: {
   programId: string
   interviewEnabled?: boolean
+  /**
+   * 개인 프로그램·면접 없음 봉사자 — 단건 승인 시 「교육 배정 안내」 후
+   * approve-with-education-scope로 승인(배정 선택). 기본 false = 기존 final-result PASS.
+   */
+  educationAssignOnApprove?: boolean
 }) {
   const { showAlert } = useCmsAlert()
   const [bulkApproveOpen, setBulkApproveOpen] = useState(false)
@@ -179,6 +186,15 @@ export function useGeneralVolunteerDocScreening({
     setList,
   })
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
+  const educationAssign = useGeneralVolunteerEducationAssignApproval({
+    programId,
+    invalidateApplications: volunteerRemote.invalidateApplications,
+    onApproved: target => {
+      setSelectedRowKeys(prev => prev.filter(key => String(key) !== target.applicationId))
+      showApplicationApprovalCompletedAlert()
+    },
+  })
+  const openEducationAssign = educationAssign.open
   const [openManagerDropdown, setOpenManagerDropdown] = useState<{
     rowId: string
     manager: 'A' | 'B'
@@ -424,6 +440,17 @@ export function useGeneralVolunteerDocScreening({
     async (payload: PermissionModalPayload) => {
       if (!approveModalVolunteer) return
       const { id } = approveModalVolunteer
+      if (educationAssignOnApprove && !interviewEnabled) {
+        // 승인 안내(알림 시점) → 교육 배정 안내 → approve-with-education-scope
+        setApproveModalVolunteer(null)
+        openEducationAssign({
+          applicationId: id,
+          volunteerName: approveModalVolunteer.name,
+          notifyTiming: payload.notifyTiming,
+          manualNotifyAt: payload.manualNotifyAt,
+        })
+        return
+      }
       const scheduledAt = toScreeningNotifyFields(
         payload.notifyTiming,
         payload.manualNotifyAt
@@ -446,7 +473,9 @@ export function useGeneralVolunteerDocScreening({
       applyDocumentScreeningStatus,
       applyFinalResultStatus,
       approveModalVolunteer,
+      educationAssignOnApprove,
       interviewEnabled,
+      openEducationAssign,
     ]
   )
 
@@ -652,6 +681,7 @@ export function useGeneralVolunteerDocScreening({
     handleCancelApprovalConfirm,
     handleCancelRejectConfirm,
     applyDocumentScreeningStatus,
+    educationAssign,
     openManagerDropdown,
     setOpenManagerDropdown,
     updatingManagerEvaluation,

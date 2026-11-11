@@ -5,13 +5,14 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { NotificationTiming } from './notificationTiming';
 
 /**
  * IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 기관 승인 body의 평탄 timing과 섞지 않습니다.
  */
 export interface Notification {
-  /** IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE */
-  timing?: string;
+  /** IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE. ON_ANNOUNCEMENT는 기관 신청 승인 취소·반려 취소(교육받은 교사 기관 승인 취소 포함)에서만 허용합니다. */
+  timing?: NotificationTiming;
   /** timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601 */
   scheduledAt?: string;
 }

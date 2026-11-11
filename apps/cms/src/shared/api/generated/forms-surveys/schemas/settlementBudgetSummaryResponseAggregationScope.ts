@@ -7,7 +7,7 @@
  */
 
 /**
- * 집계 범위. YEAR=연간(paid_at/settlement year). PERIOD는 expected만 기간 필터된 경우에도 completed*\/settlementCount/paidCount는 여전히 YEAR.
+ * 집계 범위. 현재 서버는 fromDate/toDate 지정 여부와 관계없이 항상 YEAR를 반환한다. 기간 필터는 expectedSettlementAmount에만 적용되고, completed*\/settlementCount/paidCount는 year 기준이다. PERIOD는 예약값이며 현재 반환하지 않는다.
  */
 export type SettlementBudgetSummaryResponseAggregationScope = typeof SettlementBudgetSummaryResponseAggregationScope[keyof typeof SettlementBudgetSummaryResponseAggregationScope];
 

@@ -721,6 +721,17 @@
               "FORM_TEMPLATE"
             ],
             "example": "PROGRAM"
+          },
+          "issueReason": {
+            "type": "string",
+            "description": "발급 사유 코드. 회원 포털 CertificateIssueRequest.issueReason과 같은 코드 체계(한글 별칭 기관 제출용·교육 이수 증빙용·개인 보관용도 허용). 생략하면 기존과 동일하게 사유 없이 발급합니다. 허용 외 값은 400 CERTIFICATE_ISSUE_REASON_INVALID. 이미 발급번호가 있는 재사용(reused=true)이면 기존 사유를 바꾸지 않습니다.",
+            "enum": [
+              "INSTITUTION_SUBMISSION",
+              "EDUCATION_COMPLETION_PROOF",
+              "PERSONAL_ARCHIVE"
+            ],
+            "example": "INSTITUTION_SUBMISSION",
+            "nullable": true
           }
         },
         "required": [
@@ -733,8 +744,9 @@
         "properties": {
           "serialNumber": {
             "type": "string",
-            "description": "고유번호 (YY-JA-NNNNN)",
-            "example": "26-JA-00017"
+            "description": "YY-JA-NNNNN. 00000 금지. 형식이 틀리면 PDF를 만들지 말 것",
+            "example": "26-JA-00017",
+            "pattern": "^\\d{2}-JA-\\d{5}$"
           },
           "issueId": {
             "type": "integer",
@@ -744,7 +756,7 @@
           },
           "reused": {
             "type": "boolean",
-            "description": "호환 필드. 발급마다 새 번호를 쓰므로 정상 응답은 false",
+            "description": "같은 발급 키에 이미 발급된 번호를 다시 내려주면 true. true여도 PDF 진행은 정상",
             "example": false
           },
           "issuedAt": {
@@ -754,7 +766,12 @@
             "example": "2026-11-10T01:00:00Z",
             "nullable": true
           }
-        }
+        },
+        "required": [
+          "issueId",
+          "reused",
+          "serialNumber"
+        ]
       }
     },
     "securitySchemes": {

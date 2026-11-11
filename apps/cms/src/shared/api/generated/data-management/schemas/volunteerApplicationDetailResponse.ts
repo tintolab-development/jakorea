@@ -52,4 +52,8 @@ export interface VolunteerApplicationDetailResponse {
      * @minimum 0
      */
   activityScheduleCount?: number;
+  /** 1차 서류 합격/불합격 알림(VOLUNTEER_DOCUMENT_PASSED|REJECTED)이 실제 처리된 최신 시각. 재발송하면 최신 발송 시각으로 바뀝니다. 예약 대기·취소·실패 건은 제외하며 발송 이력이 없으면 null */
+  documentResultNotificationSentAt?: string | null;
+  /** 면접 합격/예비/불합격·최종 승인 알림(VOLUNTEER_APPLICATION_APPROVED|RESERVED|REJECTED)이 실제 처리된 최신 시각. 예약 대기·취소·실패 건은 제외하며 발송 이력이 없으면 null */
+  finalResultNotificationSentAt?: string | null;
 }

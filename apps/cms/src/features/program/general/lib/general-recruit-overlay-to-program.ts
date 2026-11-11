@@ -12,6 +12,7 @@ import type {
 import { APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-keys'
 import { getApplicantRecruitInstitutionOverlayRecord } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import { formatAnnouncementLabel } from '@/features/program/shared/lib/announcement-label'
+import { isGeneralRecruitmentRowProgram } from '@/features/program/general/lib/is-general-recruitment-row-program'
 import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import { readRecruitDetailMediaFromOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
@@ -88,6 +89,7 @@ export const GENERAL_RECRUIT_OVERLAY_KEYS = {
     inquiryTel: 'recruit.instructor.inquiryTel',
     inquiryEmail: 'recruit.instructor.inquiryEmail',
     notes: 'recruit.instructor.notes',
+    notesNotApplicable: 'recruit.instructor.notesNotApplicable',
     finalAnnounceIso: 'recruit.instructor.finalAnnounceIso',
     finalAnnounceMethod: 'recruit.instructor.finalAnnounceMethod',
   },
@@ -578,6 +580,17 @@ export type ApplyGeneralRecruitOverlayOptions = {
  * 기관·개인·강사·봉사자 모집 overlay를 하나의 Program 스냅샷에 병합.
  * `institutionOverlay` + `generalOverlay` 를 합친 record를 넘기거나, 각각 전달.
  */
+/**
+ * 등록 위저드 강사 모집 비고 「해당 없음」 overlay를 옮길 대상 — 일반 프로그램(참여자 유형이 정해진 일반 모집 행 프로그램)만.
+ * 1사1교·UJAT·교육받은 교사, 유형 정보가 없는 draft는 기존 동작(옮기지 않음)을 유지한다.
+ */
+function isGeneralInstructorNotesNotApplicableTarget(program: Program): boolean {
+  if (!isGeneralRecruitmentRowProgram(program)) return false
+  return (
+    program.generalProgramAudience != null || (program.generalParticipantTypes?.length ?? 0) > 0
+  )
+}
+
 export function applyGeneralRecruitOverlayToProgram(
   program: Program,
   overlay: Record<string, unknown>,
@@ -1172,6 +1185,26 @@ export function applyGeneralRecruitOverlayToProgram(
       instructorOtherMatters,
       preferOverlay
     )
+  }
+  // 등록 위저드 강사 모집 비고 「해당 없음」 — 봉사자와 같은 규칙으로 nested에 옮긴다(일반 프로그램만).
+  // 1사1교·UJAT·교육받은 교사는 기존 경로 유지(1사1교는 RHF canonical이 정본).
+  // 상세 조회·저장은 GET 강사 모집 행 `remarksNotApplicable`이 정본(이 nested 값으로 행을 덮지 않음).
+  const overlayInstructorNotesNA = !isGeneralInstructorNotesNotApplicableTarget(program)
+    ? undefined
+    : overlay[keys.instructor.notesNotApplicable] === true
+      ? true
+      : overlay[keys.instructor.notesNotApplicable] === false
+        ? false
+        : undefined
+  if (overlayInstructorNotesNA !== undefined) {
+    const nextInstructorNotesNA = coalesceBool(
+      instructorInfo.notesNotApplicable,
+      overlayInstructorNotesNA,
+      preferOverlay
+    )
+    if (nextInstructorNotesNA !== undefined) {
+      instructorInfo.notesNotApplicable = nextInstructorNotesNA
+    }
   }
   const instructorAnnouncementPublished =
     overlayAnnouncementPublished(overlay, keys.instructor.announcementPublished) ??

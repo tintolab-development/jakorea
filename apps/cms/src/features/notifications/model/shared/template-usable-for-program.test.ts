@@ -183,3 +183,69 @@ describe('listNotificationSendTemplateDisabledKeysForProgram', () => {
     )
   })
 })
+
+describe('템플릿 선택 단계 — 수신자 유형 미정 변수', () => {
+  const catalog = [
+    { key: '회원명', enabled: true, requiresProgram: false },
+    { key: '프로그램명', enabled: true, requiresProgram: true },
+    {
+      key: '학생 명단 제출 마감일',
+      enabled: false,
+      requiresProgram: true,
+      participantTypes: ['PARTICIPANT'],
+      memberTypes: [],
+    },
+    {
+      key: '신청 기관명',
+      enabled: false,
+      requiresProgram: true,
+      participantTypes: ['PARTICIPANT'],
+      memberTypes: ['SCHOOL_TEACHER', 'TEACHER_AND_INSTRUCTOR'],
+    },
+    { key: '꺼진 변수', enabled: false, requiresProgram: false },
+  ]
+  const texts = ['#{회원명} #{프로그램명} #{학생 명단 제출 마감일} #{신청 기관명}']
+
+  it('수신자를 고르기 전에는 유형 한정 변수로 막지 않는다', () => {
+    expect(
+      canUseNotificationSendTemplateForProgram({
+        texts,
+        catalog,
+        programNumericId: 186506,
+        recipientTypeScope: {},
+      })
+    ).toBe(true)
+  })
+
+  it('범위를 넘기지 않으면 BE enabled를 그대로 따른다', () => {
+    expect(
+      listNotificationSendTemplateDisabledKeysForProgram({
+        texts,
+        catalog,
+        programNumericId: 186506,
+      })
+    ).toEqual(['학생 명단 제출 마감일', '신청 기관명'])
+  })
+
+  it('유형 조건이 없는 비활성 변수는 계속 막는다', () => {
+    expect(
+      canUseNotificationSendTemplateForProgram({
+        texts: ['#{꺼진 변수}'],
+        catalog,
+        programNumericId: 186506,
+        recipientTypeScope: {},
+      })
+    ).toBe(false)
+  })
+
+  it('프로그램을 고르지 않았으면 계속 막는다', () => {
+    expect(
+      canUseNotificationSendTemplateForProgram({
+        texts,
+        catalog,
+        programNumericId: null,
+        recipientTypeScope: {},
+      })
+    ).toBe(false)
+  })
+})

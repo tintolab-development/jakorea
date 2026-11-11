@@ -113,8 +113,45 @@ function formatWaitingInstructorOrganizationDistance(
   return label === '-' ? undefined : label
 }
 
-function hopeScheduleLineFromSession(session: ParticipatingSchoolSession): string {
+/**
+ * 희망 일정 행의 순위 라벨.
+ * - `round`(기본): 기존 표기 `${round}회차`.
+ * - `preference`: 지망 순위(`preferenceOrder`)가 확인된 행만 「N지망」, 그 외 행은 기존 표기 유지.
+ *   (일반 기관·기간 지정형 — 희망 일정 번호가 지망 순위)
+ * - `preference-only`: 「N지망」만 쓰고, 지망 순위를 모르면 순위 라벨을 붙이지 않는다.
+ *   (1사1교 — 회차 개념이 없어 round를 「N회차」로 표시하지 않는다)
+ */
+export type CompanySchoolHopeSessionLabelMode = 'round' | 'preference' | 'preference-only'
+
+function resolveHopeSchedule(
+  session: ParticipatingSchoolSession,
+  mode: CompanySchoolHopeSessionLabelMode
+) {
   const hope = participatingSchoolSessionToHopeSchedule(session)
+  if (mode === 'round') return hope
+  const order = session.preferenceOrder
+  if (order != null && order > 0) return { ...hope, hopeSession: `${order}지망` }
+  return mode === 'preference' ? hope : { ...hope, hopeSession: undefined }
+}
+
+/**
+ * 1사1교 배정 일정 라벨 — 회차 개념이 없으므로 `session`(sessionNo 「N회차」)을 뺀다. 날짜·시간은 유지.
+ */
+export function omitCompanySchoolScheduleRoundLabels(
+  labels: ReadonlyMap<string, { date?: string; time?: string; session?: string }>
+): Map<string, { date?: string; time?: string; session?: string }> {
+  const next = new Map<string, { date?: string; time?: string; session?: string }>()
+  for (const [key, label] of labels) {
+    next.set(key, { date: label.date, time: label.time })
+  }
+  return next
+}
+
+function hopeScheduleLineFromSession(
+  session: ParticipatingSchoolSession,
+  mode: CompanySchoolHopeSessionLabelMode
+): string {
+  const hope = resolveHopeSchedule(session, mode)
   const base = [hope.hopeDate, hope.hopeTime, hope.hopeSession].filter(Boolean).join(' ')
   if (session.scheduleUnresolved) {
     return base ? `${base} (일정 미생성)` : '일정 미생성'
@@ -149,7 +186,10 @@ export function buildCompanySchoolWaitingInstructorRows(input: {
    * 일반 기관형 참여 기관 상세에서 승인 전 신청을 「승인 및 배정」 대상으로 보여줄 때만 넘긴다.
    */
   candidateApplicationStatuses?: readonly string[] | 'any'
+  /** 희망 일정 순위 라벨. 기본 `round`(기존 동작). {@link CompanySchoolHopeSessionLabelMode} */
+  hopeSessionLabel?: CompanySchoolHopeSessionLabelMode
 }): CompanySchoolWaitingInstructorRow[] {
+  const hopeSessionLabelMode = input.hopeSessionLabel ?? 'round'
   const organizationApplicationId = input.organizationApplicationId?.trim() || null
   const candidateStatuses = input.candidateApplicationStatuses ?? WAITING_CANDIDATE_APPROVED_STATUSES
   const sessions = (input.sessions ?? []).filter(s => Boolean(extractLectureDateKey(s.date) || s.date))
@@ -174,7 +214,7 @@ export function buildCompanySchoolWaitingInstructorRows(input: {
         : undefined)
 
     for (const session of sessions) {
-      const hope = participatingSchoolSessionToHopeSchedule(session)
+      const hope = resolveHopeSchedule(session, hopeSessionLabelMode)
       const scheduleKey = `${session.date}|${session.round}|${session.classNum}`
       const conflictStatus = resolveOneSchoolPerDayAssignmentStatus(
         hope.hopeDate ?? session.date,
@@ -197,7 +237,7 @@ export function buildCompanySchoolWaitingInstructorRows(input: {
         hopeDate: hope.hopeDate,
         hopeTime: hope.hopeTime,
         hopeSession: hope.hopeSession,
-        hopeScheduleLine: hopeScheduleLineFromSession(session),
+        hopeScheduleLine: hopeScheduleLineFromSession(session, hopeSessionLabelMode),
         instructorApplicationId: app.id != null ? String(app.id) : undefined,
         instructorMemberId: memberId,
         requestedScheduleId: session.requestedScheduleId,

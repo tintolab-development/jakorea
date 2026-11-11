@@ -12,7 +12,6 @@ import type {
 } from '@/types/domain'
 import type { Status } from '@/types'
 import { applySettlementPolicyToCommonInfo } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
-import { applyBusinessPeriodHistoriesFromDto } from '@/features/program/shared/lib/business-period-extend'
 import { coerceProgramPaymentItemsText } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import { assignProgramPaymentItemsToWriteRequest } from '@/features/program/shared/lib/wage-payment-item-request'
 import {
@@ -341,15 +340,12 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
     programRecruitments: toProgramRecruitmentWindows(dto.recruitments),
   })
   return hydrateCompanySchoolDetailFromGet(
-    applyBusinessPeriodHistoriesFromDto(
-      applyResolvedAnnouncementTitle(
-        applyParticipantRecruitmentColumnsFromResponse(mapped, dto),
-        {
-          serviceDetailJson: dto.serviceDetailJson,
-          overlay: details.registrationOverlay,
-        }
-      ),
-      dto
+    applyResolvedAnnouncementTitle(
+      applyParticipantRecruitmentColumnsFromResponse(mapped, dto),
+      {
+        serviceDetailJson: dto.serviceDetailJson,
+        overlay: details.registrationOverlay,
+      }
     )
   )
 }

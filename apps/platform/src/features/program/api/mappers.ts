@@ -566,11 +566,15 @@ function scheduleTitle(schedule: PortalSchedule): string {
   return parts.join(' ')
 }
 
+/**
+ * 레거시 `curricula[].sessions[]` — program_curriculum_session(커리큘럼 차시).
+ * sessionNo는 차시 번호이며 일정 회차(program_schedule.session_no)가 아니다 → `N차시`.
+ */
 function mapSessions(curricula: PortalCurriculum[] | undefined) {
   return (curricula ?? []).flatMap(curriculum =>
     (curriculum.sessions ?? []).map((session, index) => ({
-      sessionLabel: `${session.sessionNo ?? index + 1}회차`,
-      title: readString(session.title) ?? readString(curriculum.title) ?? '교육 회차',
+      sessionLabel: `${session.sessionNo ?? index + 1}차시`,
+      title: readString(session.title) ?? readString(curriculum.title) ?? '교육 차시',
       description: readString(session.content) ?? '',
     }))
   )
@@ -606,6 +610,12 @@ export function mapPortalScheduleOptionLookup(
     const endAt = readString(schedule.endAt)
     const scheduleName = toDisplayEducationScheduleName(schedule.scheduleName)
     const scheduleKind = readString(schedule.scheduleKind)?.toUpperCase()
+    const sessionNo =
+      typeof schedule.sessionNo === 'number' &&
+      Number.isInteger(schedule.sessionNo) &&
+      schedule.sessionNo > 0
+        ? schedule.sessionNo
+        : undefined
     return [
       {
         scheduleId,
@@ -613,6 +623,7 @@ export function mapPortalScheduleOptionLookup(
         ...(endAt ? { endAt } : {}),
         ...(scheduleName ? { scheduleName } : {}),
         ...(scheduleKind ? { scheduleKind } : {}),
+        ...(sessionNo != null ? { sessionNo } : {}),
       },
     ]
   })
@@ -1547,6 +1558,7 @@ export function mapPortalProgramDetail(
     operatingPeriodLabel: formatRange(opStart, opEnd),
     operatingPeriodStart: opStart ? formatYmd(opStart) : '1970-01-01',
     operatingPeriodEnd: opEnd ? formatYmd(opEnd) : '1970-01-01',
+    businessEndDate: readString(remote.businessEndDate) ?? null,
     applicationStartDate: appStart ? formatYmd(appStart) : null,
     applicationEndDate: appEnd ? formatYmd(appEnd) : null,
     recruitmentPeriodLabel,
@@ -1713,6 +1725,7 @@ export function mapPortalProgramListItem(remote: PortalProgramListItem): Program
     operatingPeriodLabel: formatRange(opStart, opEnd),
     operatingPeriodStart: opStart ? formatYmd(opStart) : '1970-01-01',
     operatingPeriodEnd: opEnd ? formatYmd(opEnd) : '1970-01-01',
+    businessEndDate: readString(remote.businessEndDate) ?? null,
     applicationStartDate: appStart ? formatYmd(appStart) : null,
     applicationEndDate: appEnd ? formatYmd(appEnd) : null,
     recruitmentPeriodLabel: formatRange(appStart, appEnd),

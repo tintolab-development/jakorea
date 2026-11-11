@@ -20,6 +20,7 @@ import type {
   SettlementFrontendResponse,
 } from '@/shared/api/generated/settlement/schemas'
 import { mapPaymentStatusToAccountPaymentStatus } from '@/features/settlement-management/api/shared/settlement-status-mappers'
+import { readSettlementRecognizedSessionCount } from '@/features/settlement-management/api/shared/settlement-recognized-session-count'
 import {
   formatBusinessIncomeEarnerLabel,
   formatBusinessPeriodDisplay,
@@ -316,6 +317,7 @@ function buildAccountPaymentStatusDetail(
     lectureFeeStandardTitle?: string
     lectureFeeStandardAmount?: string
     businessIncomeEarnerLabel?: string
+    recognizedSessionCount?: number | null
     accountPaymentStatus?: AccountPaymentStatusDetail['basic']['accountPaymentStatus']
     transferScheduledDate?: string
     paidAt?: string
@@ -344,9 +346,8 @@ function buildAccountPaymentStatusDetail(
       settlementAccountBankNumberPart: bankAndNumber,
       settlementAccountHolderPart: holderDisplay,
       programName: extras?.programName ?? row.programName,
-      programSessionProgressDisplay:
-        extras?.programSessionProgressDisplay ??
-        (row.sessionLabel !== '-' ? row.sessionLabel : '-'),
+      // 프로그램 진행 회차(완료/전체 회차)는 정산 상세만. 차시 라벨·일정명(sessionLabel)으로 대체하지 않는다.
+      programSessionProgressDisplay: extras?.programSessionProgressDisplay ?? '-',
       businessPeriodDisplay: extras?.businessPeriodDisplay ?? '-',
       accountPaymentStatus,
       accountPaymentStatusLabel: ACCOUNT_PAYMENT_STATUS_LABELS[accountPaymentStatus],
@@ -362,6 +363,7 @@ function buildAccountPaymentStatusDetail(
         extras?.lectureFeeStandardAmount ??
         (row.amount > 0 ? `${row.amount.toLocaleString('ko-KR')}원` : '-'),
       businessIncomeEarnerLabel: extras?.businessIncomeEarnerLabel ?? '해당 없음',
+      recognizedSessionCount: extras?.recognizedSessionCount ?? null,
     },
     blocks,
     formulaLabel: '정산 항목 합계',
@@ -395,6 +397,7 @@ export function mapAccountPaymentDetailRemote(
     businessIncomeEarnerLabel: formatBusinessIncomeEarnerLabel(
       settlement.businessIncomeEarnerLabel
     ),
+    recognizedSessionCount: readSettlementRecognizedSessionCount(settlement),
     paidAt: settlement.paidAt ?? row.paidAt,
   })
 }

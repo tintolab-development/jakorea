@@ -12,6 +12,9 @@ export type FeaturedCarouselProps = {
 
 export function FeaturedCarousel({ stories }: FeaturedCarouselProps) {
   const [index, setIndex] = useState(0)
+  const current = stories.length > 0 ? stories[index % stories.length] : undefined
+  // 썸네일 없음(서버 null) → 기본 썸네일
+  const remoteImageUrl = current?.featuredImageUrl || current?.imageUrl || undefined
 
   if (stories.length === 0) {
     return null
@@ -19,7 +22,6 @@ export function FeaturedCarousel({ stories }: FeaturedCarouselProps) {
 
   const safeIndex = index % stories.length
   const story = stories[safeIndex]!
-  const remoteImageUrl = story.featuredImageUrl || story.imageUrl
 
   const goPrev = () => {
     setIndex(current => (current - 1 + stories.length) % stories.length)

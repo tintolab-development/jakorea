@@ -2,6 +2,7 @@
  * Admin student-roster DTO ↔ 학교 상세 학생 명단 UI row
  */
 
+import { toPolicyMaskedBirthDisplay } from '@/features/user/api/format-gender-birth-display'
 import type { StudentRosterItemResponse } from '@/shared/api/generated/dashboard/schemas/studentRosterItemResponse'
 import type { StudentRosterResponse } from '@/shared/api/generated/dashboard/schemas/studentRosterResponse'
 import {
@@ -67,7 +68,8 @@ export function mapApiBirthDateToDisplay(birthDate?: string | null): string | un
   if (!birthDate?.trim()) return undefined
   const digits = birthDate.replace(/\D/g, '')
   if (digits.length >= 8) return formatStudentBirthDateFromDigits(digits.slice(0, 8))
-  return birthDate.trim()
+  // BE 마스킹(yyyy-**-**)은 정책 표기(yyyy.**.**)로 보여준다.
+  return toPolicyMaskedBirthDisplay(birthDate)
 }
 
 /** 화면 생년월일 → API `YYYY-MM-DD`. 없거나 형식이 아니면 undefined. */
@@ -145,7 +147,10 @@ export function mapStudentRosterItemToRow(
     name: item.studentName?.trim() || '-',
     gender,
     genderMask,
-    birthDate: mapApiBirthDateToDisplay(item.birthDate),
+    // MASKED 조회는 birthDate를 생략하고 maskedBirthDate(yyyy-**-**)만 준다 → 정책 표기 yyyy.**.**로 보여준다.
+    // 저장 시 마스킹 생년월일은 날짜로 바뀌지 않아 기존 행 payload에서 생략된다(원문 유지).
+    birthDate:
+      mapApiBirthDateToDisplay(item.birthDate) ?? mapApiBirthDateToDisplay(item.maskedBirthDate),
     gradeClass,
     contact:
       (rawPhone && !isLikelyMaskedPii(rawPhone) ? rawPhone : item.maskedPhone?.trim()) || undefined,

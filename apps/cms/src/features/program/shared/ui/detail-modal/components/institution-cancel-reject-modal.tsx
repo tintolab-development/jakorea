@@ -1,6 +1,7 @@
 import {
   buildInstitutionCancelRejectionMessage,
   resolveInstitutionCancelRejectionModalTitle,
+  resolveInstitutionCancelRejectionNotifyTimingOptions,
   resolveInstitutionCancelRejectionNotifyVariant,
   type InstitutionCancelRejectionConfirmPayload,
   type InstitutionCancelRejectionCopyVariant,
@@ -11,6 +12,7 @@ import {
   PermissionModal,
   type PermissionModalPayload,
 } from '@/shared/components/permission-modal'
+import { NOTIFY_TIMING_CAPABILITY } from '@/shared/lib/notify-timing-capability'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import './instructor-bulk-approve-modal.css'
@@ -122,8 +124,11 @@ function InstitutionCancelRejectAlreadySentModal({
         isGeneralOrganization ? '취소 사유를 입력해 주세요' : '취소 사유를 입력해 주세요.'
       }
       reasonRequiredMessage="취소 사유를 입력해 주세요."
-      // cancel-rejection API는 IMMEDIATE | SCHEDULED만 받아 「발표일에 맞춰서」는 노출하지 않는다.
-      notifyTimingOptions="two"
+      // 일반(기관형) 시안 04-2: 즉시 / 발표일에 맞춰서 / 직접 설정.
+      // cancel-rejection은 BE가 ON_ANNOUNCEMENT를 지원한다(발표일 예약). OpenAPI enum 정정 요청 중.
+      // 1사1교 등 기본(default)은 기존 2옵션 유지.
+      notifyTimingOptions={resolveInstitutionCancelRejectionNotifyTimingOptions(copyVariant)}
+      notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.full}
       notifyBeforeReason={!isGeneralOrganization}
       onCancel={onCancel}
       onConfirm={onConfirm}

@@ -38,9 +38,9 @@ export interface AccountPaymentListItemResponse {
   programName?: string | null;
   /** 참여 기관. 개인 프로그램은 null */
   institutionName?: string | null;
-  /** 차시 번호. sessionLabel이 없으면 FE가 N차시로 표시합니다. */
+  /** 회차 번호(program_schedule.session_no). 회차가 없는 일정(사전교육 등)·Gemini는 null. 차시가 아니므로 N차시로 표시하지 않습니다. */
   sessionOrdinal?: number | null;
-  /** 차시 표시. 예: 2 ~ 3차시. 개인은 null */
+  /** 강의 진행 차시(정산 인정 차시) 표시. 예: 2차시. 값이 없으면 null */
   sessionLabel?: string | null;
   /** 교육 진행 일자(표시용). 캘린더 배치는 scheduledPaymentDate(이체 예정일)입니다. */
   lectureDate?: string | null;

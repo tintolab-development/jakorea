@@ -570,6 +570,7 @@ export function MypageLectureDetailPage() {
           applicationType={routeApplicationType}
           applicationId={application.id}
           operationEndAt={program.operatingPeriodEnd}
+          businessEndAt={program.businessEndDate}
           programType={program.programType}
           detailCase={program.detailCase}
           lastParticipatedSession={

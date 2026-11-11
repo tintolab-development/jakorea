@@ -5,6 +5,7 @@
  * Filtered for CMS form template / survey Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { VolunteerAssignmentResponseAssignmentNotificationStatus } from './volunteerAssignmentResponseAssignmentNotificationStatus';
 
 /**
  * 일반 기관 프로그램 봉사자 배정
@@ -29,4 +30,10 @@ export interface VolunteerAssignmentResponse {
   cancelledByAdminId?: number;
   cancelledAt?: string;
   cancelReason?: string;
+  /** 기관 배정 알림(봉사자 WEB) 상태. 같은 봉사자·같은 기관 배정 묶음 단위. NONE=알림 없음, SCHEDULED=예약 대기, SENT=봉사자가 이미 볼 수 있음, CANCELLED=발송 전에 중단됨. SENT 상태에서 기관 배정을 모두 빼면 취소 알림을 보냅니다. */
+  assignmentNotificationStatus?: VolunteerAssignmentResponseAssignmentNotificationStatus;
+  /** assignmentNotificationStatus=SENT일 때 가장 최근 발송(노출) 시각. 그 외 null */
+  assignmentNotificationSentAt?: string | null;
+  /** assignmentNotificationStatus=SCHEDULED일 때 가장 이른 예약 발송 시각. 그 외 null */
+  assignmentNotificationScheduledAt?: string | null;
 }

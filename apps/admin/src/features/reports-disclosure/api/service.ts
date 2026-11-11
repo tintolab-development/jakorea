@@ -44,14 +44,17 @@ async function listRemoteReportsPage(
   )
 }
 
-async function resolveThumbnailAssetId(input: ReportCreateInput): Promise<number> {
+/**
+ * 썸네일은 선택 항목 — 새 파일은 업로드, 기존 자산은 그대로, 없으면 `null`(수정 시 서버에서 삭제).
+ */
+async function resolveThumbnailAssetId(input: ReportCreateInput): Promise<number | null> {
   if (input.thumbnailFile) {
     return uploadReportThumbnailAsset(input.thumbnailFile)
   }
   if (input.thumbnailAssetId != null) {
     return input.thumbnailAssetId
   }
-  throw new Error('썸네일 이미지를 등록해 주세요.')
+  return null
 }
 
 async function resolveAttachmentAssetId(input: ReportCreateInput): Promise<number> {
@@ -98,9 +101,11 @@ export async function updateReportService(
   if (!current) {
     throw new Error(`Report not found: ${input.id}`)
   }
+  // 수정 화면에서 썸네일을 지우면 `null`이 넘어온다 — 기존 썸네일로 되돌리지 않는다
   const thumbnailAssetId = await resolveThumbnailAssetId({
     ...input,
-    thumbnailAssetId: input.thumbnailAssetId ?? current.thumbnailAssetId,
+    thumbnailAssetId:
+      input.thumbnailAssetId === null ? null : (input.thumbnailAssetId ?? current.thumbnailAssetId),
   })
   const attachmentAssetId = await resolveAttachmentAssetId({
     ...input,

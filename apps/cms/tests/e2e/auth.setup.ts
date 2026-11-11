@@ -8,12 +8,13 @@
 import { test as setup, expect } from './fixtures/test'
 import { LoginPage } from './pages/login.page'
 import { seedMockAdminSession } from './helpers/seed-mock-admin-session'
+import { isE2eStableViteNavEnabled } from './helpers/silence-vite-hmr'
 import { E2E_ADMIN_AUTH_FILE } from './helpers/auth-paths'
 import fs from 'node:fs'
 import path from 'node:path'
 
 setup('어드민 로그인·MFA 후 세션 저장', async ({ page }) => {
-  setup.setTimeout(90_000)
+  setup.setTimeout(isE2eStableViteNavEnabled() ? 300_000 : 90_000)
 
   if (process.env.E2E_MOCK_AUTH === '1') {
     await page.route('**/api/admin/me', route =>

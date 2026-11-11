@@ -26,6 +26,11 @@ export type GeneralVolunteerInterview2PassTypeModalProps = {
   onCancel: () => void
   onConfirm: (payload: GeneralVolunteerInterview2PassTypePayload) => void
   zIndex?: number
+  /**
+   * bulk 전용 「기관 배정은 승인 후 … 개별 배정」 안내. 기본 true(봉사자).
+   * 개인 참여자는 시안 Note(9896:142852) — 면접 합격 시 기관 배정 단계가 없어 false.
+   */
+  showInstitutionAssignCallout?: boolean
 }
 
 export function buildGeneralVolunteerInterview2PassTypeCopy({
@@ -76,6 +81,7 @@ export function GeneralVolunteerInterview2PassTypeModal({
   onCancel,
   onConfirm,
   zIndex,
+  showInstitutionAssignCallout = true,
 }: GeneralVolunteerInterview2PassTypeModalProps) {
   const [passType, setPassType] = useState<GeneralInterview2BulkPassType | null>(null)
   const [prevOpen, setPrevOpen] = useState(open)
@@ -103,7 +109,7 @@ export function GeneralVolunteerInterview2PassTypeModal({
       zIndex={zIndex}
     >
       <PermissionModalMessage text={copy.message} />
-      {mode === 'bulk' ? <BulkPassInfoCallout /> : null}
+      {mode === 'bulk' && showInstitutionAssignCallout ? <BulkPassInfoCallout /> : null}
       <div className="permission-modal__field">
         <span className="permission-modal__label">
           합격 유형

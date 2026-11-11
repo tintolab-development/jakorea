@@ -26,9 +26,12 @@ export type EducationSettlementItem = {
   scheduleId?: number | null
   /** 강사 배정 ID. lecture-report-assignments.assignmentId */
   assignmentId?: number | null
+  /** 회차 번호(sessionNo, 없으면 서버 순서 1-based). 인정 차시·커리큘럼 차시가 아니다. */
   sessionNumber: number
+  /** Gemini 정산 인정 차시(recognizedClassCount). 회차·커리큘럼 차시와 별개. */
+  recognizedClassCount?: number
   heldAt: string
-  /** 예: 10:00~11:20 3차시 */
+  /** 예: `10:00~11:20 3회차`, Gemini `10:00~11:20 3차시`(인정 차시) */
   sessionMeta: string
   /** 배정 학교·기관명. API에 값이 있을 때만 채운다. */
   institutionLabel?: string
@@ -52,6 +55,8 @@ export type EducationSettlementItem = {
   amount?: number
   rejectReason?: string
   settlementApplicationId?: number
+  /** 강사 지급조서: 최신 정산 revision ID (재신청 API 경로). 정산 전이면 없음 */
+  settlementId?: number
   receiptId?: number
   currentRevisionNo?: number
   canSubmitReceipt?: boolean
@@ -79,6 +84,12 @@ export type EducationSettlementItem = {
   submitBlockedReason?: string
   deadlineNotice?: SettlementDeadlineNotice
   previousAmount?: number
+  /** 정정 승인 후 재신청 가능 여부(서버 statementReapplyAvailable). 기한이 지나면 false */
+  reapplyAvailable?: boolean
+  /** 재신청 마감일(YYYY-MM-DD, Asia/Seoul). 정정 승인 후 DRAFT에만 있다 */
+  reapplyDeadlineDate?: string
+  /** 강사 지급조서: 사업 운영 종료일이 지났으면 true — 작성·재신청을 막는다 */
+  operationEnded?: boolean
 }
 
 export const EDUCATION_SETTLEMENT_PAGE_SIZE = 7

@@ -183,11 +183,13 @@ export function createEmptyAmountItemDraft(item: {
   itemType: string
   itemName: string
   evidenceRequired?: boolean | null
+  maxLimitWon?: number | null
 }): SettlementAmountItemDraft {
   return {
     itemType: item.itemType,
     itemName: item.itemName,
     evidenceRequired: item.evidenceRequired === true,
+    maxLimitWon: item.maxLimitWon ?? null,
     amount: '',
     attachments: [],
   }

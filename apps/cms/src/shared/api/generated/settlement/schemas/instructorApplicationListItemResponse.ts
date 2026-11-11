@@ -51,4 +51,6 @@ export interface InstructorApplicationListItemResponse {
   rejectedAt?: string;
   rejectReason?: string;
   availableActions?: string[];
+  /** 활동 포기 여부. 신청 상태가 GIVE_UP 계열이거나 회원 포털 활동 포기(give_up_yn), 또는 이 신청의 참여자가 GIVE_UP/WITHDRAWN이면 true. 그 외 false이며 null이 아닙니다. */
+  activityWithdrawn?: boolean;
 }

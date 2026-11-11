@@ -163,7 +163,7 @@ const prepare2 = (
     }
 
 /**
- * Streams a server-encrypted file. Body { password } is write-only and is never stored.
+ * Streams a server-encrypted file. Body { password } is write-only and is never stored. File name: DownloadFileNames rule for the download day in Asia/Seoul, e.g. [JA Korea] 이력서_261110.pdf; zip-wrapped files keep .zip at the end ([JA Korea] IMG_2235_261110.PNG.zip). Content-Disposition: attachment; filename="<ASCII fallback>"; filename*=UTF-8''<RFC 5987>.
  * @summary Download a career talent application attachment by asset id
  */
 const attachmentDownloadByAsset2 = (
@@ -180,7 +180,7 @@ const attachmentDownloadByAsset2 = (
     }
 
 /**
- * Streams a server-encrypted file. Body { password } is write-only and is never stored. containedPiiTypes is empty until classified.
+ * Streams a server-encrypted file. Body { password } is write-only and is never stored. containedPiiTypes is empty until classified. File name: DownloadFileNames rule for the download day in Asia/Seoul, e.g. [JA Korea] 이력서_261110.pdf; zip-wrapped files keep .zip at the end ([JA Korea] IMG_2235_261110.PNG.zip). Content-Disposition: attachment; filename="<ASCII fallback>"; filename*=UTF-8''<RFC 5987>.
  * @summary Download career talent application attachment
  */
 const attachmentDownload2 = (
@@ -374,7 +374,7 @@ const detail9 = (
     }
 
 /**
- * Same filters, sort and masking as the list GET (name original, phone/email masked). No page/size: up to 50,000 rows, otherwise 400 VALIDATION_ERROR. Writes homepage_admin_audit_log (LIST_EXPORT) and homepage_file_download_log (download_kind LIST_EXPORT).
+ * Same filters, sort and masking as the list GET (name original, phone/email masked). No page/size: up to 50,000 rows, otherwise 400 VALIDATION_ERROR. Writes homepage_admin_audit_log (LIST_EXPORT) and homepage_file_download_log (download_kind LIST_EXPORT). File name: [JA Korea] 홈페이지 어드민_인재채용 신청 목록_{YYMMDD}.xlsx (download day, Asia/Seoul), sent as Content-Disposition filename* and stored as the download history original_name.
  * @summary Export career talent applications as XLSX
  */
 const export2 = (

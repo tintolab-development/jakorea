@@ -1,5 +1,9 @@
 import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
-import type { SchoolDetailStudentRow } from '@/features/program/general/model/school-detail-types'
+import type {
+  SchoolDetailStudentRow,
+  StudentGenderKey,
+} from '@/features/program/general/model/school-detail-types'
+import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
 import {
   buildStudentCertificateDownloadContext,
   type StudentCertificateDownloadContext,
@@ -11,6 +15,17 @@ import { resolveGeneralProgramDisplayTitle } from '@/features/program/general/li
 import { mapApiBirthDateToDisplay } from '@/features/program/general/api/adapters/student-roster-adapters'
 import { unmaskIndividualParticipantForCertificateIssue } from '@/features/program/shared/lib/unmask-for-certificate-issue'
 
+/**
+ * 증명서용 학생 행 성별 (Step 6.2): 남성·여성으로 확인된 값만 매핑한다.
+ * null·빈 값·알 수 없는 코드·마스킹(`**`)은 undefined — 다른 성별로 추정하지 않는다.
+ */
+export function toCertificateStudentGender(gender: string | null | undefined): StudentGenderKey | undefined {
+  const label = toDisplayGender(gender)
+  if (label === '남성') return 'male'
+  if (label === '여성') return 'female'
+  return undefined
+}
+
 export function toParticipatingParticipantCertificateStudent(
   participant: ParticipatingIndividualParticipantRow
 ): SchoolDetailStudentRow {
@@ -18,7 +33,7 @@ export function toParticipatingParticipantCertificateStudent(
     id: participant.id,
     no: participant.no,
     name: participant.applicantName,
-    gender: participant.detail?.gender === '여성' ? 'female' : 'male',
+    gender: toCertificateStudentGender(participant.detail?.gender),
     birthDate: mapApiBirthDateToDisplay(participant.detail?.birthDate),
     gradeClass: participant.detail?.affiliationGrade ?? '',
     lectureAttendance: '',

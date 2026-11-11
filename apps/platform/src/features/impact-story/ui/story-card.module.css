@@ -41,6 +41,12 @@
   object-position: center;
 }
 
+/* Figma 13983:89479 — 기본 썸네일 1px 테두리 (실제 이미지는 테두리 없음) */
+.thumbnailDefault {
+  border: 1px solid var(--color-border-default, #d9d9d9);
+}
+
+
 .badge {
   position: absolute;
   top: var(--spacing-16);

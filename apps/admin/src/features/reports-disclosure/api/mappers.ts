@@ -24,6 +24,7 @@ export function toFeReportKind(type: string | undefined): ReportKind {
 
 export function mapReportResponseToDomain(row: ReportResponse): TransparencyReport {
   const kind = toFeReportKind(row.reportType)
+  // 썸네일은 선택 항목 — 서버가 `thumbnail: null`로 내려주면 썸네일 없음
   return {
     id: row.id != null ? String(row.id) : '',
     kind,
@@ -58,7 +59,7 @@ export function toReportsListParams(
 
 export function toReportCreateRequest(
   input: ReportCreateInput,
-  thumbnailAssetId: number,
+  thumbnailAssetId: number | null,
   attachmentAssetId: number,
 ): ReportCreateRequest {
   return {
@@ -71,7 +72,7 @@ export function toReportCreateRequest(
 export function toReportUpdateRequest(
   input: ReportUpdateInput,
   current: TransparencyReport,
-  thumbnailAssetId: number,
+  thumbnailAssetId: number | null,
   attachmentAssetId: number,
 ): ReportUpdateRequest {
   return {

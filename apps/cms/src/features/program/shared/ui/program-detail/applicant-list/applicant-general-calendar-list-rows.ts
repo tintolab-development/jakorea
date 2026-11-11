@@ -5,7 +5,9 @@ import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
+import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import type { ApprovalStatusKey } from '@/shared/components/approval-status-badge'
+import type { Program } from '@/types/domain'
 import type {
   CalendarGeneralInstitutionApplicationListRow,
   CalendarGeneralInstructorApplicationListRow,
@@ -40,8 +42,12 @@ function approvalStatusModifier(status: ApprovalStatusKey | undefined): Approval
   return 'pending'
 }
 
+/** 일정 라벨 옵션 — 일반 프로그램 `program`이면 교육 구조별(일정형=일정명, 단일=N차시, 복수=N회차) */
+export type GeneralCalendarListRowsOptions = { program?: Program | null }
+
 export function buildGeneralInstitutionCalendarListRows(
-  events: ApplicantCalendarEvent[]
+  events: ApplicantCalendarEvent[],
+  options: GeneralCalendarListRowsOptions = {}
 ): CalendarGeneralInstitutionApplicationListRow[] {
   const seen = new Set<string>()
   const rows: CalendarGeneralInstitutionApplicationListRow[] = []
@@ -69,7 +75,8 @@ export function buildGeneralInstitutionCalendarListRows(
       gradeLabel: institution.educationGrade?.trim() || '-',
       sessionLabel: formatInstitutionCalendarSessionsTimeDisplay(
         sessions,
-        institution.desiredEducationPeriod
+        institution.desiredEducationPeriod,
+        options.program
       ),
     })
   }
@@ -78,7 +85,8 @@ export function buildGeneralInstitutionCalendarListRows(
 }
 
 export function buildGeneralIndividualCalendarListRows(
-  events: ApplicantCalendarEvent[]
+  events: ApplicantCalendarEvent[],
+  options: GeneralCalendarListRowsOptions = {}
 ): CalendarGeneralIndividualApplicationListRow[] {
   const seen = new Set<string>()
   const rows: CalendarGeneralIndividualApplicationListRow[] = []
@@ -104,7 +112,7 @@ export function buildGeneralIndividualCalendarListRows(
       ),
       regionLabel: getInstitutionRegionShort(applicant.homeAddress),
       gradeLabel: applicant.educationGrade?.trim() || '-',
-      sessionLabel: formatInstitutionCalendarSessionsTimeDisplay(sessions),
+      sessionLabel: formatInstitutionCalendarSessionsTimeDisplay(sessions, undefined, options.program),
     })
   }
 
@@ -118,6 +126,8 @@ type InstructorCalendarCard = {
   /** 카드가 속한 기관 신청 id (기관별 거리 매칭) */
   organizationApplicationId?: string
   instructor: ApplicantInstructorRow
+  /** 카드가 속한 기관 일정(이벤트 `sessionsOnDate`) */
+  sessions: ParticipatingSchoolSession[]
 }
 
 function flattenInstructorCalendarCards(events: ApplicantCalendarEvent[]): InstructorCalendarCard[] {
@@ -129,6 +139,7 @@ function flattenInstructorCalendarCards(events: ApplicantCalendarEvent[]): Instr
     const calendarItem = originalItem as unknown as ApplicantInstructorCalendarEventItem
     const schoolName = resolveInstructorCalendarInstitutionName(calendarItem)
     const organizationApplicationId = calendarItem.calendarInstitutionRow?.id?.trim() || undefined
+    const sessions = calendarItem.sessionsOnDate ?? []
     const institutionRows = originalItem.calendarInstitutionInstructors as
       | ApplicantInstructorRow[]
       | undefined
@@ -141,6 +152,7 @@ function flattenInstructorCalendarCards(events: ApplicantCalendarEvent[]): Instr
           schoolName,
           organizationApplicationId,
           instructor: inst,
+          sessions,
         })
       }
       continue
@@ -152,6 +164,7 @@ function flattenInstructorCalendarCards(events: ApplicantCalendarEvent[]): Instr
         colorKey: event.id,
         schoolName,
         instructor: originalItem as unknown as ApplicantInstructorRow,
+        sessions,
       })
     }
   }
@@ -190,12 +203,21 @@ function resolveInstructorCardDistance(card: InstructorCalendarCard): {
 }
 
 export function buildGeneralInstructorCalendarListRows(
-  events: ApplicantCalendarEvent[]
+  events: ApplicantCalendarEvent[],
+  options?: {
+    /** 일반 기관형 — 교육 구조별 일정 라벨(회차·차시·세부 일정명·사전교육). 없거나 null이면 기존 표기 */
+    formatSessionLabel?: (sessions: ParticipatingSchoolSession[]) => string | null
+    /** 일반 기관형 — 강사 신청 `activityWithdrawn`이면 「활동 포기」 뱃지. 생략 시 미노출(1사1교 유지) */
+    showActivityWithdrawn?: boolean
+  }
 ): CalendarGeneralInstructorApplicationListRow[] {
   return flattenInstructorCalendarCards(events).map(card => {
     const { id, colorKey, schoolName, instructor } = card
     const instructorName = instructor.instructorName || '-'
-    const sessionLabel = getInstructorCalendarSessionCardLabel(instructor, schoolName)
+    const sessionLabel =
+      (options?.formatSessionLabel && card.sessions.length > 0
+        ? options.formatSessionLabel(card.sessions)
+        : null) ?? getInstructorCalendarSessionCardLabel(instructor, schoolName)
     const { distanceKm, longDistance } = resolveInstructorCardDistance(card)
     const { dispatchCount, longDistanceCount } = getInstructorScheduleDispatchStats({
       programDispatchCount: instructor.programDispatchCount,
@@ -216,6 +238,9 @@ export function buildGeneralInstructorCalendarListRows(
       isNearDistance: distanceKm != null ? isInstructorNearDistanceKm(distanceKm) : false,
       dispatchCount,
       longDistanceCount,
+      ...(options?.showActivityWithdrawn && instructor.activityWithdrawn === true
+        ? { activityWithdrawn: true }
+        : {}),
     }
   })
 }

@@ -22,10 +22,11 @@
   padding-top: 21px;
   overflow: hidden;
   border-radius: var(--radius-24);
-  background: #00a0af;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: cover;
+}
+
+/* Figma 11001:159541 — 로고 209 / 카드 328 */
+.annual .coverLogo {
+  width: 63.7%;
 }
 
 .annual .meta {
@@ -34,6 +35,7 @@
 
 .annual .downloadButton {
   position: absolute;
+  z-index: 1;
   right: var(--spacing-16);
   bottom: var(--spacing-16);
 }
@@ -54,51 +56,55 @@
 }
 
 .panel {
+  position: relative;
   display: flex;
   width: 100%;
   height: 256px;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: flex-start;
   overflow: hidden;
   border-radius: var(--radius-16);
+}
+
+@media (--bp-pc-up) {
+  /* Figma 11001:159624 — 카드 radius 24 */
+  .panel {
+    border-radius: var(--radius-24);
+  }
+}
+
+/* Figma 11001:159624 — 로고 193 / 카드 461 */
+.audit .coverLogo {
+  width: 41.9%;
+}
+
+/* ── 표지 공통: 기본 썸네일(회색 배경 + 테두리 + 로고) 위에 실제 표지 이미지 ── */
+
+.coverDefault {
+  border: 1px solid var(--color-border-default, #d9d9d9);
+  background: var(--color-neutral-cool-50, #f5f7f7);
+}
+
+.coverLogo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  height: auto;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.coverImage {
+  position: absolute;
+  inset: 0;
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
 }
 
-.auditText {
-  box-sizing: border-box;
-  display: flex;
-  width: 100%;
-  min-width: 0;
-  flex-direction: column;
-  padding: 24px;
-}
-
-.coverLabel {
-  margin: 0;
-  white-space: pre-line;
-}
-
-.audit .coverLabel {
-  color: var(--color-neutral-white, #fff);
-  font-family: var(--font-family-base);
-  font-size: 21.8px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 144%;
-}
-
-@media (--bp-pc-up) {
-  .audit .coverLabel {
-    font-size: 30px;
-    line-height: 144%;
-    letter-spacing: 0;
-  }
-}
-
 .auditDownload {
+  position: relative;
   box-sizing: border-box;
   display: flex;
   width: 100%;
@@ -208,10 +214,6 @@
     justify-content: flex-end;
     align-items: center;
     border-radius: var(--radius-12, 12px);
-    background-color: #d3d3d3;
-    background-position: 50%;
-    background-repeat: no-repeat;
-    background-size: cover;
   }
 
   .annual .meta {
@@ -257,10 +259,6 @@
     align-items: flex-start;
     gap: var(--spacing-4);
     align-self: stretch;
-  }
-
-  .auditText {
-    padding: var(--spacing-16);
   }
 
   .auditDownload {

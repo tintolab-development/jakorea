@@ -4,7 +4,7 @@ import { useGeneralProgramPosts } from '@/features/program/general/hooks/use-gen
 import type { Program } from '@/types/domain'
 import './program-progress-posts-section.css'
 
-/** 일반 프로그램 진행 현황 — 게시글 (개인·기관 동일 UI, 프로그램 전체 범위) */
+/** 일반 프로그램(개인) 진행 현황 — 게시글 (기관 참여 기관 상세 게시글과 동일 UI, 프로그램 전체 범위) */
 export function ProgramProgressPostsSection({ program }: { program: Program }) {
   const { posts, files, loading, isRemoteDataSource, invalidatePosts, removeDeletedPost } =
     useGeneralProgramPosts(program.id)
@@ -21,6 +21,8 @@ export function ProgramProgressPostsSection({ program }: { program: Program }) {
     <div className="program-progress-posts-section">
       <EnrollmentProgramDetailPostsTab
         program={program}
+        // 기관 참여 기관 상세 게시글과 동일 시안 19 — 삭제 안내 첫 줄에 대상 글 앞부분 표시
+        deleteGuideWithPostPreview
         postsOverride={isRemoteDataSource ? posts : null}
         filesOverride={isRemoteDataSource ? files : null}
         onPostWriteSuccess={() => {

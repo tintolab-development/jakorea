@@ -8,7 +8,6 @@ import {
   resolveGeneralVolunteerActivityWithdrawStopScheduleId,
 } from '@/features/program/general/lib/general-volunteer-activity-withdraw'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
-import { formatYmdHmWithKoreanWeekday } from '@/shared/lib/format-date-korean-weekday'
 import {
   sortGeneralParticipantDocPassedVolunteerRows,
   type GeneralVolunteerApplicantRow,
@@ -37,6 +36,8 @@ import type {
   GeneralSecondInterviewScreeningStatus,
 } from '@/features/program/general/lib/volunteer-screening-constants'
 import { useGeneralVolunteerInterview2Columns } from './interview2-columns'
+import { useGeneralVolunteerEducationAssignApproval } from './use-education-assign-approval'
+import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import type {
   PermissionModalNotifyTiming,
   PermissionModalPayload,
@@ -302,10 +303,37 @@ export function useGeneralVolunteerInterview2({
     setFailCompleteVolunteer(null)
   }, [])
 
+  /**
+   * 개인 프로그램 봉사자 — 합격 유형 「합격」이면 교육 배정 안내 후 approve-with-education-scope.
+   * (BE: 면접 ON이면 면접 평가 완료 후 허용, final-result PASS와 같은 결정 경로라 둘을 함께 부르지 않는다)
+   * 예비합격·참여자·기관형은 기존 final-result.
+   */
+  const educationAssignOnPass = subjectKind === 'volunteer' && isGeneralIndividualProgram(program)
+  const educationAssign = useGeneralVolunteerEducationAssignApproval({
+    programId,
+    invalidateApplications: volunteerRemote.invalidateApplications,
+    onApproved: target => {
+      setFinalResultNotifyById(prev => ({ ...prev, [target.applicationId]: target.notifyTiming }))
+      setSelectedRowKeys(prev => prev.filter(key => String(key) !== target.applicationId))
+      setPassCompleteVolunteerName(target.volunteerName)
+    },
+  })
+  const openEducationAssign = educationAssign.open
+
   const handlePassModalConfirm = useCallback(
     async (payload: Interview2PassConfirmPayload) => {
       if (!passModalVolunteer) return
       const { id, name: volunteerName } = passModalVolunteer
+      if (educationAssignOnPass && (payload.passType ?? 'pass') === 'pass') {
+        closePassModal()
+        openEducationAssign({
+          applicationId: id,
+          volunteerName,
+          notifyTiming: payload.notifyTiming,
+          manualNotifyAt: payload.manualNotifyAt,
+        })
+        return
+      }
       const ok = await applySecondInterviewStatus(
         [id],
         payload.passType ?? 'pass',
@@ -318,7 +346,13 @@ export function useGeneralVolunteerInterview2({
       setSelectedRowKeys(prev => prev.filter(key => String(key) !== id))
       setPassCompleteVolunteerName(volunteerName)
     },
-    [applySecondInterviewStatus, closePassModal, passModalVolunteer]
+    [
+      applySecondInterviewStatus,
+      closePassModal,
+      educationAssignOnPass,
+      openEducationAssign,
+      passModalVolunteer,
+    ]
   )
 
   const handleFailModalConfirm = useCallback(
@@ -411,26 +445,11 @@ export function useGeneralVolunteerInterview2({
       )
       setBulkPassModalOpen(false)
       if (!ok) return
-      const notifyLabel =
-        payload.notifyTiming === 'immediate'
-          ? '즉시'
-          : payload.notifyTiming === 'on_announcement'
-            ? '발표일에 맞춰서'
-            : payload.manualNotifyAt
-              ? formatYmdHmWithKoreanWeekday(payload.manualNotifyAt)
-              : '직접 설정'
-      showAlert(
-        subjectKind === 'volunteer'
-          ? // 시안 12-2(9781:52820)
-            { title: '합격 처리 완료', content: '면접 결과가 합격 처리되었습니다.' }
-          : {
-              title: '일괄 합격',
-              content: `선택한 ${ids.length}건이 합격 처리되었습니다. (알림: ${notifyLabel})`,
-            }
-      )
+      // 시안 12-2(9781:52820) — 봉사자·개인 참여자 공통(Note 9896:142852)
+      showAlert({ title: '합격 처리 완료', content: '면접 결과가 합격 처리되었습니다.' })
       setSelectedRowKeys([])
     },
-    [applySecondInterviewStatus, selectedRowKeys, showAlert, subjectKind]
+    [applySecondInterviewStatus, selectedRowKeys, showAlert]
   )
 
   const requestWithdrawActivity = useCallback(
@@ -659,6 +678,8 @@ export function useGeneralVolunteerInterview2({
   const columns = useGeneralVolunteerInterview2Columns({ subjectKind })
 
   return {
+    educationAssign,
+    educationAssignOnPass,
     list,
     pendingFilters,
     handleFilterChange,

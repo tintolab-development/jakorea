@@ -162,6 +162,40 @@ describe('buildLectureReportFilledDraft', () => {
   })
 })
 
+describe('buildLectureReportFilledDraft — 진행 차시 칸', () => {
+  function progressOf(row: Partial<LectureReportPreviewContext['row']>) {
+    const draft = buildLectureReportFilledDraft(
+      createContext(undefined, {
+        row: { ...createContext().row, ...row },
+      })
+    )
+    return draft.paragraphs.find(
+      paragraph =>
+        paragraph.kind === 'single_item' && paragraph.variant === 'lecture_report_program_progress'
+    ) as { sessionIndex?: string } | undefined
+  }
+
+  it('회차 번호를 진행 차시에 넣지 않는다', () => {
+    expect(
+      progressOf({ educationScheduleLabel: '2026.09.15 | 2회차 | 10:00-11:00', sessionNo: 2 })
+        ?.sessionIndex ?? ''
+    ).toBe('')
+  })
+
+  it('그 일정의 차시 수를 N차시로 넣는다', () => {
+    expect(
+      progressOf({
+        educationScheduleLabel: '2026.09.15 | 2회차 | 10:00-11:00',
+        sessionNo: 2,
+        curriculumSessionCount: 3,
+      })?.sessionIndex
+    ).toBe('3차시')
+    expect(
+      progressOf({ educationScheduleLabel: '2026.09.15 | 2회차 | 3차시 | 10:00-11:00' })?.sessionIndex
+    ).toBe('3차시')
+  })
+})
+
 describe('buildLectureReportPreviewFileName', () => {
   it('제출일(submittedAt)을 Asia/Seoul 날짜로 쓴다', () => {
     expect(

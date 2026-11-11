@@ -315,8 +315,8 @@ export function buildGeneralVolunteerInterview2FilterRows(
       buildGeneralFilterField({
         key: 'totalScore',
         type: 'select',
-        // 봉사자 시안 10-1(13050:741188)은 「점수 총합」 — 개인형 참여자는 기존 라벨 유지
-        label: subjectKind === 'volunteer' ? '점수 총합' : '점수 종합',
+        // 봉사자 시안 10-1(13050:741188)·개인 시안 03-1(4512:77300) 모두 「점수 총합」
+        label: '점수 총합',
         placeholder: '전체',
         options: interview2ScoreOptions,
       }),

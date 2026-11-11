@@ -6,11 +6,14 @@ import {
   clickRegistrationTabIfVisible,
   clickSectionNavIfVisible,
   fillAllByPlaceholder,
+  datePickerDialog,
+  enabledCalendarMiniDayButtons,
   fillAllParagraphDatesByPlaceholder,
   fillByPlaceholder,
   fillByPlaceholderIfVisible,
   fillParagraphDateByPlaceholder,
   fillParagraphTimeIfVisible,
+  revealEnabledCalendarMiniDays,
   fillVisibleFreeTextFields,
   selectByPlaceholder,
   selectByPlaceholderIfVisible,
@@ -444,6 +447,80 @@ export class GeneralProgramRegistrationPage {
     console.log('[STEP41] 일정형 세부 일정 날짜 트리거 입력 수', filled)
   }
 
+  /**
+   * 기관·일정형·복수에서 educationScheduleLines는 「교육 진행 (일정형)」 세부 일정의
+   * 진행 일정에서 만든다. 「교육 진행 일정 선택」 추가형 피커는 이 유형에서 숨겨질 수 있다.
+   * DEV 자동입력이 현재 연도에서 고른 날짜는, 사업 운영 기간을 미래로 다시 잡으면
+   * 기간 밖이 되어 등록이 거절될 수 있다. 이미 값이 있는 트리거를 다시 열어
+   * 달력에서 활성화된(운영 기간 안) 날짜 2개를 고른다.
+   */
+  async realignScheduleDetailDatesWithinOpenPeriod() {
+    const heading = this.page.getByText(/교육 진행 \(일정형\)/).first()
+    await heading.scrollIntoViewIfNeeded()
+    await expect(heading).toBeVisible({ timeout: 15_000 })
+
+    const nameInputs = this.page.getByPlaceholder('행사 일정명을 작성하세요')
+    if ((await nameInputs.count()) < 2) {
+      const add = this.page.getByRole('button', { name: /강의 세부 일정 추가|강의 행사 일정 추가/ })
+      await expect(add.first()).toBeVisible({ timeout: 10_000 })
+      await add.first().click()
+      await expect.poll(async () => nameInputs.count(), { timeout: 10_000 }).toBeGreaterThanOrEqual(2)
+    }
+    expect(await nameInputs.count(), '일정형 세부 일정이 2개 이상이어야 한다').toBeGreaterThanOrEqual(2)
+
+    const inputCount = await nameInputs.count()
+    for (let i = 0; i < inputCount; i += 1) {
+      const input = nameInputs.nth(i)
+      if (!(await input.isVisible().catch(() => false))) continue
+      if (!(await input.inputValue()).trim()) {
+        await input.fill(SCHEDULE_DETAIL_NAME)
+      }
+    }
+
+    const groups = this.page.getByRole('group', { name: '교육 진행 (일정형)' })
+    await expect(groups.first()).toBeVisible({ timeout: 10_000 })
+    expect(await groups.count(), '일정형 세부 일정 그룹이 2개 이상이어야 한다').toBeGreaterThanOrEqual(2)
+
+    const usedDayTexts: string[] = []
+    for (let i = 0; i < 2; i += 1) {
+      const group = groups.nth(i)
+      const trigger = group
+        .locator('.paragraph-date-picker__trigger')
+        .or(
+          group.getByRole('button').filter({ hasText: /\d{4}\.\d{2}\.\d{2}|일정을 선택해 주세요/ })
+        )
+        .first()
+      await trigger.scrollIntoViewIfNeeded()
+      await expect(trigger).toBeVisible({ timeout: 10_000 })
+      await trigger.click()
+
+      const dialog = datePickerDialog(this.page)
+      await expect(dialog).toBeVisible({ timeout: 10_000 })
+      await revealEnabledCalendarMiniDays(dialog, 0)
+      const enabledDays = enabledCalendarMiniDayButtons(dialog)
+      await expect(enabledDays.first()).toBeVisible({ timeout: 10_000 })
+      const dayCount = await enabledDays.count()
+      expect(dayCount, '사업 운영 기간 안에 선택 가능한 날짜가 있어야 한다').toBeGreaterThan(0)
+
+      let index = Math.min(i, dayCount - 1)
+      for (let candidate = 0; candidate < dayCount; candidate += 1) {
+        const text = (await enabledDays.nth(candidate).innerText()).trim()
+        if (!usedDayTexts.includes(text)) {
+          index = candidate
+          break
+        }
+      }
+      const chosen = enabledDays.nth(index)
+      const dayText = (await chosen.innerText()).trim()
+      await chosen.click()
+      await dialog.getByRole('button', { name: '설정' }).click()
+      await expect(dialog).toBeHidden({ timeout: 10_000 })
+      await expect(trigger).not.toHaveText('일정을 선택해 주세요')
+      await expect(trigger).toContainText(dayText)
+      usedDayTexts.push(dayText)
+    }
+  }
+
   private recruitField(label: string) {
     return this.page
       .locator('.detail-info-form__field:visible')
@@ -634,12 +711,8 @@ export class GeneralProgramRegistrationPage {
     console.log('[STEP41] 면접 시간대 선택', JSON.stringify(labels.slice(0, 2)))
   }
 
-  private async ensureSponsorManagerSelected(sponsorField: Locator) {
-    if (this.sponsorManagerLabel) {
-      await this.selectSponsorManagerStrict(this.sponsorManagerLabel)
-      return
-    }
-    const managerField = this.page
+  private managerField() {
+    return this.page
       .locator('.detail-info-form__field')
       .filter({
         has: this.page.locator('.detail-info-form__field-label-text', {
@@ -647,88 +720,214 @@ export class GeneralProgramRegistrationPage {
         }),
       })
       .first()
+  }
 
-    const managerSelect = managerField.locator('.ant-select').first()
-    const managerFilled = async () => {
-      const item = managerSelect.locator('.ant-select-selection-item').first()
-      if ((await item.count()) === 0) return false
-      const text = (await item.innerText()).trim()
-      return text.length > 0 && !text.includes('선택해 주세요')
+  private async readLabeledSelectText(field: Locator): Promise<string> {
+    const multi = field.locator('.cms-select-multi__trigger-text, .cms-select-multi__trigger').first()
+    if ((await multi.count()) > 0 && (await multi.isVisible().catch(() => false))) {
+      return (await multi.innerText()).trim()
+    }
+    const item = field.locator('.ant-select-selection-item').first()
+    if ((await item.count()) > 0) {
+      return (await item.innerText()).trim()
+    }
+    const button = field.getByRole('button').first()
+    if ((await button.count()) > 0 && (await button.isVisible().catch(() => false))) {
+      return (await button.innerText())
+        .trim()
+        .replace(/\s*선택 초기화\s*$/g, '')
+        .trim()
+    }
+    return ''
+  }
+
+  private isChosenSelectValue(text: string) {
+    const value = text.replace(/\s+/g, ' ').trim()
+    if (!value) return false
+    if (value === '전체' || value === '해당 없음' || value === '미선택') return false
+    if (value.includes('미선택') || value.includes('선택해 주세요')) return false
+    return true
+  }
+
+  private async closeOpenSelectOverlays() {
+    const openMulti = this.page.locator('.cms-select-multi__panel:visible')
+    const openDrop = this.page.locator('.ant-select-dropdown:visible')
+    if ((await openMulti.count()) === 0 && (await openDrop.count()) === 0) return
+    const label = this.page.locator('.detail-info-form__field-label-text').filter({
+      hasText: /^후원사 담당자$|^후원사$/,
+    }).first()
+    if (await label.isVisible().catch(() => false)) {
+      await label.click()
+    }
+    await expect(this.page.getByText('작성 취소 안내')).toHaveCount(0)
+    await expect(openMulti).toHaveCount(0, { timeout: 5_000 }).catch(() => undefined)
+    await expect(openDrop).toHaveCount(0, { timeout: 5_000 }).catch(() => undefined)
+  }
+
+  private async pickFirstRealOpenOption(currentValue?: string) {
+    const dropdown = this.page.locator('.ant-select-dropdown:visible').last()
+    if (await dropdown.isVisible().catch(() => false)) {
+      const empty = dropdown.getByText(/No data|데이터 없음|검색 결과 없음/)
+      if ((await empty.count()) > 0) return false
+      const options = dropdown.locator(
+        '.ant-select-item-option:not(.ant-select-item-option-disabled)'
+      )
+      const count = await options.count()
+      for (let i = 0; i < count; i += 1) {
+        const text = (await options.nth(i).innerText()).trim()
+        if (!this.isChosenSelectValue(text)) continue
+        if (
+          currentValue &&
+          this.isChosenSelectValue(currentValue) &&
+          (text === currentValue || text.includes(currentValue) || currentValue.includes(text))
+        ) {
+          continue
+        }
+        await options.nth(i).scrollIntoViewIfNeeded().catch(() => undefined)
+        await options.nth(i).click({ force: true })
+        await expect(dropdown).toBeHidden({ timeout: 5_000 }).catch(() => undefined)
+        return true
+      }
+      return false
     }
 
-    if (
-      await expect
-        .poll(managerFilled, { timeout: 12_000 })
-        .toBeTruthy()
-        .then(() => true)
-        .catch(() => false)
-    ) {
-      return
-    }
-
-    const trigger = sponsorField.locator('.cms-select-multi__trigger').first()
-    if ((await trigger.count()) === 0) {
-      await selectNearLabelIfVisible(this.page, '후원사 담당자')
-      await expect.poll(managerFilled, { timeout: 10_000 }).toBeTruthy()
-      return
-    }
-
-    await trigger.click()
-    const panel = this.page.locator('.cms-select-multi__panel').last()
-    await expect(panel).toBeVisible({ timeout: 10_000 })
+    const panel = this.page.locator('.cms-select-multi__panel:visible').last()
+    if (!(await panel.isVisible().catch(() => false))) return false
     const rows = panel.locator('.cms-select-multi__row')
-    const rowCount = await rows.count()
-
-    for (let i = 0; i < rowCount; i += 1) {
-      const row = rows.nth(i)
+    const count = await rows.count()
+    for (let i = 0; i < count; i += 1) {
       const text = (
-        await row
+        await rows
+          .nth(i)
           .locator('.cms-select-multi__label-pill')
           .innerText()
           .catch(() => '')
       ).trim()
-      if (!text || text === '전체' || text.includes('선택해 주세요')) continue
-
-      // 기존 선택 해제 후 이 후원사만 선택
-      const checkedRows = panel.locator('.cms-select-multi__row .ant-checkbox-checked')
-      const checkedCount = await checkedRows.count()
-      for (let c = 0; c < checkedCount; c += 1) {
-        await panel
-          .locator('.cms-select-multi__row')
-          .filter({ has: this.page.locator('.ant-checkbox-checked') })
-          .first()
-          .locator('.ant-checkbox-input, .cms-select-multi__checkbox')
-          .first()
-          .click()
-      }
-      await row.locator('.ant-checkbox-input, .cms-select-multi__checkbox').first().click()
-      if (await panel.isVisible().catch(() => false)) {
-        await trigger.click({ force: true }).catch(() => undefined)
-      }
-
+      if (!this.isChosenSelectValue(text)) continue
       if (
-        await expect
-          .poll(managerFilled, { timeout: 8_000 })
-          .toBeTruthy()
-          .then(() => true)
-          .catch(() => false)
+        currentValue &&
+        this.isChosenSelectValue(currentValue) &&
+        (text === currentValue || text.includes(currentValue) || currentValue.includes(text))
       ) {
-        return
+        continue
       }
+      const row = rows.nth(i)
+      const alreadyChecked =
+        (await row.locator('.ant-checkbox-checked').count().catch(() => 0)) > 0
+      if (!alreadyChecked) {
+        await row.locator('.ant-checkbox-input, .cms-select-multi__checkbox').first().click()
+      }
+      await this.closeOpenSelectOverlays()
+      return true
+    }
+    return false
+  }
 
-      await trigger.click()
-      await expect(panel).toBeVisible({ timeout: 5_000 })
+  private async openFieldSelect(field: Locator) {
+    await field.scrollIntoViewIfNeeded()
+    const trigger = field
+      .locator('.cms-select-multi__trigger:visible, .ant-select:visible, button:visible')
+      .first()
+    await expect(trigger).toBeVisible({ timeout: 10_000 })
+    await trigger.click()
+    const opened = await expect(async () => {
+      const drop = await this.page.locator('.ant-select-dropdown:visible').count()
+      const panel = await this.page.locator('.cms-select-multi__panel:visible').count()
+      if (drop + panel > 0) return
+      throw new Error('후원사 선택 목록이 열리지 않았습니다')
+    })
+      .toPass({ timeout: 8_000 })
+      .then(() => true)
+      .catch(() => false)
+    return opened
+  }
+
+  private async ensureOrganizationAudience() {
+    const personal = this.page.getByRole('checkbox', { name: /^개인$/ }).first()
+    const organization = this.page.getByRole('checkbox', { name: '학교/기관' }).first()
+    await expect(organization).toBeVisible({ timeout: 10_000 })
+    if ((await personal.count()) > 0 && (await personal.isChecked().catch(() => false))) {
+      await personal.click()
+      await expect(personal).not.toBeChecked({ timeout: 5_000 })
+    }
+    await expect(organization).toBeEnabled({ timeout: 10_000 })
+    if (!(await organization.isChecked())) {
+      await organization.click()
+    }
+    await expect(organization).toBeChecked({ timeout: 5_000 })
+    if ((await personal.count()) > 0) {
+      await expect(personal).not.toBeChecked()
+    }
+    await checkCheckboxIfVisible(this.page, '교사/강사')
+    await checkCheckboxIfVisible(this.page, '봉사자')
+    await expect(this.page.getByRole('checkbox', { name: '교사/강사' }).first()).toBeChecked({
+      timeout: 5_000,
+    })
+    await expect(this.page.getByRole('checkbox', { name: '봉사자' }).first()).toBeChecked({
+      timeout: 5_000,
+    })
+  }
+
+  private async ensureSponsorManagerSelected(sponsorField: Locator) {
+    if (this.sponsorManagerLabel) {
+      await this.selectSponsorManagerStrict(this.sponsorManagerLabel)
+      return
     }
 
-    if (await panel.isVisible().catch(() => false)) {
-      await trigger.click({ force: true }).catch(() => undefined)
+    const managerField = this.managerField()
+    const managerFilled = async () => this.isChosenSelectValue(await this.readLabeledSelectText(managerField))
+
+    if (
+      await expect
+        .poll(managerFilled, { timeout: 8_000 })
+        .toBeTruthy()
+        .then(() => true)
+        .catch(() => false)
+    ) {
+      await this.closeOpenSelectOverlays()
+      return
+    }
+
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      await this.closeOpenSelectOverlays()
+      if (await this.openFieldSelect(managerField)) {
+        if (await this.pickFirstRealOpenOption()) {
+          if (await managerFilled()) {
+            await this.closeOpenSelectOverlays()
+            return
+          }
+        }
+        await this.closeOpenSelectOverlays()
+      }
+
+      const currentSponsor = await this.readLabeledSelectText(sponsorField)
+      if (await this.openFieldSelect(sponsorField)) {
+        const switched = await this.pickFirstRealOpenOption(currentSponsor)
+        await this.closeOpenSelectOverlays()
+        if (switched) {
+          if (
+            await expect
+              .poll(managerFilled, { timeout: 8_000 })
+              .toBeTruthy()
+              .then(() => true)
+              .catch(() => false)
+          ) {
+            return
+          }
+        }
+      }
     }
 
     await selectNearLabelIfVisible(this.page, '후원사 담당자')
-    await expect.poll(managerFilled, { timeout: 10_000 }).toBeTruthy()
+    await this.closeOpenSelectOverlays()
+    const managerText = await this.readLabeledSelectText(managerField)
+    expect(
+      this.isChosenSelectValue(managerText),
+      `후원사 담당자가 선택되지 않았습니다: "${managerText}"`
+    ).toBe(true)
   }
 
-  /** 공통 정보 — 케이스별 대·중·소분류 + 보이는 입력 채움 */
+    /** 공통 정보 — 케이스별 대·중·소분류 + 보이는 입력 채움 */
   async fillCommonInfo() {
     const { audience, structure, session } = this.regCase
 
@@ -760,7 +959,18 @@ export class GeneralProgramRegistrationPage {
       PROGRAM_PUBLIC_NAME
     )
 
-    await selectByPlaceholder(this.page, '세부 프로그램명을 선택해 주세요', this.detailedProgramLabel)
+    await selectByPlaceholderIfVisible(
+      this.page,
+      '세부 프로그램명을 선택해 주세요',
+      this.detailedProgramLabel
+    )
+    await selectByPlaceholderIfVisible(
+      this.page,
+      '상세 프로그램명을 선택해 주세요',
+      this.detailedProgramLabel
+    )
+    await selectNearLabelIfVisible(this.page, '세부 프로그램명', this.detailedProgramLabel)
+    await selectNearLabelIfVisible(this.page, '상세 프로그램명', this.detailedProgramLabel)
     await fillParagraphDateByPlaceholder(
       this.page,
       '사업 운영 기간을 선택해 주세요',
@@ -768,14 +978,15 @@ export class GeneralProgramRegistrationPage {
       OPERATION_DATE_OPTS
     )
 
-    // 대분류 — 개인/학교·기관 상호 배타 + 강사·봉사자
+    // 대분류 — 개인/학교·기관은 상호 배타. 기본값이 개인이면 학교/기관이 비활성이라
+    // 먼저 개인을 해제한 뒤 학교/기관을 켜야 한다.
     if (audience === 'organization') {
-      await checkCheckboxIfVisible(this.page, '학교/기관')
+      await this.ensureOrganizationAudience()
     } else {
       await checkCheckboxIfVisible(this.page, /^개인$/)
+      await checkCheckboxIfVisible(this.page, '교사/강사')
+      await checkCheckboxIfVisible(this.page, '봉사자')
     }
-    await checkCheckboxIfVisible(this.page, '교사/강사')
-    await checkCheckboxIfVisible(this.page, '봉사자')
 
     await selectByPlaceholder(this.page, '사업 분야를 선택해 주세요', '기업가정신')
     await selectNearLabelIfVisible(this.page, '사업 분야', '기업가정신')

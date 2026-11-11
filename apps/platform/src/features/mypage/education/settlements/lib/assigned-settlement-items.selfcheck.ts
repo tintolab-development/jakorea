@@ -694,11 +694,12 @@ assert.equal(
   mapPaymentStatementServerStatus({ correctionStatus: 'CORRECTION_COMPLETED' }),
   'correction_completed',
 )
-assert.equal(mapPaymentStatementServerStatus({ statementStatus: 'DRAFT' }), null)
+// DRAFT = 정정 승인 후 재신청 대기(기한이 지나도 DRAFT). CMS와 같이 '지급 정정 요청'으로 본다
+assert.equal(mapPaymentStatementServerStatus({ statementStatus: 'DRAFT' }), 'correction_completed')
 
 assert.equal(
   resolveSettlementStatusUi('waiting_confirm', 'payment_statement').markLabel,
-  '확인 대기',
+  '확인 대기 중',
 )
 assert.equal(
   resolveSettlementStatusUi('reapplied', 'payment_statement').markLabel,
@@ -706,7 +707,7 @@ assert.equal(
 )
 assert.equal(
   resolveSettlementStatusUi('confirmed', 'payment_statement').markLabel,
-  '확인 완료',
+  '지급조서 확인 완료',
 )
 assert.equal(
   resolveSettlementStatusUi('paid', 'payment_statement').markLabel,
@@ -746,6 +747,60 @@ assert.equal(
   }).deadlineNotice,
   'operation_ended',
 )
+// 사업 운영 종료일(businessEndAt)이 있으면 operationEndAt은 제출 마감일로만 본다 (기획 A4·B1)
+{
+  const base = {
+    educationProgress: 'completed' as const,
+    deadlinePolicy: 'payment_statement' as const,
+    operationEndAt: '2026-04-01T23:59:59+09:00',
+    now: NOW,
+  }
+  // 강의보고서 작성 + 마감 후(운영 종료 전): 기한 지남, 작성은 허용
+  assert.deepEqual(
+    resolveEducationSettlementStatusResult({
+      ...base,
+      businessEndAt: '2026-12-31T23:59:59+09:00',
+      lectureReportSubmitted: true,
+    }),
+    { status: 'overdue', deadlineNotice: 'overdue' },
+  )
+  // 강의보고서 미작성 + 마감 후(운영 종료 전): 보고서 대기 + 기한 지남
+  assert.deepEqual(
+    resolveEducationSettlementStatusResult({
+      ...base,
+      businessEndAt: '2026-12-31T23:59:59+09:00',
+      lectureReportSubmitted: false,
+    }),
+    { status: 'report_pending', deadlineNotice: 'overdue' },
+  )
+  // 강의보고서 미작성 + 마감 전: 기존과 같다
+  assert.deepEqual(
+    resolveEducationSettlementStatusResult({
+      ...base,
+      operationEndAt: '2026-12-01T23:59:59+09:00',
+      businessEndAt: '2026-12-31T23:59:59+09:00',
+      lectureReportSubmitted: false,
+    }),
+    { status: 'report_pending' },
+  )
+  // 사업 운영 종료 후: 운영 종료
+  assert.deepEqual(
+    resolveEducationSettlementStatusResult({
+      ...base,
+      businessEndAt: '2026-04-05T23:59:59+09:00',
+      lectureReportSubmitted: true,
+    }),
+    { status: 'overdue', deadlineNotice: 'operation_ended' },
+  )
+  assert.deepEqual(
+    resolveEducationSettlementStatusResult({
+      ...base,
+      businessEndAt: '2026-04-05T23:59:59+09:00',
+      lectureReportSubmitted: false,
+    }),
+    { status: 'report_pending', deadlineNotice: 'operation_ended' },
+  )
+}
 assert.equal(
   resolveEducationSettlementStatus({
     educationProgress: 'completed',

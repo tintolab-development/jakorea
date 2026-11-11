@@ -40,10 +40,10 @@ function liveCatalogResponse(): NotificationTemplateVariableCatalogResponse {
 }
 
 describe('R7 live catalog sourceMode mapping', () => {
-  it('104개 변수의 sourceMode를 누락 없이 매핑한다', () => {
-    expect(R7_LIVE_CATALOG_ROWS).toHaveLength(104)
+  it('105개 변수의 sourceMode를 누락 없이 매핑한다', () => {
+    expect(R7_LIVE_CATALOG_ROWS).toHaveLength(105)
     const mapped = mapTemplateVariablesCatalog(liveCatalogResponse())
-    expect(mapped.variables).toHaveLength(104)
+    expect(mapped.variables).toHaveLength(105)
     expect(mapped.variables.every(item => item.sourceMode)).toBe(true)
     const counts = mapped.variables.reduce<Record<string, number>>((acc, item) => {
       const mode = item.sourceMode ?? 'null'
@@ -51,7 +51,7 @@ describe('R7 live catalog sourceMode mapping', () => {
       return acc
     }, {})
     expect(counts).toEqual({
-      SERVER_RESOLVED: 75,
+      SERVER_RESOLVED: 76,
       EVENT_ONLY: 28,
       MANUAL_ALLOWED: 1,
     })

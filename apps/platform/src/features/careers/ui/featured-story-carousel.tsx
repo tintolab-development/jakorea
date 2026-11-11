@@ -34,6 +34,9 @@ function StoryNavButton({
 
 export function FeaturedStoryCarousel({ stories }: FeaturedStoryCarouselProps) {
   const [index, setIndex] = useState(0)
+  const current = stories.length > 0 ? stories[index % stories.length] : undefined
+  // 썸네일 없음(서버 null) → 이미지 없음
+  const imageUrl = current?.imageUrl || undefined
 
   if (stories.length === 0) {
     return null
@@ -54,10 +57,10 @@ export function FeaturedStoryCarousel({ stories }: FeaturedStoryCarouselProps) {
     <section className={styles.section} aria-roledescription="carousel" aria-label="스토리">
       <div className={styles.carousel}>
         <div className={styles.media}>
-          {story.imageUrl ? (
+          {imageUrl ? (
             <img
               className={styles.image}
-              src={story.imageUrl}
+              src={imageUrl}
               alt=""
               width={720}
               height={480}

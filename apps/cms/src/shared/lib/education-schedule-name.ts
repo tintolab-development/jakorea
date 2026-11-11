@@ -173,17 +173,21 @@ export function formatEducationScheduleUnitLabel(input: EducationScheduleLabelIn
   })
 }
 
-/** `일시 | N회차` (+ ` (k차시)`). 이미 회차 접미가 있거나 회차를 모르면 label 그대로. */
+/**
+ * `일시 | N회차` (+ ` (K차시)`, K = 그 일정의 커리큘럼 차시 '개수'). 이미 회차 접미가 있거나 회차를 모르면 label 그대로.
+ */
 export function appendEducationRoundSuffix(
   label: string,
   roundNumber: number | null | undefined,
-  curriculumSessionNo?: number | null,
+  curriculumSessionCount?: number | null,
 ): string {
   const trimmed = label.trim()
   if (roundNumber == null || !(roundNumber > 0)) return trimmed
   if (ROUND_SUFFIX_RE.test(trimmed)) return trimmed
   const sessionPart =
-    curriculumSessionNo != null && curriculumSessionNo > 0 ? ` (${curriculumSessionNo}차시)` : ''
+    curriculumSessionCount != null && curriculumSessionCount > 0
+      ? ` (${curriculumSessionCount}차시)`
+      : ''
   const roundPart = `${roundNumber}회차${sessionPart}`
   return trimmed ? `${trimmed} | ${roundPart}` : roundPart
 }

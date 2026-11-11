@@ -175,7 +175,6 @@ import { ujatVolunteerRecruitInterviewNamespace } from '@/features/program/ujat/
 import { beginBlockingOverlay } from '@/shared/ui/blocking-overlay-store'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
-import { BusinessPeriodExtendToolbar } from '@/features/program/shared/ui/business-period-extend-toolbar'
 import {
   isUjatRecruitTab,
   normalizeUjatRecruitTab,
@@ -1711,22 +1710,17 @@ function UjatProgramDetailFullPageModalContent({
             <>
               <div className="ujat-detail-modal__info-header">
                 <div className="program-detail-fullpage-modal__header-actions">
-                  <BusinessPeriodExtendToolbar
-                    program={displayProgram}
-                    editDisabled={!infoEditPeriodOpen && !isEditModeInfo}
-                    hideExtend={isEditModeInfo}
-                  >
-                    <ProgramEditInfoActions
-                      canWrite={canWrite}
-                      isEditing={isEditModeInfo}
-                      idleVariant="secondary"
-                      disabled={!infoEditPeriodOpen && !isEditModeInfo}
-                      onEdit={handleInfoEdit}
-                      onCancel={handleInfoCancel}
-                      onSave={() => {
-                        void handleInfoSave()
-                      }} />
-                  </BusinessPeriodExtendToolbar>
+                  <ProgramEditInfoActions
+                    canWrite={canWrite}
+                    isEditing={isEditModeInfo}
+                    idleVariant="secondary"
+                    disabled={!infoEditPeriodOpen && !isEditModeInfo}
+                    onEdit={handleInfoEdit}
+                    onCancel={handleInfoCancel}
+                    onSave={() => {
+                      void handleInfoSave()
+                    }}
+                  />
                 </div>
               </div>
               <UjatProgramDetailCommonInfoView

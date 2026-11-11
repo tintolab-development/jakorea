@@ -38,7 +38,8 @@ export type ReportCreateInput = {
   attachmentUrl: string
   thumbnailFile?: File | null
   attachmentFile?: File | null
-  thumbnailAssetId?: number
+  /** 썸네일은 선택 항목 — `null`이면 썸네일 없음(수정 시 기존 썸네일 삭제) */
+  thumbnailAssetId?: number | null
   attachmentAssetId?: number
 }
 

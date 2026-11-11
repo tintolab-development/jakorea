@@ -1,0 +1,105 @@
+/**
+ * 일반 프로그램 상세 LNB — Figma 「LNB / Full Page」(13192:480264) 수치.
+ * 공통 `.detail-fullpage-modal__lnb*`(shared/ui/detail-fullpage-modal.css)는 UJAT·Gemini·1사1교·회원 상세도
+ * 쓰므로 여기서는 `--program-detail` 모디파이어 범위에서만 덮어쓴다.
+ */
+.detail-fullpage-modal__lnb--program-detail {
+  border-right: 1px solid var(--Border-default, #e0e0e0);
+}
+
+/* 1depth — 비활성 opacity 0.8, 라벨 Bold 18 #3d3d3d, 아이콘 Content/lnb #232323 */
+.detail-fullpage-modal__lnb--program-detail .detail-fullpage-modal__lnb-item {
+  opacity: 0.8;
+  color: var(--Neutral-black, #3d3d3d);
+}
+
+.detail-fullpage-modal__lnb--program-detail
+  .detail-fullpage-modal__lnb-item
+  .detail-fullpage-modal__lnb-icon {
+  color: var(--Content-lnb, #232323);
+}
+
+.detail-fullpage-modal__lnb--program-detail .detail-fullpage-modal__lnb-item--active,
+.detail-fullpage-modal__lnb--program-detail .detail-fullpage-modal__lnb-item--active:hover {
+  opacity: 1;
+  color: var(--Brand-500, #00a0af);
+}
+
+.detail-fullpage-modal__lnb--program-detail
+  .detail-fullpage-modal__lnb-item--active
+  .detail-fullpage-modal__lnb-icon,
+.detail-fullpage-modal__lnb--program-detail
+  .detail-fullpage-modal__lnb-item--active:hover
+  .detail-fullpage-modal__lnb-icon {
+  color: var(--Brand-500, #00a0af);
+}
+
+/* 펼침 화살표 — Icon / Field / w22, #3d3d3d (활성 메뉴에서도 동일) */
+.detail-fullpage-modal__lnb--program-detail .detail-fullpage-modal__lnb-item-arrow {
+  width: 22px;
+  height: 22px;
+  opacity: 1;
+  color: var(--Neutral-black, #3d3d3d);
+}
+
+/* 2depth 묶음 — 좌우 16, 위 2 · 아래 6 (펼침 시에만 세로 여백) */
+.detail-fullpage-modal__lnb--program-detail .detail-fullpage-modal__lnb-children {
+  padding: 0 16px;
+}
+
+.detail-fullpage-modal__lnb--program-detail
+  .detail-fullpage-modal__lnb-children-wrap--open
+  .detail-fullpage-modal__lnb-children {
+  margin-top: 0;
+  padding: 2px 16px 6px;
+}
+
+.detail-fullpage-modal__lnb--program-detail .detail-fullpage-modal__lnb-children > li,
+.detail-fullpage-modal__lnb--program-detail .detail-fullpage-modal__lnb-children > li:last-child {
+  margin-bottom: 0;
+}
+
+/* 2depth — h44, 글머리표 + 본문 시작 48px, Medium 16 #22404d opacity 0.8 */
+.detail-fullpage-modal__lnb--program-detail .detail-fullpage-modal__lnb-child {
+  padding: 12px 18px 12px 35px;
+  color: var(--Brand-800, #22404d);
+}
+
+.detail-fullpage-modal__lnb--program-detail
+  .detail-fullpage-modal__lnb-child:not(.detail-fullpage-modal__lnb-child--active) {
+  opacity: 0.8;
+}
+
+.detail-fullpage-modal__lnb--program-detail .detail-fullpage-modal__lnb-child-dot {
+  width: 5px;
+  height: 5px;
+  background-color: var(--Brand-800, #22404d);
+}
+
+.detail-fullpage-modal__lnb--program-detail .detail-fullpage-modal__lnb-child:hover {
+  color: var(--Brand-500, #00a0af);
+}
+
+.detail-fullpage-modal__lnb--program-detail
+  .detail-fullpage-modal__lnb-child:hover
+  .detail-fullpage-modal__lnb-child-dot {
+  background-color: var(--Brand-500, #00a0af);
+}
+
+/* 활성 2depth — bg Brand/500-10, Bold 16 #00a0af */
+.detail-fullpage-modal__lnb--program-detail .detail-fullpage-modal__lnb-child--active {
+  padding: 12px 18px 12px 35px;
+  background: rgba(1, 161, 175, 0.1);
+  color: var(--Brand-500, #00a0af);
+}
+
+.detail-fullpage-modal__lnb--program-detail
+  .detail-fullpage-modal__lnb-child--active
+  .detail-fullpage-modal__lnb-child-dot {
+  background-color: var(--Brand-500, #00a0af);
+}
+
+/* 하단 「프로그램 삭제」 — Button / Etc / Text: 좌우 20, LNB 하단 20 */
+.detail-fullpage-modal__lnb--program-detail .program-detail-lnb-delete {
+  padding: 0 20px 20px;
+}

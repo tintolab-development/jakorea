@@ -38,12 +38,6 @@ const PRINCIPLE_ICON_BY_CODE: Record<string, TransparencyPrincipleIcon> = {
   TRANSPARENCY_PRINCIPLE_5: 'partnership',
 }
 
-const AUDIT_COVER_GRADIENTS = [
-  'linear-gradient(135deg, #14424e 0%, #1f6f7d 100%)',
-  'linear-gradient(135deg, #1a5d6b 0%, #2f8a8a 100%)',
-  'linear-gradient(135deg, #3f8f6e 0%, #a4c95d 100%)',
-] as const
-
 /** colorHex 없을 때만 — 시드 팔레트를 프론트에 복제하지 않음 */
 const MISSING_SLICE_COLOR = '#9ca3af'
 
@@ -248,27 +242,12 @@ export function mapPublicTransparency(
   }
 }
 
-function extractYear(title: string): number | null {
-  const match = title.match(/(20\d{2})/)
-  if (!match) return null
-  const year = Number(match[1])
-  return Number.isFinite(year) ? year : null
-}
-
 function formatAuditDate(iso: string | undefined): string | undefined {
   if (!iso) return undefined
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return undefined
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${d.getFullYear()}년 ${pad(d.getMonth() + 1)}월 ${pad(d.getDate())}일`
-}
-
-function coverLabelFromTitle(title: string, type: TransparencyReportType): string {
-  const year = extractYear(title)
-  if (type === 'annual') {
-    return year != null ? `${year}\nAnnual Report` : 'Annual Report'
-  }
-  return year != null ? `${year}년\n외부 회계감사` : '외부 회계감사'
 }
 
 export function mapPublicReport(
@@ -283,11 +262,6 @@ export function mapPublicReport(
     id: row.id != null ? String(row.id) : `${type}-${index + 1}`,
     title,
     date: type === 'audit' ? formatAuditDate(row.createdAt) : undefined,
-    coverLabel: coverLabelFromTitle(title, type),
-    coverGradient:
-      type === 'audit'
-        ? AUDIT_COVER_GRADIENTS[index % AUDIT_COVER_GRADIENTS.length]!
-        : '#00A0AF',
     coverUrl: asText(row.thumbnailUrl) || undefined,
     fileName,
     downloadUrl: asText(row.downloadUrl) || undefined,

@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
+import dayjs, { type Dayjs } from 'dayjs'
 import { ContentModal, CmsButton, CmsSelect, useCmsAlert } from '@/shared/ui'
 import { AttendanceCorrectionReasonForm } from '@/features/program/shared/ui/attendance-correction-reason-form'
+import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-time-picker'
 import {
   PROGRAM_ATTENDANCE_CORRECTION_STATUS_OPTIONS,
   parseAttendanceScheduleOwnerId,
@@ -16,6 +18,15 @@ import {
 import type { ParticipatingIndividualProgressAttendanceParticipantRow } from '@/features/program/general/lib/participating-individual-progress-attendance-types'
 import './participating-individual-participant-attendance-correction-modal.css'
 
+const TIME_PICKER_Z_INDEX = 2600
+
+/** 참여자 상세 출결 정정 팝업과 동일 — 「H:mm」 문자열을 시간 선택 초기값으로 */
+function parseLateTime(value: string | undefined): Dayjs | null {
+  const match = value?.trim().match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/)
+  if (!match) return null
+  return dayjs().hour(Number(match[1])).minute(Number(match[2])).second(0).millisecond(0)
+}
+
 export type ParticipatingIndividualProgressAttendanceCorrectionParticipantOption = {
   value: string
   label: string
@@ -25,6 +36,8 @@ export type ParticipatingIndividualProgressAttendanceCorrectionParticipantOption
 export type ParticipatingIndividualProgressAttendanceCorrectionConfirmPayload = {
   participantRowId: string
   status: ProgramAttendanceCorrectionStatus
+  /** 지각일 때만 — 「H:mm」 */
+  lateTime?: string
   reason: string
   evidenceFileName: string | null
   evidenceFileObjectIds?: number[]
@@ -37,7 +50,12 @@ export type ParticipatingIndividualProgressAttendanceCorrectionModalProps = {
   scheduleId: string
   participantOptions: ReadonlyArray<ParticipatingIndividualProgressAttendanceCorrectionParticipantOption>
   onCancel: () => void
-  onConfirm: (payload: ParticipatingIndividualProgressAttendanceCorrectionConfirmPayload) => void
+  /** 저장 완료(성공·실패)까지 기다릴 수 있도록 Promise 반환 허용 */
+  onConfirm: (
+    payload: ParticipatingIndividualProgressAttendanceCorrectionConfirmPayload
+  ) => void | Promise<void>
+  /** 저장 중 — 「정정」 버튼 로딩·중복 클릭 방지 */
+  confirming?: boolean
 }
 
 export function ParticipatingIndividualProgressAttendanceCorrectionModal({
@@ -47,10 +65,12 @@ export function ParticipatingIndividualProgressAttendanceCorrectionModal({
   participantOptions,
   onCancel,
   onConfirm,
+  confirming = false,
 }: ParticipatingIndividualProgressAttendanceCorrectionModalProps) {
   const { showAlert } = useCmsAlert()
   const [participantRowId, setParticipantRowId] = useState<string | undefined>(undefined)
   const [status, setStatus] = useState<ProgramAttendanceCorrectionStatus | undefined>(undefined)
+  const [lateTime, setLateTime] = useState<Dayjs | null>(null)
   const [reason, setReason] = useState('')
   const [evidenceFiles, setEvidenceFiles] = useState<File[]>([])
   const [uploadingEvidence, setUploadingEvidence] = useState(false)
@@ -64,11 +84,21 @@ export function ParticipatingIndividualProgressAttendanceCorrectionModal({
     if (!open) return
     setParticipantRowId(undefined)
     setStatus(undefined)
+    setLateTime(null)
     setReason('')
     setEvidenceFiles([])
   }, [open, participantOptions, educationDateLabel])
 
+  const showLateTimePicker = status === 'late'
   const showReasonTable = status === 'excused_absence'
+
+  useEffect(() => {
+    if (!showLateTimePicker) {
+      setLateTime(null)
+      return
+    }
+    setLateTime(parseLateTime(selectedOption?.row.lateTime) ?? dayjs().hour(9).minute(0).second(0))
+  }, [showLateTimePicker, selectedOption?.row.lateTime])
 
   useEffect(() => {
     if (showReasonTable) return
@@ -78,7 +108,14 @@ export function ParticipatingIndividualProgressAttendanceCorrectionModal({
 
   const evidenceFileNames = evidenceFiles.map(file => file.name)
 
-  const canConfirm = Boolean(participantRowId && selectedOption && status && !uploadingEvidence)
+  const canConfirm = Boolean(
+    participantRowId &&
+      selectedOption &&
+      status &&
+      !uploadingEvidence &&
+      !confirming &&
+      (status !== 'late' || lateTime != null)
+  )
   const displayDateLabel = educationDateLabel.trim() || '교육'
 
   return (
@@ -99,8 +136,16 @@ export function ParticipatingIndividualProgressAttendanceCorrectionModal({
             size="large"
             type="button"
             disabled={!canConfirm}
+            loading={confirming || uploadingEvidence}
             onClick={() => {
               if (!participantRowId || !selectedOption || !status) return
+              if (status === 'late' && lateTime == null) {
+                showAlert({
+                  title: '안내',
+                  content: '지각 시간을 선택해 주세요.',
+                })
+                return
+              }
               if (status === 'excused_absence' && reason.trim().length === 0) {
                 showAlert({
                   title: '안내',
@@ -150,9 +195,10 @@ export function ParticipatingIndividualProgressAttendanceCorrectionModal({
                   }
                 }
 
-                onConfirm({
+                await onConfirm({
                   participantRowId,
                   status,
+                  lateTime: status === 'late' && lateTime != null ? lateTime.format('H:mm') : undefined,
                   reason: reason.trim(),
                   evidenceFileName: evidenceFiles[0]?.name ?? null,
                   evidenceFileObjectIds,
@@ -201,6 +247,20 @@ export function ParticipatingIndividualProgressAttendanceCorrectionModal({
             />
           </div>
         </div>
+
+        {showLateTimePicker ? (
+          <div className="participating-individual-attendance-correction-modal__late-time">
+            <ParagraphTimePicker
+              value={lateTime}
+              onChange={setLateTime}
+              placeholder="지각 시간을 선택해 주세요"
+              width="100%"
+              inputSize="large"
+              zIndex={TIME_PICKER_Z_INDEX}
+              showEndTimeToggle={false}
+            />
+          </div>
+        ) : null}
 
         {showReasonTable ? (
           <AttendanceCorrectionReasonForm

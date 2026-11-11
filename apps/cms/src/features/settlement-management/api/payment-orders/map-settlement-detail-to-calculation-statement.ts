@@ -19,6 +19,7 @@ import { formatPaymentOrderCalculationItemLabel } from '@/shared/constants/settl
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { formatDateDotWithWeekday } from '@/shared/utils/date'
 import { formatPaymentOrderInstitutionDisplay } from '@/features/settlement-management/api/payment-orders/payment-order-line-amounts'
+import { readSettlementRecognizedSessionCount } from '@/features/settlement-management/api/shared/settlement-recognized-session-count'
 import {
   formatBusinessIncomeEarnerLabel,
   formatBusinessPeriodDisplay,
@@ -199,6 +200,7 @@ function mapCalculationStatementSharedBasic(settlement: SettlementFrontendRespon
     businessIncomeEarnerLabel: formatBusinessIncomeEarnerLabel(
       settlement.businessIncomeEarnerLabel
     ),
+    recognizedSessionCount: readSettlementRecognizedSessionCount(settlement),
   }
 }
 

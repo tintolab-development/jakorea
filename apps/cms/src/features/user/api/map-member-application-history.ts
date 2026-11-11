@@ -54,6 +54,13 @@ export function mapMemberApplicationHistoryItem(
 ): Application {
   const now = new Date().toISOString()
   const applicationId = item.applicationId
+  // live 응답에만 있는 필드(BE 스냅샷 미반영). 이 신청으로 생성된 program_participant.id, 아직 없으면 null.
+  const rawParticipantId = (item as MemberApplicationHistoryResponse & { participantId?: number | null })
+    .participantId
+  const participantId =
+    typeof rawParticipantId === 'number' && Number.isFinite(rawParticipantId)
+      ? rawParticipantId
+      : undefined
   const programId = item.programId != null ? String(item.programId) : 'unknown'
   const id =
     applicationId != null ? `app-${applicationId}` : `app-${programId}-${item.submittedAt ?? now}`
@@ -74,6 +81,7 @@ export function mapMemberApplicationHistoryItem(
     customFields: {
       ...(item.programName?.trim() ? { programName: item.programName.trim() } : {}),
       ...(applicationId != null ? { memberApplicationId: applicationId } : {}),
+      ...(participantId != null ? { participantId } : {}),
     },
   }
 }

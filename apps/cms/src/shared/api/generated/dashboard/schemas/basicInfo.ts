@@ -10,16 +10,16 @@
  * 제출 시점 스냅샷만. 스냅샷 없는 필드는 null(현재 회원/동의서 값으로 채우지 않음).
  */
 export interface BasicInfo {
-  name?: string;
-  englishName?: string;
+  name?: string | null;
+  englishName?: string | null;
   /** 예: 000915-1******. 원문 없음. */
-  residentNumberMasked?: string;
-  affiliation?: string;
-  homeAddress?: string;
-  homeAddressDetail?: string;
-  bank?: string;
+  residentNumberMasked?: string | null;
+  affiliation?: string | null;
+  homeAddress?: string | null;
+  homeAddressDetail?: string | null;
+  bank?: string | null;
   /** 마스킹된 계좌번호. 원문 없음. */
-  accountNumberMasked?: string;
-  accountHolder?: string;
-  paymentPurpose?: string;
+  accountNumberMasked?: string | null;
+  accountHolder?: string | null;
+  paymentPurpose?: string | null;
 }

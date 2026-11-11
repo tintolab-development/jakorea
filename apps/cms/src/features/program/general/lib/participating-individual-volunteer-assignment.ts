@@ -105,7 +105,8 @@ function sessionFromDef(def: {
     dayOfWeek: weekday,
     duration: '2시간',
     format: '오프라인',
-    classNum: `${def.sessionRound}교시`,
+    // 일반 개인형에는 교시 개념이 없다 — sessionRound(회차)를 교시로 표시하지 않는다
+    classNum: '',
     timeRange,
     status: 'pending',
   }
@@ -122,7 +123,8 @@ function slotToSession(slot: InstructorLectureAssignSlot): ParticipatingSchoolSe
     dayOfWeek: weekday,
     duration: '2시간',
     format: '오프라인',
-    classNum: `${slot.sessionRound}교시`,
+    // 일반 개인형에는 교시 개념이 없다 — sessionRound(회차)를 교시로 표시하지 않는다
+    classNum: '',
     timeRange: slot.timeRange.replace(/\s*~\s*/g, '~'),
     status: 'pending',
   }

@@ -7,4 +7,7 @@ export {
   isFullyMaskedAddressDetailSegment,
   isPrivacyAddressBlurToken,
   type PrivacyHomeAddressDisplayProps,
+  HOME_ADDRESS_UNDISCLOSED,
+  isMaskedHomeAddressLine,
+  maskHomeAddressLine,
 } from './privacy-home-address-display'

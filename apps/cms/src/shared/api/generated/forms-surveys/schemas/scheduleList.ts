@@ -5,9 +5,12 @@
  * Filtered for CMS form template / survey Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { ScheduleListApplicationType } from './scheduleListApplicationType';
 import type { ScheduleSettlement } from './scheduleSettlement';
 
 export interface ScheduleList {
   applicationId?: number;
   schedules?: ScheduleSettlement[];
+  /** INDIVIDUAL: applicationId = program_individual_application.id, VOLUNTEER: applicationId = program_volunteer_application.id */
+  applicationType?: ScheduleListApplicationType;
 }

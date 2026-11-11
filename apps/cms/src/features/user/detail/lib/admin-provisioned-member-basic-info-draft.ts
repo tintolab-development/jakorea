@@ -1,3 +1,4 @@
+import { genderPatchValue, userGenderToDraftLabel } from '@/features/user/detail/lib/profile-form-gender'
 import type { User } from '@/types/user'
 import type { PatchUserBasicInfoInput } from '@/entities/user/api/user-service'
 import { buildInstructorRegisterCertifications, type InstructorRegisterLicenseRow } from '@/features/user/api/map-instructor-register-extras'
@@ -10,7 +11,6 @@ import {
   isAdminPermissionTagVariant,
   type AdminPermissionTagVariant,
 } from '@/features/user/shared/lib/admin-permission-display'
-import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
 import type { TermsAgreementRequest } from '@/shared/api/generated/members/schemas/termsAgreementRequest'
 import {
   filterEditableTermsAgreementsForAdminAccountBasicInfoPatch,
@@ -52,6 +52,8 @@ export type AdminProvisionedMemberBasicInfoDraft = {
   /** 1365 자원봉사 ID */
   id1365?: string
   gender: string
+  /** 수정 진입 시점 성별 라벨(''=미등록·마스킹). 같으면 저장 payload에서 성별을 빼 기존 값을 덮어쓰지 않는다. */
+  genderOriginal?: string
   birthDate: string
   socialAccount: string
   adminComment: string
@@ -304,10 +306,9 @@ export function userToAdminProvisionedBasicDraft(
     affiliationInstitution,
     affiliationGrade,
     affiliationNone,
-    gender: (() => {
-      const display = toDisplayGender(user.gender)
-      return display === '-' ? '' : display
-    })(),
+    // 마스킹(**)·미등록은 성별 데이터로 바꾸지 않는다(Step 6.1).
+    gender: userGenderToDraftLabel(user.gender),
+    genderOriginal: userGenderToDraftLabel(user.gender),
     birthDate: birthDateToInputValue(user.birthDate),
     socialAccount: user.socialAccounts?.[0] ?? '',
     adminComment: user.adminComment ?? '',
@@ -422,7 +423,8 @@ export function draftToBasicInfoPatch(draft: AdminProvisionedMemberBasicInfoDraf
     detailAddressDetail: detailAddressDetail,
     ...(zipCode ? { zipCode } : {}),
     affiliation,
-    gender: draft.gender.trim() || undefined,
+    // 사용자가 바꾼 경우에만 성별을 보낸다(미등록·마스킹·미변경은 제외).
+    gender: genderPatchValue(draft.gender, draft.genderOriginal),
     birthDate: draft.birthDate.trim() || undefined,
     socialAccounts: social ? [social] : [],
     adminComment: adminTrimmed ? adminTrimmed : undefined,

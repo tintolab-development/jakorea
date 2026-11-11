@@ -60,6 +60,13 @@ export interface ParticipatingSchoolSession {
   educationSlotKey?: string
   /** 해당 일정의 program_curriculum_session 건수. 없으면 생략. sessionNo로 채우지 않는다. */
   curriculumSessionCount?: number | null
+  /**
+   * 기관 신청 희망 일정의 지망 순위(requested-schedules `preferenceOrder`).
+   * 희망 일정 행에만 채운다. round(회차 번호)와 다른 값이며 「N지망」으로만 표시한다.
+   */
+  preferenceOrder?: number | null
+  /** 그 희망 일정에 신청한 차시 수(requested-schedules `sessionCount`). 희망 일정 행에만 채운다. */
+  requestedSessionCount?: number | null
 }
 
 export interface ParticipatingSchoolRow {

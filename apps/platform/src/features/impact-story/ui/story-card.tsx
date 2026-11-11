@@ -10,13 +10,19 @@ export type StoryCardProps = {
 }
 
 export function StoryCard({ story }: StoryCardProps) {
+  // 썸네일 없음(서버 null) → Figma 13983:89479 기본 썸네일(회색 배경 + 로고 + 1px 테두리)
+  const imageUrl = story.imageUrl || undefined
   return (
     <Link to={impactStoryDetailPath(story.id)} className={styles.cardLink}>
       <article className={styles.card}>
-        <div className={styles.thumbnail} aria-hidden="true">
+        <div
+          className={imageUrl ? styles.thumbnail : `${styles.thumbnail} ${styles.thumbnailDefault}`}
+          aria-hidden="true"
+        >
+          {/* 기본 썸네일은 이미지가 없을 때만 — 투명 배경 PNG 뒤로 비치지 않게 겹쳐 깔지 않는다 */}
           <img
             className={styles.image}
-            src={story.imageUrl || defaultThumbnailUrl}
+            src={imageUrl ?? defaultThumbnailUrl}
             alt=""
             width={461}
             height={256}

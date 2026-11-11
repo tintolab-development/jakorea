@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import type { PaymentOrderProgramCalculationStatement } from '@/features/settlement-management/model/payment-order-admin-list'
 import {
+  buildPaymentStatementIssuanceFileNameFromCalculation,
   buildPaymentStatementIssuancePayloadFromCalculationStatement,
+  buildPaymentStatementIssuanceViewOptionsFromCalculation,
   mapInstructorCalculationStatementToIssuanceInput,
 } from './payment-order-calculation-statement-issuance-view'
 
@@ -121,7 +123,8 @@ describe('지급조서 발급 바인딩 — mock 샘플 금지', () => {
     expect(basic?.bankName).toBe('')
     expect(basic?.residentFront).toBe('')
     expect(lecture?.lectureFeeType).toBe('')
-    expect(lecture?.sessionCount).toBe('4')
+    // 교육 진행 차시 = 인정 차시. 프로그램 진행 회차 `4 / 16`의 완료 회차 수(4)를 쓰지 않는다.
+    expect(lecture?.sessionCount).toBe('')
     expect(lecture?.totalLectureFee).toBe('')
     expect(lecture?.feeBasisLeft).toBe('')
     expect(JSON.stringify(payload!.paragraphBodyOptions)).not.toContain('최강사')
@@ -140,5 +143,36 @@ describe('지급조서 발급 바인딩 — mock 샘플 금지', () => {
     expect(input.bankName).toBe('')
     expect(input.accountNumber).toBe('')
     expect(input.accountHolder).toBe('')
+  })
+})
+
+describe('지급조서 발급 — 회차와 차시 구분', () => {
+  const baseInput = mapInstructorCalculationStatementToIssuanceInput(instructorStatement())
+
+  it('교육 진행 차시는 인정 차시(recognizedSessionCount)만 쓴다', () => {
+    const options = buildPaymentStatementIssuanceViewOptionsFromCalculation({
+      ...baseInput,
+      recognizedSessionCount: 2,
+    })
+    expect(options.lectureFeeCalculationValues?.sessionCount).toBe('2')
+  })
+
+  it('인정 차시 0은 0차시로 유지한다', () => {
+    const options = buildPaymentStatementIssuanceViewOptionsFromCalculation({
+      ...baseInput,
+      recognizedSessionCount: 0,
+    })
+    expect(options.lectureFeeCalculationValues?.sessionCount).toBe('0')
+  })
+
+  it('파일명은 일정 칸 원문 단위(차시/회차)를 그대로 쓴다', () => {
+    const withSession = (lectureSessionDisplay: string) =>
+      buildPaymentStatementIssuanceFileNameFromCalculation({
+        ...baseInput,
+        blocks: baseInput.blocks.map(block => ({ ...block, lectureSessionDisplay })),
+      })
+    expect(withSession('3차시')).toMatch(/_3차시$/)
+    expect(withSession('2 ~ 3차시')).toMatch(/_2-3차시$/)
+    expect(withSession('2026-08-15 09:00~10:00 · 1회차')).toMatch(/_1회차$/)
   })
 })

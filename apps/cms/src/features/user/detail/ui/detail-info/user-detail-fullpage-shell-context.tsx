@@ -54,6 +54,11 @@ export interface UserDetailFullpageShellValue {
     reason: CertificateIssueReasonValue,
     reasonLabel: string
   ) => void | Promise<void>
+  onInstructorCertificateBulkIssue: (
+    rowIds: readonly string[],
+    reason: CertificateIssueReasonValue,
+    reasonLabel: string
+  ) => void | Promise<void>
   progressStatusReadOnly: boolean
   onWithdrawModalCancel: () => void
   onWithdrawModalConfirm: (confirmInput?: string) => void | Promise<void>

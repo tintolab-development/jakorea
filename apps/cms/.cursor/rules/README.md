@@ -53,6 +53,7 @@ Admin 구현 스택: [`apps/admin/.cursor/rules`](../../../admin/.cursor/rules/R
 - [UI principles](./design/ui-principles.md)  
 - [숫자 입력 UX](./design/numeric-input-ux.mdc) — 정수·소수·금액·날짜 텍스트·숫자형 식별자 입력 규칙
 - **[CmsButton 액션 사이즈](./design/cms-button-action-sizes.mdc)** — 툴바 h40 · 테이블 셀 h32 (SSOT 어댑터)
+- **[비활성 버튼 툴팁 금지](./design/disabled-button-no-tooltip.mdc)** — disabled 사유 툴팁을 임의 추가하지 않음
 - [Modal viewport centering](./design/modal-viewport-centering.md) — center modals in viewport  
 - Prefer **`ContentModal`**; direct **`TealHeaderModal`** use is deprecated  
 - [CMS 공통 Alert 모달](./libraries/cms-alert-modal.md) — 단일 확인 안내 (`useCmsAlert` / `cmsAlertModal`)  

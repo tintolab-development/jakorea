@@ -9,7 +9,6 @@ import type { MemberCertificateAvailabilityResponseCertificateType } from './mem
 
 export interface MemberCertificateAvailabilityResponse {
   programId?: number;
-  /** @nullable */
   participantId?: number | null;
   /** 평가한 증명서 유형. 요청 PARTICIPATION은 COMPLETION으로 바뀌지 않는다. */
   certificateType?: MemberCertificateAvailabilityResponseCertificateType;
@@ -18,27 +17,16 @@ export interface MemberCertificateAvailabilityResponse {
   eligible?: boolean;
   reasonCode?: string;
   reasonMessage?: string;
-  /** @nullable */
   existingIssueId?: number | null;
   canDownload?: boolean;
-  /**
-     * Counted PRESENT/ATTENDED/LATE sessions inside the give-up performance boundary.
-     * @nullable
-     */
+  /** Counted PRESENT/ATTENDED/LATE sessions inside the give-up performance boundary. */
   countedParticipationCount?: number | null;
-  /**
-     * Certificate display period start (yyyy-MM-dd, Asia/Seoul).
-     * @nullable
-     */
+  /** Certificate display period start (yyyy-MM-dd, Asia/Seoul). */
   certificatePeriodStartDate?: string | null;
-  /**
-     * Certificate display period end (yyyy-MM-dd, Asia/Seoul). Give-up participation uses the last counted session end.
-     * @nullable
-     */
+  /** Certificate display period end (yyyy-MM-dd, Asia/Seoul). Give-up participation uses the last counted session end. */
   certificatePeriodEndDate?: string | null;
-  /**
-     * PDF-identical Korean period label.
-     * @nullable
-     */
+  /** PDF-identical Korean period label. */
   certificatePeriodLabel?: string | null;
+  /** 기존 발급 건(existingIssueId)의 발급 일시(certificate_issue.issued_at). PDF 발급일과 다운로드 파일명 날짜(YYMMDD, Asia/Seoul)에 사용. 발급 이력이 없으면 null */
+  issuedAt?: string | null;
 }

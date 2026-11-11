@@ -6,6 +6,7 @@ import {
   assignedSessionsForIndividualSettlementReview,
   mapIndividualSettlementReviewListRows,
   resolveIndividualSettlementReviewRowsForQueryState,
+  resolveIndividualSettlementReviewSummaryLabel,
 } from './map-individual-settlement-review-rows'
 import {
   canReviewIndividualSettlement,
@@ -312,5 +313,18 @@ describe('individual settlement review detail display', () => {
       '증빙 보완 필요'
     )
     expect(canReviewIndividualSettlement(rejected)).toBe(false)
+  })
+})
+
+describe('resolveIndividualSettlementReviewSummaryLabel', () => {
+  const empty = { submitted: 0, approved: 0, rejected: 0, total: 0 }
+
+  it('matches the participant settlement summary wording', () => {
+    expect(resolveIndividualSettlementReviewSummaryLabel(empty, true)).toBe('조회 실패')
+    expect(resolveIndividualSettlementReviewSummaryLabel({ ...empty, submitted: 1, approved: 1, total: 2 }, false)).toBe('확인 진행 중')
+    expect(resolveIndividualSettlementReviewSummaryLabel({ ...empty, submitted: 1, total: 1 }, false)).toBe('확인 대기 중')
+    expect(resolveIndividualSettlementReviewSummaryLabel({ ...empty, rejected: 1, total: 1 }, false)).toBe('신청 반려')
+    expect(resolveIndividualSettlementReviewSummaryLabel({ ...empty, total: 3 }, false)).toBe('해당 없음')
+    expect(resolveIndividualSettlementReviewSummaryLabel(empty, false)).toBe('-')
   })
 })

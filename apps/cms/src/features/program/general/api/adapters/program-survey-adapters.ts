@@ -207,6 +207,7 @@ function satisfactionSurveyMeta(
   | 'targetScopeId'
   | 'targetScopeLabel'
   | 'displayDeadlineAt'
+  | 'submissionEndAt'
   | 'resultDownloadable'
   | 'satisfactionRunMode'
   | 'satisfactionWindowDays'
@@ -219,6 +220,7 @@ function satisfactionSurveyMeta(
     targetScopeId: binding.targetScopeId ?? null,
     targetScopeLabel: binding.targetScopeLabel ?? null,
     displayDeadlineAt: extra.displayDeadlineAt,
+    ...(binding.submissionEndAt ? { submissionEndAt: binding.submissionEndAt } : {}),
     resultDownloadable: extra.resultDownloadable,
     satisfactionRunMode: extra.satisfactionRunMode ?? null,
     satisfactionWindowDays: extra.satisfactionWindowDays ?? null,
@@ -412,8 +414,10 @@ export function mapSurveyResponseListItemToPollResponse(
   const fromDetail = mapSurveyAnswersToRecord(detail?.answers ?? item.answers)
   const fromPreview = parseAnswerPreviewJson(item.answerPreviewJson)
   const answers = Object.keys(fromDetail).length > 0 ? fromDetail : fromPreview
+  const submittedByAdminId = item.submittedByAdminId ?? detail?.submittedByAdminId
 
   return {
+    ...(submittedByAdminId != null ? { submittedByAdminId } : {}),
     respondentId: String(item.formResponseId ?? detail?.formResponseId ?? ''),
     respondentName:
       item.submittedByMemberName?.trim() ||

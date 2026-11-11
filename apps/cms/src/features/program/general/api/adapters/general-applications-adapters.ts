@@ -486,6 +486,13 @@ export function mapStoredPeriodRequestedSchedulesToHopeSessions(
       resolvedScheduleId,
       // 미확정 희망 일정 — 승인/희망 일정 확정 전에는 강사 배정 후보가 아니다(map-requested-schedules와 동일).
       ...(resolvedScheduleId == null ? { scheduleUnresolved: true } : {}),
+      // 지망 순위·신청 차시 수 원본(round는 index로 채워질 수 있어 따로 둔다)
+      ...(typeof row.preferenceOrder === 'number' &&
+      Number.isInteger(row.preferenceOrder) &&
+      row.preferenceOrder > 0
+        ? { preferenceOrder: row.preferenceOrder }
+        : {}),
+      ...(hopedSessionCount != null ? { requestedSessionCount: hopedSessionCount } : {}),
     }
   })
 }
@@ -659,12 +666,17 @@ export function mapOrganizationApplicationDetailOperationalSessions(
         : '-'
     const round = session.sessionNo ?? index + 1
     const resolvedScheduleId = session.resolvedScheduleId ?? session.scheduleId ?? null
+    // sessionNo는 회차 번호다. 교시로 바꾸지 않고, 순번(index)으로 회차를 지어내지 않는다.
+    const sessionNo =
+      typeof session.sessionNo === 'number' && Number.isInteger(session.sessionNo) && session.sessionNo > 0
+        ? session.sessionNo
+        : null
     return {
       round,
       ...dateParts,
       duration,
       format: toDisplayEducationScheduleName(session.scheduleName) || '-',
-      classNum: `${round}교시`,
+      classNum: sessionNo != null ? `${sessionNo}회차` : '',
       timeRange,
       deliveryScheduleStatus: session.assignmentStatus?.trim() || undefined,
       resolvedScheduleId,
@@ -1002,7 +1014,38 @@ export function mapInstructorApplicationToApplicantInstructorRow(
     organizationDistances: collectInstructorApplicationOrganizationDistances(dto),
     programDispatchCount: readRuntimeNumber(dto, 'programDispatchCount'),
     programLongDistanceDispatchCount: readRuntimeNumber(dto, 'programLongDistanceDispatchCount'),
+    ...mapInstructorApplicationListScheduleFields(dto),
     availableActions: dto.availableActions,
+  }
+}
+
+/**
+ * 강사 신청 캘린더용 — 목록 `availableScheduleIds`·`scheduleDistances`(없으면 필드 생략)·`activityWithdrawn`.
+ * `availableScheduleIds: []`인 신청도 행은 그대로 남는다(캘린더 날짜 셀에만 안 그려진다).
+ */
+function mapInstructorApplicationListScheduleFields(
+  dto: InstructorApplicationListItemResponse
+): Pick<ApplicantInstructorRow, 'availableScheduleIds' | 'scheduleDistances' | 'activityWithdrawn'> {
+  const availableScheduleIds = (dto.availableScheduleIds ?? []).filter(
+    (id): id is number => typeof id === 'number' && Number.isFinite(id) && id > 0
+  )
+  const scheduleDistances = (dto.scheduleDistances ?? [])
+    .filter(
+      (item): item is typeof item & { scheduleId: number } =>
+        typeof item.scheduleId === 'number' && Number.isFinite(item.scheduleId)
+    )
+    .map(item => ({
+      scheduleId: item.scheduleId,
+      distanceKm: item.distanceKm ?? null,
+      longDistance: item.longDistance ?? null,
+    }))
+  return {
+    ...(availableScheduleIds.length > 0 ? { availableScheduleIds } : {}),
+    ...(scheduleDistances.length > 0 ? { scheduleDistances } : {}),
+    // 구버전 응답(필드 없음)은 생략 → 뱃지 미노출
+    ...(typeof dto.activityWithdrawn === 'boolean'
+      ? { activityWithdrawn: dto.activityWithdrawn }
+      : {}),
   }
 }
 
@@ -2001,6 +2044,15 @@ export function mapVolunteerApplicationDetailToApplicantRow(
     applicationStatus: dto.applicationStatus ?? base.applicationStatus,
     documentScreeningStatus: mapApiDocumentStatusToScreeningStatus(screening?.documentStatus),
     documentRejectionReason: screening?.rejectReason?.trim() || base.documentRejectionReason,
+    // 결과 알림 실제 발송 시각 — 필드가 있으면(null 포함) 응답 값만, 없으면(구버전) 기존 값 유지
+    documentResultNotificationSentAt:
+      dto.documentResultNotificationSentAt !== undefined
+        ? formatOrganizationResultNotificationSentAt(dto.documentResultNotificationSentAt)
+        : base.documentResultNotificationSentAt,
+    finalResultNotificationSentAt:
+      dto.finalResultNotificationSentAt !== undefined
+        ? formatOrganizationResultNotificationSentAt(dto.finalResultNotificationSentAt)
+        : base.finalResultNotificationSentAt,
     interviewSlotCount: dto.interviewAvailabilityCount ?? base.interviewSlotCount,
     interviewAssignmentStatus,
     interviewAssignmentApiStatus:
@@ -2110,7 +2162,45 @@ export function mapParticipantRequestedSchedulesToHopeSessions(
   if (storedPeriodHopes.length > 0) return storedPeriodHopes
   const preferred = requestedSchedulesToPreferredEducationSchedules(requestedSchedules)
   if (preferred.length === 0) return []
-  return mapPreferredEducationSchedulesToSessions(preferred, { useEducationDate: true })
+  const sessions = mapPreferredEducationSchedulesToSessions(preferred, { useEducationDate: true })
+  // round가 index로 채워진 행이 섞이면 지망 매칭이 틀릴 수 있어 붙이지 않는다.
+  if (preferred.some(entry => entry.round == null)) return sessions
+  const requestedByOrder = indexRequestedSchedulesByUniquePreferenceOrder(requestedSchedules)
+  return sessions.map(
+    session => {
+      // preferred.round = requested preferenceOrder(지망). 지망·신청 차시 수를 별도 필드로 붙인다.
+      const requested = requestedByOrder.get(session.round)
+      if (!requested) return session
+      return {
+        ...session,
+        preferenceOrder: session.round,
+        requestedSessionCount: requested.sessionCount,
+      }
+    }
+  )
+}
+
+/** preferenceOrder가 한 행에만 있는 경우만 — 중복 지망은 매칭하지 않는다(지어내지 않음). */
+function indexRequestedSchedulesByUniquePreferenceOrder(
+  rows: readonly RequestedScheduleResponse[]
+): Map<number, { sessionCount: number | null }> {
+  const counts = new Map<number, number>()
+  for (const row of rows) {
+    const order = row.preferenceOrder
+    if (typeof order !== 'number' || !Number.isInteger(order) || order <= 0) continue
+    counts.set(order, (counts.get(order) ?? 0) + 1)
+  }
+  const byOrder = new Map<number, { sessionCount: number | null }>()
+  for (const row of rows) {
+    const order = row.preferenceOrder
+    if (typeof order !== 'number' || counts.get(order) !== 1) continue
+    const sessionCount =
+      typeof row.sessionCount === 'number' && Number.isInteger(row.sessionCount) && row.sessionCount > 0
+        ? row.sessionCount
+        : null
+    byOrder.set(order, { sessionCount })
+  }
+  return byOrder
 }
 
 export function mapParticipantToParticipatingSchoolRow(
@@ -2353,5 +2443,9 @@ export function mapParticipantToParticipatingVolunteerRow(
     birthDate: dto.birthDate?.trim() || undefined,
     activityWithdrawn:
       dto.giveUpAt != null || dto.participantStatus?.trim().toUpperCase() === 'GIVE_UP',
+    // 기관형 캘린더 우측 카드 지표 — 구버전 응답(필드 없음)은 null → '-'
+    distanceKm: dto.distanceKm ?? null,
+    programDispatchCount: dto.programDispatchCount ?? null,
+    programLongDistanceDispatchCount: dto.programLongDistanceDispatchCount ?? null,
   }
 }

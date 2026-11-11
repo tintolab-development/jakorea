@@ -17,6 +17,7 @@ import type {
 } from '@/features/program/general/lib/participating-individual-progress-assignment-types'
 import {
   ParticipatingIndividualProgressAssignmentTable,
+  type ProgressAssignmentFeedbackTarget,
   type ProgressAssignmentSurveyNavTab,
 } from './participating-individual-progress-assignment-table'
 
@@ -25,11 +26,13 @@ export function ParticipatingIndividualProgressAssignmentSessionPanel({
   appliedFilters,
   getSessionParticipants,
   onViewSurveyResponse,
+  onOpenFeedback,
 }: {
   session: ParticipatingIndividualProgressAssignmentSessionGroup
   appliedFilters: ParticipatingIndividualProgressAssignmentFilters
   getSessionParticipants: (sessionId: string) => ParticipatingIndividualProgressAssignmentParticipantRow[]
   onViewSurveyResponse: (tab: ProgressAssignmentSurveyNavTab) => void
+  onOpenFeedback?: (target: ProgressAssignmentFeedbackTarget) => void
 }) {
   const participants = useMemo(() => {
     const rows = cloneProgressAssignmentParticipantRows(getSessionParticipants(session.id))
@@ -75,6 +78,7 @@ export function ParticipatingIndividualProgressAssignmentSessionPanel({
         <ParticipatingIndividualProgressAssignmentTable
           rows={participants}
           onViewSurveyResponse={onViewSurveyResponse}
+          onOpenFeedback={onOpenFeedback}
         />
       </div>
     </section>

@@ -49,7 +49,9 @@ function statusLabel(status: TalentDonationApplication['status']): string {
 }
 
 function genderLabel(gender: TalentDonationApplication['gender']): string {
-  return gender === 'female' ? '여성' : '남성'
+  if (gender === 'female') return '여성'
+  if (gender === 'male') return '남성'
+  return '-'
 }
 
 function internationalAge(isoDate: string): number | null {

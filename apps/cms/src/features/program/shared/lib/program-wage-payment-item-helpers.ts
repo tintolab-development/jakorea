@@ -32,7 +32,6 @@ function compactPaymentLabel(label: string | undefined): string {
 const PAYMENT_ITEM_LABEL_ALIASES: Record<string, string> = {
   교통비: '강사 교통비',
   식비: '식사비',
-  활동비: '참여자 활동비',
   '교통비(일사일교)': '강사 교통비',
   '숙박비(일사일교)': '숙박비 (1사1교)',
   장거리교통비: '장거리 교통비',
@@ -43,7 +42,7 @@ const SETTLEMENT_ITEM_TYPE_LABEL: Record<string, string> = {
   STUDENT_TRANSPORTATION: '학생 교통비',
   LONG_DISTANCE_TRANSPORTATION: '장거리 교통비',
   LODGING: '숙박비',
-  ACTIVITY: '참여자 활동비',
+  ACTIVITY: '활동비',
   MEAL: '식비',
 }
 
@@ -290,7 +289,7 @@ export function useProgramWagePaymentItemOptions(): CmsSelectMultipleOption[] {
 const LEGACY_MOCK_PAYMENT_ITEM_ID_TO_LABEL: Record<string, string> = {
   'p-1': '강사 교통비',
   'p-3': '숙박비',
-  'p-6': '참여자 활동비',
+  'p-6': '활동비',
   'p-7': '숙박비 (1사1교)',
 }
 

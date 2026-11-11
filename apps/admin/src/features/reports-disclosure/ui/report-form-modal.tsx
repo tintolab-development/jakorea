@@ -184,26 +184,18 @@ export function ReportFormModal({
       showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
-    const hasExistingThumb =
-      !thumbCleared &&
-      !pendingThumbFile &&
-      Boolean(initial?.thumbnailAssetId) &&
-      Boolean(thumbnailUrl.trim())
     const hasExistingAttach =
       !attachCleared &&
       !pendingAttachFile &&
       Boolean(initial?.attachmentAssetId) &&
       Boolean(attachmentUrl.trim())
 
-    if ((!thumbnailUrl || !thumbnailFileName) && !hasExistingThumb) {
-      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
-      return
-    }
     if ((!attachmentUrl || !attachmentFileName) && !hasExistingAttach) {
       showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
-    if (mode === 'create' && (!pendingThumbFile || !pendingAttachFile)) {
+    // 썸네일은 선택 항목 — 필수는 제목·첨부파일
+    if (mode === 'create' && !pendingAttachFile) {
       showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
@@ -215,7 +207,12 @@ export function ReportFormModal({
       attachmentUrl,
       thumbnailFile: pendingThumbFile,
       attachmentFile: pendingAttachFile,
-      thumbnailAssetId: !pendingThumbFile && !thumbCleared ? initial?.thumbnailAssetId : undefined,
+      // 새 파일이면 업로드, 지웠으면 null(썸네일 없음), 그대로면 기존 자산
+      thumbnailAssetId: pendingThumbFile
+        ? undefined
+        : thumbCleared
+          ? null
+          : (initial?.thumbnailAssetId ?? null),
       attachmentAssetId:
         !pendingAttachFile && !attachCleared ? initial?.attachmentAssetId : undefined,
     })
@@ -291,7 +288,6 @@ export function ReportFormModal({
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="썸네일"
-              required
               view={null}
               edit={
                 <div className="file-select-image-cell">

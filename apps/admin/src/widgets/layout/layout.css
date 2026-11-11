@@ -19,6 +19,8 @@
   min-height: calc(100vh - var(--header-height));
   margin-top: var(--header-height);
   overflow-y: auto;
+  /* 스크롤 유무로 본문 폭이 바뀌지 않게 — 문서(html) 대신 실제 스크롤 영역에 예약 */
+  scrollbar-gutter: stable;
   height: calc(100vh - var(--header-height));
 }
 

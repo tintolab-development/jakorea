@@ -137,3 +137,9 @@
   gap: var(--spacing-12);
   padding-top: var(--spacing-16);
 }
+
+/* PFText는 기본 inline이라 문장마다 줄을 나누려면 세로로 쌓는다 */
+.noteLines {
+  display: flex;
+  flex-direction: column;
+}

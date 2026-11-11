@@ -52,6 +52,7 @@ import {
   type MemberConsentCrimeDraftSnapshot,
   type MemberRegisterConsentWriteSnapshots,
 } from '@/features/user/shared/lib/member-register-consent-write-snapshot'
+import { registerFormGenderToApiLabel } from '@/features/user/detail/lib/profile-form-gender'
 import './add-user-individual.css'
 
 type ConsentValue = 'agree' | 'disagree'
@@ -59,9 +60,10 @@ type ConsentFieldValue = ConsentValue | undefined
 type GenderValue = 'male' | 'female'
 type SchoolEnrollmentStatus = 'enrolled' | 'not_enrolled'
 
-interface AddUserIndividualFormValues {
+export interface AddUserIndividualFormValues {
   name: string
-  gender: GenderValue
+  /** 신규 등록은 미선택(undefined)으로 시작 — 남성으로 추정하지 않는다. */
+  gender: GenderValue | undefined
   birthDate: string
   schoolEnrollmentStatus: SchoolEnrollmentStatus
   schoolName: string
@@ -158,7 +160,7 @@ const FORM_ITEM_STYLE = { marginBottom: 0, width: '100%' } as const
 
 const INITIAL_VALUES: AddUserIndividualFormValues = {
   name: '',
-  gender: 'male',
+  gender: undefined,
   birthDate: '',
   schoolEnrollmentStatus: 'enrolled',
   schoolName: '',
@@ -198,7 +200,7 @@ const MEMBER_REGISTER_REQUIRED_CONSENT_FIELDS = [
   label: string
 }>
 
-function collectMemberRegisterValidation(values: AddUserIndividualFormValues): {
+export function collectMemberRegisterValidation(values: AddUserIndividualFormValues): {
   missingRequired: boolean
   formatMessages: string[]
 } {
@@ -206,6 +208,10 @@ function collectMemberRegisterValidation(values: AddUserIndividualFormValues): {
   const formatMessages: string[] = []
 
   if (!values.name?.trim()) {
+    missingRequired = true
+  }
+
+  if (values.gender !== 'male' && values.gender !== 'female') {
     missingRequired = true
   }
 
@@ -345,7 +351,7 @@ export function AddUserIndividual({
       password: resolveAdminProvisionedTempPassword(values.email.trim()),
       name: values.name.trim(),
       phone: values.contact.trim(),
-      gender: values.gender === 'male' ? '남성' : '여성',
+      gender: registerFormGenderToApiLabel(values.gender),
       birthDate: birthDateFormValueToApi(values.birthDate),
       role: 'INDIVIDUAL',
       isActive: true,

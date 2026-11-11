@@ -18,7 +18,10 @@ import {
   cancelGeneralVolunteerApplicationRejection,
   cancelGeneralIndividualApplicationRejection,
 } from '@/features/program/general/api/admin-applications-service'
-import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import {
+  generalApplicationsQueryKeys,
+  generalProgramProgressQueryKeys,
+} from '@/features/program/general/api/general-applications-query-keys'
 import { toScreeningResultNotifyFields } from '@/features/program/general/api/screening-notify-fields'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
@@ -150,6 +153,17 @@ export function useGeneralVolunteerApplicationsRemote({
       queryClient.invalidateQueries({
         queryKey: generalApplicationsQueryKeys.volunteerDetails(),
         refetchType: 'all',
+      }),
+      // 합격 취소(final-result FAIL 등)는 BE가 참여자 CANCELLED_BEFORE_START·봉사자 배정 CANCELLED를
+      // 같은 트랜잭션에서 처리한다 → 진행 현황 참여 봉사자·기관(배정 봉사자 수)도 다시 받는다.
+      queryClient.invalidateQueries({
+        queryKey: generalProgramProgressQueryKeys.volunteers(programId),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: [...generalProgramProgressQueryKeys.all, 'participants', programId],
+      }),
+      queryClient.invalidateQueries({
+        queryKey: generalProgramProgressQueryKeys.institutions(programId),
       }),
     ])
   }, [programId, queryClient, subjectKind])

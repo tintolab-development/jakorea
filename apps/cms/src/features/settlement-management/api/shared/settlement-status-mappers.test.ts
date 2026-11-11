@@ -52,6 +52,20 @@ describe('isPendingStatementStatus', () => {
   })
 })
 
+describe('정정 승인 후 강사 재신청 대기(DRAFT)', () => {
+  it('"지급 정정 요청"으로 보이고 확인·지급 대기 집계에서 빠진다', () => {
+    expect(mapStatementStatusToProcessingStatus('DRAFT')).toBe('correction')
+    expect(mapStatementStatusToLineStatus('DRAFT')).toBe('correction')
+    expect(mapSettlementAxesToLineStatus('DRAFT', 'NOT_READY')).toBe('correction')
+    expect(isConfirmableStatementStatus('DRAFT')).toBe(false)
+    expect(isPendingStatementStatus('DRAFT')).toBe(false)
+    expect(canConfirmPaymentStatement({ statementStatus: 'DRAFT' })).toBe(false)
+    expect(
+      canConfirmPaymentStatement({ availableActions: ['VIEW'], statementStatus: 'DRAFT' })
+    ).toBe(false)
+  })
+})
+
 describe('isConfirmableStatementStatus', () => {
   it('BE bulk-confirm 허용 상태만 true', () => {
     expect(isConfirmableStatementStatus('WAITING_CONFIRM')).toBe(true)

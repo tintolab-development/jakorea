@@ -53,6 +53,7 @@ function parseDisplayDateTime(value: string | null | undefined): { date: string;
   return { date: match[1] ?? formatted, time: match[2] ?? '' }
 }
 
+/** 정산 인정 차시. sessionNo(회차)로 대신하지 않는다. */
 function recognizedClassCountOf(item: InstructorAssignmentSource): number | null {
   if (typeof item.recognizedClassCount === 'number' && Number.isFinite(item.recognizedClassCount)) {
     return item.recognizedClassCount
@@ -62,10 +63,16 @@ function recognizedClassCountOf(item: InstructorAssignmentSource): number | null
     const parsed = Number(fromText[1])
     if (Number.isFinite(parsed) && parsed > 0) return parsed
   }
-  if (typeof item.sessionNo === 'number' && Number.isFinite(item.sessionNo)) return item.sessionNo
   return null
 }
 
+function roundNumberOf(item: InstructorAssignmentSource): number | null {
+  return typeof item.sessionNo === 'number' && Number.isInteger(item.sessionNo) && item.sessionNo > 0
+    ? item.sessionNo
+    : null
+}
+
+/** `날짜 시간 | N차시`(인정 차시). 인정 차시가 없고 회차만 있으면 `| N회차`. */
 export function formatAssignmentScheduleLine(item: InstructorAssignmentSource): string {
   const start = parseDisplayDateTime(item.startAt)
   const end = parseDisplayDateTime(item.endAt)
@@ -75,13 +82,16 @@ export function formatAssignmentScheduleLine(item: InstructorAssignmentSource): 
     start?.time && end?.time ? `${start.time}~${end.time}` : start?.time || end?.time || ''
   const time = trainingTime || clock || '-'
   const sessionCount = recognizedClassCountOf(item)
+  const roundNumber = roundNumberOf(item)
   const session = trainingTime.includes('차시')
     ? ''
     : sessionCount != null
       ? `${sessionCount}차시`
-      : '-'
+      : roundNumber != null
+        ? `${roundNumber}회차`
+        : '-'
 
-  if (!start && !end && !trainingTime && sessionCount == null) return '-'
+  if (!start && !end && !trainingTime && sessionCount == null && roundNumber == null) return '-'
   const head = `${date} ${time}`.trim()
   return session ? `${head} | ${session}` : head || '-'
 }

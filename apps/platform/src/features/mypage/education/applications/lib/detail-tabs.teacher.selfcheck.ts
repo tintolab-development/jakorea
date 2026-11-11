@@ -124,10 +124,19 @@ const volunteerTabs = buildInProgressDetailTabItems({
   surveyConfigured: true,
   satisfactionConfigured: true,
 })
+// 봉사자 만족도조사는 UJAT에서만 — 일반 봉사현황은 탭 없음
 assert.deepEqual(
   volunteerTabs.map(item => item.label),
-  ['안내사항', '배정현황', '설문조사', '만족도조사', '정산현황'],
+  ['안내사항', '배정현황', '설문조사', '정산현황'],
 )
+assert.ok(
+  !buildWithdrawnDuringDetailTabItems({
+    detailCase: 'volunteer',
+    surveyConfigured: true,
+    satisfactionConfigured: true,
+  }).some(item => item.key === 'satisfaction'),
+)
+assert.ok(ujatVolunteerTabs.some(item => item.key === 'satisfaction'))
 
 const teacher = buildTeacherInProgressDetailTabItems(schoolTeacherOptions)
 assert.deepEqual(

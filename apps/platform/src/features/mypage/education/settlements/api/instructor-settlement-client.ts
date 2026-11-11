@@ -3,6 +3,7 @@ import type {
   InstructorSettlementCreateRequest,
   InstructorSettlementResubmitRequest,
 } from '../lib/build-instructor-settlement-submit.ts'
+import type { PaymentStatementCorrectionDetail } from '../lib/payment-statement-correction.ts'
 
 export type PortalInstructorSettlementApplication = {
   applicationId?: number
@@ -42,6 +43,30 @@ export async function createInstructorSettlementApplication(
   return unwrapEnvelope<PortalInstructorSettlementApplication>(data)
 }
 
+/**
+ * POST /api/portal/me/instructor-assignments/{assignmentId}/settlement-applications/preview
+ * 교통비 제외 사유(transportationExcludedReason)·주소 쪽(transportationUnresolvedAddressSide)만 쓴다.
+ */
+export type PortalInstructorSettlementPreview = {
+  assignmentId?: number | null
+  canSubmit?: boolean
+  blockerCode?: string | null
+  transportationExcludedReason?: string | null
+  transportationUnresolvedAddressSide?: string | null
+}
+
+export async function previewInstructorSettlementApplication(
+  assignmentId: number,
+  signal?: AbortSignal,
+): Promise<PortalInstructorSettlementPreview> {
+  const { data } = await axiosClient.post<unknown>(
+    `/api/portal/me/instructor-assignments/${assignmentId}/settlement-applications/preview`,
+    { requestedItems: [] },
+    { signal },
+  )
+  return unwrapEnvelope<PortalInstructorSettlementPreview>(data)
+}
+
 /** POST /api/portal/me/settlement-applications/{applicationId}/revisions */
 export async function resubmitInstructorSettlementApplication(
   settlementApplicationId: number,
@@ -52,4 +77,35 @@ export async function resubmitInstructorSettlementApplication(
     body,
   )
   return unwrapEnvelope<PortalInstructorSettlementApplication>(data)
+}
+
+export type PortalSettlementStatusChange = {
+  settlementId?: number
+  statusAxis?: string
+  toStatus?: string
+}
+
+/**
+ * POST /api/portal/me/settlements/{settlementId}/payment-statement/reapply (reapplyCorrectedPaymentStatement)
+ * 정정 승인으로 만들어진 최신 revision(DRAFT)만 가능. 아니면 409 SETTLEMENT_REAPPLICATION_NOT_AVAILABLE.
+ */
+/** GET /api/portal/me/settlements/{settlementId}/payment-statement/correction — 정정 전·후 비교 (getPaymentStatementCorrectionDetail) */
+export async function fetchPaymentStatementCorrectionDetail(
+  settlementId: number,
+  signal?: AbortSignal,
+): Promise<PaymentStatementCorrectionDetail> {
+  const { data } = await axiosClient.get<unknown>(
+    `/api/portal/me/settlements/${settlementId}/payment-statement/correction`,
+    { signal },
+  )
+  return unwrapEnvelope<PaymentStatementCorrectionDetail>(data)
+}
+
+export async function reapplyCorrectedPaymentStatement(
+  settlementId: number,
+): Promise<PortalSettlementStatusChange> {
+  const { data } = await axiosClient.post<unknown>(
+    `/api/portal/me/settlements/${settlementId}/payment-statement/reapply`,
+  )
+  return unwrapEnvelope<PortalSettlementStatusChange>(data)
 }

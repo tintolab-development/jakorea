@@ -19,7 +19,19 @@ import {
   peekGeneralRecruitOverlayRecord,
   replaceGeneralRecruitOverlayForScope,
 } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { isRecruitMediaOverlayKey } from '@/features/program/general/lib/overlay-phase1/registration-wizard-recruitment-rhf'
+import { contentUrlForFileObjectId } from '@/shared/lib/admin-file-upload'
+import { peekRecruitDetailDraftMedia } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-draft-media-session'
 import { flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
+import {
+  awaitRecruitDetailMediaUploads,
+  isEphemeralThumbPreviewUrl,
+  recruitDetailAttachmentFileNamesKey,
+  recruitDetailAttachmentFileObjectIdsKey,
+  recruitDetailThumbContentUrlKey,
+  recruitDetailThumbFileNameKey,
+  recruitDetailThumbFileObjectIdKey,
+} from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
 import {
   mergeRecruitDetailInfoFromGeneralStore,
   pickUjatVolunteerRecruitGeneralStoreSidecar,
@@ -308,6 +320,70 @@ function pickOverlayKeysByPrefixes(
     if (keyMatchesOperationalOverlayPrefixes(key, prefixes)) out[key] = value
   }
   return out
+}
+
+/** blob 미리보기 주소는 세션이 끝나면 다른 파일을 가리키거나 깨진다. 임시저장에 남기지 않는다. */
+export function stripEphemeralRecruitOverlayMedia(
+  record: Record<string, unknown>
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(record)) {
+    if (key === 'thumbObjectUrl' || key.endsWith('.thumbObjectUrl')) continue
+    if (typeof value === 'string' && isEphemeralThumbPreviewUrl(value)) continue
+    out[key] = value
+  }
+  return out
+}
+
+/**
+ * 임시저장 overlay 병합.
+ * 저장본에 남은 시드·다른 탭 미디어 ID를 `{ ...saved, ...live }`로 유지하면
+ * 불러오기 때 방금 올린 썸네일이 아닌 이미지가 미리보기에 나온다.
+ * 해당 카탈로그 prefix의 미디어는 live collect가 정본이다.
+ */
+export function mergeOperationalOverlayForPersist(
+  saved: Record<string, unknown> | undefined,
+  live: Record<string, unknown> | undefined,
+  prefixes: readonly string[]
+): Record<string, unknown> {
+  const merged: Record<string, unknown> = { ...(saved ?? {}) }
+  for (const key of Object.keys(merged)) {
+    if (!isRecruitMediaOverlayKey(key)) continue
+    if (prefixes.length === 0 || keyMatchesOperationalOverlayPrefixes(key, prefixes)) {
+      delete merged[key]
+    }
+  }
+  Object.assign(merged, live ?? {})
+  return stripEphemeralRecruitOverlayMedia(merged)
+}
+
+function applySidecarMediaToPersistOverlay(
+  overlay: Record<string, unknown>,
+  catalogId: string
+): Record<string, unknown> {
+  const prefix = recruitDetailInfoOverlayPrefixForCatalogId(catalogId)
+  if (prefix == null) return overlay
+  const sidecar = peekRecruitDetailDraftMedia(catalogId, prefix)
+  if (sidecar == null) return overlay
+  const next = { ...overlay }
+  const thumbKey = recruitDetailThumbFileObjectIdKey(prefix)
+  const contentKey = recruitDetailThumbContentUrlKey(prefix)
+  const nameKey = recruitDetailThumbFileNameKey(prefix)
+  if (sidecar.thumbFileObjectId != null) {
+    next[thumbKey] = sidecar.thumbFileObjectId
+    next[contentKey] = contentUrlForFileObjectId(sidecar.thumbFileObjectId)
+    if (sidecar.thumbFileName?.trim()) next[nameKey] = sidecar.thumbFileName.trim()
+  }
+  const liveAttachmentIds = overlay[recruitDetailAttachmentFileObjectIdsKey(prefix)]
+  const hasLiveAttachments =
+    Array.isArray(liveAttachmentIds) && liveAttachmentIds.length > 0
+  if (!hasLiveAttachments && sidecar.attachmentFileObjectIds?.length) {
+    next[recruitDetailAttachmentFileObjectIdsKey(prefix)] = sidecar.attachmentFileObjectIds
+    if (sidecar.attachmentFileNames?.length) {
+      next[recruitDetailAttachmentFileNamesKey(prefix)] = sidecar.attachmentFileNames
+    }
+  }
+  return next
 }
 
 function replaceSharedOverlayKeysByPrefixes(
@@ -697,7 +773,7 @@ export async function hydrateRegistrationOperationalOverlaysFromLocalDrafts(
     }
     if (overlay == null || Object.keys(overlay).length === 0) continue
     if (resolveOperationalOverlayKind(catalogId) == null) continue
-    applyOperationalOverlayForCatalogId(catalogId, overlay)
+    applyOperationalOverlayForCatalogId(catalogId, stripEphemeralRecruitOverlayMedia(overlay))
   }
 }
 
@@ -740,6 +816,7 @@ export async function persistRegistrationOperationalOverlaysToLocal(
   variant: RegistrationOperationalDraftVariant,
   options?: { preferSessionDrafts?: boolean; activeCatalogId?: string }
 ): Promise<void> {
+  await awaitRecruitDetailMediaUploads()
   flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
   const { loadRegistrationWizardFormDraft, persistRegistrationWizardFormDraft } = await import(
     '@/features/program/general/lib/registration-wizard-form-draft'
@@ -856,13 +933,23 @@ export async function persistRegistrationOperationalOverlaysToLocal(
       })
       continue
     }
-    const overlay = collectOperationalOverlayForCatalogId(catalogId)
-    if ((overlay == null || Object.keys(overlay).length === 0) && sessionDraft == null) continue
+    const liveOverlay = collectOperationalOverlayForCatalogId(catalogId)
+    if ((liveOverlay == null || Object.keys(liveOverlay).length === 0) && sessionDraft == null) {
+      continue
+    }
+    const overlay = applySidecarMediaToPersistOverlay(
+      mergeOperationalOverlayForPersist(
+        saved?.overlay,
+        liveOverlay ?? {},
+        operationalOverlayKeyPrefixesForCatalogId(catalogId)
+      ),
+      catalogId
+    )
     await persistRegistrationWizardFormDraft({
       programType,
       templateCode: catalogId,
       draft,
-      overlay: { ...(saved?.overlay ?? {}), ...overlay },
+      overlay,
       editorState: saved?.editorState,
       settingsJson: saved?.settingsJson,
     })

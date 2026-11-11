@@ -19,6 +19,8 @@ export type SettlementAmountItemDraft = {
   itemType: string
   itemName: string
   evidenceRequired: boolean
+  /** 영수증 항목 한도(정산 신청 1건 기준). null·없음 = 한도 없음 */
+  maxLimitWon?: number | null
   amount: string
   attachments: SettlementReceiptAttachment[]
 }

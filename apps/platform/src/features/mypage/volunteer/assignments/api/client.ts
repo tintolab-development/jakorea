@@ -27,6 +27,13 @@ export type PortalVolunteerAssignedItem = {
   longDistance?: boolean | null
   scheduleLines?: string[]
   scheduleLine?: string
+  /**
+   * N6 — 백엔드 추가 예정(OpenAPI `MemberPortalVolunteerAssignedItem` 미반영, 재생성 시 대체).
+   * scheduleLines와 순서·길이가 같다(index i끼리 같은 일정). 일정이 없으면 []. 구버전 응답에는 키가 없다.
+   */
+  scheduleIds?: number[]
+  /** N6 — scheduleLines[i]의 회차 번호(program_schedule.session_no). 사전교육·회차 없음은 null */
+  sessionNos?: (number | null)[]
 }
 
 export type PortalVolunteerWaitingItem = {
@@ -41,6 +48,11 @@ export type PortalVolunteerWaitingItem = {
   longDistance?: boolean | null
   scheduleLine?: string
   assignmentStatus?: PortalVolunteerAssignmentStatus
+  /**
+   * N6 — 이 일정의 회차 번호(program_schedule.session_no). 사전교육·회차 없음은 null.
+   * OpenAPI `MemberPortalVolunteerWaitingItem` 미반영(재생성 시 대체). 구버전 응답에는 키가 없다.
+   */
+  sessionNo?: number | null
 }
 
 export type PortalVolunteerAssignmentsResponse = {

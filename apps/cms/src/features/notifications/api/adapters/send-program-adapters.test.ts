@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  isNotificationSendableProgram,
   mapAdminProgramListItemToSendProgram,
   mapAdminProgramListItemsToSendPrograms,
 } from './send-program-adapters'
@@ -46,5 +47,42 @@ describe('mapAdminProgramListItemsToSendPrograms', () => {
         { id: 3, title: 'Beta', businessYear: 2026 },
       ]).map(row => row.id)
     ).toEqual(['3', '2', '1'])
+  })
+})
+
+describe('isNotificationSendableProgram', () => {
+  it('진행 예정·진행 중이고 게시 상태(또는 값 없음)면 발송 대상으로 고를 수 있다', () => {
+    expect(isNotificationSendableProgram({ id: 1, periodStatus: 'IN_PROGRESS' })).toBe(true)
+    expect(isNotificationSendableProgram({ id: 1, periodStatus: 'SCHEDULED' })).toBe(true)
+    expect(
+      isNotificationSendableProgram({
+        id: 1,
+        draftStatus: 'PUBLISHED',
+        periodStatus: 'IN_PROGRESS',
+      })
+    ).toBe(true)
+    expect(isNotificationSendableProgram({ id: 1 })).toBe(true)
+  })
+
+  it.each(['COMPLETED', 'PERIOD_ENDED', 'CANCELLED', 'CANCELED', 'CLOSED', 'completed'])(
+    '종료 상태 %s는 제외한다',
+    periodStatus => {
+      expect(isNotificationSendableProgram({ id: 1, periodStatus })).toBe(false)
+    }
+  )
+
+  it('임시저장 등 게시가 아닌 프로그램은 제외한다', () => {
+    expect(
+      isNotificationSendableProgram({ id: 1, draftStatus: 'DRAFT', periodStatus: 'IN_PROGRESS' })
+    ).toBe(false)
+  })
+
+  it('목록 변환 시 종료된 프로그램을 뺀다', () => {
+    expect(
+      mapAdminProgramListItemsToSendPrograms([
+        { id: 186478, title: '종료', businessYear: 2026, periodStatus: 'COMPLETED' },
+        { id: 2, title: '진행 중', businessYear: 2026, periodStatus: 'IN_PROGRESS' },
+      ]).map(row => row.id)
+    ).toEqual(['2'])
   })
 })

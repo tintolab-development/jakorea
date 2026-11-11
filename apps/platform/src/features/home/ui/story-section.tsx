@@ -30,6 +30,7 @@ function TitleLines({ title }: { title: string }) {
 }
 
 function FeaturedStory({ story }: { story: ImpactStoryListItem }) {
+  // 썸네일 없음(서버 null) → 기본 썸네일
   const remoteSrc = story.featuredImageUrl || story.imageUrl || defaultThumbnailUrl
   const [src, setSrc] = useState(remoteSrc)
 
@@ -43,7 +44,14 @@ function FeaturedStory({ story }: { story: ImpactStoryListItem }) {
       to={impactStoryDetailPath(story.id)}
       aria-label={`${story.title} 상세 보기`}
     >
-      <div className={styles.featuredMedia} aria-hidden="true">
+      <div
+        className={
+          src === defaultThumbnailUrl
+            ? `${styles.featuredMedia} ${styles.mediaDefault}`
+            : styles.featuredMedia
+        }
+        aria-hidden="true"
+      >
         <img
           className={styles.featuredImage}
           src={src}
@@ -80,16 +88,19 @@ function SubStoryCardSkeleton() {
 }
 
 function SubStoryCard({ story }: { story: ImpactStoryListItem }) {
+  const imageUrl = story.imageUrl || undefined
   return (
     <Link
       className={styles.subCard}
       to={impactStoryDetailPath(story.id)}
       aria-label={`${story.title} 상세 보기`}
     >
-      <div className={styles.subCardMedia}>
+      <div
+        className={imageUrl ? styles.subCardMedia : `${styles.subCardMedia} ${styles.mediaDefault}`}
+      >
         <img
           className={styles.subCardImage}
-          src={story.imageUrl || defaultThumbnailUrl}
+          src={imageUrl || defaultThumbnailUrl}
           alt=""
         />
         <PFCategoryBadge size="small" variant="primary" className={styles.subCardBadge}>

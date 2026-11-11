@@ -1,0 +1,80 @@
+/* 개인 봉사자 교육 배정 안내 — 시안 9899:149410 */
+
+.general-volunteer-education-assign-modal .content-modal__description {
+  margin-bottom: 16px;
+}
+
+.general-volunteer-education-assign-modal__slots {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-sizing: border-box;
+  width: 100%;
+  max-height: 280px;
+  padding: 16px;
+  overflow-y: auto;
+  border-radius: 12px;
+  border: 1px solid var(--Border-default, #e0e0e0);
+  background: var(--main-WT, #fff);
+}
+
+/* 일정별 배정 인원은 승인 전 조회할 API가 없어 표시하지 않는다 */
+.general-volunteer-education-assign-modal .instructor-assign-session-slot-chip__count {
+  display: none;
+}
+
+.general-volunteer-education-assign-modal__notice {
+  margin: 0;
+  color: var(--cms-color-text-secondary, #666);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.general-volunteer-education-assign-modal__notice--warn {
+  color: var(--cms-color-error, #cf1322);
+}
+
+.general-volunteer-education-assign-modal__hint {
+  margin: 12px 0 0;
+  padding: 0 4px;
+  color: #8c8c8c;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.general-volunteer-education-assign-modal__hint::before {
+  content: '•';
+  margin-right: 6px;
+}
+
+.general-volunteer-education-assign-modal__summary {
+  margin-top: 20px;
+}
+
+.general-volunteer-education-assign-modal__assigned-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+}
+
+.general-volunteer-education-assign-modal__assigned-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--main-BK, #3d3d3d);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.general-volunteer-education-assign-modal__assigned-empty {
+  color: #8c8c8c;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.general-volunteer-education-assign-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  width: 100%;
+}

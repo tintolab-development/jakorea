@@ -21,4 +21,6 @@ export interface CertificateAvailabilityResponse {
   certificatePeriodStartDate?: string;
   certificatePeriodEndDate?: string;
   certificatePeriodLabel?: string;
+  /** 기존 발급 건(existingIssueId)의 발급 일시. PDF 발급일과 다운로드 파일명 날짜(YYMMDD, Asia/Seoul)에 사용합니다. 발급 이력이 없으면 null입니다. */
+  issuedAt?: string | null;
 }

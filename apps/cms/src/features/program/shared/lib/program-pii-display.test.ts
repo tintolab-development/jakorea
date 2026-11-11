@@ -67,8 +67,9 @@ describe('program-pii-display', () => {
         revealed: false,
       })
     )
-    expect(container.textContent).toBe('강서구 화곡동')
-    expect(container.querySelector('.program-pii-address-blur')).toBeNull()
+    // Step 6.1: 마스킹 모드는 입력이 이미 마스킹됐다고 가정하지 않는다 — 동 경계까지 보이고 나머지는 블러.
+    expect(container.textContent).toBe('강서구 화곡동 *****')
+    expect(container.querySelector('.program-pii-address-blur')?.textContent).toBe('*****')
   })
 
   it('appends blurred ***** when masked address has no token', () => {
