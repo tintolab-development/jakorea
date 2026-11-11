@@ -5,7 +5,7 @@
  * BE 재산정 규칙 (SettlementCorrectionRecalculationService)
  * - PROGRAM_STANDARD: wageItemType TIER1~3 필수, 단가는 프로그램 저장값(unitAmount·calculationUnit 미사용)
  * - SPECIAL_LECTURE / OTHER_LABOR: unitAmount(>0)·calculationUnit 필수, wageItemType은 방식과 같은 값
- * - calculationUnit: PER_LECTURE(출강 1회) | PER_CLASS(1차시당). PER_HOUR는 레거시라 노출하지 않는다.
+ * - calculationUnit: PER_LECTURE(출강 1회당) | PER_CLASS(차시당). PER_HOUR는 레거시라 노출하지 않는다.
  */
 
 import type { SettlementCorrectionApprovalRequest } from '@/shared/api/generated/settlement/schemas'
@@ -38,8 +38,8 @@ export const PAYMENT_CORRECTION_CALCULATION_UNIT_OPTIONS: {
   value: PaymentCorrectionCalculationUnit
   label: string
 }[] = [
-  { value: 'PER_LECTURE', label: '출강 1회' },
-  { value: 'PER_CLASS', label: '1차시당' },
+  { value: 'PER_LECTURE', label: '출강 1회당' },
+  { value: 'PER_CLASS', label: '차시당' },
 ]
 
 export type PaymentCorrectionFormValue = {

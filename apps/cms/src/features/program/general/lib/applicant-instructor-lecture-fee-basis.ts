@@ -24,17 +24,21 @@ export const LECTURE_FEE_BASIS_TYPE_OPTIONS: {
   { value: 'other_labor', label: '기타 인건비' },
 ]
 
-/** 특강 강사비·기타 인건비 선택 시 지급 기준 옵션 */
+/** 특강 강사비·기타 인건비 선택 시 지급 기준 옵션 (기획 Q2: '1시간 당' → '차시당') */
 export const LECTURE_FEE_MEASURE_OPTIONS: { value: string; label: string }[] = [
   { value: '출강 1회당', label: '출강 1회당' },
-  { value: '1시간 당', label: '1시간 당' },
+  { value: '차시당', label: '차시당' },
 ]
+
+/** 지급 기준 '차시당'. 기존 저장값 '1시간 당'·'1시간 기준'도 차시당으로 읽는다 */
+export const LECTURE_FEE_MEASURE_PER_CLASS = '차시당'
+const LEGACY_PER_CLASS_MEASURES = new Set(['1시간 당', '1시간 기준'])
 
 export const DEFAULT_LECTURE_FEE_MEASURE = LECTURE_FEE_MEASURE_OPTIONS[0]!.value
 
 /**
  * 일반(기관형) 강사 신청 시안 07(1141:246730) 지급 기준 셀렉트 라벨.
- * 값(`출강 1회당`·`1시간 당`)은 API 매핑에 쓰이므로 그대로 두고 라벨만 바꾼다.
+ * 값(`출강 1회당`·`차시당`)은 API 매핑에 쓰이므로 그대로 두고 라벨만 바꾼다(기획 확인 전까지 시안 라벨 유지).
  * 시안에 보이는 라벨은 「1회 기준」뿐이라 시간 단위는 같은 규칙으로 「1시간 기준」.
  */
 export const GENERAL_ORGANIZATION_LECTURE_FEE_MEASURE_OPTIONS: { value: string; label: string }[] =
@@ -77,7 +81,10 @@ export function lectureFeeBasisTypeLabel(type: ApplicantInstructorLectureFeeBasi
   return LECTURE_FEE_BASIS_TYPE_LABEL[type]
 }
 
-/** GET `feePolicy.basisType` — `PROGRAM`/`program`은 프로그램 기준. RECRUITMENT만 특강. */
+/**
+ * GET `feePolicy.basisType` — `PROGRAM`/`program`은 프로그램 기준, `SPECIAL_LECTURE`·`OTHER_LABOR`(대소문자 무관).
+ * 옛 값 RECRUITMENT는 특강으로 표시하지만, 서버는 특강·기타를 구분할 수 없어 프로그램 기준으로 계산한다.
+ */
 export function parseLectureFeeBasisTypeFromApi(
   raw?: string | null
 ): ApplicantInstructorLectureFeeBasisType | undefined {
@@ -147,7 +154,8 @@ function findLectureFeeMeasureInDisplaySegments(segments: string[]): string | un
   return segments.find(
     s =>
       LECTURE_FEE_MEASURE_OPTIONS.some(option => option.value === s) ||
-      s === '1회 기준'
+      s === '1회 기준' ||
+      LEGACY_PER_CLASS_MEASURES.has(s)
   )
 }
 
@@ -162,6 +170,7 @@ export function normalizeLectureFeeMeasure(
   if (!trimmed || trimmed === '1회 기준' || trimmed === LECTURE_FEE_MEASURE_NOT_APPLICABLE) {
     return DEFAULT_LECTURE_FEE_MEASURE
   }
+  if (LEGACY_PER_CLASS_MEASURES.has(trimmed)) return LECTURE_FEE_MEASURE_PER_CLASS
   const matched = LECTURE_FEE_MEASURE_OPTIONS.find(option => option.value === trimmed)
   return matched?.value ?? DEFAULT_LECTURE_FEE_MEASURE
 }
@@ -173,14 +182,17 @@ export type InstructorApplicationFeePolicyContext = {
   programWageGradeRows?: Array<{ grade: string; pricing: string }>
 }
 
-export type ApiInstructorFeePolicyBasisType = 'PROGRAM' | 'RECRUITMENT'
-/** 출강 1회당은 PER_LECTURE로 보낸다. PER_SESSION은 기존 데이터 읽기 전용(백엔드가 신규 입력을 거절). */
-export type ApiInstructorFeePolicyMeasure = 'PER_LECTURE' | 'PER_HOUR' | 'FIXED'
+/** RECRUITMENT는 보내지 않는다 — 서버가 특강·기타를 구분하지 못해 프로그램 기준으로 계산한다 */
+export type ApiInstructorFeePolicyBasisType = 'PROGRAM' | 'SPECIAL_LECTURE' | 'OTHER_LABOR'
+/** 출강 1회당 PER_LECTURE, 차시당 PER_CLASS. PER_SESSION은 서버가 422로 거절한다. */
+export type ApiInstructorFeePolicyMeasure = 'PER_LECTURE' | 'PER_CLASS' | 'FIXED'
 
 export function toApiInstructorFeePolicyBasisType(
   basisType: ApplicantInstructorLectureFeeBasisType
 ): ApiInstructorFeePolicyBasisType {
-  return basisType === 'program' ? 'PROGRAM' : 'RECRUITMENT'
+  if (basisType === 'special_lecture') return 'SPECIAL_LECTURE'
+  if (basisType === 'other_labor') return 'OTHER_LABOR'
+  return 'PROGRAM'
 }
 
 export function toApiInstructorFeePolicyMeasure(
@@ -192,16 +204,18 @@ export function toApiInstructorFeePolicyMeasure(
     const unit = (programCalculationUnit ?? 'PER_HOUR').trim().toUpperCase()
     if (unit === 'PER_SESSION' || unit === 'SESSION' || unit === 'PER_LECTURE') return 'PER_LECTURE'
     if (unit === 'FIXED') return 'FIXED'
-    return 'PER_HOUR'
+    return 'PER_CLASS'
   }
 
   const normalized = normalizeLectureFeeMeasure(uiMeasure ?? undefined, basisType)
   const upper = normalized.trim().toUpperCase()
   if (upper === 'PER_SESSION' || upper === 'SESSION' || upper === 'PER_LECTURE') return 'PER_LECTURE'
-  if (upper === 'PER_HOUR' || upper === 'HOUR') return 'PER_HOUR'
+  if (upper === 'PER_HOUR' || upper === 'HOUR' || upper === 'PER_CLASS') return 'PER_CLASS'
   if (upper === 'FIXED') return 'FIXED'
   if (normalized === '출강 1회당' || normalized === '1회 기준') return 'PER_LECTURE'
-  if (normalized === '1시간 당') return 'PER_HOUR'
+  if (normalized === LECTURE_FEE_MEASURE_PER_CLASS || LEGACY_PER_CLASS_MEASURES.has(normalized)) {
+    return 'PER_CLASS'
+  }
   return 'PER_LECTURE'
 }
 
@@ -223,7 +237,7 @@ export function resolveProgramBasisFeePolicyFromWageRows(
   const amount = parseWageGradeAmount(pricing)
   if (amount == null || amount < 0) return null
 
-  const measure = /1시간/.test(pricing ?? '') ? 'PER_HOUR' : 'PER_LECTURE'
+  const measure = /1시간|차시/.test(pricing ?? '') ? 'PER_CLASS' : 'PER_LECTURE'
   return { amount, measure }
 }
 
@@ -337,6 +351,7 @@ function lectureFeeMeasureViewLabel(measure: string | undefined): string {
   const trimmed = measure?.trim() ?? ''
   if (!trimmed || trimmed === LECTURE_FEE_MEASURE_NOT_APPLICABLE) return ''
   if (trimmed === '1회 기준') return DEFAULT_LECTURE_FEE_MEASURE
+  if (LEGACY_PER_CLASS_MEASURES.has(trimmed)) return LECTURE_FEE_MEASURE_PER_CLASS
   return LECTURE_FEE_MEASURE_OPTIONS.some(option => option.value === trimmed) ? trimmed : ''
 }
 
@@ -357,10 +372,10 @@ export function buildLectureFeeBasisViewSegments(row: ApplicantInstructorRow): s
   ].filter(Boolean)
 }
 
-/** 일반(기관형) 시안 06-1·06-2 지급 기준 조회 라벨 — `출강 1회당`→「1회당」, `1시간 당`→「1시간당」 */
+/** 일반(기관형) 시안 06-1·06-2 지급 기준 조회 라벨 — `출강 1회당`→「1회당」, `차시당`→「1시간당」(기획 확인 전까지 시안 라벨 유지) */
 const GENERAL_ORGANIZATION_LECTURE_FEE_MEASURE_VIEW_LABEL: Record<string, string> = {
   [DEFAULT_LECTURE_FEE_MEASURE]: '1회당',
-  '1시간 당': '1시간당',
+  [LECTURE_FEE_MEASURE_PER_CLASS]: '1시간당',
 }
 
 /**

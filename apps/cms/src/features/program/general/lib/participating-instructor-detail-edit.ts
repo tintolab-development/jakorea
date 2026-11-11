@@ -106,7 +106,7 @@ export function resolveLectureFeeBasisFromParticipatingRow(
           : 'program')
     const amountSegment = segments.find(s => /[\d,]+/.test(s)) ?? segments[segments.length - 1]
     const measureSegment = segments.find(
-      s => s === '출강 1회당' || s === '1시간 당' || s === '1회 기준'
+      s => s === '출강 1회당' || s === '차시당' || s === '1시간 당' || s === '1회 기준'
     )
 
     return {
