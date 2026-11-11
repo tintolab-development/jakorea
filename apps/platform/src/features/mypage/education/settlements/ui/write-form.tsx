@@ -1108,7 +1108,7 @@ export function EducationSettlementWriteForm({
                 </PFFormFieldTable>
               </>
             ) : transportExclusionNotice ? (
-              <div role="note" aria-label="교통비 제외 안내">
+              <div role="note" aria-label="교통비 제외 안내" className={styles.noteLines}>
                 {transportExclusionNotice.map(line => (
                   <PFText key={line} as="p" typo="bd-md-rg" color="error">
                     {line}
