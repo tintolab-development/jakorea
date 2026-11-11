@@ -20,16 +20,14 @@ export function StoryCard({ story }: StoryCardProps) {
           className={imageUrl ? styles.thumbnail : `${styles.thumbnail} ${styles.thumbnailDefault}`}
           aria-hidden="true"
         >
-          <img className={styles.image} src={defaultThumbnailUrl} alt="" width={461} height={256} />
-          {imageUrl ? (
-            <img
-              className={`${styles.image} ${styles.imageRemote}`}
-              src={imageUrl}
-              alt=""
-              width={461}
-              height={256}
-            />
-          ) : null}
+          {/* 기본 썸네일은 이미지가 없을 때만 — 투명 배경 PNG 뒤로 비치지 않게 겹쳐 깔지 않는다 */}
+          <img
+            className={styles.image}
+            src={imageUrl ?? defaultThumbnailUrl}
+            alt=""
+            width={461}
+            height={256}
+          />
           <div className={styles.badge}>
             <PFCategoryBadge
               className={styles.categoryBadge}
