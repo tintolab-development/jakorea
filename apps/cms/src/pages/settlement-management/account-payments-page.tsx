@@ -20,7 +20,12 @@ import {
   type AccountPaymentRow,
   type AccountPaymentTransferStatus,
 } from '@/features/settlement-management/model/account-payments-list'
-import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
+import {
+  ACCOUNT_PAYMENT_ACCOUNT_MISSING,
+  getSettlementApiErrorCode,
+  getSettlementApiErrorMessage,
+  readAccountPaymentMissingAccountIds,
+} from '@/features/settlement-management/api/get-settlement-api-error'
 import { buildAccountPaymentExportRequest } from '@/features/settlement-management/api/account-payments/build-account-payment-export-request'
 import {
   assertSettlementServerExportReady,
@@ -794,14 +799,30 @@ export default function AccountPaymentsPage() {
     [canManageAccountPayments, setSearchParams]
   )
 
-  const notifyAccountPaymentPaidError = useCallback((error: unknown) => {
-    if (isGlobalApiErrorAlertShown(error)) return
-    const content = getSettlementApiErrorMessage(error, '계좌 지급 완료 처리에 실패했습니다.')
-    cmsAlertModal.show({
-      title: content.includes('권한이 없습니다') ? '권한 없음' : '처리 불가',
-      content,
-    })
-  }, [])
+  const notifyAccountPaymentPaidError = useCallback(
+    (error: unknown) => {
+      if (isGlobalApiErrorAlertShown(error)) return
+      let content = getSettlementApiErrorMessage(error, '계좌 지급 완료 처리에 실패했습니다.')
+      // 계좌 없는 영수증 건(E2): 해당 행을 찾을 수 있으면 신청자명을 문구에 덧붙인다(새 UI 없음)
+      if (getSettlementApiErrorCode(error) === ACCOUNT_PAYMENT_ACCOUNT_MISSING) {
+        const missingIds = new Set(readAccountPaymentMissingAccountIds(error))
+        const names = [
+          ...new Set(
+            accountPaymentRows
+              .filter(row => row.accountPaymentId != null && missingIds.has(row.accountPaymentId))
+              .map(row => row.instructorName.trim())
+              .filter(name => name && name !== '-')
+          ),
+        ]
+        if (names.length > 0) content = `${content} (대상: ${names.join(', ')})`
+      }
+      cmsAlertModal.show({
+        title: content.includes('권한이 없습니다') ? '권한 없음' : '처리 불가',
+        content,
+      })
+    },
+    [accountPaymentRows]
+  )
 
   const handleAccountPaymentCompletedForRow = useCallback(
     (rowId: string) => {

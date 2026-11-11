@@ -3,6 +3,7 @@ import {
   getSettlementConfigErrorField,
   getSettlementApiErrorMessage,
   getSettlementApiErrorCode,
+  readAccountPaymentMissingAccountIds,
   getFileDownloadPasswordFormError,
   getNormalizedSettlementApiError,
   isSettlementExportAlreadyDownloadedError,
@@ -448,5 +449,36 @@ describe('normalizeSettlementApiErrorCode', () => {
       missingCount: 1,
       paymentIds: [9],
     })
+  })
+
+  it('409 ACCOUNT_PAYMENT_ACCOUNT_MISSING: 서버 문구, 비면 FE 문구, details.accountPaymentIds 파싱 (E2)', () => {
+    const withMessage = {
+      response: {
+        status: 409,
+        data: {
+          success: false,
+          message: '지급 계좌 정보가 없어 지급 완료 처리할 수 없어요. 회원의 사전 동의서 계좌 정보를 확인해 주세요.',
+          error: { code: 'ACCOUNT_PAYMENT_ACCOUNT_MISSING', details: { accountPaymentIds: '11,12' } },
+        },
+      },
+    }
+    expect(getSettlementApiErrorMessage(withMessage, 'fallback')).toBe(
+      '지급 계좌 정보가 없어 지급 완료 처리할 수 없어요. 회원의 사전 동의서 계좌 정보를 확인해 주세요.'
+    )
+    expect(readAccountPaymentMissingAccountIds(withMessage)).toEqual([11, 12])
+    const codeOnly = {
+      response: { status: 409, data: { error: { code: 'ACCOUNT_PAYMENT_ACCOUNT_MISSING' } } },
+    }
+    expect(getSettlementApiErrorMessage(codeOnly, 'fallback')).toBe(
+      '지급 계좌 정보가 없어 지급 완료 처리할 수 없어요. 회원의 사전 동의서 계좌 정보를 확인해 주세요.'
+    )
+    expect(readAccountPaymentMissingAccountIds(codeOnly)).toEqual([])
+  })
+
+  it('400 TAX_REPORT_NO_ELIGIBLE_SELECTION: 세금신고 대상 없음 문구 (E1)', () => {
+    const error = {
+      response: { status: 400, data: { error: { code: 'TAX_REPORT_NO_ELIGIBLE_SELECTION' } } },
+    }
+    expect(getSettlementApiErrorMessage(error, 'fallback')).toBe('선택한 건 중 세금신고 대상이 없어요.')
   })
 })

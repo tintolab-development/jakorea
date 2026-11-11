@@ -81,8 +81,16 @@ export const GEMINI_SETTLEMENT_CORRECTION_NOT_ALLOWED = 'GEMINI_SETTLEMENT_CORRE
 export const GEMINI_SETTLEMENT_CORRECTION_NOT_ALLOWED_MESSAGE =
   '제미나이 지급조서는 지급 정정을 할 수 없습니다. 지급조서를 반려한 뒤 실적을 다시 등록해 주세요.'
 
+/** 영수증 지급 건에 계좌가 없어 지급 완료 불가(E2) — 단건·일괄. details.accountPaymentIds = 해당 건 id(쉼표 구분) */
+export const ACCOUNT_PAYMENT_ACCOUNT_MISSING = 'ACCOUNT_PAYMENT_ACCOUNT_MISSING'
+/** 고른 건이 모두 영수증이라 세금신고 대상이 없음(E1) — 발급·미리보기 */
+export const TAX_REPORT_NO_ELIGIBLE_SELECTION = 'TAX_REPORT_NO_ELIGIBLE_SELECTION'
+
 /** BE 2026-09-11 bulk-confirm 계약 — 공통 메시지 없을 때 FE fallback */
 const SETTLEMENT_BULK_CONFIRM_ERROR_MESSAGES: Record<string, string> = {
+  [ACCOUNT_PAYMENT_ACCOUNT_MISSING]:
+    '지급 계좌 정보가 없어 지급 완료 처리할 수 없어요. 회원의 사전 동의서 계좌 정보를 확인해 주세요.',
+  [TAX_REPORT_NO_ELIGIBLE_SELECTION]: '선택한 건 중 세금신고 대상이 없어요.',
   SCHEDULED_PAYMENT_DATE_REQUIRED: '계좌 지급 예정일을 입력해 주세요.',
   PAYMENT_STATEMENT_IDS_REQUIRED: '확인할 지급조서를 선택해 주세요.',
   PAYMENT_STATEMENT_NOT_FOUND:
@@ -301,6 +309,25 @@ export function getSettlementApiErrorMessage(error: unknown, fallback: string): 
 export function getSettlementApiErrorCode(error: unknown): string | undefined {
   return normalizeSettlementApiErrorCode(readRawErrorCode(readAxiosResponse(error)?.data))
     ?.stableCode
+}
+
+/** 409 ACCOUNT_PAYMENT_ACCOUNT_MISSING의 details.accountPaymentIds(쉼표 구분 또는 배열) → id 목록 */
+export function readAccountPaymentMissingAccountIds(error: unknown): number[] {
+  const data = readAxiosResponse(error)?.data
+  if (!data || typeof data !== 'object') return []
+  const envelope = data as { error?: { details?: unknown }; details?: unknown }
+  const details = (envelope.error?.details ?? envelope.details) as
+    | { accountPaymentIds?: unknown }
+    | undefined
+  const raw = details?.accountPaymentIds
+  const tokens = Array.isArray(raw)
+    ? raw.map(String)
+    : typeof raw === 'string' || typeof raw === 'number'
+      ? String(raw).split(',')
+      : []
+  return tokens
+    .map(token => parsePositiveIntToken(token))
+    .filter((id): id is number => id != null)
 }
 
 /** 원본 코드 + count/ids 파싱. UI·진단용 */
