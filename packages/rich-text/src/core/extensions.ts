@@ -117,7 +117,10 @@ export function createRichTextExtensions(
       Placeholder.configure({
         placeholder,
         emptyEditorClass: 'is-editor-empty',
-        showOnlyCurrent: false,
+        // false면 Tiptap 3.27은 화면에 보이는 범위만 계산해 문구를 붙인다.
+        // 모달이 열리는 확대 애니메이션 중에 범위를 재면 빈 첫 문단이 빠진 채 고정돼 문구가 안 보일 수 있다.
+        // 문구는 빈 에디터 첫 문단에만 보이므로(CSS) 커서 문단 기준(true)이어도 보이는 결과는 같다.
+        showOnlyCurrent: true,
       })
     )
   }
