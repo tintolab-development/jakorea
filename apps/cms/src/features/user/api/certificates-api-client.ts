@@ -6,9 +6,16 @@ import type { AxiosRequestConfig, AxiosResponse } from 'axios'
 import { axiosClient } from '@/shared/instance/axios-instance'
 import { hydrateAxiosBlobError } from '@/shared/lib/admin-file-upload/attachments'
 
+/** 일괄 발급·ZIP 공통 증명서 유형. 봉사자는 VOLUNTEER_ACTIVITY, 강사는 INSTRUCTOR_ACTIVITY. */
+export type CertificateBulkType =
+  | 'COMPLETION'
+  | 'PARTICIPATION'
+  | 'VOLUNTEER_ACTIVITY'
+  | 'INSTRUCTOR_ACTIVITY'
+
 /** Swagger `bulkIssue` — `POST /api/admin/certificates/issues/bulk` */
 export async function bulkIssueCertificatesRemote(
-  body: CertificateBulkIssueRequest
+  body: Omit<CertificateBulkIssueRequest, 'certificateType'> & { certificateType: CertificateBulkType }
 ): Promise<BulkActionResponse> {
   return unwrapApiBody(
     await customInstance<unknown>({
@@ -18,6 +25,18 @@ export async function bulkIssueCertificatesRemote(
       data: body,
     })
   )
+}
+
+/**
+ * 일괄 발급 응답에서 발급된(이미 발급된 건 포함) participantId만 요청 순서대로 고른다.
+ * 실패 건이 ZIP 대상이나 성공 건수에 섞이지 않게 한다.
+ */
+export function issuedParticipantIdsFromBulkResult(
+  participantIds: readonly number[],
+  result: BulkActionResponse
+): number[] {
+  const success = new Set(result.successIds ?? [])
+  return participantIds.filter(id => success.has(id))
 }
 
 export type CertificateBulkDownloadZip = {
@@ -42,7 +61,7 @@ function readContentDisposition(headers: unknown): string | null {
  */
 export async function bulkDownloadCertificatesRemote(body: {
   participantIds: number[]
-  certificateType: CertificateBulkIssueRequest['certificateType']
+  certificateType: CertificateBulkType
 }): Promise<CertificateBulkDownloadZip> {
   let response: AxiosResponse<unknown>
   try {

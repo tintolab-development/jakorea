@@ -141,6 +141,8 @@ import { resolveAdminCommentResource } from '@/features/user/api/resolve-admin-c
 import {
   bulkIssueCertificatesRemote,
   bulkDownloadCertificatesRemote,
+  issuedParticipantIdsFromBulkResult,
+  type CertificateBulkType,
 } from '@/features/user/api/certificates-api-client'
 import { downloadBlob, fileNameFromContentDisposition, generateFilename } from '@/shared/utils/file-download'
 import {
@@ -753,7 +755,7 @@ export function useUserDetailController({
       rowIds: readonly string[],
       _reason: CertificateIssueReasonValue,
       reasonLabel: string,
-      certificateType: 'COMPLETION' | 'ACTIVITY'
+      certificateType: CertificateBulkType
     ) => {
       if (!membersRemote) return
       // 신청 이력 행은 응답의 participantId로, 참여 이력 행은 행 ID로 대상을 정한다(추가 호출 없음).
@@ -779,12 +781,18 @@ export function useUserDetailController({
           issueReason: reasonLabel,
         }
         const result = await bulkIssueCertificatesRemote(issueBody)
-        const successCount = result.successCount ?? participantIds.length
+        // 건별 실패는 200 안의 failures로 온다. 발급된 건만 집계하고 ZIP에 넣는다.
+        const issuedParticipantIds = issuedParticipantIdsFromBulkResult(participantIds, result)
+        const successCount = issuedParticipantIds.length
+        if (successCount === 0) {
+          showAlert({ title: '안내', content: '증명서 발급에 실패했습니다.' })
+          return
+        }
         try {
           // 서버가 ZIP을 바로 내려준다. 파일명은 서버 헤더([JA Korea] 증명서_일괄_YYMMDD.zip) 우선.
           // 이 ZIP은 서버 파일 다운로드 이력에 남지 않으므로 클라이언트 이력을 같은 이름으로 남긴다.
           const { zip, contentDisposition } = await bulkDownloadCertificatesRemote({
-            participantIds,
+            participantIds: issuedParticipantIds,
             certificateType,
           })
           await downloadBlob(
@@ -832,7 +840,7 @@ export function useUserDetailController({
 
   const handleVolunteerCertificateBulkIssue = useCallback(
     (rowIds: readonly string[], reason: CertificateIssueReasonValue, reasonLabel: string) => {
-      void handleCertificateBulkIssue(rowIds, reason, reasonLabel, 'ACTIVITY')
+      void handleCertificateBulkIssue(rowIds, reason, reasonLabel, 'VOLUNTEER_ACTIVITY')
     },
     [handleCertificateBulkIssue]
   )

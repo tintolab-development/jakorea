@@ -6,7 +6,7 @@ vi.mock('@/shared/instance/axios-instance', () => ({
 vi.mock('@/shared/api/orval-mutator', () => ({ customInstance: vi.fn(), default: vi.fn() }))
 
 import { axiosClient } from '@/shared/instance/axios-instance'
-import { bulkDownloadCertificatesRemote } from './certificates-api-client'
+import { bulkDownloadCertificatesRemote, issuedParticipantIdsFromBulkResult } from './certificates-api-client'
 
 describe('bulkDownloadCertificatesRemote', () => {
   beforeEach(() => {
@@ -48,5 +48,21 @@ describe('bulkDownloadCertificatesRemote', () => {
     await expect(
       bulkDownloadCertificatesRemote({ participantIds: [1], certificateType: 'COMPLETION' })
     ).rejects.toThrow('증명서 ZIP을 받지 못했습니다.')
+  })
+})
+
+describe('issuedParticipantIdsFromBulkResult', () => {
+  it('successIds에 있는 건만 요청 순서대로 고른다(실패 건 제외)', () => {
+    expect(
+      issuedParticipantIdsFromBulkResult([3, 1, 2], {
+        successCount: 2,
+        successIds: [2, 3],
+        failures: [{ id: 1, code: 'CERTIFICATE_TYPE_NOT_SUPPORTED' }],
+      })
+    ).toEqual([3, 2])
+  })
+
+  it('successIds가 없으면 발급 성공으로 세지 않는다', () => {
+    expect(issuedParticipantIdsFromBulkResult([1, 2], { failureCount: 2 })).toEqual([])
   })
 })
