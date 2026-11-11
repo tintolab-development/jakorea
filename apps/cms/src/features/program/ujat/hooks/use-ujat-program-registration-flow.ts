@@ -13,6 +13,11 @@ import {
   listIncompleteUjatProgramRegistrationWizardRequiredFields,
   UjatRegistrationRequiredFieldsIncompleteError,
 } from '@/features/program/ujat/lib/ujat-program-registration-required-fields'
+import {
+  FIELD_FORMAT_MISMATCH_ALERT_TITLE,
+  isProgramContactFormatKey,
+  listContactFormatIssuesFromUnknown,
+} from '@/features/program/shared/lib/registration-wizard-contact-format'
 import type { Program } from '@/types/domain'
 import { getFormTemplateVersionCacheEntry } from '@/features/template/api/form-template-version-cache'
 import { useWritingFormSections } from '@/features/template/hooks/use-writing-form-sections'
@@ -696,18 +701,44 @@ export function useUjatProgramRegistrationFlow(
         })
         return
       }
+      if (validationTarget === 'program') {
+        const formatIssues = listContactFormatIssuesFromUnknown(
+          currentBasicInfo,
+          isProgramContactFormatKey
+        )
+        if (formatIssues.length > 0) {
+          options?.reportValidationIncomplete?.(formatIssues.map(issue => issue.key))
+          showAlert({
+            title: FIELD_FORMAT_MISMATCH_ALERT_TITLE,
+            content: formatIssues[0]?.message ?? FIELD_FORMAT_MISMATCH_ALERT_TITLE,
+          })
+          return
+        }
+      }
       if (validationTarget === 'recruitment') {
-        const recruitIncompleteKeys = listIncompleteUjatProgramRecruitmentTypedRequiredFields({
+        const typedRecruitment = {
           institution: institutionRecruitmentForm.getValues(),
           volunteerH1: volunteerH1RecruitmentForm.getValues(),
           volunteerH2: volunteerH2RecruitmentForm.getValues(),
-        })
+        }
+        const recruitIncompleteKeys = listIncompleteUjatProgramRecruitmentTypedRequiredFields(
+          typedRecruitment
+        )
         if (recruitIncompleteKeys.length > 0) {
           options?.reportValidationIncomplete?.(recruitIncompleteKeys)
           console.debug('[registration] UJAT 모집정보 필수항목 미입력:', recruitIncompleteKeys)
           showAlert({
             title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
             content: ujatRequiredFieldsIncompleteAlertContent(recruitIncompleteKeys),
+          })
+          return
+        }
+        const formatIssues = listContactFormatIssuesFromUnknown(typedRecruitment)
+        if (formatIssues.length > 0) {
+          options?.reportValidationIncomplete?.(formatIssues.map(issue => issue.key))
+          showAlert({
+            title: FIELD_FORMAT_MISMATCH_ALERT_TITLE,
+            content: formatIssues[0]?.message ?? FIELD_FORMAT_MISMATCH_ALERT_TITLE,
           })
           return
         }
@@ -872,6 +903,21 @@ export function useUjatProgramRegistrationFlow(
       showAlert({
         title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
         content: ujatRequiredFieldsIncompleteAlertContent(wizardIncompleteKeys),
+      })
+      return Promise.reject(new UjatRegistrationRequiredFieldsIncompleteError())
+    }
+    const formatIssues = [
+      ...listContactFormatIssuesFromUnknown(
+        registrationVm.basicInfoValues,
+        isProgramContactFormatKey
+      ),
+      ...listContactFormatIssuesFromUnknown(typedRecruitment),
+    ]
+    if (formatIssues.length > 0) {
+      options?.reportValidationIncomplete?.(formatIssues.map(issue => issue.key))
+      showAlert({
+        title: FIELD_FORMAT_MISMATCH_ALERT_TITLE,
+        content: formatIssues[0]?.message ?? FIELD_FORMAT_MISMATCH_ALERT_TITLE,
       })
       return Promise.reject(new UjatRegistrationRequiredFieldsIncompleteError())
     }

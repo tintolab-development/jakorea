@@ -59,7 +59,10 @@ import {
   fetchAdminProgramOverviewStagesRemote,
 } from '@/features/program/general/api/programs-api-client'
 import { mergeProgramSponsorAssignments } from '@/features/program/shared/lib/merge-program-sponsor-assignments'
-import { updateFormResponseRemote } from '@/features/program/general/api/form-responses-api-client'
+import {
+  deleteFormResponseRemote,
+  updateFormResponseRemote,
+} from '@/features/program/general/api/form-responses-api-client'
 import type { ProgramFormBindingRequest } from '@/shared/api/generated/forms-surveys/schemas/programFormBindingRequest'
 import type { ProgramRole } from '@/types/user'
 import type { GeneralProgramOverviewStatusFilter } from '@/features/program/general/lib/list-status-filter'
@@ -464,6 +467,13 @@ export async function updateGeneralProgramFormResponse(
   if (!shouldUseProgramsHttpRemoteApi()) return null
   assertProgramsHttpRemoteReady()
   return updateFormResponseRemote(responseId, payload)
+}
+
+/** 강의평가 본인 응답 삭제 — DELETE /api/admin/form-responses/{responseId} */
+export async function deleteGeneralProgramFormResponse(responseId: number) {
+  if (!shouldUseProgramsHttpRemoteApi()) return
+  assertProgramsHttpRemoteReady()
+  await deleteFormResponseRemote(responseId)
 }
 
 export async function fetchGeneralProgramManagers(

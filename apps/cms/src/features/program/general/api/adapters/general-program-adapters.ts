@@ -88,6 +88,7 @@ import {
   toOperationCalendarDate,
 } from '@/features/program/general/lib/general-program-recruitment-operation-period'
 import { participantRecruitmentAnnouncementRequestFields } from '@/features/program/general/lib/participant-recruitment-announcement-request'
+import { volunteerRecruitmentCreateFields } from '@/features/program/general/lib/volunteer-recruitment-create-fields'
 import { resolveGeneralRecruitDetailDisplayProgram } from '@/features/program/general/lib/general-recruit-overlay-to-program'
 import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
 import {
@@ -1216,11 +1217,12 @@ function withTypedVolunteerInterviewConfigForCreate(
     volunteerInterviewRequiredFromOverlay(overlay) ??
     false
   const period = interviewEnabled ? volunteerInterviewPeriodForCreate(detail, overlay) : {}
+  const copyFields = volunteerRecruitmentCreateFields(overlay, program, interviewEnabled)
   return {
     ...body,
     recruitments: rows.map((row, index) =>
       index === target
-        ? ({ ...row, interviewEnabled, ...period, interviewConfig } as typeof row)
+        ? ({ ...row, ...copyFields, interviewEnabled, ...period, interviewConfig } as typeof row)
         : row
     ),
     serviceDetailJson: omitVolunteerInterviewSaveKeysFromServiceDetailJson(body.serviceDetailJson),

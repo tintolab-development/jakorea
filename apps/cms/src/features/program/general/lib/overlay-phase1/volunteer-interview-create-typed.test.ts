@@ -199,6 +199,64 @@ describe.each<Kind>(['GENERAL_ORGANIZATION', 'GENERAL_INDIVIDUAL'])('%s 생성 �
       )
     ).toEqual([])
   })
+
+  it('봉사 행에 발표·면접 유형·봉사 대상 상세를 싣는다 — BE 알림 #{면접 유형}이 행 값을 읽는다', () => {
+    const overlay = {
+      ...ON_OVERLAY,
+      'recruit.volunteer.interviewMethod': '오프라인',
+      'recruit.volunteer.docDeadlineIso': '2026-12-05T01:00:00.000Z',
+      'recruit.volunteer.docAnnounceMethod': '홈페이지 공지',
+      'recruit.volunteer.finalAnnounceIso': '2026-12-20T01:00:00.000Z',
+      'recruit.volunteer.finalAnnounceMethod': '개별 연락',
+    }
+    const body = mapGeneralProgramToCreateRequest({
+      ...program(kind, overlay, true),
+      volunteerTargetDetail: '대학(원)생',
+    })
+    const volunteer = (body.recruitments ?? []).find(r => r.recruitmentType === 'VOLUNTEER')
+    expect(volunteer).toMatchObject({
+      interviewMethod: '오프라인',
+      documentPassAnnouncementAt: '2026-12-05T01:00:00.000Z',
+      documentPassAnnouncementMethod: '홈페이지 공지',
+      finalPassAnnouncementAt: '2026-12-20T01:00:00.000Z',
+      finalPassAnnouncementMethod: '개별 연락',
+      volunteerTargetDetail: '대학(원)생',
+    })
+  })
+
+  it('면접 OFF — 면접 유형·서류 발표는 싣지 않고 최종 발표·봉사 대상 상세만 싣는다', () => {
+    const overlay = {
+      ...OFF_OVERLAY,
+      'recruit.volunteer.interviewMethod': '오프라인',
+      'recruit.volunteer.docAnnounceMethod': '홈페이지 공지',
+      'recruit.volunteer.finalAnnounceMethod': '개별 연락',
+    }
+    const body = mapGeneralProgramToCreateRequest({
+      ...program(kind, overlay, false),
+      volunteerTargetDetail: '대학(원)생',
+    })
+    const volunteer = (body.recruitments ?? []).find(r => r.recruitmentType === 'VOLUNTEER')
+    expect(volunteer).toMatchObject({
+      finalPassAnnouncementMethod: '개별 연락',
+      volunteerTargetDetail: '대학(원)생',
+    })
+    expect(volunteer).not.toHaveProperty('interviewMethod')
+    expect(volunteer).not.toHaveProperty('documentPassAnnouncementMethod')
+  })
+
+  it('overlay 에 없으면 모집 탭 nested 값을 쓴다', () => {
+    const base = program(kind, ON_OVERLAY, true)
+    const body = mapGeneralProgramToCreateRequest({
+      ...base,
+      registrationOverlay: { ...ON_OVERLAY, 'recruit.volunteer.interviewMethod': undefined },
+      generalCommonInfo: {
+        ...base.generalCommonInfo,
+        volunteerRecruitmentInfo: { interviewMethod: '온라인', finalPassAnnouncementMethod: '문자' },
+      },
+    } as Program)
+    const volunteer = (body.recruitments ?? []).find(r => r.recruitmentType === 'VOLUNTEER')
+    expect(volunteer).toMatchObject({ interviewMethod: '온라인', finalPassAnnouncementMethod: '문자' })
+  })
 })
 
 describe('생성 — interviewConfig 를 넣지 않는 경우', () => {
