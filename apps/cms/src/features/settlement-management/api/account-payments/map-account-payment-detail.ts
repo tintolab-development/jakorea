@@ -344,9 +344,8 @@ function buildAccountPaymentStatusDetail(
       settlementAccountBankNumberPart: bankAndNumber,
       settlementAccountHolderPart: holderDisplay,
       programName: extras?.programName ?? row.programName,
-      programSessionProgressDisplay:
-        extras?.programSessionProgressDisplay ??
-        (row.sessionLabel !== '-' ? row.sessionLabel : '-'),
+      // 프로그램 진행 회차(완료/전체 회차)는 정산 상세만. 차시 라벨·일정명(sessionLabel)으로 대체하지 않는다.
+      programSessionProgressDisplay: extras?.programSessionProgressDisplay ?? '-',
       businessPeriodDisplay: extras?.businessPeriodDisplay ?? '-',
       accountPaymentStatus,
       accountPaymentStatusLabel: ACCOUNT_PAYMENT_STATUS_LABELS[accountPaymentStatus],

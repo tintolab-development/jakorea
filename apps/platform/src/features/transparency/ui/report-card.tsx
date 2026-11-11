@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react'
 import { ANALYTICS_CLICK_METRICS, recordMetric } from '@/features/analytics'
 import jaLogoGrayCompactUrl from '@/shared/assets/brand/ja-logo-gray-compact.svg'
-import { useRemoteThumbnailUrl } from '@/shared/hooks'
 import { downloadAttachment } from '@/shared/lib/download-attachment'
 import { PFText } from '@/shared/ui'
 import downloadPrimary20Url from '../image/icon/download-primary-20.svg'
@@ -49,8 +48,8 @@ function DownloadButton({
 
 /**
  * 표지 — Figma 11001:159541(연차) · 11001:159624(회계감사) 기본 썸네일:
- * 회색 배경 + 1px 테두리 + 가운데 JA Korea 로고를 항상 깔고, 실제 표지 이미지는 그 위에 덮는다.
- * 어드민 「썸네일 없음」 표식(1×1 투명 PNG)은 판별 전에도 아래 로고가 비쳐 보이고, 판별 후 기본 썸네일 테두리가 붙는다.
+ * 표지가 없을 때(서버 thumbnailUrl null)만 회색 배경 + 1px 테두리 + 가운데 JA Korea 로고를 그린다.
+ * 표지가 있으면 이미지만 그려, 투명 배경 PNG 표지 뒤로 기본 썸네일이 비치지 않게 한다.
  */
 function ReportCover({
   coverUrl,
@@ -61,7 +60,8 @@ function ReportCover({
   className: string
   children: ReactNode
 }) {
-  const imageUrl = useRemoteThumbnailUrl(coverUrl)
+  // 썸네일 없음(서버 null) → 기본 썸네일
+  const imageUrl = coverUrl || undefined
   return (
     <div className={[className, imageUrl ? '' : styles.coverDefault].filter(Boolean).join(' ')}>
       {/* 기본 썸네일 로고는 표지가 없을 때만 — 투명 배경 PNG 표지 뒤로 비치지 않게 한다 */}

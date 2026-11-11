@@ -1149,6 +1149,7 @@ export function useApplicationSettlementsQuery(
                 startAt: row.startAt,
                 endAt: row.endAt,
                 sessionNo: row.sessionNo,
+                curriculumSessionCount: row.curriculumSessionCount ?? null,
                 lectureFeePreview: row.lectureFeePreview ?? null,
                 instructorTransportPreview: row.instructorTransportPreview ?? null,
               })),

@@ -13,6 +13,7 @@
  * - 교육받은 교사 커리큘럼/일정 테이블은 폼에 없어 `triggerSave(extraCommonInfo)` 로 합친다.
  */
 
+import { resolveInstructorRowRemarksNotApplicable } from '@/features/program/general/lib/instructor-remarks-not-applicable'
 import { useCallback, useRef } from 'react'
 import type { FieldPath, UseFormReturn } from 'react-hook-form'
 import type { z } from 'zod'
@@ -163,7 +164,15 @@ export function useProgramDetailInfoSave({
               ? values.participantRecruitmentNotesNotApplicable === 'not_applicable'
               : recruitmentAudience === 'volunteer'
                 ? values.volunteerRecruitmentNotesNotApplicable === 'not_applicable'
-                : undefined
+                : recruitmentAudience === 'instructor' && writesRowFields
+                  ? values.instructorRecruitmentNotesNotApplicable === 'not_applicable'
+                  : undefined
+          // 강사 모집 비고 「해당 없음」 — 폼(RHF)이 정본. 시드되지 않은 경우(행 값 null·타 유형)는 행을 건드리지 않는다.
+          const instructorRowRemarksNotApplicable = resolveInstructorRowRemarksNotApplicable(
+            values,
+            recruitmentAudience,
+            writesRowFields
+          )
           const contact =
             recruitmentAudience === 'instructor'
               ? {
@@ -197,6 +206,9 @@ export function useProgramDetailInfoSave({
                   ? values.instructorRecruitmentRemarks
                   : values[notesField],
               notesNotApplicable,
+              ...(instructorRowRemarksNotApplicable !== undefined
+                ? { rowRemarksNotApplicable: instructorRowRemarksNotApplicable }
+                : {}),
               ...(writesRowFields
                 ? {
                     contactName: contact.contactName ?? '',

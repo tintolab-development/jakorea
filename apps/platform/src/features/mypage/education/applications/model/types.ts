@@ -238,6 +238,8 @@ export type EducationTeacherPreferredSchedule = {
   id: string
   label: string
   value: string
+  /** 교육받은교사 — 차시별 「K차시: M교시 | 시작 ~ 종료」 줄. 다른 유형은 없음 */
+  sessionLines?: string[]
   scheduleId?: number | null
   startAt?: string | null
   endAt?: string | null

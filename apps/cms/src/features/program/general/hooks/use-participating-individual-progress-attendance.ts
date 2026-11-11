@@ -138,8 +138,9 @@ export function useParticipatingIndividualProgressAttendance(program: Program) {
       const session = remoteSessions?.find(s => s.id === payload.sessionId)
       const participant = session?.participants.find(p => p.id === payload.participantRowId)
 
+      // 저장 대상이 없으면 성공으로 넘기지 않는다 — 호출부가 「정정 완료」를 잘못 띄우지 않게
       if (!isRemoteDataSource || !participant) {
-        return
+        throw new Error('출결을 저장할 참여자 정보를 찾을 수 없습니다. 새로고침 후 다시 시도해 주세요.')
       }
 
       const requests = (session?.participants ?? []).flatMap(row => {
@@ -187,6 +188,7 @@ export function useParticipatingIndividualProgressAttendance(program: Program) {
         })
       }
     },
+    // 사용자 안내는 호출부(회차 패널)가 저장 결과를 await 해서 띄운다. 여기서는 로그만.
     onError: error => {
       if (isAttendanceRecordingNotOpenError(error)) return
       handleError(error, { context: 'saveGeneralScheduleAttendances' })
@@ -211,9 +213,7 @@ export function useParticipatingIndividualProgressAttendance(program: Program) {
         remark?: string
         evidenceFileObjectIds?: number[]
       }
-    ) => {
-      void saveMutation.mutateAsync({ sessionId, participantRowId, patch })
-    },
+    ): Promise<void> => saveMutation.mutateAsync({ sessionId, participantRowId, patch }),
     [saveMutation]
   )
 
@@ -254,6 +254,7 @@ export function useParticipatingIndividualProgressAttendance(program: Program) {
     filterFields,
     sessionGroups,
     saveSessionParticipant,
+    isSaving: saveMutation.isPending,
     getSessionParticipants,
     loading: viewState.kind === 'loading',
     loadError: viewState.kind === 'load_error',

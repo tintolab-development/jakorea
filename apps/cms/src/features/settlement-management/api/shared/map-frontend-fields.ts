@@ -60,9 +60,19 @@ export function prepareSettlementFrontendItemsForStatement(
   return sortSettlementFrontendItems(filterSettlementFrontendItemsForDisplay(items ?? []))
 }
 
-export function formatLectureSessionLabel(sessionOrdinal?: number): string {
-  if (sessionOrdinal == null) return '-'
-  return `${sessionOrdinal}차시`
+/**
+ * 정산 `sessionOrdinal` = 일정 회차 번호(`program_schedule.session_no`). 차시가 아니다.
+ * 없거나 양의 정수가 아니면(사전교육 등) `-` — 0회차를 만들지 않는다.
+ */
+export function formatLectureSessionLabel(sessionOrdinal?: number | null): string {
+  if (
+    typeof sessionOrdinal !== 'number' ||
+    !Number.isInteger(sessionOrdinal) ||
+    sessionOrdinal <= 0
+  ) {
+    return '-'
+  }
+  return `${sessionOrdinal}회차`
 }
 
 export function formatWonAmountDisplay(amount?: number | null): string {

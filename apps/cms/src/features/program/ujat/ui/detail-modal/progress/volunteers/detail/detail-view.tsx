@@ -476,7 +476,6 @@ export function UjatEducationProgressVolunteerDetailView({
             variant="secondary"
             icon={<ButtonDownloadIcon />}
             disabled={certificateIssueDisabled}
-            title={certificateProgressBlockReason ?? undefined}
             onClick={handleActivityCertificateIssueClick}
           >
             활동인증서 발급
@@ -486,7 +485,6 @@ export function UjatEducationProgressVolunteerDetailView({
             variant="secondary"
             icon={<ButtonDownloadIcon />}
             disabled={certificateIssueDisabled}
-            title={certificateProgressBlockReason ?? undefined}
             onClick={handleStudentCertificateIssueClick}
           >
             수료증/참가인증서 발급

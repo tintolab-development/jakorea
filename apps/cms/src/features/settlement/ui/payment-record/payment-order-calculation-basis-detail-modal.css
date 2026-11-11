@@ -25,17 +25,40 @@
   gap: 30px;
 }
 
+.payment-order-calculation-basis-detail-modal
+  .detail-info-form__field-content--view
+  > .program-detail-td-segment-wrap {
+  flex: 1 1 0;
+  min-width: 0;
+  width: 100%;
+  flex-wrap: nowrap;
+}
+
+.payment-order-calculation-basis-detail-modal
+  .program-detail-td-segment-wrap
+  > span:has(.payment-order-calculation-basis-detail-modal__file-link) {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
 .payment-order-calculation-basis-detail-modal__file-link {
+  display: block;
   margin: 0;
   padding: 0;
   border: none;
   background: none;
+  max-width: 100%;
+  overflow: hidden;
   color: #2563eb;
   font-family: inherit;
   font-size: inherit;
   font-weight: inherit;
   line-height: inherit;
+  text-align: left;
   text-decoration: underline;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   cursor: pointer;
 }
 

@@ -277,7 +277,19 @@ export function programToRecruitmentTabEditValues(
     otherNotes: resolveRecruitmentOtherMatters(merged, audience) ?? base.otherNotes,
     instructorRecruitmentRemarks:
       audience === 'instructor'
-        ? resolveRecruitmentRemarks(merged, 'instructor')
+        ? recruitmentRow?.remarksNotApplicable === true
+          ? ''
+          : resolveRecruitmentRemarks(merged, 'instructor')
+        : undefined,
+    // 강사 모집 비고 「해당 없음」 — GET 강사 모집 행 `remarksNotApplicable`이 정본(overlay·nested 미사용).
+    // 행에 값이 없으면(null) 시드하지 않아 저장 payload도 바꾸지 않는다.
+    instructorRecruitmentNotesNotApplicable:
+      audience === 'instructor'
+        ? recruitmentRow?.remarksNotApplicable === true
+          ? 'not_applicable'
+          : recruitmentRow?.remarksNotApplicable === false
+            ? 'applicable'
+            : undefined
         : undefined,
     remarks:
       audience === 'participant'

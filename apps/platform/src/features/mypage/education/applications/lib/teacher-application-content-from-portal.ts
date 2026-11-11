@@ -85,6 +85,7 @@ export function buildTeacherApplicationContentFromPortal(
     preferredEducationScheduleLabel: input.preferredEducationScheduleLabel,
     preferredScheduleBlocks: input.preferredScheduleBlocks,
     preserveLegacyLineTokens: (programGroup ?? '').toUpperCase() === 'TRAINED_TEACHER',
+    trainedTeacherSessionDetail: (programGroup ?? '').toUpperCase() === 'TRAINED_TEACHER',
     program,
   })
 

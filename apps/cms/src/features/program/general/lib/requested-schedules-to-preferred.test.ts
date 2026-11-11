@@ -107,7 +107,15 @@ describe('participants requestedSchedules → 희망 일정 (이전 경로와 �
       old.preferred
     )
     expect(row.preferredEducationSchedules).toEqual(old.preferred)
-    expect(row.hopeEducationSessions).toEqual(old.hope)
+    // participants 경로는 지망 순위·신청 차시 수를 별도 필드로 더 싣는다(기존 필드는 이전 경로와 동일).
+    const requestedSessionCounts = [2, 1]
+    expect(row.hopeEducationSessions).toEqual(
+      old.hope.map((session, index) => ({
+        ...session,
+        preferenceOrder: session.round,
+        requestedSessionCount: requestedSessionCounts[index],
+      }))
+    )
     expect(buildParticipatingSchoolPreferredScheduleLines(row.hopeEducationSessions)).toEqual(
       buildParticipatingSchoolPreferredScheduleLines(old.hope)
     )
@@ -170,7 +178,15 @@ describe('participants requestedSchedules → 희망 일정 (이전 경로와 �
     const row = newPathRow(requestedSchedules)
 
     expect(row.preferredEducationSchedules).toEqual(old.preferred)
-    expect(row.hopeEducationSessions).toEqual(old.hope)
+    // participants 경로는 지망 순위·신청 차시 수를 별도 필드로 더 싣는다(기존 필드는 이전 경로와 동일).
+    const requestedSessionCounts = [1, 1]
+    expect(row.hopeEducationSessions).toEqual(
+      old.hope.map((session, index) => ({
+        ...session,
+        preferenceOrder: session.round,
+        requestedSessionCount: requestedSessionCounts[index],
+      }))
+    )
     expect(buildParticipatingSchoolPreferredScheduleLines(row.hopeEducationSessions)).toEqual(
       buildParticipatingSchoolPreferredScheduleLines(old.hope)
     )

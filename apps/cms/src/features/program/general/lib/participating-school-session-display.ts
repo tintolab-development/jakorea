@@ -584,9 +584,78 @@ export function buildParticipatingSchoolSessionLines(
   return sessions.map(formatParticipatingSchoolSessionLine)
 }
 
+/**
+ * 캘린더·카드 일정 선행 라벨(classNum). 교시를 지어내지 않는다.
+ * - 비어 있으면 null(시간만 표시)
+ * - 숫자만(기존 교시 번호 원본)이면 `N교시`
+ * - 그 외(`N교시`·`N차시`·`N회차`·`N지망`·일정명)는 원문 그대로 — 뒤에 `교시`를 붙이지 않는다
+ *   (일반 프로그램에는 교시 개념이 없다)
+ */
+export function resolveParticipatingSessionClassNumLead(
+  classNum: string | null | undefined
+): string | null {
+  const trimmed = classNum?.trim() ?? ''
+  if (!trimmed) return null
+  if (/^\d+$/u.test(trimmed)) return `${trimmed}교시`
+  return trimmed
+}
+
+/** `{선행 라벨} ({시간})` — 선행 라벨이 없으면 시간만 */
+export function formatParticipatingSessionClassNumWithTime(
+  classNum: string | null | undefined,
+  timeRangeDisplay: string
+): string {
+  const lead = resolveParticipatingSessionClassNumLead(classNum)
+  return lead ? `${lead} (${timeRangeDisplay})` : timeRangeDisplay
+}
+
+function positiveSessionCount(value: number | null | undefined): number | null {
+  return typeof value === 'number' && Number.isInteger(value) && value > 0 ? value : null
+}
+
+/**
+ * 일정 1건의 차시 수(개수). 신청 차시 수(`requestedSessionCount`) → `N차시` duration →
+ * 연결 커리큘럼 차시 수(`curriculumSessionCount`) 순. 모르면 null — round·일정 건수로 대신하지 않는다.
+ */
+export function readParticipatingSessionCurriculumCount(
+  session: Pick<ParticipatingSchoolSession, 'requestedSessionCount' | 'duration' | 'curriculumSessionCount'>
+): number | null {
+  const requested = positiveSessionCount(session.requestedSessionCount)
+  if (requested != null) return requested
+  const fromDuration = /^(\d+)\s*차시$/u.exec(session.duration?.trim() ?? '')
+  if (fromDuration) return positiveSessionCount(Number(fromDuration[1]))
+  return positiveSessionCount(session.curriculumSessionCount)
+}
+
+/** 같은 날 일정들의 차시 수 합. 하나라도 모르면 null(차시 표기 생략) */
+export function sumKnownParticipatingSessionCurriculumCount(
+  sessions: ReadonlyArray<
+    Pick<ParticipatingSchoolSession, 'requestedSessionCount' | 'duration' | 'curriculumSessionCount'>
+  >
+): number | null {
+  if (sessions.length === 0) return null
+  let total = 0
+  for (const session of sessions) {
+    const count = readParticipatingSessionCurriculumCount(session)
+    if (count == null) return null
+    total += count
+  }
+  return total
+}
+
+export type ParticipatingSchoolPreferredScheduleLineOptions = {
+  /**
+   * 차시 수 출처.
+   * - `legacy`(기본, 교육받은 교사 등 기존 동작): duration `N차시` 합, 없으면 일정 건수.
+   * - `known-only`(1사1교): {@link sumKnownParticipatingSessionCurriculumCount}. 모르면 차시 표기 생략.
+   */
+  sessionCountSource?: 'legacy' | 'known-only'
+}
+
 /** 1사1교 참여 기관 목록 — 신청 날짜별 `첫 차시 시작 ~ 마지막 차시 종료 | 신청 총 차시` */
 export function buildParticipatingSchoolPreferredScheduleLines(
-  sessions: ParticipatingSchoolSession[] | undefined
+  sessions: ParticipatingSchoolSession[] | undefined,
+  options?: ParticipatingSchoolPreferredScheduleLineOptions
 ): string[] {
   if (!sessions?.length) return []
 
@@ -609,16 +678,23 @@ export function buildParticipatingSchoolPreferredScheduleLines(
       return sum + (match ? Number.parseInt(match[1]!, 10) : 0)
     }, 0)
     /** duration(N차시) 우선 — round는 지망순·sessionIndex일 수 있어 총 차시로 쓰지 않음 */
-    const totalSessions = fromDuration > 0 ? fromDuration : Math.max(group.length, 1)
+    const totalSessions =
+      options?.sessionCountSource === 'known-only'
+        ? sumKnownParticipatingSessionCurriculumCount(group)
+        : fromDuration > 0
+          ? fromDuration
+          : Math.max(group.length, 1)
+    const sessionSuffix = totalSessions != null ? ` | ${totalSessions}차시` : ''
+    const dateWithDay = `${datePart}(${first.dayOfWeek})`
 
     if (ranges.length === 0) {
-      return formatCmsScheduleDisplayLabel(`${datePart}(${first.dayOfWeek}) | ${totalSessions}차시`)
+      return formatCmsScheduleDisplayLabel(`${dateWithDay}${sessionSuffix}`)
     }
 
     const start = Math.min(...ranges.map(range => range.start))
     const end = Math.max(...ranges.map(range => range.end))
     return formatCmsScheduleDisplayLabel(
-      `${datePart}(${first.dayOfWeek}) ${formatMinutes(start)} ~ ${formatMinutes(end)} | ${totalSessions}차시`
+      `${dateWithDay} ${formatMinutes(start)} ~ ${formatMinutes(end)}${sessionSuffix}`
     )
   })
 }
@@ -682,6 +758,10 @@ export function resolveParticipatingInstitutionScheduleRowLabel(
 
   return (
     resolveAssignedScheduleDisplayName(program, session) ??
-    resolveSchoolDetailAttendanceSessionLeadLabel(program, session.round)
+    resolveSchoolDetailAttendanceSessionLeadLabel(program, session.round, {
+      ...session,
+      // 참여 기관 일정 행은 회차명만(기존 표기 유지)
+      includeCurriculumSessionCount: false,
+    })
   )
 }

@@ -208,7 +208,16 @@ export const INSTRUCTOR_ROLE_LABELS: Record<InstructorRoleKey, string> = {
 export type LectureAttendanceStatusKey = 'attended' | 'absent' | 'late' | 'excused' | 'not_held'
 
 export interface LectureAttendanceSession {
-  roundNumber: number
+  /**
+   * 회차 번호(program_schedule.session_no). 서버가 주지 않으면 null — 행 순서로 만들지 않는다.
+   * 사전교육은 0(`PRE_EDUCATION_LECTURE_ROUND_NUMBER`).
+   */
+  roundNumber: number | null
+  /**
+   * 행 라벨(교육 구조별) — 일반 프로그램 일정형 = 세부 일정명, 커리큘럼형 단일 회차 = `N차시`,
+   * 복수 회차 = `N회차`. 없으면 `N회차`(roundNumber) 표기.
+   */
+  sessionLabel?: string
   status: LectureAttendanceStatusKey
   /** 진행 출석 정정용 schedule PK */
   scheduleId?: number
@@ -253,7 +262,8 @@ export type AssignmentSubmissionRowStatusKey =
 
 export interface AssignmentSubmissionTableRow {
   id: string
-  roundNumber: number
+  /** 회차 번호. 서버가 주지 않으면 null — 행 순서로 만들지 않는다 */
+  roundNumber: number | null
   teamRole: AssignmentTeamRoleKey
   /** 팀 과제 시 팀명, 개인 역할이면 '-' */
   teamName: string

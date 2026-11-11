@@ -119,6 +119,8 @@ export type ProgramScheduleOptionLookupRow = {
   scheduleName?: string
   /** Portal `schedules[].scheduleKind` — 신청 선택지에서 사전교육 제외용 */
   scheduleKind?: string | null
+  /** Portal `schedules[].sessionNo` — 실제 회차(program_schedule.session_no). 없으면 생략 */
+  sessionNo?: number
 }
 
 /** UJAT `schedules[]` 중 scheduleKind=EDUCATION + 반기 term. 신청 희망일 칩 구간. */

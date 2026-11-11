@@ -362,6 +362,26 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
     expect(mapped.basic.settlementAccountHolderPart).toBe('이건희')
   })
 
+  it('settlement가 없으면 프로그램 진행 회차를 차시 라벨(sessionLabel)로 채우지 않는다', () => {
+    const detail: AccountPaymentDetailResponse = {
+      payment: {
+        accountPaymentId: 185956,
+        memberId: 190001,
+        instructorName: '이건희',
+        sourceType: 'GEMINI_TRAINING_REPORT',
+        sessionLabel: '2차시',
+        netPaymentAmount: 50_000,
+      },
+      settlement: undefined,
+    }
+
+    const mapped = mapAccountPaymentDetailFromGetApi({ ...baseRow, sessionLabel: '2차시' }, detail)
+
+    expect(mapped.basic.programSessionProgressDisplay).toBe('-')
+    // 일정 칸에는 차시 라벨 원문 유지
+    expect(mapped.blocks[0]?.lectureSessionDisplay).toBe('2차시')
+  })
+
   it('sensitiveAccount.accountNo가 없으면 강사 계좌 원문으로 보완하지 않는다', () => {
     const detail: AccountPaymentDetailResponse = {
       payment: {

@@ -5,6 +5,7 @@
  * Filtered for CMS member management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { InstructorAssignmentCreateRequestTiming } from './instructorAssignmentCreateRequestTiming';
 
 export interface InstructorAssignmentCreateRequest {
   /** @minimum 1 */
@@ -23,8 +24,8 @@ export interface InstructorAssignmentCreateRequest {
   /** @minimum 0 */
   lectureFeeAmountSnapshot?: number;
   lodgingApprovedYn?: boolean;
-  /** 배정 완료 알림. IMMEDIATE | SCHEDULED. 생략하면 IMMEDIATE. 승인 알림과 다른 이벤트입니다. */
-  timing?: string;
-  /** timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601 */
+  /** 배정 완료 알림. IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE. 승인 알림과 다른 이벤트입니다. ON_ANNOUNCEMENT는 일반 프로그램(GENERAL·GENERAL_ORGANIZATION·GENERAL_INDIVIDUAL)만 허용하며 기관 승인 notification과 같은 규칙으로 프로그램 최종 발표일 기준 예약합니다. 다른 유형은 400 INVALID_NOTIFICATION_SCHEDULE, 발표일 미설정은 409 APPLICATION_ANNOUNCEMENT_DATE_NOT_CONFIGURED. */
+  timing?: InstructorAssignmentCreateRequestTiming;
+  /** timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601. ON_ANNOUNCEMENT와 함께 보내면 400 */
   scheduledAt?: string;
 }

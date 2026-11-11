@@ -140,6 +140,7 @@ import {
 } from '../../../api/portrait-consent-api-client'
 import { StudentCertificatePdfExportHost } from './student-certificate-pdf-export-host'
 import './school-detail-modal.css'
+import type { Program } from '@/types/domain'
 import './school-detail-student-list-section.css'
 import {
   STUDENT_LIST_TABLE_COL_MIN_WIDTHS,
@@ -180,6 +181,8 @@ export interface SchoolDetailStudentListSectionProps {
   organizationApplicationId?: string | number | null
   /** 고유번호 발급 키 — 없으면 다운로드 API가 400 */
   programId?: string | number
+  /** 강의 출석 내역 행 라벨 교육 구조 분기(일정형=세부 일정명, 단일 회차=N차시). 없으면 「N회차」 */
+  program?: Program | null
   /** 과제·설문 제출 내역 모달 설명에 사용하는 프로그램명 */
   programTitle?: string
   programStartDate?: Date | string | null
@@ -224,6 +227,7 @@ export function SchoolDetailStudentListSection({
   educationGrade = '',
   organizationApplicationId = null,
   programId,
+  program = null,
   programTitle = 'JA Korea 경제교육 프로그램',
   programStartDate = null,
   programEndDate = null,
@@ -950,6 +954,7 @@ export function SchoolDetailStudentListSection({
           participantId,
           studentName: record.name,
           organizationApplicationId: organizationApplicationKey,
+          program,
         })
         setLectureAttendanceRemoteDetail(detail)
         setAttendanceSessionsByStudentId(prev => ({
@@ -967,7 +972,7 @@ export function SchoolDetailStudentListSection({
         setLectureAttendanceRemoteLoading(false)
       }
     },
-    [organizationApplicationKey, programId, progressRemoteEnabled, showAlert]
+    [organizationApplicationKey, program, programId, progressRemoteEnabled, showAlert]
   )
 
   const handleSaveLectureAttendance = useCallback(
@@ -998,6 +1003,7 @@ export function SchoolDetailStudentListSection({
           participantId,
           studentName: student.name,
           organizationApplicationId: organizationApplicationKey,
+          program,
         })
         setLectureAttendanceRemoteDetail(refreshed)
         setAttendanceSessionsByStudentId(prev => ({
@@ -1018,7 +1024,14 @@ export function SchoolDetailStudentListSection({
         setLectureAttendanceSaving(false)
       }
     },
-    [lectureAttendanceStudent, organizationApplicationKey, programId, progressRemoteEnabled, showAlert]
+    [
+      lectureAttendanceStudent,
+      organizationApplicationKey,
+      program,
+      programId,
+      progressRemoteEnabled,
+      showAlert,
+    ]
   )
 
   const handleEditInfoClick = useCallback(() => {

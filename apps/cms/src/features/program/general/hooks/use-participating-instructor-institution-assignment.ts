@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { InstructorAssignmentListItemEnriched } from '@/features/program/general/api/instructor-assignment-types'
 import { fetchGeneralInstructorAssignmentBoard } from '@/features/program/general/api/instructor-assignment-board-service'
 import { fetchCompanySchoolAssignmentBoard } from '@/features/program/1c-1s/api/instructor-assignment-conflict-service'
+import { omitCompanySchoolScheduleRoundLabels } from '@/features/program/1c-1s/lib/build-company-school-assignment-rows'
 import { fetchGeneralParticipantEducationScope } from '@/features/program/general/api/admin-program-progress-service'
 import { companySchoolQueryKeys } from '@/features/program/1c-1s/api/query-keys'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
@@ -156,6 +157,10 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
       }
     }
 
+    // 1사1교는 회차가 없다 — 배정 일정 라벨에서 sessionNo 「N회차」를 뺀다(날짜·시간만)
+    const scheduleLabelById = useCompanySchoolBoard
+      ? omitCompanySchoolScheduleRoundLabels(board.scheduleLabelById)
+      : board.scheduleLabelById
     const assignedAssignments = selectAssignmentsForInstructor(
       board.assignments,
       instructorMemberId
@@ -164,13 +169,13 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
       assignments: assignedAssignments,
       instructorMemberId,
       schoolRows: input.schoolRows,
-      scheduleLabelById: board.scheduleLabelById,
+      scheduleLabelById,
     })
     const assignedSchedules = buildParticipatingInstructorAssignedScheduleRowsFromBoard({
       assignments: assignedAssignments,
       instructorMemberId,
       schoolRows: input.schoolRows,
-      scheduleLabelById: board.scheduleLabelById,
+      scheduleLabelById,
       schedules: board.schedules,
     })
 
@@ -193,7 +198,7 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
         waitingSchedules: buildParticipatingInstructorWaitingScheduleRowsFromBoard({
           instructor: input.instructor,
           schedules: board.schedules,
-          scheduleLabelById: board.scheduleLabelById,
+          scheduleLabelById,
           assignments: board.assignments,
           instructorMemberId,
           maxAssignableInstructors: input.maxAssignableInstructors,
@@ -219,7 +224,7 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
       waitingSchedules: buildParticipatingInstructorWaitingScheduleRowsFromBoard({
         instructor: input.instructor,
         schedules: board.schedules,
-        scheduleLabelById: board.scheduleLabelById,
+        scheduleLabelById,
         assignments: board.assignments,
         instructorMemberId,
         maxAssignableInstructors: input.maxAssignableInstructors,

@@ -5,6 +5,7 @@
 
 import { useState, useMemo, useCallback } from 'react'
 import type { Dayjs } from 'dayjs'
+import type { Program } from '@/types/domain'
 import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
@@ -16,6 +17,7 @@ import {
   resolveParticipatingInstitutionPreferredDisplaySessions,
   resolveParticipatingProgressAssignedSessions,
 } from '@/features/program/general/lib/organization-education-schedule-sources'
+import { formatParticipatingSessionClassNumWithTime } from '@/features/program/general/lib/participating-school-session-display'
 import {
   formatInstitutionRegionForCalendarListDisplay,
 } from '@/shared/lib/format-institution-region-display'
@@ -128,7 +130,8 @@ function getInstructorCalendarPopoverParts(ev: CalendarEvent): ParticipatingCale
 
 function getPopoverRowParts(
   ev: CalendarEvent,
-  usePreferredScheduleFormat = false
+  usePreferredScheduleFormat = false,
+  program?: Program | null
 ): ParticipatingCalendarPopoverRowParts {
   if (isVolunteerCalendarEventItem(ev.originalItem)) {
     return getVolunteerCalendarPopoverParts(ev)
@@ -143,14 +146,15 @@ function getPopoverRowParts(
     grade: educationGrade?.trim() || row.educationGrade?.trim() || '-',
     sessionLine: usePreferredScheduleFormat
       ? formatParticipatingSessionsPeriodForCalendarDisplay(sessionsOnDate)
-      : getPrimaryParticipatingSessionLine(sessionsOnDate),
+      : getPrimaryParticipatingSessionLine(sessionsOnDate, program),
   }
 }
 
 function resolveEventPopoverRowParts(
   ev: CalendarEvent,
   resolvePopoverRowParts?: ParticipatingInstitutionsCalendarViewProps['resolvePopoverRowParts'],
-  usePreferredScheduleFormat = false
+  usePreferredScheduleFormat = false,
+  program?: Program | null
 ): ParticipatingCalendarPopoverRowParts {
   if (isVolunteerCalendarEventItem(ev.originalItem)) {
     return getVolunteerCalendarPopoverParts(ev)
@@ -164,7 +168,7 @@ function resolveEventPopoverRowParts(
       date: dayjs(ev.startDate),
     })
   }
-  return getPopoverRowParts(ev, usePreferredScheduleFormat)
+  return getPopoverRowParts(ev, usePreferredScheduleFormat, program)
 }
 
 function ParticipatingCalendarEventPopoverContent({
@@ -274,10 +278,11 @@ function buildEventsFromSchools(
         if (!d.isValid()) continue
         const times = parseParticipatingSessionTimeRange(session.timeRange)
         const timeRangeDisplay = session.timeRange.replace(/\s*~\s*/g, ' ~ ')
-        const periodLabel = /(교시|차시|회차)$/.test(session.classNum)
-          ? session.classNum
-          : `${session.classNum}교시`
-        const periodStr = `${periodLabel} (${timeRangeDisplay})`
+        // classNum이 비거나 교시가 아닌 값이면 `교시`를 붙이지 않는다(일반 프로그램에는 교시 없음)
+        const periodStr = formatParticipatingSessionClassNumWithTime(
+          session.classNum,
+          timeRangeDisplay
+        )
         const dateKey = d.format('YYYY-MM-DD')
         events.push({
           id: `${row.id}_${dateKey}_r${session.round}`,
@@ -361,6 +366,8 @@ export interface ParticipatingInstitutionsCalendarViewProps {
   usePreferredScheduleFormat?: boolean
   /** 기본 우측 기관 목록 표시 변형 — 일반 기관형 시안은 `general-institution` */
   dayListVariant?: ParticipatingInstitutionsCalendarDayListVariant
+  /** 일반 프로그램 — 팝오버·우측 목록 일정 라벨을 교육 구조별로 표시. 없으면 기존 표기 */
+  program?: Program | null
 }
 
 export function ParticipatingInstitutionsCalendarView({
@@ -377,6 +384,7 @@ export function ParticipatingInstitutionsCalendarView({
   renderMonthEventContent,
   usePreferredScheduleFormat = false,
   dayListVariant = 'default',
+  program,
 }: ParticipatingInstitutionsCalendarViewProps) {
   const [fallbackCalendarMode, setFallbackCalendarMode] = useState<'month' | 'week'>('month')
   const calendarControlled =
@@ -488,7 +496,8 @@ export function ParticipatingInstitutionsCalendarView({
                   resolveEventPopoverRowParts(
                     event,
                     resolvePopoverRowParts,
-                    usePreferredScheduleFormat
+                    usePreferredScheduleFormat,
+                    program
                   )
                 }
                 usePreferredScheduleFormat={usePreferredScheduleFormat}
@@ -507,6 +516,7 @@ export function ParticipatingInstitutionsCalendarView({
             onSchoolClick={onSchoolClick}
             usePreferredScheduleFormat={usePreferredScheduleFormat}
             variant={dayListVariant}
+            program={program}
           />
         )
       }

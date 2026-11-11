@@ -4,6 +4,7 @@ import type { InstructorApplicationListItemResponse } from '@/shared/api/generat
 import {
   buildCompanySchoolAssignedInstructorRows,
   buildCompanySchoolWaitingInstructorRows,
+  omitCompanySchoolScheduleRoundLabels,
 } from './build-company-school-assignment-rows'
 
 describe('buildCompanySchoolWaitingInstructorRows', () => {
@@ -55,6 +56,35 @@ describe('buildCompanySchoolWaitingInstructorRows', () => {
     ).toBeUndefined()
     // 1사1교(기관 신청 id 미전달)는 기존 신청 단위 거리
     expect(buildCompanySchoolWaitingInstructorRows(base)[0]?.distanceToSchool).toBe('77.7km')
+  })
+
+  it('희망 일정 순위 라벨 — 기본은 회차, preference는 확인된 지망만, preference-only는 지망 외 생략', () => {
+    const base = {
+      schoolName: '계남중학교',
+      approvedInstructors: [generalApplication],
+      assignedInstructorMemberIds: new Set<string>(),
+    }
+    const withOrder = { ...hopeSession, round: 2, preferenceOrder: 2 }
+    const withoutOrder = { ...hopeSession, round: 7 }
+    const hope = (
+      session: typeof withOrder | typeof withoutOrder,
+      hopeSessionLabel?: 'round' | 'preference' | 'preference-only'
+    ) =>
+      buildCompanySchoolWaitingInstructorRows({ ...base, sessions: [session], hopeSessionLabel })[0]
+        ?.hopeSession
+
+    expect(hope(withOrder)).toBe('2회차')
+    expect(hope(withOrder, 'preference')).toBe('2지망')
+    expect(hope(withoutOrder, 'preference')).toBe('7회차')
+    expect(hope(withOrder, 'preference-only')).toBe('2지망')
+    expect(hope(withoutOrder, 'preference-only')).toBeUndefined()
+  })
+
+  it('1사1교 배정 일정 라벨에서 회차(session)만 뺀다', () => {
+    const labels = omitCompanySchoolScheduleRoundLabels(
+      new Map([['1', { date: '2026.11.20(금)', time: '09:00 ~ 10:30', session: '7회차' }]])
+    )
+    expect(labels.get('1')).toEqual({ date: '2026.11.20(금)', time: '09:00 ~ 10:30' })
   })
 
   it('희망일(session)이 없으면 행을 만들지 않는다 (가짜 일정 금지)', () => {

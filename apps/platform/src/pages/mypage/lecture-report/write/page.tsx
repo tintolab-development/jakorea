@@ -30,7 +30,7 @@ import {
   type LectureReportState,
 } from '@/features/mypage/education/schedules/api/lecture-report-client'
 import { asAssignmentDisplayText } from '@/features/mypage/education/schedules/lib/instructor-assignment-support'
-import { formatInstructorEducationUnitLabel } from '@/features/mypage/education/schedules/lib/instructor-education-schedule-display'
+import { formatLectureReportProgressSessionLabel } from '@/features/mypage/education/schedules/lib/instructor-education-schedule-display'
 import {
   INVALID_LECTURE_REPORT_BINDING_MESSAGE,
   LECTURE_REPORT_BINDING_UNAVAILABLE_MESSAGE,
@@ -152,8 +152,9 @@ function applyLectureReportAssignmentContext(
           : assignment.institutionAddress?.trim() || paragraph.institutionLocation,
         educationDate: educationDate || paragraph.educationDate,
         sessionTime: sessionTime || paragraph.sessionTime,
+        // 「진행 차시」 칸 — 그 일정의 커리큘럼 차시 수(`K차시`). 회차(sessionNo) 라벨을 넣지 않는다.
         sessionIndex:
-          formatInstructorEducationUnitLabel(assignment) || paragraph.sessionIndex,
+          formatLectureReportProgressSessionLabel(assignment) || paragraph.sessionIndex,
         educationTarget:
           program?.educationTargetDetailLabel?.trim() ||
           asAssignmentDisplayText(assignment.grade) ||

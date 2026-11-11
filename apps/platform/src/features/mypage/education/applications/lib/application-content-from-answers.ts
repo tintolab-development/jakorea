@@ -237,11 +237,14 @@ function resolveFormOptionLabelForStoredLine(
     .map(slot => slot.trim())
     .filter(Boolean)
   if (slots.length === 0) return undefined
-  const sameDate = slots.filter(slot => dateKeysFromText(slot)[0] === storedDate)
-  if (sameDate.length !== 1) return undefined
-  const slot = sameDate[0]
+  const sameDateIndexes = slots
+    .map((slot, index) => (dateKeysFromText(slot)[0] === storedDate ? index : -1))
+    .filter(index => index >= 0)
+  if (sameDateIndexes.length !== 1) return undefined
+  const slotIndex = sameDateIndexes[0]!
+  const slot = slots[slotIndex]
   if (!slot) return undefined
-  return normalizeScheduleDisplayLabel(withSourceSessionSuffix(slot, lines))
+  return normalizeScheduleDisplayLabel(withSourceSessionSuffix(slot, slotIndex, lines))
 }
 
 function mapStoredScheduleLabelToFormOptions(
@@ -483,15 +486,26 @@ function formatScheduleRangeLabel(input: {
 
 const FIXED_SCHEDULE_SESSION_SUFFIX_RE = /\|\s*\d+\s*차시\s*$/
 
+/**
+ * 예정일 줄 slot에 그 slot이 나온 원본 줄의 「| N차시」(차시 개수)만 붙인다.
+ * 다른 날짜 줄의 차시 수를 복사하지 않는다 — 원본 줄에 없으면 생략.
+ */
 function withSourceSessionSuffix(
   slot: string,
+  slotIndex: number,
   lines: readonly string[] | undefined,
 ): string {
   if (FIXED_SCHEDULE_SESSION_SUFFIX_RE.test(slot)) return slot
-  const suffix = (lines ?? [])
-    .map(line => line.trim().match(FIXED_SCHEDULE_SESSION_SUFFIX_RE)?.[0])
-    .find((value): value is string => Boolean(value))
-  return suffix ? `${slot} ${suffix}` : slot
+  let cursor = 0
+  for (const line of lines ?? []) {
+    const lineSlots = expandEducationScheduleChoiceSlots([line])
+    if (slotIndex < cursor + lineSlots.length) {
+      const suffix = line.trim().match(FIXED_SCHEDULE_SESSION_SUFFIX_RE)?.[0]
+      return suffix ? `${slot} ${suffix}` : slot
+    }
+    cursor += lineSlots.length
+  }
+  return slot
 }
 
 /**
@@ -504,7 +518,7 @@ function resolveEducationScheduleLineLabel(
 ): string | undefined {
   const slot = expandEducationScheduleChoiceSlots(lines)[index]?.trim()
   if (!slot) return undefined
-  return normalizeScheduleDisplayLabel(withSourceSessionSuffix(slot, lines))
+  return normalizeScheduleDisplayLabel(withSourceSessionSuffix(slot, index, lines))
 }
 
 function resolveOneScheduleOptionToken(

@@ -172,6 +172,7 @@ export function writeRecruitmentRowCopy(
       | 'learningSupportContent'
       | 'additionalContentHtml'
       | 'remarks'
+      | 'remarksNotApplicable'
       | 'otherMatters'
       | 'startAt'
       | 'endAt'

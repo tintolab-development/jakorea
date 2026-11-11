@@ -1,5 +1,5 @@
 /**
- * 신청 기관 상세 - 기본 정보 / 안내 사항 / 강의 회차 별 교육 희망 날짜 및 시간
+ * 신청 기관 상세 - 기본 정보 / 안내 사항 / 지망별 교육 희망 날짜 및 시간
  * applicant-instructor-basic-info 스타일 참고, 이미지 시안 구조 반영
  * 강의 회차 표시: 프로그램 진행 현황 참여 기관과 동일 형식 (ParticipatingSchoolSession)
  *
@@ -327,10 +327,10 @@ export function ApplicantInstitutionBasicInfo({
         </div>
       </section>
 
-      {/* 강의 회차 별 교육 희망 날짜 및 시간 (참여 기관과 동일 표시 방식) */}
+      {/* 지망별 교육 희망 날짜 및 시간 — 행 번호는 신청 희망 일정 순위(지망)이며 회차·차시가 아니다 */}
       <section className="applicant-institution-basic-info__section">
         <h3 className="applicant-institution-basic-info__title">
-          강의 회차 별 교육 희망 날짜 및 시간
+          지망별 교육 희망 날짜 및 시간
         </h3>
         <div className="applicant-institution-basic-info__table-wrap">
           <table className="applicant-institution-basic-info__table">
@@ -385,7 +385,7 @@ function SessionTableRow({ session }: { session: ParticipatingSchoolSession }) {
   return (
     <tr>
       <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--label">
-        {session.round}차시 강의
+        {session.preferenceOrder ?? session.round}지망
       </td>
       <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--value">
         {contentCell}

@@ -144,6 +144,19 @@ const dateOnlyMappedToFormOption = resolvePreferredEducationScheduleDisplayLabel
 })
 assert.equal(dateOnlyMappedToFormOption, '2026년 11월 3일(화) 10:00 ~ 12:00 | 1차시')
 
+// 한 줄의 「| N차시」를 차시 수가 없는 다른 날짜 줄에 복사하지 않는다
+const noCrossLineSuffix = resolvePreferredScheduleLabelsFromAnswers({
+  preferredScheduleOptionValues: ['line:0', 'line:1'],
+  educationScheduleLines: [
+    '2026년 04월 20일(월) 9:30 ~ 12:20 | 3차시',
+    '2026년 04월 27일(월) 13:00 ~ 15:50',
+  ],
+})
+assert.deepEqual(noCrossLineSuffix, [
+  '2026년 4월 20일(월) 09:30 ~ 12:20 | 3차시',
+  '2026년 4월 27일(월) 13:00 ~ 15:50',
+])
+
 const dateOnlyKeepsStoredWithoutLines = resolvePreferredEducationScheduleDisplayLabel({
   preferredEducationScheduleLabel: '2026. 11. 03(화)',
 })

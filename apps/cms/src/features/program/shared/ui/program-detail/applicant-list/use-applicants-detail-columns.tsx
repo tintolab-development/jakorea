@@ -44,7 +44,16 @@ const COMPANY_SCHOOL_TEACHER_COL_WIDTH = 136
 function formatCompanySchoolPreferredScheduleLine(
   session: NonNullable<ApplicantSchoolRow['sessions']>[number]
 ): string {
-  const rank = session.classNum?.trim() || (session.round > 0 ? `${session.round}지망` : '')
+  /** 지망 순위만 「N지망」으로 쓴다. classNum(차시 수·교시)을 지망 자리에 넣지 않는다. */
+  const classNum = session.classNum?.trim() ?? ''
+  const rank =
+    session.preferenceOrder != null && session.preferenceOrder > 0
+      ? `${session.preferenceOrder}지망`
+      : /지망$/.test(classNum)
+        ? classNum
+        : session.round > 0
+          ? `${session.round}지망`
+          : ''
   const dateLabel = [session.date, session.dayOfWeek ? `(${session.dayOfWeek})` : '']
     .filter(Boolean)
     .join('')

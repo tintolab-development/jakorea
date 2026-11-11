@@ -138,7 +138,8 @@ export interface PaymentOrderAdminProgramDetailInstructorRow {
   institutionName: string
   /** 강의일 (ISO YYYY-MM-DD) */
   lectureDate: string
-  sessionOrdinal: number
+  /** 일정 회차 번호(`session_no`). 없으면(사전교육 등) null — 0회차로 만들지 않는다. */
+  sessionOrdinal: number | null
   processingStatus: PaymentOrderAdminLineProcessingStatus
   estimatedAmount: number
   /** 일괄 확인 시 선택한 강사비 지급 예정일 (ISO YYYY-MM-DD) */
@@ -178,7 +179,8 @@ export interface PaymentOrderAdminInstructorDetailProgramRow {
   programName: string
   institutionName: string
   lectureDate: string
-  sessionOrdinal: number
+  /** 일정 회차 번호(`session_no`). 없으면(사전교육 등) null — 0회차로 만들지 않는다. */
+  sessionOrdinal: number | null
   processingStatus: PaymentOrderAdminLineProcessingStatus
   estimatedAmount: number
   /** 일괄 확인 시 선택한 강사비 지급 예정일 (ISO YYYY-MM-DD) */

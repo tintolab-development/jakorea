@@ -4,6 +4,11 @@
 
 import type { ApplyPreferredScheduleBlock } from '../ui/apply-preferred-schedule/apply-preferred-schedule'
 import type { PortalPreferredScheduleBlock } from '../api/application-types'
+import {
+  TRAINED_TEACHERS_PREFERRED_SCHEDULE_INCOMPLETE_MESSAGE,
+  hasTrainedTeachersSessionInput,
+  toTrainedTeachersPortalSessionTimes,
+} from './trained-teachers-preferred-schedule.ts'
 
 function normalizeScheduleTime(raw: string): string {
   const trimmed = raw.trim()
@@ -61,6 +66,12 @@ export type PreferredScheduleBlocksMapOptions = {
    * - 복수 회차: 희망 차시 셀렉트 값을 sessionCount로 제출한다.
    */
   generalInstitution?: { singleRound?: boolean; sessionCount?: number }
+  /**
+   * 교육받은교사 기간형 — 지망마다 희망 차시(그날 수업 개수) + 차시별 교시·시작~종료 줄.
+   * sessionCount = 차시 수(= sessionTimes 줄 수), sessionTimes[i].classPeriod = 그 차시의 교시.
+   * 교시 번호를 sessionCount로 보내지 않는다.
+   */
+  trainedTeachersSessionRows?: boolean
 }
 
 export const GENERAL_INSTITUTION_SESSION_COUNT_UNAVAILABLE_MESSAGE =
@@ -108,6 +119,21 @@ export function toPortalPreferredScheduleBlocks(
         sessionCount: 1,
         sessionTimes: [],
         ...(block.session ? { session: block.session } : {}),
+      })
+      rank += 1
+      continue
+    }
+    if (options?.trainedTeachersSessionRows) {
+      const sessionTimes = toTrainedTeachersPortalSessionTimes(block)
+      if (!date || sessionTimes == null) continue
+      out.push({
+        preferenceRank: rank,
+        date,
+        sessionCount: sessionTimes.length,
+        startTime: sessionTimes[0]!.startTime,
+        endTime: sessionTimes[sessionTimes.length - 1]!.endTime,
+        ...(block.session ? { session: block.session } : {}),
+        sessionTimes,
       })
       rank += 1
       continue
@@ -248,6 +274,9 @@ export function findIncompletePreferredScheduleMessage(
   blocks: readonly ApplyPreferredScheduleBlock[],
   options?: PreferredScheduleBlocksMapOptions,
 ): string | null {
+  if (options?.trainedTeachersSessionRows && !options.dateOnly) {
+    return findIncompleteTrainedTeachersPreferredScheduleMessage(blocks, options)
+  }
   const withoutClassPeriod = isGeneralInstitutionSingleRound(options)
   if (
     withoutClassPeriod &&
@@ -276,10 +305,12 @@ export function findIncompletePreferredScheduleMessage(
     if (withoutClassPeriod) {
       return '진행 희망 교육 일정에 날짜·시작/종료 시간을 모두 입력해 주세요.'
     }
-    if (options?.generalInstitution) {
+    // 일반·Gemini 기관 — 화면 입력은 「희망 차시」 셀렉트(차시 수)
+    if (options?.generalInstitution || options?.sessionCountRange) {
       return '진행 희망 교육 일정에 날짜·희망 차시·시작/종료 시간을 모두 입력해 주세요.'
     }
-    return '진행 희망 교육 일정에 날짜·차시(교시)·시작/종료 시간을 모두 입력해 주세요.'
+    // 교육받은교사 — 화면 입력은 「수업 진행 교시」
+    return '진행 희망 교육 일정에 날짜·수업 진행 교시·시작/종료 시간을 모두 입력해 주세요.'
   }
   const sessionCountRange = options?.sessionCountRange
   if (sessionCountRange && !options?.dateOnly) {
@@ -308,6 +339,37 @@ export function findIncompletePreferredScheduleMessage(
   return null
 }
 
+/** 교육받은교사 — 지망마다 날짜·희망 차시·차시별 교시·시작~종료 */
+function findIncompleteTrainedTeachersPreferredScheduleMessage(
+  blocks: readonly ApplyPreferredScheduleBlock[],
+  options: PreferredScheduleBlocksMapOptions,
+): string | null {
+  const hasPartial = blocks.some(block => {
+    const any = Boolean(block.date.trim()) || hasTrainedTeachersSessionInput(block)
+    const complete = Boolean(block.date.trim()) && toTrainedTeachersPortalSessionTimes(block) != null
+    return any && !complete
+  })
+  if (hasPartial) return TRAINED_TEACHERS_PREFERRED_SCHEDULE_INCOMPLETE_MESSAGE
+  const hasInvalidTimeRange = blocks.some(block =>
+    (toTrainedTeachersPortalSessionTimes(block) ?? []).some(row => {
+      const startTime = row.startTime ?? ''
+      const endTime = row.endTime ?? ''
+      return !isValidScheduleTime(startTime) || !isValidScheduleTime(endTime) || endTime <= startTime
+    }),
+  )
+  if (hasInvalidTimeRange) return PREFERRED_SCHEDULE_TIME_ORDER_ERROR_MESSAGE
+  if (toPortalPreferredScheduleBlocks(blocks, options).length === 0) {
+    return '진행 희망 교육 일정을 한 개 이상 입력해 주세요.'
+  }
+  return null
+}
+
+function readDraftString(value: unknown): string {
+  if (typeof value === 'string') return value.trim()
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value)
+  return ''
+}
+
 export function preferredScheduleBlocksFromDraftAnswers(
   draftAnswers: Record<string, unknown> | null | undefined,
   answerKey: string,
@@ -332,7 +394,22 @@ export function preferredScheduleBlocksFromDraftAnswers(
       sessions[0] && typeof sessions[0] === 'object'
         ? (sessions[0] as Record<string, unknown>)
         : null
+    // 교육받은교사 차시 줄 복원용 — 다른 유형 화면은 이 필드를 읽지 않는다.
+    const sessionTimes = sessions
+      .filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === 'object')
+      .map(item => ({
+        classPeriod: readDraftString(item.classPeriod).replace(/[^\d]/g, ''),
+        startTime: normalizeScheduleTime(readDraftString(item.startTime) || readDraftString(item.start)),
+        endTime: normalizeScheduleTime(readDraftString(item.endTime) || readDraftString(item.end)),
+      }))
+    const rawSessionCount = Number(row.sessionCount)
+    const sessionCount =
+      Number.isInteger(rawSessionCount) && rawSessionCount > 0
+        ? rawSessionCount
+        : sessionTimes.length
     blocks.push({
+      ...(sessionCount > 0 ? { sessionCount: String(sessionCount) } : {}),
+      ...(sessionTimes.length > 0 ? { sessionTimes } : {}),
       date,
       session: typeof row.session === 'string' ? row.session : undefined,
       classPeriod: typeof first?.classPeriod === 'string' ? first.classPeriod : '',

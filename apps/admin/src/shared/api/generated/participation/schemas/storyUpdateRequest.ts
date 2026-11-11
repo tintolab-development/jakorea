@@ -22,7 +22,8 @@ export interface StoryUpdateRequest {
      * @maxLength 2000000
      */
   body: string;
-  thumbnailAssetId: number;
+  /** Optional card thumbnail. Null or omitted means no thumbnail; on update, null removes the current thumbnail. */
+  thumbnailAssetId?: number | null;
   /**
      * Ordered READY asset ids. Empty array means no attachments. Max 10 files, 20 MiB (20971520 bytes) each, 100 MiB (104857600 bytes) total. Allowed MIME: image/jpeg, image/png, application/pdf, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/x-hwp, application/vnd.hancom.hwp, application/haansofthwp, application/x-hwpx, application/vnd.hancom.hwpx, application/hwp+zip.
      * @minItems 0

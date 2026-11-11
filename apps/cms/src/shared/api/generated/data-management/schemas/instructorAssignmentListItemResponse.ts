@@ -5,6 +5,7 @@
  * Filtered for CMS data management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { InstructorAssignmentListItemResponseAssignmentNotificationStatus } from './instructorAssignmentListItemResponseAssignmentNotificationStatus';
 import type { InstructorAssignmentListItemResponseSettlementStatus } from './instructorAssignmentListItemResponseSettlementStatus';
 
 export interface InstructorAssignmentListItemResponse {
@@ -66,4 +67,10 @@ export interface InstructorAssignmentListItemResponse {
   settlementId?: number | null;
   /** settlementStatus 근거가 된 정산 신청서 ID. 정산 행이 있으면 그 행의 신청서 ID, 없으면 최신 미확정 신청서 ID. 미신청이면 null. */
   settlementApplicationId?: number | null;
+  /** 배정 완료 알림(교사·강사) 발송 상태. NONE=알림 없음, SCHEDULED=예약 대기, SENT=수신자가 이미 볼 수 있거나 외부 발송 진행·완료, CANCELLED=발송 전에 예약 알림이 중단됨. SENT이면 배정 취소 시 reason 필수, NONE/SCHEDULED/CANCELLED이면 reason·notification 생략 가능 */
+  assignmentNotificationStatus?: InstructorAssignmentListItemResponseAssignmentNotificationStatus;
+  /** assignmentNotificationStatus=SENT일 때 가장 최근 발송(노출) 시각. 그 외 null */
+  assignmentNotificationSentAt?: string | null;
+  /** assignmentNotificationStatus=SCHEDULED일 때 가장 이른 예약 발송 시각. 그 외 null */
+  assignmentNotificationScheduledAt?: string | null;
 }

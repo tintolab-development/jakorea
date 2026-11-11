@@ -56,7 +56,11 @@ export interface PaymentStatementIssuanceFromCalculationInput {
   lectureFeeStandardTitle: string
   lectureFeeStandardAmount: string
   businessIncomeEarnerLabel: string
-  programSessionProgressDisplay?: string
+  /**
+   * 「교육 진행 차시」 = 강사비 산정에 적용된 인정 차시(`calcInfo.recognizedSessionCount`).
+   * 프로그램 진행 회차(`programSessionProgressDisplay`)·회차 번호로 대체하지 않는다. 없으면 빈칸.
+   */
+  recognizedSessionCount?: number | null
   blocks: PaymentOrderCalculationStatementSessionBlock[]
   formulaLabel: string
   totalAmount: number
@@ -83,9 +87,13 @@ function parseSessionPartFromBlocks(
 ): string {
   const session = presentText(blocks[0]?.lectureSessionDisplay)
   if (!session) return '정산'
-  const match = session.match(/(\d+)\s*~?\s*(\d+)?\s*(?:차시|회차)/)
-  if (match?.[1]) {
-    return match[2] && match[2] !== match[1] ? `${match[1]}-${match[2]}회차` : `${match[1]}회차`
+  // 회차(일정 단위)와 차시(커리큘럼·인정 차시)는 다른 값이다. 원문 단위를 그대로 쓴다.
+  const match = session.match(/(\d+)\s*~?\s*(\d+)?\s*(차시|회차)/)
+  if (match?.[1] && match[3]) {
+    const unit = match[3]
+    return match[2] && match[2] !== match[1]
+      ? `${match[1]}-${match[2]}${unit}`
+      : `${match[1]}${unit}`
   }
   return sanitizeFileNamePart(session)
 }
@@ -157,9 +165,8 @@ function buildLectureFeeCalculationValues(
     .filter(l => l.kind === 'lecture_fee')
     .reduce((s, l) => s + l.amount, 0)
 
-  const sessionProgress = presentText(input.programSessionProgressDisplay)
-  const sessionCountFromProgress = sessionProgress.split('/')[0]?.trim() ?? ''
-  const sessionCount = presentText(sessionCountFromProgress)
+  const sessionCount =
+    input.recognizedSessionCount != null ? String(input.recognizedSessionCount) : ''
 
   const lectureFeeType = presentText(input.lectureFeeStandardTitle)
   const lectureFeeAmount = presentText(input.lectureFeeStandardAmount)
@@ -217,7 +224,6 @@ export function mapProgramCalculationStatementToIssuanceInput(
     lectureFeeStandardTitle: presentText(statement.basic.lectureFeeStandardTitle),
     lectureFeeStandardAmount: presentText(statement.basic.lectureFeeStandardAmount),
     businessIncomeEarnerLabel: presentText(statement.basic.businessIncomeEarnerLabel),
-    programSessionProgressDisplay: presentText(statement.basic.programSessionProgressDisplay),
     blocks: statement.blocks,
     formulaLabel: statement.formulaLabel,
     totalAmount: statement.totalAmount,
@@ -268,7 +274,6 @@ export function mapAccountPaymentStatusDetailToIssuanceInput(
     lectureFeeStandardTitle: presentText(detail.basic.lectureFeeStandardTitle),
     lectureFeeStandardAmount: presentText(detail.basic.lectureFeeStandardAmount),
     businessIncomeEarnerLabel: presentText(detail.basic.businessIncomeEarnerLabel),
-    programSessionProgressDisplay: presentText(detail.basic.programSessionProgressDisplay),
     blocks: detail.blocks,
     formulaLabel: detail.formulaLabel,
     totalAmount: detail.totalAmount,

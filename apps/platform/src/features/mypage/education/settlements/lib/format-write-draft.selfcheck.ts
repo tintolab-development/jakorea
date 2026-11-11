@@ -3,6 +3,7 @@ import { buildSettlementWriteDraft } from './build-write-draft.ts'
 import {
   INSTRUCTOR_MEAL_MAX_WON,
   formatSettlementAmountInput,
+  formatSettlementEducationSessionProgress,
   formatSettlementSessionBannerTitle,
   hasSettlementActivitySection,
   hasSettlementMealSection,
@@ -71,5 +72,12 @@ legacyMealDraft.activity = {
 } as typeof legacyMealDraft.activity
 assert.equal(hasSettlementMealSection(legacyMealDraft), true)
 assert.equal(hasSettlementActivitySection(legacyMealDraft), true)
+
+// sessionNumber는 회차 번호 — 「N차시」로 표기하지 않는다
+assert.equal(
+  formatSettlementEducationSessionProgress({ sessionNumber: 3, sessionMeta: '10:00~11:20 3회차' }),
+  '3회차, 10:00 ~ 11:20',
+)
+assert.equal(formatSettlementEducationSessionProgress({ sessionNumber: 0, sessionMeta: '10:00~11:20' }), '10:00 ~ 11:20')
 
 console.log('format-write-draft.selfcheck: ok')

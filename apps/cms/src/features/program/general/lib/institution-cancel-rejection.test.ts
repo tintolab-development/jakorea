@@ -3,8 +3,14 @@ import {
   buildInstitutionCancelRejectionMessage,
   patchInstitutionForCancelRejection,
   resolveInstitutionCancelRejectionModalTitle,
+  resolveInstitutionCancelRejectionNotifyTimingOptions,
   resolveInstitutionCancelRejectionNotifyVariant,
 } from '@/features/program/general/lib/institution-cancel-rejection'
+import { toNestedDecisionNotification } from '@/features/program/general/lib/application-decision-notify-timing'
+import {
+  NOTIFY_TIMING_CAPABILITY,
+  isNotifyTimingSupported,
+} from '@/shared/lib/notify-timing-capability'
 import {
   buildInstitutionCancelRejectCompleteDescription,
   resolveInstitutionCancelRejectCompleteCopy,
@@ -106,5 +112,27 @@ describe('institution-cancel-rejection general-organization copy', () => {
     expect(resolveInstitutionCancelRejectCompleteCopy('JA초등학교').title).toBe(
       '기관 반려 취소 완료'
     )
+  })
+})
+
+describe('institution cancel notify — 발표일에 맞춰서 (ON_ANNOUNCEMENT)', () => {
+  it('반려 취소(발송 후) 옵션은 일반(기관형)만 3개, 기본은 기존 2개', () => {
+    expect(resolveInstitutionCancelRejectionNotifyTimingOptions('general-organization')).toBe(
+      'three'
+    )
+    expect(resolveInstitutionCancelRejectionNotifyTimingOptions()).toBe('two')
+  })
+
+  it('반려 취소·승인 취소 팝업 capability(full)는 발표일 선택을 막지 않는다', () => {
+    expect(isNotifyTimingSupported('on_announcement', NOTIFY_TIMING_CAPABILITY.full)).toBe(true)
+  })
+
+  it('발표일 선택은 cancel-rejection·cancel-approval 요청 notification.timing ON_ANNOUNCEMENT로 보낸다', () => {
+    const reason = '일정 재조정'
+    const notification = toNestedDecisionNotification('on_announcement')?.notification
+    expect({ reason, ...(notification ? { notification } : {}) }).toEqual({
+      reason: '일정 재조정',
+      notification: { timing: 'ON_ANNOUNCEMENT' },
+    })
   })
 })

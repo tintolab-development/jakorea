@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import { downloadAdminFile } from '@/shared/lib/admin-file-upload'
-import { useCmsAlert } from '@/shared/ui'
+import { CmsButton, useCmsAlert } from '@/shared/ui'
 import { handleError } from '@/shared/utils/error-handler'
 import { AssignmentSubmissionCellActionButton } from '@/features/program/general/ui/assignment-submission-history-table'
 import { resolveProgressAssignmentRemark } from '@/features/program/general/lib/participating-individual-progress-assignment-display'
@@ -15,7 +15,17 @@ import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
 export type ProgressAssignmentSurveyNavTab = 'survey' | typeof GENERAL_SATISFACTION_NAV_TAB
 
-export const PARTICIPATING_INDIVIDUAL_PROGRESS_ASSIGNMENT_TABLE_SCROLL_X = 1100
+/** 피드백 열 — 작성(제출 완료) / 보기(피드백 전달 완료) */
+export type ProgressAssignmentFeedbackMode = 'write' | 'view'
+
+export type ProgressAssignmentFeedbackTarget = {
+  row: ParticipatingIndividualProgressAssignmentParticipantRow
+  mode: ProgressAssignmentFeedbackMode
+}
+
+export const PARTICIPATING_INDIVIDUAL_PROGRESS_ASSIGNMENT_TABLE_SCROLL_X = 1240
+
+const FEEDBACK_COLUMN_WIDTH = 140
 
 /** 링크 제출은 URL 대신 고정 문구로 표시한다(Figma 4515:64786). */
 export const PROGRESS_ASSIGNMENT_SUBMISSION_LINK_LABEL = '제출 링크'
@@ -136,12 +146,47 @@ function SubmissionCell({
   )
 }
 
+/**
+ * 시안 06(4175:60110) 피드백 열.
+ * - 교육 미진행(SCHEDULED): `-`
+ * - 미제출: 「피드백 작성」 비활성
+ * - 피드백 전달 완료: 「피드백 보기」
+ * - 제출: 「피드백 작성」 — 과제 응답 id가 없으면 비활성(피드백 API 키 없음)
+ */
+function FeedbackCell({
+  row,
+  onOpenFeedback,
+}: {
+  row: ParticipatingIndividualProgressAssignmentParticipantRow
+  onOpenFeedback?: (target: ProgressAssignmentFeedbackTarget) => void
+}) {
+  if (row.submission.kind === 'scheduled') return '-'
+  const submitted = row.submission.kind === 'submitted'
+  const delivered = submitted && row.remarkKind === 'feedback_delivered'
+  const mode: ProgressAssignmentFeedbackMode = delivered ? 'view' : 'write'
+  const disabled =
+    !submitted || row.assignmentFormResponseId == null || onOpenFeedback == null
+  return (
+    <CmsButton
+      variant="secondary"
+      size="h32"
+      style={{ width: '100%' }}
+      disabled={disabled}
+      onClick={() => onOpenFeedback?.({ row, mode })}
+    >
+      {delivered ? '피드백 보기' : '피드백 작성'}
+    </CmsButton>
+  )
+}
+
 export function ParticipatingIndividualProgressAssignmentTable({
   rows,
   onViewSurveyResponse,
+  onOpenFeedback,
 }: {
   rows: ParticipatingIndividualProgressAssignmentParticipantRow[]
   onViewSurveyResponse: (tab: ProgressAssignmentSurveyNavTab) => void
+  onOpenFeedback?: (target: ProgressAssignmentFeedbackTarget) => void
 }) {
   const tableData = useMemo(() => {
     return rows.map((row, index) => ({
@@ -202,8 +247,17 @@ export function ParticipatingIndividualProgressAssignmentTable({
         ellipsis: true,
         render: (_value, record) => resolveProgressAssignmentRemark(record),
       },
+      {
+        title: '피드백',
+        key: 'feedback',
+        width: FEEDBACK_COLUMN_WIDTH,
+        align: 'center',
+        render: (_value, record) => (
+          <FeedbackCell row={record} onOpenFeedback={onOpenFeedback} />
+        ),
+      },
     ],
-    [onViewSurveyResponse]
+    [onOpenFeedback, onViewSurveyResponse]
   )
 
   return (

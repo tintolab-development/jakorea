@@ -106,6 +106,7 @@ import { resolveInstructorAssignmentScheduleId } from '@/features/program/genera
 import {
   buildCompanySchoolWaitingInstructorRows,
   buildCompanySchoolAssignedInstructorRows,
+  omitCompanySchoolScheduleRoundLabels,
 } from '@/features/program/1c-1s/lib/build-company-school-assignment-rows'
 import {
   getGeneralProgramApiErrorMessage,
@@ -423,7 +424,10 @@ function buildAssignedScheduleLineFromSessionIds(
   const selectedSessions = sessions.filter(session =>
     selectedSessionIds.has(buildSchoolAddInstructorSessionSlotKey(schoolId, session))
   )
-  return buildParticipatingSchoolPreferredScheduleLines(selectedSessions)[0]
+  // 1사1교 로컬 배정 경로 전용 — 일정 건수를 차시 수로 쓰지 않는다
+  return buildParticipatingSchoolPreferredScheduleLines(selectedSessions, {
+    sessionCountSource: 'known-only',
+  })[0]
 }
 
 function renderAssignedInstructorTableEmpty(withDescription = false) {
@@ -909,6 +913,19 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
     educationScheduleMode: program.generalCommonInfo?.educationScheduleMode,
     options: requestedScheduleConfirmOptions,
   })
+  /**
+   * 배정 대기 「교육 진행 희망 일정」 순위 라벨.
+   * - 1사1교: 회차가 없다. 지망 순위만 「N지망」, 모르면 순위 라벨 없음.
+   * - 일반 기관·기간 지정: 희망 일정 번호가 지망 순위(requested-schedules preferenceOrder)라 「N지망」.
+   * - 그 외(날짜 지정형 등): 기존 표기.
+   */
+  const waitingHopeSessionLabel = isCompanySchool
+    ? ('preference-only' as const)
+    : isGeneralOrgProgram &&
+        String(program.generalCommonInfo?.educationScheduleMode ?? '').trim().toLowerCase() ===
+          'period'
+      ? ('preference' as const)
+      : ('round' as const)
   const requestedScheduleAlreadyConfirmed = hasConfirmedRequestedSchedule(
     requestedScheduleConfirmOptions
   )
@@ -1522,7 +1539,10 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
         assignments: assignmentBoard.assignments,
         organizationApplicationId: orgAppId,
         instructorNameByMemberId: assignmentBoard.instructorNameByMemberId,
-        scheduleLabelById: assignmentBoard.scheduleLabelById,
+        // 1사1교는 회차가 없다 — sessionNo 「N회차」를 배정 일정에 붙이지 않는다
+        scheduleLabelById: isCompanySchool
+          ? omitCompanySchoolScheduleRoundLabels(assignmentBoard.scheduleLabelById)
+          : assignmentBoard.scheduleLabelById,
         includeCancelled: isCompanySchool,
       })
       return apiRows.map(r => ({
@@ -1551,7 +1571,9 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
     // 일반 remote OFF — FE mock 프로그램만 로컬 시드
     if (!isCompanySchool) return []
     const rows = getAssignedInstructorDisplayRows(instructors)
-    const defaultScheduleLine = buildParticipatingSchoolPreferredScheduleLines(row.sessions)[0]
+    const defaultScheduleLine = buildParticipatingSchoolPreferredScheduleLines(row.sessions, {
+      sessionCountSource: 'known-only',
+    })[0]
     return rows.map(assignedRow => ({
       ...assignedRow,
       assignedScheduleLine:
@@ -1623,6 +1645,7 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
         // 일반 기관형: 강사 신청의 기관별 거리에서 이 기관을 찾는다(1사1교는 기존 신청 단위 거리)
         organizationApplicationId: isGeneralOrgProgram ? row.organizationApplicationId : null,
         ...(includePending ? { candidateApplicationStatuses: 'any' as const } : {}),
+        hopeSessionLabel: waitingHopeSessionLabel,
       })
         .filter(waitingRow => !completedWaitingRowKeys.has(waitingRow.id))
         .map((waitingRow): WaitingInstructorRow => {
@@ -1668,6 +1691,7 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
     disabledWaitingInstructorIds,
     assignedInstructorIdSet,
     assignmentBoard,
+    waitingHopeSessionLabel,
   ])
 
   const assignedInstructorNames = useMemo(
@@ -3264,6 +3288,7 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
               educationGrade={mergedDetail.educationGrade ?? ''}
               organizationApplicationId={row.organizationApplicationId}
               programId={program.id}
+              program={program}
               programTitle={program.mainTitle ?? program.title ?? ''}
               programStartDate={program.startDate}
               programEndDate={program.endDate}

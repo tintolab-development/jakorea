@@ -259,9 +259,10 @@ assert.equal(
   multiSchedule.paragraphDescription,
   '2차시*2회로 구성된 프로그램입니다. 진행 가능한 일정을 모두 선택해 주세요.'
 )
+// 예정일 줄에는 실제 회차(sessionNo)가 없다 — 입력 순서로 「1회차」를 만들지 않는다
 assert.equal(
   (multiSchedule as MultipleChoiceParagraph).items[0]?.label,
-  '26년 4월 20일(월) 9:30 ~ 12:20 | 1회차'
+  '26년 4월 20일(월) 9:30 ~ 12:20'
 )
 
 const scheduleSingleDateLines = [
@@ -470,6 +471,7 @@ assert.equal(
   '진행 가능한 일정을 모두 선택해 주세요.'
 )
 
+// 회차별 진행 차시 수가 다르면(2차시/4차시) 1회차 값을 전체 회차 차시 수로 쓰지 않는다
 assert.equal(
   readCurriculumMultiDateFixedScheduleMeta({
     curriculumSessions: [
@@ -477,7 +479,7 @@ assert.equal(
       { sessionLabel: '2회차', title: '4차시' },
     ],
   }).sessionsPerRound,
-  2
+  undefined
 )
 
 // 안내 문구 = 신청 양식 기본값. 프로그램 등록 시 관리자가 수정한 문구는 유지, 구조(선택지)는 SSOT.

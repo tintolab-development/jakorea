@@ -74,6 +74,15 @@ describe('buildProgramDetailFromSettlements', () => {
     expect(detail.instructorRows[0]?.sessionOrdinal).not.toBe(88001)
   })
 
+  it('sessionOrdinal(회차)이 없으면 0회차로 만들지 않고 null', () => {
+    const detail = buildProgramDetailFromSettlements(
+      programRow,
+      [listItem({ sessionOrdinal: undefined })],
+      []
+    )
+    expect(detail.instructorRows[0]?.sessionOrdinal).toBeNull()
+  })
+
   it('진행 회차·사업기간은 라인 건수/lectureDate가 아니라 DTO 헤더', () => {
     const detail = buildProgramDetailFromSettlements(
       programRow,
@@ -144,7 +153,7 @@ describe('buildProgramDetailFromSettlements', () => {
 })
 
 describe('buildInstructorDetailFromSettlements', () => {
-  it('프로그램 행에 기관명·차시를 매핑', () => {
+  it('프로그램 행에 기관명·회차(sessionOrdinal)를 매핑', () => {
     const detail = buildInstructorDetailFromSettlements(
       instructorRow,
       [

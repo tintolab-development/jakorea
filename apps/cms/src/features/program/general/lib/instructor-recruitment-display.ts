@@ -135,6 +135,10 @@ export function resolveGeneralProgramInstructorRecruitmentDisplay(
       useContactRow ? undefined : info?.email,
       useContactRow ? undefined : info?.contactEmail
     ),
-    notes: pickDisplayString(resolveRecruitmentRemarks(program, 'instructor')),
+    // 강사 모집 행 `remarksNotApplicable`(비고 해당 없음)이면 시안대로 `-`
+    notes:
+      useInstructorRow && row?.remarksNotApplicable === true
+        ? '-'
+        : pickDisplayString(resolveRecruitmentRemarks(program, 'instructor')),
   }
 }

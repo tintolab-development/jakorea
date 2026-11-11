@@ -11,6 +11,7 @@ import {
 } from '@/features/program/general/lib/participant-cancel-approval'
 import {
   buildParticipantCancelRejectionMessage,
+  PARTICIPANT_CANCEL_REJECTION_MODAL_TITLE,
   resolveParticipantCancelRejectionNotifyVariant,
   type ParticipantCancelRejectionConfirmPayload,
 } from '@/features/program/general/lib/participant-cancel-rejection'
@@ -339,7 +340,7 @@ function ParticipantCancelRejectPendingNotificationModal({
     <ContentModal
       open={open}
       onCancel={onCancel}
-      title="참여자 반려 취소 안내"
+      title={PARTICIPANT_CANCEL_REJECTION_MODAL_TITLE}
       width={MODAL_WIDTH}
       zIndex={zIndex}
       className="participant-cancel-reject-modal"
@@ -386,16 +387,17 @@ function ParticipantCancelRejectAlreadySentModal({
       open={open}
       variant="reject"
       className="participant-cancel-reject-modal"
-      title="참여자 반려 취소 안내"
+      title={PARTICIPANT_CANCEL_REJECTION_MODAL_TITLE}
       message={buildParticipantCancelRejectionMessage(participantName, 'alreadySent')}
       confirmLabel="반려 취소"
       confirmVariant="delete"
       requireReason
       reasonLabel="취소 사유"
-      reasonPlaceholder="취소 사유를 입력해 주세요."
+      reasonPlaceholder="취소 사유를 입력해 주세요"
       reasonRequiredMessage="취소 사유를 입력해 주세요."
-      notifyTimingOptions="two"
-      notifyBeforeReason
+      // 개인 시안 04-2: 취소 사유 → 알림 발송(즉시·발표일에 맞춰서·직접 설정).
+      // individual cancel-rejection `notification.timing`은 ON_ANNOUNCEMENT를 받는다.
+      notifyTimingOptions="three"
       onCancel={onCancel}
       onConfirm={onConfirm}
       zIndex={zIndex}
@@ -451,9 +453,9 @@ export function ParticipantCancelRejectModal({
   )
 }
 
-export function buildParticipantCancelRejectCompleteDescription(participantName: string): string {
-  const trimmedName = participantName.trim() || '참여자'
-  return `${formatModalBracketedSubjectName(trimmedName, '참여자')}의 프로그램 참여 ${formatModalBoldPhrase('반려 취소')} 되었습니다.\n해당 참여자는 신청 목록 또는 상세에서 ${formatModalBoldPhrase('승인 및 반려')}가 가능합니다.`
+/** 개인 시안 04-3(4121:107763) 「취소 완료 / 취소되었습니다.」 — 승인 취소 완료(07-3)와 동일 공통 완료 팝업 */
+export function buildParticipantCancelRejectCompleteDescription(_participantName: string): string {
+  return MESSAGES.success.cancelled
 }
 
 export function ParticipantCancelRejectCompleteModal({
@@ -468,21 +470,12 @@ export function ParticipantCancelRejectCompleteModal({
   zIndex?: number
 }) {
   return (
-    <ContentModal
+    <AlertModal
       open={open}
-      onCancel={onClose}
-      title="참여자 반려 취소 완료"
-      width={MODAL_WIDTH}
+      onClose={onClose}
+      title="취소 완료"
+      content={buildParticipantCancelRejectCompleteDescription(participantName)}
       zIndex={zIndex}
-      className="participant-cancel-reject-complete-modal"
-      description={buildParticipantCancelRejectCompleteDescription(participantName)}
-      footer={
-        <CmsButton variant="secondary" size="medium" type="button" onClick={onClose}>
-          확인
-        </CmsButton>
-      }
-    >
-      {null}
-    </ContentModal>
+    />
   )
 }

@@ -883,7 +883,6 @@ export function SchoolDetailModal({
                         variant="delete"
                         size="large"
                         disabled={isCancelApprovalDisabled}
-                        title={cancelApprovalDisabledReason ?? undefined}
                         onClick={() => setCancelApprovalConfirmOpen(true)} >
                         승인 취소
                       </CmsButton>

@@ -630,6 +630,13 @@ export type GeneralAssignmentSubmissionParticipantDto = {
   links?: GeneralAssignmentSubmissionLinkDto[] | null
   surveyResponse?: { templateVersionId?: number; formResponseId?: number } | null
   satisfactionResponse?: { templateVersionId?: number; formResponseId?: number } | null
+  /**
+   * 과제 응답(form_response) id — 피드백 작성·조회 키(POST/GET /api/admin/form-responses/{id}/feedback).
+   * OpenAPI `GeneralIndividualAssignmentParticipant`에는 아직 없다(BE 추가 요청). 회원 과제 API처럼
+   * `submissionId`로 내려올 수도 있어 둘 다 읽는다. 없으면 피드백 버튼을 비활성으로 둔다.
+   */
+  formResponseId?: number | null
+  submissionId?: number | null
   giveUpAt?: string | null
   participantStatus?: string | null
 }

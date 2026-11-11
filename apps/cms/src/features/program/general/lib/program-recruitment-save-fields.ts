@@ -246,6 +246,7 @@ export const programInstructorRecruitmentSaveSchema = z.object({
   contactEmail: optionalString,
   otherNotes: optionalString,
   instructorRecruitmentRemarks: optionalString,
+  instructorRecruitmentNotesNotApplicable: notesApplicableEnum,
 })
 
 export const programVolunteerRecruitmentSaveSchema = z.object({

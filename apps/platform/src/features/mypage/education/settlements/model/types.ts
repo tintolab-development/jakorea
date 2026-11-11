@@ -26,9 +26,12 @@ export type EducationSettlementItem = {
   scheduleId?: number | null
   /** 강사 배정 ID. lecture-report-assignments.assignmentId */
   assignmentId?: number | null
+  /** 회차 번호(sessionNo, 없으면 서버 순서 1-based). 인정 차시·커리큘럼 차시가 아니다. */
   sessionNumber: number
+  /** Gemini 정산 인정 차시(recognizedClassCount). 회차·커리큘럼 차시와 별개. */
+  recognizedClassCount?: number
   heldAt: string
-  /** 예: 10:00~11:20 3차시 */
+  /** 예: `10:00~11:20 3회차`, Gemini `10:00~11:20 3차시`(인정 차시) */
   sessionMeta: string
   /** 배정 학교·기관명. API에 값이 있을 때만 채운다. */
   institutionLabel?: string

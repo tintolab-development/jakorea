@@ -51,7 +51,6 @@ import {
 } from '@/features/program/shared/lib/program-audit-names'
 import { mapProgramRoundsToWriteRequest } from '@/features/program/shared/lib/round-write'
 import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
-import { applyBusinessPeriodHistoriesFromDto } from '@/features/program/shared/lib/business-period-extend'
 import {
   isRecruitmentStartLocked,
   toProgramRecruitmentWindows,
@@ -1163,7 +1162,7 @@ export function fromDetail(
     ...(resolvedTypedDetail ? { ujatTypedDetail: resolvedTypedDetail } : {}),
     ...(periodStatus != null ? { periodStatus } : {}),
   }
-  return applyBusinessPeriodHistoriesFromDto(result, dto)
+  return result
 }
 
 function looksMaskedPii(value: string | null | undefined): boolean {

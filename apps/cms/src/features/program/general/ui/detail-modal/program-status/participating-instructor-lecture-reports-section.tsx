@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Spin, Tooltip } from 'antd'
+import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import type { Program } from '@/types/domain'
@@ -19,7 +19,6 @@ import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import { downloadGeneralProgramLectureReportFiles } from '@/features/program/general/api/admin-program-progress-service'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
-import { LECTURE_REPORT_NO_SUBMITTED_PDF_CTA } from '@/features/program/general/lib/download-lecture-reports-bulk-pdf'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
@@ -73,6 +72,7 @@ export function ParticipatingInstructorLectureReportsSection({
   const lectureReports = useProgramLectureReports(program?.id, {
     instructorMemberId,
     instructor,
+    program,
   })
   const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
     hasNextPage: lectureReports.hasNextPage,
@@ -301,22 +301,18 @@ export function ParticipatingInstructorLectureReportsSection({
           <span className="table-description">{rows.length}건</span>
         </div>
         <div className="info-section-buttons--wrapper">
-          <Tooltip title={!hasPdfTargets ? LECTURE_REPORT_NO_SUBMITTED_PDF_CTA : undefined}>
-              <span>
-                <CmsButton
-                  variant="secondary"
-                  size="h40"
-                  icon={<ButtonDownloadIcon />}
-                  disabled={bulkDownloading || !hasPdfTargets}
-                  loading={bulkDownloading}
-                  onClick={() => {
-                    void handleBulkDownload()
-                  }}
-                >
-                  강의보고서 일괄 다운로드
-                </CmsButton>
-              </span>
-            </Tooltip>
+          <CmsButton
+            variant="secondary"
+            size="h40"
+            icon={<ButtonDownloadIcon />}
+            disabled={bulkDownloading || !hasPdfTargets}
+            loading={bulkDownloading}
+            onClick={() => {
+              void handleBulkDownload()
+            }}
+          >
+            강의보고서 일괄 다운로드
+          </CmsButton>
           <ExcelButton onClick={exportExcel} loading={isExcelExporting} />
         </div>
       </div>

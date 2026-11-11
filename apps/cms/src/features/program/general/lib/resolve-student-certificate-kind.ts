@@ -41,8 +41,11 @@ export function resolveStudentCertificateKind(
   const { sessions, satisfactionSurveyRequired, satisfactionSurveyCompleted } = input
   if (sessions.length === 0) return 'participation'
 
-  const lastRoundNumber = Math.max(...sessions.map(session => session.roundNumber))
-  const lastSession = sessions.find(session => session.roundNumber === lastRoundNumber)
+  // 마지막 교육 일정 — 모든 행에 회차 번호가 있으면 가장 큰 회차, 없으면 서버 순서의 마지막 행
+  const roundNumbers = sessions.map(session => session.roundNumber)
+  const lastSession = roundNumbers.every((round): round is number => round != null)
+    ? sessions.find(session => session.roundNumber === Math.max(...roundNumbers))
+    : sessions[sessions.length - 1]
   if (lastSession == null || lastSession.status === 'not_held') {
     return 'participation'
   }

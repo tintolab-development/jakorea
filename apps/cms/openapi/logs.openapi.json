@@ -12209,6 +12209,18 @@
             "format": "int32",
             "description": "activityScheduleSlots 항목 수",
             "minimum": 0
+          },
+          "documentResultNotificationSentAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "1차 서류 합격/불합격 알림(VOLUNTEER_DOCUMENT_PASSED|REJECTED)이 실제 처리된 최신 시각. 재발송하면 최신 발송 시각으로 바뀝니다. 예약 대기·취소·실패 건은 제외하며 발송 이력이 없으면 null",
+            "nullable": true
+          },
+          "finalResultNotificationSentAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "면접 합격/예비/불합격·최종 승인 알림(VOLUNTEER_APPLICATION_APPROVED|RESERVED|REJECTED)이 실제 처리된 최신 시각. 예약 대기·취소·실패 건은 제외하며 발송 이력이 없으면 null",
+            "nullable": true
           }
         }
       },
@@ -12406,7 +12418,12 @@
         "properties": {
           "timing": {
             "type": "string",
-            "description": "IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE",
+            "description": "IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE. ON_ANNOUNCEMENT는 기관 신청 승인 취소·반려 취소(교육받은 교사 기관 승인 취소 포함)에서만 허용합니다.",
+            "enum": [
+              "IMMEDIATE",
+              "SCHEDULED",
+              "ON_ANNOUNCEMENT"
+            ],
             "example": "SCHEDULED"
           },
           "scheduledAt": {
@@ -18539,13 +18556,18 @@
           },
           "timing": {
             "type": "string",
-            "description": "배정 완료 알림. IMMEDIATE | SCHEDULED. 생략하면 IMMEDIATE. 승인 알림과 다른 이벤트입니다.",
+            "description": "배정 완료 알림. IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE. 승인 알림과 다른 이벤트입니다. ON_ANNOUNCEMENT는 일반 프로그램(GENERAL·GENERAL_ORGANIZATION·GENERAL_INDIVIDUAL)만 허용하며 기관 승인 notification과 같은 규칙으로 프로그램 최종 발표일 기준 예약합니다. 다른 유형은 400 INVALID_NOTIFICATION_SCHEDULE, 발표일 미설정은 409 APPLICATION_ANNOUNCEMENT_DATE_NOT_CONFIGURED.",
+            "enum": [
+              "IMMEDIATE",
+              "SCHEDULED",
+              "ON_ANNOUNCEMENT"
+            ],
             "example": "SCHEDULED"
           },
           "scheduledAt": {
             "type": "string",
             "format": "date-time",
-            "description": "timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601"
+            "description": "timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601. ON_ANNOUNCEMENT와 함께 보내면 400"
           }
         },
         "required": [
@@ -44257,6 +44279,28 @@
           },
           "scheduleLead": {
             "type": "boolean"
+          },
+          "assignmentNotificationStatus": {
+            "type": "string",
+            "description": "배정 완료 알림(교사·강사) 발송 상태. NONE=알림 없음, SCHEDULED=예약 대기, SENT=수신자가 이미 볼 수 있거나 외부 발송 진행·완료, CANCELLED=발송 전에 예약 알림이 중단됨. SENT이면 배정 취소 시 reason 필수, NONE/SCHEDULED/CANCELLED이면 reason·notification 생략 가능",
+            "enum": [
+              "NONE",
+              "SCHEDULED",
+              "SENT",
+              "CANCELLED"
+            ]
+          },
+          "assignmentNotificationSentAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "assignmentNotificationStatus=SENT일 때 가장 최근 발송(노출) 시각. 그 외 null",
+            "nullable": true
+          },
+          "assignmentNotificationScheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "assignmentNotificationStatus=SCHEDULED일 때 가장 이른 예약 발송 시각. 그 외 null",
+            "nullable": true
           }
         }
       },
@@ -44509,6 +44553,23 @@
             "items": {
               "$ref": "#/components/schemas/RequestedScheduleResponse"
             }
+          },
+          "distanceKm": {
+            "type": "number",
+            "description": "봉사자 행 거리(km). 강사 신청 목록 distanceKm과 같은 이름이나, 봉사자 거리는 아직 산출·저장하지 않아 항상 null.",
+            "nullable": true
+          },
+          "programDispatchCount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "봉사자 행 이 프로그램 출강(배정) 횟수. 강사 신청 목록 programDispatchCount와 같은 정의로 취소되지 않은 배정 건수(일반 기관형 program_volunteer_assignment ASSIGNED 일정 수). GENERAL_ORGANIZATION 봉사자 행이 아니면 null, 배정이 없으면 0.",
+            "nullable": true
+          },
+          "programLongDistanceDispatchCount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "봉사자 행 장거리 출강 횟수. 봉사자 거리를 산출하지 않아 항상 null.",
+            "nullable": true
           }
         }
       },
@@ -45507,6 +45568,10 @@
             "items": {
               "type": "string"
             }
+          },
+          "activityWithdrawn": {
+            "type": "boolean",
+            "description": "활동 포기 여부. 신청 상태가 GIVE_UP 계열이거나 회원 포털 활동 포기(give_up_yn), 또는 이 신청의 참여자가 GIVE_UP/WITHDRAWN이면 true. 그 외 false이며 null이 아닙니다."
           }
         }
       },
@@ -47337,6 +47402,28 @@
             "type": "integer",
             "format": "int64",
             "description": "settlementStatus 근거가 된 정산 신청서 ID. 정산 행이 있으면 그 행의 신청서 ID, 없으면 최신 미확정 신청서 ID. 미신청이면 null.",
+            "nullable": true
+          },
+          "assignmentNotificationStatus": {
+            "type": "string",
+            "description": "배정 완료 알림(교사·강사) 발송 상태. NONE=알림 없음, SCHEDULED=예약 대기, SENT=수신자가 이미 볼 수 있거나 외부 발송 진행·완료, CANCELLED=발송 전에 예약 알림이 중단됨. SENT이면 배정 취소 시 reason 필수, NONE/SCHEDULED/CANCELLED이면 reason·notification 생략 가능",
+            "enum": [
+              "NONE",
+              "SCHEDULED",
+              "SENT",
+              "CANCELLED"
+            ]
+          },
+          "assignmentNotificationSentAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "assignmentNotificationStatus=SENT일 때 가장 최근 발송(노출) 시각. 그 외 null",
+            "nullable": true
+          },
+          "assignmentNotificationScheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "assignmentNotificationStatus=SCHEDULED일 때 가장 이른 예약 발송 시각. 그 외 null",
             "nullable": true
           }
         }

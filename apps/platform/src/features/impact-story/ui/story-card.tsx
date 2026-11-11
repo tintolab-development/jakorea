@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom'
-import { useRemoteThumbnailUrl } from '@/shared/hooks'
 import { PFCategoryBadge, PFText } from '@/shared/ui'
 import defaultThumbnailUrl from '../image/illustration/card-default.png'
 import { impactStoryDetailPath } from '../lib/constants'
@@ -11,8 +10,8 @@ export type StoryCardProps = {
 }
 
 export function StoryCard({ story }: StoryCardProps) {
-  // 썸네일 없음(어드민 표식 포함) → Figma 13983:89479 기본 썸네일(회색 배경 + 로고 + 1px 테두리)
-  const imageUrl = useRemoteThumbnailUrl(story.imageUrl)
+  // 썸네일 없음(서버 null) → Figma 13983:89479 기본 썸네일(회색 배경 + 로고 + 1px 테두리)
+  const imageUrl = story.imageUrl || undefined
   return (
     <Link to={impactStoryDetailPath(story.id)} className={styles.cardLink}>
       <article className={styles.card}>
