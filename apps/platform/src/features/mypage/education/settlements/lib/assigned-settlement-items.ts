@@ -437,8 +437,11 @@ export function buildAssignedSettlementItems(
       now,
     })
     const status = resolved.status
+    // 정산 신청 금액: 최신 정산 revision 금액(정정 후 금액) 우선, 정산이 없으면 제출 당시 금액
     const amount = readFiniteAmount(
+      settlement?.latestNetPaymentAmount,
       settlement?.netPaymentAmount,
+      settlement?.latestGrossAmount,
       settlement?.grossAmount,
       receipt?.amount,
     )

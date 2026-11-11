@@ -80,10 +80,10 @@ assert.equal(formatMonthExpectedLabel('2026-10'), '10월 정산 예정금')
 assert.equal(EMPTY_SETTLEMENT_OVERVIEW.items.length, 0)
 assert.equal(EMPTY_SETTLEMENT_OVERVIEW.summary.totalPaidAmount, null)
 
-// 대체된 이전 재신청 이력은 원래 결과를 알 수 없어 '전체'에서만 보인다
+// 대체된 이전 재신청 이력: 원래 결과를 모르면(임시) '전체'에서만, 알면 원래 상태 필터에 포함
 {
   const history: SettlementOverviewItem[] = [
-    { ...items[0], id: 'old', status: 'reapplied', superseded: true },
+    { ...items[0], id: 'old', status: 'reapplied', superseded: true, supersededStatusUnknown: true },
     { ...items[0], id: 'new', status: 'reapplied' },
   ]
   const month = history[0].startsAt.slice(0, 7)
@@ -98,6 +98,14 @@ assert.equal(EMPTY_SETTLEMENT_OVERVIEW.summary.totalPaidAmount, null)
   assert.deepEqual(
     filterSettlementCalendarItems(history, { q: '', status: 'reapplied' }).map(item => item.id),
     ['new'],
+  )
+  const known: SettlementOverviewItem[] = [
+    { ...items[0], id: 'rejected-old', status: 'rejected', superseded: true },
+    { ...items[0], id: 'new', status: 'reapplied' },
+  ]
+  assert.deepEqual(
+    filterSettlementListItems(known, { month, q: '', status: 'rejected' }).map(item => item.id),
+    ['rejected-old'],
   )
 }
 
