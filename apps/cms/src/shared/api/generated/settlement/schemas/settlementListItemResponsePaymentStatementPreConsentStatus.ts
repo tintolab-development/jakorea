@@ -7,7 +7,7 @@
  */
 
 /**
- * Gemini 지급조서 사전 동의 상태. COMPLETE=유효한 사전 동의 있음, MISSING=없음·만료·철회(확인 불가). Gemini가 아닌 행은 null
+ * Gemini 실적 지급조서만: 매핑된 강사의 유효한 지급조서 사전 동의서 여부. COMPLETE=확인 가능, MISSING=지급조서 사전 동의 미완료(확인 불가, CONFIRM_PAYMENT_STATEMENT 없음). Gemini가 아닌 행은 null.
  */
 export type SettlementListItemResponsePaymentStatementPreConsentStatus = typeof SettlementListItemResponsePaymentStatementPreConsentStatus[keyof typeof SettlementListItemResponsePaymentStatementPreConsentStatus] | null;
 

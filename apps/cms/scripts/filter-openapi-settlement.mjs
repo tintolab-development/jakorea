@@ -132,26 +132,6 @@ function patchSettlementInstitutionNameContract(subset) {
   }
 }
 
-/** 지급조서 목록 — Gemini 지급조서 사전 동의 상태(BE 2026-11-11). Gemini가 아닌 행은 null */
-const SETTLEMENT_PAYMENT_STATEMENT_PRE_CONSENT_STATUS = {
-  type: 'string',
-  nullable: true,
-  enum: ['COMPLETE', 'MISSING', null],
-  description:
-    'Gemini 지급조서 사전 동의 상태. COMPLETE=유효한 사전 동의 있음, MISSING=없음·만료·철회(확인 불가). Gemini가 아닌 행은 null',
-}
-
-function patchSettlementPaymentStatementPreConsentContract(subset) {
-  const schemas = ensureObject(ensureObject(subset, 'components'), 'schemas')
-
-  const listItem = schemas.SettlementListItemResponse
-  if (listItem?.type === 'object') {
-    listItem.properties = { ...(listItem.properties ?? {}) }
-    listItem.properties.paymentStatementPreConsentStatus =
-      SETTLEMENT_PAYMENT_STATEMENT_PRE_CONSENT_STATUS
-  }
-}
-
 function patchAccountPaymentP0Contract(subset) {
   const schemas = ensureObject(ensureObject(subset, 'components'), 'schemas')
 
@@ -214,7 +194,6 @@ if (bearer && bearer.type === 'http' && 'name' in bearer) {
 
 patchAccountPaymentP0Contract(subset)
 patchSettlementInstitutionNameContract(subset)
-patchSettlementPaymentStatementPreConsentContract(subset)
 
 normalizeOpenApiSchemaNode(subset)
 

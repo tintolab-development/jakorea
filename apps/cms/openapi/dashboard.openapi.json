@@ -54805,6 +54805,21 @@
               "GEMINI_INSTRUCTOR_NOT_MATCHED"
             ],
             "nullable": true
+          },
+          "settlementId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "이 실적이 만든 지급조서(settlement) ID. 지급 제외 실적·과거 직접 지급 건은 null.",
+            "nullable": true
+          },
+          "statementStatus": {
+            "type": "string",
+            "description": "연결된 지급조서의 statementStatus(지급조서 목록과 같은 값, 예: WAITING_CONFIRM·CONFIRMED). settlementId가 null이면 null.",
+            "nullable": true
+          },
+          "deleteBlocked": {
+            "type": "boolean",
+            "description": "true면 삭제(무효화) 불가. DELETE·bulk-delete가 409 GEMINI_TRAINING_REPORT_ACCOUNT_PAID를 내는 조건과 같다: 과거 직접 지급이 PAID, 연결된 지급조서가 확인완료(CONFIRMED), 또는 그 지급조서로 계좌 지급이 이미 생성됨."
           }
         }
       },
