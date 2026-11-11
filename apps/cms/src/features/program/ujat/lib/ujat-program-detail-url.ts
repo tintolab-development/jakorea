@@ -62,10 +62,13 @@ export function parseUjatVolAddMemberIdParam(raw: string | null | undefined): st
 export const UJAT_EDU_VOL_ID_PARAM = 'eduVolId'
 export const UJAT_EDU_VOL_TAB_PARAM = 'eduVolTab'
 
-export type UjatEducationProgressVolunteerDetailTab = 'application' | 'assignment_progress'
+export type UjatEducationProgressVolunteerDetailTab =
+  | 'application'
+  | 'assignment_progress'
+  | 'settlement'
 
 const UJAT_EDU_PROGRESS_VOLUNTEER_DETAIL_TABS: readonly UjatEducationProgressVolunteerDetailTab[] =
-  ['application', 'assignment_progress']
+  ['application', 'assignment_progress', 'settlement']
 
 export const UJAT_EDU_PROGRESS_VOLUNTEER_DETAIL_TAB_LABELS: Record<
   UjatEducationProgressVolunteerDetailTab,
@@ -73,6 +76,7 @@ export const UJAT_EDU_PROGRESS_VOLUNTEER_DETAIL_TAB_LABELS: Record<
 > = {
   application: '신청 정보',
   assignment_progress: '교육 배정 및 진행 현황',
+  settlement: '정산 현황',
 }
 
 export function isUjatEducationProgressVolunteerDetailTab(
