@@ -97,22 +97,12 @@
   gap: 16px;
 }
 
-.agreement-template-preview-modal__notice {
-  margin: 0;
-  padding-left: 16px;
-  color: var(--main-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  font-size: 18px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-  opacity: 0.6;
-}
-
 .agreement-template-preview-modal__actions {
   display: inline-flex;
   gap: 8px;
   align-items: center;
+  /* 안내 문구 없이도 버튼은 오른쪽 정렬 (양식 제한 안내는 템플릿 관리 「템플릿 보기」에서만) */
+  margin-left: auto;
 }
 
 .agreement-template-preview-modal__preview-wrapper {
