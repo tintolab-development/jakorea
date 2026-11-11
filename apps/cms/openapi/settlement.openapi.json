@@ -25462,7 +25462,7 @@
           },
           "resultDownloadable": {
             "type": "boolean",
-            "description": "SATISFACTION만. 참여 기간이 끝난 뒤에만 true. 전원 제출만으로 true가 되지 않는다.",
+            "description": "SATISFACTION: 참여 기간이 끝난 뒤에만 true. 전원 제출만으로 true가 되지 않는다. LECTURE_EVALUATION: progressStatus=FINISHED이고 호출 관리자에게 해당 프로그램 FILE_DOWNLOAD가 있을 때만 true (프로그램 담당자 Viewer는 false). 그 외 formType은 null.",
             "nullable": true
           },
           "displayDeadlineAt": {
@@ -34493,8 +34493,9 @@
         "properties": {
           "serialNumber": {
             "type": "string",
-            "description": "고유번호 (YY-JA-NNNNN)",
-            "example": "26-JA-00017"
+            "description": "YY-JA-NNNNN. 00000 금지. 형식이 틀리면 PDF를 만들지 말 것",
+            "example": "26-JA-00017",
+            "pattern": "^\\d{2}-JA-\\d{5}$"
           },
           "issueId": {
             "type": "integer",
@@ -34504,7 +34505,7 @@
           },
           "reused": {
             "type": "boolean",
-            "description": "호환 필드. 발급마다 새 번호를 쓰므로 정상 응답은 false",
+            "description": "같은 발급 키에 이미 발급된 번호를 다시 내려주면 true. true여도 PDF 진행은 정상",
             "example": false
           },
           "issuedAt": {
@@ -34514,7 +34515,12 @@
             "example": "2026-11-10T01:00:00Z",
             "nullable": true
           }
-        }
+        },
+        "required": [
+          "issueId",
+          "reused",
+          "serialNumber"
+        ]
       },
       "CertificateRosterSerialAllocateRequest": {
         "type": "object",
@@ -47047,6 +47053,13 @@
           },
           "managerName": {
             "type": "string"
+          },
+          "participantId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "이 신청으로 생성된 참가자 ID(program_participant.id). 증명서 발급 등 participantId가 필요한 API에 사용합니다. 아직 참가자가 아니면 null입니다.",
+            "example": 7001,
+            "nullable": true
           }
         }
       },
@@ -51277,7 +51290,7 @@
       },
       "SessionProgress": {
         "type": "object",
-        "description": "참여 일정. 기관·개인 참여자 모두 해당 참여자에 실제 배정된 프로그램 일정만 반환한다. 개인(INDIVIDUAL) 배정 SSOT는 GET …/participants/{participantId}/education-scope 의 scheduleIds. 신청 희망 일정은 실제 배정으로 확정된 경우에만 requestedScheduleId로 함께 표시한다. 배정되지 않은 프로그램 일정·미확정 희망 일정은 목록 sessions·출석 상세·회차 집계에서 제외한다. sessions가 없으면 빈 배열. null은 반환하지 않는다.",
+        "description": "참여 일정. 기관·개인 참여자 모두 해당 참여자에 실제 배정된 프로그램 일정만 반환한다. 개인(INDIVIDUAL) 배정 SSOT는 GET …/participants/{participantId}/education-scope 의 scheduleIds. 봉사자(VOLUNTEER)는 일반 기관형·UJAT이면 봉사자 배정(ASSIGNED) 일정, 일반 개인형이면 교육 범위 확정 일정만 반환하고 배정이 없으면 빈 배열이다. 신청 희망 일정은 실제 배정으로 확정된 경우에만 requestedScheduleId로 함께 표시한다. 배정되지 않은 프로그램 일정·미확정 희망 일정은 목록 sessions·출석 상세·회차 집계에서 제외한다. sessions가 없으면 빈 배열. null은 반환하지 않는다.",
         "properties": {
           "scheduleId": {
             "type": "integer",

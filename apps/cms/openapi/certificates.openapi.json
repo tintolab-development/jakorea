@@ -733,8 +733,9 @@
         "properties": {
           "serialNumber": {
             "type": "string",
-            "description": "고유번호 (YY-JA-NNNNN)",
-            "example": "26-JA-00017"
+            "description": "YY-JA-NNNNN. 00000 금지. 형식이 틀리면 PDF를 만들지 말 것",
+            "example": "26-JA-00017",
+            "pattern": "^\\d{2}-JA-\\d{5}$"
           },
           "issueId": {
             "type": "integer",
@@ -744,7 +745,7 @@
           },
           "reused": {
             "type": "boolean",
-            "description": "호환 필드. 발급마다 새 번호를 쓰므로 정상 응답은 false",
+            "description": "같은 발급 키에 이미 발급된 번호를 다시 내려주면 true. true여도 PDF 진행은 정상",
             "example": false
           },
           "issuedAt": {
@@ -754,7 +755,12 @@
             "example": "2026-11-10T01:00:00Z",
             "nullable": true
           }
-        }
+        },
+        "required": [
+          "issueId",
+          "reused",
+          "serialNumber"
+        ]
       }
     },
     "securitySchemes": {
