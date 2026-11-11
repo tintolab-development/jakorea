@@ -145,11 +145,18 @@ export function RecruitPostingFormModal({
     [open, mode, initial?.id, editorContentFormat]
   )
 
-  const { editor, getHTML, editorMode, htmlSource, onEditorModeChange, onHtmlSourceChange } =
-    useRecruitPostingWysiwygEditor(open, initialMarkdown, editorResetKey, {
-      contentFormat: editorContentFormat,
-      allowInlineMedia: true,
-    })
+  const {
+    editor,
+    getHTML,
+    editorMode,
+    htmlSource,
+    onEditorModeChange,
+    onHtmlSourceChange,
+    resolveImageSrc,
+  } = useRecruitPostingWysiwygEditor(open, initialMarkdown, editorResetKey, {
+    contentFormat: editorContentFormat,
+    allowInlineMedia: true,
+  })
 
   const resetFromInitial = useCallback(() => {
     if (mode === 'edit' && initial) {
@@ -498,6 +505,7 @@ export function RecruitPostingFormModal({
               <RichTextEditor
                 editor={editor}
                 allowInlineMedia
+                resolveImageSrc={resolveImageSrc}
                 allowRawHtmlBlock
                 editorMode={editorMode}
                 htmlSource={htmlSource}
