@@ -543,7 +543,7 @@ export function RecruitPostingFormModal({
             <div className="posting-form-modal__group-title">
               <span className="posting-form-modal__group-title-text">연결 버튼</span>
               <span className="posting-form-modal__group-title-note">
-                링크 입력 시 공고 상세에 버튼이 노출됩니다.
+                ※ 버튼명 입력 시에만 공고 상세에 버튼이 노출됩니다.
               </span>
             </div>
             <div className="posting-form-modal__link-row">
