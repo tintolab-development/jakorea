@@ -108,6 +108,8 @@
 }
 
 .content {
+  /* 홈페이지 어드민 에디터 본문 기본 글자 크기와 같게 — 툴바 「크기: 기본」 글자 */
+  --rt-content-font-size: 15px;
   min-width: 0;
   overflow: visible;
   overflow-x: auto;
