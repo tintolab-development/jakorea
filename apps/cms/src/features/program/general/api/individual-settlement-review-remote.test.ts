@@ -115,7 +115,7 @@ describe('individual settlement review remote', () => {
     )
   })
 
-  it('approves with expectedRevisionNo', async () => {
+  it('approves with expectedRevisionNo and scheduledPaymentDate (A1·A2)', async () => {
     vi.mocked(customInstance).mockResolvedValue({
       success: true,
       data: { settlementApplicationId: 1, revisionNo: 1, status: 'APPROVED' },
@@ -123,11 +123,12 @@ describe('individual settlement review remote', () => {
     await approveIndividualSettlementReviewRemote({
       settlementApplicationId: 1,
       expectedRevisionNo: 1,
+      scheduledPaymentDate: '2026-11-20',
     })
     expect(customInstance).toHaveBeenCalledWith({
       url: individualSettlementReviewApproveUrl(1),
       method: 'PATCH',
-      data: { expectedRevisionNo: 1 },
+      data: { expectedRevisionNo: 1, scheduledPaymentDate: '2026-11-20' },
     })
   })
 
