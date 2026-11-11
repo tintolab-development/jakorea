@@ -53,7 +53,7 @@ export function toEducationNoticePlainText(value: string): string {
     // 서버 제목은 HTML 앞부분을 잘라 저장되어 `<img src="…` 처럼 닫히지 않은 태그로 끝날 수 있다
     .replace(/<[a-z!/][^>]*$/i, '')
     .replace(/\[([^\]]*)]\([^)]*\)/g, '$1')
-    .replace(/^\s{0,3}(#{1,6}|>|[-*+]|\d+\.)\s+/gm, '')
+    .replace(/^[ \t]{0,3}(#{1,6}|>|[-*+]|\d+\.)[ \t]+/gm, '')
     .replace(/(\*\*|__|~~|`)/g, '')
     .replace(/&(nbsp|amp|lt|gt|quot|#39);/g, entity => HTML_ENTITIES[entity] ?? entity)
     .replace(/[ \t]+\n/g, '\n')
