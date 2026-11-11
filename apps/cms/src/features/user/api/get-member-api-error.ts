@@ -1,5 +1,9 @@
 import { messageForProtectedDownloadErrorCode } from '@jakorea/domain/shared/file-download-password'
-import { extractApiErrorCode, extractApiErrorMessage } from '@/shared/lib/extract-api-error-message'
+import {
+  extractApiErrorCode,
+  extractApiErrorMessage,
+  readApiErrorEnvelopeText,
+} from '@/shared/lib/extract-api-error-message'
 import { getNotificationTimingApiErrorMessage } from '@/shared/lib/notification-schedule'
 import {
   LECTURE_REPORT_NO_DOWNLOADABLE_FILES,
@@ -94,10 +98,9 @@ export function getMemberApiErrorMessage(error: unknown, fallback: string): stri
     }
     const mapped = code ? MEMBER_ERROR_CODE_MESSAGES[code] : undefined
     if (mapped) {
-      const serverMessage = extractApiErrorMessage(axiosErr.response?.data, {
-        httpStatus: axiosErr.response?.status,
-        fallback: '',
-      }).trim()
+      // 서버 원문만 본다. extractApiErrorMessage는 원문이 없으면 상태코드 공통 문구를 돌려주므로
+      // (17a5231ee 이후 code 반환 제거) 그 값으로 비교하면 FE 매핑이 가려진다.
+      const serverMessage = readApiErrorEnvelopeText(axiosErr.response?.data)?.trim() ?? ''
       // 공통 409 문구만 온 경우 FE 코드 매핑을 우선한다 (원인 코드가 더 정확)
       if (
         !serverMessage ||
