@@ -219,7 +219,7 @@
 .admin-inquiry-detail-modal__answer-viewer .rich-text-content {
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, var(--font-family-primary, sans-serif);
-  font-size: 16px;
+  font-size: var(--rt-content-font-size, 15px);
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
@@ -236,7 +236,7 @@
   margin: 0;
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, var(--font-family-primary, sans-serif);
-  font-size: 16px;
+  font-size: var(--rt-content-font-size, 15px);
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
