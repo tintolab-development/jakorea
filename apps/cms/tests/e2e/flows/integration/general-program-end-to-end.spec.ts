@@ -354,10 +354,8 @@ test.describe('일반 프로그램 통합 흐름 — CMS 등록부터 포털 정
         },
         {
           openRecruitment: true,
-          // 일정형·복수에서 educationScheduleLines 동기화 앱 버그(숨은 잔여 라인)가
-          // 수정되기 전에는 자동입력이 등록 400을 유발할 수 있다. 후원사 등 안정 입력을 위해
-          // 일단 유지하고, 세부 일정 진행 일정은 운영 기간 안으로 다시 맞춘다.
-          devAutofillCaseId: 5,
+          // 자동입력은 educationScheduleLines 잔여 앱 버그를 유발하므로 사용하지 않는다.
+          // 후원사·담당자·일정은 화면에서만 직접 입력한다.
           safeWagePaymentItems: true,
           skipOptionalUploads: true,
           skipApplicationFormEdits: true,

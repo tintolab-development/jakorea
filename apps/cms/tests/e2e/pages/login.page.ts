@@ -17,8 +17,13 @@ export class LoginPage {
   constructor(private readonly page: Page) {}
 
   async goto() {
-    await this.page.goto('/login')
-    await expect(this.page.getByRole('button', { name: '로그인하기' })).toBeVisible()
+    // Vite dev에서 module graph 로딩·HMR full reload가 반복되면
+    // load/domcontentloaded가 끝나지 않을 수 있다.
+    // 문서 commit 후 로그인 버튼이 안정적으로 보일 때까지 기다린다.
+    await this.page.goto('/login', { waitUntil: 'commit', timeout: 60_000 })
+    await expect(this.page.getByRole('button', { name: '로그인하기' })).toBeVisible({
+      timeout: 180_000,
+    })
   }
 
   /** DEV 마스터 자동 입력 → 로그인 → MFA(LOCAL_TEST 또는 mock TOTP) → `/` 대시보드 */
@@ -41,10 +46,13 @@ export class LoginPage {
       await this.submitMfa(code)
     }
 
-    await this.page.waitForURL(url => {
-      const { pathname } = new URL(url)
-      return pathname === '/' || pathname === ''
-    })
+    await this.page.waitForURL(
+      url => {
+        const { pathname } = new URL(url)
+        return pathname === '/' || pathname === ''
+      },
+      { waitUntil: 'commit', timeout: 60_000 }
+    )
   }
 
   private async resolveMfaCode(): Promise<string> {

@@ -13,7 +13,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 setup('어드민 로그인·MFA 후 세션 저장', async ({ page }) => {
-  setup.setTimeout(90_000)
+  setup.setTimeout(300_000)
 
   if (process.env.E2E_MOCK_AUTH === '1') {
     await page.route('**/api/admin/me', route =>
