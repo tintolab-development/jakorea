@@ -57,6 +57,8 @@ export type ParticipatingIndividualProgressAssignmentParticipantRow = {
   remarkDateLabel?: string
   surveyResponse?: { templateVersionId: number; formResponseId: number }
   satisfactionResponse?: { templateVersionId: number; formResponseId: number }
+  /** 과제 응답 id — 피드백 작성·보기 키. 응답에 없으면 undefined(피드백 버튼 비활성) */
+  assignmentFormResponseId?: number
 }
 
 export type ParticipatingIndividualProgressAssignmentSessionGroup = {

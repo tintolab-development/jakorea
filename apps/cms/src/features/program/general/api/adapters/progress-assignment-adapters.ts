@@ -83,7 +83,10 @@ function formatScheduleHeader(
     program && scheduleDirect
       ? resolveGeneralScheduleSingleDateDetailName(program, schedule)
       : program
-        ? resolveSchoolDetailAttendanceSessionLeadLabel(program, round)
+        ? resolveSchoolDetailAttendanceSessionLeadLabel(program, round, {
+            curriculumSessionCount: (schedule as { curriculumSessionCount?: number | null })
+              .curriculumSessionCount,
+          })
         : `${round}회차`
   const built = buildGeneralProgressSessionTableHeader({
     round,
@@ -174,9 +177,17 @@ function mapSubmission(
   return { kind: 'not_submitted' }
 }
 
+function readAssignmentFormResponseId(
+  participant: GeneralAssignmentSubmissionParticipantDto
+): number | undefined {
+  const raw = participant.formResponseId ?? participant.submissionId
+  return typeof raw === 'number' && Number.isFinite(raw) && raw > 0 ? raw : undefined
+}
+
 function mapParticipantRow(
   participant: GeneralAssignmentSubmissionParticipantDto
 ): ParticipatingIndividualProgressAssignmentParticipantRow {
+  const assignmentFormResponseId = readAssignmentFormResponseId(participant)
   const participantId = String(participant.participantId ?? '')
   const affiliation = participant.affiliation?.trim() || participant.organizationName?.trim() || '-'
   const educationGrade = participant.grade?.trim() || '-'
@@ -203,6 +214,7 @@ function mapParticipantRow(
     remarkDateLabel: formatDateLabel(participant.remarkAt, 'YY.MM.DD') || undefined,
     surveyResponse: parseParticipantSurveyViewKey(participant.surveyResponse),
     satisfactionResponse: parseParticipantSurveyViewKey(participant.satisfactionResponse),
+    ...(assignmentFormResponseId != null ? { assignmentFormResponseId } : {}),
   }
 }
 

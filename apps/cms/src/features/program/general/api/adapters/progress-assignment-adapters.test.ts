@@ -362,4 +362,24 @@ describe('buildProgressAssignmentSessionsFromRemote', () => {
 
     expect(sessions[0]?.assignmentPeriodLabel).toBe('')
   })
+
+  it('reads assignment form response id for feedback from formResponseId or submissionId', () => {
+    const sessions = buildProgressAssignmentSessionsFromRemote({
+      items: [
+        {
+          scheduleId: 701,
+          sessionNo: 1,
+          startAt: '2026-10-20T01:00:00Z',
+          endAt: '2026-10-20T03:00:00Z',
+          participants: [
+            { participantId: 1, memberName: 'A', submissionStatus: 'SUBMITTED', formResponseId: 5001 },
+            { participantId: 2, memberName: 'B', submissionStatus: 'SUBMITTED', submissionId: 5002 },
+            { participantId: 3, memberName: 'C', submissionStatus: 'SUBMITTED' },
+          ],
+        },
+      ],
+    })
+    const rows = sessions[0]?.participants ?? []
+    expect(rows.map(row => row.assignmentFormResponseId)).toEqual([5001, 5002, undefined])
+  })
 })
