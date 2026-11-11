@@ -3,8 +3,8 @@
  *
  * - 차시 = 그날 수업 개수(희망 차시 셀렉). 교시 = 각 차시가 들어가는 학교 시간표 번호.
  * - 희망 차시 수만큼 「N차시 희망 교육 시간」(교시 + 시작~종료) 줄이 생긴다.
- * - 1사1교(`economy-preferred-schedule.ts`)와 같은 구조: 다음 차시 교시는 앞 차시 + 1로 자동 입력.
- *   단, 교육받은교사는 연강 규칙 근거가 없어 자동 입력값을 사용자가 고칠 수 있다.
+ * - 차시마다 교시·시간을 따로 입력한다(연강이 아니어도 됨, 예: 1교시·4교시).
+ *   1사1교의 「다음 교시 자동 입력(앞 차시 + 1)」은 적용하지 않는다 — 새 차시 줄은 빈 교시로 시작.
  * - 전송: `sessionCount` = 차시 수(= sessionTimes 줄 수), `sessionTimes[i].classPeriod` = 그 차시의 교시.
  *   교시 번호를 sessionCount로 보내지 않는다.
  */
@@ -14,7 +14,6 @@ import type {
   ApplyPreferredScheduleSessionTime,
 } from '../ui/apply-preferred-schedule/apply-preferred-schedule'
 import type { PortalPreferredScheduleSessionTime } from '../api/application-types'
-import { resolveEconomySecondClassPeriod } from './economy-preferred-schedule.ts'
 
 /**
  * 모집 1일 최대 차시(maxSessionsPerDay)를 받지 못했을 때의 희망 차시 상한.
@@ -57,45 +56,27 @@ export function readTrainedTeachersSessionCount(
   return Number.isInteger(value) && value > 0 ? value : 0
 }
 
-function emptySessionTime(classPeriod = ''): ApplyPreferredScheduleSessionTime {
-  return { classPeriod, startTime: '', endTime: '' }
+function emptySessionTime(): ApplyPreferredScheduleSessionTime {
+  return { classPeriod: '', startTime: '', endTime: '' }
 }
 
-/** 차시 수에 맞춰 줄을 늘리거나 줄인다. 새 줄 교시는 앞 차시 + 1로 채운다. */
+/** 차시 수에 맞춰 줄을 늘리거나 줄인다. 새 줄은 교시·시간 모두 빈 값으로 시작한다. */
 export function resizeTrainedTeachersSessionTimes(
   times: readonly ApplyPreferredScheduleSessionTime[] | undefined,
   count: number,
 ): ApplyPreferredScheduleSessionTime[] {
   const next = (times ?? []).slice(0, Math.max(0, count)).map(row => ({ ...row }))
-  while (next.length < count) {
-    const previous = next[next.length - 1]
-    next.push(emptySessionTime(previous ? resolveEconomySecondClassPeriod(previous.classPeriod) : ''))
-  }
+  while (next.length < count) next.push(emptySessionTime())
   return next
 }
 
-/**
- * 한 차시 줄을 고친다. 교시를 바꾸면 뒤 차시 중 비었거나 자동 입력값(앞 차시 + 1) 그대로인 줄만
- * 다시 앞 차시 + 1로 맞춘다. 사용자가 직접 고친 교시는 덮어쓰지 않는다.
- */
+/** 한 차시 줄만 고친다. 다른 차시 줄의 교시는 바꾸지 않는다. */
 export function patchTrainedTeachersSessionTime(
   times: readonly ApplyPreferredScheduleSessionTime[],
   index: number,
   patch: Partial<ApplyPreferredScheduleSessionTime>,
 ): ApplyPreferredScheduleSessionTime[] {
-  const previousRows = times.map(row => ({ ...row }))
-  const next = previousRows.map((row, rowIndex) => (rowIndex === index ? { ...row, ...patch } : row))
-  if (patch.classPeriod === undefined) return next
-  for (let rowIndex = index + 1; rowIndex < next.length; rowIndex += 1) {
-    const oldAuto = resolveEconomySecondClassPeriod(previousRows[rowIndex - 1]!.classPeriod)
-    const current = previousRows[rowIndex]!.classPeriod.trim()
-    if (current !== '' && current !== oldAuto) break
-    next[rowIndex] = {
-      ...next[rowIndex]!,
-      classPeriod: resolveEconomySecondClassPeriod(next[rowIndex - 1]!.classPeriod),
-    }
-  }
-  return next
+  return times.map((row, rowIndex) => (rowIndex === index ? { ...row, ...patch } : { ...row }))
 }
 
 function normalizeTime(raw: string): string {
