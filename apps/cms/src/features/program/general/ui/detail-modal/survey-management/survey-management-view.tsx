@@ -2144,20 +2144,6 @@ export function GeneralSurveyManagementView({
         templateOptions={surveyTemplateOptions}
         templateValue={selectedTemplateId}
         onTemplateChange={setSelectedTemplateId}
-        audienceOptions={
-          isTrainedTeacherSatisfaction
-            ? [
-                { label: '교사', value: 'teacher' },
-                { label: '학생', value: 'student' },
-              ]
-            : undefined
-        }
-        audienceValue={pendingSatisfactionAudience}
-        onAudienceChange={value => {
-          if (value === 'teacher' || value === 'student') {
-            setPendingSatisfactionAudience(value)
-          }
-        }}
         audienceError={createFieldError?.field === 'targetRole' ? createFieldError.message : null}
         runMode={satisfactionRunMode}
         onRunModeChange={setSatisfactionRunMode}

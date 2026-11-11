@@ -77,25 +77,25 @@ export function isTrainedTeachersProgram(program: Program): boolean {
   )
 }
 
-/** SATISFACTION form-binding `targetRole`. 교육받은 교사는 교사/학생 각각 바인딩. 1사1교는 교사만. */
+/**
+ * SATISFACTION form-binding `targetRole`.
+ * 1사1교·교육받은 교사는 교사 단일 만족도(대상 탭 없음, 시안 5416:116711)라 항상 TEACHER.
+ */
 export function resolveSatisfactionFormBindingTargetRole(
   program: Program,
   audience: GeneralSatisfactionAudienceKey | null | undefined
 ): 'TEACHER' | 'STUDENT' | 'VOLUNTEER' | 'INDIVIDUAL' | undefined {
-  if (isCompanySchoolProgram(program)) return 'TEACHER'
-  if (audience == null) {
-    if (isTrainedTeachersProgram(program)) return 'TEACHER'
-    return undefined
-  }
+  if (isInstitutionTeacherOnlySatisfactionProgram(program)) return 'TEACHER'
+  if (audience == null) return undefined
   if (audience === 'teacher') return 'TEACHER'
   if (audience === 'student') return 'STUDENT'
   if (audience === 'volunteer_h1' || audience === 'volunteer_h2') return 'VOLUNTEER'
   return 'INDIVIDUAL'
 }
 
-/** 1사1교 — 교사용 만족도조사 단일 폼, 대상 탭 미노출 */
+/** 1사1교·교육받은 교사 — 교사용 만족도조사 단일 폼, 대상 탭 미노출 */
 export function isInstitutionTeacherOnlySatisfactionProgram(program: Program): boolean {
-  return isCompanySchoolProgram(program)
+  return isCompanySchoolProgram(program) || isTrainedTeachersProgram(program)
 }
 
 export function isGeneralIndividualProgram(program: Program): boolean {
@@ -131,11 +131,8 @@ export function isGeneralIndividualParticipantTarget(
 export function getGeneralSatisfactionAudienceTabs(
   program: Program
 ): ReadonlyArray<SurveyAudienceTab<GeneralSatisfactionAudienceKey>> {
-  if (isCompanySchoolProgram(program)) {
+  if (isInstitutionTeacherOnlySatisfactionProgram(program)) {
     return [{ key: 'teacher', label: '교사' }]
-  }
-  if (isTrainedTeachersProgram(program)) {
-    return GENERAL_ORGANIZATION_SATISFACTION_AUDIENCE_TABS
   }
   return isGeneralIndividualProgram(program)
     ? GENERAL_INDIVIDUAL_SATISFACTION_AUDIENCE_TABS
@@ -151,11 +148,8 @@ export function getEnabledGeneralSatisfactionAudienceTabs(
     return []
   }
 
-  if (isCompanySchoolProgram(program)) {
+  if (isInstitutionTeacherOnlySatisfactionProgram(program)) {
     return [{ key: 'teacher', label: '교사' }]
-  }
-  if (isTrainedTeachersProgram(program)) {
-    return GENERAL_ORGANIZATION_SATISFACTION_AUDIENCE_TABS
   }
 
   if (isGeneralIndividualProgram(program)) {
