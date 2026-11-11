@@ -26,7 +26,6 @@ import {
   careerPostingLinkButtonVisible,
   careerPostingLinkHref,
   careerPostingMutationLinkFormatAlert,
-  resolveCareerPostingLinkButtonLabel,
 } from '@/features/recruit-posting/lib/link-fields'
 import linkCtaArrowUrl from '@/features/recruit-posting/ui/assets/link-cta-arrow.svg'
 import { isAdminForbidden } from '@/features/system-inbox/lib/http-status'
@@ -341,8 +340,8 @@ function RecruitPostingDetailView({
             )}
           </div>
 
-          {/* 공고문 하단 연결 버튼 (Figma 2118:128846) — 공개 상세와 같은 조건: 링크가 있을 때만 */}
-          {careerPostingLinkButtonVisible(posting.linkUrl) && careerPostingLinkHref(posting.linkUrl) ? (
+          {/* 공고문 하단 연결 버튼 (Figma 2118:128846) — 공개 상세와 같은 조건: 버튼명과 링크가 모두 있을 때만 */}
+          {careerPostingLinkButtonVisible(posting) ? (
             <a
               className="recruit-posting-detail-page__link-cta"
               href={careerPostingLinkHref(posting.linkUrl)}
@@ -351,7 +350,7 @@ function RecruitPostingDetailView({
             >
               <span className="recruit-posting-detail-page__link-cta-copy">
                 <span className="recruit-posting-detail-page__link-cta-label">
-                  {resolveCareerPostingLinkButtonLabel(posting.buttonLabel)}
+                  {posting.buttonLabel.trim()}
                 </span>
                 {posting.recruitStart && posting.recruitEnd ? (
                   <span className="recruit-posting-detail-page__link-cta-period">

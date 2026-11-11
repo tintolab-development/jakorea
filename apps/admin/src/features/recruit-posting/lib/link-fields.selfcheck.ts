@@ -35,7 +35,7 @@ assert.equal(
 )
 assert.equal(
   validateCareerPostingLinkFields({ buttonLabel: '', linkUrl: 'https://example.test' }),
-  null,
+  '채용 공고 바로가기 버튼명을 입력해 주세요.',
 )
 assert.equal(
   validateCareerPostingLinkFields({ buttonLabel: '채용 바로가기', linkUrl: 'http://example.test/apply' }),
@@ -90,11 +90,14 @@ assert.deepEqual(readCareerPostingLinkFields({ buttonLabel: null, linkUrl: 'http
   buttonLabel: '',
   linkUrl: 'https://jobs.example.test',
 })
-assert.equal(careerPostingLinkButtonVisible(''), false)
-assert.equal(careerPostingLinkButtonVisible('https://jobs.example.test'), true)
+assert.equal(careerPostingLinkButtonVisible({ buttonLabel: '', linkUrl: '' }), false)
 assert.equal(careerPostingLinkButtonVisible({ buttonLabel: '지원하기', linkUrl: '' }), false)
 assert.equal(
   careerPostingLinkButtonVisible({ buttonLabel: '', linkUrl: 'https://jobs.example.test' }),
+  false,
+)
+assert.equal(
+  careerPostingLinkButtonVisible({ buttonLabel: '지원하기', linkUrl: 'https://jobs.example.test' }),
   true,
 )
 assert.deepEqual(
