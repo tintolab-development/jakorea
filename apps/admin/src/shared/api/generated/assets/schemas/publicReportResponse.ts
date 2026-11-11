@@ -11,7 +11,7 @@ export interface PublicReportResponse {
   id?: number;
   reportType?: PublicReportResponseReportType;
   title?: string;
-  thumbnailUrl?: string;
+  thumbnailUrl?: string | null;
   attachmentFileName?: string;
   downloadUrl?: string;
   downloadCount?: number;

@@ -12,7 +12,7 @@ export interface ReportResponse {
   id?: number;
   reportType?: ReportResponseReportType;
   title?: string;
-  thumbnail?: AssetResponse;
+  thumbnail?: AssetResponse | null;
   attachment?: AssetResponse;
   attachmentFileName?: string;
   downloadCount?: number;
