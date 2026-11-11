@@ -59,6 +59,13 @@ export type ParticipatingIndividualProgressAssignmentParticipantRow = {
   satisfactionResponse?: { templateVersionId: number; formResponseId: number }
   /** 과제 응답 id — 피드백 작성·보기 키. 응답에 없으면 undefined(피드백 버튼 비활성) */
   assignmentFormResponseId?: number
+  /**
+   * 과제 응답 행에 BE N7 필드(`formResponseId` 키)가 있었는지. true면 응답 id null = 미제출 → 버튼 숨김,
+   * 없으면(구버전) 기존처럼 비활성 버튼.
+   */
+  assignmentFeedbackFieldsProvided?: boolean
+  /** BE N7 `hasFeedback` — true 「피드백 보기」, false 「피드백 작성」. 구버전 응답엔 없음 */
+  assignmentHasFeedback?: boolean
 }
 
 export type ParticipatingIndividualProgressAssignmentSessionGroup = {

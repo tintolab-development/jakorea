@@ -5,6 +5,8 @@ import { getJAKoreaCMSBackendAPIDashboardSubset } from '@/shared/api/generated/d
 import type { ApplicationDecisionResponse } from '@/shared/api/generated/dashboard/schemas/applicationDecisionResponse'
 import type { ApplicationRejectRequest } from '@/shared/api/generated/dashboard/schemas/applicationRejectRequest'
 import type { ApplicationDecisionCancelRequest } from '@/shared/api/generated/dashboard/schemas/applicationDecisionCancelRequest'
+import type { ApplicationDecisionCancelRequest as OrganizationApplicationDecisionCancelRequest } from '@/shared/api/generated/settlement/schemas/applicationDecisionCancelRequest'
+import { NotificationTiming } from '@/shared/api/generated/settlement/schemas/notificationTiming'
 import type { BulkActionResponse } from '@/shared/api/generated/dashboard/schemas/bulkActionResponse'
 import type { IndividualApprovalWithScopeBulkTarget } from '@/shared/api/generated/dashboard/schemas/individualApprovalWithScopeBulkTarget'
 import type { IndividualApprovalWithScopeRequest } from '@/shared/api/generated/dashboard/schemas/individualApprovalWithScopeRequest'
@@ -183,9 +185,9 @@ export type OrganizationApplicationApprovePayload = OrganizationApplicationAppro
 }
 
 /**
- * 기관·봉사자 취소 — 중첩 notification. reason만 있으면 즉시.
- * 생성 enum(`ApplicationDecisionCancelRequestNotificationTiming`)은 IMMEDIATE | SCHEDULED뿐이지만
- * 기관 cancel-approval·cancel-rejection은 BE 지원, OpenAPI enum 정정 요청 중: ON_ANNOUNCEMENT(발표일 예약)도 보낸다.
+ * 기관·개인·봉사자 신청 취소 — 중첩 notification. reason만 있으면 즉시.
+ * 기관 cancel-approval·cancel-rejection 전송 body는 `toOrganizationApplicationDecisionCancelRequest`로
+ * 생성 타입(settlement `ApplicationDecisionCancelRequest`, timing IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT)에 맞춘다.
  */
 export type ApplicationDecisionCancelRequestWithNotification = Omit<
   ApplicationDecisionCancelRequest,
@@ -575,6 +577,31 @@ export async function rejectOrganizationApplicationRemote(
   )
 }
 
+const ORGANIZATION_CANCEL_NOTIFICATION_TIMINGS = new Set<string>(Object.values(NotificationTiming))
+
+/**
+ * 기관 신청 승인 취소·반려 취소 body (BE 항목 7).
+ * - timing은 생성 enum 값만 보낸다. ON_ANNOUNCEMENT는 최종 발표일 기준 예약이라 scheduledAt을 보내지 않는다.
+ * - scheduledAt은 SCHEDULED에만. 알 수 없는 timing은 notification을 빼서 서버 기본(즉시)으로 둔다.
+ */
+export function toOrganizationApplicationDecisionCancelRequest(
+  payload: ApplicationDecisionCancelRequestWithNotification
+): OrganizationApplicationDecisionCancelRequest {
+  const { notification, ...rest } = payload
+  const timing = notification?.timing
+  if (!notification || !timing || !ORGANIZATION_CANCEL_NOTIFICATION_TIMINGS.has(timing)) {
+    return { ...rest }
+  }
+  const typedTiming = timing as NotificationTiming
+  return {
+    ...rest,
+    notification:
+      typedTiming === NotificationTiming.SCHEDULED && notification.scheduledAt
+        ? { timing: typedTiming, scheduledAt: notification.scheduledAt }
+        : { timing: typedTiming },
+  }
+}
+
 export async function cancelOrganizationApplicationApprovalRemote(
   applicationId: string,
   payload: ApplicationDecisionCancelRequestWithNotification
@@ -583,7 +610,7 @@ export async function cancelOrganizationApplicationApprovalRemote(
     await customInstance({
       url: `/api/admin/organization-applications/${encodeURIComponent(applicationId)}/cancel-approval`,
       method: 'POST',
-      data: payload,
+      data: toOrganizationApplicationDecisionCancelRequest(payload),
     })
   )
 }
@@ -596,7 +623,7 @@ export async function cancelOrganizationApplicationRejectionRemote(
     await customInstance({
       url: `/api/admin/organization-applications/${encodeURIComponent(applicationId)}/cancel-rejection`,
       method: 'POST',
-      data: payload,
+      data: toOrganizationApplicationDecisionCancelRequest(payload),
     })
   )
 }

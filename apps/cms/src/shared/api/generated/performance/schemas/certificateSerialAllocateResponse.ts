@@ -7,7 +7,7 @@
  */
 
 /**
- * 인증서 고유번호 발급 data
+ * 인증서 고유번호 발급 응답
  */
 export interface CertificateSerialAllocateResponse {
   /**
@@ -19,6 +19,6 @@ export interface CertificateSerialAllocateResponse {
   issueId: number;
   /** 같은 발급 키에 이미 발급된 번호를 다시 내려주면 true. true여도 PDF 진행은 정상 */
   reused: boolean;
-  /** certificate_issue 발급 일시. 기존 발급 건을 다시 받으면 최초 발급 일시. PDF 발급일과 다운로드 파일명 날짜(YYMMDD, Asia/Seoul)에 사용 */
+  /** certificate_issue 발급 일시. 기존 발급 건을 다시 받으면 최초 발급 일시입니다. PDF 발급일과 다운로드 파일명 날짜(YYMMDD, Asia/Seoul)에 사용합니다. */
   issuedAt?: string | null;
 }

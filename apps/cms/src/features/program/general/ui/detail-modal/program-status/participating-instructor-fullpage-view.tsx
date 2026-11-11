@@ -84,10 +84,16 @@ import {
   createInstructorAssignmentRemote,
   putRepresentativeInstructorRemote,
 } from '@/features/program/general/api/instructor-assignments-api-client'
+import { toInstructorAssignmentCancelRequest } from '@/features/program/general/lib/instructor-cancel-fault-party'
 import {
-  toInstitutionDetailAssignmentCancelRequest,
-  toInstructorAssignmentCancelRequest,
-} from '@/features/program/general/lib/instructor-cancel-fault-party'
+  INSTRUCTOR_ASSIGNMENT_CANCEL_CONFLICT_MESSAGE,
+  INSTRUCTOR_UNASSIGN_NOTIFICATION_ALREADY_SENT_MESSAGE,
+  isInstructorAssignmentConflictError,
+  isInstructorAssignmentNotificationSent,
+  isInstructorUnassignReasonRequiredError,
+  resolveInstructorUnassignNotificationSent,
+  toInstructorUnassignCancelBody,
+} from '@/features/program/general/lib/instructor-assignment-notification'
 import { formatInstructorOrganizationScheduleScopeMessage } from '@/features/program/shared/lib/instructor-organization-schedule-scope'
 import { mapParticipatingSessionsToInstructorAssignOptions } from '@/features/program/general/lib/instructor-assign-session-options'
 import {
@@ -142,12 +148,6 @@ import './participating-institutions-section.css'
 import './school-detail-fullpage-view.css'
 import './participating-instructor-fullpage-view.css'
 import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
-
-/**
- * 기관형 배정 취소 — 선택 배정의 알림 발송 여부. 배정 목록 응답에 발송 여부가 없어 판단 불가(undefined)
- * → 발송 후 시안(06-2: 사유·알림)으로 연다. 응답에 필드가 생기면 행 단위로 채운다.
- */
-const INSTRUCTOR_UNASSIGN_NOTIFICATION_SENT: boolean | undefined = undefined
 
 function sessionOptionId(session: ParticipatingSchoolSession): string {
   return `session-${session.round}-${session.date}-${session.timeRange}`
@@ -508,6 +508,33 @@ export function ParticipatingInstructorFullpageView({
     maxAssignableInstructors: resolveRequiredAssignableInstructorCount(program),
   })
 
+  /**
+   * 400 VALIDATION_FAILED(발송 전으로 보고 `{}` 취소했으나 서버는 발송 후) 배정 id — 화면에서 「발송 후」로 고정.
+   */
+  const [forcedSentAssignmentIds, setForcedSentAssignmentIds] = useState<ReadonlySet<string>>(
+    () => new Set()
+  )
+  /**
+   * 기관형 배정 알림 발송 여부(BE 항목 1-A) — 배정 목록 `assignmentNotificationStatus`.
+   * SENT → 「발송 후」(06-2: 사유·알림), NONE·SCHEDULED·CANCELLED → 「발송 전」(06-1: 안내만).
+   * 필드 없는 구버전 응답·1사1교·개인형은 undefined(기존 동작).
+   */
+  const assignmentNotificationSentById = useMemo(() => {
+    const map = new Map<string, boolean | undefined>()
+    if (!isInstitutionProgram) return map
+    for (const item of institutionAssignment.assignments) {
+      if (item.assignmentId == null) continue
+      const id = String(item.assignmentId)
+      map.set(
+        id,
+        forcedSentAssignmentIds.has(id)
+          ? true
+          : isInstructorAssignmentNotificationSent(item.assignmentNotificationStatus)
+      )
+    }
+    return map
+  }, [forcedSentAssignmentIds, institutionAssignment.assignments, isInstitutionProgram])
+
   useEffect(() => {
     setAssignedSchools(institutionAssignment.assignedSchools)
     setWaitingSchools(institutionAssignment.waitingSchools)
@@ -860,8 +887,9 @@ export function ParticipatingInstructorFullpageView({
       }
       const selectedRows = assignedSchools.filter(r => selectedAssignedSchoolKeys.includes(r.id))
       const removedSchoolNames = selectedRows.map(r => r.schoolName)
+      // 기관형: 배정마다 발송 전이면 `{}`, 발송 후(·미상)면 사유·알림 시점(BE 항목 1-A)
       const cancelBody = isInstitutionProgram
-        ? toInstitutionDetailAssignmentCancelRequest(payload, INSTRUCTOR_UNASSIGN_NOTIFICATION_SENT)
+        ? undefined
         : toInstructorAssignmentCancelRequest({
             reason: payload.reason,
             notifyTiming: payload.notifyTiming,
@@ -870,6 +898,9 @@ export function ParticipatingInstructorFullpageView({
           })
 
       if (institutionAssignment.remoteEnabled) {
+        let cancelledCount = 0
+        let pendingAssignmentId: string | null = null
+        let pendingBodyWasEmpty = false
         try {
           for (const row of selectedRows) {
             const ids =
@@ -879,7 +910,16 @@ export function ParticipatingInstructorFullpageView({
                   ? [row.assignmentId]
                   : []
             for (const assignmentId of ids) {
-              await cancelInstructorAssignmentRemote(assignmentId, cancelBody)
+              const rowBody =
+                cancelBody ??
+                toInstructorUnassignCancelBody(
+                  payload,
+                  assignmentNotificationSentById.get(String(assignmentId))
+                )
+              pendingAssignmentId = String(assignmentId)
+              pendingBodyWasEmpty = Object.keys(rowBody).length === 0
+              await cancelInstructorAssignmentRemote(assignmentId, rowBody)
+              cancelledCount += 1
             }
           }
           await institutionAssignment.invalidate()
@@ -895,6 +935,39 @@ export function ParticipatingInstructorFullpageView({
             })
           }
         } catch (error) {
+          // 기관형 「발송 전」 취소 중 서버가 발송 후로 판단 → 해당 배정을 발송 후로 보고 「발송 후」 팝업으로 다시 연다
+          if (
+            isInstitutionProgram &&
+            pendingBodyWasEmpty &&
+            pendingAssignmentId != null &&
+            isInstructorUnassignReasonRequiredError(error)
+          ) {
+            const sentId = pendingAssignmentId
+            setForcedSentAssignmentIds(prev => new Set(prev).add(sentId))
+            if (cancelledCount > 0) {
+              // 일부 취소됨 — 목록을 다시 불러오면 선택이 초기화되므로 팝업을 닫고 다시 선택하게 한다
+              await institutionAssignment.invalidate()
+              setUnassignConfirmOpen(false)
+            } else {
+              setUnassignConfirmOpen(true)
+            }
+            showAlert({
+              title: '안내',
+              content: INSTRUCTOR_UNASSIGN_NOTIFICATION_ALREADY_SENT_MESSAGE,
+            })
+            return
+          }
+          if (isInstitutionProgram && isInstructorAssignmentConflictError(error)) {
+            await institutionAssignment.invalidate()
+            setUnassignConfirmOpen(false)
+            setSelectedAssignedSchoolKeys([])
+            showAlert({
+              title: '배정 취소 실패',
+              content: INSTRUCTOR_ASSIGNMENT_CANCEL_CONFLICT_MESSAGE,
+            })
+            return
+          }
+          if (cancelledCount > 0) await institutionAssignment.invalidate()
           const message =
             error instanceof Error && error.message.trim()
               ? error.message
@@ -911,6 +984,7 @@ export function ParticipatingInstructorFullpageView({
     },
     [
       assignedSchools,
+      assignmentNotificationSentById,
       institutionAssignment,
       instructorList,
       isInstitutionProgram,
@@ -1330,6 +1404,22 @@ export function ParticipatingInstructorFullpageView({
       assignedSchools.filter(r => selectedAssignedSchoolKeys.includes(r.id)).map(r => r.schoolName),
     [assignedSchools, selectedAssignedSchoolKeys]
   )
+
+  /** 선택한 배정 중 하나라도 발송 후면 「발송 후」, 모두 발송 전이면 「발송 전」, 미상이면 undefined(발송 후) */
+  const unassignNotificationSent = useMemo(() => {
+    if (!isInstitutionProgram) return undefined
+    const flags = assignedSchools
+      .filter(r => selectedAssignedSchoolKeys.includes(r.id))
+      .flatMap(r =>
+        r.assignmentIds && r.assignmentIds.length > 0
+          ? r.assignmentIds
+          : r.assignmentId
+            ? [r.assignmentId]
+            : []
+      )
+      .map(id => assignmentNotificationSentById.get(String(id)))
+    return resolveInstructorUnassignNotificationSent(flags)
+  }, [assignedSchools, assignmentNotificationSentById, isInstitutionProgram, selectedAssignedSchoolKeys])
 
   const privacyMasked = !personalInfoRevealed
 
@@ -1867,7 +1957,7 @@ export function ParticipatingInstructorFullpageView({
                   onCancel={() => setUnassignConfirmOpen(false)}
                   targetNames={unassignSchoolNames}
                   audience="instructor"
-                  notificationSent={INSTRUCTOR_UNASSIGN_NOTIFICATION_SENT}
+                  notificationSent={unassignNotificationSent}
                   onConfirm={handleUnassignConfirm}
                 />
               ) : (

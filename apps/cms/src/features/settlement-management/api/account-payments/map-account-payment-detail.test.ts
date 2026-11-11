@@ -5,6 +5,10 @@ import {
   mapAccountPaymentDetailFromGetApi,
   resolveAccountPaymentMemberId,
 } from '@/features/settlement-management/api/account-payments/map-account-payment-detail'
+import {
+  buildPaymentStatementIssuanceViewOptionsFromCalculation,
+  mapAccountPaymentStatusDetailToIssuanceInput,
+} from '@/features/settlement/lib/payment-order-calculation-statement-issuance-view'
 import type {
   AccountPaymentRow,
   AccountPaymentStatusDetail,
@@ -316,6 +320,102 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
     expect(line.basisDetail.lectureTimeDisplay).toBe('2차시')
     expect(line.basisDetail.feeAssessmentWon).toBe(170_000)
     expect(line.basisDetail.categoryLabel).toBe('제미나이 강사비')
+  })
+
+  it('BE N3·N5 — Gemini 상세(AP-…): 진행 회차 null은 「-」, 인정 차시는 recognizedSessionCount, basisJson에 sessionOrdinal 없음', () => {
+    const settlement = {
+      id: 'AP-77',
+      wageItemType: 'GEMINI',
+      lectureFeeStandardTitle: '세미나이 강사비',
+      lectureFeeStandardAmount: 170_000,
+      sessionOrdinal: null,
+      sessionCompleted: null,
+      sessionTotal: null,
+      programSessionProgressDisplay: null,
+      recognizedSessionCount: 2,
+      lectureSessionDisplay: '2차시',
+      items: [
+        {
+          type: 'instructor_fee',
+          description: '프로그램 2차시 강사비 (세미나이 강사비)',
+          amount: 170_000,
+          calculationDetail: {
+            layout: 'lectureFeeTier',
+            title: '강사비 산정 기준 상세',
+            resultAmount: 170_000,
+            basisJson: JSON.stringify({
+              layout: 'lectureFeeTier',
+              itemType: 'LECTURE_FEE',
+              wageItemType: 'GEMINI',
+              categoryLabel: '세미나이 강사비',
+              feeAssessmentWon: 170_000,
+              amount: 170_000,
+              lectureTimeDisplay: '2차시',
+            }),
+          },
+        },
+      ],
+      totalAmount: 170_000,
+    } as unknown as SettlementFrontendResponse
+    const detail: AccountPaymentDetailResponse = {
+      payment: {
+        accountPaymentId: 77,
+        memberId: 190031,
+        instructorName: '강하늘',
+        sourceType: 'GEMINI_TRAINING_REPORT',
+        netPaymentAmount: 170_000,
+        sessionOrdinal: null,
+        sessionLabel: '2차시',
+        paymentStatus: 'PAID',
+      },
+      settlement,
+    }
+
+    const mapped = mapAccountPaymentDetailFromGetApi(
+      { ...baseRow, id: '77', accountPaymentId: 77, sessionLabel: '2차시' },
+      detail
+    )
+
+    expect(mapped.basic.programSessionProgressDisplay).toBe('-')
+    expect(mapped.basic.recognizedSessionCount).toBe(2)
+    expect(mapped.blocks[0]?.lectureSessionDisplay).toBe('2차시')
+    const line = mapped.blocks[0]?.lines[0]
+    expect(line?.basisDetail?.layout).toBe('lectureFeeGemini')
+    if (line?.basisDetail?.layout === 'lectureFeeGemini') {
+      expect(line.basisDetail.lectureTimeDisplay).toBe('2차시')
+    }
+
+    const issuance = buildPaymentStatementIssuanceViewOptionsFromCalculation(
+      mapAccountPaymentStatusDetailToIssuanceInput(mapped)
+    )
+    expect(issuance.lectureFeeCalculationValues?.sessionCount).toBe('2')
+  })
+
+  it('recognizedSessionCount가 없는 예전 정산은 지급조서 교육 진행 차시를 빈칸으로 둔다', () => {
+    const detail: AccountPaymentDetailResponse = {
+      payment: { accountPaymentId: 78, instructorName: '강하늘', paymentStatus: 'PAID' },
+      settlement: {
+        id: '1694926',
+        sessionOrdinal: 3,
+        sessionCompleted: 2,
+        sessionTotal: 5,
+        programSessionProgressDisplay: '2 / 5',
+        items: [],
+      },
+    }
+
+    const mapped = mapAccountPaymentDetailFromGetApi(
+      { ...baseRow, id: '78', accountPaymentId: 78 },
+      detail
+    )
+
+    expect(mapped.basic.programSessionProgressDisplay).toBe('2 / 5')
+    expect(mapped.basic.recognizedSessionCount).toBeNull()
+    const issuance = buildPaymentStatementIssuanceViewOptionsFromCalculation(
+      mapAccountPaymentStatusDetailToIssuanceInput(mapped)
+    )
+    // 진행 회차 `2 / 5`의 2나 회차 번호 3으로 채우지 않는다.
+    expect(issuance.lectureFeeCalculationValues?.sessionCount).toBe('')
   })
 
   it('미지급 상태에서는 paidAt가 있어도 이체 완료일을 -로 표시한다', () => {

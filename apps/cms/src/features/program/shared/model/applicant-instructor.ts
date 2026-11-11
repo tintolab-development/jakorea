@@ -183,6 +183,11 @@ export interface ApplicantInstructorRow {
    * 개인형 강사 신청 캘린더(사람 단위)가 프로그램 일정과 매칭해 그린다.
    */
   availableScheduleIds?: number[]
+  /**
+   * Admin API 목록 `activityWithdrawn` — 활동 포기(GIVE_UP 계열 신청·포털 활동 포기·참여자 GIVE_UP/WITHDRAWN).
+   * 구버전 응답에는 없다(undefined = 표시 안 함).
+   */
+  activityWithdrawn?: boolean
   /** Admin API 목록 `scheduleDistances` — 개인형 일정별 편도 거리(GENERAL_INDIVIDUAL 외 []) */
   scheduleDistances?: Array<{
     scheduleId: number

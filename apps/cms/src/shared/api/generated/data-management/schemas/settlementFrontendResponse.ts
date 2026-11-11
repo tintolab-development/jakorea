@@ -19,10 +19,14 @@ export interface SettlementFrontendResponse {
   programNameKo?: string;
   businessPeriodStart?: string;
   businessPeriodEnd?: string;
-  sessionCompleted?: number;
-  sessionTotal?: number;
-  programSessionProgressDisplay?: string;
-  sessionOrdinal?: number;
+  /** 완료 회차 수(program_schedule.session_no 기준). 회차 개념이 없는 출처(Gemini 등)는 null */
+  sessionCompleted?: number | null;
+  /** 전체 회차 수(program_schedule.session_no 기준). 회차 개념이 없는 출처(Gemini 등)는 null */
+  sessionTotal?: number | null;
+  /** 프로그램 진행 회차 표시(완료 회차 / 전체 회차). 회차 개념이 없으면 null → FE '-' */
+  programSessionProgressDisplay?: string | null;
+  /** 회차 번호(program_schedule.session_no). 회차가 없는 일정(사전교육 등)·Gemini는 null. 차시가 아니다. */
+  sessionOrdinal?: number | null;
   lectureFeeStandardTitle?: string;
   lectureFeeStandardAmount?: number;
   wageItemType?: string;
@@ -54,4 +58,6 @@ export interface SettlementFrontendResponse {
   /** 가장 최근 정산 결과 알림(확인/반려/지급완료/정정완료 재발송 포함) 시각. 없으면 null. statementStatus·paymentStatus·paidAt는 재발송으로 바뀌지 않습니다. */
   resultNotificationSentAt?: string | null;
   availableActions?: string[];
+  /** 정산 인정 차시(정산 기준 차시 수). 정산 calculation snapshot의 recognizedSessionCount, Gemini는 결과 보고 class_count. 회차·커리큘럼 차시와 별개이며, 값이 없는 구 정산은 null(다른 값으로 대체하지 않음). */
+  recognizedSessionCount?: number | null;
 }

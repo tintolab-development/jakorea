@@ -7,6 +7,10 @@
 import type { ApprovalStatusKey } from '@/shared/components/approval-status-badge'
 import { CalendarApprovalStatusBadge } from '@/shared/components/calendar/ui/item-list/calendar-approval-status-badge'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
+import { StatusOutlineTag } from '@/shared/components/status-outline-tag'
+
+/** 참여 봉사자 캘린더 카드 「활동 포기」와 같은 톤 */
+const ACTIVITY_WITHDRAWN_ACCENT = 'var(--Status-red-main, #c32f4a)'
 
 export type IndividualInstructorCalendarCardRow = {
   instructorName: string
@@ -16,6 +20,8 @@ export type IndividualInstructorCalendarCardRow = {
   isNearDistance: boolean
   dispatchCount: number
   longDistanceCount: number
+  /** 목록 `activityWithdrawn` — true면 승인 상태 옆 「활동 포기」 뱃지 */
+  activityWithdrawn?: boolean
 }
 
 export function IndividualInstructorCalendarCard({
@@ -36,6 +42,9 @@ export function IndividualInstructorCalendarCard({
           </span>
           <span className="general-instructor-application-list-item__divider" aria-hidden />
           <CalendarApprovalStatusBadge status={row.approvalStatus} />
+          {row.activityWithdrawn ? (
+            <StatusOutlineTag label="활동 포기" accentColor={ACTIVITY_WITHDRAWN_ACCENT} />
+          ) : null}
         </div>
         {row.sessionLabel !== '-' ? (
           <div className="general-instructor-application-list-item__session">

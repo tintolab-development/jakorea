@@ -1,6 +1,7 @@
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import type { ApprovalStatusKey } from '@/shared/components/approval-status-badge'
 import { CalendarApprovalStatusBadge } from './calendar-approval-status-badge'
+import { StatusOutlineTag } from '@/shared/components/status-outline-tag'
 import './general-instructor-application-list-item.css'
 
 export type CalendarGeneralInstructorApplicationListRow = {
@@ -16,7 +17,12 @@ export type CalendarGeneralInstructorApplicationListRow = {
   isNearDistance: boolean
   dispatchCount: number
   longDistanceCount: number
+  /** true면 승인 상태 옆 「활동 포기」 뱃지. 호출부가 켠 화면(일반 기관형)에서만 채운다 */
+  activityWithdrawn?: boolean
 }
+
+/** 참여 봉사자 캘린더 카드 「활동 포기」와 같은 톤 */
+const ACTIVITY_WITHDRAWN_ACCENT = 'var(--Status-red-main, #c32f4a)'
 
 type CalendarListItemContentGeneralInstructorApplicationProps = {
   row: CalendarGeneralInstructorApplicationListRow
@@ -36,6 +42,9 @@ export function CalendarListItemContentGeneralInstructorApplication({
           <span className="general-instructor-application-list-item__school">{row.schoolName}</span>
           <span className="general-instructor-application-list-item__divider" aria-hidden />
           <CalendarApprovalStatusBadge status={row.approvalStatus} />
+          {row.activityWithdrawn ? (
+            <StatusOutlineTag label="활동 포기" accentColor={ACTIVITY_WITHDRAWN_ACCENT} />
+          ) : null}
         </div>
         <div className="general-instructor-application-list-item__session">
           <span className="general-instructor-application-list-item__instructor">

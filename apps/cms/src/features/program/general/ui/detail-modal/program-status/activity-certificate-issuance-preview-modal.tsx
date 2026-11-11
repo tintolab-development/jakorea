@@ -13,6 +13,7 @@ import {
 import { useCertificateTemplateModalState } from '@/features/template/hooks/use-certificate-template-modal-state'
 import { downloadIssuedCertificatePdf } from '@/features/program/shared/lib/apply-allocated-serial-for-pdf-capture'
 import { getCertificateSerialAllocateErrorMessage } from '@/features/program/shared/api/certificate-serial-api'
+import { certificateIssueReasonCodeFromLabel } from '@/features/program/shared/lib/certificate-serial'
 import { unmaskInstructorForCertificateIssue } from '@/features/program/shared/lib/unmask-for-certificate-issue'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
@@ -127,6 +128,11 @@ export function ActivityCertificateIssuancePreviewModal({
     buildFilename: buildPdfFilename,
   })
 
+  const issueReasonCode = useMemo(
+    () => certificateIssueReasonCodeFromLabel(issuanceReasonLabel),
+    [issuanceReasonLabel]
+  )
+
   const handleClose = useCallback(() => {
     onClose()
   }, [onClose])
@@ -140,6 +146,9 @@ export function ActivityCertificateIssuancePreviewModal({
           programId: program?.id,
           subjectId: unmaskedInstructor.id,
           certificateType: INSTRUCTOR_ACTIVITY_CERTIFICATE_TEMPLATE_CODE,
+          // 기관형 발급 사유 모달에서 고른 사유 — 문서 「발급목적」과 같은 값을 코드로 issueReason에 전송.
+          // 사유를 고르지 않는 흐름(라벨 없음)은 기존처럼 생략.
+          issueReason: issueReasonCode,
         },
         applySerial: setPdfSerialNumber,
         applyIssuedAt,
@@ -161,6 +170,7 @@ export function ActivityCertificateIssuancePreviewModal({
     isAllocatingSerial,
     isPdfDownloading,
     isUnmasking,
+    issueReasonCode,
     program?.id,
     showAlert,
     unmaskedInstructor.id,

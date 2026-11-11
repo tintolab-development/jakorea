@@ -67,6 +67,13 @@ export interface GeneralVolunteerApplicantRow {
   documentScreeningStatus: GeneralDocumentScreeningStatus
   /** GET screening.rejectReason / list rejectReason — 서류 불합격 재발송 시 생략 가능 */
   documentRejectionReason?: string
+  /**
+   * 상세 `documentResultNotificationSentAt` — 1차 서류 합격·불합격 알림 실제 발송 최근 시각
+   * (`YYYY.MM.DD HH:mm:ss`). 없으면(이력 없음·구버전 응답) 생략 → 화면에서 숨김
+   */
+  documentResultNotificationSentAt?: string
+  /** 상세 `finalResultNotificationSentAt` — 면접 합격·예비·불합격/최종 결과 알림 발송 최근 시각. 없으면 생략 */
+  finalResultNotificationSentAt?: string
   documentApprovalNotifyTiming?: PermissionModalNotifyTiming
   documentRejectionNotifyTiming?: PermissionModalNotifyTiming
   /** 반려 취소(alreadySent) 시 재발송 알림 시기 */

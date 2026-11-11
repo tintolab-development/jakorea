@@ -15,6 +15,8 @@ export interface WaitingItem {
   id?: string;
   /** 일정 ID */
   scheduleId?: number | null;
+  /** 회차 번호(program_schedule.session_no). 회차가 없는 일정(사전교육 등)은 null */
+  sessionNo?: number | null;
   /** 개인: 기관 소재지/봉사 지역 */
   locationName?: string | null;
   /** 기관: 소재지 */

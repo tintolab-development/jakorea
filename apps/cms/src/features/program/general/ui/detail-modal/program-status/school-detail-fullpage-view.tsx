@@ -122,10 +122,18 @@ import {
   createInstructorAssignmentRemote,
   putRepresentativeInstructorRemote,
 } from '@/features/program/general/api/instructor-assignments-api-client'
+import { toInstructorAssignmentCancelRequest } from '@/features/program/general/lib/instructor-cancel-fault-party'
 import {
-  toInstitutionDetailAssignmentCancelRequest,
-  toInstructorAssignmentCancelRequest,
-} from '@/features/program/general/lib/instructor-cancel-fault-party'
+  formatInstructorAssignmentAnnouncementDateMessage,
+  INSTRUCTOR_ASSIGNMENT_CANCEL_CONFLICT_MESSAGE,
+  INSTRUCTOR_UNASSIGN_NOTIFICATION_ALREADY_SENT_MESSAGE,
+  isInstructorAssignmentConflictError,
+  isInstructorAssignmentNotificationSent,
+  isInstructorUnassignReasonRequiredError,
+  resolveInstructorUnassignNotificationSent,
+  toInstructorAssignmentCreateNotifyTiming,
+  toInstructorUnassignCancelBody,
+} from '@/features/program/general/lib/instructor-assignment-notification'
 import type { SchoolAddInstructorAssignOption } from '../../../lib/school-add-instructor-assign'
 import {
   isOneSchoolPerDayConflictErrorCode,
@@ -138,7 +146,6 @@ import { SchoolDetailSelectAssignConfirmModal } from './school-detail-select-ass
 import { SchoolDetailUnassignCompleteModal } from './school-detail-unassign-complete-modal'
 import { SchoolDetailUnassignConfirmModal } from './school-detail-unassign-confirm-modal'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
-import { toScheduledOnlyNotifyTiming } from '@/features/program/general/lib/application-decision-notify-timing'
 import { SchoolDetailAssignOverflowModal } from './school-detail-assign-overflow-modal'
 import { SchoolDetailAssignCompleteModal } from './school-detail-assign-complete-modal'
 import { SchoolDetailNewAssignGuideModal } from './school-detail-new-assign-guide-modal'
@@ -1807,9 +1814,10 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
             }
             const applicationIdRaw = (waitingRow as { instructorApplicationId?: string })
               .instructorApplicationId
-            const assignmentNotify = toScheduledOnlyNotifyTiming(
+            const assignmentNotify = toInstructorAssignmentCreateNotifyTiming(
               pendingAssignNotifyRef.current?.notifyTiming,
-              pendingAssignNotifyRef.current?.manualNotifyAt
+              pendingAssignNotifyRef.current?.manualNotifyAt,
+              { allowOnAnnouncement: !isCompanySchool }
             )
             await createInstructorAssignmentRemote(programId, {
               instructorMemberId: memberId,
@@ -1852,7 +1860,8 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
             title: '배정 실패',
             content: isOneSchoolPerDayConflictErrorCode(code)
               ? ONE_SCHOOL_PER_DAY_CONFLICT_ALERT_MESSAGE
-              : (formatInstructorOrganizationScheduleScopeMessage(error) ??
+              : (formatInstructorAssignmentAnnouncementDateMessage(error) ??
+                formatInstructorOrganizationScheduleScopeMessage(error) ??
                 getParticipationConsentRequiredMessage(error) ??
                 getGeneralProgramApiErrorMessage(
                   error,
@@ -2088,18 +2097,19 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
       assignInFlightRef.current = true
       setAssignSubmitting(true)
       /**
-       * 승인 API(`Notification`)는 발표일(ON_ANNOUNCEMENT)을 받지만, 이미 승인된 강사의
-       * 배정 create는 즉시·예약만 받는다. 모두 미승인일 때만 발표일을 허용한다.
+       * 일반 기관형 「승인 및 배정」 — 승인 API(`Notification`)와 이미 승인된 강사의 배정 create 모두
+       * 발표일(ON_ANNOUNCEMENT)을 받는다(BE 항목 2). 배정 create는 평탄 timing, 발표일이면 scheduledAt 미전송.
        */
-      const allUnapproved = plan.instructors.every(instructor => instructor.unapproved)
       const notification = toInstructorApplicationNotificationRequest(
         detail.notifyTiming,
         detail.manualNotifyAt,
-        allUnapproved ? NOTIFY_TIMING_CAPABILITY.full : NOTIFY_TIMING_CAPABILITY.scheduledOnly
+        NOTIFY_TIMING_CAPABILITY.full
       )
-      const assignmentNotify = allUnapproved
-        ? undefined
-        : toScheduledOnlyNotifyTiming(detail.notifyTiming, detail.manualNotifyAt)
+      const assignmentNotify = toInstructorAssignmentCreateNotifyTiming(
+        detail.notifyTiming,
+        detail.manualNotifyAt,
+        { allowOnAnnouncement: true }
+      )
       const completedNames: string[] = []
       let leadAssigned = currentAssignedCount > 0 && assignedRows.some(i => i.role === 'lead')
       try {
@@ -2160,6 +2170,7 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
           setSelectedWaitingKeys([])
         }
         const reason =
+          formatInstructorAssignmentAnnouncementDateMessage(error) ??
           formatInstructorOrganizationScheduleScopeMessage(error) ??
           getParticipationConsentRequiredMessage(error) ??
           getGeneralProgramApiErrorMessage(
@@ -2258,9 +2269,10 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
       setAssignSubmitting(true)
       pendingAssignNotifyRef.current = payload
       try {
-        const assignmentNotify = toScheduledOnlyNotifyTiming(
+        const assignmentNotify = toInstructorAssignmentCreateNotifyTiming(
           payload.notifyTiming,
-          payload.manualNotifyAt
+          payload.manualNotifyAt,
+          { allowOnAnnouncement: !isCompanySchool }
         )
         let leadAssigned = currentAssignedCount > 0 && assignedRows.some(i => i.role === 'lead')
         const wantLead = role === 'lead' || currentAssignedCount === 0
@@ -2331,7 +2343,8 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
           title: '배정 실패',
           content: isOneSchoolPerDayConflictErrorCode(code)
             ? ONE_SCHOOL_PER_DAY_CONFLICT_ALERT_MESSAGE
-            : (formatInstructorOrganizationScheduleScopeMessage(error) ??
+            : (formatInstructorAssignmentAnnouncementDateMessage(error) ??
+              formatInstructorOrganizationScheduleScopeMessage(error) ??
               getParticipationConsentRequiredMessage(error) ??
               getGeneralProgramApiErrorMessage(
                 error,
@@ -2359,10 +2372,39 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
   )
 
   /**
-   * 배정 알림 발송 여부 — 강사 배정 목록 응답(InstructorAssignmentListItemResponse)에 발송 여부/시각 필드가 없어
-   * 판단할 수 없다. 미지정이면 발송 후 시안(12-2: 사유 + 알림)으로 연다. BE 필드가 생기면 여기서 매핑한다.
+   * 400 VALIDATION_FAILED(발송 전으로 보고 `{}` 취소했으나 서버는 발송 후) 배정 id.
+   * 재조회 후에도 목록 상태가 늦게 바뀔 수 있어 화면에서 「발송 후」로 고정한다.
    */
-  const unassignNotificationSent: boolean | undefined = undefined
+  const [forcedSentAssignmentIds, setForcedSentAssignmentIds] = useState<ReadonlySet<string>>(
+    () => new Set()
+  )
+  /**
+   * 배정 알림 발송 여부(BE 항목 1-A) — 일반 기관형만. 강사 배정 목록 `assignmentNotificationStatus`.
+   * SENT → 「발송 후」(12-2: 사유 + 알림), NONE·SCHEDULED·CANCELLED → 「발송 전」(12-1: 안내만).
+   * 필드 없는 구버전 응답·1사1교는 undefined(기존처럼 발송 후 시안).
+   */
+  const assignmentNotificationSentById = useMemo(() => {
+    const map = new Map<string, boolean | undefined>()
+    if (isCompanySchool || !assignmentBoard) return map
+    for (const assignment of assignmentBoard.assignments) {
+      if (assignment.assignmentId == null) continue
+      const id = String(assignment.assignmentId)
+      map.set(
+        id,
+        forcedSentAssignmentIds.has(id)
+          ? true
+          : isInstructorAssignmentNotificationSent(assignment.assignmentNotificationStatus)
+      )
+    }
+    return map
+  }, [assignmentBoard, forcedSentAssignmentIds, isCompanySchool])
+  const unassignNotificationSent: boolean | undefined = useMemo(() => {
+    if (isCompanySchool) return undefined
+    const flags = assignedRows
+      .filter(r => selectedAssignedKeys.includes(r.id))
+      .map(r => assignmentNotificationSentById.get(String(r.assignmentId ?? r.id)))
+    return resolveInstructorUnassignNotificationSent(flags)
+  }, [assignedRows, assignmentNotificationSentById, isCompanySchool, selectedAssignedKeys])
 
   const handleUnassignClick = useCallback(() => {
     if (selectedAssignedKeys.length === 0) {
@@ -2439,22 +2481,62 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
             manualNotifyAt: payload.manualNotifyAt,
             faultParty: payload.faultParty as 'USER' | 'ADMIN',
           })
-        : toInstitutionDetailAssignmentCancelRequest(payload, unassignNotificationSent)
+        : undefined
 
       if (assignmentBoardRemoteEnabled) {
         if (unassignSubmitting) return
         setUnassignSubmitting(true)
         const cancelledNames: string[] = []
+        const cancelledRowIds: string[] = []
+        let pendingAssignmentId: string | null = null
+        let pendingBodyWasEmpty = false
         try {
           for (const removed of removedRows) {
             const assignmentId = removed.assignmentId ?? removed.id
             if (!assignmentId) continue
-            await cancelInstructorAssignmentRemote(String(assignmentId), cancelBody)
+            // 일반 기관형: 배정마다 발송 전이면 `{}`, 발송 후(·미상)면 사유·알림 시점
+            const rowBody =
+              cancelBody ??
+              toInstructorUnassignCancelBody(
+                payload,
+                assignmentNotificationSentById.get(String(assignmentId))
+              )
+            pendingAssignmentId = String(assignmentId)
+            pendingBodyWasEmpty = Object.keys(rowBody).length === 0
+            await cancelInstructorAssignmentRemote(String(assignmentId), rowBody)
             cancelledNames.push(removed.instructorName)
+            cancelledRowIds.push(removed.id)
           }
           await invalidateAssignmentBoard()
         } catch (error) {
           if (cancelledNames.length > 0) await invalidateAssignmentBoard()
+          // 일반 기관형 「발송 전」 취소 중 서버가 발송 후로 판단 → 재조회 후 「발송 후」 팝업으로 다시 연다
+          if (
+            !isCompanySchool &&
+            pendingBodyWasEmpty &&
+            pendingAssignmentId != null &&
+            isInstructorUnassignReasonRequiredError(error)
+          ) {
+            const sentId = pendingAssignmentId
+            setForcedSentAssignmentIds(prev => new Set(prev).add(sentId))
+            await invalidateAssignmentBoard()
+            if (cancelledRowIds.length > 0) {
+              setSelectedAssignedKeys(prev => prev.filter(key => !cancelledRowIds.includes(String(key))))
+            }
+            setUnassignConfirmOpen(true)
+            showAlert({
+              title: '안내',
+              content: INSTRUCTOR_UNASSIGN_NOTIFICATION_ALREADY_SENT_MESSAGE,
+            })
+            return
+          }
+          if (!isCompanySchool && isInstructorAssignmentConflictError(error)) {
+            await invalidateAssignmentBoard()
+            setUnassignConfirmOpen(false)
+            setSelectedAssignedKeys([])
+            showAlert({ title: '배정 취소 실패', content: INSTRUCTOR_ASSIGNMENT_CANCEL_CONFLICT_MESSAGE })
+            return
+          }
           showAlert({
             title: '배정 취소 실패',
             content:
@@ -2513,7 +2595,7 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
       })
     },
     [
-      unassignNotificationSent,
+      assignmentNotificationSentById,
       unassignSubmitting,
       selectedAssignedKeys,
       assignedRows,
@@ -3596,6 +3678,7 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
             />
             <SchoolDetailSelectAssignConfirmModal
               open={addAssignNotifyOpen}
+              allowOnAnnouncement={!isCompanySchool}
               onCancel={() => {
                 if (assignSubmitting) return
                 pendingAddAssignRef.current = null
@@ -3667,12 +3750,8 @@ function InstitutionDetailViewBody(props: SchoolDetailFullpageViewProps) {
               open={approveAssignStep === 'fee'}
               title="강사비 책정 및 배정 안내"
               confirmLabel="배정"
-              notifyTimingCapability={
-                approveAssignSelection.unapprovedInstructorCount ===
-                approveAssignSelection.selectedInstructorCount
-                  ? NOTIFY_TIMING_CAPABILITY.full
-                  : NOTIFY_TIMING_CAPABILITY.scheduledOnly
-              }
+              // 일반 기관형: 승인 알림·배정 create 모두 발표일(ON_ANNOUNCEMENT)을 받는다(BE 항목 2)
+              notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.full}
               instructorName={approveAssignUnapprovedNames[0] ?? ''}
               description={`${formatInstitutionApproveAssignFeeSubject(approveAssignUnapprovedNames)}의 강사비 책정 방식을 선택해 주세요\n선택한 방식으로 강사비가 책정되며, 회원에게 승인 알림이 발송됩니다.`}
               instructorFeeGradeLabel={approveAssignFeeGradeLabel}

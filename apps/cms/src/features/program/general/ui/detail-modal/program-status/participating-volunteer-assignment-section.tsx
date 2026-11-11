@@ -11,8 +11,16 @@ import type { ParticipatingVolunteerRow } from '@/features/program/general/model
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
 import {
   fetchGeneralParticipantEducationScope,
+  fetchGeneralVolunteerAssignments,
   saveGeneralVolunteerAssignedOrganizations,
 } from '@/features/program/general/api/admin-program-progress-service'
+import type { VolunteerAssignmentNotificationTiming } from '@/features/program/general/api/program-progress-api-client'
+import {
+  buildVolunteerAssignmentNotificationByOrganization,
+  resolveVolunteerUnassignNotificationSent,
+  toVolunteerAssignmentNotificationTiming,
+} from '@/features/program/general/lib/volunteer-assignment-notification'
+import { getNotificationTimingApiErrorMessage } from '@/shared/lib/notification-schedule'
 import { formatWaitingOrganizationDistance } from '@/features/program/general/lib/assignment-waiting-distance'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
@@ -42,7 +50,7 @@ import { participatingScheduleTableColumnLayout } from '@/features/program/gener
 import { buildVolunteerInstitutionAddAssignOptions } from '@/features/program/general/lib/general-add-assign-session-chips'
 import { GeneralParticipantAddAssignModal } from './general-participant-add-assign-modal'
 import { ParticipatingVolunteerUnassignConfirmModal } from './participating-volunteer-unassign-confirm-modal'
-import { InstitutionUnassignConfirmModal } from './institution-unassign-confirm-modal'
+import { VolunteerInstitutionUnassignConfirmModal } from './volunteer-institution-unassign-confirm-modal'
 import {
   ASSIGNED_INSTITUTIONS_EMPTY_COPY,
   AssignmentListEmpty,
@@ -83,12 +91,6 @@ export function buildVolunteerAssignCompleteCountLine(
   if (single) return `(현재 배정 인원 : ${Number(single[1]) + 1}명)`
   return null
 }
-
-/**
- * 기관형 봉사 배정 취소 — 배정 응답에 알림 발송 여부가 없어 판단 불가(undefined)
- * → 발송 후 시안(07-2/06-2: 사유·알림)으로 연다.
- */
-const VOLUNTEER_UNASSIGN_NOTIFICATION_SENT: boolean | undefined = undefined
 
 /** 추가 배정 — Figma CMS 9760:8214 ‘기관 추가 배정 안내’ (C: 기관형 참여 봉사자) */
 const ADD_ASSIGN_MODAL_TITLE = '기관 추가 배정 안내'
@@ -160,6 +162,36 @@ export function ParticipatingVolunteerAssignmentSection({
         : '-',
     [organizationDistances]
   )
+  /**
+   * 기관형 배정 취소 팝업 분기 — GET …/volunteer-assignments 의 기관별 배정 알림 상태
+   * (assignmentNotificationStatus). 조회 실패·구버전 응답(필드 없음)이면 판단 불가 → 기존 발송 후 시안.
+   */
+  const volunteerAssignmentsQuery = useQuery({
+    queryKey: generalProgramProgressQueryKeys.volunteerAssignments(program.id, volunteer.id),
+    queryFn: ({ signal }) => fetchGeneralVolunteerAssignments(program.id, volunteer.id, signal),
+    enabled: remoteEnabled && isInstitutionSurface && Boolean(volunteer.id),
+    staleTime: 15_000,
+    retry: false,
+  })
+  const notificationByOrganization = useMemo(
+    () =>
+      volunteerAssignmentsQuery.data
+        ? buildVolunteerAssignmentNotificationByOrganization(volunteerAssignmentsQuery.data)
+        : null,
+    [volunteerAssignmentsQuery.data]
+  )
+  /** 선택한(빠지는) 기관 중 배정 알림이 발송(SENT)된 기관이 있는지 — true 발송 후 / false 발송 전 / undefined 판단 불가 */
+  const unassignNotificationSent = useMemo(
+    () =>
+      resolveVolunteerUnassignNotificationSent(
+        assignedInstitutions
+          .filter(row => selectedAssignedKeys.includes(row.id))
+          .map(row => row.organizationApplicationId),
+        notificationByOrganization
+      ),
+    [assignedInstitutions, notificationByOrganization, selectedAssignedKeys]
+  )
+
   /** 표 셀 — 응답 전에는 비워 둔다('-'는 미산출 뜻이라 로딩 중에 보이면 값이 깜빡인다) */
   const distanceLoading = educationScopeQuery.isLoading
   const renderDistanceCell = useCallback(
@@ -407,7 +439,11 @@ export function ParticipatingVolunteerAssignmentSection({
   }, [selectedWaitingKeys, waitingInstitutions, showAlert])
 
   const persistAssignedOrganizations = useCallback(
-    async (nextAssigned: VolunteerAssignedInstitutionRow[], reason: string): Promise<boolean> => {
+    async (
+      nextAssigned: VolunteerAssignedInstitutionRow[],
+      reason: string,
+      notification?: VolunteerAssignmentNotificationTiming
+    ): Promise<boolean> => {
       if (!remoteEnabled) {
         notifyProgramApiUnavailable(
           'general-progress-volunteer-assigned-organizations',
@@ -431,6 +467,7 @@ export function ParticipatingVolunteerAssignmentSection({
           organizationApplicationIds,
           expectedRevision: assignedInstitutions.length,
           reason: reason.trim() || '봉사 배정',
+          ...(notification ? { notification } : {}),
         })
         await queryClient.invalidateQueries({
           queryKey: generalProgramProgressQueryKeys.volunteers(program.id),
@@ -438,14 +475,20 @@ export function ParticipatingVolunteerAssignmentSection({
         await queryClient.invalidateQueries({
           queryKey: generalProgramProgressQueryKeys.institutions(program.id),
         })
+        await queryClient.invalidateQueries({
+          queryKey: generalProgramProgressQueryKeys.volunteerAssignments(program.id, volunteer.id),
+        })
         return true
       } catch (error) {
         showAlert({
           title: '배정 실패',
-          content: getGeneralProgramApiErrorMessage(
-            error,
-            '봉사 배정을 저장하지 못했습니다. 다시 시도해 주세요.'
-          ),
+          content:
+            // 400 INVALID_NOTIFICATION_SCHEDULE(예약 시각 오류) — 최소 허용 시각 안내
+            getNotificationTimingApiErrorMessage(error) ??
+            getGeneralProgramApiErrorMessage(
+              error,
+              '봉사 배정을 저장하지 못했습니다. 다시 시도해 주세요.'
+            ),
         })
         return false
       }
@@ -471,8 +514,14 @@ export function ParticipatingVolunteerAssignmentSection({
       const nextAssigned = renumberVolunteerAssignedRows(
         assignedInstitutions.filter(r => !toRemove.has(r.id))
       )
+      // 빠지는 기관 알림이 발송 후(또는 판단 불가 — 팝업에 시점 입력이 보인 경우)만 notification을 보낸다.
+      // 발송 전이면 생략 — BE가 예약 알림만 중단하고 취소 알림은 보내지 않는다.
+      const notification =
+        isInstitutionSurface && unassignNotificationSent !== false
+          ? toVolunteerAssignmentNotificationTiming(payload.notifyTiming, payload.manualNotifyAt)
+          : undefined
       void (async () => {
-        const saved = await persistAssignedOrganizations(nextAssigned, payload.reason)
+        const saved = await persistAssignedOrganizations(nextAssigned, payload.reason, notification)
         if (!saved) return
         setAssignedInstitutions(nextAssigned)
         setWaitingInstitutions(prev =>
@@ -498,6 +547,7 @@ export function ParticipatingVolunteerAssignmentSection({
       assignedInstitutions,
       persistAssignedOrganizations,
       selectedAssignedKeys,
+      unassignNotificationSent,
       volunteer.volunteerName,
     ]
   )
@@ -816,12 +866,11 @@ export function ParticipatingVolunteerAssignmentSection({
       </div>
 
       {isInstitutionSurface ? (
-        <InstitutionUnassignConfirmModal
+        <VolunteerInstitutionUnassignConfirmModal
           open={unassignConfirmOpen}
           onCancel={() => setUnassignConfirmOpen(false)}
           targetNames={unassignSchoolNames}
-          audience="volunteer"
-          notificationSent={VOLUNTEER_UNASSIGN_NOTIFICATION_SENT}
+          notificationSent={unassignNotificationSent}
           onConfirm={handleUnassignConfirm}
         />
       ) : (

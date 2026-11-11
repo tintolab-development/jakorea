@@ -218,6 +218,42 @@ describe('mapCalculationDetailToBasisDetail', () => {
     }
   })
 
+  it('BE N5 — basisJson에 sessionOrdinal 키가 없어도 lectureTimeDisplay 원문으로 모달을 만든다', () => {
+    const tier = mapCalculationDetailToBasisDetail({
+      layout: 'lectureFeeTier',
+      title: '강사비 산정 기준 상세',
+      resultAmount: 170000,
+      basisJson: JSON.stringify({
+        layout: 'lectureFeeTier',
+        itemType: 'LECTURE_FEE',
+        wageItemType: 'GEMINI',
+        categoryLabel: '세미나이 강사비',
+        feeAssessmentWon: 170000,
+        amount: 170000,
+        lectureTimeDisplay: '2차시',
+      }),
+    })
+    // wageItemType GEMINI면 제미나이 모달로 연결된다(기존 동작).
+    expect(tier?.layout).toBe('lectureFeeGemini')
+    if (tier?.layout === 'lectureFeeGemini') {
+      expect(tier.lectureTimeDisplay).toBe('2차시')
+      expect(tier.feeAssessmentWon).toBe(170000)
+    }
+
+    const gemini = mapCalculationDetailToBasisDetail({
+      layout: 'lectureFeeGemini',
+      resultAmount: 170000,
+      basisJson: JSON.stringify({
+        layout: 'lectureFeeGemini',
+        categoryLabel: '제미나이 강사비',
+        feeAssessmentWon: 170000,
+        amount: 170000,
+      }),
+    })
+    // 시간·차시 필드가 하나도 없어도 예외 없이 원격 표시로 떨어진다.
+    expect(gemini).toBeDefined()
+  })
+
   it('Gemini basisJson에 lectureTimeDisplay가 없으면 sessionOrdinal으로 차시를 만들지 않는다', () => {
     const detail = mapCalculationDetailToBasisDetail({
       layout: 'lectureFeeGemini',

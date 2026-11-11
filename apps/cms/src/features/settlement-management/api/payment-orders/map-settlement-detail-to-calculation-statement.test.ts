@@ -6,6 +6,7 @@ import {
 } from './map-settlement-detail-to-calculation-statement'
 import type { PaymentOrderAdminProgramDetailInstructorRow } from '@/features/settlement-management/model/payment-order-admin-list'
 import type { SettlementFrontendResponse } from '@/shared/api/generated/settlement/schemas'
+import { buildPaymentStatementIssuancePayloadFromCalculationStatement } from '@/features/settlement/lib/payment-order-calculation-statement-issuance-view'
 
 const lineRow: PaymentOrderAdminProgramDetailInstructorRow = {
   id: '1001',
@@ -76,6 +77,52 @@ describe('mapSettlementDetailToProgramCalculationStatement', () => {
     expect(mapped.blocks[0]?.lectureSessionDisplay).toBe('2 ~ 3차시')
     expect(mapped.blocks[0]?.lines[0]?.kind).toBe('lecture_fee')
     expect(mapped.blocks[0]?.lines[0]?.basisDetail?.layout).toBe('lectureFeeTier')
+  })
+
+  it('BE N5 — recognizedSessionCount(인정 차시)를 basic에 싣고 지급조서 교육 진행 차시로 쓴다', () => {
+    const withCount = {
+      ...settlement({ sessionOrdinal: 3, programSessionProgressDisplay: '2 / 5' }),
+      recognizedSessionCount: 2,
+    } as SettlementFrontendResponse
+    const program = mapSettlementDetailToProgramCalculationStatement(
+      lineRow,
+      withCount,
+      'JA 경제교실',
+      '홍길동'
+    )
+    if (program.context !== 'program') throw new Error('program context expected')
+    expect(program.basic.programSessionProgressDisplay).toBe('2 / 5')
+    expect(program.basic.recognizedSessionCount).toBe(2)
+    expect(
+      buildPaymentStatementIssuancePayloadFromCalculationStatement(program)
+        ?.paragraphBodyOptions.lectureFeeCalculationValues?.sessionCount
+    ).toBe('2')
+
+    const instructor = mapSettlementDetailToInstructorPageCalculationStatement(
+      lineRow,
+      withCount,
+      instructorIdentityFromLine('홍길동'),
+      'JA 경제교실'
+    )
+    expect(instructor.basic.recognizedSessionCount).toBe(2)
+    expect(
+      buildPaymentStatementIssuancePayloadFromCalculationStatement(instructor)
+        ?.paragraphBodyOptions.lectureFeeCalculationValues?.sessionCount
+    ).toBe('2')
+  })
+
+  it('recognizedSessionCount가 없으면 null — 진행 회차·회차 번호로 대체하지 않는다', () => {
+    const program = mapSettlementDetailToProgramCalculationStatement(
+      lineRow,
+      settlement({ sessionOrdinal: 3, programSessionProgressDisplay: '2 / 5' }),
+      'JA 경제교실',
+      '홍길동'
+    )
+    expect(program.basic.recognizedSessionCount).toBeNull()
+    expect(
+      buildPaymentStatementIssuancePayloadFromCalculationStatement(program)
+        ?.paragraphBodyOptions.lectureFeeCalculationValues?.sessionCount
+    ).toBe('')
   })
 
   it('institutionName이 null이면 "-" (다른 필드로 보완하지 않음)', () => {

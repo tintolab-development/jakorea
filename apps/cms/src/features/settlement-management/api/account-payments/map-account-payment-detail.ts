@@ -20,6 +20,7 @@ import type {
   SettlementFrontendResponse,
 } from '@/shared/api/generated/settlement/schemas'
 import { mapPaymentStatusToAccountPaymentStatus } from '@/features/settlement-management/api/shared/settlement-status-mappers'
+import { readSettlementRecognizedSessionCount } from '@/features/settlement-management/api/shared/settlement-recognized-session-count'
 import {
   formatBusinessIncomeEarnerLabel,
   formatBusinessPeriodDisplay,
@@ -316,6 +317,7 @@ function buildAccountPaymentStatusDetail(
     lectureFeeStandardTitle?: string
     lectureFeeStandardAmount?: string
     businessIncomeEarnerLabel?: string
+    recognizedSessionCount?: number | null
     accountPaymentStatus?: AccountPaymentStatusDetail['basic']['accountPaymentStatus']
     transferScheduledDate?: string
     paidAt?: string
@@ -361,6 +363,7 @@ function buildAccountPaymentStatusDetail(
         extras?.lectureFeeStandardAmount ??
         (row.amount > 0 ? `${row.amount.toLocaleString('ko-KR')}원` : '-'),
       businessIncomeEarnerLabel: extras?.businessIncomeEarnerLabel ?? '해당 없음',
+      recognizedSessionCount: extras?.recognizedSessionCount ?? null,
     },
     blocks,
     formulaLabel: '정산 항목 합계',
@@ -394,6 +397,7 @@ export function mapAccountPaymentDetailRemote(
     businessIncomeEarnerLabel: formatBusinessIncomeEarnerLabel(
       settlement.businessIncomeEarnerLabel
     ),
+    recognizedSessionCount: readSettlementRecognizedSessionCount(settlement),
     paidAt: settlement.paidAt ?? row.paidAt,
   })
 }

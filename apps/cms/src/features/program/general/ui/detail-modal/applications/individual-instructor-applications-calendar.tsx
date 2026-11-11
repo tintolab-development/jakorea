@@ -6,6 +6,9 @@
  * - 셀 「이름 | 자택 지역」, 팝오버 「지역 | 일정 라벨(시간)」, 우측 카드 「이름 | 승인 상태 / 일정 라벨(시간) / 거리·출강·장거리」
  *   일정 라벨은 교육 구조별 SSOT(`resolveEducationScheduleSessionLeadLabel`) — 회차·차시·세부 일정명·사전교육
  * - 우측 상단 기관 multi select 없음
+ * - `availableScheduleIds: []`(신청 일정 없음)인 신청도 빠지지 않게: 날짜 셀에는 그리지 않고
+ *   우측 목록 날짜 카드 아래에 선택일과 무관하게 「신청 일정 없음」 카드로 항상 보여 준다
+ * - 목록 `activityWithdrawn` true → 카드 승인 상태 옆 「활동 포기」 뱃지
  */
 
 import { useCallback, useMemo, type Key } from 'react'
@@ -34,10 +37,16 @@ import {
   IndividualPersonCalendarView,
   type IndividualPersonCalendarAccessors,
   type IndividualPersonCalendarListItemRenderer,
+  type IndividualPersonCalendarUnscheduledListItemRenderer,
 } from '../program-status/individual-person-calendar-view'
-import { IndividualInstructorCalendarCard } from './individual-instructor-calendar-card'
+import {
+  IndividualInstructorCalendarCard,
+  type IndividualInstructorCalendarCardRow,
+} from './individual-instructor-calendar-card'
 
 const EMPTY_SCHEDULES_DESCRIPTION = '신청한 교육 일정이 없습니다.'
+/** 일정 없는 신청 카드 2행 */
+const UNSCHEDULED_SESSION_LABEL = '신청 일정 없음'
 
 function toCalendarApprovalStatus(status: string | undefined): ApprovalStatusKey {
   if (status === 'approved' || status === 'rejected' || status === 'pending') return status
@@ -64,6 +73,29 @@ function resolveScheduleDistance(
   return {
     distanceKm: typeof km === 'number' && Number.isFinite(km) ? km : null,
     longDistance: instructor.longDistanceYn === true,
+  }
+}
+
+/** 우측 카드 행 — 일정 카드·일정 없는 카드 공통 */
+function buildCardRow(
+  instructor: ApplicantInstructorRow,
+  personName: string,
+  options: { sessionLabel: string; scheduleId?: number | null }
+): IndividualInstructorCalendarCardRow {
+  const { distanceKm, longDistance } = resolveScheduleDistance(instructor, options.scheduleId)
+  const { dispatchCount, longDistanceCount } = getInstructorScheduleDispatchStats({
+    programDispatchCount: instructor.programDispatchCount,
+    programLongDistanceDispatchCount: instructor.programLongDistanceDispatchCount,
+  })
+  return {
+    instructorName: personName,
+    approvalStatus: toCalendarApprovalStatus(instructor.approvalStatus),
+    sessionLabel: options.sessionLabel,
+    distanceDisplay: formatApiDistanceKmDisplay(distanceKm, { longDistance }),
+    isNearDistance: distanceKm != null ? isInstructorNearDistanceKm(distanceKm) : false,
+    dispatchCount,
+    longDistanceCount,
+    activityWithdrawn: instructor.activityWithdrawn === true,
   }
 }
 
@@ -159,32 +191,34 @@ export function IndividualInstructorApplicationsCalendar({
   )
 
   const renderListItem: IndividualPersonCalendarListItemRenderer<ApplicantInstructorRow> =
-    useCallback(({ event, checked, onToggle }) => {
-      const { person, personId, personName, session } = event.originalItem
-      const { distanceKm, longDistance } = resolveScheduleDistance(
-        person,
-        session.resolvedScheduleId
-      )
-      const { dispatchCount, longDistanceCount } = getInstructorScheduleDispatchStats({
-        programDispatchCount: person.programDispatchCount,
-        programLongDistanceDispatchCount: person.programLongDistanceDispatchCount,
-      })
-      return (
+    useCallback(
+      ({ event, checked, onToggle }) => {
+        const { person, personId, personName, session } = event.originalItem
+        return (
+          <IndividualInstructorCalendarCard
+            row={buildCardRow(person, personName, {
+              sessionLabel: formatPersonCalendarSessionLabel(session, program) ?? '-',
+              scheduleId: session.resolvedScheduleId,
+            })}
+            checked={checked}
+            onToggle={next => onToggle(personId, next)}
+          />
+        )
+      },
+      [program]
+    )
+
+  const renderUnscheduledListItem: IndividualPersonCalendarUnscheduledListItemRenderer<ApplicantInstructorRow> =
+    useCallback(
+      ({ person, personId, personName, checked, onToggle }) => (
         <IndividualInstructorCalendarCard
-          row={{
-            instructorName: personName,
-            approvalStatus: toCalendarApprovalStatus(person.approvalStatus),
-            sessionLabel: formatPersonCalendarSessionLabel(session, program) ?? '-',
-            distanceDisplay: formatApiDistanceKmDisplay(distanceKm, { longDistance }),
-            isNearDistance: distanceKm != null ? isInstructorNearDistanceKm(distanceKm) : false,
-            dispatchCount,
-            longDistanceCount,
-          }}
+          row={buildCardRow(person, personName, { sessionLabel: UNSCHEDULED_SESSION_LABEL })}
           checked={checked}
           onToggle={next => onToggle(personId, next)}
         />
-      )
-    }, [program])
+      ),
+      []
+    )
 
   const selectedIds = useMemo(() => selectedRowKeys.map(String), [selectedRowKeys])
 
@@ -198,6 +232,7 @@ export function IndividualInstructorApplicationsCalendar({
       calendarGranularity={calendarGranularity}
       onCalendarGranularityChange={onCalendarGranularityChange}
       renderListItem={renderListItem}
+      renderUnscheduledListItem={renderUnscheduledListItem}
       emptyDescription={EMPTY_SCHEDULES_DESCRIPTION}
       loading={loading || (schedulesQuery.isPending && schedulesQuery.fetchStatus !== 'idle')}
     />

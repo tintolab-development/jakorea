@@ -102,6 +102,11 @@ export interface AccountPaymentStatusDetailBasic {
   lectureFeeStandardTitle: string
   lectureFeeStandardAmount: string
   businessIncomeEarnerLabel: string
+  /**
+   * 지급조서 「교육 진행 차시」 = 인정 차시(`SettlementFrontendResponse.recognizedSessionCount`, BE N5).
+   * 없으면 null — 진행 회차·회차 번호로 대체하지 않는다.
+   */
+  recognizedSessionCount?: number | null
 }
 
 export interface AccountPaymentPlainAccountForConfirm {

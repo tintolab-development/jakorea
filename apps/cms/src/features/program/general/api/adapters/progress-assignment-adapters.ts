@@ -192,6 +192,11 @@ function mapParticipantRow(
   participant: GeneralAssignmentSubmissionParticipantDto
 ): ParticipatingIndividualProgressAssignmentParticipantRow {
   const assignmentFormResponseId = readAssignmentFormResponseId(participant)
+  // BE N7: 행 루트 `formResponseId` 키가 항상 온다(미제출 null). 키 자체가 없으면 구버전 응답
+  const assignmentFeedbackFieldsProvided = Object.prototype.hasOwnProperty.call(
+    participant,
+    'formResponseId'
+  )
   const participantId = String(participant.participantId ?? '')
   const affiliation = participant.affiliation?.trim() || participant.organizationName?.trim() || '-'
   const educationGrade = participant.grade?.trim() || '-'
@@ -219,6 +224,10 @@ function mapParticipantRow(
     surveyResponse: parseParticipantSurveyViewKey(participant.surveyResponse),
     satisfactionResponse: parseParticipantSurveyViewKey(participant.satisfactionResponse),
     ...(assignmentFormResponseId != null ? { assignmentFormResponseId } : {}),
+    ...(assignmentFeedbackFieldsProvided ? { assignmentFeedbackFieldsProvided: true } : {}),
+    ...(typeof participant.hasFeedback === 'boolean'
+      ? { assignmentHasFeedback: participant.hasFeedback }
+      : {}),
   }
 }
 

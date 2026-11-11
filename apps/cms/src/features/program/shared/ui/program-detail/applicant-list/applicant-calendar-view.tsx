@@ -84,6 +84,8 @@ interface ApplicantCalendarViewProps {
    * 생략·null이면 기존 표기(1사1교 유지).
    */
   formatInstructorSessionLabel?: GeneralInstructorCalendarSessionLabelFormatter
+  /** `general-instructor` 전용 — 우측 카드 「활동 포기」 뱃지(일반 기관형). 기본 false(1사1교 유지) */
+  showInstructorActivityWithdrawn?: boolean
   /**
    * `general-institution`·`general-individual` — 일반 프로그램이면 우측 목록·팝오버 일정 라벨을 교육 구조별로
    * (일정형=세부 일정명, 단일 회차=N차시, 복수 회차=N회차). 1사1교 등은 기존 표기.
@@ -157,6 +159,7 @@ export function ApplicantCalendarView({
   scheduleListEmptyDescription,
   hideInstitutionPreviewApprovalBadge = false,
   formatInstructorSessionLabel,
+  showInstructorActivityWithdrawn = false,
   program = null,
 }: ApplicantCalendarViewProps) {
   const isGeneralInstructor = calendarVariant === 'general-instructor'
@@ -285,9 +288,15 @@ export function ApplicantCalendarView({
       isGeneralInstructor
         ? buildGeneralInstructorCalendarListRows(filteredDayEvents, {
             formatSessionLabel: formatInstructorSessionLabel,
+            showActivityWithdrawn: showInstructorActivityWithdrawn,
           })
         : [],
-    [filteredDayEvents, formatInstructorSessionLabel, isGeneralInstructor]
+    [
+      filteredDayEvents,
+      formatInstructorSessionLabel,
+      isGeneralInstructor,
+      showInstructorActivityWithdrawn,
+    ]
   )
 
   const individualListRows = useMemo(

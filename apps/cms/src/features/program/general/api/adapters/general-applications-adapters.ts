@@ -1019,10 +1019,13 @@ export function mapInstructorApplicationToApplicantInstructorRow(
   }
 }
 
-/** 개인형 강사 신청 캘린더용 — 목록 `availableScheduleIds`·`scheduleDistances`(없으면 필드 생략) */
+/**
+ * 강사 신청 캘린더용 — 목록 `availableScheduleIds`·`scheduleDistances`(없으면 필드 생략)·`activityWithdrawn`.
+ * `availableScheduleIds: []`인 신청도 행은 그대로 남는다(캘린더 날짜 셀에만 안 그려진다).
+ */
 function mapInstructorApplicationListScheduleFields(
   dto: InstructorApplicationListItemResponse
-): Pick<ApplicantInstructorRow, 'availableScheduleIds' | 'scheduleDistances'> {
+): Pick<ApplicantInstructorRow, 'availableScheduleIds' | 'scheduleDistances' | 'activityWithdrawn'> {
   const availableScheduleIds = (dto.availableScheduleIds ?? []).filter(
     (id): id is number => typeof id === 'number' && Number.isFinite(id) && id > 0
   )
@@ -1039,6 +1042,10 @@ function mapInstructorApplicationListScheduleFields(
   return {
     ...(availableScheduleIds.length > 0 ? { availableScheduleIds } : {}),
     ...(scheduleDistances.length > 0 ? { scheduleDistances } : {}),
+    // 구버전 응답(필드 없음)은 생략 → 뱃지 미노출
+    ...(typeof dto.activityWithdrawn === 'boolean'
+      ? { activityWithdrawn: dto.activityWithdrawn }
+      : {}),
   }
 }
 
@@ -2037,6 +2044,15 @@ export function mapVolunteerApplicationDetailToApplicantRow(
     applicationStatus: dto.applicationStatus ?? base.applicationStatus,
     documentScreeningStatus: mapApiDocumentStatusToScreeningStatus(screening?.documentStatus),
     documentRejectionReason: screening?.rejectReason?.trim() || base.documentRejectionReason,
+    // 결과 알림 실제 발송 시각 — 필드가 있으면(null 포함) 응답 값만, 없으면(구버전) 기존 값 유지
+    documentResultNotificationSentAt:
+      dto.documentResultNotificationSentAt !== undefined
+        ? formatOrganizationResultNotificationSentAt(dto.documentResultNotificationSentAt)
+        : base.documentResultNotificationSentAt,
+    finalResultNotificationSentAt:
+      dto.finalResultNotificationSentAt !== undefined
+        ? formatOrganizationResultNotificationSentAt(dto.finalResultNotificationSentAt)
+        : base.finalResultNotificationSentAt,
     interviewSlotCount: dto.interviewAvailabilityCount ?? base.interviewSlotCount,
     interviewAssignmentStatus,
     interviewAssignmentApiStatus:
@@ -2427,5 +2443,9 @@ export function mapParticipantToParticipatingVolunteerRow(
     birthDate: dto.birthDate?.trim() || undefined,
     activityWithdrawn:
       dto.giveUpAt != null || dto.participantStatus?.trim().toUpperCase() === 'GIVE_UP',
+    // 기관형 캘린더 우측 카드 지표 — 구버전 응답(필드 없음)은 null → '-'
+    distanceKm: dto.distanceKm ?? null,
+    programDispatchCount: dto.programDispatchCount ?? null,
+    programLongDistanceDispatchCount: dto.programLongDistanceDispatchCount ?? null,
   }
 }

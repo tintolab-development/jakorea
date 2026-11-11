@@ -7,6 +7,7 @@
  */
 import type { CertificateSerialAllocateRequestCertificateType } from './certificateSerialAllocateRequestCertificateType';
 import type { CertificateSerialAllocateRequestIssuanceSource } from './certificateSerialAllocateRequestIssuanceSource';
+import type { CertificateSerialAllocateRequestIssueReason } from './certificateSerialAllocateRequestIssueReason';
 
 /**
  * 인증서 고유번호(YY-JA-NNNNN) 발급 요청. 호출마다 새 번호를 할당합니다.
@@ -23,4 +24,6 @@ export interface CertificateSerialAllocateRequest {
   certificateType: CertificateSerialAllocateRequestCertificateType;
   /** 발급 출처. 생략/PROGRAM=실발급, FORM_TEMPLATE=양식 관리 샘플 */
   issuanceSource?: CertificateSerialAllocateRequestIssuanceSource;
+  /** 발급 사유 코드. 회원 포털 CertificateIssueRequest.issueReason과 같은 코드 체계(한글 별칭 기관 제출용·교육 이수 증빙용·개인 보관용도 허용). 생략하면 기존과 동일하게 사유 없이 발급합니다. 허용 외 값은 400 CERTIFICATE_ISSUE_REASON_INVALID. 이미 발급번호가 있는 재사용(reused=true)이면 기존 사유를 바꾸지 않습니다. */
+  issueReason?: CertificateSerialAllocateRequestIssueReason;
 }

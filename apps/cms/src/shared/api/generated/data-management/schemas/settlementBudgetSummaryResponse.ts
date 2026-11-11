@@ -13,7 +13,7 @@ import type { SettlementBudgetSummaryResponseAggregationScope } from './settleme
 export interface SettlementBudgetSummaryResponse {
   /** 집계 기준 연도 (Asia/Seoul). completed*\/paidCount/settlementCount의 year. */
   year?: number;
-  /** 집계 범위. YEAR=연간(paid_at/settlement year). PERIOD는 expected만 기간 필터된 경우에도 completed*\/settlementCount/paidCount는 여전히 YEAR. */
+  /** 집계 범위. 현재 서버는 fromDate/toDate 지정 여부와 관계없이 항상 YEAR를 반환한다. 기간 필터는 expectedSettlementAmount에만 적용되고, completed*\/settlementCount/paidCount는 year 기준이다. PERIOD는 예약값이며 현재 반환하지 않는다. */
   aggregationScope?: SettlementBudgetSummaryResponseAggregationScope;
   annualBudgetAmount?: number;
   /** 미지급/예정 정산 금액(세후 net). expected_transfer_date 범위. */
@@ -24,6 +24,7 @@ export interface SettlementBudgetSummaryResponse {
   completedGrossTotal?: number;
   /** 지급완료 세후 합계(연간 실지급). paid_at Asia/Seoul 연도. */
   completedNetTotal?: number;
+  /** 잔여 예산(참고값). annualBudgetAmount - expectedSettlementAmount(세후, 기간 필터 적용) - completedGrossTotal(세전)으로 계산하므로 세전·세후 기준이 섞여 있다. 화면 표시 기준은 아직 정의되지 않았다. */
   remainingBudgetAmount?: number;
   /** 정산 건수(해당 연도 최신 정산 행 전체). paidCount와 분리. */
   settlementCount?: number;

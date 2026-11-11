@@ -108,7 +108,7 @@ describe('resolveInstitutionApplicationSessionPeriodPart', () => {
     ).toBe('3차시')
   })
 
-  it('일정형 단일 회차 + 기간 지정이면 회차를 노출한다', () => {
+  it('일정형 단일 회차 + 기간 지정이면 지망 순위를 노출한다', () => {
     expect(
       resolveInstitutionApplicationSessionPeriodPart({ ...baseSession, round: 2 }, {
         educationStructure: 'schedule',
@@ -116,7 +116,28 @@ describe('resolveInstitutionApplicationSessionPeriodPart', () => {
         educationScheduleMode: 'period',
         preEducationNoticeRequired: true,
       })
-    ).toBe('2회차')
+    ).toBe('2지망')
+  })
+
+  it('커리큘럼형 복수 회차 + 기간 지정: 지망 순위(round)를 차시 수로 쓰지 않는다', () => {
+    const bridge = {
+      educationStructure: 'curriculum',
+      sessionRound: 'multi',
+      educationScheduleMode: 'period',
+      preEducationNoticeRequired: true,
+    } as const
+    expect(
+      resolveInstitutionApplicationSessionPeriodPart(
+        { ...baseSession, round: 2, classNum: '2지망', duration: '1차시' },
+        bridge
+      )
+    ).toBe('1차시')
+    expect(
+      resolveInstitutionApplicationSessionPeriodPart(
+        { ...baseSession, round: 2, classNum: '2지망', duration: '3시간' },
+        bridge
+      )
+    ).toBeNull()
   })
 
   it('고정 일정 선택(기간 지정 preferred 미사용)이면 차시·회차를 숨긴다', () => {

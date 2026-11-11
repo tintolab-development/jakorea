@@ -6276,6 +6276,28 @@
           }
         }
       },
+      "VolunteerAssignmentCancellationNotification": {
+        "type": "object",
+        "description": "봉사자 기관 배정 취소 알림 시점",
+        "properties": {
+          "timing": {
+            "type": "string",
+            "description": "IMMEDIATE | SCHEDULED. 생략하면 scheduledAt이 있으면 SCHEDULED, 없으면 IMMEDIATE",
+            "enum": [
+              "IMMEDIATE",
+              "SCHEDULED"
+            ],
+            "example": "IMMEDIATE",
+            "nullable": true
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "timing=SCHEDULED일 때 필수. 현재보다 1분 이상 뒤의 ISO-8601",
+            "nullable": true
+          }
+        }
+      },
       "VolunteerOrganizationAssignmentReplaceRequest": {
         "type": "object",
         "properties": {
@@ -6296,6 +6318,17 @@
             "type": "string",
             "maxLength": 500,
             "minLength": 2
+          },
+          "notification": {
+            "description": "빠지는 기관의 배정 알림이 이미 발송(SENT)된 경우 보내는 취소 알림 시점. 생략하면 즉시 발송. 발송 전(NONE/SCHEDULED)이면 예약 알림만 중단하고 무시됩니다.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/VolunteerAssignmentCancellationNotification"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -12308,6 +12341,12 @@
             "format": "date-time",
             "description": "마지막 다운로드 시각",
             "example": "2026-06-02T09:30:00Z"
+          },
+          "issueReason": {
+            "type": "string",
+            "description": "발급 사유 코드(certificate_issue.issue_reason_code). 관리자 일련번호 발급의 issueReason 또는 회원 포털 발급 사유. 사유 없이 발급됐으면 null",
+            "example": "INSTITUTION_SUBMISSION",
+            "nullable": true
           }
         }
       },
@@ -18760,6 +18799,28 @@
           },
           "cancelReason": {
             "type": "string"
+          },
+          "assignmentNotificationStatus": {
+            "type": "string",
+            "description": "기관 배정 알림(봉사자 WEB) 상태. 같은 봉사자·같은 기관 배정 묶음 단위. NONE=알림 없음, SCHEDULED=예약 대기, SENT=봉사자가 이미 볼 수 있음, CANCELLED=발송 전에 중단됨. SENT 상태에서 기관 배정을 모두 빼면 취소 알림을 보냅니다.",
+            "enum": [
+              "NONE",
+              "SCHEDULED",
+              "SENT",
+              "CANCELLED"
+            ]
+          },
+          "assignmentNotificationSentAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "assignmentNotificationStatus=SENT일 때 가장 최근 발송(노출) 시각. 그 외 null",
+            "nullable": true
+          },
+          "assignmentNotificationScheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "assignmentNotificationStatus=SCHEDULED일 때 가장 이른 예약 발송 시각. 그 외 null",
+            "nullable": true
           }
         }
       },
@@ -19037,15 +19098,14 @@
               "PREVIEW",
               "DOWNLOAD"
             ],
-            "default": "PREVIEW",
             "example": "PREVIEW",
             "nullable": true
           },
           "fileName": {
             "type": "string",
-            "nullable": true,
+            "description": "mode=DOWNLOAD일 때 브라우저가 저장하는 파일명. 파일 다운로드 이력 파일명으로 기록합니다. 생략하면 서버 규칙 이름을 기록합니다.",
             "example": "[JA Korea] CMS 어드민_1365 봉사시간 등록 양식_261110.xlsx",
-            "description": "mode=DOWNLOAD일 때 브라우저가 저장하는 파일명. 파일 다운로드 이력 파일명으로 기록합니다. 생략하면 서버 규칙 이름을 기록합니다. '/', '\\'는 ','로 저장합니다."
+            "nullable": true
           }
         },
         "required": [
@@ -29793,6 +29853,17 @@
               "FORM_TEMPLATE"
             ],
             "example": "PROGRAM"
+          },
+          "issueReason": {
+            "type": "string",
+            "description": "발급 사유 코드. 회원 포털 CertificateIssueRequest.issueReason과 같은 코드 체계(한글 별칭 기관 제출용·교육 이수 증빙용·개인 보관용도 허용). 생략하면 기존과 동일하게 사유 없이 발급합니다. 허용 외 값은 400 CERTIFICATE_ISSUE_REASON_INVALID. 이미 발급번호가 있는 재사용(reused=true)이면 기존 사유를 바꾸지 않습니다.",
+            "enum": [
+              "INSTITUTION_SUBMISSION",
+              "EDUCATION_COMPLETION_PROOF",
+              "PERSONAL_ARCHIVE"
+            ],
+            "example": "INSTITUTION_SUBMISSION",
+            "nullable": true
           }
         },
         "required": [
@@ -29801,36 +29872,31 @@
       },
       "CertificateSerialAllocateResponse": {
         "type": "object",
-        "description": "인증서 고유번호 발급 data",
-        "required": [
-          "serialNumber",
-          "issueId",
-          "reused"
-        ],
+        "description": "인증서 고유번호 발급 응답",
         "properties": {
           "serialNumber": {
             "type": "string",
-            "pattern": "^\\d{2}-JA-\\d{5}$",
+            "description": "YY-JA-NNNNN. 00000 금지. 형식이 틀리면 PDF를 만들지 말 것",
             "example": "26-JA-00017",
-            "description": "YY-JA-NNNNN. 00000 금지. 형식이 틀리면 PDF를 만들지 말 것"
+            "pattern": "^\\d{2}-JA-\\d{5}$"
           },
           "issueId": {
             "type": "integer",
             "format": "int64",
-            "example": 12,
-            "description": "certificate_issue 장부 PK"
+            "description": "certificate_issue 장부 PK",
+            "example": 12
           },
           "reused": {
             "type": "boolean",
-            "example": false,
-            "description": "같은 발급 키에 이미 발급된 번호를 다시 내려주면 true. true여도 PDF 진행은 정상"
+            "description": "같은 발급 키에 이미 발급된 번호를 다시 내려주면 true. true여도 PDF 진행은 정상",
+            "example": false
           },
           "issuedAt": {
             "type": "string",
             "format": "date-time",
-            "nullable": true,
+            "description": "certificate_issue 발급 일시. 기존 발급 건을 다시 받으면 최초 발급 일시입니다. PDF 발급일과 다운로드 파일명 날짜(YYMMDD, Asia/Seoul)에 사용합니다.",
             "example": "2026-11-10T01:00:00Z",
-            "description": "certificate_issue 발급 일시. 기존 발급 건을 다시 받으면 최초 발급 일시. PDF 발급일과 다운로드 파일명 날짜(YYMMDD, Asia/Seoul)에 사용"
+            "nullable": true
           }
         },
         "required": [
@@ -36943,6 +37009,163 @@
           }
         }
       },
+      "ApiResponseMemberCorrectionDetailResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "$ref": "#/components/schemas/MemberCorrectionDetailResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다.",
+            "nullable": true
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
+          }
+        }
+      },
+      "CorrectionFeeBasisResponse": {
+        "type": "object",
+        "description": "강사비 산정 기준 한쪽(정정 전 또는 정정 후). 지급조서 계산 snapshot에서 읽는다.",
+        "properties": {
+          "pricingMode": {
+            "type": "string",
+            "description": "강사비 책정 방식. PROGRAM_STANDARD=프로그램 등급 기준, SPECIAL_LECTURE=특강, OTHER_LABOR=기타 인건비",
+            "enum": [
+              "PROGRAM_STANDARD",
+              "SPECIAL_LECTURE",
+              "OTHER_LABOR"
+            ],
+            "example": "PROGRAM_STANDARD",
+            "nullable": true
+          },
+          "wageItemType": {
+            "type": "string",
+            "description": "강사비 유형(적용 등급). TIER1~3은 1~3급",
+            "enum": [
+              "TIER1",
+              "TIER2",
+              "TIER3",
+              "SPECIAL_LECTURE",
+              "OTHER_LABOR"
+            ],
+            "example": "TIER1",
+            "nullable": true
+          },
+          "wageTitle": {
+            "type": "string",
+            "description": "화면 표시용 강사비 이름",
+            "example": "1급 강사비",
+            "nullable": true
+          },
+          "calculationUnit": {
+            "type": "string",
+            "description": "단가 기준. PER_HOUR=차시당(레거시), PER_CLASS=1차시당, PER_SESSION=회차당, PER_LECTURE=출강 1회, CATALOG_TIER=등급 카탈로그 기준",
+            "example": "PER_CLASS",
+            "nullable": true
+          },
+          "unitAmount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "회당·시간당 단가(원)",
+            "example": 450000,
+            "nullable": true
+          },
+          "lectureFee": {
+            "type": "integer",
+            "format": "int64",
+            "description": "총 강사비(원)",
+            "example": 450000,
+            "nullable": true
+          },
+          "netPaymentAmount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "실지급액(원). 원천징수 후 금액",
+            "example": 488150,
+            "nullable": true
+          }
+        }
+      },
+      "MemberCorrectionDetailResponse": {
+        "type": "object",
+        "description": "강사 정정 내역 확인. 정정 전·후 강사비 기준과 금액, 강사가 쓴 정정 요청 사유, 재신청 가능 여부",
+        "properties": {
+          "settlementId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "정정으로 만들어진 지급조서의 정산 ID(재신청 대상)",
+            "example": 9876
+          },
+          "previousSettlementId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "정정 전 정산 ID",
+            "example": 9875
+          },
+          "correctionRequestId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "정정 요청 ID",
+            "example": 12
+          },
+          "requestReason": {
+            "type": "string",
+            "description": "강사가 입력한 정정 요청 사유. 전/후 비교 없이 한 번만 표시",
+            "example": "강사 등급이 잘못 적용되었습니다."
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "정정 요청 시각",
+            "nullable": true
+          },
+          "correctedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "관리자 정정 처리 시각",
+            "nullable": true
+          },
+          "before": {
+            "$ref": "#/components/schemas/CorrectionFeeBasisResponse",
+            "description": "정정 전 강사비 기준"
+          },
+          "after": {
+            "$ref": "#/components/schemas/CorrectionFeeBasisResponse",
+            "description": "정정 후 강사비 기준"
+          },
+          "reapplyAvailable": {
+            "type": "boolean",
+            "description": "지금 재신청할 수 있는지. 최신 revision이고 지급조서가 DRAFT이며 재신청 기한 안이면 true",
+            "example": true
+          },
+          "reapplyDeadlineDate": {
+            "type": "string",
+            "format": "date",
+            "description": "재신청 마감일(Asia/Seoul, 그날 포함). 정정 처리일로부터 14일과 사업 운영 종료일 중 빠른 날. Gemini 프로그램은 null",
+            "example": "2026-11-25",
+            "nullable": true
+          }
+        }
+      },
       "ApiResponseSettlementApplicationListItemArray": {
         "type": "object",
         "properties": {
@@ -37062,8 +37285,29 @@
           },
           "statementReapplyAvailable": {
             "type": "boolean",
-            "description": "지급조서 재신청 가능 여부. 최신 revision이 지급 정정 승인으로 만들어졌고 지급조서가 DRAFT이면 true (POST /api/portal/me/settlements/{settlementId}/payment-statement/reapply 대상). 그 외 false.",
+            "description": "지급조서 재신청 가능 여부. 최신 revision이 지급 정정 승인으로 만들어졌고 지급조서가 DRAFT이며 재신청 기한(statementReapplyDeadlineDate) 안이면 true (POST /api/portal/me/settlements/{settlementId}/payment-statement/reapply 대상). 기한이 지났거나 그 외에는 false.",
             "example": false
+          },
+          "statementReapplyDeadlineDate": {
+            "type": "string",
+            "format": "date",
+            "description": "지급조서 재신청 마감일(Asia/Seoul, 그날 포함). 정정 처리일로부터 14일과 사업 운영 종료일 중 빠른 날. 정정 승인 후 재신청을 기다리는 건(최신 revision이 정정으로 생성된 DRAFT)에만 값이 있고, 기한이 지나도 그대로 내려준다. Gemini 프로그램·그 외 상태는 null.",
+            "example": "2026-11-25",
+            "nullable": true
+          },
+          "scheduleStartAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "정산 대상 회차(programScheduleId) 시작 시각. 회차가 없거나 찾지 못하면 null. 관리자 직접 배정(강사 신청서 없음) 건에도 채워진다.",
+            "example": "2026-11-06T06:00:00Z",
+            "nullable": true
+          },
+          "scheduleEndAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "정산 대상 회차 종료 시각. 회차가 없거나 찾지 못하면 null.",
+            "example": "2026-11-06T06:10:00Z",
+            "nullable": true
           }
         }
       },
@@ -37165,7 +37409,7 @@
           },
           "instructorFeeCalculationUnit": {
             "type": "string",
-            "description": "강사비 책정 단위. 제출 시점 lectureFeePreview.instructorFeeCalculationUnit과 동일 코드. 구 스냅샷에 없으면 null",
+            "description": "강사비 책정 단위. 제출 전 lectureFeePreview.instructorFeeCalculationUnit과 동일.",
             "enum": [
               "PER_HOUR",
               "PER_CLASS",
@@ -37192,20 +37436,20 @@
           "recognizedSessionCount": {
             "type": "integer",
             "format": "int32",
-            "description": "강사비 산정에 적용된 인정 차시. 지급조서 '교육 진행 차시' 표시 기준. 구 스냅샷에 없으면 null이며 educationSessionCount로 대체하지 않는다.",
+            "description": "강사비 산정에 적용된 인정 차시. 지급조서 '교육 진행 차시' 표시 기준. 제출 스냅샷 recognizedSessionCount. 구 스냅샷에 없으면 null이며 educationSessionCount로 대체하지 않는다.",
             "example": 1,
             "nullable": true
           },
           "educationStartAt": {
             "type": "string",
             "format": "date-time",
-            "description": "제출 시점 program_schedule.start_at (ISO-8601 instant). 구 스냅샷에 없으면 null",
+            "description": "제출 시점 배정 교육 일정 시작 instant. 현재 일정으로 대체하지 않으며, 스냅샷이 없으면 null.",
             "nullable": true
           },
           "educationEndAt": {
             "type": "string",
             "format": "date-time",
-            "description": "제출 시점 program_schedule.end_at (ISO-8601 instant). 구 스냅샷에 없으면 null",
+            "description": "제출 시점 배정 교육 일정 종료 instant. 현재 일정으로 대체하지 않으며, 스냅샷이 없으면 null.",
             "nullable": true
           },
           "actualTrainingMinutes": {
@@ -40221,6 +40465,22 @@
             "items": {
               "type": "string"
             }
+          },
+          "scheduleIds": {
+            "type": "array",
+            "description": "scheduleLines와 같은 순서·길이의 일정 ID 목록. 없으면 빈 배열",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "sessionNos": {
+            "type": "array",
+            "description": "scheduleLines와 같은 순서·길이의 회차 번호(program_schedule.session_no) 목록. 회차가 없는 일정(사전교육 등)은 해당 원소가 null. 없으면 빈 배열",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
           }
         }
       },
@@ -40266,6 +40526,12 @@
             "type": "integer",
             "format": "int64",
             "description": "일정 ID",
+            "nullable": true
+          },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32",
+            "description": "회차 번호(program_schedule.session_no). 회차가 없는 일정(사전교육 등)은 null",
             "nullable": true
           },
           "locationName": {
@@ -43472,18 +43738,26 @@
           },
           "sessionCompleted": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "완료 회차 수(program_schedule.session_no 기준). 회차 개념이 없는 출처(Gemini 등)는 null",
+            "nullable": true
           },
           "sessionTotal": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "전체 회차 수(program_schedule.session_no 기준). 회차 개념이 없는 출처(Gemini 등)는 null",
+            "nullable": true
           },
           "programSessionProgressDisplay": {
-            "type": "string"
+            "type": "string",
+            "description": "프로그램 진행 회차 표시(완료 회차 / 전체 회차). 회차 개념이 없으면 null → FE '-'",
+            "nullable": true
           },
           "sessionOrdinal": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "회차 번호(program_schedule.session_no). 회차가 없는 일정(사전교육 등)·Gemini는 null. 차시가 아니다.",
+            "nullable": true
           },
           "lectureFeeStandardTitle": {
             "type": "string"
@@ -43596,6 +43870,12 @@
             "items": {
               "type": "string"
             }
+          },
+          "recognizedSessionCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "정산 인정 차시(정산 기준 차시 수). 정산 calculation snapshot의 recognizedSessionCount, Gemini는 결과 보고 class_count. 회차·커리큘럼 차시와 별개이며, 값이 없는 구 정산은 null(다른 값으로 대체하지 않음).",
+            "nullable": true
           }
         }
       },
@@ -44304,7 +44584,7 @@
           },
           "aggregationScope": {
             "type": "string",
-            "description": "집계 범위. YEAR=연간(paid_at/settlement year). PERIOD는 expected만 기간 필터된 경우에도 completed*/settlementCount/paidCount는 여전히 YEAR.",
+            "description": "집계 범위. 현재 서버는 fromDate/toDate 지정 여부와 관계없이 항상 YEAR를 반환한다. 기간 필터는 expectedSettlementAmount에만 적용되고, completed*/settlementCount/paidCount는 year 기준이다. PERIOD는 예약값이며 현재 반환하지 않는다.",
             "enum": [
               "YEAR",
               "PERIOD"
@@ -44337,7 +44617,8 @@
           },
           "remainingBudgetAmount": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "잔여 예산(참고값). annualBudgetAmount - expectedSettlementAmount(세후, 기간 필터 적용) - completedGrossTotal(세전)으로 계산하므로 세전·세후 기준이 섞여 있다. 화면 표시 기준은 아직 정의되지 않았다."
           },
           "settlementCount": {
             "type": "integer",
@@ -44543,13 +44824,13 @@
           "sessionOrdinal": {
             "type": "integer",
             "format": "int32",
-            "description": "차시 번호. sessionLabel이 없으면 FE가 N차시로 표시합니다.",
+            "description": "회차 번호(program_schedule.session_no). 회차가 없는 일정(사전교육 등)·Gemini는 null. 차시가 아니므로 N차시로 표시하지 않습니다.",
             "nullable": true
           },
           "sessionLabel": {
             "type": "string",
-            "description": "차시 표시. 예: 2 ~ 3차시. 개인은 null",
-            "example": "2 ~ 3차시",
+            "description": "강의 진행 차시(정산 인정 차시) 표시. 예: 2차시. 값이 없으면 null",
+            "example": "2차시",
             "nullable": true
           },
           "lectureDate": {
@@ -48113,8 +48394,22 @@
           },
           "satisfactionResponse": {
             "$ref": "#/components/schemas/FormResponseRef"
+          },
+          "formResponseId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "이 회차 과제 제출 form_response.id(최신 유효 revision). 미제출이면 null. 피드백 작성/조회 대상 ID.",
+            "nullable": true
+          },
+          "hasFeedback": {
+            "type": "boolean",
+            "description": "이 과제 제출에 삭제되지 않은 피드백이 있으면 true. 미제출이면 false."
           }
-        }
+        },
+        "required": [
+          "formResponseId",
+          "hasFeedback"
+        ]
       },
       "GeneralIndividualAssignmentSubmissionFile": {
         "type": "object",
@@ -55025,6 +55320,11 @@
           "lastDownloadedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "issueReason": {
+            "type": "string",
+            "description": "발급 사유 코드(certificate_issue.issue_reason_code). 관리자 일련번호 발급의 issueReason 또는 회원 포털 발급 사유. 사유 없이 발급됐으면 null",
+            "nullable": true
           }
         }
       },
@@ -55981,93 +56281,6 @@
             "writeOnly": true,
             "minLength": 8,
             "description": "파일 암호. 8자 이상, 영문+숫자+특수문자, 공백 불가. 쿼리/로그/분석에 넣지 않는다."
-          }
-        }
-      },
-      "Ujat1365RegistrationFormRequest": {
-        "type": "object",
-        "description": "UJAT 1365 등록 양식 요청 본문(선택). 본문 없이 호출해도 된다.",
-        "properties": {
-          "fileName": {
-            "type": "string",
-            "nullable": true,
-            "example": "[JA Korea] CMS 어드민_1365 봉사시간 등록 양식_261110.xlsx",
-            "description": "mode=DOWNLOAD일 때 브라우저가 저장하는 파일명. 파일 다운로드 이력 파일명으로 기록합니다. 생략하면 서버 규칙 이름을 기록합니다. '/', '\\'는 ','로 저장합니다."
-          }
-        }
-      },
-      "MemberCertificateAvailabilityResponse": {
-        "type": "object",
-        "properties": {
-          "programId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "participantId": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          },
-          "certificateType": {
-            "type": "string",
-            "description": "평가한 증명서 유형. 요청 PARTICIPATION은 COMPLETION으로 바뀌지 않는다.",
-            "enum": [
-              "COMPLETION",
-              "PARTICIPATION",
-              "INSTRUCTOR_ACTIVITY",
-              "VOLUNTEER_ACTIVITY"
-            ]
-          },
-          "available": {
-            "type": "boolean"
-          },
-          "reason": {
-            "type": "string"
-          },
-          "eligible": {
-            "type": "boolean"
-          },
-          "reasonCode": {
-            "type": "string"
-          },
-          "reasonMessage": {
-            "type": "string"
-          },
-          "existingIssueId": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          },
-          "canDownload": {
-            "type": "boolean"
-          },
-          "countedParticipationCount": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true,
-            "description": "Counted PRESENT/ATTENDED/LATE sessions inside the give-up performance boundary."
-          },
-          "certificatePeriodStartDate": {
-            "type": "string",
-            "nullable": true,
-            "description": "Certificate display period start (yyyy-MM-dd, Asia/Seoul)."
-          },
-          "certificatePeriodEndDate": {
-            "type": "string",
-            "nullable": true,
-            "description": "Certificate display period end (yyyy-MM-dd, Asia/Seoul). Give-up participation uses the last counted session end."
-          },
-          "certificatePeriodLabel": {
-            "type": "string",
-            "nullable": true,
-            "description": "PDF-identical Korean period label."
-          },
-          "issuedAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true,
-            "example": "2026-11-10T01:00:00Z",
-            "description": "기존 발급 건(existingIssueId)의 발급 일시(certificate_issue.issued_at). PDF 발급일과 다운로드 파일명 날짜(YYMMDD, Asia/Seoul)에 사용. 발급 이력이 없으면 null"
           }
         }
       }

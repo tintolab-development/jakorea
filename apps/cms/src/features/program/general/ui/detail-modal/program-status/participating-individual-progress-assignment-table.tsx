@@ -149,8 +149,12 @@ function SubmissionCell({
 /**
  * 시안 06(4175:60110) 피드백 열.
  * - 교육 미진행(SCHEDULED): `-`
+ * BE N7 응답(행 루트 `formResponseId`·`hasFeedback`):
+ * - 미제출(`formResponseId` null): 버튼 없이 `-` (QA: 미제출 행은 버튼 없음)
+ * - 제출: 활성 — `hasFeedback` true 「피드백 보기」 / false 「피드백 작성」
+ * 구버전 응답(필드 없음) — 기존 동작:
  * - 미제출: 「피드백 작성」 비활성
- * - 피드백 전달 완료: 「피드백 보기」
+ * - 피드백 전달 완료(remarkKind): 「피드백 보기」
  * - 제출: 「피드백 작성」 — 과제 응답 id가 없으면 비활성(피드백 API 키 없음)
  */
 function FeedbackCell({
@@ -161,11 +165,16 @@ function FeedbackCell({
   onOpenFeedback?: (target: ProgressAssignmentFeedbackTarget) => void
 }) {
   if (row.submission.kind === 'scheduled') return '-'
+  if (row.assignmentFeedbackFieldsProvided && row.assignmentFormResponseId == null) return '-'
   const submitted = row.submission.kind === 'submitted'
-  const delivered = submitted && row.remarkKind === 'feedback_delivered'
+  const delivered = row.assignmentFeedbackFieldsProvided
+    ? row.assignmentHasFeedback === true
+    : submitted && row.remarkKind === 'feedback_delivered'
   const mode: ProgressAssignmentFeedbackMode = delivered ? 'view' : 'write'
-  const disabled =
-    !submitted || row.assignmentFormResponseId == null || onOpenFeedback == null
+  // N7: 응답 id가 있으면 제출 행 — 제출 상태 표기와 무관하게 활성(id가 피드백 API 키)
+  const disabled = row.assignmentFeedbackFieldsProvided
+    ? onOpenFeedback == null
+    : !submitted || row.assignmentFormResponseId == null || onOpenFeedback == null
   return (
     <CmsButton
       variant="secondary"
