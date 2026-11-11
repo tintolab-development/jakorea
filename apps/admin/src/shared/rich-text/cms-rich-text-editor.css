@@ -16,6 +16,8 @@
   --rt-body-padding: 16px;
   --rt-placeholder-color: var(--Content-tertiary, var(--text-placeholder, #85969d));
   --rt-content-color: var(--default-BK, #3d3d3d);
+  /* 홈페이지 어드민 에디터 본문 기본 글자 크기 15px — 툴바 「크기: 기본」(인라인 크기 없음)에 적용 */
+  --rt-content-font-size: 15px;
 }
 
 .cms-rich-text-editor.rich-text-editor {
