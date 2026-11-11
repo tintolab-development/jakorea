@@ -298,7 +298,7 @@
     var(--Content-tertiary, var(--text-placeholder, #85969d))
   );
   font-family: var(--rt-content-font-family, Pretendard, sans-serif);
-  font-size: var(--rt-content-font-size, 16px);
+  font-size: var(--rt-content-font-size, 15px);
   font-style: normal;
   font-weight: 500;
   line-height: var(--rt-content-line-height, 170%);

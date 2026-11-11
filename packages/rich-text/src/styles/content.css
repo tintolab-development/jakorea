@@ -7,7 +7,7 @@
   box-sizing: border-box;
   color: var(--rt-content-color, var(--default-BK, #3d3d3d));
   font-family: var(--rt-content-font-family, Pretendard, var(--font-family-primary, sans-serif));
-  font-size: var(--rt-content-font-size, 16px);
+  font-size: var(--rt-content-font-size, 15px);
   font-style: normal;
   font-weight: 500;
   line-height: var(--rt-content-line-height, 170%);
@@ -20,7 +20,7 @@
 .rich-text-content th {
   color: var(--rt-content-color, var(--default-BK, #3d3d3d));
   font-family: var(--rt-content-font-family, Pretendard, var(--font-family-primary, sans-serif));
-  font-size: var(--rt-content-font-size, 16px);
+  font-size: var(--rt-content-font-size, 15px);
   font-weight: 500;
   line-height: var(--rt-content-line-height, 170%);
 }
