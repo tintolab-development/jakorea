@@ -308,6 +308,8 @@ export interface GeneralProgramInstructorRecruitmentInfo {
   contactPhone?: string
   contactEmail?: string
   remarks?: string
+  /** 등록 위저드 강사 모집 비고 「해당 없음」 (overlay `recruit.instructor.notesNotApplicable`) → 생성 요청 `remarksNotApplicable` */
+  notesNotApplicable?: boolean
   recruitmentTarget?: string
   recruitmentTargetDetail?: string
   /** 모집 양식 상세정보 — 프로그램 설명 (공통정보 description과 분리) */
@@ -784,14 +786,6 @@ export interface Program {
   createdByName?: string
   /** 최종 수정자 표시명 (목록/상세 표시용, API·mock에서 채움) */
   updatedByName?: string
-  /** PATCH 연장 응답에만 실릴 수 있는 사업 종료일 연장 이력. 공통 정보 상세에는 표시하지 않는다. */
-  businessPeriodHistories?: Array<{
-    previousBusinessEndDate?: string | null
-    businessEndDate?: string | null
-    reason?: string | null
-    changedByName?: string | null
-    changedAt?: string | null
-  }>
 }
 
 // 회차별 진행 방식 (교육 커리큘럼 수정용)

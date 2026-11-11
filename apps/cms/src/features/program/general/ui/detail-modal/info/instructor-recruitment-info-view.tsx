@@ -16,6 +16,7 @@ import { optionalDateUsesClockTime } from '@/features/template/lib/date-range-cl
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { DividerVertical } from '@/shared/components/divider-vertical'
@@ -388,24 +389,67 @@ export function GeneralProgramInstructorRecruitmentInfoView({
               view={display.notes}
               edit={
                 isEdit && form ? (
-                  <Controller
-                    name="instructorRecruitmentRemarks"
-                    control={form.control}
-                    render={({ field }) => (
-                      <CmsInput
-                        {...field}
-                        value={field.value ?? ''}
-                        placeholder={
-                          variant === 'general'
-                            ? '비고를 입력해 주세요'
-                            : '비고란을 작성하세요 (없으면 -로 입력)'
-                        }
-                        inputSize="small"
-                        width="100%"
-                        className="program-detail-info-tab__notes-input"
+                  variant === 'general' ? (
+                    // 시안 02-2: 「해당 없음」 체크 + 비고 입력 — 강사 모집 행 remarksNotApplicable
+                    <div className="detail-info-form-inputs-wrapper-no-gap instructor-recruitment-info-view__notes-field">
+                      <Controller
+                        name="instructorRecruitmentNotesNotApplicable"
+                        control={form.control}
+                        render={({ field }) => (
+                          <CmsCheckbox
+                            checkboxSize="medium"
+                            checked={field.value === 'not_applicable'}
+                            onChange={e => {
+                              const checked = e.target.checked
+                              field.onChange(checked ? 'not_applicable' : 'applicable')
+                              if (checked) {
+                                form.setValue('instructorRecruitmentRemarks', '', {
+                                  shouldDirty: true,
+                                })
+                              }
+                            }}
+                          >
+                            해당 없음
+                          </CmsCheckbox>
+                        )}
                       />
-                    )}
-                  />
+                      <DetailInfoForm.InputsSeparator />
+                      <Controller
+                        name="instructorRecruitmentRemarks"
+                        control={form.control}
+                        render={({ field }) => (
+                          <CmsInput
+                            {...field}
+                            value={field.value ?? ''}
+                            disabled={
+                              form.watch('instructorRecruitmentNotesNotApplicable') ===
+                              'not_applicable'
+                            }
+                            placeholder="비고를 입력해 주세요"
+                            inputSize="small"
+                            width="100%"
+                            style={{ flex: '1 1 0', minWidth: 0, width: '100%' }}
+                            className="program-detail-info-tab__notes-input"
+                          />
+                        )}
+                      />
+                    </div>
+                  ) : (
+                    <Controller
+                      name="instructorRecruitmentRemarks"
+                      control={form.control}
+                      render={({ field }) => (
+                        <CmsInput
+                          {...field}
+                          value={field.value ?? ''}
+                          placeholder="비고란을 작성하세요 (없으면 -로 입력)"
+                          inputSize="small"
+                          width="100%"
+                          className="program-detail-info-tab__notes-input"
+                        />
+                      )}
+                    />
+                  )
                 ) : undefined
               }
             />
