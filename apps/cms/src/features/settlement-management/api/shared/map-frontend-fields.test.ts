@@ -14,12 +14,18 @@ import {
 } from './map-frontend-fields'
 
 describe('formatLectureSessionLabel', () => {
-  it('sessionOrdinal → N차시', () => {
-    expect(formatLectureSessionLabel(3)).toBe('3차시')
+  it('sessionOrdinal(회차 번호) → N회차', () => {
+    expect(formatLectureSessionLabel(3)).toBe('3회차')
   })
 
   it('없으면 -', () => {
     expect(formatLectureSessionLabel(undefined)).toBe('-')
+    expect(formatLectureSessionLabel(null)).toBe('-')
+  })
+
+  it('0·음수는 0회차로 만들지 않고 -', () => {
+    expect(formatLectureSessionLabel(0)).toBe('-')
+    expect(formatLectureSessionLabel(-1)).toBe('-')
   })
 })
 

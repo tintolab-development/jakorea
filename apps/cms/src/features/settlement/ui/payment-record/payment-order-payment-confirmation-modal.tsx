@@ -40,7 +40,7 @@ export function PaymentOrderPaymentConfirmationModal({
   zIndex,
 }: PaymentOrderPaymentConfirmationModalProps) {
   const block0 = data?.blocks[0]
-  /** 기관·교육일·회차 중 값이 있는 것만 — 회차/차시가 없는 개인 정산 등에서 끝 구분선이 남지 않게 */
+  /** 기관·교육일·일정 칸(lectureSessionDisplay: 회차 또는 차시 원문) 중 값이 있는 것만 — 없는 개인 정산 등에서 끝 구분선이 남지 않게 */
   const detailParts = [
     block0?.institutionName,
     block0?.lectureDateDisplay,
@@ -98,7 +98,7 @@ export function PaymentOrderPaymentConfirmationModal({
           </p>
           <div
             className="payment-order-payment-confirm__detail-line"
-            aria-label="참여 기관·강의일·회차"
+            aria-label="참여 기관·강의일·회차 또는 차시"
           >
             {detailParts.map((part, index) => (
               <Fragment key={`${index}-${part}`}>
