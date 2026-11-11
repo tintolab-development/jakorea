@@ -41,8 +41,8 @@ export function VolunteerScheduleLines({ lines }: { lines: string[] }) {
 
   return (
     <div className={styles.scheduleCell}>
-      {displayLines.map(line => (
-        <PFText key={line} as="span" typo="bd-md-rg" color="black">
+      {displayLines.map((line, index) => (
+        <PFText key={`${index}-${line}`} as="span" typo="bd-md-rg" color="black">
           {line}
         </PFText>
       ))}
