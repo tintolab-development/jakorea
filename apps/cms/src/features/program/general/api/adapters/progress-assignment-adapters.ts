@@ -1,3 +1,4 @@
+import { toPolicyMaskedBirthDisplay } from '@/features/user/api/format-gender-birth-display'
 import dayjs from 'dayjs'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import type { Program } from '@/types/domain'
@@ -121,6 +122,9 @@ function mapGenderLabel(gender?: string | null): string {
 }
 
 function mapBirthLabel(birthDate?: string | null): string {
+  // BE 마스킹(yyyy-**-**)은 정책 표기(yyyy.**.**) — 날짜 파서에 넣지 않는다.
+  const masked = toPolicyMaskedBirthDisplay(birthDate)
+  if (masked && masked !== (birthDate?.trim() ?? '')) return masked
   return formatDateLabel(birthDate, 'YYYY.MM.DD') || '-'
 }
 

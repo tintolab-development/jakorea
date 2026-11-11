@@ -1,21 +1,11 @@
+import { profileFormGenderToDraftLabel, toProfileFormGender } from '@/features/user/detail/lib/profile-form-gender'
 import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import type { User } from '@/types/user'
 import type { AdminRegisterModalFormValues } from '@/features/user/shared/ui/admin-register-modal'
 
-function mapGender(gender: string | undefined): 'male' | 'female' {
-  const g = gender?.trim()
-  if (
-    g === '여' ||
-    g === '여성' ||
-    g === '여자' ||
-    g === 'F' ||
-    g === 'FEMALE' ||
-    g === 'female' ||
-    g === '2'
-  ) {
-    return 'female'
-  }
-  return 'male'
+/** 모르는 값·마스킹은 남성으로 추정하지 않는다(선택 안 됨). */
+function mapGender(gender: string | undefined): 'male' | 'female' | undefined {
+  return toProfileFormGender(gender)
 }
 
 function birthDateToFormValue(birthDate: User['birthDate']): string {
@@ -61,7 +51,7 @@ export function mapAdminProfileFormToBasicInfoDraftPartial(
     name: values.name.trim(),
     phone: values.contact.trim(),
     email: values.email.trim(),
-    gender: values.gender === 'female' ? '여성' : '남성',
+    gender: profileFormGenderToDraftLabel(values.gender),
     birthDate,
   }
 }

@@ -142,9 +142,9 @@ import {
   bulkIssueCertificatesRemote,
   bulkDownloadCertificatesRemote,
 } from '@/features/user/api/certificates-api-client'
-import { downloadFromBulkEndpoint } from '@/features/user/api/download-bulk-endpoint'
+import { downloadBlob, fileNameFromContentDisposition, generateFilename } from '@/shared/utils/file-download'
 import {
-  collectParticipantIdsFromHistoryRowIds,
+  collectParticipantIdsFromHistoryRows,
   parseMemberProgramHistoryRowId,
 } from '@/features/user/api/member-program-history-ids'
 import type { CertificateIssueReasonValue } from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
@@ -756,7 +756,11 @@ export function useUserDetailController({
       certificateType: 'COMPLETION' | 'ACTIVITY'
     ) => {
       if (!membersRemote) return
-      const participantIds = collectParticipantIdsFromHistoryRowIds(rowIds)
+      // 신청 이력 행은 응답의 participantId로, 참여 이력 행은 행 ID로 대상을 정한다(추가 호출 없음).
+      const participantIds = collectParticipantIdsFromHistoryRows(rowIds, [
+        ...applications,
+        ...enrollmentApplications,
+      ])
       if (participantIds.length === 0) {
         showAlert({
           title: '안내',
@@ -777,10 +781,16 @@ export function useUserDetailController({
         const result = await bulkIssueCertificatesRemote(issueBody)
         const successCount = result.successCount ?? participantIds.length
         try {
-          const download = await bulkDownloadCertificatesRemote(issueBody)
-          if (download.downloadEndpoint) {
-            await downloadFromBulkEndpoint(download.downloadEndpoint, '증명서_일괄')
-          }
+          // 서버가 ZIP을 바로 내려준다. 파일명은 서버 헤더([JA Korea] 증명서_일괄_YYMMDD.zip) 우선.
+          // 이 ZIP은 서버 파일 다운로드 이력에 남지 않으므로 클라이언트 이력을 같은 이름으로 남긴다.
+          const { zip, contentDisposition } = await bulkDownloadCertificatesRemote({
+            participantIds,
+            certificateType,
+          })
+          await downloadBlob(
+            zip,
+            fileNameFromContentDisposition(contentDisposition, generateFilename('증명서_일괄', 'zip'))
+          )
         } catch (downloadError) {
           showAlert({
             title: '안내',
@@ -804,7 +814,14 @@ export function useUserDetailController({
         })
       }
     },
-    [displayUser, membersRemote, refetchApplications, showAlert]
+    [
+      applications,
+      displayUser,
+      enrollmentApplications,
+      membersRemote,
+      refetchApplications,
+      showAlert,
+    ]
   )
 
   const handleStudentCertificateBulkIssue = useCallback(

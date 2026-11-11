@@ -19,7 +19,8 @@ export function mergeParticipatingVolunteerDetailRow(
     emailRaw,
     contact: row.contact || displayServerPiiAsIs(contactRaw, contactRaw),
     email: row.email || displayServerPiiAsIs(emailRaw, emailRaw),
-    gender: row.gender ?? '여성',
+    // 성별을 모르면 추정하지 않는다(정책: null·미등록 정보를 임의로 채우지 않음).
+    gender: row.gender ?? '-',
     birthDate: row.birthDate ?? '-',
     age: row.age ?? 0,
     scheduleChangeCancelCount: row.scheduleChangeCancelCount ?? 0,

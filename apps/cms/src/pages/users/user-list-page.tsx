@@ -113,6 +113,7 @@ import {
   instructorProfileFormValuesToCmsSettlement,
 } from '@/features/user/api/map-instructor-cms-profile'
 import { SCHOOL_TEACHER_EMPLOYMENT_BADGE_LABEL } from '@/features/user/detail/lib/school-teacher-employment-status'
+import { registerFormGenderToApiLabel } from '@/features/user/detail/lib/profile-form-gender'
 import { buildMemberListDeleteGuideLines, isMemberWithdrawListKind } from '@/features/user/shared/lib/member-withdraw-delete-guide'
 import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
@@ -986,7 +987,7 @@ export function UserListPage() {
         password: resolveAdminProvisionedTempPassword(email),
         name: values.name.trim(),
         phone: values.contact.trim(),
-        gender: values.gender === 'male' ? '남성' : '여성',
+        gender: registerFormGenderToApiLabel(values.gender),
         birthDate: values.birthDate.trim(),
         role: 'ADMIN',
         adminLevel: 'ADMIN',
@@ -1039,7 +1040,7 @@ export function UserListPage() {
         password: resolveAdminProvisionedTempPassword(email),
         name,
         phone: values.contact.trim() || undefined,
-        gender: values.gender === 'male' ? '남성' : '여성',
+        gender: registerFormGenderToApiLabel(values.gender),
         birthDate,
         role: 'INSTRUCTOR',
         affiliation: affiliationParts.length > 0 ? affiliationParts.join(' | ') : undefined,

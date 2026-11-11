@@ -4,6 +4,7 @@
  * 필수 항목은 `StudentRosterRowRequest` required와 동일.
  */
 
+import type { DefaultValues } from 'react-hook-form'
 import { z } from 'zod'
 import { isValidKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 
@@ -51,9 +52,10 @@ export const addStudentFormSchema = z.object({
 
 export type AddStudentFormValues = z.infer<typeof addStudentFormSchema>
 
-export const DEFAULT_ADD_STUDENT_FORM_VALUES: AddStudentFormValues = {
+/** 학생 추가 초기값 — 성별은 미선택으로 시작하고 zod 검증이 명시적 선택을 요구한다(남성 추정 금지). */
+export const DEFAULT_ADD_STUDENT_FORM_VALUES: DefaultValues<AddStudentFormValues> = {
   name: '',
-  gender: 'male',
+  gender: undefined,
   birthDate: '',
   contact: '',
   email: '',

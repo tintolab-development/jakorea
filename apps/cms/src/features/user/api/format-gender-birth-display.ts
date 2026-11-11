@@ -40,6 +40,27 @@ function appendManAge(formatted: string, age: number | null | undefined): string
 }
 
 /**
+ * BE 마스킹 생년월일 API 형식(`yyyy-**-**`)을 정책 §4-1 표기(`yyyy.**.**`)로 바꾼다.
+ * 그 밖의 값(원문·이미 정책 표기·빈 값)은 그대로 둔다 — 날짜를 지어내지 않는다.
+ */
+export function toPolicyMaskedBirthDisplay(value: string | null | undefined): string {
+  const trimmed = value?.trim() ?? ''
+  return /^\d{4}-\*\*-\*\*$/.test(trimmed) ? `${trimmed.slice(0, 4)}.**.**` : trimmed
+}
+
+/** 생년월일·나이 표시. 마스킹 값은 정책 표기로 바꾸고 나이(0 포함 없음)는 있을 때만 붙인다. */
+export function formatBirthWithOptionalAge(birthDate?: string | null, age?: number | null): string {
+  const raw = birthDate?.trim() ?? ''
+  const masked = toPolicyMaskedBirthDisplay(raw)
+  const formatted = masked !== raw ? masked : raw ? raw.split('.').join('. ') : ''
+  const hasAge = age != null && !(masked !== raw && age === 0)
+  if (formatted && hasAge) return `${formatted} (만 ${age}세)`
+  if (formatted) return formatted
+  if (hasAge) return `만 ${age}세`
+  return '-'
+}
+
+/**
  * 마스킹: `2017.**.** (만 N세)` · 원문: `1990. 03. 15 (만 N세)`
  * BE 마스킹 `yyyy-**-**` / 연도만(birthYear) 모두 지원.
  */

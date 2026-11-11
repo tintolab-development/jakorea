@@ -11,7 +11,8 @@ export type TalentDonationApplication = {
   id: string
   status: ApplicationStatus
   applicantName: string
-  gender: ApplicantGender
+  /** 원문 성별. 없거나 마스킹 응답이면 null — 다른 값으로 추정하지 않는다. */
+  gender: ApplicantGender | null
   /** ISO date YYYY-MM-DD */
   birthDate: string
   /** 원문 연락처 (목록 마스킹, 상세 전체) */

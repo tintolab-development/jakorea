@@ -1,3 +1,4 @@
+import { formatBirthWithOptionalAge } from '@/features/user/api/format-gender-birth-display'
 import type { ReactNode } from 'react'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -27,8 +28,7 @@ export type GeneralVolunteerApplicantBasicInfoStatusRow =
   | 'none'
 
 function formatBirthDateAndAge(birthDate: string, age: number): string {
-  const formatted = birthDate.replace(/\./g, '. ')
-  return `${formatted} (만 ${age}세)`
+  return formatBirthWithOptionalAge(birthDate, age)
 }
 
 export interface GeneralVolunteerApplicantBasicInfoProps {

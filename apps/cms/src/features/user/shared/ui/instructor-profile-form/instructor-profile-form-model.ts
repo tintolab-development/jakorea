@@ -97,7 +97,8 @@ export type LicenseOrAwardRow = {
 
 export type InstructorRegisterModalFormValues = {
   name: string
-  gender: 'male' | 'female'
+  /** 수정 폼에서 미등록·마스킹 성별은 undefined(선택 안 됨) — 남성으로 추정하지 않는다. */
+  gender: 'male' | 'female' | undefined
   birthDate: string
   contact: string
   email: string
@@ -183,7 +184,8 @@ export const EMPTY_LICENSE_OR_AWARD_ROW: LicenseOrAwardRow = {
 
 export const INITIAL_VALUES: InstructorProfileFormValues = {
   name: '',
-  gender: 'male',
+  // 신규 등록은 미선택으로 시작 — 남성으로 추정하지 않는다(필수 검증은 도메인 validator).
+  gender: undefined,
   birthDate: '',
   contact: '',
   email: '',
@@ -277,7 +279,8 @@ export function mapInstructorRegisterFormValuesToValidationInput(
 ): InstructorRegisterValidationInput {
   return {
     name: values.name,
-    gender: values.gender,
+    // 미선택(undefined)은 도메인 검증이 필수값 누락으로 처리한다.
+    gender: values.gender as InstructorRegisterValidationInput['gender'],
     birthDate: values.birthDate,
     contact: values.contact,
     email: values.email,

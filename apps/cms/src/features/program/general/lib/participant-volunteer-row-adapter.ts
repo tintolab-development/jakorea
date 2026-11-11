@@ -2,25 +2,24 @@
  * 개인 참여자 심사 mock → 봉사자 심사 UI(합격자·2차 면접) 재사용용 어댑터
  */
 
+import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
 import type { ApplicantApprovalStatusKey } from '@/features/program/shared/model/applicant-institution'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import { countInterviewAvailabilitySlots } from '@/features/program/general/lib/interview-availability-utils'
 import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
 
+// 정책 §4-1 공통 규칙(MASKING_POLICY)을 쓴다. 이미 마스킹된 BE 값은 다시 가리지 않는다.
 function maskContact(contact: string): string {
   const trimmed = contact.trim()
   if (!trimmed) return '-'
-  return trimmed.replace(/(\d{3})-(\d{4})-(\d{4})/, '$1-****-$3')
+  return MASKING_POLICY.phone(trimmed)
 }
 
 function maskEmail(email: string): string {
   const trimmed = email.trim()
   if (!trimmed) return '-'
-  const [local, domain] = trimmed.split('@')
-  if (!local || !domain) return trimmed
-  const visible = local.slice(0, Math.min(2, local.length))
-  return `${visible}***@${domain}`
+  return MASKING_POLICY.email(trimmed)
 }
 
 export function mapParticipantToVolunteerScreeningRow(

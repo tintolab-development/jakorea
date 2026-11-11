@@ -2,6 +2,8 @@
  * 일반 프로그램 — 개인 유형 참여자 신청 상세
  */
 
+import { formatBirthWithOptionalAge } from '@/features/user/api/format-gender-birth-display'
+import { mask1365IdForDisplay } from '@/features/user/api/map-external-identifiers'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsButton, CmsInput, CmsNumericInput, CmsSelect } from '@/shared/ui'
 import type {
@@ -89,12 +91,7 @@ export interface ApplicantGeneralIndividualBasicInfoProps {
 }
 
 function formatBirthDateAndAge(birthDate?: string, age?: number): string {
-  if (!birthDate && age == null) return '-'
-  const formatted = birthDate ? birthDate.replace(/\./g, '. ') : ''
-  if (formatted && age != null) return `${formatted} (만 ${age}세)`
-  if (formatted) return formatted
-  if (age != null) return `만 ${age}세`
-  return '-'
+  return formatBirthWithOptionalAge(birthDate, age)
 }
 
 function IndividualApplicantScreeningBasicInfo({
@@ -274,9 +271,10 @@ function IndividualApplicantScreeningTeamSection({
   )
 }
 
+/** 1365 ID: 정책 §4-1 뒤 2자리 마스킹(공통 mask1365IdForDisplay). 이미 마스킹된 값은 그대로. */
 function maskId1365(id: string): string {
-  if (id.length <= 4) return '*'.repeat(id.length)
-  return `${id.slice(0, 4)}***`
+  if (!id || id === '—' || id === '-') return id || '-'
+  return mask1365IdForDisplay(id)
 }
 
 function formatTeamMemberCountDisplay(
