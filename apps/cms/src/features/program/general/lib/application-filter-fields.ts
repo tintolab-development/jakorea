@@ -68,7 +68,8 @@ export const generalOrganizationApplicationFilterFields: FilterFieldConfig[] = [
 
 /**
  * 일반 프로그램(기관형) 상세 — 기관 신청 목록 필터. 시안 1141:234529 placeholder.
- * `generalOrganizationApplicationFilterFields`는 1사1교 기관 신청 목록이 그대로 쓴다.
+ * 1사1교 기관 신청 목록(시안 4175:104376)도 이 placeholder를 쓴다.
+ * `generalOrganizationApplicationFilterFields`는 교육받은 교사 기관 신청 목록이 그대로 쓴다.
  */
 const GENERAL_ORGANIZATION_INSTITUTION_FILTER_PLACEHOLDERS: Partial<Record<string, string>> = {
   organizationName: '기관명을 입력해 주세요',
@@ -164,7 +165,8 @@ export const generalInstructorApplicationFilterFields: FilterFieldConfig[] = [
 /**
  * 일반 프로그램(기관형) 상세 — 강사 신청 목록 리스트·캘린더 뷰 공통 필터.
  * 시안 1141:241761·1141:241422: 주소 라벨은 「자택 주소지」.
- * `generalInstructorApplicationFilterFields`(「자택 소재지」)는 1사1교·일반 개인형 리스트용으로 유지.
+ * 1사1교 강사 신청 리스트(Info 14716:4 일반 기관형과 동일)도 이 필터를 쓴다.
+ * `generalInstructorApplicationFilterFields`(「자택 소재지」)는 일반 개인형 리스트용으로 유지.
  */
 export const generalOrganizationInstructorFilterFields: FilterFieldConfig[] =
   generalInstructorApplicationFilterFields.map(field =>
