@@ -1,7 +1,17 @@
 import type { ApplicationDecisionCancelRequest } from '@/shared/api/generated/dashboard/schemas/applicationDecisionCancelRequest'
 import type { Notification } from '@/shared/api/generated/dashboard/schemas/notification'
 
-const CANCEL_NOTIFICATION_TIMINGS = new Set(['IMMEDIATE', 'SCHEDULED', 'ON_ANNOUNCEMENT'])
+type CancelNotificationTiming = NonNullable<Notification['timing']>
+
+const CANCEL_NOTIFICATION_TIMINGS: ReadonlySet<string> = new Set<CancelNotificationTiming>([
+  'IMMEDIATE',
+  'SCHEDULED',
+  'ON_ANNOUNCEMENT',
+])
+
+function isCancelNotificationTiming(value: string): value is CancelNotificationTiming {
+  return CANCEL_NOTIFICATION_TIMINGS.has(value)
+}
 
 function isBlankWireValue(value: unknown): boolean {
   if (value == null) return true
@@ -22,7 +32,7 @@ function sanitizeNotification(
 ): Notification | undefined {
   if (notification == null || typeof notification !== 'object') return undefined
   const timing = notification.timing?.trim().toUpperCase()
-  if (!timing || !CANCEL_NOTIFICATION_TIMINGS.has(timing)) return undefined
+  if (!timing || !isCancelNotificationTiming(timing)) return undefined
 
   if (timing === 'SCHEDULED') {
     const scheduledAt = sanitizeScheduledAt(notification.scheduledAt)

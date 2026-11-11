@@ -182,7 +182,11 @@ export type OrganizationApplicationApprovePayload = OrganizationApplicationAppro
   preferredScheduleRank?: number
 }
 
-/** 기관·봉사자 취소 — 중첩 notification. reason만 있으면 즉시. */
+/**
+ * 기관·봉사자 취소 — 중첩 notification. reason만 있으면 즉시.
+ * 생성 enum(`ApplicationDecisionCancelRequestNotificationTiming`)은 IMMEDIATE | SCHEDULED뿐이지만
+ * 기관 cancel-approval·cancel-rejection은 BE 지원, OpenAPI enum 정정 요청 중: ON_ANNOUNCEMENT(발표일 예약)도 보낸다.
+ */
 export type ApplicationDecisionCancelRequestWithNotification = Omit<
   ApplicationDecisionCancelRequest,
   'notification'
