@@ -17,7 +17,6 @@ import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { PermissionModal, type PermissionModalPayload } from '@/shared/components/permission-modal'
 import { NOTIFY_TIMING_CAPABILITY } from '@/shared/lib/notify-timing-capability'
-import { toScheduledOnlyNotifyTiming } from '@/features/program/general/lib/application-decision-notify-timing'
 import { StatusDropdownCell, STATUS_DROPDOWN_CELL_CLASSNAME } from '@/shared/components'
 import { getInstructorRoleTag } from '@/shared/lib/status-tag-specs'
 import {
@@ -50,7 +49,17 @@ import {
   createInstructorAssignmentRemote,
   putRepresentativeInstructorRemote,
 } from '@/features/program/general/api/instructor-assignments-api-client'
-import { toInstitutionDetailAssignmentCancelRequest } from '@/features/program/general/lib/instructor-cancel-fault-party'
+import {
+  formatInstructorAssignmentAnnouncementDateMessage,
+  INSTRUCTOR_ASSIGNMENT_CANCEL_CONFLICT_MESSAGE,
+  INSTRUCTOR_UNASSIGN_NOTIFICATION_ALREADY_SENT_MESSAGE,
+  isInstructorAssignmentConflictError,
+  isInstructorAssignmentNotificationSent,
+  isInstructorUnassignReasonRequiredError,
+  resolveInstructorUnassignNotificationSent,
+  toInstructorAssignmentCreateNotifyTiming,
+  toInstructorUnassignCancelBody,
+} from '@/features/program/general/lib/instructor-assignment-notification'
 import { resolveAssignableSchedulePayloadFromSession } from '@/features/program/general/lib/organization-instructor-assignable-schedule'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import {
@@ -69,12 +78,6 @@ import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 /** 추가 배정 — Figma CMS 9760:8214 ‘추가 배정 안내’ (D: 개인형 참여 강사) */
 const ADD_ASSIGN_MODAL_TITLE = '추가 배정 안내'
-
-/**
- * 배정 알림 발송 여부 — 배정 목록 API(`instructor-assignments`)에 필드가 없어 판단 불가.
- * 기관형 참여 강사 상세와 같이 발송 후 시안(03-2: 사유 + 알림)으로 연다.
- */
-const INDIVIDUAL_INSTRUCTOR_UNASSIGN_NOTIFICATION_SENT: boolean | undefined = undefined
 
 /** 시안 03-1·03-2 본문 대상 `[2026.01.09(금) 09:20 ~ 11:20]` — 회차·차시 조각은 뺀다 */
 function formatUnassignScheduleSubjectLabel(scheduleLabel: string): string {
@@ -137,6 +140,32 @@ export function ParticipatingIndividualInstructorAssignmentSection({
 
     maxAssignableInstructors: resolveRequiredAssignableInstructorCount(program),
   })
+
+  /**
+   * 400 VALIDATION_FAILED(발송 전으로 보고 `{}` 취소했으나 서버는 발송 후) 배정 id — 화면에서 「발송 후」로 고정.
+   */
+  const [forcedSentAssignmentIds, setForcedSentAssignmentIds] = useState<ReadonlySet<string>>(
+    () => new Set()
+  )
+  /**
+   * 배정 알림 발송 여부(BE 항목 1-A) — 배정 목록 `assignmentNotificationStatus`.
+   * SENT → 「발송 후」(03-2: 사유 + 알림), NONE·SCHEDULED·CANCELLED → 「발송 전」(03-1: 안내만).
+   * 필드 없는 구버전 응답은 undefined(기존처럼 발송 후 시안).
+   */
+  const assignmentNotificationSentById = useMemo(() => {
+    const map = new Map<string, boolean | undefined>()
+    for (const item of assignment.assignments) {
+      if (item.assignmentId == null) continue
+      const id = String(item.assignmentId)
+      map.set(
+        id,
+        forcedSentAssignmentIds.has(id)
+          ? true
+          : isInstructorAssignmentNotificationSent(item.assignmentNotificationStatus)
+      )
+    }
+    return map
+  }, [assignment.assignments, forcedSentAssignmentIds])
 
   useEffect(() => {
     setAssignedSchedules(assignment.assignedSchedules)
@@ -405,8 +434,13 @@ export function ParticipatingIndividualInstructorAssignmentSection({
       if (assignInFlightRef.current) return false
       assignInFlightRef.current = true
       setAssignSubmitting(true)
+      // 일반 개인형 — 발표일에 맞춰서(ON_ANNOUNCEMENT) 허용, scheduledAt 동시 전송 금지(BE 항목 2)
       const assignmentNotify = notifyPayload
-        ? toScheduledOnlyNotifyTiming(notifyPayload.notifyTiming, notifyPayload.manualNotifyAt)
+        ? toInstructorAssignmentCreateNotifyTiming(
+            notifyPayload.notifyTiming,
+            notifyPayload.manualNotifyAt,
+            { allowOnAnnouncement: true }
+          )
         : undefined
       try {
         let leadAssigned = assignedSchedules.some(row => row.role === 'lead')
@@ -460,6 +494,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
           return false
         }
         const message =
+          formatInstructorAssignmentAnnouncementDateMessage(error) ??
           getParticipationConsentRequiredMessage(error) ??
           getGeneralProgramApiErrorMessage(
             error,
@@ -487,11 +522,8 @@ export function ParticipatingIndividualInstructorAssignmentSection({
     async (payload: PermissionModalPayload) => {
       if (selectedAssignedKeys.length === 0) return
       const removedRows = assignedSchedules.filter(r => selectedAssignedKeys.includes(r.id))
-      // 시안 03-1·03-2 — 취소 귀책 없음(API 선택값 — 생략 시 서버 ADMIN). 발송 여부 미제공 → 발송 후 본문
-      const cancelBody = toInstitutionDetailAssignmentCancelRequest(
-        payload,
-        INDIVIDUAL_INSTRUCTOR_UNASSIGN_NOTIFICATION_SENT
-      )
+      // 시안 03-1·03-2 — 취소 귀책 없음(API 선택값 — 생략 시 서버 ADMIN).
+      // 배정마다 발송 전이면 `{}`, 발송 후(·미상)면 사유·알림 시점(BE 항목 1-A)
 
       if (!assignment.remoteEnabled) {
         notifyProgramApiUnavailable(
@@ -500,11 +532,21 @@ export function ParticipatingIndividualInstructorAssignmentSection({
         )
         return
       }
+      let cancelledCount = 0
+      let pendingAssignmentId: string | null = null
+      let pendingBodyWasEmpty = false
       try {
         for (const row of removedRows) {
           const assignmentId = row.assignmentId ?? row.id
           if (!assignmentId) continue
-          await cancelInstructorAssignmentRemote(String(assignmentId), cancelBody)
+          const rowBody = toInstructorUnassignCancelBody(
+            payload,
+            assignmentNotificationSentById.get(String(assignmentId))
+          )
+          pendingAssignmentId = String(assignmentId)
+          pendingBodyWasEmpty = Object.keys(rowBody).length === 0
+          await cancelInstructorAssignmentRemote(String(assignmentId), rowBody)
+          cancelledCount += 1
         }
         await assignment.invalidate()
         setUnassignConfirmOpen(false)
@@ -512,6 +554,32 @@ export function ParticipatingIndividualInstructorAssignmentSection({
         // 기관형 참여 강사 상세와 같은 「취소 완료」 공통 알림
         showAlert({ title: '취소 완료', content: '취소되었습니다.' })
       } catch (error) {
+        // 「발송 전」 취소 중 서버가 발송 후로 판단 → 해당 배정을 발송 후로 보고 팝업을 「발송 후」로 다시 연다
+        if (
+          pendingBodyWasEmpty &&
+          pendingAssignmentId != null &&
+          isInstructorUnassignReasonRequiredError(error)
+        ) {
+          const sentId = pendingAssignmentId
+          setForcedSentAssignmentIds(prev => new Set(prev).add(sentId))
+          if (cancelledCount > 0) {
+            // 일부 취소됨 — 목록을 다시 불러오면 선택이 초기화되므로 팝업을 닫고 다시 선택하게 한다
+            await assignment.invalidate()
+            setUnassignConfirmOpen(false)
+          } else {
+            setUnassignConfirmOpen(true)
+          }
+          showAlert({ title: '안내', content: INSTRUCTOR_UNASSIGN_NOTIFICATION_ALREADY_SENT_MESSAGE })
+          return
+        }
+        if (isInstructorAssignmentConflictError(error)) {
+          await assignment.invalidate()
+          setUnassignConfirmOpen(false)
+          setSelectedAssignedKeys([])
+          showAlert({ title: '배정 취소 실패', content: INSTRUCTOR_ASSIGNMENT_CANCEL_CONFLICT_MESSAGE })
+          return
+        }
+        if (cancelledCount > 0) await assignment.invalidate()
         const message =
           error instanceof Error && error.message.trim()
             ? error.message
@@ -519,7 +587,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
         showAlert({ title: '배정 취소 실패', content: message })
       }
     },
-    [selectedAssignedKeys, assignedSchedules, assignment, showAlert]
+    [selectedAssignedKeys, assignedSchedules, assignment, assignmentNotificationSentById, showAlert]
   )
 
   const handleSelectAssignConfirm = useCallback(
@@ -592,6 +660,17 @@ export function ParticipatingIndividualInstructorAssignmentSection({
   const handleAddAssignSessionIdsChange = useCallback((ids: string[]) => {
     setAddAssignWaitingRowId(ids[0] ?? null)
   }, [])
+
+  /** 선택한 배정 중 하나라도 발송 후면 「발송 후」, 모두 발송 전이면 「발송 전」, 미상이면 undefined(발송 후) */
+  const unassignNotificationSent = useMemo(
+    () =>
+      resolveInstructorUnassignNotificationSent(
+        assignedSchedules
+          .filter(r => selectedAssignedKeys.includes(r.id))
+          .map(r => assignmentNotificationSentById.get(String(r.assignmentId ?? r.id)))
+      ),
+    [assignedSchedules, assignmentNotificationSentById, selectedAssignedKeys]
+  )
 
   const unassignScheduleLabels = useMemo(
     () =>
@@ -732,7 +811,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
         targetNames={unassignScheduleLabels}
         onConfirm={handleUnassignConfirm}
         variant="individual-schedule"
-        notificationSent={INDIVIDUAL_INSTRUCTOR_UNASSIGN_NOTIFICATION_SENT}
+        notificationSent={unassignNotificationSent}
       />
 
       {/* 선택 배정 안내 — 공통 모달(알림은 기관형 선택 배정과 같은 기본값) */}
@@ -792,8 +871,9 @@ export function ParticipatingIndividualInstructorAssignmentSection({
         confirmLabel="강사 배정"
         confirmVariant="primary"
         requireReason={false}
-        notifyTimingOptions="two"
-        notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.scheduledOnly}
+        // 일반 개인형 강사 배정 create — 즉시 / 발표일에 맞춰서 / 직접 설정(BE 항목 2)
+        notifyTimingOptions="three"
+        notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.full}
       />
     </div>
   )

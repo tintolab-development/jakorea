@@ -58,7 +58,7 @@ export function resolveInstitutionCancelRejectionModalTitle(
 /**
  * 반려 취소(알림 발송 후) 알림 옵션.
  * 일반(기관형) 시안 04-2: 즉시 / 발표일에 맞춰서 / 직접 설정 — BE cancel-rejection이 ON_ANNOUNCEMENT 지원
- * (OpenAPI enum 정정 요청 중). 기본(1사1교 등)은 기존 2옵션.
+ * (생성 타입 `NotificationTiming`, 전송 body는 `toOrganizationApplicationDecisionCancelRequest`). 기본(1사1교 등)은 기존 2옵션.
  */
 export function resolveInstitutionCancelRejectionNotifyTimingOptions(
   copyVariant: InstitutionCancelRejectionCopyVariant = 'default'

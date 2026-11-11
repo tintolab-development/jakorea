@@ -1,7 +1,7 @@
 /**
  * 선택 배정 확인 모달 (강사 배정 안내 컨펌)
  * 배정 대기 강사 목록에서 강사 선택 후 "선택 배정" 클릭 시 노출.
- * 배정 생성 API에 전달할 알림 시점(즉시/직접 설정)을 여기서 수집한다.
+ * 배정 생성 API에 전달할 알림 시점(즉시/직접 설정, 일반 기관형은 발표일에 맞춰서 포함)을 여기서 수집한다.
  */
 
 import {
@@ -31,6 +31,11 @@ export interface SchoolDetailSelectAssignConfirmModalProps {
    * 시안에 알림 발송 선택이 없어 즉시 발송으로 확정한다. 기본은 기존 문구·알림 선택.
    */
   copyVariant?: 'default' | 'general-institution'
+  /**
+   * true면 알림 시점에 「발표일에 맞춰서」를 연다(일반 기관형 강사 배정 create `ON_ANNOUNCEMENT`, BE 항목 2).
+   * 생략 시 기존(즉시/직접 설정) — 1사1교.
+   */
+  allowOnAnnouncement?: boolean
 }
 
 /** 시안 09-1(단건)·11-1(일괄) 본문 */
@@ -74,6 +79,7 @@ export function SchoolDetailSelectAssignConfirmModal({
   onConfirm,
   confirmLoading = false,
   copyVariant = 'default',
+  allowOnAnnouncement = false,
 }: SchoolDetailSelectAssignConfirmModalProps) {
   if (copyVariant === 'general-institution') {
     const uniqueCount = new Set(instructorNames.map(name => name.trim()).filter(Boolean)).size
@@ -118,8 +124,10 @@ export function SchoolDetailSelectAssignConfirmModal({
       confirmLabel="강사 배정"
       confirmVariant="primary"
       requireReason={false}
-      notifyTimingOptions="two"
-      notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.scheduledOnly}
+      notifyTimingOptions={allowOnAnnouncement ? 'three' : 'two'}
+      notifyTimingCapability={
+        allowOnAnnouncement ? NOTIFY_TIMING_CAPABILITY.full : NOTIFY_TIMING_CAPABILITY.scheduledOnly
+      }
     />
   )
 }
