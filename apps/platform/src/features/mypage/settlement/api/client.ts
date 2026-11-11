@@ -56,14 +56,18 @@ export function mapSettlementOverviewStatus(input: {
   status?: string | null
   statementStatus?: string | null
   paymentStatus?: string | null
+  statementReapplyAvailable?: boolean | null
 }): SettlementOverviewStatus | null {
   const payment = normalizeStatusToken(input.paymentStatus)
   const statement = normalizeStatusToken(input.statementStatus ?? input.status)
 
   if (payment === 'PAID' || statement === 'PAID') return 'paid'
+  // DRAFT = 정정 승인 후 강사 재신청 대기. 강의 상세 정산 탭·CMS와 같이 "지급 정정 요청"으로 본다
   if (
     statement === 'CORRECTION_REQUESTED' ||
-    payment === 'CORRECTION_REQUESTED'
+    payment === 'CORRECTION_REQUESTED' ||
+    statement === 'DRAFT' ||
+    input.statementReapplyAvailable === true
   ) {
     return 'correction_requested'
   }
@@ -110,6 +114,42 @@ function sumSubmittedAmounts(
   return hasAmount ? total : null
 }
 
+function readTimeMs(value: unknown): number {
+  const text = readOptionalText(value)
+  const ms = text ? Date.parse(text) : Number.NaN
+  return Number.isFinite(ms) ? ms : Number.NEGATIVE_INFINITY
+}
+
+/**
+ * 강사 정산은 "배정 1건 = 정산 1건"이다. 같은 assignmentId의 예전 신청(RESUBMITTED 등)은 빼고
+ * 가장 늦게 만든 신청(같으면 applicationId가 큰 쪽) 한 행만 남긴다. assignmentId가 없으면 그대로 둔다.
+ */
+export function pickLatestInstructorSettlementRows(
+  rows: readonly PortalSettlementApplication[],
+): PortalSettlementApplication[] {
+  const latestByAssignment = new Map<number, PortalSettlementApplication>()
+  const result: PortalSettlementApplication[] = []
+  for (const row of rows) {
+    const assignmentId = readOptionalNumber(row.assignmentId)
+    if (assignmentId == null) {
+      result.push(row)
+      continue
+    }
+    const current = latestByAssignment.get(assignmentId)
+    if (!current) {
+      latestByAssignment.set(assignmentId, row)
+      continue
+    }
+    const byCreated = readTimeMs(row.createdAt) - readTimeMs(current.createdAt)
+    const byId =
+      (readOptionalNumber(row.applicationId) ?? 0) - (readOptionalNumber(current.applicationId) ?? 0)
+    if (byCreated > 0 || (byCreated === 0 && byId > 0)) {
+      latestByAssignment.set(assignmentId, row)
+    }
+  }
+  return [...result, ...latestByAssignment.values()]
+}
+
 function mapInstructorSettlementItem(
   row: PortalSettlementApplication,
   programTitleByProgramId: Map<string, string>,
@@ -120,6 +160,7 @@ function mapInstructorSettlementItem(
     status: row.status,
     statementStatus: row.statementStatus,
     paymentStatus: row.paymentStatus,
+    statementReapplyAvailable: row.statementReapplyAvailable,
   })
   if (!status) return null
   const programId = readOptionalNumber(row.programId)
@@ -246,7 +287,7 @@ export async function fetchSettlementOverviewPageData(input?: {
 
   const items: SettlementOverviewItem[] = []
 
-  for (const row of instructorRows) {
+  for (const row of pickLatestInstructorSettlementRows(instructorRows)) {
     const mapped = mapInstructorSettlementItem(row, programTitleByProgramId)
     if (mapped) items.push(mapped)
   }
