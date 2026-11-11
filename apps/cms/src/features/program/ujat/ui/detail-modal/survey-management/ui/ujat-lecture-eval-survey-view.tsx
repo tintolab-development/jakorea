@@ -20,7 +20,7 @@ import type { UjatRegisteredSurvey } from '../lib/ujat-satisfaction-survey'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import { canDownloadSurveyResults } from './ujat-survey-registered-actions'
 import { UjatSurveyEmptyState } from './ujat-survey-empty-state'
-import { UjatSurveyPreStartState } from './ujat-survey-pre-start-state'
+import { UjatSurveyNoResponseState } from './ujat-survey-no-response-state'
 import { UjatLectureEvalSubmittedIcon } from './ujat-lecture-eval-submitted-icon'
 import { UjatSurveySubmittedState } from './ujat-survey-submitted-state'
 import { UjatLectureEvalFormView } from './ujat-lecture-eval-form-view'
@@ -40,6 +40,8 @@ export type UjatLectureEvalSurveyViewProps = {
   resultsExportRef: RefObject<HTMLDivElement | null>
   onTabChange: (tab: UjatLectureEvalTabKey) => void
   onRegisterClick: () => void
+  /** 진행 전 — 등록된 강의평가 매핑 삭제 */
+  onDeleteClick: () => void
   onOpenTemplatePreview: () => void
   onFormDraftChange: (draft: WritingFormDraft) => void
   onSubmitClick: () => void
@@ -58,6 +60,7 @@ export function UjatLectureEvalSurveyView({
   resultsExportRef,
   onTabChange,
   onRegisterClick,
+  onDeleteClick,
   onOpenTemplatePreview,
   onFormDraftChange,
   onSubmitClick,
@@ -99,10 +102,14 @@ export function UjatLectureEvalSurveyView({
         onRegisterClick={onRegisterClick}
       />
     ) : showPreStart ? (
-      <UjatSurveyPreStartState
+      <UjatSurveyNoResponseState
         title={UJAT_LECTURE_EVAL_PRE_START_COPY.title}
         description={UJAT_LECTURE_EVAL_PRE_START_COPY.description}
+        deleteButtonLabel={UJAT_LECTURE_EVAL_PRE_START_COPY.deleteButton}
         previewButtonLabel={UJAT_LECTURE_EVAL_PRE_START_COPY.previewButton}
+        canDelete
+        embedded
+        onDeleteClick={onDeleteClick}
         onOpenTemplatePreview={onOpenTemplatePreview}
       />
     ) : showSubmitted ? (

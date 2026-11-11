@@ -24,7 +24,10 @@ import {
   readFormVersionStatus,
   resolveProgramFormWritePlan,
 } from '@/features/template/lib/program-form-version-write-guard'
-import type { ProgramFormBindingResponse } from '@/shared/api/generated/forms-surveys/schemas'
+import type {
+  ProgramFormBindingRequest,
+  ProgramFormBindingResponse,
+} from '@/shared/api/generated/forms-surveys/schemas'
 import {
   extractApiErrorMessage,
   getApiErrorCode,
@@ -466,52 +469,12 @@ export async function saveProgramSurveyFormEdit(
       }
     }
 
-    const source = await fetchFormTemplateVersionRemote(target.sourceVersionId)
-    if (source.templateId == null) {
+    const published = await publishProgramOwnedSurveyVersion(target, draft)
+    if (!published.ok) {
       await restoreUnlockPeriod()
-      return { ok: false, message: '바인딩된 양식의 템플릿 ID를 찾을 수 없습니다.' }
+      return published
     }
-
-    if (
-      readFormTemplateScope(source) === 'PROGRAM' &&
-      String(source.ownerProgramId ?? '') !== String(target.programId)
-    ) {
-      await restoreUnlockPeriod()
-      return { ok: false, message: PROGRAM_SURVEY_FORM_FOREIGN_OWNER_MESSAGE }
-    }
-
-    const preparedDraft = await prepareProgramSurveyDraftVersion(target, {
-      ...source,
-      templateId: source.templateId,
-    })
-    let { templateId, draftVersionId } = preparedDraft
-    if (draftVersionId == null) {
-      await restoreUnlockPeriod()
-      return { ok: false, message: '프로그램 전용 양식 초안을 만들지 못했습니다.' }
-    }
-
-    const schemaJson = writingFormDraftToSchemaJson(normalizeWritingFormDraft(draft))
-    try {
-      await updateFormTemplateVersionRemote(draftVersionId, { schemaJson })
-    } catch (error) {
-      if (!isFormVersionImmutableError(error)) throw error
-      const recopy = await copySurveyOwnedDraft(preparedDraft.catalogTemplateId, target)
-      if (recopy.templateVersionId == null) throw error
-      templateId = recopy.templateId
-      draftVersionId = recopy.templateVersionId
-      await updateFormTemplateVersionRemote(draftVersionId, { schemaJson })
-    }
-    const templateVersionId = await publishFormTemplateVersionById(draftVersionId)
-
-    const templateName = target.title.trim()
-    if (templateId !== source.templateId && templateName !== '') {
-      try {
-        // 복제 템플릿명은 서버가 「… 복사본」으로 만든다 — 설문 제목이 바뀌지 않게 원래 이름으로 되돌린다.
-        await updateFormTemplateRemote(templateId, { templateName })
-      } catch (error) {
-        console.warn('[program-survey-form-edit] restore template name failed', error)
-      }
-    }
+    const { templateId, templateVersionId, schemaJson } = published
 
     await updateAdminProgramFormBindingRemote(target.programId, target.bindingId, {
       templateId,
@@ -524,4 +487,115 @@ export async function saveProgramSurveyFormEdit(
     await restoreUnlockPeriod()
     throw error
   }
+}
+
+/**
+ * 원본 version(`target.sourceVersionId`)을 프로그램 전용 DRAFT로 만들어 본문을 저장하고 게시한다.
+ * 양식 관리 원본 템플릿은 바꾸지 않는다. 바인딩은 건드리지 않는다.
+ */
+async function publishProgramOwnedSurveyVersion(
+  target: ProgramSurveyFormEditTarget,
+  draft: WritingFormDraft
+): Promise<
+  | {
+      ok: true
+      templateId: number
+      templateVersionId: number
+      schemaJson: ReturnType<typeof writingFormDraftToSchemaJson>
+    }
+  | { ok: false; message: string }
+> {
+  const source = await fetchFormTemplateVersionRemote(target.sourceVersionId)
+  if (source.templateId == null) {
+    return { ok: false, message: '바인딩된 양식의 템플릿 ID를 찾을 수 없습니다.' }
+  }
+
+  if (
+    readFormTemplateScope(source) === 'PROGRAM' &&
+    String(source.ownerProgramId ?? '') !== String(target.programId)
+  ) {
+    return { ok: false, message: PROGRAM_SURVEY_FORM_FOREIGN_OWNER_MESSAGE }
+  }
+
+  const preparedDraft = await prepareProgramSurveyDraftVersion(target, {
+    ...source,
+    templateId: source.templateId,
+  })
+  let { templateId, draftVersionId } = preparedDraft
+  if (draftVersionId == null) {
+    return { ok: false, message: '프로그램 전용 양식 초안을 만들지 못했습니다.' }
+  }
+
+  const schemaJson = writingFormDraftToSchemaJson(normalizeWritingFormDraft(draft))
+  try {
+    await updateFormTemplateVersionRemote(draftVersionId, { schemaJson })
+  } catch (error) {
+    if (!isFormVersionImmutableError(error)) throw error
+    const recopy = await copySurveyOwnedDraft(preparedDraft.catalogTemplateId, target)
+    if (recopy.templateVersionId == null) throw error
+    templateId = recopy.templateId
+    draftVersionId = recopy.templateVersionId
+    await updateFormTemplateVersionRemote(draftVersionId, { schemaJson })
+  }
+  const templateVersionId = await publishFormTemplateVersionById(draftVersionId)
+
+  const templateName = target.title.trim()
+  if (templateId !== source.templateId && templateName !== '') {
+    try {
+      // 복제 템플릿명은 서버가 「… 복사본」으로 만든다 — 설문 제목이 바뀌지 않게 원래 이름으로 되돌린다.
+      await updateFormTemplateRemote(templateId, { templateName })
+    } catch (error) {
+      console.warn('[program-survey-form-edit] restore template name failed', error)
+    }
+  }
+
+  return { ok: true, templateId, templateVersionId, schemaJson }
+}
+
+export type ProgramSurveyFormCreateBindingResult =
+  | { ok: true; binding?: ProgramFormBindingResponse | null }
+  | { ok: false; message: string }
+
+/** 신규 등록 대기 — 에디터 「저장」 전까지 서버에는 아무것도 만들지 않는다. */
+export type ProgramSurveyFormCreatePlan = {
+  /** 만족도조사 일정별은 여러 건. 모두 저장된 같은 version으로 묶는다. */
+  bindings: ProgramFormBindingRequest[]
+  /** true면 요청에 담긴 기간(일정별 만족도조사)을 쓰고, false면 에디터 「작성 기간」으로 채운다. */
+  keepBindingPeriods: boolean
+  createBinding: (payload: ProgramFormBindingRequest) => Promise<ProgramSurveyFormCreateBindingResult>
+}
+
+/**
+ * 설문조사·만족도조사·강의평가 신규 등록 저장.
+ * 프로그램 전용 양식을 게시한 뒤에야 바인딩(프로그램 매핑)을 만든다. 에디터를 취소하면 아무것도 등록되지 않는다.
+ */
+export async function saveProgramSurveyFormCreate(
+  target: ProgramSurveyFormEditTarget,
+  plan: ProgramSurveyFormCreatePlan,
+  draft: WritingFormDraft
+): Promise<ProgramSurveyFormEditResult> {
+  const validation = validateSurveyWritingDraft(draft)
+  if (!validation.ok) return validation
+  if (plan.bindings.length === 0) {
+    return { ok: false, message: '등록할 설문 대상을 찾지 못했습니다. 다시 시도해 주세요.' }
+  }
+
+  const published = await publishProgramOwnedSurveyVersion(target, draft)
+  if (!published.ok) return published
+  const { templateId, templateVersionId, schemaJson } = published
+  const draftPeriod = resolveSurveyBindingPeriodForFormSave(
+    readSurveySubmissionPeriodFromSchema(schemaJson)
+  )
+
+  for (const payload of plan.bindings) {
+    const result = await plan.createBinding({
+      ...payload,
+      templateId,
+      templateVersionId,
+      ...(plan.keepBindingPeriods ? {} : draftPeriod),
+    })
+    if (!result.ok) return { ok: false, message: result.message, refetchBindings: true }
+  }
+
+  return { ok: true, templateId, templateVersionId }
 }

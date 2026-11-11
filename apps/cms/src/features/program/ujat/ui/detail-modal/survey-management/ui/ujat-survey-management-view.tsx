@@ -116,7 +116,7 @@ import {
   pickLastSurveyPollEducationSlot,
 } from '@/features/program/shared/lib/survey-management/survey-poll-schedule-options'
 import { resolveUjatSurveyScheduleFieldFromOptions } from '../lib/ujat-survey-schedule-register'
-import { loadProgramSurveyFormEditAfterBinding } from '@/features/program/shared/lib/survey-management/load-program-survey-form-edit'
+import { loadProgramSurveyFormEditForCreate } from '@/features/program/shared/lib/survey-management/load-program-survey-form-edit'
 import { isSatisfactionPerScheduleWritingPeriodLocked } from '@/features/program/shared/lib/survey-management/satisfaction-binding-contract'
 import { useProgramSurveyScheduleOptions } from '@/features/program/shared/hooks/use-program-survey-schedule-options'
 import { SurveyPollRegisterModal } from '@/features/program/shared/ui/survey-management/survey-poll-register-modal'
@@ -221,6 +221,8 @@ export function UjatSurveyManagementView({
   const [submittingSatisfactionSurvey, setSubmittingSatisfactionSurvey] = useState(false)
   const [satisfactionDeleteModalOpen, setSatisfactionDeleteModalOpen] = useState(false)
   const [satisfactionDeleteConfirmWord, setSatisfactionDeleteConfirmWord] = useState('')
+  const [lectureEvalDeleteModalOpen, setLectureEvalDeleteModalOpen] = useState(false)
+  const [lectureEvalDeleteConfirmWord, setLectureEvalDeleteConfirmWord] = useState('')
   const [satisfactionDownloadModalOpen, setSatisfactionDownloadModalOpen] = useState(false)
   const [downloadingSatisfactionResults, setDownloadingSatisfactionResults] = useState(false)
   const [shareToastOpen, setShareToastOpen] = useState(false)
@@ -649,29 +651,22 @@ export function UjatSurveyManagementView({
           required: false,
           ...targetScopePayload,
         }
-        const result = await createBinding(payload)
-        if (!result.ok) {
-          await invalidateSurveyCaches()
-          void showAlert({ title: '등록 실패', content: result.message })
-          return
-        }
-        if (displayProgram != null && result.binding != null) {
-          const editLoad = await loadProgramSurveyFormEditAfterBinding(
-            String(displayProgram.id),
-            result.binding,
-            selectedSurveyTemplateId,
-            { schedules: surveyScheduleOptionsQuery.schedules }
-          )
-          setSurveyCreateModalOpen(false)
-          setSelectedSurveyScheduleValue(null)
-          if (editLoad.ok) {
-            setProgramFormEdit(editLoad.edit)
-          } else {
-            void showAlert({ title: '양식 편집', content: editLoad.message })
-          }
+        if (displayProgram == null) return
+        // 등록 버튼에서는 바인딩을 만들지 않는다. 에디터 「저장」 때 양식 게시 후 바인딩을 만든다.
+        const editLoad = await loadProgramSurveyFormEditForCreate(
+          String(displayProgram.id),
+          [payload],
+          selectedSurveyTemplateId,
+          createBinding,
+          { schedules: surveyScheduleOptionsQuery.schedules }
+        )
+        if (!editLoad.ok) {
+          void showAlert({ title: '양식 편집', content: editLoad.message })
           return
         }
         setSurveyCreateModalOpen(false)
+        setSelectedSurveyScheduleValue(null)
+        setProgramFormEdit(editLoad.edit)
         return
       }
 
@@ -697,7 +692,6 @@ export function UjatSurveyManagementView({
     classifiedBindings,
     createBinding,
     displayProgram,
-    invalidateSurveyCaches,
     registerScheduleOptions.length,
     registeredSurveys.length,
     resolveRegisterScheduleTarget,
@@ -893,38 +887,26 @@ export function UjatSurveyManagementView({
           startAtLocked: false,
           startImmediately: false,
         } as ProgramFormBindingRequest
-        const result = await createBinding(payload)
-        if (!result.ok) {
-          await invalidateSurveyCaches()
-          void showAlert({ title: '등록 실패', content: result.message })
-          return
-        }
-        if (displayProgram != null && result.binding != null) {
-          const editLoad = await loadProgramSurveyFormEditAfterBinding(
-            String(displayProgram.id),
-            {
-              ...result.binding,
-              formType: result.binding.formType ?? payload.formType,
-              targetScope: result.binding.targetScope ?? payload.targetScope,
-              targetScopeId: result.binding.targetScopeId ?? payload.targetScopeId,
-            },
-            selectedSatisfactionTemplateId,
-            {
-              schedules: surveyScheduleOptionsQuery.schedules,
-              windowDays: 7,
-              targetScope: result.binding.targetScope ?? payload.targetScope,
-              targetScopeId: result.binding.targetScopeId ?? payload.targetScopeId,
-            }
-          )
-          setSatisfactionCreateModalOpen(false)
-          if (editLoad.ok) {
-            setProgramFormEdit(editLoad.edit)
-          } else {
-            void showAlert({ title: '양식 편집', content: editLoad.message })
+        if (displayProgram == null) return
+        // 등록 버튼에서는 바인딩을 만들지 않는다. 에디터 「저장」 때 양식 게시 후 바인딩을 만든다.
+        const editLoad = await loadProgramSurveyFormEditForCreate(
+          String(displayProgram.id),
+          [payload],
+          selectedSatisfactionTemplateId,
+          createBinding,
+          {
+            schedules: surveyScheduleOptionsQuery.schedules,
+            windowDays: 7,
+            targetScope: payload.targetScope ?? undefined,
+            targetScopeId: payload.targetScopeId ?? undefined,
           }
+        )
+        if (!editLoad.ok) {
+          void showAlert({ title: '양식 편집', content: editLoad.message })
           return
         }
         setSatisfactionCreateModalOpen(false)
+        setProgramFormEdit(editLoad.edit)
         return
       }
 
@@ -950,7 +932,6 @@ export function UjatSurveyManagementView({
     activeSatisfactionAudience,
     createBinding,
     displayProgram,
-    invalidateSurveyCaches,
     resolveRegisterScheduleTarget,
     selectedSatisfactionTemplateId,
     showAlert,
@@ -997,6 +978,40 @@ export function UjatSurveyManagementView({
     setSatisfactionDeleteModalOpen(false)
     setSatisfactionDeleteConfirmWord('')
   }, [satisfactionDeleteConfirmWord, handleDeleteSatisfactionSurvey])
+
+  /** 강의평가 진행 전 — 등록된 매핑 삭제 (설문조사·만족도조사와 동일) */
+  const handleDeleteLectureEvalSurvey = useCallback(async () => {
+    if (!lectureEvalSurvey || lectureEvalSurvey.status !== 'before_start') return
+    if (surveysRemote && lectureEvalSurvey.bindingId) {
+      const result = await deleteBinding(lectureEvalSurvey.bindingId)
+      if (!result.ok) {
+        void showAlert({ title: '삭제 실패', content: result.message })
+      }
+      return
+    }
+    void showAlert({
+      title: '삭제 불가',
+      content: '강의평가 삭제는 remote API가 활성화된 환경에서만 이용할 수 있습니다.',
+    })
+  }, [deleteBinding, lectureEvalSurvey, showAlert, surveysRemote])
+
+  const handleOpenLectureEvalDeleteModal = useCallback(() => {
+    if (!lectureEvalSurvey || lectureEvalSurvey.status !== 'before_start') return
+    setLectureEvalDeleteConfirmWord('')
+    setLectureEvalDeleteModalOpen(true)
+  }, [lectureEvalSurvey])
+
+  const handleCloseLectureEvalDeleteModal = useCallback(() => {
+    setLectureEvalDeleteModalOpen(false)
+    setLectureEvalDeleteConfirmWord('')
+  }, [])
+
+  const handleConfirmLectureEvalDelete = useCallback(() => {
+    if (lectureEvalDeleteConfirmWord.trim() !== '삭제') return
+    void handleDeleteLectureEvalSurvey()
+    setLectureEvalDeleteModalOpen(false)
+    setLectureEvalDeleteConfirmWord('')
+  }, [handleDeleteLectureEvalSurvey, lectureEvalDeleteConfirmWord])
 
   const handleOpenSatisfactionTemplatePreview = useCallback(() => {
     if (!activeSatisfactionSurvey) return
@@ -1208,13 +1223,22 @@ export function UjatSurveyManagementView({
           active: true,
           required: false,
         }
-        const result = await createBinding(payload)
-        if (!result.ok) {
-          await invalidateSurveyCaches()
-          void showAlert({ title: '등록 실패', content: result.message })
+        if (displayProgram == null) return
+        // 설문조사와 같이 에디터 「저장」 때 양식 게시 후 바인딩을 만든다(취소 시 미등록).
+        const editLoad = await loadProgramSurveyFormEditForCreate(
+          String(displayProgram.id),
+          [payload],
+          selectedLectureEvalTemplateId,
+          createBinding,
+          { schedules: surveyScheduleOptionsQuery.schedules }
+        )
+        if (!editLoad.ok) {
+          void showAlert({ title: '양식 편집', content: editLoad.message })
           return
         }
         setLectureEvalCreateModalOpen(false)
+        setSelectedSurveyScheduleValue(null)
+        setProgramFormEdit(editLoad.edit)
         return
       }
 
@@ -1238,10 +1262,11 @@ export function UjatSurveyManagementView({
     }
   }, [
     createBinding,
-    invalidateSurveyCaches,
+    displayProgram,
     resolveRegisterScheduleTarget,
     selectedLectureEvalTemplateId,
     showAlert,
+    surveyScheduleOptionsQuery.schedules,
     surveysRemote,
   ])
 
@@ -1631,6 +1656,7 @@ export function UjatSurveyManagementView({
                 resultsExportRef={lectureEvalResultsExportRef}
                 onTabChange={handleLectureEvalTabChange}
                 onRegisterClick={handleOpenLectureEvalCreateModal}
+                onDeleteClick={handleOpenLectureEvalDeleteModal}
                 onOpenTemplatePreview={handleOpenLectureEvalPreview}
                 onFormDraftChange={handleLectureEvalDraftChange}
                 onSubmitClick={handleLectureEvalSubmit}
@@ -1695,6 +1721,45 @@ export function UjatSurveyManagementView({
             placeholder="삭제하시려면 해당란에 [삭제]를 입력해 주세요."
             value={surveyDeleteConfirmWord}
             onChange={e => setSurveyDeleteConfirmWord(e.target.value)}
+          />
+        </div>
+      </ContentModal>
+      <ContentModal
+        open={lectureEvalDeleteModalOpen}
+        onCancel={handleCloseLectureEvalDeleteModal}
+        title="강의평가 삭제 안내"
+        width={600}
+        modalStyles={{
+          content: { minHeight: 310 },
+        }}
+        className="ujat-survey-delete-modal"
+        description={`**[${lectureEvalSurvey?.title ?? '강의평가'}]** 강의평가를 삭제하시겠습니까?\n삭제 시 해당 양식의 내용은 모두 삭제됩니다.\n삭제된 항목 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?`}
+        footer={
+          <>
+            <CmsButton
+              variant="secondary"
+              size="medium"
+              type="button"
+              onClick={handleCloseLectureEvalDeleteModal} >
+              취소
+            </CmsButton>
+            <CmsButton
+              variant="delete"
+              size="medium"
+              type="button"
+              disabled={lectureEvalDeleteConfirmWord.trim() !== '삭제'}
+              onClick={handleConfirmLectureEvalDelete} >
+              설문 삭제
+            </CmsButton>
+          </>
+        }
+      >
+        <div className="ujat-survey-delete-modal__field">
+          <CmsInput
+            width="100%"
+            placeholder="삭제하시려면 해당란에 [삭제]를 입력해 주세요."
+            value={lectureEvalDeleteConfirmWord}
+            onChange={e => setLectureEvalDeleteConfirmWord(e.target.value)}
           />
         </div>
       </ContentModal>

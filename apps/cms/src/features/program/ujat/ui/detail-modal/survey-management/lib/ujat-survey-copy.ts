@@ -76,6 +76,7 @@ export const UJAT_LECTURE_EVAL_EMPTY_COPY = {
 export const UJAT_LECTURE_EVAL_PRE_START_COPY = {
   title: '강의평가는 아직 진행 전입니다.',
   description: '프로그램 종료 이후 설문이 진행됩니다. 설문 진행 이후에 확인해 주세요.',
+  deleteButton: '강의평가 삭제',
   previewButton: '설문 양식 보기',
 } as const
 

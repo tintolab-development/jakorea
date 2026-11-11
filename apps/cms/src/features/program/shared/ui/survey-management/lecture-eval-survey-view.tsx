@@ -19,7 +19,7 @@ import type {
 } from '../../lib/survey-management/survey-copy'
 import { canDownloadSurveyResults } from './survey-registered-actions'
 import { SurveyEmptyState } from './survey-empty-state'
-import { SurveyPreStartState } from './survey-pre-start-state'
+import { SurveyNoResponseState } from './survey-no-response-state'
 import { LectureEvalSubmittedIcon } from './lecture-eval-submitted-icon'
 import { SurveySubmittedState } from './survey-submitted-state'
 import { LectureEvalFormView } from './lecture-eval-form-view'
@@ -43,6 +43,8 @@ export type LectureEvalSurveyViewProps = {
   actionLabels: LectureEvalActionLabels
   onTabChange: (tab: LectureEvalTabKey) => void
   onRegisterClick: () => void
+  /** 진행 전 — 등록된 강의평가 매핑 삭제 */
+  onDeleteClick: () => void
   onOpenTemplatePreview: () => void
   onFormDraftChange: (draft: WritingFormDraft) => void
   onSubmitClick: () => void
@@ -67,6 +69,7 @@ export function LectureEvalSurveyView({
   actionLabels,
   onTabChange,
   onRegisterClick,
+  onDeleteClick,
   onOpenTemplatePreview,
   onFormDraftChange,
   onSubmitClick,
@@ -109,11 +112,14 @@ export function LectureEvalSurveyView({
         onRegisterClick={onRegisterClick}
       />
     ) : showPreStart ? (
-      <SurveyPreStartState
+      <SurveyNoResponseState
         title={preStartCopy.title}
         description={preStartCopy.description}
+        deleteButtonLabel={preStartCopy.deleteButton}
         previewButtonLabel={preStartCopy.previewButton}
+        canDelete
         embedded
+        onDeleteClick={onDeleteClick}
         onOpenTemplatePreview={onOpenTemplatePreview}
       />
     ) : showSubmitted ? (

@@ -97,7 +97,7 @@ import {
   resolveSurveyPollBindingTargetWhenScheduleFieldHidden,
   shouldShowSurveyPollScheduleSelectField,
 } from '@/features/program/shared/lib/survey-management/should-show-survey-poll-schedule-field'
-import { loadProgramSurveyFormEditAfterBinding } from '@/features/program/shared/lib/survey-management/load-program-survey-form-edit'
+import { loadProgramSurveyFormEditForCreate } from '@/features/program/shared/lib/survey-management/load-program-survey-form-edit'
 import {
   findSatisfactionScheduleById,
   resolveSatisfactionCreateSubmissionPeriod,
@@ -193,7 +193,7 @@ import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-cod
 import { isReadOnlyAdminRoleCode } from '@/shared/lib/admin-role-policy'
 
 type CreateModalKind = 'survey' | 'satisfaction' | 'lecture'
-type DeleteModalKind = 'survey' | 'satisfaction'
+type DeleteModalKind = 'survey' | 'satisfaction' | 'lecture'
 
 export type GeneralSurveyManagementViewProps = {
   program: Program
@@ -1207,64 +1207,36 @@ export function GeneralSurveyManagementView({
             }
           }
         }
-        let result: Awaited<ReturnType<typeof createBinding>> | null = null
-        if (createModalKind === 'satisfaction') {
-          for (const item of satisfactionPayloads) {
-            result = await createBinding(item as ProgramFormBindingRequest)
-            if (!result.ok) break
+        // 등록 버튼에서는 바인딩을 만들지 않는다. 에디터 「저장」 때 양식 게시 후 바인딩을 만든다.
+        const createPayloads: ProgramFormBindingRequest[] =
+          createModalKind === 'satisfaction'
+            ? (satisfactionPayloads as ProgramFormBindingRequest[])
+            : [payload as ProgramFormBindingRequest]
+        const lastCreatePayload = createPayloads.at(-1)
+        const editLoad = await loadProgramSurveyFormEditForCreate(
+          String(program.id),
+          createPayloads,
+          selectedTemplateId,
+          createBinding,
+          {
+            title: surveyTemplateOptions.find(option => option.value === selectedTemplateId)?.label,
+            schedules:
+              createModalKind === 'satisfaction'
+                ? satisfactionScheduleOptionsQuery.schedules
+                : surveyScheduleOptionsQuery.schedules,
+            windowDays:
+              createModalKind === 'satisfaction' ? effectiveSatisfactionWindowDays : undefined,
+            targetScope: lastCreatePayload?.targetScope ?? undefined,
+            targetScopeId: lastCreatePayload?.targetScopeId ?? undefined,
           }
-        } else {
-          result = await createBinding(payload)
-        }
-        if (!result?.ok) {
-          await invalidateSurveyCaches()
-          if (result?.field === 'targetRole') {
-            setCreateFieldError({ field: result.field, message: result.message })
-            return
-          }
-          void showAlert({ title: '등록 실패', content: result?.message ?? '등록에 실패했습니다.' })
-          return
-        }
-        if (
-          (createModalKind === 'survey' || createModalKind === 'satisfaction') &&
-          result.binding != null
-        ) {
-          const lastSatisfactionPayload =
-            createModalKind === 'satisfaction' ? satisfactionPayloads.at(-1) : undefined
-          const editLoad = await loadProgramSurveyFormEditAfterBinding(
-            String(program.id),
-            {
-              ...result.binding,
-              formType: result.binding.formType ?? payload.formType,
-              targetScope:
-                result.binding.targetScope ?? lastSatisfactionPayload?.targetScope,
-              targetScopeId:
-                result.binding.targetScopeId ?? lastSatisfactionPayload?.targetScopeId,
-            },
-            selectedTemplateId,
-            {
-              schedules:
-                createModalKind === 'satisfaction'
-                  ? satisfactionScheduleOptionsQuery.schedules
-                  : surveyScheduleOptionsQuery.schedules,
-              windowDays:
-                createModalKind === 'satisfaction' ? effectiveSatisfactionWindowDays : undefined,
-              targetScope:
-                result.binding.targetScope ?? lastSatisfactionPayload?.targetScope,
-              targetScopeId:
-                result.binding.targetScopeId ?? lastSatisfactionPayload?.targetScopeId,
-            }
-          )
-          setCreateModalKind(null)
-          setSelectedSurveyScheduleValue(null)
-          if (editLoad.ok) {
-            setProgramFormEdit(editLoad.edit)
-          } else {
-            void showAlert({ title: '양식 편집', content: editLoad.message })
-          }
+        )
+        if (!editLoad.ok) {
+          void showAlert({ title: '양식 편집', content: editLoad.message })
           return
         }
         setCreateModalKind(null)
+        setSelectedSurveyScheduleValue(null)
+        setProgramFormEdit(editLoad.edit)
         return
       }
 
@@ -1376,6 +1348,28 @@ export function GeneralSurveyManagementView({
         return next
       })
     }
+    if (deleteModalKind === 'lecture' && lectureEvalSurvey != null) {
+      if (lectureEvalSurvey.status !== 'before_start') return
+      if (surveysRemote) {
+        const bindingId = lectureEvalSurvey.bindingId
+        if (!bindingId) {
+          void showAlert({
+            title: '삭제 실패',
+            content: '삭제할 강의평가 바인딩 ID를 찾지 못했습니다.',
+          })
+          return
+        }
+        const result = await deleteBinding(bindingId)
+        if (!result.ok) {
+          void showAlert({ title: '삭제 실패', content: result.message })
+          return
+        }
+        setDeleteModalKind(null)
+        setDeleteConfirmWord('')
+        return
+      }
+      setLectureEvalSurvey(null)
+    }
     setDeleteModalKind(null)
     setDeleteConfirmWord('')
   }, [
@@ -1383,6 +1377,7 @@ export function GeneralSurveyManagementView({
     activeSatisfactionAudience,
     activeSatisfactionSurvey,
     deleteBinding,
+    lectureEvalSurvey,
     deleteConfirmWord,
     deleteModalKind,
     showAlert,
@@ -2003,6 +1998,11 @@ export function GeneralSurveyManagementView({
             actionLabels={GENERAL_LECTURE_EVAL_ACTION_LABELS}
             onTabChange={handleLectureEvalTabChange}
             onRegisterClick={() => openCreateModal('lecture')}
+            onDeleteClick={() => {
+              if (lectureEvalSurvey?.status !== 'before_start') return
+              setDeleteConfirmWord('')
+              setDeleteModalKind('lecture')
+            }}
             onOpenTemplatePreview={handleLectureEvalPreview}
             onFormDraftChange={handleLectureEvalDraftChange}
             onSubmitClick={handleLectureEvalSubmit}
@@ -2136,7 +2136,9 @@ export function GeneralSurveyManagementView({
         title={
           deleteModalKind === 'satisfaction' && activeSatisfactionAudience != null
             ? getGeneralSatisfactionDeleteModalTitle(activeSatisfactionAudience)
-            : '설문조사 삭제 안내'
+            : deleteModalKind === 'lecture'
+              ? '강의평가 삭제 안내'
+              : '설문조사 삭제 안내'
         }
         width={600}
         modalStyles={{ content: { minHeight: 310 } }}
@@ -2145,7 +2147,9 @@ export function GeneralSurveyManagementView({
           deleteModalKind === 'satisfaction' && activeSatisfactionAudience != null
             ? (selectedSatisfactionScheduleLabel ??
               `${getGeneralSatisfactionAudienceLabel(activeSatisfactionAudience)} 만족도조사`)
-            : (activeRegisteredSurvey?.title ?? '설문조사')
+            : deleteModalKind === 'lecture'
+              ? (lectureEvalSurvey?.title ?? '강의평가')
+              : (activeRegisteredSurvey?.title ?? '설문조사')
         }]** 설문을 삭제하시겠습니까?\n삭제 시 설문 결과를 포함한 모든 정보가 삭제되며, 삭제된 정보는 되돌릴 수 없습니다.`}
         footer={
           <>

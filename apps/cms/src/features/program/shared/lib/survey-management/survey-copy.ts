@@ -28,6 +28,8 @@ export type LectureEvalEmptyCopy = {
 export type LectureEvalPreStartCopy = {
   title: string
   description: string
+  /** 진행 전 — 등록된 강의평가 매핑 삭제 (설문조사·만족도조사와 동일) */
+  deleteButton: string
   previewButton: string
 }
 
@@ -193,6 +195,7 @@ export const GENERAL_LECTURE_EVAL_EMPTY_COPY = {
 export const GENERAL_LECTURE_EVAL_PRE_START_COPY = {
   title: '강의평가는 아직 진행 전입니다.',
   description: '프로그램 종료 이후 설문이 진행됩니다. 설문 진행 이후에 확인해 주세요.',
+  deleteButton: '강의평가 삭제',
   previewButton: '설문 양식 보기',
 } as const satisfies LectureEvalPreStartCopy
 
