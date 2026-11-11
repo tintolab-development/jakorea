@@ -54,6 +54,27 @@ assert.equal(hiddenAnswer?.educationFormat, 'hybrid')
 assert.equal(hiddenAnswer?.educationPlace, 'outside')
 assert.equal(hiddenAnswer?.educationPlaceDetail, '강당')
 
+// 교육받은 교사·1사1교 — 교육 장소 행이 보이면 희망 교육 형태가 숨겨져도 화면 값을 보낸다
+const placeShownAnswer = basicInfoAnswerFromValues(
+  { ...base, educationFormat: '', educationPlace: 'outside', educationPlaceDetail: '강당' },
+  {
+    includePreferredEducationFields: false,
+    includeEducationPlaceFields: true,
+    existingAnswer: { educationPlace: 'inside', educationPlaceDetail: '교실' },
+  },
+)
+assert.equal('educationFormat' in (placeShownAnswer ?? {}), false)
+assert.equal(placeShownAnswer?.educationPlace, 'outside')
+assert.equal(placeShownAnswer?.educationPlaceDetail, '강당')
+
+// 교육 장소 행이 없는 일반 기관 — 희망 교육 형태 숨김이면 장소를 보내지 않는다(기존 동작)
+const placeHiddenAnswer = basicInfoAnswerFromValues(
+  { ...base, educationFormat: '' },
+  { includePreferredEducationFields: false, includeEducationPlaceFields: false },
+)
+assert.equal('educationPlace' in (placeHiddenAnswer ?? {}), false)
+assert.equal('educationPlaceDetail' in (placeHiddenAnswer ?? {}), false)
+
 const draftValues = basicInfoValuesFromDraftAnswer({
   ...base,
   educationFormat: undefined,

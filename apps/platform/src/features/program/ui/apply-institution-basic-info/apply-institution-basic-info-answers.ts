@@ -58,6 +58,11 @@ export function emptyInstitutionBasicInfo(): ApplyInstitutionBasicInfoValues {
 export type BasicInfoAnswerFromValuesOptions = {
   /** 서버 런타임에서 선택 가능할 때만 희망 교육 형태·장소를 보낸다. */
   includePreferredEducationFields?: boolean
+  /**
+   * 교육 장소 행을 노출하는 유형(교육받은 교사·1사1교 기관 신청)이면 true —
+   * 희망 교육 형태 노출 여부와 무관하게 화면의 교육 장소·상세 장소를 보낸다.
+   */
+  includeEducationPlaceFields?: boolean
   /** UI가 숨겨져도 서버 draft에 이미 있던 educationFormat은 보존한다. */
   existingAnswer?: unknown
 }
@@ -74,6 +79,8 @@ export function basicInfoAnswerFromValues(
   const addressDetail = values.addressDetail.trim()
   const regionLabel = values.regionLabel.trim()
   const includePreferredEducation = options?.includePreferredEducationFields === true
+  const includeEducationPlace =
+    includePreferredEducation || options?.includeEducationPlaceFields === true
   const existingAnswer =
     options?.existingAnswer && typeof options.existingAnswer === 'object'
       ? (options.existingAnswer as Record<string, unknown>)
@@ -110,16 +117,16 @@ export function basicInfoAnswerFromValues(
             : preservedEducationFormat,
         }
       : {}),
-    ...((includePreferredEducation && educationPlace) ||
-    (!includePreferredEducation && preservedEducationPlace)
+    ...((includeEducationPlace && educationPlace) ||
+    (!includeEducationPlace && preservedEducationPlace)
       ? {
-          educationPlace: includePreferredEducation ? educationPlace : preservedEducationPlace,
+          educationPlace: includeEducationPlace ? educationPlace : preservedEducationPlace,
         }
       : {}),
-    ...((includePreferredEducation && educationPlaceDetail) ||
-    (!includePreferredEducation && preservedEducationPlaceDetail)
+    ...((includeEducationPlace && educationPlaceDetail) ||
+    (!includeEducationPlace && preservedEducationPlaceDetail)
       ? {
-          educationPlaceDetail: includePreferredEducation
+          educationPlaceDetail: includeEducationPlace
             ? educationPlaceDetail
             : preservedEducationPlaceDetail,
         }
