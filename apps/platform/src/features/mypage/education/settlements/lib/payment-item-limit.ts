@@ -6,7 +6,7 @@ export const PAYMENT_ITEM_LIMIT_EXCEEDED_CODE = 'PAYMENT_ITEM_LIMIT_EXCEEDED'
 
 /** 서버 메시지에 금액이 없어 FE가 maxLimitWon으로 문구를 만든다. */
 export function paymentItemLimitExceededMessage(maxLimitWon: number): string {
-  return `신청은 최대 ${maxLimitWon.toLocaleString('ko-KR')}원까지만 가능합니다.`
+  return `최대 ${maxLimitWon.toLocaleString('ko-KR')}원까지 신청할 수 있어요.`
 }
 
 /** 한도를 알 수 없을 때(서버 설정이 바뀐 경우 등) 쓰는 문구 */
@@ -31,22 +31,9 @@ export function paymentItemLimitError(
     : null
 }
 
-/** 교통비 항목 금액 = 가는 편 + (왕복이면) 오는 편. 서버도 합계로 한도를 본다. */
-export function receiptTransportTotal(transport: SettlementWriteDraft['transport']): number {
-  const depart = parseSettlementAmount(transport.depart.amount)
-  const back = transport.tripType === 'round_trip' ? parseSettlementAmount(transport.return.amount) : 0
-  return depart + back
-}
-
-/** 영수증 draft에서 처음으로 한도를 넘는 항목의 한도. 없으면 null */
+/** 영수증 draft에서 처음으로 한도를 넘는 금액 항목의 한도. 없으면 null. 교통비는 한도가 없다. */
 export function findExceededReceiptItemLimit(draft: SettlementWriteDraft): number | null {
   if (draft.meta.documentKind !== 'receipt') return null
-  if (
-    draft.transport.itemType &&
-    isOverPaymentItemLimit(receiptTransportTotal(draft.transport), draft.transport.maxLimitWon)
-  ) {
-    return draft.transport.maxLimitWon ?? null
-  }
   for (const item of draft.extraItems) {
     if (isOverPaymentItemLimit(parseSettlementAmount(item.amount), item.maxLimitWon)) {
       return item.maxLimitWon ?? null

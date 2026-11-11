@@ -5,24 +5,22 @@ import {
   isOverPaymentItemLimit,
   paymentItemLimitError,
   paymentItemLimitExceededMessage,
-  receiptTransportTotal,
 } from './payment-item-limit.ts'
 import { receiptPayableDisplayRank } from './payment-items.ts'
 
-assert.equal(paymentItemLimitExceededMessage(20000), '신청은 최대 20,000원까지만 가능합니다.')
+assert.equal(paymentItemLimitExceededMessage(20000), '최대 20,000원까지 신청할 수 있어요.')
 
 // 한도와 같은 금액은 통과, 넘으면 차단, null은 한도 없음
 assert.equal(isOverPaymentItemLimit(20000, 20000), false)
 assert.equal(isOverPaymentItemLimit(20001, 20000), true)
 assert.equal(isOverPaymentItemLimit(999999, null), false)
 assert.equal(paymentItemLimitError(20000, 20000), null)
-assert.equal(paymentItemLimitError(20001, 20000), '신청은 최대 20,000원까지만 가능합니다.')
+assert.equal(paymentItemLimitError(20001, 20000), '최대 20,000원까지 신청할 수 있어요.')
 
 function receiptDraft(input: {
   tripType: 'one_way' | 'round_trip'
   depart: string
   back: string
-  transportMax: number | null
   mealAmount?: string
   mealMax?: number | null
 }) {
@@ -38,7 +36,6 @@ function receiptDraft(input: {
     accountNumber: '1',
     accountHolder: '홍길동',
     transportItemType: 'TRANSPORTATION',
-    transportMaxLimitWon: input.transportMax,
     tripType: input.tripType,
     departTransit: 'BUS',
     departAmount: input.depart,
@@ -61,22 +58,15 @@ function receiptDraft(input: {
   })
 }
 
-// 교통비는 가는 편 + 오는 편 합계로 한도를 본다 (각 편이 한도 이하여도 합계가 넘으면 차단)
-const roundTrip = receiptDraft({ tripType: 'round_trip', depart: '15,000', back: '15,000', transportMax: 20000 })
-assert.equal(receiptTransportTotal(roundTrip.transport), 30000)
-assert.equal(findExceededReceiptItemLimit(roundTrip), 20000)
-
-// 편도면 오는 편 금액은 합계에 넣지 않는다
-const oneWay = receiptDraft({ tripType: 'one_way', depart: '15,000', back: '15,000', transportMax: 20000 })
-assert.equal(receiptTransportTotal(oneWay.transport), 15000)
-assert.equal(findExceededReceiptItemLimit(oneWay), null)
+// 교통비는 한도가 없다 — 금액이 커도 한도 오류가 나지 않는다
+const roundTrip = receiptDraft({ tripType: 'round_trip', depart: '150,000', back: '150,000' })
+assert.equal(findExceededReceiptItemLimit(roundTrip), null)
 
 // 금액 항목 한도
 const mealOver = receiptDraft({
   tripType: 'one_way',
   depart: '',
   back: '',
-  transportMax: null,
   mealAmount: '12,000',
   mealMax: 10000,
 })
