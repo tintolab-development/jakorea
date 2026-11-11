@@ -17,6 +17,7 @@ export function ParticipatingIndividualProgressAttendanceSection({ program }: { 
     filterFields,
     sessionGroups,
     saveSessionParticipant,
+    isSaving,
     getSessionParticipants,
     loading,
     loadError,
@@ -96,6 +97,7 @@ export function ParticipatingIndividualProgressAttendanceSection({ program }: { 
                 appliedFilters={appliedFilters}
                 getSessionParticipants={getSessionParticipants}
                 onSaveParticipant={saveSessionParticipant}
+                saving={isSaving}
               />
             ))}
           </div>

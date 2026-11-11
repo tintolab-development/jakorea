@@ -20,6 +20,17 @@ import type {
 } from '@/features/program/general/lib/participating-individual-progress-attendance-types'
 import { formatMonthDayWithWeekday } from '@/shared/utils/date'
 import {
+  ATTENDANCE_CORRECTION_NOT_OPEN_ALERT,
+  isAttendanceRecordingNotOpenError,
+} from '@/features/program/general/lib/attendance-recording-not-open'
+import {
+  ATTENDANCE_ARRIVAL_TIME_FORMAT_ERROR_MESSAGE,
+  isInvalidAttendanceArrivalTimeError,
+} from '@/shared/lib/attendance-arrival-time'
+import { getApiErrorCode, readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
+import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
+import { isGlobalApiErrorAlertShown } from '@/shared/lib/show-global-api-error-alert'
+import {
   ParticipatingIndividualProgressAttendanceCorrectionModal,
   type ParticipatingIndividualProgressAttendanceCorrectionConfirmPayload,
 } from './participating-individual-progress-attendance-correction-modal'
@@ -46,7 +57,7 @@ function mapCorrectionPayloadToAttendancePatch(
   evidenceFileObjectIds?: number[]
 } {
   if (payload.status === 'late') {
-    return { attendanceStatus: 'late', lateTime: '9:05' }
+    return { attendanceStatus: 'late', lateTime: payload.lateTime }
   }
   if (payload.status === 'excused_absence') {
     return {
@@ -66,6 +77,7 @@ export function ParticipatingIndividualProgressAttendanceSessionPanel({
   appliedFilters,
   getSessionParticipants,
   onSaveParticipant,
+  saving = false,
 }: {
   session: ParticipatingIndividualProgressAttendanceSessionGroup
   appliedFilters: ParticipatingIndividualProgressAttendanceFilters
@@ -79,8 +91,11 @@ export function ParticipatingIndividualProgressAttendanceSessionPanel({
       attendanceStatus: ParticipatingIndividualProgressAttendanceStatus
       lateTime?: string
       remark?: string
+      evidenceFileObjectIds?: number[]
     }
-  ) => void
+  ) => Promise<void>
+  /** 저장 진행 중 — 정정 팝업 「정정」 버튼 로딩 */
+  saving?: boolean
 }) {
   const { showAlert } = useCmsAlert()
   const [correctionModalOpen, setCorrectionModalOpen] = useState(false)
@@ -122,7 +137,10 @@ export function ParticipatingIndividualProgressAttendanceSessionPanel({
   })
 
   const handleOpenCorrectionModal = useCallback(() => {
-    if (!session.attendanceRecordingOpen) return
+    if (!session.attendanceRecordingOpen) {
+      showAlert(ATTENDANCE_CORRECTION_NOT_OPEN_ALERT)
+      return
+    }
     if (participantCorrectionOptions.length === 0) {
       showAlert({
         title: '안내',
@@ -134,16 +152,45 @@ export function ParticipatingIndividualProgressAttendanceSessionPanel({
   }, [participantCorrectionOptions.length, session.attendanceRecordingOpen, showAlert])
 
   const handleConfirmCorrection = useCallback(
-    (payload: ParticipatingIndividualProgressAttendanceCorrectionConfirmPayload) => {
-      onSaveParticipant(
-        session.id,
-        payload.participantRowId,
-        mapCorrectionPayloadToAttendancePatch(payload)
-      )
+    async (payload: ParticipatingIndividualProgressAttendanceCorrectionConfirmPayload) => {
+      try {
+        await onSaveParticipant(
+          session.id,
+          payload.participantRowId,
+          mapCorrectionPayloadToAttendancePatch(payload)
+        )
+      } catch (error) {
+        // 참여자 상세 출결 정정과 같은 오류 안내 순서
+        if (isAttendanceRecordingNotOpenError(error)) {
+          showAlert(ATTENDANCE_CORRECTION_NOT_OPEN_ALERT)
+          return
+        }
+        if (isGlobalApiErrorAlertShown(error)) return
+        if (isInvalidAttendanceArrivalTimeError(error)) {
+          showAlert({ title: '안내', content: ATTENDANCE_ARRIVAL_TIME_FORMAT_ERROR_MESSAGE })
+          return
+        }
+        if (getApiErrorCode(error) === 'ATTENDANCE_AFTER_GIVE_UP') {
+          showAlert({
+            title: '안내',
+            content: getGeneralProgramApiErrorMessage(
+              error,
+              '활동 포기 이후 회차에는 출결을 저장할 수 없습니다.'
+            ),
+          })
+          return
+        }
+        showAlert({
+          title: '안내',
+          content: readApiErrorAlertMessage(error, '요청 처리에 실패했습니다.'),
+        })
+        return
+      }
       setCorrectionModalOpen(false)
+      // 시안 02-3 — 출결 정정 완료 팝업
       showAlert({
-        title: '안내',
-        content: '출결이 정정되었습니다.',
+        title: '정정 완료',
+        content: '정정되었습니다.',
       })
     },
     [onSaveParticipant, session.id, showAlert]
@@ -192,6 +239,7 @@ export function ParticipatingIndividualProgressAttendanceSessionPanel({
         participantOptions={participantCorrectionOptions}
         onCancel={() => setCorrectionModalOpen(false)}
         onConfirm={handleConfirmCorrection}
+        confirming={saving}
       />
     </section>
   )
