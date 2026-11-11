@@ -53,13 +53,10 @@ export function LectureFeeBasisEditField({
   draft,
   onDraftChange,
   validationError,
-  measureOptions = LECTURE_FEE_MEASURE_OPTIONS,
 }: {
   draft: ApplicantInstructorEditDraft
   onDraftChange: (partial: Partial<ApplicantInstructorEditDraft>) => void
   validationError?: string
-  /** 지급 기준 셀렉트 옵션. 기본 `LECTURE_FEE_MEASURE_OPTIONS` */
-  measureOptions?: { value: string; label: string }[]
 }) {
   const isProgramBasis = draft.lectureFeeBasisType === 'program'
 
@@ -111,7 +108,10 @@ export function LectureFeeBasisEditField({
               ? LECTURE_FEE_MEASURE_NOT_APPLICABLE
               : draft.lectureFeeMeasure || undefined
           }
-          options={isProgramBasis ? [LECTURE_FEE_MEASURE_NOT_APPLICABLE_OPTION] : measureOptions}
+          options={
+            // 지급 기준 라벨은 모든 프로그램 유형 공통 「차시당 / 출강 1회당」(기획 11/10)
+            isProgramBasis ? [LECTURE_FEE_MEASURE_NOT_APPLICABLE_OPTION] : LECTURE_FEE_MEASURE_OPTIONS
+          }
           onChange={v => onDraftChange({ lectureFeeMeasure: v != null ? String(v) : '' })}
           getPopupContainer={() => document.body}
         />

@@ -4,7 +4,11 @@ import {
   buildLectureFeeBasisViewSegments,
   parseLectureFeeBasisTypeFromApi,
   toInstructorApplicationFeePolicy,
-  GENERAL_ORGANIZATION_LECTURE_FEE_MEASURE_OPTIONS,
+  buildLectureFeeBasisDisplay,
+  lectureFeeMeasureLabel,
+  normalizeLectureFeeMeasure,
+  resolveLectureFeeBasisFromRow,
+  toApiInstructorFeePolicyMeasure,
   LECTURE_FEE_MEASURE_OPTIONS,
 } from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
@@ -98,7 +102,7 @@ describe('buildLectureFeeBasisViewSegments', () => {
         lectureFeeMeasure: '1시간 당',
         lectureFeeAmount: '120000',
       } as ApplicantInstructorRow)
-    ).toEqual(['프로그램 기준', '1시간 당', '120,000원'])
+    ).toEqual(['프로그램 기준', '차시당', '120,000원'])
   })
 
   it('유형이 없어도 금액만 있으면 프로그램 기준으로 본다', () => {
@@ -150,15 +154,41 @@ describe('businessIncomeEarnerStatusPatchField', () => {
   })
 })
 
-describe('GENERAL_ORGANIZATION_LECTURE_FEE_MEASURE_OPTIONS', () => {
-  it('값은 기존 지급 기준과 같고 라벨만 시안(「1회 기준」)으로 바꾼다', () => {
-    expect(GENERAL_ORGANIZATION_LECTURE_FEE_MEASURE_OPTIONS.map(o => o.value)).toEqual(
-      LECTURE_FEE_MEASURE_OPTIONS.map(o => o.value)
-    )
-    expect(GENERAL_ORGANIZATION_LECTURE_FEE_MEASURE_OPTIONS.map(o => o.label)).toEqual([
-      '1회 기준',
-      '1시간 기준',
+describe('강사비 지급 기준 공통 라벨 (기획 11/10 「차시당 / 출강 1회당」)', () => {
+  it('모든 유형 공통 옵션 — 값은 그대로(1시간 당=PER_HOUR, 출강 1회당=PER_SESSION)', () => {
+    expect(LECTURE_FEE_MEASURE_OPTIONS).toEqual([
+      { value: '1시간 당', label: '차시당' },
+      { value: '출강 1회당', label: '출강 1회당' },
     ])
+  })
+
+  it('예전 라벨·값 표기도 값·새 라벨로 읽힌다', () => {
+    for (const legacy of ['1시간 당', '1시간당', '1시간 기준', '차시당']) {
+      expect(normalizeLectureFeeMeasure(legacy)).toBe('1시간 당')
+      expect(lectureFeeMeasureLabel(legacy)).toBe('차시당')
+      expect(toApiInstructorFeePolicyMeasure(legacy, 'special_lecture')).toBe('PER_HOUR')
+    }
+    for (const legacy of ['출강 1회당', '1회당', '1회 기준']) {
+      expect(normalizeLectureFeeMeasure(legacy)).toBe('출강 1회당')
+      expect(lectureFeeMeasureLabel(legacy)).toBe('출강 1회당')
+      expect(toApiInstructorFeePolicyMeasure(legacy, 'special_lecture')).toBe('PER_SESSION')
+    }
+  })
+
+  it('표시 문자열 왕복 — 저장은 새 라벨, 다시 읽으면 같은 값', () => {
+    for (const value of ['1시간 당', '출강 1회당']) {
+      const display = buildLectureFeeBasisDisplay('special_lecture', value, '50000')
+      expect(display).toBe(`특강 강사비 | ${lectureFeeMeasureLabel(value)} | 50,000원`)
+      expect(
+        resolveLectureFeeBasisFromRow({ lectureFeeBasisDisplay: display } as ApplicantInstructorRow)
+      ).toEqual({ type: 'special_lecture', measure: value, amount: '50000' })
+    }
+    // 예전 라벨로 저장된 표시 문자열
+    expect(
+      resolveLectureFeeBasisFromRow({
+        lectureFeeBasisDisplay: '기타 인건비 | 1시간 기준 | 30,000원',
+      } as ApplicantInstructorRow).measure
+    ).toBe('1시간 당')
   })
 })
 
@@ -169,7 +199,7 @@ describe('buildGeneralOrganizationLectureFeeBasisViewSegments — 일반(기관�
     ).toEqual([])
   })
 
-  it('프로그램 기준: 「프로그램 기준 | 3급 강사비 : 1시간당 240,000원」', () => {
+  it('프로그램 기준: 「프로그램 기준 | 3급 강사비 : 차시당 240,000원」', () => {
     expect(
       buildGeneralOrganizationLectureFeeBasisViewSegments({
         lectureFeeBasisType: 'program',
@@ -177,17 +207,17 @@ describe('buildGeneralOrganizationLectureFeeBasisViewSegments — 일반(기관�
         lectureFeeAmount: '240000',
         instructorFeeGradeLabel: '3급 강사비',
       } as ApplicantInstructorRow)
-    ).toEqual(['프로그램 기준', '3급 강사비 : 1시간당 240,000원'])
+    ).toEqual(['프로그램 기준', '3급 강사비 : 차시당 240,000원'])
   })
 
-  it('특강 강사비: 「특강 강사비 | 1회당 150,000원」', () => {
+  it('특강 강사비: 「특강 강사비 | 출강 1회당 150,000원」', () => {
     expect(
       buildGeneralOrganizationLectureFeeBasisViewSegments({
         lectureFeeBasisType: 'special_lecture',
         lectureFeeMeasure: '출강 1회당',
         lectureFeeAmount: '150000',
       } as ApplicantInstructorRow)
-    ).toEqual(['특강 강사비', '1회당 150,000원'])
+    ).toEqual(['특강 강사비', '출강 1회당 150,000원'])
   })
 
   it('기타 인건비는 특강과 같은 규칙이다', () => {
@@ -197,6 +227,6 @@ describe('buildGeneralOrganizationLectureFeeBasisViewSegments — 일반(기관�
         lectureFeeMeasure: '1시간 당',
         lectureFeeAmount: '50000',
       } as ApplicantInstructorRow)
-    ).toEqual(['기타 인건비', '1시간당 50,000원'])
+    ).toEqual(['기타 인건비', '차시당 50,000원'])
   })
 })

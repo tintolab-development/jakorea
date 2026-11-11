@@ -1895,6 +1895,7 @@ export function ApplicantsDetailContents({
     instructorApplicationInfo,
     instructorResumeLayout,
     isGeneralOrganizationInstructorDetail,
+    program,
   ])
 
   const tabPanel = useMemo(() => {
