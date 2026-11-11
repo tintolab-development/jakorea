@@ -710,6 +710,9 @@
   font-style: normal;
   font-weight: 500;
   line-height: 170%;
+  /* 목록 미리보기는 서식 없는 일반 텍스트 — 문단 줄바꿈만 살린다 */
+  white-space: pre-line;
+  word-break: break-word;
 }
 
 /* ...더보기 — 세 줄 이상일 때 노출, 스펙 */
