@@ -53,6 +53,7 @@ export function GeneralProgramApplicationTemplateEditModal({
   onApplicationTabChange,
   closeLabel,
   title,
+  saveLabel,
 }: {
   open: boolean
   program: Program
@@ -71,6 +72,8 @@ export function GeneralProgramApplicationTemplateEditModal({
   closeLabel?: string
   /** 팝업 헤더 제목. 생략 시 양식 템플릿 이름(기존) — 1사1교 상세는 「1사1교 프로그램 신청 양식」 */
   title?: string
+  /** 상단 우측 저장 버튼 라벨. 생략 시 템플릿 모달 기본(「저장」) — 교육받은 교사 상세는 「수정 완료」 */
+  saveLabel?: string
 }) {
   const variant = useMemo(
     () => variantOverride ?? resolveGeneralApplicationEditorVariant(program, applicationTab),
@@ -230,6 +233,7 @@ export function GeneralProgramApplicationTemplateEditModal({
         ) : undefined
       }
       closeLabel={closeLabel}
+      saveLabel={saveLabel}
       templateTabType="writing"
       className="general-program-application-template-edit-modal"
       zIndex={1200}

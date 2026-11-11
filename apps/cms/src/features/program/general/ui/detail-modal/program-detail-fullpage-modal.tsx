@@ -2497,6 +2497,10 @@ function ProgramDetailFullPageModalContent({
             setTrainedTeachersFormPreviewReloadKey(key => key + 1)
           }}
           onSaved={() => setTrainedTeachersFormPreviewReloadKey(key => key + 1)}
+          // 시안 5416:113798 — 제목·단일 「참여 기관 신청 정보」 탭·「수정 완료」
+          title="교육 받은 교사 프로그램 신청 양식"
+          tabItems={[{ key: 'institutions', label: '참여 기관 신청 정보' }]}
+          saveLabel="수정 완료"
         />
       ) : null}
       {isCompanySchoolDetail &&
