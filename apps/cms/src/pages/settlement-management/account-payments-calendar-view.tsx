@@ -192,7 +192,8 @@ function placeholderInvoiceForAccountPaymentCalendar(
   const d = dayjs(row.transferScheduledDate)
   return {
     programName: row.programName,
-    sessionProgress: formatAccountPaymentSessionLabelDisplay(row.sessionLabel),
+    // 프로그램 진행 회차는 정산 상세 값만. 목록 sessionLabel(인정 차시)로 만들지 않는다.
+    sessionProgress: '-',
     operationPeriod: '-',
     paymentStatementStatus: status,
     expectedTransferDate: formatDateDotWithWeekday(d),

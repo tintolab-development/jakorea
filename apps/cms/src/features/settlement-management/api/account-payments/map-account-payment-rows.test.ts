@@ -55,18 +55,19 @@ describe('mapAccountPaymentListItemToRow', () => {
     expect(row.lectureDate).toBe('2026-01-10')
   })
 
-  it('sessionLabel이 있으면 sessionOrdinal으로 재조립하지 않는다', () => {
+  it('BE N1 — 「강의 진행 차시」는 sessionLabel(인정 차시)만, sessionOrdinal(회차)로 바꾸지 않는다', () => {
     const payment: AccountPaymentListItemResponse = {
       accountPaymentId: 14,
       instructorName: '김틴토',
       paymentStatus: 'PAID',
-      sessionLabel: 'GROK_E2E_API CS03 1회차',
-      sessionOrdinal: 1,
+      sessionLabel: '2차시',
+      sessionOrdinal: 3,
     }
 
     const row = mapAccountPaymentListItemToRow(payment, 0)
 
-    expect(row.sessionLabel).toBe('GROK_E2E_API CS03 1회차')
+    expect(row.sessionLabel).toBe('2차시')
+    expect(row.sessionLabel).not.toContain('회차')
   })
 
   it('sessionLabel 없으면 sessionOrdinal으로 N차시를 만들지 않는다', () => {

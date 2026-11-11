@@ -57,7 +57,8 @@ export interface PaymentStatementIssuanceFromCalculationInput {
   lectureFeeStandardAmount: string
   businessIncomeEarnerLabel: string
   /**
-   * 「교육 진행 차시」 = 강사비 산정에 적용된 인정 차시(`calcInfo.recognizedSessionCount`).
+   * 「교육 진행 차시」 = 강사비 산정에 적용된 인정 차시
+   * (정산 상세 `SettlementFrontendResponse.recognizedSessionCount`, 신청서 문서 `calcInfo.recognizedSessionCount`와 같은 값).
    * 프로그램 진행 회차(`programSessionProgressDisplay`)·회차 번호로 대체하지 않는다. 없으면 빈칸.
    */
   recognizedSessionCount?: number | null
@@ -224,6 +225,7 @@ export function mapProgramCalculationStatementToIssuanceInput(
     lectureFeeStandardTitle: presentText(statement.basic.lectureFeeStandardTitle),
     lectureFeeStandardAmount: presentText(statement.basic.lectureFeeStandardAmount),
     businessIncomeEarnerLabel: presentText(statement.basic.businessIncomeEarnerLabel),
+    recognizedSessionCount: statement.basic.recognizedSessionCount ?? null,
     blocks: statement.blocks,
     formulaLabel: statement.formulaLabel,
     totalAmount: statement.totalAmount,
@@ -251,6 +253,7 @@ export function mapInstructorCalculationStatementToIssuanceInput(
     lectureFeeStandardTitle: presentText(statement.basic.lectureFeeStandardTitle),
     lectureFeeStandardAmount: presentText(statement.basic.lectureFeeStandardAmount),
     businessIncomeEarnerLabel: presentText(statement.basic.businessIncomeEarnerLabel),
+    recognizedSessionCount: statement.basic.recognizedSessionCount ?? null,
     blocks: statement.blocks,
     formulaLabel: statement.formulaLabel,
     totalAmount: statement.totalAmount,
@@ -274,6 +277,7 @@ export function mapAccountPaymentStatusDetailToIssuanceInput(
     lectureFeeStandardTitle: presentText(detail.basic.lectureFeeStandardTitle),
     lectureFeeStandardAmount: presentText(detail.basic.lectureFeeStandardAmount),
     businessIncomeEarnerLabel: presentText(detail.basic.businessIncomeEarnerLabel),
+    recognizedSessionCount: detail.basic.recognizedSessionCount ?? null,
     blocks: detail.blocks,
     formulaLabel: detail.formulaLabel,
     totalAmount: detail.totalAmount,
