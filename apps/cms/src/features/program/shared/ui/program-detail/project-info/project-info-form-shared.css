@@ -286,6 +286,16 @@
   object-fit: contain;
 }
 
+/*
+ * 상세 정보 일반 텍스트 값(HTML이 아닌 기존·자동 입력 값, 프로그램 설명)
+ * — 에디터 뷰어와 같은 본문 기본 글자 크기 15px·행간 1.6
+ */
+.program-detail-info-tab__plain-content {
+  color: var(--color-text-primary);
+  font-size: var(--rt-content-font-size, 15px);
+  line-height: var(--rt-content-line-height, 1.6);
+}
+
 /* 추가 내용 뷰어 — 행간·단락 여백은 @jakorea/rich-text content.css SSOT */
 .program-detail-info-tab__editor-content {
   --rt-content-line-height: 1.6;
