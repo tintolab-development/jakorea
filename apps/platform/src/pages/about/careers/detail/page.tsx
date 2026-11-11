@@ -12,7 +12,6 @@ import {
 import {
   careerPostingLinkCtaVisible,
   careerPostingLinkHref,
-  resolveCareerPostingLinkCtaLabel,
 } from '@/features/careers/lib/link-cta'
 import ctaArrowUrl from '@/features/careers/image/icon/cta-arrow.svg'
 import { RichTextViewer } from '@/shared/rich-text'
@@ -85,9 +84,9 @@ export function CareerPostingDetailPage() {
     fileName: file.name,
     href: file.fileUrl,
   }))
-  const showLinkButton = careerPostingLinkCtaVisible(detail.linkUrl)
+  const showLinkButton = careerPostingLinkCtaVisible(detail)
   const linkHref = careerPostingLinkHref(detail.linkUrl)
-  const linkButtonLabel = resolveCareerPostingLinkCtaLabel(detail.buttonLabel)
+  const linkButtonLabel = detail.buttonLabel.trim()
   const showRecruitPeriod = showLinkButton && Boolean(detail.recruitPeriodLabel)
 
   return (
