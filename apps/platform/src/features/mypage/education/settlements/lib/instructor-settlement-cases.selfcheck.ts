@@ -162,7 +162,7 @@ const case04 = build({
 })[0]
 assert.equal(case04?.status, 'waiting_confirm')
 assert.equal(case04?.amount, 300000)
-assert.equal(resolveSettlementStatusUi(case04!.status, 'payment_statement').markLabel, '확인 대기')
+assert.equal(resolveSettlementStatusUi(case04!.status, 'payment_statement').markLabel, '확인 대기 중')
 
 const case05 = build({
   schedules: [completedSchedule],
@@ -194,7 +194,7 @@ const case06 = build({
   ],
 })[0]
 assert.equal(case06?.status, 'confirmed')
-assert.equal(resolveSettlementStatusUi(case06!.status, 'payment_statement').markLabel, '확인 완료')
+assert.equal(resolveSettlementStatusUi(case06!.status, 'payment_statement').markLabel, '지급조서 확인 완료')
 
 const case07 = build({
   schedules: [completedSchedule],

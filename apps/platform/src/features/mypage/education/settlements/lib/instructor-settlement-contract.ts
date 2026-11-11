@@ -33,8 +33,15 @@ export const INSTRUCTOR_SETTLEMENT_ERROR_MESSAGE: Record<string, string> = {
   SETTLEMENT_REAPPLICATION_DEADLINE_EXPIRED: '재제출 기한이 지나 지급조서를 다시 제출할 수 없습니다.',
   SETTLEMENT_REAPPLICATION_DEADLINE_UNAVAILABLE: '재제출 기한을 확인할 수 없습니다. 잠시 후 다시 시도해 주세요.',
   SETTLEMENT_REAPPLICATION_NOT_AVAILABLE:
-    '지금은 지급조서를 재신청할 수 없습니다. 이미 재신청했거나 정정 내역이 바뀌었을 수 있으니 화면을 새로고침해 주세요.',
+    '지금은 지급조서를 재신청할 수 없어요. 화면을 새로고침한 뒤 다시 확인해 주세요.',
+  SETTLEMENT_CORRECTION_NOT_FOUND: '정정 내역을 찾을 수 없어요.',
 }
+
+/** 서버 message를 먼저 쓰는 오류 코드 (없으면 위 문구) */
+const SERVER_MESSAGE_FIRST_CODES = new Set([
+  'SETTLEMENT_REAPPLICATION_DEADLINE_EXPIRED',
+  'SETTLEMENT_CORRECTION_NOT_FOUND',
+])
 
 export const PAYMENT_STATEMENT_REAPPLY_FAILED_MESSAGE =
   '지급조서 재신청에 실패했습니다. 잠시 후 다시 시도해 주세요.'
@@ -122,6 +129,10 @@ export function instructorSettlementApiErrorMessage(
     return settlementTransportationAddressUnresolvedMessage(error)
   }
   const code = readInstructorSettlementErrorCode(error)
+  if (code && SERVER_MESSAGE_FIRST_CODES.has(code)) {
+    const serverMessage = readServerErrorMessage(error)
+    if (serverMessage) return serverMessage
+  }
   if (code && INSTRUCTOR_SETTLEMENT_ERROR_MESSAGE[code]) {
     return INSTRUCTOR_SETTLEMENT_ERROR_MESSAGE[code]
   }

@@ -38,6 +38,8 @@ export type ProgramListItem = {
   operatingPeriodStart: string
   /** YYYY-MM-DD — 운영기간 필터 매칭용 */
   operatingPeriodEnd: string
+  /** YYYY-MM-DD — 사업 운영 종료일(businessEndDate). 없으면 null */
+  businessEndDate?: string | null
   /** YYYY-MM-DD — 최신순 정렬 */
   applicationStartDate: string | null
   /** YYYY-MM-DD — 마감일 가까운순 정렬 */

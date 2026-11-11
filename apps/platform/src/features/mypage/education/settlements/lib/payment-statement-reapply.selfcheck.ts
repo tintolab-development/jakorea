@@ -12,8 +12,6 @@ assert.equal(
   mapPaymentStatementServerStatus({ statementStatus: 'DRAFT', statementReapplyAvailable: true }),
   'correction_completed',
 )
-// 재신청 가능 표시가 없는 DRAFT는 추측하지 않는다
-assert.equal(mapPaymentStatementServerStatus({ statementStatus: 'DRAFT', statementReapplyAvailable: false }), null)
 // 재신청 후에는 REAPPLICATION → 지급조서 재신청
 assert.equal(mapPaymentStatementServerStatus({ statementStatus: 'REAPPLICATION' }), 'reapplied')
 // 지급 완료가 우선
@@ -33,6 +31,18 @@ const completedItem = (status: EducationSettlementItem['status']) =>
 assert.equal(resolveInstructorPaymentStatementAggregateLabel([completedItem('correction_completed')]), '지급 정정 요청')
 assert.equal(resolveInstructorPaymentStatementAggregateLabel([completedItem('reapplied')]), '지급조서 재신청')
 
-assert.ok(INSTRUCTOR_SETTLEMENT_ERROR_MESSAGE.SETTLEMENT_REAPPLICATION_NOT_AVAILABLE)
+assert.equal(
+  INSTRUCTOR_SETTLEMENT_ERROR_MESSAGE.SETTLEMENT_REAPPLICATION_NOT_AVAILABLE,
+  '지금은 지급조서를 재신청할 수 없어요. 화면을 새로고침한 뒤 다시 확인해 주세요.',
+)
+
+// 재신청 기한이 지난 정정 건(DRAFT + available false)도 '지급 정정 요청'(correction_completed) 상태를 유지한다
+assert.equal(
+  mapPaymentStatementServerStatus({ statementStatus: 'DRAFT', statementReapplyAvailable: false }),
+  'correction_completed',
+)
+// 강사 지급조서 배지 (기획 1번)
+assert.equal(resolveSettlementStatusUi('waiting_confirm', 'payment_statement').markLabel, '확인 대기 중')
+assert.equal(resolveSettlementStatusUi('confirmed', 'payment_statement').markLabel, '지급조서 확인 완료')
 
 console.log('payment-statement-reapply.selfcheck: ok')
