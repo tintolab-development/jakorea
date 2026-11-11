@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { isValidKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import {
   shouldShowApplicationMaxScheduleFields,
-  shouldShowApplicationMaxSessionsPerDayField,
+  shouldShowTrainedTeachersApplicationMaxSessionsPerDayField,
 } from '@jakorea/form-schema/program-application'
 import { normalizeTargetLevelValue } from '@/features/program/shared/lib/program-detail-info-constants'
 import { isAnnouncementUnpublished } from '@/features/program/shared/lib/participant-recruitment-form-options'
@@ -202,8 +202,9 @@ export const programTrainedTeachersRecruitmentSaveSchema = programParticipantRec
         message: '신청 가능 최대 일정 수를 입력해주세요',
       })
     }
+    // TT: 커리큘럼형(단일·복수) + 기간 지정 — Platform 「희망 차시」 셀렉 조건과 동일
     if (
-      shouldShowApplicationMaxSessionsPerDayField(visibility) &&
+      shouldShowTrainedTeachersApplicationMaxSessionsPerDayField(visibility) &&
       scheduleValues.participantRecruitmentMaxSessionsPerDay == null
     ) {
       ctx.addIssue({

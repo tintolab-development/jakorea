@@ -26,7 +26,9 @@ import {
   resolveInstitutionApplicationProgramBridge,
   shouldShowInstitutionApplicationMaxScheduleFields,
   shouldShowInstitutionApplicationMaxSessionsPerDayField,
+  shouldShowTrainedTeachersInstitutionApplicationMaxSessionsPerDayField,
 } from '@/features/program/general/lib/institution-application-program-bridge'
+import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
 import { resolveProgramParticipantMaxClassCount } from '@/features/template/lib/participant-recruitment-institution-limits'
 import { audienceOperationPeriodLabelFromRecruitmentRow } from '@/features/program/general/lib/general-program-recruitment-operation-period'
@@ -233,9 +235,12 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
   const bridge = resolveRecruitmentInstitutionLimitsBridge(program)
   const showMaxScheduleCountField =
     showInstitutionApplicationLimits && shouldShowInstitutionApplicationMaxScheduleFields(bridge)
+  // 교육받은 교사는 커리큘럼 단일 회차도 노출 — Platform TT 「희망 차시」 셀렉 조건과 동일
   const showMaxSessionsPerDayField =
     showInstitutionApplicationLimits &&
-    shouldShowInstitutionApplicationMaxSessionsPerDayField(bridge)
+    (isTrainedTeachersDetailProgram(program)
+      ? shouldShowTrainedTeachersInstitutionApplicationMaxSessionsPerDayField(bridge)
+      : shouldShowInstitutionApplicationMaxSessionsPerDayField(bridge))
 
   const studentListValue = pickDisplayValue(
     typeof info?.studentListRequired === 'string' ? info.studentListRequired : undefined,
