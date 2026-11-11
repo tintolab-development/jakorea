@@ -291,6 +291,25 @@ export function createDefaultCompanySchoolRegistrationRhfValues(): CompanySchool
   }
 }
 
+/**
+ * 신규 등록 시작값 — 시안(9899:215345) 기본 선택값.
+ * 임시저장 복원·재조회 hydrate·레거시 import 는 `createDefaultCompanySchoolRegistrationRhfValues` 를
+ * 그대로 써서 저장값(빈 값 포함)을 덮지 않는다.
+ * 세부 프로그램명은 카탈로그 숫자 id가 필요해 기본값을 두지 않는다.
+ */
+export function createNewCompanySchoolRegistrationRhfValues(): CompanySchoolRegistrationRhfValues {
+  return {
+    ...createDefaultCompanySchoolRegistrationRhfValues(),
+    repKo: '1사1교 경제금융교육',
+    repEn: '1 Company 1 School Economics and Finance Education',
+    businessField: 'economy_finance',
+    ipOwned: 'ja',
+    courseDeliveredBy: 'ja',
+    partnerInvolvement: 'no',
+    ipsCategory: 'prepare',
+  }
+}
+
 export function cloneCompanySchoolRegistrationRhfValues(
   values: CompanySchoolRegistrationRhfValues
 ): CompanySchoolRegistrationRhfValues {

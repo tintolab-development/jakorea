@@ -450,7 +450,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                   withAllOption={false}
                   inputSize="small"
                   placeholder="후원사를 선택해 주세요"
-                  width={240}
+                  width="100%"
                   options={sponsorOptions}
                   value={selectedSponsorId}
                   loading={sponsorOptionsLoading}
@@ -475,7 +475,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                   withAllOption={false}
                   inputSize="small"
                   placeholder="후원사 담당자를 선택해 주세요"
-                  width={240}
+                  width="100%"
                   showSearch
                   optionFilterProp="label"
                   options={managerOptions}
@@ -526,7 +526,8 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                 <CmsSelect
                   withAllOption={false}
                   inputSize="small"
-                  placeholder="선택해 주세요"
+                  // 시안(9899:215345): 미선택 시 플레이스홀더「전체」(회색)
+                  placeholder="전체"
                   width={240}
                   options={educationCourseSelectOptions}
                   value={educationCourse}

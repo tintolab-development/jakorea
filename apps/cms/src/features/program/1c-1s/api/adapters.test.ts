@@ -1005,3 +1005,39 @@ describe('1사1교 serviceDetailJson nested overlay 정본', () => {
     )
   })
 })
+
+describe('mapCompanySchoolListItemToProgram — 목록 열 값 (시안 4175:65554 외)', () => {
+  it('교육 대상·총 참여 학교/학생 수·강사 모집 인원을 응답 필드에서 읽는다', () => {
+    const mapped = mapCompanySchoolListItemToProgram({
+      id: 186545,
+      title: '1사1교 경제금융교육',
+      targetLevel: 'elementary',
+      targetLevels: ['elementary', 'middle'],
+      participatingSchoolCount: 3,
+      participatingStudentCount: 90,
+      instructorRecruitmentCount: 30,
+      instructorApprovedCount: 4,
+    })
+    expect(mapped.targetLevel).toBe('elementary')
+    expect(mapped.targetLevels).toEqual(['elementary', 'middle'])
+    expect(mapped.participatingSchoolCount).toBe(3)
+    expect(mapped.participatingStudentCount).toBe(90)
+    expect(mapped.instructorCapacity).toBe(30)
+    expect(mapped.instructors).toBe(4)
+  })
+
+  it('학교 수는 participatingOrganizationCount로 폴백하고, 강사 정원이 없으면 비워 둔다', () => {
+    const mapped = mapCompanySchoolListItemToProgram({
+      id: 1,
+      title: 'x',
+      targetLevel: 'high',
+      participatingOrganizationCount: 2,
+      instructorRecruitmentCount: null,
+      instructorApplicantCount: 1,
+    })
+    expect(mapped.targetLevels).toEqual(['high'])
+    expect(mapped.participatingSchoolCount).toBe(2)
+    expect(mapped.instructorCapacity).toBeUndefined()
+    expect(mapped.instructors).toBe(1)
+  })
+})

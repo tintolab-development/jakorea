@@ -549,7 +549,10 @@ function GeneralProgramRegistrationFullpageModalInner({
             visibleRecruitTabKeys={flow.visibleRecruitTabKeys}
             visibleApplicationTabKeys={flow.visibleApplicationTabKeys}
             programPhaseHint={
-              isGeneralVariant ? GENERAL_PROGRAM_REGISTRATION_PROGRAM_PHASE_HINT_GENERAL : undefined
+              // 1사1교 시안(9899:215345)도 일반과 같은「※ … 작성해 주세요.」
+              isGeneralVariant || registrationFormVariant === 'economy'
+                ? GENERAL_PROGRAM_REGISTRATION_PROGRAM_PHASE_HINT_GENERAL
+                : undefined
             }
             onSelectStep={key => {
               setTemplatePickerOpen(false)

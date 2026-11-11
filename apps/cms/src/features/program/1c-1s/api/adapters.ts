@@ -41,6 +41,7 @@ import { patchTouchesProgramSponsors } from '@/features/program/shared/lib/merge
 import {
   normalizeProgramBusinessAreaValue,
   resolvePersistedProgramTargetLevels,
+  resolveProgramTargetLevels,
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import type { ProgramUpdateRequestTargetLevelsItem } from '@/shared/api/generated/dashboard/schemas/programUpdateRequestTargetLevelsItem'
 import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
@@ -116,6 +117,28 @@ function baseProgram(
   }
 }
 
+function toOptionalListCount(value: unknown): number | undefined {
+  if (value == null || value === '') return undefined
+  const n = typeof value === 'number' ? value : Number(value)
+  return Number.isFinite(n) ? n : undefined
+}
+
+/** 목록「교육 대상」— `targetLevels` 우선, 없으면 단일 `targetLevel` */
+function mapCompanySchoolListTargetLevels(
+  dto: AdminProgramListItemDto
+): Pick<Program, 'targetLevel' | 'targetLevels'> {
+  const levels = resolveProgramTargetLevels({
+    targetLevels: Array.isArray(dto.targetLevels)
+      ? dto.targetLevels.map(v => String(v))
+      : undefined,
+    targetLevel: dto.targetLevel,
+  })
+  return {
+    targetLevel: levels[0],
+    targetLevels: levels.length > 0 ? levels : undefined,
+  }
+}
+
 export function mapCompanySchoolListItemToProgram(dto: AdminProgramListItemDto): Program {
   const title = dto.title?.trim() || dto.nameKo?.trim() || '제목 없음'
   const mainTitle = dto.mainTitle?.trim() || title
@@ -136,8 +159,18 @@ export function mapCompanySchoolListItemToProgram(dto: AdminProgramListItemDto):
     }),
     approvedStudentCount: dto.approvedOrganizationApplicationCount ?? dto.applicantCount,
     ...mapListParticipantRecruitment(dto),
-    instructors: dto.instructorApplicantCount,
-    participatingSchoolCount: dto.organizationApplicationCount,
+    // 일반 목록 매퍼(`mapAdminProgramListItemToProgram`)와 같은 응답 필드에서 읽는다.
+    ...mapCompanySchoolListTargetLevels(dto),
+    instructors:
+      toOptionalListCount(dto.instructorApprovedCount) ??
+      toOptionalListCount(dto.instructorApplicantCount),
+    instructorCapacity:
+      toOptionalListCount(dto.instructorCapacity) ??
+      toOptionalListCount(dto.instructorRecruitmentCount),
+    participatingSchoolCount:
+      toOptionalListCount(dto.participatingSchoolCount) ??
+      toOptionalListCount(dto.participatingOrganizationCount),
+    participatingStudentCount: toOptionalListCount(dto.participatingStudentCount),
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
     ...readProgramAuditNames(dto),

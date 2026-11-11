@@ -81,7 +81,7 @@ import {
 import { serializeCompanySchoolRegistrationForFormVersion } from '@/features/program/1c-1s/lib/serialize-registration-overlay-from-canonical'
 import { resolveRegistrationFormVersionOverlay } from '@/features/program/general/lib/resolve-registration-form-version-overlay'
 import {
-  createDefaultCompanySchoolRegistrationRhfValues,
+  createNewCompanySchoolRegistrationRhfValues,
   isCompanySchoolRegistrationCanonicalSnapshot,
   omitCompanySchoolCommonInfoOverlayKeys,
   rhfValuesFromCompanySchoolCanonical,
@@ -843,7 +843,7 @@ export function useProgramRegistrationEditor(
       // C4: 1사1교 RHF도 seed 초기화 시 기본값으로 reset (이전 draft 값 잔류 방지)
       if (programRegistrationFormVariant === 'economy') {
         peekCompanySchoolRegistrationRhf()?.reset(
-          createDefaultCompanySchoolRegistrationRhfValues(),
+          createNewCompanySchoolRegistrationRhfValues(),
           { keepDirty: false }
         )
       }

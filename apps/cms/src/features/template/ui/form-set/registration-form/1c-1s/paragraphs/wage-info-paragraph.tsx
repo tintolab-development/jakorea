@@ -24,8 +24,9 @@ import '@/features/template/ui/form-set/registration-form/general/paragraphs/pro
 /** 화면 라벨 — 카탈로그 원문과 매칭해 실제 마스터 id 를 고른다 */
 const PAYMENT_LABEL_TRANSPORT_CATALOG = '강사 교통비'
 const PAYMENT_LABEL_LODGING_CATALOG = '숙박비 (1사1교)'
-const PAYMENT_LABEL_TRANSPORT_1C1S = '교통비(일사일교)'
-const PAYMENT_LABEL_LODGING_1C1S = '숙박비(일사일교)'
+/** 시안(9899:215345) 표시 라벨 —「강사 교통비, 숙박비(1사1교)」. 카탈로그 id·정산 키는 그대로 */
+const PAYMENT_LABEL_TRANSPORT_1C1S = '강사 교통비'
+const PAYMENT_LABEL_LODGING_1C1S = '숙박비(1사1교)'
 
 const WAGE_FEE_ROWS = [
   {

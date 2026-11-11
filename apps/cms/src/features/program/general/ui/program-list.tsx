@@ -245,14 +245,18 @@ export function ProgramList({
   const filterFieldsForLayout = useMemo(() => {
     if (filterFieldsOverride) return filterFieldsOverride
     if (tableContext.mode === 'overview') {
-      return resolveProgramListFilterFields({
+      const overviewFields = resolveProgramListFilterFields({
         scheduledViewActive: listView === 'SCHEDULED',
         inProgressViewActive: listView === 'IN_PROGRESS',
         completedViewActive: listView === 'COMPLETED',
       })
+      // 1사1교 시안: 참여자 유형(학교/기관·강사 고정, 봉사자 없음) 필터 없음
+      return columnPreset === 'companySchool'
+        ? overviewFields.filter(field => field.key !== 'participantType')
+        : overviewFields
     }
     return programListFilterFields
-  }, [filterFieldsOverride, tableContext.mode, listView])
+  }, [filterFieldsOverride, tableContext.mode, listView, columnPreset])
 
   /**
    * useTablePage.tableData를 사용한다.

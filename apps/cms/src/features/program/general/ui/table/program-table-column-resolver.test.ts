@@ -174,3 +174,63 @@ describe('resolveEducationColumns general preset', () => {
     expect(column?.render?.(undefined, record, 0)).toBe('2026.12.08 ~ 2026.12.30')
   })
 })
+
+describe('resolveEducationColumns companySchool preset (1사1교 시안 4175:65554 외)', () => {
+  const resolve = (listView: 'ALL' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED') =>
+    columnKeys(
+      resolveEducationColumns({ isOverviewListPage: true, listView, columnPreset: 'companySchool' })
+    )
+
+  it('전체 탭: 참여자 유형을 빼고 강사 모집 인원을 넣는다', () => {
+    expect(resolve('ALL')).toEqual([
+      'no',
+      'title',
+      'lifecycleProgress',
+      'participantCapacity',
+      'instructorRecruitment',
+      'targetLevel',
+    ])
+  })
+
+  it('예정 탭: 참여자 유형을 빼고 강사 모집 인원을 넣는다', () => {
+    expect(resolve('SCHEDULED')).toEqual([
+      'no',
+      'title',
+      'participantCapacity',
+      'instructorRecruitment',
+      'targetLevel',
+      'operationPeriod',
+    ])
+  })
+
+  it('진행 중·완료 탭: 봉사자 모집 인원·참여자 유형을 뺀다', () => {
+    const expected = [
+      'no',
+      'title',
+      'participantCapacity',
+      'instructorRecruitment',
+      'participatingSchoolCount',
+      'participatingStudentCount',
+      'targetLevel',
+    ]
+    expect(resolve('IN_PROGRESS')).toEqual(expected)
+    expect(resolve('COMPLETED')).toEqual(expected)
+  })
+
+  it('예정 탭 사업 운영 기간을 요일과 함께 표시한다', () => {
+    const record = { startDate: '2026-12-08', endDate: '2026-12-30' } as unknown as Program
+    const columns = resolveEducationColumns({
+      isOverviewListPage: true,
+      listView: 'SCHEDULED',
+      columnPreset: 'companySchool',
+    })
+    const column = columns.find(item => item.key === 'operationPeriod')
+    expect(column?.render?.(undefined, record, 0)).toBe('2026.12.08(화) ~ 2026.12.30(수)')
+  })
+
+  it('default preset(교육 프로그램 등)은 기존 열을 유지한다', () => {
+    expect(
+      columnKeys(resolveEducationColumns({ isOverviewListPage: true, listView: 'IN_PROGRESS' }))
+    ).toContain('volunteerRecruitment')
+  })
+})
