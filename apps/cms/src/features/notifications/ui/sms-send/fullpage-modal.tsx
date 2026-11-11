@@ -346,8 +346,9 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
         texts: [template.subject, template.bodyText],
         catalog: variablesCatalog,
         programNumericId,
+        recipientTypeScope: templateVariablesQuery,
       }),
-    [programNumericId, variablesCatalog]
+    [programNumericId, templateVariablesQuery, variablesCatalog]
   )
 
   const getTemplateUnusableMessage = useCallback(
@@ -357,9 +358,10 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
           texts: [template.subject, template.bodyText],
           catalog: variablesCatalog,
           programNumericId,
+          recipientTypeScope: templateVariablesQuery,
         })
       ),
-    [programNumericId, variablesCatalog]
+    [programNumericId, templateVariablesQuery, variablesCatalog]
   )
 
   /** 템플릿 미리보기 「템플릿 사용」으로 열렸을 때 open당 1회만 적용 (선택 팝업 「사용하기」와 같은 가드) */

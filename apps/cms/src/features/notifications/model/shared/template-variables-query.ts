@@ -27,12 +27,14 @@ export function buildNotificationTemplateVariablesQuery(input: {
   })
 }
 
-/** 선택 수신자에서 유형이 하나뿐일 때만 필터값으로 쓴다 (혼합이면 생략 → BE가 보수적으로 enabled). */
+/**
+ * 선택 수신자에서 유형이 하나뿐일 때만 필터값으로 쓴다.
+ * 혼합·미선택이면 생략한다. 이때 BE는 유형 한정 변수를 `enabled=false`로 준다(2026-11-11 확인).
+ * 템플릿 선택 단계는 `isNotificationCatalogVariablePendingRecipientType`으로 이 변수를 막지 않는다.
+ */
 export function inferUniqueRecipientTypeValue(
   values: Array<string | undefined | null>
 ): string | undefined {
-  const unique = [
-    ...new Set(values.map(value => (value ?? '').trim()).filter(Boolean)),
-  ]
+  const unique = [...new Set(values.map(value => (value ?? '').trim()).filter(Boolean))]
   return unique.length === 1 ? unique[0] : undefined
 }
