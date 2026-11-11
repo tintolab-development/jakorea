@@ -1,5 +1,6 @@
 import { axiosClient } from '@/shared/api/axios-instance'
 import {
+  fetchApplicationSchedules,
   fetchIndividualSettlementSchedules,
   fetchVolunteerSettlementSchedules,
   fetchSettlementApplications,
@@ -150,9 +151,27 @@ export function pickLatestInstructorSettlementRows(
   return [...result, ...latestByAssignment.values()]
 }
 
+export type ScheduleTime = { startAt: string; endAt: string }
+
+/**
+ * 강사 정산 행의 교육 진행 일시. programScheduleId로 찾은 강의 회차 일시를 쓰고,
+ * 회차를 찾지 못할 때만 제출(없으면 생성) 시각으로 대체한다.
+ */
+export function resolveInstructorSettlementPeriod(
+  row: PortalSettlementApplication,
+  scheduleTimeById: ReadonlyMap<number, ScheduleTime>,
+): { startsAt: string; endsAt: string } {
+  const scheduleId = readOptionalNumber(row.programScheduleId)
+  const schedule = scheduleId != null ? scheduleTimeById.get(scheduleId) : undefined
+  if (schedule) return { startsAt: schedule.startAt, endsAt: schedule.endAt }
+  const fallback = readOptionalText(row.submittedAt) ?? readOptionalText(row.createdAt) ?? ''
+  return { startsAt: fallback, endsAt: fallback }
+}
+
 function mapInstructorSettlementItem(
   row: PortalSettlementApplication,
   programTitleByProgramId: Map<string, string>,
+  scheduleTimeById: ReadonlyMap<number, ScheduleTime>,
 ): SettlementOverviewItem | null {
   const id = readOptionalNumber(row.applicationId)
   if (id == null) return null
@@ -166,12 +185,13 @@ function mapInstructorSettlementItem(
   const programId = readOptionalNumber(row.programId)
   const programName =
     (programId != null ? programTitleByProgramId.get(String(programId)) : null) ?? '-'
+  const { startsAt, endsAt } = resolveInstructorSettlementPeriod(row, scheduleTimeById)
   return {
     id: String(id),
     programName,
     organizationName: '-',
-    startsAt: readOptionalText(row.submittedAt) ?? readOptionalText(row.createdAt) ?? '',
-    endsAt: readOptionalText(row.submittedAt) ?? readOptionalText(row.createdAt) ?? '',
+    startsAt,
+    endsAt,
     sessionLabel: '',
     status,
     appliedAmount:
@@ -253,6 +273,54 @@ async function fetchAllMyProgramApplications(
 }
 
 /**
+ * 강사 정산 행이 있는 프로그램의 강사 신청 일정만 조회해 scheduleId → 회차 일시를 모은다.
+ * 조회 실패는 무시하고(해당 행은 제출 시각으로 대체) 다른 건을 막지 않는다.
+ */
+async function fetchInstructorScheduleTimes(
+  applications: readonly PortalProgramApplicationListItem[],
+  rows: readonly PortalSettlementApplication[],
+  signal?: AbortSignal,
+): Promise<Map<number, ScheduleTime>> {
+  const scheduleTimeById = new Map<number, ScheduleTime>()
+  const programIds = new Set(
+    rows
+      .filter(row => readOptionalNumber(row.programScheduleId) != null)
+      .map(row => readOptionalNumber(row.programId))
+      .filter((id): id is number => id != null),
+  )
+  if (programIds.size === 0) return scheduleTimeById
+  const instructorApps = applications.filter(app => {
+    const programId = readOptionalNumber(app.programId)
+    return (
+      String(app.applicationType ?? '').toUpperCase() === 'INSTRUCTOR' &&
+      programId != null &&
+      programIds.has(programId)
+    )
+  })
+  await Promise.all(
+    instructorApps.map(async app => {
+      const applicationId = readOptionalNumber(app.applicationId)
+      if (applicationId == null) return
+      try {
+        const result = await fetchApplicationSchedules('INSTRUCTOR', String(applicationId), signal)
+        for (const schedule of result.items) {
+          const scheduleId = readOptionalNumber(schedule.scheduleId)
+          const startAt = readOptionalText(schedule.startAt)
+          if (scheduleId == null || !startAt) continue
+          scheduleTimeById.set(scheduleId, {
+            startAt,
+            endAt: readOptionalText(schedule.endAt) ?? startAt,
+          })
+        }
+      } catch {
+        // 일정 조회 실패는 다른 건을 막지 않는다.
+      }
+    }),
+  )
+  return scheduleTimeById
+}
+
+/**
  * 정산현황 overview 데이터.
  * - 강사: GET /api/portal/me/settlement-applications
  * - 개인: 내 INDIVIDUAL 신청별 GET .../individual-settlements/applications/{id}/schedules
@@ -287,8 +355,14 @@ export async function fetchSettlementOverviewPageData(input?: {
 
   const items: SettlementOverviewItem[] = []
 
-  for (const row of pickLatestInstructorSettlementRows(instructorRows)) {
-    const mapped = mapInstructorSettlementItem(row, programTitleByProgramId)
+  const latestInstructorRows = pickLatestInstructorSettlementRows(instructorRows)
+  const scheduleTimeById = await fetchInstructorScheduleTimes(
+    applications,
+    latestInstructorRows,
+    signal,
+  )
+  for (const row of latestInstructorRows) {
+    const mapped = mapInstructorSettlementItem(row, programTitleByProgramId, scheduleTimeById)
     if (mapped) items.push(mapped)
   }
 

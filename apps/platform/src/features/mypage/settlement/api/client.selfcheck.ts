@@ -1,5 +1,34 @@
 import assert from 'node:assert/strict'
-import { mapSettlementOverviewStatus, pickLatestInstructorSettlementRows } from './client.ts'
+import {
+  mapSettlementOverviewStatus,
+  pickLatestInstructorSettlementRows,
+  resolveInstructorSettlementPeriod,
+} from './client.ts'
+
+// 강사 정산의 교육 진행 일자는 강의 회차 일시. 회차를 못 찾으면 제출 시각 (QA 신청 14: 회차 187744)
+{
+  const times = new Map([
+    [187744, { startAt: '2026-11-07T13:00:00Z', endAt: '2026-11-07T14:00:00Z' }],
+  ])
+  assert.deepEqual(
+    resolveInstructorSettlementPeriod(
+      { applicationId: 14, programScheduleId: 187744, submittedAt: '2026-11-07T17:01:00Z' },
+      times,
+    ),
+    { startsAt: '2026-11-07T13:00:00Z', endsAt: '2026-11-07T14:00:00Z' },
+  )
+  assert.deepEqual(
+    resolveInstructorSettlementPeriod(
+      { applicationId: 15, programScheduleId: 999, submittedAt: '2026-11-07T19:40:00Z' },
+      times,
+    ),
+    { startsAt: '2026-11-07T19:40:00Z', endsAt: '2026-11-07T19:40:00Z' },
+  )
+  assert.deepEqual(
+    resolveInstructorSettlementPeriod({ applicationId: 16, createdAt: '2026-11-09T18:42:00Z' }, times),
+    { startsAt: '2026-11-09T18:42:00Z', endsAt: '2026-11-09T18:42:00Z' },
+  )
+}
 
 // 같은 배정의 예전 재신청 이력(RESUBMITTED)은 빼고 최신 신청 한 행만 남긴다 (QA 배정 1694905: 신청 16·17·20)
 {
