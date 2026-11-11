@@ -246,6 +246,15 @@
   white-space: pre-line;
 }
 
+/*
+ * 에디터로 쓰지 않은 값(기본정보·차시·일정·모집 기간·문의처·지원 방법 등)도
+ * 에디터 본문(.extraSectionRichText 15px)과 같은 15px로 보여 준다. 라벨·날짜 등 보조 글자는 그대로.
+ */
+.detail .fieldValue {
+  font-size: 15px;
+  letter-spacing: -0.15px;
+}
+
 .extraSectionRichText {
   /* 에디터 본문 기본 글자 크기 15px — CMS·홈페이지 어드민 에디터와 동일 */
   --rt-content-font-size: 15px;
@@ -420,7 +429,7 @@
   }
 
   .participate .applicationMethodValue {
-    font-size: 14px;
+    font-size: 15px;
     line-height: 1.6;
     letter-spacing: 0;
   }
@@ -455,6 +464,16 @@
     font-size: 14px;
     line-height: 1.6;
     letter-spacing: 0;
+  }
+
+  /* 값은 에디터 본문과 같은 15px (날짜 등 보조 글자는 위 14px 유지) */
+  .participate .infoItem > .fieldValue,
+  .participate .session > .fieldValue,
+  .participate .infoBlock > .fieldValue,
+  .participate .scheduleCard > .fieldValue,
+  .participate .extraSectionBody.fieldValue,
+  .participate .contact > .fieldValue {
+    font-size: 15px;
   }
 
   /* 차시 박스: 패딩 16, radius 12 (차시 간 16 + 구분선 + 16 은 공통 규칙 유지) */
