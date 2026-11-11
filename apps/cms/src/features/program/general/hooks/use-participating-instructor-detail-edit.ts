@@ -21,7 +21,12 @@ import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { shouldUseOrganizationApplicationRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { PROGRAM_API_UNAVAILABLE_SAVE_CONTENT } from '@/features/program/shared/lib/program-api-unavailable'
-import { showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
+import { cmsAlertModal, showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
+import { MESSAGES } from '@/shared/constants/messages'
+
+/** 참여 강사 강사비 수정 안내(C1) — 승인 후 수정은 이미 배정된 회차에 반영되지 않는다 */
+export const PARTICIPATING_INSTRUCTOR_FEE_CHANGE_NOTICE =
+  '이미 배정된 회차에는 적용되지 않아요. 기존 회차는 지급조서 정정으로 처리해 주세요.'
 import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
@@ -138,9 +143,27 @@ export function useParticipatingInstructorDetailEdit({
       void queryClient.invalidateQueries({
         queryKey: generalApplicationsQueryKeys.instructorDetail(applicationId),
       })
-      onSaved(mapInstructorApplicationDetailToParticipatingRow(refreshed, instructor, programId))
+      const updatedRow = mapInstructorApplicationDetailToParticipatingRow(
+        refreshed,
+        instructor,
+        programId
+      )
+      const feeChanged =
+        updatedRow.lectureFeeBasisType !== instructor.lectureFeeBasisType ||
+        (updatedRow.lectureFeeMeasure ?? '') !== (instructor.lectureFeeMeasure ?? '') ||
+        (updatedRow.lectureFeeAmount ?? '') !== (instructor.lectureFeeAmount ?? '')
+      onSaved(updatedRow)
       resetEditState()
-      showUpdateCompletedAlert()
+      if (feeChanged) {
+        // 기존 「수정 완료」 알림 안에 C1 안내를 덧붙인다(새 UI 없음)
+        cmsAlertModal.show({
+          title: '수정 완료',
+          content: `${MESSAGES.success.updated} ${PARTICIPATING_INSTRUCTOR_FEE_CHANGE_NOTICE}`,
+          confirmLabel: '확인',
+        })
+      } else {
+        showUpdateCompletedAlert()
+      }
       return true
     } catch (error) {
       const message = getGeneralProgramApiErrorMessage(
