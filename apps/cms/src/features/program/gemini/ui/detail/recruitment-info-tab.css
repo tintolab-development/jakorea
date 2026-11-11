@@ -38,8 +38,11 @@
   color: var(--default-BK, #3d3d3d);
 }
 
+/* HTML이 아닌 기존·자동 입력 값 — 에디터 뷰어와 같은 본문 기본 글자 크기 15px */
 .gemini-recruitment-info-tab__multiline-text {
   white-space: pre-wrap;
+  font-size: var(--rt-content-font-size, 15px);
+  line-height: 150%;
 }
 
 .gemini-recruitment-info-tab__additional-content {

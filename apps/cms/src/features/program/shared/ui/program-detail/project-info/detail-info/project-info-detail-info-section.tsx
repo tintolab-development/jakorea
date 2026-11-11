@@ -194,7 +194,12 @@ function RichTextReadContent({
   className?: string
 }) {
   if (typeof content !== 'string' || !isHtmlContent(content)) {
-    return <div className={className}>{content}</div>
+    // HTML이 아닌 기존·자동 입력 값도 에디터 뷰어와 같은 글자 크기·행간으로 보인다
+    return (
+      <div className={[className, 'program-detail-info-tab__plain-content'].filter(Boolean).join(' ')}>
+        {content}
+      </div>
+    )
   }
   return (
     <div className={className}>
@@ -317,7 +322,9 @@ function ProgramDetailTextAreaField({
         labelWidth={DETAIL_INFO_FIELD_LABEL_WIDTH}
         fullRow
         view={
-          <div className="text-area-field-row__content-block">{readContent}</div>
+          <div className="text-area-field-row__content-block program-detail-info-tab__plain-content">
+            {readContent}
+          </div>
         }
         edit={
           isFormEdit && form
