@@ -44,6 +44,18 @@ export type BuildTeacherApplicationContentInput = {
   institutionOverlay?: Record<string, unknown> | null
 }
 
+/** 1사1교(`COMPANY_SCHOOL`·구 `ONE_COMPANY_ONE_SCHOOL`·registrationKind economy) 기관 신청 */
+function isCompanySchoolTeacherApplication(
+  program: Pick<ProgramDetail, 'programType' | 'registrationKind'> | undefined,
+  programGroup: string | undefined,
+): boolean {
+  const types = [program?.programType, programGroup].map(value => value?.trim().toUpperCase())
+  return (
+    program?.registrationKind === 'economy' ||
+    types.some(type => type === 'COMPANY_SCHOOL' || type === 'ONE_COMPANY_ONE_SCHOOL')
+  )
+}
+
 export function buildTeacherApplicationContentFromPortal(
   input: BuildTeacherApplicationContentInput,
   program?: Pick<
@@ -86,6 +98,7 @@ export function buildTeacherApplicationContentFromPortal(
     preferredScheduleBlocks: input.preferredScheduleBlocks,
     preserveLegacyLineTokens: (programGroup ?? '').toUpperCase() === 'TRAINED_TEACHER',
     trainedTeacherSessionDetail: (programGroup ?? '').toUpperCase() === 'TRAINED_TEACHER',
+    companySchoolPeriodDetail: isCompanySchoolTeacherApplication(programForAudience, programGroup),
     program,
   })
 

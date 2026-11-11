@@ -333,4 +333,42 @@ assert.deepEqual(
 assert.ok(!geminiInstructorTabs.some(item => item.key === 'notice'))
 assert.ok(!geminiInstructorTabs.some(item => item.key === 'lecture-report'))
 
+// 1사1교 교사 — 안내사항 / 교육 일정 / 설문조사 / 만족도조사만 (학생 명단·정산 없음, policy·회원 유형 무관)
+for (const programType of ['COMPANY_SCHOOL', 'ONE_COMPANY_ONE_SCHOOL']) {
+  for (const teacherOptions of [schoolTeacherOptions, instructorDualOptions]) {
+    const companySchoolTeacher = buildTeacherInProgressDetailTabItems({
+      ...teacherOptions,
+      programType,
+      scheduleTabLabel: EDUCATION_ACTIVITY_SCHEDULE_TAB_LABEL,
+      teacherStudentDocumentTabsVisible: true,
+    })
+    assert.deepEqual(
+      companySchoolTeacher.map(item => item.key),
+      ['notice', 'schedule', 'survey', 'satisfaction'],
+    )
+    assert.deepEqual(
+      buildTeacherWithdrawnDuringDetailTabItems({
+        ...teacherOptions,
+        programType,
+        teacherStudentDocumentTabsVisible: true,
+      }).map(item => item.key),
+      ['schedule', 'survey', 'satisfaction'],
+    )
+  }
+}
+
+// 1사1교 강사 역할(강의현황 상세 — 교사 빌더를 쓰지 않음)은 배정 현황·안내사항·강의보고서·정산 현황 그대로
+for (const programType of ['COMPANY_SCHOOL', 'ONE_COMPANY_ONE_SCHOOL']) {
+  assert.deepEqual(
+    buildInProgressDetailTabItems({
+      ...instructorDualOptions,
+      detailCase: 'instructor',
+      programType,
+      lectureReportVisible: true,
+      instructorAssignmentVisible: true,
+    }).map(item => item.key),
+    ['schedule', 'notice', 'lecture-report', 'settlement'],
+  )
+}
+
 console.log('detail-tabs.teacher.selfcheck: ok')
