@@ -120,13 +120,13 @@
   flex-shrink: 0;
 }
 
-/* 공고 정보 1행 — 시안 필드 간 gap 16 */
+/* 공고 정보 1행 — 필드 간 24px (공지사항·임팩트 스토리 등록 모달과 동일) */
 .posting-form-modal__filter-inner {
   display: flex;
   flex-wrap: nowrap;
   align-items: flex-start;
   justify-content: flex-start;
-  gap: 16px;
+  gap: 24px;
   width: 100%;
   box-sizing: border-box;
 }
@@ -158,8 +158,9 @@
   flex: 0 0 auto;
 }
 
+/* 라디오 medium — 컨트롤 높이 40 (공지사항·임팩트 스토리와 동일) */
 .posting-form-modal__filter-field--radio .app-radio-group {
-  min-height: 44px;
+  min-height: 40px;
   width: fit-content;
   flex-wrap: nowrap;
 }
