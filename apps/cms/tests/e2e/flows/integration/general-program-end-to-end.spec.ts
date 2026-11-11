@@ -3,6 +3,8 @@
  *
  * 한 단계씩 구현·실행한다. 아직 구현하지 않은 단계는 skip 하며 통과로 보고하지 않는다.
  * 데이터 생성은 E2E_ALLOW_MUTATION=1 일 때만 실행한다.
+ * Vite HMR로 로그인/등록 페이지가 반복 reload 되면
+ * E2E_STABLE_VITE_NAV=1 을 함께 켠다(공유 fixture·로그인 헬퍼 옵트인).
  */
 import { type Page } from '@playwright/test'
 import { expect, test } from '../../fixtures/test'

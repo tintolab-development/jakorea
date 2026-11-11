@@ -533,10 +533,7 @@ async function clickCalendarMiniNav(dialog: Locator, direction: 'prev' | 'next')
   const button =
     direction === 'prev' ? calendarMiniPrevButton(dialog) : calendarMiniNextButton(dialog)
   await expect(button).toBeVisible({ timeout: 5_000 })
-  // 등록 모달 안에서 팝오버가 트리거 왼쪽/가장자리에 붙으면
-  // 대표 프로그램명 등 다른 필드가 히트 테스트를 가로챈다.
-  // 날짜 셀과 같이 force click으로 실제 내비게이션 버튼을 누른다.
-  await button.click({ force: true })
+  await button.click()
   await expect.poll(async () => calendarMiniTitle(dialog), { timeout: 5_000 }).not.toBe(before)
 }
 
@@ -630,15 +627,9 @@ async function fillParagraphDateByPlaceholderOnce(
     }
   }
 
-  // 탭 전환·리렌더로 트리거가 detach 될 수 있어 재조회 후 스크롤/클릭.
-  // 모달 상단에 붙으면 달력이 카드 밖으로 열려 월 이동 클릭이 가로채이므로 가운데로 둔다.
-  const centerTrigger = async (target: Locator) => {
-    await target.evaluate(el => {
-      el.scrollIntoView({ block: 'center', inline: 'nearest' })
-    })
-  }
+  // 탭 전환·리렌더로 트리거가 detach 될 수 있어 재조회 후 스크롤/클릭
   try {
-    await centerTrigger(trigger)
+    await trigger.scrollIntoViewIfNeeded()
   } catch {
     trigger = triggerLocator()
     if ((await trigger.count()) === 0 || !(await trigger.isVisible().catch(() => false))) {
@@ -647,7 +638,7 @@ async function fillParagraphDateByPlaceholderOnce(
       }
       return
     }
-    await centerTrigger(trigger)
+    await trigger.scrollIntoViewIfNeeded()
   }
   await trigger.click()
 
@@ -669,10 +660,11 @@ async function fillParagraphDateByPlaceholderOnce(
       if (!match) break
       const displayedMonth = Number(match[1]) * 12 + Number(match[2]) - 1
       if (displayedMonth === targetMonth) break
-      await clickCalendarMiniNav(
-        dialog,
-        displayedMonth < targetMonth ? 'next' : 'prev'
-      )
+      const navigationButton =
+        displayedMonth < targetMonth
+          ? calendarMiniNextButton(dialog)
+          : calendarMiniPrevButton(dialog)
+      await navigationButton.click()
     }
   }
 
