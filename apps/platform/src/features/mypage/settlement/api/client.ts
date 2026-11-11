@@ -114,46 +114,29 @@ function sumSubmittedAmounts(
   return hasAmount ? total : null
 }
 
-function readTimeMs(value: unknown): number {
-  const text = readOptionalText(value)
-  const ms = text ? Date.parse(text) : Number.NaN
-  return Number.isFinite(ms) ? ms : Number.NEGATIVE_INFINITY
-}
-
-/** 이전 재신청 이력 행 노출 여부 — 시안 확정 전까지 false(최신 신청만 보인다) */
-const SHOW_SUPERSEDED_INSTRUCTOR_HISTORY = false
-
 /**
- * 재신청 이력은 한 줄씩 보여 준다. 같은 assignmentId에서 가장 늦게 만든 신청(같으면 applicationId가 큰 쪽)만
- * 현재 건이고, 나머지는 다음 revision으로 대체된 이전 신청이다. 이전 신청의 applicationId 집합을 돌려준다.
+ * 재신청 이력은 한 줄씩 보여 준다(기획 B3). 이전 신청 판단은 서버 superseded만 쓴다
+ * (status 문자열이나 같은 배정의 신청 순서로 추측하지 않는다). 이전 신청의 applicationId 집합을 돌려준다.
  */
 export function findSupersededInstructorApplicationIds(
   rows: readonly PortalSettlementApplication[],
 ): Set<number> {
-  const latestByAssignment = new Map<number, PortalSettlementApplication>()
-  for (const row of rows) {
-    const assignmentId = readOptionalNumber(row.assignmentId)
-    if (assignmentId == null) continue
-    const current = latestByAssignment.get(assignmentId)
-    if (!current) {
-      latestByAssignment.set(assignmentId, row)
-      continue
-    }
-    const byCreated = readTimeMs(row.createdAt) - readTimeMs(current.createdAt)
-    const byId =
-      (readOptionalNumber(row.applicationId) ?? 0) - (readOptionalNumber(current.applicationId) ?? 0)
-    if (byCreated > 0 || (byCreated === 0 && byId > 0)) {
-      latestByAssignment.set(assignmentId, row)
-    }
-  }
   const superseded = new Set<number>()
   for (const row of rows) {
-    const assignmentId = readOptionalNumber(row.assignmentId)
     const applicationId = readOptionalNumber(row.applicationId)
-    if (assignmentId == null || applicationId == null) continue
-    if (latestByAssignment.get(assignmentId) !== row) superseded.add(applicationId)
+    if (row.superseded === true && applicationId != null) superseded.add(applicationId)
   }
   return superseded
+}
+
+/** 정산 신청 금액 — 최신 정산 revision 금액(정정 후 금액) 우선, 정산이 없으면 제출 당시 금액 */
+export function resolveInstructorSettlementAmount(row: PortalSettlementApplication): number | null {
+  return (
+    readOptionalNumber(row.latestNetPaymentAmount) ??
+    readOptionalNumber(row.netPaymentAmount) ??
+    readOptionalNumber(row.latestGrossAmount) ??
+    readOptionalNumber(row.grossAmount)
+  )
 }
 
 /**
@@ -170,6 +153,16 @@ export function resolveInstructorSettlementPeriod(
   return { startsAt: fallback, endsAt: fallback }
 }
 
+/** 대체된 이전 신청의 원래 결과 → '신청 반려' | '지급 정정 요청'. 모르면 null */
+export function mapSupersededResultStatus(
+  value: string | null | undefined,
+): SettlementOverviewStatus | null {
+  const token = normalizeStatusToken(value)
+  if (token === 'REJECTED') return 'rejected'
+  if (token === 'CORRECTION_REQUESTED') return 'correction_requested'
+  return null
+}
+
 function mapInstructorSettlementItem(
   row: PortalSettlementApplication,
   programTitleByProgramId: Map<string, string>,
@@ -177,12 +170,15 @@ function mapInstructorSettlementItem(
 ): SettlementOverviewItem | null {
   const id = readOptionalNumber(row.applicationId)
   if (id == null) return null
-  const status = mapSettlementOverviewStatus({
-    status: row.status,
-    statementStatus: row.statementStatus,
-    paymentStatus: row.paymentStatus,
-    statementReapplyAvailable: row.statementReapplyAvailable,
-  })
+  const supersededStatus = superseded ? mapSupersededResultStatus(row.supersededReason) : null
+  const status =
+    supersededStatus ??
+    mapSettlementOverviewStatus({
+      status: row.status,
+      statementStatus: row.statementStatus,
+      paymentStatus: row.paymentStatus,
+      statementReapplyAvailable: row.statementReapplyAvailable,
+    })
   if (!status) return null
   const programId = readOptionalNumber(row.programId)
   const programName =
@@ -196,9 +192,10 @@ function mapInstructorSettlementItem(
     endsAt,
     sessionLabel: '',
     status,
-    appliedAmount:
-      readOptionalNumber(row.netPaymentAmount) ?? readOptionalNumber(row.grossAmount),
+    appliedAmount: resolveInstructorSettlementAmount(row),
     ...(superseded ? { superseded: true } : {}),
+    // superseded=true인데 supersededReason이 없는 옛 데이터만 상태 '-'
+    ...(superseded && !supersededStatus ? { supersededStatusUnknown: true } : {}),
   }
 }
 
@@ -315,8 +312,6 @@ export async function fetchSettlementOverviewPageData(input?: {
   for (const row of instructorRows) {
     const applicationId = readOptionalNumber(row.applicationId)
     const superseded = applicationId != null && supersededIds.has(applicationId)
-    // 이전 재신청 이력 행(상태 '-'·금액 취소선)은 시안 확정 전까지 비노출
-    if (superseded && !SHOW_SUPERSEDED_INSTRUCTOR_HISTORY) continue
     const mapped = mapInstructorSettlementItem(row, programTitleByProgramId, superseded)
     if (mapped) items.push(mapped)
   }

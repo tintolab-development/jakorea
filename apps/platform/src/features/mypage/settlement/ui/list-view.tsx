@@ -65,14 +65,16 @@ export function SettlementListView({ month, items }: SettlementListViewProps) {
                   </td>
                   <td className={styles.colOrg}>{item.organizationName || '-'}</td>
                   <td className={styles.colDate}>{formatEducationDateCell(item)}</td>
-                  {/* 대체된 이전 신청: 원래 결과를 구분할 서버 필드가 없어 상태 라벨을 비운다 */}
+                  {/* 대체된 이전 신청은 원래 결과 상태로 표시. supersededReason이 없는 옛 데이터만 '-' */}
                   <td
                     className={styles.colStatus}
                     style={
-                      item.superseded ? undefined : { color: SETTLEMENT_STATUS_LIST_COLOR[item.status] }
+                      item.supersededStatusUnknown
+                        ? undefined
+                        : { color: SETTLEMENT_STATUS_LIST_COLOR[item.status] }
                     }
                   >
-                    {item.superseded ? '-' : SETTLEMENT_STATUS_LIST_LABEL[item.status]}
+                    {item.supersededStatusUnknown ? '-' : SETTLEMENT_STATUS_LIST_LABEL[item.status]}
                   </td>
                 </tr>
               ))}
