@@ -119,6 +119,10 @@ export function GeneralProgramRecruitmentView({
 
   let recruitment: ReactNode
   let detail: ReactNode
+  // 교육받은 교사 참여 기관 모집 상세 — 일반 기관 시안 스펙(HWP·10개·100MB·안내/placeholder). 1사1교·UJAT 불변
+  const resolvedParticipantDetailVariant: DetailInfoSectionVariant =
+    participantDetailVariant ??
+    (isTrainedTeachersDetailProgram(program) ? 'trained-teachers' : variant)
 
   switch (activeRecruitTab) {
     case 'institutions':
@@ -142,7 +146,7 @@ export function GeneralProgramRecruitmentView({
           showRecruitmentMethod={showParticipantRecruitmentMethod}
           recruitmentMethodLabel="지원 방법"
           emptyReadDisplay="dash"
-          variant={participantDetailVariant ?? variant}
+          variant={resolvedParticipantDetailVariant}
         />
       )
       break
@@ -216,8 +220,9 @@ export function GeneralProgramRecruitmentView({
           items={generalRecruitTabItems({
             showInstructor: showInstructorTab,
             showVolunteer: showVolunteerTab,
+            // 교육받은 교사도 학교/기관 모집 — 시안 탭 「참여 기관 모집 정보」
             institutionsLabel:
-              isGeneralIndividualProgram(program) || isTrainedTeachersDetailProgram(program)
+              isGeneralIndividualProgram(program) && !isTrainedTeachersDetailProgram(program)
                 ? '참여자 모집 정보'
                 : '참여 기관 모집 정보',
           })}
