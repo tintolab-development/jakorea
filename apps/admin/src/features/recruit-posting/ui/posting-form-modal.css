@@ -154,7 +154,7 @@
   max-width: 240px;
 }
 
-/* 라디오 — content 폭 (공개/미공개, 모집/발표) */
+/* 라디오 — content 폭 (공개/비공개, 모집/발표) */
 .posting-form-modal__filter-field--radio {
   width: fit-content;
   max-width: none;
