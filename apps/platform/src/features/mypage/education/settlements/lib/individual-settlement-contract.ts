@@ -158,11 +158,20 @@ export function normalizeIndividualIneligibleReason(
   return normalized ? normalized : null
 }
 
+/** 봉사자 정산 — 개인(교육)과 문구가 다른 사유만 */
+const VOLUNTEER_INELIGIBLE_REASON_MESSAGES: Record<string, string> = {
+  SCHEDULE_NOT_ENDED: '봉사가 종료된 이후에 영수증을 제출할 수 있습니다.',
+}
+
 export function individualIneligibleMessage(
   reason: string | null | undefined,
+  audience: ScheduleSettlementAudience = 'individual',
 ): string | undefined {
   const normalized = normalizeIndividualIneligibleReason(reason)
   if (!normalized) return undefined
+  if (audience === 'volunteer' && VOLUNTEER_INELIGIBLE_REASON_MESSAGES[normalized]) {
+    return VOLUNTEER_INELIGIBLE_REASON_MESSAGES[normalized]
+  }
   return INELIGIBLE_REASON_MESSAGES[normalized]
 }
 

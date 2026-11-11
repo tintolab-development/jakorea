@@ -271,9 +271,10 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
         usedKeys: collectTemplatePlaceholderKeys(template),
         catalog: variablesCatalog,
         programNumericId,
+        recipientTypeScope: templateVariablesQuery,
       })
     },
-    [programNumericId, variablesCatalog, variablesQuery.isError]
+    [programNumericId, templateVariablesQuery, variablesCatalog, variablesQuery.isError]
   )
 
   const getTemplateUnusableMessage = useCallback(
@@ -292,10 +293,11 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
           usedKeys: collectTemplatePlaceholderKeys(template),
           catalog: variablesCatalog,
           programNumericId,
+          recipientTypeScope: templateVariablesQuery,
         })
       )
     },
-    [programNumericId, variablesCatalog, variablesQuery.isError]
+    [programNumericId, templateVariablesQuery, variablesCatalog, variablesQuery.isError]
   )
 
   const getTemplateUnusableReason = useCallback(
@@ -314,11 +316,18 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
             usedKeys: collectTemplatePlaceholderKeys(template),
             catalog: variablesCatalog,
             programNumericId,
+            recipientTypeScope: templateVariablesQuery,
           })
         ) ?? (message ? { summary: message, detail: message } : null)
       )
     },
-    [getTemplateUnusableMessage, programNumericId, variablesCatalog, variablesQuery.isError]
+    [
+      getTemplateUnusableMessage,
+      programNumericId,
+      templateVariablesQuery,
+      variablesCatalog,
+      variablesQuery.isError,
+    ]
   )
 
   const onRecipientPrivacyFailure = useCallback((failure: 'forbidden' | 'audit-unavailable') => {

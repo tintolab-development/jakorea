@@ -215,6 +215,33 @@
   cursor: not-allowed;
 }
 
+.ujat-lecture-eval-survey .ujat-lecture-eval-submitted .ujat-survey-submitted-state__actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 28px;
+}
+
+.ujat-lecture-eval-survey
+  .ujat-lecture-eval-submitted
+  .ujat-survey-submitted-state__actions
+  .ujat-survey-submitted-state__edit-button.cms-button.ant-btn {
+  margin-top: 0;
+}
+
+.ujat-lecture-eval-survey
+  .ujat-lecture-eval-submitted
+  .ujat-survey-submitted-state__delete-button.cms-button.ant-btn {
+  height: 44px;
+  min-height: 44px;
+  border-radius: 8px;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 120%;
+}
+
 .ujat-lecture-eval-form {
   display: flex;
   flex: 1;

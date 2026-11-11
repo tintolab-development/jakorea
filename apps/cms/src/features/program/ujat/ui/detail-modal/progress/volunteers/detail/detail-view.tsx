@@ -56,6 +56,7 @@ import { useVolunteerAssignmentProgress } from './use-assignment-progress'
 import {
   UjatEducationProgressVolunteerAssignmentProgressTab,
 } from './assignment-progress-tab'
+import { UjatEducationProgressVolunteerSettlementTab } from './settlement-tab'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './detail.css'
 
@@ -554,6 +555,11 @@ export function UjatEducationProgressVolunteerDetailView({
             preferredRegionDraft={preferredRegionDraft}
             onPreferredRegionDraftChange={setPreferredRegionDraft}
             isAdminCommentEditing={false}
+          />
+        ) : activeTab === 'settlement' ? (
+          <UjatEducationProgressVolunteerSettlementTab
+            program={program}
+            volunteerId={detail.volunteerId}
           />
         ) : (
           <UjatEducationProgressVolunteerAssignmentProgressTab

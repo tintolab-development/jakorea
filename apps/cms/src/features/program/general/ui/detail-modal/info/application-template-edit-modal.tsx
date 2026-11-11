@@ -30,7 +30,6 @@ import {
 import {
   lookupTemplateRegistry,
   resolvePreviewHeaderTitle,
-  TEMPLATE_FORM_MODAL_DESCRIPTION,
 } from '@/features/template/model/template-registry/template-registry'
 import { resolveTemplateEditorPanels } from '@/features/template/ui/template-renderers/resolve-template-editor-panels'
 import type { TemplateEditorVm } from '@/features/template/ui/template-renderers/template-renderer-types'
@@ -217,7 +216,6 @@ export function GeneralProgramApplicationTemplateEditModal({
       open={open}
       onClose={onClose}
       title={headerTitle}
-      description={TEMPLATE_FORM_MODAL_DESCRIPTION}
       bodyHeaderLeading={
         tabItems != null && tabItems.length > 0 ? (
           <CmsTextTabs

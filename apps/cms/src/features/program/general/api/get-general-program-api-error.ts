@@ -72,6 +72,13 @@ const PROGRESS_INSTRUCTOR_ERROR_MESSAGES: Record<string, string> = {
   FORM_BINDING_TARGET_ROLE_MISMATCH: '현재 참여 역할에 해당하지 않는 설문입니다.',
   FORM_RESPONSE_ALREADY_SUBMITTED:
     '이미 제출된 응답입니다. 수정은 응답 수정으로 해 주세요.',
+  /* 강의평가 — 서버 message가 있으면 그 문구를 쓴다(아래 raw 우선). BE 회신 2026-11-11 */
+  FORM_RESPONSE_NOT_OWNER: '본인이 제출한 강의평가 답변만 수정하거나 삭제할 수 있습니다.',
+  LECTURE_EVALUATION_EDIT_PERIOD_ENDED: '강의평가 기간이 끝나 답변을 수정할 수 없습니다.',
+  FORM_RESPONSE_NOT_MUTABLE: '이미 삭제된 답변입니다. 화면을 다시 불러온 뒤 확인해 주세요.',
+  FORM_SUBMISSION_NOT_STARTED: '아직 작성 기간 전입니다. 작성 기간에 다시 제출해 주세요.',
+  FORM_SUBMISSION_CLOSED: '작성 기간이 끝나 제출할 수 없습니다.',
+  FORM_RESULTS_NOT_AVAILABLE: '강의평가 결과는 평가 기간이 끝난 뒤에 볼 수 있습니다.',
   INSTRUCTOR_PARTICIPATION_CONSENT_REQUIRED:
     '강사 활동에 필요한 동의가 부족합니다. 해당 동의를 다시 받은 뒤 처리해 주세요.',
   UJAT_VOLUNTEER_PARTICIPATION_CONSENT_REQUIRED:

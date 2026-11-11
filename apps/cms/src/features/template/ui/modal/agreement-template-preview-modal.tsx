@@ -151,9 +151,6 @@ export function AgreementTemplatePreviewModal({
 
         <div ref={previewScrollRef} className="agreement-template-preview-modal__body">
           <div className="agreement-template-preview-modal__toolbar">
-            <p className="agreement-template-preview-modal__notice">
-              * 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다.
-            </p>
             {pdfError ? <Alert type="error" description={pdfError} showIcon /> : null}
             <div className="agreement-template-preview-modal__actions">
               <CmsButton

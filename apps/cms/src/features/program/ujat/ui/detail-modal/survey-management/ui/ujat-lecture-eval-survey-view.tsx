@@ -4,10 +4,12 @@ import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { CmsButton } from '@/shared/ui/cms-button'
 import {
   UJAT_LECTURE_EVAL_ACTION_LABELS,
+  UJAT_LECTURE_EVAL_CLOSED_COPY,
   UJAT_LECTURE_EVAL_EMPTY_COPY,
   UJAT_LECTURE_EVAL_PRE_START_COPY,
   UJAT_LECTURE_EVAL_SUBMITTED_COPY,
 } from '../lib/ujat-survey-copy'
+import { canDownloadLectureEvalResults } from '@/features/program/shared/lib/survey-management/lecture-eval-survey'
 import {
   canEditLectureEvalResponse,
   isLectureEvalFormPhase,
@@ -18,9 +20,8 @@ import {
 import type { UjatSurveyPollRawResponse } from '@/features/program/ujat/model/ujat-survey-poll'
 import type { UjatRegisteredSurvey } from '../lib/ujat-satisfaction-survey'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
-import { canDownloadSurveyResults } from './ujat-survey-registered-actions'
 import { UjatSurveyEmptyState } from './ujat-survey-empty-state'
-import { UjatSurveyPreStartState } from './ujat-survey-pre-start-state'
+import { UjatSurveyNoResponseState } from './ujat-survey-no-response-state'
 import { UjatLectureEvalSubmittedIcon } from './ujat-lecture-eval-submitted-icon'
 import { UjatSurveySubmittedState } from './ujat-survey-submitted-state'
 import { UjatLectureEvalFormView } from './ujat-lecture-eval-form-view'
@@ -40,10 +41,14 @@ export type UjatLectureEvalSurveyViewProps = {
   resultsExportRef: RefObject<HTMLDivElement | null>
   onTabChange: (tab: UjatLectureEvalTabKey) => void
   onRegisterClick: () => void
+  /** 진행 전 — 등록된 강의평가 매핑 삭제 */
+  onDeleteClick: () => void
   onOpenTemplatePreview: () => void
   onFormDraftChange: (draft: WritingFormDraft) => void
   onSubmitClick: () => void
   onEditResponseClick: () => void
+  /** 본인 답변 삭제 — 진행 중·마감 전 */
+  onDeleteResponseClick: () => void
   onDownloadResultsClick: () => void
 }
 
@@ -58,18 +63,21 @@ export function UjatLectureEvalSurveyView({
   resultsExportRef,
   onTabChange,
   onRegisterClick,
+  onDeleteClick,
   onOpenTemplatePreview,
   onFormDraftChange,
   onSubmitClick,
   onEditResponseClick,
+  onDeleteResponseClick,
   onDownloadResultsClick,
 }: UjatLectureEvalSurveyViewProps) {
   const showForm =
     survey != null && isLectureEvalFormPhase(survey, submitted) && formDraft != null
   const showSubmitted = survey != null && submitted
   const showPreStart = survey != null && survey.status === 'before_start'
+  const showClosed = survey != null && survey.status === 'finished' && !submitted
   const resultsAccessible = survey != null && isLectureEvalResultsTabAccessible(survey)
-  const downloadEnabled = survey != null && canDownloadSurveyResults(survey)
+  const downloadEnabled = canDownloadLectureEvalResults(survey)
 
   const trailingActions =
     activeTab === 'eval' && showForm && !submitted ? (
@@ -99,10 +107,15 @@ export function UjatLectureEvalSurveyView({
         onRegisterClick={onRegisterClick}
       />
     ) : showPreStart ? (
-      <UjatSurveyPreStartState
+      <UjatSurveyNoResponseState
         title={UJAT_LECTURE_EVAL_PRE_START_COPY.title}
         description={UJAT_LECTURE_EVAL_PRE_START_COPY.description}
+        deleteButtonLabel={UJAT_LECTURE_EVAL_PRE_START_COPY.deleteButton}
         previewButtonLabel={UJAT_LECTURE_EVAL_PRE_START_COPY.previewButton}
+        canDelete
+        previewButtonAction="write"
+        embedded
+        onDeleteClick={onDeleteClick}
         onOpenTemplatePreview={onOpenTemplatePreview}
       />
     ) : showSubmitted ? (
@@ -112,9 +125,25 @@ export function UjatLectureEvalSurveyView({
         title={UJAT_LECTURE_EVAL_SUBMITTED_COPY.title}
         description={UJAT_LECTURE_EVAL_SUBMITTED_COPY.description}
         editButtonLabel={UJAT_LECTURE_EVAL_SUBMITTED_COPY.editButton}
-        canEdit={canEditLectureEvalResponse(survey, formDraft)}
-        showEditButton
+        canEdit={canEditLectureEvalResponse(survey)}
+        showEditButton={survey.status !== 'finished'}
         onEditClick={onEditResponseClick}
+        deleteButtonLabel={UJAT_LECTURE_EVAL_SUBMITTED_COPY.deleteButton}
+        showDeleteButton={canEditLectureEvalResponse(survey)}
+        onDeleteClick={onDeleteResponseClick}
+      />
+    ) : showClosed ? (
+      <UjatSurveyNoResponseState
+        title={UJAT_LECTURE_EVAL_CLOSED_COPY.title}
+        description={UJAT_LECTURE_EVAL_CLOSED_COPY.description}
+        deleteButtonLabel=""
+        previewButtonLabel=""
+        canDelete={false}
+        showDeleteButton={false}
+        showPreviewButton={false}
+        embedded
+        onDeleteClick={onDeleteClick}
+        onOpenTemplatePreview={onOpenTemplatePreview}
       />
     ) : showForm && formDraft != null ? (
       <UjatLectureEvalFormView
@@ -145,6 +174,7 @@ export function UjatLectureEvalSurveyView({
             responseCount={survey!.responseCount}
             participantTotal={survey!.participantTotal}
             responses={pollResponses.length > 0 ? pollResponses : undefined}
+            pdfTitle="강의평가 결과"
           />
         </div>
       ) : null}

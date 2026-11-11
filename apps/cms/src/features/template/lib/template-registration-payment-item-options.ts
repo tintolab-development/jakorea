@@ -18,7 +18,7 @@ import type { CmsSelectMultipleOption } from '@/shared/ui/cms-select-multiple'
 export const LEGACY_LOCAL_PAYMENT_ITEM_OPTIONS: CmsSelectMultipleOption[] = [
   { value: 'p-1', label: '강사 교통비' },
   { value: 'p-3', label: '숙박비' },
-  { value: 'p-6', label: '참여자 활동비' },
+  { value: 'p-6', label: '활동비' },
   { value: 'p-7', label: '숙박비 (1사1교)' },
 ]
 

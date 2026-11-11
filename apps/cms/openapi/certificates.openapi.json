@@ -751,7 +751,7 @@
           "reused": {
             "type": "boolean",
             "example": false,
-            "description": "동일 키 재사용이면 true. true여도 PDF 진행은 정상"
+            "description": "같은 발급 키에 이미 발급된 번호를 다시 내려주면 true. true여도 PDF 진행은 정상"
           },
           "issuedAt": {
             "type": "string",
@@ -760,7 +760,12 @@
             "example": "2026-11-10T01:00:00Z",
             "description": "certificate_issue 발급 일시. 기존 발급 건을 다시 받으면 최초 발급 일시. PDF 발급일과 다운로드 파일명 날짜(YYMMDD, Asia/Seoul)에 사용"
           }
-        }
+        },
+        "required": [
+          "issueId",
+          "reused",
+          "serialNumber"
+        ]
       }
     },
     "securitySchemes": {

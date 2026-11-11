@@ -17,7 +17,7 @@ export interface CertificateSerialAllocateResponse {
   serialNumber: string;
   /** certificate_issue 장부 PK */
   issueId: number;
-  /** 동일 키 재사용이면 true. true여도 PDF 진행은 정상 */
+  /** 같은 발급 키에 이미 발급된 번호를 다시 내려주면 true. true여도 PDF 진행은 정상 */
   reused: boolean;
   /** certificate_issue 발급 일시. 기존 발급 건을 다시 받으면 최초 발급 일시. PDF 발급일과 다운로드 파일명 날짜(YYMMDD, Asia/Seoul)에 사용 */
   issuedAt?: string | null;

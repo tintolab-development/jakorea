@@ -43,6 +43,7 @@ import {
   buildProgramSurveyFormEditTarget,
   resolveProgramSurveyFormEditFailure,
   PROGRAM_SURVEY_FORM_FOREIGN_OWNER_MESSAGE,
+  saveProgramSurveyFormCreate,
   saveProgramSurveyFormEdit,
 } from '@/features/program/shared/lib/survey-management/save-program-survey-form-edit'
 import { SURVEY_OPEN_ENDED_END_AT } from '@/features/program/shared/lib/survey-management/survey-binding-period'
@@ -620,5 +621,98 @@ describe('resolveProgramSurveyFormEditFailure', () => {
       refetchBindings: false,
     })
     expect(resolveProgramSurveyFormEditFailure(apiError(500, 'INTERNAL'))).toBeUndefined()
+  })
+})
+
+describe('saveProgramSurveyFormCreate', () => {
+  const CREATE_TARGET = { programId: '186051', bindingId: '', sourceVersionId: 352, title: '강의평가' }
+  const createBinding = vi.fn()
+
+  beforeEach(() => {
+    for (const mock of [fetchVersion, copyVersion, createVersion, updateVersion, updateTemplate, publishVersion, updateBinding, listBindings, validate, createBinding]) {
+      mock.mockReset()
+    }
+    validate.mockReturnValue({ ok: true })
+    fetchVersion.mockResolvedValue({ templateId: 1995, templateVersionId: 352 })
+    copyVersion.mockResolvedValue({ templateId: 2001, templateVersionId: 400 })
+    publishVersion.mockResolvedValue(400)
+    createBinding.mockResolvedValue({ ok: true, binding: { bindingId: 901 } })
+  })
+
+  it('저장 시 프로그램 전용 양식을 게시한 뒤 에디터 작성 기간으로 바인딩을 만든다', async () => {
+    await expect(
+      saveProgramSurveyFormCreate(
+        CREATE_TARGET,
+        {
+          bindings: [
+            {
+              formType: 'LECTURE_EVALUATION',
+              templateId: 1995,
+              templateVersionId: 352,
+              submissionStartAt: '2026-11-12T00:00:00.000Z',
+              targetRole: 'ADMIN',
+            },
+          ],
+          keepBindingPeriods: false,
+          createBinding,
+        },
+        createNewSurveyDraft()
+      )
+    ).resolves.toEqual({ ok: true, templateId: 2001, templateVersionId: 400 })
+
+    expect(publishVersion).toHaveBeenCalledWith(400)
+    expect(createBinding).toHaveBeenCalledWith({
+      formType: 'LECTURE_EVALUATION',
+      templateId: 2001,
+      templateVersionId: 400,
+      submissionStartAt: '2026-10-20T00:00:00.000Z',
+      submissionEndAt: SURVEY_OPEN_ENDED_END_AT,
+      targetRole: 'ADMIN',
+    })
+    expect(updateBinding).not.toHaveBeenCalled()
+    expect(listBindings).not.toHaveBeenCalled()
+  })
+
+  it('일정별 만족도조사는 요청마다 담긴 기간을 유지하고 같은 version으로 모두 만든다', async () => {
+    const perSchedule = [
+      { formType: 'SATISFACTION', templateVersionId: 352, targetScopeId: 1, submissionStartAt: 'a', submissionEndAt: 'b' },
+      { formType: 'SATISFACTION', templateVersionId: 352, targetScopeId: 2, submissionStartAt: 'c', submissionEndAt: 'd' },
+    ]
+    await saveProgramSurveyFormCreate(
+      CREATE_TARGET,
+      { bindings: perSchedule as never, keepBindingPeriods: true, createBinding },
+      createNewSurveyDraft()
+    )
+
+    expect(createBinding).toHaveBeenCalledTimes(2)
+    expect(createBinding).toHaveBeenNthCalledWith(1, { ...perSchedule[0], templateId: 2001, templateVersionId: 400 })
+    expect(createBinding).toHaveBeenNthCalledWith(2, { ...perSchedule[1], templateId: 2001, templateVersionId: 400 })
+  })
+
+  it('양식 검증에 실패하면 게시·바인딩 생성을 하지 않는다', async () => {
+    validate.mockReturnValue({ ok: false, message: '문항을 1개 이상 추가해 주세요.' })
+
+    await expect(
+      saveProgramSurveyFormCreate(
+        CREATE_TARGET,
+        { bindings: [{ formType: 'SURVEY', templateVersionId: 352 }], keepBindingPeriods: false, createBinding },
+        createNewSurveyDraft()
+      )
+    ).resolves.toEqual({ ok: false, message: '문항을 1개 이상 추가해 주세요.' })
+    expect(copyVersion).not.toHaveBeenCalled()
+    expect(publishVersion).not.toHaveBeenCalled()
+    expect(createBinding).not.toHaveBeenCalled()
+  })
+
+  it('바인딩 생성이 거절되면 메시지를 돌려주고 목록 재조회를 요청한다', async () => {
+    createBinding.mockResolvedValue({ ok: false, message: '이미 등록된 일정입니다.' })
+
+    await expect(
+      saveProgramSurveyFormCreate(
+        CREATE_TARGET,
+        { bindings: [{ formType: 'SURVEY', templateVersionId: 352 }], keepBindingPeriods: false, createBinding },
+        createNewSurveyDraft()
+      )
+    ).resolves.toEqual({ ok: false, message: '이미 등록된 일정입니다.', refetchBindings: true })
   })
 })

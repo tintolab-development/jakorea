@@ -356,6 +356,7 @@ exports[`BE 후속 parity (part6) — 생성 본문 > 일반 기관 + 봉사 면
         "timeUnit": 30,
       },
       "interviewEnabled": true,
+      "interviewMethod": "online",
       "learningSupportContent": undefined,
       "maxCount": undefined,
       "operationEndDate": undefined,

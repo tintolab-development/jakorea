@@ -451,8 +451,9 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
         texts: [template.subject, template.bodyHtml],
         catalog: variablesCatalog,
         programNumericId,
+        recipientTypeScope: templateVariablesQuery,
       }),
-    [programNumericId, variablesCatalog]
+    [programNumericId, templateVariablesQuery, variablesCatalog]
   )
 
   const getTemplateUnusableMessage = useCallback(
@@ -462,9 +463,10 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
           texts: [template.subject, template.bodyHtml],
           catalog: variablesCatalog,
           programNumericId,
+          recipientTypeScope: templateVariablesQuery,
         })
       ),
-    [programNumericId, variablesCatalog]
+    [programNumericId, templateVariablesQuery, variablesCatalog]
   )
 
   const applyFormTemplate = form.applyTemplate

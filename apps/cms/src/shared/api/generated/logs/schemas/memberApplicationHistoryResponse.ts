@@ -25,4 +25,6 @@ export interface MemberApplicationHistoryResponse {
   lectureAttendance?: string;
   hasAssignmentSubmission?: boolean;
   managerName?: string;
+  /** 이 신청으로 생성된 참가자 ID(program_participant.id). 증명서 발급 등 participantId가 필요한 API에 사용합니다. 아직 참가자가 아니면 null입니다. */
+  participantId?: number | null;
 }

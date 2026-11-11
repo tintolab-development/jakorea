@@ -45,6 +45,14 @@ import {
   persistRegistrationOperationalOverlaysToLocal,
 } from '@/features/program/general/lib/registration-operational-form-drafts'
 import { peekGeneralRegistrationWizardRhf } from '@/features/program/general/lib/overlay-phase1/registration-wizard-rhf-api'
+import { peekCompanySchoolRegistrationRhf } from '@/features/program/1c-1s/lib/registration-rhf-api'
+import {
+  FIELD_FORMAT_MISMATCH_ALERT_TITLE,
+  isProgramContactFormatKey,
+  isRecruitmentContactFormatKey,
+  listContactFormatIssuesFromUnknown,
+  type RegistrationContactFormatIssue,
+} from '@/features/program/shared/lib/registration-wizard-contact-format'
 import { collectWizardApplicationOverlayForCatalog } from '@/features/program/general/lib/overlay-phase1/registration-wizard-application-from-rhf'
 import {
   clearRegistrationWizardSessionDrafts,
@@ -140,6 +148,17 @@ function tabVisibilityForVariant(
     return { hideVolunteer: true as const }
   }
   return undefined
+}
+
+function collectRegistrationWizardContactFormatIssues(
+  phase: 'program' | 'recruitment'
+): RegistrationContactFormatIssue[] {
+  const includeKey = phase === 'program' ? isProgramContactFormatKey : isRecruitmentContactFormatKey
+  return [
+    peekGeneralRegistrationWizardRhf()?.getValues(),
+    peekCompanySchoolRegistrationRhf()?.getValues(),
+    peekTrainedTeachersRegistrationRhf()?.getValues(),
+  ].flatMap(record => listContactFormatIssuesFromUnknown(record, includeKey))
 }
 
 function coerceRegistrationStepForVariant(
@@ -698,6 +717,17 @@ export function useGeneralProgramRegistrationFlow(
         })
         return
       }
+      if (shouldCheckRequired && nextPhase !== 'program' && isProgramStep) {
+        const formatIssues = collectRegistrationWizardContactFormatIssues('program')
+        if (formatIssues.length > 0) {
+          options?.reportValidationIncomplete?.(formatIssues.map(issue => issue.key))
+          showAlert({
+            title: FIELD_FORMAT_MISMATCH_ALERT_TITLE,
+            content: formatIssues[0]?.message ?? FIELD_FORMAT_MISMATCH_ALERT_TITLE,
+          })
+          return
+        }
+      }
       /** 모집→신청 필수 검사. TT는 typed RHF, 일반·1사1교는 기존 경로 */
       if (shouldCheckRequired && phase === 'recruitment' && nextPhase === 'application') {
         const recruitCtx = {
@@ -725,6 +755,15 @@ export function useGeneralProgramRegistrationFlow(
           showAlert({
             title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
             content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+          })
+          return
+        }
+        const formatIssues = collectRegistrationWizardContactFormatIssues('recruitment')
+        if (formatIssues.length > 0) {
+          options?.reportValidationIncomplete?.(formatIssues.map(issue => issue.key))
+          showAlert({
+            title: FIELD_FORMAT_MISMATCH_ALERT_TITLE,
+            content: formatIssues[0]?.message ?? FIELD_FORMAT_MISMATCH_ALERT_TITLE,
           })
           return
         }
@@ -866,6 +905,18 @@ export function useGeneralProgramRegistrationFlow(
           showAlert({
             title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
             content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+          })
+          return
+        }
+        const formatIssues = [
+          ...collectRegistrationWizardContactFormatIssues('program'),
+          ...collectRegistrationWizardContactFormatIssues('recruitment'),
+        ]
+        if (formatIssues.length > 0) {
+          options?.reportValidationIncomplete?.(formatIssues.map(issue => issue.key))
+          showAlert({
+            title: FIELD_FORMAT_MISMATCH_ALERT_TITLE,
+            content: formatIssues[0]?.message ?? FIELD_FORMAT_MISMATCH_ALERT_TITLE,
           })
           return
         }

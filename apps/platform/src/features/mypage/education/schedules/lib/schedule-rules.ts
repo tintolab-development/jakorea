@@ -52,7 +52,7 @@ function mapOperationalScheduleProgress(
  * 출결이 있으면 완료. 그다음 API `scheduleStatus`를 쓴다.
  * MATCHED는 진행 뱃지가 아니다.
  * TT 기관(`operationalDayView`)은 COMPLETED|IN_PROGRESS|SCHEDULED|UNSCHEDULED 만 쓰고 날짜로 추정하지 않는다.
- * 정산 탭(`resolveSettlementEducationProgress`)은 기존 `resolveEducationScheduleProgressStatus`를 유지한다.
+ * 정산 탭(`resolveSettlementEducationProgress`)은 종료 시각(`endAt`)이 있으면 그 시각, 없으면 교육일 기준이다.
  */
 export function resolveEducationScheduleRowProgressStatus(
   item: Pick<

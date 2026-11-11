@@ -22,7 +22,6 @@
   padding-top: 21px;
   overflow: hidden;
   border-radius: var(--radius-24);
-  background: var(--color-neutral-cool-50, #f5f7f7);
 }
 
 /* Figma 11001:159541 — 로고 209 / 카드 328 */
@@ -66,7 +65,6 @@
   align-items: flex-start;
   overflow: hidden;
   border-radius: var(--radius-16);
-  background: var(--color-neutral-cool-50, #f5f7f7);
 }
 
 @media (--bp-pc-up) {
@@ -85,6 +83,7 @@
 
 .coverDefault {
   border: 1px solid var(--color-border-default, #d9d9d9);
+  background: var(--color-neutral-cool-50, #f5f7f7);
 }
 
 .coverLogo {

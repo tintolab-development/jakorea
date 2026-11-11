@@ -2,7 +2,6 @@ import { useCallback, useMemo, useRef } from 'react'
 import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
 import { useWritingFormEditorWithUserPreview } from '@/features/template/hooks/use-writing-form-editor-with-user-preview'
 import { useFormTemplateSaveFeedback } from '@/features/template/lib/form-template-save-feedback'
-import { TEMPLATE_FORM_MODAL_DESCRIPTION } from '@/features/template/model/template-registry/template-registry'
 import {
   isSurveyRegistryEntry,
   lookupTemplateRegistry,
@@ -116,7 +115,6 @@ function UjatSurveyTemplateEditModalInner({
       open={open}
       onClose={onClose}
       title={headerTitle}
-      description={TEMPLATE_FORM_MODAL_DESCRIPTION}
       templateTabType="writing"
       className="ujat-survey-template-edit-modal"
       zIndex={1200}

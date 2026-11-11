@@ -1,11 +1,19 @@
 import { extractPlaceholderKeysFromTexts } from '@/features/notifications/api/adapters/alimtalk-send-batch-adapters'
-import { isNotificationCatalogVariableDisabled } from '@/features/notifications/model/shared/catalog-variable-disabled'
+import {
+  isNotificationCatalogVariableDisabled,
+  isNotificationCatalogVariablePendingRecipientType,
+  type NotificationRecipientTypeScope,
+} from '@/features/notifications/model/shared/catalog-variable-disabled'
 
 export type NotificationSendCatalogVariableLike = {
   key: string
   token?: string
   enabled?: boolean
   requiresProgram?: boolean
+  programGroups?: string[]
+  recruitmentTypes?: string[]
+  participantTypes?: string[]
+  memberTypes?: string[]
 }
 
 function catalogByKey(
@@ -27,11 +35,7 @@ function usedKeysFromInput(input: {
   usedKeys?: Iterable<string>
 }): Set<string> {
   if (input.usedKeys) {
-    return new Set(
-      [...input.usedKeys]
-        .map(key => key.trim())
-        .filter(Boolean)
-    )
+    return new Set([...input.usedKeys].map(key => key.trim()).filter(Boolean))
   }
   return extractPlaceholderKeysFromTexts(...(input.texts ?? []))
 }
@@ -42,6 +46,7 @@ function usedKeysFromInput(input: {
  * - 미등록 키: 프로그램 유무와 관계없이 비활성
  * - 프로그램 미선택: requiresProgram 키는 비활성 (BE 발송 가드와 동일)
  * - 프로그램 지정: #{키} ⊆ catalog 이고 모두 enabled=true
+ * - `recipientTypeScope`(템플릿 선택 단계): 수신자 유형이 안 정해져서만 비활성인 키는 막지 않는다
  * 알림톡 EVENT_ONLY/SYSTEM 차단은 채널 어댑터에서 추가한다.
  */
 export function canUseNotificationSendTemplateForProgram(input: {
@@ -49,6 +54,7 @@ export function canUseNotificationSendTemplateForProgram(input: {
   usedKeys?: Iterable<string>
   catalog: NotificationSendCatalogVariableLike[] | null | undefined
   programNumericId?: number | null
+  recipientTypeScope?: NotificationRecipientTypeScope | null
 }): boolean {
   if (input.catalog == null) return false
   return listNotificationSendTemplateDisabledKeysForProgram(input).length === 0
@@ -63,6 +69,8 @@ export function listNotificationSendTemplateDisabledKeysForProgram(input: {
   usedKeys?: Iterable<string>
   catalog: NotificationSendCatalogVariableLike[] | null | undefined
   programNumericId?: number | null
+  /** 템플릿 선택 단계에서만 넘긴다. 변수 목록 조회에 쓴 수신자 유형 */
+  recipientTypeScope?: NotificationRecipientTypeScope | null
 }): string[] {
   if (input.catalog == null) return []
 
@@ -75,6 +83,12 @@ export function listNotificationSendTemplateDisabledKeysForProgram(input: {
   for (const key of usedKeys) {
     const item = byKey.get(key)
     if (!item || isNotificationCatalogVariableDisabled(item, programId)) {
+      if (
+        item &&
+        isNotificationCatalogVariablePendingRecipientType(item, programId, input.recipientTypeScope)
+      ) {
+        continue
+      }
       disabled.push(key)
     }
   }

@@ -64,7 +64,10 @@ function ReportCover({
   const imageUrl = useRemoteThumbnailUrl(coverUrl)
   return (
     <div className={[className, imageUrl ? '' : styles.coverDefault].filter(Boolean).join(' ')}>
-      <img className={styles.coverLogo} src={jaLogoGrayCompactUrl} alt="" aria-hidden="true" />
+      {/* 기본 썸네일 로고는 표지가 없을 때만 — 투명 배경 PNG 표지 뒤로 비치지 않게 한다 */}
+      {imageUrl ? null : (
+        <img className={styles.coverLogo} src={jaLogoGrayCompactUrl} alt="" aria-hidden="true" />
+      )}
       {imageUrl ? (
         <div
           className={styles.coverImage}

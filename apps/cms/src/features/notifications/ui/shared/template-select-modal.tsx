@@ -60,7 +60,6 @@ export function TemplateSelectModal<T extends SendTemplatePickerItem>({
   const { showAlert } = useCmsAlert()
   const [keyword, setKeyword] = useState('')
   const [appliedKeyword, setAppliedKeyword] = useState('')
-  const [hasSearched, setHasSearched] = useState(false)
   const [page, setPage] = useState(1)
 
   const filtered = useMemo(
@@ -75,10 +74,11 @@ export function TemplateSelectModal<T extends SendTemplatePickerItem>({
     currentPage * TEMPLATE_SELECT_MODAL_PAGE_SIZE
   )
   const hasResults = filtered.length > 0
+  /** 검색어 적용 전 빈 목록은 「등록 없음」, 검색 후 빈 목록은 「검색 결과 없음」 */
+  const emptyCopy = CMS_TABLE_EMPTY_COPY[appliedKeyword ? 'no-search' : 'no-data']
 
   const handleSearch = () => {
     setAppliedKeyword(keyword.trim())
-    setHasSearched(true)
     setPage(1)
   }
 
@@ -206,7 +206,8 @@ export function TemplateSelectModal<T extends SendTemplatePickerItem>({
           </CmsButton>
         </div>
 
-        {hasSearched && hasResults ? (
+        {/* 시안: 진입 시 전체 목록을 바로 보여 주고, 검색은 목록을 좁힌다 */}
+        {hasResults ? (
           <>
             <div className="send-template-select-modal__table-section">
               <p className="send-template-select-modal__count">총 {filtered.length}건</p>
@@ -229,14 +230,10 @@ export function TemplateSelectModal<T extends SendTemplatePickerItem>({
             </div>
           </>
         ) : null}
-        {hasSearched && !hasResults ? (
+        {!hasResults ? (
           <div className="send-template-select-modal__empty" role="status">
-            <p className="send-template-select-modal__empty-title">
-              {CMS_TABLE_EMPTY_COPY['no-search'].title}
-            </p>
-            <p className="send-template-select-modal__empty-description">
-              {CMS_TABLE_EMPTY_COPY['no-search'].description}
-            </p>
+            <p className="send-template-select-modal__empty-title">{emptyCopy.title}</p>
+            <p className="send-template-select-modal__empty-description">{emptyCopy.description}</p>
           </div>
         ) : null}
       </div>

@@ -114,13 +114,19 @@ export function compareAssignedSettlementSchedules(
   return left.sessionNumber - right.sessionNumber
 }
 
+/**
+ * 정산 카드 진행 뱃지.
+ * 출결 → API `scheduleStatus` → 종료 시각(`endAt`, 지나면 완료) → 종료 시각이 없을 때만 교육일(일 단위) 순.
+ */
 export function resolveSettlementEducationProgress(
-  item: Pick<EducationScheduleItem, 'heldAt' | 'attendanceStatus' | 'scheduleStatus'>,
+  item: Pick<EducationScheduleItem, 'heldAt' | 'endAt' | 'attendanceStatus' | 'scheduleStatus'>,
   now = new Date(),
 ): EducationSettlementProgress {
   if (item.attendanceStatus != null) return 'completed'
   const scheduleStatus = (item.scheduleStatus ?? '').trim().toUpperCase()
   if (COMPLETED_SCHEDULE.has(scheduleStatus)) return 'completed'
+  const endAt = item.endAt?.trim() ? Date.parse(item.endAt) : Number.NaN
+  if (Number.isFinite(endAt)) return endAt <= now.getTime() ? 'completed' : 'upcoming'
   return resolveEducationScheduleProgressStatus(item.heldAt, now) === 'completed'
     ? 'completed'
     : 'upcoming'
