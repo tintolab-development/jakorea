@@ -50,26 +50,6 @@
   max-width: 100%;
 }
 
-/* 라벨 — 14px · 필수 * · 라벨↔컨트롤 6px (Figma spacing/6) */
-.notice-form-modal__label {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  margin-bottom: 6px;
-  color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard, var(--font-family-primary, sans-serif);
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.4;
-}
-
-.notice-form-modal__required {
-  color: var(--color-red, #c32f4a);
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1;
-}
-
 /* 상단 1행 → 제목 24px */
 .notice-form-modal__filter-wrap {
   width: 100%;
@@ -94,10 +74,6 @@
   flex: 0 0 auto;
   min-width: 0;
   box-sizing: border-box;
-}
-
-.notice-form-modal__filter-field .notice-form-modal__label {
-  margin-bottom: 6px;
 }
 
 .notice-form-modal__filter-field--datetime {
@@ -141,6 +117,12 @@
 .notice-form-modal__section--editor {
   flex-shrink: 0;
   margin-bottom: 30px;
+}
+
+/* 내용 라벨은 공통 필드 틀(AdminFieldFrame) — inline-flex 기본값 대신 행 전체 폭 */
+.notice-form-modal__section--editor.cms-field {
+  display: flex;
+  width: 100%;
 }
 
 .notice-form-modal__editor-host {
