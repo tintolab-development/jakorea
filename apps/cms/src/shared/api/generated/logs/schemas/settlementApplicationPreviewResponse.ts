@@ -7,6 +7,8 @@
  */
 import type { SettlementApplicationCalculationDetailResponse } from './settlementApplicationCalculationDetailResponse';
 import type { SettlementApplicationItemResponse } from './settlementApplicationItemResponse';
+import type { SettlementApplicationPreviewResponseTransportationExcludedReason } from './settlementApplicationPreviewResponseTransportationExcludedReason';
+import type { SettlementApplicationPreviewResponseTransportationUnresolvedAddressSide } from './settlementApplicationPreviewResponseTransportationUnresolvedAddressSide';
 
 export interface SettlementApplicationPreviewResponse {
   assignmentId?: number;
@@ -24,4 +26,8 @@ export interface SettlementApplicationPreviewResponse {
   netPaymentAmount?: number;
   items?: SettlementApplicationItemResponse[];
   calculationDetails?: SettlementApplicationCalculationDetailResponse[];
+  /** 교통비가 제외된 사유. 지도에서 출발지·도착지 주소나 경로를 찾지 못하면 ADDRESS_UNRESOLVED이고 교통비 없이 신청할 수 있다. 보완하려면 주소를 고친 뒤 반려 → 재신청한다. 제외되지 않았으면 null. 1사1교는 강사비가 거리 구간에 따라 정해지므로 이 경우 409 SETTLEMENT_TRANSPORTATION_ADDRESS_UNRESOLVED. */
+  transportationExcludedReason?: SettlementApplicationPreviewResponseTransportationExcludedReason;
+  /** 찾지 못한 쪽. ORIGIN=강사 자택 주소, DESTINATION=교육 장소, ROUTE=경로. 제외되지 않았으면 null. */
+  transportationUnresolvedAddressSide?: SettlementApplicationPreviewResponseTransportationUnresolvedAddressSide;
 }

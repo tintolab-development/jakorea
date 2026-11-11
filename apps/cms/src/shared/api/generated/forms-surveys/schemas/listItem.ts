@@ -5,11 +5,13 @@
  * Filtered for CMS form template / survey Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { ListItemApplicationType } from './listItemApplicationType';
 
 export interface ListItem {
   settlementApplicationId?: number;
   programId?: number;
-  individualApplicationId?: number;
+  /** INDIVIDUAL 신청만. VOLUNTEER 신청은 null이고 volunteerApplicationId를 쓴다. */
+  individualApplicationId?: number | null;
   participantId?: number;
   memberId?: number;
   memberName?: string;
@@ -24,4 +26,8 @@ export interface ListItem {
   reviewedAt?: string;
   rejected?: boolean;
   rejectionReason?: string;
+  /** 참여자(INDIVIDUAL) 또는 봉사자(VOLUNTEER) 영수증 정산 */
+  applicationType?: ListItemApplicationType;
+  /** VOLUNTEER 신청의 program_volunteer_application.id */
+  volunteerApplicationId?: number | null;
 }

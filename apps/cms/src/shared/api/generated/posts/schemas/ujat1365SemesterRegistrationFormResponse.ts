@@ -14,10 +14,10 @@ import type { Ujat1365SemesterRegistrationFormVolunteer } from './ujat1365Semest
  * UJAT 1365 봉사시간 등록 양식(반기 전체). 연락처·주소·계좌·주민번호는 포함하지 않습니다.
  */
 export interface Ujat1365SemesterRegistrationFormResponse {
-  programId: number;
-  semesterType: Ujat1365SemesterRegistrationFormResponseSemesterType;
-  mode: Ujat1365SemesterRegistrationFormResponseMode;
-  columns: Ujat1365SemesterRegistrationFormColumns;
+  programId?: number;
+  semesterType?: Ujat1365SemesterRegistrationFormResponseSemesterType;
+  mode?: Ujat1365SemesterRegistrationFormResponseMode;
+  columns?: Ujat1365SemesterRegistrationFormColumns;
   /** 반기 봉사자 전원. 페이지네이션 없음. 이름, participantId 오름차순. */
-  volunteers: Ujat1365SemesterRegistrationFormVolunteer[];
+  volunteers?: Ujat1365SemesterRegistrationFormVolunteer[];
 }

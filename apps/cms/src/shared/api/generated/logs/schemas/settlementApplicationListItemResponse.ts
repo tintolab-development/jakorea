@@ -34,4 +34,12 @@ export interface SettlementApplicationListItemResponse {
   createdAt?: string;
   /** 회원 가능 액션 */
   availableActions?: string[];
+  /** 이 신청에서 만들어진 최신 정산 revision ID. 지급조서 확인·정정 요청·재신청 (/api/portal/me/settlements/{settlementId}/payment-statement/**)에 쓴다. 정산이 아직 없으면 null. */
+  settlementId?: number | null;
+  /** 최신 정산 revision의 지급조서 상태(DRAFT, WAITING_CONFIRM, REAPPLICATION, CONFIRMED, CORRECTION_REQUESTED, REJECTED 등). 정산이 아직 없으면 null. */
+  statementStatus?: string | null;
+  /** 최신 정산 revision의 계좌 지급 상태. 정산이 아직 없으면 null. */
+  paymentStatus?: string | null;
+  /** 지급조서 재신청 가능 여부. 최신 revision이 지급 정정 승인으로 만들어졌고 지급조서가 DRAFT이면 true (POST /api/portal/me/settlements/{settlementId}/payment-statement/reapply 대상). 그 외 false. */
+  statementReapplyAvailable?: boolean;
 }

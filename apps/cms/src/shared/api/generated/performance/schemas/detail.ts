@@ -5,13 +5,15 @@
  * Filtered for CMS performance (education-record) Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { DetailApplicationType } from './detailApplicationType';
 import type { Revision } from './revision';
 
 export interface Detail {
   settlementApplicationId?: number;
   programId?: number;
   programName?: string;
-  individualApplicationId?: number;
+  /** INDIVIDUAL 신청만. VOLUNTEER 신청은 null. */
+  individualApplicationId?: number | null;
   applicationStatus?: string;
   participantId?: number;
   memberId?: number;
@@ -24,4 +26,7 @@ export interface Detail {
   latestRevisionNo?: number;
   revisions?: Revision[];
   availableActions?: string[];
+  applicationType?: DetailApplicationType;
+  /** VOLUNTEER 신청의 program_volunteer_application.id */
+  volunteerApplicationId?: number | null;
 }

@@ -13,4 +13,6 @@ export interface Ujat1365SemesterRegistrationFormRequest {
   semesterType: Ujat1365SemesterRegistrationFormRequestSemesterType;
   /** PREVIEW 또는 DOWNLOAD. 생략하면 PREVIEW. */
   mode?: Ujat1365SemesterRegistrationFormRequestMode;
+  /** mode=DOWNLOAD일 때 브라우저가 저장하는 파일명. 파일 다운로드 이력 파일명으로 기록합니다. 생략하면 서버 규칙 이름을 기록합니다. */
+  fileName?: string | null;
 }

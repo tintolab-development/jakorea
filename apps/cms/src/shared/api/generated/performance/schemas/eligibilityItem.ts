@@ -10,4 +10,6 @@ export interface EligibilityItem {
   itemType?: string;
   itemName?: string;
   evidenceRequired?: boolean;
+  /** 정산 항목 설정(settlement-configs/current)의 1회 한도 금액(원). 미설정이면 null. */
+  maxLimitWon?: number | null;
 }
