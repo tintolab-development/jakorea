@@ -47,6 +47,11 @@ export type SettlementApplicationDocumentCalcInfo = {
   actualTrainingMinutes?: number | null
   totalStudentCount?: number | null
   totalLectureFee?: number | null
+  /**
+   * 1사1교 장거리 강사비 단가 적용 여부(제출 스냅샷, BE K11). 제출 전 lectureFeePreview.longDistance와 같다.
+   * 제미나이·영수증·배포 전 제출 건은 null. null을 false로 바꾸거나 거리로 다시 판정하지 않는다.
+   */
+  longDistance?: boolean | null
   oneWayDistanceKm?: number | null
   fuelCostWon?: number | null
   tollFeeWon?: number | null
