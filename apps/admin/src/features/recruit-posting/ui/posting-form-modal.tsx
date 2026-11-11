@@ -418,14 +418,14 @@ export function RecruitPostingFormModal({
               <div className="posting-form-modal__filter-field posting-form-modal__filter-field--radio">
                 <FieldLabel required>공개 여부</FieldLabel>
                 <CmsRadioGroup
-                  size="large"
+                  size="medium"
                   value={isPublic ? 'public' : 'private'}
                   onChange={e => setIsPublic(e.target.value === 'public')}
                 >
-                  <CmsRadio size="large" value="public">
+                  <CmsRadio size="medium" value="public">
                     공개
                   </CmsRadio>
-                  <CmsRadio size="large" value="private">
+                  <CmsRadio size="medium" value="private">
                     미공개
                   </CmsRadio>
                 </CmsRadioGroup>
@@ -433,7 +433,7 @@ export function RecruitPostingFormModal({
               <div className="posting-form-modal__filter-field posting-form-modal__filter-field--datetime">
                 <FieldLabel required>게시일시</FieldLabel>
                 <CmsDatePicker
-                  inputSize="large"
+                  inputSize="medium"
                   width={FILTER_CONTROL_MAX_WIDTH_PX}
                   showTime={{
                     format: 'HH:mm',
@@ -448,14 +448,14 @@ export function RecruitPostingFormModal({
               <div className="posting-form-modal__filter-field posting-form-modal__filter-field--radio">
                 <FieldLabel required>게시글 유형</FieldLabel>
                 <CmsRadioGroup
-                  size="large"
+                  size="medium"
                   value={status}
                   onChange={e => setStatus(e.target.value as RecruitPostingFormStatus)}
                 >
-                  <CmsRadio size="large" value="recruiting">
+                  <CmsRadio size="medium" value="recruiting">
                     모집
                   </CmsRadio>
-                  <CmsRadio size="large" value="result">
+                  <CmsRadio size="medium" value="result">
                     발표
                   </CmsRadio>
                 </CmsRadioGroup>
@@ -465,7 +465,7 @@ export function RecruitPostingFormModal({
                 <div className="posting-form-modal__filter-field posting-form-modal__filter-field--range">
                   <FieldLabel required>모집 기간</FieldLabel>
                   <CmsDateRangePicker
-                    inputSize="large"
+                    inputSize="medium"
                     width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
                     showTime={{
                       format: 'HH:mm',
@@ -491,7 +491,7 @@ export function RecruitPostingFormModal({
           <div className="posting-form-modal__section">
             <FieldLabel required>제목</FieldLabel>
             <CmsInput
-              inputSize="large"
+              inputSize="medium"
               width="100%"
               value={title}
               onChange={e => setTitle(e.target.value)}
@@ -548,7 +548,7 @@ export function RecruitPostingFormModal({
                   {`채용 공고 바로가기 버튼명 (최대 ${CAREER_POSTING_BUTTON_LABEL_MAX_LENGTH}자)`}
                 </FieldLabel>
                 <CmsInput
-                  inputSize="large"
+                  inputSize="medium"
                   width="100%"
                   maxLength={CAREER_POSTING_BUTTON_LABEL_MAX_LENGTH}
                   value={buttonLabel}
@@ -559,7 +559,7 @@ export function RecruitPostingFormModal({
               <div className="posting-form-modal__link-field">
                 <FieldLabel>채용 공고 바로가기 링크</FieldLabel>
                 <CmsInput
-                  inputSize="large"
+                  inputSize="medium"
                   width="100%"
                   value={linkUrl}
                   onChange={e => setLinkUrl(e.target.value)}
