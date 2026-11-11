@@ -245,7 +245,10 @@ export function formatSettlementDocumentEducationTimeRange(
   return start && end ? `${start} ~ ${end}` : null
 }
 
-/** 시안: "출강 1회당 | 기본 : 240,000원" — 단위·단가 모두 스냅샷 그대로. 둘 다 없으면 [] */
+/**
+ * 시안: "출강 1회당 | 기본 : 240,000원" — 단위·단가 모두 스냅샷 그대로. 둘 다 없으면 []
+ * TODO(K11): 1사1교 장거리면 "장거리 : X원"이어야 하는데, 지급조서 문서 calcInfo에 longDistance가 없어 구분할 수 없다(BE 필드 필요).
+ */
 export function formatSettlementDocumentInstructorFeeParts(
   calc: Pick<SettlementApplicationDocumentCalcInfo, 'instructorFeeAmount' | 'instructorFeeCalculationUnit'>
 ): string[] {

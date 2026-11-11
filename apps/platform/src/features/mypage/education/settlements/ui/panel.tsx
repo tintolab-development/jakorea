@@ -12,7 +12,7 @@ import type { ProgramApplicationType } from '../../applications/api/types'
 import { useGeminiSettlementTabQuery } from '../api/use-gemini-settlement-query'
 import {
   readInstructorBusinessIncomeLabel,
-  readInstructorFeeGradeLabel,
+  readAssignmentFeeBasisLabel,
 } from '../lib/instructor-settlement-summary'
 import {
   displayGeminiBusinessIncome,
@@ -139,7 +139,8 @@ export function EducationSettlementPanel({
   const feeGradeLabel = geminiFeeBasis
     ? geminiFeeBasis.fallback
     : documentKind === 'payment_statement'
-      ? readInstructorFeeGradeLabel(profileQuery.data)
+      ? // 배정 기준(회차 강사비 미리보기). 회차마다 다르면 첫 회차 기준
+        readAssignmentFeeBasisLabel(allItems).label
       : undefined
   const businessIncomeLabel = isGemini
     ? displayGeminiBusinessIncome(geminiSettlements.summary)

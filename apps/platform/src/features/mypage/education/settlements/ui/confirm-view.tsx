@@ -30,7 +30,7 @@ import {
   hasConfirmedLectureFeeTotal,
   isLectureFeeSettlementBlocked,
   lectureFeeSettlementBlockerMessage,
-  lectureFeeTypeDisplayLabel,
+  lectureFeeWageTitle,
 } from '../lib/lecture-fee-preview'
 import { readInstructorBusinessIncomeLabel } from '../lib/instructor-settlement-summary'
 import { usePortalProfileQuery } from '@/features/auth/sign-in'
@@ -170,7 +170,8 @@ export function EducationSettlementConfirmView({
   const confirmedLectureFee = hasConfirmedLectureFeeTotal(lectureFeePreview)
   const businessIncome = readInstructorBusinessIncomeLabel(profileQuery.data)
   const calcRows: PFInfoReviewItem[] = [
-    { label: '강사비 유형', value: lectureFeeTypeDisplayLabel(lectureFeePreview?.lectureFeeType) },
+    // 특강·기타 인건비는 lectureFeeType이 null이라 서버 wageTitle을 쓴다
+    { label: '강사비 유형', value: lectureFeeWageTitle(lectureFeePreview) },
     { label: '강사비 배정', value: formatInstructorFeeAssignment(lectureFeePreview) },
     { label: '사업소득자 여부', value: businessIncome },
     {

@@ -6,9 +6,11 @@ import {
   resolveSettlementStatusUi,
 } from './settlement-status-ui.ts'
 import {
+  readAssignmentFeeBasisLabel,
   readInstructorBusinessIncomeLabel,
   readInstructorFeeGradeLabel,
 } from './instructor-settlement-summary.ts'
+import { parseLectureFeePreview } from './lecture-fee-preview.ts'
 import {
   buildSettlementConfirmPath,
   buildSettlementWritePath,
@@ -383,5 +385,32 @@ const fromLectureWithCurriculum = build({
 })
 // 회차 + 연결 커리큘럼 차시 수
 assert.equal(fromLectureWithCurriculum[0]?.sessionMeta, '10:00~11:20 3회차 (2차시)')
+
+// 강사비 책정 기준 칸은 배정(회차 lectureFeePreview) 기준. 회차마다 다르면 첫 회차 기준 + mixed (기획 K7)
+{
+  const special = parseLectureFeePreview({
+    feePricingMode: 'SPECIAL_LECTURE',
+    wageTitle: '특강 강사비',
+    instructorFeeCalculationUnit: 'PER_LECTURE',
+    instructorFeeAmount: 200000,
+  })
+  const program = parseLectureFeePreview({ feePricingMode: 'PROGRAM_STANDARD', wageTitle: '1급 강사비' })
+  const base = { progress: 'completed', status: 'pending_submit', sessionNumber: 1, sessionMeta: '' } as const
+  assert.deepEqual(
+    readAssignmentFeeBasisLabel([
+      { ...base, id: '1', heldAt: '2026-11-01', lectureFeePreview: special },
+      { ...base, id: '2', heldAt: '2026-11-02', lectureFeePreview: special },
+    ]),
+    { label: '특강 강사비 | 출강 1회당 200,000원', mixed: false },
+  )
+  assert.deepEqual(
+    readAssignmentFeeBasisLabel([
+      { ...base, id: '1', heldAt: '2026-11-01', lectureFeePreview: program },
+      { ...base, id: '2', heldAt: '2026-11-02', lectureFeePreview: special },
+    ]),
+    { label: '1급 강사비', mixed: true },
+  )
+  assert.deepEqual(readAssignmentFeeBasisLabel([]), { label: '-', mixed: false })
+}
 
 console.log('instructor-settlement-cases.selfcheck: ok')
