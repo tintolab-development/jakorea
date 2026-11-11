@@ -396,6 +396,16 @@ export function PaymentOrderCalculationStatementModalImpl({
       availableActions == null ||
       availableActions.includes('REJECT_PAYMENT_STATEMENT'))
 
+  /**
+   * 확인 처리 — 같은 잠금 상태를 따르고, 원격이면 BE `availableActions`의 CONFIRM_PAYMENT_STATEMENT가 있을 때만 연다.
+   * (Gemini 지급조서 사전 동의 미완료(MISSING)면 BE가 이 액션을 빼서 보낸다)
+   */
+  const canConfirmStatement =
+    !isStatementActionLocked &&
+    (!paymentOrdersRemote ||
+      availableActions == null ||
+      availableActions.includes('CONFIRM_PAYMENT_STATEMENT'))
+
   const handleRemoteConfirm = async (lectureFeePaymentScheduledDateIso: string) => {
     if (statementId == null) {
       showAlert({
@@ -571,7 +581,7 @@ export function PaymentOrderCalculationStatementModalImpl({
                 <CmsButton
                   variant="primary"
                   size="medium"
-                  disabled={isStatementActionLocked || confirmMutation.isPending}
+                  disabled={!canConfirmStatement || confirmMutation.isPending}
                   onClick={() => setPaymentConfirmOpen(true)}
                 >
                   확인 처리

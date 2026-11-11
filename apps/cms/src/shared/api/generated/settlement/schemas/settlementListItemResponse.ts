@@ -5,6 +5,7 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { SettlementListItemResponsePaymentStatementPreConsentStatus } from './settlementListItemResponsePaymentStatementPreConsentStatus';
 
 export interface SettlementListItemResponse {
   settlementId?: number;
@@ -45,4 +46,6 @@ export interface SettlementListItemResponse {
   supersededBySettlementId?: number;
   taxIncomeType?: string;
   availableActions?: string[];
+  /** Gemini 지급조서 사전 동의 상태. COMPLETE=유효한 사전 동의 있음, MISSING=없음·만료·철회(확인 불가). Gemini가 아닌 행은 null */
+  paymentStatementPreConsentStatus?: SettlementListItemResponsePaymentStatementPreConsentStatus;
 }

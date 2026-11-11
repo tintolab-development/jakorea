@@ -1471,6 +1471,7 @@ export * from './settlementGenerateRequest';
 export * from './settlementGenerateResponse';
 export * from './settlementItemResponse';
 export * from './settlementListItemResponse';
+export * from './settlementListItemResponsePaymentStatementPreConsentStatus';
 export * from './settlementListResponse';
 export * from './settlementNotificationResendRequest';
 export * from './settlementNotificationResendResponse';
