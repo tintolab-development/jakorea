@@ -23,6 +23,7 @@ import {
   individualIneligibleMessage,
   individualTransportIneligibleNotice,
   isEvidencePolicyUnconfigured,
+  type ScheduleSettlementAudience,
 } from './individual-settlement-contract.ts'
 import { normalizePayableItems } from './payment-items.ts'
 import { seoulBusinessEndDeadlineAt } from './seoul-deadline.ts'
@@ -42,7 +43,10 @@ import {
   readSettlementDeadlineAt,
   readSettlementScheduleJoinId,
 } from './settlement-join.ts'
-import { toDisplayEducationScheduleName } from '../../../../../shared/lib/education-schedule-name.ts'
+import {
+  isAutoMaterializedScheduleName,
+  toDisplayEducationScheduleName,
+} from '../../../../../shared/lib/education-schedule-name.ts'
 import { isScheduleDateLikeText } from '../../../../../shared/lib/format-display-date.ts'
 
 export type SettlementLectureReportJoin = {
@@ -115,6 +119,8 @@ export type BuildAssignedSettlementItemsInput = {
   /** true이면 일정별 정산 API `schedules`가 카드 목록 SSOT */
   preferIndividualSchedules?: boolean
   lectureReports?: readonly SettlementLectureReportJoin[]
+  /** 일정별 영수증 정산 대상 — 봉사자면 사유 문구를 봉사 기준으로 바꾼다 */
+  scheduleSettlementAudience?: ScheduleSettlementAudience | null
 }
 
 function mapIndividualAttendance(
@@ -153,14 +159,19 @@ function educationItemFromIndividual(
   row: PortalIndividualScheduleSettlement,
 ): EducationScheduleItem {
   const scheduleId = readScheduleJoinId(row) ?? null
+  // 일반 기관형 승인 시 서버가 만든 내부 일정명(`기관 확정 YYYY-MM-DD`)은 회차 라벨로 노출하지 않는다
+  const scheduleName = isAutoMaterializedScheduleName(row.scheduleName)
+    ? undefined
+    : toDisplayEducationScheduleName(row.scheduleName)
   return {
     id: scheduleId != null ? String(scheduleId) : String(row.scheduleName ?? 'schedule'),
     scheduleId,
     sessionNumber: 0,
     heldAt: row.startAt ?? row.endAt ?? '',
-    title: toDisplayEducationScheduleName(row.scheduleName) || '-',
+    ...(row.endAt ? { endAt: row.endAt } : {}),
+    title: scheduleName || '-',
     attendanceStatus: mapIndividualAttendance(row.attendanceStatus),
-    sessionLabel: toDisplayEducationScheduleName(row.scheduleName),
+    sessionLabel: scheduleName,
   }
 }
 
@@ -250,6 +261,7 @@ function resolveProgressWithLecture(
   return resolveSettlementEducationProgress(
     {
       heldAt: schedule.heldAt || lecture?.startAt || '',
+      endAt: schedule.endAt || lecture?.endAt || undefined,
       scheduleStatus: schedule.scheduleStatus,
       attendanceStatus: schedule.attendanceStatus,
     },
@@ -418,7 +430,10 @@ export function buildAssignedSettlementItems(
     const submittedAt = settlement?.submittedAt ?? receipt?.submittedAt
     /** 교통비만 지급 항목이었고 거리 미달·주소 없음으로 빠진 회차 — 빈 payableItems를 설정 오류로 보지 않는다 */
     const ineligibleMessage =
-      individualIneligibleMessage(individual?.ineligibleReason) ??
+      individualIneligibleMessage(
+        individual?.ineligibleReason,
+        input.scheduleSettlementAudience ?? 'individual',
+      ) ??
       (individual && payableItems.length === 0
         ? (individualTransportIneligibleNotice(individual.transportPreview) ?? undefined)
         : undefined)

@@ -1157,9 +1157,11 @@ export function useApplicationSettlementsQuery(
         deadlinePolicy: applicationType === 'INSTRUCTOR' ? 'payment_statement' : 'receipt',
         preferIndividualSchedules:
           individualAudience && individual.isSuccess && !individual.isDisabled,
+        scheduleSettlementAudience,
       }),
     [
       applicationType,
+      scheduleSettlementAudience,
       individual.schedules,
       individual.isError,
       individual.isSuccess,

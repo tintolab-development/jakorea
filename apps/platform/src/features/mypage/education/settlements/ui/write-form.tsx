@@ -715,7 +715,10 @@ export function EducationSettlementWriteForm({
     if (isReceipt && (session?.eligible === false || matchedIndividual?.eligible === false)) {
       showAlert(
         session?.submitBlockedReason ??
-          individualIneligibleMessage(matchedIndividual?.ineligibleReason) ??
+          individualIneligibleMessage(
+            matchedIndividual?.ineligibleReason,
+            scheduleSettlementAudience ?? 'individual',
+          ) ??
           '지금은 영수증을 제출할 수 없습니다.',
       )
       return

@@ -177,4 +177,18 @@ assert.equal(
   '편도 30km 이상 이동 시에만 교통비를 신청할 수 있습니다.',
 )
 
+// 봉사자 — 일정 미종료 문구만 봉사 기준, 나머지 사유는 공통 문구
+assert.equal(
+  individualIneligibleMessage('SCHEDULE_NOT_ENDED'),
+  '교육이 종료된 이후에 영수증을 제출할 수 있습니다.',
+)
+assert.equal(
+  individualIneligibleMessage('SCHEDULE_NOT_ENDED', 'volunteer'),
+  '봉사가 종료된 이후에 영수증을 제출할 수 있습니다.',
+)
+assert.equal(
+  individualIneligibleMessage('SUBMISSION_DEADLINE_PASSED', 'volunteer'),
+  individualIneligibleMessage('SUBMISSION_DEADLINE_PASSED'),
+)
+
 console.log('individual-settlement-contract.selfcheck: ok')
