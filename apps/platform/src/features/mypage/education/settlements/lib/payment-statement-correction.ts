@@ -1,5 +1,3 @@
-import { instructorFeeUnitDisplayLabel } from './lecture-fee-preview.ts'
-
 /** 정정 전·후 강사비 내역 (모든 필드 nullable) */
 export type PaymentStatementCorrectionSide = {
   /** PROGRAM_STANDARD | SPECIAL_LECTURE | OTHER_LABOR */
@@ -31,44 +29,55 @@ export type PaymentStatementCorrectionDetail = {
 
 const MISSING = '-'
 
-/** 책정 방식 — 기존 표시 규칙이 없어 BE 계약의 의미를 그대로 쓴다 (기획 문구 확인 필요) */
+/** 강사비 책정 방식 (기획 확정 2026-11-11) */
 const PRICING_MODE_LABEL: Record<string, string> = {
-  PROGRAM_STANDARD: '프로그램 등급 기준',
-  SPECIAL_LECTURE: '특강',
+  PROGRAM_STANDARD: '프로그램 기준',
+  SPECIAL_LECTURE: '특강 강사비',
   OTHER_LABOR: '기타 인건비',
 }
 
-export function correctionPricingModeLabel(value: string | null | undefined): string {
+/** 프로그램 기준 적용 등급 (시간당 단가) */
+const TIER_LABEL: Record<string, string> = {
+  TIER1: '1급',
+  TIER2: '2급',
+  TIER3: '3급',
+}
+
+function normalizeCode(value: string | null | undefined): string | null {
   const key = value?.trim().toUpperCase()
+  return key ? key : null
+}
+
+export function correctionPricingModeLabel(value: string | null | undefined): string {
+  const key = normalizeCode(value)
   return (key && PRICING_MODE_LABEL[key]) || MISSING
 }
 
-/** 단가 기준 — 차시당·출강 1회당은 기존 강사비 표시 규칙을 재사용, 등급 카탈로그는 BE 계약 의미 */
-export function correctionCalculationUnitLabel(value: string | null | undefined): string {
-  const key = value?.trim().toUpperCase()
-  if (!key) return MISSING
-  if (key === 'CATALOG_TIER') return '등급 카탈로그 기준'
-  const label = instructorFeeUnitDisplayLabel(
-    key as Parameters<typeof instructorFeeUnitDisplayLabel>[0],
-  )
-  return label || MISSING
+/** 특강·기타 인건비 지급 기준: 차시 기준은 "차시당", PER_SESSION·PER_LECTURE는 "출강 1회당" */
+function paymentBasisLabel(unit: string | null): string {
+  if (unit === 'PER_HOUR' || unit === 'PER_CLASS') return '차시당'
+  if (unit === 'PER_SESSION' || unit === 'PER_LECTURE') return '출강 1회당'
+  return MISSING
+}
+
+/**
+ * 적용 등급 또는 지급 기준.
+ * 프로그램 기준이면 "1급"/"2급"/"3급", 특강·기타 인건비면 "차시당"/"출강 1회당".
+ * "등급 카탈로그 기준"(CATALOG_TIER)은 표시하지 않는다.
+ */
+export function correctionGradeOrBasisLabel(
+  side: PaymentStatementCorrectionSide | null | undefined,
+): string {
+  const pricingMode = normalizeCode(side?.pricingMode)
+  const wageItemType = normalizeCode(side?.wageItemType)
+  const unit = normalizeCode(side?.calculationUnit)
+  if (pricingMode === 'PROGRAM_STANDARD' || (!pricingMode && wageItemType && TIER_LABEL[wageItemType])) {
+    return (wageItemType && TIER_LABEL[wageItemType]) || MISSING
+  }
+  return paymentBasisLabel(unit)
 }
 
 export function formatCorrectionWon(amount: number | null | undefined): string {
   if (amount == null || !Number.isFinite(amount)) return MISSING
   return `${amount.toLocaleString('ko-KR')}원`
-}
-
-export function correctionWageTitle(side: PaymentStatementCorrectionSide | null | undefined): string {
-  return side?.wageTitle?.trim() || MISSING
-}
-
-/** 단가 기준·단가 한 줄: "등급 카탈로그 기준 450,000원" */
-export function correctionUnitText(side: PaymentStatementCorrectionSide | null | undefined): string {
-  const unit = correctionCalculationUnitLabel(side?.calculationUnit)
-  const amount = formatCorrectionWon(side?.unitAmount)
-  if (unit === MISSING && amount === MISSING) return MISSING
-  if (unit === MISSING) return amount
-  if (amount === MISSING) return unit
-  return `${unit} ${amount}`
 }
