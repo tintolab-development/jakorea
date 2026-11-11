@@ -8,9 +8,26 @@ import {
 } from '@/features/program/general/lib/filter-textbooks-for-applicant'
 import type { TextbookRow } from '@/features/textbook/model/textbook.types'
 import type { TextbookSelectOption } from '@/features/program/general/hooks/use-applicant-institution-detail-edit'
+import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 
 /** UI 셀렉 전용 sentinel — PATCH 시 `textbookId: null`로 보낸다 */
 export const TEXTBOOK_NOT_USED_OPTION_VALUE = '__TEXTBOOK_NOT_USED__'
+
+/** 미지정(textbook null) 표시 — 기관 신청 상세와 같은 「해당 없음」 */
+export const INDIVIDUAL_APPLICANT_TEXTBOOK_UNDECIDED_LABEL = '해당 없음'
+
+/**
+ * 일반 프로그램(개인) 참여자 신청 상세 — 승인 완료 시 기본 정보 첫 행 「프로그램 승인 현황 | 교재명」 반반.
+ * 시안 06-1(4121:106093)·06-2(4121:108167). 승인 대기·반려 시안(01·03)에는 교재명 행이 없다.
+ * 기관형 `shouldShowGeneralOrganizationApplicantTextbookField`와 같은 규칙(유형 + 승인 완료).
+ */
+export function shouldShowGeneralIndividualApplicantTextbookField(
+  program: Program | null | undefined,
+  approvalStatus: string | null | undefined
+): boolean {
+  if (!program) return false
+  return isGeneralIndividualProgram(program) && approvalStatus === 'approved'
+}
 
 /**
  * 승인 완료 후 교재 셀렉트 옵션.
