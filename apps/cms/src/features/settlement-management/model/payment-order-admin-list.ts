@@ -163,8 +163,10 @@ export interface PaymentOrderAdminProgramDetail {
   aggregateProcessingStatus: PaymentOrderAdminProcessingStatus
   businessPeriodStart: string
   businessPeriodEnd: string
-  sessionCompleted: number
-  sessionTotal: number
+  /** 프로그램 진행 회차(완료). 회차 개념이 없는 프로그램(Gemini 등)은 null */
+  sessionCompleted: number | null
+  /** 프로그램 진행 회차(전체). 회차 개념이 없는 프로그램(Gemini 등)은 null */
+  sessionTotal: number | null
   instructorRows: PaymentOrderAdminProgramDetailInstructorRow[]
 }
 

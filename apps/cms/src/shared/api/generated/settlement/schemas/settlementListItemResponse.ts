@@ -5,6 +5,7 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { SettlementListItemResponsePaymentStatementPreConsentStatus } from './settlementListItemResponsePaymentStatementPreConsentStatus';
 
 export interface SettlementListItemResponse {
   settlementId?: number;
@@ -24,9 +25,12 @@ export interface SettlementListItemResponse {
   institutionName?: string | null;
   businessPeriodStart?: string;
   businessPeriodEnd?: string;
-  sessionCompleted?: number;
-  sessionTotal?: number;
-  programSessionProgressDisplay?: string;
+  /** 프로그램 일정 기준 완료 회차 수. Gemini 실적 지급조서는 회차 개념이 없어 null */
+  sessionCompleted?: number | null;
+  /** 프로그램 일정 기준 전체 회차 수. Gemini 실적 지급조서는 null */
+  sessionTotal?: number | null;
+  /** 프로그램 커리큘럼/스케줄 기준 진행 회차 (예: 4 / 16). Gemini 실적 지급조서는 null */
+  programSessionProgressDisplay?: string | null;
   calculationStatus?: string;
   /** 지급조서 상태. WAITING_CONFIRM | REAPPLICATION | CONFIRMED | CORRECTION_REQUESTED | REJECTED */
   statementStatus?: string;
@@ -45,4 +49,6 @@ export interface SettlementListItemResponse {
   supersededBySettlementId?: number;
   taxIncomeType?: string;
   availableActions?: string[];
+  /** Gemini 실적 지급조서만: 매핑된 강사의 유효한 지급조서 사전 동의서 여부. COMPLETE=확인 가능, MISSING=지급조서 사전 동의 미완료(확인 불가, CONFIRM_PAYMENT_STATEMENT 없음). Gemini가 아닌 행은 null. */
+  paymentStatementPreConsentStatus?: SettlementListItemResponsePaymentStatementPreConsentStatus;
 }

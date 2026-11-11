@@ -72,6 +72,15 @@ export const GEMINI_TRAINING_REPORT_MISSING = 'GEMINI_TRAINING_REPORT_MISSING'
 export const GEMINI_TRAINING_REPORT_MISSING_MESSAGE =
   'Gemini 연수 실적(시작·종료 시각)이 없어 차시를 산출할 수 없습니다.'
 
+/** BE 2026-11-11 Gemini 지급조서 409 — 서버 message를 우선 표시하고, 비었을 때만 아래 문구를 쓴다 */
+export const GEMINI_PAYMENT_STATEMENT_PRE_CONSENT_REQUIRED =
+  'GEMINI_PAYMENT_STATEMENT_PRE_CONSENT_REQUIRED'
+export const GEMINI_PAYMENT_STATEMENT_PRE_CONSENT_REQUIRED_MESSAGE =
+  '강사의 지급조서 사전 동의가 완료되지 않아 지급조서를 확인할 수 없습니다. 강사에게 사전 동의를 안내해 주세요.'
+export const GEMINI_SETTLEMENT_CORRECTION_NOT_ALLOWED = 'GEMINI_SETTLEMENT_CORRECTION_NOT_ALLOWED'
+export const GEMINI_SETTLEMENT_CORRECTION_NOT_ALLOWED_MESSAGE =
+  '제미나이 지급조서는 지급 정정을 할 수 없습니다. 지급조서를 반려한 뒤 실적을 다시 등록해 주세요.'
+
 /** BE 2026-09-11 bulk-confirm 계약 — 공통 메시지 없을 때 FE fallback */
 const SETTLEMENT_BULK_CONFIRM_ERROR_MESSAGES: Record<string, string> = {
   SCHEDULED_PAYMENT_DATE_REQUIRED: '계좌 지급 예정일을 입력해 주세요.',
@@ -103,6 +112,9 @@ const SETTLEMENT_BULK_CONFIRM_ERROR_MESSAGES: Record<string, string> = {
   [LEGACY_GEMINI_TAX_SNAPSHOT_MISSING]: LEGACY_GEMINI_TAX_SNAPSHOT_MISSING_MESSAGE,
   [TAX_REPORT_REQUIRED_IDENTITY_MISSING]: TAX_REPORT_REQUIRED_IDENTITY_MISSING_MESSAGE,
   [GEMINI_TRAINING_REPORT_MISSING]: GEMINI_TRAINING_REPORT_MISSING_MESSAGE,
+  [GEMINI_PAYMENT_STATEMENT_PRE_CONSENT_REQUIRED]:
+    GEMINI_PAYMENT_STATEMENT_PRE_CONSENT_REQUIRED_MESSAGE,
+  [GEMINI_SETTLEMENT_CORRECTION_NOT_ALLOWED]: GEMINI_SETTLEMENT_CORRECTION_NOT_ALLOWED_MESSAGE,
   SETTLEMENT_ASSIGNED_SCHEDULE_TIME_REQUIRED:
     '배정 일정 시작·종료 시간이 없어 정산을 신청할 수 없습니다.',
   SETTLEMENT_ACTUAL_TRAINING_TIME_REQUIRED: '실적 시작·종료 시간이 없어 정산을 신청할 수 없습니다.',
@@ -338,6 +350,13 @@ export function isPaymentStatementStatusConflictError(error: unknown): boolean {
   const response = readAxiosResponse(error)
   if (response?.status !== 409) return false
   return getSettlementApiErrorCode(error) === PAYMENT_STATEMENT_STATUS_CONFLICT
+}
+
+/** 409 Gemini 지급조서 사전 동의 미완료 — 목록을 다시 불러와 확인 가능 여부(availableActions)를 갱신한다 */
+export function isGeminiPaymentStatementPreConsentRequiredError(error: unknown): boolean {
+  const response = readAxiosResponse(error)
+  if (response?.status !== 409) return false
+  return getSettlementApiErrorCode(error) === GEMINI_PAYMENT_STATEMENT_PRE_CONSENT_REQUIRED
 }
 
 export function isTaxReportIdentityOrSnapshotMissingError(error: unknown): boolean {

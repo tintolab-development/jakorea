@@ -8,6 +8,7 @@ import {
   isSettlementExportAlreadyDownloadedError,
   isSettlementExportReissueRequiredError,
   isPaymentStatementStatusConflictError,
+  isGeminiPaymentStatementPreConsentRequiredError,
   isTaxReportIdentityOrSnapshotMissingError,
   normalizeSettlementApiErrorCode,
   LEGACY_GEMINI_TAX_SNAPSHOT_MISSING_MESSAGE,
@@ -16,6 +17,8 @@ import {
   SETTLEMENT_CORRECTION_CALCULATION_UNIT_INVALID_MESSAGE,
   SETTLEMENT_CORRECTION_CLASS_COUNT_REQUIRED_MESSAGE,
   GEMINI_TRAINING_REPORT_MISSING_MESSAGE,
+  GEMINI_PAYMENT_STATEMENT_PRE_CONSENT_REQUIRED_MESSAGE,
+  GEMINI_SETTLEMENT_CORRECTION_NOT_ALLOWED_MESSAGE,
 } from './get-settlement-api-error'
 
 describe('getSettlementApiErrorMessage', () => {
@@ -178,6 +181,71 @@ describe('getSettlementApiErrorMessage', () => {
     expect(getSettlementApiErrorMessage(error, 'fallback')).toBe(
       GEMINI_TRAINING_REPORT_MISSING_MESSAGE
     )
+  })
+
+  it('409 Gemini 사전 동의 미완료·정정 불가 → 서버 message를 그대로 쓴다', () => {
+    const preConsentError = {
+      response: {
+        status: 409,
+        data: {
+          success: false,
+          error: {
+            code: 'GEMINI_PAYMENT_STATEMENT_PRE_CONSENT_REQUIRED',
+            message: '서버 사전 동의 안내',
+          },
+        },
+      },
+    }
+    const correctionError = {
+      response: {
+        status: 409,
+        data: {
+          success: false,
+          error: {
+            code: 'GEMINI_SETTLEMENT_CORRECTION_NOT_ALLOWED',
+            message: '서버 정정 불가 안내',
+          },
+        },
+      },
+    }
+    expect(getSettlementApiErrorMessage(preConsentError, 'fallback')).toBe('서버 사전 동의 안내')
+    expect(getSettlementApiErrorMessage(correctionError, 'fallback')).toBe('서버 정정 불가 안내')
+  })
+
+  it('409 Gemini 사전 동의 미완료만 재조회 대상으로 판정한다', () => {
+    const build = (status: number, code: string) => ({
+      response: { status, data: { error: { code, message: 'm' } } },
+    })
+    expect(
+      isGeminiPaymentStatementPreConsentRequiredError(
+        build(409, 'GEMINI_PAYMENT_STATEMENT_PRE_CONSENT_REQUIRED')
+      )
+    ).toBe(true)
+    expect(
+      isGeminiPaymentStatementPreConsentRequiredError(
+        build(400, 'GEMINI_PAYMENT_STATEMENT_PRE_CONSENT_REQUIRED')
+      )
+    ).toBe(false)
+    expect(
+      isGeminiPaymentStatementPreConsentRequiredError(
+        build(409, 'GEMINI_SETTLEMENT_CORRECTION_NOT_ALLOWED')
+      )
+    ).toBe(false)
+  })
+
+  it('409 Gemini 사전 동의 미완료·정정 불가 + 서버 공통 문구 → FE 안내', () => {
+    const build = (code: string) => ({
+      response: {
+        status: 409,
+        data: { message: '요청한 변경이 기존 데이터와 충돌합니다.', error: { code } },
+      },
+    })
+    expect(
+      getSettlementApiErrorMessage(build('GEMINI_PAYMENT_STATEMENT_PRE_CONSENT_REQUIRED'), 'fb')
+    ).toBe(GEMINI_PAYMENT_STATEMENT_PRE_CONSENT_REQUIRED_MESSAGE)
+    expect(
+      getSettlementApiErrorMessage(build('GEMINI_SETTLEMENT_CORRECTION_NOT_ALLOWED'), 'fb')
+    ).toBe(GEMINI_SETTLEMENT_CORRECTION_NOT_ALLOWED_MESSAGE)
   })
 
   it('409 LEGACY_GEMINI_TAX_SNAPSHOT_MISSING(+count/ids) → Gemini 스냅샷 안내', () => {

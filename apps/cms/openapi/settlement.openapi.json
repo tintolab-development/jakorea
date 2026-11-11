@@ -2214,7 +2214,7 @@
           "정산"
         ],
         "summary": "POST /api/admin/settlements/{settlementId}/correction-requests",
-        "description": "### 이 API가 하는 일\n- POST /api/admin/settlements/{settlementId}/correction-requests\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 정산 관리 (`null`)\n- 프론트 담당 영역: 정산 (`settlement`)\n- 호출 방식: `POST /api/admin/settlements/{settlementId}/correction-requests`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 경로/쿼리/요청 본문 from 선택 행, 필터, or provider callback\n- 응답 사용 위치: 정산 지급정정 요청 생성 response drives 화면 state, modal, or audit detail\n- 프론트 조회 키: `post_api_admin_settlements_settlementid_correction_requests`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: SETTLEMENT_CORRECTION_CREATE_SMOKE\n- 목데이터 대체: Replace localStorage state for 정산 지급정정 요청 생성 with API response/cache.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.\n- 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "description": "### 이 API가 하는 일\n- POST /api/admin/settlements/{settlementId}/correction-requests\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 정산 관리 (`null`)\n- 프론트 담당 영역: 정산 (`settlement`)\n- 호출 방식: `POST /api/admin/settlements/{settlementId}/correction-requests`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 경로/쿼리/요청 본문 from 선택 행, 필터, or provider callback\n- 응답 사용 위치: 정산 지급정정 요청 생성 response drives 화면 state, modal, or audit detail\n- 프론트 조회 키: `post_api_admin_settlements_settlementid_correction_requests`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: SETTLEMENT_CORRECTION_CREATE_SMOKE\n- 목데이터 대체: Replace localStorage state for 정산 지급정정 요청 생성 with API response/cache.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.\n- 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route\nGemini 실적 지급조서는 지급 정정 불가: 409 GEMINI_SETTLEMENT_CORRECTION_NOT_ALLOWED.",
         "operationId": "requestCorrection",
         "parameters": [
           {
@@ -2334,7 +2334,7 @@
             }
           },
           "409": {
-            "description": "비즈니스 상태 충돌 또는 중복 요청",
+            "description": "비즈니스 상태 충돌 또는 중복 요청 | GEMINI_SETTLEMENT_CORRECTION_NOT_ALLOWED",
             "content": {
               "*/*": {
                 "schema": {
@@ -2527,7 +2527,7 @@
           "정산"
         ],
         "summary": "지급조서 일괄 확인 처리",
-        "description": "선택된 지급조서를 일괄 CONFIRMED 처리합니다(all-or-nothing).\n확인 가능: WAITING_CONFIRM | REAPPLICATION.\n409 PAYMENT_STATEMENT_STATUS_CONFLICT (details.statementId),\n404 PAYMENT_STATEMENT_NOT_FOUND,\n400 SCHEDULED_PAYMENT_DATE_REQUIRED | SCHEDULED_PAYMENT_DATE_MUST_BE_TODAY_OR_LATER.\n",
+        "description": "선택된 지급조서를 일괄 CONFIRMED 처리합니다(all-or-nothing).\n확인 가능: WAITING_CONFIRM | REAPPLICATION.\n409 PAYMENT_STATEMENT_STATUS_CONFLICT (details.statementId),\n404 PAYMENT_STATEMENT_NOT_FOUND,\n400 SCHEDULED_PAYMENT_DATE_REQUIRED | SCHEDULED_PAYMENT_DATE_MUST_BE_TODAY_OR_LATER.\nGemini 실적 지급조서 중 사전 동의 미완료 건이 있으면 409 GEMINI_PAYMENT_STATEMENT_PRE_CONSENT_REQUIRED(전체 롤백).",
         "operationId": "bulkConfirmPaymentStatements",
         "requestBody": {
           "content": {
@@ -2635,7 +2635,7 @@
             }
           },
           "409": {
-            "description": "비즈니스 상태 충돌 또는 중복 요청",
+            "description": "비즈니스 상태 충돌 또는 중복 요청 | GEMINI_PAYMENT_STATEMENT_PRE_CONSENT_REQUIRED",
             "content": {
               "application/json": {
                 "schema": {
@@ -3776,7 +3776,7 @@
           "정산"
         ],
         "summary": "정산/계좌지급 부분 수정",
-        "description": "### 이 API가 하는 일\n- 정산/계좌지급 부분 수정\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 정산 관리 (`null`)\n- 프론트 담당 영역: 정산s (`settlements`)\n- 호출 방식: `PATCH /api/admin/settlements/statements/{statementId}/confirm`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신 (mock/local provider first, production provider after staging config)\n- 프론트 조회 키: `patch_admin_settlements_statements_statementId_confirm`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: PROVIDER_PENDING\n- 외부 연동 확인: NAVER_MAPS_FUEL_PDF_XLSX_EXPORT_TEMPLATE 연동 검증 필요\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 settlements API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.\n- 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route 이체 예정일은 KST 기준 오늘 또는 이후 날짜만 허용하며, 위반 시 400 SCHEDULED_PAYMENT_DATE_MUST_BE_TODAY_OR_LATER를 반환합니다.",
+        "description": "### 이 API가 하는 일\n- 정산/계좌지급 부분 수정\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 정산 관리 (`null`)\n- 프론트 담당 영역: 정산s (`settlements`)\n- 호출 방식: `PATCH /api/admin/settlements/statements/{statementId}/confirm`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신 (mock/local provider first, production provider after staging config)\n- 프론트 조회 키: `patch_admin_settlements_statements_statementId_confirm`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: PROVIDER_PENDING\n- 외부 연동 확인: NAVER_MAPS_FUEL_PDF_XLSX_EXPORT_TEMPLATE 연동 검증 필요\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 settlements API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.\n- 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route 이체 예정일은 KST 기준 오늘 또는 이후 날짜만 허용하며, 위반 시 400 SCHEDULED_PAYMENT_DATE_MUST_BE_TODAY_OR_LATER를 반환합니다.\nGemini 실적 지급조서는 강사의 유효한 지급조서 사전 동의서가 없으면 409 GEMINI_PAYMENT_STATEMENT_PRE_CONSENT_REQUIRED.",
         "operationId": "confirmPaymentStatement",
         "parameters": [
           {
@@ -3896,7 +3896,7 @@
             }
           },
           "409": {
-            "description": "비즈니스 상태 충돌 또는 중복 요청",
+            "description": "비즈니스 상태 충돌 또는 중복 요청 | GEMINI_PAYMENT_STATEMENT_PRE_CONSENT_REQUIRED",
             "content": {
               "application/json": {
                 "schema": {
@@ -48068,14 +48068,20 @@
           },
           "sessionCompleted": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "프로그램 일정 기준 완료 회차 수. Gemini 실적 지급조서는 회차 개념이 없어 null",
+            "nullable": true
           },
           "sessionTotal": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "프로그램 일정 기준 전체 회차 수. Gemini 실적 지급조서는 null",
+            "nullable": true
           },
           "programSessionProgressDisplay": {
-            "type": "string"
+            "type": "string",
+            "description": "프로그램 커리큘럼/스케줄 기준 진행 회차 (예: 4 / 16). Gemini 실적 지급조서는 null",
+            "nullable": true
           },
           "calculationStatus": {
             "type": "string"
@@ -48141,6 +48147,15 @@
             "items": {
               "type": "string"
             }
+          },
+          "paymentStatementPreConsentStatus": {
+            "type": "string",
+            "description": "Gemini 실적 지급조서만: 매핑된 강사의 유효한 지급조서 사전 동의서 여부. COMPLETE=확인 가능, MISSING=지급조서 사전 동의 미완료(확인 불가, CONFIRM_PAYMENT_STATEMENT 없음). Gemini가 아닌 행은 null.",
+            "enum": [
+              "COMPLETE",
+              "MISSING"
+            ],
+            "nullable": true
           }
         }
       },
@@ -58063,6 +58078,21 @@
               "GEMINI_INSTRUCTOR_NOT_MATCHED"
             ],
             "nullable": true
+          },
+          "settlementId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "이 실적이 만든 지급조서(settlement) ID. 지급 제외 실적·과거 직접 지급 건은 null.",
+            "nullable": true
+          },
+          "statementStatus": {
+            "type": "string",
+            "description": "연결된 지급조서의 statementStatus(지급조서 목록과 같은 값, 예: WAITING_CONFIRM·CONFIRMED). settlementId가 null이면 null.",
+            "nullable": true
+          },
+          "deleteBlocked": {
+            "type": "boolean",
+            "description": "true면 삭제(무효화) 불가. DELETE·bulk-delete가 409 GEMINI_TRAINING_REPORT_ACCOUNT_PAID를 내는 조건과 같다: 과거 직접 지급이 PAID, 연결된 지급조서가 확인완료(CONFIRMED), 또는 그 지급조서로 계좌 지급이 이미 생성됨."
           }
         }
       },
