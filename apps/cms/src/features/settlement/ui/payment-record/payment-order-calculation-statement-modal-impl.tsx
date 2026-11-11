@@ -11,7 +11,10 @@ import {
   useCmsAlert,
 } from '@/shared/ui'
 import type { PaymentOrderProgramCalculationStatement } from '@/features/settlement-management/model/payment-order-admin-list'
-import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
+import {
+  getSettlementApiErrorMessage,
+  isGeminiPaymentStatementPreConsentRequiredError,
+} from '@/features/settlement-management/api/get-settlement-api-error'
 import {
   useApproveSettlementCorrectionMutation,
   useConfirmPaymentStatementMutation,
@@ -422,6 +425,10 @@ export function PaymentOrderCalculationStatementModalImpl({
         title: '안내',
         content: getSettlementApiErrorMessage(error, '지급조서 확인 처리에 실패했습니다.'),
       })
+      // 사전 동의 미완료(Gemini)면 목록을 다시 받아 그 행의 확인 가능 여부를 갱신한다
+      if (isGeminiPaymentStatementPreConsentRequiredError(error)) {
+        await detailContextQuery?.refetch()
+      }
     }
   }
 

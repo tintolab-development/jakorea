@@ -14,6 +14,7 @@ import { getPaymentOrdersDetailContextRemote } from '@/features/settlement-manag
 import { fetchSettlementDetailRemote } from '@/features/settlement-management/api/settlement-api-client'
 import {
   getSettlementApiErrorMessage,
+  isGeminiPaymentStatementPreConsentRequiredError,
   isPaymentStatementStatusConflictError,
 } from '@/features/settlement-management/api/get-settlement-api-error'
 import { canConfirmPaymentStatement } from '@/features/settlement-management/api/shared/settlement-status-mappers'
@@ -460,7 +461,11 @@ export function usePaymentOrderDetailLinesController(
               title: '안내',
               content: getSettlementApiErrorMessage(error, '지급조서 일괄 확인에 실패했습니다.'),
             })
-            if (isPaymentStatementStatusConflictError(error)) {
+            // 사전 동의 미완료(Gemini)도 상태 충돌처럼 목록을 다시 받아 확인 불가 행을 반영한다(일괄 확인은 전체 롤백됨)
+            if (
+              isPaymentStatementStatusConflictError(error) ||
+              isGeminiPaymentStatementPreConsentRequiredError(error)
+            ) {
               setBatchConfirmOpen(false)
               setSelectedRowKeys([])
               await detailContextQuery?.refetch()

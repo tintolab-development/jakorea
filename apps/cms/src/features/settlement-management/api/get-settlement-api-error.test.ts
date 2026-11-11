@@ -8,6 +8,7 @@ import {
   isSettlementExportAlreadyDownloadedError,
   isSettlementExportReissueRequiredError,
   isPaymentStatementStatusConflictError,
+  isGeminiPaymentStatementPreConsentRequiredError,
   isTaxReportIdentityOrSnapshotMissingError,
   normalizeSettlementApiErrorCode,
   LEGACY_GEMINI_TAX_SNAPSHOT_MISSING_MESSAGE,
@@ -209,6 +210,27 @@ describe('getSettlementApiErrorMessage', () => {
     }
     expect(getSettlementApiErrorMessage(preConsentError, 'fallback')).toBe('서버 사전 동의 안내')
     expect(getSettlementApiErrorMessage(correctionError, 'fallback')).toBe('서버 정정 불가 안내')
+  })
+
+  it('409 Gemini 사전 동의 미완료만 재조회 대상으로 판정한다', () => {
+    const build = (status: number, code: string) => ({
+      response: { status, data: { error: { code, message: 'm' } } },
+    })
+    expect(
+      isGeminiPaymentStatementPreConsentRequiredError(
+        build(409, 'GEMINI_PAYMENT_STATEMENT_PRE_CONSENT_REQUIRED')
+      )
+    ).toBe(true)
+    expect(
+      isGeminiPaymentStatementPreConsentRequiredError(
+        build(400, 'GEMINI_PAYMENT_STATEMENT_PRE_CONSENT_REQUIRED')
+      )
+    ).toBe(false)
+    expect(
+      isGeminiPaymentStatementPreConsentRequiredError(
+        build(409, 'GEMINI_SETTLEMENT_CORRECTION_NOT_ALLOWED')
+      )
+    ).toBe(false)
   })
 
   it('409 Gemini 사전 동의 미완료·정정 불가 + 서버 공통 문구 → FE 안내', () => {

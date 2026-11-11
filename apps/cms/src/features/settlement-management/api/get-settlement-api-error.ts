@@ -352,6 +352,13 @@ export function isPaymentStatementStatusConflictError(error: unknown): boolean {
   return getSettlementApiErrorCode(error) === PAYMENT_STATEMENT_STATUS_CONFLICT
 }
 
+/** 409 Gemini 지급조서 사전 동의 미완료 — 목록을 다시 불러와 확인 가능 여부(availableActions)를 갱신한다 */
+export function isGeminiPaymentStatementPreConsentRequiredError(error: unknown): boolean {
+  const response = readAxiosResponse(error)
+  if (response?.status !== 409) return false
+  return getSettlementApiErrorCode(error) === GEMINI_PAYMENT_STATEMENT_PRE_CONSENT_REQUIRED
+}
+
 export function isTaxReportIdentityOrSnapshotMissingError(error: unknown): boolean {
   const response = readAxiosResponse(error)
   if (response?.status !== 409) return false
