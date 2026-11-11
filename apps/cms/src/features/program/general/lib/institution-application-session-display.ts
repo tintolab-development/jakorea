@@ -11,8 +11,20 @@ export const INSTITUTION_APPLICATION_SESSIONS_TABLE_OVERFLOW_HEAD = 2
 
 function resolveSessionRoundNumber(session: ApplicantSessionLineInput): number | null {
   if (session.round != null && session.round > 0) return session.round
-  const labeled = session.classNum.match(/(\d+)\s*(?:차시|회차)/)
+  const labeled = session.classNum.match(/(\d+)\s*(?:지망|회차)/)
   if (labeled) return Number.parseInt(labeled[1]!, 10)
+  return null
+}
+
+/** 희망 일정 행의 신청 차시 수 — `duration`/`classNum`의 `N차시`(개수)만 읽는다. */
+function resolveSessionRequestedCount(session: ApplicantSessionLineInput): number | null {
+  for (const raw of [session.duration, session.classNum]) {
+    const matched = /^\s*(\d+)\s*차시\s*$/u.exec(raw ?? '')
+    if (matched) {
+      const count = Number.parseInt(matched[1]!, 10)
+      if (count > 0) return count
+    }
+  }
   return null
 }
 
@@ -69,18 +81,22 @@ export function resolveInstitutionApplicationSessionPeriodPart(
     return null
   }
 
+  // 커리큘럼형·복수·기간 지정 — 「N차시」는 그 희망 일정의 신청 차시 '수'다.
+  // `round`(기간 지정 희망 행은 지망 순위)를 차시로 쓰지 않는다.
+  if (shouldShowInstitutionApplicationMaxSessionsPerDayField(bridge)) {
+    const count = resolveSessionRequestedCount(session)
+    return count != null ? `${count}차시` : null
+  }
+
   const roundNumber = resolveSessionRoundNumber(session)
   if (roundNumber == null) return null
 
-  if (shouldShowInstitutionApplicationMaxSessionsPerDayField(bridge)) {
-    return `${roundNumber}차시`
-  }
-
+  // 일정형·기간 지정 희망 행의 번호는 지망 순위다(회차 아님).
   if (
     shouldShowInstitutionApplicationPreferredScheduleParagraph(bridge) &&
     bridge.educationStructure === 'schedule'
   ) {
-    return `${roundNumber}회차`
+    return `${roundNumber}지망`
   }
 
   return null
