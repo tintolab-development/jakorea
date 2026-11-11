@@ -155,7 +155,8 @@ export function buildSchoolDetailAttendanceSessionGroups(input: {
     )
     const sessionLeadLabel = resolveSchoolDetailAttendanceSessionLeadLabel(
       program,
-      session.round
+      session.round,
+      session
     )
     const header = buildAttendanceSessionHeaderParts(session, sessionLeadLabel, program)
     const scheduleStartAt = sessionScheduleStartAt(session)
@@ -212,7 +213,8 @@ export function buildSchoolDetailAttendanceEducationScheduleOptions(input: {
     const id = resolveSessionGroupDisplayId(input.schoolId, session)
     const sessionLeadLabel = resolveSchoolDetailAttendanceSessionLeadLabel(
       input.program,
-      session.round
+      session.round,
+      session
     )
     return {
       label: buildAttendanceSessionFilterLabel(session, sessionLeadLabel),

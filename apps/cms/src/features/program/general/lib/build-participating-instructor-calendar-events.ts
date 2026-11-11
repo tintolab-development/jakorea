@@ -5,6 +5,7 @@ import type {
   ParticipatingSchoolSession,
 } from '@/features/program/general/model/participating-schools'
 import { parseParticipatingSessionTimeRange } from '../ui/detail-modal/program-status/participating-institutions-calendar-day-list'
+import { formatParticipatingSessionClassNumWithTime } from '@/features/program/general/lib/participating-school-session-display'
 import type { CalendarMainEventInput } from '@/shared/components/calendar/model/calendar-main-event-input'
 
 export type ParticipatingInstructorCalendarEventItem = {
@@ -50,10 +51,8 @@ export function buildParticipatingInstructorCalendarEvents(
       const sessionDate = parseSessionDate(session.date)
       const times = parseParticipatingSessionTimeRange(session.timeRange)
       const timeRangeDisplay = session.timeRange.replace(/\s*~\s*/g, ' ~ ')
-      const periodLabel = session.classNum.endsWith('교시')
-        ? session.classNum
-        : `${session.classNum}교시`
-      const periodStr = `${periodLabel} (${timeRangeDisplay})`
+      // classNum이 비거나 교시가 아닌 값(회차·지망 등)이면 `교시`를 붙이지 않는다
+      const periodStr = formatParticipatingSessionClassNumWithTime(session.classNum, timeRangeDisplay)
       const dateKey = sessionDate.format('YYYY-MM-DD')
 
       events.push({

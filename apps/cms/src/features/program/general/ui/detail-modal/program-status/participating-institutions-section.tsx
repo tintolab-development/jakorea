@@ -359,7 +359,9 @@ export function ParticipatingInstitutionsSection({
             )
           }
           const sessionLines = buildParticipatingSchoolPreferredScheduleLines(
-            resolveParticipatingInstitutionPreferredDisplaySessions(record)
+            resolveParticipatingInstitutionPreferredDisplaySessions(record),
+            // 1사1교만 — 일정 건수를 차시 수로 쓰지 않는다. 교육받은 교사는 기존 표기 유지
+            isCompanySchool ? { sessionCountSource: 'known-only' } : undefined
           )
           return <ScheduleLinesCell lines={sessionLines} />
         },
@@ -649,6 +651,7 @@ export function ParticipatingInstitutionsSection({
               onCalendarGranularityChange={setProgressCalendarGranularity}
               usePreferredScheduleFormat={isCompanySchool}
               dayListVariant={isCompanySchool ? 'default' : 'general-institution'}
+              program={program}
             />
           </div>
         )}

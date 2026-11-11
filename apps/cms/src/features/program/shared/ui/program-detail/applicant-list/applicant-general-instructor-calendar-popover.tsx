@@ -6,6 +6,7 @@
 import type { ReactNode } from 'react'
 import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
 import type { CalendarItem } from '@/shared/components/calendar'
+import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import { formatInstitutionRegionForTableDisplay } from '@/shared/lib/format-institution-region-display'
 import type {
   ApplicantCalendarEvent,
@@ -14,7 +15,14 @@ import type {
 import { resolveInstructorCalendarInstitutionName } from './applicant-calendar-events'
 import { formatInstitutionCalendarSessionsTimeDisplay } from './applicant-institution-calendar-session'
 
-function resolveInstructorInstitutionFromCalendarItem(item: CalendarItem): {
+export type GeneralInstructorCalendarSessionLabelFormatter = (
+  sessions: ParticipatingSchoolSession[]
+) => string | null
+
+function resolveInstructorInstitutionFromCalendarItem(
+  item: CalendarItem,
+  formatSessionLabel?: GeneralInstructorCalendarSessionLabelFormatter
+): {
   schoolName: string
   regionDisplay: string
   applicantCount: number
@@ -43,10 +51,13 @@ function resolveInstructorInstitutionFromCalendarItem(item: CalendarItem): {
     row.calendarInstitutionRow?.region?.trim() || summary.regionDisplay?.trim() || ''
   const regionDisplay = formatInstitutionRegionForTableDisplay(regionRaw)
   const sessionsOnDate = row.sessionsOnDate ?? []
-  const sessionLabel = formatInstitutionCalendarSessionsTimeDisplay(
-    sessionsOnDate,
-    row.calendarInstitutionRow?.desiredEducationPeriod
-  )
+  // 일반 기관형: 교육 구조별 일정 라벨(회차·차시·세부 일정명·사전교육) — 호출부 formatter. 그 외는 기존 표기
+  const sessionLabel =
+    (formatSessionLabel ? formatSessionLabel(sessionsOnDate) : null) ??
+    formatInstitutionCalendarSessionsTimeDisplay(
+      sessionsOnDate,
+      row.calendarInstitutionRow?.desiredEducationPeriod
+    )
 
   return {
     schoolName,
@@ -56,16 +67,22 @@ function resolveInstructorInstitutionFromCalendarItem(item: CalendarItem): {
   }
 }
 
-export function renderGeneralInstructorCalendarPreviewTooltipContent({
-  events,
-}: {
-  events: CalendarItem[]
-  colorMap: Map<string | number, ScheduleColorPair>
-}): ReactNode {
+export function renderGeneralInstructorCalendarPreviewTooltipContent(
+  {
+    events,
+  }: {
+    events: CalendarItem[]
+    colorMap: Map<string | number, ScheduleColorPair>
+  },
+  options?: { formatSessionLabel?: GeneralInstructorCalendarSessionLabelFormatter }
+): ReactNode {
   return (
     <div className="calendar-preview-popover">
       {events.map(item => {
-        const resolved = resolveInstructorInstitutionFromCalendarItem(item)
+        const resolved = resolveInstructorInstitutionFromCalendarItem(
+          item,
+          options?.formatSessionLabel
+        )
         if (resolved == null) return null
 
         const { schoolName, regionDisplay, applicantCount, sessionLabel } = resolved

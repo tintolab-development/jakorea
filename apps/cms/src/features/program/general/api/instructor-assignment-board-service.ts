@@ -66,8 +66,26 @@ function splitRangeDateAndTime(range: string): { date?: string; time?: string } 
   return {}
 }
 
+/**
+ * 일정 단위 라벨 순서.
+ * - `round-first`(기본, 1사1교): `N회차` → 일정명
+ * - `schedule-name-first`(일반): 세부 일정명·사전교육(자동 기본명 제외) → `N회차`.
+ *   일정형은 회차 대신 세부 일정명을 쓴다. 커리큘럼형 일정은 자동 기본명이라 `N회차`가 된다.
+ */
+type ScheduleSessionLabelOrder = 'round-first' | 'schedule-name-first'
+
+function resolveScheduleSessionLabel(
+  schedule: ProgramScheduleResponse,
+  order: ScheduleSessionLabelOrder
+): string | undefined {
+  const round = formatEducationRoundSessionLabel({ roundNumber: schedule.sessionNo }) || undefined
+  const name = toDisplayEducationScheduleName(schedule.scheduleName)
+  return order === 'schedule-name-first' ? (name ?? round) : (round ?? name)
+}
+
 function buildScheduleLabelById(
-  schedules: ProgramScheduleResponse[]
+  schedules: ProgramScheduleResponse[],
+  order: ScheduleSessionLabelOrder = 'round-first'
 ): Map<string, { date?: string; time?: string; session?: string }> {
   const map = new Map<string, { date?: string; time?: string; session?: string }>()
   for (const schedule of schedules) {
@@ -80,9 +98,7 @@ function buildScheduleLabelById(
     map.set(String(schedule.id), {
       date: split.date || dateKey || start,
       time: split.time,
-      session:
-        formatEducationRoundSessionLabel({ roundNumber: schedule.sessionNo }) ||
-        toDisplayEducationScheduleName(schedule.scheduleName),
+      session: resolveScheduleSessionLabel(schedule, order),
     })
   }
   return map
@@ -139,7 +155,8 @@ async function fetchCalendarSafe(
 
 /** assert 없는 공통 fetch — 1사1교·일반 래퍼에서 게이트 후 호출 */
 export async function fetchInstructorAssignmentBoardData(
-  programId: string
+  programId: string,
+  options: { sessionLabelOrder?: ScheduleSessionLabelOrder } = {}
 ): Promise<InstructorAssignmentBoardData> {
   const [assignments, instructorApplications, schedules, calendarOccupied] = await Promise.all([
     fetchAllInstructorAssignments(programId),
@@ -189,7 +206,7 @@ export async function fetchInstructorAssignmentBoardData(
     schedules,
     occupiedLectureDatesByInstructorId,
     scheduleLabelById: enrichScheduleLabelFromAssignments(
-      buildScheduleLabelById(schedules),
+      buildScheduleLabelById(schedules, options.sessionLabelOrder),
       assignments
     ),
     instructorNameByMemberId,
@@ -201,7 +218,7 @@ export async function fetchGeneralInstructorAssignmentBoard(
   programId: string
 ): Promise<InstructorAssignmentBoardData> {
   assertGeneralAssignmentRemoteReady()
-  return fetchInstructorAssignmentBoardData(programId)
+  return fetchInstructorAssignmentBoardData(programId, { sessionLabelOrder: 'schedule-name-first' })
 }
 
 /**

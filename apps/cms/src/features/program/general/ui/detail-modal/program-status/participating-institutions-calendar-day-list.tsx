@@ -12,6 +12,13 @@ import type {
 } from '@/features/program/general/model/participating-schools'
 import { formatInstitutionRegionForCalendarListDisplay } from '@/shared/lib/format-institution-region-display'
 import { formatEducationRoundSessionLabel } from '@/shared/lib/education-schedule-name'
+import {
+  resolveParticipatingSessionClassNumLead,
+  sumKnownParticipatingSessionCurriculumCount,
+} from '@/features/program/general/lib/participating-school-session-display'
+import { toCalendarScheduleLeadLabel } from '@/features/program/general/lib/school-detail-attendance-display'
+import { resolveGeneralScheduleUnitLabel } from '@/features/program/general/lib/schedule-unit-label'
+import type { Program } from '@/types/domain'
 import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
 
 export type ParticipatingInstitutionsCalendarDayListEvent = {
@@ -38,19 +45,37 @@ export function parseParticipatingSessionTimeRange(
   }
 }
 
-function resolveParticipatingSessionPeriodLabel(session: ParticipatingSchoolSession): string {
-  const classNum = session.classNum?.trim()
-  if (classNum) {
-    if (classNum.endsWith('교시')) return classNum
-    if (classNum.endsWith('차시') || classNum.endsWith('회차')) return classNum
-    return `${classNum}교시`
-  }
+function resolveParticipatingSessionPeriodLabel(
+  session: ParticipatingSchoolSession,
+  program?: Program | null
+): string {
+  // 일반 프로그램 — 교육 구조별(일정형=세부 일정명, 단일 회차=N차시, 복수 회차=N회차).
+  // 일반에는 교시가 없고 classNum의 `N회차`는 순번으로 합성된 값이라 읽지 않는다. 모르면 시간만.
+  const generalLabel = resolveGeneralScheduleUnitLabel(
+    {
+      sessionNo: session.sessionNo,
+      curriculumSessionCount: session.curriculumSessionCount,
+      scheduleRole: session.scheduleRole,
+      educationSlotKey: session.educationSlotKey,
+      scheduleName: session.scheduleName ?? session.educationScheduleLabel,
+    },
+    program
+  )
+  if (generalLabel !== undefined) return generalLabel ?? ''
+  // 숫자만인 classNum(교시 번호 원본)만 `N교시`. 그 외 값 뒤에 `교시`를 붙이지 않는다
+  const classNumLead = resolveParticipatingSessionClassNumLead(session.classNum)
+  if (classNumLead) return classNumLead
   return formatEducationRoundSessionLabel({ roundNumber: session.round })
 }
 
-export function formatParticipatingSessionLine(session: ParticipatingSchoolSession): string {
+/** `{선행 라벨} (시간)` — 선행 라벨을 모르면 시간만. `program`이 일반 프로그램이면 교육 구조별 라벨 */
+export function formatParticipatingSessionLine(
+  session: ParticipatingSchoolSession,
+  program?: Program | null
+): string {
   const timeRangeDisplay = session.timeRange.replace(/\s*~\s*/, ' ~ ')
-  return `${resolveParticipatingSessionPeriodLabel(session)} (${timeRangeDisplay})`
+  const lead = toCalendarScheduleLeadLabel(resolveParticipatingSessionPeriodLabel(session, program))
+  return lead ? `${lead} (${timeRangeDisplay})` : timeRangeDisplay
 }
 
 function timeToMinutes(value: string): number | null {
@@ -67,6 +92,7 @@ function minutesToTime(totalMinutes: number): string {
   return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
 }
 
+/** 1사1교 캘린더(`usePreferredScheduleFormat`) 전용 — 날짜별 `N차시 (첫 시작 ~ 마지막 종료)` */
 export function formatParticipatingSessionsPeriodForCalendarDisplay(
   sessions: ParticipatingSchoolSession[]
 ): string {
@@ -85,28 +111,36 @@ export function formatParticipatingSessionsPeriodForCalendarDisplay(
       (range): range is { start: number; end: number } => range.start != null && range.end != null
     )
 
-  const first = sorted[0]!
-  const sessionCount =
-    sorted.length === 1 && first.round > 0 ? first.round : Math.max(sorted.length, 1)
+  /**
+   * round(지망 순위·회차 번호)·일정 건수는 차시 수가 아니다. 그날 신청·연결된 실제 차시 수만 더하고,
+   * 하나라도 모르면 차시 표기를 생략한다(시간만).
+   */
+  const sessionCount = sumKnownParticipatingSessionCurriculumCount(sorted)
+  const countLabel = sessionCount != null ? `${sessionCount}차시` : null
 
-  if (ranges.length === 0) return `${sessionCount}차시`
+  if (ranges.length === 0) return countLabel ?? '-'
 
   const start = Math.min(...ranges.map(range => range.start))
   const end = Math.max(...ranges.map(range => range.end))
-  return `${sessionCount}차시 (${minutesToTime(start)} ~ ${minutesToTime(end)})`
+  const timeLabel = `${minutesToTime(start)} ~ ${minutesToTime(end)}`
+  return countLabel ? `${countLabel} (${timeLabel})` : timeLabel
 }
 
 /** 캘린더 우측 목록 2행 — 교시·차시 + 시간만 (학년 제외) */
 export function formatParticipatingSessionPeriodForCalendarDisplay(
-  session: ParticipatingSchoolSession
+  session: ParticipatingSchoolSession,
+  program?: Program | null
 ): string {
-  return formatParticipatingSessionLine(session)
+  return formatParticipatingSessionLine(session, program)
 }
 
-export function getPrimaryParticipatingSessionLine(sessions: ParticipatingSchoolSession[]): string {
+export function getPrimaryParticipatingSessionLine(
+  sessions: ParticipatingSchoolSession[],
+  program?: Program | null
+): string {
   if (sessions.length === 0) return '-'
   const sorted = [...sessions].sort((a, b) => a.round - b.round)
-  return formatParticipatingSessionLine(sorted[0]!)
+  return formatParticipatingSessionLine(sorted[0]!, program)
 }
 
 export type ParticipatingInstitutionsCalendarDayListVariant = 'default' | 'general-institution'
@@ -117,6 +151,7 @@ export function ParticipatingInstitutionsCalendarDayList({
   onSchoolClick,
   usePreferredScheduleFormat = false,
   variant = 'default',
+  program,
 }: {
   events: ParticipatingInstitutionsCalendarDayListEvent[]
   getColorForEvent: (event: ParticipatingInstitutionsCalendarDayListEvent) => ScheduleColorPair
@@ -127,6 +162,8 @@ export function ParticipatingInstitutionsCalendarDayList({
    * 체크박스는 화면 내 선택 표시만 한다(선택 대상 일괄 액션은 시안에 정의되지 않음).
    */
   variant?: ParticipatingInstitutionsCalendarDayListVariant
+  /** 일반 프로그램 — 일정 라벨을 교육 구조별로 표시. 없으면 기존 표기 */
+  program?: Program | null
 }) {
   const isGeneralInstitution = variant === 'general-institution'
   const [checkedEventIds, setCheckedEventIds] = useState<ReadonlySet<string>>(() => new Set())
@@ -160,7 +197,7 @@ export function ParticipatingInstitutionsCalendarDayList({
           const grade = educationGrade?.trim() || row.educationGrade?.trim() || '-'
           const sessionLine = usePreferredScheduleFormat
             ? formatParticipatingSessionsPeriodForCalendarDisplay(sessionsOnDate)
-            : getPrimaryParticipatingSessionLine(sessionsOnDate)
+            : getPrimaryParticipatingSessionLine(sessionsOnDate, program)
 
           const itemKey = `${ev.id}-${ev.originalItem.row.id}`
           const checked = isGeneralInstitution && checkedEventIds.has(itemKey)

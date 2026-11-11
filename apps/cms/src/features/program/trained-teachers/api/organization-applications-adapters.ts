@@ -18,6 +18,10 @@ import type { PreferredScheduleBlock } from '@/shared/api/generated/dashboard/sc
 import type { TrainedTeacherOrganizationEducationSchedule } from '@/shared/api/generated/dashboard/schemas/trainedTeacherOrganizationEducationSchedule'
 import type { PreferredScheduleSessionTime } from '@/shared/api/generated/dashboard/schemas/preferredScheduleSessionTime'
 import type { ProgramSchedule } from '@/types/domain'
+import {
+  formatTrainedTeacherClassPeriod,
+  resolveTrainedTeacherBlockSessionCount,
+} from '@/features/program/trained-teachers/lib/preferred-schedule-display'
 import type { TrainedTeacherOrganizationApplicationDetailResponse } from './organization-applications-types'
 import type { TrainedTeacherOrganizationApplicationResponse } from '@/shared/api/generated/dashboard/schemas/trainedTeacherOrganizationApplicationResponse'
 import type { GradeBlock } from '@/shared/api/generated/dashboard/schemas/gradeBlock'
@@ -36,7 +40,8 @@ function normalizeSessionTimeRange(timeRange: string): string {
 
 /**
  * TT SoT `preferredScheduleBlocks` → 목록 컬럼이 읽는 `sessions`.
- * 날짜(블록)당 1행: `duration`에 총 차시, `timeRange`에 첫~끝 시간.
+ * 날짜(블록)당 1행: `duration`에 그날 차시 수(시간 줄 수 — {@link resolveTrainedTeacherBlockSessionCount}),
+ * `classNum`에 첫 차시 교시, `timeRange`에 첫~끝 시간.
  * (교시 라벨 classNum을 차시 수로 합산하면 안 됨 — company-school 목록 포맷터 계약)
  */
 export function mapPreferredScheduleBlocksToSessions(
@@ -46,7 +51,7 @@ export function mapPreferredScheduleBlocksToSessions(
   return blocks.map((block, index) => {
     const date = formatPreferredScheduleDateForSession(block.date)
     const dayOfWeek = block.dayOfWeek || ''
-    const sessionCount = Math.max(block.sessionCount, block.sessionTimes.length, 1)
+    const sessionCount = resolveTrainedTeacherBlockSessionCount(block)
     const firstTime = block.sessionTimes[0]
     const lastTime = block.sessionTimes[block.sessionTimes.length - 1]
     const startRaw = firstTime?.timeRange?.split('~')[0]?.trim() || firstTime?.startTime?.trim() || ''
@@ -63,9 +68,9 @@ export function mapPreferredScheduleBlocksToSessions(
       round: index + 1,
       date,
       dayOfWeek,
-      duration: `${sessionCount}차시`,
+      duration: sessionCount != null ? `${sessionCount}차시` : '',
       format: '',
-      classNum: firstTime?.classPeriod || '',
+      classNum: formatTrainedTeacherClassPeriod(firstTime?.classPeriod),
       timeRange,
       resolvedScheduleId:
         typeof block.scheduleId === 'number' &&
@@ -201,12 +206,14 @@ export function mapProgramSchedulesToPreferredScheduleBlocks(
     dayOfWeek: dayOfWeekFromIsoDate(date),
     sessionCount: dateSchedules.length,
     sessionTimes: dateSchedules.map((schedule, sessionIndex) => {
-      const sessionNo = schedule.sessionNo ?? sessionIndex + 1
       const startTime = timeFromDateTime(schedule.startAt)
       const endTime = timeFromDateTime(schedule.endAt)
+      // sessionIndex = 그날 차시 순서, classPeriod = 교시(학교 시간표 번호).
+      // 프로그램 일정에는 교시 정보가 없다 — session_no(회차)를 차시·교시 자리에 넣지 않는다
+      // (OpenAPI TrainedTeacherOrganizationEducationSchedule.round).
       return {
-        sessionIndex: sessionNo,
-        classPeriod: `${sessionNo}차시`,
+        sessionIndex: sessionIndex + 1,
+        classPeriod: '',
         timeRange: startTime && endTime ? `${startTime} ~ ${endTime}` : startTime || endTime || '-',
         ...(startTime ? { startTime } : {}),
         ...(endTime ? { endTime } : {}),
@@ -385,15 +392,21 @@ export function mapPreferredScheduleBlocks(
         typeof block.preferenceRank === 'number' && Number.isFinite(block.preferenceRank)
           ? block.preferenceRank
           : index + 1
+      // 차시 수 = 시간 줄 수. 기존 플랫폼 신청은 sessionCount에 교시 번호를 보낸 데이터가 있어
+      // 줄이 있으면 줄 수를 쓰고, 줄이 없을 때만 sessionCount를 쓴다.
       const sessionCount =
-        typeof block.sessionCount === 'number' && Number.isFinite(block.sessionCount)
-          ? block.sessionCount
-          : sessionTimes.length
+        resolveTrainedTeacherBlockSessionCount({
+          sessionCount:
+            typeof block.sessionCount === 'number' && Number.isFinite(block.sessionCount)
+              ? Math.trunc(block.sessionCount)
+              : 0,
+          sessionTimes,
+        }) ?? 1
       return {
         preferenceRank,
         date,
         dayOfWeek: block.dayOfWeek?.trim() || '',
-        sessionCount: Math.max(sessionCount, sessionTimes.length, 1),
+        sessionCount,
         sessionTimes,
         scheduleId:
           typeof block.scheduleId === 'number' && Number.isFinite(block.scheduleId)

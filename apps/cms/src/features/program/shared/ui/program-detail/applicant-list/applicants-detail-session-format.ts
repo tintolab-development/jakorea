@@ -64,13 +64,8 @@ export function getSessionLineParts(
     const timePart = s.timeRange.replace('~', ' ~ ')
     const periodPart = bridge
       ? (resolveInstitutionApplicationSessionPeriodPart(s, bridge) ?? '')
-      : (() => {
-          const roundLabel =
-            s.round != null
-              ? s.round
-              : Number.parseInt(s.classNum.replace(/\D/g, ''), 10) || 1
-          return formatEducationRoundSessionLabel({ roundNumber: roundLabel })
-        })()
+      : // 회차 번호(round)가 있을 때만 `N회차`. classNum(교시) 숫자를 회차로 읽거나 1회차를 지어내지 않는다.
+        formatEducationRoundSessionLabel({ roundNumber: s.round })
     return { datePart, durationPart: timePart, periodPart, preset }
   }
   const durationPart = `${s.duration} (${s.format})`

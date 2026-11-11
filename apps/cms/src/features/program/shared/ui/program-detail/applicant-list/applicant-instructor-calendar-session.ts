@@ -1,6 +1,14 @@
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 
-/** 희망 배정 학교·기관 sessions mock 기반 회차·시간 요약 */
+/**
+ * 희망 배정 기관 순위(`preferredSchools[].rank`) 라벨 — `N지망`.
+ * 순위는 회차·차시가 아니므로 `N차시`/`N회차`로 쓰지 않는다. 순위가 없으면 지어내지 않는다.
+ */
+function formatPreferredSchoolRankLabel(rank: number | undefined): string | null {
+  return typeof rank === 'number' && Number.isInteger(rank) && rank > 0 ? `${rank}지망` : null
+}
+
+/** 희망 배정 학교·기관 — 지망·시간 요약 */
 export function getInstructorCalendarSessionSummary(
   instructor: ApplicantInstructorRow,
   schoolName: string
@@ -16,8 +24,9 @@ export function getInstructorCalendarSessionSummary(
   if (pref?.grade) {
     const timeMatch = pref.dateRange?.match(/(\d{1,2}:\d{2})\s*~\s*(\d{1,2}:\d{2})/)
     if (timeMatch) {
-      const roundLabel = pref.rank ? `${pref.rank}차시` : '1차시'
-      return `${roundLabel} ${timeMatch[1]}~${timeMatch[2]}`
+      const rankLabel = formatPreferredSchoolRankLabel(pref.rank)
+      const timeLabel = `${timeMatch[1]}~${timeMatch[2]}`
+      return rankLabel ? `${rankLabel} ${timeLabel}` : timeLabel
     }
     if (pref.dateRange) {
       return `${pref.grade} (${pref.dateRange})`
@@ -27,7 +36,7 @@ export function getInstructorCalendarSessionSummary(
   return '-'
 }
 
-/** 캘린더 우측 카드 — 강사명 옆 차시 라벨만 (시간·학년 제외) */
+/** 캘린더 우측 카드 — 강사명 옆 지망 라벨만 (시간·학년 제외) */
 export function getInstructorCalendarRoundLabel(
   instructor: ApplicantInstructorRow,
   schoolName: string
@@ -41,22 +50,21 @@ export function getInstructorCalendarRoundLabel(
         p.schoolName?.trim() === normalizedSchool
     ) ?? instructor.preferredSchools?.[0]
   if (!pref) return '-'
-  if (pref.rank) return `${pref.rank}차시`
-  const timeMatch = pref.dateRange?.match(/(\d{1,2}:\d{2})\s*~\s*(\d{1,2}:\d{2})/)
-  if (timeMatch) return '1차시'
-  return '-'
+  return formatPreferredSchoolRankLabel(pref.rank) ?? '-'
 }
 
-/** 캘린더 우측 카드 2행 — `2차시 (09:20 ~ 11:20)` 형식 */
+/** 캘린더 우측 카드 2행 — `2지망 (09:20 ~ 11:20)`, 지망이 없으면 `09:20 ~ 11:20` */
 export function getInstructorCalendarSessionCardLabel(
   instructor: ApplicantInstructorRow,
   schoolName: string
 ): string {
   const summary = getInstructorCalendarSessionSummary(instructor, schoolName)
-  const match = summary.match(/^(\d+차시)\s+(\d{1,2}:\d{2})~(\d{1,2}:\d{2})$/)
+  const match = summary.match(/^(\d+지망)\s+(\d{1,2}:\d{2})~(\d{1,2}:\d{2})$/)
   if (match) {
     return `${match[1]} (${match[2]} ~ ${match[3]})`
   }
+  const timeOnly = summary.match(/^(\d{1,2}:\d{2})~(\d{1,2}:\d{2})$/)
+  if (timeOnly) return `${timeOnly[1]} ~ ${timeOnly[2]}`
   const roundOnly = getInstructorCalendarRoundLabel(instructor, schoolName)
   return roundOnly !== '-' ? roundOnly : '-'
 }

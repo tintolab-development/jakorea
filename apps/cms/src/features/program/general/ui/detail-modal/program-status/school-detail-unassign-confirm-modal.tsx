@@ -7,7 +7,9 @@
  * - 알림 발송 전(`notificationSent === false`): 사유·알림 입력 없이 안내만
  * - 알림 발송 후 또는 판단 불가: 취소 사유 + 알림 발송
  * - 단건/일괄 제목·본문 분기, 취소 귀책 필드 없음(API 선택값 — 생략 시 서버 ADMIN)
- * 기본(`default`)은 참여 강사 상세·개인형 등 기존 호출부 동작 그대로.
+ * `variant="individual-schedule"` — 일반 개인형 참여 강사 상세 「교육 배정 취소 안내」(03-1·03-2).
+ * - 대상은 일정(`targetNames`), 단건/일괄 제목·본문, 발송 전/후 분기는 `institution-detail`과 같고 귀책 없음
+ * 기본(`default`)은 1사1교 등 기존 호출부 동작 그대로.
  */
 
 import {
@@ -33,7 +35,14 @@ export interface SchoolDetailUnassignConfirmModalProps {
   confirmLoading?: boolean
 }
 
-export type SchoolDetailUnassignConfirmVariant = 'default' | 'institution-detail'
+/**
+ * - `institution-detail`: 일반 기관형 참여 기관 상세 시안(12-1·12-2)
+ * - `individual-schedule`: 일반 개인형 참여 강사 상세 「교육 배정 취소 안내」 시안(03-1·03-2) — 대상은 일정
+ */
+export type SchoolDetailUnassignConfirmVariant =
+  | 'default'
+  | 'institution-detail'
+  | 'individual-schedule'
 
 function formatBracketedBoldNames(names: string[], fallback: string): string {
   if (names.length === 0) {
@@ -77,6 +86,25 @@ export function resolveInstitutionDetailUnassignTitle(instructorCount: number): 
   return instructorCount > 1 ? '강사 일괄 배정 취소 안내' : '강사 배정 취소 안내'
 }
 
+/** 개인형 시안 03-1(4121:129121, 발송 전)·03-2(9899:176659, 발송 후) 제목 */
+export function resolveIndividualScheduleUnassignTitle(scheduleCount: number): string {
+  return scheduleCount > 1 ? '교육 일괄 배정 취소 안내' : '교육 배정 취소 안내'
+}
+
+/** 개인형 시안 03-1·03-2 본문 — `[일정] 교육일` / `[일정] 교육일 외 N개` */
+export function buildIndividualScheduleUnassignMessage(
+  scheduleLabels: string[],
+  notificationSent: boolean
+): string {
+  const first = scheduleLabels[0]?.trim() || '교육 일정'
+  const others = scheduleLabels.length - 1
+  const subject = others > 0 ? `[**${first}**] 교육일 외 ${others}개` : `[**${first}**] 교육일`
+  if (!notificationSent) {
+    return `${subject}의 배정을 취소하시겠습니까?\n취소 시 발송 예정인 배정 알림이 있는 경우 자동으로 취소됩니다.`
+  }
+  return `${subject}의 배정을 취소하시겠습니까?\n취소 시 입력하신 사유가 회원에게 취소 사유로 안내되며, 알림이 발송됩니다.`
+}
+
 export function SchoolDetailUnassignConfirmModal({
   open,
   onCancel,
@@ -87,6 +115,30 @@ export function SchoolDetailUnassignConfirmModal({
   notificationSent,
   confirmLoading = false,
 }: SchoolDetailUnassignConfirmModalProps) {
+  if (variant === 'individual-schedule') {
+    const sent = notificationSent !== false
+    return (
+      <PermissionModal
+        open={open}
+        variant="reject"
+        className="school-detail-unassign-confirm-modal"
+        title={resolveIndividualScheduleUnassignTitle(targetNames.length)}
+        message={buildIndividualScheduleUnassignMessage(targetNames, sent)}
+        confirmLabel="배정 취소"
+        confirmVariant="delete"
+        confirmLoading={confirmLoading}
+        requireReason={sent}
+        reasonLabel="취소 사유"
+        reasonPlaceholder="취소 사유를 입력해 주세요"
+        reasonRequiredMessage="취소 사유를 입력해 주세요."
+        showNotifyTiming={sent}
+        notifyTimingOptions="two"
+        onCancel={onCancel}
+        onConfirm={onConfirm}
+      />
+    )
+  }
+
   if (variant === 'institution-detail') {
     const sent = notificationSent !== false
     return (

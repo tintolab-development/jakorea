@@ -109,7 +109,7 @@ describe('buildTrainedTeacherEducationProgressRows', () => {
     )
   })
 
-  it('같은 날 slots 3건이면 3행을 그리고 합치지 않는다', () => {
+  it('같은 날 slots 3건(3차시)은 한 행 `일시 | 3차시`로 묶고 출석 id는 전부 유지한다 (CMS-FUNC-0072)', () => {
     const rows = buildTrainedTeacherEducationProgressRows(
       [
         session({
@@ -171,17 +171,14 @@ describe('buildTrainedTeacherEducationProgressRows', () => {
       ]
     )
 
-    expect(rows).toHaveLength(3)
-    expect(rows.map(row => row.rowLabel)).toEqual(['1지망', '1지망', '1지망'])
-    expect(rows.map(row => row.session.duration)).toEqual(['1차시', '1차시', '1차시'])
-    expect(rows.map(row => row.session.timeRange)).toEqual([
-      '09:30~10:20',
-      '10:30~11:20',
-      '11:30~12:20',
-    ])
-    expect(rows.map(row => row.attendanceScheduleIds)).toEqual([[1], [2], [3]])
+    expect(rows).toHaveLength(1)
+    expect(rows[0]?.rowLabel).toBe('1지망')
+    expect(rows[0]?.session.duration).toBe('3차시')
+    expect(rows[0]?.session.timeRange).toBe('09:30~12:20')
+    expect(rows[0]?.attendanceScheduleIds).toEqual([1, 2, 3])
+    expect(rows[0]?.session.deliveryScheduleStatus).toBe('COMPLETED')
     expect(formatTrainedTeacherEducationProgressDateTime(rows[0]!.session)).toBe(
-      '2026.04.20(월) 09:30 ~ 10:20'
+      '2026.04.20(월) 09:30 ~ 12:20'
     )
   })
 

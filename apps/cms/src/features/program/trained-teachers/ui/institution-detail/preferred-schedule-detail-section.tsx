@@ -4,23 +4,33 @@ import {
   INSTITUTION_APPLICATION_SCHEDULE_COLGROUP,
   InstitutionApplicationTableRowSingleCol,
 } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-application-info-table'
+import { Fragment } from 'react'
 import { ProgramDetailTdSegmentWrap } from '@/features/program/shared/ui/program-detail-td-divider'
 import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
+import {
+  formatTrainedTeacherPreferredDateSegments,
+  formatTrainedTeacherSessionTimeSegments,
+  TRAINED_TEACHER_SESSION_JOINER,
+} from '@/features/program/trained-teachers/lib/preferred-schedule-display'
 import '@/features/program/general/ui/detail-modal/applications/volunteer-screening/detail.css'
 
-function preferredDateSegments(block: TrainedTeachersPreferredScheduleBlock): string[] {
-  const datePart = block.date.replace(/\./g, '. ').replace(/\s+/g, ' ').trim()
-  const weekday = block.dayOfWeek.trim()
-  const dateLabel = weekday ? `${datePart} (${weekday})` : datePart
-  const sessionCount =
-    typeof block.sessionCount === 'number' && block.sessionCount > 0
-      ? `${block.sessionCount}차시`
-      : ''
-  return [dateLabel, sessionCount].filter(Boolean)
-}
-
-function preferredSessionTimeSegments(classPeriod: string, timeRange: string): string[] {
-  return [classPeriod, timeRange].map(s => s.trim()).filter(Boolean)
+/**
+ * 시안: 「희망 교육일 및 차시」 `2026.04.27(월) ㅣ 2차시`,
+ * 「차시별 희망 교육 시간」 `1차시: 1교시 ㅣ 09:00 ~ 09:40 / 2차시: 2교시 ㅣ 09:50 ~ 10:30` (한 줄, CMS-FUNC-0072)
+ */
+function PreferredSessionTimesValue({ block }: { block: TrainedTeachersPreferredScheduleBlock }) {
+  const sessions = formatTrainedTeacherSessionTimeSegments(block.sessionTimes)
+  if (sessions.length === 0) return <>-</>
+  return (
+    <ProgramDetailTdSegmentWrap>
+      {sessions.map((segments, index) => (
+        <Fragment key={`${block.preferenceRank}-${index}`}>
+          {index > 0 ? TRAINED_TEACHER_SESSION_JOINER : null}
+          {withProgramDetailTdDivider(segments)}
+        </Fragment>
+      ))}
+    </ProgramDetailTdSegmentWrap>
+  )
 }
 
 export function TrainedTeachersPreferredScheduleDetailSection({
@@ -57,24 +67,18 @@ export function TrainedTeachersPreferredScheduleDetailSection({
                 label="희망 교육일 및 차시"
                 value={
                   <ProgramDetailTdSegmentWrap>
-                    {withProgramDetailTdDivider(preferredDateSegments(block))}
+                    {withProgramDetailTdDivider(formatTrainedTeacherPreferredDateSegments(block))}
                   </ProgramDetailTdSegmentWrap>
                 }
               />
             )
-            const timeRows = block.sessionTimes.map(session => (
+            const timeRow = (
               <InstitutionApplicationTableRowSingleCol
-                key={`${blockKey}-time-${session.sessionIndex}`}
-                label={`${session.sessionIndex}차시 희망 교육 시간`}
-                value={
-                  <ProgramDetailTdSegmentWrap>
-                    {withProgramDetailTdDivider(
-                      preferredSessionTimeSegments(session.classPeriod, session.timeRange)
-                    )}
-                  </ProgramDetailTdSegmentWrap>
-                }
+                key={`${blockKey}-times`}
+                label="차시별 희망 교육 시간"
+                value={<PreferredSessionTimesValue block={block} />}
               />
-            ))
+            )
 
             return (
               <div
@@ -90,7 +94,7 @@ export function TrainedTeachersPreferredScheduleDetailSection({
                     {INSTITUTION_APPLICATION_SCHEDULE_COLGROUP}
                     <tbody>
                       {dateRow}
-                      {timeRows}
+                      {timeRow}
                     </tbody>
                   </table>
                 </div>

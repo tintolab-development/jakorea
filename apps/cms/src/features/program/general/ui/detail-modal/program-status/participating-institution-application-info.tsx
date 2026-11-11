@@ -13,6 +13,7 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import {
   resolveParticipatingInstitutionScheduleRowLabel,
+  sumKnownParticipatingSessionCurriculumCount,
   withParticipatingProgressCurriculumShape,
 } from '@/features/program/general/lib/participating-school-session-display'
 import { generalEducationScheduleShapeFromBridge } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-session-format'
@@ -95,8 +96,9 @@ function formatCompanySchoolDateWithDay(session: ParticipatingSchoolSession): st
 function formatCompanySchoolClassTime(session: ParticipatingSchoolSession): string {
   const [startRaw, endRaw] = session.timeRange.split('~')
   const timePart = `${padScheduleTimePart(startRaw)} ~ ${padScheduleTimePart(endRaw ?? startRaw)}`
-  const classLabel = session.classNum?.trim() || `${session.round}교시`
-  return `${classLabel} (${timePart})`
+  // round는 회차 번호(sessionNo)라 교시가 아니다. 교시를 모르면 지어내지 않고 시각만 표시한다.
+  const classLabel = session.classNum?.trim()
+  return classLabel ? `${classLabel} (${timePart})` : timePart
 }
 
 function groupCompanySchoolSessions(
@@ -127,11 +129,13 @@ function CompanySchoolProgressScheduleFields({
         const statusClass = isCompleted
           ? 'participating-institution-application-info__session-status--completed'
           : 'participating-institution-application-info__session-status--pending'
+        // 일정 건수는 차시 수가 아니다 — 신청·연결 차시 수를 알 때만 「N차시」
+        const sessionCount = sumKnownParticipatingSessionCurriculumCount(group)
         const scheduleLabel = (
           <ProgramDetailTdSegmentWrap>
             {withProgramDetailTdDivider([
               formatCompanySchoolDateWithDay(first),
-              `${group.length}차시`,
+              ...(sessionCount != null ? [`${sessionCount}차시`] : []),
             ])}
           </ProgramDetailTdSegmentWrap>
         )

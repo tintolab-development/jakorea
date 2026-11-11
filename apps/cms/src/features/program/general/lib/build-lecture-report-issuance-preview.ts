@@ -14,7 +14,10 @@ import {
 } from '@/features/template/model/writing-form-draft.schema'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 import type { Program } from '@/types/domain'
-import { formatEducationScheduleLabelTokens } from '@/shared/lib/education-schedule-name'
+import {
+  isEducationSchedulePreEducation,
+  positiveEducationNumber,
+} from '@/shared/lib/education-schedule-name'
 import { formatAsiaSeoulYymmdd } from '@/features/settlement-management/api/account-payments/settlement-form-download'
 
 export const LECTURE_REPORT_DOCUMENT_TITLE = '강의보고서'
@@ -113,10 +116,8 @@ function parseEducationScheduleLabel(label: string): {
 } {
   const raw = label.trim()
   const pipeParts = raw.split(/\s*[|·]\s*/u).map(part => part.trim()).filter(Boolean)
-  const sessionPart =
-    pipeParts.find(part => /\d+\s*회차/.test(part)) ??
-    pipeParts.find(part => /\d+\s*차시/.test(part)) ??
-    ''
+  // 「진행 차시」 칸 — 차시 조각만 읽는다. 회차(`N회차`)는 차시가 아니므로 넣지 않는다.
+  const sessionPart = pipeParts.find(part => /^\d+\s*차시$/u.test(part)) ?? ''
   const sessionIndex = sessionPart.replace(/\s+/g, '')
   const rangePart = pipeParts[0] ?? raw
   const dateOnly = rangePart.replace(/\d{1,2}:\d{2}.*$/, '').trim()
@@ -178,12 +179,15 @@ function fillProgramProgressParagraph(
   const lectureDate = ctx.row.lectureDate?.trim()
     ? toIsoDateFromLabel(ctx.row.lectureDate) || ctx.row.lectureDate
     : ''
-  const sessionFromNo = formatEducationScheduleLabelTokens({
-    sessionNo: ctx.row.sessionNo,
-    curriculumSessionCount: ctx.row.curriculumSessionCount,
+  // 「진행 차시」 = 그 일정에 연결된 커리큘럼 차시 수(`N차시`). 회차 번호(sessionNo)·사전교육은 넣지 않는다.
+  const isPreEducation = isEducationSchedulePreEducation({
     scheduleRole: ctx.row.scheduleRole,
     educationSlotKey: ctx.row.educationSlotKey,
-  }).join(' · ')
+  })
+  const curriculumSessionCount = isPreEducation
+    ? null
+    : positiveEducationNumber(ctx.row.curriculumSessionCount)
+  const sessionFromCount = curriculumSessionCount != null ? `${curriculumSessionCount}차시` : ''
   return {
     ...p,
     programName: pickNonEmpty(p.programName, resolveProgramTitle(ctx.program)),
@@ -195,7 +199,7 @@ function fillProgramProgressParagraph(
     institutionLocation: ctx.hideInstitutionFields ? '' : pickNonEmpty(p.institutionLocation),
     educationDate: pickNonEmpty(p.educationDate, lectureDate, parsedDate),
     sessionTime: pickNonEmpty(p.sessionTime, ctx.row.timeLabel, timeLabel),
-    sessionIndex: pickNonEmpty(p.sessionIndex, sessionFromNo, sessionIndex),
+    sessionIndex: pickNonEmpty(p.sessionIndex, sessionFromCount, isPreEducation ? '' : sessionIndex),
     educationTarget: pickNonEmpty(
       p.educationTarget,
       ctx.row.educationGrade === '-' ? '' : ctx.row.educationGrade

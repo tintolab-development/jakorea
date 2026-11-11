@@ -166,7 +166,10 @@ function scheduleGroupsForWaitingInstructor(
     else groups.set(scheduleKey, [session])
   }
 
-  const lines = buildParticipatingSchoolPreferredScheduleLines(sessions)
+  // 1사1교 전용 경로 — 일정 건수를 차시 수로 쓰지 않는다
+  const lines = buildParticipatingSchoolPreferredScheduleLines(sessions, {
+    sessionCountSource: 'known-only',
+  })
   return Array.from(groups.entries()).map(([scheduleKey, group], index) => ({
     scheduleKey,
     sessions: group,

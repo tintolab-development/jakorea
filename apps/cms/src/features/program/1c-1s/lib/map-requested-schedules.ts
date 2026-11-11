@@ -83,16 +83,20 @@ function mapClockTimeRequestedScheduleToSession(
    * 일반 기관(startPeriod=null)은 "총 차시 수 + 시간 1구간"으로 저장된다.
    * 차시 수는 sessionCount, 시각은 sessionTimes 처음 시작 ~ 마지막 종료.
    * sessionTimes[].period는 저장 순번이라 교시로 읽지 않는다.
-   * 1사1교·Gemini(startPeriod 있음)는 기존 표기를 유지한다.
+   * 1사1교(startPeriod 있음)는 차시마다 sessionTimes 1건이다. 신청 차시 수(sessionCount, 없으면
+   * sessionTimes 건수)를 쓰고 시각은 1차시 시작 ~ 마지막 차시 종료로 표시한다(1차시 고정 금지).
    */
   const generalInstitutionRow = schedule.startPeriod == null
-  const lastTime = generalInstitutionRow ? sessionTimes[sessionTimes.length - 1] : firstTime
+  const lastTime = sessionTimes[sessionTimes.length - 1] ?? firstTime
   const start = toClockLabel(firstTime?.startTime)
   const end = toClockLabel(lastTime?.endTime)
-  const sessionCount =
-    generalInstitutionRow && schedule.sessionCount != null && schedule.sessionCount > 0
+  const requestedSessionCount =
+    schedule.sessionCount != null && schedule.sessionCount > 0
       ? schedule.sessionCount
-      : 1
+      : !generalInstitutionRow && sessionTimes.length > 0
+        ? sessionTimes.length
+        : null
+  const sessionCount = requestedSessionCount ?? 1
   const sessionCountLabel = `${sessionCount}차시`
   const timeRange =
     start && end ? `${start} ~ ${end}` : start ?? (periodLabel ? '' : '종일')
@@ -113,7 +117,13 @@ function mapClockTimeRequestedScheduleToSession(
       : undefined,
     scheduleUnresolved: scheduleUnresolved || undefined,
     ...(periodLabel ? { scheduleLabel: periodLabel } : {}),
+    preferenceOrder: positivePreferenceOrder(schedule.preferenceOrder),
+    requestedSessionCount,
   }
+}
+
+function positivePreferenceOrder(value: number | null | undefined): number | null {
+  return typeof value === 'number' && Number.isInteger(value) && value > 0 ? value : null
 }
 
 /**
@@ -166,6 +176,8 @@ export function mapRequestedSchedulesToSessions(
         ? (schedule.resolvedScheduleId ?? null)
         : undefined,
       scheduleUnresolved: scheduleUnresolved || undefined,
+      preferenceOrder: positivePreferenceOrder(schedule.preferenceOrder),
+      requestedSessionCount: sessionCount,
     }
   })
 

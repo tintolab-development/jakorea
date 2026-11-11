@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
+import { fetchAdminProgramSchedulesRemote } from '@/features/program/general/api/program-schedules-api-client'
+import { formatEducationScheduleSessionWithTime } from '@/features/program/general/lib/school-detail-attendance-display'
+import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
@@ -50,6 +54,7 @@ import { mapApplicantDataToCalendarEvents } from './applicant-calendar-events'
 import { ApplicantsDetailContents, type ApplicantType } from './applicants-detail-contents'
 import { GeneralParticipantApplicantDetailView } from '@/features/program/general/ui/detail-modal/applications/participant-screening/participant-applicant-detail-view'
 import { IndividualApproveScopeModal } from '@/features/program/general/ui/detail-modal/applications/individual-approve-scope-modal'
+import { IndividualInstructorApplicationsCalendar } from '@/features/program/general/ui/detail-modal/applications/individual-instructor-applications-calendar'
 import { IndividualApplicationBulkApproveModal } from '@/features/program/general/ui/detail-modal/applications/individual-application-bulk-approve-modal'
 import {
   INDIVIDUAL_APPROVAL_NO_SLOTS_MESSAGE,
@@ -538,13 +543,73 @@ export function ApplicantList({
     instructorColumnPreset === 'general-detail' &&
     detailVariant === 'general' &&
     isGeneralOrganizationProgram(program)
-  const instructorCopyVariant = isGeneralOrganizationInstructorList
+  /**
+   * 일반 프로그램(개인형) 강사 신청 — 시안 14696:178580 「그 외 강사 신청 목록 화면 기관과 동일」.
+   * 반려 취소·승인 취소·반려 취소 완료 팝업 문구(귀책 미노출)와 단건 반려·승인 알림 3옵션을 기관형과 맞춘다.
+   * 1사1교는 기본 유지.
+   */
+  const isGeneralIndividualInstructorList =
+    menu === 'instructors' &&
+    instructorColumnPreset === 'general-detail' &&
+    detailVariant === 'general' &&
+    program != null &&
+    isGeneralIndividualProgram(program)
+  const usesGeneralOrganizationInstructorPopupCopy =
+    isGeneralOrganizationInstructorList || isGeneralIndividualInstructorList
+  const instructorCopyVariant = usesGeneralOrganizationInstructorPopupCopy
     ? 'general-organization'
     : 'default'
-  /** 강사 단건 승인·반려·승인 취소·반려 취소 `Notification` — 기관형만 발표일(ON_ANNOUNCEMENT) 허용 */
-  const instructorDecisionNotifyCapability = isGeneralOrganizationInstructorList
+  /**
+   * 강사 단건 승인·반려·승인 취소·반려 취소 `Notification` — 일반 기관형·개인형은 발표일(ON_ANNOUNCEMENT) 허용
+   * (시안 02-1 반려·05-2 강사비 책정 및 승인 「즉시 / 발표일에 맞춰서 / 직접 설정」).
+   * OpenAPI `Notification.timing`(approve·reject·cancel-approval·cancel-rejection)은 IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT.
+   * 1사1교는 기존 scheduledOnly 유지.
+   */
+  const instructorDecisionNotifyCapability = usesGeneralOrganizationInstructorPopupCopy
     ? NOTIFY_TIMING_CAPABILITY.full
     : NOTIFY_TIMING_CAPABILITY.scheduledOnly
+
+  /**
+   * 일반 기관형 강사 신청 캘린더 — 팝오버·우측 카드 일정 라벨을 교육 구조별 SSOT로 맞춘다
+   * (회차 ≠ 차시. `resolveEducationScheduleSessionLeadLabel`). 기관 신청 목록 sessions에는
+   * 사전교육·연결 차시 건수가 없어 프로그램 일정(scheduleId)으로 보강한다. 1사1교는 기존 표기.
+   */
+  const organizationInstructorCalendarSchedulesQuery = useQuery({
+    queryKey: generalProgramQueryKeys.schedules(programId ?? ''),
+    queryFn: () => fetchAdminProgramSchedulesRemote(programId ?? ''),
+    enabled:
+      isGeneralOrganizationInstructorList &&
+      viewMode === 'calendar' &&
+      instructorRemoteEnabled &&
+      Boolean(programId),
+    // 다른 일반 상세 화면(서류 합격자·면접)과 같은 프로그램 일정 캐시 정책
+    staleTime: 60_000,
+  })
+  const organizationInstructorCalendarSchedules = organizationInstructorCalendarSchedulesQuery.data
+  const formatOrganizationInstructorCalendarSessionLabel = useMemo(() => {
+    if (!isGeneralOrganizationInstructorList || !program) return undefined
+    const schedulesById = new Map(
+      (organizationInstructorCalendarSchedules ?? [])
+        .filter(schedule => typeof schedule.id === 'number')
+        .map(schedule => [schedule.id as number, schedule])
+    )
+    return (sessions: ParticipatingSchoolSession[]): string | null => {
+      const session = sessions[0]
+      if (!session) return null
+      const schedule =
+        session.resolvedScheduleId != null ? schedulesById.get(session.resolvedScheduleId) : undefined
+      return formatEducationScheduleSessionWithTime(
+        {
+          ...session,
+          curriculumSessionCount:
+            session.curriculumSessionCount ?? schedule?.curriculumSessionCount ?? null,
+          scheduleRole: session.scheduleRole ?? schedule?.scheduleRole,
+          educationSlotKey: session.educationSlotKey ?? schedule?.educationSlotKey,
+        },
+        program
+      )
+    }
+  }, [isGeneralOrganizationInstructorList, organizationInstructorCalendarSchedules, program])
 
   const useGeneralParticipantActionModal =
     menu === 'individual-applications' && detailVariant === 'general'
@@ -2026,7 +2091,7 @@ export function ApplicantList({
         variant="single"
         subjectName={instructorRejectTarget?.name ?? ''}
         notifyTimingCapability={instructorDecisionNotifyCapability}
-        notifyTimingOptions={isGeneralOrganizationInstructorList ? 'three' : 'two'}
+        notifyTimingOptions={usesGeneralOrganizationInstructorPopupCopy ? 'three' : 'two'}
         onCancel={() => setInstructorRejectTarget(null)}
         onConfirm={payload => {
           if (!instructorRejectTarget) return
@@ -2093,7 +2158,7 @@ export function ApplicantList({
         instructor={instructorCancelApprovalInstructor}
         copyVariant={instructorCopyVariant}
         notifyTimingCapability={
-          isGeneralOrganizationInstructorList ? instructorDecisionNotifyCapability : undefined
+          usesGeneralOrganizationInstructorPopupCopy ? instructorDecisionNotifyCapability : undefined
         }
         onCancel={() => setInstructorCancelApprovalTarget(null)}
         onConfirm={payload => {
@@ -2640,9 +2705,25 @@ export function ApplicantList({
               </div>
             ) : (
               <div className="applicant-details__calendar-wrap">
+                {isGeneralIndividualInstructorList && program ? (
+                  // 개인형 강사 신청 캘린더(시안 9899:148010) — 기관 없이 강사 × 신청 일정
+                  <IndividualInstructorApplicationsCalendar
+                    program={program}
+                    instructors={tableData as ApplicantInstructorRow[]}
+                    remoteEnabled={instructorRemoteEnabled}
+                    loading={applicationsLoading}
+                    selectedRowKeys={selectedRowKeys}
+                    onSelectionChange={setSelectedRowKeys}
+                    onInstructorClick={instructor => setSelectedItem(instructor)}
+                    calendarGranularity={applicantsCalendarGranularity}
+                    onCalendarGranularityChange={setApplicantsCalendarGranularity}
+                  />
+                ) : (
                 <ApplicantCalendarView
                   useSplitCardPageScroll={detailVariant === 'general'}
                   hideInstitutionPreviewApprovalBadge={isGeneralOrganizationInstitutionList}
+                  formatInstructorSessionLabel={formatOrganizationInstructorCalendarSessionLabel}
+                  program={program}
                   events={applicantCalendarEvents}
                   scheduleListEmptyDescription={
                     instructorCalendarScheduleEmptyHint ?? institutionCalendarScheduleEmptyHint
@@ -2667,6 +2748,7 @@ export function ApplicantList({
                           : 'default'
                   }
                 />
+                )}
               </div>
             )}
             <div

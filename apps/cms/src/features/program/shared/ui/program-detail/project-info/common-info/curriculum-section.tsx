@@ -69,19 +69,17 @@ function parseCurriculumContent(content: string | undefined): {
 function resolveCompanySchoolCurriculumRows(program: Program) {
   const commonInfo = resolveGeneralProgramCommonInfo(program)
   const sessions = commonInfo.curriculumSessions ?? []
-  const rows = sessions.slice(0, 2).map((session, index) => ({
-    unitName: session.title?.trim() || `${index + 1}차시`,
-    content: session.description?.trim() || '-',
+  /**
+   * 1사1교 차시 행은 공통정보 커리큘럼 차시(`curriculumSessions`)만 쓴다.
+   * 회차(`program.rounds`) 커리큘럼으로 채우거나 「N차시」 라벨을 단원명에 넣지 않는다. 빈 값은 화면에서 `-`.
+   */
+  const rows = sessions.slice(0, 2).map(session => ({
+    unitName: session.title?.trim() ?? '',
+    content: session.description?.trim() ?? '',
   }))
 
   while (rows.length < 2) {
-    const round = program.rounds?.[rows.length]
-    const parsed = parseCurriculumContent(round?.curriculum)
-    rows.push({
-      unitName:
-        parsed.duration && parsed.duration !== '1시간' ? parsed.duration : `${rows.length + 1}차시`,
-      content: parsed.description || round?.curriculum?.trim() || '-',
-    })
+    rows.push({ unitName: '', content: '' })
   }
 
   return rows
@@ -215,7 +213,7 @@ export function CurriculumSection({
             <DetailInfoForm.Row key={`company-school-curriculum-${index}`} type="double">
               <DetailInfoForm.Field
                 label={`${index + 1}차시 단원명`}
-                view={row.unitName}
+                view={row.unitName || '-'}
                 edit={
                   isFormEdit && form ? (
                     <Controller
@@ -236,7 +234,7 @@ export function CurriculumSection({
               />
               <DetailInfoForm.Field
                 label={`${index + 1}차시 교육 내용`}
-                view={row.content}
+                view={row.content || '-'}
                 edit={
                   isFormEdit && form ? (
                     <Controller

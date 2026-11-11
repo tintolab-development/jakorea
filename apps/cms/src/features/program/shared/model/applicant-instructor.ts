@@ -178,6 +178,17 @@ export interface ApplicantInstructorRow {
     distanceKm?: number | null
     longDistance?: boolean | null
   }>
+  /**
+   * Admin API 목록 `availableScheduleIds` — 개인형 강사가 신청한(가능) program_schedule id.
+   * 개인형 강사 신청 캘린더(사람 단위)가 프로그램 일정과 매칭해 그린다.
+   */
+  availableScheduleIds?: number[]
+  /** Admin API 목록 `scheduleDistances` — 개인형 일정별 편도 거리(GENERAL_INDIVIDUAL 외 []) */
+  scheduleDistances?: Array<{
+    scheduleId: number
+    distanceKm?: number | null
+    longDistance?: boolean | null
+  }>
   /** Admin API — 프로그램 내 출강 횟수 */
   programDispatchCount?: number
   /** Admin API — 프로그램 내 장거리 출강 횟수 (표기 기준) */

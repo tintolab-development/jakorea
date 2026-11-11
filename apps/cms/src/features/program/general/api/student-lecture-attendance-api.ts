@@ -23,6 +23,8 @@ import {
   fetchAttendancesByScheduleIdsRemote,
   fetchProgramSchedulesViaDashboardRemote,
 } from '@/features/program/general/api/program-progress-api-client'
+import { resolveGeneralScheduleUnitLabel } from '@/features/program/general/lib/schedule-unit-label'
+import type { Program } from '@/types/domain'
 
 function mapApiStatusToLecture(status?: string | null): LectureAttendanceStatusKey {
   const normalized = (status ?? '').trim().toUpperCase()
@@ -156,14 +158,35 @@ function isLectureRecordingOpen(schedule?: DashboardProgramScheduleResponse): bo
   )
 }
 
+/** 일반 프로그램 — 교육 구조별 행 라벨(일정형=세부 일정명, 단일 회차=N차시). 그 외 유형·모르면 undefined */
+function resolveLectureSessionLabel(
+  row: LectureRoundRow,
+  program: Program | null | undefined
+): string | undefined {
+  if (row.preEducation || !row.schedule) return undefined
+  const label = resolveGeneralScheduleUnitLabel(
+    {
+      sessionNo: row.schedule.sessionNo,
+      scheduleName: row.schedule.scheduleName,
+      scheduleRole: row.schedule.scheduleRole,
+      educationSlotKey: row.schedule.educationSlotKey,
+    },
+    program
+  )
+  return label ?? undefined
+}
+
 function toLectureSession(
   row: LectureRoundRow,
   items: readonly AttendanceItemResponse[] | undefined,
-  participantId: number
+  participantId: number,
+  program?: Program | null
 ): LectureAttendanceSession {
   const mine = items?.find(item => Number(item.participantId) === participantId)
+  const sessionLabel = resolveLectureSessionLabel(row, program)
   return {
     roundNumber: row.roundNumber,
+    ...(sessionLabel ? { sessionLabel } : {}),
     scheduleId: row.scheduleId,
     status: mine ? mapApiStatusToLecture(mine.status) : 'not_held',
     ...(isLectureRecordingOpen(row.schedule) ? { recordingOpen: true } : {}),
@@ -176,6 +199,8 @@ export async function fetchStudentLectureAttendanceByParticipantRemote(input: {
   participantId: number
   studentName: string
   organizationApplicationId?: string | null
+  /** 행 라벨 교육 구조 분기용. 없으면 「N회차」 */
+  program?: Program | null
 }): Promise<LectureAttendanceDetail> {
   const organizationApplicationId = input.organizationApplicationId?.trim() ?? ''
   const schedules = await fetchProgramSchedulesViaDashboardRemote(input.programId)
@@ -212,7 +237,8 @@ export async function fetchStudentLectureAttendanceByParticipantRemote(input: {
     toLectureSession(
       row,
       attendancesByScheduleId[String(row.scheduleId)],
-      input.participantId
+      input.participantId,
+      input.program
     )
   )
 

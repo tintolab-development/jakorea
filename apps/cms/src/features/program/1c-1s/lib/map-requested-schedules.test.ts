@@ -177,4 +177,26 @@ describe('mapRequestedSchedulesToSessions', () => {
     expect(session?.timeRange).toBe('09:00 ~ 10:30')
     expect(session?.duration).toBe('2차시')
   })
+
+  it('1사1교 차시별 sessionTimes는 신청 차시 수와 1차시 시작 ~ 마지막 차시 종료로 표시한다', () => {
+    const sessions = mapRequestedSchedulesToSessions([
+      {
+        id: 2,
+        preferenceOrder: 2,
+        requestedDate: '2026-04-27',
+        startPeriod: 1,
+        sessionCount: 2,
+        sessionTimes: [
+          { sessionOrder: 1, period: 1, startTime: '09:00', endTime: '09:40' },
+          { sessionOrder: 2, period: 2, startTime: '09:50', endTime: '10:30' },
+        ],
+      },
+    ])
+    const session = sessions?.[0]
+    expect(session?.duration).toBe('2차시')
+    expect(session?.classNum).toBe('2차시')
+    expect(session?.timeRange).toBe('09:00 ~ 10:30')
+    expect(session?.preferenceOrder).toBe(2)
+    expect(session?.requestedSessionCount).toBe(2)
+  })
 })

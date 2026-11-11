@@ -50,14 +50,13 @@ import {
   createInstructorAssignmentRemote,
   putRepresentativeInstructorRemote,
 } from '@/features/program/general/api/instructor-assignments-api-client'
-import { toInstructorAssignmentCancelRequest } from '@/features/program/general/lib/instructor-cancel-fault-party'
+import { toInstitutionDetailAssignmentCancelRequest } from '@/features/program/general/lib/instructor-cancel-fault-party'
 import { resolveAssignableSchedulePayloadFromSession } from '@/features/program/general/lib/organization-instructor-assignable-schedule'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import {
   GENERAL_INSTRUCTOR_ASSIGNMENT_REQUIRES_RECRUITMENT_MESSAGE,
   programHasActiveInstructorRecruitment,
 } from '@/features/program/general/lib/general-instructor-recruitment-required'
-import { SchoolDetailUnassignCompleteModal } from './school-detail-unassign-complete-modal'
 import { SchoolDetailUnassignConfirmModal } from './school-detail-unassign-confirm-modal'
 import { InstitutionSelectAssignConfirmModal } from './institution-select-assign-confirm-modal'
 import { INSTITUTION_SELECT_ASSIGN_DEFAULT_NOTIFY_PAYLOAD } from '@/features/program/general/lib/institution-select-assign'
@@ -70,6 +69,23 @@ import { NO_SELECTION_ALERT } from '@/shared/constants/no-selection-alert'
 
 /** 추가 배정 — Figma CMS 9760:8214 ‘추가 배정 안내’ (D: 개인형 참여 강사) */
 const ADD_ASSIGN_MODAL_TITLE = '추가 배정 안내'
+
+/**
+ * 배정 알림 발송 여부 — 배정 목록 API(`instructor-assignments`)에 필드가 없어 판단 불가.
+ * 기관형 참여 강사 상세와 같이 발송 후 시안(03-2: 사유 + 알림)으로 연다.
+ */
+const INDIVIDUAL_INSTRUCTOR_UNASSIGN_NOTIFICATION_SENT: boolean | undefined = undefined
+
+/** 시안 03-1·03-2 본문 대상 `[2026.01.09(금) 09:20 ~ 11:20]` — 회차·차시 조각은 뺀다 */
+function formatUnassignScheduleSubjectLabel(scheduleLabel: string): string {
+  const parts = scheduleLabel
+    .split('|')
+    .map(part => part.trim())
+    .filter(Boolean)
+  const withoutRound = parts.filter(part => !/(회차|차시)$/.test(part))
+  const label = (withoutRound.length > 0 ? withoutRound : parts).join(' ')
+  return label ? formatCmsScheduleDisplayLabel(label) : scheduleLabel
+}
 
 const ASSIGNED_EMPTY_TEXT = '배정된 일정이 없습니다.'
 const WAITING_EMPTY_TEXT = '배정 대기 중인 일정이 없습니다.'
@@ -102,11 +118,6 @@ export function ParticipatingIndividualInstructorAssignmentSection({
   const [selectedWaitingKeys, setSelectedWaitingKeys] = useState<Key[]>([])
   const [openRoleDropdownId, setOpenRoleDropdownId] = useState<string | null>(null)
   const [unassignConfirmOpen, setUnassignConfirmOpen] = useState(false)
-  const [unassignCompleteModal, setUnassignCompleteModal] = useState<{
-    instructorNames: string[]
-    targetNames: string[]
-    reason: string
-  } | null>(null)
   const [selectAssignConfirmOpen, setSelectAssignConfirmOpen] = useState(false)
   const [addAssignModalOpen, setAddAssignModalOpen] = useState(false)
   const [addAssignNotifyOpen, setAddAssignNotifyOpen] = useState(false)
@@ -475,15 +486,12 @@ export function ParticipatingIndividualInstructorAssignmentSection({
   const handleUnassignConfirm = useCallback(
     async (payload: PermissionModalPayload) => {
       if (selectedAssignedKeys.length === 0) return
-      if (payload.faultParty !== 'USER' && payload.faultParty !== 'ADMIN') return
       const removedRows = assignedSchedules.filter(r => selectedAssignedKeys.includes(r.id))
-      const removedLabels = removedRows.map(r => r.scheduleLabel)
-      const cancelBody = toInstructorAssignmentCancelRequest({
-        reason: payload.reason,
-        notifyTiming: payload.notifyTiming,
-        manualNotifyAt: payload.manualNotifyAt,
-        faultParty: payload.faultParty,
-      })
+      // 시안 03-1·03-2 — 취소 귀책 없음(API 선택값 — 생략 시 서버 ADMIN). 발송 여부 미제공 → 발송 후 본문
+      const cancelBody = toInstitutionDetailAssignmentCancelRequest(
+        payload,
+        INDIVIDUAL_INSTRUCTOR_UNASSIGN_NOTIFICATION_SENT
+      )
 
       if (!assignment.remoteEnabled) {
         notifyProgramApiUnavailable(
@@ -501,11 +509,8 @@ export function ParticipatingIndividualInstructorAssignmentSection({
         await assignment.invalidate()
         setUnassignConfirmOpen(false)
         setSelectedAssignedKeys([])
-        setUnassignCompleteModal({
-          instructorNames: [instructor.instructorName],
-          targetNames: removedLabels,
-          reason: payload.reason,
-        })
+        // 기관형 참여 강사 상세와 같은 「취소 완료」 공통 알림
+        showAlert({ title: '취소 완료', content: '취소되었습니다.' })
       } catch (error) {
         const message =
           error instanceof Error && error.message.trim()
@@ -514,7 +519,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
         showAlert({ title: '배정 취소 실패', content: message })
       }
     },
-    [selectedAssignedKeys, assignedSchedules, assignment, instructor.instructorName, showAlert]
+    [selectedAssignedKeys, assignedSchedules, assignment, showAlert]
   )
 
   const handleSelectAssignConfirm = useCallback(
@@ -590,7 +595,9 @@ export function ParticipatingIndividualInstructorAssignmentSection({
 
   const unassignScheduleLabels = useMemo(
     () =>
-      assignedSchedules.filter(r => selectedAssignedKeys.includes(r.id)).map(r => r.scheduleLabel),
+      assignedSchedules
+        .filter(r => selectedAssignedKeys.includes(r.id))
+        .map(r => formatUnassignScheduleSubjectLabel(r.scheduleLabel)),
     [assignedSchedules, selectedAssignedKeys]
   )
 
@@ -724,13 +731,8 @@ export function ParticipatingIndividualInstructorAssignmentSection({
         instructorNames={[instructor.instructorName]}
         targetNames={unassignScheduleLabels}
         onConfirm={handleUnassignConfirm}
-      />
-      <SchoolDetailUnassignCompleteModal
-        open={unassignCompleteModal != null}
-        onClose={() => setUnassignCompleteModal(null)}
-        instructorNames={unassignCompleteModal?.instructorNames ?? []}
-        targetNames={unassignCompleteModal?.targetNames ?? []}
-        reason={unassignCompleteModal?.reason ?? ''}
+        variant="individual-schedule"
+        notificationSent={INDIVIDUAL_INSTRUCTOR_UNASSIGN_NOTIFICATION_SENT}
       />
 
       {/* 선택 배정 안내 — 공통 모달(알림은 기관형 선택 배정과 같은 기본값) */}

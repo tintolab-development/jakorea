@@ -5,7 +5,7 @@
  * - 우측: 선택일 일정 목록(이름 · 메타 · 시간 + 체크박스). 기관 검색/필터 없음
  */
 
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
@@ -31,8 +31,11 @@ import {
   syncViewAnchorOnDateSelect,
 } from '@/shared/components/calendar/lib/calendar-navigation'
 import { calendarListItemBackground } from '@/shared/components/calendar/lib/calendar-list-item-background'
+import { CalendarMonthEventTitleWithDivider } from '@/shared/components/calendar/ui/calendar-month-event-title'
+import type { RenderCalendarMonthEventContent } from '@/shared/components/calendar/model/calendar-month-cell-row'
 import { EmptyState } from '@/shared/ui'
 import { ParticipatingParticipantCalendarListItem } from './participating-participant-calendar-list-item'
+import type { Program } from '@/types/domain'
 import '@/shared/components/calendar/styles/calendar.css'
 import './participating-institutions-calendar-view.css'
 
@@ -46,21 +49,42 @@ export type IndividualPersonCalendarAccessors<T> = {
   getSessions: (person: T) => readonly ParticipatingSchoolSession[] | null | undefined
   /** 이름 아래 메타 라벨 (디바이더로 구분) */
   getMetaLabels: (person: T) => readonly string[]
+  /**
+   * 월간 셀 「이름 | X」 오른쪽 조각. 생략하면 이름만(기존 참여자·참여 봉사자 동작).
+   * 예: 개인형 강사 신청 「김도영 | 대구광역시」, 참여 강사 「김제이 | 2차시 (09:20 ~ 11:20)」
+   */
+  getCellRightLabel?: (event: IndividualPersonCalendarEvent<T>) => string | undefined
+  /** 팝오버 이름 아래 줄. 생략하면 `getMetaLabels` + 차시(시간) */
+  getPopoverMetaLabels?: (event: IndividualPersonCalendarEvent<T>) => readonly string[]
 }
+
+/** 우측 목록 카드 커스텀 렌더 — 생략하면 참여자 카드(이름 · 메타 · 시간) */
+export type IndividualPersonCalendarListItemRenderer<T> = (args: {
+  event: IndividualPersonCalendarEvent<T>
+  checked: boolean
+  onToggle: (personId: string, checked: boolean) => void
+}) => ReactNode
 
 function IndividualPersonCalendarPopoverContent<T>({
   events,
   getMetaLabels,
+  getPopoverMetaLabels,
+  program,
 }: {
   events: IndividualPersonCalendarEvent<T>[]
   getMetaLabels: (person: T) => readonly string[]
+  getPopoverMetaLabels?: (event: IndividualPersonCalendarEvent<T>) => readonly string[]
+  program?: Program | null
 }) {
   return (
     <div className="calendar-preview-popover">
       {events.map(ev => {
         const { person, personName, session } = ev.originalItem
-        const sessionLine = formatInstitutionCalendarSessionTimeDisplay(session)
-        const metaLabels = getMetaLabels(person)
+        // 커스텀 줄이 있으면 그 줄만 쓴다(차시를 자동으로 덧붙이지 않음)
+        const sessionLine = getPopoverMetaLabels
+          ? '-'
+          : formatInstitutionCalendarSessionTimeDisplay(session, undefined, program)
+        const metaLabels = getPopoverMetaLabels ? getPopoverMetaLabels(ev) : getMetaLabels(person)
 
         return (
           <div key={ev.id} className="calendar-preview-popover__entry">
@@ -99,6 +123,9 @@ function IndividualPersonCalendarRight<T>({
   selectedIds,
   onSelectionChange,
   onPersonClick,
+  renderListItem,
+  emptyDescription,
+  program,
 }: {
   events: readonly IndividualPersonCalendarEvent<T>[]
   getColorForName: (name: string) => ScheduleColorPair
@@ -106,6 +133,9 @@ function IndividualPersonCalendarRight<T>({
   selectedIds: string[]
   onSelectionChange: (ids: string[]) => void
   onPersonClick: (person: T) => void
+  renderListItem?: IndividualPersonCalendarListItemRenderer<T>
+  emptyDescription?: string
+  program?: Program | null
 }) {
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds])
 
@@ -140,7 +170,7 @@ function IndividualPersonCalendarRight<T>({
       }
     >
       {isEmpty ? (
-        <EmptyState description="해당 날짜에 일정이 없습니다" />
+        <EmptyState description={emptyDescription ?? '해당 날짜에 일정이 없습니다'} />
       ) : (
         sortedEvents.map(event => {
           const { person, personId, personName, session } = event.originalItem
@@ -169,17 +199,25 @@ function IndividualPersonCalendarRight<T>({
               }}
             >
               <div className="calendar-list-item__column">
-                <ParticipatingParticipantCalendarListItem
-                  row={{
-                    id: event.id,
-                    participantId: personId,
-                    participantName: personName,
-                    metaLabels: getMetaLabels(person),
-                    sessionLabel: formatInstitutionCalendarSessionTimeDisplay(session),
-                  }}
-                  checked={checked}
-                  onToggle={handleToggle}
-                />
+                {renderListItem ? (
+                  renderListItem({ event, checked, onToggle: handleToggle })
+                ) : (
+                  <ParticipatingParticipantCalendarListItem
+                    row={{
+                      id: event.id,
+                      participantId: personId,
+                      participantName: personName,
+                      metaLabels: getMetaLabels(person),
+                      sessionLabel: formatInstitutionCalendarSessionTimeDisplay(
+                        session,
+                        undefined,
+                        program
+                      ),
+                    }}
+                    checked={checked}
+                    onToggle={handleToggle}
+                  />
+                )}
               </div>
             </div>
           )
@@ -197,6 +235,17 @@ export interface IndividualPersonCalendarViewProps<T> {
   onPersonClick: (person: T) => void
   calendarGranularity?: 'month' | 'week'
   onCalendarGranularityChange?: (mode: 'month' | 'week') => void
+  /** 우측 카드 커스텀 렌더(개인형 강사 신청·참여 강사). 생략 시 참여자 카드 */
+  renderListItem?: IndividualPersonCalendarListItemRenderer<T>
+  /** 캘린더 전체 이벤트가 0건일 때 우측 빈 안내 문구. 생략 시 「해당 날짜에 일정이 없습니다」 */
+  emptyDescription?: string
+  /** 일정·목록 조회 중 — `CalendarSplitCardLayout` 로딩 */
+  loading?: boolean
+  /**
+   * 기본 팝오버·참여자 카드 일정 라벨 — 일반 프로그램이면 교육 구조별
+   * (일정형=세부 일정명, 단일 회차=N차시, 복수 회차=N회차). 생략 시 시간(·신청 차시 수)만
+   */
+  program?: Program | null
 }
 
 export function IndividualPersonCalendarView<T>({
@@ -207,6 +256,10 @@ export function IndividualPersonCalendarView<T>({
   onPersonClick,
   calendarGranularity: calendarGranularityProp,
   onCalendarGranularityChange,
+  renderListItem,
+  emptyDescription,
+  loading,
+  program,
 }: IndividualPersonCalendarViewProps<T>) {
   const [fallbackCalendarMode, setFallbackCalendarMode] = useState<'month' | 'week'>('month')
   const calendarControlled =
@@ -223,7 +276,8 @@ export function IndividualPersonCalendarView<T>({
   )
   const didSnapToEventsRef = useRef(false)
 
-  const { getId, getName, getSessions, getMetaLabels } = accessors
+  const { getId, getName, getSessions, getMetaLabels, getCellRightLabel, getPopoverMetaLabels } =
+    accessors
 
   const events = useMemo(
     () => buildIndividualPersonCalendarEvents(people, { getId, getName, getSessions }),
@@ -285,6 +339,22 @@ export function IndividualPersonCalendarView<T>({
     [events, selectedDate]
   )
 
+  /** 월간 셀 「이름 | X」 — `getCellRightLabel`이 있을 때만 커스텀 렌더 */
+  const renderMonthEventContent = useMemo((): RenderCalendarMonthEventContent | undefined => {
+    if (!getCellRightLabel) return undefined
+    return ({ row, colors }) => {
+      const event = row.sourceEvent.original as IndividualPersonCalendarEvent<T> | undefined
+      const left = event?.originalItem.personName ?? String(row.sourceEvent.title ?? '')
+      const right = event ? getCellRightLabel(event)?.trim() : undefined
+      return (
+        <CalendarMonthEventTitleWithDivider
+          parts={right && right !== '-' ? { left, right } : { left }}
+          accentColor={colors.text}
+        />
+      )
+    }
+  }, [getCellRightLabel])
+
   const handleDateSelect = (date: Dayjs) => {
     setSelectedDate(date)
     setCurrentMonth(prev => syncViewAnchorOnDateSelect(calendarMode, date, prev))
@@ -293,6 +363,7 @@ export function IndividualPersonCalendarView<T>({
   return (
     <CalendarSplitCardLayout
       pageScroll
+      loading={loading}
       left={
         <CalendarMain
           className="calendar-split-card-main"
@@ -308,12 +379,15 @@ export function IndividualPersonCalendarView<T>({
           eventsTooltipTrigger="cell"
           formatEventsOverflowText={n => `외 ${n}개의 항목`}
           overrideEventColorMap={overrideEventColorMap}
+          renderMonthEventContent={renderMonthEventContent}
           previewTooltipContent={({ events: dayItems }) => (
             <IndividualPersonCalendarPopoverContent
               events={calendarItemsForEventMode(dayItems).map(
                 item => item.original as IndividualPersonCalendarEvent<T>
               )}
               getMetaLabels={getMetaLabels}
+              getPopoverMetaLabels={getPopoverMetaLabels}
+              program={program}
             />
           )}
         />
@@ -326,6 +400,9 @@ export function IndividualPersonCalendarView<T>({
           selectedIds={selectedRowKeys}
           onSelectionChange={onSelectionChange}
           onPersonClick={onPersonClick}
+          renderListItem={renderListItem}
+          emptyDescription={events.length === 0 ? emptyDescription : undefined}
+          program={program}
         />
       }
     />

@@ -141,7 +141,12 @@ function formatScheduleHeader(
     : program && scheduleDirect
       ? resolveGeneralScheduleSingleDateDetailName(program, schedule)
       : program
-        ? resolveSchoolDetailAttendanceSessionLeadLabel(program, round)
+        ? resolveSchoolDetailAttendanceSessionLeadLabel(program, round, {
+            curriculumSessionCount: (schedule as { curriculumSessionCount?: number | null })
+              .curriculumSessionCount,
+            scheduleRole: schedule.scheduleRole,
+            educationSlotKey: schedule.educationSlotKey,
+          })
         : `${round}회차`
   const built = buildGeneralProgressSessionTableHeader({
     round,
