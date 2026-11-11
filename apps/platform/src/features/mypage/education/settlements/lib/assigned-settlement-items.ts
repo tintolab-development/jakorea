@@ -386,6 +386,7 @@ export function buildAssignedSettlementItems(
       statementStatus,
       paymentStatus,
       correctionStatus: settlement?.correctionStatus,
+      statementReapplyAvailable: settlement?.statementReapplyAvailable === true,
       receiptDeadlineAt: deadlineAt,
       operationEndAt: seoulBusinessEndDeadlineAt(input.operationEndAt) ?? input.operationEndAt,
       canSubmit: submitAllowed,
@@ -463,6 +464,9 @@ export function buildAssignedSettlementItems(
         : settlement?.applicationId != null
           ? { settlementApplicationId: settlement.applicationId }
           : {}),
+      ...(!individual && settlement?.settlementId != null
+        ? { settlementId: settlement.settlementId }
+        : {}),
       ...(individual?.currentRevisionNo != null
         ? { currentRevisionNo: individual.currentRevisionNo }
         : settlement?.revisionNo != null

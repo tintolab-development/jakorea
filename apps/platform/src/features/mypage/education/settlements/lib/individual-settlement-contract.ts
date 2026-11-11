@@ -1,4 +1,5 @@
 import { isAxiosError } from 'axios'
+import { PAYMENT_ITEM_LIMIT_EXCEEDED_FALLBACK_MESSAGE } from './payment-item-limit.ts'
 
 function extractApiErrorCode(data: unknown): string | null {
   if (!data || typeof data !== 'object') return null
@@ -146,6 +147,8 @@ const INELIGIBLE_REASON_MESSAGES: Record<string, string> = {
     '개인 프로그램 신청 정산만 이 화면에서 조회할 수 있습니다. 강사·기관 프로그램은 강사 배정 정산을 이용해 주세요.',
   RECEIPT_PRE_CONSENT_REQUIRED: RECEIPT_PRE_CONSENT_REQUIRED_MESSAGE,
   TRANSPORTATION_DISTANCE_NOT_ELIGIBLE: TRANSPORTATION_UNDER_MIN_DISTANCE_MESSAGE,
+  /** 금액이 들어간 문구는 확인 화면이 draft 한도로 만든다(payment-item-limit). */
+  PAYMENT_ITEM_LIMIT_EXCEEDED: PAYMENT_ITEM_LIMIT_EXCEEDED_FALLBACK_MESSAGE,
 }
 
 export function normalizeIndividualIneligibleReason(

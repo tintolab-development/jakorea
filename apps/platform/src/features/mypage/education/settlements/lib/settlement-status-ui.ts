@@ -154,7 +154,7 @@ export function resolveSettlementStatusUi(
       statusLabel: kind === 'payment_statement' ? '정정 완료' : undefined,
       amountKind: 'expected',
       writeLabel: kind === 'payment_statement' ? '지급조서 재신청' : copy.writeLabel,
-      viewLabel: '정정 내역 확인',
+      viewLabel: '정정 내역 확인하기',
       actions: kind === 'payment_statement' ? ['view-correction', 'reapply'] : [],
     },
     rejected: {

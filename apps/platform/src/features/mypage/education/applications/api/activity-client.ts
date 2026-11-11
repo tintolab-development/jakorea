@@ -458,6 +458,10 @@ export type PortalSettlementApplication = {
   correctionRequestId?: number
   correctionStatus?: string
   supersededBySettlementId?: number
+  /** 이 신청에서 만들어진 최신 정산 revision ID. 지급조서 재신청 등 /api/portal/me/settlements/{settlementId}/** 에 쓴다. 정산 전이면 null */
+  settlementId?: number | null
+  /** 정정 승인으로 만들어진 최신 revision의 지급조서가 DRAFT(강사 재신청 대기)이면 true */
+  statementReapplyAvailable?: boolean
 }
 
 function applicationPath(applicationType: ProgramApplicationType, applicationId: string): string {

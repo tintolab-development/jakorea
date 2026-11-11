@@ -52,6 +52,8 @@ export type EducationSettlementItem = {
   amount?: number
   rejectReason?: string
   settlementApplicationId?: number
+  /** 강사 지급조서: 최신 정산 revision ID (재신청 API 경로). 정산 전이면 없음 */
+  settlementId?: number
   receiptId?: number
   currentRevisionNo?: number
   canSubmitReceipt?: boolean

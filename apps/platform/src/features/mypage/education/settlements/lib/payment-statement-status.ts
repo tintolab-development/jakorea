@@ -47,13 +47,19 @@ export function mapPaymentStatementServerStatus(input: {
   statementStatus?: string | null
   paymentStatus?: string | null
   correctionStatus?: string | null
+  /** 정정 승인 후 강사 재신청 대기(최신 revision DRAFT). 서버 statementReapplyAvailable */
+  statementReapplyAvailable?: boolean | null
 }): EducationSettlementStatus | null {
   const payment = normalize(input.paymentStatus)
   const statement = normalize(input.statementStatus)
   const correction = normalize(input.correctionStatus)
 
   if (PAID.has(payment) || PAID.has(statement)) return 'paid'
-  if (CORRECTION_COMPLETED.has(correction) || CORRECTION_COMPLETED.has(statement)) {
+  if (
+    input.statementReapplyAvailable === true ||
+    CORRECTION_COMPLETED.has(correction) ||
+    CORRECTION_COMPLETED.has(statement)
+  ) {
     return 'correction_completed'
   }
   if (
@@ -80,8 +86,10 @@ function aggregateKeyForStatus(
     case 'waiting_confirm':
       return 'awaiting_confirmation'
     case 'reapplied':
-    case 'correction_completed':
       return 'payment_statement_reapplication'
+    // 정정 승인 후 강사가 재신청하기 전까지는 "지급 정정 요청"으로 집계한다(CMS 강사 상태와 같음).
+    case 'correction_completed':
+      return 'payment_correction_requested'
     case 'confirmed':
       return 'payment_statement_verified'
     case 'paid':

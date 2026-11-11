@@ -34,6 +34,7 @@ type BuildSettlementWriteDraftInput = {
   transportItemType?: string
   transportItemName?: string
   transportEvidenceRequired?: boolean
+  transportMaxLimitWon?: number | null
   transportAutoPreview?: InstructorTransportPreview | null
   tripType: SettlementWriteDraft['transport']['tripType']
   departTransit: string
@@ -91,6 +92,7 @@ export function buildSettlementWriteDraft(
       itemType: input.transportItemType,
       itemName: input.transportItemName,
       evidenceRequired: input.transportEvidenceRequired,
+      maxLimitWon: input.transportMaxLimitWon ?? null,
       autoPreview: input.transportAutoPreview ?? null,
       tripType: input.tripType,
       depart: {
@@ -183,11 +185,13 @@ export function createEmptyAmountItemDraft(item: {
   itemType: string
   itemName: string
   evidenceRequired?: boolean | null
+  maxLimitWon?: number | null
 }): SettlementAmountItemDraft {
   return {
     itemType: item.itemType,
     itemName: item.itemName,
     evidenceRequired: item.evidenceRequired === true,
+    maxLimitWon: item.maxLimitWon ?? null,
     amount: '',
     attachments: [],
   }

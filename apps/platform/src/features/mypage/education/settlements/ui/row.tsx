@@ -31,7 +31,12 @@ import clockGrayUrl from '@/shared/assets/icons/clock-gray.svg'
 import alertRedUrl from '@/shared/assets/icons/alert-red.svg'
 import alertBlack24Url from '@/shared/assets/icons/alert-black-24.svg'
 import villaIconUrl from '@/shared/assets/icons/villa.svg'
-import { PFButton, PFMetaBadge, PFModal, PFStateBadge, PFText } from '@/shared/ui'
+import { PFAlertModal, PFButton, PFMetaBadge, PFModal, PFStateBadge, PFText } from '@/shared/ui'
+import { useReapplyPaymentStatementMutation } from '../api/use-reapply-payment-statement-mutation'
+import {
+  PAYMENT_STATEMENT_REAPPLY_FAILED_MESSAGE,
+  instructorSettlementApiErrorMessage,
+} from '../lib/instructor-settlement-contract'
 import styles from './row.module.css'
 
 type EducationSettlementRowProps = {
@@ -76,7 +81,12 @@ export function EducationSettlementRow({
 }: EducationSettlementRowProps) {
   const navigate = useNavigate()
   const [rejectOpen, setRejectOpen] = useState(initialRejectOpen)
+  const [reapplyErrorMessage, setReapplyErrorMessage] = useState<string | null>(null)
+  const reapplyMutation = useReapplyPaymentStatementMutation()
   const config = resolveSettlementStatusUi(item.status, documentKind)
+  /** 정정 승인 후 강사 재신청 대기 — [지급조서 재신청]이 재신청 API를 부른다 */
+  const isCorrectionReapply =
+    documentKind === 'payment_statement' && item.status === 'correction_completed'
   const sessionId = item.id
   const writePath = buildSettlementWritePath({
     applicationId,
@@ -285,6 +295,31 @@ export function EducationSettlementRow({
       )
     }
     if (hideInstructorWrite && documentKind === 'payment_statement') return null
+    if (isCorrectionReapply) {
+      // 정정 승인된 지급조서: 작성 화면이 아니라 재신청 API(DRAFT → REAPPLICATION). 서버가 기한을 보지 않아 기한으로 막지 않는다.
+      const settlementId = item.settlementId
+      const disabled = settlementId == null || reapplyMutation.isPending
+      return (
+        <PFButton
+          key={action}
+          type="button"
+          variant="primary"
+          size="large"
+          disabled={disabled}
+          onClick={() => {
+            if (disabled || settlementId == null) return
+            reapplyMutation.mutate(settlementId, {
+              onError: error =>
+                setReapplyErrorMessage(
+                  instructorSettlementApiErrorMessage(error, PAYMENT_STATEMENT_REAPPLY_FAILED_MESSAGE),
+                ),
+            })
+          }}
+        >
+          {config.writeLabel ?? '지급조서 재신청'}
+        </PFButton>
+      )
+    }
     const reapplyPath = documentKind === 'receipt' ? receiptSubmitPath : writePath
     const reapplyUnavailable = receiptReapplyUnavailable
     return (
@@ -478,6 +513,12 @@ export function EducationSettlementRow({
           </div>
         </div>
       </PFModal>
+      <PFAlertModal
+        open={reapplyErrorMessage != null}
+        title="지급조서 재신청"
+        description={reapplyErrorMessage ?? ''}
+        onConfirm={() => setReapplyErrorMessage(null)}
+      />
     </>
   )
 }

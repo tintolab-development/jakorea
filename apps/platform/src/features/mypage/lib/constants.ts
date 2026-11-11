@@ -73,4 +73,4 @@ export function instructorApplyConsentPath(consentKey: string): string {
 }
 
 /** DEV-only placeholder — PROD tree-shake (`import.meta.env.DEV` false → '') */
-export const MOCK_MYPAGE_USER_NAME = import.meta.env.DEV ? '이름예시' : ''
+export const MOCK_MYPAGE_USER_NAME = import.meta.env?.DEV ? '이름예시' : ''

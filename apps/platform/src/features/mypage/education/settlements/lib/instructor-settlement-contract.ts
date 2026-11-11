@@ -32,7 +32,12 @@ export const INSTRUCTOR_SETTLEMENT_ERROR_MESSAGE: Record<string, string> = {
   SETTLEMENT_APPLICATION_STATE_CONFLICT: '현재 상태에서는 지급조서를 제출할 수 없습니다.',
   SETTLEMENT_REAPPLICATION_DEADLINE_EXPIRED: '재제출 기한이 지나 지급조서를 다시 제출할 수 없습니다.',
   SETTLEMENT_REAPPLICATION_DEADLINE_UNAVAILABLE: '재제출 기한을 확인할 수 없습니다. 잠시 후 다시 시도해 주세요.',
+  SETTLEMENT_REAPPLICATION_NOT_AVAILABLE:
+    '지금은 지급조서를 재신청할 수 없습니다. 이미 재신청했거나 정정 내역이 바뀌었을 수 있으니 화면을 새로고침해 주세요.',
 }
+
+export const PAYMENT_STATEMENT_REAPPLY_FAILED_MESSAGE =
+  '지급조서 재신청에 실패했습니다. 잠시 후 다시 시도해 주세요.'
 
 export function isInstructorPaymentStatementSubmit(input: {
   applicationType?: string | null

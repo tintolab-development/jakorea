@@ -138,6 +138,8 @@ export type ResolveEducationSettlementStatusInput = {
   statementStatus?: string | null
   paymentStatus?: string | null
   correctionStatus?: string | null
+  /** 정정 승인 후 지급조서 재신청 대기 — 서버 statementReapplyAvailable */
+  statementReapplyAvailable?: boolean | null
   receiptDeadlineAt?: string | null
   operationEndAt?: string | null
   canSubmit?: boolean
@@ -182,6 +184,7 @@ export function resolveEducationSettlementStatusResult(
     statementStatus: input.statementStatus ?? input.reviewStatus,
     paymentStatus: input.paymentStatus,
     correctionStatus: input.correctionStatus,
+    statementReapplyAvailable: input.statementReapplyAvailable,
   })
 
   if (input.deadlinePolicy === 'payment_statement') {
