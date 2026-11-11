@@ -27,10 +27,7 @@ import {
   geminiPerformanceService,
 } from '../../api/performance-service'
 import { resolveGeminiDeleteGuideModalCopy } from '../../lib/delete-guide'
-import {
-  isGeminiPerformanceAccountPaid,
-  isGeminiPerformancePaidBlockedError,
-} from '../../lib/performance/import-paid-duplicate'
+import { isGeminiPerformancePaidBlockedError } from '../../lib/performance/import-paid-duplicate'
 import {
   GEMINI_PERFORMANCE_APPEND_DONE_MESSAGE,
   GEMINI_PERFORMANCE_APPEND_DONE_TITLE,
@@ -237,7 +234,7 @@ export function GeminiPerformanceList() {
     }
     const selectedIdSet = new Set(selectedRowKeys.map(key => String(key)))
     const paidSelected = allRows.some(
-      row => selectedIdSet.has(row.id) && isGeminiPerformanceAccountPaid(row.accountPaymentId)
+      row => selectedIdSet.has(row.id) && row.deleteBlocked === true
     )
     if (paidSelected) {
       showAlert({
@@ -596,7 +593,7 @@ export function GeminiPerformanceList() {
                   onChange: keys => setSelectedRowKeys(keys.map(k => String(k))),
                   preserveSelectedRowKeys: false,
                   getCheckboxProps: (row: GeminiPerformanceRow) => ({
-                    disabled: isGeminiPerformanceAccountPaid(row.accountPaymentId),
+                    disabled: row.deleteBlocked === true,
                   }),
                 }
               : undefined

@@ -100,6 +100,7 @@ export function mapGeminiTrainingReportItemToRow(
     calculatedAmount: dto.calculatedAmount ?? null,
     classCount: dto.classCount ?? null,
     paymentExclusionReason: dto.paymentExclusionReason ?? null,
+    deleteBlocked: dto.deleteBlocked === true,
     ...(dto.accountPaymentId != null &&
     Number.isFinite(dto.accountPaymentId) &&
     dto.accountPaymentId > 0
