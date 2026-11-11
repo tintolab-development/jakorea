@@ -85221,40 +85221,36 @@
       },
       "Ujat1365SemesterRegistrationFormRequest": {
         "type": "object",
-        "required": [
-          "semesterType"
-        ],
         "properties": {
           "semesterType": {
             "type": "string",
-            "description": "반기",
             "enum": [
               "FIRST_HALF",
               "SECOND_HALF"
             ],
-            "example": "SECOND_HALF"
+            "example": "SECOND_HALF",
+            "description": "반기"
           },
           "mode": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "PREVIEW 또는 DOWNLOAD. 생략하면 PREVIEW.",
+            "type": "string",
+            "nullable": true,
             "enum": [
               "PREVIEW",
               "DOWNLOAD"
             ],
-            "example": "PREVIEW"
+            "default": "PREVIEW",
+            "description": "PREVIEW 또는 DOWNLOAD. 생략하면 PREVIEW."
           },
           "fileName": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "mode=DOWNLOAD일 때 브라우저가 저장하는 파일명. 파일 다운로드 이력 파일명으로 기록합니다. 생략하면 서버 규칙 이름을 기록합니다.",
-            "example": "[JA Korea] CMS 어드민_1365 봉사시간 등록 양식_261110.xlsx"
+            "type": "string",
+            "nullable": true,
+            "example": "[JA Korea] CMS 어드민_1365 봉사시간 등록 양식_261110.xlsx",
+            "description": "mode=DOWNLOAD일 때 브라우저가 저장하는 파일명. 파일 다운로드 이력 파일명으로 기록합니다. 생략하면 서버 규칙 이름을 기록합니다. '/', '\\'는 ','로 저장합니다."
           }
-        }
+        },
+        "required": [
+          "semesterType"
+        ]
       },
       "Ujat1365SemesterRegistrationFormCell": {
         "type": "object",
@@ -96534,32 +96530,36 @@
       },
       "CertificateSerialAllocateResponse": {
         "type": "object",
-        "description": "인증서 고유번호 발급 응답",
+        "description": "인증서 고유번호 발급 data",
+        "required": [
+          "serialNumber",
+          "issueId",
+          "reused"
+        ],
         "properties": {
           "serialNumber": {
             "type": "string",
-            "description": "고유번호 (YY-JA-NNNNN)",
-            "example": "26-JA-00017"
+            "pattern": "^\\d{2}-JA-\\d{5}$",
+            "example": "26-JA-00017",
+            "description": "YY-JA-NNNNN. 00000 금지. 형식이 틀리면 PDF를 만들지 말 것"
           },
           "issueId": {
             "type": "integer",
             "format": "int64",
-            "description": "certificate_issue 장부 PK",
-            "example": 12
+            "example": 12,
+            "description": "certificate_issue 장부 PK"
           },
           "reused": {
             "type": "boolean",
-            "description": "호환 필드. 발급마다 새 번호를 쓰므로 정상 응답은 false",
-            "example": false
+            "example": false,
+            "description": "동일 키 재사용이면 true. true여도 PDF 진행은 정상"
           },
           "issuedAt": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
             "format": "date-time",
-            "description": "certificate_issue 발급 일시. 기존 발급 건을 다시 받으면 최초 발급 일시입니다. PDF 발급일과 다운로드 파일명 날짜(YYMMDD, Asia/Seoul)에 사용합니다.",
-            "example": "2026-11-10T01:00:00Z"
+            "nullable": true,
+            "example": "2026-11-10T01:00:00Z",
+            "description": "certificate_issue 발급 일시. 기존 발급 건을 다시 받으면 최초 발급 일시. PDF 발급일과 다운로드 파일명 날짜(YYMMDD, Asia/Seoul)에 사용"
           }
         }
       },
@@ -124686,15 +124686,88 @@
       },
       "Ujat1365RegistrationFormRequest": {
         "type": "object",
-        "description": "UJAT 1365 등록 양식 요청 본문(선택)",
+        "description": "UJAT 1365 등록 양식 요청 본문(선택). 본문 없이 호출해도 된다.",
         "properties": {
           "fileName": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "mode=DOWNLOAD일 때 브라우저가 저장하는 파일명. 파일 다운로드 이력 파일명으로 기록합니다. 생략하면 서버 규칙 이름을 기록합니다.",
-            "example": "[JA Korea] CMS 어드민_1365 봉사시간 등록 양식_261110.xlsx"
+            "type": "string",
+            "nullable": true,
+            "example": "[JA Korea] CMS 어드민_1365 봉사시간 등록 양식_261110.xlsx",
+            "description": "mode=DOWNLOAD일 때 브라우저가 저장하는 파일명. 파일 다운로드 이력 파일명으로 기록합니다. 생략하면 서버 규칙 이름을 기록합니다. '/', '\\'는 ','로 저장합니다."
+          }
+        }
+      },
+      "MemberCertificateAvailabilityResponse": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "participantId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "certificateType": {
+            "type": "string",
+            "description": "평가한 증명서 유형. 요청 PARTICIPATION은 COMPLETION으로 바뀌지 않는다.",
+            "enum": [
+              "COMPLETION",
+              "PARTICIPATION",
+              "INSTRUCTOR_ACTIVITY",
+              "VOLUNTEER_ACTIVITY"
+            ]
+          },
+          "available": {
+            "type": "boolean"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "eligible": {
+            "type": "boolean"
+          },
+          "reasonCode": {
+            "type": "string"
+          },
+          "reasonMessage": {
+            "type": "string"
+          },
+          "existingIssueId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "canDownload": {
+            "type": "boolean"
+          },
+          "countedParticipationCount": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "description": "Counted PRESENT/ATTENDED/LATE sessions inside the give-up performance boundary."
+          },
+          "certificatePeriodStartDate": {
+            "type": "string",
+            "nullable": true,
+            "description": "Certificate display period start (yyyy-MM-dd, Asia/Seoul)."
+          },
+          "certificatePeriodEndDate": {
+            "type": "string",
+            "nullable": true,
+            "description": "Certificate display period end (yyyy-MM-dd, Asia/Seoul). Give-up participation uses the last counted session end."
+          },
+          "certificatePeriodLabel": {
+            "type": "string",
+            "nullable": true,
+            "description": "PDF-identical Korean period label."
+          },
+          "issuedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": "2026-11-10T01:00:00Z",
+            "description": "기존 발급 건(existingIssueId)의 발급 일시(certificate_issue.issued_at). PDF 발급일과 다운로드 파일명 날짜(YYMMDD, Asia/Seoul)에 사용. 발급 이력이 없으면 null"
           }
         }
       }

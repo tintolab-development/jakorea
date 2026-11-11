@@ -7,7 +7,7 @@
  */
 
 /**
- * 강사비 책정 단위. 제출 전 lectureFeePreview.instructorFeeCalculationUnit과 동일.
+ * 강사비 책정 단위. 제출 시점 lectureFeePreview.instructorFeeCalculationUnit과 동일 코드. 구 스냅샷에 없으면 null
  */
 export type CalcInfoInstructorFeeCalculationUnit = typeof CalcInfoInstructorFeeCalculationUnit[keyof typeof CalcInfoInstructorFeeCalculationUnit] | null;
 

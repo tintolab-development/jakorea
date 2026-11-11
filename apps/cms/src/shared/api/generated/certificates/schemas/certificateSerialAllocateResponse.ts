@@ -7,15 +7,18 @@
  */
 
 /**
- * 인증서 고유번호 발급 응답
+ * 인증서 고유번호 발급 data
  */
 export interface CertificateSerialAllocateResponse {
-  /** 고유번호 (YY-JA-NNNNN) */
-  serialNumber?: string;
+  /**
+     * YY-JA-NNNNN. 00000 금지. 형식이 틀리면 PDF를 만들지 말 것
+     * @pattern ^\d{2}-JA-\d{5}$
+     */
+  serialNumber: string;
   /** certificate_issue 장부 PK */
-  issueId?: number;
-  /** 호환 필드. 발급마다 새 번호를 쓰므로 정상 응답은 false */
-  reused?: boolean;
-  /** certificate_issue 발급 일시. 기존 발급 건을 다시 받으면 최초 발급 일시입니다. PDF 발급일과 다운로드 파일명 날짜(YYMMDD, Asia/Seoul)에 사용합니다. */
+  issueId: number;
+  /** 동일 키 재사용이면 true. true여도 PDF 진행은 정상 */
+  reused: boolean;
+  /** certificate_issue 발급 일시. 기존 발급 건을 다시 받으면 최초 발급 일시. PDF 발급일과 다운로드 파일명 날짜(YYMMDD, Asia/Seoul)에 사용 */
   issuedAt?: string | null;
 }
