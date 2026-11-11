@@ -147,9 +147,10 @@ describe('useVolunteerAssignmentProgress mutations', () => {
         .catch(() => undefined)
     })
 
+    // d1e0e2ae1부터 오류 안내는 `readApiErrorAlertMessage` — 응답 envelope가 없으면 Error.message, 그마저 없으면 fallback
     expect(alerts.showAlert).toHaveBeenCalledWith({
       title: '오류',
-      content: '교육 배정에 실패했습니다.',
+      content: 'fail',
     })
     expect(invalidateQueries).not.toHaveBeenCalled()
     expect(postUjatPartnerAssignmentConfirm).not.toHaveBeenCalled()

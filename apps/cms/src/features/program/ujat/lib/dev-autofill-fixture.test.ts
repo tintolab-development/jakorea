@@ -108,9 +108,10 @@ describe.each(UJAT_DEV_AUTOFILL_CASE_IDS)('%s Fixture 공통 불변식', caseId 
     for (const half of ['h1', 'h2'] as const) {
       const range = plan.halves[half].interview
       expect(dayjs(range.start).isAfter(dayjs(range.end))).toBe(false)
+      /** a376821a2: fixture 날짜는 BE LocalDate 계약대로 달력일 YYYY-MM-DD */
       expect(recruitVolunteer[ujatVolunteerHalfOverlayKey(half, 'interviewRange')]).toEqual({
-        start: dayjs(range.start).startOf('day').toISOString(),
-        end: dayjs(range.end).startOf('day').toISOString(),
+        start: dayjs(range.start).format('YYYY-MM-DD'),
+        end: dayjs(range.end).format('YYYY-MM-DD'),
       })
     }
   })

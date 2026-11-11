@@ -157,8 +157,11 @@ describe('RawHtmlBlock preview sandbox', () => {
     const srcdoc = buildRawHtmlSrcdoc(STIBEE_LIKE)
     expect(srcdoc.startsWith('<!DOCTYPE html>')).toBe(true)
     expect(srcdoc).toContain('<head><meta http-equiv="Content-Security-Policy"')
-    expect(srcdoc).toContain('<base target="_blank">')
-    expect(buildRawHtmlSrcdoc('<p>조각</p>')).toMatch(/<base target="_blank"><p>조각<\/p>$/)
+    // 덧붙인 요소에는 직렬화 때 빼기 위한 표시(data-raw-html-preview)가 붙는다(raw-html-block.ts 주석).
+    expect(srcdoc).toContain('<base target="_blank" data-raw-html-preview="">')
+    expect(buildRawHtmlSrcdoc('<p>조각</p>')).toMatch(
+      /<base target="_blank" data-raw-html-preview=""><p>조각<\/p>$/
+    )
   })
 })
 
