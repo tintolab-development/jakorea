@@ -110,7 +110,8 @@ describe('UJAT 등록 필드 → 상세 표시 누락 점검', () => {
     )
     const institution = resolveUjatRecruitDisplayProgram(program, 'institution')
     expect(institution.startDate).toBe(RANGE.start)
-    expect(institution.district).toBe('초등학교 4~6학년')
+    // a2f69b3aa: 교육 대상 상세는 district와 분리된 educationTargetDetail
+    expect(institution.educationTargetDetail).toBe('초등학교 4~6학년')
     expect(institution.applicationStartDate).toBe(RANGE.start)
     expect(institution.resultAnnouncementMethod).toBe('홈페이지 공지')
     expect(institution.managerName).toBe('모집팀')

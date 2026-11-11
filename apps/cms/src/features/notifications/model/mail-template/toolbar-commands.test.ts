@@ -272,18 +272,19 @@ describe('mail template editor toolbar commands', () => {
     })
   })
 
-  it('blocks visible text above the common 50,000 character limit', () => {
+  // 본문 5만 자 입력 제한은 해제됨(에디터에 글자 수 제한 확장을 등록하지 않음 — 기획 확인).
+  it('does not block visible text above 50,000 characters', () => {
     const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
     const instance = createEditor('')
 
     expect(
       instance.chain().focus().insertContent('가'.repeat(RICH_TEXT_MAX_TEXT_CHARACTERS)).run()
     ).toBe(true)
-    expect(createRichTextEditorApi(instance).getCharacterCount()).toBe(RICH_TEXT_MAX_TEXT_CHARACTERS)
-
     instance.chain().focus().insertContent('나').run()
-    expect(createRichTextEditorApi(instance).getCharacterCount()).toBe(RICH_TEXT_MAX_TEXT_CHARACTERS)
-    expect(alertSpy).toHaveBeenCalled()
+    expect(createRichTextEditorApi(instance).getCharacterCount()).toBe(
+      RICH_TEXT_MAX_TEXT_CHARACTERS + 1
+    )
+    expect(alertSpy).not.toHaveBeenCalled()
     alertSpy.mockRestore()
   })
 

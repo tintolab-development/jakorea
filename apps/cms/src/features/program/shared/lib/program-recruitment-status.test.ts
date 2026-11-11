@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { Program } from '@/types/domain'
 import {
   getInstructorRecruitmentStatus,
@@ -22,6 +22,10 @@ const baseProgram = {
 } as unknown as Program
 
 describe('모집 현황 상태', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('미래·현재·종료·누락 날짜를 구분한다', () => {
     expect(
       getRecruitmentStatusFromDates('2026-10-25', '2026-10-31', '2026-10-24')
@@ -47,6 +51,9 @@ describe('모집 현황 상태', () => {
   })
 
   it('lifecycleStatus가 아니라 모집 유형별 기간을 사용한다', () => {
+    // 참여자 기간(2026-10-24~31) 안의 시각으로 고정 — 오늘 날짜에 따라 결과가 바뀌지 않게 한다
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-10-27T03:00:00.000Z'))
     const program: Program = {
       ...baseProgram,
       lifecycleStatus: 'recruiting_students',
