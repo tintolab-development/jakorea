@@ -19,6 +19,7 @@ import {
   type NotifyTimingCapability,
 } from '@/shared/lib/notify-timing-capability'
 import { formatYmdHmWithKoreanWeekday } from '@/shared/lib/format-date-korean-weekday'
+import { useNotifyAnnouncementPassed } from '@/shared/components/notify-announcement-context'
 import {
   INSTRUCTOR_JA_FAULT_PARTY_HINT,
   INSTRUCTOR_JA_FAULT_PARTY_REQUIRED_MESSAGE,
@@ -133,6 +134,11 @@ export type PermissionModalProps = {
   notifyBeforeReason?: boolean
   /** 강사 배정/승인 취소 — 취소 귀책 필수 선택 (기본값 없음) */
   faultPartyRequired?: boolean
+  /**
+   * 이 알림이 따르는 모집의 최종 발표일(ISO). 지났으면 「발표일에 맞춰서」를 비활성한다.
+   * 생략하면 `NotifyAnnouncementProvider` 값, Provider도 없으면 항상 선택 가능(기존 동작).
+   */
+  announcementAt?: string | null
 }
 
 function resolveVariantDefaults(variant: PermissionModalVariant): {
@@ -191,6 +197,7 @@ export function PermissionModal({
   className: classNameProp,
   notifyBeforeReason = false,
   faultPartyRequired = false,
+  announcementAt,
 }: PermissionModalProps) {
   const { showAlert } = useCmsAlert()
   const defaults = resolveVariantDefaults(variant)
@@ -216,6 +223,13 @@ export function PermissionModal({
     setManualNotifyAt(null)
     setDateTimePickerOpen(false)
   }, [open])
+
+  /** 발표일 경과 — 「발표일에 맞춰서」 비활성. 이미 골라 둔 상태면 즉시로 되돌린다 */
+  const announcementPassed = useNotifyAnnouncementPassed(announcementAt)
+  useEffect(() => {
+    if (!open || !announcementPassed) return
+    setNotifyTiming(prev => (prev === 'on_announcement' ? 'immediate' : prev))
+  }, [open, announcementPassed])
 
   const showIncompleteRequiredAlert = () => {
     showAlert({
@@ -310,7 +324,7 @@ export function PermissionModal({
           즉시
         </CmsRadio>
         {notifyTimingOptions === 'three' ? (
-          <CmsRadio value="on_announcement" size="medium">
+          <CmsRadio value="on_announcement" size="medium" disabled={announcementPassed}>
             발표일에 맞춰서
           </CmsRadio>
         ) : null}

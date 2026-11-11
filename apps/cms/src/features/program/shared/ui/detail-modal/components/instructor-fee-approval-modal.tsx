@@ -6,7 +6,7 @@ import { useEffect } from 'react'
 import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/features/program/shared/model/program-wage-info'
 import {
   INSTRUCTOR_FEE_APPROVAL_BASIS_OPTIONS,
-  LECTURE_FEE_PAYMENT_CRITERIA_OPTIONS,
+  LECTURE_FEE_MEASURE_OPTIONS,
 } from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
 import {
   useInstructorFeeApprovalModal,
@@ -32,6 +32,7 @@ import {
   getUnsupportedNotifyTimingMessage,
   type NotifyTimingCapability,
 } from '@/shared/lib/notify-timing-capability'
+import { useNotifyAnnouncementPassed } from '@/shared/components/notify-announcement-context'
 import './instructor-fee-approval-modal.css'
 
 const MODAL_WIDTH = 600
@@ -82,8 +83,8 @@ export type InstructorFeeApprovalModalProps = {
    * `onAnnouncement`가 true면 「발표일에 맞춰서」 라디오를 함께 노출한다(일반 기관형 시안 05-2).
    */
   notifyTimingCapability?: NotifyTimingCapability
-  /** 지급 기준 셀렉트 옵션. 기본 `LECTURE_FEE_PAYMENT_CRITERIA_OPTIONS` */
-  lectureFeeMeasureOptions?: { value: string; label: string }[]
+  /** 강사 모집 최종 합격 발표일(ISO). 지났으면 「발표일에 맞춰서」 비활성. 생략 시 Provider 값 */
+  announcementAt?: string | null
 }
 
 /** 일반(기관형) 시안 05-2(1141:247368) — 「[이름] 님의 … 선택해 주세요」(띄어쓰기, 첫 줄 마침표 없음) */
@@ -111,9 +112,10 @@ export function InstructorFeeApprovalModal({
   confirmLabel = '승인',
   description,
   notifyTimingCapability = NOTIFY_TIMING_CAPABILITY.scheduledOnly,
-  lectureFeeMeasureOptions = LECTURE_FEE_PAYMENT_CRITERIA_OPTIONS,
+  announcementAt,
 }: InstructorFeeApprovalModalProps) {
   const { showAlert } = useCmsAlert()
+  const announcementPassed = useNotifyAnnouncementPassed(announcementAt)
   const {
     lectureFeeBasisType,
     instructorFeeGrade,
@@ -136,6 +138,12 @@ export function InstructorFeeApprovalModal({
     handleNotifyTimingChange,
     buildConfirmDetail,
   } = useInstructorFeeApprovalModal({ open, instructorFeeGradeLabel, feePolicyContext })
+
+  /** 발표일 경과 — 「발표일에 맞춰서」를 골라 둔 상태면 즉시로 되돌린다 */
+  useEffect(() => {
+    if (!open || !announcementPassed || notifyTiming !== 'on_announcement') return
+    handleNotifyTimingChange('immediate')
+  }, [open, announcementPassed, notifyTiming, handleNotifyTimingChange])
 
   useEffect(() => {
     if (!open || !feePolicyError) return
@@ -239,7 +247,8 @@ export function InstructorFeeApprovalModal({
                     withAllOption={false}
                     placeholder="지급 기준"
                     value={lectureFeeMeasure || undefined}
-                    options={lectureFeeMeasureOptions}
+                    // 지급 기준 라벨은 모든 프로그램 유형 공통 「차시당 / 출강 1회당」(기획 11/10)
+                    options={LECTURE_FEE_MEASURE_OPTIONS}
                     onChange={v => setLectureFeeMeasure(v != null ? String(v) : '')}
                     getPopupContainer={() => document.body}
                   />
@@ -272,7 +281,9 @@ export function InstructorFeeApprovalModal({
             >
               <CmsRadio value="immediate">즉시</CmsRadio>
               {notifyTimingCapability.onAnnouncement ? (
-                <CmsRadio value="on_announcement">발표일에 맞춰서</CmsRadio>
+                <CmsRadio value="on_announcement" disabled={announcementPassed}>
+                  발표일에 맞춰서
+                </CmsRadio>
               ) : null}
               <span
                 ref={manualRadioAnchorRef}

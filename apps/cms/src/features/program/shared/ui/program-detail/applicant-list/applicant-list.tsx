@@ -90,7 +90,6 @@ import { ApplicantNotificationResendModal } from '@/features/program/shared/ui/d
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import { toInstructorApplicationNotificationRequest } from '@/features/program/general/lib/instructor-application-notification'
 import {
-  GENERAL_ORGANIZATION_LECTURE_FEE_MEASURE_OPTIONS,
   INSTRUCTOR_FEE_POLICY_INVALID_MESSAGE,
   isInstructorApplicationFeePolicyRequestValid,
   toInstructorApplicationFeePolicy,
@@ -139,6 +138,11 @@ import { resolveEffectiveGeneralProgramTypeFields } from '@/features/program/gen
 import { resolveInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { isGeneralOrganizationProgram } from '@/features/program/general/lib/organization-merge-program-type'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
+import { NotifyAnnouncementProvider } from '@/shared/components/notify-announcement-context'
+import {
+  resolveRecruitmentFinalAnnouncementAt,
+  type NotifyAnnouncementAudience,
+} from '@/features/program/shared/lib/recruitment-final-announcement'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import { fetchTrainedTeacherOrganizationApplicationRemote } from '@/features/program/trained-teachers/api/organization-applications-client'
 import { mapTrainedTeacherOrganizationApplicationToRow } from '@/features/program/trained-teachers/api/organization-applications-adapters'
@@ -534,6 +538,11 @@ export function ApplicantList({
     isGeneralOrganizationProgram(program) &&
     (isGeneralOrganizationInstitutionList ||
       (menu === 'instructors' && instructorColumnPreset === 'general-detail'))
+  /** 1사1교 기관·강사 신청 목록 — 시안 4175:104376 「총 N건」 (툴바 버튼 문구는 기존 유지) */
+  const isCompanySchoolApplicationList =
+    detailVariant === 'general' &&
+    isCompanySchoolProgram(program) &&
+    (menu === 'institutions' || menu === 'instructors')
   /**
    * 일반 프로그램(기관형) 강사 신청 — 시안 03-1·03-2 팝업 문구·알림 3옵션.
    * 1사1교 강사 신청도 `general-detail` preset을 쓰므로 programType으로 한정한다(1사1교·개인형 기본 유지).
@@ -546,7 +555,6 @@ export function ApplicantList({
   /**
    * 일반 프로그램(개인형) 강사 신청 — 시안 14696:178580 「그 외 강사 신청 목록 화면 기관과 동일」.
    * 반려 취소·승인 취소·반려 취소 완료 팝업 문구(귀책 미노출)와 단건 반려·승인 알림 3옵션을 기관형과 맞춘다.
-   * 1사1교는 기본 유지.
    */
   const isGeneralIndividualInstructorList =
     menu === 'instructors' &&
@@ -554,8 +562,23 @@ export function ApplicantList({
     detailVariant === 'general' &&
     program != null &&
     isGeneralIndividualProgram(program)
+  /**
+   * 1사1교 강사 신청 — 시안 Info 14716:4 「강사 신청 목록 일반 프로그램(기관)과 동일」.
+   * 승인·반려·승인 취소·반려 취소 팝업 문구(귀책 미노출)·알림 3옵션·강사비 승인 문구를 기관형과 맞춘다
+   * (기획 11/10 CMS-FUNC-0075·0076·0102 — 1사1교도 강사 모집 최종 합격 발표일이 있다).
+   */
+  const isCompanySchoolInstructorList =
+    menu === 'instructors' &&
+    instructorColumnPreset === 'general-detail' &&
+    detailVariant === 'general' &&
+    isCompanySchoolProgram(program)
   const usesGeneralOrganizationInstructorPopupCopy =
-    isGeneralOrganizationInstructorList || isGeneralIndividualInstructorList
+    isGeneralOrganizationInstructorList ||
+    isGeneralIndividualInstructorList ||
+    isCompanySchoolInstructorList
+  /** 강사비 책정 승인 설명 — 일반 기관형 시안(1141:247368)과 같은 문구 (지급 기준 라벨은 유형별) */
+  const usesGeneralOrganizationInstructorFeeApprovalCopy =
+    isGeneralOrganizationInstructorList || isCompanySchoolInstructorList
   const instructorCopyVariant = usesGeneralOrganizationInstructorPopupCopy
     ? 'general-organization'
     : 'default'
@@ -563,7 +586,7 @@ export function ApplicantList({
    * 강사 단건 승인·반려·승인 취소·반려 취소 `Notification` — 일반 기관형·개인형은 발표일(ON_ANNOUNCEMENT) 허용
    * (시안 02-1 반려·05-2 강사비 책정 및 승인 「즉시 / 발표일에 맞춰서 / 직접 설정」).
    * OpenAPI `Notification.timing`(approve·reject·cancel-approval·cancel-rejection)은 IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT.
-   * 1사1교는 기존 scheduledOnly 유지.
+   * 그 외(일반 기관형·개인형·1사1교가 아닌 강사 목록)는 scheduledOnly.
    */
   const instructorDecisionNotifyCapability = usesGeneralOrganizationInstructorPopupCopy
     ? NOTIFY_TIMING_CAPABILITY.full
@@ -1222,7 +1245,26 @@ export function ApplicantList({
     }
   }
 
+  /**
+   * 알림 「발표일에 맞춰서」 경과 비활성 — 이 목록 모집의 최종 발표일(GET recruitments[]).
+   * 기관=참여 기관 모집, 개인=참여자 모집, 강사=강사 모집, 봉사자=봉사자 모집.
+   */
+  const notifyAnnouncementAt = useMemo(() => {
+    const audience: NotifyAnnouncementAudience | null =
+      menu === 'institutions'
+        ? 'organization'
+        : menu === 'instructors'
+          ? 'instructor'
+          : menu === 'individual-applications'
+            ? 'individual'
+            : menu === 'volunteers'
+              ? 'volunteer'
+              : null
+    return audience ? resolveRecruitmentFinalAnnouncementAt(program, audience) : null
+  }, [menu, program])
+
   return (
+    <NotifyAnnouncementProvider announcementAt={notifyAnnouncementAt}>
     <div
       className={`applicant-details${
         isGeneralProgramCalendarView ? ' general-program-detail--calendar-view' : ''
@@ -1686,6 +1728,7 @@ export function ApplicantList({
       <InstitutionCancelApprovalModal
         open={institutionCancelApprovalTarget != null}
         institution={institutionCancelApprovalInstitution}
+        notifyTimingOptions={isCompanySchoolInstitutionApprove ? 'two' : undefined}
         onCancel={() => setInstitutionCancelApprovalTarget(null)}
         onConfirm={payload => {
           if (!institutionCancelApprovalTarget) return
@@ -2441,18 +2484,13 @@ export function ApplicantList({
           instructorApprovalTarget.skipLectureAssign === true
         }
         description={
-          isGeneralOrganizationInstructorList
+          usesGeneralOrganizationInstructorFeeApprovalCopy
             ? buildGeneralOrganizationInstructorFeeApprovalDescription(
                 instructorApprovalTarget?.name ?? ''
               )
             : undefined
         }
         notifyTimingCapability={instructorDecisionNotifyCapability}
-        lectureFeeMeasureOptions={
-          isGeneralOrganizationInstructorList
-            ? GENERAL_ORGANIZATION_LECTURE_FEE_MEASURE_OPTIONS
-            : undefined
-        }
         onCancel={() => {
           setInstructorFeePolicyError(null)
           setInstructorApprovalTarget(null)
@@ -2598,7 +2636,7 @@ export function ApplicantList({
             onSearch={handleSearch}
             title={title}
             description={
-              usesGeneralOrganizationListToolbarCopy
+              usesGeneralOrganizationListToolbarCopy || isCompanySchoolApplicationList
                 ? `총 ${tableData.length}건`
                 : `${tableData.length}건`
             }
@@ -2765,5 +2803,6 @@ export function ApplicantList({
         </>
       ) : null}
     </div>
+    </NotifyAnnouncementProvider>
   )
 }

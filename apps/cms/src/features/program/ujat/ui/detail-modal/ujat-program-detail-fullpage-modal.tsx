@@ -192,6 +192,8 @@ import { useQueryClient } from '@tanstack/react-query'
 import '@/features/program/general/ui/detail-modal/program-detail-fullpage-modal.css'
 import './ujat-program-detail-fullpage-modal.css'
 import { ProgramDetailActionGuard } from '@/features/program/shared/ui/program-detail-action-guard'
+import { NotifyAnnouncementProvider } from '@/shared/components/notify-announcement-context'
+import { resolveRecruitmentFinalAnnouncementAt } from '@/features/program/shared/lib/recruitment-final-announcement'
 
 const TAB_PARAM = 'tab'
 const LNB_PARAM = 'lnb'
@@ -1705,6 +1707,18 @@ function UjatProgramDetailFullPageModalContent({
           프로그램 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
         </Typography.Text>
       ) : displayProgram ? (
+        // 알림 「발표일에 맞춰서」 경과 비활성 — 기관 신청=참여 기관 모집, 봉사자 상·하반기=해당 반기 봉사자 모집 최종 발표일
+        <NotifyAnnouncementProvider
+          announcementAt={
+            activeLnb === 'institution_applications'
+              ? resolveRecruitmentFinalAnnouncementAt(displayProgram, 'organization')
+              : activeLnb === 'volunteer_h1' || activeLnb === 'volunteer_h2'
+                ? resolveRecruitmentFinalAnnouncementAt(displayProgram, 'volunteer', {
+                    recruitTerm: activeLnb === 'volunteer_h2' ? 'SECOND_HALF' : 'FIRST_HALF',
+                  })
+                : null
+          }
+        >
         <>
           {activeLnb === 'info' && activeTab === 'info' && (
             <>
@@ -1936,6 +1950,7 @@ function UjatProgramDetailFullPageModalContent({
             </div>
           ) : null}
         </>
+        </NotifyAnnouncementProvider>
       ) : (
         <Typography.Text type="secondary">프로그램 정보를 찾을 수 없습니다.</Typography.Text>
       )}
