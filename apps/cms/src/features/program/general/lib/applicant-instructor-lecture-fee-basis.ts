@@ -174,7 +174,8 @@ export type InstructorApplicationFeePolicyContext = {
 }
 
 export type ApiInstructorFeePolicyBasisType = 'PROGRAM' | 'RECRUITMENT'
-export type ApiInstructorFeePolicyMeasure = 'PER_SESSION' | 'PER_HOUR' | 'FIXED'
+/** 출강 1회당은 PER_LECTURE로 보낸다. PER_SESSION은 기존 데이터 읽기 전용(백엔드가 신규 입력을 거절). */
+export type ApiInstructorFeePolicyMeasure = 'PER_LECTURE' | 'PER_HOUR' | 'FIXED'
 
 export function toApiInstructorFeePolicyBasisType(
   basisType: ApplicantInstructorLectureFeeBasisType
@@ -189,19 +190,19 @@ export function toApiInstructorFeePolicyMeasure(
 ): ApiInstructorFeePolicyMeasure {
   if (basisType === 'program') {
     const unit = (programCalculationUnit ?? 'PER_HOUR').trim().toUpperCase()
-    if (unit === 'PER_SESSION' || unit === 'SESSION') return 'PER_SESSION'
+    if (unit === 'PER_SESSION' || unit === 'SESSION' || unit === 'PER_LECTURE') return 'PER_LECTURE'
     if (unit === 'FIXED') return 'FIXED'
     return 'PER_HOUR'
   }
 
   const normalized = normalizeLectureFeeMeasure(uiMeasure ?? undefined, basisType)
   const upper = normalized.trim().toUpperCase()
-  if (upper === 'PER_SESSION' || upper === 'SESSION') return 'PER_SESSION'
+  if (upper === 'PER_SESSION' || upper === 'SESSION' || upper === 'PER_LECTURE') return 'PER_LECTURE'
   if (upper === 'PER_HOUR' || upper === 'HOUR') return 'PER_HOUR'
   if (upper === 'FIXED') return 'FIXED'
-  if (normalized === '출강 1회당' || normalized === '1회 기준') return 'PER_SESSION'
+  if (normalized === '출강 1회당' || normalized === '1회 기준') return 'PER_LECTURE'
   if (normalized === '1시간 당') return 'PER_HOUR'
-  return 'PER_SESSION'
+  return 'PER_LECTURE'
 }
 
 export function resolveInstructorFeeGradeCode(
@@ -222,7 +223,7 @@ export function resolveProgramBasisFeePolicyFromWageRows(
   const amount = parseWageGradeAmount(pricing)
   if (amount == null || amount < 0) return null
 
-  const measure = /1시간/.test(pricing ?? '') ? 'PER_HOUR' : 'PER_SESSION'
+  const measure = /1시간/.test(pricing ?? '') ? 'PER_HOUR' : 'PER_LECTURE'
   return { amount, measure }
 }
 

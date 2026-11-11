@@ -3,6 +3,7 @@ import {
   buildGeneralOrganizationLectureFeeBasisViewSegments,
   buildLectureFeeBasisViewSegments,
   parseLectureFeeBasisTypeFromApi,
+  toApiInstructorFeePolicyMeasure,
   toInstructorApplicationFeePolicy,
   GENERAL_ORGANIZATION_LECTURE_FEE_MEASURE_OPTIONS,
   LECTURE_FEE_MEASURE_OPTIONS,
@@ -34,7 +35,7 @@ describe('toInstructorApplicationFeePolicy', () => {
     })
   })
 
-  it('특강·기타는 RECRUITMENT와 PER_SESSION/PER_HOUR 코드를 보낸다', () => {
+  it('특강·기타는 RECRUITMENT와 PER_LECTURE/PER_HOUR 코드를 보낸다', () => {
     expect(
       toInstructorApplicationFeePolicy({
         basisType: 'special_lecture',
@@ -58,7 +59,7 @@ describe('toInstructorApplicationFeePolicy', () => {
       })
     ).toMatchObject({
       basisType: 'RECRUITMENT',
-      measure: 'PER_SESSION',
+      measure: 'PER_LECTURE',
       amount: 0,
       instructorFeeGrade: 'GRADE_2',
     })
@@ -198,5 +199,15 @@ describe('buildGeneralOrganizationLectureFeeBasisViewSegments — 일반(기관�
         lectureFeeAmount: '50000',
       } as ApplicantInstructorRow)
     ).toEqual(['기타 인건비', '1시간당 50,000원'])
+  })
+})
+
+describe('출강 1회당 코드(K13, 2026-11-12)', () => {
+  it('출강 1회당·기존 PER_SESSION·SESSION은 모두 PER_LECTURE로 보낸다', () => {
+    expect(toApiInstructorFeePolicyMeasure('출강 1회당', 'special_lecture')).toBe('PER_LECTURE')
+    expect(toApiInstructorFeePolicyMeasure('PER_SESSION', 'other_labor')).toBe('PER_LECTURE')
+    expect(toApiInstructorFeePolicyMeasure(undefined, 'special_lecture')).toBe('PER_LECTURE')
+    expect(toApiInstructorFeePolicyMeasure(null, 'program', 'SESSION')).toBe('PER_LECTURE')
+    expect(toApiInstructorFeePolicyMeasure(null, 'program', 'PER_HOUR')).toBe('PER_HOUR')
   })
 })
