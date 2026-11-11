@@ -36,6 +36,7 @@ import {
   normalizeSponsorManagerContactIds,
   retainSponsorManagerContactIdsForSponsors,
   resolveVenueKind,
+  type GeneralProgramVenueKind,
 } from '@/features/program/general/model/common-info-edit-schema'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import {
@@ -134,6 +135,7 @@ function CompanySchoolFixedParticipantTypes() {
   return <LockedParticipantTypeCheckboxes organization teacherInstructor />
 }
 
+/** 교육받은 교사 수정 — 시안 5416:111869 「개인 / 학교/기관 / 강사 / 봉사자」 비활성 체크박스 */
 function TrainedTeachersParticipantTypes({ program }: { program: Program }) {
   return (
     <LockedParticipantTypeCheckboxes
@@ -142,11 +144,18 @@ function TrainedTeachersParticipantTypes({ program }: { program: Program }) {
         program.generalParticipantTypes,
         'teacher_instructor'
       )}
-      teacherInstructorLabel="교사/강사"
       individual={participantTypeChecked(program.generalParticipantTypes, 'individual')}
       volunteer={participantTypeChecked(program.generalParticipantTypes, 'volunteer')}
     />
   )
+}
+
+/** 교육받은 교사 조회 — 시안 5416:111561 텍스트(「학교/기관」). 저장값이 없으면 고정 라벨 */
+function formatTrainedTeachersParticipantTypes(program: Program, fallbackLabel: string): string {
+  const labels = (program.generalParticipantTypes ?? [])
+    .map(type => GENERAL_PARTICIPANT_TYPE_LABELS[type] ?? type)
+    .filter(Boolean)
+  return labels.length > 0 ? labels.join(', ') : fallbackLabel
 }
 
 function ProgramProgressReadonlyCell({ status }: { status: ProgramLifecycleStatus }) {
@@ -172,7 +181,10 @@ export interface BasicInfoSectionProps {
    * 1사1교·일반 기본정보 IPS 행은 유지.
    */
   hideIpsTypeField?: boolean
-  /** 교육받은 교사 — 참여자 유형을 고정 라벨로 표시 (수정 UI 없음) */
+  /**
+   * 교육받은 교사 — 참여자 유형 고정(수정 불가). 조회는 텍스트, 수정은 비활성 체크박스.
+   * 값은 저장된 참여자 유형이 없을 때 조회에 쓰는 라벨이다.
+   */
   fixedParticipantTypeLabel?: string
   /** 교육받은 교사 — 대표 프로그램명(영문) Input 편집 */
   enableTitleEnEdit?: boolean
@@ -183,7 +195,7 @@ export interface BasicInfoSectionProps {
    * 교육받은 교사 상세 수정 전용 — 1사1교·일반 조회 타이틀은 유지.
    */
   hideFormTitles?: boolean
-  /** 교육받은 교사 — 등록 위저드와 같이 교육 장소 행 비노출 */
+  /** 교육 장소 행 비노출 opt-in. 교육받은 교사 상세는 시안(5416:111561·111869)대로 노출한다 */
   hideEducationPlace?: boolean
   /** 교육받은 교사 — 공고용 프로그램명 placeholder (위저드 카피) */
   announcementTitlePlaceholder?: string
@@ -220,9 +232,10 @@ function formatCompanySchoolVenue(program: Program): string {
   const kind = resolveVenueKind(program)
   const kindLabel = kind === 'outside' ? '기관 밖' : kind === 'other' ? '기타(직접입력)' : '기관 안'
   if (isTrainedTeachersProgram(program)) {
-    const venueName = program.venue?.trim() || '-'
-    const venueDetail = program.generalCommonInfo?.venueDetail?.trim() || '-'
-    return `${kindLabel} | ${venueName} | ${venueDetail}`
+    // 시안 5416:111561 「기관 안 | -」 — 상세 장소 1칸. 등록 위저드와 같이 venueDetail 정본, 없을 때만 top-level venue
+    const detail =
+      program.generalCommonInfo?.venueDetail?.trim() || program.venue?.trim() || '-'
+    return `${kindLabel} | ${detail}`
   }
   const detail = program.generalCommonInfo?.venueDetail?.trim() || program.venue?.trim() || '-'
   return `${kindLabel} | ${detail}`
@@ -729,7 +742,7 @@ export function BasicInfoSection({
                 isEconomyCommonInfo ? (
                   <CompanySchoolFixedParticipantTypes />
                 ) : fixedParticipantTypeLabel != null ? (
-                  <TrainedTeachersParticipantTypes program={program} />
+                  formatTrainedTeachersParticipantTypes(program, fixedParticipantTypeLabel)
                 ) : (
                   formatCompanySchoolParticipantTypes(program)
                 )
@@ -971,8 +984,21 @@ export function BasicInfoSection({
                       render={({ field }) => (
                         <CmsRadio.Group
                           size="medium"
-                          value={field.value ?? 'inside'}
-                          onChange={event => field.onChange(event.target.value)}
+                          value={
+                            field.value ??
+                            (trainedTeacherCommonInfo ? resolveVenueKind(program) : 'inside')
+                          }
+                          onChange={event => {
+                            const nextKind = event.target.value as GeneralProgramVenueKind
+                            field.onChange(nextKind)
+                            if (trainedTeacherCommonInfo && nextKind === 'other') {
+                              // TT 기타 — 등록 위저드와 같이 top-level venue = 상세 장소 문구
+                              const detail = commonInfoForm.getValues('venueDetail')?.trim()
+                              if (detail) {
+                                commonInfoForm.setValue('venue', detail, { shouldDirty: true })
+                              }
+                            }
+                          }}
                         >
                           <CmsRadio size="medium" value="inside">
                             기관 안
@@ -987,38 +1013,34 @@ export function BasicInfoSection({
                       )}
                     />
                     <DetailInfoForm.InputsSeparator />
-                    {isTrainedTeachersProgram(program) ? (
-                      <>
-                        <Controller
-                          name="venue"
-                          control={commonInfoForm.control}
-                          render={({ field }) => (
-                            <CmsInput
-                              inputSize="small"
-                              placeholder="장소명"
-                              width="100%"
-                              style={{ flex: '1 1 0', minWidth: 0 }}
-                              value={field.value ?? ''}
-                              onChange={field.onChange}
-                            />
-                          )}
-                        />
-                        <DetailInfoForm.InputsSeparator />
-                        <Controller
-                          name="venueDetail"
-                          control={commonInfoForm.control}
-                          render={({ field }) => (
-                            <CmsInput
-                              inputSize="small"
-                              placeholder="상세 장소"
-                              width="100%"
-                              style={{ flex: '1 1 0', minWidth: 0 }}
-                              value={field.value ?? ''}
-                              onChange={field.onChange}
-                            />
-                          )}
-                        />
-                      </>
+                    {trainedTeacherCommonInfo ? (
+                      // 시안 5416:111869 — 라디오 | 상세 장소 1칸 (등록 위저드 venueDetail과 같은 값)
+                      <Controller
+                        name="venueDetail"
+                        control={commonInfoForm.control}
+                        render={({ field }) => (
+                          <CmsInput
+                            inputSize="small"
+                            placeholder="교육이 진행될 상세 장소를 입력해 주세요"
+                            width="100%"
+                            style={{ flex: '1 1 0', minWidth: 0 }}
+                            value={field.value ?? ''}
+                            onChange={event => {
+                              field.onChange(event)
+                              const text = event.target.value
+                              const currentKind = commonInfoForm.getValues('venueKind')
+                              // 라디오를 건드리지 않은 채 입력하면 화면에 보이던 종류를 함께 저장한다
+                              const kind = currentKind ?? resolveVenueKind(program)
+                              if (!currentKind) {
+                                commonInfoForm.setValue('venueKind', kind, { shouldDirty: true })
+                              }
+                              if (kind === 'other') {
+                                commonInfoForm.setValue('venue', text, { shouldDirty: true })
+                              }
+                            }}
+                          />
+                        )}
+                      />
                     ) : (
                       <Controller
                         name="venueDetail"

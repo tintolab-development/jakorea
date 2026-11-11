@@ -2214,9 +2214,8 @@ export function TrainedTeachersCommonInfoView({
               lifecycleStatus={program.lifecycleStatus ?? undefined}
               forceCompanySchoolLayout
               hideIpsTypeField
-              hideEducationPlace
               hideFormTitles
-              fixedParticipantTypeLabel="교사/강사"
+              fixedParticipantTypeLabel="학교/기관"
               enableTitleEnEdit
               useDetailedProgramSelect
               announcementTitlePlaceholder="모집 시 노출될 프로그램명을 입력해 주세요"
@@ -2237,9 +2236,8 @@ export function TrainedTeachersCommonInfoView({
               lifecycleStatus={program.lifecycleStatus ?? undefined}
               forceCompanySchoolLayout
               hideIpsTypeField
-              hideEducationPlace
               hideFormTitles
-              fixedParticipantTypeLabel="교사/강사"
+              fixedParticipantTypeLabel="학교/기관"
               enableTitleEnEdit
               useDetailedProgramSelect
               announcementTitlePlaceholder="모집 시 노출될 프로그램명을 입력해 주세요"
