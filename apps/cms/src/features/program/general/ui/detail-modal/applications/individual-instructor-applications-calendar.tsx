@@ -6,8 +6,7 @@
  * - 셀 「이름 | 자택 지역」, 팝오버 「지역 | 일정 라벨(시간)」, 우측 카드 「이름 | 승인 상태 / 일정 라벨(시간) / 거리·출강·장거리」
  *   일정 라벨은 교육 구조별 SSOT(`resolveEducationScheduleSessionLeadLabel`) — 회차·차시·세부 일정명·사전교육
  * - 우측 상단 기관 multi select 없음
- * - `availableScheduleIds: []`(신청 일정 없음)인 신청도 빠지지 않게: 날짜 셀에는 그리지 않고
- *   우측 목록 날짜 카드 아래에 선택일과 무관하게 「신청 일정 없음」 카드로 항상 보여 준다
+ * - `availableScheduleIds: []`(신청 일정 없음)인 신청은 캘린더에 노출하지 않는다(리스트뷰에는 그대로 있음)
  * - 목록 `activityWithdrawn` true → 카드 승인 상태 옆 「활동 포기」 뱃지
  */
 
@@ -37,7 +36,6 @@ import {
   IndividualPersonCalendarView,
   type IndividualPersonCalendarAccessors,
   type IndividualPersonCalendarListItemRenderer,
-  type IndividualPersonCalendarUnscheduledListItemRenderer,
 } from '../program-status/individual-person-calendar-view'
 import {
   IndividualInstructorCalendarCard,
@@ -45,8 +43,6 @@ import {
 } from './individual-instructor-calendar-card'
 
 const EMPTY_SCHEDULES_DESCRIPTION = '신청한 교육 일정이 없습니다.'
-/** 일정 없는 신청 카드 2행 */
-const UNSCHEDULED_SESSION_LABEL = '신청 일정 없음'
 
 function toCalendarApprovalStatus(status: string | undefined): ApprovalStatusKey {
   if (status === 'approved' || status === 'rejected' || status === 'pending') return status
@@ -208,18 +204,6 @@ export function IndividualInstructorApplicationsCalendar({
       [program]
     )
 
-  const renderUnscheduledListItem: IndividualPersonCalendarUnscheduledListItemRenderer<ApplicantInstructorRow> =
-    useCallback(
-      ({ person, personId, personName, checked, onToggle }) => (
-        <IndividualInstructorCalendarCard
-          row={buildCardRow(person, personName, { sessionLabel: UNSCHEDULED_SESSION_LABEL })}
-          checked={checked}
-          onToggle={next => onToggle(personId, next)}
-        />
-      ),
-      []
-    )
-
   const selectedIds = useMemo(() => selectedRowKeys.map(String), [selectedRowKeys])
 
   return (
@@ -232,7 +216,6 @@ export function IndividualInstructorApplicationsCalendar({
       calendarGranularity={calendarGranularity}
       onCalendarGranularityChange={onCalendarGranularityChange}
       renderListItem={renderListItem}
-      renderUnscheduledListItem={renderUnscheduledListItem}
       emptyDescription={EMPTY_SCHEDULES_DESCRIPTION}
       loading={loading || (schedulesQuery.isPending && schedulesQuery.fetchStatus !== 'idle')}
     />
