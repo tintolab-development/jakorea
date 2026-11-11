@@ -12,16 +12,16 @@ export type InstructorTransportExclusion = {
 }
 
 const SIDE_MESSAGE: Record<string, string> = {
-  ORIGIN: '회원정보의 자택 주소를 지도에서 찾을 수 없어 교통비가 제외되었습니다. 주소를 확인해 주세요.',
-  DESTINATION: '교육 장소 주소를 지도에서 찾을 수 없어 교통비가 제외되었습니다. 담당자에게 문의해 주세요.',
-  ROUTE: '이동 경로를 찾을 수 없어 교통비가 제외되었습니다.',
+  ORIGIN: '회원정보의 자택 주소를 지도에서 찾을 수 없어 교통비가 제외되었어요. 주소를 확인해 주세요.',
+  DESTINATION: '교육 장소 주소를 지도에서 찾을 수 없어 교통비가 제외되었어요. 담당자에게 문의해 주세요.',
+  ROUTE: '이동 경로를 찾을 수 없어 교통비가 제외되었어요.',
 }
 
-/** UNKNOWN·값 없음 — 프롬프트에 문구가 없어 일반 문구로 안내한다. */
-const DEFAULT_MESSAGE = '교통비 계산에 필요한 주소를 지도에서 찾을 수 없어 교통비가 제외되었습니다.'
+/** UNKNOWN·값 없음 */
+const DEFAULT_MESSAGE = '교통비 계산에 필요한 주소를 지도에서 찾을 수 없어 교통비가 제외되었어요.'
 
 export const TRANSPORTATION_EXCLUDED_RESUBMIT_GUIDE =
-  '제출 후 교통비를 보완하려면 반려 후 재신청해야 합니다.'
+  '제출 후 교통비를 보완하려면 담당자에게 문의해 주세요.'
 
 function normalize(value: unknown): string | null {
   return typeof value === 'string' && value.trim() ? value.trim().toUpperCase() : null
